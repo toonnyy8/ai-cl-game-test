@@ -1,0 +1,82 @@
+[
+{
+"at": 2.5,
+"eval": "Module._debug_cmd(11)"
+},
+{
+"at": 3.0,
+"eval": "Module._debug_cmd(16)"
+},
+{
+"at": 3.5,
+"shot": "tests/shots/e2-wave1-banner.png"
+},
+{
+"at": 11.0,
+"shot": "tests/shots/e2-wave1-surround.png"
+},
+{
+"at": 13.0,
+"eval": "Module._debug_cmd(52)"
+},
+{
+"at": 13.05,
+"eval": "Module._debug_cmd(21)"
+},
+{
+"at": 16.0,
+"shot": "tests/shots/e2-grunt-slash.png"
+},
+{
+"at": 17.0,
+"eval": "Module._debug_cmd(56)"
+},
+{
+"at": 17.1,
+"eval": "Module._debug_cmd(32)"
+},
+{
+"at": 17.2,
+"eval": "Module._debug_cmd(56)"
+},
+{
+"at": 20.0,
+"shot": "tests/shots/e2-grunt-crippled.png"
+},
+{
+"at": 24.5,
+"shot": "tests/shots/e2-grunt-crawl.png"
+},
+{
+"at": 27.0,
+"shot": "tests/shots/e2-grunt-grip-0.png"
+},
+{
+"at": 28.3,
+"shot": "tests/shots/e2-grunt-grip-1.png"
+},
+{
+"at": 29.6,
+"shot": "tests/shots/e2-grunt-grip-2.png"
+},
+{
+"at": 30.9,
+"shot": "tests/shots/e2-grunt-grip-3.png"
+},
+{
+"at": 32.2,
+"shot": "tests/shots/e2-grunt-grip-4.png"
+},
+{
+"at": 33.5,
+"shot": "tests/shots/e2-grunt-grip-5.png"
+},
+{
+"at": 34.8,
+"shot": "tests/shots/e2-grunt-grip-6.png"
+},
+{
+"at": 36.1,
+"shot": "tests/shots/e2-grunt-grip-7.png"
+}
+]

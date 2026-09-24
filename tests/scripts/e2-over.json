@@ -1,0 +1,52 @@
+[
+{
+"at": 2.5,
+"eval": "Module._debug_cmd(11)"
+},
+{
+"at": 7.0,
+"eval": "Module._debug_cmd(41)"
+},
+{
+"at": 13.0,
+"shot": "tests/shots/e2-game-over.png"
+},
+{
+"at": 15.0,
+"key": "Enter",
+"down": true
+},
+{
+"at": 15.08,
+"key": "Enter",
+"down": false
+},
+{
+"at": 17.0,
+"shot": "tests/shots/e2-retry.png"
+},
+{
+"at": 19.0,
+"key": "Escape",
+"down": true
+},
+{
+"at": 19.08,
+"key": "Escape",
+"down": false
+},
+{
+"at": 20.0,
+"shot": "tests/shots/e2-pause.png"
+},
+{
+"at": 21.5,
+"key": "Escape",
+"down": true
+},
+{
+"at": 21.58,
+"key": "Escape",
+"down": false
+}
+]

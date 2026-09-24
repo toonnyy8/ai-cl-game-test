@@ -1,0 +1,27 @@
+# title: RAVEN EDGE
+# Game sources in compile order, relative to this directory (the engine's come first, see
+# engine/MANIFEST). Order matters: macros, structs, components and special variables before their users.
+# Data files (sounds, clips, moves, bodies) are declarative; rules.lisp is the pure functional core.
+lisp/package.lisp
+lisp/tuning.lisp
+lisp/sounds.lisp
+lisp/world.lisp
+lisp/clips.lisp
+lisp/rules.lisp
+lisp/moves.lisp
+lisp/effects.lisp
+lisp/components.lisp
+lisp/bodies.lisp
+lisp/fighters.lisp
+lisp/combat.lisp
+lisp/camera.lisp
+lisp/player.lisp
+lisp/enemy.lisp
+lisp/projectiles.lisp
+lisp/feedback.lisp
+lisp/training.lisp
+lisp/game.lisp
+lisp/hud.lisp
+lisp/debug.lisp
+lisp/main.lisp
+c/world.c

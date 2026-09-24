@@ -1,0 +1,272 @@
+;;;; demo.lisp — exercises the engine alone: neon rooftop, orbit camera, fx, UI.
+;;;; Build: ./build.sh examples/engine-demo      Run: node tools/run.mjs dist/engine-demo --secs 8 --shot x.png
+;;;; Keys: arrows / A D = orbit, W S / wheel = zoom, mouse drag or pointer lock = look,
+;;;;       SPACE = spark burst, B = toggle bloom, F = toggle 240-part crowd.
+(defpackage :engine-demo (:use :cl :engine))
+(in-package :engine-demo)
+
+(defvar *m-ground*) (defvar *m-props*) (defvar *m-skyline*) (defvar *m-windows*)
+(defvar *m-sign-a*) (defvar *m-sign-b*) (defvar *m-blade*) (defvar *m-hilt*) (defvar *m-pedestal*)
+(defvar *m-crate*) (defvar *m-body*) (defvar *m-head*) (defvar *m-limb*) (defvar *m-rail*)
+(defvar *crowd* t)
+(declaim (type f32vec *orbit* *mtmp* *mpart* *mparent* *trail* *demo-parts* *vtmp* *vtmp2*))
+(defvar *orbit* (fv 0.6 0.32 10.5))           ; yaw pitch distance
+(defvar *mtmp* (m4)) (defvar *mpart* (m4)) (defvar *mparent* (m4))
+(defvar *vtmp* (make-f32 3)) (defvar *vtmp2* (make-f32 3))
+(defconstant +demo-trail-n+ 14)
+(defvar *trail* (make-f32 (* 6 +demo-trail-n+)))
+(defconstant +max-parts+ 600)
+(defvar *demo-parts* (make-f32 (* 8 +max-parts+)))  ; x y z vx vy vz life max-life
+(defvar *rain* (make-f32 (* 3 220)))
+(defvar *demo-stats* (make-f32 4))                  ; cons accumulator, frames, log timer
+(defvar *seed* 7)
+(defun rnd () (setf *seed* (mod (+ (* *seed* 1103515245) 12345) 1073741824)) (/ (float *seed* 1f0) 1073741824f0))
+(defun rnd2 (a b) (+ (f32 a) (* (- (f32 b) (f32 a)) (rnd))))
+
+;;; ---------------------------------------------------------------- scene building
+(defun build-scene ()
+  (setf *m-ground*
+        (build-mesh (mb :jitter 0.12 :color '(0.16 0.15 0.20))
+          (mb-plane mb 36 36 :nx 18 :nz 18 :color2 '(0.13 0.12 0.17))
+          ;; roof parapet
+          (mb-color mb 0.22 0.2 0.26)
+          (dolist (s '(-1 1))
+            (with-xform (mb (xform :z (* s 18) :y 0.45)) (mb-box mb 36.8 0.9 0.8))
+            (with-xform (mb (xform :x (* s 18) :y 0.45)) (mb-box mb 0.8 0.9 35.2)))))
+  (setf *m-props*
+        (build-mesh (mb :jitter 0.08 :color '(0.35 0.36 0.42))
+          ;; AC units, vents, water tank, pillars
+          (loop for (x z) in '((-9 -8) (-6.5 -8) (8 7) (10 -3)) do
+            (with-xform (mb (xform :x x :y 0.7 :z z)) (mb-bevel-box mb 2 1.4 1.4 0.1))
+            (mb-color mb 0.1 0.1 0.12)
+            (with-xform (mb (xform :x x :y 1.41 :z z)) (mb-cylinder mb 0.5 0.02 :segments 10))
+            (mb-color mb 0.35 0.36 0.42))
+          (mb-color mb 0.30 0.22 0.20)
+          (with-xform (mb (xform :x 11 :y 3.2 :z 10)) (mb-cylinder mb 2 3 :segments 12))
+          (with-xform (mb (xform :x 11 :y 5.2 :z 10)) (mb-cone mb 2.1 1 :segments 12))
+          (mb-color mb 0.2 0.2 0.24)
+          (loop for (x z) in '((9.5 8.5) (12.5 8.5) (9.5 11.5) (12.5 11.5)) do
+            (with-xform (mb (xform :x x :y 0.9 :z z)) (mb-box mb 0.2 1.8 0.2)))
+          (mb-color mb 0.28 0.26 0.33)
+          (loop for (x z) in '((-4 -9) (4 -9) (-13 -1) (13 -1)) do
+            (with-xform (mb (xform :x x :y 2.5 :z z)) (mb-prism mb 0.45 5 6)))
+          ;; ramp + stairs block
+          (mb-color mb 0.25 0.24 0.3)
+          (with-xform (mb (xform :x -12 :y 0.75 :z 6 :yaw 1.57)) (mb-wedge mb 3 1.5 4))
+          (with-xform (mb (xform :x -12 :y 0.75 :z 9.5)) (mb-box mb 3 1.5 3))
+          ;; sign frames
+          (mb-color mb 0.08 0.08 0.1)
+          (with-xform (mb (xform :x -7 :y 3.5 :z -12)) (mb-box mb 4.6 2.2 0.25))
+          (with-xform (mb (xform :x 6 :y 4 :z -13)) (mb-box mb 0.3 3.6 1.9))
+          (with-xform (mb (xform :x -7 :y 1.3 :z -12)) (mb-box mb 0.2 2.6 0.2))
+          ;; a capsule and sphere for coverage
+          (mb-color mb 0.5 0.1 0.12)
+          (with-xform (mb (xform :x 3 :y 0.9 :z 3)) (mb-capsule mb 0.35 1.8 :segments 8 :rings 4))
+          (mb-color mb 0.2 0.5 0.55)
+          (with-xform (mb (xform :x -3 :y 0.6 :z 3)) (mb-sphere mb 0.6 :segments 10 :rings 6))))
+  (setf *m-sign-a* (build-mesh (mb :color '(1.0 0.15 0.75))
+                     (with-xform (mb (xform :y 0.5)) (mb-box mb 4 0.18 0.1))
+                     (with-xform (mb (xform :y -0.5)) (mb-box mb 4 0.18 0.1))
+                     (loop for i from 0 below 5 do
+                       (with-xform (mb (xform :x (- (* i 0.8) 1.6) :roll 0.5)) (mb-box mb 0.14 0.8 0.1))))
+        *m-sign-b* (build-mesh (mb :color '(0.1 0.9 1.0))
+                     (loop for i from 0 below 4 do
+                       (with-xform (mb (xform :y (- 1.2 (* i 0.8)))) (mb-box mb 0.1 0.5 1.4)))))
+  (setf *m-blade* (build-mesh (mb) (mb-blade mb :hilt nil))
+        *m-hilt* (build-mesh (mb) (mb-blade mb :blade nil))
+        *m-pedestal* (build-mesh (mb :color '(0.12 0.11 0.14))
+                       (with-xform (mb (xform :y 0.2)) (mb-bevel-box mb 1.6 0.4 1.6 0.08))
+                       (mb-color mb 0.6 0.05 0.1)
+                       (with-xform (mb (xform :y 0.42)) (mb-box mb 1.2 0.04 1.2)))
+        *m-crate* (build-mesh (mb :jitter 0.1 :color '(0.32 0.24 0.18))
+                    (mb-bevel-box mb 1 1 1 0.06))
+        *m-body* (build-mesh (mb :color '(0.12 0.12 0.16)) (mb-bevel-box mb 0.42 0.6 0.24 0.05))
+        *m-head* (build-mesh (mb :color '(0.75 0.12 0.15)) (mb-bevel-box mb 0.22 0.24 0.22 0.04))
+        *m-limb* (build-mesh (mb :color '(0.1 0.1 0.13)) (with-xform (mb (xform :y -0.28)) (mb-bevel-box mb 0.12 0.56 0.12 0.03)))
+        *m-rail* (build-mesh (mb :color '(0.3 0.3 0.36))
+                   (loop for i from 0 below 12 do
+                     (with-xform (mb (xform :x (- (* i 1.5) 8.25) :y 0.6)) (mb-box mb 0.06 1.2 0.06)))
+                   (with-xform (mb (xform :y 1.2)) (mb-box mb 17 0.07 0.07))))
+  ;; skyline ring + lit windows
+  (let* ((sk (make-mesh-builder)) (win (make-mesh-builder)))
+    (setf (mb-jitter sk) 0.25)
+    (loop for i from 0 below 70 do
+      (let* ((a (* i (/ (* 2 pi) 70))) (r (rnd2 55 120)) (w (rnd2 8 20)) (h (rnd2 20 80)) (x (* r (cos a))) (z (* r (sin a))))
+        (mb-color sk 0.05 0.045 0.08)
+        (with-xform (sk (xform :x x :y (- (* .5 h) 25) :z z :yaw (- (/ pi 2) a))) (mb-box sk w h w))
+        (loop repeat (floor h 5) do
+          (let* ((c (if (< (rnd) 0.7) '(1.0 0.75 0.4) (if (< (rnd) 0.5) '(0.3 0.9 1.0) '(1.0 0.3 0.8)))))
+            (apply #'mb-color win c)
+            (with-xform (win (xform :x x :y (- (rnd2 0 h) 25) :z z :yaw (- (/ pi 2) a)))
+              (with-xform (win (xform :x (rnd2 (* -.4 w) (* .4 w)) :z (* -.5 (+ w 0.1))))
+                (mb-box win (rnd2 0.8 2.5) 0.6 0.1)))))))
+    (setf *m-skyline* (mb-build sk) *m-windows* (mb-build win))))
+
+;;; ---------------------------------------------------------------- per-frame helpers
+(defun-fast draw-at (mesh x y z &key (yaw 0f0) (s 1f0) tint (emissive 0f0) (alpha 1f0))
+  (m4-euler! *mtmp* (f32 x) (f32 y) (f32 z) (f32 yaw) 0f0 0f0 (f32 s) (f32 s) (f32 s))
+  (draw-mesh mesh *mtmp* :tint tint :emissive emissive :alpha alpha))
+
+(defun-fast draw-dummy (x z phase flash)
+  "A 6-part rigid character: hierarchy parent * local, one draw per part."
+  (declare (single-float x z phase flash))
+  (let* ((sw (* 0.6f0 (sin phase))))
+    (m4-euler! *mparent* x 1.05f0 z (* 0.3f0 phase) 0f0 0f0)
+    (draw-mesh *m-body* *mparent* :flash flash)
+    (m4-mul! *mpart* *mparent* (m4-translation! *mtmp* 0f0 0.45f0 0f0))
+    (draw-mesh *m-head* *mpart* :emissive 0.3f0 :flash flash)
+    (loop for side single-float in '(-1f0 1f0) do
+      (m4-mul! *mpart* *mparent* (m4-euler! *mtmp* (* side 0.28f0) 0.26f0 0f0 0f0 (* side sw) 0f0))
+      (draw-mesh *m-limb* *mpart* :flash flash)
+      (m4-mul! *mpart* *mparent* (m4-euler! *mtmp* (* side 0.12f0) -0.3f0 0f0 0f0 (- (* side sw)) 0f0))
+      (draw-mesh *m-limb* *mpart* :flash flash))
+    (fx-decal x 0f0 z 0.55f0 0f0 0f0 0f0 0.55f0)))
+
+(defun-fast spawn-sparks (x y z n)
+  (let* ((p *demo-parts*))
+    (dotimes (k n)
+      (let* ((slot (loop for i below +max-parts+ when (<= (aref p (+ (* i 8) 6)) 0f0) return i)))
+        (when slot
+          (let* ((o (* slot 8)) (a (rnd2 0 6.283)) (sp (rnd2 1.5 6)))
+            (setf (aref p o) x (aref p (+ o 1)) y (aref p (+ o 2)) z
+                  (aref p (+ o 3)) (* sp (cos a)) (aref p (+ o 4)) (rnd2 2 7) (aref p (+ o 5)) (* sp (sin a))
+                  (aref p (+ o 7)) (rnd2 0.5 1.3) (aref p (+ o 6)) (aref p (+ o 7)))))))))
+
+(defun-fast update-particles (dt)
+  (declare (single-float dt))
+  (let* ((p *demo-parts*) (live 0))
+    (declare (fixnum live))
+    (dotimes (i +max-parts+ live)
+      (let* ((o (* i 8)))
+        (when (> (aref p (+ o 6)) 0f0)
+          (incf live)
+          (decf (aref p (+ o 6)) dt)
+          (decf (aref p (+ o 4)) (* 9.8f0 dt))
+          (dotimes (k 3) (incf (aref p (+ o k)) (* dt (aref p (+ o 3 k)))))
+          (when (< (aref p (+ o 1)) 0.05f0)
+            (setf (aref p (+ o 1)) 0.05f0 (aref p (+ o 4)) (* -0.4f0 (aref p (+ o 4)))))
+          (let* ((u (/ (aref p (+ o 6)) (aref p (+ o 7)))) (x (aref p o)) (y (aref p (+ o 1))) (z (aref p (+ o 2))))
+            (declare (single-float u x y z))
+            (fx-line x y z (- x (* 0.03f0 (aref p (+ o 3)))) (- y (* 0.03f0 (aref p (+ o 4)))) (- z (* 0.03f0 (aref p (+ o 5))))
+                     0.025f0 1f0 (+ 0.35f0 (* 0.5f0 u)) 0.15f0 u :end-width 0.005f0 :end-alpha 0f0)
+            (fx-billboard x y z (* 0.09f0 u) 1f0 0.4f0 0.2f0 (* 0.6f0 u))))))))
+
+(defun-fast update-rain (dt)
+  (declare (single-float dt))
+  (let* ((r *rain*) (tg (camera-target *camera*)))
+    (dotimes (i 220)
+      (let* ((o (* i 3)))
+        (decf (aref r (+ o 1)) (* 16f0 dt))
+        (when (< (aref r (+ o 1)) 0f0)
+          (setf (aref r o) (+ (aref tg 0) (rnd2 -14 14)) (aref r (+ o 1)) (rnd2 8 14) (aref r (+ o 2)) (+ (aref tg 2) (rnd2 -14 14))))
+        (let* ((x (aref r o)) (y (aref r (+ o 1))) (z (aref r (+ o 2))))
+          (fx-line x y z (+ x 0.03f0) (+ y 0.45f0) z 0.012f0 0.55f0 0.65f0 0.9f0 0.35f0 :mode :alpha))))))
+
+(defun-fast update-camera-input (dt)
+  (declare (single-float dt))
+  (let* ((o *orbit*))
+    (when (or (key-down :left) (key-down :a)) (decf (aref o 0) (* 1.6f0 dt)))
+    (when (or (key-down :right) (key-down :d)) (incf (aref o 0) (* 1.6f0 dt)))
+    (when (key-down :up) (incf (aref o 1) (* 1.0f0 dt)))
+    (when (key-down :down) (decf (aref o 1) (* 1.0f0 dt)))
+    (when (key-down :w) (decf (aref o 2) (* 6f0 dt)))
+    (when (key-down :s) (incf (aref o 2) (* 6f0 dt)))
+    (decf (aref o 2) (* 0.8f0 (mouse-wheel)))
+    (when (or (pointer-locked-p) (mouse-down :left) (mouse-down :right))
+      (decf (aref o 0) (* 0.005f0 (mouse-dx)))
+      (incf (aref o 1) (* 0.005f0 (mouse-dy))))
+    (incf (aref o 0) (* 0.15f0 (pad-rx) dt 10f0))
+    (setf (aref o 1) (max -0.1f0 (min 1.3f0 (aref o 1)))
+          (aref o 2) (max 3f0 (min 30f0 (aref o 2))))
+    (let* ((yaw (aref o 0)) (pitch (aref o 1)) (d (aref o 2)))
+      (camera-look-at (* d (cos pitch) (sin yaw)) (+ 1.2f0 (* d (sin pitch))) (* d (cos pitch) (cos yaw)) 0f0 1.2f0 0f0))))
+
+;;; ---------------------------------------------------------------- entry points
+(defun demo-init ()
+  (build-scene)
+  (dotimes (i 220) (setf (aref *rain* (* i 3)) (rnd2 -14 14) (aref *rain* (+ (* i 3) 1)) (rnd2 0 14) (aref *rain* (+ (* i 3) 2)) (rnd2 -14 14)))
+  (log-msg "engine-demo: init ok (~d skyline tris, ~d window tris)" (floor (mesh-count *m-skyline*) 3) (floor (mesh-count *m-windows*) 3)))
+
+(defun demo-frame (rdt)
+  (declare (ignore rdt))                ; the demo animates with FRAME-DT (clamped to *MAX-DT*)
+  (let* ((c0 (cons-bytes)) (dt (frame-dt)) (tm (elapsed-time)))
+    (declare (single-float dt tm))
+    (update-camera-input dt)
+    (when (key-pressed :b) (setf (env-bloom *env*) (not (env-bloom *env*))))
+    (when (key-pressed :f) (setf *crowd* (not *crowd*)))
+    (when (or (key-pressed :space) (pad-pressed :a)) (spawn-sparks 0f0 1.6f0 0f0 80))
+    (when (< (mod tm 1.5f0) dt) (spawn-sparks 0f0 1.6f0 0f0 20))
+    ;; scene
+    (draw-mesh *m-ground* (m4-identity! *mtmp*))
+    (draw-mesh *m-props* (m4-identity! *mtmp*))
+    (draw-mesh *m-skyline* (m4-identity! *mtmp*))
+    (draw-mesh *m-windows* (m4-identity! *mtmp*) :emissive 2.2f0)
+    (draw-at *m-rail* 0 0 -17 :tint '(0.8 0.8 1.0))
+    (let* ((flick (if (< (mod (* tm 7.3f0) 1f0) 0.08f0) 0.3f0 1f0)))
+      (draw-at *m-sign-a* -7 3.5 -11.8 :emissive (* 3f0 flick))
+      (add-point-light -7 3.5 -10.5 1 0.2 0.8 9 (* 2.2f0 flick)))
+    (draw-at *m-sign-b* 6 4 -12.8 :emissive 3.0)
+    (add-point-light 6 3.5 -11.5 0.1 0.85 1 9 2.0)
+    (add-point-light 0 0.8 0 1 0.1 0.15 4 (+ 1.2f0 (* 0.3f0 (sin (* tm 3f0)))))
+    (loop for i from 0 below 6 do
+      (draw-at *m-crate* (- (* i 1.3) 12) 0.5 -3 :yaw (* i 0.4)))
+    (draw-at *m-crate* -11.4 1.5 -3 :yaw 0.2 :s 0.8)
+    ;; katana on pedestal with trail
+    (draw-at *m-pedestal* 0 0 0)
+    (let* ((yaw (* tm 2.4f0)))
+      (m4-euler! *mparent* 0f0 1.1f0 0f0 yaw 0f0 1.2f0)
+      (draw-mesh *m-blade* *mparent* :emissive 0.6f0 :tint '(0.8 0.95 1.0))
+      (draw-mesh *m-hilt* *mparent*)
+      (replace *trail* *trail* :start1 0 :start2 6)
+      (let* ((o (* 6 (1- +demo-trail-n+))))
+        (m4-transform-point! *vtmp* *mparent* (v3-set! *vtmp2* 0f0 0.25f0 0f0))
+        (replace *trail* *vtmp* :start1 o)
+        (m4-transform-point! *vtmp* *mparent* (v3-set! *vtmp2* 0f0 1.02f0 0f0))
+        (replace *trail* *vtmp* :start1 (+ o 3))))
+    (fx-trail *trail* +demo-trail-n+ 0.3 0.8 1.0 0.8)
+    (fx-decal 0 0.45 0 0.9 1 0.1 0.2 0.35 :mode :add)
+    ;; crowd of rigid-part dummies (6 draws each)
+    (when *crowd*
+      (dotimes (i 40)
+        (let* ((a (* i 0.157f0)))
+          (draw-dummy (* 8.5f0 (cos a)) (* 8.5f0 (sin a)) (+ (* tm 4f0) (float i 1f0))
+                      (if (< (mod (+ tm (* i 0.37f0)) 3f0) 0.12f0) 0.8f0 0f0)))))
+    ;; translucent glass panel (transparent pass)
+    (draw-at *m-crate* 2.5 1.2 -2 :yaw 0.3 :s 1.6 :tint '(0.4 0.8 1.0) :alpha 0.35 :emissive 0.4)
+    (update-particles dt)
+    (update-rain dt)
+    ;; UI
+    (let* ((s (ui-scale)) (w (window-width)) (h (window-height)) (pad (* 8 s)) (st *demo-stats*))
+      (ui-gradient 0 0 (* 190 s) (* 64 s) '(0.05 0.02 0.1 0.8) '(0.05 0.02 0.1 0) :vertical nil)
+      (ui-text (format nil "FPS ~,1f  DRAWS ~d  TRIS ~d" (fps) *draw-count* *tri-count*) pad pad :scale s :shadow t)
+      (ui-text (format nil "CONS ~d B/FRAME  BLOOM ~:[OFF~;ON~]  ~dx~d"
+                       (round (aref st 3)) (env-bloom *env*) w h)
+               pad (+ pad (* 12 s)) :scale s :color '(0.6 0.9 1 1) :shadow t)
+      (ui-text (format nil "LOCK ~:[no~;yes~]  PAD ~:[no~;yes~]  YAW ~,2f" (pointer-locked-p) (pad-connected-p) (aref *orbit* 0))
+               pad (+ pad (* 24 s)) :scale s :color '(0.8 0.8 0.9 1) :shadow t)
+      (ui-text "ENGINE DEMO" (floor w 2) (floor h 7) :scale (* 4 s) :align :center :color '(1 0.2 0.35 1) :shadow t)
+      (ui-text " !\"#$%&'()*+,-./0123456789:;<=>?
+@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`
+abcdefghijklmnopqrstuvwxyz{|}~" (- w (* 50 s)) (- h (* 42 s)) :scale s :align :right :color '(0.9 0.9 1 0.9) :shadow t)
+      (let* ((bx pad) (by (- h (* 60 s))))
+        (ui-text "HEALTH" bx (- by (* 10 s)) :scale s :color '(1 0.4 0.4 1))
+        (ui-bar bx by (* 160 s) (* 8 s) (+ 0.6 (* 0.4 (sin tm))) '(0.6 0.02 0.08) :color2 '(1 0.2 0.3) :border '(1 1 1 0.5))
+        (ui-text "KI" bx (+ by (* 14 s)) :scale s :color '(0.4 0.9 1 1))
+        (ui-bar bx (+ by (* 24 s)) (* 160 s) (* 6 s) (mod (* tm 0.2) 1) '(0.1 0.4 1) :color2 '(0.3 1 1)))
+      (ui-text "arrows/AD orbit, WS zoom, SPACE sparks, B bloom, F crowd" (- w pad) pad :scale s :align :right
+               :color '(0.7 0.7 0.8 0.8))
+      (ui-rect-outline (- w (* 40 s)) (- h (* 40 s)) (* 30 s) (* 30 s) '(1 0.2 0.8 1) s)
+      ;; world-anchored label
+      (when (world-to-screen *vtmp* 0f0 2.3f0 0f0)
+        (ui-text "KATANA" (floor (aref *vtmp* 0)) (floor (aref *vtmp* 1)) :scale s :align :center
+                 :color '(0.5 0.95 1 1) :shadow t)))
+    ;; stats: bytes consed by this frame's Lisp work (END-FRAME runs after this function)
+    (let* ((st *demo-stats*) (dc (- (cons-bytes) c0)))
+      (incf (aref st 0) (float (max dc 0) 1f0)) (incf (aref st 1) 1f0) (incf (aref st 2) dt)
+      (when (>= (aref st 2) 2f0)
+        (setf (aref st 3) (/ (aref st 0) (aref st 1)))
+        (log-msg "stats: fps ~,1f draws ~d tris ~d cons/frame ~d B yaw ~,2f pitch ~,2f dist ~,1f fx-dropped ~d"
+                 (fps) *draw-count* *tri-count* (round (aref st 3)) (aref *orbit* 0) (aref *orbit* 1) (aref *orbit* 2) *fx-dropped*)
+        (setf (aref st 0) 0f0 (aref st 1) 0f0 (aref st 2) 0f0)))))
+
+(run-game :title "ENGINE DEMO" :load (list #'demo-init) :frame #'demo-frame)

@@ -1,0 +1,16 @@
+# 文件索引
+
+專案總覽、快速開始和建置需求在根目錄的 [README.md](../README.md)。第一次接觸這個專案，先讀 [TUTORIAL.zh-TW.md](TUTORIAL.zh-TW.md)。技術參考文件大多是英文，是開發時各模組之間的「合約」；中文的開發紀錄說明這些決定背後的理由。
+
+| 文件 | 內容 |
+|---|---|
+| [TUTORIAL.zh-TW.md](TUTORIAL.zh-TW.md) | 學習路徑：建置與執行、專案地圖、逐行讀 `examples/hello`、幀迴圈與 GC、ECS、純函式規則、事件、算圖、RAVEN EDGE 的組成、練習題（中文） |
+| [DEVLOG.zh-TW.md](DEVLOG.zh-TW.md) | 開發紀錄與技術思辨：從 GLES3 到 SDL_GPU（WebGPU）、建置管線、GC 問題、ECL 效能、算圖、音訊、玩法設計、團隊分工、已知限制、引擎／遊戲拆分與 ECS 重構（中文） |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | 建置管線、執行模型、GC 規則、ECS／規則／事件、模組分工表，以及一長串 ECL／Emscripten／WebGPU 踩過的坑 |
+| [ENGINE_API.md](ENGINE_API.md) | 引擎 API 參考（依原始檔分組）：座標慣例、輸入、數學、算圖、模型產生、UI、音訊、動畫、時間、特效、ECS、`RUN-GAME` |
+| [GAME_DESIGN.md](GAME_DESIGN.md) | 遊戲設計規格 v1：操作、招式幀數表、戰鬥規則、敵人、波次、HUD、美術、音效對照、動畫 |
+| [GAMEPLAY.md](GAMEPLAY.md) | 玩法系統的實作說明：時間模型、實體與元件、動畫、招式定義、敵人 AI、遊戲流程、除錯指令、砍掉的項目 |
+| [WORLD.md](WORLD.md) | 頂樓場景：API、碰撞體、場景內容、光源配置、雨、效能數據 |
+| [AUDIO.md](AUDIO.md) | 音訊：Lisp API、C 混音器設計、瀏覽器自動播放處理、合成工具、音效清單 |
+| [research/ng4-notes.md](research/ng4-notes.md) | 《忍者外傳 4》玩法研究筆記，附來源和可信度標記 |
+| [world-shots/](world-shots/) | 場景 demo 的截圖（出生點、各角落、俯視、水窪、頭目戰的血雨） |

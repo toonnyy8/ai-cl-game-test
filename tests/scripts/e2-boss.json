@@ -1,0 +1,118 @@
+[
+{
+"at": 2.5,
+"eval": "Module._debug_cmd(14)"
+},
+{
+"at": 3.0,
+"eval": "Module._debug_cmd(16)"
+},
+{
+"at": 4.2,
+"shot": "tests/shots/e2-boss-drop.png"
+},
+{
+"at": 7.5,
+"shot": "tests/shots/e2-boss-intro.png"
+},
+{
+"at": 12.0,
+"eval": "Module._debug_cmd(26)"
+},
+{
+"at": 12.5,
+"eval": "Module._debug_cmd(50)"
+},
+{
+"at": 12.6,
+"shot": "tests/shots/e2-boss-crescent.png"
+},
+{
+"at": 19.0,
+"eval": "Module._debug_cmd(53)"
+},
+{
+"at": 19.05,
+"eval": "Module._debug_cmd(28)"
+},
+{
+"at": 22.0,
+"shot": "tests/shots/e2-boss-blade-wave.png"
+},
+{
+"at": 24.0,
+"eval": "Module._debug_cmd(52)"
+},
+{
+"at": 24.05,
+"eval": "Module._debug_cmd(30)"
+},
+{
+"at": 27.0,
+"shot": "tests/shots/e2-boss-triple.png"
+},
+{
+"at": 29.0,
+"eval": "Module._debug_cmd(15)"
+},
+{
+"at": 29.8,
+"shot": "tests/shots/e2-boss-phase2-a.png"
+},
+{
+"at": 31.0,
+"shot": "tests/shots/e2-boss-phase2-roar.png"
+},
+{
+"at": 33.0,
+"shot": "tests/shots/e2-boss-phase2-b.png"
+},
+{
+"at": 36.0,
+"shot": "tests/shots/e2-boss-phase2.png"
+},
+{
+"at": 41.0,
+"eval": "Module._debug_cmd(27)"
+},
+{
+"at": 41.5,
+"eval": "Module._debug_cmd(50)"
+},
+{
+"at": 41.6,
+"shot": "tests/shots/e2-boss-leap-windup.png"
+},
+{
+"at": 45.0,
+"eval": "Module._debug_cmd(54)"
+},
+{
+"at": 45.05,
+"eval": "Module._debug_cmd(27)"
+},
+{
+"at": 48.0,
+"shot": "tests/shots/e2-boss-leap-air.png"
+},
+{
+"at": 51.0,
+"eval": "Module._debug_cmd(19)"
+},
+{
+"at": 52.5,
+"shot": "tests/shots/e2-boss-broken.png"
+},
+{
+"at": 53.0,
+"eval": "Module._debug_cmd(18)"
+},
+{
+"at": 64.0,
+"shot": "tests/shots/e2-victory.png"
+},
+{
+"at": 74.0,
+"shot": "tests/shots/e2-results.png"
+}
+]

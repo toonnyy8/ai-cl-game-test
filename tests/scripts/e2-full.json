@@ -1,0 +1,92 @@
+[
+{
+"at": 8.0,
+"key": "Enter",
+"down": true
+},
+{
+"at": 8.08,
+"key": "Enter",
+"down": false
+},
+{
+"at": 10.0,
+"eval": "Module._debug_cmd(18)"
+},
+{
+"at": 90,
+"shot": "tests/shots/e2-full-00.png"
+},
+{
+"at": 180,
+"shot": "tests/shots/e2-full-01.png"
+},
+{
+"at": 270,
+"shot": "tests/shots/e2-full-02.png"
+},
+{
+"at": 360,
+"shot": "tests/shots/e2-full-03.png"
+},
+{
+"at": 450,
+"shot": "tests/shots/e2-full-04.png"
+},
+{
+"at": 540,
+"shot": "tests/shots/e2-full-05.png"
+},
+{
+"at": 630,
+"shot": "tests/shots/e2-full-06.png"
+},
+{
+"at": 720,
+"shot": "tests/shots/e2-full-07.png"
+},
+{
+"at": 810,
+"shot": "tests/shots/e2-full-08.png"
+},
+{
+"at": 900,
+"shot": "tests/shots/e2-full-09.png"
+},
+{
+"at": 990,
+"shot": "tests/shots/e2-full-10.png"
+},
+{
+"at": 1080,
+"shot": "tests/shots/e2-full-11.png"
+},
+{
+"at": 1170,
+"shot": "tests/shots/e2-full-12.png"
+},
+{
+"at": 1260,
+"shot": "tests/shots/e2-full-13.png"
+},
+{
+"at": 1350,
+"shot": "tests/shots/e2-full-14.png"
+},
+{
+"at": 1440,
+"shot": "tests/shots/e2-full-15.png"
+},
+{
+"at": 1530,
+"shot": "tests/shots/e2-full-16.png"
+},
+{
+"at": 1620,
+"shot": "tests/shots/e2-full-17.png"
+},
+{
+"at": 1710,
+"shot": "tests/shots/e2-full-18.png"
+}
+]

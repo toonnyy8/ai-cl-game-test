@@ -1,0 +1,4 @@
+# build outputs (./build.sh recreates them)
+/build/
+/dist/
+/.vscode/

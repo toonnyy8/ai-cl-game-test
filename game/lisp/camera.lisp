@@ -1,0 +1,96 @@
+;;;; camera.lisp — the third-person camera (GAME_DESIGN §7.7): an orbit around REN with lag,
+;;;; auto-yaw behind movement, a wider view near enemies, framing overrides for Obliterate /
+;;;; Thunderfall, then clamped inside the parapets and pulled in front of props. Runs once per
+;;;; frame on real time (GAME-CAMERA in game.lisp picks this, the title orbit or the intro sweep).
+(in-package :raven)
+
+(defstruct (orbit-cam (:conc-name cam-))
+  (yaw 0f0 :type single-float) (pitch (deg 15) :type single-float) (dist 5.5 :type single-float)
+  (pivot-x 0f0 :type single-float) (pivot-y 1.5 :type single-float) (pivot-z 8f0 :type single-float)
+  (idle-t 0f0 :type single-float)                   ; seconds without camera input
+  (override-w 0f0 :type single-float)               ; 0..1 blend toward the override framing
+  (override-yaw 0f0 :type single-float) (override-dist 0f0 :type single-float) (override-pitch 0f0 :type single-float))
+
+(defvar *cam* (make-orbit-cam) "The orbit camera's state; *CAMERA* (engine) is what it produces.")
+
+(defun any-enemy-within (r)
+  (let ((pl *player*) (hit nil))
+    (do-entities (e fighter) (when (and (enemy-p e) (<= (distance pl e) r)) (setf hit t)))
+    hit))
+
+(defun camera-update (dt)
+  "Third-person orbit with lag, auto-yaw behind movement and move-specific framing (real DT)."
+  (let* ((c *cam*) (e *player*) (f (fighter e)) (p (pos-of e)) (input nil))
+    ;; input: arrows 150 deg/s, mouse 0.15 / 0.12 deg per px (pointer lock), stick 200 deg/s
+    (let ((yr 0.0) (pr 0.0))
+      (when (key-down :left) (incf yr (deg 150))) (when (key-down :right) (decf yr (deg 150)))
+      (when (key-down :up) (decf pr (deg 150))) (when (key-down :down) (incf pr (deg 150)))
+      (decf yr (* (deg 200) (pad-rx))) (incf pr (* (deg 200) (pad-ry)))
+      (when (or (/= yr 0) (/= pr 0)) (setf input t))
+      (setf (cam-yaw c) (f32 (+ (cam-yaw c) (* yr dt))) (cam-pitch c) (f32 (+ (cam-pitch c) (* pr dt))))
+      (when (pointer-locked-p)
+        (let ((mx (mouse-dx)) (my (mouse-dy)))
+          (when (or (/= mx 0) (/= my 0)) (setf input t))
+          (setf (cam-yaw c) (f32 (- (cam-yaw c) (* mx (deg 0.15)))) (cam-pitch c) (f32 (+ (cam-pitch c) (* my (deg 0.12))))))))
+    (setf (cam-idle-t c) (if input 0f0 (f32 (+ (cam-idle-t c) dt))))
+    ;; auto-yaw behind movement (no camera input for 1.5 s while running)
+    (when (and (> (cam-idle-t c) 1.5) (eq (fighter-state f) :run))
+      (let* ((behind (yaw-of e)) (d (angle-wrap (f32 (- behind (cam-yaw c))))))
+        (when (< (abs d) (deg 120))
+          (setf (cam-yaw c) (turn-toward (cam-yaw c) behind (* (deg 60) dt))))))
+    ;; move-specific framing override
+    (let* ((mv (and (eq (fighter-state f) :move) (fighter-move f))) (sp (and mv (mv-special mv))))
+      (cond ((eq sp :obliterate)
+             (setf (cam-override-yaw c) (f32 (+ (yaw-of e) (/ pi 2))) (cam-override-dist c) 3.5 (cam-override-pitch c) (deg 8)
+                   (cam-override-w c) (f32 (min 1.0 (+ (cam-override-w c) (/ dt 0.15))))))
+            ((eq sp :thunderfall)
+             (setf (cam-override-yaw c) (cam-yaw c) (cam-override-dist c) 7.5 (cam-override-pitch c) (deg 30)
+                   (cam-override-w c) (f32 (min 1.0 (+ (cam-override-w c) (/ dt 0.2))))))
+            (t (setf (cam-override-w c) (f32 (max 0.0 (- (cam-override-w c) (/ dt 0.3))))))))
+    (setf (cam-pitch c) (f32 (clamp (cam-pitch c) (deg -10) (deg 55))))
+    (let* ((want (if (any-enemy-within 12.0) *cam-fight-dist* *cam-dist*)))
+      (setf (cam-dist c) (f32 (+ (cam-dist c) (* (- want (cam-dist c)) (min 1.0 (* 2.0 dt)))))))
+    ;; pivot lag: exponential, k = 12/s horizontal, 8/s vertical (4/s airborne)
+    (let* ((kh (- 1.0 (exp (* -12.0 dt)))) (kv (- 1.0 (exp (* (if (motion-grounded (motion e)) -8.0 -4.0) dt)))))
+      (setf (cam-pivot-x c) (f32 (+ (cam-pivot-x c) (* kh (- (aref p 0) (cam-pivot-x c)))))
+            (cam-pivot-y c) (f32 (+ (cam-pivot-y c) (* kv (- (+ (aref p 1) 1.5) (cam-pivot-y c)))))
+            (cam-pivot-z c) (f32 (+ (cam-pivot-z c) (* kh (- (aref p 2) (cam-pivot-z c)))))))
+    (let* ((w (cam-override-w c)) (ws (* w w (- 3 (* 2 w))))
+           (yaw (if (> w 0) (+ (cam-yaw c) (* ws (angle-wrap (f32 (- (cam-override-yaw c) (cam-yaw c)))))) (cam-yaw c)))
+           (dist (+ (cam-dist c) (* ws (- (cam-override-dist c) (cam-dist c)))))
+           (pitch (+ (cam-pitch c) (* ws (- (cam-override-pitch c) (cam-pitch c)))))
+           (px (cam-pivot-x c)) (py (cam-pivot-y c)) (pz (cam-pivot-z c))
+           (fovp (player-fov-punch (pl)))
+           (fov (+ *cam-fov* (if (> fovp 0) (* 8 (sin (* pi (/ (- 0.4 fovp) 0.4)))) 0))))
+      (setf (camera-fov *camera*) (f32 (deg fov)))
+      (camera-look-at (+ px (* dist (cos pitch) (sin yaw)))
+                      (max 0.4 (+ py (* dist (sin pitch))))
+                      (+ pz (* dist (cos pitch) (cos yaw)))
+                      px py pz))))
+
+(defvar *cam-k* 1.0 "Smoothed prop-occlusion pull-in (1 = none).")
+(defun clamp-camera (rdt)
+  "Keep the eye 1.1 m inside the parapets (clear of the railings and lamp poles on the caps; pull it
+in toward REN and lift it), then out of the props (AC units, tank, stair house, mast, pipe rack)."
+  (let* ((cam *camera*) (p (camera-pos cam)) (tg (camera-target cam)) (lim 16.5) (u 1.0)
+         (dx (- (aref p 0) (aref tg 0))) (dz (- (aref p 2) (aref tg 2))))
+    (let ((lx (max lim (+ (abs (aref tg 0)) 0.3))) (lz (max lim (+ (abs (aref tg 2)) 0.3))))   ; REN by the wall
+      (when (and (> (abs (aref p 0)) lx) (> (abs dx) 0.01))
+        (setf u (min u (/ (- (* lx (signum (aref p 0))) (aref tg 0)) dx))))
+      (when (and (> (abs (aref p 2)) lz) (> (abs dz) 0.01))
+        (setf u (min u (/ (- (* lz (signum (aref p 2))) (aref tg 2)) dz)))))
+    (when (< u 1.0)
+      (let ((u (max 0.2 u)))
+        (camera-look-at (+ (aref tg 0) (* u dx)) (+ (aref p 1) (* (- 1 u) 1.5)) (+ (aref tg 2) (* u dz))
+                        (aref tg 0) (aref tg 1) (aref tg 2)))))
+  (let* ((cam *camera*) (p (camera-pos cam)) (tg (camera-target cam))
+         (x0 (aref tg 0)) (y0 (aref tg 1)) (z0 (aref tg 2))
+         (dx (- (aref p 0) x0)) (dy (- (aref p 1) y0)) (dz (- (aref p 2) z0))
+         (len (sqrt (+ (* dx dx) (* dy dy) (* dz dz))))
+         (u (if (> len 0.5) (arena-raycast x0 y0 z0 (aref p 0) (aref p 1) (aref p 2)) 1.0))
+         (k (if (< u 1.0) (max 0.35 (/ (- (* u len) 0.3) len)) 1.0)))
+    ;; snap in when a prop blocks the view, ease back out (no pops); lift the eye as it pulls in
+    (setf *cam-k* (if (< k *cam-k*) k (min k (+ *cam-k* (* 1.5 rdt)))))
+    (when (< *cam-k* 0.999)
+      (let ((k *cam-k*))
+        (camera-look-at (+ x0 (* k dx)) (max 0.4 (+ y0 (* k dy) (* (- 1 k) 1.2))) (+ z0 (* k dz)) x0 y0 z0)))))

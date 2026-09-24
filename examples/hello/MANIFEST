@@ -1,0 +1,4 @@
+# title: HELLO
+# The smallest complete game on the engine: ./build.sh examples/hello
+# Walkthrough: docs/TUTORIAL.zh-TW.md, step 2.
+hello.lisp

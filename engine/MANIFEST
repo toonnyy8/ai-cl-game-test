@@ -1,0 +1,20 @@
+# Engine sources in compile order, relative to this directory. build.sh puts them in front of every
+# target's sources: the .lisp files (engine, then the target) become one compilation unit (ECL),
+# the .c files are compiled by emcc at link time.
+lisp/package.lisp
+lisp/math.lisp
+lisp/platform.lisp
+lisp/render.lisp
+lisp/meshgen.lisp
+lisp/ui.lisp
+lisp/audio.lisp
+lisp/anim.lisp
+lisp/time.lisp
+lisp/fx.lisp
+lisp/ecs.lisp
+lisp/app.lisp
+c/main.c
+c/rng.c
+c/platform.c
+c/render.c
+c/audio.c

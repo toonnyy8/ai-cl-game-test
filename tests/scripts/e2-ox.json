@@ -1,0 +1,70 @@
+[
+{
+"at": 2.5,
+"eval": "Module._debug_cmd(13)"
+},
+{
+"at": 3.0,
+"eval": "Module._debug_cmd(16)"
+},
+{
+"at": 7.0,
+"shot": "tests/shots/e2-ox-landed.png"
+},
+{
+"at": 13.0,
+"shot": "tests/shots/e2-wave3.png"
+},
+{
+"at": 15.0,
+"eval": "Module._debug_cmd(24)"
+},
+{
+"at": 15.5,
+"eval": "Module._debug_cmd(50)"
+},
+{
+"at": 15.6,
+"shot": "tests/shots/e2-ox-slam-windup.png"
+},
+{
+"at": 20.0,
+"eval": "Module._debug_cmd(52)"
+},
+{
+"at": 20.05,
+"eval": "Module._debug_cmd(24)"
+},
+{
+"at": 23.0,
+"shot": "tests/shots/e2-ox-slam-impact.png"
+},
+{
+"at": 26.0,
+"eval": "Module._debug_cmd(25)"
+},
+{
+"at": 26.5,
+"eval": "Module._debug_cmd(50)"
+},
+{
+"at": 26.6,
+"shot": "tests/shots/e2-ox-charge-windup.png"
+},
+{
+"at": 31.0,
+"eval": "Module._debug_cmd(51)"
+},
+{
+"at": 32.0,
+"eval": "Module._debug_cmd(52)"
+},
+{
+"at": 32.05,
+"eval": "Module._debug_cmd(31)"
+},
+{
+"at": 35.0,
+"shot": "tests/shots/e2-ox-swing.png"
+}
+]
