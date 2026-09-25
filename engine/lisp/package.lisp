@@ -42,15 +42,18 @@
    #:env-moon-dir #:env-moon-color #:env-moon-intensity #:env-rim-color #:env-rim-intensity #:env-rim-power
    #:env-specular #:env-shininess #:env-exposure #:env-bloom #:env-bloom-threshold #:env-bloom-strength
    #:env-vignette #:env-sun-size #:env-sun-glow #:*grade-desat* #:*grade-split*
+   #:env-toon #:env-key-light #:env-toon-threshold #:env-toon-band #:env-toon-gradient #:env-toon-gradient-height
+   #:env-toon-light-gain #:env-shade-value #:env-shade-saturation #:env-shade-hue #:env-shade-lift
+   #:env-cin-rim #:env-cin-width #:*grade-impact* #:*impact-params* #:grade-impact #:*fx-clock*
    #:*render-scale* #:*auto-render-scale* #:*render-scale-min* #:*frame-budget-ms* #:*pixel-lights* #:*perf-log*
-   #:*draw-count* #:*tri-count* #:*fx-alpha* #:*fx-add* #:*fx-dropped*
+   #:*draw-count* #:*tri-count* #:*fx-alpha* #:*fx-add* #:*fx-toon* #:*fx-dropped*
    #:stream-buffer #:stream-buffer-data #:stream-buffer-fill #:stream-buffer-stride #:stream-room-p
    #:engine-init #:begin-frame #:end-frame #:draw-mesh #:add-point-light #:add-point-light-v
    #:with-fx-verts #:vtx #:fx-billboard #:fx-line #:fx-trail #:fx-decal
    ;; meshgen.lisp: procedural meshes
    #:mesh-builder #:make-mesh-builder #:mb-jitter #:mb-cur-color #:mb-xform #:build-mesh #:mb-build #:with-xform
    #:mb-color #:mbc #:hexc #:mb-quad #:mb-poly-out #:mb-box #:mb-bevel-box #:mb-cylinder #:mb-cone #:mb-prism
-   #:mb-sphere #:mb-capsule #:mb-wedge #:mb-plane #:mb-blade #:mb-tube #:mb-flat-quad #:rim-vec
+   #:mb-sphere #:mb-capsule #:mb-wedge #:mb-plane #:mb-blade #:mb-hull #:mb-tube #:mb-flat-quad #:rim-vec
    ;; ui.lisp: 2D UI batch and bitmap text
    #:+font-5x7+ #:ui-scale #:fit-scale #:ui-rect #:ui-gradient #:ui-rect-outline #:ui-bar #:%ui-poly4
    #:with-ui-verts #:uvtx
@@ -66,21 +69,27 @@
    #:list-sounds #:sound-loop-p
    ;; anim.lisp: humanoid rig, pose / clip DSL, playback, forward kinematics
    #:ji #:joint-index #:joint-mask #:+nj+ #:+pose-n+ #:+root+ #:defpose #:find-pose #:defclip #:defstrike #:find-clip
-   #:clip #:clip-name #:clip-dur #:clip-loop #:clip-sample! #:clip-mark #:list-clips #:build-clip
+   #:clip #:clip-name #:clip-dur #:clip-loop #:clip-sample! #:clip-mark #:list-clips #:build-clip #:*key-ease*
    #:anim #:make-anim #:anim-clip #:anim-time #:anim-speed #:anim-blend #:anim-pose #:anim-play #:anim-advance #:anim-eval
    #:pose-fk! #:make-rig-proportions #:joint-point!
    ;; body.lisp: rigid-part characters (shape spec -> meshes per joint, drawing)
-   #:pal-rgb #:build-parts #:draw-parts
+   #:pal-rgb #:build-parts #:draw-parts #:*part-jitter* #:*part-smooth*
    ;; time.lisp: fixed step, hitstop, slow motion
    #:+step+ #:*tick* #:*hitstop* #:*hitstop-mult* #:hitstop #:slowmo #:slowmo-scale #:time-step #:time-reset
    #:run-fixed-steps #:*step-acc*
    ;; fx.lisp: shake, particles, rings, debris, trails, screen-edge vignette
-   #:*shake-mult* #:shake #:shake-update
+   #:*shake-mult* #:*shake-hz* #:shake #:shake-update
    #:+p-mist+ #:+p-spark+ #:+p-dust+ #:+p-orb-a+ #:+p-orb-b+ #:+p-feather+ #:+p-glow+ #:+p-flame+
    #:*plive* #:*orb-target* #:*on-orb-absorbed* #:fx-emit #:fx-burst #:fx-update #:fx-draw-particles
    #:fx-clear-orbs #:fx-clear #:fx-ring #:fx-rings-update #:*debris-life* #:fx-debris #:fx-debris-update #:fx-clear-debris
    #:+trail-n+ #:make-trail #:trail-count #:trail-push #:trail-decay #:edge-vignette
    #:draw-circle #:draw-vol #:fx-ribbon #:fx-sector
+   ;; fx.lisp, toon effects (docs/STYLE_STORM_DESIGN.md §3): fx clock, palettes, envelope, shapes, toon
+   ;; particle kinds, screen punctuation
+   #:fx-clock #:fx-clock-advance #:sage #:toon-a #:fx-envelope #:fx-disc #:fx-star #:fx-shard #:fx-crescent #:fx-wall
+   #:+pal-fire+ #:+pal-ember+ #:+pal-reiatsu+ #:+pal-ink+ #:+pal-steel+ #:+pal-hit+ #:+pal-smoke+ #:+pal-dust+
+   #:+pal-ash+ #:+pal-soul+ #:+pal-blood+ #:+pal-black-smoke+ #:+p-t-blob+ #:+p-t-shard+
+   #:ui-focus-lines #:ui-speed-lines #:ui-ink-splash
    ;; cine.lisp: the cinematic director (scripted cutscenes inside the fixed step)
    #:defcine #:cine #:*cine* #:cine-name #:cine-cf #:cine-a #:cine-v #:cine-hold #:cine-hold-frame
    #:start-cine #:end-cine #:abort-cine #:skip-cine #:cine-step #:cine-draw #:cine-cam

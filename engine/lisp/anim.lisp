@@ -154,6 +154,11 @@ last key is usually (:end BASE-POSE). DEFCLIP :fps 60 with marks :s / :a; (CLIP-
 reads them back in seconds."
   `(defclip ,name (,(+ s a r) :fps 60 :base ,base :marks (:s ,s :a ,(+ s a))) ,@keys))
 
+(defvar *key-ease* 0
+  "How CLIP-SAMPLE! eases between two keys that are not :SNAP: 0 (default, RAVEN) smoothstep, 1 ease-out
+cubic 1-(1-u)^3 (the pose snaps into the key and settles: pose-to-pose timing, SOUL DUEL).")
+(declaim (type fixnum *key-ease*))
+
 (defun-fast clip-sample! (out clip time)
   "Sample CLIP at TIME (seconds; wraps for loops, clamps otherwise) into pose OUT."
   (declare (type f32vec out) (single-float time))
@@ -170,7 +175,9 @@ reads them back in seconds."
                (loop while (and (< (+ i 2) n) (>= tm (aref times (1+ i)))) do (incf i))
                (let* ((t0 (aref times i)) (t1 (aref times (1+ i)))
                       (u (/ (- tm t0) (f-max 1f-5 (- t1 t0))))
-                      (w (if (> (aref snaps (1+ i)) 0.5f0) u (* u u (- 3f0 (* 2f0 u)))))
+                      (w (cond ((> (aref snaps (1+ i)) 0.5f0) u)
+                               ((> (the fixnum *key-ease*) 0) (- 1f0 (* (- 1f0 u) (- 1f0 u) (- 1f0 u))))   ; ease-out cubic
+                               (t (* u u (- 3f0 (* 2f0 u))))))
                       (oa (* i +pose-n+)) (ob (+ oa +pose-n+)))
                  (declare (single-float t0 t1 u w) (fixnum oa ob))
                  (dotimes (c +pose-n+)

@@ -1,0 +1,48 @@
+# G2 reference (style-gates.py cvc): tests/scripts/duel-cvc-PAIR.json, after the RoS Kikon rework (b989a71), 2026-09-25
+yy duel hash t=600 | -531 0 416 -111 IDLE BASE r990 k9 a93 w30 m60 h2 | 361 0 -26 203 IDLE BASE r660 k9 a99 w36 m15 h2 | haz 0
+yy duel hash t=1200 | -1039 0 -151 107 IDLE BASE r820 k9 a168 w48 m60 h0 | -1399 0 -348 -207 IDLE BASE r524 k9 a174 w54 m60 h8 | haz 0
+yy duel hash t=1800 | -1176 0 -374 27 IDLE BASE r539 k9 a244 w68 m60 h16 | -1270 0 -715 -287 IDLE BASE r524 k9 a244 w68 m95 h3 | haz 0
+yy duel hash t=2400 | -1148 0 -821 -147 MOVE BASE r539 k9 a300 w77 m80 h4 | -808 0 -854 167 GUARD BASE r343 k9 a10 w81 m95 h18 | haz 1
+yy duel hash t=3000 | -577 0 -509 126 CINE BASE r298 k9 a300 w97 m85 h0 | -881 0 -606 -188 CINE HELLFIRE r1100 k7 a77 w100 m0 h1 | haz 0
+yy duel hash t=3600 | 395 0 61 142 CINE BANKAI r1100 k6 a142 w0 m0 h4 | -395 0 -61 -172 CINE BANKAI r860 k7 a30 w0 m0 h2 | haz 0
+yy duel hash t=4200 | -9 0 707 -41 IDLE BANKAI r920 k6 a215 w0 m0 h13 | 187 0 250 -41 RUN BANKAI r728 k7 a102 w0 m0 h2 | haz 0
+yy duel hash t=4800 | 63 0 -16 234 MOVE BANKAI r920 k6 a187 w0 m0 h0 | -78 0 119 -81 GUARD-HIT BANKAI r408 k7 a181 w0 m0 h19 | haz 0
+yy duel hash t=5400 | 575 0 -688 280 CINE BANKAI r600 k6 a172 w0 m0 h0 | 494 0 -462 -34 CINE BANKAI r1100 k4 a162 w0 m0 h6 | haz 0
+yy duel hash t=6000 | 308 0 268 -56 STEP BANKAI r587 k6 a228 w0 m0 h4 | 610 0 -178 255 IDLE BANKAI r968 k4 a220 w0 m0 h12 | haz 0
+yy duel hash t=6600 | 90 0 305 -24 MOVE BANKAI r455 k6 a103 w0 m0 h0 | 143 0 92 290 GUARD-HIT BANKAI r780 k4 a296 w0 m0 h11 | haz 0
+yy duel hash t=7200 | -221 0 315 -61 IDLE BANKAI r1100 k3 a172 w0 m0 h9 | 221 0 -315 253 IDLE BANKAI r648 k4 a300 w0 m0 h4 | haz 0
+yy duel hash t=7800 | -938 0 752 -80 IDLE BANKAI r1100 k3 a242 w0 m0 h4 | -804 0 620 234 GUARD BANKAI r384 k4 a300 w0 m0 h21 | haz 0
+yy duel hash t=8400 | 80 0 126 60 IDLE BANKAI r776 k3 a300 w0 m0 h12 | 42 0 65 -252 MOVE BANKAI r1100 k1 a260 w0 m0 h0 | haz 0
+yy duel hash t=9000 | 9 0 55 -77 MOVE BANKAI r516 k3 a221 w0 m0 h0 | -120 0 189 -77 MOVE BANKAI r936 k1 a203 w0 m0 h2 | haz 0
+yy duel -> RESULTS winner P2 konpaku 0-1 ticks 9545 secs 159.1
+yk duel hash t=600 | -875 0 -148 -207 IDLE BASE r1100 k9 a82 w23 m80 h2 | -568 0 11 107 GUARD BASE r649 k9 a91 w32 m0 h15 | haz 0
+yk duel hash t=1200 | -1303 0 -268 86 IDLE BASE r940 k9 a146 w34 m80 h16 | -1407 0 -371 -228 IDLE BASE r649 k9 a152 w40 m0 h5 | haz 0
+yk duel hash t=1800 | -365 0 -1306 285 CINE BASE r940 k9 a220 w51 m80 h0 | -457 0 -999 -29 CINE BASE r1100 k7 a233 w93 m0 h19 | haz 0
+yk duel hash t=2400 | 379 0 212 43 CINE BASE r779 k9 a272 w62 m80 h13 | 264 0 -51 -236 CINE NOZARASHI r1100 k7 a192 w0 m0 h1 | haz 0
+yk duel hash t=3000 | -277 0 117 -251 MOVE HELLFIRE r264 k9 a118 w88 m0 h0 | -189 0 238 63 STUN NOZARASHI r699 k7 a283 w0 m0 h3 | haz 0
+yk duel hash t=3600 | -45 0 -82 37 DOWN BANKAI r898 k5 a115 w0 m0 h3 | -272 0 -475 -263 IDLE NOZARASHI r312 k7 a300 w0 m0 h1 | haz 0
+yk duel hash t=4200 | 24 0 639 -19 IDLE BANKAI r898 k5 a170 w0 m0 h3 | 38 0 547 295 IDLE NOZARASHI r920 k4 a300 w0 m0 h14 | haz 0
+yk duel hash t=4800 | 836 0 876 248 IDLE BANKAI r898 k5 a137 w0 m0 h3 | 733 0 1007 -66 IDLE NOZARASHI r662 k4 a300 w0 m0 h28 | haz 0
+yk duel hash t=5400 | 1292 0 301 161 IDLE BANKAI r719 k5 a220 w0 m0 h9 | 972 0 311 -153 IDLE NOZARASHI r423 k4 a156 w0 m0 h1 | haz 0
+yk duel hash t=6000 | -391 0 -66 -168 STUN BANKAI r633 k5 a280 w0 m0 h8 | -550 0 -83 -168 HOHO NOZARASHI r1100 k1 a128 w0 m0 h0 | haz 0
+yk duel hash t=6600 | -661 0 162 129 GUARD-HIT BANKAI r533 k5 a53 w0 m0 h9 | -828 0 113 -185 MOVE NOZARASHI r894 k1 a103 w0 m0 h14 | haz 0
+yk duel hash t=7200 | 68 0 -171 -99 IDLE BANKAI r1100 k2 a117 w0 m0 h23 | 153 0 -224 215 GUARD NOZARASHI r894 k1 a172 w0 m0 h5 | haz 0
+yk duel hash t=7800 | -343 0 -1244 219 STUN BANKAI r1050 k2 a91 w0 m0 h7 | -423 0 -1190 -94 MOVE NOZARASHI r633 k1 a251 w0 m0 h0 | haz 0
+yk duel hash t=8400 | -160 0 -1192 -44 WAKEUP BANKAI r642 k2 a178 w0 m0 h21 | -2 0 -1171 144 MOVE NOZARASHI r633 k1 a300 w0 m0 h2 | haz 0
+yk duel hash t=9000 | 191 0 -921 169 RUN BANKAI r426 k2 a259 w0 m0 h7 | 568 0 -963 169 IDLE NOZARASHI r495 k1 a164 w0 m0 h7 | haz 0
+yk duel hash t=9600 | 343 0 -25 59 CINE BANKAI r426 k2 a300 w0 m0 h5 | 211 0 -224 -256 CINE NOZARASHI r1100 k0 a26 w0 m0 h20 | haz 0
+yk duel -> RESULTS winner P1 konpaku 2-0 ticks 9780 secs 163.0
+kk duel hash t=600 | 396 0 151 105 STUN BASE r1065 k9 a76 w18 m0 h2 | 320 0 98 -217 MOVE BASE r790 k9 a81 w23 m0 h0 | haz 0
+kk duel hash t=1200 | 225 0 58 -183 GUARD BASE r940 k9 a149 w35 m0 h3 | 339 0 88 129 MOVE BASE r630 k9 a155 w41 m0 h13 | haz 0
+kk duel hash t=1800 | 19 0 308 7 IDLE BASE r905 k9 a123 w54 m0 h4 | -19 0 -308 -307 IDLE BASE r1100 k7 a236 w96 m0 h4 | haz 0
+kk duel hash t=2400 | -16 0 21 189 GUARD BASE r905 k9 a190 w70 m0 h2 | -196 0 82 -19 IDLE NOZARASHI r930 k7 a300 w0 m0 h16 | haz 0
+kk duel hash t=3000 | -645 0 419 -50 IDLE BASE r703 k9 a271 w92 m0 h8 | -534 0 188 264 IDLE NOZARASHI r770 k7 a300 w0 m0 h4 | haz 0
+kk duel hash t=3600 | -200 0 342 -61 IDLE NOZARASHI r853 k9 a300 w0 m0 h3 | -131 0 253 253 IDLE NOZARASHI r530 k7 a111 w0 m0 h16 | haz 0
+kk duel hash t=4200 | -754 0 590 194 IDLE NOZARASHI r727 k9 a268 w0 m0 h10 | -888 0 641 -120 IDLE NOZARASHI r346 k7 a187 w0 m0 h4 | haz 0
+kk duel hash t=4800 | 94 0 -98 274 IDLE NOZARASHI r525 k9 a152 w0 m0 h5 | 23 0 71 -40 IDLE NOZARASHI r1100 k4 a271 w0 m0 h8 | haz 0
+kk duel hash t=5400 | -54 0 126 -289 IDLE NOZARASHI r871 k6 a147 w0 m0 h18 | -26 0 257 25 IDLE NOZARASHI r1100 k4 a237 w0 m0 h3 | haz 0
+kk duel hash t=6000 | -702 0 1202 50 IDLE NOZARASHI r642 k6 a244 w0 m0 h7 | -741 0 1121 -264 IDLE NOZARASHI r757 k4 a300 w0 m0 h5 | haz 0
+kk duel hash t=6600 | -76 0 -88 -111 STUN NOZARASHI r1050 k3 a132 w0 m0 h21 | 6 0 -126 205 MOVE NOZARASHI r757 k4 a132 w0 m0 h0 | haz 0
+kk duel hash t=7200 | -108 0 704 127 AIR NOZARASHI r642 k3 a234 w0 m0 h6 | -221 0 662 -193 MOVE NOZARASHI r578 k4 a230 w0 m0 h0 | haz 0
+kk duel hash t=7800 | 388 0 569 214 CINE NOZARASHI r1100 k0 a300 w0 m0 h4 | 281 0 637 -100 CINE NOZARASHI r349 k4 a300 w0 m0 h0 | haz 0
+kk duel -> RESULTS winner P2 konpaku 0-4 ticks 8035 secs 133.9

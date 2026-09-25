@@ -1,5 +1,5 @@
 // frame.wgsl — shared by the scene shaders: the per-frame uniform block (struct Frame, filled by
-// FILL-FRAME-UNIFORMS in render.lisp, 136 floats) and the lighting / fog / tonemap helpers.
+// FILL-FRAME-UNIFORMS in render.lisp, 160 floats) and the lighting / fog / tonemap helpers.
 // Each including program declares the uniform F itself (vertex and fragment use different groups).
 // The shader loader in render.lisp strips every comment before the text reaches SDL.
 struct Frame {
@@ -14,6 +14,13 @@ struct Frame {
   sky_top: vec4f,
   spec: vec4f,        // env specular, shininess, lights used, lights shaded per pixel
   lp: array<vec4f, 8>, lc: array<vec4f, 8>,   // pos + radius; linear color x intensity + 1/radius^2
+  // toon lanes (read only by the toon entry points; 0 when ENV-TOON is off)
+  key: vec4f,         // character key light (world, unit, toward the light); w band threshold
+  toon: vec4f,        // band half-softness, vertical-gradient strength, gradient height m, stage light gain
+  shd: vec4f,         // shadow value x, shadow saturation x, shadow hue shift deg, stage shadow lift
+  scr: vec4f,         // scene px w h, proj[1][1], ink scale (scene h / 720)
+  cin: vec4f,         // cinematic hard back-rim rgb (0 = off), rim width
+  clk: vec4f,         // fx clock in 24 Hz ticks
 }
 // Exponential distance fog, thicker near the ground (height falloff), capped at fogh.z.
 fn fog_amount(p: vec3f) -> f32 {

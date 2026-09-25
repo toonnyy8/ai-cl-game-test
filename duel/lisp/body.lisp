@@ -7,7 +7,7 @@
 ;;;;   (find-body key)  (find-weapon key)          registered bodies / weapons (error if unknown)
 ;;;;   (body-scale b) (body-hunch b) (body-props b)  → the last three args of POSE-FK!
 ;;;;   (body-hurt-r b) (body-hurt-h b)             hurt cylinder, world metres (already scaled)
-;;;;   (bodies-init)                               :load step: build every body + weapon mesh
+;;;;   (bodies-init) (body-load-steps)            :load steps: every weapon mesh, then one step per body
 ;;;;   (draw-body body joints x y z yaw &key weapon hidden hide tint rim emissive flash alpha shadow)
 ;;;;       JOINTS = the f32vec POSE-FK! filled; X Y Z = the fighter's feet (blob shadow; YAW unused,
 ;;;;       kept for the call shape). WEAPON = weapon key or NIL (drawn in the :weapon-r joint).
@@ -17,6 +17,11 @@
 ;;;;       silhouette rim; EMISSIVE adds glow to solid parts; FLASH 0..1 = hit flash to white;
 ;;;;       ALPHA < 1 = transparent (Hoho vanish). Mirror match: P2 passes :tint *MIRROR-TINT*
 ;;;;       :rim *MIRROR-RIM*. Conses a few boxed floats per call (keyword floats), nothing else.
+;;;;       Look (docs/STYLE_STORM_DESIGN.md §2): every part is a toon character draw (fs_toon: two
+;;;;       tones, cold designed shadows, darker toward the feet), so RIM is ignored; built without
+;;;;       per-face jitter and with round normals on spheres / cylinders. The shadow is a hard ink disc.
+;;;;       Ink (§2.4): every solid shape and weapon section gets an ink hull (*BODY-INK* colours, a
+;;;;       shape's :ink k = width, small shapes and strokes none), drawn when ALPHA is 1.
 ;;;;   (draw-weapon key m &key alpha flash emissive rim)   a weapon at world matrix M (weapon frame)
 ;;;;   (draw-planted-weapon key x z yaw &key alpha emissive)  a blade stuck in the ground (Ikkotsu, Kaka)
 ;;;;   (body-weapon-tip body weapon joints out) / (body-weapon-base ...)   world points of the
@@ -24,6 +29,8 @@
 (in-package :duel)
 
 ;;; ---------------------------------------------------------------- bodies
+(setf *part-jitter* 0.0 *part-smooth* t)      ; toon bodies: flat colour per shape, round spheres / cylinders
+
 (defstruct (body (:constructor %make-body))
   (name nil)
   (scale 1f0 :type single-float)        ; uniform rig scale (1.0 = 1.80 m tall)
@@ -34,19 +41,28 @@
   (palette nil) (spec nil)
   (rim nil)                             ; f32vec linear rgb x strength: silhouette rim (readability)
   (props nil)                           ; NIL or MAKE-RIG-PROPORTIONS vector: the last arg of POSE-FK!
+  (girth nil)                           ; ((joint sx sy sz) ...): that joint's shapes scaled in its frame (GIRTH-SPEC)
   (parts (make-array +nj+ :initial-element nil) :type simple-vector)  ; untagged solid mesh per joint
-  (extras nil))                         ; list of #(joint mesh tint emissive tag): glows + tagged parts
+  (extras nil)                          ; list of #(joint mesh tint emissive tag): glows + tagged parts
+  (hulls nil))                          ; list of #(joint mesh tag): the ink outlines (BUILD-PARTS)
+
+(defparameter *body-ink* '((:skin . #x3A1E1A) (:skin-d . #x3A1E1A) (:black . #x4A5062) (:hair . #x4A5062) (t . #x101018))
+  "Ink of the body hulls by shape colour (docs/STYLE_STORM_DESIGN.md §2.4, §2.5): red-brown on skin, a cold
+grey keyline on black cloth and hair (dark on the ground, a separating line on the dark sky), near-black
+on everything else.")
 
 (defvar *bodies* (make-hash-table :test 'eq))
 (defun find-body (name) (or (gethash name *bodies*) (error "unknown body ~s" name)))
 
-(defvar *mirror-tint* '(0.62 0.7 1.0) "Mirror match: P2's body tint (cool blue cast).")
+(defvar *mirror-tint* (hexc #xD8E2F2) "Mirror match: P2's body tint (a cold cast: it shows on the white parts).")
 (defvar *mirror-rim* (rim-vec #x5A8CFF 0.9) "Mirror match: P2's strong blue silhouette rim.")
 
 (defmacro defbody (name (&rest props &key &allow-other-keys) &body parts)
   "Register a body. PROPS: :scale :width :hunch (degrees) :hurt-r :hurt-h (world m)
 :palette ((key #xRRGGBB) ...) :rim (#xRRGGBB strength) :props (MAKE-RIG-PROPORTIONS keys, e.g.
-:shoulders 1.3 = a wider chest that keeps the arms out of a broad haori).
+:shoulders 1.3 = a wider chest that keeps the arms out of a broad haori), :girth ((joint sx sy sz) ...)
+(every shape of JOINT, size and :at, scaled in the joint frame: a smaller head, a narrower chest, arm
+shapes as long as :props :arms makes the bones; see GIRTH-SPEC).
 PARTS: (joint shape ...), the engine's shape spec (engine/lisp/body.lisp header: :box :bevel :cyl
 :cone :sphere :wedge with :at :rot :c :seg :top :stretch :tag, and (:glow e shape [tag])); a :tag
 part is its own mesh, so DRAW-BODY :hide skips it. Meshes are built by BODIES-INIT (after the GPU
@@ -55,17 +71,42 @@ device exists)."
          (%make-body :name ,name :spec ',parts
                      ,@(loop for (k v) on props by #'cddr
                              append (case k
-                                      (:palette (list k `',v))
+                                      ((:palette :girth) (list k `',v))
                                       (:rim (list k `(rim-vec ,@v)))
                                       (:props (list k `(make-rig-proportions ,@v)))
                                       (:hunch (list k `(deg ,v)))
                                       (t (list k `(f32 ,v))))))))
 
+(defun girth-shape (shape s)
+  "SHAPE with its size and :at scaled by S = (sx sy sz) in its joint's frame (radii by (sx + sz) / 2)."
+  (if (eq (first shape) :glow)
+      (list* :glow (second shape) (girth-shape (third shape) s) (cdddr shape))
+      (destructuring-bind (sx sy sz) s
+        (let* ((opts (copy-list (member-if #'keywordp (cdr shape)))) (nums (ldiff (cdr shape) opts))
+               (r (* 0.5 (+ sx sz))) (at (getf opts :at)))
+          (when at (setf (getf opts :at) (mapcar #'* (list (or (first at) 0) (or (second at) 0) (or (third at) 0)) (list sx sy sz))))
+          (when (getf opts :top) (setf (getf opts :top) (* r (getf opts :top))))
+          (when (getf opts :stretch) (setf (getf opts :stretch) (* sy (getf opts :stretch))))
+          (append (list (first shape))
+                  (ecase (first shape)
+                    ((:box :wedge) (mapcar #'* nums (list sx sy sz)))
+                    (:bevel (list (* sx (first nums)) (* sy (second nums)) (* sz (third nums)) (* (min sx sy sz) (fourth nums))))
+                    ((:cyl :cone) (list (* r (first nums)) (* sy (second nums))))
+                    (:sphere (list (* r (first nums)))))
+                  opts)))))
+
+(defun girth-spec (spec girth)
+  "SPEC with GIRTH ((joint sx sy sz) ...) applied to the shapes of each listed joint."
+  (loop for (j . shapes) in spec
+        for s = (rest (assoc j girth))
+        collect (cons j (if s (mapcar (lambda (sh) (girth-shape sh s)) shapes) shapes))))
+
 (defun build-body (b)
   "Build B's meshes (the engine's BUILD-PARTS): one per joint for untagged solid shapes, one per
 glow / per (joint, tag)."
-  (multiple-value-bind (parts extras) (build-parts (body-spec b) (body-palette b) (body-width b))
-    (setf (body-parts b) parts (body-extras b) extras))
+  (multiple-value-bind (parts extras hulls)
+      (build-parts (girth-spec (body-spec b) (body-girth b)) (body-palette b) (body-width b) :ink *body-ink*)
+    (setf (body-parts b) parts (body-extras b) extras (body-hulls b) hulls))
   b)
 
 ;;; ---------------------------------------------------------------- weapons
@@ -76,21 +117,24 @@ glow / per (joint, tag)."
   (name nil)
   (len 1f0 :type single-float)          ; grip → tip (weapon frame, before the body's scale)
   (base 0.25f0 :type single-float)      ; grip → start of the trail / fire (blade base)
-  (sections nil)                        ; ((:solid fn) (:glow e color fn) ...), fn = (lambda (mb))
-  (meshes nil))                         ; built: list of #(mesh tint emissive)
+  (sections nil)                        ; ((:solid ink fn) (:glow e color fn) ...), fn = (lambda (mb))
+  (meshes nil))                         ; built: list of #(mesh tint emissive hull-or-NIL)
 
 (defvar *weapons* (make-hash-table :test 'eq))
 (defun find-weapon (name) (or (gethash name *weapons*) (error "unknown weapon ~s" name)))
 
 (defmacro defweapon (name (&key (length 1.0) (base 0.25)) &body sections)
-  "Register a weapon. SECTIONS: (:solid meshgen-forms...) drawn lit like the body, or
-(:glow emissive #xRRGGBB meshgen-forms...) drawn as a glowing part. The forms use MB (the builder)
+  "Register a weapon. SECTIONS: (:solid [:ink k] meshgen-forms...) drawn toon like the body, with an
+ink hull K widths wide (default 1; 0 = none, e.g. a katana blade: build it as its own section with
+MB-BLADE :hilt nil), or (:glow emissive #xRRGGBB meshgen-forms...) drawn as a glowing part. The forms use MB (the builder)
 in the weapon frame: grip at the origin, blade along +Y, edge toward +Z."
   `(setf (gethash ,name *weapons*)
          (%make-weapon :name ,name :len (f32 ,length) :base (f32 ,base)
                        :sections (list ,@(loop for s in sections collect
                                                (if (eq (first s) :solid)
-                                                   `(list :solid (lambda (mb) ,@(rest s)))
+                                                   (let ((ink (if (eq (second s) :ink) (third s) 1))
+                                                         (forms (if (eq (second s) :ink) (cdddr s) (rest s))))
+                                                     `(list :solid ,ink (lambda (mb) ,@forms)))
                                                    `(list :glow ,(second s) ,(third s)
                                                           (lambda (mb) ,@(cdddr s)))))))))
 
@@ -98,36 +142,69 @@ in the weapon frame: grip at the origin, blade along +Y, edge toward +Z."
   (setf (weapon-meshes wp)
         (loop for s in (weapon-sections wp) collect
               (if (eq (first s) :solid)
-                  (vector (build-mesh (mb :jitter 0.04) (funcall (second s) mb)) nil 0f0)
+                  (destructuring-bind (ink fn) (rest s)
+                    (let ((mb (make-mesh-builder)))
+                      (funcall fn mb)
+                      (vector (mb-build mb) nil 0f0
+                              (when (plusp ink)
+                                (mb-build (mb-hull (make-mesh-builder) mb :k ink :c 0.8 :color (hexc (cdr (assoc t *body-ink*)))))))))
                   (destructuring-bind (e hex fn) (rest s)
                     (vector (build-mesh (mb :color '(1 1 1)) (funcall fn mb))
-                            (coerce (hexc hex) 'simple-vector) (f32 e))))))
+                            (coerce (hexc hex) 'simple-vector) (f32 e) nil)))))
   wp)
 
+(defvar *shadow-mesh* nil "The ink shadow: a flat unit disc (24 sides) at the origin, built by BODIES-INIT.")
+
 (defun bodies-init ()
-  "Startup (:load) step: build the meshes of every registered body and weapon."
-  (maphash (lambda (k b) (declare (ignore k)) (unless (svref (body-parts b) 0) (build-body b))) *bodies*)
+  "Startup (:load) step: build the meshes of every registered weapon and the shadow disc (the bodies:
+BODY-LOAD-STEPS)."
+  (setf *shadow-mesh* (build-mesh (mb :color (hexc #x14151C))
+                        (mb-poly-out mb (loop for k below 24 collect (let ((a (* 2 pi (/ k 24)))) (v3 (cos a) 0 (sin a))))
+                                     :center '(0 -1 0))))
   (maphash (lambda (k w) (declare (ignore k)) (unless (weapon-meshes w) (build-weapon w))) *weapons*))
 
+(defun body-load-steps ()
+  "Startup (:load) steps, one per registered body: build its meshes and ink hulls (one step each, so the
+collector runs between them: the hull build allocates a few MB of scratch)."
+  (loop for b being the hash-values of *bodies*
+        collect (let ((b b)) (lambda () (unless (svref (body-parts b) 0) (build-body b))))))
+
 ;;; ---------------------------------------------------------------- drawing
-(declaim (type f32vec *dm* *dm2* *weapon-m*))
+(declaim (type f32vec *dm* *dm2* *weapon-m* *toon-body* *toon-ground* *shadow-m*))
 (defvar *dm* (m4))
 (defvar *dm2* (m4))
+(defvar *shadow-m* (m4))
+(defvar *toon-body* (fv 2 0 0.2 0) "DRAW-MESH :toon lanes of a character: mode 2, feet height (set per draw), fog x 0.2.")
+(defvar *toon-ground* (fv 1 0 1 0) "... and of things lying on the stage (the ink shadow): mode 1, full fog.")
+(declaim (type f32vec *toon-ink*))
+(defvar *toon-ink* (fv 3 0.012 0.2 1.8) "... and of a weapon's ink hull (DRAW-PARTS' lanes for the body's).")
 (defvar *weapon-m* (xform :pitch (deg 90) :roll pi) "weapon frame → :weapon-r joint frame")
 
 (defun draw-weapon (key m &key (alpha 1f0) (flash 0f0) (emissive 0f0) rim)
-  "Draw weapon KEY with world matrix M (the weapon frame: grip origin, blade +Y)."
+  "Draw weapon KEY with world matrix M (the weapon frame: grip origin, blade +Y), toon-shaded with the
+feet height of the last DRAW-BODY (0 for a planted weapon)."
   (dolist (part (weapon-meshes (find-weapon key)))
     (if (svref part 1)
-        (draw-mesh (svref part 0) m :tint (svref part 1) :emissive (+ (svref part 2) emissive) :alpha alpha)
-        (draw-mesh (svref part 0) m :flash flash :alpha alpha :emissive emissive :rim rim))))
+        (draw-mesh (svref part 0) m :tint (svref part 1) :emissive (+ (svref part 2) emissive) :alpha alpha :toon *toon-body*)
+        (draw-mesh (svref part 0) m :flash flash :alpha alpha :emissive emissive :rim rim :toon *toon-body*)))
+  (when (>= alpha 1f0)
+    (dolist (part (weapon-meshes (find-weapon key)))
+      (when (svref part 3) (draw-mesh (svref part 3) m :toon *toon-ink*)))))
 
 (defun draw-planted-weapon (key x z yaw &key (alpha 1f0) (emissive 0f0))
   "WEAPON KEY stuck in the ground at (X Z), leaning slightly toward YAW's facing (Ikkotsu, Kaka)."
   (let* ((len (weapon-len (find-weapon key))) (m *dm2*))
     ;; blade +Y pointing down (pitch pi), grip 0.8 of the blade length above the ground
     (m4-euler! m (f32 x) (f32 (* 0.8 len)) (f32 z) (f32 yaw) (f32 (- pi 0.2)) 0f0)
+    (setf (aref *toon-body* 1) 0f0)
     (draw-weapon key m :alpha alpha :emissive emissive)))
+
+(defun draw-shadow (x y z r)
+  "The ink shadow disc of radius R under (X Z), smaller the higher the body is (Y)."
+  (let ((m *shadow-m*) (k (f32 (* r (max 0.3 (- 1.0 (* 0.3 y)))))))
+    (m4-identity! m)
+    (setf (aref m 0) k (aref m 10) k (aref m 12) (f32 x) (aref m 13) 0.012f0 (aref m 14) (f32 z))
+    (draw-mesh *shadow-mesh* m :toon *toon-ground*)))
 
 (defun draw-body (body joints x y z yaw &key weapon (hidden 0) hide tint rim (emissive 0f0) (flash 0f0)
                                           (alpha 1f0) (shadow t))
@@ -135,15 +212,16 @@ in the weapon frame: grip at the origin, blade along +Y, edge toward +Z."
   (declare (ignore yaw) (type f32vec joints) (fixnum hidden))
   (let* ((dm *dm*) (rim (or rim (body-rim body))))
     (declare (type f32vec dm))
+    (setf (aref *toon-body* 1) (f32 y))
     (draw-parts (body-parts body) (body-extras body) joints :hidden hidden :hide hide
-                :tint tint :flash flash :emissive emissive :alpha alpha :rim rim)
+                :tint tint :flash flash :emissive emissive :alpha alpha :rim rim :toon *toon-body*
+                :hulls (body-hulls body) :ink-tint tint)
     (let ((w (ji :weapon-r)))
       (when (and weapon (not (logbitp w hidden)))
         (replace dm joints :start2 (* w 16) :end2 (+ 16 (* w 16)))
         (m4-mul! *dm2* dm *weapon-m*)
         (draw-weapon weapon *dm2* :alpha alpha :flash flash :rim rim)))
-    (when shadow
-      (fx-decal x 0 z (* 1.5 (body-hurt-r body)) 0 0 0 (* 0.5 alpha (max 0.0 (- 1.0 (* 0.3 y))))))))
+    (when shadow (draw-shadow x y z (* 1.2 alpha (body-hurt-r body))))))
 
 (defun body-weapon-point (weapon joints out along)
   (declare (ignore weapon))

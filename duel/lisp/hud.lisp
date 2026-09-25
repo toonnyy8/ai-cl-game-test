@@ -3,7 +3,8 @@
 ;;;; white damage trail), *KONPAKU-MAX* Konpaku soul flames that shatter, Reiatsu 3 bars, Awakening bar (EVOLUTION
 ;;;; blinks; drains in a timed awakening), the kit meter (Inferno; drains in Hellfire), the timer, the
 ;;;; combo counter under the victim's bar, move-name callouts over the user, the HOLD O KIKON prompt, the red
-;;;; soul flame over a Kikon-able victim, and the big words (ANNOUNCE). Cosmetic only: real time, RND01.
+;;;; soul flame over a Kikon-able victim, and the big words (ANNOUNCE). Cosmetic only: the fx clock (it stops
+;;;; while paused, so the HUD's pulses and fades hold too), RND01.
 ;;;; Screen lanes (top to bottom): side panels + timer (0 .. ~0.22 h), small words (0.3 h), big words
 ;;;; (0.45 h), captions (0.8 h). Callouts float over the user's head and step out of a word's box.
 ;;;; Consing: the battle HUD runs every frame, so its strings are cached (timer, labels, combo), its
@@ -14,12 +15,15 @@
 
 (defparameter *white* '(1 1 1 1))
 (defparameter *dim* '(0.72 0.7 0.78 1))
+(defparameter *dim-ink* '(0.14 0.15 0.19 1) "Select screen: the unselected entries, dark ink on the mid-grey plaza (*DIM* vanished there).")
 (defparameter *ember* '(1 0.55 0.2 1))
 (defparameter *shade* '(0 0 0 0.75) "HUD-TEXT's drop shadow.")
 
+(defmacro hud-dt () "This frame's HUD seconds: 0 while paused (nothing moves under the pause menu)." `(if *paused* 0.0 (frame-dt)))
+
 (defun hud-pulse (hz)
   "0..1, HZ times a second (real time)."
-  (+ 0.5 (* 0.5 (sin (* 6.2831855 (f32 hz) (the single-float (elapsed-time)))))))
+  (+ 0.5 (* 0.5 (sin (* 6.2831855 (f32 hz) (the single-float (fx-clock)))))))
 
 (defun alpha! (color a)
   "COLOR (a preallocated, mutable 4-list) with its alpha set to A: a pulsing colour without a
@@ -78,7 +82,7 @@ UI-TEXT no longer conses per glyph either; the HUD keeps its block look.)"
 
 ;;; ---------------------------------------------------------------- big words
 (defstruct (word (:constructor make-word (text sub color secs kanji small side)))
-  text sub color secs kanji small side (t0 (elapsed-time))
+  text sub color secs kanji small side (t0 (fx-clock))
   (col (list 1.0 1.0 1.0 1.0)) (shadow (list 0.0 0.0 0.0 0.8)))   ; this frame's colours (alpha fades)
 (defvar *words* nil "Big words on screen, newest first.")
 (defun clear-words () (setf *words* nil))
@@ -94,7 +98,7 @@ with SUB under it and an optional KANJI word (:bankai :nozarashi) above it."
 (defun word-layout (x w h s)
   "Word X on a W x H screen at UI scale S. Values: centre x, centre y, block-pixel size (the pop-in
 shrinks it over the first 0.08 s)."
-  (let ((k (min 1.0 (/ (- (elapsed-time) (word-t0 x)) 0.08))))
+  (let ((k (min 1.0 (/ (- (fx-clock) (word-t0 x)) 0.08))))
     (values (case (word-side x) (0 (* 0.2 w)) (1 (* 0.8 w)) (t (floor w 2)))
             (if (or (word-side x) (word-small x)) (* 0.3 h) (* 0.45 h))
             (round (* s (cond ((word-side x) 3) ((word-small x) 5) (t (+ 8 (* 4 (- 1 k))))))))))
@@ -107,9 +111,9 @@ shrinks it over the first 0.08 s)."
       (values (- cx hw) (- cy (* 3.5 px)) (+ cx hw) (+ cy (if (word-sub x) (+ (* 26 s) (* 14 s)) (* 3.5 px)))))))
 
 (defun draw-words (w h s)
-  (setf *words* (delete-if (lambda (x) (> (- (elapsed-time) (word-t0 x)) (word-secs x))) *words*))
+  (setf *words* (delete-if (lambda (x) (> (- (fx-clock) (word-t0 x)) (word-secs x))) *words*))
   (dolist (x *words*)
-    (let* ((age (- (elapsed-time) (word-t0 x)))
+    (let* ((age (- (fx-clock) (word-t0 x)))
            (fade (min 1.0 (/ (- (word-secs x) age) 0.25)))
            (col (alpha! (word-col x) fade)) (shadow (alpha! (word-shadow x) (* 0.8 fade))))
       (multiple-value-bind (cx cy px) (word-layout x w h s)
@@ -143,7 +147,7 @@ shrinks it over the first 0.08 s)."
   "LOST more of V's Konpaku pips break (HUD shards + glass burst in the world)."
   (let* ((side (fighter-side (fighter v))) (left (gauges-konpaku (gauges v))))
     (loop for i from left below (min *konpaku-max* (+ left lost))
-          do (setf (aref *pip-t* (+ (* side *konpaku-max*) i)) (f32 (elapsed-time))))
+          do (setf (aref *pip-t* (+ (* side *konpaku-max*) i)) (f32 (fx-clock))))
     (multiple-value-bind (x y z) (actor-point v 1.6) (vfx-konpaku-shatter x y z lost))
     (play-sfx :konpaku-shatter)))
 
@@ -243,7 +247,7 @@ from the base form when this form has none)."
 (defun combo-string (c hits dmg)
   (unless (and (= hits (cs-hits c)) (= dmg (cs-dmg c)))
     (setf (cs-hits c) hits (cs-dmg c) dmg (cs-str c) (format nil "~d HITS  ~d" hits dmg)))
-  (setf (cs-t0 c) (elapsed-time))
+  (setf (cs-t0 c) (fx-clock))
   c)
 
 (defvar *c-evo* (list 1.0 0.85 0.3 1.0))
@@ -255,13 +259,13 @@ from the base form when this form has none)."
   (let* ((f (fighter e)) (g (gauges e)) (kit (fighter-kit f)) (kh (kit-hud kit)) (side (fighter-side f)) (right (= side 1))
          (m (* 0.03 w)) (bw (* 0.36 w)) (x (if right (- w m bw) m)) (edge (if right (+ x bw) x))
          (align (if right :right :left)) (y (* 0.05 h)) (bh (max (* 7 s) (* 0.028 h)))
-         (ns (max 2 s)) (tm (elapsed-time))
+         (ns (max 2 s)) (tm (fx-clock))
          (frac (/ (gauges-reishi g) (float (gauges-reishi-max g)))) (red (red-p (gauges-reishi g) (gauges-reishi-max g))))
     ;; name + form
     (hud-text (svref kh 0) edge (- y (* 8 ns) s) ns (if (kit-awakening kit) *ember* *white*) :align align)
     ;; Reishi + trail
     (let ((tr (aref *trail-v* side)))
-      (setf (aref *trail-v* side) (f32 (if (> tr frac) (max frac (- tr (* 0.35 (frame-dt)))) frac)))
+      (setf (aref *trail-v* side) (f32 (if (> tr frac) (max frac (- tr (* 0.35 (hud-dt)))) frac)))
       (%hud-reishi (f32 x) (f32 y) (f32 bw) (f32 bh) (f32 frac) (aref *trail-v* side) right red tm))
     ;; Konpaku soul flames
     (%hud-pips (f32 x) (f32 (+ y bh (* 11 s))) (f32 bw) (f32 (max (* 4.5 s) (* 0.013 h))) side (gauges-konpaku g) right red tm)
@@ -340,7 +344,7 @@ callout: above the box it hits, or below it when above would reach the side pane
         (setf (svref cb 0) t (svref cb 1) x0 (svref cb 2) (round y0) (svref cb 3) (+ x0 tw) (svref cb 4) (+ (round y0) th))
         (hud-text str x0 y0 sc (alpha! *c-callout* (min 1.0 (/ (fighter-callout-t f) 20.0))))))
     (when (red-p (gauges-reishi g) (gauges-reishi-max g))
-      (vfx-soul-flame (aref p 0) top (aref p 2) (elapsed-time)))))
+      (vfx-soul-flame (aref p 0) top (aref p 2) (fx-clock)))))
 
 (defvar *timer-strings* (make-array 1000 :initial-element nil) "Seconds -> their string, made once.")
 
@@ -382,10 +386,10 @@ callout: above the box it hits, or below it when above would reach the side pane
 (defun hud-title (w h s)
   (ui-big-text "SOUL DUEL" (floor w 2) (* 0.34 h) (* 9 s) '(1 0.92 0.8 1) '(0.7 0.18 0.05 1) s)
   (ui-text "YAMAMOTO GENRYUSAI  VS  ZARAKI KENPACHI" (floor w 2) (* 0.46 h) :scale (* 2 s) :align :center :color *ember* :shadow t)
-  (when (< (mod (elapsed-time) 1.2) 0.8)
+  (when (< (mod (fx-clock) 1.2) 0.8)
     (ui-text "PRESS START" (floor w 2) (* 0.68 h) :scale (* 2 s) :align :center :color *white* :shadow t))
   (ui-text "A FAN STUDY INSPIRED BY BLEACH: REBIRTH OF SOULS" (floor w 2) (- h (* 16 s)) :scale s :align :center
-           :color '(0.75 0.72 0.8 0.85) :shadow t))
+           :color '(0.93 0.93 0.96 1) :shadow t))
 
 (defun hud-select (w h s)
   (ui-big-text "SELECT YOUR FIGHTER" (floor w 2) (* 0.09 h) (* 4 s) *white* '(0.7 0.25 0.05 1) s)
@@ -395,18 +399,18 @@ callout: above the box it hits, or below it when above would reach the side pane
       (ui-text (format nil "~a~a" (if (zerop side) "P1" "P2") (if cpu " CPU" "")) x (* 0.72 h) :scale (* 2 s) :align :center
                :color (if (zerop side) '(1 0.6 0.3 1) '(0.5 0.7 1 1)) :shadow t)
       (ui-text (format nil "~:[  ~;< ~]~a~:[  ~; >~]" (and active (< *select-phase* 2)) (kit-name (kit-of e)) (and active (< *select-phase* 2)))
-               x (* 0.78 h) :scale (* 3 s) :align :center :color (if active *white* *dim*) :shadow t)))
+               x (* 0.78 h) :scale (* 3 s) :align :center :color (if active *white* *dim-ink*) :shadow active)))
   (when (and (/= *select-phase* 0) (/= *select-phase* 1) (not (eq *mode* :vs-player)))
     (let ((cam (eq *mode* :vs-cpu)))                    ; VS CPU: a second row, up / down picks the row
       (ui-text (format nil "CPU  < ~a >" (symbol-name *difficulty*)) (floor w 2) (* (if cam 0.85 0.88) h) :scale (* 2 s)
-               :align :center :color (if (and cam (= *menu* 1)) *dim* '(1 0.85 0.3 1)) :shadow t)
+               :align :center :color (if (and cam (= *menu* 1)) *dim-ink* '(1 0.85 0.3 1)) :shadow (not (and cam (= *menu* 1))))
       (when cam
         (ui-text (format nil "< ~a >" (camera-label)) (floor w 2) (* 0.9 h) :scale (* 2 s)
-                 :align :center :color (if (= *menu* 1) '(1 0.85 0.3 1) *dim*) :shadow t))))
+                 :align :center :color (if (= *menu* 1) '(1 0.85 0.3 1) *dim-ink*) :shadow (= *menu* 1)))))
   (ui-text (if (and (= *select-phase* 2) (eq *mode* :vs-cpu))
                "UP / DOWN ROW    LEFT / RIGHT CHOOSE    ENTER / J CONFIRM    ESC BACK"
                "LEFT / RIGHT CHOOSE    ENTER / J CONFIRM    ESC BACK")
-           (floor w 2) (- h (* 12 s)) :scale s :align :center :color *dim*))
+           (floor w 2) (- h (* 12 s)) :scale s :align :center :color *white* :shadow t))
 
 (defparameter *results-rows* '("DAMAGE" "KIKONS" "PERFECT HOHOS" "BEST COMBO" "KONPAKU LEFT"))
 (defvar *results-cache* (cons nil nil) "(match-tick . strings) of the results table, made once per match.")
@@ -468,7 +472,8 @@ WINNER + name, the stats table (P1 / P2 columns), the match time, the menu."
       (let ((c *c-flash*))
         (setf (first c) (aref f 0) (second c) (aref f 1) (third c) (aref f 2) (fourth c) (aref f 3))
         (ui-rect 0 0 w h c))
-      (setf (aref f 3) (f32 (max 0.0 (- (aref f 3) (* (aref f 4) (frame-dt)))))))
+      (setf (aref f 3) (f32 (max 0.0 (- (aref f 3) (* (aref f 4) (hud-dt)))))))
+    (draw-screen-fx w h)                                 ; focus lines (under the HUD)
     (when *cine*                                         ; letterbox + the cinematic's title
       (ui-rect 0 0 w (* 0.09 h) '(0 0 0 1)) (ui-rect 0 (* 0.91 h) w (* 0.09 h) '(0 0 0 1))
       (when *caption* (draw-caption w h s)))

@@ -9,6 +9,16 @@
 ;;;;   2000+k scene k (restarts its clock)    3000 stats overlay on/off    3001 stage fx off/on
 ;;;   4000+ms run the scene clock to MS milliseconds, then freeze everything (deterministic shots;
 ;;;           another 4000+ms resumes up to the new time)    4999 unfreeze
+;;;   3002 fighters off/on (a still without them = the fighter mask of tools/toon_check.py --bg)
+;;;   3003 label + stats text off/on (measured stills)    3004 stage fx (ash) off/on
+;;;   3006 the fighters' ink shadow discs off/on (the outline measure: the mask's edge is then the figure's)
+;;;   3010+m *GRADE-IMPACT* mode m (0 off, 1 negative, 2 two-tone, 3 manga page, 4 spot-keep hue 10)
+;;;   Scenes 18-31: the phase-2 toon universal effects (docs/STYLE_STORM_DESIGN.md §4.3), each fired at the scene's
+;;;   start (and again every 2.4 s), for frozen stills at chosen ages (tests/style-2-shots.py)
+;;;   3005 flat measuring mode on/off: no character gradient, character / shadow fog or vignette, so every lit or shadow pixel
+;;;        is exactly a palette tone (tools/toon_check.py --palette: two tones per colour)
+;;; The frozen duel still (tests/style-gates.py duelstill): scene 17 NEUTRAL, 3003, 3004, 4000+500, then
+;;; a shot with and one without the fighters, under run.mjs --fixed-dt.
 (in-package :duel)
 
 (setf *stats-log* t *pixel-lights* 3 *auto-render-scale* nil)
@@ -30,6 +40,10 @@
 (defvar *stats-on* t)
 (defvar *hold* nil "NIL or the scene time (s) at which the gallery freezes")
 (defvar *stage-on* t)
+(defvar *actors-on* t "3002: draw the fighters")
+(defvar *text-on* t "3003: draw the label and stats text")
+(defvar *shadows-on* t "3006: draw the fighters' shadow discs")
+(defvar *vignette* 0.25 "3005: the stage's vignette, restored when the flat mode ends")
 (defvar *label* "")
 (defvar *stat-str* "")
 (defvar *stat-t* 0.0)
@@ -59,29 +73,40 @@
     (2.0 1.8 6.5 1.5 1.1 0.0) (0.0 7.0 14.0 -1.0 1.8 0.0) (-1.0 4.0 11.0 1.5 1.4 0.0) (0.0 1.6 5.2 0.0 1.1 0.0)
     (0.5 1.6 5.0 1.5 1.0 0.0) (2.0 6.0 11.0 1.0 0.0 -1.0) (10.0 3.0 0.0 -6.0 1.5 0.0) (0.0 1.6 5.2 0.0 1.1 0.0)
     (0.5 2.2 5.0 1.5 1.7 0.0) (1.5 1.4 3.2 1.5 1.1 0.0) (0.0 2.0 6.0 0.0 0.8 0.0) (0.0 1.6 5.2 0.0 1.1 0.0)
-    (3.0 6.0 13.0 1.0 1.4 0.0)))
+    (3.0 6.0 13.0 1.0 1.4 0.0) (0.3 2.95 5.64 0.0 1.05 0.0)    ; 17: the pair camera at 3 m (x 0.8 closer)
+    ;; 18-31: the universal effects, a mid shot of the pair (Yamamoto at x 0, Kenpachi at 1.5), impact at x 1.2
+    (0.9 1.55 3.9 0.9 1.1 0.0) (0.9 1.55 3.9 0.9 1.1 0.0) (0.9 1.55 3.9 0.9 1.1 0.0) (0.9 1.55 3.9 0.9 1.1 0.0)
+    (0.9 1.55 3.9 0.9 1.1 0.0) (0.9 1.55 3.9 0.9 1.1 0.0) (0.9 1.9 5.2 0.9 1.0 0.0) (0.9 1.6 4.6 0.9 1.0 0.0)
+    (0.9 2.2 5.6 0.9 0.9 0.0) (0.9 1.55 3.9 0.9 1.1 0.0) (1.5 1.7 4.6 1.5 1.0 0.0) (0.9 1.4 3.9 0.9 0.6 0.0)
+    (1.5 2.0 4.2 1.5 1.6 0.0) (0.9 1.55 3.9 0.9 1.1 0.0)))
 
 (defparameter *scene-names*
   #("BLADE FIRE" "HELLFIRE: BLADE 1.3 + FIRE AURA" "BANKAI: BLADE EMBERS + HEAT AURA" "FIRE WAVE"
     "SHIRANUI: CHARGE -> FIREBALL" "ENNETSU JIGOKU: 7 PILLARS" "JOKAKU ENJO: DOME" "AURAS: EVOLUTION / REIATSU"
     "BREAKER: AURA + RING" "LINE CUTS: SUN / METEOR / CRACK" "NOZARASHI KIKON: SKY SPLIT"
     "TENCHI KAIJIN: SLASH + ASH" "SOUL FLAME + SKELETON DUST" "HITS" "HOHO / SHATTER / AWAKEN / SHOCKWAVE / FIRE CONE"
-    "UI: KANJI / BITMAP / BAR" "WORST CASE"))
+    "UI: KANJI / BITMAP / BAR" "WORST CASE" "NEUTRAL"
+    "HIT: CUT" "HIT: HEAVY" "HIT: FIRE" "COUNTER" "GUARD" "GUARD BREAK" "CLASH" "HOHO: VANISH / APPEAR"
+    "BURST REVERSE" "KONPAKU SHATTER" "KIKON RUSH: AURA + RING" "STEP DUST / LAND" "SOUL FLAME" "PUNCTUATION"))
 
 (defun scene (k)
+  (stamps-clear)
   (setf *scene* (mod k (length *scene-names*)) *age* 0.0 *prev-age* 0.0 *grade-desat* 0.0 *grade-split* 0.0
         *label* (format nil "~d ~a" *scene* (aref *scene-names* *scene*)))
   (fx-clear)
   (setf *actors*
         (case *scene*
           ((0 1 4 5 15 16) (list (yama :x -1.5) (ken :x 4.0)))
+          (17 (list (yama :x -1.5) (ken :x 1.5)))
           (2 (list (yama :x -1.5 :weapon :zanka) (ken :x 4.0)))
           (3 (list (yama :x -5.0) (ken :x 7.0)))
           ((6 10 11 12 13) (list (yama :x -2.0) (ken :x 1.5)))
           (7 (list (yama :x -0.9 :yaw pi) (ken :x 0.9 :yaw pi)))
           (8 (list (ken :x 1.5 :yaw (/ pi -2))))
           (9 (list (yama :x -3.0 :z 1.5) (ken :x 3.0 :z -1.5 :weapon :nozarashi :hide :eyepatch)))
-          (14 (list (yama :x -1.5) (ken :x 1.5)))))
+          (14 (list (yama :x -1.5) (ken :x 1.5)))
+          (28 (list (ken :x 1.5 :yaw (/ pi -2))))
+          ((18 19 20 21 22 23 24 25 26 27 29 30 31) (list (yama :x 0.0) (ken :x 1.5)))))
   (log-msg "vfx: scene ~a" *label*))
 
 (defun scene-fx (dt)
@@ -143,6 +168,19 @@
               (when (at 6.0 "SHOCKWAVE") (vfx-shockwave 0 0 6 0.6))
               (when (at 6.6 "TAIMATSU FIRE CONE") (vfx-fire-cone x z (/ pi -2))))))
       (15 nil)
+      ((18 19 20 21 22 23 24) (when (cyc-crossed 2.4 0.0)
+                                (vfx-hit 1.2 1.25 0.0 (nth (- *scene* 18) '(:cut :heavy :fire :counter :guard :guard-break :clash))
+                                         :dx 1.0 :dz 0.0)))
+      (25 (when (cyc-crossed 2.4 0.0) (vfx-hoho 0.0 1.0 0.0 nil :dx 1.0 :dz 0.0))
+          (when (cyc-crossed 2.4 0.6) (vfx-hoho 0.9 1.0 0.3 t :dx 1.0 :dz 0.0)))
+      (26 (when (cyc-crossed 2.4 0.0) (vfx-burst (actor-x ke) 0.0 (actor-z ke))))
+      (27 (when (cyc-crossed 2.4 0.0) (vfx-konpaku-shatter (actor-x ke) 1.3 (actor-z ke) 4)))
+      (28 (when (cyc-crossed 2.4 0.0) (vfx-kikon-rush (actor-x ya) (actor-z ya)))
+          (vfx-aura (actor-x ya) 0 (actor-z ya) 2.02 :kikon age dt :k 1.0))
+      (29 (when (cyc-crossed 2.4 0.0) (vfx-step-dust (actor-x ya) (actor-z ya) -1.0 0.0))
+          (when (cyc-crossed 2.4 0.0) (vfx-shockwave (actor-x ke) (actor-z ke) 1.2 0.3 :pal +pal-dust+)))
+      (30 (vfx-soul-flame (actor-x ke) 2.3 (actor-z ke) age))
+      (31 nil)
       (16 (multiple-value-bind (a b c d e f) (blade ya) (vfx-blade-fire a b c d e f dt :power 1.3))
        (vfx-aura (actor-x ya) 0 (actor-z ya) 1.68 :hellfire age dt)
        (let ((u (cycle 1.2))) (when (< u 0.9) (vfx-fire-wave (+ -1.0 (* 14.0 u)) 2.0 (/ pi -2) u 3.5 dt)))
@@ -152,6 +190,15 @@
 
 (defun draw-ui ()
   (let ((s (ui-scale)) (w (window-width)) (h (window-height)))
+    (when (= *scene* 31)
+      (ui-rect 0 0 (* 0.5 w) h '(0.03 0.03 0.047 1)) (ui-rect (* 0.5 w) 0 (* 0.5 w) h '(1 1 1 1))
+      (ui-ink-splash (* 0.25 w) (* 0.5 h) (* 0.12 h) 3f0 '(0.95 0.95 0.95 1) (f->i (* 12 *age*)))
+      (ui-ink-splash (* 0.75 w) (* 0.5 h) (* 0.12 h) 8f0 '(0.03 0.03 0.047 1) (f->i (* 12 *age*)))
+      (ui-speed-lines 0f0 18 '(0.95 0.95 0.95 0.9) (f->i (* 12 *age*)))
+      (ui-focus-lines (* 0.75 w) (* 0.5 h) 48 (* 0.2 h) (* 1.2 w) '(0.03 0.03 0.047 0.9) (f->i (* 12 *age*))))
+    (when (= *scene* 24)
+      (ui-focus-lines (* 0.5 w) (* 0.45 h) 56 (* 0.16 h) (* 1.4 w) '(0.03 0.03 0.05 0.92) (f->i (* 12 *age*))))
+    (unless *text-on* (return-from draw-ui nil))
     (ui-text *label* (* 10 s) (* 10 s) :scale s :shadow t)
     (when (= *scene* 15)
       (ui-kanji :bankai (* 0.5 w) (* 0.12 h) (* 2 s) :align :center :color '(1 0.95 0.8 1) :color2 '(1 0.45 0.1 1))
@@ -181,9 +228,13 @@
     (let ((an (actor-anim a)) (b (actor-body a)))
       (anim-advance an (f32 rdt))
       (pose-fk! (actor-joints a) (anim-eval an) (actor-x a) 0.0 (actor-z a) (actor-yaw a) (body-scale b) (body-hunch b) (body-props b))
-      (draw-body b (actor-joints a) (actor-x a) 0.0 (actor-z a) (actor-yaw a) :weapon (actor-weapon a) :hide (actor-hide a))))
+      (when *actors-on*
+        (draw-body b (actor-joints a) (actor-x a) 0.0 (actor-z a) (actor-yaw a) :weapon (actor-weapon a) :hide (actor-hide a)
+                   :shadow *shadows-on*))))
   (when *stage-on* (stage-draw rdt))
+  (fx-clock-advance (f32 rdt))
   (scene-fx (f32 rdt))
+  (stamps-draw (f32 rdt))
   (lights-flush)
   (fx-update (f32 rdt))
   (fx-draw-particles)
@@ -196,17 +247,45 @@
   (when (< *age* *stat-t*) (setf *stat-t* 0.0))
   (draw-ui))
 
+(defmacro consed (&body body) `(let ((c0 (cons-bytes))) ,@body (- (cons-bytes) c0)))
+(defun-fast cons-stamps (n) (declare (fixnum n)) (dotimes (i n) (stamps-draw 0f0)))
+(defun-fast cons-kikon (n) (declare (fixnum n)) (dotimes (i n) (%kikon-aura 1f0 0f0 0f0 1.9f0 1f0)))
+(defun-fast cons-soul (n) (declare (fixnum n)) (dotimes (i n) (vfx-soul-flame 1f0 2.3f0 0f0 0.5f0)))
+(defun cons-check ()
+  "3020: bytes consed by 100 calls of each new per-frame path (with one stamp of every kind live)."
+  (dolist (k '(:cut :heavy :fire :counter :guard :guard-break :clash :hoho-out :hoho-in :burst :konpaku :rush :land))
+    (stamps-clear) (stamp k 1.2 1.2 0.0 :dx 1.0 :dz 0.0)
+    (let* ((ft (stream-buffer-fill *fx-toon*)) (a (consed (cons-stamps 100))))
+      (setf (stream-buffer-fill *fx-toon*) ft)
+      (log-msg "phase-2 consing: 100 stamps-draw of ~a ~d B" k a)))
+  (stamps-clear)
+  (dolist (k '(:cut :heavy :fire :counter :guard :guard-break :clash :hoho-out :hoho-in :burst :konpaku :rush :land))
+    (stamp k 1.2 1.2 0.0 :dx 1.0 :dz 0.0))
+  (let* ((ft (stream-buffer-fill *fx-toon*)) (a (consed (cons-stamps 100))) (b (consed (cons-kikon 100))) (c (consed (cons-soul 100))))
+    (setf (stream-buffer-fill *fx-toon*) ft)
+    (log-msg "phase-2 consing: 100 stamps-draw (13 stamps live) ~d B, 100 kikon aura ~d B, 100 soul flame ~d B" a b c)))
+
 (defun vfx-debug (c)
   (cond ((= c 4999) (setf *hold* nil))
+        ((<= 3010 c 3014) (grade-impact (- c 3010)))
+        ((= c 3020) (cons-check))
         ((>= c 4000) (setf *hold* (/ (- c 4000) 1000.0)))
         ((= c 3000) (setf *stats-on* (not *stats-on*)))
         ((= c 3001) (setf *stage-on* (not *stage-on*)))
+        ((= c 3002) (setf *actors-on* (not *actors-on*)))
+        ((= c 3003) (setf *text-on* (not *text-on*)))
+        ((= c 3006) (setf *shadows-on* (not *shadows-on*)))
+        ((= c 3004) (setf *stage-fx* (not *stage-fx*)))
+        ((= c 3005) (let ((on (> (env-toon-gradient *env*) 0)))
+                      (when on (setf *vignette* (env-vignette *env*)))
+                      (setf (env-toon-gradient *env*) (if on 0.0 0.14) (env-vignette *env*) (if on 0.0 *vignette*)
+                            (aref *toon-body* 2) (if on 0f0 0.2f0) (aref *toon-ground* 2) (if on 0f0 1f0))))
         ((>= c 2000) (setf *hold* nil) (scene (- c 2000)))))
 
 (defun vfx-start () (stage-env) (scene 0))
 
 (run-game :title "SOUL DUEL VFX"
-          :load (list #'bodies-init #'stage-init)
+          :load (append (list #'bodies-init) (body-load-steps) (list #'stage-init))
           :start #'vfx-start
           :frame #'vfx-frame
           :debug #'vfx-debug

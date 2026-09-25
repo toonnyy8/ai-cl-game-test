@@ -6,6 +6,18 @@
 ;;;; ALPHA (flame intensity), *GRADE-SPLIT*, ENV-SUN-SIZE / -GLOW, DRAW-MESH :ENV-RIM, light
 ;;;; PRIORITY, DEFCLIP :FPS / :MARKS, LIST-CLIPS / LIST-SOUNDS / FIND-CLIP NIL / ANIM-BLEND,
 ;;;; MB-XFORM, MAKE-RIG-PROPORTIONS with POSE-FK!.
+;;;; Restyle phase 1a (docs/STYLE_STORM_DESIGN.md §2): DRAW-MESH :TOON lanes (and 0 without), zero-cons
+;;;; toon draws and toon frame lanes, the camera-space key light, analytic smooth normals, the RAVEN
+;;;; defaults of *PART-JITTER* / *PART-SMOOTH*; debug 12 = the toon look (ec-toon.png: fs_toon stage +
+;;;; character draws, one mirrored = RP_TOON_CW, and fs_sky_toon's moon) for the WGSL smoke test.
+;;;; Restyle phase 1b (§2.4): MB-HULL extrusions (a box corner moves every face out 1 width, the cone
+;;;; cap), BUILD-PARTS :INK (hull colours by key, the size rule, no hulls without :INK), zero-cons
+;;;; DRAW-PARTS with hulls; ec-toon.png also draws the balls' ink hulls (RP_HULL, RP_HULL_CW).
+;;;; Restyle phase 2 (§3): zero-cons toon primitives (FX-STAR / -SHARD / -CRESCENT / -WALL, toon FX-RIBBON /
+;;;; FX-SECTOR / FX-BILLBOARD, the toon particle kinds, FX-ENVELOPE + SAGE, the screen punctuation
+;;;; UI-FOCUS-LINES / UI-SPEED-LINES / UI-INK-SPLASH), the fx clock lane, *KEY-EASE*, *SHAKE-HZ* and
+;;;; GRADE-IMPACT defaults; debug 13 = ec-fxtoon.png (every toon primitive in every palette over the toon
+;;;; stage: RP_FXT with alpha-to-coverage) and debug 14..17 = ec-impact-1..4.png (RP_COMP_FX modes).
 ;;;;   tests/engine-check.sh          (= ./build.sh echeck tests/engine-check.lisp, then the run below)
 ;;;;   node tools/run.mjs dist/echeck --secs 28 --script tests/scripts/engine-check.json
 ;;;; Every check logs "check PASS|FAIL name"; debug command 9 logs "engine-check: N pass, M fail".
@@ -238,8 +250,125 @@
   (let ((n engine::*dq-n*) (q engine::*dq*) (m (m4)))
     (draw-mesh *box* m) (draw-mesh *box* m :env-rim 0.0)
     (check "draw-mesh :env-rim -> record lane 27 (default 1)"
-           (and (= 1.0 (aref q (+ (* n 28) 27))) (= 0.0 (aref q (+ (* (1+ n) 28) 27)))))
+           (and (= 1.0 (aref q (+ (* n engine::+dq-stride+) 27))) (= 0.0 (aref q (+ (* (1+ n) engine::+dq-stride+) 27)))))
     (setf engine::*dq-n* n)))
+
+(defvar *toon-lanes* (fv 2 0.1 0.2 0) "DRAW-MESH :toon lanes: character mode, feet 0.1, fog x 0.2")
+(defun-fast ec-toon-draws (n m)
+  (declare (fixnum n) (type f32vec m))
+  (dotimes (i n) (draw-mesh *box* m :toon *toon-lanes*)))
+
+(defvar *hull-lanes* (fv 3 0.012 0.2 3.0) "DRAW-MESH :toon lanes of an ink hull: mode 3, push, fog, 3 px")
+(defvar *ec-parts* nil)
+(defun-fast ec-hull-draws (n jm hulls)
+  (declare (fixnum n) (type f32vec jm))
+  (let ((p *ec-parts*))
+    (dotimes (i n) (draw-parts (first p) (second p) jm :toon *toon-lanes* :hulls (and hulls (third p)) :ink-tint '(1 1 1)))))
+
+(defun check-hull ()
+  (flet ((es (build &rest keys)            ; every hull vertex's extrusion (the normal slot)
+           (let ((src (make-mesh-builder)) (dst (make-mesh-builder)))
+             (funcall build src) (apply #'mb-hull dst src keys)
+             (loop for o from 0 below (engine::mb-fill dst) by 9
+                   collect (let ((d (engine::mb-data dst))) (list (aref d (+ o 3)) (aref d (+ o 4)) (aref d (+ o 5))))))))
+    (let ((box (es (lambda (mb) (mb-box mb 0.4 0.2 0.3)) :k 1.0))
+          (cone (es (lambda (mb) (mb-cone mb 0.05 0.4 :segments 4)) :c 0.8)))
+      (check "mb-hull: a box corner's extrusion is (+-1 +-1 +-1): every face moves out one width"
+             (every (lambda (e) (every (lambda (x) (< (abs (- (abs x) 1)) 1e-4)) e)) box) "~d vertices" (length box))
+      (check "mb-hull: no spike longer than 1/C at a cone tip"
+             (every (lambda (e) (<= (sqrt (reduce #'+ (mapcar #'* e e))) (+ (/ 1 0.8) 1e-4))) cone))))
+  (multiple-value-bind (parts extras hulls)
+      (build-parts '((:chest (:box 0.4 0.3 0.2 :c :robe) (:box 0.08 0.08 0.08 :at (0 0.3 0) :c :skin)
+                             (:box 0.02 0.2 0.01 :at (0 0 0.11) :c :robe) (:box 0.1 0.1 0.1 :at (0.3 0 0) :c :robe :tag :tagged)))
+                   '((:robe #x16161E) (:skin #xD8B4A0)) 1.0 :ink '((:skin . #x3A1E1A) (t . #x4A5062)))
+    (setf *ec-parts* (list parts extras hulls))
+    (check "build-parts :ink -> one hull per joint mesh and tagged part" (and (= (length hulls) 2) (find :tagged hulls :key (lambda (h) (svref h 2)))))
+    (check "build-parts without :ink -> no hulls" (null (nth-value 2 (build-parts '((:chest (:box 0.4 0.3 0.2))) nil 1.0))))
+    (let* ((jm (make-f32 (* 16 +nj+))) (n engine::*dq-n*) (c0 (consed (ec-hull-draws 100 jm nil)))
+           (c (progn (setf engine::*dq-n* n) (consed (ec-hull-draws 100 jm t)))))   ; (a growing *dq* would count)
+      (setf engine::*dq-n* n)
+      (check "100 draw-parts with hulls cons nothing more than without" (= c c0) "~d B (without hulls ~d B)" c c0))))
+
+;;; phase 2: toon primitives
+(defvar *wall-x* (fv -2.4 -1.2 0.0 1.2 2.4)) (defvar *wall-z* (fv -2.0 -2.4 -2.5 -2.4 -2.0))
+(defun-fast ec-toon-fx (n x)
+  "N rounds of every toon primitive (and toon particles), all palettes."
+  (declare (fixnum n) (single-float x))
+  (dotimes (i n)
+    (let* ((p (i->f (mod i 12))))
+      (declare (single-float p))
+      (fx-star x 1.4f0 0f0 0.12f0 0.45f0 7 0.2f0 1f0 0.3f0 0.1f0 (i->f i) p 0.98f0)
+      (fx-shard x 1.0f0 0f0 0.7f0 0.7f0 0f0 0.3f0 0.07f0 0.1f0 3f0 p 0.9f0)
+      (fx-crescent (- x 0.5f0) 0.6f0 0f0 (+ x 0.5f0) 0.6f0 0f0 x 1.0f0 0f0 0.12f0 :comet 0.1f0 5f0 p 0.9f0)
+      (fx-wall *wall-x* *wall-z* 5 1.2f0 6 0.2f0 2f0 p 0.9f0)
+      (fx-ribbon x 0f0 0f0 0f0 1f0 0f0 0.2f0 0f0 1f0 -3f0 0.2f0 (toon-a p 0.9f0) 0.2f0 -3f0 0.2f0 (toon-a p 0.9f0) 0f0 0f0
+                 :mode :toon)
+      (fx-emit +p-t-blob+ x 1f0 0f0 0f0 0f0 0f0 0.5f0 0.2f0 0f0 0.2f0 0f0 0f0 p)
+      (fx-envelope (sc k fl ph) ((sage 0.1f0 2f0) 1 2 2 6 :anticipate 4)
+        (fx-disc x 2f0 0f0 (* sc 0.2f0) 0.1f0 7f0 p k)))))
+(defun-fast ec-punct (n)
+  (declare (fixnum n))
+  (dotimes (i n)
+    (ui-focus-lines 640f0 360f0 40 200f0 900f0 '(0 0 0 0) i)
+    (ui-speed-lines 0.3f0 20 '(0 0 0 0) i)
+    (ui-ink-splash 300f0 300f0 80f0 3f0 '(0 0 0 0) i)))
+
+(defun check-toon-fx ()
+  (let* ((ft (stream-buffer-fill *fx-toon*)) (ui0 (stream-buffer-fill engine::*ui-batch*))
+         (c (consed (ec-toon-fx 12 0.5f0))) (dp (consed (fx-draw-particles))) (u (consed (ec-punct 5))))
+    (log-msg "consed: 12 rounds of every toon primitive ~d B, fx-draw-particles with toon kinds ~d B, 5 x focus / speed lines + ink splash ~d B" c dp u)
+    (check "toon primitives, 12 rounds: 0 B" (= c 0) "~d B" c)
+    (check "fx-draw-particles with toon particles: 0 B" (= dp 0) "~d B" dp)
+    (check "ui-focus-lines / ui-speed-lines / ui-ink-splash: 0 B" (= u 0) "~d B" u)
+    (check "toon batch written" (> (stream-buffer-fill *fx-toon*) (+ ft (* 9 1000))))
+    (setf (stream-buffer-fill *fx-toon*) ft (stream-buffer-fill engine::*ui-batch*) ui0))
+  (fx-envelope (sc k fl ph) (0.5f0 1 2 2 6)        ; frame 30 of (1 2 2 6): done
+    (check "fx-envelope: past flash+grow+hold+out -> phase 5, k 0" (and (= ph 5) (= k 0f0))))
+  (fx-envelope (sc k fl ph) ((/ 0.5f0 60f0) 1 2 2 6)
+    (check "fx-envelope: frame 0.5 -> the flash, scale 0.6" (and (= ph 1) (= fl 1f0) (= sc 0.6f0))))
+  (fx-envelope (sc k fl ph) ((/ 8f0 60f0) 1 2 2 6)
+    (check "fx-envelope: frame 8 of (1 2 2 6) -> half way out, k ~0.49" (and (= ph 4) (< 0.4 k 0.6)) "k ~,3f" k))
+  (let ((c0 (aref *fx-clock* 0)))
+    (setf (aref *fx-clock* 0) 1.0)
+    (check "sage: age quantised to the fx clock's twos" (< (abs (- (sage 0.5f0 2f0) (- 0.5 (mod 1.0 (/ 2 24.0))))) 1e-5))
+    (setf (aref *fx-clock* 0) c0))
+  (check "RAVEN defaults: *key-ease* 0, *shake-hz* 30, *grade-impact* 0" (and (= *key-ease* 0) (= *shake-hz* 30) (= *grade-impact* 0))))
+
+(defun check-toon ()
+  (let* ((n engine::*dq-n*) (q engine::*dq*) (m (m4)) (st engine::+dq-stride+) (e *env*))
+    (draw-mesh *box* m) (draw-mesh *box* m :toon *toon-lanes*)
+    (check "draw-mesh: no :toon -> lanes 28..31 are 0 (RAVEN's records unchanged)"
+           (every #'zerop (subseq q (+ (* n st) 28) (+ (* n st) 32))))
+    (check "draw-mesh :toon -> lanes 28..31" (equalp (subseq q (+ (* (1+ n) st) 28) (+ (* (1+ n) st) 32)) *toon-lanes*))
+    (setf engine::*dq-n* n)
+    (let ((c (consed (ec-toon-draws 100 m))))
+      (setf engine::*dq-n* n)
+      (check "100 toon draw-mesh calls cons nothing" (= c 0) "~d B" c))
+    (setf (env-toon e) t)
+    (let ((c (consed (dotimes (i 100) (engine::fill-toon-uniforms engine::*fu* e *camera*)))) (u engine::*fu*)
+          (fw (camera-forward *camera*)))
+      (check "100 fill-toon-uniforms cons nothing" (= c 0) "~d B" c)
+      (let ((kl (sqrt (+ (expt (aref u 136) 2) (expt (aref u 137) 2) (expt (aref u 138) 2))))
+            (kv (- (+ (* (aref u 136) (aref fw 0)) (* (aref u 137) (aref fw 1)) (* (aref u 138) (aref fw 2))))))
+        (check "key light: unit, from the camera side (lit share (1+L.V)/2 ~ 73 %)" (and (< (abs (- kl 1)) 1e-4) (< 0.4 kv 0.5))
+               "|key| ~,4f L.V ~,3f" kl kv)))
+    (setf (env-toon e) nil))
+  (check "RAVEN defaults: *part-jitter* 0.06, *part-smooth* NIL" (and (= *part-jitter* 0.06) (null *part-smooth*)))
+  (flet ((normals-ok (build radial)       ; every vertex normal = the unit RADIAL of its position
+           (let ((mb (make-mesh-builder)) (worst 0.0))
+             (funcall build mb)
+             (loop for o from 0 below (engine::mb-fill mb) by 9
+                   do (let* ((d (engine::mb-data mb)) (r (funcall radial (aref d o) (aref d (+ o 1)) (aref d (+ o 2))))
+                             (l (sqrt (reduce #'+ (mapcar (lambda (x) (* x x)) r)))))
+                        (when (> l 1e-3)
+                          (setf worst (max worst (loop for k below 3 maximize (abs (- (aref d (+ o 3 k)) (/ (nth k r) l)))))))))
+             worst)))
+    (let ((sph (normals-ok (lambda (mb) (with-xform (mb (xform :y 1 :yaw 0.7)) (mb-sphere mb 0.3 :stretch 0.4 :smooth t)))
+                           (lambda (x y z) (list x (- y 1 (max -0.2 (min 0.2 (- y 1)))) z))))
+          (cyl (normals-ok (lambda (mb) (mb-cylinder mb 0.3 0.6 :top-radius 0.1 :caps nil :smooth t))
+                           (lambda (x y z) (declare (ignore y)) (list x (* (/ 0.2 0.6) (sqrt (+ (* x x) (* z z)))) z)))))
+      (check "smooth capsule normals: p - (0, clamp(y), 0), turned by the transform" (< sph 1e-3) "worst ~,5f" sph)
+      (check "smooth tapered cylinder normals: (x, slope r, z)" (< cyl 1e-3) "worst ~,5f" cyl))))
 
 ;;; ---------------------------------------------------------------- scene
 (defvar *m* (m4))
@@ -250,9 +379,26 @@
 (defvar *log-plive-next* nil)
 (defvar *frame-no* 0)
 
+(defvar *ball* nil)
+(defvar *ball-hull* nil)
 (defun build-meshes ()
   (setf *floor* (build-mesh (mb :color '(0.10 0.10 0.13)) (mb-plane mb 16 16 :nx 8 :nz 8 :color2 '(0.14 0.13 0.18)))
-        *box* (build-mesh (mb :color '(1 1 1)) (mb-box mb 0.8 0.8 0.8))))
+        *box* (build-mesh (mb :color '(1 1 1)) (mb-box mb 0.8 0.8 0.8))
+        *ball* (build-mesh (mb :color '(0.94 0.94 0.92)) (mb-sphere mb 0.45 :segments 12 :rings 8 :smooth t)))
+  (let ((mb (make-mesh-builder)))
+    (mb-sphere mb 0.45 :segments 12 :rings 8)
+    (setf *ball-hull* (mb-build (mb-hull (make-mesh-builder) mb :color '(0.06 0.06 0.09))))))
+
+(defvar *toon-stage* (fv 1 0 1 0))
+(defun toon-look ()
+  "Debug 12: the toon look (fs_sky_toon + fs_toon), as SOUL DUEL's stage sets it."
+  (let ((e *env*))
+    (v3-set! (env-sky-top e) 0.03 0.035 0.055) (v3-set! (env-fog-color e) 0.11 0.125 0.19) (v3-set! (env-moon-color e) 0.95 0.96 0.97)
+    (v3-set! (env-moon-dir e) -0.3 0.16 -0.92) (v3-normalize! (env-moon-dir e) (env-moon-dir e))
+    (setf (env-toon e) t (env-sun-size e) 6.0 (env-sun-glow e) 0.012 (env-moon-intensity e) 1.0 (env-fog-density e) 0.012
+          (env-bloom-threshold e) 0.97
+          *mode* :toon *emit* nil)
+    (fx-clear)))
 
 (defun dusk-look ()
   (let ((e *env*))                                    ; a dark dusk look, like a fire stage
@@ -304,14 +450,24 @@
     (:sun (let ((d (env-moon-dir *env*)))             ; look straight at the sky disc
             (camera-look-at 0.0 1.3 4.6 (* 10 (aref d 0)) (+ 1.3 (* 10 (aref d 1))) (+ 4.6 (* 10 (aref d 2))))))
     (:rig (camera-look-at 0.0 1.1 3.2 0.0 0.95 0.0))
+    ((:toon :fxtoon) (camera-look-at 0.0 1.4 4.6 0.0 0.9 -1.0))
     (t (camera-look-at 0.0 1.3 4.6 0.0 0.9 0.0)))
-  (when (= *frame-no* 30) (check-consing) (check-light-priority) (check-env-rim-lane))
+  (when (= *frame-no* 30) (check-consing) (check-light-priority) (check-env-rim-lane) (check-toon) (check-hull) (check-toon-fx))
   (when *emit* (emit-flames dt))
+  (fx-clock-advance dt)
+  (when (eq *mode* :fxtoon) (fxtoon-scene))
   (fx-update dt)
   (when *log-plive-next*
     (setf *log-plive-next* nil)
     (check "fx-clear: nothing left a frame later" (= *plive* 0) "*plive* ~d" *plive*))
-  (draw-mesh *floor* (m4-identity! *m*) :specular 0.1 :env-rim (if (eq *mode* :rig) 0.0 1.0))   ; the stage opts out
+  (if (member *mode* '(:toon :fxtoon))
+      (draw-mesh *floor* (m4-identity! *m*) :toon *toon-stage*)
+      (draw-mesh *floor* (m4-identity! *m*) :specular 0.1 :env-rim (if (eq *mode* :rig) 0.0 1.0)))   ; the stage opts out
+  (when (eq *mode* :toon)                             ; left: a character ball; right: the same mirrored (RP_TOON_CW)
+    (draw-mesh *ball* (m4-euler! *m* -0.8 0.5 0.0 0.0 0.0 0.0) :toon *toon-lanes*)
+    (draw-mesh *ball* (m4-euler! *m* 0.8 0.5 0.0 0.0 0.0 0.0 -1.0 1.0 1.0) :toon *toon-lanes*)
+    (draw-mesh *ball-hull* (m4-euler! *m* -0.8 0.5 0.0 0.0 0.0 0.0) :toon *hull-lanes*)          ; ink outlines
+    (draw-mesh *ball-hull* (m4-euler! *m* 0.8 0.5 0.0 0.0 0.0 0.0 -1.0 1.0 1.0) :toon *hull-lanes*))
   (if (eq *mode* :rig)
       (let ((pose (find-pose :ec-pose)))
         (pose-fk! *jm-a* pose -0.75 0.0 0.0 0.0 1.0 0.0)
@@ -326,8 +482,28 @@
   (fx-rings-update dt)
   (ui-text (format nil "ENGINE CHECK  PARTICLES ~d  DESAT ~,1f  SPLIT ~,1f" *plive* *grade-desat* *grade-split*) 12 12 :scale 2 :shadow t))
 
+(defun fxtoon-scene ()
+  "Debug 13: every toon primitive, one palette each, over the toon stage (the pipeline's smoke still)."
+  (let ((row '((0 -2.2) (1 -1.3) (2 -0.4) (3 0.5) (4 1.4) (5 2.3))))
+    (loop for (p x) in row
+          do (fx-star (f32 x) 1.9f0 -0.5f0 0.1f0 0.33f0 7 0.3f0 1f0 0.2f0 0.1f0 (f32 (* 3 p)) (f32 p) 0.98f0 :push 0f0)
+             (fx-crescent (f32 (- x 0.35)) 1.2f0 -0.5f0 (f32 (+ x 0.35)) 1.2f0 -0.5f0 (f32 x) 1.5f0 -0.5f0 0.1f0 :comet
+                          0.1f0 (f32 p) (f32 (+ p 6)) 0.98f0 :push 0f0)
+             (fx-shard (f32 x) 0.75f0 -0.5f0 0.6f0 0.8f0 0f0 0.35f0 0.07f0 0.1f0 2f0 (f32 (+ p 6)) 0.98f0 :push 0f0)
+             (fx-billboard x 0.35 -0.5 0.22 1.0 (f32 p) 0.15 (toon-a (f32 (+ p 6)) 0.9f0) :mode :toon)
+             (fx-ribbon (f32 (+ x 0.25)) 0f0 -0.8f0 0f0 0.9f0 0f0 0.12f0 0f0 1f0 -2f0 0.2f0 (toon-a (f32 p) 0.9f0)
+                        0.2f0 -2f0 0.2f0 (toon-a (f32 p) 0.9f0) 0f0 0f0 :mode :toon))
+    (fx-wall *wall-x* *wall-z* 5 1.0f0 6 0.25f0 4f0 0f0 0.95f0)
+    (fx-sector 0.0 0.0 -0.5 1.9 2.1 0.0 3.2 1.0 5.0 0.1 (toon-a 10 0.9f0) :mode :toon)
+    (ui-focus-lines 640f0 360f0 48 260f0 900f0 '(0.05 0.05 0.07 0.9) 3)
+    (ui-ink-splash 140f0 560f0 70f0 5f0 '(0.03 0.03 0.05 1) 2)
+    (ui-speed-lines 0f0 14 '(1 1 1 0.8) 1)))
+
 (defun debug-command (n)
   (case n
+    (13 (toon-look) (setf *mode* :fxtoon) (log-msg "toon fx: every primitive, palettes 0..11"))
+    ((14 15 16 17) (grade-impact (- n 13)) (log-msg "grade-impact ~d" (- n 13)))
+    (18 (grade-impact 0))
     (2 (setf *grade-desat* 1.0) (log-msg "*grade-desat* 1.0"))
     (3 (setf *grade-desat* 0.0) (log-msg "*grade-desat* 0.0"))
     (4 (let ((before *plive*))
@@ -344,6 +520,7 @@
        (v3-set! (env-moon-dir *env*) 0.0 0.2 -1.0) (v3-normalize! (env-moon-dir *env*) (env-moon-dir *env*))
        (log-msg "sun: size ~,2f glow ~,2f" (env-sun-size *env*) (env-sun-glow *env*)))
     (10 (setf (env-sun-size *env*) 3.0 (env-sun-glow *env*) 0.8) (log-msg "sun: size 3 glow 0.8"))
+    (12 (toon-look) (log-msg "toon look: fs_sky_toon, fs_toon stage + characters (one mirrored)"))
     (11 (dusk-look) (setf *mode* :rig (env-rim-intensity *env*) 1.5 (env-sun-size *env*) 1.0 (env-sun-glow *env*) 0.25)
         (log-msg "rig: standard (left) / proportions (right); boxes: env rim / :env-rim 0"))
     (9 (check "numpad keys seen (:kp-1 :kp-enter :kp-plus)" (subsetp '(:kp-1 :kp-enter :kp-plus) *seen*) "~s" *seen*)

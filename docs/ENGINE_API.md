@@ -143,7 +143,7 @@ meshgen (below). Meshes are immutable and live for the whole run (they share big
 Vertex format: position, normal, color (9 floats). Faces must be CCW from the front
 (back faces are culled; mirrored model matrices are handled automatically).
 
-**`(draw-mesh mesh model &key tint emissive flash alpha specular rim env-rim)`** — queues one draw; the matrix is
+**`(draw-mesh mesh model &key tint emissive flash alpha specular rim env-rim toon)`** — queues one draw; the matrix is
 copied, so reuse one scratch mat4. `tint` color multiplies vertex colors; `emissive` 0 = lit only,
 1–4 = glowing neon (feeds bloom); `flash` 0..1 lerps to white (hit flash); `alpha` < 1 goes to
 the transparent pass (drawn after opaque, no depth write, unsorted); `specular` = wet-highlight
@@ -151,6 +151,19 @@ strength for this draw (0 = matte and skips the specular math; default/negative 
 f32vec of 3 **linear** rgb floats (strength baked in, e.g. `(rim-vec #xBFD8FF 0.22)`, meshgen.lisp) added as `rim·(1−N·V)³` (character silhouettes);
 `env-rim` (1.0) multiplies the environment rim (`env-rim-*`) for this draw: 0 = none (a stage floor or
 wall that must not glow at grazing angles), the draw's own `rim` is added either way.
+`toon` = NIL (the lit shader, RAVEN) or an f32vec of 4 toon lanes `(mode feet-y fog-scale spare)`: mode 1 =
+toon stage (lit by the moon, the per-pixel lights as flat 2-step pools, lighter shadows), 2 = toon
+character (the camera-space key light, a darker-toward-the-feet gradient from `feet-y`, the strongest
+fx light within 4 m warms only the shadow side); `fog-scale` multiplies the fog (e.g. 0.2 keeps
+characters crisp). Toon draws are two-tone and palette-exact (the lit tone is the vertex colour × tint,
+no exposure or ACES; the shadow tone is designed per colour in HSV: darker, more saturated, hue turned,
+neutrals cold blue-grey), ignore `specular`, `rim` and the env rim, and must be opaque (`alpha` < 1
+falls back to the lit shader). Mode 3 = an **ink hull** (a mesh built with `mb-hull`), lanes
+`(3 push fog-scale px)`: the shell is pushed out by its extrusion × PX pixels at 720 lines (thinner where
+it faces the camera), then PUSH metres away from the camera along the view ray, and drawn front-culled in
+its vertex colour × tint (`RP_HULL` / `RP_HULL_CW`): an ink outline that shows only where the surface
+behind is farther than PUSH (`draw-parts :hulls` does this for bodies). Keep the lanes in one f32vec and
+set its slots: 0 bytes per call.
 ~0 bytes consed per call.
 Counters: `*draw-count*`, `*tri-count*` (last frame).
 
@@ -189,6 +202,17 @@ is ~1.6°), `sun-glow` (0.25: strength of the halo around it; both only change t
 a big dusk sun), `rim-color`, `rim-intensity`, `rim-power`, `specular`
 (wet highlight strength, 0 = matte), `shininess`, `exposure`, `bloom` (T/NIL), `bloom-threshold`,
 `bloom-strength`, `vignette`. Colors are vec3s: `(v3-set! (env-fog-color *env*) 0.2 0.1 0.3)`.
+The toon look (SOUL DUEL): `toon` (NIL) T draws the sky with `fs_sky_toon` (the same gradient,
+palette-exact, a flat `moon-color` disc of `sun-size` with two flat halo rings of strength `sun-glow`),
+fills the frame's toon lanes and shades 2 point lights per pixel on toon stage draws (so
+`*pixel-lights*` and the auto-quality light steps do nothing); its knobs: `key-light` (vec3 in camera
+axes right / up / back, default (−0.45 0.62 0.40): lit ≈ 73 % of what the camera sees, and a cut never
+flips it), `toon-threshold` (0.5), `toon-band` (0.02, half-width of the soft terminator),
+`toon-gradient` (0.14) over `toon-gradient-height` (1.8 m), `toon-light-gain` (0.45, stage pools),
+`shade-value` (0.72), `shade-saturation` (1.25), `shade-hue` (8°), `shade-lift` (0.25, stage shadows
+toward the lit tone), `cin-rim` (vec3 sRGB, 0 = off: a hard back-rim on toon characters, for
+silhouette shots; with `toon-threshold` 1.5 the whole body is in its shadow tone) of width
+`cin-width` (0.16). NIL leaves every frame exactly as before (RAVEN).
 `*render-scale*` (offscreen resolution factor, 1.0).
 `*grade-desat*` (0.0): the composite pass mixes the final scene color toward its luma by this
 amount; 0 leaves the image exactly unchanged, 1 is greyscale (KO / flashback grading). The UI is
@@ -197,6 +221,14 @@ drawn after it and keeps its colors.
 and the right half shifted down by this much, split along the vertical centre line; the strips
 that uncovers are black (a "the sky is cut in two" beat, e.g. 24). 0 = the plain image. The UI is
 not split.
+
+**Screen punctuation** (docs/STYLE_STORM_DESIGN.md §3.6): `(grade-impact mode &key (threshold 0.4)
+(keep-sat 0.45) (keep-hue 10) (ink '(0.031 0.031 0.047)) (paper '(1 1 1)))` sets `*grade-impact*` and
+`*impact-params*`: 1 negative, 2 two-tone (INK below the luma THRESHOLD, PAPER above), 3 manga page
+(two-tone, but pixels with HSV saturation > KEEP-SAT and value > 0.25 keep their colour: fire and
+blood stay), 4 spot-keep (greyscale except saturated pixels within 25° of KEEP-HUE), 0 off. The
+composite then runs `RP_COMP_FX` (the plain composite otherwise); the game owns the duration. The UI is
+drawn after it and keeps its colours.
 
 ### Frame time, dynamic quality
 * `*perf-log*` (NIL): T logs `perf: first frame at N ms after page load` once and
@@ -211,7 +243,8 @@ not split.
 
 ### FX batch (particles, trails, decals)
 Drawn after meshes with depth test, no depth write, unlit, faded by fog. `mode` is `:add`
-(glow, default) or `:alpha`. Alpha fades with the soft UV falloff (round sprites, soft edges).
+(glow, default) or `:alpha`, or `:toon` (the toon batch, see "Toon effects" under FX: its colour lanes
+mean heat, seed, wobble, `toon-a`). Alpha fades with the soft UV falloff (round sprites, soft edges).
 Batches hold 16384 vertices each per frame; a call that does not fit is skipped and increments
 `*fx-dropped*` (a running total, also at the end of the stats line). In the additive batch a
 sprite's center is whitened (hot core); a **negative vertex alpha** means |alpha| without that
@@ -245,15 +278,21 @@ each face's brightness ±jitter (low-poly look).
 Primitives (sizes are full extents, meters):
 `(mb-box mb w h d &key colors)` — `colors` = 6 colors for faces +X −X +Y −Y +Z −Z (NIL = current);
 `(mb-bevel-box mb w h d bevel &key colors)`;
-`(mb-cylinder mb radius height &key segments top-radius caps top-color)` along Y;
+`(mb-cylinder mb radius height &key segments top-radius caps top-color smooth)` along Y;
 `(mb-cone mb radius height &key segments)`; `(mb-prism mb radius height sides)`;
-`(mb-sphere mb radius &key segments rings stretch)`; `(mb-capsule mb radius height &key segments rings)`
+`(mb-sphere mb radius &key segments rings stretch smooth)`; `(mb-capsule mb radius height &key segments rings)`
 (height includes the caps); `(mb-wedge mb w h d)` (full height at −Z, sloping to +Z);
 `(mb-plane mb w d &key nx nz color2)` (XZ grid facing +Y, checker `color2`);
 `(mb-blade mb &key length width thickness curve segments blade-color edge-color guard-color
 handle-color wrap-color blade hilt)` — katana, origin at the guard, blade toward +Y with the
 edge toward +Z, handle toward −Y (~0.28 m). `:hilt nil` / `:blade nil` build the parts
-separately (e.g. to draw the blade emissive);
+separately (e.g. to draw the blade emissive); `:smooth t` on a sphere / capsule / cylinder side gives
+analytic per-vertex normals (round shading; cylinder caps stay flat), otherwise every face is flat;
+`(mb-hull dst src &key start end k c color)` appends to builder DST the ink hull of SRC's triangles in
+floats [START, END) (default all; read `mb-fill` around a shape for its range): the same triangles in
+COLOR, each vertex's normal slot holding its extrusion E (vertices grouped by position, face normals
+recomputed; E = K·ŝ / max(min ŝ·n, C): a box corner gets (±1 ±1 ±1)·K; C 0.55 for boxes and round
+shapes, 0.8 caps the spike at cone / blade tips). Draw the built mesh with DRAW-MESH toon mode 3.
 `(mb-quad mb a b c d &optional color)` (CCW = front),
 `(mb-poly-out mb points &key color center)` (convex polygon, auto-oriented away from `center`).
 `(mb-tube mb x0 y0 z0 x1 y1 z1 r &key sides caps)` (prism around a segment: pipes, beams, cables),
@@ -347,7 +386,8 @@ Details, the mixer design and the autoplay handling: AUDIO.md.
 ## Animation (`anim.lisp`)
 
 A 21-joint humanoid rig (`+nj+`), poses and keyframe clips; GAMEPLAY.md "Rig & animation" has the
-conventions.
+conventions. `*key-ease*` (0): 1 eases between non-`:snap` keys with an ease-out cubic (poses snap into a
+key and settle; SOUL DUEL) instead of smoothstep.
 * `(ji :hand-r)` → joint index at compile time; `(joint-index name)`, `(joint-mask &rest names)`
   (bitmask). A pose is an f32vec of `+pose-n+` (68) floats; `+root+` is the root's offset in it.
 * `(defpose name (&key base) specs…)`, `(defclip name (dur &key loop base fps marks) keys…)`,
@@ -399,13 +439,26 @@ weapons) and build / draw through these:
   `(:wedge w h d)`; options `:at (right up fwd)` m, `:rot (yaw pitch roll)` deg, `:c` palette key or
   #xRRGGBB, `:seg n`, `:top r` (cylinder top), `:stretch m` (sphere → capsule), `:tag key` (its own
   mesh, hideable); `(:glow e shape [tag])` an emissive part drawn in its own colour.
-* `(build-parts spec palette width)` → values PARTS (simple-vector: a mesh or NIL per joint) and
+* `(build-parts spec palette width &key ink)` → values PARTS (simple-vector: a mesh or NIL per joint),
   EXTRAS (list of `#(joint mesh tint emissive tag)`: glows, tint = their colour; tagged solid parts,
-  tint NIL). WIDTH scales the girth (x and z). At load time (needs the GPU device).
-* `(draw-parts parts extras joints &key (hidden 0) hide recolor tint rim (emissive 0) (flash 0) (alpha 1))`
+  tint NIL) and HULLS (list of `#(joint mesh tag)`, the ink outlines; NIL without INK). WIDTH scales
+  the girth (x and z). INK (NIL = no hulls, RAVEN) = `((key . #xRRGGBB) … (t . #xRRGGBB))`, the ink
+  colour of a shape by its `:c` key, T for the rest; each solid shape's hull is built from its own
+  vertex range (`mb-hull`), K = the shape's `:ink k` option or by size (its middle extent: 0 = no hull
+  under 4 cm, e.g. strokes and eye shapes; 0.6 under 10 cm; else 1); glows get none. At load time
+  (needs the GPU device; the hulls allocate a few MB of scratch, so give each body its own `:load` step).
+* `*part-jitter*` (0.06): per-face random brightness of the built parts; `*part-smooth*` (NIL): T gives
+  `:sphere` and `:cyl` shapes smooth normals. Read at build time; a toon game sets 0 and T (SOUL DUEL's
+  body.lisp), RAVEN keeps the defaults.
+* `(draw-parts parts extras joints &key (hidden 0) hide recolor tint rim (emissive 0) (flash 0) (alpha 1) toon
+  hulls ink-tint (ink-px 1.8) (ink-push 0.012))`
   — HIDDEN a joint bitmask (`joint-mask`), HIDE a tag or list of tags, RECOLOR `(tag . rgb)` draws
   that tag's glows in RGB (RAVEN's red visor in Raven Form); TINT / RIM / EMISSIVE / FLASH / ALPHA
-  as DRAW-MESH, for the solid parts (glows keep their colour; ALPHA applies).
+  as DRAW-MESH, for the solid parts (glows keep their colour; ALPHA applies); TOON: DRAW-MESH's toon
+  lanes for every part. HULLS (BUILD-PARTS' third value) are queued after all solids (2 pipeline
+  switches) when TOON is set and ALPHA is 1: INK-PX pixels wide at 720 lines, tinted INK-TINT, pushed
+  INK-PUSH m behind (no line on the seams of abutting parts, thin or none where parts nearly touch).
+  0 bytes per call.
 * `(pal-rgb c palette)` → rgb list of a palette key `((key #xRRGGBB) …)`, a #xRRGGBB or a list.
 
 ## Time (`time.lisp`)
@@ -480,6 +533,35 @@ Real-time or sim-time effects that live in flat float pools (no entities, no con
 * **Ribbons, sectors** (`fx-ribbon`, `fx-sector`) and **debug outlines** (`draw-circle`, `draw-vol`):
   see the FX batch table and "Hit volumes".
 * `(edge-vignette r g b a frac)` — UI-space darkening toward the screen edges.
+* `*shake-hz*` (30.0): how often the shake offsets change; SOUL DUEL 12 (a drawn, stepped shake).
+
+### Toon effects (docs/STYLE_STORM_DESIGN.md §3; SOUL DUEL)
+Hard, inked shapes in one of 12 palettes (`+pal-fire+ +pal-ember+ +pal-reiatsu+ +pal-ink+ +pal-steel+
++pal-hit+ +pal-smoke+ +pal-dust+ +pal-ash+ +pal-soul+ +pal-blood+ +pal-black-smoke+`; core / body /
+shade / edge tones, the edge taking the value opposite to the body) in the `:toon` batch, drawn with
+depth write and alpha-to-coverage. A toon vertex's colour lanes: HEAT (ribbons: base 1 → tip 0.2),
+SEED (0..999; negative = an "along" shape whose tip erodes first; +1000 = the charcoal style), WOBBLE
+(0..0.5 silhouette boil), and `(toon-a pal k &optional fan)` = palette + presence K (0.98 whole … 0.01
+gone: matter perforates, energy erodes). Existing calls take `:mode :toon` (`fx-ribbon`, `fx-sector`,
+`fx-line`, `fx-billboard` — pushed 0.8 × size toward the eye); `fx-ring` takes `:palette`.
+* **Fx clock:** `(fx-clock-advance dt)` once per frame with the effects' dt (0 while paused);
+  `(fx-clock)` = its seconds (`*fx-clock*`); the shader steps on it (fire / energy on twos, matter on
+  threes). `(sage age rate)` quantises an age to the same drawings (RATE 1 / 2 / 3 ticks).
+* **Envelope:** `(fx-envelope (scale k flash phase) (age flash grow hold out :anticipate a) body…)`
+  binds a one-shot's drawn scale / presence / flash / phase (0 anticipation … 5 done) for AGE seconds,
+  the counts in 60 Hz frames.
+* **Shapes** (macros; float forms; 0 B): `(fx-disc x y z r wobble seed pal k &key push)`;
+  `(fx-star x y z r0 r1 n rot dirx diry wobble seed pal k &key (push 0.3))` — irregular hashed spikes,
+  the one nearest the screen direction (DIRX DIRY) long, R0 ≥ R1 = a regular N-gon;
+  `(fx-shard x y z dx dy dz len w wobble seed pal k &key push)` — a kite; `(fx-crescent x0 y0 z0 x1 y1 z1
+  bx by bz w profile wobble seed pal k &key push)` — a Bézier strip, PROFILE `:lens` or `:comet`;
+  `(fx-wall xs zs n height scallops wobble seed pal k)` — a flame wall on a ground polyline.
+* **Toon particles:** `+p-t-blob+` (puff / flame / droplet, a pushed billboard) and `+p-t-shard+` (a kite
+  along its velocity) — `(fx-emit +p-t-blob+ x y z vx vy vz life size grav wobble 0 0 pal)`; drawn
+  stepped (positions per drawing; a newborn particle shows from the next drawing).
+* **UI punctuation** (0 B, DRAWING = a drawing number that reshuffles them):
+  `(ui-focus-lines cx cy n rmin rmax col drawing)`, `(ui-speed-lines dir n col drawing)`,
+  `(ui-ink-splash cx cy r seed col drawing)` (a hashed blob, spikes and droplets, grows over drawing 0).
 
 ## ECS (`ecs.lisp`)
 

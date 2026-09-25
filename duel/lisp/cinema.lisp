@@ -34,6 +34,7 @@ flash, give the actors back (the presses buffered during it forgotten: mashing t
 cinematic fires nothing)."
   (setf *caption* nil)
   (fill *ui-flash* 0f0)
+  (screen-fx-clear)
   (stage-env)
   (when c
     (dolist (e (list (cine-a c) (cine-v c)))
@@ -81,6 +82,74 @@ away, H high, looking at his body LOOK metres up, AHEAD metres in front of him."
 (defun actor-point (e up)
   "X Y Z (values) of fighter E's body, UP metres above the feet."
   (let ((p (pos-of e))) (values (aref p 0) (+ (aref p 1) up) (aref p 2))))
+
+;;; ---------------------------------------------------------------- screen punctuation
+;;; Impact frames (the engine's *GRADE-IMPACT* composite modes), focus lines, the Burst's back-rim and
+;;; silence beats, each for a number of 60 Hz frames of effect time (paused = frozen). A request made
+;;; during a frame's steps is drawn by that frame at least: SCREEN-FX-UPDATE runs down the previous
+;;; frame's time at the start of the next one (main.lisp GAME-FRAME).
+(declaim (type f32vec *screen-fx* *fl-scr*))
+(defvar *fl-scr* (make-f32 3) "FOCUS-LINES' projected centre.")
+(defvar *screen-fx* (make-f32 6)
+  "Effect seconds left: [0] impact frame [1] focus lines [2] silence [3] back-rim; [4 5] the focus lines'
+centre (window px; < 0 = the screen centre).")
+(defparameter *impact-presets*
+  '((:negative 1)
+    (:two-tone 2 :threshold 0.4)                                            ; white / ink
+    (:ink 2 :threshold 0.4 :ink (1 1 1) :paper (0.031 0.031 0.047))         ; ink / white (on a white card)
+    (:red 2 :threshold 0.4 :paper (0.816 0.063 0.11))                       ; red / ink
+    (:fire 2 :threshold 0.4 :paper (1.0 0.353 0.118))                       ; fire / ink
+    (:manga 3 :threshold 0.4 :keep-sat 0.45)                                ; two-tone, the spot colour kept
+    (:spot 4 :keep-sat 0.45 :keep-hue 10.0))                                ; grey but the ember hue (Bankai)
+  "IMPACT-FRAME kinds -> GRADE-IMPACT mode and parameters (docs/STYLE_STORM_DESIGN.md §3.6 presets).")
+
+(defun impact-frame (kind frames)
+  "Screen punctuation KIND (a key of *IMPACT-PRESETS*: :negative, :two-tone, :ink, :red, :fire, :manga,
+:spot) for FRAMES 60 Hz frames (at least one drawn frame). A later request replaces a running one."
+  (apply #'grade-impact (rest (or (assoc kind *impact-presets*) (error "no impact preset ~s" kind))))
+  (setf (aref *screen-fx* 0) (f32 (/ frames 60.0))))
+
+(defun focus-lines (frames &optional x y z)
+  "Ink focus lines for FRAMES 60 Hz frames, converging on world point (X Y Z) (default the screen centre)."
+  (let ((f *screen-fx*) (v *fl-scr*))
+    (setf (aref f 1) (f32 (/ frames 60.0)) (aref f 4) -1f0 (aref f 5) -1f0)
+    (when (and x (world-to-screen v (f32 x) (f32 y) (f32 z)))
+      (setf (aref f 4) (aref v 0) (aref f 5) (aref v 1)))))
+
+(defun silence (frames)
+  "A silence beat (TYBW: the sound drops out before the impact): the music down to 0.1 of its level and
+the sfx bus muted for FRAMES 60 Hz frames (no engine change: the mixer's bus gains)."
+  (setf (aref *screen-fx* 2) (f32 (/ frames 60.0)))
+  (set-music-volume 0.055)
+  (ffi:c-inline () () :void "au_set_volume(1,0.0f)" :one-liner t))
+
+(defun back-rim (frames)
+  "Both fighters silhouetted (all in their shadow tone) with a hard white back-rim for FRAMES (the Burst)."
+  (setf (aref *screen-fx* 3) (f32 (/ frames 60.0)) (env-toon-threshold *env*) 1.5)
+  (v3-set! (env-cin-rim *env*) 0.91f0 0.93f0 0.96f0))
+
+(defun screen-fx-update (dt)
+  "Run the screen punctuation down by DT effect seconds (0 while paused); end what ran out."
+  (let ((f *screen-fx*))
+    (flet ((run (i) (let ((was (aref f i))) (setf (aref f i) (f32 (max 0.0 (- was dt)))) (and (> was 0) (<= (aref f i) 0)))))
+      (when (run 0) (grade-impact 0))
+      (run 1)
+      (when (run 2) (set-music-volume 0.55) (ffi:c-inline () () :void "au_set_volume(1,1.0f)" :one-liner t))
+      (when (run 3) (setf (env-toon-threshold *env*) 0.5) (v3-set! (env-cin-rim *env*) 0f0 0f0 0f0)))))
+
+(defun screen-fx-clear ()
+  "End every screen punctuation now (a new match, the end of a cinematic)."
+  (let ((f *screen-fx*))
+    (when (> (aref f 2) 0) (set-music-volume 0.55) (ffi:c-inline () () :void "au_set_volume(1,1.0f)" :one-liner t))
+    (fill f 0f0) (grade-impact 0) (setf (env-toon-threshold *env*) 0.5) (v3-set! (env-cin-rim *env*) 0f0 0f0 0f0)))
+
+(defun draw-screen-fx (w h)
+  "The UI part of the punctuation: focus lines (ink, reshuffled every drawing on twos)."
+  (let ((f *screen-fx*))
+    (when (> (aref f 1) 0)
+      (let ((cx (if (< (aref f 4) 0) (* 0.5 w) (aref f 4))) (cy (if (< (aref f 5) 0) (* 0.5 h) (aref f 5))))
+        (ui-focus-lines (f32 cx) (f32 cy) 56 (f32 (* 0.16 h)) (f32 (* 1.4 (max w h))) '(0.03 0.03 0.05 0.92)
+                        (f->i (* 12f0 (fx-clock))))))))
 
 ;;; ---------------------------------------------------------------- generic scripts
 (defcine soul-break-cine (a v :len 96 :hold 44)

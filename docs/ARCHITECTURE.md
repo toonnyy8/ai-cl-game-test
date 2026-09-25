@@ -65,7 +65,12 @@ dist/NAME/{index.html,index.js,index.wasm}   (shell: engine/web/shell.html, titl
 * `node tools/run.mjs dist/NAME --secs 8 --shot out.png [--script steps.json]`
   runs it in headless Chrome (SwiftShader WebGPU), prints the console, replays
   scripted key/mouse input (and `{"at":t,"size":"800x450"}` resizes), takes screenshots.
-  Exit code 1 on JS exceptions. WebGPU validation errors print as `WebGPU: …` console errors.
+  Exit code 1 on JS exceptions and on WebGPU validation errors (`WebGPU: …` console errors) or a
+  failed pipeline. `--fixed-dt 16.666667` runs on a virtual clock: every animation frame advances
+  `performance.now` / `Date.now` by exactly that, the next frame waits until the GPU finished the last
+  one, and script times / `--secs` are virtual seconds (the page is held at each step while it is
+  applied, e.g. a screenshot). The same binary and script then give byte-identical screenshots (the
+  frozen stills of the restyle gates, `tests/style-gates.py`).
 * `tools/pkgcheck.sh DIR` reads (does not compile) the engine and a target's sources and lists
   target symbols that shadow ENGINE internals, i.e. probable missing exports, top-level
   `DEF*` forms in the target that name an ENGINE export (a silent redefinition; see below), and
@@ -92,17 +97,19 @@ All Lisp sources of a target are **one compilation unit** (concatenated). Conseq
 ## Render pipeline (one command buffer per frame, `r_frame` in engine/c/render.c)
 
 ```
-copy pass     draw records (storage buffer) · fx alpha/add vertices · UI vertices   (one writeBuffer each)
-scene pass    MSAA 4x RGBA8 + D32 at window × *render-scale*: sky → opaque → transparent → fx alpha → fx add
+copy pass     draw records (storage buffer) · fx alpha/add/toon vertices · UI vertices   (one writeBuffer each)
+scene pass    MSAA 4x RGBA8 + D32 at window × *render-scale*: sky → opaque → transparent → fx toon → fx alpha → fx add
+              (ENV-TOON: the toon sky; opaque draws with DRAW-MESH :TOON lanes use the toon pipelines)
               └ resolves into the scene texture
 bloom         bright (1/2) → blur H/V (1/2) → blur H/V (1/4)          5 small full-screen passes
-swapchain     composite (scene + bloom + vignette, desaturate *grade-desat*, split *grade-split*) → UI batch (font atlas, nearest)
+swapchain     composite (scene + bloom + vignette, desaturate *grade-desat*, split *grade-split*;
+              RP_COMP_FX instead while *grade-impact* ≠ 0) → UI batch (font atlas, nearest)
 ```
 * Per-frame uniforms (WGSL `Frame`: matrices, fog, ambient, moon, rim, 8 lights) are pushed once to
   vertex and fragment slot 0 (free `w` lanes carry extras: `moon_dir.w` = `env-sun-size`,
   `moon_col.w` = `env-sun-glow`; the composite's vec4 is bloom, vignette, desaturate, split).
-  **Per-draw data** (model, tint, emissive/flash/specular, rim rgb + env-rim scale) is not
-  pushed per draw: `*dq*` records are laid out exactly as WGSL `struct Draw` (112 B,
+  **Per-draw data** (model, tint, emissive/flash/specular, rim rgb + env-rim scale, toon lanes) is not
+  pushed per draw: `*dq*` records are laid out exactly as WGSL `struct Draw` (128 B,
   `engine/shaders/lit-io.wgsl`) and uploaded as one storage buffer; each draw is
   `SDL_DrawGPUPrimitives(count, 1, first_vertex, record_index)` and the vertex shader reads
   `draws[instance_index]`. Measured with 258 draws (engine demo, RTX 4090): storage buffer 0.03 ms
@@ -112,6 +119,28 @@ swapchain     composite (scene + bloom + vignette, desaturate *grade-desat*, spl
   draws rarely rebind a vertex buffer. Mirrored transforms use a clockwise-front pipeline variant.
 * Clip-space depth is WebGPU's [0,1]: `m4-perspective!` produces it directly.
   Render-target UVs run top to bottom (`uv.y = 0.5 - ndc.y/2`).
+* **Toon path** (SOUL DUEL's restyle, docs/STYLE_STORM_DESIGN.md §2): separate entry points and
+  pipelines, so RAVEN's are untouched (`lit.vert/frag.wgsl`, `sky.frag.wgsl` byte-identical; only the
+  shared structs grew: `Frame` 136 → 160 floats with the toon lanes key / toon / shd / scr / cin / clk,
+  `Draw` + `toon`). `r_draw_queue` sends an opaque record with `toon.x` ≥ 1 to `RP_TOON` / `RP_TOON_CW`
+  (`toon.vert.wgsl` + `toon.frag.wgsl`, slots 11–12; the designed shadow tone is computed per vertex,
+  as a face has one colour), `r_frame` draws `RP_SKY_TOON` (`sky-toon.frag.wgsl`, slot 13) while
+  `*rp*`[10] (ENV-TOON) is set. With ENV-TOON NIL every toon lane is 0 and the frame is RAVEN's.
+  **Ink hulls** (§2.4): `toon.x` 3 selects `RP_HULL` / `RP_HULL_CW` (slots 14–15: `vs_hull` in
+  toon.vert.wgsl, `fs_ink` in toon.frag.wgsl, cull codes 3 / 4 = FRONT with CCW / CW front faces in
+  `r_make_pipe`). A hull mesh (`mb-hull`) is the shape's own triangles with an extrusion vector in the
+  normal slot and the ink colour as the vertex colour; the vertex shader pushes it out by a screen-constant
+  width and then back along the view ray, so only the back of the shell shows past the silhouette.
+* **Toon effects** (§3, Phase 2): a third fx batch (`*fx-toon*`, `with-fx-verts … :toon`) drawn by
+  `RP_FXT` (slot 16, `fx-toon.vert/frag.wgsl`) right after the transparent meshes, with depth test and
+  write and **alpha-to-coverage** instead of blending (`r_make_pipe` blend code 3; A2C only with MSAA —
+  the shader discards below `F.clk.y` = 0.5 otherwise). Its 9 vertex floats are position, shape uv,
+  heat, seed, wobble and palette + presence; the 12 palettes are a WGSL constant (`fx-toon-pal.wgsl`),
+  the noise steps on the fx clock (`F.clk.x`, 24 Hz ticks, 0 while paused). **Screen punctuation**:
+  while `*grade-impact*` ≠ 0, `r_frame` composites with `RP_COMP_FX` (slot 17,
+  `composite-fx.frag.wgsl`: the RP_COMP image, then negative / two-tone / manga page / spot-keep, 4
+  vec4 of fragment uniforms) instead of `RP_COMP`, which stays byte-identical. `r_frame` took 12
+  arguments (`c-inline` `#a` `#b`), `*rp*` 21 floats.
 * Shaders are files in `engine/shaders/` (`*.vert.wgsl`, `*.frag.wgsl`; plain `*.wgsl` are shared
   pieces pulled in with a `// #include "file.wgsl"` line). The `WGSL` macro (render.lisp) reads
   them at compile time, resolves includes and strips comments; editing a shader needs a rebuild.
@@ -124,10 +153,17 @@ swapchain     composite (scene + bloom + vignette, desaturate *grade-desat*, spl
    with a full GC after each step: `ENGINE-INIT` (window, GPU, UI), the game's `:load` steps
    (RAVEN: world ×2, bodies), opening the audio device, one step per `DEFSOUND`, then the game's
    `:start`. The page's loading bar follows `Module.engineLoading(pct)`. Heap after startup
-   (console `startup: heap …`): RAVEN EDGE 87 MB, SOUL DUEL 103 MB, examples/hello 23 MB; stepwise loading brought
-   RAVEN's peak down from 199 MB (wasm memory 237 → 128 MB). Most of RAVEN's remaining heap is ECL
-   reading the module's literal data inside `ecl_init_module`, where GC must stay off. (The
-   ECS/rules restructure added 1.8 MB there, which crossed a Boehm heap growth step: 71 → 87 MB.)
+   (console `startup: heap …`): RAVEN EDGE and SOUL DUEL 57 MB each since Phase 2 of the restyle
+   (were 103 MB); stepwise loading brought RAVEN's peak down from 199 MB (wasm memory 237 → 128 MB).
+   Most of the remaining heap is garbage made inside `ecl_init_module`, where GC must stay off, and
+   Boehm grows the heap in 16 MB steps, so a little more load-time garbage can cost a whole step
+   (the ECS/rules restructure: 71 → 87 MB; the restyle's Phase 2: 103 → 119 MB). The largest part
+   was ECL's per-definition bookkeeping: every DEFUN / DEFMACRO ran `EXT:ANNOTATE` (source location,
+   lambda list) and `SET-DOCUMENTATION` at load time, ~35 KB of garbage each (a documentation hash
+   table rebuilt as it grows), 27 of the engine alone's 43 MB. `tools/build.lisp` now compiles with
+   `ext:*register-with-pde-hook*` and `si::*keep-documentation*` NIL (no annotations, no runtime
+   docstrings — nothing reads them; the docstrings stay in the source): examples/hello's load garbage
+   42.6 → 15.5 MB, SOUL DUEL's heap 119 → 57 MB.
 3. `emscripten_set_main_loop` calls `ENGINE::%FRAME` every animation frame: platform poll,
    `BEGIN-FRAME`, queued `Module._debug_cmd(n)` commands (→ the game's `:debug`), the game's
    `:frame`, `END-FRAME`. Returning `NIL` stops the loop. Any unhandled Lisp condition unwinds to C
@@ -292,7 +328,7 @@ run to run). Its cinematics run inside the fixed step through the engine's direc
 | lisp/body.lisp        | DEFBODY (engine shape spec + rig proportions), DEFWEAPON, DRAW-BODY, shared poses / reaction clips |
 | lisp/kit.lisp         | characters as data: DEFMOVE, DEFKIT, the roster             |
 | lisp/cinema.lisp      | the director's hooks, shot helpers, the generic cinematics (intro, K.O., soul break, time) |
-| lisp/stage.lisp       | the burning plaza: meshes, env look, fires, cracks          |
+| lisp/stage.lisp       | the ruins at night: meshes, the toon env look, ash, cracks  |
 | lisp/vfx.lisp         | fire / aura / hit / UI effects (built from FX-RIBBON, FX-SECTOR, UI-BITMAP) |
 | lisp/yama-art.lisp, ken-art.lisp | the two characters' bodies, weapons and clips (DEFSTRIKE) |
 | lisp/yama.lisp, ken.lisp | their moves, forms, hooks and cinematics                 |
@@ -369,6 +405,12 @@ and grep the function for `ecl_make_single_float`/`ecl_times`/`ecl_divide`.
 * **Fixnums are 30-bit on wasm32.** An LCG like `(* seed 1103515245)` goes to bignums and conses
   on every call. Do it in C with `long long` (the engine's `rnd01` / `sim-rnd01` are C xorshifts;
   `rnd-state` returns the 32-bit word, a bignum above 2^29, so it is not for per-frame use).
+
+* **An unused float binding boxes.** In a DEFUN-FAST, a `let*` variable declared single-float that a
+  code path never reads is kept as a boxed object (8 B per call): `%st-guard` consed 8 B a frame for a
+  per-drawing hash it did not use. Bind rarely used fields with `symbol-macrolet` (`with-stamp`,
+  duel/lisp/vfx.lisp) — and give such macros' hidden names a unique prefix: a `%s` in `with-stamp`
+  was captured by `%spr`'s own `%s` binding (ECL warned: ROW-MAJOR-AREF on a SINGLE-FLOAT).
 
 ### ECL: compiling and packages
 * **ECL doesn't warn about undefined functions.** A typo, a deleted helper or an unexported engine
@@ -467,3 +509,17 @@ and grep the function for `ecl_make_single_float`/`ecl_times`/`ecl_divide`.
   the browser's autoplay lock, change that flag in run.mjs to
   `--autoplay-policy=document-user-activation-required`.
 * Never `pkill -f` a pattern that also matches your own shell command line (it kills the shell).
+* **Deterministic stills.** A wall-clock headless run is not repeatable frame for frame. `run.mjs
+  --fixed-dt` fixes the time base (see Build pipeline) and three pitfalls found building it: SDL skips
+  drawing a frame whose swapchain texture is not ready (SwiftShader falls behind), so the canvas shows
+  an older frame than the state (the virtual clock waits for the GPU); headless windows can lose focus,
+  and both games pause on focus loss (focus emulation is on); a fixed debugging port could be taken by
+  a leftover Chrome, which then served its own page (Chrome now picks the port).
+* Phase 2 of the restyle adds `tests/style-2-shots.py` (every universal toon effect at 3 moments from
+  duel-vfx scenes 18–31, the impact-frame modes, a gallery sheet, in-game stills) and
+  `tests/style-2-checks.py` (`ticks`: toon shapes change only on new drawings; `pause`: 0 px change
+  over a second of pause; `manga`: mode 3 keeps the spot pixels; `spot`: hits are mono).
+* The restyle harness: `tests/style-gates.py` (G1 RAVEN frozen stills + ECL C diff + cons, G2 CvC
+  hash lines vs `tests/style-cvc-ref.txt`, G3 perf A/B / heap / startup, WGSL smoke, the frozen duel
+  still), `tests/style-shots.py` (the user-review stills, before / after), `tools/toon_check.py`
+  (value steps, chroma, spot share, sky / ground, palette tones of a still).

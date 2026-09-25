@@ -8,3 +8,7 @@
 /tests/shots/duel-view-*
 /tests/shots/duel-vfx-*
 /tests/scripts/pt-*
+# restyle review stills (tests/style-shots.py, tests/style-2-shots.py regenerate them); keep the sheets
+/tests/shots/style-*
+!/tests/shots/style-1a-proportions-*.png
+!/tests/shots/style-2-gallery.png

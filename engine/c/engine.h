@@ -57,7 +57,8 @@ int r_make_pipe(int slot, const char *vsrc, const char *ventry, const char *fsrc
 int r_mesh_new(const float *v, int n);       /* returns the mesh id, -1 when out of buffers */
 int r_font_new(const unsigned char *px, int w, int h);
 int r_frame(const float *fu, const float *rp, const float *dq, int n,
-            const float *fxa, int nfa, const float *fxb, int nfb, const float *ui, int nui);
+            const float *fxa, int nfa, const float *fxb, int nfb, const float *ui, int nui, const float *fxt, int nft);
+int r_sample_count(void);                    /* scene MSAA samples in use (1 or 4) */
 int r_tri_count(void);
 int r_timing(int autoscale, float budget, float smin, int log, int draws, int tris, float scale, int plights);
 

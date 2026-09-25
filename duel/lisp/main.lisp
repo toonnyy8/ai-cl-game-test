@@ -59,19 +59,77 @@ match leaves the running state), or 120 steps in turbo (debug fast-forward)."
 (defvar *base* (make-f32 3))
 (defvar *super-rim* (rim-vec #xFFFFFF 3.0) "SP start: the rim-light super flash.")
 (defparameter *evolution-rgb* '(1.0 0.85 0.3))
-(defparameter *kikon-rgb* '(1.0 0.15 0.2) "The Kikon rush's aura (the HUD's Kikon red).")
+(defvar *no-parts* (make-array +nj+ :initial-element nil) "DRAW-PARTS with no solids: the hulls alone (ink afterimage).")
+(defparameter *ghost-ink* '(0.35 0.35 0.4) "Ink afterimage tint: the keyline grey of black parts darkened to ink.")
+
+(defun-fast smear-joints! (joints cx cy cz dx dz)
+  "The squash / stretch smear drawing: premultiply every joint matrix by T(c) S T(-c), S = x1.5 along the
+ground direction (DX DZ) (unit) and x0.7 across it, about the body centre C (docs/STYLE_STORM_DESIGN.md §2.6).
+The hulls follow (they are drawn from the same joints)."
+  (declare (type f32vec joints) (single-float cx cy cz dx dz))
+  (let* ((a 0.7f0) (b 0.8f0))                          ; S = a I + b d d^T
+    (declare (single-float a b))
+    (dotimes (j +nj+)
+      (let* ((o (* j 16)))
+        (declare (fixnum o))
+        (dotimes (col 4)
+          (let* ((k (+ o (* 4 col))) (tr (= col 3))
+                 (vx (if tr (- (aref joints k) cx) (aref joints k))) (vy (if tr (- (aref joints (+ k 1)) cy) (aref joints (+ k 1))))
+                 (vz (if tr (- (aref joints (+ k 2)) cz) (aref joints (+ k 2))))
+                 (dd (* b (+ (* dx vx) (* dz vz)))))
+            (declare (fixnum k) (single-float vx vy vz dd))
+            (setf (aref joints k) (+ (* a vx) (* dd dx) (if tr cx 0f0))
+                  (aref joints (+ k 1)) (+ (* a vy) (if tr cy 0f0))
+                  (aref joints (+ k 2)) (+ (* a vz) (* dd dz) (if tr cz 0f0)))))))
+    nil))
+
+(defun hold-pose (e frames)
+  "Hold fighter E's drawn pose for FRAMES (60 Hz, effect time; visual only: the sim runs on)."
+  (let ((m (model e))) (setf (model-hold m) (f32 (max (model-hold m) (/ frames 60.0))))))
+
+(defun smear (e dx dz)
+  "One squash / stretch smear drawing of fighter E along the ground direction (DX DZ)."
+  (let* ((m (model e)) (l (max 1e-4 (sqrt (+ (* dx dx) (* dz dz))))) (v (model-smear-dir m)))
+    (setf (model-smear m) (/ 1.0 60.0) (aref v 0) (f32 (/ dx l)) (aref v 1) (f32 (/ dz l)))))
+
+(defun start-ghost (e)
+  "The Hoho afterimage: the pose E vanishes in, smeared sideways (the squash / stretch drawing), drawn
+white (drawing 1) then as a solid ink silhouette (2)."
+  (let* ((m (model e)) (g (model-ghost m)) (p (pos-of e)) (yaw (yaw-of e)))
+    (replace g (model-joints m))
+    (smear-joints! g (aref p 0) (+ (aref p 1) 1f0) (aref p 2) (fwd-z yaw) (- (fwd-x yaw)))
+    (setf (model-ghost-age m) 0f0)))
+
+(defun draw-ghost (e dt)
+  "Draw fighter E's Hoho afterimage while it lasts (2 drawings white, 2 ink: twos on the fx clock)."
+  (let* ((m (model e)) (age (model-ghost-age m)) (b (model-body m)))
+    (when (>= age 0.0)
+      (let ((q (sage age 2f0)))
+        (cond ((< q (/ 2 24.0)) (draw-body b (model-ghost m) 0.0 0.0 0.0 0.0 :hide (model-hide m) :tint (model-tint m) :flash 1.0 :shadow nil))
+              ((< q (/ 4 24.0)) (draw-parts *no-parts* nil (model-ghost m) :toon *toon-body* :hulls (body-hulls b) :ink-tint *ghost-ink*))
+              (t (setf age -2.0))))
+      (setf (model-ghost-age m) (if (< age -1.0) -1f0 (f32 (+ age dt)))))))
 
 (defun draw-fighter (e rdt)
-  "Pose and queue fighter E: body, weapon (or the planted one), blade look, aura, trail."
+  "Pose and queue fighter E: body, weapon (or the planted one), blade look, aura, trail. RDT = this
+frame's effect seconds (0 while paused)."
   (let* ((m (model e)) (f (fighter e)) (kit (fighter-kit f)) (b (model-body m)) (p (pos-of e)) (yaw (yaw-of e))
          (mv (and (eq (fighter-state f) :move) (fighter-move f)))
          (planted (and mv (mv-planted mv) (eq (fighter-phase f) :main)))
          (weapon (if planted nil (model-weapon m))) (x (aref p 0)) (y (aref p 1)) (z (aref p 2)))
     (setf (model-flash m) (f32 (max 0.0 (- (model-flash m) rdt))) (model-super m) (f32 (max 0.0 (- (model-super m) rdt))))
-    (pose-fk! (model-joints m) (anim-eval (model-anim m)) x y z yaw (body-scale b) (body-hunch b) (body-props b))
-    (draw-body b (model-joints m) x y z yaw :weapon weapon :hide (model-hide m) :tint (model-tint m)
-                                          :rim (if (> (model-super m) 0) *super-rim* (model-rim m))
-                                          :flash (if (> (model-flash m) 0) 0.45 0.0) :alpha (model-alpha m))
+    (pose-fk! (model-joints m) (if (> (model-hold m) 0) (anim-pose (model-anim m)) (anim-eval (model-anim m)))
+              x y z yaw (body-scale b) (body-hunch b) (body-props b))
+    (setf (model-hold m) (f32 (max 0.0 (- (model-hold m) rdt))))
+    (when (> (model-smear m) 0)
+      (let ((v (model-smear-dir m)))
+        (smear-joints! (model-joints m) (f32 x) (+ (f32 y) 1f0) (f32 z) (aref v 0) (aref v 1)))
+      (when (> rdt 0) (setf (model-smear m) 0f0)))
+    (draw-ghost e rdt)
+    (when (>= (model-alpha m) 0.999)                    ; a vanishing Hoho body is not drawn: its afterimage is
+      (draw-body b (model-joints m) x y z yaw :weapon weapon :hide (model-hide m) :tint (model-tint m)
+                                            :rim (if (> (model-super m) 0) *super-rim* (model-rim m))
+                                            :flash (if (> (model-flash m) 0) 0.45 0.0)))
     (when (and planted (model-weapon m))
       (draw-planted-weapon (model-weapon m) (+ x (* 0.7 (fwd-x yaw))) (+ z (* 0.7 (fwd-z yaw))) yaw))
     (when (and weapon (> (model-alpha m) 0.5))
@@ -92,7 +150,7 @@ match leaves the running state), or 120 steps in turbo (debug fast-forward)."
             (trail-decay tr))
         (when (>= n 2) (fx-trail tr n 1.0 0.75 0.5 0.8))))
     ;; auras: the form's, EVOLUTION ready, the Breaker (brightens over the strike startup), the Kikon rush
-    (let ((age (elapsed-time)))
+    (let ((age (fx-clock)))
       (when (kit-aura kit) (vfx-aura x y z (* 1.1 (body-hurt-h b)) (kit-aura kit) age rdt :rgb (and (eq (kit-aura kit) :reiatsu) '(1.0 0.9 0.3))))
       (when (gauges-evolution (gauges e)) (vfx-aura x y z (body-hurt-h b) :evolution age rdt :rgb *evolution-rgb* :k 0.5))
       (when (and mv (eq (mv-kind mv) :breaker) (not (eq (fighter-phase f) :main)))
@@ -100,15 +158,13 @@ match leaves the running state), or 120 steps in turbo (debug fast-forward)."
         (vfx-breaker-ring x z age))
       (when (and mv (eq (mv-kind mv) :breaker) (eq (fighter-phase f) :main) (< (fighter-sf f) (mv-s mv)))
         (vfx-aura x y z (body-hurt-h b) :breaker age rdt :k (+ 1.0 (/ (fighter-sf f) (float (mv-s mv))))))
-      (when (and mv (eq (mv-kind mv) :kikon) (eq (fighter-state f) :move)    ; the Kikon rush: red
+      (when (and mv (eq (mv-kind mv) :kikon) (eq (fighter-state f) :move)    ; the Kikon rush: BLOOD tongues + ring
                  (or (not (eq (fighter-phase f) :main)) (< (fighter-sf f) (mv-s mv))))
-        ;; ponytail: the faint EVOLUTION aura tinted red + a red light; a Kikon aura look belongs in vfx.lisp
-        (vfx-aura x y z (body-hurt-h b) :evolution age rdt :rgb *kikon-rgb* :k 1.0)
-        (vfx-aura x y z (* 1.2 (body-hurt-h b)) :evolution (+ age 0.5) rdt :rgb *kikon-rgb* :k 1.0)
-        (add-point-light x (+ y 1.0) z 1.0 0.15 0.2 4.5 1.4 6)))
+        (vfx-aura x y z (body-hurt-h b) :kikon age rdt :k 1.0)))
     (unless (and mv (eq (mv-kind mv) :breaker)) (stop-hum e))))
 
 (defun draw-scene (rdt)
+  "Queue the 3D scene. RDT = this frame's effect seconds (0 while paused: nothing moves, no particle is born)."
   (unless (svref *no-draw* 2) (stage-draw rdt))
   (unless *cine* (setf *grade-desat* 0.0))              ; a cinematic's script owns the grade
   (dolist (e (list *p1* *p2*))
@@ -117,7 +173,10 @@ match leaves the running state), or 120 steps in turbo (debug fast-forward)."
       (unless (svref *no-draw* 1) (draw-fighter e rdt))))
   (unless (svref *no-draw* 3) (hazard-draw rdt) (cine-draw))
   (when *hitboxes* (draw-hitboxes))
-  (fx-update (if *paused* 0f0 (f32 rdt)))
+  (stamps-draw (f32 rdt))
+  (when (> (aref *burst-flag* 0) 0)                     ; a Burst ring fired: its beat, drawn this frame
+    (setf (aref *burst-flag* 0) 0f0) (impact-frame :negative 1) (back-rim 3))
+  (fx-update (f32 rdt))
   (fx-draw-particles)
   (fx-rings-update (f32 rdt))
   (lights-flush))
@@ -138,7 +197,9 @@ of the screen (the stats take the left third); select: both fighters from the fr
          (camera-look-at mx 1.6 (+ mz 6.8) mx 1.15 mz)))))
 
 (defun game-frame (rdt)
-  "One frame (the engine runs it between BEGIN-FRAME and END-FRAME; RDT = real seconds)."
+  "One frame (the engine runs it between BEGIN-FRAME and END-FRAME; RDT = real seconds). The effects run
+on FDT: RDT, or 0 while paused (the fx clock, particles, stamps, shake, camera and HUD animation stop)."
+  (screen-fx-update (if *paused* 0.0 rdt))                 ; last frame's impact frames / lines / silence run out
   (flow-update rdt)
   (gate-update)
   (perf-mark)                                               ; stats: "sim" = the fixed steps
@@ -147,14 +208,16 @@ of the screen (the stats take the left third); select: both fighters from the fr
       (progn (setf *step-acc* 0.0)
              (unless (or *paused* (not (entity-alive-p *p1*)))       ; menus: fighters idle on real time
                (dolist (e (list *p1* *p2*)) (anim-advance (model-anim (model e)) (f32 rdt))))))
-  (if (member *flow* '(:intro :battle :finish))
-      (duel-camera *p1* *p2* rdt)
-      (menu-camera))
-  (shake-update (f32 rdt))
-  (update-camera)
-  (perf-mark)                                               ; "queue" = scene + HUD
-  (unless *turbo* (draw-scene rdt))
-  (unless (svref *no-draw* 0) (hud-draw)))
+  (let ((fdt (if *paused* 0.0 rdt)))
+    (fx-clock-advance (f32 fdt))
+    (if (member *flow* '(:intro :battle :finish))
+        (duel-camera *p1* *p2* fdt)
+        (menu-camera))
+    (shake-update (f32 fdt))
+    (update-camera)
+    (perf-mark)                                             ; "queue" = scene + HUD
+    (unless *turbo* (draw-scene fdt))
+    (unless (svref *no-draw* 0) (hud-draw))))
 
 (defun stats-tail ()
   (if (entity-alive-p *p1*)
@@ -165,12 +228,13 @@ of the screen (the stats take the left third); select: both fighters from the fr
 
 (defun start-game ()
   "After loading: the dusk plaza, keyboard-friendly pointer, the title screen."
-  (setf *pointer-lock* nil)
+  (setf *pointer-lock* nil
+        *key-ease* 1 *shake-hz* 12f0)                       ; pose-to-pose easing, a drawn (stepped) shake
   (stage-env)
   (go-title))
 
 (run-game :title "SOUL DUEL"
-          :load (list #'bodies-init #'stage-init)
+          :load (append (list #'bodies-init) (body-load-steps) (list #'stage-init))
           :start #'start-game
           :frame #'game-frame
           :debug #'debug-command

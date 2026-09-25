@@ -24,6 +24,7 @@
 ;;;;   2322+k   Kikon rush test: human P1 Yamamoto 5 m from an idle Kenpachi who (k 0) holds guard at full
 ;;;;            Reishi, (1) stands red (Reishi 200), (2) holds guard red; (3) as 1 but 7 m apart in 0.1x
 ;;;;            slow motion for 4 s (screenshots of the dash); the script presses O
+;;;;   2326     force a clash now (Breaker vs Breaker: YK 3 m apart, the CLASH event; screenshots)
 ;;;;   2600+k   *RED-THRESHOLD* = k % (pacing the seed gate without a rebuild)
 ;;;;   2400 god (both fighters' Reishi is topped back up to 400 every frame; Kikon still lands)   2500+k human P1 vs an
 ;;;;            idle CPU (k: 0 Yama vs Ken, 1 Ken vs Yama, 2 Yama vs Yama, 3 Ken vs Ken)
@@ -265,6 +266,7 @@ presses (J down every other step: the switched-off brain still writes its held b
         ((= c 2320) (probe-mash))
         ((= c 2321) (force-burst))
         ((<= 2322 c 2325) (rush-test (- c 2322)))
+        ((= c 2326) (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 3.0) (clash! *p1* *p2*))
         ((<= 2300 c 2399) (force-special (- c 2300)))
         ((= c 2400) (setf *god* (not *god*)))
         ((<= 2600 c 2699) (setf *red-threshold* (/ (- c 2600) 100.0)))

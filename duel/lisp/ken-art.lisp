@@ -7,12 +7,22 @@
 (in-package :duel)
 
 ;;; ---------------------------------------------------------------- body
-(defbody :kenpachi (:scale 1.13 :width 1.18 :hunch 0 :hurt-r 0.45 :hurt-h 2.0
-                    :palette ((:skin #xC4885C) (:skin-d #xA87048) (:black #x141418) (:white #xD3CFC5)
-                              (:hair #x111116) (:patch #x070707) (:scar #x8A3A2C) (:teeth #xF2EEE2)
-                              (:eye #x141414) (:obi #xC2BEB2) (:tabi #xC6C2B6) (:sole #x3A3028))
+;; Proportions (user review 1: realistic, not chibi; TYBW's ~8 heads): a small narrow head and hair (the
+;; girth factors), a broad but not boxy chest, long legs and arms (:props, the limb shapes as long), big hands.
+(defbody :kenpachi (:scale 1.07 :width 1.18 :hunch 0 :hurt-r 0.45 :hurt-h 2.0
+                    :girth ((:neck 0.85 1.3 0.85) (:chest 0.8 1.0 0.9) (:spine 0.8 1.0 0.9) (:pelvis 0.82 1.0 0.9)
+                            (:shoulder-r 0.85 0.85 0.85) (:shoulder-l 0.85 0.85 0.85)
+                            (:upper-arm-r 0.95 1.1 0.95) (:upper-arm-l 0.95 1.1 0.95)
+                            (:lower-arm-r 0.95 1.1 0.95) (:lower-arm-l 0.95 1.1 0.95)
+                            (:hand-r 1.2 1.25 1.2) (:hand-l 1.2 1.25 1.2)
+                            (:thigh-r 0.95 1.1 0.95) (:thigh-l 0.95 1.1 0.95) (:shin-r 0.95 1.1 0.95) (:shin-l 0.95 1.1 0.95))
+                    ;; v4 notan palette (docs/STYLE_STORM_DESIGN.md §2.5): black robe and solid black hair,
+                    ;; the tattered haori V4 white, muted skin
+                    :palette ((:skin #xCFA48C) (:skin-d #xB08C78) (:black #x16161E) (:white #xE8E8E4)
+                              (:hair #x0C0C12) (:patch #x070707) (:scar #x5A3430) (:teeth #xECECE8)
+                              (:eye #x0C0C12) (:fold #xD8DCE4) (:obi #xC8CCD6) (:tabi #xE8E8E4) (:sole #x262833))
                     :rim (#xFFE070 0.2)
-                    :props (:shoulders 1.3 :arms 1.06))  ; broad chest: the bare arms hang clear of the haori
+                    :props (:shoulders 1.08 :arms 1.1 :legs 1.1))  ; the bare arms hang clear of the haori
   (:pelvis (:box 0.34 0.18 0.24 :c :black)
            (:box 0.35 0.07 0.25 :at (0 0.06 0) :c :obi)
            ;; the tattered haori hem: strips of different lengths
@@ -25,69 +35,85 @@
            (:box 0.02 0.46 0.12 :at (-0.215 -0.18 0.06) :rot (0 0 -4) :c :white)
            (:box 0.1 0.64 0.02 :at (0.17 -0.27 0.135) :rot (0 4 0) :c :white)
            (:box 0.1 0.52 0.02 :at (-0.17 -0.21 0.135) :rot (0 4 0) :c :white))
-  (:spine (:box 0.32 0.24 0.21 :at (0 0.11 0) :c :black)
-          (:box 0.4 0.25 0.03 :at (0 0.11 -0.12) :c :white)
-          (:box 0.03 0.25 0.24 :at (0.2 0.11 0) :c :white)
-          (:box 0.03 0.25 0.24 :at (-0.2 0.11 0) :c :white)
-          (:box 0.1 0.25 0.03 :at (0.16 0.11 0.12) :c :white)
-          (:box 0.1 0.25 0.03 :at (-0.16 0.11 0.12) :c :white))
-  (:chest (:bevel 0.44 0.3 0.25 0.03 :at (0 0.11 0) :c :black)
-          (:box 0.13 0.2 0.02 :at (0 0.15 0.124) :c :skin)                               ; open collar
-          (:box 0.1 0.08 0.02 :at (0 0.07 0.124) :rot (0 0 45) :c :skin)
-          (:box 0.48 0.32 0.03 :at (0 0.11 -0.135) :c :white)
-          (:box 0.5 0.03 0.28 :at (0 0.265 0) :c :white)
-          (:box 0.03 0.3 0.27 :at (0.235 0.1 0) :c :white)
-          (:box 0.03 0.3 0.27 :at (-0.235 0.1 0) :c :white)
-          (:box 0.12 0.32 0.03 :at (0.18 0.11 0.135) :c :white)
-          (:box 0.12 0.32 0.03 :at (-0.18 0.11 0.135) :c :white))
+  ;; the haori over the torso: one rounded white shell, the black robe and the bare chest at its open front
+  (:spine (:bevel 0.44 0.25 0.27 0.04 :at (0 0.11 -0.005) :c :white)
+          (:box 0.14 0.25 0.02 :at (0 0.11 0.155) :c :black))
+  (:chest (:bevel 0.5 0.33 0.29 0.05 :at (0 0.105 -0.005) :c :white)
+          (:box 0.15 0.3 0.02 :at (0 0.1 0.156) :c :skin)                                ; the bare chest in the open collar ...
+          (:box 0.05 0.33 0.02 :at (0.045 0.1 0.163) :rot (0 0 -14) :c :black)          ; ... between the robe's lapels
+          (:box 0.05 0.33 0.02 :at (-0.045 0.1 0.163) :rot (0 0 14) :c :black))
   (:neck (:cyl 0.075 0.1 :at (0 0.04 0) :c :skin))
-  (:head (:bevel 0.18 0.26 0.2 0.03 :at (0 0.12 0) :c :skin)
-         (:wedge 0.04 0.05 0.045 :at (0 0.11 0.11) :rot (180 0 0) :c :skin)
-         (:box 0.05 0.02 0.012 :at (-0.045 0.145 0.102) :c :eye)
-         (:box 0.018 0.2 0.014 :at (-0.047 0.13 0.103) :rot (0 0 6) :c :scar)          ; scar, left side
-         (:glow 0.5 (:box 0.1 0.028 0.012 :at (0 0.058 0.106) :c :teeth))                ; the grin
-         (:box 0.11 0.01 0.01 :at (0 0.045 0.105) :c :eye)
-         (:bevel 0.075 0.065 0.03 0.01 :at (0.045 0.145 0.106) :c :patch :tag :eyepatch) ; eyepatch (right)
-         (:box 0.205 0.014 0.22 :at (0 0.185 0) :rot (0 0 -18) :c :patch :tag :eyepatch)
-         ;; long loose spiky hair
-         (:bevel 0.22 0.1 0.23 0.03 :at (0 0.24 -0.01) :c :hair)
-         (:box 0.26 0.46 0.07 :at (0 0.0 -0.13) :rot (0 -8 0) :c :hair)
-         (:cone 0.055 0.36 :at (0.115 0.05 -0.01) :rot (0 172 -14) :seg 4 :c :hair)      ; side locks
-         (:cone 0.055 0.36 :at (-0.115 0.05 -0.01) :rot (0 172 14) :seg 4 :c :hair)
-         (:cone 0.045 0.26 :at (0.13 0.12 -0.07) :rot (0 160 -35) :seg 4 :c :hair)
-         (:cone 0.045 0.26 :at (-0.13 0.12 -0.07) :rot (0 160 35) :seg 4 :c :hair)
-         (:cone 0.05 0.24 :at (0.15 -0.2 -0.1) :rot (0 160 -20) :seg 4 :c :hair)
-         (:cone 0.05 0.26 :at (-0.15 -0.22 -0.1) :rot (0 160 20) :seg 4 :c :hair)
-         (:cone 0.05 0.22 :at (0.06 -0.3 -0.14) :rot (0 170 -8) :seg 4 :c :hair)
-         (:cone 0.05 0.24 :at (-0.06 -0.32 -0.14) :rot (0 170 8) :seg 4 :c :hair)
-         (:cone 0.05 0.24 :at (0.16 0.14 -0.08) :rot (0 140 -35) :seg 4 :c :hair)
-         (:cone 0.05 0.24 :at (-0.16 0.14 -0.08) :rot (0 140 35) :seg 4 :c :hair)
-         (:cone 0.05 0.26 :at (0.07 0.24 -0.14) :rot (0 115 -15) :seg 4 :c :hair)
-         (:cone 0.05 0.26 :at (-0.07 0.24 -0.14) :rot (0 115 15) :seg 4 :c :hair)
-         (:cone 0.045 0.2 :at (0 0.3 -0.1) :rot (0 100 0) :seg 4 :c :hair)
-         (:cone 0.03 0.12 :at (0.04 0.2 0.11) :rot (0 160 -10) :seg 4 :c :hair)         ; fringe
-         (:cone 0.03 0.12 :at (-0.05 0.2 0.11) :rot (0 160 15) :seg 4 :c :hair))
+  ;; head in metres (not girth-scaled; x and z sizes x the body :width 1.18): a skull sphere under the hair,
+  ;; a flat-fronted face (front at z 0.073) carrying the flat face shapes (tag :face-neutral: expressions swap them)
+  (:head (:sphere 0.061 :stretch 0.04 :at (0 0.13 -0.012) :seg 10 :c :skin)                ; skull
+         (:bevel 0.1 0.15 0.076 0.018 :at (0 0.085 0.028) :c :skin)                         ; face, jaw
+         (:bevel 0.07 0.03 0.06 0.01 :at (0 0.012 0.036) :c :skin)                          ; chin
+         (:box 0.016 0.04 0.025 :at (0.064 0.105 0.0) :c :skin) (:box 0.016 0.04 0.025 :at (-0.064 0.105 0.0) :c :skin)
+         (:wedge 0.024 0.042 0.03 :at (0 0.097 0.086) :rot (180 0 0) :c :skin)            ; nose
+         ;; the left eye (his left = -x): narrow, small pupil, a heavy slanted lid and brow
+         (:box 0.024 0.011 0.004 :at (-0.028 0.118 0.075) :c :teeth :tag :face-neutral)
+         (:box 0.008 0.011 0.005 :at (-0.024 0.118 0.0755) :c :eye :tag :face-neutral)
+         (:box 0.035 0.006 0.005 :at (-0.028 0.125 0.0756) :rot (0 0 -10) :c :eye :tag :face-neutral)
+         (:box 0.04 0.009 0.006 :at (-0.03 0.141 0.0757) :rot (0 0 -16) :c :eye :tag :face-neutral)
+         ;; the right eye (under the eyepatch; seen when Nozarashi tears it off)
+         (:box 0.024 0.011 0.004 :at (0.028 0.118 0.075) :c :teeth :tag :face-neutral)
+         (:box 0.008 0.011 0.005 :at (0.024 0.118 0.0755) :c :eye :tag :face-neutral)
+         (:box 0.035 0.006 0.005 :at (0.028 0.125 0.0756) :rot (0 0 10) :c :eye :tag :face-neutral)
+         (:box 0.04 0.009 0.006 :at (0.03 0.141 0.0757) :rot (0 0 16) :c :eye :tag :face-neutral)
+         (:box 0.006 0.12 0.004 :at (-0.037 0.108 0.0765) :rot (0 0 8) :c :scar)                ; scar through the left eye
+         ;; the grin: a wide dark mouth, a row of teeth, corners pulled up
+         (:box 0.06 0.02 0.004 :at (0 0.043 0.074) :c :eye :tag :face-neutral)
+         (:box 0.054 0.009 0.004 :at (0 0.047 0.0746) :c :teeth :tag :face-neutral)
+         (:box 0.014 0.006 0.004 :at (0.034 0.05 0.0746) :rot (0 0 32) :c :eye :tag :face-neutral)
+         (:box 0.014 0.006 0.004 :at (-0.034 0.05 0.0746) :rot (0 0 -32) :c :eye :tag :face-neutral)
+         (:bevel 0.042 0.04 0.01 0.006 :at (0.028 0.122 0.078) :c :patch :tag :eyepatch)   ; eyepatch (right)
+         (:box 0.122 0.01 0.14 :at (0 0.15 -0.004) :rot (0 0 -18) :c :patch :tag :eyepatch)
+         ;; long loose spiky hair: a cap over the skull, a back sheet, locks and spikes
+         (:sphere 0.0695 :stretch 0.03 :at (0 0.15 -0.024) :seg 10 :c :hair)
+         (:box 0.182 0.414 0.056 :at (0 0 -0.104) :rot (0 -8 0) :c :hair)
+         (:cone 0.0413 0.324 :at (0.0805 0.045 -0.008) :rot (0 172 -14) :seg 4 :c :hair)      ; side locks
+         (:cone 0.0413 0.324 :at (-0.0805 0.045 -0.008) :rot (0 172 14) :seg 4 :c :hair)
+         (:cone 0.0338 0.234 :at (0.091 0.108 -0.056) :rot (0 160 -35) :seg 4 :c :hair)
+         (:cone 0.0338 0.234 :at (-0.091 0.108 -0.056) :rot (0 160 35) :seg 4 :c :hair)
+         (:cone 0.0375 0.216 :at (0.105 -0.18 -0.08) :rot (0 160 -20) :seg 4 :c :hair)
+         (:cone 0.0375 0.234 :at (-0.105 -0.198 -0.08) :rot (0 160 20) :seg 4 :c :hair)
+         (:cone 0.0375 0.198 :at (0.042 -0.27 -0.112) :rot (0 170 -8) :seg 4 :c :hair)
+         (:cone 0.0375 0.216 :at (-0.042 -0.288 -0.112) :rot (0 170 8) :seg 4 :c :hair)
+         (:cone 0.0375 0.216 :at (0.112 0.126 -0.064) :rot (0 140 -35) :seg 4 :c :hair)
+         (:cone 0.0375 0.216 :at (-0.112 0.126 -0.064) :rot (0 140 35) :seg 4 :c :hair)
+         (:cone 0.0375 0.234 :at (0.049 0.216 -0.112) :rot (0 115 -15) :seg 4 :c :hair)
+         (:cone 0.0375 0.234 :at (-0.049 0.216 -0.112) :rot (0 115 15) :seg 4 :c :hair)
+         (:cone 0.0225 0.108 :at (0.028 0.19 0.085) :rot (0 160 -10) :seg 4 :c :hair)         ; fringe
+         (:cone 0.0225 0.108 :at (-0.035 0.19 0.085) :rot (0 160 15) :seg 4 :c :hair)
+         ;; white highlight strokes on the black hair (Kubo's white-on-black)
+         (:box 0.006 0.05 0.004 :at (0.028 0.215 0.036) :rot (0 -48 -12) :c :fold)
+         (:box 0.006 0.04 0.004 :at (-0.034 0.21 0.034) :rot (0 -48 16) :c :fold)
+         (:box 0.006 0.14 0.004 :at (0.035 -0.02 -0.136) :rot (0 -8 3) :c :fold)
+         (:box 0.006 0.11 0.004 :at (-0.045 -0.05 -0.136) :rot (0 -8 -4) :c :fold))
   (:shoulder-r (:sphere 0.09 :at (0.06 -0.03 0) :c :skin)
                (:box 0.1 0.04 0.27 :at (-0.01 0.05 0) :rot (0 0 -10) :c :white))
   (:shoulder-l (:sphere 0.09 :at (-0.06 -0.03 0) :c :skin)
                (:box 0.1 0.04 0.27 :at (0.01 0.05 0) :rot (0 0 10) :c :white))
-  (:upper-arm-r (:bevel 0.12 0.3 0.12 0.025 :at (0 -0.15 0) :c :skin) (:sphere 0.065 :at (0 -0.13 0.035) :c :skin-d))
-  (:upper-arm-l (:bevel 0.12 0.3 0.12 0.025 :at (0 -0.15 0) :c :skin) (:sphere 0.065 :at (0 -0.13 0.035) :c :skin-d))
-  (:lower-arm-r (:bevel 0.1 0.27 0.105 0.02 :at (0 -0.125 0) :c :skin))
-  (:lower-arm-l (:bevel 0.1 0.27 0.105 0.02 :at (0 -0.125 0) :c :skin))
-  (:hand-r (:box 0.085 0.1 0.09 :at (0 -0.045 0) :c :skin))
-  (:hand-l (:box 0.085 0.1 0.09 :at (0 -0.045 0) :c :skin))
-  (:thigh-r (:box 0.19 0.46 0.21 :at (0 -0.22 0) :c :black))
-  (:thigh-l (:box 0.19 0.46 0.21 :at (0 -0.22 0) :c :black))
-  (:shin-r (:box 0.2 0.34 0.22 :at (0 -0.15 0) :c :black) (:box 0.085 0.12 0.09 :at (0 -0.37 0) :c :tabi))
-  (:shin-l (:box 0.2 0.34 0.22 :at (0 -0.15 0) :c :black) (:box 0.085 0.12 0.09 :at (0 -0.37 0) :c :tabi))
-  (:foot-r (:box 0.09 0.06 0.23 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.25 :at (0 -0.055 0.06) :c :sole))
-  (:foot-l (:box 0.09 0.06 0.23 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.25 :at (0 -0.055 0.06) :c :sole)))
+  (:upper-arm-r (:cyl 0.05 0.3 :top 0.056 :seg 8 :at (0 -0.15 0) :c :skin) (:sphere 0.05 :at (0 -0.13 0.028) :c :skin-d))
+  (:upper-arm-l (:cyl 0.05 0.3 :top 0.056 :seg 8 :at (0 -0.15 0) :c :skin) (:sphere 0.05 :at (0 -0.13 0.028) :c :skin-d))
+  (:lower-arm-r (:cyl 0.036 0.27 :top 0.048 :seg 8 :at (0 -0.125 0) :c :skin) (:sphere 0.045 :at (0 0 0) :c :skin))
+  (:lower-arm-l (:cyl 0.036 0.27 :top 0.048 :seg 8 :at (0 -0.125 0) :c :skin) (:sphere 0.045 :at (0 0 0) :c :skin))
+  (:hand-r (:bevel 0.075 0.1 0.08 0.02 :at (0 -0.045 0) :c :skin))
+  (:hand-l (:bevel 0.075 0.1 0.08 0.02 :at (0 -0.045 0) :c :skin))
+  (:thigh-r (:cyl 0.092 0.46 :top 0.088 :seg 10 :at (0 -0.22 0) :c :black))
+  (:thigh-l (:cyl 0.092 0.46 :top 0.088 :seg 10 :at (0 -0.22 0) :c :black))
+  (:shin-r (:cyl 0.11 0.34 :top 0.094 :seg 10 :at (0 -0.15 0) :c :black)
+          (:box 0.005 0.2 0.004 :at (0.03 -0.16 0.125) :rot (0 -4 -5) :c :fold) (:box 0.085 0.12 0.09 :at (0 -0.37 0) :c :tabi))
+  (:shin-l (:cyl 0.11 0.34 :top 0.094 :seg 10 :at (0 -0.15 0) :c :black)
+          (:box 0.005 0.22 0.004 :at (-0.02 -0.15 0.125) :rot (0 -4 4) :c :fold) (:box 0.085 0.12 0.09 :at (0 -0.37 0) :c :tabi))
+  (:foot-r (:bevel 0.09 0.06 0.23 0.02 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.25 :at (0 -0.055 0.06) :c :sole))
+  (:foot-l (:bevel 0.09 0.06 0.23 0.02 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.25 :at (0 -0.055 0.06) :c :sole)))
 
 ;;; ---------------------------------------------------------------- weapons
 (defweapon :ken-katana (:length 1.08)                  ; battered, notched, chipped
-  (:solid (mb-blade mb :length 1.02 :width 0.036 :curve 0.018 :blade-color '(0.55 0.57 0.6) :edge-color '(0.78 0.8 0.82)
-                       :guard-color '(0.25 0.24 0.22) :handle-color '(0.1 0.09 0.09) :wrap-color '(0.3 0.28 0.26))
+  (:solid (mb-blade mb :width 0.036 :guard-color '(0.25 0.24 0.22) :handle-color '(0.1 0.09 0.09) :wrap-color '(0.3 0.28 0.26) :blade nil))
+  (:solid :ink 0 (mb-blade mb :length 1.02 :width 0.036 :curve 0.018 :blade-color '(0.55 0.57 0.6) :edge-color '(0.78 0.8 0.82)
+                              :hilt nil)
           (mbc mb #x2A2A2E)                              ; chips: dark notches bitten out of the edge
           (loop for (y d) in '((0.22 0.012) (0.37 0.008) (0.55 0.014) (0.71 0.009) (0.86 0.011))
                 do (with-xform (mb (xform :y y :z (- 0.016 (* 0.018 (/ y 1.02) (/ y 1.02))) :roll 0.6))
@@ -108,16 +134,16 @@
                 do (with-xform (mb (xform :y y :z 0.3 :roll 0.6)) (mb-box mb 0.03 d d)))
           (mbc mb #x3A3E42)                              ; the dark spine
           (with-xform (mb (xform :y 0.82 :z -0.085)) (mb-box mb 0.05 1.46 0.03))
-          (mbc mb #xC9A04A)                              ; brass cap on top, brass collar
+          (mbc mb #xA8A290)                              ; dull brass cap on top, collar (colour is spot-only)
           (with-xform (mb (xform :y 1.58 :z 0.1)) (mb-bevel-box mb 0.07 0.16 0.38 0.02))
           (with-xform (mb (xform :y 0.08 :z 0.07)) (mb-bevel-box mb 0.07 0.1 0.34 0.015))
-          (mbc mb #xD9CFB0)                              ; long cloth-wrapped handle
+          (mbc mb #xD8D6CC)                              ; long cloth-wrapped handle
           (with-xform (mb (xform :y -0.32)) (mb-box mb 0.05 0.72 0.05))
-          (mbc mb #x7A6A50)
+          (mbc mb #x5A5650)
           (loop for i below 7 do (with-xform (mb (xform :y (- -0.04 (* i 0.1)) :roll 0.785)) (mb-box mb 0.035 0.035 0.058)))
-          (mbc mb #xC9A04A)
+          (mbc mb #xA8A290)
           (with-xform (mb (xform :y -0.7)) (mb-bevel-box mb 0.065 0.05 0.065 0.01))
-          (mbc mb #x3E8E3A)                              ; green tassel off the pommel
+          (mbc mb #x3A4A3E)                              ; the tassel, a dark green-grey
           (with-xform (mb (xform :y -0.76)) (mb-box mb 0.04 0.06 0.04))
           (with-xform (mb (xform :y -0.9 :z -0.02 :pitch 0.2)) (mb-box mb 0.05 0.22 0.03))))
 

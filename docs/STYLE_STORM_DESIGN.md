@@ -13,17 +13,16 @@
 >
 > **主要決定**
 > 1. **舞台**：瀞靈廷廢墟，無風的深夜，灰燼像雪一樣落下。
->    - 天空是冷黑，後方有一輪巨大的白月。
->    - 廢墟是純黑剪影；廣場是月光照白的石地，只畫幾道墨線裂縫。
+>    - 天空是冷暗的藍灰，後方有一輪巨大的月亮。
+>    - 廢墟是冷灰剪影；廣場是月光下的中灰石地，只畫幾道墨線裂縫。天空、廢墟、地面收在同一段冷暗的中間明度（使用者在審查 1 決定：不要上黑下白）。
 >    - 遠方燃燒的建築拿掉，暖色只留給特效。
 >    - 選深夜而不選暴風雨，是因為 notan 最乾淨、畫面最不雜，灰燼又和山本燒盡一切的故事呼應。
 > 2. **明度系統**：全畫面 5 階明度（V0 黑～V4 白）。
 >    - 世界的彩度 ≤ 0.12。
->    - 地面在視線下方占大半畫面，是「白紙」：黑衣在白地上跳出來。
->    - 天空與廢墟是黑：白羽織在黑上跳出來。
+>    - 世界（天空、廢墟、地面）是一整片平衡的冷暗中間調；畫面上最強的對比留給角色：黑衣對白羽織（審查 1）。
 > 3. **點色規則**：全遊戲只有三個點色，一般對戰時暖色像素 ≤ 畫面 15%。
 >    - 山本的火（橘紅）；
->    - 劍八的靈壓黃，只在覺醒（野晒）與大招時出現，平常的靈壓畫成黑墨火焰加白邊；
+>    - 劍八的靈壓黃，所有形態都是黃色（使用者在審查 1 決定保留）；
 >    - 血紅，只給鬼魂（Kikon）、反擊、Breaker、魂之焰。
 >
 >    其餘特效（命中、防禦、Burst、魂魄、步法）一律黑白，最多帶一點冷鋼藍。
@@ -45,7 +44,7 @@
 >
 > **使用者已決定**：美術方向（久保 notan）、範圍（Phase 0–6 全做）、毛筆字型（Yuji Syuku，OFL，離線轉成向量資料並附授權聲明）、跳過參考截圖（各階段完成後由使用者看截圖審查）、鏡頭拉近 20%。
 >
-> **還需要使用者的**：各審查點的截圖審查（Phase 1a、3、4、6 結束時）。另外兩個預設可以推翻：舞台選深夜（不是暴風雨）、劍八平常的靈壓畫成黑墨（黃色留給覺醒）。
+> **還需要使用者的**：各審查點的截圖審查（Phase 1a、3、4、6 結束時）。審查 1 已決定：維持深夜（不下暴風雨）、劍八靈壓一律黃色、世界明度要平衡（不要上黑下白）、角色改成寫實身材比例（不要 Q 版）。
 
 Companion to `STYLE_STORM_RESEARCH.md` (same folder; §11 covers Kubo Tite, the TYBW anime and
 Rebirth of Souls). Source tags such as [V: S13] or [V: K3] refer to its tables; [I] = inferred.
@@ -56,8 +55,9 @@ Code references are `file:line` in this repository.
 - rounds 2 and 3: the art and engineering critiques of v2;
 - round 4: **the user's decisions on v3**.
 
-Nothing in this document has been implemented yet. v4 changes the **art direction** (§A, §2.5,
-§3.3, §4, §5, §6). The engine architecture of v3 (§1–§3.2, §3.4–§3.5) stands unchanged.
+v4 changes the **art direction** (§A, §2.5, §3.3, §4, §5, §6). The engine architecture of v3
+(§1–§3.2, §3.4–§3.5) stands unchanged. **Phases 0, 1a, 1b and 2 are implemented** (2026-09-25); §14 logs
+what was built, where it differs from this text, and the measured gates.
 
 ---
 
@@ -76,28 +76,29 @@ notan**:
 
 | Step | sRGB | Used for |
 |---|---|---|
-| V0 black | #08080C – #14151C | ruins, sky, black robes (lit and shadow), ink |
-| V1 dark | #262833 – #3A3E4C | robe fold shade, ruin edges, grey keylines |
-| V2 mid | #7A8090 | ground shadow, smoke shade |
-| V3 light | #BCC1CC | ground lit (moonlit stone) |
-| V4 white | #EEEEEA – #FFFFFF | haori lit, moon, effect cores, flashes, paper cards |
+| V0 black | #08080C – #14151C | black robes (lit and shadow), ink, cast shadows |
+| V1 dark | #262833 – #4A5062 | sky (#1A1E2A zenith – #363B4C horizon), ruins (#343846 – #484D60), robe fold shade, grey keylines |
+| V2 mid | #6A7182 – #7A8090 | ground (moonlit stone #767D8E), smoke shade |
+| V3 light | #BCC1CC | effect shades, steel |
+| V4 white | #EEEEEA – #FFFFFF | haori lit, effect cores, flashes, paper cards (the moon is a V3 #D6DAE0) |
 
 Rules:
 - World saturation ≤ 0.12, with hue in the cold band 210–240° (grey-blue).
 - Skin is the only warm non-spot colour, muted (S ≤ 0.3).
-- **Notan interlock.** The gameplay camera looks down. The pale ground fills most of the frame
-  below the horizon (at least 55 %), and the dark sky and ruins fill the rest. **Black robes read
-  against the white ground; white haori and heads read against the black sky.** Each fighter is
-  always half black-on-white and half white-on-black, which is Kubo's figure/ground (research
-  §11). It also satisfies the art critic's trait 0 (figure/ground contrast) by *value* instead of
-  hue.
+- **Figure against one balanced world** (user review 1, §13 round 5; replaces v4's "notan
+  interlock" of a black top and a white bottom). The world (sky, ruins, ground) sits in **one cold
+  mid-dark value range** (V1–V2, luma about 40–125): the sky and ruins are lifted to V1 and the
+  plaza brought down to V2, so the frame no longer splits into a black half and a white half. The
+  strongest contrast on screen belongs to the **fighters**: black robes (V0) and white haori (V4)
+  both read against the mid-grey ground and the V1 sky. It still satisfies trait 0 (figure/ground)
+  by value.
 
 ### A.2 Spot colour: exactly three hues
 
 | Spot | Hue | Owner | When |
 |---|---|---|---|
 | **FIRE** | red-orange 15–25° | Yamamoto | always in Shikai/Hellfire (it is his identity). In Bankai, **all fire vanishes** except a thin ember-red line |
-| **REIATSU** | yellow 48–52° | Kenpachi | **only** when awakened (Nozarashi) and in his cinematics. His base-form reiatsu is drawn in **black ink with white edges** (manga reiatsu) |
+| **REIATSU** | yellow 48–52° | Kenpachi | **in every form** (user review 1: keep his reiatsu yellow): his aura, Breaker, cleaves and cinematics. Nozarashi makes it bigger and brighter, not a different colour |
 | **BLOOD** | red 355° | universal | Kikon, counter hits, Breaker, the soul flame, the hanko, red accents on inversion frames |
 
 Everything else is monochrome, with at most a desaturated **cold steel** tint (S ≤ 0.3, 210°):
@@ -117,7 +118,7 @@ during the owner's big moves.
 | hull ink near-black everywhere | near-black on light parts; **cold grey keyline #4A5062** on black parts (dark on the pale ground, a separation line on the black sky) |
 | coloured background drop | **pure black or pure white card** (+ ink splash) |
 | impact modes: negative, two-tone | + **"manga page"** (two-tone with spot colour kept) |
-| REIATSU yellow always | ink reiatsu in base form; yellow when awakened |
+| REIATSU yellow always | ~~ink reiatsu in base form~~ → yellow in every form again (user review 1) |
 | palette of 12 colours | 12 slots remapped to mono + 3 spots (§3.3) |
 
 ---
@@ -126,7 +127,7 @@ during the owner's big moves.
 
 | # | Decision | Why |
 |---|---|---|
-| D1 | **Kubo notan world**: Seireitei ruins at night, cold black sky with a huge white moon, black ruin silhouettes, a moonlit pale plaza with a few ink cracks, falling white ash. No burning buildings (§6) | the user's direction (§13 round 4). Night is chosen over a storm: storm rain adds grey noise and blurs notan, while still air with falling ash keeps the frame graphic. The ash ties to Yamamoto's burnt world. Kubo uses weather and sky for emotion [V2: K2] |
+| D1 | **Kubo world, balanced**: Seireitei ruins at night, a cold dark sky with a huge moon, cold-grey ruin silhouettes, a mid-grey moonlit plaza with a few ink cracks, falling white ash, all in one cold mid-dark value range so the fighters carry the strongest contrast (user review 1). No burning buildings (§6) | the user's direction (§13 round 4). Night is chosen over a storm: storm rain adds grey noise and blurs notan, while still air with falling ash keeps the frame graphic. The ash ties to Yamamoto's burnt world. Kubo uses weather and sky for emotion [V2: K2] |
 | D2 | **Toon characters through `fs_toon`** (separate entry and pipelines; `fs_main` byte-identical): 2 tones, HSV-designed cold shadows, the CC2 vertical gradient, no point lights or rim in gameplay | unchanged from v3 (measured +16 % RAVEN cost otherwise) |
 | D3 | **Ink hull**, 1.8 px, facing taper; **cold grey keyline on black parts**; red-brown ink on skin | trait #1; notan separation on black-on-black |
 | D4 | **`fx-toon` drawn shapes** with the v3 fixes; the palettes are remapped to **mono + 3 spot colours** (§3.3) | "drawn, not simulated" [V: S7], in Kubo's colour economy |
@@ -533,8 +534,8 @@ one more branch in `fs_fx_toon`, uniform per shape.
 |---|---|---|---|---|---|---|---|
 | 0 | FIRE | #FFF3DC | #FF5A1E | #B81A0C | #1A0402 (1.6), lower third | 2 hybrid | **spot** |
 | 1 | EMBER / HELLFIRE | #FFB08A | #E8301A | #6A0A06 | #0A0404 (1.4) | 2 | **spot** |
-| 2 | REIATSU (awakened only) | #FFFFFF | #FFD83A | #C88A0A | #1A1206 (1.0) | 0 | **spot** |
-| 3 | INK REIATSU (Kenpachi base form, Breaker aura) | #FFFFFF (core line) | #0C0C12 | #262833 | #FFFFFF (1.2) | 0 | mono |
+| 2 | REIATSU (Kenpachi, every form) | #FFFFFF | #FFD83A | #C88A0A | #1A1206 (1.0) | 0 | **spot** |
+| 3 | INK (ink reiatsu of other uses: black splashes on cards, the Breaker's dark backing) | #FFFFFF (core line) | #0C0C12 | #262833 | #FFFFFF (1.2) | 0 | mono |
 | 4 | STEEL (Burst, guard) | #FFFFFF | #C8D4E4 | #7A8CA8 | #101018 (1.0) | 0 | cold tint |
 | 5 | HIT | #FFFFFF | #FFFFFF | #C8CCD6 | #101018 (1.2) | 0 | mono |
 | 6 | SMOKE (pale) | #F2F2EE | #C4C8D0 | #7A8090 | #101018 (1.6) | 1 matter | mono |
@@ -657,9 +658,9 @@ covers every row.
 
 **v4 palette mapping** (§3.3), applied to every row below:
 - fire → FIRE (0); Hellfire and Bankai embers → EMBER (1);
-- Kenpachi's reiatsu → **INK REIATSU (3) in base form**, and REIATSU yellow (2) only when awakened
-  (Nozarashi) and in his cinematics;
-- Breaker → INK REIATSU with a BLOOD edge;
+- Kenpachi's reiatsu → **REIATSU yellow (2) in every form** (user review 1); Nozarashi makes it
+  larger and brighter;
+- Breaker → the owner's colour (FIRE / REIATSU) over an INK (3) backing, with a BLOOD edge;
 - Burst and guard → STEEL (4); hits and clash → HIT (5); Konpaku → SOUL glass (9);
 - Kikon, counter and soul flame → BLOOD (10);
 - smoke backing → BLACK SMOKE (11) on the pale ground, or SMOKE (6) against the dark sky.
@@ -680,8 +681,8 @@ covers every row.
 ### 4.2 Kenpachi
 | Effect | Redesign | AC |
 |---|---|---|
-| ▲ **Reiatsu aura** | **base form: INK REIATSU**: 7 black brush-flame tongues **behind** the body (radius 0.5 m, wider than the silhouette; `front-dim` lets only the edges wrap in front) with white edges and a white core line, height flicker per drawing (twos, seed boil) + white flecks rising. **Awakened (Nozarashi)**: the same shapes in REIATSU yellow with a dark hairline + 4 inner white tongues + a flat yellow ring + one faint T光 billboard | base form has no colour pixels; awakened, yellow is the only spot hue on Kenpachi; the body stays readable inside the aura |
-| ▲ **Cleaves** | `fx-crescent :comet` from hilt to tip, 2 d. Base form: INK REIATSU (a black comet with a white leading edge). Nozarashi: white leading edge, yellow trailing edge, dark hairline | the smear reads as a comet, not a banana |
+| ▲ **Reiatsu aura** | **every form: REIATSU yellow** (user review 1): 7 brush-flame tongues **behind** the body (radius 0.5 m, wider than the silhouette; `front-dim` lets only the edges wrap in front) with a dark hairline and a white core line, height flicker per drawing (twos, seed boil) + white flecks rising. **Awakened (Nozarashi)**: taller and denser + 4 inner white tongues + a flat yellow ring + one faint T光 billboard | yellow is the only spot hue on Kenpachi; the body stays readable inside the aura; neutral-still spot share ≤ 15 % with the base aura |
+| ▲ **Cleaves** | `fx-crescent :comet` from hilt to tip, 2 d: white leading edge, yellow trailing edge, dark hairline (every form) | the smear reads as a comet, not a banana |
 | Nozarashi awakening | pillar rises on **ones**, then holds; 2 flat rings; 8 DUST puffs; a negative frame at the eyepatch tear; the yellow pillar on a black card; silhouette plus yellow back-rim shot | the first frame where yellow fills > 30 % |
 | Split the Meteor / Buttagiru | ink gash (a DUST-palette ribbon on the ground with a heavy edge) + a REIATSU core line + a light sheet of 5 LIGHT ribbons for 3 d + 12 inked rocks + 14 DUST puffs (threes) | particles per cut ≤ 20 |
 | Sky split | beat 0 (a negative frame for 2 f) → **black card**, silence → the white light band with ink borders + focus lines, held 8 f (`model-hold`, no hitstop) → the existing `*grade-split*` → the ground cut in drawings | — |
@@ -811,47 +812,49 @@ Kenpachi's awakening (silhouette + yellow rim) and Kikon, `soul-break-cine`, and
 
 Numbers apply to `stage-env`, `stage.lisp` and `fs_sky_toon`.
 
-- **Why night, not storm.** A storm's rain streaks and grey sky would add mid-value noise, which
-  is the opposite of notan. Still night air with falling ash keeps two clean masses (black sky,
-  white ground). The ash doubles as Yamamoto's burnt world, and Kubo uses sky and weather as
+- **Why night, not storm** (confirmed by the user at review 1). A storm's rain streaks and grey
+  sky would add mid-value noise. Still night air with falling ash keeps the frame calm and
+  graphic. The ash doubles as Yamamoto's burnt world, and Kubo uses sky and weather as
   emotion [V2: K2]. Rain stays available as an *emotional* cinematic accent (e.g. the K.O.),
   not as the base.
 - **Sky**:
-  - `fs_sky_toon` runs from zenith #08090E to horizon #1C2030 (V0 → V1);
-  - **a huge white moon**: `sun-size` 6 (about 10°), elevation 14°, #EEF0F2, a flat disc with 2
-    flat halo rings (#262A38, #1C2030) and no bloom;
+  - `fs_sky_toon` runs from zenith #1A1E2A to horizon #363B4C (V1; review 1 — was #08090E →
+    #1C2030);
+  - **a huge moon**: `sun-size` 6 (about 10°), elevation 9° (was 14°: cut off by the pair camera),
+    #D6DAE0 (was #EEF0F2: the fighters' white must stay the brightest), a flat disc with 2 faint
+    flat halo rings and no bloom;
   - the moon's azimuth sits behind the arena centre as seen from the default pair view, so
     fighters often stand against it (Kubo's backlit-moon composition [I]).
 - **Ruins** (walls, houses):
-  - drawn as **flat black V0** (#101118 lit, #0A0A10 shade);
-  - moon-facing caps and ridges are lit #3A3E4C, so a thin edge light reads the silhouette;
-  - no stage hulls;
-  - the `st-house` walls lose their plaster white (#BEB6A8 → #2A2C36).
+  - drawn as **flat cold-grey V1** (review 1; was flat black #101118): ring walls #464B5C,
+    footings and rubble #30343F, house walls #484D60 (#3E4354 far ring), roofs #363A48, beams
+    #2C303C, far skyline #343846 / #262A34, burnt frames #2E3240;
+  - moon-facing caps and ridges are lit #50566A, so a thin edge light reads the silhouette;
+  - no stage hulls; 0.6 × fog.
 
-  The skyline becomes black paper cut-outs.
+  The skyline reads as grey paper cut-outs against the slightly darker sky.
 - **Burning buildings removed.** The flames, smoke, halos and the 2 stage fire lights go.
   `*st-fires*` becomes empty, which frees about 160 particles and 2 light slots.
 - **Plaza** (rebuilt, Phase 1a):
-  - one flat disc of moonlit stone, V3 (#BCC1CC lit; V2 #7A8090 shade);
-  - 5–8 **ink cracks** (thin black ribbons, hand-placed data);
-  - faint stone joints only in the outer ring (#9CA2AE, ≤ 1 px);
-  - the curb ring in V2.
+  - one flat disc of moonlit stone, **V2 #767D8E** (review 1; was V3 #BCC1CC);
+  - 8 **ink cracks** (thin dark ribbons #262A36, hand-placed data);
+  - faint stone joints only in the outer ring (#6A7182, ≤ 1 px);
+  - the curb ring #5C6272, the ground outside #3C4150.
 
-  The foreground is a near-blank "white page". This is the art critic's flat-plane rebuild, now
-  in scope.
+  The foreground is a near-blank mid-grey page: empty, but no brighter than the figures on it.
 - **Falling ash**: the existing ash particles become toon ASH shards (white, 60 live), drifting
   on threes. Embers are removed (warm is spot-only).
 - **Blob shadows** become **hard ink ellipses** under the fighters (INK palette, crisp edge):
   the Kubo cast shadow.
-- **Fog**: #1C2030, density 0.012, height falloff unchanged. The far ground fades into the dark,
-  which frames the white page like a vignette.
+- **Fog**: #363B4C (= the horizon), density 0.012, height falloff unchanged. The far ground fades
+  into the horizon tone.
 - **Light**: `moon_dir` comes from the moon (behind-left, 14°) for stage shading. Characters keep
   the camera-space key (§2.1). The 2 per-pixel stage lights now come **only from effects**, so a
   fire wave throws a warm pool onto the white ground (spot colour, very readable).
-- **Grade**: bloom threshold 0.97 (effect cores only), vignette **0.35**, no global
+- **Grade**: bloom threshold 0.97 (effect cores only), vignette **0.25** (was 0.35), no global
   desaturation (the palette itself is desaturated). Bankai uses spot-keep mode 4.
 - **Destruction** (in scope, Phase 6): ink scorch and crack marks that persist for the round,
-  and inked rock debris that rests for 6 s. Black marks on the white page read strongly.
+  and inked rock debris that rests for 6 s. Dark marks on the mid-grey page.
 - **Camera**: `*cam-close*` = **0.8** (the user took the recommendation). Pair distance is
   `max(4.8, 3.6 + 0.68·sep)`; the behind eye is at 4.4 m.
 
@@ -890,7 +893,7 @@ Numbers come from the tech critic's synthetic SwiftShader experiment unless mark
 | R6 | Toon fx depth occludes soft fx | intended: T光 is drawn after them; checked in `duel-hellfire` |
 | R7 | Box heads in close-ups | background drop, silhouette shots, mid-shots, drawn face shapes; no face close-ups under 1 m |
 | R8 | "Guilty Gear, not Storm", or "a manga filter, not a game" | smooth bodies with stepped effects; spot colour and 2-tone depth keep it a 3D anime; user reviews 1–4 replace the skipped board |
-| R9 | Notan world too dark or too flat for gameplay reading | pale-ground "white page" under the fighters (≥ 55 % of the frame); keyline and white strokes on black parts; user review 1 |
+| R9 | Notan world too dark or too flat for gameplay reading | resolved at user review 1: one balanced mid-dark world, the fighters carry the strongest contrast (toon_check: world gap ≤ 75, fighters' span ≥ world span + 60); keyline and white strokes on black parts (1b) |
 | R10 | Closer camera hides the opponent in some spacings | `*cam-close*` knob; the existing out-of-both-fighters rule stays |
 | R11 | Heap growth step (+16 MB once in the past) | hulls in their own load step; startup heap AC |
 | R12 | SwiftShader perf noise (±10 %) | median of 3, A/B in the same session |
@@ -921,10 +924,10 @@ approves or redirects. These are the only user-gated steps.
 | Phase | Content | Estimate | Acceptance (beyond G1–G3) |
 |---|---|---|---|
 | **0 Harness** | RAVEN frozen still + noise floor; duel frozen still (`duelvfx` freeze + stage fx off + fighter mask); CvC hash script; perf A/B script; WGSL smoke test; `tools/toon_check.py` (value steps, saturation, spot-pixel share, palette checks) | 0.5 d | the gates run green on the unchanged tree |
-| **1a Notan world + toon characters** | §6 (sky, moon, black ruins, flat plaza with ink cracks, remove fires, ash, ink blob shadows, fog, grade, camera 0.8); §2.1–2.3 (`fs_toon`, `fs_sky_toon`, cold HSV shadows, gradient, jitter off, analytic normals); §2.5 v4 palettes | 2 d | duel still: ≥ 55 % of non-HUD pixels below the horizon are V3/V2 ground; the sky is ≤ V1; world saturation ≤ 0.12; a lit haori pixel = #F0F0EC ±3; robe pixels ≤ #16161E (+3); every face shows only its 2 tones (gradient masked); fight frame ≤ 0.75× today. **User review 1** |
+| **1a Notan world + toon characters** | §6 (sky, moon, black ruins, flat plaza with ink cracks, remove fires, ash, ink blob shadows, fog, grade, camera 0.8); §2.1–2.3 (`fs_toon`, `fs_sky_toon`, cold HSV shadows, gradient, jitter off, analytic normals); §2.5 v4 palettes | 2 d | duel still (revised at user review 1): the world is balanced (median luma above / below the horizon differ by ≤ 75), in the cold mid-dark range (world luma p2 ≥ 20, p98 ≤ 150, the moon excepted), and the fighters' luma span beats the world's by ≥ 60; world saturation ≤ 0.12; a lit haori pixel = #F0F0EC ±3; robe pixels ≤ #16161E (+3); every face shows only its 2 tones (gradient masked); fight frame ≤ 0.75× today. **User review 1** |
 | **1b Ink** | hull (§2.4), grey keyline on black parts, red-brown on skin, the ink art pass, **white-on-black inner strokes** and ink strokes, neutral face shapes | 2.5 d | a continuous silhouette on both fighters against ground *and* sky (the keyline is visible on the sky); thinner overlap lines; no haori seam lines; hull cost ≤ +5 % |
 | **2 fx-toon + universal + punctuation** | §3 (A2C `RP_FXT`, WGSL palettes v4, charcoal style, value-opposite edges, envelope, fx clock, primitives, 2 particle kinds); §4.3 universal effects; `RP_COMP_FX` modes 1–4; focus lines, speed lines, `ui-ink-splash`; `model-hold`; squash smear; `*key-ease*`; `*shake-hz*`; `silence` | 3.5 d | §4.3 row ACs; hits are mono (no spot pixels); seeds change only on their rate's ticks; nothing changes while paused; manga-page mode keeps FIRE and BLOOD pixels and turns the rest two-tone |
-| **3 Signature effects** | ▲ rows (blade fire, fire wave wall, ink-reiatsu and yellow reiatsu auras, cleave comets) + layering | 2 d | row ACs; spot-pixel share ≤ 15 % in the neutral still, and FIRE dominant only while Yamamoto's moves run; live particles ≤ 500. **User review 2** |
+| **3 Signature effects** | ▲ rows (blade fire, fire wave wall, yellow reiatsu aura in every form, cleave comets) + layering | 2 d | row ACs; spot-pixel share ≤ 15 % in the neutral still (Yamamoto's blade fire and Kenpachi's base yellow aura included), and FIRE dominant only while Yamamoto's moves run; live particles ≤ 500. **User review 2** |
 | **4 Cinematics + typography** | §5 (beat 0, black/white cards, ink splash, inversion cuts, silence, silhouette shots, FOV, holds); Bankai reveal; 8 cinematics re-staged; §4.4 glyph tool + `glyphs.lisp` + licence file; vertical captions, hanko, 勝 | 3 d | every Kikon: beat 0, ≥ 1 card beat, ≥ 3 cuts, ≥ 1 inversion (negative + manga page), ≥ 1 silence hold ≥ 8 f, a vertical brush caption; `:len` unchanged; the Bankai still shows a grey world with only the ember line red. **User review 3** |
 | **5 Remaining effects + faces** | all non-▲ rows of §4.1 and §4.2; expression swaps (`:face-shout`, `:face-hurt`); per-clip pose-to-pose re-authoring of the attack clips | 5 d | row ACs; each fighter shows 3 expression states in the gallery |
 | **6 Polish** | destruction marks and resting debris; caption slice exit; skull in the Nozarashi pillar; quantised fog bands (if they help the white page); rain accent for the K.O.; chromatic aberration or fisheye **only if** user review 3 or 4 asks; P10 atlas **only if** the charcoal style is judged too thin | 3 d | **User review 4** (final) |
@@ -978,10 +981,8 @@ The user has decided:
 Still open:
 1. **The four screenshot reviews** (after Phases 1a, 3, 4 and 6). They are the only remaining
    user gates.
-2. Two defaults the user may overturn at review 1:
-   - **night** was chosen over a storm for the base stage;
-   - Kenpachi's **base-form reiatsu is black ink**, and yellow appears only when he is awakened
-     or in his cinematics.
+2. Decided at review 1 (§13 round 5): night stays; Kenpachi's reiatsu is yellow in every form;
+   the world is one balanced value range; the characters get realistic proportions.
 3. Carried from v3 as defaults:
    - smooth gameplay animation;
    - near-black ink with a grey keyline on black parts and red-brown ink on skin;
@@ -1127,8 +1128,264 @@ These were all fixed in v2:
   review, because the +14 % measured cost is unchanged.
 
 **New [I] risks introduced by v4, and their checks:**
-- Kenpachi against the black sky: the keyline plus white strokes are checked at user review 1.
+- Kenpachi against the dark sky: the keyline plus white strokes are checked after 1b.
 - A white page with low value contrast against the white haori: the haori shadow is V2 cold
   grey, and the ink hull is near-black. The Phase 1a AC checks the haori-to-ground separation.
 - The spot share rising during fire moves: Yamamoto's fire is *meant* to dominate while his moves
   run; the ≤ 15 % AC applies to neutral stills only.
+
+### Round 5: the user's review 1 (Phase 1a stills)
+
+| # | User's words (translated from zh-TW) | Decision | Consequence |
+|---|---|---|---|
+| 1 | "The ruins are too dark and the arena floor too bright; balance the two so they are consistent." | the world becomes one cold mid-dark value range; the figure (black robe vs white haori) keeps the strongest contrast | §A.1 rules, §6 stage values (sky #1A1E2A → #363B4C, ruins V1 #343846 – #484D60, plaza V2 #767D8E, moon #D6DAE0), the 1a acceptance of §9 and `tools/toon_check.py` (balance / range / figure-contrast replace "≥ 55 % V2/V3 ground" and "sky ≤ V1") |
+| 2 | keep the still night | night, no storm | §6 |
+| 3 | "Keep Kenpachi's reiatsu yellow." | REIATSU yellow in every form | §A.2, §3.3 palette 2 / 3, §4 mapping and the Kenpachi rows; the neutral spot budget (≤ 15 %) now includes his base aura |
+| 4 | "Change the characters' proportions to normal, realistic size instead of the current chibi proportions." | realistic adult proportions (anime-realistic, TYBW): narrow heads, lean / broad but not boxy torsos, long limbs, big hands; heights and hurt cylinders unchanged | `defbody :girth` (per-joint shape scaling, duel/lisp/body.lisp) + `:props`; numbers in §14 |
+
+---
+
+## 14. Progress log
+
+### Phase 0: harness (done)
+
+- **`tools/run.mjs --fixed-dt MS`**: a virtual clock. Every animation frame advances
+  `performance.now` / `Date.now` by exactly MS (a fixed epoch), the next frame waits until the GPU
+  finished the previous one, script times and `--secs` are virtual, and the page is held while a step
+  (a screenshot) is applied. The same binary and script give **byte-identical** screenshots: the
+  noise floor of every frozen still is 0 px. Three causes of flaky stills were found and fixed on the
+  way: SDL skips drawing a frame whose swapchain texture is not ready, so a screenshot showed an older
+  frame than the state; a headless window can lose focus and both games pause on focus loss (focus
+  emulation on); a fixed random debugging port could hit a leftover Chrome (Chrome now picks it).
+  `run.mjs` also exits 1 on `WebGPU:` validation errors and failed pipelines (R3).
+- **`tests/style-gates.py`**: `raven` (G1: RAVEN title + bot-played wave frozen stills, base twice =
+  noise floor, new once; cons/frame), `rc` (G1: RAVEN's ECL C, function by function, with L / VV /
+  gensym numbering folded), `cvc` (G2: the three `duel-cvc-*.json` result + hash lines vs
+  `tests/style-cvc-ref.txt`, captured on the unchanged tree), `perf` (G1/G3: A B A B A B real-time
+  runs, median frame ms, startup heap, page-to-first-frame), `smoke` (WGSL smoke: run.mjs exit 0),
+  `duelstill` (the frozen duel still: `duel-vfx` scene 17 NEUTRAL, stage fx off, frozen scene clock,
+  plus the same frame without fighters = the fighter mask, and a "flat" pair without gradient, fog or
+  vignette for palette checks).
+- **`tools/toon_check.py`**: value steps V0–V4, world chroma, spot share, sky / ground split (horizon
+  estimated), fighter palette tones (lit + `shade_of`), lit haori, robe; `--ac` applies the 1a
+  thresholds. Two measures were adapted to what the design means (both documented in the tool):
+  *world saturation* is **chroma** (max − min channel), because HSV saturation flags the design's own
+  cold greys (V1 #3A3E4C has S 0.24); *sky ≤ V1* is "≥ 80 % of the sky pixels are V0/V1", because
+  the moon is V4 by design.
+- **`tests/style-shots.py`**: the review still set, after and before, under the virtual clock.
+- `tests/engine-check.lisp`: the 1a engine checks (below) and a toon scene (`ec-toon.png`) that draws
+  every new pipeline, including a mirrored toon draw (`RP_TOON_CW`).
+- Gates on the unchanged copy: G1 stills identical (noise 0), C 716/716 identical, G2 3/3, smoke 3/3,
+  perf A/A 1.017, heap 103.4 MB.
+
+### Phase 1a: notan world + toon characters (done, awaiting user review 1)
+
+Built as §2.1–§2.3, §2.5 (palettes) and §6, with these differences:
+
+| Design text | Built | Why |
+|---|---|---|
+| slots 11 RP_TOON, 12 RP_TOON_CW, 16 RP_SKY_TOON | 11, 12, **13** RP_SKY_TOON | no holes; later phases append 14 RP_HULL, 15 RP_HULL_CW, 16 RP_FXT, 17 RP_COMP_FX |
+| `fs_toon` in `lit.frag.wgsl` | its own files: `toon.vert.wgsl` (`vs_toon`), `toon.frag.wgsl`, `toon-io.wgsl`, `sky-toon.frag.wgsl` | `lit.vert/frag.wgsl` and `sky.frag.wgsl` stay byte-identical; only the shared `Frame` (160 floats) and `Draw` (+`toon`) structs grew |
+| `shade_of` per pixel, HSV of the linear colour | **per vertex** (a face has one colour), HSV of the **sRGB** colour | the worked values of §2.2 (#F0F0EC → #9CA3B4) are sRGB; linear gives #C5C8CF, far too light for notan. Per pixel, the HSV + 2 pows cost the fight 0.83× instead of 0.68× |
+| shadow-side tint: `draw-fighter` + a new `nearest-light-rgb` | computed in `vs_toon` from the selected lights (strongest within 4 m of the part's origin, × 0.35) | no CPU cost, no engine helper, and no ordering problem (effects add their lights after the fighters are queued) |
+| `draw-mesh` toon keywords | `:toon` takes an f32vec of the 4 lanes | 0 B per call (float keywords box) |
+| `*part-jitter*` only | + **`*part-smooth*`** (NIL default) | smooth normals on `:sphere` / `:cyl` would change RAVEN's bodies |
+| moon elevation 14°, #EEF0F2, vignette 0.35 | **9°**, #F4F6F8, vignette **0.25** | at 14° the pair camera (pitched ~19° down) cut the moon off at the top; at 9° it rises behind the rooftops, so the ruins stand as black cut-outs against it. Vignette 0.35 greyed the moon to #C4 |
+| house walls #2A2C36 | #1C1E28 (#181A22 far ring), ruins drawn with 0.35 × fog | #2A2C36 plus fog read lighter than the sky behind them; the ruins must stay the darkest mass |
+| blob shadow: hard ink ellipse | a flat 24-gon ink disc mesh (#14151C) drawn as a toon stage draw, r = 1.2 × hurt radius, shrinking with height | crisp edge without a new fx primitive; 1.5 × read too heavy |
+| toon draws must be opaque | an `alpha` < 1 toon draw (the Hoho fade) falls back to the lit shader | Phase 2's afterimage replaces the alpha fades |
+
+Also done: weapons and props desaturated (Ryujin Jakka's guard and wrap, the cane, Nozarashi's brass
+and tassel) so only the three spot hues stay saturated; the mirror tint is #D8E2F2; the stage's
+per-draw fog scale is 1 on the plaza; `*cam-close*` 0.8 in `duel/lisp/camera.lisp` (pair distance and
+behind distance). The ember cracks of Bankai (`stage-crack-add`) are unchanged (Phase 3).
+
+**Measured (final build).**
+- G1: RAVEN title and wave stills byte-identical to the base build (noise floor 0 px both); ECL C:
+  704 of 716 functions identical, the 12 changed are exactly the touched ones (%MB-TRI, BUILD-PARTS,
+  BUILD-SHAPE, DRAW-MESH, DRAW-PARTS, END-FRAME, FILL-FRAME-UNIFORMS, MAKE-ENVIRONMENT,
+  MAKE-MESH-BUILDER, MB-CYLINDER, MB-SPHERE, RENDER-INIT) + FILL-TOON-UNIFORMS added; RAVEN
+  cons/frame 17 367 B = base; RAVEN title frame time 129.6 → 125.5 ms (0.97×, inside the ±10 % noise).
+- G2: yy `winner P1 konpaku 7-0 ticks 6887`, yk `winner P2 konpaku 0-1 ticks 7298 secs 121.6`, kk
+  `winner P2 konpaku 0-1 ticks 8034`; every hash line identical.
+- G3: 100 toon `draw-mesh` 0 B, 100 `fill-toon-uniforms` 0 B; SOUL DUEL cons/frame 12.5 → 10.9 KB,
+  live particles ~330 → ~140, draws 46 → 47; startup heap 103.4 → 103.1 MB; page to first frame
+  3370 → 3390 ms (+0.6 %).
+- **Fight frame 48.7 → 31.9 ms = 0.65×** (real-time CPU vs CPU, median of 3 A/B, SwiftShader; AC ≤ 0.75×).
+- 1a acceptance (`tools/toon_check.py --ac` on the frozen duel still): ground V2/V3 93.9 % of the
+  pixels below the horizon (≥ 55 %), sky 93 % V0/V1, world chroma p99 0.063 (≤ 0.12), spot 0.00 %,
+  flat still: 99.8 % of the fighters' interior pixels are a lit or designed-shadow palette tone,
+  lit haori exactly #F0F0EC, robe #16161E with no V0 pixel brighter; gameplay stills (HUD rows
+  excluded): ground 85–95 %, sky 97–98 %, chroma p99 ≤ 0.082.
+
+**Open for 1b and later.** No ink hull, keylines or white-on-black strokes yet, so black hair and
+robes merge with the black ruins and the white haori sits on the pale ground without a line (1b).
+Faces have no eyes (1b neutral face shapes). Effects are still the soft additive ones (Phase 2–3):
+Yamamoto's blade fire reads as a white-hot blob. The HUD (not part of the restyle so far) was made
+for a dark frame: the select screen's grey names and hint line nearly vanish on the white page.
+
+
+### Revision after user review 1 (§13 round 5)
+
+- **Values** (old → new): sky zenith #08090E → #1A1E2A, horizon / fog #1C2030 → #363B4C, moon
+  #F4F6F8 → #D6DAE0; ruin walls #101118 → #464B5C, caps #3A3E4C → #50566A, house walls #1C1E28 →
+  #484D60, roofs #101118 → #363A48, ruins fog 0.35 → 0.6; plaza #BCC1CC → #767D8E, joints #9CA2AE →
+  #6A7182, cracks #101018 → #262A36, curb #7A8090 → #5C6272, outside ground #2A2C36 → #3C4150.
+  Frozen duel still: median luma above / below the horizon 20 / 190 → 50 / 112 (gap 151 → 62);
+  world luma p2..p98 13..180 → 39..120; fighters' span 217 vs world 81.
+- **toon_check `--ac`**: "≥ 55 % V2/V3 ground" and "sky ≤ V1" are replaced by *world balanced*
+  (gap ≤ 75, skipped when no sky is measured), *world in the cold mid-dark range* (p2 ≥ 20,
+  p98 ≤ 150, the moon excepted) and *fighters carry the strongest contrast* (span ≥ world span +
+  60). The flat measuring mode (duel-vfx 3005) also removes the shadow disc's fog.
+- **Kenpachi's reiatsu** is yellow in every form (docs only: the auras are Phase 3; the current aura
+  is already yellow).
+- **Proportions** (`defbody :girth`, per-joint shape scaling in the joint frame, plus `:props`;
+  measured by duel-view 4005, standing, no hunch; heights and hurt cylinders unchanged):
+
+  | | Yamamoto old → new | Kenpachi old → new |
+  |---|---|---|
+  | crown (untilted head shapes) | 1.705 → 1.705 m | 2.09 → 2.04 m (scale 1.13 → 1.07) |
+  | head length / heads | 0.209 m, 8.2 → 0.209 m, 8.2 | 0.294 m, 7.1 → 0.250 m, 8.2 |
+  | head width | 0.190 → 0.152 m | 0.240 → 0.159 m |
+  | shoulder joints | 0.418 → 0.418 m | 0.646 → 0.508 m (shoulders 1.3 → 1.08) |
+  | fingertips / height | 0.42 → 0.37 (arms 1.12) | 0.39 → 0.40 (arms 1.06 → 1.1) |
+  | hips / height (legs) | 0.52 → 0.52 | 0.50 → 0.53 (legs 1.1) |
+  | other | hunch 22° → 14°, chest x 0.86, hands x 1.2–1.3 | chest x 0.8, neck longer, hands x 1.2, limb shapes x 1.1 long |
+
+  The head *length* was already realistic; the chibi read came from wide heads and hair, boxy wide
+  torsos, short arms (Yamamoto), short legs (Kenpachi) and small hands. Weapons stay in the hands
+  (the grip is the hand joint), two-handed grips still meet (KE-F2), Ikkotsu / Kaka / stances /
+  run / lose / win strips checked, no floating feet (make-rig-proportions keeps the feet on the
+  ground). The sim reads no joint (G2 unchanged); joints feed only trails and blade fire.
+- Gates after the revision: G1 stills identical, G2 3/3, fight frame 43.5 → 30.5 ms (0.70×),
+  heap 103.1 MB, cons 10.9 KB/frame.
+
+
+### Phase 1b: ink (done)
+
+Built as §2.4 and §2.5 (inner strokes, faces), with these differences:
+
+| Design text | Built | Why |
+|---|---|---|
+| slots 13 RP_HULL, 14 RP_HULL_CW | **14, 15** (1a put RP_SKY_TOON at 13) | appended, no holes |
+| `vs_hull` / `fs_ink` in the lit shader files | in `toon.vert.wgsl` / `toon.frag.wgsl`, output `ToonV` | the toon files own every toon entry; the lit files stay byte-identical |
+| "thinner lines where parts overlap" by the facing taper alone | the taper **plus a depth push**: after the width offset the hull vertex moves `ink-push` (1.2 cm) away from the camera along its view ray (screen position unchanged) | a line now shows only where the surface behind is more than 1.2 cm farther: full against the ground and sky, thinner or none where parts nearly touch, and **no line on the seams of abutting panels** (coplanar or near-coplanar faces). 3 cm hid the beard against the white haori (white on white needs the line) |
+| ink art pass: `:ink 0` on the inner / side haori panels | the haori over the torso rebuilt as **one rounded white shell** per joint (`:bevel`) with the black robe (and Kenpachi's bare chest between two lapels) at its open front; the skirt panels keep their own hulls | 15 abutting boxes read as an open crate at 3/4 view, with or without seams; the push removes what remains (the 3/4 and back stills show no seam lines) |
+| `:ink k` per shape, 0.6 under 10 cm, 0 under 4 cm | the size is the shape's **middle extent** (second largest side of its box in the joint frame) | a 20 cm × 5 mm stroke is "under 4 cm" in the sense that matters; strokes, eyes, brows, scars, lids need no `:ink 0` |
+| ink colour per shape: skin #3A1610, other = the body's `:ink` | `build-parts :ink` = an alist by colour key: skin / skin-d #3A1E1A, black / hair keyline #4A5062, the rest #101018 (`*body-ink*`, duel body.lisp) | the keyline and skin rules are data; §2.5's table values |
+| the hull built in its own `:load` step | built with the solids by `build-parts` (the shape ranges exist only then), **one `:load` step per body** (`body-load-steps`) | the same heap effect (the collector runs between bodies): startup heap 103.1 MB = 1a |
+| mirror P2: ink tint #9AB0FF, keyline #5A6A8A | the hulls take the draw's tint (P2 = the cold #D8E2F2) | one rule; the cast shows on the grey keyline |
+| katana blades `:ink 0` | as designed (Ryujin Jakka, Zanka, Kenpachi's katana: blade and hilt are separate `defweapon` sections, `(:solid :ink 0 …)`); hilts, the cane and the Nozarashi slab get hulls (c 0.8) | |
+| faces "unchanged from v3" | **new heads**: a smooth skull sphere, a flat-fronted face box, flat face shapes (tag `:face-neutral`): Kenpachi's slanted lids, small pupils and angry brows, the scar through the left eye, the grin (dark mouth, teeth, corners up), both eyes under the eyepatch (Nozarashi shows them); Yamamoto's drooping slit eyes with lower lids under the long brows, the X scar, beard strands and the moustache parting in ink | the 1a heads were bevel boxes with no eyes; the user asked for realistic anime figures, not boxes. Head shapes are now plain metres (the `:head` girth factors were baked in) |
+| — | **rounder bodies**: hakama legs as flaring smooth 10-sided cylinders, Kenpachi's bare arms as tapered 8-sided limbs with round deltoids, elbows and biceps, bevelled hands and tabi, Kenpachi's top hair spike removed | boxes with outlines still read as boxes; the round parts give the toon terminator real curves. Heights, rig and hurt cylinders unchanged |
+| white strokes: Yamamoto 3 robe folds + sleeve edge, Kenpachi 4 hair highlights + 2 robe folds | as designed (`:fold` #D8DCE4 thin boxes), the robe folds on the hakama | |
+
+Also: the face close-up camera in duel-view (`6200+i` front, `6210+i` from 35°) and in the still set
+(`-closeup`, `-closeup34`), the 3/4 and back stills of the ink art pass (`yama-34`, `ken-34`, `-back34`),
+duel-vfx `3006` (shadow discs off) and `toon_check.py --outline` (below); the duel-vfx flat mode now
+restores the stage's vignette (it restored 0.35). HUD (`hud.lisp`): on the select screen the unselected
+name and the unselected CPU / camera row are dark ink (`*dim-ink*` #242630) instead of the light grey
+that vanished on the V2 plaza, the key hint line and the title's credit line are white with a shadow.
+
+**Measured (final build).**
+- G1: RAVEN title and wave stills byte-identical to the 1a build (noise floor 0 px); ECL C: 713 of 717
+  functions identical, changed BUILD-PARTS, DRAW-PARTS, RENDER-INIT (2 pipelines) and RAVEN's
+  BUILD-BODY (its call of the now-keyworded BUILD-PARTS), added BUILD-SOLID, MB-HULL, SHAPE-INK-K;
+  RAVEN cons/frame 17 367 B = base; RAVEN title frame 126.1 → 115.9 ms (0.92×, noise).
+- G2: yy `winner P2 konpaku 0-1 ticks 9545`, yk `winner P1 konpaku 2-0 ticks 9780 secs 163.0`, kk
+  `winner P2 konpaku 0-4 ticks 8035`; every hash line identical to `tests/style-cvc-ref.txt`.
+- G3: 100 `draw-parts` with hulls cons 0 B (engine-check, 64/64); SOUL DUEL cons/frame 11.9 KB = 1a;
+  draws 47 → 87, triangles 10.4 k → 14.5 k; startup heap 103.1 MB = 1a; page to first frame 3410 →
+  3530 ms (+3.5 %); WGSL smoke green on duel, game, duelview, duelvfx, echeck (ec-toon.png draws a
+  hull in both windings).
+- **Hull cost: fight frame 29.9 → 30.4 ms = +1.9 %** (real-time A B A B A B, median of 3; AC ≤ +5 %).
+- Continuous silhouette (`toon_check.py --outline`: edge pixels of the fighter mask with ink within
+  2 px, shadow discs off): frozen duel still 84.4 % against the ground, where every miss is on the two
+  unlined katana blades or a sole on the ground (the miss map); duel-view stills with the fighters
+  against the ruins and the sky: 92.6–94.5 % above the horizon, the misses being the blades and ash
+  flakes that moved between the two shots. The grey keyline shows against the dark sky on Kenpachi's
+  hair and the black robes.
+- Thinner overlap lines: the facing taper (0.45–1 × width) and the push. The effect is modest: lines
+  thin or break only where the part behind is within about 1.2 cm (panel seams, sleeve on hakama, hand
+  on hilt); an arm crossing the torso 10 cm in front keeps a full-width line, as in Storm.
+- The 1a acceptance still holds on the 1b still (`--ac`: chroma p99 0.094, gap 62, range 39..120,
+  fighters' span 217 vs 81, spot 0 %; 99.7 % of the flat still's interior fighter pixels are a palette,
+  shadow or ink tone).
+
+**Open.** The katana blades have no line (by design); on a white card (Phase 4) they may need one.
+Yamamoto's sleeves and haori skirt are still flat boxes (kimono sleeves are rectangular, so they
+read), and his hunch points his face at the floor in level close-ups. Hull lines are 1.8 px at 720
+lines as designed; if the user wants a heavier Storm line, `ink-px` is one number.
+
+
+
+### Phase 2: fx-toon, universal effects, punctuation (done)
+
+Built as §3 (the toon batch, palettes v4, charcoal, value-opposite edges, envelope, fx clock, primitives,
+2 particle kinds), §3.6 (`RP_COMP_FX` modes 1–4, focus / speed lines, ink splash, `*shake-hz*`,
+`silence`), §2.6 (`*key-ease*`, `model-hold`, the squash smear, the Hoho afterimage) and every §4.3 row,
+plus step / dash dust and the Kikon rush (a dedicated `:kikon` aura and a red ground ring replace the
+twice red-tinted Evolution aura, its red light and the red shockwave). Engine: `fx.lisp` (toon section),
+`render.lisp` / `render.c` (`*fx-toon*`, slots 16 `RP_FXT` and 17 `RP_COMP_FX`, `grade-impact`),
+`fx-toon.vert/frag.wgsl`, `fx-toon-pal.wgsl`, `fx-toon-io.wgsl`, `composite-fx.frag.wgsl`, `anim.lisp`
+(`*key-ease*`). Game: `vfx.lisp` (stamps: the drawn one-shots), `feedback.lisp`, `main.lisp` (hold, smear,
+afterimage, the Burst beat), `cinema.lisp` (`impact-frame`, `focus-lines`, `silence`, `back-rim`), the HUD's
+time on the fx clock, debug 2326 (force a clash). Differences:
+
+| Design text | Built | Why |
+|---|---|---|
+| slots 15 `RP_FXT`, 17 `RP_COMP_FX` | **16, 17** | appended after 1b's 14–15 |
+| `P: array<vec4f,3>` (48 B) | **4 vec4** (64 B): the RP_COMP lane, mode + threshold + keep-sat + keep-hue, ink, paper | ink rgb and paper rgb need a vec4 each |
+| charcoal = "seed flag" (≥ 50 in the first draft) | seed **+1000** | toon particle seeds (slot × 0.618) and per-drawing seeds passed 50 and turned puffs into charcoal grain |
+| the `\|uv\|` field for every shape | stars, polygons and shards are **fan shapes** (palette + 16): the field is the heat lane, 0 at the centre, exactly 1 on the straight outline | `\|uv\|` interpolated between two rim directions dips below 1 on a straight edge (cos 15°), so the ink band vanished between vertices |
+| `fx-star … heat seed a`, `fx-crescent … profile heat seed a` | the heat argument is WOBBLE, plus a PUSH key; crescents run heat 0.2 (tail) → 1 (blade) themselves | fans use heat as their field; a crescent's heat is its along coordinate |
+| edge 1.0–1.6 px @720, weight 0.4–1.3 | × 1.8, weight 0.7–1.5 (1.3–4.3 px) | at 1.0–1.6 px the stars' dark hairline did not read on the V2 ground: white clip-art stars |
+| core `hc < 0.42 k` | 0.2 k on dark bodies (INK, BLACK SMOKE) | the white "core line" of ink shards covered half the shard |
+| `fx-billboard :toon` for discs and puffs | + `fx-disc` (a macro, 0 B) | `fx-billboard` is a function: its float arguments box (40 B a call) |
+| — | `fx-wall` (Phase 3's fire wave) is in, minimal: a vertical strip with a scalloped top, no end outlines | §3.4's primitive list; Phase 3 refines it |
+| the envelope returns values | `(fx-envelope (scale k flash phase) (age f g h o :anticipate a) body)` binds them | returning floats boxes |
+| hit drawing 1 = a round white flash disc (+ T光) | a **jagged** round burst (12 short hashed spikes, ink rim); the additive T光 only as a small core while it grows | a flat disc with a glow read as a glowing ball, not a drawing |
+| Hit :heavy "red only in the droplets"; §9 "hits are mono" | heavy hits keep their 5–8 BLOOD droplets; `spot` checks every other mono effect for 0 spot px, the heavy one outside its droplets | the two ACs conflict; the row AC is the specific one |
+| toon particles at `pos − vel·min(mod(clock, rate/24), age)` | + presence from the life left when the drawing began; a particle born inside a drawing shows from the next one | else births and fading changed every frame (the `ticks` check caught it) |
+| the defender silhouetted with a white back-rim for 3 f | `back-rim`: `env-cin-rim` white + `toon-threshold` 1.5 for 3 f — **both** fighters | `F.cin` / `F.key.w` are per frame; per-draw lanes are not worth it for 3 f |
+| `silence`: music to 0.1, suppress the script's `play-sfx` | the music bus × 0.1 and the sfx bus muted for the beat (the mixer's bus gains, `au_set_volume`) | no engine change; a bone sound inside a silence (Phase 4) needs a bus of its own |
+| `*fx-clock*` a special float | an f32vec `[0]` + `fx-clock` / `fx-clock-advance` | a special float boxes on every write |
+| hold / smear | `model-hold`, `model-smear` (+ dir), `model-ghost` (+ age): the Hoho afterimage (white, then hull-only ink) is drawn from a copy of the vanish pose smeared sideways; a body with alpha < 1 is not drawn | §2.6, no alpha < 1 body |
+| — | the HUD's animation (`hud.lisp`, the stage's cracks) on the fx clock, `(hud-dt)` 0 while paused; shake, camera and ash take the effects' dt | "nothing changes while paused" |
+| — | `tools/build.lisp` compiles without source annotations and runtime docstrings | this phase's code crossed a Boehm heap growth step at load (103 → 119 MB, budget 110); see ARCHITECTURE "Runtime model". Heap now **57 MB** (SOUL DUEL and RAVEN) |
+
+Bankai's spot-keep grade (mode 4, hue 10°) exists and is in the stills (`impact-spot-keep-*`), but `kit-grade`
+still drives `*grade-desat*` 0.3: wiring the form to it goes with its ember line (Phase 3 / 4). The sword trail
+is still the soft additive `fx-trail` (the comet smear is Phase 3's cleave row).
+
+**Measured (final build).**
+- G1: RAVEN title and wave stills byte-identical (noise 0 px); ECL C 703 of 720 functions identical — changed
+  %FX-RIBBON, BEGIN-FRAME, CLIP-SAMPLE!, END-FRAME, FILL-TOON-UNIFORMS, FX-BILLBOARD, FX-CLEAR, FX-DECAL,
+  FX-DRAW-PARTICLES, FX-LINE, FX-RING, FX-RINGS-UPDATE, FX-SECTOR, FX-TRAIL, MAKE-ENVIRONMENT, RENDER-INIT,
+  SHAKE-UPDATE (the 3-way `with-fx-verts`, the ring palette, toon lanes, `*key-ease*`, `*shake-hz*`), added the
+  10 new functions; RAVEN cons/frame 17 367 → 17 369 B; RAVEN title frame 100.5 → 102.2 ms (1.017×, noise).
+- G2: yy `winner P2 konpaku 0-1 ticks 9545`, yk `winner P1 konpaku 2-0 ticks 9780 secs 163.0`, kk `winner P2
+  konpaku 0-4 ticks 8035`; every hash line identical to `tests/style-cvc-ref.txt`.
+- G3: 0 B for 12 rounds of every engine toon primitive, `fx-draw-particles` with toon kinds, focus / speed lines
+  + ink splash (engine-check 73/73); 0 B for 100 `stamps-draw` with one stamp of each of the 13 kinds live, 100
+  Kikon auras, 100 soul flames (duel-vfx 3020); SOUL DUEL fight frame 28.8 → 28.9 ms (1.003×, CvC A B A B A B);
+  startup heap 103.1 → 57.3 MB (both games); page to first frame 2940 → 2870 ms; cons/frame in a fight ~9–10 KB
+  (unchanged); WGSL smoke green on duel, game, duelvfx, echeck, duelview.
+- ACs (`tests/style-2-checks.py`): `spot` — 0 spot pixels in the cut / heavy (outside its droplets) / guard /
+  clash / burst / Konpaku / Hoho stills at their 3 moments (fighters off); `ticks` — the Kikon aura changes on 7
+  of 35 frame steps, 4–6 frames apart (twos = every 5th frame; the drawing boundaries fall exactly on frame times,
+  so float rounding moves some by a frame), never in between; `pause` — 0 px differ over 1 s of pause right after
+  a clash; `manga` — mode 3 keeps 3763 of 3769 FIRE and 4859 of 4859 BLOOD pixels and turns 100 % of the rest to
+  ink or paper. The cut spark is gone by f11 (1 2 2 6); the guard is a hexagon; the heavy hit's impact mark holds
+  3 drawings; `style-2-game-hoho-2` is the solid ink afterimage; the Burst has no glowing ball (anticipation lines,
+  then the double ring).
+- Stills: `tests/shots/style-2-gallery.png` (every effect × 3 moments), `style-2-<effect>-{1,2,3}.png`,
+  `style-2-impact-{negative,two-tone,manga,spot-keep}-{clash,counter}.png`, in game
+  `style-2-game-{hoho,kikon-rush,clash,burst,guard-break}-{1,2,3}.png`, `style-2-neutral-{behind,side}.png`,
+  `style-2-side-7m.png`, `style-2-fight-side.png` (with the lead's `*cam-close*` 0.6: both fighters fit the side
+  camera at 7 m; the behind camera is over the shoulder).
+
+**Open.** The announce words are still the pixel font (Phase 4's brush typography); the Breaker's pink aura and
+ring, Hellfire and the Evolution aura are the soft additive ones (Phase 3 / 5). The Burst's light pool reads as a
+faint cold glow on the ground in its first drawing. Every toon shape is a camera-facing card or a flat ground
+shape, so ground rings thin out from low angles.

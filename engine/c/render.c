@@ -5,21 +5,24 @@
 #include "engine/c/engine.h"
 #include <stdio.h>
 static SDL_GPUDevice *r_dev;
-enum { RP_LIT, RP_LIT_CW, RP_LIT_T, RP_LIT_T_CW, RP_SKY, RP_FXA, RP_FXB, RP_BRIGHT, RP_BLUR, RP_COMP, RP_UI, RP_N };
+/* Slots are fixed: ui.lisp creates RP_UI = 10; the toon pipelines (SOUL DUEL's restyle) are appended. */
+enum { RP_LIT, RP_LIT_CW, RP_LIT_T, RP_LIT_T_CW, RP_SKY, RP_FXA, RP_FXB, RP_BRIGHT, RP_BLUR, RP_COMP, RP_UI,
+       RP_TOON, RP_TOON_CW, RP_SKY_TOON, RP_HULL, RP_HULL_CW, RP_FXT, RP_COMP_FX, RP_N };
 static SDL_GPUGraphicsPipeline *r_pipe[RP_N];
 static SDL_GPUSampler *r_linear, *r_nearest;
 static SDL_GPUTexture *r_msaa_tex, *r_depth, *r_scene, *r_half[2], *r_q[2], *r_font;
-static SDL_GPUBuffer *r_draws, *r_fx[2], *r_uib;
+static SDL_GPUBuffer *r_draws, *r_fx[3], *r_uib;
 static SDL_GPUTransferBuffer *r_dyn;
 static int r_fw, r_fh, r_samples = 1, r_tris;
-#define R_DQ 28            /* draw record floats = WGSL struct Draw (112 bytes), see DRAW-MESH */
-#define R_FU 136           /* frame uniform floats = WGSL struct Frame, see FILL-FRAME-UNIFORMS */
+#define R_DQ 32            /* draw record floats = WGSL struct Draw (128 bytes), see DRAW-MESH */
+#define R_FU 160           /* frame uniform floats = WGSL struct Frame, see FILL-FRAME-UNIFORMS */
 #define R_MAX_DRAWS 4096
 #define R_FX_VERTS 16384   /* per fx batch, 9 floats each */
 #define R_UI_VERTS 32768   /* 8 floats each */
 #define R_OFF_FX0 (R_MAX_DRAWS * R_DQ * 4)
 #define R_OFF_FX1 (R_OFF_FX0 + R_FX_VERTS * 36)
-#define R_OFF_UI (R_OFF_FX1 + R_FX_VERTS * 36)
+#define R_OFF_FX2 (R_OFF_FX1 + R_FX_VERTS * 36)   /* the toon fx batch (RP_FXT) */
+#define R_OFF_UI (R_OFF_FX2 + R_FX_VERTS * 36)
 #define R_DYN_SIZE (R_OFF_UI + R_UI_VERTS * 32)
 
 /* Meshes live in 4 MB vertex buffer chunks (fewer vertex-buffer binds); a mesh = chunk, first vertex, count. */
@@ -40,7 +43,9 @@ static SDL_GPUShader *r_shader(const char *src, const char *entry, SDL_GPUShader
 }
 /* LAYOUT: vertex attribute sizes (floats) as hex digits, 0x333 = 3 x float3; 0 = no vertex buffer.
    TARGET 0 scene (MSAA + depth), 1 offscreen RGBA8, 2 swapchain. DEPTH 0 off, 1 test+write, 2 test.
-   BLEND 0 off, 1 alpha, 2 additive. CULL 0 none, 1 back, 2 back with clockwise front faces. */
+   BLEND 0 off, 1 alpha, 2 additive, 3 off + alpha-to-coverage (with MSAA; the toon fx shader discards
+   below its own threshold without it). CULL 0 none, 1 back, 2 back with clockwise front faces,
+   3 front (the ink hull), 4 front with clockwise front faces. */
 int r_make_pipe(int slot, const char *vsrc, const char *ventry, const char *fsrc, const char *fentry,
                 int layout, int target, int depth, int blend, int cull) {
   static const SDL_GPUVertexElementFormat fmt[5] = { SDL_GPU_VERTEXELEMENTFORMAT_INVALID, SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
@@ -55,6 +60,7 @@ int r_make_pipe(int slot, const char *vsrc, const char *ventry, const char *fsrc
   SDL_GPUColorTargetDescription ct = {0};
   SDL_GPUColorTargetBlendState *bs = &ct.blend_state;
   ct.format = target == 2 ? SDL_GetGPUSwapchainTextureFormat(r_dev, pf_window()) : SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+  int a2c = blend == 3; if (a2c) blend = 0;   /* alpha-to-coverage: no blending */
   bs->enable_blend = blend != 0; bs->color_blend_op = bs->alpha_blend_op = SDL_GPU_BLENDOP_ADD;
   bs->src_color_blendfactor = blend ? SDL_GPU_BLENDFACTOR_SRC_ALPHA : SDL_GPU_BLENDFACTOR_ONE;
   bs->dst_color_blendfactor = blend == 1 ? SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA : blend ? SDL_GPU_BLENDFACTOR_ONE : SDL_GPU_BLENDFACTOR_ZERO;
@@ -64,10 +70,11 @@ int r_make_pipe(int slot, const char *vsrc, const char *ventry, const char *fsrc
   pi.vertex_shader = vs; pi.fragment_shader = fs;
   pi.vertex_input_state = (SDL_GPUVertexInputState){ &vb, na ? 1u : 0u, at, (Uint32)na };
   pi.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
-  pi.rasterizer_state.cull_mode = cull ? SDL_GPU_CULLMODE_BACK : SDL_GPU_CULLMODE_NONE;
-  pi.rasterizer_state.front_face = cull == 2 ? SDL_GPU_FRONTFACE_CLOCKWISE : SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE;
+  pi.rasterizer_state.cull_mode = cull >= 3 ? SDL_GPU_CULLMODE_FRONT : cull ? SDL_GPU_CULLMODE_BACK : SDL_GPU_CULLMODE_NONE;
+  pi.rasterizer_state.front_face = cull == 2 || cull == 4 ? SDL_GPU_FRONTFACE_CLOCKWISE : SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE;
   pi.rasterizer_state.enable_depth_clip = true;
   pi.multisample_state.sample_count = target == 0 && r_samples > 1 ? SDL_GPU_SAMPLECOUNT_4 : SDL_GPU_SAMPLECOUNT_1;
+  pi.multisample_state.enable_alpha_to_coverage = a2c && target == 0 && r_samples > 1;
   /* the WebGPU backend ignores enable_depth_test: an untested pipeline needs compare ALWAYS */
   pi.depth_stencil_state.enable_depth_test = depth > 0; pi.depth_stencil_state.enable_depth_write = depth == 1;
   pi.depth_stencil_state.compare_op = depth ? SDL_GPU_COMPAREOP_LESS : SDL_GPU_COMPAREOP_ALWAYS;
@@ -122,12 +129,14 @@ int r_init(int msaa) {
   r_draws = r_buf(SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ, R_MAX_DRAWS * R_DQ * 4);
   r_fx[0] = r_buf(SDL_GPU_BUFFERUSAGE_VERTEX, R_FX_VERTS * 36);
   r_fx[1] = r_buf(SDL_GPU_BUFFERUSAGE_VERTEX, R_FX_VERTS * 36);
+  r_fx[2] = r_buf(SDL_GPU_BUFFERUSAGE_VERTEX, R_FX_VERTS * 36);
   r_uib = r_buf(SDL_GPU_BUFFERUSAGE_VERTEX, R_UI_VERTS * 32);
   SDL_GPUTransferBufferCreateInfo ti = {0}; ti.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD; ti.size = R_DYN_SIZE;
   r_dyn = SDL_CreateGPUTransferBuffer(r_dev, &ti);
   printf("render: SDL_GPU %s, scene MSAA %dx\n", SDL_GetGPUDeviceDriver(r_dev), r_samples);
-  return r_linear && r_nearest && r_draws && r_fx[0] && r_fx[1] && r_uib && r_dyn;
+  return r_linear && r_nearest && r_draws && r_fx[0] && r_fx[1] && r_fx[2] && r_uib && r_dyn;
 }
+int r_sample_count(void) { return r_samples; }   /* scene MSAA samples actually used (1 or 4) */
 int r_mesh_new(const float *v, int n) {
   Uint32 size = (Uint32)n * 36;
   if (r_nmesh == r_mesh_cap) { r_mesh_cap = r_mesh_cap ? r_mesh_cap * 2 : 256; r_mesh = SDL_realloc(r_mesh, r_mesh_cap * sizeof *r_mesh); }
@@ -163,7 +172,9 @@ static int r_targets(int w, int h) {
   return r_scene && r_depth && r_half[0] && r_half[1] && r_q[0] && r_q[1] && (r_samples == 1 || r_msaa_tex);
 }
 /* Opaque (TRANSPARENT 0) or alpha < 1 (1) records of the queue. Per-draw data is read by the vertex
-   shader from the storage buffer at instance_index = record index (first_instance). */
+   shader from the storage buffer at instance_index = record index (first_instance). An opaque record
+   with a toon mode (q[28] 1 stage / 2 character) uses the toon pipelines, 3 (ink hull) the hull ones; 0 (RAVEN,
+   every legacy draw) the lit ones. */
 static int r_draw_queue(SDL_GPURenderPass *rp, const float *q, int n, int transparent) {
   int cur_pipe = -1, cur_buf = -1, drawn = 0;
   for (int i = 0; i < n; i++, q += R_DQ) {
@@ -171,7 +182,7 @@ static int r_draw_queue(SDL_GPURenderPass *rp, const float *q, int n, int transp
     int id = (int)q[23]; if (id < 0 || id >= r_nmesh || r_mesh[id].count == 0) continue;
     RMesh *m = &r_mesh[id];
     float det = q[0]*(q[5]*q[10]-q[9]*q[6]) - q[4]*(q[1]*q[10]-q[9]*q[2]) + q[8]*(q[1]*q[6]-q[5]*q[2]);
-    int pipe = RP_LIT + 2 * transparent + (det < 0);   /* mirrored transforms flip winding */
+    int pipe = (transparent || q[28] < 0.5f ? RP_LIT + 2 * transparent : q[28] > 2.5f ? RP_HULL : RP_TOON) + (det < 0);   /* mirrored transforms flip winding */
     if (pipe != cur_pipe) {
       SDL_BindGPUGraphicsPipeline(rp, r_pipe[pipe]);
       SDL_BindGPUVertexStorageBuffers(rp, 0, &r_draws, 1);   /* pipeline binds reset resource bindings */
@@ -206,10 +217,12 @@ static SDL_GPURenderPass *r_fs_pass(SDL_GPUCommandBuffer *cb, SDL_GPUTexture *ds
   SDL_EndGPURenderPass(rp); return NULL;
 }
 /* The whole frame. FU = frame uniforms; RP = [0 bloom 1 threshold 2 strength 3 vignette
-   4 scene w 5 scene h 6 window w 7 window h 8 desaturate 9 split (window px)]; DQ = N draw records; FXA/FXB/UI = vertex floats.
+   4 scene w 5 scene h 6 window w 7 window h 8 desaturate 9 split (window px) 10 toon sky
+   11 impact mode (0 = RP_COMP; 1..4 = RP_COMP_FX, see composite-fx.frag.wgsl) 12 threshold 13 keep-saturation
+   14 keep-hue 15..17 ink rgb 18..20 paper rgb]; DQ = N draw records; FXA/FXB/FXT/UI = vertex floats.
    Returns the mesh draws issued, or -1 when no swapchain texture was available (frame skipped). */
 int r_frame(const float *fu, const float *rp, const float *dq, int n,
-            const float *fxa, int nfa, const float *fxb, int nfb, const float *ui, int nui) {
+            const float *fxa, int nfa, const float *fxb, int nfb, const float *ui, int nui, const float *fxt, int nft) {
   SDL_GPUCommandBuffer *cb = SDL_AcquireGPUCommandBuffer(r_dev);
   SDL_GPUTexture *swt = NULL; Uint32 sw, sh;
   if (!cb) return -1;
@@ -221,18 +234,18 @@ int r_frame(const float *fu, const float *rp, const float *dq, int n,
      queue.writeBuffer inside SDL_UploadToGPUBuffer, so reusing r_dyn without cycling is safe
      (cycle=true would memset all 2.6 MB every frame). */
   Uint8 *m = SDL_MapGPUTransferBuffer(r_dev, r_dyn, false);
-  Uint32 sz[4] = { (Uint32)n * R_DQ * 4, (Uint32)nfa * 4, (Uint32)nfb * 4, (Uint32)nui * 4 };
-  Uint32 offs[4] = { 0, R_OFF_FX0, R_OFF_FX1, R_OFF_UI };
-  const void *srcs[4] = { dq, fxa, fxb, ui }; SDL_GPUBuffer *dsts[4] = { r_draws, r_fx[0], r_fx[1], r_uib };
-  for (int i = 0; i < 4; i++) if (sz[i]) SDL_memcpy(m + offs[i], srcs[i], sz[i]);
+  Uint32 sz[5] = { (Uint32)n * R_DQ * 4, (Uint32)nfa * 4, (Uint32)nfb * 4, (Uint32)nui * 4, (Uint32)nft * 4 };
+  Uint32 offs[5] = { 0, R_OFF_FX0, R_OFF_FX1, R_OFF_UI, R_OFF_FX2 };
+  const void *srcs[5] = { dq, fxa, fxb, ui, fxt }; SDL_GPUBuffer *dsts[5] = { r_draws, r_fx[0], r_fx[1], r_uib, r_fx[2] };
+  for (int i = 0; i < 5; i++) if (sz[i]) SDL_memcpy(m + offs[i], srcs[i], sz[i]);
   SDL_UnmapGPUTransferBuffer(r_dev, r_dyn);
   SDL_GPUCopyPass *cp = SDL_BeginGPUCopyPass(cb);
-  for (int i = 0; i < 4; i++) if (sz[i]) {
+  for (int i = 0; i < 5; i++) if (sz[i]) {
     SDL_GPUTransferBufferLocation l = { r_dyn, offs[i] }; SDL_GPUBufferRegion r = { dsts[i], 0, sz[i] };
     SDL_UploadToGPUBuffer(cp, &l, &r, false);
   }
   SDL_EndGPUCopyPass(cp);
-  /* scene: sky, opaque, transparent, fx; MSAA resolves into r_scene */
+  /* scene: sky, opaque (+ ink hulls), transparent, toon fx, fx; MSAA resolves into r_scene */
   SDL_PushGPUVertexUniformData(cb, 0, fu, R_FU * 4);
   SDL_PushGPUFragmentUniformData(cb, 0, fu, R_FU * 4);
   SDL_GPUColorTargetInfo ct = {0};
@@ -242,9 +255,10 @@ int r_frame(const float *fu, const float *rp, const float *dq, int n,
   dt.texture = r_depth; dt.clear_depth = 1; dt.load_op = SDL_GPU_LOADOP_CLEAR; dt.store_op = SDL_GPU_STOREOP_DONT_CARE;
   dt.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE; dt.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
   SDL_GPURenderPass *pass = SDL_BeginGPURenderPass(cb, &ct, 1, &dt);
-  SDL_BindGPUGraphicsPipeline(pass, r_pipe[RP_SKY]); SDL_DrawGPUPrimitives(pass, 3, 1, 0, 0);
+  SDL_BindGPUGraphicsPipeline(pass, r_pipe[rp[10] != 0 ? RP_SKY_TOON : RP_SKY]); SDL_DrawGPUPrimitives(pass, 3, 1, 0, 0);
   r_tris = 0;
   int drawn = r_draw_queue(pass, dq, n, 0) + r_draw_queue(pass, dq, n, 1);
+  r_draw_batch(pass, RP_FXT, r_fx[2], nft / 9);
   r_draw_batch(pass, RP_FXA, r_fx[0], nfa / 9);
   r_draw_batch(pass, RP_FXB, r_fx[1], nfb / 9);
   SDL_EndGPURenderPass(pass);
@@ -259,7 +273,19 @@ int r_frame(const float *fu, const float *rp, const float *dq, int n,
   }
   /* composite to the swapchain, then the UI on top in the same pass */
   SDL_GPUTexture *src[3] = { r_scene, r_half[0], r_q[1] };
-  pass = r_fs_pass(cb, swt, RP_COMP, src, 3, bloom ? rp[2] : 0.0f, rp[3], rp[8], rp[7] > 0 ? rp[9] / rp[7] : 0.0f, 1);
+  if (rp[11] != 0) {   /* impact frame / spot-keep grade: RP_COMP_FX with 4 vec4 (the RP_COMP lane, mode + params, ink, paper) */
+    SDL_GPUColorTargetInfo sct = {0};
+    sct.texture = swt; sct.load_op = SDL_GPU_LOADOP_DONT_CARE; sct.store_op = SDL_GPU_STOREOP_STORE;
+    pass = SDL_BeginGPURenderPass(cb, &sct, 1, NULL);
+    SDL_GPUTextureSamplerBinding b[3]; float u[16] = { bloom ? rp[2] : 0.0f, rp[3], rp[8], rp[7] > 0 ? rp[9] / rp[7] : 0.0f,
+      rp[11], rp[12], rp[13], rp[14], rp[15], rp[16], rp[17], 0, rp[18], rp[19], rp[20], 0 };
+    for (int i = 0; i < 3; i++) { b[i].texture = src[i]; b[i].sampler = r_linear; }
+    SDL_BindGPUGraphicsPipeline(pass, r_pipe[RP_COMP_FX]);
+    SDL_BindGPUFragmentSamplers(pass, 0, b, 3);
+    SDL_PushGPUFragmentUniformData(cb, 0, u, sizeof u);
+    SDL_DrawGPUPrimitives(pass, 3, 1, 0, 0);
+  } else
+    pass = r_fs_pass(cb, swt, RP_COMP, src, 3, bloom ? rp[2] : 0.0f, rp[3], rp[8], rp[7] > 0 ? rp[9] / rp[7] : 0.0f, 1);
   if (nui > 0) {
     float s[4] = { rp[6], rp[7], 0, 0 }; SDL_GPUTextureSamplerBinding fb = { r_font, r_nearest }; SDL_GPUBufferBinding b = { r_uib, 0 };
     SDL_BindGPUGraphicsPipeline(pass, r_pipe[RP_UI]);

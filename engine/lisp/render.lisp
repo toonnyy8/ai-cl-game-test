@@ -144,7 +144,23 @@ Returns T if the point is in front of the camera."
   (bloom t)
   (bloom-threshold 0.62f0 :type single-float)       ; on tonemapped color, 0..1
   (bloom-strength 0.9f0 :type single-float)
-  (vignette 0.35f0 :type single-float))
+  (vignette 0.35f0 :type single-float)
+  ;; toon look (SOUL DUEL, docs/STYLE_STORM_DESIGN.md §2): T fills the Frame's toon lanes, draws the toon
+  ;; sky (fs_sky_toon) and shades 2 point lights per pixel (the stage's flat pools; DRAW-MESH :TOON draws
+  ;; only). NIL (default, RAVEN) leaves every lane 0 and the frame exactly as before.
+  (toon nil)
+  (key-light (v3 -0.45 0.62 0.40) :type f32vec)     ; characters' key light in camera axes (right up back)
+  (toon-threshold 0.5f0 :type single-float)         ; lit when N.L*0.5+0.5 > this (1.5 = all shadow)
+  (toon-band 0.02f0 :type single-float)             ; half-width of the soft terminator
+  (toon-gradient 0.14f0 :type single-float)         ; characters darker toward the feet by this much ...
+  (toon-gradient-height 1.8f0 :type single-float)   ; ... over this many metres
+  (toon-light-gain 0.45f0 :type single-float)       ; stage: strength of the per-pixel light pools
+  (shade-value 0.72f0 :type single-float)           ; shadow tone: value x, saturation x, hue turn (degrees),
+  (shade-saturation 1.25f0 :type single-float)
+  (shade-hue 8f0 :type single-float)
+  (shade-lift 0.25f0 :type single-float)            ; stage shadows lifted this far toward the lit tone
+  (cin-rim (v3 0 0 0) :type f32vec)                 ; cinematic hard back-rim on toon characters (sRGB; 0 = off)
+  (cin-width 0.16f0 :type single-float))            ; ... its width (1 - N.V above 1 - this)
 
 (defvar *env* (make-environment))
 (defvar *render-scale* 1f0 "Offscreen scene resolution relative to the window.")
@@ -157,15 +173,17 @@ down to *RENDER-SCALE-MIN*, then *PIXEL-LIGHTS* to 3 and 1; raise it back when t
 (defvar *frame-budget-ms* 18f0 "Target frame time for *AUTO-RENDER-SCALE* (60 Hz + slack).")
 (defvar *pixel-lights* 8
   "Point lights shaded per pixel (0..8, highest priority then nearest the camera target first); the others are shaded per
-vertex (Gouraud: cheap, but light pools on big low-poly faces blur out). Fill-rate knob for weak GPUs.")
+vertex (Gouraud: cheap, but light pools on big low-poly faces blur out). Fill-rate knob for weak GPUs.
+Ignored while ENV-TOON is on: toon stage draws shade 2 per pixel, toon characters none (so the auto
+quality ladder's two light steps do nothing there).")
 (defvar *perf-log* nil "T: log a perf line (startup, frame time, render scale) every ~5 s.")
 
 
 ;;; ---------------------------------------------------------------- state
-(defconstant +dq-stride+ 28 "Draw record floats = WGSL struct Draw (uploaded as is).")
+(defconstant +dq-stride+ 32 "Draw record floats = WGSL struct Draw (uploaded as is).")
 (defconstant +max-lights+ 8)
 (defconstant +max-light-candidates+ 64)
-(defconstant +fu-floats+ 136 "Frame uniform floats = WGSL struct Frame.")
+(defconstant +fu-floats+ 160 "Frame uniform floats = WGSL struct Frame.")
 (declaim (type f32vec *dq* *light-cand* *lp* *lc* *fu* *rp*) (type fixnum *dq-n* *light-n* *draw-count* *tri-count*))
 (defvar *dq* (make-f32 (* +dq-stride+ 512)))
 (defvar *dq-n* 0)
@@ -174,14 +192,25 @@ vertex (Gouraud: cheap, but light pools on big low-poly faces blur out). Fill-ra
 (defvar *lp* (make-f32 (* 4 +max-lights+)))
 (defvar *lc* (make-f32 (* 4 +max-lights+)))
 (defvar *fu* (make-f32 +fu-floats+) "Frame uniforms, filled by FILL-FRAME-UNIFORMS.")
-(defvar *rp* (make-f32 10) "r_frame parameters (see r_frame).")
+(defvar *rp* (make-f32 21) "r_frame parameters (see r_frame).")
 (defvar *grade-desat* 0.0 "Composite desaturation: 0 = the image unchanged, 1 = greyscale (KO / flashback grading).")
 (defvar *grade-split* 0.0
   "Composite split, window pixels: the left half of the frame is shifted up and the right half down by
 this much along the vertical centre line (the uncovered strips are black). 0 = off.")
+(defvar *grade-impact* 0
+  "Screen punctuation mode of the composite (docs/STYLE_STORM_DESIGN.md §3.6): 0 off (the plain composite,
+RAVEN's), 1 negative, 2 two-tone (ink / paper by luma), 3 manga page (two-tone keeping saturated spot
+colour), 4 spot-keep (greyscale but the saturated pixels near one hue). Parameters: *IMPACT-PARAMS*
+(GRADE-IMPACT sets both). The game owns the duration (set it back to 0).")
+(declaim (type f32vec *impact-params* *fx-clock*))
+(defvar *impact-params* (make-f32 9) "threshold keep-saturation keep-hue(deg) ink-rgb paper-rgb (sRGB), see GRADE-IMPACT")
+(defvar *fx-clock* (make-f32 1)
+  "[0] = the fx clock in seconds (FX-CLOCK-ADVANCE, fx.lisp): advances by the effects' dt, so it stops
+while the game pauses. The toon fx shader steps its noise on it (24 Hz ticks, F.clk.x).")
+(defvar *msaa-samples* 1 "Scene MSAA samples in use (RENDER-INIT).")
 (defvar *draw-count* 0 "Mesh draws issued last frame.")
 (defvar *tri-count* 0 "Mesh triangles drawn last frame.")
-(defvar *fx-alpha*) (defvar *fx-add*) (defvar *ui-batch*)
+(defvar *fx-alpha*) (defvar *fx-add*) (defvar *fx-toon*) (defvar *ui-batch*)
 (defvar *fx-dropped* 0)
 
 ;;; Dynamic vertex batch: filled on the CPU each frame, uploaded and drawn by END-FRAME.
@@ -200,7 +229,8 @@ this much along the vertical centre line (the uncovered strips are black). 0 = o
   (unless (ffi:c-inline (msaa) (:int) :bool "r_init(#0)" :one-liner t)
     (error "render: no SDL_GPU device (WebGPU unavailable?)"))
   (let ((lit-vs (wgsl "lit.vert.wgsl")) (lit-fs (wgsl "lit.frag.wgsl"))
-        (tri (wgsl "fullscreen.vert.wgsl")) (fx-vs (wgsl "fx.vert.wgsl")) (fx-fs (wgsl "fx.frag.wgsl")))
+        (tri (wgsl "fullscreen.vert.wgsl")) (fx-vs (wgsl "fx.vert.wgsl")) (fx-fs (wgsl "fx.frag.wgsl"))
+        (toon-vs (wgsl "toon.vert.wgsl")) (toon-fs (wgsl "toon.frag.wgsl")))
     ;; slot vs entry fs entry layout target depth blend cull   (enum order in render.c)
     (make-pipeline 0 lit-vs "vs_main" lit-fs "fs_main" #x333 0 1 0 1)       ; RP_LIT
     (make-pipeline 1 lit-vs "vs_main" lit-fs "fs_main" #x333 0 1 0 2)       ; RP_LIT_CW (mirrored)
@@ -211,9 +241,32 @@ this much along the vertical centre line (the uncovered strips are black). 0 = o
     (make-pipeline 6 fx-vs "vs_fx" fx-fs "fs_fx_add" #x324 0 2 2 0)         ; RP_FXB
     (make-pipeline 7 tri "vs_tri" (wgsl "bright.frag.wgsl") "fs_bright" 0 1 0 0 0)      ; RP_BRIGHT
     (make-pipeline 8 tri "vs_tri" (wgsl "blur.frag.wgsl") "fs_blur" 0 1 0 0 0)          ; RP_BLUR
-    (make-pipeline 9 tri "vs_tri" (wgsl "composite.frag.wgsl") "fs_comp" 0 2 0 0 0))    ; RP_COMP (RP_UI: ui.lisp)
-  (setf *fx-alpha* (make-stream-buffer 9 16384)
-        *fx-add* (make-stream-buffer 9 16384)))
+    (make-pipeline 9 tri "vs_tri" (wgsl "composite.frag.wgsl") "fs_comp" 0 2 0 0 0)     ; RP_COMP (10 RP_UI: ui.lisp)
+    (make-pipeline 11 toon-vs "vs_toon" toon-fs "fs_toon" #x333 0 1 0 1)    ; RP_TOON (DRAW-MESH :TOON)
+    (make-pipeline 12 toon-vs "vs_toon" toon-fs "fs_toon" #x333 0 1 0 2)    ; RP_TOON_CW
+    (make-pipeline 13 tri "vs_tri" (wgsl "sky-toon.frag.wgsl") "fs_sky_toon" 0 0 0 0 0)    ; RP_SKY_TOON (ENV-TOON)
+    (make-pipeline 14 toon-vs "vs_hull" toon-fs "fs_ink" #x333 0 1 0 3)     ; RP_HULL (DRAW-MESH :TOON mode 3)
+    (make-pipeline 15 toon-vs "vs_hull" toon-fs "fs_ink" #x333 0 1 0 4)     ; RP_HULL_CW
+    (make-pipeline 16 (wgsl "fx-toon.vert.wgsl") "vs_fx_toon" (wgsl "fx-toon.frag.wgsl") "fs_fx_toon" #x324 0 1 3 0) ; RP_FXT (A2C)
+    (make-pipeline 17 tri "vs_tri" (wgsl "composite-fx.frag.wgsl") "fs_comp_fx" 0 2 0 0 0)) ; RP_COMP_FX (*GRADE-IMPACT*)
+  (setf *msaa-samples* (ffi:c-inline () () :int "r_sample_count()" :one-liner t)
+        *fx-alpha* (make-stream-buffer 9 16384)
+        *fx-add* (make-stream-buffer 9 16384)
+        *fx-toon* (make-stream-buffer 9 16384))
+  (grade-impact 0))
+
+(defun grade-impact (mode &key (threshold 0.4) (keep-sat 0.45) (keep-hue 10.0) (ink '(0.031 0.031 0.047)) (paper '(1 1 1)))
+  "Set *GRADE-IMPACT* to MODE (0 off, 1 negative, 2 two-tone, 3 manga page, 4 spot-keep) and its
+parameters: THRESHOLD (luma 0..1 between INK and PAPER), KEEP-SAT (HSV saturation above which modes 3 / 4
+keep a pixel's colour), KEEP-HUE (degrees; mode 4 keeps only saturated pixels within 25 degrees of it),
+INK / PAPER (sRGB lists). Presets: white/ink (the defaults), ink/white (:ink '(1 1 1) :paper '(0.03 0.03
+0.05)), red/ink, fire/ink."
+  (let ((p *impact-params*))
+    (setf *grade-impact* mode
+          (aref p 0) (f32 threshold) (aref p 1) (f32 keep-sat) (aref p 2) (f32 keep-hue)
+          (aref p 3) (f32 (elt ink 0)) (aref p 4) (f32 (elt ink 1)) (aref p 5) (f32 (elt ink 2))
+          (aref p 6) (f32 (elt paper 0)) (aref p 7) (f32 (elt paper 1)) (aref p 8) (f32 (elt paper 2)))
+    mode))
 
 (defun engine-init (&key (title "game") (msaa 4))
   "Platform + renderer + UI. MSAA (1 or 4) applies to the offscreen scene target."
@@ -225,13 +278,14 @@ this much along the vertical centre line (the uncovered strips are black). 0 = o
 (defun begin-frame ()
   "Reset per-frame queues. Call once per frame after PLATFORM-POLL."
   (setf *dq-n* 0 *light-n* 0
-        (stream-buffer-fill *fx-alpha*) 0 (stream-buffer-fill *fx-add*) 0 (stream-buffer-fill *ui-batch*) 0)
+        (stream-buffer-fill *fx-alpha*) 0 (stream-buffer-fill *fx-add*) 0 (stream-buffer-fill *fx-toon*) 0
+        (stream-buffer-fill *ui-batch*) 0)
   (update-camera))
 
 ;; macros, not inline defuns: an inline defun boxes its float argument before the c-inline
 (defmacro srgb->lin (c) `(ffi:c-inline (,c) (:float) :float "powf(fmaxf(#0,0.0f),2.2f)" :one-liner t))
 
-(defun-fast draw-mesh (mesh model &key tint (emissive 0f0) (flash 0f0) (alpha 1f0) (specular -1f0) rim (env-rim 1f0))
+(defun-fast draw-mesh (mesh model &key tint (emissive 0f0) (flash 0f0) (alpha 1f0) (specular -1f0) rim (env-rim 1f0) toon)
   "Queue MESH with world matrix MODEL (mat4, copied). TINT: (r g b) list/vector multiplies vertex
 colors. EMISSIVE: self-illumination (0 = lit only, 1..4 = glowing neon). FLASH: 0..1 lerp to white.
 ALPHA < 1 draws in the transparent pass (after opaque, no depth write).
@@ -239,14 +293,18 @@ SPECULAR: wet-highlight strength for this draw (0 = matte, skips the specular ma
 negative (default) = (env-specular *env*).
 RIM: f32vec of 3 LINEAR rgb floats (strength baked in) added as a (1-N.V)^3 rim light (silhouettes).
 ENV-RIM: multiplies the environment's rim light (env-rim-*) for this draw: 0 = none (a stage or
-floor that must not glow at grazing angles), 1 (default) = unchanged. RIM is added either way."
+floor that must not glow at grazing angles), 1 (default) = unchanged. RIM is added either way.
+TOON: NIL (default: the lit shader) or an f32vec of 4 toon lanes (mode 1 stage / 2 character, feet
+height, fog scale, spare) for fs_toon (engine/shaders/toon.frag.wgsl), or mode 3 = an ink hull (MB-HULL
+mesh; lanes: 3, depth push m, fog scale, ink px @720) for vs_hull / fs_ink; toon draws ignore SPECULAR,
+RIM and the env rim and must be opaque (ALPHA < 1 falls back to the lit shader)."
   (declare (type f32vec model))
   (unless (mesh-p mesh) (error 'type-error :datum mesh :expected-type 'mesh))
   (let* ((n *dq-n*) (q *dq*))
     (declare (fixnum n) (type f32vec q))
     (when (> (* (1+ n) +dq-stride+) (length q))
       (setf q (replace (make-f32 (* 2 (length q))) q) *dq* q))
-    ;; record = WGSL Draw: [0..15 model][16..19 tint rgba][20 emissive 21 flash 22 specular 23 mesh id][24..26 rim, 27 env-rim]
+    ;; record = WGSL Draw: [0..15 model][16..19 tint rgba][20 emissive 21 flash 22 specular 23 mesh id][24..26 rim, 27 env-rim][28..31 toon]
     (let* ((o (* n +dq-stride+)))
       (declare (fixnum o))
       (replace q model :start1 o :end1 (+ o 16))
@@ -261,6 +319,9 @@ floor that must not glow at grazing angles), 1 (default) = unchanged. RIM is add
           (let ((rv rim)) (declare (type f32vec rv))
             (setf (aref q (+ o 24)) (aref rv 0) (aref q (+ o 25)) (aref rv 1) (aref q (+ o 26)) (aref rv 2)))
           (setf (aref q (+ o 24)) 0f0 (aref q (+ o 25)) 0f0 (aref q (+ o 26)) 0f0))
+      (if toon                          ; [28..31 toon lanes]
+          (replace q (the f32vec toon) :start1 (+ o 28) :end1 (+ o 32))
+          (fill q 0f0 :start (+ o 28) :end (+ o 32)))
       (setf *dq-n* (1+ n))
       nil)))
 
@@ -353,26 +414,59 @@ view frustum light no visible pixel, so they are dropped first (each costs a ful
       (lin3 64 (env-sky-top e) 1f0 0f0)
       (setf (aref u 68) (env-specular e) (aref u 69) (env-shininess e)
             (aref u 70) (ffi:c-inline (nl) (:int) :float "(float)(#0)" :one-liner t)
-            (aref u 71) (ffi:c-inline ((min +max-lights+ (max 0 (the fixnum *pixel-lights*)))) (:int) :float "(float)(#0)" :one-liner t))
+            (aref u 71) (ffi:c-inline ((if (env-toon e) 2 (min +max-lights+ (max 0 (the fixnum *pixel-lights*))))) (:int) :float "(float)(#0)" :one-liner t))
       (replace u *lp* :start1 72)
       (replace u *lc* :start1 104)
+      (when (env-toon e) (fill-toon-uniforms u e cam))
       u)))
+
+(defun-fast fill-toon-uniforms (u e cam)
+  "The Frame's toon lanes 136..151 (frame.wgsl: key, toon, shd, scr) from environment E and camera CAM.
+The key light is set in camera axes, so a cut never flips the shading; SCR reads *RP* (scene size); CIN
+is the cinematic back-rim (ENV-CIN-RIM / -WIDTH); CLK the fx clock in 24 Hz ticks + the toon fx discard
+threshold (0 with MSAA's alpha-to-coverage, 0.5 without)."
+  (declare (type f32vec u))
+  (let* ((k (env-key-light e)) (rt (camera-right cam)) (up (camera-upv cam)) (fw (camera-forward cam)) (p *rp*))
+    (declare (type f32vec k rt up fw p))
+    (let* ((kx (- (+ (* (aref k 0) (aref rt 0)) (* (aref k 1) (aref up 0))) (* (aref k 2) (aref fw 0))))
+           (ky (- (+ (* (aref k 0) (aref rt 1)) (* (aref k 1) (aref up 1))) (* (aref k 2) (aref fw 1))))
+           (kz (- (+ (* (aref k 0) (aref rt 2)) (* (aref k 1) (aref up 2))) (* (aref k 2) (aref fw 2))))
+           (l (f-max 1f-6 (f-sqrt (+ (* kx kx) (* ky ky) (* kz kz))))))
+      (declare (single-float kx ky kz l))
+      (setf (aref u 136) (/ kx l) (aref u 137) (/ ky l) (aref u 138) (/ kz l) (aref u 139) (env-toon-threshold e)
+            (aref u 140) (env-toon-band e) (aref u 141) (env-toon-gradient e)
+            (aref u 142) (env-toon-gradient-height e) (aref u 143) (env-toon-light-gain e)
+            (aref u 144) (env-shade-value e) (aref u 145) (env-shade-saturation e)
+            (aref u 146) (env-shade-hue e) (aref u 147) (env-shade-lift e)
+            (aref u 148) (aref p 4) (aref u 149) (aref p 5)
+            (aref u 150) (aref (the f32vec (camera-proj cam)) 5) (aref u 151) (/ (aref p 5) 720f0)))
+    (let* ((c (env-cin-rim e)))
+      (declare (type f32vec c))
+      (setf (aref u 152) (srgb->lin (aref c 0)) (aref u 153) (srgb->lin (aref c 1)) (aref u 154) (srgb->lin (aref c 2))
+            (aref u 155) (env-cin-width e)
+            (aref u 156) (i->f (f->i (* 24f0 (aref (the f32vec *fx-clock*) 0))))          ; clk: fx clock in 24 Hz ticks,
+            (aref u 157) (if (> (the fixnum *msaa-samples*) 1) 0f0 0.5f0)))            ; toon fx discard threshold
+    nil))
 
 (defun end-frame ()
   "Render everything queued this frame (scene → fx → post → UI) and present."
   (update-camera)
-  (fill-frame-uniforms (select-lights))
   (let* ((e *env*) (p *rp*) (ww (window-width)) (wh (window-height)))
     (declare (type f32vec p))
     (setf (aref p 0) (if (env-bloom e) 1f0 0f0) (aref p 1) (env-bloom-threshold e) (aref p 2) (env-bloom-strength e)
           (aref p 3) (env-vignette e)
           (aref p 4) (f32 (max 1 (round (* ww *render-scale*)))) (aref p 5) (f32 (max 1 (round (* wh *render-scale*))))
-          (aref p 6) (f32 ww) (aref p 7) (f32 wh) (aref p 8) (f32 *grade-desat*) (aref p 9) (f32 *grade-split*))
-    (let* ((fa *fx-alpha*) (fb *fx-add*) (ui *ui-batch*)
+          (aref p 6) (f32 ww) (aref p 7) (f32 wh) (aref p 8) (f32 *grade-desat*) (aref p 9) (f32 *grade-split*)
+          (aref p 10) (if (env-toon e) 1f0 0f0)
+          (aref p 11) (f32 *grade-impact*))
+    (replace p *impact-params* :start1 12)
+    (fill-frame-uniforms (select-lights))
+    (let* ((fa *fx-alpha*) (fb *fx-add*) (ft *fx-toon*) (ui *ui-batch*)
            (n (ffi:c-inline (*fu* p *dq* *dq-n* (stream-buffer-data fa) (stream-buffer-fill fa)
-                             (stream-buffer-data fb) (stream-buffer-fill fb) (stream-buffer-data ui) (stream-buffer-fill ui))
-                            (t t t :int t :int t :int t :int) :int
-                            "r_frame(#0->vector.self.sf,#1->vector.self.sf,#2->vector.self.sf,#3,#4->vector.self.sf,#5,#6->vector.self.sf,#7,#8->vector.self.sf,#9)"
+                             (stream-buffer-data fb) (stream-buffer-fill fb) (stream-buffer-data ui) (stream-buffer-fill ui)
+                             (stream-buffer-data ft) (stream-buffer-fill ft))
+                            (t t t :int t :int t :int t :int t :int) :int
+                            "r_frame(#0->vector.self.sf,#1->vector.self.sf,#2->vector.self.sf,#3,#4->vector.self.sf,#5,#6->vector.self.sf,#7,#8->vector.self.sf,#9,#a->vector.self.sf,#b)"
                             :one-liner t)))
       (declare (fixnum n))
       (when (>= n 0)                  ; -1: no swapchain texture this frame (skipped)
@@ -391,10 +485,14 @@ view frustum light no visible pixel, so they are dropped first (each costs a ful
 
 ;;; ---------------------------------------------------------------- fx batch
 ;;; Vertex: pos xyz, uv (radial softness: |uv|=0 opaque .. 1 transparent), rgba (sRGB, not tonemapped).
+;;; The :toon batch (drawn first, depth-written, alpha-to-coverage; fx-toon.frag.wgsl) reads the same
+;;; 9 floats as pos, uv (shape-local, |uv| 1 = the edge), heat, seed, wobble and palette + presence
+;;; (TOON-A); see fx.lisp's toon section.
 (defmacro with-fx-verts ((data o mode nverts) &body body)
-  "Reserve NVERTS in the MODE batch; inside BODY (VTX x y z u v r g b a) appends one vertex."
+  "Reserve NVERTS in the MODE batch (:alpha, :toon, else additive); inside BODY (VTX x y z u v r g b a)
+appends one vertex."
   (let* ((sb (gensym)))
-    `(let* ((,sb (if (eq ,mode :alpha) *fx-alpha* *fx-add*)))
+    `(let* ((,sb (case ,mode (:alpha *fx-alpha*) (:toon *fx-toon*) (t *fx-add*))))
        (if (not (stream-room-p ,sb ,nverts))
            (progn (incf *fx-dropped*) nil)
            (let* ((,data (stream-buffer-data ,sb)) (,o (stream-buffer-fill ,sb)))
@@ -410,10 +508,17 @@ view frustum light no visible pixel, so they are dropped first (each costs a ful
              t)))))
 
 (defun-fast fx-billboard (x y z size r g b a &key (mode :add) (rot 0f0))
-  "Camera-facing soft round sprite of radius SIZE at (x y z). MODE :add or :alpha."
+  "Camera-facing soft round sprite of radius SIZE at (x y z). MODE :add or :alpha, or :toon (R G B A =
+heat seed wobble TOON-A: a disc or puff, pushed 0.8 SIZE toward the eye at the same screen size, so it
+never slices a body or the floor with a straight depth line)."
   (let* ((x (f32 x)) (y (f32 y)) (z (f32 z)) (s (f32 size)) (r (f32 r)) (g (f32 g)) (b (f32 b)) (a (f32 a))
         (rt (camera-right *camera*)) (up (camera-upv *camera*)) (rot (f32 rot)))
     (declare (single-float x y z s r g b a rot) (type f32vec rt up))
+    (when (eq mode :toon)
+      (let* ((e (camera-eye *camera*)) (dx (- (aref e 0) x)) (dy (- (aref e 1) y)) (dz (- (aref e 2) z))
+             (dd (f-max 1f-3 (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz))))) (pp (f-min (* 0.8f0 s) (* 0.5f0 dd))))
+        (declare (type f32vec e) (single-float dx dy dz dd pp))
+        (setf x (+ x (* pp (/ dx dd))) y (+ y (* pp (/ dy dd))) z (+ z (* pp (/ dz dd))) s (* s (/ (- dd pp) dd)))))
     (let* ((c (cos rot)) (sn (sin rot))
            (rx (* s (- (* c (aref rt 0)) (* sn (aref up 0))))) (ry (* s (- (* c (aref rt 1)) (* sn (aref up 1))))) (rz (* s (- (* c (aref rt 2)) (* sn (aref up 2)))))
            (ux (* s (+ (* sn (aref rt 0)) (* c (aref up 0))))) (uy (* s (+ (* sn (aref rt 1)) (* c (aref up 1))))) (uz (* s (+ (* sn (aref rt 2)) (* c (aref up 2))))))

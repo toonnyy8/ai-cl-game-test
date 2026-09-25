@@ -7,10 +7,18 @@
 (in-package :duel)
 
 ;;; ---------------------------------------------------------------- body
-(defbody :yamamoto (:scale 0.95 :width 1.05 :hunch 22 :hurt-r 0.36 :hurt-h 1.65
-                    :palette ((:skin #xC29470) (:black #x17161B) (:white #xD3CFC5) (:beard #xDAD8D0)
-                              (:cord #x6B3A96) (:scar #x7A4A3C) (:obi #xBDB9AE) (:tabi #xCCC8BE)
-                              (:sole #x4A3A2A) (:mouth #x3A2420))
+;; Proportions (user review 1: realistic, not chibi): a narrow head (the girth factors), a lean chest,
+;; arms to mid-thigh (:props :arms, the arm shapes as long), bigger hands, a slighter hunch.
+(defbody :yamamoto (:scale 0.95 :width 1.05 :hunch 14 :hurt-r 0.36 :hurt-h 1.65
+                    :props (:arms 1.12)
+                    :girth ((:chest 0.86 1.0 0.92) (:spine 0.86 1.0 0.92) (:pelvis 0.9 1.0 0.95)
+                            (:upper-arm-r 0.9 1.12 0.9) (:upper-arm-l 0.9 1.12 0.9) (:lower-arm-r 0.9 1.12 0.9)
+                            (:hand-r 1.2 1.3 1.2))
+                    ;; v4 notan palette (docs/STYLE_STORM_DESIGN.md §2.5): a solid black robe, a V4 white
+                    ;; haori whose shadow turns cold grey-blue, muted skin (the only warm non-spot colour)
+                    :palette ((:skin #xD8B4A0) (:black #x16161E) (:white #xF0F0EC) (:beard #xECECEA)
+                              (:cord #x4A3A6A) (:scar #x7A4A3C) (:obi #xC8CCD6) (:tabi #xE8E8E4)
+                              (:sole #x262833) (:mouth #x3A1E1A) (:lid #x1E1818) (:fold #xD8DCE4))
                     :rim (#xFFB070 0.22))
   (:pelvis (:box 0.34 0.18 0.24 :c :black)
            (:box 0.35 0.07 0.25 :at (0 0.06 0) :c :obi)
@@ -19,39 +27,44 @@
            (:box 0.025 0.74 0.28 :at (-0.215 -0.3 0) :rot (0 0 -4) :c :white)
            (:box 0.12 0.74 0.025 :at (0.16 -0.3 0.135) :rot (0 5 0) :c :white)         ; open front
            (:box 0.12 0.74 0.025 :at (-0.16 -0.3 0.135) :rot (0 5 0) :c :white))
-  (:spine (:box 0.32 0.24 0.21 :at (0 0.11 0) :c :black)
-          (:box 0.41 0.25 0.03 :at (0 0.11 -0.12) :c :white)
-          (:box 0.03 0.25 0.24 :at (0.205 0.11 0) :c :white)
-          (:box 0.03 0.25 0.24 :at (-0.205 0.11 0) :c :white)
-          (:box 0.12 0.25 0.03 :at (0.155 0.11 0.12) :c :white)
-          (:box 0.12 0.25 0.03 :at (-0.155 0.11 0.12) :c :white))
-  (:chest (:bevel 0.40 0.28 0.24 0.03 :at (0 0.11 0) :c :black)
-          (:box 0.45 0.3 0.03 :at (0 0.11 -0.13) :c :white)
-          (:box 0.03 0.3 0.26 :at (0.225 0.11 0) :c :white)
-          (:box 0.03 0.3 0.26 :at (-0.225 0.11 0) :c :white)
-          (:box 0.13 0.3 0.03 :at (0.16 0.11 0.13) :c :white)
-          (:box 0.13 0.3 0.03 :at (-0.16 0.11 0.13) :c :white)
-          (:box 0.025 0.2 0.01 :at (0.035 0.15 0.125) :rot (0 0 -22) :c :obi)         ; under-collar V
-          (:box 0.025 0.2 0.01 :at (-0.035 0.15 0.125) :rot (0 0 22) :c :obi)
-          (:box 0.46 0.03 0.27 :at (0 0.255 0) :c :white)                               ; yoke over the shoulders
-          (:box 0.2 0.035 0.01 :at (0 0.17 -0.147) :c :black))                         ; 一 on the back
+  ;; the haori over the torso: one rounded white shell, the black robe at its open front
+  (:spine (:bevel 0.46 0.25 0.28 0.04 :at (0 0.11 -0.005) :c :white)
+          (:box 0.12 0.25 0.02 :at (0 0.11 0.15) :c :black))
+  (:chest (:bevel 0.5 0.3 0.29 0.05 :at (0 0.11 -0.005) :c :white)
+          (:box 0.13 0.3 0.02 :at (0 0.11 0.15) :c :black)
+          (:box 0.025 0.2 0.01 :at (0.035 0.15 0.162) :rot (0 0 -22) :c :obi)         ; under-collar V
+          (:box 0.025 0.2 0.01 :at (-0.035 0.15 0.162) :rot (0 0 22) :c :obi)
+          (:box 0.2 0.035 0.01 :at (0 0.17 -0.157) :c :black))                         ; 一 on the back
   (:neck (:cyl 0.065 0.1 :at (0 0.04 0) :c :skin))
-  (:head (:bevel 0.19 0.22 0.21 0.035 :at (0 0.125 0) :c :skin)
-         (:box 0.03 0.06 0.04 :at (0.1 0.12 -0.01) :c :skin) (:box 0.03 0.06 0.04 :at (-0.1 0.12 -0.01) :c :skin)
-         (:wedge 0.045 0.05 0.045 :at (0 0.1 0.115) :rot (180 0 0) :c :skin)          ; nose
-         (:box 0.07 0.012 0.012 :at (0 0.195 0.103) :rot (0 0 38) :c :scar)           ; X scar
-         (:box 0.07 0.012 0.012 :at (0 0.195 0.103) :rot (0 0 -38) :c :scar)
-         (:box 0.085 0.028 0.035 :at (0.047 0.152 0.1) :rot (0 0 -14) :c :beard)      ; long brows
-         (:box 0.085 0.028 0.035 :at (-0.047 0.152 0.1) :rot (0 0 14) :c :beard)
-         (:box 0.03 0.11 0.03 :at (0.1 0.105 0.085) :rot (0 0 12) :c :beard)
-         (:box 0.03 0.11 0.03 :at (-0.1 0.105 0.085) :rot (0 0 -12) :c :beard)
-         (:bevel 0.2 0.11 0.13 0.02 :at (0 0.04 0.055) :c :beard)                     ; jaw + moustache
-         (:box 0.05 0.12 0.03 :at (0.06 0.02 0.12) :rot (0 0 -10) :c :beard)
-         (:box 0.05 0.12 0.03 :at (-0.06 0.02 0.12) :rot (0 0 10) :c :beard)
-         (:box 0.19 0.26 0.09 :at (0 -0.1 0.13) :rot (0 8 0) :c :beard)               ; the long beard
-         (:box 0.14 0.22 0.07 :at (0 -0.3 0.18) :rot (0 8 0) :c :beard)
-         (:box 0.155 0.04 0.085 :at (0 -0.33 0.18) :rot (0 8 0) :c :cord)
-         (:cone 0.065 0.18 :at (0 -0.49 0.2) :rot (0 172 0) :seg 5 :c :beard))
+  ;; head in metres (not girth-scaled; x and z sizes x the body :width 1.05): a bald skull sphere, a
+  ;; flat-fronted face (front at z 0.08) with the flat face shapes (tag :face-neutral), the long beard
+  (:head (:sphere 0.0743 :stretch 0.05 :at (0 0.135 -0.008) :seg 12 :c :skin)             ; bald skull
+         (:bevel 0.108 0.13 0.076 0.018 :at (0 0.1 0.042) :c :skin)                         ; face
+         (:box 0.021 0.055 0.032 :at (0.078 0.115 -0.005) :c :skin) (:box 0.021 0.055 0.032 :at (-0.078 0.115 -0.005) :c :skin)
+         (:wedge 0.028 0.05 0.029 :at (0 0.1 0.095) :rot (180 0 0) :c :skin)               ; nose
+         (:box 0.036 0.008 0.008 :at (0 0.19 0.066) :rot (0 -24 38) :c :scar)              ; X scar
+         (:box 0.036 0.008 0.008 :at (0 0.19 0.066) :rot (0 -24 -38) :c :scar)
+         ;; eyes: narrow old man's slits, drooping at the outer ends, under the long brows
+         (:box 0.03 0.006 0.004 :at (0.03 0.128 0.082) :rot (0 0 -8) :c :lid :tag :face-neutral)
+         (:box 0.03 0.006 0.004 :at (-0.03 0.128 0.082) :rot (0 0 8) :c :lid :tag :face-neutral)
+         (:box 0.022 0.004 0.004 :at (0.032 0.118 0.0815) :rot (0 0 6) :c :scar :tag :face-neutral)   ; lower lids
+         (:box 0.022 0.004 0.004 :at (-0.032 0.118 0.0815) :rot (0 0 -6) :c :scar :tag :face-neutral)
+         (:box 0.064 0.022 0.026 :at (0.035 0.143 0.087) :rot (0 0 -14) :c :beard)          ; long brows over the eyes
+         (:box 0.064 0.022 0.026 :at (-0.035 0.143 0.087) :rot (0 0 14) :c :beard)
+         (:box 0.022 0.1 0.024 :at (0.068 0.1 0.084) :rot (0 0 12) :c :beard)              ; ... hanging past the eyes
+         (:box 0.022 0.1 0.024 :at (-0.068 0.1 0.084) :rot (0 0 -12) :c :beard)
+         (:bevel 0.152 0.11 0.105 0.016 :at (0 0.04 0.0467) :c :beard)                     ; jaw + moustache
+         (:box 0.038 0.12 0.024 :at (0.048 0.02 0.102) :rot (0 0 -10) :c :beard)
+         (:box 0.038 0.12 0.024 :at (-0.048 0.02 0.102) :rot (0 0 10) :c :beard)
+         (:box 0.145 0.26 0.073 :at (0 -0.1 0.1105) :rot (0 8 0) :c :beard)               ; the long beard
+         (:box 0.0025 0.17 0.006 :at (-0.03 -0.12 0.151) :rot (0 8 3) :c :lid)             ; ink strands (ink on white)
+         (:box 0.0025 0.2 0.006 :at (0.006 -0.13 0.151) :rot (0 8 -1) :c :lid)
+         (:box 0.0025 0.12 0.006 :at (0.036 -0.09 0.151) :rot (0 8 -4) :c :lid)
+         (:box 0.004 0.05 0.006 :at (0.022 0.072 0.104) :rot (0 0 -55) :c :lid)            ; the moustache's parting
+         (:box 0.004 0.05 0.006 :at (-0.022 0.072 0.104) :rot (0 0 55) :c :lid)
+         (:box 0.107 0.22 0.057 :at (0 -0.3 0.153) :rot (0 8 0) :c :beard)
+         (:box 0.118 0.04 0.069 :at (0 -0.33 0.153) :rot (0 8 0) :c :cord)
+         (:cone 0.051 0.18 :at (0 -0.49 0.17) :rot (0 172 0) :seg 5 :c :beard))
   (:shoulder-r (:bevel 0.13 0.06 0.2 0.02 :at (0.02 -0.02 0) :rot (0 0 -24) :c :white))
   (:shoulder-l (:bevel 0.13 0.06 0.2 0.02 :at (-0.02 -0.02 0) :rot (0 0 24) :c :white))
   (:upper-arm-r (:box 0.14 0.31 0.15 :at (0 -0.15 0) :c :white))
@@ -60,34 +73,39 @@
   (:lower-arm-r (:box 0.16 0.21 0.18 :at (0 -0.1 0) :c :white)
                 (:box 0.04 0.2 0.2 :at (0 -0.16 -0.06) :rot (0 -10 0) :c :white)              ; hanging sleeve
                 (:box 0.13 0.04 0.15 :at (0 -0.21 0) :c :black)
+                (:box 0.13 0.005 0.004 :at (0 -0.196 0.081) :c :fold)
                 (:box 0.07 0.08 0.07 :at (0 -0.23 0) :c :skin))
-  (:hand-r (:box 0.08 0.09 0.08 :at (0 -0.045 0) :c :skin))
-  (:thigh-r (:box 0.19 0.46 0.21 :at (0 -0.22 0) :c :black))
-  (:thigh-l (:box 0.19 0.46 0.21 :at (0 -0.22 0) :c :black))
-  (:shin-r (:box 0.22 0.3 0.24 :at (0 -0.1 0) :c :black) (:box 0.25 0.08 0.27 :at (0 -0.27 0) :c :black)
+  (:hand-r (:bevel 0.075 0.09 0.075 0.02 :at (0 -0.045 0) :c :skin))
+  (:thigh-r (:cyl 0.096 0.46 :top 0.09 :seg 10 :at (0 -0.22 0) :c :black)
+           (:box 0.005 0.3 0.004 :at (0.035 -0.2 0.118) :rot (0 -3 -4) :c :fold))
+  (:thigh-l (:cyl 0.096 0.46 :top 0.09 :seg 10 :at (0 -0.22 0) :c :black)
+           (:box 0.005 0.26 0.004 :at (-0.03 -0.24 0.118) :rot (0 -3 5) :c :fold))
+  (:shin-r (:cyl 0.12 0.3 :top 0.1 :seg 10 :at (0 -0.1 0) :c :black)
+          (:box 0.005 0.22 0.004 :at (0.02 -0.12 0.123) :rot (0 -5 -6) :c :fold) (:cyl 0.13 0.08 :top 0.12 :seg 10 :at (0 -0.27 0) :c :black)
           (:box 0.08 0.12 0.09 :at (0 -0.37 0) :c :tabi))
-  (:shin-l (:box 0.22 0.3 0.24 :at (0 -0.1 0) :c :black) (:box 0.25 0.08 0.27 :at (0 -0.27 0) :c :black)
+  (:shin-l (:cyl 0.12 0.3 :top 0.1 :seg 10 :at (0 -0.1 0) :c :black) (:cyl 0.13 0.08 :top 0.12 :seg 10 :at (0 -0.27 0) :c :black)
           (:box 0.08 0.12 0.09 :at (0 -0.37 0) :c :tabi))
-  (:foot-r (:box 0.09 0.06 0.22 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.24 :at (0 -0.055 0.06) :c :sole))
-  (:foot-l (:box 0.09 0.06 0.22 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.24 :at (0 -0.055 0.06) :c :sole)))
+  (:foot-r (:bevel 0.09 0.06 0.22 0.02 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.24 :at (0 -0.055 0.06) :c :sole))
+  (:foot-l (:bevel 0.09 0.06 0.22 0.02 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.24 :at (0 -0.055 0.06) :c :sole)))
 
 ;;; ---------------------------------------------------------------- weapons
 (defweapon :ya-cane (:length 0.86 :base 0.1)          ; the shikomizue: Ryujin Jakka sheathed in a cane
-  (:solid (mbc mb #x5B3A22)
+  (:solid (mbc mb #x3A3430)                           ; dark wood, desaturated (colour is spot-only)
           (with-xform (mb (xform :y 0.4)) (mb-cylinder mb 0.018 0.92 :segments 6))
-          (mbc mb #x3A2414)
+          (mbc mb #x26221E)
           (with-xform (mb (xform :y -0.06)) (mb-cylinder mb 0.02 0.14 :segments 6))
           (with-xform (mb (xform :y 0.855)) (mb-cylinder mb 0.02 0.03 :segments 6))))
 
 (defweapon :ryujin-jakka (:length 0.95)
-  (:solid (mb-blade mb :length 0.9 :width 0.036 :blade-color '(0.76 0.78 0.82) :edge-color '(1.0 0.93 0.85)
-                       :guard-color '(0.7 0.55 0.25) :handle-color '(0.08 0.06 0.07) :wrap-color '(0.34 0.18 0.44)))
+  (:solid :ink 0 (mb-blade mb :length 0.9 :width 0.036 :blade-color '(0.76 0.78 0.82) :edge-color '(1.0 0.93 0.85) :hilt nil))
+  (:solid (mb-blade mb :width 0.036 :guard-color '(0.44 0.42 0.38) :handle-color '(0.08 0.06 0.07) :wrap-color '(0.3 0.25 0.4) :blade nil))
   (:glow 1.2 #xFF7A2A (with-xform (mb (xform :y 0.45 :z 0.017)) (mb-box mb 0.003 0.8 0.004))))
 
 (defweapon :zanka (:length 0.95)
-  (:solid (mb-blade mb :length 0.9 :width 0.04 :curve 0.004 :blade-color '(0.07 0.055 0.055)
-                       :edge-color '(0.3 0.07 0.03) :guard-color '(0.16 0.12 0.1) :handle-color '(0.05 0.04 0.04)
-                       :wrap-color '(0.18 0.08 0.06)))
+  (:solid :ink 0 (mb-blade mb :length 0.9 :width 0.04 :curve 0.004 :blade-color '(0.07 0.055 0.055)
+                              :edge-color '(0.3 0.07 0.03) :hilt nil))
+  (:solid (mb-blade mb :width 0.04 :guard-color '(0.16 0.12 0.1) :handle-color '(0.05 0.04 0.04) :wrap-color '(0.18 0.08 0.06)
+                       :blade nil))
   (:glow 3.5 #xFF5A14 (with-xform (mb (xform :y 0.46 :z 0.02)) (mb-box mb 0.005 0.86 0.006))
                       (with-xform (mb (xform :y 0.3 :z 0.0 :roll 0.5)) (mb-box mb 0.009 0.07 0.004))
                       (with-xform (mb (xform :y 0.62 :z 0.004 :roll -0.4)) (mb-box mb 0.009 0.08 0.004))))

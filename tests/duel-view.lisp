@@ -1,5 +1,5 @@
 ;;;; duel-view.lisp — SOUL DUEL art viewer: both characters (every form and weapon), the skeleton,
-;;;; clip strips, the stage at dusk, and every sound. A test target, not part of the game:
+;;;; clip strips, the stage, and every sound. A test target, not part of the game:
 ;;;;   ./build.sh duelview duel/lisp/package.lisp duel/lisp/body.lisp duel/lisp/yama-art.lisp \
 ;;;;     duel/lisp/ken-art.lisp duel/lisp/sounds.lisp duel/lisp/stage.lisp tests/duel-view.lisp
 ;;;;   python3 tests/scripts/duel-view.py   (writes tests/scripts/duel-view-*.json, see its header)
@@ -7,9 +7,12 @@
 ;;;; Keys: 1-5 scenes, LEFT/RIGHT turn, SPACE spin, N/P next/previous clip strip, G stage on/off.
 ;;;; Debug commands (Module._debug_cmd):
 ;;;;   2000+k  scene k: 0 base forms, 1 awakened forms, 2 cane + skeletons, 3 mirror match, 4 duel on the stage
-;;;;   6000+i / 6100+i  camera on actor i: full body / face
+;;;;   6000+i / 6100+i / 6200+i  camera on actor i: full body / head and chest / face (0.7 m, eye level);
+;;;;   6210+i  the face from 35 degrees to its left
 ;;;;   3000+d  turntable angle d degrees (0 = facing the camera)     4000 stage off/on   4001 spin on/off
 ;;;;   4002 / 4003  add three Bankai cracks / clear them    4004 actors off/on (cons baseline)
+;;;;   4005  log every body's proportions (standing, no hunch): crown, head length, heads, head width,
+;;;;         shoulder span, fingertips, hips (legs / height), from the joints and the shape extents
 ;;;;   5000+i  play sound i (LIST-SOUNDS order) and log it
 ;;;;   1000000+1000*i  strip of clip i (clips sorted by name): the owner posed at 4 frames side by side
 ;;;;           (0, S, S+A, end for DEFSTRIKE clips; 0, 1/3, 2/3, end otherwise; :sh- clips on both)
@@ -84,7 +87,7 @@
                  (make-actor :yamamoto :ryujin-jakka :ya-stance :x -1.0 :yaw pi :tint *mirror-tint* :rim *mirror-rim*)
                  (make-actor :kenpachi :ken-katana :ke-stance :x 0.9 :yaw pi)
                  (make-actor :kenpachi :ken-katana :ke-stance :x 2.8 :yaw pi :tint *mirror-tint* :rim *mirror-rim*)))
-          (4 (setf *v-label* "BURNING SEIREITEI AT DUSK")
+          (4 (setf *v-label* "SEIREITEI RUINS AT NIGHT")
            (look-at 7.5 2.6 7.0 0 1.1 -0.5)
            (list (make-actor :yamamoto :ryujin-jakka :ya-stance :x -2.5 :z 0 :yaw (/ pi -2))
                  (make-actor :kenpachi :ken-katana :ke-stance :x 2.5 :z 0 :yaw (/ pi 2)))))))
@@ -117,6 +120,13 @@
         (look-at x (* 0.88 h) (+ z 1.6) x (* 0.82 h) z)
         (look-at x (* 0.6 h) (+ z (* 1.9 h)) x (* 0.5 h) z))))
 
+(defun face-cam (i deg)
+  "Camera 0.7 m from actor I's face, level with it, DEG degrees round from the front (the actor faces +z
+at turntable 0)."
+  (let* ((a (nth (mod i (length *actors*)) *actors*)) (p (make-f32 3)) (r (deg deg)))
+    (joint-point! p (actor-joints a) (ji :head) 0f0 (* 0.12 (body-scale (actor-body a))) 0f0)
+    (look-at (+ (aref p 0) (* 0.7 (sin r))) (aref p 1) (+ (aref p 2) (* 0.7 (cos r))) (aref p 0) (aref p 1) (aref p 2))))
+
 (defun play-live (i)
   (let* ((names (clip-names)) (name (nth (mod i (length names)) names)))
     (dolist (a *actors*)
@@ -125,15 +135,48 @@
         (anim-play (actor-anim a) name :blend 4)))
     (setf *v-label* (format nil "LIVE ~a" name))))
 
+(defun measure-body (key)
+  "Log KEY's proportions: zero pose, no hunch; shape extents ignore :rot (a close estimate)."
+  (let* ((b (find-body key)) (jm (make-f32 (* 16 +nj+))) (p (make-f32 3)) (w (body-width b))
+         (spec (girth-spec (body-spec b) (body-girth b))))
+    (pose-fk! jm (make-f32 +pose-n+) 0.0 0.0 0.0 0.0 (body-scale b) 0.0 (body-props b))
+    (labels ((half (sh)                  ; half extents (x y z) in the joint frame
+               (let ((n (ldiff (cdr sh) (member-if #'keywordp (cdr sh)))))
+                 (ecase (first sh)
+                   ((:box :bevel :wedge) (list (* 0.5 w (first n)) (* 0.5 (second n)) (* 0.5 w (third n))))
+                   ((:cyl :cone) (list (* w (first n)) (* 0.5 (second n)) (* w (first n))))
+                   (:sphere (list (* w (first n)) (+ (first n) (* 0.5 (getf (member-if #'keywordp (cdr sh)) :stretch 0))) (* w (first n)))))))
+             (edge (j sh sy)             ; world y of the shape's top (SY 1) or bottom (-1)
+               (let ((at (or (getf (member-if #'keywordp (cdr sh)) :at) '(0 0 0))))
+                 (joint-point! p jm (joint-index j) (f32 (or (first at) 0)) (f32 (+ (or (second at) 0) (* sy (second (half sh))))) 0f0)
+                 (aref p 1)))
+             (shapes (j) (remove :glow (rest (assoc j spec)) :key #'first))
+             (jy (j) (joint-point! p jm (joint-index j) 0f0 0f0 0f0) (aref p 1)))
+      (let* ((skull (first (shapes :head)))
+             (crown (loop for sh in (shapes :head)                  ; tilted hair spikes left out
+                          unless (getf (member-if #'keywordp (cdr sh)) :rot) maximize (edge :head sh 1)))
+             (chin (edge :head skull -1)) (hl (- (edge :head skull 1) chin))
+             (tip (loop for sh in (shapes :hand-r) minimize (edge :hand-r sh -1)))
+             (sw (progn (joint-point! p jm (joint-index :upper-arm-r) 0f0 0f0 0f0)
+                        (let ((x (aref p 0))) (joint-point! p jm (joint-index :upper-arm-l) 0f0 0f0 0f0) (- x (aref p 0)))))
+             (hip (jy :thigh-r)))
+        (log-msg "proportions ~a: crown ~,3f m, head ~,3f m (~,2f heads), head width ~,3f m, shoulder joints ~,3f m, ~
+fingertips ~,3f m (~,2f of height), hips ~,3f m (legs ~,2f of height), neck gap chin-shoulder ~,3f m"
+                 key crown hl (/ crown hl) (* 2 (body-scale b) (first (half skull))) sw tip (/ tip crown) hip (/ hip crown)
+                 (- chin (jy :upper-arm-r)))))))
+
 (defun view-debug (c)
   (cond ((>= c 1000000) (strip (floor (- c 1000000) 1000)))
         ((>= c 900000) (play-live (- c 900000)))
+        ((>= c 6210) (face-cam (- c 6210) 35))
+        ((>= c 6200) (face-cam (- c 6200) 0))
         ((>= c 6100) (close-up (- c 6100) t))
         ((>= c 6000) (close-up (- c 6000) nil))
         ((>= c 5000) (let ((k (nth (- c 5000) (list-sounds))))
                        (when k (log-msg "view: play sound ~d ~a" (- c 5000) k)
                          (if (sound-loop-p k) (music-play k) (play-sfx k :pitch-jitter 0.0)))))
         ((= c 4004) (setf *v-hide-actors* (not *v-hide-actors*)))
+        ((= c 4005) (dolist (k '(:yamamoto :kenpachi)) (measure-body k)))
         ((= c 4003) (stage-clear-cracks))
         ((= c 4002) (stage-crack-add -2.5 0.5 2.2) (stage-crack-add 1.0 -1.5 3.0) (stage-crack-add 3.5 2.0 1.6))
         ((= c 4001) (setf *v-spin* (not *v-spin*)))
@@ -182,7 +225,7 @@
     (ui-text *v-label* (* 10 s) (* 10 s) :scale s :shadow t)))
 
 (run-game :title "SOUL DUEL VIEW"
-          :load (list #'bodies-init #'stage-init)
+          :load (append (list #'bodies-init) (body-load-steps) (list #'stage-init))
           :start #'view-start
           :frame #'view-frame
           :debug #'view-debug)

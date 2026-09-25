@@ -1,4 +1,5 @@
-;;;; meshgen.lisp — procedural low-poly mesh builders (flat normals, per-vertex color).
+;;;; meshgen.lisp — procedural low-poly mesh builders (flat normals, per-vertex color; spheres and
+;;;; cylinder sides can take analytic smooth normals with :SMOOTH T).
 ;;;; Build CPU-side into a MESH-BUILDER, then (mb-build mb) uploads once and returns a MESH.
 ;;;; All primitives are centered on the builder's current origin; compose parts with WITH-XFORM.
 ;;;; Setup-time code: allocates freely, not meant for per-frame use.
@@ -11,7 +12,8 @@
   (flip nil)                           ; xform mirrors → swap winding
   (cur-color (v3 0.7 0.7 0.7) :type f32vec)
   (jitter 0f0 :type single-float)      ; per-face random brightness ±jitter (low-poly shading variety)
-  (seed 12345 :type fixnum))
+  (seed 12345 :type fixnum)
+  (smooth nil))                        ; NIL = flat normals, else #(kind hs slope) of the surface being emitted (%MB-TRI)
 
 (defun mb-color (mb r g b)
   "Set the current color (sRGB 0..1) for following primitives."
@@ -66,9 +68,13 @@
 (defun-fast %mb-tri (mb a b c)
   "Append triangle A B C (local vec3s, CCW = front) in color *MB-FC*. Conses nothing.
 The math is spelled out (same formulas and order as m4-transform-point!, v3-cross!, v3-normalize!):
-calling those from here boxed every float through the out-of-line V3-SET!."
+calling those from here boxed every float through the out-of-line V3-SET!.
+Normals: the face normal, or with (MB-SMOOTH MB) = #(kind hs slope) an analytic per-vertex normal
+from the local position (kind 1 sphere / capsule: p - (0, clamp(y, -hs, hs), 0); kind 2 cylinder side:
+(x, slope * radius, z)) turned by the builder transform (assumed rigid), the face normal where it
+degenerates (a cone tip)."
   (declare (type f32vec a b c))
-  (let* ((m (mb-xform mb)) (fc *mb-fc*))
+  (let* ((m (mb-xform mb)) (fc *mb-fc*) (sm (mb-smooth mb)))
     (declare (type f32vec m fc))
     (when (mb-flip mb) (rotatef b c))
     (macrolet ((xf (v i) `(+ (* (aref m ,i) (aref ,v 0)) (* (aref m ,(+ i 4)) (aref ,v 1)) (* (aref m ,(+ i 8)) (aref ,v 2)) (aref m ,(+ i 12)))))
@@ -86,11 +92,25 @@ calling those from here boxed every float through the out-of-line V3-SET!."
         (mb-ensure mb 27)
         (let* ((d (mb-data mb)) (o (mb-fill mb)) (r (aref fc 0)) (g (aref fc 1)) (bl (aref fc 2)))
           (declare (type f32vec d) (fixnum o) (single-float r g bl))
-          (macrolet ((vert (x y z) `(setf (aref d o) ,x (aref d (+ o 1)) ,y (aref d (+ o 2)) ,z
-                                          (aref d (+ o 3)) nx (aref d (+ o 4)) ny (aref d (+ o 5)) nz
-                                          (aref d (+ o 6)) r (aref d (+ o 7)) g (aref d (+ o 8)) bl
-                                          o (+ o 9))))
-            (vert x0 y0 z0) (vert x1 y1 z1) (vert x2 y2 z2))
+          (macrolet ((vert (x y z v)
+                       `(progn
+                          (setf (aref d o) ,x (aref d (+ o 1)) ,y (aref d (+ o 2)) ,z
+                                (aref d (+ o 3)) nx (aref d (+ o 4)) ny (aref d (+ o 5)) nz
+                                (aref d (+ o 6)) r (aref d (+ o 7)) g (aref d (+ o 8)) bl)
+                          (when sm
+                            (let* ((s sm) (lx (aref ,v 0)) (lz (aref ,v 2))
+                                   (ly (if (< (aref s 0) 1.5f0)
+                                           (- (aref ,v 1) (f-max (- (aref s 1)) (f-min (aref s 1) (aref ,v 1))))
+                                           (* (aref s 2) (f-sqrt (+ (* lx lx) (* lz lz))))))
+                                   (wx (+ (* (aref m 0) lx) (* (aref m 4) ly) (* (aref m 8) lz)))
+                                   (wy (+ (* (aref m 1) lx) (* (aref m 5) ly) (* (aref m 9) lz)))
+                                   (wz (+ (* (aref m 2) lx) (* (aref m 6) ly) (* (aref m 10) lz)))
+                                   (wl (f-sqrt (+ (* wx wx) (* wy wy) (* wz wz)))))
+                              (declare (type f32vec s) (single-float lx ly lz wx wy wz wl))
+                              (when (> wl 1f-6)
+                                (setf (aref d (+ o 3)) (/ wx wl) (aref d (+ o 4)) (/ wy wl) (aref d (+ o 5)) (/ wz wl)))))
+                          (setf o (+ o 9)))))
+            (vert x0 y0 z0 a) (vert x1 y1 z1 b) (vert x2 y2 z2 c))
           (setf (mb-fill mb) o))))
     nil))
 
@@ -173,17 +193,20 @@ other two. Same triangles as MB-POLY-OUT on the corner quads, without allocating
               (mb-poly-out mb (list (pt sx sy sz 0) (pt sx sy sz 1) (pt sx sy sz 2))))))))
     mb))
 
-(defun mb-cylinder (mb radius height &key (segments 8) (top-radius radius) (caps t) top-color)
-  "Cylinder / frustum along Y, centered. TOP-RADIUS 0 makes a cone. SEGMENTS 3..6 give prisms."
+(defun mb-cylinder (mb radius height &key (segments 8) (top-radius radius) (caps t) top-color smooth)
+  "Cylinder / frustum along Y, centered. TOP-RADIUS 0 makes a cone. SEGMENTS 3..6 give prisms.
+SMOOTH: analytic normals on the side (round shading); the caps stay flat."
   (let* ((hy (* .5 height)) (n segments)
          (ring (lambda (r y) (loop for k below n
                                    collect (let ((a (/ (* 2 pi k) n))) (v3 (* r (cos a)) y (* r (- (sin a)))))))))
     (let ((bot (funcall ring radius (- hy))) (top (funcall ring top-radius hy)))
+      (when smooth (setf (mb-smooth mb) (fv 2 0 (/ (- radius top-radius) (max height 1e-6)))))
       (loop for k below n
             for k2 = (mod (1+ k) n)
             do (if (< top-radius 1e-6)
                    (mb-poly-out mb (list (nth k bot) (nth k2 bot) (nth k top)))
                    (mb-poly-out mb (list (nth k bot) (nth k2 bot) (nth k2 top) (nth k top)))))
+      (setf (mb-smooth mb) nil)
       (when caps
         (mb-poly-out mb bot)
         (when (> top-radius 1e-6) (mb-poly-out mb top :color top-color))))
@@ -196,8 +219,9 @@ other two. Same triangles as MB-POLY-OUT on the corner quads, without allocating
   "N-sided prism along Y (e.g. 6 = hex pillar)."
   (mb-cylinder mb radius height :segments sides))
 
-(defun mb-sphere (mb radius &key (segments 8) (rings 6) (stretch 0))
-  "Low-poly UV sphere. STRETCH > 0 splits it at the equator and inserts a cylinder of that length."
+(defun mb-sphere (mb radius &key (segments 8) (rings 6) (stretch 0) smooth)
+  "Low-poly UV sphere. STRETCH > 0 splits it at the equator and inserts a cylinder of that length.
+SMOOTH: analytic normals (round shading)."
   (let* ((n segments) (hs (* .5 stretch)) (half (floor rings 2))
          (spec (append (loop for i from 0 to half collect (cons i hs))
                        (when (plusp stretch) (list (cons half (- hs))))
@@ -206,11 +230,13 @@ other two. Same triangles as MB-POLY-OUT on the corner quads, without allocating
                      collect (let* ((phi (* pi (/ i rings))) (y (+ dy (* radius (cos phi)))) (r (* radius (sin phi))))
                                (cons (or (= i 0) (= i rings))
                                      (loop for k below n collect (let ((a (/ (* 2 pi k) n))) (v3 (* r (cos a)) y (* r (- (sin a)))))))))))
+    (when smooth (setf (mb-smooth mb) (fv 1 hs 0)))
     (loop for ((up-pole . up) (dn-pole . dn)) on rows while dn do
       (loop for k below n for k2 = (mod (1+ k) n) do
         (cond (up-pole (mb-poly-out mb (list (nth k up) (nth k dn) (nth k2 dn))))
               (dn-pole (mb-poly-out mb (list (nth k up) (nth k dn) (nth k2 up))))
               (t (mb-poly-out mb (list (nth k up) (nth k dn) (nth k2 dn) (nth k2 up)))))))
+    (setf (mb-smooth mb) nil)
     mb))
 
 (defun mb-capsule (mb radius height &key (segments 8) (rings 4))
@@ -321,6 +347,54 @@ Use :hilt nil / :blade nil to build the parts as separate meshes (e.g. to make t
 (defun mb-flat-quad (mb x0 z0 x1 z1 y &optional color)
   "Upward-facing rectangle at height Y."
   (mb-quad mb (v3 x0 y z1) (v3 x1 y z1) (v3 x1 y z0) (v3 x0 y z0) color))
+
+(defun mb-hull (dst src &key (start 0) end (k 1.0) (c 0.55) (color '(0.06 0.06 0.09)))
+  "Append to builder DST the ink hull of SRC's triangles in floats [START, END) (default: all of them;
+a range read from MB-FILL around a shape): the same triangles in colour COLOR, each vertex's normal slot holding its
+extrusion vector E (vs_hull moves the vertex by E x the ink width and draws the back faces only).
+Vertices are grouped by position (1e-4 m) and the face normals are recomputed from the positions, so
+the result does not depend on flat / smooth normals: s = the normalised sum of the group's distinct
+face normals, E = K s / max(min s.n, C). A box corner gets (+-1 +-1 +-1) K (every face moves out
+exactly K widths); C caps the spike at sharp tips (0.55 boxes and round shapes, 0.8 cones, wedges and
+blades). Load time: allocates freely."
+  (let* ((d (mb-data src)) (end (or end (mb-fill src))) (groups (make-hash-table :test 'equal)) (tris nil))
+    (flet ((key (o) (list (round (aref d o) 1e-4) (round (aref d (+ o 1)) 1e-4) (round (aref d (+ o 2)) 1e-4))))
+      (loop for o from start below end by 27 do
+        (let* ((ax (- (aref d (+ o 9)) (aref d o))) (ay (- (aref d (+ o 10)) (aref d (+ o 1)))) (az (- (aref d (+ o 11)) (aref d (+ o 2))))
+               (bx (- (aref d (+ o 18)) (aref d o))) (by (- (aref d (+ o 19)) (aref d (+ o 1)))) (bz (- (aref d (+ o 20)) (aref d (+ o 2))))
+               (n (list (- (* ay bz) (* az by)) (- (* az bx) (* ax bz)) (- (* ax by) (* ay bx))))
+               (l (sqrt (reduce #'+ (mapcar #'* n n)))))
+          (push o tris)
+          (dotimes (v 3)
+            (let* ((vo (+ o (* v 9))) (g (or (gethash (key vo) groups)
+                                            (setf (gethash (key vo) groups)
+                                                  (list nil (list (aref d (+ vo 3)) (aref d (+ vo 4)) (aref d (+ vo 5))))))))
+              (when (> l 1e-12)
+                (let ((u (mapcar (lambda (x) (/ x l)) n)))
+                  (unless (find-if (lambda (m) (> (reduce #'+ (mapcar #'* u m)) 0.999)) (first g))
+                    (push u (first g)))))))))
+      ;; group -> E (stored in place of the fallback vertex normal)
+      (maphash (lambda (key g)
+                 (declare (ignore key))
+                 (let* ((ns (first g)) (sum (reduce (lambda (a b) (mapcar #'+ a b)) ns :initial-value '(0 0 0)))
+                        (sl (sqrt (reduce #'+ (mapcar #'* sum sum)))))
+                   (setf (second g)
+                         (if (< sl 1e-3)
+                             (mapcar (lambda (x) (* k x)) (second g))
+                             (let* ((s (mapcar (lambda (x) (/ x sl)) sum))
+                                    (m (reduce #'min (mapcar (lambda (n) (reduce #'+ (mapcar #'* s n))) ns))))
+                               (mapcar (lambda (x) (/ (* k x) (max m c))) s))))))
+               groups)
+      (dolist (o (nreverse tris))
+        (mb-ensure dst 27)
+        (let ((out (mb-data dst)) (f (mb-fill dst)))
+          (dotimes (v 3)
+            (let* ((vo (+ o (* v 9))) (e (second (gethash (key vo) groups))) (w (+ f (* v 9))))
+              (setf (aref out w) (aref d vo) (aref out (+ w 1)) (aref d (+ vo 1)) (aref out (+ w 2)) (aref d (+ vo 2)))
+              (loop for i from 3 for x in e do (setf (aref out (+ w i)) (f32 x)))
+              (loop for i from 6 for x in color do (setf (aref out (+ w i)) (f32 x)))))
+          (setf (mb-fill dst) (+ f 27))))))
+  dst)
 
 (defun mb-build (mb)
   "Upload builder contents as a new MESH."
