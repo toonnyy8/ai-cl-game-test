@@ -34,7 +34,8 @@ the code wins; the host test `tests/duel-rules-test.lisp` checks the move tables
 Kept from RoS: two layers of health (Reishi bar + Konpaku lives), **9 Konpaku**, the red window at
 **30 %** Reishi, Kikon moves as the only way to break a Konpaku, Soul Break at 0 Reishi, Kikon
 counts 2 / 3 (awakened) and Soul Break +1, the Attack > Breaker > Guard > Attack triangle,
-Breaker vs Breaker clash, Hoho (1 bar, reappear behind, perfect Hoho counter), the Fighting
+Breaker vs Breaker clash, Hoho (1 bar, reappear behind, perfect Hoho counter), Burst Reverse
+(blue, 2 bars, breaks a combo), the dash (hold Step), the camera behind the player, the Fighting
 Spirit gauge with "EVOLUTION", a 300 s timer, Yamamoto's Inferno gauge / Hellfire / Shiranui /
 Taimatsu → Nadegiri, Kenpachi's "try to cut me" stance, Buttagiru and charge-into-flurry.
 
@@ -42,13 +43,13 @@ Deliberate deviations:
 
 | RoS | SOUL DUEL | Why |
 |---|---|---|
-| Yamamoto awakens into a stronger Shikai; Kenpachi removes his eyepatch | Yamamoto's awakening is **Bankai: Zanka no Tachi** (20 s); Kenpachi's is **Nozarashi** (eyepatch off, then the cleaver; permanent) | TYBW versions, as the user asked |
+| Yamamoto awakens into a stronger Shikai; Kenpachi removes his eyepatch | Yamamoto's awakening is **Bankai: Zanka no Tachi**; Kenpachi's is **Nozarashi** (eyepatch off, then the cleaver); both last to the end of the match | TYBW versions, as the user asked |
 | Guard gauge, guard break when it empties | Infinite guard; only a Breaker breaks it | One pacing knob fewer; the triangle carries it |
 | Reverse gauge + Spiritual Power gauge | One **Reiatsu** gauge (3 bars) pays for SP1, SP2 and Hoho | Fewer gauges to read and tune |
-| Reverse Actions (Soul / Chain / Burst) | None; Burst Reverse was planned and **not built** | Scope |
+| Reverse Actions (Soul / Chain / Burst), the game picks one | Only **Burst Reverse**, its own command (mod + Quick) | The one a player must choose deliberately; Soul / Chain would need the Reverse gauge |
 | Sublimation (Kikon Channel), Spirit Drive, Reawakening | None: one awakening per match | Scope |
-| Hakugeki, dashes, jump | None (Step and Hoho only) | Scope |
-| Behind-the-back camera | One 3/4 side camera for every mode | One camera for VS, CPU and tests |
+| Hakugeki, jump | None (Step, the dash and Hoho) | Scope |
+| Behind-the-back camera | Behind P1 in VS CPU (the default; the option SIDE switches it); the 3/4 pair camera in VS PLAYER and CPU VS CPU | One screen must show two humans; CPU matches are watched, not steered |
 
 ## 2. Match rules
 
@@ -87,14 +88,14 @@ strafe" around the opponent. There is no jump.
 | Guard (hold) | U | KP4 | LB |
 | Breaker (hold = longer dash) | I | KP5 | RB |
 | Kikon | O | KP6 | RT |
-| Step | Space | KP0 | A |
+| Step (hold = dash) | Space | KP0 | A |
 | Reiatsu modifier (hold) | Left Shift | KP Enter | LT |
 | Awaken | P | KP + | Back, or LS+RS |
 
-Modifier + Flash = **SP1**, modifier + Signature = **SP2**, modifier + Step = **Hoho**
-(modifier + Quick was reserved for Burst Reverse and does nothing). Presses stay buffered 10 f.
+Modifier + Flash = **SP1**, modifier + Signature = **SP2**, modifier + Step = **Hoho**, modifier +
+Quick = **Burst Reverse** (only in hitstun). Presses stay buffered 10 f.
 When several buffered buttons could start something, the command table in
-`duel/lisp/control.lisp` decides, highest first: Kikon, Awaken, Hoho, (Burst), Step, Breaker,
+`duel/lisp/control.lisp` decides, highest first: Kikon, Awaken, Hoho, Burst, Step, Breaker,
 SP2, SP1, Signature, Flash, Quick; a command that is refused (no bar, not red yet) does not hide
 the ones below it.
 
@@ -112,6 +113,16 @@ Step does not).
 **Walk** Yamamoto 3.2 m/s, Kenpachi 4.4 m/s; strafing circles the opponent at the same speed.
 
 **Step** (tap): a 2.5 m hop in the stick direction (neutral = back), invulnerable f3–f9, 24 f.
+
+**Dash** (hold Step): the hop happens as above; if Step is still held when its 24 f end, the
+fighter **runs** (`:run`): Yamamoto 8 m/s, Kenpachi 10 m/s (Nozarashi inherits 10), facing and
+moving in the stick direction relative to the opponent (neutral = at him), turning at most
+300°/s, stopping 1.2 m from him. No iframes (only the hop's). The run cancels at once into Quick,
+Flash, Signature, SP1 / SP2, Breaker, Kikon, Hoho or a new Step, and a move started out of it slides
+1 m on along the run (never closer than 1.2 m); Guard stops it; releasing Step brakes it over 6 f
+(committed). The run starts only after the whole hop, so holding Step never shortens a Step or
+lets it cancel early into an attack. Arena wall as usual. Clip `:sh-run` (body.lisp), played at
+speed / 8 m/s.
 
 **Guard** (hold): blocks after 2 f of holding, from the front 200°, forever. A blocked hit pushes
 0.6 m and puts the defender in blockstun sized so the attacker ends exactly at the move's block
@@ -144,6 +155,16 @@ cancel a Quick / Flash string on hit. **Perfect Hoho**: an opponent hit window (
 active now or within 8 f overlaps our hurt cylinder grown by 1 m, or his Breaker dash is within
 2.7 m. Then: "PERFECT", 0.45 s of 0.25× slow motion for both, the opponent's inputs locked 40 f,
 and the Hoho ends in an automatic counter strike on f14 (60 damage, 36 f stun).
+
+**Burst Reverse** (modifier + Quick, 2 bars; blue, as in RoS): only in hitstun or airborne (launched
+or knocked down) after the **2nd hit** of a combo, inputs not locked (so never against a perfect
+Hoho's counter strike, which is hit 1 anyway), never during a cinematic. It is pressed in the
+victim's step but applied once both fighters have stepped, and only if no cinematic began: a Kikon
+pressed on the same step connects and wins, whichever side steps first. Effect: the user is
+neutral at once (put on the ground if airborne), his combo over, invulnerable 20 f; the attacker's
+move (or Hoho, step, run) ends and he slides 5 m away over 20 f, not stunned; 8 f of global
+hitstop; a blue shockwave, "BURST REVERSE" and a human's HUD prompt (SHIFT+J BURST) while it is
+possible. Rules: `burst-allowed-p` (rules.lisp), `burst-ok-p` / `burst!` (combat.lisp).
 
 **Fighting Spirit** (Awakening gauge, 0–100): +0.05 per damage dealt, +0.07 per damage taken,
 +15 per Konpaku lost. Full → "EVOLUTION" blinks and a faint aura shows. Awaken from idle, walk or
@@ -218,12 +239,12 @@ and it burns him for 30.
 |---|---|---|---|---|---|
 | Shift+L | SP2 Nadegiri `:ya-nadegiri` | 20/4/30 | 240 | −16 | 2 bars; a line 8 m long, knockdown |
 
-**Awakening → BANKAI: ZANKA NO TACHI** (form `:bankai`, 20 s, the Awakening bar drains as its
-timer). Every flame is drawn into the blade, which chars black with an ember edge; the plaza cracks;
-the world is desaturated 0.3. ×1.20 damage; blade hits chip 25 % through guard (East,
-Kyokujitsujin); armour against Quick attacks (West, Zanjitsu Gokui: no reaction, Nozarashi ignores
-it); burns 2 % of max Reishi per second; no Inferno and no Hellfire while it lasts (Inferno ends at
-0). Cinematic 1.2 s (卍解 / ZANKA NO TACHI).
+**Awakening → BANKAI: ZANKA NO TACHI** (form `:bankai`, permanent: it lasts to the end of the
+match, no timer and no burn). Every flame is drawn into the blade, which chars black with an ember
+edge; the plaza cracks; the world is desaturated 0.3. ×1.20 damage; blade hits chip 25 % through
+guard (East, Kyokujitsujin); armour against Quick attacks (West, Zanjitsu Gokui: no reaction,
+Nozarashi ignores it); no Inferno and no Hellfire any more (Inferno ends at 0). Cinematic 1.2 s
+(卍解 / ZANKA NO TACHI).
 
 | Input (Bankai) | Move | S / A / R | Dmg | Block | Notes |
 |---|---|---|---|---|---|
@@ -302,6 +323,13 @@ random number from `sim-rnd01` (seeded per match), so a seed replays the same ma
   kit's `:guard` chance), attack (per-intent aggression PRESSURE 0.45, APPROACH 0.3, ZONE 0.5,
   DEFEND 0.1), or wait. An attack is a weighted pick from the kit's table for the current distance
   band; no Q / F out of reach. After taking a reaction or blockstun the CPU stays in DEFEND 120 f.
+- **Burst**: combo'd past the 2nd hit, for at least its perception delay (EASY 24 / NORMAL 14 /
+  HARD 8 f), 2 bars, and worth it (`ai-burst-wanted-p`: Reishi below 50 %, or the combo's average
+  hit so far would put it in red): one roll per combo, EASY 0.2, NORMAL 0.6, HARD 0.85.
+- **Dash**: at a neutral decision, beyond its preferred range + 2.5 m it dashes in (the kit's
+  `:dash`: Kenpachi 0.8, Yamamoto 0.25, in Hellfire 0.5); closer than the range − 2.5 m it dashes
+  away (`:dash-back`: Yamamoto 0.5, back to his 7–9.5 m zone). It lets go of Step in the middle of
+  the range and decides at once, so an attack can come out of the run (with its momentum).
 - **Heat** (anti-stall): +1.5/s without dealing damage, twice that beyond 6 m; dealing damage resets
   it. Each point shrinks the preferred range by 0.3 m (never below 1 m), adds 0.04 aggression
   (max 0.9) and pressure weight; at 8 the Breaker weight doubles. This is what makes matches end.
@@ -312,8 +340,9 @@ random number from `sim-rnd01` (seeded per match), so a seed replays the same ma
 
 **Pacing gate** (the regression test for all of the above): 20 seeded CPU-vs-CPU matches (NORMAL,
 cinematics included) per pairing YY, YK, KK must all end by K.O.; target median 120–180 s, max
-240 s. Latest: YY 129.7 s (103–185), YK 106.9 s (88–158), KK 134.8 s (100–161), 60/60 K.O.
-(DUEL_GAMEPLAY.md).
+240 s. Latest (with Burst and the dash): YY 134.2 s (104–193), YK 120.1 s (94–179), KK 135.8 s
+(108–153), 60/60 K.O. (DUEL_GAMEPLAY.md). Burst's NORMAL chance (0.6) is the knob that brought YK
+into the window (at 0.4: YY 131.3, YK 107.4, KK 137.9).
 
 ## 8. Flow and screens
 
@@ -327,12 +356,28 @@ Menu matches take a clock seed; debug matches take a fixed seed (DUEL_GAMEPLAY.m
 
 ## 9. Camera
 
-One camera for every mode: a 3/4 side view framing both fighters. Its side of the fighter axis is
-sim state (`view-step`, fighter.lisp): P1 on the left at every start and every Kikon reset, and it
-never swings 180° after a Hoho. The render camera (camera.lisp) smooths the orbit angle and the
-midpoint at 10/s and the distance at 5/s; distance = max(6, 4.5 + 0.85 × separation) m, a little
-behind P1 (0.05 × distance), the eye kept within 18 m of the centre. A perfect Hoho punches in
-(× 0.6). A cinematic shot overrides it and the first frame after cuts back.
+Two cameras (camera.lisp). A human's stick is read through the **view direction the sim owns**
+(`view-step`, fighter.lisp, every step), never through the lagging render camera, so a replay
+cannot depend on the frame rate; CPU pilots never read the view, so a CPU match cannot depend on
+the camera choice.
+
+- **Behind P1** (VS CPU; the default, option CAMERA: BEHIND / SIDE in the pause menu and on the
+  select screen's difficulty page, up / down picks the row): the sim's view yaw turns toward P1 → P2
+  at most 300°/s (after a Hoho behind either fighter it swings round in ~0.6 s instead of snapping;
+  every start and reset snaps it). The eye stands 5.5 m behind and 2.3 m above P1 and 0.9 m to his
+  right, backing off 0.2 m (and rising 0.07 m) per metre of separation beyond 4 m; up close (under
+  6 m, full at 2 m) it swings up to 40° round to his right so he does not hide the opponent (the
+  look only: steering keeps the sim's yaw). It looks 60 % of the way to P2, 1.1 m up, follows P1 on
+  a spring (8/s), stays within 18 m of the centre (rising when the wall pulls it in) and out of both
+  fighters. Stick up = at the opponent.
+- **Pair** (VS PLAYER, CPU VS CPU, or SIDE): a 3/4 side view framing both fighters. Its side of the
+  fighter axis is sim state: P1 on the left at every start and every Kikon reset, and it never
+  swings 180° after a Hoho. The render camera smooths the orbit angle and the midpoint at 10/s and
+  the distance at 5/s; distance = max(6, 4.5 + 0.85 × separation) m, a little behind P1 (0.05 ×
+  distance), the eye kept within 18 m of the centre.
+
+Both: a perfect Hoho punches in (× 0.6); a cinematic shot overrides them and the first frame after
+cuts back.
 
 ## 10. Stage, HUD, audio
 
@@ -343,25 +388,25 @@ low red sun. Bankai adds ember cracks to the plaza.
 
 **HUD** (`hud.lisp`, P2 mirrored): Reishi bar (red and pulsing below 30 %, a white damage trail),
 9 Konpaku soul flames that shatter, the REIATSU 3 bars, the AWAKEN bar (EVOLUTION blinks; shows the
-form name and drains while a timed awakening runs), Yamamoto's INFERNO bar (drains in Hellfire),
+form name once awakened), Yamamoto's INFERNO bar (drains in Hellfire),
 the timer, the combo counter under the victim's bar ("5 HITS 212"), move-name callouts over the
-user, a KIKON prompt (for a human attacker) and a red soul flame over a Kikon-able victim, the big
-words (FIGHT!, COUNTER, GUARD BREAK, BROKEN, CLASH, PERFECT, EVOLUTION) and the cinematic captions
+user, a KIKON prompt (for a human attacker), a BURST prompt (a human in a combo he may burst out
+of) and a red soul flame over a Kikon-able victim, the big words (FIGHT!, COUNTER, GUARD BREAK,
+BROKEN, CLASH, PERFECT, EVOLUTION, BURST REVERSE) and the cinematic captions
 (JOKAKU ENJO, TENCHI KAIJIN, ZANKA NO TACHI, NOME, NOZARASHI, SOUL BREAK, K.O., TIME); WINNER / DRAW
 on the results screen.
 
 **Audio** (`sounds.lisp`): 38 synthesized sounds: 36 SFX (swings, cuts, clang, guard break,
 Breaker hum and clash, Hoho, perfect chime, fire whoosh / roar / crackle / wave, explosion, ground
 crack, bones, Kikon slash, Konpaku shatter, awakening rise and boom, a laugh …) and two music loops
-(battle: 100 BPM, 19.2 s; title / select: 16 s). No voices.
+(battle: 100 BPM, 19.2 s; title / select: 16 s). No voices. Burst Reverse layers two of them
+(clash at 0.7 pitch + Hoho reappear); the run starts with the step sound.
 
 ## 11. Not built
 
-- **Burst Reverse** (stretch): the rules exist (`burst-allowed-p`, tuning knobs) but the command
-  does nothing.
-- **Behind-P1 camera** (stretch): only the side camera exists.
-- **Dash / run**, a diegetic guard crack (stretch-2).
-- Everything else of the v1 stretch list was built: Ennetsu Jigoku, Nadegiri, the Kaka skeletons.
+- A diegetic guard crack (stretch-2).
+- Everything of the v1 stretch list was built: Ennetsu Jigoku, Nadegiri, the Kaka skeletons, and
+  (later) Burst Reverse, the behind-P1 camera and the dash.
 
 ## 12. What changed after the v1 contract, and why
 
@@ -376,10 +421,14 @@ crack, bones, Kikon slash, Konpaku shatter, awakening rise and boom, a laugh …
 | Hitstop | first build: decided in feedback | decided in combat (APPLY-HIT, CLASH!), +3 f on block / armour / absorb | Hitstop is sim timing: determinism must not depend on the presentation code |
 | Slow motion | v1: the engine's time scale | step skipping (`*slow-acc*`) | Frames stay whole numbers; a seed replays at any frame rate |
 | Lethal trade | first build: the first applied Soul Break started its cinematic and dropped the other hit | both souls settle at the end of the step; double K.O. = draw | No side bias |
-| Hellfire | v1: a state of the kit | a timed kit form (`:meter (:full-form :hellfire)`) | Forms are data: Hellfire and Bankai use the same timer / burn / look code |
+| Hellfire | v1: a state of the kit | a timed kit form (`:meter (:full-form :hellfire)`) | Forms are data: Hellfire uses the same form / look code as the awakenings, plus a timer and a burn |
 | Inferno gains | Flash 15, Signature 10 | 20 / 15, +5 per blocked hazard | Yamamoto's fire kit was never used by the CPU; see AI rework |
 | Breaker dash tracking | 180°/s | 120°/s | A sideways Step from range should beat it |
 | AI | guard 0.6 / 0.25, Breaker a guard p 0.6 | guard 0.45 / 0.35, p 0.4, stun follow-up, block punish without delay, anti-Breaker Hoho / Q1 / side Step, stance only when it can beat the Flash, Yamamoto zones 7–9.5 m with full-charge Shiranui | Playtest: CPUs never followed up a Guard Break, never punished blocked enders, Yamamoto never zoned, the Breaker loop dominated |
 | Menu press leak | first build | a cinematic's end forgets buffered presses (`vpad-flush!`) | Confirming a menu with J started a Q1 on tick 1 |
 | Stick | first build: read through the render camera | read through the sim-owned view direction | The render camera lags on real time: replays would differ |
 | Kenpachi's flurry in Nozarashi | first build: the base move | `(:ke-charge :land :ke-flurry)` string, derived like the rest | It kept base reach and timing |
+| Burst Reverse | stretch: rules only, the command did nothing | built (§4): 2 bars, after hit 2, applied after both stepped | The user asked for it; applying it late makes a same-step Kikon win for either side |
+| Burst invulnerability | v1: 30 f (critique: 20) | 20 f, the user neutral at once, attacker pushed 5 m over 20 f, 8 f hitstop | critique-design 1.7 |
+| Dash | design draft: "dash versions" of Q1 / F1 | hold Step: the run after the hop; any move out of it, +1 m of momentum | One rule for every move instead of two extra moves per kit |
+| Camera | one pair camera for every mode | behind P1 in VS CPU (default), the pair camera elsewhere; the sim owns both views' direction | The user asked for RoS's default camera |

@@ -207,6 +207,32 @@ within *PERFECT-LEAD* frames overlaps E's hurt cylinder grown by *PERFECT-INFLAT
              (<= (fighter-dist fo) (+ *breaker-trigger* 0.5)))
         (hazard-threat-p o e))))
 
+;;; ---------------------------------------------------------------- Burst Reverse
+(defun burst-ok-p (e)
+  "May E Burst now (rules BURST-ALLOWED-P): in a reaction or airborne, inputs not locked, past the
+combo's 2nd hit, 2 bars."
+  (let ((f (fighter e)))
+    (burst-allowed-p (and (member (fighter-state f) '(:stun :air)) (zerop (fighter-lock f)))
+                     (fighter-combo-hits f) (gauges-reiatsu (gauges e)))))
+
+(defun burst! (e)
+  "Burst Reverse (FIGHTER-SYSTEM applies it once both fighters have stepped): E spends
+*COST-BURST* bars and is neutral at once (on the ground), invulnerable *BURST-INVULN* f, his combo
+over; the attacker's move / Hoho / step / run ends and he slides *BURST-PUSH* away, not stunned.
+A short global hitstop."
+  (let* ((f (fighter e)) (g (gauges e)) (mo (motion e)) (o (fighter-opp f)) (p (pos-of e)) (q (pos-of o)))
+    (setf (gauges-reiatsu g) (f32 (spend-bars (gauges-reiatsu g) *cost-burst*))
+          (aref p 1) 0f0 (motion-grounded mo) t (motion-kb-left mo) 0)
+    (to-idle e 0)
+    (setf (fighter-invuln f) *burst-invuln*)
+    (when (member (state-of o) '(:move :hoho :step :run))
+      (to-idle o 0)
+      (setf (model-alpha (model o)) 1f0))
+    (set-slide o *burst-push* *burst-push-frames* (- (aref q 0) (aref p 0)) (- (aref q 2) (aref p 2)))
+    (hitstop *burst-hitstop*)
+    (emit :burst e o)
+    (clog "~a BURST" (side-name e))))
+
 ;;; ---------------------------------------------------------------- forms, awakening
 (defun set-form (e form)
   "E's character changes to FORM: the old form's exit hook, the new kit, its timer, look and entry hook."

@@ -248,6 +248,7 @@ from the base form when this form has none)."
 
 (defvar *c-evo* (list 1.0 0.85 0.3 1.0))
 (defvar *c-kikon* (list 1.0 0.2 0.25 1.0))
+(defvar *c-burst* (list 0.5 0.75 1.0 1.0))
 (defvar *c-callout* (list 1.0 0.85 0.55 1.0))
 
 (defun hud-side (e w h s)
@@ -297,11 +298,16 @@ from the base form when this form has none)."
         (combo-string c (fighter-combo-hits f) (fighter-combo-dmg f)))
       (when (< (- tm (cs-t0 c)) 1.2)
         (hud-text (cs-str c) edge (+ y bh (* 56 s)) (* 2 s) '(1 0.9 0.6 1) :align align)))
-    ;; KIKON prompt for a human attacker
-    (when (and (not (brain e)) (member *flow* '(:battle)) (kikon-ok-p e))
-      (hud-text (if (pad-connected-p side) "RT  KIKON" (if right "KP6  KIKON" "O  KIKON"))
-                (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 3 s) (alpha! *c-kikon* (+ 0.5 (* 0.5 (hud-pulse 4.0))))
-                :align :center))))
+    ;; KIKON / BURST prompts for a human
+    (when (and (not (brain e)) (member *flow* '(:battle)))
+      (cond ((kikon-ok-p e)
+             (hud-text (if (pad-connected-p side) "RT  KIKON" (if right "KP6  KIKON" "O  KIKON"))
+                       (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 3 s) (alpha! *c-kikon* (+ 0.5 (* 0.5 (hud-pulse 4.0))))
+                       :align :center))
+            ((burst-ok-p e)
+             (hud-text (if (pad-connected-p side) "LT+X  BURST" (if right "KP ENTER+KP1  BURST" "SHIFT+J  BURST"))
+                       (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 2 s) (alpha! *c-burst* (+ 0.5 (* 0.5 (hud-pulse 4.0))))
+                       :align :center))))))
 
 ;;; ---------------------------------------------------------------- over the fighters
 (defvar *callout-box* (vector nil 0 0 0 0) "The callout drawn first this frame: #(drawn x0 y0 x1 y1).")
@@ -360,7 +366,7 @@ callout: above the box it hits, or below it when above would reach the side pane
   '(("MOVE" "W A S D" "ARROWS") ("QUICK" "J" "KP1") ("FLASH" "K" "KP2") ("SIGNATURE" "L" "KP3")
     ("GUARD" "U" "KP4") ("BREAKER" "I" "KP5") ("KIKON" "O" "KP6") ("STEP" "SPACE" "KP0")
     ("REIATSU (HOLD)" "LSHIFT" "KP ENTER") ("AWAKEN" "P" "KP +") ("SP1 / SP2" "SHIFT+K / SHIFT+L" "")
-    ("HOHO" "SHIFT+SPACE" "") ("PAUSE" "ESC" "")))
+    ("HOHO" "SHIFT+SPACE" "") ("BURST REVERSE" "SHIFT+J" "") ("DASH" "HOLD SPACE" "HOLD KP0") ("PAUSE" "ESC" "")))
 
 (defun hud-controls (w h s)
   (ui-rect 0 0 w h '(0 0 0 0.7))
@@ -370,7 +376,7 @@ callout: above the box it hits, or below it when above would reach the side pane
           (ui-text a (* 0.3 w) y :scale s :align :right :color *dim*)
           (ui-text p1 (* 0.36 w) y :scale s :color *white*)
           (ui-text p2 (* 0.62 w) y :scale s :color *white*))
-  (ui-text "P1: KEYBOARD LEFT + PAD 1      P2: ARROWS + NUMPAD + PAD 2      PAD: X Y B = Q F SIG, LB GUARD, RB BREAKER, RT KIKON, A STEP, LT MOD"
+  (ui-text "P1: KEYBOARD LEFT + PAD 1      P2: ARROWS + NUMPAD + PAD 2      PAD: X Y B = Q F SIG, LB GUARD, RB BREAKER, RT KIKON, A STEP (HOLD = DASH), LT MOD, LT+X BURST"
            (floor w 2) (* 0.9 h) :scale 1 :align :center :color *dim*))
 
 (defun hud-title (w h s)
@@ -391,9 +397,16 @@ callout: above the box it hits, or below it when above would reach the side pane
       (ui-text (format nil "~:[  ~;< ~]~a~:[  ~; >~]" (and active (< *select-phase* 2)) (kit-name (kit-of e)) (and active (< *select-phase* 2)))
                x (* 0.78 h) :scale (* 3 s) :align :center :color (if active *white* *dim*) :shadow t)))
   (when (and (/= *select-phase* 0) (/= *select-phase* 1) (not (eq *mode* :vs-player)))
-    (ui-text (format nil "CPU  < ~a >" (symbol-name *difficulty*)) (floor w 2) (* 0.88 h) :scale (* 2 s) :align :center
-             :color '(1 0.85 0.3 1) :shadow t))
-  (ui-text "LEFT / RIGHT CHOOSE    ENTER / J CONFIRM    ESC BACK" (floor w 2) (- h (* 12 s)) :scale s :align :center :color *dim*))
+    (let ((cam (eq *mode* :vs-cpu)))                    ; VS CPU: a second row, up / down picks the row
+      (ui-text (format nil "CPU  < ~a >" (symbol-name *difficulty*)) (floor w 2) (* (if cam 0.85 0.88) h) :scale (* 2 s)
+               :align :center :color (if (and cam (= *menu* 1)) *dim* '(1 0.85 0.3 1)) :shadow t)
+      (when cam
+        (ui-text (format nil "< ~a >" (camera-label)) (floor w 2) (* 0.9 h) :scale (* 2 s)
+                 :align :center :color (if (= *menu* 1) '(1 0.85 0.3 1) *dim*) :shadow t))))
+  (ui-text (if (and (= *select-phase* 2) (eq *mode* :vs-cpu))
+               "UP / DOWN ROW    LEFT / RIGHT CHOOSE    ENTER / J CONFIRM    ESC BACK"
+               "LEFT / RIGHT CHOOSE    ENTER / J CONFIRM    ESC BACK")
+           (floor w 2) (- h (* 12 s)) :scale s :align :center :color *dim*))
 
 (defparameter *results-rows* '("DAMAGE" "KIKONS" "PERFECT HOHOS" "BEST COMBO" "KONPAKU LEFT"))
 (defvar *results-cache* (cons nil nil) "(match-tick . strings) of the results table, made once per match.")
@@ -471,5 +484,5 @@ WINNER + name, the stats table (P1 / P2 columns), the match time, the menu."
     (when (and *paused* (eq *flow* :battle))
       (ui-rect 0 0 w h '(0 0 0 0.55))
       (ui-big-text "PAUSED" (floor w 2) (* 0.3 h) (* 5 s) *white* '(0.7 0.25 0.05 1) s)
-      (hud-menu *pause-menu* 0.45 w h s))
+      (hud-menu (pause-items) 0.45 w h s))
     (debug-hud w h s)))

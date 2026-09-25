@@ -14,5 +14,7 @@
 | [GAMEPLAY.md](GAMEPLAY.md) | RAVEN EDGE 玩法系統的實作說明：時間模型、實體與元件、動畫、招式定義、敵人 AI、遊戲流程、除錯指令、砍掉的項目 |
 | [WORLD.md](WORLD.md) | 頂樓場景：API、碰撞體、場景內容、光源配置、雨、效能數據 |
 | [AUDIO.md](AUDIO.md) | 音訊：Lisp API、C 混音器設計、瀏覽器自動播放處理、合成工具、音效清單 |
+| [STYLE_STORM_RESEARCH.md](STYLE_STORM_RESEARCH.md) | 《究極風暴》畫風解析，加上久保帶人畫風與千年血戰篇動畫的研究：角色著色、墨線、手繪式特效、鏡頭、舞台，附來源與可信度標記（英文，開頭有中文摘要） |
+| [STYLE_STORM_DESIGN.md](STYLE_STORM_DESIGN.md) | SOUL DUEL 改成《究極風暴》畫風的設計 v4（究極風暴技術 × 久保帶人的黑白語言）：引擎算圖改動、特效系統、各招式重新設計、奧義鏡頭、舞台、預算、分階段計畫與驗收、辯論紀錄（英文，開頭有中文摘要與待決事項） |
 | [research/ng4-notes.md](research/ng4-notes.md) | 《忍者外傳 4》玩法研究筆記，附來源和可信度標記 |
 | [world-shots/](world-shots/) | 場景 demo 的截圖（出生點、各角落、俯視、水窪、頭目戰的血雨） |

@@ -14,6 +14,10 @@
 ;;;;               to walk to, then a weighted move for the distance band
 ;;;;   heat        +*AI-HEAT-RATE*/s without dealing damage (x2 far apart): the preferred range
 ;;;;               shrinks, the Breaker weight doubles at 8 — this is what makes matches end
+;;;;   burst       combo'd past its 2nd hit for its perception delay, 2 bars, and worth it
+;;;;               (AI-BURST-WANTED-P): one roll per combo (*AI-BURST-P* by difficulty)
+;;;;   dash        far outside its range: hold Step toward it (the kit's :dash chance), or away from a
+;;;;               too-close opponent (:dash-back), released once the range is reached
 (in-package :duel)
 
 (defstruct snap
@@ -57,6 +61,23 @@
 (defun ai-press (b button frames &key modded (act button))
   "Hold BUTTON (with :MOD when MODDED) for FRAMES steps, starting now."
   (setf (brain-press b) button (brain-press-mod b) modded (brain-press-left b) (max 1 frames) (brain-act b) act))
+
+(defun ai-dash (b dir to)
+  "Hold Step (the hop, then the run) with the stick toward (DIR 1) or away from (-1) the opponent,
+until the distance passes TO (BRAIN-STEP lets go)."
+  (ai-press b :step *ai-dash-frames* :act :dash)
+  (setf (brain-dash b) (f32 dir) (brain-dash-to b) (f32 to)))
+
+(defun ai-burst-roll (e b)
+  "Burst Reverse now? No sooner than the perception delay after the combo's 2nd hit (BRAIN-BURST-T),
+allowed (BURST-OK-P) and worth it (AI-BURST-WANTED-P, the next hit estimated as the combo's average
+so far): one roll per combo at the difficulty's *AI-BURST-P*."
+  (let ((f (fighter e)) (g (gauges e)))
+    (when (and (not (brain-burst-rolled b)) (>= (brain-burst-t b) (brain-delay b)) (burst-ok-p e)
+               (ai-burst-wanted-p (gauges-reishi g) (gauges-reishi-max g)
+                                  (floor (fighter-combo-dmg f) (max 1 (fighter-combo-hits f)))))
+      (setf (brain-burst-rolled b) t)
+      (< (sim-rnd01) (getf *ai-burst-p* (brain-difficulty b) 0.4)))))
 
 (defun ai-command (b kit cmd d)
   "Press the buttons of kit command CMD at distance D (holding charge / stance / Breaker moves a
@@ -104,7 +125,7 @@ SP2 when the victim is on the ground (a launched victim would drop out of it) an
   "The reflexes (checked before the intent): a command keyword or NIL. S = the perceived opponent,
 D = the perceived distance."
   (let* ((f (fighter e)) (g (gauges e)) (kit (fighter-kit f)) (st (fighter-state f)) (mv (fighter-move f))
-         (bars (floor (gauges-reiatsu g) *reiatsu-bar*)) (free (member st '(:idle :guard)))
+         (bars (floor (gauges-reiatsu g) *reiatsu-bar*)) (free (member st '(:idle :guard :run)))
          (q (kit-command-move kit :q)) (new-event (/= (snap-start s) (brain-roll-key b))))
     (when new-event                                       ; one roll per opponent action
       (setf (brain-roll-key b) (snap-start s) (brain-guard-roll b) (sim-rnd01) (brain-hoho-roll b) (sim-rnd01)
@@ -171,7 +192,7 @@ D = the perceived distance."
               :guard))))))
 
 (defun ai-neutral (e b d)
-  "No reflex fired: walk to the intent's range, and now and then pick a move for the distance."
+  "No reflex fired: walk to the intent's range, and now and then decide (AI-DECIDE)."
   (let* ((kit (kit-of e)) (vp (pilot-vpad (pilot e))) (heat (brain-heat b)))
     (when (<= (decf (brain-intent-t b)) 0)
       (setf (brain-intent-t b) *ai-repick*)
@@ -186,19 +207,29 @@ D = the perceived distance."
     (destructuring-bind (lo hi) (getf (ai-table e :ranges) (brain-intent b) '(2.0 4.0))
       (multiple-value-bind (lo hi) (heat-range lo hi heat)
         (vpad-stick! vp (if (<= lo d hi) (brain-strafe b) (* 0.3 (brain-strafe b)))
-                     (cond ((> d hi) 1f0) ((< d lo) -1f0) (t 0f0)))))
-    (when (<= (decf (brain-decide-t b)) 0)
-      (setf (brain-decide-t b) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
-      (cond ((and (< d 3.4) (< (sim-rnd01) (min 0.9 (+ (ai-table e :guard 0.3) (if (eq (brain-intent b) :defend) 0.2 0.0)))))
-             (ai-press b :guard (+ (first *ai-guard-hold*) (floor (* (second *ai-guard-hold*) (sim-rnd01))))))
-            ((< (sim-rnd01) (min 0.9 (+ (getf *ai-aggression* (brain-intent b) 0.3) (* 0.04 heat))))
-             (let* ((weights (copy-list (band-weights (ai-table e :moves) d))))
-               (when (getf weights :breaker) (setf (getf weights :breaker) (* (getf weights :breaker) (heat-breaker-mult heat))))
-               (let ((cmd (apply #'weighted-pick (sim-rnd01) weights)))
-                 (when (and cmd (or (not (member cmd *kit-commands*)) (kit-command-ok-p e cmd))
-                            (or (not (member cmd '(:q :f)))                  ; don't whiff a string at range
-                                (<= d (+ 0.2 (mv-reach (kit-command-move kit cmd))))))
-                   (ai-command b kit cmd d) (setf (brain-why b) :neutral)))))))))
+                     (cond ((> d hi) 1f0) ((< d lo) -1f0) (t 0f0)))
+        (when (<= (decf (brain-decide-t b)) 0)
+          (setf (brain-decide-t b) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
+          (ai-decide e b kit d lo hi heat))))))
+
+(defun ai-decide (e b kit d lo hi heat)
+  "A neutral decision, at distance D with the preferred range LO..HI: dash to / from that range
+(until its middle),
+guard, attack (a weighted pick from the kit's band for D), or wait."
+  (cond ((and (> d (+ hi *ai-dash-gap*)) (< (sim-rnd01) (ai-table e :dash 0.0)))
+         (ai-dash b 1.0 (* 0.5 (+ lo hi))) (setf (brain-why b) :dash))
+        ((and (< d (- lo *ai-dash-gap*)) (< (sim-rnd01) (ai-table e :dash-back 0.0)))
+         (ai-dash b -1.0 (* 0.5 (+ lo hi))) (setf (brain-why b) :dash-back))
+        ((and (< d 3.4) (< (sim-rnd01) (min 0.9 (+ (ai-table e :guard 0.3) (if (eq (brain-intent b) :defend) 0.2 0.0)))))
+         (ai-press b :guard (+ (first *ai-guard-hold*) (floor (* (second *ai-guard-hold*) (sim-rnd01))))))
+        ((< (sim-rnd01) (min 0.9 (+ (getf *ai-aggression* (brain-intent b) 0.3) (* 0.04 heat))))
+         (let* ((weights (copy-list (band-weights (ai-table e :moves) d))))
+           (when (getf weights :breaker) (setf (getf weights :breaker) (* (getf weights :breaker) (heat-breaker-mult heat))))
+           (let ((cmd (apply #'weighted-pick (sim-rnd01) weights)))
+             (when (and cmd (or (not (member cmd *kit-commands*)) (kit-command-ok-p e cmd))
+                        (or (not (member cmd '(:q :f)))                  ; don't whiff a string at range
+                            (<= d (+ 0.2 (mv-reach (kit-command-move kit cmd))))))
+               (ai-command b kit cmd d) (setf (brain-why b) :neutral)))))))
 
 (defun brain-step (e b)
   "One step of the CPU: perceive, then hold / reflex / neutral, written to the vpad."
@@ -213,14 +244,22 @@ D = the perceived distance."
       (vpad-stick! vp 0f0 0f0)
       (when (member (fighter-state f) '(:stun :air :down :wakeup :guard-hit))   ; just took it: respect
         (setf (brain-intent b) :defend (brain-intent-t b) *ai-respect*))
+      (if (and (member (fighter-state f) '(:stun :air)) (>= (fighter-combo-hits f) *burst-min-hits*))
+          (incf (brain-burst-t b))                                                ; the Burst clock
+          (setf (brain-burst-t b) 0 (brain-burst-rolled b) nil))
+      (when (and (eq (brain-act b) :dash) (> (brain-press-left b) 0)              ; a dash reached its range:
+                 (if (> (brain-dash b) 0) (<= d (brain-dash-to b)) (>= d (brain-dash-to b))))
+        (setf (brain-press-left b) 0 (brain-decide-t b) 1))                      ; decide now (out of the run)
       (unless (or (brain-off b) (> (fighter-lock f) 0) (eq (fighter-state f) :cine))
-        (if (and (> (brain-press-left b) 0) (not (eq (brain-press b) :guard)))   ; a reflex may drop a guard
-            (decf (brain-press-left b))
-            (let ((cmd (ai-reflex e b s d)))
-              (cond ((and cmd (not (and (eq cmd :guard) (eq (brain-press b) :guard) (> (brain-press-left b) 0))))
-                     (ai-command b (kit-of e) cmd d))
-                    ((> (brain-press-left b) 0) (decf (brain-press-left b)))
-                    ((eq (fighter-state f) :idle) (ai-neutral e b d))))))
+        (cond ((ai-burst-roll e b) (ai-press b :quick 1 :modded t :act :burst) (setf (brain-why b) :burst))
+              ((and (> (brain-press-left b) 0)                                    ; a reflex may drop a guard / a dash
+                    (not (or (eq (brain-press b) :guard) (eq (brain-act b) :dash))))
+               (decf (brain-press-left b)))
+              (t (let ((cmd (ai-reflex e b s d)))
+                   (cond ((and cmd (not (and (eq cmd :guard) (eq (brain-press b) :guard) (> (brain-press-left b) 0))))
+                          (ai-command b (kit-of e) cmd d))
+                         ((> (brain-press-left b) 0) (decf (brain-press-left b)))
+                         ((member (fighter-state f) '(:idle :run)) (ai-neutral e b d)))))))
       (setf (brain-was b) (fighter-state f))
       ;; the buttons of this step
       (loop for a across *vpad-actions*
@@ -229,7 +268,8 @@ D = the perceived distance."
       (when (> (brain-press-left b) 0)
         (case (brain-act b)
           (:guard (vpad-stick! vp 0f0 0f0))
-          (:side-step (vpad-stick! vp (brain-strafe b) 0f0)))))))
+          (:side-step (vpad-stick! vp (brain-strafe b) 0f0))
+          (:dash (vpad-stick! vp 0f0 (brain-dash b))))))))
 
 (defun brain-system ()
   "Every CPU fighter decides this step (before FIGHTER-SYSTEM reads the vpads)."

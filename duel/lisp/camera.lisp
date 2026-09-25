@@ -1,10 +1,13 @@
-;;;; camera.lisp — the one duel camera (design-v1 §7, critique-design §4.5): a 3/4 side view framing
-;;;; both fighters, farther as they separate. Which side of the fighter axis it stands on is sim state
+;;;; camera.lisp — the duel's two cameras (design-v1 §7, critique-design §4.5). The PAIR camera: a 3/4
+;;;; side view framing both fighters, farther as they separate. Which side of the fighter axis it stands on is sim state
 ;;;; (fighter.lisp VIEW-STEP: P1 on the left at every start / reset, and it never swings 180° after a
 ;;;; Hoho); this file only places the render camera there, smoothing the ORBIT ANGLE around the
 ;;;; fighters' midpoint (so a strafing pair stays framed side-on instead of the eye trailing behind),
 ;;;; the distance and the midpoint separately. A cinematic shot (cinema.lisp) overrides it; the first
 ;;;; frame after one cuts back. A perfect Hoho punches in. Runs once per frame on real time.
+;;;; The BEHIND camera (VS CPU, the default there; fighter.lisp *VIEW-BEHIND*): over P1's right shoulder,
+;;;; looking along the sim's *BEHIND-YAW* (P1 -> P2, rate-limited: it swings round after a Hoho), at a
+;;;; point between the fighters biased to P2; it follows P1 on a spring and backs off with distance.
 (in-package :duel)
 
 (declaim (single-float *cam-ang* *cam-dist* *punch-t*) (type f32vec *cam-eye* *cam-at*))
@@ -17,11 +20,51 @@
 (defparameter *cam-orbit-rate* 10.0 "Orbit angle and midpoint follow at this rate (1/s) ...")
 (defparameter *cam-dist-rate* 5.0 "... the distance at this one.")
 (defparameter *cam-max-r* 18.0 "The eye stays this close to the arena centre (the wall ring stands at 19 m).")
+(declaim (type f32vec *cam-anchor*))
+(defvar *cam-anchor* (fv 0 0 0) "Behind camera: P1's position, followed on a spring.")
+(defparameter *behind-back* 5.5 "Behind camera: metres behind P1 ...")
+(defparameter *behind-up* 2.3 "... this high ...")
+(defparameter *behind-shoulder* 0.9 "... and this far to his right (over the shoulder) ...")
+(defparameter *behind-widen* 0.2 "... backing off this much (and rising a third of it) per metre of separation beyond 4 m.")
+(defparameter *behind-look* 0.6 "It looks this fraction of the way to P2, 1.1 m up.")
+(defparameter *behind-close* 40.0
+  "Up close P1 would hide P2: the eye swings round to P1's right by up to this many degrees (full at
+2 m, none from 6 m). Only the look; steering keeps the sim's *BEHIND-YAW*.")
+(defparameter *behind-rate* 8.0 "The anchor follows P1 at this rate (1/s): a spring, so a Step or a Hoho glides.")
 
 (defun camera-side (&optional (a nil))
   "For a cinematic's SHOT-PAIR from actor A (default P1) to the other: the side (+1 / -1) of that
 line the duel camera is on."
   (if (and a (= 1 (fighter-side (fighter a)))) (- *view-side*) *view-side*))
+
+(defun behind-camera (a b rdt snap)
+  "Place *CAM-EYE* / *CAM-AT* behind fighter A (P1), looking along *BEHIND-YAW* toward B."
+  (let* ((p (pos-of a)) (q (pos-of b)) (c *cam-anchor*)
+         (sep (sqrt (+ (expt (- (aref q 0) (aref p 0)) 2) (expt (- (aref q 2) (aref p 2)) 2))))
+         (wide (* *behind-widen* (max 0.0 (- sep 4.0))))
+         (back (* (+ *behind-back* wide) (if (> *punch-t* 0) 0.6 1.0)))
+         (off (deg (* *behind-close* (max 0.0 (min 1.0 (/ (- 6.0 sep) 4.0))))))
+         (side (+ *behind-shoulder* (* back (sin off))))     ; to the right of P1 ...
+         (fx (fwd-x *behind-yaw*)) (fz (fwd-z *behind-yaw*)))
+    (setf back (* back (cos off)))                         ; ... and behind him
+    (if (or snap *cam-cut*)
+        (setf (aref c 0) (aref p 0) (aref c 2) (aref p 2) *cam-cut* nil)
+        (let ((k (- 1.0 (exp (* (- *behind-rate*) rdt)))))
+          (setf (aref c 0) (f32 (+ (aref c 0) (* k (- (aref p 0) (aref c 0)))))
+                (aref c 2) (f32 (+ (aref c 2) (* k (- (aref p 2) (aref c 2))))))))
+    (let* ((ex (+ (aref c 0) (* (- back) fx) (* side (- fz))))   ; right = (-fz, fx)
+           (ez (+ (aref c 2) (* (- back) fz) (* side fx)))
+           (r (sqrt (+ (* ex ex) (* ez ez))))
+           (k (min 1.0 (/ *cam-max-r* (max 0.01 r))))
+           (h (+ *behind-up* (* 0.33 wide) (* 0.4 (- r (* k r))))))   ; pulled in by the wall: rise instead
+      (setf ex (* k ex) ez (* k ez))
+      (dolist (e (list a b))                             ; never inside a fighter
+        (let* ((o (pos-of e)) (dx (- ex (aref o 0))) (dz (- ez (aref o 2))) (d (sqrt (+ (* dx dx) (* dz dz))))
+               (min-d (+ 0.5 (body-hurt-r (model-body (model e))))))
+          (when (and (< d min-d) (> d 0.001))
+            (setf ex (+ (aref o 0) (* dx (/ min-d d))) ez (+ (aref o 2) (* dz (/ min-d d)))))))
+      (v3-set! *cam-eye* (f32 ex) (f32 h) (f32 ez))
+      (v3-set! *cam-at* (f32 (+ (aref c 0) (* *behind-look* sep fx))) 1.1f0 (f32 (+ (aref c 2) (* *behind-look* sep fz)))))))
 
 (defun duel-camera (a b rdt &key snap)
   "Place the camera for this frame: the cinematic shot if one is set, else the pair camera (SNAP: no
@@ -30,6 +73,7 @@ smoothing, e.g. a new round)."
   (cond (*cine-cam*
          (v3-copy! *cam-eye* *cine-eye*) (v3-copy! *cam-at* *cine-target*)
          (setf *cam-cut* t))
+        ((and a b *view-behind*) (behind-camera a b rdt snap))
         ((and a b)
          (let* ((p (pos-of a)) (q (pos-of b))
                 (mx (* 0.5 (+ (aref p 0) (aref q 0)))) (mz (* 0.5 (+ (aref p 2) (aref q 2))))

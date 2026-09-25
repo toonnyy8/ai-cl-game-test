@@ -39,6 +39,13 @@ medians by only ~10 s, see p2-log).")
 (defparameter *step-distance* 2.5 "Step hop length (stick direction; neutral = back).")
 (defparameter *step-frames* 24 "Step total frames.")
 (defparameter *step-iframes* '(3 9) "Step invulnerable frames, inclusive.")
+(defparameter *run-yamamoto* 8.0 "Yamamoto's run (dash) speed: Step held past the hop.")
+(defparameter *run-kenpachi* 10.0 "Kenpachi's run speed.")
+(defparameter *run-turn* 300.0 "Degrees per second a runner turns toward the stick direction.")
+(defparameter *run-stop* 1.2 "A run toward the opponent stops this close to him.")
+(defparameter *run-brake* 6 "Frames of braking after Step is released (committed, like recovery).")
+(defparameter *run-carry* 1.0 "A move started out of a run slides this far along the run (momentum) ...")
+(defparameter *run-carry-frames* 10 "... over this many frames (never past *RUN-STOP* from the opponent).")
 (defparameter *guard-raise* 2 "Frames of holding Guard before it blocks.")
 (defparameter *guard-arc* 200.0 "Guard covers this many degrees in front (infinite guard, no gauge).")
 (defparameter *block-pushback* 0.6 "Metres a blocked hit pushes the defender back.")
@@ -84,7 +91,7 @@ Hoho fit, Q1 doesn't (§3). On hit the chain opens at the end of the active fram
 (defparameter *cost-sp* 1 "Bars an SP1 / SP2 costs.")
 (defparameter *cost-sp-awakened* 2 "Bars an SP2 costs in an awakened form.")
 (defparameter *cost-hoho* 1 "Bars a Hoho costs.")
-(defparameter *cost-burst* 2 "Bars a Burst Reverse costs (stretch-1).")
+(defparameter *cost-burst* 2 "Bars a Burst Reverse costs.")
 
 ;;; ---------------------------------------------------------------- Hoho
 (defparameter *hoho-distance* 1.6 "Hoho reappears this far behind the opponent, facing him.")
@@ -136,11 +143,15 @@ then :down + :wakeup (iframes in both).")
 (defparameter *super-flash* 6 "SP start: frames of the rim-light super flash...")
 (defparameter *super-freeze* 4 "... and frames the opponent alone is frozen.")
 
-;;; ---------------------------------------------------------------- arena, Burst
+;;; ---------------------------------------------------------------- arena, Burst Reverse
 (defparameter *arena-radius* 15.0 "Circular arena; fighters are clamped inside (invisible wall).")
-(defparameter *burst-min-hits* 2 "Burst Reverse (stretch-1) only after this many hits of a combo.")
-(defparameter *burst-invuln* 20 "Burst invulnerable frames.")
-(defparameter *burst-push* 5.0 "Burst pushes the attacker this far (no stun).")
+(defparameter *burst-min-hits* 2
+  "Burst Reverse (mod + Quick, *COST-BURST* bars) only in hitstun / airborne after this many hits of
+a combo (critique-design 1.7: not from hit 1).")
+(defparameter *burst-invuln* 20 "Frames the Burst user stays invulnerable (he is neutral at once).")
+(defparameter *burst-push* 5.0 "Burst pushes the attacker this far (no stun; his move ends) ...")
+(defparameter *burst-push-frames* 20 "... over this many frames.")
+(defparameter *burst-hitstop* 8 "Global hitstop of a Burst.")
 
 ;;; ================================================================ §4 damage multipliers
 (defparameter *hellfire-mult* 1.30 "Damage x in Hellfire (Gokuen).")
@@ -161,8 +172,6 @@ then :down + :wakeup (iframes in both).")
 (defparameter *ennetsu-self-burn* 30 "... and it burns the caster for this (floor 1).")
 (defparameter *ennetsu-pillars* 7 "Pillars in the Ennetsu ring.")
 (defparameter *ennetsu-seconds* 0.8 "Ennetsu duration.")
-(defparameter *bankai-seconds* 20.0 "Bankai length (the Awakening bar drains over it).")
-(defparameter *bankai-burn* 0.02 "Bankai burns this fraction of max Reishi per second (floor 1).")
 (defparameter *nozarashi-heal* 150 "Reishi Nozarashi's awakening heals.")
 (defparameter *nozarashi-reach* 1.4 "Nozarashi: reach x of the inherited moves.")
 (defparameter *nozarashi-startup* 3 "Nozarashi: extra startup frames of the inherited moves.")
@@ -209,6 +218,15 @@ feels its own blockstun (no perception delay), so this is the only thing that de
 (defparameter *ai-heat-range* 0.3 "Preferred range shrinks this much per heat point ...")
 (defparameter *ai-min-range* 1.0 "... but never below this.")
 (defparameter *ai-heat-breaker* 8.0 "At this heat the Breaker weight doubles.")
+(defparameter *ai-burst-p* '(:easy 0.2 :normal 0.6 :hard 0.85)
+  "Chance (one roll per combo) the CPU bursts once it is worth it (AI-BURST-WANTED-P), no sooner
+than its perception delay after the combo's *BURST-MIN-HITS*th hit.")
+(defparameter *ai-burst-low* 0.5 "Burst is worth it below this fraction of Reishi ...")
+(defparameter *ai-dash-gap* 2.5
+  "The CPU dashes (the kit's :dash / :dash-back chance, at a neutral decision) when it stands this
+far outside its preferred range: toward it from beyond, away from it from inside; it lets go in the
+middle of the range.")
+(defparameter *ai-dash-frames* 70 "Longest the CPU holds a dash.")
 
 ;;; ================================================================ §14 budgets
 (defparameter *fire-density* 1.0 "Scales every fire emitter's rate (0.5 if the perf gate fails).")

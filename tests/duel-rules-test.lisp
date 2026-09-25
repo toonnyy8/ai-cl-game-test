@@ -156,7 +156,7 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 (check (and (= (chip-damage 110 0.12 5) 4) (= (chip-damage 110 0.12 1) 0)))   ; chip never kills
 (check (= (chip-damage 110 nil 500) 0))                                  ; no chip by default
 (check (= 500 (loop for s below 600 sum (burn-amount 1000 *hellfire-burn* s))))  ; 5 %/s x 10 s
-(check (= 20 (loop for s below 60 sum (burn-amount 1000 *bankai-burn* s))))
+(check (= 20 (loop for s below 60 sum (burn-amount 1000 0.02 s))))        ; 2 %/s x 1 s
 (check (and (= (burn 30 50) 1) (= (burn 1 5) 1) (= (burn 500 30) 470)))  ; burns floor at 1
 (check (= (cornered-mult 0.05 10 0.25) 1.25))
 
@@ -194,6 +194,11 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 (check (and (awaken-allowed-p t 100.0 nil) (not (awaken-allowed-p t 100.0 t)) (not (awaken-allowed-p nil 100.0 nil))
             (not (awaken-allowed-p t 99.0 nil))))
 (check (and (burst-allowed-p t 2 200.0) (not (burst-allowed-p t 1 200.0)) (not (burst-allowed-p t 2 150.0))))
+(check (not (burst-allowed-p nil 5 300.0)))                                 ; not in hitstun: no Burst
+(check (= *cost-burst* 2))
+;; the CPU's Burst: below half its Reishi, or the next hit would put it in red (30 % of 1100 = 330)
+(check (and (ai-burst-wanted-p 540 1100 10) (not (ai-burst-wanted-p 600 1100 10))
+            (ai-burst-wanted-p 600 1100 280) (not (ai-burst-wanted-p 600 1100 260))))
 (check (and (= (seconds->frames 10.0) 600) (~= (timer-fill 300 600 100.0) 50.0)))
 (check (and (= (stance-store 150 80) 200) (= (stance-store 0 45) 45)))
 (check (equal (multiple-value-list (stance-release 150)) '(250 t)))
@@ -239,6 +244,16 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 (multiple-value-bind (x z yaw) (hoho-destination 0.0 0.0 0.0)
   (check (and (~= x 0.0) (~= z 1.6) (~= yaw 0.0))))                   ; behind, facing his back
 (check (equal (multiple-value-list (step-direction 0.0 0.1)) '(-1.0 0.0)))   ; neutral = back
+;; the run (Step held): neutral = at the opponent, stops 1.2 m from him, 6 f brake, 1 m of carry
+(check (equal (multiple-value-list (step-direction 0.0 0.1 1.0)) '(1.0 0.0)))
+(check (and (not (run-stop-p 1.4 1.0 8.0)) (run-stop-p 1.3 1.0 8.0)      ; 8 m/s = 0.133 m / f
+            (not (run-stop-p 1.0 -1.0 8.0)) (not (run-stop-p 1.25 0.0 10.0))))   ; running away / sideways
+(check (and (~= (run-carry 5.0) 1.0) (~= (run-carry 1.7) 0.5) (~= (run-carry 1.0) 0.0)))
+(check (and (~= (brake-speed 9.0 3) 4.5) (~= (brake-speed 9.0 6) 0.0) (~= (brake-speed 9.0 9) 0.0)))
+(check (and (~= (kit-run (kit :yamamoto :base)) 8.0) (~= (kit-run (kit :kenpachi :base)) 10.0)
+            (~= (kit-run (kit :kenpachi :nozarashi)) 10.0) (~= (kit-run (kit :yamamoto :bankai)) 8.0)))
+(check (and (> (getf (kit-ai (kit :kenpachi :base)) :dash) (getf (kit-ai (kit :yamamoto :base)) :dash))   ; Ken dashes more
+            (getf (kit-ai (kit :yamamoto :base)) :dash-back)))                                          ; Yama backs off to zone
 
 ;;; ================================================================ AI helpers
 (check (and (eq (weighted-pick 0.0 :a 1 :b 1) :a) (eq (weighted-pick 0.5 :a 1 :b 1) :b)
@@ -338,7 +353,7 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 (check (eq (mv-name (kit-command-move (kit :yamamoto :bankai) :kikon)) :ya-tenchi))
 (check (and (null (kit-meter (kit :yamamoto :bankai))) (kit-meter (kit :yamamoto :hellfire))))  ; no Hellfire in Bankai
 (check (and (kit-awakening (kit :yamamoto :bankai)) (not (kit-awakening (kit :yamamoto :hellfire)))
-            (null (kit-duration (kit :kenpachi :nozarashi))) (~= (kit-duration (kit :yamamoto :bankai)) 20.0)))
+            (null (kit-duration (kit :kenpachi :nozarashi))) (null (kit-duration (kit :yamamoto :bankai)))))   ; both awakenings last the match
 (check (member :armor-vs-quick (kit-passives (kit :yamamoto :bankai))))
 (check (and (~= (kit-walk (kit :yamamoto :base)) 3.2) (~= (kit-walk (kit :kenpachi :nozarashi)) 4.4)))
 (check (~= (kit-reset-reiatsu (kit :kenpachi :base)) 10.0))

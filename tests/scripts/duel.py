@@ -6,12 +6,14 @@
 #   node tools/run.mjs dist/duel --secs 20  --script tests/scripts/duel-probe.json    frame probes: "duel probe ... advantage
 #     A (table A)" for blocked Q1 / Q3 / F2 / Taimatsu (must be equal), then a mirror Q1 trade (same Reishi both sides)
 #   node tools/run.mjs dist/duel --secs 60  --script tests/scripts/duel-keys.json     P1 keyboard: J/K/L/I/U/Space/Shift
+#   node tools/run.mjs dist/duel --secs 50  --script tests/scripts/duel-extras.json   dash, Hoho swing, Burst, camera toggle
 #   node tools/run.mjs dist/duel --secs 75  --script tests/scripts/duel-perf.json     real-time CPU vs CPU: stats lines
 #   node tools/run.mjs dist/duel --secs 140 --script tests/scripts/duel-shots.json    tests/shots/duel-*.png
 # Determinism: run a cvc script twice (or once with turbo and once without: drop the 2102 step) and
 #   diff <(grep '^duel' run1.log) <(grep '^duel' run2.log)   -> empty.
-# Reference (fix round, 2026-09-25): duel-cvc-yk.json (seed 7) ends
-#   duel -> RESULTS winner P2 konpaku 0-7 ticks 5302 secs 88.4     (turbo and real time alike)
+# Reference (permanent Bankai, slow-motion clock reset per match, 2026-09-25): duel-cvc-yk.json (seed 7) ends
+#   duel -> RESULTS winner P2 konpaku 0-1 ticks 7298 secs 121.6    (turbo and real time alike; also after a gate)
+#   (before: 0-4 ticks 5857 secs 97.6 with Burst + dash; 0-7 ticks 5302 secs 88.4 before them)
 import json
 T0 = 9.0          # startup (meshes + sound synthesis) is done by then
 SHOTS = "tests/shots/duel-"
@@ -35,7 +37,7 @@ write("probe", [cmd(T0 + 2 * i, 2315 + i) for i in range(5)])
 # P1 move YA-Q1 YA-Q2 YA-Q3 | YA-F1 YA-F2 | YA-SIG | YA-BREAKER | P1 guard | P1 step | YA-SHIRANUI | P1 hoho | YA-TAIMATSU
 ev = [cmd(T0, 2500)]
 t = T0 + 1.2
-ev += [key(t, "KeyD"), key(t + 1.8, "KeyD", False)]; t += 2.1               # walk in (P1 is on the left)
+ev += [key(t, "KeyW"), key(t + 1.8, "KeyW", False)]; t += 2.1               # walk in (VS CPU: the behind camera, W = at him)
 for k in ("KeyJ", "KeyJ", "KeyJ"): ev += tap(t, k); t += 0.3              # Q Q Q
 t += 1.0
 ev += tap(t, "KeyK"); ev += tap(t + 0.35, "KeyK"); t += 1.8                 # K K
@@ -49,6 +51,34 @@ ev += [key(t, "ShiftLeft"), key(t + 0.05, "Space"), key(t + 0.15, "Space", False
 ev += [key(t, "ShiftLeft"), key(t + 0.05, "KeyL"), key(t + 0.15, "KeyL", False), key(t + 0.2, "ShiftLeft", False)]; t += 2.0   # SP2 Taimatsu
 ev += [cmd(t, 2107)]
 write("keys", ev)
+
+# Burst, dash and the camera by keyboard (P1 Yamamoto vs an idle Kenpachi, VS CPU = the behind camera).
+# Expected log lines, in order: P1 step, P1 dash (the run), P1 step, P1 dash, P1 run -> YA-Q1, carry ...,
+# P1 hoho, KE-Q1 / KE-Q2 -> P1 HIT (the mash test 2320), P1 BURST, then "duel camera CAMERA  SIDE" (pause menu).
+# Shots: extras-behind (neutral), extras-dash (running), extras-hoho-a / -b (the swing after a Hoho),
+# extras-burst-a / -b (2321, the shockwave), extras-pause (the menu with CAMERA), extras-side.
+t = T0
+ev = [cmd(t, 2500), shot(t + 1.5, "extras-behind")]
+t += 2.5
+ev += [key(t, "KeyW"), key(t + 0.05, "Space"), shot(t + 1.0, "extras-dash"), key(t + 1.6, "Space", False), key(t + 1.6, "KeyW", False)]
+t += 3.0
+ev += [cmd(t, 2500)]; t += 1.0                                              # again: J out of the run
+ev += [key(t, "KeyW"), key(t + 0.05, "Space")] + tap(t + 0.8, "KeyJ") + [key(t + 1.0, "Space", False), key(t + 1.0, "KeyW", False)]
+t += 2.5
+ev += [cmd(t, 2500), cmd(t + 0.5, 2108)]; t += 1.0                          # Hoho behind P2: the camera swings round
+ev += [key(t, "ShiftLeft"), key(t + 0.05, "Space"), key(t + 0.3, "Space", False), key(t + 0.35, "ShiftLeft", False),
+       shot(t + 0.4, "extras-hoho-a"), shot(t + 1.8, "extras-hoho-b")]
+t += 3.0
+ev += [cmd(t, 2320), key(t + 0.1, "ShiftLeft")]                             # Burst out of Kenpachi's string
+for i in range(16): ev += tap(t + 0.3 + 0.12 * i, "KeyJ", 0.05)
+ev += [key(t + 2.4, "ShiftLeft", False)]
+t += 3.5
+ev += [cmd(t, 2321), shot(t + 0.05, "extras-burst-a"), shot(t + 0.5, "extras-burst-b")]
+t += 2.0
+ev += tap(t, "Escape") + [shot(t + 0.6, "extras-pause")]                    # pause -> CAMERA (5th item) -> SIDE
+for i in range(4): ev += tap(t + 1.2 + 0.3 * i, "ArrowDown")
+ev += tap(t + 2.6, "Enter") + tap(t + 3.1, "Escape") + [shot(t + 4.0, "extras-side"), cmd(t + 4.5, 2107)]
+write("extras", ev)
 
 # the menus by keyboard: TITLE -> MODE (VS PLAYER) -> SELECT (P1 Kenpachi, P2 confirms with KP1) -> INTRO
 # -> skip (Esc) -> BATTLE -> pause (Esc) -> RESUME -> pause -> CHARACTER SELECT -> back ... -> TITLE;

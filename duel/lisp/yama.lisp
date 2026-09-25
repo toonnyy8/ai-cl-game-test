@@ -1,6 +1,6 @@
 ;;;; yama.lisp — YAMAMOTO GENRYUSAI SHIGEKUNI (TYBW), design-v1 §5.1: his moves (DEFMOVE) and his
 ;;;; three forms (DEFKIT): :base (shikai), :hellfire (Gokuen: the Inferno meter full, 10 s) and
-;;;; :bankai (Zanka no Tachi, his awakening, 20 s). Frame data here is the §5 table; clip names are
+;;;; :bankai (Zanka no Tachi, his awakening, kept to the end of the match). Frame data here is the §5 table; clip names are
 ;;;; the art contract (yama-art.lisp authors them). Below the data: his hook functions (called by
 ;;;; the generic fighter code through the symbols in the data) and his cinematics (DEFCINE).
 (in-package :duel)
@@ -62,7 +62,7 @@
 (defkit :yamamoto :base
   :name "YAMAMOTO" :body :yamamoto :weapon :ryujin-jakka :stance :ya-stance
   :intro :ya-intro :win :ya-win :intro-callout "BANSHO ISSAI KAIJIN TO NASE" :intro-weapon (:ya-cane 81)
-  :walk *walk-yamamoto* :reishi *reishi-max* :blade (:fire 1.0) :swing-sfx :fire-whoosh
+  :walk *walk-yamamoto* :run *run-yamamoto* :reishi *reishi-max* :blade (:fire 1.0) :swing-sfx :fire-whoosh
   :commands (:q :ya-q1 :f :ya-f1 :sig :ya-sig :sp1 :ya-shiranui :sp2 :ya-taimatsu
              :breaker :ya-breaker :kikon :ya-kikon)
   :strings ((:ya-q1 :q :ya-q2) (:ya-q2 :q :ya-q3) (:ya-q2 :f :ya-f2q) (:ya-f1 :f :ya-f2))
@@ -74,7 +74,8 @@
                (3.0 5.0 :f 1 :sig 2 :step 2 nil 2)
                (5.0 7.0 :sig 4 :sp1 1 :step 1 nil 1)
                (7.0 99.0 :sp1 4 :sig 2 nil 1))
-       :guard 0.45 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 2 :oki :sp1-full :oki-above 0.6))
+       :guard 0.45 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 2 :oki :sp1-full :oki-above 0.6
+       :dash 0.25 :dash-back 0.5))
 
 (defkit :yamamoto :hellfire :inherit :base
   :callout "GOKUEN" :mult *hellfire-mult* :duration *hellfire-seconds* :burn *hellfire-burn* :blade (:fire 1.3)
@@ -85,13 +86,13 @@
        :moves ((0.0 3.0 :q 3 :f 3 :sp2 2 :breaker 1)
                (3.0 8.0 :f 1 :sig 2 :step 2)
                (8.0 99.0 :sp1 2 :step 2))
-       :guard 0.4 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 1))
+       :guard 0.4 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 1 :dash 0.5))
 
 (defkit :yamamoto :bankai :inherit :base
-  :awakening t :mult *bankai-mult* :duration *bankai-seconds* :burn *bankai-burn* :blade (:embers 1.0) :grade 0.3
+  :awakening t :mult *bankai-mult* :blade (:embers 1.0) :grade 0.3
   :passives (:armor-vs-quick) :blade-chip *chip-blade* :meter nil
   :weapon :zanka :aura :heat :enter-clips (:ya-bankai) :enter-hook yama-bankai-enter :swing-sfx :whoosh-heavy
-  :exit-hook yama-bankai-exit :cine yama-bankai-cine
+  :cine yama-bankai-cine
   :commands (:sp1 :ya-kyoku :sp2 :ya-kaka :kikon :ya-tenchi))
 
 ;;; ================================================================ hooks (called through the data's symbols)
@@ -141,13 +142,9 @@
     (emit :sfx :fire-roar e)))
 
 (defun yama-bankai-enter (e)
-  "Bankai: every fire is drawn into the blade (Inferno empties; no Hellfire while it lasts)."
+  "Bankai: every fire is drawn into the blade for good (Inferno empties; no more Hellfire)."
   (setf (gauges-meter (gauges e)) 0f0))
 
-(defun yama-bankai-exit (e)
-  "Bankai ends: the flames burst back out; Inferno 0."
-  (setf (gauges-meter (gauges e)) 0f0)
-  (emit :bankai-end e))
 
 (defun yama-sun-line (e)
   "Kyokujitsujin: the thrust leaves a white-hot line on the ground (a look)."

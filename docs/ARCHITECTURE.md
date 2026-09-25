@@ -300,7 +300,7 @@ run to run). Its cinematics run inside the fixed step through the engine's direc
 | lisp/combat.lisp      | HIT-SYSTEM (clash, collect then apply every hit, blocks, Kikon, soul break), forms / awakening, GAUGE-SYSTEM |
 | lisp/hazards.lisp     | projectiles, pillars, skeletons, cuts as HAZARD entities    |
 | lisp/ai.lisp          | BRAIN-SYSTEM: the CPU player (writes its vpad)              |
-| lisp/camera.lisp      | the pair camera (3/4 side view of both fighters, cinematic shots) |
+| lisp/camera.lisp      | the behind-P1 camera (VS CPU) and the pair camera (3/4 side view), cinematic shots |
 | lisp/feedback.lisp    | FEEDBACK-SYSTEM: events → sounds, sparks, shake, big words  |
 | lisp/flow.lisp        | the screens: title, mode, select, intro, battle, results, pause; MATCH-SYSTEM (timer, time-up), match end |
 | lisp/hud.lisp         | the battle HUD and every screen                             |

@@ -55,7 +55,7 @@
 (defkit :kenpachi :base
   :name "KENPACHI" :body :kenpachi :weapon :ken-katana :stance :ke-stance
   :intro :ke-intro :win :ke-win
-  :walk *walk-kenpachi* :reishi *reishi-max*
+  :walk *walk-kenpachi* :run *run-kenpachi* :reishi *reishi-max*
   :cornered *cornered-per-konpaku* :cornered-max *cornered-max* :reset-reiatsu *reset-reiatsu-bonus*
   :absorb-sfx :laugh
   :commands (:q :ke-q1 :f :ke-f1 :sig :ke-stance :sp1 :ke-buttagiru :sp2 :ke-charge
@@ -69,7 +69,7 @@
                (3.0 4.0 :f 1 :sp1 2 :step 1 nil 2)
                (4.0 6.0 :sp1 4 :sp2 2 nil 1)
                (6.0 99.0 :step 1 nil 1))
-       :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1
+       :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 0.8
        :react (:projectile :sig :flash-startup :sig)))
 
 (defkit :kenpachi :nozarashi :inherit :base

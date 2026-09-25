@@ -31,8 +31,8 @@ python3 -m http.server -d dist/duel 8000     # 用 Chrome 開 http://localhost:8
 
 - **規則**：雙方各有 1100 點靈子（Reishi，血條）和 9 個魂魄（Konpaku，命）。靈子掉到 30% 以下變紅，這時任何命中都能接 Kikon（鬼魂）技，一次打掉 2 個魂魄（覺醒後 3 個）；靈子歸零自動多打掉 1 個（Soul Break）。魂魄打光就輸，時限 300 秒。
 - **猜拳**：防禦擋攻擊、攻擊打斷 Breaker、Breaker 破防；兩邊同時 Breaker 會互彈（CLASH）。步法（Hoho）瞬移到對手背後，時機抓準會觸發慢動作反擊（PERFECT）。
-- **角色**：山本用火焰壓制距離，Inferno 量表滿了進入獄焱（Hellfire）；覺醒是 20 秒的卍解。劍八近身猛攻，越被逼到絕境越強；覺醒是永久的野晒。
-- **操作**（完整對照表在 [docs/DUEL_GAMEPLAY.md](docs/DUEL_GAMEPLAY.md)）：P1 用 W A S D 移動，J 輕攻擊、K 重攻擊、L 招牌技、U 防禦、I Breaker、O Kikon、Space 閃步（Step）、P 覺醒，按住左 Shift 再按 K／L／Space 是 SP1／SP2／Hoho。P2 用方向鍵加數字鍵盤（KP1～KP6、KP0、KP Enter、KP +），也可以各接一支手把。Esc 暫停。
+- **角色**：山本用火焰壓制距離，Inferno 量表滿了進入獄焱（Hellfire）；覺醒是卍解（持續到比賽結束，此後不再有 Inferno 和獄焱）。劍八近身猛攻，越被逼到絕境越強；覺醒是野晒，同樣持續到比賽結束。
+- **操作**（完整對照表在 [docs/DUEL_GAMEPLAY.md](docs/DUEL_GAMEPLAY.md)）：P1 用 W A S D 移動，J 輕攻擊、K 重攻擊、L 招牌技、U 防禦、I Breaker、O Kikon、Space 閃步（Step，按住不放就接著衝刺），P 覺醒，按住左 Shift 再按 K／L／Space 是 SP1／SP2／Hoho；被連段打中第 2 下之後按 Shift+J 是 Burst Reverse（花 2 格靈壓，藍色衝擊波把對手推開）。P2 用方向鍵加數字鍵盤（KP1～KP6、KP0、KP Enter、KP +），也可以各接一支手把。Esc 暫停。對電腦時鏡頭預設在 P1 背後（W 就是衝向對手），暫停選單和選難度的畫面可以切回側面鏡頭。
 
 這是**非商業的同人練習作品**（fan study）：角色與招式名稱是應使用者要求使用的，所有模型、動作、特效、音效與配樂都由程式產生，沒有使用原作動畫或遊戲的任何素材。設計與數值見 [docs/DUEL_DESIGN.md](docs/DUEL_DESIGN.md)。
 
@@ -72,7 +72,7 @@ $E --norc --load tests/rules-test.lisp             # RAVEN EDGE 的規則
 $E --norc --load engine/lisp/package.lisp --load engine/lisp/math.lisp --load tests/test-math.lisp
 $E --norc --load tests/input-test.lisp             # 引擎的虛擬手把（vpad），31 項
 $E --norc --load tests/cine-test.lisp              # 引擎的過場導演，18 項
-$E --norc --load tests/duel-rules-test.lisp        # SOUL DUEL 的規則與招式表，351 項
+$E --norc --load tests/duel-rules-test.lisp        # SOUL DUEL 的規則與招式表，360 項
 $E --norc --load tests/duel-control-test.lisp      # SOUL DUEL 的操作與指令表，53 項
 ```
 
@@ -260,4 +260,4 @@ emmake make && emmake make install
 - `libecl` 是 `-O0` 建的，ECL 執行期函式跑的是沒最佳化的程式碼。
 - 每次幀間 GC 是一次完整回收，偶爾會造成幾毫秒的卡頓。
 - 打擊感、鏡頭、難度是看截圖和 log 調的，還需要真人實際試玩確認（DEVLOG 第 9 節）。
-- SOUL DUEL 還沒解決的問題（沒做的 Burst Reverse 與背後鏡頭、動畫與幀數的對齊、節奏等）列在 DEVLOG 第 14.5 節。
+- SOUL DUEL 還沒解決的問題（動畫與幀數的對齊、節奏等）列在 DEVLOG 第 14.5 節。

@@ -78,11 +78,26 @@ line they stood on (A keeps his side). Values: ax az bx bz (each then faces the 
     (if (< d 1e-3) (setf dx 0.0 dz 1.0) (setf dx (/ dx d) dz (/ dz d)))
     (values (* dx (- h)) (* dz (- h)) (* dx h) (* dz h))))
 
-(defun step-direction (toward strafe)
+(defun step-direction (toward strafe &optional (neutral -1.0))
   "Step direction (values toward strafe, unit length): the stick's, or straight back when the
-stick is neutral."
+stick is neutral. NEUTRAL 1.0: straight at the opponent instead (the run)."
   (let ((m (sqrt (+ (* toward toward) (* strafe strafe)))))
-    (if (< m 0.3) (values -1.0 0.0) (values (/ toward m) (/ strafe m)))))
+    (if (< m 0.3) (values neutral 0.0) (values (/ toward m) (/ strafe m)))))
+
+;;; ---------------------------------------------------------------- the run (Step held)
+(defun run-stop-p (dist closing speed)
+  "Does a run moving at SPEED m/s, CLOSING (the fraction of it toward the opponent, -1..1), stop
+this frame at DIST from him? It stops before it would come within *RUN-STOP*."
+  (and (> closing 0) (< (- dist (* speed closing (/ 1.0 60))) *run-stop*)))
+
+(defun run-carry (dist)
+  "Momentum of a move started out of a run: *RUN-CARRY* metres, never past *RUN-STOP* from the
+opponent at DIST."
+  (max 0.0 (min *run-carry* (- dist *run-stop*))))
+
+(defun brake-speed (speed frame)
+  "Speed on brake FRAME (1-based) of *RUN-BRAKE* after a run at SPEED: linear down to 0."
+  (* speed (max 0.0 (- 1.0 (/ frame (float *run-brake*))))))
 
 ;;; ================================================================ the triangle (§3)
 ;;; Defender states the shell reports for a contact:
@@ -218,7 +233,7 @@ spread over 60 steps in whole points, so a whole second burns exactly the rate (
     (- (floor (* per-second (1+ step)) 60) (floor (* per-second step) 60))))
 
 (defun burn (reishi amount)
-  "REISHI after a self-burn of AMOUNT (Hellfire, Bankai, Ennetsu): never below 1."
+  "REISHI after a self-burn of AMOUNT (Hellfire, Ennetsu): never below 1."
   (if (<= reishi 1) reishi (max 1 (- reishi amount))))
 
 ;;; ================================================================ Kikon, Konpaku, time-up (§1)
@@ -273,7 +288,7 @@ victim's Reishi resets to max and both are placed by RESET-PLACEMENT."
 (defun seconds->frames (s) (round (* s 60)))
 
 (defun timer-fill (frames-left total-frames max)
-  "Display value of a gauge that drains as a timer (Inferno in Hellfire, Awakening in Bankai)."
+  "Display value of a gauge that drains as a timer (Inferno in Hellfire, Awakening in a timed awakening)."
   (if (<= total-frames 0) 0.0 (* max (/ (float frames-left) total-frames))))
 
 (defun hoho-allowed-p (stunned reiatsu lockout-left)
@@ -285,7 +300,9 @@ victim's Reishi resets to max and both are placed by RESET-PLACEMENT."
   (and free (not used) (>= gauge *awaken-max*)))
 
 (defun burst-allowed-p (in-hitstun combo-hits reiatsu)
-  "Burst Reverse (stretch-1): in hitstun after the *BURST-MIN-HITS*th hit, 2 bars."
+  "Burst Reverse: IN-HITSTUN (a grounded reaction or airborne, inputs not locked) after the
+*BURST-MIN-HITS*th hit of the combo (COMBO-HITS), *COST-BURST* bars of REIATSU. A Kikon connecting
+on the same step wins (the shell applies a Burst only when no cinematic started)."
   (and in-hitstun (>= combo-hits *burst-min-hits*) (>= reiatsu (* *cost-burst* *reiatsu-bar*))))
 
 ;;; ---------------------------------------------------------------- stance (a Signature kind)
@@ -344,6 +361,11 @@ LO <= D < HI, or NIL."
 (defun heat-breaker-mult (heat)
   "Breaker weight factor: 2 once HEAT reaches *AI-HEAT-BREAKER*."
   (if (>= heat *ai-heat-breaker*) 2 1))
+
+(defun ai-burst-wanted-p (reishi reishi-max next-hit)
+  "Is a Burst worth its bars to the CPU? Below *AI-BURST-LOW* of its Reishi, or the NEXT-HIT
+(estimated: the combo's average hit so far) would put it in red."
+  (or (< reishi (* *ai-burst-low* reishi-max)) (red-p (- reishi next-hit) reishi-max)))
 
 (defun heat-after (heat far)
   "Heat one frame later: +*AI-HEAT-RATE* per second, twice that when FAR (beyond *AI-HEAT-FAR*).

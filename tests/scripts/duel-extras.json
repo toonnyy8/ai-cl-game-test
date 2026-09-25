@@ -1,0 +1,372 @@
+[
+{
+"at": 9.0,
+"eval": "Module._debug_cmd(2500)"
+},
+{
+"at": 10.5,
+"shot": "tests/shots/duel-extras-behind.png"
+},
+{
+"at": 11.5,
+"key": "KeyW",
+"down": true
+},
+{
+"at": 11.55,
+"key": "Space",
+"down": true
+},
+{
+"at": 12.5,
+"shot": "tests/shots/duel-extras-dash.png"
+},
+{
+"at": 13.1,
+"key": "Space",
+"down": false
+},
+{
+"at": 13.1,
+"key": "KeyW",
+"down": false
+},
+{
+"at": 14.5,
+"eval": "Module._debug_cmd(2500)"
+},
+{
+"at": 15.5,
+"key": "KeyW",
+"down": true
+},
+{
+"at": 15.55,
+"key": "Space",
+"down": true
+},
+{
+"at": 16.3,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 16.38,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 16.5,
+"key": "Space",
+"down": false
+},
+{
+"at": 16.5,
+"key": "KeyW",
+"down": false
+},
+{
+"at": 18.0,
+"eval": "Module._debug_cmd(2500)"
+},
+{
+"at": 18.5,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 19.0,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 19.05,
+"key": "Space",
+"down": true
+},
+{
+"at": 19.3,
+"key": "Space",
+"down": false
+},
+{
+"at": 19.35,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 19.4,
+"shot": "tests/shots/duel-extras-hoho-a.png"
+},
+{
+"at": 20.8,
+"shot": "tests/shots/duel-extras-hoho-b.png"
+},
+{
+"at": 22.0,
+"eval": "Module._debug_cmd(2320)"
+},
+{
+"at": 22.1,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 22.3,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 22.35,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 22.42,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 22.47,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 22.54,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 22.59,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 22.66,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 22.71,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 22.78,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 22.83,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 22.9,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 22.95,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.02,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.07,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.14,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.19,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.26,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.31,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.38,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.43,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.5,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.55,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.62,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.67,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.74,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.79,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.86,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.91,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.98,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 24.03,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 24.1,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 24.15,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 24.4,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 25.5,
+"eval": "Module._debug_cmd(2321)"
+},
+{
+"at": 25.55,
+"shot": "tests/shots/duel-extras-burst-a.png"
+},
+{
+"at": 26.0,
+"shot": "tests/shots/duel-extras-burst-b.png"
+},
+{
+"at": 27.5,
+"key": "Escape",
+"down": true
+},
+{
+"at": 27.58,
+"key": "Escape",
+"down": false
+},
+{
+"at": 28.1,
+"shot": "tests/shots/duel-extras-pause.png"
+},
+{
+"at": 28.7,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 28.78,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 29.0,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 29.08,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 29.3,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 29.38,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 29.6,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 29.68,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 30.1,
+"key": "Enter",
+"down": true
+},
+{
+"at": 30.18,
+"key": "Enter",
+"down": false
+},
+{
+"at": 30.6,
+"key": "Escape",
+"down": true
+},
+{
+"at": 30.68,
+"key": "Escape",
+"down": false
+},
+{
+"at": 31.5,
+"shot": "tests/shots/duel-extras-side.png"
+},
+{
+"at": 32.0,
+"eval": "Module._debug_cmd(2107)"
+}
+]

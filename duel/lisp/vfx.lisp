@@ -817,6 +817,18 @@ rings)."
        (flash-light x (+ y 1.0) z 1.0 0.85 0.3)))
     nil))
 
+(defun-fast vfx-burst (x y z)
+  "Burst Reverse at the user's feet (x y z), blue as in RoS: a burst of blue glow and sparks from his
+chest, a wide flat shock ring, two upright rings, a blue light."
+  (with-floats (x y z)
+    (fx-burst +p-glow+ 36 x (+ y 1f0) z 0f0 0.2f0 0f0 1f0 4f0 9f0 0.45f0 0.4f0 0.2f0 0.45f0 1f0)
+    (fx-burst +p-spark+ 50 x (+ y 1f0) z 0f0 0.3f0 0f0 1f0 8f0 16f0 0.5f0 0.05f0 0.6f0 0.85f0 1f0)
+    (fx-ring x (+ y 0.05) z 0.4 6.0 0.5 0.2 0.45 1.0 :flat t :width 0.45)
+    (fx-ring x (+ y 1.1) z 0.3 3.5 0.35 0.45 0.7 1.0 :width 0.22)
+    (fx-ring x (+ y 1.1) z 0.2 2.2 0.25 0.8 0.9 1.0 :width 0.1)
+    (flash-light x (+ y 1f0) z 0.4 0.6 1.0)
+    nil))
+
 (defun vfx-shockwave (x z r life &key (rgb '(1.0 0.8 0.5)))
   "Expanding ground ring at (x z) to radius R over LIFE s, with a thinner inner ring and dust."
   (let ((cr (f32 (elt rgb 0))) (cg (f32 (elt rgb 1))) (cb (f32 (elt rgb 2))))

@@ -41,8 +41,8 @@
 
 (defcomponent fighter
   "One side of the duel: its kit (character + form), state machine and combo bookkeeping.
-States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstun) :step :hoho
-:move :stun (flinch stagger knockback guard-break crumple clash) :air (launched / knocked down)
+States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstun) :step :run
+(Step held: phase :run / :brake) :hoho :move :stun (flinch stagger knockback guard-break crumple clash) :air (launched / knocked down)
 :down :wakeup :cine (a cinematic owns it) :intro :win :lose."
   (side 0 :type fixnum)                 ; 0 = P1, 1 = P2
   (opp nil)                             ; the opponent's handle
@@ -69,6 +69,8 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (stored 0 :type fixnum)               ; stance: damage absorbed
   (charge 0 :type fixnum)               ; hold frames when a charge move was released (Shiranui)
   (perfect nil)                         ; this Hoho was perfect: its counter strike is pending
+  (burst nil)                           ; a Burst Reverse was pressed this step (applied after both stepped)
+  (invuln 0 :type fixnum)               ; frames of invulnerability left (after a Burst)
   (ox 0f0 :type single-float) (oz 0f0 :type single-float)   ; the opponent at the start of this step
   (dist 0f0 :type single-float)         ; ... and the distance to him
   ;; as a victim: the running combo (reset when back to neutral)
@@ -86,7 +88,7 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (awakened nil)                        ; the awakening of this match is used
   (evolution nil)                       ; EVOLUTION was announced
   (meter 0f0 :type single-float)        ; the kit meter (Inferno)
-  (form-left 0 :type fixnum)            ; frames left in a timed form (Hellfire, Bankai)
+  (form-left 0 :type fixnum)            ; frames left in a timed form (Hellfire)
   (form-total 0 :type fixnum)
   (burn-step 0 :type fixnum)            ; frames of the current form's burn so far
   ;; results
@@ -116,6 +118,8 @@ is holding. Identity comes from the kit's :AI tables."
   (react-roll 1f0 :type single-float)   ; (1 = never)
   (was :idle)                           ; its fighter's state at the previous step (block punish)
   (break-key -1 :type fixnum)           ; the guard episode the Breaker roll was made for
+  (burst-t 0 :type fixnum) (burst-rolled nil)   ; frames in a combo past its 2nd hit; the Burst roll made
+  (dash 0f0 :type single-float) (dash-to 0f0 :type single-float)   ; a held dash: +1 toward / -1 away, until this distance
   (act nil) (why nil)                   ; the last thing it decided and why (debug overlay, log)
   (off nil))                            ; debug: this CPU does nothing
 

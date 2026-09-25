@@ -153,7 +153,7 @@
   (character nil) (form nil) (inherit nil) (name nil)
   (awakening nil) (awaken-form nil) (duration nil) (burn 0.0) (heal 0)
   (mult 1.0) (cornered 0.0) (cornered-max 0.0) (passives nil) (blade-chip nil)
-  (walk 3.0) (reishi *reishi-max*) (body nil) (weapon nil) (stance nil) (hide nil) (aura nil)
+  (walk 3.0) (run 8.0) (reishi *reishi-max*) (body nil) (weapon nil) (stance nil) (hide nil) (aura nil)
   (intro nil) (win nil) (intro-callout nil) (intro-weapon nil) (callout nil)
   (swing-sfx nil) (absorb-sfx nil)
   (enter-clips nil) (enter-hook nil) (exit-hook nil)
@@ -208,7 +208,7 @@
                                            unless (member k '(:inherit :startup-add :reach-mult))
                                              append (list k v))))))
     (destructuring-bind (&key inherit name awakening awaken-form duration (burn 0.0) (heal 0) (mult 1.0)
-                           (cornered 0.0) (cornered-max 0.0) passives blade-chip (walk 3.0) (reishi *reishi-max*)
+                           (cornered 0.0) (cornered-max 0.0) passives blade-chip (walk 3.0) (run 8.0) (reishi *reishi-max*)
                            body weapon stance hide aura intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
                            enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade (grade 0.0)
                            (startup-add 0) (reach-mult 1.0) commands strings)
@@ -216,7 +216,7 @@
       (let ((kit (make-kit :character character :form form :inherit inherit :name name
                            :awakening awakening :awaken-form awaken-form :duration duration :burn burn
                            :heal heal :mult mult :cornered cornered :cornered-max cornered-max
-                           :passives passives :blade-chip blade-chip :walk walk :reishi reishi :body body
+                           :passives passives :blade-chip blade-chip :walk walk :run run :reishi reishi :body body
                            :weapon weapon :stance stance :hide hide :aura aura :intro intro :win win
                            :intro-callout intro-callout :intro-weapon intro-weapon :callout callout
                            :swing-sfx swing-sfx :absorb-sfx absorb-sfx
@@ -243,7 +243,7 @@
   "One character form as one plist. :inherit FORM takes every key of that (earlier) form; the
 child's keys win, :commands merge per command, :strings add. Keys:
   :name :body :weapon :stance :hide (body part tags hidden) :aura  look (art agent's names)
-  :walk :reishi                      stats
+  :walk :run :reishi                 stats (walk / run speed m/s)
   :commands (:q m :f m :sig m :sp1 m :sp2 m :breaker m :kikon m)   see *KIT-COMMANDS*
   :strings ((from-move command to-move) ...)   Q1 -q-> Q2 -q-> Q3, Q2 -f-> F2, F1 -f-> F2; a
                                      non-button command (:land) names a follow-up a hook starts
@@ -263,5 +263,6 @@ child's keys win, :commands merge per command, :strings add. Keys:
   :intro :win :intro-callout :callout  clips / texts; :intro-weapon (key frame) = a prop held in the
                                      intro clip until FRAME (Yamamoto's cane)   :reset-reiatsu  bonus at each Kikon reset
   :ai (:intents plist :ranges plist :moves ((lo hi cmd w ...) ...) :guard p :hoho p
-       :awaken-above reishi-fraction :react plist :sp-cancel-bars n :oki cmd :oki-above fraction)   CPU identity (§8, ai.lisp)"
+       :awaken-above reishi-fraction :react plist :sp-cancel-bars n :oki cmd :oki-above fraction
+       :dash p :dash-back p)   CPU identity (§8, ai.lisp)"
   `(register-kit ,character ,form ',spec))

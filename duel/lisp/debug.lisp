@@ -6,6 +6,7 @@
 ;;;;   2102 turbo: up to 120 steps per frame, no scene drawn (seed gates; toggle)
 ;;;;   2103 hitbox overlay   2104 CPU intent overlay   2105 CPUs off (toggle)   2106 perf log
 ;;;;   2107 dump both fighters (state, gauges) to the log    2108 fill both fighters' Reiatsu
+;;;;   2109 toggle the CAMERA option (BEHIND / SIDE; the behind camera is VS CPU's)
 ;;;;   2120+k   perf: toggle drawing part k off (0 HUD, 1 fighters, 2 stage, 3 hazards + cine looks)
 ;;;;   2110+p   the seed gate: seeds 1..20 of pairing p (0 YY, 1 YK, 2 KK, 3 all three) back to back
 ;;;;            (turbo; cinematics play: they are part of the match time), then "duel gate ..." lines
@@ -17,6 +18,9 @@
 ;;;;            13 Nozarashi form, 14 P2 red)
 ;;;;   2315+k   frame probe, YY at 2 m: P1's move k (0 Q1, 1 Q3, 2 F2, 3 Taimatsu) into P2's held guard
 ;;;;            -> "duel probe ... advantage"; 2319 trade probe: both Q1 on the same tick -> hash line
+;;;;   2320     Burst test: human P1 Yamamoto (3 bars) at 2 m from Kenpachi, whose idle CPU mashes Quick for
+;;;;            60 steps (Q1 Q2 Q3): press Shift+J after the 2nd hit
+;;;;   2321     force a Burst Reverse now: P1 (in Kenpachi's Q2 hitstun) bursts out (screenshots)
 ;;;;   2600+k   *RED-THRESHOLD* = k % (pacing the seed gate without a rebuild)
 ;;;;   2400 god (both fighters' Reishi is topped back up to 400 every frame; Kikon still lands)   2500+k human P1 vs an
 ;;;;            idle CPU (k: 0 Yama vs Ken, 1 Ken vs Yama, 2 Yama vs Yama, 3 Ken vs Ken)
@@ -64,14 +68,38 @@
   (dolist (e (list *p1* *p2*)) (start-move e (kit-move (kit-of e) :ya-q1)))
   (setf *probe* (list :trade :ya-q1 *match-tick* nil nil nil)))
 
+(defun probe-mash ()
+  "Burst test (2320): human P1 at 2 m from P2, whose (switched off) CPU mashes Quick (PROBE-UPDATE)."
+  (ensure-battle :yamamoto :kenpachi)
+  (place *p1* *p2* 2.0)
+  (setf (gauges-reiatsu (gauges *p1*)) *reiatsu-max*)
+  (setf *probe* (list :mash :quick *match-tick* nil nil nil)))
+
+(defun force-burst ()
+  "P1 Yamamoto, 2 hits into Kenpachi's string, bursts out now."
+  (ensure-battle :yamamoto :kenpachi)
+  (place *p1* *p2* 2.0)
+  (setf (gauges-reiatsu (gauges *p1*)) *reiatsu-max*)
+  (start-move *p2* (kit-move (kit-of *p2*) :ke-q2))
+  (setf (fighter-sf (fighter *p2*)) 9)
+  (set-reaction *p1* :flinch 18 (aref (pos-of *p2*) 0) (aref (pos-of *p2*) 2) 0.0)
+  (setf (fighter-combo-hits (fighter *p1*)) 2)
+  (burst! *p1*))
+
 (defun probe-update ()
   "Per step: finish a running probe (the first tick each side is free again = both idle; the
-difference is the frame advantage, measured the way the fighters really step)."
+difference is the frame advantage, measured the way the fighters really step); the mash test's
+presses (J down every other step: the switched-off brain still writes its held button)."
   (when *probe*
     (destructuring-bind (kind name t0 af df blocked) *probe*
       (let ((dt (- *match-tick* t0)))
-        (if (eq kind :trade)
-            (when (>= dt 40) (log-msg "duel probe trade ~a: ~a" name (state-hash-line)) (setf *probe* nil))
+        (case kind
+          (:mash (let ((b (brain *p2*)))
+                   (setf (brain-press b) :quick (brain-press-mod b) nil (brain-press-left b) (if (evenp dt) 1 0))
+                   (when (> dt 60) (setf (brain-press-left b) 0 *probe* nil))))
+          (:trade
+            (when (>= dt 40) (log-msg "duel probe trade ~a: ~a" name (state-hash-line)) (setf *probe* nil)))
+          (t
             (progn
               (when (eq (state-of *p2*) :guard-hit) (setf blocked t))
               (when (and (not af) (member (state-of *p1*) '(:idle :guard))) (setf af dt))
@@ -81,7 +109,7 @@ difference is the frame advantage, measured the way the fighters really step)."
                      (log-msg "duel probe ~a blocked: attacker free at +~d, defender at +~d, advantage ~@d (table ~@d)"
                               name af df (- df af) (mv-adv-block (kit-move (kit-of *p1*) name)))
                      (setf *probe* nil))
-                    ((> dt 300) (log-msg "duel probe ~a: no block" name) (setf *probe* nil)))))))))
+                    ((> dt 300) (log-msg "duel probe ~a: no block" name) (setf *probe* nil))))))))))
 
 (defun god-update ()
   (when *god*
@@ -214,11 +242,14 @@ difference is the frame advantage, measured the way the fighters really step)."
         ((= c 2106) (setf *perf-log* (not *perf-log*)))
         ((= c 2107) (when (entity-alive-p *p1*) (log-msg "~a" (state-hash-line))))
         ((= c 2108) (dolist (e (list *p1* *p2*)) (setf (gauges-reiatsu (gauges e)) *reiatsu-max*)))
+        ((= c 2109) (toggle-cam))
         ((<= 2110 c 2113) (start-gate (- c 2110)))
         ((<= 2120 c 2123) (setf (svref *no-draw* (- c 2120)) (not (svref *no-draw* (- c 2120)))))
         ((<= 2200 c 2299) (force-cine (- c 2200)))
         ((<= 2315 c 2318) (probe-block (nth (- c 2315) '(:ya-q1 :ya-q3 :ya-f2 :ya-taimatsu))))
         ((= c 2319) (probe-trade))
+        ((= c 2320) (probe-mash))
+        ((= c 2321) (force-burst))
         ((<= 2300 c 2399) (force-special (- c 2300)))
         ((= c 2400) (setf *god* (not *god*)))
         ((<= 2600 c 2699) (setf *red-threshold* (/ (- c 2600) 100.0)))

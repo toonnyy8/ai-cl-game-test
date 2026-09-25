@@ -10,6 +10,11 @@
 
 ;;; ---------------------------------------------------------------- the fixed step
 (defvar *slow-acc* 0.0 "Slow motion: sim frames owed (a sim frame runs each time it reaches 1).")
+(defun reset-slow-clock ()
+  "A new match owes no slow-motion frames (START-MATCH). A perfect Hoho leaves a fraction here; carried
+over, it shifted the next match's first slow motion by a step: a seed's result then depended on the
+matches run before it in the page."
+  (setf *slow-acc* 0.0))
 
 (defun sim-systems ()
   "One sim frame: the systems in order (a Kikon / Soul Break may start a cinematic mid-way; the

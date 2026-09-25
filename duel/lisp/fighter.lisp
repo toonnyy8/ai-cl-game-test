@@ -6,6 +6,7 @@
 ;;;; States (FIGHTER-STATE):
 ;;;;   :idle   stand / walk / strafe (auto-faces)      :guard      guard held (blocks after *GUARD-RAISE*)
 ;;;;   :guard-hit  blockstun                           :step       24 f hop, iframes f3-f9
+;;;;   :run    Step held past the hop: run (phase :run), then :brake on release (no iframes)
 ;;;;   :hoho   vanish, reappear behind (iframes f1-f14; perfect → counter strike)
 ;;;;   :move   a kit move; phase :hold (charge / stance) :aura :dash (Breaker) :main (S / A / R)
 ;;;;   :stun   a grounded reaction (phase = :flinch :stagger :knockback :guard-break :crumple :clash)
@@ -91,11 +92,19 @@ match (tinted)."
 ;;; ---------------------------------------------------------------- the view humans steer by
 ;;; A human's stick is camera-relative. The sim must not read the render camera (it lags on real
 ;;; time: a replay would differ), so the sim owns the view's DIRECTION: VIEW-STEP keeps it on its side
-;;; of the fighter axis each step, and camera.lisp smooths the render camera toward it.
-(declaim (single-float *view-x* *view-z* *view-side*))
+;;; of the fighter axis each step, and camera.lisp smooths the render camera toward it. Two views:
+;;; the pair camera (side-on, *VIEW-X* / *VIEW-Z*) and the camera behind P1 (*BEHIND-YAW*, looking
+;;; from P1 at P2, turned at most *BEHIND-TURN* per step: after a Hoho it swings round instead of
+;;; snapping). *VIEW-BEHIND* says which one humans steer by (flow.lisp sets it: VS CPU with the
+;;; BEHIND option); CPU pilots never read the view, so a CPU match can't depend on it.
+(declaim (single-float *view-x* *view-z* *view-side* *behind-yaw*))
 (defvar *view-x* 0f0 "Unit direction (x z) from the fighters' midpoint toward the pair camera ...")
 (defvar *view-z* 1f0 "... z.")
 (defvar *view-side* 1f0 "+1: the view shows P1 on the left of the screen; -1: on the right.")
+(defvar *behind-yaw* 0f0 "The behind camera's view yaw: from P1 toward P2, rate-limited.")
+(defvar *view-behind* nil "Humans steer by the behind camera (else the pair camera).")
+(defparameter *behind-turn* 300.0
+  "Degrees per second the behind view turns toward P1->P2: a Hoho behind P1 swings it round in ~0.6 s.")
 
 (defun view-step (a b &optional reset)
   "Keep the pair view on its side of the A (P1) -> B axis: of the two perpendiculars take the one
@@ -106,7 +115,10 @@ every Kikon reset). Screen right is SIDE x (A->B) for a right-handed look-at."
     (when (> d 0.01)
       (let* ((nx (/ (- dz) d)) (nz (/ dx d))
              (side (if (or reset (>= (+ (* nx *view-x*) (* nz *view-z*)) 0)) 1f0 -1f0)))
-        (setf *view-side* side *view-x* (f32 (* side nx)) *view-z* (f32 (* side nz)))))))
+        (setf *view-side* side *view-x* (f32 (* side nx)) *view-z* (f32 (* side nz))
+              *behind-yaw* (f32 (if reset
+                                    (dir-yaw dx dz)
+                                    (angle-wrap (turn-toward *behind-yaw* (dir-yaw dx dz) (track-step *behind-turn*))))))))))
 
 (defun stick-relative (e f)
   "E's stick as (values toward strafe) relative to his opponent: a human's stick is read through the
@@ -114,7 +126,7 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
   (let* ((vp (pilot-vpad (pilot e))) (sx (vpad-sx vp)) (sy (vpad-sy vp)))
     (if (pilot-cam-relative (pilot e))
         (let ((p (pos-of e)))
-          (stick-toward-strafe sx sy (dir-yaw (- *view-x*) (- *view-z*))
+          (stick-toward-strafe sx sy (if *view-behind* *behind-yaw* (dir-yaw (- *view-x*) (- *view-z*)))
                                (aref p 0) (aref p 2) (fighter-ox f) (fighter-oz f)))
         (values sy sx))))
 
@@ -169,8 +181,24 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
       (fill (motion-vel (motion e)) 0f0)
       (play-clip e (cond ((> (abs st) (abs to)) (if (> st 0) :sh-step-r :sh-step-l)) ((> to 0) :sh-step-f) (t :sh-step-b))
                  :blend 2)
-      (clog "~a step" (side-name e))
+      (clog "~a step~@[ ~a~]" (side-name e) (let ((b (brain e))) (and b (brain-why b))))
       (emit :step e))))
+
+(defun run-yaw (e f)
+  "The yaw a runner wants: the stick direction relative to the opponent (neutral = at him)."
+  (multiple-value-bind (to st) (stick-relative e f)
+    (multiple-value-bind (to st) (step-direction to st 1.0)
+      (let ((p (pos-of e)))
+        (multiple-value-bind (dx dz) (toward-strafe-dir to st (aref p 0) (aref p 2) (fighter-ox f) (fighter-oz f))
+          (dir-yaw dx dz))))))
+
+(defun start-run (e f)
+  "Step still held when the hop ends: run (RUN-STEP), facing the stick direction at once."
+  (setf (fighter-state f) :run (fighter-sf f) 0 (fighter-phase f) :run
+        (transform-yaw (transform e)) (f32 (run-yaw e f)))
+  (play-clip e :sh-run :blend 5 :speed (/ (kit-run (fighter-kit f)) 8.0))
+  (clog "~a dash~@[ ~a~]" (side-name e) (let ((b (brain e))) (and b (brain-why b))))
+  (emit :step e))
 
 (defun start-hoho (e f)
   "Hoho: spend a bar, vanish, reappear behind the opponent (HOHO-STEP). Checks PERFECT now."
@@ -205,7 +233,7 @@ it now. T when something started."
       (:awaken (when (awaken-allowed-p (member (fighter-state f) '(:idle :guard)) (gauges-awaken g) (gauges-awakened g))
                  (awaken! e) t))
       (:kikon (when (kikon-ok-p e) (kikon! e) t))
-      (:burst nil)                                        ; stretch-1, not in v1
+      (:burst (when (burst-ok-p e) (setf (fighter-burst f) t) t))   ; applied after both stepped
       (t (let ((mv (kit-command-move kit cmd)))
            (when (and mv (kit-command-ok-p e cmd))
              (let ((cost (kit-command-cost kit cmd)))
@@ -216,6 +244,9 @@ it now. T when something started."
 (defparameter *neutral-commands* '(:kikon :awaken :hoho :step :breaker :sp2 :sp1 :sig :f :q)
   "Commands from idle / walk / guard. Kikon only while the red opponent is still in our hitstun
 (KIKON-OK-P): there is no raw Kikon.")
+
+(defparameter *run-commands* '(:kikon :hoho :step :breaker :sp2 :sp1 :sig :f :q)
+  "Commands a run cancels into at once (neutral's, without Awaken); Step again = a new hop.")
 
 (defun command! (e f vp allowed)
   "The highest-priority buffered command among ALLOWED that can start now; consumes its press. A
@@ -322,13 +353,53 @@ refused one doesn't hide the next). T when a new move / action started."
                        (progn (vpad-consume! vp button) t)))))
 
 (defun stun-step (e f vp)
-  "A reaction / blockstun counts down; then neutral (guard again if Guard is held)."
+  "A reaction / blockstun counts down (Burst Reverse may be pressed); then neutral (guard again if
+Guard is held)."
+  (when (zerop (fighter-lock f)) (command! e f vp '(:burst)))
   (when (>= (incf (fighter-sf f)) (fighter-stun f))
     (to-idle e)
     (when (vpad-down vp :guard) (setf (fighter-state f) :guard (fighter-guard-t f) *guard-raise*) (play-clip e :sh-guard :blend 3))))
 
-(defun step-step (e f)
-  (when (>= (incf (fighter-sf f)) *step-frames*) (to-idle e)))
+(defun step-step (e f vp)
+  "The hop; at its end a Step still held becomes a run (so holding never shortens a Step)."
+  (when (>= (incf (fighter-sf f)) *step-frames*)
+    (if (and (zerop (fighter-lock f)) (vpad-down vp :step)) (start-run e f) (to-idle e))))
+
+(defun run-velocity (e speed)
+  "E moves at SPEED along his facing."
+  (let ((v (motion-vel (motion e))) (yaw (yaw-of e)))
+    (setf (aref v 0) (f32 (* speed (fwd-x yaw))) (aref v 2) (f32 (* speed (fwd-z yaw))))))
+
+(defun run-closing (e f)
+  "The fraction (-1..1) of E's facing that points at his opponent."
+  (let* ((p (pos-of e)) (yaw (yaw-of e)) (d (fighter-dist f)))
+    (if (< d 0.01)
+        0.0
+        (/ (+ (* (fwd-x yaw) (- (fighter-ox f) (aref p 0))) (* (fwd-z yaw) (- (fighter-oz f) (aref p 2)))) d))))
+
+(defun run-step (e f vp)
+  "The run: a command cancels it at once (a move keeps RUN-CARRY of momentum), Guard stops it,
+releasing Step brakes (*RUN-BRAKE* f, committed); else run at the kit's :run speed toward the stick
+direction relative to the opponent (neutral = at him), turning at *RUN-TURN*, stopping *RUN-STOP*
+from him (RUN-STOP-P)."
+  (let* ((v (motion-vel (motion e))) (vx (aref v 0)) (vz (aref v 2))
+         (speed (kit-run (fighter-kit f))) (sf (incf (fighter-sf f))) (free (zerop (fighter-lock f))))
+    (cond ((eq (fighter-phase f) :brake)
+           (let ((s (if (run-stop-p (fighter-dist f) (run-closing e f) speed) 0.0 (brake-speed speed sf))))
+             (if (or (<= s 0) (>= sf *run-brake*)) (to-idle e) (run-velocity e s))))
+          ((and free (command! e f vp *run-commands*))
+           (when (eq (fighter-state f) :move)
+             (set-slide e (run-carry (fighter-dist f)) *run-carry-frames* vx vz)
+             (clog "~a run -> ~a, carry ~,1f m" (side-name e) (mv-name (fighter-move f)) (run-carry (fighter-dist f)))))
+          ((and free (vpad-down vp :guard)) (to-idle e 3) (neutral-step e f vp))
+          ((not (and free (vpad-down vp :step)))
+           (setf (fighter-phase f) :brake (fighter-sf f) 0)
+           (play-clip e (kit-stance (fighter-kit f)) :blend 6))
+          (t (let ((tf (transform e)))
+               (setf (transform-yaw tf) (f32 (angle-wrap (turn-toward (transform-yaw tf) (run-yaw e f) (track-step *run-turn*)))))
+               (if (run-stop-p (fighter-dist f) (run-closing e f) speed)
+                   (to-idle e 4)
+                   (run-velocity e speed)))))))
 
 (defun hoho-step (e f)
   "Vanish, reappear behind the opponent on frame *HOHO-APPEAR* facing him; a perfect Hoho swings on
@@ -345,8 +416,10 @@ refused one doesn't hide the next). T when a new move / action started."
       (play-clip e (mv-clip (kit-command-move (fighter-kit f) :q)) :blend 0 :time 0.1))
     (when (>= sf *hoho-frames*) (to-idle e 3))))
 
-(defun air-step (e f)
-  "Airborne until landing, then :down 30 f and :wakeup 30 f (both invulnerable)."
+(defun air-step (e f vp)
+  "Airborne until landing (Burst Reverse may be pressed), then :down 30 f and :wakeup 30 f (both
+invulnerable)."
+  (when (and (eq (fighter-state f) :air) (zerop (fighter-lock f))) (command! e f vp '(:burst)))
   (let ((sf (incf (fighter-sf f))) (mo (motion e)))
     (case (fighter-state f)
       (:air (when (and (motion-grounded mo) (> sf 2))
@@ -391,7 +464,8 @@ refused one doesn't hide the next). T when a new move / action started."
   "E's side of the triangle for RESOLVE-CONTACT (rules.lisp): :neutral :guard :breaker :stance-in
 :stance :invuln."
   (let* ((f (fighter e)) (sf (fighter-sf f)) (mv (fighter-move f)))
-    (case (fighter-state f)
+    (case (if (> (fighter-invuln f) 0) :invuln (fighter-state f))
+      (:invuln :invuln)                                  ; after a Burst
       (:guard (if (>= (fighter-guard-t f) *guard-raise*) :guard :neutral))
       (:guard-hit :guard)
       (:step (if (invulnerable-frame-p sf *step-iframes*) :invuln :neutral))
@@ -449,15 +523,17 @@ refused one doesn't hide the next). T when a new move / action started."
   (when (> (fighter-freeze f) 0) (decf (fighter-freeze f)) (return-from fighter-step nil))
   (when (> (fighter-lock f) 0) (decf (fighter-lock f)))
   (when (> (fighter-hoho-lock f) 0) (decf (fighter-hoho-lock f)))
+  (when (> (fighter-invuln f) 0) (decf (fighter-invuln f)))
   (when (> (fighter-callout-t f) 0) (decf (fighter-callout-t f)))
   (let ((vp (pilot-vpad (pilot e))))
     (case (fighter-state f)
       ((:idle :guard) (neutral-step e f vp))
       (:move (move-step e f vp))
       ((:stun :guard-hit) (stun-step e f vp))
-      (:step (step-step e f))
+      (:step (step-step e f vp))
+      (:run (run-step e f vp))
       (:hoho (hoho-step e f))
-      ((:air :down :wakeup) (air-step e f))))
+      ((:air :down :wakeup) (air-step e f vp))))
   (fighter-physics e)
   (anim-advance (model-anim (model e)) +step+))
 
@@ -478,4 +554,9 @@ step: a symmetric sim), step each, then keep them apart."
       (setf (fighter-freeze f) (max (fighter-freeze f) (fighter-freeze-next f))
             (fighter-lock f) (max (fighter-lock f) (fighter-lock-next f))
             (fighter-freeze-next f) 0 (fighter-lock-next f) 0))
+    ;; a Burst pressed this step applies now, unless a cinematic began (a Kikon on the same step wins)
+    (do-entities (e (f fighter))
+      (when (fighter-burst f)
+        (setf (fighter-burst f) nil)
+        (unless *cine* (burst! e))))
     (when (and a b) (separate-fighters a b))))

@@ -1,6 +1,6 @@
 ;;;; flow.lisp — the screens (design-v1 §6): TITLE → MODE (VS CPU / VS PLAYER / CPU VS CPU / CONTROLS)
-;;;; → SELECT (P1, then P2 / the CPU, then difficulty; both models on the plaza) → INTRO → BATTLE
-;;;; (pause: RESUME / RESTART / CHARACTER SELECT / TITLE) → FINISH (K.O. / TIME) → RESULTS (REMATCH /
+;;;; → SELECT (P1, then P2 / the CPU, then difficulty and, VS CPU, the camera; both models on the plaza)
+;;;; → INTRO → BATTLE (pause: RESUME / RESTART / CHARACTER SELECT / TITLE, VS CPU also CAMERA) → FINISH (K.O. / TIME) → RESULTS (REMATCH /
 ;;;; SELECT / TITLE). Menus read the devices directly (either player's keys / pads); fighters only
 ;;;; ever read their vpad. MATCH-SYSTEM (the timer, time-up) is the last sim system; the KO comes from
 ;;;; a Kikon / Soul Break (combat.lisp AFTER-KIKON → MATCH-OVER). Log: "duel -> STATE" per change.
@@ -15,6 +15,7 @@
 (defvar *mode* :vs-cpu "Match mode: :vs-cpu :vs-player :cpu-cpu")
 (defvar *picks* (list (first *roster*) (car (last *roster*))) "Characters of P1 and P2 (kit.lisp *ROSTER*).")
 (defvar *difficulty* :normal)
+(defvar *cam-behind* t "The CAMERA option of VS CPU: BEHIND (P1's shoulder, the default) or SIDE (the pair camera).")
 (defvar *select-phase* 0 "SELECT: 0 P1 picks, 1 P2 picks, 2 difficulty.")
 (defvar *p1* nil) (defvar *p2* nil)
 (defvar *timer* 0 "Match frames left.")
@@ -31,6 +32,18 @@
 (defun set-flow (st)
   (setf *flow* st *ft* 0.0 *menu* 0)
   (log-msg "duel -> ~a" st))
+
+(defun set-cam-behind (on)
+  "Set the CAMERA option. Humans steer by the behind view only in VS CPU (fighter.lisp *VIEW-BEHIND*);
+VS PLAYER and CPU VS CPU keep the pair camera."
+  (setf *cam-behind* on *view-behind* (and on (eq *mode* :vs-cpu)) *cam-cut* t))
+
+(defun camera-label () (if *cam-behind* "CAMERA  BEHIND" "CAMERA  SIDE"))
+
+(defun toggle-cam ()
+  "The CAMERA option flips (pause menu, select screen, debug 2109)."
+  (set-cam-behind (not *cam-behind*))
+  (log-msg "duel camera ~a" (camera-label)))
 
 (defun battle-p () (member *flow* '(:intro :battle :finish)))
 (defun sim-running-p () (and (battle-p) (not *paused*)))
@@ -87,10 +100,13 @@
 
 (defun start-match ()
   "Spawn the fighters for *MODE* / *PICKS*, seed the sim stream, play the intro."
-  (setf *paused* nil *winner* nil *match-tick* 0 *timer* (* 60 *match-seconds*))
+  (setf *paused* nil *winner* nil *match-tick* 0 *timer* (* 60 *match-seconds*)
+        *pending* nil *soul-breaks* nil)          ; nothing of the last match may leak in
+  (reset-slow-clock)
   (abort-cine)
   (clear-words)
   (sim-rnd-seed *match-seed*)
+  (set-cam-behind *cam-behind*)
   (spawn-pair :cpu1 (eq *mode* :cpu-cpu) :cpu2 (member *mode* '(:vs-cpu :cpu-cpu)))
   (dolist (e (list *p1* *p2*))
     (setf (gauges-konpaku (gauges e)) *konpaku-start*)
@@ -159,9 +175,15 @@ won, NIL = a draw (a lethal trade took both souls' last Konpaku)."
            (play-sfx :confirm)
            (let ((e (if (zerop side) *p1* *p2*)))
              (play-clip e (or (kit-intro (kit-of e)) (kit-stance (kit-of e))) :blend 4))
-           (setf *select-phase* (if (and (= *select-phase* 1) (eq *mode* :vs-player)) 3 (1+ *select-phase*)))))
-        (2 (when (or (menu-left-p) (menu-right-p))
-             (setf *difficulty* (cycle *difficulty* *difficulties* (if (menu-left-p) -1 1))) (play-sfx :select))
+           (setf *select-phase* (if (and (= *select-phase* 1) (eq *mode* :vs-player)) 3 (1+ *select-phase*))
+                 *menu* 0)))
+        (2 (let ((cam (eq *mode* :vs-cpu)))            ; row 0 the difficulty, row 1 (VS CPU) the camera
+             (when (and cam (or (menu-up-p) (menu-down-p))) (setf *menu* (- 1 *menu*)) (play-sfx :select))
+             (when (or (menu-left-p) (menu-right-p))
+               (if (and cam (= *menu* 1))
+                   (toggle-cam)
+                   (setf *difficulty* (cycle *difficulty* *difficulties* (if (menu-left-p) -1 1))))
+               (play-sfx :select)))
            (when (confirm-p) (play-sfx :confirm) (setf *select-phase* 3))))
       (when (>= *select-phase* 3) (new-seed) (start-match))
       (when (back-p)
@@ -170,6 +192,9 @@ won, NIL = a draw (a lethal trade took both souls' last Konpaku)."
 
 (defparameter *mode-menu* '("VS CPU" "VS PLAYER" "CPU VS CPU" "CONTROLS"))
 (defparameter *pause-menu* '("RESUME" "RESTART" "CHARACTER SELECT" "TITLE"))
+(defun pause-items ()
+  "The pause menu: VS CPU adds the CAMERA toggle."
+  (if (eq *mode* :vs-cpu) (append *pause-menu* (list (camera-label))) *pause-menu*))
 (defparameter *results-menu* '("REMATCH" "CHARACTER SELECT" "TITLE"))
 
 (defun flow-update (rdt)
@@ -190,11 +215,12 @@ won, NIL = a draw (a lethal trade took both souls' last Konpaku)."
      (cond (*paused*
             (if (pause-p)
                 (setf *paused* nil)
-                (case (menu-nav 4)
+                (case (menu-nav (length (pause-items)))
                   (0 (setf *paused* nil))
                   (1 (start-match))
                   (2 (go-select))
-                  (3 (go-title)))))
+                  (3 (go-title))
+                  (4 (toggle-cam)))))
            ((and *cine* (pause-p)) (skip-cine))
            ((or (pause-p) (focus-lost-p)) (setf *paused* t *menu* 0) (play-sfx :select))))
     (:results (when (> *ft* 2.5)                         ; a masher doesn't skip the results
