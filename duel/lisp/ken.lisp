@@ -61,7 +61,7 @@
 (defkit :kenpachi :base
   :name "KENPACHI" :body :kenpachi :weapon :ken-katana :stance :ke-stance
   :intro :ke-intro :win :ke-win
-  :walk *walk-kenpachi* :run *run-kenpachi* :reishi *reishi-max*
+  :walk *walk-kenpachi* :run *run-kenpachi* :reishi *reishi-max* :aura :reiatsu
   :cornered *cornered-per-konpaku* :cornered-max *cornered-max* :reset-reiatsu *reset-reiatsu-bonus*
   :absorb-sfx :laugh
   :commands (:q :ke-q1 :f :ke-f1 :sig :ke-stance :sp1 :ke-buttagiru :sp2 :ke-charge
@@ -81,7 +81,7 @@
 (defkit :kenpachi :nozarashi :inherit :base
   :awakening t :mult *nozarashi-mult* :startup-add *nozarashi-startup* :reach-mult *nozarashi-reach*
   :passives (:projectile-cut :ignore-armor) :heal *nozarashi-heal*
-  :weapon :nozarashi :stance :ke-n-stance :hide (:eyepatch) :aura :reiatsu :swing-sfx :whoosh-cleaver
+  :weapon :nozarashi :stance :ke-n-stance :hide (:eyepatch) :aura :nozarashi :swing-sfx :whoosh-cleaver
   :enter-clips (:ke-patch :ke-nome) :cine ken-nozarashi-cine
   :commands (:sp1 :ke-meteor :kikon :ke-kikon-n))
 
@@ -171,8 +171,8 @@ grows into the cleaver. 野晒."
         (vfx-shockwave (aref p 0) (aref p 2) 7.0 0.6 :rgb '(1.0 0.9 0.3)))
       (play-sfx :awaken-boom) (shake 0.2 0.3))
   (during (0 72) (let ((p (pos-of a)))                  ; faint and narrow in the face close-up: the patch reads
-                   (vfx-aura (aref p 0) 0.0 (aref p 2) (if (< cf 30) 2.0 3.2) :reiatsu (/ cf 60.0) (frame-dt)
-                             :rgb '(1.0 0.9 0.3) :k (if (< cf 18) 0.1 1.0))))
+                   (vfx-aura (aref p 0) 0.0 (aref p 2) (if (< cf 30) 2.0 3.2) :nozarashi (/ cf 60.0) (frame-dt)
+                             :k (if (< cf 18) 0.1 1.0))))
   (at 30 (cine-clip a :ke-nome :blend 2) (shot-on a 30 4.6 1.3 :look 1.6))
   (at 51 (setf (model-weapon (model a)) :nozarashi)
       (caption "NOME, NOZARASHI" :kanji :nozarashi :color '(1 0.9 0.35 1))

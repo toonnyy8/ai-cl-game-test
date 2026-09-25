@@ -43,7 +43,8 @@
 (defcomponent blade
   "The sword ribbon (engine MAKE-TRAIL layout): sampled in the draw while a move is active.
 (Not named TRAIL: its constructor would be MAKE-TRAIL, the engine's.)"
-  (points (make-trail) :type f32vec))
+  (points (make-trail) :type f32vec)
+  (smear (make-f32 12) :type f32vec))    ; the comet smear held for the current drawing (vfx.lisp VFX-SMEAR)
 
 (defcomponent fighter
   "One side of the duel: its kit (character + form), state machine and combo bookkeeping.

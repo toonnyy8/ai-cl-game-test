@@ -95,7 +95,7 @@
        :guard 0.4 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 1 :dash 0.5))
 
 (defkit :yamamoto :bankai :inherit :base
-  :awakening t :mult *bankai-mult* :blade (:embers 1.0) :grade 0.3
+  :awakening t :mult *bankai-mult* :blade (:embers 1.0) :grade :spot
   :passives (:armor-vs-quick) :blade-chip *chip-blade* :meter nil
   :weapon :zanka :aura :heat :enter-clips (:ya-bankai) :enter-hook yama-bankai-enter :swing-sfx :whoosh-heavy
   :cine yama-bankai-cine
@@ -192,7 +192,7 @@ bursts into ash."
       (cine-clip a :ya-tenchi :blend 2) (cine-clip v :sh-kikon-victim :blend 4)
       (shot-on a 70 4.2 1.2 :look 1.1 :ahead 1.2)
       (caption "TENCHI KAIJIN" :sub "KIKON" :color '(0.95 0.95 0.95 1)))
-  (during (0 18) (setf *grade-desat* (max (kit-grade (kit-of a)) u)))   ; from the form's grade (Bankai 0.3)
+  (during (0 18) (setf *grade-desat* u))
   (during (18 96) (setf *grade-desat* 1.0) (vfx-tenchi-slash (/ (- cf 18) 60.0) 0.6))
   (at 18 (play-sfx :kikon-slash) (ui-flash 1 1 1 0.9 4.0) (shot-pair a v 1 5.0 1.4))
   (at 30 (multiple-value-bind (x y z) (actor-point v 1.0) (vfx-ash-burst x y z) (vfx-konpaku-shatter x y z 3))
@@ -219,4 +219,4 @@ the plaza cracks and dries. 卍解 / ZANKA NO TACHI."
       (caption "ZANKA NO TACHI" :kanji :bankai :color '(1 0.55 0.2 1))
       (play-sfx :awaken-boom) (shake 0.25 0.4) (ui-flash 1 0.5 0.15 0.6)
       (shot-on a 35 5.0 1.6 :look 1.2))
-  (during (40 72) (setf *grade-desat* (* 0.3 u))))
+  (during (40 72) (setf *grade-desat* u)))   ; into the form's spot-keep grey (main.lisp FORM-GRADE)

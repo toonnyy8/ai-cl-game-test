@@ -421,7 +421,7 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 (check (equal (kit-intro-weapon (kit :yamamoto :base)) '(:ya-cane 81)))              ; cane until 1.35 s
 (check (and (eq (kit-cine (kit :yamamoto :bankai)) 'yama-bankai-cine) (eq (kit-cine (kit :kenpachi :nozarashi)) 'ken-nozarashi-cine)
             (null (kit-cine (kit :yamamoto :hellfire)))))
-(check (and (equal (kit-blade (kit :yamamoto :hellfire)) '(:fire 1.3)) (~= (kit-grade (kit :yamamoto :bankai)) 0.3)
+(check (and (equal (kit-blade (kit :yamamoto :hellfire)) '(:fire 1.3)) (eq (kit-grade (kit :yamamoto :bankai)) :spot)
             (null (kit-blade (kit :kenpachi :base)))))
 (check (and (mv-planted (find-move :ya-breaker)) (~= (mv-blend (find-move :ke-stance)) 6)))
 (let ((fl (find-move :ke-flurry)))                                          ; 4 more cuts + the launcher

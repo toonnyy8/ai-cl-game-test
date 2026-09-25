@@ -56,7 +56,7 @@ Code references are `file:line` in this repository.
 - round 4: **the user's decisions on v3**.
 
 v4 changes the **art direction** (§A, §2.5, §3.3, §4, §5, §6). The engine architecture of v3
-(§1–§3.2, §3.4–§3.5) stands unchanged. **Phases 0, 1a, 1b and 2 are implemented** (2026-09-25); §14 logs
+(§1–§3.2, §3.4–§3.5) stands unchanged. **Phases 0, 1a, 1b, 2 and 3 are implemented** (2026-09-25); §14 logs
 what was built, where it differs from this text, and the measured gates.
 
 ---
@@ -532,20 +532,28 @@ one more branch in `fs_fx_toon`, uniform per shape.
 
 | # | Name | Core | Body | Shade | Edge (px) | Style | Colour class |
 |---|---|---|---|---|---|---|---|
-| 0 | FIRE | #FFF3DC | #FF5A1E | #B81A0C | #1A0402 (1.6), lower third | 2 hybrid | **spot** |
-| 1 | EMBER / HELLFIRE | #FFB08A | #E8301A | #6A0A06 | #0A0404 (1.4) | 2 | **spot** |
-| 2 | REIATSU (Kenpachi, every form) | #FFFFFF | #FFD83A | #C88A0A | #1A1206 (1.0) | 0 | **spot** |
+| 0 | FIRE | #FFE483 (Phase 3; was #FFF3DC) | #FF5A1E | #B81A0C | none (review 2; was #1A0402 1.6, lower third) | 2 hybrid | **spot** |
+| 1 | EMBER / HELLFIRE | #FFB08A | #E8301A | #6A0A06 | none (review 2; was #0A0404 1.4) | 2 | **spot** |
+| 2 | REIATSU (Kenpachi, every form) | #FFFFFF | #FFD83A | #C88A0A | #C88A0A (1.0) = shade (review 2; was #1A1206) | 0 | **spot** |
 | 3 | INK (ink reiatsu of other uses: black splashes on cards, the Breaker's dark backing) | #FFFFFF (core line) | #0C0C12 | #262833 | #FFFFFF (1.2) | 0 | mono |
-| 4 | STEEL (Burst, guard) | #FFFFFF | #C8D4E4 | #7A8CA8 | #101018 (1.0) | 0 | cold tint |
-| 5 | HIT | #FFFFFF | #FFFFFF | #C8CCD6 | #101018 (1.2) | 0 | mono |
-| 6 | SMOKE (pale) | #F2F2EE | #C4C8D0 | #7A8090 | #101018 (1.6) | 1 matter | mono |
-| 7 | DUST / ROCK | #D6D8DE | #A6AAB6 | #6A6E7C | #14151C (1.6) | 1 | mono |
-| 8 | ASH | #FFFFFF | #D0D2D8 | #8A8E9A | #20222A (1.4) | 1 | mono |
-| 9 | SOUL glass | #FFFFFF | #E6ECF4 | #9AA8BE | #101018 (1.2) | 0 | mono |
-| 10 | BLOOD (Kikon, counter, Breaker edge, soul flame, ink-blood splatter) | #FFE8E8 | #D0101C | #6A0008 | #0A0002 (1.0) | 0 | **spot** |
+| 4 | STEEL (Burst, guard) | #FFFFFF | #C8D4E4 | #7A8CA8 | #7A8CA8 (1.0) = shade (review 2; was #101018) | 0 | cold tint |
+| 5 | HIT | #FFFFFF | #FFFFFF | #C8CCD6 | #C8CCD6 (1.2) = shade (review 2; was #101018) | 0 | mono |
+| 6 | SMOKE (pale) | #F2F2EE | #C4C8D0 | #7A8090 | none (review 2; was #101018 1.6) | 1 matter | mono |
+| 7 | DUST / ROCK | #D6D8DE | #A6AAB6 | #6A6E7C | none (review 2; was #14151C 1.6) | 1 | mono |
+| 8 | ASH | #FFFFFF | #D0D2D8 | #8A8E9A | none (review 2; was #20222A 1.4) | 1 | mono |
+| 9 | SOUL glass | #FFFFFF | #E6ECF4 | #9AA8BE | #9AA8BE (1.2) = shade (review 2; was #101018) | 0 | mono |
+| 10 | BLOOD (Kikon, counter, Breaker edge, soul flame, ink-blood splatter) | #FFE8E8 | #D0101C | #6A0008 | none (review 2; was #0A0002 1.0) | 0 | **spot** |
 | 11 | BLACK SMOKE / INK SPLASH / charcoal | #3A3E4C | #101018 | #08080C | #E8E8EC (1.2) | 1 (3 = charcoal variant via seed flag) | mono |
 
 Each effect still uses ≤ 3 hues [V2: S11], and in practice 1 spot hue plus black and white.
+
+**User review 2 (§13 round 6): no dark ink edge.** The dark half of the edge rule is withdrawn: no toon effect
+draws a black or near-black outline. Each shape reads by its own core / body / shade steps. Fire, ember, blood
+and matter (smoke, dust / rock, ash) have no edge at all (edge px 0). Light energy (REIATSU, STEEL, HIT, SOUL)
+keeps a coloured edge in its own shade tone, plus its white core. The dark shapes (INK, BLACK SMOKE, charcoal)
+keep their *white* edge, because that edge is not an ink line. The change is data only (the edge entries of
+`fx-toon-pal.wgsl`); `fs_fx_toon` just loses the fire-only lower-third line. The fire wave's backing wall
+changes from BLACK SMOKE to EMBER, because a black wall 20 % taller than the flames read as a black outline.
 
 ### 3.4 Primitives (engine `fx.lisp`, 0 B per call via the `*ribbon-args*` pattern)
 
@@ -626,7 +634,8 @@ New primitives:
      TYBW red-accent inversion.
   4. **spot-keep desaturation** (new): grey everywhere except pixels whose saturation is above
      `keep-sat` *and* whose hue lies within ±25° of `keep-hue`. Bankai uses it with hue 10°
-     (the ember line) for the whole 20 s. It replaces `*grade-desat*` 0.3.
+     (the ember line) for the whole 20 s, plus a second kept hue, 48° (`keep-hue-2`: Kenpachi's REIATSU
+     yellow, user review 2). It replaces `*grade-desat*` 0.3.
 - Cost: the same 3 taps as `RP_COMP` plus about 20 ALU for the rgb→hsv test, and only while
   active. The Bankai state keeps it active for 20 s, which is negligible [I, measured in Phase 2].
 - Presets:
@@ -1143,6 +1152,22 @@ These were all fixed in v2:
 | 3 | "Keep Kenpachi's reiatsu yellow." | REIATSU yellow in every form | §A.2, §3.3 palette 2 / 3, §4 mapping and the Kenpachi rows; the neutral spot budget (≤ 15 %) now includes his base aura |
 | 4 | "Change the characters' proportions to normal, realistic size instead of the current chibi proportions." | realistic adult proportions (anime-realistic, TYBW): narrow heads, lean / broad but not boxy torsos, long limbs, big hands; heights and hurt cylinders unchanged | `defbody :girth` (per-joint shape scaling, duel/lisp/body.lisp) + `:props`; numbers in §14 |
 
+### Round 6: the user's review 2 (Phase 3 stills)
+
+| # | User's words (translated from zh-TW) | Decision | Consequence |
+|---|---|---|---|
+| 1 | "I think the effects look better with the black edge lines removed." | no dark ink edge on any toon effect; energy keeps a coloured edge (its shade) + white core, dark shapes keep their white edge | §3.3 (the edge column and the note under the table), `fx-toon-pal.wgsl` edge entries, the fire wave's backing wall → EMBER |
+| 2 | (default approved) keep the yellow FIRE core #FFE483 | kept | — |
+| 3 | (default approved) keep the Nozarashi aura at 1.05 × | kept | — |
+| 4 | (default approved) Kenpachi's base-form yellow aura always on | kept | — |
+| 5 | (default approved) keep the fire wave's warm ground light circle | kept | — |
+| 6 | (default approved) Bankai's grey grade keeps Kenpachi's yellow | the spot-keep mode keeps a second hue | `grade-impact :keep-hue-2`, the `:spot` preset keeps 10° and 48° (§3.6) |
+| 7 | (default approved) the behind camera may hide Kenpachi's swing smear | accepted | — |
+
+**Position reversed:** round 4's "mono energy shapes need a dark hairline to read on the white ground". On the
+cold mid-grey ground of round 5 (V2 plaza), white hits and yellow reiatsu read by value without it (see the
+review-2 stills).
+
 ---
 
 ## 14. Progress log
@@ -1389,3 +1414,72 @@ is still the soft additive `fx-trail` (the comet smear is Phase 3's cleave row).
 ring, Hellfire and the Evolution aura are the soft additive ones (Phase 3 / 5). The Burst's light pool reads as a
 faint cold glow on the ground in its first drawing. Every toon shape is a camera-facing card or a flat ground
 shape, so ground rings thin out from low angles.
+
+
+### Phase 3: signature effects (done, awaiting user review 2)
+
+Built as the ▲ rows of §4.1 / §4.2 plus what the lead added to the phase: Yamamoto's blade fire and the swing
+smears, the fire wave as one wall, Kenpachi's yellow reiatsu aura in every form, the cleave comets, the Nozarashi /
+Buttagiru ground cuts, and Bankai's in-form look (charred blade with an ember line, charcoal heat wisps, ember
+cracks, and the form wired to the spot-keep grade). Every signature effect follows the §3.4 layer order (backing,
+drawn mass, thin additive T光, toon scraps) and is re-drawn on the fx clock's drawings; no gameplay position steps.
+Game: `vfx.lisp` (`vfx-blade-fire`, `vfx-blade-embers`, `vfx-smear`, `vfx-fire-wave`, `%brush-aura` /
+`%reiatsu-aura` / `%kikon-aura`, the `:heat` wisps, `%crack` / `vfx-line-cut :meteor :crack`, `%light`), `stage.lisp`
+(`toon-ground-seg`, `st-glow-seg`, the cracks), `main.lisp` (`form-grade`, the smear replaces `fx-trail`),
+`components.lisp` (`blade-smear`), `kit.lisp` / `yama.lisp` / `ken.lisp` (kit data), `hazards.lisp` (the wave's life),
+`debug.lisp` (2312 also lays two crack patches). Engine: `%fx-wall` (fx.lisp), `fx-toon.frag.wgsl`, `fx-toon-pal.wgsl`.
+Differences:
+
+| Design text | Built | Why |
+|---|---|---|
+| FIRE core #FFF3DC | **#FFE483** | the row AC asks for a *yellow* core; the cream core read as a white blob inside every flame |
+| `fx-wall`: scallops on a strip, "Phase 3 refines it" | **pointed tongues over round valleys** (tips 0.75–1 × hashed per seed, valleys 0.45 ×), tallest in the middle (1 − 0.4 (2u−1)²), ends tapering to the ground; an **along shape** (heat 1 base → 0.2 top) whose **uv.y is the distance along the wall** | with the height fraction as its only shape coordinate the noise was constant along the wall: core, body and shade became regular zigzag stripes parallel to the top. The shader change is one line (an along shape's field is \|uv.x\|, uv.y only moves the noise; every other along shape writes uv.y = 0, so it is unchanged) |
+| fire wave: one wall + smoke backing wall + lens slash + 6 scraps + EMBER sector scorch | as designed, plus **5 camera-facing FIRE tongues that fade in only when the wall is seen edge-on**; the scorch is a narrow EMBER strip (0.3 × the half-width, 1.4 m) behind the wall; no smoke puffs | from the side camera the wall is a sliver; a wide EMBER scorch read as a red carpet; black smoke puffs read as bubbles (the backing wall is the smoke) |
+| blade fire: sheath + 3 tongues + T光 + scraps | as designed; the tongues stand 4 cm behind the sheath along the view ray (`%away-from-eye`), no smoke puffs | coplanar camera-facing layers fought for depth |
+| sword smear "`fx-crescent :comet` from hilt to tip, the last 3 trail samples, held 2 d" | `vfx-smear`: a comet through the blade's 0.7 point over the samples of the last drawing (≤ 5), captured when a drawing starts and held for it, half-width 0.33 × the blade; FIRE (Ryujin Jakka), REIATSU (Kenpachi, every form), **charcoal BLACK SMOKE** (Zanka no Tachi) | Bankai has no fire: an ink-wash smear keeps the spot-keep grade grey |
+| reiatsu aura: 7 tongues behind the body; awakened taller + 4 white tongues + ring + T光 | base: 7 REIATSU tongues at 0.45 m, 0.8 × height; **Nozarashi: 9 tongues at 0.5 m, 1.05 ×** + 3 thin white tongues + a REIATSU ring + a small T光 over the head + a yellow light; white flecks (HIT blobs) rise in both. The Kikon rush aura shares the macro | 1.25 × and 4 wide white tongues filled a fifth of the behind-camera frame and washed Kenpachi's back white |
+| Bankai: charred blade, ember edge line on threes, 4 charcoal wisps; cracks = ink gashes with an ember core | as designed; the ember line and the crack cores get an **additive** core line (T光) | a toon line a few pixels wide is all edge band: the ember read as dark red specks |
+| Bankai grade: spot-keep mode 4, hue 10°, the whole form | kit `:grade :spot` (was a desaturation of 0.3); `form-grade` sets mode 4 while a fighter's kit has it and no impact frame runs; an impact frame takes over for its frames and the form's grade returns | the Tenchi / Bankai cinematics now ramp `*grade-desat*` to 1 instead of 0.3 (Phase 4 restages them) |
+| Split the Meteor: DUST gash + REIATSU core + 5 light ribbons for 3 d + 12 rocks + 14 puffs | DUST gash + REIATSU core line, two DUST heave strips running out (threes), 5 narrow HIT light blades for 3 drawings, **8 inked rocks + 10 puffs**; Buttagiru the same at 0.2 m with 4 rocks + 7 puffs | the row's own AC: ≤ 20 particles per cut |
+| — | per-frame helpers are macros or take no float arguments (`%brush-aura`, `%crack`, `%light` → `add-point-light-v`, `st-draw-cracks`) | a `defun-fast` boxes its float arguments at every call |
+
+Not in this phase (not ▲, Phase 5): Shiranui, Taimatsu, the Ennetsu pillars, the Jokaku Enjo dome, the Hellfire /
+Evolution / Breaker auras, Kyokujitsujin (`:sun`), and the Bankai / Nozarashi awakening bursts (Phase 4 cinematics).
+They are still the soft additive looks. A fire wave that hits is destroyed by the sim on the next step, so its
+look ends without its 18-frame erosion.
+
+**Measured (final build).**
+- G1: RAVEN title and wave stills byte-identical to the Phase 2 build (noise floor 0 px); RAVEN C 729 of 730
+  functions identical, changed exactly %FX-WALL; cons/frame 17 369 B = base.
+- G2: yy `winner P2 konpaku 0-1 ticks 9545`, yk `winner P1 konpaku 2-0 ticks 9780 secs 163.0`, kk `winner P2 konpaku
+  0-4 ticks 8035`; every hash line identical to `tests/style-cvc-ref.txt`.
+- G3: 0 B for 100 calls of each new per-frame path (duel-vfx 3021: blade fire, blade embers, the three smears, the
+  fire wave, the three auras, both line cuts, the cracks); engine-check 73/73; SOUL DUEL fight frame 33.6 → 34.7 ms
+  (1.033×, CvC A B A B A B, noise); startup heap 57.3 → 55.1 MB; page to first frame 3270 → 3460 ms (+5.8 %);
+  cons/frame in a fight ~9.4 KB (unchanged); live particles ≤ 56 in the worst gallery scene, ≤ 26 in the still
+  runs (budget 500); WGSL smoke green on duel, game, duelvfx, echeck.
+- Spot share (`tests/style-3-checks.py`, HUD rows left out): neutral stills with Yamamoto's blade fire and
+  Kenpachi's base aura 0.1–1.2 % (≤ 15 %; the frozen duel still with both looks, duel-vfx 3007: 0.43 %); during the
+  fire wave 2.7–4.8 % with FIRE dominant; the Nozarashi idle 3.2 %; in Bankai only the ember hue (0.1–0.4 %). The
+  ≤ 15 % rule needed no change for the user's yellow-in-every-form decision.
+- Stills: `tests/shots/style-3-<effect>-<n>.png` (behind and side cameras), `style-3-gallery.png`, and
+  `style-3-pairs.png` (the Phase-0 look on the left, this phase on the right).
+
+
+### Revision after user review 2 (§13 round 6)
+
+- **No dark ink edges.** `engine/shaders/fx-toon-pal.wgsl`: the edge entries of FIRE, EMBER, BLOOD, SMOKE, DUST and ASH
+  are 0 px; REIATSU, STEEL, HIT and SOUL take their shade tone as the edge colour (same widths); INK and BLACK SMOKE keep
+  their white edges. `fx-toon.frag.wgsl` drops the fire lower-third edge line (dead with a 0 px edge). `vfx.lisp`: the
+  fire wave's backing wall is EMBER (was BLACK SMOKE).
+- **Bankai keeps Kenpachi's yellow.** `grade-impact :keep-hue-2` (default = `keep-hue`, so every other caller is
+  unchanged) → `*impact-params*`[9] → `r_frame` rp[21] → `P[2].w` of `composite-fx.frag.wgsl`; mode 4 keeps saturated
+  pixels within 25° of either hue. The `:spot` preset (cinema.lisp) keeps 10° (ember) and 48° (REIATSU #FFD83A);
+  Kenpachi's skin stays grey (saturation < 0.45).
+- **Measured.** G1: RAVEN title and wave stills byte-identical to a copy of dist/game made before the change (noise
+  floor 0 px), cons/frame 17 369 B = base. G2: yy / yk / kk results and hash lines identical to
+  `tests/style-cvc-ref.txt`. G3: 0 B for every phase-2 (duel-vfx 3020) and phase-3 (3021) per-frame path. duel, game and
+  duelvfx build with 0 warnings; pkgcheck clean. Spot share (`tests/style-3-checks.py`): all PASS, neutral 0.2–1.4 %;
+  Bankai now shows Kenpachi's yellow (bankai-side-3: 0.51 % yellow).
+- Stills: `tests/shots/style-3-*.png`, `style-3-gallery.png`, `style-3-pairs.png` re-shot. The Phase-2 stills
+  (`style-2-*`) were not re-shot; their hits and dust now have the same edges.

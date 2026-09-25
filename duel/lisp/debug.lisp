@@ -14,7 +14,7 @@
 ;;;;            4 Ken Kikon, 5 sky split, 6 Soul Break, 7 intro, 8 K.O.)
 ;;;;   2300+k   force a special now (0 Hellfire + Ennetsu, 1 full Shiranui, 2 fire wave, 3 Kaka
 ;;;;            skeletons, 4 Kyokujitsujin, 5 Split the Meteor, 6 guard break, 7 perfect Hoho,
-;;;;            8 Ken stance, 9 Buttagiru, 10 Ken SP2 flurry, 11 EVOLUTION both, 12 Bankai form,
+;;;;            8 Ken stance, 9 Buttagiru, 10 Ken SP2 flurry, 11 EVOLUTION both, 12 Bankai form (+ 2 crack patches),
 ;;;;            13 Nozarashi form, 14 P2 red)
 ;;;;   2315+k   frame probe, YY at 2 m: P1's move k (0 Q1, 1 Q3, 2 F2, 3 Taimatsu) into P2's held guard
 ;;;;            -> "duel probe ... advantage"; 2319 trade probe: both Q1 on the same tick -> hash line
@@ -196,7 +196,9 @@ presses (J down every other step: the switched-off brain still writes its held b
     (9 (ensure-battle :kenpachi :yamamoto) (place *p1* *p2* 5.0) (force-cmd *p1* :sp1))
     (10 (ensure-battle :kenpachi :yamamoto) (place *p1* *p2* 5.0) (force-cmd *p1* :sp2))
     (11 (dolist (e (list *p1* *p2*)) (setf (gauges-awaken (gauges e)) *awaken-max*)))
-    (12 (ensure-battle :yamamoto :kenpachi) (force-form *p1* :bankai))
+    (12 (ensure-battle :yamamoto :kenpachi) (force-form *p1* :bankai)            ; + the reveal's cracks (yama-bankai-cine)
+        (let ((p (pos-of *p1*)))
+          (stage-crack-add (aref p 0) (aref p 2) 3.0) (stage-crack-add (+ (aref p 0) 3.5) (- (aref p 2) 2.0) 2.2)))
     (13 (ensure-battle :kenpachi :yamamoto) (force-form *p1* :nozarashi))
     (14 (setf (gauges-reishi (gauges *p2*)) 200))))
 

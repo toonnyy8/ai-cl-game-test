@@ -202,8 +202,8 @@ on effect cores; a vignette."
 (defun stage-clear-cracks () (setf *st-ncracks* 0))
 
 (defun stage-crack-add (x z r)
-  "A dried, cracked patch of radius R at (X Z): a dark decal plus branching ember cracks. Keeps the
-newest +CRACK-MAX+ (the oldest is replaced)."
+  "A cracked patch of radius R at (X Z): 5 branching ink gashes with ember cores (ST-DRAW-CRACKS). Keeps
+the newest +CRACK-MAX+ (the oldest is replaced)."
   (let* ((c *st-cracks*) (i (mod *st-ncracks* +crack-max+)) (o (* i +crack-stride+)) (s 4))
     (setf (aref c o) (f32 x) (aref c (+ o 1)) (f32 z) (aref c (+ o 2)) (f32 r) (aref c (+ o 3)) 0f0)
     ;; 5 jagged rays from the centre, 4 segments each, bending randomly
@@ -216,37 +216,55 @@ newest +CRACK-MAX+ (the oldest is replaced)."
     (incf *st-ncracks*)
     nil))
 
-(defmacro st-ground-seg (x0 z0 x1 z1 w r g b a mode)
-  "Queue a flat quad on the ground from (x0 z0) to (x1 z1), half-width W, in fx batch MODE.
-A macro so the caller's unboxed floats stay unboxed (a function call would box 10 floats)."
-  `(let* ((x0 ,x0) (z0 ,z0) (x1 ,x1) (z1 ,z1) (w ,w) (r ,r) (g ,g) (b ,b) (a ,a)
-          (dx (- x1 x0)) (dz (- z1 z0)) (l (f-sqrt (+ (* dx dx) (* dz dz)))) (y 0.035f0))
-     (declare (single-float x0 z0 x1 z1 w r g b a dx dz l y))
+(defmacro st-glow-seg (x0 z0 x1 z1 y w r g b a)
+  "Queue a soft additive strip on the ground (x0 z0)->(x1 z1) at height Y, half-width W, colour (R G B), alpha A:
+a glowing core line (T光) over a drawn gash. A macro: 0 B."
+  `(let* ((x0 ,x0) (z0 ,z0) (x1 ,x1) (z1 ,z1) (gy ,y) (w ,w) (r ,r) (g ,g) (b ,b) (a ,a)
+          (dx (- x1 x0)) (dz (- z1 z0)) (l (f-sqrt (+ (* dx dx) (* dz dz)))))
+     (declare (single-float x0 z0 x1 z1 gy w r g b a dx dz l))
      (when (> l 1f-4)
        (let* ((nx (* w (/ (- dz) l))) (nz (* w (/ dx l))))
          (declare (single-float nx nz))
-         (with-fx-verts (d o ,mode 6)
-           (vtx (- x0 nx) y (- z0 nz) 0f0 -1f0 r g b a)
-           (vtx (+ x0 nx) y (+ z0 nz) 0f0 1f0 r g b a)
-           (vtx (+ x1 nx) y (+ z1 nz) 0f0 1f0 r g b a)
-           (vtx (- x0 nx) y (- z0 nz) 0f0 -1f0 r g b a)
-           (vtx (+ x1 nx) y (+ z1 nz) 0f0 1f0 r g b a)
-           (vtx (- x1 nx) y (- z1 nz) 0f0 -1f0 r g b a))))))
+         (with-fx-verts (d o :add 6)
+           (vtx (- x0 nx) gy (- z0 nz) 0f0 -1f0 r g b a) (vtx (+ x0 nx) gy (+ z0 nz) 0f0 1f0 r g b a)
+           (vtx (+ x1 nx) gy (+ z1 nz) 0f0 1f0 r g b a) (vtx (- x0 nx) gy (- z0 nz) 0f0 -1f0 r g b a)
+           (vtx (+ x1 nx) gy (+ z1 nz) 0f0 1f0 r g b a) (vtx (- x1 nx) gy (- z1 nz) 0f0 -1f0 r g b a))))))
 
-(defun-fast st-draw-cracks (tm)
-  (declare (single-float tm))
-  (let* ((c *st-cracks*) (n (min *st-ncracks* +crack-max+)))
-    (declare (type f32vec c) (fixnum n))
+(defmacro toon-ground-seg (x0 z0 x1 z1 y w h0 h1 seed wob pk)
+  "Queue a flat toon strip on the ground (the toon fx batch, docs/STYLE_STORM_DESIGN.md §3.2) from (x0 z0) to
+(x1 z1) at height Y, half-width W: an along shape (SEED is made negative) whose field runs across it, heat H0
+at the start .. H1 at the end (the low-heat end erodes first as the presence in PK fades). A macro: 0 B."
+  `(let* ((x0 ,x0) (z0 ,z0) (x1 ,x1) (z1 ,z1) (gy ,y) (w ,w) (h0 ,h0) (h1 ,h1) (sd (- -1f0 (f-abs ,seed))) (wb ,wob) (pk ,pk)
+          (dx (- x1 x0)) (dz (- z1 z0)) (l (f-sqrt (+ (* dx dx) (* dz dz)))))
+     (declare (single-float x0 z0 x1 z1 gy w h0 h1 sd wb pk dx dz l))
+     (when (> l 1f-4)
+       (let* ((nx (* w (/ (- dz) l))) (nz (* w (/ dx l))))
+         (declare (single-float nx nz))
+         (with-fx-verts (d o :toon 6)
+           (vtx (- x0 nx) gy (- z0 nz) -1f0 0f0 h0 sd wb pk)
+           (vtx (+ x0 nx) gy (+ z0 nz) 1f0 0f0 h0 sd wb pk)
+           (vtx (+ x1 nx) gy (+ z1 nz) 1f0 0f0 h1 sd wb pk)
+           (vtx (- x0 nx) gy (- z0 nz) -1f0 0f0 h0 sd wb pk)
+           (vtx (+ x1 nx) gy (+ z1 nz) 1f0 0f0 h1 sd wb pk)
+           (vtx (- x1 nx) gy (- z1 nz) -1f0 0f0 h1 sd wb pk))))))
+
+(defun-fast st-draw-cracks ()
+  "Bankai's cracks (docs/STYLE_STORM_DESIGN.md §4.1): each ray an ink gash (BLACK SMOKE, a white hairline on the
+mid-grey page) narrowing and eroding toward the ray's end, with a glowing ember core (a thin additive line: a drawn
+toon line this thin would be all edge) whose brightness breathes on threes (the fx clock)."
+  (let* ((tm (fx-clock)) (c *st-cracks*) (n (min *st-ncracks* +crack-max+)) (d3 (i->f (logand (f->i (* 8f0 tm)) 63))))
+    (declare (single-float tm) (type f32vec c) (fixnum n) (single-float d3))
     (dotimes (i n)
-      (let* ((o (* i +crack-stride+)) (x (aref c o)) (z (aref c (+ o 1))) (r (aref c (+ o 2)))
-             (pulse (+ 0.8f0 (* 0.2f0 (f-sin (+ (* 2.3f0 tm) (i->f i)))))))
-        (declare (fixnum o) (single-float x z r pulse))
-        (fx-decal x 0.01 z (* 1.25 r) 0.13 0.08 0.05 0.6)
+      (let* ((o (* i +crack-stride+)) (fi (i->f i))
+             (pk (+ 0.6f0 (* 0.4f0 (f-abs (f-sin (+ (* 1.7f0 d3) (* 2.3f0 fi))))))))
+        (declare (fixnum o) (single-float fi pk))
         (dotimes (k +crack-segs+)
-          (let* ((s (+ o 4 (* k 4))))
-            (declare (fixnum s))
-            (st-ground-seg (aref c s) (aref c (+ s 1)) (aref c (+ s 2)) (aref c (+ s 3)) 0.11f0 0.04f0 0.015f0 0.01f0 0.95f0 :alpha)
-            (st-ground-seg (aref c s) (aref c (+ s 1)) (aref c (+ s 2)) (aref c (+ s 3)) 0.07f0 1f0 0.38f0 0.08f0 pulse :add)))))))
+          (let* ((s (+ o 4 (* k 4))) (j (i->f (mod k 4))) (h0 (- 1f0 (* 0.2f0 j))) (h1 (- h0 0.2f0))
+                 (w (* 0.09f0 (- 1f0 (* 0.18f0 j)))) (sd (+ (* 5f0 fi) (i->f k))))
+            (declare (fixnum s) (single-float j h0 h1 w sd))
+            (toon-ground-seg (aref c s) (aref c (+ s 1)) (aref c (+ s 2)) (aref c (+ s 3)) 0.035f0 w h0 h1 sd 0.25f0
+                             (toon-a +pal-black-smoke+ 0.98f0))
+            (st-glow-seg (aref c s) (aref c (+ s 1)) (aref c (+ s 2)) (aref c (+ s 3)) 0.042f0 (* 0.4f0 w) 1f0 0.3f0 0.08f0 (- pk))))))))
 
 ;;; ---------------------------------------------------------------- per-frame ash
 (defmacro st-every ((acc-index rate dt) &body body)
@@ -276,4 +294,4 @@ A macro so the caller's unboxed floats stay unboxed (a function call would box 1
     (draw-mesh *st-town* m :toon far)
     (draw-mesh *st-burnt* m :toon far))
   (when *stage-fx* (st-ash-fx (f32 rdt)))
-  (st-draw-cracks (the single-float (fx-clock))))
+  (st-draw-cracks))

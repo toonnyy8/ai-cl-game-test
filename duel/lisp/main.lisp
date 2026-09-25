@@ -143,15 +143,15 @@ frame's effect seconds (0 while paused)."
       (when (and mv (eq (fighter-phase f) :hold) (not (member :stance (mv-flags mv))))
         (vfx-charge (aref *tip* 0) (aref *tip* 1) (aref *tip* 2)
                     (min 1.0 (/ (fighter-hold f) (float (second (mv-hold mv))))) rdt))
-      (let* ((tr (blade-points (blade e))) (n (f->i (trail-count tr))))
+      (let* ((tr (blade-points (blade e))))
         (declare (type f32vec tr))
         (if (and mv (eq (fighter-phase f) :main) (>= (fighter-sf f) (- (mv-s mv) 4)) (< (fighter-sf f) (+ (mv-s mv) (mv-a mv) 3)))
             (trail-push tr (aref *base* 0) (aref *base* 1) (aref *base* 2) (aref *tip* 0) (aref *tip* 1) (aref *tip* 2))
             (trail-decay tr))
-        (when (>= n 2) (fx-trail tr n 1.0 0.75 0.5 0.8))))
+        (vfx-smear tr (blade-smear (blade e)) (case (first (kit-blade kit)) (:fire 0) (:embers 2) (t 1)))))
     ;; auras: the form's, EVOLUTION ready, the Breaker (brightens over the strike startup), the Kikon rush
     (let ((age (fx-clock)))
-      (when (kit-aura kit) (vfx-aura x y z (* 1.1 (body-hurt-h b)) (kit-aura kit) age rdt :rgb (and (eq (kit-aura kit) :reiatsu) '(1.0 0.9 0.3))))
+      (when (kit-aura kit) (vfx-aura x y z (* 1.1 (body-hurt-h b)) (kit-aura kit) age rdt))
       (when (gauges-evolution (gauges e)) (vfx-aura x y z (body-hurt-h b) :evolution age rdt :rgb *evolution-rgb* :k 0.5))
       (when (and mv (eq (mv-kind mv) :breaker) (not (eq (fighter-phase f) :main)))
         (vfx-aura x y z (body-hurt-h b) :breaker age rdt :k (if (eq (fighter-phase f) :dash) 1.0 0.5))
@@ -163,13 +163,22 @@ frame's effect seconds (0 while paused)."
         (vfx-aura x y z (body-hurt-h b) :kikon age rdt :k 1.0)))
     (unless (and mv (eq (mv-kind mv) :breaker)) (stop-hum e))))
 
+(defun form-grade ()
+  "A form's world grade (kit :GRADE): Bankai's :SPOT keeps the whole world grey except the ember hue (the composite's
+spot-keep mode 4, docs/STYLE_STORM_DESIGN.md §3.6) while the form is on. An impact frame takes the composite over
+for its frames (IMPACT-FRAME); the form's grade comes back when it ends. Changes the mode only when needed."
+  (let ((want (if (or (and (entity-alive-p *p1*) (eq (kit-grade (kit-of *p1*)) :spot))
+                      (and (entity-alive-p *p2*) (eq (kit-grade (kit-of *p2*)) :spot)))
+                  4 0)))
+    (when (and (/= *grade-impact* want) (<= (aref *screen-fx* 0) 0f0))
+      (if (= want 4) (impact-frame :spot 0) (grade-impact 0)))))
+
 (defun draw-scene (rdt)
   "Queue the 3D scene. RDT = this frame's effect seconds (0 while paused: nothing moves, no particle is born)."
   (unless (svref *no-draw* 2) (stage-draw rdt))
-  (unless *cine* (setf *grade-desat* 0.0))              ; a cinematic's script owns the grade
+  (unless *cine* (setf *grade-desat* 0.0) (form-grade))   ; a cinematic's script owns the grade
   (dolist (e (list *p1* *p2*))
     (when (entity-alive-p e)
-      (unless *cine* (setf *grade-desat* (max *grade-desat* (kit-grade (kit-of e)))))
       (unless (svref *no-draw* 1) (draw-fighter e rdt))))
   (unless (svref *no-draw* 3) (hazard-draw rdt) (cine-draw))
   (when *hitboxes* (draw-hitboxes))

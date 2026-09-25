@@ -2,7 +2,8 @@
 // A vertex carries uv (shape-local: |uv| 0 at the centre / spine .. 1 at the edge), heat, seed, wobble
 // and pk = palette + presence k (0.01..0.98; the silhouette is the field's level set d = k, so k < 1
 // erodes the shape). Flags: seed < 0 = an "along" shape (ribbon: the along coordinate is the heat, the
-// tip erodes first); |seed| >= 1000 = the charcoal style; pk >= 16 = a fan shape (stars, polygons,
+// tip erodes first; its field is |uv.x|, and uv.y only moves the noise: 0 for ribbons, the distance along
+// a wall); |seed| >= 1000 = the charcoal style; pk >= 16 = a fan shape (stars, polygons,
 // shards: the field is the heat lane, 0 at the centre .. 1 exactly on the straight outline).
 // Output: the palette colour, alpha = coverage (alpha-to-coverage with MSAA; F.clk.y = the discard
 // threshold, 0.5 without MSAA). Noise is PCG-hashed (the same on every GPU) and steps on the fx clock
@@ -35,11 +36,11 @@ fn vnoise(p: vec2f) -> f32 {          // value noise on the integer lattice, smo
   let tick = floor(F.clk.x / select(2.0, 3.0, matter));                // this material's drawing number
   let tf = select(tick, floor(tick / 3.0), fire);
   let scroll = select(0.0, (tick - 3.0 * tf) * 0.35, fire);
-  let q = vec2f(s.x, s.y - scroll) * 2.6
+  let q = vec2f(s.x + select(0.0, i.uv.y, along), s.y - scroll) * 2.6     // along: uv.y = a free along-coordinate (walls)
         + vec2f(fract(seed * 0.618034) * 97.0 + fract(tf * 0.618034) * 37.0, fract(seed * 0.381966) * 61.0 + fract(tf * 0.414214) * 23.0);
   let n1 = vnoise(q) - 0.5; let n2 = vnoise(q * 1.7 + 13.0) - 0.5; let n3 = vnoise(q * 3.1 + 29.0);
   let grain = vnoise(q * 6.0 + 5.0); let holes = vnoise(q * 0.8 + 71.0);
-  var d = select(length(i.uv), heat, fan) + n1 * i.col.z;              // silhouette field (wobbled)
+  var d = select(select(length(i.uv), abs(i.uv.x), along), heat, fan) + n1 * i.col.z;   // silhouette field (wobbled)
   if (along) { d = max(d, (1.0 - k - heat) * 4.0 + k); }               // the tip erodes first
   let aa = max(fwidth(d), 1e-4);                                       // (uniform control flow)
   var cover = 1.0 - smoothstep(k - aa, k, d);
@@ -58,7 +59,6 @@ fn vnoise(p: vec2f) -> f32 {          // value noise on the integer lattice, smo
   }
   let wdir = clamp(dot(normalize(s + vec2f(1e-4)), vec2f(0.35, -0.94)), 0.0, 1.0);   // heavy under and behind
   var ew = 1.8 * edge.w * F.scr.w * (0.7 + 0.8 * wdir) * step(0.2, n3);   // px (x1.8: read at 720p), broken like a brush lift
-  if (fire) { ew *= step(s.y, -0.33); }                                // fire: a dark edge on the lower third only
   c = select(c, edge.rgb, d > k - ew * aa);
   c = mix(c, pow(F.fog.rgb, vec3f(1.0 / 2.2)), 0.6 * i.fog);           // fog tints the colour, not the coverage
   return vec4f(c, cover);

@@ -219,7 +219,7 @@ static SDL_GPURenderPass *r_fs_pass(SDL_GPUCommandBuffer *cb, SDL_GPUTexture *ds
 /* The whole frame. FU = frame uniforms; RP = [0 bloom 1 threshold 2 strength 3 vignette
    4 scene w 5 scene h 6 window w 7 window h 8 desaturate 9 split (window px) 10 toon sky
    11 impact mode (0 = RP_COMP; 1..4 = RP_COMP_FX, see composite-fx.frag.wgsl) 12 threshold 13 keep-saturation
-   14 keep-hue 15..17 ink rgb 18..20 paper rgb]; DQ = N draw records; FXA/FXB/FXT/UI = vertex floats.
+   14 keep-hue 15..17 ink rgb 18..20 paper rgb 21 keep-hue-2]; DQ = N draw records; FXA/FXB/FXT/UI = vertex floats.
    Returns the mesh draws issued, or -1 when no swapchain texture was available (frame skipped). */
 int r_frame(const float *fu, const float *rp, const float *dq, int n,
             const float *fxa, int nfa, const float *fxb, int nfb, const float *ui, int nui, const float *fxt, int nft) {
@@ -273,12 +273,12 @@ int r_frame(const float *fu, const float *rp, const float *dq, int n,
   }
   /* composite to the swapchain, then the UI on top in the same pass */
   SDL_GPUTexture *src[3] = { r_scene, r_half[0], r_q[1] };
-  if (rp[11] != 0) {   /* impact frame / spot-keep grade: RP_COMP_FX with 4 vec4 (the RP_COMP lane, mode + params, ink, paper) */
+  if (rp[11] != 0) {   /* impact frame / spot-keep grade: RP_COMP_FX with 4 vec4 (the RP_COMP lane, mode + params, ink + keep-hue-2, paper) */
     SDL_GPUColorTargetInfo sct = {0};
     sct.texture = swt; sct.load_op = SDL_GPU_LOADOP_DONT_CARE; sct.store_op = SDL_GPU_STOREOP_STORE;
     pass = SDL_BeginGPURenderPass(cb, &sct, 1, NULL);
     SDL_GPUTextureSamplerBinding b[3]; float u[16] = { bloom ? rp[2] : 0.0f, rp[3], rp[8], rp[7] > 0 ? rp[9] / rp[7] : 0.0f,
-      rp[11], rp[12], rp[13], rp[14], rp[15], rp[16], rp[17], 0, rp[18], rp[19], rp[20], 0 };
+      rp[11], rp[12], rp[13], rp[14], rp[15], rp[16], rp[17], rp[21], rp[18], rp[19], rp[20], 0 };
     for (int i = 0; i < 3; i++) { b[i].texture = src[i]; b[i].sampler = r_linear; }
     SDL_BindGPUGraphicsPipeline(pass, r_pipe[RP_COMP_FX]);
     SDL_BindGPUFragmentSamplers(pass, 0, b, 3);

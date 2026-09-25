@@ -100,7 +100,8 @@ centre (window px; < 0 = the screen centre).")
     (:red 2 :threshold 0.4 :paper (0.816 0.063 0.11))                       ; red / ink
     (:fire 2 :threshold 0.4 :paper (1.0 0.353 0.118))                       ; fire / ink
     (:manga 3 :threshold 0.4 :keep-sat 0.45)                                ; two-tone, the spot colour kept
-    (:spot 4 :keep-sat 0.45 :keep-hue 10.0))                                ; grey but the ember hue (Bankai)
+    (:spot 4 :keep-sat 0.45 :keep-hue 10.0 :keep-hue-2 48.0))               ; grey but the ember hue (Bankai) and
+                                                                            ; Kenpachi's REIATSU yellow (user review 2)
   "IMPACT-FRAME kinds -> GRADE-IMPACT mode and parameters (docs/STYLE_STORM_DESIGN.md §3.6 presets).")
 
 (defun impact-frame (kind frames)

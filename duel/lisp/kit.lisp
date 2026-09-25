@@ -161,7 +161,7 @@
   (intro nil) (win nil) (intro-callout nil) (intro-weapon nil) (callout nil)
   (swing-sfx nil) (absorb-sfx nil)
   (enter-clips nil) (enter-hook nil) (exit-hook nil)
-  (meter nil) (reset-reiatsu 0.0) (ai nil) (cine nil) (blade nil) (grade 0.0)
+  (meter nil) (reset-reiatsu 0.0) (ai nil) (cine nil) (blade nil) (grade nil)
   (commands nil)                ; plist command -> move name
   (strings nil)                 ; ((from-move command to-move) ...)
   (moves (make-hash-table :test 'eq))   ; move name -> this form's MOVE
@@ -214,7 +214,7 @@
     (destructuring-bind (&key inherit name awakening awaken-form duration (burn 0.0) (heal 0) (mult 1.0)
                            (cornered 0.0) (cornered-max 0.0) passives blade-chip (walk 3.0) (run 8.0) (reishi *reishi-max*)
                            body weapon stance hide aura intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
-                           enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade (grade 0.0)
+                           enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
                            (startup-add 0) (reach-mult 1.0) commands strings)
         merged
       (let ((kit (make-kit :character character :form form :inherit inherit :name name
@@ -263,7 +263,8 @@ child's keys win, :commands merge per command, :strings add. Keys:
                                      hit the stance absorbs (Kenpachi's laugh)
   :cine SYMBOL                       the DEFCINE played when the form is entered (awakening)
   :blade (look power)                blade look drawn along the held weapon: (:fire 1.0) (:embers 1.0)
-  :grade                             world desaturation while the form is on (*GRADE-DESAT*)
+  :grade                             the world's grade while the form is on: NIL, or :SPOT (grey but the ember
+                                     hue: the composite's spot-keep mode, main.lisp FORM-GRADE)
   :intro :win :intro-callout :callout  clips / texts; :intro-weapon (key frame) = a prop held in the
                                      intro clip until FRAME (Yamamoto's cane)   :reset-reiatsu  bonus at each Kikon reset
   :ai (:intents plist :ranges plist :moves ((lo hi cmd w ...) ...) :guard p :hoho p

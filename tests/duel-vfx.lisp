@@ -15,6 +15,10 @@
 ;;;   3010+m *GRADE-IMPACT* mode m (0 off, 1 negative, 2 two-tone, 3 manga page, 4 spot-keep hue 10)
 ;;;   Scenes 18-31: the phase-2 toon universal effects (docs/STYLE_STORM_DESIGN.md §4.3), each fired at the scene's
 ;;;   start (and again every 2.4 s), for frozen stills at chosen ages (tests/style-2-shots.py)
+;;;   3007 scene 17 with the phase-3 signature looks on/off: Yamamoto's blade fire and Kenpachi's base yellow aura (the
+;;;        neutral still of docs/STYLE_STORM_DESIGN.md §9 row 3: spot share <= 15 %)
+;;;   3020 consing of the phase-2 per-frame paths; 3021 the phase-3 ones (blade fire / embers, smears, fire wave, auras,
+;;;        line cuts, Bankai cracks), 100 calls each
 ;;;   3005 flat measuring mode on/off: no character gradient, character / shadow fog or vignette, so every lit or shadow pixel
 ;;;        is exactly a palette tone (tools/toon_check.py --palette: two tones per colour)
 ;;; The frozen duel still (tests/style-gates.py duelstill): scene 17 NEUTRAL, 3003, 3004, 4000+500, then
@@ -43,6 +47,7 @@
 (defvar *actors-on* t "3002: draw the fighters")
 (defvar *text-on* t "3003: draw the label and stats text")
 (defvar *shadows-on* t "3006: draw the fighters' shadow discs")
+(defvar *looks-on* nil "3007: scene 17 with Yamamoto's blade fire and Kenpachi's base aura")
 (defvar *vignette* 0.25 "3005: the stage's vignette, restored when the flat mode ends")
 (defvar *label* "")
 (defvar *stat-str* "")
@@ -119,7 +124,7 @@
       (2 (multiple-value-bind (a b c d e f) (blade ya) (vfx-blade-embers a b c d e f dt))
        (vfx-aura (actor-x ya) 0 (actor-z ya) 1.68 :heat age dt))
       (3 (multiple-value-bind (a b c d e f) (blade ya) (vfx-blade-fire a b c d e f dt))
-       (let ((u (cycle 1.2))) (when (< u 0.9) (vfx-fire-wave (+ -4.0 (* 14.0 u)) 0.0 (/ pi -2) u 3.5 dt))))
+       (let ((u (cycle 1.2))) (when (< u 0.9) (vfx-fire-wave (+ -4.0 (* 14.0 u)) 0.0 (/ pi -2) u 3.5 dt :life 0.9))))
       (4 (multiple-value-bind (a b c d e f) (blade ya)
            (declare (ignore a b c))
            (let ((u (cycle 2.4)))
@@ -168,6 +173,9 @@
               (when (at 6.0 "SHOCKWAVE") (vfx-shockwave 0 0 6 0.6))
               (when (at 6.6 "TAIMATSU FIRE CONE") (vfx-fire-cone x z (/ pi -2))))))
       (15 nil)
+      (17 (when *looks-on*
+            (multiple-value-bind (a b c d e f) (blade ya) (vfx-blade-fire a b c d e f dt))
+            (vfx-aura (actor-x ke) 0 (actor-z ke) 2.02 :reiatsu age dt)))
       ((18 19 20 21 22 23 24) (when (cyc-crossed 2.4 0.0)
                                 (vfx-hit 1.2 1.25 0.0 (nth (- *scene* 18) '(:cut :heavy :fire :counter :guard :guard-break :clash))
                                          :dx 1.0 :dz 0.0)))
@@ -183,7 +191,7 @@
       (31 nil)
       (16 (multiple-value-bind (a b c d e f) (blade ya) (vfx-blade-fire a b c d e f dt :power 1.3))
        (vfx-aura (actor-x ya) 0 (actor-z ya) 1.68 :hellfire age dt)
-       (let ((u (cycle 1.2))) (when (< u 0.9) (vfx-fire-wave (+ -1.0 (* 14.0 u)) 2.0 (/ pi -2) u 3.5 dt)))
+       (let ((u (cycle 1.2))) (when (< u 0.9) (vfx-fire-wave (+ -1.0 (* 14.0 u)) 2.0 (/ pi -2) u 3.5 dt :life 0.9)))
        (dotimes (i 7)
          (let ((an (* i (/ (* 2 pi) 7))))
            (vfx-fire-pillar (+ (actor-x ya) (* 4.0 (cos an))) (+ (actor-z ya) (* 4.0 (sin an))) 0.4 10.0 dt)))))))
@@ -251,6 +259,34 @@
 (defun-fast cons-stamps (n) (declare (fixnum n)) (dotimes (i n) (stamps-draw 0f0)))
 (defun-fast cons-kikon (n) (declare (fixnum n)) (dotimes (i n) (%kikon-aura 1f0 0f0 0f0 1.9f0 1f0)))
 (defun-fast cons-soul (n) (declare (fixnum n)) (dotimes (i n) (vfx-soul-flame 1f0 2.3f0 0f0 0.5f0)))
+(defvar *t-trail* (let ((tr (make-trail)))          ; a synthetic swing: 6 samples on an arc
+                    (dotimes (i 6 tr)
+                      (let ((a (* 0.3 i)))
+                        (trail-push tr 0.0 1.2 0.0 (f32 (* 0.9 (cos a))) (f32 (+ 1.2 (* 0.9 (sin a)))) 0.3)))))
+(defvar *t-smear* (make-f32 12))
+(defun-fast cons-p3 (n what)
+  (declare (fixnum n what))
+  (dotimes (i n)
+    (fx-clock-advance 0.02f0)                             ; new drawings, so the smear re-captures
+    (case what
+      (0 (vfx-blade-fire 0f0 1f0 0f0 0.9f0 1.2f0 0f0 0.016f0 :power 1.3f0))
+      (1 (vfx-blade-embers 0f0 1f0 0f0 0.9f0 1.2f0 0f0 0.016f0))
+      (2 (vfx-smear *t-trail* *t-smear* 0) (vfx-smear *t-trail* *t-smear* 1) (vfx-smear *t-trail* *t-smear* 2))
+      (3 (vfx-fire-wave 1f0 0f0 -1.57f0 0.3f0 3.5f0 0.016f0 :life 0.9f0))
+      (4 (vfx-aura 1f0 0f0 0f0 2f0 :reiatsu 0f0 0.016f0) (vfx-aura 1f0 0f0 0f0 2f0 :nozarashi 0f0 0.016f0)
+         (vfx-aura 1f0 0f0 0f0 2f0 :heat 0f0 0.016f0))
+      (5 (vfx-line-cut 0f0 0f0 6f0 0f0 0.1f0 1f0 :meteor :dt 0.016f0) (vfx-line-cut 0f0 1f0 3f0 1f0 0.1f0 1f0 :crack :dt 0.016f0))
+      (t (st-draw-cracks)))))
+(defun cons-check-3 ()
+  "3021: bytes consed by 100 calls of each phase-3 per-frame path."
+  (stage-clear-cracks) (stage-crack-add 0.0 0.0 3.0) (stage-crack-add 2.0 1.0 2.0)
+  (dotimes (w 7)
+    (let* ((ft (stream-buffer-fill *fx-toon*)) (fa (stream-buffer-fill *fx-add*)) (fb (stream-buffer-fill *fx-alpha*))
+           (a (consed (cons-p3 100 w))))
+      (setf (stream-buffer-fill *fx-toon*) ft (stream-buffer-fill *fx-add*) fa (stream-buffer-fill *fx-alpha*) fb)
+      (log-msg "phase-3 consing: 100 x ~a ~d B" (nth w '(blade-fire blade-embers smear-x3 fire-wave auras-x3 line-cuts-x2 cracks)) a)))
+  (stage-clear-cracks) (fx-clear))
+
 (defun cons-check ()
   "3020: bytes consed by 100 calls of each new per-frame path (with one stamp of every kind live)."
   (dolist (k '(:cut :heavy :fire :counter :guard :guard-break :clash :hoho-out :hoho-in :burst :konpaku :rush :land))
@@ -269,6 +305,8 @@
   (cond ((= c 4999) (setf *hold* nil))
         ((<= 3010 c 3014) (grade-impact (- c 3010)))
         ((= c 3020) (cons-check))
+        ((= c 3021) (cons-check-3))
+        ((= c 3007) (setf *looks-on* (not *looks-on*)))
         ((>= c 4000) (setf *hold* (/ (- c 4000) 1000.0)))
         ((= c 3000) (setf *stats-on* (not *stats-on*)))
         ((= c 3001) (setf *stage-on* (not *stage-on*)))

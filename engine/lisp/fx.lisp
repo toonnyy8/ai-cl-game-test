@@ -129,8 +129,13 @@ pushed PUSH m toward the eye (default 0.8 R) at the same screen size. Matter pal
   `(%tn-call %fx-disc (,x ,y ,z ,r ,wobble ,seed ,pal ,k ,push)))
 (defmacro fx-wall (xs zs n height scallops wobble seed pal k)
   "A continuous toon wall (a flame wall) standing on the ground polyline of N points XS / ZS (f32vecs),
-HEIGHT m, its top in SCALLOPS scallops (5-7), tapering at both ends. uv.x = the height fraction: the core
-sits at the base, the edge follows the top. N and SCALLOPS fixnums."
+HEIGHT m at its middle (0.6 x at the quarter points: tallest in the middle), its top cut into SCALLOPS
+pointed tongues (5-7, each 0.75..1 x high, hashed from SEED: pass a seed that changes per drawing to
+re-draw them) over rounded valleys at 0.45 x, tapering to the ground at both ends. An along shape:
+uv.x = the height fraction (the field; the silhouette follows the top), uv.y = 0.8 x the distance along
+the wall (only the noise reads it, so the core and shade break up along the wall), heat 1 at the base ..
+0.2 at the top, so fire keeps its dark edge on the lower third (the ends and valleys) and fades from the top.
+N and SCALLOPS fixnums."
   `(%tn-call %fx-wall (,height ,wobble ,seed ,pal ,k) ,xs ,zs ,n ,scallops))
 
 ;;; ---------------------------------------------------------------- particles
@@ -761,23 +766,28 @@ A telegraph cone, a fire front, a shock ring."
 (defun-fast %fx-wall (xs zs n scallops)
   (declare (type f32vec xs zs) (fixnum n scallops))
   (let* ((a *tn-args*) (height (aref a 0)) (wob (aref a 1)) (seed (aref a 2)) (pk (toon-a (aref a 3) (aref a 4)))
-         (sub (max 1 (ceiling (* 4 scallops) (max 1 (1- n))))) (cols (* sub (max 1 (1- n)))) (inv (/ 1f0 (i->f cols)))
-         (lx 0f0) (lz 0f0) (lh 0f0))
-    (declare (type f32vec a) (single-float height wob seed pk inv lx lz lh) (fixnum sub cols))
+         (sd (- -1f0 (f-abs seed)))                     ; negative: an along shape
+         (cols (* 6 (max 1 scallops))) (inv (/ 1f0 (i->f cols)))   ; 6 columns a tongue: tips and valleys on columns
+         (lx 0f0) (lz 0f0) (lh 0f0) (lv 0f0) (v 0f0))
+    (declare (type f32vec a) (single-float height wob seed sd pk inv lx lz lh lv v) (fixnum cols))
     (when (>= n 2)
       (with-fx-verts (d o :toon (* 6 cols))
         (dotimes (c (1+ cols))
-          (let* ((seg (min (- n 2) (floor c sub))) (f (/ (i->f (- c (* seg sub))) (i->f sub)))
+          (let* ((p (* (i->f (1- n)) inv (i->f c))) (seg (min (- n 2) (f->i p))) (f (- p (i->f seg)))
                  (x (+ (aref xs seg) (* f (- (aref xs (1+ seg)) (aref xs seg)))))
                  (z (+ (aref zs seg) (* f (- (aref zs (1+ seg)) (aref zs seg)))))
-                 (u (* inv (i->f c)))
-                 (h (* height (+ 0.6f0 (* 0.4f0 (f-abs (f-sin (* 3.1415927f0 (i->f scallops) u)))))
-                       (f-min 1f0 (* 6f0 (f-min u (- 1f0 u)))))))
-            (declare (fixnum seg) (single-float f x z u h))
-            (when (> c 0)
-              (vtx lx 0.02f0 lz 0f0 0f0 1f0 seed wob pk) (vtx x 0.02f0 z 0f0 0f0 1f0 seed wob pk) (vtx x h z 1f0 0f0 1f0 seed wob pk)
-              (vtx lx 0.02f0 lz 0f0 0f0 1f0 seed wob pk) (vtx x h z 1f0 0f0 1f0 seed wob pk) (vtx lx lh lz 1f0 0f0 1f0 seed wob pk))
-            (setf lx x lz z lh h))))))
+                 (u (* inv (i->f c))) (m (- (* 2f0 u) 1f0))
+                 (q (* (i->f scallops) u)) (j (min (1- scallops) (f->i q)))  ; the tongue this column is in
+                 (tri (- 1f0 (f-abs (- (* 2f0 (- q (i->f j))) 1f0))))       ; 0 valley .. 1 tip
+                 (tip (* tri (f-sqrt tri)))                                  ; ^1.5: pointed tips, round valleys
+                 (h (* height (- 1f0 (* 0.4f0 m m)) (f-min 1f0 (* 5f0 (f-min u (- 1f0 u))))
+                       (+ 0.45f0 (* 0.55f0 tip (+ 0.75f0 (* 0.25f0 (%h01 (i->f j) seed))))))))
+            (declare (fixnum seg j) (single-float p f x z u m q tri tip h))
+            (when (> c 0)                              ; uv.y = 0.8 x the distance along the wall (the noise's second axis)
+              (setf v (+ lv (* 0.8f0 (f-sqrt (+ (* (- x lx) (- x lx)) (* (- z lz) (- z lz)))))))
+              (vtx lx 0.02f0 lz 0f0 lv 1f0 sd wob pk) (vtx x 0.02f0 z 0f0 v 1f0 sd wob pk) (vtx x h z 1f0 v 0.2f0 sd wob pk)
+              (vtx lx 0.02f0 lz 0f0 lv 1f0 sd wob pk) (vtx x h z 1f0 v 0.2f0 sd wob pk) (vtx lx lh lz 1f0 lv 0.2f0 sd wob pk))
+            (setf lx x lz z lh h lv v))))))
   nil)
 
 ;;; ---------------------------------------------------------------- screen punctuation (UI layer, 0 B per call)

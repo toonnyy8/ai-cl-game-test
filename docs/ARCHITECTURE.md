@@ -136,7 +136,9 @@ swapchain     composite (scene + bloom + vignette, desaturate *grade-desat*, spl
   write and **alpha-to-coverage** instead of blending (`r_make_pipe` blend code 3; A2C only with MSAA —
   the shader discards below `F.clk.y` = 0.5 otherwise). Its 9 vertex floats are position, shape uv,
   heat, seed, wobble and palette + presence; the 12 palettes are a WGSL constant (`fx-toon-pal.wgsl`),
-  the noise steps on the fx clock (`F.clk.x`, 24 Hz ticks, 0 while paused). **Screen punctuation**:
+  the noise steps on the fx clock (`F.clk.x`, 24 Hz ticks, 0 while paused). An "along" shape (negative
+  seed: ribbons, crescents, walls) takes its field from |uv.x| and uses uv.y only as a second noise axis
+  (Phase 3: `fx-wall` writes the distance along the wall there, so its core and shade break up along it). **Screen punctuation**:
   while `*grade-impact*` ≠ 0, `r_frame` composites with `RP_COMP_FX` (slot 17,
   `composite-fx.frag.wgsl`: the RP_COMP image, then negative / two-tone / manga page / spot-keep, 4
   vec4 of fragment uniforms) instead of `RP_COMP`, which stays byte-identical. `r_frame` took 12

@@ -192,7 +192,7 @@ quality ladder's two light steps do nothing there).")
 (defvar *lp* (make-f32 (* 4 +max-lights+)))
 (defvar *lc* (make-f32 (* 4 +max-lights+)))
 (defvar *fu* (make-f32 +fu-floats+) "Frame uniforms, filled by FILL-FRAME-UNIFORMS.")
-(defvar *rp* (make-f32 21) "r_frame parameters (see r_frame).")
+(defvar *rp* (make-f32 22) "r_frame parameters (see r_frame).")
 (defvar *grade-desat* 0.0 "Composite desaturation: 0 = the image unchanged, 1 = greyscale (KO / flashback grading).")
 (defvar *grade-split* 0.0
   "Composite split, window pixels: the left half of the frame is shifted up and the right half down by
@@ -200,10 +200,10 @@ this much along the vertical centre line (the uncovered strips are black). 0 = o
 (defvar *grade-impact* 0
   "Screen punctuation mode of the composite (docs/STYLE_STORM_DESIGN.md §3.6): 0 off (the plain composite,
 RAVEN's), 1 negative, 2 two-tone (ink / paper by luma), 3 manga page (two-tone keeping saturated spot
-colour), 4 spot-keep (greyscale but the saturated pixels near one hue). Parameters: *IMPACT-PARAMS*
+colour), 4 spot-keep (greyscale but the saturated pixels near one or two hues). Parameters: *IMPACT-PARAMS*
 (GRADE-IMPACT sets both). The game owns the duration (set it back to 0).")
 (declaim (type f32vec *impact-params* *fx-clock*))
-(defvar *impact-params* (make-f32 9) "threshold keep-saturation keep-hue(deg) ink-rgb paper-rgb (sRGB), see GRADE-IMPACT")
+(defvar *impact-params* (make-f32 10) "threshold keep-saturation keep-hue(deg) ink-rgb paper-rgb (sRGB) keep-hue-2(deg), see GRADE-IMPACT")
 (defvar *fx-clock* (make-f32 1)
   "[0] = the fx clock in seconds (FX-CLOCK-ADVANCE, fx.lisp): advances by the effects' dt, so it stops
 while the game pauses. The toon fx shader steps its noise on it (24 Hz ticks, F.clk.x).")
@@ -255,17 +255,20 @@ while the game pauses. The toon fx shader steps its noise on it (24 Hz ticks, F.
         *fx-toon* (make-stream-buffer 9 16384))
   (grade-impact 0))
 
-(defun grade-impact (mode &key (threshold 0.4) (keep-sat 0.45) (keep-hue 10.0) (ink '(0.031 0.031 0.047)) (paper '(1 1 1)))
+(defun grade-impact (mode &key (threshold 0.4) (keep-sat 0.45) (keep-hue 10.0) (keep-hue-2 keep-hue)
+                     (ink '(0.031 0.031 0.047)) (paper '(1 1 1)))
   "Set *GRADE-IMPACT* to MODE (0 off, 1 negative, 2 two-tone, 3 manga page, 4 spot-keep) and its
 parameters: THRESHOLD (luma 0..1 between INK and PAPER), KEEP-SAT (HSV saturation above which modes 3 / 4
-keep a pixel's colour), KEEP-HUE (degrees; mode 4 keeps only saturated pixels within 25 degrees of it),
+keep a pixel's colour), KEEP-HUE (degrees; mode 4 keeps only saturated pixels within 25 degrees of it or of
+KEEP-HUE-2, which defaults to KEEP-HUE),
 INK / PAPER (sRGB lists). Presets: white/ink (the defaults), ink/white (:ink '(1 1 1) :paper '(0.03 0.03
 0.05)), red/ink, fire/ink."
   (let ((p *impact-params*))
     (setf *grade-impact* mode
           (aref p 0) (f32 threshold) (aref p 1) (f32 keep-sat) (aref p 2) (f32 keep-hue)
           (aref p 3) (f32 (elt ink 0)) (aref p 4) (f32 (elt ink 1)) (aref p 5) (f32 (elt ink 2))
-          (aref p 6) (f32 (elt paper 0)) (aref p 7) (f32 (elt paper 1)) (aref p 8) (f32 (elt paper 2)))
+          (aref p 6) (f32 (elt paper 0)) (aref p 7) (f32 (elt paper 1)) (aref p 8) (f32 (elt paper 2))
+          (aref p 9) (f32 keep-hue-2))
     mode))
 
 (defun engine-init (&key (title "game") (msaa 4))

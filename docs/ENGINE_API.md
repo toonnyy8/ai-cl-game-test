@@ -223,10 +223,10 @@ that uncovers are black (a "the sky is cut in two" beat, e.g. 24). 0 = the plain
 not split.
 
 **Screen punctuation** (docs/STYLE_STORM_DESIGN.md §3.6): `(grade-impact mode &key (threshold 0.4)
-(keep-sat 0.45) (keep-hue 10) (ink '(0.031 0.031 0.047)) (paper '(1 1 1)))` sets `*grade-impact*` and
+(keep-sat 0.45) (keep-hue 10) (keep-hue-2 keep-hue) (ink '(0.031 0.031 0.047)) (paper '(1 1 1)))` sets `*grade-impact*` and
 `*impact-params*`: 1 negative, 2 two-tone (INK below the luma THRESHOLD, PAPER above), 3 manga page
 (two-tone, but pixels with HSV saturation > KEEP-SAT and value > 0.25 keep their colour: fire and
-blood stay), 4 spot-keep (greyscale except saturated pixels within 25° of KEEP-HUE), 0 off. The
+blood stay), 4 spot-keep (greyscale except saturated pixels within 25° of KEEP-HUE or KEEP-HUE-2), 0 off. The
 composite then runs `RP_COMP_FX` (the plain composite otherwise); the game owns the duration. The UI is
 drawn after it and keeps its colours.
 
@@ -555,7 +555,12 @@ gone: matter perforates, energy erodes). Existing calls take `:mode :toon` (`fx-
   the one nearest the screen direction (DIRX DIRY) long, R0 ≥ R1 = a regular N-gon;
   `(fx-shard x y z dx dy dz len w wobble seed pal k &key push)` — a kite; `(fx-crescent x0 y0 z0 x1 y1 z1
   bx by bz w profile wobble seed pal k &key push)` — a Bézier strip, PROFILE `:lens` or `:comet`;
-  `(fx-wall xs zs n height scallops wobble seed pal k)` — a flame wall on a ground polyline.
+  `(fx-wall xs zs n height scallops wobble seed pal k)` — one continuous flame wall on a ground polyline
+  (N points in the f32vecs XS / ZS): tallest in the middle, the top cut into SCALLOPS pointed tongues (heights
+  hashed from SEED: vary the seed per drawing to re-draw them) over round valleys, tapering to the ground at
+  both ends; an along shape (field = height fraction, heat 1 at the base → 0.2 at the top, so fire keeps its dark
+  edge only low, on the ends and valleys), its uv.y = the distance along the wall (the noise's second axis).
+  An along shape's field is |uv.x|; uv.y only moves the noise (0 for ribbons and crescents).
 * **Toon particles:** `+p-t-blob+` (puff / flame / droplet, a pushed billboard) and `+p-t-shard+` (a kite
   along its velocity) — `(fx-emit +p-t-blob+ x y z vx vy vz life size grav wobble 0 0 pal)`; drawn
   stepped (positions per drawing; a newborn particle shows from the next drawing).
