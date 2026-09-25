@@ -357,6 +357,9 @@ feet height of the last DRAW-BODY (0 for a planted weapon)."
 (defclip :sh-lose (2.0 :loop t :base :kneel)
   (0 (:arm-r :flex 20 :side 10) (:elbow-r :flex 20) (:hand-r :twist 150 :flex 10))
   (1.0 (:spine :flex 50) (:head :flex 32)))
+(defclip :sh-bound (1.0 :loop t)                     ; bound by the feet (South): the legs held, the body straining
+  (0 (:root :u -0.1) (:spine :flex 30 :twist 15) (:head :flex -20) (:arms :side 40 :flex 30) (:elbows :flex 40) (:knees :flex 25))
+  (0.5 (:root :u -0.12) (:spine :flex 22 :twist -15) (:head :flex -10) (:arms :side 50 :flex 10) (:elbows :flex 20) (:knees :flex 30)))
 (defclip :sh-kikon-victim (1.0 :loop t)
   (0 (:root :u -0.08) (:spine :flex -18) (:head :flex -25) (:arms :side 35 :flex 15) (:elbows :flex 10) (:knees :flex 30))
   (0.5 (:root :u -0.1) (:spine :flex -22) (:head :flex -30) (:arms :side 40 :flex 18)))

@@ -1,0 +1,1848 @@
+[
+{
+"at": 8.5,
+"eval": "Module._debug_cmd(2109)"
+},
+{
+"at": 9.0,
+"eval": "Module._debug_cmd(2370)"
+},
+{
+"at": 9.3,
+"shot": "tests/shots/duel-stance-east-idle.png"
+},
+{
+"at": 9.5,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 9.58,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 9.8,
+"shot": "tests/shots/duel-stance-nishi.png"
+},
+{
+"at": 10.2,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 10.28,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 10.4,
+"shot": "tests/shots/duel-stance-to-west.png"
+},
+{
+"at": 10.9,
+"shot": "tests/shots/duel-stance-west-idle.png"
+},
+{
+"at": 11.0,
+"key": "KeyD",
+"down": true
+},
+{
+"at": 12.1,
+"key": "KeyD",
+"down": false
+},
+{
+"at": 12.4,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 12.48,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 12.65,
+"shot": "tests/shots/duel-stance-higashi.png"
+},
+{
+"at": 12.85,
+"shot": "tests/shots/duel-stance-to-east.png"
+},
+{
+"at": 14.0,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 15.0,
+"eval": "Module._debug_cmd(2371)"
+},
+{
+"at": 15.4,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 15.45,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 15.55,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 15.6,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 15.7,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 15.75,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 15.85,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 15.9,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 16.0,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 16.05,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 16.15,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 16.2,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 16.3,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 16.35,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 16.45,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 16.5,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 16.6,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 16.65,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 16.75,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 16.8,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 16.9,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 16.95,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 17.05,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 17.1,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 17.2,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 17.25,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 17.35,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 17.4,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 17.5,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 17.55,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 17.65,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 17.7,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 17.8,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 17.85,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 17.95,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 18.0,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 18.1,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 18.15,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 18.25,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 18.3,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 18.4,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 18.45,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 18.55,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 18.6,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 18.7,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 18.75,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 18.85,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 18.9,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.0,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.05,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.15,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.2,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.3,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.35,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.45,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.5,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.6,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.65,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.75,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.8,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.9,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.95,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 20.05,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 20.1,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 20.2,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 20.25,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 20.35,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 20.4,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 20.5,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 20.55,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 20.65,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 20.7,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 20.8,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 20.85,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 20.95,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 21.0,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 21.1,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 21.15,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 21.25,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 21.3,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 21.4,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 21.45,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 21.55,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 21.6,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 21.7,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 21.75,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 21.85,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 21.9,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 22.0,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 22.05,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 22.15,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 22.2,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 22.3,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 22.35,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 22.45,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 22.5,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 22.6,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 22.65,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 22.75,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 22.8,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 22.9,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 22.95,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.05,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.1,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.2,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.25,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.35,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.4,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.5,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.55,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.65,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.7,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.8,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.85,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.95,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 24.0,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 24.1,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 24.15,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 24.25,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 24.3,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 24.4,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 24.45,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 24.55,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 24.6,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 24.7,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 24.75,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 24.85,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 24.9,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 25.0,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 25.05,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 25.15,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 25.2,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 25.3,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 25.35,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 25.45,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 25.5,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 25.6,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 25.65,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 25.75,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 25.8,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 25.9,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 25.95,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 26.05,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 26.1,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 26.2,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 26.25,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 26.35,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 26.4,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 26.5,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 26.55,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 26.65,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 26.7,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 26.8,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 26.85,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 26.95,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 27.0,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 27.1,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 27.15,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 27.25,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 27.3,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 27.4,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 27.45,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 27.55,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 27.6,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 27.7,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 27.75,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 27.85,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 27.9,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 28.0,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 28.05,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 28.15,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 28.2,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 28.3,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 28.35,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 28.45,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 28.5,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 28.6,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 28.65,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 28.75,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 28.8,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 28.9,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 28.95,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 29.05,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 29.1,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 29.2,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 29.25,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 29.35,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 29.4,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 29.5,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 29.55,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 29.65,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 29.7,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 29.8,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 29.85,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 29.95,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 30.0,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 30.1,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 30.15,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 30.25,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 30.3,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 30.4,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 30.45,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 30.55,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 30.6,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 30.7,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 30.75,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 30.85,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 30.9,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 31.0,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 31.05,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 31.15,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 31.2,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 31.3,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 31.35,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 31.45,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 31.5,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 31.6,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 31.65,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 31.75,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 31.8,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 31.9,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 31.95,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 32.05,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 32.1,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 32.2,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 32.25,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 32.35,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 32.4,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 32.5,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 32.55,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 32.65,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 32.7,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 32.8,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 32.85,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 32.95,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 33.0,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 33.1,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 33.15,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 33.25,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 33.3,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 33.4,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 33.45,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 33.55,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 33.6,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 33.7,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 33.75,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 33.85,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 33.9,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 34.0,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 34.05,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 34.15,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 34.2,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 34.3,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 34.35,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 34.45,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 34.5,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 34.6,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 34.65,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 34.75,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 34.8,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 34.9,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 34.95,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 35.05,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 35.1,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 35.2,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 35.25,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 35.35,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 35.4,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 35.5,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 35.55,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 35.65,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 35.7,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 35.8,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 35.85,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 35.95,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 36.0,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 36.1,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 36.15,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 36.25,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 36.3,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 36.4,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 36.45,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 36.55,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 36.6,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 36.7,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 36.75,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 36.85,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 36.9,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 37.0,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 37.05,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 37.15,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 37.2,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 37.3,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 37.35,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 37.45,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 37.5,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 37.6,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 37.65,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 37.75,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 37.8,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 20.0,
+"shot": "tests/shots/duel-stance-recoil.png"
+},
+{
+"at": 25.6,
+"shot": "tests/shots/duel-stance-burnout.png"
+},
+{
+"at": 27.4,
+"shot": "tests/shots/duel-stance-burnout-hit.png"
+},
+{
+"at": 39.0,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 40.0,
+"eval": "Module._debug_cmd(2372)"
+},
+{
+"at": 42.5,
+"shot": "tests/shots/duel-stance-armour.png"
+},
+{
+"at": 46.3,
+"shot": "tests/shots/duel-stance-armour-burnout.png"
+},
+{
+"at": 56.0,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 57.0,
+"eval": "Module._debug_cmd(2373)"
+},
+{
+"at": 57.5,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 57.55,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 57.65,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 57.7,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 57.95,
+"shot": "tests/shots/duel-stance-kyoku-break.png"
+},
+{
+"at": 58.2,
+"shot": "tests/shots/duel-stance-kyoku-cone.png"
+},
+{
+"at": 60.0,
+"eval": "Module._debug_cmd(2374)"
+},
+{
+"at": 60.5,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 60.55,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 60.65,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 60.7,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 61.1,
+"shot": "tests/shots/duel-stance-kyoku-far.png"
+},
+{
+"at": 62.5,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 63.0,
+"eval": "Module._debug_cmd(2375)"
+},
+{
+"at": 63.5,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 63.55,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 63.65,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 63.7,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 63.95,
+"shot": "tests/shots/duel-stance-parry.png"
+},
+{
+"at": 64.25,
+"shot": "tests/shots/duel-stance-counter.png"
+},
+{
+"at": 66.0,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 67.0,
+"eval": "Module._debug_cmd(2376)"
+},
+{
+"at": 67.5,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 67.55,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 67.65,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 67.7,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 67.95,
+"shot": "tests/shots/duel-stance-south-tell.png"
+},
+{
+"at": 68.4,
+"shot": "tests/shots/duel-stance-south-bound.png"
+},
+{
+"at": 68.5,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 68.55,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 68.7,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 68.75,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 68.9,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 68.95,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 70.0,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 71.0,
+"eval": "Module._debug_cmd(2377)"
+},
+{
+"at": 72.3,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 72.35,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 72.45,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 72.5,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 72.2,
+"shot": "tests/shots/duel-stance-south-victim.png"
+},
+{
+"at": 72.6,
+"shot": "tests/shots/duel-stance-south-burst.png"
+},
+{
+"at": 74.0,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 75.0,
+"eval": "Module._debug_cmd(2378)"
+},
+{
+"at": 76.9,
+"key": "KeyD",
+"down": true
+},
+{
+"at": 76.95,
+"key": "Space",
+"down": true
+},
+{
+"at": 77.05,
+"key": "Space",
+"down": false
+},
+{
+"at": 77.4,
+"key": "KeyD",
+"down": false
+},
+{
+"at": 77.6,
+"shot": "tests/shots/duel-stance-south-step.png"
+},
+{
+"at": 83.0,
+"eval": "Module._debug_cmd(2107)"
+}
+]

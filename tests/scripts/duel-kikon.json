@@ -25,230 +25,290 @@
 "shot": "tests/shots/duel-o-enjo-c.png"
 },
 {
-"at": 21.0,
+"at": 14.7,
+"shot": "tests/shots/duel-o-enjo-d.png"
+},
+{
+"at": 16.2,
+"shot": "tests/shots/duel-o-enjo-e.png"
+},
+{
+"at": 24.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 25.0,
+"at": 27.0,
 "eval": "Module._debug_cmd(2351)"
 },
 {
-"at": 25.2,
+"at": 27.2,
 "key": "KeyO",
 "down": true
 },
 {
-"at": 26.2,
+"at": 28.2,
 "shot": "tests/shots/duel-o-tenchi-a.png"
 },
 {
-"at": 27.6,
+"at": 29.6,
 "shot": "tests/shots/duel-o-tenchi-b.png"
 },
 {
-"at": 29.0,
+"at": 31.0,
 "shot": "tests/shots/duel-o-tenchi-c.png"
 },
 {
-"at": 37.0,
+"at": 32.5,
+"shot": "tests/shots/duel-o-tenchi-d.png"
+},
+{
+"at": 34.0,
+"shot": "tests/shots/duel-o-tenchi-e.png"
+},
+{
+"at": 42.0,
 "key": "KeyO",
 "down": false
-},
-{
-"at": 41.0,
-"eval": "Module._debug_cmd(2352)"
-},
-{
-"at": 41.2,
-"key": "KeyO",
-"down": true
-},
-{
-"at": 42.2,
-"shot": "tests/shots/duel-o-charge-a.png"
-},
-{
-"at": 43.6,
-"shot": "tests/shots/duel-o-charge-b.png"
 },
 {
 "at": 45.0,
+"eval": "Module._debug_cmd(2352)"
+},
+{
+"at": 45.2,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 46.2,
+"shot": "tests/shots/duel-o-charge-a.png"
+},
+{
+"at": 47.6,
+"shot": "tests/shots/duel-o-charge-b.png"
+},
+{
+"at": 49.0,
 "shot": "tests/shots/duel-o-charge-c.png"
 },
 {
-"at": 53.0,
+"at": 54.0,
+"shot": "tests/shots/duel-o-charge-d.png"
+},
+{
+"at": 55.5,
+"shot": "tests/shots/duel-o-charge-e.png"
+},
+{
+"at": 60.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 57.0,
+"at": 63.0,
 "eval": "Module._debug_cmd(2353)"
 },
 {
-"at": 57.2,
+"at": 63.2,
 "key": "KeyO",
 "down": true
 },
 {
-"at": 58.2,
+"at": 64.2,
 "shot": "tests/shots/duel-o-leap-a.png"
 },
 {
-"at": 59.6,
+"at": 65.6,
 "shot": "tests/shots/duel-o-leap-b.png"
 },
 {
-"at": 61.0,
+"at": 67.0,
 "shot": "tests/shots/duel-o-leap-c.png"
 },
 {
-"at": 69.0,
+"at": 71.7,
+"shot": "tests/shots/duel-o-leap-d.png"
+},
+{
+"at": 73.2,
+"shot": "tests/shots/duel-o-leap-e.png"
+},
+{
+"at": 78.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 73.0,
+"at": 81.0,
 "eval": "Module._debug_cmd(2334)"
 },
 {
-"at": 73.3,
+"at": 81.3,
 "key": "KeyO",
 "down": true
 },
 {
-"at": 76.0,
+"at": 84.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 80.0,
+"at": 88.0,
 "eval": "Module._debug_cmd(2335)"
 },
 {
-"at": 80.3,
+"at": 88.3,
 "key": "KeyO",
 "down": true
 },
 {
-"at": 83.0,
+"at": 91.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 87.0,
+"at": 95.0,
 "eval": "Module._debug_cmd(2343)"
 },
 {
-"at": 87.3,
+"at": 95.3,
 "key": "KeyO",
 "down": true
 },
 {
-"at": 90.0,
+"at": 98.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 94.0,
+"at": 102.0,
 "eval": "Module._debug_cmd(2345)"
 },
 {
-"at": 94.3,
+"at": 102.3,
 "key": "KeyO",
 "down": true
 },
 {
-"at": 97.0,
+"at": 105.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 101.0,
+"at": 109.0,
 "eval": "Module._debug_cmd(2339)"
 },
 {
-"at": 101.3,
+"at": 109.3,
 "key": "KeyO",
 "down": true
 },
 {
-"at": 104.0,
+"at": 112.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 108.0,
+"at": 116.0,
 "eval": "Module._debug_cmd(2341)"
 },
 {
-"at": 108.3,
+"at": 116.3,
 "key": "KeyO",
 "down": true
 },
 {
-"at": 111.0,
+"at": 119.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 115.0,
+"at": 123.0,
 "eval": "Module._debug_cmd(2347)"
 },
 {
-"at": 115.3,
+"at": 123.3,
 "key": "KeyO",
 "down": true
 },
 {
-"at": 118.0,
+"at": 126.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 122.0,
+"at": 130.0,
 "eval": "Module._debug_cmd(2354)"
 },
 {
-"at": 122.3,
+"at": 130.3,
 "key": "KeyO",
 "down": true
 },
 {
-"at": 125.0,
+"at": 133.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 129.0,
+"at": 137.0,
 "eval": "Module._debug_cmd(2356)"
 },
 {
-"at": 129.3,
+"at": 137.3,
 "key": "KeyO",
 "down": true
-},
-{
-"at": 132.0,
-"key": "KeyO",
-"down": false
-},
-{
-"at": 136.0,
-"eval": "Module._debug_cmd(2340)"
-},
-{
-"at": 136.3,
-"key": "KeyO",
-"down": true
-},
-{
-"at": 136.4,
-"key": "KeyO",
-"down": false
 },
 {
 "at": 140.0,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 144.0,
+"eval": "Module._debug_cmd(2359)"
+},
+{
+"at": 144.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 147.0,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 151.0,
+"eval": "Module._debug_cmd(2360)"
+},
+{
+"at": 151.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 154.0,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 158.0,
+"eval": "Module._debug_cmd(2340)"
+},
+{
+"at": 158.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 158.4,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 162.0,
 "eval": "Module._debug_cmd(2107)"
 }
 ]

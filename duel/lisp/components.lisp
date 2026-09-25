@@ -3,7 +3,7 @@
 ;;;;
 ;;;;   a fighter        transform motion model blade fighter gauges pilot   (+ brain when the CPU plays it)
 ;;;;   a hazard         hazard                     (fire wave, Shiranui, pillars, line cuts, Kaka)
-;;;;   a skeleton       hazard transform model     (a hazard with a body: Bankai South)
+;;;;   a South hand     hazard transform model     (a hazard with a body: a look of Bankai South)
 ;;;;
 ;;;; "Human vs CPU" is only "has a BRAIN or not": BRAIN-SYSTEM (ai.lisp) writes the same PILOT vpad a
 ;;;; keyboard does. Systems and their order: main.lisp. Fighters hold each other by handle
@@ -141,7 +141,7 @@ is holding. Identity comes from the kit's :AI tables."
 
 (defcomponent hazard
   "A hit that is not a fighter's melee: fire wave, Shiranui, Ennetsu pillars, line cuts (looks only),
-Kaka skeletons. World-space volume + a HITWIN (kit.lisp) for the hit itself. KIND picks its update,
+South's bind and hands. World-space volume + a HITWIN (kit.lisp) for the hit itself. KIND picks its update,
 its volume test and its look (hazards.lisp)."
   (kind nil)
   (owner nil)                           ; the fighter whose hit this is
@@ -153,8 +153,7 @@ its volume test and its look (hazards.lisp)."
   (age 0 :type fixnum) (life 0 :type fixnum) (delay 0 :type fixnum)   ; frames
   (hits-left 1 :type fixnum) (rehit 0 :type fixnum)   ; hits it may still deal; frames to the next
   (hw nil)                              ; the HITWIN it deals (NIL = a look only)
-  (look nil)                            ; look keyword for the draw (:sun :meteor :crack ...)
-  (last nil))                           ; skeleton: the last one (its hit stuns longer)
+  (look nil))                           ; look keyword for the draw (:kyoku :meteor :crack :south ...)
 
 ;;; ---------------------------------------------------------------- small helpers every file uses
 (declaim (inline pos-of yaw-of))
@@ -165,8 +164,15 @@ its volume test and its look (hazards.lisp)."
 (defun state-of (e) (fighter-state (fighter e)))
 (defun side-name (e) (if (zerop (fighter-side (fighter e))) "P1" "P2"))
 (defun cpu-p (e) (and (brain e) t))
-(defun passive-p (e p) "Does E's current form have passive P (:armor-vs-quick :projectile-cut :ignore-armor)?"
-  (member p (kit-passives (kit-of e))))
+(defun burnout-p (e)
+  "Is E burned out (design v3 §A.1)? A form whose stance traits run on the guard gauge (kit :burnout) is,
+from the moment the gauge empties (any cause) until it is full again: exactly while he is guardless."
+  (and (gauges-guardless (gauges e)) (kit-burnout (kit-of e))))
+(defun heat-on-p (e) "E's stance traits are on: not burned out (the rules' HEAT argument)." (not (burnout-p e)))
+(defun passive-p (e p)
+  "Does E's current form have passive P (:armor-vs-quick :projectile-cut :ignore-armor :recoil :scorch)?
+None while he is burned out."
+  (and (heat-on-p e) (member p (kit-passives (kit-of e)))))
 
 (defvar *combat-log* nil
   "Dev logging: moves, hits, reactions, Kikons (CLOG lines). The first Module._debug_cmd turns it on.")

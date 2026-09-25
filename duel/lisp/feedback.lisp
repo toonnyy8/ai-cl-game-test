@@ -7,6 +7,7 @@
 ;;;;   (:swing e kind)  (:super e)  (:breaker e) (:breaker-end e)  (:rush e) (:rush-dash e) (:kikon-follow att def)  (:step e)
 ;;;;   (:hit att def x y z hitstop counter-p dmg kind)  (:blocked att def x y z)  (:armored def x y z)
 ;;;;   (:absorbed def x y z)  (:guard-crush att def x y z) (:guard-back e)  (:guard-break att def x y z)  (:stance-break att def x y z)  (:clash x y z)
+;;;;   (:parried att def x y z)  (:scorch att)  (:burnout e why)  (:refused e cmd)
 ;;;;   (:hazard-cut x y z)  (:hoho-out e x z) (:hoho-in e x z) (:perfect e victim)  (:burst e attacker)
 ;;;;   (:launch e) (:land e)
 ;;;;   (:konpaku victim lost) (:kikon att victim) (:soul-break att victim)  (:awaken e) (:form e form)
@@ -33,12 +34,12 @@
 and smears the victim along the hit; a counter turns the frame to a manga page for 2 f (red stays)."
   (multiple-value-bind (dx dz) (hit-dir att def)
     (let* ((blade (first (kit-blade (kit-of att))))
-           (look (cond (counter :counter) ((eq kind :breaker) :breaker) ((eq kind :fire) :fire)
+           (look (cond (counter :counter) ((eq kind :breaker) :breaker) ((eq kind :fire) :fire) ((eq kind :bind) :cut)
                        ((eq blade :fire) (if (eq kind :quick) :fire :heavy)) ((eq kind :quick) :cut) (t :heavy))))
       (vfx-hit x y z look :dx dx :dz dz)
       (when (member look '(:heavy :counter :breaker))
         (hold-pose att 3) (smear def dx dz))
-      (sfx-at (cond ((eq kind :breaker) :punch) ((eq kind :fire) :explode) ((eq blade :embers) :sizzle)
+      (sfx-at (cond ((eq kind :breaker) :punch) ((eq kind :fire) :explode) ((eq kind :bind) :bones) ((member blade '(:embers :charcoal)) :sizzle)
                     ((eq kind :quick) :cut) (t :cut-heavy))
               x y z :gain (if (eq kind :quick) 0.8 1.0))))
   (setf (model-flash (model def)) (max 0.06 (/ hs 60.0)))
@@ -72,20 +73,36 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
                           (when sfx (sfx-on sfx e))
                           (vfx-rush-dash (aref p 0) (aref p 2) (fwd-x (yaw-of e)) (fwd-z (yaw-of e)) look)
                           (when (eq look :flash-step) (start-ghost e))))))
-        (:kikon-follow (destructuring-bind (att def) args   ; the strike hit, O held, not red: guard the next one
+        (:kikon-follow (destructuring-bind (att def) args   ; the strike hit, O held: he dashes in (not red: guard it!)
                          (declare (ignore def))
                          (let ((p (pos-of att))) (vfx-kikon-rush (aref p 0) (aref p 2)))
                          (sfx-on :whoosh-heavy att :pitch 0.6)
-                         (announce "KIKON" :sub "GUARD IT!" :color '(0.82 0.06 0.11 1) :secs 0.6 :small t)))
+                         (focus-lines 10)
+                         (announce "KIKON" :sub (if (kikon-ready-p att) nil "GUARD IT!") :color '(0.82 0.06 0.11 1) :secs 0.6 :small t)))
         (:hit (apply #'show-hit args))
         (:blocked (destructuring-bind (att def x y z) args
                     (multiple-value-bind (dx dz) (hit-dir att def) (vfx-hit x y z :guard :dx dx :dz dz))
                     (sfx-at :clang x y z)))
-        (:armored (destructuring-bind (def x y z) args     ; the owner's spot colour: fire, else REIATSU (+ his absorb sound)
-                    (if (member (first (kit-blade (kit-of def))) '(:fire :embers))
-                        (progn (vfx-hit x y z :fire) (sfx-at :sizzle x y z))
-                        (progn (vfx-hit x y z :reiatsu) (sfx-at :cut x y z :gain 0.7)
-                               (let ((k (kit-absorb-sfx (kit-of def)))) (when k (sfx-on k def :gain 0.8)))))))
+        (:armored (destructuring-bind (def x y z) args     ; the owner's spot colour: fire / ember, else REIATSU (+ his absorb sound)
+                    (case (first (kit-blade (kit-of def)))
+                      ((:embers :charcoal) (vfx-ember x y z) (sfx-at :sizzle x y z))
+                      (:fire (vfx-hit x y z :fire) (sfx-at :sizzle x y z))
+                      (t
+                       (vfx-hit x y z :reiatsu) (sfx-at :cut x y z :gain 0.7)
+                       (let ((k (kit-absorb-sfx (kit-of def)))) (when k (sfx-on k def :gain 0.8)))))))
+        (:parried (destructuring-bind (att def x y z) args   ; a parry caught it: an ember star, a 1 f negative frame
+                    (multiple-value-bind (dx dz) (hit-dir att def) (vfx-ember x y z :dx (- dx) :dz (- dz) :scale 1.3))
+                    (sfx-at :clang x y z) (sfx-at :sizzle x y z) (shake 0.12 0.2) (impact-frame :negative 1)
+                    (announce "PARRY" :color '(1 0.55 0.2 1) :secs 0.7 :small t)))
+        (:scorch (let* ((e (first args)) (p (pos-of e)))   ; the attacker's arm smokes
+                   (vfx-smoke-puffs (aref p 0) 1.3 (aref p 2) 2) (sfx-on :sizzle e :gain 0.5 :pitch 1.3)))
+        (:burnout (let* ((e (first args)) (p (pos-of e)))   ; the stance's heat dies: smoke, ash, the word
+                    (vfx-smoke-puffs (aref p 0) 1.4 (aref p 2) 4)
+                    (sfx-on :sizzle e :pitch 0.6) (sfx-on :heat-flare e :pitch 0.6 :gain 0.8)
+                    (announce "BURNOUT" :color '(0.62 0.64 0.7 1) :secs 1.2 :side (fighter-side (fighter e)))))
+        (:refused (destructuring-bind (e cmd) args          ; still cooling: a dud tick, its HUD bar flashes
+                    (sfx-on :clang e :gain 0.35 :pitch 1.6)
+                    (hud-refused e cmd)))
         (:absorbed (destructuring-bind (def x y z) args
                      (vfx-hit x y z :guard) (sfx-at :cut x y z :gain 0.7)
                      (let ((k (kit-absorb-sfx (kit-of def)))) (when (and k (< (rnd01) 0.5)) (sfx-on k def :gain 0.8)))))
@@ -94,9 +111,13 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
                         (sfx-at :guard-break x y z :pitch 1.2) (sfx-at :clang x y z :pitch 0.8)
                         (shake 0.15 0.25) (impact-frame :negative 1)
                         (announce "GUARD CRUSH" :color '(0.78 0.83 0.89 1) :secs 1.0)))
-        (:guard-back (let ((e (first args)))                           ; full again: he can guard
-                       (sfx-on :clang e :gain 0.5 :pitch 1.4)
-                       (announce "GUARD" :color '(0.78 0.83 0.89 1) :secs 0.7 :side (fighter-side (fighter e)))))
+        (:guard-back (let ((e (first args)))                           ; full again: he can guard (a stance reignites)
+                       (if (kit-burnout (kit-of e))
+                           (let ((p (pos-of e)))
+                             (vfx-ember (aref p 0) 1.2 (aref p 2) :scale 1.2) (sfx-on :heat-flare e :pitch 1.3 :gain 0.6)
+                             (announce "REIGNITE" :color '(1 0.55 0.2 1) :secs 0.8 :side (fighter-side (fighter e))))
+                           (progn (sfx-on :clang e :gain 0.5 :pitch 1.4)
+                                  (announce "GUARD" :color '(0.78 0.83 0.89 1) :secs 0.7 :side (fighter-side (fighter e)))))))
         (:guard-break (destructuring-bind (att def x y z) args
                         (multiple-value-bind (dx dz) (hit-dir att def) (vfx-hit x y z :guard-break :dx dx :dz dz))
                         (sfx-at :guard-break x y z) (shake 0.2 0.3) (ui-flash 1 1 1 0.9 50.0)      ; a 1 f white flash

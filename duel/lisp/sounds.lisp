@@ -25,6 +25,7 @@
 ;;;;   :fire-wave        the Signature flame wave travelling
 ;;;;   :explode          fireball / fire dome detonation
 ;;;;   :sizzle           Bankai blade hit: heat erasing what it touches
+;;;;   :heat-flare       Bankai: the garb flaring (NISHI), the heat sheet, a burnout (low pitch): a thump + a long hiss
 ;;;;   :ground-crack     ground split (Buttagiru, Split the Meteor, Bankai cracks)
 ;;;;   :bones            skeleton rattle (Bankai South)
 ;;;;   :kikon-slash      Kikon finishing cut (reverse swell into a heavy slash)
@@ -197,6 +198,12 @@
   (let ((b (au-fnoise 0.8 :hp 3500 :to 6000 :attack 0.005 :hold 0.1 :decay 0.2)))
     (au-thump! b 0.0 200 90 0.03 0.05 0.5)
     (au-mix! b (au-fnoise 0.6 :bp 1200 :q 4 :decay 0.1) 0.0 0.3)))
+
+(defsound :heat-flare (:peak 0.85)
+  (let ((b (au-fnoise 1.2 :hp 2200 :to 5000 :attack 0.02 :hold 0.25 :decay 0.55)))
+    (au-thump! b 0.0 90 35 0.12 0.3 1.0)
+    (au-mix! b (snd-fire-noise 0.9 60 600 :attack 0.04 :decay 0.35) 0.0 0.45)
+    (au-drive! b 1.3)))
 
 (defsound :ground-crack (:peak 0.95)
   (let ((b (au-buf 1.3)))

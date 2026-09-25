@@ -205,22 +205,23 @@ lower edge is the backing: black smoke puffs off a blade read as bubbles). POWER
           (%t-blob (+ x0 (* u bx)) (+ y0 (* u by) 0.05f0) (+ z0 (* u bz)) (rnd-range -0.4f0 0.4f0) (rnd-range 0.8f0 1.6f0)
                    (rnd-range -0.4f0 0.4f0) (rnd-range 0.3f0 0.5f0) (* p (rnd-range 0.035f0 0.06f0)) -2f0 0.3f0 +pal-fire+))))))
 
-(defun-fast vfx-blade-embers (x0 y0 z0 x1 y1 z1 dt)
+(defun-fast vfx-blade-embers (x0 y0 z0 x1 y1 z1 dt &key ash)
   "Zanka no Tachi (§4.1 Bankai): every flame is gone. One thin EMBER line along the charred blade (drawn just in
 front of it, a glowing additive core in it), its presence breathing on threes, and a few ember flecks drifting up; the heat is the :HEAT aura's
-charcoal wisps. Under the Bankai grade (spot-keep, hue 10) this line is the only colour in the frame."
+charcoal wisps. Under the Bankai grade (spot-keep, hue 10) this line is the only colour in the frame. ASH (burned
+out): the edge dead grey, no core, ash flecks instead of embers."
   (with-floats (x0 y0 z0 x1 y1 z1 dt)
-    (let* ((bx (- x1 x0)) (by (- y1 y0)) (bz (- z1 z0)) (d3 (drawing-no 8f0))
-           (pk (toon-a +pal-ember+ (+ 0.75f0 (* 0.2f0 (hash01 d3 2.3f0))))) (sd (- -2f0 (i->f (mod (f->i d3) 3)))))
-      (declare (single-float bx by bz d3 pk sd))
+    (let* ((bx (- x1 x0)) (by (- y1 y0)) (bz (- z1 z0)) (d3 (drawing-no 8f0)) (pal (if ash +pal-ash+ +pal-ember+))
+           (pk (toon-a pal (+ 0.75f0 (* 0.2f0 (hash01 d3 2.3f0))))) (sd (- -2f0 (i->f (mod (f->i d3) 3)))))
+      (declare (single-float bx by bz d3 pal pk sd))
       (%away-from-eye (x0 y0 z0) -0.03f0
         (fx-ribbon x0 y0 z0 bx by bz 0.026f0 0.016f0 1f0 sd 0.05f0 pk 0.5f0 sd 0.05f0 pk d3 0f0 :segs 3 :mode :toon)
-        (fx-ribbon x0 y0 z0 bx by bz 0.012f0 0.008f0 1f0 0.3f0 0.08f0 -0.9f0 1f0 0.3f0 0.08f0 -0.7f0 0f0 0f0 :segs 1))
+        (unless ash (fx-ribbon x0 y0 z0 bx by bz 0.012f0 0.008f0 1f0 0.3f0 0.08f0 -0.9f0 1f0 0.3f0 0.08f0 -0.7f0 0f0 0f0 :segs 1)))
       (dotimes (i (n-of 5f0 dt))
         (let* ((u (rnd01)))
           (declare (single-float u))
           (%t-blob (+ x0 (* u bx)) (+ y0 (* u by)) (+ z0 (* u bz)) (rnd-range -0.15f0 0.15f0) (rnd-range 0.3f0 0.7f0)
-                   (rnd-range -0.15f0 0.15f0) (rnd-range 0.8f0 1.4f0) (rnd-range 0.015f0 0.028f0) -0.3f0 0.1f0 +pal-ember+))))))
+                   (rnd-range -0.15f0 0.15f0) (rnd-range 0.8f0 1.4f0) (rnd-range 0.015f0 0.028f0) -0.3f0 0.1f0 pal))))))
 
 (defun-fast vfx-smear (tr sm look)
   "The sword smear (docs/STYLE_STORM_DESIGN.md §2.6, §4.1 blade fire, §4.2 cleaves): a comet crescent through the
@@ -498,6 +499,24 @@ The ring is an along shape whose heat varies around it, so it breaks into arcs a
            (vtx (+ cx (* ri c1)) cy (+ cz (* ri s1)) -1f0 0f0 h1 sd 0.12f0 pk))))))
 
 
+(defmacro %tsector (x y z r0 r1 yaw half heat seed wob pk segs)
+  "A flat toon sector on the ground at height Y (+3 cm) between radii R0 and R1, centred on YAW (forward = FWD-X /
+FWD-Z of it), +-HALF radians: FX-SECTOR's shape in the toon batch (uv across the radii). A macro: 0 B."
+  `(let* ((cx ,x) (cy (+ ,y 0.03f0)) (cz ,z) (ri ,r0) (ro ,r1) (a0 (- ,yaw ,half)) (da (/ (* 2f0 ,half) ,(float segs 1f0)))
+          (ht ,heat) (sd ,seed) (wb ,wob) (pk ,pk))
+     (declare (single-float cx cy cz ri ro a0 da ht sd wb pk))
+     (with-fx-verts (d o :toon ,(* 6 segs))
+       (dotimes (k ,segs)
+         (let* ((t0 (+ a0 (* da (i->f k)))) (t1 (+ t0 da))
+                (c0 (- (f-sin t0))) (s0 (- (f-cos t0))) (c1 (- (f-sin t1))) (s1 (- (f-cos t1))))
+           (declare (single-float t0 t1 c0 s0 c1 s1))
+           (vtx (+ cx (* ri c0)) cy (+ cz (* ri s0)) 0f0 -1f0 ht sd wb pk)
+           (vtx (+ cx (* ro c0)) cy (+ cz (* ro s0)) 0f0 1f0 ht sd wb pk)
+           (vtx (+ cx (* ro c1)) cy (+ cz (* ro s1)) 0f0 1f0 ht sd wb pk)
+           (vtx (+ cx (* ri c0)) cy (+ cz (* ri s0)) 0f0 -1f0 ht sd wb pk)
+           (vtx (+ cx (* ro c1)) cy (+ cz (* ro s1)) 0f0 1f0 ht sd wb pk)
+           (vtx (+ cx (* ri c1)) cy (+ cz (* ri s1)) 0f0 -1f0 ht sd wb pk))))))
+
 (defmacro %brush-aura (x y z h k pal n rad w white)
   "A brush-flame aura (docs/STYLE_STORM_DESIGN.md §4.2 reiatsu, §4.3 Kikon rush): N tongues of palette PAL around
 the body at radius RAD (half-width W at the base), drawn only behind and at the sides (the ones between the camera and the body are left
@@ -558,6 +577,11 @@ front of the body fade (FRONT-DIM)."
                0.24f0 0f0 ,r ,g ,b aa (* 0.8f0 ,r) (* 0.5f0 ,g) (* 0.5f0 ,b) 0f0 (+ (* 6f0 ,ph) (* 1.9f0 kf)) 0.12f0
                :segs 5))))
 
+(defvar *aura-now* (vector nil nil) "Per side: the body aura drawn now (main.lisp DRAW-AURA) ...")
+(defvar *aura-was* (vector nil nil) "... the one before it ...")
+(declaim (type f32vec *aura-t*))
+(defvar *aura-t* (make-f32 2) "... and the FX-CLOCK it changed (a form switch, a burnout, a reignite).")
+
 (defvar *aura-cap* 1.0
   "0.5..1: alpha cap of every body aura this frame. HUD-DRAW (AURA-CAP-UPDATE) lowers it while the
 fighters stand within ~3 m, where two auras (or one over the other fighter) summed to a white blob.")
@@ -603,7 +627,33 @@ close-up must still show the face); the drawn ones stand behind the body instead
            (fx-emit +p-dust+ (+ x (rnd-range -0.3f0 0.3f0)) (+ y h) (+ z (rnd-range -0.3f0 0.3f0))
                     0f0 1.2f0 0f0 1.2f0 0.3f0 -1f0 0.22f0 0.17f0 0.15f0))
          (add-point-light x (+ y 0.6) z 1.0 0.4 0.1 4.5 0.8 8))
-        (:heat                                           ; Bankai: the heat as 4 slow charcoal ink-wash wisps (threes)
+        (:ash                                            ; Bankai burned out: 3 BLACK SMOKE wisps off the shoulders, ash rising
+         (let* ((d3 (drawing-no 8f0)))
+           (declare (single-float d3))
+           (dotimes (j 3)
+             (let* ((f (i->f j)) (ang (+ (* 2.094f0 f) (* 0.3f0 (hash01 d3 f)))) (c (f-cos ang)) (sn (f-sin ang))
+                    (hh (* h (+ 0.4f0 (* 0.3f0 (hash01 (+ f d3) 4.1f0))))) (sd (- -1101f0 f (* 3f0 (i->f (mod (f->i d3) 3))))))
+               (declare (single-float f ang c sn hh sd))
+               (fx-ribbon (+ x (* 0.22f0 c)) (+ y (* 0.8f0 h)) (+ z (* 0.22f0 sn)) (* 0.12f0 c) hh (* 0.12f0 sn) 0.09f0 0.015f0
+                          1f0 sd 0.35f0 (toon-a +pal-black-smoke+ (* 0.9f0 ka)) 0.2f0 sd 0.35f0
+                          (toon-a +pal-black-smoke+ (* 0.9f0 ka)) (+ f d3) 0.25f0 :segs 6 :mode :toon)))
+           (dotimes (i (n-of 12f0 dt))                    ; <= 12 ash flecks / s
+             (%t-blob (+ x (rnd-range -0.3f0 0.3f0)) (+ y (* h (rnd-range 0.5f0 0.95f0))) (+ z (rnd-range -0.3f0 0.3f0))
+                      0f0 (rnd-range 0.6f0 1.2f0) 0f0 (rnd-range 0.8f0 1.3f0) (rnd-range 0.03f0 0.05f0) -0.2f0 0.2f0 +pal-ash+))))
+        (:garb                                           ; Bankai West, Zanjitsu Gokui: wrapped in red flames (the
+                                                         ; 15-million-degree garb): 9 FIRE brush-flame tongues round the
+                                                         ; body (behind and at the sides: the silhouette stays readable),
+                                                         ; 5 EMBER inner ones, flame scraps rising, a warm light
+         (let* ((kc (f-clamp k 0f0 1f0)))
+           (declare (single-float kc))
+           (%brush-aura x y z (* 1.1f0 h) kc +pal-fire+ 9 0.44f0 0.2f0 0)
+           (%brush-aura x y z (* 0.72f0 h) kc +pal-ember+ 5 0.3f0 0.13f0 0)
+           (dotimes (i (n-of (* 14f0 kc) dt))
+             (%t-blob (+ x (rnd-range -0.4f0 0.4f0)) (+ y (* h (rnd-range 0.2f0 0.9f0))) (+ z (rnd-range -0.4f0 0.4f0))
+                      (rnd-range -0.2f0 0.2f0) (rnd-range 1.2f0 2.2f0) (rnd-range -0.2f0 0.2f0) (rnd-range 0.3f0 0.5f0)
+                      (rnd-range 0.06f0 0.11f0) -1f0 0.3f0 +pal-fire+))
+           (%light x (+ y 1.0f0) z 1f0 0.45f0 0.12f0 5f0 (* 1.2f0 kc) 8)))
+        (:heat                                           ; Bankai East: the heat as 4 slow charcoal ink-wash wisps (threes)
          (let* ((e (camera-eye *camera*)) (ex (- (aref e 0) x)) (ez (- (aref e 2) z)) (el (f-max 0.01f0 (f-sqrt (+ (* ex ex) (* ez ez)))))
                 (d3 (drawing-no 8f0)))
            (declare (type f32vec e) (single-float ex ez el d3))
@@ -631,6 +681,11 @@ close-up must still show the face); the drawn ones stand behind the body instead
          (dotimes (i (n-of (if (eq kind :nozarashi) 12f0 5f0) dt))   ; white flecks rising
            (%t-blob (+ x (rnd-range -0.45f0 0.45f0)) (+ y (* h (rnd-range 0.1f0 0.8f0))) (+ z (rnd-range -0.45f0 0.45f0))
                     0f0 (rnd-range 1.2f0 2.4f0) 0f0 (rnd-range 0.3f0 0.6f0) (rnd-range 0.015f0 0.03f0) 0f0 0.1f0 +pal-hit+)))
+        (:bound                                          ; South's hold: ASH drifting up from the held feet (threes)
+         (dotimes (i (n-of 10f0 dt))
+           (%t-blob (+ x (rnd-range -0.35f0 0.35f0)) 0.1f0 (+ z (rnd-range -0.35f0 0.35f0)) (rnd-range -0.2f0 0.2f0)
+                    (rnd-range 0.4f0 0.9f0) (rnd-range -0.2f0 0.2f0) (rnd-range 0.8f0 1.2f0) (rnd-range 0.04f0 0.07f0)
+                    -0.1f0 0.2f0 +pal-ash+)))
         (:kikon (%kikon-aura x y z (* 0.95f0 h) (f-clamp k 0.3f0 1f0))
          (dotimes (i (n-of 10f0 dt))
            (%t-blob (+ x (rnd-range -0.4f0 0.4f0)) (+ y (* h (rnd-range 0.2f0 0.9f0))) (+ z (rnd-range -0.4f0 0.4f0))
@@ -762,6 +817,46 @@ and erode). DT (optional) feeds the particles; 0 = none."
                  (%t-blob (+ x0 (* u ux)) (rnd-range 1f0 2f0) (+ z0 (* u uz)) (rnd-range -1f0 1f0) (rnd-range 0.5f0 1.5f0)
                           (rnd-range -1f0 1f0) (rnd-range 0.25f0 0.4f0) (rnd-range 0.08f0 0.14f0) -1f0 0.3f0 +pal-fire+))))
            (%light (* 0.5f0 (+ x0 x1)) 1.2f0 (* 0.5f0 (+ z0 z1)) 1f0 0.45f0 0.12f0 7f0 (* 2.5f0 k) 7)))
+        (:kyoku                                          ; KYOKUJITSUJIN: the ink gash where the tip bites, then a flat
+                                                         ; 25 deg heat sheet racing 9 m over 3 drawings (HIT core, EMBER
+                                                         ; body, a charcoal backing), then ASH lifting along it
+         (let* ((sa (sage age 2f0)) (run (f-clamp (/ sa 0.25f0) 0f0 1f0)) (yaw (f-atan2 (- dx) (- dz)))
+                (k (f-clamp (- 0.98f0 (* 2.8f0 (f-max 0f0 (- sa 0.25f0)))) 0f0 0.98f0)) (dr (drawing-no))
+                (sd (i->f (mod (f->i dr) 7))) (r1 (* 9f0 run)) (half 0.2182f0))
+           (declare (single-float sa run yaw k dr sd r1 half))
+           (when (> k 0.02f0)
+             (toon-ground-seg (+ x0 (* 0.5f0 px)) (+ z0 (* 0.5f0 pz)) (+ x0 (* 2.4f0 (/ dx l))) (+ z0 (* 2.4f0 (/ dz l)))
+                              0.03f0 0.16f0 1f0 0.3f0 (+ seed 2f0) 0.25f0 (toon-a +pal-ink+ k))
+             (when (> r1 0.6f0)                          ; (no dark backing: the effects carry no black rim)
+               (%tsector x0 0.01f0 z0 0.5f0 r1 yaw half 0.8f0 (+ 61f0 sd) 0.25f0 (toon-a +pal-ember+ (* 0.9f0 k)) 8)
+               (%tsector x0 0.03f0 z0 0.55f0 (* 0.95f0 r1) yaw (* 0.7f0 half) 1f0 (+ 62f0 sd) 0.1f0 (toon-a +pal-hit+ k) 6)))
+           (when (and (> sa 0.25f0) (> k 0.3f0))
+             (dotimes (i (n-of 18f0 dt))
+               (let* ((u (rnd-range 0.1f0 1f0)) (w (* 2f0 u (rnd-range -1f0 1f0))))
+                 (declare (single-float u w))
+                 (%t-blob (+ x0 (* 9f0 u (/ dx l)) (* w px)) 0.1f0 (+ z0 (* 9f0 u (/ dz l)) (* w pz)) 0f0 (rnd-range 0.5f0 1.1f0) 0f0
+                          (rnd-range 0.8f0 1.3f0) (rnd-range 0.05f0 0.1f0) -0.2f0 0.25f0 +pal-ash+))))
+           (%light (+ x0 (* 0.5f0 r1 (/ dx l))) 0.6f0 (+ z0 (* 0.5f0 r1 (/ dz l))) 1f0 0.5f0 0.2f0 6f0 (* 2f0 k) 7)))
+        (:south                                          ; South: (x0 z0) the grab point, L its radius: an INK ring crack
+                                                         ; with an EMBER rim pulsing on twos over the tell, 5 radial cracks,
+                                                         ; then eroding while the feet are held
+         (let* ((sa (sage age 2f0)) (dr (drawing-no)) (tell (< age 0.28f0)) (sd (i->f (mod (f->i dr) 5)))
+                (k (f-clamp (* 0.98f0 fade) 0f0 0.98f0)) (pulse (if (evenp (f->i dr)) 0.98f0 0.55f0)))
+           (declare (single-float sa dr sd k pulse))
+           (%tring x0 0f0 z0 l 0.11f0 +pal-ink+ k (+ seed 1f0))
+           (%tring x0 0.005f0 z0 (* 0.93f0 l) 0.04f0 +pal-ember+ (* k (if tell pulse 0.4f0)) (+ seed sd))
+           (dotimes (i 5)
+             (let* ((a (+ (* 1.2566f0 (i->f i)) (hash01 (i->f i) seed))) (c (f-cos a)) (sn (f-sin a)) (r2 (* l (+ 1.3f0 (* 0.6f0 (hash01 (i->f i) 3.1f0))))))
+               (declare (single-float a c sn r2))
+               (toon-ground-seg (+ x0 (* 0.4f0 l c)) (+ z0 (* 0.4f0 l sn)) (+ x0 (* r2 c)) (+ z0 (* r2 sn)) 0.03f0 0.05f0 1f0 0.3f0
+                                (+ seed (i->f i)) 0.2f0 (toon-a +pal-ink+ k))))
+           (when (and tell (< sa 0.2f0))
+             (dotimes (i (n-of 30f0 dt))
+               (let* ((a (rnd-range 0f0 6.2832f0)))
+                 (declare (single-float a))
+                 (%t-blob (+ x0 (* l (f-cos a))) 0.1f0 (+ z0 (* l (f-sin a))) (* 0.8f0 (f-cos a)) (rnd-range 0.5f0 1.5f0) (* 0.8f0 (f-sin a))
+                          (rnd-range 0.5f0 0.8f0) (rnd-range 0.15f0 0.25f0) -0.2f0 0.25f0 +pal-dust+))))
+           (%light x0 0.3f0 z0 1f0 0.4f0 0.12f0 4f0 (* 1.5f0 k (if tell pulse 0.3f0)) 6)))
         (t                                               ; :crack (Buttagiru): gash + core, dust, a few rocks
          (let* ((open (f-clamp (/ age 0.08f0) 0f0 1f0)) (glow (f-clamp (- 1f0 (/ age (* 0.5f0 life))) 0f0 1f0)))
            (declare (single-float open glow))
@@ -840,12 +935,13 @@ dark flakes, a few burning edges. One-shot (~110 particles)."
                (rnd-range -0.5f0 0.5f0) (rnd-range 0.5f0 1.5f0) (rnd-range -0.5f0 0.5f0) 1f0 0.03f0 -0.2f0 1f0 0.45f0 0.1f0))))
 
 (defun-fast vfx-skeleton-dust (x z)
-  "Earth bursting where a charred skeleton claws out: dust, dirt clods, embers. One-shot."
+  "Earth bursting where a South hand claws out (x z): 2 DUST puffs and 2 inked rocks (toon). One-shot."
   (with-floats (x z)
-    (fx-burst +p-dust+ 26 x 0.2f0 z 0f0 1f0 0f0 0.8f0 2f0 4f0 0.9f0 0.35f0 0.36f0 0.29f0 0.23f0)
-    (fx-burst +p-feather+ 10 x 0.3f0 z 0f0 1f0 0f0 0.7f0 3f0 5f0 1.0f0 0.07f0 0.12f0 0.1f0 0.09f0)
-    (fx-burst +p-glow+ 10 x 0.3f0 z 0f0 1f0 0f0 0.8f0 1.5f0 3f0 0.8f0 0.04f0 1f0 0.45f0 0.1f0)
-    (fx-burst +p-flame+ 8 x 0.3f0 z 0f0 1f0 0f0 0.5f0 1f0 2f0 0.4f0 0.3f0 1f0 0.8f0 0.4f0)))
+    (dotimes (i 2)
+      (%t-blob (+ x (rnd-range -0.2f0 0.2f0)) 0.15f0 (+ z (rnd-range -0.2f0 0.2f0)) (rnd-range -0.8f0 0.8f0) (rnd-range 0.6f0 1.4f0)
+               (rnd-range -0.8f0 0.8f0) (rnd-range 0.5f0 0.8f0) (rnd-range 0.18f0 0.28f0) -0.2f0 0.25f0 +pal-dust+)
+      (%t-shard x 0.2f0 z (rnd-range -2f0 2f0) (rnd-range 2f0 4f0) (rnd-range -2f0 2f0) (rnd-range 0.5f0 0.8f0)
+                (rnd-range 0.07f0 0.12f0) 9f0 +pal-dust+))))
 
 ;;; ---------------------------------------------------------------- one-shots
 (defun-fast vfx-fire-cone (x z yaw &key (reach 4.0) (half 0.785))
@@ -929,7 +1025,7 @@ rings)."
   "Live drawn one-shots: kind x y z dx dy dz age scale seed n flag (kind 0 = a free slot).")
 (defparameter *stamp-kinds*
   '(:cut 1 :heavy 2 :fire 3 :counter 4 :guard 5 :guard-break 6 :clash 7 :hoho-out 8 :hoho-in 9 :burst 10
-    :konpaku 11 :rush 12 :land 13 :guard-crush 14 :reiatsu 15)
+    :konpaku 11 :rush 12 :land 13 :guard-crush 14 :reiatsu 15 :ember 16 :slit 17 :garb 18 :sweep 19 :wisps 20)
   "Stamp kind -> its code in *STAMPS*.")
 (defvar *stamp-seed* 0.0 "Advances per stamp: every one-shot draws its own irregular shape.")
 
@@ -1170,12 +1266,79 @@ steel shards. The frame it fires: a 1 f negative frame and a 3 f white back-rim 
   "Ground rings: :rush (the Kikon rush starts: a BLOOD ring and an inner one running out) and :land (DUST)."
   (declare (fixnum o))
   (with-stamp (o)
-    (let* ((rush (= (aref %sv o) 12f0)) (a (sage age 2f0)) (pal (if rush +pal-blood+ +pal-dust+)))
-      (declare (single-float a pal))
+    (let* ((kind (aref %sv o)) (rush (= kind 12f0)) (garb (= kind 18f0)) (a (sage age 2f0))
+           (pal (cond (rush +pal-blood+) (garb +pal-black-smoke+) (t +pal-dust+))))
+      (declare (single-float kind a pal))
       (fx-envelope (es k fl ph) (a 0 2 3 14)
         (when (< ph 5)
-          (%tring x y z (* sc (+ 0.4f0 (* (if rush 5f0 2.5f0) a))) (* sc (if rush 0.12f0 0.06f0)) pal k seed)
-          (when rush (%tring x y z (* sc (+ 0.3f0 (* 2.5f0 a))) 0.04f0 pal k (+ seed 1f0))))
+          (%tring x y z (* sc (+ 0.4f0 (* (if (or rush garb) 5f0 2.5f0) a))) (* sc (if (or rush garb) 0.12f0 0.06f0)) pal k seed)
+          (when rush (%tring x y z (* sc (+ 0.3f0 (* 2.5f0 a))) 0.04f0 pal k (+ seed 1f0)))
+          (when garb (%tring x y z (* sc (+ 0.3f0 (* 3.6f0 a))) 0.04f0 +pal-black-smoke+ k (+ seed 1f0))
+                     (%tring x (+ y 0.01f0) z (* sc (+ 0.25f0 (* 4.2f0 a))) 0.025f0 +pal-ember+ k (+ seed 2f0))))
+        (= ph 5)))))
+
+;;; the Bankai stances (design v3 §D; STYLE §4.1): EMBER + charcoal, the only warm hue a thin ember line
+(defun-fast %st-ember (o)
+  "Armour / parry / scorch in the Bankai stances: an EMBER star and 4 ember shards (not guard's steel hexagon; no
+dark backing: effects carry no black rim, user review 2); envelope 1 2 2 8."
+  (declare (fixnum o))
+  (with-stamp (o)
+    (let* ((a (hit-age age)))
+      (declare (single-float a))
+      (fx-envelope (es k fl ph) (a 1 2 2 8)
+        (if (= ph 1)
+            (%flash x y z (* sc 0.2f0) seed)
+            (when (< ph 5)
+              (%star x y z (* sc 0.15f0) (* sc es 0.55f0) 7 sdx sdy 0.06f0 seed +pal-ember+ k)
+              (%shards-out 4 x y z sdx sdy a 4f0 (* sc 0.25f0) (* sc 0.04f0) +pal-ember+ k seed 2f0)))
+        (= ph 5)))))
+
+(defun-fast %st-slit (o)
+  "KYOKUJITSUJIN's down-cut: a white vertical lens slit from overhead to the ground ahead (DX DZ), held 3
+drawings; envelope 0 1 3 6."
+  (declare (fixnum o))
+  (with-stamp (o)
+    (let* ((a (sage age 2f0)))
+      (declare (single-float a))
+      (fx-envelope (es k fl ph) (a 0 1 3 6)
+        (when (< ph 5)
+          (fx-crescent (+ x (* 0.5f0 dx)) (+ y 2.3f0) (+ z (* 0.5f0 dz)) (+ x (* 2.2f0 dx)) 0.05f0 (+ z (* 2.2f0 dz))
+                       (+ x (* 1.8f0 dx)) (+ y 1.6f0) (+ z (* 1.8f0 dz)) (* sc es 0.12f0) :lens 0.1f0 seed +pal-hit+ k :push 0.3f0))
+        (= ph 5)))))
+
+(defun-fast %st-sweep (o)
+  "HIGASHI: a white lens crescent sweeping 4.2 m across his front (DX DZ his facing) from low right, held 2
+drawings, then an EMBER hairline over it as it erodes; envelope 1 2 4 10."
+  (declare (fixnum o))
+  (with-stamp (o)
+    (let* ((a (hit-age age)) (rx (- dz)) (rz dx))
+      (declare (single-float a rx rz))
+      (fx-envelope (es k fl ph) (a 1 2 4 10)
+        (when (and (> ph 0) (< ph 5))
+          (let* ((ax (+ x (* 1.8f0 dx) (* 2.2f0 rx))) (az (+ z (* 1.8f0 dz) (* 2.2f0 rz)))
+                 (bx (+ x (* 1.8f0 dx) (* -2.2f0 rx))) (bz (+ z (* 1.8f0 dz) (* -2.2f0 rz)))
+                 (cx (+ x (* 4.2f0 dx))) (cz (+ z (* 4.2f0 dz))))
+            (declare (single-float ax az bx bz cx cz))
+            (if (< ph 4)
+                (fx-crescent ax (+ y 0.7f0) az bx (+ y 1.2f0) bz cx (+ y 1.1f0) cz (* sc es 0.14f0) :lens 0.1f0 seed +pal-hit+ k :push 0.2f0)
+                (fx-crescent ax (+ y 0.7f0) az bx (+ y 1.2f0) bz cx (+ y 1.1f0) cz (* sc 0.03f0) :lens 0.9f0 seed +pal-ember+ k :push 0.2f0))))
+        (= ph 5)))))
+
+(defun-fast %st-wisps (o)
+  "GOKUI GAESHI up: a column of 6 charcoal wisps rising round him for its 12 f window (twos); envelope 0 2 8 6."
+  (declare (fixnum o))
+  (with-stamp (o)
+    (let* ((a (sage age 2f0)) (dr drawing))
+      (declare (single-float a dr))
+      (fx-envelope (es k fl ph) (a 0 2 8 6)
+        (when (< ph 5)
+          (dotimes (j 6)
+            (let* ((f (i->f j)) (ang (+ (* 1.0472f0 f) (* 0.3f0 (hash01 f seed)))) (c (f-cos ang)) (sn (f-sin ang))
+                   (hh (* es (+ 1.6f0 (* 0.6f0 (hash01 (+ f dr) seed))))) (sd (- -1201f0 f (* 6f0 (i->f (mod (f->i dr) 3))))))
+              (declare (single-float f ang c sn hh sd))
+              (fx-ribbon (+ x (* 0.55f0 c)) y (+ z (* 0.55f0 sn)) (* 0.1f0 c) hh (* 0.1f0 sn) 0.12f0 0.01f0
+                         1f0 sd 0.3f0 (toon-a +pal-black-smoke+ k) 0.2f0 sd 0.3f0 (toon-a +pal-black-smoke+ k) (+ f dr) 0.2f0
+                         :segs 5 :mode :toon))))
         (= ph 5)))))
 
 (defun-fast stamps-draw (dt)
@@ -1190,7 +1353,8 @@ steel shards. The frame it fires: a 1 f negative frame and a 3 f white back-rim 
           (setf (aref s (+ o 7)) (+ (aref s (+ o 7)) dt))
           (when (case kind
                   ((1 2 3 4 15) (%st-hit o)) (5 (%st-guard o)) (6 (%st-guard-break o)) (7 (%st-clash o)) (14 (%st-guard-crush o))
-                  ((8 9) (%st-hoho o)) (10 (%st-burst o)) (11 (%st-konpaku o)) ((12 13) (%st-ring o)) (t t))
+                  ((8 9) (%st-hoho o)) (10 (%st-burst o)) (11 (%st-konpaku o)) ((12 13 18) (%st-ring o))
+                  (16 (%st-ember o)) (17 (%st-slit o)) (19 (%st-sweep o)) (20 (%st-wisps o)) (t t))
             (setf (aref s o) 0f0)))))
     nil))
 
@@ -1269,6 +1433,52 @@ vanish streaks, :leap a DUST ring and dust (the take-off), else (:charge) dust k
       (:flash-step (stamp :hoho-out x 1.0 z :dx dx :dz dz))
       (:leap (stamp :land x 0.0 z :scale 1.2) (vfx-step-dust x z dx dz))
       (t (vfx-step-dust x z dx dz)))
+    nil))
+
+(defun-fast vfx-ember (x y z &key (dx 0.0) (dz -1.0) (scale 1.0))
+  "An EMBER star over charcoal at (x y z) (a Bankai armour / parry / scorch hit), hit direction (DX DZ)."
+  (with-floats (x y z dx dz scale)
+    (stamp :ember x y z :dx dx :dz dz :scale scale)
+    (flash-light x y z 1.0 0.5 0.2)
+    nil))
+
+(defun-fast vfx-kyoku-slit (x z dx dz)
+  "KYOKUJITSUJIN f18 at feet (x z) facing (dx dz): the white down-cut slit."
+  (with-floats (x z dx dz)
+    (stamp :slit x 0.0 z :dx dx :dz dz)
+    nil))
+
+(defun-fast vfx-nishi (x z)
+  "L to West (NISHI) at feet (x z): a charcoal double ring out to 2.6 m, an EMBER line inside it, 8 ASH shards."
+  (with-floats (x z)
+    (stamp :garb x 0.0 z :scale 0.52)
+    (dotimes (i 8)
+      (let* ((a (+ (* 0.785f0 (i->f i)) (rnd-range -0.2f0 0.2f0))) (sp (rnd-range 3f0 5f0)))
+        (declare (single-float a sp))
+        (%t-shard (+ x (* 0.5f0 (f-cos a))) (rnd-range 0.5f0 1.6f0) (+ z (* 0.5f0 (f-sin a))) (* sp (f-cos a)) (rnd-range 0.5f0 2f0)
+                  (* sp (f-sin a)) (rnd-range 0.5f0 0.8f0) (rnd-range 0.1f0 0.18f0) 5f0 +pal-ash+)))
+    (flash-light x 1.0 z 1.0 0.45 0.15)
+    nil))
+
+(defun-fast vfx-higashi (x z dx dz)
+  "L to East (HIGASHI) at feet (x z) facing (dx dz): the white backhand crescent, then its ember hairline."
+  (with-floats (x z dx dz)
+    (stamp :sweep x 0.0 z :dx dx :dz dz)
+    nil))
+
+(defun-fast vfx-parry-up (x z)
+  "GOKUI GAESHI's window opens at feet (x z): the column of charcoal wisps."
+  (with-floats (x z)
+    (stamp :wisps x 0.0 z)
+    nil))
+
+(defun-fast vfx-smoke-puffs (x y z n)
+  "N BLACK SMOKE puffs rising at (x y z): a scorched attacker's arm, a burnout."
+  (declare (fixnum n))
+  (with-floats (x y z)
+    (dotimes (i n)
+      (%t-blob (+ x (rnd-range -0.15f0 0.15f0)) y (+ z (rnd-range -0.15f0 0.15f0)) (rnd-range -0.3f0 0.3f0) (rnd-range 0.8f0 1.6f0)
+               (rnd-range -0.3f0 0.3f0) (rnd-range 0.6f0 1.0f0) (rnd-range 0.12f0 0.22f0) -0.4f0 0.3f0 +pal-black-smoke+))
     nil))
 
 (defun-fast vfx-step-dust (x z dx dz)

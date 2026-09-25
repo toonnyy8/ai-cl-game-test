@@ -83,7 +83,7 @@
                (4.0 6.0 :sp1 4 :sp2 2 nil 1)
                (6.0 99.0 :step 1 :kikon 1 nil 1))                      ; the charge / leap as a poke
        :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 0.8 :kikon-range 9.0
-       :react (:projectile :sig :flash-startup :sig)))
+       :react (:projectile :sig :flash-startup :sig) :block-string 0.8))   ; a blocked string goes on (guard pressure)
 
 (defkit :kenpachi :nozarashi :inherit :base
   :awakening t :mult *nozarashi-mult* :startup-add *nozarashi-startup* :reach-mult *nozarashi-reach*

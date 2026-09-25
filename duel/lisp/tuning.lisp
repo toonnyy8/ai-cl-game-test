@@ -11,8 +11,8 @@
 (defparameter *reishi-max* 1100 "Reishi (health) of every fighter at the start, integer points.")
 (defparameter *konpaku-max* 9 "Konpaku (soul pips) per fighter, as in RoS; the one at 0 loses.")
 (defparameter *red-threshold* 0.30
-  "Red = Reishi below this fraction of max: a Kikon rush strike that hits him with the button still
-held is the Kikon at once (rules KIKON-OUTCOME; above red it is a guardable follow-up).
+  "Red = Reishi below this fraction of max: the Kikon rush's dash-in follow-up can't be guarded (rules
+KIKON-FOLLOW-UNGUARDABLE-P; above red he may guard it).
 The §8 gate's pacing knob if seeded CPU matches run long (fix round: 0.10 .. 0.30 moved the gate
 medians by only ~10 s, see p2-log).")
 (defparameter *kikon-konpaku* 2 "Konpaku a Kikon removes.")
@@ -23,11 +23,13 @@ medians by only ~10 s, see p2-log).")
 (defparameter *kikon-trigger* 1.6
   "... and the strike starts as soon as the opponent is within this range (a blocked strike pushes
 him 0.6 m back: 2.2 m, still inside both characters' Q1 reach, so the -14 is punishable).")
-(defparameter *kikon-follow-stun* 20
-  "A rush strike that hits a victim who isn't red, the button held: he staggers this long, in place ...")
+(defparameter *kikon-follow-kb* 2.5
+  "A rush strike that hits with the button held knocks the victim this far back (a short stagger) ...")
+(defparameter *kikon-follow-stun* 16
+  "... for this long (a victim who isn't red; a red one reels until the Kikon lands: KIKON-FOLLOW-STUN) ...")
 (defparameter *kikon-follow-gap* 12
-  "... and the follow-up strike hits this many frames after he can act again (guard it, Step or Hoho
-out; failing that it is the Kikon, KIKON-OUTCOME).")
+  "... while the rusher dashes in after him: its strike (the Kikon) lands this many frames after he can act
+again, so he can guard it (not red), Step or Hoho out (KIKON-FOLLOW-WAIT).")
 (defparameter *kikon-track* 120.0 "Default :track (deg/s) of a Kikon rush strike's startup (like the Breaker's dash).")
 (defparameter *armor-from* 6 "A move's armour (:armor-hits) starts on this move frame (no frame-1 reversals).")
 (defparameter *reset-distance* 8.0 "After a Kikon / Soul Break both fighters are placed this far apart.")
@@ -64,7 +66,7 @@ out; failing that it is the Kikon, KIKON-OUTCOME).")
 (defparameter *block-pushback* 0.6 "Metres a blocked hit pushes the defender back.")
 (defparameter *whiff-extra* 6 "A move that touched nothing recovers R + this.")
 (defparameter *hazard-blockstun* 14
-  "Blockstun of a blocked hazard hit (fire wave, Shiranui, pillars, skeletons): a projectile has no
+  "Blockstun of a blocked hazard hit (fire wave, Shiranui, pillars): a projectile has no
 attacker recovery to measure advantage against, so it is a fixed stun.")
 (defparameter *chain-lead* 3
   "A string's next hit may be input this many frames before the current move's recovery ends
@@ -122,9 +124,9 @@ Hoho fit, Q1 doesn't (§3). On hit the chain opens at the end of the active fram
 (defparameter *gg-ender* 4 "+ this for a string ender (Quick / Flash / Signature with block advantage <= *GG-ENDER-ADV*).")
 (defparameter *gg-ender-adv* -10 "The block advantage that makes a Quick / Flash / Signature an ender.")
 (defparameter *gg-breaker* 35 "A Breaker's Guard Break also drains this.")
-(defparameter *gg-delay* 45 "The gauge refills only after this many frames without a drain ...")
-(defparameter *gg-regen* 20.0 "... at this per second ...")
-(defparameter *gg-regen-guardless* 25.0 "... or this while guardless (0 -> 100 in 4.75 s).")
+(defparameter *gg-delay* 60 "The gauge refills only after this many frames without a drain (the user: 45 -> 60) ...")
+(defparameter *gg-regen* 12.0 "... at this per second (the user: 20 -> 12) ...")
+(defparameter *gg-regen-guardless* 14.0 "... or this while guardless / burned out (the user: 25 -> 14; 0 -> 100 in 7.1 s + the delay).")
 (defparameter *guard-crush-stun* 40
   "A blocked hit that empties the gauge is still blocked, then the defender reels this long (GUARD CRUSH)
 and can't guard until the gauge is full again.")
@@ -193,6 +195,9 @@ a combo (critique-design 1.7: not from hit 1).")
 (defparameter *hellfire-mult* 1.30 "Damage x in Hellfire (Gokuen).")
 (defparameter *bankai-mult* 1.20 "Damage x in Bankai (East, Kyokujitsujin).")
 (defparameter *nozarashi-mult* 1.15 "Damage x in Nozarashi.")
+(defparameter *bankai-taken* 1.40
+  "Damage x Bankai East takes (the defender's :taken): the extreme stance. Burnout doesn't lift it. Pacing knob
+(design v3 §E): 1.4 -> 1.3.")
 (defparameter *cornered-per-konpaku* 0.05 "Cornered: + this damage fraction per Konpaku lost ...")
 (defparameter *cornered-max* 0.25 "... up to this.")
 
@@ -208,6 +213,15 @@ a combo (critique-design 1.7: not from hit 1).")
 (defparameter *ennetsu-self-burn* 30 "... and it burns the caster for this (floor 1).")
 (defparameter *ennetsu-pillars* 7 "Pillars in the Ennetsu ring.")
 (defparameter *ennetsu-seconds* 0.8 "Ennetsu duration.")
+;;; Bankai stances (design v3 §A): East / West are kit forms, L switches; the stance traits run on
+;;; the guard gauge (a kit with :burnout burns out at gg 0 until it is full: RULES HEAT-*)
+(defparameter *switch-cooldown* 100 "L (the stance switch) may start again this many frames after it started.")
+(defparameter *recoil* 0.6 "East (:recoil): each of his hits that is blocked drains his own guard gauge by this x its guard value.")
+(defparameter *scorch* 15 "West (:scorch): a melee hit his armour or his parry stops burns the attacker this much (never kills).")
+(defparameter *parry-window* '(4 15) "GOKUI GAESHI: the move frames (inclusive) its parry catches a melee hit ...")
+(defparameter *parry-stun* 32 "... the parried attacker staggers this long (his move ends) ...")
+(defparameter *parry-slide* 0.5 "... sliding this far.")
+(defparameter *bind-stun* 60 "South (the bind): frames the victim's feet are held. Pacing knob (design v3 §E): 60 -> 45.")
 (defparameter *nozarashi-heal* 150 "Reishi Nozarashi's awakening heals.")
 (defparameter *nozarashi-reach* 1.4 "Nozarashi: reach x of the inherited moves.")
 (defparameter *nozarashi-startup* 3 "Nozarashi: extra startup frames of the inherited moves.")
@@ -222,8 +236,6 @@ a combo (critique-design 1.7: not from hit 1).")
 (defparameter *wave-box* '(1.2 0.5) "Fire wave box: half-height, half-length (half-width = its :width / 2).")
 (defparameter *pillar-size* '(0.7 5.0) "Ennetsu pillar cylinder: radius, height.")
 (defparameter *pillar-window* '(6 8) "Pillars hit from this many frames after they erupt until this many before they end.")
-(defparameter *skeleton-rise* 40 "Frames a Kaka skeleton takes to claw out of the ground ...")
-(defparameter *skeleton-window* '(12 17) "... then its lunge hits on these lunge frames (inclusive).")
 
 ;;; ================================================================ §8 CPU AI
 (defparameter *ai-delay* '(:easy 24 :normal 14 :hard 8) "Perception delay (frames) per difficulty.")
@@ -263,6 +275,10 @@ than its perception delay after the combo's *BURST-MIN-HITS*th hit.")
 far outside its preferred range: toward it from beyond, away from it from inside; it lets go in the
 middle of the range.")
 (defparameter *ai-dash-frames* 70 "Longest the CPU holds a dash.")
+(defparameter *ai-hold-guard* '(:easy 0.97 :normal 0.92 :hard 0.8)
+  "In blockstun a CPU keeps holding Guard through the string with this chance per blocked hit, whatever its
+guard gauge (turtling mid-string is what a Guard Crush punishes): the easier CPU turtles and gets crushed,
+the harder one steps out. (Its neutral guard choice still shrinks with the gauge: AI-GUARD-MULT.)")
 (defparameter *ai-kikon-p* 0.5
   "The CPU rushes a red opponent within its kit's :kikon-range (a stunned one at once) with this chance
 per neutral decision; one who isn't red only as a poke (the kit's :moves bands).")

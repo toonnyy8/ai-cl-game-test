@@ -150,7 +150,7 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
           (fighter-contact f) nil (fighter-land-sf f) -1 (fighter-dmg-bonus f) 0 (fighter-crush f) nil
           (fighter-stored f) 0                           ; an interrupted stance keeps nothing
           (fighter-button f) button (fighter-hold f) 0 (fighter-perfect f) nil
-          (fighter-follow f) nil (fighter-armor-left f) (mv-armor-hits mv)
+          (fighter-follow f) nil (fighter-armor-left f) (armor-budget (mv-armor-hits mv) (heat-on-p e))
           (fighter-phase f) (cond ((member (mv-kind mv) '(:breaker :kikon)) :aura) ((mv-hold mv) :hold) (t :main)))
     (fill (motion-vel (motion e)) 0f0)
     (play-clip e (mv-clip mv) :blend (mv-blend mv) :speed (mv-clip-speed mv)
@@ -263,10 +263,22 @@ Kikon is decided when its strike connects: combat.lisp APPLY-HIT).")
 
 (defun command! (e f vp allowed)
   "The highest-priority buffered command among ALLOWED that can start now; consumes its press. A
-buffered command that can't start (Kikon too early, no bar) doesn't hide the ones below it."
+buffered command that can't start (Kikon too early, no bar, cooling down) doesn't hide the ones below it."
   (loop for (cmd button mod) in *commands*
-        thereis (and (member cmd allowed) (vpad-command-pressed-p vp button mod) (try-command e f cmd button)
+        thereis (and (member cmd allowed) (vpad-command-pressed-p vp button mod)
+                     (or (try-command e f cmd button) (refused-cue e f cmd vp button))
                      (progn (vpad-consume! vp button) t))))
+
+(defun refused-cue (e f cmd vp button)
+  "A kit command pressed while it cools down (its :cooldown: L's switch, South, the O module): the press is
+eaten with a cue, the :refused event (a flash of its HUD bar, a dud tick). NIL: the commands below it may
+still start."
+  (let ((i (position cmd *kit-commands*)))
+    (when (and i (plusp (aref (fighter-cd f) i)))
+      (vpad-consume! vp button)
+      (emit :refused e cmd)
+      (clog "~a refused ~a: cooling ~d" (side-name e) cmd (aref (fighter-cd f) i))))
+  nil)
 
 ;;; ---------------------------------------------------------------- per-state steps
 (defun guard-held-p (e vp)
@@ -332,14 +344,18 @@ buffered command that can't start (Kikon too early, no bar) doesn't hide the one
   "Kikon rush: the aura (turning at the module's :aim), then its dash toward the opponent at :speed
 (turning at :dash-track; 0 = locked at take-off) until KIKON-RUSH-NEXT-PHASE says strike (no dash:
 :dash-max 0). The button isn't read here: only when the strike connects (combat.lisp). After a strike
-that hit a victim who isn't red with the button held (phase :follow, KIKON-OUTCOME): wait
-KIKON-FOLLOW-WAIT frames facing him, then the strike again, the follow-up."
+that hit with the button held (phase :follow, KIKON-OUTCOME): dash in after the knocked-back victim for
+KIKON-FOLLOW-WAIT frames (KIKON-FOLLOW-SPEED: arriving at the trigger range as the wait ends, at most the
+module's :follow-speed, else its :speed, else 14 m/s), then the strike again, the follow-up."
   (incf (fighter-hold f))
   (let ((v (motion-vel (motion e))) (phase (fighter-phase f)))
     (fill v 0f0)
     (if (eq phase :follow)
-        (progn (turn-to-opp e f (track-step (rush-param mv :aim)))
-               (when (>= (fighter-hold f) (kikon-follow-wait (mv-s mv)))
+        (let ((left (- (kikon-follow-wait (mv-s mv)) (fighter-hold f))))
+               (turn-to-opp e f (track-step (rush-param mv :aim)))
+               (run-velocity e (kikon-follow-speed (fighter-dist f) left
+                                                   (or (rush-param mv :follow-speed) (max 14.0 (rush-param mv :speed)))))
+               (when (<= left 0)
                  (setf (fighter-hits f) 0 (fighter-contact f) nil (fighter-land-sf f) -1)
                  (enter-main e f mv)))
         (let ((next (kikon-rush-next-phase phase (fighter-hold f) (fighter-dist f)
@@ -386,7 +402,7 @@ the end (MOVE-END-FRAME)."
 refused one doesn't hide the next). T when a new move / action started."
   (let ((kit (fighter-kit f)) (landed (fighter-contact f)))
     (loop for (cmd button mod) in *commands*
-          thereis (and (member cmd '(:kikon :q :f :sp1 :sp2 :hoho))
+          thereis (and (member cmd '(:kikon :q :f :sp1 :sp2 :sig :hoho))
                        (vpad-command-pressed-p vp button mod)
                        (case cmd
                          (:kikon (and (not (eq (mv-kind mv) :kikon))   ; the rush from any landed move
@@ -395,7 +411,8 @@ refused one doesn't hide the next). T when a new move / action started."
                          ((:q :f) (let ((next (kit-next kit (mv-name mv) cmd)))
                                     (when (and next (chain-open-p sf (mv-s mv) (mv-a mv) (mv-r mv) landed))
                                       (start-move e next button) t)))
-                         (t (and (member (mv-kind mv) '(:quick :flash))
+                         (t (and (member (mv-kind mv) '(:quick :flash))   ; SPs, Hoho, a :cancel Signature (L)
+                                 (or (not (eq cmd :sig)) (member :cancel (mv-flags (kit-command-move kit :sig))))
                                  (cancel-open-p sf (fighter-land-sf f) (mv-total mv) (eq landed :hit))
                                  (try-command e f cmd button))))
                        (progn (vpad-consume! vp button) t)))))
@@ -496,7 +513,7 @@ invulnerable)."
           (t (setf (fighter-state f) :stun (fighter-stun f) stun)
              (when (> kb 0) (set-slide e kb (min stun *knockback-slide-frames*) dx dz))
              (play-clip e (case react (:stagger :sh-stagger) (:knockback :sh-knockback) (:guard-break :sh-guard-break)
-                                      (:crumple :sh-crumple) (:clash :sh-clash) (t :sh-flinch))
+                                      (:crumple :sh-crumple) (:clash :sh-clash) (:bind :sh-bound) (t :sh-flinch))
                         :blend 0)))))
 
 (defun set-blockstun (e stun from-x from-z adv)
@@ -510,7 +527,7 @@ invulnerable)."
 
 (defun defender-state (e)
   "E's side of the triangle for RESOLVE-CONTACT (rules.lisp): :neutral :guard :breaker :stance-in
-:stance :armor :invuln."
+:stance :armor :parry :invuln. Burned out (BURNOUT-P) he has no armour."
   (let* ((f (fighter e)) (sf (fighter-sf f)) (mv (fighter-move f)))
     (case (if (> (fighter-invuln f) 0) :invuln (fighter-state f))
       (:invuln :invuln)                                  ; after a Burst
@@ -523,13 +540,14 @@ invulnerable)."
       (:air (if (eq (fighter-phase f) :knockdown) :invuln :neutral))   ; the combo limits' forced knockdown
       (:move (cond ((and (eq (mv-kind mv) :breaker) (or (member (fighter-phase f) '(:aura :dash)) (< sf (mv-s mv))))
                     :breaker)
-                   ((and (plusp (fighter-armor-left f))              ; the move's armour (:armor-hits)
+                   ((and (plusp (fighter-armor-left f)) (heat-on-p e)  ; the move's armour (:armor-hits)
                          (if (eq (mv-kind mv) :kikon)
                              (eq (fighter-phase f) :dash)
                              (and (eq (fighter-phase f) :main) (<= *armor-from* sf) (< sf (mv-s mv)))))
                     :armor)
                    ((and (member :stance (mv-flags mv)) (eq (fighter-phase f) :hold))
                     (if (< (fighter-hold f) *stance-in*) :stance-in :stance))
+                   ((and (member :parry (mv-flags mv)) (eq (fighter-phase f) :main) (parry-frame-p sf)) :parry)
                    (t :neutral)))
       (t :neutral))))
 

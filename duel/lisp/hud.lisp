@@ -3,7 +3,9 @@
 ;;;; white damage trail), the guard gauge under it (steel, a white drain trail; guardless: grey with a red
 ;;;; fill climbing back), *KONPAKU-MAX* Konpaku soul flames that shatter, Reiatsu 3 bars, the flash-step bar
 ;;;; (ticks at a Hoho's and a Burst's cost; the Burst part glows while a Burst is possible), Awakening bar (EVOLUTION
-;;;; blinks; drains in a timed awakening), the kit meter (Inferno; drains in Hellfire), the timer, the
+;;;; blinks; drains in a timed awakening; BURNOUT while a stance is burned out, the name dimmed), the kit meter
+;;;; (Inferno; drains in Hellfire) or, for an awakened form with cooldown commands, the L / Shift+L cooldown bars
+;;;; (a refused press flashes its bar), the timer, the
 ;;;; combo counter under the victim's bar, move-name callouts over the user, the HOLD O KIKON prompt, the red
 ;;;; soul flame over a Kikon-able victim, and the big words (ANNOUNCE). Cosmetic only: the fx clock (it stops
 ;;;; while paused, so the HUD's pulses and fades hold too), RND01.
@@ -251,6 +253,25 @@ PIPS-SHATTER), and dim embers for the lost ones."
             (%hbar bx y sw sh fill right 0.6f0 0.92f0 1f0 1f0 0.25f0 0.65f0 1f0 1f0)
             (%hbar bx y sw sh fill right 0.2f0 0.45f0 0.7f0 1f0))))))
 
+(declaim (type f32vec *refused-t*))
+(defvar *refused-t* (make-f32 4) "Per side x (L, Shift+L): FX-CLOCK of the last refused press (its bar flashes).")
+(defparameter *cd-commands* '(:sig :sp2) "The commands whose cooldown the panel shows (L's switch, Shift+L).")
+
+(defun hud-refused (e cmd)
+  "E pressed CMD while it was cooling (the :refused event): its cooldown bar flashes."
+  (let ((i (position cmd *cd-commands*)))
+    (when i (setf (aref *refused-t* (+ (* 2 (fighter-side (fighter e))) i)) (f32 (fx-clock))))))
+
+(defun-fast %hud-cd (x y w h fill flash right r g b)
+  "One cooldown bar: dark back, the FILL (1 = ready) bright in (R G B) when ready, dim while cooling; FLASH (0..1)
+washes it white (a refused press)."
+  (declare (single-float x y w h fill flash r g b))
+  (let* ((k (if (>= fill 1f0) 1f0 0.45f0)))
+    (declare (single-float k))
+    (%hrect x y w h 0.05f0 0.04f0 0.07f0 0.75f0)
+    (%hbar x y w h fill right (* k r) (* k g) (* k b) 1f0)
+    (when (> flash 0f0) (%hrect x (- y 1f0) w (+ h 2f0) 1f0 1f0 1f0 flash))))
+
 (defun-fast %hud-thin (x y w h fill right r g b a0 hz tm)
   "A thin gauge (Awakening, the kit meter): dark back, FILL in (R G B), alpha A0, pulsing up to 1
 at HZ when HZ > 0."
@@ -293,8 +314,9 @@ from the base form when this form has none)."
          (align (if right :right :left)) (y (* 0.05 h)) (bh (max (* 7 s) (* 0.028 h)))
          (ns (max 2 s)) (tm (fx-clock))
          (frac (/ (gauges-reishi g) (float (gauges-reishi-max g)))) (red (red-p (gauges-reishi g) (gauges-reishi-max g))))
-    ;; name + form
-    (hud-text (svref kh 0) edge (- y (* 8 ns) s) ns (if (kit-awakening kit) *ember* *white*) :align align)
+    ;; name + form (dimmed while the stance is burned out)
+    (hud-text (svref kh 0) edge (- y (* 8 ns) s) ns (cond ((burnout-p e) '(0.5 0.52 0.58 1)) ((kit-awakening kit) *ember*) (t *white*))
+              :align align)
     ;; Reishi + trail
     (let ((tr (aref *trail-v* side)))
       (setf (aref *trail-v* side) (f32 (if (> tr frac) (max frac (- tr (* 0.35 (hud-dt)))) frac)))
@@ -324,8 +346,21 @@ from the base form when this form has none)."
                    (if hot 0.6f0 1f0) (if hot 4f0 0f0) tm)
         (cond ((gauges-evolution g)
                (hud-text "EVOLUTION" lx (+ ay ty) s (alpha! *c-evo* (hud-pulse 3.0)) :align align))
+              ((burnout-p e) (hud-text "BURNOUT" lx (+ ay ty) s '(0.62 0.64 0.7 1) :align align))
               ((kit-awakening kit) (hud-text (symbol-name (kit-form kit)) lx (+ ay ty) s *ember* :align align))
               (t (hud-text "AWAKEN" lx (+ ay ty) s '(0.95 0.8 0.4 0.9) :align align)))
+        (let ((l (kit-command-move kit :sig)) (sp (kit-command-move kit :sp2)))   ; the L / Shift+L cooldowns
+          (when (and (kit-awakening kit) (plusp (mv-cooldown l)))
+            (let* ((my (+ ay row)) (hw (* 0.5 (- aw (* 2 s)))) (cd (fighter-cd f)) (o (* 2 side))
+                   (fl (max 0.0 (- 1.0 (* 4.0 (- tm (aref *refused-t* o))))))
+                   (fs (max 0.0 (- 1.0 (* 4.0 (- tm (aref *refused-t* (1+ o))))))))
+              (%hud-cd (f32 (if right (+ ax hw (* 2 s)) ax)) (f32 my) (f32 hw) (f32 ah)
+                       (f32 (- 1.0 (/ (aref cd (position :sig *kit-commands*)) (float (mv-cooldown l))))) (f32 fl) right
+                       0.84f0 0.88f0 0.94f0)
+              (%hud-cd (f32 (if right ax (+ ax hw (* 2 s)))) (f32 my) (f32 hw) (f32 ah)
+                       (f32 (- 1.0 (/ (aref cd (position :sp2 *kit-commands*)) (float (max 1 (mv-cooldown sp)))))) (f32 fs) right
+                       1f0 0.45f0 0.15f0)
+              (hud-text "COOLDOWN" lx (+ my ty) s '(0.84 0.88 0.94 0.9) :align align))))
         (let ((meter (svref kh 1)))
           (when (and meter (not (kit-awakening kit)))
             (let* ((my (+ ay row)) (burning (plusp (gauges-form-left g)))
@@ -387,8 +422,22 @@ callout: above the box it hits, or below it when above would reach the side pane
 
 (defvar *timer-strings* (make-array 1000 :initial-element nil) "Seconds -> their string, made once.")
 
+(declaim (type f32vec *hud-v2*))
+(defvar *hud-v2* (make-f32 3))
+
+(defun hud-rush-lines (e)
+  "Speed lines along a Kikon rush's dash-in (RUSH-DASHING-P in its :follow phase), on the screen direction
+from the rusher to his victim."
+  (let ((f (fighter e)))
+    (when (and (eq (fighter-state f) :move) (eq (fighter-phase f) :follow) (rush-dashing-p f))
+      (let ((p (pos-of e)) (a *hud-v*) (b *hud-v2*))
+        (when (and (world-to-screen a (aref p 0) 1f0 (aref p 2)) (world-to-screen b (fighter-ox f) 1f0 (fighter-oz f)))
+          (ui-speed-lines (f32 (atan (- (aref b 1) (aref a 1)) (- (aref b 0) (aref a 0)))) 14 '(1 1 1 0.55)
+                          (f->i (* 12f0 (fx-clock)))))))))
+
 (defun hud-battle (w h s)
   (setf (svref *callout-box* 0) nil)
+  (dolist (e (list *p1* *p2*)) (when (entity-alive-p e) (hud-rush-lines e)))
   (dolist (e (list *p1* *p2*)) (when (entity-alive-p e) (hud-side e w h s) (hud-world e w h s)))
   (let* ((secs (min 999 (ceiling (max 0 *timer*) 60)))
          (str (or (svref *timer-strings* secs) (setf (svref *timer-strings* secs) (format nil "~d" secs)))))

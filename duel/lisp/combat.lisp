@@ -1,7 +1,8 @@
 ;;;; combat.lisp — what happens when fighters touch (design-v1 §1, §3, §4): HIT-SYSTEM (clash check,
 ;;;; then COLLECT every fighter's and hazard's hits, then APPLY them all: a trade is a trade, no side
 ;;;; goes first; then settle the souls they broke), APPLY-HIT (the triangle, damage, reactions, chip,
-;;;; gauges, hitstop; the Kikon rush's strike becomes the Kikon here), Kikon / Soul Break / awakening
+;;;; gauges, hitstop; the Kikon rush's strike becomes the Kikon here; the stance traits: taken, recoil,
+;;;; armour paid by the guard gauge, scorch, the parry, burnout), Kikon / Soul Break / awakening
 ;;;; / form changes (all settled here, at connect time; cinema.lisp only presents them), the perfect-Hoho test and GAUGE-SYSTEM (regen, burns,
 ;;;; form timers, Hellfire, EVOLUTION). Decisions are rules.lisp's; effects are EMITted for feedback.lisp.
 (in-package :duel)
@@ -44,14 +45,28 @@ automatic Soul Break, settled at the end of the step (*SOUL-BREAKS*): returns T 
       (setf (gauges-meter g) (f32 (gauge-add (gauges-meter g) amount (getf m :max)))))))
 
 ;;; ---------------------------------------------------------------- one hit
-(defun drain-guard (e v)
+(defun drain-guard (e v &optional (why :block))
   "E's guard gauge loses V (its regen waits *GG-DELAY* again). At 0 he is guardless until it is full
-(CAN-GUARD-P). T when this drain emptied it."
+(CAN-GUARD-P), and a :burnout form is burned out (BURNOUT-P) by WHY (:block :breaker :recoil :armour: the
+:burnout event). T when this drain emptied it."
   (let ((g (gauges e)))
     (multiple-value-bind (n crushed) (gg-drain (gauges-gg g) v)
       (setf (gauges-gg g) (f32 n) (gauges-gg-idle g) 0)
-      (when crushed (setf (gauges-guardless g) t))
+      (when (and crushed (not (gauges-guardless g)))
+        (setf (gauges-guardless g) t)
+        (clog "~a GUARDLESS ~a" (side-name e) why)
+        (when (kit-burnout (kit-of e))
+          (emit :burnout e why)
+          (clog "~a BURNOUT ~a" (side-name e) why)))
       crushed)))
+
+(defun scorch (att def)
+  "DEF's :scorch (Bankai West): a melee hit his armour or his parry stopped burns ATT *SCORCH* (a burn:
+never kills, no gauges, no heat reset)."
+  (when (passive-p def :scorch)
+    (let ((g (gauges att))) (setf (gauges-reishi g) (burn (gauges-reishi g) *scorch*)))
+    (emit :scorch att)
+    (clog "~a scorched ~d" (side-name att) *scorch*)))
 
 (defun apply-hit (att def hw sx sz &key mv hazard def-state (bonus 0) crush x z red)
   "Apply hit HW of ATT (a fighter) to DEF, coming from (SX SZ) (the attacker or the HAZARD: guard
@@ -59,25 +74,31 @@ facing and push direction). MV, BONUS (damage added: the stance's stored) and CR
 and its state when the hit was collected (in a trade the first hit applied may already have put ATT
 in hitstun). DEF-STATE and RED: DEF's triangle state and red-ness when collected. X Z: where to show
 it. Sets the global hitstop (sim timing). A Kikon rush strike (MV of kind :kikon) is guardable like any
-hit; one that hits with ATT still holding the button that started it (KIKON-OUTCOME) is the Kikon on
-a RED defender (no damage, queued in *KIKONS* for SETTLE-SOULS), else a stagger in place and ATT's
-rush goes on to the follow-up strike (phase :follow), whose hit is the Kikon. Returns RESOLVE-CONTACT's
-result (NIL = no effect)."
-  (let* ((fa (fighter att)) (fd (fighter def)) (flags (hw-flags hw))
+hit; one that hits with ATT still holding the button that started it (KIKON-OUTCOME) knocks DEF back into
+a short stagger and ATT's rush dashes in after him to the follow-up strike (phase :follow), whose hit is the
+Kikon (no damage, queued in *KIKONS* for SETTLE-SOULS): a guard held during the dash blocks it unless DEF
+is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no effect)."
+  (let* ((fa (fighter att)) (fd (fighter def)) (heat (heat-on-p att))
+         (flags (heat-flags (hw-flags hw) heat))        ; burned out: East's blade doesn't break guard
          (p (pos-of def))
          (rush (and mv (eq (mv-kind mv) :kikon)))
          (own (and mv (eq (fighter-move fa) mv)))       ; the attacker is still in that move
+         (fstrike (and rush own (fighter-follow fa)))   ; the dash-in's strike: the Kikon if it hits
          (res (resolve-contact def-state
                                :breaker (member :breaker flags)
                                :guard-crush (or (member :guard-crush flags) crush)
                                :quick (and mv (eq (mv-kind mv) :quick))
                                :ignore-armor (passive-p att :ignore-armor)
                                :in-front (in-front-p (yaw-of def) (aref p 0) (aref p 2) sx sz *guard-arc*)
-                               :armor-vs-quick (passive-p def :armor-vs-quick)))
+                               :armor-vs-quick (passive-p def :armor-vs-quick)
+                               :unguardable (or (member :unguardable flags) (and fstrike (kikon-follow-unguardable-p red)))
+                               :hazard (and hazard t)))
+         (atk (kit-atk-mods (kit-of att) (- *konpaku-max* (gauges-konpaku (gauges att))) heat))
+         (dmods (kit-def-mods (kit-of def)))
          (x (or x (aref p 0))) (z (or z (aref p 2))) (y (+ (aref p 1) 1.1))
          (base (+ (hw-dmg hw) bonus))
-         (outcome (and rush (kikon-outcome red (vpad-down (pilot-vpad (pilot att)) :kikon) res (and own (fighter-follow fa)))))
-         (follow (eq outcome :follow)))                 ; a stagger in place, then the follow-up strike
+         (outcome (and rush (kikon-outcome (vpad-down (pilot-vpad (pilot att)) :kikon) res fstrike)))
+         (follow (eq outcome :follow)))                 ; knocked back, then the rusher dashes in to the follow-up
     (when (eq outcome :kikon)
       (setf res :kikon)
       (unless (find def *kikons* :key #'second) (push (list att def mv) *kikons*)))
@@ -95,36 +116,51 @@ result (NIL = no effect)."
                (combo-step (if follow :stagger (hw-react hw)) (eq (fighter-state fd) :air) (fighter-combo-hits fd)
                            (fighter-combo-launches fd) (fighter-combo-air fd))
              (setf (fighter-combo-hits fd) hits (fighter-combo-launches fd) launches (fighter-combo-air fd) air)
-             (let* ((lost (- *konpaku-max* (gauges-konpaku (gauges att))))
-                    (dmg (hit-damage base (kit-atk-mods (kit-of att) lost) nil hits (eq res :counter)))
-                    (stun (cond (follow *kikon-follow-stun*) ((hw-stun hw)) (t (hitstun react (eq res :counter))))))
+             (let* ((dmg (hit-damage base atk dmods hits (eq res :counter)))
+                    (stun (cond (follow (kikon-follow-stun red (mv-s mv)))
+                                ((and (hw-stun hw) (eq react (hw-react hw))) (hw-stun hw))   ; (a bind in a combo: a flinch)
+                                (t (hitstun react (eq res :counter))))))
                (setf (gauges-best-combo (gauges att)) (max hits (gauges-best-combo (gauges att))))
                (add-meter att (hw-meter hw))
                (hitstop (hw-hs hw))
-               (emit :hit att def x y z (hw-hs hw) (eq res :counter) dmg (if hazard :fire (if mv (mv-kind mv) :counter)))
+               (emit :hit att def x y z (hw-hs hw) (eq res :counter) dmg
+                     (cond ((eq react :bind) :bind) (hazard :fire) (mv (mv-kind mv)) (t :counter)))
                (unless (deal-damage att def dmg)          ; (a broken soul crumples in its cinematic)
-                 (set-reaction def react stun sx sz (if follow 0.0 (hw-kb hw))))
-               (when (and follow own)                     ; the rush waits, then strikes again (KIKON-RUSH-STEP)
+                 (set-reaction def react stun sx sz (if follow *kikon-follow-kb* (hw-kb hw))))
+               (when (and follow own)                     ; the rush dashes in, then strikes again (KIKON-RUSH-STEP)
                  (setf (fighter-phase fa) :follow (fighter-hold fa) 0 (fighter-follow fa) t)
                  (emit :kikon-follow att def)
-                 (clog "~a KIKON FOLLOW-UP on ~a" (side-name att) (side-name def))))))
-          (:armored
+                 (emit :rush-dash att)
+                 (clog "~a KIKON FOLLOW-UP on ~a~:[~; (red)~]" (side-name att) (side-name def) red)))))
+          (:armored                                     ; a :burnout form pays its armour from the guard gauge
            (when (eq def-state :armor) (decf (fighter-armor-left fd)))   ; a move's armour: one hit spent
            (hitstop *hitstop-block*)
            (emit :armored def x y z)
-           (deal-damage att def (hit-damage base (kit-atk-mods (kit-of att) 0) nil 1 nil)))
+           (deal-damage att def (hit-damage base atk dmods 1 nil))
+           (when (kit-burnout (kit-of def)) (drain-guard def (or (hw-guard hw) *gg-hazard*) :armour))
+           (unless hazard (scorch att def)))
+          (:parried                                     ; the attacker staggers, the parry counters (its :land string)
+           (hitstop *hitstop-breaker*)
+           (set-reaction att :stagger *parry-stun* (aref p 0) (aref p 2) *parry-slide*)
+           (setf (fighter-armor-left fa) 0)
+           (scorch att def)
+           (emit :parried att def x y z)
+           (let ((c (and (fighter-move fd) (kit-next (kit-of def) (mv-name (fighter-move fd)) :land))))
+             (when c (start-move def c))))
           (:absorbed
-           (let ((dmg (hit-damage base (kit-atk-mods (kit-of att) 0) nil 1 nil)))
+           (let ((dmg (hit-damage base atk dmods 1 nil)))
              (setf (fighter-stored fd) (stance-store (fighter-stored fd) dmg))
              (hitstop *hitstop-block*)
              (emit :absorbed def x y z)
              (deal-damage att def dmg)))
-          (:blocked                                     ; blockstun, chip, the guard gauge (at 0: GUARD CRUSH)
+          (:blocked                                     ; blockstun, chip, the guard gauge (at 0: GUARD CRUSH), recoil
            (let* ((adv (if (and mv (integerp (mv-adv-block mv))) (mv-adv-block mv) 0))
                   (stun (if mv (blockstun (mv-total mv) (fighter-sf fa) adv) *hazard-blockstun*))
-                  (chip (chip-damage base (or (hw-chip hw) (and mv (kit-blade-chip (kit-of att))))
+                  (v (or (hw-guard hw) *gg-hazard*))
+                  (chip (chip-damage base (chip-rate (hw-chip hw) (and mv (kit-blade-chip (kit-of att))) heat)
                                      (gauges-reishi (gauges def)))))
-             (if (drain-guard def (or (hw-guard hw) *gg-hazard*))
+             (when (and mv (passive-p att :recoil)) (drain-guard att (recoil v) :recoil))   ; East pays too
+             (if (drain-guard def v)
                  (progn (set-reaction def :guard-break *guard-crush-stun* sx sz *block-pushback*)
                         (hitstop *hitstop-breaker*)
                         (emit :guard-crush att def x y z)
@@ -135,7 +171,7 @@ result (NIL = no effect)."
              (when (plusp chip) (deal-damage att def chip))
              (when (and hazard (plusp (hw-meter hw))) (add-meter att *meter-on-block*))))
           (:guard-break
-           (drain-guard def *gg-breaker*)
+           (drain-guard def *gg-breaker* :breaker)
            (set-reaction def :guard-break *guard-break-stun* sx sz *guard-break-kb*)
            (hitstop *hitstop-breaker*)
            (emit :guard-break att def x y z))
@@ -186,7 +222,7 @@ Hoho's counter strike on its frame (it always connects)."
         (loop for w across (mv-hits mv)
               when (and (<= (hw-from w) sf) (< sf (hw-to w)))
                 do (do-entities (h (hz hazard))
-                     (when (and (not (eql (hazard-owner hz) e)) (member (hazard-kind hz) '(:wave :fireball :skeleton))
+                     (when (and (not (eql (hazard-owner hz) e)) (member (hazard-kind hz) '(:wave :fireball :bind))
                                 (<= (hazard-delay hz) 0)
                                 (loop for v in (hw-vols w)
                                       thereis (vol-hit-p v (aref p 0) (aref p 1) (aref p 2) fx fz

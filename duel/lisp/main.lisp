@@ -21,7 +21,7 @@ matches run before it in the page."
 rest of the frame then waits for it)."
   (brain-system)                        ; CPU players write their vpads
   (fighter-system)                      ; vpad → commands → state machine → physics
-  (unless *cine* (hazard-system))       ; projectiles, pillars, skeletons move
+  (unless *cine* (hazard-system))       ; projectiles, pillars, South's grab and hands
   (unless *cine* (hit-system))          ; collect every hit, then apply them together
   (unless *cine* (gauge-system))        ; regen, burns, form timers, Hellfire, EVOLUTION
   (unless *cine* (match-system)))       ; timer, time-up
@@ -110,13 +110,20 @@ white (drawing 1) then as a solid ink silhouette (2)."
               (t (setf age -2.0))))
       (setf (model-ghost-age m) (if (< age -1.0) -1f0 (f32 (+ age dt)))))))
 
+(defun rush-dashing-p (f)
+  "Is F's Kikon rush travelling now: its dash, or the dash-in after the victim of a held strike (until it
+reaches the trigger range)?"
+  (case (fighter-phase f)
+    (:dash t)
+    (:follow (> (fighter-dist f) (+ *kikon-trigger* 0.05)))))
+
 (defun rush-lift (f mv)
   "The drawn height of a Kikon rush module's leap (its :lift, metres; a look: the sim stays on the
-ground): up over the first 8 f of the dash, down over the strike's startup (not on a follow-up)."
+ground): up over the first 8 f of the dash (or the dash-in), down over the strike's startup."
   (let ((h (and mv (eq (mv-kind mv) :kikon) (getf (mv-params mv) :lift))))
     (cond ((null h) 0.0)
-          ((eq (fighter-phase f) :dash) (* h (min 1.0 (/ (fighter-hold f) 8.0))))
-          ((and (eq (fighter-phase f) :main) (not (fighter-follow f)) (< (fighter-sf f) (mv-s mv)))
+          ((member (fighter-phase f) '(:dash :follow)) (* h (min 1.0 (/ (fighter-hold f) 8.0))))
+          ((and (eq (fighter-phase f) :main) (< (fighter-sf f) (mv-s mv)))
            (* h (- 1.0 (/ (fighter-sf f) (float (mv-s mv))))))
           (t 0.0))))
 
@@ -127,7 +134,7 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
   (let* ((m (model e)) (f (fighter e)) (kit (fighter-kit f)) (b (model-body m)) (p (pos-of e)) (yaw (yaw-of e))
          (mv (and (eq (fighter-state f) :move) (fighter-move f)))
          (look (and mv (eq (mv-kind mv) :kikon) (getf (mv-params mv) :look)))
-         (flashing (and (eq look :flash-step) (eq (fighter-phase f) :dash)))   ; the flash step: afterimages only
+         (flashing (and (eq look :flash-step) (rush-dashing-p f)))   ; the flash step: afterimages only
          (planted (and mv (mv-planted mv) (eq (fighter-phase f) :main)))
          (weapon (if (or planted flashing) nil (model-weapon m))) (x (aref p 0)) (y (+ (aref p 1) (rush-lift f mv))) (z (aref p 2)))
     (setf (model-flash m) (f32 (max 0.0 (- (model-flash m) rdt))) (model-super m) (f32 (max 0.0 (- (model-super m) rdt))))
@@ -153,7 +160,8 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
         (case (first look)
           (:fire (vfx-blade-fire (aref *base* 0) (aref *base* 1) (aref *base* 2) (aref *tip* 0) (aref *tip* 1) (aref *tip* 2)
                                  rdt :power (second look)))
-          (:embers (vfx-blade-embers (aref *base* 0) (aref *base* 1) (aref *base* 2) (aref *tip* 0) (aref *tip* 1) (aref *tip* 2) rdt))))
+          (:embers (vfx-blade-embers (aref *base* 0) (aref *base* 1) (aref *base* 2) (aref *tip* 0) (aref *tip* 1) (aref *tip* 2) rdt
+                                     :ash (burnout-p e)))))
       (when (and mv (eq (fighter-phase f) :hold) (not (member :stance (mv-flags mv))))
         (vfx-charge (aref *tip* 0) (aref *tip* 1) (aref *tip* 2)
                     (min 1.0 (/ (fighter-hold f) (float (second (mv-hold mv))))) rdt))
@@ -162,11 +170,14 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
         (if (and mv (eq (fighter-phase f) :main) (>= (fighter-sf f) (- (mv-s mv) 4)) (< (fighter-sf f) (+ (mv-s mv) (mv-a mv) 3)))
             (trail-push tr (aref *base* 0) (aref *base* 1) (aref *base* 2) (aref *tip* 0) (aref *tip* 1) (aref *tip* 2))
             (trail-decay tr))
-        (vfx-smear tr (blade-smear (blade e)) (case (first (kit-blade kit)) (:fire 0) (:embers 2) (t 1)))))
+        (vfx-smear tr (blade-smear (blade e)) (case (first (kit-blade kit)) (:fire 0) ((:embers :charcoal) 2) (t 1)))))
     ;; auras: the form's, EVOLUTION ready, the Breaker (brightens over the strike startup), the Kikon rush
     (let ((age (fx-clock)))
-      (when (and (kit-aura kit) (not flashing))
-        (vfx-aura x y z (* 1.1 (body-hurt-h b)) (kit-aura kit) age rdt :k (if (and (eq look :charge) (not (eq (fighter-phase f) :main))) 1.5 1.0)))
+      (unless flashing                                    ; the form's aura (burned out: ash and smoke), crossfaded
+        (draw-aura f (if (burnout-p e) :ash (kit-aura kit)) x y z (* 1.1 (body-hurt-h b)) age rdt
+                   (if (and (eq look :charge) (not (eq (fighter-phase f) :main))) 1.5 1.0)))
+      (when (and (eq (fighter-state f) :stun) (eq (fighter-phase f) :bind))   ; bound by South: ash drifting at the feet
+        (vfx-aura x y z (body-hurt-h b) :bound age rdt))
       (when (gauges-evolution (gauges e)) (vfx-aura x y z (body-hurt-h b) :evolution age rdt :rgb *evolution-rgb* :k 0.5))
       (when (and mv (eq (mv-kind mv) :breaker) (not (eq (fighter-phase f) :main)))
         (vfx-aura x y z (body-hurt-h b) :breaker age rdt :k (if (eq (fighter-phase f) :dash) 1.0 0.5))
@@ -178,15 +189,41 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
         (vfx-aura x y z (body-hurt-h b) :kikon age rdt :k 1.0)))
     (unless (and mv (eq (mv-kind mv) :breaker)) (stop-hum e))))
 
+(defun-fast %aura-ms (i)
+  "Milliseconds of fx clock since side I's aura changed (a fixnum: no boxed float in DRAW-AURA's steady state)."
+  (declare (fixnum i))
+  (min 100000 (f->i (* 1000f0 (- (fx-clock) (aref (the f32vec *aura-t*) i))))))
+
+(defun draw-aura (f aura x y z h age rdt k)
+  "Fighter F's body AURA (a VFX-AURA kind or NIL) at his feet, HEIGHT H, presence K. When it changes (a stance
+switch, a burnout, the reignite) the old one dies down over 350 ms while the new one flares up (grows 35 % and
+settles over 300 ms): e.g. the West garb's flames flaring on, guttering out to smoke. Cosmetic, fx clock (AGE:
+the caller's reading of it); once settled it passes H and K through as they came (no float math per frame)."
+  (let ((i (fighter-side f)))
+    (unless (eq aura (svref *aura-now* i))
+      (setf (svref *aura-was* i) (svref *aura-now* i) (svref *aura-now* i) aura (aref *aura-t* i) (fx-clock)))
+    (let ((ms (%aura-ms i)) (was (svref *aura-was* i)))
+      (when (and was (< ms 350))
+        (vfx-aura x y z h was age rdt :k (* k (- 1.0 (/ ms 350.0)))))
+      (when aura
+        (if (>= ms 300)
+            (vfx-aura x y z h aura age rdt :k k)
+            (vfx-aura x y z (* h (+ 1.0 (* 0.35 (- 1.0 (/ ms 300.0))))) aura age rdt :k (* k (min 1.0 (+ 0.2 (/ ms 120.0))))))))))
+
+(defvar *form-grade* nil "The form grade preset shown now (:spot, :ash) or NIL.")
+
 (defun form-grade ()
   "A form's world grade (kit :GRADE): Bankai's :SPOT keeps the whole world grey except the ember hue (the composite's
-spot-keep mode 4, docs/STYLE_STORM_DESIGN.md §3.6) while the form is on. An impact frame takes the composite over
-for its frames (IMPACT-FRAME); the form's grade comes back when it ends. Changes the mode only when needed."
-  (let ((want (if (or (and (entity-alive-p *p1*) (eq (kit-grade (kit-of *p1*)) :spot))
-                      (and (entity-alive-p *p2*) (eq (kit-grade (kit-of *p2*)) :spot)))
-                  4 0)))
-    (when (and (/= *grade-impact* want) (<= (aref *screen-fx* 0) 0f0))
-      (if (= want 4) (impact-frame :spot 0) (grade-impact 0)))))
+spot-keep mode 4, docs/STYLE_STORM_DESIGN.md §3.6) while the form is on; while such a fighter is burned out the
+ember hue goes too (:ASH, the world fully grey). An impact frame takes the composite over for its frames
+(IMPACT-FRAME); the form's grade comes back when it ends. Changes the mode only when needed."
+  (flet ((spot-p (e) (and (entity-alive-p e) (eq (kit-grade (kit-of e)) :spot))))
+    (let* ((want (cond ((or (and (spot-p *p1*) (burnout-p *p1*)) (and (spot-p *p2*) (burnout-p *p2*))) :ash)
+                       ((or (spot-p *p1*) (spot-p *p2*)) :spot)))
+           (mode (if want 4 0)))
+      (when (and (<= (aref *screen-fx* 0) 0f0) (or (/= *grade-impact* mode) (not (eq want *form-grade*))))
+        (setf *form-grade* want)
+        (if want (impact-frame want 0) (grade-impact 0))))))
 
 (defun draw-scene (rdt)
   "Queue the 3D scene. RDT = this frame's effect seconds (0 while paused: nothing moves, no particle is born)."

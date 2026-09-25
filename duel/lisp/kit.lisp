@@ -34,7 +34,7 @@
   (meter 0.0)                   ; the kit meter (Inferno) gained on hit
   (stun nil)                    ; hitstun override in frames (NIL = the reaction's, *REACTION-FRAMES*)
   (guard nil)                   ; guard gauge a block drains (GUARD-VALUE; NIL = a hazard's *GG-HAZARD*)
-  (flags nil))                  ; :breaker :guard-crush
+  (flags nil))                  ; :breaker :guard-crush :unguardable :heat (see HEAT-FLAGS)
 
 (defstruct (move (:conc-name mv-))
   "A move: frame data, hit windows and hooks. See DEFMOVE for the fields."
@@ -116,7 +116,7 @@
          :on-frame (loop for (f hook) in on-frame collect (list (+ f startup-add) hook))
          :tick tick :release release :on-land on-land :cine cine :params params :spec spec
          :enter (if (plusp enter) (+ enter startup-add) 0) :blend blend :planted planted
-         :clip-speed (if (and startup (or clip-s (plusp startup-add))) (/ (or clip-s startup) (float s)) 1.0))))))
+         :clip-speed (if (and startup (or clip-s (/= 0 startup-add))) (/ (or clip-s startup) (float s)) 1.0))))))
 
 (defun register-move (name spec)
   (let ((spec (resolve-tuning spec)))
@@ -142,7 +142,8 @@
   :cooldown frames before its command may start again (from the move start; kept through resets)
   :cost     Reiatsu bars (default by command, KIT-COMMAND-COST); :hold (min max) frames the button
             is held before the move proper (charge / stance); :slide metres moved during the move
-  :flags    :breaker :guard-crush :stance
+  :flags    :breaker :guard-crush :stance :parry (a parry move: *PARRY-WINDOW*) :cancel (a Signature
+            that may cancel a landed Quick / Flash, like an SP) :bind (South: the CPU's trap reflex)
   :hits     ((from to &key dmg on-hit kb vol reach chip meter flags hs guard) ...) multi-hit windows;
             default: one window [S, S+A) when the move has damage and a volume
   :on-frame ((frame hook) ...), :tick hook (every frame), :release hook (button released during
@@ -163,7 +164,7 @@
   "One character in one form. See DEFKIT for the fields."
   (character nil) (form nil) (inherit nil) (name nil)
   (awakening nil) (awaken-form nil) (duration nil) (burn 0.0) (heal 0)
-  (mult 1.0) (cornered 0.0) (cornered-max 0.0) (passives nil) (blade-chip nil)
+  (mult 1.0) (taken 1.0) (burnout nil) (cornered 0.0) (cornered-max 0.0) (passives nil) (blade-chip nil)
   (walk 3.0) (run 8.0) (reishi *reishi-max*) (body nil) (weapon nil) (stance nil) (hide nil) (aura nil)
   (intro nil) (win nil) (intro-callout nil) (intro-weapon nil) (callout nil)
   (swing-sfx nil) (absorb-sfx nil)
@@ -197,9 +198,13 @@
           (:sp1 *cost-sp*)
           (:sp2 (if (kit-awakening kit) *cost-sp-awakened* *cost-sp*))
           (t 0)))))
-(defun kit-atk-mods (kit lost)
-  "The attacker plist for HIT-DAMAGE: the form's multiplier and Cornered with LOST Konpaku."
-  (list :mult (kit-mult kit) :cornered (kit-cornered kit) :cornered-max (kit-cornered-max kit) :lost lost))
+(defun kit-atk-mods (kit lost &optional (heat t))
+  "The attacker plist for HIT-DAMAGE: the form's multiplier (1.0 while burned out: no HEAT, HEAT-MULT) and
+Cornered with LOST Konpaku."
+  (list :mult (heat-mult (kit-mult kit) heat) :cornered (kit-cornered kit) :cornered-max (kit-cornered-max kit) :lost lost))
+(defun kit-def-mods (kit)
+  "The defender plist for HIT-DAMAGE: the damage the form takes (:taken; burnout doesn't lift it)."
+  (list :mult (kit-taken kit)))
 (defun kit-clips (kit)
   "Every clip name the form uses (moves, stance, intro/win, entry cinematic)."
   (remove-duplicates
@@ -218,7 +223,7 @@
                         (append spec (loop for (k v) on pspec by #'cddr
                                            unless (member k '(:inherit :startup-add :reach-mult))
                                              append (list k v))))))
-    (destructuring-bind (&key inherit name awakening awaken-form duration (burn 0.0) (heal 0) (mult 1.0)
+    (destructuring-bind (&key inherit name awakening awaken-form duration (burn 0.0) (heal 0) (mult 1.0) (taken 1.0) burnout
                            (cornered 0.0) (cornered-max 0.0) passives blade-chip (walk 3.0) (run 8.0) (reishi *reishi-max*)
                            body weapon stance hide aura intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
                            enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
@@ -226,7 +231,7 @@
         merged
       (let ((kit (make-kit :character character :form form :inherit inherit :name name
                            :awakening awakening :awaken-form awaken-form :duration duration :burn burn
-                           :heal heal :mult mult :cornered cornered :cornered-max cornered-max
+                           :heal heal :mult mult :taken taken :burnout burnout :cornered cornered :cornered-max cornered-max
                            :passives passives :blade-chip blade-chip :walk walk :run run :reishi reishi :body body
                            :weapon weapon :stance stance :hide hide :aura aura :intro intro :win win
                            :intro-callout intro-callout :intro-weapon intro-weapon :callout callout
@@ -235,13 +240,16 @@
                            :meter meter :reset-reiatsu reset-reiatsu :ai ai :cine cine :blade blade :grade grade
                            :commands commands :strings strings :spec merged))
             (own (loop for (nil m) on (getf spec :commands) by #'cddr collect m)))
-        ;; every move the form can reach; inherited ones get the form's derivation (Nozarashi)
+        ;; every move the form can reach. The derivation rule (design v2 §0): a move is as written when the
+        ;; form lists it in its own :commands or the parent form doesn't have it (new to this form: its
+        ;; own strings); an inherited one gets the form's derivation (:startup-add / :reach-mult)
         (dolist (m (remove-duplicates
                     (append (loop for (nil m) on commands by #'cddr collect m)
                             (loop for (from nil to) in strings collect from collect to))))
           (let ((mv (find-move m)))
             (setf (gethash m (kit-moves kit))
-                  (if (or (member m own) (and (eql startup-add 0) (= reach-mult 1)))
+                  (if (or (member m own) (not (and parent (gethash m (kit-moves parent))))
+                          (and (eql startup-add 0) (= reach-mult 1)))
                       mv
                       (parse-move m (mv-spec mv) :startup-add startup-add :reach-mult reach-mult)))))
         (when (and (eq form :base) (not (member character *roster*)))
@@ -259,8 +267,11 @@ child's keys win, :commands merge per command, :strings add. Keys:
   :strings ((from-move command to-move) ...)   Q1 -q-> Q2 -q-> Q3, Q2 -f-> F2, F1 -f-> F2; a
                                      non-button command (:land) names a follow-up a hook starts
                                      (KIT-NEXT), so derived forms derive it too
-  :mult :cornered :cornered-max      §4 damage (KIT-ATK-MODS)
-  :passives (:armor-vs-quick :projectile-cut :ignore-armor)   :blade-chip fraction
+  :mult :cornered :cornered-max      §4 damage dealt (KIT-ATK-MODS)   :taken  damage x taken (KIT-DEF-MODS)
+  :passives (:armor-vs-quick :projectile-cut :ignore-armor :recoil :scorch)   :blade-chip fraction
+  :burnout T                         the stance traits run on the guard gauge: at 0 he is burned out (the
+                                     passives, :mult, chip, armour and :heat flags off) until it is full,
+                                     and his armour is paid from it (combat.lisp BURNOUT-P)
   :awakening T (an awakened form)    :awaken-form FORM (what Awaken turns this character into)
   :duration seconds (NIL = permanent; then back to :inherit)   :burn Reishi fraction/s   :heal
   :startup-add :reach-mult           derive the inherited moves (not inherited themselves)

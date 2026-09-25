@@ -106,13 +106,15 @@ opponent at DIST."
 ;;;   :stance-in entering a stance (counter-hit)  :stance   holding a stance (super armour)
 ;;;   :armor     a move's armour with hits left (:armor-hits: from move frame *ARMOR-FROM* to its startup's
 ;;;              end, or a Kikon rush's dash)   :invuln    Step / Hoho iframes, down, wake-up
-(defun resolve-contact (def-state &key breaker guard-crush quick ignore-armor (in-front t) armor-vs-quick unguardable)
+;;;   :parry     a parry move inside *PARRY-WINDOW* (Bankai West's GOKUI GAESHI)
+(defun resolve-contact (def-state &key breaker guard-crush quick ignore-armor (in-front t) armor-vs-quick unguardable hazard)
   "What one hit that touched the defender does. The attack: BREAKER (a Breaker strike),
 GUARD-CRUSH (Breaker property on another move), QUICK (a Quick move), IGNORE-ARMOR (Nozarashi),
-UNGUARDABLE (guard and stance don't stop it, Step / Hoho iframes still do; no move uses it now: the
-Kikon rush's strike is guardable, KIKON-OUTCOME).
+UNGUARDABLE (guard, stance, armour and a parry don't stop it, Step / Hoho iframes still do: the South
+bind; the Kikon rush's strike is guardable, KIKON-OUTCOME), HAZARD (a projectile / ground hit: a parry
+doesn't catch it).
 The defender: DEF-STATE (above), IN-FRONT (the attacker is inside his guard arc), ARMOR-VS-QUICK
-(Bankai West). Returns
+(Bankai West; the shell passes NIL in burnout). Returns
   NIL           no effect (invulnerable)
   :hit          damage + the move's reaction
   :counter      :hit with x*COUNTER-MULT* damage and +*COUNTER-STUN* frames
@@ -122,13 +124,17 @@ The defender: DEF-STATE (above), IN-FRONT (the attacker is inside his guard arc)
   :absorbed     the stance takes the damage, no reaction, and stores it
   :armored      damage, no reaction (a move's armour, or armour vs Quick); a Breaker, UNGUARDABLE and
                 IGNORE-ARMOR go through a move's armour
+  :parried      caught by a parry: no damage; the attacker staggers and the parry counters (a Breaker
+                breaks it: :stance-break; a hazard or UNGUARDABLE hits)
 Breaker vs Breaker is a CLASH, decided before any contact (BREAKER-CLASH-P)."
   (let ((crush (or breaker guard-crush))
         (state (cond ((and (eq def-state :guard) (not in-front)) :neutral)
-                     ((and unguardable (member def-state '(:guard :stance-in :stance))) :neutral)
+                     ((and unguardable (member def-state '(:guard :stance-in :stance :parry))) :neutral)
+                     ((and hazard (eq def-state :parry)) :neutral)
                      (t def-state))))
     (ecase state
       (:invuln nil)
+      (:parry (if breaker :stance-break :parried))
       (:guard (if crush :guard-break :blocked))
       (:breaker :counter)
       (:stance-in (if breaker :stance-break :counter))
@@ -171,6 +177,10 @@ the dash strikes within *KIKON-TRIGGER* or after DASH-MAX frames (its range)."
   (ecase phase
     (:aura (cond ((< frames aura) :aura) ((or (zerop dash-max) (<= dist *kikon-trigger*)) :strike) (t :dash)))
     (:dash (if (or (<= dist *kikon-trigger*) (>= frames dash-max)) :strike :dash))))
+
+(defun parry-frame-p (sf)
+  "Is move frame SF of a parry move inside *PARRY-WINDOW* (it catches a melee hit: RESOLVE-CONTACT :parry)?"
+  (invulnerable-frame-p sf *parry-window*))
 
 (defun kikon-rush-reach (speed dash-max)
   "How far a rush module reaches: its dash (SPEED m/s for DASH-MAX frames) + *KIKON-TRIGGER*."
@@ -251,6 +261,38 @@ DEF-MODS: :mult on the defender's side (1 in v1). COMBO-INDEX: this hit's number
                        (combo-scale combo-index)
                        (if counter-hit *counter-mult* 1.0))))))
 
+;;; ---------------------------------------------------------------- the stance traits and burnout (design v3 §0, §A)
+;;; A kit with :burnout (the Bankai stances) runs its stance traits on the guard gauge: when the gauge
+;;; empties (a block, East's recoil, West's armour, a Breaker) he is burned out (and guardless) until it
+;;; is full again. HEAT is T while he is not burned out; these rules gate the five places the traits live.
+;;; The damage he TAKES (:taken) is not gated: the risk stays.
+(defun heat-mult (mult heat)
+  "The form's dealt multiplier MULT, or 1.0 while burned out (no HEAT)."
+  (if heat mult 1.0))
+
+(defun chip-rate (hw-chip blade-chip heat)
+  "The chip fraction of a blocked hit: the hit's own HW-CHIP, else the form's BLADE-CHIP; none while burned out."
+  (and heat (or hw-chip blade-chip)))
+
+(defun armor-budget (hits heat)
+  "The armour a move starts with (its :armor-hits HITS); none while burned out."
+  (if heat hits 0))
+
+(defun heat-flags (flags heat)
+  "A hit window's FLAGS: while burned out (no HEAT) a window marked :heat loses its :guard-crush (East's
+SP1 blade no longer breaks guard: it is blocked like any hit)."
+  (if (or heat (not (member :heat flags))) flags (remove :guard-crush flags)))
+
+(defun recoil (v)
+  "East's recoil: the guard gauge he loses when a hit of guard value V is blocked (*RECOIL* x V, rounded)."
+  (round (* *recoil* v)))
+
+(defun cast-point (px pz tx tz range)
+  "Where a cast aimed from (PX PZ) at a target at (TX TZ) lands: on the target, or RANGE along the line
+when he is farther (South's bind). Values: x z."
+  (let* ((dx (- tx px)) (dz (- tz pz)) (d (sqrt (+ (* dx dx) (* dz dz)))))
+    (if (<= d range) (values tx tz) (values (+ px (* dx (/ range d))) (+ pz (* dz (/ range d)))))))
+
 (defun chip-damage (dmg rate reishi)
   "Chip of a blocked hit worth DMG at chip fraction RATE (NIL = none) on a defender with REISHI:
 chip never kills (leaves at least 1)."
@@ -273,24 +315,38 @@ spread over 60 steps in whole points, so a whole second burns exactly the rate (
   "Red: Reishi below *RED-THRESHOLD* of max."
   (< reishi (* max-reishi *red-threshold*)))
 
-(defun kikon-outcome (red held contact follow)
-  "What a Kikon rush strike that connected with CONTACT (RESOLVE-CONTACT's result) leads to. The
+(defun kikon-outcome (held contact follow)
+  "What a Kikon rush strike that connected with CONTACT (RESOLVE-CONTACT's result) leads to. The first
 strike is always guardable: guarded (blocked, absorbed, armoured, parried) or dodged, nothing more.
-  :KIKON   it HIT a RED victim with the button still HELD on that step (guaranteed), or it is the
-           FOLLOW-up and it hit: the Kikon (KIKON-RESULT)
-  :FOLLOW  it hit a victim who is not red, the button held: a follow-up strike comes after his hitstun
-           (*KIKON-FOLLOW-STUN*, then *KIKON-FOLLOW-GAP* frames free: he can guard or dodge it)
+  :FOLLOW  it hit with the button still HELD on that step: the victim is knocked back *KIKON-FOLLOW-KB* into
+           a short stagger and the rusher dashes in after him (phase :follow, KIKON-FOLLOW-WAIT) to the
+           follow-up strike: guardable during the dash unless he is red (KIKON-FOLLOW-UNGUARDABLE-P)
+  :KIKON   it is that FOLLOW-up and it hit: the Kikon (KIKON-RESULT)
   NIL      guarded, whiffed, or the button released: a plain hit (maybe a Soul Break)"
   (when (member contact '(:hit :counter))
     (cond (follow :kikon)
-          ((not held) nil)
-          (red :kikon)
-          (t :follow))))
+          (held :follow))))
+
+(defun kikon-follow-unguardable-p (red)
+  "The follow-up strike (the Kikon) on a RED victim can't be guarded (guard, stance, armour, a parry); on one
+who isn't red a guard held during the dash blocks it. Iframes dodge it either way."
+  (and red t))
 
 (defun kikon-follow-wait (s)
-  "Frames the rush waits (phase :follow) after its strike hit a non-red victim before the follow-up
-strike (startup S) starts: it then hits *KIKON-FOLLOW-GAP* frames after the victim can act again."
+  "Frames the rush dashes in (phase :follow) after its strike hit, the button held, before the follow-up
+strike (startup S) starts: it then hits *KIKON-FOLLOW-GAP* frames after a non-red victim can act again."
   (max 0 (- (+ *kikon-follow-stun* 1 *kikon-follow-gap*) s)))
+
+(defun kikon-follow-stun (red s)
+  "The follow-up's victim reels this long (after the knockback): *KIKON-FOLLOW-STUN* (then he is free for
+*KIKON-FOLLOW-GAP* frames to guard or dodge the strike), or, RED, until the strike (startup S) has landed:
+the Kikon is certain unless something stops the rusher."
+  (if red (+ (kikon-follow-wait s) s 2) *kikon-follow-stun*))
+
+(defun kikon-follow-speed (dist frames-left cap)
+  "The dash-in's speed (m/s) this frame: arrive at *KIKON-TRIGGER* from DIST exactly when the FRAMES-LEFT
+of the wait run out, never faster than the module's CAP."
+  (if (<= dist *kikon-trigger*) 0.0 (min cap (* 60.0 (/ (- dist *kikon-trigger*) (max 1 frames-left))))))
 
 (defun soul-break-p (reishi) "Reishi reached 0: automatic Soul Break." (<= reishi 0))
 
@@ -371,7 +427,7 @@ advantage ADV <= *GG-ENDER-ADV*)."
 
 (defun gg-regen (gg idle guardless)
   "The guard gauge one frame later: nothing before *GG-DELAY* frames without a drain (IDLE), then
-*GG-REGEN*/s (*GG-REGEN-GUARDLESS*/s while GUARDLESS), capped at *GG-MAX*. From 0: 285 f to full."
+*GG-REGEN*/s (*GG-REGEN-GUARDLESS*/s while GUARDLESS), capped at *GG-MAX*. From 0: 60 + 429 f to full."
   (if (< idle *gg-delay*)
       gg
       (min *gg-max* (+ gg (/ (if guardless *gg-regen-guardless* *gg-regen*) 60.0)))))
@@ -395,11 +451,15 @@ when STORED >= *STANCE-CRUSH-AT*)."
   "Book one more connected hit of a combo (counters reset when the victim returns to neutral).
 REACT the move's reaction, AIRBORNE the victim's state, HITS / LAUNCHES / AIR-HITS the combo so
 far. The combo limits turn REACT: a 2nd launch -> :knockback, the *COMBO-AIR-HITS*th airborne hit
-or the *COMBO-CAP*th hit -> :knockdown. Values: react hits launches air-hits (the new HITS is this
-hit's COMBO-INDEX for HIT-DAMAGE)."
-  (let* ((hits (1+ hits))
+or the *COMBO-CAP*th hit -> :knockdown. A :bind (South) only opens a combo: on a victim already in one it
+is a :flinch; as the opener it books *BURST-MIN-HITS* hits, so the bound victim may Burst at once.
+Values: react hits launches air-hits (the new HITS is this hit's COMBO-INDEX for HIT-DAMAGE)."
+  (let* ((bind (and (eq react :bind) (zerop hits)))
+         (hits (if bind *burst-min-hits* (1+ hits)))
          (air-hits (if airborne (1+ air-hits) air-hits))
-         (react (cond ((>= hits *combo-cap*) :knockdown)
+         (react (cond (bind :bind)
+                      ((eq react :bind) :flinch)
+                      ((>= hits *combo-cap*) :knockdown)
                       ((and airborne (>= air-hits *combo-air-hits*)) :knockdown)
                       ((and (eq react :launch) (>= launches *combo-launches*)) :knockback)
                       (t react))))
