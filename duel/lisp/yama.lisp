@@ -38,7 +38,11 @@
   :vol (:arc 4.0 90 0.0 2.2) :on-hit :knockback :kb 3.5             ; fire cone 4 m, 90 deg
   :on-frame ((16 yama-fire-cone)))
 (defmove :ya-breaker :kind :breaker :clip :ya-breaker :clip-2 :ya-ikkotsu :callout "IKKOTSU" :planted t)
-(defmove :ya-kikon :kind :kikon :clip :ya-kikon :callout "JOKAKU ENJO" :cine yama-kikon-cine)
+;; the Kikon rush (O): red aura, dash (tuning.lisp *KIKON-...*), then this strike (Q3's overhead chop,
+;; played faster). On a red opponent with O still held when it connects: the Kikon, Jokaku Enjo;
+;; else a plain knockback hit (guardable unless he is red). -14 on block.
+(defmove :ya-kikon :kind :kikon :clip :sh-run :clip-2 :ya-q3 :clip-s 12 :callout "JOKAKU ENJO" :cine yama-kikon-cine
+  :startup 8 :active 3 :recovery 24 :dmg 70 :adv-block -14 :reach 2.2 :arc 110 :on-hit :knockback :kb 2.5)
 
 ;;; ================================================================ Hellfire (Gokuen)
 (defmove :ya-nadegiri :kind :sp :clip :ya-nadegiri :callout "NADEGIRI" :cost 2
@@ -56,7 +60,9 @@
   :startup 24 :active 1 :recovery 36
   :on-frame ((24 yama-kaka-summon))
   :params (:count 3 :radius 1.9 :delay 6 :stagger 10 :dmg 50 :on-hit :flinch :last-stun 40))
-(defmove :ya-tenchi :kind :kikon :clip :ya-tenchi :callout "TENCHI KAIJIN" :cine yama-tenchi-cine)
+;; the Bankai Kikon rush: the same numbers, one diagonal cut (Q1's), Tenchi Kaijin
+(defmove :ya-tenchi :kind :kikon :clip :sh-run :clip-2 :ya-q1 :clip-s 9 :callout "TENCHI KAIJIN" :cine yama-tenchi-cine
+  :startup 8 :active 3 :recovery 24 :dmg 70 :adv-block -14 :reach 2.2 :arc 110 :on-hit :knockback :kb 2.5)
 
 ;;; ================================================================ forms
 (defkit :yamamoto :base

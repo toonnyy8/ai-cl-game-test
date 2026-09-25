@@ -4,7 +4,7 @@
 ;;;; cosmetic (RND01, real time): nothing the sim reads is decided here (hitstop is combat.lisp's).
 ;;;;
 ;;;; Events (positions captured when they happen):
-;;;;   (:swing e kind)  (:super e)  (:breaker e) (:breaker-end e)  (:step e)
+;;;;   (:swing e kind)  (:super e)  (:breaker e) (:breaker-end e)  (:rush e)  (:step e)
 ;;;;   (:hit att def x y z hitstop counter-p dmg kind)  (:blocked att def x y z)  (:armored def x y z)
 ;;;;   (:absorbed def x y z)  (:guard-break att def x y z)  (:stance-break att def x y z)  (:clash x y z)
 ;;;;   (:hazard-cut x y z)  (:hoho-out e x z) (:hoho-in e x z) (:perfect e victim)  (:burst e attacker)
@@ -55,6 +55,10 @@
                     (stop-hum e)
                     (setf (svref *hums* (fighter-side (fighter e))) (start-loop :breaker-hum :gain 0.7))))
         (:breaker-end (stop-hum (first args)))
+        (:rush (let* ((e (first args)) (p (pos-of e)))       ; the Kikon rush starts: a red burst at his feet
+                 (vfx-shockwave (aref p 0) (aref p 2) 2.5 0.3 :rgb '(1.0 0.15 0.2))
+                 (setf (model-super (model e)) 0.12)
+                 (sfx-on :whoosh-heavy e :pitch 0.6)))
         (:hit (apply #'show-hit args))
         (:blocked (destructuring-bind (att def x y z) args
                     (multiple-value-bind (dx dz) (hit-dir att def) (vfx-hit x y z :guard :dx dx :dz dz))

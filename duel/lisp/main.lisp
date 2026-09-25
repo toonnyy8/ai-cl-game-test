@@ -59,6 +59,7 @@ match leaves the running state), or 120 steps in turbo (debug fast-forward)."
 (defvar *base* (make-f32 3))
 (defvar *super-rim* (rim-vec #xFFFFFF 3.0) "SP start: the rim-light super flash.")
 (defparameter *evolution-rgb* '(1.0 0.85 0.3))
+(defparameter *kikon-rgb* '(1.0 0.15 0.2) "The Kikon rush's aura (the HUD's Kikon red).")
 
 (defun draw-fighter (e rdt)
   "Pose and queue fighter E: body, weapon (or the planted one), blade look, aura, trail."
@@ -90,7 +91,7 @@ match leaves the running state), or 120 steps in turbo (debug fast-forward)."
             (trail-push tr (aref *base* 0) (aref *base* 1) (aref *base* 2) (aref *tip* 0) (aref *tip* 1) (aref *tip* 2))
             (trail-decay tr))
         (when (>= n 2) (fx-trail tr n 1.0 0.75 0.5 0.8))))
-    ;; auras: the form's, EVOLUTION ready, the Breaker (brightens over the strike startup)
+    ;; auras: the form's, EVOLUTION ready, the Breaker (brightens over the strike startup), the Kikon rush
     (let ((age (elapsed-time)))
       (when (kit-aura kit) (vfx-aura x y z (* 1.1 (body-hurt-h b)) (kit-aura kit) age rdt :rgb (and (eq (kit-aura kit) :reiatsu) '(1.0 0.9 0.3))))
       (when (gauges-evolution (gauges e)) (vfx-aura x y z (body-hurt-h b) :evolution age rdt :rgb *evolution-rgb* :k 0.5))
@@ -98,7 +99,13 @@ match leaves the running state), or 120 steps in turbo (debug fast-forward)."
         (vfx-aura x y z (body-hurt-h b) :breaker age rdt :k (if (eq (fighter-phase f) :dash) 1.0 0.5))
         (vfx-breaker-ring x z age))
       (when (and mv (eq (mv-kind mv) :breaker) (eq (fighter-phase f) :main) (< (fighter-sf f) (mv-s mv)))
-        (vfx-aura x y z (body-hurt-h b) :breaker age rdt :k (+ 1.0 (/ (fighter-sf f) (float (mv-s mv)))))))
+        (vfx-aura x y z (body-hurt-h b) :breaker age rdt :k (+ 1.0 (/ (fighter-sf f) (float (mv-s mv))))))
+      (when (and mv (eq (mv-kind mv) :kikon) (eq (fighter-state f) :move)    ; the Kikon rush: red
+                 (or (not (eq (fighter-phase f) :main)) (< (fighter-sf f) (mv-s mv))))
+        ;; ponytail: the faint EVOLUTION aura tinted red + a red light; a Kikon aura look belongs in vfx.lisp
+        (vfx-aura x y z (body-hurt-h b) :evolution age rdt :rgb *kikon-rgb* :k 1.0)
+        (vfx-aura x y z (* 1.2 (body-hurt-h b)) :evolution (+ age 0.5) rdt :rgb *kikon-rgb* :k 1.0)
+        (add-point-light x (+ y 1.0) z 1.0 0.15 0.2 4.5 1.4 6)))
     (unless (and mv (eq (mv-kind mv) :breaker)) (stop-hum e))))
 
 (defun draw-scene (rdt)

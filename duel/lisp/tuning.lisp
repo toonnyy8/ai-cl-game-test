@@ -11,12 +11,21 @@
 (defparameter *reishi-max* 1100 "Reishi (health) of every fighter at the start, integer points.")
 (defparameter *konpaku-max* 9 "Konpaku (soul pips) per fighter, as in RoS; the one at 0 loses.")
 (defparameter *red-threshold* 0.30
-  "Red = Reishi below this fraction of max: hits on a red fighter can be cancelled into Kikon.
+  "Red = Reishi below this fraction of max: a red fighter can't guard the Kikon rush, and its
+strike Kiko's him when the attacker still holds the button (rules KIKON-GUARDABLE-P / KIKON-CONFIRM-P).
 The §8 gate's pacing knob if seeded CPU matches run long (fix round: 0.10 .. 0.30 moved the gate
 medians by only ~10 s, see p2-log).")
 (defparameter *kikon-konpaku* 2 "Konpaku a Kikon removes.")
 (defparameter *kikon-konpaku-awakened* 3 "Konpaku a Kikon removes when the attacker is awakened.")
 (defparameter *soul-break-extra* 1 "A Soul Break (Reishi reached 0) removes the Kikon count + this.")
+;;; the Kikon rush (the Kikon button, any time): aura, dash, then the kit's strike (frame data per kit)
+(defparameter *kikon-aura* 5 "Kikon rush: frames of red aura before the dash (it strikes at once when already close).")
+(defparameter *kikon-speed* 16.0 "Kikon rush dash speed (m/s) ...")
+(defparameter *kikon-dash-max* 22 "... for at most this many frames (~5.9 m: the rush's range) ...")
+(defparameter *kikon-trigger* 1.6
+  "... and the strike starts as soon as the opponent is within this range (a blocked strike pushes
+him 0.6 m back: 2.2 m, still inside both characters' Q1 reach, so the -14 is punishable).")
+(defparameter *kikon-track* 120.0 "Degrees per second the rush turns during its dash and strike startup (like the Breaker).")
 (defparameter *reset-distance* 8.0 "After a Kikon / Soul Break both fighters are placed this far apart.")
 (defparameter *reset-neutral* 48 "Frames of neutral (inputs ignored) after the reset (0.8 s).")
 (defparameter *reset-reiatsu-bonus* 10.0 "Reiatsu a kit with :reset-reiatsu gets at each reset (Kenpachi).")
@@ -227,6 +236,10 @@ than its perception delay after the combo's *BURST-MIN-HITS*th hit.")
 far outside its preferred range: toward it from beyond, away from it from inside; it lets go in the
 middle of the range.")
 (defparameter *ai-dash-frames* 70 "Longest the CPU holds a dash.")
+(defparameter *ai-kikon-range* 7.0
+  "The CPU rushes a red opponent (a stunned one at once, else at a neutral decision) within this
+range (the rush's dash covers *KIKON-TRIGGER* + ~5.9 m) ...")
+(defparameter *ai-kikon-p* 0.5 "... with this chance per neutral decision. It never rushes a fighter who isn't red.")
 
 ;;; ================================================================ §14 budgets
 (defparameter *fire-density* 1.0 "Scales every fire emitter's rate (0.5 if the perf gate fails).")

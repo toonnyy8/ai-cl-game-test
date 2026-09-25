@@ -2,7 +2,7 @@
 ;;;; select, results, pause). Per side, P2 mirrored: Reishi bar (red + pulsing below *RED-THRESHOLD*,
 ;;;; white damage trail), *KONPAKU-MAX* Konpaku soul flames that shatter, Reiatsu 3 bars, Awakening bar (EVOLUTION
 ;;;; blinks; drains in a timed awakening), the kit meter (Inferno; drains in Hellfire), the timer, the
-;;;; combo counter under the victim's bar, move-name callouts over the user, the KIKON prompt, the red
+;;;; combo counter under the victim's bar, move-name callouts over the user, the HOLD O KIKON prompt, the red
 ;;;; soul flame over a Kikon-able victim, and the big words (ANNOUNCE). Cosmetic only: real time, RND01.
 ;;;; Screen lanes (top to bottom): side panels + timer (0 .. ~0.22 h), small words (0.3 h), big words
 ;;;; (0.45 h), captions (0.8 h). Callouts float over the user's head and step out of a word's box.
@@ -300,8 +300,8 @@ from the base form when this form has none)."
         (hud-text (cs-str c) edge (+ y bh (* 56 s)) (* 2 s) '(1 0.9 0.6 1) :align align)))
     ;; KIKON / BURST prompts for a human
     (when (and (not (brain e)) (member *flow* '(:battle)))
-      (cond ((kikon-ok-p e)
-             (hud-text (if (pad-connected-p side) "RT  KIKON" (if right "KP6  KIKON" "O  KIKON"))
+      (cond ((kikon-ready-p e)                            ; the opponent is red: the rush, held, Kiko's
+             (hud-text (if (pad-connected-p side) "HOLD RT  KIKON" (if right "HOLD KP6  KIKON" "HOLD O  KIKON"))
                        (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 3 s) (alpha! *c-kikon* (+ 0.5 (* 0.5 (hud-pulse 4.0))))
                        :align :center))
             ((burst-ok-p e)
@@ -364,7 +364,7 @@ callout: above the box it hits, or below it when above would reach the side pane
 
 (defparameter *controls-text*
   '(("MOVE" "W A S D" "ARROWS") ("QUICK" "J" "KP1") ("FLASH" "K" "KP2") ("SIGNATURE" "L" "KP3")
-    ("GUARD" "U" "KP4") ("BREAKER" "I" "KP5") ("KIKON" "O" "KP6") ("STEP" "SPACE" "KP0")
+    ("GUARD" "U" "KP4") ("BREAKER" "I" "KP5") ("KIKON RUSH (HOLD = KIKON)" "O" "KP6") ("STEP" "SPACE" "KP0")
     ("REIATSU (HOLD)" "LSHIFT" "KP ENTER") ("AWAKEN" "P" "KP +") ("SP1 / SP2" "SHIFT+K / SHIFT+L" "")
     ("HOHO" "SHIFT+SPACE" "") ("BURST REVERSE" "SHIFT+J" "") ("DASH" "HOLD SPACE" "HOLD KP0") ("PAUSE" "ESC" "")))
 

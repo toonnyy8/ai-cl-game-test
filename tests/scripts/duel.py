@@ -1,19 +1,22 @@
 # SOUL DUEL headless scripts (duel/lisp/debug.lisp lists the debug commands). Run:
 #   python3 tests/scripts/duel.py            (writes tests/scripts/duel-*.json)
 #   node tools/run.mjs dist/duel --secs 60  --script tests/scripts/duel-cvc-yk.json   seeded CPU vs CPU -> RESULTS
-#   node tools/run.mjs dist/duel --secs 200 --script tests/scripts/duel-gate.json     20 seeds x YY/YK/KK: "duel gate" lines
+#   node tools/run.mjs dist/duel --secs 300 --script tests/scripts/duel-gate.json     20 seeds x YY/YK/KK: "duel gate" lines
 #     (+ the combat log: 2107 turns it back on after the gate starts; scratchpad pt/attr.py-style analysers read it)
 #   node tools/run.mjs dist/duel --secs 20  --script tests/scripts/duel-probe.json    frame probes: "duel probe ... advantage
 #     A (table A)" for blocked Q1 / Q3 / F2 / Taimatsu (must be equal), then a mirror Q1 trade (same Reishi both sides)
 #   node tools/run.mjs dist/duel --secs 60  --script tests/scripts/duel-keys.json     P1 keyboard: J/K/L/I/U/Space/Shift
 #   node tools/run.mjs dist/duel --secs 50  --script tests/scripts/duel-extras.json   dash, Hoho swing, Burst, camera toggle
+#   node tools/run.mjs dist/duel --secs 48  --script tests/scripts/duel-kikon.json    the Kikon rush: blocked / Kikon (O held) /
+#     a hit (O tapped) / through a red guard
 #   node tools/run.mjs dist/duel --secs 75  --script tests/scripts/duel-perf.json     real-time CPU vs CPU: stats lines
 #   node tools/run.mjs dist/duel --secs 140 --script tests/scripts/duel-shots.json    tests/shots/duel-*.png
 # Determinism: run a cvc script twice (or once with turbo and once without: drop the 2102 step) and
 #   diff <(grep '^duel' run1.log) <(grep '^duel' run2.log)   -> empty.
-# Reference (permanent Bankai, slow-motion clock reset per match, 2026-09-25): duel-cvc-yk.json (seed 7) ends
-#   duel -> RESULTS winner P2 konpaku 0-1 ticks 7298 secs 121.6    (turbo and real time alike; also after a gate)
-#   (before: 0-4 ticks 5857 secs 97.6 with Burst + dash; 0-7 ticks 5302 secs 88.4 before them)
+# Reference (the Kikon rush, 2026-09-25): duel-cvc-yk.json (seed 7) ends
+#   duel -> RESULTS winner P1 konpaku 2-0 ticks 9780 secs 163.0    (turbo and real time alike; also after a gate)
+#   (before: P2 0-1 ticks 7298 secs 121.6 with the instant Kikon; 0-4 ticks 5857 secs 97.6 with a timed Bankai;
+#   0-7 ticks 5302 secs 88.4 before Burst and the dash)
 import json
 T0 = 9.0          # startup (meshes + sound synthesis) is done by then
 SHOTS = "tests/shots/duel-"
@@ -79,6 +82,27 @@ ev += tap(t, "Escape") + [shot(t + 0.6, "extras-pause")]                    # pa
 for i in range(4): ev += tap(t + 1.2 + 0.3 * i, "ArrowDown")
 ev += tap(t + 2.6, "Enter") + tap(t + 3.1, "Escape") + [shot(t + 4.0, "extras-side"), cmd(t + 4.5, 2107)]
 write("extras", ev)
+
+# The Kikon rush by keyboard (P1 Yamamoto 5 m from an idle Kenpachi, debug 2322+k). Expected log lines, in order:
+#   P1 move YA-KIKON, P1 YA-KIKON -> P2 BLOCKED 70   (not red, guarding: blocked although O is held)
+#   P1 move YA-KIKON, P1 YA-KIKON -> P2 KIKON 70, P1 KIKON on P2: -2 konpaku, cine YAMA-KIKON-CINE   (red, O held)
+#   P1 move YA-KIKON, P1 YA-KIKON -> P2 HIT 70       (red, O tapped: released before the strike, a plain hit)
+#   P1 move YA-KIKON, P1 YA-KIKON -> P2 KIKON 70 ... (red and guarding: the guard doesn't stop it)
+#   P1 move YA-KIKON, P1 YA-KIKON -> P2 KIKON 70 ... (7 m, in 0.1x slow motion for the shots)
+# Shots: kikon-rush-a / -b (the aura and the dash, slow motion), kikon-prompt (HOLD O  KIKON over a red P2), kikon-cine.
+t = T0
+ev = [cmd(t, 2322), key(t + 1.0, "KeyO"), key(t + 4.0, "KeyO", False)]
+t += 5.0
+ev += [cmd(t, 2323), shot(t + 1.0, "kikon-prompt"), key(t + 1.3, "KeyO"), shot(t + 2.6, "kikon-cine"),
+       key(t + 4.3, "KeyO", False)]
+t += 9.0
+ev += [cmd(t, 2323)] + tap(t + 1.3, "KeyO")
+t += 4.0
+ev += [cmd(t, 2324), key(t + 1.3, "KeyO"), key(t + 4.3, "KeyO", False)]
+t += 9.0
+ev += [cmd(t, 2325), key(t + 0.3, "KeyO"), shot(t + 0.6, "kikon-rush-a"), shot(t + 1.6, "kikon-rush-b"),   # 0.1x slow motion
+       key(t + 6.0, "KeyO", False), cmd(t + 10.0, 2107)]
+write("kikon", ev)
 
 # the menus by keyboard: TITLE -> MODE (VS PLAYER) -> SELECT (P1 Kenpachi, P2 confirms with KP1) -> INTRO
 # -> skip (Esc) -> BATTLE -> pause (Esc) -> RESUME -> pause -> CHARACTER SELECT -> back ... -> TITLE;

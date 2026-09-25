@@ -1,15 +1,19 @@
 ;;;; combat.lisp — what happens when fighters touch (design-v1 §1, §3, §4): HIT-SYSTEM (clash check,
 ;;;; then COLLECT every fighter's and hazard's hits, then APPLY them all: a trade is a trade, no side
 ;;;; goes first; then settle the souls they broke), APPLY-HIT (the triangle, damage, reactions, chip,
-;;;; gauges, hitstop), Kikon / Soul Break / awakening / form changes (all settled here, at connect
-;;;; time; cinema.lisp only presents them), the perfect-Hoho test and GAUGE-SYSTEM (regen, burns,
+;;;; gauges, hitstop; the Kikon rush's strike becomes the Kikon here), Kikon / Soul Break / awakening
+;;;; / form changes (all settled here, at connect time; cinema.lisp only presents them), the perfect-Hoho test and GAUGE-SYSTEM (regen, burns,
 ;;;; form timers, Hellfire, EVOLUTION). Decisions are rules.lisp's; effects are EMITted for feedback.lisp.
 (in-package :duel)
 
 ;;; ---------------------------------------------------------------- damage and gauges
+(defvar *kikons* nil
+  "(attacker victim move) of every Kikon rush strike confirmed during this step's HIT-SYSTEM
+(KIKON-CONFIRM-P): settled with the Soul Breaks at its end (SETTLE-SOULS).")
+
 (defvar *soul-breaks* nil
   "(attacker . victim) of every Reishi that reached 0 during this step's HIT-SYSTEM: settled together
-at its end (SETTLE-SOUL-BREAKS), so a lethal trade breaks both souls and no side goes first.")
+at its end (SETTLE-SOULS), so a lethal trade breaks both souls and no side goes first.")
 
 (defun gain-gauges (e dealt taken)
   "Reiatsu and Fighting Spirit for dealing DEALT / taking TAKEN damage."
@@ -39,15 +43,20 @@ automatic Soul Break, settled at the end of the step (*SOUL-BREAKS*): returns T 
       (setf (gauges-meter g) (f32 (gauge-add (gauges-meter g) amount (getf m :max)))))))
 
 ;;; ---------------------------------------------------------------- one hit
-(defun apply-hit (att def hw sx sz &key mv hazard def-state (bonus 0) crush x z)
+(defun apply-hit (att def hw sx sz &key mv hazard def-state (bonus 0) crush x z red)
   "Apply hit HW of ATT (a fighter) to DEF, coming from (SX SZ) (the attacker or the HAZARD: guard
 facing and push direction). MV, BONUS (damage added: the stance's stored) and CRUSH: ATT's move
 and its state when the hit was collected (in a trade the first hit applied may already have put ATT
-in hitstun). DEF-STATE: DEF's triangle state when collected. X Z: where to show it. Sets the global
-hitstop (sim timing). Returns RESOLVE-CONTACT's result (NIL = no effect)."
+in hitstun). DEF-STATE and RED: DEF's triangle state and red-ness when collected. X Z: where to show
+it. Sets the global hitstop (sim timing). A Kikon rush strike (MV of kind :kikon) is unguardable on a
+RED defender (KIKON-GUARDABLE-P) and, if ATT still holds the button that started it on this step, is
+the Kikon (KIKON-CONFIRM-P): no damage, queued in *KIKONS* for SETTLE-SOULS. Returns RESOLVE-CONTACT's
+result (NIL = no effect)."
   (let* ((fa (fighter att)) (fd (fighter def)) (flags (hw-flags hw))
          (p (pos-of def))
+         (rush (and mv (eq (mv-kind mv) :kikon)))
          (res (resolve-contact def-state
+                               :unguardable (and rush red)
                                :breaker (member :breaker flags)
                                :guard-crush (or (member :guard-crush flags) crush)
                                :quick (and mv (eq (mv-kind mv) :quick))
@@ -56,7 +65,11 @@ hitstop (sim timing). Returns RESOLVE-CONTACT's result (NIL = no effect)."
                                :armor-vs-quick (passive-p def :armor-vs-quick)))
          (x (or x (aref p 0))) (z (or z (aref p 2))) (y (+ (aref p 1) 1.1))
          (base (+ (hw-dmg hw) bonus))
-         (own (and mv (eq (fighter-move fa) mv))))      ; the attacker is still in that move
+         (own (and mv (eq (fighter-move fa) mv)))       ; the attacker is still in that move
+         (kikon (and rush (kikon-confirm-p red (vpad-down (pilot-vpad (pilot att)) :kikon) res))))
+    (when kikon
+      (setf res :kikon)
+      (unless (find def *kikons* :key #'second) (push (list att def mv) *kikons*)))
     (when res
       (let ((first (and own (null (fighter-contact fa)))))
         (when own
@@ -65,6 +78,7 @@ hitstop (sim timing). Returns RESOLVE-CONTACT's result (NIL = no effect)."
         (clog "~a ~a -> ~a ~a ~d" (side-name att) (if mv (mv-name mv) (if hazard (hazard-kind hazard) :counter))
               (side-name def) res base)
         (ecase res
+          (:kikon nil)                                  ; settled at the end of the step (SETTLE-SOULS)
           ((:hit :counter)
            (multiple-value-bind (react hits launches air)
                (combo-step (hw-react hw) (eq (fighter-state fd) :air) (fighter-combo-hits fd)
@@ -114,8 +128,9 @@ hitstop (sim timing). Returns RESOLVE-CONTACT's result (NIL = no effect)."
 (defstruct pending
   "One hit collected this step, with what it needs of the attacker as he was then (they are applied
 after all are collected). I: the move's window index; HAZARD: the hazard dealing it (NIL = melee);
-STATE: the defender's triangle state; MV BONUS CRUSH: the attacker's move, stored damage, guard crush."
-  att def hw (i 0) (sx 0f0) (sz 0f0) hazard state mv (bonus 0) crush)
+STATE RED: the defender's triangle state and red-ness; MV BONUS CRUSH: the attacker's move, stored
+damage, guard crush."
+  att def hw (i 0) (sx 0f0) (sz 0f0) hazard state red mv (bonus 0) crush)
 
 (defvar *pending* nil "Hits collected this step, applied together.")
 
@@ -128,7 +143,7 @@ Hoho's counter strike on its frame (it always connects)."
         (push (make-pending :att e :def o :hw *perfect-hw* :sx (aref p 0) :sz (aref p 2) :state (defender-state o))
               *pending*))
       (when (and (eq (fighter-state f) :move) (eq (fighter-phase f) :main))
-        (let* ((sf (fighter-sf f)) (q (pos-of o)) (yaw (yaw-of e))
+        (let* ((sf (fighter-sf f)) (q (pos-of o)) (yaw (yaw-of e)) (go (gauges o))
                (fx (f32 (fwd-x yaw))) (fz (f32 (fwd-z yaw))) (ob (model-body (model o))))
           (loop for w across (mv-hits mv) for i from 0
                 when (and (<= (hw-from w) sf) (< sf (hw-to w)) (not (logbitp i (fighter-hits f)))
@@ -137,6 +152,7 @@ Hoho's counter strike on its frame (it always connects)."
                                                    (body-hurt-r ob) (body-hurt-h ob) 0f0)))
                   do (push (make-pending :att e :def o :hw w :i i :sx (aref p 0) :sz (aref p 2)
                                          :state (defender-state o) :mv mv
+                                         :red (not (kikon-guardable-p (gauges-reishi go) (gauges-reishi-max go)))
                                          :bonus (fighter-dmg-bonus f) :crush (fighter-crush f))
                            *pending*)))))))
 
@@ -184,18 +200,19 @@ settle the souls they broke."
     (dolist (h hits)
       (let* ((hz (pending-hazard h)) (fa (fighter (pending-att h))) (mv (pending-mv h))
              (res (apply-hit (pending-att h) (pending-def h) (pending-hw h) (pending-sx h) (pending-sz h)
-                             :mv mv :hazard hz :def-state (pending-state h)
+                             :mv mv :hazard hz :def-state (pending-state h) :red (pending-red h)
                              :bonus (pending-bonus h) :crush (pending-crush h))))
         (when res
           (cond (hz (hazard-connected hz))
                 ((and mv (eq mv (fighter-move fa)))   ; (an on-land hook may have started the next move)
                  (setf (fighter-hits fa) (logior (fighter-hits fa) (ash 1 (pending-i h))))))))))
-  (settle-soul-breaks))
+  (settle-souls))
 
 ;;; ---------------------------------------------------------------- perfect Hoho
 (defun perfect-now-p (e)
   "Would a Hoho started now by E be PERFECT? An opponent hit volume (move or hazard) active now or
-within *PERFECT-LEAD* frames overlaps E's hurt cylinder grown by *PERFECT-INFLATE* (rules.lisp)."
+within *PERFECT-LEAD* frames overlaps E's hurt cylinder grown by *PERFECT-INFLATE* (rules.lisp), or
+his Breaker / Kikon rush dash is within 0.5 m of its trigger range."
   (let* ((o (opp-of e)) (fo (fighter o)) (mv (fighter-move fo)) (p (pos-of e)) (q (pos-of o))
          (b (model-body (model e))) (yaw (yaw-of o)))
     (or (and (eq (fighter-state fo) :move) (eq (fighter-phase fo) :main)
@@ -203,8 +220,8 @@ within *PERFECT-LEAD* frames overlaps E's hurt cylinder grown by *PERFECT-INFLAT
                    thereis (perfect-hoho-p (fighter-sf fo) (hw-from w) (hw-to w) (hw-vols w)
                                            (aref q 0) (aref q 1) (aref q 2) (f32 (fwd-x yaw)) (f32 (fwd-z yaw))
                                            (aref p 0) (aref p 1) (aref p 2) (body-hurt-r b) (body-hurt-h b))))
-        (and (eq (fighter-state fo) :move) (eq (fighter-phase fo) :dash)      ; a Breaker about to strike
-             (<= (fighter-dist fo) (+ *breaker-trigger* 0.5)))
+        (and (eq (fighter-state fo) :move) (eq (fighter-phase fo) :dash)      ; a Breaker / Kikon rush about to strike
+             (<= (fighter-dist fo) (+ (if (eq (mv-kind mv) :kikon) *kikon-trigger* *breaker-trigger*) 0.5)))
         (hazard-threat-p o e))))
 
 ;;; ---------------------------------------------------------------- Burst Reverse
@@ -259,22 +276,10 @@ one (both fighters idle after it)."
         (to-idle e 0))))
 
 ;;; ---------------------------------------------------------------- Kikon, Soul Break, reset
-(defun victim-stun-left (v)
-  "Frames of hitstun V has left (0 when not in a reaction)."
-  (let ((f (fighter v)))
-    (case (fighter-state f)
-      (:stun (max 0 (- (fighter-stun f) (fighter-sf f))))
-      (:air 1)
-      (t 0))))
-
-(defun kikon-ok-p (e)
-  "May E press Kikon now (rules KIKON-AVAILABLE-P): the opponent is red, and E's move landed and is
-in its cancel window, or the opponent is still in hitstun."
-  (let* ((f (fighter e)) (o (opp-of e)) (go (gauges o)) (mv (fighter-move f)) (moving (eq (fighter-state f) :move)))
-    (kikon-available-p (gauges-reishi go) (gauges-reishi-max go)
-                       :landed (and moving (eq (fighter-contact f) :hit))
-                       :sf (fighter-sf f) :hit-frame (fighter-land-sf f) :total (if moving (mv-total mv) 0)
-                       :victim-stun (victim-stun-left o))))
+(defun kikon-ready-p (e)
+  "Is E's opponent red: would E's Kikon rush, connecting now with the button held, be the Kikon?
+(The HUD's HOLD O prompt, the CPU's rush.)"
+  (let ((go (gauges (opp-of e)))) (red-p (gauges-reishi go) (gauges-reishi-max go))))
 
 (defun settle-konpaku (att def soul-break)
   "Konpaku at connect time (KIKON-RESULT): DEF loses 2 / 3 (+1 on a Soul Break), his Reishi refills.
@@ -289,28 +294,27 @@ Returns T when DEF is out of Konpaku."
       (clog "~a ~a on ~a: -~d konpaku, ~d left" (side-name att) (if soul-break "SOUL BREAK" "KIKON") (side-name def) lost left)
       ko)))
 
-(defun kikon! (e)
-  "Kikon: settled now, then its cinematic, then the reset (or the finish). The hazards still out are
-cleared first: the reset clears them anyway, and frozen through the cinematic their looks would hang
-in its shots."
-  (let* ((o (opp-of e)) (mv (kit-command-move (kit-of e) :kikon)) (ko (settle-konpaku e o nil)))
-    (when (mv-callout mv) (callout e (mv-callout mv)))
-    (emit :kikon e o)
-    (clear-hazards)
-    (start-cine (mv-cine mv) e o :after (lambda () (if ko (match-over e) (reset-round e o))))))
-
-(defun settle-soul-breaks ()
-  "Reishi reached 0 (*SOUL-BREAKS*): automatic Soul Break (Kikon count + 1) for every victim of this
-step at once, so a lethal trade breaks both; one cinematic, then the reset, or the finish (a draw
-when both souls ran out)."
-  (let ((sb (reverse *soul-breaks*)))
-    (setf *soul-breaks* nil)
-    (when sb
-      (let ((kos (loop for (att . def) in sb when (settle-konpaku att def t) collect def))
-            (a (car (first sb))) (v (cdr (first sb))))
+(defun settle-souls ()
+  "The souls broken during this step's HIT-SYSTEM, settled together so no side goes first: every
+confirmed Kikon (*KIKONS*: the Kikon count) and every Reishi that reached 0 (*SOUL-BREAKS*: the
+count + 1; a Kikon's victim has no Soul Break on top, the Kikon refills his Reishi). Then one
+cinematic (the first Kikon's move :cine, else the Soul Break's), then the reset, or the finish (a
+draw when both souls ran out). The hazards still out are cleared first: the reset clears them anyway,
+and frozen through the cinematic their looks would hang in its shots."
+  (let* ((kk (reverse *kikons*))
+         (sb (remove-if (lambda (s) (find (cdr s) kk :key #'second)) (reverse *soul-breaks*))))
+    (setf *kikons* nil *soul-breaks* nil)
+    (when (or kk sb)
+      (let ((kos (append (loop for (att def nil) in kk when (settle-konpaku att def nil) collect def)
+                         (loop for (att . def) in sb when (settle-konpaku att def t) collect def)))
+            (a (if kk (first (first kk)) (car (first sb))))
+            (v (if kk (second (first kk)) (cdr (first sb)))))
+        (loop for (att def mv) in kk
+              do (when (mv-callout mv) (callout att (mv-callout mv)))
+                 (emit :kikon att def))
         (loop for (att . def) in sb do (emit :soul-break att def))
         (clear-hazards)
-        (start-cine 'soul-break-cine a v
+        (start-cine (if kk (mv-cine (third (first kk))) 'soul-break-cine) a v
                     :after (lambda () (cond ((null kos) (reset-round a v))
                                             ((rest kos) (match-over nil))
                                             (t (match-over (opp-of (first kos)))))))))))
@@ -330,6 +334,7 @@ of neutral, P1 on the left of the view again, hazards cleared, the kit's :reset-
             (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (kit-reset-reiatsu (kit-of e)) *reiatsu-max*)))
       (fill (motion-vel mo) 0f0)
       (vpad-clear! (pilot-vpad (pilot e)))
+      (let ((b (brain e))) (when b (setf (brain-press-left b) 0)))   ; a CPU lets go of what it held (a rush's O)
       (to-idle e 0)))
   (emit :reset))
 

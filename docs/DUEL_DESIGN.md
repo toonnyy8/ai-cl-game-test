@@ -32,7 +32,9 @@ the code wins; the host test `tests/duel-rules-test.lisp` checks the move tables
 ## 1. How RoS maps onto SOUL DUEL
 
 Kept from RoS: two layers of health (Reishi bar + Konpaku lives), **9 Konpaku**, the red window at
-**30 %** Reishi, Kikon moves as the only way to break a Konpaku, Soul Break at 0 Reishi, Kikon
+**30 %** Reishi, Kikon moves as the only way to break a Konpaku (the Kikon button rushes in and
+strikes; only a strike that lands on a red opponent with the button still held is the Kikon; it is
+guardable unless he is red), Soul Break at 0 Reishi, Kikon
 counts 2 / 3 (awakened) and Soul Break +1, the Attack > Breaker > Guard > Attack triangle,
 Breaker vs Breaker clash, Hoho (1 bar, reappear behind, perfect Hoho counter), Burst Reverse
 (blue, 2 bars, breaks a combo), the dash (hold Step), the camera behind the player, the Fighting
@@ -64,15 +66,34 @@ Deliberate deviations:
 | Timer | 300 s. Time-up: more Konpaku wins, then the higher Reishi %, else a draw |
 | Chip | only fire projectiles (12 %) and Bankai blade hits (25 %); chip never kills (leaves 1) |
 
-**Kikon.** There is no raw Kikon. The Kikon button works only while the opponent is red and
-either (a) our move landed and is inside its cancel window (from its first hit frame to the end of
-its S+A+R), or (b) the opponent is still in hitstun from our hits (`kikon-available-p`,
-rules.lisp). Konpaku and Reishi are **settled when the Kikon connects** (`kikon!`, combat.lisp);
-the cinematic that follows (≤ 2.0 s) only presents it and can be skipped.
+**Kikon** (as in RoS: press to rush, keep holding to Kiko). The Kikon button (O / KP6 / RT) starts
+the **Kikon rush** at any time, whatever the opponent's Reishi: from idle, walk, guard or a run, or
+as a cancel of any landed move inside its cancel window (from its first hit frame to the end of its
+S+A+R; not of another rush). The rush is a red aura of 5 f (`*kikon-aura*`), then a dash at 16 m/s
+toward him for at most 22 f (~5.9 m, `*kikon-speed*`, `*kikon-dash-max*`), turning 120°/s, until he
+is within 1.6 m (`*kikon-trigger*`; already that close after the aura: no dash), then the kit's
+strike (S8 A3 R24, §6; 30 f recovery on a whiff). From a cancel at close range it hits 13 f after
+the press, inside a flinch. No armour and no counter-hit property: any hit interrupts it.
+- **Not red** (Reishi ≥ 30 %): the strike is an ordinary hit, guardable like any attack: blocked it is
+  **−14** (13 f of blockstun, 0.6 m pushback: at 2.2 m both Q1s punish it); a hit deals 70 (×
+  form and Cornered, combo-scaled), knocks back 2.5 m, counts for combos and gauges, no Konpaku.
+  Holding the button changes nothing.
+- **Red**: the strike is **unguardable**: guard and Kenpachi's stance don't stop it (it hits); Step
+  and Hoho iframes still dodge it (a whiff, punishable), and a Burst Reverse pressed before it
+  connects escapes it (the Burst ends the rush). When it connects and the button is **still held on
+  that step** (the hit frame; `kikon-confirm-p`, rules.lisp), it is the **Kikon**: no damage, the
+  Konpaku are settled at the end of that step's hit resolution (`settle-souls`, combat.lisp) and the
+  character's Kikon cinematic plays (≤ 2.0 s; it only presents it and can be skipped). Released
+  before the hit frame, it is a plain hit (70, knockback) — and if that hit takes his Reishi to 0,
+  the normal Soul Break follows.
+Rules: `kikon-rush-next-phase`, `kikon-guardable-p`, `kikon-confirm-p`, `resolve-contact
+:unguardable` (rules.lisp). Why the hit frame and not a window after it: the hitstop that follows a
+hit freezes the sim (devices are still read), so a longer window would add no real time to react,
+and "held at the hit" is one fact a replay can check.
 
 **Soul Break.** Every Reishi that reaches 0 during a step is settled at the end of that step's hit
-resolution (`settle-soul-breaks`). A lethal trade breaks both souls; if both run out of Konpaku,
-the match is a draw.
+resolution (`settle-souls`, with the Kikons of that step; a Kikon's victim gets no Soul Break on
+top). A lethal trade breaks both souls; if both run out of Konpaku, the match is a draw.
 
 ## 3. Controls
 
@@ -87,7 +108,7 @@ strafe" around the opponent. There is no jump.
 | Signature (hold where noted) | L | KP3 | B |
 | Guard (hold) | U | KP4 | LB |
 | Breaker (hold = longer dash) | I | KP5 | RB |
-| Kikon | O | KP6 | RT |
+| Kikon rush (hold through the strike = Kikon on a red opponent) | O | KP6 | RT |
 | Step (hold = dash) | Space | KP0 | A |
 | Reiatsu modifier (hold) | Left Shift | KP Enter | LT |
 | Awaken | P | KP + | Back, or LS+RS |
@@ -95,7 +116,7 @@ strafe" around the opponent. There is no jump.
 Modifier + Flash = **SP1**, modifier + Signature = **SP2**, modifier + Step = **Hoho**, modifier +
 Quick = **Burst Reverse** (only in hitstun). Presses stay buffered 10 f.
 When several buffered buttons could start something, the command table in
-`duel/lisp/control.lisp` decides, highest first: Kikon, Awaken, Hoho, Burst, Step, Breaker,
+`duel/lisp/control.lisp` decides, highest first: Kikon (the rush), Awaken, Hoho, Burst, Step, Breaker,
 SP2, SP1, Signature, Flash, Quick; a command that is refused (no bar, not red yet) does not hide
 the ones below it.
 
@@ -118,7 +139,7 @@ Step does not).
 fighter **runs** (`:run`): Yamamoto 8 m/s, Kenpachi 10 m/s (Nozarashi inherits 10), facing and
 moving in the stick direction relative to the opponent (neutral = at him), turning at most
 300°/s, stopping 1.2 m from him. No iframes (only the hop's). The run cancels at once into Quick,
-Flash, Signature, SP1 / SP2, Breaker, Kikon, Hoho or a new Step, and a move started out of it slides
+Flash, Signature, SP1 / SP2, Breaker, the Kikon rush, Hoho or a new Step, and a move started out of it slides
 1 m on along the run (never closer than 1.2 m); Guard stops it; releasing Step brakes it over 6 f
 (committed). The run starts only after the whole hop, so holding Step never shortens a Step or
 lets it cancel early into an attack. Arena wall as usual. Clip `:sh-run` (body.lisp), played at
@@ -153,14 +174,15 @@ cost 1 bar (SP2 in an awakened form 2; a move may name its own cost), Hoho 1 bar
 f1–f14, 24 f total; not usable in blockstun / hitstun; 60 f lockout between two. It can also
 cancel a Quick / Flash string on hit. **Perfect Hoho**: an opponent hit window (move or hazard)
 active now or within 8 f overlaps our hurt cylinder grown by 1 m, or his Breaker dash is within
-2.7 m. Then: "PERFECT", 0.45 s of 0.25× slow motion for both, the opponent's inputs locked 40 f,
+2.7 m (his Kikon rush dash within 2.1 m). Then: "PERFECT", 0.45 s of 0.25× slow motion for both, the opponent's inputs locked 40 f,
 and the Hoho ends in an automatic counter strike on f14 (60 damage, 36 f stun).
 
 **Burst Reverse** (modifier + Quick, 2 bars; blue, as in RoS): only in hitstun or airborne (launched
 or knocked down) after the **2nd hit** of a combo, inputs not locked (so never against a perfect
 Hoho's counter strike, which is hit 1 anyway), never during a cinematic. It is pressed in the
-victim's step but applied once both fighters have stepped, and only if no cinematic began: a Kikon
-pressed on the same step connects and wins, whichever side steps first. Effect: the user is
+victim's step but applied once both fighters have stepped (before the hits of that step are
+resolved), and only if no cinematic began: it ends the attacker's move, so a Kikon rush whose strike
+has not connected yet is escaped; a strike that connected first has already started its cinematic. Effect: the user is
 neutral at once (put on the ground if airborne), his combo over, invulnerable 20 f; the attacker's
 move (or Hoho, step, run) ends and he slides 5 m away over 20 f, not stunned; 8 f of global
 hitstop; a blue shockwave, "BURST REVERSE" and a human's HUD prompt (SHIFT+J BURST) while it is
@@ -226,7 +248,7 @@ Shikai (form `:base`):
 | Shift+K | SP1 Shiranui `:ya-shiranui` | hold 12–60 f, then throw 2/1/20 | 90 → 170 | chip 12 % | homing fireball (60°/s), 10 → 16 m/s, 20 m range; a full charge fills Inferno |
 | Shift+L | SP2 Taimatsu `:ya-taimatsu` | 16/8/24 | 120 | −14 | fire cone 4 m, 90°, knockback 3.5 m |
 | I | Breaker: Ikkotsu `:ya-breaker` | §4 | 150 | Guard Break | plants the sword, punches |
-| O | Kikon: Jokaku Enjo `:ya-kikon` | cinematic 1.8 s | — | — | fire walls close into a dome and detonate |
+| O | Kikon rush `:ya-kikon` → Kikon **Jokaku Enjo** | aura 5, dash ≤ 22, strike 8/3/24 | 70 | −14 | §2; strike = Q3's chop (`:clip-s 12`), reach 2.2, knockback 2.5 m; unguardable on red; held on a red hit → cinematic 1.8 s: fire walls close into a dome and detonate |
 
 **Inferno (Goen) gauge**, 0–100: +20 per Flash hit, +15 per Signature hit (cuts and wave), +5 per
 blocked wave / fireball, a full Shiranui fills it. Full → **Hellfire (Gokuen)**, a timed form
@@ -250,7 +272,7 @@ Nozarashi ignores it); no Inferno and no Hellfire any more (Inferno ends at 0). 
 |---|---|---|---|---|---|
 | Shift+K | SP1 Kyokujitsujin `:ya-kyoku` | 18/3/26 | 220 | −16 | thrust, a line 9 m × 0.6 m, knockback 4 m |
 | Shift+L | SP2 Kaka Jumanokushi Daisojin `:ya-kaka` | 24/1/36 | 3 × 50 | — | 2 bars; 3 charred skeletons rise 1.9 m around the opponent from f30, one every 10 f, and lunge; the last one's hit stuns 40 f |
-| O | Kikon: Tenchi Kaijin `:ya-tenchi` | cinematic 1.6 s | — | — | one slash; the world goes ash-grey, a white line crosses the screen, the victim bursts into ash |
+| O | Kikon rush `:ya-tenchi` → Kikon **Tenchi Kaijin** | as the base rush (strike = Q1's cut) | 70 | −14 | held on a red hit → cinematic 1.6 s: one slash; the world goes ash-grey, a white line crosses the screen, the victim bursts into ash |
 
 ### 6.2 Zaraki Kenpachi (`duel/lisp/ken.lisp`, art `ken-art.lisp`)
 
@@ -273,7 +295,7 @@ Base form:
 | Shift+K | SP1 Buttagiru `:ke-buttagiru` | 22/4/26 | 180 | −14 | leaps 5 m, overhead, a 3 m ground crack, knockdown |
 | Shift+L | SP2 "ORE NI KIRENEE MON WA NEE" `:ke-charge` | 14 startup, dashes 14 m/s for its 26 active frames | 25 | −16 | contact → the flurry `:ke-flurry` (4 × 25 + a 60 launcher; S10, cuts f10 16 22 28, launcher f40); still holding when the dash starts = guard-crushing |
 | I | Breaker: shoulder charge `:ke-breaker` | §4 | 150 | Guard Break | |
-| O | Kikon `:ke-kikon` | cinematic 1.9 s | — | — | three reckless cuts, laughing, the last through the victim |
+| O | Kikon rush `:ke-kikon` → Kikon | aura 5, dash ≤ 22, strike 8/3/24 | 70 | −14 | §2; strike = the stance's cross-body cut, reach 2.2, knockback 2.5 m; held on a red hit → cinematic 1.9 s: three reckless cuts, laughing, the last through the victim |
 
 **Awakening → "NOME, NOZARASHI"** (form `:nozarashi`, permanent). Cinematic 1.2 s in two beats:
 the eyepatch torn off (yellow reiatsu pillar, shockwave), then the katana grows into the cleaver
@@ -294,7 +316,7 @@ S(base)/S(derived) speed so it still hits on frame S. SP2 costs 2 bars (awakened
 | SP1 **Split the Meteor** `:ke-meteor` (replaces Buttagiru) | 26/4/30 | 12 m line | 240, knockdown, splits the ground |
 | SP2 charge / flurry | 17/26/24; flurry S13, cuts f13 19 25 31, launcher f43 | 1.96 / 3.08 | 2 bars |
 | Breaker | strike 11/4/18 | 3.64 | still triggers at 2.2 m |
-| Kikon **sky split** `:ke-kikon-n` | cinematic 1.5 s | — | one cleave; a line of light splits the sky and the ground, the screen halves shear apart |
+| Kikon rush `:ke-kikon-n` → Kikon **sky split** | strike 11/3/24 | 3.08 | its own move, written with the derivation's numbers (S + 3, reach × 1.4; aura, dash and trigger unchanged); held on a red hit → cinematic 1.5 s: one cleave; a line of light splits the sky and the ground, the screen halves shear apart |
 
 Damage is the base table's × 1.15 (and × Cornered); block advantages are unchanged.
 
@@ -305,18 +327,26 @@ random number from `sim-rnd01` (seeded per match), so a seed replays the same ma
 
 - **Perception**: the opponent as he was N steps ago (a ring buffer): EASY 24, NORMAL 14, HARD 8.
   What happens to the CPU itself (its own hit, its own blockstun) it feels at once.
-- **Reflexes**, checked first, in order: Kikon when allowed; finish the string on hit (the F
+- **Reflexes**, checked first, in order: on its own landed hit against a red opponent, the Kikon
+  rush as a cancel; else finish the string on hit (the F
   branch half the time), else an SP2 cancel if the victim is grounded and the kit's
-  `:sp-cancel-bars` are there; awaken on EVOLUTION (Yamamoto only above 40 % Reishi); punish a
+  `:sp-cancel-bars` are there; from neutral, the Kikon rush on a red opponent it sees in hitstun or
+  airborne within 7 m (`*ai-kikon-range*`); awaken on EVOLUTION (Yamamoto only above 40 % Reishi); punish a
   blocked ender (advantage ≤ −8) with Q1 (EASY 0.25, NORMAL 0.6, HARD 0.9); follow up a stunned
   opponent (Guard Break, broken stance) with Q1; Yamamoto's "oki": a full-charge Shiranui on a
   launched / downed opponent beyond 3 m while he has ≥ 60 % Reishi (this is what fills Inferno
-  into Hellfire); punish a recovering opponent in reach; an incoming Breaker aura (p 0.4 / 0.55 /
-  0.7 within 5 m): Hoho through the dash if a bar is free and the kit's Hoho roll passes, else
-  Q1 beyond 1.8 m, else a sideways Step; the kit's reactions (Kenpachi's stance against a
+  into Hellfire); punish a recovering opponent in reach; an incoming Breaker or Kikon rush aura /
+  dash (p 0.4 / 0.55 / 0.7 within 5 m): a rush while the CPU is not red is guarded; else Hoho
+  through the dash if a bar is free and the kit's Hoho roll passes, else Q1 beyond 1.8 m, else a
+  sideways Step; the kit's reactions (Kenpachi's stance against a
   projectile, or against a Flash startup only when the stance can still come up in time), p 0.7;
   Breaker a guard held ≥ 24 f within 3 m (p 0.4); against a committed move in range: Hoho (1 bar,
-  ≥ 6 f before it hits) or guard.
+  ≥ 6 f before it hits) or guard (a Kikon rush strike on a red CPU: Hoho or a sideways Step).
+- **Kikon**: the CPU rushes only a red opponent: as a cancel, on his hitstun, or at a neutral
+  decision within 7 m with p 0.5 (`*ai-kikon-p*`; not while it sees him down, waking up or in a
+  Hoho). It holds the button from the press to past the strike (aura + the longest dash + S + 4
+  frames), so a CPU rush that connects on a red opponent is always the Kikon. It never rushes a
+  fighter who isn't red (a −14 hit is worth less than its other moves).
 - **Intents** APPROACH / PRESSURE / ZONE / DEFEND, re-picked every 12 f from the kit's weights;
   each has a preferred range. In neutral the CPU walks to that range, strafes (direction re-rolled
   every 40–120 f), and every 40–80 f (NORMAL; EASY 56–96, HARD 20–60) decides: guard (close, the
@@ -340,9 +370,9 @@ random number from `sim-rnd01` (seeded per match), so a seed replays the same ma
 
 **Pacing gate** (the regression test for all of the above): 20 seeded CPU-vs-CPU matches (NORMAL,
 cinematics included) per pairing YY, YK, KK must all end by K.O.; target median 120–180 s, max
-240 s. Latest (with Burst and the dash): YY 134.2 s (104–193), YK 120.1 s (94–179), KK 135.8 s
-(108–153), 60/60 K.O. (DUEL_GAMEPLAY.md). Burst's NORMAL chance (0.6) is the knob that brought YK
-into the window (at 0.4: YY 131.3, YK 107.4, KK 137.9).
+240 s. Latest (the Kikon rush): YY 153.4 s (119–181), YK 136.9 s (106–165), KK 140.6 s
+(114–157), 60/60 K.O. (DUEL_GAMEPLAY.md). Before it (the instant Kikon after a hit, permanent
+Bankai): YY 144.2, YK 138.1, KK 140.8 s; no knob was retuned for the rush.
 
 ## 8. Flow and screens
 
@@ -390,7 +420,8 @@ low red sun. Bankai adds ember cracks to the plaza.
 9 Konpaku soul flames that shatter, the REIATSU 3 bars, the AWAKEN bar (EVOLUTION blinks; shows the
 form name once awakened), Yamamoto's INFERNO bar (drains in Hellfire),
 the timer, the combo counter under the victim's bar ("5 HITS 212"), move-name callouts over the
-user, a KIKON prompt (for a human attacker), a BURST prompt (a human in a combo he may burst out
+user ("KIKON" when a rush starts, the Kikon's own name when it becomes one), a HOLD O KIKON prompt
+(for a human attacker while the opponent is red; HOLD KP6 / HOLD RT), a BURST prompt (a human in a combo he may burst out
 of) and a red soul flame over a Kikon-able victim, the big words (FIGHT!, COUNTER, GUARD BREAK,
 BROKEN, CLASH, PERFECT, EVOLUTION, BURST REVERSE) and the cinematic captions
 (JOKAKU ENJO, TENCHI KAIJIN, ZANKA NO TACHI, NOME, NOZARASHI, SOUL BREAK, K.O., TIME); WINNER / DRAW
@@ -428,7 +459,8 @@ crack, bones, Kikon slash, Konpaku shatter, awakening rise and boom, a laugh …
 | Menu press leak | first build | a cinematic's end forgets buffered presses (`vpad-flush!`) | Confirming a menu with J started a Q1 on tick 1 |
 | Stick | first build: read through the render camera | read through the sim-owned view direction | The render camera lags on real time: replays would differ |
 | Kenpachi's flurry in Nozarashi | first build: the base move | `(:ke-charge :land :ke-flurry)` string, derived like the rest | It kept base reach and timing |
-| Burst Reverse | stretch: rules only, the command did nothing | built (§4): 2 bars, after hit 2, applied after both stepped | The user asked for it; applying it late makes a same-step Kikon win for either side |
+| Burst Reverse | stretch: rules only, the command did nothing | built (§4): 2 bars, after hit 2, applied after both stepped | The user asked for it; applying it after both stepped means no side goes first |
+| Kikon | a button that worked only after our hit on a red opponent (in the move's cancel window or during his hitstun) and settled at once | the **Kikon rush** (§2): any time, a dash + strike; guardable unless red; the Kikon only if the strike connects on a red opponent with the button still held on the hit frame; a released button = a plain hit (so a Soul Break still ends a red opponent at 0) | The user asked for RoS's Kikon: "press, the character rushes in and strikes; only a hit with the button still held is the Kikon; guardable unless red". The rush's HUD callout is "KIKON"; the prompt says HOLD |
 | Burst invulnerability | v1: 30 f (critique: 20) | 20 f, the user neutral at once, attacker pushed 5 m over 20 f, 8 f hitstop | critique-design 1.7 |
 | Dash | design draft: "dash versions" of Q1 / F1 | hold Step: the run after the hop; any move out of it, +1 m of momentum | One rule for every move instead of two extra moves per kit |
 | Camera | one pair camera for every mode | behind P1 in VS CPU (default), the pair camera elsewhere; the sim owns both views' direction | The user asked for RoS's default camera |

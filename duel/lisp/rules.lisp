@@ -105,9 +105,11 @@ opponent at DIST."
 ;;;   :breaker   Breaker aura / dash / strike startup (hit = counter-hit)
 ;;;   :stance-in entering a stance (counter-hit)  :stance   holding a stance (super armour)
 ;;;   :invuln    Step / Hoho iframes, down, wake-up
-(defun resolve-contact (def-state &key breaker guard-crush quick ignore-armor (in-front t) armor-vs-quick)
+(defun resolve-contact (def-state &key breaker guard-crush quick ignore-armor (in-front t) armor-vs-quick unguardable)
   "What one hit that touched the defender does. The attack: BREAKER (a Breaker strike),
-GUARD-CRUSH (Breaker property on another move), QUICK (a Quick move), IGNORE-ARMOR (Nozarashi).
+GUARD-CRUSH (Breaker property on another move), QUICK (a Quick move), IGNORE-ARMOR (Nozarashi),
+UNGUARDABLE (the Kikon rush on a red defender, KIKON-GUARDABLE-P: guard and stance don't stop it,
+Step / Hoho iframes still do).
 The defender: DEF-STATE (above), IN-FRONT (the attacker is inside his guard arc), ARMOR-VS-QUICK
 (Bankai West). Returns
   NIL           no effect (invulnerable)
@@ -120,7 +122,9 @@ The defender: DEF-STATE (above), IN-FRONT (the attacker is inside his guard arc)
   :armored      damage, no reaction (armour vs Quick)
 Breaker vs Breaker is a CLASH, decided before any contact (BREAKER-CLASH-P)."
   (let ((crush (or breaker guard-crush))
-        (state (if (and (eq def-state :guard) (not in-front)) :neutral def-state)))
+        (state (cond ((and (eq def-state :guard) (not in-front)) :neutral)
+                     ((and unguardable (member def-state '(:guard :stance-in :stance))) :neutral)
+                     (t def-state))))
     (ecase state
       (:invuln nil)
       (:guard (if crush :guard-break :blocked))
@@ -144,6 +148,15 @@ and becomes :strike as soon as the opponent is within *BREAKER-TRIGGER*."
     (:dash (if (or (<= dist *breaker-trigger*) (>= frames *breaker-dash-max*)
                    (and (not held) (>= frames *breaker-dash-min*)))
                :strike :dash))))
+
+(defun kikon-rush-next-phase (phase frames dist)
+  "The Kikon rush's pre-strike state machine (the Breaker's without the hold: the button only
+matters at the strike, KIKON-CONFIRM-P). PHASE :aura or :dash, FRAMES spent in it, DIST to the
+opponent. The aura lasts *KIKON-AURA*, then the strike if he is already within *KIKON-TRIGGER*, else
+the dash; the dash strikes within *KIKON-TRIGGER* or after *KIKON-DASH-MAX* frames (its range)."
+  (ecase phase
+    (:aura (cond ((< frames *kikon-aura*) :aura) ((<= dist *kikon-trigger*) :strike) (t :dash)))
+    (:dash (if (or (<= dist *kikon-trigger*) (>= frames *kikon-dash-max*)) :strike :dash))))
 
 (defun breaker-speed (frames)
   "Dash speed after FRAMES of dashing: *BREAKER-SPEED-MIN* rising to *BREAKER-SPEED-MAX*."
@@ -183,7 +196,8 @@ so a -2 string hit leaves a gap (Step / Hoho yes, Q1 no)."
          (if (eq contact :hit) (>= sf (+ s a)) (>= sf (- total *chain-lead*))))))
 
 (defun cancel-open-p (sf hit-frame total landed)
-  "On-hit cancel window (SP1 / SP2 / Hoho from Quick/Flash strings, Kikon from anything): the move
+  "On-hit cancel window (SP1 / SP2 / Hoho from Quick/Flash strings, the Kikon rush from any other
+landed move): the move
 LANDED, from its first hit frame HIT-FRAME until its recovery ends (TOTAL)."
   (and landed (>= sf hit-frame) (< sf total)))
 
@@ -241,12 +255,17 @@ spread over 60 steps in whole points, so a whole second burns exactly the rate (
   "Red: Reishi below *RED-THRESHOLD* of max."
   (< reishi (* max-reishi *red-threshold*)))
 
-(defun kikon-available-p (victim-reishi victim-max &key landed (sf 0) (hit-frame 0) (total 0) (victim-stun 0))
-  "May the attacker press Kikon now? The victim is red (after the hit's damage) and either our
-move LANDED and SF is in its cancel window (CANCEL-OPEN-P), or the victim is still in hitstun from
-our string (VICTIM-STUN > 0). No raw Kikon."
-  (and (red-p victim-reishi victim-max)
-       (or (cancel-open-p sf hit-frame total landed) (> victim-stun 0))))
+(defun kikon-guardable-p (victim-reishi victim-max)
+  "Can the Kikon rush's strike be guarded (blocked, or absorbed by a stance)? Only while the victim
+is not red: on a red victim it is UNGUARDABLE for RESOLVE-CONTACT (iframes still dodge it)."
+  (not (red-p victim-reishi victim-max)))
+
+(defun kikon-confirm-p (victim-red held contact)
+  "Does the Kikon rush's strike become the Kikon? It connected (CONTACT, RESOLVE-CONTACT's result, is
+:hit or :counter) on a VICTIM-RED fighter (red when the hit was collected) while the attacker still
+HELD the Kikon button on that step. Otherwise the strike is an ordinary hit (a released button on a
+red victim: damage, maybe a Soul Break) or blocked. The Kikon then removes Konpaku (KIKON-RESULT)."
+  (and victim-red held (member contact '(:hit :counter)) t))
 
 (defun soul-break-p (reishi) "Reishi reached 0: automatic Soul Break." (<= reishi 0))
 

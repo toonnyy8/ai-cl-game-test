@@ -433,7 +433,7 @@ RAVEN EDGE 是「一個玩家對一群敵人」。第二款遊戲 SOUL DUEL（`d
 python3 -m http.server -d dist/duel 8000
 ```
 
-操作、除錯指令和測試在 [DUEL_GAMEPLAY.md](DUEL_GAMEPLAY.md)，規則和全部招式表在 [DUEL_DESIGN.md](DUEL_DESIGN.md)。這一步不重講前面教過的東西（ECS、純函式規則、事件），只看 RAVEN 沒教、而格鬥遊戲逼著你面對的五件事，最後追一次 Kikon（鬼魂技）從按鍵到魂魄碎掉的完整路徑。
+操作、除錯指令和測試在 [DUEL_GAMEPLAY.md](DUEL_GAMEPLAY.md)，規則和全部招式表在 [DUEL_DESIGN.md](DUEL_DESIGN.md)。這一步不重講前面教過的東西（ECS、純函式規則、事件），只看 RAVEN 沒教、而格鬥遊戲逼著你面對的五件事，最後追一次 Kikon（鬼魂技）從按住按鍵、突進、砍中到魂魄碎掉的完整路徑。
 
 `duel/MANIFEST` 的順序也分了層：`tuning`、`rules`、`control`、`kit` 是純 Common Lisp（主機上可測）；`yama*`、`ken*` 是兩個角色（資料、掛鉤函式、過場）；`fighter` 到 `main` 是通用的系統，其中規則、操作和各個系統（`rules`、`control`、`fighter`、`combat`、`hazards`、`ai`、`camera`、`flow`）**不准出現任何角色的名字**（只有除錯工具 `debug.lisp` 會指名角色來擺場景）。
 
@@ -451,17 +451,17 @@ RAVEN 的玩家程式直接讀鍵盤。格鬥遊戲有兩個玩家，其中任�
 
 SOUL DUEL 這邊只有資料：`duel/lisp/control.lisp` 的 `*vpad-actions*`（第 12～15 行，九顆按鈕）、`new-vpad`（第 17～19 行）、指令表 `*commands*`（第 22～40 行，優先順序由高到低）、`*p1-bindings*`（第 46～53 行）和 `*p2-bindings*`。
 
-誰來寫？真人：`pilot-system`（`duel/lisp/ai.lisp` 第 278～281 行）在每一步呼叫 `vpad-begin-step!`，它執行 vpad 的讀取器 `p1-reader`（`duel/lisp/fighter.lisp` 第 25 行）。電腦：`brain-step`（`ai.lisp` 第 234～272 行）想好要按什麼，最後一樣用 `vpad-set!` 把每顆按鈕寫進去（第 266 行）。`spawn-fighter`（`fighter.lisp` 第 28～45 行）裡，「人或電腦」只差在 vpad 有沒有讀取器、實體有沒有 `brain` 元件。
+誰來寫？真人：`pilot-system`（`duel/lisp/ai.lisp` 第 293～296 行）在每一步呼叫 `vpad-begin-step!`，它執行 vpad 的讀取器 `p1-reader`（`duel/lisp/fighter.lisp` 第 25 行）。電腦：`brain-step`（`ai.lisp` 第 249～287 行）想好要按什麼，最後一樣用 `vpad-set!` 把每顆按鈕寫進去（第 281 行）。`spawn-fighter`（`fighter.lisp` 第 28～45 行）裡，「人或電腦」只差在 vpad 有沒有讀取器、實體有沒有 `brain` 元件。
 
 好處：電腦只能做人做得到的事；`tests/duel-control-test.lisp` 可以檢查「經過按鍵對應讀進來」和「直接注入」結果完全一樣；而且因為輸入是在固定步長裡讀的，同一串按鍵每次都得到同一場比賽（9.5）。
 
 ### 9.2 角色是資料加掛鉤
 
-`duel/lisp/kit.lisp` 定義兩個宣告式的巨集：`defmove`（第 121～145 行，一招一個 plist）和 `defkit`（第 242～268 行，角色的一種型態一個 plist）。通用的戰鬥程式碼只讀它們產生的結構。
+`duel/lisp/kit.lisp` 定義兩個宣告式的巨集：`defmove`（第 122～149 行，一招一個 plist）和 `defkit`（第 246～272 行，角色的一種型態一個 plist）。通用的戰鬥程式碼只讀它們產生的結構。
 
-看山本的招牌技（`duel/lisp/yama.lisp` 第 23～29 行）：幀數、傷害、判定範圍都是數字，只有一件事資料做不到，就是「第 40 幀放出一道火焰波」，所以寫成 `:on-frame ((40 yama-fire-wave))`。`yama-fire-wave`（第 99～107 行）是普通函式，通用的 `main-phase-step`（`fighter.lisp` 第 310～328 行）在那一幀用 `funcall` 呼叫它（第 320 行）。為什麼寫符號而不是 `#'yama-fire-wave`？整個遊戲是一個編譯單元，招式資料在載入時就執行，那時後面的 `defun` 還沒定義，`#'` 會失敗；符號到真的要呼叫時才去找函式。
+看山本的招牌技（`duel/lisp/yama.lisp` 第 23～29 行）：幀數、傷害、判定範圍都是數字，只有一件事資料做不到，就是「第 40 幀放出一道火焰波」，所以寫成 `:on-frame ((40 yama-fire-wave))`。`yama-fire-wave`（第 105～113 行）是普通函式，通用的 `main-phase-step`（`fighter.lisp` 第 326～344 行）在那一幀用 `funcall` 呼叫它（第 336 行）。為什麼寫符號而不是 `#'yama-fire-wave`？整個遊戲是一個編譯單元，招式資料在載入時就執行，那時後面的 `defun` 還沒定義，`#'` 會失敗；符號到真的要呼叫時才去找函式。
 
-型態也是資料。劍八的野晒（`duel/lisp/ken.lisp` 第 75～80 行）只寫了「繼承 `:base`、起手 +3 幀、距離 ×1.4、換掉 SP1 和 Kikon」，其餘十幾招由 `register-kit`（`kit.lisp` 第 199～240 行）在載入時從原招式重新推導（第 227～235 行），沒有任何一招是複製貼上的。數值可以直接寫 `tuning.lisp` 的變數名（例如 `:walk *walk-kenpachi*`），`resolve-tuning`（第 18～22 行）在載入時換成值。
+型態也是資料。劍八的野晒（`duel/lisp/ken.lisp` 第 81～86 行）只寫了「繼承 `:base`、起手 +3 幀、距離 ×1.4、換掉 SP1 和 Kikon」，其餘十幾招由 `register-kit`（`kit.lisp` 第 203～244 行）在載入時從原招式重新推導（第 231～239 行），沒有任何一招是複製貼上的。數值可以直接寫 `tuning.lisp` 的變數名（例如 `:walk *walk-kenpachi*`），`resolve-tuning`（第 18～22 行）在載入時換成值。
 
 這條規矩有檢查：`grep -nE ':ya-|:ke-|yama|kenpachi' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow}.lisp` 必須什麼都印不出來，`tests/duel-rules-test.lisp` 最後也有同樣的檢查。所以加第三個角色不必改任何通用檔案（練習 8）。
 
@@ -471,75 +471,90 @@ SOUL DUEL 這邊只有資料：`duel/lisp/control.lisp` 的 `*vpad-actions*`（�
 
 SOUL DUEL 分兩段：
 
-- `fighter-system`（`fighter.lisp` 第 540～562 行）先把每個人「對手現在站哪」記下來（`fighter-ox`、`fighter-oz`），再讓兩個人各走一步，所以誰都看不到對方這一步的移動。一方對另一方造成的凍結、鎖輸入，等兩個人都走完才生效（第 552～556 行；Burst Reverse 也是這時才生效，第 557～561 行，所以同一步按下的 Kikon 不管誰先走都會贏）。
-- `hit-system`（`duel/lisp/combat.lisp` 第 170～193 行）先檢查 Breaker 互撞，然後**收集**所有碰到的近戰與飛行道具命中（`collect-melee`，第 122～141 行），每一筆連同攻擊者當下的招式、蓄積的傷害一起存進 `pending`（第 114～118 行），最後才一筆筆**套用**（`apply-hit`，第 42～111 行）。靈子歸零的 Soul Break 在最後一起結算（`settle-soul-breaks`，第 302～316 行）：互砍到兩邊同時沒命就是平手。
+- `fighter-system`（`fighter.lisp` 第 558～581 行）先把每個人「對手現在站哪」記下來（`fighter-ox`、`fighter-oz`），再讓兩個人各走一步，所以誰都看不到對方這一步的移動。一方對另一方造成的凍結、鎖輸入，等兩個人都走完才生效（第 570～574 行；Burst Reverse 也是這時才生效，第 575～580 行，而且在這一步的命中結算之前，所以 Kikon 突進還沒砍中時被 Burst，突進就中斷了，不管誰先走）。
+- `hit-system`（`duel/lisp/combat.lisp` 第 186～209 行）先檢查 Breaker 互撞，然後**收集**所有碰到的近戰與飛行道具命中（`collect-melee`，第 137～157 行），每一筆連同攻擊者當下的招式、蓄積的傷害、防守方當時紅不紅一起存進 `pending`（第 128～133 行），最後才一筆筆**套用**（`apply-hit`，第 46～125 行）。這一步確認的 Kikon 和靈子歸零的 Soul Break 在最後一起結算（`settle-souls`，第 297～320 行）：互砍到兩邊同時沒命就是平手。
 
 程式碼審查時抓到的真實 bug 就是這個：`pending` 原本沒存攻擊者的招式，套用時才去讀，而第一筆命中已經把對方打進硬直、招式清空了，所以每次互砍 P2 的那一刀都少了屬性。修好之後，除錯指令 2319 讓兩個山本在同一步出 Q1，兩邊靈子都剩 1062。
 
 ### 9.4 過場導演：規則決定，過場只負責呈現
 
-Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規則的一部分（「動畫播到第幾幀才扣命」），然後就不能跳過、不能快轉、測試也要等它。SOUL DUEL 的規矩是：**過場開始之前，結果已經算完了**。`kikon!`（`combat.lisp` 第 292～300 行）先 `settle-konpaku` 扣掉魂魄、補滿靈子，最後才 `start-cine`，並把「接下來重置或結束比賽」交給 `:after`。所以跳過過場（Esc，或除錯指令 2100）什麼都不會少。
+Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規則的一部分（「動畫播到第幾幀才扣命」），然後就不能跳過、不能快轉、測試也要等它。SOUL DUEL 的規矩是：**過場開始之前，結果已經算完了**。`settle-souls`（`combat.lisp` 第 297～320 行）先 `settle-konpaku` 扣掉魂魄、補滿靈子，最後才 `start-cine`，並把「接下來重置或結束比賽」交給 `:after`。所以跳過過場（Esc，或除錯指令 2100）什麼都不會少。
 
-導演在引擎的 `engine/lisp/cine.lisp`。`defcine`（第 191～214 行）定義的腳本有兩種模式：
+導演在引擎的 `engine/lisp/cine.lisp`。`defcine`（第 38～61 行）定義的腳本有兩種模式：
 
 - `(at 幀 …)`：**步長模式**，每個固定步長跑一次：切鏡頭、換動作、播音效。這些是決定性的。
 - `(during (起 迄) …)`：**繪製模式**，每個畫面幀跑一次：火焰、光暈、鏡頭推移這些只給人看的東西，`u` 從 0 走到 1。
 
-`main.lisp` 的 `sim-step`（第 24～36 行）在過場中改跑 `cine-step`（第 27 行），角色、飛行道具、計時器都停住；`draw-scene`（第 99～111 行）每幀呼叫 `cine-draw`（第 106 行）。例子是山本的 Kikon（`yama.lisp` 第 172～183 行）：第 0 幀拉鏡頭、上字幕，`during (0 108)` 每幀畫火焰圓頂，第 77 幀魂魄碎裂。
+`main.lisp` 的 `sim-step`（第 29～41 行）在過場中改跑 `cine-step`（第 32 行），角色、飛行道具、計時器都停住；`draw-scene`（第 111～123 行）每幀呼叫 `cine-draw`（第 118 行）。例子是山本的 Kikon（`yama.lisp` 第 175～186 行）：第 0 幀拉鏡頭、上字幕，`during (0 108)` 每幀畫火焰圓頂，第 77 幀魂魄碎裂。
 
 這背後是兩種時間：
 
 - **模擬時間**：固定步長。命中停頓時凍結、慢動作時跳過、過場時角色不動。規則、AI、招式幀數都用它。
-- **特效時間**：每幀的真實秒數。粒子、光暈、鏡頭平滑、`during` 裡的畫面都用它（`fx-update` 拿的是真實的 `rdt`，第 108 行）。
+- **特效時間**：每幀的真實秒數。粒子、光暈、鏡頭平滑、`during` 裡的畫面都用它（`fx-update` 拿的是真實的 `rdt`，第 120 行）。
 
-原則：模擬會讀到的東西一律用模擬時間，只用來看的東西才用真實時間。所以命中停頓在 SOUL DUEL 是規則，由 `apply-hit` 設定（`combat.lisp` 第 78 行 `(hitstop (hw-hs hw))`），而不是像 RAVEN 那樣在 feedback 系統裡設定（第 6 步）。
+原則：模擬會讀到的東西一律用模擬時間，只用來看的東西才用真實時間。所以命中停頓在 SOUL DUEL 是規則，由 `apply-hit` 設定（`combat.lisp` 第 92 行 `(hitstop (hw-hs hw))`），而不是像 RAVEN 那樣在 feedback 系統裡設定（第 6 步）。
 
 ### 9.5 決定性：sim-rnd01 與 rnd01
 
-引擎有兩條亂數流（`engine/lisp/package.lisp` 第 162～166 行）：`rnd01` 給裝飾用（粒子、震動、音高），每幀、每顆粒子都在抽，所以它的序列跟幀率有關；`sim-rnd01` 給模擬用，**只在固定步長裡抽**。SOUL DUEL 的電腦（`ai.lisp`）只用 `sim-rnd01`，特效（`vfx.lisp`）只用 `rnd01`，比賽開始時 `start-match` 用種子重設模擬那條（`duel/lisp/flow.lisp` 第 106 行）。
+引擎有兩條亂數流（`engine/lisp/package.lisp` 第 162～166 行）：`rnd01` 給裝飾用（粒子、震動、音高），每幀、每顆粒子都在抽，所以它的序列跟幀率有關；`sim-rnd01` 給模擬用，**只在固定步長裡抽**。SOUL DUEL 的電腦（`ai.lisp`）只用 `sim-rnd01`，特效（`vfx.lisp`）只用 `rnd01`，比賽開始時 `start-match` 用種子重設模擬那條（`duel/lisp/flow.lisp` 第 108 行）。
 
 光是亂數分開還不夠。其他讓「同一個種子＝同一場比賽」成立的條件：
 
 - 裝置在固定步長裡讀（9.1），不是每幀讀。
-- 真人的搖桿方向透過「模擬擁有的視角方向」換算（`view-step`，`fighter.lisp` 第 109～122 行），而不是讀跟著真實時間平滑移動的攝影機。
-- 慢動作用「跳步」實作（`main.lisp` 第 30～33 行）：每步累加倍率，滿 1 才跑一個模擬幀，所以幀數永遠是整數。這個累加器 `*slow-acc*` 在每場開始時歸零（`start-match` 呼叫 `reset-slow-clock`）：完美 Hoho 的慢動作會留下零頭（0.5、0.75……），以前它會帶進下一場，讓下一場第一次慢動作錯開一步，結果同一個種子在測試關卡裡的成績取決於前面跑過哪些比賽。
+- 真人的搖桿方向透過「模擬擁有的視角方向」換算（`view-step`，`fighter.lisp` 第 109～121 行），而不是讀跟著真實時間平滑移動的攝影機。
+- 慢動作用「跳步」實作（`main.lisp` 第 34～37 行）：每步累加倍率，滿 1 才跑一個模擬幀，所以幀數永遠是整數。這個累加器 `*slow-acc*` 在每場開始時歸零（`start-match` 呼叫 `reset-slow-clock`）：完美 Hoho 的慢動作會留下零頭（0.5、0.75……），以前它會帶進下一場，讓下一場第一次慢動作錯開一步，結果同一個種子在測試關卡裡的成績取決於前面跑過哪些比賽。
 - 命中停頓由規則設定、過場在步長時鐘上跑（9.4）。
 - `dir-yaw`（`rules.lisp` 第 20～24 行）用 Common Lisp 的 `atan`（倍精度），不用引擎的 `yaw-to`（單精度 `atan2f`）：兩者差最後一位，就會長出另一場比賽，而參考紀錄是用前者錄的。
 
-驗證方法：每 600 步印一行 `duel hash`（`state-hash-line`，`duel/lisp/debug.lisp` 第 37～47 行，位置、朝向、每個量表、電腦的 heat）。`tests/scripts/duel-cvc-yk.json` 用種子 7 讓兩個電腦打完一場，最後一行一定是：
+驗證方法：每 600 步印一行 `duel hash`（`state-hash-line`，`duel/lisp/debug.lisp` 第 40～50 行，位置、朝向、每個量表、電腦的 heat）。`tests/scripts/duel-cvc-yk.json` 用種子 7 讓兩個電腦打完一場，最後一行一定是：
 
 ```
-duel -> RESULTS winner P2 konpaku 0-1 ticks 7298 secs 121.6
+duel -> RESULTS winner P1 konpaku 2-0 ticks 9780 secs 163.0
 ```
 
 跑兩次、把所有 `^duel` 開頭的行 diff 一下，應該完全相同（指令在 DUEL_GAMEPLAY.md）。這就變成一個不用寫的回歸測試：任何「不該改變行為」的修改（重構、把程式搬進引擎）都必須讓這一行和十一行 hash 一字不差。把 SOUL DUEL 的東西收回引擎時，每一步都是這樣檢查的。
 
 ### 9.6 一次 Kikon 的旅程
 
-山本打中了已經變紅的劍八，趁 Q1 還在取消視窗內按下 O：
+劍八的靈子已經掉到 30% 以下（變紅）。山本在 5 公尺外按下 O，而且一直按著：
 
 ```
 按鍵        control.lisp 50           *p1-bindings* 裡 :kikon ((:key :o) (:pad :rt))
-讀進手把    ai.lisp 238-241            pilot-system → vpad-begin-step!（input.lisp 51-55）
-                                        → p1-reader（fighter.lisp 24）→ vpad-read!（input.lisp 143-153）
-                                        → vpad-set!（57-71）：Kikon 鈕按下，蓋上時間戳
-這一步      main.lisp 24-36            sim-step → sim-systems → fighter-system（fighter.lisp 464-481）
-                                        → fighter-step（447-462）→ move-step（299-305）→ main-phase-step（279-297）
-指令        fighter.lisp 307-322       move-commands 依 *commands* 的順序找到被按下的 :kikon
-可以嗎（規則）combat.lisp 244-251      kikon-ok-p → kikon-available-p（rules.lisp 229-234）：
-                                        對手紅了嗎（red-p）？我方這招命中且還在取消視窗內
-                                        （cancel-open-p，170-173），或對手還在我方造成的硬直裡？
-結算        combat.lisp 266-274        kikon! → settle-konpaku（253-264）→ kikon-result（rules.lisp 238-245）：
+讀進手把    ai.lisp 293-296            pilot-system → vpad-begin-step!（input.lisp 51-55）
+                                        → p1-reader（fighter.lisp 25）→ vpad-read!（input.lisp 143-153）
+                                        → vpad-set!（57-71）：Kikon 鈕按下，蓋上時間戳；之後每一步都是「按著」
+這一步      main.lisp 29-41            sim-step → sim-systems → fighter-system（fighter.lisp 558-581）
+                                        → fighter-step（539-556）→ neutral-step（261-285）
+指令        fighter.lisp 253-258       command! 依 *commands* 的順序找到被按下的 :kikon
+                                        → try-command（228-244）→ start-move（146-167）：
+                                        進入 Kikon 突進這一招，階段 :aura，頭上跳出 "KIKON"
+突進        fighter.lisp 312-324       kikon-rush-step，每一步問規則 kikon-rush-next-phase（rules.lisp 152-159）：
+                                        紅色氣場 5 幀 → 以 16 m/s 衝向對手（最多 22 幀，約 5.9 公尺）
+                                        → 進到 1.6 公尺內就出刀（enter-main，fighter.lisp 169-174）
+收集        combat.lisp 186-209        hit-system → collect-melee（137-157）：刀碰到了，
+                                        記下劍八這時紅不紅（kikon-guardable-p，rules.lisp 258-261）
+套用        combat.lisp 46-125         apply-hit：紅了就是 :unguardable（第 59 行），
+                                        resolve-contact（rules.lisp 108-134）不管他有沒有防禦都算 :hit；
+                                        第 69 行 kikon-confirm-p（rules.lisp 263-268）：紅、砍中、
+                                        而且「這一步」O 還按著 → 不扣靈子，排進 *kikons*
+結算        combat.lisp 297-320        settle-souls → settle-konpaku（284-295）→ kikon-result（rules.lisp 272-279）：
                                         扣 2 個魂魄（覺醒中 3 個），靈子補滿，發出 (:konpaku 劍八 2)
-表現        feedback.lisp 85           :konpaku → pips-shatter（hud.lisp 142-148）：HUD 上兩個魂魄碎掉
-過場        cine.lisp 219-231          start-cine 'yama-kikon-cine，之後每一步 cine-step（249-259）
-                                        yama.lisp 172-183：鏡頭、字幕、火焰圓頂，第 77 幀魂魄碎裂
+表現        feedback.lisp 98           :konpaku → pips-shatter（hud.lisp 142-148）：HUD 上兩個魂魄碎掉
+過場        cine.lisp 66-78            start-cine 突進招式的 :cine（'yama-kikon-cine），之後每一步 cine-step（96-106）
+                                        yama.lisp 175-186：鏡頭、字幕、火焰圓頂，第 77 幀魂魄碎裂
 結束        cinema.lisp 31-40          cine-end：恢復場景、忘掉過場中亂按的鍵（vpad-flush!）
-            combat.lisp 292-308        :after → reset-round：兩人相隔 8 公尺、48 幀不能動
-                                        （魂魄打光的話改成 match-over，flow.lisp 112-119）
+            combat.lisp 322-339        :after → reset-round：兩人相隔 8 公尺、48 幀不能動
+                                        （魂魄打光的話改成 match-over，flow.lisp 128-135）
 ```
 
-如果是從中立狀態按（對手還在硬直裡），路線換成 `neutral-step` → `command!`（`fighter.lisp` 第 251～256 行）→ `try-command`（第 225～242 行），其餘一樣。
+換幾個條件，路線在哪裡分岔：
+
+- **O 在砍中之前就放開了**：`kikon-confirm-p` 回 NIL，`apply-hit` 走一般命中那條路，70 點傷害加擊退。這一刀如果剛好把靈子打到 0，就是一般的 Soul Break（`deal-damage` 排進 `*soul-breaks*`，同樣在 `settle-souls` 結算）。
+- **劍八沒變紅**：不是 `:unguardable`，他防禦就是 `:blocked`（−14，會被反擊），沒防禦就是一般命中；O 按不按都一樣。
+- **劍八在閃步或 Hoho 的無敵幀裡**：`defender-state` 回 `:invuln`，`resolve-contact` 回 NIL，刀揮空，山本吃 30 幀的揮空硬直。
+- **從招式取消出來**（打中之後、還在取消視窗內按 O）：路線從 `main-phase-step` → `move-commands`（`fighter.lisp` 第 354～371 行）的 `:kikon` 那一格開始，其餘一樣。
+
+注意「按著」是在**砍中的那一步**讀的：`vpad-down` 讀的是這一步 `pilot-system` 寫進 vpad 的狀態，所以重播同一串按鍵一定得到同一個結果。
 
 和第 8 步 RAVEN 的一刀比一比：「判定」和「結算」一樣是純函式，事件一樣交給 feedback；多出來的是兩件格鬥遊戲才需要的事：輸入經過 vpad，而結算之後才有過場。
 

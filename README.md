@@ -29,10 +29,10 @@ Lisp 原始碼先由 ECL 編成 C，再由 Emscripten 編成 WebAssembly，在�
 python3 -m http.server -d dist/duel 8000     # 用 Chrome 開 http://localhost:8000/
 ```
 
-- **規則**：雙方各有 1100 點靈子（Reishi，血條）和 9 個魂魄（Konpaku，命）。靈子掉到 30% 以下變紅，這時任何命中都能接 Kikon（鬼魂）技，一次打掉 2 個魂魄（覺醒後 3 個）；靈子歸零自動多打掉 1 個（Soul Break）。魂魄打光就輸，時限 300 秒。
+- **規則**：雙方各有 1100 點靈子（Reishi，血條）和 9 個魂魄（Konpaku，命）。按 O 是 Kikon（鬼魂）突進：角色衝上去砍一刀，隨時都能用，也能從命中的招式取消出來。對手沒變紅時，這一刀跟一般攻擊一樣能被擋（被擋住 −14，會被反擊）；對手的靈子掉到 30% 以下變紅後就擋不住（閃步和 Hoho 的無敵幀還是躲得掉），而且砍中那一刻 O 還按著，才會真正發動 Kikon，一次打掉 2 個魂魄（覺醒後 3 個）；先放開的話只是一般的一刀。靈子歸零自動多打掉 1 個（Soul Break）。魂魄打光就輸，時限 300 秒。
 - **猜拳**：防禦擋攻擊、攻擊打斷 Breaker、Breaker 破防；兩邊同時 Breaker 會互彈（CLASH）。步法（Hoho）瞬移到對手背後，時機抓準會觸發慢動作反擊（PERFECT）。
 - **角色**：山本用火焰壓制距離，Inferno 量表滿了進入獄焱（Hellfire）；覺醒是卍解（持續到比賽結束，此後不再有 Inferno 和獄焱）。劍八近身猛攻，越被逼到絕境越強；覺醒是野晒，同樣持續到比賽結束。
-- **操作**（完整對照表在 [docs/DUEL_GAMEPLAY.md](docs/DUEL_GAMEPLAY.md)）：P1 用 W A S D 移動，J 輕攻擊、K 重攻擊、L 招牌技、U 防禦、I Breaker、O Kikon、Space 閃步（Step，按住不放就接著衝刺），P 覺醒，按住左 Shift 再按 K／L／Space 是 SP1／SP2／Hoho；被連段打中第 2 下之後按 Shift+J 是 Burst Reverse（花 2 格靈壓，藍色衝擊波把對手推開）。P2 用方向鍵加數字鍵盤（KP1～KP6、KP0、KP Enter、KP +），也可以各接一支手把。Esc 暫停。對電腦時鏡頭預設在 P1 背後（W 就是衝向對手），暫停選單和選難度的畫面可以切回側面鏡頭。
+- **操作**（完整對照表在 [docs/DUEL_GAMEPLAY.md](docs/DUEL_GAMEPLAY.md)）：P1 用 W A S D 移動，J 輕攻擊、K 重攻擊、L 招牌技、U 防禦、I Breaker、O Kikon 突進（對手變紅時按住不放＝Kikon）、Space 閃步（Step，按住不放就接著衝刺），P 覺醒，按住左 Shift 再按 K／L／Space 是 SP1／SP2／Hoho；被連段打中第 2 下之後按 Shift+J 是 Burst Reverse（花 2 格靈壓，藍色衝擊波把對手推開）。P2 用方向鍵加數字鍵盤（KP1～KP6、KP0、KP Enter、KP +），也可以各接一支手把。Esc 暫停。對電腦時鏡頭預設在 P1 背後（W 就是衝向對手），暫停選單和選難度的畫面可以切回側面鏡頭。
 
 這是**非商業的同人練習作品**（fan study）：角色與招式名稱是應使用者要求使用的，所有模型、動作、特效、音效與配樂都由程式產生，沒有使用原作動畫或遊戲的任何素材。設計與數值見 [docs/DUEL_DESIGN.md](docs/DUEL_DESIGN.md)。
 

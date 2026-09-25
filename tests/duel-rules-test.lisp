@@ -163,12 +163,29 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 ;;; ================================================================ Kikon, Konpaku, Soul Break, time-up
 (let ((*red-threshold* 0.30))                  ; the rule at the design value (tuning.lisp may differ)
   (check (and (red-p 299 1000) (not (red-p 300 1000))))
-  (check (kikon-available-p 250 1000 :landed t :sf 10 :hit-frame 9 :total 24))
-  (check (not (kikon-available-p 350 1000 :landed t :sf 10 :hit-frame 9 :total 24)))   ; not red
-  (check (kikon-available-p 250 1000 :victim-stun 5))                      ; string hitstun
-  (check (not (kikon-available-p 250 1000 :landed t :sf 24 :hit-frame 9 :total 24)))   ; recovered
-  (check (not (kikon-available-p 250 1000 :landed nil :sf 10 :hit-frame 9 :total 24))) ; no raw Kikon
-  )
+  ;; the Kikon rush: guardable unless red; the Kikon only on a red victim, button held, strike connected
+  (check (and (kikon-guardable-p 300 1000) (not (kikon-guardable-p 299 1000))))
+  (check (kikon-confirm-p t t :hit))
+  (check (kikon-confirm-p t t :counter))                                   ; (a Breaker's startup)
+  (check (not (kikon-confirm-p t nil :hit)))                               ; released early: a plain hit
+  (check (not (kikon-confirm-p nil t :hit)))                               ; not red: a plain hit, held or not
+  (check (notany (lambda (r) (kikon-confirm-p t t r)) '(nil :blocked :absorbed :armored :guard-break))))
+;; red: guard and stance don't stop the rush's strike; iframes still dodge it; a Breaker is counter-hit
+(check (eq (resolve-contact :guard :unguardable t) :hit))
+(check (eq (resolve-contact :guard :unguardable nil) :blocked))
+(check (eq (resolve-contact :stance :unguardable t) :hit))
+(check (eq (resolve-contact :stance-in :unguardable t) :hit))
+(check (null (resolve-contact :invuln :unguardable t)))
+(check (eq (resolve-contact :breaker :unguardable t) :counter))
+;; the rush's phases: aura *KIKON-AURA* f, then the strike at once when close, else the dash to the
+;; trigger range or its end (*KIKON-DASH-MAX* f)
+(check (and (eq (kikon-rush-next-phase :aura (1- *kikon-aura*) 9.0) :aura)
+            (eq (kikon-rush-next-phase :aura *kikon-aura* 9.0) :dash)
+            (eq (kikon-rush-next-phase :aura *kikon-aura* *kikon-trigger*) :strike)
+            (eq (kikon-rush-next-phase :dash 3 9.0) :dash)
+            (eq (kikon-rush-next-phase :dash 3 (- *kikon-trigger* 0.1)) :strike)
+            (eq (kikon-rush-next-phase :dash *kikon-dash-max* 9.0) :strike)))
+(check (<= 5.5 (* *kikon-speed* (/ *kikon-dash-max* 60.0)) 6.5))           ; the rush's range: ~6 m
 (check (equal (multiple-value-list (kikon-result 6 nil nil)) '(4 2 nil)))
 (check (equal (multiple-value-list (kikon-result 6 t nil)) '(3 3 nil)))           ; awakened
 (check (equal (multiple-value-list (kikon-result 6 nil t)) '(3 3 nil)))           ; Soul Break +1
@@ -351,6 +368,20 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 (check (eq (mv-name (kit-command-move (kit :yamamoto :hellfire) :sp2)) :ya-nadegiri))
 (check (eq (mv-name (kit-command-move (kit :yamamoto :hellfire) :sp1)) :ya-shiranui))  ; inherited
 (check (eq (mv-name (kit-command-move (kit :yamamoto :bankai) :kikon)) :ya-tenchi))
+;; the Kikon rush of every form: a strike with a cinematic, clearly punishable on block (Q1 of either
+;; character fits, also after the block pushback from the trigger range), reach beyond the trigger
+(dolist (cf *forms*)
+  (let ((m (kit-command-move (apply #'kit cf) :kikon)))
+    (check (and (eq (mv-kind m) :kikon) (mv-cine m) (= 1 (length (mv-hits m))) (<= (mv-adv-block m) -12)
+                (> (mv-reach m) *kikon-trigger*) (plusp (mv-dmg m))
+                (<= (+ *kikon-trigger* *block-pushback*) (min (mv-reach (mv :yamamoto :base :ya-q1))
+                                                              (mv-reach (mv :kenpachi :base :ke-q1))))))))
+;; Nozarashi's own rush carries the derivation's numbers (startup +3, reach x1.4); the clip still
+;; reaches its hit pose on frame S (:clip-s)
+(let ((b (mv :kenpachi :base :ke-kikon)) (n (mv :kenpachi :nozarashi :ke-kikon-n)))
+  (check (and (= (mv-s n) (+ (mv-s b) *nozarashi-startup*)) (~= (mv-reach n) (* *nozarashi-reach* (mv-reach b)))
+              (~= (mv-clip-speed n) (/ 8.0 11.0)) (~= (mv-clip-speed b) 1.0))))
+(check (~= (mv-clip-speed (mv :yamamoto :base :ya-kikon)) 1.5))            ; Q3's chop (S12) at S8
 (check (and (null (kit-meter (kit :yamamoto :bankai))) (kit-meter (kit :yamamoto :hellfire))))  ; no Hellfire in Bankai
 (check (and (kit-awakening (kit :yamamoto :bankai)) (not (kit-awakening (kit :yamamoto :hellfire)))
             (null (kit-duration (kit :kenpachi :nozarashi))) (null (kit-duration (kit :yamamoto :bankai)))))   ; both awakenings last the match
@@ -371,11 +402,13 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 ;; clip names: exactly the §5 contract, and every §5 clip is used
 (defparameter *clips-5*
   '(:ya-stance :ya-q1 :ya-q2 :ya-q3 :ya-f1 :ya-f2 :ya-sig :ya-shiranui :ya-shiranui-throw :ya-taimatsu
-    :ya-nadegiri :ya-breaker :ya-ikkotsu :ya-kikon :ya-intro :ya-win :ya-hellfire :ya-bankai :ya-kyoku
-    :ya-kaka :ya-tenchi
+    :ya-nadegiri :ya-breaker :ya-ikkotsu :ya-intro :ya-win :ya-hellfire :ya-bankai :ya-kyoku
+    :ya-kaka :sh-run                    ; the Kikon rush runs (:sh-run) into a strike clip of the kit
     :ke-stance :ke-q1 :ke-q2 :ke-q3 :ke-f1 :ke-f2 :ke-stance-hold :ke-stance-cut :ke-buttagiru :ke-charge
-    :ke-flurry :ke-breaker :ke-shoulder :ke-kikon :ke-intro :ke-win :ke-patch :ke-nome :ke-meteor
-    :ke-kikon-n :ke-n-stance))
+    :ke-flurry :ke-breaker :ke-shoulder :ke-intro :ke-win :ke-patch :ke-nome :ke-meteor
+    :ke-n-stance))
+;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
+;; DEFCINEs, which the host stubs)
 (let ((used (remove-duplicates (loop for cf in *forms* append (kit-clips (apply #'kit cf))))))
   (let ((extra (set-difference used *clips-5*)) (unused (set-difference *clips-5* used)))
     (when (or extra unused) (format t "  clips not in §5: ~s, §5 clips unused: ~s~%" extra unused))

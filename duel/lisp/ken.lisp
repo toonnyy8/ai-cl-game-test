@@ -43,13 +43,19 @@
   :reach 2.2 :arc 120 :on-hit :flinch
   :hits ((10 11) (16 17) (22 23) (28 29) (40 41 :dmg 60 :on-hit :launch)))
 (defmove :ke-breaker :kind :breaker :clip :ke-breaker :clip-2 :ke-shoulder :callout "SHOULDER CHARGE")
-(defmove :ke-kikon :kind :kikon :clip :ke-kikon :cine ken-kikon-cine)
+;; the Kikon rush (O): red aura, dash, then the stance's huge cross-body cut. Red opponent + O held
+;; when it connects = the Kikon; else a plain knockback hit (guardable unless he is red), -14 on block
+(defmove :ke-kikon :kind :kikon :clip :sh-run :clip-2 :ke-stance-cut :cine ken-kikon-cine
+  :startup 8 :active 3 :recovery 24 :dmg 70 :adv-block -14 :reach 2.2 :arc 110 :on-hit :knockback :kb 2.5)
 
 ;;; ================================================================ Nozarashi
 (defmove :ke-meteor :kind :sp :clip :ke-meteor :callout "SPLIT THE METEOR"
   :startup 26 :active 4 :recovery 30 :dmg 240 :adv-block -16
   :vol (:cap 0.3 12.0 0.5 0.5) :on-hit :knockdown :kb 3.0 :on-frame ((26 ken-meteor-cut)))
-(defmove :ke-kikon-n :kind :kikon :clip :ke-kikon-n :callout "SKY SPLIT" :cine ken-sky-split-cine)
+;; Nozarashi's own Kikon rush (own moves aren't derived): written with the derivation's numbers,
+;; startup 8 + 3, reach 2.2 x 1.4; the rush's aura / dash / trigger range are unchanged
+(defmove :ke-kikon-n :kind :kikon :clip :sh-run :clip-2 :ke-stance-cut :clip-s 8 :callout "SKY SPLIT" :cine ken-sky-split-cine
+  :startup 11 :active 3 :recovery 24 :dmg 70 :adv-block -14 :reach 3.08 :arc 110 :on-hit :knockback :kb 2.5)
 
 ;;; ================================================================ forms
 (defkit :kenpachi :base

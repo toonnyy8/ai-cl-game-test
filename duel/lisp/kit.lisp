@@ -44,7 +44,8 @@
   (cost nil) (hold nil) (slide 0.0) (flags nil)
   (on-frame nil) (tick nil) (release nil) (on-land nil) (cine nil) (params nil)
   (enter 0 :type fixnum)        ; the move starts at this frame (its clip too): a faster string branch
-  (clip-speed 1.0)              ; clip playback speed: base startup / this startup (derived forms)
+  (clip-speed 1.0)              ; clip playback speed: the clip's startup (:clip-s, else the base
+                                ; startup of a derived form) / this startup, so it hits on frame S
   (blend 0.0)                   ; crossfade frames into the clip (0 = snap, attacks)
   (planted nil)                 ; the weapon is planted in the ground during the strike (Ikkotsu)
   (spec nil))                   ; the DEFMOVE plist (resolved), re-parsed for derived forms
@@ -75,7 +76,7 @@
   (destructuring-bind (&key kind clip clip-2 callout startup active recovery whiff (dmg 0) adv-block
                          track reach (arc 90) (height '(0.2 2.0)) vol on-hit (kb 0.0) hs chip (meter 0.0)
                          cost hold (slide 0.0) flags hits on-frame tick release on-land cine params
-                         (enter 0) (blend 0.0) planted)
+                         (enter 0) (blend 0.0) planted clip-s)
       spec
     (let* ((breaker (eq kind :breaker))
            (s (+ startup-add (or startup (if breaker *breaker-startup* 0))))
@@ -103,7 +104,7 @@
          :name name :kind kind :clip clip :clip-2 clip-2 :callout callout
          :s s :a a :r r :whiff (or whiff (if breaker *breaker-whiff* (+ r *whiff-extra*)))
          :dmg dmg :adv-block (if breaker (or adv-block :guard-break) adv-block)
-         :track (or track (case kind (:quick *track-quick*) (:breaker *track-breaker*) (:kikon 0.0) (t *track-heavy*)))
+         :track (or track (case kind (:quick *track-quick*) (:breaker *track-breaker*) (:kikon *kikon-track*) (t *track-heavy*)))
          :reach (or reach 0.0)
          :hits (coerce (cond (hits (loop for h in hits collect (apply #'window h)))
                              ((and (plusp dmg) vol) (list (window (- s startup-add) (+ (- s startup-add) a)))))
@@ -112,7 +113,7 @@
          :on-frame (loop for (f hook) in on-frame collect (list (+ f startup-add) hook))
          :tick tick :release release :on-land on-land :cine cine :params params :spec spec
          :enter (if (plusp enter) (+ enter startup-add) 0) :blend blend :planted planted
-         :clip-speed (if (and startup (plusp startup-add)) (/ startup (float s)) 1.0))))))
+         :clip-speed (if (and startup (or clip-s (plusp startup-add))) (/ (or clip-s startup) (float s)) 1.0))))))
 
 (defun register-move (name spec)
   (let ((spec (resolve-tuning spec)))
@@ -121,8 +122,11 @@
 (defmacro defmove (name &rest spec)
   "One move as ONE plist (critique-design §3.4). Keys:
   :kind     :quick :flash :sig :sp :breaker :kikon (sets the defaults of :track, :hs; a :breaker
-            takes S/A/R, whiff, damage, reach, knockback from tuning.lisp unless given)
+            takes S/A/R, whiff, damage, reach, knockback from tuning.lisp unless given; a :kikon is
+            the Kikon rush: aura and dash from tuning.lisp, then its own strike S/A/R, and :cine)
   :clip :clip-2  clip names (§5; :clip-2 = the second part: throw, strike, cut, flurry)
+  :clip-s   the startup the :clip-2 / :clip was authored with (a clip reused at another startup
+            plays at clip-s / S speed, so it still reaches its hit pose on frame S)
   :callout  move name shown above the user (Signature / SP / Breaker / Kikon)
   :startup :active :recovery  frame data; :whiff  recovery after a whiff (default R + 6)
   :dmg :adv-block  damage and block advantage (§5 table; NIL = no melee block data)

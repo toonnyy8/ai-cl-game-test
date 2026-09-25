@@ -21,6 +21,9 @@
 ;;;;   2320     Burst test: human P1 Yamamoto (3 bars) at 2 m from Kenpachi, whose idle CPU mashes Quick for
 ;;;;            60 steps (Q1 Q2 Q3): press Shift+J after the 2nd hit
 ;;;;   2321     force a Burst Reverse now: P1 (in Kenpachi's Q2 hitstun) bursts out (screenshots)
+;;;;   2322+k   Kikon rush test: human P1 Yamamoto 5 m from an idle Kenpachi who (k 0) holds guard at full
+;;;;            Reishi, (1) stands red (Reishi 200), (2) holds guard red; (3) as 1 but 7 m apart in 0.1x
+;;;;            slow motion for 4 s (screenshots of the dash); the script presses O
 ;;;;   2600+k   *RED-THRESHOLD* = k % (pacing the seed gate without a rebuild)
 ;;;;   2400 god (both fighters' Reishi is topped back up to 400 every frame; Kikon still lands)   2500+k human P1 vs an
 ;;;;            idle CPU (k: 0 Yama vs Ken, 1 Ken vs Yama, 2 Yama vs Yama, 3 Ken vs Ken)
@@ -85,6 +88,17 @@
   (set-reaction *p1* :flinch 18 (aref (pos-of *p2*) 0) (aref (pos-of *p2*) 2) 0.0)
   (setf (fighter-combo-hits (fighter *p1*)) 2)
   (burst! *p1*))
+
+(defun rush-test (k)
+  "Kikon rush test (2322+k): human P1 Yamamoto 5 m from an idle Kenpachi CPU; K 0: he holds guard at
+full Reishi (the strike is blocked, held O or not), 1: he stands red (held O = the Kikon, a tap = a
+hit), 2: he holds guard red (the strike goes through), 3: as 1, 7 m apart in slow motion (shots)."
+  (ensure-battle :yamamoto :kenpachi)
+  (place *p1* *p2* (if (= k 3) 7.0 5.0))
+  (when (= k 3) (slowmo 0.1 4.0))
+  (let ((g (gauges *p2*)) (b (brain *p2*)))
+    (setf (gauges-reishi g) (if (plusp k) 200 (gauges-reishi-max g)))
+    (setf (brain-press b) :guard (brain-press-mod b) nil (brain-press-left b) (if (member k '(0 2)) 999 0))))   ; off: held
 
 (defun probe-update ()
   "Per step: finish a running probe (the first tick each side is free again = both idle; the
@@ -250,6 +264,7 @@ presses (J down every other step: the switched-off brain still writes its held b
         ((= c 2319) (probe-trade))
         ((= c 2320) (probe-mash))
         ((= c 2321) (force-burst))
+        ((<= 2322 c 2325) (rush-test (- c 2322)))
         ((<= 2300 c 2399) (force-special (- c 2300)))
         ((= c 2400) (setf *god* (not *god*)))
         ((<= 2600 c 2699) (setf *red-threshold* (/ (- c 2600) 100.0)))

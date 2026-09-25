@@ -1,0 +1,92 @@
+[
+{
+"at": 9.0,
+"eval": "Module._debug_cmd(2322)"
+},
+{
+"at": 10.0,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 13.0,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 14.0,
+"eval": "Module._debug_cmd(2323)"
+},
+{
+"at": 15.0,
+"shot": "tests/shots/duel-kikon-prompt.png"
+},
+{
+"at": 15.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 16.6,
+"shot": "tests/shots/duel-kikon-cine.png"
+},
+{
+"at": 18.3,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 23.0,
+"eval": "Module._debug_cmd(2323)"
+},
+{
+"at": 24.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 24.38,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 27.0,
+"eval": "Module._debug_cmd(2324)"
+},
+{
+"at": 28.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 31.3,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 36.0,
+"eval": "Module._debug_cmd(2325)"
+},
+{
+"at": 36.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 36.6,
+"shot": "tests/shots/duel-kikon-rush-a.png"
+},
+{
+"at": 37.6,
+"shot": "tests/shots/duel-kikon-rush-b.png"
+},
+{
+"at": 42.0,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 46.0,
+"eval": "Module._debug_cmd(2107)"
+}
+]

@@ -8,7 +8,7 @@
 ;;;;   :guard-hit  blockstun                           :step       24 f hop, iframes f3-f9
 ;;;;   :run    Step held past the hop: run (phase :run), then :brake on release (no iframes)
 ;;;;   :hoho   vanish, reappear behind (iframes f1-f14; perfect → counter strike)
-;;;;   :move   a kit move; phase :hold (charge / stance) :aura :dash (Breaker) :main (S / A / R)
+;;;;   :move   a kit move; phase :hold (charge / stance) :aura :dash (Breaker, Kikon rush) :main (S / A / R)
 ;;;;   :stun   a grounded reaction (phase = :flinch :stagger :knockback :guard-break :crumple :clash)
 ;;;;   :air    launched / knocked down, until landing  :down :wakeup  (invulnerable)
 ;;;;   :cine :intro :win :lose   owned by a cinematic / the flow
@@ -150,16 +150,19 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
           (fighter-contact f) nil (fighter-land-sf f) -1 (fighter-dmg-bonus f) 0 (fighter-crush f) nil
           (fighter-stored f) 0                           ; an interrupted stance keeps nothing
           (fighter-button f) button (fighter-hold f) 0 (fighter-perfect f) nil
-          (fighter-phase f) (cond ((eq (mv-kind mv) :breaker) :aura) ((mv-hold mv) :hold) (t :main)))
+          (fighter-phase f) (cond ((member (mv-kind mv) '(:breaker :kikon)) :aura) ((mv-hold mv) :hold) (t :main)))
     (fill (motion-vel (motion e)) 0f0)
     (play-clip e (mv-clip mv) :blend (mv-blend mv) :speed (mv-clip-speed mv)
                               :time (/ (* enter (mv-clip-speed mv)) 60.0))
-    (when (mv-callout mv) (callout e (mv-callout mv)))
+    (if (eq (mv-kind mv) :kikon)
+        (callout e "KIKON")                             ; its own name shows if it becomes the Kikon
+        (when (mv-callout mv) (callout e (mv-callout mv))))
     (case (mv-kind mv)
       (:sp (let ((o (opp-of e)))                        ; super flash: the opponent alone freezes
              (setf (fighter-freeze-next (fighter o)) (max (fighter-freeze-next (fighter o)) *super-freeze*))
              (emit :super e)))
-      (:breaker (emit :breaker e)))
+      (:breaker (emit :breaker e))
+      (:kikon (emit :rush e)))
     (clog "~a move ~a~@[ ~a~]" (side-name e) (mv-name mv) (let ((b (brain e))) (and b (brain-why b))))
     mv))
 
@@ -232,7 +235,6 @@ it now. T when something started."
                (start-hoho e f) t))
       (:awaken (when (awaken-allowed-p (member (fighter-state f) '(:idle :guard)) (gauges-awaken g) (gauges-awakened g))
                  (awaken! e) t))
-      (:kikon (when (kikon-ok-p e) (kikon! e) t))
       (:burst (when (burst-ok-p e) (setf (fighter-burst f) t) t))   ; applied after both stepped
       (t (let ((mv (kit-command-move kit cmd)))
            (when (and mv (kit-command-ok-p e cmd))
@@ -242,8 +244,8 @@ it now. T when something started."
              t))))))
 
 (defparameter *neutral-commands* '(:kikon :awaken :hoho :step :breaker :sp2 :sp1 :sig :f :q)
-  "Commands from idle / walk / guard. Kikon only while the red opponent is still in our hitstun
-(KIKON-OK-P): there is no raw Kikon.")
+  "Commands from idle / walk / guard. :kikon starts the Kikon rush at any time (whether it becomes a
+Kikon is decided when its strike connects: combat.lisp APPLY-HIT).")
 
 (defparameter *run-commands* '(:kikon :hoho :step :breaker :sp2 :sp1 :sig :f :q)
   "Commands a run cancels into at once (neutral's, without Awaken); Step again = a new hop.")
@@ -307,6 +309,20 @@ buffered command that can't start (Kikon too early, no bar) doesn't hide the one
                (let ((sp (breaker-speed (fighter-hold f))) (yaw (yaw-of e)))
                  (setf (aref v 0) (f32 (* sp (fwd-x yaw))) (aref v 2) (f32 (* sp (fwd-z yaw))))))))))
 
+(defun kikon-rush-step (e f mv)
+  "Kikon rush: the aura, then the dash at *KIKON-SPEED* toward the opponent (KIKON-RUSH-NEXT-PHASE,
+turning at the move's :track), then the strike. The button isn't read here: only at the strike's
+connect (combat.lisp)."
+  (incf (fighter-hold f))
+  (let ((next (kikon-rush-next-phase (fighter-phase f) (fighter-hold f) (fighter-dist f)))
+        (v (motion-vel (motion e))))
+    (cond ((eq next :strike) (enter-main e f mv))
+          (t (unless (eq next (fighter-phase f)) (setf (fighter-phase f) next (fighter-hold f) 0))
+             (fill v 0f0)
+             (when (eq next :dash)
+               (turn-to-opp e f (track-step (mv-track mv)))
+               (run-velocity e *kikon-speed*))))))
+
 (defun main-phase-step (e f vp mv)
   "The move proper, one frame: tracking and lunge in the startup, frame hooks, chains and cancels,
 the end (MOVE-END-FRAME)."
@@ -332,7 +348,7 @@ the end (MOVE-END-FRAME)."
   (let ((mv (fighter-move f)))
     (case (fighter-phase f)
       (:hold (hold-phase-step e f vp mv))
-      ((:aura :dash) (breaker-phase-step e f vp mv))
+      ((:aura :dash) (if (eq (mv-kind mv) :kikon) (kikon-rush-step e f mv) (breaker-phase-step e f vp mv)))
       (t (main-phase-step e f vp mv)))))
 
 (defun move-commands (e f vp mv sf)
@@ -343,7 +359,9 @@ refused one doesn't hide the next). T when a new move / action started."
           thereis (and (member cmd '(:kikon :q :f :sp1 :sp2 :hoho))
                        (vpad-command-pressed-p vp button mod)
                        (case cmd
-                         (:kikon (when (kikon-ok-p e) (kikon! e) t))
+                         (:kikon (and (not (eq (mv-kind mv) :kikon))   ; the rush from any landed move
+                                      (cancel-open-p sf (fighter-land-sf f) (mv-total mv) (eq landed :hit))
+                                      (try-command e f cmd button)))
                          ((:q :f) (let ((next (kit-next kit (mv-name mv) cmd)))
                                     (when (and next (chain-open-p sf (mv-s mv) (mv-a mv) (mv-r mv) landed))
                                       (start-move e next button) t)))
@@ -554,7 +572,8 @@ step: a symmetric sim), step each, then keep them apart."
       (setf (fighter-freeze f) (max (fighter-freeze f) (fighter-freeze-next f))
             (fighter-lock f) (max (fighter-lock f) (fighter-lock-next f))
             (fighter-freeze-next f) 0 (fighter-lock-next f) 0))
-    ;; a Burst pressed this step applies now, unless a cinematic began (a Kikon on the same step wins)
+    ;; a Burst pressed this step applies now, unless a cinematic began (an awakening on the same step
+    ;; wins); it ends the attacker's move, so a Kikon rush that hasn't connected yet is escaped
     (do-entities (e (f fighter))
       (when (fighter-burst f)
         (setf (fighter-burst f) nil)
