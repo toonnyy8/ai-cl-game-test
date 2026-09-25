@@ -48,7 +48,10 @@ await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceSc
 await send('Page.navigate', { url: `http://127.0.0.1:${port}/index.html` });
 const t0 = Date.now(), now = () => (Date.now() - t0) / 1000;
 const save = async f => { const r = await send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(f, Buffer.from(r.data, 'base64')); console.log(`[run] screenshot ${f} @${now().toFixed(1)}s`); };
-const keyEv = (key, down) => send('Input.dispatchKeyEvent', { type: down ? 'keyDown' : 'keyUp', code: key, key: key.replace(/^Key/, '').toLowerCase(), windowsVirtualKeyCode: key.startsWith('Key') ? key.charCodeAt(3) : ({ Space: 32, ShiftLeft: 16, Enter: 13, Escape: 27, Tab: 9, ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39, ArrowDown: 40 }[key] || 0) });
+// numpad: code Numpad0..9 / NumpadEnter / NumpadAdd ... with the numpad virtual key codes and location 3
+const numpad = { ...Object.fromEntries([...'0123456789'].map((d, i) => ['Numpad' + d, 96 + i])), NumpadEnter: 13, NumpadAdd: 107,
+  NumpadSubtract: 109, NumpadMultiply: 106, NumpadDivide: 111, NumpadDecimal: 110 };
+const keyEv = (key, down) => send('Input.dispatchKeyEvent', { type: down ? 'keyDown' : 'keyUp', code: key, key: key.replace(/^Key/, '').toLowerCase(), windowsVirtualKeyCode: key.startsWith('Key') ? key.charCodeAt(3) : ({ Space: 32, ShiftLeft: 16, Enter: 13, Escape: 27, Tab: 9, ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39, ArrowDown: 40, ...numpad }[key] || 0), ...(key in numpad ? { location: 3 } : {}) });
 for (const s of steps) {
   while (now() < s.at) await sleep(10);
   if (s.key) await keyEv(s.key, s.down !== false);

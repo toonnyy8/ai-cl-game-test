@@ -93,35 +93,66 @@
   (n 0 :type fixnum)
   (times (make-f32 1) :type f32vec)
   (snaps (make-f32 1) :type f32vec)   ; 1.0 = key reached with a linear snap
-  (poses (make-f32 1) :type f32vec))  ; n x +pose-n+
+  (poses (make-f32 1) :type f32vec)   ; n x +pose-n+
+  (marks nil))                        ; plist: mark name -> seconds (DEFCLIP :MARKS)
 
 (defvar *clips* (make-hash-table :test 'eq))
-(defun find-clip (name) (or (gethash name *clips*) (error "unknown clip ~s" name)))
+(defun find-clip (name &optional (errorp t))
+  "The clip named NAME; unknown: an error, or NIL when ERRORP is NIL (e.g. art not written yet)."
+  (or (gethash name *clips*) (and errorp (error "unknown clip ~s" name))))
+(defun list-clips ()
+  "Names of every defined clip, sorted alphabetically (viewers, tests)."
+  (sort (loop for k being the hash-keys of *clips* collect k) #'string< :key #'symbol-name))
+(defun clip-mark (clip name)
+  "Time in seconds of mark NAME of CLIP (a clip or its name), :END = its duration; NIL if unknown."
+  (let ((c (if (clip-p clip) clip (find-clip clip))))
+    (if (eq name :end) (clip-dur c) (getf (clip-marks c) name))))
 
-(defun build-clip (name dur loop base keys)
+(defun build-clip (name dur loop base keys &key fps marks)
   "KEYS: list of (time [:snap] [pose-name] spec...). Each key starts from the previous key's
-pose (the first from BASE); a pose-name keyword resets it to that named pose."
-  (let* ((cur (copy-seq (find-pose base))) (acc nil))
+pose (the first from BASE); a pose-name keyword resets it to that named pose. FPS: DUR, key times
+and MARKS are frames at FPS per second. A key time may also be a MARKS name or :END (= DUR)."
+  (let* ((sec (lambda (x) (if fps (/ (f32 x) (f32 fps)) (f32 x))))   ; single-float frame / fps
+         (marks (loop for (k v) on marks by #'cddr append (list k (funcall sec v))))
+         (dur (funcall sec dur))
+         (cur (copy-seq (find-pose base))) (acc nil))
     (dolist (k keys)
-      (let ((snap nil))
+      (let ((snap nil) (tm (first k)))
         (dolist (e (rest k))
           (cond ((eq e :snap) (setf snap t))
                 ((keywordp e) (setf cur (copy-seq (find-pose e))))
                 (t (apply-spec! cur e))))
-        (push (list (f32 (first k)) snap (copy-seq cur)) acc)))
+        (push (list (cond ((numberp tm) (funcall sec tm)) ((eq tm :end) dur)
+                          (t (or (getf marks tm) (error "clip ~s: unknown key time ~s" name tm))))
+                    snap (copy-seq cur))
+              acc)))
     (setf acc (nreverse acc))
     (when (and loop (< (first (car (last acc))) (f32 dur)))
       (setf acc (append acc (list (list (f32 dur) nil (third (first acc)))))))
-    (let* ((n (length acc)) (c (%make-clip :name name :dur (f32 dur) :loop loop :n n
+    (let* ((n (length acc)) (c (%make-clip :name name :dur (f32 dur) :loop loop :n n :marks marks
                                            :times (make-f32 n) :snaps (make-f32 n) :poses (make-f32 (* n +pose-n+)))))
       (loop for (tm snap p) in acc for i from 0 do
         (setf (aref (clip-times c) i) tm (aref (clip-snaps c) i) (if snap 1f0 0f0))
         (replace (clip-poses c) p :start1 (* i +pose-n+)))
       (setf (gethash name *clips*) c))))
 
-(defmacro defclip (name (dur &key loop (base :stance)) &body keys)
-  "Keyframe clip. Keys: (time [:snap] [pose-name] (group chan val ...) ...). See §11.2."
-  `(build-clip ,name ,dur ,loop ,base ',keys))
+(defmacro defclip (name (dur &key loop (base :stance) fps marks) &body keys)
+  "Keyframe clip. Keys: (time [:snap] [pose-name] (group chan val ...) ...). See §11.2.
+DUR and key times are seconds, or frames with :FPS n (e.g. :fps 60 to match move frame data).
+MARKS: plist of named times in the same unit, e.g. (:hit 7 :recover 10); a key's time may be a mark
+name or :END (= DUR), and (CLIP-MARK clip :hit) returns it in seconds. An attack in frames:
+  (defclip :q1 (22 :fps 60 :base :my-stance :marks (:hit 7 :recover 10))
+    (4 (:arm-r :flex 120)) (:hit :snap (:arm-r :flex -30)) (:recover (:arm-r :flex -40)) (:end :my-stance))"
+  `(build-clip ,name ,dur ,loop ,base ',keys :fps ,fps :marks ',marks))
+
+;;; DEFSTRIKE: the attack-clip form of DEFCLIP, timed by a move's startup / active / recovery frames.
+(defmacro defstrike (name (s a r &key (base :stance)) &body keys)
+  "An attack clip timed to its move's frame data (60 Hz): the hit pose lands at frame S, the
+follow-through holds through S+A, and the character is back in BASE at S+A+R (the clip's end).
+KEYS are DEFCLIP keys whose time is a frame number or :S / :A (= S+A) / :END (= S+A+R); the
+last key is usually (:end BASE-POSE). DEFCLIP :fps 60 with marks :s / :a; (CLIP-MARK clip :s)
+reads them back in seconds."
+  `(defclip ,name (,(+ s a r) :fps 60 :base ,base :marks (:s ,s :a ,(+ s a))) ,@keys))
 
 (defun-fast clip-sample! (out clip time)
   "Sample CLIP at TIME (seconds; wraps for loops, clamps otherwise) into pose OUT."
@@ -240,15 +271,42 @@ then flex, then side, in the parent's axes (§11.2)."
 (defvar *fk-a* (make-f32 16))
 (defvar *fk-b* (make-f32 16))
 
-(defun-fast pose-fk! (jm pose px py pz yaw scale hunch)
-  "World matrix per joint into JM from POSE, character at (px py pz) facing YAW, uniform rig
-SCALE. HUNCH (rad) adds spine flex. Feet are auto-levelled against thigh/knee/pelvis flex."
+;;; Rig proportions: an f32vec of the +NJ+ x 3 bone offsets (the *RIG-OFF* layout) + the pelvis height,
+;;; made once by MAKE-RIG-PROPORTIONS and passed to POSE-FK! (NIL = the standard rig).
+(defconstant +rig-props-n+ (1+ (* 3 +nj+)))
+
+(defun make-rig-proportions (&key (shoulders 1) (arms 1) (legs 1) (spine 1))
+  "Per-chain proportions for POSE-FK!, multipliers of the standard rig (1 = unchanged; POSE-FK!'s
+uniform SCALE still applies on top). SHOULDERS: shoulder width (a broad chest pushes the arms out
+of a wide sleeve / haori); ARMS: upper arm + forearm length; LEGS: thigh + shin length, and the
+pelvis rises or sinks with them so the feet stay on the ground; SPINE: pelvis-to-neck length.
+Bones get longer, meshes do not stretch: parts are rigid in their joint's frame. Setup-time
+(allocates): make one per body and keep it."
+  (let ((v (make-f32 +rig-props-n+)))
+    (replace v *rig-off*)
+    (flet ((stretch (joints axis k)
+             (dolist (j joints)
+               (let ((i (+ (* 3 (joint-index j)) axis))) (setf (aref v i) (* (aref v i) (f32 k)))))))
+      (stretch '(:shoulder-r :shoulder-l :upper-arm-r :upper-arm-l) 0 shoulders)   ; x
+      (stretch '(:lower-arm-r :lower-arm-l :hand-r :hand-l) 1 arms)                ; y (down the bone)
+      (stretch '(:shin-r :shin-l :foot-r :foot-l) 1 legs)
+      (stretch '(:spine :chest :neck) 1 spine))
+    ;; standard pelvis height 0.98 = 0.05 hip + 0.44 thigh + 0.43 shin + ~0.06 foot
+    (setf (aref v (* 3 +nj+)) (f32 (+ 0.98 (* 0.87 (- legs 1)))))
+    v))
+
+(defun-fast %pose-fk! (jm pose px py pz yaw scale hunch props)
+  "POSE-FK! with its optional argument made positional (see POSE-FK!)."
   (declare (type f32vec jm pose) (single-float px py pz yaw scale hunch))
-  (let* ((la *fk-a*) (lb *fk-b*) (par *rig-parent*) (off *rig-off*) (fs *rig-fsign*) (mir *rig-mirror*))
-    (declare (type f32vec la lb off fs mir) (type (simple-array fixnum (*)) par))
-    ;; root: T(p) Ry(yaw + root yaw) S(scale) · T(root r, 0.98 + u, -f) Rx(-root pitch) · pelvis channels
+  (when props
+    (unless (and (f32vec-p props) (= (length (the f32vec props)) +rig-props-n+))
+      (error "pose-fk!: ~s is not a MAKE-RIG-PROPORTIONS vector" props)))
+  (let* ((la *fk-a*) (lb *fk-b*) (par *rig-parent*) (off (if props props *rig-off*)) (fs *rig-fsign*) (mir *rig-mirror*)
+         (ph (if props (aref (the f32vec props) (* 3 +nj+)) 0.98f0)))
+    (declare (type f32vec la lb off fs mir) (type (simple-array fixnum (*)) par) (single-float ph))
+    ;; root: T(p) Ry(yaw + root yaw) S(scale) · T(root r, pelvis height + u, -f) Rx(-root pitch) · pelvis channels
     (%euler! la 0 px py pz (+ yaw (aref pose 66)) 0f0 0f0 scale)
-    (%euler! lb 0 (aref pose 63) (+ 0.98f0 (aref pose 64)) (- (aref pose 65)) 0f0 (- (aref pose 67)) 0f0 1f0)
+    (%euler! lb 0 (aref pose 63) (+ ph (aref pose 64)) (- (aref pose 65)) 0f0 (- (aref pose 67)) 0f0 1f0)
     (%affine-mul! jm 0 la 0 lb 0)
     (replace la jm :end2 16)
     (%joint-rot! lb 0f0 0f0 0f0 (aref pose 1) (- (aref pose 0)) (aref pose 2))
@@ -267,6 +325,16 @@ SCALE. HUNCH (rad) adds spine flex. Feet are auto-levelled against thigh/knee/pe
         (%joint-rot! lb (aref off o3) (aref off (+ o3 1)) (aref off (+ o3 2)) tw fl sd)
         (%affine-mul! jm (* j 16) jm (* p 16) lb 0)))
     jm))
+
+(defun pose-fk! (jm pose px py pz yaw scale hunch &optional props)
+  "World matrix per joint into JM from POSE, character at (px py pz) facing YAW, uniform rig
+SCALE. HUNCH (rad) adds spine flex. Feet are auto-levelled against thigh/knee/pelvis flex.
+PROPS: NIL (the standard rig) or a MAKE-RIG-PROPORTIONS vector (per-chain bone lengths).
+A direct call compiles to %POSE-FK! (compiler macro): no optional-argument parsing."
+  (%pose-fk! jm pose px py pz yaw scale hunch props))
+(eval-when (:compile-toplevel :load-toplevel :execute)   ; ECL: else not seen by the compiler
+  (define-compiler-macro pose-fk! (jm pose px py pz yaw scale hunch &optional props)
+    `(%pose-fk! ,jm ,pose ,px ,py ,pz ,yaw ,scale ,hunch ,props)))
 
 (defun-fast joint-point! (out jm j lx ly lz)
   "OUT = world position of local point (lx ly lz) in joint J's frame."

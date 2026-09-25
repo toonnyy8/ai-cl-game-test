@@ -8,8 +8,8 @@ struct Frame {
   fog: vec4f,         // linear rgb, density
   fogh: vec4f,        // base height, height falloff, max amount
   amb_sky: vec4f, amb_ground: vec4f,
-  moon_dir: vec4f,    // direction TO the moon
-  moon_col: vec4f,    // linear color x intensity
+  moon_dir: vec4f,    // direction TO the moon; w = sky disc size (env-sun-size)
+  moon_col: vec4f,    // linear color x intensity; w = sky glow strength (env-sun-glow)
   rim: vec4f,         // linear rgb x strength, power
   sky_top: vec4f,
   spec: vec4f,        // env specular, shininess, lights used, lights shaded per pixel

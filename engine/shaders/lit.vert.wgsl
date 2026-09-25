@@ -14,7 +14,7 @@
   var o: LitV;
   o.pos = F.vp * wp;
   o.wpos = wp.xyz; o.nrm = nm; o.col = pow(c, vec3f(2.2));
-  o.tint = d.tint; o.fx = d.fx; o.rim = d.rim.xyz;
+  o.tint = d.tint; o.fx = d.fx; o.rim = d.rim;
   var acc = Lit(vec3f(0.0), vec3f(0.0));
   let nl = i32(F.spec.z); let np = i32(F.spec.w);
   if (np < nl) {                               // per-vertex lights np..nl-1

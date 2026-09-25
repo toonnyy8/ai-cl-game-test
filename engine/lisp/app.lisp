@@ -84,10 +84,10 @@ the frame time there into sim / queue / render."
     (when (>= (aref st 2) 2f0)
       (setf (aref st 3) (/ (aref st 0) (aref st 1)))
       (let ((n (max 1.0 (aref st 1))) (tail (app-stats *app*)))
-        (log-msg "stats: fps ~,1f cons/frame ~d B draws ~d tris ~d particles ~d | ms/frame sim ~,2f queue ~,2f render ~,2f~a"
+        (log-msg "stats: fps ~,1f cons/frame ~d B draws ~d tris ~d particles ~d | ms/frame sim ~,2f queue ~,2f render ~,2f~a | fx-dropped ~d"
                  (fps) (round (aref st 3)) *draw-count* *tri-count* *plive*
                  (/ (aref *perf* 0) n) (/ (aref *perf* 1) n) (/ (aref *perf* 2) n)
-                 (if tail (funcall tail) "")))
+                 (if tail (funcall tail) "") *fx-dropped*))
       (fill *perf* 0f0)
       (setf (aref st 0) 0f0 (aref st 1) 0f0 (aref st 2) 0f0))))
 

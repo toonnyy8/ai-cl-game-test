@@ -1,0 +1,502 @@
+[
+{
+"at": 8.0,
+"eval": "Module._debug_cmd(2000)"
+},
+{
+"at": 8.1,
+"eval": "Module._debug_cmd(5000)"
+},
+{
+"at": 10.3,
+"shot": "tests/shots/duel-vfx-blade-fire-0.png"
+},
+{
+"at": 10.6,
+"eval": "Module._debug_cmd(5600)"
+},
+{
+"at": 12.2,
+"shot": "tests/shots/duel-vfx-blade-fire-1.png"
+},
+{
+"at": 12.5,
+"eval": "Module._debug_cmd(2001)"
+},
+{
+"at": 12.6,
+"eval": "Module._debug_cmd(5000)"
+},
+{
+"at": 14.8,
+"shot": "tests/shots/duel-vfx-hellfire-0.png"
+},
+{
+"at": 15.1,
+"eval": "Module._debug_cmd(5700)"
+},
+{
+"at": 16.85,
+"shot": "tests/shots/duel-vfx-hellfire-1.png"
+},
+{
+"at": 17.15,
+"eval": "Module._debug_cmd(2002)"
+},
+{
+"at": 17.25,
+"eval": "Module._debug_cmd(5000)"
+},
+{
+"at": 19.45,
+"shot": "tests/shots/duel-vfx-bankai-embers-0.png"
+},
+{
+"at": 19.75,
+"eval": "Module._debug_cmd(5700)"
+},
+{
+"at": 21.5,
+"shot": "tests/shots/duel-vfx-bankai-embers-1.png"
+},
+{
+"at": 21.8,
+"eval": "Module._debug_cmd(2003)"
+},
+{
+"at": 21.9,
+"eval": "Module._debug_cmd(4300)"
+},
+{
+"at": 23.05,
+"shot": "tests/shots/duel-vfx-fire-wave-0.png"
+},
+{
+"at": 23.35,
+"eval": "Module._debug_cmd(4600)"
+},
+{
+"at": 24.5,
+"shot": "tests/shots/duel-vfx-fire-wave-1.png"
+},
+{
+"at": 24.8,
+"eval": "Module._debug_cmd(4900)"
+},
+{
+"at": 25.95,
+"shot": "tests/shots/duel-vfx-fire-wave-2.png"
+},
+{
+"at": 26.25,
+"eval": "Module._debug_cmd(2004)"
+},
+{
+"at": 26.35,
+"eval": "Module._debug_cmd(4800)"
+},
+{
+"at": 28.25,
+"shot": "tests/shots/duel-vfx-shiranui-0.png"
+},
+{
+"at": 28.55,
+"eval": "Module._debug_cmd(5600)"
+},
+{
+"at": 30.45,
+"shot": "tests/shots/duel-vfx-shiranui-1.png"
+},
+{
+"at": 30.75,
+"eval": "Module._debug_cmd(6000)"
+},
+{
+"at": 32.05,
+"shot": "tests/shots/duel-vfx-shiranui-2.png"
+},
+{
+"at": 32.35,
+"eval": "Module._debug_cmd(2005)"
+},
+{
+"at": 32.45,
+"eval": "Module._debug_cmd(4150)"
+},
+{
+"at": 33.38,
+"shot": "tests/shots/duel-vfx-ennetsu-0.png"
+},
+{
+"at": 33.67,
+"eval": "Module._debug_cmd(4450)"
+},
+{
+"at": 34.82,
+"shot": "tests/shots/duel-vfx-ennetsu-1.png"
+},
+{
+"at": 35.12,
+"eval": "Module._debug_cmd(4750)"
+},
+{
+"at": 36.27,
+"shot": "tests/shots/duel-vfx-ennetsu-2.png"
+},
+{
+"at": 36.57,
+"eval": "Module._debug_cmd(2006)"
+},
+{
+"at": 36.67,
+"eval": "Module._debug_cmd(4500)"
+},
+{
+"at": 38.12,
+"shot": "tests/shots/duel-vfx-dome-0.png"
+},
+{
+"at": 38.42,
+"eval": "Module._debug_cmd(5200)"
+},
+{
+"at": 40.17,
+"shot": "tests/shots/duel-vfx-dome-1.png"
+},
+{
+"at": 40.47,
+"eval": "Module._debug_cmd(5550)"
+},
+{
+"at": 41.7,
+"shot": "tests/shots/duel-vfx-dome-2.png"
+},
+{
+"at": 42.0,
+"eval": "Module._debug_cmd(5800)"
+},
+{
+"at": 43.07,
+"shot": "tests/shots/duel-vfx-dome-3.png"
+},
+{
+"at": 43.37,
+"eval": "Module._debug_cmd(6100)"
+},
+{
+"at": 44.52,
+"shot": "tests/shots/duel-vfx-dome-4.png"
+},
+{
+"at": 44.82,
+"eval": "Module._debug_cmd(2007)"
+},
+{
+"at": 44.92,
+"eval": "Module._debug_cmd(5000)"
+},
+{
+"at": 47.12,
+"shot": "tests/shots/duel-vfx-auras-0.png"
+},
+{
+"at": 47.42,
+"eval": "Module._debug_cmd(5800)"
+},
+{
+"at": 49.32,
+"shot": "tests/shots/duel-vfx-auras-1.png"
+},
+{
+"at": 49.62,
+"eval": "Module._debug_cmd(2008)"
+},
+{
+"at": 49.72,
+"eval": "Module._debug_cmd(4500)"
+},
+{
+"at": 51.17,
+"shot": "tests/shots/duel-vfx-breaker-0.png"
+},
+{
+"at": 51.47,
+"eval": "Module._debug_cmd(4950)"
+},
+{
+"at": 52.85,
+"shot": "tests/shots/duel-vfx-breaker-1.png"
+},
+{
+"at": 53.15,
+"eval": "Module._debug_cmd(2009)"
+},
+{
+"at": 53.25,
+"eval": "Module._debug_cmd(4100)"
+},
+{
+"at": 54.1,
+"shot": "tests/shots/duel-vfx-line-cuts-0.png"
+},
+{
+"at": 54.4,
+"eval": "Module._debug_cmd(4350)"
+},
+{
+"at": 55.47,
+"shot": "tests/shots/duel-vfx-line-cuts-1.png"
+},
+{
+"at": 55.77,
+"eval": "Module._debug_cmd(4900)"
+},
+{
+"at": 57.3,
+"shot": "tests/shots/duel-vfx-line-cuts-2.png"
+},
+{
+"at": 57.6,
+"eval": "Module._debug_cmd(2010)"
+},
+{
+"at": 57.7,
+"eval": "Module._debug_cmd(4050)"
+},
+{
+"at": 58.47,
+"shot": "tests/shots/duel-vfx-sky-split-0.png"
+},
+{
+"at": 58.77,
+"eval": "Module._debug_cmd(4300)"
+},
+{
+"at": 59.85,
+"shot": "tests/shots/duel-vfx-sky-split-1.png"
+},
+{
+"at": 60.15,
+"eval": "Module._debug_cmd(4900)"
+},
+{
+"at": 61.75,
+"shot": "tests/shots/duel-vfx-sky-split-2.png"
+},
+{
+"at": 62.05,
+"eval": "Module._debug_cmd(2011)"
+},
+{
+"at": 62.15,
+"eval": "Module._debug_cmd(4040)"
+},
+{
+"at": 62.91,
+"shot": "tests/shots/duel-vfx-tenchi-0.png"
+},
+{
+"at": 63.21,
+"eval": "Module._debug_cmd(4300)"
+},
+{
+"at": 64.3,
+"shot": "tests/shots/duel-vfx-tenchi-1.png"
+},
+{
+"at": 64.6,
+"eval": "Module._debug_cmd(5200)"
+},
+{
+"at": 66.65,
+"shot": "tests/shots/duel-vfx-tenchi-2.png"
+},
+{
+"at": 66.95,
+"eval": "Module._debug_cmd(2012)"
+},
+{
+"at": 67.05,
+"eval": "Module._debug_cmd(4400)"
+},
+{
+"at": 68.35,
+"shot": "tests/shots/duel-vfx-soul-flame-0.png"
+},
+{
+"at": 68.65,
+"eval": "Module._debug_cmd(5000)"
+},
+{
+"at": 70.25,
+"shot": "tests/shots/duel-vfx-soul-flame-1.png"
+},
+{
+"at": 70.55,
+"eval": "Module._debug_cmd(2013)"
+},
+{
+"at": 70.65,
+"eval": "Module._debug_cmd(4100)"
+},
+{
+"at": 71.5,
+"shot": "tests/shots/duel-vfx-hits-0.png"
+},
+{
+"at": 71.8,
+"eval": "Module._debug_cmd(4500)"
+},
+{
+"at": 73.1,
+"shot": "tests/shots/duel-vfx-hits-1.png"
+},
+{
+"at": 73.4,
+"eval": "Module._debug_cmd(4900)"
+},
+{
+"at": 74.7,
+"shot": "tests/shots/duel-vfx-hits-2.png"
+},
+{
+"at": 75.0,
+"eval": "Module._debug_cmd(5300)"
+},
+{
+"at": 76.3,
+"shot": "tests/shots/duel-vfx-hits-3.png"
+},
+{
+"at": 76.6,
+"eval": "Module._debug_cmd(5700)"
+},
+{
+"at": 77.9,
+"shot": "tests/shots/duel-vfx-hits-4.png"
+},
+{
+"at": 78.2,
+"eval": "Module._debug_cmd(6100)"
+},
+{
+"at": 79.5,
+"shot": "tests/shots/duel-vfx-hits-5.png"
+},
+{
+"at": 79.8,
+"eval": "Module._debug_cmd(6500)"
+},
+{
+"at": 81.1,
+"shot": "tests/shots/duel-vfx-hits-6.png"
+},
+{
+"at": 81.4,
+"eval": "Module._debug_cmd(2014)"
+},
+{
+"at": 81.5,
+"eval": "Module._debug_cmd(4150)"
+},
+{
+"at": 82.42,
+"shot": "tests/shots/duel-vfx-oneshots-0.png"
+},
+{
+"at": 82.72,
+"eval": "Module._debug_cmd(5150)"
+},
+{
+"at": 84.92,
+"shot": "tests/shots/duel-vfx-oneshots-1.png"
+},
+{
+"at": 85.22,
+"eval": "Module._debug_cmd(6150)"
+},
+{
+"at": 87.42,
+"shot": "tests/shots/duel-vfx-oneshots-2.png"
+},
+{
+"at": 87.72,
+"eval": "Module._debug_cmd(7250)"
+},
+{
+"at": 90.07,
+"shot": "tests/shots/duel-vfx-oneshots-3.png"
+},
+{
+"at": 90.37,
+"eval": "Module._debug_cmd(7700)"
+},
+{
+"at": 91.75,
+"shot": "tests/shots/duel-vfx-oneshots-4.png"
+},
+{
+"at": 92.05,
+"eval": "Module._debug_cmd(9200)"
+},
+{
+"at": 95.0,
+"shot": "tests/shots/duel-vfx-oneshots-5.png"
+},
+{
+"at": 95.3,
+"eval": "Module._debug_cmd(10200)"
+},
+{
+"at": 97.5,
+"shot": "tests/shots/duel-vfx-oneshots-6.png"
+},
+{
+"at": 97.8,
+"eval": "Module._debug_cmd(10750)"
+},
+{
+"at": 99.32,
+"shot": "tests/shots/duel-vfx-oneshots-7.png"
+},
+{
+"at": 99.62,
+"eval": "Module._debug_cmd(10950)"
+},
+{
+"at": 100.62,
+"shot": "tests/shots/duel-vfx-oneshots-8.png"
+},
+{
+"at": 100.92,
+"eval": "Module._debug_cmd(2015)"
+},
+{
+"at": 101.02,
+"eval": "Module._debug_cmd(4500)"
+},
+{
+"at": 102.47,
+"shot": "tests/shots/duel-vfx-ui-0.png"
+},
+{
+"at": 102.77,
+"eval": "Module._debug_cmd(2016)"
+},
+{
+"at": 102.87,
+"eval": "Module._debug_cmd(6500)"
+},
+{
+"at": 107.32,
+"shot": "tests/shots/duel-vfx-worst-0.png"
+},
+{
+"at": 107.62,
+"eval": "Module._debug_cmd(10000)"
+},
+{
+"at": 113.57,
+"shot": "tests/shots/duel-vfx-worst-1.png"
+}
+]

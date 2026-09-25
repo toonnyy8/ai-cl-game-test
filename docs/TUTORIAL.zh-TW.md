@@ -1,8 +1,8 @@
-# 學習路徑：從 HELLO 讀到 RAVEN EDGE
+# 學習路徑：從 HELLO 讀到 RAVEN EDGE 與 SOUL DUEL
 
 這份教材的對象是會一點程式、也許碰過一點 Lisp、想知道「網頁上的 3D 遊戲引擎和遊戲是怎麼做出來的」的人。它不從零教 Common Lisp，而是帶你照順序讀這個專案的真實程式碼。每一步都標了檔案和行號，建議把檔案開在旁邊對著看。
 
-路線是這樣：先把最小的範例 `examples/hello` 建起來、跑起來、從頭讀到尾（第 0～2 步），再往下看引擎的四根柱子：幀迴圈與 GC、ECS、純函式規則、事件（第 3～6 步），接著是算圖（第 7 步），最後用同樣的眼光讀完整的遊戲 RAVEN EDGE（第 8 步）。第 9 步是練習題。
+路線是這樣：先把最小的範例 `examples/hello` 建起來、跑起來、從頭讀到尾（第 0～2 步），再往下看引擎的四根柱子：幀迴圈與 GC、ECS、純函式規則、事件（第 3～6 步），接著是算圖（第 7 步），再用同樣的眼光讀完整的遊戲 RAVEN EDGE（第 8 步），最後看第二款、類型完全不同的遊戲 SOUL DUEL 教了哪些 RAVEN 沒教的事（第 9 步）。第 10 步是練習題。
 
 ![HELLO：一個會發光的方塊和幾顆旋轉的寶石](../tests/shots/hello.png)
 
@@ -49,13 +49,17 @@ node tools/run.mjs dist/hello --secs 10 --shot out.png
 
 ### 在主機上一秒跑完的測試
 
-有三個檔案是純 Common Lisp，不用建置、不用瀏覽器，直接用 host ECL 就能測：
+有幾個檔案是純 Common Lisp，不用建置、不用瀏覽器，直接用 host ECL 就能測：
 
 ```sh
 E=/media/8tsp/projects/ecl-24.5.10/ecl-emscripten-host/bin/ecl
 $E --norc --load tests/ecs-test.lisp          # ecs-test: ALL PASS
 $E --norc --load tests/rules-test.lisp        # rules-test: ALL PASS
 $E --norc --load engine/lisp/package.lisp --load engine/lisp/math.lisp --load tests/test-math.lisp   # test-math: OK
+$E --norc --load tests/input-test.lisp        # input-test: 31 checks, ALL PASS
+$E --norc --load tests/cine-test.lisp         # cine-test: 18 checks, ALL PASS
+$E --norc --load tests/duel-rules-test.lisp   # duel-rules-test: 351 checks, ALL PASS
+$E --norc --load tests/duel-control-test.lisp # duel-control-test: 53 checks, ALL PASS
 ```
 
 這件事為什麼做得到，第 5 步會講。
@@ -71,13 +75,14 @@ engine/     可重複使用的引擎（ENGINE 套件）。不知道任何一款�
   shaders/    所有 WGSL 著色器
   web/        HTML 外殼 shell.html
 game/       RAVEN EDGE（RAVEN 套件），用引擎做出來的完整遊戲
+duel/       SOUL DUEL（DUEL 套件），第二款遊戲：1 對 1 格鬥（第 9 步）
 examples/   只用引擎的小範例：hello（本教材）、engine-demo（算圖、模型產生、特效、UI 的展示）
 tests/      主機上的測試、wasm 版的 demo、無頭測試腳本產生器、截圖
 tools/      build.lisp（編譯腳本）、run.mjs（無頭測試器）、pkgcheck.sh、vendor 腳本
 docs/       文件（索引在 docs/README.md）
 ```
 
-引擎和遊戲的界線是套件：引擎的公開 API 就是 `engine/lisp/package.lisp` 第 7～71 行的 export 清單，遊戲用 `(defpackage :raven (:use :cl :engine))` 看到這些名字。引擎的程式碼裡沒有任何一行提到 RAVEN。
+引擎和遊戲的界線是套件：引擎的公開 API 就是 `engine/lisp/package.lisp` 第 8～93 行的 export 清單，遊戲用 `(defpackage :raven (:use :cl :engine))` 看到這些名字。引擎的程式碼裡沒有任何一行提到 RAVEN 或 SOUL DUEL。
 
 ### MANIFEST：一個建置目標的原始檔清單
 
@@ -117,7 +122,7 @@ dist/hello/index.html  index.js  index.wasm
   tools/pkgcheck.sh examples/hello
   ```
 
-  輸出 `0 symbols that look like unexported ENGINE names` 就是沒問題；如果列出 `HELLO::某名稱`，代表你用了引擎沒有 export 的東西（去 `engine/lisp/package.lisp` 找找正確的名字），或是剛好和引擎內部名稱撞名（換個名字）。
+  它印三行，三個數字都是 0 就是沒問題：`0 symbols that look like unexported ENGINE names`（用到引擎沒有 export 的名字，或剛好和引擎內部名稱撞名）、`0 top-level definitions that redefine an ENGINE export`（遊戲 `defun` 了一個和引擎 export 同名的函式，會悄悄蓋掉引擎的版本）、`0 functions called but defined nowhere`（打錯字或呼叫了已刪掉的函式）。有任何一項不是 0，結束碼就是 1。
 
 ---
 
@@ -231,13 +236,13 @@ ECL 用的 Boehm GC 是「保守式」的：它掃描堆疊和暫存器，看到
 
 第 3 條是引擎很多寫法的原因：預先配置的矩陣、`!` 結尾的函式、`defun-fast`。想看自己每幀配置多少，在 hello 的 `start` 裡加一行 `(setf *stats-log* t)`，console 每 2 秒會印一行 `stats: fps … cons/frame … B …`。
 
-對照一下啟動完成時的堆大小：hello 是 23.2 MB，RAVEN EDGE 是 87.1 MB（console 的 `startup: heap … MB`）。
+對照一下啟動完成時的堆大小：hello 是 23.2 MB，RAVEN EDGE 是 87.1 MB，SOUL DUEL 是 103.1 MB（console 的 `startup: heap … MB`）。
 
 ---
 
 ## 第 4 步：ECS（Entity-Component-System）
 
-打開 `engine/lisp/ecs.lisp`，154 行，開頭 1～26 行的註解就是整個設計。
+打開 `engine/lisp/ecs.lisp`，155 行，開頭 1～26 行的註解就是整個設計。
 
 **為什麼不用類別繼承。** 遊戲物件之間的差別在「帶了哪些資料」，不在「是哪一種類別」。主角、小兵、飛出去的苦無都有位置，只有戰鬥者有血量，只有苦無是飛行道具。用繼承會很快卡在「苦無要不要繼承角色」這種問題上。ECS 把三件事拆開：
 
@@ -247,7 +252,7 @@ ECL 用的 Boehm GC 是「保守式」的：它掃描堆疊和暫存器，看到
 | Component 元件 | 一包資料 | `defcomponent` 定義的 struct，每個實體每種最多一個 |
 | System 系統 | 一段邏輯 | 普通函式，用 `do-entities` 找到需要的實體 |
 
-**儲存方式。** 每一種元件有一個長度 256 的向量，用實體的「槽位」當索引（第 36～40 行）。所以 `(pos e)` 就是兩次陣列讀取。`do-entities`（第 123～139 行）展開後是一個掃過所有使用中槽位的迴圈，只要有一種元件是 `nil` 就跳過。
+**儲存方式。** 每一種元件有一個長度 256 的向量，用實體的「槽位」當索引（第 36～40 行）。所以 `(pos e)` 就是兩次陣列讀取。`do-entities`（第 123～140 行）展開後是一個掃過所有使用中槽位的迴圈，只要有一種元件是 `nil` 就跳過。
 
 **編號與世代（第 58～69 行）。** 實體被刪掉後，槽位會給新的實體重用。如果編號只是槽位，別人手上留著的舊編號就會指到新實體，這是很難抓的 bug。所以編號 = 槽位 + 256 × 世代：`destroy-entity`（第 107～116 行）把該槽位的世代加一，舊編號的世代對不上，`entity-alive-p` 傳回 `nil`，所有元件 getter 也傳回 `nil`。因此實體之間可以放心互相記編號，例如 RAVEN 的飛行道具記著丟它的人（`projectile-owner`），丟的人死掉也不會出事。
 
@@ -274,9 +279,9 @@ a projectile   transform projectile
 
 打開 `game/lisp/rules.lisp`。檔頭 1～7 行說明了規矩：這個檔案裡的函式只看參數、只回傳結果，不碰元件、不讀特殊變數、沒有副作用，連亂數都是從參數傳進來的一個數字。這叫「函數式核心」。
 
-最好的例子是 `enemy-hit-outcome`（第 98～144 行）：一下攻擊打到敵人會怎樣？輸入全部是關鍵字參數：是不是 Raven 型態、是不是頭目、在不在防禦、在不在紅色蓄力、剩多少韌性和血量……輸出是一個小結構 `enemy-hit`（第 86～96 行）：結果（`:hit`、`:blocked`、`:killed`、`:crippled`……）、扣多少血、停頓幾幀。它不知道實體是什麼，也不知道畫面長什麼樣子。
+最好的例子是 `enemy-hit-outcome`（第 57～103 行）：一下攻擊打到敵人會怎樣？輸入全部是關鍵字參數：是不是 Raven 型態、是不是頭目、在不在防禦、在不在紅色蓄力、剩多少韌性和血量……輸出是一個小結構 `enemy-hit`（第 45～55 行）：結果（`:hit`、`:blocked`、`:killed`、`:crippled`……）、扣多少血、停頓幾幀。它不知道實體是什麼，也不知道畫面長什麼樣子。
 
-「命令式外殼」是呼叫它的地方：`game/lisp/combat.lisp` 的 `enemy-take-hit`（第 197～252 行）。它從元件收集輸入、呼叫規則、再把結果套回元件（扣血、改狀態、擊退），最後發事件。
+「命令式外殼」是呼叫它的地方：`game/lisp/combat.lisp` 的 `enemy-take-hit`（第 192～247 行）。它從元件收集輸入、呼叫規則、再把結果套回元件（扣血、改狀態、擊退），最後發事件。
 
 ### 為什麼這樣切
 
@@ -289,7 +294,7 @@ a projectile   transform projectile
 
 不用建置、不用開瀏覽器、不用在遊戲裡等敵人出招。改完一條規則，0.04 秒就知道有沒有打破別的東西。遊戲裡要驗證同一件事，得建置、開無頭 Chrome、下除錯指令、翻 log。
 
-**因為規則集中在一個檔案，讀得懂。** 想知道「格擋視窗是幾幀」「紅色攻擊能不能擋」，看 `player-hit-outcome`（第 163～194 行）就好，不用在 800 行的玩家狀態機裡找。
+**因為規則集中在一個檔案，讀得懂。** 想知道「格擋視窗是幾幀」「紅色攻擊能不能擋」，看 `player-hit-outcome`（第 122～153 行）就好，不用在 800 行的玩家狀態機裡找。
 
 ### 那為什麼外殼還是直接改資料？
 
@@ -298,7 +303,7 @@ a projectile   transform projectile
 - **浮點數會裝箱。** ECL 裡的 `single-float` 只要存進「一般的地方」（串列、沒宣告型別的欄位、一般變數），就會被包成一個堆上的物件，約 16 位元組。一個角色每步要更新十幾個 float，每秒 60 步，十幾個角色，全部複製一份的話每秒會多出幾 MB 的垃圾。
 - **垃圾就是卡頓。** 第 3 步說過，GC 只能在幀之間做完整回收，垃圾越多，回收越頻繁。
 
-所以取捨是：**決定**用純函式（好測、好讀、只在事件發生時跑，例如命中時），**狀態**留在元件裡原地修改。規則回傳的小結構也會配置記憶體，但一秒只有幾次命中，可以接受。攻擊判定期間每一步都要跑的 `vol-hit-p`（第 48～83 行）則寫成只收 float、只回傳真假值，本體用 `(safety 0)` 編譯，裡面不配置記憶體（不過照 ECL 的規矩，呼叫時傳進去的 float 還是會各裝箱一次）。
+所以取捨是：**決定**用純函式（好測、好讀、只在事件發生時跑，例如命中時），**狀態**留在元件裡原地修改。規則回傳的小結構也會配置記憶體，但一秒只有幾次命中，可以接受。攻擊判定期間每一步都要跑的 `vol-hit-p` 則寫成只收 float、只回傳真假值，本體用 `(safety 0)` 編譯，裡面不配置記憶體（不過照 ECL 的規矩，呼叫時傳進去的 float 還是會各裝箱一次）。它原本在 RAVEN 的 `rules.lisp`，SOUL DUEL 也需要一模一樣的東西，所以後來搬進了引擎的 `engine/lisp/hitvol.lisp`（第 29～64 行），同樣是純 Common Lisp，兩款遊戲的主機測試都直接載入它。
 
 這次重構在同樣的自動遊玩測試下，每秒配置量大約多了 10%（見 [DEVLOG](DEVLOG.zh-TW.md) 第 13 節）。
 
@@ -306,9 +311,9 @@ a projectile   transform projectile
 
 ## 第 6 步：事件和 feedback 系統
 
-事件佇列在 `ecs.lisp` 第 141～154 行，只有兩個函式：`(emit kind data…)` 把一個串列推進佇列，`(take-events)` 依發生順序全部取出並清空。
+事件佇列在 `ecs.lisp` 第 142～155 行，只有兩個函式：`(emit kind data…)` 把一個串列推進佇列，`(take-events)` 依發生順序全部取出並清空。
 
-RAVEN EDGE 的戰鬥程式碼從不直接放音效或特效。`combat.lisp` 的 `emit-hit`（第 104～107 行）只記下「誰打到誰、在哪裡、是不是重擊、要停頓幾幀」：
+RAVEN EDGE 的戰鬥程式碼從不直接放音效或特效。`combat.lisp` 的 `emit-hit`（第 99～102 行）只記下「誰打到誰、在哪裡、是不是重擊、要停頓幾幀」：
 
 ```lisp
 (emit :hit att tgt (aref p 0) (aref p 1) (aref p 2) (fwd-x yaw) (fwd-z yaw) heavy hitstop ender)
@@ -316,7 +321,7 @@ RAVEN EDGE 的戰鬥程式碼從不直接放音效或特效。`combat.lisp` 的 
 
 `game/lisp/feedback.lisp` 的檔頭（第 1～18 行）列出所有事件的格式，`feedback-system`（第 21～61 行）把它們變成血霧、火花、音效、鏡頭震動、命中停頓、慢動作，順便累計連擊數和擊殺數。
 
-它在 `game/lisp/main.lisp` 被呼叫兩次：每個模擬步長的最後（第 22 行），以及每幀一次（第 67 行，處理遊戲流程和除錯指令發的事件）。
+它在 `game/lisp/main.lisp` 被呼叫兩次：每個模擬步長的最後（第 21 行），以及每幀一次（第 63 行，處理遊戲流程和除錯指令發的事件）。
 
 好處：
 
@@ -336,9 +341,9 @@ hello 的 `:picked` 事件是同一個模式的最小版。
 
 ### 繪製佇列
 
-`draw-mesh`（`render.lisp` 第 228～257 行）不會馬上畫，只是在陣列 `*dq*` 後面寫一筆 28 個 float 的紀錄：矩陣、色調、自發光、閃白、鏡面強度、模型編號、邊緣光。這個格式和 WGSL 裡的 `struct Draw`（`engine/shaders/lit-io.wgsl` 第 4 行）一模一樣。
+`draw-mesh`（`render.lisp` 第 234～265 行）不會馬上畫，只是在陣列 `*dq*` 後面寫一筆 28 個 float 的紀錄：矩陣、色調、自發光、閃白、鏡面強度、模型編號、邊緣光。這個格式和 WGSL 裡的 `struct Draw`（`engine/shaders/lit-io.wgsl` 第 4 行）一模一樣。
 
-一幀結束時，`end-frame`（`render.lisp` 第 349 行起）用**一個** `ffi:c-inline` 呼叫把整個佇列、特效頂點、UI 頂點交給 C 的 `r_frame`（`render.c` 第 211 行起）。C 把佇列當成一個 storage buffer 上傳，每次繪製只帶一個索引，頂點著色器用 `draws[instance_index]` 讀自己的那筆資料。這樣比每次繪製都推一次 uniform 快：錄 258 次繪製，CPU 時間從 0.33 ms 降到 0.10 ms。
+一幀結束時，`end-frame`（`render.lisp` 第 361 行起）用**一個** `ffi:c-inline` 呼叫把整個佇列、特效頂點、UI 頂點交給 C 的 `r_frame`（`render.c` 第 211 行起）。C 把佇列當成一個 storage buffer 上傳，每次繪製只帶一個索引，頂點著色器用 `draws[instance_index]` 讀自己的那筆資料。這樣比每次繪製都推一次 uniform 快：錄 258 次繪製，CPU 時間從 0.33 ms 降到 0.10 ms。
 
 `r_frame` 的一幀：
 
@@ -351,7 +356,7 @@ swapchain    合成（場景 + bloom + 暈影）→ UI
 
 ### WGSL 著色器與 `// #include`
 
-所有著色器都是 `engine/shaders/` 下的檔案。`render.lisp` 第 12～39 行的 `wgsl` 巨集在**編譯時**讀檔：`// #include "frame.wgsl"` 這一行會被換成那個檔案的內容，註解和空行被拿掉，結果變成一個字串常數編進 wasm。所以改了著色器要重新建置。
+所有著色器都是 `engine/shaders/` 下的檔案。`render.lisp` 第 11～39 行的 `wgsl` 巨集在**編譯時**讀檔：`// #include "frame.wgsl"` 這一行會被換成那個檔案的內容，註解和空行被拿掉，結果變成一個字串常數編進 wasm。所以改了著色器要重新建置。
 
 幾個你一定會撞到的規矩（細節在 [ARCHITECTURE.md](ARCHITECTURE.md) 的 Gotchas）：
 
@@ -372,13 +377,13 @@ Lisp 呼叫的每個 C 函式都宣告在 `engine/c/engine.h`，在 `engine/lisp
 
 ## 第 8 步：RAVEN EDGE 是怎麼組起來的
 
-有了前面的概念，打開 `game/lisp/main.lisp`（95 行），整個遊戲的一幀都在這裡。
+有了前面的概念，打開 `game/lisp/main.lisp`（91 行），整個遊戲的一幀都在這裡。
 
-`game-frame`（第 57～74 行）：輸入 → 遊戲流程 → 模擬 → 鏡頭 → 畫場景 → HUD，和 hello 的 `frame` 是同一個形狀，只是多了一層：
+`game-frame`（第 53～70 行）：輸入 → 遊戲流程 → 模擬 → 鏡頭 → 畫場景 → HUD，和 hello 的 `frame` 是同一個形狀，只是多了一層：
 
-**固定步長。** 動作遊戲的招式數據以 1/60 秒的「幀」為單位（「第 15 幀開始有判定」）。為了讓這句話在任何幀率下都成立，`accumulate-and-step`（第 25～31 行）把真實時間累積起來，每滿 1/60 秒跑一次 `sim-step`，每幀最多 6 次。
+**固定步長。** 動作遊戲的招式數據以 1/60 秒的「幀」為單位（「第 15 幀開始有判定」）。為了讓這句話在任何幀率下都成立，`accumulate-and-step`（第 24～27 行）呼叫引擎的 `run-fixed-steps`（`engine/lisp/time.lisp` 第 64～75 行）：把真實時間累積起來，每滿 1/60 秒跑一次 `sim-step`，每幀最多 6 次，積壓更多就丟掉。這個累加器原本寫在 RAVEN 裡，SOUL DUEL 需要同一套，所以搬進了引擎。
 
-`sim-step`（第 11～23 行）就是系統清單，順序即設計：
+`sim-step`（第 10～22 行）就是系統清單，順序即設計：
 
 ```lisp
 (player-system kp)          ; REN：輸入緩衝 → 狀態機 → 物理 → 姿勢
@@ -396,15 +401,15 @@ Lisp 呼叫的每個 C 函式都宣告在 `engine/c/engine.h`，在 `engine/lisp
 用小兵 RAINBLADE 的突刺打中 REN 當例子，從資料一路走到音效：
 
 ```
-資料        moves.lisp 135-136   (defmove :rb-lunge (... :s 30 :a 15 :r 42 ...)
+資料        moves.lisp 125-126   (defmove :rb-lunge (... :s 30 :a 15 :r 42 ...)
                                    (30 45 :dmg 18 :cap (0 1.6 1.1 0.5) :react :stagger ...))
-             └ register-move / parse-hit（39、30 行）→ MOVE 與 HITDEF 結構（rules.lisp 13-39）
+             └ register-move / parse-hit（29、20 行）→ MOVE 與 HITDEF 結構（rules.lisp 13-39）
 AI 出招     enemy.lisp 291       (enemy-attack e :rb-lunge ...) → start-move（combat.lisp 10）
-每一步      enemy-system → enemy-tick → enemy-step（combat.lisp 338）
+每一步      enemy-system → enemy-tick → enemy-step（combat.lisp 333）
              └ move-tick（23）→ move-hit-scan（64）→ hitdef-scan（42）
-判定（規則） vol-hit-p（rules.lisp 48）：膠囊碰到 REN 的受擊圓柱了嗎？
+判定（規則） vol-hit-p（engine/lisp/hitvol.lisp 29）：膠囊碰到 REN 的受擊圓柱了嗎？
 套用        resolve-hit（combat.lisp 72）→ player-take-hit（player.lisp 642）
-結果（規則） player-hit-outcome（rules.lisp 163）：閃掉？格擋？彈反？受傷？
+結果（規則） player-hit-outcome（rules.lisp 122）：閃掉？格擋？彈反？受傷？
 事件        (emit :player-hurt x y z fx fz heavy hitstop)
 表現        feedback-system（feedback.lisp 21）：血霧、閃白、停頓、震動、紅色暈影、音效
 ```
@@ -417,7 +422,130 @@ AI 出招     enemy.lisp 291       (enemy-attack e :rb-lunge ...) → start-move
 
 ---
 
-## 第 9 步：練習
+## 第 9 步：第二款遊戲：SOUL DUEL
+
+RAVEN EDGE 是「一個玩家對一群敵人」。第二款遊戲 SOUL DUEL（`duel/`，DUEL 套件）刻意選了完全不同的類型：1 對 1 的 3D 競技場格鬥，參考《BLEACH: Rebirth of Souls》，山本元柳齋對更木劍八，兩邊都可以是人或電腦。這是一份非商業的同人練習作品，角色名稱應使用者要求使用，模型、動作、音效全部由程式產生。
+
+![SOUL DUEL：黃昏的廣場上兩人對峙，上方是靈子條、9 個魂魄和各種量表](../tests/shots/duel-neutral.png)
+
+```sh
+./build.sh duel                              # 產生 dist/duel/
+python3 -m http.server -d dist/duel 8000
+```
+
+操作、除錯指令和測試在 [DUEL_GAMEPLAY.md](DUEL_GAMEPLAY.md)，規則和全部招式表在 [DUEL_DESIGN.md](DUEL_DESIGN.md)。這一步不重講前面教過的東西（ECS、純函式規則、事件），只看 RAVEN 沒教、而格鬥遊戲逼著你面對的五件事，最後追一次 Kikon（鬼魂技）從按鍵到魂魄碎掉的完整路徑。
+
+`duel/MANIFEST` 的順序也分了層：`tuning`、`rules`、`control`、`kit` 是純 Common Lisp（主機上可測）；`yama*`、`ken*` 是兩個角色（資料、掛鉤函式、過場）；`fighter` 到 `main` 是通用的系統，其中規則、操作和各個系統（`rules`、`control`、`fighter`、`combat`、`hazards`、`ai`、`camera`、`flow`）**不准出現任何角色的名字**（只有除錯工具 `debug.lisp` 會指名角色來擺場景）。
+
+### 9.1 一個虛擬手把，給人、電腦和測試共用
+
+RAVEN 的玩家程式直接讀鍵盤。格鬥遊戲有兩個玩家，其中任一個可能是電腦，測試腳本還要能「按鍵」。如果每一種來源都有自己的一條路，電腦就可能作弊（直接改狀態），測試也不等於真人在玩。
+
+解法是**虛擬手把（vpad）**，在引擎的 `engine/lisp/input.lisp`：戰鬥程式碼只讀 vpad，鍵盤、手把、電腦大腦、測試腳本都用同一種方式寫它，每個固定步長寫一次。
+
+- `make-vpad`（第 39～45 行）：一組按鈕名稱、一個修飾鍵、緩衝幾步。
+- `vpad-set!`（第 57～71 行）：這一步某個按鈕是不是按著。按下的那一刻會蓋上時間戳（`vpad-tick`），並記下當時修飾鍵有沒有按著。
+- `vpad-pressed`（第 102～105 行）：時間戳還在緩衝期內（SOUL DUEL 是 10 步）而且沒被用掉，就算「按過」。這就是輸入緩衝。
+- `vpad-command-pressed-p`（第 121～124 行）：指令表的一列（按鈕＋要不要修飾鍵）有沒有被按。
+- `vpad-read!`（第 143～153 行）：裝置讀取器。按鍵對應是資料（一個 plist），它問遊戲給的 `down-p` 函式「這個鍵按著嗎」，自己完全不碰裝置，所以整個檔案是純 Common Lisp，`tests/input-test.lisp` 在主機上測它。
+
+SOUL DUEL 這邊只有資料：`duel/lisp/control.lisp` 的 `*vpad-actions*`（第 12～15 行，九顆按鈕）、`new-vpad`（第 17～19 行）、指令表 `*commands*`（第 22～40 行，優先順序由高到低）、`*p1-bindings*`（第 46～53 行）和 `*p2-bindings*`。
+
+誰來寫？真人：`pilot-system`（`duel/lisp/ai.lisp` 第 238～241 行）在每一步呼叫 `vpad-begin-step!`，它執行 vpad 的讀取器 `p1-reader`（`duel/lisp/fighter.lisp` 第 24 行）。電腦：`brain-step`（`ai.lisp` 第 203～232 行）想好要按什麼，最後一樣用 `vpad-set!` 把每顆按鈕寫進去（第 227 行）。`spawn-fighter`（`fighter.lisp` 第 27～44 行）裡，「人或電腦」只差在 vpad 有沒有讀取器、實體有沒有 `brain` 元件。
+
+好處：電腦只能做人做得到的事；`tests/duel-control-test.lisp` 可以檢查「經過按鍵對應讀進來」和「直接注入」結果完全一樣；而且因為輸入是在固定步長裡讀的，同一串按鍵每次都得到同一場比賽（9.5）。
+
+### 9.2 角色是資料加掛鉤
+
+`duel/lisp/kit.lisp` 定義兩個宣告式的巨集：`defmove`（第 121～145 行，一招一個 plist）和 `defkit`（第 242～267 行，角色的一種型態一個 plist）。通用的戰鬥程式碼只讀它們產生的結構。
+
+看山本的招牌技（`duel/lisp/yama.lisp` 第 23～29 行）：幀數、傷害、判定範圍都是數字，只有一件事資料做不到，就是「第 40 幀放出一道火焰波」，所以寫成 `:on-frame ((40 yama-fire-wave))`。`yama-fire-wave`（第 98～106 行）是普通函式，通用的 `main-phase-step`（`fighter.lisp` 第 279～297 行）在那一幀用 `funcall` 呼叫它（第 289 行）。為什麼寫符號而不是 `#'yama-fire-wave`？整個遊戲是一個編譯單元，招式資料在載入時就執行，那時後面的 `defun` 還沒定義，`#'` 會失敗；符號到真的要呼叫時才去找函式。
+
+型態也是資料。劍八的野晒（`duel/lisp/ken.lisp` 第 75～80 行）只寫了「繼承 `:base`、起手 +3 幀、距離 ×1.4、換掉 SP1 和 Kikon」，其餘十幾招由 `register-kit`（`kit.lisp` 第 199～240 行）在載入時從原招式重新推導（第 227～235 行），沒有任何一招是複製貼上的。數值可以直接寫 `tuning.lisp` 的變數名（例如 `:walk *walk-kenpachi*`），`resolve-tuning`（第 18～22 行）在載入時換成值。
+
+這條規矩有檢查：`grep -nE ':ya-|:ke-|yama|kenpachi' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow}.lisp` 必須什麼都印不出來，`tests/duel-rules-test.lisp` 最後也有同樣的檢查。所以加第三個角色不必改任何通用檔案（練習 8）。
+
+### 9.3 同時結算的命中
+
+兩個角色在同一步互砍，誰先算？如果照實體順序，P1 永遠先結算：他的攻擊先把 P2 打進硬直，P2 的攻擊就「沒發生」。這種偏差在一對多的 RAVEN 看不出來，在 1 對 1 裡是作弊。
+
+SOUL DUEL 分兩段：
+
+- `fighter-system`（`fighter.lisp` 第 464～481 行）先把每個人「對手現在站哪」記下來（`fighter-ox`、`fighter-oz`），再讓兩個人各走一步，所以誰都看不到對方這一步的移動。一方對另一方造成的凍結、鎖輸入，等兩個人都走完才生效（第 476～480 行）。
+- `hit-system`（`duel/lisp/combat.lisp` 第 170～193 行）先檢查 Breaker 互撞，然後**收集**所有碰到的近戰與飛行道具命中（`collect-melee`，第 122～141 行），每一筆連同攻擊者當下的招式、蓄積的傷害一起存進 `pending`（第 114～118 行），最後才一筆筆**套用**（`apply-hit`，第 42～111 行）。靈子歸零的 Soul Break 在最後一起結算（`settle-soul-breaks`，第 276～290 行）：互砍到兩邊同時沒命就是平手。
+
+程式碼審查時抓到的真實 bug 就是這個：`pending` 原本沒存攻擊者的招式，套用時才去讀，而第一筆命中已經把對方打進硬直、招式清空了，所以每次互砍 P2 的那一刀都少了屬性。修好之後，除錯指令 2319 讓兩個山本在同一步出 Q1，兩邊靈子都剩 1062。
+
+### 9.4 過場導演：規則決定，過場只負責呈現
+
+Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規則的一部分（「動畫播到第幾幀才扣命」），然後就不能跳過、不能快轉、測試也要等它。SOUL DUEL 的規矩是：**過場開始之前，結果已經算完了**。`kikon!`（`combat.lisp` 第 266～274 行）先 `settle-konpaku` 扣掉魂魄、補滿靈子，最後才 `start-cine`，並把「接下來重置或結束比賽」交給 `:after`。所以跳過過場（Esc，或除錯指令 2100）什麼都不會少。
+
+導演在引擎的 `engine/lisp/cine.lisp`。`defcine`（第 191～214 行）定義的腳本有兩種模式：
+
+- `(at 幀 …)`：**步長模式**，每個固定步長跑一次：切鏡頭、換動作、播音效。這些是決定性的。
+- `(during (起 迄) …)`：**繪製模式**，每個畫面幀跑一次：火焰、光暈、鏡頭推移這些只給人看的東西，`u` 從 0 走到 1。
+
+`main.lisp` 的 `sim-step`（第 24～36 行）在過場中改跑 `cine-step`（第 27 行），角色、飛行道具、計時器都停住；`draw-scene`（第 99～111 行）每幀呼叫 `cine-draw`（第 106 行）。例子是山本的 Kikon（`yama.lisp` 第 172～183 行）：第 0 幀拉鏡頭、上字幕，`during (0 108)` 每幀畫火焰圓頂，第 77 幀魂魄碎裂。
+
+這背後是兩種時間：
+
+- **模擬時間**：固定步長。命中停頓時凍結、慢動作時跳過、過場時角色不動。規則、AI、招式幀數都用它。
+- **特效時間**：每幀的真實秒數。粒子、光暈、鏡頭平滑、`during` 裡的畫面都用它（`fx-update` 拿的是真實的 `rdt`，第 108 行）。
+
+原則：模擬會讀到的東西一律用模擬時間，只用來看的東西才用真實時間。所以命中停頓在 SOUL DUEL 是規則，由 `apply-hit` 設定（`combat.lisp` 第 78 行 `(hitstop (hw-hs hw))`），而不是像 RAVEN 那樣在 feedback 系統裡設定（第 6 步）。
+
+### 9.5 決定性：sim-rnd01 與 rnd01
+
+引擎有兩條亂數流（`engine/lisp/package.lisp` 第 162～166 行）：`rnd01` 給裝飾用（粒子、震動、音高），每幀、每顆粒子都在抽，所以它的序列跟幀率有關；`sim-rnd01` 給模擬用，**只在固定步長裡抽**。SOUL DUEL 的電腦（`ai.lisp`）只用 `sim-rnd01`，特效（`vfx.lisp`）只用 `rnd01`，比賽開始時 `start-match` 用種子重設模擬那條（`duel/lisp/flow.lisp` 第 93 行）。
+
+光是亂數分開還不夠。其他讓「同一個種子＝同一場比賽」成立的條件：
+
+- 裝置在固定步長裡讀（9.1），不是每幀讀。
+- 真人的搖桿方向透過「模擬擁有的視角方向」換算（`view-step`，`fighter.lisp` 第 100～109 行），而不是讀跟著真實時間平滑移動的攝影機。
+- 慢動作用「跳步」實作（`main.lisp` 第 29～32 行）：每步累加倍率，滿 1 才跑一個模擬幀，所以幀數永遠是整數。
+- 命中停頓由規則設定、過場在步長時鐘上跑（9.4）。
+- `dir-yaw`（`rules.lisp` 第 20～24 行）用 Common Lisp 的 `atan`（倍精度），不用引擎的 `yaw-to`（單精度 `atan2f`）：兩者差最後一位，就會長出另一場比賽，而參考紀錄是用前者錄的。
+
+驗證方法：每 600 步印一行 `duel hash`（`state-hash-line`，`duel/lisp/debug.lisp` 第 33～43 行，位置、朝向、每個量表、電腦的 heat）。`tests/scripts/duel-cvc-yk.json` 用種子 7 讓兩個電腦打完一場，最後一行一定是：
+
+```
+duel -> RESULTS winner P2 konpaku 0-7 ticks 5302 secs 88.4
+```
+
+跑兩次、把所有 `^duel` 開頭的行 diff 一下，應該完全相同（指令在 DUEL_GAMEPLAY.md）。這就變成一個不用寫的回歸測試：任何「不該改變行為」的修改（重構、把程式搬進引擎）都必須讓這一行和八行 hash 一字不差。把 SOUL DUEL 的東西收回引擎時，每一步都是這樣檢查的。
+
+### 9.6 一次 Kikon 的旅程
+
+山本打中了已經變紅的劍八，趁 Q1 還在取消視窗內按下 O：
+
+```
+按鍵        control.lisp 50           *p1-bindings* 裡 :kikon ((:key :o) (:pad :rt))
+讀進手把    ai.lisp 238-241            pilot-system → vpad-begin-step!（input.lisp 51-55）
+                                        → p1-reader（fighter.lisp 24）→ vpad-read!（input.lisp 143-153）
+                                        → vpad-set!（57-71）：Kikon 鈕按下，蓋上時間戳
+這一步      main.lisp 24-36            sim-step → sim-systems → fighter-system（fighter.lisp 464-481）
+                                        → fighter-step（447-462）→ move-step（299-305）→ main-phase-step（279-297）
+指令        fighter.lisp 307-322       move-commands 依 *commands* 的順序找到被按下的 :kikon
+可以嗎（規則）combat.lisp 244-251      kikon-ok-p → kikon-available-p（rules.lisp 229-234）：
+                                        對手紅了嗎（red-p）？我方這招命中且還在取消視窗內
+                                        （cancel-open-p，170-173），或對手還在我方造成的硬直裡？
+結算        combat.lisp 266-274        kikon! → settle-konpaku（253-264）→ kikon-result（rules.lisp 238-245）：
+                                        扣 2 個魂魄（覺醒中 3 個），靈子補滿，發出 (:konpaku 劍八 2)
+表現        feedback.lisp 85           :konpaku → pips-shatter（hud.lisp 142-148）：HUD 上兩個魂魄碎掉
+過場        cine.lisp 219-231          start-cine 'yama-kikon-cine，之後每一步 cine-step（249-259）
+                                        yama.lisp 172-183：鏡頭、字幕、火焰圓頂，第 77 幀魂魄碎裂
+結束        cinema.lisp 31-40          cine-end：恢復場景、忘掉過場中亂按的鍵（vpad-flush!）
+            combat.lisp 292-308        :after → reset-round：兩人相隔 8 公尺、48 幀不能動
+                                        （魂魄打光的話改成 match-over，flow.lisp 112-119）
+```
+
+如果是從中立狀態按（對手還在硬直裡），路線換成 `neutral-step` → `command!`（`fighter.lisp` 第 220～225 行）→ `try-command`（第 197～214 行），其餘一樣。
+
+和第 8 步 RAVEN 的一刀比一比：「判定」和「結算」一樣是純函式，事件一樣交給 feedback；多出來的是兩件格鬥遊戲才需要的事：輸入經過 vpad，而結算之後才有過場。
+
+---
+
+## 第 10 步：練習
 
 每一題都附了提示。改完記得重新建置，並用 `tools/pkgcheck.sh` 檢查一下。
 
@@ -435,13 +563,29 @@ AI 出招     enemy.lisp 291       (enemy-attack e :rb-lunge ...) → start-move
 
 **4. 替 RAINBLADE 加一招。** 用 `defmove` 加一個大範圍橫掃 `:rb-sweep`。
 
-> 提示：在 `game/lisp/moves.lisp` 的 RAINBLADE 區塊（第 129 行起）仿照 `:rb-slash` 寫，動畫先借用 `:clip :rb-slash`，判定用比較寬的 `:arc`（例如 `(2.4 160 0.3 2.0)`：半徑、角度、高度範圍）。然後改 `game/lisp/enemy.lisp` 的 `grunt-strike`（第 297～300 行），用 `rules.lisp` 的 `weighted-pick` 在三招之間選，例如 `(weighted-pick (rnd01) :rb-slash 50 :rb-double 30 :rb-sweep 20)`。用 `e2-grunt.json` 跑一次，在 console 找 `move RB-SWEEP`；測試時可以先把新招的權重調高，比較快看到。
+> 提示：在 `game/lisp/moves.lisp` 的 RAINBLADE 區塊（第 119 行起）仿照 `:rb-slash` 寫，動畫先借用 `:clip :rb-slash`，判定用比較寬的 `:arc`（例如 `(2.4 160 0.3 2.0)`：半徑、角度、高度範圍）。然後改 `game/lisp/enemy.lisp` 的 `grunt-strike`（第 297～300 行），用引擎的 `weighted-pick`（`engine/lisp/math.lisp` 第 57 行）在三招之間選，例如 `(weighted-pick (rnd01) :rb-slash 50 :rb-double 30 :rb-sweep 20)`。用 `e2-grunt.json` 跑一次，在 console 找 `move RB-SWEEP`；測試時可以先把新招的權重調高，比較快看到。
 
 **5. 改一個著色器。** 把最終畫面變成黑白。
 
-> 提示：`engine/shaders/composite.frag.wgsl` 第 14 行，回傳前算亮度：`let g = dot(c, vec3f(0.299, 0.587, 0.114));`，改成 `return vec4f(vec3f(g), 1.0);`。著色器在編譯時讀入，所以要重新建置。這個檔案是引擎的，hello 和 RAVEN EDGE 都會變。
+> 提示：`engine/shaders/composite.frag.wgsl` 第 19 行已經有一行把顏色往亮度混：`c = mix(c, vec3f(dot(c, …)), P.z);`，`P.z` 就是引擎的 `*grade-desat*`（SOUL DUEL 的卍解和天地灰盡用它把世界變灰）。把 `P.z` 換成 `1.0`。著色器在編譯時讀入，所以要重新建置。這個檔案是引擎的，每個遊戲都會變。（不改著色器的做法：在 hello 的 `frame` 裡 `(setf *grade-desat* 1.0)`。）
 
 **6. 故意犯一個錯。** 在 hello 的 `start` 裡加一行 `(render-init 4)`。這是引擎內部的函式，沒有 export。看看 `./build.sh` 會不會報錯、執行時頁面顯示什麼，再跑 `tools/pkgcheck.sh examples/hello`，它會列出 `HELLO::RENDER-INIT`。
+
+**7. 替劍八加一招。** 讓劍八在 F1 命中後按 J 接一招「追擊斬」`:ke-f1q`。
+
+> 提示：在 `duel/lisp/ken.lisp` 的 base 區塊仿照 `:ke-q3` 寫一個 `defmove`：`(defmove :ke-f1q :kind :quick :clip :ke-q3 :startup 11 :active 4 :recovery 22 :dmg 50 :adv-block -10 :reach 2.6 :arc 120 :on-hit :stagger)`。動畫先借 `:ke-q3`，所以幀數跟它一樣（`defstrike` 讓動畫剛好在第 S 幀揮到）；要用新的動畫名稱，就得在 `ken-art.lisp` 用 `defstrike` 做一個，並把名字加進 `tests/duel-rules-test.lisp` 的 `*clips-5*`。然後在 `(defkit :kenpachi :base …)` 的 `:strings` 加一列 `(:ke-f1 :q :ke-f1q)`。野晒型態會自動推導出它（起手 +3、距離 ×1.4），不用另外寫。先跑 `$E --norc --load tests/duel-rules-test.lisp`（它會替每個型態的每一招檢查幀數是否自洽），再 `./build.sh duel`、`tools/pkgcheck.sh duel`，用除錯指令 2501（劍八對一個不動的山本）走近按 K、命中後按 J，在 console 找 `P1 move KE-F1Q`。注意連段的時機：命中時從 F1 的判定結束後就能接，揮空或被擋時只有收招的最後 3 幀（`*chain-lead*`）能接。
+
+**8. 加第三個角色。** 以劍八為底，複製出一個新角色 `:ronin`。
+
+> 提示：通用檔案一行都不用改，要動的是這些：
+> 1. `cp duel/lisp/ken-art.lisp duel/lisp/ronin-art.lisp`、`cp duel/lisp/ken.lisp duel/lisp/ronin.lisp`。
+> 2. 兩個新檔裡，招式、姿勢、動畫的名稱是整個建置共用的關鍵字，要全部換掉前綴：`:ke-` → `:ro-`。身體與武器也一樣：`(defbody :kenpachi …)` → `:ronin`，`(defweapon :ken-katana …)`、`(defweapon :nozarashi …)` 換成新名字，`defkit` 裡的 `:body`、`:weapon` 跟著改。
+> 3. 全域函式名稱也會撞：`ken-stance-release`、`ken-ground-crack`、`ken-charge-tick`、`ken-flurry`、`ken-meteor-cut`、`cine-slash` 和三個過場 `ken-kikon-cine`、`ken-sky-split-cine`、`ken-nozarashi-cine` 都要改名，資料裡引用它們的符號（`:release`、`:on-frame`、`:tick`、`:on-land`、`:cine`）一起改。
+> 4. `(defkit :kenpachi :base …)` 和 `(defkit :kenpachi :nozarashi …)` 改成 `(defkit :ronin …)`，`:name "RONIN"`，數值隨你調。
+> 5. `duel/MANIFEST`：`lisp/ronin-art.lisp` 放在 `lisp/ken-art.lisp` 後面，`lisp/ronin.lisp` 放在 `lisp/ken.lisp` 後面（都要在 `lisp/fighter.lisp` 之前）。
+> 6. 角色選單不用改：`*roster*`（`kit.lisp` 第 167 行）在 `register-kit` 裡自動收集每個有 `:base` 型態的角色（第 236～237 行）。除錯指令 2000+s 從名單裡抽角色，所以電腦對戰也會抽到它；`debug.lisp` 的 `*pairs*` 只列了 YY／YK／KK，要讓節奏測試涵蓋新角色就加一組。
+> 7. 想讓主機測試也檢查它：在 `tests/duel-rules-test.lisp` 的載入清單（第 12 行）加 `"ronin"`，並更新 `*forms*`、`*clips-5*` 和 `(equal *roster* '(:yamamoto :kenpachi))` 那一項。
+> 8. `./build.sh duel`、`tools/pkgcheck.sh duel`（撞名或漏改的函式會出現在第二、三行），最後跑一次 `grep -nE ':ya-|:ke-|:ro-|yama|kenpachi|ronin' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow}.lisp`，應該什麼都印不出來。
 
 ---
 
@@ -450,5 +594,6 @@ AI 出招     enemy.lisp 291       (enemy-attack e :rb-lunge ...) → start-move
 - [ARCHITECTURE.md](ARCHITECTURE.md)：建置管線、執行模型、GC 規則、模組分工，以及一長串 ECL／WebGPU 踩過的坑。寫效能敏感的程式前一定要看 Gotchas。
 - [ENGINE_API.md](ENGINE_API.md)：引擎每個公開函式的參考。
 - [GAMEPLAY.md](GAMEPLAY.md)、[GAME_DESIGN.md](GAME_DESIGN.md)：RAVEN EDGE 的系統實作和設計規格。
+- [DUEL_GAMEPLAY.md](DUEL_GAMEPLAY.md)、[DUEL_DESIGN.md](DUEL_DESIGN.md)：SOUL DUEL 的操作、除錯與測試，以及設計規格和招式表。
 - [DEVLOG.zh-TW.md](DEVLOG.zh-TW.md)：每個技術決定背後的理由。
 - `examples/engine-demo/demo.lisp`：算圖、模型產生、特效和 UI 的更多用法。

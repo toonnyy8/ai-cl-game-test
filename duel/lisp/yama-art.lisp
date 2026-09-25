@@ -1,0 +1,311 @@
+;;;; yama-art.lisp — YAMAMOTO GENRYUSAI (TYBW) as art data: his body, his three weapons (the cane
+;;;; he leans on, Ryujin Jakka, the charred Bankai blade Zanka no Tachi), the charred :skeleton of
+;;;; Bankai South, and every :ya-* / :sk-* pose and clip (design §5.1). Attack clips use DEFSTRIKE,
+;;;; so each reaches its hit pose at frame S and is back in :ya-stance at S+A+R.
+;;;; Look: 1.68 m, hunched, bald + X scar, long white brows, waist-length beard tied with a purple
+;;;; cord, black shihakusho + white captain's haori (一 on the back), no left forearm (empty sleeve).
+(in-package :duel)
+
+;;; ---------------------------------------------------------------- body
+(defbody :yamamoto (:scale 0.95 :width 1.05 :hunch 22 :hurt-r 0.36 :hurt-h 1.65
+                    :palette ((:skin #xC29470) (:black #x17161B) (:white #xD3CFC5) (:beard #xDAD8D0)
+                              (:cord #x6B3A96) (:scar #x7A4A3C) (:obi #xBDB9AE) (:tabi #xCCC8BE)
+                              (:sole #x4A3A2A) (:mouth #x3A2420))
+                    :rim (#xFFB070 0.22))
+  (:pelvis (:box 0.34 0.18 0.24 :c :black)
+           (:box 0.35 0.07 0.25 :at (0 0.06 0) :c :obi)
+           (:box 0.42 0.74 0.025 :at (0 -0.3 -0.14) :rot (0 -5 0) :c :white)          ; haori back
+           (:box 0.025 0.74 0.28 :at (0.215 -0.3 0) :rot (0 0 4) :c :white)            ; sides
+           (:box 0.025 0.74 0.28 :at (-0.215 -0.3 0) :rot (0 0 -4) :c :white)
+           (:box 0.12 0.74 0.025 :at (0.16 -0.3 0.135) :rot (0 5 0) :c :white)         ; open front
+           (:box 0.12 0.74 0.025 :at (-0.16 -0.3 0.135) :rot (0 5 0) :c :white))
+  (:spine (:box 0.32 0.24 0.21 :at (0 0.11 0) :c :black)
+          (:box 0.41 0.25 0.03 :at (0 0.11 -0.12) :c :white)
+          (:box 0.03 0.25 0.24 :at (0.205 0.11 0) :c :white)
+          (:box 0.03 0.25 0.24 :at (-0.205 0.11 0) :c :white)
+          (:box 0.12 0.25 0.03 :at (0.155 0.11 0.12) :c :white)
+          (:box 0.12 0.25 0.03 :at (-0.155 0.11 0.12) :c :white))
+  (:chest (:bevel 0.40 0.28 0.24 0.03 :at (0 0.11 0) :c :black)
+          (:box 0.45 0.3 0.03 :at (0 0.11 -0.13) :c :white)
+          (:box 0.03 0.3 0.26 :at (0.225 0.11 0) :c :white)
+          (:box 0.03 0.3 0.26 :at (-0.225 0.11 0) :c :white)
+          (:box 0.13 0.3 0.03 :at (0.16 0.11 0.13) :c :white)
+          (:box 0.13 0.3 0.03 :at (-0.16 0.11 0.13) :c :white)
+          (:box 0.025 0.2 0.01 :at (0.035 0.15 0.125) :rot (0 0 -22) :c :obi)         ; under-collar V
+          (:box 0.025 0.2 0.01 :at (-0.035 0.15 0.125) :rot (0 0 22) :c :obi)
+          (:box 0.46 0.03 0.27 :at (0 0.255 0) :c :white)                               ; yoke over the shoulders
+          (:box 0.2 0.035 0.01 :at (0 0.17 -0.147) :c :black))                         ; 一 on the back
+  (:neck (:cyl 0.065 0.1 :at (0 0.04 0) :c :skin))
+  (:head (:bevel 0.19 0.22 0.21 0.035 :at (0 0.125 0) :c :skin)
+         (:box 0.03 0.06 0.04 :at (0.1 0.12 -0.01) :c :skin) (:box 0.03 0.06 0.04 :at (-0.1 0.12 -0.01) :c :skin)
+         (:wedge 0.045 0.05 0.045 :at (0 0.1 0.115) :rot (180 0 0) :c :skin)          ; nose
+         (:box 0.07 0.012 0.012 :at (0 0.195 0.103) :rot (0 0 38) :c :scar)           ; X scar
+         (:box 0.07 0.012 0.012 :at (0 0.195 0.103) :rot (0 0 -38) :c :scar)
+         (:box 0.085 0.028 0.035 :at (0.047 0.152 0.1) :rot (0 0 -14) :c :beard)      ; long brows
+         (:box 0.085 0.028 0.035 :at (-0.047 0.152 0.1) :rot (0 0 14) :c :beard)
+         (:box 0.03 0.11 0.03 :at (0.1 0.105 0.085) :rot (0 0 12) :c :beard)
+         (:box 0.03 0.11 0.03 :at (-0.1 0.105 0.085) :rot (0 0 -12) :c :beard)
+         (:bevel 0.2 0.11 0.13 0.02 :at (0 0.04 0.055) :c :beard)                     ; jaw + moustache
+         (:box 0.05 0.12 0.03 :at (0.06 0.02 0.12) :rot (0 0 -10) :c :beard)
+         (:box 0.05 0.12 0.03 :at (-0.06 0.02 0.12) :rot (0 0 10) :c :beard)
+         (:box 0.19 0.26 0.09 :at (0 -0.1 0.13) :rot (0 8 0) :c :beard)               ; the long beard
+         (:box 0.14 0.22 0.07 :at (0 -0.3 0.18) :rot (0 8 0) :c :beard)
+         (:box 0.155 0.04 0.085 :at (0 -0.33 0.18) :rot (0 8 0) :c :cord)
+         (:cone 0.065 0.18 :at (0 -0.49 0.2) :rot (0 172 0) :seg 5 :c :beard))
+  (:shoulder-r (:bevel 0.13 0.06 0.2 0.02 :at (0.02 -0.02 0) :rot (0 0 -24) :c :white))
+  (:shoulder-l (:bevel 0.13 0.06 0.2 0.02 :at (-0.02 -0.02 0) :rot (0 0 24) :c :white))
+  (:upper-arm-r (:box 0.14 0.31 0.15 :at (0 -0.15 0) :c :white))
+  (:upper-arm-l (:box 0.13 0.31 0.14 :at (0 -0.15 0) :c :white)
+                (:box 0.11 0.3 0.07 :at (0 -0.42 0.02) :rot (0 8 0) :c :white))      ; empty sleeve
+  (:lower-arm-r (:box 0.16 0.21 0.18 :at (0 -0.1 0) :c :white)
+                (:box 0.04 0.2 0.2 :at (0 -0.16 -0.06) :rot (0 -10 0) :c :white)              ; hanging sleeve
+                (:box 0.13 0.04 0.15 :at (0 -0.21 0) :c :black)
+                (:box 0.07 0.08 0.07 :at (0 -0.23 0) :c :skin))
+  (:hand-r (:box 0.08 0.09 0.08 :at (0 -0.045 0) :c :skin))
+  (:thigh-r (:box 0.19 0.46 0.21 :at (0 -0.22 0) :c :black))
+  (:thigh-l (:box 0.19 0.46 0.21 :at (0 -0.22 0) :c :black))
+  (:shin-r (:box 0.22 0.3 0.24 :at (0 -0.1 0) :c :black) (:box 0.25 0.08 0.27 :at (0 -0.27 0) :c :black)
+          (:box 0.08 0.12 0.09 :at (0 -0.37 0) :c :tabi))
+  (:shin-l (:box 0.22 0.3 0.24 :at (0 -0.1 0) :c :black) (:box 0.25 0.08 0.27 :at (0 -0.27 0) :c :black)
+          (:box 0.08 0.12 0.09 :at (0 -0.37 0) :c :tabi))
+  (:foot-r (:box 0.09 0.06 0.22 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.24 :at (0 -0.055 0.06) :c :sole))
+  (:foot-l (:box 0.09 0.06 0.22 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.24 :at (0 -0.055 0.06) :c :sole)))
+
+;;; ---------------------------------------------------------------- weapons
+(defweapon :ya-cane (:length 0.86 :base 0.1)          ; the shikomizue: Ryujin Jakka sheathed in a cane
+  (:solid (mbc mb #x5B3A22)
+          (with-xform (mb (xform :y 0.4)) (mb-cylinder mb 0.018 0.92 :segments 6))
+          (mbc mb #x3A2414)
+          (with-xform (mb (xform :y -0.06)) (mb-cylinder mb 0.02 0.14 :segments 6))
+          (with-xform (mb (xform :y 0.855)) (mb-cylinder mb 0.02 0.03 :segments 6))))
+
+(defweapon :ryujin-jakka (:length 0.95)
+  (:solid (mb-blade mb :length 0.9 :width 0.036 :blade-color '(0.76 0.78 0.82) :edge-color '(1.0 0.93 0.85)
+                       :guard-color '(0.7 0.55 0.25) :handle-color '(0.08 0.06 0.07) :wrap-color '(0.34 0.18 0.44)))
+  (:glow 1.2 #xFF7A2A (with-xform (mb (xform :y 0.45 :z 0.017)) (mb-box mb 0.003 0.8 0.004))))
+
+(defweapon :zanka (:length 0.95)
+  (:solid (mb-blade mb :length 0.9 :width 0.04 :curve 0.004 :blade-color '(0.07 0.055 0.055)
+                       :edge-color '(0.3 0.07 0.03) :guard-color '(0.16 0.12 0.1) :handle-color '(0.05 0.04 0.04)
+                       :wrap-color '(0.18 0.08 0.06)))
+  (:glow 3.5 #xFF5A14 (with-xform (mb (xform :y 0.46 :z 0.02)) (mb-box mb 0.005 0.86 0.006))
+                      (with-xform (mb (xform :y 0.3 :z 0.0 :roll 0.5)) (mb-box mb 0.009 0.07 0.004))
+                      (with-xform (mb (xform :y 0.62 :z 0.004 :roll -0.4)) (mb-box mb 0.009 0.08 0.004))))
+
+;;; ---------------------------------------------------------------- the charred skeleton (Bankai South)
+(defbody :skeleton (:scale 1.0 :width 1.0 :hunch 20 :hurt-r 0.3 :hurt-h 1.7
+                    :palette ((:bone #x2B2420) (:ash #x4A403A) (:ember #xFF5A1A))
+                    :rim (#xFF6A2A 0.35))
+  (:pelvis (:bevel 0.26 0.1 0.12 0.02 :c :ash))
+  (:spine (:box 0.05 0.24 0.05 :at (0 0.11 -0.04) :c :bone)
+          (:glow 2.0 (:box 0.02 0.18 0.02 :at (0 0.11 -0.01) :c :ember)))
+  (:chest (:box 0.06 0.24 0.06 :at (0 0.1 -0.06) :c :bone)
+          (:box 0.3 0.035 0.18 :at (0 0.04 0) :c :ash) (:box 0.34 0.035 0.2 :at (0 0.1 0) :c :bone)
+          (:box 0.32 0.035 0.19 :at (0 0.16 0) :c :ash) (:box 0.26 0.035 0.16 :at (0 0.21 0) :c :bone)
+          (:glow 2.5 (:box 0.2 0.1 0.12 :at (0 0.12 0) :c :ember)))
+  (:neck (:box 0.04 0.1 0.04 :at (0 0.04 0) :c :bone))
+  (:head (:bevel 0.17 0.17 0.2 0.04 :at (0 0.13 0) :c :ash)
+         (:box 0.12 0.06 0.1 :at (0 0.03 0.04) :c :bone)
+         (:glow 4.0 (:box 0.04 0.035 0.01 :at (0.04 0.13 0.1) :c :ember))
+         (:glow 4.0 (:box 0.04 0.035 0.01 :at (-0.04 0.13 0.1) :c :ember)))
+  (:shoulder-r (:box 0.14 0.04 0.05 :at (0.04 0 0) :c :bone))
+  (:shoulder-l (:box 0.14 0.04 0.05 :at (-0.04 0 0) :c :bone))
+  (:upper-arm-r (:box 0.045 0.3 0.045 :at (0 -0.15 0) :c :bone))
+  (:upper-arm-l (:box 0.045 0.3 0.045 :at (0 -0.15 0) :c :bone))
+  (:lower-arm-r (:box 0.04 0.27 0.04 :at (0 -0.135 0) :c :ash))
+  (:lower-arm-l (:box 0.04 0.27 0.04 :at (0 -0.135 0) :c :ash))
+  (:hand-r (:box 0.07 0.1 0.03 :at (0 -0.05 0) :c :bone) (:cone 0.03 0.08 :at (0 -0.13 0) :rot (0 180 0) :seg 4 :c :bone))
+  (:hand-l (:box 0.07 0.1 0.03 :at (0 -0.05 0) :c :bone) (:cone 0.03 0.08 :at (0 -0.13 0) :rot (0 180 0) :seg 4 :c :bone))
+  (:thigh-r (:box 0.05 0.44 0.05 :at (0 -0.22 0) :c :bone))
+  (:thigh-l (:box 0.05 0.44 0.05 :at (0 -0.22 0) :c :bone))
+  (:shin-r (:box 0.045 0.43 0.045 :at (0 -0.215 0) :c :ash))
+  (:shin-l (:box 0.045 0.43 0.045 :at (0 -0.215 0) :c :ash))
+  (:foot-r (:box 0.07 0.04 0.18 :at (0 -0.03 0.05) :c :bone))
+  (:foot-l (:box 0.07 0.04 0.18 :at (0 -0.03 0.05) :c :bone)))
+
+;;; ---------------------------------------------------------------- poses
+(defpose :ya-stance ()
+  (:root :u -0.04) (:pelvis :twist 10) (:spine :flex 8) (:chest :twist -8) (:neck :flex -16) (:head :flex -16)
+  (:arm-r :flex 22 :side 22) (:elbow-r :flex 40) (:hand-r :flex -30)
+  (:arm-l :flex 4 :side 10) (:elbow-l :flex 0)
+  (:thigh-r :flex -8 :side 8) (:thigh-l :flex 18 :side 6) (:knee-r :flex 18) (:knee-l :flex 22))
+
+(defclip :ya-stance (2.4 :loop t :base :ya-stance)
+  (0) (1.2 (:chest :flex 3) (:root :u -0.05)))
+
+;;; ---------------------------------------------------------------- shikai kit (§5.1 table)
+;;; Blade directions reuse RAVEN's solved hand values (same rig): diagonal = rb-slash,
+;;; horizontal R->L = h1, backhand = h2, overhead = h3, rising = rising-crow, thrust = crimson-lance.
+(defstrike :ya-q1 (9 3 12 :base :ya-stance)            ; flame cut: diagonal down
+  (0)
+  (5 (:chest :twist -25) (:arm-r :flex 150 :side 30) (:elbow-r :flex 30) (:hand-r :twist -15 :flex -15) (:spine :flex 2))
+  (:s :snap (:arm-r :flex 40 :side -10) (:elbow-r :flex 10) (:hand-r :twist -15 :flex -75) (:chest :twist 35)
+      (:spine :flex 22) (:root :f 0.15))
+  (:a (:chest :twist 40) (:arm-r :flex 32 :side -14) (:spine :flex 24))
+  (:end :ya-stance))
+(defstrike :ya-q2 (8 3 13 :base :ya-stance)            ; backhand
+  (0)
+  (5 (:chest :twist 55) (:spine :side 8) (:arm-r :side -15 :flex 75) (:elbow-r :flex 15) (:hand-r :twist 55 :flex -80))
+  (:s :snap (:chest :twist -55) (:arm-r :side 90 :flex 30) (:elbow-r :flex 10) (:hand-r :twist 5 :flex -70)
+      (:spine :side 0) (:root :f 0.15))
+  (:a (:chest :twist -62) (:arm-r :side 95 :flex 25))
+  (:end :ya-stance))
+(defstrike :ya-q3 (12 4 22 :base :ya-stance)           ; flame burst: one-handed overhead chop
+  (0)
+  (8 (:root :u 0.03) (:arm-r :flex 175 :side 10) (:elbow-r :flex 25) (:hand-r :twist 0 :flex -50) (:spine :flex -8)
+     (:chest :twist 0) (:head :flex -20))
+  (:s :snap (:root :u -0.2 :f 0.3) (:spine :flex 40) (:arm-r :flex 25 :side 10) (:elbow-r :flex 0) (:hand-r :twist -10 :flex -35)
+      (:knees :flex 55) (:thigh-l :flex 55) (:head :flex -30))
+  (:a (:spine :flex 43) (:root :u -0.22 :f 0.3))
+  (:end :ya-stance))
+(defstrike :ya-f1 (18 4 20 :base :ya-stance)           ; flame sweep: wide horizontal with a step
+  (0)
+  (12 (:chest :twist -65) (:spine :side -10) (:arm-r :side 90 :flex 0) (:elbow-r :flex 10) (:hand-r :twist 0 :flex -90)
+      (:thigh-r :flex -25) (:root :u -0.08))
+  (:s :snap (:chest :twist 75) (:arm-r :flex 80 :side 10) (:hand-r :twist 5 :flex -85) (:root :f 0.4 :u -0.12) (:spine :side 0)
+      (:thigh-l :flex 45) (:knee-l :flex 50))
+  (:a (:chest :twist 85) (:arm-r :flex 75 :side -10))
+  (:end :ya-stance))
+(defstrike :ya-f2 (22 5 28 :base :ya-stance)           ; rising blaze: launcher
+  (0)
+  (16 (:root :u -0.25) (:arm-r :flex -30 :side 20) (:elbow-r :flex 10) (:hand-r :twist 155 :flex 15) (:knees :flex 55)
+      (:spine :flex 25))
+  (:s :snap (:root :u 0.08) (:arm-r :flex 170 :side 10) (:hand-r :twist -155 :flex 15) (:spine :flex -20) (:knees :flex 10)
+      (:head :flex -30))
+  (:a (:arm-r :flex 176) (:root :u 0.1))
+  (:end :ya-stance))
+(defstrike :ya-sig (16 24 26 :base :ya-stance)         ; flame slash wave: hits f16, f28, wave launched f40
+  (0)
+  (10 (:chest :twist -60) (:arm-r :side 90 :flex 0) (:elbow-r :flex 10) (:hand-r :twist 0 :flex -90) (:root :u -0.06))
+  (16 :snap (:chest :twist 60) (:arm-r :flex 80 :side 10) (:hand-r :twist 5 :flex -85) (:root :f 0.2))
+  (22 (:chest :twist 60) (:arm-r :side -15 :flex 75) (:elbow-r :flex 15) (:hand-r :twist 55 :flex -80))
+  (28 :snap (:chest :twist -55) (:arm-r :side 90 :flex 30) (:hand-r :twist 5 :flex -70) (:root :f 0.3))
+  (35 (:root :u 0.03) (:chest :twist 0) (:arm-r :flex 178 :side 5) (:elbow-r :flex 20) (:hand-r :twist 0 :flex -50)
+      (:spine :flex -12) (:head :flex -25))
+  (40 :snap (:root :u -0.22 :f 0.45) (:spine :flex 42) (:arm-r :flex 20 :side 5) (:elbow-r :flex 0) (:hand-r :twist -10 :flex -35)
+      (:knees :flex 55) (:thigh-l :flex 55) (:head :flex -32))
+  (46 (:spine :flex 44))
+  (:end :ya-stance))
+(defclip :ya-shiranui (0.5 :loop t :base :ya-stance)   ; charging: blade drawn back at the hip
+  (0 (:root :u -0.16) (:knees :flex 45) (:chest :twist -45) (:spine :flex 15) (:arm-r :flex -25 :side 35) (:elbow-r :flex 95)
+     (:hand-r :twist 150 :flex 20) (:head :twist 25 :flex -20))
+  (0.25 (:root :u -0.18) (:chest :twist -48) (:arm-r :side 37)))
+(defstrike :ya-shiranui-throw (6 2 20 :base :ya-stance)  ; flings the fireball forward
+  (0 (:root :u -0.16) (:knees :flex 45) (:chest :twist -45) (:spine :flex 15) (:arm-r :flex -25 :side 35) (:elbow-r :flex 95)
+     (:hand-r :twist 150 :flex 20) (:head :twist 25 :flex -20))
+  (:s :snap (:arm-r :flex 90 :side 5) (:elbow-r :flex 0) (:hand-r :twist -35 :flex -85) (:chest :twist 25) (:root :f 0.35 :u -0.12)
+      (:thigh-l :flex 55) (:knee-l :flex 40) (:thigh-r :flex -25) (:head :twist 0 :flex -15))
+  (:a)
+  (:end :ya-stance))
+(defstrike :ya-taimatsu (16 8 24 :base :ya-stance)     ; Taimatsu: a torch-sweep upward, cone of fire
+  (0)
+  (10 (:root :u -0.2) (:chest :twist 50) (:arm-r :side -20 :flex 40) (:elbow-r :flex 15) (:hand-r :twist 55 :flex -80)
+      (:knees :flex 50) (:spine :flex 22))
+  (:s :snap (:root :u 0.0 :f 0.3) (:chest :twist -40) (:arm-r :side 70 :flex 110) (:hand-r :twist 5 :flex -70) (:spine :flex -10)
+      (:knees :flex 20) (:head :flex -25))
+  (:a (:chest :twist -48) (:arm-r :side 80 :flex 115))
+  (:end :ya-stance))
+(defstrike :ya-nadegiri (20 4 30 :base :ya-stance)     ; Nadegiri: one crouched, killing horizontal stroke
+  (0)
+  (16 (:root :u -0.3) (:knees :flex 60) (:thighs :flex 45) (:spine :flex 25) (:chest :twist 60) (:arm-r :side -10 :flex 60)
+      (:elbow-r :flex 20) (:hand-r :twist 55 :flex -80))
+  (19 (:root :u -0.33) (:chest :twist 68))
+  (:s :snap (:chest :twist -75) (:arm-r :side 90 :flex 30) (:hand-r :twist 5 :flex -70) (:root :u -0.15 :f 0.8) (:spine :flex 10)
+      (:thigh-l :flex 60) (:knee-l :flex 50) (:thigh-r :flex -20) (:knee-r :flex 30))
+  (:a)
+  (40 (:chest :twist -78) (:arm-r :side 92))
+  (:end :ya-stance))
+(defclip :ya-breaker (0.4 :loop t :base :ya-stance)    ; Breaker aura dash: hunched charge, blade trailing
+  (0 (:spine :flex 30) (:head :flex -30) (:arm-r :flex -35 :side 30) (:elbow-r :flex 20) (:hand-r :twist 150 :flex 10)
+     (:thigh-r :flex 45) (:knee-r :flex 20) (:thigh-l :flex -30) (:knee-l :flex 45) (:root :u -0.1))
+  (0.2 (:spine :flex 30) (:head :flex -30) (:thigh-l :flex 45) (:knee-l :flex 20) (:thigh-r :flex -30) (:knee-r :flex 45)
+       (:root :u -0.06)))
+(defstrike :ya-ikkotsu (8 4 18 :base :ya-stance)       ; Ikkotsu: sword planted (draw it with DRAW-PLANTED-WEAPON), one punch
+  (0 (:root :u -0.1) (:chest :twist -40) (:arm-r :flex 10 :side 15) (:elbow-r :flex 120) (:hand-r :flex 0 :twist 0))
+  (:s :snap (:arm-r :flex 90 :side 0) (:elbow-r :flex 0) (:hand-r :flex 0 :twist 0) (:chest :twist 35) (:spine :flex 15)
+      (:root :f 0.4 :u -0.15) (:thigh-l :flex 50) (:knee-l :flex 45) (:thigh-r :flex -20))
+  (:a (:chest :twist 38))
+  (24 (:arm-r :flex 45 :side 10) (:elbow-r :flex 20) (:hand-r :flex -20) (:chest :twist 5) (:spine :flex 30) (:root :u -0.2))
+  (:end :ya-stance))
+(defclip :ya-kikon (1.8 :base :ya-stance)              ; Jokaku Enjo: raise the blade, sweep, the fire dome detonates
+  (0)
+  (0.3 (:arm-r :flex 100 :side 0) (:elbow-r :flex 70) (:hand-r :twist 90 :flex -10) (:spine :flex 0) (:head :flex -10))
+  (0.9 (:arm-r :flex 105) (:root :u 0.02))
+  (1.2 (:chest :twist -40) (:arm-r :side 70 :flex 90) (:elbow-r :flex 10) (:hand-r :twist 0 :flex -80))
+  (1.3 :snap (:chest :twist 40) (:arm-r :side -10 :flex 40) (:hand-r :twist -15 :flex -75) (:spine :flex 22) (:root :u -0.15))
+  (1.8 :ya-stance))
+
+;;; ---------------------------------------------------------------- intro / win / Hellfire
+(defpose :ya-lean (:base :ya-stance)                   ; leaning on the cane, planted in front
+  (:root :u -0.02) (:pelvis :twist 0) (:chest :twist 0) (:spine :flex 14) (:head :flex -6)
+  (:arm-r :flex 40 :side 8) (:elbow-r :flex 35) (:hand-r :twist 150 :flex 10)
+  (:thigh-r :flex 0 :side 6) (:thigh-l :flex 0 :side 6) (:knees :flex 8))
+(defclip :ya-intro (2.0 :base :ya-lean)                ; weapon :ya-cane until 1.35 s, then :ryujin-jakka
+  (0) (1.1 (:head :flex -12))
+  (1.3 (:chest :twist -30) (:arm-r :flex 60 :side 40) (:elbow-r :flex 60) (:hand-r :twist 0 :flex -40))
+  (1.45 :snap (:chest :twist 20) (:arm-r :side 70 :flex 60) (:elbow-r :flex 10) (:hand-r :twist 5 :flex -80) (:root :u -0.06))
+  (2.0 :ya-stance))
+(defclip :ya-win (2.0 :base :ya-stance)                ; blade raised upright before the face, then lowered; holds
+  (0)
+  (0.6 (:arm-r :flex 70 :side -10) (:elbow-r :flex 90) (:hand-r :twist 90 :flex -10) (:spine :flex 0) (:head :flex 0))
+  (1.3 (:arm-r :flex 72))
+  (1.8 :ya-lean (:arm-r :flex 35 :side 10) (:elbow-r :flex 20) (:hand-r :twist 150 :flex 10) (:head :flex -4))
+  (2.0 :ya-lean (:arm-r :flex 35 :side 10) (:elbow-r :flex 20) (:hand-r :twist 150 :flex 10) (:head :flex -4)))
+(defclip :ya-hellfire (1.0 :base :ya-stance)           ; Hellfire entry: crouch, then flare out
+  (0)
+  (0.25 (:root :u -0.2) (:knees :flex 55) (:spine :flex 30) (:arm-r :flex 20 :side 10) (:elbow-r :flex 60) (:head :flex 10))
+  (0.4 :snap (:root :u 0.0) (:spine :flex -12) (:head :flex -30) (:arm-r :side 80 :flex 20) (:elbow-r :flex 10)
+       (:hand-r :twist 0 :flex -90) (:arm-l :side 45))
+  (0.75 (:spine :flex -10) (:arm-r :side 82))
+  (1.0 :ya-stance))
+
+;;; ---------------------------------------------------------------- Bankai (Zanka no Tachi) kit
+(defclip :ya-bankai (2.2 :base :ya-stance)             ; the blade raised: every fire drawn into it; then ready
+  (0)
+  (0.4 (:arm-r :flex 175 :side 5) (:elbow-r :flex 5) (:hand-r :twist 0 :flex -10) (:spine :flex -8) (:head :flex -30)
+       (:root :u 0.02))
+  (1.4 (:arm-r :flex 178) (:head :flex -32))
+  (1.7 (:arm-r :flex 60 :side 10) (:elbow-r :flex 20) (:hand-r :twist 5 :flex -80) (:spine :flex 12) (:head :flex -12))
+  (2.2 :ya-stance))
+(defstrike :ya-kyoku (18 3 26 :base :ya-stance)        ; Kyokujitsujin thrust (a 9 m line)
+  (0)
+  (12 (:arm-r :flex 50) (:elbow-r :flex 120) (:hand-r :twist 155 :flex 25) (:chest :twist -35) (:root :u -0.1) (:knees :flex 40))
+  (:s :snap (:arm-r :flex 90) (:elbow-r :flex 0) (:hand-r :twist -35 :flex -85) (:chest :twist 20) (:root :f 0.6 :u -0.15)
+      (:thigh-l :flex 55) (:knee-l :flex 40) (:thigh-r :flex -25))
+  (:a)
+  (32 (:chest :twist 18))
+  (:end :ya-stance))
+(defstrike :ya-kaka (24 6 40 :base :ya-stance)         ; South: blade driven into the ground (skeletons rise f30-70)
+  (0)
+  (16 (:arm-r :flex 150 :side 5) (:elbow-r :flex 60) (:hand-r :twist 150 :flex 5) (:spine :flex -10) (:root :u 0.05)
+      (:head :flex -25))
+  (:s :snap (:root :u -0.45) (:knee-r :flex 120) (:thigh-r :flex -30) (:thigh-l :flex 90) (:knee-l :flex 95) (:spine :flex 40)
+      (:arm-r :flex 60) (:elbow-r :flex 40) (:hand-r :twist 150 :flex 5) (:head :flex -25))
+  (:a)
+  (50 (:root :u -0.43) (:spine :flex 36))
+  (:end :ya-stance))
+(defclip :ya-tenchi (1.3 :base :ya-stance)             ; North: Tenchi Kaijin, one slash
+  (0)
+  (0.25 (:root :u -0.2) (:chest :twist -70) (:arm-r :side 90 :flex 10) (:elbow-r :flex 10) (:hand-r :twist 0 :flex -90)
+        (:knees :flex 45) (:spine :flex 20))
+  (0.3 :snap (:chest :twist 70) (:arm-r :flex 60 :side -20) (:hand-r :twist -25 :flex -60) (:root :f 0.8 :u -0.3)
+       (:spine :flex 35) (:thigh-l :flex 60) (:knee-l :flex 60) (:thigh-r :flex -25))
+  (0.9 (:chest :twist 72) (:root :f 0.8 :u -0.28))
+  (1.3 :ya-stance))
+
+;;; ---------------------------------------------------------------- skeletons (Kaka Jumanokushi Daisojin)
+(defpose :sk-crouch ()
+  (:root :u -0.2) (:spine :flex 25) (:head :flex -20) (:arms :flex 50 :side 25) (:elbows :flex 60)
+  (:thighs :flex 30) (:knees :flex 50))
+(defclip :sk-rise (1.0 :base :sk-crouch)               ; clawing out of the ground
+  (0 (:root :u -1.5) (:arms :flex 170 :side 20) (:elbows :flex 10) (:spine :flex -10) (:head :flex -40))
+  (0.35 (:root :u -0.9) (:arms :flex 120 :side 30) (:elbows :flex 40) (:spine :flex 10))
+  (0.7 (:root :u -0.35) (:arms :flex 60) (:spine :flex 40) (:knees :flex 90) (:thighs :flex 80))
+  (1.0 :sk-crouch))
+(defstrike :sk-lunge (12 6 18 :base :sk-crouch)        ; lunge with both claws
+  (0)
+  (8 (:root :u -0.3) (:arms :flex 40 :side 40) (:elbows :flex 100) (:spine :flex 35) (:knees :flex 80))
+  (:s :snap (:root :f 0.9 :u -0.1) (:arms :flex 95 :side 10) (:elbows :flex 0) (:spine :flex 20) (:head :flex -30)
+      (:thigh-l :flex 60) (:thigh-r :flex -30) (:knee-l :flex 40))
+  (:a)
+  (:end :sk-crouch))

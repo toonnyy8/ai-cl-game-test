@@ -10,11 +10,11 @@ then `node tools/run.mjs dist/audio-demo --secs 6 --script steps.json`
 
 | call | effect |
 |---|---|
-| startup (no call needed) | Games registered with `RUN-GAME` get the device opened and the bank synthesized by the engine's startup steps, one sound per browser frame (`audio-init-begin` / `-sound` / `-end`, engine/lisp/app.lisp), with a GC after each. If audio can't be used the game stays silent (every other call then returns -1 or does nothing). Set `*audio-debug*` to T to log per-sound stats. |
+| startup (no call needed) | Games registered with `RUN-GAME` get the device opened and the bank synthesized by the engine's startup steps, one sound per browser frame (`audio-init-begin` / `-sound` / `-end`, engine/lisp/app.lisp), with a GC after each. If audio can't be used the game stays silent (every other call then returns -1 or does nothing). Set `*audio-debug*` to T to log per-sound stats (the stats pass is an unboxed loop: ~10 KB per sound, whatever its length). `(list-sounds)` / `(sound-loop-p key)` list the bank. |
 | `(play-sfx key &key (gain 1.0) (pitch 1.0) (pan 0.0) (pitch-jitter 0.05))` → voice id or -1 | Plays one sound once. Pan is -1 (left) to 1 (right). Pitch is a playback-rate ratio, randomly varied by ±`pitch-jitter`. |
 | `(play-sfx-at key x y z listener-x listener-z listener-yaw &key gain pitch pitch-jitter)` | Positional version. Gain = `gain/(1+d/8)`. The yaw rotates about +Y: yaw 0 looks down -Z with +X on the right. |
 | `(start-loop key &key (gain 1.0))` → id / `(stop-loop id &optional (fade 0.15))` | Looping sounds on the sfx bus (for example `:rain`). `stop-loop` fades out any voice id; `(set-loop-gain id g)` re-gains a running loop. |
-| `(music-play)` / `(music-stop &optional (fade 1.0))` / `(music-playing-p)` | The music loop on the music bus. `music-play` does nothing if the music is already playing. `(music-intensify)` restarts it at pitch 1.12, volume 0.7 (boss phase 2). |
+| `(music-play &optional (key :music))` / `(music-stop &optional (fade 1.0))` / `(music-playing-p)` | The music loop KEY on the music bus (one track at a time). `music-play` does nothing if music is already playing; stop it first to switch tracks. `(music-intensify &optional (key :music))` restarts KEY at pitch 1.12, volume 0.7 (boss phase 2). |
 | `(set-music-volume v)` | Music bus gain from 0 to 2 (default 0.55). The master and sfx bus gains are fixed at 1. |
 | `(audio-locked-p)` | T while the browser still holds the AudioContext suspended (the title shows a click hint). |
 | `(audio-stats)` → `(values voices frames-mixed peak ctx)` | Debug values. `peak` is the output peak since the last call. `ctx` is 0 none, 1 suspended, 2 running. |

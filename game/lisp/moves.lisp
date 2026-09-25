@@ -5,17 +5,7 @@
 ;;;; Who runs a move: MOVE-TICK (combat.lisp) for everyone; specials are handled by their owner.
 (in-package :raven)
 
-;;; ---------------------------------------------------------------- hit volumes
-;;; A volume is an f32vec #(type p1 p2 p3 p4) in the attacker's frame (§0):
-;;;   0 ARC  r half-angle(rad) y0 y1       1 CAP a b h r
-;;;   2 SPH  fwd up r                      3 TSPH r  (sphere at the attacker's target, chest height)
-(defun make-vol (kind args)
-  (flet ((v (&rest xs) (let ((a (make-f32 5))) (loop for x in xs for i from 0 do (setf (aref a i) (f32 x))) a)))
-    (ecase kind
-      (:arc (destructuring-bind (r deg y0 y1) args (v 0 r (deg (/ deg 2)) y0 y1)))
-      (:cap (destructuring-bind (a b h r) args (v 1 a b h r)))
-      (:sph (destructuring-bind (f u r) args (v 2 f u r)))
-      (:tsph (destructuring-bind (r) args (v 3 r))))))
+;;; Hit volumes: MAKE-VOL (engine/lisp/hitvol.lisp) builds each :arc / :cap / :sph / :tsph of a hit.
 
 ;;; ---------------------------------------------------------------- DEFMOVE
 (defvar *moves* (make-hash-table :test 'eq))

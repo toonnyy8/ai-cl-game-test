@@ -1,4 +1,5 @@
-;;;; math.lisp — vec3 / mat4 on (simple-array single-float (*)). Pure CL.
+;;;; math.lisp — scalars, facing angles, vec3 / mat4 on (simple-array single-float (*)). Pure CL
+;;;; (host-loadable: tests load it natively; YAW-TO is the one C-inline call, never used there).
 ;;;; Conventions: Y up, right-handed, meters, radians.
 ;;;;   vec3 = 3 floats, mat4 = 16 floats COLUMN-MAJOR
 ;;;;   (element row r, col c at index c*4+r — same layout WGSL mat4x4f uses).
@@ -37,6 +38,31 @@
   (declare (single-float e0 e1 x))
   (let* ((u (max 0f0 (min 1f0 (/ (- x e0) (- e1 e0))))))
     (* u u (- 3f0 (* 2f0 u)))))
+
+;;; ---------------------------------------------------------------- facing (yaw on the ground plane)
+;;; A character's facing is one angle, YAW, about +Y. Yaw 0 faces -Z; the facing direction is
+;;; (FWD-X yaw, 0, FWD-Z yaw) = (-sin yaw, 0, -cos yaw).
+(declaim (inline fwd-x fwd-z))
+(defun-fast fwd-x (yaw) "X of the facing (forward) direction of YAW." (declare (single-float yaw)) (- (sin yaw)))
+(defun-fast fwd-z (yaw) "Z of the facing (forward) direction of YAW." (declare (single-float yaw)) (- (cos yaw)))
+(defun-fast yaw-to (dx dz)
+  "The yaw that faces direction (DX DZ) (float atan2: plain C, no consing)."
+  (declare (single-float dx dz))
+  (f-atan2 (- dx) (- dz)))
+(defun turn-toward (cur target step)
+  "Angle CUR turned toward TARGET by at most STEP radians (the short way round)."
+  (let ((d (angle-wrap (f32 (- target cur)))))
+    (f32 (+ cur (clamp d (- step) step)))))
+
+(defun weighted-pick (r &rest kv)
+  "KV = key weight ...; the key whose share of the total weight contains R (0 <= R < 1). NIL keys
+are allowed (\"do nothing\"); NIL if all weights are 0. For AI choices: pass a SIM-RND01 as R."
+  (let ((sum 0.0))
+    (loop for (nil w) on kv by #'cddr do (incf sum w))
+    (when (> sum 0)
+      (let ((x (* sum r)))
+        (loop for (key w) on kv by #'cddr
+              do (decf x w) (when (and (< x 0) (> w 0)) (return key)))))))
 
 ;;; ---------------------------------------------------------------- vec3
 (defun-fast v3 (x y z)

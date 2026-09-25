@@ -93,11 +93,6 @@ ignoring H's frame window. Each target is hit at most once per slot until START-
           (aref out 2) (+ (aref q 2) (* r (/ dz d))))
     out))
 
-(defun sfx-at (key x y z &key (gain 1.0) (pitch 1.0))
-  "Play KEY positioned at (X Y Z) relative to the camera."
-  (let ((c (camera-pos *camera*)) (f (camera-forward *camera*)))
-    (play-sfx-at key x y z (aref c 0) (aref c 2) (atan (- (aref f 0)) (- (aref f 2))) :gain gain :pitch pitch)))
-
 ;;; Combat reports what happened as events (EMIT, engine/lisp/ecs.lisp); FEEDBACK-SYSTEM (feedback.lisp)
 ;;; turns them into blood, sparks, sounds, shake, hitstop and slow-mo at the end of the step.
 ;;; Positions are taken now, where the hit happened.

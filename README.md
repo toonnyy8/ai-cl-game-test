@@ -1,6 +1,6 @@
 # RAVEN EDGE
 
-用 Common Lisp 寫的網頁 3D 動作遊戲，玩法參考《忍者外傳 4》（Ninja Gaiden 4），同時也是一份教材：它示範怎麼用 Lisp 做一個小型遊戲引擎，再用這個引擎做出一款完整的遊戲。
+用 Common Lisp 寫的網頁 3D 動作遊戲，玩法參考《忍者外傳 4》（Ninja Gaiden 4），同時也是一份教材：它示範怎麼用 Lisp 做一個小型遊戲引擎，再用這個引擎做出一款完整的遊戲；之後又用同一個引擎做了第二款、類型完全不同的格鬥遊戲 SOUL DUEL（見下方）。
 
 Lisp 原始碼先由 ECL 編成 C，再由 Emscripten 編成 WebAssembly，在瀏覽器裡執行。畫面透過 SDL3 的 SDL_GPU（WebGPU 後端）繪製。所有模型都是程式產生的低面數幾何，音效和配樂在啟動時即時合成，整個專案沒有任何美術或音訊素材檔。
 
@@ -14,6 +14,28 @@ Lisp 原始碼先由 ECL 編成 C，再由 Emscripten 編成 WebAssembly，在�
 
 截圖都是無頭 Chrome（SwiftShader 軟體算圖）在 1280×720 下自動拍的，檔案在 `tests/shots/`。`gpu-*` 是現在的 SDL_GPU 版；`e2-*` 與 `webgl-*` 是改用 SDL_GPU 之前的 WebGL2 版，兩者畫面一致。
 
+## 第二款遊戲：SOUL DUEL
+
+同一個引擎上的第二款遊戲，類型完全不同：1 對 1 的 3D 競技場格鬥，玩法參考《BLEACH: Rebirth of Souls》，由《千年血戰篇》（TYBW）的山本元柳齋對上更木劍八。可以人對電腦、雙人同機對戰，或看兩個電腦對打。做它有兩個目的：用第二種類型的遊戲找出引擎的缺口並補上，再把兩款遊戲都用得到的東西收回引擎（過程見 DEVLOG 第 14 節）。
+
+![SOUL DUEL：黃昏燃燒的廣場，山本與劍八對峙，上方是靈子條、魂魄與各種量表](tests/shots/duel-neutral.png)
+
+| 卍解・殘火太刀 | 野晒的 Kikon（天空被劈開） |
+|---|---|
+| ![山本發動卍解，字幕「卍解 ZANKA NO TACHI」](tests/shots/duel-bankai.png) | ![劍八的 Kikon：一道光柱把畫面左右劈開](tests/shots/duel-kikon-sky.png) |
+
+```sh
+./build.sh duel                              # 建出 dist/duel/
+python3 -m http.server -d dist/duel 8000     # 用 Chrome 開 http://localhost:8000/
+```
+
+- **規則**：雙方各有 1100 點靈子（Reishi，血條）和 9 個魂魄（Konpaku，命）。靈子掉到 30% 以下變紅，這時任何命中都能接 Kikon（鬼魂）技，一次打掉 2 個魂魄（覺醒後 3 個）；靈子歸零自動多打掉 1 個（Soul Break）。魂魄打光就輸，時限 300 秒。
+- **猜拳**：防禦擋攻擊、攻擊打斷 Breaker、Breaker 破防；兩邊同時 Breaker 會互彈（CLASH）。步法（Hoho）瞬移到對手背後，時機抓準會觸發慢動作反擊（PERFECT）。
+- **角色**：山本用火焰壓制距離，Inferno 量表滿了進入獄焱（Hellfire）；覺醒是 20 秒的卍解。劍八近身猛攻，越被逼到絕境越強；覺醒是永久的野晒。
+- **操作**（完整對照表在 [docs/DUEL_GAMEPLAY.md](docs/DUEL_GAMEPLAY.md)）：P1 用 W A S D 移動，J 輕攻擊、K 重攻擊、L 招牌技、U 防禦、I Breaker、O Kikon、Space 閃步（Step）、P 覺醒，按住左 Shift 再按 K／L／Space 是 SP1／SP2／Hoho。P2 用方向鍵加數字鍵盤（KP1～KP6、KP0、KP Enter、KP +），也可以各接一支手把。Esc 暫停。
+
+這是**非商業的同人練習作品**（fan study）：角色與招式名稱是應使用者要求使用的，所有模型、動作、特效、音效與配樂都由程式產生，沒有使用原作動畫或遊戲的任何素材。設計與數值見 [docs/DUEL_DESIGN.md](docs/DUEL_DESIGN.md)。
+
 ## 快速開始
 
 ```sh
@@ -26,6 +48,7 @@ python3 -m http.server -d dist/game 8000     # 用 Chrome 開 http://localhost:8
 其他建置目標：
 
 ```sh
+./build.sh duel                   # 第二款遊戲 SOUL DUEL → dist/duel/
 ./build.sh examples/hello         # 最小的範例遊戲 → dist/hello/（教材從這裡開始）
 ./build.sh examples/engine-demo   # 引擎的算圖、特效、UI 展示 → dist/engine-demo/
 ./build.sh NAME a.lisp b.c        # 引擎加上指定檔案，建一個測試目標 dist/NAME/
@@ -41,23 +64,30 @@ Lisp 編譯錯誤會印在終端機，完整記錄在 `build/NAME/lisp.log`。�
 node tools/run.mjs dist/game --secs 12 --shot out.png      # 無頭 Chrome 跑 12 秒並截圖
 python3 tests/scripts/e2.py                                # 產生情境腳本 tests/scripts/e2-*.json
 node tools/run.mjs dist/game --secs 30 --script tests/scripts/e2-grunt.json
-tools/pkgcheck.sh game                                     # 找出用到引擎未 export 名稱的地方
+tools/pkgcheck.sh game                                     # 找出未 export 的引擎名稱、覆蓋引擎的定義、未定義的函式
 
 E=/media/8tsp/projects/ecl-24.5.10/ecl-emscripten-host/bin/ecl   # 主機上的純 Lisp 測試，不用建置
-$E --norc --load tests/ecs-test.lisp
-$E --norc --load tests/rules-test.lisp
+$E --norc --load tests/ecs-test.lisp               # ECS
+$E --norc --load tests/rules-test.lisp             # RAVEN EDGE 的規則
 $E --norc --load engine/lisp/package.lisp --load engine/lisp/math.lisp --load tests/test-math.lisp
+$E --norc --load tests/input-test.lisp             # 引擎的虛擬手把（vpad），31 項
+$E --norc --load tests/cine-test.lisp              # 引擎的過場導演，18 項
+$E --norc --load tests/duel-rules-test.lisp        # SOUL DUEL 的規則與招式表，351 項
+$E --norc --load tests/duel-control-test.lisp      # SOUL DUEL 的操作與指令表，53 項
 ```
 
 `tools/run.mjs` 不需要安裝任何套件。它起一個小 HTTP 伺服器，用 DevTools 協定開無頭 Chrome（WebGPU 走 SwiftShader 的 Vulkan 軟體實作，預設參數寫在腳本裡，`CHROME_FLAGS` 可覆寫），把 console 輸出轉到終端機，照腳本在指定時間送出按鍵、滑鼠、`eval`，並拍截圖。頁面丟出 JS 例外時結束碼是 1。
 
 測試腳本由 `tests/scripts/` 的 `gen.py`（玩家招式）、`e2.py`（敵人與遊戲流程）、`p3.py`（各畫面與長時間浸泡測試）和 `gpu.py`（SDL_GPU 版的截圖組）產生。腳本透過 `Module._debug_cmd(n)` 跳到指定波次、強制敵人出某一招、開無敵，或讓自動遊玩的 bot 從頭打到尾。指令清單在 [docs/GAMEPLAY.md](docs/GAMEPLAY.md)。
 
-## 三個資料夾
+SOUL DUEL 的腳本由 `python3 tests/scripts/duel.py` 產生：固定種子的電腦對戰（`duel-cvc-*.json`，同一個種子每次跑出一模一樣的比賽）、60 場的節奏測試（`duel-gate.json`）、幀數探針（`duel-probe.json`）、鍵盤、選單流程、效能與截圖組。說明與除錯指令在 [docs/DUEL_GAMEPLAY.md](docs/DUEL_GAMEPLAY.md)。
+
+## 資料夾
 
 ```
 engine/      可重複使用的引擎（ENGINE 套件），不知道任何一款遊戲的存在
-  lisp/        數學、平台與輸入、算圖、模型產生、UI、音訊、動畫、時間、特效、ECS、app（RUN-GAME）
+  lisp/        數學、命中判定（hitvol）、虛擬手把（input）、平台、算圖、模型產生、UI、音訊、動畫、
+               剛體角色（body）、時間與固定步長、特效、過場導演（cine）、ECS、app（RUN-GAME）
   c/           engine.h（Lisp 呼叫的所有 C 函式）、main.c（啟動 ECL、GC、主迴圈）、platform.c、render.c、audio.c、rng.c
   shaders/     所有 WGSL 著色器（共用片段用 // #include）
   web/         HTML 外殼：向瀏覽器要 WebGPU 裝置、載入進度、錯誤畫面
@@ -67,6 +97,9 @@ game/        RAVEN EDGE（RAVEN 套件）
                與資料檔（moves、bodies、clips、sounds、tuning）
   c/           雨、霓虹倒影、水花、碰撞、射線（world.c）
   MANIFEST     遊戲原始檔的編譯順序，第一行 `# title: RAVEN EDGE`
+duel/        SOUL DUEL（DUEL 套件）
+  lisp/        規則、操作、角色資料（kit、yama、ken）、美術、系統（fighter、combat、hazards、ai……）、過場
+  MANIFEST     第一行 `# title: SOUL DUEL`
 examples/
   hello/       最小的完整遊戲，123 行，教材的起點
   engine-demo/ 只用引擎的展示：頂樓、環繞鏡頭、特效、UI
@@ -78,7 +111,7 @@ examples/
 
 ## 學習路徑
 
-想知道這一切怎麼運作，從 **[docs/TUTORIAL.zh-TW.md](docs/TUTORIAL.zh-TW.md)** 開始。它帶你建置並從頭讀完 `examples/hello`，再依序看幀迴圈與 GC、ECS、純函式規則、事件、算圖，最後讀懂 RAVEN EDGE 的一下攻擊怎麼從招式資料一路變成畫面上的血霧和音效。最後有練習題。
+想知道這一切怎麼運作，從 **[docs/TUTORIAL.zh-TW.md](docs/TUTORIAL.zh-TW.md)** 開始。它帶你建置並從頭讀完 `examples/hello`，再依序看幀迴圈與 GC、ECS、純函式規則、事件、算圖，讀懂 RAVEN EDGE 的一下攻擊怎麼從招式資料一路變成畫面上的血霧和音效，接著用 SOUL DUEL 學虛擬手把、角色即資料、同時結算的命中、過場導演和決定性重播。最後有練習題。
 
 ## 文件索引
 
@@ -88,12 +121,14 @@ examples/
 - [docs/ENGINE_API.md](docs/ENGINE_API.md)：引擎 API 參考
 - [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md)：遊戲設計規格與全部數值
 - [docs/GAMEPLAY.md](docs/GAMEPLAY.md)：遊戲系統的實作說明與除錯指令
+- [docs/DUEL_DESIGN.md](docs/DUEL_DESIGN.md)：SOUL DUEL 的設計與全部招式表（英文）
+- [docs/DUEL_GAMEPLAY.md](docs/DUEL_GAMEPLAY.md)：SOUL DUEL 的建置、操作、除錯指令、測試與決定性檢查（英文）
 - [docs/WORLD.md](docs/WORLD.md)：場景、雨、碰撞
 - [docs/AUDIO.md](docs/AUDIO.md)：混音器與程式合成音效
 - [docs/research/ng4-notes.md](docs/research/ng4-notes.md)：《忍者外傳 4》玩法研究筆記
 - [docs/README.md](docs/README.md)：以上文件的簡介
 
-## 遊戲內容
+## 遊戲內容（RAVEN EDGE）
 
 一輪流程是：標題 → 開場 → 第 1～3 波 → 頭目 → 勝利 → 結算，大約 5～10 分鐘。
 
@@ -115,7 +150,7 @@ examples/
 
 每一下命中都有停頓（hitstop）、血霧、鏡頭震動和音效。完整的數值和幀數表在 [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md)。
 
-## 操作說明
+## 操作說明（RAVEN EDGE）
 
 以下按鍵對照 `game/lisp/player.lisp`、`game/lisp/game.lisp` 和遊戲內 CONTROLS 畫面（`game/lisp/hud.lisp`）確認過。
 
@@ -216,7 +251,7 @@ emmake make && emmake make install
 
 ## 致謝與限制
 
-建立在這些專案之上：[ECL](https://ecl.common-lisp.dev/)（Embeddable Common Lisp）、[Emscripten](https://emscripten.org/)、[SDL3](https://libsdl.org/) 與其 SDL_GPU WebGPU 後端草稿（PR #16020）、Google Dawn 的 emdawnwebgpu、Boehm GC、GMP。玩法結構參考 Team NINJA 的《忍者外傳 4》，但沒有使用該作的任何名稱、角色或素材（研究筆記見 `docs/research/ng4-notes.md`）。這個專案由多個 AI agent 分工完成，流程記錄在 DEVLOG 第 9 節。
+建立在這些專案之上：[ECL](https://ecl.common-lisp.dev/)（Embeddable Common Lisp）、[Emscripten](https://emscripten.org/)、[SDL3](https://libsdl.org/) 與其 SDL_GPU WebGPU 後端草稿（PR #16020）、Google Dawn 的 emdawnwebgpu、Boehm GC、GMP。RAVEN EDGE 的玩法結構參考 Team NINJA 的《忍者外傳 4》，但沒有使用該作的任何名稱、角色或素材（研究筆記見 `docs/research/ng4-notes.md`）。SOUL DUEL 是參考《BLEACH: Rebirth of Souls》的非商業同人練習作品，角色與招式名稱應使用者要求使用，素材全部由程式產生。這個專案由多個 AI agent 分工完成，流程記錄在 DEVLOG 第 9 節與第 14 節。
 
 已知限制（詳見 [docs/DEVLOG.zh-TW.md](docs/DEVLOG.zh-TW.md) 第 10 節）：
 
@@ -225,3 +260,4 @@ emmake make && emmake make install
 - `libecl` 是 `-O0` 建的，ECL 執行期函式跑的是沒最佳化的程式碼。
 - 每次幀間 GC 是一次完整回收，偶爾會造成幾毫秒的卡頓。
 - 打擊感、鏡頭、難度是看截圖和 log 調的，還需要真人實際試玩確認（DEVLOG 第 9 節）。
+- SOUL DUEL 還沒解決的問題（沒做的 Burst Reverse 與背後鏡頭、動畫與幀數的對齊、節奏等）列在 DEVLOG 第 14.5 節。

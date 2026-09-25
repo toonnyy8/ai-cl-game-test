@@ -31,9 +31,6 @@
 ;;; ---------------------------------------------------------------- sword trails
 (declaim (type f32vec *trail-core*))
 (defvar *trail-core* (make-f32 (* 6 +trail-n+)))
-(defmacro trail-count (tr)
-  "Samples in trail TR: the engine's MAKE-TRAIL layout is +TRAIL-N+ x (base xyz, tip xyz), then the count."
-  `(aref ,tr (* 6 +trail-n+)))
 
 (defun trail-draw (tr raven)
   "Additive ribbon: outer #5B8CFF + inner core #E8F4FF (raven: #5A0010 / #FF1E3C)."

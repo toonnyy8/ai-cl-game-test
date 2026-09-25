@@ -287,6 +287,7 @@ instead (for stationary noise)."
 
 ;;; ------------------------------------------------------------- sound bank
 (defvar *au-defs* nil "((key peak loop-p fn) ...) in definition order")
+(defconstant +au-slots+ 128 "Sound slots in the C mixer (AU_NS, engine/c/audio.c).")
 
 (defmacro defsound (key (&key (peak 0.9) loop) &body body)
   "Define how to synthesize sound KEY (BODY returns a sample buffer, see AU-BUF / AU-RENDER); the
@@ -295,10 +296,16 @@ startup in definition order."
   (let ((fn (intern (format nil "AU-SND-~a" key))))
     `(progn (defun ,fn () ,@body)
             (setf *au-defs* (append (remove ,key *au-defs* :key #'first)
-                                    (list (list ,key ,peak ,loop ',fn)))))))
+                                    (list (list ,key ,peak ,loop ',fn))))
+            (when (> (length *au-defs*) +au-slots+)
+              (error "DEFSOUND ~s: more than ~d sounds (the mixer's slot count)" ,key +au-slots+)))))
 
 ;;; --------------------------------------------------------------- Lisp API
 (defvar *audio-debug* nil "When true, AUDIO-INIT logs per-sound stats.")
+(defun list-sounds ()
+  "Keys of every DEFSOUND, in definition order (= synthesis order)."
+  (mapcar #'first *au-defs*))
+(defun sound-loop-p (key) "T if sound KEY was defined with :LOOP (music, ambience)." (third (assoc key *au-defs*)))
 (defvar *au-ok* nil)
 (defvar *au-index* (make-hash-table :test 'eq) "sound key -> C slot")
 (defvar *au-music* -1)
@@ -320,15 +327,23 @@ startup in definition order."
     (dotimes (i f buf)
       (setf (aref buf (- n 1 i)) (* (aref buf (- n 1 i)) (/ (float i 1.0) f))))))
 
+(defun au-moments (buf)
+  "Sum and sum of squares of BUF's samples (doubles; unboxed loop, conses only the two results)."
+  (declare (type f32vec buf) (optimize (speed 3) (safety 0)))
+  (let ((sum 0d0) (sq 0d0))
+    (declare (double-float sum sq))
+    (dotimes (i (length buf) (values sum sq))
+      (let ((x (ffi:c-inline ((aref buf i)) (:float) :double "(double)(#0)" :one-liner t)))   ; FLOAT boxes here
+        (declare (double-float x)) (incf sum x) (incf sq (* x x))))))
+
 (defun au-stats (key buf bad)
   (declare (type f32vec buf))
-  (let ((sum 0d0) (sq 0d0) (n (length buf)) (pk (au-peak buf)))
-    (declare (double-float sum sq))
-    (dotimes (i n) (let ((x (float (aref buf i) 1d0))) (incf sum x) (incf sq (* x x))))
+  (multiple-value-bind (sum sq) (au-moments buf)
+   (let ((n (length buf)) (pk (au-peak buf)))
     (let ((dc (/ sum n)) (ms (round (* 1000 n) +au-rate+)))
       (log-msg "audio: ~15a ~5d ms  peak ~5,3f  rms ~5,3f  dc ~8,5f  nan/inf ~d~a" key ms pk
                (sqrt (/ sq n)) dc bad
-               (if (or (> bad 0) (> pk 1.0) (> (abs dc) 0.01) (< ms 20)) "  <-- BAD" "")))))
+               (if (or (> bad 0) (> pk 1.0) (> (abs dc) 0.01) (< ms 20)) "  <-- BAD" ""))))))
 
 (defvar *au-t0* 0)
 (defvar *au-total* 0)
@@ -384,6 +399,12 @@ right. Gain falls off as 1/(1+d/8); pan follows the listener's right vector."
          (gain (/ (getf keys :gain 1.0) (+ 1.0 (/ d 8.0)))))
     (apply #'play-sfx key :gain gain :pan pan keys)))
 
+(defun sfx-at (key x y z &key (gain 1.0) (pitch 1.0))
+  "PLAY-SFX-AT with the camera as the listener: KEY sounds from (X Y Z) as heard from *CAMERA*
+(e.g. every in-world sound of a third-person game)."
+  (let ((c (camera-pos *camera*)) (f (camera-forward *camera*)))
+    (play-sfx-at key x y z (aref c 0) (aref c 2) (atan (- (aref f 0)) (- (aref f 2))) :gain gain :pitch pitch)))
+
 (defun start-loop (key &key (gain 1.0))
   "Start looping sound KEY (e.g. :rain) on the sfx bus. Returns id for STOP-LOOP."
   (let ((idx (and *au-ok* (gethash key *au-index*))))
@@ -405,9 +426,10 @@ right. Gain falls off as 1/(1+d/8); pan follows the listener's right vector."
 (defun music-playing-p ()
   (ffi:c-inline ((the fixnum *au-music*)) (:int) :bool "au_alive(#0)" :one-liner t))
 
-(defun music-play ()
-  "Start the music loop (no-op if already playing)."
-  (let ((idx (and *au-ok* (gethash :music *au-index*))))
+(defun music-play (&optional (key :music))
+  "Start looping sound KEY (a DEFSOUND :loop t) on the music bus; no-op while music is playing.
+One track plays at a time: to switch tracks, MUSIC-STOP first."
+  (let ((idx (and *au-ok* (gethash key *au-index*))))
     (when (and idx (not (music-playing-p)))
       (setf *au-music* (au-play idx 1.0 0.0 1.0 1 1)))
     *au-music*))
@@ -416,10 +438,10 @@ right. Gain falls off as 1/(1+d/8); pan follows the listener's right vector."
   (stop-loop *au-music* fade)
   (setf *au-music* -1))
 
-(defun music-intensify ()
-  "Intensify the music (e.g. a boss's second phase): restart the loop a little faster and higher
+(defun music-intensify (&optional (key :music))
+  "Intensify the music (e.g. a boss's second phase): restart track KEY a little faster and higher
 (the one cheap layer we have)."
-  (let ((idx (and *au-ok* (gethash :music *au-index*))))
+  (let ((idx (and *au-ok* (gethash key *au-index*))))
     (when idx
       (music-stop 0.4)
       (set-music-volume 0.7)

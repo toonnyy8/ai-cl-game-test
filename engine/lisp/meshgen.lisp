@@ -291,6 +291,11 @@ Use :hilt nil / :blade nil to build the parts as separate meshes (e.g. to make t
   "#xRRGGBB -> (r g b) list, 0..1, each channel times K (capped at 1)."
   (list (min 1.0 (* k (/ (ldb (byte 8 16) h) 255.0))) (min 1.0 (* k (/ (ldb (byte 8 8) h) 255.0)))
         (min 1.0 (* k (/ (ldb (byte 8 0) h) 255.0)))))
+(defun rim-vec (hex k)
+  "Per-draw rim colour for DRAW-MESH :rim: sRGB #xRRGGBB at strength K, as a linear-rgb f32vec."
+  (let ((v (make-f32 3)))
+    (loop for c in (hexc hex) for i from 0 do (setf (aref v i) (f32 (* k (expt c 2.2)))))
+    v))
 (defun mbc (mb h &optional (k 1.0))
   "MB-COLOR from a #xRRGGBB color (see HEXC)."
   (apply #'mb-color mb (hexc h k)))

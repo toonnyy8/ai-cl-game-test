@@ -1,0 +1,157 @@
+;;;; hazards.lisp — every hit that isn't a fighter's melee is one HAZARD entity (design-v1 §12):
+;;;;   :wave      the Signature flame wave: a moving oriented box (WIDTH wide), hits once
+;;;;   :fireball  Shiranui: a homing sphere, swept from last step's position (no tunnelling)
+;;;;   :pillars   Ennetsu Jigoku: a ring of *ENNETSU-PILLARS* cylinders around where it erupted
+;;;;   :line      a ground line cut / crack: a look only (Kyokujitsujin, Buttagiru, the Meteor)
+;;;;   :skeleton  Kaka Jumanokushi: a posed body (transform + model) that rises, then lunges
+;;;; HAZARD-SYSTEM moves them (sim steps, SIM randomness only), COLLECT-HAZARD-HITS hands their hits to
+;;;; combat.lisp's HIT-SYSTEM (applied with the fighters' hits), HAZARD-DRAW shows them (vfx.lisp
+;;;; looks, real time). Hazards of one kind never hit their owner.
+(in-package :duel)
+
+(defun spawn-hazard (kind owner &key (x 0.0) (y 0.0) (z 0.0) (yaw 0.0) (speed 0.0) (turn 0.0) (size 0.5)
+                                  (life 60) (delay 0) (hits 1) hw look last)
+  "A new hazard of KIND for fighter OWNER. LIFE / DELAY in frames; HW = the HITWIN it deals (NIL = look only)."
+  (spawn-entity (make-hazard :kind kind :owner owner :x (f32 x) :y (f32 y) :z (f32 z) :px (f32 x) :pz (f32 z)
+                             :yaw (f32 yaw) :speed (f32 speed) :turn (f32 turn) :size (f32 size)
+                             :life life :delay delay :hits-left (if hw hits 0) :hw hw :look look :last last)))
+
+(defun clear-hazards ()
+  (do-entities (h hazard) (destroy-entity h)))
+
+(defun hazard-target (hz)
+  "The fighter a hazard of HZ's owner can hit (his opponent), or NIL."
+  (let ((o (hazard-owner hz))) (and (entity-alive-p o) (fighter-opp (fighter o)))))
+
+;;; ---------------------------------------------------------------- skeletons (Kaka)
+(defun skeleton-phase (hz)
+  "Frames into the lunge (>= 0) once risen (*SKELETON-RISE*: :sk-rise played at 1.5x), else NIL."
+  (let ((f (- (hazard-age hz) *skeleton-rise*))) (and (>= f 0) f)))
+
+(defun spawn-skeleton (owner x z yaw delay hw last)
+  (let ((h (spawn-hazard :skeleton owner :x x :z z :yaw yaw :size 0.5 :life (+ *skeleton-rise* 36 20) :delay delay
+                                         :hw hw :last last)))
+    (add-component h (make-transform :yaw (f32 yaw)))
+    (add-component h (make-model :body (find-body :skeleton)))
+    (v3-set! (pos-of h) (f32 x) -5f0 (f32 z))            ; below the plaza until it appears
+    h))
+
+;;; ---------------------------------------------------------------- per step
+(defun hazard-step (h hz)
+  (when (> (hazard-delay hz) 0)
+    (decf (hazard-delay hz))
+    (when (and (zerop (hazard-delay hz)) (eq (hazard-kind hz) :skeleton))
+      (v3-set! (pos-of h) (hazard-x hz) 0f0 (hazard-z hz))
+      (play-clip h :sk-rise :blend 0 :speed 1.5)
+      (emit :skeleton-rise (hazard-x hz) (hazard-z hz)))
+    (return-from hazard-step nil))
+  (incf (hazard-age hz))
+  (when (> (hazard-rehit hz) 0) (decf (hazard-rehit hz)))
+  (setf (hazard-px hz) (hazard-x hz) (hazard-pz hz) (hazard-z hz))
+  (case (hazard-kind hz)
+    (:fireball                                          ; home on the target
+     (let ((tg (hazard-target hz)))
+       (when (entity-alive-p tg)
+         (let ((q (pos-of tg)))
+           (setf (hazard-yaw hz) (f32 (angle-wrap (turn-toward (hazard-yaw hz)
+                                                          (dir-yaw (- (aref q 0) (hazard-x hz)) (- (aref q 2) (hazard-z hz)))
+                                                          (hazard-turn hz)))))))))
+    (:skeleton
+     (let ((ph (skeleton-phase hz)) (tg (hazard-target hz)))
+       (when (and ph (= ph 0) (entity-alive-p tg))       ; risen: face the target, lunge
+         (let ((q (pos-of tg)))
+           (setf (hazard-yaw hz) (f32 (dir-yaw (- (aref q 0) (hazard-x hz)) (- (aref q 2) (hazard-z hz))))
+                 (transform-yaw (transform h)) (hazard-yaw hz)))
+         (play-clip h :sk-lunge :blend 3))
+       (anim-advance (model-anim (model h)) +step+))))
+  (when (member (hazard-kind hz) '(:wave :fireball))
+    (let ((d (* (hazard-speed hz) +step+)))
+      (setf (hazard-x hz) (f32 (+ (hazard-x hz) (* d (fwd-x (hazard-yaw hz)))))
+            (hazard-z hz) (f32 (+ (hazard-z hz) (* d (fwd-z (hazard-yaw hz))))))
+      (when (> (+ (expt (hazard-x hz) 2) (expt (hazard-z hz) 2)) (expt (+ *arena-radius* 2.0) 2))
+        (setf (hazard-age hz) (hazard-life hz)))))
+  (when (>= (hazard-age hz) (hazard-life hz)) (destroy-entity h)))
+
+(defun hazard-system ()
+  "Move / age every hazard one fixed step."
+  (do-entities (h (hz hazard)) (hazard-step h hz)))
+
+;;; ---------------------------------------------------------------- volumes
+(defun hazard-active-p (hz)
+  (and (hazard-hw hz) (> (hazard-hits-left hz) 0) (<= (hazard-rehit hz) 0) (<= (hazard-delay hz) 0)
+       (case (hazard-kind hz)
+         (:skeleton (let ((ph (skeleton-phase hz)))
+                      (and ph (<= (first *skeleton-window*) ph (second *skeleton-window*)))))
+         (:pillars (< (first *pillar-window*) (hazard-age hz) (- (hazard-life hz) (second *pillar-window*))))
+         (t t))))
+
+(defun hazard-touches-p (hz tx ty tz tr th)
+  "Does HZ's world volume touch the hurt cylinder at (TX TY TZ), radius TR, height TH?"
+  (let ((x (hazard-x hz)) (y (hazard-y hz)) (z (hazard-z hz)) (s (hazard-size hz)) (tr (f32 tr)) (th (f32 th)))
+    (case (hazard-kind hz)
+      (:wave (obox-cyl-hit-p x 1f0 z (hazard-yaw hz) s (f32 (first *wave-box*)) (f32 (second *wave-box*)) tx ty tz tr th))
+      (:fireball (capsule-cyl-hit-p (hazard-px hz) y (hazard-pz hz) x y z s tx ty tz tr th))
+      (:pillars (let ((pr (f32 (first *pillar-size*))) (ph (f32 (second *pillar-size*))))
+                  (loop for i below *ennetsu-pillars*
+                        for a of-type single-float = (+ (* i (/ +two-pi+ *ennetsu-pillars*)) (hazard-yaw hz))
+                        thereis (cyl-cyl-hit-p (+ x (* s (cos a))) 0f0 (+ z (* s (sin a))) pr ph tx ty tz tr th))))
+      (:skeleton (let ((fx (f32 (fwd-x (hazard-yaw hz)))) (fz (f32 (fwd-z (hazard-yaw hz)))))
+                   (capsule-cyl-hit-p x 1f0 z (+ x (* 1.4f0 fx)) 1f0 (+ z (* 1.4f0 fz)) s tx ty tz tr th)))
+      (t nil))))
+
+(defun collect-hazard-hits ()
+  "Hand every active hazard's contact with its target to the HIT-SYSTEM's pending list."
+  (do-entities (h (hz hazard))
+    (when (hazard-active-p hz)
+      (let ((tg (hazard-target hz)))
+        (when (entity-alive-p tg)
+          (let ((q (pos-of tg)) (b (model-body (model tg))))
+            (when (hazard-touches-p hz (aref q 0) (aref q 1) (aref q 2) (body-hurt-r b) (body-hurt-h b))
+              (push (make-pending :att (hazard-owner hz) :def tg :hw (hazard-hw hz) :sx (hazard-x hz) :sz (hazard-z hz)
+                                  :hazard hz :state (defender-state tg))
+                    *pending*))))))))
+
+(defun hazard-connected (hz)
+  "HZ's hit took effect: one hit fewer (projectiles are spent), pillars wait before hitting again."
+  (decf (hazard-hits-left hz))
+  (setf (hazard-rehit hz) *hazard-rehit*)
+  (when (and (<= (hazard-hits-left hz) 0) (member (hazard-kind hz) '(:wave :fireball)))
+    (setf (hazard-life hz) (hazard-age hz))))            ; gone at the next step (its look fades)
+
+(defun hazard-threat-p (owner victim)
+  "Perfect Hoho vs hazards: one of OWNER's hazards is active (or becomes so within *PERFECT-LEAD*
+frames) and touches VICTIM's hurt cylinder grown by *PERFECT-INFLATE*."
+  (let ((q (pos-of victim)) (b (model-body (model victim))) (found nil))
+    (do-entities (h (hz hazard))
+      (when (and (not found) (eql (hazard-owner hz) owner) (hazard-hw hz) (> (hazard-hits-left hz) 0)
+                 (<= (hazard-delay hz) *perfect-lead*)
+                 (or (not (eq (hazard-kind hz) :skeleton))
+                     (let ((ph (skeleton-phase hz)))
+                       (and ph (<= (- (first *skeleton-window*) *perfect-lead*) ph (second *skeleton-window*)))))
+                 (hazard-touches-p hz (aref q 0) (aref q 1) (aref q 2)
+                                   (+ (body-hurt-r b) *perfect-inflate*) (+ (body-hurt-h b) *perfect-inflate*)))
+        (setf found t)))
+    found))
+
+;;; ---------------------------------------------------------------- draw (real time)
+(defun hazard-draw (rdt)
+  "Every hazard's look this frame."
+  (do-entities (h (hz hazard))
+    (when (<= (hazard-delay hz) 0)
+      (let ((x (hazard-x hz)) (z (hazard-z hz)) (age (/ (hazard-age hz) 60.0)) (life (/ (hazard-life hz) 60.0)))
+        (case (hazard-kind hz)
+          (:wave (vfx-fire-wave x z (hazard-yaw hz) age (* 2 (hazard-size hz)) rdt)
+           (add-point-light x 1.0 z 1.0 0.5 0.15 7.0 2.0 3))
+          (:fireball (vfx-fireball x (hazard-y hz) z (hazard-size hz) rdt)
+           (add-point-light x (hazard-y hz) z 1.0 0.55 0.2 6.0 2.2 3))
+          (:pillars (dotimes (i *ennetsu-pillars*)          ; (the pillars' looks merge into one light)
+                      (let ((a (+ (* i (/ +two-pi+ *ennetsu-pillars*)) (hazard-yaw hz))))
+                        (vfx-fire-pillar (+ x (* (hazard-size hz) (cos a))) (+ z (* (hazard-size hz) (sin a))) age life rdt))))
+          (:line (let ((l (hazard-size hz)) (yaw (hazard-yaw hz)))
+                   (vfx-line-cut x z (+ x (* l (fwd-x yaw))) (+ z (* l (fwd-z yaw))) age life (hazard-look hz) :dt rdt)))
+          (:skeleton
+           (let ((m (model h)) (p (pos-of h)))
+             (pose-fk! (model-joints m) (anim-eval (model-anim m)) (aref p 0) (aref p 1) (aref p 2)
+                       (transform-yaw (transform h)) (body-scale (model-body m)) (body-hunch (model-body m)))
+             (draw-body (model-body m) (model-joints m) (aref p 0) (aref p 1) (aref p 2) 0.0
+                        :alpha (f32 (min 1.0 (max 0.0 (/ (- (hazard-life hz) (hazard-age hz)) 15.0))))))))))))

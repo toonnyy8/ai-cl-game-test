@@ -1,5 +1,5 @@
 ;;;; fighters.lisp — fighter entities (REN, enemies, dummies): creating one, the geometry helpers
-;;;; every system uses (distance, facing), posing (animation -> joint matrices) and drawing a posed
+;;;; every system uses (distance, facing; FWD-X / YAW-TO / TURN-TOWARD are the engine's), posing (animation -> joint matrices) and drawing a posed
 ;;;; fighter (tint / hit flash / emissive / hidden parts), plus throwing parts off as debris.
 (in-package :raven)
 
@@ -31,11 +31,6 @@ fighter and blade-trail. PLAYER-INIT adds the player component, SPAWN-ENEMY / SP
               (transform-yaw tf) (body-scale b) (body-hunch b))))
 
 ;;; ---------------------------------------------------------------- geometry
-(declaim (inline fwd-x fwd-z))
-(defun-fast fwd-x (yaw) "Facing direction x for YAW." (declare (single-float yaw)) (- (f-sin yaw)))
-(defun-fast fwd-z (yaw) (declare (single-float yaw)) (- (f-cos yaw)))
-(defun-fast yaw-to (dx dz) "Yaw that faces direction (DX DZ)." (declare (single-float dx dz)) (f-atan2 (- dx) (- dz)))
-
 (declaim (inline pos-of yaw-of))
 (defun pos-of (e) (transform-pos (transform e)))
 (defun yaw-of (e) (transform-yaw (transform e)))
@@ -57,11 +52,6 @@ fighter and blade-trail. PLAYER-INIT adds the player component, SPAWN-ENEMY / SP
          (l (sqrt (+ (* dx dx) (* dz dz)))) (yaw (yaw-of a)))
     (or (< l 0.01)
         (>= (/ (+ (* dx (fwd-x yaw)) (* dz (fwd-z yaw))) l) (cos (deg half-deg))))))
-
-(defun turn-toward (cur target step)
-  "Angle CUR turned toward TARGET by at most STEP radians (the short way round)."
-  (let ((d (angle-wrap (f32 (- target cur)))))
-    (f32 (+ cur (clamp d (- step) step)))))
 
 (defun downed-p (e)
   "Knocked down and lying on the floor."
@@ -88,6 +78,7 @@ fighter and blade-trail. PLAYER-INIT adds the player component, SPAWN-ENEMY / SP
 (defvar *dm2* (m4))
 (defvar *scarf-m* (m4))
 (defvar *raven-red* '(1.0 0.12 0.24))
+(defvar *raven-visor* (cons :visor *raven-red*) "Raven Form: the visor glow turns red (DRAW-PARTS :recolor).")
 
 (defun draw-fighter (e &key (alpha 1f0) tint (emissive 0f0) hide-role rim)
   "Queue every visible part of fighter E (one draw-mesh per joint part + glows + weapon + scarf)
@@ -95,20 +86,11 @@ and its ground shadow. HIDE-ROLE skips glow parts with that role (boss phase-2 g
 maul core). RIM overrides the body's silhouette rim (f32vec, see RIM-VEC)."
   (let* ((m (model e)) (b (model-body m)) (jm (model-joints m)) (hid (model-hidden m)) (dm *dm*)
          (rim (or rim (body-rim b)))
-         (fl (if (> (model-flash m) 0f0) 0.7f0 0f0)) (parts (body-parts b))
+         (fl (if (> (model-flash m) 0f0) 0.7f0 0f0))
          (raven (and (eql e *player*) (raven-form-p))))
     (declare (type f32vec jm dm) (fixnum hid))
-    (dotimes (j +nj+)
-      (let ((mesh (svref parts j)))
-        (when (and mesh (not (logbitp j hid)))
-          (replace dm jm :start2 (* j 16) :end2 (+ 16 (* j 16)))
-          (draw-mesh mesh dm :tint tint :flash fl :emissive emissive :alpha alpha :rim rim))))
-    (dolist (g (body-glows b))
-      (let ((j (svref g 0)))
-        (unless (or (logbitp j hid) (and hide-role (eq (svref g 4) hide-role)))
-          (replace dm jm :start2 (* j 16) :end2 (+ 16 (* j 16)))
-          (draw-mesh (svref g 1) dm :tint (if (and raven (eq (svref g 4) :visor)) *raven-red* (svref g 2))
-                     :emissive (svref g 3) :alpha alpha))))
+    (draw-parts (body-parts b) (body-glows b) jm :hidden hid :hide hide-role :recolor (and raven *raven-visor*)
+                :tint tint :flash fl :emissive emissive :alpha alpha :rim rim)
     (let ((w (ji :weapon-r)))
       (when (and (body-hilt b) (not (logbitp w hid)))
         (replace dm jm :start2 (* w 16) :end2 (+ 16 (* w 16)))

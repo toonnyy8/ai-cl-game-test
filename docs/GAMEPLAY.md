@@ -1,5 +1,7 @@
 # RAVEN EDGE — Gameplay systems
 
+(SOUL DUEL, the second game, has its own: `DUEL_GAMEPLAY.md`.)
+
 Files (`game/lisp/`, MANIFEST order): data and rules first (`tuning`, `sounds`, `world`, `clips`,
 `rules`, `moves`, `effects`), then the entity layer (`components`, `bodies`, `fighters`), the
 systems (`combat`, `camera`, `player`, `enemy`, `projectiles`, `feedback`, `training`), the flow
@@ -9,8 +11,8 @@ data is authoritative and is copied as-is into the `defmove` tables. Background 
 rules / events split: ARCHITECTURE.md "Game structure", TUTORIAL.zh-TW.md steps 4–6 and 8.
 
 ## Time model
-* `main.lisp` `ACCUMULATE-AND-STEP` runs **fixed 1/60 s steps** from real dt, at most 6 steps per
-  frame. A longer backlog is dropped. Each step (`SIM-STEP`) runs `TIME-STEP` (engine time.lisp).
+* `main.lisp` `ACCUMULATE-AND-STEP` runs **fixed 1/60 s steps** from real dt through the engine's
+  `RUN-FIXED-STEPS` (time.lisp), at most 6 steps per frame. A longer backlog is dropped. Each step (`SIM-STEP`) runs `TIME-STEP` (engine time.lisp).
   It returns NIL during **hitstop** (`(hitstop n)`, the max wins). Then the whole sim is skipped
   while fx, shake, camera and UI keep running.
 * `SIM-STEP` is the system list, in order: `player-system`, `enemy-system`, `projectile-system`,
@@ -36,7 +38,8 @@ MOVE), `fighter-target` (a handle), `fighter-crippled`, `model-flash` (real s), 
   `spawn-dummy` add their component. Visit fighters with `(do-entities (e fighter) …)`.
 * Helpers every file uses: `pos-of`, `yaw-of`, `alive-p`, `enemy-p`, `state-of`, `body-of`,
   `kind-of`, `name-of`, `crippled-p`, `distance`, `face-toward`, `facing-p`, `turn-toward`,
-  `fwd-x`/`fwd-z`, `yaw-to`, `downed-p`, `red-windup-p`.
+  `fwd-x`/`fwd-z`, `yaw-to`, `downed-p`, `red-windup-p` (`turn-toward`, `fwd-x`/`fwd-z` and
+  `yaw-to` are the engine's, math.lisp).
 * Handles outlive their entities: a stored `target`, `owner` or `*boss*` may be dead; check
   `entity-alive-p` / `alive-p` before following one.
 
@@ -93,7 +96,8 @@ throws parts as debris; this is how crippling and death work.
   `(start-move e :rb-lunge)`; `move-tick` then advances it every step (slide, sounds, trail,
   `move-hit-scan`). A `:red` move plays `:warn`, pulses the red tint and a glint, and has hyper
   armor during its windup.
-* The hit scan tests each open window's volumes with the pure rule `vol-hit-p` (rules.lisp) and
+* The hit scan tests each open window's volumes with the pure function `vol-hit-p` (engine
+  hitvol.lisp; RAVEN's `make-vol` volumes are built there too) and
   calls `(resolve-hit att tgt hitdef)`, the single entry point for any hit. It dispatches to
   `enemy-take-hit` (combat.lisp) or `player-take-hit` (player.lisp). Each of those asks a pure
   rule what happens — `enemy-hit-outcome` (poise, block, Raven Break, cripple, kill, BROKEN) or
@@ -122,7 +126,7 @@ throws parts as debris; this is how crippling and death work.
   `(token-release e)`. Reactions and death release automatically. `(attacks-paused-p)` and
   `(player-punishable-p)` are there; the boss ignores tokens. `token-system` counts the timers down.
 * Utilities: `pick-target`, `face-toward`, `distance`, `facing-p`, `fwd-x/fwd-z`, `yaw-to`,
-  `kind-of`, `separation-system`, `enemy-kill`, `enemy-to-idle`, `weighted-pick` (rules.lisp).
+  `kind-of`, `separation-system`, `enemy-kill`, `enemy-to-idle`, `weighted-pick` (engine math.lisp).
 
 ## Feedback: events (`feedback.lisp`, presets in `effects.lisp`, engine `time.lisp` / `fx.lisp`)
 Combat code does not play effects. It emits events (`emit-hit`, `emit-block`, `(emit :killed …)`,
@@ -135,7 +139,7 @@ The tools it uses: `(hitstop f)`, `(slowmo s secs [enemies])`, `(shake amp dur)`
 blue)` (orbs home to `*orb-target*`, the player, and call `orb-absorbed` through the engine hook
 `*on-orb-absorbed*`), `(fx-burst type n ...)` with `+p-mist+ +p-spark+ +p-dust+ +p-glow+
 +p-feather+ +p-orb-a+ +p-orb-b+`, `(fx-ring x y z r0 r1 dur r g b :flat t)` and
-`(fx-debris mesh m offset vx vy vz spin)`, `sfx-at` (positional sound).
+`(fx-debris mesh m offset vx vy vz spin)`, `sfx-at` (positional sound, engine audio.lisp).
 Particles are a 2000-slot f32 pool written straight into the fx batch, so they don't cons.
 `screen-hurt` and `fx-draw-screen` draw the vignettes.
 

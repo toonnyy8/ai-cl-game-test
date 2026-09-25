@@ -1,7 +1,10 @@
 ;;;; rules-test.lisp — checks game/lisp/rules.lisp (the pure game rules) on the host, no browser, no build:
 ;;;;   $ECL_HOST --norc --load tests/rules-test.lisp
-;;;; The rules file is plain Common Lisp, so it loads into a bare package here.
-(defpackage :raven (:use :cl))
+;;;; The rules file is plain Common Lisp over the engine's plain-CL math and hit volumes, so it loads
+;;;; here after engine/lisp/{package,math,hitvol}.lisp (no build, no GPU).
+(dolist (f '("package" "math" "hitvol"))
+  (load (merge-pathnames (format nil "../engine/lisp/~a.lisp" f) *load-truename*)))
+(defpackage :raven (:use :cl :engine))
 (load (merge-pathnames "../game/lisp/rules.lisp" *load-truename*))
 (in-package :raven)
 

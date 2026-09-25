@@ -1,0 +1,38 @@
+[
+{
+"at": 9.0,
+"eval": "Module._debug_cmd(2004)"
+},
+{
+"at": 11.75,
+"shot": "tests/shots/duel-view-stage.png"
+},
+{
+"at": 11.95,
+"eval": "Module._debug_cmd(4002)"
+},
+{
+"at": 13.7,
+"shot": "tests/shots/duel-view-stage-cracks.png"
+},
+{
+"at": 13.9,
+"eval": "Module._debug_cmd(4003)"
+},
+{
+"at": 14.15,
+"eval": "Module._debug_cmd(2000)"
+},
+{
+"at": 14.4,
+"eval": "Module._debug_cmd(4000)"
+},
+{
+"at": 15.65,
+"shot": "tests/shots/duel-view-no-stage.png"
+},
+{
+"at": 20.35,
+"eval": "Module._debug_cmd(4004)"
+}
+]

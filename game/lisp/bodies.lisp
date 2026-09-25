@@ -1,7 +1,7 @@
 ;;;; bodies.lisp — character appearance and body stats as data (GAME_DESIGN §9, §11.1, §5): DEFBODY
-;;;; for REN and every enemy kind, built from rigid parts per rig joint (meshes made by BODIES-INIT
-;;;; once the GPU exists). A body also carries the stats of its kind: hurt cylinder, max HP, poise,
-;;;; cripple threshold. A fighter entity points at its body from its MODEL component.
+;;;; for REN and every enemy kind, built from rigid parts per rig joint (the engine's shape spec and
+;;;; BUILD-PARTS, engine/lisp/body.lisp; meshes made by BODIES-INIT once the GPU exists). A body
+;;;; also carries the stats of its kind: hurt cylinder, max HP, poise, cripple threshold. A fighter entity points at its body from its MODEL component.
 (in-package :raven)
 
 ;;; ---------------------------------------------------------------- body types
@@ -19,7 +19,7 @@
   (palette nil) (spec nil) (weapon nil)
   (rim nil)                             ; f32vec linear rgb x strength: silhouette rim (readability)
   (parts (make-array +nj+ :initial-element nil) :type simple-vector)  ; mesh per joint
-  (glows nil)                           ; list of #(joint mesh color emissive role)
+  (glows nil)                           ; list of #(joint mesh color emissive role) (BUILD-PARTS extras)
   (blade nil) (hilt nil) (raven-blade nil)
   (blade-len 0.95f0 :type single-float)
   (weapon-m (m4) :type f32vec)          ; weapon mesh placement in the weapon joint frame
@@ -30,23 +30,14 @@
 (defvar *bodies* (make-hash-table :test 'eq))
 (defun find-body (name) (or (gethash name *bodies*) (error "unknown body ~s" name)))
 
-(defun pal-rgb (c palette)
-  "Color C as an rgb list: a PALETTE key, #xRRGGBB, or already a list (NIL stays NIL)."
-  (cond ((keywordp c) (hexc (second (assoc c palette)))) ((integerp c) (hexc c)) (t c)))
-
-(defun rim-vec (hex k)
-  "Per-draw rim color for DRAW-MESH :rim: sRGB #xRRGGBB at strength K, as linear rgb."
-  (let ((v (make-f32 3)))
-    (loop for c in (hexc hex) for i from 0 do (setf (aref v i) (f32 (* k (expt c 2.2)))))
-    v))
-
 (defmacro defbody (name (&rest props &key &allow-other-keys) &body parts)
   "Register a body type. PROPS: :scale :width :hurt-r :hurt-h :max-hp :poise :hunch :blade-len
 :cripple-frac :grab-immune :no-cripple :palette ((key #xRRGGBB) ...) :rim (#xRRGGBB strength) :weapon (:katana len) |
-(:sword len #xRRGGBB) | nil, :scarf key. PARTS: (joint shape ...), shapes in the joint frame
-with :at (right up fwd) metres, :rot (yaw pitch roll) degrees, :c palette-key:
+(:sword len #xRRGGBB) | nil, :scarf key. PARTS: (joint shape ...), the engine's shape spec
+(engine/lisp/body.lisp): shapes in the joint frame with :at (right up fwd) metres, :rot (yaw pitch
+roll) degrees, :c palette-key:
   (:box w h d) (:bevel w h d bevel) (:cyl r h) (:cone r h) (:sphere r) (:wedge w h d)
-  (:glow e shape) = separate emissive part (e = emissive strength), drawn tinted by its color.
+  (:glow e shape [role]) = separate emissive part (e = emissive strength), drawn tinted by its color.
 Meshes are built by BODIES-INIT (after the GPU device exists)."
   `(setf (gethash ,name *bodies*)
          (%make-body :name ,name :spec ',parts
@@ -58,44 +49,11 @@ Meshes are built by BODIES-INIT (after the GPU device exists)."
                                       (:hunch (list k `(deg ,v)))
                                       (t (list k `(f32 ,v))))))))
 
-(defun shape-xform (at rot)
-  (destructuring-bind (&optional (r 0) (u 0) (f 0)) at
-    (destructuring-bind (&optional (yw 0) (pt 0) (rl 0)) rot
-      (xform :x r :y u :z (- f) :yaw (deg yw) :pitch (deg pt) :roll (deg rl)))))
-
-(defun build-shape (mb shape palette w &optional color)
-  "Add one shape to MB, girth scaled by W (COLOR overrides its :c). Glows are handled by the caller."
-  (destructuring-bind (kind &rest args) shape
-    (let* ((kpos (position-if #'keywordp args))
-           (nums (subseq args 0 kpos)) (opts (and kpos (subseq args kpos)))
-           (col (pal-rgb (or color (getf opts :c)) palette)))
-      (when col (apply #'mb-color mb col))
-      (with-xform (mb (shape-xform (getf opts :at) (getf opts :rot)))
-        (ecase kind
-          (:box (destructuring-bind (x y z) nums (mb-box mb (* w x) y (* w z))))
-          (:bevel (destructuring-bind (x y z b) nums (mb-bevel-box mb (* w x) y (* w z) b)))
-          (:cyl (destructuring-bind (r h) nums (mb-cylinder mb (* w r) h :segments (getf opts :seg 8))))
-          (:cone (destructuring-bind (r h) nums (mb-cone mb (* w r) h :segments (getf opts :seg 8))))
-          (:sphere (destructuring-bind (r) nums (mb-sphere mb (* w r) :segments 8 :rings 5)))
-          (:wedge (destructuring-bind (x y z) nums (mb-wedge mb (* w x) y (* w z)))))))))
-
 (defun build-body (b)
-  (let* ((pal (body-palette b)) (w (body-width b)))
-    (setf (body-glows b) nil (body-parts b) (make-array +nj+ :initial-element nil))
-    (dolist (entry (body-spec b))
-      (destructuring-bind (jname &rest shapes) entry
-        (let* ((j (joint-index jname))
-               (solid (remove :glow shapes :key #'first))
-               (glows (remove :glow shapes :key #'first :test-not #'eq)))
-          (when solid
-            (setf (svref (body-parts b) j)
-                  (build-mesh (mb :jitter 0.06)
-                    (dolist (sh solid) (build-shape mb sh pal w)))))
-          (dolist (g glows)                   ; (:glow e shape [role])
-            (destructuring-bind (e shape &optional role) (rest g)
-              (let* ((col (pal-rgb (getf (member-if #'keywordp (cdr shape)) :c) pal))
-                     (mesh (build-mesh (mb :color '(1 1 1)) (build-shape mb shape pal w '(1 1 1)))))
-                (push (vector j mesh (coerce col 'simple-vector) (f32 e) role) (body-glows b))))))))
+  "Build B's meshes: the parts per joint and glows (the engine's BUILD-PARTS), weapon, scarf."
+  (let* ((pal (body-palette b)))
+    (multiple-value-bind (parts glows) (build-parts (body-spec b) pal (body-width b))
+      (setf (body-parts b) parts (body-glows b) glows))
     ;; weapon: blade along -Z of the weapon joint, edge down (§11.1 weapon_R)
     (setf (body-weapon-m b) (xform :pitch (deg 90) :roll pi))
     (destructuring-bind (&optional kind (len 0.95) color) (body-weapon b)

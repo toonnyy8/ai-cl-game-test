@@ -2,3 +2,9 @@
 /build/
 /dist/
 /.vscode/
+# regenerable test screenshots (their scripts under tests/scripts/ recreate them)
+/tests/shots/pt-*
+/tests/shots/ec-*
+/tests/shots/duel-view-*
+/tests/shots/duel-vfx-*
+/tests/scripts/pt-*

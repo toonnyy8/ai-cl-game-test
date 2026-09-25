@@ -1,0 +1,30 @@
+# title: SOUL DUEL
+# SOUL DUEL sources in compile order, relative to this directory (the engine's come first, see
+# engine/MANIFEST). Order matters: macros, structs, components and special variables before their
+# users. tuning / rules / control / kit are plain CL (host-tested); yama / ken are the characters
+# (data + hooks + cinematics); fighter ... main are the generic systems (no character names, except debug.lisp's test scenarios).
+lisp/package.lisp
+lisp/tuning.lisp
+lisp/rules.lisp
+lisp/control.lisp
+lisp/sounds.lisp
+lisp/components.lisp
+lisp/body.lisp
+lisp/kit.lisp
+lisp/cinema.lisp
+lisp/stage.lisp
+lisp/vfx.lisp
+lisp/yama-art.lisp
+lisp/ken-art.lisp
+lisp/yama.lisp
+lisp/ken.lisp
+lisp/fighter.lisp
+lisp/combat.lisp
+lisp/hazards.lisp
+lisp/ai.lisp
+lisp/camera.lisp
+lisp/feedback.lisp
+lisp/flow.lisp
+lisp/hud.lisp
+lisp/debug.lisp
+lisp/main.lisp

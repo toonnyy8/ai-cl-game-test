@@ -1,6 +1,7 @@
 ;;;; package.lisp — the ENGINE package and its public API (the export list below, grouped by file),
 ;;;; global compiler policy, and the small numeric helpers every other file uses: DEFUN-FAST,
-;;;; the F-* float macros (plain C math, no boxing) and the random numbers RND01 / RND-RANGE.
+;;;; the F-* float macros (plain C math, no boxing) and the random numbers RND01 / RND-RANGE and
+;;;; SIM-RND01 / SIM-RND-RANGE.
 ;;;; A game is its own package that uses this one: (defpackage :my-game (:use :cl :engine)).
 (defpackage :engine
   (:use :cl)
@@ -8,19 +9,29 @@
    ;; package.lisp: types, compiler helpers, float math in C, random numbers, logging
    #:f32 #:f32vec #:f32vec-p #:clamp #:lerp #:log-msg #:defun-fast
    #:f-min #:f-max #:f-abs #:f-sqrt #:f-sin #:f-cos #:f-atan2 #:f-mod #:f-acos #:f-asin #:f-clamp
-   #:i->f #:f->i #:f-wrap #:rnd01 #:rnd-range
+   #:i->f #:f->i #:f-wrap #:rnd01 #:rnd-range #:rnd-seed #:rnd-state
+   #:sim-rnd01 #:sim-rnd-range #:sim-rnd-seed #:sim-rnd-state
    ;; math.lisp: vec3 / mat4 on f32vecs (! = writes into its first argument)
    #:fv #:make-f32 #:deg #:angle-wrap #:angle-lerp #:approach #:smoothstep
+   #:fwd-x #:fwd-z #:yaw-to #:turn-toward #:weighted-pick
    #:v3 #:v3-set! #:v3-copy! #:v3-copy #:v3-add! #:v3-sub! #:v3-scale! #:v3-madd! #:v3-lerp! #:v3-cross!
    #:v3-normalize! #:v3-normalize #:v3-dot #:v3-len #:v3-len2 #:v3-dist
    #:m4 #:m4-identity! #:m4-copy! #:m4-mul! #:m4-translation! #:m4-euler! #:m4-perspective! #:m4-look-at!
    #:m4-invert! #:m4-transform-point! #:m4-transform-dir! #:xform
+   ;; hitvol.lisp: hit volumes vs hurt cylinders (plain CL)
+   #:make-vol #:vol-hit-p #:capsule-cyl-hit-p #:obox-cyl-hit-p #:cyl-cyl-hit-p
+   ;; input.lisp: the virtual controller (vpad), command tables, device bindings (plain CL)
+   #:vpad #:vpad-p #:make-vpad #:vpad-actions #:vpad-tick #:vpad-sx #:vpad-sy #:vpad-reader
+   #:vpad-downs #:vpad-press #:vpad-modded
+   #:vpad-begin-step! #:vpad-set! #:vpad-stick! #:vpad-clear! #:vpad-flush! #:vpad-down #:vpad-held
+   #:vpad-pressed #:vpad-modded-p #:vpad-consume! #:vpad-command-pressed-p #:vpad-command
+   #:inputs-down-p #:vpad-read!
    ;; platform.lisp: window, time, input
    #:platform-init #:platform-poll #:*max-dt* #:window-width #:window-height #:window-aspect
    #:frame-dt #:raw-dt #:elapsed-time #:fps
    #:key-down #:key-pressed #:mouse-down #:mouse-pressed #:mouse-dx #:mouse-dy #:mouse-wheel
-   #:pointer-locked-p #:focus-lost-p
-   #:pad-connected-p #:pad-down #:pad-pressed #:pad-lx #:pad-ly #:pad-rx #:pad-ry #:pad-lt #:pad-rt
+   #:pointer-locked-p #:focus-lost-p #:*pointer-lock*
+   #:pad-count #:pad-connected-p #:pad-down #:pad-pressed #:pad-lx #:pad-ly #:pad-rx #:pad-ry #:pad-lt #:pad-rt
    ;; render.lisp: meshes, camera, look, frame, lights, fx batch
    #:wgsl #:mesh #:mesh-p #:mesh-id #:mesh-count #:make-mesh #:+vertex-floats+
    #:camera #:*camera* #:make-camera #:camera-pos #:camera-target #:camera-up #:camera-shake #:camera-fov
@@ -30,40 +41,51 @@
    #:env-fog-falloff #:env-fog-max #:env-ambient-sky #:env-ambient-ground #:env-ambient-intensity
    #:env-moon-dir #:env-moon-color #:env-moon-intensity #:env-rim-color #:env-rim-intensity #:env-rim-power
    #:env-specular #:env-shininess #:env-exposure #:env-bloom #:env-bloom-threshold #:env-bloom-strength
-   #:env-vignette
+   #:env-vignette #:env-sun-size #:env-sun-glow #:*grade-desat* #:*grade-split*
    #:*render-scale* #:*auto-render-scale* #:*render-scale-min* #:*frame-budget-ms* #:*pixel-lights* #:*perf-log*
    #:*draw-count* #:*tri-count* #:*fx-alpha* #:*fx-add* #:*fx-dropped*
    #:stream-buffer #:stream-buffer-data #:stream-buffer-fill #:stream-buffer-stride #:stream-room-p
    #:engine-init #:begin-frame #:end-frame #:draw-mesh #:add-point-light #:add-point-light-v
    #:with-fx-verts #:vtx #:fx-billboard #:fx-line #:fx-trail #:fx-decal
    ;; meshgen.lisp: procedural meshes
-   #:mesh-builder #:make-mesh-builder #:mb-jitter #:mb-cur-color #:build-mesh #:mb-build #:with-xform
+   #:mesh-builder #:make-mesh-builder #:mb-jitter #:mb-cur-color #:mb-xform #:build-mesh #:mb-build #:with-xform
    #:mb-color #:mbc #:hexc #:mb-quad #:mb-poly-out #:mb-box #:mb-bevel-box #:mb-cylinder #:mb-cone #:mb-prism
-   #:mb-sphere #:mb-capsule #:mb-wedge #:mb-plane #:mb-blade #:mb-tube #:mb-flat-quad
+   #:mb-sphere #:mb-capsule #:mb-wedge #:mb-plane #:mb-blade #:mb-tube #:mb-flat-quad #:rim-vec
    ;; ui.lisp: 2D UI batch and bitmap text
    #:+font-5x7+ #:ui-scale #:fit-scale #:ui-rect #:ui-gradient #:ui-rect-outline #:ui-bar #:%ui-poly4
-   #:ui-block-text #:text-width #:ui-text
+   #:with-ui-verts #:uvtx
+   #:ui-block-text #:ui-big-text #:ui-bitmap #:text-width #:ui-text
    ;; audio.lisp: synthesis toolkit, DEFSOUND, playback
    #:+au-rate+ #:+au-dt+ #:tt #:au-rnd #:au-frac #:au-expf #:au-powf #:au-sin #:au-saw #:au-sqr #:au-ph+
    #:au-env-exp #:au-ar #:au-adsr #:au-sweep #:au-rrange #:au-midi #:au-buf #:au-render #:au-peak #:au-scale!
    #:au-normalize! #:au-mix! #:au-svf! #:au-onepole! #:au-drive! #:au-delay! #:au-reverb! #:au-fold
    #:au-noise #:au-fnoise #:au-whoosh #:au-ping! #:au-partials! #:au-thump! #:au-taiko! #:au-gong!
    #:au-shaku! #:au-saws! #:defsound #:*audio-debug*
-   #:play-sfx #:play-sfx-at #:start-loop #:stop-loop #:set-loop-gain #:set-music-volume
+   #:play-sfx #:play-sfx-at #:sfx-at #:start-loop #:stop-loop #:set-loop-gain #:set-music-volume
    #:music-playing-p #:music-play #:music-stop #:music-intensify #:audio-stats #:audio-locked-p
+   #:list-sounds #:sound-loop-p
    ;; anim.lisp: humanoid rig, pose / clip DSL, playback, forward kinematics
-   #:ji #:joint-index #:joint-mask #:+nj+ #:+pose-n+ #:+root+ #:defpose #:find-pose #:defclip #:find-clip
-   #:clip #:clip-name #:clip-dur #:clip-loop #:clip-sample!
-   #:anim #:make-anim #:anim-clip #:anim-time #:anim-speed #:anim-pose #:anim-play #:anim-advance #:anim-eval
-   #:pose-fk! #:joint-point!
+   #:ji #:joint-index #:joint-mask #:+nj+ #:+pose-n+ #:+root+ #:defpose #:find-pose #:defclip #:defstrike #:find-clip
+   #:clip #:clip-name #:clip-dur #:clip-loop #:clip-sample! #:clip-mark #:list-clips #:build-clip
+   #:anim #:make-anim #:anim-clip #:anim-time #:anim-speed #:anim-blend #:anim-pose #:anim-play #:anim-advance #:anim-eval
+   #:pose-fk! #:make-rig-proportions #:joint-point!
+   ;; body.lisp: rigid-part characters (shape spec -> meshes per joint, drawing)
+   #:pal-rgb #:build-parts #:draw-parts
    ;; time.lisp: fixed step, hitstop, slow motion
-   #:+step+ #:*tick* #:*hitstop* #:*hitstop-mult* #:hitstop #:slowmo #:slowmo-scale #:time-step
+   #:+step+ #:*tick* #:*hitstop* #:*hitstop-mult* #:hitstop #:slowmo #:slowmo-scale #:time-step #:time-reset
+   #:run-fixed-steps #:*step-acc*
    ;; fx.lisp: shake, particles, rings, debris, trails, screen-edge vignette
    #:*shake-mult* #:shake #:shake-update
-   #:+p-mist+ #:+p-spark+ #:+p-dust+ #:+p-orb-a+ #:+p-orb-b+ #:+p-feather+ #:+p-glow+
+   #:+p-mist+ #:+p-spark+ #:+p-dust+ #:+p-orb-a+ #:+p-orb-b+ #:+p-feather+ #:+p-glow+ #:+p-flame+
    #:*plive* #:*orb-target* #:*on-orb-absorbed* #:fx-emit #:fx-burst #:fx-update #:fx-draw-particles
-   #:fx-clear-orbs #:fx-ring #:fx-rings-update #:*debris-life* #:fx-debris #:fx-debris-update #:fx-clear-debris
-   #:+trail-n+ #:make-trail #:trail-push #:trail-decay #:edge-vignette
+   #:fx-clear-orbs #:fx-clear #:fx-ring #:fx-rings-update #:*debris-life* #:fx-debris #:fx-debris-update #:fx-clear-debris
+   #:+trail-n+ #:make-trail #:trail-count #:trail-push #:trail-decay #:edge-vignette
+   #:draw-circle #:draw-vol #:fx-ribbon #:fx-sector
+   ;; cine.lisp: the cinematic director (scripted cutscenes inside the fixed step)
+   #:defcine #:cine #:*cine* #:cine-name #:cine-cf #:cine-a #:cine-v #:cine-hold #:cine-hold-frame
+   #:start-cine #:end-cine #:abort-cine #:skip-cine #:cine-step #:cine-draw #:cine-cam
+   #:*cine-cam* #:*cine-eye* #:*cine-target* #:*skip-cines* #:*cine-hold*
+   #:*cine-begin-hook* #:*cine-actor-hook* #:*cine-end-hook*
    ;; ecs.lisp: entities, components, systems, events
    #:+max-entities+ #:defcomponent #:spawn-entity #:destroy-entity #:entity-alive-p #:add-component
    #:remove-component #:clear-entities #:do-entities #:emit #:take-events
@@ -133,6 +155,22 @@ runs there. Declare every float local inside BODY."
                                               "((#0)-6.2831853f*floorf(((#0)+3.14159265f)*0.15915494f))" :one-liner t))
 
 ;;; ---------------------------------------------------------------- random numbers
-;;; xorshift32 in C (rng_float, engine/c/engine.h): 30-bit fixnums make a Lisp LCG cons bignums.
+;;; xorshift32 in C (engine/c/engine.h, rng.c): 30-bit fixnums make a Lisp LCG cons bignums.
+;;; Two independent streams. Rule: gameplay / AI randomness uses SIM-RND01 and only inside fixed
+;;; steps, so a seed (SIM-RND-SEED) replays the same match whatever the frame rate or particle count;
+;;; cosmetics (fx, shake, sound pitch) use RND01, which runs per frame and per particle.
 (defmacro rnd01 () "uniform [0,1), no consing" `(ffi:c-inline () () :float "rng_float()" :one-liner t))
-(defmacro rnd-range (a b) `(+ ,a (* (- ,b ,a) (rnd01))))
+(defmacro rnd-range (a b) "Uniform [A,B). A is evaluated twice: pass plain values." `(+ ,a (* (- ,b ,a) (rnd01))))
+(defmacro sim-rnd01 () "uniform [0,1) from the simulation stream, no consing"
+  `(ffi:c-inline () () :float "rng2_float()" :one-liner t))
+(defmacro sim-rnd-range (a b) "Uniform [A,B) from the sim stream. A is evaluated twice: pass plain values." `(+ ,a (* (- ,b ,a) (sim-rnd01))))
+
+;; Seeding and state. A seed is any fixnum (hashed in C, so 1 2 3 start far apart). The state is the
+;; raw 32-bit generator word, 1..2^32-1: above 2^29 it is a bignum, so read it for save / restore /
+;; determinism checks, not per frame. (SETF (SIM-RND-STATE) s) restores a state read earlier.
+(defun rnd-seed (n) "Restart the RND01 stream from seed N." (ffi:c-inline (n) (:int) :void "rng_seed(&rng_state,#0)" :one-liner t))
+(defun sim-rnd-seed (n) "Restart the SIM-RND01 stream from seed N." (ffi:c-inline (n) (:int) :void "rng_seed(&rng2_state,#0)" :one-liner t))
+(defun rnd-state () (ffi:c-inline () () :unsigned-int "rng_state" :one-liner t))
+(defun sim-rnd-state () (ffi:c-inline () () :unsigned-int "rng2_state" :one-liner t))
+(defun (setf rnd-state) (s) (ffi:c-inline (s) (:unsigned-int) :void "rng_state = #0 ? #0 : 1u" :one-liner t) s)
+(defun (setf sim-rnd-state) (s) (ffi:c-inline (s) (:unsigned-int) :void "rng2_state = #0 ? #0 : 1u" :one-liner t) s)

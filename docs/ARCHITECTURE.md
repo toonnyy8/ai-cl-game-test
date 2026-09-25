@@ -4,8 +4,12 @@ A Ninja-Gaiden-4-style 3D action demo written in Common Lisp, compiled by ECL to
 Emscripten to WebAssembly. SDL3 provides window, input, timing, audio and rendering: **SDL_GPU on
 its WebGPU backend** (WGSL shaders). There is no OpenGL/WebGL code path.
 
-The code is split in two: a reusable **engine** (`engine/`, package `ENGINE`) and the **game**
-built on it (`game/`, package `RAVEN`). `examples/` holds two more games on the same engine:
+The code is split in two: a reusable **engine** (`engine/`, package `ENGINE`) and the **games**
+built on it: RAVEN EDGE (`game/`, package `RAVEN`, a wave-based action game) and SOUL DUEL
+(`duel/`, package `DUEL`, a 1v1 arena fighter). What the second game proved generic was moved into
+the engine ("the harvest": vpad, hit volumes, facing helpers, fixed-step accumulator, rigid-part
+bodies, cinematic director, ribbons / sectors / bitmaps); both games call the same code.
+`examples/` holds two more games on the same engine:
 `hello` (the smallest one, the tutorial's starting point) and `engine-demo`. A beginner's tour of
 this document's contents is `docs/TUTORIAL.zh-TW.md`.
 
@@ -63,9 +67,12 @@ dist/NAME/{index.html,index.js,index.wasm}   (shell: engine/web/shell.html, titl
   scripted key/mouse input (and `{"at":t,"size":"800x450"}` resizes), takes screenshots.
   Exit code 1 on JS exceptions. WebGPU validation errors print as `WebGPU: …` console errors.
 * `tools/pkgcheck.sh DIR` reads (does not compile) the engine and a target's sources and lists
-  target symbols that shadow ENGINE internals, i.e. probable missing exports (see below).
-* Host tests, no build: `tests/ecs-test.lisp`, `tests/rules-test.lisp`, `tests/test-math.lisp`
-  (commands in their headers).
+  target symbols that shadow ENGINE internals, i.e. probable missing exports, top-level
+  `DEF*` forms in the target that name an ENGINE export (a silent redefinition; see below), and
+  functions called but defined nowhere. Exit status 1 if it lists anything.
+* Host tests, no build: `tests/ecs-test.lisp`, `tests/test-math.lisp`, `tests/input-test.lisp`
+  (vpad), `tests/cine-test.lisp` (director), `tests/rules-test.lisp` (RAVEN),
+  `tests/duel-rules-test.lisp`, `tests/duel-control-test.lisp` (SOUL DUEL) (commands in their headers).
 * `vendor/ecl/` holds the wasm32 ECL 24.5.10 static libs + headers, assembled
   from `/media/8tsp/projects/ecl-24.5.10/build` (see `tools/vendor-ecl.sh`).
   Note: libecl itself was built with `-O0`; our Lisp code is built `-O2`.
@@ -89,10 +96,12 @@ copy pass     draw records (storage buffer) · fx alpha/add vertices · UI verti
 scene pass    MSAA 4x RGBA8 + D32 at window × *render-scale*: sky → opaque → transparent → fx alpha → fx add
               └ resolves into the scene texture
 bloom         bright (1/2) → blur H/V (1/2) → blur H/V (1/4)          5 small full-screen passes
-swapchain     composite (scene + bloom + vignette) → UI batch (font atlas, nearest)
+swapchain     composite (scene + bloom + vignette, desaturate *grade-desat*, split *grade-split*) → UI batch (font atlas, nearest)
 ```
 * Per-frame uniforms (WGSL `Frame`: matrices, fog, ambient, moon, rim, 8 lights) are pushed once to
-  vertex and fragment slot 0. **Per-draw data** (model, tint, emissive/flash/specular, rim) is not
+  vertex and fragment slot 0 (free `w` lanes carry extras: `moon_dir.w` = `env-sun-size`,
+  `moon_col.w` = `env-sun-glow`; the composite's vec4 is bloom, vignette, desaturate, split).
+  **Per-draw data** (model, tint, emissive/flash/specular, rim rgb + env-rim scale) is not
   pushed per draw: `*dq*` records are laid out exactly as WGSL `struct Draw` (112 B,
   `engine/shaders/lit-io.wgsl`) and uploaded as one storage buffer; each draw is
   `SDL_DrawGPUPrimitives(count, 1, first_vertex, record_index)` and the vertex shader reads
@@ -115,7 +124,7 @@ swapchain     composite (scene + bloom + vignette) → UI batch (font atlas, nea
    with a full GC after each step: `ENGINE-INIT` (window, GPU, UI), the game's `:load` steps
    (RAVEN: world ×2, bodies), opening the audio device, one step per `DEFSOUND`, then the game's
    `:start`. The page's loading bar follows `Module.engineLoading(pct)`. Heap after startup
-   (console `startup: heap …`): RAVEN EDGE 87 MB, examples/hello 23 MB; stepwise loading brought
+   (console `startup: heap …`): RAVEN EDGE 87 MB, SOUL DUEL 103 MB, examples/hello 23 MB; stepwise loading brought
    RAVEN's peak down from 199 MB (wasm memory 237 → 128 MB). Most of RAVEN's remaining heap is ECL
    reading the module's literal data inside `ecl_init_module`, where GC must stay off. (The
    ECS/rules restructure added 1.8 MB there, which crossed a Boehm heap growth step: 71 → 87 MB.)
@@ -156,10 +165,11 @@ RAVEN EDGE uses them this way:
 * `game/lisp/components.lisp`: every component; the header lists which components make REN, an
   enemy, a training dummy and a projectile. Particles, rain, debris and trail vertices are **not**
   entities: they live in flat float pools (engine/lisp/fx.lisp, game/c/world.c).
-* `game/lisp/rules.lisp` — the functional core: pure functions (hit volumes, hit outcomes on an
-  enemy / on REN, cancel windows, Raven gauge, tokens, windup skip, weighted pick, ENRA's attack
-  choice, waves, score, rank). Arguments in, values or small structs out, randomness passed in as a
-  number. Plain CL, so `tests/rules-test.lisp` loads it on the host.
+* `game/lisp/rules.lisp` — the functional core: pure functions (hit outcomes on an enemy / on
+  REN, cancel windows, Raven gauge, tokens, windup skip, ENRA's attack choice, waves, score, rank).
+  Arguments in, values or small structs out, randomness passed in as a number. Plain CL over the
+  engine's plain-CL files (math.lisp: facing, WEIGHTED-PICK; hitvol.lisp: hit volumes), so
+  `tests/rules-test.lisp` loads them all on the host.
 * The imperative shell (systems in combat.lisp, player.lisp, enemy.lisp, projectiles.lisp,
   game.lisp) gathers a rule's inputs from components, calls it, and applies the result **in
   place**. Components are mutated, not copied, because ECL boxes floats in structs and lists
@@ -171,6 +181,35 @@ RAVEN EDGE uses them this way:
   (DEFPOSE / DEFCLIP), `sounds.lisp` (DEFSOUND); balance knobs are in `tuning.lisp`.
 * `main.lisp` is the whole frame: input → game flow → fixed 60 Hz steps (`SIM-STEP`: player,
   enemies, projectiles, separation, tokens, feedback) → camera → draw → HUD.
+
+SOUL DUEL has the same shape: `duel/lisp/rules.lisp` (pure, host-tested by
+tests/duel-rules-test.lisp), systems in fighter / combat / hazards / ai, events to feedback.lisp.
+Its players are **vpads** (engine/lisp/input.lisp): devices and the CPU brain write them once per
+fixed step, the fighters read only them, and all gameplay randomness is `sim-rnd01`, so a seed
+replays a whole match (`tests/scripts/duel-cvc-yk.json`: the `duel hash` lines are byte-identical
+run to run). Its cinematics run inside the fixed step through the engine's director
+(engine/lisp/cine.lisp; scripts in cinema.lisp / yama.lisp / ken.lisp).
+
+## Input, randomness and round resets (engine rules for games)
+
+* **Gamepads.** Up to 4 pads are open at once (engine/c/platform.c). A connected pad takes the first
+  free slot 0..3 and keeps it until it is unplugged; unplugging one never moves the others, so
+  "P2 = pad 1" stays true. Every pad reader takes an optional slot (default 0) and `(pad-count)`
+  counts the open pads. Pad 0's sticks/triggers are also copied into `*input*`[3..8], so the
+  zero-argument readers stay inline array reads. Headless Chrome cannot plug in a pad: every mode
+  must also be drivable by keys (the numpad names `:kp-0`… exist for a second player on one keyboard;
+  `tools/run.mjs` injects `Numpad0`…`Numpad9`, `NumpadEnter`, `NumpadAdd`… with their key codes).
+* **Pointer lock.** `*pointer-lock*` T (default, RAVEN's mouse-look): a click without the lock
+  requests it and is swallowed. NIL: no lock is ever requested and every click is a press.
+* **Two random streams** (C xorshift, engine/c/rng.c). `rnd01` is the cosmetic stream: particles,
+  shake and sound jitter draw from it per frame and per particle, so its sequence depends on the
+  frame rate. `sim-rnd01` is the simulation stream: gameplay and AI draw from it **only inside
+  fixed steps**, so `(sim-rnd-seed n)` at the start of a match replays the same match (CPU-vs-CPU
+  regression tests, replays). Never draw `sim-rnd01` for an effect, never decide gameplay with
+  `rnd01`. RAVEN predates the split and uses `rnd01` for everything.
+* **Resets.** `(fx-clear)` (particles, rings, debris, shake) and `(time-reset)` (hitstop, slow-mo)
+  clear the engine's global effect/time state between rounds or scenes; `clear-entities` clears the
+  ECS.
 
 ## Performance conventions (ECL specifics)
 
@@ -194,16 +233,20 @@ RAVEN EDGE uses them this way:
 
 | file              | responsibility                                              |
 |-------------------|-------------------------------------------------------------|
-| lisp/package.lisp | package `ENGINE` + exports, global declaims, DEFUN-FAST, F-* float macros, RND01 |
-| lisp/math.lisp    | vec3 / mat4 on single-float arrays (pure CL)                 |
+| lisp/package.lisp | package `ENGINE` + exports, global declaims, DEFUN-FAST, F-* float macros, RND01 / SIM-RND01 (C: c/rng.c) |
+| lisp/math.lisp    | scalars, facing (FWD-X / YAW-TO / TURN-TOWARD), WEIGHTED-PICK, vec3 / mat4 on single-float arrays (plain CL, host-loadable) |
+| lisp/hitvol.lisp  | hit volumes vs hurt cylinders: MAKE-VOL / VOL-HIT-P, capsule / box / cylinder tests (plain CL, host-loadable) |
+| lisp/input.lisp   | the virtual controller (vpad): buttons, buffer, modifier, stick, command tables, device bindings (plain CL, host-loadable) |
 | lisp/platform.lisp| SDL3 window, time, events → input state (C: c/platform.c)    |
 | lisp/render.lisp  | SDL_GPU pipelines, WGSL loader, camera, lights, meshes, draw queue, fx batch (C: c/render.c, shaders/*.wgsl) |
 | lisp/meshgen.lisp | procedural mesh builders (box, cylinder, cone, blade, tube…) |
-| lisp/ui.lisp      | embedded bitmap font, 2D UI batch (rects, text, bars)        |
-| lisp/audio.lisp   | mixer API, synthesis toolkit, DEFSOUND, stepwise loader (C: c/audio.c) |
-| lisp/anim.lisp    | humanoid rig, pose / clip DSL, playback, blending, FK        |
-| lisp/time.lisp    | fixed step, hitstop, slow-mo                                 |
-| lisp/fx.lisp      | shake, particles, rings, debris, trail buffers, edge vignette |
+| lisp/ui.lisp      | embedded bitmap font, 2D UI batch (rects, text, big text, bitmaps, bars, with-ui-verts) |
+| lisp/audio.lisp   | mixer API, synthesis toolkit, DEFSOUND, stepwise loader, SFX-AT (C: c/audio.c) |
+| lisp/anim.lisp    | humanoid rig + proportions, pose / clip DSL (DEFCLIP, DEFSTRIKE), playback, blending, FK |
+| lisp/body.lisp    | rigid-part characters: shape spec → meshes per joint (BUILD-PARTS), DRAW-PARTS |
+| lisp/time.lisp    | fixed step (RUN-FIXED-STEPS), hitstop, slow-mo               |
+| lisp/fx.lisp      | shake, particles, rings, debris, trail buffers, edge vignette, FX-RIBBON / FX-SECTOR, hit-volume debug outlines |
+| lisp/cine.lisp    | the cinematic director: DEFCINE (AT / DURING), start / step / draw / skip, shots, game hooks |
 | lisp/ecs.lisp     | entities, components, systems, events                        |
 | lisp/app.lisp     | `RUN-GAME`, startup steps, frame driver, debug queue, stats line |
 | c/main.c          | boot ECL, GC policy, browser main loop, page hooks            |
@@ -218,12 +261,12 @@ RAVEN EDGE uses them this way:
 | lisp/sounds.lisp      | data: the sound bank (every SFX, rain, music) as DEFSOUNDs   |
 | lisp/world.lisp       | arena scenery, skyline, env look, rain, arena collision (C: c/world.c) |
 | lisp/clips.lisp       | data: the pose / clip library (DEFPOSE / DEFCLIP), all characters |
-| lisp/rules.lisp       | the functional core: plain-CL pure rules (hit volumes, hit outcomes, cancels, tokens, score…), tested by tests/rules-test.lisp |
+| lisp/rules.lisp       | the functional core: plain-CL pure rules (hit outcomes, cancels, tokens, score…), tested by tests/rules-test.lisp |
 | lisp/moves.lisp       | data: DEFMOVE and every move / hitdef (REN, enemies)         |
 | lisp/effects.lisp     | fx presets (mist, sparks, dust, orbs), trail colors, screen effects |
 | lisp/components.lisp  | every DEFCOMPONENT (transform, motion, model, health, fighter, blade-trail, player, brain, dummy, projectile) |
-| lisp/bodies.lisp      | data: DEFBODY for every character (parts, palette, stats)    |
-| lisp/fighters.lisp    | spawning a fighter entity, geometry helpers, posing, drawing, debris |
+| lisp/bodies.lisp      | data: DEFBODY for every character (parts, palette, stats; meshes via the engine's BUILD-PARTS) |
+| lisp/fighters.lisp    | spawning a fighter entity, geometry helpers, posing, drawing (DRAW-PARTS + weapon + scarf), debris |
 | lisp/combat.lisp      | move runner + hit scan, applying hits to enemies, reactions, physics, separation, soft-lock, tokens |
 | lisp/camera.lisp      | the third-person orbit camera                               |
 | lisp/player.lisp      | REN: input buffer, state machine, specials, defense, `PLAYER-SYSTEM` |
@@ -236,10 +279,38 @@ RAVEN EDGE uses them this way:
 | lisp/debug.lisp       | `Module._debug_cmd` commands, F3/T keys, autoplay bot, soak mode |
 | lisp/main.lisp        | the fixed-step system list, the frame, `RUN-GAME` registration |
 
+`duel/` (package `DUEL`; character names only in kit data and yama*.lisp / ken*.lisp):
+
+| file                  | responsibility                                              |
+|-----------------------|-------------------------------------------------------------|
+| lisp/package.lisp     | package `DUEL`                                              |
+| lisp/tuning.lisp      | the shared balance knobs (rules, gauges, forms, AI); per-move frame data lives with the moves |
+| lisp/rules.lisp       | the functional core: triangle / clash, frame advantage, damage, Kikon / Konpaku, gauges, AI helpers (plain CL), tested by tests/duel-rules-test.lisp |
+| lisp/control.lisp     | the controls as data on the engine's vpad: buttons, command table, P1 / P2 bindings (plain CL, tests/duel-control-test.lisp) |
+| lisp/sounds.lisp      | data: the sound bank (DEFSOUND)                             |
+| lisp/components.lisp  | every DEFCOMPONENT (transform, motion, model, fighter, gauges, pilot, brain, hazard …) |
+| lisp/body.lisp        | DEFBODY (engine shape spec + rig proportions), DEFWEAPON, DRAW-BODY, shared poses / reaction clips |
+| lisp/kit.lisp         | characters as data: DEFMOVE, DEFKIT, the roster             |
+| lisp/cinema.lisp      | the director's hooks, shot helpers, the generic cinematics (intro, K.O., soul break, time) |
+| lisp/stage.lisp       | the burning plaza: meshes, env look, fires, cracks          |
+| lisp/vfx.lisp         | fire / aura / hit / UI effects (built from FX-RIBBON, FX-SECTOR, UI-BITMAP) |
+| lisp/yama-art.lisp, ken-art.lisp | the two characters' bodies, weapons and clips (DEFSTRIKE) |
+| lisp/yama.lisp, ken.lisp | their moves, forms, hooks and cinematics                 |
+| lisp/fighter.lisp     | FIGHTER-SYSTEM: vpad → commands → state machine → physics   |
+| lisp/combat.lisp      | HIT-SYSTEM (clash, collect then apply every hit, blocks, Kikon, soul break), forms / awakening, GAUGE-SYSTEM |
+| lisp/hazards.lisp     | projectiles, pillars, skeletons, cuts as HAZARD entities    |
+| lisp/ai.lisp          | BRAIN-SYSTEM: the CPU player (writes its vpad)              |
+| lisp/camera.lisp      | the pair camera (3/4 side view of both fighters, cinematic shots) |
+| lisp/feedback.lisp    | FEEDBACK-SYSTEM: events → sounds, sparks, shake, big words  |
+| lisp/flow.lisp        | the screens: title, mode, select, intro, battle, results, pause; MATCH-SYSTEM (timer, time-up), match end |
+| lisp/hud.lisp         | the battle HUD and every screen                             |
+| lisp/debug.lisp       | debug commands, seeded CPU-vs-CPU gate, hash lines, hitbox overlay |
+| lisp/main.lisp        | the fixed step (cinematic or sim systems), the frame, `RUN-GAME` |
+
 `examples/hello/hello.lisp` (one file, package `HELLO`) and `examples/engine-demo/demo.lisp`
 (package `ENGINE-DEMO`) use only the engine.
 
-Game design and tuning: see `docs/GAME_DESIGN.md`.
+Game design and tuning: `docs/GAME_DESIGN.md` (RAVEN EDGE), `docs/DUEL_DESIGN.md` (SOUL DUEL); systems, debug commands and tests: `docs/GAMEPLAY.md`, `docs/DUEL_GAMEPLAY.md`.
 
 ## Gotchas
 
@@ -284,12 +355,40 @@ and grep the function for `ecl_make_single_float`/`ecl_times`/`ecl_divide`.
   `v3-cross!`, `v3-normalize!` and `m4-transform-point!` expand inline, but the `v3-set!` inside
   them is called out of line with 3 boxed floats. Hot loops should spell out the math (see
   `%mb-tri` in meshgen.lisp). A fix belongs in math.lisp (e.g. make `v3-set!` a macro).
+* **`(float x 1d0)` of a single-float boxes it** (`ecl_to_double(ecl_make_single_float(x))`) even
+  at `(safety 0)`: 960 000 samples cost 7.7 MB in `au-stats`. Use
+  `(ffi:c-inline (x) (:float) :double "(double)(#0)" :one-liner t)`.
+* **Zero-cons calls with float arguments: a function plus a compiler macro.** `fx-emit`,
+  `%ui-poly4` and `pose-fk!` keep a DEFUN (for `#'`, `apply`, other packages) and add a compiler
+  macro that expands a direct call into the body (`%fx-put`, `%ui-poly4-inline`) or into a fixed-arity
+  internal (`%pose-fk!`, so an `&optional` argument costs no variadic parsing). ECL also applies the
+  compiler macro to `(funcall #'f …)`; only a call through a variable holding the function boxes.
+  The expansion binds every argument to a gensym first (left-to-right evaluation, no capture).
+  Measured: 100 `fx-emit` / `%ui-poly4` / `with-ui-verts` quads / `ui-rect` 0 B (was ~210 B per
+  `fx-emit`), `ui-block-text` ~100 B per call (was ~250 B per font pixel).
 * **Fixnums are 30-bit on wasm32.** An LCG like `(* seed 1103515245)` goes to bignums and conses
-  on every call. Do it in C with `long long` (the engine's `rnd01` is a C xorshift).
+  on every call. Do it in C with `long long` (the engine's `rnd01` / `sim-rnd01` are C xorshifts;
+  `rnd-state` returns the 32-bit word, a bignum above 2^29, so it is not for per-frame use).
 
 ### ECL: compiling and packages
-* **ECL doesn't warn about undefined functions.** A typo or an unexported engine function in game
-  code compiles silently and fails at run time. `tools/pkgcheck.sh DIR` catches the second kind.
+* **ECL doesn't warn about undefined functions.** A typo, a deleted helper or an unexported engine
+  function in game code compiles silently and fails when that line runs. `tools/pkgcheck.sh DIR`
+  catches all three (it walks every form: calls and `#'` references must be defined somewhere) and
+  exits 1 when it reports anything.
+* **Engine files the host tests load are plain CL:** math.lisp, hitvol.lisp, input.lisp (and
+  cine.lisp with two stubs). Keep C-inline macros (F-SIN …) out of what the games' rules call there;
+  defining a function that uses one is fine, calling it on the host is not.
+* **DEFCINE's AT / DURING / CF / U / STEP-P** are interned in the script's own package (local
+  macros and variables of the script function), so they don't clash with a game's own `at` macro
+  (RAVEN's world.lisp has one).
+* **A game `DEFUN` (or `DEFVAR`, `DEFMACRO` …) of an ENGINE-exported name silently replaces the
+  engine's definition** for that build (the game package uses ENGINE, so it is the same symbol).
+  `tools/pkgcheck.sh DIR` lists such top-level definitions; rename them.
+* **`define-compiler-macro` needs an explicit `eval-when`.** At top level inside `compile-file`,
+  ECL 24.5 does not make a compiler macro visible to later forms of the same file unless it is
+  wrapped in `(eval-when (:compile-toplevel :load-toplevel :execute) …)`; without it the calls
+  stay ordinary (boxing) calls. See the pad readers in platform.lisp. (An inline DEFUN with an
+  `&optional` argument boxes its float result; the compiler macro avoids that.)
 * **defstruct accessors can collide with functions.** A slot named `color` in a struct with
   `(:conc-name mb-)` defines `mb-color`, silently replacing a function of the same name. The same
   holds for components: `(defcomponent gem (angle …))` defines `gem`, `make-gem`, `gem-angle`.
@@ -329,6 +428,9 @@ and grep the function for `ecl_make_single_float`/`ecl_times`/`ecl_divide`.
   window size × `*render-scale*` changes.
 * **MSAA lives in the offscreen scene target** (4x, the only count WebGPU has besides 1), resolved by
   the scene pass's store op, then bloomed and composited to the swapchain.
+* **Additive fx sprites have a white hot core** (fx.frag.wgsl mixes the center toward white). A
+  vertex with a negative alpha draws with |alpha| and no core; `+p-flame+` uses it after its hot
+  phase, otherwise every flame particle would read as a pale blob.
 * **Coplanar decals z-fight.** `fx-decal` lifts itself 2 cm; pass the actual surface height.
 * **Set the camera before `fx-*` calls** in a frame: billboards and rings use its axes.
 * **SwiftShader runs both sides of a divergent branch.** A per-pixel `if (d2 >= r*r) continue;`

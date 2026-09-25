@@ -133,6 +133,8 @@ Returns T if the point is in front of the camera."
   (moon-dir (v3-normalize (v3 -0.35 0.55 -0.75)) :type f32vec) ; direction TO the moon
   (moon-color (v3 0.65 0.72 1.0) :type f32vec)
   (moon-intensity 0.5f0 :type single-float)
+  (sun-size 1f0 :type single-float)                 ; sky disc of the moon / sun: radius x (1 = ~1.6 deg)
+  (sun-glow 0.25f0 :type single-float)              ; strength of the halo around the disc
   (rim-color (v3 0.35 0.55 1.0) :type f32vec)
   (rim-intensity 0.35f0 :type single-float)
   (rim-power 3f0 :type single-float)
@@ -154,7 +156,7 @@ down to *RENDER-SCALE-MIN*, then *PIXEL-LIGHTS* to 3 and 1; raise it back when t
 (defvar *render-scale-min* 0.7f0)
 (defvar *frame-budget-ms* 18f0 "Target frame time for *AUTO-RENDER-SCALE* (60 Hz + slack).")
 (defvar *pixel-lights* 8
-  "Point lights shaded per pixel (0..8, nearest the camera target first); the others are shaded per
+  "Point lights shaded per pixel (0..8, highest priority then nearest the camera target first); the others are shaded per
 vertex (Gouraud: cheap, but light pools on big low-poly faces blur out). Fill-rate knob for weak GPUs.")
 (defvar *perf-log* nil "T: log a perf line (startup, frame time, render scale) every ~5 s.")
 
@@ -172,7 +174,11 @@ vertex (Gouraud: cheap, but light pools on big low-poly faces blur out). Fill-ra
 (defvar *lp* (make-f32 (* 4 +max-lights+)))
 (defvar *lc* (make-f32 (* 4 +max-lights+)))
 (defvar *fu* (make-f32 +fu-floats+) "Frame uniforms, filled by FILL-FRAME-UNIFORMS.")
-(defvar *rp* (make-f32 8) "r_frame parameters (see r_frame).")
+(defvar *rp* (make-f32 10) "r_frame parameters (see r_frame).")
+(defvar *grade-desat* 0.0 "Composite desaturation: 0 = the image unchanged, 1 = greyscale (KO / flashback grading).")
+(defvar *grade-split* 0.0
+  "Composite split, window pixels: the left half of the frame is shifted up and the right half down by
+this much along the vertical centre line (the uncovered strips are black). 0 = off.")
 (defvar *draw-count* 0 "Mesh draws issued last frame.")
 (defvar *tri-count* 0 "Mesh triangles drawn last frame.")
 (defvar *fx-alpha*) (defvar *fx-add*) (defvar *ui-batch*)
@@ -225,20 +231,22 @@ vertex (Gouraud: cheap, but light pools on big low-poly faces blur out). Fill-ra
 ;; macros, not inline defuns: an inline defun boxes its float argument before the c-inline
 (defmacro srgb->lin (c) `(ffi:c-inline (,c) (:float) :float "powf(fmaxf(#0,0.0f),2.2f)" :one-liner t))
 
-(defun-fast draw-mesh (mesh model &key tint (emissive 0f0) (flash 0f0) (alpha 1f0) (specular -1f0) rim)
+(defun-fast draw-mesh (mesh model &key tint (emissive 0f0) (flash 0f0) (alpha 1f0) (specular -1f0) rim (env-rim 1f0))
   "Queue MESH with world matrix MODEL (mat4, copied). TINT: (r g b) list/vector multiplies vertex
 colors. EMISSIVE: self-illumination (0 = lit only, 1..4 = glowing neon). FLASH: 0..1 lerp to white.
 ALPHA < 1 draws in the transparent pass (after opaque, no depth write).
 SPECULAR: wet-highlight strength for this draw (0 = matte, skips the specular math);
 negative (default) = (env-specular *env*).
-RIM: f32vec of 3 LINEAR rgb floats (strength baked in) added as a (1-N.V)^3 rim light (silhouettes)."
+RIM: f32vec of 3 LINEAR rgb floats (strength baked in) added as a (1-N.V)^3 rim light (silhouettes).
+ENV-RIM: multiplies the environment's rim light (env-rim-*) for this draw: 0 = none (a stage or
+floor that must not glow at grazing angles), 1 (default) = unchanged. RIM is added either way."
   (declare (type f32vec model))
   (unless (mesh-p mesh) (error 'type-error :datum mesh :expected-type 'mesh))
   (let* ((n *dq-n*) (q *dq*))
     (declare (fixnum n) (type f32vec q))
     (when (> (* (1+ n) +dq-stride+) (length q))
       (setf q (replace (make-f32 (* 2 (length q))) q) *dq* q))
-    ;; record = WGSL Draw: [0..15 model][16..19 tint rgba][20 emissive 21 flash 22 specular 23 mesh id][24..26 rim, 27 unused]
+    ;; record = WGSL Draw: [0..15 model][16..19 tint rgba][20 emissive 21 flash 22 specular 23 mesh id][24..26 rim, 27 env-rim]
     (let* ((o (* n +dq-stride+)))
       (declare (fixnum o))
       (replace q model :start1 o :end1 (+ o 16))
@@ -248,7 +256,7 @@ RIM: f32vec of 3 LINEAR rgb floats (strength baked in) added as a (1-N.V)^3 rim 
                 (aref q (+ o 18)) (srgb->lin (elt tint 2)))
           (setf (aref q (+ o 16)) 1f0 (aref q (+ o 17)) 1f0 (aref q (+ o 18)) 1f0))
       (setf (aref q (+ o 19)) (f32 alpha) (aref q (+ o 20)) (f32 emissive) (aref q (+ o 21)) (f32 flash)
-            (aref q (+ o 22)) (f32 specular) (aref q (+ o 23)) (float (mesh-id mesh) 1f0) (aref q (+ o 27)) 0f0)
+            (aref q (+ o 22)) (f32 specular) (aref q (+ o 23)) (float (mesh-id mesh) 1f0) (aref q (+ o 27)) (f32 env-rim))
       (if rim
           (let ((rv rim)) (declare (type f32vec rv))
             (setf (aref q (+ o 24)) (aref rv 0) (aref q (+ o 25)) (aref rv 1) (aref q (+ o 26)) (aref rv 2)))
@@ -256,10 +264,11 @@ RIM: f32vec of 3 LINEAR rgb floats (strength baked in) added as a (1-N.V)^3 rim 
       (setf *dq-n* (1+ n))
       nil)))
 
-(defmacro %add-light (x y z r g b radius k)
-  "Body shared by the ADD-POINT-LIGHT variants (a macro: an inline defun-fast re-checked and boxed its args)."
-  `(let* ((x ,x) (y ,y) (z ,z) (r ,r) (g ,g) (b ,b) (radius ,radius) (k ,k) (n *light-n*) (c *light-cand*))
-     (declare (single-float x y z r g b radius k) (fixnum n) (type f32vec c))
+(defmacro %add-light (x y z r g b radius k prio)
+  "Body shared by the ADD-POINT-LIGHT variants (a macro: an inline defun-fast re-checked and boxed its args).
+Score (lower wins): distance to the camera target minus radius, minus 10000 per priority level."
+  `(let* ((x ,x) (y ,y) (z ,z) (r ,r) (g ,g) (b ,b) (radius ,radius) (k ,k) (prio ,prio) (n *light-n*) (c *light-cand*))
+     (declare (single-float x y z r g b radius k) (fixnum prio n) (type f32vec c))
      (when (and (< n +max-light-candidates+) (> k 0f0) (> radius 0f0))   ; dark lights take no slot
        (let* ((o (* n 8)) (tg (camera-target *camera*))
               (dx (- x (aref tg 0))) (dy (- y (aref tg 1))) (dz (- z (aref tg 2))))
@@ -268,21 +277,24 @@ RIM: f32vec of 3 LINEAR rgb floats (strength baked in) added as a (1-N.V)^3 rim 
                (aref c (+ o 4)) (* k (srgb->lin r)) (aref c (+ o 5)) (* k (srgb->lin g))
                (aref c (+ o 6)) (* k (srgb->lin b))
                (aref c (+ o 7)) (- (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz))) radius))
+         (unless (= prio 0) (setf (aref c (+ o 7)) (- (aref c (+ o 7)) (* 10000f0 (i->f prio)))))
          (setf *light-n* (1+ n))))
      nil))
 
-(defun-fast add-point-light (x y z r g b radius &optional (intensity 1f0))
+(defun-fast add-point-light (x y z r g b radius &optional (intensity 1f0) (priority 0))
   "Point light for this frame only (call every frame). Up to 8 are used; when more are added,
-the ones nearest the camera target win. Color sRGB, RADIUS meters (light reaches 0 there).
-Each float argument is boxed at the call site; hot callers can use ADD-POINT-LIGHT-V."
-  (%add-light (f32 x) (f32 y) (f32 z) (f32 r) (f32 g) (f32 b) (f32 radius) (f32 intensity)))
+the highest PRIORITY (an integer, default 0) wins, then the ones nearest the camera target (lights
+outside the view are dropped first whatever their priority). Color sRGB, RADIUS meters (light
+reaches 0 there). Each float argument is boxed at the call site; hot callers can use ADD-POINT-LIGHT-V."
+  (declare (fixnum priority))
+  (%add-light (f32 x) (f32 y) (f32 z) (f32 r) (f32 g) (f32 b) (f32 radius) (f32 intensity) priority))
 
-(defun-fast add-point-light-v (v &optional (offset 0))
+(defun-fast add-point-light-v (v &optional (offset 0) (priority 0))
   "ADD-POINT-LIGHT reading 8 floats x y z r g b radius intensity from f32vec V at OFFSET.
 Conses nothing: keep one f32vec of light records and update intensities in place."
-  (declare (type f32vec v) (fixnum offset))
+  (declare (type f32vec v) (fixnum offset priority))
   (%add-light (aref v offset) (aref v (+ offset 1)) (aref v (+ offset 2)) (aref v (+ offset 3))
-              (aref v (+ offset 4)) (aref v (+ offset 5)) (aref v (+ offset 6)) (aref v (+ offset 7))))
+              (aref v (+ offset 4)) (aref v (+ offset 5)) (aref v (+ offset 6)) (aref v (+ offset 7)) priority))
 
 (defun-fast select-lights ()
   "Pick up to 8 best candidates into *LP*/*LC*; returns count. Lights whose sphere lies outside the
@@ -335,8 +347,8 @@ view frustum light no visible pixel, so they are dropped first (each costs a ful
       (lin3 44 (env-ambient-sky e) (env-ambient-intensity e) 0f0)
       (lin3 48 (env-ambient-ground e) (env-ambient-intensity e) 0f0)
       (let* ((d (env-moon-dir e))) (declare (type f32vec d))
-        (setf (aref u 52) (aref d 0) (aref u 53) (aref d 1) (aref u 54) (aref d 2) (aref u 55) 0f0))
-      (lin3 56 (env-moon-color e) (env-moon-intensity e) 0f0)
+        (setf (aref u 52) (aref d 0) (aref u 53) (aref d 1) (aref u 54) (aref d 2) (aref u 55) (env-sun-size e)))
+      (lin3 56 (env-moon-color e) (env-moon-intensity e) (env-sun-glow e))
       (lin3 60 (env-rim-color e) (env-rim-intensity e) (env-rim-power e))
       (lin3 64 (env-sky-top e) 1f0 0f0)
       (setf (aref u 68) (env-specular e) (aref u 69) (env-shininess e)
@@ -355,7 +367,7 @@ view frustum light no visible pixel, so they are dropped first (each costs a ful
     (setf (aref p 0) (if (env-bloom e) 1f0 0f0) (aref p 1) (env-bloom-threshold e) (aref p 2) (env-bloom-strength e)
           (aref p 3) (env-vignette e)
           (aref p 4) (f32 (max 1 (round (* ww *render-scale*)))) (aref p 5) (f32 (max 1 (round (* wh *render-scale*))))
-          (aref p 6) (f32 ww) (aref p 7) (f32 wh))
+          (aref p 6) (f32 ww) (aref p 7) (f32 wh) (aref p 8) (f32 *grade-desat*) (aref p 9) (f32 *grade-split*))
     (let* ((fa *fx-alpha*) (fb *fx-add*) (ui *ui-batch*)
            (n (ffi:c-inline (*fu* p *dq* *dq-n* (stream-buffer-data fa) (stream-buffer-fill fa)
                              (stream-buffer-data fb) (stream-buffer-fill fb) (stream-buffer-data ui) (stream-buffer-fill ui))

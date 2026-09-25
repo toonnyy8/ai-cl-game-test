@@ -1,0 +1,184 @@
+[
+{
+"at": 9.0,
+"eval": "Module._debug_cmd(2500)"
+},
+{
+"at": 10.2,
+"key": "KeyD",
+"down": true
+},
+{
+"at": 12.0,
+"key": "KeyD",
+"down": false
+},
+{
+"at": 12.3,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 12.38,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 12.6,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 12.68,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 12.9,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 12.98,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 14.2,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 14.28,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 14.55,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 14.63,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 16.0,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 16.08,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 18.0,
+"key": "KeyI",
+"down": true
+},
+{
+"at": 18.6,
+"key": "KeyI",
+"down": false
+},
+{
+"at": 19.8,
+"key": "KeyU",
+"down": true
+},
+{
+"at": 20.6,
+"key": "KeyU",
+"down": false
+},
+{
+"at": 21.0,
+"key": "KeyA",
+"down": true
+},
+{
+"at": 21.5,
+"key": "KeyA",
+"down": false
+},
+{
+"at": 21.1,
+"key": "Space",
+"down": true
+},
+{
+"at": 21.18,
+"key": "Space",
+"down": false
+},
+{
+"at": 22.2,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 22.3,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 22.35,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 23.1,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 23.2,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 24.7,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 24.75,
+"key": "Space",
+"down": true
+},
+{
+"at": 24.85,
+"key": "Space",
+"down": false
+},
+{
+"at": 24.9,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 26.2,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 26.25,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 26.35,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 26.4,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 28.2,
+"eval": "Module._debug_cmd(2107)"
+}
+]

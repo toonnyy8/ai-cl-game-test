@@ -38,49 +38,8 @@
   (air nil) (hang nil) (red nil) (ravenable nil) (jump nil) (special nil)
   (trail-from 0 :type fixnum) (trail-to 0 :type fixnum))
 
-;;; ================================================================ hit volumes (§0)
-;;; A volume is a float vector #(type p1 p2 p3 p4) in the attacker's frame (MAKE-VOL, moves.lisp):
-;;;   0 ARC  r half-angle(rad) y0 y1   a pie slice around the attacker, from height y0 to y1
-;;;   1 CAP  a b h r                   a capsule along his facing from a to b metres, at height h
-;;;   2 SPH  fwd up r                  a sphere fwd metres ahead, up metres high
-;;;   3 TSPH r                         a sphere at the attacker's target, chest height
-;;; Hurt volumes are vertical cylinders (radius, height) standing on the target's feet.
-(defun vol-hit-p (v ax ay az fx fz tx ty tz tr th extra)
-  "Does volume V of an attacker at (AX AY AZ) facing (FX 0 FZ) touch the hurt cylinder at
-(TX TY TZ), radius TR, height TH? EXTRA widens ARC radii (Raven Form). For TSPH, (AX AY AZ) is
-the target point. All floats are single-floats (hot path: compiled with safety 0)."
-  (declare (optimize (speed 3) (safety 0))
-           (type (simple-array single-float (*)) v)
-           (single-float ax ay az fx fz tx ty tz tr th extra))
-  (let ((type (aref v 0)))
-    (cond
-      ((< type 0.5f0)                                   ; ARC
-       (let* ((r (+ (aref v 1) extra)) (half (aref v 2)) (y0 (+ ay (aref v 3))) (y1 (+ ay (aref v 4)))
-              (dx (- tx ax)) (dz (- tz az)) (d (sqrt (the (single-float 0f0) (+ (* dx dx) (* dz dz))))))
-         (declare (single-float r half y0 y1 dx dz d))
-         (and (<= d (+ r tr)) (<= y0 (+ ty th)) (>= y1 ty)
-              (or (>= half 3.1f0) (< d (+ tr 0.05f0))
-                  ;; the cylinder's edge is inside the slice: angle to its centre <= half + its angular radius
-                  (let ((c (/ (+ (* dx fx) (* dz fz)) d)) (s (/ tr d)))
-                    (declare (single-float c s))
-                    (<= (acos (if (> c 1f0) 1f0 (if (< c -1f0) -1f0 c)))
-                        (+ half (asin (if (> s 1f0) 1f0 s)))))))))
-      ((< type 1.5f0)                                   ; CAP: closest point on the segment
-       (let* ((a (aref v 1)) (b (aref v 2)) (h (+ ay (aref v 3))) (r (aref v 4))
-              (dx (- tx ax)) (dz (- tz az)) (along (+ (* dx fx) (* dz fz)))
-              (s (if (< along a) a (if (> along b) b along)))
-              (ex (- tx (+ ax (* fx s)))) (ez (- tz (+ az (* fz s)))))
-         (declare (single-float a b h r dx dz along s ex ez))
-         (and (<= (+ (* ex ex) (* ez ez)) (* (+ r tr) (+ r tr)))
-              (>= h (- ty r)) (<= h (+ ty th r)))))
-      (t                                                ; SPH / TSPH: sphere vs cylinder
-       (let* ((sph (< type 2.5f0))
-              (f (if sph (aref v 1) 0f0)) (u (if sph (aref v 2) 1.1f0)) (r (if sph (aref v 3) (aref v 1)))
-              (cx (+ ax (* fx f))) (cy (+ ay u)) (cz (+ az (* fz f)))
-              (dx (- tx cx)) (dz (- tz cz)) (lo (+ ty tr)) (hi (- (+ ty th) tr))
-              (dy (cond ((< cy lo) (- lo cy)) ((> cy hi) (- cy hi)) (t 0f0))))
-         (declare (single-float f u r cx cy cz dx dz lo hi dy))
-         (<= (+ (* dx dx) (* dz dz) (* dy dy)) (* (+ r tr) (+ r tr))))))))
+;;; Hit volumes (§0): MAKE-VOL / VOL-HIT-P are the engine's (engine/lisp/hitvol.lisp); a HITDEF's
+;;; VOLS are those attacker-relative volumes (EXTRA widens ARC radii in Raven Form).
 
 ;;; ================================================================ a hit on an enemy (§4)
 (defstruct (enemy-hit (:conc-name eh-))
@@ -245,16 +204,6 @@ x0.8) goes to one enemy within 2.5 m of REN while he recovers. Returns :keep, :m
   "Frames of an enemy windup of S frames to skip: MULT < 1 shortens it (punish x0.8, boss phase
 2 x0.85) but a RED windup keeps at least 42 f; SKIP frames more."
   (max 0.0 (min (if red (float (- s 42)) (float s)) (+ skip (* s (- 1.0 mult))))))
-
-(defun weighted-pick (r &rest kv)
-  "KV = key weight ...; the key whose share of the total weight contains R (0 <= R < 1). NIL keys
-are allowed (\"do nothing\"); NIL if all weights are 0."
-  (let ((sum 0.0))
-    (loop for (nil w) on kv by #'cddr do (incf sum w))
-    (when (> sum 0)
-      (let ((x (* sum r)))
-        (loop for (key w) on kv by #'cddr
-              do (decf x w) (when (and (< x 0) (> w 0)) (return key)))))))
 
 (defun enra-attack-choice (d p2 zone-t r)
   "ENRA's pick at distance D (m): close = Triple Cut / Crimson Crescent (after 1.5 s in range) /

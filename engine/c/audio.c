@@ -1,4 +1,4 @@
-/* audio.c — the mixer: up to 32 voices over 64 sample slots, fed to an SDL3 audio stream.
+/* audio.c — the mixer: up to 32 voices over 128 sample slots, fed to an SDL3 audio stream.
    Lisp side (synthesis toolkit, sound bank, play API): engine/lisp/audio.lisp. See docs/AUDIO.md.
    ponytail: the SDL stream *get callback* mixes in pure C. On the web SDL3 calls it from a
    ScriptProcessorNode `onaudioprocess` event, i.e. between frames, never while Lisp runs, and it
@@ -10,7 +10,7 @@
 
 #define AU_RATE 48000
 #define AU_NV 32
-#define AU_NS 64
+#define AU_NS 128   /* = +AU-SLOTS+ in audio.lisp (DEFSOUND errors past it) */
 #define AU_CHUNK 256
 typedef struct { const float *d; int n, loop, bus, id; double pos, step; float g, gl, gr, amp, rel; } au_voice;
 static float *au_snd[AU_NS]; static int au_len[AU_NS];
@@ -106,7 +106,9 @@ void au_gain(int id, float g) {   /* re-gain a running (centre-panned) voice, e.
 int au_active(void) { int k, c = 0; for (k = 0; k < AU_NV; k++) c += au_v[k].d != 0; return c; }
 
 void au_load(int s, const float *src, int n) {
-  float *d = (float *)malloc(sizeof(float) * n);
+  float *d;
+  if (s < 0 || s >= AU_NS) { printf("audio: sound slot %d out of range (max %d)\n", s, AU_NS); return; }
+  d = (float *)malloc(sizeof(float) * n);
   if (!d) return;
   memcpy(d, src, sizeof(float) * n);
   au_snd[s] = d; au_len[s] = n;

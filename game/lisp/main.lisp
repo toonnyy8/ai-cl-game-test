@@ -5,7 +5,6 @@
 (in-package :raven)
 
 ;;; ---------------------------------------------------------------- the fixed-step simulation
-(defvar *acc* 0.0 "Real seconds not yet simulated.")
 (defvar *sim-dt* 0.0 "Player-scale sim seconds simulated this frame (debris, world).")
 
 (defun sim-step ()
@@ -23,12 +22,9 @@ slow-mo scales each side: KP for REN, KE for everyone else."
       (incf *sim-dt* (* kp +step+)))))
 
 (defun accumulate-and-step (rdt)
-  "Fixed-step accumulator: at most 6 steps per frame; a longer backlog is dropped."
-  (setf *acc* (+ *acc* rdt) *sim-dt* 0.0)
-  (let ((n 0))
-    (loop while (and (>= *acc* +step+) (< n 6)) do
-      (decf *acc* +step+) (incf n) (sim-step))
-    (when (>= *acc* +step+) (setf *acc* 0.0))))
+  "This frame's fixed steps (the engine's accumulator: at most 6 per frame, a longer backlog is dropped)."
+  (setf *sim-dt* 0.0)
+  (run-fixed-steps rdt #'sim-step))
 
 ;;; ---------------------------------------------------------------- drawing
 (defun fighter-draw-system (rdt)
@@ -61,7 +57,7 @@ slow-mo scales each side: KP for REN, KE for everyone else."
   (when (and *bot* (input-active-p)) (bot-input))
   (game-input)
   (perf-mark)                           ; stats: "sim" = from here to the next mark
-  (if (sim-active-p) (accumulate-and-step rdt) (setf *sim-dt* 0.0 *acc* 0.0))
+  (if (sim-active-p) (accumulate-and-step rdt) (setf *sim-dt* 0.0 *step-acc* 0.0))
   (when *soak* (soak-update rdt))
   (game-update rdt)
   (feedback-system)                     ; events from game flow / debug commands (kills, BROKEN ...)

@@ -1,0 +1,234 @@
+[
+{
+"at": 8.5,
+"shot": "tests/shots/duel-title.png"
+},
+{
+"at": 9.0,
+"key": "Enter",
+"down": true
+},
+{
+"at": 9.08,
+"key": "Enter",
+"down": false
+},
+{
+"at": 10.0,
+"shot": "tests/shots/duel-mode.png"
+},
+{
+"at": 10.5,
+"key": "Enter",
+"down": true
+},
+{
+"at": 10.58,
+"key": "Enter",
+"down": false
+},
+{
+"at": 12.0,
+"shot": "tests/shots/duel-select.png"
+},
+{
+"at": 13.0,
+"eval": "Module._debug_cmd(2207)"
+},
+{
+"at": 17.5,
+"shot": "tests/shots/duel-intro.png"
+},
+{
+"at": 18.5,
+"eval": "Module._debug_cmd(4003)"
+},
+{
+"at": 30.5,
+"shot": "tests/shots/duel-neutral.png"
+},
+{
+"at": 31.5,
+"eval": "Module._debug_cmd(2309)"
+},
+{
+"at": 31.86,
+"shot": "tests/shots/duel-hit.png"
+},
+{
+"at": 31.95,
+"shot": "tests/shots/duel-hit-b.png"
+},
+{
+"at": 32.05,
+"shot": "tests/shots/duel-hit-c.png"
+},
+{
+"at": 33.05,
+"eval": "Module._debug_cmd(2306)"
+},
+{
+"at": 33.67,
+"shot": "tests/shots/duel-guard-break.png"
+},
+{
+"at": 33.85,
+"shot": "tests/shots/duel-guard-break-b.png"
+},
+{
+"at": 34.85,
+"eval": "Module._debug_cmd(2307)"
+},
+{
+"at": 35.15,
+"shot": "tests/shots/duel-perfect.png"
+},
+{
+"at": 35.35,
+"shot": "tests/shots/duel-perfect-b.png"
+},
+{
+"at": 36.35,
+"eval": "Module._debug_cmd(2300)"
+},
+{
+"at": 36.7,
+"shot": "tests/shots/duel-hellfire.png"
+},
+{
+"at": 36.95,
+"shot": "tests/shots/duel-hellfire-b.png"
+},
+{
+"at": 37.95,
+"eval": "Module._debug_cmd(2302)"
+},
+{
+"at": 38.85,
+"shot": "tests/shots/duel-fire-wave.png"
+},
+{
+"at": 39.85,
+"eval": "Module._debug_cmd(2301)"
+},
+{
+"at": 41.25,
+"shot": "tests/shots/duel-shiranui.png"
+},
+{
+"at": 42.25,
+"eval": "Module._debug_cmd(2303)"
+},
+{
+"at": 43.65,
+"shot": "tests/shots/duel-kaka.png"
+},
+{
+"at": 44.15,
+"shot": "tests/shots/duel-kaka-b.png"
+},
+{
+"at": 45.15,
+"eval": "Module._debug_cmd(2305)"
+},
+{
+"at": 45.75,
+"shot": "tests/shots/duel-meteor.png"
+},
+{
+"at": 46.75,
+"eval": "Module._debug_cmd(2200)"
+},
+{
+"at": 48.25,
+"shot": "tests/shots/duel-bankai.png"
+},
+{
+"at": 49.25,
+"eval": "Module._debug_cmd(2203)"
+},
+{
+"at": 50.45,
+"shot": "tests/shots/duel-tenchi.png"
+},
+{
+"at": 51.45,
+"eval": "Module._debug_cmd(2201)"
+},
+{
+"at": 53.05,
+"shot": "tests/shots/duel-nozarashi.png"
+},
+{
+"at": 54.05,
+"eval": "Module._debug_cmd(2202)"
+},
+{
+"at": 55.95,
+"shot": "tests/shots/duel-kikon-jokaku.png"
+},
+{
+"at": 56.95,
+"eval": "Module._debug_cmd(2204)"
+},
+{
+"at": 58.85,
+"shot": "tests/shots/duel-kikon-ken.png"
+},
+{
+"at": 59.85,
+"eval": "Module._debug_cmd(2205)"
+},
+{
+"at": 61.05,
+"shot": "tests/shots/duel-kikon-sky.png"
+},
+{
+"at": 62.05,
+"eval": "Module._debug_cmd(2206)"
+},
+{
+"at": 63.45,
+"shot": "tests/shots/duel-soul-break.png"
+},
+{
+"at": 64.45,
+"eval": "Module._debug_cmd(2100)"
+},
+{
+"at": 64.55,
+"eval": "Module._debug_cmd(2101)"
+},
+{
+"at": 64.65,
+"eval": "Module._debug_cmd(2102)"
+},
+{
+"at": 64.75,
+"eval": "Module._debug_cmd(4003)"
+},
+{
+"at": 70.45,
+"eval": "Module._debug_cmd(2102)"
+},
+{
+"at": 73.45,
+"shot": "tests/shots/duel-results.png"
+},
+{
+"at": 74.45,
+"eval": "Module._debug_cmd(2101)"
+},
+{
+"at": 74.55,
+"eval": "Module._debug_cmd(4005)"
+},
+{
+"at": 79.45,
+"size": "800x450"
+},
+{
+"at": 81.45,
+"shot": "tests/shots/duel-hud-800x450.png"
+}
+]

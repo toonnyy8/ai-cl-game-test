@@ -14,13 +14,19 @@
 
 /* ---------------------------------------------------------------- random numbers
    xorshift32 generators, inline because they run in particle / synthesis loops.
-   rng_float: gameplay and fx randomness (RND01 in Lisp), state in rng.c.
+   rng_float: fx / cosmetic randomness (RND01 in Lisp), state in rng.c.
+   rng2_float: the simulation stream (SIM-RND01), state in rng.c; seeded by SIM-RND-SEED.
    au_rand: synthesis noise (AU-RND in Lisp), state in audio.c. */
-extern unsigned rng_state, au_rng;
+extern unsigned rng_state, rng2_state, au_rng;
 static inline float rng_float(void) {   /* uniform [0,1) */
   rng_state ^= rng_state << 13; rng_state ^= rng_state >> 17; rng_state ^= rng_state << 5;
   return (float)(rng_state >> 8) * (1.0f / 16777216.0f);
 }
+static inline float rng2_float(void) {  /* uniform [0,1), the simulation stream */
+  rng2_state ^= rng2_state << 13; rng2_state ^= rng2_state >> 17; rng2_state ^= rng2_state << 5;
+  return (float)(rng2_state >> 8) * (1.0f / 16777216.0f);
+}
+void rng_seed(unsigned *state, int seed);   /* rng.c: &rng_state or &rng2_state */
 static inline float au_rand(void) {     /* uniform [-1,1) */
   au_rng ^= au_rng << 13; au_rng ^= au_rng >> 17; au_rng ^= au_rng << 5;
   return (float)(int)au_rng * 4.656612873e-10f;
@@ -28,7 +34,7 @@ static inline float au_rand(void) {     /* uniform [-1,1) */
 
 /* ---------------------------------------------------------------- platform.c (window, input, time) */
 int pf_init(const char *title, int w, int h);
-int pf_pump(float *f, float maxdt);          /* events + timing into f[13], see PLATFORM-POLL */
+int pf_pump(float *f, float maxdt, int lock);   /* events + timing into f[13], see PLATFORM-POLL; LOCK = *POINTER-LOCK* */
 SDL_Window *pf_window(void);
 int pf_width(void);                          /* window size in pixels */
 int pf_height(void);
@@ -38,9 +44,11 @@ int pf_key_down(int scancode);
 int pf_key_pressed(int scancode);            /* went down this frame */
 int pf_mouse_down(int button);
 int pf_mouse_pressed(int button);
-int pf_pad_connected(void);
-int pf_pad_down(int button);                 /* SDL gamepad button, 16 = LT, 17 = RT */
-int pf_pad_pressed(int button);
+int pf_pad_count(void);                      /* open pads (up to 4, stable slots 0..3) */
+int pf_pad_connected(int pad);
+int pf_pad_down(int pad, int button);        /* SDL gamepad button, 16 = LT, 17 = RT */
+int pf_pad_pressed(int pad, int button);
+float pf_pad_axis(int pad, int axis);        /* 0 lx 1 ly 2 rx 3 ry 4 lt 5 rt */
 
 /* ---------------------------------------------------------------- render.c (SDL_GPU) */
 int r_init(int msaa);

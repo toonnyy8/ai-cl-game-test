@@ -1,5 +1,5 @@
-;;;; time.lisp — the time manager: fixed 60 Hz steps, hitstop (global sim freeze) and slow motion
-;;;; for hit feedback. Pure bookkeeping: the game decides what a "step" simulates.
+;;;; time.lisp — the time manager: fixed 60 Hz steps (RUN-FIXED-STEPS), hitstop (global sim freeze)
+;;;; and slow motion for hit feedback. Pure bookkeeping: the game decides what a "step" simulates.
 (in-package :engine)
 
 ;;; ---------------------------------------------------------------- time manager
@@ -43,6 +43,11 @@ Lowest scale wins."
             (declare (single-float k e))
             (setf sc (f-min sc e))))))))
 
+(defun time-reset ()
+  "Cancel any hitstop and slow motion (a new round / scene). *TICK* keeps counting."
+  (setf *hitstop* 0)
+  (fill *slowmo* 0f0))
+
 (defun-fast time-step ()
   "Advance real-time timers by one fixed step. Returns T when the sim should run this step."
   (let* ((s *slowmo*))
@@ -52,3 +57,19 @@ Lowest scale wins."
       (let* ((o (+ (* i 3) 1))) (declare (fixnum o))
         (setf (aref s o) (f-max 0f0 (- (aref s o) +step+)))))
     (if (> *hitstop* 0) (progn (setf *hitstop* (1- *hitstop*)) nil) t)))
+
+;;; ---------------------------------------------------------------- the fixed-step accumulator
+(defvar *step-acc* 0.0 "Real seconds not yet simulated (RUN-FIXED-STEPS). Set it to 0.0 while the sim pauses.")
+
+(defun run-fixed-steps (rdt step &key (max-steps 6) while)
+  "The frame's fixed steps: add RDT real seconds to *STEP-ACC*, then call STEP (a function of no
+arguments, the game's one-step simulation) once per whole +STEP+ they cover, at most MAX-STEPS
+times; a longer backlog is dropped, so one slow frame never snowballs. WHILE (NIL or a function of
+no arguments) is asked before each step: NIL stops early (e.g. the match ended mid-frame).
+Returns the number of steps run."
+  (setf *step-acc* (+ *step-acc* rdt))
+  (let ((n 0))
+    (loop while (and (>= *step-acc* +step+) (< n max-steps) (or (null while) (funcall while))) do
+      (decf *step-acc* +step+) (incf n) (funcall step))
+    (when (>= *step-acc* +step+) (setf *step-acc* 0.0))
+    n))

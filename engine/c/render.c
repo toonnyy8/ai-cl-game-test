@@ -206,7 +206,7 @@ static SDL_GPURenderPass *r_fs_pass(SDL_GPUCommandBuffer *cb, SDL_GPUTexture *ds
   SDL_EndGPURenderPass(rp); return NULL;
 }
 /* The whole frame. FU = frame uniforms; RP = [0 bloom 1 threshold 2 strength 3 vignette
-   4 scene w 5 scene h 6 window w 7 window h]; DQ = N draw records; FXA/FXB/UI = vertex floats.
+   4 scene w 5 scene h 6 window w 7 window h 8 desaturate 9 split (window px)]; DQ = N draw records; FXA/FXB/UI = vertex floats.
    Returns the mesh draws issued, or -1 when no swapchain texture was available (frame skipped). */
 int r_frame(const float *fu, const float *rp, const float *dq, int n,
             const float *fxa, int nfa, const float *fxb, int nfb, const float *ui, int nui) {
@@ -259,7 +259,7 @@ int r_frame(const float *fu, const float *rp, const float *dq, int n,
   }
   /* composite to the swapchain, then the UI on top in the same pass */
   SDL_GPUTexture *src[3] = { r_scene, r_half[0], r_q[1] };
-  pass = r_fs_pass(cb, swt, RP_COMP, src, 3, bloom ? rp[2] : 0.0f, rp[3], 0, 0, 1);
+  pass = r_fs_pass(cb, swt, RP_COMP, src, 3, bloom ? rp[2] : 0.0f, rp[3], rp[8], rp[7] > 0 ? rp[9] / rp[7] : 0.0f, 1);
   if (nui > 0) {
     float s[4] = { rp[6], rp[7], 0, 0 }; SDL_GPUTextureSamplerBinding fb = { r_font, r_nearest }; SDL_GPUBufferBinding b = { r_uib, 0 };
     SDL_BindGPUGraphicsPipeline(pass, r_pipe[RP_UI]);

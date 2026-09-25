@@ -3,14 +3,18 @@
 # the .c files are compiled by emcc at link time.
 lisp/package.lisp
 lisp/math.lisp
+lisp/hitvol.lisp
+lisp/input.lisp
 lisp/platform.lisp
 lisp/render.lisp
 lisp/meshgen.lisp
 lisp/ui.lisp
 lisp/audio.lisp
 lisp/anim.lisp
+lisp/body.lisp
 lisp/time.lisp
 lisp/fx.lisp
+lisp/cine.lisp
 lisp/ecs.lisp
 lisp/app.lisp
 c/main.c
