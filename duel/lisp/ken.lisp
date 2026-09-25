@@ -43,19 +43,26 @@
   :reach 2.2 :arc 120 :on-hit :flinch
   :hits ((10 11) (16 17) (22 23) (28 29) (40 41 :dmg 60 :on-hit :launch)))
 (defmove :ke-breaker :kind :breaker :clip :ke-breaker :clip-2 :ke-shoulder :callout "SHOULDER CHARGE")
-;; the Kikon rush (O): red aura, dash, then the stance's huge cross-body cut. Red opponent + O held
-;; when it connects = the Kikon; else a plain knockback hit (guardable unless he is red), -14 on block
-(defmove :ke-kikon :kind :kikon :clip :sh-run :clip-2 :ke-stance-cut :cine ken-kikon-cine
-  :startup 8 :active 3 :recovery 24 :dmg 70 :adv-block -14 :reach 2.2 :arc 110 :on-hit :knockback :kb 2.5)
+;; O, the Kikon rush module CHARGE: 5 f of aura, then a charge at 13 m/s for at most 36 f that keeps
+;; turning at him (150 deg/s) and eats one hit on its armour (a Breaker or a second hit stops it), then
+;; the stance's huge cross-body cut: 9.4 m, <= 50 f. A hit with O held: the Kikon on a red opponent,
+;; else the follow-up (KIKON-OUTCOME). -14 on block. Cooldown 90.
+(defmove :ke-kikon :kind :kikon :clip :ke-charge :clip-2 :ke-stance-cut :clip-s 8 :cine ken-kikon-cine
+  :startup 9 :active 3 :recovery 24 :dmg 70 :adv-block -14 :reach 2.4 :arc 110 :on-hit :knockback :kb 2.5
+  :armor-hits 1 :cooldown 90
+  :params (:aura 5 :aim 120.0 :speed 13.0 :dash-max 36 :dash-track 150.0 :look :charge :sfx :laugh))
 
 ;;; ================================================================ Nozarashi
 (defmove :ke-meteor :kind :sp :clip :ke-meteor :callout "SPLIT THE METEOR"
   :startup 26 :active 4 :recovery 30 :dmg 240 :adv-block -16
   :vol (:cap 0.3 12.0 0.5 0.5) :on-hit :knockdown :kb 3.0 :on-frame ((26 ken-meteor-cut)))
-;; Nozarashi's own Kikon rush (own moves aren't derived): written with the derivation's numbers,
-;; startup 8 + 3, reach 2.2 x 1.4; the rush's aura / dash / trigger range are unchanged
-(defmove :ke-kikon-n :kind :kikon :clip :sh-run :clip-2 :ke-stance-cut :clip-s 8 :callout "SKY SPLIT" :cine ken-sky-split-cine
-  :startup 11 :active 3 :recovery 24 :dmg 70 :adv-block -14 :reach 3.08 :arc 110 :on-hit :knockback :kb 2.5)
+;; O in Nozarashi, LEAP CLEAVE (his own move: not derived): 8 f of crouch, then a leap at 18 m/s for at
+;; most 30 f, the direction locked at take-off (the height is a look, :lift), then the widest cleave,
+;; 3.08 m over 160 deg, and a gash where it lands: 10.6 m, <= 49 f. Cooldown 90.
+(defmove :ke-kikon-n :kind :kikon :clip :ke-n-leap :clip-2 :ke-stance-cut :clip-s 8 :callout "SKY SPLIT" :cine ken-sky-split-cine
+  :startup 11 :active 3 :recovery 24 :dmg 70 :adv-block -14 :reach 3.08 :arc 160 :on-hit :knockback :kb 2.5 :cooldown 90
+  :on-frame ((11 ken-leap-cleave))
+  :params (:aura 8 :aim 120.0 :speed 18.0 :dash-max 30 :dash-track 0.0 :look :leap :lift 1.6 :sfx :whoosh-cleaver))
 
 ;;; ================================================================ forms
 (defkit :kenpachi :base
@@ -74,8 +81,8 @@
        :moves ((0.0 3.0 :q 5 :f 2 :breaker 1 :sp2 1 :sig 2 nil 3)
                (3.0 4.0 :f 1 :sp1 2 :step 1 nil 2)
                (4.0 6.0 :sp1 4 :sp2 2 nil 1)
-               (6.0 99.0 :step 1 nil 1))
-       :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 0.8
+               (6.0 99.0 :step 1 :kikon 1 nil 1))                      ; the charge / leap as a poke
+       :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 0.8 :kikon-range 9.0
        :react (:projectile :sig :flash-startup :sig)))
 
 (defkit :kenpachi :nozarashi :inherit :base
@@ -116,6 +123,12 @@ dash starts = guard-crushing (the Breaker property)."
   (when (eq (fighter-contact (fighter e)) :hit)
     (start-move e (kit-next (kit-of e) :ke-charge :land))
     (setf (fighter-contact (fighter e)) :hit (fighter-land-sf (fighter e)) 0)))
+
+(defun ken-leap-cleave (e)
+  "LEAP CLEAVE lands: a short gash split into the ground ahead (a look)."
+  (let ((p (pos-of e)))
+    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 3.0 :life 45 :look :meteor))
+  (emit :sfx :ground-crack e))
 
 (defun ken-meteor-cut (e)
   "Split the Meteor: the cleave splits the ground 12 m ahead (a look)."

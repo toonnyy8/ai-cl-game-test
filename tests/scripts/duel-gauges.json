@@ -1,0 +1,330 @@
+[
+{
+"at": 9.0,
+"eval": "Module._debug_cmd(2327)"
+},
+{
+"at": 9.2,
+"key": "KeyU",
+"down": true
+},
+{
+"at": 12.0,
+"shot": "tests/shots/duel-gauges-drain.png"
+},
+{
+"at": 15.0,
+"shot": "tests/shots/duel-gauges-crush.png"
+},
+{
+"at": 18.0,
+"shot": "tests/shots/duel-gauges-guardless.png"
+},
+{
+"at": 31.0,
+"key": "KeyU",
+"down": false
+},
+{
+"at": 31.2,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 33.0,
+"eval": "Module._debug_cmd(2500)"
+},
+{
+"at": 34.0,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 34.05,
+"key": "Space",
+"down": true
+},
+{
+"at": 34.2,
+"key": "Space",
+"down": false
+},
+{
+"at": 34.25,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 35.8,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 35.85,
+"key": "Space",
+"down": true
+},
+{
+"at": 36.0,
+"key": "Space",
+"down": false
+},
+{
+"at": 36.05,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 37.6,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 37.65,
+"key": "Space",
+"down": true
+},
+{
+"at": 37.8,
+"key": "Space",
+"down": false
+},
+{
+"at": 37.85,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 39.4,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 39.45,
+"key": "Space",
+"down": true
+},
+{
+"at": 39.6,
+"key": "Space",
+"down": false
+},
+{
+"at": 39.65,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 41.4,
+"shot": "tests/shots/duel-gauges-hoho.png"
+},
+{
+"at": 41.5,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 43.0,
+"eval": "Module._debug_cmd(2500)"
+},
+{
+"at": 44.0,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 44.05,
+"key": "Space",
+"down": true
+},
+{
+"at": 44.2,
+"key": "Space",
+"down": false
+},
+{
+"at": 44.25,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 46.0,
+"eval": "Module._debug_cmd(2320)"
+},
+{
+"at": 46.1,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 46.3,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 46.35,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 46.42,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 46.47,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 46.54,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 46.59,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 46.66,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 46.71,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 46.78,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 46.83,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 46.9,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 46.95,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 47.02,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 47.07,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 47.14,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 47.19,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 47.26,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 47.31,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 47.38,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 47.43,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 47.5,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 47.55,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 47.62,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 47.67,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 47.74,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 47.79,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 47.86,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 47.91,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 47.98,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 48.03,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 48.1,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 48.15,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 48.4,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 48.6,
+"shot": "tests/shots/duel-gauges-burst.png"
+},
+{
+"at": 48.8,
+"eval": "Module._debug_cmd(2107)"
+}
+]

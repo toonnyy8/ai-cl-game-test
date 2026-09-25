@@ -1,92 +1,254 @@
 [
 {
-"at": 9.0,
-"eval": "Module._debug_cmd(2322)"
+"at": 8.5,
+"eval": "Module._debug_cmd(2109)"
 },
 {
-"at": 10.0,
+"at": 9.0,
+"eval": "Module._debug_cmd(2350)"
+},
+{
+"at": 9.2,
 "key": "KeyO",
 "down": true
+},
+{
+"at": 10.2,
+"shot": "tests/shots/duel-o-enjo-a.png"
+},
+{
+"at": 11.6,
+"shot": "tests/shots/duel-o-enjo-b.png"
 },
 {
 "at": 13.0,
+"shot": "tests/shots/duel-o-enjo-c.png"
+},
+{
+"at": 21.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 14.0,
-"eval": "Module._debug_cmd(2323)"
+"at": 25.0,
+"eval": "Module._debug_cmd(2351)"
 },
 {
-"at": 15.0,
-"shot": "tests/shots/duel-kikon-prompt.png"
-},
-{
-"at": 15.3,
+"at": 25.2,
 "key": "KeyO",
 "down": true
 },
 {
-"at": 16.6,
-"shot": "tests/shots/duel-kikon-cine.png"
+"at": 26.2,
+"shot": "tests/shots/duel-o-tenchi-a.png"
 },
 {
-"at": 18.3,
+"at": 27.6,
+"shot": "tests/shots/duel-o-tenchi-b.png"
+},
+{
+"at": 29.0,
+"shot": "tests/shots/duel-o-tenchi-c.png"
+},
+{
+"at": 37.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 23.0,
-"eval": "Module._debug_cmd(2323)"
+"at": 41.0,
+"eval": "Module._debug_cmd(2352)"
 },
 {
-"at": 24.3,
+"at": 41.2,
 "key": "KeyO",
 "down": true
 },
 {
-"at": 24.38,
+"at": 42.2,
+"shot": "tests/shots/duel-o-charge-a.png"
+},
+{
+"at": 43.6,
+"shot": "tests/shots/duel-o-charge-b.png"
+},
+{
+"at": 45.0,
+"shot": "tests/shots/duel-o-charge-c.png"
+},
+{
+"at": 53.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 27.0,
-"eval": "Module._debug_cmd(2324)"
+"at": 57.0,
+"eval": "Module._debug_cmd(2353)"
 },
 {
-"at": 28.3,
+"at": 57.2,
 "key": "KeyO",
 "down": true
 },
 {
-"at": 31.3,
+"at": 58.2,
+"shot": "tests/shots/duel-o-leap-a.png"
+},
+{
+"at": 59.6,
+"shot": "tests/shots/duel-o-leap-b.png"
+},
+{
+"at": 61.0,
+"shot": "tests/shots/duel-o-leap-c.png"
+},
+{
+"at": 69.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 36.0,
-"eval": "Module._debug_cmd(2325)"
+"at": 73.0,
+"eval": "Module._debug_cmd(2334)"
 },
 {
-"at": 36.3,
+"at": 73.3,
 "key": "KeyO",
 "down": true
 },
 {
-"at": 36.6,
-"shot": "tests/shots/duel-kikon-rush-a.png"
-},
-{
-"at": 37.6,
-"shot": "tests/shots/duel-kikon-rush-b.png"
-},
-{
-"at": 42.0,
+"at": 76.0,
 "key": "KeyO",
 "down": false
 },
 {
-"at": 46.0,
+"at": 80.0,
+"eval": "Module._debug_cmd(2335)"
+},
+{
+"at": 80.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 83.0,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 87.0,
+"eval": "Module._debug_cmd(2343)"
+},
+{
+"at": 87.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 90.0,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 94.0,
+"eval": "Module._debug_cmd(2345)"
+},
+{
+"at": 94.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 97.0,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 101.0,
+"eval": "Module._debug_cmd(2339)"
+},
+{
+"at": 101.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 104.0,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 108.0,
+"eval": "Module._debug_cmd(2341)"
+},
+{
+"at": 108.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 111.0,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 115.0,
+"eval": "Module._debug_cmd(2347)"
+},
+{
+"at": 115.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 118.0,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 122.0,
+"eval": "Module._debug_cmd(2354)"
+},
+{
+"at": 122.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 125.0,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 129.0,
+"eval": "Module._debug_cmd(2356)"
+},
+{
+"at": 129.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 132.0,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 136.0,
+"eval": "Module._debug_cmd(2340)"
+},
+{
+"at": 136.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 136.4,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 140.0,
 "eval": "Module._debug_cmd(2107)"
 }
 ]

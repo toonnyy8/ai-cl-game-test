@@ -110,13 +110,26 @@ white (drawing 1) then as a solid ink silhouette (2)."
               (t (setf age -2.0))))
       (setf (model-ghost-age m) (if (< age -1.0) -1f0 (f32 (+ age dt)))))))
 
+(defun rush-lift (f mv)
+  "The drawn height of a Kikon rush module's leap (its :lift, metres; a look: the sim stays on the
+ground): up over the first 8 f of the dash, down over the strike's startup (not on a follow-up)."
+  (let ((h (and mv (eq (mv-kind mv) :kikon) (getf (mv-params mv) :lift))))
+    (cond ((null h) 0.0)
+          ((eq (fighter-phase f) :dash) (* h (min 1.0 (/ (fighter-hold f) 8.0))))
+          ((and (eq (fighter-phase f) :main) (not (fighter-follow f)) (< (fighter-sf f) (mv-s mv)))
+           (* h (- 1.0 (/ (fighter-sf f) (float (mv-s mv))))))
+          (t 0.0))))
+
 (defun draw-fighter (e rdt)
   "Pose and queue fighter E: body, weapon (or the planted one), blade look, aura, trail. RDT = this
-frame's effect seconds (0 while paused)."
+frame's effect seconds (0 while paused). A Kikon rush module's look (its :look): :flash-step shows only
+ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawing (RUSH-LIFT)."
   (let* ((m (model e)) (f (fighter e)) (kit (fighter-kit f)) (b (model-body m)) (p (pos-of e)) (yaw (yaw-of e))
          (mv (and (eq (fighter-state f) :move) (fighter-move f)))
+         (look (and mv (eq (mv-kind mv) :kikon) (getf (mv-params mv) :look)))
+         (flashing (and (eq look :flash-step) (eq (fighter-phase f) :dash)))   ; the flash step: afterimages only
          (planted (and mv (mv-planted mv) (eq (fighter-phase f) :main)))
-         (weapon (if planted nil (model-weapon m))) (x (aref p 0)) (y (aref p 1)) (z (aref p 2)))
+         (weapon (if (or planted flashing) nil (model-weapon m))) (x (aref p 0)) (y (+ (aref p 1) (rush-lift f mv))) (z (aref p 2)))
     (setf (model-flash m) (f32 (max 0.0 (- (model-flash m) rdt))) (model-super m) (f32 (max 0.0 (- (model-super m) rdt))))
     (pose-fk! (model-joints m) (if (> (model-hold m) 0) (anim-pose (model-anim m)) (anim-eval (model-anim m)))
               x y z yaw (body-scale b) (body-hunch b) (body-props b))
@@ -125,8 +138,9 @@ frame's effect seconds (0 while paused)."
       (let ((v (model-smear-dir m)))
         (smear-joints! (model-joints m) (f32 x) (+ (f32 y) 1f0) (f32 z) (aref v 0) (aref v 1)))
       (when (> rdt 0) (setf (model-smear m) 0f0)))
+    (when (and flashing (> rdt 0) (zerop (mod (fighter-hold f) 4))) (start-ghost e))   ; a new afterimage every 4 f
     (draw-ghost e rdt)
-    (when (>= (model-alpha m) 0.999)                    ; a vanishing Hoho body is not drawn: its afterimage is
+    (when (and (>= (model-alpha m) 0.999) (not flashing))   ; a vanishing Hoho body is not drawn: its afterimage is
       (draw-body b (model-joints m) x y z yaw :weapon weapon :hide (model-hide m) :tint (model-tint m)
                                             :rim (if (> (model-super m) 0) *super-rim* (model-rim m))
                                             :flash (if (> (model-flash m) 0) 0.45 0.0)))
@@ -151,14 +165,15 @@ frame's effect seconds (0 while paused)."
         (vfx-smear tr (blade-smear (blade e)) (case (first (kit-blade kit)) (:fire 0) (:embers 2) (t 1)))))
     ;; auras: the form's, EVOLUTION ready, the Breaker (brightens over the strike startup), the Kikon rush
     (let ((age (fx-clock)))
-      (when (kit-aura kit) (vfx-aura x y z (* 1.1 (body-hurt-h b)) (kit-aura kit) age rdt))
+      (when (and (kit-aura kit) (not flashing))
+        (vfx-aura x y z (* 1.1 (body-hurt-h b)) (kit-aura kit) age rdt :k (if (and (eq look :charge) (not (eq (fighter-phase f) :main))) 1.5 1.0)))
       (when (gauges-evolution (gauges e)) (vfx-aura x y z (body-hurt-h b) :evolution age rdt :rgb *evolution-rgb* :k 0.5))
       (when (and mv (eq (mv-kind mv) :breaker) (not (eq (fighter-phase f) :main)))
         (vfx-aura x y z (body-hurt-h b) :breaker age rdt :k (if (eq (fighter-phase f) :dash) 1.0 0.5))
         (vfx-breaker-ring x z age))
       (when (and mv (eq (mv-kind mv) :breaker) (eq (fighter-phase f) :main) (< (fighter-sf f) (mv-s mv)))
         (vfx-aura x y z (body-hurt-h b) :breaker age rdt :k (+ 1.0 (/ (fighter-sf f) (float (mv-s mv))))))
-      (when (and mv (eq (mv-kind mv) :kikon) (eq (fighter-state f) :move)    ; the Kikon rush: BLOOD tongues + ring
+      (when (and mv (eq (mv-kind mv) :kikon) (eq (fighter-state f) :move) (not flashing)   ; the Kikon rush: BLOOD tongues + ring
                  (or (not (eq (fighter-phase f) :main)) (< (fighter-sf f) (mv-s mv))))
         (vfx-aura x y z (body-hurt-h b) :kikon age rdt :k 1.0)))
     (unless (and mv (eq (mv-kind mv) :breaker)) (stop-hum e))))

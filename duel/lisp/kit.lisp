@@ -33,6 +33,7 @@
   (chip nil)                    ; chip fraction on block, NIL = none
   (meter 0.0)                   ; the kit meter (Inferno) gained on hit
   (stun nil)                    ; hitstun override in frames (NIL = the reaction's, *REACTION-FRAMES*)
+  (guard nil)                   ; guard gauge a block drains (GUARD-VALUE; NIL = a hazard's *GG-HAZARD*)
   (flags nil))                  ; :breaker :guard-crush
 
 (defstruct (move (:conc-name mv-))
@@ -42,6 +43,7 @@
   (dmg 0 :type fixnum) (adv-block nil) (track 0.0) (reach 0.0)
   (hits #() :type simple-vector)
   (cost nil) (hold nil) (slide 0.0) (flags nil)
+  (armor-hits 0 :type fixnum) (cooldown 0 :type fixnum)
   (on-frame nil) (tick nil) (release nil) (on-land nil) (cine nil) (params nil)
   (enter 0 :type fixnum)        ; the move starts at this frame (its clip too): a faster string branch
   (clip-speed 1.0)              ; clip playback speed: the clip's startup (:clip-s, else the base
@@ -76,7 +78,7 @@
   (destructuring-bind (&key kind clip clip-2 callout startup active recovery whiff (dmg 0) adv-block
                          track reach (arc 90) (height '(0.2 2.0)) vol on-hit (kb 0.0) hs chip (meter 0.0)
                          cost hold (slide 0.0) flags hits on-frame tick release on-land cine params
-                         (enter 0) (blend 0.0) planted clip-s)
+                         (enter 0) (blend 0.0) planted clip-s guard (armor-hits 0) (cooldown 0))
       spec
     (let* ((breaker (eq kind :breaker))
            (s (+ startup-add (or startup (if breaker *breaker-startup* 0))))
@@ -90,15 +92,16 @@
            (react (or on-hit (if breaker :knockback :flinch)))
            (kb (if (and breaker (zerop kb)) *breaker-knockback* kb))
            (hs (or hs (case kind (:quick *hitstop-light*) (:breaker *hitstop-breaker*) (t *hitstop-heavy*))))
-           (flags (if breaker (adjoin :breaker flags) flags)))
+           (flags (if breaker (adjoin :breaker flags) flags))
+           (guard (guard-value kind adv-block guard)))
       (flet ((window (from to &key (dmg dmg) (on-hit react) (kb kb) ((:vol hit-vol)) ((:reach hit-reach))
-                                   (chip chip) (meter meter) (flags flags) (hs hs) stun)
+                                   (chip chip) (meter meter) (flags flags) (hs hs) stun (guard guard))
                ;; a window's own :reach / :vol (scaled like the move's), else the move's volume
                (let ((v (cond (hit-reach (list* :arc (* reach-mult hit-reach) arc height))
                               (hit-vol (scale-vol-spec hit-vol reach-mult))
                               (t vol))))
                  (make-hitwin :from (+ from startup-add) :to (+ to startup-add) :dmg dmg :react on-hit
-                              :kb kb :hs hs :chip chip :meter meter :flags flags :stun stun
+                              :kb kb :hs hs :chip chip :meter meter :flags flags :stun stun :guard guard
                               :vols (and v (list (make-vol (first v) (rest v))))))))
         (make-move
          :name name :kind kind :clip clip :clip-2 clip-2 :callout callout
@@ -109,7 +112,7 @@
          :hits (coerce (cond (hits (loop for h in hits collect (apply #'window h)))
                              ((and (plusp dmg) vol) (list (window (- s startup-add) (+ (- s startup-add) a)))))
                        'simple-vector)
-         :cost cost :hold hold :slide slide :flags flags
+         :cost cost :hold hold :slide slide :flags flags :armor-hits armor-hits :cooldown cooldown
          :on-frame (loop for (f hook) in on-frame collect (list (+ f startup-add) hook))
          :tick tick :release release :on-land on-land :cine cine :params params :spec spec
          :enter (if (plusp enter) (+ enter startup-add) 0) :blend blend :planted planted
@@ -123,7 +126,8 @@
   "One move as ONE plist (critique-design §3.4). Keys:
   :kind     :quick :flash :sig :sp :breaker :kikon (sets the defaults of :track, :hs; a :breaker
             takes S/A/R, whiff, damage, reach, knockback from tuning.lisp unless given; a :kikon is
-            the Kikon rush: aura and dash from tuning.lisp, then its own strike S/A/R, and :cine)
+            the Kikon rush: :params (:aura f :aim deg/s :speed m/s :dash-max f :dash-track deg/s, 0 =
+            locked at take-off), then its own strike S/A/R, and :cine)
   :clip :clip-2  clip names (§5; :clip-2 = the second part: throw, strike, cut, flurry)
   :clip-s   the startup the :clip-2 / :clip was authored with (a clip reused at another startup
             plays at clip-s / S speed, so it still reaches its hit pose on frame S)
@@ -133,10 +137,13 @@
   :track    deg/s turn during startup; :reach metres; :arc degrees; :height (y0 y1) of the arc;
   :vol      explicit volume (:arc r deg y0 y1 | :cap a b h r | :sph fwd up r) instead of reach/arc
   :on-hit   reaction; :kb knockback m; :hs hitstop f; :chip block chip fraction; :meter kit meter gain
+  :guard    guard gauge a block drains (default by kind, GUARD-VALUE)
+  :armor-hits  hits the move's armour takes (move frames *ARMOR-FROM* .. S-1; a Kikon rush: its dash)
+  :cooldown frames before its command may start again (from the move start; kept through resets)
   :cost     Reiatsu bars (default by command, KIT-COMMAND-COST); :hold (min max) frames the button
             is held before the move proper (charge / stance); :slide metres moved during the move
   :flags    :breaker :guard-crush :stance
-  :hits     ((from to &key dmg on-hit kb vol reach chip meter flags hs) ...) multi-hit windows;
+  :hits     ((from to &key dmg on-hit kb vol reach chip meter flags hs guard) ...) multi-hit windows;
             default: one window [S, S+A) when the move has damage and a volume
   :on-frame ((frame hook) ...), :tick hook (every frame), :release hook (button released during
             :hold), :on-land hook (first hit connects), :cine hook (Kikon cinematic)
@@ -267,7 +274,7 @@ child's keys win, :commands merge per command, :strings add. Keys:
                                      hue: the composite's spot-keep mode, main.lisp FORM-GRADE)
   :intro :win :intro-callout :callout  clips / texts; :intro-weapon (key frame) = a prop held in the
                                      intro clip until FRAME (Yamamoto's cane)   :reset-reiatsu  bonus at each Kikon reset
-  :ai (:intents plist :ranges plist :moves ((lo hi cmd w ...) ...) :guard p :hoho p
+  :ai (:intents plist :ranges plist :moves ((lo hi cmd w ...) ...) :guard p :hoho p :kikon-range m
        :awaken-above reishi-fraction :react plist :sp-cancel-bars n :oki cmd :oki-above fraction
        :dash p :dash-back p)   CPU identity (§8, ai.lisp)"
   `(register-kit ,character ,form ',spec))

@@ -7,15 +7,15 @@
 #     A (table A)" for blocked Q1 / Q3 / F2 / Taimatsu (must be equal), then a mirror Q1 trade (same Reishi both sides)
 #   node tools/run.mjs dist/duel --secs 60  --script tests/scripts/duel-keys.json     P1 keyboard: J/K/L/I/U/Space/Shift
 #   node tools/run.mjs dist/duel --secs 50  --script tests/scripts/duel-extras.json   dash, Hoho swing, Burst, camera toggle
-#   node tools/run.mjs dist/duel --secs 48  --script tests/scripts/duel-kikon.json    the Kikon rush: blocked / Kikon (O held) /
-#     a hit (O tapped) / through a red guard
+#   node tools/run.mjs dist/duel --secs 150 --script tests/scripts/duel-kikon.json    the four O modules and the O rule
+#   node tools/run.mjs dist/duel --secs 50  --script tests/scripts/duel-gauges.json   guard gauge (crush, guardless) + flash-step
 #   node tools/run.mjs dist/duel --secs 75  --script tests/scripts/duel-perf.json     real-time CPU vs CPU: stats lines
 #   node tools/run.mjs dist/duel --secs 140 --script tests/scripts/duel-shots.json    tests/shots/duel-*.png
 # Determinism: run a cvc script twice (or once with turbo and once without: drop the 2102 step) and
 #   diff <(grep '^duel' run1.log) <(grep '^duel' run2.log)   -> empty.
-# Reference (the Kikon rush, 2026-09-25): duel-cvc-yk.json (seed 7) ends
-#   duel -> RESULTS winner P1 konpaku 2-0 ticks 9780 secs 163.0    (turbo and real time alike; also after a gate)
-#   (before: P2 0-1 ticks 7298 secs 121.6 with the instant Kikon; 0-4 ticks 5857 secs 97.6 with a timed Bankai;
+# Reference (the gauges, the O rule and the O modules, 2026-09-25): duel-cvc-yk.json (seed 7) ends
+#   duel -> RESULTS winner P1 konpaku 1-0 ticks 9438 secs 157.3    (turbo and real time alike; also after a gate)
+#   (before: P1 2-0 ticks 9780 secs 163.0 with the Kikon rush; P2 0-1 ticks 7298 secs 121.6 with the instant Kikon; 0-4 ticks 5857 secs 97.6 with a timed Bankai;
 #   0-7 ticks 5302 secs 88.4 before Burst and the dash)
 import json
 T0 = 9.0          # startup (meshes + sound synthesis) is done by then
@@ -83,26 +83,52 @@ for i in range(4): ev += tap(t + 1.2 + 0.3 * i, "ArrowDown")
 ev += tap(t + 2.6, "Enter") + tap(t + 3.1, "Escape") + [shot(t + 4.0, "extras-side"), cmd(t + 4.5, 2107)]
 write("extras", ev)
 
-# The Kikon rush by keyboard (P1 Yamamoto 5 m from an idle Kenpachi, debug 2322+k). Expected log lines, in order:
-#   P1 move YA-KIKON, P1 YA-KIKON -> P2 BLOCKED 70   (not red, guarding: blocked although O is held)
-#   P1 move YA-KIKON, P1 YA-KIKON -> P2 KIKON 70, P1 KIKON on P2: -2 konpaku, cine YAMA-KIKON-CINE   (red, O held)
-#   P1 move YA-KIKON, P1 YA-KIKON -> P2 HIT 70       (red, O tapped: released before the strike, a plain hit)
-#   P1 move YA-KIKON, P1 YA-KIKON -> P2 KIKON 70 ... (red and guarding: the guard doesn't stop it)
-#   P1 move YA-KIKON, P1 YA-KIKON -> P2 KIKON 70 ... (7 m, in 0.1x slow motion for the shots)
-# Shots: kikon-rush-a / -b (the aura and the dash, slow motion), kikon-prompt (HOLD O  KIKON over a red P2), kikon-cine.
+# The O modules and the O rule by keyboard (debug 2330+k: P1 with module k % 4 -- 0 ENJO, 1 TENCHI, 2 CHARGE,
+# 3 LEAP -- 1 m inside its reach from a Yamamoto CPU who, by k // 4: 0 stands, 1 guards, 2 stands red,
+# 3 guards red, 4 plays at HARD, 5 stands in 0.1x slow motion). Expected log lines per step:
+#   k 20..23 (slow motion, O held): "-> P2 HIT 70", "KIKON FOLLOW-UP on P2", then "-> P2 KIKON 70", the cinematic
+#   k 4 / 5  (guarding, not red, O held): "-> P2 BLOCKED 70" and nothing more
+#   k 13 / 15 (guarding RED, O held): "-> P2 BLOCKED 70", no Kikon (the strike is always guardable)
+#   k 9 / 11 (red, O held): "-> P2 KIKON 70" at once;  k 10 with O tapped (released): "-> P2 HIT 70", no Kikon
+#   k 17 (HARD CPU, not red): the CPU guards the strike or the follow-up by its roll, or takes the Kikon
+#   k 24 / 26 (not red, guards once hit): "-> P2 HIT 70", "KIKON FOLLOW-UP", then "-> P2 BLOCKED 70": no Kikon
+# The script turns the CAMERA option to SIDE first (2109): the lanes and dashes read from the side.
+# Shots: tests/shots/duel-o-<module>-{a,b,c}.png (the aim / aura, the dash or lane, the strike or follow-up).
 t = T0
-ev = [cmd(t, 2322), key(t + 1.0, "KeyO"), key(t + 4.0, "KeyO", False)]
-t += 5.0
-ev += [cmd(t, 2323), shot(t + 1.0, "kikon-prompt"), key(t + 1.3, "KeyO"), shot(t + 2.6, "kikon-cine"),
-       key(t + 4.3, "KeyO", False)]
-t += 9.0
-ev += [cmd(t, 2323)] + tap(t + 1.3, "KeyO")
-t += 4.0
-ev += [cmd(t, 2324), key(t + 1.3, "KeyO"), key(t + 4.3, "KeyO", False)]
-t += 9.0
-ev += [cmd(t, 2325), key(t + 0.3, "KeyO"), shot(t + 0.6, "kikon-rush-a"), shot(t + 1.6, "kikon-rush-b"),   # 0.1x slow motion
-       key(t + 6.0, "KeyO", False), cmd(t + 10.0, 2107)]
+ev = [cmd(t - 0.5, 2109)]
+for k, name in ((20, "enjo"), (21, "tenchi"), (22, "charge"), (23, "leap")):
+    ev += [cmd(t, 2330 + k), key(t + 0.2, "KeyO"), shot(t + 1.2, f"o-{name}-a"), shot(t + 2.6, f"o-{name}-b"),
+           shot(t + 4.0, f"o-{name}-c"), key(t + 12.0, "KeyO", False)]
+    t += 16.0
+for k in (4, 5, 13, 15, 9, 11, 17, 24, 26):
+    ev += [cmd(t, 2330 + k), key(t + 0.3, "KeyO"), key(t + 3.0, "KeyO", False)]
+    t += 7.0
+ev += [cmd(t, 2330 + 10)] + tap(t + 0.3, "KeyO", 0.1)                      # CHARGE tapped (released) on a red target: a plain hit
+ev += [cmd(t + 4.0, 2107)]
 write("kikon", ev)
+
+# The two universal gauges by keyboard. Guard gauge (2327: human P1 Yamamoto holds U while Kenpachi presses
+# Quick for 20 s): "P2 KE-Q* -> P1 BLOCKED" (28 per Q string) until "P1 GUARD CRUSH" on the 4th string, then
+# "-> P1 HIT" lines although U is held, then "P1 GUARD BACK" 4.75 s after the gauge emptied, then BLOCKED
+# again. Flash-step (2500: P1 Yamamoto vs an idle Kenpachi): Shift+Space x4 -> three "P1 hoho" (30 each),
+# the 4th refused; then 2500 again, one Hoho (70 left), 2320 + Shift+J after Kenpachi's 2nd hit -> "P1 BURST"
+# (70), the hash line shows f0. Shots: gauges-drain, gauges-crush, gauges-guardless, gauges-hoho, gauges-burst.
+t = T0
+ev = [cmd(t, 2327), key(t + 0.2, "KeyU"), shot(t + 3.0, "gauges-drain"), shot(t + 6.0, "gauges-crush"),
+      shot(t + 9.0, "gauges-guardless"), key(t + 22.0, "KeyU", False), cmd(t + 22.2, 2107)]
+t += 24.0
+ev += [cmd(t, 2500)]
+for i in range(4):
+    ev += [key(t + 1.0 + 1.8 * i, "ShiftLeft"), key(t + 1.05 + 1.8 * i, "Space"), key(t + 1.2 + 1.8 * i, "Space", False),
+           key(t + 1.25 + 1.8 * i, "ShiftLeft", False)]
+ev += [shot(t + 8.4, "gauges-hoho"), cmd(t + 8.5, 2107)]
+t += 10.0
+ev += [cmd(t, 2500), key(t + 1.0, "ShiftLeft"), key(t + 1.05, "Space"), key(t + 1.2, "Space", False), key(t + 1.25, "ShiftLeft", False)]
+t += 3.0
+ev += [cmd(t, 2320), key(t + 0.1, "ShiftLeft")]
+for i in range(16): ev += tap(t + 0.3 + 0.12 * i, "KeyJ", 0.05)
+ev += [key(t + 2.4, "ShiftLeft", False), shot(t + 2.6, "gauges-burst"), cmd(t + 2.8, 2107)]
+write("gauges", ev)
 
 # the menus by keyboard: TITLE -> MODE (VS PLAYER) -> SELECT (P1 Kenpachi, P2 confirms with KP1) -> INTRO
 # -> skip (Esc) -> BATTLE -> pause (Esc) -> RESUME -> pause -> CHARACTER SELECT -> back ... -> TITLE;

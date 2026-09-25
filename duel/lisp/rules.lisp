@@ -104,12 +104,13 @@ opponent at DIST."
 ;;;   :neutral   idle, walk, any move, stun      :guard     guard up (held >= *GUARD-RAISE* f)
 ;;;   :breaker   Breaker aura / dash / strike startup (hit = counter-hit)
 ;;;   :stance-in entering a stance (counter-hit)  :stance   holding a stance (super armour)
-;;;   :invuln    Step / Hoho iframes, down, wake-up
+;;;   :armor     a move's armour with hits left (:armor-hits: from move frame *ARMOR-FROM* to its startup's
+;;;              end, or a Kikon rush's dash)   :invuln    Step / Hoho iframes, down, wake-up
 (defun resolve-contact (def-state &key breaker guard-crush quick ignore-armor (in-front t) armor-vs-quick unguardable)
   "What one hit that touched the defender does. The attack: BREAKER (a Breaker strike),
 GUARD-CRUSH (Breaker property on another move), QUICK (a Quick move), IGNORE-ARMOR (Nozarashi),
-UNGUARDABLE (the Kikon rush on a red defender, KIKON-GUARDABLE-P: guard and stance don't stop it,
-Step / Hoho iframes still do).
+UNGUARDABLE (guard and stance don't stop it, Step / Hoho iframes still do; no move uses it now: the
+Kikon rush's strike is guardable, KIKON-OUTCOME).
 The defender: DEF-STATE (above), IN-FRONT (the attacker is inside his guard arc), ARMOR-VS-QUICK
 (Bankai West). Returns
   NIL           no effect (invulnerable)
@@ -119,7 +120,8 @@ The defender: DEF-STATE (above), IN-FRONT (the attacker is inside his guard arc)
   :guard-break  *GUARD-BREAK-STUN*
   :stance-break the stance crumples (*STANCE-BREAK-STUN*)
   :absorbed     the stance takes the damage, no reaction, and stores it
-  :armored      damage, no reaction (armour vs Quick)
+  :armored      damage, no reaction (a move's armour, or armour vs Quick); a Breaker, UNGUARDABLE and
+                IGNORE-ARMOR go through a move's armour
 Breaker vs Breaker is a CLASH, decided before any contact (BREAKER-CLASH-P)."
   (let ((crush (or breaker guard-crush))
         (state (cond ((and (eq def-state :guard) (not in-front)) :neutral)
@@ -131,7 +133,18 @@ Breaker vs Breaker is a CLASH, decided before any contact (BREAKER-CLASH-P)."
       (:breaker :counter)
       (:stance-in (if breaker :stance-break :counter))
       (:stance (if breaker :stance-break :absorbed))
+      (:armor (if (or breaker unguardable ignore-armor) :hit :armored))
       (:neutral (if (and quick armor-vs-quick (not ignore-armor) (not breaker)) :armored :hit)))))
+
+(defun contact-of (res)
+  "What a hit's RESOLVE-CONTACT result counts as for the attacker (design v2 §0, the contact rule):
+:HIT only when it really landed (:hit :counter :guard-break :stance-break, and the Kikon); armour, a
+stance absorb, a parry and a block are :BLOCK. Only :HIT opens the string's hit timing, the cancels
+and a move's on-land hook; NIL (a whiff or iframes) stays NIL."
+  (case res
+    ((:hit :counter :guard-break :stance-break :kikon) :hit)
+    ((nil) nil)
+    (t :block)))
 
 (defun breaker-clash-p (phase-a phase-b dist)
   "Both fighters' Breakers in :dash or :strike (strike startup/active) within *CLASH-RANGE*: CLASH
@@ -149,14 +162,19 @@ and becomes :strike as soon as the opponent is within *BREAKER-TRIGGER*."
                    (and (not held) (>= frames *breaker-dash-min*)))
                :strike :dash))))
 
-(defun kikon-rush-next-phase (phase frames dist)
+(defun kikon-rush-next-phase (phase frames dist &key aura dash-max)
   "The Kikon rush's pre-strike state machine (the Breaker's without the hold: the button only
-matters at the strike, KIKON-CONFIRM-P). PHASE :aura or :dash, FRAMES spent in it, DIST to the
-opponent. The aura lasts *KIKON-AURA*, then the strike if he is already within *KIKON-TRIGGER*, else
-the dash; the dash strikes within *KIKON-TRIGGER* or after *KIKON-DASH-MAX* frames (its range)."
+matters at the strike, KIKON-OUTCOME). PHASE :aura or :dash, FRAMES spent in it, DIST to the
+opponent; AURA and DASH-MAX are the module's (its move :params). The aura lasts AURA frames, then the
+strike if he is already within *KIKON-TRIGGER* or the module has no dash (DASH-MAX 0), else the dash;
+the dash strikes within *KIKON-TRIGGER* or after DASH-MAX frames (its range)."
   (ecase phase
-    (:aura (cond ((< frames *kikon-aura*) :aura) ((<= dist *kikon-trigger*) :strike) (t :dash)))
-    (:dash (if (or (<= dist *kikon-trigger*) (>= frames *kikon-dash-max*)) :strike :dash))))
+    (:aura (cond ((< frames aura) :aura) ((or (zerop dash-max) (<= dist *kikon-trigger*)) :strike) (t :dash)))
+    (:dash (if (or (<= dist *kikon-trigger*) (>= frames dash-max)) :strike :dash))))
+
+(defun kikon-rush-reach (speed dash-max)
+  "How far a rush module reaches: its dash (SPEED m/s for DASH-MAX frames) + *KIKON-TRIGGER*."
+  (+ *kikon-trigger* (* speed (/ dash-max 60.0))))
 
 (defun breaker-speed (frames)
   "Dash speed after FRAMES of dashing: *BREAKER-SPEED-MIN* rising to *BREAKER-SPEED-MAX*."
@@ -255,17 +273,24 @@ spread over 60 steps in whole points, so a whole second burns exactly the rate (
   "Red: Reishi below *RED-THRESHOLD* of max."
   (< reishi (* max-reishi *red-threshold*)))
 
-(defun kikon-guardable-p (victim-reishi victim-max)
-  "Can the Kikon rush's strike be guarded (blocked, or absorbed by a stance)? Only while the victim
-is not red: on a red victim it is UNGUARDABLE for RESOLVE-CONTACT (iframes still dodge it)."
-  (not (red-p victim-reishi victim-max)))
+(defun kikon-outcome (red held contact follow)
+  "What a Kikon rush strike that connected with CONTACT (RESOLVE-CONTACT's result) leads to. The
+strike is always guardable: guarded (blocked, absorbed, armoured, parried) or dodged, nothing more.
+  :KIKON   it HIT a RED victim with the button still HELD on that step (guaranteed), or it is the
+           FOLLOW-up and it hit: the Kikon (KIKON-RESULT)
+  :FOLLOW  it hit a victim who is not red, the button held: a follow-up strike comes after his hitstun
+           (*KIKON-FOLLOW-STUN*, then *KIKON-FOLLOW-GAP* frames free: he can guard or dodge it)
+  NIL      guarded, whiffed, or the button released: a plain hit (maybe a Soul Break)"
+  (when (member contact '(:hit :counter))
+    (cond (follow :kikon)
+          ((not held) nil)
+          (red :kikon)
+          (t :follow))))
 
-(defun kikon-confirm-p (victim-red held contact)
-  "Does the Kikon rush's strike become the Kikon? It connected (CONTACT, RESOLVE-CONTACT's result, is
-:hit or :counter) on a VICTIM-RED fighter (red when the hit was collected) while the attacker still
-HELD the Kikon button on that step. Otherwise the strike is an ordinary hit (a released button on a
-red victim: damage, maybe a Soul Break) or blocked. The Kikon then removes Konpaku (KIKON-RESULT)."
-  (and victim-red held (member contact '(:hit :counter)) t))
+(defun kikon-follow-wait (s)
+  "Frames the rush waits (phase :follow) after its strike hit a non-red victim before the follow-up
+strike (startup S) starts: it then hits *KIKON-FOLLOW-GAP* frames after the victim can act again."
+  (max 0 (- (+ *kikon-follow-stun* 1 *kikon-follow-gap*) s)))
 
 (defun soul-break-p (reishi) "Reishi reached 0: automatic Soul Break." (<= reishi 0))
 
@@ -310,19 +335,50 @@ victim's Reishi resets to max and both are placed by RESET-PLACEMENT."
   "Display value of a gauge that drains as a timer (Inferno in Hellfire, Awakening in a timed awakening)."
   (if (<= total-frames 0) 0.0 (* max (/ (float frames-left) total-frames))))
 
-(defun hoho-allowed-p (stunned reiatsu lockout-left)
-  "Hoho needs 1 bar (*COST-HOHO*), no block/hitstun (STUNNED) and the *HOHO-LOCKOUT* over."
-  (and (not stunned) (>= reiatsu (* *cost-hoho* *reiatsu-bar*)) (<= lockout-left 0)))
+(defun hoho-allowed-p (stunned fs lockout-left)
+  "Hoho needs *FS-HOHO* flash-step (FS), no block/hitstun (STUNNED) and the *HOHO-LOCKOUT* over."
+  (and (not stunned) (>= fs *fs-hoho*) (<= lockout-left 0)))
 
 (defun awaken-allowed-p (free gauge used)
   "Awaken: FREE (idle / walk / guard only), the gauge full, not USED yet this match."
   (and free (not used) (>= gauge *awaken-max*)))
 
-(defun burst-allowed-p (in-hitstun combo-hits reiatsu)
+(defun burst-allowed-p (in-hitstun combo-hits fs)
   "Burst Reverse: IN-HITSTUN (a grounded reaction or airborne, inputs not locked) after the
-*BURST-MIN-HITS*th hit of the combo (COMBO-HITS), *COST-BURST* bars of REIATSU. A Kikon connecting
-on the same step wins (the shell applies a Burst only when no cinematic started)."
-  (and in-hitstun (>= combo-hits *burst-min-hits*) (>= reiatsu (* *cost-burst* *reiatsu-bar*))))
+*BURST-MIN-HITS*th hit of the combo (COMBO-HITS), *FS-BURST* flash-step (FS). A Kikon connecting on
+the same step wins (the shell applies a Burst only when no cinematic started)."
+  (and in-hitstun (>= combo-hits *burst-min-hits*) (>= fs *fs-burst*)))
+
+(defun fs-regen (fs idle)
+  "Flash-step one frame later: +*FS-REGEN*/s once IDLE (frames since the last spend) reaches
+*FS-DELAY*, capped at *FS-MAX*. (Damage taken adds *FS-TAKEN* per point: combat.lisp GAIN-GAUGES.)"
+  (if (>= idle *fs-delay*) (min *fs-max* (+ fs (/ *fs-regen* 60.0))) fs))
+
+;;; ---------------------------------------------------------------- the guard gauge (design v3 G.2)
+(defun guard-value (kind adv &optional override)
+  "The guard gauge a blocked hit drains: OVERRIDE (a hitwin's / move's :guard), else by the move KIND
+(*GG-KIND*; NIL = a hazard, *GG-HAZARD*), + *GG-ENDER* for a Quick / Flash / Signature ender (block
+advantage ADV <= *GG-ENDER-ADV*)."
+  (or override
+      (if kind
+          (+ (getf *gg-kind* kind 0)
+             (if (and (member kind '(:quick :flash :sig)) (integerp adv) (<= adv *gg-ender-adv*)) *gg-ender* 0))
+          *gg-hazard*)))
+
+(defun gg-drain (gg v)
+  "The guard gauge GG after a drain of V. Values: new-gg crushed-p (it reached 0: GUARD CRUSH / guardless)."
+  (let ((n (max 0.0 (- gg v)))) (values n (<= n 0.0))))
+
+(defun gg-regen (gg idle guardless)
+  "The guard gauge one frame later: nothing before *GG-DELAY* frames without a drain (IDLE), then
+*GG-REGEN*/s (*GG-REGEN-GUARDLESS*/s while GUARDLESS), capped at *GG-MAX*. From 0: 285 f to full."
+  (if (< idle *gg-delay*)
+      gg
+      (min *gg-max* (+ gg (/ (if guardless *gg-regen-guardless* *gg-regen*) 60.0)))))
+
+(defun can-guard-p (gg guardless)
+  "May a fighter guard? Not at gauge 0, and not while GUARDLESS (from 0 until the gauge is full again)."
+  (and (> gg 0.0) (not guardless)))
 
 ;;; ---------------------------------------------------------------- stance (a Signature kind)
 (defun stance-store (stored taken)
@@ -385,6 +441,19 @@ LO <= D < HI, or NIL."
   "Is a Burst worth its bars to the CPU? Below *AI-BURST-LOW* of its Reishi, or the NEXT-HIT
 (estimated: the combo's average hit so far) would put it in red."
   (or (< reishi (* *ai-burst-low* reishi-max)) (red-p (- reishi next-hit) reishi-max)))
+
+(defun ai-guard-mult (gg guardless)
+  "How much of its guard chance a CPU uses at guard gauge GG: all of it at >= 50 %, half at 25-50 %,
+0.15 below, none when it can't guard (CAN-GUARD-P)."
+  (cond ((not (can-guard-p gg guardless)) 0.0)
+        ((>= gg (* 0.5 *gg-max*)) 1.0)
+        ((>= gg (* 0.25 *gg-max*)) 0.5)
+        (t 0.15)))
+
+(defun ai-hoho-spare-p (fs reishi reishi-max)
+  "Flash-step budgeting: may a CPU spend a Hoho on a routine dodge? It needs *FS-HOHO*, and while a
+Burst would be worth it (below *AI-BURST-LOW* of its Reishi) it keeps *FS-BURST* on top."
+  (>= fs (+ *fs-hoho* (if (< reishi (* *ai-burst-low* reishi-max)) *fs-burst* 0.0))))
 
 (defun heat-after (heat far)
   "Heat one frame later: +*AI-HEAT-RATE* per second, twice that when FAR (beyond *AI-HEAT-FAR*).

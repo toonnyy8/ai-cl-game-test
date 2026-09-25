@@ -275,7 +275,8 @@
       (3 (vfx-fire-wave 1f0 0f0 -1.57f0 0.3f0 3.5f0 0.016f0 :life 0.9f0))
       (4 (vfx-aura 1f0 0f0 0f0 2f0 :reiatsu 0f0 0.016f0) (vfx-aura 1f0 0f0 0f0 2f0 :nozarashi 0f0 0.016f0)
          (vfx-aura 1f0 0f0 0f0 2f0 :heat 0f0 0.016f0))
-      (5 (vfx-line-cut 0f0 0f0 6f0 0f0 0.1f0 1f0 :meteor :dt 0.016f0) (vfx-line-cut 0f0 1f0 3f0 1f0 0.1f0 1f0 :crack :dt 0.016f0))
+      (5 (vfx-line-cut 0f0 0f0 6f0 0f0 0.1f0 1f0 :meteor :dt 0.016f0) (vfx-line-cut 0f0 1f0 3f0 1f0 0.1f0 1f0 :crack :dt 0.016f0)
+         (vfx-line-cut 0f0 2f0 9f0 2f0 0.3f0 0.57f0 :enjo :dt 0.016f0))
       (t (st-draw-cracks)))))
 (defun cons-check-3 ()
   "3021: bytes consed by 100 calls of each phase-3 per-frame path."
@@ -284,12 +285,12 @@
     (let* ((ft (stream-buffer-fill *fx-toon*)) (fa (stream-buffer-fill *fx-add*)) (fb (stream-buffer-fill *fx-alpha*))
            (a (consed (cons-p3 100 w))))
       (setf (stream-buffer-fill *fx-toon*) ft (stream-buffer-fill *fx-add*) fa (stream-buffer-fill *fx-alpha*) fb)
-      (log-msg "phase-3 consing: 100 x ~a ~d B" (nth w '(blade-fire blade-embers smear-x3 fire-wave auras-x3 line-cuts-x2 cracks)) a)))
+      (log-msg "phase-3 consing: 100 x ~a ~d B" (nth w '(blade-fire blade-embers smear-x3 fire-wave auras-x3 line-cuts-x3 cracks)) a)))
   (stage-clear-cracks) (fx-clear))
 
 (defun cons-check ()
   "3020: bytes consed by 100 calls of each new per-frame path (with one stamp of every kind live)."
-  (dolist (k '(:cut :heavy :fire :counter :guard :guard-break :clash :hoho-out :hoho-in :burst :konpaku :rush :land))
+  (dolist (k '(:cut :heavy :fire :counter :guard :guard-break :clash :hoho-out :hoho-in :burst :konpaku :rush :land :guard-crush :reiatsu))
     (stamps-clear) (stamp k 1.2 1.2 0.0 :dx 1.0 :dz 0.0)
     (let* ((ft (stream-buffer-fill *fx-toon*)) (a (consed (cons-stamps 100))))
       (setf (stream-buffer-fill *fx-toon*) ft)

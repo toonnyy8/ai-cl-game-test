@@ -11,13 +11,17 @@
 ;;;;               stunned opponent (Guard Break); punish a recovering one; answer an incoming Breaker
 ;;;;               or Kikon rush (guard it unless red); the kit's reactions (Kenpachi's stance);
 ;;;;               Breaker a long guard; guard or Hoho a committed move; awaken
-;;;;   kikon       the rush only on a red opponent (as a cancel, on his hitstun, or at a neutral
-;;;;               decision within its range), the button held through the strike: always the Kikon
+;;;;   kikon       the rush on a red opponent (as a cancel, on his hitstun, or at a neutral decision
+;;;;               within the kit's :kikon-range), the button held through the strike: always the Kikon;
+;;;;               on one who isn't red only as a poke (the kit's :moves), which a hit turns into the
+;;;;               follow-up. As the victim of a follow-up it guards it by difficulty (the anti-rush roll)
 ;;;;   intents     APPROACH / PRESSURE / ZONE / DEFEND re-picked every *AI-REPICK* f: a preferred range
 ;;;;               to walk to, then a weighted move for the distance band
 ;;;;   heat        +*AI-HEAT-RATE*/s without dealing damage (x2 far apart): the preferred range
 ;;;;               shrinks, the Breaker weight doubles at 8 — this is what makes matches end
-;;;;   burst       combo'd past its 2nd hit for its perception delay, 2 bars, and worth it
+;;;;   gauges      guards less as its guard gauge runs low (steps aside instead), never guardless;
+;;;;               presses a guardless opponent; keeps a Burst's flash-step when a Burst would be worth it
+;;;;   burst       combo'd past its 2nd hit for its perception delay, *FS-BURST* flash-step, and worth it
 ;;;;               (AI-BURST-WANTED-P): one roll per combo (*AI-BURST-P* by difficulty)
 ;;;;   dash        far outside its range: hold Step toward it (the kit's :dash chance), or away from a
 ;;;;               too-close opponent (:dash-back), released once the range is reached
@@ -102,7 +106,8 @@ while: a charge move is held to its full charge from beyond 7 m, where it has th
         (:side-step (ai-press b :step 1 :act :side-step))  ; BRAIN-STEP holds the stick sideways
         (:hoho (ai-press b :step 1 :modded t :act :hoho))
         (:guard (ai-press b :guard (+ 10 (floor (* r 20)))))
-        (:kikon (ai-press b :kikon (+ *kikon-aura* *kikon-dash-max* (mv-s (kit-command-move kit :kikon)) 4)))   ; held to the strike
+        (:kikon (let ((mv (kit-command-move kit :kikon)))                ; held through the strike (aura + dash + S)
+                  (ai-press b :kikon (+ (rush-param mv :aura) (rush-param mv :dash-max) (mv-s mv) 4))))
         (:awaken (ai-press b :awaken 1))))))
 
 ;;; ---------------------------------------------------------------- decisions
@@ -128,8 +133,10 @@ SP2 when the victim is on the ground (a launched victim would drop out of it) an
   "The reflexes (checked before the intent): a command keyword or NIL. S = the perceived opponent,
 D = the perceived distance."
   (let* ((f (fighter e)) (g (gauges e)) (kit (fighter-kit f)) (st (fighter-state f)) (mv (fighter-move f))
-         (bars (floor (gauges-reiatsu g) *reiatsu-bar*)) (free (member st '(:idle :guard :run)))
+         (free (member st '(:idle :guard :run)))
          (red (red-p (gauges-reishi g) (gauges-reishi-max g)))
+         (hoho-ok (and (zerop (fighter-hoho-lock f)) (>= (gauges-fs g) *fs-hoho*)))      ; flash-step for one
+         (guard-k (ai-guard-mult (gauges-gg g) (gauges-guardless g)))                  ; the guard gauge left
          (q (kit-command-move kit :q)) (new-event (/= (snap-start s) (brain-roll-key b))))
     (when new-event                                       ; one roll per opponent action
       (setf (brain-roll-key b) (snap-start s) (brain-guard-roll b) (sim-rnd01) (brain-hoho-roll b) (sim-rnd01)
@@ -144,7 +151,7 @@ D = the perceived distance."
       ((eq st :move) nil)
       ((not free) nil)
       ;; a red opponent still reeling from our hits: rush him
-      ((and (kikon-ready-p e) (member (snap-state s) '(:stun :air)) (< d *ai-kikon-range*))
+      ((and (kikon-ready-p e) (member (snap-state s) '(:stun :air)) (< d (ai-table e :kikon-range 7.0)))
        (why b :kikon :kikon))
       ((and (gauges-evolution g) (>= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (ai-table e :awaken-above 0.0)))
        :awaken)
@@ -167,15 +174,15 @@ D = the perceived distance."
       ((and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s))
             (>= (- (snap-left s) (brain-delay b)) (mv-s q)) (< d (+ (mv-reach q) 0.4)))
        (why b :punish :q))
-      ;; an incoming Breaker, or a Kikon rush we can't guard (we are red): Hoho through its dash (a
-      ;; bar), Q1 it while it has the room, else Step sideways (a Hoho in the aura only reappears in
-      ;; front of the dash); a rush we can guard: guard it
-      ((and (member (snap-kind s) '(:breaker :kikon)) (member (snap-phase s) '(:aura :dash)) (< d *ai-anti-breaker-range*)
+      ;; an incoming Breaker, a Kikon rush, or a rush's follow-up strike coming (it hit us, not red): guard
+      ;; a rush when not red (the chance by difficulty); else Hoho through its dash (flash-step), Q1 it
+      ;; while it has the room, else Step sideways (a Hoho in the aura only reappears in front of the dash)
+      ((and (member (snap-kind s) '(:breaker :kikon)) (member (snap-phase s) '(:aura :dash :follow))
+            (< d (if (eq (snap-phase s) :follow) (+ (snap-reach s) *ai-threat-margin*) *ai-anti-breaker-range*))
             (< (brain-react-roll b) (getf *ai-anti-breaker-p* (brain-difficulty b) 0.5)))
        (why b :anti-breaker
-            (cond ((and (eq (snap-kind s) :kikon) (not red)) :guard)
-                  ((and (eq (snap-phase s) :dash) (>= bars 1) (zerop (fighter-hoho-lock f))
-                        (< (brain-hoho-roll b) (ai-table e :hoho 0.2)))
+            (cond ((and (eq (snap-kind s) :kikon) (not red) (plusp guard-k)) :guard)
+                  ((and (eq (snap-phase s) :dash) hoho-ok (< (brain-hoho-roll b) (ai-table e :hoho 0.2)))
                    :hoho)
                   ((> d *ai-anti-breaker-q*) :q)
                   (t :side-step))))
@@ -193,15 +200,17 @@ D = the perceived distance."
             (/= (brain-break-key b) (snap-start s)))
        (setf (brain-break-key b) (snap-start s))
        (and (< (sim-rnd01) *ai-guard-break-p*) (why b :guard-break :breaker)))
-      ;; a committed move coming: Hoho it (1 bar) or guard it (a Kikon rush on us red: Hoho or Step)
+      ;; a committed move coming: Hoho it (flash-step to spare) or guard it; a low guard gauge guards
+      ;; less and steps aside instead (AI-GUARD-MULT); a Kikon rush on us red: Hoho or Step
       ((and (eq (snap-state s) :move) (member (snap-kind s) '(:quick :flash :sig :sp :breaker :kikon))
             (< (snap-sf s) (snap-active-end s)) (< d (+ (snap-reach s) *ai-threat-margin*)))
-       (cond ((and (>= bars 1) (zerop (fighter-hoho-lock f)) (>= (- (snap-s s) (snap-sf s)) 6)
-                   (< (brain-hoho-roll b) (ai-table e :hoho 0.2)))
-              (why b :hoho :hoho))
-             ((and red (eq (snap-kind s) :kikon)) (why b :anti-kikon :side-step))
-             ((< (brain-guard-roll b) (+ (ai-table e :guard 0.3) (if (eq (brain-intent b) :defend) 0.25 0.0)))
-              :guard))))))
+       (let ((chance (+ (ai-table e :guard 0.3) (if (eq (brain-intent b) :defend) 0.25 0.0))))
+         (cond ((and hoho-ok (ai-hoho-spare-p (gauges-fs g) (gauges-reishi g) (gauges-reishi-max g))
+                     (>= (- (snap-s s) (snap-sf s)) 6) (< (brain-hoho-roll b) (ai-table e :hoho 0.2)))
+                (why b :hoho :hoho))
+               ((and red (eq (snap-kind s) :kikon)) (why b :anti-kikon :side-step))
+               ((< (brain-guard-roll b) (* chance guard-k)) :guard)
+               ((< (brain-guard-roll b) chance) (why b :low-guard :side-step))))))))
 
 (defun ai-neutral (e b s d)
   "No reflex fired: walk to the intent's range, and now and then decide (AI-DECIDE)."
@@ -210,7 +219,8 @@ D = the perceived distance."
       (setf (brain-intent-t b) *ai-repick*)
       (let ((w (ai-table e :intents)) (hot (min 3.0 (/ heat 4.0))))
         (setf (brain-intent b)
-              (or (weighted-pick (sim-rnd01) :approach (getf w :approach 1) :pressure (+ (getf w :pressure 1) hot)
+              (or (weighted-pick (sim-rnd01) :approach (getf w :approach 1)
+                                 :pressure (+ (getf w :pressure 1) hot (if (opp-guardless-p e) 3 0))
                                  :zone (getf w :zone 1) :defend (getf w :defend 1))
                   :approach))))
     (when (<= (decf (brain-strafe-t b)) 0)
@@ -224,22 +234,28 @@ D = the perceived distance."
           (setf (brain-decide-t b) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
           (ai-decide e b kit s d lo hi heat))))))
 
+(defun opp-guardless-p (e)
+  "E's opponent can't guard (his guard gauge ran out): press him (AI-NEUTRAL, AI-DECIDE)."
+  (gauges-guardless (gauges (opp-of e))))
+
 (defun ai-decide (e b kit s d lo hi heat)
   "A neutral decision, at distance D with the preferred range LO..HI (S: the perceived opponent):
 the Kikon rush on a red opponent within its range (*AI-KIKON-P*), dash to / from that range (until
 its middle), guard, attack (a weighted pick from the kit's band for D), or wait."
-  (cond ((and (kikon-ready-p e) (< d *ai-kikon-range*) (not (member (snap-state s) '(:down :wakeup :hoho)))
+  (cond ((and (kikon-ready-p e) (< d (ai-table e :kikon-range 7.0)) (not (member (snap-state s) '(:down :wakeup :hoho)))
               (< (sim-rnd01) *ai-kikon-p*))
          (ai-command b kit :kikon d) (setf (brain-why b) :kikon))
         ((and (> d (+ hi *ai-dash-gap*)) (< (sim-rnd01) (ai-table e :dash 0.0)))
          (ai-dash b 1.0 (* 0.5 (+ lo hi))) (setf (brain-why b) :dash))
         ((and (< d (- lo *ai-dash-gap*)) (< (sim-rnd01) (ai-table e :dash-back 0.0)))
          (ai-dash b -1.0 (* 0.5 (+ lo hi))) (setf (brain-why b) :dash-back))
-        ((and (< d 3.4) (< (sim-rnd01) (min 0.9 (+ (ai-table e :guard 0.3) (if (eq (brain-intent b) :defend) 0.2 0.0)))))
+        ((and (< d 3.4) (< (sim-rnd01) (* (min 0.9 (+ (ai-table e :guard 0.3) (if (eq (brain-intent b) :defend) 0.2 0.0)))
+                                          (ai-guard-mult (gauges-gg (gauges e)) (gauges-guardless (gauges e))))))
          (ai-press b :guard (+ (first *ai-guard-hold*) (floor (* (second *ai-guard-hold*) (sim-rnd01))))))
-        ((< (sim-rnd01) (min 0.9 (+ (getf *ai-aggression* (brain-intent b) 0.3) (* 0.04 heat))))
+        ((< (sim-rnd01) (min 0.9 (+ (getf *ai-aggression* (brain-intent b) 0.3) (* 0.04 heat) (if (opp-guardless-p e) 0.3 0.0))))
          (let* ((weights (copy-list (band-weights (ai-table e :moves) d))))
-           (when (getf weights :breaker) (setf (getf weights :breaker) (* (getf weights :breaker) (heat-breaker-mult heat))))
+           (when (getf weights :breaker)                  ; (a guardless opponent has no guard to break)
+             (setf (getf weights :breaker) (if (opp-guardless-p e) 0 (* (getf weights :breaker) (heat-breaker-mult heat)))))
            (let ((cmd (apply #'weighted-pick (sim-rnd01) weights)))
              (when (and cmd (or (not (member cmd *kit-commands*)) (kit-command-ok-p e cmd))
                         (or (not (member cmd '(:q :f)))                  ; don't whiff a string at range

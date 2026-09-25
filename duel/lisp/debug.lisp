@@ -21,9 +21,12 @@
 ;;;;   2320     Burst test: human P1 Yamamoto (3 bars) at 2 m from Kenpachi, whose idle CPU mashes Quick for
 ;;;;            60 steps (Q1 Q2 Q3): press Shift+J after the 2nd hit
 ;;;;   2321     force a Burst Reverse now: P1 (in Kenpachi's Q2 hitstun) bursts out (screenshots)
-;;;;   2322+k   Kikon rush test: human P1 Yamamoto 5 m from an idle Kenpachi who (k 0) holds guard at full
-;;;;            Reishi, (1) stands red (Reishi 200), (2) holds guard red; (3) as 1 but 7 m apart in 0.1x
-;;;;            slow motion for 4 s (screenshots of the dash); the script presses O
+;;;;   2327     guard gauge test: human P1 Yamamoto 2 m from Kenpachi pressing Quick for 20 s (hold U): the
+;;;;            gauge drains, GUARD CRUSH, hits land while U is held, the guard back only when full
+;;;;   2328     consing of the new HUD gauge bars (100 draws each) -> "hud consing" line
+;;;;   2330+k   O module test: human P1 with module k mod 4 (0 ENJO, 1 TENCHI, 2 CHARGE, 3 LEAP) 1 m inside
+;;;;            its reach from a Yamamoto CPU who (k div 4) 0 stands, 1 guards, 2 stands red, 3 guards red,
+;;;;            4 plays (HARD), 5 stands, 0.1x slow motion 8 s (shots), 6 guards once hit; the script holds O
 ;;;;   2326     force a clash now (Breaker vs Breaker: YK 3 m apart, the CLASH event; screenshots)
 ;;;;   2600+k   *RED-THRESHOLD* = k % (pacing the seed gate without a rebuild)
 ;;;;   2400 god (both fighters' Reishi is topped back up to 400 every frame; Kikon still lands)   2500+k human P1 vs an
@@ -39,16 +42,19 @@
 (defvar *no-draw* (make-array 4 :initial-element nil) "Debug 2120+k: skip drawing part k (perf bisection).")
 
 (defun state-hash-line ()
-  "The determinism hash: positions quantized to cm, facing to 0.01 rad, every gauge."
+  "The determinism hash: positions quantized to cm, facing to 0.01 rad, every gauge (f flash-step,
+g guard gauge, ! = guardless)."
   (with-output-to-string (s)
     (format s "duel hash t=~d" *match-tick*)
     (dolist (e (list *p1* *p2*))
       (let ((p (pos-of e)) (g (gauges e)) (f (fighter e)))
-        (format s " | ~d ~d ~d ~d ~a ~a r~d k~d a~d w~d m~d~@[ h~d~]" (round (* 100 (aref p 0))) (round (* 100 (aref p 1)))
+        (format s " | ~d ~d ~d ~d ~a ~a r~d k~d a~d f~d g~d~:[~;!~] w~d m~d~@[ h~d~]" (round (* 100 (aref p 0))) (round (* 100 (aref p 1)))
                 (round (* 100 (aref p 2))) (round (* 100 (yaw-of e))) (fighter-state f) (fighter-form f)
-                (gauges-reishi g) (gauges-konpaku g) (round (gauges-reiatsu g)) (round (gauges-awaken g))
+                (gauges-reishi g) (gauges-konpaku g) (round (gauges-reiatsu g)) (round (gauges-fs g)) (round (gauges-gg g))
+                (gauges-guardless g) (round (gauges-awaken g))
                 (round (gauges-meter g)) (and (brain e) (floor (brain-heat (brain e)))))))
-    (format s " | haz ~d" (let ((n 0)) (do-entities (h hazard) (incf n)) n))))
+    (format s " | cd ~{~d~^.~} ~{~d~^.~} | haz ~d" (coerce (fighter-cd (fighter *p1*)) 'list) (coerce (fighter-cd (fighter *p2*)) 'list)
+            (let ((n 0)) (do-entities (h hazard) (incf n)) n))))
 
 (defun hash-log ()
   (when (and (eq *flow* :battle) (plusp *match-tick*) (zerop (mod *match-tick* 600)))
@@ -90,16 +96,41 @@
   (setf (fighter-combo-hits (fighter *p1*)) 2)
   (burst! *p1*))
 
-(defun rush-test (k)
-  "Kikon rush test (2322+k): human P1 Yamamoto 5 m from an idle Kenpachi CPU; K 0: he holds guard at
-full Reishi (the strike is blocked, held O or not), 1: he stands red (held O = the Kikon, a tap = a
-hit), 2: he holds guard red (the strike goes through), 3: as 1, 7 m apart in slow motion (shots)."
+(defparameter *module-tests* '((:yamamoto :base) (:yamamoto :bankai) (:kenpachi :base) (:kenpachi :nozarashi))
+  "The O (Kikon rush) modules by form: ENJO, TENCHI, CHARGE, LEAP CLEAVE.")
+
+(defun module-test (k)
+  "O module test (2330+k): human P1 with module (mod K 4) (0 ENJO, 1 TENCHI, 2 CHARGE, 3 LEAP) 1 m inside
+its reach from a Yamamoto CPU who, by (floor K 4): 0 stands (a held O hits: the follow-up, then the
+Kikon), 1 holds guard (blocked), 2 stands red (the Kikon), 3 holds guard red (blocked: no Kikon), 4 is
+switched on at HARD (it guards the follow-up by its roll), 5 as 0 in 0.1x slow motion for 8 s (shots),
+6 stands and holds guard from the moment the strike hits him (the follow-up is BLOCKED).
+The script holds O (or taps it)."
+  (destructuring-bind (c form) (nth (mod k 4) *module-tests*)
+    (ensure-battle c :yamamoto)
+    (force-form *p1* form)
+    (let* ((mv (kit-command-move (kit-of *p1*) :kikon))
+           (reach (max (mv-reach mv) (kikon-rush-reach (rush-param mv :speed) (rush-param mv :dash-max)))))
+      (place *p1* *p2* (- reach 1.0)))
+    (fill (fighter-cd (fighter *p1*)) 0)
+    (when (<= 20 k 23) (slowmo 0.1 8.0))
+    (when (>= k 24) (setf *probe* (list :guard-after nil *match-tick* nil nil nil)))
+    (let ((v (floor k 4)) (g (gauges *p2*)) (b (brain *p2*)))
+      (setf (gauges-reishi g) (if (member v '(2 3)) 200 (gauges-reishi-max g))
+            (gauges-gg g) *gg-max* (gauges-guardless g) nil
+            (brain-off b) (/= v 4) (brain-difficulty b) :hard (brain-delay b) (getf *ai-delay* :hard)
+            (brain-press b) :guard (brain-press-mod b) nil (brain-press-left b) (if (member v '(1 3)) 999 0)))))
+
+(defun probe-pressure ()
+  "Guard gauge test (2327): human P1 Yamamoto 2 m from Kenpachi, whose switched-off CPU presses Quick
+every other step for 20 s (Q strings into the guard), both put back 2 m apart whenever Kenpachi is free
+beyond 2.6 m (PROBE-UPDATE). Hold Guard (U) throughout: the gauge drains 28 per blocked Q string, the
+4th string GUARD CRUSHes, the next hits land although U is held, and the guard comes back only when the
+gauge is full again (4.75 s)."
   (ensure-battle :yamamoto :kenpachi)
-  (place *p1* *p2* (if (= k 3) 7.0 5.0))
-  (when (= k 3) (slowmo 0.1 4.0))
-  (let ((g (gauges *p2*)) (b (brain *p2*)))
-    (setf (gauges-reishi g) (if (plusp k) 200 (gauges-reishi-max g)))
-    (setf (brain-press b) :guard (brain-press-mod b) nil (brain-press-left b) (if (member k '(0 2)) 999 0))))   ; off: held
+  (place *p1* *p2* 2.0)
+  (setf (gauges-gg (gauges *p1*)) *gg-max* (gauges-guardless (gauges *p1*)) nil)
+  (setf *probe* (list :pressure :quick *match-tick* nil nil nil)))
 
 (defun probe-update ()
   "Per step: finish a running probe (the first tick each side is free again = both idle; the
@@ -114,6 +145,16 @@ presses (J down every other step: the switched-off brain still writes its held b
                    (when (> dt 60) (setf (brain-press-left b) 0 *probe* nil))))
           (:trade
             (when (>= dt 40) (log-msg "duel probe trade ~a: ~a" name (state-hash-line)) (setf *probe* nil)))
+          (:guard-after (when (eq (state-of *p2*) :stun)          ; hit: hold guard from now on
+                          (let ((b (brain *p2*))) (setf (brain-press b) :guard (brain-press-left b) 999 *probe* nil))))
+          (:pressure (let ((b (brain *p2*)))
+                       (setf (brain-press b) :quick (brain-press-mod b) nil (brain-press-left b) (if (evenp dt) 1 0))
+                       (when (and (eq (state-of *p2*) :idle) (> (fighter-dist (fighter *p2*)) 2.6)
+                                  (member (state-of *p1*) '(:idle :guard)))
+                         (let ((g1 (gauges *p1*)))
+                           (place *p1* *p2* 2.0)
+                           (log-msg "duel probe pressure t=~d gg ~d~:[~; guardless~]" dt (round (gauges-gg g1)) (gauges-guardless g1))))
+                       (when (> dt 1200) (setf (brain-press-left b) 0 *probe* nil))))
           (t
             (progn
               (when (eq (state-of *p2*) :guard-hit) (setf blocked t))
@@ -125,6 +166,14 @@ presses (J down every other step: the switched-off brain still writes its held b
                               name af df (- df af) (mv-adv-block (kit-move (kit-of *p1*) name)))
                      (setf *probe* nil))
                     ((> dt 300) (log-msg "duel probe ~a: no block" name) (setf *probe* nil))))))))))
+
+(defun hud-cons-check ()
+  "2328: bytes consed by 100 draws of each HUD gauge bar added with the gauges (guard, flash-step)."
+  (let ((c0 (cons-bytes)))
+    (dotimes (i 100) (%hud-guard 10f0 10f0 300f0 6f0 0.4f0 0.6f0 nil nil 1f0) (%hud-guard 10f0 10f0 300f0 6f0 0.4f0 0.6f0 t t 1f0))
+    (let ((c1 (cons-bytes)))
+      (dotimes (i 100) (%hud-flash 10f0 30f0 300f0 6f0 0.8f0 nil t 1f0) (%hud-flash 10f0 30f0 300f0 6f0 0.8f0 t nil 1f0))
+      (log-msg "hud consing: 100 x 2 guard bars ~d B, 100 x 2 flash-step bars ~d B" (- c1 c0) (- (cons-bytes) c1)))))
 
 (defun god-update ()
   (when *god*
@@ -267,7 +316,9 @@ presses (J down every other step: the switched-off brain still writes its held b
         ((= c 2319) (probe-trade))
         ((= c 2320) (probe-mash))
         ((= c 2321) (force-burst))
-        ((<= 2322 c 2325) (rush-test (- c 2322)))
+        ((= c 2327) (probe-pressure))
+        ((= c 2328) (hud-cons-check))
+        ((<= 2330 c 2357) (module-test (- c 2330)))
         ((= c 2326) (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 3.0) (clash! *p1* *p2*))
         ((<= 2300 c 2399) (force-special (- c 2300)))
         ((= c 2400) (setf *god* (not *god*)))

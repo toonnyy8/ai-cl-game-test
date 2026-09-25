@@ -686,6 +686,8 @@ covers every row.
 | Bankai | anticipation: 16 tongues pulled into the blade over 3 d + converging shards + ink focus lines; **silence**; burst: a BLACK SMOKE / charcoal (style 3) double ring + 6 charcoal puffs; silhouette reveal on a white card (§5); for the whole 20 s form: **spot-keep mode 4 (hue 10°)**, a charred blade with an EMBER edge line on threes, 4 slow **charcoal ink-wash wisps** for the heat [V: K3]; cracks = ink gashes with an ember core | the reveal still is grey except the ember line; the wisps show charcoal grain |
 | Tenchi Kaijin | a pure white hard slash (`fx-crescent`-like UI polygon, tapered at both ends, 2 px ink border) in a true two-tone impact frame (white/ink), on a **black card**; then a manga-page hold; the victim flakes into ASH shards drifting sideways on threes; a silence beat before the slash | there is no translucent grey wedge; the frame has no colour at all |
 | Nadegiri / Kyokujitsujin / Kaka | HIT `fx-crescent :lens` + an ink-edged scorch line; Kaka: DUST puffs + inked rock debris | — |
+| O: ENJO (built, bankai-kikon part 1) | `vfx-line-cut :enjo`: a FIRE ground line along the 1–9 m lane, then 4 `fx-wall`s (2 m each) rising one after another over 16 f, each over an EMBER backing wall (no black), flame scraps, a warm light; erodes over 0.25 s | one lane of walls, fire the only colour |
+| O: KITA: TENCHI (built) | take-off: the Hoho vanish streaks; the dash: body and aura not drawn, an ink afterimage (`start-ghost`) every 4 f; the cut: the hit's white star | the flash step reads as afterimages only |
 
 ### 4.2 Kenpachi
 | Effect | Redesign | AC |
@@ -696,6 +698,8 @@ covers every row.
 | Split the Meteor / Buttagiru | ink gash (a DUST-palette ribbon on the ground with a heavy edge) + a REIATSU core line + a light sheet of 5 LIGHT ribbons for 3 d + 12 inked rocks + 14 DUST puffs (threes) | particles per cut ≤ 20 |
 | Sky split | beat 0 (a negative frame for 2 f) → **black card**, silence → the white light band with ink borders + focus lines, held 8 f (`model-hold`, no hitstop) → the existing `*grade-split*` → the ground cut in drawings | — |
 | SP2 dash | afterimage sequence (§2.6) every 2 drawings + `ui-speed-lines` | — |
+| O: CHARGE (built) | the REIATSU aura × 1.5 and the BLOOD rush aura; the hit its armour eats: a REIATSU star + the laugh | yellow + the red rush ring only |
+| O: LEAP CLEAVE (built) | take-off: a DUST ring + dust; the body drawn up to 1.6 m (`:lift`, a look); landing: a 3 m `:meteor` gash | — |
 
 ### 4.3 Universal (▲ all, Phase 2)
 | Effect | Redesign | AC |
@@ -706,6 +710,7 @@ covers every row.
 | Counter | BLOOD star + a manga-page frame for 2 f (the world goes black/white, the red stays) + a "COUNTER" brush stamp | red is the only colour in the frame |
 | Guard | a **hex-faceted** STEEL shape (`fx-star` with r0 = r1, n = 6) held 2 d + 4 steel shards | a hexagon, not a ring; no warm pixels |
 | Guard break | 12 INK shards with BLOOD edges + a HIT star + a 1 f white flash | — |
+| Guard crush (built, the guard gauge) | the STEEL hexagon held one drawing, then 12 STEEL shards around a HIT star + a 1 f negative frame, "GUARD CRUSH" | mono |
 | Clash | an 8-spike HIT star (r 1.2) + a negative impact frame for 2 f + focus lines for 20 f + a flat ground ring | — |
 | Hoho | vanish: d1 squash/stretch smear + 6 horizontal speed streaks at body height; d2 ink silhouette (§2.6); d3 DUST puffs. Appear: converging streaks → a small HIT star | the ink afterimage is visible in the d2 still |
 | Burst Reverse | anticipation (4 f contraction + converging lines) → a flat expanding **double ring** (thick white leading edge, thin STEEL trailing edge, dark hairline) + 8 steel shards + the defender silhouetted with a white back-rim for 3 f + a 1 f negative frame | there is no glowing ball |

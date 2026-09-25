@@ -680,7 +680,9 @@ far end erodes first). A macro: 0 B."
   "A cut along the ground (x0 z0)→(x1 z1). KIND :sun (Kyokujitsujin: a thin white-hot line, in
 the air at chest height and scorched on the ground, no explosion), :meteor (Nozarashi: the ground
 splits, a light sheet flashes and a shockwave runs out on both sides), :crack (Buttagiru: a 3 m
-ground crack with dust). DT (optional) feeds the particles; 0 = none."
+ground crack with dust), :enjo (the Kikon module ENJO: a FIRE line runs along the lane from 1 m, then
+four FIRE walls rise along it one after another over 16 frames, each over an EMBER backing, hold,
+and erode). DT (optional) feeds the particles; 0 = none."
   (with-floats (x0 z0 x1 z1 age life dt)
     (let* ((dx (- x1 x0)) (dz (- z1 z0)) (l (f-max 1f-3 (f-sqrt (+ (* dx dx) (* dz dz)))))
            (px (/ (- dz) l)) (pz (/ dx l)) (v (f-clamp (/ age (f-max life 0.01f0)) 0f0 1f0))
@@ -733,6 +735,33 @@ ground crack with dust). DT (optional) feeds the particles; 0 = none."
                  (declare (single-float u sd sp))
                  (%t-blob (+ x0 (* u dx)) 0.2f0 (+ z0 (* u dz)) (* sd sp px) (rnd-range 0.3f0 1f0) (* sd sp pz)
                           (rnd-range 0.6f0 1f0) (rnd-range 0.25f0 0.4f0) -0.2f0 0.25f0 +pal-dust+))))))
+        (:enjo                                           ; the lane of fire walls (§4.1 row ENJO)
+         (let* ((sa (sage age 2f0)) (dr (drawing-no)) (sd (i->f (mod (f->i dr) 7))) (ux (/ dx l)) (uz (/ dz l))
+                (k (if (< sa (- life 0.25f0)) 0.98f0 (f-max 0f0 (* 0.98f0 (/ (- life sa) 0.25f0)))))
+                (e (camera-eye *camera*)) (vx (- (* 0.5f0 (+ x0 x1)) (aref e 0))) (vz (- (* 0.5f0 (+ z0 z1)) (aref e 2)))
+                (vl (f-max 0.01f0 (f-sqrt (+ (* vx vx) (* vz vz))))) (ox (* 0.3f0 (/ vx vl))) (oz (* 0.3f0 (/ vz vl))))
+           (declare (single-float sa dr sd ux uz k vx vz vl ox oz) (type f32vec e))
+           (toon-ground-seg (+ x0 ux) (+ z0 uz) x1 z1 0.03f0 0.12f0 1f0 0.3f0 (+ 40f0 sd) 0.3f0
+                            (toon-a +pal-fire+ (* k (f-clamp (* 8f0 sa) 0f0 0.98f0))))
+           (dotimes (i 4)
+             (let* ((fi (i->f i)) (rise (f-clamp (/ (- sa (* 0.0667f0 fi)) 0.07f0) 0f0 1f0)) (hgt (* 2.4f0 rise))
+                    (a0 (+ 1f0 (* 2f0 fi))))
+               (declare (single-float fi rise hgt a0))
+               (when (> rise 0f0)
+                 (dotimes (j 5)                          ; this wall's base: 2 m of the lane
+                   (let* ((u (+ a0 (* 0.5f0 (i->f j)))))
+                     (declare (single-float u))
+                     (setf (aref *wave-xs* j) (+ x0 (* u ux) ox) (aref *wave-zs* j) (+ z0 (* u uz) oz))))
+                 (fx-wall *wave-xs* *wave-zs* 5 (* 1.2f0 hgt) 5 0.25f0 (+ 20f0 sd fi) +pal-ember+ k)   ; the backing
+                 (dotimes (j 5) (setf (aref *wave-xs* j) (- (aref *wave-xs* j) ox) (aref *wave-zs* j) (- (aref *wave-zs* j) oz)))
+                 (fx-wall *wave-xs* *wave-zs* 5 hgt 5 0.2f0 (+ 3f0 sd fi) +pal-fire+ k))))
+           (when (> k 0.3f0)
+             (dotimes (i (n-of 16f0 dt))                  ; flame scraps off the crests
+               (let* ((u (rnd-range 1f0 9f0)))
+                 (declare (single-float u))
+                 (%t-blob (+ x0 (* u ux)) (rnd-range 1f0 2f0) (+ z0 (* u uz)) (rnd-range -1f0 1f0) (rnd-range 0.5f0 1.5f0)
+                          (rnd-range -1f0 1f0) (rnd-range 0.25f0 0.4f0) (rnd-range 0.08f0 0.14f0) -1f0 0.3f0 +pal-fire+))))
+           (%light (* 0.5f0 (+ x0 x1)) 1.2f0 (* 0.5f0 (+ z0 z1)) 1f0 0.45f0 0.12f0 7f0 (* 2.5f0 k) 7)))
         (t                                               ; :crack (Buttagiru): gash + core, dust, a few rocks
          (let* ((open (f-clamp (/ age 0.08f0) 0f0 1f0)) (glow (f-clamp (- 1f0 (/ age (* 0.5f0 life))) 0f0 1f0)))
            (declare (single-float open glow))
@@ -900,7 +929,7 @@ rings)."
   "Live drawn one-shots: kind x y z dx dy dz age scale seed n flag (kind 0 = a free slot).")
 (defparameter *stamp-kinds*
   '(:cut 1 :heavy 2 :fire 3 :counter 4 :guard 5 :guard-break 6 :clash 7 :hoho-out 8 :hoho-in 9 :burst 10
-    :konpaku 11 :rush 12 :land 13)
+    :konpaku 11 :rush 12 :land 13 :guard-crush 14 :reiatsu 15)
   "Stamp kind -> its code in *STAMPS*.")
 (defvar *stamp-seed* 0.0 "Advances per stamp: every one-shot draws its own irregular shape.")
 
@@ -975,7 +1004,8 @@ hashes). Symbol macros: a float a stamp kind does not use costs nothing (an unus
 held 3 drawings, 6 shards; envelope 1 2 3 8), :fire (FIRE star), :counter (BLOOD star)."
   (declare (fixnum o))
   (with-stamp (o)
-    (let* ((kind (aref %sv o)) (heavy (= kind 2f0)) (pal (cond ((= kind 3f0) +pal-fire+) ((= kind 4f0) +pal-blood+) (t +pal-hit+)))
+    (let* ((kind (aref %sv o)) (heavy (= kind 2f0))
+           (pal (cond ((= kind 3f0) +pal-fire+) ((= kind 4f0) +pal-blood+) ((= kind 15f0) +pal-reiatsu+) (t +pal-hit+)))
            (a (hit-age age)))
       (declare (single-float kind pal a))
       (fx-envelope (es k fl ph) (a 1 2 (if heavy 3f0 2f0) (if heavy 8f0 6f0))
@@ -1024,6 +1054,22 @@ held 3 drawings, 6 shards; envelope 1 2 3 8), :fire (FIRE star), :counter (BLOOD
               (%star x y z (* sc 0.2f0) (* sc es 0.85f0) 8 sdx sdy 0.06f0 seed +pal-hit+ k)
               (%shards-out 12 x y z sdx sdy a 4.5f0 (* sc 0.42f0) (* sc 0.11f0) +pal-blood+ k seed 3.1f0)
               (%shards-out 12 x y z sdx sdy a 4.5f0 (* sc 0.34f0) (* sc 0.075f0) +pal-ink+ k seed 3.1f0 0.36f0)))
+        (= ph 5)))))
+
+(defun-fast %st-guard-crush (o)
+  "Guard crush (the guard gauge ran out on a block): the STEEL hexagon held one drawing, then shattered
+into 12 STEEL shards around a HIT star (mono: the negative frame is the feedback's)."
+  (declare (fixnum o))
+  (with-stamp (o)
+    (let* ((a (hit-age age)))
+      (declare (single-float a))
+      (fx-envelope (es k fl ph) (a 0 1 3 10)
+        (when (< ph 5)
+          (if (< a 0.05f0)
+              (fx-star x y z 1f0 (* sc 0.5f0) 6 (* 0.5236f0 (hash01 2.1f0 seed)) 0f0 0f0 0.03f0 seed +pal-steel+ 0.98f0 :push 0.4f0)
+              (progn
+                (%star x y z (* sc 0.18f0) (* sc es 0.7f0) 8 sdx sdy 0.06f0 seed +pal-hit+ k)
+                (%shards-out 12 x y z sdx sdy a 4f0 (* sc 0.3f0) (* sc 0.08f0) +pal-steel+ k seed 3.1f0))))
         (= ph 5)))))
 
 (defun-fast %st-clash (o)
@@ -1143,7 +1189,7 @@ steel shards. The frame it fires: a 1 f negative frame and a 3 f white back-rim 
         (when (> kind 0)
           (setf (aref s (+ o 7)) (+ (aref s (+ o 7)) dt))
           (when (case kind
-                  ((1 2 3 4) (%st-hit o)) (5 (%st-guard o)) (6 (%st-guard-break o)) (7 (%st-clash o))
+                  ((1 2 3 4 15) (%st-hit o)) (5 (%st-guard o)) (6 (%st-guard-break o)) (7 (%st-clash o)) (14 (%st-guard-crush o))
                   ((8 9) (%st-hoho o)) (10 (%st-burst o)) (11 (%st-konpaku o)) ((12 13) (%st-ring o)) (t t))
             (setf (aref s o) 0f0)))))
     nil))
@@ -1151,7 +1197,7 @@ steel shards. The frame it fires: a 1 f negative frame and a 3 f white back-rim 
 ;;; the calls the game makes (events, cinematics)
 (defun-fast vfx-hit (x y z kind &key (dx 0.0) (dz -1.0))
   "Hit spark at (x y z); (dx dz) = the hit direction (attacker -> victim). KIND :cut :heavy :fire
-:counter :guard :guard-break :clash (:breaker = :guard-break). Heavy hits throw 3 DUST puffs and 5-8
+:counter :guard :guard-crush :guard-break :clash (:breaker = :guard-break). Heavy hits throw 3 DUST puffs and 5-8
 ink-blood droplets, fire hits 4 flame scraps. Also starts the 0.15 s hit light (white: no warm pixels)."
   (with-floats (x y z dx dz)
     (let* ((l (f-max 0.01f0 (f-sqrt (+ (* dx dx) (* dz dz))))) (dx (/ dx l)) (dz (/ dz l))
@@ -1213,6 +1259,16 @@ the ink afterimage is drawn by the fighter) or appear (converging streaks, then 
         (declare (single-float a))
         (%t-blob (+ x (* 0.4f0 (f-cos a))) 0.15f0 (+ z (* 0.4f0 (f-sin a))) (* 2.5f0 (f-cos a)) 0.5f0 (* 2.5f0 (f-sin a))
                  (rnd-range 0.5f0 0.8f0) (rnd-range 0.2f0 0.3f0) -0.3f0 0.25f0 +pal-dust+)))
+    nil))
+
+(defun-fast vfx-rush-dash (x z dx dz look)
+  "A Kikon rush module takes off at feet (x z), dashing along (dx dz), by LOOK: :flash-step the Hoho's
+vanish streaks, :leap a DUST ring and dust (the take-off), else (:charge) dust kicked back."
+  (with-floats (x z dx dz)
+    (case look
+      (:flash-step (stamp :hoho-out x 1.0 z :dx dx :dz dz))
+      (:leap (stamp :land x 0.0 z :scale 1.2) (vfx-step-dust x z dx dz))
+      (t (vfx-step-dust x z dx dz)))
     nil))
 
 (defun-fast vfx-step-dust (x z dx dz)

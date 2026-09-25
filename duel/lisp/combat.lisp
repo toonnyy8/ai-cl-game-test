@@ -16,9 +16,10 @@
 at its end (SETTLE-SOULS), so a lethal trade breaks both souls and no side goes first.")
 
 (defun gain-gauges (e dealt taken)
-  "Reiatsu and Fighting Spirit for dealing DEALT / taking TAKEN damage."
+  "Reiatsu, flash-step and Fighting Spirit for dealing DEALT / taking TAKEN damage."
   (let ((g (gauges e)))
-    (setf (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (reiatsu-gain dealt taken) *reiatsu-max*)))
+    (setf (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (reiatsu-gain dealt taken) *reiatsu-max*))
+          (gauges-fs g) (f32 (gauge-add (gauges-fs g) (* taken *fs-taken*) *fs-max*)))
     (unless (gauges-awakened g)
       (setf (gauges-awaken g) (f32 (gauge-add (gauges-awaken g) (awakening-gain dealt taken 0) *awaken-max*))))))
 
@@ -43,20 +44,30 @@ automatic Soul Break, settled at the end of the step (*SOUL-BREAKS*): returns T 
       (setf (gauges-meter g) (f32 (gauge-add (gauges-meter g) amount (getf m :max)))))))
 
 ;;; ---------------------------------------------------------------- one hit
+(defun drain-guard (e v)
+  "E's guard gauge loses V (its regen waits *GG-DELAY* again). At 0 he is guardless until it is full
+(CAN-GUARD-P). T when this drain emptied it."
+  (let ((g (gauges e)))
+    (multiple-value-bind (n crushed) (gg-drain (gauges-gg g) v)
+      (setf (gauges-gg g) (f32 n) (gauges-gg-idle g) 0)
+      (when crushed (setf (gauges-guardless g) t))
+      crushed)))
+
 (defun apply-hit (att def hw sx sz &key mv hazard def-state (bonus 0) crush x z red)
   "Apply hit HW of ATT (a fighter) to DEF, coming from (SX SZ) (the attacker or the HAZARD: guard
 facing and push direction). MV, BONUS (damage added: the stance's stored) and CRUSH: ATT's move
 and its state when the hit was collected (in a trade the first hit applied may already have put ATT
 in hitstun). DEF-STATE and RED: DEF's triangle state and red-ness when collected. X Z: where to show
-it. Sets the global hitstop (sim timing). A Kikon rush strike (MV of kind :kikon) is unguardable on a
-RED defender (KIKON-GUARDABLE-P) and, if ATT still holds the button that started it on this step, is
-the Kikon (KIKON-CONFIRM-P): no damage, queued in *KIKONS* for SETTLE-SOULS. Returns RESOLVE-CONTACT's
+it. Sets the global hitstop (sim timing). A Kikon rush strike (MV of kind :kikon) is guardable like any
+hit; one that hits with ATT still holding the button that started it (KIKON-OUTCOME) is the Kikon on
+a RED defender (no damage, queued in *KIKONS* for SETTLE-SOULS), else a stagger in place and ATT's
+rush goes on to the follow-up strike (phase :follow), whose hit is the Kikon. Returns RESOLVE-CONTACT's
 result (NIL = no effect)."
   (let* ((fa (fighter att)) (fd (fighter def)) (flags (hw-flags hw))
          (p (pos-of def))
          (rush (and mv (eq (mv-kind mv) :kikon)))
+         (own (and mv (eq (fighter-move fa) mv)))       ; the attacker is still in that move
          (res (resolve-contact def-state
-                               :unguardable (and rush red)
                                :breaker (member :breaker flags)
                                :guard-crush (or (member :guard-crush flags) crush)
                                :quick (and mv (eq (mv-kind mv) :quick))
@@ -65,15 +76,15 @@ result (NIL = no effect)."
                                :armor-vs-quick (passive-p def :armor-vs-quick)))
          (x (or x (aref p 0))) (z (or z (aref p 2))) (y (+ (aref p 1) 1.1))
          (base (+ (hw-dmg hw) bonus))
-         (own (and mv (eq (fighter-move fa) mv)))       ; the attacker is still in that move
-         (kikon (and rush (kikon-confirm-p red (vpad-down (pilot-vpad (pilot att)) :kikon) res))))
-    (when kikon
+         (outcome (and rush (kikon-outcome red (vpad-down (pilot-vpad (pilot att)) :kikon) res (and own (fighter-follow fa)))))
+         (follow (eq outcome :follow)))                 ; a stagger in place, then the follow-up strike
+    (when (eq outcome :kikon)
       (setf res :kikon)
       (unless (find def *kikons* :key #'second) (push (list att def mv) *kikons*)))
     (when res
-      (let ((first (and own (null (fighter-contact fa)))))
-        (when own
-          (setf (fighter-contact fa) (if (eq res :blocked) (or (fighter-contact fa) :block) :hit))
+      (let ((first (and own (not (eq (fighter-contact fa) :hit)) (eq (contact-of res) :hit))))   ; its first real hit
+        (when own                                       ; only a real hit counts as one (CONTACT-OF)
+          (setf (fighter-contact fa) (if (eq (contact-of res) :hit) :hit (or (fighter-contact fa) :block)))
           (when (< (fighter-land-sf fa) 0) (setf (fighter-land-sf fa) (fighter-sf fa))))
         (clog "~a ~a -> ~a ~a ~d" (side-name att) (if mv (mv-name mv) (if hazard (hazard-kind hazard) :counter))
               (side-name def) res base)
@@ -81,19 +92,24 @@ result (NIL = no effect)."
           (:kikon nil)                                  ; settled at the end of the step (SETTLE-SOULS)
           ((:hit :counter)
            (multiple-value-bind (react hits launches air)
-               (combo-step (hw-react hw) (eq (fighter-state fd) :air) (fighter-combo-hits fd)
+               (combo-step (if follow :stagger (hw-react hw)) (eq (fighter-state fd) :air) (fighter-combo-hits fd)
                            (fighter-combo-launches fd) (fighter-combo-air fd))
              (setf (fighter-combo-hits fd) hits (fighter-combo-launches fd) launches (fighter-combo-air fd) air)
              (let* ((lost (- *konpaku-max* (gauges-konpaku (gauges att))))
                     (dmg (hit-damage base (kit-atk-mods (kit-of att) lost) nil hits (eq res :counter)))
-                    (stun (or (hw-stun hw) (hitstun react (eq res :counter)))))
+                    (stun (cond (follow *kikon-follow-stun*) ((hw-stun hw)) (t (hitstun react (eq res :counter))))))
                (setf (gauges-best-combo (gauges att)) (max hits (gauges-best-combo (gauges att))))
                (add-meter att (hw-meter hw))
                (hitstop (hw-hs hw))
                (emit :hit att def x y z (hw-hs hw) (eq res :counter) dmg (if hazard :fire (if mv (mv-kind mv) :counter)))
                (unless (deal-damage att def dmg)          ; (a broken soul crumples in its cinematic)
-                 (set-reaction def react stun sx sz (hw-kb hw))))))
+                 (set-reaction def react stun sx sz (if follow 0.0 (hw-kb hw))))
+               (when (and follow own)                     ; the rush waits, then strikes again (KIKON-RUSH-STEP)
+                 (setf (fighter-phase fa) :follow (fighter-hold fa) 0 (fighter-follow fa) t)
+                 (emit :kikon-follow att def)
+                 (clog "~a KIKON FOLLOW-UP on ~a" (side-name att) (side-name def))))))
           (:armored
+           (when (eq def-state :armor) (decf (fighter-armor-left fd)))   ; a move's armour: one hit spent
            (hitstop *hitstop-block*)
            (emit :armored def x y z)
            (deal-damage att def (hit-damage base (kit-atk-mods (kit-of att) 0) nil 1 nil)))
@@ -103,17 +119,23 @@ result (NIL = no effect)."
              (hitstop *hitstop-block*)
              (emit :absorbed def x y z)
              (deal-damage att def dmg)))
-          (:blocked
+          (:blocked                                     ; blockstun, chip, the guard gauge (at 0: GUARD CRUSH)
            (let* ((adv (if (and mv (integerp (mv-adv-block mv))) (mv-adv-block mv) 0))
                   (stun (if mv (blockstun (mv-total mv) (fighter-sf fa) adv) *hazard-blockstun*))
                   (chip (chip-damage base (or (hw-chip hw) (and mv (kit-blade-chip (kit-of att))))
                                      (gauges-reishi (gauges def)))))
-             (set-blockstun def stun sx sz adv)
+             (if (drain-guard def (or (hw-guard hw) *gg-hazard*))
+                 (progn (set-reaction def :guard-break *guard-crush-stun* sx sz *block-pushback*)
+                        (hitstop *hitstop-breaker*)
+                        (emit :guard-crush att def x y z)
+                        (clog "~a GUARD CRUSH" (side-name def)))
+                 (progn (set-blockstun def stun sx sz adv)
+                        (hitstop *hitstop-block*)
+                        (emit :blocked att def x y z)))
              (when (plusp chip) (deal-damage att def chip))
-             (when (and hazard (plusp (hw-meter hw))) (add-meter att *meter-on-block*))
-             (hitstop *hitstop-block*)
-             (emit :blocked att def x y z)))
+             (when (and hazard (plusp (hw-meter hw))) (add-meter att *meter-on-block*))))
           (:guard-break
+           (drain-guard def *gg-breaker*)
            (set-reaction def :guard-break *guard-break-stun* sx sz *guard-break-kb*)
            (hitstop *hitstop-breaker*)
            (emit :guard-break att def x y z))
@@ -152,7 +174,7 @@ Hoho's counter strike on its frame (it always connects)."
                                                    (body-hurt-r ob) (body-hurt-h ob) 0f0)))
                   do (push (make-pending :att e :def o :hw w :i i :sx (aref p 0) :sz (aref p 2)
                                          :state (defender-state o) :mv mv
-                                         :red (not (kikon-guardable-p (gauges-reishi go) (gauges-reishi-max go)))
+                                         :red (red-p (gauges-reishi go) (gauges-reishi-max go))
                                          :bonus (fighter-dmg-bonus f) :crush (fighter-crush f))
                            *pending*)))))))
 
@@ -227,19 +249,19 @@ his Breaker / Kikon rush dash is within 0.5 m of its trigger range."
 ;;; ---------------------------------------------------------------- Burst Reverse
 (defun burst-ok-p (e)
   "May E Burst now (rules BURST-ALLOWED-P): in a reaction or airborne, inputs not locked, past the
-combo's 2nd hit, 2 bars."
+combo's 2nd hit, *FS-BURST* flash-step."
   (let ((f (fighter e)))
     (burst-allowed-p (and (member (fighter-state f) '(:stun :air)) (zerop (fighter-lock f)))
-                     (fighter-combo-hits f) (gauges-reiatsu (gauges e)))))
+                     (fighter-combo-hits f) (gauges-fs (gauges e)))))
 
 (defun burst! (e)
   "Burst Reverse (FIGHTER-SYSTEM applies it once both fighters have stepped): E spends
-*COST-BURST* bars and is neutral at once (on the ground), invulnerable *BURST-INVULN* f, his combo
+*FS-BURST* flash-step and is neutral at once (on the ground), invulnerable *BURST-INVULN* f, his combo
 over; the attacker's move / Hoho / step / run ends and he slides *BURST-PUSH* away, not stunned.
 A short global hitstop."
   (let* ((f (fighter e)) (g (gauges e)) (mo (motion e)) (o (fighter-opp f)) (p (pos-of e)) (q (pos-of o)))
-    (setf (gauges-reiatsu g) (f32 (spend-bars (gauges-reiatsu g) *cost-burst*))
-          (aref p 1) 0f0 (motion-grounded mo) t (motion-kb-left mo) 0)
+    (spend-fs g *fs-burst*)
+    (setf (aref p 1) 0f0 (motion-grounded mo) t (motion-kb-left mo) 0)
     (to-idle e 0)
     (setf (fighter-invuln f) *burst-invuln*)
     (when (member (state-of o) '(:move :hoho :step :run))
@@ -321,7 +343,8 @@ and frozen through the cinematic their looks would hang in its shots."
 
 (defun reset-round (a v)
   "After a Kikon / Soul Break (§1): both placed *RESET-DISTANCE* apart facing, *RESET-NEUTRAL* frames
-of neutral, P1 on the left of the view again, hazards cleared, the kit's :reset-reiatsu (Kenpachi)."
+of neutral, P1 on the left of the view again, hazards cleared, both guard gauges full (flash-step
+and Reiatsu are kept), the kit's :reset-reiatsu (Kenpachi)."
   (let ((p (pos-of a)) (q (pos-of v)))
     (multiple-value-bind (ax az bx bz) (reset-placement (aref p 0) (aref p 2) (aref q 0) (aref q 2))
       (v3-set! p (f32 ax) 0f0 (f32 az)) (v3-set! q (f32 bx) 0f0 (f32 bz))))
@@ -331,7 +354,8 @@ of neutral, P1 on the left of the view again, hazards cleared, the kit's :reset-
   (dolist (e (list a v))
     (let ((f (fighter e)) (g (gauges e)) (mo (motion e)))
       (setf (motion-grounded mo) t (motion-kb-left mo) 0 (fighter-lock f) *reset-neutral* (fighter-combo-dmg f) 0
-            (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (kit-reset-reiatsu (kit-of e)) *reiatsu-max*)))
+            (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (kit-reset-reiatsu (kit-of e)) *reiatsu-max*))
+            (gauges-gg g) (f32 *gg-max*) (gauges-gg-idle g) 0 (gauges-guardless g) nil)
       (fill (motion-vel mo) 0f0)
       (vpad-clear! (pilot-vpad (pilot e)))
       (let ((b (brain e))) (when b (setf (brain-press-left b) 0)))   ; a CPU lets go of what it held (a rush's O)
@@ -340,10 +364,19 @@ of neutral, P1 on the left of the view again, hazards cleared, the kit's :reset-
 
 ;;; ---------------------------------------------------------------- gauges per step
 (defun gauge-system ()
-  "Regen, timed forms (burn, drain, end), the meter's full form (Hellfire), EVOLUTION."
+  "Regen (Reiatsu; flash-step and the guard gauge after their delays: a full guard gauge ends
+guardless), timed forms (burn, drain, end), the meter's full form (Hellfire), EVOLUTION."
   (do-entities (e (f fighter) (g gauges))
     (let ((kit (fighter-kit f)))
-      (setf (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (reiatsu-gain 0 0 1) *reiatsu-max*)))
+      (setf (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (reiatsu-gain 0 0 1) *reiatsu-max*))
+            (gauges-fs g) (f32 (fs-regen (gauges-fs g) (gauges-fs-idle g)))
+            (gauges-fs-idle g) (min 9999 (1+ (gauges-fs-idle g)))
+            (gauges-gg g) (f32 (gg-regen (gauges-gg g) (gauges-gg-idle g) (gauges-guardless g)))
+            (gauges-gg-idle g) (min 9999 (1+ (gauges-gg-idle g))))
+      (when (and (gauges-guardless g) (>= (gauges-gg g) *gg-max*))
+        (setf (gauges-guardless g) nil)
+        (emit :guard-back e)
+        (clog "~a GUARD BACK" (side-name e)))
       (when (> (fighter-combo-dmg f) 0)                  ; the combo's damage shows until he is up again
         (unless (member (fighter-state f) '(:stun :air :down :wakeup :guard-hit)) (setf (fighter-combo-dmg f) 0)))
       (when (plusp (gauges-form-left g))

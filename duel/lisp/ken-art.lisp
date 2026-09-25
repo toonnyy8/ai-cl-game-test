@@ -286,6 +286,14 @@
   (0.3 (:arm-r :flex 170 :side 10) (:elbow-r :flex 10) (:hand-r :twist 0 :flex -10) (:arm-l :flex 40 :side 30) (:head :flex -30))
   (0.45 (:arm-r :flex 172))
   (0.7 :ke-n-stance))
+;; O in Nozarashi, LEAP CLEAVE: 8 f of crouch, then airborne, the cleaver raised over the head (held while
+;; the leap lasts; the strike is :ke-stance-cut)
+(defclip :ke-n-leap (0.7 :base :ke-n-stance)
+  (0)
+  (0.13 (:root :u -0.35) (:knees :flex 85) (:thighs :flex 65) (:spine :flex 32) (:arms :flex 35) (:elbows :flex 60))
+  (0.25 (:root :u 0.1) (:thighs :flex 55) (:knees :flex 90) (:arms :flex 175 :side 8) (:elbows :flex 25)
+        (:hand-r :twist 0 :flex -50) (:spine :flex -18) (:head :flex -18))
+  (0.7 (:root :u 0.1) (:thighs :flex 50) (:knees :flex 85) (:arms :flex 178 :side 6) (:spine :flex -22)))
 (defclip :ke-n-stance (2.0 :loop t :base :ke-n-stance)
   (0) (1.0 (:chest :flex 3) (:root :u -0.07)))
 (defstrike :ke-meteor (26 4 30 :base :ke-n-stance)     ; "Split the meteor": the huge two-handed cleave

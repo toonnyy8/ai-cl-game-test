@@ -127,7 +127,9 @@ encoded in the integer.
 | 2319 | trade probe: both Q1 on the same step → `duel probe trade …` hash line 40 steps later |
 | 2320 | Burst test: human P1 Yamamoto (3 bars) 2 m from Kenpachi, whose switched-off CPU mashes Quick for 60 steps (Q1 Q2 Q3); press Shift+J after the 2nd hit |
 | 2321 | force a Burst Reverse now (P1 two hits into Kenpachi's string): screenshots |
-| 2322+k | Kikon rush test: human P1 Yamamoto 5 m from an idle Kenpachi who (0) holds guard at full Reishi, (1) stands red (Reishi 200), (2) holds guard red, (3) stands red 7 m away in 0.1× slow motion for 4 s (screenshots of the dash); press O (hold it, or tap it) — `duel-kikon.json` |
+| 2327 | guard gauge test: human P1 Yamamoto 2 m from Kenpachi, whose switched-off CPU presses Quick every other step for 20 s (both put back 2 m apart when he is free beyond 2.6 m, a `duel probe pressure t=… gg …` line each time); hold U: BLOCKED ×n, `P1 GUARD CRUSH`, hits land although U is held, `P1 GUARD BACK`, blocked again — `duel-gauges.json` |
+| 2328 | consing of the HUD's guard and flash-step bars (100 draws each): `hud consing: … 0 B` |
+| 2330+k | O module test: human P1 with module k mod 4 (0 ENJO, 1 TENCHI, 2 CHARGE, 3 LEAP CLEAVE) 1 m inside its reach from a Yamamoto CPU who, by k div 4: 0 stands, 1 holds guard, 2 stands red (Reishi 200), 3 holds guard red, 4 plays (HARD), 5 stands in 0.1× slow motion for 8 s (shots), 6 stands and holds guard once hit (a guarded follow-up); press O (hold it, or tap it) — `duel-kikon.json` |
 | 2400 | toggle god mode: each step both fighters' Reishi is raised to at least 400 |
 | 2500+k | human P1 vs an idle CPU, cinematics skipped: 0 Yamamoto vs Kenpachi, 1 Kenpachi vs Yamamoto, 2 YY, 3 KK |
 | 2600+k | `*red-threshold*` = k % (pace the gate without a rebuild) |
@@ -142,11 +144,11 @@ apart (`place`).
 |---|---|
 | `duel -> TITLE` … `duel -> RESULTS` | every flow change (`set-flow`) |
 | `duel match seed 7 CPU-CPU YAMAMOTO vs KENPACHI NORMAL` | a match starts |
-| `duel hash t=600 \| x y z yaw STATE FORM r<reishi> k<konpaku> a<reiatsu> w<awaken> m<meter> h<heat> \| … \| haz N` | every 600 battle steps: positions in cm, yaw in 0.01 rad, gauges, CPU heat, hazard count (the determinism check) |
-| `duel -> RESULTS winner P1 konpaku 2-0 ticks 9780 secs 163.0` | the match result (winner, Konpaku P1-P2, sim steps, seconds) |
+| `duel hash t=600 \| x y z yaw STATE FORM r<reishi> k<konpaku> a<reiatsu> f<flash-step> g<guard>[!] w<awaken> m<meter> h<heat> \| … \| cd <P1 cooldowns> <P2> \| haz N` | every 600 battle steps: positions in cm, yaw in 0.01 rad, gauges (`!` = guardless), CPU heat, each command slot's cooldown, hazard count (the determinism check) |
+| `duel -> RESULTS winner P1 konpaku 1-0 ticks 9438 secs 157.3` | the match result (winner, Konpaku P1-P2, sim steps, seconds) |
 | `duel gate YAMAMOTO KENPACHI: 20 matches, KOs 20, median … s, min …, max … \| …` | the seed gate summary |
 | `duel probe YA-Q1 blocked: attacker free at +27, defender at +25, advantage -2 (table -2)` | a frame probe |
-| `[  tick] P1 move YA-Q1 [why]`, `P1 YA-Q1 -> P2 HIT 38`, `P1 YA-KIKON -> P2 KIKON 70` (a rush strike that became the Kikon; `BLOCKED` / `HIT` otherwise), `P1 KIKON on P2: -2 konpaku, 7 left`, `P1 form HELLFIRE`, `P1 PERFECT HOHO`, `P1 EVOLUTION`, `CLASH`, `cine NAME`, `P1 step [why]` / `P1 dash [why]` (a run starts; why DASH / DASH-BACK for the CPU) / `P1 run -> YA-Q1, carry 1.0 m` / `P1 BURST` / `hoho` / `guard` | the combat log (`clog`, components.lisp): move starts (with the CPU's reason), every applied hit and its result, Konpaku, forms, events |
+| `[  tick] P1 move YA-Q1 [why]`, `P1 YA-Q1 -> P2 HIT 38`, `P1 YA-KIKON -> P2 KIKON 70` (a rush strike that became the Kikon; `BLOCKED` / `HIT` otherwise), `P1 KIKON FOLLOW-UP on P2` (it hit a non-red opponent with O held), `P1 KIKON on P2: -2 konpaku, 7 left`, `P1 GUARD CRUSH` / `P1 GUARD BACK`, `P1 form HELLFIRE`, `P1 PERFECT HOHO`, `P1 EVOLUTION`, `CLASH`, `cine NAME`, `P1 step [why]` / `P1 dash [why]` (a run starts; why DASH / DASH-BACK for the CPU) / `P1 run -> YA-Q1, carry 1.0 m` / `P1 BURST` / `hoho` / `guard` | the combat log (`clog`, components.lisp): move starts (with the CPU's reason), every applied hit and its result, Konpaku, forms, events |
 | `duel camera CAMERA  SIDE` | the CAMERA option changed (menu or 2109) |
 | `missing clip :name` | once per clip name the art lacks (the stance plays instead) |
 | `stats: fps … cons/frame … draws … particles … \| ms/frame sim … queue … render … \| BATTLE t … p1 STATE reishi p2 … \| heap … MB \| fx-dropped N` | the engine's 2 s stats line plus the duel's tail |
@@ -164,7 +166,8 @@ SwiftShader WebGPU). Every script waits 9 s for startup.
 | `duel-probe.json` | 20 | debug 2315–2319: each `advantage` must equal its `table` value; the trade line shows the same Reishi on both sides |
 | `duel-keys.json` | 32 | P1's keyboard against an idle CPU (2500): log lines `P1 move YA-Q1`, `YA-Q2`, `YA-Q3`, `YA-F1`, `YA-SIG`, `YA-BREAKER`, `P1 guard`, `P1 step`, `P1 move YA-SHIRANUI`, `P1 hoho`, `P1 move YA-TAIMATSU`, in that order (it walks in with W: VS CPU's behind camera; Q3's knockback puts P2 out of F1's reach, F1 whiffs, and the second K, 21 f later, expires before a whiffed move's chain window opens, so there is no F2, although the script's comment lists one); plus `P1 WAVE -> P2 HIT 110` and `P1 FIREBALL -> P2 HIT …` |
 | `duel-extras.json` | 45 | P1's keyboard, VS CPU (behind camera): hold Space + W (`P1 step`, `P1 dash`), again with J out of the run (`P1 run -> YA-Q1, carry 1.0 m`), Shift+Space (`P1 hoho`: the camera swings round), 2320 + Shift and J taps (`P2 KE-Q2 -> P1 HIT`, then `P1 BURST`), 2321 (a forced Burst), pause → CAMERA → SIDE (`duel camera CAMERA  SIDE`). Shots `tests/shots/duel-extras-*.png`: behind, dash, hoho-a / -b, burst-a / -b, pause, side |
-| `duel-kikon.json` | 48 | the Kikon rush by keyboard (2322+k, P1 Yamamoto vs an idle Kenpachi 5 m away): O held vs a guarding, full Kenpachi → `P1 YA-KIKON -> P2 BLOCKED 70`; O held vs a red one → `P1 YA-KIKON -> P2 KIKON 70`, `P1 KIKON on P2: -2 konpaku, 7 left`, `cine YAMA-KIKON-CINE`; O tapped (released before the strike) vs a red one → `P1 YA-KIKON -> P2 HIT 70`; O held vs a red one holding guard → `KIKON` again (unguardable); 2325 (slow motion) → `KIKON`. Shots `tests/shots/duel-kikon-*.png`: rush-a / -b, prompt (HOLD O  KIKON), cine |
+| `duel-kikon.json` | 150 | the O modules and the O rule by keyboard (2109 = the side camera, then 2330+k): each module in slow motion with O held on a standing opponent → `-> P2 HIT 70`, `KIKON FOLLOW-UP on P2`, `-> P2 KIKON 70`, its cinematic (shots `tests/shots/duel-o-{enjo,tenchi,charge,leap}-{a,b,c}.png`: the aim, the lane / flash step / charge / leap, the strike); guarding, not red → `BLOCKED`; guarding **red**, O held → `BLOCKED`, no Kikon; red → `KIKON` at once; the HARD CPU guards; guarding once hit → `HIT`, `FOLLOW-UP`, `BLOCKED`; O tapped on a red one → a plain `HIT` |
+| `duel-gauges.json` | 52 | 2327 with U held (the guard gauge drains 28 per Q string, `GUARD CRUSH` on the 4th, `HIT` while U is held, `GUARD BACK` 4.75 s after it emptied); 2500 + Shift+Space ×4 (three `P1 hoho`, the 4th refused: flash-step 23); 2500, a Hoho, 2320 + Shift+J → `P1 BURST` (flash-step 70 → ~0). Shots `tests/shots/duel-gauges-*.png` |
 | `duel-flow.json` | 34 | the menus by keyboard: VS PLAYER (P2 confirms with KP1), skip the intro, pause / resume, pause → CHARACTER SELECT → back to TITLE, then VS CPU HARD; check the `duel ->` lines; shot `duel-flow-vs-cpu-hard.png` |
 | `duel-perf.json` | 75 | 60 s of real-time CPU vs CPU (4003): the stats lines |
 | `duel-shots.json` | 90 | the screenshot set `tests/shots/duel-*.png`: title, mode, select, intro, neutral, hit, guard break, perfect Hoho, Hellfire, fire wave, Shiranui, Kaka, Meteor, the six cinematics, results, the HUD at 800×450 |
@@ -197,10 +200,11 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P1 konpaku 2-0 ticks 9780 secs 163.0
+duel -> RESULTS winner P1 konpaku 1-0 ticks 9438 secs 157.3
 ```
 
-(Before the Kikon rush it was `winner P2 konpaku 0-1 ticks 7298 secs 121.6`; before Bankai became
+(Before the gauges, the O rule and the O modules it was `winner P1 konpaku 2-0 ticks 9780 secs 163.0`;
+before the Kikon rush `winner P2 konpaku 0-1 ticks 7298 secs 121.6`; before Bankai became
 permanent, `winner P2 konpaku 0-4 ticks 5857 secs 97.6`; before Burst and the dash, `0-7 ticks
 5302 secs 88.4`.)
 
@@ -214,21 +218,30 @@ diff <(grep '^duel' a.log) <(grep '^duel' b.log)          # empty
 ```
 
 Any change to the rules, the AI, a kit or a tuning knob changes the reference; a change that
-should not (a refactor, an engine move) must keep it and all eleven `duel hash` lines identical.
+should not (a refactor, an engine move) must keep it and all fifteen `duel hash` lines identical.
+`tests/style-cvc-ref.txt` holds all three pairings' result and hash lines (`python3
+tests/style-gates.py cvc dist/duel` compares them).
 The harvest was checked this way after each step.
 
 ## Pacing gate
 
 `duel-gate.json` (20 seeds × pairing, NORMAL, turbo, cinematics included in the match time).
-Target: every match ends by K.O., median 120–180 s, max 240 s.
+Target: every match ends by K.O., median 125–180 s, max 240 s.
 
 | Pairing | Median | Range | K.O. |
 |---|---|---|---|
-| Yamamoto vs Yamamoto | 153.4 s | 118.8–181.4 | 20/20 |
-| Yamamoto vs Kenpachi | 136.9 s | 106.3–165.3 | 20/20 |
-| Kenpachi vs Kenpachi | 140.6 s | 114.0–157.1 | 20/20 |
+| Yamamoto vs Yamamoto | 168.1 s | 148.5–204.3 | 20/20 |
+| Yamamoto vs Kenpachi | 154.8 s | 122.4–175.9 | 20/20 |
+| Kenpachi vs Kenpachi | 150.3 s | 116.7–177.1 | 20/20 |
 
-(9 Konpaku, Reishi 1100, red 0.30, CPU Burst chance NORMAL 0.6, Bankai permanent, the Kikon rush
+(The guard and flash-step gauges, Reiatsu 3/s, the O rule with its follow-up, the four O modules with
+the CPU's non-red O pokes; no knob retuned. With the gauges alone (the old rush): YY 181.9 s
+(137.7–281.7), YK 135.8 (101.8–154.7), KK 141.9 (117.4–159.6); the O modules brought YY back inside.
+Usage over the 60 matches: 353 Hohos, 215 Bursts, 199 perfect Hohos, 532 O presses, 333 Kikons, 1
+follow-up, 0 guard crushes: CPUs block ~7 hits a match and guard less as their gauge runs low, so the
+guard gauge rarely empties between CPUs (the keyboard script shows it does against a turtling human).
+Before (the Kikon rush): YY 153.4 s (118.8–181.4), YK 136.9 (106.3–165.3), KK 140.6 (114.0–157.1).
+9 Konpaku, Reishi 1100, red 0.30, CPU Burst chance NORMAL 0.6, Bankai permanent, the Kikon rush
 with the CPU's `*ai-kikon-p*` 0.5; each pairing gives the same times alone. Before the Kikon rush
 (the instant Kikon after a hit): YY 144.2 s (109.2–203.4), YK 138.1 (110.8–179.6), KK 140.8
 (107.9–163.2). Before, with a 20 s Bankai and the slow-motion leak: YY 134.2, YK 120.1,
@@ -254,7 +267,7 @@ YY 1.9, YK 0.5, KK 0.2 (mostly Yamamoto's Signature / Shiranui once back in his 
 
 ```sh
 E=/media/8tsp/projects/ecl-24.5.10/ecl-emscripten-host/bin/ecl
-$E --norc --load tests/duel-rules-test.lisp      # duel-rules-test: 385 checks, ALL PASS
+$E --norc --load tests/duel-rules-test.lisp      # duel-rules-test: 430 checks, ALL PASS
 $E --norc --load tests/duel-control-test.lisp    # duel-control-test: 53 checks, ALL PASS
 $E --norc --load tests/input-test.lisp           # input-test: 31 checks, ALL PASS  (engine vpad)
 $E --norc --load tests/cine-test.lisp            # cine-test: 18 checks, ALL PASS   (engine director)
@@ -263,10 +276,12 @@ $E --norc --load tests/cine-test.lisp            # cine-test: 18 checks, ALL PAS
 * **duel-rules-test** loads `tuning`, `rules`, `kit`, `yama`, `ken` over the engine's plain-CL
   `math`, `hitvol`, `input` (DEFCINE stubbed): the triangle and clash matrix; block / whiff
   advantage, including a frame-by-frame replay of every move of every form against its table;
-  damage and combo scaling; the Kikon rush (its phases and range, guardable unless red,
-  unguardable against guard and stance but not iframes, the hold confirm, every form's rush
-  punishable on block), Konpaku counts, Soul Break, time-up; gauges and
-  burns; Burst eligibility and the CPU's Burst rule; the run (stop, carry, brake, kit speeds);
+  damage and combo scaling; the contact rule; armour budgets; the Kikon rush (its phases with each
+  module's aura / dash, reaches and press → hit times, cooldowns, `kikon-outcome`: guarded → nothing,
+  red + held → the Kikon, not red + held → the follow-up whose hit is the Kikon, released → a plain
+  hit; the follow-up's wait for every module; every form's rush punishable on block), Konpaku counts,
+  Soul Break, time-up; the guard gauge (guard values, drain, crush advantage, regen, guardless) and
+  the flash-step gauge (costs, regen, refund); Reiatsu 3/s; burns; Burst eligibility and the CPU's Burst rule; the run (stop, carry, brake, kit speeds);
   combo limits; the perfect-Hoho window; facing, movement and arena; AI helpers; hit
   volumes; kit sanity (every form's commands, costs and derived Nozarashi numbers).
 * **duel-control-test**: the buffer window, consume and holds; command priority and modifier

@@ -40,6 +40,11 @@
 (check (eq (resolve-contact :neutral :quick t :armor-vs-quick t) :armored))            ; Bankai West
 (check (eq (resolve-contact :neutral :quick t :armor-vs-quick t :ignore-armor t) :hit)) ; Nozarashi
 (check (eq (resolve-contact :neutral :armor-vs-quick t) :hit))            ; West: Quick only
+;; the contact rule: only a real hit is a hit for the attacker (armour, absorb, parry, block are :block)
+(check (every (lambda (r) (eq (contact-of r) :hit)) '(:hit :counter :guard-break :stance-break :kikon)))
+(check (every (lambda (r) (eq (contact-of r) :block)) '(:blocked :armored :absorbed :parried)))
+(check (null (contact-of nil)))
+(check (not (chain-open-p 12 9 3 12 (contact-of :armored))))            ; armour never opens hit timing
 (check (breaker-clash-p :dash :strike 2.5))
 (check (not (breaker-clash-p :dash :aura 1.0)))
 (check (not (breaker-clash-p :dash :dash 3.5)))
@@ -162,30 +167,44 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 
 ;;; ================================================================ Kikon, Konpaku, Soul Break, time-up
 (let ((*red-threshold* 0.30))                  ; the rule at the design value (tuning.lisp may differ)
-  (check (and (red-p 299 1000) (not (red-p 300 1000))))
-  ;; the Kikon rush: guardable unless red; the Kikon only on a red victim, button held, strike connected
-  (check (and (kikon-guardable-p 300 1000) (not (kikon-guardable-p 299 1000))))
-  (check (kikon-confirm-p t t :hit))
-  (check (kikon-confirm-p t t :counter))                                   ; (a Breaker's startup)
-  (check (not (kikon-confirm-p t nil :hit)))                               ; released early: a plain hit
-  (check (not (kikon-confirm-p nil t :hit)))                               ; not red: a plain hit, held or not
-  (check (notany (lambda (r) (kikon-confirm-p t t r)) '(nil :blocked :absorbed :armored :guard-break))))
-;; red: guard and stance don't stop the rush's strike; iframes still dodge it; a Breaker is counter-hit
+  (check (and (red-p 299 1000) (not (red-p 300 1000)))))
+;; the Kikon rush strike (the user's rule): always guardable; guarded -> nothing; a hit with O held is the
+;; Kikon on a red victim, else the guardable follow-up, whose hit is the Kikon; released -> a plain hit
+(check (eq (kikon-outcome t t :hit nil) :kikon))
+(check (eq (kikon-outcome t t :counter nil) :kikon))                       ; (a Breaker's startup)
+(check (eq (kikon-outcome nil t :hit nil) :follow))                        ; not red: the follow-up comes
+(check (eq (kikon-outcome nil nil :hit t) :kikon))                         ; the follow-up hit: the Kikon
+(check (eq (kikon-outcome t nil :hit t) :kikon))
+(check (and (null (kikon-outcome t nil :hit nil)) (null (kikon-outcome nil nil :hit nil))))   ; released: a plain hit
+(check (notany (lambda (r) (or (kikon-outcome t t r nil) (kikon-outcome nil t r nil) (kikon-outcome nil t r t)))
+               '(nil :blocked :absorbed :armored :parried :guard-break)))  ; guarded / dodged: nothing, red or not
+;; the follow-up: the victim staggers *KIKON-FOLLOW-STUN* in place, then has *KIKON-FOLLOW-GAP* frames to act
+;; (a guard needs *GUARD-RAISE*); for every module the wait fits: hit - (strike hit + stun + 1) = the gap
+(check (and (>= *kikon-follow-gap* (+ *guard-raise* 1)) (= (kikon-follow-wait 6) (- (+ *kikon-follow-stun* 1 *kikon-follow-gap*) 6))
+            (= (kikon-follow-wait 99) 0)))
+(dolist (cf *forms*)
+  (let ((s (mv-s (kit-command-move (apply #'kit cf) :kikon))))
+    (check (= (+ (kikon-follow-wait s) s) (+ *kikon-follow-stun* 1 *kikon-follow-gap*)))))
+;; the strike is guardable: guard and stance stop it (no :unguardable any more); iframes dodge it
+(check (eq (resolve-contact :guard) :blocked))
 (check (eq (resolve-contact :guard :unguardable t) :hit))
 (check (eq (resolve-contact :guard :unguardable nil) :blocked))
 (check (eq (resolve-contact :stance :unguardable t) :hit))
 (check (eq (resolve-contact :stance-in :unguardable t) :hit))
 (check (null (resolve-contact :invuln :unguardable t)))
 (check (eq (resolve-contact :breaker :unguardable t) :counter))
-;; the rush's phases: aura *KIKON-AURA* f, then the strike at once when close, else the dash to the
-;; trigger range or its end (*KIKON-DASH-MAX* f)
-(check (and (eq (kikon-rush-next-phase :aura (1- *kikon-aura*) 9.0) :aura)
-            (eq (kikon-rush-next-phase :aura *kikon-aura* 9.0) :dash)
-            (eq (kikon-rush-next-phase :aura *kikon-aura* *kikon-trigger*) :strike)
-            (eq (kikon-rush-next-phase :dash 3 9.0) :dash)
-            (eq (kikon-rush-next-phase :dash 3 (- *kikon-trigger* 0.1)) :strike)
-            (eq (kikon-rush-next-phase :dash *kikon-dash-max* 9.0) :strike)))
-(check (<= 5.5 (* *kikon-speed* (/ *kikon-dash-max* 60.0)) 6.5))           ; the rush's range: ~6 m
+;; the rush's phases: the module's aura, then the strike at once when close (or no dash: ENJO), else
+;; the dash to the trigger range or its end (the module's dash-max)
+(flet ((nx (ph f d &optional (dm 22)) (kikon-rush-next-phase ph f d :aura 5 :dash-max dm)))
+  (check (and (eq (nx :aura 4 9.0) :aura) (eq (nx :aura 5 9.0) :dash) (eq (nx :aura 5 *kikon-trigger*) :strike)
+              (eq (nx :dash 3 9.0) :dash) (eq (nx :dash 3 (- *kikon-trigger* 0.1)) :strike) (eq (nx :dash 22 9.0) :strike)
+              (eq (nx :aura 5 9.0 0) :strike))))                           ; no dash: strike after the aura
+(check (and (~= (kikon-rush-reach 36.0 14) 10.0) (~= (kikon-rush-reach 13.0 36) 9.4) (~= (kikon-rush-reach 18.0 30) 10.6)))
+;; armour: a move's armour takes hits (:armored) until its budget is spent; a Breaker, an unguardable hit
+;; and Nozarashi's ignore-armor go through
+(check (and (eq (resolve-contact :armor) :armored) (eq (resolve-contact :armor :quick t) :armored)
+            (eq (resolve-contact :armor :breaker t) :hit) (eq (resolve-contact :armor :unguardable t) :hit)
+            (eq (resolve-contact :armor :ignore-armor t) :hit)))
 (check (equal (multiple-value-list (kikon-result 6 nil nil)) '(4 2 nil)))
 (check (equal (multiple-value-list (kikon-result 6 t nil)) '(3 3 nil)))           ; awakened
 (check (equal (multiple-value-list (kikon-result 6 nil t)) '(3 3 nil)))           ; Soul Break +1
@@ -201,18 +220,51 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
   (check (and (~= ax -4.0) (~= az 0.0) (~= bx 4.0) (~= bz 0.0))))
 
 ;;; ================================================================ gauges
-(check (and (~= (reiatsu-gain 100 0) 8.0) (~= (reiatsu-gain 0 100) 10.0) (~= (reiatsu-gain 0 0 60) 5.0)))
+(check (and (~= (reiatsu-gain 100 0) 8.0) (~= (reiatsu-gain 0 100) 10.0) (~= (reiatsu-gain 0 0 60) 3.0)))   ; SPs only: 3 / s
 (check (~= (awakening-gain 100 100 1) 27.0))
 (check (and (~= (gauge-add 290.0 20.0 300.0) 300.0) (~= (gauge-add 5.0 -10.0 300.0) 0.0)))
 (check (equal (multiple-value-list (spend-bars 150.0 1)) '(50.0 t)))
 (check (equal (multiple-value-list (spend-bars 50.0 1)) '(50.0 nil)))
-(check (and (hoho-allowed-p nil 100.0 0) (not (hoho-allowed-p t 100.0 0))
-            (not (hoho-allowed-p nil 100.0 10)) (not (hoho-allowed-p nil 99.0 0))))
+(check (and (hoho-allowed-p nil 30.0 0) (not (hoho-allowed-p t 100.0 0))          ; flash-step 30
+            (not (hoho-allowed-p nil 100.0 10)) (not (hoho-allowed-p nil 29.0 0))))
 (check (and (awaken-allowed-p t 100.0 nil) (not (awaken-allowed-p t 100.0 t)) (not (awaken-allowed-p nil 100.0 nil))
             (not (awaken-allowed-p t 99.0 nil))))
-(check (and (burst-allowed-p t 2 200.0) (not (burst-allowed-p t 1 200.0)) (not (burst-allowed-p t 2 150.0))))
-(check (not (burst-allowed-p nil 5 300.0)))                                 ; not in hitstun: no Burst
-(check (= *cost-burst* 2))
+(check (and (burst-allowed-p t 2 70.0) (not (burst-allowed-p t 1 100.0)) (not (burst-allowed-p t 2 69.0))))  ; flash-step 70
+(check (not (burst-allowed-p nil 5 100.0)))                                 ; not in hitstun: no Burst
+;; the flash-step gauge (design v3 G.1): Hoho 30, Burst 70, no Reiatsu; 3 / s after 60 f; +0.03 per damage taken
+(check (and (= *fs-hoho* 30) (= *fs-burst* 70) (= *fs-refund* 15) (~= *fs-taken* 0.03) (= *fs-max* 100)))
+(check (and (~= (fs-regen 50.0 59) 50.0) (~= (fs-regen 50.0 60) 50.05) (~= (fs-regen 99.99 600) 100.0)))
+(check (~= 3.0 (- (loop with f = 0.0 for i below 60 do (setf f (fs-regen f 60)) finally (return f)) 0.0)))   ; 3 per second
+(check (~= 600 (/ *fs-hoho* (/ *fs-regen* 60.0)) 0.5))                     ; ... a Hoho from empty in 11 s (10 + the 1 s delay)
+;; the guard gauge (G.2): values by kind, +4 for an ender, overrides; the drain, the crush, the regen, guardless
+(check (and (= (guard-value :quick -2) 8) (= (guard-value :quick -12) 12) (= (guard-value :flash -4) 14)
+            (= (guard-value :flash -14) 18) (= (guard-value :sig -6) 18) (= (guard-value :sig -14) 22)
+            (= (guard-value :sp -16) 22) (= (guard-value :kikon -14) 20) (= (guard-value nil nil) 12)
+            (= (guard-value :sig -6 10) 10)))
+(check (and (= (hw-guard (svref (mv-hits (mv :kenpachi :base :ke-q3)) 0)) 12)            ; Q3 ender 12
+            (= (hw-guard (svref (mv-hits (mv :kenpachi :base :ke-f2)) 0)) 18)            ; F2 ender 18
+            (= (hw-guard (svref (mv-hits (mv :yamamoto :base :ya-sig)) 0)) 10)           ; the Signature's cuts 10 each
+            (= 15 (getf (mv-params (find-move :ya-sig)) :guard))))                       ; ... its wave 15
+;; Kenpachi base Q1 Q2 Q3 blocked = 28, F1 F2 = 32: a full gauge falls on the 4th Q string
+(flet ((gv (name) (hw-guard (svref (mv-hits (mv :kenpachi :base name)) 0))))
+  (check (= 28 (+ (gv :ke-q1) (gv :ke-q2) (gv :ke-q3))))
+  (check (= 32 (+ (gv :ke-f1) (gv :ke-f2))))
+  (check (and (< (* 3 28) *gg-max*) (>= (* 4 28) *gg-max*))))
+(check (equal (multiple-value-list (gg-drain 100.0 8)) '(92.0 nil)))
+(check (equal (multiple-value-list (gg-drain 5.0 8)) '(0.0 t)))            ; emptied: GUARD CRUSH
+(check (and (~= (gg-regen 50.0 44 nil) 50.0) (~= (gg-regen 50.0 45 nil) (+ 50.0 (/ 20.0 60)))
+            (~= (gg-regen 50.0 45 t) (+ 50.0 (/ 25.0 60))) (~= (gg-regen 99.9 99 nil) 100.0)))
+(check (<= 285 (loop with g = 0.0 for f from 0 until (>= g *gg-max*)         ; 0 -> 100 guardless: 285 f (4.75 s;
+                     do (setf g (gg-regen g f t)) finally (return f)) 286))   ;  + 1 f of float rounding)
+(check (and (can-guard-p 1.0 nil) (not (can-guard-p 0.0 nil)) (not (can-guard-p 99.0 t))))
+;; a guard crush: Kenpachi's Q1 blocked into an empty gauge -> the attacker acts 25 frames first
+(let ((q1 (mv :kenpachi :base :ke-q1)))
+  (check (= 25 (- *guard-crush-stun* (- (mv-total q1) (mv-first-hit q1)))))
+  (check (= *gg-breaker* 35)))
+;; the CPU's guard: all at >= 50 %, half at 25-50 %, 0.15 below, none guardless; flash-step budgeting
+(check (and (~= (ai-guard-mult 50.0 nil) 1.0) (~= (ai-guard-mult 30.0 nil) 0.5) (~= (ai-guard-mult 10.0 nil) 0.15)
+            (~= (ai-guard-mult 100.0 t) 0.0) (~= (ai-guard-mult 0.0 nil) 0.0)))
+(check (and (ai-hoho-spare-p 30.0 1000 1100) (not (ai-hoho-spare-p 90.0 400 1100)) (ai-hoho-spare-p 100.0 400 1100)))
 ;; the CPU's Burst: below half its Reishi, or the next hit would put it in red (30 % of 1100 = 330)
 (check (and (ai-burst-wanted-p 540 1100 10) (not (ai-burst-wanted-p 600 1100 10))
             (ai-burst-wanted-p 600 1100 280) (not (ai-burst-wanted-p 600 1100 260))))
@@ -376,12 +428,28 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
                 (> (mv-reach m) *kikon-trigger*) (plusp (mv-dmg m))
                 (<= (+ *kikon-trigger* *block-pushback*) (min (mv-reach (mv :yamamoto :base :ya-q1))
                                                               (mv-reach (mv :kenpachi :base :ke-q1))))))))
-;; Nozarashi's own rush carries the derivation's numbers (startup +3, reach x1.4); the clip still
-;; reaches its hit pose on frame S (:clip-s)
-(let ((b (mv :kenpachi :base :ke-kikon)) (n (mv :kenpachi :nozarashi :ke-kikon-n)))
-  (check (and (= (mv-s n) (+ (mv-s b) *nozarashi-startup*)) (~= (mv-reach n) (* *nozarashi-reach* (mv-reach b)))
-              (~= (mv-clip-speed n) (/ 8.0 11.0)) (~= (mv-clip-speed b) 1.0))))
-(check (~= (mv-clip-speed (mv :yamamoto :base :ya-kikon)) 1.5))            ; Q3's chop (S12) at S8
+;; the O modules (design v2 §B): cooldown 90, a melee strike with its cinematic, reach and press -> hit,
+;; aura >= 5 (>= 8 for a locked dash), armour <= 1 hit; the melee ones strike from *KIKON-TRIGGER* (a
+;; blocked strike stays punishable); ENJO has no dash (a lane, locked)
+(defparameter *modules* '((:yamamoto :base :ya-kikon 9.0 26) (:yamamoto :bankai :ya-tenchi 10.0 30)
+                          (:kenpachi :base :ke-kikon 9.4 50) (:kenpachi :nozarashi :ke-kikon-n 10.6 49)))
+(dolist (row *modules*)
+  (destructuring-bind (c f name reach press) row
+    (let* ((m (mv c f name)) (p (mv-params m)))
+      (flet ((pa (k) (getf p k)))
+        (check (and (eq (mv-name (kit-command-move (kit c f) :kikon)) name) (= (mv-cooldown m) 90) (mv-cine m)
+                    (= 70 (mv-dmg m)) (= -14 (mv-adv-block m)) (>= (pa :aura) 5) (<= (mv-armor-hits m) 1)
+                    (or (plusp (pa :dash-track)) (zerop (pa :dash-max)) (>= (pa :aura) 8))))
+        (check (~= reach (max (mv-reach m) (kikon-rush-reach (pa :speed) (pa :dash-max))) 0.01))
+        (check (= press (+ (pa :aura) (pa :dash-max) (mv-s m))))))))
+(check (and (= (mv-armor-hits (find-move :ke-kikon)) 1) (zerop (mv-armor-hits (find-move :ya-tenchi)))))
+(check (and (~= 0.0 (mv-track (find-move :ya-kikon))) (~= 0.0 (getf (mv-params (find-move :ya-tenchi)) :dash-track))
+            (~= 0.0 (getf (mv-params (find-move :ke-kikon-n)) :dash-track)) (~= 150.0 (getf (mv-params (find-move :ke-kikon)) :dash-track))))
+(check (~= 160 (/ (* 2 (aref (first (hw-vols (svref (mv-hits (find-move :ke-kikon-n)) 0))) 2)) (deg 1))))   ; the widest strike
+(check (and (~= (mv-clip-speed (mv :kenpachi :nozarashi :ke-kikon-n)) (/ 8.0 11.0)) (~= (mv-clip-speed (mv :kenpachi :base :ke-kikon)) (/ 8.0 9.0))
+            (~= (mv-clip-speed (mv :yamamoto :bankai :ya-tenchi)) 1.5)))    ; clips reach their hit pose on frame S
+;; cooldowns: every command slot of the fighter's CD vector
+(check (= 7 (length *kit-commands*)))
 (check (and (null (kit-meter (kit :yamamoto :bankai))) (kit-meter (kit :yamamoto :hellfire))))  ; no Hellfire in Bankai
 (check (and (kit-awakening (kit :yamamoto :bankai)) (not (kit-awakening (kit :yamamoto :hellfire)))
             (null (kit-duration (kit :kenpachi :nozarashi))) (null (kit-duration (kit :yamamoto :bankai)))))   ; both awakenings last the match
@@ -403,7 +471,7 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 (defparameter *clips-5*
   '(:ya-stance :ya-q1 :ya-q2 :ya-q3 :ya-f1 :ya-f2 :ya-sig :ya-shiranui :ya-shiranui-throw :ya-taimatsu
     :ya-nadegiri :ya-breaker :ya-ikkotsu :ya-intro :ya-win :ya-hellfire :ya-bankai :ya-kyoku
-    :ya-kaka :sh-run                    ; the Kikon rush runs (:sh-run) into a strike clip of the kit
+    :ya-kaka :sh-run :ya-enjo :ke-n-leap ; the O modules (TENCHI runs in :sh-run, CHARGE in :ke-charge)
     :ke-stance :ke-q1 :ke-q2 :ke-q3 :ke-f1 :ke-f2 :ke-stance-hold :ke-stance-cut :ke-buttagiru :ke-charge
     :ke-flurry :ke-breaker :ke-shoulder :ke-intro :ke-win :ke-patch :ke-nome :ke-meteor
     :ke-n-stance))

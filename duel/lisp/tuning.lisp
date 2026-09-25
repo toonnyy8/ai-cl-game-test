@@ -11,21 +11,25 @@
 (defparameter *reishi-max* 1100 "Reishi (health) of every fighter at the start, integer points.")
 (defparameter *konpaku-max* 9 "Konpaku (soul pips) per fighter, as in RoS; the one at 0 loses.")
 (defparameter *red-threshold* 0.30
-  "Red = Reishi below this fraction of max: a red fighter can't guard the Kikon rush, and its
-strike Kiko's him when the attacker still holds the button (rules KIKON-GUARDABLE-P / KIKON-CONFIRM-P).
+  "Red = Reishi below this fraction of max: a Kikon rush strike that hits him with the button still
+held is the Kikon at once (rules KIKON-OUTCOME; above red it is a guardable follow-up).
 The §8 gate's pacing knob if seeded CPU matches run long (fix round: 0.10 .. 0.30 moved the gate
 medians by only ~10 s, see p2-log).")
 (defparameter *kikon-konpaku* 2 "Konpaku a Kikon removes.")
 (defparameter *kikon-konpaku-awakened* 3 "Konpaku a Kikon removes when the attacker is awakened.")
 (defparameter *soul-break-extra* 1 "A Soul Break (Reishi reached 0) removes the Kikon count + this.")
 ;;; the Kikon rush (the Kikon button, any time): aura, dash, then the kit's strike (frame data per kit)
-(defparameter *kikon-aura* 5 "Kikon rush: frames of red aura before the dash (it strikes at once when already close).")
-(defparameter *kikon-speed* 16.0 "Kikon rush dash speed (m/s) ...")
-(defparameter *kikon-dash-max* 22 "... for at most this many frames (~5.9 m: the rush's range) ...")
+;;; (each character's rush module sets its own aura, dash speed and range: the move's :params)
 (defparameter *kikon-trigger* 1.6
   "... and the strike starts as soon as the opponent is within this range (a blocked strike pushes
 him 0.6 m back: 2.2 m, still inside both characters' Q1 reach, so the -14 is punishable).")
-(defparameter *kikon-track* 120.0 "Degrees per second the rush turns during its dash and strike startup (like the Breaker).")
+(defparameter *kikon-follow-stun* 20
+  "A rush strike that hits a victim who isn't red, the button held: he staggers this long, in place ...")
+(defparameter *kikon-follow-gap* 12
+  "... and the follow-up strike hits this many frames after he can act again (guard it, Step or Hoho
+out; failing that it is the Kikon, KIKON-OUTCOME).")
+(defparameter *kikon-track* 120.0 "Default :track (deg/s) of a Kikon rush strike's startup (like the Breaker's dash).")
+(defparameter *armor-from* 6 "A move's armour (:armor-hits) starts on this move frame (no frame-1 reversals).")
 (defparameter *reset-distance* 8.0 "After a Kikon / Soul Break both fighters are placed this far apart.")
 (defparameter *reset-neutral* 48 "Frames of neutral (inputs ignored) after the reset (0.8 s).")
 (defparameter *reset-reiatsu-bonus* 10.0 "Reiatsu a kit with :reset-reiatsu gets at each reset (Kenpachi).")
@@ -56,7 +60,7 @@ him 0.6 m back: 2.2 m, still inside both characters' Q1 reach, so the -14 is pun
 (defparameter *run-carry* 1.0 "A move started out of a run slides this far along the run (momentum) ...")
 (defparameter *run-carry-frames* 10 "... over this many frames (never past *RUN-STOP* from the opponent).")
 (defparameter *guard-raise* 2 "Frames of holding Guard before it blocks.")
-(defparameter *guard-arc* 200.0 "Guard covers this many degrees in front (infinite guard, no gauge).")
+(defparameter *guard-arc* 200.0 "Guard covers this many degrees in front (while the guard gauge lasts).")
 (defparameter *block-pushback* 0.6 "Metres a blocked hit pushes the defender back.")
 (defparameter *whiff-extra* 6 "A move that touched nothing recovers R + this.")
 (defparameter *hazard-blockstun* 14
@@ -91,16 +95,39 @@ Hoho fit, Q1 doesn't (§3). On hit the chain opens at the end of the active fram
 (defparameter *guard-break-kb* 0.8 "Slide of a guard-broken fighter.")
 (defparameter *stance-break-kb* 0.5 "Slide of a broken stance.")
 
-;;; ---------------------------------------------------------------- Reiatsu gauge (3 bars)
+;;; ---------------------------------------------------------------- Reiatsu gauge (3 bars): SPs only
 (defparameter *reiatsu-max* 300.0 "Reiatsu gauge maximum (3 bars).")
 (defparameter *reiatsu-bar* 100.0 "One bar.")
-(defparameter *reiatsu-regen* 5.0 "Reiatsu per second, always.")
+(defparameter *reiatsu-regen* 3.0
+  "Reiatsu per second, always (5 before the flash-step gauge took Hoho and Burst off it: design v3 G.3).")
 (defparameter *reiatsu-dealt* 0.08 "Reiatsu per point of damage dealt.")
 (defparameter *reiatsu-taken* 0.10 "Reiatsu per point of damage taken.")
 (defparameter *cost-sp* 1 "Bars an SP1 / SP2 costs.")
 (defparameter *cost-sp-awakened* 2 "Bars an SP2 costs in an awakened form.")
-(defparameter *cost-hoho* 1 "Bars a Hoho costs.")
-(defparameter *cost-burst* 2 "Bars a Burst Reverse costs.")
+
+;;; ---------------------------------------------------------------- flash-step gauge (design v3 G.1): Hoho, Burst
+(defparameter *fs-max* 100.0 "Flash-step gauge maximum; full at the match start, kept through Kikon resets.")
+(defparameter *fs-hoho* 30.0 "Flash-step a Hoho costs.")
+(defparameter *fs-burst* 70.0 "Flash-step a Burst Reverse costs.")
+(defparameter *fs-regen* 3.0 "Flash-step per second ...")
+(defparameter *fs-delay* 60 "... once this many frames passed since the last spend.")
+(defparameter *fs-taken* 0.03 "Flash-step per point of damage taken (a full 1100 Reishi bar = +33).")
+(defparameter *fs-refund* 15.0 "A perfect Hoho gives this back (net cost 15: it rewards the read).")
+
+;;; ---------------------------------------------------------------- guard gauge (design v3 G.2)
+(defparameter *gg-max* 100.0 "Guard gauge maximum; full at the start and after every Kikon reset (both).")
+(defparameter *gg-kind* '(:quick 8 :flash 14 :sig 18 :sp 22 :kikon 20)
+  "Guard value (the gauge a blocked hit drains) by move kind; a hitwin / move :guard overrides it.")
+(defparameter *gg-hazard* 12 "Guard value of a blocked hazard hit without its own :guard.")
+(defparameter *gg-ender* 4 "+ this for a string ender (Quick / Flash / Signature with block advantage <= *GG-ENDER-ADV*).")
+(defparameter *gg-ender-adv* -10 "The block advantage that makes a Quick / Flash / Signature an ender.")
+(defparameter *gg-breaker* 35 "A Breaker's Guard Break also drains this.")
+(defparameter *gg-delay* 45 "The gauge refills only after this many frames without a drain ...")
+(defparameter *gg-regen* 20.0 "... at this per second ...")
+(defparameter *gg-regen-guardless* 25.0 "... or this while guardless (0 -> 100 in 4.75 s).")
+(defparameter *guard-crush-stun* 40
+  "A blocked hit that empties the gauge is still blocked, then the defender reels this long (GUARD CRUSH)
+and can't guard until the gauge is full again.")
 
 ;;; ---------------------------------------------------------------- Hoho
 (defparameter *hoho-distance* 1.6 "Hoho reappears this far behind the opponent, facing him.")
@@ -155,7 +182,7 @@ then :down + :wakeup (iframes in both).")
 ;;; ---------------------------------------------------------------- arena, Burst Reverse
 (defparameter *arena-radius* 15.0 "Circular arena; fighters are clamped inside (invisible wall).")
 (defparameter *burst-min-hits* 2
-  "Burst Reverse (mod + Quick, *COST-BURST* bars) only in hitstun / airborne after this many hits of
+  "Burst Reverse (mod + Quick, *FS-BURST* flash-step) only in hitstun / airborne after this many hits of
 a combo (critique-design 1.7: not from hit 1).")
 (defparameter *burst-invuln* 20 "Frames the Burst user stays invulnerable (he is neutral at once).")
 (defparameter *burst-push* 5.0 "Burst pushes the attacker this far (no stun; his move ends) ...")
@@ -236,10 +263,9 @@ than its perception delay after the combo's *BURST-MIN-HITS*th hit.")
 far outside its preferred range: toward it from beyond, away from it from inside; it lets go in the
 middle of the range.")
 (defparameter *ai-dash-frames* 70 "Longest the CPU holds a dash.")
-(defparameter *ai-kikon-range* 7.0
-  "The CPU rushes a red opponent (a stunned one at once, else at a neutral decision) within this
-range (the rush's dash covers *KIKON-TRIGGER* + ~5.9 m) ...")
-(defparameter *ai-kikon-p* 0.5 "... with this chance per neutral decision. It never rushes a fighter who isn't red.")
+(defparameter *ai-kikon-p* 0.5
+  "The CPU rushes a red opponent within its kit's :kikon-range (a stunned one at once) with this chance
+per neutral decision; one who isn't red only as a poke (the kit's :moves bands).")
 
 ;;; ================================================================ §14 budgets
 (defparameter *fire-density* 1.0 "Scales every fire emitter's rate (0.5 if the perf gate fails).")

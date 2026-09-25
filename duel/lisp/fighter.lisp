@@ -150,6 +150,7 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
           (fighter-contact f) nil (fighter-land-sf f) -1 (fighter-dmg-bonus f) 0 (fighter-crush f) nil
           (fighter-stored f) 0                           ; an interrupted stance keeps nothing
           (fighter-button f) button (fighter-hold f) 0 (fighter-perfect f) nil
+          (fighter-follow f) nil (fighter-armor-left f) (mv-armor-hits mv)
           (fighter-phase f) (cond ((member (mv-kind mv) '(:breaker :kikon)) :aura) ((mv-hold mv) :hold) (t :main)))
     (fill (motion-vel (motion e)) 0f0)
     (play-clip e (mv-clip mv) :blend (mv-blend mv) :speed (mv-clip-speed mv)
@@ -203,11 +204,16 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
   (clog "~a dash~@[ ~a~]" (side-name e) (let ((b (brain e))) (and b (brain-why b))))
   (emit :step e))
 
+(defun spend-fs (g amount)
+  "Spend AMOUNT of flash-step (the regen waits *FS-DELAY* again)."
+  (setf (gauges-fs g) (f32 (max 0.0 (- (gauges-fs g) amount))) (gauges-fs-idle g) 0))
+
 (defun start-hoho (e f)
-  "Hoho: spend a bar, vanish, reappear behind the opponent (HOHO-STEP). Checks PERFECT now."
+  "Hoho: spend *FS-HOHO* flash-step, vanish, reappear behind the opponent (HOHO-STEP). Checks PERFECT
+now (a perfect one refunds *FS-REFUND*)."
   (let ((g (gauges e)))
-    (setf (gauges-reiatsu g) (f32 (spend-bars (gauges-reiatsu g) *cost-hoho*))
-          (fighter-perfect f) (perfect-now-p e)          ; (before leaving the move: a cancel Hoho)
+    (spend-fs g *fs-hoho*)
+    (setf (fighter-perfect f) (perfect-now-p e)          ; (before leaving the move: a cancel Hoho)
           (fighter-state f) :hoho (fighter-sf f) 0 (fighter-move f) nil
           (fighter-hoho-lock f) (+ *hoho-frames* *hoho-lockout*))
     (fill (motion-vel (motion e)) 0f0)
@@ -216,14 +222,17 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
     (when (fighter-perfect f)
       (let ((o (opp-of e)))
         (incf (gauges-perfects g))
+        (setf (gauges-fs g) (f32 (min *fs-max* (+ (gauges-fs g) *fs-refund*))))
         (setf (fighter-lock-next (fighter o)) *perfect-lock*)
         (slowmo *perfect-slowmo-scale* *perfect-slowmo-seconds*)
         (emit :perfect e o)
         (clog "~a PERFECT HOHO" (side-name e))))))
 
 (defun kit-command-ok-p (e command)
-  "Can E afford COMMAND's move (Reiatsu bars)?"
-  (>= (gauges-reiatsu (gauges e)) (* (kit-command-cost (kit-of e) command) *reiatsu-bar*)))
+  "Can E start COMMAND's move now: Reiatsu bars, and not cooling down (its :cooldown)?"
+  (let ((i (position command *kit-commands*)))
+    (and (>= (gauges-reiatsu (gauges e)) (* (kit-command-cost (kit-of e) command) *reiatsu-bar*))
+         (or (null i) (zerop (aref (fighter-cd (fighter e)) i))))))
 
 (defun try-command (e f cmd &optional button)
   "Start command CMD (pressed with vpad BUTTON: a hold / Breaker move watches it) if the rules allow
@@ -231,7 +240,7 @@ it now. T when something started."
   (let ((g (gauges e)) (kit (fighter-kit f)))
     (case cmd
       (:step (start-step e f) t)
-      (:hoho (when (hoho-allowed-p nil (gauges-reiatsu g) (fighter-hoho-lock f))
+      (:hoho (when (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f))
                (start-hoho e f) t))
       (:awaken (when (awaken-allowed-p (member (fighter-state f) '(:idle :guard)) (gauges-awaken g) (gauges-awakened g))
                  (awaken! e) t))
@@ -240,6 +249,8 @@ it now. T when something started."
            (when (and mv (kit-command-ok-p e cmd))
              (let ((cost (kit-command-cost kit cmd)))
                (when (plusp cost) (setf (gauges-reiatsu g) (f32 (spend-bars (gauges-reiatsu g) cost)))))
+             (when (plusp (mv-cooldown mv))
+               (setf (aref (fighter-cd f) (position cmd *kit-commands*)) (mv-cooldown mv)))
              (start-move e mv button)
              t))))))
 
@@ -258,11 +269,15 @@ buffered command that can't start (Kikon too early, no bar) doesn't hide the one
                      (progn (vpad-consume! vp button) t))))
 
 ;;; ---------------------------------------------------------------- per-state steps
+(defun guard-held-p (e vp)
+  "Guard is held and E may guard (the guard gauge: CAN-GUARD-P). Guardless, holding it does nothing."
+  (let ((g (gauges e))) (and (vpad-down vp :guard) (can-guard-p (gauges-gg g) (gauges-guardless g)))))
+
 (defun neutral-step (e f vp)
   "Idle / walk / strafe / guard: commands, then guard or walk, auto-facing."
   (unless (and (zerop (fighter-lock f)) (command! e f vp *neutral-commands*))
     (let ((v (motion-vel (motion e))))
-      (if (and (zerop (fighter-lock f)) (vpad-down vp :guard))
+      (if (and (zerop (fighter-lock f)) (guard-held-p e vp))
           (progn
             (unless (eq (fighter-state f) :guard)
               (setf (fighter-state f) :guard (fighter-guard-t f) 0)
@@ -309,19 +324,34 @@ buffered command that can't start (Kikon too early, no bar) doesn't hide the one
                (let ((sp (breaker-speed (fighter-hold f))) (yaw (yaw-of e)))
                  (setf (aref v 0) (f32 (* sp (fwd-x yaw))) (aref v 2) (f32 (* sp (fwd-z yaw))))))))))
 
+(defun rush-param (mv key)
+  "A Kikon rush module's number KEY (:aura :aim :speed :dash-max :dash-track) from its move :params."
+  (getf (mv-params mv) key))
+
 (defun kikon-rush-step (e f mv)
-  "Kikon rush: the aura, then the dash at *KIKON-SPEED* toward the opponent (KIKON-RUSH-NEXT-PHASE,
-turning at the move's :track), then the strike. The button isn't read here: only at the strike's
-connect (combat.lisp)."
+  "Kikon rush: the aura (turning at the module's :aim), then its dash toward the opponent at :speed
+(turning at :dash-track; 0 = locked at take-off) until KIKON-RUSH-NEXT-PHASE says strike (no dash:
+:dash-max 0). The button isn't read here: only when the strike connects (combat.lisp). After a strike
+that hit a victim who isn't red with the button held (phase :follow, KIKON-OUTCOME): wait
+KIKON-FOLLOW-WAIT frames facing him, then the strike again, the follow-up."
   (incf (fighter-hold f))
-  (let ((next (kikon-rush-next-phase (fighter-phase f) (fighter-hold f) (fighter-dist f)))
-        (v (motion-vel (motion e))))
-    (cond ((eq next :strike) (enter-main e f mv))
-          (t (unless (eq next (fighter-phase f)) (setf (fighter-phase f) next (fighter-hold f) 0))
-             (fill v 0f0)
-             (when (eq next :dash)
-               (turn-to-opp e f (track-step (mv-track mv)))
-               (run-velocity e *kikon-speed*))))))
+  (let ((v (motion-vel (motion e))) (phase (fighter-phase f)))
+    (fill v 0f0)
+    (if (eq phase :follow)
+        (progn (turn-to-opp e f (track-step (rush-param mv :aim)))
+               (when (>= (fighter-hold f) (kikon-follow-wait (mv-s mv)))
+                 (setf (fighter-hits f) 0 (fighter-contact f) nil (fighter-land-sf f) -1)
+                 (enter-main e f mv)))
+        (let ((next (kikon-rush-next-phase phase (fighter-hold f) (fighter-dist f)
+                                           :aura (rush-param mv :aura) :dash-max (rush-param mv :dash-max))))
+          (cond ((eq next :strike) (enter-main e f mv))
+                (t (unless (eq next phase)
+                     (setf (fighter-phase f) next (fighter-hold f) 0)
+                     (emit :rush-dash e))
+                   (if (eq next :dash)
+                       (progn (turn-to-opp e f (track-step (rush-param mv :dash-track)))
+                              (run-velocity e (rush-param mv :speed)))
+                       (turn-to-opp e f (track-step (rush-param mv :aim))))))))))
 
 (defun main-phase-step (e f vp mv)
   "The move proper, one frame: tracking and lunge in the startup, frame hooks, chains and cancels,
@@ -348,7 +378,7 @@ the end (MOVE-END-FRAME)."
   (let ((mv (fighter-move f)))
     (case (fighter-phase f)
       (:hold (hold-phase-step e f vp mv))
-      ((:aura :dash) (if (eq (mv-kind mv) :kikon) (kikon-rush-step e f mv) (breaker-phase-step e f vp mv)))
+      ((:aura :dash :follow) (if (eq (mv-kind mv) :kikon) (kikon-rush-step e f mv) (breaker-phase-step e f vp mv)))
       (t (main-phase-step e f vp mv)))))
 
 (defun move-commands (e f vp mv sf)
@@ -376,7 +406,7 @@ Guard is held)."
   (when (zerop (fighter-lock f)) (command! e f vp '(:burst)))
   (when (>= (incf (fighter-sf f)) (fighter-stun f))
     (to-idle e)
-    (when (vpad-down vp :guard) (setf (fighter-state f) :guard (fighter-guard-t f) *guard-raise*) (play-clip e :sh-guard :blend 3))))
+    (when (guard-held-p e vp) (setf (fighter-state f) :guard (fighter-guard-t f) *guard-raise*) (play-clip e :sh-guard :blend 3))))
 
 (defun step-step (e f vp)
   "The hop; at its end a Step still held becomes a run (so holding never shortens a Step)."
@@ -409,7 +439,7 @@ from him (RUN-STOP-P)."
            (when (eq (fighter-state f) :move)
              (set-slide e (run-carry (fighter-dist f)) *run-carry-frames* vx vz)
              (clog "~a run -> ~a, carry ~,1f m" (side-name e) (mv-name (fighter-move f)) (run-carry (fighter-dist f)))))
-          ((and free (vpad-down vp :guard)) (to-idle e 3) (neutral-step e f vp))
+          ((and free (guard-held-p e vp)) (to-idle e 3) (neutral-step e f vp))
           ((not (and free (vpad-down vp :step)))
            (setf (fighter-phase f) :brake (fighter-sf f) 0)
            (play-clip e (kit-stance (fighter-kit f)) :blend 6))
@@ -480,11 +510,12 @@ invulnerable)."
 
 (defun defender-state (e)
   "E's side of the triangle for RESOLVE-CONTACT (rules.lisp): :neutral :guard :breaker :stance-in
-:stance :invuln."
+:stance :armor :invuln."
   (let* ((f (fighter e)) (sf (fighter-sf f)) (mv (fighter-move f)))
     (case (if (> (fighter-invuln f) 0) :invuln (fighter-state f))
       (:invuln :invuln)                                  ; after a Burst
-      (:guard (if (>= (fighter-guard-t f) *guard-raise*) :guard :neutral))
+      (:guard (if (and (>= (fighter-guard-t f) *guard-raise*) (can-guard-p (gauges-gg (gauges e)) (gauges-guardless (gauges e))))
+                  :guard :neutral))
       (:guard-hit :guard)
       (:step (if (invulnerable-frame-p sf *step-iframes*) :invuln :neutral))
       (:hoho (if (invulnerable-frame-p sf *hoho-iframes*) :invuln :neutral))
@@ -492,6 +523,11 @@ invulnerable)."
       (:air (if (eq (fighter-phase f) :knockdown) :invuln :neutral))   ; the combo limits' forced knockdown
       (:move (cond ((and (eq (mv-kind mv) :breaker) (or (member (fighter-phase f) '(:aura :dash)) (< sf (mv-s mv))))
                     :breaker)
+                   ((and (plusp (fighter-armor-left f))              ; the move's armour (:armor-hits)
+                         (if (eq (mv-kind mv) :kikon)
+                             (eq (fighter-phase f) :dash)
+                             (and (eq (fighter-phase f) :main) (<= *armor-from* sf) (< sf (mv-s mv)))))
+                    :armor)
                    ((and (member :stance (mv-flags mv)) (eq (fighter-phase f) :hold))
                     (if (< (fighter-hold f) *stance-in*) :stance-in :stance))
                    (t :neutral)))
@@ -543,6 +579,7 @@ invulnerable)."
   (when (> (fighter-hoho-lock f) 0) (decf (fighter-hoho-lock f)))
   (when (> (fighter-invuln f) 0) (decf (fighter-invuln f)))
   (when (> (fighter-callout-t f) 0) (decf (fighter-callout-t f)))
+  (let ((cd (fighter-cd f))) (dotimes (i (length cd)) (when (plusp (aref cd i)) (decf (aref cd i)))))
   (let ((vp (pilot-vpad (pilot e))))
     (case (fighter-state f)
       ((:idle :guard) (neutral-step e f vp))

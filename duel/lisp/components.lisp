@@ -56,10 +56,14 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (character nil) (form :base) (kit nil)
   (state :idle)
   (sf 0 :type fixnum)                   ; frames in the state; in :move the move frame (0 = first)
-  (phase nil)                           ; :move → :hold :aura :dash :main; :stun → the reaction kind
+  (phase nil)                           ; :move → :hold :aura :dash :follow :main; :stun → the reaction kind
   (move nil)                            ; the MOVE (kit.lisp) while in :move
   (button nil)                          ; the vpad button that started the move (holds, releases)
-  (hold 0 :type fixnum)                 ; frames in the pre-strike phase (hold / aura / dash)
+  (hold 0 :type fixnum)                 ; frames in the pre-strike phase (hold / aura / dash / follow)
+  (follow nil)                          ; this Kikon rush strike is the follow-up (its hit = the Kikon)
+  (armor-left 0 :type fixnum)           ; hits the move's armour may still take (:armor-hits)
+  (cd (make-array 7 :element-type 'fixnum :initial-element 0) :type (simple-array fixnum (7)))
+                                        ; frames each *KIT-COMMANDS* slot (7 of them) still cools down (kept through resets)
   (hits 0 :type fixnum)                 ; bitmask: hit windows of the current move that connected
   (contact nil)                         ; what the move's hits did: NIL (whiff) :hit :block
   (land-sf -1 :type fixnum)             ; move frame of the first connect (cancel windows open)
@@ -90,7 +94,12 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   "A fighter's numbers (design-v1 §1, §3, §5) and his match stats."
   (reishi *reishi-max* :type fixnum) (reishi-max *reishi-max* :type fixnum)
   (konpaku *konpaku-max* :type fixnum)
-  (reiatsu 0f0 :type single-float)      ; 0..300 (3 bars)
+  (reiatsu 0f0 :type single-float)      ; 0..300 (3 bars): SPs
+  (fs *fs-max* :type single-float)      ; flash-step 0..100: Hoho, Burst (kept through resets)
+  (fs-idle 0 :type fixnum)              ; frames since the last flash-step spend
+  (gg *gg-max* :type single-float)      ; guard gauge 0..100 (full again at every reset)
+  (gg-idle 0 :type fixnum)              ; frames since the last guard drain
+  (guardless nil)                       ; the guard gauge hit 0: no guard until it is full again
   (awaken 0f0 :type single-float)       ; Fighting Spirit 0..100
   (awakened nil)                        ; the awakening of this match is used
   (evolution nil)                       ; EVOLUTION was announced

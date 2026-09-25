@@ -22,27 +22,31 @@
 ;; two cuts (f16, f28), then the wave hazard leaves the blade at f40 (-6 on block at range)
 (defmove :ya-sig :kind :sig :clip :ya-sig :callout "RYUJIN JAKKA"
   :startup 16 :active 25 :recovery 26 :dmg 30 :adv-block -6 :reach 2.6 :arc 110 :on-hit :flinch
-  :meter *inferno-sig*
+  :meter *inferno-sig* :guard 10                                    ; guard gauge: 10 per cut, the wave 15
   :hits ((16 19) (28 31))
   :on-frame ((40 yama-fire-wave))
   :params (:width 3.5 :speed 14.0 :range 12.0 :dmg 110 :on-hit :knockback :kb 3.0
-           :chip *chip-fire* :meter *inferno-sig*))
+           :chip *chip-fire* :meter *inferno-sig* :guard 15))
 ;; hold 12..60 f (charge loop), release -> throw; the fireball leaves at throw frame 2
 (defmove :ya-shiranui :kind :sp :clip :ya-shiranui :clip-2 :ya-shiranui-throw :callout "SHIRANUI"
   :hold (12 60) :startup 2 :active 1 :recovery 20
   :tick yama-shiranui-charge :on-frame ((2 yama-shiranui-throw))
   :params (:dmg-min 90 :dmg-max 170 :speed-min 10.0 :speed-max 16.0 :turn 60.0 :range 20.0 :on-hit :knockback
-           :kb 3.0 :chip *chip-fire* :meter *inferno-sig* :full-meter *inferno-max*))
+           :kb 3.0 :chip *chip-fire* :meter *inferno-sig* :full-meter *inferno-max* :guard-min 10 :guard-max 18))
 (defmove :ya-taimatsu :kind :sp :clip :ya-taimatsu :callout "TAIMATSU"
   :startup 16 :active 8 :recovery 24 :dmg 120 :adv-block -14
   :vol (:arc 4.0 90 0.0 2.2) :on-hit :knockback :kb 3.5             ; fire cone 4 m, 90 deg
   :on-frame ((16 yama-fire-cone)))
 (defmove :ya-breaker :kind :breaker :clip :ya-breaker :clip-2 :ya-ikkotsu :callout "IKKOTSU" :planted t)
-;; the Kikon rush (O): red aura, dash (tuning.lisp *KIKON-...*), then this strike (Q3's overhead chop,
-;; played faster). On a red opponent with O still held when it connects: the Kikon, Jokaku Enjo;
-;; else a plain knockback hit (guardable unless he is red). -14 on block.
-(defmove :ya-kikon :kind :kikon :clip :sh-run :clip-2 :ya-q3 :clip-s 12 :callout "JOKAKU ENJO" :cine yama-kikon-cine
-  :startup 8 :active 3 :recovery 24 :dmg 70 :adv-block -14 :reach 2.2 :arc 110 :on-hit :knockback :kb 2.5)
+;; O, the Kikon rush module ENJO (Shikai, Hellfire): no dash. He aims for 6 f, points the blade along a
+;; lane and a line of fire walls rises along it (f4) and bursts at f20: a melee lane 1 -> 9 m, locked,
+;; fire (chip 12 %). A hit with O held: the Kikon, Jokaku Enjo, on a red opponent, else the follow-up
+;; (the lane again; KIKON-OUTCOME). Guardable; -14 on block, out of reach at range. Cooldown 90.
+(defmove :ya-kikon :kind :kikon :clip :ya-stance :clip-2 :ya-enjo :callout "JOKAKU ENJO" :cine yama-kikon-cine
+  :startup 20 :active 2 :recovery 30 :whiff 30 :dmg 70 :adv-block -14 :track 0
+  :vol (:cap 1.0 9.0 1.2 1.4) :on-hit :knockback :kb 2.0 :chip *chip-fire* :cooldown 90
+  :on-frame ((4 yama-enjo-line))
+  :params (:aura 6 :aim 120.0 :speed 0.0 :dash-max 0 :dash-track 0.0 :look :lane))
 
 ;;; ================================================================ Hellfire (Gokuen)
 (defmove :ya-nadegiri :kind :sp :clip :ya-nadegiri :callout "NADEGIRI" :cost 2
@@ -60,9 +64,13 @@
   :startup 24 :active 1 :recovery 36
   :on-frame ((24 yama-kaka-summon))
   :params (:count 3 :radius 1.9 :delay 6 :stagger 10 :dmg 50 :on-hit :flinch :last-stun 40))
-;; the Bankai Kikon rush: the same numbers, one diagonal cut (Q1's), Tenchi Kaijin
+;; O in Bankai, KITA: TENCHI: 10 f of aim, then a flash step, 36 m/s for at most 14 f, the direction
+;; locked at take-off (a sidestep in the aim beats it), then one diagonal cut (Q1's, played faster):
+;; 10 m, <= 30 f from the press. Tenchi Kaijin. Cooldown 90.
 (defmove :ya-tenchi :kind :kikon :clip :sh-run :clip-2 :ya-q1 :clip-s 9 :callout "TENCHI KAIJIN" :cine yama-tenchi-cine
-  :startup 8 :active 3 :recovery 24 :dmg 70 :adv-block -14 :reach 2.2 :arc 110 :on-hit :knockback :kb 2.5)
+  :startup 6 :active 2 :recovery 26 :dmg 70 :adv-block -14 :reach 2.4 :arc 110 :on-hit :knockback :kb 2.5 :cooldown 90
+  :on-frame ((5 yama-tenchi-slash))
+  :params (:aura 10 :aim 120.0 :speed 36.0 :dash-max 14 :dash-track 0.0 :look :flash-step :sfx :hoho-out))
 
 ;;; ================================================================ forms
 (defkit :yamamoto :base
@@ -79,9 +87,9 @@
        :moves ((0.0 3.0 :q 4 :f 2 :breaker 1 :sp2 1 :step 1)
                (3.0 5.0 :f 1 :sig 2 :step 2 nil 2)
                (5.0 7.0 :sig 4 :sp1 1 :step 1 nil 1)
-               (7.0 99.0 :sp1 4 :sig 2 nil 1))
+               (7.0 99.0 :sp1 4 :sig 2 :kikon 1 nil 1))                ; ENJO as a poke from range
        :guard 0.45 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 2 :oki :sp1-full :oki-above 0.6
-       :dash 0.25 :dash-back 0.5))
+       :dash 0.25 :dash-back 0.5 :kikon-range 9.0))
 
 (defkit :yamamoto :hellfire :inherit :base
   :callout "GOKUEN" :mult *hellfire-mult* :duration *hellfire-seconds* :burn *hellfire-burn* :blade (:fire 1.3)
@@ -92,14 +100,22 @@
        :moves ((0.0 3.0 :q 3 :f 3 :sp2 2 :breaker 1)
                (3.0 8.0 :f 1 :sig 2 :step 2)
                (8.0 99.0 :sp1 2 :step 2))
-       :guard 0.4 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 1 :dash 0.5))
+       :guard 0.4 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 1 :dash 0.5 :kikon-range 9.0))
 
 (defkit :yamamoto :bankai :inherit :base
   :awakening t :mult *bankai-mult* :blade (:embers 1.0) :grade :spot
   :passives (:armor-vs-quick) :blade-chip *chip-blade* :meter nil
   :weapon :zanka :aura :heat :enter-clips (:ya-bankai) :enter-hook yama-bankai-enter :swing-sfx :whoosh-heavy
   :cine yama-bankai-cine
-  :commands (:sp1 :ya-kyoku :sp2 :ya-kaka :kikon :ya-tenchi))
+  :commands (:sp1 :ya-kyoku :sp2 :ya-kaka :kikon :ya-tenchi)
+  :ai (:intents (:approach 1 :pressure 1 :zone 3 :defend 1)            ; the base table without the O poke
+       :ranges (:approach (3.0 6.0) :pressure (1.5 3.0) :zone (7.0 9.5) :defend (4.0 7.0))
+       :moves ((0.0 3.0 :q 4 :f 2 :breaker 1 :sp2 1 :step 1)
+               (3.0 5.0 :f 1 :sig 2 :step 2 nil 2)
+               (5.0 7.0 :sig 4 :sp1 1 :step 1 nil 1)
+               (7.0 99.0 :sp1 4 :sig 2 nil 1))
+       :guard 0.45 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 2 :oki :sp1-full :oki-above 0.6
+       :dash 0.25 :dash-back 0.5 :kikon-range 9.0))
 
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun yama-fire-wave (e)
@@ -109,7 +125,8 @@
       (spawn-hazard :wave e :x x :z z :yaw (yaw-of e) :speed speed :size (* 0.5 (move-param e :width))
                             :life (round (* 60 (/ (move-param e :range) speed)))
                             :hw (make-hitwin :dmg (move-param e :dmg) :react (move-param e :on-hit) :kb (move-param e :kb)
-                                             :hs *hitstop-heavy* :chip (move-param e :chip) :meter (move-param e :meter)))))
+                                             :hs *hitstop-heavy* :chip (move-param e :chip) :meter (move-param e :meter)
+                                             :guard (move-param e :guard)))))
   (emit :sfx :fire-wave e))
 
 (defun yama-fire-cone (e)
@@ -133,7 +150,8 @@
                                   :hw (make-hitwin :dmg (round (lerp (move-param e :dmg-min) (move-param e :dmg-max) k))
                                                    :react (move-param e :on-hit) :kb (move-param e :kb)
                                                    :hs *hitstop-heavy* :chip (move-param e :chip)
-                                                   :meter (move-param e :meter)))))
+                                                   :meter (move-param e :meter)
+                                                   :guard (round (lerp (move-param e :guard-min) (move-param e :guard-max) k))))))
     (when (>= k 1.0) (add-meter e (move-param e :full-meter)))
     (emit :sfx :fire-roar e)))
 
@@ -142,10 +160,20 @@
   (let ((p (pos-of e)) (g (gauges e)))
     (spawn-hazard :pillars e :x (aref p 0) :z (aref p 2) :size 3.0 :life (seconds->frames *ennetsu-seconds*)
                              :hits *ennetsu-hits*
-                             :hw (make-hitwin :dmg *ennetsu-damage* :react :stagger :kb 2.0 :hs *hitstop-heavy*))
+                             :hw (make-hitwin :dmg *ennetsu-damage* :react :stagger :kb 2.0 :hs *hitstop-heavy* :guard 10))
     (setf (gauges-reishi g) (burn (gauges-reishi g) *ennetsu-self-burn*))
     (when (eq (fighter-state (fighter e)) :idle) (play-clip e :ya-hellfire :blend 3))
     (emit :sfx :fire-roar e)))
+
+(defun yama-enjo-line (e)
+  "ENJO f4: the line of fire walls starts rising along the locked lane (a look: the hit is the move's)."
+  (let ((p (pos-of e)))
+    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 9.0 :life 34 :look :enjo))
+  (emit :sfx :fire-roar e))
+
+(defun yama-tenchi-slash (e)
+  "TENCHI: the cut's ring, just before it lands."
+  (emit :sfx :kikon-slash e))
 
 (defun yama-bankai-enter (e)
   "Bankai: every fire is drawn into the blade for good (Inferno empties; no more Hellfire)."
