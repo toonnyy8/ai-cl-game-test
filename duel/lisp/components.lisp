@@ -38,7 +38,18 @@
   (smear 0f0 :type single-float)        ; > 0: the squash / stretch smear drawing (1 frame)
   (smear-dir (make-f32 2) :type f32vec) ; its direction on the ground (x z, unit)
   (ghost (make-f32 (* +nj+ 16)) :type f32vec)   ; the Hoho afterimage: the joints at the vanish
-  (ghost-age -1f0 :type single-float))  ; effect seconds since the vanish (< 0 = none)
+  (ghost-age -1f0 :type single-float)   ; effect seconds since the vanish (< 0 = none)
+  ;; Phase 5 looks (docs/STYLE_STORM_DESIGN.md §2.5 faces, §4; cosmetic)
+  (face :neutral)                       ; a held expression (:neutral :shout :hurt) while FACE-T > 0 (else chosen by state)
+  (face-t 0f0 :type single-float)       ; effect seconds the held FACE lasts
+  (beat 0f0 :type single-float)         ; effect seconds left of the head-thrown-back overlay (cup 3's entry: the grin)
+  (flare 0f0 :type single-float)        ; effect seconds left of the garb's flare (a ranged hit absorbed)
+  (last-sf -1 :type fixnum)             ; the move frame the last draw saw (draw-side move beats: Nadegiri's cut)
+  ;; Phase 6 looks (cosmetic)
+  (face-was :neutral)                   ; the expression drawn last frame (FACE-ACCENT)
+  (looks (make-f32 2) :type f32vec)     ; [0] 0..1 the left fist held on the handle (GRIP-STEP), [1] the fx clock when
+                                        ; FACE-WAS last changed (an f32vec: set every frame at 0 B)
+  (t3 0 :type fixnum))                  ; cup-3 entries this match (the first gets the full pillar, later ones half)
 
 (defcomponent blade
   "The sword ribbon (engine MAKE-TRAIL layout): sampled in the draw while a move is active.

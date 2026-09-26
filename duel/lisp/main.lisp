@@ -127,6 +127,90 @@ ground): up over the first 8 f of the dash (or the dash-in), down over the strik
            (* h (- 1.0 (/ (fighter-sf f) (float (mv-s mv))))))
           (t 0.0))))
 
+(defparameter *hurt-cines* '(yama-kikon-cine yama-tenchi-cine ken-kikon-cine ken-sky-split-cine soul-break-cine ko-cine)
+  "The cinematics whose victim (V) shows the hurt face; their attacker (A) shouts (every cinematic's A does but the intro's,
+TIME's and the K.O.'s winner).")
+
+(defun face-of (e f m mv)
+  "Fighter E's expression this frame (docs/STYLE_STORM_DESIGN.md §2.5, Phase 5; a look, read from the state): a held
+face (MODEL-FACE-T) first; in a cinematic the attacker shouts and a Kikon's / Soul Break's / K.O.'s victim is hurt; hurt
+while stunned, airborne, down or lost; shouting through a non-Quick move from 10 f before its hit to 12 f after it (and
+through its charge, aura or dash phases)."
+  (let ((st (fighter-state f)))
+    (cond ((> (model-face-t m) 0f0) (model-face m))
+          ((eq st :cine)
+           (let ((c *cine*))
+             (cond ((null c) :neutral)
+                   ((eql e (cine-a c)) (if (member (cine-name c) '(intro-cine time-cine ko-cine)) :neutral :shout))
+                   ((member (cine-name c) *hurt-cines*) :hurt)
+                   (t :neutral))))
+          ((member st '(:stun :air :down :lose)) :hurt)
+          ((and mv (eq st :move) (not (eq (mv-kind mv) :quick))
+                (or (not (eq (fighter-phase f) :main)) (<= (- (mv-s mv) 10) (fighter-sf f) (+ (mv-s mv) (mv-a mv) 12))))
+           :shout)
+          (t :neutral))))
+
+(defun face-beat (e face secs &optional head-back)
+  "Hold fighter E's expression FACE for SECS (effect seconds); HEAD-BACK: also throw his head back over them (the
+overlay pose of DRAW-FIGHTER: cup 3's grin on entry). A look."
+  (let ((m (model e)))
+    (setf (model-face m) face (model-face-t m) (f32 secs))
+    (when head-back (setf (model-beat m) (f32 secs)))))
+
+(declaim (type f32vec *beat-pose*))
+(defvar *beat-pose* (make-f32 +pose-n+) "DRAW-FIGHTER's pose with the head-back overlay added (a copy: the anim's own pose stays).")
+
+(defun-fast beat-pose! (pose beat)
+  "*BEAT-POSE* = POSE with the head thrown back (head -35, chest -10, spine -8 degrees of flex) by the envelope of a
+beat with BEAT s left of its 0.9 s: up over 0.12 s, held, down over the last 0.3 s. Returns it. 0 B."
+  (declare (type f32vec pose) (single-float beat))
+  (let* ((out *beat-pose*) (u (- 0.9f0 beat)) (w (f-min (f-clamp (/ u 0.12f0) 0f0 1f0) (f-clamp (/ beat 0.3f0) 0f0 1f0))))
+    (declare (type f32vec out) (single-float u w))
+    (replace out pose)
+    (setf (aref out (* 3 (ji :head))) (+ (aref out (* 3 (ji :head))) (* w -0.61f0))
+          (aref out (* 3 (ji :chest))) (+ (aref out (* 3 (ji :chest))) (* w -0.175f0))
+          (aref out (* 3 (ji :spine))) (+ (aref out (* 3 (ji :spine))) (* w -0.14f0)))
+    out))
+
+(defun-fast grip-step (m on dt)
+  "The left fist on the handle (Phase 6): MODEL-LOOKS [0] eases toward 1 while ON (a grip clip plays, the weapon in hand), to
+0 otherwise, over 0.1 s of effect time (DT), and GRIP-LEFT! holds it there by that much. 0 B."
+  (declare (single-float dt))
+  (let* ((lk (model-looks m)) (g (aref lk 0)) (to (if on 1f0 0f0))
+         (n (if (> to g) (f-min to (+ g (* 10f0 dt))) (f-max to (- g (* 10f0 dt))))))
+    (declare (type f32vec lk) (single-float g to n))
+    (setf (aref lk 0) n)
+    (when (> n 0f0) (grip-left! (model-joints m) lk))
+    nil))
+
+(defun-fast face-accent (m face)
+  "FACE (FACE-OF's expression), noting when it changed; outside a cinematic a shout or a hurt face just put on shows its
+accent over the head for a few drawings (VFX-FACE-ACCENT: the faces are too small at gameplay distance). Returns FACE."
+  (let* ((lk (model-looks m)))
+    (declare (type f32vec lk))
+    (unless (eq face (model-face-was m)) (setf (model-face-was m) face (aref lk 1) (fx-clock))))
+  (unless (or *cine* (eq face :neutral))
+    (let* ((lk (model-looks m)) (ms (f->i (* 1000f0 (- (fx-clock) (aref lk 1))))))
+      (declare (type f32vec lk))
+      (declare (fixnum ms))
+      (when (< ms 400) (vfx-face-accent (model-joints m) (if (eq face :shout) 1 2) ms))))
+  face)
+
+(defun move-beats (e f m mv x y z yaw)
+  "Draw-side looks keyed on a move frame (the sim's on-frame hooks stay as they are): Nadegiri's cut at its S, the
+focus lines as Shiranui's charge starts, Kenpachi's SP2 dash leaving an afterimage every 10 f (§4.2 SP2 dash). Each fires
+once, on the draw that first sees the frame (MODEL-LAST-SF)."
+  (let ((prev (model-last-sf m)) (now (if (and mv (eq (fighter-state f) :move)) (fighter-sf f) -1)))
+    (setf (model-last-sf m) now)
+    (when (and mv (/= now prev))
+      (case (mv-name mv)
+        (:ya-nadegiri (when (and (eq (fighter-phase f) :main) (< prev (mv-s mv)) (<= (mv-s mv) now))
+                        (vfx-nadegiri x z (fwd-x yaw) (fwd-z yaw))))
+        (:ya-shiranui (when (and (eq (fighter-phase f) :hold) (= (fighter-hold f) 2)) (focus-lines 14 x (+ y 1.2) z)))
+        (:ke-charge (when (and (eq (fighter-phase f) :main) (<= (mv-s mv) now) (< now (+ (mv-s mv) (mv-a mv)))
+                               (zerop (mod (- now (mv-s mv)) 10)))
+                      (start-ghost e)))))))
+
 (defun draw-fighter (e rdt)
   "Pose and queue fighter E: body, weapon (or the planted one), blade look, aura, trail. RDT = this
 frame's effect seconds (0 while paused). A Kikon rush module's look (its :look): :flash-step shows only
@@ -138,9 +222,16 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
          (planted (and mv (mv-planted mv) (eq (fighter-phase f) :main)))
          (weapon (if (or planted flashing) nil (model-weapon m))) (x (aref p 0)) (y (+ (aref p 1) (rush-lift f mv))) (z (aref p 2)))
     (setf (model-flash m) (f32 (max 0.0 (- (model-flash m) rdt))) (model-super m) (f32 (max 0.0 (- (model-super m) rdt))))
-    (pose-fk! (model-joints m) (if (> (model-hold m) 0) (anim-pose (model-anim m)) (anim-eval (model-anim m)))
-              x y z yaw (body-scale b) (body-hunch b) (body-props b))
+    (let ((pose (if (> (model-hold m) 0) (anim-pose (model-anim m)) (anim-eval (model-anim m)))))
+      (pose-fk! (model-joints m) (if (> (model-beat m) 0f0) (beat-pose! pose (model-beat m)) pose)
+                x y z yaw (body-scale b) (body-hunch b) (body-props b)))
+    (let ((c (anim-clip (model-anim m))))                  ; a two-handed clip: the left fist on the handle
+      (grip-step m (and weapon c (member (clip-name c) *grip-clips*)) (f32 rdt)))
     (setf (model-hold m) (f32 (max 0.0 (- (model-hold m) rdt))))
+    (when (> rdt 0)                                       ; the Phase 5 look timers (effect seconds)
+      (setf (model-face-t m) (f32 (max 0.0 (- (model-face-t m) rdt))) (model-beat m) (f32 (max 0.0 (- (model-beat m) rdt)))
+            (model-flare m) (f32 (max 0.0 (- (model-flare m) rdt)))))
+    (move-beats e f m mv x y z yaw)
     (when (> (model-smear m) 0)
       (let ((v (model-smear-dir m)))
         (smear-joints! (model-joints m) (f32 x) (+ (f32 y) 1f0) (f32 z) (aref v 0) (aref v 1)))
@@ -148,7 +239,8 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
     (when (and flashing (> rdt 0) (zerop (mod (fighter-hold f) 4))) (start-ghost e))   ; a new afterimage every 4 f
     (draw-ghost e rdt)
     (when (and (>= (model-alpha m) 0.999) (not flashing))   ; a vanishing Hoho body is not drawn: its afterimage is
-      (draw-body b (model-joints m) x y z yaw :weapon weapon :hide (model-hide m) :tint (model-tint m)
+      (draw-body b (model-joints m) x y z yaw :weapon weapon :hide (model-hide m) :face (face-accent m (face-of e f m mv))
+                                            :tint (model-tint m)
                                             :rim (if (> (model-super m) 0) *super-rim* (model-rim m))
                                             :flash (if (> (model-flash m) 0) 0.45 0.0)))
     (when (and planted (model-weapon m))
@@ -176,17 +268,20 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
       (unless (or flashing (<= (model-alpha m) 0f0))      ; the form's aura (burned out: ash and smoke), crossfaded; none
                                                           ; round a body turned to ash (Tenchi Kaijin)
         (draw-aura f (if (burnout-p e) :ash (kit-aura kit)) x y z (* 1.1 (body-hurt-h b)) age rdt
-                   (cond ((and (eq look :charge) (not (eq (fighter-phase f) :main))) 1.5)
+                   (cond ((> (model-flare m) 0f0) (+ 1.0 (* 2.0 (model-flare m))))   ; West's garb flaring (a ranged hit absorbed)
+                         ((and (eq look :charge) (not (eq (fighter-phase f) :main))) 1.5)
                          ((and (member (fighter-state f) '(:guard :guard-hit)) (passive-p e :garb)) 1.4)   ; West guards: the garb flares
                          (t 1.0))))
       (when (and (eq (fighter-state f) :stun) (eq (fighter-phase f) :bind))   ; bound by South: ash drifting at the feet
         (vfx-aura x y z (body-hurt-h b) :bound age rdt))
       (when (gauges-evolution (gauges e)) (vfx-aura x y z (body-hurt-h b) :evolution age rdt :rgb *evolution-rgb* :k 0.5))
-      (when (and mv (eq (mv-kind mv) :breaker) (not (eq (fighter-phase f) :main)))
-        (vfx-aura x y z (body-hurt-h b) :breaker age rdt :k (if (eq (fighter-phase f) :dash) 1.0 0.5))
-        (vfx-breaker-ring x z age))
-      (when (and mv (eq (mv-kind mv) :breaker) (eq (fighter-phase f) :main) (< (fighter-sf f) (mv-s mv)))
-        (vfx-aura x y z (body-hurt-h b) :breaker age rdt :k (+ 1.0 (/ (fighter-sf f) (float (mv-s mv))))))
+      (when (and mv (eq (mv-kind mv) :breaker))            ; the owner's colour over ink (§4 mapping)
+        (let ((bk (case (first (kit-blade kit)) (:fire :breaker-fire) ((:embers :charcoal) :breaker-ember) (t :breaker))))
+          (unless (eq (fighter-phase f) :main)
+            (vfx-aura x y z (body-hurt-h b) bk age rdt :k (if (eq (fighter-phase f) :dash) 1.0 0.5))
+            (vfx-breaker-ring x z age))
+          (when (and (eq (fighter-phase f) :main) (< (fighter-sf f) (mv-s mv)))
+            (vfx-aura x y z (body-hurt-h b) bk age rdt :k (+ 1.0 (/ (fighter-sf f) (float (mv-s mv))))))))
       (when (and mv (eq (mv-kind mv) :kikon) (eq (fighter-state f) :move) (not flashing)   ; the Kikon rush: BLOOD tongues + ring
                  (or (not (eq (fighter-phase f) :main)) (< (fighter-sf f) (mv-s mv))))
         (vfx-aura x y z (body-hurt-h b) :kikon age rdt :k 1.0)))

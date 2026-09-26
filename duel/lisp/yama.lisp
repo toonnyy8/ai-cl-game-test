@@ -316,7 +316,7 @@ and an ink splash; the aftermath wide."
                      (let ((q (pos-of v)))               ; detonates at 85 % of its 1.96 s from f42: f142
                        (vfx-fire-dome (aref q 0) (aref q 2) 1.7 (/ (- cf 42) 60.0) 1.96 (cine-dt))
                        (add-point-light (aref q 0) 1.5 (aref q 2) 1.0 0.35 0.08 10.0 (+ 0.5 (* 1.5 u)) 5))))
-  (at 100 (shot-on v 150 3.8 0.35 :look 1.4) (lens 88) (setf *caption* nil))
+  (at 100 (shot-on v 150 3.8 0.35 :look 1.4) (lens 88) (caption-exit))
   (at 120 (hold-both a v 22) (silence 22) (lens 70))
   (during (120 142) (shot-on v 150 (- 3.6 (* 0.6 u)) (+ 0.4 (* 0.05 u)) :look 1.4))   ; a slow push-in, not cuts
   (at 142 (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))
@@ -342,7 +342,7 @@ grey world."
       (setf (model-alpha (model v)) 0f0)
       (let ((q (pos-of v))) (impact-splash (aref q 0) 0.0 (aref q 2) 14 0.07))
       (play-sfx :konpaku-shatter) (play-sfx :sizzle) (shake 0.2 0.3))
-  (at 110 (shot-on a -35 4.6 0.5 :look 1.3) (lens 48) (setf *caption* nil)))
+  (at 110 (shot-on a -35 4.6 0.5 :look 1.3) (lens 48) (caption-exit)))
 
 (defcine yama-bankai-cine (a v :len 138 :hold 72)
   "BANKAI (§5's reveal; paced by user review 3): beat 0; every flame in the arena is drawn into the blade (close, low,

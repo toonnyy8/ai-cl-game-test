@@ -7,11 +7,15 @@
 ;;;; white haori are the strongest contrast on screen. No fires
 ;;;; and no stage lights: warm colour belongs to the effects (their lights pool on the white ground).
 ;;;; Everything is drawn toon (fs_toon, stage mode: lit by the moon). Bankai dries and cracks the plaza:
-;;;; STAGE-CRACK-ADD keeps a few ember-crack decals.
+;;;; STAGE-CRACK-ADD keeps a few ember-crack decals. The fight marks the page (Phase 6, §6 "Destruction"): ink scorches
+;;;; and cracks that stay for the round (STAGE-MARK, a pool of 20, the oldest replaced) and inked rock chips that
+;;;; bounce and rest 6 s (STAGE-DEBRIS, a pool of 24); both are looks placed from events (feedback.lisp) and cleared at
+;;;; every reset (STAGE-CLEAR-MARKS: the :reset event and a new match).
 ;;;; API: (stage-init) :load step (meshes) · (stage-env) sets *ENV* (the toon look) · (stage-draw rdt)
 ;;;;      every frame after the camera (RDT = real seconds; the ash keeps falling through hitstop and
-;;;;      cinematics) · (stage-crack-add x z r) · (stage-clear-cracks). The plaza radius (15 m) is the gameplay's.
-;;;; Budget: ~60 live stage particles, no lights, 4 mesh draws; FX-EMIT conses nothing.
+;;;;      cinematics) · (stage-crack-add x z r) · (stage-clear-cracks) · (stage-mark kind x z r) · (stage-debris x z n)
+;;;;      · (stage-clear-marks). The plaza radius (15 m) is the gameplay's.
+;;;; Budget: ~60 live stage particles, no lights, 4 mesh draws (+ 2 per resting chip); FX-EMIT conses nothing.
 (in-package :duel)
 
 ;;; ---------------------------------------------------------------- data
@@ -174,10 +178,23 @@ catches the moon (the thin edge light of the skyline)."
                          (mb-box mb 0.3 (st-r 2 4) 0.3)))                              ; charred beams
         (mbc mb #x343846) (st-at (mb :x -2 :roll 0.25) (st-roof mb 5.2 7 5.5 1.6))))))
 
+(defvar *st-rocks* nil "Debris chips: a vector of (mesh . hull) pairs, 3 shapes (BUILD-ROCKS).")
+(defun build-rocks ()
+  "Three rubble chips (~0.2 m, the ruins' rubble grey with a lighter broken face) and their ink hulls."
+  (coerce (loop for k below 3 collect
+                (let ((mb (make-mesh-builder)))
+                  (mbc mb #x3A3E4A)
+                  (st-at (mb :yaw (* 0.7 k) :roll (* 0.3 k)) (mb-box mb (+ 0.2 (* 0.05 k)) 0.12 (- 0.18 (* 0.03 k))))
+                  (mbc mb #x5C6272)
+                  (st-at (mb :x 0.04 :y 0.05 :yaw 0.6 :pitch 0.5 :roll 0.4) (mb-box mb 0.12 0.08 0.1))
+                  (cons (mb-build mb) (mb-build (mb-hull (make-mesh-builder) mb :k 1.0 :c 0.55 :color (hexc #x0C0C12))))))
+          'simple-vector))
+
 (defun stage-init ()
   "Startup (:load) step: build the stage meshes (deterministic)."
   (let ((*st-rng* 7771))
-    (setf *st-floor* (build-floor) *st-walls* (build-walls) *st-town* (build-town) *st-burnt* (build-burnt))
+    (setf *st-floor* (build-floor) *st-walls* (build-walls) *st-town* (build-town) *st-burnt* (build-burnt)
+          *st-rocks* (build-rocks))
     (stage-clear-cracks)))
 
 ;;; ---------------------------------------------------------------- environment
@@ -199,7 +216,7 @@ on effect cores; a vignette."
           (env-vignette e) 0.25)))
 
 ;;; ---------------------------------------------------------------- cracks (Bankai)
-(defun stage-clear-cracks () (setf *st-ncracks* 0))
+(defun stage-clear-cracks () "A new match: no cracks, marks or chips." (setf *st-ncracks* 0) (stage-clear-marks))
 
 (defun stage-crack-add (x z r)
   "A cracked patch of radius R at (X Z): 5 branching ink gashes with ember cores (ST-DRAW-CRACKS). Keeps
@@ -215,20 +232,6 @@ the newest +CRACK-MAX+ (the oldest is replaced)."
             (incf s 4) (setf px (f32 nx) pz (f32 nz))))))
     (incf *st-ncracks*)
     nil))
-
-(defmacro st-glow-seg (x0 z0 x1 z1 y w r g b a)
-  "Queue a soft additive strip on the ground (x0 z0)->(x1 z1) at height Y, half-width W, colour (R G B), alpha A:
-a glowing core line (T光) over a drawn gash. A macro: 0 B."
-  `(let* ((x0 ,x0) (z0 ,z0) (x1 ,x1) (z1 ,z1) (gy ,y) (w ,w) (r ,r) (g ,g) (b ,b) (a ,a)
-          (dx (- x1 x0)) (dz (- z1 z0)) (l (f-sqrt (+ (* dx dx) (* dz dz)))))
-     (declare (single-float x0 z0 x1 z1 gy w r g b a dx dz l))
-     (when (> l 1f-4)
-       (let* ((nx (* w (/ (- dz) l))) (nz (* w (/ dx l))))
-         (declare (single-float nx nz))
-         (with-fx-verts (d o :add 6)
-           (vtx (- x0 nx) gy (- z0 nz) 0f0 -1f0 r g b a) (vtx (+ x0 nx) gy (+ z0 nz) 0f0 1f0 r g b a)
-           (vtx (+ x1 nx) gy (+ z1 nz) 0f0 1f0 r g b a) (vtx (- x0 nx) gy (- z0 nz) 0f0 -1f0 r g b a)
-           (vtx (+ x1 nx) gy (+ z1 nz) 0f0 1f0 r g b a) (vtx (- x1 nx) gy (- z1 nz) 0f0 -1f0 r g b a))))))
 
 (defmacro toon-ground-seg (x0 z0 x1 z1 y w h0 h1 seed wob pk)
   "Queue a flat toon strip on the ground (the toon fx batch, docs/STYLE_STORM_DESIGN.md §3.2) from (x0 z0) to
@@ -250,8 +253,8 @@ at the start .. H1 at the end (the low-heat end erodes first as the presence in 
 
 (defun-fast st-draw-cracks ()
   "Bankai's cracks (docs/STYLE_STORM_DESIGN.md §4.1): each ray an ink gash (BLACK SMOKE, a white hairline on the
-mid-grey page) narrowing and eroding toward the ray's end, with a glowing ember core (a thin additive line: a drawn
-toon line this thin would be all edge) whose brightness breathes on threes (the fx clock)."
+mid-grey page) narrowing and eroding toward the ray's end, with a thin drawn EMBER core (EMBER has no edge since user
+review 2, so a thin toon strip reads; Phase 6: it was a soft additive line) whose presence breathes on threes."
   (let* ((tm (fx-clock)) (c *st-cracks*) (n (min *st-ncracks* +crack-max+)) (d3 (i->f (logand (f->i (* 8f0 tm)) 63))))
     (declare (single-float tm) (type f32vec c) (fixnum n) (single-float d3))
     (dotimes (i n)
@@ -264,7 +267,114 @@ toon line this thin would be all edge) whose brightness breathes on threes (the 
             (declare (fixnum s) (single-float j h0 h1 w sd))
             (toon-ground-seg (aref c s) (aref c (+ s 1)) (aref c (+ s 2)) (aref c (+ s 3)) 0.035f0 w h0 h1 sd 0.25f0
                              (toon-a +pal-black-smoke+ 0.98f0))
-            (st-glow-seg (aref c s) (aref c (+ s 1)) (aref c (+ s 2)) (aref c (+ s 3)) 0.042f0 (* 0.4f0 w) 1f0 0.3f0 0.08f0 (- pk))))))))
+            (toon-ground-seg (aref c s) (aref c (+ s 1)) (aref c (+ s 2)) (aref c (+ s 3)) 0.042f0 (* 0.3f0 w) h0 h1 (+ sd 50f0) 0.1f0
+                             (toon-a +pal-ember+ pk))))))))
+
+;;; ---------------------------------------------------------------- destruction (Phase 6): marks and chips
+;;; Looks placed from events (feedback.lisp, the Buttagiru / Meteor hooks): the sim never reads them. Marks: x z r kind
+;;; (0 scorch, 1 crack) and the fx clock at birth, the oldest replaced; drawn flat in the toon batch (BLACK SMOKE: an ink
+;;; body with the white hairline of Bankai's gashes), their shapes hashed from the position (stable, 0 B). Chips: rubble
+;;; thrown up by a heavy impact, x y z vx vy vz angle spin age scale (age < 0 = free); they bounce once, rest 6 s, shrink.
+(defconstant +mark-n+ 20)
+(defconstant +mark-stride+ 5)
+(defconstant +chip-n+ 24)
+(defconstant +chip-stride+ 10)
+(declaim (type f32vec *st-marks* *st-chips* *st-cm* *st-ink*) (type fixnum *st-nmarks* *st-chip-i*))
+(defvar *st-marks* (make-f32 (* +mark-n+ +mark-stride+)))
+(defvar *st-nmarks* 0)
+(defvar *st-chips* (let ((v (make-f32 (* +chip-n+ +chip-stride+)))) (dotimes (i +chip-n+ v) (setf (aref v (+ (* i +chip-stride+) 8)) -1f0))))
+(defvar *st-chip-i* 0 "The next chip slot (a ring).")
+(defvar *st-cm* (make-f32 16) "A chip's world matrix.")
+(defvar *st-ink* (fv 3 0.01 1 1.4) "DRAW-MESH :toon lanes of a chip's ink hull (mode 3, full fog, 1.4 px).")
+(defmacro st-h01 (i seed)
+  "Stable pseudo-random 0..1 of the float forms I and SEED (vfx.lisp HASH01's sine hash)."
+  `(f-mod (f-abs (* 43758.547f0 (f-sin (+ (* ,i 12.9898f0) (* ,seed 78.233f0))))) 1f0))
+
+(defun stage-clear-marks ()
+  "A reset (the :reset event, a new match): no marks, no chips."
+  (setf *st-nmarks* 0)
+  (dotimes (i +chip-n+) (setf (aref *st-chips* (+ (* i +chip-stride+) 8)) -1f0)))
+
+(defun stage-mark (kind x z r)
+  "Leave a mark of KIND (:scorch or :crack) and radius R at ground point (X Z) for the round (inside the plaza only)."
+  (when (< (+ (* x x) (* z z)) (* 14.5 14.5))
+    (let ((o (* (mod *st-nmarks* +mark-n+) +mark-stride+)) (v *st-marks*))
+      (setf (aref v o) (f32 x) (aref v (+ o 1)) (f32 z) (aref v (+ o 2)) (f32 r)
+            (aref v (+ o 3)) (if (eq kind :crack) 1f0 0f0) (aref v (+ o 4)) (fx-clock))
+      (incf *st-nmarks*))))
+
+(defun stage-debris (x z n &optional (speed 1.0))
+  "Throw N rubble chips up from ground point (X Z), SPEED x 2.5-4.5 m/s outward."
+  (let ((c *st-chips*))
+    (dotimes (k n)
+      (let* ((o (* *st-chip-i* +chip-stride+)) (a (rnd-range 0.0 6.2832)) (sp (* speed (rnd-range 2.5 4.5))))
+        (setf *st-chip-i* (mod (1+ *st-chip-i*) +chip-n+)
+              (aref c o) (f32 (+ x (* 0.25 (cos a)))) (aref c (+ o 1)) 0.15f0 (aref c (+ o 2)) (f32 (+ z (* 0.25 (sin a))))
+              (aref c (+ o 3)) (f32 (* sp (cos a))) (aref c (+ o 4)) (f32 (rnd-range 3.0 6.0)) (aref c (+ o 5)) (f32 (* sp (sin a)))
+              (aref c (+ o 6)) (f32 a) (aref c (+ o 7)) (f32 (rnd-range -14.0 14.0)) (aref c (+ o 8)) 0f0
+              (aref c (+ o 9)) (f32 (rnd-range 0.6 1.3)))))))
+
+(defun-fast st-draw-marks ()
+  "Every mark of the round: a scorch = 9 ink spokes splashed out of its centre (the inner half wide, the tips thin and
+eroding), a crack = 5 jagged ink rays of 3 segments narrowing outward. Each burns in over 0.12 s (its presence)."
+  (let* ((v *st-marks*) (n (min *st-nmarks* +mark-n+)) (tm (fx-clock)))
+    (declare (type f32vec v) (fixnum n) (single-float tm))
+    (dotimes (i n)
+      (let* ((o (* i +mark-stride+)) (x (aref v o)) (z (aref v (+ o 1))) (r (aref v (+ o 2)))
+             (sd (+ (* 3.7f0 x) (* 1.3f0 z))) (y (+ 0.018f0 (* 0.0015f0 (i->f (mod i 6)))))
+             (pk (toon-a +pal-black-smoke+ (f-clamp (/ (- tm (aref v (+ o 4))) 0.12f0) 0.35f0 0.98f0))))
+        (declare (fixnum o) (single-float x z r sd y pk))
+        (if (< (aref v (+ o 3)) 0.5f0)
+            (dotimes (j 9)                              ; a scorch
+              (let* ((fj (i->f j)) (a (+ (* 0.698f0 fj) (* 0.5f0 (- (st-h01 fj sd) 0.5f0))))
+                     (l (* r (+ 0.55f0 (* 0.75f0 (st-h01 (+ fj 9f0) sd))))) (w (* r (+ 0.16f0 (* 0.1f0 (st-h01 (+ fj 3f0) sd)))))
+                     (cx (f-cos a)) (sx (f-sin a)) (mx (+ x (* 0.5f0 l cx))) (mz (+ z (* 0.5f0 l sx))))
+                (declare (single-float fj a l w cx sx mx mz))
+                (toon-ground-seg x z mx mz y w 1f0 0.7f0 (+ sd fj) 0.12f0 pk)
+                (toon-ground-seg mx mz (+ x (* l cx)) (+ z (* l sx)) y (* 0.4f0 w) 0.7f0 0.2f0 (+ sd fj 20f0) 0.12f0 pk)))
+            (dotimes (j 5)                              ; a crack
+              (let* ((fj (i->f j)) (a (+ (* 1.2566f0 fj) (* 0.6f0 (- (st-h01 fj sd) 0.5f0)))) (px x) (pz z)
+                     (st (* r (/ (+ 0.8f0 (* 0.4f0 (st-h01 (+ fj 7f0) sd))) 3f0))))
+                (declare (single-float fj a px pz st))
+                (dotimes (k 3)
+                  (let* ((fk (i->f k)) (a2 (+ a (* 0.9f0 (- (st-h01 (+ fj (* 5f0 fk)) (+ sd 1f0)) 0.5f0))))
+                         (nx (+ px (* st (f-cos a2)))) (nz (+ pz (* st (f-sin a2)))) (h0 (- 1f0 (* 0.3f0 fk))))
+                    (declare (single-float fk a2 nx nz h0))
+                    (toon-ground-seg px pz nx nz y (* r 0.05f0 (- 1f0 (* 0.3f0 fk))) h0 (- h0 0.3f0) (+ sd fj (* 7f0 fk)) 0.12f0 pk)
+                    (setf px nx pz nz))))))))
+    nil))
+
+(defun-fast st-chips (dt)
+  "Advance (DT effect seconds) and draw every chip: gravity, one bounce, then at rest; it shrinks away 6.6-7 s after
+it was thrown. Each is a rubble mesh (stage toon) and its ink hull."
+  (declare (single-float dt))
+  (let* ((c *st-chips*) (m *st-cm*) (rocks *st-rocks*))
+    (declare (type f32vec c m) (simple-vector rocks))
+    (dotimes (i +chip-n+)
+      (let* ((o (* i +chip-stride+)) (age (aref c (+ o 8))))
+        (declare (fixnum o) (single-float age))
+        (when (>= age 0f0)
+          (setf age (+ age dt) (aref c (+ o 8)) age)
+          (if (> age 7f0)
+              (setf (aref c (+ o 8)) -1f0)
+              (let* ((s (* (aref c (+ o 9)) (f-clamp (/ (- 7f0 age) 0.4f0) 0f0 1f0))) (fl (* 0.05f0 (aref c (+ o 9)))))
+                (declare (single-float s fl))
+                (when (> dt 0f0)
+                  (setf (aref c (+ o 4)) (- (aref c (+ o 4)) (* 18f0 dt)))
+                  (dotimes (k 3) (setf (aref c (+ o k)) (+ (aref c (+ o k)) (* dt (aref c (+ o 3 k))))))
+                  (setf (aref c (+ o 6)) (+ (aref c (+ o 6)) (* dt (aref c (+ o 7)))))
+                  (when (< (aref c (+ o 1)) fl)               ; the ground: one bounce, then at rest
+                    (setf (aref c (+ o 1)) fl)
+                    (if (< (aref c (+ o 4)) -2f0)
+                        (setf (aref c (+ o 4)) (* -0.3f0 (aref c (+ o 4))) (aref c (+ o 3)) (* 0.5f0 (aref c (+ o 3)))
+                              (aref c (+ o 5)) (* 0.5f0 (aref c (+ o 5))) (aref c (+ o 7)) (* 0.4f0 (aref c (+ o 7))))
+                        (setf (aref c (+ o 3)) 0f0 (aref c (+ o 4)) 0f0 (aref c (+ o 5)) 0f0 (aref c (+ o 7)) 0f0))))
+                (engine::%euler! m 0 (aref c o) (aref c (+ o 1)) (aref c (+ o 2)) (+ (i->f i) (* 0.6f0 (aref c (+ o 6))))
+                                 (aref c (+ o 6)) 0f0 s)
+                (let ((rk (svref rocks (mod i 3))))
+                  (draw-mesh (car rk) m :toon *st-toon*)
+                  (draw-mesh (cdr rk) m :toon *st-ink*)))))))
+    nil))
 
 ;;; ---------------------------------------------------------------- per-frame ash
 (defmacro st-every ((acc-index rate dt) &body body)
@@ -294,4 +404,6 @@ toon line this thin would be all edge) whose brightness breathes on threes (the 
     (draw-mesh *st-town* m :toon far)
     (draw-mesh *st-burnt* m :toon far))
   (when *stage-fx* (st-ash-fx (f32 rdt)))
-  (st-draw-cracks))
+  (st-draw-cracks)
+  (st-draw-marks)
+  (st-chips (f32 rdt)))

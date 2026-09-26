@@ -47,7 +47,7 @@ frames, grabs at the ankles, holds and crumbles (:sk-grab): South's look; the :b
       (play-clip h :sk-grab :blend 0)
       (emit :skeleton-rise (hazard-x hz) (hazard-z hz)))
     (when (and (zerop (hazard-delay hz)) (eq (hazard-kind hz) :rift))
-      (emit :rift-cut (hazard-owner hz) (rift-mid-x hz) (rift-mid-z hz)))
+      (emit :rift-cut (hazard-owner hz) (rift-mid-x hz) (rift-mid-z hz) (hazard-x hz) (hazard-z hz) (hazard-yaw hz)))   ; (+ its frame: the ink gash)
     (return-from hazard-step nil))
   (incf (hazard-age hz))
   (when (> (hazard-rehit hz) 0) (decf (hazard-rehit hz)))
@@ -148,10 +148,12 @@ frames) and touches VICTIM's hurt cylinder grown by *PERFECT-INFLATE*."
     (when (<= (hazard-delay hz) 0)
       (let ((x (hazard-x hz)) (z (hazard-z hz)) (age (/ (hazard-age hz) 60.0)) (life (/ (hazard-life hz) 60.0)))
         (case (hazard-kind hz)
-          (:wave (vfx-fire-wave x z (hazard-yaw hz) age (* 2 (hazard-size hz)) rdt :life life))   ; (its own light)
-          (:fireball (vfx-fireball x (hazard-y hz) z (hazard-size hz) rdt)
-           (add-point-light x (hazard-y hz) z 1.0 0.55 0.2 6.0 2.2 3))
-          (:pillars (dotimes (i *ennetsu-pillars*)          ; (the pillars' looks merge into one light)
+          (:wave (if (>= (hazard-age hz) (hazard-life hz))   ; spent by a hit (HAZARD-CONNECTED): it erodes where it hit
+                     (wave-ghost-start x z (hazard-yaw hz) (* 2 (hazard-size hz)) age)
+                     (vfx-fire-wave x z (hazard-yaw hz) age (* 2 (hazard-size hz)) rdt :life life)))   ; (its own light)
+          (:fireball (vfx-fireball x (hazard-y hz) z (hazard-size hz) (fwd-x (hazard-yaw hz)) (fwd-z (hazard-yaw hz)) rdt))
+          (:pillars (add-point-light x 1.5 z 1.0 0.45 0.12 7.0 (* 1.6 (min 1.0 (* 4.0 (/ (- life age) life)))) 4)   ; one light
+                    (dotimes (i *ennetsu-pillars*)          ; for the ring (7 would wash the floor out)
                       (let ((a (+ (* i (/ +two-pi+ *ennetsu-pillars*)) (hazard-yaw hz))))
                         (vfx-fire-pillar (+ x (* (hazard-size hz) (cos a))) (+ z (* (hazard-size hz) (sin a))) age life rdt))))
           (:line (let ((l (hazard-size hz)) (yaw (hazard-yaw hz)))
@@ -162,4 +164,5 @@ frames) and touches VICTIM's hurt cylinder grown by *PERFECT-INFLATE*."
                        (transform-yaw (transform h)) (body-scale (model-body m)) (body-hunch (model-body m)))
              (draw-body (model-body m) (model-joints m) (aref p 0) (aref p 1) (aref p 2) 0.0 :shadow nil   ; no disc: it hid the pale bones
                         :alpha (f32 (min 1.0 (max 0.0 (/ (- (hazard-life hz) (hazard-age hz)) 15.0)))))))
-          ((:bind :rift) nil))))))                        ; (their looks: the :south crack and the hands; VFX-RIFT)
+          ((:bind :rift) nil)))))                         ; (their looks: the :south crack and the hands; VFX-RIFT)
+  (wave-ghosts-draw (f32 rdt)))

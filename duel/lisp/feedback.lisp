@@ -12,7 +12,7 @@
 ;;;;   (:launch e) (:land e)
 ;;;;   (:konpaku victim lost) (:kikon att victim) (:soul-break att victim)  (:awaken e) (:form e form)
 ;;;;   (:evolution e) (:hellfire e)  (:skeleton-rise x z)  (:sfx key e)  (:reset)
-;;;;   (:rung e up-p) (:drink att def x y z) (:rift-cut owner x z) (:rift-close x z)   Nozarashi's NOME ladder
+;;;;   (:rung e up-p) (:drink att def x y z) (:rift-cut owner x z hx hz yaw) (:rift-close x z)   Nozarashi's NOME ladder
 (in-package :duel)
 
 (defun sfx-on (key e &key (gain 1.0) (pitch 1.0))
@@ -25,6 +25,8 @@
     (values (/ dx d) (/ dz d))))
 
 (defvar *hums* (make-array 2 :initial-element -1) "Breaker hum loop voice per side.")
+(declaim (type f32vec *fb-v*))
+(defvar *fb-v* (make-f32 3) "A world point (the scorched hand).")
 
 (defun stop-hum (e)
   (let ((i (fighter-side (fighter e))))
@@ -45,6 +47,9 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
               x y z :gain (if (eq kind :quick) 0.8 1.0))))
   (setf (model-flash (model def)) (max 0.06 (/ hs 60.0)))
   (cond ((>= dmg 150) (shake 0.22 0.3)) ((>= dmg 60) (shake 0.09 0.18)) (t (shake 0.03 0.1)))
+  (cond ((eq kind :fire) (stage-mark :scorch x z 0.8))           ; the page keeps the fight (Phase 6): fire scorches,
+        ((or (>= dmg 150) (eq kind :breaker))                      ; a heavy blow cracks the stone and throws chips
+         (stage-mark :crack x z 0.9) (stage-debris x z 3)))
   (when counter
     (impact-frame :manga 2)
     (announce "COUNTER" :color '(0.82 0.06 0.11 1) :secs 0.6 :small t)))
@@ -83,13 +88,16 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
         (:hit (apply #'show-hit args))
         (:blocked (destructuring-bind (att def x y z) args   ; West's garb guard: the ember star and a sizzle
                     (multiple-value-bind (dx dz) (hit-dir att def)
-                      (if (passive-p def :garb)
-                          (progn (vfx-ember x y z :dx (- dx) :dz (- dz)) (sfx-at :sizzle x y z))
+                      (if (passive-p def :garb)                    ; the guard's hexagon drawn in fire (Phase 5)
+                          (progn (vfx-garb-block x y z (- dx) (- dz)) (sfx-at :sizzle x y z))
                           (vfx-hit x y z :guard :dx dx :dz dz)))
                     (sfx-at :clang x y z)))
         (:armored (destructuring-bind (def x y z) args     ; the owner's spot colour: fire / ember, else REIATSU (+ his absorb sound)
                     (case (first (kit-blade (kit-of def)))
-                      ((:embers :charcoal) (vfx-ember x y z) (sfx-at :sizzle x y z))
+                      ((:embers :charcoal) (vfx-ember x y z) (sfx-at :sizzle x y z)   ; West's garb takes a ranged hit: it
+                       (when (passive-p def :garb)                                     ; flares (a flung ring, the aura up)
+                         (let ((p (pos-of def))) (vfx-garb-flare (aref p 0) (aref p 2)))
+                         (setf (model-flare (model def)) 0.45)))
                       (:fire (vfx-hit x y z :fire) (sfx-at :sizzle x y z))
                       (t
                        (vfx-hit x y z :reiatsu) (sfx-at :cut x y z :gain 0.7)
@@ -98,10 +106,12 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
                     (multiple-value-bind (dx dz) (hit-dir att def) (vfx-ember x y z :dx (- dx) :dz (- dz) :scale 1.3))
                     (sfx-at :clang x y z) (sfx-at :sizzle x y z) (shake 0.12 0.2) (impact-frame :negative 1)
                     (announce "PARRY" :color '(1 0.55 0.2 1) :secs 0.7 :small t)))
-        (:scorch (let* ((e (first args)) (p (pos-of e)))   ; the attacker's arm smokes
-                   (vfx-smoke-puffs (aref p 0) 1.3 (aref p 2) 2) (sfx-on :sizzle e :gain 0.5 :pitch 1.3)))
+        (:scorch (let* ((e (first args)) (v *fb-v*))       ; the attacker's sword arm burns: a white flash, black smoke
+                   (joint-point! v (model-joints (model e)) (ji :hand-r) 0f0 0f0 0f0)
+                   (vfx-scorch (aref v 0) (aref v 1) (aref v 2)) (vfx-smoke-puffs (aref v 0) (aref v 1) (aref v 2) 1)
+                   (sfx-on :sizzle e :gain 0.5 :pitch 1.3)))
         (:burnout (let* ((e (first args)) (p (pos-of e)))   ; the stance's heat dies: smoke, ash, the word
-                    (vfx-smoke-puffs (aref p 0) 1.4 (aref p 2) 4)
+                    (vfx-burnout (aref p 0) (aref p 2) (member :garb (kit-passives (kit-of e))))   ; smoke, an ash ring (West: his flames gutter out)
                     (sfx-on :sizzle e :pitch 0.6) (sfx-on :heat-flare e :pitch 0.6 :gain 0.8)
                     (announce "BURNOUT" :color '(0.62 0.64 0.7 1) :secs 1.2 :side (fighter-side (fighter e)))))
         (:refused (destructuring-bind (e cmd) args          ; still cooling: a dud tick, its HUD bar flashes
@@ -125,13 +135,14 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
         (:guard-break (destructuring-bind (att def x y z) args
                         (multiple-value-bind (dx dz) (hit-dir att def) (vfx-hit x y z :guard-break :dx dx :dz dz))
                         (sfx-at :guard-break x y z) (shake 0.2 0.3) (ui-flash 1 1 1 0.9 50.0)      ; a 1 f white flash
+                        (stage-mark :crack x z 1.1) (stage-debris x z 4)
                         (announce "GUARD BREAK" :color '(1 1 1 1) :secs 1.0)))
         (:stance-break (destructuring-bind (att def x y z) args
                          (multiple-value-bind (dx dz) (hit-dir att def) (vfx-hit x y z :guard-break :dx dx :dz dz))
                          (sfx-at :guard-break x y z)
                          (announce "BROKEN" :color '(1 1 1 1) :secs 0.9 :small t)))
         (:clash (destructuring-bind (x y z) args
-                  (vfx-hit x y z :clash) (sfx-at :clash x y z) (shake 0.25 0.3)
+                  (vfx-hit x y z :clash) (sfx-at :clash x y z) (shake 0.25 0.3) (stage-mark :crack x z 1.2) (stage-debris x z 4)
                   (impact-frame :negative 2) (focus-lines 20 x y z)
                   (announce "CLASH" :color '(1 1 1 1) :secs 0.9)))
         (:hazard-cut (destructuring-bind (x y z) args (vfx-hit x y z :heavy) (sfx-at :cut-heavy x y z)))
@@ -155,7 +166,8 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
                   (announce "BURST REVERSE" :color '(0.78 0.83 0.89 1) :secs 1.0 :small t)))
         (:launch (sfx-on :launch (first args) :gain 0.8))
         (:land (let ((e (first args))) (sfx-on :land e)
-                 (let ((p (pos-of e))) (vfx-shockwave (aref p 0) (aref p 2) 1.2 0.3 :pal +pal-dust+))))
+                 (let ((p (pos-of e))) (vfx-shockwave (aref p 0) (aref p 2) 1.2 0.3 :pal +pal-dust+)
+                   (stage-mark :crack (aref p 0) (aref p 2) 0.6) (stage-debris (aref p 0) (aref p 2) 2 0.6))))
         (:konpaku (destructuring-bind (v lost) args (pips-shatter v lost)))
         (:kikon (destructuring-bind (att v) args
                   (declare (ignore v))
@@ -169,17 +181,19 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
         (:evolution (let ((e (first args))) (play-sfx :evolution)
                       (announce "EVOLUTION" :color '(1 0.85 0.3 1) :secs 1.0 :small t :side (fighter-side (fighter e)))))
         (:hellfire (let* ((e (first args)) (p (pos-of e)))
-                     (vfx-shockwave (aref p 0) (aref p 2) 6.0 0.5 :rgb '(1.0 0.5 0.15)) (shake 0.2 0.4)))
+                     (vfx-shockwave (aref p 0) (aref p 2) 6.0 0.5 :rgb '(1.0 0.5 0.15)) (shake 0.2 0.4)
+                     (stage-mark :scorch (aref p 0) (aref p 2) 2.0)))
         (:skeleton-rise (destructuring-bind (x z) args (vfx-skeleton-dust x z) (sfx-at :bones x 0.5 z)))
         (:sfx (destructuring-bind (key e) args (sfx-on key e)))
-        (:reset (play-sfx :bell :gain 0.6))
+        (:reset (play-sfx :bell :gain 0.6) (stage-clear-marks))   ; a new round: a clean page
         (:rung (destructuring-bind (e up) args               ; a cup up (or down) the NOME ladder
                  (let ((form (fighter-form (fighter e))) (side (fighter-side (fighter e))))
                    (cond ((not up)
                           (let ((p (pos-of e))) (vfx-smoke-puffs (aref p 0) 1.2 (aref p 2) 2))
                           (when (eq form :nozarashi) (callout e "TSUMANNEE...")))
-                         ((eq form :nomihose)              ; drink it dry: a negative, then a manga page (yellow kept)
-                          (impact-frame :negative 1) (setf *impact-next* '(:manga . 12))
+                         ((eq form :nomihose)              ; drink it dry: a negative, then a manga page (yellow kept);
+                          (impact-frame :negative 1) (setf *impact-next* '(:manga . 12))   ; the grin, head thrown back
+                          (face-beat e :shout 0.9 t)
                           (sfx-on :awaken-boom e) (sfx-on :tier-up e) (shake 0.2 0.3)
                           (announce "NOMIHOSE!" :color '(1 0.85 0.25 1) :secs 1.0 :small t :side side))
                          (t (sfx-on :tier-up e)
@@ -188,7 +202,8 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
                   (multiple-value-bind (dx dz) (hit-dir att def) (vfx-hit x y z :reiatsu :dx (- dx) :dz (- dz)))
                   (sfx-on :gulp def)
                   (when (< (rnd01) 0.33) (sfx-on :laugh def :gain 0.7))))
-        (:rift-cut (destructuring-bind (o x z) args
+        (:rift-cut (destructuring-bind (o x z hx hz yaw) args  ; the white hit and the ink gash left along the rift
                      (declare (ignore o))
-                     (vfx-hit x 1.15 z :heavy) (sfx-at :rift-cut x 1.15 z) (shake 0.08 0.15)))
+                     (vfx-hit x 1.15 z :heavy) (vfx-rift-gash hx hz (fwd-x yaw) (fwd-z yaw))
+                     (sfx-at :rift-cut x 1.15 z) (shake 0.08 0.15)))
         (:rift-close (destructuring-bind (x z) args (vfx-smoke-puffs x 1.15 z 1)))))))

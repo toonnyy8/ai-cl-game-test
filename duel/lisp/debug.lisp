@@ -46,6 +46,14 @@
 ;;;;            his held U), 2 / 3 KUKAN-GIRI's rift into a guard / a standing Yamamoto (K, K K), 4 the cash-out (cup 3,
 ;;;;            Shift+K into a red Yamamoto's guard at 4 m, then O held: the Kikon is worth 2), 5 West's garb guard under
 ;;;;            RYOTE's K K (the cut, halved: 24 of his guard gauge and 30 scorch per string)
+;;;;   2362+k   Phase 5 looks (force-special 62+k): 0 Taimatsu (YK 4.5 m), 1 Nadegiri (Hellfire, 5 m), 2 Yamamoto's
+;;;;            Breaker (Ikkotsu, 6 m), 3 Kenpachi drinks cup 3 dry on entry (the NOMIHOSE rung event: the grin beat)
+;;;;   2390     consing of the Phase 5 per-frame looks (10 draws each) -> "vfx5 consing" line
+;;;;   2366     Phase 6 destruction still: YK 4 m apart, a scorch under Kenpachi, a crack and a burst of chips beside him;
+;;;;            Yamamoto shouts and Kenpachi is hurt (face beats: both gameplay face accents)
+;;;;   2391     consing of the Phase 6 per-frame looks (10 draws each) -> "vfx6 consing" line
+;;;;   2392     the left fist's gap to the cleaver's handle over the grip clips and their transitions, raw and with GRIP-LEFT!
+;;;;            (P1 must be Kenpachi, e.g. after 2315 or 2383) -> "grip drift" line
 ;;;;   2114+p   the seed gate of 2110+p with the combat log and a pace line every 60 ticks (scratchpad pace.py)
 ;;;;   2600+k   *RED-THRESHOLD* = k % (pacing the seed gate without a rebuild)
 ;;;;   2400 god (both fighters' Reishi is topped back up to 400 every frame; Kikon still lands)   2500+k human P1 vs an
@@ -451,7 +459,103 @@ when K already runs, it continues to F."
     (13 (ensure-battle :kenpachi :yamamoto) (force-form *p1* :nozarashi))
     (14 (setf (gauges-reishi (gauges *p2*)) 200))
     (15 (ensure-battle :kenpachi :yamamoto) (force-form *p1* :ryote) (setf (gauges-meter (gauges *p1*)) 70f0))
-    (16 (ensure-battle :kenpachi :yamamoto) (force-form *p1* :nomihose) (setf (gauges-meter (gauges *p1*)) 100f0))))
+    (16 (ensure-battle :kenpachi :yamamoto) (force-form *p1* :nomihose) (setf (gauges-meter (gauges *p1*)) 100f0))
+    (62 (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 4.5) (force-cmd *p1* :sp2))
+    (63 (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 5.0) (force-form *p1* :hellfire) (force-cmd *p1* :sp2))
+    (64 (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 6.0) (force-cmd *p1* :breaker))
+    (65 (ensure-battle :kenpachi :yamamoto) (place *p1* *p2* 4.0) (force-form *p1* :nomihose)
+        (setf (gauges-meter (gauges *p1*)) 100f0) (emit :rung *p1* t))
+    (66 (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 4.0)            ; looks only: the marks and chips
+        (let ((q (pos-of *p2*)))
+          (stage-mark :scorch (aref q 0) (+ (aref q 2) 0.6) 1.0)
+          (stage-mark :crack (- (aref q 0) 1.2) (- (aref q 2) 1.4) 1.1) (stage-debris (- (aref q 0) 1.2) (- (aref q 2) 1.4) 5))
+        (face-beat *p1* :shout 0.6) (face-beat *p2* :hurt 0.6))))                ; and both face accents
+
+(defun grip-drift-check ()
+  "2392: the left fist's gap to the cleaver's handle over every grip clip and every grip-clip -> grip-clip transition
+(a 4 f crossfade from 0.1 s before the first one's end), sampled at 60 Hz on P1's body, raw and after GRIP-LEFT! (W 1):
+'grip drift: raw max … mm, IK max … mm'."
+  (let* ((b (model-body (model *p1*))) (jm (make-f32 (* 16 +nj+))) (an (make-anim)) (raw 0.0) (ik 0.0) (worst nil) (iw nil)
+         (one (fv 1)) (per '()))
+    (flet ((sample (tag)
+             (pose-fk! jm (anim-eval an) 0.0 0.0 0.0 0.0 (body-scale b) (body-hunch b) (body-props b))
+             (let ((g (grip-gap jm)))
+               (when (> g raw) (setf raw g worst tag))
+               (grip-left! jm one)
+               (let ((g2 (grip-gap jm)))
+                 (when (> g2 ik) (setf ik g2 iw tag))
+                 (let ((e (assoc tag per :test #'equal)))
+                   (if e (setf (second e) (max (second e) g) (third e) (max (third e) g2)) (push (list tag g g2) per)))))))
+      (dolist (a *grip-clips*)
+        (anim-play an a :blend 0)
+        (let ((fr '()))
+          (loop for i from 0 below (floor (* 60 (clip-dur (find-clip a)))) do
+            (pose-fk! jm (anim-eval an) 0.0 0.0 0.0 0.0 (body-scale b) (body-hunch b) (body-props b))
+            (push (round (* 1000 (grip-gap jm))) fr)
+            (grip-left! jm one) (push (round (* 1000 (grip-gap jm))) fr)
+            (sample a) (anim-advance an (/ 1f0 60)))
+          (log-msg "grip ~a (raw/IK mm): ~{~d/~d~^ ~}" a (reverse fr)))
+        (dolist (c *grip-clips*)
+          (anim-play an a :blend 0)
+          (loop repeat (max 1 (floor (* 60 (- (clip-dur (find-clip a)) 0.1)))) do (anim-advance an (/ 1f0 60)))
+          (anim-play an c :blend 4f0)
+          (loop repeat 18 do (sample (list a c)) (anim-advance an (/ 1f0 60))))))
+    (dolist (e (reverse per)) (when (> (second e) 0.03) (log-msg "grip drift ~a: raw ~,0f mm, IK ~,0f mm" (first e) (* 1000 (second e)) (* 1000 (third e)))))
+    (log-msg "grip drift: raw max ~,0f mm (~a), IK max ~,0f mm (~a)" (* 1000 raw) worst (* 1000 ik) iw)))
+
+(defun vfx6-cons-check ()
+  "2391: bytes consed by 10 draws of each Phase 6 per-frame look (docs/STYLE_STORM_DESIGN.md §14 Phase 6): the marks and
+chips (both pools full), a pillar beside the lens, the fire wave passing it, the skull, the rain, both face accents, the
+left-hand grip (its step and the IK), and a caption slicing out."
+  (let* ((e *p1*) (m (model e)) (cap (make-bcap "卍解" :kanji2 "残火の太刀" :reading "BANKAI" :layout :cine))
+         (eye (camera-eye *camera*)) (px (f32 (+ (aref eye 0) 0.8))) (wx (f32 (+ (aref eye 0) 1.0))) (ez (aref eye 2)))
+    (dotimes (i 20) (stage-mark (if (evenp i) :scorch :crack) (- (* 0.5 i) 5.0) 2.0 1.0))
+    (stage-debris 0.0 0.0 24)
+    (bcap-exit cap) (setf (aref (bcap-f cap) 7) (- (fx-clock) 0.1))
+    (face-accent m :shout)                                  ; (a face change stamps the time once: not per frame)
+    (macrolet ((per (name form)
+                 `(let ((c0 (cons-bytes))) (dotimes (i 10) ,form) (format nil "~a ~d" ,name (- (cons-bytes) c0)))))
+      (log-msg "vfx6 consing (10 draws, B): ~{~a~^, ~}"
+               (list (per "marks" (st-draw-marks))
+                     (per "chips" (st-chips 0.016f0))
+                     (per "pillar-near" (vfx-fire-pillar px ez 0.3f0 0.8f0 0.016f0))
+                     (per "wave-near" (vfx-fire-wave wx ez 0f0 0.3f0 9f0 0.016f0))
+                     (per "skull" (vfx-skull 0f0 3f0 0f0 0.98f0))
+                     (per "rain" (vfx-rain 0f0 0f0 0.5f0 0.9f0))
+                     (per "shout" (vfx-face-accent (model-joints m) 1 100))
+                     (per "hurt" (vfx-face-accent (model-joints m) 2 100))
+                     (per "face-accent" (face-accent m :shout))
+                     (per "grip" (grip-step m t 0.016f0))
+                     (per "caption-exit" (draw-bcap cap 1280 720)))))
+    (stage-clear-marks) (setf (aref (model-looks m) 0) 0f0)))
+
+(defun vfx5-cons-check ()
+  "2390: bytes consed by 10 draws of each Phase 5 per-frame look (docs/STYLE_STORM_DESIGN.md §14 Phase 5): the fire looks,
+the auras redrawn in toon, the rift, a spent wave's erosion, the new stamps (all live at once), and the face / beat /
+move-beat choices of DRAW-FIGHTER."
+  (let* ((e *p1*) (f (fighter e)) (m (model e)) (mv (fighter-move f)))
+    (dolist (k '(:cone :boom :ring :gash :garb-guard :scorch :flare :gutter :nade)) (stamp k 1.0 1.0 0.0 :dx 1.0 :dz 0.0 :scale 2.0 :n 0.7))
+    (wave-ghost-start 3.0 0.0 0.0 3.5 0.3)
+    (setf (model-beat m) 0.5)
+    (macrolet ((per (name form)
+                 `(let ((c0 (cons-bytes))) (dotimes (i 10) ,form) (format nil "~a ~d" ,name (- (cons-bytes) c0)))))
+      (log-msg "vfx5 consing (10 draws, B): ~{~a~^, ~}"
+               (list (per "fireball" (vfx-fireball 0f0 1.2f0 0f0 0.5f0 1f0 0f0 0.016f0))
+                     (per "charge" (vfx-charge 0f0 1.2f0 0f0 0.6f0 0.016f0))
+                     (per "pillar" (vfx-fire-pillar 0f0 0f0 0.3f0 0.8f0 0.016f0))
+                     (per "dome" (vfx-fire-dome 0f0 0f0 1.7f0 1.2f0 1.96f0 0.016f0))
+                     (per "hellfire" (vfx-aura 0f0 0f0 0f0 1.8f0 :hellfire 1f0 0.016f0))
+                     (per "evolution" (vfx-aura 0f0 0f0 0f0 1.8f0 :evolution 1f0 0.016f0 :k 0.5f0))
+                     (per "breaker" (vfx-aura 0f0 0f0 0f0 1.8f0 :breaker-fire 1f0 0.016f0 :k 1.5f0))
+                     (per "breaker-ring" (vfx-breaker-ring 0f0 0f0 0.3f0))
+                     (per "garb-flare" (vfx-aura 0f0 0f0 0f0 1.8f0 :garb 1f0 0.016f0 :k 1.9f0))
+                     (per "rift" (vfx-rift 1f0 0f0 4.4f0 0f0 nil))
+                     (per "wave-ghost" (wave-ghosts-draw 0.001f0))
+                     (per "stamps" (stamps-draw 0f0))
+                     (per "face" (face-of e f m mv))
+                     (per "beat-pose" (beat-pose! (anim-pose (model-anim m)) 0.5f0))
+                     (per "move-beats" (move-beats e f m mv 0f0 0f0 0f0 0f0)))))
+    (setf (model-beat m) 0f0)))
 
 (defun start-cvc (seed pair)
   "Seeded CPU vs CPU (NORMAL): PAIR = (c1 c2), or NIL to draw both from SEED."
@@ -524,6 +628,9 @@ when K already runs, it continues to F."
         ((= c 2327) (probe-pressure))
         ((= c 2328) (hud-cons-check))
         ((= c 2329) (brush-cons-check))
+        ((= c 2390) (vfx5-cons-check))
+        ((= c 2391) (vfx6-cons-check))
+        ((= c 2392) (grip-drift-check))
         ((<= 2330 c 2361) (module-test (- c 2330)))
         ((<= 2370 c 2379) (stance-test (- c 2370)))
         ((<= 2380 c 2385) (nome-test (- c 2380)))

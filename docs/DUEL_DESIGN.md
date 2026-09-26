@@ -300,7 +300,9 @@ frame S).
 
 ### 6.1 Yamamoto Genryusai Shigekuni (`duel/lisp/yama.lisp`, art `yama-art.lisp`)
 
-Look: 1.68 m, hunched, bald with an X scar, long white brows, waist-length beard tied with a
+Look: 1.68 m, hunched, bald with an X scar, three expressions (neutral slit eyes, shout: the eyes wide open, the
+mouth open in the beard, hurt: eyes squeezed shut, a grimace; in play a shout or a hurt face just put on also shows a
+brief ink accent over the head, since the face is ~12 px tall at gameplay distance: restyle Phase 6), long white brows, waist-length beard tied with a
 purple cord, black shihakusho under a white captain's haori, no left forearm (empty sleeve),
 one-handed. Katana wreathed in fire; in the intro he leans on his cane and draws on "FIGHT"
 ("BANSHO ISSAI KAIJIN TO NASE"). Identity: slow, zones with fire, burns himself for power.
@@ -448,7 +450,8 @@ binds (above).
 
 ### 6.2 Zaraki Kenpachi (`duel/lisp/ken.lisp`, art `ken-art.lisp`)
 
-Look: 2.02 m, broad, long loose black spiky hair, **both eyes open: no eyepatch in any form** (in TYBW he has not worn it
+Look: 2.02 m, broad, long loose black spiky hair, three expressions (neutral grin, shout: the roaring laugh, hurt: a
+grimacing grin; the gameplay accents as for Yamamoto), **both eyes open: no eyepatch in any form** (in TYBW he has not worn it
 since the start of the arc; the user's decision 2026-09-26), a scar down the left side of the face, a grin, a sleeveless
 tattered white haori over black, bare arms. A notched katana; he runs with it on his shoulder (every form).
 Identity: rushes in, eats hits, wins trades, gets stronger as he loses and the longer the fight lasts.
@@ -473,7 +476,7 @@ Base form:
 **Awakening → "NOME, NOZARASHI"** (permanent). Cinematic 1.8 s (108 f) in four shots, 28 · 30 · 20 · 30 f: beat 0 on
 his face, the head down, the yellow reiatsu rising round him and lifting his hair; **NOME**: the head thrown back grinning
 as it bursts (a negative frame, the burst and a shockwave; the release is the whole first beat, there is no eyepatch to
-tear); the yellow pillar on a black card; close and low while the katana grows into the cleaver; the 野晒 / 呑め、 stamp on
+tear); the yellow pillar on a black card, a black skull flashing in it for 2 drawings (f40-49); close and low while the katana grows into the cleaver; the 野晒 / 呑め、 stamp on
 a white card. Heals 150 Reishi; NOME starts at **10**, in cup 1.
 
 **Nozarashi: NOME, the three-cup ladder** (呑め, "drink": DUEL_NOZARASHI_V2.md, built with the deviations listed there).
@@ -492,7 +495,8 @@ the cash-out is the one forced change), several steps at once:
 | Traits | cuts projectiles and South's grab | + **the cut** (§4) | + DRINK, the rift |
 | Shift+K | Split the Meteor (as written) | Split the Meteor | **NOMIHOSE**, the cash-out |
 | Kikon (O) | LEAP CLEAVE, **2** Konpaku | LEAP CLEAVE, 3 | LEAP CLEAVE, **4** |
-| Look | one hand (`:ke-n-stance`), the base yellow aura | two-handed jōdan (`:ke-r-stance`), the awakened aura, a yellow ring, "RYOTE" | two-handed, the aura as a pillar (×1.6 tall); on entry the yellow pillar, a 1 f negative, a 12 f manga page, "NOMIHOSE!" |
+| Look | one hand (`:ke-n-stance`), the base yellow aura | two-handed jōdan (`:ke-r-stance`, both fists on the long handle: the draw holds the left fist there between the keys
+too, restyle Phase 6), the awakened aura, a yellow ring, "RYOTE"; the kendo set's own clips (MEN, KESA, DO, KABUTO-WARI) | two-handed, the aura as a pillar (×1.6 tall); on entry the yellow pillar (a match's later cup 3s: a half-height flare), a 1 f negative, a 12 f manga page, "NOMIHOSE!" and the grin: his shout face held 0.9 s, the head thrown back (a look over any clip); KUKAN-GIRI's own clip; the rift drawn (a yellow lens slit, then the ink gash) |
 
 The HUD names the cup (KENPACHI KATATE / RYOTE / NOMIHOSE); NOME is a yellow bar in the kit meter's slot with a bright
 mark at 40, dim ticks at the floors 25 and 50, three cup pips, and a pulse within 10 of the current floor. Dropping to cup
@@ -707,10 +711,14 @@ cuts back.
 
 ## 10. Stage, HUD, audio
 
-**Stage "Burning Seireitei at dusk"** (`stage.lisp`): a round flagstone plaza (r 15 m), a ring of
-broken white walls and tiled roofs outside it (no collision), three burning buildings in the
-distance (flame, smoke, 2 point lights), falling ash and embers, a purple-to-orange dusk sky with a
-low red sun. Bankai adds ember cracks to the plaza.
+**Stage "Seireitei ruins at night"** (`stage.lisp`; the restyle's look, STYLE_STORM_DESIGN §6): a round plaza of
+moonlit mid-grey stone (r 15 m) with a few ink cracks, a ring of broken walls and the ruined town as cold-grey cut-outs
+outside it (no collision), a huge flat moon, white ash falling. Bankai adds ember-cored ink cracks. **The fight marks the
+page** (restyle Phase 6, looks placed from the feedback events; the sim never reads them): an ink scorch under a fire
+hit and round Hellfire's entry; an ink crack under a hit of 150+ damage or a Breaker, a guard break, a clash, a
+knockdown landing, along Buttagiru's and the Meteor's cuts; the heavy impacts throw rubble chips that bounce and rest
+6 s. The marks stay until the next reset (a Kikon / Soul Break reset, a new match), 20 at most (the oldest goes). The
+K.O. cinematic brings rain (thin steel streaks, small splash rings) as the orbit begins.
 
 **HUD** (`hud.lisp`, P2 mirrored): Reishi bar (red and pulsing below 30 %, a white damage trail),
 the guard gauge right under it (steel, a white drain trail; guardless: grey with a red fill climbing
@@ -731,7 +739,8 @@ GUARD CRUSH, BROKEN, CLASH, PERFECT, EVOLUTION, BURST REVERSE, KIKON / GUARD IT!
 (KIKON alone on a red victim), PARRY, GUARD over a panel when a guardless fighter can guard again, BURNOUT /
 REIGNITE over a Bankai panel), speed lines along a dash-in, the **brush captions** (Yuji Syuku glyphs, OFL:
 docs/STYLE_STORM_DESIGN.md §4.4) and a big brush 勝 on the black results card (DRAW stays a word).
-Brush captions: every cinematic stamps a vertical kanji column with a small romaji reading (城郭炎上 JOKAKU ENJO,
+Brush captions (they slice out: a brush cut through the column, the halves sliding apart, 0.3 s, at the cut that ends
+them or over what follows the cinematic; a gameplay column in its last 0.3 s): every cinematic stamps a vertical kanji column with a small romaji reading (城郭炎上 JOKAKU ENJO,
 北 天地灰尽 TENCHI KAIJIN, 卍解 残火の太刀 BANKAI, 野晒 呑め、NOME, NOZARASHI, 呑め、野晒 NOME, NOZARASHI on both of Kenpachi's Kikons (the sub line KIKON's quote / SKY
 SPLIT), 魂 SOUL BREAK,
 決着 K.O., 時間切れ TIME, the names 山本元柳斎重國 / 更木剣八 in the intro), a red 鬼 hanko on the Kikon names.
@@ -741,6 +750,12 @@ pixel callout over his head (不知火 SHIRANUI, 松明 TAIMATSU, 撫斬 NADEGIR
 西 残日獄衣 NISHI, 東 HIGASHI, 東 旭日刃 KYOKUJITSUJIN, 南 火火十万億死大葬陣 MINAMI, 北 KITA (the Bankai rush).
 Every other move callout and every big word (FIGHT!, COUNTER, CLASH, GUARD BREAK, KIKON / GUARD IT! ...) is one line of
 brush Latin; the pixel font stays for HUD numbers, stat tables, prompts and menus (user review 3).
+**Callouts keep clear of the HUD** (Phase 5 of the restyle): each side panel's box (bars, labels, the combo counter)
+is recorded as it is drawn; a callout over a fighter's head that would overlap one moves down under it (before, e.g.
+Kenpachi's KUKAN-GIRI / NOMIHOSE covered the P2 labels with the side camera), a word over a panel (RYOTE,
+NOMIHOSE!, BURNOUT ...) or a centred small word crossing one is set under it, and a brush callout column starts under
+both panels. A callout, word or column still drawn over a panel is logged once (`hud: … over the P2 panel`,
+`brush: caption … over the HUD`; `tests/style-5-checks.py --run`, at 1280x720 and 800x450).
 
 **Cinematic lengths** (60 Hz frames; at user review 3 the Kikons and awakenings were slowed ~1.45× (fewer, longer
 shots, longer holds, sharp impacts), then the caption close-ups (the card shot with the brush caption) of the Kikons and
@@ -779,8 +794,9 @@ batch: §4, §6.1, §6.2, §12):
   default; FULL assist has no damage scaling; no local portrait 2P; netplay (Bluetooth / Wi-Fi P2P) later.
   Guard v3 removed its U latch (every U is a guard) and added the GUARD HOLD ring cue (the ring dims while a rest
   freezes the refill), both on paper until the mode is built.
-- Nozarashi v2's open art: the kendo set's own clips (they reuse `:ke-f1 / :ke-q3 / :ke-f2`), the half-height pillar of a
-  later cup 3, the rift's ink gash (DUEL_NOZARASHI_V2 "Built").
+- Nozarashi v2's open art: the hair lift of cup 3's grin (a hair rig). The kendo set's own clips, KUKAN-GIRI's, the
+  rift's ink gash and cup 3's grin on entry were built in Phase 5 of the restyle, the half-height pillar of a later
+  cup 3 in Phase 6 (STYLE_STORM_DESIGN §14).
 
 ## 12. What changed after the v1 contract, and why
 

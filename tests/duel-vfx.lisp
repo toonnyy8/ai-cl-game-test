@@ -88,7 +88,7 @@
 (defparameter *scene-names*
   #("BLADE FIRE" "HELLFIRE: BLADE 1.3 + FIRE AURA" "BANKAI: BLADE EMBERS + HEAT AURA" "FIRE WAVE"
     "SHIRANUI: CHARGE -> FIREBALL" "ENNETSU JIGOKU: 7 PILLARS" "JOKAKU ENJO: DOME" "AURAS: EVOLUTION / REIATSU"
-    "BREAKER: AURA + RING" "LINE CUTS: SUN / METEOR / CRACK" "NOZARASHI KIKON: SKY SPLIT"
+    "BREAKER: AURA + RING" "LINE CUTS: KYOKU / METEOR / CRACK" "NOZARASHI KIKON: SKY SPLIT"
     "TENCHI KAIJIN: SLASH + ASH" "SOUL FLAME + SKELETON DUST" "HITS" "HOHO / SHATTER / AWAKEN / SHOCKWAVE / FIRE CONE"
     "UI: KANJI / BITMAP / BAR" "WORST CASE" "NEUTRAL"
     "HIT: CUT" "HIT: HEAVY" "HIT: FIRE" "COUNTER" "GUARD" "GUARD BREAK" "CLASH" "HOHO: VANISH / APPEAR"
@@ -130,7 +130,7 @@
            (let ((u (cycle 2.4)))
              (if (< u 1.2)
                  (vfx-charge d e f (/ u 1.2) dt)
-                 (let ((s (- u 1.2))) (vfx-fireball (+ d (* 10.0 s)) e f 0.45 dt))))))
+                 (let ((s (- u 1.2))) (vfx-fireball (+ d (* 10.0 s)) e f 0.45 1.0 0.0 dt))))))
       (5 (multiple-value-bind (a b c d e f) (blade ya) (vfx-blade-fire a b c d e f dt :power 1.3))
        (let ((u (cycle 1.6)))
          (when (< u 0.8)
@@ -144,7 +144,7 @@
            (vfx-aura (actor-x ya) 0 (actor-z ya) 2.02 :breaker age dt :k (max 0.0 (/ (- u 0.6) 0.4)))
            (vfx-breaker-ring (actor-x ya) (actor-z ya) age)))
       (9 (let ((u (cycle 2.0)))
-           (vfx-line-cut -2.0 1.5 7.0 1.5 u 0.8 :sun :dt dt)
+           (vfx-line-cut -2.0 1.5 7.0 1.5 u 0.67 :kyoku :dt dt)
            (vfx-line-cut 2.0 -1.5 -10.0 -1.5 u 1.5 :meteor :dt dt)
            (when (< u 1.0) (vfx-line-cut 0.0 4.0 0.0 1.0 u 1.0 :crack :dt dt))))
       (10 (let ((u (cycle 2.0)) (x (actor-x ke)) (z (actor-z ke)))    ; the cut runs along -x, the camera sits on it

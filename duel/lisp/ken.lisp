@@ -69,21 +69,21 @@
   :params (:aura 8 :aim 120.0 :speed 18.0 :dash-max 30 :dash-track 0.0 :look :leap :lift 1.6 :sfx :whoosh-cleaver))
 
 ;;; ---------------------------------------------------------------- RYOTE (cup 2): two-handed kendo, straight and long
-;;; (clips reused through :clip-s until the art lands: design §2.10)
-(defmove :ke-r-q1 :kind :quick :clip :ke-f1 :clip-s 16 :startup 10 :active 3 :recovery 12 :dmg 40 :adv-block -2
+;;; (their own clips, ken-art.lisp; :clip-s = the clip's authored S, so each plays at speed 1)
+(defmove :ke-r-q1 :kind :quick :clip :ke-r-q1 :clip-s 10 :startup 10 :active 3 :recovery 12 :dmg 40 :adv-block -2
   :vol (:cap 0.3 3.9 1.2 0.5) :on-hit :flinch)                       ; MEN: the straight overhead
-(defmove :ke-r-q3 :kind :quick :clip :ke-q3 :clip-s 11 :startup 14 :active 4 :recovery 22 :dmg 70 :adv-block -12
+(defmove :ke-r-q3 :kind :quick :clip :ke-r-q3 :clip-s 14 :startup 14 :active 4 :recovery 22 :dmg 70 :adv-block -12
   :reach 3.8 :arc 140 :on-hit :knockback :kb 3.0)                    ; KESA: the diagonal
-(defmove :ke-r-f1 :kind :flash :clip :ke-f1 :clip-s 16 :startup 19 :active 4 :recovery 20 :dmg 85 :adv-block -4
+(defmove :ke-r-f1 :kind :flash :clip :ke-r-f1 :clip-s 19 :startup 19 :active 4 :recovery 20 :dmg 85 :adv-block -4
   :reach 4.2 :arc 160 :on-hit :stagger)                              ; DO: the wide body cut
-(defmove :ke-r-f2 :kind :flash :clip :ke-f2 :clip-s 20 :startup 21 :active 5 :recovery 28 :dmg 110 :adv-block -14
+(defmove :ke-r-f2 :kind :flash :clip :ke-r-f2 :clip-s 21 :startup 21 :active 5 :recovery 28 :dmg 110 :adv-block -14
   :vol (:cap 0.3 4.2 1.2 0.55) :on-hit :launch)                      ; KABUTO-WARI: the helm splitter
-(defmove :ke-r-f2q :kind :flash :clip :ke-f2 :clip-s 20 :enter 7 :startup 21 :active 5 :recovery 28 :dmg 110 :adv-block -14
+(defmove :ke-r-f2q :kind :flash :clip :ke-r-f2 :clip-s 21 :enter 7 :startup 21 :active 5 :recovery 28 :dmg 110 :adv-block -14
   :vol (:cap 0.3 4.2 1.2 0.55) :on-hit :launch)
 ;;; ---------------------------------------------------------------- NOMIHOSE (cup 3)
 ;; K: KUKAN-GIRI, the space cut: its blade leaves a rift in the air (f20) that cuts again *RIFT-DELAY* frames
 ;; later (KEN-RIFT: a :rift hazard, closed if he is hit before it cuts)
-(defmove :ke-n-f1 :kind :flash :clip :ke-f1 :clip-s 16 :callout "KUKAN-GIRI" :startup 20 :active 4 :recovery 22 :dmg 90
+(defmove :ke-n-f1 :kind :flash :clip :ke-n-f1 :clip-s 20 :callout "KUKAN-GIRI" :startup 20 :active 4 :recovery 22 :dmg 90
   :adv-block -4 :reach 4.2 :arc 150 :on-hit :stagger :on-frame ((20 ken-rift))
   :params (:rift-dmg 50 :rift-guard 12 :rift-chip 0.2 :rift-vol (:cap 1.0 4.4 1.4 0.5)))
 ;; Shift+K: NOMIHOSE, Split the Meteor with the whole cup: on its first frame NOME is 0 and he is back in cup 1
@@ -185,10 +185,11 @@ rung change that doesn't wait for him to be free), so the cut and an O cancel re
   (let ((p (pos-of e))) (vfx-shockwave (aref p 0) (aref p 2) 2.5 0.35 :rgb '(1.0 0.85 0.25))))
 
 (defun ken-nomihose-enter (e)
-  "Cup 3: the yellow pillar (a full one on the first cup 3 of a match, then a flare), 2 rings, a 1 f negative
-frame and a 12 f manga page (feedback :rung)."
-  (let ((p (pos-of e)))
-    (vfx-awaken-burst (aref p 0) 1.0 (aref p 2) :nozarashi)
+  "Cup 3: the yellow pillar (a full one on the first cup 3 of a match, then a half-height flare: MODEL-T3 counts them, a
+look), 2 rings, a 1 f negative frame and a 12 f manga page (feedback :rung)."
+  (let ((p (pos-of e)) (m (model e)))
+    (incf (model-t3 m))
+    (vfx-awaken-burst (aref p 0) 1.0 (aref p 2) (if (> (model-t3 m) 1) :nozarashi-half :nozarashi))
     (vfx-shockwave (aref p 0) (aref p 2) 5.0 0.5 :rgb '(1.0 0.9 0.3))
     (vfx-shockwave (aref p 0) (aref p 2) 3.0 0.35 :rgb '(1.0 1.0 0.9))))
 
@@ -203,8 +204,16 @@ frame and a 12 f manga page (feedback :rung)."
 (defun ken-ground-crack (e)
   "Buttagiru lands: a 3 m crack in the ground (a look)."
   (let ((p (pos-of e)))
-    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 3.5 :life 50 :look :crack))
+    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 3.5 :life 50 :look :crack)
+    (ground-scar p (yaw-of e) '(1.2 2.8) 0.9))
   (emit :sfx :ground-crack e))
+
+(defun ground-scar (p yaw ds r)
+  "A look: crack marks R m wide at DS metres ahead of P along YAW, that stay for the round, and chips thrown up
+(stage.lisp STAGE-MARK / STAGE-DEBRIS; Phase 6 destruction)."
+  (dolist (d ds)
+    (let ((x (+ (aref p 0) (* d (fwd-x yaw)))) (z (+ (aref p 2) (* d (fwd-z yaw)))))
+      (stage-mark :crack x z r) (stage-debris x z 3))))
 
 (defun ken-charge-tick (e)
   "SP2 dash: 14 m/s during the active frames until it touches; still holding the button when the
@@ -232,7 +241,8 @@ dash starts = guard-crushing (the Breaker property)."
 (defun ken-meteor-cut (e)
   "Split the Meteor: the cleave splits the ground 12 m ahead (a look)."
   (let ((p (pos-of e)))
-    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 12.0 :life 60 :look :meteor))
+    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 12.0 :life 60 :look :meteor)
+    (ground-scar p (yaw-of e) '(2.0 5.0 8.0 11.0) 1.2))
   (emit :sfx :ground-crack e))
 
 ;;; ================================================================ cinematics
@@ -249,7 +259,7 @@ stay), the Konpaku shatter and a splash; he laughs; a wide from behind."
   (at 12 (card :white a) (shot-on a 30 3.0 0.6 :look 1.4 :off -0.8) (lens 44 -12) (silence 52)
       (caption "呑め、野晒" :reading "NOME, NOZARASHI" :sub "MOTTO TANOSHIMASETE KURE YO!" :side 1 :ink t :hanko t))
   (at 70 (card nil) (cine-slash v :cut) (shot-on v 120 3.8 1.2) (lens 55) (play-sfx :laugh))
-  (at 98 (cine-slash v :cut) (shot-on v -110 3.6 1.0) (setf *caption* nil))
+  (at 98 (cine-slash v :cut) (shot-on v -110 3.6 1.0) (caption-exit))
   (at 122 (hold-both a v 20) (silence 20) (lens 86))
   (during (122 142) (shot-on a 20 (+ 1.5 (* 0.4 u)) 0.5 :look 1.45))   ; a slow pull, not cuts
   (at 142 (cine-slash v :heavy) (shot-pair a v (- (camera-side a)) 5.5 1.3) (lens 55)
@@ -284,14 +294,14 @@ split from the side, then Kenpachi."
   (at 70 (impact-frame :manga 12))
   ;; (the ground split is part of the look, on the cine clock: a sim hazard would freeze with the sim)
   (during (68 162) (let ((q (pos-of v))) (vfx-sky-split (aref q 0) (aref q 2) (yaw-of a) (/ (- cf 68) 60.0) 1.5)))
-  (at 102 (shot-on v 95 7.5 1.2 :look 1.0) (lens 50) (setf *caption* nil))
+  (at 102 (shot-on v 95 7.5 1.2 :look 1.0) (lens 50) (caption-exit))
   (at 132 (shot-on a -20 5.0 0.7 :look 1.4) (lens 45)))
 
 (defcine ken-nozarashi-cine (a v :len 108 :hold 84)
   "NOME, NOZARASHI (§5; paced by user review 3; no eyepatch in any form, TYBW: the release is the whole first beat):
 beat 0 on the face close-up, the head down, the reiatsu rising round him; NOME: the head thrown back grinning as it
 bursts (a negative); the yellow reiatsu pillar held long on a black card, Kenpachi silhouetted with a yellow back-rim
-(the only time yellow floods the frame); close, low and wide-angle while the katana grows into the cleaver, in silence;
+(the only time yellow floods the frame), a skull flashing in it for 2 drawings (f40-49); close, low and wide-angle while the katana grows into the cleaver, in silence;
 the 野晒 / 呑め、 stamp in black on a white card."
   (at 0 (cine-clip a :ke-release :blend 3 :speed (/ 1.0 1.5)) (cine-clip v (kit-stance (kit-of v)) :blend 6)
       (setf (model-weapon (model a)) :ken-katana)
@@ -305,6 +315,8 @@ the 野晒 / 呑め、 stamp in black on a white card."
   (during (0 108) (let ((p (pos-of a)))                 ; rising through the face close-up (it lifts the hair), full at NOME
                     (vfx-aura (aref p 0) 0.0 (aref p 2) (cond ((< cf 28) 2.0) ((< cf 58) 6.5) (t 3.2)) :nozarashi (/ cf 60.0) (cine-dt)
                               :k (if (< cf 26) (+ 0.1 (* 0.02 cf)) 1.0))))   ; 28-58: the pillar
+  (during (40 50) (let* ((p (pos-of a)) (yaw (yaw-of a)))   ; the skull in the pillar, 2 drawings (Phase 6)
+                    (vfx-skull (- (aref p 0) (* 0.25 (fwd-x yaw))) 2.9 (- (aref p 2) (* 0.25 (fwd-z yaw))) 0.98)))
   (at 54 (cine-clip a :ke-nome :blend 2))
   (at 58 (card nil) (shot-on a 30 1.6 0.45 :look 1.5) (lens 86 -8) (silence 20))
   (at 78 (setf (model-weapon (model a)) :nozarashi)

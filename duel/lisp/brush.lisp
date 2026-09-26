@@ -5,7 +5,8 @@
 ;;;; an optional chapter line, and a direction mark (Bankai's compass: a white glyph in a black box) or a red hanko (Kikon names
 ;;;; only). Three layouts: :cine (a cinematic's title, 50-70 % of the frame height, bleeding off the top when long),
 ;;;; :callout (a gameplay SP / technique name at its user's side of the screen) and :results (the 勝 stamp). It is
-;;;; stamped in on twos (scale 1.8 -> 1.15 -> 1, a drawn shake, an ink splash). DRAW-BCAP conses nothing.
+;;;; stamped in on twos (scale 1.8 -> 1.15 -> 1, a drawn shake, an ink splash) and sliced out (Phase 6: BCAP-EXIT, or a
+;;;; timed caption's last 0.3 s: a brush cut through the column, the halves sliding apart). DRAW-BCAP conses nothing.
 (in-package :duel)
 
 ;;; ---------------------------------------------------------------- glyphs
@@ -82,13 +83,72 @@ area check: the triangles must cover each polygon exactly (BAD > 0 means a broke
   (loop for ch across str sum (if (member ch '(#\Space #\、)) 0.5 1.0)))
 
 ;;; ---------------------------------------------------------------- zero-cons drawing (macros for DEFUN-FAST code)
+(declaim (type f32vec *bclip*))
+(defvar *bclip* (make-f32 13)
+  "The slice exit's clip (DRAW-BCAP; 0 B): [0] 0 = off, +1 / -1 = keep the side n.p >= c / <= c of the cut, [1 2] n (unit,
+px), [3] c, [4 5] the kept half's slide (px); [6..12] %GLYPH-TRIS-CLIP's arguments x y sz r g b a.")
+
+(defun-fast %glyph-tris-clip (tv)
+  "%GLYPH-TRIS for the glyph triangles TV cut by *BCLIP*'s line: each triangle clipped to the kept side (0-2 triangles),
+slid by the half's offset."
+  (declare (type f32vec tv))
+  (let* ((c *bclip*) (sg (aref c 0)) (nx (aref c 1)) (ny (aref c 2)) (cc (aref c 3)) (ox (aref c 4)) (oy (aref c 5))
+         (gx (aref c 6)) (gy (aref c 7)) (gs (aref c 8)) (cr (aref c 9)) (cg (aref c 10)) (cb (aref c 11)) (ca (aref c 12))
+         (nt (floor (length tv) 6)))
+    (declare (type f32vec c) (single-float sg nx ny cc ox oy gx gy gs cr cg cb ca) (fixnum nt))
+    (with-ui-verts (d o (* 6 nt))
+      (dotimes (k nt)
+        (let* ((q (* 6 k)) (x0 (+ gx (* gs (aref tv q)))) (y0 (+ gy (* gs (aref tv (+ q 1)))))
+               (x1 (+ gx (* gs (aref tv (+ q 2))))) (y1 (+ gy (* gs (aref tv (+ q 3)))))
+               (x2 (+ gx (* gs (aref tv (+ q 4))))) (y2 (+ gy (* gs (aref tv (+ q 5)))))
+               (d0 (* sg (- (+ (* nx x0) (* ny y0)) cc))) (d1 (* sg (- (+ (* nx x1) (* ny y1)) cc)))
+               (d2 (* sg (- (+ (* nx x2) (* ny y2)) cc))))
+          (declare (fixnum q) (single-float x0 y0 x1 y1 x2 y2 d0 d1 d2))
+          (macrolet ((tri (ax ay bx by cx cy)
+                       `(progn (uvtx (+ ,ax ox) (+ ,ay oy) cr cg cb ca) (uvtx (+ ,bx ox) (+ ,by oy) cr cg cb ca)
+                               (uvtx (+ ,cx ox) (+ ,cy oy) cr cg cb ca)))
+                     (cuts (((ax ay ad) (bx by bd) (cx cy cd)) &body body)  ; P = A->B and Q = A->C on the line
+                       `(let* ((%u (/ ,ad (- ,ad ,bd))) (%v (/ ,ad (- ,ad ,cd)))
+                               (px (+ ,ax (* (- ,bx ,ax) %u))) (py (+ ,ay (* (- ,by ,ay) %u)))
+                               (qx (+ ,ax (* (- ,cx ,ax) %v))) (qy (+ ,ay (* (- ,cy ,ay) %v))))
+                          (declare (single-float %u %v px py qx qy))
+                          ,@body))
+                     (one (a b c) `(cuts (,a ,b ,c) (tri ,(first a) ,(second a) px py qx qy)))       ; A in: its corner
+                     (two (a b c) `(cuts (,a ,b ,c) (tri px py ,(first b) ,(second b) ,(first c) ,(second c))   ; A out
+                                         (tri px py ,(first c) ,(second c) qx qy))))
+            (let ((in (+ (if (>= d0 0f0) 1 0) (if (>= d1 0f0) 2 0) (if (>= d2 0f0) 4 0))))
+              (declare (fixnum in))
+              (case in
+                (7 (tri x0 y0 x1 y1 x2 y2))
+                (1 (one (x0 y0 d0) (x1 y1 d1) (x2 y2 d2))) (2 (one (x1 y1 d1) (x2 y2 d2) (x0 y0 d0)))
+                (4 (one (x2 y2 d2) (x0 y0 d0) (x1 y1 d1)))
+                (6 (two (x0 y0 d0) (x1 y1 d1) (x2 y2 d2))) (5 (two (x1 y1 d1) (x2 y2 d2) (x0 y0 d0)))
+                (3 (two (x2 y2 d2) (x0 y0 d0) (x1 y1 d1)))))))))
+    nil))
+
 (defmacro %glyph-tris (tris x y sz r g b a)
-  "Queue the triangles TRIS (a glyph's f32vec), the em box's top left at (X Y), SZ px per em, colour (R G B A)."
-  `(let* ((tv ,tris) (gx ,x) (gy ,y) (gs ,sz) (cr ,r) (cg ,g) (cb ,b) (ca ,a) (nv (floor (length tv) 2)))
-     (declare (type f32vec tv) (single-float gx gy gs cr cg cb ca) (fixnum nv))
-     (with-ui-verts (d o nv)
-       (dotimes (k nv)
-         (uvtx (+ gx (* gs (aref tv (* 2 k)))) (+ gy (* gs (aref tv (1+ (* 2 k))))) cr cg cb ca)))))
+  "Queue the triangles TRIS (a glyph's f32vec), the em box's top left at (X Y), SZ px per em, colour (R G B A); cut
+and slid by *BCLIP* while a caption slices out."
+  `(let* ((tv ,tris) (gx ,x) (gy ,y) (gs ,sz) (cr ,r) (cg ,g) (cb ,b) (ca ,a) (nv (floor (length tv) 2)) (%cl *bclip*))
+     (declare (type f32vec tv %cl) (single-float gx gy gs cr cg cb ca) (fixnum nv))
+     (if (/= (aref %cl 0) 0f0)
+         (progn (setf (aref %cl 6) gx (aref %cl 7) gy (aref %cl 8) gs (aref %cl 9) cr (aref %cl 10) cg (aref %cl 11) cb
+                      (aref %cl 12) ca)
+                (%glyph-tris-clip tv))
+         (with-ui-verts (d o nv)
+           (dotimes (k nv)
+             (uvtx (+ gx (* gs (aref tv (* 2 k)))) (+ gy (* gs (aref tv (1+ (* 2 k))))) cr cg cb ca))))))
+
+(declaim (type f32vec *panel-box*))
+(defvar *panel-box* (make-f32 8)
+  "The HUD's two side panels this frame, per side x0 y0 x1 y1 in px (hud.lisp HUD-SIDE fills them; 0 when not drawn):
+the gameplay callouts, the side words and the brush callout columns keep clear of them (Phase 5).")
+(defmacro panel-hit (x0 y0 x1 y1)
+  "The side (0 / 1) of the first HUD panel (*PANEL-BOX*) the box (X0 Y0 X1 Y1) overlaps, or NIL. Float forms; 0 B."
+  `(let* ((%pb *panel-box*) (%x0 ,x0) (%y0 ,y0) (%x1 ,x1) (%y1 ,y1))
+     (declare (type f32vec %pb) (single-float %x0 %y0 %x1 %y1))
+     (cond ((and (< %x0 (aref %pb 2)) (< (aref %pb 0) %x1) (< %y0 (aref %pb 3)) (< (aref %pb 1) %y1)) 0)
+           ((and (< %x0 (aref %pb 6)) (< (aref %pb 4) %x1) (< %y0 (aref %pb 7)) (< (aref %pb 5) %y1)) 1))))
 
 (declaim (type f32vec *bcap-box*))
 (defvar *bcap-box* (make-f32 4) "DRAW-BCAP: the union of the em boxes it drew this call (x0 y0 x1 y1, px).")
@@ -124,13 +184,15 @@ right by the advance + GAP em. A space is half a cell (0.35 em across); a char w
 (defstruct (bcap (:constructor %make-bcap))
   "A brush caption (see the file header). F: [0] start (fx clock) [1] seconds shown (0 = until replaced)
 [2] main column cells [3] second column cells [4] reading width (em, 0.25 em letter gap) [5] chapter line width
-[6] the column's centre as a fraction of the screen width (0 = the layout's)."
+[6] the column's centre as a fraction of the screen width (0 = the layout's) [7] the slice exit's start (fx clock; 0 = none,
+BCAP-EXIT)."
   (kanji "" :type simple-string) (kanji2 nil) (reading nil) (sub nil) (mark nil)
   (layout :cine) (side 0 :type fixnum) (ink nil) (hanko nil)
   (splash nil)                                ; (cx cy r seed) boxed once per window size: UI-INK-SPLASH's arguments
   (splash-wh -1 :type fixnum)                 ; ... for this window (w * 10000 + h)
   (warned nil)                                ; a glyph was drawn off the screen (logged once)
-  (f (make-f32 7) :type f32vec))
+  (hud-warned nil)                            ; a callout column was drawn over a HUD panel (logged once)
+  (f (make-f32 8) :type f32vec))
 
 (defun make-bcap (kanji &key kanji2 reading sub mark (layout :cine) (side 0) ink hanko (secs 0.0))
   "A caption starting now (see BCAP). SIDE 0 / 1: the left / right third (:cine) or that player's side (:callout);
@@ -145,7 +207,12 @@ INK: black glyphs (on a white card), else white; HANKO: the red Kikon seal; MARK
 
 (defun bcap-restart (c)
   "Stamp caption C in again from now."
-  (setf (aref (bcap-f c) 0) (fx-clock))
+  (setf (aref (bcap-f c) 0) (fx-clock) (aref (bcap-f c) 7) 0f0)
+  c)
+
+(defun bcap-exit (c)
+  "Caption C slices out from now (DRAW-BCAP: a brush cut through the column, the halves slide apart and fade, 0.3 s)."
+  (when (<= (aref (bcap-f c) 7) 0f0) (setf (aref (bcap-f c) 7) (fx-clock)))
   c)
 
 (defun bcap-splash-args (c cx cy r w h)
@@ -170,9 +237,13 @@ inside them, the reading and the chapter line shrink to fit their half of the sc
   (let* ((f (bcap-f c)) (ww (i->f w)) (hh (i->f h)) (age (- (fx-clock) (aref f 0))) (secs (aref f 1))
          (layout (bcap-layout c)) (cine (eq layout :cine)) (res (eq layout :results)) (right (= (bcap-side c) 1))
          (d (f->i (* 12f0 age)))                                          ; drawings on twos (12 a second)
-         (a (if (> secs 0f0) (f-clamp (/ (- secs age) 0.25f0) 0f0 1f0) 1f0))
+         (ex (cond ((> (aref f 7) 0f0) (- (fx-clock) (aref f 7)))          ; the slice exit: BCAP-EXIT, or a timed
+                   ((> secs 0f0) (- age (- secs 0.3f0))) (t -1f0)))          ; caption's last 0.3 s
+         (exiting (>= ex 0f0)) (de (if exiting (f->i (* 12f0 ex)) 0))
+         (a (if exiting (f-clamp (/ (- 0.3f0 ex) 0.12f0) 0f0 1f0) 1f0))
          (n (f-max 1f0 (aref f 2))) (n2 (aref f 3)) (hk (bcap-hanko c)) (rd (bcap-reading c))
-         (top (cond (res (* 0.03f0 hh)) (cine (* 0.1f0 hh)) (t (* 0.27f0 hh))))
+         (top (cond (res (* 0.03f0 hh)) (cine (* 0.1f0 hh))         ; a callout: under both HUD panels
+                    (t (f-max (* 0.27f0 hh) (+ (f-max (aref *panel-box* 3) (aref *panel-box* 7)) (* 0.012f0 hh))))))
          (bot (cond (res (* 0.265f0 hh)) (cine (if (bcap-sub c) (* 0.84f0 hh) (* 0.895f0 hh))) (t (* 0.9f0 hh))))
          (ls (if cine (* 0.034f0 hh) (* 0.026f0 hh))) (lsh (if rd (* 1.05f0 ls) 0f0))
          (nb (+ (f-max (+ n (if hk 0.58f0 0f0)) (if (> n2 0f0) (+ 0.35f0 (* 0.42f0 n2)) 0f0)) (if rd 0.15f0 0f0)))   ; em of the block
@@ -188,11 +259,11 @@ inside them, the reading and the chapter line shrink to fit their half of the sc
          (kx (f-clamp (+ sx (- cx (* 0.5f0 ksz))) (+ (* 0.02f0 ww) (if right w2 0f0)) (- (* 0.98f0 ww) ksz (if right 0f0 w2))))
          (ky (f-max top (f-min (- (+ top (* 0.5f0 bh)) (* 0.5f0 k bh)) (- bot (* k bh))))) (yy ky) (yb ky)
          (bb *bcap-box*))
-    (declare (type f32vec f bb) (fixnum d)
-             (single-float ww hh age secs a n n2 top bot ls lsh nb sz bh k sx gr gb pr pb ksz w2 cx kx ky yy yb))
-    (when (and (> secs 0f0) (> age secs)) (return-from draw-bcap nil))
+    (declare (type f32vec f bb) (fixnum d de)
+             (single-float ww hh age secs ex a n n2 top bot ls lsh nb sz bh k sx gr gb pr pb ksz w2 cx kx ky yy yb))
+    (when (or (and (> secs 0f0) (> age secs)) (>= ex 0.3f0)) (return-from draw-bcap nil))
     (setf (aref bb 0) 1f9 (aref bb 1) 1f9 (aref bb 2) -1f9 (aref bb 3) -1f9)
-    (when (and (>= d 1) (or cine res))                                   ; the ink splash, from drawing 1: beside the
+    (when (and (>= d 1) (or cine res) (not exiting))                     ; the ink splash, from drawing 1: beside the
       (let ((sp (if (= (bcap-splash-wh c) (+ (* w 10000) h)) (bcap-splash c)   ; column's head (results: right of 勝)
                     (bcap-splash-args c (cond (res (+ cx (* 0.5f0 sz) (* 0.38f0 sz))) (right (+ cx (* 0.62f0 sz))) (t (- cx (* 0.62f0 sz))))
                                       (+ top (* (if res 0.3f0 0.2f0) sz)) (* (if res 0.12f0 0.26f0) sz) w h))))
@@ -200,27 +271,53 @@ inside them, the reading and the chapter line shrink to fit their half of the sc
     (when (bcap-mark c)                                                  ; the direction mark: a white glyph in a black
       (let* ((bs (* 0.95f0 ksz)) (bx (+ kx (* 0.025f0 ksz))) (fr (f-max 1f0 (* 0.03f0 bs))))   ; box, a white frame
         (declare (single-float bs bx fr))                                ; round it (it reads on a black card too)
-        (%brush-box (- bx fr) (- yy fr) (+ bs fr fr) (+ bs fr fr) 0.96f0 0.96f0 0.94f0 a)
-        (%brush-box bx yy bs bs 0.03f0 0.03f0 0.047f0 a)
-        (%brush-run (the simple-string (bcap-mark c)) (+ bx (* 0.1f0 bs)) (+ yy (* 0.1f0 bs)) (* 0.8f0 bs) t 0f0 0.96f0 0.96f0 0.94f0 a)
+        (unless exiting                                                  ; (the slice exit cuts the column alone)
+          (%brush-box (- bx fr) (- yy fr) (+ bs fr fr) (+ bs fr fr) 0.96f0 0.96f0 0.94f0 a)
+          (%brush-box bx yy bs bs 0.03f0 0.03f0 0.047f0 a)
+          (%brush-run (the simple-string (bcap-mark c)) (+ bx (* 0.1f0 bs)) (+ yy (* 0.1f0 bs)) (* 0.8f0 bs) t 0f0 0.96f0 0.96f0 0.94f0 a))
         (setf yy (+ yy (* 1.15f0 ksz)))))
-    (unless ink                                                          ; white glyphs: an ink shadow for the scene
-      (%brush-run (bcap-kanji c) (+ kx (* 0.04f0 ksz)) (+ yy (* 0.04f0 ksz)) ksz t 0f0 pr pr pb (* 0.8f0 a)))
-    (%brush-run (bcap-kanji c) kx yy ksz t 0f0 gr gr gb a)
+    (let ((y0 yy))
+      (declare (single-float y0))
+      (macrolet ((columns ()                                             ; the column (+ its ink shadow) and the second
+                   `(progn                                               ; column, toward the frame's middle
+                      (unless ink                                        ; white glyphs: an ink shadow for the scene
+                        (%brush-run (bcap-kanji c) (+ kx (* 0.04f0 ksz)) (+ y0 (* 0.04f0 ksz)) ksz t 0f0 pr pr pb (* 0.8f0 a)))
+                      (%brush-run (bcap-kanji c) kx y0 ksz t 0f0 gr gr gb a)
+                      (when (> n2 0f0)
+                        (let* ((s2 (* 0.42f0 ksz)) (x2 (if right (- kx (* 1.15f0 s2)) (+ kx ksz (* 0.15f0 s2)))) (y2 (+ ky (* 0.35f0 ksz))))
+                          (declare (single-float s2 x2 y2))
+                          (unless ink (%brush-run (the simple-string (bcap-kanji2 c)) (+ x2 (* 0.05f0 s2)) (+ y2 (* 0.05f0 s2)) s2 t 0f0 pr pr pb (* 0.8f0 a)))
+                          (%brush-run (the simple-string (bcap-kanji2 c)) x2 y2 s2 t 0f0 gr gr gb a)
+                          (setf yb (+ y2 (* s2 n2))))))))
+        (if (not exiting)
+            (columns)
+            ;; the slice exit (Phase 6): a brush cut rising left to right through the column's middle; the two halves
+            ;; slide apart along it on twos (drawings DE 0..3) and fade over the last 0.12 s; the cut stroke shows 2 drawings
+            (let* ((cl *bclip*) (mx (+ kx (* 0.5f0 ksz))) (my (+ y0 (* 0.5f0 ksz (- n (if (bcap-mark c) 1.15f0 0f0))))) (ux 0.866f0) (uy -0.5f0) (nx 0.5f0) (ny 0.866f0)
+                   (sl (* ksz (+ 0.1f0 (* 0.25f0 (i->f de))))) (sp (* ksz 0.04f0 (+ 1f0 (i->f de)))))
+              (declare (type f32vec cl) (single-float mx my ux uy nx ny sl sp))
+              (setf (aref cl 1) nx (aref cl 2) ny (aref cl 3) (+ (* nx mx) (* ny my)))
+              (setf (aref cl 0) 1f0 (aref cl 4) (+ (* sl ux) (* sp nx)) (aref cl 5) (+ (* sl uy) (* sp ny)))
+              (columns)
+              (setf (aref cl 0) -1f0 (aref cl 4) (- 0f0 (* sl ux) (* sp nx)) (aref cl 5) (- 0f0 (* sl uy) (* sp ny)))
+              (columns)
+              (setf (aref cl 0) 0f0)
+              (when (< de 2)                                             ; the cut: a long thin spindle along the line
+                (let* ((hl (* 1.3f0 ksz)) (hw (* ksz (if (= de 0) 0.04f0 0.018f0))))
+                  (declare (single-float hl hw))
+                  (with-ui-verts (dv o 6)
+                    (uvtx (- mx (* hl ux)) (- my (* hl uy)) gr gr gb a) (uvtx (+ mx (* hw nx)) (+ my (* hw ny)) gr gr gb a)
+                    (uvtx (+ mx (* hl ux)) (+ my (* hl uy)) gr gr gb a)
+                    (uvtx (- mx (* hl ux)) (- my (* hl uy)) gr gr gb a) (uvtx (+ mx (* hl ux)) (+ my (* hl uy)) gr gr gb a)
+                    (uvtx (- mx (* hw nx)) (- my (* hw ny)) gr gr gb a))))))))
     (setf yy (+ yy (* ksz (- n (if (bcap-mark c) 1.15f0 0f0)))))
-    (when (> n2 0f0)                                                    ; the second column, toward the frame's middle
-      (let* ((s2 (* 0.42f0 ksz)) (x2 (if right (- kx (* 1.15f0 s2)) (+ kx ksz (* 0.15f0 s2)))) (y2 (+ ky (* 0.35f0 ksz))))
-        (declare (single-float s2 x2 y2))
-        (unless ink (%brush-run (the simple-string (bcap-kanji2 c)) (+ x2 (* 0.05f0 s2)) (+ y2 (* 0.05f0 s2)) s2 t 0f0 pr pr pb (* 0.8f0 a)))
-        (%brush-run (the simple-string (bcap-kanji2 c)) x2 y2 s2 t 0f0 gr gr gb a)
-        (setf yb (+ y2 (* s2 n2)))))
-    (when hk                                                             ; the red seal: 鬼 knocked out of BLOOD red
+    (when (and hk (not exiting))                                         ; the red seal: 鬼 knocked out of BLOOD red
       (let* ((hs (* 0.46f0 ksz)) (hx (+ kx (* 0.5f0 (- ksz hs)))) (hy (+ yy (* 0.12f0 ksz))))
         (declare (single-float hs hx hy))
         (%brush-box hx hy hs hs 0.816f0 0.063f0 0.11f0 a)
         (%brush-run "鬼" (+ hx (* 0.1f0 hs)) (+ hy (* 0.1f0 hs)) (* 0.8f0 hs) t 0f0 0.96f0 0.95f0 0.93f0 a)
         (setf yy (+ hy hs))))
-    (when rd                                                             ; the reading, small and letter-spaced, fit to
+    (when (and rd (not exiting))                                         ; the reading, small and letter-spaced, fit to
       (let* ((room (cond (res (* 0.3f0 ww)) (right (- (+ kx ksz) (* 0.51f0 ww))) (t (- (* 0.49f0 ww) kx))))   ; its half
              (rs (f-min ls (/ room (f-max 1f0 (aref f 4))))) (rw (* rs (aref f 4)))
              (rx (cond (res (- cx (* 0.5f0 rw))) (right (- (+ kx ksz) rw)) (t kx)))
@@ -229,7 +326,7 @@ inside them, the reading and the chapter line shrink to fit their half of the sc
         (unless (and ink (or cine res))
           (%brush-run (the simple-string rd) (+ rx (* 0.06f0 rs)) (+ ry (* 0.06f0 rs)) rs nil 0.25f0 pr pr pb (* 0.8f0 a)))
         (%brush-run (the simple-string rd) rx ry rs nil 0.25f0 gr gr gb a)))
-    (when (bcap-sub c)                                                  ; the chapter line at the foot of its half: — SUB —
+    (when (and (bcap-sub c) (not exiting))                              ; the chapter line at the foot of its half: — SUB —
       (let* ((ls (f-min (* 0.024f0 hh) (/ (* 0.44f0 ww) (+ (aref f 5) 4f0)))) (tw (* ls (aref f 5))) (rl (* 1.6f0 ls))
              (x (if right (- (* 0.95f0 ww) tw rl (* 0.2f0 ls)) (+ (* 0.05f0 ww) rl (* 0.5f0 ls)))) (y (* 0.868f0 hh)))
         (declare (single-float ls tw x y rl))
@@ -238,6 +335,9 @@ inside them, the reading and the chapter line shrink to fit their half of the sc
         (%brush-box (+ x tw (* 0.2f0 ls)) (+ y (* 0.52f0 ls)) rl (* 0.07f0 ls) gr gr gb a)))
     (when (or (< (aref bb 0) -0.5f0) (< (aref bb 1) -0.5f0) (> (aref bb 2) (+ ww 0.5f0)) (> (aref bb 3) (+ hh 0.5f0)))
       (bcap-off-screen c w h))
+    (when (and (eq layout :callout) (not (bcap-hud-warned c)) (panel-hit (aref bb 0) (aref bb 1) (aref bb 2) (aref bb 3)))
+      (setf (bcap-hud-warned c) t)                                        ; tests/style-5-checks.py greps it
+      (log-msg "brush: caption ~a over the HUD on the ~dx~d screen" (bcap-kanji c) w h))
     t))
 
 ;;; ---------------------------------------------------------------- one line of brush Latin (callouts, big words)

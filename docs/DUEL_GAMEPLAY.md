@@ -135,6 +135,11 @@ encoded in the integer.
 | 2330+k | O module test: human P1 with module k mod 4 (0 ENJO, 1 TENCHI, 2 CHARGE, 3 LEAP CLEAVE) 1 m inside its reach from a Yamamoto CPU who, by k div 4: 0 stands, 1 holds guard, 2 stands red (Reishi 200), 3 holds guard red, 4 plays (HARD), 5 stands in 0.1× slow motion for 14 s (shots), 6 stands and holds guard once hit (the dash-in is BLOCKED), 7 the same red (the dash-in can't be guarded: the Kikon); press O (hold it, or tap it) — `duel-kikon.json` |
 | 2370+k | Bankai stance test (human P1, P2's CPU off; `duel-stances.json`): 0 East vs Kenpachi 3 m (L switch, cooldown, HIGASHI), 1 East J strings into a guard the probe keeps full (`duel probe wall … P1 gg … [BURNOUT] P2 r…`: the recoil burns him out, then the guard drops), 2 West's garb guard under Kenpachi's Quick mash (U held; `duel probe garb … P1 gg … P2 r…`: 14 × 1.3 = 18 a string, 5 scorch a hit, burnout on the 6th string), 3 / 4 East Shift+K into a guard at 2 / 6 m, 5 West Shift+K with Kenpachi's F1 started as the parry opens (the parry, the counter), 6 East Shift+L on Kenpachi 3 m, 7 / 8 human Kenpachi under a CPU East's South at 5 m (8 in 0.25× slow motion for 6 s), 9 West's **ranged armour** (the `:ranged` probe: a cup-3 Kenpachi 4.8 m away casts KUKAN-GIRI's rift twice (the second into West's guard, which the script holds), the cash-out, then cup 1's Meteor, then the Meteor at 3 m, inside its 3.4 m cleaver: melee; `duel probe ranged t=… P1 r… gg … STATE`) |
 | 2380+k | Nozarashi v2 / West garb test (`nome-test`, human P1, P2's CPU off; `duel-nome.json`): 0 the ladder (the probe raises NOME +12 every 45 steps to 100, then lets it drain: `duel probe nome t=… m… FORM` every 30 steps, cups up then down), 1 DRINK (cup 3, U held, Bankai East mashes Quick: `duel probe drink … gg … m …`), 2 / 3 KUKAN-GIRI's rift into a guard / on a standing Yamamoto (K, K K), 4 the cash-out (cup 3, Shift+K into a red Yamamoto's guard at 4 m, then O held: a 2-Konpaku Kikon), 5 West's garb guard under RYOTE's K K (`duel probe cut … gg …`: the cut, halved, ×1.3: 31 a string, 30 scorch) |
+| 2362+k | Phase 5 looks (force-special 62+k): 0 Taimatsu (YK 4.5 m), 1 Nadegiri (forced Hellfire, 5 m), 2 Yamamoto's Breaker (Ikkotsu, 6 m), 3 Kenpachi entering cup 3 (NOMIHOSE, the rung event: the page, the grin with the head thrown back) |
+| 2390 | consing of the Phase 5 looks (10 draws each: fireball, charge, pillar, dome, the Hellfire / Evolution / Breaker auras and ring, the garb flare, the rift, a spent wave's erosion, the Phase 5 stamps, the face / beat / move-beat choices): `vfx5 consing (10 draws, B): fireball 0, …` (0 B each) |
+| 2366 | Phase 6 destruction still (looks only): YK 4 m apart, a scorch under Kenpachi, a crack and a burst of rubble chips beside him; Yamamoto shouts and Kenpachi is hurt for 0.6 s (face beats: both gameplay face accents) |
+| 2391 | consing of the Phase 6 looks (10 draws each: the marks and chips with both pools full, a pillar and a fire wave beside the lens, the Nozarashi skull, the K.O. rain, both face accents, the face-change note, the left-hand grip step + IK, a caption slicing out): `vfx6 consing (10 draws, B): marks 0, …` (0 B each) |
+| 2392 | the left fist's gap to the cleaver's handle over every grip clip (the RYOTE kendo set, KUKAN-GIRI, the stance) and every grip-clip → grip-clip crossfade, keys only and with the draw's `GRIP-LEFT!` (P1 must be Kenpachi, e.g. after 2383): `grip <clip> (raw/IK mm): …` per frame, `grip drift: raw max … mm, IK max … mm` |
 | 2114+p | the seed gate of 2110+p with the combat log kept and a `pace t=… \| FORM m… r… g…[!] k… w…` line every 60 ticks per side (scratchpad `pace.py` reads it: cup times, stays, the Bankai gauge, scorches) |
 | 2400 | toggle god mode: each step both fighters' Reishi is raised to at least 400 |
 | 2500+k | human P1 vs an idle CPU, cinematics skipped: 0 Yamamoto vs Kenpachi, 1 Kenpachi vs Yamamoto, 2 YY, 3 KK |
@@ -192,8 +197,13 @@ hold-U armour, the run facing the opponent): `python3 tests/batch-shots.py` → 
 sheet `batch-sheet.png`.
 
 Galleries (test targets, not the game; build lines in their headers): `tests/duel-view.lisp`
-(bodies, weapons, clip strips, stage, every sound; `tests/scripts/duel-view.py`) and
+(bodies, weapons, clip strips, stage, every sound; `tests/scripts/duel-view.py`; scene 5 = 2005 lines up both
+fighters' three expressions, 6300+k sets every actor's face: 0 neutral, 1 shout, 2 hurt; 7000+k shows grip clip k's four
+worst-drift frames, each as a pair: keys only, then with the game's left-hand grip) and
 `tests/duel-vfx.lisp` (every effect plus a worst-case scene; `tests/scripts/duel-vfx.py`).
+Restyle Phase 5 stills: `python3 tests/style-5-shots.py` (the redone effects, the kendo and re-authored clips, the
+expressions, before / after the previous build), `python3 tests/style-5-checks.py --run dist/duel` (3 expressions per
+fighter, the Jokaku manga page, callouts clear of the HUD at 1280x720 and 800x450, 0 B for the new looks).
 
 ## Determinism
 

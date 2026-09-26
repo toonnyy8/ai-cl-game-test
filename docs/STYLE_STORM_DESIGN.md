@@ -44,7 +44,9 @@
 >
 > **使用者已決定**：美術方向（久保 notan）、範圍（Phase 0–6 全做）、毛筆字型（Yuji Syuku，OFL，離線轉成向量資料並附授權聲明）、跳過參考截圖（各階段完成後由使用者看截圖審查）、鏡頭拉近 20%。
 >
-> **還需要使用者的**：各審查點的截圖審查（Phase 1a、3、4、6 結束時）。審查 1 已決定：維持深夜（不下暴風雨）、劍八靈壓一律黃色、世界明度要平衡（不要上黑下白）、角色改成寫實身材比例（不要 Q 版）。
+> **目前狀態**：Phase 0–6 全部完成，使用者已在審查 4（最後一次）核准（2026-09-26：「非常完美」），重繪結束。
+>
+> **還需要使用者的**：無。審查 1 已決定：維持深夜（不下暴風雨）、劍八靈壓一律黃色、世界明度要平衡（不要上黑下白）、角色改成寫實身材比例（不要 Q 版）。
 
 Companion to `STYLE_STORM_RESEARCH.md` (same folder; §11 covers Kubo Tite, the TYBW anime and
 Rebirth of Souls). Source tags such as [V: S13] or [V: K3] refer to its tables; [I] = inferred.
@@ -56,7 +58,8 @@ Code references are `file:line` in this repository.
 - round 4: **the user's decisions on v3**.
 
 v4 changes the **art direction** (§A, §2.5, §3.3, §4, §5, §6). The engine architecture of v3
-(§1–§3.2, §3.4–§3.5) stands unchanged. **Phases 0, 1a, 1b, 2, 3 and 4 are implemented** (2026-09-25/26); §14 logs
+(§1–§3.2, §3.4–§3.5) stands unchanged. **All phases, 0 to 6, are implemented** (2026-09-25/26); the user **approved it at
+review 4**, the last review point (2026-09-26; `tests/shots/style-final-gallery.png`), so the restyle is closed. §14 logs
 what was built, where it differs from this text, and the measured gates.
 
 ---
@@ -396,7 +399,10 @@ The HSV shadow rule (§2.2) is unchanged, except that neutrals now rotate to the
 
   They are all thin `:c` boxes under 4 cm, so they get no hull.
 - **Faces**: unchanged from v3 (ink brows as wedges, eyes, grin), `:tag :face-neutral`.
-  Expression swaps (`:face-shout`, `:face-hurt`) are **in scope** (Phase 5).
+  Expression swaps (`:face-shout`, `:face-hurt`) are **built** (Phase 5, §14): `draw-body :face` hides the other two
+  tags; the fighter's state picks the face (hurt while stunned / airborne / down / lost, shout through a non-Quick
+  move's wind-up and hit, a cinematic's attacker shouts and a Kikon's victim is hurt), and a look can hold one
+  (`face-beat`: cup 3's grin).
 - The CC2 vertical gradient (§2.2) stays at 0.14. On black robes it is invisible, and on the
   white haori it gives the soft "moonlit from above" fall-off.
 
@@ -405,7 +411,9 @@ The HSV shadow rule (§2.2) is unchanged, except that neutrals now rotate to the
 - **Key easing** (art §1.14): `clip-sample!` (anim.lisp:173) uses smoothstep between keys, or
   linear for `:snap`. A new `*key-ease*` (0 = today, so RAVEN is unchanged; 1 = ease-out cubic
   `1−(1−u)³` for non-snap keys) makes SOUL DUEL poses snap into keys and settle. This is one
-  function edit; per-clip re-authoring is below the cut line.
+  function edit; per-clip re-authoring is below the cut line. (Phase 5 re-authored every attack clip pose to pose
+  within its own S / A / R: a held wind-up, a `:snap` into the unchanged hit pose at S, an overshoot, a zanshin
+  hold, a settle; §14.)
 - **Holds**: a `model-hold` slot, in frames. While it is > 0, `draw-fighter` skips `anim-eval` and
   reuses the cached local pose, but still runs `pose-fk!` with the current root, so the body does
   not detach from a moving actor. It is used by cinematics and for 3–4 f attacker holds on heavy
@@ -679,20 +687,21 @@ covers every row.
 |---|---|---|
 | ▲ **Blade fire** | toon sheath ribbon (FIRE, heat 1 at the base to 0.3 at the tip) + 3 tongue ribbons (w1 = 0, along) + a thin additive core line + 10 `+p-t-blob+`/s scraps peeling off the swing; the swing is drawn as a FIRE `fx-crescent :comet`, held 2 d | the blade reads as a flame with yellow core, orange body and dark-red lower edge; no white blob |
 | ▲ **Fire wave** | **one continuous `fx-wall`** along the crescent (5–7 scallops, FIRE) + a BLACK SMOKE backing wall behind it, 20 % taller and curling off the crests + an `fx-crescent :lens` slash at 1.2 m + 6 flame scraps flying ahead + an EMBER sector scorch; envelope (1 3 ∞ 18) | one wall, not a fence; smoke backing visible where the wall crosses the moonlit ground; the wall is the only warm mass in the still |
-| Shiranui | toon disc (FIRE, wobble 0.3) + 5 tongues curling back + a BLACK SMOKE wake (threes) + scraps. Charge: anticipation (converging LIGHT shards + `ui-focus-lines`), disc growing in 3 drawings | ball reads as a drawn fireball with a smoke trail |
-| Taimatsu | 9 FIRE blobs fanned over the sector, envelope (1 3 4 30), 5 SMOKE puffs at the lip, a ground FIRE sector for 2 d | fan of drawn flames, then perforating smoke |
-| Ennetsu Jigoku pillars | wide FIRE ribbon + an inner EMBER spiral stripe (a second ribbon, twisted) + a **crowned top** (a ring of 6 short tongues flaring out); rise on **ones** (3 drawings), crown on twos; erodes from the tip | 7 crowned pillars, each with a visible dark-red spiral |
-| Jokaku Enjo | **no shell**. 3 inward-leaning tiers of tongue rings (12 + 9 + 6 tongues) closing in a spiral over 4 d; the seethe is the tongues boiling on twos; detonation per §5: a fire/ink negative, then a **manga-page** hold where the fire stays orange in a black/white world | never a striped sphere; tiers visible at mid-close; the fire is the only colour |
+| Shiranui (built, Phase 5) | toon disc (FIRE, wobble 0.3) + 5 tongues curling back + a BLACK SMOKE wake (threes) + scraps. Charge: anticipation (converging LIGHT shards + `ui-focus-lines`), disc growing in 3 drawings. Built: 6 FIRE / EMBER shards converging on the tip on twos, the disc growing in 6 drawn steps of the charge, focus lines as the charge starts | ball reads as a drawn fireball with a smoke trail |
+| Taimatsu (built, Phase 5) | 9 FIRE blobs fanned over the sector, envelope (1 3 4 30), 5 SMOKE puffs at the lip, a ground FIRE sector for 2 d. Built as the `:cone` stamp: each blob is a big FIRE tongue with a small one beside it (discs read as a row of balls) | fan of drawn flames, then perforating smoke |
+| Ennetsu Jigoku pillars (built, Phase 5) | wide FIRE ribbon + an inner EMBER spiral stripe (a second ribbon, twisted) + a **crowned top** (a ring of 6 short tongues flaring out); rise on **ones** (3 drawings), crown on twos; erodes from the tip. Built 0.64 m wide (1 m hid the side camera's frame) over an EMBER backing, an EMBER ring at the foot, one light for the ring | 7 crowned pillars, each with a visible dark-red spiral |
+| Jokaku Enjo (built, Phase 5) | **no shell**. 3 inward-leaning tiers of tongue rings (12 + 9 + 6 tongues) closing in a spiral over 4 d; the seethe is the tongues boiling on twos; detonation per §5: a fire/ink negative, then a **manga-page** hold where the fire stays orange in a black/white world. Built: the 4 d are 4 drawn steps over the script's closing span; the outer tier over EMBER backings; the detonation is the `:boom` stamp (a FIRE star over an EMBER one, a white core) + a FIRE ground ring + scraps | never a striped sphere; tiers visible at mid-close; the fire is the only colour |
 | Bankai | anticipation: 16 tongues pulled into the blade over 3 d + converging shards + ink focus lines; **silence**; burst: a BLACK SMOKE / charcoal (style 3) double ring + 6 charcoal puffs; silhouette reveal on a white card (§5); for the whole 20 s form: **spot-keep mode 4 (hue 10°)**, a charred blade with an EMBER edge line on threes, 4 slow **charcoal ink-wash wisps** for the heat [V: K3]; cracks = ink gashes with an ember core | the reveal still is grey except the ember line; the wisps show charcoal grain |
-| Tenchi Kaijin | a pure white hard slash (`fx-crescent`-like UI polygon, tapered at both ends, 2 px ink border) in a true two-tone impact frame (white/ink), on a **black card**; then a manga-page hold; the victim flakes into ASH shards drifting sideways on threes; a silence beat before the slash | there is no translucent grey wedge; the frame has no colour at all |
-| Nadegiri / Kyokujitsujin / Kaka | HIT `fx-crescent :lens` + an ink-edged scorch line; Kaka: DUST puffs + inked rock debris | — |
+| Tenchi Kaijin (built; the ash Phase 5) | a pure white hard slash (`fx-crescent`-like UI polygon, tapered at both ends, 2 px ink border) in a true two-tone impact frame (white/ink), on a **black card**; then a manga-page hold; the victim flakes into ASH shards drifting sideways on threes; a silence beat before the slash | there is no translucent grey wedge; the frame has no colour at all |
+| Nadegiri / Kyokujitsujin / Kaka (built: Nadegiri Phase 5, the others as their own rows) | HIT `fx-crescent :lens` + an ink-edged scorch line; Kaka: DUST puffs + inked rock debris. Nadegiri: the `:nade` stamp at its S (a draw-side beat): a white lens across his front for 2 d, then an EMBER hairline, and an INK ground strip with an EMBER core racing 8 m out | — |
+| Hellfire aura (built, Phase 5; §4 mapping) | 7 FIRE brush tongues behind him (0.8 × his height), 8 short FIRE tongues licking at his feet, an EMBER ring, scraps: a bonfire, apart from West's garb (wrapped all over) | fire the only colour |
 | O: ENJO (built, bankai-kikon part 1) | `vfx-line-cut :enjo`: a FIRE ground line along the 1–9 m lane, then 4 `fx-wall`s (2 m each) rising one after another over 16 f, each over an EMBER backing wall (no black), flame scraps, a warm light; erodes over 0.25 s | one lane of walls, fire the only colour |
 | O: KITA: TENCHI (built) | take-off: the Hoho vanish streaks; the dash: body and aura not drawn, an ink afterimage (`start-ghost`) every 4 f; the cut: the hit's white star | the flash step reads as afterimages only |
 | Bankai East / West (built, bankai-kikon part 2; the user's look) | East: the body as it is (the 4 charcoal heat wisps), the charred blade with its EMBER edge line. West: **wrapped in red flames** (`vfx-aura :garb`: 9 FIRE brush-flame tongues + 5 EMBER inner ones, behind and at the sides so the silhouette stays readable, flame scraps, a warm light), the blade pure charcoal (no ember line, the charcoal smear). A switch crossfades (the new aura flares up 35 % over 0.3 s, the old dies down over 0.35 s) | the two stances read apart at a glance; spot share (S > 0.45, below the HUD) West idle 2.4 %, East idle 1.0 %, NISHI 4.1 %: inside the 15 % budget, no exception needed |
-| Burnout (built) | the aura crossfades to `:ash`: 3 BLACK SMOKE wisps off the shoulders + ASH flecks (≤ 12/s); East's ember line goes dead ASH; the world's grade loses the ember hue (`:ash` preset: spot-keep with only Kenpachi's yellow); "BURNOUT" in ash grey, the HUD name dimmed; REIGNITE: an EMBER star + the word | traits off must be visible: no warm pixel on a burned-out Yamamoto |
+| Burnout (built; the burst Phase 5) | the burst: the `:gutter` stamp (West's flames sinking for 2 d, then 6 charcoal wisps off the shoulders and an ASH ring) + 5 BLACK SMOKE puffs + 12 ASH shards; the aura crossfades to `:ash`: 3 BLACK SMOKE wisps off the shoulders + ASH flecks (≤ 12/s); East's ember line goes dead ASH; the world's grade loses the ember hue (`:ash` preset: spot-keep with only Kenpachi's yellow); "BURNOUT" in ash grey, the HUD name dimmed; REIGNITE: an EMBER star + the word | traits off must be visible: no warm pixel on a burned-out Yamamoto |
 | NISHI / HIGASHI (built) | NISHI: a BLACK SMOKE double ring out to 2.6 m + an EMBER inner line + 8 ASH shards, `:heat-flare`; HIGASHI: a white lens crescent 3 m wide across his front (Phase 4: 4.4 m filled the side camera's frame), held 2 d, then an EMBER hairline | — |
 | KYOKUJITSUJIN (built) | f18 a white vertical lens slit; f20 an INK gash where the tip bites + a flat 25° sheet (an EMBER sector with a HIT-white core, no dark backing: it read as a black rim) racing 9 m over 3 d, eroding, then ASH lifting along it | no black edge; the only warm mass is the sheet |
-| GOKUI GAESHI / the garb / scorch (built; the garb guard since guard v3) | the parry's window: 6 charcoal wisps rising round him; parried: an EMBER star (no charcoal backing star, same reason), a 1 f negative frame, "PARRY"; a hit the garb guard blocks: the EMBER star and a sizzle instead of the steel hexagon (feedback `:blocked` on a `:garb` defender), a ranged hit it armours: the same star; scorch: the attacker's arm smoking (BLACK SMOKE puffs); the garb aura flares ×1.4 while he guards | — |
+| GOKUI GAESHI / the garb / scorch (built; the garb guard since guard v3; Phase 5 redrew the block, the scorch and the flare) | the parry's window: 6 charcoal wisps rising round him; parried: an EMBER star (no charcoal backing star, same reason), a 1 f negative frame, "PARRY"; a hit the garb guard blocks: the guard's hexagon drawn in fire (`:garb-guard`: an EMBER hexagon with a white core, 5 ember sparks flung back, 2 black smoke curls) and a sizzle; a ranged hit it armours: the EMBER star and **the garb flares** (`:flare`: 12 FIRE tongues flung out, an EMBER ring; the aura ×1.9 decaying over 0.45 s); scorch: at the attacker's sword hand a white flash, an EMBER star, 2 BLACK SMOKE curls rising; the garb aura flares ×1.4 while he guards (Phase 5 made it visible: `:garb` scales height and radius by K > 1; before, K was clamped to 1) | the block reads as a block by shape and a burn by value; ember the only colour |
 | South (built) | an INK ring crack with an EMBER rim pulsing on twos over the 16 f tell + 5 INK radial cracks; 4 skeleton arms (`:sk-grab`, hips under the plaza; Phase 4: pale bone #D2CEC4 with charred bands #4A4E5C, no shadow disc) claw out, clench, crumble; each throws 1 low DUST puff + 2 rocks; bound: ASH drifting at the feet | — |
 | Kikon dash-in (built) | the rush's own travel look (TENCHI afterimages, CHARGE aura ×1.5, LEAP lift) + the BLOOD rush aura, `ui-speed-lines` along the dash, focus lines, "KIKON / GUARD IT!" | — |
 
@@ -702,10 +711,12 @@ covers every row.
 | ▲ **Reiatsu aura** | **every form: REIATSU yellow** (user review 1): 7 brush-flame tongues **behind** the body (radius 0.5 m, wider than the silhouette; `front-dim` lets only the edges wrap in front) with a dark hairline and a white core line, height flicker per drawing (twos, seed boil) + white flecks rising. **Awakened (Nozarashi)**: taller and denser + 4 inner white tongues + a flat yellow ring + one faint T光 billboard | yellow is the only spot hue on Kenpachi; the body stays readable inside the aura; neutral-still spot share ≤ 15 % with the base aura |
 | ▲ **Cleaves** | `fx-crescent :comet` from hilt to tip, 2 d: white leading edge, yellow trailing edge, dark hairline (every form) | the smear reads as a comet, not a banana |
 | Nozarashi awakening | pillar rises on **ones**, then holds; 2 flat rings; 8 DUST puffs; a negative frame at the NOME release (no eyepatch in any form since 2026-09-26: the release is the whole first beat); the yellow pillar on a black card; silhouette plus yellow back-rim shot | the first frame where yellow fills > 30 % |
-| Nozarashi's cups (v2, built 2026-09-26) | cup 1 the base REIATSU aura, one hand; cup 2 the awakened aura, two-handed jōdan, a yellow ring; cup 3 the aura as a pillar (×1.6 tall), on entry the awakening's REIATSU burst + 2 rings, a 1 f negative and a 12 f manga page (yellow kept); DRINK: the REIATSU star reversed; the rift: a white slit over a yellow rim at chest height, trembling on twos | yellow stays Kenpachi's only spot hue; no persistent grade for cup 3 |
+| Nozarashi's cups (v2, built 2026-09-26; Phase 5: the entry beat, the rift drawn, the kendo clips) | cup 1 the base REIATSU aura, one hand; cup 2 the awakened aura, two-handed jōdan, a yellow ring; cup 3 the aura as a pillar (×1.6 tall), on entry the awakening's REIATSU burst + 2 rings, a 1 f negative and a 12 f manga page (yellow kept) **and the grin: his shout face held 0.9 s with the head thrown back** (an overlay pose on whatever clip plays, `face-beat`); DRINK: the REIATSU star reversed; the rift: a REIATSU lens slit with a white HIT line in it at chest height, trembling on twos; when it cuts, a wide white lens over a yellow one and **the ink gash** that stays (`:gash`: an INK lens with a white edge along the rift, a white line in it, 4 ink shards); RYOTE's MEN / KESA / DO / KABUTO-WARI and cup 3's KUKAN-GIRI have their own clips | yellow stays Kenpachi's only spot hue; no persistent grade for cup 3 |
 | Split the Meteor / Buttagiru | ink gash (a DUST-palette ribbon on the ground with a heavy edge) + a REIATSU core line + a light sheet of 5 LIGHT ribbons for 3 d + 12 inked rocks + 14 DUST puffs (threes) | particles per cut ≤ 20 |
 | Sky split | beat 0 (a negative frame for 2 f) → **black card**, silence → the white light band with ink borders + focus lines, held 8 f (`model-hold`, no hitstop) → the existing `*grade-split*` → the ground cut in drawings | — |
-| SP2 dash | afterimage sequence (§2.6) every 2 drawings + `ui-speed-lines` | — |
+| SP2 dash (built, Phase 5) | afterimage sequence (§2.6) every 2 drawings + `ui-speed-lines` (a draw-side beat: a new afterimage every 10 f of the dash's active frames; the speed lines along his facing) | — |
+| Breaker (both; built, Phase 5; §4 mapping) | the owner's colour (Kenpachi REIATSU, Yamamoto FIRE, Bankai EMBER) as 7 tongues over 7 taller INK tongues, BLOOD flecks, a steady BLOOD ring and an INK ripple every 0.4 s at the feet; it grows over the strike's startup | — |
+| EVOLUTION ready (universal; built, Phase 5) | 5 thin STEEL tongues behind him and white flecks (mono: it was a soft gold glow) | no spot colour |
 | O: CHARGE (built) | the REIATSU aura × 1.5 and the BLOOD rush aura; the hit its armour eats: a REIATSU star + the laugh | yellow + the red rush ring only |
 | O: LEAP CLEAVE (built) | take-off: a DUST ring + dust; the body drawn up to 1.6 m (`:lift`, a look); landing: a 3 m `:meteor` gash | — |
 
@@ -749,7 +760,7 @@ covers every row.
     colour on a caption.
 - **Stamp animation** (on twos): scale 1.8 → 1.15 → 1.0, an `ui-ink-splash` behind the glyph on
   drawing 2, a shake of 3 discrete offsets, then hold. Exit: 3 horizontal slices slide apart over
-  3 d (in scope, Phase 6).
+  3 d (built in Phase 6 as one diagonal brush cut and two halves sliding apart over 4 d: §14).
 - The centred 90 px pixel-font captions are removed from cinematics. HUD numbers keep the pixel
   font.
 - **Title and results**: the brush title, and a big 勝 stamp (white on a black card, with an ink
@@ -822,7 +833,7 @@ Helpers (draw-mode, cosmetic):
 - **Nozarashi awakening**: the only time yellow floods the frame.
   1. NOME: the head thrown back as the reiatsu bursts (negative frame; no eyepatch in any form, 2026-09-26).
   2. A yellow pillar against a black card.
-  3. The skull silhouette in the pillar for 2 drawings (in scope, Phase 6).
+  3. The skull silhouette in the pillar for 2 drawings (built in Phase 6: §14).
 
 The same grammar is applied to `yama-tenchi-cine`, `yama-bankai-cine` (silhouette reveal),
 Kenpachi's awakening (silhouette + yellow rim) and Kikon, `soul-break-cine`, and `ko-cine`
@@ -875,7 +886,7 @@ Numbers apply to `stage-env`, `stage.lisp` and `fs_sky_toon`.
   fire wave throws a warm pool onto the white ground (spot colour, very readable).
 - **Grade**: bloom threshold 0.97 (effect cores only), vignette **0.25** (was 0.35), no global
   desaturation (the palette itself is desaturated). Bankai uses spot-keep mode 4.
-- **Destruction** (in scope, Phase 6): ink scorch and crack marks that persist for the round,
+- **Destruction** (built in Phase 6: §14): ink scorch and crack marks that persist for the round,
   and inked rock debris that rests for 6 s. Dark marks on the mid-grey page.
 - **Camera**: `*cam-close*` = **0.8** (the user took the recommendation). Pair distance is
   `max(4.8, 3.6 + 0.68·sep)`; the behind eye is at 4.4 m.
@@ -952,7 +963,7 @@ approves or redirects. These are the only user-gated steps.
 | **3 Signature effects** | ▲ rows (blade fire, fire wave wall, yellow reiatsu aura in every form, cleave comets) + layering | 2 d | row ACs; spot-pixel share ≤ 15 % in the neutral still (Yamamoto's blade fire and Kenpachi's base yellow aura included), and FIRE dominant only while Yamamoto's moves run; live particles ≤ 500. **User review 2** |
 | **4 Cinematics + typography** | §5 (beat 0, black/white cards, ink splash, inversion cuts, silence, silhouette shots, FOV, holds); Bankai reveal; 8 cinematics re-staged; §4.4 glyph tool + `glyphs.lisp` + licence file; vertical captions, hanko, 勝 | 3 d | every Kikon: beat 0, ≥ 1 card beat, ≥ 3 cuts, ≥ 1 inversion (negative + manga page), ≥ 1 silence hold ≥ 8 f, a vertical brush caption; `:len` unchanged; the Bankai still shows a grey world with only the ember line red. **User review 3** |
 | **5 Remaining effects + faces** | all non-▲ rows of §4.1 and §4.2; expression swaps (`:face-shout`, `:face-hurt`); per-clip pose-to-pose re-authoring of the attack clips | 5 d | row ACs; each fighter shows 3 expression states in the gallery |
-| **6 Polish** | destruction marks and resting debris; caption slice exit; skull in the Nozarashi pillar; quantised fog bands (if they help the white page); rain accent for the K.O.; chromatic aberration or fisheye **only if** user review 3 or 4 asks; P10 atlas **only if** the charcoal style is judged too thin | 3 d | **User review 4** (final) |
+| **6 Polish** (done, approved at user review 4) | destruction marks and resting debris; caption slice exit; skull in the Nozarashi pillar; quantised fog bands (if they help the white page); rain accent for the K.O.; chromatic aberration or fisheye **only if** user review 3 or 4 asks; P10 atlas **only if** the charcoal style is judged too thin | 3 d | **User review 4** (final) |
 
 **Total ≈ 21.5 d** of agent work, plus four user reviews. With parallel agents the limits are
 engine syncs, SwiftShader review loops and the review points (tech §9.34). Phases 3 and 5 split by
@@ -963,12 +974,17 @@ character between two agents.
 ## 10. Not done (and when to add it)
 
 - Post-process edges: only if the stage ever needs lines.
-- The procedural atlas (P10): only if Phase 6 judges the charcoal style too thin.
+- The procedural atlas (P10): judged not needed at Phase 6 (§14): the charcoal grain reads at gameplay distance and in
+  the Bankai close-ups; add it only if a review calls the charcoal thin. It needs a texture binding in `fs_fx_toon`
+  (an engine change).
+- Quantised fog bands: tried at Phase 6 and rejected (§14): on the review-1 mid-grey plaza they draw a false contour arc
+  across the page under the fighters. Revisit only if the plaza turns white again.
+- Chromatic aberration and fisheye: not built; no review asked for them (+3 ms measured for always-on CA).
 - The per-vertex threshold float (R1 escalation).
 - Halftone screen tone (Hi-Fi Rush, not Storm [V2: S20]; Kubo also reduced grey tones in favour of pure black and white [V2: K1], so v4 agrees).
 - Real motion blur.
 - Refraction heat haze.
-- Chromatic aberration and fisheye (Phase 6 at most).
+- A hair rig (the lift of cup 3's grin: the rising aura tongues stand in); a sound for the K.O. rain.
 - Everything listed in §13 as dropped.
 
 ---
@@ -1001,8 +1017,9 @@ The user has decided:
 - the camera at 20 % closer.
 
 Still open:
-1. **The four screenshot reviews** (after Phases 1a, 3, 4 and 6). They are the only remaining
-   user gates.
+1. **The four screenshot reviews** (after Phases 1a, 3, 4 and 6). Reviews 1-3 are answered (§13, §14); **review 4**, the
+   final one (Phase 6: `tests/shots/style-final-gallery.png`, `style-6-gallery.png`, `style-6-pairs.png`), is approved
+   (§13 round 7). No user gate remains.
 2. Decided at review 1 (§13 round 5): night stays; Kenpachi's reiatsu is yellow in every form;
    the world is one balanced value range; the characters get realistic proportions.
 3. Carried from v3 as defaults:
@@ -1180,6 +1197,13 @@ These were all fixed in v2:
 **Position reversed:** round 4's "mono energy shapes need a dark hairline to read on the white ground". On the
 cold mid-grey ground of round 5 (V2 plaza), white hits and yellow reiatsu read by value without it (see the
 review-2 stills).
+
+### Round 7: the user's review 4 (Phase 6, final)
+
+The user approved the whole restyle as shown in `style-final-gallery.png` ("非常完美", 2026-09-26) and asked for no
+changes. The review sheet's open questions therefore stay at the built defaults: the destruction marks as built (20 max,
+cleared at resets), the shout / hurt face accents kept, the near-camera pillar thinning as built, no rain sound and no
+rain on the results screen, and the fog bands rejected. The restyle (Phases 0-6) is closed.
 
 ---
 
@@ -1643,3 +1667,132 @@ one-time "HIT TO FEED" callout; the U tag reads `U: GARB`. The HUD bars stay 0 B
 changed: Reishi 1300 and the new rules); the YK reference is now `duel -> RESULTS winner P2 konpaku 0-4 ticks 9305 secs
 155.1`. `style-4-checks.py --run dist/duel`: 52 PASS. Stills: `tests/shots/guard3-*.png`.
 
+
+### Phase 5: remaining effects, faces, pose-to-pose clips (done)
+
+Built as the non-▲ rows of §4.1 / §4.2 (and every move added since, §4's rows now say "built, Phase 5"), the expression
+swaps of §2.5 and the per-clip re-authoring of §2.6, plus the items carried over: the last soft fire looks, the fire
+wave's erosion after a hit, the callouts clear of the HUD, the Kenpachi batch's open art (the kendo clips, the rift's
+ink gash, cup 3's grin) and West's garb looks. **No engine change** (engine/ and game/ untouched). The work was split
+by character as §9 suggests: two helper agents re-authored the clips and faces of `yama-art.lisp` and `ken-art.lisp`
+(each file its own owner), the lead did everything else. Files: `vfx.lisp` (the looks, 9 new stamps, the wave's
+ghost), `main.lisp` (faces, the head-back overlay, draw-side move beats, the Breaker's colour, the garb flare),
+`components.lisp` (5 model slots), `feedback.lisp`, `hazards.lisp` (the draw; the `:rift-cut` event carries the
+rift's frame), `hud.lisp` / `brush.lisp` (the panel boxes), `body.lisp` (`draw-body :face`), `debug.lisp` (2362+k,
+2390), `ken.lisp` (the kendo moves' `:clip`), the art files; tests `duel-view.lisp` (scene 5, 6300+k), `duel-vfx.lisp`,
+`duel-rules-test.lisp` (the clip contract), `style-5-shots.py`, `style-5-checks.py`.
+
+| Item | Built | Why / deviation |
+|---|---|---|
+| Shiranui | a FIRE disc (wobble 0.3, re-drawn each drawing), 5 tongues licking back along the flight and curling up, a thin T光 core, flame scraps and a BLACK SMOKE wake of toon puffs left behind; `vfx-fireball` takes the flight direction | as §4.1 |
+| its charge (`vfx-charge`, also the Bankai reveal's blade) | 6 FIRE / EMBER shards converging on the tip (a new drawing every 1/12 s), flame scraps sucked in, a FIRE disc growing in 6 drawn steps of the charge; focus lines when the charge starts (a draw-side beat) | "3 drawings" became 6 steps of the charge: the charge lasts 12–60 f, 3 steps read as pops |
+| Taimatsu | the `:cone` stamp, envelope (1 3 4 30): a white flash, 9 flames fanned over the sector rolling out and up, a FIRE ground sector for 2 drawings, 5 pale SMOKE puffs at the lip | each "blob" is a big FIRE tongue with a small one beside it: 9 discs read as a row of fireballs |
+| Ennetsu pillars | a FIRE column over an EMBER backing, a swaying EMBER stripe in front (the spiral), a crown of 6 tongues, an EMBER foot ring; rises on ones in 3 drawings, crown on twos, erodes from the tip; one light for the ring (in `hazard-draw`) | 0.64 m wide, not the soft 1–1.8 m: opaque columns 1 m wide filled the side camera's frame (the camera stands inside the ring) |
+| Jokaku Enjo | no shell: 3 tiers of FIRE tongues (12 + 9 + 6; the outer over EMBER backings) rising on ones, leaning in and spiralling closed in 4 drawn steps, boiling on twos; the detonation is the `:boom` stamp (a white flash, a 14-spike FIRE star over a larger EMBER one, a white core) + a FIRE ground ring + 26 flame / 10 smoke / 16 ember scraps | the "4 d" close is 4 drawn steps over the script's closing span (0.35–0.7 of its life), so the cinematic's shots keep their beats. The detonation fires on the first draw past 85 % by a flag, not by crossing with DT: the cinematic freezes effects (DT 0) exactly there, and the old crossing test never fired (the old dome hid it behind sprites drawn every frame) |
+| Hellfire aura | a bonfire: 7 FIRE brush tongues behind him, 8 short FIRE tongues at his feet, an EMBER ring, scraps | not in §4's table (only the palette mapping); made to read apart from West's garb, which wraps him all over |
+| Evolution aura | 5 thin STEEL tongues + white flecks | universal, so mono (§A.2); it was a soft gold glow |
+| Breaker (both) | the owner's colour (REIATSU / FIRE / EMBER by the kit's blade) as 7 tongues over 7 taller INK tongues, BLOOD flecks; the ring: a steady BLOOD ring and an INK ripple every 0.4 s | §4 mapping: "the owner's colour over an INK backing, with a BLOOD edge"; the red edge is the ring (a red outline would break review 2) |
+| shockwaves | `vfx-shockwave` always draws a toon `:ring` stamp; an RGB call maps to FIRE / REIATSU / HIT (the Hellfire entry, Buttagiru, the awakening rings) | the soft rings were the last soft ground marks |
+| Tenchi Kaijin's ash | 44 ASH shards peeling off and drifting sideways (threes), 16 ASH flakes, 6 BLACK SMOKE puffs | §4.1 Tenchi row (it was soft dust, feathers and a warm glow) |
+| Nadegiri | the `:nade` stamp, fired by a draw-side beat at its S: a flash, a white lens across his front for 2 drawings then an EMBER hairline, an INK ground strip with an EMBER core racing 8 m out | the sim's move data is untouched (no new on-frame hook): `move-beats` in `draw-fighter` fires on the draw that first sees S |
+| the fire wave after a hit | the sim ends a wave the step after its hit (`hazard-connected`), so its look vanished; `hazard-draw` now hands a spent wave (age ≥ life) to `wave-ghost-start`, and `wave-ghosts-draw` keeps drawing it where it hit with LIFE = its hit age + 22 f: 4 f of hold, then the 18 f erosion | render-only (4 ghost slots); the body is the macro `%fire-wave-look`, shared with the live wave, so the ghost is 0 B |
+| KUKAN-GIRI's rift | waiting: a REIATSU lens slit with a white HIT line in it at chest height, trembling on twos; cutting: a wide white lens over a yellow one; and the `:gash` stamp that stays: an INK lens with a white edge along the rift, a white line in it, 4 ink shards (envelope 0 1 4 16) | the `:rift-cut` event now carries the rift's frame (x z yaw) so the gash lies along it; events are presentation, the sim state is unchanged |
+| West's garb block | the `:garb-guard` stamp: the guard's hexagon drawn in fire (an EMBER hexagon with a white core) + 5 ember sparks flung back at the attacker + 2 black smoke curls | the lead's "reading clearly in the mono style": a block reads by its shape (the hexagon of every guard), the burn by value (white core, black smoke); the ember is the only colour |
+| the scorch | at the attacker's sword hand (its joint): a white flash, an EMBER star for 2 drawings, 2 BLACK SMOKE curls rising (+ 1 puff) | the old 2 puffs at 1.3 m read as nothing |
+| the garb flare (a ranged hit armoured) | the `:flare` stamp (12 FIRE tongues flung out low, an EMBER ring running out) and the aura ×1.9 decaying over 0.45 s (`model-flare`) | found on the way: `:garb` clamped K to 1, so the ×1.4 guard flare of guard v3 never showed; K > 1 now scales the garb's height and radius |
+| the burnout | the `:gutter` stamp (West: his flames sinking for 2 drawings; both: 6 charcoal wisps off the shoulders, an ASH ring running out), 5 BLACK SMOKE puffs, 12 ASH shards falling | East has no flames to gutter (his heat is charcoal already) |
+| SP2 dash (Kenpachi) | an ink afterimage every 10 f of the dash's active frames + speed lines along his facing | §4.2 row; a draw-side beat, like Nadegiri's |
+| cup 3's entry (NOMIHOSE) | `face-beat`: his shout face (the laugh) held 0.9 s and the head thrown back over whatever clip plays (head −35°, chest −10°, spine −8° on an envelope; `beat-pose!` copies the pose, the anim's own stays) | the Kenpachi batch dropped the beat because the rung changes only while he is free, where the idle / walk clips replay every step; an overlay pose is independent of the clip. The hair lift is still the rising tongues of his aura (no hair rig) |
+| faces | `draw-body :face` (:neutral / :shout / :hurt; `face-hide` hides the other two tag sets, constant lists: 0 B); `face-of` in `draw-fighter`: a held face first, a cinematic's attacker shouts and a Kikon's / Soul Break's / K.O.'s victim is hurt, hurt while stunned / airborne / down / lost, shout through a non-Quick move from 10 f before its hit to 12 f after (and its charge / aura / dash phases). Yamamoto: shout = the glare (wide whites, small pupils, brows up, the mouth open in the beard), hurt = eyes squeezed shut, a grimace. Kenpachi: shout = the roaring laugh (mouth wide, both teeth rows, wide eyes, hooked brows), hurt = a grimacing grin (clenched teeth, one eye squinted); both eyes open in all three, no eyepatch | at gameplay distance (4–8 m) the face is ~12 px tall: the shout reads as a dark open mouth, hurt vs neutral hardly; the close-ups of the cinematics and the viewer show all three |
+| the RYOTE kendo clips | own DEFSTRIKEs with the moves' exact S/A/R on the two-handed jōdan: MEN `:ke-r-q1` (10/3/12, the blade down the centre line on a step), KESA `:ke-r-q3` (14/4/22, the diagonal), DO `:ke-r-f1` (19/4/20, the flat sweep stepping through), KABUTO-WARI `:ke-r-f2` (21/5/28, rising on the toes, crashing down; KE-R-F2Q enters it at f7), and cup 3's KUKAN-GIRI `:ke-n-f1` (20/4/22, a flat cut at 1.2 m); `ken.lisp` points the moves at them with `:clip-s` = the authored S (speed 1) | the left hand was solved onto the cleaver's long handle (a host FK tool); `:ke-r-stance` now has both fists on the handle (before, the left fist hung 0.57 m off it) |
+| pose-to-pose re-authoring | every attack DEFSTRIKE of both (Yamamoto 19, Kenpachi 10): a held anticipation pose, a `:snap` into the hit pose at S (Yamamoto's from named `:ya-*-hit` poses equal to the old keys; Kenpachi's blade within 3° of the old), an overshoot, a zanshin hold, a settle; the DEFSTRIKE headers (S A R, base), names, durations, marks and weapon swaps are byte-identical to the previous build | the sim never reads joints, and the frame data lives in the headers (G2) |
+| callouts vs the HUD | each side panel's box (its bars, labels and combo counter) is recorded as it is drawn (`*panel-box*`, both panels before any callout); a head callout overlapping one moves under it (`callout-y`), a word overlapping one is set under it (`word-layout`), a brush callout column starts under both; anything still over a panel is logged once (`hud: … over the P2 panel`, `brush: caption … over the HUD`) and `style-5-checks.py --run` fails on it at 1280x720 and 800x450 | with the side camera Kenpachi's KUKAN-GIRI / NOMIHOSE (P2) sat on the P2 labels (reproduced on the base build) |
+| Kyokujitsujin's old `:sun` line cut | removed (dead: no hazard spawns a `:sun` line) | its soft look was the last `%gseg` user |
+
+Also: the dead soft helpers (`fire-tongue`, `%aura-tongues`, `front-dim`, `%gseg`, `%gdisc`, `flame`) deleted; the duel-vfx
+gallery's line-cut scene shows `:kyoku` instead of `:sun`.
+
+**Measured (final build).**
+- G1: no engine or RAVEN file changed; the RAVEN title and wave stills byte-identical to a BASE `dist/game` built before
+  the phase (noise floor 0 px), cons/frame 17 369 B = base.
+- G2 (`style-gates.py cvc dist/duel`): yy `winner P2 konpaku 0-1 ticks 13914 secs 231.9`, yk `winner P2 konpaku 0-4 ticks 9305
+  secs 155.1`, kk `winner P1 konpaku 6-0 ticks 7578 secs 126.3`; every hash line identical to `tests/style-cvc-ref.txt`
+  (unchanged: a render-only phase).
+- G3: 0 B for 10 draws of every new per-frame look (debug 2390: fireball, charge, pillar, dome, the Hellfire /
+  Evolution / Breaker auras and ring, the garb flare, the rift, a spent wave's erosion, the 9 new stamps live at once,
+  `face-of`, `beat-pose!`, `move-beats`); SOUL DUEL fight frame 29.1 → 28.3 ms (0.97×, CvC A B A B A B against the
+  BASE build of the phase: noise); startup heap 56.0 → 55.4 MB (≤ 110); page to first frame 3030 → 3130 ms (+3.3 %).
+- duel, game, duelvfx, duelview build with 0 warnings; `tools/pkgcheck.sh duel` clean; WGSL smoke green on duel, game,
+  duelvfx, duelview; host tests all pass (duel-rules-test 703 with the 5 kendo clips added to its clip contract,
+  duel-control-test 53, ecs, rules, input 31, cine 18).
+- `style-4-checks.py --run dist/duel`: 52 PASS (every `:len`, the pacing rule, the held caption close-ups, the Bankai
+  grade, the caption bounds at both sizes).
+- `style-5-checks.py --run dist/duel`: all PASS — each fighter shows 3 expression states (the face close-ups differ
+  pairwise by 10.6–15.3 % of the crop's pixels for Yamamoto, 19.6–28.8 % for Kenpachi); Jokaku Enjo's manga page: of
+  2219 sampled saturated pixels 1298 fire, 919 the victim's own yellow reiatsu, 2 other; no callout, word or brush
+  column over a HUD panel and no caption off the screen at 1280x720 and 800x450 (the side-camera case reproduced the
+  overlap on the BASE build); 0 B for every new look (debug 2390).
+- Stills: `tests/shots/style-5-<name>.png` (the gameplay scenes at 2–5 moments, the dome and Tenchi's ash in their
+  cinematics, the VFX gallery frames, the kendo and re-authored clip strips, the six face close-ups and the line-up),
+  `style-5-before-<name>.png` (the same scripts on the previous build), `style-5-gallery.png`, `style-5-pairs.png`.
+
+**Open (Phase 6).** Destruction marks and resting debris, the caption slice exit, the skull in the Nozarashi pillar,
+the K.O. rain, the quantised fog bands, CA / fisheye only if a review asks (as planned). From this phase: the hurt and
+neutral faces hardly differ at gameplay distance (a larger mouth shape, or a face held a few frames longer, if the user
+wants them read in play); Kenpachi's left fist drifts off the cleaver's handle for a few frames in some kendo
+transitions (more solved in-between keys); the half-height pillar of a later cup 3; the hair lift of cup 3's grin (a
+hair rig); the additive T光 cores (a few sprites and core lines) are the only soft shapes left.
+
+### Phase 6: polish (done, approved at user review 4)
+
+Built as the Phase 6 row of §9, plus the Phase 5 leftovers and the coordinator's review of the Phase 5 stills. **No engine
+change** (engine/ and game/ untouched; the fog-band trial below touched `toon.frag.wgsl` in a one-off build only and was
+reverted). Files: `stage.lisp` (the marks and chips, the Bankai cracks' drawn core), `feedback.lisp` (the events that
+place marks; `:reset` clears them), `ken.lisp` (the Buttagiru / Meteor scars, the skull beat, the half pillar),
+`vfx.lisp` (near-lens columns, the skull, the rain, the face accents, the soft cores redrawn), `body.lisp` (the grip
+IK), `main.lisp` (grip and face-accent calls), `components.lisp` (3 model slots), `brush.lisp` / `cinema.lisp` / `hud.lisp`
+/ `yama.lisp` (the slice exit), `debug.lisp` (2366, 2391, 2392), the two art files (bolder mouths, the grip clips);
+tests `duel-view.lisp` (7000+k grip strips), `style-6-shots.py`, `style-6-checks.py`.
+
+| Item | Built | Why / deviation |
+|---|---|---|
+| Destruction marks | a pool of 20 marks (x z r kind birth; the oldest replaced), drawn flat in the toon batch as BLACK SMOKE (ink body, the white hairline of Bankai's gashes): a **scorch** = 9 ink spokes splashed from the centre, a **crack** = 5 jagged rays of 3 segments; shapes hashed from the position (stable, 0 B), each burns in over 0.12 s. Placed by the feedback events (a fire hit: scorch 0.8 m; a hit of 150+ or a Breaker: crack 0.9 m; guard break 1.1; clash 1.2; a knockdown landing 0.6; Hellfire's entry: scorch 2 m) and by the Buttagiru / Meteor hooks (cracks along the cut); inside the plaza only. Cleared by `:reset` (a Kikon / Soul Break reset) and a new match | render-only: the sim never reads them; events are read, nothing the sim owns is written (G2 unchanged). The Kikon impacts leave none: the reset follows at once |
+| Resting debris | a pool of 24 rubble chips (3 low-poly meshes built at load, each with its ink hull): thrown up by a heavy impact (3-5), gravity, one bounce, at rest, shrinking away 6.6-7 s after the throw; stage toon + ink hull draws (2 per live chip) | the engine's `fx-debris` draws lit, not toon, and lives 2.4 s |
+| Caption slice exit | one diagonal brush cut (rising left to right) through the column's middle, the two halves sliding apart along it on twos (4 drawings, 0.3 s) and fading, the cut stroke on the first 2 drawings; the mark box, hanko, reading and chapter line drop out on the cut. `CAPTION-EXIT` replaces the scripts' `(setf *caption* nil)` (at the same cuts), a title still up when a cinematic ends slices out over what follows (`*CAPTION-OUT*`), a timed callout column slices in its last 0.3 s (was a 0.25 s fade). The glyph triangles are clipped to each half in the UI batch (`%GLYPH-TRIS-CLIP`, 0 B) | §4.4 said 3 horizontal slices over 3 d: one diagonal cut reads as the sword stroke. During a freeze beat (effects held) the halves wait with the cut drawn, then slide (Jokaku's held push-in): kept, it reads as "cut, then it falls apart" |
+| Skull in the Nozarashi pillar | f40-49 (2 drawings on twos) of the pillar card: an INK cranium and hexagonal jaw cut out of the yellow (white hairline), REIATSU eye sockets with white cores, a REIATSU nose, 6 white fangs; screen-plane shapes 0.25 m behind him (in front of the rear tongues, behind his body) | first placed 0.8 m behind him it sat behind the tongues, black on the black card |
+| Quantised fog bands | **rejected**. Trial: `fs_toon` quantising the stage fog to 5 steps (a one-off build); stills `style-6-fog-{title,behind,side}-{before,bands}.png` | the plaza is no longer a white page (review 1 made it V2 mid-grey); the bands draw a false contour arc across the plaza under the fighters and change nothing on the ruins |
+| K.O. rain | `vfx-rain` through the K.O.'s orbit (f20-150, fading in over 20 f): 110 thin white streaks slanting through a 14 m box round the loser, falling 14 m/s on threes (re-drawn every 1/8 s), 10 small white splash rings each drawing; no particles | §6: rain as the emotional accent. No rain sound (not asked; §10) |
+| Pillars near the lens (review of the Phase 5 stills) | an Ennetsu column is never wider on screen than one 9 m away (width × distance / 9 m, at least × 0.1) and shortens to 0.4 of its height at 2 m (to full at 8 m); its crown and scraps go below half; the EMBER foot ring stays whole (the hazard stays readable). The fire wave sinks to 0.4 of its height where it passes within 1-3.5 m of the eye | render-only (the sim's hit volumes are untouched). In the behind camera the column between the lens and Yamamoto becomes a thin stick; the ring's side columns still frame the shot |
+| Faces at gameplay distance | (1) the shout and hurt mouths bolder (Kenpachi's roar 0.08 × 0.054 m, Yamamoto's 0.066 × 0.048, his grimace and clenched teeth wider); (2) a **gameplay accent** when a shout or hurt face is put on (not in cinematics, whose close-ups show the faces): shout = 6 ink strokes (BLACK SMOKE kites) bursting out of the head's upper half, grown over 2 drawings, re-drawn on twos, gone at 350 ms; hurt = 3 white drops flung off the head, falling, gone at 400 ms. 3 states per fighter kept | the face is ~12 px tall at 4-8 m; the burst spans ~125 × 55 px at the side camera (`style-6-face-accents-1`). Inside Kenpachi's cup-3 pillar aura the strokes are partly hidden by the tongues |
+| Fist drift (RYOTE kendo) | a render-side **two-bone IK** (`GRIP-LEFT!`, after the FK): the left fist (the `:weapon-l` point) pulled onto the cleaver's handle (0.14-0.62 m behind the right grip, the nearest point to where the keys put it), the elbow bending in the plane the pose gave it, 2 passes; on for the clips of `*GRIP-CLIPS*` (the RYOTE stance, DRINK, MEN, KESA, DO, KABUTO-WARI, KUKAN-GIRI), eased in and out over 0.1 s. Debug 2392 measures every frame of those clips and of every grip-clip → grip-clip crossfade | DEFSTRIKE headers and every key unchanged (the sim never reads joints); the hit pose at S differs only in the left arm, by the key's own few mm. Keys only: 2-43 mm on the keys, spikes of 157-436 mm between them (the snaps and the returns to jōdan); held: median 0 mm, worst 160 mm on one DO wind-up frame where the handle is beyond the left arm's reach (≤ 53 mm on every other clip) |
+| Soft shapes | the four soft sprites are gone: Shiranui's and the charge's warm core glows → small white HIT discs (drawn); the Nozarashi aura's faint glow and the hit star's white core sprite cut; the Bankai cracks' ember core → a thin drawn EMBER strip (EMBER has no edge since review 2, so a thin toon strip reads). The unused `%SPR` and `ST-GLOW-SEG` deleted | **kept**: the thin additive T光 core lines (the blade fire's, the embers', the fire wave's base): 1-2 px wide, they read as hard lines, and §3.4 makes the T光 line a layer |
+| Half-height pillar of a later cup 3 (optional) | built (cheap, render-only): `MODEL-T3` counts a match's cup-3 entries; the first gets the full pillar, later ones `:nozarashi-half` (the blobs half as fast, the ring × 0.5) | — |
+| P10 atlas | **not built**: the charcoal style is not too thin (the Bankai heat, the burnout wisps and the charcoal puffs read at gameplay distance and in the Bankai close-ups: `style-final-gallery` bankai-128) | it would need a texture binding in `fs_fx_toon` (an engine change) for no visible gain |
+| CA / fisheye | not built: no review asked | §9 |
+
+**Measured (final build).**
+- G1: engine/ and game/ untouched; the RAVEN title and wave stills byte-identical to a BASE `dist/base6-game` built before
+  the phase (noise floor 0 px), cons/frame 17 369 B = base.
+- G2 (`style-gates.py cvc dist/duel`): yy `winner P2 konpaku 0-1 ticks 13914 secs 231.9`, yk `winner P2 konpaku 0-4 ticks
+  9305 secs 155.1`, kk `winner P1 konpaku 6-0 ticks 7578 secs 126.3`; every hash line identical to `tests/style-cvc-ref.txt`
+  (unchanged: a render-only phase).
+- G3: 0 B for 10 draws of every new per-frame look (debug 2391: the marks and chips with both pools full, a pillar and a
+  fire wave beside the lens, the skull, the rain, both face accents, the face-change note, the grip step + IK, a caption
+  slicing out); SOUL DUEL fight frame 28.4 → 29.2 ms (1.026×, A B A B A B against `dist/base6-duel`, measured before the last pillar-width tweak: noise); startup heap
+  55.4 → 55.4 MB (≤ 110); page to first frame 3320 → 3040 ms.
+- duel, game, duelvfx, duelview build with 0 warnings; `tools/pkgcheck.sh duel` clean; WGSL smoke green on all four;
+  host tests pass (duel-rules-test 703, duel-control-test 53, input 31, cine 18, ecs, rules, test-math).
+- `style-4-checks.py --run dist/duel`: 52 PASS (every `:len`, the pacing, the caption bounds at 1280x720 and 800x450 with
+  the slice exits). `style-5-checks.py --run dist/duel`: all PASS (the HUD bounds, the Phase 5 cons). `style-6-checks.py
+  --run dist/duel`: cons 0 B each; grip: keys only worst 436 mm, held worst 160 mm, median 0 mm over 346 frames. The
+  Phase 6 face close-ups still differ pairwise by 10.9-15.4 % (Yamamoto) and 20.3-28.8 % (Kenpachi) of the crop.
+- Stills: `tests/shots/style-6-<name>.png` (the destruction in play, the pillars behind the lens and from the side, the
+  face accents, the kendo grip in play and the viewer's grip strips (each pair: keys only | held), the slice exits in
+  Jokaku, Kenpachi's Kikon and a callout column, the skull, the rain, the redrawn cores in the VFX gallery, the fog trial),
+  `style-6-before-<name>.png` (the same scripts on the BASE build), `style-6-gallery.png`, `style-6-pairs.png`, and the
+  **final review sheet** `style-final-gallery.png` (`style-6-final-*`: gameplay in both cameras, Hellfire, the fire wave,
+  cup 3, Bankai, Buttagiru, a guard break, every Kikon and awakening at its caption beat and its impact, Soul Break, the
+  intro, the K.O. with its rain, the results card, the six face close-ups and the face accents).
+
+**Open.** User review 4 (the final one). The fist's residual on DO's wind-up frame (a longer left arm or an extra key would
+reach); the face accents inside Kenpachi's cup-3 aura; a rain sound; the hair lift of cup 3's grin (a hair rig).

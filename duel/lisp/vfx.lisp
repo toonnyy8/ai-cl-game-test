@@ -9,7 +9,12 @@
 ;;;;   per-frame looks  VFX-BLADE-FIRE … VFX-SOUL-FLAME: call every rendered frame while the thing
 ;;;;                    exists (after the camera is set, before END-FRAME). Bodies are fx quads
 ;;;;                    written with WITH-FX-VERTS (0 bytes consed); a few particles top them up.
-;;;;   one-shots        VFX-FIRE-CONE, VFX-AWAKEN-BURST, VFX-ASH-BURST, VFX-SKELETON-DUST: particles / rings once.
+;;;;   one-shots        VFX-FIRE-CONE, VFX-AWAKEN-BURST, VFX-ASH-BURST, VFX-SKELETON-DUST, VFX-GARB-BLOCK, VFX-SCORCH,
+;;;;                    VFX-GARB-FLARE, VFX-BURNOUT, VFX-NADEGIRI, VFX-RIFT-GASH: stamps and toon particles once.
+;;;;   Every look is a drawn toon shape since Phase 5 of the restyle (docs/STYLE_STORM_DESIGN.md §14): the last soft
+;;;;   additive ones (Shiranui, the charge, Taimatsu, the Ennetsu pillars, the Jokaku dome, the Hellfire / Evolution /
+;;;;   Breaker auras, Tenchi's ash, the rift) were redrawn; since Phase 6 the only additive shapes left are the thin T光
+;;;;   core lines (1-2 px: the blade fire's, the embers', the fire wave's base), a layer of §3.4 by design.
 ;;;;   toon universal   VFX-HIT, VFX-HOHO, VFX-BURST, VFX-KONPAKU-SHATTER, VFX-KIKON-RUSH, VFX-STEP-DUST,
 ;;;;                    VFX-SHOCKWAVE start STAMPS (drawn one-shots, STAMPS-DRAW every frame) + toon
 ;;;;                    particles; VFX-SOUL-FLAME and the :KIKON aura are per-frame toon shapes
@@ -44,66 +49,14 @@ average is exact at any frame rate. 0 once the pool is near the budget."
   "Stable pseudo-random 0..1 of (I SEED) — for shapes that must not change every frame."
   `(f-mod (f-abs (* 43758.547f0 (f-sin (+ (* ,i 12.9898f0) (* ,seed 78.233f0))))) 1f0))
 
-(defmacro flame (x y z vx vy vz life size r g b &optional (alpha 0.6f0))
-  "One +P-FLAME+ particle (rises: negative gravity). Emit colour = the hot core. ALPHA < 1 keeps
-dense flames from summing to white on the bright dusk sky (FX-EMIT's alpha scale)."
-  `(fx-emit +p-flame+ ,x ,y ,z ,vx ,vy ,vz ,life ,size -3f0 ,r ,g ,b ,alpha))
-
-(defmacro front-dim (x z ang)
-  "0.25..1: how much of an aura layer at angle ANG around (x z) to keep — layers between the camera
-and the body fade, so the fighter stays readable inside his aura (the silhouette ones stay full)."
-  `(let* ((%e (camera-eye *camera*)) (%dx (- (aref %e 0) ,x)) (%dz (- (aref %e 2) ,z))
-          (%l (f-max 0.01f0 (f-sqrt (+ (* %dx %dx) (* %dz %dz)))))
-          (%d (/ (+ (* %dx (f-cos ,ang)) (* %dz (f-sin ,ang))) %l)))
-     (declare (type f32vec %e) (single-float %dx %dz %l %d))
-     (- 1f0 (* 0.75f0 (f-max 0f0 %d)))))
-
 (defmacro with-cam (() &body body)
-  "Bind RX RY RZ UX UY UZ (camera right / up) for %SPR."
+  "Bind RX RY RZ UX UY UZ (camera right / up) for camera-facing shapes."
   `(let* ((%rt (camera-right *camera*)) (%up (camera-upv *camera*)))
      (declare (type f32vec %rt %up) (ignorable %rt %up))
      (let* ((rx (aref %rt 0)) (ry (aref %rt 1)) (rz (aref %rt 2))
             (ux (aref %up 0)) (uy (aref %up 1)) (uz (aref %up 2)))
        (declare (single-float rx ry rz ux uy uz) (ignorable rx ry rz ux uy uz))
        ,@body)))
-
-(defmacro %spr (x y z s r g b a &optional (mode :add))
-  "Camera-facing round sprite inside WITH-CAM (a macro: no boxing). Negative A = no white core."
-  `(let* ((%s ,s) (px ,x) (py ,y) (pz ,z) (cr ,r) (cg ,g) (cb ,b) (ca ,a)
-          (sx (* %s rx)) (sy (* %s ry)) (sz (* %s rz)) (vx (* %s ux)) (vy (* %s uy)) (vz (* %s uz)))
-     (declare (single-float %s px py pz cr cg cb ca sx sy sz vx vy vz))
-     (with-fx-verts (d o ,mode 6)
-       (vtx (- px sx vx) (- py sy vy) (- pz sz vz) -1f0 -1f0 cr cg cb ca)
-       (vtx (- (+ px sx) vx) (- (+ py sy) vy) (- (+ pz sz) vz) 1f0 -1f0 cr cg cb ca)
-       (vtx (+ px sx vx) (+ py sy vy) (+ pz sz vz) 1f0 1f0 cr cg cb ca)
-       (vtx (- px sx vx) (- py sy vy) (- pz sz vz) -1f0 -1f0 cr cg cb ca)
-       (vtx (+ px sx vx) (+ py sy vy) (+ pz sz vz) 1f0 1f0 cr cg cb ca)
-       (vtx (+ (- px sx) vx) (+ (- py sy) vy) (+ (- pz sz) vz) -1f0 1f0 cr cg cb ca))))
-
-(defmacro %gseg (x0 z0 x1 z1 y w r g b a mode &optional (soft t))
-  "Flat ground strip (x0 z0)→(x1 z1) at height Y, half-width W; SOFT fades across its width."
-  `(let* ((x0 ,x0) (z0 ,z0) (x1 ,x1) (z1 ,z1) (gy ,y) (w ,w) (cr ,r) (cg ,g) (cb ,b) (ca ,a)
-          (dx (- x1 x0)) (dz (- z1 z0)) (l (f-sqrt (+ (* dx dx) (* dz dz)))) (e (if ,soft 1f0 0f0)))
-     (declare (single-float x0 z0 x1 z1 gy w cr cg cb ca dx dz l e))
-     (when (> l 1f-4)
-       (let* ((nx (* w (/ (- dz) l))) (nz (* w (/ dx l))))
-         (declare (single-float nx nz))
-         (with-fx-verts (d o ,mode 6)
-           (vtx (- x0 nx) gy (- z0 nz) 0f0 (- e) cr cg cb ca)
-           (vtx (+ x0 nx) gy (+ z0 nz) 0f0 e cr cg cb ca)
-           (vtx (+ x1 nx) gy (+ z1 nz) 0f0 e cr cg cb ca)
-           (vtx (- x0 nx) gy (- z0 nz) 0f0 (- e) cr cg cb ca)
-           (vtx (+ x1 nx) gy (+ z1 nz) 0f0 e cr cg cb ca)
-           (vtx (- x1 nx) gy (- z1 nz) 0f0 (- e) cr cg cb ca))))))
-
-(defmacro %gdisc (x y z s r g b a mode)
-  "Soft flat disc of radius S at height Y (FX-DECAL without the boxed call)."
-  `(let* ((px ,x) (gy ,y) (pz ,z) (%s ,s) (cr ,r) (cg ,g) (cb ,b) (ca ,a))
-     (declare (single-float px gy pz %s cr cg cb ca))
-     (with-fx-verts (d o ,mode 6)
-       (vtx (- px %s) gy (- pz %s) -1f0 -1f0 cr cg cb ca) (vtx (+ px %s) gy (- pz %s) 1f0 -1f0 cr cg cb ca)
-       (vtx (+ px %s) gy (+ pz %s) 1f0 1f0 cr cg cb ca) (vtx (- px %s) gy (- pz %s) -1f0 -1f0 cr cg cb ca)
-       (vtx (+ px %s) gy (+ pz %s) 1f0 1f0 cr cg cb ca) (vtx (- px %s) gy (+ pz %s) -1f0 1f0 cr cg cb ca))))
 
 (defmacro %t-blob (x y z vx vy vz life size grav wob pal)
   "One toon particle puff / flame / droplet (+P-T-BLOB+)."
@@ -112,22 +65,42 @@ and the body fade, so the fighter stays readable inside his aura (the silhouette
   "One toon shard particle (+P-T-SHARD+): a kite along its velocity."
   `(fx-emit +p-t-shard+ ,x ,y ,z ,vx ,vy ,vz ,life ,size ,grav 0.05f0 0f0 0f0 ,pal))
 
-(defmacro fire-tongue (x y z ax ay az w k ph sway &key (segs 6) (dark t) (core t) (taper 0.3f0))
-  "A flame as 3-4 ribbon layers: dark-red underlay (alpha batch, so it reads on a bright sky),
-orange body, yellow middle, white-hot core line (CORE). W = base half-width, TAPER = tip width /
-base width, K = brightness 0..1."
-  `(let* ((tx ,x) (ty ,y) (tz ,z) (tax ,ax) (tay ,ay) (taz ,az) (tw ,w) (tk ,k) (tph ,ph) (tsw ,sway))
-     (declare (single-float tx ty tz tax tay taz tw tk tph tsw))
-     (when ,dark
-       (fx-ribbon tx ty tz (* 1.1f0 tax) (* 1.1f0 tay) (* 1.1f0 taz) (* 1.2f0 tw) (* (+ ,taper 0.2f0) tw)
-               0.28f0 0.04f0 0.02f0 (* 0.5f0 tk) 0.16f0 0.03f0 0.02f0 (* 0.25f0 tk) tph tsw :segs ,segs :mode :alpha))
-     (fx-ribbon tx ty tz tax tay taz tw (* ,taper tw) 1f0 0.33f0 0.04f0 (* -0.6f0 tk) 0.6f0 0.06f0 0.02f0 (* -0.3f0 tk)
-             tph tsw :segs ,segs)
-     (fx-ribbon tx ty tz (* 0.75f0 tax) (* 0.75f0 tay) (* 0.75f0 taz) (* 0.55f0 tw) (* 0.12f0 tw)
-             1f0 0.6f0 0.15f0 (* -0.45f0 tk) 1f0 0.3f0 0.04f0 0f0 (+ tph 0.7f0) tsw :segs ,segs)
-     (when ,core
-       (fx-ribbon tx ty tz (* 0.45f0 tax) (* 0.45f0 tay) (* 0.45f0 taz) (* 0.2f0 tw) (* 0.05f0 tw)
-               1f0 0.9f0 0.6f0 (* 0.35f0 tk) 1f0 0.6f0 0.2f0 0f0 (+ tph 1.3f0) (* 0.5f0 tsw) :segs ,segs))))
+(defmacro %tring (x y z r w pal k seed &optional (segs 32))
+  "A flat toon ring on the ground at height Y (+2 cm), radius R, band half-width W, both band edges inked.
+The ring is an along shape whose heat varies around it, so it breaks into arcs as K fades."
+  `(let* ((cx ,x) (cy (+ ,y 0.02f0)) (cz ,z) (ri (f-max 0f0 (- ,r ,w))) (ro (+ ,r ,w)) (pk (toon-a ,pal ,k))
+          (sd (- -1f0 ,seed)) (da (/ 6.2831855f0 ,(float segs 1f0))))
+     (declare (single-float cx cy cz ri ro pk sd da))
+     (with-fx-verts (d o :toon ,(* 6 segs))
+       (dotimes (i ,segs)
+         (let* ((a0 (* da (i->f i))) (a1 (+ a0 da)) (c0 (f-cos a0)) (s0 (f-sin a0)) (c1 (f-cos a1)) (s1 (f-sin a1))
+                (h0 (+ 0.3f0 (* 0.7f0 (f-abs (f-sin (+ (* 2.5f0 a0) sd)))))) (h1 (+ 0.3f0 (* 0.7f0 (f-abs (f-sin (+ (* 2.5f0 a1) sd)))))))
+           (declare (single-float a0 a1 c0 s0 c1 s1 h0 h1))
+           (vtx (+ cx (* ri c0)) cy (+ cz (* ri s0)) -1f0 0f0 h0 sd 0.12f0 pk)
+           (vtx (+ cx (* ro c0)) cy (+ cz (* ro s0)) 1f0 0f0 h0 sd 0.12f0 pk)
+           (vtx (+ cx (* ro c1)) cy (+ cz (* ro s1)) 1f0 0f0 h1 sd 0.12f0 pk)
+           (vtx (+ cx (* ri c0)) cy (+ cz (* ri s0)) -1f0 0f0 h0 sd 0.12f0 pk)
+           (vtx (+ cx (* ro c1)) cy (+ cz (* ro s1)) 1f0 0f0 h1 sd 0.12f0 pk)
+           (vtx (+ cx (* ri c1)) cy (+ cz (* ri s1)) -1f0 0f0 h1 sd 0.12f0 pk))))))
+
+
+(defmacro %tsector (x y z r0 r1 yaw half heat seed wob pk segs)
+  "A flat toon sector on the ground at height Y (+3 cm) between radii R0 and R1, centred on YAW (forward = FWD-X /
+FWD-Z of it), +-HALF radians: FX-SECTOR's shape in the toon batch (uv across the radii). A macro: 0 B."
+  `(let* ((cx ,x) (cy (+ ,y 0.03f0)) (cz ,z) (ri ,r0) (ro ,r1) (a0 (- ,yaw ,half)) (da (/ (* 2f0 ,half) ,(float segs 1f0)))
+          (ht ,heat) (sd ,seed) (wb ,wob) (pk ,pk))
+     (declare (single-float cx cy cz ri ro a0 da ht sd wb pk))
+     (with-fx-verts (d o :toon ,(* 6 segs))
+       (dotimes (k ,segs)
+         (let* ((t0 (+ a0 (* da (i->f k)))) (t1 (+ t0 da))
+                (c0 (- (f-sin t0))) (s0 (- (f-cos t0))) (c1 (- (f-sin t1))) (s1 (- (f-cos t1))))
+           (declare (single-float t0 t1 c0 s0 c1 s1))
+           (vtx (+ cx (* ri c0)) cy (+ cz (* ri s0)) 0f0 -1f0 ht sd wb pk)
+           (vtx (+ cx (* ro c0)) cy (+ cz (* ro s0)) 0f0 1f0 ht sd wb pk)
+           (vtx (+ cx (* ro c1)) cy (+ cz (* ro s1)) 0f0 1f0 ht sd wb pk)
+           (vtx (+ cx (* ri c0)) cy (+ cz (* ri s0)) 0f0 -1f0 ht sd wb pk)
+           (vtx (+ cx (* ro c1)) cy (+ cz (* ro s1)) 0f0 1f0 ht sd wb pk)
+           (vtx (+ cx (* ri c1)) cy (+ cz (* ri s1)) 0f0 -1f0 ht sd wb pk))))))
 
 ;;; ---------------------------------------------------------------- lights (engine priorities)
 ;;; Effects call ADD-POINT-LIGHT with a PRIORITY (its last argument): the engine keeps the 8 highest
@@ -178,6 +151,13 @@ that must sit behind (or in front of) another camera-facing layer without fighti
           (,x (+ ,x (* ,d (/ %dx %l)))) (,y (+ ,y (* ,d (/ %dy %l)))) (,z (+ ,z (* ,d (/ %dz %l)))))
      (declare (type f32vec %e) (single-float %dx %dy %dz %l ,x ,y ,z))
      ,@body))
+
+(defmacro %near-cam (x z near far)
+  "0 when the camera eye stands within NEAR m (on the ground plane) of the point (X Z), rising to 1 at FAR: tall
+columns thin and shorten close to the lens (Phase 6: an Ennetsu pillar beside the behind camera filled the frame)."
+  `(let* ((%e (camera-eye *camera*)) (%dx (- ,x (aref %e 0))) (%dz (- ,z (aref %e 2))))
+     (declare (type f32vec %e) (single-float %dx %dz))
+     (f-clamp (/ (- (f-sqrt (+ (* %dx %dx) (* %dz %dz))) ,near) (- ,far ,near)) 0f0 1f0)))
 
 (defun-fast vfx-blade-fire (x0 y0 z0 x1 y1 z1 dt &key (power 1.0))
   "Ryujin Jakka (§4.1 blade fire): the blade (base x0 y0 z0 → tip x1 y1 z1) sheathed in drawn FIRE (heat 1 at the
@@ -268,22 +248,20 @@ bowed back 0.7 m), shifted by (OX OZ)."
        (setf (aref *wave-xs* %i) (+ ,x ,ox (* ,sx %u ,hw) (- (* %b ,fx)))
              (aref *wave-zs* %i) (+ ,z ,oz (* ,sz %u ,hw) (- (* %b ,fz)))))))
 
-(defun-fast vfx-fire-wave (x z yaw age width dt &key (life 99.0))
-  "Signature flame wave (§4.1 fire wave): ONE continuous drawn FIRE wall WIDTH m wide on a crescent centred on
-ground point (x z), travelling toward YAW (the caller moves it; the position never steps), tallest in the middle,
-its top cut into 6 tongues re-drawn every drawing (seen edge-on, 5 camera-facing tongues along it give it body);
-behind it (away from the camera) an EMBER backing wall 20 % taller (the fire's own dark red: a black one read as
-an ink outline, user review 2); a FIRE lens slash riding it at 1.2 m;
-a narrow EMBER scorch on the ground behind; flame scraps flying ahead (black smoke puffs read as bubbles). Envelope (1 3 hold 18) over LIFE s: a white flash, grows, holds, erodes."
-  (with-floats (x z yaw age width dt life)
+(defmacro %fire-wave-look ()
+  "VFX-FIRE-WAVE's body over the single-float variables X Z YAW AGE WIDTH DT LIFE in scope (a macro: the live wave and
+its eroding ghost, WAVE-GHOSTS-DRAW, share it at 0 B)."
+  `(progn
     (let* ((fx (- (f-sin yaw))) (fz (- (f-cos yaw))) (sx (- fz)) (sz fx) (dr (drawing-no)) (a (sage age 2f0))
            (hold (f-max 0f0 (- (* 60f0 life) 22f0))) (e (camera-eye *camera*))
            (vx (- x (aref e 0))) (vz (- z (aref e 2))) (vl (f-max 0.01f0 (f-sqrt (+ (* vx vx) (* vz vz)))))
            (ox (* 0.35f0 (/ vx vl))) (oz (* 0.35f0 (/ vz vl))) (sd (i->f (mod (f->i dr) 7))))
       (declare (type f32vec e) (single-float fx fz sx sz dr a hold vx vz vl ox oz sd))
       (fx-envelope (es k fl ph) (a 1 3 hold 18)
-        (let* ((hw (* 0.5f0 width es)) (hgt (* 2.6f0 es)))
-          (declare (single-float hw hgt))
+        (let* ((hw (* 0.5f0 width es))                   ; the eye's nearest point of the wall: passing the lens
+               (al (f-clamp (+ (* sx vx) (* sz vz)) (- hw) hw))   ; (the behind camera) it sinks to 0.4 of its height
+               (hgt (* 2.6f0 es (+ 0.4f0 (* 0.6f0 (%near-cam (- x (* sx al)) (- z (* sz al)) 1.0f0 3.5f0))))))
+          (declare (single-float hw al hgt))
           (when (= ph 1)                              ; the flash drawing: a jagged white burst
             (fx-star x 1.2f0 z 0.48f0 0.69f0 12 (* 6.2831855f0 (hash01 0.3f0 dr)) 0f0 0f0 0.1f0 dr +pal-hit+ 0.98f0 :push 0.45f0))
           (%wave-line x z sx sz fx fz hw ox oz)          ; the backing, then the mass
@@ -317,206 +295,219 @@ a narrow EMBER scorch on the ground behind; flame scraps flying ahead (black smo
           (%light x 1.2f0 z 1f0 0.45f0 0.12f0 6f0 2.5f0 7)
           nil)))))
 
-(defun-fast vfx-fireball (x y z size dt)
-  "Shiranui: a ball of fire of radius SIZE m (grows with the charge) with licking tongues and a
-flame wake (particles stay behind as it flies)."
-  (with-floats (x y z size dt)
-    (let* ((s size) (ph (clock)))
-      (declare (single-float s ph))
-      (with-cam ()
-        (%spr x y z (* 1.6f0 s) 0.3f0 0.04f0 0.02f0 0.45f0 :alpha)
-        (%spr x y z (* 1.45f0 s) 0.8f0 0.14f0 0.03f0 -0.6f0)
-        (%spr x y z (* 1.05f0 s) 1f0 0.45f0 0.08f0 -0.9f0)
-        (%spr x y z (* (+ 0.4f0 (* 0.05f0 (f-sin (* 30f0 ph)))) s) 1f0 0.85f0 0.5f0 0.8f0))
-      (dotimes (k 5)
-        (let* ((a (+ (* 2.5f0 ph) (* 1.2566f0 (i->f k)))) (l (* s (+ 1.1f0 (* 0.3f0 (f-sin (+ (* 11f0 ph) (i->f k))))))))
-          (declare (single-float a l))
-          (fx-ribbon x y z (* l (f-cos a)) (* 0.6f0 l) (* l (f-sin a)) (* 0.45f0 s) 0f0
-                  1f0 0.5f0 0.1f0 -0.8f0 0.8f0 0.12f0 0.02f0 0f0 (+ (* 8f0 ph) (i->f k)) (* 0.2f0 s) :segs 4)))
-      (dotimes (i (n-of 90f0 dt))
-        (flame (+ x (* 0.6f0 s (rnd-range -1f0 1f0))) (+ y (* 0.6f0 s (rnd-range -1f0 1f0))) (+ z (* 0.6f0 s (rnd-range -1f0 1f0)))
-               (rnd-range -0.5f0 0.5f0) (rnd-range 0.3f0 1.2f0) (rnd-range -0.5f0 0.5f0)
-               (rnd-range 0.25f0 0.4f0) (f-min 0.33f0 (* s (rnd-range 0.35f0 0.5f0))) 1f0 0.85f0 0.45f0))
-      (dotimes (i (n-of 12f0 dt))
-        (fx-emit +p-spark+ x y z (rnd-range -3f0 3f0) (rnd-range -1f0 3f0) (rnd-range -3f0 3f0)
-                 (rnd-range 0.3f0 0.6f0) 0.03f0 6f0 1f0 0.6f0 0.2f0))
-      (add-point-light x y z 1.0 0.5 0.15 8.0 2.0 7))))
+(defun-fast vfx-fire-wave (x z yaw age width dt &key (life 99.0))
+  "Signature flame wave (§4.1 fire wave): ONE continuous drawn FIRE wall WIDTH m wide on a crescent centred on
+ground point (x z), travelling toward YAW (the caller moves it; the position never steps), tallest in the middle,
+its top cut into 6 tongues re-drawn every drawing (seen edge-on, 5 camera-facing tongues along it give it body);
+behind it (away from the camera) an EMBER backing wall 20 % taller (the fire's own dark red: a black one read as
+an ink outline, user review 2); a FIRE lens slash riding it at 1.2 m;
+a narrow EMBER scorch on the ground behind; flame scraps flying ahead (black smoke puffs read as bubbles). Envelope (1 3 hold 18) over LIFE s: a white flash, grows, holds, erodes."
+  (with-floats (x z yaw age width dt life)
+    (%fire-wave-look)))
+
+(declaim (type f32vec *wave-ghosts*))
+(defvar *wave-ghosts* (let ((g (make-f32 24))) (dotimes (i 4 g) (setf (aref g (+ (* 6 i) 5)) -1f0)))
+  "Fire waves spent by a hit, eroding where they hit (Phase 5): 4 slots of x z yaw width age-at-the-hit t (t < 0 = free).
+The sim ends a wave the step after its hit (hazards.lisp HAZARD-CONNECTED), which cut its look off without its
+18-frame erosion; HAZARD-DRAW hands the spent wave here instead.")
+
+(defun wave-ghost-start (x z yaw width age)
+  "The fire wave at (x z) was spent by a hit at AGE s: keep drawing it where it is, eroding over its envelope's 18 f
+(once: a wave drawn again while the sim still holds it keeps its ghost)."
+  (let ((g *wave-ghosts*) (free nil))
+    (dotimes (i 4)
+      (let ((o (* 6 i)))
+        (cond ((and (>= (aref g (+ o 5)) 0f0) (= (aref g o) (f32 x)) (= (aref g (+ o 1)) (f32 z))) (return-from wave-ghost-start nil))
+              ((and (not free) (< (aref g (+ o 5)) 0f0)) (setf free o)))))
+    (when free
+      (setf (aref g free) (f32 x) (aref g (+ free 1)) (f32 z) (aref g (+ free 2)) (f32 yaw) (aref g (+ free 3)) (f32 width)
+            (aref g (+ free 4)) (f32 age) (aref g (+ free 5)) 0f0))
+    nil))
+
+(defun-fast wave-ghosts-draw (dt)
+  "Draw every spent wave's erosion (DT effect seconds): the wave's own look with LIFE = its hit age + 22 f, so its
+envelope goes from the hold straight into the 18 f erosion; freed after 0.4 s."
+  (declare (single-float dt))
+  (let* ((g *wave-ghosts*))
+    (declare (type f32vec g))
+    (dotimes (i 4)
+      (let* ((o (* 6 i)))
+        (declare (fixnum o))
+        (when (>= (aref g (+ o 5)) 0f0)
+          (setf (aref g (+ o 5)) (+ (aref g (+ o 5)) dt))
+          (if (> (aref g (+ o 5)) 0.4f0)
+              (setf (aref g (+ o 5)) -1f0)
+              (let* ((x (aref g o)) (z (aref g (+ o 1))) (yaw (aref g (+ o 2))) (width (aref g (+ o 3)))
+                     (age (+ (aref g (+ o 4)) (aref g (+ o 5)))) (life (+ (aref g (+ o 4)) 0.3667f0)))
+                (declare (single-float x z yaw width age life))
+                (%fire-wave-look))))))
+    nil))
+
+(defmacro %tongue (x y z ax ay az w pal k seed ph sway &key (segs 6) (wob 0.3f0))
+  "One toon flame tongue (an along ribbon, w1 = 0: heat 1 at the base .. 0.2 at the tip, so it erodes from the tip
+as K fades) from (X Y Z) along (AX AY AZ), base half-width W, palette PAL, presence K; SEED (made negative: along)
+re-draws it when it changes (pass a per-drawing seed). A macro: 0 B."
+  `(let* ((%sd (- -1f0 (f-abs ,seed))) (%pk (toon-a ,pal ,k)))
+     (declare (single-float %sd %pk))
+     (fx-ribbon ,x ,y ,z ,ax ,ay ,az ,w 0f0 1f0 %sd ,wob %pk 0.2f0 %sd ,wob %pk ,ph ,sway :segs ,segs :mode :toon)))
+
+(defun-fast vfx-fireball (x y z size dirx dirz dt)
+  "Shiranui (§4.1, Phase 5): a drawn FIRE disc of radius SIZE m (wobble 0.3, re-drawn every drawing), 5 tongues licking
+back along the flight (DIRX DIRZ, unit) and curling up, a white-hot HIT core disc, flame scraps and a BLACK SMOKE wake
+left behind (toon puffs, stepped on threes). The position never steps (the hazard moves it)."
+  (with-floats (x y z size dirx dirz dt)
+    (let* ((s size) (dr (drawing-no)) (sd (i->f (mod (f->i dr) 7))))
+      (declare (single-float s dr sd))
+      (dotimes (k 5)                                     ; the tongues first: they stand behind the disc
+        (let* ((f (i->f k)) (a (+ (* 1.2566f0 f) (* 0.6f0 (hash01 (+ f dr) 2.1f0)))) (ca (f-cos a)) (sa (f-sin a))
+               (l (* s (+ 1.5f0 (* 1.1f0 (hash01 (+ f dr) 4.7f0)))))
+               (ox (* 0.6f0 s ca (- dirz))) (oy (* 0.6f0 s sa)) (oz (* 0.6f0 s ca dirx)))
+          (declare (single-float f a ca sa l ox oy oz))
+          (%tongue (+ x ox) (+ y oy) (+ z oz) (+ (* (- l) dirx) (* 0.5f0 ox)) (+ (* 0.35f0 l) (* 0.5f0 oy)) (+ (* (- l) dirz) (* 0.5f0 oz))
+                   (* 0.42f0 s) +pal-fire+ 0.95f0 (+ 40f0 (* 3f0 f) sd) (+ dr f) 0.04f0 :segs 5)))
+      (fx-disc x y z s 0.3f0 (+ 30f0 sd) +pal-fire+ 0.95f0 :push (* 0.5f0 s))
+      (fx-disc x y z (* 0.3f0 s) 0.2f0 (+ 35f0 sd) +pal-hit+ 0.98f0 :push (* 0.6f0 s))   ; the white-hot core (was a soft sprite)
+      (dotimes (i (n-of 12f0 dt))                        ; scraps
+        (%t-blob (+ x (* s (rnd-range -0.6f0 0.6f0))) (+ y (* s (rnd-range -0.4f0 0.6f0))) (+ z (* s (rnd-range -0.6f0 0.6f0)))
+                 (* -2f0 dirx) (rnd-range 0.8f0 1.6f0) (* -2f0 dirz) (rnd-range 0.25f0 0.4f0) (* s (rnd-range 0.18f0 0.3f0)) -1f0 0.3f0
+                 +pal-fire+))
+      (dotimes (i (n-of 16f0 dt))                        ; the wake: black smoke left behind as it flies
+        (%t-blob (- x (* 0.9f0 s dirx)) (+ y (* s (rnd-range -0.3f0 0.3f0))) (- z (* 0.9f0 s dirz)) (rnd-range -0.2f0 0.2f0)
+                 (rnd-range 0.3f0 0.6f0) (rnd-range -0.2f0 0.2f0) (rnd-range 0.5f0 0.8f0) (* s (rnd-range 0.3f0 0.45f0)) -0.3f0 0.3f0
+                 +pal-black-smoke+))
+      (%light x y z 1f0 0.5f0 0.15f0 8f0 2f0 7))))
 
 (defun-fast vfx-charge (x y z k dt)
-  "Charging glow at the blade (x y z), K 0..1: a growing hot sphere, flames sucked inward."
+  "Charging at the blade (x y z), K 0..1 (§4.1 Shiranui, Phase 5): anticipation — 6 FIRE / EMBER shards converging on
+it (a new drawing every 1/12 s, looping inward), flame scraps sucked in — and a FIRE disc growing in drawn steps (1/6 of
+the charge each) with a white HIT core disc. (The caller adds the focus lines when the charge starts.)"
   (with-floats (x y z k dt)
-    (let* ((ph (clock)) (fl (+ 1f0 (* 0.12f0 (f-sin (* 25f0 ph))))))
-      (declare (single-float ph fl))
+    (let* ((dr (drawing-no)) (kq (* 0.16667f0 (i->f (f->i (* 6f0 (f-clamp k 0f0 1f0)))))))
+      (declare (single-float dr kq))
       (with-cam ()
-        (%spr x y z (* fl (+ 0.4f0 (* 0.6f0 k))) 0.35f0 0.05f0 0.02f0 (+ 0.2f0 (* 0.2f0 k)) :alpha)
-        (%spr x y z (* fl (+ 0.3f0 (* 0.5f0 k))) 1f0 0.35f0 0.04f0 (- (+ 0.3f0 (* 0.3f0 k))))
-        (%spr x y z (* fl (+ 0.06f0 (* 0.16f0 k))) 1f0 0.85f0 0.5f0 (+ 0.5f0 (* 0.3f0 k))))
-      (dotimes (j 4)                                     ; flame tongues spiralling in
-        (let* ((a (+ (* -4f0 ph) (* 1.5708f0 (i->f j)))) (l (+ 0.35f0 (* 0.35f0 k))))
-          (declare (single-float a l))
-          (fx-ribbon (+ x (* l (f-cos a))) (+ y (* 0.3f0 l (f-sin (* 2f0 a)))) (+ z (* l (f-sin a)))
-                  (* -0.9f0 l (f-cos a)) 0f0 (* -0.9f0 l (f-sin a)) 0.02f0 (+ 0.05f0 (* 0.06f0 k))
-                  0.8f0 0.15f0 0.03f0 -0.2f0 1f0 0.5f0 0.1f0 (- (+ 0.4f0 (* 0.4f0 k))) (* 9f0 ph) 0.04f0 :segs 3)))
-      (dotimes (i (n-of (+ 30f0 (* 90f0 k)) dt))
+        (dotimes (i 6)
+          (let* ((f (i->f i)) (a (+ (* 1.0472f0 f) (* 0.4f0 (hash01 f 3.3f0))))
+                 (ph (- 1f0 (* 0.25f0 (i->f (mod (+ (f->i dr) i) 4))))) (rr (* (+ 0.35f0 (* 0.5f0 k)) (+ 0.4f0 (* 0.8f0 ph))))
+                 (c (f-cos a)) (sn (f-sin a)) (wx (+ (* c rx) (* sn ux))) (wy (+ (* c ry) (* sn uy))) (wz (+ (* c rz) (* sn uz))))
+            (declare (single-float f a ph rr c sn wx wy wz))
+            (fx-shard (+ x (* rr wx)) (+ y (* rr wy)) (+ z (* rr wz)) (- wx) (- wy) (- wz) (* 0.22f0 (+ 0.6f0 k)) 0.03f0 0.05f0
+                      (+ f dr) (if (evenp i) +pal-fire+ +pal-ember+) 0.9f0 :push 0.3f0)))
+        nil)
+      (fx-disc x y z (+ 0.07f0 (* 0.26f0 kq)) 0.3f0 (+ 50f0 (i->f (mod (f->i dr) 5))) +pal-fire+ 0.95f0 :push 0.2f0)
+      (fx-disc x y z (+ 0.03f0 (* 0.08f0 kq)) 0.2f0 (+ 55f0 (i->f (mod (f->i dr) 5))) +pal-hit+ 0.98f0 :push 0.25f0)   ; the core
+      (dotimes (i (n-of (+ 20f0 (* 40f0 k)) dt))
         (let* ((dx (rnd-range -1f0 1f0)) (dy (rnd-range -1f0 1f0)) (dz (rnd-range -1f0 1f0))
-               (l (f-max 0.05f0 (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz))))) (r (+ 0.7f0 (* 0.5f0 k)))
-               (sp (/ r (* l 0.25f0))))
+               (l (f-max 0.05f0 (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz))))) (r (+ 0.6f0 (* 0.5f0 k))) (sp (/ r (* l 0.3f0))))
           (declare (single-float dx dy dz l r sp))
-          (fx-emit +p-flame+ (+ x (* r (/ dx l))) (+ y (* r (/ dy l))) (+ z (* r (/ dz l)))
-                   (- (* sp dx)) (- (* sp dy)) (- (* sp dz)) 0.25f0 (+ 0.06f0 (* 0.07f0 k)) 0f0 1f0 0.8f0 0.4f0)))
-      (add-point-light x y z 1.0 0.5 0.15 (+ 3.0 (* 3.0 k)) (+ 0.5 (* 1.0 k)) 5))))
+          (%t-blob (+ x (* r (/ dx l))) (+ y (* r (/ dy l))) (+ z (* r (/ dz l))) (- (* sp dx)) (- (* sp dy)) (- (* sp dz))
+                   0.3f0 (+ 0.03f0 (* 0.04f0 k)) 0f0 0.2f0 +pal-fire+)))
+      (%light x y z 1f0 0.5f0 0.15f0 (+ 3f0 (* 3f0 k)) (+ 0.5f0 k) 5))))
 
 ;;; ---------------------------------------------------------------- Ennetsu Jigoku pillar / Jokaku Enjo dome
 (defun-fast vfx-fire-pillar (x z age life dt &key (height 5.0))
-  "One Ennetsu Jigoku pillar at ground (x z): rises in 0.18 s, roars, fades over the last
-0.25 s of LIFE. Body = ribbon layers; ≤ ~40 live particles; no light (the caller adds one for
-the whole ring: 7 pillar lights would wash the floor out)."
+  "One Ennetsu Jigoku pillar at ground (x z) (§4.1, Phase 5): a wide FIRE column over an EMBER backing, an inner EMBER
+stripe twisting up its front (a second, swaying ribbon: the spiral), and a crowned top (6 short tongues flaring out). It
+rises on ones (3 drawings), the crown re-draws on twos, and it erodes from the tip over the last 0.25 s of LIFE; an EMBER
+scorch ring at its foot, flame scraps off the crown. No light (the caller adds one for the ring)."
   (with-floats (x z age life dt height)
-    (let* ((ph (+ (clock) (* 0.37f0 x))) (r0 (f-clamp (/ age 0.18f0) 0f0 1f0))
-           (rise (- 1f0 (* (- 1f0 r0) (- 1f0 r0))))
-           (fade (f-clamp (/ (- life age) 0.25f0) 0f0 1f0))
-           (h (* height rise (+ 0.92f0 (* 0.08f0 (f-sin (* 6f0 ph))))))
-           (w (* (+ 0.7f0 (* 0.3f0 rise)) (+ 0.6f0 (* 0.4f0 fade)))))
-      (declare (single-float ph r0 rise fade h w))
-      (when (> fade 0f0)
-        (%gdisc x 0.03f0 z (* 1.8f0 w) 1f0 0.32f0 0.06f0 (* -0.2f0 fade) :add)
-        (%gdisc x 0.02f0 z (* 1.4f0 w) 0.08f0 0.03f0 0.02f0 (* 0.5f0 fade) :alpha)
-        (fire-tongue x 0f0 z 0f0 h 0f0 (* 0.9f0 w) (* 0.8f0 fade) ph 0.3f0 :segs 8 :taper 0.55f0)
-        (with-cam ()
-          (fire-tongue (+ x (* 0.45f0 w rx)) 0f0 (+ z (* 0.45f0 w rz)) 0.15f0 (* 0.6f0 h) 0f0 (* 0.5f0 w) (* 0.6f0 fade)
-                       (+ ph 2.1f0) 0.3f0 :segs 5 :dark nil)
-          (fire-tongue (- x (* 0.45f0 w rx)) 0f0 (- z (* 0.45f0 w rz)) -0.15f0 (* 0.5f0 h) 0f0 (* 0.5f0 w) (* 0.6f0 fade)
-                       (+ ph 4.2f0) 0.3f0 :segs 5 :dark nil))
-        (dotimes (i (n-of (* 28f0 fade) dt))
-          (flame (+ x (rnd-range -0.35f0 0.35f0)) (* h (rnd-range 0.55f0 0.95f0)) (+ z (rnd-range -0.35f0 0.35f0))
-                 (rnd-range -0.6f0 0.6f0) (rnd-range 2f0 3.2f0) (rnd-range -0.6f0 0.6f0)
-                 (rnd-range 0.4f0 0.6f0) (rnd-range 0.22f0 0.34f0) 1f0 0.8f0 0.4f0))
-        (dotimes (i (n-of (* 18f0 fade) dt))
-          (let* ((a (rnd-range 0f0 6.2832f0)) (c (f-cos a)) (s (f-sin a)))
-            (declare (single-float a c s))
-            (flame (+ x (* 0.6f0 c)) 0.2f0 (+ z (* 0.6f0 s)) (* 1.6f0 c) (rnd-range 0.6f0 1.4f0) (* 1.6f0 s)
-                   (rnd-range 0.3f0 0.4f0) (rnd-range 0.18f0 0.28f0) 1f0 0.8f0 0.4f0)))
-        (dotimes (i (n-of 6f0 dt))
-          (fx-emit +p-dust+ (+ x (rnd-range -0.4f0 0.4f0)) h (+ z (rnd-range -0.4f0 0.4f0))
-                   (rnd-range -0.3f0 0.3f0) 1.5f0 (rnd-range -0.3f0 0.3f0) 1.4f0 0.5f0 -1.5f0 0.22f0 0.17f0 0.15f0))
-        (dotimes (i (n-of 8f0 dt))
-          (fx-emit +p-spark+ x (* 0.5f0 h) z (rnd-range -3f0 3f0) (rnd-range 3f0 7f0) (rnd-range -3f0 3f0)
-                   (rnd-range 0.6f0 1.1f0) 0.035f0 6f0 1f0 0.6f0 0.2f0))))))
+    (let* ((a1 (sage age 1f0)) (rise (f-clamp (/ (i->f (f->i (* 24f0 a1))) 3f0) 0f0 1f0)) (dr (drawing-no))
+           (k (* 0.98f0 (f-clamp (/ (- life age) 0.25f0) 0f0 1f0))) (q (%near-cam x z 2f0 8f0))   ; near the lens:
+           (ws (f-max 0.1f0 (%near-cam x z 0f0 9f0)))     ; never wider on screen than at 9 m, 0.4 as tall at 2 m, the ring whole
+           (h (* height rise (+ 0.4f0 (* 0.6f0 q)) (+ 0.9f0 (* 0.1f0 (hash01 dr (* 0.37f0 x)))))) (sd (+ (i->f (mod (f->i dr) 7)) (f-abs (* 3.1f0 z)))))
+      (declare (single-float a1 rise dr k q ws h sd))
+      (when (and (> k 0.02f0) (> rise 0f0))
+        (%tring x 0f0 z 0.5f0 0.08f0 +pal-ember+ (* 0.9f0 k) sd 16)
+        (let* ((bx x) (by 0f0) (bz z))
+          (declare (single-float bx by bz))
+          (%away-from-eye (bx by bz) 0.12f0             ; the dark-red backing, 8 % taller and wider
+            (fx-ribbon bx by bz 0f0 (* 1.08f0 h) 0f0 (* 0.4f0 ws) (* 0.26f0 ws) 1f0 (- -20f0 sd) 0.3f0 (toon-a +pal-ember+ k) 0.35f0 (- -20f0 sd) 0.3f0
+                       (toon-a +pal-ember+ k) dr 0.05f0 :segs 7 :mode :toon)))
+        (fx-ribbon x 0f0 z 0f0 h 0f0 (* 0.32f0 ws) (* 0.2f0 ws) 1f0 (- -3f0 sd) 0.25f0 (toon-a +pal-fire+ k) 0.35f0 (- -3f0 sd) 0.25f0
+                   (toon-a +pal-fire+ k) dr 0.04f0 :segs 7 :mode :toon)
+        (let* ((sx x) (sy 0.1f0) (sz z))                ; the spiral stripe, in front of the column
+          (declare (single-float sx sy sz))
+          (%away-from-eye (sx sy sz) -0.1f0
+            (fx-ribbon sx sy sz 0f0 (* 0.95f0 h) 0f0 (* 0.07f0 ws) (* 0.045f0 ws) 1f0 (- -9f0 sd) 0.1f0 (toon-a +pal-ember+ k) 0.4f0 (- -9f0 sd) 0.1f0
+                       (toon-a +pal-ember+ k) (* 2f0 dr) 0.25f0 :segs 8 :mode :toon)))
+        (when (and (>= rise 1f0) (> q 0.5f0))            ; the crown: 6 tongues flaring out of the top
+          (dotimes (j 6)
+            (let* ((f (i->f j)) (an (+ (* 1.0472f0 f) (* 0.5f0 (hash01 (+ f dr) 5.1f0)))) (hc (* 0.18f0 height (+ 0.7f0 (* 0.5f0 (hash01 (+ f dr) 2.3f0))))))
+              (declare (single-float f an hc))
+              (%tongue (+ x (* 0.16f0 (f-cos an))) (* 0.94f0 h) (+ z (* 0.16f0 (f-sin an))) (* 0.6f0 hc (f-cos an)) hc (* 0.6f0 hc (f-sin an))
+                       0.11f0 +pal-fire+ k (+ 60f0 f sd) (+ dr f) 0.03f0 :segs 4))))
+        (dotimes (i (n-of (* 10f0 rise q) dt))
+          (%t-blob (+ x (rnd-range -0.3f0 0.3f0)) (* h (rnd-range 0.85f0 1f0)) (+ z (rnd-range -0.3f0 0.3f0)) (rnd-range -0.8f0 0.8f0)
+                   (rnd-range 1.5f0 3f0) (rnd-range -0.8f0 0.8f0) (rnd-range 0.3f0 0.5f0) (rnd-range 0.08f0 0.15f0) -1f0 0.3f0 +pal-fire+))))))
 
-(defconstant +dome-n+ 12 "flame walls around the Jokaku Enjo dome")
+(declaim (type f32vec *dome-last*))
+(defvar *dome-last* (make-f32 1) "VFX-FIRE-DOME: < 1e8 while a dome is closing (the detonation is armed), 1e9 once it fired.")
 
 (defun-fast vfx-fire-dome (x z r age life dt)
-  "Jokaku Enjo around ground point (x z), radius R. 0-35 % of LIFE: 12 flame walls rise; 35-70 %:
-they bend inward and close into a dome (a glowing shell grows from the ground up); 70-85 %: the
-dome seethes; at 85 % it detonates (one burst + a fading flash)."
+  "Jokaku Enjo around ground point (x z), radius R (§4.1, Phase 5: no shell). 3 tiers of FIRE tongue rings (12 + 9 + 6
+tongues; the outer one over EMBER backings) rise on ones, then lean in and close in a spiral in 4 drawn steps (35-70 %
+of LIFE), the upper tiers climbing as it closes; 70-85 % the tongues boil on twos (the seethe); at 85 % it detonates:
+the :BOOM stamp (a white flash, a FIRE star over an EMBER one), a FIRE ground ring and flame / smoke / ember scraps.
+An EMBER scorch ring under the walls."
   (with-floats (x z r age life dt)
-    (let* ((u (/ age (f-max life 0.01f0))) (ph (clock)) (det 0.85f0)
-           (big-h (* 1.15f0 r)) (w0 (* 0.62f0 (/ (* 6.2832f0 r) (i->f +dome-n+)))))
-      (declare (single-float u ph det big-h w0))
-      (if (< u det)
-          (let* ((rise (f-clamp (/ u 0.35f0) 0f0 1f0))
-                 (c (f-clamp (/ (- u 0.35f0) 0.35f0) 0f0 1f0)) (close (* c c (- 3f0 (* 2f0 c))))
-                 (seethe (f-clamp (/ (- u 0.7f0) 0.15f0) 0f0 1f0)) (hw (* 3.2f0 rise)))
-            (declare (single-float rise c close seethe hw))
-            (%gdisc x 0.025f0 z (* 1.15f0 r) 0.08f0 0.03f0 0.02f0 (* 0.5f0 rise) :alpha)   ; scorched ground: the
-            (%gdisc x 0.03f0 z (* 1.3f0 r) 1f0 0.28f0 0.04f0 (* -0.1f0 rise) :add)          ; base reads dark red
-            (when (> close 0f0)                          ; the shell: rings of quads up to the closing line
-              (let* ((lat (* close 1.5708f0)))
-                (declare (single-float lat))
-                (dotimes (j 4)
-                  (let* ((b0 (* lat (/ (i->f j) 4f0))) (b1 (* lat (/ (i->f (1+ j)) 4f0)))
-                         (cr0 (* 0.92f0 r (f-cos b0))) (cr1 (* 0.92f0 r (f-cos b1)))
-                         (y0 (* big-h (f-sin b0))) (y1 (* big-h (f-sin b1))) (k (+ 0.08f0 (* 0.08f0 seethe)))
-                         (f0 (/ b0 1.5708f0)) (f1 (/ b1 1.5708f0))              ; 0 at the ground, 1 at the top
-                         (r0 (+ 0.45f0 (* 0.35f0 f0))) (g0 (+ 0.07f0 (* 0.13f0 f0))) (r1 (+ 0.45f0 (* 0.35f0 f1))) (g1 (+ 0.07f0 (* 0.13f0 f1))))
-                    (declare (single-float b0 b1 cr0 cr1 y0 y1 k f0 f1 r0 g0 r1 g1))
-                    (dotimes (i 12)
-                      (let* ((a0 (* 0.5236f0 (i->f i))) (a1 (+ a0 0.5236f0))
-                             (c0 (f-cos a0)) (s0 (f-sin a0)) (c1 (f-cos a1)) (s1 (f-sin a1)))
-                        (declare (single-float a0 a1 c0 s0 c1 s1))
-                        (with-fx-verts (d o :alpha 6)    ; the wall: opaque-ish, dark red at the ground
-                          (vtx (+ x (* cr0 c0)) y0 (+ z (* cr0 s0)) 0f0 0f0 r0 g0 0.03f0 0.65f0)   ; (a low camera sees the
-                          (vtx (+ x (* cr0 c1)) y0 (+ z (* cr0 s1)) 0f0 0f0 r0 g0 0.03f0 0.65f0)   ; base through every
-                          (vtx (+ x (* cr1 c1)) y1 (+ z (* cr1 s1)) 0f0 0f0 r1 g1 0.04f0 0.6f0)    ; flame), orange up top
-                          (vtx (+ x (* cr0 c0)) y0 (+ z (* cr0 s0)) 0f0 0f0 r0 g0 0.03f0 0.65f0)
-                          (vtx (+ x (* cr1 c1)) y1 (+ z (* cr1 s1)) 0f0 0f0 r1 g1 0.04f0 0.6f0)
-                          (vtx (+ x (* cr1 c0)) y1 (+ z (* cr1 s0)) 0f0 0f0 r1 g1 0.04f0 0.6f0))
-                        (with-fx-verts (d o :add 6)
-                          (vtx (+ x (* cr0 c0)) y0 (+ z (* cr0 s0)) 0f0 0f0 1f0 0.3f0 0.04f0 (- k))
-                          (vtx (+ x (* cr0 c1)) y0 (+ z (* cr0 s1)) 0f0 0f0 1f0 0.3f0 0.04f0 (- k))
-                          (vtx (+ x (* cr1 c1)) y1 (+ z (* cr1 s1)) 0f0 0f0 0.9f0 0.15f0 0.03f0 (- k))
-                          (vtx (+ x (* cr0 c0)) y0 (+ z (* cr0 s0)) 0f0 0f0 1f0 0.3f0 0.04f0 (- k))
-                          (vtx (+ x (* cr1 c1)) y1 (+ z (* cr1 s1)) 0f0 0f0 0.9f0 0.15f0 0.03f0 (- k))
-                          (vtx (+ x (* cr1 c0)) y1 (+ z (* cr1 s0)) 0f0 0f0 0.9f0 0.15f0 0.03f0 (- k)))))))))
-            (dotimes (i +dome-n+)
-              (let* ((a (+ (* 0.5236f0 (i->f i)) (* 0.15f0 ph))) (bx (+ x (* r (f-cos a)))) (bz (+ z (* r (f-sin a))))
-                     (ax (* close (- x bx))) (ay (+ (* (- 1f0 close) hw) (* close big-h))) (az (* close (- z bz)))
-                     (w (* w0 (+ 0.7f0 (* 0.3f0 rise)))))
-                (declare (single-float a bx bz ax ay az w))
-                (fire-tongue bx 0f0 bz ax ay az w (* 0.75f0 (- (+ 0.75f0 (* 0.2f0 seethe)) (* 0.6f0 close)))
-                             (+ (* 5f0 ph) (* 1.7f0 (i->f i))) (* 0.3f0 (- 1f0 close)) :segs 6 :core (< close 0.3f0))))
-            (with-cam ()
-              (%spr x 1.2f0 z (* 1.2f0 r (+ 0.8f0 (* 0.2f0 (f-sin (* 17f0 ph))))) 1f0 0.22f0 0.03f0 (* -0.12f0 (+ close seethe))))
-            (dotimes (i (n-of (* 130f0 rise (- 1f0 (* 0.6f0 close))) dt))
-              (let* ((a (rnd-range 0f0 6.2832f0)) (h (rnd01)) (rr (* r (- 1f0 (* close h)))))
-                (declare (single-float a h rr))
-                (flame (+ x (* rr (f-cos a))) (* h (+ (* (- 1f0 close) hw) (* close big-h))) (+ z (* rr (f-sin a)))
-                       (rnd-range -0.4f0 0.4f0) (rnd-range 1.2f0 2.4f0) (rnd-range -0.4f0 0.4f0)
-                       (rnd-range 0.3f0 0.45f0) (rnd-range 0.2f0 0.33f0) 1f0 0.55f0 0.2f0 (- 0.45f0 (* 0.25f0 close)))))
-            (add-point-light x 1.5 z 1.0 0.35 0.08 10.0 (+ 1.0 (* 0.8 close)) 8))
-          (let* ((v (f-clamp (/ (- u det) (- 1f0 det)) 0f0 1f0)) (tdet (* det life)))
-            (declare (single-float v tdet))
-            (when (and (<= tdet age) (< (- age dt) tdet))  ; the frame that crosses 85 %: detonate
-              (fx-burst +p-flame+ (f->i (* 90f0 (the single-float (f32 *fire-density*)))) x 1.2f0 z 0f0 0.3f0 0f0 1f0
-                        6f0 12f0 0.6f0 0.35f0 1f0 0.85f0 0.45f0)
-              (fx-burst +p-spark+ 30 x 1.2f0 z 0f0 0.5f0 0f0 1f0 8f0 16f0 0.8f0 0.05f0 1f0 0.7f0 0.3f0)
-              (fx-burst +p-dust+ 12 x 1.5f0 z 0f0 0.5f0 0f0 1f0 3f0 6f0 1.4f0 0.7f0 0.24f0 0.18f0 0.15f0)
-              (fx-ring x 0.05 z (* 0.8 r) (* 3.0 r) 0.5 1.0 0.6 0.2 :flat t :width 0.35)
-              (fx-ring x 1.2 z 0.5 (* 2.5 r) 0.3 1.0 0.85 0.5 :width 0.2))
-            (with-cam ()
-              (%spr x 1.4f0 z (* r (+ 1f0 (* 1.8f0 v))) 1f0 0.55f0 0.15f0 (* -0.9f0 (- 1f0 v)))
-              (%spr x 1.4f0 z (* r (+ 0.4f0 (* 0.8f0 v))) 1f0 0.9f0 0.7f0 (* 0.9f0 (- 1f0 v) (- 1f0 v))))
-            (add-point-light x 1.5 z 1.0 0.5 0.2 16.0 (* 3.5 (- 1.0 v)) 9)))))
+    (let* ((ua (/ (sage age 1f0) (f-max life 0.01f0))) (det 0.85f0) (big-h (* 1.15f0 r)) (dr (drawing-no)) (sd (i->f (mod (f->i dr) 7))))
+      (declare (single-float ua det big-h dr sd))
+      (if (< ua det)
+          (let* ((c (f-clamp (/ (- ua 0.35f0) 0.35f0) 0f0 1f0)) (cq (* 0.25f0 (i->f (f->i (* 4f0 c)))))   ; closing: 4 drawn steps
+                 (seethe (f-clamp (/ (- ua 0.7f0) 0.15f0) 0f0 1f0)))
+            (declare (single-float c cq seethe))
+            (setf (aref *dome-last* 0) age)                 ; still closing: the detonation is armed
+            (%tring x 0f0 z r 0.14f0 +pal-ember+ (* 0.9f0 (f-clamp (* 8f0 ua) 0f0 1f0)) sd)
+            (dotimes (tier 3)
+              (let* ((ti (i->f tier)) (n (- 12 (* 3 tier))) (nf (i->f n)) (start (* 0.18f0 ti))
+                     (rise (f-clamp (/ (i->f (f->i (* 24f0 life (- ua start)))) 3f0) 0f0 1f0))
+                     (rad (* r (- 1f0 (* 0.27f0 ti)))) (y0 (* big-h 0.3f0 ti cq)) (lean (* cq (+ 0.45f0 (* 0.25f0 ti))))
+                     (spin (+ (* 0.7f0 ti) (* 0.6f0 (+ ti 1f0) (- 1f0 cq)))) (w (* 0.3f0 (/ (* 6.2832f0 rad) nf))))
+                (declare (fixnum n) (single-float ti nf start rise rad y0 lean spin w))
+                (when (> rise 0f0)
+                  (dotimes (i n)
+                    (let* ((f (i->f i)) (an (+ spin (/ (* 6.2832f0 f) nf))) (ca (f-cos an)) (sa (f-sin an))
+                           (bx (+ x (* rad ca))) (bz (+ z (* rad sa)))
+                           (hh (* rise big-h (- 0.95f0 (* 0.25f0 ti)) (- 1f0 (* 0.3f0 cq))
+                                  (+ (- 0.8f0 (* 0.15f0 seethe)) (* (+ 0.4f0 (* 0.5f0 seethe)) (hash01 (+ f dr) (+ 3.7f0 ti))))))
+                           (ax (* (- lean) rad ca)) (az (* (- lean) rad sa)) (tsd (+ (* 13f0 ti) f sd)))
+                      (declare (single-float f an ca sa bx bz hh ax az tsd))
+                      (when (= tier 0)
+                        (let* ((kx bx) (ky y0) (kz bz))
+                          (declare (single-float kx ky kz))
+                          (%away-from-eye (kx ky kz) 0.1f0
+                            (%tongue kx ky kz (* 1.1f0 ax) (* 1.15f0 hh) (* 1.1f0 az) (* 1.2f0 w) +pal-ember+ 0.95f0 (+ 100f0 tsd) (+ dr f) 0.05f0))))
+                      (%tongue bx y0 bz ax hh az w +pal-fire+ 0.95f0 tsd (+ dr f) 0.05f0))))))
+            (dotimes (i (n-of 40f0 dt))
+              (let* ((an (rnd-range 0f0 6.2832f0)) (rr (* r (rnd-range 0.3f0 1f0))))
+                (declare (single-float an rr))
+                (%t-blob (+ x (* rr (f-cos an))) (* big-h (rnd-range 0.3f0 0.9f0)) (+ z (* rr (f-sin an))) (rnd-range -0.4f0 0.4f0)
+                         (rnd-range 1.2f0 2.4f0) (rnd-range -0.4f0 0.4f0) (rnd-range 0.3f0 0.45f0) (rnd-range 0.1f0 0.18f0) -1f0 0.3f0 +pal-fire+)))
+            (%light x 1.5f0 z 1f0 0.35f0 0.08f0 10f0 (+ 1f0 (* 0.8f0 c)) 8))
+          (let* ((v (f-clamp (/ (- (/ age (f-max life 0.01f0)) det) (- 1f0 det)) 0f0 1f0)))
+            (declare (single-float v))
+            (when (< (aref *dome-last* 0) 1f8)             ; the first draw past 85 %: detonate (a flag, not DT: a
+              (setf (aref *dome-last* 0) 1f9)               ; cinematic's freeze passes DT 0)
+              (stamp :boom x 1.3f0 z :scale r)
+              (stamp :ring x 0f0 z :scale (* 1.2f0 r) :n +pal-fire+)
+              (dotimes (i 26)
+                (let* ((an (rnd-range 0f0 6.2832f0)) (sp (rnd-range 3f0 7f0)))
+                  (declare (single-float an sp))
+                  (%t-blob x (rnd-range 0.6f0 2f0) z (* sp (f-cos an)) (rnd-range 1f0 4f0) (* sp (f-sin an)) (rnd-range 0.4f0 0.7f0)
+                           (rnd-range 0.25f0 0.45f0) -1f0 0.3f0 +pal-fire+)))
+              (dotimes (i 10)
+                (let* ((an (rnd-range 0f0 6.2832f0)) (sp (rnd-range 1f0 2.5f0)))
+                  (declare (single-float an sp))
+                  (%t-blob (+ x (* r 0.5f0 (f-cos an))) (rnd-range 0.5f0 2f0) (+ z (* r 0.5f0 (f-sin an))) (* sp (f-cos an)) (rnd-range 0.8f0 1.8f0)
+                           (* sp (f-sin an)) (rnd-range 0.9f0 1.4f0) (rnd-range 0.4f0 0.7f0) -0.3f0 0.3f0 +pal-black-smoke+)))
+              (dotimes (i 16)
+                (let* ((an (rnd-range 0f0 6.2832f0)) (sp (rnd-range 5f0 10f0)))
+                  (declare (single-float an sp))
+                  (%t-shard x 1.3f0 z (* sp (f-cos an)) (rnd-range 1f0 5f0) (* sp (f-sin an)) (rnd-range 0.5f0 0.8f0) (rnd-range 0.12f0 0.22f0)
+                            6f0 +pal-ember+))))
+            (%light x 1.5f0 z 1f0 0.5f0 0.2f0 16f0 (* 3.5f0 (- 1f0 v)) 9)))))
   nil)
 
 ;;; ---------------------------------------------------------------- auras
-(defmacro %tring (x y z r w pal k seed &optional (segs 32))
-  "A flat toon ring on the ground at height Y (+2 cm), radius R, band half-width W, both band edges inked.
-The ring is an along shape whose heat varies around it, so it breaks into arcs as K fades."
-  `(let* ((cx ,x) (cy (+ ,y 0.02f0)) (cz ,z) (ri (f-max 0f0 (- ,r ,w))) (ro (+ ,r ,w)) (pk (toon-a ,pal ,k))
-          (sd (- -1f0 ,seed)) (da (/ 6.2831855f0 ,(float segs 1f0))))
-     (declare (single-float cx cy cz ri ro pk sd da))
-     (with-fx-verts (d o :toon ,(* 6 segs))
-       (dotimes (i ,segs)
-         (let* ((a0 (* da (i->f i))) (a1 (+ a0 da)) (c0 (f-cos a0)) (s0 (f-sin a0)) (c1 (f-cos a1)) (s1 (f-sin a1))
-                (h0 (+ 0.3f0 (* 0.7f0 (f-abs (f-sin (+ (* 2.5f0 a0) sd)))))) (h1 (+ 0.3f0 (* 0.7f0 (f-abs (f-sin (+ (* 2.5f0 a1) sd)))))))
-           (declare (single-float a0 a1 c0 s0 c1 s1 h0 h1))
-           (vtx (+ cx (* ri c0)) cy (+ cz (* ri s0)) -1f0 0f0 h0 sd 0.12f0 pk)
-           (vtx (+ cx (* ro c0)) cy (+ cz (* ro s0)) 1f0 0f0 h0 sd 0.12f0 pk)
-           (vtx (+ cx (* ro c1)) cy (+ cz (* ro s1)) 1f0 0f0 h1 sd 0.12f0 pk)
-           (vtx (+ cx (* ri c0)) cy (+ cz (* ri s0)) -1f0 0f0 h0 sd 0.12f0 pk)
-           (vtx (+ cx (* ro c1)) cy (+ cz (* ro s1)) 1f0 0f0 h1 sd 0.12f0 pk)
-           (vtx (+ cx (* ri c1)) cy (+ cz (* ri s1)) -1f0 0f0 h1 sd 0.12f0 pk))))))
-
-
-(defmacro %tsector (x y z r0 r1 yaw half heat seed wob pk segs)
-  "A flat toon sector on the ground at height Y (+3 cm) between radii R0 and R1, centred on YAW (forward = FWD-X /
-FWD-Z of it), +-HALF radians: FX-SECTOR's shape in the toon batch (uv across the radii). A macro: 0 B."
-  `(let* ((cx ,x) (cy (+ ,y 0.03f0)) (cz ,z) (ri ,r0) (ro ,r1) (a0 (- ,yaw ,half)) (da (/ (* 2f0 ,half) ,(float segs 1f0)))
-          (ht ,heat) (sd ,seed) (wb ,wob) (pk ,pk))
-     (declare (single-float cx cy cz ri ro a0 da ht sd wb pk))
-     (with-fx-verts (d o :toon ,(* 6 segs))
-       (dotimes (k ,segs)
-         (let* ((t0 (+ a0 (* da (i->f k)))) (t1 (+ t0 da))
-                (c0 (- (f-sin t0))) (s0 (- (f-cos t0))) (c1 (- (f-sin t1))) (s1 (- (f-cos t1))))
-           (declare (single-float t0 t1 c0 s0 c1 s1))
-           (vtx (+ cx (* ri c0)) cy (+ cz (* ri s0)) 0f0 -1f0 ht sd wb pk)
-           (vtx (+ cx (* ro c0)) cy (+ cz (* ro s0)) 0f0 1f0 ht sd wb pk)
-           (vtx (+ cx (* ro c1)) cy (+ cz (* ro s1)) 0f0 1f0 ht sd wb pk)
-           (vtx (+ cx (* ri c0)) cy (+ cz (* ri s0)) 0f0 -1f0 ht sd wb pk)
-           (vtx (+ cx (* ro c1)) cy (+ cz (* ro s1)) 0f0 1f0 ht sd wb pk)
-           (vtx (+ cx (* ri c1)) cy (+ cz (* ri s1)) 0f0 -1f0 ht sd wb pk))))))
-
 (defmacro %brush-aura (x y z h k pal n rad w white)
   "A brush-flame aura (docs/STYLE_STORM_DESIGN.md §4.2 reiatsu, §4.3 Kikon rush): N tongues of palette PAL around
 the body at radius RAD (half-width W at the base), drawn only behind and at the sides (the ones between the camera and the body are left
@@ -552,30 +543,17 @@ white core lines in the back three, and a flat BLOOD ring at the feet. A macro: 
 (defmacro %reiatsu-aura (x y z h k awake)
   "Kenpachi's reiatsu, yellow in every form (§4.2, user review 1). Base (AWAKE 0): 7 REIATSU tongues behind him at
 0.45 m, 0.8 x his height, white core lines, white flecks rising. Nozarashi (AWAKE 1): 9 wider tongues at 0.5 m, 1.05 x,
-3 thin inner white tongues, a flat REIATSU ring at the feet, one faint additive T光 glow and a yellow light. A macro: 0 B."
+3 thin inner white tongues, a flat REIATSU ring at the feet and a yellow light (its soft additive glow cut in Phase 6). A macro: 0 B."
   `(let* ((x ,x) (y ,y) (z ,z) (h ,h) (k ,k) (dr (drawing-no)))
     (declare (single-float x y z h k dr))
     (if (= ,awake 1)
         (progn
-          (with-cam () (%spr x (+ y (* 0.9f0 h)) z (* 0.35f0 h) 1f0 0.85f0 0.3f0 (* -0.06f0 k)))   ; T光 (over the head)
           (%brush-aura x y z (* 1.05f0 h) k +pal-reiatsu+ 9 0.5f0 0.19f0 1)
           (%brush-aura x y z (* 0.7f0 h) k +pal-hit+ 3 0.3f0 0.06f0 0)
           (%tring x y z (+ 0.8f0 (* 0.06f0 (hash01 dr 8.3f0))) 0.06f0 +pal-reiatsu+ (* 0.95f0 k) (i->f (mod (f->i dr) 7)))
           (%light x (+ y 1.2f0) z 1f0 0.8f0 0.25f0 5f0 0.7f0 8))
         (%brush-aura x y z (* 0.8f0 h) k +pal-reiatsu+ 7 0.45f0 0.16f0 1))
     nil))
-
-(defmacro %aura-tongues (x y z height n rad r g b a ph)
-  "N flame-shaped ribbons around a body at radius RAD, rising HEIGHT·(0.75..1.15); the ones in
-front of the body fade (FRONT-DIM)."
-  `(dotimes (k ,n)
-     (let* ((kf (i->f k)) (ang (+ (* 0.3f0 ,ph) (/ (* 6.2832f0 kf) (i->f ,n))))
-            (hh (* ,height (+ 0.95f0 (* 0.2f0 (f-sin (+ (* 7f0 ,ph) (* 2.7f0 kf)))))))
-            (aa (* ,a (front-dim ,x ,z ang))))
-       (declare (single-float kf ang hh aa))
-       (fx-ribbon (+ ,x (* ,rad (f-cos ang))) (+ ,y 0.05f0) (+ ,z (* ,rad (f-sin ang))) 0f0 hh 0f0
-               0.24f0 0f0 ,r ,g ,b aa (* 0.8f0 ,r) (* 0.5f0 ,g) (* 0.5f0 ,b) 0f0 (+ (* 6f0 ,ph) (* 1.9f0 kf)) 0.12f0
-               :segs 5))))
 
 (defvar *aura-now* (vector nil nil) "Per side: the body aura drawn now (main.lisp DRAW-AURA) ...")
 (defvar *aura-was* (vector nil nil) "... the one before it ...")
@@ -587,46 +565,38 @@ front of the body fade (FRONT-DIM)."
 fighters stand within ~3 m, where two auras (or one over the other fighter) summed to a white blob.")
 
 (defun-fast vfx-aura (x y z height kind age dt &key rgb (k 1.0))
-  "Body aura at the feet (x y z) of a fighter HEIGHT m tall. KIND:
-:hellfire (fire aura + a ring of flames at the feet + light), :heat (Bankai: 4 charcoal wisps, drawn),
-:evolution (faint aura in RGB, a list, default white), :reiatsu / :nozarashi / :nomihose (Kenpachi's drawn yellow
-brush-flame aura, base / awakened / cup 3's pillar: %REIATSU-AURA), :kikon (the drawn BLOOD rush aura), :breaker (pink;
-K 0..1 brightens it over the last 8 f). For the other kinds K scales the alpha / presence (0..1). The
-soft kinds (hellfire, evolution, breaker) also fade by *AURA-CAP* and when the camera is within ~4 m (a
-close-up must still show the face); the drawn ones stand behind the body instead."
-  (declare (ignorable age))
+  "Body aura at the feet (x y z) of a fighter HEIGHT m tall, every kind a drawn toon look (Phase 5 redrew the last soft
+ones). KIND: :hellfire (a bonfire of FIRE tongues + a ring at the feet), :heat (Bankai East: 4 charcoal wisps), :ash
+(burned out: black smoke wisps, ash), :garb (Bankai West wrapped in fire; K > 1 flares it taller and wider), :evolution
+(mono STEEL tongues; RGB is ignored), :reiatsu / :nozarashi / :nomihose (Kenpachi's yellow brush-flame aura, base /
+awakened / cup 3's pillar: %REIATSU-AURA), :bound (ash at the held feet), :kikon (the BLOOD rush aura), :breaker /
+:breaker-fire / :breaker-ember (the owner's colour over an INK backing; K 0.5..2 grows it over the strike's startup).
+K is the presence (0..1). :ash and :heat also fade by *AURA-CAP* and when the camera is within ~4 m."
+  (declare (ignorable age rgb))
   (with-floats (x y z height dt k)
-    (let* ((ph (+ (clock) (* 0.5f0 x))) (h height) (eye (camera-eye *camera*))
+    (let* ((h height) (eye (camera-eye *camera*))
            (ex (- (aref eye 0) x)) (ey (- (aref eye 1) (+ y (* 0.6f0 h)))) (ez (- (aref eye 2) z))
            (near (f-clamp (/ (- (f-sqrt (+ (* ex ex) (* ey ey) (* ez ez))) 1.5f0) 2.5f0) 0.35f0 1f0))
-           (cap (* near (the single-float (f32 *aura-cap*))))
-           (ka (if (eq kind :breaker) cap (* cap (f-clamp k 0f0 1f0)))))
-      (declare (type f32vec eye) (single-float ph h ex ey ez near cap ka))
+           (ka (* near (the single-float (f32 *aura-cap*)) (f-clamp k 0f0 1f0))))
+      (declare (type f32vec eye) (single-float h ex ey ez near ka))
       (case kind
-        (:hellfire
-         (%gdisc x (+ y 0.03f0) z 0.9f0 1f0 0.3f0 0.05f0 (* -0.25f0 ka) :add)
-         (dotimes (j 5)                                   ; tongues at the silhouette, faint in front
-           (let* ((ang (+ (* 0.4f0 ph) (* 1.2566f0 (i->f j)))))
-             (declare (single-float ang))
-             (fire-tongue (+ x (* 0.34f0 (f-cos ang))) y (+ z (* 0.34f0 (f-sin ang))) 0f0
-                          (* h (+ 0.6f0 (* 0.2f0 (f-sin (+ (* 6f0 ph) (* 2f0 (i->f j))))))) 0f0
-                          0.2f0 (* 0.8f0 ka (front-dim x z ang)) (+ (* 6f0 ph) (* 1.3f0 (i->f j))) 0.15f0
-                          :segs 5 :dark (< j 2) :core nil)))
-         (dotimes (j 8)                                   ; a thin ring of flames licking at his feet
-           (let* ((ang (+ (* -0.6f0 ph) (* 0.7854f0 (i->f j))))
-                  (hh (* 0.32f0 (+ 1f0 (* 0.4f0 (f-sin (+ (* 9f0 ph) (* 2.3f0 (i->f j)))))))))
-             (declare (single-float ang hh))
-             (fx-ribbon (+ x (* 0.55f0 (f-cos ang))) (+ y 0.02f0) (+ z (* 0.55f0 (f-sin ang))) 0f0 hh 0f0 0.11f0 0f0
-                     1f0 0.45f0 0.08f0 (* -0.75f0 ka) 1f0 0.2f0 0.02f0 0f0 (+ (* 8f0 ph) (i->f j)) 0.05f0 :segs 3)))
-         (fx-sector x y z 0.42 0.66 0.0 3.1416 1.0 0.4 0.08 (* -0.45 ka) :segs 24)
-         (dotimes (i (n-of 40f0 dt))
-           (flame (+ x (rnd-range -0.35f0 0.35f0)) (+ y (* h (rnd-range 0.05f0 0.9f0))) (+ z (rnd-range -0.35f0 0.35f0))
-                  (rnd-range -0.3f0 0.3f0) (rnd-range 1.5f0 2.5f0) (rnd-range -0.3f0 0.3f0)
-                  (rnd-range 0.3f0 0.5f0) (rnd-range 0.12f0 0.22f0) 1f0 0.7f0 0.3f0 (* 0.55f0 ka)))
-         (dotimes (i (n-of 4f0 dt))
-           (fx-emit +p-dust+ (+ x (rnd-range -0.3f0 0.3f0)) (+ y h) (+ z (rnd-range -0.3f0 0.3f0))
-                    0f0 1.2f0 0f0 1.2f0 0.3f0 -1f0 0.22f0 0.17f0 0.15f0))
-         (add-point-light x (+ y 0.6) z 1.0 0.4 0.1 4.5 0.8 8))
+        (:hellfire                                       ; Hellfire (Gokuen, §4 mapping, Phase 5): a bonfire round him — 7 FIRE
+                                                         ; brush tongues behind and at the sides (0.8 x his height), a ring of 8
+                                                         ; short FIRE tongues licking at his feet, an EMBER scorch ring, scraps
+         (let* ((kc (f-clamp k 0f0 1f0)) (dr (drawing-no)) (sd (i->f (mod (f->i dr) 5))))
+           (declare (single-float kc dr sd))
+           (%brush-aura x y z (* 0.8f0 h) kc +pal-fire+ 7 0.38f0 0.17f0 0)
+           (dotimes (j 8)
+             (let* ((f (i->f j)) (an (+ (* 0.7854f0 f) (* 0.3f0 (hash01 f 7.1f0)))) (hh (* 0.3f0 (+ 0.7f0 (* 0.7f0 (hash01 (+ f dr) 2.9f0))))))
+               (declare (single-float f an hh))
+               (%tongue (+ x (* 0.55f0 (f-cos an))) (+ y 0.02f0) (+ z (* 0.55f0 (f-sin an))) 0f0 hh 0f0 0.09f0 +pal-fire+ (* 0.95f0 kc)
+                        (+ 70f0 f (* 8f0 sd)) (+ dr f) 0.02f0 :segs 3)))
+           (%tring x y z 0.55f0 0.07f0 +pal-ember+ (* 0.9f0 kc) sd 24)
+           (dotimes (i (n-of (* 16f0 kc) dt))
+             (%t-blob (+ x (rnd-range -0.35f0 0.35f0)) (+ y (* h (rnd-range 0.1f0 0.8f0))) (+ z (rnd-range -0.35f0 0.35f0))
+                      (rnd-range -0.2f0 0.2f0) (rnd-range 1.2f0 2.2f0) (rnd-range -0.2f0 0.2f0) (rnd-range 0.3f0 0.5f0)
+                      (rnd-range 0.05f0 0.1f0) -1f0 0.3f0 +pal-fire+))
+           (%light x (+ y 0.6f0) z 1f0 0.4f0 0.1f0 4.5f0 (* 0.8f0 kc) 8)))
         (:ash                                            ; Bankai burned out: 3 BLACK SMOKE wisps off the shoulders, ash rising
          (let* ((d3 (drawing-no 8f0)))
            (declare (single-float d3))
@@ -644,15 +614,15 @@ close-up must still show the face); the drawn ones stand behind the body instead
                                                          ; 15-million-degree garb): 9 FIRE brush-flame tongues round the
                                                          ; body (behind and at the sides: the silhouette stays readable),
                                                          ; 5 EMBER inner ones, flame scraps rising, a warm light
-         (let* ((kc (f-clamp k 0f0 1f0)))
-           (declare (single-float kc))
-           (%brush-aura x y z (* 1.1f0 h) kc +pal-fire+ 9 0.44f0 0.2f0 0)
-           (%brush-aura x y z (* 0.72f0 h) kc +pal-ember+ 5 0.3f0 0.13f0 0)
+         (let* ((kc (f-clamp k 0f0 1f0)) (fl (f-max 1f0 k)) (fr (+ 1f0 (* 0.3f0 (- fl 1f0)))))   ; K > 1: a flare, taller
+           (declare (single-float kc fl fr))                                                    ; and wider
+           (%brush-aura x y z (* 1.1f0 h fl) kc +pal-fire+ 9 (* 0.44f0 fr) (* 0.2f0 fr) 0)
+           (%brush-aura x y z (* 0.72f0 h fl) kc +pal-ember+ 5 (* 0.3f0 fr) (* 0.13f0 fr) 0)
            (dotimes (i (n-of (* 14f0 kc) dt))
              (%t-blob (+ x (rnd-range -0.4f0 0.4f0)) (+ y (* h (rnd-range 0.2f0 0.9f0))) (+ z (rnd-range -0.4f0 0.4f0))
                       (rnd-range -0.2f0 0.2f0) (rnd-range 1.2f0 2.2f0) (rnd-range -0.2f0 0.2f0) (rnd-range 0.3f0 0.5f0)
                       (rnd-range 0.06f0 0.11f0) -1f0 0.3f0 +pal-fire+))
-           (%light x (+ y 1.0f0) z 1f0 0.45f0 0.12f0 5f0 (* 1.2f0 kc) 8)))
+           (%light x (+ y 1.0f0) z 1f0 0.45f0 0.12f0 5f0 (* 1.2f0 kc fl) 8)))
         (:heat                                           ; Bankai East: the heat as 4 slow charcoal ink-wash wisps (threes)
          (let* ((e (camera-eye *camera*)) (ex (- (aref e 0) x)) (ez (- (aref e 2) z)) (el (f-max 0.01f0 (f-sqrt (+ (* ex ex) (* ez ez)))))
                 (d3 (drawing-no 8f0)))
@@ -668,14 +638,12 @@ close-up must still show the face); the drawn ones stand behind the body instead
                    (fx-ribbon (+ x (* 0.42f0 c)) (+ y (* 0.25f0 h)) (+ z (* 0.42f0 sn)) (* lean c) hh (* lean sn) 0.15f0 0.01f0
                               1f0 sd 0.35f0 (toon-a +pal-black-smoke+ (* 0.9f0 ka)) 0.2f0 sd 0.35f0
                               (toon-a +pal-black-smoke+ (* 0.9f0 ka)) (+ f d3) 0.3f0 :segs 7 :mode :toon)))))))
-        (:evolution
-         (let* ((r (if rgb (f32 (elt rgb 0)) 1f0)) (g (if rgb (f32 (elt rgb 1)) 1f0)) (b (if rgb (f32 (elt rgb 2)) 1f0))
-                (pulse (* ka (+ 0.25f0 (* 0.1f0 (f-sin (* 4f0 ph)))))))
-           (declare (single-float r g b pulse))
-           (%aura-tongues x y z (* 0.85f0 h) 5 0.33f0 r g b (- pulse) ph)
-           (dotimes (i (n-of 12f0 dt))
-             (fx-emit +p-glow+ (+ x (rnd-range -0.35f0 0.35f0)) (+ y (* h (rnd01))) (+ z (rnd-range -0.35f0 0.35f0))
-                      0f0 (rnd-range 0.5f0 1.2f0) 0f0 0.7f0 0.04f0 0f0 r g b))))
+        (:evolution                                      ; EVOLUTION ready (universal: mono, Phase 5): 5 thin STEEL brush tongues
+                                                         ; behind him and white flecks rising (RGB is ignored)
+         (%brush-aura x y z (* 0.85f0 h) (* 0.8f0 (f-clamp k 0f0 1f0)) +pal-steel+ 5 0.33f0 0.09f0 0)
+         (dotimes (i (n-of 8f0 dt))
+           (%t-blob (+ x (rnd-range -0.35f0 0.35f0)) (+ y (* h (rnd-range 0.1f0 0.8f0))) (+ z (rnd-range -0.35f0 0.35f0))
+                    0f0 (rnd-range 0.8f0 1.6f0) 0f0 (rnd-range 0.4f0 0.7f0) (rnd-range 0.015f0 0.03f0) 0f0 0.1f0 +pal-hit+)))
         ((:reiatsu :nozarashi :nomihose)                  ; cups 1 / 2 / 3: base, awakened, pillar-scale (x1.6 tall)
          (%reiatsu-aura x y z (if (eq kind :nomihose) (* 1.6f0 h) h) (f-clamp k 0f0 1f0) (if (eq kind :reiatsu) 0 1))
          (dotimes (i (n-of (case kind (:nomihose 22f0) (:nozarashi 12f0) (t 5f0)) dt))   ; white flecks rising
@@ -691,26 +659,29 @@ close-up must still show the face); the drawn ones stand behind the body instead
            (%t-blob (+ x (rnd-range -0.4f0 0.4f0)) (+ y (* h (rnd-range 0.2f0 0.9f0))) (+ z (rnd-range -0.4f0 0.4f0))
                     0f0 (rnd-range 1f0 2f0) 0f0 (rnd-range 0.4f0 0.7f0) (rnd-range 0.025f0 0.045f0) 0f0 0.2f0 +pal-blood+))
          (add-point-light x (+ y 1.0) z 1.0 0.15 0.2 4.5 1.0 6))
-        (:breaker
-         (let* ((bk (* ka (+ 0.5f0 (* 0.9f0 (f-clamp k 0f0 1f0))))))
-           (declare (single-float bk))
-           (%aura-tongues x y z (* 1.05f0 h) 6 0.36f0 1f0 0.3f0 0.65f0 (* -0.4f0 bk) ph)
-           (%aura-tongues x y z (* 0.7f0 h) 3 0.2f0 1f0 0.7f0 0.9f0 (* -0.3f0 bk) (+ ph 2f0))
-           (dotimes (i (n-of (* 30f0 bk) dt))
-             (fx-emit +p-glow+ (+ x (rnd-range -0.4f0 0.4f0)) (+ y (* h (rnd01))) (+ z (rnd-range -0.4f0 0.4f0))
-                      0f0 (rnd-range 1f0 2.5f0) 0f0 0.5f0 0.05f0 0f0 1f0 0.35f0 0.7f0))
-           (add-point-light x (+ y 1.0) z 1.0 0.35 0.7 5.0 (* 1.2 bk) 5))))
+        ((:breaker :breaker-fire :breaker-ember)          ; the Breaker (§4 mapping, Phase 5): the owner's colour (REIATSU / FIRE /
+                                                         ; EMBER) over an INK backing (7 black tongues, taller, behind), the
+                                                         ; BLOOD edge is the ring (VFX-BREAKER-RING); K 0.5 aura, 1 dash, 1..2
+                                                         ; the strike's startup (it grows)
+         (let* ((pal (case kind (:breaker-fire +pal-fire+) (:breaker-ember +pal-ember+) (t +pal-reiatsu+)))
+                (pk (f-clamp (+ 0.55f0 (* 0.45f0 k)) 0f0 1f0)) (gr (+ 1f0 (* 0.25f0 (f-clamp (- k 1f0) 0f0 1f0)))))
+           (declare (single-float pal pk gr))
+           (%brush-aura x y z (* 1.1f0 h gr) pk +pal-ink+ 7 0.5f0 0.2f0 0)
+           (%brush-aura x y z (* 0.9f0 h gr) pk pal 7 0.4f0 0.16f0 1)
+           (dotimes (i (n-of (* 14f0 pk) dt))
+             (%t-blob (+ x (rnd-range -0.4f0 0.4f0)) (+ y (* h (rnd-range 0.2f0 0.9f0))) (+ z (rnd-range -0.4f0 0.4f0))
+                      0f0 (rnd-range 1f0 2f0) 0f0 (rnd-range 0.3f0 0.6f0) (rnd-range 0.03f0 0.05f0) 0f0 0.2f0 +pal-blood+))
+           (%light x (+ y 1f0) z 1f0 0.3f0 0.2f0 5f0 (* 1.2f0 pk) 5))))
       nil)))
 
 (defun-fast vfx-breaker-ring (x z age)
-  "Pink ground ring under a Breaker dash (call every frame with the Breaker's AGE): a steady
-ring plus a ripple every 0.4 s."
+  "The ground rings under a Breaker's aura and dash (§4 mapping, Phase 5; call every frame with its AGE): a steady BLOOD
+ring (the Breaker's red edge) and an INK ripple running out every 0.4 s (on twos)."
   (with-floats (x z age)
-    (let* ((f (/ (f-mod age 0.4f0) 0.4f0)) (pulse (+ 0.7f0 (* 0.3f0 (f-sin (* 20f0 age))))))
-      (declare (single-float f pulse))
-      (fx-sector x 0.0 z 0.55 1.05 0.0 3.1416 1.0 0.35 0.7 (* -0.8 pulse) :segs 24)
-      (fx-sector x 0.0 z (+ 0.9 (* 1.3 f)) (+ 1.1 (* 1.4 f)) 0.0 3.1416 1.0 0.5 0.8 (* -0.5 (- 1.0 f)) :segs 24)
-      (%gdisc x 0.025f0 z 0.9f0 1f0 0.3f0 0.65f0 -0.3f0 :add))))
+    (let* ((sa (sage age 2f0)) (f (/ (f-mod sa 0.4f0) 0.4f0)) (dr (drawing-no)))
+      (declare (single-float sa f dr))
+      (%tring x 0f0 z 0.8f0 0.08f0 +pal-blood+ 0.95f0 (i->f (mod (f->i dr) 5)) 24)
+      (%tring x 0f0 z (+ 0.95f0 (* 1.4f0 f)) 0.05f0 +pal-ink+ (* 0.95f0 (- 1f0 f)) 3f0 24))))
 
 ;;; ---------------------------------------------------------------- ground cuts, sky split, Tenchi Kaijin
 (defmacro %crack (x0 z0 x1 z1 w kg kc seed)
@@ -732,8 +703,7 @@ far end erodes first). A macro: 0 B."
           (setf ox nx oz nz oh nh))))))
 
 (defun-fast vfx-line-cut (x0 z0 x1 z1 age life kind &key (dt 0.0))
-  "A cut along the ground (x0 z0)→(x1 z1). KIND :sun (Kyokujitsujin: a thin white-hot line, in
-the air at chest height and scorched on the ground, no explosion), :meteor (Nozarashi: the ground
+  "A cut along the ground (x0 z0)→(x1 z1). KIND :meteor (Nozarashi: the ground
 splits, a light sheet flashes and a shockwave runs out on both sides), :crack (Buttagiru: a 3 m
 ground crack with dust), :enjo (the Kikon module ENJO: a FIRE line runs along the lane from 1 m, then
 four FIRE walls rise along it one after another over 16 frames, each over an EMBER backing, hold,
@@ -744,23 +714,6 @@ and erode). DT (optional) feeds the particles; 0 = none."
            (fade (- 1f0 (* v v))) (seed (+ x0 (* 3f0 z0))))
       (declare (single-float dx dz l px pz v fade seed))
       (case kind
-        (:sun
-         (let* ((grow (f-clamp (/ age 0.06f0) 0f0 1f0)) (ex (+ x0 (* grow dx))) (ez (+ z0 (* grow dz)))
-                (hot (f-clamp (- 1f0 (/ age 0.35f0)) 0f0 1f0)))
-           (declare (single-float grow ex ez hot))
-           (%gseg x0 z0 ex ez 0.03f0 0.12f0 0.05f0 0.03f0 0.02f0 (* 0.7f0 fade) :alpha)
-           (%gseg x0 z0 ex ez 0.035f0 0.3f0 1f0 0.5f0 0.12f0 (* -0.6f0 fade) :add)
-           (%gseg x0 z0 ex ez 0.04f0 0.05f0 1f0 0.95f0 0.8f0 fade :add)
-           (when (> hot 0f0)
-             (fx-ribbon x0 1.1f0 z0 (* grow dx) 0f0 (* grow dz) 0.2f0 0.12f0 1f0 0.55f0 0.15f0 (* -0.6f0 hot)
-                     1f0 0.45f0 0.1f0 (* -0.4f0 hot) 0f0 0f0 :segs 1)
-             (fx-ribbon x0 1.1f0 z0 (* grow dx) 0f0 (* grow dz) 0.035f0 0.025f0 1f0 1f0 0.9f0 hot 1f0 0.9f0 0.7f0 hot
-                     0f0 0f0 :segs 1))
-           (dotimes (i (n-of (* 40f0 hot) dt))
-             (let* ((u (* grow (rnd01))))
-               (declare (single-float u))
-               (fx-emit +p-spark+ (+ x0 (* u dx)) (rnd-range 0.05f0 1.1f0) (+ z0 (* u dz))
-                        (rnd-range -1f0 1f0) (rnd-range 0.5f0 2f0) (rnd-range -1f0 1f0) 0.4f0 0.02f0 3f0 1f0 0.8f0 0.4f0)))))
         (:meteor                                         ; §4.2: gash + core, a light sheet for 3 drawings, rocks, dust
          (let* ((open (f-clamp (/ age 0.12f0) 0f0 1f0)) (glow (f-clamp (- 1f0 (/ age (* 0.6f0 life))) 0f0 1f0))
                 (in (f-clamp (/ age 0.03f0) 0f0 1f0))     ; nothing at age 0 (a hazard frozen by a cinematic)
@@ -914,22 +867,22 @@ flash). Pair with the grey grade and VFX-ASH-BURST."
 
 ;;; ---------------------------------------------------------------- victim marks
 (defun-fast vfx-ash-burst (x y z)
-  "Tenchi Kaijin victim turning to ash (x y z = the feet): grey ash rising off the whole body,
-dark flakes, a few burning edges. One-shot (~110 particles)."
+  "Tenchi Kaijin's victim flaking into ash (x y z = the feet; §4.1, Phase 5): 44 ASH shards peeling off the whole body
+and drifting sideways (toon: matter, on threes), 16 ASH flakes and 6 BLACK SMOKE puffs. One-shot, mono."
   (with-floats (x y z)
-    (dotimes (i 50)
-      (let* ((h (rnd-range 0.1f0 1.8f0)))
-        (declare (single-float h))
-        (fx-emit +p-dust+ (+ x (rnd-range -0.3f0 0.3f0)) (+ y h) (+ z (rnd-range -0.3f0 0.3f0))
-                 (rnd-range -0.8f0 0.8f0) (rnd-range 0.3f0 1.5f0) (rnd-range -0.8f0 0.8f0)
-                 (rnd-range 1.2f0 2.2f0) (rnd-range 0.12f0 0.25f0) -0.5f0 0.55f0 0.54f0 0.52f0)))
-    (dotimes (i 40)
-      (fx-emit +p-feather+ (+ x (rnd-range -0.3f0 0.3f0)) (+ y (rnd-range 0.1f0 1.8f0)) (+ z (rnd-range -0.3f0 0.3f0))
-               (rnd-range -1.2f0 1.2f0) (rnd-range 0.5f0 2f0) (rnd-range -1.2f0 1.2f0)
-               (rnd-range 1.5f0 2.5f0) 0.05f0 -0.3f0 0.2f0 0.19f0 0.18f0))
-    (dotimes (i 20)
-      (fx-emit +p-glow+ (+ x (rnd-range -0.3f0 0.3f0)) (+ y (rnd-range 0.1f0 1.8f0)) (+ z (rnd-range -0.3f0 0.3f0))
-               (rnd-range -0.5f0 0.5f0) (rnd-range 0.5f0 1.5f0) (rnd-range -0.5f0 0.5f0) 1f0 0.03f0 -0.2f0 1f0 0.45f0 0.1f0))))
+    (let* ((sd (if (< (rnd01) 0.5f0) -1f0 1f0)))
+      (declare (single-float sd))
+      (dotimes (i 44)
+        (%t-shard (+ x (rnd-range -0.3f0 0.3f0)) (+ y (rnd-range 0.1f0 1.8f0)) (+ z (rnd-range -0.3f0 0.3f0))
+                  (* sd (rnd-range 0.8f0 2.2f0)) (rnd-range 0.2f0 0.9f0) (rnd-range -0.6f0 0.6f0) (rnd-range 1.2f0 2.2f0)
+                  (rnd-range 0.06f0 0.14f0) -0.15f0 +pal-ash+))
+      (dotimes (i 16)
+        (%t-blob (+ x (rnd-range -0.3f0 0.3f0)) (+ y (rnd-range 0.2f0 1.7f0)) (+ z (rnd-range -0.3f0 0.3f0)) (* sd (rnd-range 0.5f0 1.5f0))
+                 (rnd-range 0.3f0 1f0) (rnd-range -0.4f0 0.4f0) (rnd-range 1f0 1.8f0) (rnd-range 0.04f0 0.08f0) -0.1f0 0.2f0 +pal-ash+))
+      (dotimes (i 6)
+        (%t-blob (+ x (rnd-range -0.25f0 0.25f0)) (+ y (rnd-range 0.3f0 1.5f0)) (+ z (rnd-range -0.25f0 0.25f0)) (* sd 0.6f0)
+                 (rnd-range 0.4f0 0.9f0) 0f0 (rnd-range 0.9f0 1.3f0) (rnd-range 0.2f0 0.35f0) -0.3f0 0.3f0 +pal-black-smoke+)))
+    nil))
 
 (defun-fast vfx-skeleton-dust (x z)
   "Earth bursting where a South hand claws out (x z): 1 low DUST puff and 2 inked rocks (toon; more dust hid the arm).
@@ -942,35 +895,26 @@ One-shot."
 
 ;;; ---------------------------------------------------------------- one-shots
 (defun-fast vfx-fire-cone (x z yaw &key (reach 4.0) (half 0.785))
-  "Taimatsu: a great sweep of fire from ground point (x z) toward YAW, filling the REACH m / ±HALF
-rad sector (the move's hit arc) at once: hero-size flames spread over the whole fan, rolling
-outward and up for ~0.7 s, sparks, a dark smoke lip at the far edge, an orange flash. One-shot
-(~95 particles); call on the move's first active frame."
+  "Taimatsu (§4.1, Phase 5): the drawn sweep of fire over the REACH m / +-HALF rad sector toward YAW, a :CONE stamp
+(%ST-CONE: a white flash, 9 FIRE flames fanned over the sector rolling out and up, a FIRE ground sector for 2 drawings,
+5 pale SMOKE puffs at the lip), a few flame scraps and an orange flash light. One-shot; call on the first active frame."
   (with-floats (x z yaw reach half)
-    (dotimes (i (f->i (* 60f0 (the single-float (f32 *fire-density*)))))
-      (let* ((a (+ yaw (rnd-range (- half) half))) (fx (- (f-sin a))) (fz (- (f-cos a)))
-             (d (* reach (f-max 0.12f0 (f-sqrt (rnd01))))) (sp (rnd-range 1f0 2.5f0)))   ; even over the fan's area
-        (declare (single-float a fx fz d sp))
-        (flame (+ x (* d fx)) (rnd-range 0.1f0 0.9f0) (+ z (* d fz)) (* sp fx) (rnd-range 1.2f0 2.8f0) (* sp fz)
-               (rnd-range 0.5f0 0.85f0) (rnd-range 0.26f0 0.35f0) 1f0 0.8f0 0.4f0 0.8f0)))
-    (dotimes (i 18)
-      (let* ((a (+ yaw (rnd-range (- half) half))) (sp (rnd-range 6f0 11f0)))
-        (declare (single-float a sp))
-        (fx-emit +p-spark+ x 1f0 z (* sp (- (f-sin a))) (rnd-range 0.5f0 3f0) (* sp (- (f-cos a)))
-                 (rnd-range 0.3f0 0.55f0) 0.035f0 4f0 1f0 0.6f0 0.2f0)))
-    (dotimes (i 16)
-      (let* ((a (+ yaw (rnd-range (- half) half))) (d (* reach (rnd-range 0.8f0 1.05f0))))
-        (declare (single-float a d))
-        (fx-emit +p-dust+ (+ x (* d (- (f-sin a)))) (rnd-range 0.3f0 1.2f0) (+ z (* d (- (f-cos a))))
-                 0f0 (rnd-range 0.8f0 1.6f0) 0f0 (rnd-range 1f0 1.6f0) (rnd-range 0.35f0 0.55f0) -0.8f0 0.2f0 0.15f0 0.13f0)))
-    (flash-light (+ x (* 0.5f0 reach (- (f-sin yaw)))) 1.2 (+ z (* 0.5f0 reach (- (f-cos yaw)))) 1.0 0.5 0.12)
-    nil))
+    (let* ((fx (- (f-sin yaw))) (fz (- (f-cos yaw))))
+      (declare (single-float fx fz))
+      (stamp :cone x 0f0 z :dx fx :dz fz :scale reach :n half)
+      (dotimes (i 8)
+        (let* ((a (+ yaw (rnd-range (- half) half))) (sp (rnd-range 4f0 8f0)))
+          (declare (single-float a sp))
+          (%t-blob x 1f0 z (* sp (- (f-sin a))) (rnd-range 0.5f0 2.5f0) (* sp (- (f-cos a))) (rnd-range 0.3f0 0.5f0) (rnd-range 0.1f0 0.18f0)
+                   -1f0 0.3f0 +pal-fire+)))
+      (flash-light (+ x (* 0.5f0 reach fx)) 1.2 (+ z (* 0.5f0 reach fz)) 1.0 0.5 0.12)
+      nil)))
 
 (defun-fast vfx-awaken-burst (x y z kind)
   "Awakening one-shots at the feet (x y z), drawn toon (docs/STYLE_STORM_DESIGN.md §4.1 / §4.2). KIND :bankai (every
 flame within 6 m pulled into the blade: FIRE flames and EMBER shards rushing in to the hands, ~0.45 s), :bankai-burst
 (the reveal: a charcoal double ring with an ember line, charcoal puffs, ash shards: no fire), :nozarashi (the
-yellow reiatsu pillar: REIATSU flames shooting up, a flat ring)."
+yellow reiatsu pillar: REIATSU flames shooting up, a flat ring), :nozarashi-half (a later cup 3's: half as tall)."
   (with-floats (x y z)
     (case kind
       (:bankai
@@ -998,12 +942,14 @@ yellow reiatsu pillar: REIATSU flames shooting up, a flat ring)."
            (%t-shard x (+ y (rnd-range 0.5f0 1.8f0)) z (* sp (f-cos a)) (rnd-range 0.5f0 2.5f0) (* sp (f-sin a))
                      (rnd-range 0.6f0 1.0f0) (rnd-range 0.1f0 0.2f0) 4f0 +pal-ash+)))
        (flash-light x (+ y 1.0) z 1.0 0.4 0.12))
-      (:nozarashi
-       (dotimes (i 28)
-         (%t-blob (+ x (rnd-range -0.35f0 0.35f0)) (+ y (rnd-range 0f0 1f0)) (+ z (rnd-range -0.35f0 0.35f0))
-                  (rnd-range -0.3f0 0.3f0) (rnd-range 10f0 20f0) (rnd-range -0.3f0 0.3f0)
-                  (rnd-range 0.35f0 0.6f0) (rnd-range 0.3f0 0.5f0) 0f0 0.3f0 +pal-reiatsu+))
-       (stamp :land x y z :scale 2.4)                  ; (no dust puffs: on the black card they hid him)
+      ((:nozarashi :nozarashi-half)                    ; (half: a later cup 3's flare, half as tall: Phase 6)
+       (let ((vk (if (eq kind :nozarashi) 1f0 0.5f0)))
+         (declare (single-float vk))
+         (dotimes (i (if (eq kind :nozarashi) 28 18))
+           (%t-blob (+ x (rnd-range -0.35f0 0.35f0)) (+ y (rnd-range 0f0 1f0)) (+ z (rnd-range -0.35f0 0.35f0))
+                    (rnd-range -0.3f0 0.3f0) (* vk (rnd-range 10f0 20f0)) (rnd-range -0.3f0 0.3f0)
+                    (rnd-range 0.35f0 0.6f0) (rnd-range 0.3f0 0.5f0) 0f0 0.3f0 +pal-reiatsu+))
+         (stamp :land x y z :scale (* 2.4f0 vk)))       ; (no dust puffs: on the black card they hid him)
        (flash-light x (+ y 1.0) z 1.0 0.85 0.3)))
     nil))
 
@@ -1021,7 +967,8 @@ yellow reiatsu pillar: REIATSU flames shooting up, a flat ring)."
   "Live drawn one-shots: kind x y z dx dy dz age scale seed n flag (kind 0 = a free slot).")
 (defparameter *stamp-kinds*
   '(:cut 1 :heavy 2 :fire 3 :counter 4 :guard 5 :guard-break 6 :clash 7 :hoho-out 8 :hoho-in 9 :burst 10
-    :konpaku 11 :rush 12 :land 13 :guard-crush 14 :reiatsu 15 :ember 16 :slit 17 :garb 18 :sweep 19 :wisps 20)
+    :konpaku 11 :rush 12 :land 13 :guard-crush 14 :reiatsu 15 :ember 16 :slit 17 :garb 18 :sweep 19 :wisps 20
+    :cone 21 :boom 22 :ring 23 :gash 24 :garb-guard 25 :scorch 26 :flare 27 :gutter 28 :nade 29)
   "Stamp kind -> its code in *STAMPS*.")
 (defvar *stamp-seed* 0.0 "Advances per stamp: every one-shot draws its own irregular shape.")
 
@@ -1109,7 +1056,6 @@ held 3 drawings, 6 shards; envelope 1 2 3 8), :fire (FIRE star), :counter (BLOOD
                   (declare (single-float r1))
                   (%star x y z (* 0.22f0 r1) r1 (if heavy 8 6) sdx sdy 0.06f0 seed pal k)
                   (%shards-out (if heavy 6 4) x y z sdx sdy a 5f0 (* sc 0.3f0) (* sc 0.045f0) pal k seed 0.7f0)
-                  (when (< ph 3) (%spr x y z (* 0.2f0 r1) 1f0 1f0 1f0 0.3f0))   ; T光: a thin additive core
                   (when (and heavy (< a 0.25f0))                          ; the impact mark: held 3 drawings
                     (let* ((l (* sc 0.65f0)) (px (- sdy)) (py sdx)
                            (ax (+ x (* l (+ (* px rx) (* py ux))))) (ay (+ y (* l (+ (* px ry) (* py uy))))) (az (+ z (* l (+ (* px rz) (* py uz)))))
@@ -1259,18 +1205,196 @@ steel shards. The frame it fires: a 1 f negative frame and a 3 f white back-rim 
         (= ph 5)))))
 
 (defun-fast %st-ring (o)
-  "Ground rings: :rush (the Kikon rush starts: a BLOOD ring and an inner one running out) and :land (DUST)."
+  "Ground rings: :rush (the Kikon rush starts: a BLOOD ring and an inner one running out), :land (DUST), :garb (NISHI's
+charcoal double ring with an ember line) and :ring (a shockwave in the palette N: FIRE, REIATSU, HIT)."
   (declare (fixnum o))
   (with-stamp (o)
-    (let* ((kind (aref %sv o)) (rush (= kind 12f0)) (garb (= kind 18f0)) (a (sage age 2f0))
-           (pal (cond (rush +pal-blood+) (garb +pal-black-smoke+) (t +pal-dust+))))
+    (let* ((kind (aref %sv o)) (rush (= kind 12f0)) (garb (= kind 18f0)) (ring (= kind 23f0)) (a (sage age 2f0))
+           (pal (cond (rush +pal-blood+) (garb +pal-black-smoke+) (ring n) (t +pal-dust+))))
       (declare (single-float kind a pal))
       (fx-envelope (es k fl ph) (a 0 2 3 14)
         (when (< ph 5)
-          (%tring x y z (* sc (+ 0.4f0 (* (if (or rush garb) 5f0 2.5f0) a))) (* sc (if (or rush garb) 0.12f0 0.06f0)) pal k seed)
-          (when rush (%tring x y z (* sc (+ 0.3f0 (* 2.5f0 a))) 0.04f0 pal k (+ seed 1f0)))
+          (%tring x y z (* sc (+ 0.4f0 (* (cond (ring 7f0) ((or rush garb) 5f0) (t 2.5f0)) a))) (* sc (if (or rush garb ring) 0.12f0 0.06f0))
+                  pal k seed)
+          (when (or rush ring) (%tring x y z (* sc (+ 0.3f0 (* (if ring 4.5f0 2.5f0) a))) 0.04f0 pal k (+ seed 1f0)))
           (when garb (%tring x y z (* sc (+ 0.3f0 (* 3.6f0 a))) 0.04f0 +pal-black-smoke+ k (+ seed 1f0))
                      (%tring x (+ y 0.01f0) z (* sc (+ 0.25f0 (* 4.2f0 a))) 0.025f0 +pal-ember+ k (+ seed 2f0))))
+        (= ph 5)))))
+
+;;; Phase 5 stamps (docs/STYLE_STORM_DESIGN.md §4.1 / §4.2 rows done in Phase 5): Taimatsu's cone, Jokaku Enjo's
+;;; detonation, KUKAN-GIRI's ink gash, West's garb guard / scorch / flare / burnout, Nadegiri's cut
+(defun-fast %st-cone (o)
+  "Taimatsu (:cone): X Y Z the feet, DX DZ the facing, SC the reach, N the half angle (rad). Envelope 1 3 4 30: a white
+flash, then 9 FIRE flames (a big tongue and a small one beside it) fanned over the sector, rolling out and up; a FIRE
+ground sector for its first 2 drawings; 5 pale SMOKE puffs at the lip from the hold on (they perforate as it erodes)."
+  (declare (fixnum o))
+  (with-stamp (o)
+    (let* ((a (sage age 2f0)) (yaw (f-atan2 (- dx) (- dz))) (dr drawing) (d5 (i->f (mod (f->i drawing) 5))))
+      (declare (single-float a yaw dr d5))
+      (fx-envelope (es k fl ph) (a 1 3 4 30)
+        (cond ((= ph 1) (%flash (+ x (* 0.45f0 sc dx)) 0.9f0 (+ z (* 0.45f0 sc dz)) 0.35f0 seed))
+              ((< ph 5)
+               (when (< a 0.2f0)
+                 (%tsector x 0f0 z 0.3f0 (* sc es) yaw n 1f0 (+ seed 7f0) 0.2f0 (toon-a +pal-fire+ (* 0.95f0 k)) 12))
+               (dotimes (i 9)
+                 (let* ((f (i->f i)) (u (- (* 0.25f0 f) 1f0)) (an (+ yaw (* u n 0.85f0) (* 0.12f0 (- (hash01 f seed) 0.5f0))))
+                        (fx (- (f-sin an))) (fz (- (f-cos an))) (d (+ (* sc (+ 0.25f0 (* 0.7f0 (hash01 (+ f 2.3f0) seed)))) (* 1.2f0 a)))
+                        (bx (+ x (* d fx))) (bz (+ z (* d fz))) (by (* 0.9f0 a))
+                        (hh (* es (+ 1f0 (* 0.7f0 (hash01 (+ f dr) seed))) (- 1f0 (* 0.3f0 u u)))))
+                   (declare (single-float f u an fx fz d bx bz by hh))
+                   (%tongue bx by bz (* 0.5f0 hh fx) (* 1.6f0 hh) (* 0.5f0 hh fz) (* 0.3f0 es) +pal-fire+ k (+ seed f (* 9f0 d5)) (+ dr f) 0.06f0
+                            :segs 6)                     ; a big flame rolling out, a smaller one licking beside it
+                   (%tongue (+ bx (* 0.35f0 fz)) by (- bz (* 0.35f0 fx)) (* 0.3f0 hh fx) (* 0.9f0 hh) (* 0.3f0 hh fz) (* 0.18f0 es) +pal-fire+ k
+                            (+ seed f 20f0 d5) (+ dr f 0.5f0) 0.04f0 :segs 4)))
+               (when (>= ph 3)
+                 (dotimes (j 5)
+                   (let* ((f (i->f j)) (an (+ yaw (* (- (* 0.5f0 f) 1f0) n 0.8f0))) (d (+ sc (* 0.8f0 a))))
+                     (declare (single-float f an d))
+                     (fx-disc (- x (* d (f-sin an))) (+ 0.5f0 (* 1.3f0 a)) (- z (* d (f-cos an))) (+ 0.3f0 (* 0.5f0 a)) 0.25f0
+                              (+ seed f 30f0) +pal-smoke+ k))))))
+        (= ph 5)))))
+
+(defun-fast %st-boom (o)
+  "Jokaku Enjo's detonation (:boom, SC the dome radius): envelope 1 3 6 24 — a white flash, then a 14-spike FIRE star
+over a larger EMBER one (its dark-red backing) with a white core for 2 drawings, eroding."
+  (declare (fixnum o))
+  (with-stamp (o)
+    (let* ((a (sage age 2f0)))
+      (declare (single-float a))
+      (fx-envelope (es k fl ph) (a 1 3 6 24)
+        (cond ((= ph 1) (%flash x y z (* 0.6f0 sc) seed))
+              ((< ph 5)
+               (%star x y z (* 0.5f0 sc) (* 1.55f0 sc es) 14 0f0 0f0 0.12f0 (+ seed 3f0) +pal-ember+ k 0.2f0)
+               (%star x y z (* 0.45f0 sc) (* 1.3f0 sc es) 14 0f0 0f0 0.12f0 seed +pal-fire+ k 0.3f0)
+               (when (< ph 4) (%star x y z (* 0.15f0 sc) (* 0.4f0 sc es) 9 0f0 0f0 0.08f0 (+ seed 5f0) +pal-hit+ k 0.4f0))))
+        (= ph 5)))))
+
+(defun-fast %st-gash (o)
+  "KUKAN-GIRI's rift cutting (:gash): X Y Z its near end, DX DY DZ along it, SC its length. Envelope 0 1 4 16: an INK
+gash (a black lens with a white edge) hanging in the air along the rift, a white HIT line in it while it holds, and
+4 ink shards thrown up."
+  (declare (fixnum o))
+  (with-stamp (o)
+    (let* ((a (sage age 2f0)) (x1 (+ x (* sc dx))) (y1 (+ y (* sc dy))) (z1 (+ z (* sc dz))))
+      (declare (single-float a x1 y1 z1))
+      (fx-envelope (es k fl ph) (a 0 1 4 16)
+        (when (< ph 5)
+          (fx-crescent x y z x1 y1 z1 (* 0.5f0 (+ x x1)) (+ 0.06f0 (* 0.5f0 (+ y y1))) (* 0.5f0 (+ z z1)) (* 0.13f0 es) :lens 0.1f0 seed
+                       +pal-ink+ k :push 0.2f0)
+          (when (< ph 4)
+            (fx-crescent x y z x1 y1 z1 (* 0.5f0 (+ x x1)) (+ 0.06f0 (* 0.5f0 (+ y y1))) (* 0.5f0 (+ z z1)) 0.03f0 :lens 0.05f0 (+ seed 1f0)
+                         +pal-hit+ 0.98f0 :push 0.25f0))
+          (%shards-out 4 (* 0.5f0 (+ x x1)) (* 0.5f0 (+ y y1)) (* 0.5f0 (+ z z1)) 0f0 1f0 a 4f0 0.25f0 0.05f0 +pal-ink+ k seed 1.4f0))
+        (= ph 5)))))
+
+(defun-fast %st-garb-guard (o)
+  "A hit the garb guard blocks (:garb-guard; West, §4.1 GOKUI GAESHI row, Phase 5): the guard's hexagon drawn in fire —
+an EMBER hexagon with a white HIT core hexagon (it reads as a block by shape, as a burn by value) — 5 EMBER sparks flung
+back along DX DZ (toward the attacker) and two BLACK SMOKE curls rising off it. Envelope 1 2 3 10."
+  (declare (fixnum o))
+  (with-stamp (o)
+    (let* ((a (hit-age age)) (dr drawing))
+      (declare (single-float a dr))
+      (fx-envelope (es k fl ph) (a 1 2 3 10)
+        (cond ((= ph 1) (%flash x y z (* sc 0.2f0) seed))
+              ((< ph 5)
+               (fx-star x y z 1f0 (* sc 0.46f0 es) 6 (* 0.5236f0 (hash01 2.1f0 seed)) 0f0 0f0 0.05f0 seed +pal-ember+ k :push 0.4f0)
+               (when (< ph 4)
+                 (fx-star x y z 1f0 (* sc 0.24f0 es) 6 (* 0.5236f0 (hash01 2.1f0 seed)) 0f0 0f0 0.03f0 (+ seed 1f0) +pal-hit+ k :push 0.44f0))
+               (%shards-out 5 x y z sdx sdy a 5f0 (* sc 0.22f0) (* sc 0.035f0) +pal-ember+ k seed 1.2f0 0.46f0)
+               (dotimes (j 2)
+                 (let* ((f (i->f j)) (off (* sc (- (* 0.3f0 f) 0.15f0))))
+                   (declare (single-float f off))
+                   (%tongue (+ x off) (+ y 0.1f0) z (* 0.1f0 (- (hash01 (+ f dr) seed) 0.5f0)) (* sc es (+ 0.35f0 (* 1.2f0 a))) 0f0
+                            (* sc 0.06f0) +pal-black-smoke+ k (+ seed f (* 3f0 (i->f (mod (f->i dr) 3))) 200f0) (+ dr f) 0.08f0 :segs 5 :wob 0.35f0)))))
+        (= ph 5)))))
+
+(defun-fast %st-scorch (o)
+  "The garb scorching an attacker (:scorch, at his sword hand; Phase 5): a small white flash, an EMBER star for 2
+drawings, then two BLACK SMOKE curls rising off the arm (mono: a white burn, black smoke; the ember is the only
+colour). Envelope 1 2 4 16."
+  (declare (fixnum o))
+  (with-stamp (o)
+    (let* ((a (hit-age age)) (dr drawing))
+      (declare (single-float a dr))
+      (fx-envelope (es k fl ph) (a 1 2 4 16)
+        (cond ((= ph 1) (%flash x y z 0.12f0 seed))
+              ((< ph 5)
+               (when (< ph 4) (%star x y z 0.05f0 (* 0.22f0 es) 7 0f0 1f0 0.06f0 seed +pal-ember+ k 0.35f0))
+               (dotimes (j 2)
+                 (let* ((f (i->f j)))
+                   (declare (single-float f))
+                   (%tongue (+ x (* 0.12f0 (- f 0.5f0))) y z (* 0.15f0 (- (hash01 (+ f dr) seed) 0.5f0)) (+ 0.3f0 (* 1.4f0 a)) 0f0 0.07f0
+                            +pal-black-smoke+ k (+ seed f (* 3f0 (i->f (mod (f->i dr) 3))) 210f0) (+ dr f) 0.08f0 :segs 5 :wob 0.35f0)))))
+        (= ph 5)))))
+
+(defun-fast %st-flare (o)
+  "The garb flaring as it absorbs a ranged hit (:flare, at the feet; Phase 5): 12 FIRE tongues thrown out round him, low
+and leaning out, and an EMBER ring running out. Envelope 1 2 3 12."
+  (declare (fixnum o))
+  (with-stamp (o)
+    (let* ((a (hit-age age)) (dr drawing) (d5 (i->f (mod (f->i drawing) 5))))
+      (declare (single-float a dr d5))
+      (fx-envelope (es k fl ph) (a 1 2 3 12)
+        (when (and (> ph 0) (< ph 5))
+          (dotimes (i 12)
+            (let* ((f (i->f i)) (an (+ (* 0.5236f0 f) (* 0.3f0 (hash01 f seed)))) (c (f-cos an)) (sn (f-sin an))
+                   (r (+ 0.35f0 (* 2.2f0 a))) (hh (* es (+ 0.7f0 (* 0.6f0 (hash01 (+ f dr) seed))))))
+              (declare (single-float f an c sn r hh))
+              (%tongue (+ x (* r c)) (+ y 0.05f0) (+ z (* r sn)) (* 0.5f0 hh c) hh (* 0.5f0 hh sn) 0.14f0 +pal-fire+ k (+ seed f (* 12f0 d5)) (+ dr f)
+                       0.03f0 :segs 4)))
+          (%tring x y z (+ 0.4f0 (* 4.5f0 a)) 0.06f0 +pal-ember+ k seed))
+        (= ph 5)))))
+
+(defun-fast %st-gutter (o)
+  "A burnout (:gutter, at the feet; §4.1 Burnout, Phase 5): West's garb (N 1) gutters out — 9 FIRE tongues sinking for
+the first 2 drawings (threes) — then 6 BLACK SMOKE wisps rise off the shoulders and an ASH ring runs out at the feet
+(mono). Envelope 0 2 6 30 on threes."
+  (declare (fixnum o))
+  (with-stamp (o)
+    (let* ((a (sage age 3f0)) (d3 (i->f (logand (f->i (* 8f0 (fx-clock))) 63))))
+      (declare (single-float a d3))
+      (fx-envelope (es k fl ph) (a 0 2 6 30)
+        (when (< ph 5)
+          (when (and (< a 0.2f0) (> n 0.5f0))
+            (dotimes (i 9)
+              (let* ((f (i->f i)) (an (+ (* 0.698f0 f) (* 0.3f0 (hash01 f seed)))) (hh (* (- 1f0 (* 5f0 a)) (+ 0.7f0 (* 0.6f0 (hash01 (+ f d3) seed))))))
+                (declare (single-float f an hh))
+                (when (> hh 0.05f0)
+                  (%tongue (+ x (* 0.4f0 (f-cos an))) (+ y 0.05f0) (+ z (* 0.4f0 (f-sin an))) 0f0 hh 0f0 0.15f0 +pal-fire+ 0.9f0 (+ seed f) (+ d3 f) 0.03f0
+                           :segs 4)))))
+          (dotimes (j 6)
+            (let* ((f (i->f j)) (an (+ (* 1.0472f0 f) (* 0.3f0 (hash01 f (+ seed 1f0))))) (c (f-cos an)) (sn (f-sin an))
+                   (hh (* es (+ 0.5f0 (* 1.5f0 a)) (+ 0.8f0 (* 0.4f0 (hash01 (+ f d3) seed))))))
+              (declare (single-float f an c sn hh))
+              (%tongue (+ x (* 0.25f0 c)) (+ y 1.1f0) (+ z (* 0.25f0 sn)) (* 0.2f0 c) hh (* 0.2f0 sn) 0.13f0 +pal-black-smoke+ k
+                       (+ 1100f0 seed f (* 6f0 (i->f (mod (f->i d3) 3)))) (+ d3 f) 0.25f0 :segs 6 :wob 0.35f0)))
+          (%tring x y z (+ 0.4f0 (* 3f0 a)) 0.09f0 +pal-ash+ k seed))
+        (= ph 5)))))
+
+(defun-fast %st-nade (o)
+  "Nadegiri (:nade; §4.1, Phase 5): X Y Z the feet, DX DZ his facing, SC the line's length. Envelope 1 2 4 30: a white
+flash, a white HIT lens crescent across his front held 2 drawings (then an EMBER hairline), and on the ground an
+ink-edged scorch line (an INK strip with an EMBER core) racing out along the cut, eroding from its far end."
+  (declare (fixnum o))
+  (with-stamp (o)
+    (let* ((a (hit-age age)) (rx (- dz)) (rz dx) (run (f-clamp (/ a 0.1f0) 0f0 1f0))
+           (ex (+ x (* sc run dx))) (ez (+ z (* sc run dz))))
+      (declare (single-float a rx rz run ex ez))
+      (fx-envelope (es k fl ph) (a 1 2 4 30)
+        (cond ((= ph 1) (%flash (+ x (* 1.3f0 dx)) (+ y 1f0) (+ z (* 1.3f0 dz)) 0.3f0 seed))
+              ((< ph 5)
+               (let* ((ax (+ x (* 1.2f0 dx) (* 1.6f0 rx))) (az (+ z (* 1.2f0 dz) (* 1.6f0 rz)))
+                      (bx (+ x (* 1.2f0 dx) (* -1.6f0 rx))) (bz (+ z (* 1.2f0 dz) (* -1.6f0 rz))))
+                 (declare (single-float ax az bx bz))
+                 (if (< ph 4)
+                     (fx-crescent ax (+ y 0.85f0) az bx (+ y 1.05f0) bz (+ x (* 2.9f0 dx)) (+ y 0.95f0) (+ z (* 2.9f0 dz)) (* 0.11f0 es) :lens 0.1f0
+                                  seed +pal-hit+ k :push 0.2f0)
+                     (fx-crescent ax (+ y 0.85f0) az bx (+ y 1.05f0) bz (+ x (* 2.9f0 dx)) (+ y 0.95f0) (+ z (* 2.9f0 dz)) 0.03f0 :lens 0.9f0
+                                  seed +pal-ember+ k :push 0.2f0)))
+               (toon-ground-seg (+ x (* 0.5f0 dx)) (+ z (* 0.5f0 dz)) ex ez 0.03f0 0.11f0 1f0 0.3f0 (+ seed 2f0) 0.25f0 (toon-a +pal-ink+ k))
+               (toon-ground-seg (+ x (* 0.5f0 dx)) (+ z (* 0.5f0 dz)) ex ez 0.037f0 0.035f0 1f0 0.3f0 (+ seed 3f0) 0.15f0
+                                (toon-a +pal-ember+ k))))
         (= ph 5)))))
 
 ;;; the Bankai stances (design v3 §D; STYLE §4.1): EMBER + charcoal, the only warm hue a thin ember line
@@ -1350,7 +1474,9 @@ drawings, then an EMBER hairline over it as it erodes; envelope 1 2 4 10."
           (when (case kind
                   ((1 2 3 4 15) (%st-hit o)) (5 (%st-guard o)) (6 (%st-guard-break o)) (7 (%st-clash o)) (14 (%st-guard-crush o))
                   ((8 9) (%st-hoho o)) (10 (%st-burst o)) (11 (%st-konpaku o)) ((12 13 18) (%st-ring o))
-                  (16 (%st-ember o)) (17 (%st-slit o)) (19 (%st-sweep o)) (20 (%st-wisps o)) (t t))
+                  (16 (%st-ember o)) (17 (%st-slit o)) (19 (%st-sweep o)) (20 (%st-wisps o))
+                  (21 (%st-cone o)) (22 (%st-boom o)) (23 (%st-ring o)) (24 (%st-gash o)) (25 (%st-garb-guard o)) (26 (%st-scorch o))
+                  (27 (%st-flare o)) (28 (%st-gutter o)) (29 (%st-nade o)) (t t))
             (setf (aref s o) 0f0)))))
     nil))
 
@@ -1445,14 +1571,15 @@ vanish streaks, :leap a DUST ring and dust (the take-off), else (:charge) dust k
     nil))
 
 (defun-fast vfx-rift (x0 z0 x1 z1 cutting)
-  "KUKAN-GIRI's rift along (x0 z0)->(x1 z1) at chest height: while it waits a thin white lens slit with a REIATSU
-yellow rim, trembling on twos (the tell); CUTTING (its 2 f): a wide HIT-white band over a yellow one."
+  "KUKAN-GIRI's rift along (x0 z0)->(x1 z1) at chest height (§4.2 cups row, Phase 5: drawn). While it waits: a thin
+REIATSU lens slit (yellow with a white core) with a white HIT line in it, trembling on twos (the tell); CUTTING (its
+2 f): a wide white HIT lens over a wider REIATSU one (the ink gash that stays is VFX-RIFT-GASH's stamp)."
   (with-floats (x0 z0 x1 z1)
-    (let* ((dx (- x1 x0)) (dz (- z1 z0)) (dr (drawing-no)) (tr (* 0.05f0 (- (hash01 dr 3f0) 0.5f0)))
-           (y (+ 1.15f0 tr)) (w (if cutting 0.16f0 0.05f0)))
-      (declare (single-float dx dz dr tr y w))
-      (fx-ribbon x0 y z0 dx 0f0 dz (* 1.8f0 w) (* 0.6f0 w) 1f0 0.85f0 0.2f0 -0.8f0 1f0 0.8f0 0.15f0 -0.6f0 dr 0f0 :segs 2)
-      (fx-ribbon x0 y z0 dx 0f0 dz w (* 0.3f0 w) 1f0 1f0 0.97f0 1f0 1f0 1f0 0.95f0 1f0 dr 0f0 :segs 2)
+    (let* ((dr (drawing-no)) (tr (* 0.05f0 (- (hash01 dr 3f0) 0.5f0))) (y (+ 1.15f0 tr)) (sd (i->f (mod (f->i dr) 5)))
+           (mx (* 0.5f0 (+ x0 x1))) (mz (* 0.5f0 (+ z0 z1))))
+      (declare (single-float dr tr y sd mx mz))
+      (fx-crescent x0 y z0 x1 y z1 mx (+ y 0.02f0) mz (if cutting 0.2f0 0.065f0) :lens 0.08f0 (+ 20f0 sd) +pal-reiatsu+ 0.95f0 :push 0.2f0)
+      (fx-crescent x0 y z0 x1 y z1 mx (+ y 0.02f0) mz (if cutting 0.1f0 0.018f0) :lens 0.04f0 (+ 25f0 sd) +pal-hit+ 0.98f0 :push 0.24f0)
       nil)))
 
 (defun-fast vfx-nishi (x z)
@@ -1479,6 +1606,52 @@ yellow rim, trembling on twos (the tell); CUTTING (its 2 f): a wide HIT-white ba
     (stamp :wisps x 0.0 z)
     nil))
 
+(defun-fast vfx-garb-block (x y z dx dz)
+  "A hit West's garb guard blocks at (x y z); (DX DZ) = toward the attacker: the fire hexagon (%ST-GARB-GUARD)."
+  (with-floats (x y z dx dz)
+    (stamp :garb-guard x y z :dx dx :dz dz)
+    (flash-light x y z 1.0 0.5 0.2)
+    nil))
+
+(defun-fast vfx-scorch (x y z)
+  "The garb scorching an attacker's sword arm at (x y z): a white burn, an ember star, black smoke curls (%ST-SCORCH)."
+  (with-floats (x y z)
+    (stamp :scorch x y z)
+    nil))
+
+(defun-fast vfx-garb-flare (x z)
+  "The garb flaring as it absorbs a ranged hit, at the feet (x z): the flung ring of flames (%ST-FLARE)."
+  (with-floats (x z)
+    (stamp :flare x 0f0 z)
+    nil))
+
+(defun-fast vfx-burnout (x z garb)
+  "A Bankai stance burning out at the feet (x z): black smoke and an ash ring (%ST-GUTTER; GARB: West's flames gutter out
+first), 5 BLACK SMOKE puffs off the shoulders and 12 ASH shards falling."
+  (with-floats (x z)
+    (stamp :gutter x 0f0 z :n (if garb 1 0))
+    (dotimes (i 5)
+      (%t-blob (+ x (rnd-range -0.3f0 0.3f0)) (rnd-range 1.1f0 1.5f0) (+ z (rnd-range -0.3f0 0.3f0)) (rnd-range -0.4f0 0.4f0)
+               (rnd-range 0.8f0 1.6f0) (rnd-range -0.4f0 0.4f0) (rnd-range 0.8f0 1.2f0) (rnd-range 0.18f0 0.3f0) -0.4f0 0.3f0 +pal-black-smoke+))
+    (dotimes (i 12)
+      (%t-shard (+ x (rnd-range -0.4f0 0.4f0)) (rnd-range 0.8f0 1.7f0) (+ z (rnd-range -0.4f0 0.4f0)) (rnd-range -1f0 1f0) (rnd-range 0f0 1f0)
+                (rnd-range -1f0 1f0) (rnd-range 0.8f0 1.3f0) (rnd-range 0.06f0 0.12f0) 1.5f0 +pal-ash+))
+    nil))
+
+(defun-fast vfx-nadegiri (x z dx dz)
+  "Nadegiri's cut at the feet (x z), facing (DX DZ): the white crescent and the scorch line racing 8 m out (%ST-NADE)."
+  (with-floats (x z dx dz)
+    (stamp :nade x 0f0 z :dx dx :dz dz :scale 8.0)
+    (flash-light (+ x (* 1.5f0 dx)) 1.0 (+ z (* 1.5f0 dz)) 1.0 0.6 0.3)
+    nil))
+
+(defun-fast vfx-rift-gash (x z dx dz)
+  "KUKAN-GIRI's rift cuts: the ink gash along it (the rift's frame: X Z its owner's feet at the cut, (DX DZ) along it; the
+rift runs 1.0 -> 4.4 m at 1.15 m, hazards.lisp)."
+  (with-floats (x z dx dz)
+    (stamp :gash (+ x dx) 1.15f0 (+ z dz) :dx dx :dy 0.0 :dz dz :scale 3.4)
+    nil))
+
 (defun-fast vfx-smoke-puffs (x y z n)
   "N BLACK SMOKE puffs rising at (x y z): a scorched attacker's arm, a burnout."
   (declare (fixnum n))
@@ -1497,21 +1670,103 @@ yellow rim, trembling on twos (the tell); CUTTING (its 2 f): a wide HIT-white ba
                (rnd-range 0.4f0 0.6f0) (rnd-range 0.14f0 0.22f0) -0.2f0 0.25f0 +pal-dust+))
     nil))
 
-(defun vfx-shockwave (x z r life &key (rgb '(1.0 0.8 0.5)) pal)
-  "Expanding ground ring at (x z) to radius R over LIFE s. PAL (a toon palette): a :land-style toon ring
-+ DUST puffs (PAL +PAL-DUST+); else the soft coloured ring of RGB with a thinner inner ring and dust."
-  (if pal
-      (progn (stamp :land x 0.0 z :scale (/ r 2.5))
-             (dotimes (i 4)
-               (let ((a (rnd-range 0.0 6.2832)))
-                 (%t-blob (f32 (+ x (* 0.3 (cos a)))) 0.12f0 (f32 (+ z (* 0.3 (sin a)))) (f32 (* 2.0 (cos a))) 0.4f0 (f32 (* 2.0 (sin a)))
-                          0.6f0 0.2f0 -0.2f0 0.25f0 (f32 pal)))))
-      (let ((cr (f32 (elt rgb 0))) (cg (f32 (elt rgb 1))) (cb (f32 (elt rgb 2))))
-        (fx-ring x 0.05 z 0.3 r life cr cg cb :flat t :width (* 0.04 r))
-        (fx-ring x 0.05 z 0.2 (* 0.7 r) (* 0.8 life) cr cg cb :flat t :width (* 0.015 r))
-        (fx-burst +p-dust+ 16 (f32 x) 0.15f0 (f32 z) 0f0 0.1f0 0f0 1f0 (f32 (* 0.8 (/ r life))) (f32 (/ r life))
-                  (f32 (* 0.5 life)) 0.35f0 0.55f0 0.5f0 0.45f0)))
-    nil)
+(defun vfx-shockwave (x z r life &key rgb pal)
+  "Expanding toon ground ring at (x z) to radius R (Phase 5: every shockwave is drawn). PAL (a toon palette) or RGB, mapped
+to the nearest of the notan palettes: orange -> FIRE, yellow -> REIATSU, else HIT white; DUST (the :land stamp) also
+kicks up 4 dust puffs. LIFE is kept for the call shape (the stamp's envelope times it)."
+  (declare (ignore life))
+  (let ((pal (or pal (if (and rgb (< (second rgb) 0.7)) +pal-fire+ (if (and rgb (< (third rgb) 0.6)) +pal-reiatsu+ +pal-hit+)))))
+    (if (= pal +pal-dust+)
+        (progn (stamp :land x 0.0 z :scale (/ r 2.5))
+               (dotimes (i 4)
+                 (let ((a (rnd-range 0.0 6.2832)))
+                   (%t-blob (f32 (+ x (* 0.3 (cos a)))) 0.12f0 (f32 (+ z (* 0.3 (sin a)))) (f32 (* 2.0 (cos a))) 0.4f0 (f32 (* 2.0 (sin a)))
+                            0.6f0 0.2f0 -0.2f0 0.25f0 +pal-dust+))))
+        (stamp :ring x 0.0 z :scale (/ r 2.5) :n pal)))
+  nil)
+
+;;; ---------------------------------------------------------------- Phase 6: the Nozarashi skull, the K.O. rain
+(defun-fast vfx-skull (x y z k)
+  "The skull in the Nozarashi pillar (§5, Phase 6): Kenpachi's reiatsu taking the shape of a skull, drawn in the screen
+plane at (X Y Z): an INK cranium and jaw (the black shape with the white hairline, cut out of the yellow), REIATSU eye
+sockets and nose (the pillar showing through, the sockets' white cores glaring), 6 white fangs; re-drawn on twos
+(the boil). K: presence. 0 B."
+  (declare (single-float x y z k))
+  (let* ((dr (drawing-no)) (sd (i->f (mod (f->i dr) 5))))
+    (declare (single-float dr sd))
+    (with-cam ()
+      (macrolet ((at ((px py) &body body)                ; bind X1 Y1 Z1 = the screen-plane point (px, py) m off the centre
+                   `(let* ((x1 (+ x (* ,px rx) (* ,py ux))) (y1 (+ y (* ,px ry) (* ,py uy))) (z1 (+ z (* ,px rz) (* ,py uz))))
+                      (declare (single-float x1 y1 z1))
+                      ,@body)))
+        (at (0f0 0.08f0) (fx-disc x1 y1 z1 0.56f0 0.06f0 (+ 70f0 sd) +pal-ink+ k :push 0.1f0))            ; the cranium
+        (at (0f0 -0.42f0) (fx-star x1 y1 z1 0.36f0 0.3f0 6 0.52f0 0f0 0f0 0.05f0 (+ 71f0 sd) +pal-ink+ k :push 0.12f0))  ; the jaw
+        (at (-0.21f0 0.04f0) (fx-disc x1 y1 z1 0.15f0 0.1f0 (+ 72f0 sd) +pal-reiatsu+ k :push 0.2f0))     ; the sockets
+        (at (0.21f0 0.04f0) (fx-disc x1 y1 z1 0.15f0 0.1f0 (+ 73f0 sd) +pal-reiatsu+ k :push 0.2f0))
+        (at (0f0 -0.2f0) (fx-star x1 y1 z1 0.08f0 0.06f0 3 3.1416f0 0f0 0f0 0.05f0 (+ 74f0 sd) +pal-reiatsu+ k :push 0.2f0))
+        (dotimes (i 6)                                     ; the fangs along the jaw
+          (let* ((f (i->f i)) (px (* 0.09f0 (- f 2.5f0))))
+            (declare (single-float f px))
+            (at (px -0.4f0) (fx-shard x1 y1 z1 (- ux) (- uy) (- uz) (if (member i '(0 5)) 0.16f0 0.11f0) 0.03f0 0.05f0 (+ f dr)
+                                      +pal-hit+ k :push 0.22f0))))))
+    nil))
+
+(defun-fast vfx-rain (cx cz age k)
+  "The K.O.'s rain (§6: rain as an emotional accent, Phase 6): 110 thin white HIT streaks (grey hairline) slanting down through a 14 m box
+round (CX CZ), falling 14 m/s on threes (the streaks re-drawn every 1/8 s), and 10 small white splash rings on the
+ground each drawing; AGE s since it began (the fx clock), K presence (a fade in). No particles: 0 B."
+  (declare (single-float cx cz age k))
+  (let* ((a (sage age 3f0)) (dr (drawing-no 8f0)) (l (f-sqrt (+ 1f0 0.0225f0 0.0025f0))) (dx (/ 0.15f0 l)) (dy (/ -1f0 l)) (dz (/ 0.05f0 l)))
+    (declare (single-float a dr l dx dy dz))
+    (dotimes (i 110)
+      (let* ((f (i->f i)) (y (- 9f0 (f-mod (+ (* 9f0 (hash01 f 1.3f0)) (* 14f0 a)) 9f0))))
+        (declare (single-float f y))
+        (fx-shard (+ cx (* 14f0 (- (hash01 f 2.7f0) 0.5f0))) (+ y 0.2f0) (+ cz (* 14f0 (- (hash01 f 5.9f0) 0.5f0)))
+                  dx dy dz 0.9f0 0.018f0 0f0 f +pal-hit+ k :push 0f0)))
+    (dotimes (i 10)
+      (let* ((f (+ (i->f i) (* 10f0 dr))))
+        (declare (single-float f))
+        (%tring (+ cx (* 12f0 (- (hash01 f 3.3f0) 0.5f0))) 0f0 (+ cz (* 12f0 (- (hash01 f 7.1f0) 0.5f0))) 0.12f0 0.02f0
+                +pal-hit+ (* 0.9f0 k) f 12)))
+    nil))
+
+(declaim (type f32vec *acc-v*))
+(defvar *acc-v* (make-f32 3) "VFX-FACE-ACCENT: the head point.")
+(defun-fast vfx-face-accent (jm kind ms)
+  "The expression accent at gameplay distance (Phase 6: the faces are ~12 px tall there), over the head of the body
+posed in JM, MS milliseconds after the face changed. KIND 1 (shout): 6 ink strokes (BLACK SMOKE: dark, a white hairline)
+bursting out of the head's upper half
+(the manga roar), grown over 2 drawings, re-drawn on twos, eroding after 250 ms, gone at 350; KIND 2 (hurt): 3 white
+HIT drops flung off the head, falling, gone at 400 ms. 0 B."
+  (declare (type f32vec jm) (fixnum kind ms))
+  (let* ((v *acc-v*) (age (* 0.001f0 (i->f ms))) (a (sage age 2f0)) (dr (drawing-no)))
+    (declare (type f32vec v) (single-float age a dr))
+    (joint-point! v jm (ji :head) 0f0 0.12f0 0.02f0)
+    (with-cam ()
+      (let* ((hx (aref v 0)) (hy (aref v 1)) (hz (aref v 2)))
+        (declare (single-float hx hy hz))
+        (if (= kind 1)
+            (when (< ms 350)
+              (let* ((k (* 0.98f0 (f-clamp (/ (- 0.35f0 a) 0.1f0) 0f0 1f0))) (g (f-min 1f0 (+ 0.6f0 (* 5f0 a)))))
+                (declare (single-float k g))
+                (dotimes (i 6)
+                  (let* ((f (i->f i)) (th (+ 0.35f0 (* 0.49f0 f) (* 0.14f0 (- (hash01 (+ f dr) 3.1f0) 0.5f0))))
+                         (c (f-cos th)) (sn (f-sin th)) (l (* g (+ 0.28f0 (* 0.14f0 (hash01 (+ f dr) 1.7f0)))))
+                         (dx (+ (* c rx) (* sn ux))) (dy (+ (* c ry) (* sn uy))) (dz (+ (* c rz) (* sn uz))) (r (+ 0.3f0 (* 0.5f0 l))))
+                    (declare (single-float f th c sn l dx dy dz r))
+                    (fx-shard (+ hx (* r dx)) (+ hy (* r dy)) (+ hz (* r dz)) dx dy dz l 0.045f0 0.05f0 (+ f dr) +pal-black-smoke+ k
+                              :push 0.3f0)))))
+            (when (< ms 400)
+              (dotimes (i 3)
+                (let* ((f (i->f i)) (side (if (= i 1) -1f0 1f0)) (vx (* side (+ 1.2f0 (* 0.5f0 f)))) (vy (- 1.6f0 (* 0.3f0 f)))
+                       (px (* vx a)) (py (- (* vy a) (* 4.9f0 a a))) (ty (- vy (* 9.8f0 a)))
+                       (tl (f-max 1f-3 (f-sqrt (+ (* vx vx) (* ty ty))))) (k (* 0.98f0 (f-clamp (/ (- 0.4f0 a) 0.1f0) 0f0 1f0))))
+                  (declare (single-float f side vx vy px py ty tl k))
+                  (fx-shard (+ hx (* (+ (* side 0.1f0) px) rx) (* py ux)) (+ hy (* (+ (* side 0.1f0) px) ry) (* py uy))
+                            (+ hz (* (+ (* side 0.1f0) px) rz) (* py uz))
+                            (/ (+ (* vx rx) (* ty ux)) tl) (/ (+ (* vx ry) (* ty uy)) tl) (/ (+ (* vx rz) (* ty uz)) tl)
+                            0.2f0 0.07f0 0.05f0 (+ 7f0 f) +pal-hit+ k :push 0.3f0)))))))
+    nil))
 
 (defun-fast vfx-soul-flame (x y z age)
   "The red soul flame floating over a Kikon-able victim (x y z = the flame's base, e.g. 0.4 m over the

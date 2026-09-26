@@ -13,6 +13,9 @@
 ;;;;       kept for the call shape). WEAPON = weapon key or NIL (drawn in the :weapon-r joint).
 ;;;;       HIDDEN = joint bitmask (JOINT-MASK ...): parts, glows and the weapon of those joints are
 ;;;;       skipped. HIDE = a tag or list of tags of tagged parts to skip.
+;;;;       FACE :neutral / :shout / :hurt = the expression (docs/STYLE_STORM_DESIGN.md §2.5): the face shapes are
+;;;;       tagged :face-neutral / :face-shout / :face-hurt and the two not shown are hidden (FACE-HIDE; a
+;;;;       non-NIL HIDE replaces that list, so a caller that hides parts names the faces too).
 ;;;;       TINT (r g b) multiplies the solid parts' colours; RIM (f32vec, RIM-VEC) replaces the body's
 ;;;;       silhouette rim; EMISSIVE adds glow to solid parts; FLASH 0..1 = hit flash to white;
 ;;;;       ALPHA < 1 = transparent (Hoho vanish). Mirror match: P2 passes :tint *MIRROR-TINT*
@@ -206,11 +209,16 @@ feet height of the last DRAW-BODY (0 for a planted weapon)."
     (setf (aref m 0) k (aref m 10) k (aref m 12) (f32 x) (aref m 13) 0.012f0 (aref m 14) (f32 z))
     (draw-mesh *shadow-mesh* m :toon *toon-ground*)))
 
-(defun draw-body (body joints x y z yaw &key weapon (hidden 0) hide tint rim (emissive 0f0) (flash 0f0)
+(defparameter *face-hides*
+  '((:neutral :face-shout :face-hurt) (:shout :face-neutral :face-hurt) (:hurt :face-neutral :face-shout))
+  "Expression -> the face tags DRAW-BODY hides for it (constant lists: 0 B a draw).")
+(defun face-hide (face) (rest (or (assoc face *face-hides*) (first *face-hides*))))
+
+(defun draw-body (body joints x y z yaw &key weapon (hidden 0) hide (face :neutral) tint rim (emissive 0f0) (flash 0f0)
                                           (alpha 1f0) (shadow t))
   "Queue every visible part of BODY posed by JOINTS (see the file header)."
   (declare (ignore yaw) (type f32vec joints) (fixnum hidden))
-  (let* ((dm *dm*) (rim (or rim (body-rim body))))
+  (let* ((dm *dm*) (rim (or rim (body-rim body))) (hide (or hide (face-hide face))))
     (declare (type f32vec dm))
     (setf (aref *toon-body* 1) (f32 y))
     (draw-parts (body-parts body) (body-extras body) joints :hidden hidden :hide hide
@@ -236,6 +244,100 @@ feet height of the last DRAW-BODY (0 for a planted weapon)."
   "World position of the held WEAPON's blade base (trail / fire start) into OUT."
   (declare (ignore body))
   (body-weapon-point weapon joints out (weapon-base (find-weapon weapon))))
+
+;;; ---------------------------------------------------------------- the two-handed grip (Phase 6)
+(defvar *grip-clips* nil
+  "Clip names drawn with the left fist on the held weapon's handle (the art files register theirs): GRIP-LEFT! pulls
+the left arm there after the FK, so the keys' in-betweens cannot drift off it.")
+
+(defmacro %rot-to! (kx ky kz c x y z)
+  "Rotate the float variables X Y Z in place by the rotation taking unit A to unit B, given K = A x B and C = A . B
+(Rodrigues: v c + k x v + k (k . v) / (1 + c))."
+  `(let* ((%d (/ (+ (* ,kx ,x) (* ,ky ,y) (* ,kz ,z)) (+ 1f0 ,c)))
+          (%x (+ (* ,c ,x) (- (* ,ky ,z) (* ,kz ,y)) (* %d ,kx)))
+          (%y (+ (* ,c ,y) (- (* ,kz ,x) (* ,kx ,z)) (* %d ,ky)))
+          (%z (+ (* ,c ,z) (- (* ,kx ,y) (* ,ky ,x)) (* %d ,kz))))
+     (declare (single-float %d %x %y %z))
+     (setf ,x %x ,y %y ,z %z)))
+
+(defmacro %rot-cols! (jm j kx ky kz c)
+  "Rotate joint J's three axis columns in JM by %ROT-TO!'s rotation (its origin stays)."
+  `(dotimes (%c 3)
+     (let* ((%o (+ (* ,j 16) (* 4 %c))) (%x (aref ,jm %o)) (%y (aref ,jm (+ %o 1))) (%z (aref ,jm (+ %o 2))))
+       (declare (fixnum %o) (single-float %x %y %z))
+       (%rot-to! ,kx ,ky ,kz ,c %x %y %z)
+       (setf (aref ,jm %o) %x (aref ,jm (+ %o 1)) %y (aref ,jm (+ %o 2)) %z))))
+
+(defun-fast grip-left! (jm wv)
+  "Two-bone IK after the FK (a look): move the left fist (the :weapon-l point) W (0..1) of the way onto the right hand's
+handle (the :weapon-r frame's +Z axis, 0.14-0.62 m behind the grip: the long handle; the nearest point to where the
+pose put the fist, so the keys choose where it holds), bending the elbow in the plane the pose gave it. The upper arm,
+forearm, hand and :weapon-l matrices are rotated about the shoulder and elbow; nothing else moves. W = WV[0] (an f32vec:
+a float argument would box). 0 B."
+  (declare (type f32vec jm wv))
+  (dotimes (pass (if (>= (aref wv 0) 1f0) 2 1))          ; a 2nd pass takes up what turning the fist's offset moved
+  (let* ((w (aref wv 0)) (ua (* 16 (ji :upper-arm-l))) (la (* 16 (ji :lower-arm-l))) (hd (* 16 (ji :hand-l))) (wl (* 16 (ji :weapon-l)))
+         (wr (* 16 (ji :weapon-r)))
+         (sx (aref jm (+ ua 12))) (sy (aref jm (+ ua 13))) (sz (aref jm (+ ua 14)))
+         (ex (aref jm (+ la 12))) (ey (aref jm (+ la 13))) (ez (aref jm (+ la 14)))
+         (hx (aref jm (+ hd 12))) (hy (aref jm (+ hd 13))) (hz (aref jm (+ hd 14)))
+         (fx (aref jm (+ wl 12))) (fy (aref jm (+ wl 13))) (fz (aref jm (+ wl 14)))
+         (ax (aref jm (+ wr 8))) (ay (aref jm (+ wr 9))) (az (aref jm (+ wr 10)))       ; the handle axis (scaled)
+         (ox (aref jm (+ wr 12))) (oy (aref jm (+ wr 13))) (oz (aref jm (+ wr 14)))
+         (s (f-clamp (/ (+ (* (- fx ox) ax) (* (- fy oy) ay) (* (- fz oz) az)) (f-max 1f-6 (+ (* ax ax) (* ay ay) (* az az))))
+                     0.14f0 0.62f0))
+         (tx (+ hx (* w (- (+ ox (* s ax)) fx)))) (ty (+ hy (* w (- (+ oy (* s ay)) fy)))) (tz (+ hz (* w (- (+ oz (* s az)) fz))))
+         (a (f-sqrt (+ (* (- ex sx) (- ex sx)) (* (- ey sy) (- ey sy)) (* (- ez sz) (- ez sz)))))
+         (b (f-sqrt (+ (* (- hx ex) (- hx ex)) (* (- hy ey) (- hy ey)) (* (- hz ez) (- hz ez)))))
+         (dx (- tx sx)) (dy (- ty sy)) (dz (- tz sz))
+         (d (f-clamp (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz))) (+ 1f-3 (* 1.01f0 (f-abs (- a b)))) (* 0.999f0 (+ a b))))
+         (dl (f-max 1f-5 (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
+         (ux (/ dx dl)) (uy (/ dy dl)) (uz (/ dz dl))
+         (pe (+ (* (- ex sx) ux) (* (- ey sy) uy) (* (- ez sz) uz)))
+         (px (- ex sx (* pe ux))) (py (- ey sy (* pe uy))) (pz (- ez sz (* pe uz)))       ; the elbow's side of S->T
+         (pl (f-sqrt (+ (* px px) (* py py) (* pz pz)))))
+    (declare (fixnum ua la hd wl wr)
+             (single-float w sx sy sz ex ey ez hx hy hz fx fy fz ax ay az ox oy oz s tx ty tz a b dx dy dz d dl ux uy uz pe px py pz pl))
+    (when (and (> pl 1f-4) (> a 1f-4) (> b 1f-4))
+      (let* ((ca (f-clamp (/ (- (+ (* a a) (* d d)) (* b b)) (* 2f0 a d)) -1f0 1f0)) (sa (f-sqrt (f-max 0f0 (- 1f0 (* ca ca)))))
+             (nex (+ sx (* a (+ (* ca ux) (* sa (/ px pl)))))) (ney (+ sy (* a (+ (* ca uy) (* sa (/ py pl))))))
+             (nez (+ sz (* a (+ (* ca uz) (* sa (/ pz pl))))))
+             (nhx (+ sx (* d ux))) (nhy (+ sy (* d uy))) (nhz (+ sz (* d uz)))
+             ;; R1: shoulder->elbow old -> new
+             (a0x (/ (- ex sx) a)) (a0y (/ (- ey sy) a)) (a0z (/ (- ez sz) a))
+             (a1x (/ (- nex sx) a)) (a1y (/ (- ney sy) a)) (a1z (/ (- nez sz) a))
+             (k1x (- (* a0y a1z) (* a0z a1y))) (k1y (- (* a0z a1x) (* a0x a1z))) (k1z (- (* a0x a1y) (* a0y a1x)))
+             (c1 (+ (* a0x a1x) (* a0y a1y) (* a0z a1z)))
+             ;; the forearm after R1, then R2: it -> elbow->new wrist
+             (b0x (/ (- hx ex) b)) (b0y (/ (- hy ey) b)) (b0z (/ (- hz ez) b)))
+        (declare (single-float ca sa nex ney nez nhx nhy nhz a0x a0y a0z a1x a1y a1z k1x k1y k1z c1 b0x b0y b0z))
+        (when (> c1 -0.999f0)
+          (%rot-to! k1x k1y k1z c1 b0x b0y b0z)
+          (let* ((bl (f-max 1f-5 (f-sqrt (+ (* (- nhx nex) (- nhx nex)) (* (- nhy ney) (- nhy ney)) (* (- nhz nez) (- nhz nez))))))
+                 (b1x (/ (- nhx nex) bl)) (b1y (/ (- nhy ney) bl)) (b1z (/ (- nhz nez) bl))
+                 (k2x (- (* b0y b1z) (* b0z b1y))) (k2y (- (* b0z b1x) (* b0x b1z))) (k2z (- (* b0x b1y) (* b0y b1x)))
+                 (c2 (+ (* b0x b1x) (* b0y b1y) (* b0z b1z)))
+                 (qx (- fx hx)) (qy (- fy hy)) (qz (- fz hz)))                                ; the fist from the wrist
+            (declare (single-float bl b1x b1y b1z k2x k2y k2z c2 qx qy qz))
+            (when (> c2 -0.999f0)
+              (%rot-cols! jm (ji :upper-arm-l) k1x k1y k1z c1)
+              (%rot-cols! jm (ji :lower-arm-l) k1x k1y k1z c1) (%rot-cols! jm (ji :lower-arm-l) k2x k2y k2z c2)
+              (%rot-cols! jm (ji :hand-l) k1x k1y k1z c1) (%rot-cols! jm (ji :hand-l) k2x k2y k2z c2)
+              (%rot-cols! jm (ji :weapon-l) k1x k1y k1z c1) (%rot-cols! jm (ji :weapon-l) k2x k2y k2z c2)
+              (%rot-to! k1x k1y k1z c1 qx qy qz) (%rot-to! k2x k2y k2z c2 qx qy qz)
+              (setf (aref jm (+ la 12)) nex (aref jm (+ la 13)) ney (aref jm (+ la 14)) nez
+                    (aref jm (+ hd 12)) nhx (aref jm (+ hd 13)) nhy (aref jm (+ hd 14)) nhz
+                    (aref jm (+ wl 12)) (+ nhx qx) (aref jm (+ wl 13)) (+ nhy qy) (aref jm (+ wl 14)) (+ nhz qz)))))))))
+  nil)
+
+(defun grip-gap (jm)
+  "Metres from the left fist (:weapon-l) to the handle span of the :weapon-r frame that GRIP-LEFT! uses (tests: debug
+2392, the art viewer's grip strips; allocates)."
+  (let* ((l (* 16 (ji :weapon-l))) (r (* 16 (ji :weapon-r)))
+         (f (list (aref jm (+ l 12)) (aref jm (+ l 13)) (aref jm (+ l 14)))) (o (list (aref jm (+ r 12)) (aref jm (+ r 13)) (aref jm (+ r 14))))
+         (ax (list (aref jm (+ r 8)) (aref jm (+ r 9)) (aref jm (+ r 10))))
+         (s (max 0.14 (min 0.62 (/ (reduce #'+ (mapcar (lambda (a b c) (* (- a b) c)) f o ax)) (reduce #'+ (mapcar #'* ax ax)))))))
+    (sqrt (reduce #'+ (mapcar (lambda (a b c) (expt (- a (+ b (* s c))) 2)) f o ax)))))
 
 ;;; ---------------------------------------------------------------- generic stance + shared clips
 ;;; The shared reactions (:sh-*) are played by every character on the same rig, from and back to

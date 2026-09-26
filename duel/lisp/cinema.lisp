@@ -20,11 +20,12 @@
 (declaim (single-float *dutch*))
 (defvar *dutch* 0f0 "The shot's roll, degrees (LENS; camera.lisp DUEL-CAMERA applies it to a cinematic shot).")
 (defvar *caption* nil "The running cinematic's brush title (a BCAP, brush.lisp), shown until it ends (hud.lisp).")
+(defvar *caption-out* nil "The title of a cinematic that just ended, slicing out over what follows (hud.lisp; Phase 6).")
 
 ;;; ---------------------------------------------------------------- the director's hooks
 (defun cine-begin (name a v)
   "A cinematic starts: no caption yet, the actors leave their sim states (standing still)."
-  (setf *caption* nil)
+  (setf *caption* nil *caption-out* nil)
   (dolist (e (list a v))
     (when (fighter e)
       (setf (fighter-state (fighter e)) :cine (fighter-sf (fighter e)) 0 (motion-kb-left (motion e)) 0)
@@ -39,7 +40,8 @@
   "A cinematic ended (C, or NIL when none ran): restore the stage look, clear the caption and the
 flash, give the actors back (the presses buffered during it forgotten: mashing through a
 cinematic fires nothing)."
-  (setf *caption* nil *card* nil *card-only* nil *cine-grade* nil *dutch* 0f0 (camera-fov *camera*) (f32 (deg 60)))
+  (setf *caption-out* (and *caption* (bcap-exit *caption*))   ; a title still up slices out over what follows
+        *caption* nil *card* nil *card-only* nil *cine-grade* nil *dutch* 0f0 (camera-fov *camera*) (f32 (deg 60)))
   (v3-set! (camera-up *camera*) 0f0 1f0 0f0)
   (unsilhouette)
   (fill *ui-flash* 0f0)
@@ -88,8 +90,12 @@ the other third to a caption."
 
 (defun caption (kanji &rest keys)
   "The cinematic's brush title, stamped in now (brush.lisp MAKE-BCAP keys: :kanji2 :reading :sub :mark :side :ink
-:hanko): stays up until the next caption or the end."
+:hanko): stays up until the next caption, CAPTION-EXIT or the end (it then slices out over what follows)."
   (setf *caption* (apply #'make-bcap kanji :layout :cine keys)))
+
+(defun caption-exit ()
+  "The title slices out now (Phase 6, §5: a brush cut through the column, the halves sliding apart, 0.3 s)."
+  (when *caption* (bcap-exit *caption*)))
 
 (defun actor-point (e up)
   "X Y Z (values) of fighter E's body, UP metres above the feet."
@@ -248,7 +254,7 @@ a wide."
       (play-sfx :konpaku-shatter) (shake 0.15 0.3))
   (at 42 (impact-frame :manga 10))
   (during (0 96) (let ((p (pos-of v))) (vfx-soul-flame (aref p 0) 2.2 (aref p 2) (/ cf 60.0))))
-  (at 60 (shot-pair a v 1 7.0 2.2) (lens 50) (setf *caption* nil)))
+  (at 60 (shot-pair a v 1 7.0 2.2) (lens 50) (caption-exit)))
 
 (defcine intro-cine (a v :len 300 :hold 200)
   "Match intro: A (P1) then V (P2) play their intro clips beside their names in vertical brush kanji (the reading and
@@ -266,7 +272,7 @@ the intro line under it), a negative cut between them; then the pair and FIGHT!"
   (during (120 240) (shot-on v (- -25 (* 20 u)) (- 3.6 (* 0.6 u)) 1.5 :look 1.2 :off 0.7))
   (during (240 300) (shot-pair a v (camera-side) (+ 6.0 (* 2.0 u)) 2.4))
   (when step-p (intro-weapon a cf) (intro-weapon v (- cf 120)))
-  (at 240 (setf *caption* nil))
+  (at 240 (caption-exit))
   (at 250 (announce "FIGHT!" :color '(1 0.85 0.3 1) :secs 1.0) (play-sfx :fight)))
 
 (defun intro-weapon (e frame)
@@ -276,14 +282,16 @@ the intro line under it), a negative cut between them; then the pair and FIGHT!"
 
 (defcine ko-cine (a v :len 150 :hold 40)
   "K.O.: a white / ink two-tone frame on the last hit; the winner held 20 f in a low shot under the 決着 / K.O. stamp;
-then the one slow orbit round the kneeling loser (the 勝 stamp waits on the results screen)."
+then the one slow orbit round the kneeling loser while rain begins (the 勝 stamp waits on the results screen)."
   (at 0 (face-each-other a v)
       (cine-clip v :sh-lose :blend 8) (cine-clip a (or (kit-win (kit-of a)) (kit-stance (kit-of a))) :blend 8)
       (impact-frame :two-tone 3) (hold-pose a 20) (play-sfx :ko)
       (shot-on a 30 3.0 0.8 :look 1.3 :off -0.8) (lens 42)
       (caption "決着" :reading "K.O." :side 1))
   (at 20 (lens 55))
-  (during (20 150) (shot-on v (+ 40 (* 50 u)) (- 5.0 (* 1.2 u)) (+ 1.0 (* 0.6 u)) :look 0.8)))
+  (during (20 150) (shot-on v (+ 40 (* 50 u)) (- 5.0 (* 1.2 u)) (+ 1.0 (* 0.6 u)) :look 0.8)
+    (let ((p (pos-of v)))                                  ; the rain begins as the fight ends (Phase 6, §6)
+      (vfx-rain (aref p 0) (aref p 2) (/ (- cf 20) 60.0) (min 0.9 (/ (- cf 20) 20.0))))))
 
 (defcine time-cine (a v :len 120 :hold 60)
   "TIME: the timer ran out; A won on Konpaku / Reishi (or a draw). 時間切れ."

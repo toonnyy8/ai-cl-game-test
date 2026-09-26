@@ -541,7 +541,8 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
     :ke-flurry :ke-breaker :ke-shoulder :ke-intro :ke-win :ke-release :ke-nome :ke-meteor
     :ke-n-stance
     :sh-skate-b :sh-slide-r :sh-slide-l :ke-run :ke-skate-b :ke-slide-r :ke-slide-l   ; the runs (facing the opponent)
-    :ke-r-stance :ke-drink))   ; the cups
+    :ke-r-stance :ke-drink     ; the cups
+    :ke-r-q1 :ke-r-q3 :ke-r-f1 :ke-r-f2 :ke-n-f1))   ; RYOTE's kendo set and KUKAN-GIRI (their own clips since Phase 5)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
 ;; DEFCINEs, which the host stubs)
 (let ((used (remove-duplicates (loop for cf in *forms* append (kit-clips (apply #'kit cf))))))

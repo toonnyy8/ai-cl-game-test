@@ -6,9 +6,12 @@
 ;;;;   node tools/run.mjs dist/duelview --secs 60 --script tests/scripts/duel-view-looks.json
 ;;;; Keys: 1-5 scenes, LEFT/RIGHT turn, SPACE spin, N/P next/previous clip strip, G stage on/off.
 ;;;; Debug commands (Module._debug_cmd):
-;;;;   2000+k  scene k: 0 base forms, 1 awakened forms, 2 cane + skeletons, 3 mirror match, 4 duel on the stage
+;;;;   2000+k  scene k: 0 base forms, 1 awakened forms, 2 cane + skeletons, 3 mirror match, 4 duel on the stage,
+;;;;           5 the expressions: actors 0-2 Yamamoto neutral / shout / hurt, 3-5 Kenpachi (6200+i: each face)
 ;;;;   6000+i / 6100+i / 6200+i  camera on actor i: full body / head and chest / face (0.7 m, eye level);
 ;;;;   6210+i  the face from 35 degrees to its left
+;;;;   6300+k  every actor's expression: 0 neutral, 1 shout, 2 hurt (DRAW-BODY :face; scene 5 shows all three)
+;;;;   7000+k  grip strip of *GRIP-CLIPS* k: its 4 worst-drift frames, each a pair: keys only, then with GRIP-LEFT!
 ;;;;   3000+d  turntable angle d degrees (0 = facing the camera)     4000 stage off/on   4001 spin on/off
 ;;;;   4002 / 4003  add three Bankai cracks / clear them    4004 actors off/on (cons baseline)
 ;;;;   4005  log every body's proportions (standing, no hunch): crown, head length, heads, head width,
@@ -25,7 +28,9 @@
   (body nil) (weapon nil) (hide nil) (tint nil) (rim nil)
   (x 0f0 :type single-float) (z 0f0 :type single-float) (yaw 0f0 :type single-float)
   (anim (make-anim)) (joints (make-f32 (* 16 +nj+)) :type f32vec)
-  (frame -1 :type fixnum))                          ; >= 0: frozen at this frame
+  (frame -1 :type fixnum)                           ; >= 0: frozen at this frame
+  (face :neutral)                                   ; the expression (6300+k, scene 5)
+  (grip nil))                                       ; the left fist held on the handle (GRIP-LEFT!, 7000+k)
 
 (defun make-actor (body weapon clip &key hide tint rim (x 0.0) (z 0.0) (yaw 0.0) (frame -1))
   (let ((a (%make-actor :body (find-body body) :weapon weapon :hide hide :tint tint :rim rim
@@ -53,7 +58,8 @@
 (defun clip-owners (name)
   "((body weapon hide) ...) that show clip NAME."
   (let ((awake-ya '(:ya-kyoku :ya-kaka :ya-tenchi :ya-bankai))
-        (awake-ke '(:ke-meteor :ke-kikon-n :ke-nome :ke-n-stance)))
+        (awake-ke '(:ke-meteor :ke-kikon-n :ke-nome :ke-n-stance :ke-n-leap :ke-r-stance :ke-drink :ke-r-q1 :ke-r-q3 :ke-r-f1
+                   :ke-r-f2 :ke-n-f1)))
     (cond ((member name awake-ya) '((:yamamoto :zanka nil)))
           ((eq name :ya-intro) '((:yamamoto :ya-cane nil)))
           ((eq name :ya-ikkotsu) '((:yamamoto nil nil)))
@@ -86,6 +92,13 @@
                  (make-actor :yamamoto :ryujin-jakka :ya-stance :x -1.0 :yaw pi :tint *mirror-tint* :rim *mirror-rim*)
                  (make-actor :kenpachi :ken-katana :ke-stance :x 0.9 :yaw pi)
                  (make-actor :kenpachi :ken-katana :ke-stance :x 2.8 :yaw pi :tint *mirror-tint* :rim *mirror-rim*)))
+          (5 (setf *v-label* "EXPRESSIONS: NEUTRAL / SHOUT / HURT")
+           (look-at 0 1.5 7.5 0 1.3 0)
+           (loop for (body weapon clip) in '((:yamamoto :ryujin-jakka :ya-stance) (:kenpachi :ken-katana :ke-stance))
+                 for row from 0
+                 nconc (loop for face in '(:neutral :shout :hurt) for col from 0
+                             collect (let ((a (make-actor body weapon clip :x (+ (* 1.3 col) (* 4.2 row) -3.4) :yaw pi)))
+                                       (setf (actor-face a) face) a))))
           (4 (setf *v-label* "SEIREITEI RUINS AT NIGHT")
            (look-at 7.5 2.6 7.0 0 1.1 -0.5)
            (list (make-actor :yamamoto :ryujin-jakka :ya-stance :x -2.5 :z 0 :yaw (/ pi -2))
@@ -110,6 +123,27 @@
           *v-label* (format nil "~d ~a  ~,2f S  FRAMES ~{~d~^ ~}~@[  S/A/R ~{~d~^/~}~]" i name (clip-dur clip) frames sar))
     (if (cdr owners) (look-at 0 3.4 6.8 0 0.7 -1.7) (look-at 0 1.3 5.0 0 1.0 0))
     (log-msg "view: strip ~a" *v-label*)))
+
+(defvar *v-one* (fv 1) "GRIP-LEFT!'s weight 1.")
+(defun grip-strip (k)
+  "Grip clip K (*GRIP-CLIPS*) at the 4 frames where the left fist drifts furthest off the handle between the keys, each a
+pair: as the keys interpolate it (raw), then as the game draws it (GRIP-LEFT!, Phase 6)."
+  (let* ((name (nth (mod k (length *grip-clips*)) *grip-clips*)) (b (find-body :kenpachi)) (jm (make-f32 (* 16 +nj+)))
+         (an (make-anim)) (gaps '()))
+    (anim-play an name :blend 0)
+    (dotimes (f (round (* 60 (clip-dur (find-clip name)))))
+      (setf (anim-time an) (/ f 60.0))
+      (pose-fk! jm (anim-eval an) 0.0 0.0 0.0 0.0 (body-scale b) (body-hunch b) (body-props b))
+      (push (cons (grip-gap jm) f) gaps))
+    (let ((frames (sort (mapcar #'cdr (subseq (sort gaps #'> :key #'car) 0 4)) #'<)) (acts nil))
+      (loop for f in frames for col from 0 do                ; a pair per frame: keys only, then held
+        (dotimes (held 2)
+          (let ((a (make-actor :kenpachi :nozarashi name :frame f :x (+ (* 3.4 (- col 1.5)) (* 1.45 (- held 0.5))) :yaw (- (/ pi -2) 0.5))))
+            (setf (actor-grip a) (= held 1)) (push a acts))))
+      (setf *actors* (nreverse acts)
+            *v-label* (format nil "GRIP ~a  FRAMES ~{~d~^ ~}  EACH PAIR: KEYS ONLY | FIST HELD ON THE HANDLE" name frames))
+      (look-at 0 2.2 11.5 0 1.2 0)
+      (log-msg "view: ~a" *v-label*))))
 
 (defun close-up (i head)
   "Camera on actor I: full body, or HEAD (face) close-up."
@@ -167,6 +201,8 @@ fingertips ~,3f m (~,2f of height), hips ~,3f m (legs ~,2f of height), neck gap 
 (defun view-debug (c)
   (cond ((>= c 1000000) (strip (floor (- c 1000000) 1000)))
         ((>= c 900000) (play-live (- c 900000)))
+        ((<= 7000 c 7099) (grip-strip (- c 7000)))
+        ((>= c 6300) (let ((f (nth (min 2 (- c 6300)) '(:neutral :shout :hurt)))) (dolist (a *actors*) (setf (actor-face a) f))))
         ((>= c 6210) (face-cam (- c 6210) 35))
         ((>= c 6200) (face-cam (- c 6200) 0))
         ((>= c 6100) (close-up (- c 6100) t))
@@ -213,8 +249,9 @@ fingertips ~,3f m (~,2f of height), hips ~,3f m (legs ~,2f of height), neck gap 
                      (setf (anim-time an) 0.0)))))
       (pose-fk! (actor-joints a) (anim-eval an) (actor-x a) 0.0 (actor-z a) (+ (actor-yaw a) *v-yaw*)
                 (body-scale b) (body-hunch b) (body-props b))
+      (when (actor-grip a) (grip-left! (actor-joints a) *v-one*))
       (draw-body b (actor-joints a) (actor-x a) 0.0 (actor-z a) (actor-yaw a)
-                 :weapon (actor-weapon a) :hide (actor-hide a) :tint (actor-tint a) :rim (actor-rim a))))
+                 :weapon (actor-weapon a) :hide (actor-hide a) :face (actor-face a) :tint (actor-tint a) :rim (actor-rim a))))
   (perf-mark)
   (when *v-stage* (stage-draw rdt))
   (fx-update (f32 rdt))

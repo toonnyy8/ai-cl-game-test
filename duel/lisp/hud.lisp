@@ -103,12 +103,19 @@ with SUB under it."
 
 (defun word-layout (x w h)
   "Word X on a W x H screen. Values: centre x, the caps' middle y, the brush em in px (the pop-in shrinks it over
-the first 0.08 s; a long word shrinks to 92 % of the width)."
+the first 0.08 s; a long word shrinks to 92 % of the width). A word whose box would overlap a HUD side panel
+(*PANEL-BOX*) is moved down under it (Phase 5: e.g. NOMIHOSE! over the P2 labels)."
   (let* ((k (min 1.0 (/ (- (fx-clock) (word-t0 x)) 0.08)))
-         (em (* h (cond ((word-side x) 0.05) ((word-small x) 0.085) (t (* 0.13 (+ 1.0 (* 0.5 (- 1 k)))))))))
-    (values (case (word-side x) (0 (* 0.2 w)) (1 (* 0.8 w)) (t (* 0.5 w)))
-            (if (or (word-side x) (word-small x)) (* 0.3 h) (* 0.45 h))
-            (min em (/ (* 0.92 w) (max 0.1 (line-width (word-text x))))))))
+         (em (* h (cond ((word-side x) 0.05) ((word-small x) 0.085) (t (* 0.13 (+ 1.0 (* 0.5 (- 1 k))))))))
+         (em (min em (/ (* 0.92 w) (max 0.1 (line-width (word-text x))))))
+         (cx (case (word-side x) (0 (* 0.2 w)) (1 (* 0.8 w)) (t (* 0.5 w))))
+         (cy (if (or (word-side x) (word-small x)) (* 0.3 h) (* 0.45 h)))
+         (hw (* 0.5 em (line-width (word-text x)))) (pb *panel-box*))
+    (dotimes (i 2)
+      (let ((o (* 4 i)))
+        (when (and (< (- cx hw) (aref pb (+ o 2))) (< (aref pb o) (+ cx hw)) (< (- cy (* 0.45 em)) (aref pb (+ o 3))))
+          (setf cy (+ (aref pb (+ o 3)) (* 0.012 h) (* 0.45 em))))))
+    (values cx cy em)))
 
 (defun word-box (x w h)
   "Screen box of word X (text + sub). Values: x0 y0 x1 y1."
@@ -116,10 +123,21 @@ the first 0.08 s; a long word shrinks to 92 % of the width)."
     (let ((hw (* 0.5 em (line-width (word-text x)))))
       (values (- cx hw) (- cy (* 0.45 em)) (+ cx hw) (+ cy (if (word-sub x) (* 1.05 em) (* 0.45 em)))))))
 
+(defvar *hud-warned* nil "Strings already logged as drawn over a HUD panel (HUD-OVER-PANEL).")
+(defun hud-over-panel (what str x0 y0 x1 y1 w h)
+  "Log once per string that the WHAT (callout / word) STR at (X0 Y0 X1 Y1) overlaps a HUD panel (tests/style-5-checks.py
+greps \"over the P\")."
+  (let ((side (panel-hit (f32 x0) (f32 y0) (f32 x1) (f32 y1))))
+    (when (and side (not (member str *hud-warned* :test #'equal)))
+      (push str *hud-warned*)
+      (log-msg "hud: ~a ~a over the P~d panel on the ~dx~d screen: ~d ~d ~d ~d" what str (1+ side) w h
+               (round x0) (round y0) (round x1) (round y1)))))
+
 (defun draw-words (w h)
   "The big words (ANNOUNCE) in brush Latin, fading out over their last 0.25 s."
   (setf *words* (delete-if (lambda (x) (> (- (fx-clock) (word-t0 x)) (word-secs x))) *words*))
   (dolist (x *words*)
+    (multiple-value-bind (x0 y0 x1 y1) (word-box x w h) (hud-over-panel "word" (word-text x) x0 y0 x1 y1 w h))
     (let* ((age (- (fx-clock) (word-t0 x)))
            (fade (min 1.0 (/ (- (word-secs x) age) 0.25))) (col (word-col x)))
       (multiple-value-bind (cx cy em) (word-layout x w h)
@@ -419,6 +437,10 @@ a guard in every form, two forms' guards do more)."
         (combo-string c (fighter-combo-hits f) (fighter-combo-dmg f)))
       (when (< (- tm (cs-t0 c)) 1.2)
         (hud-text (cs-str c) edge (+ y bh (* 62 s)) (* 2 s) '(1 0.9 0.6 1) :align align)))
+    ;; the panel's box (the callouts and words keep clear of it): its bars, labels and combo counter
+    (let ((o (* 4 side)) (pb *panel-box*))
+      (setf (aref pb o) (f32 (- x (* 4 s))) (aref pb (+ o 1)) 0f0 (aref pb (+ o 2)) (f32 (+ x bw (* 4 s)))
+            (aref pb (+ o 3)) (f32 (+ y bh (* 78 s)))))
     ;; KIKON / BURST prompts for a human
     (when (and (not (brain e)) (member *flow* '(:battle)))
       (cond ((kikon-ready-p e)                            ; the opponent is red: the rush, held, Kiko's
@@ -438,7 +460,8 @@ a guard in every form, two forms' guards do more)."
 
 (defun callout-y (x0 y0 x1 y1 w h s)
   "Top edge for a callout box (X0 Y0 X1 Y1) that steps out of the big words' boxes and the other
-callout: above the box it hits, or below it when above would reach the side panels."
+callout: above the box it hits, or below it when above would reach the side panels; last, below a HUD
+side panel it would overlap (*PANEL-BOX*; Phase 5)."
   (let ((th (- y1 y0)) (gap (* 4 s)))
     (flet ((dodge (bx0 by0 bx1 by1)
              (when (boxes-overlap-p x0 y0 x1 y1 bx0 by0 bx1 by1)
@@ -447,7 +470,12 @@ callout: above the box it hits, or below it when above would reach the side pane
       (dolist (wd *words*)
         (multiple-value-bind (bx0 by0 bx1 by1) (word-box wd w h) (dodge bx0 by0 bx1 by1)))
       (let ((cb *callout-box*))
-        (when (svref cb 0) (dodge (svref cb 1) (svref cb 2) (svref cb 3) (svref cb 4)))))
+        (when (svref cb 0) (dodge (svref cb 1) (svref cb 2) (svref cb 3) (svref cb 4))))
+      (let ((pb *panel-box*))
+        (dotimes (i 2)
+          (let ((o (* 4 i)))
+            (when (boxes-overlap-p x0 y0 x1 y1 (aref pb o) (aref pb (+ o 1)) (aref pb (+ o 2)) (aref pb (+ o 3)))
+              (setf y0 (+ (aref pb (+ o 3)) gap) y1 (+ y0 th)))))))
     y0))
 
 (defvar *callout-seen* (vector nil nil 0 0) "Per side: the callout string last seen and its frames left then.")
@@ -477,6 +505,7 @@ when he is red."
              (x0 (round (- (aref v 0) (* 0.5 tw)))) (y0 (callout-y x0 (round (aref v 1)) (+ x0 tw) (+ (round (aref v 1)) th) w h s))
              (cb *callout-box*))
         (setf (svref cb 0) t (svref cb 1) x0 (svref cb 2) (round y0) (svref cb 3) (+ x0 tw) (svref cb 4) (+ (round y0) th))
+        (hud-over-panel "callout" str x0 y0 (+ x0 tw) (+ y0 th) w h)
         (set-line (+ x0 (* 0.5 tw)) (+ y0 (* 0.5 th)) em *c-callout* (min 1.0 (/ (fighter-callout-t f) 20.0)))
         (setf (aref *bl* 7) (line-width str))
         (brush-line str)))
@@ -490,18 +519,25 @@ when he is red."
 
 (defun hud-rush-lines (e)
   "Speed lines along a Kikon rush's dash-in (RUSH-DASHING-P in its :follow phase), on the screen direction
-from the rusher to his victim."
-  (let ((f (fighter e)))
-    (when (and (eq (fighter-state f) :move) (eq (fighter-phase f) :follow) (rush-dashing-p f))
+from the rusher to his victim; and along Kenpachi's SP2 dash (§4.2 SP2 dash, Phase 5: its active frames), on his
+facing."
+  (let* ((f (fighter e)) (mv (fighter-move f))
+         (charge (and mv (eq (fighter-state f) :move) (eq (mv-name mv) :ke-charge) (eq (fighter-phase f) :main)
+                      (<= (mv-s mv) (fighter-sf f) (+ (mv-s mv) (mv-a mv) -1)))))
+    (when (or charge (and (eq (fighter-state f) :move) (eq (fighter-phase f) :follow) (rush-dashing-p f)))
       (let ((p (pos-of e)) (a *hud-v*) (b *hud-v2*))
-        (when (and (world-to-screen a (aref p 0) 1f0 (aref p 2)) (world-to-screen b (fighter-ox f) 1f0 (fighter-oz f)))
+        (when (and (world-to-screen a (aref p 0) 1f0 (aref p 2))
+                   (if charge
+                       (world-to-screen b (f32 (+ (aref p 0) (* 2 (fwd-x (yaw-of e))))) 1f0 (f32 (+ (aref p 2) (* 2 (fwd-z (yaw-of e))))))
+                       (world-to-screen b (fighter-ox f) 1f0 (fighter-oz f))))
           (ui-speed-lines (f32 (atan (- (aref b 1) (aref a 1)) (- (aref b 0) (aref a 0)))) 14 '(1 1 1 0.55)
                           (f->i (* 12f0 (fx-clock)))))))))
 
 (defun hud-battle (w h s)
   (setf (svref *callout-box* 0) nil)
   (dolist (e (list *p1* *p2*)) (when (entity-alive-p e) (hud-rush-lines e)))
-  (dolist (e (list *p1* *p2*)) (when (entity-alive-p e) (hud-side e w h s) (hud-world e w h s)))
+  (dolist (e (list *p1* *p2*)) (when (entity-alive-p e) (hud-side e w h s)))   ; both panels first: the callouts
+  (dolist (e (list *p1* *p2*)) (when (entity-alive-p e) (hud-world e w h s)))  ; keep clear of them
   (let* ((secs (min 999 (ceiling (max 0 *timer*) 60)))
          (str (or (svref *timer-strings* secs) (setf (svref *timer-strings* secs) (format nil "~d" secs)))))
     (ui-big-text str (floor w 2) (* 0.07 h) (* 4 s) (if (< secs 30) '(1 0.3 0.3 1) *white*) '(0 0 0 0.7) s :shear 0.0)))
@@ -625,6 +661,7 @@ WINNER + name, the stats table (P1 / P2 columns), the match time, the menu."
 (defun hud-draw ()
   "The UI of this frame, by screen."
   (let* ((w (window-width)) (h (window-height)) (s (ui-scale)) (f *ui-flash*))
+    (fill *panel-box* 0f0)                               ; HUD-SIDE sets them when the panels are drawn
     (aura-cap-update)
     (when (> (aref f 3) 0)
       (let ((c *c-flash*))
@@ -634,7 +671,8 @@ WINNER + name, the stats table (P1 / P2 columns), the match time, the menu."
     (draw-screen-fx w h)                                 ; focus lines (under the HUD)
     (when *cine*                                         ; letterbox + the cinematic's brush title
       (ui-rect 0 0 w (* 0.09 h) '(0 0 0 1)) (ui-rect 0 (* 0.91 h) w (* 0.09 h) '(0 0 0 1))
-      (when *caption* (draw-bcap *caption* w h)))
+      (when *caption* (unless (draw-bcap *caption* w h) (setf *caption* nil))))
+    (when *caption-out* (unless (draw-bcap *caption-out* w h) (setf *caption-out* nil)))   ; an ended cinematic's title
     (case *flow*
       (:title (hud-title w h s))
       (:mode (ui-big-text "SOUL DUEL" (floor w 2) (* 0.2 h) (* 6 s) '(1 0.92 0.8 1) '(0.7 0.18 0.05 1) s)
