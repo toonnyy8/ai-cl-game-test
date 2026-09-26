@@ -384,7 +384,7 @@ The HSV shadow rule (§2.2) is unchanged, except that neutrals now rotate to the
 | Kenpachi `:hair` | #2A2A3A | **#0C0C12** | #08080C | a solid black mass + white highlight strokes |
 | Kenpachi `:black` | #2E2C3C | **#16161E** | #0A0A10 | |
 | Kenpachi `:white` (haori) | — | **#E8E8E4** | #969DAE | tattered hem |
-| Kenpachi eyepatch | #070707 | #070707 | | |
+| Kenpachi eyepatch | #070707 | #070707 (removed 2026-09-26: no eyepatch in any form, TYBW) | | |
 | Ink (hull) | per character near-black | **#101018** on light parts, **#4A5062 keyline on black parts**, **#3A1E1A** on skin | | the keyline is dark against the V3 ground and light against the V0 sky |
 | Mirror P2 | blue-black tint | P2 haori and white parts tinted #D8E2F2 (cold), keyline #5A6A8A | | |
 
@@ -392,7 +392,7 @@ The HSV shadow rule (§2.2) is unchanged, except that neutrals now rotate to the
   - on black parts: **white strokes** #D8DCE4 (Yamamoto: 3 robe folds + sleeve-opening edge;
     Kenpachi: 4 hair-spike highlights, 2 robe folds);
   - on white parts: ink strokes (haori collar V, hakama pleats, cuffs, tattered-hem notches);
-  - on skin: Kenpachi's scar and the eyepatch strap in ink.
+  - on skin: Kenpachi's scar in ink (the eyepatch strap went with the eyepatch, 2026-09-26).
 
   They are all thin `:c` boxes under 4 cm, so they get no hull.
 - **Faces**: unchanged from v3 (ink brows as wedges, eyes, grin), `:tag :face-neutral`.
@@ -692,7 +692,7 @@ covers every row.
 | Burnout (built) | the aura crossfades to `:ash`: 3 BLACK SMOKE wisps off the shoulders + ASH flecks (≤ 12/s); East's ember line goes dead ASH; the world's grade loses the ember hue (`:ash` preset: spot-keep with only Kenpachi's yellow); "BURNOUT" in ash grey, the HUD name dimmed; REIGNITE: an EMBER star + the word | traits off must be visible: no warm pixel on a burned-out Yamamoto |
 | NISHI / HIGASHI (built) | NISHI: a BLACK SMOKE double ring out to 2.6 m + an EMBER inner line + 8 ASH shards, `:heat-flare`; HIGASHI: a white lens crescent 3 m wide across his front (Phase 4: 4.4 m filled the side camera's frame), held 2 d, then an EMBER hairline | — |
 | KYOKUJITSUJIN (built) | f18 a white vertical lens slit; f20 an INK gash where the tip bites + a flat 25° sheet (an EMBER sector with a HIT-white core, no dark backing: it read as a black rim) racing 9 m over 3 d, eroding, then ASH lifting along it | no black edge; the only warm mass is the sheet |
-| GOKUI GAESHI / armour / scorch (built) | the parry's window: 6 charcoal wisps rising round him; parried: an EMBER star (no charcoal backing star, same reason), a 1 f negative frame, "PARRY"; armour and scorch: the EMBER star, the attacker's arm smoking (BLACK SMOKE puffs) | — |
+| GOKUI GAESHI / the garb / scorch (built; the garb guard since guard v3) | the parry's window: 6 charcoal wisps rising round him; parried: an EMBER star (no charcoal backing star, same reason), a 1 f negative frame, "PARRY"; a hit the garb guard blocks: the EMBER star and a sizzle instead of the steel hexagon (feedback `:blocked` on a `:garb` defender), a ranged hit it armours: the same star; scorch: the attacker's arm smoking (BLACK SMOKE puffs); the garb aura flares ×1.4 while he guards | — |
 | South (built) | an INK ring crack with an EMBER rim pulsing on twos over the 16 f tell + 5 INK radial cracks; 4 skeleton arms (`:sk-grab`, hips under the plaza; Phase 4: pale bone #D2CEC4 with charred bands #4A4E5C, no shadow disc) claw out, clench, crumble; each throws 1 low DUST puff + 2 rocks; bound: ASH drifting at the feet | — |
 | Kikon dash-in (built) | the rush's own travel look (TENCHI afterimages, CHARGE aura ×1.5, LEAP lift) + the BLOOD rush aura, `ui-speed-lines` along the dash, focus lines, "KIKON / GUARD IT!" | — |
 
@@ -701,7 +701,8 @@ covers every row.
 |---|---|---|
 | ▲ **Reiatsu aura** | **every form: REIATSU yellow** (user review 1): 7 brush-flame tongues **behind** the body (radius 0.5 m, wider than the silhouette; `front-dim` lets only the edges wrap in front) with a dark hairline and a white core line, height flicker per drawing (twos, seed boil) + white flecks rising. **Awakened (Nozarashi)**: taller and denser + 4 inner white tongues + a flat yellow ring + one faint T光 billboard | yellow is the only spot hue on Kenpachi; the body stays readable inside the aura; neutral-still spot share ≤ 15 % with the base aura |
 | ▲ **Cleaves** | `fx-crescent :comet` from hilt to tip, 2 d: white leading edge, yellow trailing edge, dark hairline (every form) | the smear reads as a comet, not a banana |
-| Nozarashi awakening | pillar rises on **ones**, then holds; 2 flat rings; 8 DUST puffs; a negative frame at the eyepatch tear; the yellow pillar on a black card; silhouette plus yellow back-rim shot | the first frame where yellow fills > 30 % |
+| Nozarashi awakening | pillar rises on **ones**, then holds; 2 flat rings; 8 DUST puffs; a negative frame at the NOME release (no eyepatch in any form since 2026-09-26: the release is the whole first beat); the yellow pillar on a black card; silhouette plus yellow back-rim shot | the first frame where yellow fills > 30 % |
+| Nozarashi's cups (v2, built 2026-09-26) | cup 1 the base REIATSU aura, one hand; cup 2 the awakened aura, two-handed jōdan, a yellow ring; cup 3 the aura as a pillar (×1.6 tall), on entry the awakening's REIATSU burst + 2 rings, a 1 f negative and a 12 f manga page (yellow kept); DRINK: the REIATSU star reversed; the rift: a white slit over a yellow rim at chest height, trembling on twos | yellow stays Kenpachi's only spot hue; no persistent grade for cup 3 |
 | Split the Meteor / Buttagiru | ink gash (a DUST-palette ribbon on the ground with a heavy edge) + a REIATSU core line + a light sheet of 5 LIGHT ribbons for 3 d + 12 inked rocks + 14 DUST puffs (threes) | particles per cut ≤ 20 |
 | Sky split | beat 0 (a negative frame for 2 f) → **black card**, silence → the white light band with ink borders + focus lines, held 8 f (`model-hold`, no hitstop) → the existing `*grade-split*` → the ground cut in drawings | — |
 | SP2 dash | afterimage sequence (§2.6) every 2 drawings + `ui-speed-lines` | — |
@@ -819,7 +820,7 @@ Helpers (draw-mode, cosmetic):
 
   The fire vanishing is the story beat [V: K3, K4], and v4 makes it the look.
 - **Nozarashi awakening**: the only time yellow floods the frame.
-  1. The eyepatch tears (negative frame).
+  1. NOME: the head thrown back as the reiatsu bursts (negative frame; no eyepatch in any form, 2026-09-26).
   2. A yellow pillar against a black card.
   3. The skull silhouette in the pillar for 2 drawings (in scope, Phase 6).
 
@@ -1621,3 +1622,24 @@ order. After the caption close-ups were held +30 f the same proof held again aga
 before the cinematic starts). Pacing gate (`duel-gate.json`, 20 seeds × pairing, all K.O.), final: YY median 158.7 s
 (95.5–223.2), YK 152.1 (115.2–185.2), KK 159.7 (128.8–197.4); with the slow-down alone 155.2 / 149.6 / 157.2; the build
 before the change gave exactly the old 150.4 / 145.5 / 152.4.
+
+### After phase 4: the Kenpachi batch (2026-09-26, DUEL_DESIGN §12)
+
+No engine or RAVEN change (G1 identical). The look side: the eyepatch removed from Kenpachi's body (every form), the
+Nozarashi awakening's first shot re-staged as the NOME release (`:ke-release`; its shots stay 28 · 30 · 20 · 30 f, the
+pacing rule and the brush captions untouched: `style-4-checks.py --run`, 52 PASS), the run clips facing the opponent
+(`defrun`: forward run, side slides, back-skate; Kenpachi's set with the blade on his shoulder), Nozarashi's cup looks
+(§4.2's new row) and West's garb flaring while his U armour holds (since guard v3: while he guards). G2 re-baselined (the sim changed: DUEL_GAMEPLAY
+"Determinism"); the YK reference is now `duel -> RESULTS winner P1 konpaku 7-0 ticks 7351 secs 122.5`. Stills:
+`tests/shots/batch-*.png`, `batch-sheet.png` (`tests/batch-shots.py`).
+
+### After the Kenpachi batch: guard v3 (2026-09-26, DUEL_DESIGN §12)
+
+No engine or RAVEN change (G1: the RAVEN stills byte-identical against a BASE `dist/game` built before the change). The
+look side: West's garb guard shows the EMBER star and a sizzle on a blocked hit (and on a ranged hit it armours), the
+garb aura's ×1.4 flare is keyed on West guarding (was the held-U armour); the HUD's guard bar is 30 % darker while its
+owner guards below full (GUARD HOLD), **ember** in Bankai (the fed flame) with a 0.1 s white flash on a feed and a
+one-time "HIT TO FEED" callout; the U tag reads `U: GARB`. The HUD bars stay 0 B (debug 2328). G2 re-baselined (the sim
+changed: Reishi 1300 and the new rules); the YK reference is now `duel -> RESULTS winner P2 konpaku 0-4 ticks 9305 secs
+155.1`. `style-4-checks.py --run dist/duel`: 52 PASS. Stills: `tests/shots/guard3-*.png`.
+

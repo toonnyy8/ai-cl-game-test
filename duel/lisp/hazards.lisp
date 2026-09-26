@@ -5,6 +5,8 @@
 ;;;;   :line      a ground line cut / crack: a look only (Kyokujitsujin, Buttagiru, the Meteor, South's crack)
 ;;;;   :bind      South: a disc at the feet (radius SIZE, height Y) that grabs once its DELAY runs out
 ;;;;   :hand      South: a skeleton's arm clawing out of the ground (transform + model), a look only
+;;;;   :rift      NOMIHOSE's KUKAN-GIRI: the blade's chord left in the air (its hitwin's volume, in the frame the owner
+;;;;              had at the cut, fixed in the world) that cuts once its DELAY runs out; closed if the owner is hit first
 ;;;; HAZARD-SYSTEM moves them (sim steps, SIM randomness only), COLLECT-HAZARD-HITS hands their hits to
 ;;;; combat.lisp's HIT-SYSTEM (applied with the fighters' hits), HAZARD-DRAW shows them (vfx.lisp
 ;;;; looks, real time). Hazards of one kind never hit their owner.
@@ -44,6 +46,8 @@ frames, grabs at the ankles, holds and crumbles (:sk-grab): South's look; the :b
       (v3-set! (pos-of h) (hazard-x hz) 0f0 (hazard-z hz))
       (play-clip h :sk-grab :blend 0)
       (emit :skeleton-rise (hazard-x hz) (hazard-z hz)))
+    (when (and (zerop (hazard-delay hz)) (eq (hazard-kind hz) :rift))
+      (emit :rift-cut (hazard-owner hz) (rift-mid-x hz) (rift-mid-z hz)))
     (return-from hazard-step nil))
   (incf (hazard-age hz))
   (when (> (hazard-rehit hz) 0) (decf (hazard-rehit hz)))
@@ -87,7 +91,20 @@ frames, grabs at the ankles, holds and crumbles (:sk-grab): South's look; the :b
                         for a of-type single-float = (+ (* i (/ +two-pi+ *ennetsu-pillars*)) (hazard-yaw hz))
                         thereis (cyl-cyl-hit-p (+ x (* s (cos a))) 0f0 (+ z (* s (sin a))) pr ph tx ty tz tr th))))
       (:bind (cyl-cyl-hit-p x 0f0 z s y tx ty tz tr th))                 ; the feet: a disc SIZE x Y
+      (:rift (let ((yaw (hazard-yaw hz)))
+               (vol-hit-p (first (hw-vols (hazard-hw hz))) x 0f0 z (f32 (fwd-x yaw)) (f32 (fwd-z yaw)) tx ty tz tr th 0f0)))
       (t nil))))
+
+(defun rift-mid-x (hz) (f32 (+ (hazard-x hz) (* 2.7 (fwd-x (hazard-yaw hz))))))
+(defun rift-mid-z (hz) (f32 (+ (hazard-z hz) (* 2.7 (fwd-z (hazard-yaw hz))))))
+
+(defun close-rifts (e)
+  "E was hit: his rifts that haven't cut yet close (KUKAN-GIRI's rift: a parried or traded blade leaves none)."
+  (do-entities (h (hz hazard))
+    (when (and (eq (hazard-kind hz) :rift) (eql (hazard-owner hz) e) (> (hazard-delay hz) 0))
+      (emit :rift-close (rift-mid-x hz) (rift-mid-z hz))
+      (clog "~a RIFT CLOSED" (side-name e))
+      (destroy-entity h))))
 
 (defun collect-hazard-hits ()
   "Hand every active hazard's contact with its target to the HIT-SYSTEM's pending list."
@@ -124,6 +141,10 @@ frames) and touches VICTIM's hurt cylinder grown by *PERFECT-INFLATE*."
 (defun hazard-draw (rdt)
   "Every hazard's look this frame."
   (do-entities (h (hz hazard))
+    (when (eq (hazard-kind hz) :rift)                    ; the rift shows while it waits (the tell), then cuts
+      (let ((l (hazard-size hz)) (yaw (hazard-yaw hz)))
+        (vfx-rift (+ (hazard-x hz) (* 1.0 (fwd-x yaw))) (+ (hazard-z hz) (* 1.0 (fwd-z yaw)))
+                  (+ (hazard-x hz) (* l (fwd-x yaw))) (+ (hazard-z hz) (* l (fwd-z yaw))) (<= (hazard-delay hz) 0))))
     (when (<= (hazard-delay hz) 0)
       (let ((x (hazard-x hz)) (z (hazard-z hz)) (age (/ (hazard-age hz) 60.0)) (life (/ (hazard-life hz) 60.0)))
         (case (hazard-kind hz)
@@ -141,4 +162,4 @@ frames) and touches VICTIM's hurt cylinder grown by *PERFECT-INFLATE*."
                        (transform-yaw (transform h)) (body-scale (model-body m)) (body-hunch (model-body m)))
              (draw-body (model-body m) (model-joints m) (aref p 0) (aref p 1) (aref p 2) 0.0 :shadow nil   ; no disc: it hid the pale bones
                         :alpha (f32 (min 1.0 (max 0.0 (/ (- (hazard-life hz) (hazard-age hz)) 15.0)))))))
-          (:bind nil))))))                                ; (its look: the :south crack and the hands)
+          ((:bind :rift) nil))))))                        ; (their looks: the :south crack and the hands; VFX-RIFT)

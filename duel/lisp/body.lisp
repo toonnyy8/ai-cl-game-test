@@ -12,7 +12,7 @@
 ;;;;       JOINTS = the f32vec POSE-FK! filled; X Y Z = the fighter's feet (blob shadow; YAW unused,
 ;;;;       kept for the call shape). WEAPON = weapon key or NIL (drawn in the :weapon-r joint).
 ;;;;       HIDDEN = joint bitmask (JOINT-MASK ...): parts, glows and the weapon of those joints are
-;;;;       skipped. HIDE = a tag or list of tags (e.g. :eyepatch) of tagged parts to skip.
+;;;;       skipped. HIDE = a tag or list of tags of tagged parts to skip.
 ;;;;       TINT (r g b) multiplies the solid parts' colours; RIM (f32vec, RIM-VEC) replaces the body's
 ;;;;       silhouette rim; EMISSIVE adds glow to solid parts; FLASH 0..1 = hit flash to white;
 ;;;;       ALPHA < 1 = transparent (Hoho vanish). Mirror match: P2 passes :tint *MIRROR-TINT*
@@ -284,13 +284,36 @@ feet height of the last DRAW-BODY (0 for a planted weapon)."
   (0.4 (:thigh-l :side 4) (:thigh-r :side 22 :flex -5) (:knee-r :flex 20))
   (0.6 (:root :u -0.04) (:thigh-r :side 8) (:knee-r :flex 45) (:thigh-l :side 10)))
 
-;; run (Step held past the hop): leaning in, long strides, arms from the stance (a 0.5 s cycle, played
-;; at run speed / 8 m/s)
-(defclip :sh-run (0.5 :loop t)
-  (0 (:root :u -0.07) (:spine :flex 22) (:head :flex -12) (:thigh-r :flex 45) (:knee-r :flex 15) (:thigh-l :flex -30) (:knee-l :flex 50))
-  (0.125 (:root :u 0.02) (:spine :flex 22) (:head :flex -12) (:thigh-r :flex 10) (:knee-r :flex 30) (:thigh-l :flex 10) (:knee-l :flex 95))
-  (0.25 (:root :u -0.07) (:spine :flex 22) (:head :flex -12) (:thigh-l :flex 45) (:knee-l :flex 15) (:thigh-r :flex -30) (:knee-r :flex 50))
-  (0.375 (:root :u 0.02) (:spine :flex 22) (:head :flex -12) (:thigh-l :flex 10) (:knee-l :flex 30) (:thigh-r :flex 10) (:knee-r :flex 95)))
+;; the run (Step held past the hop), facing the opponent whatever way it goes (the user's decision 2026-09-26): a
+;; forward run (leaning in, long strides), a side slide (crouched, the lead leg reaching, the trail leg crossing) either
+;; way and a back-skate (upright, gliding back on alternate push-offs). The legs are key lists so a character can lay
+;; them under his own arms (Kenpachi: the blade on his shoulder, ken-art.lisp); a kit's :run-clips picks the set.
+;; 0.5 s cycles played at run speed / 8 m/s (fighter.lisp RUN-CLIP).
+(defparameter *run-keys*
+  '((0 (:root :u -0.07) (:spine :flex 22) (:head :flex -12) (:thigh-r :flex 45) (:knee-r :flex 15) (:thigh-l :flex -30) (:knee-l :flex 50))
+    (0.125 (:root :u 0.02) (:spine :flex 22) (:head :flex -12) (:thigh-r :flex 10) (:knee-r :flex 30) (:thigh-l :flex 10) (:knee-l :flex 95))
+    (0.25 (:root :u -0.07) (:spine :flex 22) (:head :flex -12) (:thigh-l :flex 45) (:knee-l :flex 15) (:thigh-r :flex -30) (:knee-r :flex 50))
+    (0.375 (:root :u 0.02) (:spine :flex 22) (:head :flex -12) (:thigh-l :flex 10) (:knee-l :flex 30) (:thigh-r :flex 10) (:knee-r :flex 95))))
+(defparameter *skate-keys*
+  '((0 (:root :u -0.12) (:spine :flex -6) (:head :flex 6) (:thigh-r :flex 25 :side 20) (:knee-r :flex 45) (:thigh-l :flex -12 :side 6) (:knee-l :flex 25))
+    (0.125 (:root :u -0.06) (:thigh-r :flex 12 :side 10) (:knee-r :flex 30) (:thigh-l :flex 0 :side 10))
+    (0.25 (:root :u -0.12) (:thigh-l :flex 25 :side 20) (:knee-l :flex 45) (:thigh-r :flex -12 :side 6) (:knee-r :flex 25))
+    (0.375 (:root :u -0.06) (:thigh-l :flex 12 :side 10) (:knee-l :flex 30) (:thigh-r :flex 0 :side 10))))
+(defparameter *slide-r-keys*
+  '((0 (:root :u -0.14) (:spine :flex 14 :side -10) (:thigh-r :side 32 :flex 10) (:knee-r :flex 25) (:thigh-l :side -8 :flex 22) (:knee-l :flex 50))
+    (0.125 (:root :u -0.07) (:thigh-r :side 14 :flex 20) (:knee-r :flex 45) (:thigh-l :side 6 :flex 10) (:knee-l :flex 30))
+    (0.25 (:root :u -0.14) (:thigh-r :side 4 :flex 25) (:knee-r :flex 30) (:thigh-l :side 26 :flex 0) (:knee-l :flex 20))
+    (0.375 (:root :u -0.07) (:thigh-r :side 18 :flex 15) (:knee-r :flex 40) (:thigh-l :side 10 :flex 12) (:knee-l :flex 40))))
+(defparameter *slide-l-keys*
+  '((0 (:root :u -0.14) (:spine :flex 14 :side 10) (:thigh-l :side 32 :flex 10) (:knee-l :flex 25) (:thigh-r :side -8 :flex 22) (:knee-r :flex 50))
+    (0.125 (:root :u -0.07) (:thigh-l :side 14 :flex 20) (:knee-l :flex 45) (:thigh-r :side 6 :flex 10) (:knee-r :flex 30))
+    (0.25 (:root :u -0.14) (:thigh-l :side 4 :flex 25) (:knee-l :flex 30) (:thigh-r :side 26 :flex 0) (:knee-r :flex 20))
+    (0.375 (:root :u -0.07) (:thigh-l :side 18 :flex 15) (:knee-l :flex 40) (:thigh-r :side 10 :flex 12) (:knee-r :flex 40))))
+(defun defrun (base fwd back right left)
+  "The four run clips (FWD BACK RIGHT LEFT, 0.5 s loops) with the run legs over pose BASE's arms."
+  (loop for name in (list fwd back right left) for keys in (list *run-keys* *skate-keys* *slide-r-keys* *slide-l-keys*)
+        do (build-clip name 0.5 t base keys)))
+(defrun :stance :sh-run :sh-skate-b :sh-slide-r :sh-slide-l)
 
 ;; step (24 f): crouch, hop, land
 (defclip :sh-step-b (0.4)

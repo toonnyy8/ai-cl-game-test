@@ -1,9 +1,8 @@
 ;;;; ken-art.lisp — ZARAKI KENPACHI (TYBW) as art data: his body, his notched katana and the true
 ;;;; Shikai NOZARASHI (a giant cleaver), and every :ke-* pose and clip (design §5.2). Attack clips
 ;;;; use DEFSTRIKE, so each reaches its hit pose at frame S and is back in his stance at S+A+R.
-;;;; Look: 2.02 m, broad, long loose black spiky hair (no bells), eyepatch over the RIGHT eye (tag
-;;;; :eyepatch — awakened Ken is drawn with :hide :eyepatch), scar down the left side of the face,
-;;;; a grin, sleeveless tattered white haori over the black shihakusho, bare muscular arms.
+;;;; Look: 2.02 m, broad, long loose black spiky hair (no bells), both eyes open (no eyepatch in any
+;;;; form: TYBW canon, the user's decision 2026-09-26), scar down the left side of the face, a grin, sleeveless tattered white haori over the black shihakusho, bare muscular arms.
 (in-package :duel)
 
 ;;; ---------------------------------------------------------------- body
@@ -19,7 +18,7 @@
                     ;; v4 notan palette (docs/STYLE_STORM_DESIGN.md §2.5): black robe and solid black hair,
                     ;; the tattered haori V4 white, muted skin
                     :palette ((:skin #xCFA48C) (:skin-d #xB08C78) (:black #x16161E) (:white #xE8E8E4)
-                              (:hair #x0C0C12) (:patch #x070707) (:scar #x5A3430) (:teeth #xECECE8)
+                              (:hair #x0C0C12) (:scar #x5A3430) (:teeth #xECECE8)
                               (:eye #x0C0C12) (:fold #xD8DCE4) (:obi #xC8CCD6) (:tabi #xE8E8E4) (:sole #x262833))
                     :rim (#xFFE070 0.2)
                     :props (:shoulders 1.08 :arms 1.1 :legs 1.1))  ; the bare arms hang clear of the haori
@@ -55,7 +54,7 @@
          (:box 0.008 0.011 0.005 :at (-0.024 0.118 0.0755) :c :eye :tag :face-neutral)
          (:box 0.035 0.006 0.005 :at (-0.028 0.125 0.0756) :rot (0 0 -10) :c :eye :tag :face-neutral)
          (:box 0.04 0.009 0.006 :at (-0.03 0.141 0.0757) :rot (0 0 -16) :c :eye :tag :face-neutral)
-         ;; the right eye (under the eyepatch; seen when Nozarashi tears it off)
+         ;; the right eye
          (:box 0.024 0.011 0.004 :at (0.028 0.118 0.075) :c :teeth :tag :face-neutral)
          (:box 0.008 0.011 0.005 :at (0.024 0.118 0.0755) :c :eye :tag :face-neutral)
          (:box 0.035 0.006 0.005 :at (0.028 0.125 0.0756) :rot (0 0 10) :c :eye :tag :face-neutral)
@@ -66,8 +65,6 @@
          (:box 0.054 0.009 0.004 :at (0 0.047 0.0746) :c :teeth :tag :face-neutral)
          (:box 0.014 0.006 0.004 :at (0.034 0.05 0.0746) :rot (0 0 32) :c :eye :tag :face-neutral)
          (:box 0.014 0.006 0.004 :at (-0.034 0.05 0.0746) :rot (0 0 -32) :c :eye :tag :face-neutral)
-         (:bevel 0.042 0.04 0.01 0.006 :at (0.028 0.122 0.078) :c :patch :tag :eyepatch)   ; eyepatch (right)
-         (:box 0.122 0.01 0.14 :at (0 0.15 -0.004) :rot (0 0 -18) :c :patch :tag :eyepatch)
          ;; long loose spiky hair: a cap over the skull, a back sheet, locks and spikes
          (:sphere 0.0695 :stretch 0.03 :at (0 0.15 -0.024) :seg 10 :c :hair)
          (:box 0.182 0.414 0.056 :at (0 0 -0.104) :rot (0 -8 0) :c :hair)
@@ -264,6 +261,8 @@
   (:pelvis :twist 10) (:chest :twist -5) (:spine :flex 2) (:head :flex -10 :twist 10)
   (:arm-r :flex 110 :side 25 :twist 0) (:elbow-r :flex 130) (:hand-r :twist 0 :flex -90)
   (:arm-l :flex 5 :side 18) (:elbow-l :flex 20))
+;; the run set (every form: the blade on his shoulder, TYBW's walk-in): forward run, back-skate, side slides
+(defrun :ke-shoulder-rest :ke-run :ke-skate-b :ke-slide-r :ke-slide-l)
 (defclip :ke-intro (2.0 :base :ke-shoulder-rest)       ; grin, sword on the shoulder, a laugh, then ready
   (0) (0.7 (:head :flex -30) (:spine :flex -8)) (0.9 (:head :flex -25)) (1.1 (:head :flex -32)) (1.4 (:head :flex -12))
   (2.0 :ke-stance))
@@ -276,9 +275,11 @@
   (:pelvis :twist 15) (:chest :twist -8) (:spine :flex 6) (:head :flex -8)
   (:arm-r :flex 95 :side 30) (:elbow-r :flex 120) (:hand-r :twist 0 :flex -85)
   (:arm-l :flex 15 :side 22) (:elbow-l :flex 25))
-(defclip :ke-patch (0.5 :base :ke-stance)              ; tears the eyepatch off (hide :eyepatch from 0.3 s)
+;; the NOME release (the awakening's first beat): head down, the grin, then head thrown back and the left arm flung
+;; wide as the reiatsu bursts (0.3 s; the cinematic plays it at 2/3 speed: the burst on its frame 26)
+(defclip :ke-release (0.5 :base :ke-stance)
   (0)
-  (0.2 (:arm-l :flex 150 :side -35) (:elbow-l :flex 125) (:hand-l :flex 20) (:head :flex 10 :twist 10) (:chest :twist 10))
+  (0.2 (:head :flex 22 :twist 6) (:spine :flex 16) (:chest :twist 8) (:arm-l :flex 30 :side 10) (:elbow-l :flex 70))
   (0.3 :snap (:arm-l :flex 110 :side 70) (:elbow-l :flex 10) (:head :flex -25 :twist -10) (:spine :flex -15) (:chest :twist -15))
   (0.5 (:arm-l :flex 90 :side 75) (:head :flex -30) (:spine :flex -18)))
 (defclip :ke-nome (0.7 :base :ke-stance)               ; "Nome": blade up (weapon -> :nozarashi at 0.35 s), then down
@@ -296,6 +297,19 @@
   (0.7 (:root :u 0.1) (:thighs :flex 50) (:knees :flex 85) (:arms :flex 178 :side 6) (:spine :flex -22)))
 (defclip :ke-n-stance (2.0 :loop t :base :ke-n-stance)
   (0) (1.0 (:chest :flex 3) (:root :u -0.07)))
+;; Nozarashi v2, the cups read from the grip: cup 1 one hand (:ke-n-stance); cups 2 and 3 two-handed jodan, the
+;; cleaver raised over the right shoulder in both hands, the green tassel hanging
+(defpose :ke-r-stance (:base :ke-n-stance)
+  (:pelvis :twist 10) (:chest :twist -4) (:spine :flex 4) (:head :flex -4)
+  (:arm-r :flex 150 :side 12) (:elbow-r :flex 55) (:hand-r :twist 0 :flex -40)
+  (:arm-l :flex 140 :side -12) (:elbow-l :flex 60) (:hand-l :flex -30)
+  (:thigh-r :flex -10 :side 10) (:thigh-l :flex 22 :side 8) (:knee-r :flex 22) (:knee-l :flex 28))
+(defclip :ke-r-stance (2.0 :loop t :base :ke-r-stance)
+  (0) (1.0 (:chest :flex 3) (:root :u -0.06)))
+;; DRINK (cup 3's U): a drunk hit, the head thrown back, the chest open (a variant of the stance's hold)
+(defclip :ke-drink (0.3 :base :ke-r-stance)
+  (0 :snap (:head :flex -32) (:spine :flex -14) (:chest :twist 6) (:root :u -0.03))
+  (0.3 (:head :flex -20) (:spine :flex -8)))
 (defstrike :ke-meteor (26 4 30 :base :ke-n-stance)     ; "Split the meteor": the huge two-handed cleave
   (0)
   (18 (:root :u 0.05) (:arms :flex 180 :side 5) (:elbows :flex 30) (:hand-r :twist 0 :flex -50) (:spine :flex -22) (:head :flex -20)

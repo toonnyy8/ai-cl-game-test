@@ -12,6 +12,7 @@
 ;;;;   (:launch e) (:land e)
 ;;;;   (:konpaku victim lost) (:kikon att victim) (:soul-break att victim)  (:awaken e) (:form e form)
 ;;;;   (:evolution e) (:hellfire e)  (:skeleton-rise x z)  (:sfx key e)  (:reset)
+;;;;   (:rung e up-p) (:drink att def x y z) (:rift-cut owner x z) (:rift-close x z)   Nozarashi's NOME ladder
 (in-package :duel)
 
 (defun sfx-on (key e &key (gain 1.0) (pitch 1.0))
@@ -80,8 +81,11 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
                          (focus-lines 10)
                          (announce "KIKON" :sub (if (kikon-ready-p att) nil "GUARD IT!") :color '(0.82 0.06 0.11 1) :secs 0.6 :small t)))
         (:hit (apply #'show-hit args))
-        (:blocked (destructuring-bind (att def x y z) args
-                    (multiple-value-bind (dx dz) (hit-dir att def) (vfx-hit x y z :guard :dx dx :dz dz))
+        (:blocked (destructuring-bind (att def x y z) args   ; West's garb guard: the ember star and a sizzle
+                    (multiple-value-bind (dx dz) (hit-dir att def)
+                      (if (passive-p def :garb)
+                          (progn (vfx-ember x y z :dx (- dx) :dz (- dz)) (sfx-at :sizzle x y z))
+                          (vfx-hit x y z :guard :dx dx :dz dz)))
                     (sfx-at :clang x y z)))
         (:armored (destructuring-bind (def x y z) args     ; the owner's spot colour: fire / ember, else REIATSU (+ his absorb sound)
                     (case (first (kit-blade (kit-of def)))
@@ -168,4 +172,23 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
                      (vfx-shockwave (aref p 0) (aref p 2) 6.0 0.5 :rgb '(1.0 0.5 0.15)) (shake 0.2 0.4)))
         (:skeleton-rise (destructuring-bind (x z) args (vfx-skeleton-dust x z) (sfx-at :bones x 0.5 z)))
         (:sfx (destructuring-bind (key e) args (sfx-on key e)))
-        (:reset (play-sfx :bell :gain 0.6))))))
+        (:reset (play-sfx :bell :gain 0.6))
+        (:rung (destructuring-bind (e up) args               ; a cup up (or down) the NOME ladder
+                 (let ((form (fighter-form (fighter e))) (side (fighter-side (fighter e))))
+                   (cond ((not up)
+                          (let ((p (pos-of e))) (vfx-smoke-puffs (aref p 0) 1.2 (aref p 2) 2))
+                          (when (eq form :nozarashi) (callout e "TSUMANNEE...")))
+                         ((eq form :nomihose)              ; drink it dry: a negative, then a manga page (yellow kept)
+                          (impact-frame :negative 1) (setf *impact-next* '(:manga . 12))
+                          (sfx-on :awaken-boom e) (sfx-on :tier-up e) (shake 0.2 0.3)
+                          (announce "NOMIHOSE!" :color '(1 0.85 0.25 1) :secs 1.0 :small t :side side))
+                         (t (sfx-on :tier-up e)
+                            (announce "RYOTE" :color '(1 0.85 0.25 1) :secs 0.8 :small t :side side))))))
+        (:drink (destructuring-bind (att def x y z) args     ; the hit star reversed: flecks sucked into the cleaver
+                  (multiple-value-bind (dx dz) (hit-dir att def) (vfx-hit x y z :reiatsu :dx (- dx) :dz (- dz)))
+                  (sfx-on :gulp def)
+                  (when (< (rnd01) 0.33) (sfx-on :laugh def :gain 0.7))))
+        (:rift-cut (destructuring-bind (o x z) args
+                     (declare (ignore o))
+                     (vfx-hit x 1.15 z :heavy) (sfx-at :rift-cut x 1.15 z) (shake 0.08 0.15)))
+        (:rift-close (destructuring-bind (x z) args (vfx-smoke-puffs x 1.15 z 1)))))))

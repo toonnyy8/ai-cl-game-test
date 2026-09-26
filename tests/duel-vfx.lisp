@@ -108,7 +108,7 @@
           ((6 10 11 12 13) (list (yama :x -2.0) (ken :x 1.5)))
           (7 (list (yama :x -0.9 :yaw pi) (ken :x 0.9 :yaw pi)))
           (8 (list (ken :x 1.5 :yaw (/ pi -2))))
-          (9 (list (yama :x -3.0 :z 1.5) (ken :x 3.0 :z -1.5 :weapon :nozarashi :hide :eyepatch)))
+          (9 (list (yama :x -3.0 :z 1.5) (ken :x 3.0 :z -1.5 :weapon :nozarashi)))
           (14 (list (yama :x -1.5) (ken :x 1.5)))
           (28 (list (ken :x 1.5 :yaw (/ pi -2))))
           ((18 19 20 21 22 23 24 25 26 27 29 30 31) (list (yama :x 0.0) (ken :x 1.5)))))

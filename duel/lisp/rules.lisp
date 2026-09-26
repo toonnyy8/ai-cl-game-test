@@ -107,14 +107,15 @@ opponent at DIST."
 ;;;   :armor     a move's armour with hits left (:armor-hits: from move frame *ARMOR-FROM* to its startup's
 ;;;              end, or a Kikon rush's dash)   :invuln    Step / Hoho iframes, down, wake-up
 ;;;   :parry     a parry move inside *PARRY-WINDOW* (Bankai West's GOKUI GAESHI)
-(defun resolve-contact (def-state &key breaker guard-crush quick ignore-armor (in-front t) armor-vs-quick unguardable hazard)
+(defun resolve-contact (def-state &key breaker guard-crush (in-front t) unguardable hazard ranged-armor)
   "What one hit that touched the defender does. The attack: BREAKER (a Breaker strike),
-GUARD-CRUSH (Breaker property on another move), QUICK (a Quick move), IGNORE-ARMOR (Nozarashi),
+GUARD-CRUSH (Breaker property on another move),
 UNGUARDABLE (guard, stance, armour and a parry don't stop it, Step / Hoho iframes still do: the South
 bind; the Kikon rush's strike is guardable, KIKON-OUTCOME), HAZARD (a projectile / ground hit: a parry
-doesn't catch it).
-The defender: DEF-STATE (above), IN-FRONT (the attacker is inside his guard arc), ARMOR-VS-QUICK
-(Bankai West; the shell passes NIL in burnout). Returns
+doesn't catch it; a :ranged hit window counts as one), RANGED-ARMOR (a ranged hit on a defender whose form armours
+against them, Bankai West's garb: unless he guards, it is armoured; UNGUARDABLE still goes through).
+The defender: DEF-STATE (above), IN-FRONT (the attacker is inside his guard arc; armour covers every
+side). Returns
   NIL           no effect (invulnerable)
   :hit          damage + the move's reaction
   :counter      :hit with x*COUNTER-MULT* damage and +*COUNTER-STUN* frames
@@ -122,16 +123,17 @@ The defender: DEF-STATE (above), IN-FRONT (the attacker is inside his guard arc)
   :guard-break  *GUARD-BREAK-STUN*
   :stance-break the stance crumples (*STANCE-BREAK-STUN*)
   :absorbed     the stance takes the damage, no reaction, and stores it
-  :armored      damage, no reaction (a move's armour, or armour vs Quick); a Breaker, UNGUARDABLE and
-                IGNORE-ARMOR go through a move's armour
+  :armored      damage, no reaction (a move's armour, or the garb against a ranged hit); a Breaker and
+                UNGUARDABLE go through it (nothing ignores armour)
   :parried      caught by a parry: no damage; the attacker staggers and the parry counters (a Breaker
                 breaks it: :stance-break; a hazard or UNGUARDABLE hits)
 Breaker vs Breaker is a CLASH, decided before any contact (BREAKER-CLASH-P)."
-  (let ((crush (or breaker guard-crush))
-        (state (cond ((and (eq def-state :guard) (not in-front)) :neutral)
+  (let* ((crush (or breaker guard-crush))
+         (state (cond ((and (eq def-state :guard) (not in-front)) :neutral)
                      ((and unguardable (member def-state '(:guard :stance-in :stance :parry))) :neutral)
                      ((and hazard (eq def-state :parry)) :neutral)
-                     (t def-state))))
+                     (t def-state)))
+         (state (if (and ranged-armor (member state '(:neutral :breaker))) :armor state)))
     (ecase state
       (:invuln nil)
       (:parry (if breaker :stance-break :parried))
@@ -139,8 +141,8 @@ Breaker vs Breaker is a CLASH, decided before any contact (BREAKER-CLASH-P)."
       (:breaker :counter)
       (:stance-in (if breaker :stance-break :counter))
       (:stance (if breaker :stance-break :absorbed))
-      (:armor (if (or breaker unguardable ignore-armor) :hit :armored))
-      (:neutral (if (and quick armor-vs-quick (not ignore-armor) (not breaker)) :armored :hit)))))
+      (:armor (if (or breaker unguardable) :hit :armored))
+      (:neutral :hit))))
 
 (defun contact-of (res)
   "What a hit's RESOLVE-CONTACT result counts as for the attacker (design v2 §0, the contact rule):
@@ -263,7 +265,7 @@ DEF-MODS: :mult on the defender's side (1 in v1). COMBO-INDEX: this hit's number
 
 ;;; ---------------------------------------------------------------- the stance traits and burnout (design v3 §0, §A)
 ;;; A kit with :burnout (the Bankai stances) runs its stance traits on the guard gauge: when the gauge
-;;; empties (a block, East's recoil, West's armour, a Breaker) he is burned out (and guardless) until it
+;;; empties (a block, East's recoil, a Breaker) he is burned out (and guardless) until it
 ;;; is full again. HEAT is T while he is not burned out; these rules gate the five places the traits live.
 ;;; The damage he TAKES (:taken) is not gated: the risk stays.
 (defun heat-mult (mult heat)
@@ -350,12 +352,12 @@ of the wait run out, never faster than the module's CAP."
 
 (defun soul-break-p (reishi) "Reishi reached 0: automatic Soul Break." (<= reishi 0))
 
-(defun kikon-result (konpaku awakened soul-break)
-  "Konpaku settled at connect time: a Kikon removes *KIKON-KONPAKU* (*KIKON-KONPAKU-AWAKENED* if the
-attacker is AWAKENED); a SOUL-BREAK removes one more. Values: konpaku-left lost ko-p. After it the
+(defun kikon-result (konpaku count soul-break)
+  "Konpaku settled at connect time: a Kikon removes COUNT (the attacker's kit :kikon-konpaku, read when his
+rush started: *KIKON-KONPAKU* 2, awakened *KIKON-KONPAKU-AWAKENED* 3, Nozarashi's cups 2 / 3 / 4); a SOUL-BREAK
+removes one more; never more than *KIKON-MAX-EVENT* per event. Values: konpaku-left lost ko-p. After it the
 victim's Reishi resets to max and both are placed by RESET-PLACEMENT."
-  (let* ((lost (min konpaku (+ (if awakened *kikon-konpaku-awakened* *kikon-konpaku*)
-                               (if soul-break *soul-break-extra* 0))))
+  (let* ((lost (min konpaku *kikon-max-event* (+ count (if soul-break *soul-break-extra* 0))))
          (left (- konpaku lost)))
     (values left lost (<= left 0))))
 
@@ -425,16 +427,80 @@ advantage ADV <= *GG-ENDER-ADV*)."
   "The guard gauge GG after a drain of V. Values: new-gg crushed-p (it reached 0: GUARD CRUSH / guardless)."
   (let ((n (max 0.0 (- gg v)))) (values n (<= n 0.0))))
 
-(defun gg-regen (gg idle guardless)
-  "The guard gauge one frame later: nothing before *GG-DELAY* frames without a drain (IDLE), then
-*GG-REGEN*/s (*GG-REGEN-GUARDLESS*/s while GUARDLESS), capped at *GG-MAX*. From 0: 60 + 429 f to full."
-  (if (< idle *gg-delay*)
+(defun gg-regen (gg idle guardless guarding)
+  "The guard gauge one frame later: nothing while GUARDING (GUARD HOLD) or before *GG-DELAY* frames without a
+drain (IDLE), then *GG-REGEN*/s (*GG-REGEN-GUARDLESS*/s while GUARDLESS), capped at *GG-MAX*. From 0: 60 + 429 f
+to full."
+  (if (or guarding (< idle *gg-delay*))
       gg
       (min *gg-max* (+ gg (/ (if guardless *gg-regen-guardless* *gg-regen*) 60.0)))))
+
+(defun gg-idle-next (idle guarding)
+  "GUARD HOLD: the refill delay counter (frames since the last drain) one frame later: frozen while GUARDING
+(:guard / :guard-hit), not restarted, so a guard released picks up where it left off."
+  (if guarding idle (min 9999 (1+ idle))))
+
+(defun gg-feed (gg removed rate)
+  "Bankai's fed flame: the guard gauge GG after its owner removed REMOVED Reishi from the opponent (RATE per point,
+*BANKAI-FEED*), capped at *GG-MAX*."
+  (min *gg-max* (+ gg (* rate removed))))
 
 (defun can-guard-p (gg guardless)
   "May a fighter guard? Not at gauge 0, and not while GUARDLESS (from 0 until the gauge is full again)."
   (and (> gg 0.0) (not guardless)))
+
+;;; ---------------------------------------------------------------- NOME: Nozarashi's three-cup ladder (v2)
+;;; A kit meter with a :ladder: ((form drain/s delay-f up-at down-below) ...), one rung per kit form, cup 1 first.
+(defun nome-gain (dealt taken drunk gains)
+  "NOME from DEALT, TAKEN and DRUNK damage points at the kit's GAINS plist (:dealt :taken :drunk)."
+  (+ (* dealt (getf gains :dealt 0.0)) (* taken (getf gains :taken 0.0)) (* drunk (getf gains :drunk 0.0))))
+
+(defun meter-drain (nome rate delay idle)
+  "NOME one frame later at a rung draining RATE per second once IDLE (frames since the last gain) reaches
+DELAY (0 = always: NOMIHOSE drains even while he drinks); never below 0."
+  (if (and (plusp rate) (>= idle delay)) (max 0.0 (- nome (/ rate 60.0))) nome))
+
+(defun ladder-rung (nome rung ladder)
+  "The rung (index into LADDER) for NOME from RUNG: up while NOME reaches the next rung's up-at, down while
+it is below this rung's down-below (hysteresis; several steps at once: 0 at the top rung is cup 1)."
+  (let ((i rung) (n (length ladder)))
+    (loop while (and (< (1+ i) n) (>= nome (fourth (nth (1+ i) ladder)))) do (incf i))
+    (loop while (and (> i 0) (< nome (fifth (nth i ladder)))) do (decf i))
+    i))
+
+(defun garb-value (v)
+  "West's garb guard: the guard gauge a blocked hit of guard value V drains (*GARB-MULT* x V, after the cut)."
+  (* *garb-mult* v))
+
+(defun garb-scorch (kind)
+  "West's garb guard: the burn a blocked melee hit of move KIND gives its attacker (*GARB-SCORCH*; 0 if none)."
+  (getf *garb-scorch* kind 0))
+
+(defun ranged-hit-p (hazard flags melee-range d2)
+  "Is a hit ranged (not the attacker's own blade)? A HAZARD's always; a window with :ranged in FLAGS unless its move's
+MELEE-RANGE covers the defender (D2: his squared distance from the attacker): the blade near, the line / crack beyond.
+One window decides it per hit, so a hit never lands twice."
+  (and (or hazard (and (member :ranged flags) (not (and melee-range (<= d2 (* melee-range melee-range)))))) t))
+
+(defun ranged-damage (dmg)
+  "West's garb vs a ranged hit: the damage DMG is reduced to *GARB-RANGED* x DMG (rounded; HIT-DAMAGE keeps >= 1)."
+  (round (* *garb-ranged* dmg)))
+
+(defun drink-split (dmg)
+  "DRINK: a drunk hit worth DMG. Values: the half he takes (rounded up: real damage) and the half the
+cleaver drinks."
+  (values (ceiling dmg 2) (floor dmg 2)))
+
+(defun drink-adv (adv)
+  "The attacker's advantage after a drunk melee hit of block advantage ADV: ADV - *DRINK-ADV* (Q1 -2 -> -6,
+enders -12 -> -16): the drinker's blockstun is shorter, so a drunk string leaves gaps and every ender is
+punishable, but his own 10 f R-Q1 only trades into the next hit."
+  (- adv *drink-adv*))
+
+(defun cut-value (v kind &optional (mult *cut-mult*))
+  "The cut: the guard gauge a blocked hit of move KIND drains when its attacker has the :cut passive: V x MULT
+(rounded) for :flash :sig :sp, else V."
+  (if (member kind '(:flash :sig :sp)) (round (* v mult)) v))
 
 ;;; ---------------------------------------------------------------- stance (a Signature kind)
 (defun stance-store (stored taken)

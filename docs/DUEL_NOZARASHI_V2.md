@@ -1,7 +1,10 @@
 # SOUL DUEL: Nozarashi redesign — "NOME" (呑め, Drink), the three-cup ladder — v2
 
-> Status: **decided, not yet built**. Working notes (critiques, v1 drafts, research) were kept outside the repo; the debate outcome is recorded below.
-> **User override (2026-09-26): Kenpachi wears NO eyepatch in any form.** Every eyepatch mention below is superseded by the last section.
+> Status: **built (2026-09-26, the Kenpachi batch)**. The design text below is kept as decided; what the build does
+> differently, and why, is in the last section ("Built: deviations and measurements"). DUEL_DESIGN §6.2 is the as-built
+> reference. Working notes (critiques, v1 drafts, research) were kept outside the repo; the debate outcome is recorded below.
+> **User override (2026-09-26): Kenpachi wears NO eyepatch in any form.** Every eyepatch mention below is superseded by the
+> "User decision after v2" section.
 
 ## 給使用者的摘要（繁體中文）
 
@@ -12,7 +15,7 @@
 - **高風險高報酬**：升杯要流自己的血，越強就越接近紅血。三杯通常只撐 5–10 秒，對手可以拉開距離讓刀乾掉，或逼他「喝」到防禦量表見底。
 - **Shift+K 劈開隕石**：三杯時會「一口喝乾」：一出招就付掉整杯、立刻退回一杯，所以 O 取消接 Kikon 也只拿 2。這一刀 12 m、390 傷害，**6 m 內破防**，更遠的部分可以擋。
 - **享受戰鬥**：越晚收尾，Kikon 越值錢（2 → 3 → 4），而且 Kikon 的價值在衝出去那一刻就定了。
-- **U 的兩種例外，規則一致**：山本西（按住 U = 霸體，可以邊移動邊攻擊，吃滿傷害並燙傷對手）和更木三杯（按住 U = 喝，站定，只受一半傷害並累積量表）都是「U 不再擋，改用防禦量表來付」，歸零就要等量表回滿。面板上會標「U: ARMOUR」或「U: DRINK」。
+- **U 的兩種例外，規則一致**：山本西（按住 U = 霸體，可以邊移動邊攻擊，吃滿傷害並燙傷對手）和更木三杯（按住 U = 喝，站定，只受一半傷害並累積量表）都是「U 不再擋，改用防禦量表來付」，歸零就要等量表回滿。面板上會標「U: ARMOUR」或「U: DRINK」。（2026-09-26 guard v3 之後改了：西的 U 變成「殘日獄衣」火焰防禦，所以現在是「U 在每個型態都是防禦，其中兩個型態的防禦多一個效果」，見文末「After v2: guard v3」。）
 - **配合同批改動**：
   - 野晒不再無視霸體，不然山本西按住 U 的霸體對他完全沒用。改為重招打在霸體上多扣 ×1.5 防禦量表。
   - 跑步時身體一律面向對手，三杯共用同一組跑步動作，杯數靠靈壓大小、單手或雙手握刀和介面辨識（任何形態都沒有眼罩）。
@@ -236,7 +239,9 @@ The passive `:drink` only changes the **`:blocked` branch** of `apply-hit`:
 A drunk −2 hit leaves a gap to the next string hit of S(next) + 2 (Yamamoto's Q2: 10 f; Kenpachi's: 9 f).
 His 10 f R-Q1 at best trades, so a drunk string is not a free interrupt. Every ender is punishable.
 
-**The two U-overrides read as one family** (this batch also turns West's U into hold-U armour):
+**The two U-overrides read as one family** (this batch also turns West's U into hold-U armour; **superseded by guard v3**:
+West's U is now the garb guard, and the family is "U is a guard in every form; two forms' guards do more", see "After
+v2: guard v3" at the end):
 
 | | Bankai West: **hold U = ARMOUR** | Nozarashi T3: **hold U = DRINK** |
 |---|---|---|
@@ -547,3 +552,108 @@ Rejected outright: **none**. Where I went past the critique:
   visual trigger than "the eyepatch flies off" (e.g. the yellow reiatsu pillar + the 12 f two-tone page beat
   + his grin / hair lifting — decide in implementation); cup identification relies on reiatsu size/shape,
   grip (one hand / two hands) and the HUD, not the patch. Update research/DUEL_DESIGN canon notes.
+
+## Built: deviations and measurements (2026-09-26)
+
+Built with the rest of the Kenpachi batch (DUEL_DESIGN §12): (a) no eyepatch, (e) the run facing the opponent, (c) West's
+hold-U armour, then (d) + (b) together. Each landed with its own gate run (DUEL_GAMEPLAY "Pacing gate").
+
+**Built as designed**: the three kit forms `:nozarashi` (KATATE) / `:ryote` / `:nomihose`, their move tables and links
+(§2.3; the host test checks every number and link, and records today's old F1→F2 0-gap), the register-kit parent-move
+fix (§2.8), NOME (`gauges-meter`) with the three sources, the drains, the hysteresis ladder applied only when free, DRINK
+as a guard passive in the `:blocked` branch (real damage through `deal-damage`, `drink-adv` −4, no chip on top, East's
+recoil, the crush), the cut (Flash / Signature / SP ×1.5 on block and on armour), KUKAN-GIRI's rift (a `:rift` hazard,
+`*rift-delay*` 20, closed when its owner is really hit before it cuts, cleared at every reset; +8 on block), the cash-out
+(NOME 0 and cup 1 on its first frame, 390 at ×1.0, the guard break only within 6 m), the Kikon count per cup read at rush
+start (`fighter-kikon-n`) with the per-event cap 4, `:ignore-armor` removed, the AI keys `:kikon-p` and `:cashout`, the
+HUD (NOME bar, cup pips, `U: DRINK`), 4 sounds (`:gulp :rift-open :rift-cut :tier-up`), the determinism fields (the form =
+the rung, `m` = NOME, the new `n` = the last rush's Konpaku, `haz` counts the rifts).
+
+| # | Design | Built | Why |
+|---|---|---|---|
+| 1 | The eyepatch torn off at the first T3 (sticky `revealed`) | No eyepatch in any form (user override). Cup 3's trigger: the yellow pillar (`vfx-awaken-burst :nozarashi`) + two rings, a 1 f negative then a 12 f manga page (`*impact-next*` queues it), "NOMIHOSE!", `:awaken-boom` + `:tier-up`, and a persistent pillar-scale aura (`:nomihose`: the awakened aura drawn ×1.6 tall, 22 flecks/s). The cups read from the aura (cup 1 the base aura, cup 2 the awakened one, cup 3 the pillar), the grip (cup 1 one hand, `:ke-n-stance`; cups 2 / 3 two-handed jōdan, `:ke-r-stance`) and the HUD | The user's decision. The grin / hair-lifting beat was not given its own clip: the rung changes only while he is free, where the walk / stance clips replay every step and would cut it; the rising tongues of the aura read as the hair lifting |
+| 2 | "The first T3 of a match gets the full pillar; later ones a half-height flare" | the same burst every time | a cosmetic refinement left out |
+| 3 | The ladder evaluated when free, the drain every frame | the rung is read **before** that frame's drain | with the drain first a gain to exactly 100 was eaten by RYOTE's drain on the same frame (cap 100 → 99.95) and cup 3 never came (found by the 2380 probe). One edge remains: reaching 100 during a move that lasts past RYOTE's 60 f delay drains it below 100 before he is free |
+| 4 | The stance's absorbed points: +0.30 (the pace note's "100 absorbed = +30") | +0.30 drunk **and** +0.12 taken (he loses those Reishi through `deal-damage`) | one rule for "taken": every point he loses |
+| 5 | Two hit windows for the cash-out (`:cap 0.3→6.0` breaking, `:cap 6.0→12.0` blockable) | one window and a move param `:crush-range 6.0` (combat.lisp: the hit breaks guard when the defender stands within it) | two capsules overlap by their radii near 6 m: one cut could hit twice |
+| 6 | Hook `ken-drink-dry` at f0 | `start-move` now runs a move's frame-`enter` hooks (no existing move has one) | the frame hooks ran from frame 1 |
+| 7 | "OMOSHIREE!": a callout and a one-drawing aura flare | the callout (kit `:respect-callout`) on the opponent's counter-hit, perfect Hoho, parry or Burst against him; no flare | the flare adds nothing the callout doesn't say |
+| 8 | Rift look: a white lens slit with a yellow rim trembling on twos; the cut: a white line, an ink gash, 4 shards | two additive ribbons at chest height (a white slit over a yellow rim, trembling on twos), wider at the cut, a heavy hit spark and `:rift-cut`; closed early: a smoke puff | kept to the additive-ribbon primitives the other line looks use |
+| 9 | DRINK: 6 yellow flecks into the cleaver, a gulp ring, `:ke-drink` | the REIATSU hit star reversed (toward the cleaver), `:gulp`, the laugh a third of the time, the `:ke-drink` clip (head thrown back; kit `:drink-clip`) | — |
+| 10 | Clips `:ke-r-q1` … `:ke-n-f1` | reused through `:clip-s` as §2.10 allows (R-Q1 / R-F1 / N-F1 ← `:ke-f1`, R-Q3 ← `:ke-q3`, R-F2 ← `:ke-f2`, meteor-n ← `:ke-meteor`); new: `:ke-r-stance`, `:ke-drink` | the art pass for the kendo set is still open |
+| 11 | T2 AI: pressure 5, approach 2 | + zone 0, defend 1; T1's close band ends at 3.4 m (the design's 0–3.4) | the other weights had to be something |
+| 12 | The cut ×1.5 on armour | its own knob `*cut-mult-armour*` (1.5), the balance note's first knob | the gate stayed in range: not tuned |
+| 13 | NOME HUD: bright marks at 40 and 100 | a bright mark at 40, dim ticks at 25 / 50 (100 is the bar's end); `U: DRINK` in the awaken row's label, not on the name line | at 800×450 the name line has no room for a second tag |
+
+**Measured** (seed gate, 20 seeds × pairing, all K.O.; the last column the West hold-U rework alone, v2 off):
+
+| Pairing | Before the batch | West hold-U alone (+ the run) | Both (final) | Win rate, final (P1 / P2) |
+|---|---|---|---|---|
+| YY | 158.7 s (95.5–223.2) | 148.9 (114.7–219.2) | 148.9 (114.7–219.2) | 11 / 9 |
+| YK | 152.1 (115.2–185.2) | 142.9 (107.8–188.4) | **140.3 (97.8–180.6)** | Yamamoto 7, Kenpachi 13 (before: 6 / 14) |
+| KK | 159.7 (128.8–197.4) | 159.7 (128.8–197.4) | **154.1 (106.8–170.0)** | 8 / 12 |
+
+The prediction (§2.12: YK ~140–150, KK ~135–150) holds for YK; KK is 4 s above it. No pacing knob was retuned.
+
+Pacing log (the gate's combat log, `pace.py`-style counts over the 20 YK and 20 KK matches):
+
+| | YK | KK |
+|---|---|---|
+| cup entries 1 / 2 / 3 | 55 / 52 / 36 | 118 / 109 / 83 |
+| NOMIHOSE stay | mean 5.6 s, max 10.8 s | mean 6.2 s, max 19.8 s |
+| drinks (crushes while drinking) | 1 (0) | 20 (0) |
+| rifts hit / blocked / armoured / closed | 2 / 1 / 2 / 2 | 8 / 6 / 0 / 1 |
+| cash-outs (punish / near) | 32 (10 / 22) | 75 (35 / 40) |
+| Kenpachi's Kikons by cup (Konpaku 1 / 2 / 3 / 4) | KATATE 2×1 6×2, RYOTE 2×1 2×2 22×3, NOMIHOSE 1×1 1×4 | KATATE 14×2, RYOTE 4×1 3×2 41×3, NOMIHOSE 2×1 9×4 |
+
+(A count below the cup's value is the opponent's last Konpaku.) The CPU cashes nearly every cup 3 out before it drains
+(the `:cashout` near rule fires once NOME < 60 within 6 m), so the 4-Konpaku Kikon is rare; about half the cash-outs
+connect (55 of 107: 15 guard breaks). Open: whether the CPU should keep cup 3 longer (`:cashout :below` 60 → 55) is a
+feel question for the user, not a gate one.
+
+## After v2: guard v3 (2026-09-26)
+
+Guard v3 (DUEL_DESIGN §4, §6.1, §6.2, §12; the user's decisions 2026-09-26) changed NOME's pacing and West's U, which
+changes this design's DRINK / West pairing (§2.4) and its balance notes (§2.11).
+
+**NOME (knob set K3).** The user: "make cup 2 → 3 easier; HP is too low and the meter drains too fast". The CPU
+always reached cup 3; the player the user describes (who finishes a red opponent at once, rarely uses the stance)
+did not: the human proxy (Kenpachi on HARD, the rush at 0.9 in every cup, no stance) reached cup 3 while Yamamoto
+still had ≥ 4 Konpaku in only 13 of 20 matches, because cup 2 drained 3/s after 1 s idle (a fifth of all NOME) and
+1100 Reishi made each exchange short. Changed: RYOTE drains **1.5/s after 180 f** (`*nome-delay*` 60 → 180,
+`*nome-drain-t2*` 3.0 → 1.5), with the global Reishi 1100 → **1300** (the user's choice: real human matches run much
+faster than CPU vs CPU). Unchanged: the three gains (dealt 0.08, taken 0.12, drunk 0.30), the rungs 40 / 25 / 100 / 50,
+cup 3's 10/s drain with no delay, the cash-out. Measured (the gate, 20 seeds): first cup 3 28.2 s (YK) / 28.7 s (KK)
+after the awakening (was 36.4 / 33.1); the proxy reaches cup 3 with Yamamoto at ≥ 4 Konpaku in **20 / 20**; cup 3
+stays mean 6.4 / 6.7 s, max 12.0 / 18.9 s (a peak still); awake time KATATE 32 %, RYOTE 52 %, NOMIHOSE 16 % (YK).
+
+**DRINK and West's garb: the family restated.** West's hold-U armour is gone; his U is the **garb guard**. So there is
+no U that doesn't guard any more: "in every form U is a guard; two forms' guards do more, and both are paid from the
+guard gauge".
+
+| | Bankai West: `U: GARB` | Nozarashi cup 3: `U: DRINK` |
+|---|---|---|
+| Blocks? | yes (a guard) | yes (a guard) |
+| A blocked hit costs him | **half** its guard value (after the cut), ×1.3 in Bankai (the user's follow-up): ×0.65 net | its guard value |
+| and does | burns a melee attacker 5 (Quick) / 15 (Flash / Signature / SP / Kikon strike) | he takes half the damage for real, the other half fills NOME; the attacker is −4 f worse |
+| Refill while held | none (GUARD HOLD), and a Bankai never refills by time (fed by his hits) | none (GUARD HOLD) |
+| Breaker / from behind / unguardable | break / hit / hit | break / hit / hit |
+| At 0 | burnout: guardless and every West trait off 8.1 s, then REIGNITE | guardless 8.1 s |
+| Ranged hits | ×0.6 and armoured unless he guards (the rift, the Meteor, the cash-out line, Buttagiru) | (nothing special) |
+
+**YK / KK interplay, restated:**
+- **Kenpachi cup 2+ vs West's garb**: the cut still bites (×1.5 on his blocked heavies, ×0.75 net on the garb, then
+  Bankai's ×1.3 drain): RYOTE's K K costs West 31 a string and burns Kenpachi 30, the 4th string burns West out; his J
+  string costs 18 and burns 15 (the 6th burns West out). `*cut-mult-armour*` is removed: no gauge-paid armour is left.
+- **West's hits into a cup-3 drink**: drunk, as before (+NOME for Kenpachi); Kenpachi's hits into the garb are
+  scorched. Both pay from gauges that don't refill while held: the race §2.4 meant.
+- **Kenpachi's ranged cuts vs West**: KUKAN-GIRI's rift is ranged; Split the Meteor, the cash-out and Buttagiru are
+  **melee at the cleaver and ranged beyond it** (the user's follow-up decision 2026-09-26: one window, the victim's
+  distance decides; the boundary is the cup's Q reach: the Meteor 3.4 m (KATATE's Q1 3.38), the cash-out 3.9 m (cup
+  3's MEN), Buttagiru 2.6 m). Beyond it an unguarded West takes ×0.6 with no reaction (the cash-out 390 → 234, no
+  knockdown); within it the cleaver lands as any melee hit (390 and the knockdown, or a garb block that scorches 15).
+  Guarded, both are garb blocks, and the cash-out within 6 m still breaks the guard. Between CPUs this is rare (about 0.3 a YK match, nearly all
+  cash-outs).
+- **The phone**: the U latch of DUEL_MOBILE_DESIGN §3.4 is deleted: a resting thumb holds DRINK and the garb like any
+  guard.
+

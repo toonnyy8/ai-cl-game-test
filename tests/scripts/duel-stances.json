@@ -1600,12 +1600,22 @@
 "eval": "Module._debug_cmd(2372)"
 },
 {
-"at": 42.5,
-"shot": "tests/shots/duel-stance-armour.png"
+"at": 40.1,
+"key": "KeyU",
+"down": true
 },
 {
-"at": 46.3,
-"shot": "tests/shots/duel-stance-armour-burnout.png"
+"at": 42.5,
+"shot": "tests/shots/guard3-garb.png"
+},
+{
+"at": 52.5,
+"shot": "tests/shots/guard3-garb-burnout.png"
+},
+{
+"at": 55.0,
+"key": "KeyU",
+"down": false
 },
 {
 "at": 56.0,
@@ -1613,236 +1623,272 @@
 },
 {
 "at": 57.0,
-"eval": "Module._debug_cmd(2373)"
+"eval": "Module._debug_cmd(2379)"
 },
 {
-"at": 57.5,
-"key": "ShiftLeft",
+"at": 58.05,
+"shot": "tests/shots/guard3-ranged-rift.png"
+},
+{
+"at": 58.6,
+"key": "KeyU",
 "down": true
 },
 {
-"at": 57.55,
-"key": "KeyK",
+"at": 60.3,
+"key": "KeyU",
+"down": false
+},
+{
+"at": 61.15,
+"shot": "tests/shots/guard3-ranged-cashout.png"
+},
+{
+"at": 62.9,
+"key": "KeyJ",
 "down": true
 },
 {
-"at": 57.65,
-"key": "KeyK",
+"at": 62.98,
+"key": "KeyJ",
 "down": false
-},
-{
-"at": 57.7,
-"key": "ShiftLeft",
-"down": false
-},
-{
-"at": 57.95,
-"shot": "tests/shots/duel-stance-kyoku-break.png"
-},
-{
-"at": 58.2,
-"shot": "tests/shots/duel-stance-kyoku-cone.png"
-},
-{
-"at": 60.0,
-"eval": "Module._debug_cmd(2374)"
-},
-{
-"at": 60.5,
-"key": "ShiftLeft",
-"down": true
-},
-{
-"at": 60.55,
-"key": "KeyK",
-"down": true
-},
-{
-"at": 60.65,
-"key": "KeyK",
-"down": false
-},
-{
-"at": 60.7,
-"key": "ShiftLeft",
-"down": false
-},
-{
-"at": 61.1,
-"shot": "tests/shots/duel-stance-kyoku-far.png"
-},
-{
-"at": 62.5,
-"eval": "Module._debug_cmd(2107)"
-},
-{
-"at": 63.0,
-"eval": "Module._debug_cmd(2375)"
-},
-{
-"at": 63.5,
-"key": "ShiftLeft",
-"down": true
-},
-{
-"at": 63.55,
-"key": "KeyK",
-"down": true
-},
-{
-"at": 63.65,
-"key": "KeyK",
-"down": false
-},
-{
-"at": 63.7,
-"key": "ShiftLeft",
-"down": false
-},
-{
-"at": 63.95,
-"shot": "tests/shots/duel-stance-parry.png"
-},
-{
-"at": 64.25,
-"shot": "tests/shots/duel-stance-counter.png"
-},
-{
-"at": 66.0,
-"eval": "Module._debug_cmd(2107)"
 },
 {
 "at": 67.0,
-"eval": "Module._debug_cmd(2376)"
+"eval": "Module._debug_cmd(2107)"
 },
 {
 "at": 67.5,
+"eval": "Module._debug_cmd(2373)"
+},
+{
+"at": 68.0,
 "key": "ShiftLeft",
 "down": true
 },
 {
-"at": 67.55,
-"key": "KeyL",
+"at": 68.05,
+"key": "KeyK",
 "down": true
 },
 {
-"at": 67.65,
-"key": "KeyL",
+"at": 68.15,
+"key": "KeyK",
 "down": false
 },
 {
-"at": 67.7,
+"at": 68.2,
 "key": "ShiftLeft",
 "down": false
 },
 {
-"at": 67.95,
-"shot": "tests/shots/duel-stance-south-tell.png"
-},
-{
-"at": 68.4,
-"shot": "tests/shots/duel-stance-south-bound.png"
-},
-{
-"at": 68.5,
-"key": "KeyJ",
-"down": true
-},
-{
-"at": 68.55,
-"key": "KeyJ",
-"down": false
+"at": 68.45,
+"shot": "tests/shots/duel-stance-kyoku-break.png"
 },
 {
 "at": 68.7,
-"key": "KeyJ",
-"down": true
+"shot": "tests/shots/duel-stance-kyoku-cone.png"
 },
 {
-"at": 68.75,
-"key": "KeyJ",
-"down": false
-},
-{
-"at": 68.9,
-"key": "KeyJ",
-"down": true
-},
-{
-"at": 68.95,
-"key": "KeyJ",
-"down": false
-},
-{
-"at": 70.0,
-"eval": "Module._debug_cmd(2107)"
+"at": 70.5,
+"eval": "Module._debug_cmd(2374)"
 },
 {
 "at": 71.0,
-"eval": "Module._debug_cmd(2377)"
-},
-{
-"at": 72.3,
 "key": "ShiftLeft",
 "down": true
 },
 {
-"at": 72.35,
-"key": "KeyJ",
+"at": 71.05,
+"key": "KeyK",
 "down": true
 },
 {
-"at": 72.45,
-"key": "KeyJ",
+"at": 71.15,
+"key": "KeyK",
 "down": false
 },
 {
-"at": 72.5,
+"at": 71.2,
 "key": "ShiftLeft",
 "down": false
 },
 {
-"at": 72.2,
-"shot": "tests/shots/duel-stance-south-victim.png"
+"at": 71.6,
+"shot": "tests/shots/duel-stance-kyoku-far.png"
 },
 {
-"at": 72.6,
-"shot": "tests/shots/duel-stance-south-burst.png"
-},
-{
-"at": 74.0,
+"at": 73.0,
 "eval": "Module._debug_cmd(2107)"
 },
 {
-"at": 75.0,
-"eval": "Module._debug_cmd(2378)"
+"at": 73.5,
+"eval": "Module._debug_cmd(2375)"
 },
 {
-"at": 76.9,
-"key": "KeyD",
+"at": 74.0,
+"key": "ShiftLeft",
 "down": true
 },
 {
-"at": 76.95,
-"key": "Space",
+"at": 74.05,
+"key": "KeyK",
 "down": true
 },
 {
-"at": 77.05,
-"key": "Space",
+"at": 74.15,
+"key": "KeyK",
 "down": false
 },
 {
-"at": 77.4,
-"key": "KeyD",
+"at": 74.2,
+"key": "ShiftLeft",
 "down": false
 },
 {
-"at": 77.6,
-"shot": "tests/shots/duel-stance-south-step.png"
+"at": 74.45,
+"shot": "tests/shots/duel-stance-parry.png"
+},
+{
+"at": 74.75,
+"shot": "tests/shots/duel-stance-counter.png"
+},
+{
+"at": 76.5,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 77.5,
+"eval": "Module._debug_cmd(2376)"
+},
+{
+"at": 78.0,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 78.05,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 78.15,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 78.2,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 78.45,
+"shot": "tests/shots/duel-stance-south-tell.png"
+},
+{
+"at": 78.9,
+"shot": "tests/shots/duel-stance-south-bound.png"
+},
+{
+"at": 79.0,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 79.05,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 79.2,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 79.25,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 79.4,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 79.45,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 80.5,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 81.5,
+"eval": "Module._debug_cmd(2377)"
+},
+{
+"at": 82.8,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 82.85,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 82.95,
+"key": "KeyJ",
+"down": false
 },
 {
 "at": 83.0,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 82.7,
+"shot": "tests/shots/duel-stance-south-victim.png"
+},
+{
+"at": 83.1,
+"shot": "tests/shots/duel-stance-south-burst.png"
+},
+{
+"at": 84.5,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 85.5,
+"eval": "Module._debug_cmd(2378)"
+},
+{
+"at": 87.4,
+"key": "KeyD",
+"down": true
+},
+{
+"at": 87.45,
+"key": "Space",
+"down": true
+},
+{
+"at": 87.55,
+"key": "Space",
+"down": false
+},
+{
+"at": 87.9,
+"key": "KeyD",
+"down": false
+},
+{
+"at": 88.1,
+"shot": "tests/shots/duel-stance-south-step.png"
+},
+{
+"at": 93.5,
 "eval": "Module._debug_cmd(2107)"
 }
 ]

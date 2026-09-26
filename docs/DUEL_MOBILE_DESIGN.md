@@ -14,7 +14,8 @@ there is no local portrait 2P; future Bluetooth / Wi-Fi P2P netplay must stay po
 - **撥（flick）在劃過門檻的那一刻就出招**，不必等手指離開，延遲變得穩定。只有「往上撥 = Flash」要多等 80 ms 確認不是往前拖著跑。
 - **Hoho**：站著或防禦時，按住再往上撥。出招途中往上撥一律是 Flash，所以 J J K 分支不會誤觸成 Hoho。單手版少了「連段中取消成 Hoho」這一招。
 - **Burst**：被打中、硬直或浮空時往下撥，跟 Shift+J 一樣會記在緩衝裡。
-- **山本西、野晒三杯這類「U 不是防禦」的型態**：長按後放開就鎖住 U（霸體或喝），再長按一次解除，量表歸零時自動解除。鎖住之後點擊和撥照樣出招，所以攻擊時也有霸體。
+- **U 在每個型態都是防禦**（2026-09-26 的 guard v3 決定之後）：山本西的 U 改成「殘日獄衣」火焰防禦，野晒三杯的「喝」本來就是防禦，所以拇指按著不動就是防禦，任何型態都一樣。原本設計的「長按放開鎖住 U」手勢已經刪掉，因為再也沒有「U 不是防禦」的型態需要它。
+- **放開拇指才會回防禦量表**：防禦中量表不回，等待回復的 1 秒也暫停計時（放開後接著算，不是重算）。所以單手時「拖、停、拖」的走位不會讓量表永遠回不來；防禦中拇指下的墨圈會變暗，提醒「抬起拇指喘口氣」。
 - **按鈕重新排過**：手勢區是一整塊至少 260×194 px 的連續區域。O 放在手勢區上方，其餘四顆（L、I、SP1、SP2）沿拇指側排成一列，不會碰到 Home 條和側邊的返回手勢區。覺醒要按住 0.3 秒。
 - **防止誤退出**：會先 push 一筆瀏覽紀錄，擋住 Android 側滑返回和 iOS 返回，觸發時改成暫停；拇指那一側的邊緣也留 32 px 死區。
 - **鏡頭**：直向改為 FOV 66°，畫面往上平移 0.22，貼身時的轉角從 40° 降到 15°。所有調整都只在畫面端，Hoho 後鏡頭怎麼追上也只在畫面端做，不改模擬端的 `*behind-turn*`。這樣兩台手機將來連線，搖桿方向的換算也不會不同步。
@@ -27,7 +28,7 @@ there is no local portrait 2P; future Bluetooth / Wi-Fi P2P netplay must stay po
 
 Status: design only; nothing in the project was edited. Code references were re-checked for this revision:
 fighter.lisp run-step 453–462 (guard before the Step release), move-commands 400–418, stun-step 420–426;
-main.lisp pilot-read 43–47; hud.lisp `*refused-t*` 240–247; design-nozarashi.md §2.4 (U: ARMOUR / U: DRINK).
+main.lisp pilot-read 43–47; hud.lisp `*refused-t*` 240–247; design-nozarashi.md §2.4 (U: ARMOUR / U: DRINK; since guard v3 both are guards: `U: GARB` / `U: DRINK`).
 
 ## 1. What exists today (unchanged from v1, two corrections)
 
@@ -76,7 +77,7 @@ contact cannot lock input. A contact that starts in a dead band never claims the
 | State / event | Condition | vpad writes | Meaning |
 |---|---|---|---|
 | **TAP** | lifted ≤ `tap-ms` (120) after down, travel < `slop` (10 px) | `:quick` pulse | Quick. Taps chain Q1 Q2 Q3; the J J K branch is tap, tap, flick↑. |
-| **REST** | still for `tap-ms` | U held (guard forms); nothing in latch forms (§3.4) | Guard (it blocks after the existing 2 f raise). Lifting after this point does **nothing** else. |
+| **REST** | still for `tap-ms` | U held (every form: since guard v3 U is a guard in every form, §3.4) | Guard (it blocks after the existing 2 f raise). Lifting after this point does **nothing** else. While a rest guards, the guard gauge neither refills nor counts its refill delay (GUARD HOLD, DUEL_DESIGN §4): **lift the thumb to breathe**. The delay is frozen, not restarted, so drag, rest, drag footsies still refill between rests. |
 | **FLICK** (not up) | travel reaches `flick-min` (28 px) within `flick-window` (120 ms) of leaving the slop | fires **at the crossing**: `:step` pulse + stick = stroke direction | Step (↓ back, ←/→ sidestep, diagonals). If the thumb keeps going past the run ring, `:step` stays held: the hop, then the run, as holding Space does. |
 | **FLICK ↓ in `:stun` / `:air`** | same | `:mod` + `:quick` | Burst Reverse, buffered like Shift+J (fires on hit 2 if pressed after hit 1) |
 | **HOHO** | a REST contact (≥ `tap-ms` still) in neutral or guard, then an up-stroke crossing `flick-min` | fires at the crossing: `:mod` + `:step` | Hoho from guard. The perfect-Hoho read is intact. |
@@ -133,7 +134,7 @@ one SP chip: tap = SP1, flick up off it = SP2.
 The column's lowest chip is the rarest (SP2). The O spot and the column order are tuned on real phones in
 P0, whose exit criteria include reach.
 
-### 3.4 Chips and the U latch
+### 3.4 Chips (the U latch is deleted)
 
 - **Chips** fire on touch-down (they are outside the pad, so no gesture starts on them). A chip **stays held
   until lift**, even if the thumb slides off, so a sliding thumb never drops a Kikon hold.
@@ -154,16 +155,10 @@ P0, whose exit criteria include reach.
   L / Shift+L slots and a no-bar press emits nothing today. Give `*refused-t*` one slot per chip, and emit a
   `:refused` event on a no-bar press as well as a cooling one. It is cosmetic; the fixed-dt touch gate (§7)
   confirms the hash is unaffected.
-- **U latch** (forms where U is not a guard: West `U: ARMOUR`, Nozarashi T3 `U: DRINK`). The pilot keys off
-  the batch's own per-form U mode (the value behind the panel tag; `:guard` until that batch merges). No new
-  kit flag.
-  - A still rest of ≥ `latch-ms` (250) **released without a stroke** toggles U on; the next one toggles it
-    off.
-  - Gauge 0 / burnout clears it. The panel tag glows while it is latched.
-  - While latched, taps, flicks and chips attack **with U held**, as on keyboard. This restores West's
-    armoured attacks, which v1 lost.
-  - Rest → stroke never toggles, so Hoho still works.
-  - Guard forms have no latch: rest = hold U, exactly as §3.2.
+- **No U latch.** This design had one (a long rest-and-release toggling U on) for the forms whose U was not a
+  guard: West's hold-U armour and Nozarashi T3's DRINK. Guard v3 (the user's decision 2026-09-26) replaced West's
+  armour with the garb guard, and DRINK already was a guard, so **U is a guard in every form** and a rest holds
+  it everywhere, exactly as §3.2. The latch, its knob, its glyph, its tests and its risk row are deleted.
 
 ### 3.5 Keyboard → one-hand map
 
@@ -171,7 +166,7 @@ P0, whose exit criteria include reach.
 |---|---|
 | WASD | Drag |
 | Space (tap / hold) | Flick / drag far |
-| U (hold) | Rest (guard forms) or the U latch (armour / drink forms) |
+| U (hold) | Rest (every form) |
 | J / K | Tap / flick ↑ |
 | L | L chip |
 | I | I chip |
@@ -206,9 +201,11 @@ read, the triangle, guard-gauge pressure, run cancels with carry, SP holds, Burs
 
 ### 3.7 Feedback (v2 scope)
 
-- The recognised gesture flashes its glyph at the thumb for 0.3 s (↑ F, ↓ STEP, 歩 HOHO, 鎖 U-LATCH). This is
+- The recognised gesture flashes its glyph at the thumb for 0.3 s (↑ F, ↓ STEP, 歩 HOHO). This is
   the misread teacher and stays in P0.
-- The floating stick is an ink ring (run ring dashed). Chips show pressed / cooldown / cost / refused states.
+- The floating stick is an ink ring (run ring dashed). **GUARD HOLD cue**: while a rest guards and the guard
+  gauge is below full (so its refill is frozen), the ring dims (render only; not for a Bankai, whose gauge never
+  refills by time): "lift the thumb to breathe". Chips show pressed / cooldown / cost / refused states.
 - Deferred: the brush touch trail and haptics (Android only anyway; WebKit has no Vibration API).
 
 ### 3.8 Knobs (one `gesture-config`; tuned in P0 / P4)
@@ -220,7 +217,6 @@ read, the triangle, guard-gauge pressure, run cancels with carry, SP holds, Burs
 | `flick-min` | 28 px |
 | `flick-window` | 120 ms |
 | `up-lift-ms` | 80 ms |
-| `latch-ms` | 250 ms |
 | `stick-r` | 48 px |
 | `run-ring` | 1.6 r |
 | `recenter` | 2 r |
@@ -282,7 +278,7 @@ Run grace is cut: it existed only to rescue v1's guard-on-touch-down.
 |---|---|---|---|
 | G1 | **Finger input** | `pf_pump`: FINGER_DOWN / MOTION / UP / CANCELED into a static 10-finger table (id, x, y in window px, x0, y0, **SDL event timestamp per sample**, down / began / ended). CANCELED is idempotent and never a lift-tap. **Fingers are cleared on FOCUS_LOST / HIDDEN / MINIMIZED** (with keys and mouse). Synthetic mouse buttons with `which == SDL_TOUCH_MOUSEID` are dropped (it only matters to RAVEN; the duel runs with `*pointer-lock*` nil, main.lisp:299). A debug hint `SDL_HINT_MOUSE_TOUCH_EVENTS=1` lets the mouse act as a finger. `pf_touch_*` accessors, 0 B. Under `run.mjs --fixed-dt`, `SDL_GetTicksNS` follows the virtual clock, so timestamps are deterministic. | P0 |
 | G2 | **Recogniser + zones + pulse latch** | `engine/lisp/touch.lisp`, plain CL, host-tested; `gesture-config` | P0 crude, P1 hardened |
-| G3 | **vpad fed by touch** | `(:touch name)` bindings in control.lisp; `p1-down-p` answers `:touch`; stick added to `ax ay`; the pilot extras (Burst rewrite, Hoho / F rule, U latch, Kikon latch) run after `vpad-read!` in the same reader | P0 / P1 |
+| G3 | **vpad fed by touch** | `(:touch name)` bindings in control.lisp; `p1-down-p` answers `:touch`; stick added to `ax ay`; the pilot extras (Burst rewrite, Hoho / F rule, Kikon latch) run after `vpad-read!` in the same reader | P0 / P1 |
 | G4 | **DPR text floor** | `ui-scale` = max(current, ceil(`*ui-min-css*` · dpr / 7)); `*ui-min-css*` 0 on desktop (unchanged), 11 in portrait; `(pixel-density)` | P0 (one line) |
 | G5 | **Viewport + back trap** | shell: `height:100dvh` (fallback 100vh), `viewport-fit=cover`, `-webkit-touch-callout:none`, safe-area probe → `(safe-inset side)`, `(portrait-p)`. **History trap**: `history.pushState` on the first tap (after user activation, or Chrome skips the entry); `popstate` → `Module` flag → pause + push again. | P0 (dvh, trap), P2 (insets) |
 | G6 | **Lens shift** | camera `shift-x / shift-y` added in `m4-perspective!` (math.lisp:160), about 5 lines. G6b (a viewport rect for a cinematic band) is deferred. | P2 |
@@ -315,16 +311,16 @@ phone. Pixels dominate, and G7 caps them. Low Power Mode at 30 fps is absorbed b
 1. **Host**:
    - `tests/touch-test.lisp`: every row of §3.2 and every boundary knob; CANCELED after `pointerup`;
      the latest-contact rule; dead-band starts; focus-loss clearing; the pulse latch across 0-step and
-     2-step frames; chip slide-off keeps the hold; U-latch toggle and clear; the Kikon-latch swallow;
+     2-step frames; chip slide-off keeps the hold; the Kikon-latch swallow;
      `deck-layout-ok-p` at 4 sizes.
    - `duel-control-test` additions: gesture → vpad → command (rest→↑ in neutral = `:hoho`; in `:move` =
      `:f`; ↓ in stun = `:burst`; the SP chips modded).
 2. **Determinism, two gates**:
    - (a) CvC hash lines unchanged vs `tests/style-cvc-ref.txt`: shared code untouched.
-   - (b) **new**: a `--fixed-dt` touch script (tap / flick / hold / chip / latch) run twice gives identical
+   - (b) **new**: a `--fixed-dt` touch script (tap / flick / hold / chip / Kikon latch) run twice gives identical
      hash lines, which catches any wall-clock leakage into the recogniser.
 3. **Headless** (`--mobile --size 390x844`, DPR 2 or render-scale 0.5 for SwiftShader): `duel-touch-kit.json`
-   produces all 11 commands + guard, walk, dash, the U latch, and a Kikon on a red P2 (debug 2314).
+   produces all 11 commands + guard (DRINK and West's garb included: a rest), walk, dash, and a Kikon on a red P2 (debug 2314).
    Screenshots `tests/shots/mobile-*.png`.
 4. **Probes**:
    - framing, at 4 sizes;
@@ -344,7 +340,7 @@ phone. Pixels dominate, and G7 caps them. Low Power Mode at 30 fps is absorbed b
 | Phase | Work | Exit / acceptance |
 |---|---|---|
 | **P0 playable prototype** | G1, G2 crude (rest / tap / flick / drag / the Hoho rule), G3, O / L / I / SP chips as plain circles, the glyph flash, G4, G5 (dvh + back trap), G7, G13; the existing behind camera and HUD at `--size 390x844` | On two real phones, a NORMAL match can be finished one-handed; gesture logs show misreads < 10 %; ≥ 50 fps after G7; the back gesture pauses instead of leaving; the P0 report tunes chip reach and knobs |
-| **P1 recogniser hardening** | every §3.2 rule, latency via SDL timestamps, the latest-contact rule, dead bands, CANCELED, U latch, Kikon latch (LIGHT), G14, host tests | touch-test + control-test pass; both determinism gates pass; 0 B per frame |
+| **P1 recogniser hardening** | every §3.2 rule, latency via SDL timestamps, the latest-contact rule, dead bands, CANCELED, Kikon latch (LIGHT), G14, host tests | touch-test + control-test pass; both determinism gates pass; 0 B per frame |
 | **P2 portrait presentation** | G6 lens shift, per-frame portrait camera, HUD re-layout, text floor, insets, deck-layout constraints at 4 sizes, cinematic lens clamp | framing and text probes pass at 4 sizes; mobile stills reviewed by the user; desktop stills unchanged |
 | **P3 mode + shell** | MODE entry and auto-detect, settings, G9 menu taps, static gesture card, G10 wake lock + PWA (standalone), G11 reload | a fresh profile reaches a match in < 60 s of taps; the PWA runs standalone portrait on iOS; wake lock holds a 5-min match |
 | **P4 tuning** | knobs, chip layout, auto-scale levels | playtest misreads < 5 %; a NORMAL median of 125–180 s; no throttle below 45 fps in 10 min |
@@ -367,7 +363,6 @@ phone. Pixels dominate, and G7 caps them. Low Power Mode at 30 fps is absorbed b
 |---|---|
 | Gesture misreads (slow flick vs drag, rest vs tap, fresh ↑ vs forward run) | Knobs, the glyph flash, fail-safe ordering, the P0 real-phone exit gate |
 | Resting guard is 7 f slower than keyboard | Stated honestly. Pre-emptive guard only; heavies are still blockable. |
-| The West / Nozarashi U batch lands differently | The pilot keys off that batch's own U mode; the latch is generic |
 | Android back gesture, iOS home swipe | History trap, dead bands, P0 test on gesture navigation |
 | iOS: standalone only, no vibrate, GPU loss on backgrounding, a reported 26.4 GPU-process crash | Stated in P3's acceptance; the reload veil; test the oldest iPhone in P0 |
 | Phone GPU / thermals at DPR 3 | G7 + auto-render-scale, measured in P0 |
@@ -381,7 +376,7 @@ phone. Pixels dominate, and G7 caps them. Low Power Mode at 30 fps is absorbed b
 | 1 | BLOCKER: guard at touch-down kills run cancels (run-step checks guard before Step, fighter.lisp:459), turns Q2 into Q1 after a fall to `:guard`, flickers the guard clip, gives free blocking to mashers, and a short block fires a Quick | **Accepted.** Guard engages only at `tap-ms`; a lift after that does nothing; run grace is cut; §10 states the 7 f cost. The code was re-checked (run-step, neutral-step, move-commands). |
 | 2 | MAJOR: latency claim wrong; jitter hurts perfect Hoho and block strings | **Accepted.** Flicks fire at the crossing; only flick↑ = F waits ≤ 80 ms; timing uses SDL event timestamps; the §3.2 latency table replaces the claim. |
 | 3 | MAJOR: Hoho vs F collide (guard → F impossible; a waiting thumb turns the Q2 → F branch into a Hoho cancel) | **Accepted.** Up-stroke in `:move` = F; Hoho only from neutral / guard after a rest; the string Hoho cancel is listed as lost. |
-| 4 | MAJOR: West's armoured attacks impossible; `:u-moves` duplicates the batch's data and depends on it | **Accepted.** A U latch (toggle by long rest-and-release) keyed off the batch's own per-form U mode; attacks while latched are armoured. The flag is dropped. |
+| 4 | MAJOR: West's armoured attacks impossible; `:u-moves` duplicates the batch's data and depends on it | **Accepted**, then **superseded** by guard v3 (2026-09-26): the U latch it added is deleted because West's U is now the garb guard and every U is a guard (§3.4). The flag stays dropped. |
 | 5 | MAJOR: the chip arc walls off the pad, I sits in the home band, the hit circles overlap, AWAKEN appears under the thumb, O commits wherever a gesture starts | **Accepted.** One contiguous pad; O above it, four chips in a thumb-side column; constraints host-checked at 4 sizes; AWAKEN held 300 ms; chips outside the pad, so touch-down firing is safe. |
 | 6 | MAJOR: back gesture ends the match; palm contacts mute the thumb | **Accepted.** History trap (G5), 32 px thumb-side dead band, the latest-contact rule, a gesture-navigation Android in P0. |
 | 7 | MAJOR: engine gaps (fingers not cleared on focus loss; CANCELED after every pointerup; frame-time quantisation; back trap; iOS device loss; visibility pause already exists; run.mjs resets DPR on size; refused-cue slots) | **All accepted**: G1 (clear, idempotent, timestamps), G5, G11, G10 note, G13 carry-through, G14. |

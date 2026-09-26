@@ -28,7 +28,7 @@
   (anim (make-anim))
   (joints (make-f32 (* +nj+ 16)) :type f32vec)   ; +NJ+ world matrices, filled by POSE-FK! in the draw
   (weapon nil)                          ; weapon key in the right hand, NIL = none
-  (hide nil)                            ; body part tags not drawn (:eyepatch)
+  (hide nil)                            ; body part tags not drawn (the kit's :hide)
   (tint nil) (rim nil)                  ; mirror match: P2's tint / rim
   (flash 0f0 :type single-float)        ; real seconds of hit flash left
   (super 0f0 :type single-float)        ; real seconds of the SP rim-light "super flash" left
@@ -62,6 +62,7 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (hold 0 :type fixnum)                 ; frames in the pre-strike phase (hold / aura / dash / follow)
   (follow nil)                          ; this Kikon rush strike is the follow-up (its hit = the Kikon)
   (armor-left 0 :type fixnum)           ; hits the move's armour may still take (:armor-hits)
+  (kikon-n 2 :type fixnum)              ; Konpaku his current Kikon rush is worth (the kit's, read at rush start)
   (cd (make-array 7 :element-type 'fixnum :initial-element 0) :type (simple-array fixnum (7)))
                                         ; frames each *KIT-COMMANDS* slot (7 of them) still cools down (kept through resets)
   (hits 0 :type fixnum)                 ; bitmask: hit windows of the current move that connected
@@ -84,6 +85,7 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (invuln 0 :type fixnum)               ; frames of invulnerability left (after a Burst)
   (ox 0f0 :type single-float) (oz 0f0 :type single-float)   ; the opponent at the start of this step
   (dist 0f0 :type single-float)         ; ... and the distance to him
+  (run-yaw 0f0 :type single-float)      ; the run's heading (he faces the opponent; this is where he goes)
   ;; as a victim: the running combo (reset when back to neutral)
   (combo-hits 0 :type fixnum) (combo-launches 0 :type fixnum) (combo-air 0 :type fixnum)
   (combo-dmg 0 :type fixnum)
@@ -103,7 +105,8 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (awaken 0f0 :type single-float)       ; Fighting Spirit 0..100
   (awakened nil)                        ; the awakening of this match is used
   (evolution nil)                       ; EVOLUTION was announced
-  (meter 0f0 :type single-float)        ; the kit meter (Inferno)
+  (meter 0f0 :type single-float)        ; the kit meter (Inferno, NOME)
+  (meter-idle 0 :type fixnum)           ; frames since NOME last grew (RYOTE's drain waits for it)
   (form-left 0 :type fixnum)            ; frames left in a timed form (Hellfire)
   (form-total 0 :type fixnum)
   (burn-step 0 :type fixnum)            ; frames of the current form's burn so far
@@ -170,7 +173,7 @@ from the moment the gauge empties (any cause) until it is full again: exactly wh
   (and (gauges-guardless (gauges e)) (kit-burnout (kit-of e))))
 (defun heat-on-p (e) "E's stance traits are on: not burned out (the rules' HEAT argument)." (not (burnout-p e)))
 (defun passive-p (e p)
-  "Does E's current form have passive P (:armor-vs-quick :projectile-cut :ignore-armor :recoil :scorch)?
+  "Does E's current form have passive P (:garb :projectile-cut :recoil :scorch :cut :drink)?
 None while he is burned out."
   (and (heat-on-p e) (member p (kit-passives (kit-of e)))))
 

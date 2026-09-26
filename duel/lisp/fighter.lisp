@@ -165,6 +165,8 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
       (:breaker (emit :breaker e))
       (:kikon (emit :rush e)))
     (clog "~a move ~a~@[ ~a~]" (side-name e) (mv-name mv) (let ((b (brain e))) (and b (brain-why b))))
+    (when (eq (fighter-phase f) :main)                 ; a hook on the move's first frame (NOMIHOSE's cash-out)
+      (loop for (fr hook) in (mv-on-frame mv) when (= fr enter) do (funcall hook e)))
     mv))
 
 (defun enter-main (e f mv)
@@ -196,11 +198,17 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
         (multiple-value-bind (dx dz) (toward-strafe-dir to st (aref p 0) (aref p 2) (fighter-ox f) (fighter-oz f))
           (dir-yaw dx dz))))))
 
+(defun run-clip (e f)
+  "The run clip of E's kit for the way he goes relative to where he faces (the opponent): forward run,
+back-skate, or a side slide (the kit's :run-clips)."
+  (let* ((hy (fighter-run-yaw f)) (fy (yaw-of e)) (hx (fwd-x hy)) (hz (fwd-z hy)) (fx (fwd-x fy)) (fz (fwd-z fy))
+         (ahead (+ (* hx fx) (* hz fz))) (right (- (* hz fx) (* hx fz))) (clips (kit-run-clips (fighter-kit f))))
+    (cond ((> ahead 0.5) (first clips)) ((< ahead -0.5) (second clips)) ((> right 0) (third clips)) (t (fourth clips)))))
+
 (defun start-run (e f)
-  "Step still held when the hop ends: run (RUN-STEP), facing the stick direction at once."
-  (setf (fighter-state f) :run (fighter-sf f) 0 (fighter-phase f) :run
-        (transform-yaw (transform e)) (f32 (run-yaw e f)))
-  (play-clip e :sh-run :blend 5 :speed (/ (kit-run (fighter-kit f)) 8.0))
+  "Step still held when the hop ends: run (RUN-STEP) toward the stick direction at once, facing the opponent."
+  (setf (fighter-state f) :run (fighter-sf f) 0 (fighter-phase f) :run (fighter-run-yaw f) (f32 (run-yaw e f)))
+  (play-clip e (run-clip e f) :blend 5 :speed (/ (kit-run (fighter-kit f)) 8.0))
   (clog "~a dash~@[ ~a~]" (side-name e) (let ((b (brain e))) (and b (brain-why b))))
   (emit :step e))
 
@@ -224,6 +232,7 @@ now (a perfect one refunds *FS-REFUND*)."
         (incf (gauges-perfects g))
         (setf (gauges-fs g) (f32 (min *fs-max* (+ (gauges-fs g) *fs-refund*))))
         (setf (fighter-lock-next (fighter o)) *perfect-lock*)
+        (respect o)
         (slowmo *perfect-slowmo-scale* *perfect-slowmo-seconds*)
         (emit :perfect e o)
         (clog "~a PERFECT HOHO" (side-name e))))))
@@ -251,6 +260,7 @@ it now. T when something started."
                (when (plusp cost) (setf (gauges-reiatsu g) (f32 (spend-bars (gauges-reiatsu g) cost)))))
              (when (plusp (mv-cooldown mv))
                (setf (aref (fighter-cd f) (position cmd *kit-commands*)) (mv-cooldown mv)))
+             (when (eq cmd :kikon) (setf (fighter-kikon-n f) (kit-kikon-konpaku kit)))   ; its worth, fixed now
              (start-move e mv button)
              t))))))
 
@@ -282,8 +292,10 @@ still start."
 
 ;;; ---------------------------------------------------------------- per-state steps
 (defun guard-held-p (e vp)
-  "Guard is held and E may guard (the guard gauge: CAN-GUARD-P). Guardless, holding it does nothing."
-  (let ((g (gauges e))) (and (vpad-down vp :guard) (can-guard-p (gauges-gg g) (gauges-guardless g)))))
+  "Guard is held and E may guard (the guard gauge: CAN-GUARD-P). Guardless, holding it does nothing. U is a guard
+in every form; two forms' guards do more (West's garb, cup 3's DRINK: combat.lisp)."
+  (let ((g (gauges e)))
+    (and (vpad-down vp :guard) (can-guard-p (gauges-gg g) (gauges-guardless g)))))
 
 (defun neutral-step (e f vp)
   "Idle / walk / strafe / guard: commands, then guard or walk, auto-facing."
@@ -430,14 +442,14 @@ Guard is held)."
   (when (>= (incf (fighter-sf f)) *step-frames*)
     (if (and (zerop (fighter-lock f)) (vpad-down vp :step)) (start-run e f) (to-idle e))))
 
-(defun run-velocity (e speed)
-  "E moves at SPEED along his facing."
-  (let ((v (motion-vel (motion e))) (yaw (yaw-of e)))
+(defun run-velocity (e speed &optional (yaw (yaw-of e)))
+  "E moves at SPEED along YAW (default his facing)."
+  (let ((v (motion-vel (motion e))))
     (setf (aref v 0) (f32 (* speed (fwd-x yaw))) (aref v 2) (f32 (* speed (fwd-z yaw))))))
 
 (defun run-closing (e f)
-  "The fraction (-1..1) of E's facing that points at his opponent."
-  (let* ((p (pos-of e)) (yaw (yaw-of e)) (d (fighter-dist f)))
+  "The fraction (-1..1) of E's run heading that points at his opponent."
+  (let* ((p (pos-of e)) (yaw (fighter-run-yaw f)) (d (fighter-dist f)))
     (if (< d 0.01)
         0.0
         (/ (+ (* (fwd-x yaw) (- (fighter-ox f) (aref p 0))) (* (fwd-z yaw) (- (fighter-oz f) (aref p 2)))) d))))
@@ -445,13 +457,15 @@ Guard is held)."
 (defun run-step (e f vp)
   "The run: a command cancels it at once (a move keeps RUN-CARRY of momentum), Guard stops it,
 releasing Step brakes (*RUN-BRAKE* f, committed); else run at the kit's :run speed toward the stick
-direction relative to the opponent (neutral = at him), turning at *RUN-TURN*, stopping *RUN-STOP*
-from him (RUN-STOP-P)."
+direction relative to the opponent (neutral = at him), the heading turning at *RUN-TURN*, stopping
+*RUN-STOP* from him (RUN-STOP-P). He faces the opponent throughout (as in neutral, *FACE-RATE*), so the
+clip follows the heading: forward run, side slide or back-skate (RUN-CLIP)."
   (let* ((v (motion-vel (motion e))) (vx (aref v 0)) (vz (aref v 2))
          (speed (kit-run (fighter-kit f))) (sf (incf (fighter-sf f))) (free (zerop (fighter-lock f))))
     (cond ((eq (fighter-phase f) :brake)
            (let ((s (if (run-stop-p (fighter-dist f) (run-closing e f) speed) 0.0 (brake-speed speed sf))))
-             (if (or (<= s 0) (>= sf *run-brake*)) (to-idle e) (run-velocity e s))))
+             (turn-to-opp e f (deg *face-rate*))
+             (if (or (<= s 0) (>= sf *run-brake*)) (to-idle e) (run-velocity e s (fighter-run-yaw f)))))
           ((and free (command! e f vp *run-commands*))
            (when (eq (fighter-state f) :move)
              (set-slide e (run-carry (fighter-dist f)) *run-carry-frames* vx vz)
@@ -460,11 +474,12 @@ from him (RUN-STOP-P)."
           ((not (and free (vpad-down vp :step)))
            (setf (fighter-phase f) :brake (fighter-sf f) 0)
            (play-clip e (kit-stance (fighter-kit f)) :blend 6))
-          (t (let ((tf (transform e)))
-               (setf (transform-yaw tf) (f32 (angle-wrap (turn-toward (transform-yaw tf) (run-yaw e f) (track-step *run-turn*)))))
-               (if (run-stop-p (fighter-dist f) (run-closing e f) speed)
-                   (to-idle e 4)
-                   (run-velocity e speed)))))))
+          (t (setf (fighter-run-yaw f) (f32 (angle-wrap (turn-toward (fighter-run-yaw f) (run-yaw e f) (track-step *run-turn*)))))
+             (turn-to-opp e f (deg *face-rate*))
+             (if (run-stop-p (fighter-dist f) (run-closing e f) speed)
+                 (to-idle e 4)
+                 (progn (run-velocity e speed (fighter-run-yaw f))
+                        (play-clip e (run-clip e f) :blend 5 :speed (/ speed 8.0) :restart nil)))))))
 
 (defun hoho-step (e f)
   "Vanish, reappear behind the opponent on frame *HOHO-APPEAR* facing him; a perfect Hoho swings on
@@ -516,18 +531,20 @@ invulnerable)."
                                       (:crumple :sh-crumple) (:clash :sh-clash) (:bind :sh-bound) (t :sh-flinch))
                         :blend 0)))))
 
-(defun set-blockstun (e stun from-x from-z adv)
-  "Blockstun of STUN frames, pushed back from (FROM-X FROM-Z); ADV = the blocked move's advantage."
+(defun set-blockstun (e stun from-x from-z adv &optional clip)
+  "Blockstun of STUN frames, pushed back from (FROM-X FROM-Z); ADV = the blocked move's advantage. CLIP: its
+clip (a drunk hit's), else the guard's."
   (let* ((f (fighter e)) (p (pos-of e)))
     (setf (fighter-state f) :guard-hit (fighter-sf f) 0 (fighter-stun f) stun (fighter-move f) nil
           (fighter-block-adv f) adv)
     (fill (motion-vel (motion e)) 0f0)
     (set-slide e *block-pushback* 6 (- (aref p 0) from-x) (- (aref p 2) from-z))
-    (play-clip e :sh-guard-hit :blend 0)))
+    (play-clip e (or clip :sh-guard-hit) :blend 0)))
 
 (defun defender-state (e)
   "E's side of the triangle for RESOLVE-CONTACT (rules.lisp): :neutral :guard :breaker :stance-in
-:stance :armor :parry :invuln. Burned out (BURNOUT-P) he has no armour."
+:stance :armor :parry :invuln. Burned out (BURNOUT-P) he has no armour. (West's garb armours him against ranged
+hits: APPLY-HIT passes that to the rule, it is not a state.)"
   (let* ((f (fighter e)) (sf (fighter-sf f)) (mv (fighter-move f)))
     (case (if (> (fighter-invuln f) 0) :invuln (fighter-state f))
       (:invuln :invuln)                                  ; after a Burst

@@ -34,6 +34,10 @@
 ;;;;   :awaken-rise      rising swell into the awakening
 ;;;;   :evolution        the Awakening gauge is full
 ;;;;   :laugh            Ken's laugh-ish formant bark (no voice)
+;;;;   :gulp             NOMIHOSE's DRINK: a throat thump and a wet swallow
+;;;;   :rift-open        KUKAN-GIRI's rift opening in the air (a thin rising shimmer)
+;;;;   :rift-cut         the rift cutting (a bright slash, no reverse swell)
+;;;;   :tier-up          a cup up the NOME ladder (a drum hit under a rising sweep)
 ;;;;   :bell             temple bell stinger (round start, Kikon available)
 ;;;;   :fight            "FIGHT!" taiko hits + gong
 ;;;;   :ko               K.O. stinger
@@ -281,6 +285,32 @@
                  (au-mix! b f1 at 1.0) (au-mix! b f2 at 0.6))))
     (au-drive! b 1.5)
     (au-reverb! b 0.15)))
+
+(defsound :gulp (:peak 0.75)
+  (let ((b (au-buf 0.45)))
+    (au-thump! b 0.0 120 55 0.05 0.14 1.0)
+    (au-mix! b (au-fnoise 0.18 :bp 420 :q 3 :decay 0.06) 0.03 0.6)
+    (au-mix! b (au-fnoise 0.12 :bp 900 :q 5 :decay 0.03) 0.12 0.35)
+    b))
+
+(defsound :rift-open (:peak 0.6)
+  (let ((b (au-buf 0.7)))
+    (au-mix! b (au-whoosh 0.5 1800 9000 :q 2.0 :peak 0.35) 0.0 0.7)
+    (au-partials! b 0.05 '((3100 0.3 0.4) (4700 0.2 0.3)))
+    (au-reverb! b 0.2)))
+
+(defsound :rift-cut (:peak 0.9)
+  (let ((b (au-buf 0.8)))
+    (au-mix! b (au-whoosh 0.2 800 8000 :q 1.2 :peak 0.03) 0.0 0.8)
+    (au-partials! b 0.03 '((2400 0.5 0.25) (5200 0.35 0.15)))
+    (au-thump! b 0.03 90 30 0.1 0.2 0.8)
+    (au-reverb! b 0.2)))
+
+(defsound :tier-up (:peak 0.85)
+  (let ((b (au-buf 1.0)))
+    (au-taiko! b 0.0 0.8 70)
+    (au-mix! b (au-whoosh 0.6 300 5000 :q 1.0 :peak 0.5) 0.0 0.5)
+    (au-drive! b 1.3)))
 
 ;;; ---------------------------------------------------------------- stingers and menus
 (defsound :bell (:peak 0.8)

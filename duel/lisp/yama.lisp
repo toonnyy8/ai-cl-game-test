@@ -37,7 +37,7 @@
            :kb 3.0 :chip *chip-fire* :meter *inferno-sig* :full-meter *inferno-max* :guard-min 10 :guard-max 18))
 (defmove :ya-taimatsu :kind :sp :clip :ya-taimatsu :callout "TAIMATSU"
   :startup 16 :active 8 :recovery 24 :dmg 120 :adv-block -14
-  :vol (:arc 4.0 90 0.0 2.2) :on-hit :knockback :kb 3.5             ; fire cone 4 m, 90 deg
+  :vol (:arc 4.0 90 0.0 2.2) :on-hit :knockback :kb 3.5 :flags (:ranged)   ; fire cone 4 m, 90 deg (fire: ranged)
   :on-frame ((16 yama-fire-cone)))
 (defmove :ya-breaker :kind :breaker :clip :ya-breaker :clip-2 :ya-ikkotsu :callout "IKKOTSU" :planted t)
 ;; O, the Kikon rush module ENJO (Shikai, Hellfire): no dash. He aims for 6 f, points the blade along a
@@ -53,7 +53,8 @@
 ;;; ================================================================ Hellfire (Gokuen)
 (defmove :ya-nadegiri :kind :sp :clip :ya-nadegiri :callout "NADEGIRI" :cost 2
   :startup 20 :active 4 :recovery 30 :dmg 240 :adv-block -16
-  :vol (:cap 0.3 8.0 1.0 0.5) :on-hit :knockdown :kb 3.0)            ; line 8 m
+  :vol (:cap 0.3 8.0 1.0 0.5) :on-hit :knockdown :kb 3.0 :flags (:ranged)   ; line 8 m: the blade within Q1's
+  :params (:melee-range 2.4))                                        ; reach 2.4 m, ranged beyond
 
 ;;; ================================================================ Bankai: Zanka no Tachi (design v3 §A)
 ;;; The compass: O = North (KITA: TENCHI, both stances), L = East / West (switch + a technique), Shift+L =
@@ -71,30 +72,32 @@
   :vol (:cap 0.2 3.8 1.3 0.35) :on-hit :launch)                     ; sun-edge rising cut
 (defmove :ya-e-f2q :kind :flash :clip :ya-f2 :clip-s 22 :enter 6 :startup 19 :active 4 :recovery 26 :dmg 90 :adv-block -14
   :vol (:cap 0.2 3.8 1.3 0.35) :on-hit :launch)
-;; L in East: NISHI, the blade planted, the garb flares (360 deg), armour 1 hit (paid by the guard gauge),
-;; and on its first active frame he is West: it resolves there
+;; L in East: NISHI, the blade planted, the garb flares (360 deg), and on its first active frame he is West: it
+;; resolves there (no move armour)
 (defmove :ya-to-west :kind :sig :clip :ya-to-west :callout "NISHI: ZANJITSU GOKUI" :startup 14 :active 4 :recovery 20
-  :dmg 50 :adv-block -10 :vol (:arc 2.6 360 0.0 2.2) :on-hit :knockback :kb 3.5 :armor-hits 1
+  :dmg 50 :adv-block -10 :vol (:arc 2.6 360 0.0 2.2) :on-hit :knockback :kb 3.5
   :cooldown *switch-cooldown* :flags (:cancel) :on-frame ((14 yama-switch)) :params (:to :bankai-west))
 ;; Shift+K in East: KYOKUJITSUJIN, the downward cut. The blade (f18-19, close) breaks guard; at f20 its tip
 ;; bites the ground and the heat runs forward: a 25 deg / 9 m cone, 130, blockable (never a break)
 (defmove :ya-kyoku :kind :sp :clip :ya-kyoku :callout "KYOKUJITSUJIN" :startup 18 :active 5 :recovery 26
   :dmg 90 :adv-block -16 :vol (:arc 9.0 25 0.0 1.6)
   :hits ((18 20 :vol (:cap 0.3 2.4 1.0 0.4) :on-hit :knockback :kb 0.5 :flags (:guard-crush :heat))   ; the blade
-         (20 23 :dmg 130 :on-hit :knockback :kb 4.0))                                               ; the cone
+         (20 23 :dmg 130 :on-hit :knockback :kb 4.0 :flags (:ranged)))                             ; the cone (ranged)
   :on-frame ((18 yama-kyoku-cut) (20 yama-kyoku-sheet)))
 
-;;; ---------------------------------------------------------------- West, Zanjitsu Gokui: short rings, armour, counters
+;;; ---------------------------------------------------------------- West, Zanjitsu Gokui: short rings, the garb, counters
+;;; (guard v3, the user's decisions 2026-09-26: U is the garb guard, a blocked hit drains half its guard value and
+;;; scorches a melee attacker; ranged hits are armoured at x*GARB-RANGED*; no move armour: passive :garb)
 (defmove :ya-w-q1 :kind :quick :clip :ya-q1 :clip-s 9 :startup 11 :active 3 :recovery 12 :dmg 40 :adv-block -2
   :reach 1.9 :arc 220 :on-hit :flinch)                              ; garb sweep
 (defmove :ya-w-q3 :kind :quick :clip :ya-w-shove :startup 13 :active 4 :recovery 22 :dmg 70 :adv-block -12
-  :reach 2.4 :arc 360 :on-hit :knockback :kb 3.0 :armor-hits 1)      ; garb shove
+  :reach 2.4 :arc 360 :on-hit :knockback :kb 3.0)      ; garb shove
 (defmove :ya-w-f1 :kind :flash :clip :ya-to-west :clip-s 14 :startup 20 :active 4 :recovery 20 :dmg 80 :adv-block -4
-  :vol (:arc 2.6 360 0.0 2.2) :on-hit :stagger :armor-hits 1)       ; garb flare
+  :vol (:arc 2.6 360 0.0 2.2) :on-hit :stagger)       ; garb flare
 (defmove :ya-w-f2 :kind :flash :clip :ya-q3 :clip-s 12 :startup 22 :active 5 :recovery 28 :dmg 110 :adv-block -14
-  :reach 2.8 :arc 110 :on-hit :knockdown :kb 2.5 :armor-hits 2)      ; garb crush
+  :reach 2.8 :arc 110 :on-hit :knockdown :kb 2.5)      ; garb crush
 (defmove :ya-w-f2q :kind :flash :clip :ya-q3 :clip-s 12 :enter 8 :startup 22 :active 5 :recovery 28 :dmg 110 :adv-block -14
-  :reach 2.8 :arc 110 :on-hit :knockdown :kb 2.5 :armor-hits 2)
+  :reach 2.8 :arc 110 :on-hit :knockdown :kb 2.5)
 ;; L in West: HIGASHI, a one-handed backhand sweep from low right; he is East from f12, so it hits at x1.2 and
 ;; chips 40 %
 (defmove :ya-to-east :kind :sig :clip :ya-to-east :callout "HIGASHI" :startup 12 :active 3 :recovery 22
@@ -155,7 +158,7 @@
        :guard 0.4 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 1 :dash 0.5 :kikon-range 9.0))
 
 (defkit :yamamoto :bankai-east :inherit :base
-  :awakening t :burnout t :mult *bankai-mult* :taken *bankai-taken* :startup-add -1 :reach-mult 1.15
+  :awakening t :burnout t :feed *bankai-feed-east* :mult *bankai-mult* :taken *bankai-taken* :startup-add -1 :reach-mult 1.15
   :blade (:embers 1.4) :grade :spot :passives (:projectile-cut :recoil) :blade-chip *chip-blade* :meter nil   ; the body as
   ;; it is (the charcoal heat wisps), the charred blade with its ember-red edge line
   :weapon :zanka :aura :heat :enter-clips (:ya-bankai) :enter-hook yama-bankai-enter :swing-sfx :whoosh-heavy
@@ -163,30 +166,30 @@
   :commands (:q :ya-e-q1 :f :ya-e-f1 :sig :ya-to-west :sp1 :ya-kyoku :sp2 :ya-kaka :kikon :ya-tenchi)
   :strings ((:ya-e-q1 :q :ya-q2) (:ya-q2 :q :ya-e-q3) (:ya-q2 :f :ya-e-f2q) (:ya-e-f1 :f :ya-e-f2))
   ;; pressure up close, the cone from range; below :gg-low of his guard gauge he backs off and zones (his
-  ;; recoil would burn him out); L ends a landed string half the time (:cancel); low Reishi: L x3 (:low)
+  ;; recoil would burn him out); L ends a landed string half the time (:cancel); low Reishi: L x3 (:low; West is
+  ;; the cheaper place for a low gauge now, so no gauge gate on it)
   :ai (:intents (:approach 2 :pressure 4 :zone 1 :defend 0)
        :ranges (:approach (3.0 5.0) :pressure (1.5 3.0) :zone (5.0 8.0) :defend (4.0 7.0))
        :moves ((0.0 3.0 :q 5 :f 2 :breaker 1 :sig 1 :sp2 1 nil 1)
                (3.0 6.0 :f 1 :sp1 2 :step 1 nil 1)
                (6.0 99.0 :sp1 3 :step 1 nil 1))
        :guard 0.35 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 9 :dash 0.6 :dash-back 0.3 :kikon-range 9.0
-       :cancel (:sig 0.5) :low (0.4 :sig 3 :gg-min 0.6) :gg-low 0.45 :block-string 0.85))
+       :cancel (:sig 0.5) :low (0.4 :sig 3) :gg-low 0.45 :block-string 0.85))
 
 (defkit :yamamoto :bankai-west :inherit :bankai-east
-  :mult 1.0 :taken 1.0 :startup-add 2 :passives (:armor-vs-quick :scorch) :blade-chip nil
+  :mult 1.0 :taken 1.0 :feed *bankai-feed* :startup-add 2 :passives (:garb :scorch) :blade-chip nil
   :blade (:charcoal) :aura :garb                ; wrapped in red flames (the garb); the blade pure charcoal, no ember line
   :commands (:q :ya-w-q1 :f :ya-w-f1 :sig :ya-to-east :sp1 :ya-w-parry :sp2 :ya-kaka :kikon :ya-tenchi)
   :strings ((:ya-w-q1 :q :ya-q2) (:ya-q2 :q :ya-w-q3) (:ya-q2 :f :ya-w-f2q) (:ya-w-f1 :f :ya-w-f2)
             (:ya-w-parry :land :ya-w-counter))
-  ;; defends, trades on armour, parries a Flash startup it can still catch (:react); below :armor-gg of his
-  ;; guard gauge no armoured moves (the armour is paid from it)
+  ;; defends (its U is the garb guard: half the gauge, scorches), parries a Flash startup it can still catch (:react)
   :ai (:intents (:approach 1 :pressure 2 :zone 1 :defend 3)
        :ranges (:approach (2.5 4.5) :pressure (1.2 2.5) :zone (3.5 5.0) :defend (2.5 4.5))
        :moves ((0.0 3.0 :q 3 :f 3 :sig 1 :breaker 1 :sp2 1 nil 2)
                (3.0 5.0 :sig 3 :f 1 :step 1 nil 2)
                (5.0 99.0 :sig 1 :step 1 nil 2))
        :guard 0.55 :hoho 0.3 :awaken-above 0.4 :sp-cancel-bars 9 :dash 0.4 :dash-back 0.2 :kikon-range 9.0
-       :react (:flash-startup :sp1) :cancel (:sig 0.5) :armor-gg 0.35))
+       :react (:flash-startup :sp1) :cancel (:sig 0.5)))
 
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun yama-fire-wave (e)

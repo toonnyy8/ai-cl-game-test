@@ -1,6 +1,7 @@
 ;;;; hud.lisp — the battle HUD (design-v1 §10) and every screen of the flow (title, mode, controls,
 ;;;; select, results, pause). Per side, P2 mirrored: Reishi bar (red + pulsing below *RED-THRESHOLD*,
-;;;; white damage trail), the guard gauge under it (steel, a white drain trail; guardless: grey with a red
+;;;; white damage trail), the guard gauge under it (steel, a white drain trail, 30 % darker while he guards below full
+;;;; (GUARD HOLD: no refill); Bankai's is ember, flashing white when fed, "HIT TO FEED" once; guardless: grey with a red
 ;;;; fill climbing back), *KONPAKU-MAX* Konpaku soul flames that shatter, Reiatsu 3 bars, the flash-step bar
 ;;;; (ticks at a Hoho's and a Burst's cost; the Burst part glows while a Burst is possible), Awakening bar (EVOLUTION
 ;;;; blinks; drains in a timed awakening; BURNOUT while a stance is burned out, the name dimmed), the kit meter
@@ -89,7 +90,8 @@ UI-TEXT no longer conses per glyph either; the HUD keeps its block look.)"
   text sub color secs small side (t0 (fx-clock))
   (col (list 1.0 1.0 1.0 1.0)))                                   ; its colour (r g b 1)
 (defvar *words* nil "Big words on screen, newest first.")
-(defun clear-words () (setf *words* nil))
+(defvar *feed-hint* (vector nil nil) "Per side: \"HIT TO FEED\" was shown this match (once).")
+(defun clear-words () (setf *words* nil (svref *feed-hint* 0) nil (svref *feed-hint* 1) nil))
 
 (defun announce (text &key sub (color *white*) (secs 1.0) small side)
   "Show TEXT big in the middle (SMALL: smaller, upper lane; SIDE 0 / 1: over that side's panel),
@@ -128,8 +130,9 @@ the first 0.08 s; a long word shrinks to 92 % of the width)."
             (brush-line (word-sub x))))))))
 
 ;;; ---------------------------------------------------------------- side panels: the meters
-(declaim (type f32vec *trail-v* *pip-t* *hud-v*))
+(declaim (type f32vec *trail-v* *gg-seen* *pip-t* *hud-v*))
 (defvar *trail-v* (make-f32 4) "Damage trail per side (fraction): [side] Reishi, [2 + side] the guard gauge.")
+(defvar *gg-seen* (make-f32 4) "Per side: [side] the guard gauge the HUD saw last frame, [2 + side] when it was last fed (FX-CLOCK).")
 (defvar *pip-t* (make-f32 (* 2 *konpaku-max*)) "Per side x pip: ELAPSED-TIME it shattered (0 = intact).")
 (defvar *hud-v* (make-f32 3))
 
@@ -156,18 +159,32 @@ pulsing when RED), a thin outline (red and pulsing when RED)."
         (%houtline (- x 1f0) (- y 1f0) (+ bw 2f0) (+ bh 2f0) 1f0 0.2f0 0.2f0 p)
         (%houtline (- x 1f0) (- y 1f0) (+ bw 2f0) (+ bh 2f0) 1f0 1f0 1f0 0.4f0))))
 
-(defun-fast %hud-guard (x y bw bh frac trail right guardless tm)
-  "The guard gauge: dark back, white drain TRAIL, a STEEL fill; GUARDLESS: a grey bar whose red fill
-climbs back (pulsing) until it is full and he can guard again."
-  (declare (single-float x y bw bh frac trail tm))
-  (let* ((p (%pulse tm 3.0)))
-    (declare (single-float p))
+(defun-fast %gg-seen! (gs side gg tm fed)
+  "The HUD's view of SIDE's guard gauge GG (GS = *GG-SEEN*): a FED gauge (Bankai) that rose since last frame was fed
+at TM (the bar's white flash)."
+  (declare (type f32vec gs) (fixnum side) (single-float gg tm))
+  (when (and fed (> gg (+ (aref gs side) 0.01f0))) (setf (aref gs (+ 2 side)) tm))
+  (setf (aref gs side) gg)
+  nil)
+
+(defun-fast %hud-guard (x y bw bh frac trail right guardless mode gs side tm)
+  "The guard gauge: dark back, white drain TRAIL, the fill by MODE: 0 steel, 1 steel 30 % darker (he guards below
+full: GUARD HOLD, no refill), 2 ember (Bankai: the fed flame), flashing white for 0.1 s after a feed (GS = *GG-SEEN*,
+SIDE); GUARDLESS: a grey bar whose red fill climbs back (pulsing) until it is full and he can guard again (Bankai:
+it REIGNITEs)."
+  (declare (single-float x y bw bh frac trail tm) (fixnum mode side) (type f32vec gs))
+  (let* ((p (%pulse tm 3.0)) (k (if (= mode 1) 0.7f0 1f0)) (em (= mode 2))
+         (flash (if em (f-max 0f0 (- 1f0 (* 10f0 (- tm (aref gs (+ 2 side)))))) 0f0))
+         (r0 (* k (if em 1f0 0.84f0))) (g0 (* k (if em 0.62f0 0.88f0))) (b0 (* k (if em 0.25f0 0.94f0)))
+         (r1 (* k (if em 0.78f0 0.48f0))) (g1 (* k (if em 0.24f0 0.55f0))) (b1 (* k (if em 0.06f0 0.66f0))))
+    (declare (single-float p k flash r0 g0 b0 r1 g1 b1))
     (%hrect x y bw bh 0.05f0 0.04f0 0.07f0 0.75f0)
     (if guardless
         (progn (%hrect x y bw bh 0.32f0 0.32f0 0.35f0 0.9f0)
                (%hbar x y bw bh frac right 0.9f0 0.12f0 0.15f0 (+ 0.6f0 (* 0.4f0 p)) 0.6f0 0.02f0 0.05f0 (+ 0.6f0 (* 0.4f0 p))))
         (progn (%hbar x y bw bh trail right 1f0 1f0 1f0 0.95f0)
-               (%hbar x y bw bh frac right 0.84f0 0.88f0 0.94f0 1f0 0.48f0 0.55f0 0.66f0 1f0)))))
+               (%hbar x y bw bh frac right (+ r0 (* flash (- 1f0 r0))) (+ g0 (* flash (- 1f0 g0))) (+ b0 (* flash (- 1f0 b0))) 1f0
+                      (+ r1 (* flash (- 1f0 r1))) (+ g1 (* flash (- 1f0 g1))) (+ b1 (* flash (- 1f0 b1))) 1f0)))))
 
 (defun-fast %hud-flash (x y w h fill right burst tm)
   "The flash-step bar: dark back, a steel-blue FILL (0..1), white ticks at a Hoho's and a Burst's cost;
@@ -185,6 +202,30 @@ while a Burst is possible (BURST) the part past the Burst tick glows."
         (%hrect sx (- y 1f0) sw (+ h 2f0) 0.85f0 0.95f0 1f0 (+ 0.5f0 (* 0.5f0 p)))))
     (%hrect (if right (+ x (* w (- 1f0 hk))) (+ x (* w hk))) (- y 2f0) 1f0 (+ h 4f0) 1f0 1f0 1f0 0.9f0)
     (%hrect (if right (+ x (* w (- 1f0 bk))) (+ x (* w bk))) (- y 2f0) 1f0 (+ h 4f0) 1f0 1f0 1f0 0.9f0)))
+
+(defun-fast %hud-nome (x y w h fill right rung floor tm)
+  "Nozarashi's NOME bar: dark back, the REIATSU yellow FILL (pulsing while within 10 of the current cup's FLOOR,
+where it would drop a cup), bright marks at a cup's entry (40, 100), dim floor ticks (25, 50), and three cup pips
+inside the frame, RUNG + 1 of them lit."
+  (declare (single-float x y w h fill floor tm) (fixnum rung))
+  (let* ((near (and (> floor 0f0) (< fill (+ floor 0.1f0))))
+         (a (if near (+ 0.55f0 (* 0.45f0 (%pulse tm 5.0))) 1f0)))
+    (declare (single-float a))
+    (%hrect x y w h 0.05f0 0.04f0 0.07f0 0.75f0)
+    (%hbar x y w h fill right 1f0 0.88f0 0.3f0 a 0.9f0 0.62f0 0.1f0 a)
+    (macrolet ((tick (v r g b al) `(let ((k (/ (the single-float (f32 ,v)) (the single-float (f32 *nome-max*)))))
+                                     (declare (single-float k))
+                                     (%hrect (if right (+ x (* w (- 1f0 k))) (+ x (* w k))) (- y 2f0) 1f0 (+ h 4f0) ,r ,g ,b ,al))))
+      (tick *nome-up-t2* 1f0 1f0 0.9f0 0.95f0)
+      (tick *nome-down-t2* 0.6f0 0.6f0 0.55f0 0.6f0)
+      (tick *nome-down-t3* 0.6f0 0.6f0 0.55f0 0.6f0))
+    (dotimes (i 3)                                        ; the cups, from the bar's inner end
+      (let* ((ps (f-max 2f0 (* 0.6f0 h))) (px (+ x (* 1.5f0 ps (i->f i)) 1f0)) (px (if right (- (+ x w) (- px x) ps) px)))
+        (declare (single-float ps px))
+        (if (<= i rung)
+            (%hrect px (+ y (* 0.2f0 h)) ps ps 1f0 1f0 0.95f0 1f0)
+            (%hrect px (+ y (* 0.2f0 h)) ps ps 0.3f0 0.3f0 0.28f0 0.8f0))))
+    nil))
 
 (defmacro %soul-flame (cx cy r lean r0 g0 b0 a0 r1 g1 b1 a1)
   "A soul-flame glyph centred at (CX CY), radius R: a rounded base and a pointed tip leaning LEAN px;
@@ -268,15 +309,17 @@ at HZ when HZ > 0."
     (%hbar x y w h fill right r g b a)))
 
 ;;; ---------------------------------------------------------------- side panels: per-kit strings
-(defvar *kit-hud* (make-hash-table :test 'eq) "KIT -> #(label meter): the panel name and the kit meter.")
+(defvar *kit-hud* (make-hash-table :test 'eq) "KIT -> #(label meter u-tag): the panel name, the kit meter, U's tag.")
 
 (defun kit-hud (kit)
-  "The cached HUD data of KIT: the name label (\"YAMAMOTO  BANKAI\") and the kit meter (inherited
-from the base form when this form has none)."
+  "The cached HUD data of KIT: the name label (\"YAMAMOTO  BANKAI\"), the kit meter (inherited
+from the base form when this form has none) and the tag of what a U that guards adds (\"U: GARB\", \"U: DRINK\": U is
+a guard in every form, two forms' guards do more)."
   (or (gethash kit *kit-hud*)
       (setf (gethash kit *kit-hud*)
-            (vector (format nil "~a~@[  ~a~]" (kit-name kit) (and (not (eq (kit-form kit) :base)) (symbol-name (kit-form kit))))
-                    (or (kit-meter kit) (kit-meter (find-kit (kit-character kit) :base)))))))
+            (vector (format nil "~a~@[  ~a~]" (kit-name kit) (and (not (eq (kit-form kit) :base)) (kit-form-name kit)))
+                    (or (kit-meter kit) (kit-meter (find-kit (kit-character kit) :base)))
+                    (cond ((member :garb (kit-passives kit)) "U: GARB") ((member :drink (kit-passives kit)) "U: DRINK"))))))
 
 ;;; combo counter: per victim side, the last combo with dealt damage (knockdown zeroes the running
 ;;; total, so the counter keeps the last non-zero one) and its string, rebuilt when it changes
@@ -290,6 +333,7 @@ from the base form when this form has none)."
   c)
 
 (defvar *c-evo* (list 1.0 0.85 0.3 1.0))
+(defvar *u-tag* (list 1.0 0.72 0.35 1.0))
 (defvar *c-kikon* (list 1.0 0.2 0.25 1.0))
 (defvar *c-burst* (list 0.5 0.75 1.0 1.0))
 (defvar *c-callout* (list 1.0 0.85 0.55 1.0))
@@ -308,10 +352,16 @@ from the base form when this form has none)."
       (setf (aref *trail-v* side) (f32 (if (> tr frac) (max frac (- tr (* 0.35 (hud-dt)))) frac)))
       (%hud-reishi (f32 x) (f32 y) (f32 bw) (f32 bh) (f32 frac) (aref *trail-v* side) right red tm))
     ;; the guard gauge, right under it
-    (let* ((gf (/ (gauges-gg g) *gg-max*)) (ti (+ 2 side)) (tr (aref *trail-v* ti)))
+    (let* ((gf (/ (gauges-gg g) *gg-max*)) (ti (+ 2 side)) (tr (aref *trail-v* ti)) (fed (kit-burnout kit)))
       (setf (aref *trail-v* ti) (f32 (if (> tr gf) (max gf (- tr (* 0.5 (hud-dt)))) gf)))
+      (%gg-seen! *gg-seen* side (gauges-gg g) tm (and fed (not (gauges-guardless g))))   ; fed: the white flash
+      (when (and fed (not (svref *feed-hint* side)) (not (gauges-guardless g)) (< gf 0.5))   ; once a match
+        (setf (svref *feed-hint* side) t)
+        (announce "HIT TO FEED" :color '(1 0.55 0.2 1) :secs 1.2 :small t :side side))
       (%hud-guard (f32 x) (f32 (+ y bh (* 2 s))) (f32 bw) (f32 (max (* 3 s) (* 0.3 bh))) (f32 gf) (aref *trail-v* ti)
-                  right (gauges-guardless g) tm))
+                  right (gauges-guardless g)
+                  (cond (fed 2) ((and (member (fighter-state f) '(:guard :guard-hit)) (< gf 1.0)) 1) (t 0))
+                  *gg-seen* side tm))
     ;; Konpaku soul flames
     (%hud-pips (f32 x) (f32 (+ y bh (* 16 s))) (f32 bw) (f32 (max (* 4.5 s) (* 0.013 h))) side (gauges-konpaku g) right red tm)
     ;; Reiatsu: 3 bars + label
@@ -333,7 +383,8 @@ from the base form when this form has none)."
         (cond ((gauges-evolution g)
                (hud-text "EVOLUTION" lx (+ ay ty) s (alpha! *c-evo* (hud-pulse 3.0)) :align align))
               ((burnout-p e) (hud-text "BURNOUT" lx (+ ay ty) s '(0.62 0.64 0.7 1) :align align))
-              ((kit-awakening kit) (hud-text (symbol-name (kit-form kit)) lx (+ ay ty) s *ember* :align align))
+              ((svref kh 2) (hud-text (svref kh 2) lx (+ ay ty) s *u-tag* :align align))   ; what this form's guard adds
+              ((kit-awakening kit) (hud-text (kit-form-name kit) lx (+ ay ty) s *ember* :align align))
               (t (hud-text "AWAKEN" lx (+ ay ty) s '(0.95 0.8 0.4 0.9) :align align)))
         (let ((l (kit-command-move kit :sig)) (sp (kit-command-move kit :sp2)))   ; the L / Shift+L cooldowns
           (when (and (kit-awakening kit) (plusp (mv-cooldown l)))
@@ -348,6 +399,12 @@ from the base form when this form has none)."
                        1f0 0.45f0 0.15f0)
               (hud-text "COOLDOWN" lx (+ my ty) s '(0.84 0.88 0.94 0.9) :align align))))
         (let ((meter (svref kh 1)))
+          (when (getf meter :ladder)                    ; NOME: the cup ladder (Nozarashi), yellow
+            (let* ((ladder (getf meter :ladder)) (rung (or (position (kit-form kit) ladder :key #'first) 0))
+                   (mx (getf meter :max)))
+              (%hud-nome (f32 ax) (f32 (+ ay row)) (f32 aw) (f32 ah) (f32 (/ (gauges-meter g) mx)) right rung
+                         (f32 (/ (fifth (nth rung ladder)) mx)) tm)
+              (hud-text (getf meter :name) lx (+ ay row ty) s '(1 0.85 0.3 0.95) :align align)))
           (when (and meter (not (kit-awakening kit)))
             (let* ((my (+ ay row)) (burning (plusp (gauges-form-left g)))
                    (mfill (if burning

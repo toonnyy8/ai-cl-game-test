@@ -589,8 +589,8 @@ fighters stand within ~3 m, where two auras (or one over the other fighter) summ
 (defun-fast vfx-aura (x y z height kind age dt &key rgb (k 1.0))
   "Body aura at the feet (x y z) of a fighter HEIGHT m tall. KIND:
 :hellfire (fire aura + a ring of flames at the feet + light), :heat (Bankai: 4 charcoal wisps, drawn),
-:evolution (faint aura in RGB, a list, default white), :reiatsu / :nozarashi (Kenpachi's drawn yellow
-brush-flame aura, base / awakened: %REIATSU-AURA), :kikon (the drawn BLOOD rush aura), :breaker (pink;
+:evolution (faint aura in RGB, a list, default white), :reiatsu / :nozarashi / :nomihose (Kenpachi's drawn yellow
+brush-flame aura, base / awakened / cup 3's pillar: %REIATSU-AURA), :kikon (the drawn BLOOD rush aura), :breaker (pink;
 K 0..1 brightens it over the last 8 f). For the other kinds K scales the alpha / presence (0..1). The
 soft kinds (hellfire, evolution, breaker) also fade by *AURA-CAP* and when the camera is within ~4 m (a
 close-up must still show the face); the drawn ones stand behind the body instead."
@@ -676,9 +676,9 @@ close-up must still show the face); the drawn ones stand behind the body instead
            (dotimes (i (n-of 12f0 dt))
              (fx-emit +p-glow+ (+ x (rnd-range -0.35f0 0.35f0)) (+ y (* h (rnd01))) (+ z (rnd-range -0.35f0 0.35f0))
                       0f0 (rnd-range 0.5f0 1.2f0) 0f0 0.7f0 0.04f0 0f0 r g b))))
-        ((:reiatsu :nozarashi)
-         (%reiatsu-aura x y z h (f-clamp k 0f0 1f0) (if (eq kind :nozarashi) 1 0))
-         (dotimes (i (n-of (if (eq kind :nozarashi) 12f0 5f0) dt))   ; white flecks rising
+        ((:reiatsu :nozarashi :nomihose)                  ; cups 1 / 2 / 3: base, awakened, pillar-scale (x1.6 tall)
+         (%reiatsu-aura x y z (if (eq kind :nomihose) (* 1.6f0 h) h) (f-clamp k 0f0 1f0) (if (eq kind :reiatsu) 0 1))
+         (dotimes (i (n-of (case kind (:nomihose 22f0) (:nozarashi 12f0) (t 5f0)) dt))   ; white flecks rising
            (%t-blob (+ x (rnd-range -0.45f0 0.45f0)) (+ y (* h (rnd-range 0.1f0 0.8f0))) (+ z (rnd-range -0.45f0 0.45f0))
                     0f0 (rnd-range 1.2f0 2.4f0) 0f0 (rnd-range 0.3f0 0.6f0) (rnd-range 0.015f0 0.03f0) 0f0 0.1f0 +pal-hit+)))
         (:bound                                          ; South's hold: ASH drifting up from the held feet (threes)
@@ -1443,6 +1443,17 @@ vanish streaks, :leap a DUST ring and dust (the take-off), else (:charge) dust k
   (with-floats (x z dx dz)
     (stamp :slit x 0.0 z :dx dx :dz dz)
     nil))
+
+(defun-fast vfx-rift (x0 z0 x1 z1 cutting)
+  "KUKAN-GIRI's rift along (x0 z0)->(x1 z1) at chest height: while it waits a thin white lens slit with a REIATSU
+yellow rim, trembling on twos (the tell); CUTTING (its 2 f): a wide HIT-white band over a yellow one."
+  (with-floats (x0 z0 x1 z1)
+    (let* ((dx (- x1 x0)) (dz (- z1 z0)) (dr (drawing-no)) (tr (* 0.05f0 (- (hash01 dr 3f0) 0.5f0)))
+           (y (+ 1.15f0 tr)) (w (if cutting 0.16f0 0.05f0)))
+      (declare (single-float dx dz dr tr y w))
+      (fx-ribbon x0 y z0 dx 0f0 dz (* 1.8f0 w) (* 0.6f0 w) 1f0 0.85f0 0.2f0 -0.8f0 1f0 0.8f0 0.15f0 -0.6f0 dr 0f0 :segs 2)
+      (fx-ribbon x0 y z0 dx 0f0 dz w (* 0.3f0 w) 1f0 1f0 0.97f0 1f0 1f0 1f0 0.95f0 1f0 dr 0f0 :segs 2)
+      nil)))
 
 (defun-fast vfx-nishi (x z)
   "L to West (NISHI) at feet (x z): a charcoal double ring out to 2.6 m, an EMBER line inside it, 8 ASH shards."

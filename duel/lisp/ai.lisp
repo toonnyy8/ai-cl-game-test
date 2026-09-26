@@ -21,10 +21,10 @@
 ;;;;               shrinks, the Breaker weight doubles at 8 — this is what makes matches end
 ;;;;   gauges      guards less as its guard gauge runs low (steps aside instead), never guardless;
 ;;;;               presses a guardless opponent; keeps a Burst's flash-step when a Burst would be worth it
-;;;;   stances     kit keys: :cancel (end a landed string with L), :low (L more often at low Reishi, if the
-;;;;               guard gauge can pay for armour), :gg-low (below it: back off and zone), :armor-gg (below
-;;;;               it: no armoured moves), :block-string (go on with a string the opponent blocks: guard
-;;;;               pressure); burned out: defend, step and Hoho; a parry is never attacked into; South's
+;;;;   stances     kit keys: :cancel (end a landed string with L), :low (L more often at low Reishi),
+;;;;               :gg-low (below it: back off and zone), :block-string (go on with a string the opponent
+;;;;               blocks: guard pressure); burned out: no armoured moves, defend, step and Hoho; a
+;;;               parry is never attacked into; South's
 ;;;;               tell is stepped out of (the trap reflex)
 ;;;;   burst       combo'd past its 2nd hit for its perception delay, *FS-BURST* flash-step, and worth it
 ;;;;               (AI-BURST-WANTED-P): one roll per combo (*AI-BURST-P* by difficulty)
@@ -125,9 +125,8 @@ while: a charge move is held to its full charge from beyond 7 m, where it has th
 (defun ai-gg (e) "E's guard gauge as a fraction." (/ (gauges-gg (gauges e)) *gg-max*))
 
 (defun ai-no-armor-p (e)
-  "Below the kit's :armor-gg of its guard gauge (or burned out) the CPU keeps off its armoured moves: the
-armour is paid from the gauge (a :burnout form)."
-  (let ((k (ai-table e :armor-gg))) (or (burnout-p e) (and k (< (ai-gg e) k)))))
+  "Burned out, the CPU keeps off its armoured moves (a burned-out form has no armour) and defends more."
+  (burnout-p e))
 
 (defun ai-gg-low-p (e)
   "Below the kit's :gg-low of its guard gauge (or burned out): back off, zone (its recoil would burn it out)."
@@ -200,6 +199,16 @@ D = the perceived distance."
       ((and (kikon-ready-p e) (member (snap-state s) '(:stun :air)) (< d (ai-table e :kikon-range 7.0))
             (kit-command-ok-p e :kikon))
        (why b :kikon :kikon))
+      ;; NOMIHOSE's cash-out (the kit's :cashout): Shift+K only as a punish (he has >= :punish frames of recovery
+      ;; or stun left, in the 12 m lane) or within :near m while NOME is below :below (it would drain away anyway)
+      ((let ((c (ai-table e :cashout)))
+         (and c (kit-command-ok-p e :sp1) (< d 12.0)
+              (setf (brain-why b)
+                    (cond ((and (member (snap-state s) '(:move :stun)) (< (snap-left s) 99)
+                                (>= (- (snap-left s) (brain-delay b)) (getf c :punish)))
+                           :cashout-punish)
+                          ((and (< d (getf c :near)) (< (gauges-meter g) (getf c :below))) :cashout-near)))))
+       :sp1)
       ;; South's tell under us: its grab comes 16 f after the stab (real move frame 36); from what we see
       ;; (delayed), step sideways out of it (the anti-rush chance) or Hoho it (the Hoho roll; perfect late)
       ((and (eq (snap-kind s) :sp) (member :bind (snap-flags s)) (eq (snap-phase s) :main)
@@ -319,7 +328,7 @@ recoil)."
 the Kikon rush on a red opponent within its range (*AI-KIKON-P*), dash to / from that range (until
 its middle), guard, attack (a weighted pick from the kit's band for D), or wait."
   (cond ((and (kikon-ready-p e) (< d (ai-table e :kikon-range 7.0)) (not (member (snap-state s) '(:down :wakeup :hoho)))
-              (kit-command-ok-p e :kikon) (< (sim-rnd01) *ai-kikon-p*))
+              (kit-command-ok-p e :kikon) (< (sim-rnd01) (ai-kikon-p e)))
          (ai-command b kit :kikon d) (setf (brain-why b) :kikon))
         ((and (> d (+ hi *ai-dash-gap*)) (< (sim-rnd01) (ai-table e :dash 0.0)))
          (ai-dash b 1.0 (* 0.5 (+ lo hi))) (setf (brain-why b) :dash))
@@ -341,10 +350,18 @@ its middle), guard, attack (a weighted pick from the kit's band for D), or wait.
                             (<= d (+ 0.2 (mv-reach (kit-command-move kit cmd))))))
                (ai-command b kit cmd d) (setf (brain-why b) :neutral)))))))
 
+(defun ai-kikon-p (e)
+  "The chance a neutral decision rushes a red opponent: the kit's :kikon-p (Nozarashi's cups 0.25 / 0.5 / 0.9:
+a later Kikon is worth more), at least *AI-KIKON-P* once the match has under a minute left; else *AI-KIKON-P*."
+  (let ((k (ai-table e :kikon-p)))
+    (cond ((null k) *ai-kikon-p*)
+          ((< (match-frames-left) 3600) (max k *ai-kikon-p*))
+          (t k))))
+
 (defun ai-stance-weights (e kit s d weights)
-  "The stance keys on a neutral pick's WEIGHTS (a fresh plist, edited in place): no armoured command below
-:armor-gg; no Q / F into a guard within 3 m below :gg-low; none into a parry; L x the kit's :low factor
-below its Reishi fraction (while the guard gauge is at :gg-min, for the armour of the other stance)."
+  "The stance keys on a neutral pick's WEIGHTS (a fresh plist, edited in place): no armoured command while burned
+out; no Q / F into a guard within 3 m below :gg-low; none into a parry; L x the kit's :low factor below its Reishi
+fraction."
   (loop for (cmd w) on weights by #'cddr
         when (or (and (ai-no-armor-p e) (member cmd *kit-commands*) (ai-armored-p (kit-command-move kit cmd)))
                  (and (member cmd '(:q :f))
@@ -352,8 +369,7 @@ below its Reishi fraction (while the guard gauge is at :gg-min, for the armour o
                           (member :parry (snap-flags s)))))
           do (setf (getf weights cmd) 0))
   (let ((low (ai-table e :low)) (g (gauges e)))
-    (when (and low (getf weights :sig) (< (/ (gauges-reishi g) (float (gauges-reishi-max g))) (first low))
-               (>= (ai-gg e) (getf (rest low) :gg-min 0.0)))
+    (when (and low (getf weights :sig) (< (/ (gauges-reishi g) (float (gauges-reishi-max g))) (first low)))
       (setf (getf weights :sig) (* (getf weights :sig) (getf (rest low) :sig 1)))))
   weights)
 

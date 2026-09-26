@@ -176,7 +176,9 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
       (unless (or flashing (<= (model-alpha m) 0f0))      ; the form's aura (burned out: ash and smoke), crossfaded; none
                                                           ; round a body turned to ash (Tenchi Kaijin)
         (draw-aura f (if (burnout-p e) :ash (kit-aura kit)) x y z (* 1.1 (body-hurt-h b)) age rdt
-                   (if (and (eq look :charge) (not (eq (fighter-phase f) :main))) 1.5 1.0)))
+                   (cond ((and (eq look :charge) (not (eq (fighter-phase f) :main))) 1.5)
+                         ((and (member (fighter-state f) '(:guard :guard-hit)) (passive-p e :garb)) 1.4)   ; West guards: the garb flares
+                         (t 1.0))))
       (when (and (eq (fighter-state f) :stun) (eq (fighter-phase f) :bind))   ; bound by South: ash drifting at the feet
         (vfx-aura x y z (body-hurt-h b) :bound age rdt))
       (when (gauges-evolution (gauges e)) (vfx-aura x y z (body-hurt-h b) :evolution age rdt :rgb *evolution-rgb* :k 0.5))
@@ -236,6 +238,8 @@ ember hue goes too (:ASH, the world fully grey). An impact frame takes the compo
   (unless (svref *no-draw* 3) (hazard-draw rdt) (cine-draw))
   (when *hitboxes* (draw-hitboxes))
   (stamps-draw (f32 rdt))
+  (when (and *impact-next* (<= (aref *screen-fx* 0) 0f0))   ; a queued impact frame (NOMIHOSE: the manga page)
+    (impact-frame (car *impact-next*) (cdr *impact-next*)) (setf *impact-next* nil))
   (when (> (aref *burst-flag* 0) 0)                     ; a Burst ring fired: its beat, drawn this frame
     (setf (aref *burst-flag* 0) 0f0) (impact-frame :negative 1) (back-rim 3))
   (fx-update (f32 rdt))

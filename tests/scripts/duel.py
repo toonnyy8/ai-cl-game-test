@@ -1,7 +1,7 @@
 # SOUL DUEL headless scripts (duel/lisp/debug.lisp lists the debug commands). Run:
 #   python3 tests/scripts/duel.py            (writes tests/scripts/duel-*.json)
 #   node tools/run.mjs dist/duel --secs 60  --script tests/scripts/duel-cvc-yk.json   seeded CPU vs CPU -> RESULTS
-#   node tools/run.mjs dist/duel --secs 300 --script tests/scripts/duel-gate.json     20 seeds x YY/YK/KK: "duel gate" lines
+#   node tools/run.mjs dist/duel --secs 1100 --script tests/scripts/duel-gate.json    20 seeds x YY/YK/KK: "duel gate" lines
 #     (+ the combat log: 2107 turns it back on after the gate starts; scratchpad pt/attr.py-style analysers read it)
 #   node tools/run.mjs dist/duel --secs 20  --script tests/scripts/duel-probe.json    frame probes: "duel probe ... advantage
 #     A (table A)" for blocked Q1 / Q3 / F2 / Taimatsu (must be equal), then a mirror Q1 trade (same Reishi both sides)
@@ -10,14 +10,15 @@
 #   node tools/run.mjs dist/duel --secs 170 --script tests/scripts/duel-kikon.json    the four O modules and the O rule
 #   node tools/run.mjs dist/duel --secs 50  --script tests/scripts/duel-gauges.json   guard gauge (crush, guardless) + flash-step
 #   node tools/run.mjs dist/duel --secs 90  --script tests/scripts/duel-stances.json  Bankai East / West: L, burnout, SP1, South
+#   node tools/run.mjs dist/duel --secs 90  --script tests/scripts/duel-nome.json    Nozarashi v2 cups, DRINK, rift, cash-out, West's garb
 #   node tools/run.mjs dist/duel --secs 75  --script tests/scripts/duel-perf.json     real-time CPU vs CPU: stats lines
 #   node tools/run.mjs dist/duel --secs 140 --script tests/scripts/duel-shots.json    tests/shots/duel-*.png
 # Determinism: run a cvc script twice (or once with turbo and once without: drop the 2102 step) and
 #   diff <(grep '^duel' run1.log) <(grep '^duel' run2.log)   -> empty.
-# Reference (the Kikon / awakening cinematics slowed, their caption close-ups held +30 f: user review 3, 2026-09-26):
-# duel-cvc-yk.json (seed 7) ends
-#   duel -> RESULTS winner P2 konpaku 0-3 ticks 8594 secs 143.2    (turbo and real time alike; also after a gate)
-#   (before: the same match with shorter cinematics, ticks 8384 secs 139.7 and ticks 8054 secs 134.2; P1 1-0 ticks 9438 secs 157.3 with the gauges and the O modules; P1 2-0 ticks 9780 secs 163.0 with the Kikon rush; P2 0-1 ticks 7298 secs 121.6 with the instant Kikon; 0-4 ticks 5857 secs 97.6 with a timed Bankai;
+# Reference (guard v3, 2026-09-26: Reishi 1300, GUARD HOLD, Bankai's fed flame, West's garb guard + ranged armour, K3,
+# *bankai-taken* 1.2): duel-cvc-yk.json (seed 7) ends
+#   duel -> RESULTS winner P2 konpaku 0-4 ticks 9305 secs 155.1    (turbo and real time alike; also after a gate)
+#   (before guard v3, the Kenpachi batch: winner P1 konpaku 7-0 ticks 7351 secs 122.5; before the batch: winner P2 konpaku 0-3 ticks 8594 secs 143.2; before user review 3's slower cinematics: the same match with shorter cinematics, ticks 8384 secs 139.7 and ticks 8054 secs 134.2; P1 1-0 ticks 9438 secs 157.3 with the gauges and the O modules; P1 2-0 ticks 9780 secs 163.0 with the Kikon rush; P2 0-1 ticks 7298 secs 121.6 with the instant Kikon; 0-4 ticks 5857 secs 97.6 with a timed Bankai;
 #   0-7 ticks 5302 secs 88.4 before Burst and the dash)
 import json
 T0 = 9.0          # startup (meshes + sound synthesis) is done by then
@@ -29,6 +30,7 @@ def write(name, ev):
 
 def cmd(t, c): return {"at": round(t, 2), "eval": f"Module._debug_cmd({c})"}
 def shot(t, n): return {"at": round(t, 2), "shot": f"{SHOTS}{n}.png"}
+def gshot(t, n): return {"at": round(t, 2), "shot": f"tests/shots/guard3-{n}.png"}   # guard v3's stills
 def key(t, k, down=True): return {"at": round(t, 2), "key": k, "down": down}
 def tap(t, k, hold=0.08): return [key(t, k), key(t + hold, k, False)]
 
@@ -142,9 +144,16 @@ write("gauges", ev)
 #   0 L switch: "P1 move YA-TO-WEST", "P1 form BANKAI-WEST"; L again at once: "P1 refused SIG: cooling N";
 #     2.2 s later: "P1 move YA-TO-EAST", "P1 form BANKAI-EAST", "P1 YA-TO-EAST -> P2 HIT 90"
 #   1 East J strings into a guard the probe keeps full: "-> P2 BLOCKED" (P2 r falls by the chip), the probe's
-#     "P1 gg" falls 17 per string, "P1 BURNOUT RECOIL", then P2 r stays (no chip), then the guard drops: "-> P2 HIT"
-#   2 West under Kenpachi's Quick mash: "P2 KE-Q1 -> P1 ARMORED", "P2 scorched 15", the probe's "P1 gg" falls 28
-#     per string, "P1 BURNOUT ARMOUR", then "P2 KE-Q1 -> P1 HIT" (no armour, no scorch)
+#     "P1 gg" falls ~20 per string (17 recoil x1.3, its chip feeds ~2 back at East's 0.05: guard v3's fed flame, no
+#     refill), "P1 BURNOUT RECOIL" on the 5th string, then P2 r stays (no chip), then the guard drops: "-> P2 HIT"
+#   2 West's garb guard under Kenpachi's Quick mash, U held (guard v3): "P2 KE-Q1 -> P1 BLOCKED", "P2 scorched 5" per
+#     hit, the probe's "P1 gg" falls 18 per string (half of 28, x1.3), "P1 BURNOUT BLOCK" on the 6th string, then
+#     "P2 KE-Q1 -> P1 HIT" (burned out = guardless, no garb, no scorch)
+#   9 West's ranged armour (the :ranged probe, P2 a cup-3 Kenpachi 4.8 m away): "P2 RIFT -> P1 ARMORED 30" (50 x 0.6;
+#     no reaction), the second rift with U held: "-> P1 BLOCKED 30" (no scorch: not melee), the cash-out "P2 KE-METEOR-N
+#     -> P1 ARMORED 234" (390 x 0.6, no knockdown), cup 1's Meteor while P1 presses J: "P2 KE-METEOR -> P1 ARMORED 144";
+#     then the Meteor at 3 m, inside its 3.4 m cleaver (melee, the user's decision 2026-09-26): "P2 KE-METEOR -> P1 HIT
+#     240" and a knockdown; the probe's "duel probe ranged" lines show P1's state (never STUN / AIR until that last one)
 #   3 East Shift+K into a guard at 2 m: "P1 YA-KYOKU -> P2 GUARD-BREAK 90", then "P1 YA-KYOKU -> P2 HIT 130"
 #   4 the same at 6 m: "P1 YA-KYOKU -> P2 BLOCKED 130" only (the cone never breaks guard)
 #   5 West Shift+K (Kenpachi's F1 on its way): "P2 KE-F1 -> P1 PARRIED 70", "P2 scorched 15", "P1 move YA-W-COUNTER",
@@ -153,8 +162,8 @@ write("gauges", ev)
 #   7 human Kenpachi under the CPU's South: "P2 BIND -> P1 HIT 40", Shift+J: "P1 BURST"
 #   8 the same in 0.25x slow motion, a sideways Step in the tell: no "BIND ->" line (it grabs the air)
 # Shots: tests/shots/duel-stance-*.png (east-idle, nishi / to-west / west-idle: the switch and the flame garb,
-#   higashi / to-east, recoil / burnout / burnout-hit (East), armour / armour-burnout (West), kyoku-*, parry /
-#   counter, south-*)
+#   higashi / to-east, recoil / burnout / burnout-hit (East), kyoku-*, parry / counter, south-*); guard v3's
+#   tests/shots/guard3-*.png (garb: the garb guard under the mash, garb-burnout; ranged-rift / ranged-cashout: absorbed)
 t = T0
 ev = [cmd(t - 0.5, 2109)]
 ev += [cmd(t, 2370), shot(t + 0.3, "stance-east-idle")] + tap(t + 0.5, "KeyL") + [shot(t + 0.8, "stance-nishi")]
@@ -166,8 +175,12 @@ ev += [cmd(t, 2371)]
 for i in range(150): ev += tap(t + 0.4 + 0.15 * i, "KeyJ", 0.05)
 ev += [shot(t + 5.0, "stance-recoil"), shot(t + 10.6, "stance-burnout"), shot(t + 12.4, "stance-burnout-hit"), cmd(t + 24.0, 2107)]
 t += 25.0
-ev += [cmd(t, 2372), shot(t + 2.5, "stance-armour"), shot(t + 6.3, "stance-armour-burnout"), cmd(t + 16.0, 2107)]
+ev += [cmd(t, 2372), key(t + 0.1, "KeyU"), gshot(t + 2.5, "garb"), gshot(t + 12.5, "garb-burnout"),
+       key(t + 15.0, "KeyU", False), cmd(t + 16.0, 2107)]
 t += 17.0
+ev += [cmd(t, 2379), gshot(t + 1.05, "ranged-rift"), key(t + 1.6, "KeyU"), key(t + 3.3, "KeyU", False),
+       gshot(t + 4.15, "ranged-cashout")] + tap(t + 5.9, "KeyJ") + [cmd(t + 10.0, 2107)]
+t += 10.5
 ev += [cmd(t, 2373), key(t + 0.5, "ShiftLeft"), key(t + 0.55, "KeyK"), key(t + 0.65, "KeyK", False), key(t + 0.7, "ShiftLeft", False),
        shot(t + 0.95, "stance-kyoku-break"), shot(t + 1.2, "stance-kyoku-cone")]
 t += 3.0
@@ -188,6 +201,34 @@ t += 4.0
 ev += [cmd(t, 2378), key(t + 1.9, "KeyD"), key(t + 1.95, "Space"), key(t + 2.05, "Space", False), key(t + 2.4, "KeyD", False),
        shot(t + 2.6, "stance-south-step"), cmd(t + 8.0, 2107)]
 write("stances", ev)
+
+# Nozarashi v2 (the NOME ladder) and West's garb guard by keyboard (debug 2380+k: human P1, P2's CPU off; the side
+# camera). Expected log lines:
+#   0 the ladder: "duel probe nome t=... m.. FORM" every 30 steps: m 38 -> 50 (form RYOTE from m >= 40), ... 100
+#     (NOMIHOSE), then draining 10/s: under 50 RYOTE, 1.5/s after 180 f (guard v3): under 25 NOZARASHI ("P1 form ..." lines too)
+#   1 DRINK (cup 3, U held; Bankai East mashes Quick): "P2 YA-E-Q1 -> P1 BLOCKED 34" then "P1 DRINK 21 (+20 drunk)"
+#     (x1.2 East: 41 -> 21 taken, 20 drunk), the probe's "m" rising and "gg" falling, "P1 GUARD CRUSH (drinking)"
+#   2 K into a guard: "P1 KE-N-F1 -> P2 BLOCKED 90", then 20 f later "P1 RIFT -> P2 BLOCKED 50"
+#   3 K K on a standing Yamamoto: "KE-N-F1 -> P2 HIT 90", "RIFT -> P2 HIT 50", "KE-R-F2 -> P2 HIT 110" (x1.2 = 300)
+#   4 the cash-out: "P1 move KE-METEOR-N", "P1 CASH-OUT", "P1 form NOZARASHI", "KE-METEOR-N -> P2 GUARD-BREAK 390",
+#     then O: "P1 move KE-KIKON-N", "KIKON FOLLOW-UP on P2 (red)", "KIKON on P2: -2 konpaku" (cup 1: 2)
+#   5 West's garb guard under RYOTE's K K: "P2 KE-R-F1 -> P1 BLOCKED 85", "P2 scorched 15" per hit, the probe's "P1 gg"
+#     falls 31 per string (the cut, halved, x1.3), "P1 BURNOUT BLOCK" on the 4th
+# Shots: tests/shots/duel-nome-*.png (drink, rift, rift-cut, cashout), tests/shots/guard3-garb-cut.png
+t = T0
+ev = [cmd(t - 0.5, 2109), cmd(t, 2380), cmd(t + 30.5, 2107)]
+t += 31.0
+ev += [cmd(t, 2381), key(t + 0.1, "KeyU"), shot(t + 2.0, "nome-drink"), key(t + 14.0, "KeyU", False), cmd(t + 14.5, 2107)]
+t += 15.0
+ev += [cmd(t, 2382)] + tap(t + 0.5, "KeyK") + [shot(t + 0.9, "nome-rift"), shot(t + 1.18, "nome-rift-cut"), cmd(t + 2.5, 2107)]
+t += 3.0
+ev += [cmd(t, 2383)] + tap(t + 0.5, "KeyK") + tap(t + 0.85, "KeyK") + [cmd(t + 3.0, 2107)]
+t += 3.5
+ev += [cmd(t, 2384), key(t + 0.5, "ShiftLeft"), key(t + 0.55, "KeyK"), key(t + 0.65, "KeyK", False), key(t + 0.7, "ShiftLeft", False),
+       shot(t + 1.0, "nome-cashout"), key(t + 1.05, "KeyO"), key(t + 4.0, "KeyO", False), cmd(t + 9.0, 2107)]
+t += 10.0
+ev += [cmd(t, 2385), key(t + 0.1, "KeyU"), gshot(t + 3.0, "garb-cut"), key(t + 15.0, "KeyU", False), cmd(t + 15.5, 2107)]
+write("nome", ev)
 
 # the menus by keyboard: TITLE -> MODE (VS PLAYER) -> SELECT (P1 Kenpachi, P2 confirms with KP1) -> INTRO
 # -> skip (Esc) -> BATTLE -> pause (Esc) -> RESUME -> pause -> CHARACTER SELECT -> back ... -> TITLE;

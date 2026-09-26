@@ -118,6 +118,8 @@ px; < 0 = the screen centre); [6] effects frozen (FREEZE); [7] the impact splash
     (:ash 4 :keep-sat 0.45 :keep-hue 48.0))                                 ; Bankai burned out: the ember hue gone too
   "IMPACT-FRAME kinds -> GRADE-IMPACT mode and parameters (docs/STYLE_STORM_DESIGN.md §3.6 presets).")
 
+(defvar *impact-next* nil "(kind . frames): an impact frame to start when the running one ends (main.lisp; feedback :rung).")
+
 (defun impact-frame (kind frames)
   "Screen punctuation KIND (a key of *IMPACT-PRESETS*: :negative, :two-tone, :ink, :red, :fire, :manga,
 :spot) for FRAMES 60 Hz frames (at least one drawn frame). A later request replaces a running one; when it

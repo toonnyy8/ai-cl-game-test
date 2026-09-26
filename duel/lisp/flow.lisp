@@ -19,6 +19,7 @@
 (defvar *select-phase* 0 "SELECT: 0 P1 picks, 1 P2 picks, 2 difficulty.")
 (defvar *p1* nil) (defvar *p2* nil)
 (defvar *timer* 0 "Match frames left.")
+(defun match-frames-left () "Frames left on the match timer (the CPU's last-minute rules)." *timer*)
 (defvar *winner* nil "0, 1 or :draw once the match is over.")
 (defvar *match-seed* 1 "SIM-RND-SEED of the current match (seeded CPU matches: the debug command's).")
 (defvar *konpaku-start* *konpaku-max* "Debug 2101: start the match with fewer Konpaku (smoke runs).")

@@ -8,16 +8,22 @@
 (in-package :duel)
 
 ;;; ================================================================ §1 rules
-(defparameter *reishi-max* 1100 "Reishi (health) of every fighter at the start, integer points.")
+(defparameter *reishi-max* 1300
+  "Reishi (health) of every fighter at the start, integer points. 1100 -> 1300 (guard v3, the user's decision
+2026-09-26: real human matches run much faster than CPU vs CPU, so longer CvC matches are fine; the seed gate's
+median window moved from 125-180 s to 125-210 s).")
 (defparameter *konpaku-max* 9 "Konpaku (soul pips) per fighter, as in RoS; the one at 0 loses.")
 (defparameter *red-threshold* 0.30
   "Red = Reishi below this fraction of max: the Kikon rush's dash-in follow-up can't be guarded (rules
 KIKON-FOLLOW-UNGUARDABLE-P; above red he may guard it).
 The §8 gate's pacing knob if seeded CPU matches run long (fix round: 0.10 .. 0.30 moved the gate
 medians by only ~10 s, see p2-log).")
-(defparameter *kikon-konpaku* 2 "Konpaku a Kikon removes.")
-(defparameter *kikon-konpaku-awakened* 3 "Konpaku a Kikon removes when the attacker is awakened.")
-(defparameter *soul-break-extra* 1 "A Soul Break (Reishi reached 0) removes the Kikon count + this.")
+(defparameter *kikon-konpaku* 2 "Konpaku a Kikon removes (a kit's default :kikon-konpaku).")
+(defparameter *kikon-konpaku-awakened* 3 "Konpaku a Kikon removes when the attacker is awakened (the default of an awakened kit).")
+(defparameter *soul-break-extra* 1 "A Soul Break (Reishi reached 0) removes the Kikon count + this ...")
+(defparameter *kikon-max-event* 4
+  "... but one event (a Kikon or a Soul Break) never removes more than this (Nozarashi v2 §2.7: every character
+needs >= 3 events to take 9 Konpaku).")
 ;;; the Kikon rush (the Kikon button, any time): aura, dash, then the kit's strike (frame data per kit)
 ;;; (each character's rush module sets its own aura, dash speed and range: the move's :params)
 (defparameter *kikon-trigger* 1.6
@@ -113,7 +119,7 @@ Hoho fit, Q1 doesn't (§3). On hit the chain opens at the end of the active fram
 (defparameter *fs-burst* 70.0 "Flash-step a Burst Reverse costs.")
 (defparameter *fs-regen* 3.0 "Flash-step per second ...")
 (defparameter *fs-delay* 60 "... once this many frames passed since the last spend.")
-(defparameter *fs-taken* 0.03 "Flash-step per point of damage taken (a full 1100 Reishi bar = +33).")
+(defparameter *fs-taken* 0.03 "Flash-step per point of damage taken (a full 1300 Reishi bar = +39).")
 (defparameter *fs-refund* 15.0 "A perfect Hoho gives this back (net cost 15: it rewards the read).")
 
 ;;; ---------------------------------------------------------------- guard gauge (design v3 G.2)
@@ -124,7 +130,10 @@ Hoho fit, Q1 doesn't (§3). On hit the chain opens at the end of the active fram
 (defparameter *gg-ender* 4 "+ this for a string ender (Quick / Flash / Signature with block advantage <= *GG-ENDER-ADV*).")
 (defparameter *gg-ender-adv* -10 "The block advantage that makes a Quick / Flash / Signature an ender.")
 (defparameter *gg-breaker* 35 "A Breaker's Guard Break also drains this.")
-(defparameter *gg-delay* 60 "The gauge refills only after this many frames without a drain (the user: 45 -> 60) ...")
+(defparameter *gg-delay* 60
+  "The gauge refills only after this many frames without a drain (the user: 45 -> 60), counting only frames he is
+not guarding (GUARD HOLD, guard v3: while he guards, in :guard / :guard-hit, it neither refills nor counts; the
+count is frozen, not restarted: a phone's resting thumb is a guard) ...")
 (defparameter *gg-regen* 12.0 "... at this per second (the user: 20 -> 12) ...")
 (defparameter *gg-regen-guardless* 14.0 "... or this while guardless / burned out (the user: 25 -> 14; 0 -> 100 in 7.1 s + the delay).")
 (defparameter *guard-crush-stun* 40
@@ -194,10 +203,13 @@ a combo (critique-design 1.7: not from hit 1).")
 ;;; ================================================================ §4 damage multipliers
 (defparameter *hellfire-mult* 1.30 "Damage x in Hellfire (Gokuen).")
 (defparameter *bankai-mult* 1.20 "Damage x in Bankai (East, Kyokujitsujin).")
-(defparameter *nozarashi-mult* 1.15 "Damage x in Nozarashi.")
-(defparameter *bankai-taken* 1.40
-  "Damage x Bankai East takes (the defender's :taken): the extreme stance. Burnout doesn't lift it. Pacing knob
-(design v3 §E): 1.4 -> 1.3.")
+(defparameter *nozarashi-mult* 1.0 "Damage x in Nozarashi's first cup, KATATE (v2: x1.15 before the ladder).")
+(defparameter *ryote-mult* 1.15 "Damage x in the second cup, RYOTE.")
+(defparameter *nomihose-mult* 1.20 "Damage x in the third cup, NOMIHOSE.")
+(defparameter *bankai-taken* 1.2
+  "Damage x Bankai East takes (the defender's :taken): the extreme stance. Burnout doesn't lift it. The YK balance
+knob: 1.4 -> 1.2 at guard v3 (Reishi 1300: 1.4 / 1.3 left Yamamoto 13 / 15 of 40 YK seeds, 1.2 17 of 40; design
+guard-v3 §5 measured 1.3 at Reishi 1200).")
 (defparameter *cornered-per-konpaku* 0.05 "Cornered: + this damage fraction per Konpaku lost ...")
 (defparameter *cornered-max* 0.25 "... up to this.")
 
@@ -217,14 +229,56 @@ a combo (critique-design 1.7: not from hit 1).")
 ;;; the guard gauge (a kit with :burnout burns out at gg 0 until it is full: RULES HEAT-*)
 (defparameter *switch-cooldown* 100 "L (the stance switch) may start again this many frames after it started.")
 (defparameter *recoil* 0.6 "East (:recoil): each of his hits that is blocked drains his own guard gauge by this x its guard value.")
-(defparameter *scorch* 15 "West (:scorch): a melee hit his armour or his parry stops burns the attacker this much (never kills).")
+(defparameter *scorch* 15 "West (:scorch): a melee hit his parry catches burns the attacker this much (never kills).")
+;;; guard v3 (the user's decisions 2026-09-26): Bankai's guard gauge is fed, not refilled; West's U is the garb guard
+(defparameter *bankai-feed* 0.10
+  "A :burnout form (Bankai) never refills its guard gauge by time (only the burnout's timed refill, then REIGNITE): it
+gains its kit's :feed per point of Reishi it actually removes from the opponent, heat on (a scorch or a Kikon feeds
+nothing). West's :feed ...")
+(defparameter *bankai-feed-east* 0.05
+  "... and East's (the user's decision 2026-09-26, after guard v3: 0.10 -> 0.05): a landed E-Q1 Q2 E-Q3 (153) feeds +8.")
+(defparameter *bankai-drain* 1.3
+  "Bankai (a :burnout form, both stances) loses this x every guard-gauge drain: a blocked hit (after West's garb x0.5:
+x0.65 net), East's recoil, a Breaker (the user's decision 2026-09-26, after guard v3).")
+(defparameter *garb-mult* 0.5
+  "West's garb guard (passive :garb): a hit he blocks drains this x its guard value (after Kenpachi's cut) ...")
+(defparameter *garb-scorch* '(:quick 5 :flash 15 :sig 15 :sp 15 :kikon 15)
+  "... and a blocked melee hit burns its attacker this much by move kind (never kills). The user asked for every
+melee block (not heavies only); a Quick burns a third of a heavy so a CPU's Q1 block-string resets can't farm it:
+a whole guard gauge of blocked Q strings (8, then burnout) burns 120, the 390 of one cash-out a third of that.")
+(defparameter *garb-ranged* 0.6
+  "West's garb vs ranged hits (a hazard, or a hit window marked :ranged: the heat cone, Taimatsu's fire, and beyond
+the blade's :melee-range the Meteor / cash-out line, Buttagiru's crack, Nadegiri's line): he takes this x their damage and they are armoured (no reaction, not paid
+from the gauge) unless he guards (then the garb guard) or they are unguardable (South's bind still binds).")
 (defparameter *parry-window* '(4 15) "GOKUI GAESHI: the move frames (inclusive) its parry catches a melee hit ...")
 (defparameter *parry-stun* 32 "... the parried attacker staggers this long (his move ends) ...")
 (defparameter *parry-slide* 0.5 "... sliding this far.")
 (defparameter *bind-stun* 60 "South (the bind): frames the victim's feet are held. Pacing knob (design v3 §E): 60 -> 45.")
 (defparameter *nozarashi-heal* 150 "Reishi Nozarashi's awakening heals.")
-(defparameter *nozarashi-reach* 1.4 "Nozarashi: reach x of the inherited moves.")
-(defparameter *nozarashi-startup* 3 "Nozarashi: extra startup frames of the inherited moves.")
+(defparameter *nozarashi-reach* 1.3 "Nozarashi KATATE (cup 1): reach x of the inherited moves (1.4 before the ladder).")
+(defparameter *nozarashi-startup* 2 "Nozarashi KATATE (cup 1): extra startup frames of the inherited moves (3 before: F1->F2 was a 0 gap).")
+(defparameter *ryote-reach* 1.4 "RYOTE (cup 2): reach x of the base moves it doesn't list.")
+(defparameter *ryote-startup* 3 "RYOTE (cup 2): extra startup frames of the base moves it doesn't list.")
+;;; Nozarashi v2, NOME (呑め): the three-cup ladder (docs/DUEL_NOZARASHI_V2.md). The meter is the kit meter
+;;; (GAUGES-METER); a rung is a kit form, changed only while he is free (combat.lisp NOME-STEP)
+(defparameter *nome-max* 100.0 "The NOME gauge.")
+(defparameter *nome-awaken* 10.0 "NOME at the awakening (cup 1).")
+(defparameter *nome-dealt* 0.08 "NOME per point of damage he deals ...")
+(defparameter *nome-taken* 0.12 "... per point he loses (a drink's taken half too, the stance's absorbed points) ...")
+(defparameter *nome-drunk* 0.30 "... and per point drunk: a DRINK's swallowed half, all the stance absorbs. Knob: 0.30 -> 0.20.")
+(defparameter *nome-delay* 180 "RYOTE drains only after this many frames without a gain (guard v3: 60 -> 180) ...")
+(defparameter *nome-drain-t2* 1.5 "... at this per second (guard v3: 3.0 -> 1.5) ...")
+(defparameter *nome-drain-t3* 10.0 "... NOMIHOSE drains this per second, always (no delay). Knob: 10 -> 12.")
+(defparameter *nome-up-t2* 40.0 "Up to RYOTE at this ...")
+(defparameter *nome-down-t2* 25.0 "... back to KATATE below this ...")
+(defparameter *nome-up-t3* 100.0 "... up to NOMIHOSE at this ...")
+(defparameter *nome-down-t3* 50.0 "... back to RYOTE below this.")
+(defparameter *nomihose-chip* 0.2 "NOMIHOSE: blade chip through guard.")
+(defparameter *cut-mult* 1.5
+  "The cut (RYOTE and NOMIHOSE, passive :cut): his blocked Flash / Signature / SP hits drain this x their guard value
+(no gauge-paid armour is left for it to cut).")
+(defparameter *drink-adv* 4 "DRINK (NOMIHOSE's U): a drunk melee hit leaves the attacker this many frames worse off than a block.")
+(defparameter *rift-delay* 20 "KUKAN-GIRI: the rift it leaves cuts this many frames after its blade (f20 -> f40). Knob: 20 -> 18.")
 (defparameter *stance-in* 6 "Stance Signature: frames to enter the stance (hit = counter-hit).")
 (defparameter *stance-hold-max* 60 "Longest stance hold before the cut comes out by itself.")
 (defparameter *stance-store-rate* 1.0 "Stance stores this x the damage it absorbs...")

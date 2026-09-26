@@ -1,6 +1,8 @@
-;;;; ken.lisp — ZARAKI KENPACHI (TYBW), design-v1 §5.2: his moves (DEFMOVE) and his two forms
-;;;; (DEFKIT): :base and :nozarashi (his permanent awakening). Nozarashi's inherited moves are
-;;;; DERIVED by the kit (startup +3, reach x1.4; damage x1.15 via :mult), never copied here.
+;;;; ken.lisp — ZARAKI KENPACHI (TYBW), design-v1 §5.2: his moves (DEFMOVE) and his forms (DEFKIT): :base and
+;;;; his permanent awakening Nozarashi, three cups of the NOME ladder (docs/DUEL_NOZARASHI_V2.md): :nozarashi
+;;;; (KATATE, one hand), :ryote (two hands) and :nomihose (drink it dry). Inherited moves are DERIVED by the kit
+;;;; (KATATE startup +2 / reach x1.3, RYOTE +3 / x1.4; damage via :mult), never copied here; NOMIHOSE derives
+;;;; nothing: it plays RYOTE's. He wears no eyepatch in any form (TYBW).
 ;;;; Clip names are the art contract (ken-art.lisp). Below the data: his hook functions and his
 ;;;; cinematics (DEFCINE).
 (in-package :duel)
@@ -29,7 +31,8 @@
 ;; leap 5 m, overhead, a 3 m ground-crack line
 (defmove :ke-buttagiru :kind :sp :clip :ke-buttagiru :callout "BUTTAGIRU"
   :startup 22 :active 4 :recovery 26 :dmg 180 :adv-block -14 :slide 5.0
-  :vol (:cap 0.0 3.0 0.5 0.6) :on-hit :knockdown :kb 2.0 :on-frame ((22 ken-ground-crack)))
+  :vol (:cap 0.0 3.0 0.5 0.6) :on-hit :knockdown :kb 2.0 :flags (:ranged) :on-frame ((22 ken-ground-crack))
+  :params (:melee-range 2.6))                          ; the blade within Q1's reach 2.6 m, the crack beyond: ranged
 ;; dash 6 m at 14 m/s during the 26 active frames (the tick hook); contact = flurry hit 1 of 5
 ;; (25 each), then :KE-FLURRY (4 more + a 60 launcher). Still holding at the dash: guard-crushing.
 (defmove :ke-charge :kind :sp :clip :ke-charge :clip-2 :ke-flurry :callout "ORE NI KIRENEE MON WA NEE"
@@ -55,7 +58,8 @@
 ;;; ================================================================ Nozarashi
 (defmove :ke-meteor :kind :sp :clip :ke-meteor :callout "SPLIT THE METEOR"
   :startup 26 :active 4 :recovery 30 :dmg 240 :adv-block -16
-  :vol (:cap 0.3 12.0 0.5 0.5) :on-hit :knockdown :kb 3.0 :on-frame ((26 ken-meteor-cut)))
+  :vol (:cap 0.3 12.0 0.5 0.5) :on-hit :knockdown :kb 3.0 :flags (:ranged) :on-frame ((26 ken-meteor-cut))
+  :params (:melee-range 3.4))                          ; the cleaver within KATATE's Q reach (3.38 m), the line beyond: ranged
 ;; O in Nozarashi, LEAP CLEAVE (his own move: not derived): 8 f of crouch, then a leap at 18 m/s for at
 ;; most 30 f, the direction locked at take-off (the height is a look, :lift), then the widest cleave,
 ;; 3.08 m over 160 deg, and a gash where it lands: 10.6 m, <= 49 f. Cooldown 90.
@@ -64,11 +68,36 @@
   :on-frame ((11 ken-leap-cleave))
   :params (:aura 8 :aim 120.0 :speed 18.0 :dash-max 30 :dash-track 0.0 :look :leap :lift 1.6 :sfx :whoosh-cleaver))
 
+;;; ---------------------------------------------------------------- RYOTE (cup 2): two-handed kendo, straight and long
+;;; (clips reused through :clip-s until the art lands: design §2.10)
+(defmove :ke-r-q1 :kind :quick :clip :ke-f1 :clip-s 16 :startup 10 :active 3 :recovery 12 :dmg 40 :adv-block -2
+  :vol (:cap 0.3 3.9 1.2 0.5) :on-hit :flinch)                       ; MEN: the straight overhead
+(defmove :ke-r-q3 :kind :quick :clip :ke-q3 :clip-s 11 :startup 14 :active 4 :recovery 22 :dmg 70 :adv-block -12
+  :reach 3.8 :arc 140 :on-hit :knockback :kb 3.0)                    ; KESA: the diagonal
+(defmove :ke-r-f1 :kind :flash :clip :ke-f1 :clip-s 16 :startup 19 :active 4 :recovery 20 :dmg 85 :adv-block -4
+  :reach 4.2 :arc 160 :on-hit :stagger)                              ; DO: the wide body cut
+(defmove :ke-r-f2 :kind :flash :clip :ke-f2 :clip-s 20 :startup 21 :active 5 :recovery 28 :dmg 110 :adv-block -14
+  :vol (:cap 0.3 4.2 1.2 0.55) :on-hit :launch)                      ; KABUTO-WARI: the helm splitter
+(defmove :ke-r-f2q :kind :flash :clip :ke-f2 :clip-s 20 :enter 7 :startup 21 :active 5 :recovery 28 :dmg 110 :adv-block -14
+  :vol (:cap 0.3 4.2 1.2 0.55) :on-hit :launch)
+;;; ---------------------------------------------------------------- NOMIHOSE (cup 3)
+;; K: KUKAN-GIRI, the space cut: its blade leaves a rift in the air (f20) that cuts again *RIFT-DELAY* frames
+;; later (KEN-RIFT: a :rift hazard, closed if he is hit before it cuts)
+(defmove :ke-n-f1 :kind :flash :clip :ke-f1 :clip-s 16 :callout "KUKAN-GIRI" :startup 20 :active 4 :recovery 22 :dmg 90
+  :adv-block -4 :reach 4.2 :arc 150 :on-hit :stagger :on-frame ((20 ken-rift))
+  :params (:rift-dmg 50 :rift-guard 12 :rift-chip 0.2 :rift-vol (:cap 1.0 4.4 1.4 0.5)))
+;; Shift+K: NOMIHOSE, Split the Meteor with the whole cup: on its first frame NOME is 0 and he is back in cup 1
+;; (KEN-DRINK-DRY), so it resolves at KATATE's x1.0 and an O cancel is KATATE's 2-Konpaku Kikon. 390; within
+;; 6 m it breaks guard (:crush-range), beyond it is blockable (guard 22)
+(defmove :ke-meteor-n :kind :sp :clip :ke-meteor :callout "NOMIHOSE" :startup 26 :active 4 :recovery 30 :dmg 390
+  :adv-block -16 :vol (:cap 0.3 12.0 0.5 0.5) :on-hit :knockdown :kb 3.0 :flags (:ranged)
+  :on-frame ((0 ken-drink-dry) (26 ken-meteor-cut)) :params (:crush-range 6.0 :melee-range 3.9))   ; blade <= cup 3's MEN 3.9 m
+
 ;;; ================================================================ forms
 (defkit :kenpachi :base
   :name "KENPACHI" :body :kenpachi :weapon :ken-katana :stance :ke-stance
   :intro :ke-intro :win :ke-win
-  :walk *walk-kenpachi* :run *run-kenpachi* :reishi *reishi-max* :aura :reiatsu
+  :walk *walk-kenpachi* :run *run-kenpachi* :run-clips (:ke-run :ke-skate-b :ke-slide-r :ke-slide-l) :reishi *reishi-max* :aura :reiatsu
   :cornered *cornered-per-konpaku* :cornered-max *cornered-max* :reset-reiatsu *reset-reiatsu-bonus*
   :absorb-sfx :laugh
   :commands (:q :ke-q1 :f :ke-f1 :sig :ke-stance :sp1 :ke-buttagiru :sp2 :ke-charge
@@ -85,14 +114,84 @@
        :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 0.8 :kikon-range 9.0
        :react (:projectile :sig :flash-startup :sig) :block-string 0.8))   ; a blocked string goes on (guard pressure)
 
-(defkit :kenpachi :nozarashi :inherit :base
+(defkit :kenpachi :nozarashi :inherit :base    ; cup 1, KATATE: one hand, as the awakening leaves him
   :awakening t :mult *nozarashi-mult* :startup-add *nozarashi-startup* :reach-mult *nozarashi-reach*
-  :passives (:projectile-cut :ignore-armor) :heal *nozarashi-heal*
-  :weapon :nozarashi :stance :ke-n-stance :hide (:eyepatch) :aura :nozarashi :swing-sfx :whoosh-cleaver
-  :enter-clips (:ke-patch :ke-nome) :cine ken-nozarashi-cine
-  :commands (:sp1 :ke-meteor :kikon :ke-kikon-n))
+  :passives (:projectile-cut) :heal *nozarashi-heal* :form-name "KATATE" :kikon-konpaku 2
+  :weapon :nozarashi :stance :ke-n-stance :aura :reiatsu :swing-sfx :whoosh-cleaver
+  :enter-clips (:ke-release :ke-nome) :cine ken-nozarashi-cine :respect-callout "OMOSHIREE!"
+  :meter (:name "NOME" :max *nome-max* :start *nome-awaken*
+          :ladder ((:nozarashi 0.0 0 0.0 0.0) (:ryote *nome-drain-t2* *nome-delay* *nome-up-t2* *nome-down-t2*)
+                   (:nomihose *nome-drain-t3* 0 *nome-up-t3* *nome-down-t3*)))
+  :meter-gain (:dealt *nome-dealt* :taken *nome-taken* :drunk *nome-drunk*)
+  :commands (:sp1 :ke-meteor :kikon :ke-kikon-n)
+  ;; toys with his opponent (a Kikon only 0.25 per decision until the last minute: it is worth 2 here)
+  :ai (:intents (:approach 2 :pressure 4 :zone 0 :defend 1)
+       :ranges (:approach (2.0 4.0) :pressure (1.5 3.0) :zone (4.0 6.0) :defend (3.0 5.0))
+       :moves ((0.0 3.4 :q 5 :f 2 :sig 3 :breaker 1 :sp2 1 nil 3)
+               (3.4 4.2 :f 1 :sp1 2 :step 1 nil 2)
+               (4.2 6.0 :sp1 4 :sp2 2 nil 1)
+               (6.0 99.0 :step 1 :kikon 1 nil 1))
+       :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 0.8 :kikon-range 9.0 :kikon-p 0.25
+       :react (:projectile :sig :flash-startup :sig) :block-string 0.8))
+
+(defkit :kenpachi :ryote :inherit :nozarashi       ; cup 2, RYOTE (NOME >= 40): two-handed kendo, the cut
+  :mult *ryote-mult* :startup-add *ryote-startup* :reach-mult *ryote-reach* :form-name "RYOTE" :kikon-konpaku 3
+  :passives (:projectile-cut :cut) :stance :ke-r-stance :aura :nozarashi :enter-hook ken-ryote-enter
+  :commands (:q :ke-r-q1 :f :ke-r-f1 :sp1 :ke-meteor :kikon :ke-kikon-n)   ; (the cup-1 moves as written: not re-derived)
+  :strings ((:ke-r-q1 :q :ke-q2) (:ke-q2 :q :ke-r-q3) (:ke-q2 :f :ke-r-f2q) (:ke-r-f1 :f :ke-r-f2))
+  :ai (:intents (:approach 2 :pressure 5 :zone 0 :defend 1)
+       :ranges (:approach (2.0 4.5) :pressure (1.5 3.5) :zone (4.0 6.0) :defend (3.0 5.0))
+       :moves ((0.0 3.4 :q 5 :f 3 :sig 1 :breaker 1 nil 3)
+               (3.4 4.2 :f 2 :sp1 2 :step 1 nil 2)
+               (4.2 6.0 :sp1 4 :sp2 2 nil 1)
+               (6.0 99.0 :step 1 :kikon 1 nil 1))
+       :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 0.8 :kikon-range 9.0 :kikon-p 0.5
+       :react (:projectile :sig :flash-startup :sig) :block-string 0.85))
+
+(defkit :kenpachi :nomihose :inherit :ryote        ; cup 3, NOMIHOSE (NOME = 100): no guard, U drinks; RYOTE's moves
+  :mult *nomihose-mult* :form-name "NOMIHOSE" :kikon-konpaku 4 :blade-chip *nomihose-chip*
+  :passives (:projectile-cut :cut :drink) :aura :nomihose :drink-clip :ke-drink :enter-hook ken-nomihose-enter
+  :commands (:f :ke-n-f1 :sp1 :ke-meteor-n)
+  :strings ((:ke-n-f1 :f :ke-r-f2))
+  :ai (:intents (:approach 3 :pressure 6 :zone 0 :defend 0)
+       :ranges (:approach (2.0 4.5) :pressure (1.5 3.5) :zone (4.0 6.0) :defend (3.0 5.0))
+       :moves ((0.0 3.4 :q 4 :f 4 :breaker 1 nil 2)
+               (3.4 6.0 :f 2 :step 1 nil 1)
+               (6.0 99.0 :step 1 :kikon 1 nil 1))
+       :guard 0.45 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 1.0 :kikon-range 9.0 :kikon-p 0.9
+       :cashout (:punish 30 :near 6.0 :below 60.0)
+       :react (:projectile :sig :flash-startup :sig) :block-string 0.85))
 
 ;;; ================================================================ hooks (called through the data's symbols)
+(defun ken-rift (e)
+  "KUKAN-GIRI f20: the blade's chord stays in the air as a rift, fixed in the world, that cuts *RIFT-DELAY*
+frames later (a 2 f window): hazard :rift, hazards.lisp; it closes if he is hit before it cuts."
+  (let ((p (pos-of e)))
+    (spawn-hazard :rift e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 4.4 :delay (1+ *rift-delay*) :life 2
+                          :hw (make-hitwin :dmg (move-param e :rift-dmg) :react :stagger :kb 1.0 :hs *hitstop-heavy*
+                                           :chip (move-param e :rift-chip) :guard (move-param e :rift-guard)
+                                           :vols (let ((v (move-param e :rift-vol))) (list (make-vol (first v) (rest v)))))))
+  (emit :sfx :rift-open e))
+
+(defun ken-drink-dry (e)
+  "NOMIHOSE (Shift+K in cup 3), its first frame: the whole cup is drunk at once: NOME 0 and cup 1 now (the one
+rung change that doesn't wait for him to be free), so the cut and an O cancel resolve in KATATE."
+  (setf (gauges-meter (gauges e)) 0f0)
+  (clog "~a CASH-OUT" (side-name e))
+  (set-form e :nozarashi))
+
+(defun ken-ryote-enter (e)
+  "Cup 2: the left hand closes on the handle (a look: the stance clip), a yellow ring."
+  (let ((p (pos-of e))) (vfx-shockwave (aref p 0) (aref p 2) 2.5 0.35 :rgb '(1.0 0.85 0.25))))
+
+(defun ken-nomihose-enter (e)
+  "Cup 3: the yellow pillar (a full one on the first cup 3 of a match, then a flare), 2 rings, a 1 f negative
+frame and a 12 f manga page (feedback :rung)."
+  (let ((p (pos-of e)))
+    (vfx-awaken-burst (aref p 0) 1.0 (aref p 2) :nozarashi)
+    (vfx-shockwave (aref p 0) (aref p 2) 5.0 0.5 :rgb '(1.0 0.9 0.3))
+    (vfx-shockwave (aref p 0) (aref p 2) 3.0 0.35 :rgb '(1.0 1.0 0.9))))
+
 (defun ken-stance-release (e)
   "The stance is released: the cut deals 100 + stored and crushes guard at stored >= 150."
   (let ((f (fighter e)))
@@ -189,23 +288,23 @@ split from the side, then Kenpachi."
   (at 132 (shot-on a -20 5.0 0.7 :look 1.4) (lens 45)))
 
 (defcine ken-nozarashi-cine (a v :len 108 :hold 84)
-  "NOME, NOZARASHI (§5; paced by user review 3): beat 0 on the face close-up; the eyepatch tears (a negative); the
-yellow reiatsu pillar held long on a black card, Kenpachi silhouetted with a yellow back-rim (the only time yellow floods
-the frame); close, low and wide-angle while the katana grows into the cleaver, in silence; the 野晒 / 呑め、 stamp in
-black on a white card."
-  (at 0 (cine-clip a :ke-patch :blend 3 :speed (/ 1.0 1.5)) (cine-clip v (kit-stance (kit-of v)) :blend 6)
-      (setf (model-weapon (model a)) :ken-katana (model-hide (model a)) nil)
+  "NOME, NOZARASHI (§5; paced by user review 3; no eyepatch in any form, TYBW: the release is the whole first beat):
+beat 0 on the face close-up, the head down, the reiatsu rising round him; NOME: the head thrown back grinning as it
+bursts (a negative); the yellow reiatsu pillar held long on a black card, Kenpachi silhouetted with a yellow back-rim
+(the only time yellow floods the frame); close, low and wide-angle while the katana grows into the cleaver, in silence;
+the 野晒 / 呑め、 stamp in black on a white card."
+  (at 0 (cine-clip a :ke-release :blend 3 :speed (/ 1.0 1.5)) (cine-clip v (kit-stance (kit-of v)) :blend 6)
+      (setf (model-weapon (model a)) :ken-katana)
       (shot-on a 10 1.9 1.9 :look 1.85)
       (hold-both a v 10) (impact-frame :negative 2) (play-sfx :awaken-rise))
-  (at 26 (setf (model-hide (model a)) '(:eyepatch))
-      (let ((p (pos-of a)))
+  (at 26 (let ((p (pos-of a)))
         (vfx-awaken-burst (aref p 0) 1.0 (aref p 2) :nozarashi)
         (vfx-shockwave (aref p 0) (aref p 2) 7.0 0.6 :rgb '(1.0 0.9 0.3)))
       (impact-frame :negative 2) (play-sfx :awaken-boom) (shake 0.2 0.3))
   (at 28 (card :black a) (back-rim 30 1.0 0.85 0.23) (shot-on a 0 4.6 0.8 :look 1.6) (lens 52))
-  (during (0 108) (let ((p (pos-of a)))                 ; faint and narrow in the face close-up: the patch reads
+  (during (0 108) (let ((p (pos-of a)))                 ; rising through the face close-up (it lifts the hair), full at NOME
                     (vfx-aura (aref p 0) 0.0 (aref p 2) (cond ((< cf 28) 2.0) ((< cf 58) 6.5) (t 3.2)) :nozarashi (/ cf 60.0) (cine-dt)
-                              :k (if (< cf 26) 0.1 1.0))))   ; 28-58: the pillar
+                              :k (if (< cf 26) (+ 0.1 (* 0.02 cf)) 1.0))))   ; 28-58: the pillar
   (at 54 (cine-clip a :ke-nome :blend 2))
   (at 58 (card nil) (shot-on a 30 1.6 0.45 :look 1.5) (lens 86 -8) (silence 20))
   (at 78 (setf (model-weapon (model a)) :nozarashi)

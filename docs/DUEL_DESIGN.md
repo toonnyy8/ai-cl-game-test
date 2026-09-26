@@ -46,7 +46,7 @@ Deliberate deviations:
 
 | RoS | SOUL DUEL | Why |
 |---|---|---|
-| Yamamoto awakens into a stronger Shikai; Kenpachi removes his eyepatch | Yamamoto's awakening is **Bankai: Zanka no Tachi**; Kenpachi's is **Nozarashi** (the cleaver; as built the cinematic still tears an eyepatch off, but **decided: Kenpachi wears no eyepatch in any form**, TYBW canon, see §11.1); both last to the end of the match | TYBW versions, as the user asked |
+| Yamamoto awakens into a stronger Shikai; Kenpachi removes his eyepatch | Yamamoto's awakening is **Bankai: Zanka no Tachi**; Kenpachi's is **Nozarashi** (the cleaver, released by "NOME"; **Kenpachi wears no eyepatch in any form**: in TYBW he has not worn it since the start of the arc, the user's decision 2026-09-26), then climbed in three cups (§6.2); both last to the end of the match | TYBW versions, as the user asked |
 | Guard gauge, guard break when it empties | A **guard gauge** (§4): each blocked hit drains its guard value; empty = GUARD CRUSH (40 f) and no guard until it is full again; the Breaker still breaks at once (and drains 35) | The user asked for it (design v3 G.2); the Breaker stays the "read" tool, the gauge the "pressure" tool |
 | Reverse gauge + Spiritual Power gauge | **Reiatsu** (3 bars) pays for SP1 / SP2 only; a **flash-step gauge** pays for Hoho and Burst Reverse | The user asked for it (design v3 G.1, G.3); two gauges with one job each |
 | Reverse Actions (Soul / Chain / Burst), the game picks one | Only **Burst Reverse**, its own command (mod + Quick) | The one a player must choose deliberately; Soul / Chain would need the Reverse gauge |
@@ -58,11 +58,12 @@ Deliberate deviations:
 
 | Rule | Value |
 |---|---|
-| Reishi | 1100 each (`*reishi-max*`) |
+| Reishi | 1300 each (`*reishi-max*`; 1100 → 1300 at guard v3, the user's decision 2026-09-26: **real human matches run much faster than CPU vs CPU**, so longer CPU matches are acceptable; the seed gate's median window moved from 125–180 s to 125–210 s, §7) |
 | Konpaku | 9 each (`*konpaku-max*`); 0 loses |
 | Red | Reishi < 30 % of max (`*red-threshold*`) |
-| Kikon | removes 2 Konpaku, 3 if the attacker is in an awakened form |
-| Soul Break | Reishi reaching 0 = automatic Kikon + 1 (3, or 4 awakened) |
+| Kikon | removes the attacker's form's count (kit `:kikon-konpaku`): 2, 3 in an awakened form; Nozarashi's cups 2 / 3 / 4 (§6.2). Read when the rush **starts** (`fighter-kikon-n`): a cup lost during the dash-in doesn't lower it, a cash-out cancelled into O doesn't keep cup 3's |
+| Soul Break | Reishi reaching 0 = automatic Kikon + 1 (the form's count + 1) |
+| Per event | never more than **4** Konpaku (`*kikon-max-event*`): every character needs ≥ 3 events to take 9 |
 | After a Kikon / Soul Break | victim's Reishi refilled; both placed 8 m apart facing; 48 f of neutral (inputs ignored); Kenpachi +10 Reiatsu; no rounds |
 | Timer | 300 s. Time-up: more Konpaku wins, then the higher Reishi %, else a draw |
 | Chip | only fire projectiles (12 %) and Bankai blade hits (25 %); chip never kills (leaves 1) |
@@ -136,7 +137,7 @@ skips it (in the intro and the finish any confirm does too). Losing window focus
 
 ## 4. Universal mechanics
 
-**Facing and tracking.** A fighter auto-faces the opponent only in idle / walk / guard, at 18°/f.
+**Facing and tracking.** A fighter auto-faces the opponent in idle / walk / guard **and while he runs**, at 18°/f.
 During a move he may turn only in its startup, at the move's `:track`: Quick 360°/s, Flash /
 Signature / SP 60°/s, Breaker dash 120°/s (so a sideways Step from ≥ 3 m beats the dash; a back
 Step does not).
@@ -146,16 +147,37 @@ Step does not).
 **Step** (tap): a 2.5 m hop in the stick direction (neutral = back), invulnerable f3–f9, 24 f.
 
 **Dash** (hold Step): the hop happens as above; if Step is still held when its 24 f end, the
-fighter **runs** (`:run`): Yamamoto 8 m/s, Kenpachi 10 m/s (Nozarashi inherits 10), facing and
-moving in the stick direction relative to the opponent (neutral = at him), turning at most
-300°/s, stopping 1.2 m from him. No iframes (only the hop's). The run cancels at once into Quick,
+fighter **runs** (`:run`): Yamamoto 8 m/s, Kenpachi 10 m/s (Nozarashi inherits 10), moving in the
+stick direction relative to the opponent (neutral = at him; the heading, `fighter-run-yaw`, turns at most
+300°/s) while he **keeps facing the opponent** (the user's decision 2026-09-26): toward him a forward run,
+sideways a side slide, away a back-skate, stopping 1.2 m from him. No iframes (only the hop's). The run cancels at once into Quick,
 Flash, Signature, SP1 / SP2, Breaker, the Kikon rush, Hoho or a new Step, and a move started out of it slides
 1 m on along the run (never closer than 1.2 m); Guard stops it; releasing Step brakes it over 6 f
 (committed). The run starts only after the whole hop, so holding Step never shortens a Step or
-lets it cancel early into an attack. Arena wall as usual. Clip `:sh-run` (body.lisp), played at
-speed / 8 m/s.
+lets it cancel early into an attack. Arena wall as usual. Clips: the kit's `:run-clips` (forward, back,
+right, left; `run-clip` picks one from the heading against the facing: ahead > cos 60° forward, < −cos 60°
+back, else the side), played at speed / 8 m/s: the shared `:sh-run :sh-skate-b :sh-slide-r :sh-slide-l`
+(body.lisp `defrun`), Kenpachi's `:ke-run …` set with the blade on his shoulder, one set for every form. A move
+out of a run starts facing the opponent.
 
-**Guard** (hold): blocks after 2 f of holding, from the front 200°, while the guard gauge lasts. A blocked hit pushes
+**Guard** (hold): blocks after 2 f of holding, from the front 200°, while the guard gauge lasts.
+**U is a guard in every form; two forms' guards do more** (guard v3, the user's decision 2026-09-26, replacing the
+Kenpachi batch's hold-U armour; DUEL_NOZARASHI_V2 "After v2: guard v3": one family, both paid from the guard gauge
+and refilled by nothing while held (GUARD HOLD, below), both broken by a Breaker, both hit from behind or by an
+unguardable hit; the HUD tags the form `U: GARB` / `U: DRINK`):
+- **Bankai West, the garb guard** (passive `:garb`, ZANJITSU GOKUI's 15-million-degree garb: "anything that touches it
+  burns"): a hit he blocks drains **half** its guard value (`*garb-mult*` 0.5, applied after Kenpachi's cut; East's
+  recoil reads the halved value), and **every blocked melee hit scorches its attacker** (`*garb-scorch*` by move kind:
+  Quick **5**, Flash / Signature / SP / a Kikon strike **15**; a burn: never kills, no gauges, feeds no flame). The
+  user asked for a scorch on every melee block, not heavies only; the critic's farming worry (a CPU's Q1
+  block-string resets) is answered by the amount: a Quick burns a third of a heavy, so a whole guard gauge of
+  blocked Q strings (the 6th burns him out, §6.1's ×1.3 drain) scorches 90, under a tenth of 1300 Reishi. Projectiles and ranged hits
+  (below, §6.1) are not scorched. Chip goes through as usual. Off while burned out.
+- **Nozarashi's cup 3, hold U = DRINK** (passive `:drink`): it *is* a guard (the same state, arc, raise time and
+  gauge: a Breaker still guard-breaks, from behind it's a hit), but a guarded hit is **drunk**: he takes half of it
+  for real (rounded up, through `deal-damage`: it can Soul Break him), the cleaver drinks the other half (NOME), no
+  chip on top; the gauge pays the hit's guard value; his blockstun is the block's with the attacker's advantage
+  −4 (`drink-adv`: Q1 −2 → −6, enders −12 → −16). A blocked hit pushes
 0.6 m and puts the defender in blockstun sized so the attacker ends exactly at the move's block
 advantage (`blockstun` = frames the attacker has left after the hit + advantage).
 A blocked projectile (fire wave, Shiranui, pillars) has no attacker recovery to measure
@@ -177,19 +199,30 @@ any hit during its aura, dash or strike startup is a **counter-hit** (×1.25 dam
 hitstun). Breaker vs Breaker (both dashing or striking within 3 m) → **CLASH**: both pushed apart
 4 m, 24 f stun, no damage.
 
-**Guard gauge** (0–100, both characters; full at the start and after every Kikon reset): each
+**Guard gauge** (0–100, both characters; full at the start and after every Kikon reset, except Bankai's, §6.1): each
 **blocked** hit drains its move's **guard value** (`guard-value`, rules.lisp; a move or hitwin
 `:guard` overrides it): Quick 8, Flash 14, Signature 18, SP 22, Kikon strike 20, a hazard 12, +4 for a
 Quick / Flash / Signature ender (block advantage ≤ −10). Yamamoto's Signature cuts are 10 each and
 its wave 15, Shiranui 10 → 18 by charge, an Ennetsu pillar 10. Examples: Kenpachi's Q1 Q2 Q3 blocked =
 28, F1 F2 = 32, so a full gauge falls on the 4th blocked Q string. It refills at **12/s once 60 f pass
-without a drain** (the user slowed it: it was 20/s after 45 f). A blocked hit that empties it is still
+without a drain** (the user slowed it: it was 20/s after 45 f). **GUARD HOLD** (guard v3, the user's request "no
+refill while holding a guard", every character): on every frame he is guarding (`:guard` or `:guard-hit`, DRINK and
+the garb included) the gauge does not refill and the 60 f delay **is frozen, not restarted**: it counts only frames
+not guarding since the last drain (a drain still zeroes it). Frozen because on a phone a resting thumb is a guard
+(DUEL_MOBILE_DESIGN §3.2): a restart would mean drag, rest, drag footsies never refill while a keyboard player
+walking would, and the rule must be the same on every input (netplay). One guarding test per step gates both the
+refill and the counter (`gg-idle-next`, `gg-regen`, rules.lisp), so the first guard frame doesn't refill. Guardless
+(below) he can't enter a guard, so holding U never pauses the guardless refill. Kenpachi's stance, Step, Hoho, the
+run, a move and a parry are not guarding. **Bankai's gauge never refills by time** (§6.1: it is fed by his hits). A blocked hit that empties it is still
 blocked (chip as usual), then **GUARD CRUSH**: the defender reels 40 f (`*guard-crush-stun*`; Kenpachi's
 Q1 into an empty gauge is +25) and is **guardless**: holding Guard does nothing until the gauge is full
 again (14/s after the 60 f delay: 1 s + 7.1 s from 0, was 4.75 s; the HUD bar turns grey with a red fill
 climbing back, "GUARD" when it returns). The Breaker still breaks at once (Guard Break, 50 f) and drains
-35. Kenpachi's stance absorb, Step and Hoho don't touch it; armour doesn't either, except Bankai
-Yamamoto's (§6.1: his stances pay their armour from the gauge, and the gauge running out burns them out).
+35. Kenpachi's stance absorb, Step, Hoho and armour don't touch it (no armour is paid from the gauge any more:
+guard v3 removed West's hold-U armour).
+**The cut** (Nozarashi's cups 2 and 3, passive `:cut`): his blocked Flash / Signature / SP hits drain ×1.5 of their
+guard value (`cut-value`, `*cut-mult*`); his Quick string doesn't (a blocked RYOTE J string is 28, K K 48; K K into
+West's garb 24, and it scorches him 30).
 
 **Flash-step gauge** (0–100, full at the start, kept through Kikon resets): Hoho costs 30, Burst
 Reverse 70; +3/s once 60 f pass after the last spend, +0.03 per damage taken (a full Reishi bar is
@@ -239,7 +272,9 @@ absorbed hits 3 f.
 :guard-break :stance-break`, the Kikon). A hit taken on armour or absorbed by the stance counts as a
 block: it opens no string hit timing, no cancel and no on-land hook (Kenpachi's flurry needs a real
 hit). **Armour** is a hit budget (move key `:armor-hits`): from move frame 6 (`*armor-from*`) to the
-end of the startup, or during a Kikon rush's dash; a Breaker and Nozarashi's ignore-armor go through. An SP start flashes the user's rim light and freezes the opponent alone for 4 f.
+end of the startup, or during a Kikon rush's dash (only CHARGE has one now); or **West's garb against a ranged hit**
+(§6.1). A Breaker and an unguardable hit go through; nothing ignores armour (Nozarashi's `:ignore-armor` was
+removed). No armour is paid from the guard gauge. An SP start flashes the user's rim light and freezes the opponent alone for 4 f.
 
 **Simultaneous hits.** Each step every fighter moves first (each sees where the other stood at the
 start of the step), then every melee and hazard hit that touches is **collected**, then all are
@@ -250,10 +285,10 @@ start of the step), then every melee and hazard hit that touches is **collected*
 ## 5. Damage
 
 `(hit-damage base atk-mods def-mods combo-index counter-hit)` (rules.lisp) multiplies: the form's
-multiplier (Hellfire 1.30, Bankai East 1.20 (1.0 burned out), Nozarashi 1.15), the defender's form's
-`:taken` (Bankai East 1.40), Kenpachi's Cornered (+5 % per Konpaku he
+multiplier (Hellfire 1.30, Bankai East 1.20 (1.0 burned out), Nozarashi's cups 1.00 / 1.15 / 1.20), the defender's form's
+`:taken` (Bankai East **1.20**, `*bankai-taken*`: 1.40 until guard v3), Kenpachi's Cornered (+5 % per Konpaku he
 has lost, at most +25 %), the combo scaling and the counter-hit ×1.25; the result is rounded, at
-least 1.
+least 1. A ranged hit on Bankai West (heat on) is first cut to ×0.6 of its base (`ranged-damage`, `*garb-ranged*`, §6.1).
 
 ## 6. Characters
 
@@ -308,21 +343,63 @@ West** (switch + a technique), **Shift+L = South** (the bind, both stances); J /
 | Rule | East, Kyokujitsujin (offence) | West, Zanjitsu Gokui (defence) |
 |---|---|---|
 | Look | the body as it is (4 charcoal heat wisps), the charred blade with an ember-red edge line | wrapped in red flames (the 15-million-degree garb: FIRE brush-flame tongues round the body), the blade pure charcoal |
-| Damage | dealt ×1.20, **taken ×1.40** (`*bankai-taken*`) | ×1.00 / ×1.00 |
-| Traits | blade chip 25 % through guard; cuts the opponent's projectiles; **recoil**: each of his hits that is blocked drains **his own** guard gauge by 0.6 × its guard value (`*recoil*`: a blocked E-Q1 Q2 E-Q3 = 28 to the defender, 17 to him) | armour against Quick attacks; move armour (W-Q3, W-F1, W-F2, NISHI); **every armoured hit is paid from his guard gauge** (its guard value: Kenpachi's Q1 Q2 Q3 = 28); **scorch**: a melee hit his armour or parry stops burns the attacker 15 (never kills; a block never scorches) |
+| Damage | dealt ×1.20, **taken ×1.20** (`*bankai-taken*`; 1.40 until guard v3, the YK balance knob) | ×1.00 / ×1.00; **ranged hits ×0.6** (`*garb-ranged*`) |
+| Traits | blade chip 25 % through guard; cuts the opponent's projectiles; **recoil**: each of his hits that is blocked drains **his own** guard gauge by 0.6 × its guard value (`*recoil*`: a blocked E-Q1 Q2 E-Q3 = 28 to the defender, 17 to him, ×1.3 = 22; its 25 % blade chip feeds ~2 back at East's 0.05: **~−20 net**, so from full the **5th** blocked string with nothing landing burns him out, and a landed string feeds only +8) | **the garb** (passive `:garb`, guard v3, the user's decisions 2026-09-26, replacing the batch's hold-U armour): **U is the garb guard** (§4: a blocked hit drains half its guard value; every blocked melee hit scorches the attacker 5 (Quick) / 15; Kenpachi's Q1 Q2 Q3 costs 14 × 1.3 = 18 a string, the 6th burns him out; RYOTE's K K 24 × 1.3 = 31, the 4th); **ranged hits** (below) are taken at ×0.6 and **armoured** unless he guards; the parry (Shift+K) stays; the HUD tags him `U: GARB`; his garb flares ×1.4 while he guards |
 | Q2 / Breaker | derived from the Shikai ones, −1 f and reach ×1.15 (Q2 7/3/13, 2.76 m) | derived, +2 f (Q2 10/3/13) |
 
+**The fed flame** (guard v3, the user's request "in Bankai the guard gauge doesn't refill by itself, only by damaging
+the opponent and after a burnout"; both stances, kit `:burnout`):
+
+| Event | The Bankai guard gauge |
+|---|---|
+| time passing (lit) | **nothing**, in or out of guard |
+| he deals damage, heat on | **+ the stance's `:feed` per Reishi point actually removed** from the opponent (`gg-feed`, in `deal-damage`: `min dmg reishi`): **West 0.10** (`*bankai-feed*`), **East 0.05** (`*bankai-feed-east*`; the user's follow-up decision 2026-09-26, was 0.10): a hit, a counter, an armoured or absorbed hit, the taken half of a drunk hit, blade chip through a guard. A landed E-Q1 Q2 E-Q3 feeds East +8 (was +15), a close KYOKUJITSUJIN that hits +13 |
+| a scorch, a Kikon | nothing (a scorch is a burn, not a hit, so blocking never refuels; a Kikon deals no damage) |
+| a blocked hit, East's recoil, a Breaker | drains **×1.3** (`*bankai-drain*`, both stances; the user's follow-up decision 2026-09-26: "raise the rate Bankai's own guard gauge is cut"). West's garb ×0.5 applies first: a West block nets ×0.65. A Breaker's 35 is 45.5. Burnout from empty is unchanged |
+| it reaches 0: BURNOUT | the timed refill only (60 f + 14/s, 8.1 s from 0), then **REIGNITE** at full; damage dealt while burned out feeds nothing |
+| the awakening | **full** (the flame is lit), **unless he is guardless** then: a guard-crushed Yamamoto awakens burned out and relights on the timer (no panic button) |
+| a Kikon / Soul Break reset | **carried** (the user's decision 2026-09-26): the Bankai gauge keeps its value, a burnout included; everyone else's is refilled |
+| L (the switch) | one gauge |
+
 **BURNOUT** (熄火). The stance traits run on the guard gauge (`:burnout` kits; `burnout-p`): when it
-empties by **any** cause (a block, East's recoil, West's armour, a Breaker) he is burned out until it is
-full again (60 f + 7.1 s from 0 with no more drain): no guard (guardless), and the stance's traits off: no
-×1.2 dealt, no chip, no projectile cut, no recoil, East's SP1 blade no longer breaks guard (its `:heat`
-flag), no armour of any kind, no scorch. **The ×1.4 East takes stays.** West's parry still works (a
-technique paid with a bar) but doesn't scorch. A blocked hit that empties it is also a Guard Crush (40 f);
-recoil or armour emptying it doesn't stun. L still switches (the other stance is burned out too: the
+empties by **any** cause (a block, East's recoil, a Breaker) he is burned out until it is full again (the timed
+refill above): no guard (guardless), and the stance's traits off: no ×1.2 dealt, no chip, no projectile cut, no
+recoil, East's SP1 blade no longer breaks guard (its `:heat` flag), no garb (no half cost, no scorch, **no ranged
+reduction or armour**), no fed flame. **East's ×1.2 taken stays.** West's parry still works (a technique paid with a
+bar) but doesn't scorch. A blocked hit that empties it is also a Guard Crush (40 f); recoil emptying it doesn't
+stun. L still switches (the other stance is burned out too: the
 gauge is his). The look: West's flames gutter out into three black smoke wisps and ash, East's ember
 line goes dead grey, the world loses its ember hue, the HUD name dims and the bar reads BURNOUT;
 "BURNOUT" on entry, "REIGNITE" (an ember flare) when it is full. Rules: `heat-mult`, `chip-rate`,
-`armor-budget`, `heat-flags`, `recoil` (rules.lisp).
+`armor-budget`, `heat-flags`, `recoil`, `gg-feed`, `garb-value`, `garb-scorch`, `ranged-hit-p`, `ranged-damage` (rules.lisp);
+the ×1.3 drain is `drain-guard`'s (combat.lisp).
+
+**The garb vs ranged hits** (guard v3, the user's decision 5, 2026-09-26). A **ranged** hit is one delivered by a
+hazard or a projectile, not the attacker's own weapon volume: every `hazards.lisp` hit (Yamamoto's fire wave,
+Shiranui, the Ennetsu pillars; Kenpachi's KUKAN-GIRI rift; South's bind) and the hit windows flagged `:ranged`
+(KYOKUJITSUJIN's heat cone, not its blade, which is its own melee window; Taimatsu's fire cone). **A weapon that
+runs into a line is melee at the blade and ranged beyond it** (the user's follow-up decision 2026-09-26): one hit
+window whose `:ranged` is decided by the victim's distance from the attacker when it lands (`:melee-range` in the
+move's params, `ranged-hit-p`), so one hit is one hit, never two (the Nozarashi batch's two overlapping capsules
+double-hit near the boundary). The boundary is the blade's reach, the form's Q reach: **Split the Meteor 3.4 m**
+(KATATE's Q1, 3.38 m), **the cash-out NOMIHOSE 3.9 m** (cup 3's J, MEN 3.9 m), **Buttagiru 2.6 m** (base Q1, the crack
+beyond), **Nadegiri 2.4 m** (Yamamoto's Q1). Within it the hit is the blade: a melee hit in every way (no ranged
+reduction or armour; the garb blocks it at half and scorches 15; a parry can catch it). The 6 m guard-break rule of
+the cash-out is unchanged. Kikon strikes are never ranged (ENJO's lane included): the Kikon rule (§2) decides them.
+Against Bankai West, heat on:
+- **Damage reduction**: ×0.6 of the hit's damage (`*garb-ranged*`; the fire wave 110 → 66, the Meteor 240 → 144,
+  the cash-out 390 → 234, the rift 50 → 30), chip included.
+- **Super armour**: unguarded, walking, running, attacking, in a Breaker's startup, even in hitstun, a ranged hit
+  gives **no reaction** (no flinch, stagger, knockback or knockdown: `:armored`, a block for the attacker). It is not
+  paid from the guard gauge. Guarding it is a garb block (half the guard value, no scorch: not melee). A guard-crush
+  still breaks a guard (the cash-out within 6 m), and a parry never catches a ranged hit (it wasn't caught before
+  either for hazards; the lines now count as ranged too).
+- **South's bind** is ranged, so its 40 is cut to 24, but **it still binds**: the bind is a grab (unguardable), not a
+  hit reaction, so the armour doesn't stop it; iframes still dodge it.
+- Measured: ranged hits on West are rare between CPUs (about 0.3 a YK match, nearly all cash-outs; ~0.4 a YY match,
+  heat cones), so ×0.6 vs ×0.4 made no measurable difference to the gate (YK 15 vs 16 of 40 Yamamoto wins at
+  `*bankai-taken*` 1.3): the value is a feel choice, the one the user suggested. The look: the ember star and a
+  sizzle on the absorbed hit (feedback `:armored`), as a parry's.
 
 East moves:
 
@@ -333,8 +410,8 @@ East moves:
 | J J J | E-Q3 rising-sun thrust `:ya-e-q3` | 11/3/27 | 55 | −12 | a line to 3.6 m, knockback 1.2 m: ±0 on hit (no loop into E-Q1) |
 | K | E-F1 edge sweep line `:ya-e-f1` | 16/4/20 | 70 | −4 | a line to 3.8 m, stagger |
 | K K / J J K | E-F2 rising cut `:ya-e-f2` / `:ya-e-f2q` | 19/4/26 (the branch enters at f6) | 90 | −14 | launch |
-| L | **NISHI: ZANJITSU GOKUI** `:ya-to-west` | 14/4/20 | 50 | −10 | the blade planted, the garb flares 360° 2.6 m (knockback 3.5 m); armour 1 hit f6–13; **he is West from f14** (it resolves there); cancels a landed Q / F; cooldown 100 f |
-| Shift+K | **KYOKUJITSUJIN**, the downward cut `:ya-kyoku` | 18/5/26 | 90 + 130 | −16 | the blade (f18–19, 0.3 → 2.4 m) **breaks guard** (Guard Break, −35 guard gauge; not in burnout); at f20 its tip bites the ground and a flat heat sheet runs out: a **25° / 9 m cone**, 130, knockback 4 m, **blockable, never a break** (guard 22, recoil 13). Close and hit: 264 (×1.2); close and guarded: the break, then 156 |
+| L | **NISHI: ZANJITSU GOKUI** `:ya-to-west` | 14/4/20 | 50 | −10 | the blade planted, the garb flares 360° 2.6 m (knockback 3.5 m); **he is West from f14** (it resolves there); cancels a landed Q / F; cooldown 100 f |
+| Shift+K | **KYOKUJITSUJIN**, the downward cut `:ya-kyoku` | 18/5/26 | 90 + 130 | −16 | the blade (f18–19, 0.3 → 2.4 m) **breaks guard** (Guard Break, −35 guard gauge; not in burnout); at f20 its tip bites the ground and a flat heat sheet runs out: a **25° / 9 m cone**, 130, knockback 4 m, **blockable, never a break** (guard 22, recoil 13), **ranged** (a West defender armours it at ×0.6). Close and hit: 264 (×1.2); close and guarded: the break, then 156 |
 | Shift+L | **MINAMI** (South), the bind `:ya-kaka` | 20/1/34 | 40 | — | 2 bars, cooldown 600 f (kept through resets); below |
 | I | Breaker (derived) | 7/4/18 | 150 | Guard Break | |
 | O | **KITA: TENCHI** `:ya-tenchi` | §6.3 | 70 | −14 | both stances |
@@ -345,9 +422,9 @@ West moves:
 |---|---|---|---|---|---|
 | J | W-Q1 garb sweep `:ya-w-q1` | 11/3/12 | 40 | −2 | 1.9 m, 220° |
 | J J | Q2 (derived) | 10/3/13 | 38 | −2 | |
-| J J J | W-Q3 garb shove `:ya-w-q3` | 13/4/22 | 70 | −12 | 2.4 m 360°, knockback 3 m, armour 1 hit f6–12 |
-| K | W-F1 garb flare `:ya-w-f1` | 20/4/20 | 80 | −4 | 2.6 m 360°, stagger, armour 1 hit f6–19 |
-| K K / J J K | W-F2 garb crush `:ya-w-f2` / `:ya-w-f2q` | 22/5/28 (the branch enters at f8) | 110 | −14 | 2.8 m 110°, knockdown, armour 2 hits f6–21 |
+| J J J | W-Q3 garb shove `:ya-w-q3` | 13/4/22 | 70 | −12 | 2.4 m 360°, knockback 3 m |
+| K | W-F1 garb flare `:ya-w-f1` | 20/4/20 | 80 | −4 | 2.6 m 360°, stagger |
+| K K / J J K | W-F2 garb crush `:ya-w-f2` / `:ya-w-f2q` | 22/5/28 (the branch enters at f8) | 110 | −14 | 2.8 m 110°, knockdown |
 | L | **HIGASHI** `:ya-to-east` | 12/3/22 | 90 | −8 | a one-handed backhand from low right, a line to 4.2 m, stagger, chip 40 %; **he is East from f12** (×1.2); cancels a landed Q / F; cooldown 100 f |
 | Shift+K | **GOKUI GAESHI**, the parry `:ya-w-parry` | 4/12/30 (46 f, parried or not) | — | — | 1 bar; a melee hit on f4–15 (`*parry-window*`) is **parried**: he takes nothing, the attacker staggers 32 f (his move and rush armour end) and is scorched, and he counters at once: `:ya-w-counter` 6/3/24, **150**, knockback 3 m (guaranteed). A Breaker breaks it; hazards and the bind aren't parried; a parried hit is a block for the attacker (no string, no Kikon) |
 | Shift+L | MINAMI (as East's) | | | | |
@@ -366,13 +443,15 @@ stance, armour and a parry don't stop it; iframes do). Step out of the tell (pre
 (f15–35; perfect from f28); walking is too slow. It only **opens** a combo (a victim already in one takes a
 40 flinch) and **books 2 combo hits**, so a bound fighter may Burst out (70 flash-step) at once. Any hit
 frees him; Yamamoto has 41 f to follow up (a J string, the cone, TENCHI on a red victim). Hazard `:bind`
-(hazards.lisp), rule `combo-step`.
+(hazards.lisp), rule `combo-step`. Against a Bankai West (a Yamamoto mirror) it is a ranged hit: 24, and it still
+binds (above).
 
 ### 6.2 Zaraki Kenpachi (`duel/lisp/ken.lisp`, art `ken-art.lisp`)
 
-Look: 2.02 m, broad, long loose black spiky hair, eyepatch over the right eye, scar down the left
-side of the face, a grin, sleeveless tattered white haori over black, bare arms. A notched katana.
-Identity: rushes in, eats hits on armour, wins trades, gets stronger as he loses.
+Look: 2.02 m, broad, long loose black spiky hair, **both eyes open: no eyepatch in any form** (in TYBW he has not worn it
+since the start of the arc; the user's decision 2026-09-26), a scar down the left side of the face, a grin, a sleeveless
+tattered white haori over black, bare arms. A notched katana; he runs with it on his shoulder (every form).
+Identity: rushes in, eats hits, wins trades, gets stronger as he loses and the longer the fight lasts.
 Passives: **Cornered** (+5 % damage per Konpaku lost, max +25 %) and +10 Reiatsu at every reset.
 
 Base form:
@@ -391,28 +470,79 @@ Base form:
 | I | Breaker: shoulder charge `:ke-breaker` | §4 | 150 | Guard Break | |
 | O | Kikon module **CHARGE** `:ke-kikon` → Kikon | aura 5, charge 13 m/s ≤ 36 f (turning 150°/s, armour 1 hit), strike 9/3/24 | 70 | −14 | §6.3; the stance's cross-body cut; the Kikon: reckless cuts, laughing, the last through the victim (3.2 s) |
 
-**Awakening → "NOME, NOZARASHI"** (form `:nozarashi`, permanent). Cinematic 1.8 s in two beats:
-the eyepatch torn off (yellow reiatsu pillar, shockwave), then the katana grows into the cleaver
-(野晒 / NOME, NOZARASHI). Heals 150 Reishi. ×1.15 damage; his hits cut through the opponent's
-projectiles and South's grab (they are destroyed) and ignore Bankai's armour; yellow aura.
+**Awakening → "NOME, NOZARASHI"** (permanent). Cinematic 1.8 s (108 f) in four shots, 28 · 30 · 20 · 30 f: beat 0 on
+his face, the head down, the yellow reiatsu rising round him and lifting his hair; **NOME**: the head thrown back grinning
+as it bursts (a negative frame, the burst and a shockwave; the release is the whole first beat, there is no eyepatch to
+tear); the yellow pillar on a black card; close and low while the katana grows into the cleaver; the 野晒 / 呑め、 stamp on
+a white card. Heals 150 Reishi; NOME starts at **10**, in cup 1.
 
-The inherited moves are **derived, not copied**: `defkit ... :startup-add 3 :reach-mult 1.4`
-shifts every frame from the startup on by 3 and scales every reach by 1.4; the clip plays at
-S(base)/S(derived) speed so it still hits on frame S. SP2 costs 2 bars (awakened form).
+**Nozarashi: NOME, the three-cup ladder** (呑め, "drink": DUEL_NOZARASHI_V2.md, built with the deviations listed there).
+The cleaver drinks blood. The kit meter NOME (0–100, `gauges-meter`, kept through resets) has three sources: **dealt**
++0.08 per point, **taken** +0.12 per point he loses, **drunk** +0.30 per point (a DRINK's swallowed half, all the stance
+absorbs). It picks his form, one rung per cup, **only while he is free** (idle, walk, guard, run: never under a string;
+the cash-out is the one forced change), several steps at once:
 
-| Move (Nozarashi) | S / A / R | Reach | Notes |
+| | **Cup 1 KATATE** 片手 `:nozarashi` | **Cup 2 RYOTE** 両手 `:ryote` | **Cup 3 NOMIHOSE** 飲み干せ `:nomihose` |
 |---|---|---|---|
-| Q1 / Q2 | 10/3/12, 10/3/13 | 3.64 | |
-| Q3 | 14/4/22 | 3.64 | |
-| F1 | 19/4/20 | 4.20 | |
-| F2 / F2 branch | 23/5/28 (branch enters at f9) | 3.64 | |
-| Stance cut | 11/4/24 | 3.92 | hold unchanged (6 f in, ≤ 60 f) |
-| SP1 **Split the Meteor** `:ke-meteor` (replaces Buttagiru) | 26/4/30 | 12 m line | 240, knockdown, splits the ground |
-| SP2 charge / flurry | 17/26/24; flurry S13, cuts f13 19 25 31, launcher f43 | 1.96 / 3.08 | 2 bars |
-| Breaker | strike 11/4/18 | 3.64 | still triggers at 2.2 m |
-| Kikon module **LEAP CLEAVE** `:ke-kikon-n` → Kikon **sky split** | crouch 8 f, leap 18 m/s ≤ 30 f (locked), strike 11/3/24 | 3.08, 160° | its own move (§6.3); the Kikon: one cleave, a line of light splits the sky and the ground, the screen halves shear apart (2.7 s) |
+| Enter / leave | the awakening (NOME 10); from cup 2 below 25 | NOME ≥ 40 / below 25 | NOME = 100 / below 50 |
+| Drain | none | **1.5/s once 180 f pass without a gain** (guard v3's K3: was 3/s after 60 f) | **10/s, always** (a drink doesn't pause it) |
+| Dealt | ×1.00 | ×1.15 | ×1.20; blade chip 20 % |
+| J / K | the base moves derived (+2 f, reach ×1.3) | its own kendo set (below); the rest derived +3 f, ×1.4 | cup 2's (not re-derived), K the space cut |
+| U | guard | guard | **DRINK** (§4): no guard, `U: DRINK` |
+| Traits | cuts projectiles and South's grab | + **the cut** (§4) | + DRINK, the rift |
+| Shift+K | Split the Meteor (as written) | Split the Meteor | **NOMIHOSE**, the cash-out |
+| Kikon (O) | LEAP CLEAVE, **2** Konpaku | LEAP CLEAVE, 3 | LEAP CLEAVE, **4** |
+| Look | one hand (`:ke-n-stance`), the base yellow aura | two-handed jōdan (`:ke-r-stance`), the awakened aura, a yellow ring, "RYOTE" | two-handed, the aura as a pillar (×1.6 tall); on entry the yellow pillar, a 1 f negative, a 12 f manga page, "NOMIHOSE!" |
 
-Damage is the base table's × 1.15 (and × Cornered); block advantages are unchanged.
+The HUD names the cup (KENPACHI KATATE / RYOTE / NOMIHOSE); NOME is a yellow bar in the kit meter's slot with a bright
+mark at 40, dim ticks at the floors 25 and 50, three cup pips, and a pulse within 10 of the current floor. Dropping to cup
+1: "TSUMANNEE...". The opponent's counter-hit, perfect Hoho, parry or Burst against him: "OMOSHIREE!" (a callout, no
+meter). A T3 lasts ~5–10 s (the gate's CPUs: mean 6.4–6.7 s, max 12–19 s).
+
+**Cup 2 → cup 3 (guard v3, the user's request "make cup 2 → 3 easier, HP is too low, the meter drains too fast";
+design guard-v3 §1, knob set K3).** The diagnosis: the CPU always reached cup 3, but a player who finishes red
+opponents at once (the human proxy: HARD, the Kikon rush at 0.9 in every cup, no stance) got there only after the
+match was decided in 7 of 20 matches, because cup 2 leaked a fifth of his NOME (3/s after 1 s idle) and 1100 Reishi
+made each exchange too short. K3: RYOTE drains **1.5/s after 180 f** without a gain (`*nome-delay*` 60 → 180,
+`*nome-drain-t2*` 3.0 → 1.5): a player breathes between exchanges, and a dropped cup 2 (40 → below 25) now takes
+3 s + 10 s of doing nothing. The gains (dealt 0.08, taken 0.12, drunk 0.30), the 40 / 25 / 100 / 50 rungs, cup 3's 10/s
+and the cash-out are unchanged; the other half is Reishi 1300 (§2). Pace: from 40, cup 3 needs +60 NOME = 750
+dealt, or 500 taken, or ~140 absorbed by the stance. Measured (the final gate, 20 seeds): first cup 3 **28.2 s** (YK)
+/ **28.7 s** (KK) after the awakening (was 36.4 / 33.1; 27.1 s in YK after the Bankai follow-up), 100 % of awakened matches; the human proxy reaches cup 3
+while Yamamoto still has ≥ 4 Konpaku in **20 of 20** matches (was 13 of 20), its first cup 3 32.4 s after the
+awakening, its YK median 161.2 s (was 134.4: not shorter); cup 3 stays mean 6.4 s (YK) / 6.7 s (KK), max 12.0 / 18.9 s.
+
+The inherited moves are **derived, not copied** (`defkit ... :startup-add 2 :reach-mult 1.3`): every frame from the
+startup on shifts, every reach scales; the clip plays at S(base)/S(derived) speed so it still hits on frame S. A form
+with no derivation (cup 3) takes its parent's version of a move (`register-kit`). SP2 costs 2 bars (awakened).
+
+| Move (cup 1, KATATE) | S / A / R | Reach | Notes |
+|---|---|---|---|
+| Q1 / Q2 | 9/3/12, 9/3/13 | 3.38 | Q1→Q2 −7 |
+| Q3 | 13/4/22 | 3.38 | Q2→Q3 −3 |
+| F1 | 18/4/20 | 3.90 | F1→F2 **−1** (with +3 it was a 0 gap: no combo) |
+| F2 / F2 branch | 22/5/28 (branch enters at f8) | 3.38 | Q2→F2q −2 |
+| Stance cut | 10/4/24 | 3.64 | hold unchanged (6 f in, ≤ 60 f) |
+| SP1 **Split the Meteor** `:ke-meteor` | 26/4/30 | 12 m line | 240, knockdown, splits the ground; the cleaver within **3.4 m** (KATATE's Q reach) is melee, the line beyond it **ranged** (a Bankai West armours it at ×0.6, §6.1); the cash-out splits at 3.9 m (cup 3's MEN), Buttagiru's at 2.6 m (its crack beyond) |
+| SP2 charge / flurry | 16/26/24; flurry S12 | 1.82 / 2.86 | 2 bars |
+| Breaker | strike 10/4/18 | 3.38 | still triggers at 2.2 m |
+| Kikon module **LEAP CLEAVE** `:ke-kikon-n` | crouch 8 f, leap 18 m/s ≤ 30 f (locked), strike 11/3/24 | 3.08, 160° | its own move in every cup (§6.3) |
+
+| Move (cup 2, RYOTE; ×1.15) | S / A / R | Dmg | Block | Volume | Guard (the cut) | Notes |
+|---|---|---|---|---|---|---|
+| J **MEN** `:ke-r-q1` | 10/3/12 | 40 | −2 | a line 0.3 → 3.9 m | 8 | straight overhead; R-Q1→Q2 −6 |
+| J J Q2 (derived) | 10/3/13 | 35 | −2 | 3.64 m, 100° | 8 | |
+| J J J **KESA** `:ke-r-q3` | 14/4/22 | 70 | −12 | 3.8 m, 140° | 12 | knockback 3 m; Q2→R-Q3 −2 |
+| K **DO** `:ke-r-f1` | 19/4/20 | 85 | −4 | 4.2 m, 160° | 14 → 21 | stagger |
+| K K / J J K **KABUTO-WARI** `:ke-r-f2` / `:ke-r-f2q` | 21/5/28 (branch enters at f7) | 110 | −14 | a line 0.3 → 4.2 m | 18 → 27 | launch; R-F1→R-F2 −2, Q2→R-F2q −2 |
+| L stance (derived) | in 6, cut 11/4/24 | 100 + stored | −14 | 3.92 m | 22 → 33 | |
+| Shift+K / Shift+L / I / O | the meteor and LEAP as written, the charge 17/26/24 and the Breaker 11/4/18 derived | | | | | Kikon **3** |
+
+| Move (cup 3, NOMIHOSE; ×1.20) | S / A / R | Dmg | Block | Notes |
+|---|---|---|---|---|
+| J strings, K K, L, Shift+L, I, O | cup 2's | | | chip 20 % on block; Kikon **4** |
+| K **KUKAN-GIRI** `:ke-n-f1` | 20/4/22 | 90 | −4 | 4.2 m, 150°, stagger; at f20 its chord stays in the air: the **rift** (hazard `:rift`, a line 1.0 → 4.4 m, fixed in the world) cuts 20 f later (`*rift-delay*`): 50, stagger, knockback 1 m, guard 12, chip 20 %. On block it cuts inside N-F1's blockstun: **+8**; on hit it combos (K K: 108 + 60 + 132 = **300**); on a whiff it stands there as a trap (a Hoho that touches it within 8 f is perfect). It closes if he is really hit before it cuts. N-F1→R-F2 −2 |
+| Shift+K **NOMIHOSE** `:ke-meteor-n` | 26/4/30 | **390** | −16 | the whole cup at once: on its first frame NOME is 0 and he is back in cup 1 (`ken-drink-dry`), so the cut resolves at ×1.0 and an O cancel is cup 1's 2-Konpaku Kikon; within 6 m (`:crush-range`) it **breaks guard** (Guard Break, −35), beyond it is blockable (guard 22); the cleaver within 3.9 m (cup 3's MEN reach) is melee, the line beyond it ranged (§6.1); 1 bar |
 
 ### 6.3 The Kikon (O) modules
 
@@ -430,7 +560,7 @@ and the dash-in to the Kikon, guardable unless red). The dash-in travels in the 
 | ENJO `:ya-kikon` | Shikai, Hellfire | 6 | none | 9 m, 26 f | 20/2/30, locked | lane `:cap 1.0→9.0 h 1.2 r 1.4` | 30 | a FIRE line along the lane, then four FIRE walls rising one after another (f4 → f20) over EMBER backings; fire hit, chip 12 %, knockback 2 m |
 | KITA: TENCHI `:ya-tenchi` | Bankai (both stances) | 10 | 36 m/s ≤ 14 f, locked | 10 m, ≤ 30 f | 6/2/26 | 2.4 m arc 110° | 32 | a flash step: the body vanishes into ink afterimages (one every 4 f), the Hoho's streaks at take-off, `:hoho-out`, `:kikon-slash` on the cut |
 | CHARGE `:ke-kikon` | Kenpachi base | 5 | 13 m/s ≤ 36 f, turning 150°/s | 9.4 m, ≤ 50 f | 9/3/24 | 2.4 m arc 110° | 30 | **armour 1 hit in the charge** (a REIATSU star + the laugh; a Breaker or a 2nd hit stops it); the aura ×1.5 |
-| LEAP CLEAVE `:ke-kikon-n` | Nozarashi | 8 | 18 m/s ≤ 30 f, locked | 10.6 m, ≤ 49 f | 11/3/24 | 3.08 m arc 160° | 30 | the widest strike; a DUST ring at take-off, the body drawn up to 1.6 m high (`:lift`, a look), a 3 m gash where it lands |
+| LEAP CLEAVE `:ke-kikon-n` | Nozarashi (every cup; worth 2 / 3 / 4) | 8 | 18 m/s ≤ 30 f, locked | 10.6 m, ≤ 49 f | 11/3/24 | 3.08 m arc 160° | 30 | the widest strike; a DUST ring at take-off, the body drawn up to 1.6 m high (`:lift`, a look), a 3 m gash where it lands |
 
 ## 7. CPU AI (`duel/lisp/ai.lisp`: generic; identity = the kit's `:ai` table)
 
@@ -456,7 +586,8 @@ random number from `sim-rnd01` (seeded per match), so a seed replays the same ma
   spare, ≥ 6 f before it hits) or guard (scaled by its guard gauge; refused: a sideways Step; a Kikon
   rush strike on a red CPU: Hoho or a sideways Step).
 - **Kikon**: the CPU rushes a red opponent as a cancel, on his hitstun, or at a neutral decision
-  within the kit's `:kikon-range` (9 m) with p 0.5 (`*ai-kikon-p*`; not while it sees him down,
+  within the kit's `:kikon-range` (9 m) with p 0.5 (`*ai-kikon-p*`; a form's `:kikon-p` replaces it: Nozarashi's
+  cups 0.25 / 0.5 / 0.9, a later Kikon being worth more, at least 0.5 once under a minute is left; not while it sees him down,
   waking up or in a Hoho) while the module isn't cooling. One who isn't red only as a poke from its
   `:moves` bands (Shikai 7–99 m, Kenpachi and Nozarashi 6–99 m, weight 1; Bankai none), which a hit turns
   into the dash-in. It holds the button from the press to past the strike (the module's aura + dash-max +
@@ -475,11 +606,15 @@ random number from `sim-rnd01` (seeded per match), so a seed replays the same ma
   the crush: PRESSURE +3, attack chance +0.2, a blocked string always goes on. In blockstun a CPU keeps
   holding Guard through the string (`*ai-hold-guard*` EASY 0.97, NORMAL 0.92, HARD 0.8 per blocked hit,
   for the blockstun + 20 f, no reflex drops it): turtling mid-string is what a Guard Crush punishes.
-- **Stances** (kit keys, no names): `:cancel (:sig p)` ends a landed string with L; `:low (0.4 :sig 3
-  :gg-min 0.6)` triples L below 40 % Reishi while the gauge can pay for the other stance's armour;
-  `:gg-low 0.45` (East): below it, no Q / F into a guard within 3 m, intents ZONE 3 / DEFEND 2, dash-back
-  0.6, no guard pressure (its recoil); `:armor-gg 0.35` (West): below it no armoured move or string branch,
-  DEFEND +2. **Burned out**: DEFEND, dash-back 0.8, no guard (a refused guard is a sideways Step), Hoho on
+- **Stances** (kit keys, no names): `:cancel (:sig p)` ends a landed string with L; `:low (0.4 :sig 3)` triples
+  L below 40 % Reishi (guard v3 dropped its `:gg-min 0.6`: it kept a low-gauge East out of West's gauge-paid
+  armour, and West is now the cheaper place for a low gauge: half cost, no recoil); `:gg-low 0.45` (East): below
+  it, no Q / F into a guard within 3 m, intents ZONE 3 / DEFEND 2, dash-back 0.6, no guard pressure (its recoil).
+  West's `:hold-u` / `:armor-gg` are gone with the hold-U armour: West guards like everyone (`:guard 0.55`, the garb
+  is its guard), DEFEND 3, and parries (`:react`). GUARD HOLD and the fed flame need no AI change: a CPU's guards are
+  short (a neutral guard 14–34 f, a string held through `*ai-hold-guard*`), and its guard choice already scales with
+  the gauge (`ai-guard-mult`). `:cashout (:punish 30 :near 6.0 :below 60)` (Nozarashi's cup 3): Shift+K only as a punish
+  (he has ≥ 30 f of recovery or stun left, within the 12 m lane) or within 6 m while NOME is below 60. **Burned out**: DEFEND, dash-back 0.8, no guard (a refused guard is a sideways Step), Hoho on
   its roll, L allowed. `:react (:flash-startup :sp1)` (West): the parry against a Flash startup whose hit
   falls in its window (counting the SP's super freeze); a parry up close is never attacked with Q / F (a
   Breaker half the time). South's tell under the CPU (the caster's real move frame 21–30): a sideways Step
@@ -505,13 +640,33 @@ random number from `sim-rnd01` (seeded per match), so a seed replays the same ma
   PRESSURE. Bankai East: PRESSURE 1.5–3 m (weight 4), Q-heavy up close with L and South, the cone SP1
   from 3 m, guard 0.35, dash 0.6. Bankai West: DEFEND 2.5–4.5 m (weight 3), Q / F / L up close, HIGASHI
   from 3–5 m, guard 0.55. Kenpachi: PRESSURE 1.5–3 m (weight 4), a Q-heavy close band with the stance, SP1 from
-  3 m, SP2 mostly at 4–6 m, guard 0.35, Hoho 0.2.
+  3 m, SP2 mostly at 4–6 m, guard 0.35, Hoho 0.2. Nozarashi: cup 1 as the base (the stance in the close band 3,
+  `:kikon-p` 0.25: he toys with a red opponent), cup 2 PRESSURE 5 (Q 5, F 3 up close, `:kikon-p` 0.5, block-string
+  0.85), cup 3 PRESSURE 6 / APPROACH 3 (Q 4, F 4, no stance, guard = DRINK 0.45, dash 1.0, `:kikon-p` 0.9, `:cashout`).
 
 **Pacing gate** (the regression test for all of the above): 20 seeded CPU-vs-CPU matches (NORMAL,
-cinematics included) per pairing YY, YK, KK must all end by K.O.; target median 125–180 s, max
-240 s. Latest (the Bankai stances with burnout, the Kikon dash-in, the slower guard refill, the CPUs'
-guard pressure): YY 150.4 s (91–215), YK 145.5 s (108–176), KK 152.4 s (122–190), 60/60 K.O., no pacing
-knob retuned (DUEL_GAMEPLAY.md has the usage per match). Before (the gauges, the O rule and the O
+cinematics included) per pairing YY, YK, KK must all end by K.O.; target **median 125–210 s** per pairing (125–180 s
+until guard v3: Reishi 1100 → 1300 lengthened every match, which the user accepted because real human matches run
+much faster than CPU vs CPU; the user's decision 2026-09-26), every match by K.O. before the 300 s timer, win rates
+near even (YK within ±3 of 10 / 10; a 20-match win count carries about ±2 of noise). Latest (guard v3 with its
+follow-up: Reishi 1300, GUARD HOLD, Bankai's fed flame carried through resets (East 0.05, West 0.10), every Bankai drain
+×1.3, West's garb guard and ranged armour, the blade / line split, K3, `*bankai-taken*` 1.2): **YY 165.3 s
+(123.3–231.9), YK 155.1 s (107.2–205.0), KK 169.2 s (111.9–196.9)**, 60/60 K.O.; wins YY 11 / 9, YK Yamamoto 7 /
+Kenpachi 13, KK 13 / 7 (a mirror: side noise). The follow-up is the user's deliberate nerf of Bankai: YK over 40 seeds
+went 17 → 14 Yamamoto wins, and no knob was retuned to undo it (if a later playtest wants some of it back, the one
+knob is `*bankai-drain*` 1.3 → 1.2). Bankai's gauge between CPUs: mean 77 % (YK) / 82 % (YY), under 50 % for 20 % /
+13 % of the time; burnouts 8 in 20 YK matches (5 by a block, 3 by a Breaker; 3 in seeds 21–40), 2 in YY. Before the
+follow-up (guard v3 alone): YY 181.8 s (135.5–230.4), YK 157.8 s (115.2–194.9), KK 169.2, wins 10 / 10, 8 / 12, 13 / 7. The balance knob moved: `*bankai-taken*` 1.4 → 1.2
+(§5). Design guard-v3 found 1.3 enough at Reishi 1200; at 1300 East's taken still moves YK, but less: over 40 seeds
+(1–40) Yamamoto won 13 at 1.4, 15 at 1.3, 17 at 1.2 (21 at 1.0, which would erase East's risk). The rest of the YK gap
+sits before either awakens (Shikai vs base Kenpachi, which a longer Reishi bar stretches), where no guard v3 knob
+reaches. Guard v3 alone: Bankai's gauge (YK) mean 85 %, under 50 % for 6 % of the time, 1 burnout in 20 matches; West
+held 48 % of the Bankai time, 57 scorches (YY 143). Before guard v3 (the Kenpachi batch: West's hold-U armour, Nozarashi
+v2's NOME ladder without `:ignore-armor`, the run facing the opponent): YY 148.9 s (114.7–219.2), YK 140.3 s
+(97.8–180.6), KK 154.1 s (106.8–170.0); wins YY 11 / 9, YK Yamamoto 7 / Kenpachi 13, KK 8 / 12 (DUEL_GAMEPLAY.md has
+the steps and the usage). Before the batch (after the restyle's slower cinematics): YY 158.7, YK 152.1, KK 159.7 s; before those (the
+Bankai stances with burnout, the Kikon dash-in, the slower guard refill, the CPUs' guard pressure): YY 150.4 s (91–215),
+YK 145.5 s (108–176), KK 152.4 s (122–190). Before (the gauges, the O rule and the O
 modules): YY 168.1 s (149–204), YK 154.8 s (122–176), KK 150.3 s (117–177). With the gauges alone: YY
 181.9, YK 135.8, KK 141.9. Before them (the Kikon rush): YY 153.4, YK 136.9, KK 140.6 s.
 
@@ -563,7 +718,11 @@ back), 9 Konpaku soul flames that shatter, the REIATSU 3 bars, the FLASH STEP ba
 at 30 and 70, the part past 70 glowing while a Burst is possible), the AWAKEN bar (EVOLUTION blinks; shows the
 form name once awakened; BURNOUT, the panel's name dimmed, while a Bankai stance is burned out),
 Yamamoto's INFERNO bar (drains in Hellfire) or, in Bankai, two COOLDOWN bars (L's switch, steel; South,
-ember; full = ready, a refused press flashes its bar),
+ember; full = ready, a refused press flashes its bar), Kenpachi's NOME bar once awakened (yellow, the cup marks and pips:
+§6.2), the awakening row's label naming the form, or what a form's guard adds (`U: GARB` in Bankai West, `U: DRINK` in
+Nozarashi's cup 3: U is a guard in every form), the guard bar drawn 30 % darker while its owner guards below full
+(GUARD HOLD: no refill; not for a Bankai) and, in Bankai, **ember** (the fed flame) with a 0.1 s white flash when a
+hit feeds it and a one-time "HIT TO FEED" callout the first time it falls below half in a match,
 the timer, the combo counter under the victim's bar ("5 HITS 212"), move-name callouts over the
 user ("KIKON" when a rush starts, the Kikon's own name when it becomes one), a HOLD O KIKON prompt
 (for a human attacker while the opponent is red; HOLD KP6 / HOLD RT), a BURST prompt (a human in a combo he may burst out
@@ -594,7 +753,7 @@ the Bankai were held +30 f; the sim is frozen during a cinematic, so only match 
 | Kenpachi's Kikon `ken-kikon-cine` | 114 | 162 | **192** | beat 0 12, caption card 58, cut 28, cut 24, held pull 20, the last cut + manga 20, wide 30 |
 | sky split `ken-sky-split-cine` | 90 | 132 | **162** | beat 0 12, caption card 56, the cleave 34, side 30, end 30 |
 | Bankai `yama-bankai-cine` | 72 | 108 | **138** | beat 0 12, flames in 28, behind 20, the reveal caption card 58, grey world 20 |
-| Nozarashi `ken-nozarashi-cine` | 72 | 108 | **108** | face + tear 28, the pillar card 30, close low 20, the stamp card 30 |
+| Nozarashi `ken-nozarashi-cine` | 72 | 108 | **108** | face + NOME release 28 (no eyepatch: the burst at f26), the pillar card 30, close low 20, the stamp card 30 |
 | Soul Break / intro / K.O. / TIME | 96 / 300 / 150 / 120 | unchanged | unchanged | |
 
 **Audio** (`sounds.lisp`): 39 synthesized sounds: 37 SFX (swings, cuts, clang, guard break, the heat flare,
@@ -613,24 +772,22 @@ crack, bones, Kikon slash, Konpaku shatter, awakening rise and boom, a laugh …
 
 ### 11.1 Decided, not yet built
 
-The user's decisions (2026-09-26) that the build does not follow yet:
+The user's decisions (2026-09-26) that the build does not follow yet ((a)–(e) of that list were built in the Kenpachi
+batch: §4, §6.1, §6.2, §12):
 
-- **(a) Kenpachi wears no eyepatch in any form** (TYBW canon). The Nozarashi awakening's "eyepatch torn off" beat
-  and the base form's eyepatch go when this is built (§1's awakening row says so).
-- **(b) Nozarashi v2, the NOME three-cup ladder**: [DUEL_NOZARASHI_V2.md](DUEL_NOZARASHI_V2.md).
-- **(c) Bankai West: hold U = armour** (no guard; he moves and attacks while armoured; each hit drains the guard gauge
-  and scorches; the per-move and vs-Quick armour go). Specified with (b) in DUEL_NOZARASHI_V2.md.
-- **(d) Nozarashi's `:ignore-armor` is removed** (it would make West's hold-U worthless against him).
-- **(e) Fighters face the opponent while moving** (forward run, side slide, back-skate).
 - **(f) ONE-HAND portrait mobile mode**: [DUEL_MOBILE_DESIGN.md](DUEL_MOBILE_DESIGN.md). Decisions: right hand is the
   default; FULL assist has no damage scaling; no local portrait 2P; netplay (Bluetooth / Wi-Fi P2P) later.
+  Guard v3 removed its U latch (every U is a guard) and added the GUARD HOLD ring cue (the ring dims while a rest
+  freezes the refill), both on paper until the mode is built.
+- Nozarashi v2's open art: the kendo set's own clips (they reuse `:ke-f1 / :ke-q3 / :ke-f2`), the half-height pillar of a
+  later cup 3, the rift's ink gash (DUEL_NOZARASHI_V2 "Built").
 
 ## 12. What changed after the v1 contract, and why
 
 | Topic | Before (v1 contract, or the first build) | As built | Why |
 |---|---|---|---|
 | Konpaku | 6 | **9** (RoS's number) | Tempo: after the AI rework the gate medians were 79–94 s, and the red threshold barely moved them (DEVLOG §14.3) |
-| Reishi | 1000 | **1100** | Same tempo decision |
+| Reishi | 1000 | 1100, then **1300** (guard v3) | 1100: the same tempo decision. 1300: **the user's decision 2026-09-26** ("HP is too low"): real human matches run much faster than CPU vs CPU, so longer CPU matches are fine; the gate's median window became 125–210 s |
 | Red threshold | 0.30 | 0.30 (0.20 for a while) | 0.20 was tuned around AI bugs; after the fix round a sweep 0.10–0.30 moved the gate medians only ~10 s, so the design value stayed |
 | Chain on block | "6 f gap" | `*chain-lead*` 3 f + an exact blockstun formula | Every block advantage measured 1 f worse than its table (code review); now a headless probe measures table = actual |
 | Q Q → F | same F2 | `:enter` key: F2 entered 8 f / 6 f into its wind-up | The plain F2 after Q2 did not combo |
@@ -659,3 +816,17 @@ The user's decisions (2026-09-26) that the build does not follow yet:
 | Kikon follow-up | a non-red hit with O held: a 20 f stagger in place, the strike again 12 f after he can act; a red hit: the Kikon at once | a hit with O held (red or not): a 2.5 m knockback and a **dash-in** to the follow-up strike, guardable during the dash unless he is red | The user asked for a visible dash in which a non-red defender can guard |
 | Guard gauge refill | 20/s after 45 f; guardless 25/s (4.75 s) | **12/s after 60 f; guardless 14/s (1 s + 7.1 s)** | The user asked for a slower refill |
 | CPU guard pressure | CPUs blocked ~7 hits a match and never crushed a guard (60 matches: 0 crushes) | a blocked string goes on and resets (`:block-string`), a CPU in blockstun keeps holding guard (`*ai-hold-guard*`), a low guard gauge is hunted | The stances' design runs on guard-gauge pressure |
+| Eyepatch | Kenpachi's base form wore it; the Nozarashi cinematic tore it off | **none in any form**; the awakening's first beat is the NOME release | TYBW canon (the user's decision 2026-09-26) |
+| The run | the runner faced the way he ran (`:sh-run`) | he **faces the opponent** while the heading turns at 300°/s: forward run, side slide, back-skate (`:run-clips`; Kenpachi's set with the blade on his shoulder, one for all his forms) | The user's decision (Kenpachi batch (e)); `*behind-turn*` stays sim-side for netplay |
+| Bankai West's armour | armour vs Quick attacks + move armour (W-Q3, W-F1, W-F2, NISHI) | **hold U = armour**: no guard, he moves and attacks in it, every hit paid from the guard gauge and scorching the attacker, burnout at 0; no move armour (NISHI's too), no armour vs Quick; the CPU attacks with U held (`:hold-u`) | The user's decision (batch (c)); one family with cup 3's DRINK (DUEL_NOZARASHI_V2 §2.4). NISHI's armour went too: DUEL_DESIGN listed it as West's. **Superseded by guard v3** (the garb guard, below) |
+| Nozarashi | one form: ×1.15, +3 f / reach ×1.4, projectile cut, **ignore-armor**, Kikon 3 | **NOME, the three-cup ladder** (KATATE ×1.0 +2 f / ×1.3 Kikon 2, RYOTE ×1.15 its kendo set and the cut Kikon 3, NOMIHOSE ×1.2 DRINK / the rift / the cash-out Kikon 4); `:ignore-armor` removed (the cut drains armour ×1.5 instead); the per-event cap 4; the Kikon count read at rush start; `register-kit` gives a non-deriving form its parent's moves | DUEL_NOZARASHI_V2.md (approved, built with the deviations listed there) |
+| GUARD HOLD | the guard gauge refilled after 60 f without a drain, guarding or not | **no refill while guarding** (`:guard` / `:guard-hit`, DRINK and the garb included); the 60 f delay is **frozen, not restarted**; guardless refill unaffected | **The user's decision 2026-09-26** (guard v3 request 3: "no refill while holding a guard, every character"). Frozen, not restarted: a phone's resting thumb is a guard (critique-guard-v3 finding 3) |
+| Bankai's guard gauge | refilled like everyone's (12/s after 60 f), full at every Kikon reset | **fed, not refilled**: +0.10 per Reishi point his hits remove (heat on; scorch and Kikons feed nothing); a burnout refills on the timer, then REIGNITE; **carried through Kikon resets**; the awakening fills it unless he is guardless | **The user's decision 2026-09-26** (guard v3 request 2: "in Bankai the gauge refills only by damaging the opponent and after a burnout"; the reset: carried, decision 3). East's 8th blocked string with nothing landing burns him out |
+| Bankai West's U | hold U = armour (the Kenpachi batch) | **the garb guard**: U is a normal guard, a blocked hit costs ×0.5 of its guard value, **every blocked melee hit scorches the attacker** (Quick 5, heavier 15); the parry stays; the U-armour code, `U: ARMOUR` and the AI's `:hold-u` / `:armor-gg` removed; `*cut-mult-armour*` removed | **The user's decisions 2026-09-26** (guard v3 decision 1: W1 approved; decision 4: scorch on every melee block, not heavies only). The Quick amount answers the critic's Q1-reset farming: a whole gauge of blocked Q strings scorches 120. DRINK is now the only other U that does more: "U is a guard in every form; two forms' guards do more" |
+| West vs ranged hits | taken like any hit | **×0.6 damage and super armour** against every ranged hit (hazards, and the `:ranged` windows: heat cone, Meteor / cash-out line, Buttagiru's crack, Taimatsu, Nadegiri) unless he guards; South's bind still binds (a grab); off while burned out | **The user's decision 2026-09-26** (guard v3 decision 5). ×0.6 is the suggested value: between CPUs ranged hits on West are rare (~0.3 a YK match), so 0.4 / 0.6 measured the same |
+| NOME cup 2 drain | 3/s after 60 f without a gain | **1.5/s after 180 f** (K3) | Guard v3 request 1 ("cup 2 → 3 too hard"): the human proxy reached cup 3 while the opponent had ≥ 4 Konpaku in 13 / 20 matches, now 20 / 20 (with Reishi 1300) |
+| East's damage taken | ×1.40 | **×1.20** (`*bankai-taken*`) | Guard v3's rebalance at Reishi 1300: 1.4 / 1.3 left Yamamoto 13 / 15 of 40 YK seeds, 1.2 gives 17 (the gate's 20: 8 / 12) |
+| Bankai's guard-gauge drain | ×1.0 | **×1.3 on every drain** (a blocked hit, East's recoil, a Breaker; after West's garb ×0.5: ×0.65 net), `*bankai-drain*` | **The user's decision 2026-09-26** (the follow-up to guard v3: 「山本卍解提高自身防禦量表的削減速度」). A deliberate nerf: no other knob was retuned to undo it. East now burns out on the 5th blocked string, West's garb on Kenpachi's 6th Q string |
+| East's feed | 0.10 per Reishi point removed (both stances) | **East 0.05**, West 0.10: a per-stance kit key `:feed` (`*bankai-feed-east*`, `*bankai-feed*`) | **The user's decision 2026-09-26** (「減少『東』攻擊時的防禦量表恢復量」). A landed East string feeds +8 (was +15) |
+| Blade vs line (melee / ranged split) | the Meteor, the cash-out, Buttagiru and Nadegiri were ranged over their whole window | **melee at the blade, ranged beyond** it: one window, the victim's distance decides (`:melee-range`: Meteor 3.4 m, cash-out 3.9 m, Buttagiru 2.6 m, Nadegiri 2.4 m, the form's Q reach); the heat cone stays ranged (its blade is its own melee window) | **The user's decision 2026-09-26** (the same follow-up). One window so one hit never lands twice; the cash-out's 6 m guard break is unchanged |
+

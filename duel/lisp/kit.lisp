@@ -144,6 +144,9 @@
             is held before the move proper (charge / stance); :slide metres moved during the move
   :flags    :breaker :guard-crush :stance :parry (a parry move: *PARRY-WINDOW*) :cancel (a Signature
             that may cancel a landed Quick / Flash, like an SP) :bind (South: the CPU's trap reflex)
+            :ranged (a hit delivered by fire / a ground line, not the blade: like a hazard, no parry catches it
+            and West's garb armours it, x*GARB-RANGED*; with :params (:melee-range r) only beyond r of the
+            attacker: nearer it is the blade, a melee hit; one window, so it still hits once)
   :hits     ((from to &key dmg on-hit kb vol reach chip meter flags hs guard) ...) multi-hit windows;
             default: one window [S, S+A) when the move has damage and a volume
   :on-frame ((frame hook) ...), :tick hook (every frame), :release hook (button released during
@@ -164,12 +167,17 @@
   "One character in one form. See DEFKIT for the fields."
   (character nil) (form nil) (inherit nil) (name nil)
   (awakening nil) (awaken-form nil) (duration nil) (burn 0.0) (heal 0)
-  (mult 1.0) (taken 1.0) (burnout nil) (cornered 0.0) (cornered-max 0.0) (passives nil) (blade-chip nil)
-  (walk 3.0) (run 8.0) (reishi *reishi-max*) (body nil) (weapon nil) (stance nil) (hide nil) (aura nil)
+  (mult 1.0) (taken 1.0) (burnout nil) (feed 0.0) (cornered 0.0) (cornered-max 0.0) (passives nil) (blade-chip nil)
+  (walk 3.0) (run 8.0) (run-clips '(:sh-run :sh-skate-b :sh-slide-r :sh-slide-l)) (reishi *reishi-max*) (body nil) (weapon nil) (stance nil) (hide nil) (aura nil)
   (intro nil) (win nil) (intro-callout nil) (intro-weapon nil) (callout nil)
   (swing-sfx nil) (absorb-sfx nil)
   (enter-clips nil) (enter-hook nil) (exit-hook nil)
   (meter nil) (reset-reiatsu 0.0) (ai nil) (cine nil) (blade nil) (grade nil)
+  (kikon-konpaku 2 :type fixnum)        ; Konpaku a Kikon of this form removes (read at rush start)
+  (meter-gain nil)                      ; NOME gains (:dealt :taken :drunk) per point
+  (form-name nil)                       ; the form's name on the HUD (default its keyword)
+  (drink-clip nil)                      ; the clip of a drunk hit (DRINK)
+  (respect-callout nil)                 ; said when the opponent outplays him (a counter-hit, a perfect Hoho, a parry, a Burst)
   (commands nil)                ; plist command -> move name
   (strings nil)                 ; ((from-move command to-move) ...)
   (moves (make-hash-table :test 'eq))   ; move name -> this form's MOVE
@@ -206,9 +214,9 @@ Cornered with LOST Konpaku."
   "The defender plist for HIT-DAMAGE: the damage the form takes (:taken; burnout doesn't lift it)."
   (list :mult (kit-taken kit)))
 (defun kit-clips (kit)
-  "Every clip name the form uses (moves, stance, intro/win, entry cinematic)."
+  "Every clip name the form uses (moves, stance, intro/win, entry cinematic, the run)."
   (remove-duplicates
-   (remove nil (append (list (kit-stance kit) (kit-intro kit) (kit-win kit)) (kit-enter-clips kit)
+   (remove nil (append (list (kit-stance kit) (kit-intro kit) (kit-win kit)) (kit-enter-clips kit) (kit-run-clips kit) (list (kit-drink-clip kit))
                        (loop for mv being the hash-values of (kit-moves kit)
                              collect (mv-clip mv) collect (mv-clip-2 mv))))))
 
@@ -223,35 +231,41 @@ Cornered with LOST Konpaku."
                         (append spec (loop for (k v) on pspec by #'cddr
                                            unless (member k '(:inherit :startup-add :reach-mult))
                                              append (list k v))))))
-    (destructuring-bind (&key inherit name awakening awaken-form duration (burn 0.0) (heal 0) (mult 1.0) (taken 1.0) burnout
-                           (cornered 0.0) (cornered-max 0.0) passives blade-chip (walk 3.0) (run 8.0) (reishi *reishi-max*)
+    (destructuring-bind (&key inherit name awakening awaken-form duration (burn 0.0) (heal 0) (mult 1.0) (taken 1.0) burnout (feed 0.0)
+                           (cornered 0.0) (cornered-max 0.0) passives blade-chip (walk 3.0) (run 8.0)
+                           (run-clips '(:sh-run :sh-skate-b :sh-slide-r :sh-slide-l)) (reishi *reishi-max*)
                            body weapon stance hide aura intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
                            enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
+                           kikon-konpaku meter-gain form-name drink-clip respect-callout
                            (startup-add 0) (reach-mult 1.0) commands strings)
         merged
       (let ((kit (make-kit :character character :form form :inherit inherit :name name
                            :awakening awakening :awaken-form awaken-form :duration duration :burn burn
-                           :heal heal :mult mult :taken taken :burnout burnout :cornered cornered :cornered-max cornered-max
-                           :passives passives :blade-chip blade-chip :walk walk :run run :reishi reishi :body body
+                           :heal heal :mult mult :taken taken :burnout burnout :feed feed :cornered cornered :cornered-max cornered-max
+                           :passives passives :blade-chip blade-chip :walk walk :run run :run-clips run-clips :reishi reishi :body body
                            :weapon weapon :stance stance :hide hide :aura aura :intro intro :win win
                            :intro-callout intro-callout :intro-weapon intro-weapon :callout callout
                            :swing-sfx swing-sfx :absorb-sfx absorb-sfx
                            :enter-clips enter-clips :enter-hook enter-hook :exit-hook exit-hook
                            :meter meter :reset-reiatsu reset-reiatsu :ai ai :cine cine :blade blade :grade grade
+                           :kikon-konpaku (or kikon-konpaku (if awakening *kikon-konpaku-awakened* *kikon-konpaku*))
+                           :meter-gain meter-gain :form-name (or form-name (symbol-name form)) :drink-clip drink-clip
+                           :respect-callout respect-callout
                            :commands commands :strings strings :spec merged))
             (own (loop for (nil m) on (getf spec :commands) by #'cddr collect m)))
         ;; every move the form can reach. The derivation rule (design v2 §0): a move is as written when the
         ;; form lists it in its own :commands or the parent form doesn't have it (new to this form: its
-        ;; own strings); an inherited one gets the form's derivation (:startup-add / :reach-mult)
+        ;; own strings); an inherited one gets the form's derivation (:startup-add / :reach-mult), and a form
+        ;; with no derivation takes the parent's version of it (Nozarashi v2 §2.8: NOMIHOSE plays RYOTE's
+        ;; derived moves, not the written ones)
         (dolist (m (remove-duplicates
                     (append (loop for (nil m) on commands by #'cddr collect m)
                             (loop for (from nil to) in strings collect from collect to))))
-          (let ((mv (find-move m)))
+          (let ((mv (find-move m)) (pmv (and parent (gethash m (kit-moves parent)))))
             (setf (gethash m (kit-moves kit))
-                  (if (or (member m own) (not (and parent (gethash m (kit-moves parent))))
-                          (and (eql startup-add 0) (= reach-mult 1)))
-                      mv
-                      (parse-move m (mv-spec mv) :startup-add startup-add :reach-mult reach-mult)))))
+                  (cond ((or (member m own) (not pmv)) mv)
+                        ((and (eql startup-add 0) (= reach-mult 1)) pmv)
+                        (t (parse-move m (mv-spec mv) :startup-add startup-add :reach-mult reach-mult))))))
         (when (and (eq form :base) (not (member character *roster*)))
           (setf *roster* (append *roster* (list character))))
         (let ((forms (remove form (gethash character *kits*) :key #'car)))
@@ -263,15 +277,22 @@ Cornered with LOST Konpaku."
 child's keys win, :commands merge per command, :strings add. Keys:
   :name :body :weapon :stance :hide (body part tags hidden) :aura  look (art agent's names)
   :walk :run :reishi                 stats (walk / run speed m/s)
+  :run-clips (fwd back right left)  the run's clips (he faces the opponent: forward run, back-skate, side
+                                     slides; body.lisp DEFRUN), default the shared :sh-* set
   :commands (:q m :f m :sig m :sp1 m :sp2 m :breaker m :kikon m)   see *KIT-COMMANDS*
   :strings ((from-move command to-move) ...)   Q1 -q-> Q2 -q-> Q3, Q2 -f-> F2, F1 -f-> F2; a
                                      non-button command (:land) names a follow-up a hook starts
                                      (KIT-NEXT), so derived forms derive it too
   :mult :cornered :cornered-max      §4 damage dealt (KIT-ATK-MODS)   :taken  damage x taken (KIT-DEF-MODS)
-  :passives (:armor-vs-quick :projectile-cut :ignore-armor :recoil :scorch)   :blade-chip fraction
+  :passives (:garb :projectile-cut :recoil :scorch :cut :drink)   :blade-chip fraction
+                                     (U is a guard in every form; :garb: West's guard drains x*GARB-MULT* and
+                                     scorches, ranged hits armoured at x*GARB-RANGED*; :cut: his heavy hits
+                                     drain guard x*CUT-MULT*; :drink: U drinks: combat.lisp)
   :burnout T                         the stance traits run on the guard gauge: at 0 he is burned out (the
-                                     passives, :mult, chip, armour and :heat flags off) until it is full,
-                                     and his armour is paid from it (combat.lisp BURNOUT-P)
+                                     passives, :mult, chip, armour and :heat flags off) until it is full; the
+                                     gauge is fed by his hits, never refilled by time, and every drain
+                                     is x*BANKAI-DRAIN*
+  :feed fraction                     a :burnout form's guard gauge per Reishi point his hits remove
   :awakening T (an awakened form)    :awaken-form FORM (what Awaken turns this character into)
   :duration seconds (NIL = permanent; then back to :inherit)   :burn Reishi fraction/s   :heal
   :startup-add :reach-mult           derive the inherited moves (not inherited themselves)
@@ -280,6 +301,14 @@ child's keys win, :commands merge per command, :strings add. Keys:
   :swing-sfx :absorb-sfx             sounds of a non-Quick swing (default :whoosh-heavy) and of a
                                      hit the stance absorbs (Kenpachi's laugh)
   :cine SYMBOL                       the DEFCINE played when the form is entered (awakening)
+  :kikon-konpaku n                   Konpaku a Kikon removes in this form (default 2, awakened 3; read when the
+                                     rush starts; a Soul Break +1, at most *KIKON-MAX-EVENT*)
+  :meter (... :start n :ladder ((form drain/s delay up-at down-below) ...))   a meter that picks the form
+                                     (Nozarashi's NOME: rules LADDER-RUNG, combat.lisp NOME-STEP); :start = its value
+                                     at the awakening
+  :meter-gain (:dealt :taken :drunk) the meter per point dealt / lost / drunk (DRINK, the stance's absorb)
+  :form-name :drink-clip :respect-callout  the HUD's form name; the clip of a drunk hit; the callout when the
+                                     opponent outplays him
   :blade (look power)                blade look drawn along the held weapon: (:fire 1.0) (:embers 1.0)
   :grade                             the world's grade while the form is on: NIL, or :SPOT (grey but the ember
                                      hue: the composite's spot-keep mode, main.lisp FORM-GRADE)

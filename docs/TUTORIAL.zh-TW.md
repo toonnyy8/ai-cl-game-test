@@ -433,7 +433,7 @@ RAVEN EDGE 是「一個玩家對一群敵人」。第二款遊戲 SOUL DUEL（`d
 python3 -m http.server -d dist/duel 8000
 ```
 
-操作、除錯指令和測試在 [DUEL_GAMEPLAY.md](DUEL_GAMEPLAY.md)，規則和全部招式表在 [DUEL_DESIGN.md](DUEL_DESIGN.md)。這一步不重講前面教過的東西（ECS、純函式規則、事件），只看 RAVEN 沒教、而格鬥遊戲逼著你面對的五件事，最後追一次 Kikon（鬼魂技）從按住按鍵、突進、砍中到魂魄碎掉的完整路徑。
+操作、除錯指令和測試在 [DUEL_GAMEPLAY.md](DUEL_GAMEPLAY.md)，規則和全部招式表在 [DUEL_DESIGN.md](DUEL_DESIGN.md)。（一個常被問的規則：U 在每個型態都是防禦。山本卍解西的 U 是「殘日獄衣」，面板標 `U: GARB`：擋下的攻擊只扣一半防禦量表（卍解的防禦量表被削減時都 ×1.3，所以實際是 0.65 倍），擋下近戰會燙傷對手（Quick 5、其他 15），遠程攻擊只受 0.6 倍傷害而且不會被打出硬直（劈開隕石這類招式只有刀身以外的斬線算遠程）；卍解的防禦量表只靠打中對手回復，西每扣對手 1 點靈子回 0.1、東只回 0.05；野晒三杯的 `U: DRINK` 則把一半傷害喝成 NOME。防禦中防禦量表不會回。）這一步不重講前面教過的東西（ECS、純函式規則、事件），只看 RAVEN 沒教、而格鬥遊戲逼著你面對的五件事，最後追一次 Kikon（鬼魂技）從按住按鍵、突進、砍中到魂魄碎掉的完整路徑。
 
 `duel/MANIFEST` 的順序也分了層：`tuning`、`rules`、`control`、`kit` 是純 Common Lisp（主機上可測）；`yama*`、`ken*` 是兩個角色（資料、掛鉤函式、過場）；`fighter` 到 `main` 是通用的系統，其中規則、操作和各個系統（`rules`、`control`、`fighter`、`combat`、`hazards`、`ai`、`camera`、`flow`）**不准出現任何角色的名字**（只有除錯工具 `debug.lisp` 會指名角色來擺場景）。
 
@@ -457,11 +457,11 @@ SOUL DUEL 這邊只有資料：`duel/lisp/control.lisp` 的 `*vpad-actions*`（�
 
 ### 9.2 角色是資料加掛鉤
 
-`duel/lisp/kit.lisp` 定義兩個宣告式的巨集：`defmove`（第 125～156 行，一招一個 plist）和 `defkit`（第 261～288 行，角色的一種型態一個 plist）。通用的戰鬥程式碼只讀它們產生的結構。
+`duel/lisp/kit.lisp` 定義兩個宣告式的巨集：`defmove`（第 125～156 行，一招一個 plist）和 `defkit`（第 272～314 行，角色的一種型態一個 plist）。通用的戰鬥程式碼只讀它們產生的結構。
 
-看山本的招牌技（`duel/lisp/yama.lisp` 第 25～32 行）：幀數、傷害、判定範圍都是數字，只有一件事資料做不到，就是「第 40 幀放出一道火焰波」，所以寫成 `:on-frame ((40 yama-fire-wave))`。`yama-fire-wave`（第 192～201 行）是普通函式，通用的 `main-phase-step`（`fighter.lisp` 第 372～391 行）在那一幀用 `funcall` 呼叫它（第 382 行）。為什麼寫符號而不是 `#'yama-fire-wave`？整個遊戲是一個編譯單元，招式資料在載入時就執行，那時後面的 `defun` 還沒定義，`#'` 會失敗；符號到真的要呼叫時才去找函式。
+看山本的招牌技（`duel/lisp/yama.lisp` 第 25～32 行）：幀數、傷害、判定範圍都是數字，只有一件事資料做不到，就是「第 40 幀放出一道火焰波」，所以寫成 `:on-frame ((40 yama-fire-wave))`。`yama-fire-wave`（第 192～201 行）是普通函式，通用的 `main-phase-step`（`fighter.lisp` 第 391～409 行）在那一幀用 `funcall` 呼叫它（第 401 行）。為什麼寫符號而不是 `#'yama-fire-wave`？整個遊戲是一個編譯單元，招式資料在載入時就執行，那時後面的 `defun` 還沒定義，`#'` 會失敗；符號到真的要呼叫時才去找函式。
 
-型態也是資料。劍八的野晒（`duel/lisp/ken.lisp` 第 88～93 行）只寫了「繼承 `:base`、起手 +3 幀、距離 ×1.4、換掉 SP1 和 Kikon」，其餘十幾招由 `register-kit`（`kit.lisp` 第 215～259 行）在載入時從原招式重新推導（第 243～254 行），沒有任何一招是複製貼上的。數值可以直接寫 `tuning.lisp` 的變數名（例如 `:walk *walk-kenpachi*`），`resolve-tuning`（第 18～22 行）在載入時換成值。
+型態也是資料。劍八的野晒分成三杯（「呑め」量表的三階，`duel/lisp/ken.lisp` 第 115～162 行）：一杯片手只寫了「繼承 `:base`、起手 +2 幀、距離 ×1.3、換掉 SP1 和 Kikon」；二杯兩手繼承一杯，另外寫了自己的劍道招式和 +3 幀、×1.4；三杯繼承二杯、完全不推導，直接沿用二杯的招式。其餘十幾招由 `register-kit`（`kit.lisp` 第 220～270 行）在載入時從原招式重新推導（第 253～265 行；不推導的型態拿上一型態的版本），沒有任何一招是複製貼上的。數值可以直接寫 `tuning.lisp` 的變數名（例如 `:walk *walk-kenpachi*`），`resolve-tuning`（第 18～22 行）在載入時換成值。
 
 這條規矩有檢查：`grep -nE ':ya-|:ke-|yama|kenpachi' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow}.lisp` 必須什麼都印不出來，`tests/duel-rules-test.lisp` 最後也有同樣的檢查。所以加第三個角色不必改任何通用檔案（練習 8）。
 
@@ -506,11 +506,13 @@ Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規�
 - 命中停頓由規則設定、過場在步長時鐘上跑（9.4）。
 - `dir-yaw`（`rules.lisp` 第 20～24 行）用 Common Lisp 的 `atan`（倍精度），不用引擎的 `yaw-to`（單精度 `atan2f`）：兩者差最後一位，就會長出另一場比賽，而參考紀錄是用前者錄的。
 
-驗證方法：每 600 步印一行 `duel hash`（`state-hash-line`，`duel/lisp/debug.lisp` 第 51～64 行，位置、朝向、每個量表、電腦的 heat）。`tests/scripts/duel-cvc-yk.json` 用種子 7 讓兩個電腦打完一場，最後一行一定是：
+驗證方法：每 600 步印一行 `duel hash`（`state-hash-line`，`duel/lisp/debug.lisp` 第 60～73 行，位置、朝向、每個量表、上一次 Kikon 突進值幾個魂魄、電腦的 heat）。`tests/scripts/duel-cvc-yk.json` 用種子 7 讓兩個電腦打完一場，最後一行一定是：
 
 ```
-duel -> RESULTS winner P2 konpaku 0-3 ticks 8594 secs 143.2
+duel -> RESULTS winner P2 konpaku 0-4 ticks 9305 secs 155.1
 ```
+
+（2026-09-26 guard v3 之後的值：靈子 1100 → 1300（使用者的決定：真人對戰比電腦對電腦快得多）、防禦中防禦量表不回、卍解的防禦量表只靠打中對手補（Kikon 重置時沿用）、山本西的 U 改成「殘日獄衣」火焰防禦（擋下扣一半、每一下近戰都燙傷對手，遠程攻擊只受 0.6 倍傷害而且不會被打出硬直）、野晒二杯掉得比較慢、東的受傷倍率 1.4 → 1.2。同一天的追加修改（卍解防禦量表被削減 ×1.3、東打人回復量減半為 0.05、劈開隕石等招式「刀身近處算近戰、遠處的斬線才算遠程」）沒有改變這一行，但 YK 的 hash 行和 YY 的結果變了。上一版是 `winner P1 konpaku 7-0 ticks 7351 secs 122.5`（劍八那一批：山本西「按住 U = 霸體」、野晒的三杯「呑め」量表、跑步時面向對手），再之前是 `winner P2 konpaku 0-3 ticks 8594 secs 143.2`。規則一改，這一行就要跟著換，同時更新 DUEL_GAMEPLAY.md、`tests/scripts/duel.py` 的註解和 `tests/style-cvc-ref.txt`。）
 
 跑兩次、把所有 `^duel` 開頭的行 diff 一下，應該完全相同（指令在 DUEL_GAMEPLAY.md）。這就變成一個不用寫的回歸測試：任何「不該改變行為」的修改（重構、把程式搬進引擎）都必須讓這一行和十三行 hash 一字不差。把 SOUL DUEL 的東西收回引擎時，每一步都是這樣檢查的。
 
@@ -551,6 +553,7 @@ duel -> RESULTS winner P2 konpaku 0-3 ticks 8594 secs 143.2
                                         yama.lisp 297-309：鏡頭、字幕、火焰圓頂，第 77 幀魂魄碎裂
 結束        cinema.lisp 31-45          cine-end：恢復場景、忘掉過場中亂按的鍵（vpad-flush!）
             combat.lisp 380-401        :after → reset-round：兩人相隔 8 公尺、48 幀不能動、防禦量表補滿
+                                        （卍解的例外：它的防禦量表只靠打中對手補，重置時沿用，guard v3）
                                         （魂魄打光的話改成 match-over，flow.lisp 128-136）
 ```
 
@@ -596,7 +599,7 @@ duel -> RESULTS winner P2 konpaku 0-3 ticks 8594 secs 143.2
 
 **7. 替劍八加一招。** 讓劍八在 F1 命中後按 J 接一招「追擊斬」`:ke-f1q`。
 
-> 提示：在 `duel/lisp/ken.lisp` 的 base 區塊仿照 `:ke-q3` 寫一個 `defmove`：`(defmove :ke-f1q :kind :quick :clip :ke-q3 :startup 11 :active 4 :recovery 22 :dmg 50 :adv-block -10 :reach 2.6 :arc 120 :on-hit :stagger)`。動畫先借 `:ke-q3`，所以幀數跟它一樣（`defstrike` 讓動畫剛好在第 S 幀揮到）；要用新的動畫名稱，就得在 `ken-art.lisp` 用 `defstrike` 做一個，並把名字加進 `tests/duel-rules-test.lisp` 的 `*clips-5*`。然後在 `(defkit :kenpachi :base …)` 的 `:strings` 加一列 `(:ke-f1 :q :ke-f1q)`。野晒型態會自動推導出它（起手 +3、距離 ×1.4），不用另外寫。先跑 `$E --norc --load tests/duel-rules-test.lisp`（它會替每個型態的每一招檢查幀數是否自洽），再 `./build.sh duel`、`tools/pkgcheck.sh duel`，用除錯指令 2501（劍八對一個不動的山本）走近按 K、命中後按 J，在 console 找 `P1 move KE-F1Q`。注意連段的時機：命中時從 F1 的判定結束後就能接，揮空或被擋時只有收招的最後 3 幀（`*chain-lead*`）能接。
+> 提示：在 `duel/lisp/ken.lisp` 的 base 區塊仿照 `:ke-q3` 寫一個 `defmove`：`(defmove :ke-f1q :kind :quick :clip :ke-q3 :startup 11 :active 4 :recovery 22 :dmg 50 :adv-block -10 :reach 2.6 :arc 120 :on-hit :stagger)`。動畫先借 `:ke-q3`，所以幀數跟它一樣（`defstrike` 讓動畫剛好在第 S 幀揮到）；要用新的動畫名稱，就得在 `ken-art.lisp` 用 `defstrike` 做一個，並把名字加進 `tests/duel-rules-test.lisp` 的 `*clips-5*`。然後在 `(defkit :kenpachi :base …)` 的 `:strings` 加一列 `(:ke-f1 :q :ke-f1q)`。野晒一杯會自動推導出它（起手 +2、距離 ×1.3），不用另外寫；二杯、三杯有自己的一套 J / K，但 `:strings` 是繼承的，所以 `(:ke-f1 :q :ke-f1q)` 在它們那裡也會推導出來（只要它們的 K 還是 `:ke-f1` 才接得上；二杯的 K 是 `:ke-r-f1`）。先跑 `$E --norc --load tests/duel-rules-test.lisp`（它會替每個型態的每一招檢查幀數是否自洽），再 `./build.sh duel`、`tools/pkgcheck.sh duel`，用除錯指令 2501（劍八對一個不動的山本）走近按 K、命中後按 J，在 console 找 `P1 move KE-F1Q`。注意連段的時機：命中時從 F1 的判定結束後就能接，揮空或被擋時只有收招的最後 3 幀（`*chain-lead*`）能接。
 
 **8. 加第三個角色。** 以劍八為底，複製出一個新角色 `:ronin`。
 

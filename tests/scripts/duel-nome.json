@@ -1,0 +1,154 @@
+[
+{
+"at": 8.5,
+"eval": "Module._debug_cmd(2109)"
+},
+{
+"at": 9.0,
+"eval": "Module._debug_cmd(2380)"
+},
+{
+"at": 39.5,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 40.0,
+"eval": "Module._debug_cmd(2381)"
+},
+{
+"at": 40.1,
+"key": "KeyU",
+"down": true
+},
+{
+"at": 42.0,
+"shot": "tests/shots/duel-nome-drink.png"
+},
+{
+"at": 54.0,
+"key": "KeyU",
+"down": false
+},
+{
+"at": 54.5,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 55.0,
+"eval": "Module._debug_cmd(2382)"
+},
+{
+"at": 55.5,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 55.58,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 55.9,
+"shot": "tests/shots/duel-nome-rift.png"
+},
+{
+"at": 56.18,
+"shot": "tests/shots/duel-nome-rift-cut.png"
+},
+{
+"at": 57.5,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 58.0,
+"eval": "Module._debug_cmd(2383)"
+},
+{
+"at": 58.5,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 58.58,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 58.85,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 58.93,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 61.0,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 61.5,
+"eval": "Module._debug_cmd(2384)"
+},
+{
+"at": 62.0,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 62.05,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 62.15,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 62.2,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 62.5,
+"shot": "tests/shots/duel-nome-cashout.png"
+},
+{
+"at": 62.55,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 65.5,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 70.5,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 71.5,
+"eval": "Module._debug_cmd(2385)"
+},
+{
+"at": 71.6,
+"key": "KeyU",
+"down": true
+},
+{
+"at": 74.5,
+"shot": "tests/shots/guard3-garb-cut.png"
+},
+{
+"at": 86.5,
+"key": "KeyU",
+"down": false
+},
+{
+"at": 87.0,
+"eval": "Module._debug_cmd(2107)"
+}
+]
