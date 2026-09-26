@@ -56,7 +56,7 @@ Code references are `file:line` in this repository.
 - round 4: **the user's decisions on v3**.
 
 v4 changes the **art direction** (§A, §2.5, §3.3, §4, §5, §6). The engine architecture of v3
-(§1–§3.2, §3.4–§3.5) stands unchanged. **Phases 0, 1a, 1b, 2 and 3 are implemented** (2026-09-25); §14 logs
+(§1–§3.2, §3.4–§3.5) stands unchanged. **Phases 0, 1a, 1b, 2, 3 and 4 are implemented** (2026-09-25/26); §14 logs
 what was built, where it differs from this text, and the measured gates.
 
 ---
@@ -690,10 +690,10 @@ covers every row.
 | O: KITA: TENCHI (built) | take-off: the Hoho vanish streaks; the dash: body and aura not drawn, an ink afterimage (`start-ghost`) every 4 f; the cut: the hit's white star | the flash step reads as afterimages only |
 | Bankai East / West (built, bankai-kikon part 2; the user's look) | East: the body as it is (the 4 charcoal heat wisps), the charred blade with its EMBER edge line. West: **wrapped in red flames** (`vfx-aura :garb`: 9 FIRE brush-flame tongues + 5 EMBER inner ones, behind and at the sides so the silhouette stays readable, flame scraps, a warm light), the blade pure charcoal (no ember line, the charcoal smear). A switch crossfades (the new aura flares up 35 % over 0.3 s, the old dies down over 0.35 s) | the two stances read apart at a glance; spot share (S > 0.45, below the HUD) West idle 2.4 %, East idle 1.0 %, NISHI 4.1 %: inside the 15 % budget, no exception needed |
 | Burnout (built) | the aura crossfades to `:ash`: 3 BLACK SMOKE wisps off the shoulders + ASH flecks (≤ 12/s); East's ember line goes dead ASH; the world's grade loses the ember hue (`:ash` preset: spot-keep with only Kenpachi's yellow); "BURNOUT" in ash grey, the HUD name dimmed; REIGNITE: an EMBER star + the word | traits off must be visible: no warm pixel on a burned-out Yamamoto |
-| NISHI / HIGASHI (built) | NISHI: a BLACK SMOKE double ring out to 2.6 m + an EMBER inner line + 8 ASH shards, `:heat-flare`; HIGASHI: a white lens crescent 4.4 m wide across his front, held 2 d, then an EMBER hairline | — |
+| NISHI / HIGASHI (built) | NISHI: a BLACK SMOKE double ring out to 2.6 m + an EMBER inner line + 8 ASH shards, `:heat-flare`; HIGASHI: a white lens crescent 3 m wide across his front (Phase 4: 4.4 m filled the side camera's frame), held 2 d, then an EMBER hairline | — |
 | KYOKUJITSUJIN (built) | f18 a white vertical lens slit; f20 an INK gash where the tip bites + a flat 25° sheet (an EMBER sector with a HIT-white core, no dark backing: it read as a black rim) racing 9 m over 3 d, eroding, then ASH lifting along it | no black edge; the only warm mass is the sheet |
 | GOKUI GAESHI / armour / scorch (built) | the parry's window: 6 charcoal wisps rising round him; parried: an EMBER star (no charcoal backing star, same reason), a 1 f negative frame, "PARRY"; armour and scorch: the EMBER star, the attacker's arm smoking (BLACK SMOKE puffs) | — |
-| South (built) | an INK ring crack with an EMBER rim pulsing on twos over the 16 f tell + 5 INK radial cracks; 4 charred skeleton arms (`:sk-grab`, hips under the plaza) claw out, clench, crumble; each throws 2 DUST puffs + 2 rocks; bound: ASH drifting at the feet | — |
+| South (built) | an INK ring crack with an EMBER rim pulsing on twos over the 16 f tell + 5 INK radial cracks; 4 skeleton arms (`:sk-grab`, hips under the plaza; Phase 4: pale bone #D2CEC4 with charred bands #4A4E5C, no shadow disc) claw out, clench, crumble; each throws 1 low DUST puff + 2 rocks; bound: ASH drifting at the feet | — |
 | Kikon dash-in (built) | the rush's own travel look (TENCHI afterimages, CHARGE aura ×1.5, LEAP lift) + the BLOOD rush aura, `ui-speed-lines` along the dash, focus lines, "KIKON / GUARD IT!" | — |
 
 ### 4.2 Kenpachi
@@ -1495,3 +1495,129 @@ look ends without its 18-frame erosion.
   Bankai now shows Kenpachi's yellow (bankai-side-3: 0.51 % yellow).
 - Stills: `tests/shots/style-3-*.png`, `style-3-gallery.png`, `style-3-pairs.png` re-shot. The Phase-2 stills
   (`style-2-*`) were not re-shot; their hits and dust now have the same edges.
+
+
+### Phase 4: cinematics and brush typography (done, awaiting user review 3)
+
+Built as §4.4 and §5. **No engine change** (G1 holds by construction: engine/ and game/ untouched). Game: `duel/lisp/brush.lisp`
+(new: triangulation, captions), `duel/lisp/glyphs.lisp` (new, generated), `cinema.lisp` (the shot language, every generic
+script), `yama.lisp` / `ken.lisp` (their scripts), `hud.lisp` (captions, the brush callouts, the 勝 results card; the old
+pixel-kanji words removed), `main.lisp` (card beats, frozen effects), `camera.lisp` (dutch), `vfx.lisp` (awakening bursts,
+Tenchi slash, sky-split band; the 24×24 bitmap kanji deleted), `hazards.lisp` / `yama-art.lisp` (South's hands), `debug.lisp`
+(10000 + 1000 k + f, 2209, 2329). Tools: `tools/glyph-bake.py`, `tests/style-4-shots.py`, `tests/style-4-checks.py`; licence
+`duel/FONT-LICENSE-YujiSyuku.txt`. Differences:
+
+| Design text | Built | Why |
+|---|---|---|
+| `tools/brush-glyphs.py` bakes triangles (200–400 per glyph) | **`tools/glyph-bake.py`** (fontTools + skia-pathops in a venv) bakes **outlines**: overlaps removed, curves flattened (1 unit), Douglas–Peucker (2.5 units), each hole bridged into its outer contour (a cut to the nearest vertex it can see that is not an earlier cut's end) → a few simple integer polygons per glyph (1/1000 em, y down), 12 354 points for 109 glyphs, 78 KB of source. `brush-init` (a `:load` step) ear-clips them (exact fixnum tests): 11 976 triangles, **22 ms**, and logs an area check (triangles = polygon area; 0 bad) | the lead's brief (outlines, triangulated at load); a generic-arithmetic clipper took 697 ms (first frame +26 %), the fixnum one 22 ms |
+| the kanji list: 卍解 野晒 鬼魂 城郭炎上 天地灰尽 残火太刀 勝 + COUNTER / CLASH in Latin | + 東西南北 旭日刃 残日獄衣 火火十万億死大葬陣 の 呑め、 撫斬 不知火 松明 ぶった斬る 俺に斬れねえもんはねえ 魂 決着 時間切れ 山本元柳斎重國 更木剣八, and A–Z . , ! - : ' (the readings) | captions for every cinematic, the Bankai compass, the SP names, the intro names; Japanese forms (残 尽 万, as printed in BLEACH) rather than 殘 盡 萬 |
+| COUNTER / CLASH as brush Latin | every move callout and every big word (ANNOUNCE) is brush Latin (`brush-line`: one centred line + an ink shadow, 0 B; widths cached per string); the pixel font stays for HUD numbers, stat tables, prompts and menus | user review 3 (below) |
+| hanko: a red square | BLOOD #D0101C square with 鬼 knocked out in paper white, under the column | the only colour on a caption |
+| Bankai direction marks | a white mark glyph in a black box with a thin white frame, at the column's head | mono: the red is the Kikon's; the user kept the black box (review 3) |
+| captions may bleed off the frame | the block (mark, column, hanko, reading; the second column) is sized to fit between the letterbox bars (0.1–0.895 h; 0.84 h with a chapter line), the stamp's zoom is capped to stay inside, the column is clamped inside 2–98 % of the width, the reading and the chapter line shrink to fit their half of the screen; `draw-bcap` logs a caption that drew an em box off the screen (`style-4-checks.py bounds`) | the coordinator's review: bleeding read as clipping (野, 卍解, the long intro names, the readings) |
+| `ui-ink-splash` behind the glyph | beside the column's head (outer side), from drawing 1; on the results card right of 勝, clear of it and of the name line | a splash in the glyph's own value behind it swallowed the glyph; in the other value it read as a hole |
+| the chapter line lower left | at the foot of the caption's third | lower left collided with the figure whenever the caption stood right |
+| captions shown until the cinematic ends | until a cut after the wind-up (Kikons), to the end (awakenings, K.O.) | a 60 %-height column over the impact beats crowded them |
+| `bg-drop` | `(card kind &optional only)`: the stage skipped, sky / horizon / fog / moon = the card's value (#08080C / #F4F4F0), no vignette or moon glow, the particles cleared, and only the ONLY actor drawn | the other fighter (and Yamamoto's blade fire) crowded every card shot |
+| `silhouette-shot` | `back-rim frames &optional rgb` (both fighters in shadow tone + a hard rim: white, or Kenpachi's yellow) and, for the Bankai reveal, `silhouette-black` (a near-black tint on body and ink) | in the shadow tone the white haori is #9CA3B4, not the black silhouette §5 asks for |
+| `(fov-set deg)`, `(shot-dutch deg)` | `(lens fov &optional roll)`: `camera-fov` + `*dutch*` (camera.lisp rolls `camera-up` about the view, `%roll-up`, 0 B); `cine-end` restores 60° / 0 | one call per shot |
+| hold beat: `model-hold` + the fx clock paused | `(hold-both a v frames)` = `hold-pose` both + `(freeze frames)`: effect time stops (particles, the fx clock, shake, the HUD's fades) while the script runs on | the grammar's beat 0 and holds |
+| — | `(cine-grade :spot)`: a cinematic's base grade, back after each impact frame (Tenchi Kaijin, the Bankai reveal) | the old scripts ramped `*grade-desat*`, which the spot-keep grade replaced in Phase 3 |
+| — | `(impact-splash x y z frames r)`: a black ink splash at the victim's feet on the Kikon impact stills (boxed once when set: 0 B a frame) | §5 "every Kikon impact still" |
+| worked example: the low wide-angle shot "inside the rings" | from 3.8 m outside the dome, then 3.4 / 3.1 m push-in cuts (FOV 88 → 66 → 58) | inside, the Phase-5-pending soft dome shell filled the whole frame; the dome is not drawn during the card beat |
+| Bankai reveal (anticipation 16 tongues + shards; burst: charcoal ring + puffs) | `vfx-awaken-burst` redrawn toon: **:bankai** 36 FIRE blobs + 16 EMBER shards rushing into the hands; **:bankai-burst** the NISHI double ring (BLACK SMOKE, EMBER line) ×1.2 + 6 BLACK SMOKE puffs + 10 ASH shards, fired when the card ends (f58); **:nozarashi** 28 REIATSU blobs shooting up + a flat ring (no dust: on the black card the puffs hid him), and the pillar itself is the Nozarashi aura drawn 6.5 m tall for f20–38 | they were the soft additive looks (Phase 3 left them to this phase); a burst on the white card covered the silhouette |
+| Tenchi slash: a hard white slash, 2 px ink border | a white spindle over an ink spindle 3 px wider, no translucent wedge, no flash (the two-tone frame is the flash) | §4.1 row AC |
+| sky split: a white band with ink borders | as designed; the yellow glow gradients and the pale flash rect removed | the negative / manga page is the flash |
+| — | HIGASHI's crescent 3 m wide (was 4.4 m); South's skeleton hands pale bone with charred bands, no shadow disc, 1 low dust puff each (was 2) | the lead's two cheap fixes |
+
+The scripts (all `:len` unchanged; only `FACE-EACH-OTHER` touches the sim, at its old frames):
+- **Kikons** (Jokaku Enjo 108, Tenchi Kaijin 96, Kenpachi's 114, sky split 90): beat 0 (f0–7: the gameplay shot frozen, a 2 f
+  negative); a card wind-up f8 (Yamamoto on black, Kenpachi's base Kikon on white, the sky split on black with a yellow
+  back-rim), low and dutch (8–12°), the stamp with its hanko, silence 10–17 f; cuts on the action (3–7 in all); a held
+  close wide-angle push (FOV 72–90, silence 12–17 f) before the last hit (Jokaku, Kenpachi's); the impact: a negative,
+  then a 10 f manga page, an ink splash; the aftermath wide. Kenpachi's two Kikons are captioned with his release words
+  呑め、野晒 (NOME, NOZARASHI) and the hanko (user review 3).
+- **Awakenings**: the Bankai (beat 0; the flames pulled in, FOV 88, focus lines; from behind in silence while the world
+  greys; a negative, then the black silhouette on the white card with only the ember line red, 卍解 / 残火の太刀; the
+  charcoal burst and the cracks back in the grey world); Nozarashi (beat 0 on the face; the patch tears: a negative; the
+  yellow pillar on the black card with a yellow rim; close, low, wide-angle in silence while the blade grows; the stamp
+  野晒 / 呑め、 (呑, as in the manga) on the white card, a manga page).
+- **Soul Break** (魂 SOUL BREAK, a held close beat in silence, the shatter as negative + manga page), **K.O.** (a white/ink
+  two-tone frame, the winner held 20 f under 決着 K.O., the one allowed orbit), **TIME** (時間切れ), **intro** (the names in
+  vertical kanji with their readings and intro lines, a negative at the switch).
+- **Gameplay callouts**: a move of `*brush-callouts*` shows a brush column at its user's side (stamped, 1.3 s) instead of
+  the pixel callout: the SP names with kanji and the Bankai compass marks (東 西 南 北). Every other callout and every
+  big word (FIGHT!, COUNTER, CLASH, GUARD BREAK, KIKON / GUARD IT! ...) is one line of brush Latin.
+
+**Measured (final build).**
+- G1: no engine or RAVEN file changed.
+- G2: with the old cinematic lengths the tree reproduced the old reference exactly (yy `ticks 11248`, yk `ticks 8054 secs
+  134.2`, kk `ticks 8396`); after the pacing changes (below) the reference was re-baselined: yy `winner P2 konpaku 0-4 ticks
+  11746`, yk `winner P2 konpaku 0-3 ticks 8594 secs 143.2`, kk `winner P2 konpaku 0-4 ticks 8834`; every hash line matches.
+- G3: 0 B for 100 draws of each caption layout (cine with mark, second column, hanko, reading and chapter line; card;
+  callout; results), the impact splash, the dutch roll and a brush Latin line (debug 2329); fight frame 29.3 → 29.0 ms (0.99×, A B A B A B vs
+  the Phase-3/bankai-kikon build; 1.029 / 0.970 after the review-3 passes, noise); startup heap 55.2 → 57.3 MB (≤ 110); page to first
+  frame 3460 → 2840–3190 ms (noise; brush-init 22 ms); WGSL smoke green; duel builds with 0 warnings, pkgcheck clean.
+- §9 row 4 (`tests/style-4-checks.py --run`, 52 PASS: the row-4 items, every `:len`, the pacing rule, the held caption
+  close-ups, the Bankai grade, the bounds at 1280x720 and 800x450): every Kikon has beat 0, a card, ≥ 3 cuts (3–7), a negative + a manga
+  page, a silence ≥ 8 f (10–17) and a brush caption; every `:len` unchanged; the Bankai stills (the reveal card, the wide
+  after it): 0.0 % of the saturated pixels off the ember / yellow hues.
+- Stills: `tests/shots/style-4-<cinematic>-<frame>.png` (each cinematic at 3–8 beats), `style-4-callout-*.png`,
+  `style-4-results-*.png`, `style-4-gallery.png`, `style-4-captions.png` (the captions close up), `style-4-pairs.png`
+  (before: the previous build held at each script's old `:hold` frame; after: the caption beat).
+
+**Open.** Jokaku Enjo's dome, Shiranui, Taimatsu, Ennetsu and the Hellfire / Breaker auras are still the soft looks (Phase
+5); the K.O. rain, the caption slice exit and the Nozarashi skull are Phase 6.
+
+**User review 3 (§13 round 7, answered via the coordinator).**
+
+| # | Question | Decision | Consequence |
+|---|---|---|---|
+| 1 | 残 尽 万 or 殘 盡 萬 | keep the Japanese forms 残 尽 万 | — |
+| 2 | Kikon caption time (up to the second cut after the wind-up) | keep, relative to the cuts: with the slower pacing it stays up ~1 s | — |
+| 3 | the black ink splash at the victim's feet on Kikon impacts | keep | — |
+| 4 | Latin-only callouts and the big words in pixel font | **all brush**: every move callout and every ANNOUNCE word; pixel only for HUD numbers, stat tables and menus | `brush-line` / `line-width` (brush.lisp), `draw-words` and the callouts (hud.lisp); `DRAW` on the results card |
+| 5 | Kenpachi's Kikons captioned 鬼魂 | his release words 「呑め、野晒」 (NOME, NOZARASHI) on both, with the red 鬼 hanko | ken.lisp; the Nozarashi awakening's second column is 呑め、 too (呑, not 飲: the coordinator) |
+| 6 | the direction mark style | keep the black box with a white glyph (a thin white frame lets it read on the black card) | brush.lisp |
+
+Coordinator fixes after the first still set: no caption glyph off the screen on any frame (the fit / clamp rules
+above; a new `bounds` check plays every cinematic, the callouts and the results at 1280x720 and 800x450); the results
+splash moved clear of 勝 and the name line; 呑 baked (飲 dropped).
+
+**Pacing (user request after review 3: 「鬼魂技與覺醒的演出與鏡頭切換速度太快，能放慢節奏嗎？」).** The Kikon and awakening
+cinematics are ~1.45× longer, not uniformly stretched: fewer and longer shots (the shortest cuts merged or dropped:
+Jokaku's three push-in FOV cuts became one held dolly, Kenpachi's close push the same), **every shot ≥ 20 f** except
+beat 0 (12 f, the gameplay freeze) and the 1–3 f negative / impact flashes (nothing under 12 f), longer holds on the
+caption card (26–28 f), the Bankai silhouette reveal (28 f), the Nozarashi yellow pillar (30 f) and the pre-final-hit
+freeze (20–22 f), and the impact frames themselves as sharp as before (2 f negative, then a 10–12 f manga page). The
+actors' clips play slower to keep their hits on the new beats (`:speed` old frame / new frame); the dome, the Tenchi
+slash and the sky split run on longer lives. `tests/style-4-checks.py pacing` checks every shot ≥ 12 f and the mean ≥ 20 f.
+
+**User decision (review 3, 2026-09-26): caption close-ups held longer.** The rest approved; the caption close-up (the
+card shot with the brush caption and the character close) of the Bankai and of every Kikon holds **+30 f** (0.5 s); no
+other shot stretched; the caption stays up through it (the Kikon rule: up to the second cut after the wind-up); the
+card's silence and back-rim cover it; the attacker's clip plays slower so his hit still lands on the (later) impact
+beat. `tests/style-4-checks.py` checks the card shot's length (`caption close-up held`) with the pacing rule.
+
+| Cinematic | :len original | review 3 (×1.45) | final | Shots (frames), final |
+|---|---|---|---|---|
+| Jokaku Enjo | 108 | 156 | **186** | 12 · 58 (caption card) · 30 · 20 · 22 (held dolly) · 14 · 30 |
+| Tenchi Kaijin | 96 | 138 | **168** | 12 · 56 (caption card) · 42 · 58 |
+| Kenpachi's Kikon | 114 | 162 | **192** | 12 · 58 (caption card) · 28 · 24 · 20 (held pull) · 20 · 30 |
+| sky split | 90 | 132 | **162** | 12 · 56 (caption card) · 34 · 30 · 30 |
+| Bankai | 72 | 108 | **138** | 12 · 28 · 20 · 58 (the reveal caption card) · 20 |
+| Nozarashi | 72 | 108 | **108** | 28 · 30 · 20 · 30 |
+| Soul Break, intro, K.O., TIME | 96, 300, 150, 120 | unchanged | unchanged | |
+
+**G2 re-baselined.** The sim is frozen during a cinematic (CINE-STEP runs instead of the systems; only `*match-tick*`
+counts on), so the lengths shift the match ticks and the times at which the 600-tick hash lines sample the state. Proof
+that nothing else changed: the build before the pacing change reproduced the old reference exactly (G2 PASS), and after
+it every combat-log event of the three CvC matches (302 / 256 / 264 events) is the old one with its tick shifted by the
+frames the cinematics played before it added (yy +288, yk +330, kk +288 ticks in all); same winners, Konpaku and event
+order. After the caption close-ups were held +30 f the same proof held again against the review-3 build (the same
+302 / 256 / 264 events, shifted yy +210, yk +210, kk +150 ticks; +498 / +540 / +438 against the pre-review reference).
+`tests/style-cvc-ref.txt` holds the final lines; the YK reference: `duel -> RESULTS winner P2 konpaku 0-3 ticks 8594 secs
+143.2` (review 3's slow-down alone: 8384 / 139.7; before: 8054 / 134.2). The Kikon hold-O rule, the dash-in and every gameplay frame are unchanged (they end
+before the cinematic starts). Pacing gate (`duel-gate.json`, 20 seeds × pairing, all K.O.), final: YY median 158.7 s
+(95.5–223.2), YK 152.1 (115.2–185.2), KK 159.7 (128.8–197.4); with the slow-down alone 155.2 / 149.6 / 157.2; the build
+before the change gave exactly the old 150.4 / 145.5 / 152.4.

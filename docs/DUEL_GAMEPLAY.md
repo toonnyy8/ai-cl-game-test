@@ -122,6 +122,8 @@ encoded in the integer.
 | 2110+p | the seed gate: seeds 1–20 of pairing p (0 YY, 1 YK, 2 KK, 3 all three) back to back, turbo, cinematics on, combat log off; then `duel gate …` lines |
 | 2120+k | toggle drawing part k off (0 HUD, 1 fighters, 2 stage, 3 hazards + cinematic looks): perf bisection |
 | 2200+k | force cinematic k now and hold it at its hold frame: 0 Bankai, 1 Nozarashi, 2 Jokaku Enjo, 3 Tenchi Kaijin, 4 Kenpachi's Kikon, 5 sky split, 6 Soul Break, 7 intro, 8 K.O. |
+| 2209 | a K.O. of P2 (Yamamoto vs Kenpachi): the K.O. cinematic, then the results screen (the 勝 card) |
+| 10000+1000k+f | stills: cinematic k (as 2200+k) held at frame f with the effects frozen there (impact frames, particles, stamps); a later command for the same k continues it to its new f (`tests/style-4-shots.py`) |
 | 2300+k | force a special now: 0 Hellfire + Ennetsu, 1 full Shiranui, 2 fire wave, 3 South (the bind) on Kenpachi 5 m away, 4 KYOKUJITSUJIN (the down-cut) at 6 m, 5 Split the Meteor, 6 Guard Break, 7 perfect Hoho, 8 Kenpachi's stance, 9 Buttagiru, 10 Kenpachi's SP2 flurry, 11 EVOLUTION for both, 12 Bankai (East) form, 13 Nozarashi form, 14 P2 red (Reishi 200) |
 | 2315+k | frame probe, YY at 2 m: P1's move k (0 Q1, 1 Q3, 2 F2, 3 Taimatsu) into P2's held guard → `duel probe … advantage A (table T)` |
 | 2319 | trade probe: both Q1 on the same step → `duel probe trade …` hash line 40 steps later |
@@ -129,6 +131,7 @@ encoded in the integer.
 | 2321 | force a Burst Reverse now (P1 two hits into Kenpachi's string): screenshots |
 | 2327 | guard gauge test: human P1 Yamamoto 2 m from Kenpachi, whose switched-off CPU presses Quick every other step for 20 s (both put back 2 m apart when he is free beyond 2.6 m, a `duel probe pressure t=… gg …` line each time); hold U: BLOCKED ×n, `P1 GUARD CRUSH`, hits land although U is held, `P1 GUARD BACK`, blocked again — `duel-gauges.json` |
 | 2328 | consing of the HUD's guard, flash-step and cooldown bars (100 draws each): `hud consing: … 0 B`; and of the Bankai stance looks (10 draws each: the burnout aura and blade, West's flame garb, the bound ash, the heat sheet, South's crack, the aura crossfade): `vfx consing (10 draws, B): ash 0, garb 0, …` (0 B each; the crossfade conses ~60 B a frame only during its 350 ms) |
+| 2329 | consing of the brush captions (100 draws of each layout: cinematic, card, callout, results), the impact splash, the dutch roll and a brush Latin line: `brush consing (100 draws, B): cine 0, card 0, callout 0, results 0, splash 0, roll 0, line 0` |
 | 2330+k | O module test: human P1 with module k mod 4 (0 ENJO, 1 TENCHI, 2 CHARGE, 3 LEAP CLEAVE) 1 m inside its reach from a Yamamoto CPU who, by k div 4: 0 stands, 1 holds guard, 2 stands red (Reishi 200), 3 holds guard red, 4 plays (HARD), 5 stands in 0.1× slow motion for 14 s (shots), 6 stands and holds guard once hit (the dash-in is BLOCKED), 7 the same red (the dash-in can't be guarded: the Kikon); press O (hold it, or tap it) — `duel-kikon.json` |
 | 2370+k | Bankai stance test (human P1, P2's CPU off; `duel-stances.json`): 0 East vs Kenpachi 3 m (L switch, cooldown, HIGASHI), 1 East J strings into a guard the probe keeps full (`duel probe wall … P1 gg … [BURNOUT] P2 r…`: the recoil burns him out, then the guard drops), 2 West under Kenpachi's Quick mash (`duel probe armour … P1 gg …`: armour drains the gauge → burnout), 3 / 4 East Shift+K into a guard at 2 / 6 m, 5 West Shift+K with Kenpachi's F1 started as the parry opens (the parry, the counter), 6 East Shift+L on Kenpachi 3 m, 7 / 8 human Kenpachi under a CPU East's South at 5 m (8 in 0.25× slow motion for 6 s) |
 | 2400 | toggle god mode: each step both fighters' Reishi is raised to at least 400 |
@@ -146,7 +149,7 @@ apart (`place`).
 | `duel -> TITLE` … `duel -> RESULTS` | every flow change (`set-flow`) |
 | `duel match seed 7 CPU-CPU YAMAMOTO vs KENPACHI NORMAL` | a match starts |
 | `duel hash t=600 \| x y z yaw STATE FORM r<reishi> k<konpaku> a<reiatsu> f<flash-step> g<guard>[!] w<awaken> m<meter> h<heat> \| … \| cd <P1 cooldowns> <P2> \| haz N` | every 600 battle steps: positions in cm, yaw in 0.01 rad, gauges (`!` = guardless), CPU heat, each command slot's cooldown, hazard count (the determinism check) |
-| `duel -> RESULTS winner P2 konpaku 0-3 ticks 8054 secs 134.2` | the match result (winner, Konpaku P1-P2, sim steps, seconds) |
+| `duel -> RESULTS winner P2 konpaku 0-3 ticks 8594 secs 143.2` | the match result (winner, Konpaku P1-P2, sim steps, seconds) |
 | `duel gate YAMAMOTO KENPACHI: 20 matches, KOs 20, median … s, min …, max … \| …` | the seed gate summary |
 | `duel probe YA-Q1 blocked: attacker free at +27, defender at +25, advantage -2 (table -2)` | a frame probe |
 | `[  tick] P1 move YA-Q1 [why]`, `P1 YA-Q1 -> P2 HIT 38`, `P1 YA-KIKON -> P2 KIKON 70` (a rush strike that became the Kikon; `BLOCKED` / `HIT` otherwise), `P1 KIKON FOLLOW-UP on P2 [(red)]` (it hit with O held: the knockback and the dash-in), `P1 BURNOUT RECOIL` (… `BLOCK` / `ARMOUR` / `BREAKER`: a Bankai stance's gauge ran out) and `P1 GUARDLESS BLOCK` (any gauge, by cause), `P1 form BANKAI-WEST` (the L switch), `P1 refused SIG: cooling 61` (a press while it cools), `P2 scorched 15` (West's armour / parry), `P1 BIND -> P2 HIT 40` (South's grab), `P1 KIKON on P2: -2 konpaku, 7 left`, `P1 GUARD CRUSH` / `P1 GUARD BACK`, `P1 form HELLFIRE`, `P1 PERFECT HOHO`, `P1 EVOLUTION`, `CLASH`, `cine NAME`, `P1 step [why]` / `P1 dash [why]` (a run starts; why DASH / DASH-BACK for the CPU) / `P1 run -> YA-Q1, carry 1.0 m` / `P1 BURST` / `hoho` / `guard` | the combat log (`clog`, components.lisp): move starts (with the CPU's reason), every applied hit and its result, Konpaku, forms, events |
@@ -202,10 +205,12 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P2 konpaku 0-3 ticks 8054 secs 134.2
+duel -> RESULTS winner P2 konpaku 0-3 ticks 8594 secs 143.2
 ```
 
-(Before the Bankai stances, the Kikon dash-in and the slower guard refill it was `winner P1 konpaku 1-0
+(User review 3 of the restyle lengthened the Kikon and awakening cinematics: the same match, every event later by the
+cinematic frames added before it. With the ~1.45× slow-down alone it was `ticks 8384 secs 139.7`, before it `ticks 8054
+secs 134.2`; before the Bankai stances, the Kikon dash-in and the slower guard refill it was `winner P1 konpaku 1-0
 ticks 9438 secs 157.3`; before the gauges, the O rule and the O modules `winner P1 konpaku 2-0 ticks 9780 secs 163.0`;
 before the Kikon rush `winner P2 konpaku 0-1 ticks 7298 secs 121.6`; before Bankai became
 permanent, `winner P2 konpaku 0-4 ticks 5857 secs 97.6`; before Burst and the dash, `0-7 ticks
@@ -233,9 +238,14 @@ Target: every match ends by K.O., median 125–180 s, max 240 s.
 
 | Pairing | Median | Range | K.O. |
 |---|---|---|---|
-| Yamamoto vs Yamamoto | 150.4 s | 90.9–214.9 | 20/20 |
-| Yamamoto vs Kenpachi | 145.5 s | 108.1–176.2 | 20/20 |
-| Kenpachi vs Kenpachi | 152.4 s | 122.2–190.1 | 20/20 |
+| Yamamoto vs Yamamoto | 158.7 s | 95.5–223.2 | 20/20 |
+| Yamamoto vs Kenpachi | 152.1 s | 115.2–185.2 | 20/20 |
+| Kenpachi vs Kenpachi | 159.7 s | 128.8–197.4 | 20/20 |
+
+(User review 3 of the restyle (STYLE_STORM_DESIGN §14) lengthened the Kikon and awakening cinematics: slowed ~1.45×,
+then their caption close-ups held +30 f. The same 60 matches, each longer by the added cinematic frames. With the
+slow-down alone: YY 155.2 s (93.5–219.7), YK 149.6 (112.7–181.7), KK 157.2 (127.0–194.9); before it, exactly the
+table below: YY 150.4 s (90.9–214.9), YK 145.5 (108.1–176.2), KK 152.4 (122.2–190.1).)
 
 (The Bankai stances with burnout, the Kikon dash-in, the guard gauge refilling at 12/s after 60 f
 (guardless 14/s), the CPUs' guard pressure; no pacing knob retuned. Usage over the 60 matches (per

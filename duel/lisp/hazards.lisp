@@ -139,6 +139,6 @@ frames) and touches VICTIM's hurt cylinder grown by *PERFECT-INFLATE*."
            (let ((m (model h)) (p (pos-of h)))
              (pose-fk! (model-joints m) (anim-eval (model-anim m)) (aref p 0) (aref p 1) (aref p 2)
                        (transform-yaw (transform h)) (body-scale (model-body m)) (body-hunch (model-body m)))
-             (draw-body (model-body m) (model-joints m) (aref p 0) (aref p 1) (aref p 2) 0.0
+             (draw-body (model-body m) (model-joints m) (aref p 0) (aref p 1) (aref p 2) 0.0 :shadow nil   ; no disc: it hid the pale bones
                         :alpha (f32 (min 1.0 (max 0.0 (/ (- (hazard-life hz) (hazard-age hz)) 15.0)))))))
           (:bind nil))))))                                ; (its look: the :south crack and the hands)

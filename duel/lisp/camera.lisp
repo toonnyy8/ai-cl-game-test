@@ -67,6 +67,15 @@ line the duel camera is on."
       (v3-set! *cam-eye* (f32 ex) (f32 h) (f32 ez))
       (v3-set! *cam-at* (f32 (+ (aref c 0) (* *behind-look* sep fx))) 1.1f0 (f32 (+ (aref c 2) (* *behind-look* sep fz)))))))
 
+(defun-fast %roll-up (up eye at roll)
+  "UP := the world's up rolled ROLL degrees about the view direction EYE -> AT (a dutch angle)."
+  (declare (type f32vec up eye at) (single-float roll))
+  (let* ((fx (- (aref at 0) (aref eye 0))) (fz (- (aref at 2) (aref eye 2)))
+         (l (f-max 1f-4 (f-sqrt (+ (* fx fx) (* fz fz))))) (r (* roll 0.017453292f0)) (s (f-sin r)))
+    (declare (single-float fx fz l r s))
+    (setf (aref up 0) (* s (/ (- fz) l)) (aref up 1) (f-cos r) (aref up 2) (* s (/ fx l)))
+    nil))
+
 (defun duel-camera (a b rdt &key snap)
   "Place the camera for this frame: the cinematic shot if one is set, else the pair camera (SNAP: no
 smoothing, e.g. a new round)."
@@ -97,5 +106,8 @@ smoothing, e.g. a new round)."
                   (k (min 1.0 (/ *cam-max-r* (max 0.01 (sqrt (+ (* ex ex) (* ez ez))))))))
              (v3-set! *cam-eye* (f32 (* k ex)) (f32 h) (f32 (* k ez)))
              (setf (aref c 1) 1.05f0)))))
-  (let ((e *cam-eye*) (c *cam-at*))
+  (let ((e *cam-eye*) (c *cam-at*) (up (camera-up *camera*)))
+    (if (and *cine-cam* (/= *dutch* 0f0))                ; a dutch shot (cinema.lisp LENS)
+        (%roll-up up e c *dutch*)
+        (v3-set! up 0f0 1f0 0f0))
     (camera-look-at (aref e 0) (aref e 1) (aref e 2) (aref c 0) (aref c 1) (aref c 2))))

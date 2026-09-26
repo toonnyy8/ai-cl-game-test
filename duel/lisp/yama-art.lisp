@@ -112,7 +112,7 @@
 
 ;;; ---------------------------------------------------------------- the charred skeleton (Bankai South)
 (defbody :skeleton (:scale 1.0 :width 1.0 :hunch 20 :hurt-r 0.3 :hurt-h 1.7
-                    :palette ((:bone #x2B2420) (:ash #x4A403A) (:ember #xFF5A1A))
+                    :palette ((:bone #xD2CEC4) (:ash #x4A4E5C) (:ember #xFF5A1A))   ; pale bone, charred bands: they read on the V2 plaza
                     :rim (#xFF6A2A 0.35))
   (:pelvis (:bevel 0.26 0.1 0.12 0.02 :c :ash))
   (:spine (:box 0.05 0.24 0.05 :at (0 0.11 -0.04) :c :bone)

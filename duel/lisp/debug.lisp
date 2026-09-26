@@ -11,7 +11,9 @@
 ;;;;   2110+p   the seed gate: seeds 1..20 of pairing p (0 YY, 1 YK, 2 KK, 3 all three) back to back
 ;;;;            (turbo; cinematics play: they are part of the match time), then "duel gate ..." lines
 ;;;;   2200+k   force cinematic k now and hold it (0 Bankai, 1 Nozarashi, 2 Jokaku Enjo, 3 Tenchi Kaijin,
-;;;;            4 Ken Kikon, 5 sky split, 6 Soul Break, 7 intro, 8 K.O.)
+;;;;            4 Ken Kikon, 5 sky split, 6 Soul Break, 7 intro, 8 K.O.)   2209 a K.O. of P2 (YK), then RESULTS
+;;;;   10000+1000k+f   stills: cinematic k (as 2200+k) held at frame f, the effects frozen there; when k already
+;;;;            runs, it continues to frame f
 ;;;;   2300+k   force a special now (0 Hellfire + Ennetsu, 1 full Shiranui, 2 fire wave, 3 Kaka
 ;;;;            skeletons, 4 Kyokujitsujin, 5 Split the Meteor, 6 guard break, 7 perfect Hoho,
 ;;;;            8 Ken stance, 9 Buttagiru, 10 Ken SP2 flurry, 11 EVOLUTION both, 12 Bankai form (+ 2 crack patches),
@@ -25,6 +27,7 @@
 ;;;;            gauge drains, GUARD CRUSH, hits land while U is held, the guard back only when full
 ;;;;   2328     consing of the new HUD gauge bars (100 draws each) -> "hud consing" line; the Bankai stances' looks
 ;;;;            (10 draws each) -> "vfx consing" line
+;;;;   2329     consing of the brush captions (each layout, 100 draws) and the impact splash -> "brush consing" line
 ;;;;   2330+k   O module test: human P1 with module k mod 4 (0 ENJO, 1 TENCHI, 2 CHARGE, 3 LEAP) 1 m inside
 ;;;;            its reach from a Yamamoto CPU who (k div 4) 0 stands, 1 guards, 2 stands red, 3 guards red,
 ;;;;            4 plays (HARD), 5 stands, 0.1x slow motion 14 s (shots), 6 guards once hit (the dash-in is
@@ -230,6 +233,28 @@ presses (J down every other step: the switched-off brain still writes its held b
                      (setf *probe* nil))
                     ((> dt 300) (log-msg "duel probe ~a: no block" name) (setf *probe* nil))))))))))
 
+(defun brush-cons-check ()
+  "2329: bytes consed by 100 draws of each brush caption layout (drawn past their stamp: the steady state), of the
+screen punctuation with an impact splash and of a brush Latin line (callouts, big words)."
+  (let* ((w (window-width)) (h (window-height))
+         (cine (make-bcap "天地灰尽" :kanji2 "残火の太刀" :mark "北" :reading "TENCHI KAIJIN" :sub "KITA" :hanko t))
+         (card (make-bcap "卍解" :reading "BANKAI" :ink t))
+         (call (make-bcap "火火十万億死大葬陣" :mark "南" :reading "MINAMI" :layout :callout :side 1 :secs 100.0))
+         (res (make-bcap "勝" :layout :results)))
+    (dolist (c (list cine card call res)) (setf (aref (bcap-f c) 0) (f32 (- (fx-clock) 1.0))))
+    (dotimes (i 2) (dolist (c (list cine card call res)) (draw-bcap c w h)))   ; the splash arguments boxed once
+    (impact-splash 0.0 0.0 0.0 60)
+    (macrolet ((per (name form)
+                 `(let ((c0 (cons-bytes))) (dotimes (i 100) ,form) (format nil "~a ~d" ,name (- (cons-bytes) c0)))))
+      (log-msg "brush consing (100 draws, B): ~{~a~^, ~}"
+               (list (per "cine" (draw-bcap cine w h)) (per "card" (draw-bcap card w h)) (per "callout" (draw-bcap call w h))
+                     (per "results" (draw-bcap res w h)) (per "splash" (draw-screen-fx w h))
+                     (progn (set-line 300 300 40 '(1 1 1 1)) (setf (aref *bl* 7) (line-width "GUARD BREAK"))
+                            (per "line" (brush-line "GUARD BREAK")))
+                     (per "roll" (%roll-up (camera-up *camera*) *cam-eye* *cam-at* 8f0)))))
+    (v3-set! (camera-up *camera*) 0f0 1f0 0f0)
+    (setf (aref *screen-fx* 7) 0f0)))
+
 (defun hud-cons-check ()
   "2328: bytes consed by 100 draws of each HUD gauge bar added with the gauges (guard, flash-step, cooldowns) and
 by 10 draws of each Bankai stance look (0 B each; the crossfade only while it runs)."
@@ -311,6 +336,18 @@ by 10 draws of each Bankai stance look (0 B each; the crossfade only while it ru
   (setf *cine-hold* t)
   (when *cine* (setf (cine-hold *cine*) (cine-hold-frame (cine-name *cine*)))))
 
+(defparameter *cine-names* '(yama-bankai-cine ken-nozarashi-cine yama-kikon-cine yama-tenchi-cine ken-kikon-cine
+                               ken-sky-split-cine soul-break-cine intro-cine ko-cine)
+  "FORCE-CINE's numbering.")
+
+(defun cine-at (k f)
+  "Debug 10000 + 1000 K + F (stills): cinematic K held at frame F (MAIN.LISP CINE-HELD-P freezes the effects there);
+when K already runs, it continues to F."
+  (unless (and *cine* (eq (cine-name *cine*) (nth k *cine-names*)))
+    (abort-cine)                                         ; another one held: its looks (card, grade) end first
+    (force-cine k))
+  (when *cine* (setf *cine-hold* t (cine-hold *cine*) f)))
+
 (defun force-special (k)
   (setf *cine-hold* nil)
   (case k
@@ -380,7 +417,7 @@ by 10 draws of each Bankai stance look (0 B each; the crossfade only while it ru
   "Module._debug_cmd(C): see the file header."
   (setf *combat-log* t *stats-log* t)
   (log-msg "debug cmd ~d" c)
-  (unless (<= 2200 c 2299) (setf *cine-hold* nil))
+  (unless (or (<= 2200 c 2299) (<= 10000 c 19999)) (setf *cine-hold* nil))
   (cond ((<= 2000 c 2099) (start-cvc (- c 2000) nil))
         ((<= 3000 c 3999) (start-cvc (- c 3000) '(:yamamoto :yamamoto)))
         ((<= 4000 c 4999) (start-cvc (- c 4000) '(:yamamoto :kenpachi)))
@@ -397,13 +434,16 @@ by 10 draws of each Bankai stance look (0 B each; the crossfade only while it ru
         ((= c 2109) (toggle-cam))
         ((<= 2110 c 2113) (start-gate (- c 2110)))
         ((<= 2120 c 2123) (setf (svref *no-draw* (- c 2120)) (not (svref *no-draw* (- c 2120)))))
+        ((= c 2209) (setf *cine-hold* nil) (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 3.0) (match-over *p1*))
         ((<= 2200 c 2299) (force-cine (- c 2200)))
+        ((<= 10000 c 19999) (cine-at (floor (- c 10000) 1000) (mod c 1000)))
         ((<= 2315 c 2318) (probe-block (nth (- c 2315) '(:ya-q1 :ya-q3 :ya-f2 :ya-taimatsu))))
         ((= c 2319) (probe-trade))
         ((= c 2320) (probe-mash))
         ((= c 2321) (force-burst))
         ((= c 2327) (probe-pressure))
         ((= c 2328) (hud-cons-check))
+        ((= c 2329) (brush-cons-check))
         ((<= 2330 c 2361) (module-test (- c 2330)))
         ((<= 2370 c 2378) (stance-test (- c 2370)))
         ((= c 2326) (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 3.0) (clash! *p1* *p2*))

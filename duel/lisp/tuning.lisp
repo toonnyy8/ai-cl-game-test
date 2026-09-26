@@ -152,7 +152,7 @@ and can't guard until the gauge is full again.")
 (defparameter *awaken-dealt* 0.05 "Awakening per point of damage dealt.")
 (defparameter *awaken-taken* 0.07 "Awakening per point of damage taken.")
 (defparameter *awaken-per-konpaku* 15.0 "Awakening per Konpaku lost.")
-(defparameter *awaken-cine-seconds* 1.2 "Awakening cinematic (sim frozen).")
+(defparameter *awaken-cine-seconds* 1.8 "Awakening cinematic (sim frozen; documentation only: the scripts own their :len).")
 
 ;;; ---------------------------------------------------------------- hit reactions, combos, hitstop
 (defparameter *reaction-frames*

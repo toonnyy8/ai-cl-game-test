@@ -10,6 +10,8 @@
 | [ENGINE_API.md](ENGINE_API.md) | 引擎 API 參考（依原始檔分組）：座標慣例、輸入與虛擬手把、數學、命中判定、算圖、模型產生、UI、音訊、動畫、剛體角色、時間、過場導演、特效、ECS、`RUN-GAME` |
 | [GAME_DESIGN.md](GAME_DESIGN.md) | RAVEN EDGE 的設計規格 v1：操作、招式幀數表、戰鬥規則、敵人、波次、HUD、美術、音效對照、動畫 |
 | [DUEL_DESIGN.md](DUEL_DESIGN.md) | SOUL DUEL 的設計（照實作）：與 RoS 的差異、規則、操作、共通機制、兩個角色的招式表、AI、流程、開發中改過的決定 |
+| [DUEL_NOZARASHI_V2.md](DUEL_NOZARASHI_V2.md) | 劍八野晒形態的重新設計 v2「呑め」三杯梯（已決定、尚未實作），含西式「按住 U＝鎧甲」與移除 `:ignore-armor` |
+| [DUEL_MOBILE_DESIGN.md](DUEL_MOBILE_DESIGN.md) | 單手（片手）直式手機模式的設計 v2（已決定、尚未實作）：預設右手、FULL 輔助不打折、不做本機直式雙人、日後藍牙／Wi-Fi 對戰 |
 | [DUEL_GAMEPLAY.md](DUEL_GAMEPLAY.md) | SOUL DUEL 的建置與操作、時間模型、除錯指令、log、測試腳本、決定性檢查、節奏測試結果、效能、主機測試 |
 | [GAMEPLAY.md](GAMEPLAY.md) | RAVEN EDGE 玩法系統的實作說明：時間模型、實體與元件、動畫、招式定義、敵人 AI、遊戲流程、除錯指令、砍掉的項目 |
 | [WORLD.md](WORLD.md) | 頂樓場景：API、碰撞體、場景內容、光源配置、雨、效能數據 |

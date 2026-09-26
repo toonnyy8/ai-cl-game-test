@@ -173,7 +173,8 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
         (vfx-smear tr (blade-smear (blade e)) (case (first (kit-blade kit)) (:fire 0) ((:embers :charcoal) 2) (t 1)))))
     ;; auras: the form's, EVOLUTION ready, the Breaker (brightens over the strike startup), the Kikon rush
     (let ((age (fx-clock)))
-      (unless flashing                                    ; the form's aura (burned out: ash and smoke), crossfaded
+      (unless (or flashing (<= (model-alpha m) 0f0))      ; the form's aura (burned out: ash and smoke), crossfaded; none
+                                                          ; round a body turned to ash (Tenchi Kaijin)
         (draw-aura f (if (burnout-p e) :ash (kit-aura kit)) x y z (* 1.1 (body-hurt-h b)) age rdt
                    (if (and (eq look :charge) (not (eq (fighter-phase f) :main))) 1.5 1.0)))
       (when (and (eq (fighter-state f) :stun) (eq (fighter-phase f) :bind))   ; bound by South: ash drifting at the feet
@@ -227,11 +228,11 @@ ember hue goes too (:ASH, the world fully grey). An impact frame takes the compo
 
 (defun draw-scene (rdt)
   "Queue the 3D scene. RDT = this frame's effect seconds (0 while paused: nothing moves, no particle is born)."
-  (unless (svref *no-draw* 2) (stage-draw rdt))
+  (unless (or (svref *no-draw* 2) *card*) (stage-draw rdt))   ; a card beat (cinema.lisp CARD) hides the stage
   (unless *cine* (setf *grade-desat* 0.0) (form-grade))   ; a cinematic's script owns the grade
   (dolist (e (list *p1* *p2*))
     (when (entity-alive-p e)
-      (unless (svref *no-draw* 1) (draw-fighter e rdt))))
+      (unless (or (svref *no-draw* 1) (and *card-only* (not (eq e *card-only*)))) (draw-fighter e rdt))))
   (unless (svref *no-draw* 3) (hazard-draw rdt) (cine-draw))
   (when *hitboxes* (draw-hitboxes))
   (stamps-draw (f32 rdt))
@@ -241,6 +242,12 @@ ember hue goes too (:ASH, the world fully grey). An impact frame takes the compo
   (fx-draw-particles)
   (fx-rings-update (f32 rdt))
   (lights-flush))
+
+(defun fx-frozen-p ()
+  "Effect time stops this frame: paused, a held beat (FREEZE), or a debug-held cinematic at its hold frame (stills)."
+  (or *paused* (> (aref *screen-fx* 6) 0f0) (cine-held-p)))
+
+(defun cine-held-p () "A debug-held cinematic stands at its hold frame." (and *cine* (cine-hold *cine*) (>= (cine-cf *cine*) (cine-hold *cine*))))
 
 ;;; ---------------------------------------------------------------- the frame
 (defun menu-camera ()
@@ -260,7 +267,7 @@ of the screen (the stats take the left third); select: both fighters from the fr
 (defun game-frame (rdt)
   "One frame (the engine runs it between BEGIN-FRAME and END-FRAME; RDT = real seconds). The effects run
 on FDT: RDT, or 0 while paused (the fx clock, particles, stamps, shake, camera and HUD animation stop)."
-  (screen-fx-update (if *paused* 0.0 rdt))                 ; last frame's impact frames / lines / silence run out
+  (screen-fx-update (if (or *paused* (cine-held-p)) 0.0 rdt))   ; last frame's impact frames / lines / silence run out
   (flow-update rdt)
   (gate-update)
   (perf-mark)                                               ; stats: "sim" = the fixed steps
@@ -269,7 +276,7 @@ on FDT: RDT, or 0 while paused (the fx clock, particles, stamps, shake, camera a
       (progn (setf *step-acc* 0.0)
              (unless (or *paused* (not (entity-alive-p *p1*)))       ; menus: fighters idle on real time
                (dolist (e (list *p1* *p2*)) (anim-advance (model-anim (model e)) (f32 rdt))))))
-  (let ((fdt (if *paused* 0.0 rdt)))
+  (let ((fdt (if (fx-frozen-p) 0.0 rdt)))
     (fx-clock-advance (f32 fdt))
     (if (member *flow* '(:intro :battle :finish))
         (duel-camera *p1* *p2* fdt)
@@ -295,7 +302,7 @@ on FDT: RDT, or 0 while paused (the fx clock, particles, stamps, shake, camera a
   (go-title))
 
 (run-game :title "SOUL DUEL"
-          :load (append (list #'bodies-init) (body-load-steps) (list #'stage-init))
+          :load (append (list #'bodies-init) (body-load-steps) (list #'stage-init #'brush-init))
           :start #'start-game
           :frame #'game-frame
           :debug #'debug-command

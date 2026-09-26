@@ -294,51 +294,77 @@ the ground there cracks (a look) and :hands skeleton hands claw out; a :bind haz
     (emit :sfx :ground-crack e)))
 
 ;;; ================================================================ cinematics
-(defcine yama-kikon-cine (a v :len 108 :hold 70)
-  "Jokaku Enjo: walls of fire rise around the victim, close into a dome and detonate."
+;;; The grammar of every cinematic is in cinema.lisp (docs/STYLE_STORM_DESIGN.md §5); Yamamoto (white haori) goes on
+;;; the black card.
+(defcine yama-kikon-cine (a v :len 186 :hold 112)
+  "Jokaku Enjo (§5's worked example, paced by user review 3: few long shots, long holds, sharp hits): beat 0 (the
+gameplay shot frozen, a negative); a black card, Yamamoto low and dutch under the 城郭炎上 stamp, silence; high and wide:
+the walls of fire rise and close; cut low and wide-angle onto the victim inside them; a held push-in (poses held,
+effects frozen, silence); the detonation: a negative, then a manga page (the fire the only colour), the Konpaku shatter
+and an ink splash; the aftermath wide."
   (at 0 (face-each-other a v 3.2)
-      (cine-clip a :ya-kikon :blend 2) (cine-clip v :sh-kikon-victim :blend 4)
-      (shot-pair a v (camera-side a) 6.5 2.0)
-      (caption "JOKAKU ENJO" :sub "KIKON" :color '(1 0.55 0.2 1))
+      (cine-clip a :ya-kikon :blend 2 :speed (/ 77.0 142.0))   ; its old timing, slowed to the new beats (cine-clip v :sh-kikon-victim :blend 4)
+      (hold-both a v 12) (impact-frame :negative 2)
       (play-sfx :fire-roar))
-  (at 40 (shot-on v 150 5.5 0.8 :look 1.6))
-  (during (0 108) (let ((q (pos-of v))) (vfx-fire-dome (aref q 0) (aref q 2) 1.7 (/ cf 60.0) 1.5 (frame-dt))
-                    (add-point-light (aref q 0) 1.5 (aref q 2) 1.0 0.35 0.08 10.0 (+ 0.5 (* 1.5 u)) 5)))
-  (at 77 (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))
-      (play-sfx :explode) (play-sfx :konpaku-shatter) (shake 0.3 0.4) (ui-flash 1.0 0.6 0.25 0.7)))
+  (at 12 (card :black a) (shot-on a 25 2.9 0.7 :look 1.3 :off -0.8) (lens 45 10) (silence 52)
+      (caption "城郭炎上" :reading "JOKAKU ENJO" :sub "KIKON" :side 1 :hanko t))
+  (at 70 (card nil) (shot-pair a v (camera-side a) 7.5 3.6) (lens 50))
+  (during (12 186) (unless *card*                        ; the card beat: only Yamamoto and his blade's fire; the dome
+                     (let ((q (pos-of v)))               ; detonates at 85 % of its 1.96 s from f42: f142
+                       (vfx-fire-dome (aref q 0) (aref q 2) 1.7 (/ (- cf 42) 60.0) 1.96 (cine-dt))
+                       (add-point-light (aref q 0) 1.5 (aref q 2) 1.0 0.35 0.08 10.0 (+ 0.5 (* 1.5 u)) 5))))
+  (at 100 (shot-on v 150 3.8 0.35 :look 1.4) (lens 88) (setf *caption* nil))
+  (at 120 (hold-both a v 22) (silence 22) (lens 70))
+  (during (120 142) (shot-on v 150 (- 3.6 (* 0.6 u)) (+ 0.4 (* 0.05 u)) :look 1.4))   ; a slow push-in, not cuts
+  (at 142 (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))
+      (impact-frame :negative 2) (let ((q (pos-of v))) (impact-splash (aref q 0) 0.0 (aref q 2) 16 0.07))
+      (play-sfx :explode) (play-sfx :konpaku-shatter) (shake 0.3 0.4))
+  (at 144 (impact-frame :manga 12))
+  (at 156 (shot-pair a v (- (camera-side a)) 9.0 1.6) (lens 48)))
 
-(defcine yama-tenchi-cine (a v :len 96 :hold 26)
-  "Tenchi Kaijin: one slash; the world goes ash-grey, a white line crosses the screen, the victim
-bursts into ash."
+(defcine yama-tenchi-cine (a v :len 168 :hold 26)
+  "Tenchi Kaijin (§4.1; paced by user review 3): beat 0 in the Bankai's grey; a long black card, Yamamoto silhouetted
+with a white back-rim under the 北 / 天地灰尽 stamp, silence; the slash: a white / ink two-tone frame with the hard white
+slash, then a manga page; the victim flakes into ash (an ink splash) in the same shot; a low wide of him standing in the
+grey world."
   (at 0 (face-each-other a v 2.4)
-      (cine-clip a :ya-tenchi :blend 2) (cine-clip v :sh-kikon-victim :blend 4)
-      (shot-on a 70 4.2 1.2 :look 1.1 :ahead 1.2)
-      (caption "TENCHI KAIJIN" :sub "KIKON" :color '(0.95 0.95 0.95 1)))
-  (during (0 18) (setf *grade-desat* u))
-  (during (18 96) (setf *grade-desat* 1.0) (vfx-tenchi-slash (/ (- cf 18) 60.0) 0.6))
-  (at 18 (play-sfx :kikon-slash) (ui-flash 1 1 1 0.9 4.0) (shot-pair a v 1 5.0 1.4))
-  (at 30 (multiple-value-bind (x y z) (actor-point v 1.0) (vfx-ash-burst x y z) (vfx-konpaku-shatter x y z 3))
+      (cine-clip a :ya-tenchi :blend 2 :speed (/ 18.0 68.0)) (cine-clip v :sh-kikon-victim :blend 4)
+      (hold-both a v 12) (impact-frame :negative 2) (cine-grade :spot))
+  (at 12 (card :black a) (back-rim 56) (shot-on a 70 3.2 0.9 :look 1.2 :off 0.8) (lens 42 -8) (silence 56)
+      (caption "天地灰尽" :mark "北" :reading "TENCHI KAIJIN" :sub "ZANKA NO TACHI" :side 0 :hanko t))
+  (during (68 168) (vfx-tenchi-slash (/ (- cf 68) 60.0) 0.8))
+  (at 68 (card nil) (play-sfx :kikon-slash) (impact-frame :two-tone 4) (shot-pair a v 1 5.0 1.4) (lens 55))
+  (at 72 (impact-frame :manga 12))
+  (at 86 (multiple-value-bind (x y z) (actor-point v 1.0) (vfx-ash-burst x y z) (vfx-konpaku-shatter x y z 3))
       (setf (model-alpha (model v)) 0f0)
-      (play-sfx :konpaku-shatter) (play-sfx :sizzle) (shake 0.2 0.3)))
+      (let ((q (pos-of v))) (impact-splash (aref q 0) 0.0 (aref q 2) 14 0.07))
+      (play-sfx :konpaku-shatter) (play-sfx :sizzle) (shake 0.2 0.3))
+  (at 110 (shot-on a -35 4.6 0.5 :look 1.3) (lens 48) (setf *caption* nil)))
 
-(defcine yama-bankai-cine (a v :len 72 :hold 44)
-  "BANKAI: every fire in the arena is drawn into the blade, the blade chars black with an ember edge,
-the plaza cracks and dries. 卍解 / ZANKA NO TACHI."
-  (at 0 (cine-clip a :ya-bankai :blend 3 :speed (/ 2.2 1.2)) (cine-clip v (kit-stance (kit-of v)) :blend 6)
+(defcine yama-bankai-cine (a v :len 138 :hold 72)
+  "BANKAI (§5's reveal; paced by user review 3): beat 0; every flame in the arena is drawn into the blade (close, low,
+wide-angle, focus lines); from behind, in silence, the world drains to grey; the reveal, held long: a negative, then
+Yamamoto a black silhouette on a white card, the only colour the ember line of the charred blade, the 卍解 / 残火の太刀
+stamp in black with its splash; the charcoal burst and the plaza cracks in the grey world."
+  (at 0 (cine-clip a :ya-bankai :blend 3 :speed (/ 2.2 1.8)) (cine-clip v (kit-stance (kit-of v)) :blend 6)
       (setf (model-weapon (model a)) :ryujin-jakka)
-      (let ((p (pos-of a))) (vfx-awaken-burst (aref p 0) 0.0 (aref p 2) :bankai))   ; every flame sucked in
-      (shot-on a 20 3.4 0.9 :look 1.5)
+      (hold-both a v 12) (impact-frame :negative 2)
       (play-sfx :awaken-rise))
-  (during (0 40) (let ((p (pos-of a)))
-                   (vfx-charge (aref p 0) 2.4 (aref p 2) u (frame-dt))
-                   (vfx-aura (aref p 0) 0.0 (aref p 2) 2.2 :hellfire (/ cf 60.0) (frame-dt) :k (- 1.0 u))))
-  (at 40 (setf (model-weapon (model a)) :zanka)
-      (let ((p (pos-of a)))
+  (at 12 (let ((p (pos-of a))) (vfx-awaken-burst (aref p 0) 0.0 (aref p 2) :bankai))   ; every flame sucked in
+      (shot-on a 25 1.5 0.45 :look 1.45) (lens 88 6) (focus-lines 36))
+  (during (12 60) (let ((p (pos-of a)))
+                    (vfx-charge (aref p 0) 2.4 (aref p 2) u (cine-dt))
+                    (vfx-aura (aref p 0) 0.0 (aref p 2) 2.2 :hellfire (/ cf 60.0) (cine-dt) :k (- 1.0 u))))
+  (at 40 (silence 20) (shot-on a 200 3.0 0.8 :look 1.4) (lens 50))
+  (at 44 (cine-grade :spot))                             ; the form's grey (main.lisp FORM-GRADE takes over after)
+  (at 60 (setf (model-weapon (model a)) :zanka)
+      (impact-frame :negative 2) (card :white a) (silhouette-black a)
+      (caption "卍解" :kanji2 "残火の太刀" :reading "BANKAI" :sub "ZANKA NO TACHI" :side 0 :ink t)
+      (play-sfx :awaken-boom) (shake 0.25 0.4)
+      (shot-on a 15 4.4 0.6 :look 1.25 :off 0.9) (lens 40))
+  (at 118 (card nil) (unsilhouette) (shot-on a -30 6.5 1.6 :look 1.1) (lens 50)
+      (let ((p (pos-of a)))                              ; back in the grey world: the charcoal burst, the plaza cracks
         (vfx-awaken-burst (aref p 0) 0.0 (aref p 2) :bankai-burst)
         (stage-crack-add (aref p 0) (aref p 2) 3.0)
         (stage-crack-add (+ (aref p 0) 3.5) (- (aref p 2) 2.0) 2.2)
-        (stage-crack-add (- (aref p 0) 3.0) (+ (aref p 2) 2.5) 2.4))
-      (caption "ZANKA NO TACHI" :kanji :bankai :color '(1 0.55 0.2 1))
-      (play-sfx :awaken-boom) (shake 0.25 0.4) (ui-flash 1 0.5 0.15 0.6)
-      (shot-on a 35 5.0 1.6 :look 1.2))
-  (during (40 72) (setf *grade-desat* u)))   ; into the form's spot-keep grey (main.lisp FORM-GRADE)
+        (stage-crack-add (- (aref p 0) 3.0) (+ (aref p 2) 2.5) 2.4))))

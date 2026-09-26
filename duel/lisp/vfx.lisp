@@ -1,6 +1,6 @@
 ;;;; vfx.lisp — SOUL DUEL's visual effects: fire (blade, wave, fireball, pillars, dome), auras,
 ;;;; ground cuts, sky split, hit sparks, Hoho, shatters, awakening bursts, and the UI helpers the
-;;;; HUD / cinematics share (hand-authored kanji drawn with the engine's UI-BITMAP).
+;;;; HUD / cinematics share.
 ;;;; Everything is cosmetic: RND01 only (never SIM-RND01), no gameplay state.
 ;;;; Units: x y z metres (y up), YAW radians with forward = (-sin yaw, -cos yaw) (the duel/RAVEN
 ;;;; convention), AGE seconds since the effect started, LIFE its total seconds, DT real seconds of
@@ -889,29 +889,26 @@ END-CINE also resets it). Shoot it down the cut (camera on the cut line) so seam
          (wide (* ui (+ 3.0 (* 40.0 (max 0.0 (- 1.0 (/ age 0.12))))))))
     (vfx-line-cut (- x (* 8 fx)) (- z (* 8 fz)) (+ x (* 8 fx)) (+ z (* 8 fz)) age life :meteor)
     (setf *grade-split* (f32 (* 0.035 h (max 0.0 (min 1.0 (/ age 0.03) (/ (- 0.2 age) 0.05))))))
-    (when (< age 0.1) (ui-rect 0 0 (window-width) h (list 1 1 0.9 (* 0.45 (- 1 (/ age 0.1))))))
-    (let ((gw (* ui 40)))
-      (ui-gradient (- sx gw) 0 gw h (%ui-col *sky-c0* 1 0.85 0.3 0) (%ui-col *sky-c1* 1 0.85 0.3 (* 0.45 fade)) :vertical nil)
-      (ui-gradient sx 0 gw h *sky-c1* *sky-c0* :vertical nil))
-    (ui-rect (- sx (* 0.5 wide)) 0 wide h (list 1 1 0.95 fade))
+    (let ((iw (+ wide (* ui 5))))                        ; a hard white band with ink borders (no glow: the frame's
+      (ui-rect (- sx (* 0.5 iw)) 0 iw h (%ui-col *sky-c0* 0.03 0.03 0.047 fade))   ; negative / manga page is the flash)
+      (ui-rect (- sx (* 0.5 wide)) 0 wide h (%ui-col *sky-c1* 1 1 0.97 fade)))
     nil))
 
 (defvar *ts-c0* (make-f32 4)) (defvar *ts-c1* (make-f32 4))
 (defun vfx-tenchi-slash (age life)
-  "Tenchi Kaijin: a full-screen white slash (UI space) sweeping lower-left → upper-right in
-0.07 s, a white flash, then thinning out over LIFE. Pair with *GRADE-DESAT* 1 and VFX-ASH-BURST."
+  "Tenchi Kaijin: a full-screen hard white slash (UI space) with an ink border, sweeping lower-left → upper-right
+in 0.07 s, then thinning out over LIFE (no translucent wedge, no flash: the cinematic's two-tone frame is the
+flash). Pair with the grey grade and VFX-ASH-BURST."
   (let* ((w (window-width)) (h (window-height)) (v (min 1.0 (/ age (max life 0.01))))
          (sweep (min 1.0 (/ age 0.07))) (th (* h 0.016 (+ 1 (* 2 (max 0.0 (- 1 (/ age 0.17))))) (- 1 (* v v v))))
          (ax (* -0.05 w)) (ay (* 0.8 h)) (bx (+ ax (* sweep 1.1 w))) (by (+ ay (* sweep -0.6 h)))
          (mx (* 0.5 (+ ax bx))) (my (* 0.5 (+ ay by)))
          (len (max 1.0 (sqrt (+ (expt (- bx ax) 2) (expt (- by ay) 2)))))
          (nx (/ (- ay by) len)) (ny (/ (- bx ax) len)))
-    (when (< age 0.12) (ui-rect 0 0 w h (list 1 1 1 (* 0.75 (- 1 (/ age 0.12))))))
     (flet ((spindle (k c)
-             (%ui-poly4 ax ay mx (- my (* k ny)) bx by bx by c c)
              (%ui-poly4 ax ay (+ mx (* k nx)) (+ my (* k ny)) bx by bx by c c)
              (%ui-poly4 ax ay (- mx (* k nx)) (- my (* k ny)) bx by bx by c c)))
-      (spindle (* 5 th) (%ui-col *ts-c0* 1 0.95 0.85 (* 0.25 (- 1 v))))
+      (spindle (+ th (* 3 (ui-scale))) (%ui-col *ts-c0* 0.03 0.03 0.047 (- 1 (* v v))))
       (spindle th (%ui-col *ts-c1* 1 1 1 (- 1 (* v v)))))
     nil))
 
@@ -935,11 +932,11 @@ dark flakes, a few burning edges. One-shot (~110 particles)."
                (rnd-range -0.5f0 0.5f0) (rnd-range 0.5f0 1.5f0) (rnd-range -0.5f0 0.5f0) 1f0 0.03f0 -0.2f0 1f0 0.45f0 0.1f0))))
 
 (defun-fast vfx-skeleton-dust (x z)
-  "Earth bursting where a South hand claws out (x z): 2 DUST puffs and 2 inked rocks (toon). One-shot."
+  "Earth bursting where a South hand claws out (x z): 1 low DUST puff and 2 inked rocks (toon; more dust hid the arm).
+One-shot."
   (with-floats (x z)
+    (%t-blob x 0.1f0 z (rnd-range -0.8f0 0.8f0) (rnd-range 0.2f0 0.5f0) (rnd-range -0.8f0 0.8f0) 0.5f0 0.2f0 -0.2f0 0.25f0 +pal-dust+)
     (dotimes (i 2)
-      (%t-blob (+ x (rnd-range -0.2f0 0.2f0)) 0.15f0 (+ z (rnd-range -0.2f0 0.2f0)) (rnd-range -0.8f0 0.8f0) (rnd-range 0.6f0 1.4f0)
-               (rnd-range -0.8f0 0.8f0) (rnd-range 0.5f0 0.8f0) (rnd-range 0.18f0 0.28f0) -0.2f0 0.25f0 +pal-dust+)
       (%t-shard x 0.2f0 z (rnd-range -2f0 2f0) (rnd-range 2f0 4f0) (rnd-range -2f0 2f0) (rnd-range 0.5f0 0.8f0)
                 (rnd-range 0.07f0 0.12f0) 9f0 +pal-dust+))))
 
@@ -970,44 +967,43 @@ outward and up for ~0.7 s, sparks, a dark smoke lip at the far edge, an orange f
     nil))
 
 (defun-fast vfx-awaken-burst (x y z kind)
-  "Awakening one-shots at the feet (x y z). KIND :bankai (every flame within 6 m sucked into the
-blade over ~0.45 s: flames and streaks rushing in, an imploding ground ring), :bankai-burst (the
-heat bursting out when the blade is revealed), :nozarashi (a yellow reiatsu pillar + shockwave
-rings)."
+  "Awakening one-shots at the feet (x y z), drawn toon (docs/STYLE_STORM_DESIGN.md §4.1 / §4.2). KIND :bankai (every
+flame within 6 m pulled into the blade: FIRE flames and EMBER shards rushing in to the hands, ~0.45 s), :bankai-burst
+(the reveal: a charcoal double ring with an ember line, charcoal puffs, ash shards: no fire), :nozarashi (the
+yellow reiatsu pillar: REIATSU flames shooting up, a flat ring)."
   (with-floats (x y z)
     (case kind
       (:bankai
-       (dotimes (i (f->i (* 140f0 (the single-float (f32 *fire-density*)))))
-         (let* ((a (rnd-range 0f0 6.2832f0)) (r (rnd-range 2.5f0 6f0)) (h (rnd-range 0.2f0 3.5f0))
-                (px (* r (f-cos a))) (pz (* r (f-sin a))) (ty 1.2f0) (k (rnd-range 2f0 2.4f0)))
-           (declare (single-float a r h px pz ty k))
-           (fx-emit +p-flame+ (+ x px) (+ y h) (+ z pz) (* (- k) px) (* k (- ty h)) (* (- k) pz)
-                    (/ 1f0 k) (rnd-range 0.3f0 0.5f0) 0f0 1f0 0.85f0 0.45f0 0.8f0)))
-       (dotimes (i 40)                                  ; suction streaks (sparks stretch along their speed)
+       (dotimes (i 36)
+         (let* ((a (rnd-range 0f0 6.2832f0)) (r (rnd-range 2.5f0 6f0)) (h (rnd-range 0.2f0 3.2f0))
+                (px (* r (f-cos a))) (pz (* r (f-sin a))) (k (rnd-range 2f0 2.4f0)))
+           (declare (single-float a r h px pz k))
+           (%t-blob (+ x px) (+ y h) (+ z pz) (* (- k) px) (* k (- 1.4f0 h)) (* (- k) pz) (/ 1f0 k) (rnd-range 0.2f0 0.35f0)
+                    0f0 0.3f0 +pal-fire+)))
+       (dotimes (i 16)
          (let* ((a (rnd-range 0f0 6.2832f0)) (r (rnd-range 3f0 6f0)) (h (rnd-range 0.3f0 3f0))
                 (px (* r (f-cos a))) (pz (* r (f-sin a))))
            (declare (single-float a r h px pz))
-           (fx-emit +p-spark+ (+ x px) (+ y h) (+ z pz) (* -2.4f0 px) (* 2.4f0 (- 1.2f0 h)) (* -2.4f0 pz)
-                    0.4f0 0.06f0 0f0 1f0 0.6f0 0.2f0)))
-       (fx-ring x (+ y 0.05) z 6.0 0.3 0.45 1.0 0.45 0.1 :flat t :width 0.35)
-       (fx-ring x (+ y 1.2) z 3.5 0.2 0.4 1.0 0.6 0.25 :width 0.15))
+           (%t-shard (+ x px) (+ y h) (+ z pz) (* -2.4f0 px) (* 2.4f0 (- 1.4f0 h)) (* -2.4f0 pz) 0.4f0 0.12f0 0f0 +pal-ember+))))
       (:bankai-burst
-       (fx-burst +p-mist+ 20 x (+ y 1f0) z 0f0 0.3f0 0f0 1f0 3f0 6f0 1.2f0 0.9f0 0.3f0 0.2f0 0.15f0)
-       (fx-burst +p-spark+ 40 x (+ y 1f0) z 0f0 0.5f0 0f0 1f0 6f0 14f0 0.7f0 0.04f0 1f0 0.5f0 0.15f0)
-       (fx-burst +p-glow+ 30 x (+ y 1f0) z 0f0 0.3f0 0f0 1f0 2f0 5f0 1.2f0 0.05f0 1f0 0.4f0 0.1f0)
-       (fx-ring x (+ y 0.05) z 0.5 7.0 0.6 1.0 0.5 0.2 :flat t :width 0.3)
-       (fx-ring x (+ y 1.0) z 0.3 4.0 0.4 1.0 0.7 0.4 :width 0.15)
-       (flash-light x (+ y 1.0) z 1.0 0.5 0.15))
-      (:nozarashi                                       ; the pillar: yellow, not white (alpha 0.45)
-       (dotimes (i 70)
-         (fx-emit +p-glow+ (+ x (rnd-range -0.4f0 0.4f0)) (+ y (rnd-range 0f0 1f0)) (+ z (rnd-range -0.4f0 0.4f0))
-                  (rnd-range -0.3f0 0.3f0) (rnd-range 10f0 22f0) (rnd-range -0.3f0 0.3f0)
-                  (rnd-range 0.4f0 0.7f0) (rnd-range 0.1f0 0.25f0) 0f0 1f0 0.8f0 0.2f0 0.45f0))
-       (fx-burst +p-spark+ 30 x (+ y 1f0) z 0f0 1f0 0f0 0.6f0 8f0 16f0 0.6f0 0.05f0 1f0 0.9f0 0.4f0)
-       (fx-burst +p-dust+ 20 x (+ y 0.1f0) z 0f0 0.1f0 0f0 1f0 4f0 8f0 0.8f0 0.4f0 0.5f0 0.45f0 0.35f0)
-       (fx-ring x (+ y 0.05) z 0.5 8.0 0.5 1.0 0.85 0.3 :flat t :width 0.3)
-       (fx-ring x (+ y 0.05) z 0.3 5.0 0.35 1.0 1.0 0.7 :flat t :width 0.12)
-       (fx-ring x (+ y 1.2) z 0.3 3.5 0.3 1.0 0.9 0.4 :width 0.12)
+       (stamp :garb x y z :scale 1.2)
+       (dotimes (i 6)
+         (let* ((a (+ (* 1.047f0 (i->f i)) (rnd-range -0.3f0 0.3f0))) (sp (rnd-range 1.2f0 2.2f0)))
+           (declare (single-float a sp))
+           (%t-blob (+ x (* 0.6f0 (f-cos a))) (+ y (rnd-range 0.3f0 1.4f0)) (+ z (* 0.6f0 (f-sin a))) (* sp (f-cos a)) (rnd-range 0.5f0 1.2f0)
+                    (* sp (f-sin a)) (rnd-range 0.9f0 1.3f0) (rnd-range 0.35f0 0.55f0) -0.3f0 0.3f0 +pal-black-smoke+)))
+       (dotimes (i 10)
+         (let* ((a (rnd-range 0f0 6.2832f0)) (sp (rnd-range 3f0 6f0)))
+           (declare (single-float a sp))
+           (%t-shard x (+ y (rnd-range 0.5f0 1.8f0)) z (* sp (f-cos a)) (rnd-range 0.5f0 2.5f0) (* sp (f-sin a))
+                     (rnd-range 0.6f0 1.0f0) (rnd-range 0.1f0 0.2f0) 4f0 +pal-ash+)))
+       (flash-light x (+ y 1.0) z 1.0 0.4 0.12))
+      (:nozarashi
+       (dotimes (i 28)
+         (%t-blob (+ x (rnd-range -0.35f0 0.35f0)) (+ y (rnd-range 0f0 1f0)) (+ z (rnd-range -0.35f0 0.35f0))
+                  (rnd-range -0.3f0 0.3f0) (rnd-range 10f0 20f0) (rnd-range -0.3f0 0.3f0)
+                  (rnd-range 0.35f0 0.6f0) (rnd-range 0.3f0 0.5f0) 0f0 0.3f0 +pal-reiatsu+))
+       (stamp :land x y z :scale 2.4)                  ; (no dust puffs: on the black card they hid him)
        (flash-light x (+ y 1.0) z 1.0 0.85 0.3)))
     nil))
 
@@ -1307,7 +1303,7 @@ drawings; envelope 0 1 3 6."
         (= ph 5)))))
 
 (defun-fast %st-sweep (o)
-  "HIGASHI: a white lens crescent sweeping 4.2 m across his front (DX DZ his facing) from low right, held 2
+  "HIGASHI: a white lens crescent sweeping 3 m across his front (DX DZ his facing) from low right, held 2
 drawings, then an EMBER hairline over it as it erodes; envelope 1 2 4 10."
   (declare (fixnum o))
   (with-stamp (o)
@@ -1315,12 +1311,12 @@ drawings, then an EMBER hairline over it as it erodes; envelope 1 2 4 10."
       (declare (single-float a rx rz))
       (fx-envelope (es k fl ph) (a 1 2 4 10)
         (when (and (> ph 0) (< ph 5))
-          (let* ((ax (+ x (* 1.8f0 dx) (* 2.2f0 rx))) (az (+ z (* 1.8f0 dz) (* 2.2f0 rz)))
-                 (bx (+ x (* 1.8f0 dx) (* -2.2f0 rx))) (bz (+ z (* 1.8f0 dz) (* -2.2f0 rz)))
-                 (cx (+ x (* 4.2f0 dx))) (cz (+ z (* 4.2f0 dz))))
+          (let* ((ax (+ x (* 1.4f0 dx) (* 1.5f0 rx))) (az (+ z (* 1.4f0 dz) (* 1.5f0 rz)))   ; 3 m wide: 4.4 m filled
+                 (bx (+ x (* 1.4f0 dx) (* -1.5f0 rx))) (bz (+ z (* 1.4f0 dz) (* -1.5f0 rz)))   ; the side camera's frame
+                 (cx (+ x (* 3.2f0 dx))) (cz (+ z (* 3.2f0 dz))))
             (declare (single-float ax az bx bz cx cz))
             (if (< ph 4)
-                (fx-crescent ax (+ y 0.7f0) az bx (+ y 1.2f0) bz cx (+ y 1.1f0) cz (* sc es 0.14f0) :lens 0.1f0 seed +pal-hit+ k :push 0.2f0)
+                (fx-crescent ax (+ y 0.7f0) az bx (+ y 1.2f0) bz cx (+ y 1.1f0) cz (* sc es 0.1f0) :lens 0.1f0 seed +pal-hit+ k :push 0.2f0)
                 (fx-crescent ax (+ y 0.7f0) az bx (+ y 1.2f0) bz cx (+ y 1.1f0) cz (* sc 0.03f0) :lens 0.9f0 seed +pal-ember+ k :push 0.2f0))))
         (= ph 5)))))
 
@@ -1522,46 +1518,4 @@ white core. AGE (s) bobs it; no particles."
       (fx-ribbon x (+ y 0.04f0) z (* 0.5f0 lean) (* 0.5f0 h) 0f0 0.035f0 0f0 1f0 (- -5f0 seed) 0.1f0
                  (toon-a +pal-hit+ 0.95f0) 0.2f0 (- -5f0 seed) 0.1f0 (toon-a +pal-hit+ 0.95f0) (* 2f0 dr) 0.03f0 :segs 3 :mode :toon))))
 
-;;; ---------------------------------------------------------------- UI: kanji (UI-BITMAP glyphs)
-(defparameter *kanji*
-  ;; 24 x 24 bit rows, rasterised once from Noto Sans CJK JP Bold (SIL OFL) and checked by eye.
-  '((:manji   ; 卍
-     #x000000 #x000000 #x1FF818 #x1FF838 #x1FF838 #x003838 #x003838 #x003838
-     #x003838 #x003838 #x1FFFF8 #x1FFFF8 #x1FFFF8 #x1C3C00 #x1C3800 #x1C3800
-     #x1C3800 #x1C3800 #x1C3C00 #x1C3FFC #x1C3FFC #x181FF8 #x000000 #x000000)
-    (:kai     ; 解
-     #x000000 #x0C0000 #x0E0FFC #x0F8FFC #x1FCFFC #x1DC38C #x39838C #x7FF71C
-     #x7FFF7C #x3B7E38 #x1B76E0 #x1FF6E0 #x1FF7FC #x1B7FFC #x1B7FFC #x1FFCE0
-     #x1FF4E0 #x387FFE #x387FFE #x3070E0 #x31F0E0 #x71E0E0 #x20C0E0 #x000000)
-    (:no      ; 野
-     #x000000 #x000000 #x3FF7FC #x3FF7FC #x333038 #x333178 #x3FF3F0 #x3FF1E0
-     #x3330F8 #x3FF7FE #x3FFFFE #x3FF7FE #x0300CC #x3FF0CC #x3FF0DC #x3FF0C0
-     #x0300C0 #x0300C0 #x07F8C0 #x7FF9C0 #x7FE7C0 #x2007C0 #x000000 #x000000)
-    (:zarashi ; 晒
-     #x000000 #x003FFC #x3F7FFE #x3F7FFE #x3F06E0 #x3306E0 #x333FFC #x333FFC
-     #x333FFC #x3F36CC #x3F36CC #x3B36CC #x3336CC #x333EFC #x333C7C #x3B380C
-     #x3F300C #x3F300C #x383FFC #x303FFC #x003FFC #x00300C #x000000 #x000000)
-    (:ki      ; 鬼
-     #x000000 #x00E000 #x00E000 #x0FFFF0 #x0FFFF0 #x0FFFF0 #x0E1870 #x0FFFF0
-     #x0FFFF0 #x0E3C70 #x0E1870 #x0FFFF0 #x0FFFF0 #x0FFFF0 #x00CCC0 #x01CCD0
-     #x01CD98 #x03CFF8 #x078FFC #x0F0C0E #x3F0FFE #x3C0FFC #x1003F8 #x000000)
-    (:kon     ; 魂
-     #x000000 #x000700 #x000700 #x3F9FF8 #x3F9FFC #x001BDC #x00199C #x001FFC
-     #x7FDFFC #x7FD99C #x7FD99C #x0C1FFC #x1D9FFC #x198FC0 #x198FD8 #x3BCFDC
-     #x7FCDF4 #x7FCDFC #x20DDF4 #x0039C6 #x0079FE #x0070FE #x000000 #x000000))
-  "Glyph key → 24 bit rows (MSB = left).")
 
-(defparameter *kanji-words* '((:bankai :manji :kai) (:nozarashi :no :zarashi) (:kikon :ki :kon))
-  "Word key → its glyph keys.")
-
-(defun ui-kanji (key x y px &key (color '(1 1 1 1)) color2 (align :left) (shear 0.0))
-  "Draw kanji KEY — a word (:bankai 卍解, :nozarashi 野晒, :kikon 鬼魂) or one glyph (:manji :kai
-:no :zarashi :ki :kon) — as 24×24 blocks of PX pixels, top at Y. ALIGN :left/:center/:right
-relative to X. Returns the width in pixels (glyphs 24 px·PX apart plus a 2-block gap)."
-  (let* ((glyphs (or (rest (assoc key *kanji-words*)) (list key)))
-         (step (* 26 px)) (w (- (* step (length glyphs)) (* 2 px)))
-         (x0 (- x (ecase align (:left 0) (:center (/ w 2)) (:right w)))))
-    (loop for g in glyphs for i from 0 do
-      (ui-bitmap (rest (or (assoc g *kanji*) (error "no kanji ~s" g))) (+ x0 (* i step)) y px
-                 :color color :color2 color2 :shear shear :width 24))
-    w))

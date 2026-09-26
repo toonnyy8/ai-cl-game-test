@@ -23,7 +23,7 @@
 (defparameter *ember* '(1 0.55 0.2 1))
 (defparameter *shade* '(0 0 0 0.75) "HUD-TEXT's drop shadow.")
 
-(defmacro hud-dt () "This frame's HUD seconds: 0 while paused (nothing moves under the pause menu)." `(if *paused* 0.0 (frame-dt)))
+(defmacro hud-dt () "This frame's HUD seconds: 0 while the effects are frozen (paused: nothing moves under the pause menu)." `(if (fx-frozen-p) 0.0 (frame-dt)))
 
 (defun hud-pulse (hz)
   "0..1, HZ times a second (real time)."
@@ -85,61 +85,47 @@ UI-TEXT no longer conses per glyph either; the HUD keeps its block look.)"
   `(+ 0.5f0 (* 0.5f0 (f-sin (* ,(* 2 (float pi 1f0) hz) ,tm)))))
 
 ;;; ---------------------------------------------------------------- big words
-(defstruct (word (:constructor make-word (text sub color secs kanji small side)))
-  text sub color secs kanji small side (t0 (fx-clock))
-  (col (list 1.0 1.0 1.0 1.0)) (shadow (list 0.0 0.0 0.0 0.8)))   ; this frame's colours (alpha fades)
+(defstruct (word (:constructor make-word (text sub color secs small side)))
+  text sub color secs small side (t0 (fx-clock))
+  (col (list 1.0 1.0 1.0 1.0)))                                   ; its colour (r g b 1)
 (defvar *words* nil "Big words on screen, newest first.")
 (defun clear-words () (setf *words* nil))
 
-(defun announce (text &key sub (color *white*) (secs 1.0) kanji small side)
+(defun announce (text &key sub (color *white*) (secs 1.0) small side)
   "Show TEXT big in the middle (SMALL: smaller, upper lane; SIDE 0 / 1: over that side's panel),
-with SUB under it and an optional KANJI word (:bankai :nozarashi) above it."
-  (let ((wd (make-word text sub color secs kanji small side)))
+with SUB under it."
+  (let ((wd (make-word text sub color secs small side)))
     (setf (first (word-col wd)) (f32 (first color)) (second (word-col wd)) (f32 (second color))
           (third (word-col wd)) (f32 (third color)))
     (setf *words* (cons wd (remove-if (lambda (w) (and (not (word-side w)) (eq (word-small w) small))) *words*)))))
 
-(defun word-layout (x w h s)
-  "Word X on a W x H screen at UI scale S. Values: centre x, centre y, block-pixel size (the pop-in
-shrinks it over the first 0.08 s)."
-  (let ((k (min 1.0 (/ (- (fx-clock) (word-t0 x)) 0.08))))
-    (values (case (word-side x) (0 (* 0.2 w)) (1 (* 0.8 w)) (t (floor w 2)))
+(defun word-layout (x w h)
+  "Word X on a W x H screen. Values: centre x, the caps' middle y, the brush em in px (the pop-in shrinks it over
+the first 0.08 s; a long word shrinks to 92 % of the width)."
+  (let* ((k (min 1.0 (/ (- (fx-clock) (word-t0 x)) 0.08)))
+         (em (* h (cond ((word-side x) 0.05) ((word-small x) 0.085) (t (* 0.13 (+ 1.0 (* 0.5 (- 1 k)))))))))
+    (values (case (word-side x) (0 (* 0.2 w)) (1 (* 0.8 w)) (t (* 0.5 w)))
             (if (or (word-side x) (word-small x)) (* 0.3 h) (* 0.45 h))
-            (round (* s (cond ((word-side x) 3) ((word-small x) 5) (t (+ 8 (* 4 (- 1 k))))))))))
+            (min em (/ (* 0.92 w) (max 0.1 (line-width (word-text x))))))))
 
-(defun word-box (x w h s)
-  "Screen box of word X (text + sub, not the kanji). Values: x0 y0 x1 y1."
-  (multiple-value-bind (cx cy px) (word-layout x w h s)
-    (let* ((px (max 1 (min px (floor (* 0.92 w) (max 1 (+ 2 (text-width (word-text x) 1)))))))
-           (hw (* 0.5 (+ (text-width (word-text x) px) (* 2 px)))))
-      (values (- cx hw) (- cy (* 3.5 px)) (+ cx hw) (+ cy (if (word-sub x) (+ (* 26 s) (* 14 s)) (* 3.5 px)))))))
+(defun word-box (x w h)
+  "Screen box of word X (text + sub). Values: x0 y0 x1 y1."
+  (multiple-value-bind (cx cy em) (word-layout x w h)
+    (let ((hw (* 0.5 em (line-width (word-text x)))))
+      (values (- cx hw) (- cy (* 0.45 em)) (+ cx hw) (+ cy (if (word-sub x) (* 1.05 em) (* 0.45 em)))))))
 
-(defun draw-words (w h s)
+(defun draw-words (w h)
+  "The big words (ANNOUNCE) in brush Latin, fading out over their last 0.25 s."
   (setf *words* (delete-if (lambda (x) (> (- (fx-clock) (word-t0 x)) (word-secs x))) *words*))
   (dolist (x *words*)
     (let* ((age (- (fx-clock) (word-t0 x)))
-           (fade (min 1.0 (/ (- (word-secs x) age) 0.25)))
-           (col (alpha! (word-col x) fade)) (shadow (alpha! (word-shadow x) (* 0.8 fade))))
-      (multiple-value-bind (cx cy px) (word-layout x w h s)
-        (when (word-kanji x)
-          (let ((kp (max 2 (round (* 2.5 s)))))
-            (ui-kanji (word-kanji x) (+ cx (* 2 s)) (+ (- cy (* 72 kp)) (* 2 s)) (* 2 kp) :color shadow :align :center)
-            (ui-kanji (word-kanji x) cx (- cy (* 72 kp)) (* 2 kp) :color col :color2 '(0.6 0.1 0.05 1) :align :center)))
-        (ui-big-text (word-text x) cx cy px col shadow s)
+           (fade (min 1.0 (/ (- (word-secs x) age) 0.25))) (col (word-col x)))
+      (multiple-value-bind (cx cy em) (word-layout x w h)
+        (set-line cx cy em col fade) (setf (aref *bl* 7) (line-width (word-text x))) (brush-line (word-text x))
         (when (word-sub x)
-          (hud-text (word-sub x) cx (+ cy (* 26 s)) (* 2 s) col :align :center))))))
-
-;;; ---------------------------------------------------------------- cinematic captions
-(defun draw-caption (w h s)
-  "The running cinematic's title (cinema.lisp CAPTION): kanji up top, the name in the lower third."
-  (destructuring-bind (text sub color kanji) *caption*
-    (let ((cy (* 0.8 h)) (shadow '(0 0 0 0.85)))
-      (when kanji
-        (let ((px (* 3 s)))
-          (ui-kanji kanji (+ (floor w 2) (* 2 s)) (+ (* 0.14 h) (* 2 s)) px :color shadow :align :center)
-          (ui-kanji kanji (floor w 2) (* 0.14 h) px :color color :color2 '(0.55 0.08 0.04 1) :align :center)))
-      (ui-big-text text (floor w 2) cy (* 6 s) color shadow s)
-      (when sub (hud-text sub (floor w 2) (- cy (* 44 s)) (* 2 s) *white* :align :center)))))
+          (let ((se (max (* 0.032 h) (* 0.36 em))))
+            (set-line cx (+ cy (* 0.55 em) (* 0.5 se)) se col fade) (setf (aref *bl* 7) (line-width (word-sub x)))
+            (brush-line (word-sub x))))))))
 
 ;;; ---------------------------------------------------------------- side panels: the meters
 (declaim (type f32vec *trail-v* *pip-t* *hud-v*))
@@ -402,21 +388,41 @@ callout: above the box it hits, or below it when above would reach the side pane
                (let ((up (- by0 gap th)))
                  (setf y0 (if (>= up (* 0.22 h)) up (+ by1 gap)) y1 (+ y0 th))))))
       (dolist (wd *words*)
-        (multiple-value-bind (bx0 by0 bx1 by1) (word-box wd w h s) (dodge bx0 by0 bx1 by1)))
+        (multiple-value-bind (bx0 by0 bx1 by1) (word-box wd w h) (dodge bx0 by0 bx1 by1)))
       (let ((cb *callout-box*))
         (when (svref cb 0) (dodge (svref cb 1) (svref cb 2) (svref cb 3) (svref cb 4)))))
     y0))
 
+(defvar *callout-seen* (vector nil nil 0 0) "Per side: the callout string last seen and its frames left then.")
+(defvar *side-caps* (vector nil nil) "Per side: the brush callout (a BCAP, brush.lisp *BRUSH-CALLOUTS*) or NIL.")
+
+(defun side-cap (e)
+  "Fighter E's brush callout: a new callout (a new string, or its frames reset) of a move with a brush name
+(*BRUSH-CALLOUTS*) starts one at his side of the screen; T while it is shown (the pixel callout then stays off)."
+  (let* ((f (fighter e)) (side (fighter-side f)) (seen *callout-seen*) (str (fighter-callout f)) (ct (fighter-callout-t f)))
+    (when (and str (> ct 0) (or (not (eq str (svref seen side))) (> ct (svref seen (+ 2 side)))))
+      (let ((entry (and (fighter-move f) (assoc (mv-name (fighter-move f)) *brush-callouts*))))
+        (setf (svref *side-caps* side)
+              (and entry (destructuring-bind (kanji reading mark) (rest entry)
+                           (make-bcap kanji :reading reading :mark mark :layout :callout :side side :secs 1.3))))))
+    (setf (svref seen side) str (svref seen (+ 2 side)) ct)
+    (let ((c (svref *side-caps* side)))
+      (and c (or (draw-bcap c (window-width) (window-height)) (setf (svref *side-caps* side) nil))))))
+
 (defun hud-world (e w h s)
-  "Over fighter E in the world: his move-name callout; the red soul flame when he is red."
+  "Over fighter E in the world: his move-name callout (or its brush column at his side); the red soul flame
+when he is red."
   (let* ((f (fighter e)) (g (gauges e)) (p (pos-of e)) (v *hud-v*)
          (top (+ (aref p 1) (body-hurt-h (model-body (model e))) 0.5)))
-    (when (and (> (fighter-callout-t f) 0) (fighter-callout f) (world-to-screen v (aref p 0) (+ top 0.3) (aref p 2)))
-      (let* ((str (fighter-callout f)) (sc (* 2 s)) (tw (text-width str sc)) (th (* 7 sc))
+    (when (and (not (side-cap e)) (> (fighter-callout-t f) 0) (fighter-callout f)
+               (world-to-screen v (aref p 0) (+ top 0.3) (aref p 2)))
+      (let* ((str (fighter-callout f)) (em (* 0.045 h)) (tw (round (* em (line-width str)))) (th (round (* 0.8 em)))
              (x0 (round (- (aref v 0) (* 0.5 tw)))) (y0 (callout-y x0 (round (aref v 1)) (+ x0 tw) (+ (round (aref v 1)) th) w h s))
              (cb *callout-box*))
         (setf (svref cb 0) t (svref cb 1) x0 (svref cb 2) (round y0) (svref cb 3) (+ x0 tw) (svref cb 4) (+ (round y0) th))
-        (hud-text str x0 y0 sc (alpha! *c-callout* (min 1.0 (/ (fighter-callout-t f) 20.0))))))
+        (set-line (+ x0 (* 0.5 tw)) (+ y0 (* 0.5 th)) em *c-callout* (min 1.0 (/ (fighter-callout-t f) 20.0)))
+        (setf (aref *bl* 7) (line-width str))
+        (brush-line str)))
     (when (red-p (gauges-reishi g) (gauges-reishi-max g))
       (vfx-soul-flame (aref p 0) top (aref p 2) (fx-clock)))))
 
@@ -503,6 +509,8 @@ from the rusher to his victim."
 (defparameter *results-rows* '("DAMAGE" "KIKONS" "PERFECT HOHOS" "BEST COMBO" "KONPAKU LEFT"))
 (defvar *results-cache* (cons nil nil) "(match-tick . strings) of the results table, made once per match.")
 
+(defvar *results-cap* (make-bcap "勝" :layout :results) "The results screen's 勝 stamp (white on the black card).")
+
 (defun results-strings ()
   "The results table's strings: #(winner-line p1-values p2-values time-line), cached per match."
   (let ((c *results-cache*))
@@ -511,6 +519,7 @@ from the rusher to his victim."
                (let ((g (gauges e)))
                  (mapcar (lambda (n) (format nil "~d" n))
                          (list (gauges-dealt g) (gauges-kikons g) (gauges-perfects g) (gauges-best-combo g) (gauges-konpaku g))))))
+        (bcap-restart *results-cap*)                           ; a new result: the 勝 stamps in again
         (setf (car c) *match-tick*
               (cdr c) (vector (case *winner* (0 (format nil "~a  (P1)" (kit-name (kit-of *p1*))))
                                             (1 (format nil "~a  (P2)" (kit-name (kit-of *p2*)))))
@@ -523,11 +532,15 @@ from the rusher to his victim."
 WINNER + name, the stats table (P1 / P2 columns), the match time, the menu."
   (let* ((rs (results-strings)) (sc (max 1 (round (* 1.5 s)))) (row (* 11 sc))
          (px (* 0.04 w)) (pw (+ (* 28 s) (* 131 sc))) (cx (+ px (* 0.5 pw))))   ; fits "PERFECT HOHOS" + 2 columns
-    (ui-gradient px 0 pw h '(0.03 0.02 0.05 0.72) '(0.05 0.02 0.03 0.6))
-    (ui-rect (+ px pw) 0 (* 2 s) h '(1 0.55 0.2 0.5))
-    (ui-big-text (if (svref rs 0) "WINNER" "DRAW") cx (* 0.1 h) (* 5 s) '(1 0.85 0.3 1) '(0.6 0.15 0.05 1) s)
-    (when (svref rs 0) (hud-text (svref rs 0) cx (* 0.17 h) (fit-scale (svref rs 0) (* 2 s) (- pw (* 8 s))) *white* :align :center))
-    (let* ((y0 (* 0.28 h)) (lx (+ px (* 10 s))) (c1 (+ px (* 18 s) (* 89 sc))) (c2 (+ c1 (* 30 sc))))
+    (ui-rect px 0 pw h '(0.031 0.031 0.047 0.94))                ; a black card (§4.4)
+    (ui-rect (+ px pw) 0 (max 1 (round s 2)) h '(0.96 0.96 0.94 0.8))
+    (if (svref rs 0)
+        (let ((c *results-cap*))                                 ; the big brush 勝 replaces WINNER
+          (setf (aref (bcap-f c) 6) (f32 (/ cx w)))
+          (draw-bcap c w h)
+          (hud-text (svref rs 0) cx (* 0.29 h) (fit-scale (svref rs 0) (* 2 s) (- pw (* 8 s))) *white* :align :center))
+        (progn (set-line cx (* 0.12 h) (* 0.13 h) *white*) (setf (aref *bl* 7) (line-width "DRAW")) (brush-line "DRAW")))
+    (let* ((y0 (* 0.36 h)) (lx (+ px (* 10 s))) (c1 (+ px (* 18 s) (* 89 sc))) (c2 (+ c1 (* 30 sc))))
       (hud-text "P1" c1 y0 sc '(1 0.6 0.3 1) :align :center)
       (hud-text "P2" c2 y0 sc '(0.5 0.7 1 1) :align :center)
       (loop for label in *results-rows* for a in (svref rs 1) for b in (svref rs 2) for i from 1
@@ -562,9 +575,9 @@ WINNER + name, the stats table (P1 / P2 columns), the match time, the menu."
         (ui-rect 0 0 w h c))
       (setf (aref f 3) (f32 (max 0.0 (- (aref f 3) (* (aref f 4) (hud-dt)))))))
     (draw-screen-fx w h)                                 ; focus lines (under the HUD)
-    (when *cine*                                         ; letterbox + the cinematic's title
+    (when *cine*                                         ; letterbox + the cinematic's brush title
       (ui-rect 0 0 w (* 0.09 h) '(0 0 0 1)) (ui-rect 0 (* 0.91 h) w (* 0.09 h) '(0 0 0 1))
-      (when *caption* (draw-caption w h s)))
+      (when *caption* (draw-bcap *caption* w h)))
     (case *flow*
       (:title (hud-title w h s))
       (:mode (ui-big-text "SOUL DUEL" (floor w 2) (* 0.2 h) (* 6 s) '(1 0.92 0.8 1) '(0.7 0.18 0.05 1) s)
@@ -573,7 +586,7 @@ WINNER + name, the stats table (P1 / P2 columns), the match time, the menu."
       (:select (hud-select w h s))
       ((:battle :finish) (unless *cine* (hud-battle w h s)))
       (:results (hud-results w h s)))
-    (draw-words w h s)
+    (draw-words w h)
     (when (and *paused* (eq *flow* :battle))
       (ui-rect 0 0 w h '(0 0 0 0.55))
       (ui-big-text "PAUSED" (floor w 2) (* 0.3 h) (* 5 s) *white* '(0.7 0.25 0.05 1) s)

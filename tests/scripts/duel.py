@@ -14,9 +14,10 @@
 #   node tools/run.mjs dist/duel --secs 140 --script tests/scripts/duel-shots.json    tests/shots/duel-*.png
 # Determinism: run a cvc script twice (or once with turbo and once without: drop the 2102 step) and
 #   diff <(grep '^duel' run1.log) <(grep '^duel' run2.log)   -> empty.
-# Reference (the Bankai stances, the Kikon dash-in, the slower guard refill, 2026-09-26): duel-cvc-yk.json (seed 7) ends
-#   duel -> RESULTS winner P2 konpaku 0-3 ticks 8054 secs 134.2    (turbo and real time alike; also after a gate)
-#   (before: P1 1-0 ticks 9438 secs 157.3 with the gauges and the O modules; P1 2-0 ticks 9780 secs 163.0 with the Kikon rush; P2 0-1 ticks 7298 secs 121.6 with the instant Kikon; 0-4 ticks 5857 secs 97.6 with a timed Bankai;
+# Reference (the Kikon / awakening cinematics slowed, their caption close-ups held +30 f: user review 3, 2026-09-26):
+# duel-cvc-yk.json (seed 7) ends
+#   duel -> RESULTS winner P2 konpaku 0-3 ticks 8594 secs 143.2    (turbo and real time alike; also after a gate)
+#   (before: the same match with shorter cinematics, ticks 8384 secs 139.7 and ticks 8054 secs 134.2; P1 1-0 ticks 9438 secs 157.3 with the gauges and the O modules; P1 2-0 ticks 9780 secs 163.0 with the Kikon rush; P2 0-1 ticks 7298 secs 121.6 with the instant Kikon; 0-4 ticks 5857 secs 97.6 with a timed Bankai;
 #   0-7 ticks 5302 secs 88.4 before Burst and the dash)
 import json
 T0 = 9.0          # startup (meshes + sound synthesis) is done by then

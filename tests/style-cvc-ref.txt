@@ -1,48 +1,51 @@
-# G2 reference (style-gates.py cvc): tests/scripts/duel-cvc-PAIR.json, after the Bankai stances with burnout, the Kikon dash-in, the slower guard refill (bankai-kikon part 2), 2026-09-26
+# G2 reference (style-gates.py cvc): tests/scripts/duel-cvc-PAIR.json, after user review 3 of the restyle (STYLE §14 Phase 4): the Kikon / awakening cinematics slowed ~1.45x and then the caption close-ups of the Kikons and the Bankai held +30 f; every combat event is the pre-review reference's shifted by the added cinematic frames (yy +498, yk +540, kk +438 ticks), 2026-09-26
 yy duel hash t=600 | -220 0 -460 -263 IDLE BASE r990 k9 a54 f100 g100 w17 m20 h8 | 89 0 96 51 IDLE BASE r921 k9 a55 f100 g100 w18 m15 h1 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
 yy duel hash t=1200 | 146 0 751 166 IDLE BASE r840 k9 a109 f100 g100 w34 m20 h6 | -443 0 795 -148 IDLE BASE r785 k9 a110 f100 g100 w35 m15 h4 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
 yy duel hash t=1800 | 80 0 1046 223 GUARD BASE r650 k9 a157 f100 g100 w48 m25 h11 | -173 0 1249 -91 IDLE BASE r772 k9 a154 f97 g100 w45 m15 h5 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
 yy duel hash t=2400 | -383 0 1413 -85 MOVE BASE r650 k9 a211 f97 g100 w65 m30 h3 | -122 0 1184 229 GUARD BASE r433 k9 a216 f100 g100 w69 m15 h19 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 1
 yy duel hash t=3000 | 374 0 1226 216 STUN BASE r404 k9 a166 f100 g100 w83 m35 h14 | -157 0 1456 -87 MOVE BASE r420 k9 a165 f100 g100 w82 m30 h0 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
 yy duel hash t=3600 | 164 0 1181 -4 CINE BASE r328 k9 a212 f100 g100 w98 m35 h0 | 176 0 861 310 CINE BASE r1100 k7 a214 f100 g100 w100 m30 h6 | cd 0.0.0.0.0.0.35 0.0.0.0.0.0.40 | haz 0
-yy duel hash t=4200 | 281 0 -158 -312 IDLE BASE r134 k9 a256 f30 g100 w100 m35 h15 | 286 0 343 2 IDLE BANKAI-EAST r1100 k7 a254 f100 g100 w0 m0 h3 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yy duel hash t=4800 | -203 0 634 -172 STEP BANKAI-WEST r1100 k6 a300 f53 g100 w0 m0 h2 | -27 0 551 159 STEP BANKAI-EAST r765 k7 a300 f100 g100 w0 m0 h10 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yy duel hash t=5400 | -458 0 144 270 MOVE BANKAI-WEST r1059 k6 a258 f62 g100 w0 m0 h0 | -540 0 315 270 DOWN BANKAI-EAST r193 k7 a300 f100 g100 w0 m0 h9 | cd 0.0.0.0.0.0.70 0.0.0.0.0.0.0 | haz 0
-yy duel hash t=6000 | -33 0 48 -84 GUARD BANKAI-WEST r946 k6 a300 f89 g100 w0 m0 h5 | 188 0 -144 230 IDLE BANKAI-EAST r1100 k4 a300 f99 g100 w0 m0 h8 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yy duel hash t=6600 | -181 0 562 132 IDLE BANKAI-EAST r610 k6 a300 f100 g100 w0 m0 h2 | -400 0 511 -182 IDLE BANKAI-EAST r837 k4 a261 f100 g100 w0 m0 h11 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yy duel hash t=7200 | 18 0 69 -68 IDLE BANKAI-EAST r1068 k3 a300 f58 g79 w0 m0 h15 | 128 0 -79 247 IDLE BANKAI-EAST r837 k4 a207 f95 g88 w0 m0 h1 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yy duel hash t=7800 | 15 0 -369 167 IDLE BANKAI-EAST r733 k3 a157 f97 g100 w0 m0 h30 | -62 0 -364 -148 GUARD BANKAI-WEST r837 k4 a262 f89 g100 w0 m0 h9 | cd 0.0.0.0.138.0.0 0.0.0.0.0.0.0 | haz 0
-yy duel hash t=8400 | 50 0 -120 66 IDLE BANKAI-WEST r733 k3 a193 f100 g100 w0 m0 h9 | -15 0 -210 -248 IDLE BANKAI-WEST r743 k4 a300 f100 g100 w0 m0 h23 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yy duel hash t=9000 | 9 0 273 85 GUARD BANKAI-WEST r718 k3 a226 f100 g100 w0 m0 h1 | -74 0 203 -229 IDLE BANKAI-WEST r703 k4 a300 f100 g96 w0 m0 h38 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yy duel hash t=9600 | -564 0 293 -81 IDLE BANKAI-WEST r638 k3 a263 f100 g70 w0 m0 h16 | -472 0 210 233 IDLE BANKAI-WEST r673 k4 a300 f100 g100 w0 m0 h3 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yy duel hash t=10200 | -30 0 641 -33 IDLE BANKAI-WEST r638 k3 a204 f100 g100 w0 m0 h10 | 4 0 544 281 IDLE BANKAI-WEST r508 k4 a300 f100 g100 w0 m0 h17 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yy duel hash t=10800 | 78 0 682 -41 STUN BANKAI-EAST r361 k3 a267 f86 g85 w0 m0 h2 | 125 0 561 220 MOVE BANKAI-WEST r406 k4 a300 f100 g66 w0 m0 h0 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yy duel -> RESULTS winner P2 konpaku 0-4 ticks 11248 secs 187.5
+yy duel hash t=4200 | 291 0 -116 -288 IDLE BASE r302 k9 a233 f100 g100 w100 m35 h11 | 337 0 55 26 IDLE BANKAI-EAST r1100 k7 a235 f100 g100 w0 m0 h5 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yy duel hash t=4800 | 42 0 -91 287 STEP BANKAI-EAST r1100 k6 a271 f40 g100 w0 m0 h20 | -33 0 262 -21 IDLE BANKAI-EAST r1100 k7 a268 f100 g100 w0 m0 h4 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yy duel hash t=5400 | -308 0 369 -13 IDLE BANKAI-WEST r1059 k6 a220 f68 g70 w0 m0 h1 | -253 0 -38 301 IDLE BANKAI-EAST r525 k7 a300 f100 g100 w0 m0 h3 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yy duel hash t=6000 | -562 0 75 -177 IDLE BANKAI-WEST r946 k6 a284 f80 g94 w0 m0 h7 | -294 0 124 138 IDLE BANKAI-EAST r178 k7 a300 f87 g100 w0 m0 h1 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yy duel hash t=6600 | 79 0 275 -154 GUARD BANKAI-WEST r610 k6 a300 f100 g100 w0 m0 h11 | 152 0 267 160 IDLE BANKAI-EAST r1100 k4 a218 f100 g100 w0 m0 h2 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yy duel hash t=7200 | -431 0 262 187 STUN BANKAI-EAST r388 k6 a300 f38 g100 w0 m0 h8 | -278 0 215 187 HOHO BANKAI-EAST r837 k4 a289 f85 g100 w0 m0 h0 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yy duel hash t=7800 | 104 0 -312 134 STUN BANKAI-EAST r1011 k3 a109 f68 g100 w0 m0 h20 | 260 0 -276 134 MOVE BANKAI-EAST r837 k4 a220 f70 g100 w0 m0 h0 | cd 0.0.0.0.544.0.0 0.0.0.0.0.0.0 | haz 5
+yy duel hash t=8400 | -64 0 -349 132 IDLE BANKAI-EAST r733 k3 a168 f100 g75 w0 m0 h1 | -240 0 -398 -182 IDLE BANKAI-WEST r793 k4 a275 f99 g60 w0 m0 h13 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yy duel hash t=9000 | -61 0 -212 309 GUARD BANKAI-WEST r733 k3 a202 f100 g96 w0 m0 h13 | -68 0 -114 -5 IDLE BANKAI-WEST r743 k4 a300 f100 g100 w0 m0 h28 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yy duel hash t=9600 | -230 0 207 290 IDLE BANKAI-WEST r718 k3 a235 f100 g100 w0 m0 h6 | -257 0 303 -24 IDLE BANKAI-WEST r703 k4 a300 f100 g100 w0 m0 h42 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yy duel hash t=10200 | -391 0 283 -268 MOVE BANKAI-WEST r638 k3 a183 f100 g100 w0 m0 h0 | -284 0 499 46 STUN BANKAI-WEST r508 k4 a300 f100 g100 w0 m0 h6 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yy duel hash t=10800 | -193 0 391 -174 IDLE BANKAI-WEST r488 k3 a227 f100 g100 w0 m0 h14 | -99 0 409 140 GUARD BANKAI-WEST r508 k4 a300 f100 g100 w0 m0 h3 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yy duel hash t=11400 | 197 0 741 129 STUN BANKAI-EAST r109 k3 a300 f100 g100 w0 m0 h6 | 64 0 702 -190 MOVE BANKAI-WEST r406 k4 a300 f100 g96 w0 m0 h0 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.71 | haz 0
+yy duel -> RESULTS winner P2 konpaku 0-4 ticks 11746 secs 195.8
 yk duel hash t=600 | -58 0 680 -245 IDLE BASE r975 k9 a68 f74 g100 w26 m60 h1 | 145 0 923 -259 DOWN BASE r759 k9 a72 f100 g100 w30 m0 h12 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
 yk duel hash t=1200 | -1005 0 948 -202 STUN BASE r790 k9 a126 f100 g65 w46 m60 h6 | -888 0 1005 112 MOVE BASE r609 k9 a30 f100 g100 w50 m0 h0 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
 yk duel hash t=1800 | -1037 0 1033 64 IDLE BASE r440 k9 a188 f30 g100 w71 m60 h19 | -1237 0 766 -250 GUARD BASE r609 k9 a84 f100 g100 w67 m0 h1 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yk duel hash t=2400 | -346 0 200 -105 IDLE BASE r1100 k7 a238 f58 g100 w100 m60 h9 | 346 0 -200 210 IDLE BASE r533 k9 a141 f44 g100 w84 m0 h1 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.16 | haz 0
-yk duel hash t=3000 | 87 0 377 156 MOVE BANKAI-EAST r1100 k7 a182 f43 g100 w0 m0 h7 | -58 0 375 163 MOVE NOZARASHI r1100 k6 a203 f71 g100 w0 m0 h13 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yk duel hash t=3600 | 273 0 -725 -7 IDLE BANKAI-EAST r704 k7 a280 f81 g100 w0 m0 h1 | 286 0 -971 277 WAKEUP NOZARASHI r714 k6 a300 f100 g100 w0 m0 h6 | cd 0.0.30.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yk duel hash t=4200 | 269 0 -1211 308 IDLE BANKAI-EAST r463 k7 a231 f42 g100 w0 m0 h5 | 271 0 -1094 -6 IDLE NOZARASHI r424 k6 a300 f100 g100 w0 m0 h8 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yk duel hash t=4800 | 28 0 243 -173 IDLE BANKAI-EAST r803 k4 a300 f87 g100 w0 m0 h18 | 165 0 263 141 GUARD NOZARASHI r424 k6 a300 f100 g100 w0 m0 h2 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yk duel hash t=5400 | -285 0 82 -139 IDLE BANKAI-EAST r506 k4 a300 f100 g100 w0 m0 h5 | -149 0 64 175 IDLE NOZARASHI r1100 k3 a300 f100 g100 w0 m0 h8 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yk duel hash t=6000 | -165 0 -364 -272 IDLE BANKAI-EAST r1100 k1 a300 f49 g100 w0 m0 h16 | 165 0 364 42 IDLE NOZARASHI r1100 k3 a130 f100 g100 w0 m0 h1 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.21 | haz 0
-yk duel hash t=6600 | -165 0 -332 -310 STUN BANKAI-WEST r1100 k1 a300 f44 g65 w0 m0 h6 | -151 0 -205 11 MOVE NOZARASHI r860 k3 a183 f100 g100 w0 m0 h17 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yk duel hash t=7200 | -5 0 -721 56 STUN BANKAI-WEST r520 k1 a300 f87 g100 w0 m0 h19 | 133 0 -468 50 MOVE NOZARASHI r860 k3 a55 f88 g100 w0 m0 h0 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-yk duel hash t=7800 | -105 148 -671 81 AIR BANKAI-WEST r152 k1 a138 f100 g100 w0 m0 h33 | 41 0 -534 81 MOVE NOZARASHI r860 k3 a112 f72 g100 w0 m0 h0 | cd 0.0.0.0.484.0.0 0.0.0.0.0.0.55 | haz 5
-yk duel -> RESULTS winner P2 konpaku 0-3 ticks 8054 secs 134.2
+yk duel hash t=2400 | -671 0 1263 -105 CINE BASE r1100 k7 a237 f57 g100 w100 m60 h8 | -497 0 1163 210 CINE BASE r533 k9 a130 f42 g100 w84 m0 h0 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.41 | haz 0
+yk duel hash t=3000 | -363 0 156 -117 CINE BANKAI-EAST r1100 k7 a175 f67 g100 w0 m0 h3 | 368 0 -157 197 CINE NOZARASHI r1100 k6 a195 f63 g100 w0 m0 h8 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yk duel hash t=3600 | -40 0 -405 -265 IDLE BANKAI-WEST r704 k7 a253 f69 g100 w0 m0 h6 | 117 0 -114 49 IDLE NOZARASHI r902 k6 a270 f92 g100 w0 m0 h0 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yk duel hash t=4200 | 178 0 -915 -17 IDLE BANKAI-EAST r463 k7 a300 f30 g100 w0 m0 h5 | 263 0 -1349 298 IDLE NOZARASHI r688 k6 a300 f88 g100 w0 m0 h1 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yk duel hash t=4800 | -78 0 -1080 -124 CINE BANKAI-EAST r1100 k4 a283 f64 g90 w0 m0 h10 | 167 0 -1166 191 CINE NOZARASHI r424 k6 a300 f100 g100 w0 m0 h0 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.41 | haz 0
+yk duel hash t=5400 | 90 0 536 58 WAKEUP BANKAI-EAST r506 k4 a300 f100 g100 w0 m0 h25 | 270 0 415 220 IDLE NOZARASHI r424 k6 a300 f100 g100 w0 m0 h2 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yk duel hash t=6000 | -365 0 -247 -82 IDLE BANKAI-EAST r366 k4 a300 f30 g100 w0 m0 h9 | -150 0 -437 232 IDLE NOZARASHI r1100 k3 a300 f100 g100 w0 m0 h1 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yk duel hash t=6600 | -154 0 -27 251 MOVE BANKAI-EAST r1100 k1 a300 f56 g100 w0 m0 h21 | -151 0 -179 -234 STEP NOZARASHI r1100 k3 a137 f100 g100 w0 m0 h6 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yk duel hash t=7200 | -176 0 -432 -310 WAKEUP BANKAI-WEST r871 k1 a300 f57 g82 w0 m0 h9 | 51 0 -354 124 GUARD NOZARASHI r860 k3 a207 f100 g100 w0 m0 h2 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yk duel hash t=7800 | -107 0 -711 281 IDLE BANKAI-WEST r472 k1 a300 f95 g100 w0 m0 h22 | -153 0 -597 -34 IDLE NOZARASHI r860 k3 a64 f94 g100 w0 m0 h2 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+yk duel hash t=8400 | -132 0 -697 -233 CINE BANKAI-WEST r1100 k0 a139 f100 g100 w0 m0 h33 | 57 0 -518 81 CINE NOZARASHI r860 k3 a113 f73 g100 w0 m0 h0 | cd 0.0.0.0.470.0.0 0.0.0.0.0.0.41 | haz 0
+yk duel -> RESULTS winner P2 konpaku 0-3 ticks 8594 secs 143.2
 kk duel hash t=600 | 157 0 -253 -259 IDLE BASE r1100 k9 a53 f100 g100 w16 m0 h2 | 218 0 -140 55 GUARD BASE r790 k9 a60 f70 g100 w22 m0 h14 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
 kk duel hash t=1200 | 1082 0 -443 256 GUARD BASE r975 k9 a103 f100 g100 w29 m0 h13 | 1011 0 -340 -58 IDLE BASE r690 k9 a109 f100 g100 w35 m0 h9 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
 kk duel hash t=1800 | 726 0 -368 311 CINE BASE r975 k9 a65 f100 g100 w52 m0 h0 | 721 0 -169 -3 CINE BASE r1100 k7 a180 f57 g100 w97 m0 h22 | cd 0.0.0.0.0.0.47 0.0.0.0.0.0.0 | haz 0
-kk duel hash t=2400 | -170 0 -218 -9 MOVE BASE r800 k9 a115 f100 g100 w66 m0 h0 | -161 0 -316 313 STUN NOZARASHI r1065 k7 a227 f77 g100 w0 m0 h6 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-kk duel hash t=3000 | -728 0 -469 -93 STUN BASE r614 k9 a88 f100 g72 w97 m0 h7 | -519 0 -666 233 MOVE NOZARASHI r708 k7 a104 f100 g100 w0 m0 h0 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-kk duel hash t=3600 | -854 0 127 62 STUN NOZARASHI r610 k9 a142 f53 g100 w0 m0 h8 | -920 0 37 -250 MOVE NOZARASHI r536 k7 a157 f100 g100 w0 m0 h0 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-kk duel hash t=4200 | -712 0 -140 2 GUARD NOZARASHI r408 k9 a204 f14 g100 w0 m0 h9 | -722 0 -310 -312 IDLE NOZARASHI r352 k7 a220 f100 g100 w0 m0 h3 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-kk duel hash t=4800 | 157 0 27 81 DOWN NOZARASHI r898 k6 a276 f49 g100 w0 m0 h23 | 233 0 -160 272 IDLE NOZARASHI r352 k7 a284 f100 g100 w0 m0 h1 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-kk duel hash t=5400 | 126 0 114 -170 GUARD NOZARASHI r493 k6 a300 f90 g100 w0 m0 h37 | 231 0 127 144 GUARD NOZARASHI r352 k7 a300 f100 g100 w0 m0 h4 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-kk duel hash t=6000 | -182 0 -348 -267 IDLE NOZARASHI r1100 k3 a300 f100 g100 w0 m0 h3 | 178 0 350 48 IDLE NOZARASHI r1100 k4 a300 f100 g100 w0 m0 h7 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-kk duel hash t=6600 | -100 0 340 138 DOWN NOZARASHI r761 k3 a300 f98 g100 w0 m0 h8 | 70 0 -12 271 IDLE NOZARASHI r871 k4 a119 f100 g100 w0 m0 h1 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-kk duel hash t=7200 | -453 0 -561 223 IDLE NOZARASHI r761 k3 a46 f100 g100 w0 m0 h2 | -519 0 -498 -91 IDLE NOZARASHI r276 k4 a204 f100 g100 w0 m0 h14 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
-kk duel hash t=7800 | -736 0 -594 34 STEP NOZARASHI r272 k3 a121 f36 g100 w0 m0 h15 | -876 0 -585 -165 MOVE NOZARASHI r276 k4 a69 f100 g100 w0 m0 h0 | cd 0.0.0.0.0.0.21 0.0.0.0.0.0.72 | haz 0
-kk duel -> RESULTS winner P2 konpaku 0-4 ticks 8396 secs 139.9
+kk duel hash t=2400 | -257 0 -207 -224 IDLE BASE r800 k9 a107 f100 g100 w64 m0 h9 | -88 0 -54 90 IDLE NOZARASHI r1100 k7 a218 f71 g100 w0 m0 h3 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+kk duel hash t=3000 | -449 0 -720 -93 STUN BASE r800 k9 a65 f100 g65 w84 m0 h5 | -353 0 -791 149 MOVE NOZARASHI r708 k7 a284 f100 g100 w0 m0 h17 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+kk duel hash t=3600 | -925 0 -168 -234 IDLE NOZARASHI r698 k9 a126 f43 g100 w0 m0 h4 | -838 0 -84 81 IDLE NOZARASHI r536 k7 a143 f100 g100 w0 m0 h8 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+kk duel hash t=4200 | -1155 0 -297 -153 STUN NOZARASHI r452 k9 a193 f79 g100 w0 m0 h6 | -1064 0 -293 153 MOVE NOZARASHI r352 k7 a209 f100 g100 w0 m0 h0 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+kk duel hash t=4800 | -2 0 74 48 GUARD NOZARASHI r1100 k6 a246 f33 g100 w0 m0 h18 | -62 0 -25 -266 IDLE NOZARASHI r352 k7 a257 f100 g100 w0 m0 h6 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+kk duel hash t=5400 | 211 0 -42 -10 GUARD NOZARASHI r696 k6 a300 f73 g100 w0 m0 h32 | 221 0 -144 304 MOVE NOZARASHI r352 k7 a300 f100 g100 w0 m0 h5 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+kk duel hash t=6000 | 74 0 -173 -232 CINE NOZARASHI r1100 k3 a300 f100 g100 w0 m0 h3 | 263 0 5 82 CINE NOZARASHI r306 k7 a300 f100 g100 w0 m0 h0 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.38 | haz 0
+kk duel hash t=6600 | -245 0 256 27 IDLE NOZARASHI r1100 k3 a300 f73 g100 w0 m0 h1 | -324 0 -3 13 DOWN NOZARASHI r871 k4 a300 f100 g100 w0 m0 h13 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+kk duel hash t=7200 | -184 0 177 50 MOVE NOZARASHI r761 k3 a201 f100 g100 w0 m0 h1 | -329 0 -76 -265 IDLE NOZARASHI r655 k4 a152 f100 g100 w0 m0 h6 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+kk duel hash t=7800 | -868 44 -465 -235 AIR NOZARASHI r422 k3 a88 f100 g100 w0 m0 h7 | -580 0 -586 197 MOVE NOZARASHI r276 k4 a40 f100 g100 w0 m0 h0 | cd 0.0.0.0.0.0.0 0.0.0.0.0.0.0 | haz 0
+kk duel hash t=8400 | -459 0 -590 138 MOVE NOZARASHI r272 k3 a136 f47 g100 w0 m0 h0 | -585 0 -635 -46 HOHO NOZARASHI r226 k4 a86 f85 g100 w0 m0 h6 | cd 0.0.0.0.0.0.72 0.0.0.0.0.0.21 | haz 0
+kk duel -> RESULTS winner P2 konpaku 0-4 ticks 8834 secs 147.2

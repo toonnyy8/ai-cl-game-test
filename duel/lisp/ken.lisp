@@ -137,19 +137,30 @@ dash starts = guard-crushing (the Breaker property)."
   (emit :sfx :ground-crack e))
 
 ;;; ================================================================ cinematics
-(defcine ken-kikon-cine (a v :len 114 :hold 72)
-  "Base Kikon: three reckless cuts, laughing; the last one goes through the victim."
+;;; The grammar of every cinematic is in cinema.lisp (docs/STYLE_STORM_DESIGN.md §5); Kenpachi (black robe, black
+;;; hair) goes on the white card.
+(defcine ken-kikon-cine (a v :len 192 :hold 112)
+  "Base Kikon (paced by user review 3): beat 0; Kenpachi on a white card, low and dutch under the 呑め、野晒 stamp in
+black (his release words), silence; two reckless cuts from two sides, laughing; before the last a held close
+wide-angle push in silence; the last cut through the victim: a negative, then a manga page (the blood and the yellow
+stay), the Konpaku shatter and a splash; he laughs; a wide from behind."
   (at 0 (face-each-other a v 2.0)
-      (cine-clip a :ke-kikon :blend 2) (cine-clip v :sh-kikon-victim :blend 4)
-      (shot-pair a v (camera-side a) 5.0 1.6)
-      (caption "KIKON" :sub "MOTTO TANOSHIMASETE KURE YO!" :color '(1 0.2 0.25 1))
-      (play-sfx :laugh))
-  (at 21 (cine-slash v :cut) (shot-on v 120 3.8 1.2))
-  (at 45 (cine-slash v :cut) (shot-on v -110 3.6 1.0))
-  (at 72 (cine-slash v :heavy) (shot-pair a v (- (camera-side a)) 5.5 1.3)
+      (cine-clip a :ke-kikon :blend 2 :speed (/ 72.0 142.0))   ; its old timing, slowed to the new beats (cine-clip v :sh-kikon-victim :blend 4)
+      (hold-both a v 12) (impact-frame :negative 2))
+  (at 12 (card :white a) (shot-on a 30 3.0 0.6 :look 1.4 :off -0.8) (lens 44 -12) (silence 52)
+      (caption "呑め、野晒" :reading "NOME, NOZARASHI" :sub "MOTTO TANOSHIMASETE KURE YO!" :side 1 :ink t :hanko t))
+  (at 70 (card nil) (cine-slash v :cut) (shot-on v 120 3.8 1.2) (lens 55) (play-sfx :laugh))
+  (at 98 (cine-slash v :cut) (shot-on v -110 3.6 1.0) (setf *caption* nil))
+  (at 122 (hold-both a v 20) (silence 20) (lens 86))
+  (during (122 142) (shot-on a 20 (+ 1.5 (* 0.4 u)) 0.5 :look 1.45))   ; a slow pull, not cuts
+  (at 142 (cine-slash v :heavy) (shot-pair a v (- (camera-side a)) 5.5 1.3) (lens 55)
+      (impact-frame :negative 2)
       (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))
-      (play-sfx :kikon-slash) (play-sfx :konpaku-shatter) (shake 0.3 0.35) (ui-flash 1 1 1 0.6))
-  (at 80 (play-sfx :laugh)))
+      (let ((q (pos-of v))) (impact-splash (aref q 0) 0.0 (aref q 2) 16 0.07))
+      (play-sfx :kikon-slash) (play-sfx :konpaku-shatter) (shake 0.3 0.35))
+  (at 144 (impact-frame :manga 12))
+  (at 152 (play-sfx :laugh))
+  (at 162 (shot-on a 160 4.2 0.8 :look 1.3) (lens 50)))
 
 (defun cine-slash (v kind)
   "A cinematic cut landing on V: sparks, sound, flash."
@@ -157,36 +168,48 @@ dash starts = guard-crushing (the Breaker property)."
   (play-sfx (if (eq kind :heavy) :cut-heavy :cut))
   (setf (model-flash (model v)) 0.1))
 
-(defcine ken-sky-split-cine (a v :len 90 :hold 34)
-  "Nozarashi Kikon: one cleave; a vertical line of light splits the sky, the ground splits, the
-screen halves shear apart for 12 frames."
+(defcine ken-sky-split-cine (a v :len 162 :hold 40)
+  "Nozarashi Kikon (§4.2 sky split; paced by user review 3): beat 0; a long black card, Kenpachi silhouetted with a
+yellow back-rim under the 呑め、野晒 stamp, silence; the cleave: a negative, then a manga page, the line of light (white,
+ink borders) splits the sky, focus lines, poses held 12 f, the screen halves shear apart; down the cut, then the ground
+split from the side, then Kenpachi."
   (at 0 (face-each-other a v 2.6)
-      (cine-clip a :ke-kikon-n :blend 2) (cine-clip v :sh-kikon-victim :blend 4)
-      (shot-on a 60 4.5 1.0 :look 1.6 :ahead 1.3)
-      (caption "KIKON" :sub "NOZARASHI" :color '(1 0.9 0.35 1))
-      (play-sfx :whoosh-cleaver))
-  (at 25 (cine-slash v :heavy) (play-sfx :kikon-slash) (play-sfx :ground-crack) (shake 0.4 0.5) (ui-flash 1 1 0.8 0.8 3.0)
-      (shot-on a 180 10.0 3.6 :look 1.2 :ahead 5.0)      ; down the cut: it splits the screen at its centre
+      (cine-clip a :ke-kikon-n :blend 2 :speed (/ 25.0 68.0)) (cine-clip v :sh-kikon-victim :blend 4)
+      (hold-both a v 12) (impact-frame :negative 2) (play-sfx :whoosh-cleaver))
+  (at 12 (card :black a) (back-rim 56 1.0 0.85 0.23) (shot-on a 60 4.2 0.7 :look 1.6 :ahead 1.3 :off 0.8) (lens 46 8) (silence 56)
+      (caption "呑め、野晒" :reading "NOME, NOZARASHI" :sub "SKY SPLIT" :side 0 :hanko t))
+  (at 68 (card nil) (cine-slash v :heavy) (play-sfx :kikon-slash) (play-sfx :ground-crack) (shake 0.4 0.5)
+      (impact-frame :negative 2) (hold-both a v 12) (focus-lines 30)
+      (shot-on a 180 10.0 3.6 :look 1.2 :ahead 5.0) (lens 60)     ; down the cut: it splits the screen at its centre
       (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3)))
+  (at 70 (impact-frame :manga 12))
   ;; (the ground split is part of the look, on the cine clock: a sim hazard would freeze with the sim)
-  (during (25 90) (let ((q (pos-of v))) (vfx-sky-split (aref q 0) (aref q 2) (yaw-of a) (/ (- cf 25) 60.0) 1.0))))
+  (during (68 162) (let ((q (pos-of v))) (vfx-sky-split (aref q 0) (aref q 2) (yaw-of a) (/ (- cf 68) 60.0) 1.5)))
+  (at 102 (shot-on v 95 7.5 1.2 :look 1.0) (lens 50) (setf *caption* nil))
+  (at 132 (shot-on a -20 5.0 0.7 :look 1.4) (lens 45)))
 
-(defcine ken-nozarashi-cine (a v :len 72 :hold 52)
-  "NOME, NOZARASHI: (1) the eyepatch torn off, a yellow reiatsu pillar and shockwave; (2) the katana
-grows into the cleaver. 野晒."
-  (at 0 (cine-clip a :ke-patch :blend 3) (cine-clip v (kit-stance (kit-of v)) :blend 6)
+(defcine ken-nozarashi-cine (a v :len 108 :hold 84)
+  "NOME, NOZARASHI (§5; paced by user review 3): beat 0 on the face close-up; the eyepatch tears (a negative); the
+yellow reiatsu pillar held long on a black card, Kenpachi silhouetted with a yellow back-rim (the only time yellow floods
+the frame); close, low and wide-angle while the katana grows into the cleaver, in silence; the 野晒 / 呑め、 stamp in
+black on a white card."
+  (at 0 (cine-clip a :ke-patch :blend 3 :speed (/ 1.0 1.5)) (cine-clip v (kit-stance (kit-of v)) :blend 6)
       (setf (model-weapon (model a)) :ken-katana (model-hide (model a)) nil)
       (shot-on a 10 1.9 1.9 :look 1.85)
-      (play-sfx :awaken-rise))
-  (at 18 (setf (model-hide (model a)) '(:eyepatch))
+      (hold-both a v 10) (impact-frame :negative 2) (play-sfx :awaken-rise))
+  (at 26 (setf (model-hide (model a)) '(:eyepatch))
       (let ((p (pos-of a)))
         (vfx-awaken-burst (aref p 0) 1.0 (aref p 2) :nozarashi)
         (vfx-shockwave (aref p 0) (aref p 2) 7.0 0.6 :rgb '(1.0 0.9 0.3)))
-      (play-sfx :awaken-boom) (shake 0.2 0.3))
-  (during (0 72) (let ((p (pos-of a)))                  ; faint and narrow in the face close-up: the patch reads
-                   (vfx-aura (aref p 0) 0.0 (aref p 2) (if (< cf 30) 2.0 3.2) :nozarashi (/ cf 60.0) (frame-dt)
-                             :k (if (< cf 18) 0.1 1.0))))
-  (at 30 (cine-clip a :ke-nome :blend 2) (shot-on a 30 4.6 1.3 :look 1.6))
-  (at 51 (setf (model-weapon (model a)) :nozarashi)
-      (caption "NOME, NOZARASHI" :kanji :nozarashi :color '(1 0.9 0.35 1))
-      (play-sfx :whoosh-cleaver) (ui-flash 1 0.95 0.5 0.5)))
+      (impact-frame :negative 2) (play-sfx :awaken-boom) (shake 0.2 0.3))
+  (at 28 (card :black a) (back-rim 30 1.0 0.85 0.23) (shot-on a 0 4.6 0.8 :look 1.6) (lens 52))
+  (during (0 108) (let ((p (pos-of a)))                 ; faint and narrow in the face close-up: the patch reads
+                    (vfx-aura (aref p 0) 0.0 (aref p 2) (cond ((< cf 28) 2.0) ((< cf 58) 6.5) (t 3.2)) :nozarashi (/ cf 60.0) (cine-dt)
+                              :k (if (< cf 26) 0.1 1.0))))   ; 28-58: the pillar
+  (at 54 (cine-clip a :ke-nome :blend 2))
+  (at 58 (card nil) (shot-on a 30 1.6 0.45 :look 1.5) (lens 86 -8) (silence 20))
+  (at 78 (setf (model-weapon (model a)) :nozarashi)
+      (impact-frame :negative 2) (card :white a) (shot-on a 20 4.4 0.8 :look 1.3 :off 0.9) (lens 42)
+      (caption "野晒" :kanji2 "呑め、" :reading "NOME, NOZARASHI" :side 0 :ink t)
+      (play-sfx :whoosh-cleaver))
+  (at 80 (impact-frame :manga 10)))

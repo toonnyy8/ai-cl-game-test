@@ -46,7 +46,7 @@ Deliberate deviations:
 
 | RoS | SOUL DUEL | Why |
 |---|---|---|
-| Yamamoto awakens into a stronger Shikai; Kenpachi removes his eyepatch | Yamamoto's awakening is **Bankai: Zanka no Tachi**; Kenpachi's is **Nozarashi** (eyepatch off, then the cleaver); both last to the end of the match | TYBW versions, as the user asked |
+| Yamamoto awakens into a stronger Shikai; Kenpachi removes his eyepatch | Yamamoto's awakening is **Bankai: Zanka no Tachi**; Kenpachi's is **Nozarashi** (the cleaver; as built the cinematic still tears an eyepatch off, but **decided: Kenpachi wears no eyepatch in any form**, TYBW canon, see §11.1); both last to the end of the match | TYBW versions, as the user asked |
 | Guard gauge, guard break when it empties | A **guard gauge** (§4): each blocked hit drains its guard value; empty = GUARD CRUSH (40 f) and no guard until it is full again; the Breaker still breaks at once (and drains 35) | The user asked for it (design v3 G.2); the Breaker stays the "read" tool, the gauge the "pressure" tool |
 | Reverse gauge + Spiritual Power gauge | **Reiatsu** (3 bars) pays for SP1 / SP2 only; a **flash-step gauge** pays for Hoho and Burst Reverse | The user asked for it (design v3 G.1, G.3); two gauges with one job each |
 | Reverse Actions (Soul / Chain / Burst), the game picks one | Only **Burst Reverse**, its own command (mod + Quick) | The one a player must choose deliberately; Soul / Chain would need the Reverse gauge |
@@ -83,7 +83,7 @@ rules.lisp):
   readable dash in the module's own style: TENCHI's flash-step afterimages, CHARGE's charge, LEAP CLEAVE's
   leap, ENJO a straight dash; the red rush aura, speed lines, a "KIKON" word) and strikes again: the
   follow-up. Its hit is the **Kikon** (no damage, the Konpaku are settled at the end of that step's hit
-  resolution, `settle-souls`, combat.lisp; the character's Kikon cinematic plays, ≤ 2.0 s, skippable).
+  resolution, `settle-souls`, combat.lisp; the character's Kikon cinematic plays, 2.7–3.2 s, skippable).
   - **Not red**: the stagger lasts 16 f (`*kikon-follow-stun*`) and the follow-up lands **12 f after he can
     act again** (`*kikon-follow-gap*`, `kikon-follow-wait`): a guard pressed (and held) during the dash
     **blocks** it (no Konpaku, −14, −20 guard gauge; "KIKON / GUARD IT!" announces it); Step / Hoho dodge it;
@@ -284,7 +284,7 @@ Shikai (form `:base`):
 | Shift+K | SP1 Shiranui `:ya-shiranui` | hold 12–60 f, then throw 2/1/20 | 90 → 170 | chip 12 % | homing fireball (60°/s), 10 → 16 m/s, 20 m range; a full charge fills Inferno |
 | Shift+L | SP2 Taimatsu `:ya-taimatsu` | 16/8/24 | 120 | −14 | fire cone 4 m, 90°, knockback 3.5 m |
 | I | Breaker: Ikkotsu `:ya-breaker` | §4 | 150 | Guard Break | plants the sword, punches |
-| O | Kikon module **ENJO** `:ya-kikon` → Kikon **Jokaku Enjo** | aims 6 f, no dash, strike 20/2/30 (locked) | 70 | −14 | §2, §6.3; a line of fire walls rises along a lane 1 → 9 m (f4 → f20), fire, chip 12 %, knockback 2 m; the Kikon: fire walls close into a dome and detonate (1.8 s) |
+| O | Kikon module **ENJO** `:ya-kikon` → Kikon **Jokaku Enjo** | aims 6 f, no dash, strike 20/2/30 (locked) | 70 | −14 | §2, §6.3; a line of fire walls rises along a lane 1 → 9 m (f4 → f20), fire, chip 12 %, knockback 2 m; the Kikon: fire walls close into a dome and detonate (3.1 s) |
 
 **Inferno (Goen) gauge**, 0–100: +20 per Flash hit, +15 per Signature hit (cuts and wave), +5 per
 blocked wave / fireball, a full Shiranui fills it. Full → **Hellfire (Gokuen)**, a timed form
@@ -300,7 +300,7 @@ and it burns him for 30.
 **Awakening → BANKAI: ZANKA NO TACHI** (permanent: it lasts to the end of the match, no timer and no
 burn; design bankai-kikon v3 §A). Every flame is drawn into the blade, which chars black; the plaza
 cracks; the world goes grey except the ember hue (the spot-keep grade). No Inferno and no Hellfire any
-more (Inferno ends at 0). Cinematic 1.2 s (卍解 / ZANKA NO TACHI). The Bankai is **two stances**, kit
+more (Inferno ends at 0). Cinematic 2.3 s (卍解 / 残火の太刀). The Bankai is **two stances**, kit
 forms `:bankai-east` (the awakening enters it) and `:bankai-west`; the HUD names them (YAMAMOTO
 BANKAI-EAST / -WEST). The buttons are a compass: **O = North** (KITA: TENCHI, both stances), **L = East /
 West** (switch + a technique), **Shift+L = South** (the bind, both stances); J / K are each stance's own.
@@ -389,9 +389,9 @@ Base form:
 | Shift+K | SP1 Buttagiru `:ke-buttagiru` | 22/4/26 | 180 | −14 | leaps 5 m, overhead, a 3 m ground crack, knockdown |
 | Shift+L | SP2 "ORE NI KIRENEE MON WA NEE" `:ke-charge` | 14 startup, dashes 14 m/s for its 26 active frames | 25 | −16 | contact → the flurry `:ke-flurry` (4 × 25 + a 60 launcher; S10, cuts f10 16 22 28, launcher f40); still holding when the dash starts = guard-crushing |
 | I | Breaker: shoulder charge `:ke-breaker` | §4 | 150 | Guard Break | |
-| O | Kikon module **CHARGE** `:ke-kikon` → Kikon | aura 5, charge 13 m/s ≤ 36 f (turning 150°/s, armour 1 hit), strike 9/3/24 | 70 | −14 | §6.3; the stance's cross-body cut; the Kikon: three reckless cuts, laughing, the last through the victim (1.9 s) |
+| O | Kikon module **CHARGE** `:ke-kikon` → Kikon | aura 5, charge 13 m/s ≤ 36 f (turning 150°/s, armour 1 hit), strike 9/3/24 | 70 | −14 | §6.3; the stance's cross-body cut; the Kikon: reckless cuts, laughing, the last through the victim (3.2 s) |
 
-**Awakening → "NOME, NOZARASHI"** (form `:nozarashi`, permanent). Cinematic 1.2 s in two beats:
+**Awakening → "NOME, NOZARASHI"** (form `:nozarashi`, permanent). Cinematic 1.8 s in two beats:
 the eyepatch torn off (yellow reiatsu pillar, shockwave), then the katana grows into the cleaver
 (野晒 / NOME, NOZARASHI). Heals 150 Reishi. ×1.15 damage; his hits cut through the opponent's
 projectiles and South's grab (they are destroyed) and ignore Bankai's armour; yellow aura.
@@ -410,7 +410,7 @@ S(base)/S(derived) speed so it still hits on frame S. SP2 costs 2 bars (awakened
 | SP1 **Split the Meteor** `:ke-meteor` (replaces Buttagiru) | 26/4/30 | 12 m line | 240, knockdown, splits the ground |
 | SP2 charge / flurry | 17/26/24; flurry S13, cuts f13 19 25 31, launcher f43 | 1.96 / 3.08 | 2 bars |
 | Breaker | strike 11/4/18 | 3.64 | still triggers at 2.2 m |
-| Kikon module **LEAP CLEAVE** `:ke-kikon-n` → Kikon **sky split** | crouch 8 f, leap 18 m/s ≤ 30 f (locked), strike 11/3/24 | 3.08, 160° | its own move (§6.3); the Kikon: one cleave, a line of light splits the sky and the ground, the screen halves shear apart (1.5 s) |
+| Kikon module **LEAP CLEAVE** `:ke-kikon-n` → Kikon **sky split** | crouch 8 f, leap 18 m/s ≤ 30 f (locked), strike 11/3/24 | 3.08, 160° | its own move (§6.3); the Kikon: one cleave, a line of light splits the sky and the ground, the screen halves shear apart (2.7 s) |
 
 Damage is the base table's × 1.15 (and × Cornered); block advantages are unchanged.
 
@@ -570,9 +570,32 @@ user ("KIKON" when a rush starts, the Kikon's own name when it becomes one), a H
 of) and a red soul flame over a Kikon-able victim, the big words (FIGHT!, COUNTER, GUARD BREAK,
 GUARD CRUSH, BROKEN, CLASH, PERFECT, EVOLUTION, BURST REVERSE, KIKON / GUARD IT! as a dash-in starts
 (KIKON alone on a red victim), PARRY, GUARD over a panel when a guardless fighter can guard again, BURNOUT /
-REIGNITE over a Bankai panel), speed lines along a dash-in and the cinematic captions
-(JOKAKU ENJO, TENCHI KAIJIN, ZANKA NO TACHI, NOME, NOZARASHI, SOUL BREAK, K.O., TIME); WINNER / DRAW
-on the results screen.
+REIGNITE over a Bankai panel), speed lines along a dash-in, the **brush captions** (Yuji Syuku glyphs, OFL:
+docs/STYLE_STORM_DESIGN.md §4.4) and a big brush 勝 on the black results card (DRAW stays a word).
+Brush captions: every cinematic stamps a vertical kanji column with a small romaji reading (城郭炎上 JOKAKU ENJO,
+北 天地灰尽 TENCHI KAIJIN, 卍解 残火の太刀 BANKAI, 野晒 呑め、NOME, NOZARASHI, 呑め、野晒 NOME, NOZARASHI on both of Kenpachi's Kikons (the sub line KIKON's quote / SKY
+SPLIT), 魂 SOUL BREAK,
+決着 K.O., 時間切れ TIME, the names 山本元柳斎重國 / 更木剣八 in the intro), a red 鬼 hanko on the Kikon names.
+In a fight the SP / technique names with kanji show as a small brush column at the user's side instead of the
+pixel callout over his head (不知火 SHIRANUI, 松明 TAIMATSU, 撫斬 NADEGIRI, ぶった斬る BUTTAGIRU,
+俺に斬れねえもんはねえ ORE NI KIRENEE MON WA NEE); the Bankai compass carries its direction in an inverted box:
+西 残日獄衣 NISHI, 東 HIGASHI, 東 旭日刃 KYOKUJITSUJIN, 南 火火十万億死大葬陣 MINAMI, 北 KITA (the Bankai rush).
+Every other move callout and every big word (FIGHT!, COUNTER, CLASH, GUARD BREAK, KIKON / GUARD IT! ...) is one line of
+brush Latin; the pixel font stays for HUD numbers, stat tables, prompts and menus (user review 3).
+
+**Cinematic lengths** (60 Hz frames; at user review 3 the Kikons and awakenings were slowed ~1.45× (fewer, longer
+shots, longer holds, sharp impacts), then the caption close-ups (the card shot with the brush caption) of the Kikons and
+the Bankai were held +30 f; the sim is frozen during a cinematic, so only match ticks and time shift):
+
+| Cinematic | Original | Review 3 | Now | Held shots (frames) |
+|---|---|---|---|---|
+| Jokaku Enjo `yama-kikon-cine` | 108 | 156 | **186** | beat 0 12, caption card 58, wide 30, low 20, held push-in 22, impact 14, aftermath 30 |
+| Tenchi Kaijin `yama-tenchi-cine` | 96 | 138 | **168** | beat 0 12, caption card 56, the slash + ash 42, wide 58 |
+| Kenpachi's Kikon `ken-kikon-cine` | 114 | 162 | **192** | beat 0 12, caption card 58, cut 28, cut 24, held pull 20, the last cut + manga 20, wide 30 |
+| sky split `ken-sky-split-cine` | 90 | 132 | **162** | beat 0 12, caption card 56, the cleave 34, side 30, end 30 |
+| Bankai `yama-bankai-cine` | 72 | 108 | **138** | beat 0 12, flames in 28, behind 20, the reveal caption card 58, grey world 20 |
+| Nozarashi `ken-nozarashi-cine` | 72 | 108 | **108** | face + tear 28, the pillar card 30, close low 20, the stamp card 30 |
+| Soul Break / intro / K.O. / TIME | 96 / 300 / 150 / 120 | unchanged | unchanged | |
 
 **Audio** (`sounds.lisp`): 39 synthesized sounds: 37 SFX (swings, cuts, clang, guard break, the heat flare,
 Breaker hum and clash, Hoho, perfect chime, fire whoosh / roar / crackle / wave, explosion, ground
@@ -585,8 +608,22 @@ crack, bones, Kikon slash, Konpaku shatter, awakening rise and boom, a laugh …
 - A diegetic guard crack (stretch-2).
 - Everything of the v1 stretch list was built: Ennetsu Jigoku, Nadegiri, the Kaka skeletons (since
   replaced by South's bind), and (later) Burst Reverse, the behind-P1 camera and the dash.
-- The 東 / 西 / 北 brush glyphs for the Bankai compass wait for the next glyph bake (the callouts say
-  HIGASHI / NISHI / KITA).
+- Brush kanji for the Latin-only callouts (SPLIT THE METEOR, GOKUI GAESHI, the Signatures, the Breakers): no
+  canonical kanji; they are brush Latin.
+
+### 11.1 Decided, not yet built
+
+The user's decisions (2026-09-26) that the build does not follow yet:
+
+- **(a) Kenpachi wears no eyepatch in any form** (TYBW canon). The Nozarashi awakening's "eyepatch torn off" beat
+  and the base form's eyepatch go when this is built (§1's awakening row says so).
+- **(b) Nozarashi v2, the NOME three-cup ladder**: [DUEL_NOZARASHI_V2.md](DUEL_NOZARASHI_V2.md).
+- **(c) Bankai West: hold U = armour** (no guard; he moves and attacks while armoured; each hit drains the guard gauge
+  and scorches; the per-move and vs-Quick armour go). Specified with (b) in DUEL_NOZARASHI_V2.md.
+- **(d) Nozarashi's `:ignore-armor` is removed** (it would make West's hold-U worthless against him).
+- **(e) Fighters face the opponent while moving** (forward run, side slide, back-skate).
+- **(f) ONE-HAND portrait mobile mode**: [DUEL_MOBILE_DESIGN.md](DUEL_MOBILE_DESIGN.md). Decisions: right hand is the
+  default; FULL assist has no damage scaling; no local portrait 2P; netplay (Bluetooth / Wi-Fi P2P) later.
 
 ## 12. What changed after the v1 contract, and why
 
