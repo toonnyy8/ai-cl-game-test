@@ -8,6 +8,9 @@
 //   clock that advances exactly MS per animation frame; "at" and --secs are then VIRTUAL seconds: before each
 //   step the page is held at that time (no frame runs), the step is applied, then it resumes. The same binary
 //   and script give byte-identical screenshots; --timeout SEC (default 900) bounds the wall time.
+// --mobile [--dpr N]: a phone: device pixel ratio N (default 3), mobile viewport, touch emulation ((pointer: coarse)),
+//   kept through "size" steps. Touch steps: {"at":1,"touch":"start","x":100,"y":700,"id":0} (CSS px; "move", "end",
+//   "cancel" likewise; several ids = several fingers) -> Input.dispatchTouchEvent (the page sees touch pointer events).
 // Exit code 1 on JS exceptions and on WebGPU validation errors / failed pipelines (the WGSL smoke test).
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -17,6 +20,8 @@ const opt = (k, d) => { const i = a.indexOf(k); return i >= 0 ? a[i + 1] : d; };
 const secs = +opt('--secs', 8), shot = opt('--shot'), script = opt('--script');
 const fixed = opt('--fixed-dt') ? +opt('--fixed-dt') : 0, wallMax = +opt('--timeout', 900);
 const [W, H] = opt('--size', '1280x720').split('x').map(Number);
+const mobile = a.includes('--mobile'), dpr = +opt('--dpr', mobile ? 3 : 1);
+const metrics = (width, height) => send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: dpr, mobile });
 const steps = script ? JSON.parse(fs.readFileSync(script, 'utf8')).sort((x, y) => x.at - y.at) : [];
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.wasm': 'application/wasm', '.data': 'application/octet-stream' };
 
@@ -52,7 +57,8 @@ ws.onmessage = m => {
   if (d.method === 'Runtime.exceptionThrown') { failed = true; console.log('EXCEPTION:', d.params.exceptionDetails.exception?.description || d.params.exceptionDetails.text); }
 };
 await send('Runtime.enable'); await send('Page.enable'); await send('Log.enable');
-await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false });
+await metrics(W, H);
+if (mobile) await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
 await send('Emulation.setFocusEmulationEnabled', { enabled: true });   // parallel headless runs must not lose focus (the games pause)
 // virtual clock: rAF callbacks advance it by DT; __hold(t) stops it at t (the frame loop idles, nothing is drawn)
 if (fixed) await send('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {
@@ -90,11 +96,18 @@ const save = async f => { const r = await send('Page.captureScreenshot', { forma
 const numpad = { ...Object.fromEntries([...'0123456789'].map((d, i) => ['Numpad' + d, 96 + i])), NumpadEnter: 13, NumpadAdd: 107,
   NumpadSubtract: 109, NumpadMultiply: 106, NumpadDivide: 111, NumpadDecimal: 110 };
 const keyEv = (key, down) => send('Input.dispatchKeyEvent', { type: down ? 'keyDown' : 'keyUp', code: key, key: key.replace(/^Key/, '').toLowerCase(), windowsVirtualKeyCode: key.startsWith('Key') ? key.charCodeAt(3) : ({ Space: 32, ShiftLeft: 16, Enter: 13, Escape: 27, Tab: 9, ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39, ArrowDown: 40, ...numpad }[key] || 0), ...(key in numpad ? { location: 3 } : {}) });
+const fingers = new Map();
 for (const s of steps) {
   await waitUntil(s.at);
   if (s.key) await keyEv(s.key, s.down !== false);
   if (s.mouse) await send('Input.dispatchMouseEvent', { type: s.mouse, x: s.x ?? W / 2, y: s.y ?? H / 2, button: s.button || 'left', clickCount: 1 });
-  if (s.size) { const [w, h] = s.size.split('x').map(Number); await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false }); }
+  if (s.size) { const [w, h] = s.size.split('x').map(Number); await metrics(w, h); }
+  if (s.touch) {                     // the active points after this change (CDP: one event per changed point)
+    const id = s.id ?? 0;
+    if (s.touch === 'start' || s.touch === 'move') fingers.set(id, { x: s.x, y: s.y, id }); else fingers.delete(id);
+    const type = { start: 'touchStart', move: 'touchMove', end: 'touchEnd', cancel: 'touchCancel' }[s.touch];
+    await send('Input.dispatchTouchEvent', { type, touchPoints: [...fingers.values()] });
+  }
   if (s.eval) { const r = await send('Runtime.evaluate', { expression: s.eval, returnByValue: true }); console.log('[eval]', JSON.stringify(r.result?.value)); }
   if (s.shot) await save(s.shot);
 }

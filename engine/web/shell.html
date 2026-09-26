@@ -1,15 +1,19 @@
 <!doctype html>
-<!-- Engine page shell (emcc --shell-file). build.sh replaces @TITLE@ with the target's MANIFEST title. -->
+<!-- Engine page shell (emcc --shell-file). build.sh replaces @TITLE@ with the target's MANIFEST title and the
+     HEAD line below with the target's web/head.html (if any: e.g. duel/web, the PWA manifest and page services). -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>@TITLE@</title>
 <link rel="icon" href="data:,">
+<!--@HEAD@-->
 <style>
   html, body { margin: 0; height: 100%; background: #07070c; overflow: hidden; overscroll-behavior: none;
-               touch-action: none; user-select: none; -webkit-user-select: none; }
-  #canvas { display: block; width: 100vw; height: 100vh; outline: none; }
+               touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+               -webkit-tap-highlight-color: transparent; }
+  /* 100dvh: a phone's browser bar doesn't cover the bottom of the canvas (100vh where dvh is unknown) */
+  #canvas { display: block; width: 100vw; height: 100vh; height: 100dvh; outline: none; }
   .veil { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
           gap: 18px; padding: 16px; box-sizing: border-box; text-align: center;
           background: radial-gradient(ellipse at 50% 45%, #1a0f1f 0%, #07070c 70%);

@@ -5,6 +5,7 @@ lisp/package.lisp
 lisp/math.lisp
 lisp/hitvol.lisp
 lisp/input.lisp
+lisp/touch.lisp
 lisp/platform.lisp
 lisp/render.lisp
 lisp/meshgen.lisp

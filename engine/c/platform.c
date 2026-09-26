@@ -13,6 +13,42 @@ static unsigned char pf_pb[PF_NPAD][PF_NBTN], pf_pprev[PF_NPAD][PF_NBTN];
 static float pf_axes[PF_NPAD][6];   /* lx ly rx ry lt rt; pad 0's are also copied into f[3..8] */
 static int pf_w = 1, pf_h = 1, pf_flost = 0;
 static Uint64 pf_tprev, pf_t0;
+/* Touch (docs/DUEL_MOBILE_DESIGN.md G1): this frame's finger events, in order, for the Lisp recogniser
+   (engine/lisp/touch.lisp). SDL finger ids map to small slots 0..PF_NFING-1 while the finger is down;
+   an UP or CANCELED frees the slot, so a later CANCELED for the same id (SDL sends one on the
+   pointerleave after every touch pointerup) finds no slot and is dropped: CANCELED is idempotent.
+   Event record: type (0 down 1 motion 2 up 3 canceled 4 cancel-all), slot, x, y (0..1 of the window),
+   ms (SDL event timestamp since pf_init). */
+#define PF_NFING 10
+#define PF_NTEV 64
+static SDL_FingerID pf_fid[PF_NFING];       /* 0 = free */
+static float pf_tev[PF_NTEV * 5]; static int pf_ntev;
+static int pf_finger_slot(SDL_FingerID id, int alloc) {
+  int k, free = -1;
+  for (k = 0; k < PF_NFING; k++) { if (pf_fid[k] == id) return k; if (!pf_fid[k] && free < 0) free = k; }
+  if (alloc && free >= 0) pf_fid[free] = id;
+  return alloc ? free : -1;
+}
+static void pf_touch_push(int type, int slot, float x, float y, Uint64 ts) {
+  if (pf_ntev >= PF_NTEV) {   /* full: keep downs / ups / cancels (drop a motion) so no finger sticks */
+    if (type == 1) return;
+    pf_ntev = PF_NTEV - 1;
+  }
+  float *r = pf_tev + 5 * pf_ntev++;
+  r[0] = (float)type; r[1] = (float)slot; r[2] = x; r[3] = y; r[4] = (float)((double)(ts - pf_t0) * 1e-6);
+}
+static void pf_touch_event(const SDL_Event *e) {
+  int type = e->type == SDL_EVENT_FINGER_DOWN ? 0 : e->type == SDL_EVENT_FINGER_MOTION ? 1
+           : e->type == SDL_EVENT_FINGER_UP ? 2 : 3;
+  int slot = pf_finger_slot(e->tfinger.fingerID, type == 0);
+  if (slot < 0) return;                     /* unknown finger (e.g. the CANCELED after an UP), or all slots taken */
+  pf_touch_push(type, slot, e->tfinger.x, e->tfinger.y, e->tfinger.timestamp);
+  if (type >= 2) pf_fid[slot] = 0;
+}
+static void pf_touch_clear(void) {          /* focus lost / hidden: every finger is gone */
+  memset(pf_fid, 0, sizeof pf_fid);
+  pf_touch_push(4, -1, 0, 0, SDL_GetTicksNS());
+}
 static float pf_dz(float v, float dz) { float a = v < 0 ? -v : v; if (a < dz) return 0; a = (a - dz) / (1 - dz); if (a > 1) a = 1; return v < 0 ? -a : a; }
 static void pf_stick(SDL_Gamepad *pad, float *out, SDL_GamepadAxis ax, SDL_GamepadAxis ay, float dz) {
   float x = SDL_GetGamepadAxis(pad, ax) / 32767.0f, y = SDL_GetGamepadAxis(pad, ay) / 32767.0f;
@@ -56,23 +92,27 @@ static void pf_pad_update(int k) {   /* read pad K into its button / axis slots 
 int pf_pump(float *f, float maxdt, int lock) {
   SDL_Event e; int run = 1;
   memset(pf_kdown, 0, sizeof pf_kdown); memset(pf_mdown, 0, sizeof pf_mdown);
-  f[0] = f[1] = f[2] = 0; pf_flost = 0;
+  f[0] = f[1] = f[2] = 0; pf_flost = 0; pf_ntev = 0;
   while (SDL_PollEvent(&e)) switch (e.type) {
     case SDL_EVENT_QUIT: run = 0; break;
     case SDL_EVENT_KEY_DOWN: if (!e.key.repeat && e.key.scancode < SDL_SCANCODE_COUNT) { pf_key[e.key.scancode] = 1; pf_kdown[e.key.scancode] = 1; } break;
     case SDL_EVENT_KEY_UP: if (e.key.scancode < SDL_SCANCODE_COUNT) pf_key[e.key.scancode] = 0; break;
-    case SDL_EVENT_MOUSE_MOTION: f[0] += e.motion.xrel; f[1] += e.motion.yrel; break;
+    case SDL_EVENT_FINGER_DOWN: case SDL_EVENT_FINGER_MOTION: case SDL_EVENT_FINGER_UP: case SDL_EVENT_FINGER_CANCELED:
+      pf_touch_event(&e); break;
+    case SDL_EVENT_MOUSE_MOTION: if (e.motion.which == SDL_TOUCH_MOUSEID) break;   /* SDL's mouse copy of a finger */
+      f[0] += e.motion.xrel; f[1] += e.motion.yrel; break;
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
+      if (e.button.which == SDL_TOUCH_MOUSEID) break;
       if (lock && !pf_locked()) {   /* this click (re)acquires the pointer lock: not an attack */
         SDL_SetWindowRelativeMouseMode(pf_win, false); SDL_SetWindowRelativeMouseMode(pf_win, true);
         break;
       }
       if (e.button.button < 8) { pf_mb[e.button.button] = 1; pf_mdown[e.button.button] = 1; }
       break;
-    case SDL_EVENT_MOUSE_BUTTON_UP: if (e.button.button < 8) pf_mb[e.button.button] = 0; break;
+    case SDL_EVENT_MOUSE_BUTTON_UP: if (e.button.which != SDL_TOUCH_MOUSEID && e.button.button < 8) pf_mb[e.button.button] = 0; break;
     case SDL_EVENT_MOUSE_WHEEL: f[2] += e.wheel.y; break;
     case SDL_EVENT_WINDOW_FOCUS_LOST: case SDL_EVENT_WINDOW_HIDDEN: case SDL_EVENT_WINDOW_MINIMIZED:
-      memset(pf_key, 0, sizeof pf_key); memset(pf_mb, 0, sizeof pf_mb); pf_flost = 1; break;
+      memset(pf_key, 0, sizeof pf_key); memset(pf_mb, 0, sizeof pf_mb); pf_touch_clear(); pf_flost = 1; break;
     case SDL_EVENT_GAMEPAD_ADDED: pf_pad_added(e.gdevice.which); break;
     case SDL_EVENT_GAMEPAD_REMOVED:
       for (int k = 0; k < PF_NPAD; k++)
@@ -94,6 +134,18 @@ SDL_Window *pf_window(void) { return pf_win; }
 int pf_width(void) { return pf_w; }
 int pf_height(void) { return pf_h; }
 int pf_focus_lost(void) { return pf_flost; }
+float pf_density(void) { return pf_win ? SDL_GetWindowPixelDensity(pf_win) : 1.0f; }
+/* Copy this frame's touch events (5 floats each, see pf_touch_push) into OUT (room for MAX); returns the count. */
+int pf_touch_copy(float *out, int max) {    /* x y scaled to window pixels here */
+  int n = pf_ntev < max ? pf_ntev : max;
+  memcpy(out, pf_tev, sizeof(float) * 5 * n);
+  for (int i = 0; i < n; i++) { out[5 * i + 2] *= (float)pf_w; out[5 * i + 3] *= (float)pf_h; }
+  return n;
+}
+/* Page services for a game's web shell (optional: globalThis.gamePage = {get(k), set(k, v)}, e.g. duel/web/pwa.js);
+   without one, get returns 0 and set does nothing. */
+EM_JS(int, pf_page_get, (int k), { var p = globalThis.gamePage; return p && p.get ? (p.get(k) | 0) : 0; });
+EM_JS(void, pf_page_set, (int k, int v), { var p = globalThis.gamePage; if (p && p.set) p.set(k, v); });
 int pf_key_down(int sc) { return sc >= 0 && sc < SDL_SCANCODE_COUNT && pf_key[sc]; }
 int pf_key_pressed(int sc) { return sc >= 0 && sc < SDL_SCANCODE_COUNT && pf_kdown[sc]; }
 int pf_mouse_down(int b) { return b >= 0 && b < 8 && pf_mb[b]; }

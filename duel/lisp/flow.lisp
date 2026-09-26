@@ -34,6 +34,11 @@
   (setf *flow* st *ft* 0.0 *menu* 0)
   (log-msg "duel -> ~a" st))
 
+(defun go-mode ()
+  "The MODE screen; ONE-HAND VS CPU is preselected on a touch-first device held in portrait, VS CPU otherwise."
+  (set-flow :mode)
+  (when (and (one-hand-offered-p) (not (and *coarse* (portrait-p)))) (setf *menu* 2)))
+
 (defun set-cam-behind (on)
   "Set the CAMERA option. Humans steer by the behind view only in VS CPU (fighter.lisp *VIEW-BEHIND*);
 VS PLAYER and CPU VS CPU keep the pair camera."
@@ -56,14 +61,16 @@ VS PLAYER and CPU VS CPU keep the pair camera."
 (defun menu-left-p () (or (key-pressed :a) (key-pressed :left) (any-pad-pressed :dpad-left)))
 (defun menu-right-p () (or (key-pressed :d) (key-pressed :right) (any-pad-pressed :dpad-right)))
 (defun confirm-p () (or (key-pressed :return) (key-pressed :j) (key-pressed :kp-1) (key-pressed :kp-enter) (any-pad-pressed :a)))
-(defun back-p () (or (key-pressed :escape) (key-pressed :k) (key-pressed :kp-2) (any-pad-pressed :b)))
-(defun pause-p () (or (key-pressed :escape) (any-pad-pressed :start)))
+(defun back-p () (or (key-pressed :escape) (key-pressed :k) (key-pressed :kp-2) (any-pad-pressed :b) *back-press*))
+(defun pause-p () (or (key-pressed :escape) (any-pad-pressed :start) *back-press*))   ; + the browser's back (onehand.lisp)
 
 (defun menu-nav (n)
-  "Up / down move the cursor over N items; returns the index on confirm."
+  "Up / down move the cursor over N items; returns the index on confirm, or on a tap on a row (HUD-MENU notes them)."
   (when (menu-up-p) (setf *menu* (mod (1- *menu*) n)) (play-sfx :select))
   (when (menu-down-p) (setf *menu* (mod (1+ *menu*) n)) (play-sfx :select))
-  (when (confirm-p) (play-sfx :confirm) *menu*))
+  (let ((r (tapped-row n)))
+    (cond (r (setf *menu* r) (play-sfx :confirm) r)
+          ((confirm-p) (play-sfx :confirm) *menu*))))
 
 ;;; ---------------------------------------------------------------- scenes
 (defun cycle (item list dir) (nth (mod (+ (position item list) dir) (length list)) list))
@@ -169,49 +176,58 @@ won, NIL = a draw (a lethal trade took both souls' last Konpaku)."
     (flet ((respawn () (spawn-pair) (dolist (e (list *p1* *p2*)) (setf (fighter-state (fighter e)) :intro))))
       (case *select-phase*
         ((0 1)
-         (when (or (menu-left-p) (menu-right-p))
-           (setf (nth side *picks*) (cycle (nth side *picks*) *roster* (if (menu-left-p) -1 1)))
+         (when (or (menu-left-p) (menu-right-p) (member (tap-third) '(-1 1)))   ; a tap: left / right third
+           (setf (nth side *picks*) (cycle (nth side *picks*) *roster* (if (or (menu-left-p) (eql (tap-third) -1)) -1 1)))
            (play-sfx :select) (respawn))
-         (when (confirm-p)
+         (when (or (confirm-p) (eql (tap-third) 0))           ; ... or the middle: confirm
            (play-sfx :confirm)
            (let ((e (if (zerop side) *p1* *p2*)))
              (play-clip e (or (kit-intro (kit-of e)) (kit-stance (kit-of e))) :blend 4))
            (setf *select-phase* (if (and (= *select-phase* 1) (eq *mode* :vs-player)) 3 (1+ *select-phase*))
                  *menu* 0)))
-        (2 (let ((cam (eq *mode* :vs-cpu)))            ; row 0 the difficulty, row 1 (VS CPU) the camera
+        (2 (let ((cam (and (eq *mode* :vs-cpu) (not *one-hand*))))   ; row 0 the difficulty, row 1 (VS CPU) the camera
              (when (and cam (or (menu-up-p) (menu-down-p))) (setf *menu* (- 1 *menu*)) (play-sfx :select))
-             (when (or (menu-left-p) (menu-right-p))
+             (when (or (menu-left-p) (menu-right-p) (member (tap-third) '(-1 1)))
                (if (and cam (= *menu* 1))
                    (toggle-cam)
-                   (setf *difficulty* (cycle *difficulty* *difficulties* (if (menu-left-p) -1 1))))
+                   (setf *difficulty* (cycle *difficulty* *difficulties* (if (or (menu-left-p) (eql (tap-third) -1)) -1 1))))
                (play-sfx :select)))
-           (when (confirm-p) (play-sfx :confirm) (setf *select-phase* 3))))
+           (when (or (confirm-p) (eql (tap-third) 0)) (play-sfx :confirm) (setf *select-phase* 3))))
       (when (>= *select-phase* 3) (new-seed) (start-match))
       (when (back-p)
         (play-sfx :back)
-        (if (zerop *select-phase*) (set-flow :mode) (decf *select-phase*))))))
+        (if (zerop *select-phase*) (go-mode) (decf *select-phase*))))))
 
 (defparameter *mode-menu* '("VS CPU" "VS PLAYER" "CPU VS CPU" "CONTROLS"))
+(defun mode-items ()
+  "The MODE menu: ONE-HAND VS CPU and its HAND option first when ONE-HAND is offered (onehand.lisp)."
+  (if (one-hand-offered-p)
+      (list* "ONE-HAND VS CPU" (if (eq *hand* :left) "HAND  LEFT" "HAND  RIGHT") *mode-menu*)
+      *mode-menu*))
 (defparameter *pause-menu* '("RESUME" "RESTART" "CHARACTER SELECT" "TITLE"))
 (defun pause-items ()
   "The pause menu: VS CPU adds the CAMERA toggle."
-  (if (eq *mode* :vs-cpu) (append *pause-menu* (list (camera-label))) *pause-menu*))
+  (if (and (eq *mode* :vs-cpu) (not *one-hand*)) (append *pause-menu* (list (camera-label))) *pause-menu*))
 (defparameter *results-menu* '("REMATCH" "CHARACTER SELECT" "TITLE"))
 
 (defun flow-update (rdt)
   "Menus, pause and screen timers (once per frame, real time)."
   (unless *paused* (incf *ft* rdt))
   (case *flow*
-    (:title (when (and (> *ft* 0.3) (or (confirm-p) (key-pressed :space) (any-pad-pressed :start)))
-              (play-sfx :confirm) (set-flow :mode)))
-    (:mode (let ((i (menu-nav 4)))
-             (case i
-               ((0 1 2) (setf *mode* (nth i '(:vs-cpu :vs-player :cpu-cpu))) (go-select))
-               (3 (set-flow :controls))))
+    (:title (when (and (> *ft* 0.3) (or (confirm-p) (key-pressed :space) (any-pad-pressed :start) (tap-p)))
+              (play-sfx :confirm) (go-mode)))
+    (:mode (let* ((off (if (one-hand-offered-p) 2 0)) (i (menu-nav (+ 4 off))))
+             (cond ((null i))
+                   ((and (= off 2) (= i 0))                   ; ONE-HAND VS CPU: the behind camera, the thumb deck
+                    (setf *one-hand* t *mode* :vs-cpu) (set-cam-behind t) (go-select))
+                   ((and (= off 2) (= i 1)) (set-hand (if (eq *hand* :left) :right :left)))
+                   (t (case (- i off)
+                        ((0 1 2) (setf *one-hand* nil *mode* (nth (- i off) '(:vs-cpu :vs-player :cpu-cpu))) (go-select))
+                        (3 (set-flow :controls))))))
            (when (back-p) (play-sfx :back) (go-title)))
-    (:controls (when (or (back-p) (confirm-p)) (play-sfx :back) (set-flow :mode)))
+    (:controls (when (or (back-p) (confirm-p) (tap-p)) (play-sfx :back) (go-mode)))
     (:select (select-update))
-    ((:intro :finish) (when (and *cine* (or (pause-p) (confirm-p))) (skip-cine)))
+    ((:intro :finish) (when (and *cine* (or (pause-p) (confirm-p) (tap-p))) (skip-cine)))
     (:battle
      (cond (*paused*
             (if (pause-p)
@@ -222,8 +238,10 @@ won, NIL = a draw (a lethal trade took both souls' last Konpaku)."
                   (2 (go-select))
                   (3 (go-title))
                   (4 (toggle-cam)))))
-           ((and *cine* (pause-p)) (skip-cine))
-           ((or (pause-p) (focus-lost-p)) (setf *paused* t *menu* 0) (play-sfx :select))))
+           ((and *cine* (or (pause-p) (and *one-hand* (tap-p)))) (skip-cine))
+           ((or (pause-p) (focus-lost-p) (touch-pause-p)
+                (and *one-hand* (not (portrait-p))))              ; ONE-HAND turned to landscape: ROTATE TO PORTRAIT
+            (setf *paused* t *menu* 0) (play-sfx :select))))
     (:results (when (> *ft* 2.5)                         ; a masher doesn't skip the results
                 (case (menu-nav 3)
                   (0 (new-seed) (start-match))

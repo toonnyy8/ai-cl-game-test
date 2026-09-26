@@ -28,5 +28,6 @@ lisp/camera.lisp
 lisp/feedback.lisp
 lisp/flow.lisp
 lisp/hud.lisp
+lisp/onehand.lisp
 lisp/debug.lisp
 lisp/main.lisp

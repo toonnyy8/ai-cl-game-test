@@ -46,11 +46,13 @@ the ones below it.")
 (defparameter *p1-bindings*
   '(:up ((:key :w) (:pad :dpad-up)) :down ((:key :s) (:pad :dpad-down))
     :left ((:key :a) (:pad :dpad-left)) :right ((:key :d) (:pad :dpad-right))
-    :quick ((:key :j) (:pad :x)) :flash ((:key :k) (:pad :y)) :sig ((:key :l) (:pad :b))
-    :guard ((:key :u) (:pad :lb)) :breaker ((:key :i) (:pad :rb)) :kikon ((:key :o) (:pad :rt))
-    :step ((:key :space) (:pad :a)) :mod ((:key :lshift) (:pad :lt))
-    :awaken ((:key :p) (:pad :back) (:pad :ls :rs)))
-  "Player 1: left keyboard + pad 0 (design-v1 §2). Menus read the devices directly (flow.lisp).")
+    :quick ((:key :j) (:pad :x) (:touch :quick)) :flash ((:key :k) (:pad :y) (:touch :flash))
+    :sig ((:key :l) (:pad :b) (:touch :sig)) :guard ((:key :u) (:pad :lb) (:touch :guard))
+    :breaker ((:key :i) (:pad :rb) (:touch :breaker)) :kikon ((:key :o) (:pad :rt) (:touch :kikon))
+    :step ((:key :space) (:pad :a) (:touch :step)) :mod ((:key :lshift) (:pad :lt) (:touch :mod))
+    :awaken ((:key :p) (:pad :back) (:pad :ls :rs) (:touch :awaken)))
+  "Player 1: left keyboard + pad 0 (design-v1 §2) + the ONE-HAND thumb deck ((:touch name): onehand.lisp
+TOUCH-BUTTON; its drag stick is added like pad 0's). Menus read the devices directly (flow.lisp).")
 
 (defparameter *p2-bindings*
   '(:up ((:key :up) (:pad :dpad-up)) :down ((:key :down) (:pad :dpad-down))

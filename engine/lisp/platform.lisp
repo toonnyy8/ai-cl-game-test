@@ -73,6 +73,20 @@ page (CSS 100vw x 100vh) and device pixel ratio."
 (defun mouse-wheel () (aref *input* 2))
 (defun pointer-locked-p () (ffi:c-inline () () :bool "pf_locked()" :one-liner t))
 (defun focus-lost-p () "T for the frame in which the window lost focus / was hidden." (ffi:c-inline () () :bool "pf_focus_lost()" :one-liner t))
+(defun pixel-density () "Window pixels per CSS pixel (the device pixel ratio)." (ffi:c-inline () () :float "pf_density()" :one-liner t))
+
+;;; ---------------------------------------------------------------- touch, page services
+(defun-fast touch-poll (tr)
+  "Feed this frame's finger events (window px, SDL timestamps) to the recogniser TR (touch.lisp), then run
+its clock to now. Call once per frame, after PLATFORM-POLL. 0 B."
+  (let ((n (ffi:c-inline ((touch-q tr)) (t) :int "pf_touch_copy(#0->vector.self.sf,64)" :one-liner t)))
+    (declare (fixnum n))
+    (setf (touch-now tr) (* 1000f0 (aref (the f32vec *input*) 10)))
+    (touch-feed! tr n)))
+(defun page-get (k)
+  "Ask the page (a game's web shell, globalThis.gamePage.get): an integer, 0 when the page has no such service."
+  (ffi:c-inline (k) (:int) :int "pf_page_get(#0)" :one-liner t))
+(defun page-set (k v) "Tell the page (globalThis.gamePage.set) K = V (integers)." (ffi:c-inline (k v) (:int :int) :void "pf_page_set(#0,#1)" :one-liner t))
 
 ;;; ---------------------------------------------------------------- gamepads
 ;;; Up to 4 open pads in stable slots 0..3: a newly connected pad takes the first free slot and keeps

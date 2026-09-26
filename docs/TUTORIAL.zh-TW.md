@@ -569,6 +569,62 @@ duel -> RESULTS winner P2 konpaku 0-4 ticks 9305 secs 155.1
 
 和第 8 步 RAVEN 的一刀比一比：「判定」和「結算」一樣是純函式，事件一樣交給 feedback；多出來的是兩件格鬥遊戲才需要的事：輸入經過 vpad，而結算之後才有過場。
 
+### 9.7 手機單手模式（片手 ONE-HAND）與安裝成 App
+
+2026-09-26 起，SOUL DUEL 可以在手機上直拿、用一根拇指打電腦，也可以加到主畫面當成 App 開。設計在 [DUEL_MOBILE_DESIGN.md](DUEL_MOBILE_DESIGN.md)，§12 記錄了這次做了哪些、和設計哪裡不一樣。
+
+![單手模式：上面是雙方的量表，右下是按鈕，左下的框是手勢區](../tests/shots/mobile-battle.png)
+
+**怎麼組起來的。** 觸控不是另一套操作系統，只是 9.1 那個 vpad 的另一種輸入來源：
+
+1. `engine/c/platform.c` 的 `pf_pump` 把這一幀的手指事件（按下、移動、放開、取消）連同 SDL 的時間戳記排成一列。取消事件如果對不到手指就直接丟掉，所以瀏覽器在每次放開後補送的取消不會變成點擊；視窗失焦時所有手指一起清掉。
+2. `engine/lisp/touch.lisp` 是純 Common Lisp 的手勢辨識器（主機上用 `tests/touch-test.lisp` 測），只看事件和時間戳記，不看幀數，所以在 30 fps 和 120 fps 下判斷一樣。
+3. `duel/lisp/onehand.lisp` 把手勢換成 P1 的 vpad 按鈕：`control.lisp` 的 P1 綁定多了 `(:touch :quick)` 這類項目，`p1-down-p` 看到 `:touch` 就問 `touch-button`。角色、規則和 AI 完全不知道玩家在用手機。
+
+**手勢（右手預設；選單的 HAND 可以換左手，整個按鈕區左右鏡像）：**
+
+| 動作 | 效果（對應鍵盤） |
+|---|---|
+| 在手勢區點一下 | Quick（J）；連點就是連段 |
+| 按著不動約 0.12 秒 | 防禦（U），放開才會回防禦量表 |
+| 拖曳 | 移動（WASD），往上是朝對手；拖遠一點是衝刺，再拖著是跑 |
+| 快速撥一下（下、左、右） | Step（Space），往下是後退 |
+| 往上撥然後馬上放開 | Flash（K） |
+| 先按著不動，再往上撥 | Hoho（Shift+Space），只在站著或防禦時 |
+| 被打中、硬直或浮空時往下撥 | Burst Reverse（Shift+J） |
+| O、L、I、SP1、SP2 圓鈕 | Kikon 突進（按著＝Kikon）、Signature、Breaker、SP1、SP2 |
+| AWK（EVOLUTION 時才出現，按住 0.3 秒） | 覺醒（P） |
+| II 圓鈕，或手機的「返回」手勢 | 暫停 |
+
+選單直接點選項；選角畫面點左邊三分之一換上一個、右邊三分之一換下一個、中間確定。對戰中把手機轉成橫的會暫停並顯示 ROTATE TO PORTRAIT。
+
+**在電腦上試。** 用 Chrome DevTools 的裝置模式選一支直式手機，或用測試工具：
+
+```sh
+./build.sh duel
+python3 tests/scripts/duel-touch.py          # 產生觸控腳本
+node tools/run.mjs dist/duel --mobile --size 390x844 --fixed-dt 16.666667 --secs 40 --script tests/scripts/duel-touch.json
+```
+
+`--mobile` 模擬 DPR 3 的觸控手機；腳本裡的 `{"at":1,"touch":"start","x":100,"y":700}` 是一根手指。同一個腳本跑兩次，`duel hash` 那幾行必須一模一樣。
+
+**放到手機上：一定要 HTTPS。** WebGPU 和 service worker 都只在「安全的來源」上能用（HTTPS，或手機自己的 localhost），所以用 `python3 -m http.server` 在區網開 `http://192.168.x.x:8000` 手機上會直接顯示 WEBGPU UNAVAILABLE。三個辦法，挑一個：
+
+- **臨時通道（最簡單）**：電腦上 `python3 -m http.server -d dist/duel 8000`，再開 `cloudflared tunnel --url http://localhost:8000`（需要先裝 cloudflared，不用帳號），它會印出一個 `https://….trycloudflare.com` 網址，兩支手機都開這個網址。網址每次都不一樣，關掉就失效；開著的時候任何知道網址的人都能看到。
+- **區網自簽憑證**：用 `mkcert` 產生 `192.168.x.x` 的憑證，用支援 HTTPS 的伺服器開 `dist/duel`（例如 `npx http-server dist/duel -S -C 憑證.pem -K 金鑰.pem`）。手機必須信任 mkcert 的根憑證：iPhone 要把 `rootCA.pem` 傳過去安裝，再到「設定 > 一般 > 關於本機 > 憑證信任設定」打開；Android 在「設定 > 安全性 > 加密與憑證 > 安裝憑證」。
+- **公開主機**：把 `dist/duel` 的全部檔案放到 GitHub Pages、Cloudflare Pages 或 Netlify 之類的靜態網站（這個 repo 是私人的，GitHub Pages 用在私人 repo 需要付費方案，可以另開一個公開 repo 只放 `dist/duel`）。
+
+Android 還有一個不用憑證的辦法：USB 接電腦，Chrome 的 `chrome://inspect` 開「Port forwarding」把手機的 `localhost:8000` 轉到電腦的 8000，手機開 `http://localhost:8000` 也算安全來源。
+
+**安裝成 App：**
+
+- **iPhone（Safari，iOS 26 以上才有 WebGPU）**：開網址 → 分享按鈕 → 「加入主畫面」→ 從主畫面的 SOUL DUEL 圖示打開。iOS 的網頁 App 是「獨立視窗」而不是全螢幕，上方的狀態列會留著，這是正常的。
+- **Android（Chrome）**：開網址 → 右上選單 →「安裝應用程式」（或「加到主畫面」）。第一次點畫面時會進全螢幕並鎖定直式。
+
+裝好之後，service worker 會把整個遊戲存起來，沒有網路也能開。重新 `./build.sh duel` 並更新網站上的檔案之後，下次開 App 會自動重新載入一次換成新版。
+
+**在兩支手機上要確認的事**：用單手打完一場 NORMAL；有沒有「想防禦卻出了 Quick」「想走路卻變成 Step」之類的誤判（大概幾次）；畫面順不順（開發者可以在 Chrome 遠端偵錯看 console 的 `stats: fps` 行）；對戰中滑「返回」是暫停而不是離開；對戰時螢幕不會自己變暗。
+
 ---
 
 ## 第 10 步：練習

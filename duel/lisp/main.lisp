@@ -367,6 +367,7 @@ of the screen (the stats take the left third); select: both fighters from the fr
   "One frame (the engine runs it between BEGIN-FRAME and END-FRAME; RDT = real seconds). The effects run
 on FDT: RDT, or 0 while paused (the fx clock, particles, stamps, shake, camera and HUD animation stop)."
   (screen-fx-update (if (or *paused* (cine-held-p)) 0.0 rdt))   ; last frame's impact frames / lines / silence run out
+  (onehand-frame)                                           ; the page, the deck, this frame's fingers
   (flow-update rdt)
   (gate-update)
   (perf-mark)                                               ; stats: "sim" = the fixed steps
@@ -398,6 +399,7 @@ on FDT: RDT, or 0 while paused (the fx clock, particles, stamps, shake, camera a
   (setf *pointer-lock* nil
         *key-ease* 1 *shake-hz* 12f0)                       ; pose-to-pose easing, a drawn (stepped) shake
   (stage-env)
+  (onehand-init)
   (go-title))
 
 (run-game :title "SOUL DUEL"

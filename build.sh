@@ -37,7 +37,10 @@ rm -rf "$OUT"; mkdir -p "$OUT" "$DIST"
   || { grep -B2 -A12 -iE "error|warning" "$OUT/lisp.log" | head -80; echo "LISP BUILD FAILED (full log: $OUT/lisp.log)"; exit 1; }
 grep -A6 -E "^;;; (Warning|Style warning)|WARNING" "$OUT/lisp.log" | head -60 || true
 
-sed "s|@TITLE@|$(printf '%s' "$TITLE" | sed 's/[&|\\]/\\&/g')|g" engine/web/shell.html > "$OUT/shell.html"
+WEB=${DIR:+$DIR/web}   # optional per-target page files: head.html goes into the shell, the rest next to index.html
+HEADF=/dev/null; [ -n "$WEB" ] && [ -f "$WEB/head.html" ] && HEADF=$WEB/head.html
+sed "s|@TITLE@|$(printf '%s' "$TITLE" | sed 's/[&|\\]/\\&/g')|g" engine/web/shell.html \
+  | sed -e "/<!--@HEAD@-->/{r $HEADF" -e "d}" > "$OUT/shell.html"
 # addRunDependency/removeRunDependency: the shell requests the WebGPU device before main()
 emcc -O2 -DECL_C_COMPATIBLE_VARIADIC_DISPATCH -I. -Ivendor/ecl/include -Ivendor/sdl3-webgpu/include \
   --use-port=vendor/emdawn/emdawnwebgpu_pkg/emdawnwebgpu.port.py \
@@ -45,4 +48,9 @@ emcc -O2 -DECL_C_COMPATIBLE_VARIADIC_DISPATCH -I. -Ivendor/ecl/include -Ivendor/
   -sSTACK_SIZE=4MB -sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=128MB \
   -sEXPORTED_RUNTIME_METHODS=addRunDependency,removeRunDependency \
   --shell-file "$OUT/shell.html" ${EMCC_EXTRA:-} -o "$DIST/index.html"
+if [ -n "$WEB" ] && [ -d "$WEB" ]; then
+  for f in "$WEB"/*; do [ "$(basename "$f")" = head.html ] || cp "$f" "$DIST/"; done
+  # a service worker's cache name carries the build's hash: every new build installs a fresh cache
+  [ -f "$DIST/sw.js" ] && sed -i "s/@VERSION@/$(cat "$DIST"/index.html "$DIST"/index.js "$DIST"/index.wasm | sha1sum | cut -c1-12)/" "$DIST/sw.js"
+fi
 echo "built $DIST/index.html"

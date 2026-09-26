@@ -360,7 +360,7 @@ a guard in every form, two forms' guards do more)."
   (let* ((f (fighter e)) (g (gauges e)) (kit (fighter-kit f)) (kh (kit-hud kit)) (side (fighter-side f)) (right (= side 1))
          (m (* 0.03 w)) (bw (* 0.36 w)) (x (if right (- w m bw) m)) (edge (if right (+ x bw) x))
          (align (if right :right :left)) (y (* 0.05 h)) (bh (max (* 7 s) (* 0.028 h)))
-         (ns (max 2 s)) (tm (fx-clock))
+         (ns (max 2 s)) (tm (fx-clock)) (ls (if (portrait-p) (ceiling s 2) s))   ; portrait: the centre labels smaller
          (frac (/ (gauges-reishi g) (float (gauges-reishi-max g)))) (red (red-p (gauges-reishi g) (gauges-reishi-max g))))
     ;; name + form (dimmed while the stance is burned out)
     (hud-text (svref kh 0) edge (- y (* 8 ns) s) ns (cond ((burnout-p e) '(0.5 0.52 0.58 1)) ((kit-awakening kit) *ember*) (t *white*))
@@ -386,7 +386,7 @@ a guard in every form, two forms' guards do more)."
     (let* ((sy (+ y bh (* 25 s))) (sw (* 0.075 w)) (sh (max (* 3 s) (* 0.011 h))) (gap (* 3 s)) (row (* 11 s))
            (lx (if right (- edge (* 3 (+ sw gap)) (* 3 s)) (+ edge (* 3 (+ sw gap)) (* 3 s)))))
       (%hud-reiatsu (f32 edge) (f32 sy) (f32 sw) (f32 sh) (f32 gap) (gauges-reiatsu g) right)
-      (hud-text "REIATSU" lx (- (+ sy (* 0.5 sh)) (* 3.5 s)) s '(0.45 0.8 1 0.9) :align align)
+      (hud-text "REIATSU" lx (- (+ sy (* 0.5 sh)) (* 3.5 s)) ls '(0.45 0.8 1 0.9) :align align)
       ;; flash-step (Hoho, Burst), Awakening (drains during a timed awakening), the kit meter (Inferno; drains in its form)
       (let* ((fy (+ sy row)) (ay (+ fy row)) (aw (+ (* 3 sw) (* 6 s))) (ah (max (* 3 s) (* 0.009 h))) (ty (- (* 0.5 ah) (* 3.5 s)))
              (ax (if right (- edge aw) x)) (lx (if right (- edge aw (* 6 s)) (+ edge aw (* 6 s))))
@@ -395,15 +395,15 @@ a guard in every form, two forms' guards do more)."
              (afill (cond (timed (timer-fill (gauges-form-left g) (gauges-form-total g) 1.0))
                           ((kit-awakening kit) 1.0) (t (/ (gauges-awaken g) *awaken-max*)))))
         (%hud-flash (f32 ax) (f32 fy) (f32 aw) (f32 ah) (f32 (/ (gauges-fs g) *fs-max*)) right (burst-ok-p e) tm)
-        (hud-text "FLASH STEP" lx (+ fy ty) s '(0.6 0.78 1 0.9) :align align)
+        (hud-text "FLASH STEP" lx (+ fy ty) ls '(0.6 0.78 1 0.9) :align align)
         (%hud-thin (f32 ax) (f32 ay) (f32 aw) (f32 ah) (f32 afill) right 1f0 (if hot 0.85f0 0.75f0) 0.3f0
                    (if hot 0.6f0 1f0) (if hot 4f0 0f0) tm)
         (cond ((gauges-evolution g)
-               (hud-text "EVOLUTION" lx (+ ay ty) s (alpha! *c-evo* (hud-pulse 3.0)) :align align))
-              ((burnout-p e) (hud-text "BURNOUT" lx (+ ay ty) s '(0.62 0.64 0.7 1) :align align))
-              ((svref kh 2) (hud-text (svref kh 2) lx (+ ay ty) s *u-tag* :align align))   ; what this form's guard adds
-              ((kit-awakening kit) (hud-text (kit-form-name kit) lx (+ ay ty) s *ember* :align align))
-              (t (hud-text "AWAKEN" lx (+ ay ty) s '(0.95 0.8 0.4 0.9) :align align)))
+               (hud-text "EVOLUTION" lx (+ ay ty) ls (alpha! *c-evo* (hud-pulse 3.0)) :align align))
+              ((burnout-p e) (hud-text "BURNOUT" lx (+ ay ty) ls '(0.62 0.64 0.7 1) :align align))
+              ((svref kh 2) (hud-text (svref kh 2) lx (+ ay ty) ls *u-tag* :align align))   ; what this form's guard adds
+              ((kit-awakening kit) (hud-text (kit-form-name kit) lx (+ ay ty) ls *ember* :align align))
+              (t (hud-text "AWAKEN" lx (+ ay ty) ls '(0.95 0.8 0.4 0.9) :align align)))
         (let ((l (kit-command-move kit :sig)) (sp (kit-command-move kit :sp2)))   ; the L / Shift+L cooldowns
           (when (and (kit-awakening kit) (plusp (mv-cooldown l)))
             (let* ((my (+ ay row)) (hw (* 0.5 (- aw (* 2 s)))) (cd (fighter-cd f)) (o (* 2 side))
@@ -415,14 +415,14 @@ a guard in every form, two forms' guards do more)."
               (%hud-cd (f32 (if right ax (+ ax hw (* 2 s)))) (f32 my) (f32 hw) (f32 ah)
                        (f32 (- 1.0 (/ (aref cd (position :sp2 *kit-commands*)) (float (max 1 (mv-cooldown sp)))))) (f32 fs) right
                        1f0 0.45f0 0.15f0)
-              (hud-text "COOLDOWN" lx (+ my ty) s '(0.84 0.88 0.94 0.9) :align align))))
+              (hud-text "COOLDOWN" lx (+ my ty) ls '(0.84 0.88 0.94 0.9) :align align))))
         (let ((meter (svref kh 1)))
           (when (getf meter :ladder)                    ; NOME: the cup ladder (Nozarashi), yellow
             (let* ((ladder (getf meter :ladder)) (rung (or (position (kit-form kit) ladder :key #'first) 0))
                    (mx (getf meter :max)))
               (%hud-nome (f32 ax) (f32 (+ ay row)) (f32 aw) (f32 ah) (f32 (/ (gauges-meter g) mx)) right rung
                          (f32 (/ (fifth (nth rung ladder)) mx)) tm)
-              (hud-text (getf meter :name) lx (+ ay row ty) s '(1 0.85 0.3 0.95) :align align)))
+              (hud-text (getf meter :name) lx (+ ay row ty) ls '(1 0.85 0.3 0.95) :align align)))
           (when (and meter (not (kit-awakening kit)))
             (let* ((my (+ ay row)) (burning (plusp (gauges-form-left g)))
                    (mfill (if burning
@@ -430,7 +430,7 @@ a guard in every form, two forms' guards do more)."
                               (/ (gauges-meter g) (getf meter :max)))))
               (%hud-thin (f32 ax) (f32 my) (f32 aw) (f32 ah) (f32 mfill) right 1f0 (if burning 0.4f0 0.45f0) (if burning 0.1f0 0.12f0)
                          (if burning 0.7f0 1f0) (if burning 5f0 0f0) tm)
-              (hud-text (getf meter :name) lx (+ my ty) s '(1 0.55 0.25 0.9) :align align))))))
+              (hud-text (getf meter :name) lx (+ my ty) ls '(1 0.55 0.25 0.9) :align align))))))
     ;; combo counter under this side's bar (this side is the victim): the last total that dealt damage
     (let ((c (svref *combo-show* side)))
       (when (and (> (fighter-combo-hits f) 1) (plusp (fighter-combo-dmg f)))
@@ -445,11 +445,12 @@ a guard in every form, two forms' guards do more)."
     (when (and (not (brain e)) (member *flow* '(:battle)))
       (cond ((kikon-ready-p e)                            ; the opponent is red: the rush, held, Kiko's
              (hud-text (if (pad-connected-p side) "HOLD RT  KIKON" (if right "HOLD KP6  KIKON" "HOLD O  KIKON"))
-                       (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 3 s) (alpha! *c-kikon* (+ 0.5 (* 0.5 (hud-pulse 4.0))))
+                       (if right (* 0.75 w) (* 0.25 w)) (* (if *one-hand* 0.52 0.78) h) (* 3 s) (alpha! *c-kikon* (+ 0.5 (* 0.5 (hud-pulse 4.0))))
                        :align :center))
             ((burst-ok-p e)
-             (hud-text (if (pad-connected-p side) "LT+X  BURST" (if right "KP ENTER+KP1  BURST" "SHIFT+J  BURST"))
-                       (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 2 s) (alpha! *c-burst* (+ 0.5 (* 0.5 (hud-pulse 4.0))))
+             (hud-text (cond (*one-hand* "FLICK DOWN  BURST") ((pad-connected-p side) "LT+X  BURST")
+                             (right "KP ENTER+KP1  BURST") (t "SHIFT+J  BURST"))
+                       (if right (* 0.75 w) (* 0.25 w)) (* (if *one-hand* 0.52 0.78) h) (* 2 s) (alpha! *c-burst* (+ 0.5 (* 0.5 (hud-pulse 4.0))))
                        :align :center))))))
 
 ;;; ---------------------------------------------------------------- over the fighters
@@ -540,7 +541,8 @@ facing."
   (dolist (e (list *p1* *p2*)) (when (entity-alive-p e) (hud-world e w h s)))  ; keep clear of them
   (let* ((secs (min 999 (ceiling (max 0 *timer*) 60)))
          (str (or (svref *timer-strings* secs) (setf (svref *timer-strings* secs) (format nil "~d" secs)))))
-    (ui-big-text str (floor w 2) (* 0.07 h) (* 4 s) (if (< secs 30) '(1 0.3 0.3 1) *white*) '(0 0 0 0.7) s :shear 0.0)))
+    (ui-big-text str (floor w 2) (* (if (portrait-p) 0.215 0.07) h) (* (if (portrait-p) 2 4) s)   ; portrait: under the panels
+                 (if (< secs 30) '(1 0.3 0.3 1) *white*) '(0 0 0 0.7) s :shear 0.0)))
 
 ;;; ---------------------------------------------------------------- screens
 (defun hud-menu (items y0 w h s &optional (cx (/ w 2)))
@@ -551,6 +553,9 @@ facing."
         (when sel
           (ui-gradient (- cx (* 0.5 tw) (* 14 s)) (- y (* 3 s)) (+ tw (* 28 s)) (+ (* 7 sc) (* 6 s))
                        '(0.8 0.3 0.05 0.0) '(0.8 0.3 0.05 0.8) :vertical nil))
+        (when (touch-tap-zones-p)                          ; the row as a tap target (onehand.lisp TAPPED-ROW)
+          (note-menu-row i (- cx (max (* 0.5 tw) (* 0.3 w))) (- y (* 0.5 (- dy (* 7 sc)))) (+ cx (max (* 0.5 tw) (* 0.3 w)))
+                         (+ y (* 7 sc) (* 0.5 (- dy (* 7 sc))))))
         (ui-text it (round cx) y :scale sc :align :center :color (if sel *white* '(0.8 0.78 0.85 1)) :shadow t)))))
 
 (defparameter *controls-text*
@@ -675,15 +680,17 @@ WINNER + name, the stats table (P1 / P2 columns), the match time, the menu."
     (when *caption-out* (unless (draw-bcap *caption-out* w h) (setf *caption-out* nil)))   ; an ended cinematic's title
     (case *flow*
       (:title (hud-title w h s))
-      (:mode (ui-big-text "SOUL DUEL" (floor w 2) (* 0.2 h) (* 6 s) '(1 0.92 0.8 1) '(0.7 0.18 0.05 1) s)
-       (hud-menu *mode-menu* 0.42 w h s))
-      (:controls (hud-controls w h s))
+      (:mode (ui-big-text "SOUL DUEL" (floor w 2) (* 0.2 h) (fit-scale "SOUL DUEL" (* 6 s) (* 0.8 w)) '(1 0.92 0.8 1) '(0.7 0.18 0.05 1) s)
+       (hud-menu (mode-items) 0.42 w h s))
+      (:controls (if (one-hand-offered-p) (hud-gestures w h s) (hud-controls w h s)))
       (:select (hud-select w h s))
-      ((:battle :finish) (unless *cine* (hud-battle w h s)))
+      ((:battle :finish) (unless *cine* (hud-battle w h s) (when (and *one-hand* (portrait-p)) (hud-deck s))))
       (:results (hud-results w h s)))
     (draw-words w h)
     (when (and *paused* (eq *flow* :battle))
       (ui-rect 0 0 w h '(0 0 0 0.55))
-      (ui-big-text "PAUSED" (floor w 2) (* 0.3 h) (* 5 s) *white* '(0.7 0.25 0.05 1) s)
+      (if (and *one-hand* (not (portrait-p)))
+          (ui-big-text "ROTATE TO PORTRAIT" (floor w 2) (* 0.3 h) (fit-scale "ROTATE TO PORTRAIT" (* 4 s) (* 0.9 w)) *white* '(0.7 0.25 0.05 1) s)
+          (ui-big-text "PAUSED" (floor w 2) (* 0.3 h) (* 5 s) *white* '(0.7 0.25 0.05 1) s))
       (hud-menu (pause-items) 0.45 w h s))
     (debug-hud w h s)))

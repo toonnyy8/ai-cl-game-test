@@ -196,3 +196,10 @@ None while he is burned out."
 
 (declaim (type fixnum *match-tick*))
 (defvar *match-tick* 0 "Fixed steps since the battle began (determinism hash, logs).")
+
+;;; ONE-HAND (onehand.lisp), declared here because fighter.lisp and flow.lisp read them
+(defvar *touch* (make-touch) "P1's gesture recogniser (engine/lisp/touch.lisp).")
+(defvar *one-hand* nil "The current match is ONE-HAND (VS CPU, portrait, the thumb deck).")
+(defvar *hand* :right "HAND setting: :RIGHT (default) or :LEFT (the deck mirrored). Saved by the page.")
+(defvar *coarse* nil "The page reports a touch-first device ((pointer: coarse)).")
+(defvar *back-press* nil "The browser's back (the history trap of duel/web/pwa.js) fired this frame.")

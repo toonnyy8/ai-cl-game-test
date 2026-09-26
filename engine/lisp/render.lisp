@@ -168,6 +168,9 @@ Returns T if the point is in front of the camera."
   "T: dynamic quality. When frames average over *FRAME-BUDGET-MS*, lower *RENDER-SCALE* in 0.1 steps
 down to *RENDER-SCALE-MIN*, then *PIXEL-LIGHTS* to 3 and 1; raise it back when there is headroom
 (hysteresis + backoff, see r_timing). Off by default (keeps screenshots deterministic).")
+(defvar *scene-scale-cap* 1f0
+  "Upper bound on the scene resolution factor (docs/DUEL_MOBILE_DESIGN.md G7): a phone at DPR 3 sets it so the
+scene stays near 1.6 MP (the UI stays native). 1 = no cap.")
 (defvar *auto-level* 0)
 (defvar *render-scale-min* 0.7f0)
 (defvar *frame-budget-ms* 18f0 "Target frame time for *AUTO-RENDER-SCALE* (60 Hz + slack).")
@@ -451,6 +454,8 @@ threshold (0 with MSAA's alpha-to-coverage, 0.5 without)."
             (aref u 157) (if (> (the fixnum *msaa-samples*) 1) 0f0 0.5f0)))            ; toon fx discard threshold
     nil))
 
+(defun scene-scale () (if (< *scene-scale-cap* 1f0) (min *render-scale* *scene-scale-cap*) *render-scale*))
+
 (defun end-frame ()
   "Render everything queued this frame (scene → fx → post → UI) and present."
   (update-camera)
@@ -458,7 +463,7 @@ threshold (0 with MSAA's alpha-to-coverage, 0.5 without)."
     (declare (type f32vec p))
     (setf (aref p 0) (if (env-bloom e) 1f0 0f0) (aref p 1) (env-bloom-threshold e) (aref p 2) (env-bloom-strength e)
           (aref p 3) (env-vignette e)
-          (aref p 4) (f32 (max 1 (round (* ww *render-scale*)))) (aref p 5) (f32 (max 1 (round (* wh *render-scale*))))
+          (aref p 4) (f32 (max 1 (round (* ww (scene-scale))))) (aref p 5) (f32 (max 1 (round (* wh (scene-scale)))))
           (aref p 6) (f32 ww) (aref p 7) (f32 wh) (aref p 8) (f32 *grade-desat*) (aref p 9) (f32 *grade-split*)
           (aref p 10) (if (env-toon e) 1f0 0f0)
           (aref p 11) (f32 *grade-impact*))

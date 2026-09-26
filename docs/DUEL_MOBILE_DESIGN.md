@@ -1,6 +1,8 @@
 # SOUL DUEL: ONE-HAND (片手) mode, a portrait phone played with one thumb (design v2)
 
-> Status: **decided, not yet built**. Working notes (critiques, v1 drafts, research) were kept outside the repo; the debate outcome is recorded below.
+> Status: **P0 + the PWA part of P3 built (2026-09-26, the user's decision: "a simple one-hand mode + PWA")**, not yet
+> tried on real phones; §12 lists what was built and where it deviates. P1, P2 and the rest of P3 are still design.
+> Working notes (critiques, v1 drafts, research) were kept outside the repo; the debate outcome is recorded below.
 
 v1 is kept as `design-mobile-v1.md`. This version answers `critique-mobile.md` (1 BLOCKER, 8 MAJOR, 7 MINOR);
 §11 records each finding and how it was resolved. It includes the user's decisions of 2026-09-26: right hand
@@ -417,3 +419,31 @@ No finding was rebutted. Each one was checked against the cited code and held.
 1. Default handedness: RIGHT (left-hand mirror still built, selectable in options).
 2. FULL assist: NO damage scaling; only the ASSIST tag on the results screen.
 3. Portrait local VS PLAYER: out of scope. Future: online versus over Bluetooth / Wi-Fi P2P. Nothing to build now; only do not preclude it (touch stays a vpad device; inputs, not state, are what a netcode layer would exchange; the sim is already deterministic).
+
+## 12. Build status (2026-09-26: P0 + the PWA part of P3)
+
+The user asked for 「一個簡單的『手機單手直拿模式』，並以 PWA 建構出近似應用程式的體驗」. Built, in the leanest form:
+
+| Piece | Where | As built |
+|---|---|---|
+| G1 finger input | `engine/c/platform.c` | `pf_pump` queues this frame's FINGER_DOWN / MOTION / UP / CANCELED (≤ 64) with the SDL event timestamp (ms) and a finger slot 0..9; UP / CANCELED free the slot, so the CANCELED SDL sends after every touch `pointerup` finds no slot and is dropped (idempotent, never a tap). FOCUS_LOST / HIDDEN / MINIMIZED clear every finger (a "cancel all" record). Mouse events with `which == SDL_TOUCH_MOUSEID` are dropped. `pf_touch_copy` hands the queue to Lisp in window px. `pf_density`, `pf_page_get / pf_page_set` (page services, below). |
+| G2 recogniser | `engine/lisp/touch.lisp` (plain CL, `tests/touch-test.lisp`) | §3.2: TAP (lift ≤ `tap-ms` inside the slop), REST (still `tap-ms` inside the slop of the stick origin = guard; also "back to rest"), FLICK at the crossing (`flick-min` within `flick-window` of leaving the slop), FLICK ↑ = F only on a lift within `up-lift-ms`, rest → ↑ = Hoho at the crossing when the game allows it, DRAG (origin follows past 2 r), DRAG far (Step held, released inside 1.3 r), the latest pad contact wins, chips held until lift, a hold chip (AWAKEN 300 ms), the pulse latch, menu taps. Knobs: `gesture-config` (§3.8 defaults). `defun-fast`, squared distances: no per-event consing. |
+| G3 vpad | `duel/lisp/control.lisp`, `fighter.lisp`, `onehand.lisp` | `(:touch name)` in P1's bindings; `p1-down-p` answers `:touch` through `touch-button`; the drag stick is added to pad 0's. Burst = a down-flick while P1 is in `:stun` / `:air` (decided per vpad read). Fighters, rules and the AI are untouched. |
+| Chips | `onehand.lisp` | O, L, I, SP1, SP2 as plain circles at the §3.3 spots (CSS px from the thumb-side and bottom edges; LEFT mirrors x), AWAKEN at its spot only at EVOLUTION (hold 300 ms), a pause chip II. The recognised gesture's word flashes over the thumb for 0.3 s; an ink ring marks the stick origin (dim while resting). |
+| G4 / G5 / G7 | `engine/lisp/ui.lisp`, `engine/web/shell.html`, `render.lisp` | `*ui-min-css*` 11 in any portrait window (desktop landscape: 0, unchanged); `100dvh`, `viewport-fit=cover`, no touch callout / tap highlight; back trap in `duel/web/pwa.js`; `*scene-scale-cap*` keeps the scene near 1.6 MP on a phone, `*auto-render-scale*` on coarse pointers. |
+| Mode entry | `flow.lisp`, `hud.lisp` | MODE lists ONE-HAND VS CPU and HAND RIGHT / LEFT first when the window is portrait or the pointer is coarse (preselected on a coarse portrait device); HAND is saved in `localStorage` (try/catch). One-hand = VS CPU, behind camera, no CAMERA option. CONTROLS shows a static gesture card. Menu rows are tap targets; the select screen reads a tap's third (left / right / confirm); a tap skips the intro and cinematics; the back gesture = Esc (back / pause). Landscape mid-match pauses with ROTATE TO PORTRAIT. |
+| PWA | `duel/web/` (copied into `dist/duel` by `build.sh`; `head.html` goes into the shell), `tools/pwa-icons.py` | `manifest.webmanifest` (standalone, portrait, colours, icons 192 / 512 / maskable 512), apple meta + `apple-touch-icon.png`, `sw.js` (versioned cache: `build.sh` writes a hash of the build into it), wake lock in battle (re-requested on `visibilitychange`), Android fullscreen + `orientation.lock('portrait')` on the first tap (not iOS). |
+| Tests | `tests/touch-test.lisp`, `tools/run.mjs --mobile [--dpr N]` (+ touch steps), `tests/scripts/duel-touch.py` → `duel-touch.json`, `duel-touch-left.json` | the headless script reaches a match by taps alone and produces Q, guard, Step (down, side), dash / run, Hoho, F, the Kikon rush and L; run twice under `--fixed-dt` its hash and combat lines are identical. Stills: `tests/shots/mobile-{battle,pause,left,rotate}.png` (390 × 844, DPR 3). |
+
+**Deviations from the design** (each a simplification, to be revisited in P1 / P2 if the phones ask for it):
+- G1 is a per-frame **event queue** (type, slot, x, y, timestamp), not a 10-finger state table: the recogniser needs the order and the times of the samples anyway.
+- The drag stick is live as soon as the thumb leaves the slop (the flick check runs alongside), so an up-flick walks forward for a few frames before its F.
+- After a non-up flick, Step stays held until the thumb stops for `tap-ms`, comes back under `flick-min`, or lifts (the design only said "past the run ring": this keeps flick → keep going = hop then run without a second Step press).
+- The layout is fixed CSS px from the edges (no millimetres, no `deck-layout-ok-p`, no SP fold for short screens); the pause chip is a tap at the thumb side, 200 CSS px from the top (not a 300 ms hold).
+- Portrait HUD: only the minimal fix. The text floor made the timer and the centre labels overlap the panels at 390 × 844, so in portrait the timer sits under the panels at half size and the panels' centre labels are drawn at half scale; the Kikon / Burst prompts move to 0.52 h in one-hand. No lens shift, no portrait camera (G6): the existing behind camera is playable at 390 × 844 (see the stills).
+- Service worker: **cache-first from one versioned cache** for every file, index.html included, instead of network-first index.html: a network-first page could pair a new index.html with an old index.js / index.wasm. Updates still land: the browser re-checks `sw.js` on each launch, the new build installs a new cache and takes over, and `pwa.js` reloads the page once.
+- The back trap, fullscreen / orientation lock, the service worker and the wake lock run only on a coarse pointer, so a desktop browser behaves exactly as before.
+- Not built (as scoped): G6, G11 (device lost), G14, safe-area insets, the framing / text probes, LIGHT's Kikon latch and every assist, haptics, the tutorial, gesture-log misread counters, `duel-control-test` gesture rows.
+
+**Known issues**: the duel's startup heap reads 87.1 MB instead of 55.4 MB (still under the 110 MB budget, wasm memory unchanged at 128 MB; RAVEN's identical binaries also flip between 57 and 71 MB, so it looks like a Boehm heap-growth threshold, not new data); the deck HUD's labels go through `hud-text` and cons a little per frame (not the 0 B of the P1 probe); a human P1 on desktop conses about +40 B / frame (two stick floats per vpad read).
+

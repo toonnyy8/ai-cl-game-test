@@ -26,11 +26,20 @@
    #:vpad-begin-step! #:vpad-set! #:vpad-stick! #:vpad-clear! #:vpad-flush! #:vpad-down #:vpad-held
    #:vpad-pressed #:vpad-modded-p #:vpad-consume! #:vpad-command-pressed-p #:vpad-command
    #:inputs-down-p #:vpad-read!
+   ;; touch.lisp: the one-thumb gesture recogniser (plain CL); platform.lisp feeds it (TOUCH-POLL)
+   #:make-touch #:touch #:touch-layout! #:touch-feed! #:touch-take! #:touch-pulse-p #:touch-resting-p
+   #:touch-step-held-p #:touch-flick-down-p #:touch-sx #:touch-sy #:touch-chip-down-p #:touch-chip-hit-p
+   #:touch-tapped-p #:touch-tap-x #:touch-tap-y #:touch-rest-up-ok #:touch-flick-hold #:touch-rested
+   #:touch-active-p #:touch-ox #:touch-oy #:touch-glyph #:touch-glyph-t #:touch-glyph-x #:touch-glyph-y #:touch-cfg #:touch-dpx
+   #:+tp-tap+ #:+tp-flick+ #:+tp-up+ #:+tp-hoho+
+   #:gesture-config #:make-gesture-config #:gc-tap-ms #:gc-slop #:gc-flick-min #:gc-flick-window #:gc-up-lift-ms
+   #:gc-stick-r #:gc-run-ring #:gc-run-release #:gc-recenter #:gc-chip-slop #:gc-menu-tap-ms
    ;; platform.lisp: window, time, input
    #:platform-init #:platform-poll #:*max-dt* #:window-width #:window-height #:window-aspect
    #:frame-dt #:raw-dt #:elapsed-time #:fps
    #:key-down #:key-pressed #:mouse-down #:mouse-pressed #:mouse-dx #:mouse-dy #:mouse-wheel
    #:pointer-locked-p #:focus-lost-p #:*pointer-lock*
+   #:pixel-density #:touch-poll #:page-get #:page-set
    #:pad-count #:pad-connected-p #:pad-down #:pad-pressed #:pad-lx #:pad-ly #:pad-rx #:pad-ry #:pad-lt #:pad-rt
    ;; render.lisp: meshes, camera, look, frame, lights, fx batch
    #:wgsl #:mesh #:mesh-p #:mesh-id #:mesh-count #:make-mesh #:+vertex-floats+
@@ -45,7 +54,7 @@
    #:env-toon #:env-key-light #:env-toon-threshold #:env-toon-band #:env-toon-gradient #:env-toon-gradient-height
    #:env-toon-light-gain #:env-shade-value #:env-shade-saturation #:env-shade-hue #:env-shade-lift
    #:env-cin-rim #:env-cin-width #:*grade-impact* #:*impact-params* #:grade-impact #:*fx-clock*
-   #:*render-scale* #:*auto-render-scale* #:*render-scale-min* #:*frame-budget-ms* #:*pixel-lights* #:*perf-log*
+   #:*render-scale* #:*scene-scale-cap* #:*auto-render-scale* #:*render-scale-min* #:*frame-budget-ms* #:*pixel-lights* #:*perf-log*
    #:*draw-count* #:*tri-count* #:*fx-alpha* #:*fx-add* #:*fx-toon* #:*fx-dropped*
    #:stream-buffer #:stream-buffer-data #:stream-buffer-fill #:stream-buffer-stride #:stream-room-p
    #:engine-init #:begin-frame #:end-frame #:draw-mesh #:add-point-light #:add-point-light-v
@@ -55,7 +64,7 @@
    #:mb-color #:mbc #:hexc #:mb-quad #:mb-poly-out #:mb-box #:mb-bevel-box #:mb-cylinder #:mb-cone #:mb-prism
    #:mb-sphere #:mb-capsule #:mb-wedge #:mb-plane #:mb-blade #:mb-hull #:mb-tube #:mb-flat-quad #:rim-vec
    ;; ui.lisp: 2D UI batch and bitmap text
-   #:+font-5x7+ #:ui-scale #:fit-scale #:ui-rect #:ui-gradient #:ui-rect-outline #:ui-bar #:%ui-poly4
+   #:+font-5x7+ #:*ui-min-css* #:ui-scale #:fit-scale #:ui-rect #:ui-gradient #:ui-rect-outline #:ui-bar #:%ui-poly4
    #:with-ui-verts #:uvtx
    #:ui-block-text #:ui-big-text #:ui-bitmap #:text-width #:ui-text
    ;; audio.lisp: synthesis toolkit, DEFSOUND, playback

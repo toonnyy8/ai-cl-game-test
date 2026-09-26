@@ -54,10 +54,14 @@
       (error "ui-init: font texture failed")))
   (setf *ui-batch* (make-stream-buffer 8 32768)))
 
+(defvar *ui-min-css* 0
+  "Text floor (docs/DUEL_MOBILE_DESIGN.md G4): UI-SCALE is at least enough for a 7-px glyph to be this many CSS
+px tall (0 = no floor, the desktop default; a phone in portrait wants about 11).")
 (defun ui-scale ()
   "Suggested integer text/UI scale for the current window: 1 per ~360 px of height, capped at
-1 per 480 px of width so narrow / portrait windows keep text inside the screen."
-  (max 1 (min (round (window-height) 360) (floor (window-width) 480))))
+1 per 480 px of width so narrow / portrait windows keep text inside the screen; at least *UI-MIN-CSS*."
+  (let ((s (max 1 (min (round (window-height) 360) (floor (window-width) 480)))))
+    (if (plusp *ui-min-css*) (max s (ceiling (* *ui-min-css* (pixel-density)) 7)) s)))
 
 (defun fit-scale (str want max-w)
   "Largest integer text scale <= WANT (>= 1) at which STR's widest line fits in MAX-W pixels."

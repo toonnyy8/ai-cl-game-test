@@ -20,9 +20,12 @@
   "The perfect Hoho's automatic counter strike.")
 
 ;;; ---------------------------------------------------------------- creation
-(defun p1-down-p (device name) (if (eq device :key) (key-down name) (pad-down name 0)))
+(defun p1-down-p (device name)
+  (case device (:key (key-down name)) (:touch (touch-button name)) (t (pad-down name 0))))
 (defun p2-down-p (device name) (if (eq device :key) (key-down name) (pad-down name 1)))
-(defun p1-reader (vp) (vpad-read! vp *p1-bindings* #'p1-down-p (pad-lx 0) (pad-ly 0)))
+(defun p1-reader (vp)
+  (touch-read-begin)                                     ; this read's gesture pulses (onehand.lisp)
+  (vpad-read! vp *p1-bindings* #'p1-down-p (+ (pad-lx 0) (touch-sx *touch*)) (+ (pad-ly 0) (touch-sy *touch*))))
 (defun p2-reader (vp) (vpad-read! vp *p2-bindings* #'p2-down-p (pad-lx 1) (pad-ly 1)))
 
 (defun spawn-fighter (side character x z yaw &key cpu (difficulty :normal) mirror)
