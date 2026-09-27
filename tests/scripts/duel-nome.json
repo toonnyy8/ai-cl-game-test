@@ -134,20 +134,6 @@
 "eval": "Module._debug_cmd(2385)"
 },
 {
-"at": 71.6,
-"key": "KeyU",
-"down": true
-},
-{
-"at": 74.5,
-"shot": "tests/shots/guard3-garb-cut.png"
-},
-{
-"at": 86.5,
-"key": "KeyU",
-"down": false
-},
-{
 "at": 87.0,
 "eval": "Module._debug_cmd(2107)"
 }

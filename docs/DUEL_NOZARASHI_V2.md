@@ -3,6 +3,10 @@
 > Status: **built (2026-09-26, the Kenpachi batch)**. The design text below is kept as decided; what the build does
 > differently, and why, is in the last section ("Built: deviations and measurements"). DUEL_DESIGN §6.2 is the as-built
 > reference. Working notes (critiques, v1 drafts, research) were kept outside the repo; the debate outcome is recorded below.
+> **Superseded in part (2026-09-27, [DUEL_STRINGS.md](DUEL_STRINGS.md)):** the J / K strings below (Q1 Q2 Q3, F1 F2, the
+> J J K branch, RYOTE's R-Q / R-F set) are replaced by the three-link J / K grid (RYOTE: MEN, KOTE, KESA, DO,
+> MOROTE-ZUKI, KABUTO-WARI; cup 3's K1 KUKAN-GIRI), and the O cancel after the cash-out is gone (the O ender only follows
+> a string's link-3 hit). DUEL_DESIGN §6.2 has the as-built tables.
 > **User override (2026-09-26): Kenpachi wears NO eyepatch in any form.** Every eyepatch mention below is superseded by the
 > "User decision after v2" section.
 
@@ -626,6 +630,10 @@ faster than CPU vs CPU). Unchanged: the three gains (dealt 0.08, taken 0.12, dru
 cup 3's 10/s drain with no delay, the cash-out. Measured (the gate, 20 seeds): first cup 3 28.2 s (YK) / 28.7 s (KK)
 after the awakening (was 36.4 / 33.1); the proxy reaches cup 3 with Yamamoto at ≥ 4 Konpaku in **20 / 20**; cup 3
 stays mean 6.4 / 6.7 s, max 12.0 / 18.9 s (a peak still); awake time KATATE 32 %, RYOTE 52 %, NOMIHOSE 16 % (YK).
+
+(Superseded 2026-09-27 for Yamamoto: the Bankai rework, DUEL_YAMA_REWORK.md, removed the garb guard, its scorch, its
+ranged armour and BURNOUT; East's U now switches to West, whose ward is a 360° guard without blockstun. The West column
+below is guard v3's, kept as history.)
 
 **DRINK and West's garb: the family restated.** West's hold-U armour is gone; his U is the **garb guard**. So there is
 no U that doesn't guard any more: "in every form U is a guard; two forms' guards do more, and both are paid from the

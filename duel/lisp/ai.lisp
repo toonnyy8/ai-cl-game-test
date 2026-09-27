@@ -6,15 +6,15 @@
 ;;;;   perception  the opponent as he was DELAY steps ago (a ring buffer of SNAPs; EASY 24,
 ;;;;               NORMAL 14, HARD 8) — reaction time is the difficulty. What happens to the CPU
 ;;;;               itself (its own hit, its own blockstun) it feels at once.
-;;;;   reflexes    first: the Kikon rush as a cancel (red opponent) / finish the string / SP cancel on
-;;;;               hit; the rush on a red opponent in hitstun; punish a blocked ender; follow up a
+;;;;   reflexes    first: the O ender off a completed string (red always, else the kit's :o-ender) / the next
+;;;;               link / an SP cancel on hit; the rush on a red opponent in hitstun; punish a blocked ender; follow up a
 ;;;;               stunned opponent (Guard Break); punish a recovering one; answer an incoming Breaker
 ;;;;               or Kikon rush (guard it unless red); the kit's reactions (Kenpachi's stance);
 ;;;;               Breaker a long guard; guard or Hoho a committed move; awaken
-;;;;   kikon       the rush on a red opponent (as a cancel, on his hitstun, or at a neutral decision
+;;;;   kikon       the rush on a red opponent (the O ender, on his hitstun, or at a neutral decision
 ;;;;               within the kit's :kikon-range), the button held through the strike: always the Kikon;
-;;;;               on one who isn't red only as a poke (the kit's :moves), which a hit turns into the
-;;;;               follow-up. As the victim of a follow-up it guards it by difficulty (the anti-rush roll)
+;;;;               on one who isn't red as the O ender (:o-ender) or a poke (the kit's :moves), which a hit
+;;;;               turns into the follow-up. As the victim of a follow-up it guards it (*AI-FOLLOW-GUARD-P*)
 ;;;;   intents     APPROACH / PRESSURE / ZONE / DEFEND re-picked every *AI-REPICK* f: a preferred range
 ;;;;               to walk to, then a weighted move for the distance band
 ;;;;   heat        +*AI-HEAT-RATE*/s without dealing damage (x2 far apart): the preferred range
@@ -23,9 +23,11 @@
 ;;;;               presses a guardless opponent; keeps a Burst's flash-step when a Burst would be worth it
 ;;;;   stances     kit keys: :cancel (end a landed string with L), :low (L more often at low Reishi),
 ;;;;               :gg-low (below it: back off and zone), :block-string (go on with a string the opponent
-;;;;               blocks: guard pressure); burned out: no armoured moves, defend, step and Hoho; a
-;;;               parry is never attacked into; South's
-;;;;               tell is stepped out of (the trap reflex)
+;;;;               blocks: guard pressure), :sig-gg (L halved below it of the guard gauge: KYOKKO pierces with a
+;;;;               full edge), :ward-reversal (Bankai West: L when the ward just took a hit up close); a parry is
+;;;;               never attacked into; South's tell is stepped out of (the trap reflex); an opponent in a ward
+;;;;               (Bankai West) is seen as guarding (SNAP-TAKE!): the Breaker reflex breaks it
+;;;;   J beats K   out of a blocked link, J1 into the string's next K link while it has the frames (J-BEATS-K-P)
 ;;;;   burst       combo'd past its 2nd hit for its perception delay, *FS-BURST* flash-step, and worth it
 ;;;;               (AI-BURST-WANTED-P): one roll per combo (*AI-BURST-P* by difficulty)
 ;;;;   dash        far outside its range: hold Step toward it (the kit's :dash chance), or away from a
@@ -44,7 +46,9 @@
 
 (defun snap-take! (s o)
   "Fill SNAP S with fighter O as he is now."
-  (let* ((f (fighter o)) (p (pos-of o)) (mv (fighter-move f)) (st (fighter-state f)))
+  (let* ((f (fighter o)) (p (pos-of o)) (mv (fighter-move f))
+         (st (let ((st (fighter-state f)))                ; Bankai West's ward is a held guard (its time in West)
+               (if (and (passive-p o :ward) (member st '(:idle :run))) :guard st))))
     (setf (snap-x s) (aref p 0) (snap-z s) (aref p 2) (snap-state s) st (snap-sf s) (fighter-sf f)
           (snap-guard-t s) (fighter-guard-t f) (snap-projectile s) (incoming-projectile-p o))
     (if (and (eq st :move) mv)
@@ -124,37 +128,37 @@ while: a charge move is held to its full charge from beyond 7 m, where it has th
 
 (defun ai-gg (e) "E's guard gauge as a fraction." (/ (gauges-gg (gauges e)) *gg-max*))
 
-(defun ai-no-armor-p (e)
-  "Burned out, the CPU keeps off its armoured moves (a burned-out form has no armour) and defends more."
-  (burnout-p e))
-
 (defun ai-gg-low-p (e)
-  "Below the kit's :gg-low of its guard gauge (or burned out): back off, zone (its recoil would burn it out)."
-  (let ((k (ai-table e :gg-low))) (or (burnout-p e) (and k (< (ai-gg e) k)))))
+  "Below the kit's :gg-low of its guard gauge: back off, zone while it refills."
+  (let ((k (ai-table e :gg-low))) (and k (< (ai-gg e) k))))
 
-(defun ai-armored-p (mv) (and mv (plusp (mv-armor-hits mv))))
+(defun guarding-p (e)
+  "E holds a guard: :guard / :guard-hit, or Bankai West's ward."
+  (or (member (state-of e) '(:guard :guard-hit)) (passive-p e :ward)))
 
 (defun ai-cancel-p (e kit)
   "End a landed string with the kit's :cancel command (L, a :cancel Signature) now? Its chance, and it may start."
   (let* ((c (ai-table e :cancel)) (p (getf c :sig)) (mv (kit-command-move kit :sig)))
-    (and p (member :cancel (mv-flags mv)) (kit-command-ok-p e :sig) (not (and (ai-armored-p mv) (ai-no-armor-p e)))
-         (< (sim-rnd01) p))))
+    (and p (member :cancel (mv-flags mv)) (kit-command-ok-p e :sig) (< (sim-rnd01) p))))
 
 (defun string-reflex (e b f mv)
-  "Our move hit: go on with the string (F branch *AI-STRING-FLASH-P* of the time; no armoured branch while
-AI-NO-ARMOR-P), or end it with L (the kit's :cancel), else cancel into SP2 when the victim is on the ground
-(a launched victim would drop out of it) and the kit's :sp-cancel-bars are there."
-  (let* ((kit (fighter-kit f)) (no-armor (ai-no-armor-p e))
-         (nq (let ((m (kit-next kit (mv-name mv) :q))) (and m (not (and no-armor (ai-armored-p m))) m)))
-         (nf (let ((m (kit-next kit (mv-name mv) :f))) (and m (not (and no-armor (ai-armored-p m))) m)))
+  "Our link hit: go on with the string (the next link K *AI-STRING-FLASH-P* of the time, among the links KIT-NEXT
+allows: after a switch only one; pressed once, the latch does the rest), or end it with L (the kit's :cancel), else
+cancel into SP2 when the victim is on the ground (a launched victim would drop out of it) and the kit's
+:sp-cancel-bars are there, *AI-SP-CANCEL-P* of the time (link 3 staggers / crumples: SP2 always combos off it)."
+  (let* ((kit (fighter-kit f))
+         (nq (kit-next kit (mv-name mv) :q))
+         (nf (kit-next kit (mv-name mv) :f))
          (bars (floor (gauges-reiatsu (gauges e)) *reiatsu-bar*)))
     (setf (brain-why b) :string)
-    (cond ((and nf (< (sim-rnd01) *ai-string-flash-p*)) :f)
+    (cond ((fighter-queued f) nil)                      ; the next link is latched already
+          ((and nf (< (sim-rnd01) *ai-string-flash-p*)) :f)
           (nq :q)
           (nf :f)
           ((and (>= (fighter-sf f) (fighter-land-sf f)) (ai-cancel-p e kit)) (why b :cancel :sig))
           ((and (>= bars (ai-table e :sp-cancel-bars 1)) (kit-command-ok-p e :sp2)
-                (>= (fighter-sf f) (fighter-land-sf f)) (not (eq (state-of (opp-of e)) :air)))
+                (= (fighter-sf f) (fighter-land-sf f)) (not (eq (state-of (opp-of e)) :air))
+                (< (sim-rnd01) *ai-sp-cancel-p*))              ; one roll, on the first step we see the hit
            :sp2))))
 
 (defun ai-reflex (e b s d)
@@ -170,28 +174,36 @@ D = the perceived distance."
       (setf (brain-roll-key b) (snap-start s) (brain-guard-roll b) (sim-rnd01) (brain-hoho-roll b) (sim-rnd01)
             (brain-react-roll b) (sim-rnd01)))
     (cond
-      ;; our own hit: the Kikon rush on a red opponent (a cancel), else finish the string, else an SP cancel
-      ((and (eq st :move) (eq (fighter-contact f) :hit) (not (eq (mv-kind mv) :kikon)) (kikon-ready-p e)
-            (cancel-open-p (fighter-sf f) (fighter-land-sf f) (mv-total mv) t) (kit-command-ok-p e :kikon))
-       (why b :kikon :kikon))
+      ;; our completed string (a link-3 hit): the O ender, on a red opponent always, else the kit's :o-ender chance;
+      ;; one roll, on the first step we see the hit (its land frame)
+      ((and (eq st :move) (eq (fighter-contact f) :hit) (member :ender (mv-flags mv))
+            (= (fighter-sf f) (fighter-land-sf f)) (kit-command-ok-p e :kikon)
+            (or (kikon-ready-p e) (< (sim-rnd01) (ai-table e :o-ender *ai-o-ender*))))
+       (why b :o-ender :kikon))
+      ;; our own hit: finish the string, else an SP / L cancel
       ((and (eq st :move) (eq (fighter-contact f) :hit) (member (mv-kind mv) '(:quick :flash)))
        (string-reflex e b f mv))
-      ;; guard pressure (the kit's :block-string): a Q / F the opponent blocked goes on, pressed just before
-      ;; the chain opens (one roll per move), but not into a punishable ender: the string resets instead (below);
-      ;; not below :gg-low (its recoil) or into a parry
+      ;; guard pressure (the kit's :block-string): a link the opponent blocked goes on, pressed just before the chain
+      ;; opens (one roll per link): a J link, a K link only *AI-BLOCK-K-P* of the time (his J interrupts it), never a
+      ;; punishable ender (K3): the string resets instead (below); not below :gg-low or into a parry
       ((and (eq st :move) (eq (fighter-contact f) :block) (member (mv-kind mv) '(:quick :flash))
             (ai-pressure-p e) (= (fighter-sf f) (- (mv-total mv) *chain-lead* 1)))
-       (let* ((kit (fighter-kit f)) (no-armor (ai-no-armor-p e)))
-         (flet ((ok (m) (and m (not (and no-armor (ai-armored-p m))) (integerp (mv-adv-block m)) (> (mv-adv-block m) *gg-ender-adv*))))
+       (let* ((kit (fighter-kit f)))
+         (flet ((ok (m) (and m (integerp (mv-adv-block m)) (> (mv-adv-block m) *gg-ender-adv*))))
            (let ((nq (kit-next kit (mv-name mv) :q)) (nf (kit-next kit (mv-name mv) :f)))
-             (why b :pressure (cond ((ok nq) :q) ((ok nf) :f)))))))
+             (why b :pressure (cond ((and (ok nf) (< (sim-rnd01) *ai-block-k-p*)) :f) ((ok nq) :q)))))))
       ((eq st :move) nil)
       ;; a Kikon rush's strike hit us, O held, and it dashes in after us: not red, hold guard from inside the
-      ;; stagger (the anti-rush chance by difficulty); red, nothing guards it
+      ;; stagger (*AI-FOLLOW-GUARD-P* by difficulty); red, nothing guards it
       ((and (eq st :stun) (eq (snap-kind s) :kikon) (eq (snap-phase s) :follow) (not red) (plusp guard-k)
-            (< (brain-react-roll b) (getf *ai-anti-breaker-p* (brain-difficulty b) 0.5)))
+            (< (brain-react-roll b) (getf *ai-follow-guard-p* (brain-difficulty b) 0.85)))
        (why b :anti-kikon :guard-long))
       ((not free) nil)
+      ;; Bankai West's reversal: the ward just blocked a hit up close (no blockstun): SHONETSU JIGOKU (L) now and then
+      ((let ((p (ai-table e :ward-reversal)))
+         (and p (passive-p e :ward) (<= (- *match-tick* (fighter-warded f)) 1) (< (fighter-dist f) 3.0)
+              (kit-command-ok-p e :sig) (< (brain-react-roll b) p)))
+       (why b :ward-reversal :sig))
       ;; the reset: our blocked string just ended (no safe hit left in it) and he still guards: Q1 again
       ((and (eq (brain-was b) :move) (eq (fighter-contact f) :block) (< d (+ (mv-reach q) 0.2)) (ai-pressure-p e))
        (why b :pressure :q))
@@ -220,11 +232,15 @@ D = the perceived distance."
        (and (< (brain-react-roll b) 0.5) (why b :anti-parry :breaker)))
       ((and (gauges-evolution g) (>= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (ai-table e :awaken-above 0.0)))
        :awaken)
-      ;; we just blocked an ender (-12 ...): it's our turn, felt at once (no perception delay)
+      ;; we just blocked an ender (-12 ...): it's our turn, felt at once (no perception delay); a K3 (-20) HARD
+      ;; punishes with K1 when it reaches
       ((and (eq (brain-was b) :guard-hit) (<= (fighter-block-adv f) *ai-punish-adv*)
             (< (fighter-dist f) (+ (mv-reach q) 0.4))
             (< (sim-rnd01) (getf *ai-block-punish-p* (brain-difficulty b) 0.5)))
-       (why b :block-punish :q))
+       (why b :block-punish
+            (if (and (eq (brain-difficulty b) :hard) (<= (fighter-block-adv f) -20)
+                     (< (fighter-dist f) (mv-reach (kit-command-move kit :f))))
+                :f :q)))
       ;; a stunned opponent (Guard Break, broken stance, our knockback) still stunned when Q1 lands
       ((and (eq (snap-state s) :stun) (>= (- (snap-left s) (brain-delay b)) (mv-s q)) (< d (+ (mv-reach q) 0.6)))
        (why b :follow-up :q))
@@ -282,6 +298,17 @@ D = the perceived distance."
                ((< (brain-guard-roll b) (* chance guard-k)) :guard)
                ((< (brain-guard-roll b) chance) (why b :low-guard :side-step))))))))
 
+(defun j-beats-k-p (e b)
+  "J beats K (docs/DUEL_STRINGS.md §4): on the first free step after our blockstun, the string's next link is a K link
+(no armour) still at least S(J1) + 2 frames from its hit, inside our J1's reach: J1 gets there first. Felt at once,
+like the block punish (the gap of a blocked string, not a read through the perception delay: a K link's startup is
+shorter than NORMAL's delay); one roll (*AI-J-BEATS-K-P* by difficulty), also out of a guard held through the string."
+  (let* ((f (fighter e)) (o (fighter-opp f)) (fo (fighter o)) (om (fighter-move fo)) (q (kit-command-move (fighter-kit f) :q)))
+    (and (eq (brain-was b) :guard-hit) (member (fighter-state f) '(:idle :guard)) (zerop (fighter-lock f))
+         (eq (fighter-state fo) :move) (eq (fighter-phase fo) :main) (eq (mv-kind om) :flash)
+         (>= (- (mv-s om) (fighter-sf fo)) (+ (mv-s q) 2)) (< (fighter-dist f) (+ (mv-reach q) 0.2))
+         (< (sim-rnd01) (getf *ai-j-beats-k-p* (brain-difficulty b) 0.45)))))
+
 (defun ai-neutral (e b s d)
   "No reflex fired: walk to the intent's range, and now and then decide (AI-DECIDE)."
   (let* ((kit (kit-of e)) (vp (pilot-vpad (pilot e))) (heat (brain-heat b)))
@@ -289,12 +316,11 @@ D = the perceived distance."
       (setf (brain-intent-t b) *ai-repick*)
       (let ((w (ai-table e :intents)) (hot (min 3.0 (/ heat 4.0))) (r (sim-rnd01)))
         (setf (brain-intent b)
-              (cond ((burnout-p e) :defend)                ; burned out: no guard, no traits: keep away
-                    ((ai-gg-low-p e) (weighted-pick r :zone 3 :defend 2))   ; low guard gauge: zone (the cone), no pressure
+              (cond ((ai-gg-low-p e) (weighted-pick r :zone 3 :defend 2))   ; low guard gauge: zone (the cone), no pressure
                     (t (or (weighted-pick r :approach (getf w :approach 1)
                                           :pressure (+ (getf w :pressure 1) hot (if (or (opp-guardless-p e) (opp-gg-low-p e)) 3 0))
                                           :zone (getf w :zone 1)
-                                          :defend (+ (getf w :defend 1) (if (ai-no-armor-p e) 2 0)))
+                                          :defend (getf w :defend 1))
                            :approach))))))
     (when (<= (decf (brain-strafe-t b)) 0)
       (setf (brain-strafe-t b) (+ (first *ai-strafe-time*) (floor (* (second *ai-strafe-time*) (sim-rnd01))))
@@ -313,10 +339,9 @@ D = the perceived distance."
 
 (defun ai-pressure-p (e)
   "Keep a blocked string going (the kit's :block-string chance; always while hunting a low guard gauge,
-OPP-GG-LOW-P)? Only while the opponent really holds guard, never below :gg-low of our own gauge (East's
-recoil)."
+OPP-GG-LOW-P)? Only while the opponent really holds guard (or a ward), never below :gg-low of our own gauge."
   (let ((p (ai-table e :block-string)))
-    (and p (member (state-of (opp-of e)) '(:guard :guard-hit)) (not (ai-gg-low-p e))
+    (and p (guarding-p (opp-of e)) (not (ai-gg-low-p e))
          (< (sim-rnd01) (if (opp-gg-low-p e) 1.0 p)))))
 
 (defun opp-gg-low-p (e)
@@ -333,17 +358,18 @@ its middle), guard, attack (a weighted pick from the kit's band for D), or wait.
         ((and (> d (+ hi *ai-dash-gap*)) (< (sim-rnd01) (ai-table e :dash 0.0)))
          (ai-dash b 1.0 (* 0.5 (+ lo hi))) (setf (brain-why b) :dash))
         ((and (< d (- lo *ai-dash-gap*))
-              (< (sim-rnd01) (cond ((burnout-p e) 0.8) ((ai-gg-low-p e) 0.6) (t (ai-table e :dash-back 0.0)))))
+              (< (sim-rnd01) (if (ai-gg-low-p e) 0.6 (ai-table e :dash-back 0.0))))
          (ai-dash b -1.0 (* 0.5 (+ lo hi))) (setf (brain-why b) :dash-back))
         ((and (< d 3.4) (< (sim-rnd01) (* (min 0.9 (+ (ai-table e :guard 0.3) (if (eq (brain-intent b) :defend) 0.2 0.0)))
                                           (ai-guard-mult (gauges-gg (gauges e)) (gauges-guardless (gauges e))))))
          (ai-press b :guard (+ (first *ai-guard-hold*) (floor (* (second *ai-guard-hold*) (sim-rnd01))))))
         ((< (sim-rnd01) (min 0.9 (+ (getf *ai-aggression* (brain-intent b) 0.3) (* 0.04 heat)
+                                    (* *ai-kosei-aggression* (- 1.0 (ai-gg e)))   ; KOSEI: a low gauge pays to attack
                                     (cond ((opp-guardless-p e) 0.3) ((opp-gg-low-p e) 0.2) (t 0.0)))))
          (let* ((weights (copy-list (band-weights (ai-table e :moves) d))))
            (when (getf weights :breaker)                  ; (a guardless opponent has no guard to break)
              (setf (getf weights :breaker) (if (opp-guardless-p e) 0 (* (getf weights :breaker) (heat-breaker-mult heat)))))
-           (ai-stance-weights e kit s d weights)
+           (ai-stance-weights e s d weights)
            (let ((cmd (apply #'weighted-pick (sim-rnd01) weights)))
              (when (and cmd (or (not (member cmd *kit-commands*)) (kit-command-ok-p e cmd))
                         (or (not (member cmd '(:q :f)))                  ; don't whiff a string at range
@@ -358,19 +384,20 @@ a later Kikon is worth more), at least *AI-KIKON-P* once the match has under a m
           ((< (match-frames-left) 3600) (max k *ai-kikon-p*))
           (t k))))
 
-(defun ai-stance-weights (e kit s d weights)
-  "The stance keys on a neutral pick's WEIGHTS (a fresh plist, edited in place): no armoured command while burned
-out; no Q / F into a guard within 3 m below :gg-low; none into a parry; L x the kit's :low factor below its Reishi
-fraction."
+(defun ai-stance-weights (e s d weights)
+  "The stance keys on a neutral pick's WEIGHTS (a fresh plist, edited in place): no Q / F into a guard within 3 m
+below :gg-low; none into a parry; L x the kit's :low factor below its Reishi fraction, halved below its :sig-gg
+fraction of the guard gauge."
   (loop for (cmd w) on weights by #'cddr
-        when (or (and (ai-no-armor-p e) (member cmd *kit-commands*) (ai-armored-p (kit-command-move kit cmd)))
-                 (and (member cmd '(:q :f))
-                      (or (and (ai-gg-low-p e) (< d 3.0) (member (snap-state s) '(:guard :guard-hit)))
-                          (member :parry (snap-flags s)))))
+        when (and (member cmd '(:q :f))
+                  (or (and (ai-gg-low-p e) (< d 3.0) (member (snap-state s) '(:guard :guard-hit)))
+                      (member :parry (snap-flags s))))
           do (setf (getf weights cmd) 0))
-  (let ((low (ai-table e :low)) (g (gauges e)))
+  (let ((low (ai-table e :low)) (sg (ai-table e :sig-gg)) (g (gauges e)))
     (when (and low (getf weights :sig) (< (/ (gauges-reishi g) (float (gauges-reishi-max g))) (first low)))
-      (setf (getf weights :sig) (* (getf weights :sig) (getf (rest low) :sig 1)))))
+      (setf (getf weights :sig) (* (getf weights :sig) (getf (rest low) :sig 1))))
+    (when (and sg (getf weights :sig) (< (ai-gg e) sg))
+      (setf (getf weights :sig) (* 0.5 (getf weights :sig)))))
   weights)
 
 (defun brain-step (e b)
@@ -397,6 +424,7 @@ fraction."
         (setf (brain-press-left b) 0 (brain-decide-t b) 1))                      ; decide now (out of the run)
       (unless (or (brain-off b) (> (fighter-lock f) 0) (eq (fighter-state f) :cine))
         (cond ((ai-burst-roll e b) (ai-press b :quick 1 :modded t :act :burst) (setf (brain-why b) :burst))
+              ((j-beats-k-p e b) (ai-press b :quick 1) (setf (brain-why b) :j-beats-k))
               ((and (> (brain-press-left b) 0)                                    ; a reflex may drop a guard / a dash,
                     (or (eq (brain-act b) :hold)                                   ; not a guard held through a string
                         (not (or (eq (brain-press b) :guard) (eq (brain-act b) :dash)))))

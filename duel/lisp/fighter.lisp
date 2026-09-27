@@ -150,10 +150,10 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
   "Enter move MV (a MOVE of E's kit). Frame (MV-ENTER mv) is this step; MOVE-STEP advances it."
   (let ((f (fighter e)) (enter (mv-enter mv)))
     (setf (fighter-state f) :move (fighter-move f) mv (fighter-sf f) enter (fighter-hits f) 0
-          (fighter-contact f) nil (fighter-land-sf f) -1 (fighter-dmg-bonus f) 0 (fighter-crush f) nil
+          (fighter-contact f) nil (fighter-queued f) nil (fighter-land-sf f) -1 (fighter-dmg-bonus f) 0 (fighter-crush f) nil
           (fighter-stored f) 0                           ; an interrupted stance keeps nothing
           (fighter-button f) button (fighter-hold f) 0 (fighter-perfect f) nil
-          (fighter-follow f) nil (fighter-armor-left f) (armor-budget (mv-armor-hits mv) (heat-on-p e))
+          (fighter-follow f) nil (fighter-armor-left f) (mv-armor-hits mv)
           (fighter-phase f) (cond ((member (mv-kind mv) '(:breaker :kikon)) :aura) ((mv-hold mv) :hold) (t :main)))
     (fill (motion-vel (motion e)) 0f0)
     (play-clip e (mv-clip mv) :blend (mv-blend mv) :speed (mv-clip-speed mv)
@@ -240,15 +240,16 @@ now (a perfect one refunds *FS-REFUND*)."
         (emit :perfect e o)
         (clog "~a PERFECT HOHO" (side-name e))))))
 
-(defun kit-command-ok-p (e command)
-  "Can E start COMMAND's move now: Reiatsu bars, and not cooling down (its :cooldown)?"
+(defun kit-command-ok-p (e command &optional (kit (kit-of e)))
+  "Can E start COMMAND's move (of KIT, default his form's) now: Reiatsu bars, and not cooling down (its :cooldown)?"
   (let ((i (position command *kit-commands*)))
-    (and (>= (gauges-reiatsu (gauges e)) (* (kit-command-cost (kit-of e) command) *reiatsu-bar*))
+    (and (>= (gauges-reiatsu (gauges e)) (* (kit-command-cost kit command) *reiatsu-bar*))
          (or (null i) (zerop (aref (fighter-cd (fighter e)) i))))))
 
 (defun try-command (e f cmd &optional button)
   "Start command CMD (pressed with vpad BUTTON: a hold / Breaker move watches it) if the rules allow
-it now. T when something started."
+it now. A command the form drops (KIT-DROP) switches the form first, on the move's frame 0, and starts that
+form's move; a refused one doesn't switch. T when something started."
   (let ((g (gauges e)) (kit (fighter-kit f)))
     (case cmd
       (:step (start-step e f) t)
@@ -257,8 +258,11 @@ it now. T when something started."
       (:awaken (when (awaken-allowed-p (member (fighter-state f) '(:idle :guard)) (gauges-awaken g) (gauges-awakened g))
                  (awaken! e) t))
       (:burst (when (burst-ok-p e) (setf (fighter-burst f) t) t))   ; applied after both stepped
-      (t (let ((mv (kit-command-move kit cmd)))
-           (when (and mv (kit-command-ok-p e cmd))
+      (t (let* ((to (kit-drop kit cmd))
+                (kit (if to (find-kit (fighter-character f) to) kit))
+                (mv (kit-command-move kit cmd)))
+           (when (and mv (kit-command-ok-p e cmd kit))
+             (when to (set-form e to))
              (let ((cost (kit-command-cost kit cmd)))
                (when (plusp cost) (setf (gauges-reiatsu g) (f32 (spend-bars (gauges-reiatsu g) cost)))))
              (when (plusp (mv-cooldown mv))
@@ -283,7 +287,7 @@ buffered command that can't start (Kikon too early, no bar, cooling down) doesn'
                      (progn (vpad-consume! vp button) t))))
 
 (defun refused-cue (e f cmd vp button)
-  "A kit command pressed while it cools down (its :cooldown: L's switch, South, the O module): the press is
+  "A kit command pressed while it cools down (its :cooldown: L, South, the O module): the press is
 eaten with a cue, the :refused event (a flash of its HUD bar, a dud tick). NIL: the commands below it may
 still start."
   (let ((i (position cmd *kit-commands*)))
@@ -296,15 +300,26 @@ still start."
 ;;; ---------------------------------------------------------------- per-state steps
 (defun guard-held-p (e vp)
   "Guard is held and E may guard (the guard gauge: CAN-GUARD-P). Guardless, holding it does nothing. U is a guard
-in every form; two forms' guards do more (West's garb, cup 3's DRINK: combat.lisp)."
+in most forms; cup 3's guard drinks (DRINK: combat.lisp); Bankai East's U switches to West (the kit's :guard-to),
+and West's ward is always up, so there U does nothing more (GUARD-P)."
   (let ((g (gauges e)))
     (and (vpad-down vp :guard) (can-guard-p (gauges-gg g) (gauges-guardless g)))))
 
+(defun guard-p (e vp)
+  "Does U raise a guard now (held, allowed: GUARD-HELD-P)? Not in a form whose U switches (:guard-to) or whose ward
+is always up (:ward)."
+  (and (guard-held-p e vp) (not (kit-guard-to (kit-of e))) (not (passive-p e :ward))))
+
 (defun neutral-step (e f vp)
-  "Idle / walk / strafe / guard: commands, then guard or walk, auto-facing."
+  "Idle / walk / strafe / guard: commands, then guard or walk, auto-facing. A form with :guard-to (Bankai East)
+switches to that form while U is held instead of guarding (from idle / walk; a run stops into this step too): its
+ward is up after *GUARD-RAISE* frames (FIGHTER-GUARD-T counts them, and keeps counting while he walks in it)."
   (unless (and (zerop (fighter-lock f)) (command! e f vp *neutral-commands*))
     (let ((v (motion-vel (motion e))))
-      (if (and (zerop (fighter-lock f)) (guard-held-p e vp))
+      (when (and (zerop (fighter-lock f)) (kit-guard-to (fighter-kit f)) (guard-held-p e vp))
+        (set-form e (kit-guard-to (fighter-kit f)))
+        (setf (fighter-guard-t f) 0))
+      (if (and (zerop (fighter-lock f)) (guard-p e vp))
           (progn
             (unless (eq (fighter-state f) :guard)
               (setf (fighter-state f) :guard (fighter-guard-t f) 0)
@@ -314,7 +329,7 @@ in every form; two forms' guards do more (West's garb, cup 3's DRINK: combat.lis
             (fill v 0f0))
           (multiple-value-bind (to st) (if (zerop (fighter-lock f)) (stick-relative e f) (values 0.0 0.0))
             (when (eq (fighter-state f) :guard) (to-idle e 4))
-            (setf (fighter-guard-t f) 0)
+            (setf (fighter-guard-t f) (if (passive-p e :ward) (min 9999 (1+ (fighter-guard-t f))) 0))
             (let ((m (sqrt (+ (* to to) (* st st)))) (p (pos-of e)) (kit (fighter-kit f)))
               (if (< m 0.2)
                   (progn (fill v 0f0) (play-clip e (kit-stance kit) :blend 6 :restart nil))
@@ -412,25 +427,42 @@ the end (MOVE-END-FRAME)."
       ((:aura :dash :follow) (if (eq (mv-kind mv) :kikon) (kikon-rush-step e f mv) (breaker-phase-step e f vp mv)))
       (t (main-phase-step e f vp mv)))))
 
+(defun skip-aura (e f)
+  "The O ender (docs/DUEL_STRINGS.md §2.4): the Kikon rush just started off a link-3 hit skips its aura: its strike
+at once within *KIKON-TRIGGER* (or a module with no dash), else its dash."
+  (let ((mv (fighter-move f)))
+    (if (eq (kikon-rush-next-phase :aura 0 (fighter-dist f) :aura 0 :dash-max (rush-param mv :dash-max)) :strike)
+        (enter-main e f mv)
+        (progn (setf (fighter-phase f) :dash (fighter-hold f) 0) (emit :rush-dash e)))))
+
 (defun move-commands (e f vp mv sf)
   "Chains (string follow-ups) and cancels during a move, walked in *COMMANDS* priority order (a
-refused one doesn't hide the next). T when a new move / action started."
-  (let ((kit (fighter-kit f)) (landed (fighter-contact f)))
-    (loop for (cmd button mod) in *commands*
-          thereis (and (member cmd '(:kikon :q :f :sp1 :sp2 :sig :hoho))
-                       (vpad-command-pressed-p vp button mod)
-                       (case cmd
-                         (:kikon (and (not (eq (mv-kind mv) :kikon))   ; the rush from any landed move
-                                      (cancel-open-p sf (fighter-land-sf f) (mv-total mv) (eq landed :hit))
-                                      (try-command e f cmd button)))
-                         ((:q :f) (let ((next (kit-next kit (mv-name mv) cmd)))
-                                    (when (and next (chain-open-p sf (mv-s mv) (mv-a mv) (mv-r mv) landed))
-                                      (start-move e next button) t)))
-                         (t (and (member (mv-kind mv) '(:quick :flash))   ; SPs, Hoho, a :cancel Signature (L)
-                                 (or (not (eq cmd :sig)) (member :cancel (mv-flags (kit-command-move kit :sig))))
-                                 (cancel-open-p sf (fighter-land-sf f) (mv-total mv) (eq landed :hit))
-                                 (try-command e f cmd button))))
-                       (progn (vpad-consume! vp button) t)))))
+refused one doesn't hide the next). A J / K press during a string link is latched (STRING-LATCH: the last allowed
+press wins, a press of the button the string switched away from is eaten) and consumed at once; the latched link
+starts when the chain opens (CHAIN-OPEN-P: after contact only). O is the ender: only off a link-3 (:ender) hit, the
+rush's aura skipped. T when a new move / action started."
+  (let ((kit (fighter-kit f)) (landed (fighter-contact f)) (name (mv-name mv)))
+    (or (loop for (cmd button mod) in *commands*
+              thereis (and (member cmd '(:kikon :q :f :sp1 :sp2 :sig :hoho))
+                           (vpad-command-pressed-p vp button mod)
+                           (case cmd
+                             (:kikon (and (member :ender (mv-flags mv))   ; the O ender: a completed string
+                                          (cancel-open-p sf (fighter-land-sf f) (mv-total mv) (eq landed :hit))
+                                          (try-command e f cmd button)
+                                          (progn (skip-aura e f) t)))
+                             ((:q :f) (when (string-link-p kit name)   ; the latch takes every J / K press
+                                        (setf (fighter-queued f) (string-latch kit name cmd (fighter-queued f)))
+                                        (vpad-consume! vp button))
+                                      nil)
+                             (t (and (member (mv-kind mv) '(:quick :flash))   ; SPs, Hoho, a :cancel Signature (L)
+                                     (or (not (eq cmd :sig)) (member :cancel (mv-flags (kit-command-move kit :sig))))
+                                     (cancel-open-p sf (fighter-land-sf f) (mv-total mv) (eq landed :hit))
+                                     (try-command e f cmd button))))
+                           (progn (vpad-consume! vp button) t)))
+        (let ((q (fighter-queued f)))                   ; the latched link, once the chain opens
+          (when (and q (chain-open-p sf (mv-s mv) (mv-a mv) (mv-r mv) landed))
+            (start-move e (kit-next kit name q) (if (eq q :q) :quick :flash))
+            t)))))
 
 (defun stun-step (e f vp)
   "A reaction / blockstun counts down (Burst Reverse may be pressed); then neutral (guard again if
@@ -438,7 +470,7 @@ Guard is held)."
   (when (zerop (fighter-lock f)) (command! e f vp '(:burst)))
   (when (>= (incf (fighter-sf f)) (fighter-stun f))
     (to-idle e)
-    (when (guard-held-p e vp) (setf (fighter-state f) :guard (fighter-guard-t f) *guard-raise*) (play-clip e :sh-guard :blend 3))))
+    (when (guard-p e vp) (setf (fighter-state f) :guard (fighter-guard-t f) *guard-raise*) (play-clip e :sh-guard :blend 3))))
 
 (defun step-step (e f vp)
   "The hop; at its end a Step still held becomes a run (so holding never shortens a Step)."
@@ -473,7 +505,7 @@ clip follows the heading: forward run, side slide or back-skate (RUN-CLIP)."
            (when (eq (fighter-state f) :move)
              (set-slide e (run-carry (fighter-dist f)) *run-carry-frames* vx vz)
              (clog "~a run -> ~a, carry ~,1f m" (side-name e) (mv-name (fighter-move f)) (run-carry (fighter-dist f)))))
-          ((and free (guard-held-p e vp)) (to-idle e 3) (neutral-step e f vp))
+          ((and free (guard-held-p e vp) (not (passive-p e :ward))) (to-idle e 3) (neutral-step e f vp))
           ((not (and free (vpad-down vp :step)))
            (setf (fighter-phase f) :brake (fighter-sf f) 0)
            (play-clip e (kit-stance (fighter-kit f)) :blend 6))
@@ -546,21 +578,24 @@ clip (a drunk hit's), else the guard's."
 
 (defun defender-state (e)
   "E's side of the triangle for RESOLVE-CONTACT (rules.lisp): :neutral :guard :breaker :stance-in
-:stance :armor :parry :invuln. Burned out (BURNOUT-P) he has no armour. (West's garb armours him against ranged
-hits: APPLY-HIT passes that to the rule, it is not a state.)"
-  (let* ((f (fighter e)) (sf (fighter-sf f)) (mv (fighter-move f)))
+:stance :armor :parry :invuln. Bankai West's ward (passive :ward, up *GUARD-RAISE* frames after U) is :guard in his
+free states (idle, walk, run), the non-invulnerable frames of Step / Hoho and his own moves (a parry's window is
+still :parry); never in a reaction (a bind, a Guard Break, a crush reel: no armoured combos)."
+  (let* ((f (fighter e)) (sf (fighter-sf f)) (mv (fighter-move f))
+         (open (if (and (passive-p e :ward) (>= (fighter-guard-t f) *guard-raise*)) :guard :neutral)))
     (case (if (> (fighter-invuln f) 0) :invuln (fighter-state f))
+      ((:idle :run) open)
       (:invuln :invuln)                                  ; after a Burst
       (:guard (if (and (>= (fighter-guard-t f) *guard-raise*) (can-guard-p (gauges-gg (gauges e)) (gauges-guardless (gauges e))))
                   :guard :neutral))
       (:guard-hit :guard)
-      (:step (if (invulnerable-frame-p sf *step-iframes*) :invuln :neutral))
-      (:hoho (if (invulnerable-frame-p sf *hoho-iframes*) :invuln :neutral))
+      (:step (if (invulnerable-frame-p sf *step-iframes*) :invuln open))
+      (:hoho (if (invulnerable-frame-p sf *hoho-iframes*) :invuln open))
       ((:down :wakeup :cine :intro :win :lose) :invuln)
       (:air (if (eq (fighter-phase f) :knockdown) :invuln :neutral))   ; the combo limits' forced knockdown
       (:move (cond ((and (eq (mv-kind mv) :breaker) (or (member (fighter-phase f) '(:aura :dash)) (< sf (mv-s mv))))
                     :breaker)
-                   ((and (plusp (fighter-armor-left f)) (heat-on-p e)  ; the move's armour (:armor-hits)
+                   ((and (plusp (fighter-armor-left f))           ; the move's armour (:armor-hits)
                          (if (eq (mv-kind mv) :kikon)
                              (eq (fighter-phase f) :dash)
                              (and (eq (fighter-phase f) :main) (<= *armor-from* sf) (< sf (mv-s mv)))))
@@ -568,7 +603,7 @@ hits: APPLY-HIT passes that to the rule, it is not a state.)"
                    ((and (member :stance (mv-flags mv)) (eq (fighter-phase f) :hold))
                     (if (< (fighter-hold f) *stance-in*) :stance-in :stance))
                    ((and (member :parry (mv-flags mv)) (eq (fighter-phase f) :main) (parry-frame-p sf)) :parry)
-                   (t :neutral)))
+                   (t open)))
       (t :neutral))))
 
 (defun breaker-phase (e)

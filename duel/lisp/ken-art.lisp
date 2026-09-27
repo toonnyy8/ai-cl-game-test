@@ -226,6 +226,21 @@
   (:a (:root :yaw 386 :u -0.12 :f 0.38) (:chest :twist 36))                         ; overshoot
   (22 (:root :yaw 374 :u -0.1 :f 0.36) (:chest :twist 32))
   (:end :ke-stance (:root :yaw 360)))
+;; J3 KENKA-GERI (docs/DUEL_STRINGS.md §3.3): no school: the rear knee chambered and held, a flat front kick to the gut,
+;; leaning back, the sword thrown out wide the other way
+(defstrike :ke-kick (8 3 18 :base :ke-stance)          ; J3 KENKA-GERI: the street fighter's front kick
+  (0)
+  (3 (:root :u 0.02 :f -0.05) (:spine :flex -6) (:chest :twist -10) (:thigh-r :flex 58 :side 4) (:knee-r :flex 96)
+     (:thigh-l :flex 12) (:knee-l :flex 20) (:arm-r :flex 38 :side 58) (:elbow-r :flex 22) (:hand-r :flex -40)
+     (:arm-l :flex 30 :side 12) (:elbow-l :flex 60) (:head :flex -4))                                ; chambered, held
+  (6 (:thigh-r :flex 64) (:knee-r :flex 102) (:spine :flex -9) (:root :f -0.07))
+  (:s :snap (:root :f 0.45 :u 0.0) (:spine :flex -18) (:chest :twist 12) (:thigh-r :flex 92 :side 0) (:knee-r :flex 4)
+      (:thigh-l :flex -6) (:knee-l :flex 14) (:arm-r :flex 30 :side 95) (:elbow-r :flex 5) (:hand-r :flex -20)
+      (:arm-l :flex 40 :side 30) (:elbow-l :flex 40) (:head :flex 6 :twist 6))
+  (:a (:root :f 0.5) (:spine :flex -21) (:thigh-r :flex 96) (:knee-r :flex 2))                        ; overshoot
+  (18 (:root :f 0.46) (:thigh-r :flex 72) (:knee-r :flex 60) (:spine :flex -13))
+  (24 (:root :f 0.3 :u -0.05) (:thigh-r :flex 8) (:knee-r :flex 30) (:spine :flex 4) (:arm-r :flex 32 :side 40) (:elbow-r :flex 40))
+  (:end :ke-stance))
 (defstrike :ke-f1 (16 4 20 :base :ke-stance)           ; two-handed kendo cut
   (0)
   (8 (:root :u 0.05) (:arm-r :flex 175 :side 5) (:arm-l :flex 162 :side 38 :twist 4) (:elbows :flex 25) (:elbow-l :flex 12)
@@ -456,6 +471,40 @@
   (46 (:root :u -0.08 :f 0.2) (:spine :flex 10) (:head :flex -8) (:thigh-l :flex 35) (:knee-l :flex 35) (:thigh-r :flex -12)
       (:knee-r :flex 25) (:arm-r :flex 55 :side -10 :twist -3) (:elbow-r :flex 95) (:hand-r :flex -67 :twist 10) (:arm-l :flex 32 :side -52 :twist 55) (:elbow-l :flex 39))
   (:end :ke-r-stance))
+;; J2 KOTE (docs/DUEL_STRINGS.md §3.4): the only small motion in the set: a short lift from jodan, the wrists snap the
+;; cleaver down to forearm height, a half step in
+(defstrike :ke-r-kote (9 3 13 :base :ke-r-stance)      ; J2 KOTE: the small wrist snap
+  (0)
+  (4 (:root :f -0.03 :u 0.02) (:spine :flex -4) (:arm-r :flex 132 :side 12 :twist 15) (:elbow-r :flex 70) (:hand-r :flex -40 :twist -6)
+     (:arm-l :flex 128 :side 14 :twist 40) (:elbow-l :flex 60))
+  (7 (:root :f -0.04 :u 0.03) (:arm-r :flex 136) (:hand-r :flex -36))                              ; the lift, held
+  (:s :snap (:root :f 0.32 :u -0.07) (:spine :flex 10) (:chest :twist -4) (:pelvis :twist 4)
+      (:thigh-l :flex 36 :side 6) (:knee-l :flex 32) (:thigh-r :flex -22 :side 8) (:knee-r :flex 12)
+      (:arm-r :flex 80 :side -10 :twist 11) (:elbow-r :flex 14) (:hand-r :flex -78 :twist 0)
+      (:arm-l :flex 36 :side -58 :twist 68) (:elbow-l :flex 45))
+  (:a (:root :f 0.35 :u -0.08) (:spine :flex 12) (:arm-r :flex 76) (:hand-r :flex -74))
+  (18 (:root :f 0.3 :u -0.06) (:spine :flex 9))
+  (22 (:root :f 0.14 :u -0.03) (:spine :flex 5) (:arm-r :flex 55 :side -10 :twist -3) (:elbow-r :flex 95) (:hand-r :flex -67 :twist 10)
+      (:arm-l :flex 32 :side -52 :twist 55) (:elbow-l :flex 39))
+  (:end :ke-r-stance))
+;; K2 MOROTE-ZUKI (§3.4): both hands draw the cleaver back to the right hip, held, then drive it straight out, the back
+;; foot sliding; held 4 f fully extended
+(defstrike :ke-r-tsuki (21 4 24 :base :ke-r-stance)    ; K2 MOROTE-ZUKI: the two-handed thrust
+  (0)
+  (8 (:root :u -0.12 :f -0.1) (:pelvis :twist 22) (:chest :twist -28) (:spine :flex 10) (:head :flex -4 :twist 20) (:knees :flex 40)
+     (:arm-r :flex 28 :side 14 :twist -30) (:elbow-r :flex 105) (:hand-r :flex -72 :twist -30)
+     (:arm-l :flex 38 :side -40 :twist 50) (:elbow-l :flex 70))
+  (17 (:root :u -0.15 :f -0.13) (:chest :twist -33) (:knees :flex 44) (:arm-r :flex 24) (:elbow-r :flex 112))   ; drawn back, held
+  (:s :snap (:root :f 0.72 :u -0.16) (:pelvis :twist -6) (:chest :twist 6) (:spine :flex 18) (:head :flex 0 :twist 0)
+      (:thigh-l :flex 56 :side 6) (:knee-l :flex 52) (:thigh-r :flex -42 :side 8) (:knee-r :flex 8)
+      (:arm-r :flex 88 :side -6 :twist 10) (:elbow-r :flex 4) (:hand-r :flex -86 :twist -20)
+      (:arm-l :flex 60 :side -40 :twist 70) (:elbow-l :flex 30))
+  (:a (:root :f 0.78 :u -0.18) (:spine :flex 20) (:arm-r :flex 90) (:elbow-r :flex 2))
+  (29 (:root :f 0.77 :u -0.18) (:spine :flex 20))                                                   ; held extended
+  (38 (:root :f 0.45 :u -0.1) (:spine :flex 12) (:thigh-r :flex -24) (:knee-r :flex 14))
+  (43 (:root :f 0.2 :u -0.05) (:spine :flex 6) (:arm-r :flex 55 :side -10 :twist -3) (:elbow-r :flex 95) (:hand-r :flex -67 :twist 10)
+      (:arm-l :flex 32 :side -52 :twist 55) (:elbow-l :flex 39))
+  (:end :ke-r-stance))
 (defstrike :ke-n-f1 (20 4 22 :base :ke-r-stance)       ; KUKAN-GIRI: a flat cut at chest height, left to right; its
   (0)                                                   ; chord is the rift (f20)
   (3 (:chest :twist 15) (:pelvis :twist -5) (:arm-r :flex 70 :side -30 :twist 90) (:elbow-r :flex 90) (:hand-r :flex -62 :twist -54) (:arm-l :flex 31 :side 27 :twist 58) (:elbow-l :flex 85))
@@ -473,7 +522,7 @@
   (34 (:root :f 0.48 :u -0.13) (:chest :twist -51) (:spine :flex 12))
   (40 (:root :f 0.2 :u -0.05) (:chest :twist -10) (:pelvis :twist 5) (:spine :flex 6) (:head :twist 0) (:arm-r :flex 55 :side -10 :twist -3) (:elbow-r :flex 95) (:hand-r :flex -67 :twist 10) (:arm-l :flex 32 :side -52 :twist 55) (:elbow-l :flex 39))
   (:end :ke-r-stance))
-(setf *grip-clips* '(:ke-r-stance :ke-drink :ke-r-q1 :ke-r-q3 :ke-r-f1 :ke-r-f2 :ke-n-f1))
+(setf *grip-clips* '(:ke-r-stance :ke-drink :ke-r-q1 :ke-r-q3 :ke-r-f1 :ke-r-f2 :ke-n-f1 :ke-r-kote :ke-r-tsuki))
 (defstrike :ke-meteor (26 4 30 :base :ke-n-stance)     ; "Split the meteor": the huge two-handed cleave
   (0)
   (16 (:root :u 0.05) (:arm-r :flex 180 :side 5) (:arm-l :flex 165 :side 37 :twist 4) (:elbows :flex 30) (:elbow-l :flex 13)

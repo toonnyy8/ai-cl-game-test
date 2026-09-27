@@ -1,0 +1,42 @@
+[
+{
+"at": 9.0,
+"eval": "Module._debug_cmd(1086000)"
+},
+{
+"at": 10.15,
+"shot": "tests/shots/duel-string-ya-sleeve.png"
+},
+{
+"at": 10.35,
+"eval": "Module._debug_cmd(1067000)"
+},
+{
+"at": 11.5,
+"shot": "tests/shots/duel-string-ya-e-drop.png"
+},
+{
+"at": 11.7,
+"eval": "Module._debug_cmd(1008000)"
+},
+{
+"at": 12.85,
+"shot": "tests/shots/duel-string-ke-kick.png"
+},
+{
+"at": 13.05,
+"eval": "Module._debug_cmd(1021000)"
+},
+{
+"at": 14.2,
+"shot": "tests/shots/duel-string-ke-r-kote.png"
+},
+{
+"at": 14.4,
+"eval": "Module._debug_cmd(1025000)"
+},
+{
+"at": 15.55,
+"shot": "tests/shots/duel-string-ke-r-tsuki.png"
+}
+]

@@ -207,6 +207,10 @@ once, on the draw that first sees the frame (MODEL-LAST-SF)."
         (:ya-nadegiri (when (and (eq (fighter-phase f) :main) (< prev (mv-s mv)) (<= (mv-s mv) now))
                         (vfx-nadegiri x z (fwd-x yaw) (fwd-z yaw))))
         (:ya-shiranui (when (and (eq (fighter-phase f) :hold) (= (fighter-hold f) 2)) (focus-lines 14 x (+ y 1.2) z)))
+        (:ya-e-k3 (when (and (eq (fighter-phase f) :main) (< prev (mv-s mv)) (<= (mv-s mv) now))   ; RAKUJITSU: the plaza
+                    (let ((ex (+ x (* 2.2 (fwd-x yaw)))) (ez (+ z (* 2.2 (fwd-z yaw)))))           ; takes the setting sun
+                      (vfx-ember ex 0.1 ez :dx (fwd-x yaw) :dz (fwd-z yaw) :scale 1.4)
+                      (stage-mark :scorch ex ez 0.7))))
         (:ke-charge (when (and (eq (fighter-phase f) :main) (<= (mv-s mv) now) (< now (+ (mv-s mv) (mv-a mv)))
                                (zerop (mod (- now (mv-s mv)) 10)))
                       (start-ghost e)))))))
@@ -243,6 +247,11 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
                                             :tint (model-tint m)
                                             :rim (if (> (model-super m) 0) *super-rim* (model-rim m))
                                             :flash (if (> (model-flash m) 0) 0.45 0.0)))
+    (when (and mv (eq (mv-clip mv) :ya-sleeve) (eq (fighter-phase f) :main)   ; SODEBI: the empty left sleeve burns
+               (< (- (mv-s mv) 4) (fighter-sf f) (+ (mv-s mv) (mv-a mv) 10)))
+      (joint-point! *base* (model-joints m) (ji :lower-arm-l) 0f0 0f0 0f0)
+      (joint-point! *tip* (model-joints m) (ji :lower-arm-l) 0f0 -0.42f0 0f0)
+      (vfx-blade-fire (aref *base* 0) (aref *base* 1) (aref *base* 2) (aref *tip* 0) (aref *tip* 1) (aref *tip* 2) rdt :power 1.4))
     (when (and planted (model-weapon m))
       (draw-planted-weapon (model-weapon m) (+ x (* 0.7 (fwd-x yaw))) (+ z (* 0.7 (fwd-z yaw))) yaw))
     (when (and weapon (> (model-alpha m) 0.5))
@@ -252,8 +261,7 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
         (case (first look)
           (:fire (vfx-blade-fire (aref *base* 0) (aref *base* 1) (aref *base* 2) (aref *tip* 0) (aref *tip* 1) (aref *tip* 2)
                                  rdt :power (second look)))
-          (:embers (vfx-blade-embers (aref *base* 0) (aref *base* 1) (aref *base* 2) (aref *tip* 0) (aref *tip* 1) (aref *tip* 2) rdt
-                                     :ash (burnout-p e)))))
+          (:embers (vfx-blade-embers (aref *base* 0) (aref *base* 1) (aref *base* 2) (aref *tip* 0) (aref *tip* 1) (aref *tip* 2) rdt))))
       (when (and mv (eq (fighter-phase f) :hold) (not (member :stance (mv-flags mv))))
         (vfx-charge (aref *tip* 0) (aref *tip* 1) (aref *tip* 2)
                     (min 1.0 (/ (fighter-hold f) (float (second (mv-hold mv))))) rdt))
@@ -265,12 +273,11 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
         (vfx-smear tr (blade-smear (blade e)) (case (first (kit-blade kit)) (:fire 0) ((:embers :charcoal) 2) (t 1)))))
     ;; auras: the form's, EVOLUTION ready, the Breaker (brightens over the strike startup), the Kikon rush
     (let ((age (fx-clock)))
-      (unless (or flashing (<= (model-alpha m) 0f0))      ; the form's aura (burned out: ash and smoke), crossfaded; none
-                                                          ; round a body turned to ash (Tenchi Kaijin)
-        (draw-aura f (if (burnout-p e) :ash (kit-aura kit)) x y z (* 1.1 (body-hurt-h b)) age rdt
-                   (cond ((> (model-flare m) 0f0) (+ 1.0 (* 2.0 (model-flare m))))   ; West's garb flaring (a ranged hit absorbed)
+      (unless (or flashing (<= (model-alpha m) 0f0))      ; the form's aura, crossfaded; none round a body turned to
+                                                          ; ash (Tenchi Kaijin)
+        (draw-aura f (kit-aura kit) x y z (* 1.1 (body-hurt-h b)) age rdt
+                   (cond ((> (model-flare m) 0f0) (+ 1.0 (* 2.0 (model-flare m))))   ; West's garb flaring (a warded hit, SHONETSU)
                          ((and (eq look :charge) (not (eq (fighter-phase f) :main))) 1.5)
-                         ((and (member (fighter-state f) '(:guard :guard-hit)) (passive-p e :garb)) 1.4)   ; West guards: the garb flares
                          (t 1.0))))
       (when (and (eq (fighter-state f) :stun) (eq (fighter-phase f) :bind))   ; bound by South: ash drifting at the feet
         (vfx-aura x y z (body-hurt-h b) :bound age rdt))
@@ -294,8 +301,8 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
 
 (defun draw-aura (f aura x y z h age rdt k)
   "Fighter F's body AURA (a VFX-AURA kind or NIL) at his feet, HEIGHT H, presence K. When it changes (a stance
-switch, a burnout, the reignite) the old one dies down over 350 ms while the new one flares up (grows 35 % and
-settles over 300 ms): e.g. the West garb's flames flaring on, guttering out to smoke. Cosmetic, fx clock (AGE:
+switch) the old one dies down over 350 ms while the new one flares up (grows 35 % and
+settles over 300 ms): e.g. the West garb's flames flaring on. Cosmetic, fx clock (AGE:
 the caller's reading of it); once settled it passes H and K through as they came (no float math per frame)."
   (let ((i (fighter-side f)))
     (unless (eq aura (svref *aura-now* i))
@@ -308,16 +315,14 @@ the caller's reading of it); once settled it passes H and K through as they came
             (vfx-aura x y z h aura age rdt :k k)
             (vfx-aura x y z (* h (+ 1.0 (* 0.35 (- 1.0 (/ ms 300.0))))) aura age rdt :k (* k (min 1.0 (+ 0.2 (/ ms 120.0))))))))))
 
-(defvar *form-grade* nil "The form grade preset shown now (:spot, :ash) or NIL.")
+(defvar *form-grade* nil "The form grade preset shown now (:spot) or NIL.")
 
 (defun form-grade ()
   "A form's world grade (kit :GRADE): Bankai's :SPOT keeps the whole world grey except the ember hue (the composite's
-spot-keep mode 4, docs/STYLE_STORM_DESIGN.md §3.6) while the form is on; while such a fighter is burned out the
-ember hue goes too (:ASH, the world fully grey). An impact frame takes the composite over for its frames
+spot-keep mode 4, docs/STYLE_STORM_DESIGN.md §3.6) while the form is on. An impact frame takes the composite over for its frames
 (IMPACT-FRAME); the form's grade comes back when it ends. Changes the mode only when needed."
   (flet ((spot-p (e) (and (entity-alive-p e) (eq (kit-grade (kit-of e)) :spot))))
-    (let* ((want (cond ((or (and (spot-p *p1*) (burnout-p *p1*)) (and (spot-p *p2*) (burnout-p *p2*))) :ash)
-                       ((or (spot-p *p1*) (spot-p *p2*)) :spot)))
+    (let* ((want (and (or (spot-p *p1*) (spot-p *p2*)) :spot))
            (mode (if want 4 0)))
       (when (and (<= (aref *screen-fx* 0) 0f0) (or (/= *grade-impact* mode) (not (eq want *form-grade*))))
         (setf *form-grade* want)

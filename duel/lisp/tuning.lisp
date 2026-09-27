@@ -43,7 +43,6 @@ again, so he can guard it (not red), Step or Hoho out (KIKON-FOLLOW-WAIT).")
 (defparameter *reset-reiatsu-bonus* 10.0 "Reiatsu a kit with :reset-reiatsu gets at each reset (Kenpachi).")
 (defparameter *match-seconds* 300 "Match timer. Time-up: more Konpaku wins, then higher Reishi %, else draw.")
 (defparameter *chip-fire* 0.12 "Chip-damage fraction of fire projectiles on block (never kills).")
-(defparameter *chip-blade* 0.25 "Chip fraction of blade hits in a form with :blade-chip (Bankai East).")
 
 ;;; ================================================================ §2 controls
 (defparameter *input-buffer* 10 "Frames a button press stays buffered in the vpad.")
@@ -70,14 +69,19 @@ again, so he can guard it (not red), Step or Hoho out (KIKON-FOLLOW-WAIT).")
 (defparameter *guard-raise* 2 "Frames of holding Guard before it blocks.")
 (defparameter *guard-arc* 200.0 "Guard covers this many degrees in front (while the guard gauge lasts).")
 (defparameter *block-pushback* 0.6 "Metres a blocked hit pushes the defender back.")
-(defparameter *whiff-extra* 6 "A move that touched nothing recovers R + this.")
+(defparameter *whiff-extra* 6 "A move that touched nothing recovers R + this (a J / K link: the two below).")
+(defparameter *whiff-extra-j* 8
+  "A J link (a :quick move) that touched nothing recovers R + this, a single swing with no string after it
+(docs/DUEL_STRINGS.md §2.2, the user's decision 2026-09-27) ...")
+(defparameter *whiff-extra-k* 12 "... and a K link (a :flash move) R + this.")
 (defparameter *hazard-blockstun* 14
   "Blockstun of a blocked hazard hit (fire wave, Shiranui, pillars): a projectile has no
 attacker recovery to measure advantage against, so it is a fixed stun.")
 (defparameter *chain-lead* 3
-  "A string's next hit may be input this many frames before the current move's recovery ends
-(block / whiff). With a -2 move this leaves S(next) - 2 frames of gap (6 f for Q1 -> Q2): Step /
-Hoho fit, Q1 doesn't (§3). On hit the chain opens at the end of the active frames instead (true combos).")
+  "On block a string's next link starts this many frames before the current link's recovery ends. With a -2 link
+this leaves S_eff(next) - 2 frames of gap (J2 after J1: 5-7 f): Step / Hoho fit, J1 doesn't; a K link leaves >= 11 f,
+so any J1 interrupts it (docs/DUEL_STRINGS.md §2.1). On hit the chain opens at the end of the active frames
+instead (true combos); on a whiff never (the contact gate, §2.2).")
 (defparameter *counter-mult* 1.25 "Damage multiplier of a counter-hit (Breaker / stance hit during startup).")
 (defparameter *counter-stun* 10 "Extra hitstun frames of a counter-hit.")
 
@@ -113,6 +117,14 @@ Hoho fit, Q1 doesn't (§3). On hit the chain opens at the end of the active fram
 (defparameter *cost-sp* 1 "Bars an SP1 / SP2 costs.")
 (defparameter *cost-sp-awakened* 2 "Bars an SP2 costs in an awakened form.")
 
+;;; ---------------------------------------------------------------- KOSEI (攻勢), the aggression reward (docs/DUEL_STRINGS.md §5)
+;;; Every contact of the attacker's own melee hit window (hit, block, ward, DRINK, armour, absorb; not a parry, a
+;;; hazard, a :ranged window or a Kikon) pays Reiatsu and flash-step, g x rate x m, g = the hit's guard value and
+;;; m = 1 + *KOSEI-BONUS* x (1 - his own guard gauge / max): x1 at a full gauge ... x3 at an empty one.
+(defparameter *kosei-bonus* 2.0 "KOSEI: the multiplier's range above 1 (x1 full gauge .. x(1 + this) empty).")
+(defparameter *kosei-reiatsu* 0.20 "KOSEI: Reiatsu per guard point of a paying contact (x m).")
+(defparameter *kosei-fs* 0.10 "KOSEI: flash-step per guard point of a paying contact (x m).")
+
 ;;; ---------------------------------------------------------------- flash-step gauge (design v3 G.1): Hoho, Burst
 (defparameter *fs-max* 100.0 "Flash-step gauge maximum; full at the match start, kept through Kikon resets.")
 (defparameter *fs-hoho* 30.0 "Flash-step a Hoho costs.")
@@ -134,8 +146,11 @@ Hoho fit, Q1 doesn't (§3). On hit the chain opens at the end of the active fram
   "The gauge refills only after this many frames without a drain (the user: 45 -> 60), counting only frames he is
 not guarding (GUARD HOLD, guard v3: while he guards, in :guard / :guard-hit, it neither refills nor counts; the
 count is frozen, not restarted: a phone's resting thumb is a guard) ...")
-(defparameter *gg-regen* 12.0 "... at this per second (the user: 20 -> 12) ...")
-(defparameter *gg-regen-guardless* 14.0 "... or this while guardless / burned out (the user: 25 -> 14; 0 -> 100 in 7.1 s + the delay).")
+(defparameter *gg-regen* 5.5
+  "... at this per second (the user: 20 -> 12; then, the user's request 2026-09-27 (大幅減少防禦量表的恢復速度): 12 -> 5.5,
+46 %) ...")
+(defparameter *gg-regen-guardless* 6.5
+  "... or this while guardless (the user: 25 -> 14; 2026-09-27: 14 -> 6.5, 46 %; 0 -> 100 in 15.4 s + the delay).")
 (defparameter *guard-crush-stun* 40
   "A blocked hit that empties the gauge is still blocked, then the defender reels this long (GUARD CRUSH)
 and can't guard until the gauge is full again.")
@@ -202,14 +217,23 @@ a combo (critique-design 1.7: not from hit 1).")
 
 ;;; ================================================================ §4 damage multipliers
 (defparameter *hellfire-mult* 1.30 "Damage x in Hellfire (Gokuen).")
-(defparameter *bankai-mult* 1.20 "Damage x in Bankai (East, Kyokujitsujin).")
 (defparameter *nozarashi-mult* 1.0 "Damage x in Nozarashi's first cup, KATATE (v2: x1.15 before the ladder).")
 (defparameter *ryote-mult* 1.15 "Damage x in the second cup, RYOTE.")
 (defparameter *nomihose-mult* 1.20 "Damage x in the third cup, NOMIHOSE.")
-(defparameter *bankai-taken* 1.2
-  "Damage x Bankai East takes (the defender's :taken): the extreme stance. Burnout doesn't lift it. The YK balance
-knob: 1.4 -> 1.2 at guard v3 (Reishi 1300: 1.4 / 1.3 left Yamamoto 13 / 15 of 40 YK seeds, 1.2 17 of 40; design
-guard-v3 §5 measured 1.3 at Reishi 1200).")
+(defparameter *bankai-taken* 1.5
+  "Damage x Bankai East takes (the defender's :taken): the extreme stance. The Bankai rework (the user's spec
+2026-09-27, docs/DUEL_YAMA_REWORK.md): 1.2 -> 1.5, East only (West takes x1.0). Not a tuning knob: the spec's value.")
+(defparameter *pierce-min* 0.1
+  "Bankai East's pierce (passive :pierce, rules PIERCE-RATE): k = this at an empty guard gauge ...")
+(defparameter *pierce-max* 0.45
+  "... rising linearly to this at a full one (the user's decision 2026-09-27: full gauge = sharpest). A hit deals
+x(1 + k); a blocked hit lets k x its damage through as chip (never kills). East's balance knob: the spec's 0.5 -> 0.45
+at the seed gate (with *WARD-MULT* 1.1: YK Yamamoto 10 / 20, medians YY 128.6 / YK 129.9 s; at 0.5 / 1.0 the YK
+median fell to 123.6 s).")
+(defparameter *ward-mult* 1.1
+  "Bankai West's ward (passive :ward): a hit it blocks drains this x its guard value (after Kenpachi's cut). The main YK
+balance knob of the rework (replaces the x1.3 Bankai drain, deleted: the user's decision 2026-09-27); 1.0 -> 1.1 at
+the seed gate (see *PIERCE-MAX*).")
 (defparameter *cornered-per-konpaku* 0.05 "Cornered: + this damage fraction per Konpaku lost ...")
 (defparameter *cornered-max* 0.25 "... up to this.")
 
@@ -225,31 +249,10 @@ guard-v3 §5 measured 1.3 at Reishi 1200).")
 (defparameter *ennetsu-self-burn* 30 "... and it burns the caster for this (floor 1).")
 (defparameter *ennetsu-pillars* 7 "Pillars in the Ennetsu ring.")
 (defparameter *ennetsu-seconds* 0.8 "Ennetsu duration.")
-;;; Bankai stances (design v3 §A): East / West are kit forms, L switches; the stance traits run on
-;;; the guard gauge (a kit with :burnout burns out at gg 0 until it is full: RULES HEAT-*)
-(defparameter *switch-cooldown* 100 "L (the stance switch) may start again this many frames after it started.")
-(defparameter *recoil* 0.6 "East (:recoil): each of his hits that is blocked drains his own guard gauge by this x its guard value.")
-(defparameter *scorch* 15 "West (:scorch): a melee hit his parry catches burns the attacker this much (never kills).")
-;;; guard v3 (the user's decisions 2026-09-26): Bankai's guard gauge is fed, not refilled; West's U is the garb guard
-(defparameter *bankai-feed* 0.10
-  "A :burnout form (Bankai) never refills its guard gauge by time (only the burnout's timed refill, then REIGNITE): it
-gains its kit's :feed per point of Reishi it actually removes from the opponent, heat on (a scorch or a Kikon feeds
-nothing). West's :feed ...")
-(defparameter *bankai-feed-east* 0.05
-  "... and East's (the user's decision 2026-09-26, after guard v3: 0.10 -> 0.05): a landed E-Q1 Q2 E-Q3 (153) feeds +8.")
-(defparameter *bankai-drain* 1.3
-  "Bankai (a :burnout form, both stances) loses this x every guard-gauge drain: a blocked hit (after West's garb x0.5:
-x0.65 net), East's recoil, a Breaker (the user's decision 2026-09-26, after guard v3).")
-(defparameter *garb-mult* 0.5
-  "West's garb guard (passive :garb): a hit he blocks drains this x its guard value (after Kenpachi's cut) ...")
-(defparameter *garb-scorch* '(:quick 5 :flash 15 :sig 15 :sp 15 :kikon 15)
-  "... and a blocked melee hit burns its attacker this much by move kind (never kills). The user asked for every
-melee block (not heavies only); a Quick burns a third of a heavy so a CPU's Q1 block-string resets can't farm it:
-a whole guard gauge of blocked Q strings (8, then burnout) burns 120, the 390 of one cash-out a third of that.")
-(defparameter *garb-ranged* 0.6
-  "West's garb vs ranged hits (a hazard, or a hit window marked :ranged: the heat cone, Taimatsu's fire, and beyond
-the blade's :melee-range the Meteor / cash-out line, Buttagiru's crack, Nadegiri's line): he takes this x their damage and they are armoured (no reaction, not paid
-from the gauge) unless he guards (then the garb guard) or they are unguardable (South's bind still binds).")
+;;; Bankai stances (docs/DUEL_YAMA_REWORK.md): East / West are kit forms; U switches East -> West, an attack other
+;;; than SP1 / L drops West back to East
+(defparameter *scorch* 15 "West (:scorch): a melee hit his parry catches burns the attacker this much (never kills; the parry also refills his
+guard gauge: the rework).")
 (defparameter *parry-window* '(4 15) "GOKUI GAESHI: the move frames (inclusive) its parry catches a melee hit ...")
 (defparameter *parry-stun* 32 "... the parried attacker staggers this long (his move ends) ...")
 (defparameter *parry-slide* 0.5 "... sliding this far.")
@@ -305,7 +308,24 @@ from the gauge) unless he guards (then the garb guard) or they are unguardable (
 (defparameter *ai-block-punish-p* '(:easy 0.25 :normal 0.6 :hard 0.9)
   "Chance the CPU punishes, with Q1, a blocked move whose block advantage is <= *AI-PUNISH-ADV*. It
 feels its own blockstun (no perception delay), so this is the only thing that decides it.")
-(defparameter *ai-string-flash-p* 0.5 "On hit, a string that can go on with Q or F takes F this often.")
+(defparameter *ai-string-flash-p* 0.3
+  "On hit, a string that can go on with J or K takes K this often (the design's 0.5; 0.3 at the seed gate: K links
+are the heavy ones).")
+(defparameter *ai-o-ender* 0.15
+  "The O ender (a completed string: a link-3 hit) on an opponent who isn't red, per string: a kit's :o-ender, else
+this (on a red one always). A pacing knob of the seed gate (docs/DUEL_STRINGS.md §4, §6, §9: the design's 0.35 -> 0.15).")
+(defparameter *ai-follow-guard-p* '(:easy 0.6 :normal 0.85 :hard 0.95)
+  "A CPU who isn't red guards a Kikon rush's dash-in follow-up with this chance (the B1 knob: DUEL_STRINGS §6).")
+(defparameter *ai-j-beats-k-p* '(:easy 0.2 :normal 0.45 :hard 0.7)
+  "J beats K: an opponent's K link still >= S(J1) + 2 frames from its hit, within J1's reach: J1 with this chance.")
+(defparameter *ai-sp-cancel-p* 0.3
+  "A string that ends on a hit with no link left (link 3, or a link the CPU doesn't go on from) is cancelled into SP2
+with this chance, one roll (the kit's :sp-cancel-bars permitting). Link 3 staggers / crumples, so SP2 always combos
+off it (Kenpachi's flurry): a seed-gate pacing knob (docs/DUEL_STRINGS.md §9).")
+(defparameter *ai-block-k-p* 0.15
+  "On block a string goes on with a K link only this x the kit's :block-string (a J link otherwise; never a K ender).")
+(defparameter *ai-kosei-aggression* 0.2
+  "KOSEI: a neutral decision attacks + this x (1 - its own guard gauge / max) more often.")
 (defparameter *ai-guard-break-hold* 24 "Breaker a guard held longer than this (0.4 s) ...")
 (defparameter *ai-guard-break-range* 3.0 "... within this range ...")
 (defparameter *ai-guard-break-p* 0.4 "... with this probability.")

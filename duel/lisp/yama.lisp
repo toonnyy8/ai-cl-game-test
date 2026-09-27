@@ -1,26 +1,33 @@
 ;;;; yama.lisp — YAMAMOTO GENRYUSAI SHIGEKUNI (TYBW), design-v1 §5.1: his moves (DEFMOVE) and his
 ;;;; four forms (DEFKIT): :base (shikai), :hellfire (Gokuen: the Inferno meter full, 10 s), and his
-;;;; awakening Bankai (Zanka no Tachi, kept to the end of the match) as two stances L switches between:
-;;;; :bankai-east (Kyokujitsujin, offence) and :bankai-west (Zanjitsu Gokui, defence), both burning out
-;;;; when his guard gauge empties (design bankai-kikon v3 §A). Frame data here is the §5 table; clip names are
+;;;; awakening Bankai (Zanka no Tachi, kept to the end of the match) as two stances: :bankai-east (Kyokujitsujin,
+;;;; the edge: pierce, x1.5 taken) and :bankai-west (Zanjitsu Gokui, the ward); U switches East -> West, any attack but
+;;;; SP1 / L drops West back to East (docs/DUEL_YAMA_REWORK.md). Frame data here is the §5 table; clip names are
 ;;;; the art contract (yama-art.lisp authors them). Below the data: his hook functions (called by
 ;;;; the generic fighter code through the symbols in the data) and his cinematics (DEFCINE).
 (in-package :duel)
 
 ;;; ================================================================ shikai (base)
-(defmove :ya-q1 :kind :quick :clip :ya-q1 :startup 9 :active 3 :recovery 12 :dmg 38 :adv-block -2
-  :reach 2.4 :arc 100 :on-hit :flinch)
-(defmove :ya-q2 :kind :quick :clip :ya-q2 :startup 8 :active 3 :recovery 13 :dmg 38 :adv-block -2
-  :reach 2.4 :arc 100 :on-hit :flinch)
-(defmove :ya-q3 :kind :quick :clip :ya-q3 :startup 12 :active 4 :recovery 22 :dmg 60 :adv-block -12
-  :reach 2.6 :arc 120 :on-hit :knockback :kb 3.0)                    ; flame burst
-(defmove :ya-f1 :kind :flash :clip :ya-f1 :startup 18 :active 4 :recovery 20 :dmg 75 :adv-block -4
-  :reach 3.0 :arc 150 :on-hit :stagger :meter *inferno-flash*)        ; flame sweep
-(defmove :ya-f2 :kind :flash :clip :ya-f2 :startup 22 :active 5 :recovery 28 :dmg 95 :adv-block -14
-  :reach 2.6 :arc 90 :on-hit :launch :meter *inferno-flash*)          ; rising blaze
-;; the Q Q -> F branch: F2 entered 8 f into its wind-up, so it combos off Q2's flinch (same -14)
-(defmove :ya-f2q :kind :flash :clip :ya-f2 :enter 8 :startup 22 :active 5 :recovery 28 :dmg 95 :adv-block -14
-  :reach 2.6 :arc 90 :on-hit :launch :meter *inferno-flash*)
+;;; the J / K strings (docs/DUEL_STRINGS.md §3.1): up to three links, each J or K, switching at most once (JJJ JJK JKK KKK
+;;; KKJ KJJ). One move per (link, button); J2s / K2s, the switched link 2, are copies (DEFMOVE-COPY) whose string allows
+;;; only the new button. Every K at link 2 / 3 enters at S_eff 14 (:enter), so it combos after a J and a K link alike;
+;;; the enders (:ender) stagger / crumple, and their hit opens the O ender. Hellfire plays these at x1.3. K2 / K3 deal
+;;; 80 % of the design's numbers (the seed gate's first lever, docs/DUEL_STRINGS.md §9: 80 -> 64, 110 -> 88; East 75 -> 60,
+;;; 105 -> 84).
+(defmove :ya-j1 :kind :quick :clip :ya-q1 :startup 9 :active 3 :recovery 12 :dmg 38 :adv-block -2
+  :reach 2.4 :arc 100 :on-hit :flinch)                               ; HISEN: the flat cut from the draw
+(defmove :ya-j2 :kind :quick :clip :ya-q2 :startup 8 :active 3 :recovery 13 :dmg 38 :adv-block -2
+  :reach 2.4 :arc 100 :on-hit :flinch)                               ; KAESHIBI: the backhand along the same line
+(defmove :ya-j3 :kind :quick :clip :ya-sleeve :startup 9 :active 3 :recovery 18 :dmg 45 :adv-block -4
+  :reach 2.2 :arc 140 :on-hit :stagger :flags (:ender))              ; SODEBI: the burning empty sleeve
+(defmove :ya-k1 :kind :flash :clip :ya-f1 :startup 18 :active 4 :recovery 20 :dmg 75 :adv-block -3
+  :reach 3.0 :arc 150 :on-hit :stagger :meter *inferno-flash*)      ; HOMURA-NAGI: the waist-high sweep
+(defmove :ya-k2 :kind :flash :clip :ya-f2 :enter 8 :startup 22 :active 4 :recovery 24 :dmg 64 :adv-block -3
+  :reach 2.6 :arc 90 :on-hit :stagger :meter *inferno-flash*)       ; SHOEN: the rising flame column
+(defmove :ya-k3 :kind :flash :clip :ya-q3 :clip-s 12 :enter 8 :startup 22 :active 5 :recovery 34 :dmg 88 :adv-block -20
+  :reach 2.8 :arc 120 :on-hit :crumple :meter *inferno-flash* :flags (:ender))   ; ENBAKU: the dome at his feet
+(defmove-copy :ya-j2s :ya-j2)
+(defmove-copy :ya-k2s :ya-k2)
 ;; two cuts (f16, f28), then the wave hazard leaves the blade at f40 (-6 on block at range)
 (defmove :ya-sig :kind :sig :clip :ya-sig :callout "RYUJIN JAKKA"
   :startup 16 :active 25 :recovery 26 :dmg 30 :adv-block -6 :reach 2.6 :arc 110 :on-hit :flinch
@@ -56,55 +63,51 @@
   :vol (:cap 0.3 8.0 1.0 0.5) :on-hit :knockdown :kb 3.0 :flags (:ranged)   ; line 8 m: the blade within Q1's
   :params (:melee-range 2.4))                                        ; reach 2.4 m, ranged beyond
 
-;;; ================================================================ Bankai: Zanka no Tachi (design v3 §A)
-;;; The compass: O = North (KITA: TENCHI, both stances), L = East / West (switch + a technique), Shift+L =
-;;; South (the bind, both stances). J / K are each stance's own; Q2 and the Breaker are derived from the
-;;; Shikai ones (East -1 f and reach x1.15, West +2 f).
-;;; ---------------------------------------------------------------- East, Kyokujitsujin: fast thin lines
-(defmove :ya-e-q1 :kind :quick :clip :ya-q1 :clip-s 9 :startup 8 :active 3 :recovery 12 :dmg 34 :adv-block -2
-  :vol (:cap 0.2 3.1 1.1 0.25) :on-hit :flinch)                      ; edge line 3.1 m
-;; the rising-sun thrust: R27 = +-0 on hit (no 1 f loop into E-Q1, the ender-gap rule)
-(defmove :ya-e-q3 :kind :quick :clip :ya-e-thrust :startup 11 :active 3 :recovery 27 :dmg 55 :adv-block -12
-  :vol (:cap 0.2 3.6 1.1 0.3) :on-hit :knockback :kb 1.2)
-(defmove :ya-e-f1 :kind :flash :clip :ya-f1 :clip-s 18 :startup 16 :active 4 :recovery 20 :dmg 70 :adv-block -4
-  :vol (:cap 0.2 3.8 1.1 0.3) :on-hit :stagger)                     ; edge sweep line
-(defmove :ya-e-f2 :kind :flash :clip :ya-f2 :clip-s 22 :startup 19 :active 4 :recovery 26 :dmg 90 :adv-block -14
-  :vol (:cap 0.2 3.8 1.3 0.35) :on-hit :launch)                     ; sun-edge rising cut
-(defmove :ya-e-f2q :kind :flash :clip :ya-f2 :clip-s 22 :enter 6 :startup 19 :active 4 :recovery 26 :dmg 90 :adv-block -14
-  :vol (:cap 0.2 3.8 1.3 0.35) :on-hit :launch)
-;; L in East: NISHI, the blade planted, the garb flares (360 deg), and on its first active frame he is West: it
-;; resolves there (no move armour)
-(defmove :ya-to-west :kind :sig :clip :ya-to-west :callout "NISHI: ZANJITSU GOKUI" :startup 14 :active 4 :recovery 20
-  :dmg 50 :adv-block -10 :vol (:arc 2.6 360 0.0 2.2) :on-hit :knockback :kb 3.5
-  :cooldown *switch-cooldown* :flags (:cancel) :on-frame ((14 yama-switch)) :params (:to :bankai-west))
+;;; ================================================================ Bankai: Zanka no Tachi (docs/DUEL_YAMA_REWORK.md)
+;;; The compass: O = North (KITA: TENCHI), Shift+L = South (the bind), U = East -> West (the kit's :guard-to), L = each
+;;; stance's own technique (East KYOKKO, West SHONETSU JIGOKU). J / K are East's own strings; the Breaker is derived
+;;; from the Shikai one (-1 f, reach x1.15). In West every command but SP1 / L goes back to East first (:drop-to / :keep):
+;;; West's J / K switch him to East and start East's string.
+;;; ---------------------------------------------------------------- East, Kyokujitsujin: fast thin lines, the pierce
+;; the East strings (docs/DUEL_STRINGS.md §3.2): thin ember lines, the sun's path
+(defmove :ya-e-j1 :kind :quick :clip :ya-q1 :clip-s 9 :startup 8 :active 3 :recovery 12 :dmg 34 :adv-block -2
+  :vol (:cap 0.2 3.1 1.1 0.25) :on-hit :flinch)                      ; HIZASHI: a flat edge line 3.1 m
+(defmove :ya-e-j2 :kind :quick :clip :ya-q2 :clip-s 8 :startup 7 :active 3 :recovery 13 :dmg 38 :adv-block -2
+  :vol (:cap 0.2 3.1 1.1 0.25) :on-hit :flinch)                      ; ZANSHO: the return stroke
+(defmove :ya-e-j3 :kind :quick :clip :ya-e-thrust :clip-s 11 :startup 8 :active 3 :recovery 18 :dmg 42 :adv-block -4
+  :vol (:cap 0.2 3.6 1.1 0.3) :on-hit :stagger :flags (:ender))      ; SENKO: a short thrust, no lunge
+(defmove :ya-e-k1 :kind :flash :clip :ya-f1 :clip-s 18 :startup 16 :active 4 :recovery 20 :dmg 70 :adv-block -3
+  :vol (:cap 0.2 3.8 1.1 0.3) :on-hit :stagger)                     ; KAGERO: the wide sweep
+(defmove :ya-e-k2 :kind :flash :clip :ya-f2 :clip-s 22 :enter 5 :startup 19 :active 4 :recovery 24 :dmg 60 :adv-block -3
+  :vol (:cap 0.2 3.8 1.3 0.35) :on-hit :stagger)                    ; NISSHO: the rising cut
+(defmove :ya-e-k3 :kind :flash :clip :ya-e-drop :enter 7 :startup 21 :active 5 :recovery 34 :dmg 84 :adv-block -20
+  :vol (:cap 0.3 3.6 1.2 0.3) :on-hit :crumple :flags (:ender))      ; RAKUJITSU: the vertical drop, the setting sun
+(defmove-copy :ya-e-j2s :ya-e-j2)
+(defmove-copy :ya-e-k2s :ya-e-k2)
+;; L in East: KYOKKO (旭光), the first ray of the rising sun: a one-handed lunge (1.6 m over the startup) whose point
+;; runs a 4.6 m line; double pierce (:pierce-mult 2: 0.2 .. 0.9), so at a full gauge 162 on hit and 77 through a
+;; guard (chip: never kills). Ends a landed Q / F string (:cancel); cooldown 100
+(defmove :ya-e-kyokko :kind :sig :clip :ya-e-thrust :clip-s 11 :callout "KYOKKO" :startup 15 :active 3 :recovery 26
+  :dmg 85 :adv-block -12 :slide 1.6 :vol (:cap 0.2 4.6 1.1 0.3) :on-hit :knockback :kb 2.0
+  :cooldown 100 :flags (:cancel) :on-frame ((1 yama-kyokko-flare) (15 yama-kyokko)) :params (:pierce-mult 2.0))
 ;; Shift+K in East: KYOKUJITSUJIN, the downward cut. The blade (f18-19, close) breaks guard; at f20 its tip
 ;; bites the ground and the heat runs forward: a 25 deg / 9 m cone, 130, blockable (never a break)
 (defmove :ya-kyoku :kind :sp :clip :ya-kyoku :callout "KYOKUJITSUJIN" :startup 18 :active 5 :recovery 26
   :dmg 90 :adv-block -16 :vol (:arc 9.0 25 0.0 1.6)
-  :hits ((18 20 :vol (:cap 0.3 2.4 1.0 0.4) :on-hit :knockback :kb 0.5 :flags (:guard-crush :heat))   ; the blade
-         (20 23 :dmg 130 :on-hit :knockback :kb 4.0 :flags (:ranged)))                             ; the cone (ranged)
+  :hits ((18 20 :vol (:cap 0.3 2.4 1.0 0.4) :on-hit :knockback :kb 0.5 :flags (:guard-crush))   ; the blade
+         (20 23 :dmg 130 :on-hit :knockback :kb 4.0 :flags (:ranged)))                      ; the cone (ranged)
   :on-frame ((18 yama-kyoku-cut) (20 yama-kyoku-sheet)))
 
-;;; ---------------------------------------------------------------- West, Zanjitsu Gokui: short rings, the garb, counters
-;;; (guard v3, the user's decisions 2026-09-26: U is the garb guard, a blocked hit drains half its guard value and
-;;; scorches a melee attacker; ranged hits are armoured at x*GARB-RANGED*; no move armour: passive :garb)
-(defmove :ya-w-q1 :kind :quick :clip :ya-q1 :clip-s 9 :startup 11 :active 3 :recovery 12 :dmg 40 :adv-block -2
-  :reach 1.9 :arc 220 :on-hit :flinch)                              ; garb sweep
-(defmove :ya-w-q3 :kind :quick :clip :ya-w-shove :startup 13 :active 4 :recovery 22 :dmg 70 :adv-block -12
-  :reach 2.4 :arc 360 :on-hit :knockback :kb 3.0)      ; garb shove
-(defmove :ya-w-f1 :kind :flash :clip :ya-to-west :clip-s 14 :startup 20 :active 4 :recovery 20 :dmg 80 :adv-block -4
-  :vol (:arc 2.6 360 0.0 2.2) :on-hit :stagger)       ; garb flare
-(defmove :ya-w-f2 :kind :flash :clip :ya-q3 :clip-s 12 :startup 22 :active 5 :recovery 28 :dmg 110 :adv-block -14
-  :reach 2.8 :arc 110 :on-hit :knockdown :kb 2.5)      ; garb crush
-(defmove :ya-w-f2q :kind :flash :clip :ya-q3 :clip-s 12 :enter 8 :startup 22 :active 5 :recovery 28 :dmg 110 :adv-block -14
-  :reach 2.8 :arc 110 :on-hit :knockdown :kb 2.5)
-;; L in West: HIGASHI, a one-handed backhand sweep from low right; he is East from f12, so it hits at x1.2 and
-;; chips 40 %
-(defmove :ya-to-east :kind :sig :clip :ya-to-east :callout "HIGASHI" :startup 12 :active 3 :recovery 22
-  :dmg 90 :adv-block -8 :vol (:cap 0.2 4.2 1.1 0.35) :on-hit :stagger :chip 0.4
-  :cooldown *switch-cooldown* :flags (:cancel) :on-frame ((12 yama-switch)) :params (:to :bankai-east))
+;;; ---------------------------------------------------------------- West, Zanjitsu Gokui: the ward (passive :ward)
+;; L in West: SHONETSU JIGOKU (焦熱地獄), the garb erupts: the blade planted, the garb flares for 16 f (the tell), then a
+;; ring of fire pillars where he stands (Ennetsu's :pillars, radius 2 m): 45 x at most 2, blockable, 360 deg. He
+;; stays West (his ward up throughout). Cooldown 150
+(defmove :ya-w-shonetsu :kind :sig :clip :ya-shonetsu :clip-s 14 :callout "SHONETSU JIGOKU" :startup 16 :active 0
+  :recovery 24 :cooldown 150 :on-frame ((0 yama-shonetsu-tell) (16 yama-shonetsu))
+  :params (:size 2.0 :life 48 :hits 2 :dmg 45 :kb 2.0 :guard 12))
 ;; Shift+K in West: GOKUI GAESHI, a parry (f4-15, *PARRY-WINDOW*); a melee hit in it staggers the attacker
-;; *PARRY-STUN* and starts the counter (the :land string: combat.lisp APPLY-HIT :parried). 46 f parried or not.
+;; *PARRY-STUN*, refills his guard gauge and starts the counter (the :land string: combat.lisp APPLY-HIT :parried).
+;; 46 f parried or not; he stays West through it and the counter (both SP1)
 (defmove :ya-w-parry :kind :sp :clip :ya-w-parry :callout "GOKUI GAESHI" :startup 4 :active 12 :recovery 30 :flags (:parry)
   :on-frame ((4 yama-parry-up)))
 (defmove :ya-w-counter :kind :sig :clip :ya-w-counter :startup 6 :active 3 :recovery 24 :dmg 150 :adv-block -12
@@ -132,9 +135,9 @@
   :name "YAMAMOTO" :body :yamamoto :weapon :ryujin-jakka :stance :ya-stance
   :intro :ya-intro :win :ya-win :intro-callout "BANSHO ISSAI KAIJIN TO NASE" :intro-weapon (:ya-cane 81)
   :walk *walk-yamamoto* :run *run-yamamoto* :reishi *reishi-max* :blade (:fire 1.0) :swing-sfx :fire-whoosh
-  :commands (:q :ya-q1 :f :ya-f1 :sig :ya-sig :sp1 :ya-shiranui :sp2 :ya-taimatsu
+  :commands (:q :ya-j1 :f :ya-k1 :sig :ya-sig :sp1 :ya-shiranui :sp2 :ya-taimatsu
              :breaker :ya-breaker :kikon :ya-kikon)
-  :strings ((:ya-q1 :q :ya-q2) (:ya-q2 :q :ya-q3) (:ya-q2 :f :ya-f2q) (:ya-f1 :f :ya-f2))
+  :grid (:ya-j1 :ya-j2 :ya-j3 :ya-k1 :ya-k2 :ya-k3 :ya-j2s :ya-k2s)
   :meter (:name "INFERNO" :max *inferno-max* :full-form :hellfire)
   :awaken-form :bankai-east
   :ai (:intents (:approach 1 :pressure 1 :zone 3 :defend 1)
@@ -158,38 +161,39 @@
        :guard 0.4 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 1 :dash 0.5 :kikon-range 9.0))
 
 (defkit :yamamoto :bankai-east :inherit :base
-  :awakening t :burnout t :feed *bankai-feed-east* :mult *bankai-mult* :taken *bankai-taken* :startup-add -1 :reach-mult 1.15
-  :blade (:embers 1.4) :grade :spot :passives (:projectile-cut :recoil) :blade-chip *chip-blade* :meter nil   ; the body as
-  ;; it is (the charcoal heat wisps), the charred blade with its ember-red edge line
+  :awakening t :taken *bankai-taken* :startup-add -1 :reach-mult 1.15 :guard-to :bankai-west
+  :blade (:embers 1.4) :grade :spot :passives (:projectile-cut :pierce) :meter nil   ; the body as it is (the charcoal
+  ;; heat wisps), the charred blade with its ember-red edge line
   :weapon :zanka :aura :heat :enter-clips (:ya-bankai) :enter-hook yama-bankai-enter :swing-sfx :whoosh-heavy
   :cine yama-bankai-cine
-  :commands (:q :ya-e-q1 :f :ya-e-f1 :sig :ya-to-west :sp1 :ya-kyoku :sp2 :ya-kaka :kikon :ya-tenchi)
-  :strings ((:ya-e-q1 :q :ya-q2) (:ya-q2 :q :ya-e-q3) (:ya-q2 :f :ya-e-f2q) (:ya-e-f1 :f :ya-e-f2))
-  ;; pressure up close, the cone from range; below :gg-low of his guard gauge he backs off and zones (his
-  ;; recoil would burn him out); L ends a landed string half the time (:cancel); low Reishi: L x3 (:low; West is
-  ;; the cheaper place for a low gauge now, so no gauge gate on it)
+  :commands (:q :ya-e-j1 :f :ya-e-k1 :sig :ya-e-kyokko :sp1 :ya-kyoku :sp2 :ya-kaka :kikon :ya-tenchi)
+  :grid (:ya-e-j1 :ya-e-j2 :ya-e-j3 :ya-e-k1 :ya-e-k2 :ya-e-k3 :ya-e-j2s :ya-e-k2s)
+  ;; pressure up close, the cone from range; U (:guard) is going West now; below :gg-low of his guard gauge he backs
+  ;; off and zones while it refills; KYOKKO (L) in the close and middle bands, halved below :sig-gg of the gauge (it
+  ;; pierces with a full edge), and ends a landed string half the time (:cancel); low Reishi: L x3 (:low)
   :ai (:intents (:approach 2 :pressure 4 :zone 1 :defend 0)
        :ranges (:approach (3.0 5.0) :pressure (1.5 3.0) :zone (5.0 8.0) :defend (4.0 7.0))
-       :moves ((0.0 3.0 :q 5 :f 2 :breaker 1 :sig 1 :sp2 1 nil 1)
-               (3.0 6.0 :f 1 :sp1 2 :step 1 nil 1)
+       :moves ((0.0 3.0 :q 5 :f 2 :breaker 1 :sig 2 :sp2 1 nil 1)
+               (3.0 6.0 :f 1 :sp1 2 :sig 2 :step 1 nil 1)
                (6.0 99.0 :sp1 3 :step 1 nil 1))
-       :guard 0.35 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 9 :dash 0.6 :dash-back 0.3 :kikon-range 9.0
-       :cancel (:sig 0.5) :low (0.4 :sig 3) :gg-low 0.45 :block-string 0.85))
+       :guard 0.45 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 9 :dash 0.6 :dash-back 0.3 :kikon-range 9.0
+       :cancel (:sig 0.5) :low (0.4 :sig 3) :gg-low 0.3 :block-string 0.85 :sig-gg 0.6))
 
 (defkit :yamamoto :bankai-west :inherit :bankai-east
-  :mult 1.0 :taken 1.0 :feed *bankai-feed* :startup-add 2 :passives (:garb :scorch) :blade-chip nil
+  :taken 1.0 :guard-to nil :drop-to :bankai-east :keep (:sig :sp1) :passives (:ward :scorch)
   :blade (:charcoal) :aura :garb                ; wrapped in red flames (the garb); the blade pure charcoal, no ember line
-  :commands (:q :ya-w-q1 :f :ya-w-f1 :sig :ya-to-east :sp1 :ya-w-parry :sp2 :ya-kaka :kikon :ya-tenchi)
-  :strings ((:ya-w-q1 :q :ya-q2) (:ya-q2 :q :ya-w-q3) (:ya-q2 :f :ya-w-f2q) (:ya-w-f1 :f :ya-w-f2)
-            (:ya-w-parry :land :ya-w-counter))
-  ;; defends (its U is the garb guard: half the gauge, scorches), parries a Flash startup it can still catch (:react)
-  :ai (:intents (:approach 1 :pressure 2 :zone 1 :defend 3)
+  :enter-hook yama-ward-up :exit-hook yama-ward-down
+  :commands (:sig :ya-w-shonetsu :sp1 :ya-w-parry)
+  :strings ((:ya-w-parry :land :ya-w-counter))
+  ;; the ward holds (U does nothing more); every pick but L / SP1 is East's move (the drop); parries a Flash startup it
+  ;; can still catch (:react); SHONETSU when the ward just took a hit up close (:ward-reversal)
+  :ai (:intents (:approach 2 :pressure 2 :zone 0 :defend 2)
        :ranges (:approach (2.5 4.5) :pressure (1.2 2.5) :zone (3.5 5.0) :defend (2.5 4.5))
-       :moves ((0.0 3.0 :q 3 :f 3 :sig 1 :breaker 1 :sp2 1 nil 2)
-               (3.0 5.0 :sig 3 :f 1 :step 1 nil 2)
-               (5.0 99.0 :sig 1 :step 1 nil 2))
-       :guard 0.55 :hoho 0.3 :awaken-above 0.4 :sp-cancel-bars 9 :dash 0.4 :dash-back 0.2 :kikon-range 9.0
-       :react (:flash-startup :sp1) :cancel (:sig 0.5)))
+       :moves ((0.0 3.0 :q 3 :f 2 :sig 2 :breaker 1 :sp2 1 nil 3)
+               (3.0 6.0 :f 1 :sp1 2 :step 1 nil 2)
+               (6.0 99.0 :sp1 2 :step 1 nil 2))
+       :guard 0.3 :hoho 0.3 :awaken-above 0.4 :sp-cancel-bars 9 :dash 0.4 :dash-back 0.2 :kikon-range 9.0
+       :react (:flash-startup :sp1) :ward-reversal 0.35))
 
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun yama-fire-wave (e)
@@ -254,14 +258,47 @@
   (setf (gauges-meter (gauges e)) 0f0))
 
 
-(defun yama-switch (e)
-  "L's first active frame: the stance switches (its :params :to), so the technique resolves in the new one.
-NISHI: the garb flares (a charcoal double ring, :heat-flare); HIGASHI: the white backhand crescent."
-  (let ((to (move-param e :to)) (p (pos-of e)) (yaw (yaw-of e)))
-    (set-form e to)
-    (if (eq to :bankai-west)
-        (progn (vfx-nishi (aref p 0) (aref p 2)) (emit :sfx :heat-flare e))
-        (progn (vfx-higashi (aref p 0) (aref p 2) (fwd-x yaw) (fwd-z yaw)) (emit :sfx :sizzle e)))))
+(defun yama-ward-up (e)
+  "West's :enter-hook (U in East): the garb flares on round him (a charcoal double ring, ASH shards)."
+  (let ((p (pos-of e))) (vfx-nishi (aref p 0) (aref p 2)))
+  (emit :sfx :heat-flare e))
+
+(defun yama-ward-down (e)
+  "West's :exit-hook (an attack drops him to East, or a crush / a Guard Break blows the garb off): an ember puff."
+  (let ((p (pos-of e))) (vfx-ember (aref p 0) 1.2 (aref p 2) :scale 0.8))
+  (emit :sfx :sizzle e))
+
+(defun yama-kyokko-flare (e)
+  "KYOKKO f1: the ember edge line flares white-hot (the lunge's tell)."
+  (setf (model-super (model e)) 0.2)
+  (emit :sfx :sizzle e))
+
+(defun yama-kyokko (e)
+  "KYOKKO f15: the ray (a look: the hit is the move's line window): a white core over an ember rim along the 4.6 m
+line and a small sun at its tip (the :line hazard look :kyokko)."
+  (let ((p (pos-of e)))
+    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 4.6 :life 14
+                          :look :kyokko))
+  (emit :sfx :kikon-slash e))
+
+(defun yama-shonetsu-tell (e)
+  "SHONETSU JIGOKU f0: the blade goes to the ground and the garb flares hard (its aura x1.9 fading over the startup:
+the tell), the charcoal column rises."
+  (setf (model-flare (model e)) 0.45)
+  (let ((p (pos-of e))) (vfx-parry-up (aref p 0) (aref p 2)))
+  (emit :sfx :heat-flare e))
+
+(defun yama-shonetsu (e)
+  "SHONETSU JIGOKU f16: the garb erupts: a ring of fire pillars (:pillars, :size m round where he stands, :life
+frames, :hits x :dmg, blockable) and the plaza cracks under him."
+  (let ((p (pos-of e)))
+    (spawn-hazard :pillars e :x (aref p 0) :z (aref p 2) :size (move-param e :size) :life (move-param e :life)
+                             :hits (move-param e :hits)
+                             :hw (make-hitwin :dmg (move-param e :dmg) :react :stagger :kb (move-param e :kb) :hs *hitstop-heavy*
+                                              :guard (move-param e :guard) :chip *chip-fire*))
+    (vfx-garb-flare (aref p 0) (aref p 2))
+    (stage-crack-add (aref p 0) (aref p 2) 1.5))
+  (emit :sfx :fire-roar e))
 
 (defun yama-parry-up (e)
   "GOKUI GAESHI's window opens: the column of charcoal wisps (a look)."

@@ -34,7 +34,7 @@
   (meter 0.0)                   ; the kit meter (Inferno) gained on hit
   (stun nil)                    ; hitstun override in frames (NIL = the reaction's, *REACTION-FRAMES*)
   (guard nil)                   ; guard gauge a block drains (GUARD-VALUE; NIL = a hazard's *GG-HAZARD*)
-  (flags nil))                  ; :breaker :guard-crush :unguardable :heat (see HEAT-FLAGS)
+  (flags nil))                  ; :breaker :guard-crush :unguardable :ranged
 
 (defstruct (move (:conc-name mv-))
   "A move: frame data, hit windows and hooks. See DEFMOVE for the fields."
@@ -105,7 +105,7 @@
                               :vols (and v (list (make-vol (first v) (rest v))))))))
         (make-move
          :name name :kind kind :clip clip :clip-2 clip-2 :callout callout
-         :s s :a a :r r :whiff (or whiff (if breaker *breaker-whiff* (+ r *whiff-extra*)))
+         :s s :a a :r r :whiff (or whiff (if breaker *breaker-whiff* (+ r (case kind (:quick *whiff-extra-j*) (:flash *whiff-extra-k*) (t *whiff-extra*)))))
          :dmg dmg :adv-block (if breaker (or adv-block :guard-break) adv-block)
          :track (or track (case kind (:quick *track-quick*) (:breaker *track-breaker*) (:kikon *kikon-track*) (t *track-heavy*)))
          :reach (or reach 0.0)
@@ -122,6 +122,19 @@
   (let ((spec (resolve-tuning spec)))
     (setf (gethash name *moves*) (parse-move name spec))))
 
+(defmacro defmove-copy (name of)
+  "Move NAME: a copy of move OF (its plist, :enter and all) under another name: a switched string link (J2s, K2s),
+whose kit string allows only the new button (docs/DUEL_STRINGS.md §2.1; no new clip)."
+  `(register-move ,name (mv-spec (find-move ,of))))
+
+(defun string-grid (grid)
+  "A kit's :grid (J1 J2 J3 K1 K2 K3 J2s K2s) as its :strings: up to three links, each J (:q) or K (:f), switching
+at most once (JJJ JJK JKK KKK KKJ KJJ). After a switch the alias (J2s after K1, K2s after J1) goes on only with the
+new button."
+  (destructuring-bind (j1 j2 j3 k1 k2 k3 j2s k2s) grid
+    `((,j1 :q ,j2) (,j1 :f ,k2s) (,k1 :f ,k2) (,k1 :q ,j2s) (,j2 :q ,j3) (,j2 :f ,k3) (,k2 :f ,k3) (,k2 :q ,j3)
+      (,j2s :q ,j3) (,k2s :f ,k3))))
+
 (defmacro defmove (name &rest spec)
   "One move as ONE plist (critique-design §3.4). Keys:
   :kind     :quick :flash :sig :sp :breaker :kikon (sets the defaults of :track, :hs; a :breaker
@@ -132,7 +145,8 @@
   :clip-s   the startup the :clip-2 / :clip was authored with (a clip reused at another startup
             plays at clip-s / S speed, so it still reaches its hit pose on frame S)
   :callout  move name shown above the user (Signature / SP / Breaker / Kikon)
-  :startup :active :recovery  frame data; :whiff  recovery after a whiff (default R + 6)
+  :startup :active :recovery  frame data; :whiff  recovery after a whiff (default R + 6; a J link, :quick, R +
+            *WHIFF-EXTRA-J*, a K link, :flash, R + *WHIFF-EXTRA-K*)
   :dmg :adv-block  damage and block advantage (§5 table; NIL = no melee block data)
   :track    deg/s turn during startup; :reach metres; :arc degrees; :height (y0 y1) of the arc;
   :vol      explicit volume (:arc r deg y0 y1 | :cap a b h r | :sph fwd up r) instead of reach/arc
@@ -142,18 +156,19 @@
   :cooldown frames before its command may start again (from the move start; kept through resets)
   :cost     Reiatsu bars (default by command, KIT-COMMAND-COST); :hold (min max) frames the button
             is held before the move proper (charge / stance); :slide metres moved during the move
-  :flags    :breaker :guard-crush :stance :parry (a parry move: *PARRY-WINDOW*) :cancel (a Signature
+  :flags    :ender (a string's link 3, J3 / K3: a hit on it opens the O ender, docs/DUEL_STRINGS.md §2.4)
+            :breaker :guard-crush :stance :parry (a parry move: *PARRY-WINDOW*) :cancel (a Signature
             that may cancel a landed Quick / Flash, like an SP) :bind (South: the CPU's trap reflex)
-            :ranged (a hit delivered by fire / a ground line, not the blade: like a hazard, no parry catches it
-            and West's garb armours it, x*GARB-RANGED*; with :params (:melee-range r) only beyond r of the
-            attacker: nearer it is the blade, a melee hit; one window, so it still hits once)
+            :ranged (a hit delivered by fire / a ground line, not the blade: like a hazard, no parry catches it;
+            with :params (:melee-range r) only beyond r of the attacker: nearer it is the blade, a melee hit;
+            one window, so it still hits once)
   :hits     ((from to &key dmg on-hit kb vol reach chip meter flags hs guard) ...) multi-hit windows;
             default: one window [S, S+A) when the move has damage and a volume
   :on-frame ((frame hook) ...), :tick hook (every frame), :release hook (button released during
             :hold), :on-land hook (first hit connects), :cine hook (Kikon cinematic)
   :params   free plist for the hooks (projectile speed, flurry hits ...)
   :enter    start at this move frame (skips that much of the wind-up and of the clip): a string
-            branch that must combo (Q2 -f-> F2); a derived form adds its startup-add to it
+            link that must combo after a J and a K link alike (every K2 / K3: S_eff 14); a derived form adds its startup-add to it
   :blend    crossfade frames into the clip (default 0, attacks snap); :planted  weapon planted
             in the ground during the strike (drawn with DRAW-PLANTED-WEAPON)
   hits: :stun  hitstun override (frames)"
@@ -167,7 +182,7 @@
   "One character in one form. See DEFKIT for the fields."
   (character nil) (form nil) (inherit nil) (name nil)
   (awakening nil) (awaken-form nil) (duration nil) (burn 0.0) (heal 0)
-  (mult 1.0) (taken 1.0) (burnout nil) (feed 0.0) (cornered 0.0) (cornered-max 0.0) (passives nil) (blade-chip nil)
+  (mult 1.0) (taken 1.0) (guard-to nil) (drop-to nil) (keep nil) (cornered 0.0) (cornered-max 0.0) (passives nil) (blade-chip nil)
   (walk 3.0) (run 8.0) (run-clips '(:sh-run :sh-skate-b :sh-slide-r :sh-slide-l)) (reishi *reishi-max*) (body nil) (weapon nil) (stance nil) (hide nil) (aura nil)
   (intro nil) (win nil) (intro-callout nil) (intro-weapon nil) (callout nil)
   (swing-sfx nil) (absorb-sfx nil)
@@ -194,9 +209,18 @@
   "The move COMMAND starts from neutral, or NIL."
   (let ((name (getf (kit-commands kit) command))) (and name (kit-move kit name))))
 (defun kit-next (kit move-name command)
-  "The string follow-up of MOVE-NAME for COMMAND (Q1 -q-> Q2, Q2 -f-> F2 ...), a MOVE or NIL."
+  "The string follow-up of MOVE-NAME for COMMAND (J1 -q-> J2, J2 -f-> K3 ...), a MOVE or NIL."
   (loop for (from cmd to) in (kit-strings kit)
         when (and (eq from move-name) (eq cmd command)) return (kit-move kit to)))
+(defun string-link-p (kit move-name)
+  "Does MOVE-NAME go on as a J / K string (a :q or :f follow-up)? While it runs every J / K press is taken by the
+latch (STRING-LATCH); link 3 has none, so presses there are plain buffered presses (a new J1 after it)."
+  (and (or (kit-next kit move-name :q) (kit-next kit move-name :f)) t))
+(defun string-latch (kit move-name command queued)
+  "The latch (docs/DUEL_STRINGS.md §2.1, §2.3): a J / K press (COMMAND :q / :f) during string link MOVE-NAME, with
+QUEUED latched so far. The new latched command: COMMAND when the string may go on with it (the last press wins),
+else QUEUED: the press is eaten (after a switch the original button is ignored and overwrites nothing)."
+  (if (kit-next kit move-name command) command queued))
 (defun kit-command-cost (kit command)
   "Reiatsu bars COMMAND's move costs: its :cost, else SP1 / SP2 *COST-SP* (SP2 in an awakened form
 *COST-SP-AWAKENED*), else 0."
@@ -206,12 +230,17 @@
           (:sp1 *cost-sp*)
           (:sp2 (if (kit-awakening kit) *cost-sp-awakened* *cost-sp*))
           (t 0)))))
-(defun kit-atk-mods (kit lost &optional (heat t))
-  "The attacker plist for HIT-DAMAGE: the form's multiplier (1.0 while burned out: no HEAT, HEAT-MULT) and
+(defun kit-drop (kit cmd)
+  "The form a kit command CMD drops KIT's form to first (its :drop-to, unless CMD is in its :keep: Bankai West's
+attacks but SP1 / L go back to East), or NIL."
+  (and (kit-drop-to kit) (not (member cmd (kit-keep kit))) (kit-drop-to kit)))
+
+(defun kit-atk-mods (kit lost &optional (pierce 1.0))
+  "The attacker plist for HIT-DAMAGE: the form's multiplier (x PIERCE: 1 + Bankai East's pierce k on a hit) and
 Cornered with LOST Konpaku."
-  (list :mult (heat-mult (kit-mult kit) heat) :cornered (kit-cornered kit) :cornered-max (kit-cornered-max kit) :lost lost))
+  (list :mult (* (kit-mult kit) pierce) :cornered (kit-cornered kit) :cornered-max (kit-cornered-max kit) :lost lost))
 (defun kit-def-mods (kit)
-  "The defender plist for HIT-DAMAGE: the damage the form takes (:taken; burnout doesn't lift it)."
+  "The defender plist for HIT-DAMAGE: the damage the form takes (:taken)."
   (list :mult (kit-taken kit)))
 (defun kit-clips (kit)
   "Every clip name the form uses (moves, stance, intro/win, entry cinematic, the run)."
@@ -225,23 +254,25 @@ Cornered with LOST Konpaku."
          (parent (and (getf spec :inherit) (find-kit character (getf spec :inherit))))
          (pspec (and parent (kit-spec parent)))
          (commands (append (getf spec :commands) (and parent (kit-commands parent))))
-         (strings (append (getf spec :strings) (and parent (kit-strings parent))))
+         (strings (append (getf spec :strings) (and (getf spec :grid) (string-grid (getf spec :grid)))
+                          (and parent (kit-strings parent))))
          ;; the child's keys come first, so they win (&key takes the leftmost)
          (merged (list* :commands commands :strings strings
                         (append spec (loop for (k v) on pspec by #'cddr
-                                           unless (member k '(:inherit :startup-add :reach-mult))
+                                           unless (member k '(:inherit :startup-add :reach-mult :grid))
                                              append (list k v))))))
-    (destructuring-bind (&key inherit name awakening awaken-form duration (burn 0.0) (heal 0) (mult 1.0) (taken 1.0) burnout (feed 0.0)
+    (destructuring-bind (&key inherit name awakening awaken-form duration (burn 0.0) (heal 0) (mult 1.0) (taken 1.0) guard-to drop-to keep
                            (cornered 0.0) (cornered-max 0.0) passives blade-chip (walk 3.0) (run 8.0)
                            (run-clips '(:sh-run :sh-skate-b :sh-slide-r :sh-slide-l)) (reishi *reishi-max*)
                            body weapon stance hide aura intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
                            enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
                            kikon-konpaku meter-gain form-name drink-clip respect-callout
-                           (startup-add 0) (reach-mult 1.0) commands strings)
+                           (startup-add 0) (reach-mult 1.0) commands strings grid)
         merged
+      (declare (ignore grid))
       (let ((kit (make-kit :character character :form form :inherit inherit :name name
                            :awakening awakening :awaken-form awaken-form :duration duration :burn burn
-                           :heal heal :mult mult :taken taken :burnout burnout :feed feed :cornered cornered :cornered-max cornered-max
+                           :heal heal :mult mult :taken taken :guard-to guard-to :drop-to drop-to :keep keep :cornered cornered :cornered-max cornered-max
                            :passives passives :blade-chip blade-chip :walk walk :run run :run-clips run-clips :reishi reishi :body body
                            :weapon weapon :stance stance :hide hide :aura aura :intro intro :win win
                            :intro-callout intro-callout :intro-weapon intro-weapon :callout callout
@@ -280,19 +311,22 @@ child's keys win, :commands merge per command, :strings add. Keys:
   :run-clips (fwd back right left)  the run's clips (he faces the opponent: forward run, back-skate, side
                                      slides; body.lisp DEFRUN), default the shared :sh-* set
   :commands (:q m :f m :sig m :sp1 m :sp2 m :breaker m :kikon m)   see *KIT-COMMANDS*
-  :strings ((from-move command to-move) ...)   Q1 -q-> Q2 -q-> Q3, Q2 -f-> F2, F1 -f-> F2; a
-                                     non-button command (:land) names a follow-up a hook starts
-                                     (KIT-NEXT), so derived forms derive it too
+  :grid (J1 J2 J3 K1 K2 K3 J2s K2s)  the J / K strings as one grid (STRING-GRID), added to :strings
+  :strings ((from-move command to-move) ...)   the J / K grid (docs/DUEL_STRINGS.md §1): J1 -q-> J2 -q-> J3,
+                                     J1 -f-> K2s -f-> K3 ... (a switched link-2 alias allows only the new
+                                     button: J / K switch at most once); a non-button command (:land) names a
+                                     follow-up a hook starts (KIT-NEXT), so derived forms derive it too
   :mult :cornered :cornered-max      §4 damage dealt (KIT-ATK-MODS)   :taken  damage x taken (KIT-DEF-MODS)
-  :passives (:garb :projectile-cut :recoil :scorch :cut :drink)   :blade-chip fraction
-                                     (U is a guard in every form; :garb: West's guard drains x*GARB-MULT* and
-                                     scorches, ranged hits armoured at x*GARB-RANGED*; :cut: his heavy hits
-                                     drain guard x*CUT-MULT*; :drink: U drinks: combat.lisp)
-  :burnout T                         the stance traits run on the guard gauge: at 0 he is burned out (the
-                                     passives, :mult, chip, armour and :heat flags off) until it is full; the
-                                     gauge is fed by his hits, never refilled by time, and every drain
-                                     is x*BANKAI-DRAIN*
-  :feed fraction                     a :burnout form's guard gauge per Reishi point his hits remove
+  :passives (:ward :pierce :projectile-cut :scorch :cut :drink)   :blade-chip fraction
+                                     (:ward: Bankai West blocks 360 deg in his free states and own moves, with
+                                     no blockstun, drains x*WARD-MULT*, never refills; :pierce: Bankai East's
+                                     hits x(1 + k), k of a blocked hit goes through (PIERCE-RATE); :scorch: his
+                                     parry burns; :cut: his heavy hits drain guard x*CUT-MULT*; :drink: U drinks:
+                                     combat.lisp)
+  :guard-to FORM                     U (held, from idle / walk / run) switches to FORM instead of guarding
+                                     (Bankai East -> West)
+  :drop-to FORM :keep (cmd ...)      any kit command not in :keep switches to FORM on its frame 0 and starts
+                                     FORM's move (Bankai West: every attack but SP1 / L goes back to East)
   :awakening T (an awakened form)    :awaken-form FORM (what Awaken turns this character into)
   :duration seconds (NIL = permanent; then back to :inherit)   :burn Reishi fraction/s   :heal
   :startup-add :reach-mult           derive the inherited moves (not inherited themselves)

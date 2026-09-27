@@ -36,18 +36,18 @@
 (check (eq (resolve-contact :stance-in) :counter))
 (check (eq (resolve-contact :stance-in :breaker t) :stance-break))
 (check (null (resolve-contact :invuln :breaker t)))
-;; West's garb vs ranged hits (guard v3, the user's decision 2026-09-26): standing, walking, attacking (:neutral), in a
-;; Breaker's startup, from any side, a ranged hit is armoured; guarding it is a (garb) block; the bind still binds
-;; (unguardable: a grab, not a reaction); a parry doesn't catch it; iframes still dodge it
-(check (and (eq (resolve-contact :neutral :hazard t :ranged-armor t) :armored) (eq (resolve-contact :breaker :hazard t :ranged-armor t) :armored)
-            (eq (resolve-contact :guard :in-front nil :hazard t :ranged-armor t) :armored)
-            (eq (resolve-contact :guard :hazard t :ranged-armor t) :blocked)
-            (eq (resolve-contact :guard :guard-crush t :hazard t :ranged-armor t) :guard-break)   ; the cash-out within 6 m
-            (eq (resolve-contact :parry :hazard t :ranged-armor t) :armored)
-            (eq (resolve-contact :neutral :hazard t :unguardable t :ranged-armor t) :hit)
-            (null (resolve-contact :invuln :hazard t :ranged-armor t))
-            (eq (resolve-contact :neutral :hazard t) :hit)))                    ; no garb: a hit
-(check (and (= (ranged-damage 110) 66) (= (ranged-damage 240) 144) (= (ranged-damage 40) 24)))
+;; Bankai West's ward (the rework, the user's decisions 2026-09-27): the defender reports :guard (DEFENDER-STATE); the
+;; ward covers 360 deg (a hit from behind is blocked), a Breaker / guard-crush breaks it, an unguardable (the bind, a red
+;; victim's Kikon follow-up) goes through, a hazard in the parry's window is blocked (a plain parry lets it hit), a
+;; melee hit in the window is parried, iframes still dodge
+(check (and (eq (resolve-contact :guard :in-front nil :ward t) :blocked) (eq (resolve-contact :guard :in-front nil) :hit)
+            (eq (resolve-contact :guard :hazard t :in-front nil :ward t) :blocked)
+            (eq (resolve-contact :guard :breaker t :in-front nil :ward t) :guard-break)
+            (eq (resolve-contact :guard :guard-crush t :ward t) :guard-break)
+            (eq (resolve-contact :guard :unguardable t :ward t) :hit)
+            (eq (resolve-contact :parry :hazard t :ward t) :blocked) (eq (resolve-contact :parry :hazard t) :hit)
+            (eq (resolve-contact :parry :ward t) :parried) (eq (resolve-contact :parry :unguardable t :ward t) :hit)
+            (null (resolve-contact :invuln :ward t))))
 ;; the melee / ranged split (the user's decision 2026-09-26): the Meteor's cleaver within 3.4 m (KATATE's Q reach), the
 ;; cash-out's within 3.9 m (cup 3's MEN), Buttagiru's within 2.6 m, Nadegiri's within 2.4 m are melee; beyond, the line
 (check (and (ranged-hit-p t nil nil 0.0) (not (ranged-hit-p nil nil nil 100.0)) (ranged-hit-p nil '(:ranged) nil 1.0)
@@ -55,9 +55,9 @@
 (flet ((mr (name) (getf (mv-params (find-move name)) :melee-range)))
   (check (and (~= (mr :ke-meteor) 3.4) (~= (mr :ke-meteor-n) 3.9) (~= (mr :ke-buttagiru) 2.6) (~= (mr :ya-nadegiri) 2.4)
               (null (mr :ya-kyoku)) (null (mr :ya-taimatsu))
-              (< (abs (- (mr :ke-meteor) (mv-reach (mv :kenpachi :nozarashi :ke-q1)))) 0.05)
-              (~= (mr :ke-meteor-n) (mv-reach (mv :kenpachi :nomihose :ke-r-q1)))
-              (~= (mr :ke-buttagiru) (mv-reach (mv :kenpachi :base :ke-q1))) (~= (mr :ya-nadegiri) (mv-reach (mv :yamamoto :base :ya-q1)))
+              (< (abs (- (mr :ke-meteor) (mv-reach (mv :kenpachi :nozarashi :ke-j1)))) 0.05)
+              (~= (mr :ke-meteor-n) (mv-reach (mv :kenpachi :nomihose :ke-r-j1)))
+              (~= (mr :ke-buttagiru) (mv-reach (mv :kenpachi :base :ke-j1))) (~= (mr :ya-nadegiri) (mv-reach (mv :yamamoto :base :ya-j1)))
               (= 1 (length (mv-hits (find-move :ke-meteor-n)))) (= 1 (length (mv-hits (find-move :ke-meteor)))))))
 ;; the contact rule: only a real hit is a hit for the attacker (armour, absorb, parry, block are :block)
 (check (every (lambda (r) (eq (contact-of r) :hit)) '(:hit :counter :guard-break :stance-break :kikon)))
@@ -80,7 +80,7 @@
               (eq (mv-adv-block b) :guard-break) (member :breaker (hw-flags (svref (mv-hits b) 0)))
               (~= (mv-track b) *track-breaker*) (= (hw-hs (svref (mv-hits b) 0)) 10))))
 ;; a Q1 thrown on seeing the aura beats the fastest Breaker (aura 12 + strike startup 8)
-(check (< (mv-s (mv :yamamoto :base :ya-q1)) (+ *breaker-aura* *breaker-startup*)))
+(check (< (mv-s (mv :yamamoto :base :ya-j1)) (+ *breaker-aura* *breaker-startup*)))
 
 ;;; ================================================================ block / whiff advantage
 (check (= (blockstun 24 9 -2) 13))
@@ -90,6 +90,8 @@
 (check (= (recovery-frames 12 nil) 18))                                 ; whiff = R + 6
 (check (= (recovery-frames 18 nil 30) 30))                              ; Breaker whiff 30
 (check (and (chain-open-p 12 9 3 12 :hit) (not (chain-open-p 11 9 3 12 :hit))))
+;; the contact gate (docs/DUEL_STRINGS.md §2.2): a whiff never chains, at any frame
+(check (loop for sf from 0 to 30 never (chain-open-p sf 9 3 12 nil)))
 (check (and (chain-open-p 21 9 3 12 :block) (not (chain-open-p 20 9 3 12 :block))
             (not (chain-open-p 24 9 3 12 :block))))
 (check (and (cancel-open-p 9 9 24 t) (cancel-open-p 23 9 24 t) (not (cancel-open-p 24 9 24 t))
@@ -121,46 +123,136 @@ step, counted from the move's first step."
 string goes on at the earliest chain frame (B starts on that step, frame 0)."
          (multiple-value-bind (att def) (free-steps a)
            (declare (ignore att))
-           (- (+ (- (mv-total a) *chain-lead*) (mv-s b)) def)))
+           (- (+ (- (mv-total a) (mv-enter a) *chain-lead*) (- (mv-s b) (mv-enter b))) def)))
 (defun hit-gap (a b)
          "Frames between the victim leaving hitstun and B's first active frame (< 0 = a combo)."
          (let ((h (mv-first-hit a)))
            (- (+ (mv-s a) (mv-a a) (- (mv-s b) (mv-enter b))) (+ h 1 (hitstun (hw-react (svref (mv-hits a) 0)))))))
-(progn
-  (dolist (cf '((:yamamoto :base) (:kenpachi :base)))
-    (let* ((k (apply #'kit cf)) (q1 (kit-move k (getf (kit-commands k) :q))))
-      ;; a blocked Q1 -> Q2 leaves a gap: >= Step's first iframe, < any Q1 startup (§3); the enders
-      ;; after Q2 (Q3, F2) leave more: they are the greedy, interruptible part of the string
-      (let ((g (blocked-gap q1 (kit-next k (mv-name q1) :q))))
-        (check (and (>= g (first *step-iframes*)) (< g 7) (< g (mv-s q1)))))
-      ;; enders and SPs at <= -10 are punishable by the Q1 of either character
-      (maphash (lambda (name m)
-                 (declare (ignore name))
-                 (when (and (integerp (mv-adv-block m)) (<= (mv-adv-block m) -10))
-                   (check (< (max (mv-s (mv :yamamoto :base :ya-q1)) (mv-s (mv :kenpachi :base :ke-q1)))
-                             (- (mv-adv-block m))))))
-               (kit-moves k))
-      ;; the Q strings, K K and Q Q K combo on hit (Q2 -f-> is the entered F2, :ENTER)
-      (dolist (pair '((:q :q) (:f :f)))
-        (let* ((a (kit-move k (getf (kit-commands k) (first pair))))
-               (b (kit-next k (mv-name a) (second pair))))
-          (check (< (hit-gap a b) 0))))
-      (let* ((q2 (kit-next k (mv-name q1) :q)) (q3 (kit-next k (mv-name q2) :q)) (f2 (kit-next k (mv-name q2) :f)))
-        (check (< (hit-gap q2 q3) 0))
-        (check (< (hit-gap q2 f2) 0))                                   ; Q Q F combos ...
-        (let ((kk-f2 (kit-next k (mv-name (kit-command-move k :f)) :f)))   ; the K K version
-          (check (and (eql (mv-adv-block f2) (mv-adv-block kk-f2)) (= (mv-dmg f2) (mv-dmg kk-f2))   ; not safer
-                      (eq (mv-clip f2) (mv-clip kk-f2)) (plusp (mv-enter f2)) (zerop (mv-enter kk-f2)))))))))
-;; Nozarashi keeps Q Q F a combo: :enter grows with the startup (KATATE +2)
-(let* ((k (kit :kenpachi :nozarashi)) (q2 (mv :kenpachi :nozarashi :ke-q2)) (f2 (kit-next k :ke-q2 :f)))
-  (check (and (= (mv-enter f2) 8) (= (mv-s f2) 22)
-              (< (+ (mv-s q2) (mv-a q2) (- (mv-s f2) (mv-enter f2))) (+ (mv-s q2) 1 (hitstun :flinch))))))
-(check (~= (mv-clip-speed (mv :kenpachi :nozarashi :ke-q1)) (/ 7.0 9.0)))  ; hit pose on the later hit frame
-(check (~= (mv-clip-speed (mv :kenpachi :base :ke-q1)) 1.0))
-;; Yama's Q1 -> Q2 on block: exactly the 6 f gap of §3 (free on step 23, Q2 hits on step 21 + 8)
-(let ((q1 (mv :yamamoto :base :ya-q1)) (q2 (mv :yamamoto :base :ya-q2)))
+;;; ---------------------------------------------------------------- the J / K strings (docs/DUEL_STRINGS.md §2, §3)
+(defun link-moves (k)
+  "Every string link of kit K reachable from J1 / K1: a list of (move link-number button-sequence)."
+  (let ((out nil))
+    (labels ((walk (m n seq)
+               (push (list m n seq) out)
+               (dolist (c '(:q :f))
+                 (let ((nx (kit-next k (mv-name m) c)))
+                   (when nx (walk nx (1+ n) (append seq (list c))))))))
+      (walk (kit-command-move k :q) 1 '(:q))
+      (walk (kit-command-move k :f) 1 '(:f)))
+    (nreverse out)))
+(defun route (k first presses)
+  "The links a string plays when every link makes contact: FIRST (:q / :f) from neutral, then per link the J / K
+presses made during it (STRING-LATCH: the last allowed press wins, a press after a switch of the old button is eaten)."
+  (let* ((m (kit-command-move k first)) (out (list (mv-name m))))
+    (dolist (ps presses (nreverse out))
+      (let ((q nil))
+        (when (string-link-p k (mv-name m))
+          (dolist (c ps) (setf q (string-latch k (mv-name m) c q))))
+        (unless q (return (nreverse out)))
+        (setf m (kit-next k (mv-name m) q))
+        (push (mv-name m) out)))))
+(defun on-hit-adv (m)
+  (let ((w (svref (mv-hits m) 0))) (- (or (hw-stun w) (hitstun (hw-react w))) (- (mv-total m) (hw-from w)))))
+(dolist (cf *forms*)
+  (let* ((k (apply #'kit cf)) (links (link-moves k)) (j1 (kit-command-move k :q)) (k1 (kit-command-move k :f))
+         (cup3 (equal cf '(:kenpachi :nomihose))) (fails0 *fails*))
+    ;; the shape: exactly the six full routes JJJ JJK JKK KKK KKJ KJJ (J / K switch at most once), every link 3 an ender
+    (check (equal (sort (loop for (nil n seq) in links when (= n 3) collect (format nil "~{~a~}" (mapcar (lambda (c) (if (eq c :q) "J" "K")) seq)))
+                        #'string<)
+                  '("JJJ" "JJK" "JKK" "KJJ" "KKJ" "KKK")))
+    (check (every (lambda (l) (eq (and (member :ender (mv-flags (first l))) t) (= 3 (second l)))) links))
+    (check (every (lambda (l) (eq (string-link-p k (mv-name (first l))) (< (second l) 3))) links))
+    ;; the budget (§2.1): J1 S 7-10 A 3 R 12 flinch -2; K1 S 16-20 A 4 R 20-22 stagger -3, no armour (cup 3's K1 is
+    ;; KUKAN-GIRI, -4); J beats K: S(K1) - S(J1) >= 7
+    (check (and (<= 7 (mv-s j1) 10) (= 3 (mv-a j1)) (= 12 (mv-r j1)) (= -2 (mv-adv-block j1))
+                (eq :flinch (hw-react (svref (mv-hits j1) 0)))))
+    (check (and (<= 16 (mv-s k1) 20) (= 4 (mv-a k1)) (<= 20 (mv-r k1) 22) (= (if cup3 -4 -3) (mv-adv-block k1))
+                (zerop (mv-armor-hits k1)) (eq :stagger (hw-react (svref (mv-hits k1) 0)))))
+    (check (>= (- (mv-s k1) (mv-s j1)) 7))
+    (dolist (l links)
+      (destructuring-bind (m n seq) l
+        (let ((kk (eq (car (last seq)) :f)) (w (svref (mv-hits m) 0)))
+          ;; every K at link 2 / 3 enters at S_eff 14; J links 2 / 3 -2 / -4, K links -3 / -20; enders stagger / crumple
+          (when (and kk (> n 1)) (check (= 14 (- (mv-s m) (mv-enter m)))))
+          (when (> n 1)
+            (check (= (mv-adv-block m) (cond ((and (= n 2) kk) -3) ((= n 2) -2) (kk -20) (t -4))))
+            (check (eq (hw-react w) (cond ((and (= n 3) kk) :crumple) ((or kk (= n 3)) :stagger) (t :flinch)))))
+          ;; the whiff: one swing, R + 8 (J) / R + 12 (K)
+          (check (= (mv-whiff m) (+ (mv-r m) (if kk *whiff-extra-k* *whiff-extra-j*))))
+          (check (= (move-end-frame (mv-s m) (mv-a m) (mv-r m) (mv-whiff m) nil nil)
+                    (+ (mv-s m) (mv-a m) (mv-r m) (if kk *whiff-extra-k* *whiff-extra-j*))))
+          ;; every follow-up combos on hit (after a J and after a K link alike); on block (the gap is S_eff - 1 -
+          ;; *CHAIN-LEAD* - adv: S_eff - 2 after a -2 link, S_eff - 1 after a -3 one) a K link leaves >= 11 f (any J1
+          ;; <= 10 f interrupts it; after KUKAN-GIRI the rift closes it) and a J link 3 .. S(J1) f (Step / Hoho fit;
+          ;; his own J1 at best trades: Kenpachi's and KATATE's K2 -> J3 leave exactly S(J1))
+          (dolist (c '(:q :f))
+            (let ((nx (kit-next k (mv-name m) c)))
+              (when nx
+                (check (< (hit-gap m nx) 0))
+                (let ((g (blocked-gap m nx)))
+                  (if (eq c :f)
+                      (check (>= g 11))
+                      (check (and (>= g (first *step-iframes*)) (<= g (mv-s j1))))))))))))
+    ;; the switched link 2 (J2s, K2s) is a copy: the same data as J2 / K2 but its name
+    (let ((j2 (kit-next k (mv-name j1) :q)) (j2s (kit-next k (mv-name k1) :q))
+          (k2 (kit-next k (mv-name k1) :f)) (k2s (kit-next k (mv-name j1) :f)))
+      (unless cup3
+        (check (and (not (eq j2 j2s)) (not (eq k2 k2s))
+                    (equal (mv-spec j2) (mv-spec j2s)) (equal (mv-spec k2) (mv-spec k2s))
+                    (= (mv-enter k2) (mv-enter k2s)) (= (mv-s j2) (mv-s j2s)) (eq (mv-clip k2) (mv-clip k2s))))))
+    ;; K3 on block -20: every J1 and every base K1 punishes it; J3 -4 is safe
+    (check (every (lambda (l) (or (/= 3 (second l)) (< (max (mv-s (mv :yamamoto :base :ya-j1)) (mv-s (mv :kenpachi :base :ke-j1))
+                                                             (mv-s (mv :yamamoto :base :ya-k1)) (mv-s (mv :kenpachi :base :ke-k1)))
+                                                        (- (mv-adv-block (first l))))
+                                  (= -4 (mv-adv-block (first l)))))
+                  links))
+    ;; the O ender always combos off a link-3 hit: the module's dash from the ender's reach to *KIKON-TRIGGER* + its
+    ;; strike's startup inside the ender's stagger / crumple
+    (let* ((o (kit-command-move k :kikon)) (pa (mv-params o)))
+      (dolist (l links)
+        (when (= 3 (second l))
+          (let* ((m (first l)) (dash (if (zerop (getf pa :dash-max)) 0
+                                        (ceiling (* 60 (/ (max 0.0 (- (mv-reach m) *kikon-trigger*)) (getf pa :speed)))))))
+            (check (< (+ (- (mv-total m) (hw-from (svref (mv-hits m) 0)) (mv-r m)) dash (mv-s o))
+                      (hitstun (hw-react (svref (mv-hits m) 0)))))))))
+    (unless (= fails0 *fails*) (format t "  string budget fails in ~s~%" cf))))
+;; route resolution (the latch, §2.1 / §2.3), Yamamoto Shikai and Kenpachi RYOTE
+(let ((y (kit :yamamoto :base)) (r (kit :kenpachi :ryote)))
+  (check (equal (route y :q '((:q) (:q))) '(:ya-j1 :ya-j2 :ya-j3)))
+  (check (equal (route y :q '((:q) (:f))) '(:ya-j1 :ya-j2 :ya-k3)))
+  (check (equal (route y :q '((:f) (:f))) '(:ya-j1 :ya-k2s :ya-k3)))
+  (check (equal (route y :f '((:f) (:f))) '(:ya-k1 :ya-k2 :ya-k3)))
+  (check (equal (route y :f '((:f) (:q))) '(:ya-k1 :ya-k2 :ya-j3)))
+  (check (equal (route y :f '((:q) (:q))) '(:ya-k1 :ya-j2s :ya-j3)))
+  (check (equal (route y :q '((:f) (:q))) '(:ya-j1 :ya-k2s)))              ; JKJ: switched back, eaten: the string ends
+  (check (equal (route y :f '((:q) (:f))) '(:ya-k1 :ya-j2s)))              ; KJK
+  (check (equal (route y :q '((:q :f) (:f :q))) '(:ya-j1 :ya-k2s :ya-k3)))   ; the last allowed press wins; the eaten J
+  (check (equal (route y :q '((:q) (:q) (:q))) '(:ya-j1 :ya-j2 :ya-j3)))   ; link 3 latches nothing: no link 4
+  (check (equal (route y :q '(() (:q))) '(:ya-j1)))                       ; nothing pressed: it stops at link 1
+  (check (equal (route r :f '((:q) (:q))) '(:ke-r-k1 :ke-r-j2s :ke-r-j3)))
+  (check (equal (route (kit :kenpachi :nomihose) :f '((:f) (:f))) '(:ke-n-f1 :ke-r-k2 :ke-r-k3)))   ; KUKAN-GIRI is cup 3's K1
+  (check (and (eq (string-latch y :ya-k2s :q :f) :f) (eq (string-latch y :ya-k2s :q nil) nil)
+              (eq (string-latch y :ya-j1 :f :q) :f) (not (string-link-p y :ya-j3)) (not (string-link-p y :ya-sig)))))
+;; KATATE (+2) keeps S_eff 14: :enter grows with the startup (J1 9, K1 18, K2 22 from 8); the design's examples
+(let ((t1 (kit :kenpachi :nozarashi)))
+  (check (and (= 9 (mv-s (kit-move t1 :ke-j1))) (= 18 (mv-s (kit-move t1 :ke-k1))) (= 22 (mv-s (kit-move t1 :ke-k2)))
+              (= 8 (mv-enter (kit-move t1 :ke-k2))) (= 8 (mv-enter (kit-move t1 :ke-k3))) (= 10 (mv-s (kit-move t1 :ke-j3))))))
+;; the route damage of Kenpachi base on hit (§3.5, before multipliers; the combo scaling starts at hit 4; K2 / K3 at 80 %
+;; of the design's, §9): JJJ 112, KKK 210 (the design's 245), KJJ 147; the O ender as hit 4 x0.9 = 63
+(flet ((dmg (&rest names) (loop for n in names for i from 1 sum (hit-damage (mv-dmg (mv :kenpachi :base n)) nil nil i nil))))
+  (check (and (= 112 (dmg :ke-j1 :ke-j2 :ke-j3)) (= 210 (dmg :ke-k1 :ke-k2 :ke-k3)) (= 147 (dmg :ke-k1 :ke-j2s :ke-j3))
+              (= 63 (hit-damage 70 nil nil 4 nil)))))
+;; Yama's J1 -> J2 on block: exactly the 6 f gap (free on step 23, J2 hits on step 21 + 8)
+(let ((q1 (mv :yamamoto :base :ya-j1)) (q2 (mv :yamamoto :base :ya-j2)))
   (check (= 23 (nth-value 1 (free-steps q1))))
   (check (= 6 (- (+ (- (mv-total q1) *chain-lead*) (mv-s q2)) (nth-value 1 (free-steps q1))))))
+(check (~= (mv-clip-speed (mv :kenpachi :nozarashi :ke-j1)) (/ 7.0 9.0)))  ; hit pose on the later hit frame
+(check (~= (mv-clip-speed (mv :kenpachi :base :ke-j1)) 1.0))
+;; KOSEI (§5): x1 at a full guard gauge, x3 empty, x2 half; a JJJ (g 24) pays 4.8 R / 2.4 FS full, 14.4 / 7.2 empty
+(check (and (~= (kosei-mult 100.0) 1.0) (~= (kosei-mult 0.0) 3.0) (~= (kosei-mult 50.0) 2.0) (~= *kosei-bonus* 2.0)))
+(multiple-value-bind (r fs m) (kosei-gain 24 100.0) (check (and (~= r 4.8) (~= fs 2.4) (~= m 1.0))))
+(multiple-value-bind (r fs m) (kosei-gain 24 0.0) (check (and (~= r 14.4) (~= fs 7.2) (~= m 3.0))))
+(check (= 24 (loop for n in '(:ke-j1 :ke-j2 :ke-j3) sum (hw-guard (svref (mv-hits (mv :kenpachi :base n)) 0)))))
 (check (= (move-end-frame 9 3 12 18 nil nil) 30))                      ; whiff: R + 6
 (check (and (= (move-end-frame 9 3 12 18 :block nil) 24) (= (move-end-frame 2 1 20 26 nil t) 23)))
 
@@ -175,7 +267,7 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 (check (= (hit-damage 100 nil nil 20 nil) 40))                          ; floor 40 %
 (check (= (hit-damage 1 nil nil 12 nil) 1))                             ; a hit always does 1
 (check (= (hit-damage 0 '(:mult 2.0) nil 1 t) 0))
-(check (= (hit-damage 100 (kit-atk-mods (kit :yamamoto :bankai-east) 4) nil 1 nil) 120))
+(check (= (hit-damage 100 (kit-atk-mods (kit :yamamoto :bankai-east) 4) nil 1 nil) 100))     ; East x1.0 (the rework)
 (check (and (= (hit-damage 100 (kit-atk-mods (kit :kenpachi :nozarashi) 4) nil 1 nil) 120)   ; KATATE x1.0 x Cornered 1.20
             (= (hit-damage 100 (kit-atk-mods (kit :kenpachi :ryote) 4) nil 1 nil) 138)      ; RYOTE 1.15 x 1.20
             (= (hit-damage 100 (kit-atk-mods (kit :kenpachi :nomihose) 5) nil 1 nil) 150))) ; worst case 1.2 x 1.25
@@ -273,42 +365,52 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
             (= (guard-value :flash -14) 18) (= (guard-value :sig -6) 18) (= (guard-value :sig -14) 22)
             (= (guard-value :sp -16) 22) (= (guard-value :kikon -14) 20) (= (guard-value nil nil) 12)
             (= (guard-value :sig -6 10) 10)))
-(check (and (= (hw-guard (svref (mv-hits (mv :kenpachi :base :ke-q3)) 0)) 12)            ; Q3 ender 12
-            (= (hw-guard (svref (mv-hits (mv :kenpachi :base :ke-f2)) 0)) 18)            ; F2 ender 18
+(check (and (= (hw-guard (svref (mv-hits (mv :kenpachi :base :ke-j3)) 0)) 8)             ; J3 (-4) 8
+            (= (hw-guard (svref (mv-hits (mv :kenpachi :base :ke-k3)) 0)) 18)            ; K3 ender (-20) 18
             (= (hw-guard (svref (mv-hits (mv :yamamoto :base :ya-sig)) 0)) 10)           ; the Signature's cuts 10 each
             (= 15 (getf (mv-params (find-move :ya-sig)) :guard))))                       ; ... its wave 15
-;; Kenpachi base Q1 Q2 Q3 blocked = 28, F1 F2 = 32: a full gauge falls on the 4th Q string
+;; Kenpachi base J J J blocked = 24, K K K = 46 (DUEL_STRINGS §3.5): a full gauge falls on the 5th J string, the 3rd K
 (flet ((gv (name) (hw-guard (svref (mv-hits (mv :kenpachi :base name)) 0))))
-  (check (= 28 (+ (gv :ke-q1) (gv :ke-q2) (gv :ke-q3))))
-  (check (= 32 (+ (gv :ke-f1) (gv :ke-f2))))
-  (check (and (< (* 3 28) *gg-max*) (>= (* 4 28) *gg-max*))))
+  (check (= 24 (+ (gv :ke-j1) (gv :ke-j2) (gv :ke-j3))))
+  (check (= 46 (+ (gv :ke-k1) (gv :ke-k2) (gv :ke-k3))))
+  (check (and (< (* 4 24) *gg-max*) (>= (* 5 24) *gg-max*) (< (* 2 46) *gg-max*) (>= (* 3 46) *gg-max*))))
 (check (equal (multiple-value-list (gg-drain 100.0 8)) '(92.0 nil)))
 (check (equal (multiple-value-list (gg-drain 5.0 8)) '(0.0 t)))            ; emptied: GUARD CRUSH
-(check (and (= *gg-delay* 60) (~= *gg-regen* 12.0) (~= *gg-regen-guardless* 14.0)))  ; the user's slower refill
-(check (and (~= (gg-regen 50.0 59 nil nil) 50.0) (~= (gg-regen 50.0 60 nil nil) (+ 50.0 (/ 12.0 60)))
-            (~= (gg-regen 50.0 60 t nil) (+ 50.0 (/ 14.0 60))) (~= (gg-regen 99.9 99 nil nil) 100.0)))
-(check (<= 489 (loop with g = 0.0 for f from 0 until (>= g *gg-max*)         ; 0 -> 100 guardless: 60 f of delay +
-                     do (setf g (gg-regen g f t nil)) finally (return f)) 490))   ;  429 f (7.1 s; + 1 f of float rounding)
+;; the refill (the user's request 2026-09-27, 大幅減少防禦量表的恢復速度: 12 -> 5.5 / s, guardless 14 -> 6.5 / s)
+(check (and (= *gg-delay* 60) (~= *gg-regen* 5.5) (~= *gg-regen-guardless* 6.5)))
+(check (and (~= (gg-regen 50.0 59 nil nil) 50.0) (~= (gg-regen 50.0 60 nil nil) (+ 50.0 (/ 5.5 60)))
+            (~= (gg-regen 50.0 60 t nil) (+ 50.0 (/ 6.5 60))) (~= (gg-regen 99.99 99 nil nil) 100.0)))
+(check (<= 983 (loop with g = 0.0 for f from 0 until (>= g *gg-max*)         ; 0 -> 100 guardless: 60 f of delay +
+                     do (setf g (gg-regen g f t nil)) finally (return f)) 984))   ;  923 f (15.4 s; + float rounding)
 ;; GUARD HOLD (guard v3): no refill while guarding, the delay frozen (not restarted): 40 f of delay, 30 f of guard,
 ;; 20 f released -> the refill starts on the 61st frame not guarding; a drain still zeroes the counter (DRAIN-GUARD)
 (check (and (~= (gg-regen 50.0 999 nil t) 50.0) (= (gg-idle-next 40 t) 40) (= (gg-idle-next 40 nil) 41) (= (gg-idle-next 9999 nil) 9999)))
 (check (= 60 (let ((idle 0)) (dotimes (i 40) (setf idle (gg-idle-next idle nil))) (dotimes (i 30) (setf idle (gg-idle-next idle t)))
                (dotimes (i 20) (setf idle (gg-idle-next idle nil))) idle)))
-;; the fed flame (guard v3, then the user's follow-up 2026-09-26): + the kit's :feed per Reishi point removed (West 0.10,
-;; East 0.05), capped; every Bankai drain x*BANKAI-DRAIN* 1.3. A landed E-Q1 Q2 E-Q3 (x1.2: 41 + 46 + 66 = 153 removed)
-;; feeds East +8; the same string blocked costs him 17 recoil x1.3 = 22.1 and its chip (25 %: 10 + 11 + 16 = 37 x 0.05)
-;; feeds back ~2: ~-20 net, so from full the 5th blocked string with nothing landing burns him out
-(check (and (~= (kit-feed (kit :yamamoto :bankai-east)) 0.05) (~= (kit-feed (kit :yamamoto :bankai-west)) 0.1)
-            (~= (kit-feed (kit :yamamoto :base)) 0.0) (~= *bankai-drain* 1.3)))
-(check (and (~= (gg-feed 50.0 100 0.1) 60.0) (~= (gg-feed 95.0 100 0.1) 100.0) (~= (gg-feed 50.0 0 0.1) 50.0)))
-(let* ((east (kit :yamamoto :bankai-east))
-       (fed (- (gg-feed 50.0 (+ (hit-damage 34 (kit-atk-mods east 0) nil 1 nil) (hit-damage 38 (kit-atk-mods east 0) nil 1 nil)
-                                (hit-damage 55 (kit-atk-mods east 0) nil 1 nil)) (kit-feed east)) 50.0))
-       (net (- (* *bankai-drain* 17) (* (kit-feed east) 37))))
-  (check (and (<= 7 fed 8) (< (* 4 net) *gg-max*) (>= (* 5 net) *gg-max*))))
+;; East's pierce (the rework): k = 0.1 .. 0.5 by his guard gauge (full = sharpest, the user's decision 2026-09-27), x a
+;; move's :pierce-mult (KYOKKO 2: 0.2 .. 1.0). On hit x(1 + k) (KIT-ATK-MODS' pierce factor): E-Q1 Q2 E-Q3 (34 38 55)
+;; at full = 51 + 57 + 82 = 190 (82.5 rounds to even); blocked, k x the damage goes through as chip (never kills): 17 + 19 + 28 = 64 at
+;; full, 3 + 4 + 6 = 13 empty; KYOKKO at full: 170 on hit, all 85 through a guard
+(check (and (~= *pierce-min* 0.1) (~= *pierce-max* 0.45) (~= *ward-mult* 1.1)))   ; the gate's values (2026-09-27)
+(let ((*pierce-max* 0.5))                                                  ; the spec's arithmetic at 0.5
+ (check (and (~= (pierce-rate 100.0) 0.5) (~= (pierce-rate 0.0) 0.1)
+             (~= (pierce-rate 50.0) 0.3) (~= (pierce-rate 100.0 2.0) 1.0) (~= (pierce-rate 0.0 2.0) 0.2)))
+ (let ((east (kit :yamamoto :bankai-east)))
+  (flet ((hit (dmg gg &optional (m 1.0)) (hit-damage dmg (kit-atk-mods east 0 (+ 1.0 (pierce-rate gg m))) nil 1 nil))
+         (through (dmg gg &optional (m 1.0)) (chip-damage dmg (pierce-rate gg m) 1300)))
+    (check (= 190 (+ (hit 34 100.0) (hit 38 100.0) (hit 55 100.0))))
+    (check (= 165 (+ (hit 34 50.0) (hit 38 50.0) (hit 55 50.0))))
+    (check (= 64 (+ (through 34 100.0) (through 38 100.0) (through 55 100.0))))
+    (check (= 13 (+ (through 34 0.0) (through 38 0.0) (through 55 0.0))))
+    (check (and (= 170 (hit 85 100.0 2.0)) (= 85 (through 85 100.0 2.0)) (= 102 (hit 85 0.0 2.0)) (= 17 (through 85 0.0 2.0))))
+    (check (= 49 (chip-damage 85 1.0 50))))))                                  ; the pierce never kills: it leaves 1
+(check (and (~= (pierce-rate 100.0) 0.45) (~= (pierce-rate 100.0 2.0) 0.9)))    ; as tuned: KYOKKO 162 / 77 at full
+;; the ward never refills: GUARD HOLD counts it as guarding (combat.lisp GAUGE-SYSTEM), so the gauge stands still and
+;; the delay is frozen; West's drain is x*WARD-MULT*; Kenpachi's base Q string (28) crushes it on the 4th string
+(check (and (~= (gg-regen 40.0 9999 nil t) 40.0) (= (gg-idle-next 30 t) 30)))
 (check (and (can-guard-p 1.0 nil) (not (can-guard-p 0.0 nil)) (not (can-guard-p 99.0 t))))
 ;; a guard crush: Kenpachi's Q1 blocked into an empty gauge -> the attacker acts 25 frames first
-(let ((q1 (mv :kenpachi :base :ke-q1)))
+(let ((q1 (mv :kenpachi :base :ke-j1)))
   (check (= 25 (- *guard-crush-stun* (- (mv-total q1) (mv-first-hit q1)))))
   (check (= *gg-breaker* 35)))
 ;; the CPU's guard: all at >= 50 %, half at 25-50 %, 0.15 below, none guardless; flash-step budgeting
@@ -333,7 +435,7 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 
 ;;; ================================================================ perfect Hoho
 ;; Yama's Q1 (window [9,12), 2.4 m arc) from the origin facing -Z; our cylinder r 0.4 h 1.8
-(let* ((q1 (mv :yamamoto :base :ya-q1)) (w (svref (mv-hits q1) 0)))
+(let* ((q1 (mv :yamamoto :base :ya-j1)) (w (svref (mv-hits q1) 0)))
   (flet ((perfect (sf z) (perfect-hoho-p sf (hw-from w) (hw-to w) (hw-vols w)
                                          0f0 0f0 0f0 0f0 -1f0 0f0 0f0 (float z 1f0) 0.4f0 1.8f0)))
     (check (perfect 3 -2.0))                  ; active in 6 f: perfect
@@ -423,21 +525,20 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 ;;; ================================================================ kit sanity
 ;;; The §5 tables, copied independently of yama.lisp / ken.lisp: move S A R dmg block (? = no value in §5)
 (defparameter *table*
-  '((:ya-q1 9 3 12 38 -2) (:ya-q2 8 3 13 38 -2) (:ya-q3 12 4 22 60 -12) (:ya-f1 18 4 20 75 -4)
-    (:ya-f2 22 5 28 95 -14) (:ya-sig 16 ? 26 30 -6) (:ya-taimatsu 16 8 24 120 -14)
+  '((:ya-j1 9 3 12 38 -2) (:ya-j2 8 3 13 38 -2) (:ya-j3 9 3 18 45 -4) (:ya-k1 18 4 20 75 -3)
+    (:ya-k2 22 4 24 64 -3) (:ya-k3 22 5 34 88 -20) (:ya-sig 16 ? 26 30 -6) (:ya-taimatsu 16 8 24 120 -14)
     (:ya-nadegiri 20 4 30 240 -16) (:ya-breaker 8 4 18 150 :guard-break) (:ya-kyoku 18 5 26 90 -16)
     (:ya-kaka 20 1 34 0 nil)
-    ;; Bankai East / West (design v3 §A.2, §A.3)
-    (:ya-e-q1 8 3 12 34 -2) (:ya-e-q3 11 3 27 55 -12) (:ya-e-f1 16 4 20 70 -4) (:ya-e-f2 19 4 26 90 -14)
-    (:ya-e-f2q 19 4 26 90 -14) (:ya-to-west 14 4 20 50 -10) (:ya-w-q1 11 3 12 40 -2) (:ya-w-q3 13 4 22 70 -12)
-    (:ya-w-f1 20 4 20 80 -4) (:ya-w-f2 22 5 28 110 -14) (:ya-w-f2q 22 5 28 110 -14) (:ya-to-east 12 3 22 90 -8)
+    ;; Bankai East / West (DUEL_STRINGS §3.2; the rework's L moves)
+    (:ya-e-j1 8 3 12 34 -2) (:ya-e-j2 7 3 13 38 -2) (:ya-e-j3 8 3 18 42 -4) (:ya-e-k1 16 4 20 70 -3)
+    (:ya-e-k2 19 4 24 60 -3) (:ya-e-k3 21 5 34 84 -20) (:ya-e-kyokko 15 3 26 85 -12) (:ya-w-shonetsu 16 0 24 0 nil)
     (:ya-w-parry 4 12 30 0 nil) (:ya-w-counter 6 3 24 150 -12)
-    (:ke-q1 7 3 12 35 -2) (:ke-q2 7 3 13 35 -2) (:ke-q3 11 4 22 55 -12) (:ke-f1 16 4 20 70 -4)
-    (:ke-f2 20 5 28 90 -14) (:ke-stance 8 4 24 100 -14) (:ke-buttagiru 22 4 26 180 -14)
+    (:ke-j1 7 3 12 35 -2) (:ke-j2 7 3 13 35 -2) (:ke-j3 8 3 18 42 -4) (:ke-k1 16 4 20 70 -3)
+    (:ke-k2 20 4 24 60 -3) (:ke-k3 20 5 34 80 -20) (:ke-stance 8 4 24 100 -14) (:ke-buttagiru 22 4 26 180 -14)
     (:ke-charge 14 ? ? 25 -16) (:ke-breaker 8 4 18 150 :guard-break) (:ke-meteor 26 4 30 240 ?)
-    ;; Nozarashi v2: RYOTE's kendo set, NOMIHOSE's space cut and cash-out (DUEL_NOZARASHI_V2 §2.3)
-    (:ke-r-q1 10 3 12 40 -2) (:ke-r-q3 14 4 22 70 -12) (:ke-r-f1 19 4 20 85 -4) (:ke-r-f2 21 5 28 110 -14)
-    (:ke-r-f2q 21 5 28 110 -14) (:ke-n-f1 20 4 22 90 -4) (:ke-meteor-n 26 4 30 390 -16)))
+    ;; RYOTE's kendo strings (DUEL_STRINGS §3.4), NOMIHOSE's space cut and cash-out (DUEL_NOZARASHI_V2 §2.3)
+    (:ke-r-j1 10 3 12 40 -2) (:ke-r-j2 9 3 13 38 -2) (:ke-r-j3 10 3 18 48 -4) (:ke-r-k1 19 4 20 85 -3)
+    (:ke-r-k2 21 4 24 68 -3) (:ke-r-k3 21 5 34 92 -20) (:ke-n-f1 20 4 22 90 -4) (:ke-meteor-n 26 4 30 390 -16)))
 (dolist (row *table*)
   (destructuring-bind (name s a r dmg adv) row
     (let ((m (find-move name)))
@@ -478,7 +579,7 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
             (= (kit-command-cost (kit :yamamoto :hellfire) :sp2) 2) (= (kit-command-cost (kit :yamamoto :bankai-east) :sp2) 2)
             (= (kit-command-cost (kit :kenpachi :nozarashi) :sp2) 2) (= (kit-command-cost (kit :kenpachi :base) :q) 0)))
 ;; forms: multipliers, inheritance, the Hellfire / Bankai swaps
-(check (and (~= (kit-mult (kit :yamamoto :hellfire)) 1.3) (~= (kit-mult (kit :yamamoto :bankai-east)) 1.2)
+(check (and (~= (kit-mult (kit :yamamoto :hellfire)) 1.3) (~= (kit-mult (kit :yamamoto :bankai-east)) 1.0)
             (~= (kit-mult (kit :kenpachi :nozarashi)) 1.0) (~= (kit-mult (kit :kenpachi :ryote)) 1.15) (~= (kit-mult (kit :kenpachi :nomihose)) 1.2) (~= (kit-mult (kit :kenpachi :base)) 1.0)))
 (check (eq (mv-name (kit-command-move (kit :yamamoto :hellfire) :sp2)) :ya-nadegiri))
 (check (eq (mv-name (kit-command-move (kit :yamamoto :hellfire) :sp1)) :ya-shiranui))  ; inherited
@@ -489,8 +590,8 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
   (let ((m (kit-command-move (apply #'kit cf) :kikon)))
     (check (and (eq (mv-kind m) :kikon) (mv-cine m) (= 1 (length (mv-hits m))) (<= (mv-adv-block m) -12)
                 (> (mv-reach m) *kikon-trigger*) (plusp (mv-dmg m))
-                (<= (+ *kikon-trigger* *block-pushback*) (min (mv-reach (mv :yamamoto :base :ya-q1))
-                                                              (mv-reach (mv :kenpachi :base :ke-q1))))))))
+                (<= (+ *kikon-trigger* *block-pushback*) (min (mv-reach (mv :yamamoto :base :ya-j1))
+                                                              (mv-reach (mv :kenpachi :base :ke-j1))))))))
 ;; the O modules (design v2 §B): cooldown 90, a melee strike with its cinematic, reach and press -> hit,
 ;; aura >= 5 (>= 8 for a locked dash), armour <= 1 hit; the melee ones strike from *KIKON-TRIGGER* (a
 ;; blocked strike stays punishable); ENJO has no dash (a lane, locked)
@@ -516,12 +617,12 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 (check (and (null (kit-meter (kit :yamamoto :bankai-east))) (kit-meter (kit :yamamoto :hellfire))))  ; no Hellfire in Bankai
 (check (and (kit-awakening (kit :yamamoto :bankai-east)) (not (kit-awakening (kit :yamamoto :hellfire)))
             (null (kit-duration (kit :kenpachi :nozarashi))) (null (kit-duration (kit :yamamoto :bankai-east)))))   ; both awakenings last the match
-(check (and (member :garb (kit-passives (kit :yamamoto :bankai-west)))
-            (not (member :garb (kit-passives (kit :yamamoto :bankai-east))))))
+(check (and (member :ward (kit-passives (kit :yamamoto :bankai-west)))
+            (not (member :ward (kit-passives (kit :yamamoto :bankai-east))))))
 (check (and (~= (kit-walk (kit :yamamoto :base)) 3.2) (~= (kit-walk (kit :kenpachi :nozarashi)) 4.4)))
 (check (~= (kit-reset-reiatsu (kit :kenpachi :base)) 10.0))
 ;; Nozarashi: derived by the kit, not copied (startup +3, reach x1.4), own moves as written
-(let ((base (mv :kenpachi :base :ke-q1)) (noz (mv :kenpachi :nozarashi :ke-q1)))
+(let ((base (mv :kenpachi :base :ke-j1)) (noz (mv :kenpachi :nozarashi :ke-j1)))
   (check (and (= (mv-s base) 7) (= (mv-s noz) 9) (= (mv-r noz) 12) (= (mv-dmg noz) 35)
               (~= (mv-reach noz) (* 2.6 1.3)) (= (hw-from (svref (mv-hits noz) 0)) 9)
               (~= (aref (first (hw-vols (svref (mv-hits noz) 0))) 1) (* 2.6 1.3)))))
@@ -530,13 +631,14 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
 (check (~= (aref (first (hw-vols (svref (mv-hits (mv :kenpachi :nozarashi :ke-charge)) 0))) 2) (* 1.4 1.3)))
 (check (= (mv-s (mv :kenpachi :nozarashi :ke-meteor)) 26))
 (check (eq (mv :kenpachi :nozarashi :ke-meteor) (find-move :ke-meteor)))
-(check (eq (kit-next (kit :kenpachi :nozarashi) :ke-q1 :q) (mv :kenpachi :nozarashi :ke-q2)))
+(check (eq (kit-next (kit :kenpachi :nozarashi) :ke-j1 :q) (mv :kenpachi :nozarashi :ke-j2)))
 ;; clip names: exactly the §5 contract, and every §5 clip is used
 (defparameter *clips-5*
   '(:ya-stance :ya-q1 :ya-q2 :ya-q3 :ya-f1 :ya-f2 :ya-sig :ya-shiranui :ya-shiranui-throw :ya-taimatsu
     :ya-nadegiri :ya-breaker :ya-ikkotsu :ya-intro :ya-win :ya-hellfire :ya-bankai :ya-kyoku
     :ya-kaka :sh-run :ya-enjo :ke-n-leap ; the O modules (TENCHI runs in :sh-run, CHARGE in :ke-charge)
-    :ya-e-thrust :ya-to-west :ya-to-east :ya-w-shove :ya-w-parry :ya-w-counter   ; the Bankai stances
+    :ya-e-thrust :ya-shonetsu :ya-w-parry :ya-w-counter   ; the Bankai stances
+    :ya-sleeve :ya-e-drop :ke-kick :ke-r-kote :ke-r-tsuki   ; the strings' new clips (DUEL_STRINGS §3)
     :ke-stance :ke-q1 :ke-q2 :ke-q3 :ke-f1 :ke-f2 :ke-stance-hold :ke-stance-cut :ke-buttagiru :ke-charge
     :ke-flurry :ke-breaker :ke-shoulder :ke-intro :ke-win :ke-release :ke-nome :ke-meteor
     :ke-n-stance
@@ -564,93 +666,82 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
               (= (+ 25 (* 4 25) 60) (+ (mv-dmg (find-move :ke-charge)) (loop for w across (mv-hits fl) sum (hw-dmg w)))))))
 (check (and (null (hw-stun (make-hitwin))) (= 40 (hw-stun (make-hitwin :stun 40)))))
 
-;;; ================================================================ Bankai stances + burnout (design v3 §A; part 2)
+;;; ================================================================ Bankai stances (docs/DUEL_YAMA_REWORK.md, the user's decisions 2026-09-27)
 (let ((east (kit :yamamoto :bankai-east)) (west (kit :yamamoto :bankai-west)))
-  ;; the forms: East x1.2 dealt / x*BANKAI-TAKEN* taken, 25 % chip, projectile-cut + recoil; West x1.0 / x1.0, the garb
-  ;; + scorch, no chip; both awakened, permanent, burning out on the guard gauge
-  (check (and (~= (kit-mult east) 1.2) (~= (kit-taken east) *bankai-taken*) (~= (kit-blade-chip east) 0.25)
-              (equal (kit-passives east) '(:projectile-cut :recoil))))
+  ;; the forms: East x1.0 dealt + the pierce, x*BANKAI-TAKEN* 1.5 taken, projectile-cut; U goes West (:guard-to). West
+  ;; x1.0 / x1.0, the ward + the parry's scorch; every command but L / SP1 drops to East (:drop-to / :keep); both
+  ;; awakened and permanent
+  (check (and (~= (kit-mult east) 1.0) (~= (kit-taken east) 1.5) (~= *bankai-taken* 1.5) (null (kit-blade-chip east))
+              (equal (kit-passives east) '(:projectile-cut :pierce)) (eq (kit-guard-to east) :bankai-west)
+              (null (kit-drop-to east))))
   (check (and (~= (kit-mult west) 1.0) (~= (kit-taken west) 1.0) (null (kit-blade-chip west))
-              (equal (kit-passives west) '(:garb :scorch))))
-  (check (and (kit-burnout east) (kit-burnout west) (kit-awakening west) (null (kit-duration west))
-              (not (kit-burnout (kit :yamamoto :base))) (not (kit-burnout (kit :kenpachi :nozarashi)))
-              (eq (kit-awaken-form (kit :yamamoto :base)) :bankai-east)))
+              (equal (kit-passives west) '(:ward :scorch)) (null (kit-guard-to west))
+              (eq (kit-drop-to west) :bankai-east) (equal (kit-keep west) '(:sig :sp1))))
+  (check (and (kit-awakening west) (null (kit-duration west)) (eq (kit-awaken-form (kit :yamamoto :base)) :bankai-east)
+              (null (kit-guard-to (kit :yamamoto :base))) (null (kit-drop-to (kit :kenpachi :nomihose)))))
   (check (and (eq (mv-name (kit-command-move east :sp1)) :ya-kyoku) (eq (mv-name (kit-command-move west :sp1)) :ya-w-parry)
-              (eq (mv-name (kit-command-move east :sig)) :ya-to-west) (eq (mv-name (kit-command-move west :sig)) :ya-to-east)))
-  ;; burnout (the five gates): x1.0 dealt, no chip, no armour, the :heat flags filtered; :taken stays
-  (check (and (= (hit-damage 100 (kit-atk-mods east 0) nil 1 nil) 120) (= (hit-damage 100 (kit-atk-mods east 0 nil) nil 1 nil) 100)
-              (= (hit-damage 100 nil (kit-def-mods east) 1 nil) (round (* 100 *bankai-taken*))) (= (hit-damage 100 nil (kit-def-mods west) 1 nil) 100)))
-  (check (and (~= (chip-rate nil 0.25 t) 0.25) (null (chip-rate nil 0.25 nil)) (~= (chip-rate 0.4 nil t) 0.4) (null (chip-rate 0.4 nil nil))
-              (null (chip-rate nil nil t))))
-  (check (and (= (armor-budget 2 t) 2) (= (armor-budget 2 nil) 0)))
-  (check (and (equal (heat-flags '(:guard-crush :heat) t) '(:guard-crush :heat)) (not (member :guard-crush (heat-flags '(:guard-crush :heat) nil)))
-              (equal (heat-flags '(:guard-crush) nil) '(:guard-crush))))           ; only :heat-marked windows lose it
-  ;; the derivation rule (the inheritance fix): own moves as written, inherited ones derived; West lists South
-  ;; and North in its own :commands, so they are East's frames exactly (not +2)
-  (check (and (= (mv-s (kit-move east :ya-q2)) 7) (~= (mv-reach (kit-move east :ya-q2)) 2.76 0.01)
-              (= (mv-s (kit-move west :ya-q2)) 10) (~= (mv-reach (kit-move west :ya-q2)) 2.4 0.01)
-              (= (mv-s (kit-command-move east :breaker)) 7) (= (mv-s (kit-command-move west :breaker)) 10)))
-  (check (and (= (mv-s (kit-move east :ya-e-q1)) 8) (= (mv-s (kit-move east :ya-e-q3)) 11) (= (mv-s (kit-move west :ya-w-f2)) 22)
-              (= (mv-s (kit-move west :ya-to-east)) 12) (= (mv-s (kit-move west :ya-w-q3)) 13) (= (mv-s (kit-move west :ya-w-counter)) 6)))
+              (eq (mv-name (kit-command-move east :sig)) :ya-e-kyokko) (eq (mv-name (kit-command-move west :sig)) :ya-w-shonetsu)))
+  ;; East <-> West (fighter.lisp KIT-DROP): in West J, K, O, I, Shift+L drop to East first (East's own move starts),
+  ;; L and Shift+K stay West; East drops nothing
+  (check (and (every (lambda (c) (eq (kit-drop west c) :bankai-east)) '(:q :f :sp2 :breaker :kikon))
+              (null (kit-drop west :sig)) (null (kit-drop west :sp1))
+              (notany (lambda (c) (kit-drop east c)) *kit-commands*)
+              (eq (kit-command-move (find-kit :yamamoto (kit-drop west :q)) :q) (kit-command-move east :q))))
+  (check (and (= (hit-damage 100 nil (kit-def-mods east) 1 nil) 150) (= (hit-damage 100 nil (kit-def-mods west) 1 nil) 100)))
+  ;; the derivation rule: East's inherited moves derived (-1 f, reach x1.15: the Breaker); West takes East's versions
+  (check (and (= (mv-s (kit-command-move east :breaker)) 7) (~= (mv-reach (kit-command-move east :breaker)) (* 1.15 *breaker-reach*) 0.01)
+              (eq (kit-move west :ya-e-j2) (kit-move east :ya-e-j2)) (eq (kit-command-move west :q) (kit-command-move east :q))))
+  (check (and (= (mv-s (kit-move east :ya-e-j1)) 8) (= (mv-s (kit-move east :ya-e-j3)) 8) (= (mv-s (kit-move west :ya-w-counter)) 6)))
   (dolist (name '(:ya-kaka :ya-tenchi))
     (let ((a (kit-move east name)) (b (kit-move west name)))
       (check (and (eq a b) (= (mv-s a) (mv-s (find-move name))) (equal (mv-on-frame a) (mv-on-frame b))))))
-  (check (~= (mv-clip-speed (kit-move east :ya-q2)) (/ 8.0 7.0)))              ; a -1 f derivation plays its clip faster
-  ;; the combos, both stances: Q1 -> Q2, Q2 -> Q3', Q2 -> F2q', F1 -> F2' on hit; L cancels from Q2 in time;
-  ;; a blocked Q1 -> Q2 leaves a gap >= Step's first iframe (East's also < 7)
-  (dolist (k (list east west))
-    (let* ((q1 (kit-command-move k :q)) (q2 (kit-next k (mv-name q1) :q)) (q3 (kit-next k (mv-name q2) :q))
-           (f2q (kit-next k (mv-name q2) :f)) (f1 (kit-command-move k :f)) (f2 (kit-next k (mv-name f1) :f)))
-      (check (and (< (hit-gap q1 q2) 0) (< (hit-gap q2 q3) 0) (< (hit-gap q2 f2q) 0) (< (hit-gap f1 f2) 0)))
-      (check (< (- (mv-s (kit-command-move k :sig)) (hitstun (hw-react (svref (mv-hits q2) 0)))) 0))
-      (check (>= (blocked-gap q1 q2) (first *step-iframes*)))))
-  (check (< (blocked-gap (kit-command-move east :q) (kit-move east :ya-q2)) 7))
-  ;; the ender-gap rule: after a string ender (or L) that leaves the victim near (flinch / stagger / knockback
-  ;; <= 1.5 m), his Step fits before the next Q1 (of the stance he is in by then): S(Q1) - on-hit adv >= 3.
-  ;; E-Q3's R27 makes it +-0 (v1's "+7 frame trap" was a 1 f loop)
-  (flet ((on-hit-adv (m) (let ((w (svref (mv-hits m) 0)))
-                           (- (or (hw-stun w) (hitstun (hw-react w))) (- (mv-total m) (hw-from w))))))
-    (check (= 0 (on-hit-adv (find-move :ya-e-q3))))
-    (dolist (k (list east west))
-      (dolist (m (cons (kit-command-move k :sig) (loop for (nil nil to) in (kit-strings k) collect (kit-move k to))))
-        (let ((w (svref (mv-hits m) 0)))
-          (when (or (member (hw-react w) '(:flinch :stagger)) (and (eq (hw-react w) :knockback) (<= (hw-kb w) 1.5)))
-            (let ((next (if (getf (mv-params m) :to) (kit (kit-character k) (getf (mv-params m) :to)) k)))
-              (check (>= (- (mv-s (kit-command-move next :q)) (on-hit-adv m)) (first *step-iframes*)))))))))
-  ;; L: a Signature that cancels a landed Q / F, switches on its first active frame to the other stance, and
-  ;; cools *SWITCH-COOLDOWN* (longer than itself + the chain lead); armour budgets from *ARMOR-FROM*
-  (dolist (k (list east west))
-    (let ((l (kit-command-move k :sig)))
-      (check (and (eq (mv-kind l) :sig) (member :cancel (mv-flags l)) (= (mv-cooldown l) *switch-cooldown* 100)
-                  (> (mv-cooldown l) (+ (mv-total l) *chain-lead*)) (equal (mapcar #'first (mv-on-frame l)) (list (mv-s l)))
-                  (not (eq (getf (mv-params l) :to) (kit-form k))) (find-kit :yamamoto (getf (mv-params l) :to))))))
-  ;; no move armour in either stance (West's U is the garb guard, guard v3)
-  (check (every (lambda (m) (zerop (mv-armor-hits (find-move m)))) '(:ya-to-west :ya-w-q3 :ya-w-f1 :ya-w-f2 :ya-w-f2q :ya-to-east)))
-  ;; the garb guard: Kenpachi's Q1 Q2 Q3 into it = 28 x 0.5 = 14, x*BANKAI-DRAIN* 1.3 = 18.2 of Bankai's gauge (the 6th
-  ;; string burns him out: 5 x 18.2 < 100 <= 6 x 18.2)
-  ;; and scorches 3 x 5; his F1 = 7 and 15; a blocked projectile scorches nothing (GARB-SCORCH of its NIL kind = 0);
-  ;; East's recoil (0.6 x the guard value): a blocked E-Q1 Q2 E-Q3 = 5 + 5 + 7 = 17, the cone 13
-  (flet ((gv (k name) (hw-guard (svref (mv-hits (kit-move k name)) 0))))
-    (check (= 14 (garb-value (+ (gv (kit :kenpachi :base) :ke-q1) (gv (kit :kenpachi :base) :ke-q2) (gv (kit :kenpachi :base) :ke-q3)))))
-    (check (and (< (* 5 14 *bankai-drain*) *gg-max*) (>= (* 6 14 *bankai-drain*) *gg-max*)))
-    (check (and (= 7 (garb-value (gv (kit :kenpachi :base) :ke-f1))) (= 15 (garb-scorch :flash)) (= 5 (garb-scorch :quick))
-                (= 15 (* 3 (garb-scorch (mv-kind (find-move :ke-q1))))) (= 0 (garb-scorch nil)) (= 15 (garb-scorch :sp))))
-    (check (= 17 (+ (recoil (gv east :ya-e-q1)) (recoil (gv east :ya-q2)) (recoil (gv east :ya-e-q3)))))
-    (check (and (= 13 (recoil 22)) (= 12 (recoil 20)) (= (gv east :ya-to-west) 22) (= (gv west :ya-to-east) 18))))
-  ;; KYOKUJITSUJIN: the blade [18,20) breaks guard (:heat: not in burnout), the tip's cone [20,23) 25 deg x 9 m,
-  ;; 130, knockback 4 m, blockable (never a break), -16; the blade's short knockback keeps the victim in the cone
+  (check (~= (mv-clip-speed (kit-move east :ya-e-j2)) (/ 8.0 7.0)))            ; Shikai's clip at East's -1 f plays faster
+  ;; KYOKKO cancels a landed J2 in time; a blocked J1 -> J2 leaves a gap >= Step's first iframe and < 7
+  (let* ((k east) (q1 (kit-command-move k :q)) (q2 (kit-next k (mv-name q1) :q)))
+    (check (< (- (mv-s (kit-command-move k :sig)) (hitstun (hw-react (svref (mv-hits q2) 0)))) 0))
+    (check (and (>= (blocked-gap q1 q2) (first *step-iframes*)) (< (blocked-gap q1 q2) 7))))
+  ;; the ender-gap rule: after a string ender that leaves the victim near, his Step fits before the next E-Q1
+  (progn
+    (check (= 5 (on-hit-adv (find-move :ya-e-j3))))
+    (dolist (m (loop for (nil nil to) in (kit-strings east) collect (kit-move east to)))
+      (let ((w (svref (mv-hits m) 0)))
+        (when (or (member (hw-react w) '(:flinch :stagger)) (and (eq (hw-react w) :knockback) (<= (hw-kb w) 1.5)))
+          (check (>= (- (mv-s (kit-command-move east :q)) (on-hit-adv m)) (first *step-iframes*)))))))
+  ;; KYOKKO: S15 A3 R26, 85, a 1.6 m lunge, a 4.6 m line, pierce x2, guard 22 (an ender), cooldown 100, cancels a landed
+  ;; Q / F; no armour anywhere in either stance
+  (let* ((l (kit-command-move east :sig)) (w (svref (mv-hits l) 0)))
+    (check (and (eq (mv-kind l) :sig) (member :cancel (mv-flags l)) (= (mv-cooldown l) 100) (~= (mv-slide l) 1.6)
+                (~= (getf (mv-params l) :pierce-mult) 2.0) (= (hw-guard w) 22) (eq (hw-react w) :knockback)
+                (~= (aref (first (hw-vols w)) 2) 4.6) (> (mv-cooldown l) (+ (mv-total l) *chain-lead*)))))
+  ;; SHONETSU JIGOKU: S16 R24 (40 f, no hit window: the pillars do it), on-frames 0 (the tell) and 16, 45 x 2 in a 2 m
+  ;; ring, guard 12, cooldown 150, not a cancel (a West Q / F would already have dropped him to East)
+  (let* ((l (kit-command-move west :sig)) (pa (mv-params l)))
+    (check (and (eq (mv-kind l) :sig) (zerop (length (mv-hits l))) (= (mv-total l) 40) (= (mv-cooldown l) 150)
+                (not (member :cancel (mv-flags l))) (equal (mapcar #'first (mv-on-frame l)) '(0 16))
+                (= (getf pa :dmg) 45) (= (getf pa :hits) 2) (~= (getf pa :size) 2.0) (= (getf pa :guard) 12)
+                (= (move-end-frame (mv-s l) (mv-a l) (mv-r l) (mv-whiff l) nil t) 40))))
+  (check (every (lambda (m) (zerop (mv-armor-hits (find-move m)))) '(:ya-e-kyokko :ya-w-shonetsu :ya-w-parry :ya-w-counter)))
+  ;; KYOKUJITSUJIN: the blade [18,20) breaks guard (and a ward), the tip's cone [20,23) 25 deg x 9 m, 130, knockback
+  ;; 4 m, blockable (never a break), -16; the blade's short knockback keeps the victim in the cone
   (let* ((m (kit-command-move east :sp1)) (bl (svref (mv-hits m) 0)) (co (svref (mv-hits m) 1)))
     (check (and (= 2 (length (mv-hits m))) (= (hw-from bl) 18) (= (hw-to bl) 20 (hw-from co)) (= (hw-to co) 23)
-                (= (hw-dmg bl) 90) (= (hw-dmg co) 130) (equal (hw-flags bl) '(:guard-crush :heat)) (equal (hw-flags co) '(:ranged))
+                (= (hw-dmg bl) 90) (= (hw-dmg co) 130) (equal (hw-flags bl) '(:guard-crush)) (equal (hw-flags co) '(:ranged))
                 (eq (hw-react bl) :knockback) (~= (hw-kb bl) 0.5) (eq (hw-react co) :knockback) (~= (hw-kb co) 4.0)
                 (= (mv-adv-block m) -16) (= (hw-guard co) 22)))
     (check (and (~= (aref (first (hw-vols co)) 1) 9.0) (~= (* 2 (aref (first (hw-vols co)) 2)) (deg 25))))
-    (check (and (eq (resolve-contact :guard :guard-crush (member :guard-crush (heat-flags (hw-flags bl) t))) :guard-break)
-                (eq (resolve-contact :guard :guard-crush (member :guard-crush (heat-flags (hw-flags bl) nil))) :blocked)
+    (check (and (eq (resolve-contact :guard :guard-crush (member :guard-crush (hw-flags bl))) :guard-break)
+                (eq (resolve-contact :guard :guard-crush (member :guard-crush (hw-flags bl)) :ward t) :guard-break)
                 (eq (resolve-contact :guard :guard-crush (member :guard-crush (hw-flags co))) :blocked)))
     (flet ((hits (v x z) (vol-hit-p v 0f0 0f0 0f0 0f0 -1f0 (float x 1f0) 0f0 (float z 1f0) 0.36f0 1.65f0 0f0)))
       (check (and (hits (first (hw-vols co)) 0 -8.5) (hits (first (hw-vols co)) 2.0 -8.5) (not (hits (first (hw-vols co)) 3.0 -8.5))
                   (not (hits (first (hw-vols co)) 0 -9.6)) (hits (first (hw-vols bl)) 0 -2.0) (not (hits (first (hw-vols bl)) 0 -3.2))))))
+  ;; the ward vs Kenpachi: his base J J J blocked = 24 x*WARD-MULT* 1.1 = 26.4: the 4th string crushes a full
+  ;; gauge; RYOTE's K K K (the cut) 69 x 1.1 = 75.9: the 2nd
+  (flet ((gv (k name) (hw-guard (svref (mv-hits (kit-move k name)) 0))))
+    (let ((qs (* *ward-mult* (+ (gv (kit :kenpachi :base) :ke-j1) (gv (kit :kenpachi :base) :ke-j2) (gv (kit :kenpachi :base) :ke-j3))))
+          (kk (* *ward-mult* (+ (cut-value (gv (kit :kenpachi :ryote) :ke-r-k1) :flash) (cut-value (gv (kit :kenpachi :ryote) :ke-r-k2) :flash)
+                                (cut-value (gv (kit :kenpachi :ryote) :ke-r-k3) :flash)))))
+      (check (and (< (* 3 qs) *gg-max*) (>= (* 4 qs) *gg-max*) (< kk *gg-max*) (>= (* 2 kk) *gg-max*)))))
   ;; GOKUI GAESHI: the parry catches a melee hit on f4-15 (12 f = its active frames), not a hazard, not an
   ;; unguardable one; a Breaker breaks it; parried = a block for the attacker (no string, no Kikon); the counter
   ;; (150, knockback) lands inside the parried attacker's stagger: guaranteed
@@ -713,19 +804,17 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
   (check (and (eq (resolve-contact :guard :breaker t) :guard-break) (eq (resolve-contact :guard :unguardable t) :hit)
               (eq (resolve-contact :guard :in-front nil) :hit) (= (drink-adv -2) -6) (= (drink-adv -12) -16)))
   (check (and (member :drink (kit-passives t3)) (not (member :drink (kit-passives t2))) (not (member :drink (kit-passives t1)))))
-  ;; 6. the cut: Flash / Signature / SP x1.5 (RYOTE, NOMIHOSE), the J string untouched: blocked RYOTE J J J = 28,
-  ;; K K = 48; into West's garb guard K K = 24 and scorches 30
+  ;; 6. the cut: Flash / Signature / SP x1.5 (RYOTE, NOMIHOSE), the J string untouched: blocked RYOTE J J J = 24,
+  ;; K K K = 69 (into West's ward too: x*WARD-MULT*)
   (flet ((gv (k name) (hw-guard (svref (mv-hits (kit-move k name)) 0))))
     (check (and (= (cut-value 8 :quick) 8) (= (cut-value 14 :flash) 21) (= (cut-value 22 :sp) 33) (= (cut-value 12 nil) 12)))
-    (check (= 28 (+ (cut-value (gv t2 :ke-r-q1) :quick) (cut-value (gv t2 :ke-q2) :quick) (cut-value (gv t2 :ke-r-q3) :quick))))
-    (check (= 48 (+ (cut-value (gv t2 :ke-r-f1) :flash) (cut-value (gv t2 :ke-r-f2) :flash))))
-    (check (= 24 (garb-value (+ (cut-value (gv t2 :ke-r-f1) :flash) (cut-value (gv t2 :ke-r-f2) :flash)))))
-    (check (= 30 (+ (garb-scorch (mv-kind (kit-move t2 :ke-r-f1))) (garb-scorch (mv-kind (kit-move t2 :ke-r-f2)))))))
+    (check (= 24 (+ (cut-value (gv t2 :ke-r-j1) :quick) (cut-value (gv t2 :ke-r-j2) :quick) (cut-value (gv t2 :ke-r-j3) :quick))))
+    (check (= 69 (+ (cut-value (gv t2 :ke-r-k1) :flash) (cut-value (gv t2 :ke-r-k2) :flash) (cut-value (gv t2 :ke-r-k3) :flash)))))
   ;; the ranged hits (guard v3): the Meteor, the cash-out, Buttagiru's crack, the heat cone, Taimatsu, Nadegiri are
   ;; :ranged; the blades (the J / K strings, the Kikon strikes, KYOKUJITSUJIN's guard-breaking blade) are not
   (flet ((rw (name i) (member :ranged (hw-flags (svref (mv-hits (find-move name)) i)))))
     (check (and (rw :ke-meteor 0) (rw :ke-meteor-n 0) (rw :ke-buttagiru 0) (rw :ya-kyoku 1) (rw :ya-taimatsu 0) (rw :ya-nadegiri 0)
-                (not (rw :ya-kyoku 0)) (not (rw :ke-r-f1 0)) (not (rw :ke-kikon-n 0)) (not (rw :ya-kikon 0)) (not (rw :ke-n-f1 0)))))
+                (not (rw :ya-kyoku 0)) (not (rw :ke-r-k1 0)) (not (rw :ke-kikon-n 0)) (not (rw :ya-kikon 0)) (not (rw :ke-n-f1 0)))))
   (check (and (member :cut (kit-passives t2)) (member :cut (kit-passives t3)) (not (member :cut (kit-passives t1)))))
   ;; 7. the Kikon count per cup (read at rush start) with the per-event cap
   (check (and (= 2 (kit-kikon-konpaku t1)) (= 3 (kit-kikon-konpaku t2)) (= 4 (kit-kikon-konpaku t3))
@@ -735,22 +824,15 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
               (= 3 (nth-value 1 (kikon-result 9 3 nil))) (= 4 (nth-value 1 (kikon-result 9 3 t)))
               (= 4 (nth-value 1 (kikon-result 9 4 nil))) (= 4 (nth-value 1 (kikon-result 9 4 t)))))   ; capped at 4
   ;; 8. register-kit: NOMIHOSE plays RYOTE's moves (not re-derived); RYOTE's meteor / LEAP as written; Hellfire unchanged
-  (check (and (eq (kit-move t3 :ke-r-q3) (kit-move t2 :ke-r-q3)) (= 14 (mv-s (kit-move t3 :ke-r-q3)))
-              (= 21 (mv-s (kit-move t3 :ke-r-f2))) (eq (kit-move t3 :ke-q2) (kit-move t2 :ke-q2))
-              (equal (list (mv-s (kit-move t3 :ke-q2)) (mv-a (kit-move t3 :ke-q2)) (mv-r (kit-move t3 :ke-q2))) '(10 3 13))
-              (~= (mv-reach (kit-move t2 :ke-q2)) 3.64) (~= (mv-reach (kit-move t2 :ke-r-q3)) 3.8)))
+  (check (and (eq (kit-move t3 :ke-r-j3) (kit-move t2 :ke-r-j3)) (= 10 (mv-s (kit-move t3 :ke-r-j3)))
+              (= 21 (mv-s (kit-move t3 :ke-r-k3))) (eq (kit-move t3 :ke-r-j2) (kit-move t2 :ke-r-j2))
+              (~= (mv-reach (kit-move t2 :ke-r-j2)) 3.6) (~= (mv-reach (kit-move t2 :ke-r-j3)) 3.8)))
   (check (and (eq (kit-move t2 :ke-meteor) (find-move :ke-meteor)) (eq (kit-move t2 :ke-kikon-n) (find-move :ke-kikon-n))
               (eq (kit-command-move t3 :kikon) (find-move :ke-kikon-n))
-              (eq (kit-move (kit :yamamoto :hellfire) :ya-q1) (find-move :ya-q1))))
+              (eq (kit-move (kit :yamamoto :hellfire) :ya-j1) (find-move :ya-j1))))
   (check (and (= 10 (mv-s (kit-move t1 :ke-stance))) (= 11 (mv-s (kit-move t2 :ke-stance))) (= 11 (mv-s (kit-move t3 :ke-stance)))))
-  ;; 9. the links: KATATE F1->F2 -1 (the old +3 had a 0 gap), Q1->Q2 -7, Q2->Q3 -3, Q2->F2q -2; RYOTE R-Q1->Q2 -6,
-  ;; Q2->R-Q3 -2, Q2->R-F2q -2, R-F1->R-F2 -2; NOMIHOSE N-F1->R-F2 -2
-  (flet ((g (k a cmd) (let ((ma (kit-move k a))) (hit-gap ma (kit-next k a cmd)))))
-    (check (and (= -1 (g t1 :ke-f1 :f)) (= -7 (g t1 :ke-q1 :q)) (= -3 (g t1 :ke-q2 :q)) (= -2 (g t1 :ke-q2 :f))
-                (= -6 (g t2 :ke-r-q1 :q)) (= -2 (g t2 :ke-q2 :q)) (= -2 (g t2 :ke-q2 :f)) (= -2 (g t2 :ke-r-f1 :f))
-                (= -2 (g t3 :ke-n-f1 :f))))
-    (check (= 0 (hit-gap (parse-move :ke-f1 (mv-spec (find-move :ke-f1)) :startup-add 3)
-                         (parse-move :ke-f2 (mv-spec (find-move :ke-f2)) :startup-add 3)))))   ; the old bug, recorded
+  ;; 9. the links: every J / K pair of every form combos (the string budget above); cup 3's K1 KUKAN-GIRI -> K2 too
+  (check (< (hit-gap (kit-move t3 :ke-n-f1) (kit-next t3 :ke-n-f1 :f)) 0))
   ;; 10. the rift: at f20, cuts f40 (a 2 f window), 50 x1.2, guard 12, chip 20 %; on block inside N-F1's blockstun
   ;; (he acts at f43, the rift's 14 f blockstun frees the defender at f55: +8)
   (let* ((n (kit-move t3 :ke-n-f1)) (pa (mv-params n)) (bs (blockstun (mv-total n) (mv-s n) (mv-adv-block n))))

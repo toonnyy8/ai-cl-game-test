@@ -1,10 +1,10 @@
 ;;;; hud.lisp — the battle HUD (design-v1 §10) and every screen of the flow (title, mode, controls,
 ;;;; select, results, pause). Per side, P2 mirrored: Reishi bar (red + pulsing below *RED-THRESHOLD*,
 ;;;; white damage trail), the guard gauge under it (steel, a white drain trail, 30 % darker while he guards below full
-;;;; (GUARD HOLD: no refill); Bankai's is ember, flashing white when fed, "HIT TO FEED" once; guardless: grey with a red
-;;;; fill climbing back), *KONPAKU-MAX* Konpaku soul flames that shatter, Reiatsu 3 bars, the flash-step bar
+;;;; (GUARD HOLD: no refill; Bankai West's ward always); Bankai's is ember (East's pierce reads it); guardless: grey with
+;;;; a red fill climbing back), *KONPAKU-MAX* Konpaku soul flames that shatter, Reiatsu 3 bars, the flash-step bar
 ;;;; (ticks at a Hoho's and a Burst's cost; the Burst part glows while a Burst is possible), Awakening bar (EVOLUTION
-;;;; blinks; drains in a timed awakening; BURNOUT while a stance is burned out, the name dimmed), the kit meter
+;;;; blinks; drains in a timed awakening; WARD while Bankai West's ward is up), the kit meter
 ;;;; (Inferno; drains in Hellfire) or, for an awakened form with cooldown commands, the L / Shift+L cooldown bars
 ;;;; (a refused press flashes its bar), the timer, the
 ;;;; combo counter under the victim's bar, move-name callouts over the user, the HOLD O KIKON prompt, the red
@@ -90,8 +90,7 @@ UI-TEXT no longer conses per glyph either; the HUD keeps its block look.)"
   text sub color secs small side (t0 (fx-clock))
   (col (list 1.0 1.0 1.0 1.0)))                                   ; its colour (r g b 1)
 (defvar *words* nil "Big words on screen, newest first.")
-(defvar *feed-hint* (vector nil nil) "Per side: \"HIT TO FEED\" was shown this match (once).")
-(defun clear-words () (setf *words* nil (svref *feed-hint* 0) nil (svref *feed-hint* 1) nil))
+(defun clear-words () (setf *words* nil))
 
 (defun announce (text &key sub (color *white*) (secs 1.0) small side)
   "Show TEXT big in the middle (SMALL: smaller, upper lane; SIDE 0 / 1: over that side's panel),
@@ -148,9 +147,8 @@ greps \"over the P\")."
             (brush-line (word-sub x))))))))
 
 ;;; ---------------------------------------------------------------- side panels: the meters
-(declaim (type f32vec *trail-v* *gg-seen* *pip-t* *hud-v*))
+(declaim (type f32vec *trail-v* *pip-t* *hud-v*))
 (defvar *trail-v* (make-f32 4) "Damage trail per side (fraction): [side] Reishi, [2 + side] the guard gauge.")
-(defvar *gg-seen* (make-f32 4) "Per side: [side] the guard gauge the HUD saw last frame, [2 + side] when it was last fed (FX-CLOCK).")
 (defvar *pip-t* (make-f32 (* 2 *konpaku-max*)) "Per side x pip: ELAPSED-TIME it shattered (0 = intact).")
 (defvar *hud-v* (make-f32 3))
 
@@ -177,32 +175,21 @@ pulsing when RED), a thin outline (red and pulsing when RED)."
         (%houtline (- x 1f0) (- y 1f0) (+ bw 2f0) (+ bh 2f0) 1f0 0.2f0 0.2f0 p)
         (%houtline (- x 1f0) (- y 1f0) (+ bw 2f0) (+ bh 2f0) 1f0 1f0 1f0 0.4f0))))
 
-(defun-fast %gg-seen! (gs side gg tm fed)
-  "The HUD's view of SIDE's guard gauge GG (GS = *GG-SEEN*): a FED gauge (Bankai) that rose since last frame was fed
-at TM (the bar's white flash)."
-  (declare (type f32vec gs) (fixnum side) (single-float gg tm))
-  (when (and fed (> gg (+ (aref gs side) 0.01f0))) (setf (aref gs (+ 2 side)) tm))
-  (setf (aref gs side) gg)
-  nil)
-
-(defun-fast %hud-guard (x y bw bh frac trail right guardless mode gs side tm)
-  "The guard gauge: dark back, white drain TRAIL, the fill by MODE: 0 steel, 1 steel 30 % darker (he guards below
-full: GUARD HOLD, no refill), 2 ember (Bankai: the fed flame), flashing white for 0.1 s after a feed (GS = *GG-SEEN*,
-SIDE); GUARDLESS: a grey bar whose red fill climbs back (pulsing) until it is full and he can guard again (Bankai:
-it REIGNITEs)."
-  (declare (single-float x y bw bh frac trail tm) (fixnum mode side) (type f32vec gs))
-  (let* ((p (%pulse tm 3.0)) (k (if (= mode 1) 0.7f0 1f0)) (em (= mode 2))
-         (flash (if em (f-max 0f0 (- 1f0 (* 10f0 (- tm (aref gs (+ 2 side)))))) 0f0))
+(defun-fast %hud-guard (x y bw bh frac trail right guardless mode tm)
+  "The guard gauge: dark back, white drain TRAIL, the fill by MODE bits: 1 30 % darker (he guards below full: GUARD
+HOLD, no refill; Bankai West's ward), 2 ember (Bankai: East's pierce reads it), else steel; GUARDLESS: a grey bar whose
+red fill climbs back (pulsing) until it is full and he can guard again."
+  (declare (single-float x y bw bh frac trail tm) (fixnum mode))
+  (let* ((p (%pulse tm 3.0)) (k (if (logtest mode 1) 0.7f0 1f0)) (em (logtest mode 2))
          (r0 (* k (if em 1f0 0.84f0))) (g0 (* k (if em 0.62f0 0.88f0))) (b0 (* k (if em 0.25f0 0.94f0)))
          (r1 (* k (if em 0.78f0 0.48f0))) (g1 (* k (if em 0.24f0 0.55f0))) (b1 (* k (if em 0.06f0 0.66f0))))
-    (declare (single-float p k flash r0 g0 b0 r1 g1 b1))
+    (declare (single-float p k r0 g0 b0 r1 g1 b1))
     (%hrect x y bw bh 0.05f0 0.04f0 0.07f0 0.75f0)
     (if guardless
         (progn (%hrect x y bw bh 0.32f0 0.32f0 0.35f0 0.9f0)
                (%hbar x y bw bh frac right 0.9f0 0.12f0 0.15f0 (+ 0.6f0 (* 0.4f0 p)) 0.6f0 0.02f0 0.05f0 (+ 0.6f0 (* 0.4f0 p))))
         (progn (%hbar x y bw bh trail right 1f0 1f0 1f0 0.95f0)
-               (%hbar x y bw bh frac right (+ r0 (* flash (- 1f0 r0))) (+ g0 (* flash (- 1f0 g0))) (+ b0 (* flash (- 1f0 b0))) 1f0
-                      (+ r1 (* flash (- 1f0 r1))) (+ g1 (* flash (- 1f0 g1))) (+ b1 (* flash (- 1f0 b1))) 1f0)))))
+               (%hbar x y bw bh frac right r0 g0 b0 1f0 r1 g1 b1 1f0)))))
 
 (defun-fast %hud-flash (x y w h fill right burst tm)
   "The flash-step bar: dark back, a steel-blue FILL (0..1), white ticks at a Hoho's and a Burst's cost;
@@ -326,18 +313,62 @@ at HZ when HZ > 0."
     (%hrect x y w h 0.05f0 0.04f0 0.07f0 0.75f0)
     (%hbar x y w h fill right r g b a)))
 
+;;; ---------------------------------------------------------------- KOSEI (攻勢): the tag and the motes (docs/DUEL_STRINGS.md §5)
+(declaim (type f32vec *kosei-v*))
+(defvar *kosei-v* (make-f32 10) "Per side: FX-CLOCK of the last paying contact, its multiplier and its screen x y (the mote).")
+(defparameter *kosei-kanji* "攻")
+(defparameter *kosei-tags* (coerce (loop for i from 15 to 30 collect (format nil "x~,1f" (/ i 10.0))) 'simple-vector)
+  "The tag's multiplier text, x1.5 .. x3.0 in tenths (no string made per frame).")
+(defparameter *c-kosei* (list 1.0 0.55 0.2 1.0))
+
+(defun kosei-mote (e m x y z)
+  "A paying contact of E's (the :kosei event): one ember mote from the hit at (X Y Z) (its screen point now) to his
+Reiatsu bar, sized by M; none when the hit is off screen."
+  (let ((o (* 5 (fighter-side (fighter e)))) (v *kosei-v*))
+    (setf (aref v o) (if (world-to-screen *hud-v* (f32 x) (f32 y) (f32 z)) (f32 (fx-clock)) 0f0) (aref v (+ o 1)) (f32 m)
+          (aref v (+ o 2)) (aref *hud-v* 0) (aref v (+ o 3)) (aref *hud-v* 1))))
+
+(defun hud-kosei (side gg x y right tx ty s)
+  "KOSEI on side SIDE's panel: at a multiplier >= 1.5 (his guard gauge GG) the ember 攻 xM tag ending at X (the inner
+end of his guard bar, on the Konpaku row: its middle at Y), toward his side of the screen (RIGHT: the right panel);
+the last paying contact's mote flying to (TX TY), his Reiatsu bar, 0.35 s."
+  (let ((m (kosei-mult gg)))
+    (when (>= m 1.5)
+      (let* ((em (* 8 s)) (str (svref *kosei-tags* (max 0 (min 15 (- (round (* 10 m)) 15)))))
+             (tw (text-width str s)) (kx (if right (+ x (* 0.5 em)) (- x tw (* 2 s) (* 0.5 em)))))
+        (set-line kx y em *c-kosei*)
+        (setf (aref *bl* 7) (line-width *kosei-kanji*))
+        (brush-line *kosei-kanji*)
+        (hud-text str (if right (+ x em (* 2 s)) x) (- y (* 3.5 s)) s *c-kosei* :align (if right :left :right)))))
+  (%kosei-mote (* 5 side) (f32 tx) (f32 ty) (f32 s)))
+
+(defun-fast %kosei-mote (o tx ty s)
+  "The mote of the paying contact at offset O of *KOSEI-V*, flying from its hit to (TX TY) over 0.35 s (0 B)."
+  (declare (fixnum o) (single-float tx ty s))
+  (let* ((v *kosei-v*) (t0 (aref v o)) (u (/ (- (fx-clock) t0) 0.35f0)))
+    (declare (type f32vec v) (single-float t0 u))
+    (when (and (> t0 0f0) (> u 0f0) (< u 1f0))
+      (let* ((k (* u u)) (x (aref v (+ o 2))) (y (aref v (+ o 3)))
+             (cx (+ x (* k (- tx x)))) (cy (+ y (* k (- ty y)))) (r (* s (+ 1.5f0 (* 1.5f0 (aref v (+ o 1)))))) (a (- 1f0 (* 0.5f0 u))))
+        (declare (single-float k x y cx cy r a))
+        (dotimes (i 12)                                   ; an ember disc (a 12-gon, drawn here: no boxed arguments)
+          (let* ((a0 (* (i->f i) 0.5235988f0)) (a1 (+ a0 0.5235988f0)))
+            (declare (single-float a0 a1))
+            (%hq cx cy (+ cx (* r (f-cos a0))) (+ cy (* r (f-sin a0))) (+ cx (* r (f-cos a1))) (+ cy (* r (f-sin a1))) cx cy
+                 1f0 0.55f0 0.2f0 a)))))))
+
 ;;; ---------------------------------------------------------------- side panels: per-kit strings
 (defvar *kit-hud* (make-hash-table :test 'eq) "KIT -> #(label meter u-tag): the panel name, the kit meter, U's tag.")
 
 (defun kit-hud (kit)
   "The cached HUD data of KIT: the name label (\"YAMAMOTO  BANKAI\"), the kit meter (inherited
-from the base form when this form has none) and the tag of what a U that guards adds (\"U: GARB\", \"U: DRINK\": U is
-a guard in every form, two forms' guards do more)."
+from the base form when this form has none) and the tag of what U does in the form (\"U: WEST\", \"WARD\", \"U: DRINK\")."
   (or (gethash kit *kit-hud*)
       (setf (gethash kit *kit-hud*)
             (vector (format nil "~a~@[  ~a~]" (kit-name kit) (and (not (eq (kit-form kit) :base)) (kit-form-name kit)))
                     (or (kit-meter kit) (kit-meter (find-kit (kit-character kit) :base)))
-                    (cond ((member :garb (kit-passives kit)) "U: GARB") ((member :drink (kit-passives kit)) "U: DRINK"))))))
+                    (cond ((kit-guard-to kit) "U: WEST") ((member :ward (kit-passives kit)) "WARD")
+                          ((member :drink (kit-passives kit)) "U: DRINK"))))))
 
 ;;; combo counter: per victim side, the last combo with dealt damage (knockdown zeroes the running
 ;;; total, so the counter keeps the last non-zero one) and its string, rebuilt when it changes
@@ -362,24 +393,24 @@ a guard in every form, two forms' guards do more)."
          (align (if right :right :left)) (y (* 0.05 h)) (bh (max (* 7 s) (* 0.028 h)))
          (ns (max 2 s)) (tm (fx-clock)) (ls (if (portrait-p) (ceiling s 2) s))   ; portrait: the centre labels smaller
          (frac (/ (gauges-reishi g) (float (gauges-reishi-max g)))) (red (red-p (gauges-reishi g) (gauges-reishi-max g))))
-    ;; name + form (dimmed while the stance is burned out)
-    (hud-text (svref kh 0) edge (- y (* 8 ns) s) ns (cond ((burnout-p e) '(0.5 0.52 0.58 1)) ((kit-awakening kit) *ember*) (t *white*))
+    ;; name + form
+    (hud-text (svref kh 0) edge (- y (* 8 ns) s) ns (if (kit-awakening kit) *ember* *white*)
               :align align)
     ;; Reishi + trail
     (let ((tr (aref *trail-v* side)))
       (setf (aref *trail-v* side) (f32 (if (> tr frac) (max frac (- tr (* 0.35 (hud-dt)))) frac)))
       (%hud-reishi (f32 x) (f32 y) (f32 bw) (f32 bh) (f32 frac) (aref *trail-v* side) right red tm))
     ;; the guard gauge, right under it
-    (let* ((gf (/ (gauges-gg g) *gg-max*)) (ti (+ 2 side)) (tr (aref *trail-v* ti)) (fed (kit-burnout kit)))
+    (let* ((gf (/ (gauges-gg g) *gg-max*)) (ti (+ 2 side)) (tr (aref *trail-v* ti)) (ward (passive-p e :ward)))
       (setf (aref *trail-v* ti) (f32 (if (> tr gf) (max gf (- tr (* 0.5 (hud-dt)))) gf)))
-      (%gg-seen! *gg-seen* side (gauges-gg g) tm (and fed (not (gauges-guardless g))))   ; fed: the white flash
-      (when (and fed (not (svref *feed-hint* side)) (not (gauges-guardless g)) (< gf 0.5))   ; once a match
-        (setf (svref *feed-hint* side) t)
-        (announce "HIT TO FEED" :color '(1 0.55 0.2 1) :secs 1.2 :small t :side side))
       (%hud-guard (f32 x) (f32 (+ y bh (* 2 s))) (f32 bw) (f32 (max (* 3 s) (* 0.3 bh))) (f32 gf) (aref *trail-v* ti)
                   right (gauges-guardless g)
-                  (cond (fed 2) ((and (member (fighter-state f) '(:guard :guard-hit)) (< gf 1.0)) 1) (t 0))
-                  *gg-seen* side tm))
+                  (logior (if (and (or ward (member (fighter-state f) '(:guard :guard-hit))) (< gf 1.0)) 1 0)
+                          (if (or ward (passive-p e :pierce)) 2 0))
+                  tm))
+    ;; KOSEI: the tag at the guard bar's inner end (on the Konpaku row, clear of the pips), the mote to the Reiatsu bars
+    (hud-kosei side (gauges-gg g) (if right x (+ x bw)) (+ y bh (* 16 s) (* 0.5 (max (* 4.5 s) (* 0.013 h))))
+               right (if right (- edge (* 0.12 w)) (+ edge (* 0.12 w))) (+ y bh (* 26 s)) s)
     ;; Konpaku soul flames
     (%hud-pips (f32 x) (f32 (+ y bh (* 16 s))) (f32 bw) (f32 (max (* 4.5 s) (* 0.013 h))) side (gauges-konpaku g) right red tm)
     ;; Reiatsu: 3 bars + label
@@ -400,7 +431,6 @@ a guard in every form, two forms' guards do more)."
                    (if hot 0.6f0 1f0) (if hot 4f0 0f0) tm)
         (cond ((gauges-evolution g)
                (hud-text "EVOLUTION" lx (+ ay ty) ls (alpha! *c-evo* (hud-pulse 3.0)) :align align))
-              ((burnout-p e) (hud-text "BURNOUT" lx (+ ay ty) ls '(0.62 0.64 0.7 1) :align align))
               ((svref kh 2) (hud-text (svref kh 2) lx (+ ay ty) ls *u-tag* :align align))   ; what this form's guard adds
               ((kit-awakening kit) (hud-text (kit-form-name kit) lx (+ ay ty) ls *ember* :align align))
               (t (hud-text "AWAKEN" lx (+ ay ty) ls '(0.95 0.8 0.4 0.9) :align align)))

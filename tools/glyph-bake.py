@@ -19,7 +19,7 @@ from fontTools.pens.basePen import BasePen
 import pathops
 
 CHARS = ("卍解残火の太刀野晒呑め、鬼魂城郭炎上天地灰尽旭日刃獄衣十万億死大葬陣東西南北撫斬勝"
-         "山本元柳斎重國更木剣八不知松明俺斬決着時間切"
+         "山本元柳斎重國更木剣八不知松明俺斬決着時間切光焦熱攻"
          "ぶったるてみろよにれねえもんは"
          "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,!-:'")
 OUT = "duel/lisp/glyphs.lisp"

@@ -11,6 +11,8 @@
 | [GAME_DESIGN.md](GAME_DESIGN.md) | RAVEN EDGE 的設計規格 v1：操作、招式幀數表、戰鬥規則、敵人、波次、HUD、美術、音效對照、動畫 |
 | [DUEL_DESIGN.md](DUEL_DESIGN.md) | SOUL DUEL 的設計（照實作）：與 RoS 的差異、規則、操作、共通機制、兩個角色的招式表、AI、流程、開發中改過的決定 |
 | [DUEL_NOZARASHI_V2.md](DUEL_NOZARASHI_V2.md) | 劍八野晒形態的重新設計 v2「呑め」三杯梯（已決定、尚未實作），含西式「按住 U＝鎧甲」與移除 `:ignore-armor` |
+| [DUEL_YAMA_REWORK.md](DUEL_YAMA_REWORK.md) | 山本卍解重製（2026-09-27，已實作）：U 從『東・旭日刃』切到『西・殘日獄衣』、東的穿透、西的全方位霸體防禦、新 L 技旭光／焦熱地獄、使用者的決定與實作偏離之處（英文） |
+| [DUEL_STRINGS.md](DUEL_STRINGS.md) | J／K 連段、O 收尾與「攻勢」KŌSEI（2026-09-27，已實作）：最多三段、J／K 只能切換一次、接觸閘門、揮空硬直、幀數預算、O 收尾只接在打中的第 3 段之後、進攻獎勵的公式、AI 調整、使用者的決定、實作偏離之處與節奏測試結果（英文） |
 | [DUEL_MOBILE_DESIGN.md](DUEL_MOBILE_DESIGN.md) | 單手（片手）直式手機模式的設計 v2：預設右手、FULL 輔助不打折、不做本機直式雙人、日後藍牙／Wi-Fi 對戰；§12 是 2026-09-26 已做好的簡單版（P0 + PWA）與偏離之處 |
 | [DUEL_GAMEPLAY.md](DUEL_GAMEPLAY.md) | SOUL DUEL 的建置與操作、時間模型、除錯指令、log、測試腳本、決定性檢查、節奏測試結果、效能、主機測試 |
 | [GAMEPLAY.md](GAMEPLAY.md) | RAVEN EDGE 玩法系統的實作說明：時間模型、實體與元件、動畫、招式定義、敵人 AI、遊戲流程、除錯指令、砍掉的項目 |

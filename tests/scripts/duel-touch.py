@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """duel-touch.py — writes tests/scripts/duel-touch.json: ONE-HAND by touch alone at 390x844 (run.mjs --mobile):
-title tap -> ONE-HAND VS CPU -> three select taps -> the intro skipped by a tap -> taps (Quick string), a rest (guard),
+title tap -> ONE-HAND VS CPU -> three select taps -> the intro skipped by a tap -> taps (the J J J string, 2.2 m from the
+idle CPU: debug 2393) and the O chip (the O ender), a rest (guard),
 flicks (Step), a drag far (dash / run), rest + flick up (Hoho), flick up + lift (F), a long neutral up-flick lifted
 late (still F, no Step: the 2026-09-27 playtest), the O and L chips, the pause chip. Hash lines (debug 2107) at the end: run it twice under --fixed-dt and they must match (the determinism gate).
   python3 tests/scripts/duel-touch.py
@@ -24,7 +25,9 @@ tap(9.0, 195, 600); tap(10.0, 195, 600); tap(11.0, 195, 600)   # select: P1, P2,
 tap(12.0, 195, 400)                                 # skip the intro
 s.append({"at": 13.0, "eval": "Module._debug_cmd(2105)"})   # the CPU idles while the gestures run (on again at 30 s)
 s.append({"at": 30.0, "eval": "Module._debug_cmd(2105)"})
-for t in (15.0, 15.25, 15.5): tap(t, PX, PY)        # Quick x3
+s.append({"at": 14.6, "eval": "Module._debug_cmd(2393)"})   # 2.2 m apart (the string needs contact: DUEL_STRINGS §2.2)
+for t in (15.0, 15.2, 15.45): tap(t, PX, PY)        # J J J: a 3-link string (each tap latched during the link before)
+tap(15.85, 220, 444)                                # the O chip tapped (not held) after J3's hit: the O ender, no Kikon
 stroke(17.0, [(PX, PY)], lift=False); s.append({"at": 17.8, "touch": "end", "x": PX, "y": PY})   # rest: guard
 stroke(19.0, [(PX, PY), (PX, PY + 12), (PX, PY + 24), (PX, PY + 40)])        # flick down: Step back
 stroke(20.0, [(PX, PY), (PX - 12, PY), (PX - 24, PY), (PX - 40, PY)])        # flick left: sidestep

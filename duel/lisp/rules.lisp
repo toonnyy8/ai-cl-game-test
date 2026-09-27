@@ -107,15 +107,15 @@ opponent at DIST."
 ;;;   :armor     a move's armour with hits left (:armor-hits: from move frame *ARMOR-FROM* to its startup's
 ;;;              end, or a Kikon rush's dash)   :invuln    Step / Hoho iframes, down, wake-up
 ;;;   :parry     a parry move inside *PARRY-WINDOW* (Bankai West's GOKUI GAESHI)
-(defun resolve-contact (def-state &key breaker guard-crush (in-front t) unguardable hazard ranged-armor)
+;;; Bankai West's ward (passive :ward) reports :guard in his free states and own moves (fighter.lisp DEFENDER-STATE)
+(defun resolve-contact (def-state &key breaker guard-crush (in-front t) unguardable hazard ward)
   "What one hit that touched the defender does. The attack: BREAKER (a Breaker strike),
 GUARD-CRUSH (Breaker property on another move),
 UNGUARDABLE (guard, stance, armour and a parry don't stop it, Step / Hoho iframes still do: the South
 bind; the Kikon rush's strike is guardable, KIKON-OUTCOME), HAZARD (a projectile / ground hit: a parry
-doesn't catch it; a :ranged hit window counts as one), RANGED-ARMOR (a ranged hit on a defender whose form armours
-against them, Bankai West's garb: unless he guards, it is armoured; UNGUARDABLE still goes through).
+doesn't catch it; a :ranged hit window counts as one).
 The defender: DEF-STATE (above), IN-FRONT (the attacker is inside his guard arc; armour covers every
-side). Returns
+side), WARD (Bankai West's ward: his guard covers 360 deg, and a hazard in his parry's window is blocked, not a hit). Returns
   NIL           no effect (invulnerable)
   :hit          damage + the move's reaction
   :counter      :hit with x*COUNTER-MULT* damage and +*COUNTER-STUN* frames
@@ -123,17 +123,16 @@ side). Returns
   :guard-break  *GUARD-BREAK-STUN*
   :stance-break the stance crumples (*STANCE-BREAK-STUN*)
   :absorbed     the stance takes the damage, no reaction, and stores it
-  :armored      damage, no reaction (a move's armour, or the garb against a ranged hit); a Breaker and
+  :armored      damage, no reaction (a move's armour); a Breaker and
                 UNGUARDABLE go through it (nothing ignores armour)
   :parried      caught by a parry: no damage; the attacker staggers and the parry counters (a Breaker
                 breaks it: :stance-break; a hazard or UNGUARDABLE hits)
 Breaker vs Breaker is a CLASH, decided before any contact (BREAKER-CLASH-P)."
   (let* ((crush (or breaker guard-crush))
-         (state (cond ((and (eq def-state :guard) (not in-front)) :neutral)
+         (state (cond ((and (eq def-state :guard) (not in-front) (not ward)) :neutral)
                      ((and unguardable (member def-state '(:guard :stance-in :stance :parry))) :neutral)
-                     ((and hazard (eq def-state :parry)) :neutral)
-                     (t def-state)))
-         (state (if (and ranged-armor (member state '(:neutral :breaker))) :armor state)))
+                     ((and hazard (eq def-state :parry)) (if ward :guard :neutral))
+                     (t def-state))))
     (ecase state
       (:invuln nil)
       (:parry (if breaker :stance-break :parried))
@@ -218,16 +217,15 @@ recovery, e.g. the Breaker's 30) or R + *WHIFF-EXTRA*."
   (if contact r (or whiff (+ r *whiff-extra*))))
 
 (defun chain-open-p (sf s a r contact)
-  "May the next hit of a string start at move frame SF? On :hit from the end of the active frames
-(the string combos); on :block or a whiff (NIL) only in the last *CHAIN-LEAD* frames of recovery,
-so a -2 string hit leaves a gap (Step / Hoho yes, Q1 no)."
+  "May the next link of a string start at move frame SF? Only after CONTACT (the contact gate, docs/DUEL_STRINGS.md
+§2.2: a whiff, NIL, never chains). On :hit from the end of the active frames (the string combos); on :block only in
+the last *CHAIN-LEAD* frames of recovery, so a -2 link leaves a gap (Step / Hoho yes, J1 no)."
   (let ((total (+ s a r)))
-    (and (< sf total)
+    (and contact (< sf total)
          (if (eq contact :hit) (>= sf (+ s a)) (>= sf (- total *chain-lead*))))))
 
 (defun cancel-open-p (sf hit-frame total landed)
-  "On-hit cancel window (SP1 / SP2 / Hoho from Quick/Flash strings, the Kikon rush from any other
-landed move): the move
+  "On-hit cancel window (SP1 / SP2 / Hoho / a :cancel L from any J / K link, the O ender from a link-3 hit): the move
 LANDED, from its first hit frame HIT-FRAME until its recovery ends (TOTAL)."
   (and landed (>= sf hit-frame) (< sf total)))
 
@@ -249,8 +247,8 @@ LANDED, from its first hit frame HIT-FRAME until its recovery ends (TOTAL)."
 
 (defun hit-damage (base atk-mods def-mods combo-index counter-hit)
   "Damage (integer, >= 1 for a damaging hit) of a hit with BASE damage. ATK-MODS, a plist of the
-attacker's multipliers, all stacked multiplicatively: :mult (the form's: Hellfire 1.30, Bankai 1.20,
-Nozarashi 1.15), :cornered / :cornered-max / :lost (Cornered: +per Konpaku lost, capped).
+attacker's multipliers, all stacked multiplicatively: :mult (the form's: Hellfire 1.30, RYOTE 1.15, x(1 + k) of
+Bankai East's pierce), :cornered / :cornered-max / :lost (Cornered: +per Konpaku lost, capped).
 DEF-MODS: :mult on the defender's side (1 in v1). COMBO-INDEX: this hit's number in the combo
 (1-based, COMBO-SCALE). COUNTER-HIT: x*COUNTER-MULT*."
   (if (<= base 0)
@@ -263,31 +261,11 @@ DEF-MODS: :mult on the defender's side (1 in v1). COMBO-INDEX: this hit's number
                        (combo-scale combo-index)
                        (if counter-hit *counter-mult* 1.0))))))
 
-;;; ---------------------------------------------------------------- the stance traits and burnout (design v3 §0, §A)
-;;; A kit with :burnout (the Bankai stances) runs its stance traits on the guard gauge: when the gauge
-;;; empties (a block, East's recoil, a Breaker) he is burned out (and guardless) until it
-;;; is full again. HEAT is T while he is not burned out; these rules gate the five places the traits live.
-;;; The damage he TAKES (:taken) is not gated: the risk stays.
-(defun heat-mult (mult heat)
-  "The form's dealt multiplier MULT, or 1.0 while burned out (no HEAT)."
-  (if heat mult 1.0))
-
-(defun chip-rate (hw-chip blade-chip heat)
-  "The chip fraction of a blocked hit: the hit's own HW-CHIP, else the form's BLADE-CHIP; none while burned out."
-  (and heat (or hw-chip blade-chip)))
-
-(defun armor-budget (hits heat)
-  "The armour a move starts with (its :armor-hits HITS); none while burned out."
-  (if heat hits 0))
-
-(defun heat-flags (flags heat)
-  "A hit window's FLAGS: while burned out (no HEAT) a window marked :heat loses its :guard-crush (East's
-SP1 blade no longer breaks guard: it is blocked like any hit)."
-  (if (or heat (not (member :heat flags))) flags (remove :guard-crush flags)))
-
-(defun recoil (v)
-  "East's recoil: the guard gauge he loses when a hit of guard value V is blocked (*RECOIL* x V, rounded)."
-  (round (* *recoil* v)))
+;;; ---------------------------------------------------------------- Bankai East's pierce (docs/DUEL_YAMA_REWORK.md)
+(defun pierce-rate (gg &optional (mult 1.0))
+  "East's pierce k at guard gauge GG: *PIERCE-MIN* (empty) .. *PIERCE-MAX* (full), x a move's :pierce-mult MULT
+(KYOKKO 2.0). A hit deals x(1 + k); a blocked hit lets k x its damage through as chip (CHIP-DAMAGE: never kills)."
+  (* mult (+ *pierce-min* (* (- *pierce-max* *pierce-min*) (/ gg *gg-max*)))))
 
 (defun cast-point (px pz tx tz range)
   "Where a cast aimed from (PX PZ) at a target at (TX TZ) lands: on the target, or RANGE along the line
@@ -311,6 +289,17 @@ spread over 60 steps in whole points, so a whole second burns exactly the rate (
 (defun burn (reishi amount)
   "REISHI after a self-burn of AMOUNT (Hellfire, Ennetsu): never below 1."
   (if (<= reishi 1) reishi (max 1 (- reishi amount))))
+
+;;; ---------------------------------------------------------------- KOSEI (攻勢), the aggression reward (docs/DUEL_STRINGS.md §5)
+(defun kosei-mult (gg)
+  "KOSEI's multiplier at the attacker's guard gauge GG: 1 + *KOSEI-BONUS* x (1 - GG / *GG-MAX*), x1 full .. x3 empty."
+  (+ 1.0 (* *kosei-bonus* (- 1.0 (/ gg *gg-max*)))))
+
+(defun kosei-gain (g gg)
+  "What one paying contact of guard value G earns an attacker at guard gauge GG. Values: Reiatsu, flash-step, the
+multiplier."
+  (let ((m (kosei-mult gg)))
+    (values (* *kosei-reiatsu* g m) (* *kosei-fs* g m) m)))
 
 ;;; ================================================================ Kikon, Konpaku, time-up (§1)
 (defun red-p (reishi max-reishi)
@@ -429,8 +418,8 @@ advantage ADV <= *GG-ENDER-ADV*)."
 
 (defun gg-regen (gg idle guardless guarding)
   "The guard gauge one frame later: nothing while GUARDING (GUARD HOLD) or before *GG-DELAY* frames without a
-drain (IDLE), then *GG-REGEN*/s (*GG-REGEN-GUARDLESS*/s while GUARDLESS), capped at *GG-MAX*. From 0: 60 + 429 f
-to full."
+drain (IDLE), then *GG-REGEN*/s (*GG-REGEN-GUARDLESS*/s while GUARDLESS), capped at *GG-MAX*. Bankai West's ward
+counts as guarding (combat.lisp GAUGE-SYSTEM): he refills only in East."
   (if (or guarding (< idle *gg-delay*))
       gg
       (min *gg-max* (+ gg (/ (if guardless *gg-regen-guardless* *gg-regen*) 60.0)))))
@@ -439,11 +428,6 @@ to full."
   "GUARD HOLD: the refill delay counter (frames since the last drain) one frame later: frozen while GUARDING
 (:guard / :guard-hit), not restarted, so a guard released picks up where it left off."
   (if guarding idle (min 9999 (1+ idle))))
-
-(defun gg-feed (gg removed rate)
-  "Bankai's fed flame: the guard gauge GG after its owner removed REMOVED Reishi from the opponent (RATE per point,
-*BANKAI-FEED*), capped at *GG-MAX*."
-  (min *gg-max* (+ gg (* rate removed))))
 
 (defun can-guard-p (gg guardless)
   "May a fighter guard? Not at gauge 0, and not while GUARDLESS (from 0 until the gauge is full again)."
@@ -468,23 +452,11 @@ it is below this rung's down-below (hysteresis; several steps at once: 0 at the 
     (loop while (and (> i 0) (< nome (fifth (nth i ladder)))) do (decf i))
     i))
 
-(defun garb-value (v)
-  "West's garb guard: the guard gauge a blocked hit of guard value V drains (*GARB-MULT* x V, after the cut)."
-  (* *garb-mult* v))
-
-(defun garb-scorch (kind)
-  "West's garb guard: the burn a blocked melee hit of move KIND gives its attacker (*GARB-SCORCH*; 0 if none)."
-  (getf *garb-scorch* kind 0))
-
 (defun ranged-hit-p (hazard flags melee-range d2)
-  "Is a hit ranged (not the attacker's own blade)? A HAZARD's always; a window with :ranged in FLAGS unless its move's
+  "Is a hit ranged (not the attacker's own blade: a parry can't catch it)? A HAZARD's always; a window with :ranged in FLAGS unless its move's
 MELEE-RANGE covers the defender (D2: his squared distance from the attacker): the blade near, the line / crack beyond.
 One window decides it per hit, so a hit never lands twice."
   (and (or hazard (and (member :ranged flags) (not (and melee-range (<= d2 (* melee-range melee-range)))))) t))
-
-(defun ranged-damage (dmg)
-  "West's garb vs a ranged hit: the damage DMG is reduced to *GARB-RANGED* x DMG (rounded; HIT-DAMAGE keeps >= 1)."
-  (round (* *garb-ranged* dmg)))
 
 (defun drink-split (dmg)
   "DRINK: a drunk hit worth DMG. Values: the half he takes (rounded up: real damage) and the half the

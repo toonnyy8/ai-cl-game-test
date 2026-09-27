@@ -43,7 +43,7 @@
   (face :neutral)                       ; a held expression (:neutral :shout :hurt) while FACE-T > 0 (else chosen by state)
   (face-t 0f0 :type single-float)       ; effect seconds the held FACE lasts
   (beat 0f0 :type single-float)         ; effect seconds left of the head-thrown-back overlay (cup 3's entry: the grin)
-  (flare 0f0 :type single-float)        ; effect seconds left of the garb's flare (a ranged hit absorbed)
+  (flare 0f0 :type single-float)        ; effect seconds left of the garb's flare (a warded hit, SHONETSU's tell)
   (last-sf -1 :type fixnum)             ; the move frame the last draw saw (draw-side move beats: Nadegiri's cut)
   ;; Phase 6 looks (cosmetic)
   (face-was :neutral)                   ; the expression drawn last frame (FACE-ACCENT)
@@ -78,6 +78,8 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
                                         ; frames each *KIT-COMMANDS* slot (7 of them) still cools down (kept through resets)
   (hits 0 :type fixnum)                 ; bitmask: hit windows of the current move that connected
   (contact nil)                         ; what the move's hits did: NIL (whiff) :hit :block
+  (queued nil)                          ; the latch: the J / K link (:q / :f) pressed during this string link
+                                        ; (fires when its chain opens after contact; dropped on a whiff)
   (land-sf -1 :type fixnum)             ; move frame of the first connect (cancel windows open)
   (dmg-bonus 0 :type fixnum)            ; added to the move's damage (stance: stored)
   (crush nil)                           ; this move now crushes guard (stance >= 150, SP2 held)
@@ -89,6 +91,8 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
                                         ; applied after both stepped (no side acts first)
   (hoho-lock 0 :type fixnum)            ; frames until the next Hoho is allowed
   (guard-t 0 :type fixnum)              ; frames Guard has been held (raised at *GUARD-RAISE*)
+                                        ; (Bankai West: frames in the ward, which is up at *GUARD-RAISE*)
+  (warded -1 :type fixnum)              ; the tick his ward (Bankai West) last blocked a hit (the CPU's reversal)
   (stored 0 :type fixnum)               ; stance: damage absorbed
   (charge 0 :type fixnum)               ; hold frames when a charge move was released (Shiranui)
   (perfect nil)                         ; this Hoho was perfect: its counter strike is pending
@@ -178,15 +182,9 @@ its volume test and its look (hazards.lisp)."
 (defun state-of (e) (fighter-state (fighter e)))
 (defun side-name (e) (if (zerop (fighter-side (fighter e))) "P1" "P2"))
 (defun cpu-p (e) (and (brain e) t))
-(defun burnout-p (e)
-  "Is E burned out (design v3 §A.1)? A form whose stance traits run on the guard gauge (kit :burnout) is,
-from the moment the gauge empties (any cause) until it is full again: exactly while he is guardless."
-  (and (gauges-guardless (gauges e)) (kit-burnout (kit-of e))))
-(defun heat-on-p (e) "E's stance traits are on: not burned out (the rules' HEAT argument)." (not (burnout-p e)))
 (defun passive-p (e p)
-  "Does E's current form have passive P (:garb :projectile-cut :recoil :scorch :cut :drink)?
-None while he is burned out."
-  (and (heat-on-p e) (member p (kit-passives (kit-of e)))))
+  "Does E's current form have passive P (:ward :pierce :projectile-cut :scorch :cut :drink)?"
+  (and (member p (kit-passives (kit-of e))) t))
 
 (defvar *combat-log* nil
   "Dev logging: moves, hits, reactions, Kikons (CLOG lines). The first Module._debug_cmd turns it on.")

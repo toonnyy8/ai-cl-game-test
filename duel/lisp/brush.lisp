@@ -375,7 +375,7 @@ LINE-WIDTH of STR. 0 B."
   ;; move -> (kanji reading mark): the gameplay SP / technique names shown as a brush column at the user's side
   ;; (instead of the pixel callout over his head). The Bankai compass (DUEL_DESIGN §6.1) carries its direction.
   '((:ya-shiranui "不知火" "SHIRANUI" nil) (:ya-taimatsu "松明" "TAIMATSU" nil) (:ya-nadegiri "撫斬" "NADEGIRI" nil)
-    (:ya-to-west "残日獄衣" "NISHI: ZANJITSU GOKUI" "西") (:ya-to-east "" "HIGASHI" "東")
+    (:ya-e-kyokko "旭光" "KYOKKO" "東") (:ya-w-shonetsu "焦熱地獄" "SHONETSU JIGOKU" "西")
     (:ya-kyoku "旭日刃" "KYOKUJITSUJIN" "東") (:ya-kaka "火火十万億死大葬陣" "MINAMI: KAKA JUMANOKUSHI DAISOJIN" "南")
     (:ya-tenchi "" "KITA" "北")
     (:ke-buttagiru "ぶった斬る" "BUTTAGIRU" nil) (:ke-charge "俺に斬れねえもんはねえ" "ORE NI KIRENEE MON WA NEE" nil))

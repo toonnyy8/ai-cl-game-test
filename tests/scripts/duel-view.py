@@ -3,12 +3,16 @@
 #   node tools/run.mjs dist/duelview --secs 120 --script tests/scripts/duel-view-strips.json
 #   node tools/run.mjs dist/duelview --secs 25  --script tests/scripts/duel-view-stage.json
 #   node tools/run.mjs dist/duelview --secs 40  --script tests/scripts/duel-view-sounds.json
+#   node tools/run.mjs dist/duelview --secs 20  --script tests/scripts/duel-view-strings.json   (the strings' new clips:
+#     tests/shots/duel-string-*.png)
 # Shots: tests/shots/duel-view-*.png. The clip indices follow the viewer's order (names sorted), which
 # this script rebuilds by reading the DEFCLIP / DEFSTRIKE forms of the art files.
 import json, re
 T0 = 9.0                     # startup (meshes + sound synthesis) is done by then
 SRC = ["duel/lisp/body.lisp", "duel/lisp/yama-art.lisp", "duel/lisp/ken-art.lisp"]
-clips = sorted({m.group(2).upper() for f in SRC for m in re.finditer(r"^\((defclip|defstrike) :([a-z0-9-]+)", open(f).read(), re.M)})
+clips = sorted({m.group(2).upper() for f in SRC for m in re.finditer(r"^\((defclip|defstrike) :([a-z0-9-]+)", open(f).read(), re.M)}
+               | {n.upper() for f in SRC for m in re.finditer(r"^\(defrun :[a-z0-9-]+ ((?::[a-z0-9-]+ ?)+)\)", open(f).read(), re.M)
+                  for n in m.group(1).replace(":", "").split()})    # (DEFRUN base run skate-b slide-r slide-l)
 
 def script(name, build):
     ev, t = [], [T0]
@@ -42,5 +46,23 @@ def stage(cmd, shot, t):
 def sounds(cmd, shot, t):
     for i in range(44): cmd(5000 + i, 0.8)
 
-script("looks", looks); script("strips", strips); script("stage", stage); script("sounds", sounds)
+NEW = ("ya-sleeve", "ya-e-drop", "ke-kick", "ke-r-kote", "ke-r-tsuki")   # the strings' new clips (docs/DUEL_STRINGS.md §3)
+
+def strings(cmd, shot, t):
+    # their strips (0, S, S+A, end) as tests/shots/duel-string-*.png
+    for n in NEW:
+        cmd(1000000 + 1000 * clips.index(n.upper()))
+        t[0] += 0.9; ev_shot(n)
+
+def script(name, build):
+    ev, t = [], [T0]
+    def cmd(c, wait=0.25): ev.append({"at": round(t[0], 2), "eval": f"Module._debug_cmd({c})"}); t[0] += wait
+    def shot(n, wait=1.0): t[0] += wait; ev.append({"at": round(t[0], 2), "shot": f"tests/shots/duel-view-{n}.png"}); t[0] += 0.2
+    global ev_shot
+    ev_shot = lambda n: (ev.append({"at": round(t[0], 2), "shot": f"tests/shots/duel-string-{n}.png"}), t.__setitem__(0, t[0] + 0.2))
+    build(cmd, shot, t)
+    json.dump(ev, open(f"tests/scripts/duel-view-{name}.json", "w"), indent=0)
+    print(f"duel-view-{name}.json: {len(ev)} steps, ends at {t[0]:.0f} s")
+
+script("looks", looks); script("strips", strips); script("stage", stage); script("sounds", sounds); script("strings", strings)
 print(len(clips), "clips:", " ".join(c.lower() for c in clips))

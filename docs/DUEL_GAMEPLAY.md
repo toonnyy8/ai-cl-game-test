@@ -19,7 +19,7 @@ The pointer is never locked (`*pointer-lock*` NIL): a keyboard-only game.
 |---|---|---|---|
 | Move | W A S D | arrows | left stick / d-pad |
 | Quick / Flash / Signature | J / K / L | KP1 / KP2 / KP3 | X / Y / B |
-| Guard (hold; in every form: West's is the garb, cup 3's DRINK) | U | KP4 | LB |
+| Guard (hold; Bankai East: switch to West, whose ward is always up; cup 3: DRINK) | U | KP4 | LB |
 | Breaker (hold) | I | KP5 | RB |
 | Kikon rush (hold through the strike: the Kikon on a red opponent) | O | KP6 | RT |
 | Step (hold = dash: run after the hop) | Space | KP0 | A |
@@ -94,8 +94,9 @@ pressed this step, applied at the end of `fighter-system`), `fighter-invuln` (fr
 ## Characters as data (`kit.lisp`)
 
 `(defmove :name :kind … :startup :active :recovery :dmg :adv-block :reach :arc … :on-frame ((f
-hook)) :params (…))` and `(defkit :character :form :inherit … :commands (…) :strings (…) :ai (…))`
-(the keys are documented in the two macros' docstrings). A form may `:inherit` another and derive
+hook)) :params (…))` and `(defkit :character :form :inherit … :commands (…) :grid (…) :strings (…) :ai (…))`
+(the keys are documented in the two macros' docstrings; `:grid (J1 J2 J3 K1 K2 K3 J2s K2s)` is a form's J / K strings,
+`defmove-copy` makes the switched link 2, DUEL_STRINGS.md). A form may `:inherit` another and derive
 its moves (`:startup-add`, `:reach-mult`). Hooks are symbols called with FUNCALL (the kits load
 before the hook DEFUNs). `*ROSTER*` lists every character with a `:base` kit, in load order; the
 select screen cycles through it.
@@ -125,22 +126,25 @@ encoded in the integer.
 | 2209 | a K.O. of P2 (Yamamoto vs Kenpachi): the K.O. cinematic, then the results screen (the 勝 card) |
 | 10000+1000k+f | stills: cinematic k (as 2200+k) held at frame f with the effects frozen there (impact frames, particles, stamps); a later command for the same k continues it to its new f (`tests/style-4-shots.py`) |
 | 2300+k | force a special now: 0 Hellfire + Ennetsu, 1 full Shiranui, 2 fire wave, 3 South (the bind) on Kenpachi 5 m away, 4 KYOKUJITSUJIN (the down-cut) at 6 m, 5 Split the Meteor, 6 Guard Break, 7 perfect Hoho, 8 Kenpachi's stance, 9 Buttagiru, 10 Kenpachi's SP2 flurry, 11 EVOLUTION for both, 12 Bankai (East) form, 13 Nozarashi form (cup 1), 14 P2 red (Reishi 200), 15 Nozarashi cup 2 (RYOTE, NOME 70), 16 cup 3 (NOMIHOSE, NOME 100) |
-| 2315+k | frame probe, YY at 2 m: P1's move k (0 Q1, 1 Q3, 2 F2, 3 Taimatsu) into P2's held guard → `duel probe … advantage A (table T)` |
-| 2319 | trade probe: both Q1 on the same step → `duel probe trade …` hash line 40 steps later |
-| 2320 | Burst test: human P1 Yamamoto (3 bars) 2 m from Kenpachi, whose switched-off CPU mashes Quick for 60 steps (Q1 Q2 Q3); press Shift+J after the 2nd hit |
+| 2315+k | frame probe, YY at 2 m: P1's move k (0 J1, 1 K3 (−20, entered at f8), 2 J3 (−4), 3 Taimatsu) into P2's held guard → `duel probe … advantage A (table T)` |
+| 2319 | trade probe: both J1 on the same step → `duel probe trade …` hash line 40 steps later |
+| 2320 | Burst test: human P1 Yamamoto (3 bars) 2 m from Kenpachi, whose switched-off CPU mashes Quick for 60 steps (J1 J2 J3); press Shift+J after the 2nd hit |
 | 2321 | force a Burst Reverse now (P1 two hits into Kenpachi's string): screenshots |
 | 2327 | guard gauge test: human P1 Yamamoto 2 m from Kenpachi, whose switched-off CPU presses Quick every other step for 20 s (both put back 2 m apart when he is free beyond 2.6 m, a `duel probe pressure t=… gg …` line each time); hold U: BLOCKED ×n (GUARD HOLD: no refill while he holds it), `P1 GUARD CRUSH`, hits land although U is held, `P1 GUARD BACK` (the guardless refill runs although U is held), blocked again — `duel-gauges.json` |
-| 2328 | consing of the HUD's guard (steel and guard v3's ember Bankai bar with its feed bookkeeping `%gg-seen!`), flash-step, cooldown and NOME bars (100 draws each): `hud consing: … 0 B`; of Nozarashi's cup-3 aura and the rift (in the `vfx consing` line); and of the Bankai stance looks (10 draws each: the burnout aura and blade, West's flame garb, the bound ash, the heat sheet, South's crack, the aura crossfade): `vfx consing (10 draws, B): ash 0, garb 0, …` (0 B each; the crossfade conses ~60 B a frame only during its 350 ms) |
+| 2328 | consing of the HUD's guard (steel, and the dimmed ember Bankai bar), flash-step, cooldown and NOME bars (100 draws each): `hud consing: … 0 B`; of Nozarashi's cup-3 aura and the rift (in the `vfx consing` line); and of the Bankai stance looks (10 draws each: West's flame garb, the bound ash, the heat sheet, KYOKKŌ's ray, South's crack, the aura crossfade): `vfx consing (10 draws, B): garb 0, …` (0 B each; the crossfade conses ~60 B a frame only during its 350 ms) |
 | 2329 | consing of the brush captions (100 draws of each layout: cinematic, card, callout, results), the impact splash, the dutch roll and a brush Latin line: `brush consing (100 draws, B): cine 0, card 0, callout 0, results 0, splash 0, roll 0, line 0` |
 | 2330+k | O module test: human P1 with module k mod 4 (0 ENJO, 1 TENCHI, 2 CHARGE, 3 LEAP CLEAVE) 1 m inside its reach from a Yamamoto CPU who, by k div 4: 0 stands, 1 holds guard, 2 stands red (Reishi 200), 3 holds guard red, 4 plays (HARD), 5 stands in 0.1× slow motion for 14 s (shots), 6 stands and holds guard once hit (the dash-in is BLOCKED), 7 the same red (the dash-in can't be guarded: the Kikon); press O (hold it, or tap it) — `duel-kikon.json` |
-| 2370+k | Bankai stance test (human P1, P2's CPU off; `duel-stances.json`): 0 East vs Kenpachi 3 m (L switch, cooldown, HIGASHI), 1 East J strings into a guard the probe keeps full (`duel probe wall … P1 gg … [BURNOUT] P2 r…`: the recoil burns him out, then the guard drops), 2 West's garb guard under Kenpachi's Quick mash (U held; `duel probe garb … P1 gg … P2 r…`: 14 × 1.3 = 18 a string, 5 scorch a hit, burnout on the 6th string), 3 / 4 East Shift+K into a guard at 2 / 6 m, 5 West Shift+K with Kenpachi's F1 started as the parry opens (the parry, the counter), 6 East Shift+L on Kenpachi 3 m, 7 / 8 human Kenpachi under a CPU East's South at 5 m (8 in 0.25× slow motion for 6 s), 9 West's **ranged armour** (the `:ranged` probe: a cup-3 Kenpachi 4.8 m away casts KUKAN-GIRI's rift twice (the second into West's guard, which the script holds), the cash-out, then cup 1's Meteor, then the Meteor at 3 m, inside its 3.4 m cleaver: melee; `duel probe ranged t=… P1 r… gg … STATE`) |
-| 2380+k | Nozarashi v2 / West garb test (`nome-test`, human P1, P2's CPU off; `duel-nome.json`): 0 the ladder (the probe raises NOME +12 every 45 steps to 100, then lets it drain: `duel probe nome t=… m… FORM` every 30 steps, cups up then down), 1 DRINK (cup 3, U held, Bankai East mashes Quick: `duel probe drink … gg … m …`), 2 / 3 KUKAN-GIRI's rift into a guard / on a standing Yamamoto (K, K K), 4 the cash-out (cup 3, Shift+K into a red Yamamoto's guard at 4 m, then O held: a 2-Konpaku Kikon), 5 West's garb guard under RYOTE's K K (`duel probe cut … gg …`: the cut, halved, ×1.3: 31 a string, 30 scorch) |
+| 2370+k | Bankai stance test (human P1, P2's CPU off; `duel-stances.json`; DUEL_YAMA_REWORK.md): 0 East vs Kenpachi 3 m (L = KYOKKŌ; then U → West, L = SHŌNETSU JIGOKU, J drops to East), 1 East J strings into a guard the probe keeps full (`duel probe wall … P1 gg … P2 r…`: P2 loses the pierce's chip, 57 a string at a full gauge; P1's gauge stays full), 2 West's ward under Kenpachi's Quick mash (`duel probe ward … P1 gg … FORM …`: 31 a string (28 × 1.1), no blockstun, never refilled; GUARD CRUSH on the 4th string, `P1 WARD BROKEN`, East and guardless), 3 / 4 East Shift+K into a guard at 2 / 6 m, 5 West Shift+K with Kenpachi's F1 started as the parry opens (P1's gauge at 40: the catch refills it; the counter), 6 East Shift+L on Kenpachi 3 m, 7 / 8 human Kenpachi under a CPU East's South at 5 m (8 in 0.25× slow motion for 6 s), 9 West's ward vs ranged hits (the `:ranged` probe: a cup-3 Kenpachi 4.8 m away casts KUKAN-GIRI's rift twice (blocked), the cash-out (a Guard Break within 6 m: the ward breaks), then cup 1's Meteor, then the Meteor at 3 m; `duel probe ranged t=… P1 r… gg … STATE`) |
+| 2380+k | Nozarashi v2 / West ward test (`nome-test`, human P1, P2's CPU off; `duel-nome.json`): 0 the ladder (the probe raises NOME +12 every 45 steps to 100, then lets it drain: `duel probe nome t=… m… FORM` every 30 steps, cups up then down), 1 DRINK (cup 3, U held, Bankai East mashes Quick: `duel probe drink … gg … m …`), 2 / 3 KUKAN-GIRI's rift into a guard / on a standing Yamamoto (K, K K), 4 the cash-out (cup 3, Shift+K into a red Yamamoto's guard at 4 m, then O held: a 2-Konpaku Kikon), 5 West's ward under RYOTE's K K (`duel probe cut … gg …`: the cut ×1.1, 53 a string, GUARD CRUSH on the 2nd → East) |
 | 2362+k | Phase 5 looks (force-special 62+k): 0 Taimatsu (YK 4.5 m), 1 Nadegiri (forced Hellfire, 5 m), 2 Yamamoto's Breaker (Ikkotsu, 6 m), 3 Kenpachi entering cup 3 (NOMIHOSE, the rung event: the page, the grin with the head thrown back) |
 | 2390 | consing of the Phase 5 looks (10 draws each: fireball, charge, pillar, dome, the Hellfire / Evolution / Breaker auras and ring, the garb flare, the rift, a spent wave's erosion, the Phase 5 stamps, the face / beat / move-beat choices): `vfx5 consing (10 draws, B): fireball 0, …` (0 B each) |
 | 2366 | Phase 6 destruction still (looks only): YK 4 m apart, a scorch under Kenpachi, a crack and a burst of rubble chips beside him; Yamamoto shouts and Kenpachi is hurt for 0.6 s (face beats: both gameplay face accents) |
 | 2391 | consing of the Phase 6 looks (10 draws each: the marks and chips with both pools full, a pillar and a fire wave beside the lens, the Nozarashi skull, the K.O. rain, both face accents, the face-change note, the left-hand grip step + IK, a caption slicing out): `vfx6 consing (10 draws, B): marks 0, …` (0 B each) |
 | 2392 | the left fist's gap to the cleaver's handle over every grip clip (the RYOTE kendo set, KUKAN-GIRI, the stance) and every grip-clip → grip-clip crossfade, keys only and with the draw's `GRIP-LEFT!` (P1 must be Kenpachi, e.g. after 2383): `grip <clip> (raw/IK mm): …` per frame, `grip drift: raw max … mm, IK max … mm` |
 | 2114+p | the seed gate of 2110+p with the combat log kept and a `pace t=… \| FORM m… r… g…[!] k… w…` line every 60 ticks per side (scratchpad `pace.py` reads it: cup times, stays, the Bankai gauge, scorches) |
+| 2393 | the string test: the running match's fighters 2.2 m apart, facing, idle, nothing held (a switched-off CPU lets go of its guard): the scripts' string + O ender (`duel-touch.json`) |
+| 2394+k | the string test (DUEL_STRINGS.md; `duel-strings.json`): human P1 in form k (0 Yamamoto Shikai, 1 Bankai East with his guard gauge at 30: KŌSEI ×2.4 on the HUD, 2 Kenpachi base, 3 RYOTE with NOME at 60) 2.2 m from an idle Kenpachi (CPU off); the script presses J / K / O |
+| 24000+k … 29000+k | the strings' seed-gate knobs without a rebuild (before 2113): `*ai-o-ender*` = k / 100 (24000), NORMAL's `*ai-follow-guard-p*` = k / 100 (25000), every K2 / K3 (and copy) deals k % of its written damage (26000), `*kosei-reiatsu*` = k / 100 and `*kosei-fs*` half that (27000), `*ai-string-flash-p*` = k / 100 (28000), `*ai-sp-cancel-p*` = k / 100 (29000) |
 | 2400 | toggle god mode: each step both fighters' Reishi is raised to at least 400 |
 | 2500+k | human P1 vs an idle CPU, cinematics skipped: 0 Yamamoto vs Kenpachi, 1 Kenpachi vs Yamamoto, 2 YY, 3 KK |
 | 2600+k | `*red-threshold*` = k % (pace the gate without a rebuild) |
@@ -158,8 +162,8 @@ apart (`place`).
 | `duel hash t=600 \| x y z yaw STATE FORM r<reishi> k<konpaku> a<reiatsu> f<flash-step> g<guard>[!] w<awaken> m<meter> n<kikon> h<heat> \| … \| cd <P1 cooldowns> <P2> \| haz N` | every 600 battle steps: positions in cm, yaw in 0.01 rad, gauges (`!` = guardless; m = Inferno or NOME, the FORM = Nozarashi's cup), n = the Konpaku the last Kikon rush was worth, CPU heat, each command slot's cooldown, hazard count (the determinism check) |
 | `duel -> RESULTS winner P1 konpaku 7-0 ticks 7351 secs 122.5` | the match result (winner, Konpaku P1-P2, sim steps, seconds) |
 | `duel gate YAMAMOTO KENPACHI: 20 matches, KOs 20, median … s, min …, max … \| …` | the seed gate summary |
-| `duel probe YA-Q1 blocked: attacker free at +27, defender at +25, advantage -2 (table -2)` | a frame probe |
-| `[  tick] P1 move YA-Q1 [why]`, `P1 YA-Q1 -> P2 HIT 38`, `P1 YA-KIKON -> P2 KIKON 70` (a rush strike that became the Kikon; `BLOCKED` / `HIT` otherwise), `P1 KIKON FOLLOW-UP on P2 [(red)]` (it hit with O held: the knockback and the dash-in), `P1 BURNOUT RECOIL` (… `BLOCK` / `ARMOUR` / `BREAKER`: a Bankai stance's gauge ran out) and `P1 GUARDLESS BLOCK` (any gauge, by cause), `P1 form BANKAI-WEST` (the L switch), `P1 refused SIG: cooling 61` (a press while it cools), `P2 scorched 15` (West's armour / parry), `P1 BIND -> P2 HIT 40` (South's grab), `P1 KIKON on P2: -2 konpaku, 7 left`, `P1 GUARD CRUSH` / `P1 GUARD BACK`, `P1 form HELLFIRE`, Nozarashi's cups `P1 form RYOTE` / `NOMIHOSE` / `NOZARASHI`, `P1 DRINK 21 (+20 drunk)`, `P1 GUARD CRUSH (drinking)`, `P1 RIFT -> P2 HIT 50`, `P1 RIFT CLOSED`, `P1 CASH-OUT` (why `CASHOUT-PUNISH` / `-NEAR` on the move line), `KIKON on P2: -3 konpaku, 6 left (RYOTE)` (the attacker's form), `P1 PERFECT HOHO`, `P1 EVOLUTION`, `CLASH`, `cine NAME`, `P1 step [why]` / `P1 dash [why]` (a run starts; why DASH / DASH-BACK for the CPU) / `P1 run -> YA-Q1, carry 1.0 m` / `P1 BURST` / `hoho` / `guard` | the combat log (`clog`, components.lisp): move starts (with the CPU's reason), every applied hit and its result, Konpaku, forms, events |
+| `duel probe YA-J1 blocked: attacker free at +27, defender at +25, advantage -2 (table -2)` | a frame probe |
+| `[  tick] P1 move YA-J1 [why]` (the CPU's why: `STRING`, `O-ENDER`, `J-BEATS-K`, `PRESSURE`, …), `P1 YA-J1 -> P2 HIT 38`, `P1 YA-KIKON -> P2 KIKON 70` (a rush strike that became the Kikon; `BLOCKED` / `HIT` otherwise), `P1 KIKON FOLLOW-UP on P2 [(red)]` (it hit with O held: the knockback and the dash-in), `P1 BURNOUT RECOIL` (… `BLOCK` / `ARMOUR` / `BREAKER`: a Bankai stance's gauge ran out) and `P1 GUARDLESS BLOCK` (any gauge, by cause), `P1 form BANKAI-WEST` (the L switch), `P1 refused SIG: cooling 61` (a press while it cools), `P2 scorched 15` (West's armour / parry), `P1 BIND -> P2 HIT 40` (South's grab), `P1 KIKON on P2: -2 konpaku, 7 left`, `P1 GUARD CRUSH` / `P1 GUARD BACK`, `P1 form HELLFIRE`, Nozarashi's cups `P1 form RYOTE` / `NOMIHOSE` / `NOZARASHI`, `P1 DRINK 21 (+20 drunk)`, `P1 GUARD CRUSH (drinking)`, `P1 RIFT -> P2 HIT 50`, `P1 RIFT CLOSED`, `P1 CASH-OUT` (why `CASHOUT-PUNISH` / `-NEAR` on the move line), `KIKON on P2: -3 konpaku, 6 left (RYOTE)` (the attacker's form), `P1 PERFECT HOHO`, `P1 EVOLUTION`, `CLASH`, `cine NAME`, `P1 step [why]` / `P1 dash [why]` (a run starts; why DASH / DASH-BACK for the CPU) / `P1 run -> YA-Q1, carry 1.0 m` / `P1 BURST` / `hoho` / `guard` | the combat log (`clog`, components.lisp): move starts (with the CPU's reason), every applied hit and its result, Konpaku, forms, events |
 | `duel camera CAMERA  SIDE` | the CAMERA option changed (menu or 2109) |
 | `missing clip :name` | once per clip name the art lacks (the stance plays instead) |
 | `stats: fps … cons/frame … draws … particles … \| ms/frame sim … queue … render … \| BATTLE t … p1 STATE reishi p2 … \| heap … MB \| fx-dropped N` | the engine's 2 s stats line plus the duel's tail |
@@ -175,12 +179,13 @@ SwiftShader WebGPU). Every script waits 9 s for startup.
 | `duel-cvc-yy.json`, `-yk`, `-kk` | 40 | turbo + seeded CPU vs CPU (debug 2102, then 3007 / 4007 / 5007): reaches `duel -> RESULTS winner …` in a few seconds; the determinism reference (below) |
 | `duel-gate.json` | 1100 | debug 2113 (all three pairings × 20 seeds), then 2107 to turn the combat log back on: three `duel gate` lines, every match a K.O. |
 | `duel-probe.json` | 20 | debug 2315–2319: each `advantage` must equal its `table` value; the trade line shows the same Reishi on both sides |
-| `duel-keys.json` | 32 | P1's keyboard against an idle CPU (2500): log lines `P1 move YA-Q1`, `YA-Q2`, `YA-Q3`, `YA-F1`, `YA-SIG`, `YA-BREAKER`, `P1 guard`, `P1 step`, `P1 move YA-SHIRANUI`, `P1 hoho`, `P1 move YA-TAIMATSU`, in that order (it walks in with W: VS CPU's behind camera; Q3's knockback puts P2 out of F1's reach, F1 whiffs, and the second K, 21 f later, expires before a whiffed move's chain window opens, so there is no F2, although the script's comment lists one); plus `P1 WAVE -> P2 HIT 110` and `P1 FIREBALL -> P2 HIT …` |
-| `duel-extras.json` | 45 | P1's keyboard, VS CPU (behind camera): hold Space + W (`P1 step`, `P1 dash`), again with J out of the run (`P1 run -> YA-Q1, carry 1.0 m`), Shift+Space (`P1 hoho`: the camera swings round), 2320 + Shift and J taps (`P2 KE-Q2 -> P1 HIT`, then `P1 BURST`), 2321 (a forced Burst), pause → CAMERA → SIDE (`duel camera CAMERA  SIDE`). Shots `tests/shots/duel-extras-*.png`: behind, dash, hoho-a / -b, burst-a / -b, pause, side |
+| `duel-keys.json` | 40 | P1's keyboard against an idle CPU (2500): log lines `P1 move YA-J1`, `YA-J2`, `YA-J3` (it walks in with W: VS CPU's behind camera, then 2393 puts him 2.2 m out, since a string needs contact), `YA-K1`, `YA-K2` (the second K latched during K1), `YA-SIG`, `YA-BREAKER`, `P1 guard`, `P1 step`, `P1 move YA-SHIRANUI`, `P1 hoho`, then SP2 (the K hits' Inferno and the full Shiranui make it Hellfire's `YA-NADEGIRI`), in that order; plus `P1 WAVE -> P2 HIT 110` and `P1 FIREBALL -> P2 HIT …` |
+| `duel-extras.json` | 45 | P1's keyboard, VS CPU (behind camera): hold Space + W (`P1 step`, `P1 dash`), again with J out of the run (`P1 run -> YA-J1, carry 1.0 m`), Shift+Space (`P1 hoho`: the camera swings round), 2320 + Shift and J taps (`P2 KE-J2 -> P1 HIT`, then `P1 BURST`), 2321 (a forced Burst), pause → CAMERA → SIDE (`duel camera CAMERA  SIDE`). Shots `tests/shots/duel-extras-*.png`: behind, dash, hoho-a / -b, burst-a / -b, pause, side |
 | `duel-kikon.json` | 170 | the O modules and the O rule by keyboard (2109 = the side camera, then 2330+k): each module in slow motion with O held on a standing opponent → `-> P2 HIT 70`, `KIKON FOLLOW-UP on P2` (the knockback and the dash-in), `-> P2 KIKON 70`, its cinematic (shots `tests/shots/duel-o-{enjo,tenchi,charge,leap}-{a,b,c,d,e}.png`: the aim, the lane / flash step / charge / leap, the strike, the dash-in, its strike); guarding, not red → `BLOCKED`; guarding **red**, O held → `BLOCKED`, no Kikon (the first strike is always guardable); red, standing → `HIT`, `FOLLOW-UP`, `KIKON`; the HARD CPU guards; not red, guarding once hit → `HIT`, `FOLLOW-UP`, `BLOCKED`; **red**, guarding once hit → `HIT`, `FOLLOW-UP (red)`, `KIKON`; O tapped on a red one → a plain `HIT` |
-| `duel-gauges.json` | 52 | 2327 with U held (the guard gauge drains 28 per Q string, `GUARD CRUSH` on the 4th, `HIT` while U is held, `GUARD BACK` about 9 s of ticks after it emptied: 1 s + 7.1 s of refill, plus the hitstops); 2500 + Shift+Space ×4 (three `P1 hoho`, the 4th refused: flash-step 23); 2500, a Hoho, 2320 + Shift+J → `P1 BURST` (flash-step 70 → ~0). Shots `tests/shots/duel-gauges-*.png` |
-| `duel-stances.json` | 100 | the Bankai stances by keyboard (2370+k, the side camera): L → `P1 move YA-TO-WEST`, `P1 form BANKAI-WEST`, L again → `P1 refused SIG: cooling 61`, L → `YA-TO-EAST -> P2 HIT 90`; East J strings into a full guard → the probe's `P1 gg` falls ~20 per string (17 recoil × 1.3, the chip feeds ~2 back at East's 0.05; the fed flame never refills), `P1 BURNOUT RECOIL` on the 5th, P2's Reishi stops falling (no chip), the guard drops → `HIT` ×1.0 (127 a string), after `P1 GUARD BACK` ×1.2 (153); West's garb guard under Kenpachi's Quick (U held) → `BLOCKED` + `scorched 5` per hit, 18 per string, `P1 BURNOUT BLOCK` on the 6th, then `HIT`; (2379) `P2 RIFT -> P1 ARMORED 30` (×0.6 of 50; the log shows the base, P1 loses it ×1.2 for cup 3 and ×1.2 for Cornered: 43), `RIFT -> P1 BLOCKED 30` (U held: 6 of the gauge, no scorch), `KE-METEOR-N -> P1 ARMORED 234` and `KE-METEOR -> P1 ARMORED 144` (from 4.8 m: the line), then from 3 m `KE-METEOR -> P1 HIT 240` (the cleaver: melee), the probe showing P1 never in `STUN` before that; Shift+K at 2 m → `YA-KYOKU -> P2 GUARD-BREAK 90`, `-> P2 HIT 130`, at 6 m → `BLOCKED 130` only; West Shift+K → `KE-F1 -> P1 PARRIED 70`, `YA-W-COUNTER -> P2 HIT 150`; Shift+L → `P1 BIND -> P2 HIT 40` exactly 16 f after the stab, J J → hits 3–4; as the bound Kenpachi Shift+J → `P1 BURST`; a Step in the tell → no `BIND` line. Shots `tests/shots/duel-stance-*.png` (east-idle, nishi, to-west, west-idle, higashi, to-east, recoil, burnout, burnout-hit, kyoku-break, kyoku-cone, kyoku-far, parry, counter, south-tell, south-bound, south-victim, south-burst, south-step; the older armour / armour-burnout / armour-attack stills show the removed hold-U armour) and guard v3's `tests/shots/guard3-{garb,garb-burnout,ranged-rift,ranged-cashout}.png` |
-| `duel-nome.json` | 90 | Nozarashi v2 and West's garb guard by keyboard (2380+k, the side camera): the ladder probe (`m` 38 → 100 and back; `P1 form RYOTE` at 40, `NOMIHOSE` at 100, `RYOTE` below 50, `NOZARASHI` below 25); DRINK (`P2 YA-E-Q1 -> P1 BLOCKED 34`, `P1 DRINK 21 (+20 drunk)`, … `P1 GUARD CRUSH (drinking)`); the rift (`KE-N-F1 -> P2 BLOCKED 90`, 20 f later `RIFT -> P2 BLOCKED 50`; on a standing target `HIT 90`, `RIFT -> HIT 50`, `KE-R-F2 -> HIT 110`); the cash-out (`CASH-OUT`, `form NOZARASHI`, `KE-METEOR-N -> P2 GUARD-BREAK 390`, then O: `KIKON on P2: -2 konpaku`); West's garb guard under RYOTE's K K (`KE-R-F1 -> P1 BLOCKED 85`, `scorched 15` per hit, 31 of the gauge a string, `BURNOUT BLOCK` on the 4th). Shots `tests/shots/duel-nome-*.png`, `tests/shots/guard3-garb-cut.png` |
+| `duel-gauges.json` | 52 | 2327 with U held (the guard gauge drains 24 per J J J string, `GUARD CRUSH` on the 5th, `HIT` while U is held, `GUARD BACK` about 17 s of ticks after it emptied: 1 s + 15.4 s of refill at 6.5/s, plus the hitstops); 2500 + Shift+Space ×4 (three `P1 hoho`, the 4th refused: flash-step 23); 2500, a Hoho, 2320 + Shift+J → `P1 BURST` (flash-step 70 → ~0). Shots `tests/shots/duel-gauges-*.png` |
+| `duel-stances.json` | 70 | the Bankai stances by keyboard (2370+k, the side camera): L → `P1 move YA-E-KYOKKO`, `-> P2 HIT 85` (the log shows the base: 162 at a full gauge); U → `P1 form BANKAI-WEST`, L → `P1 move YA-W-SHONETSU`, `P1 PILLARS -> P2 HIT 45`, J → `P1 form BANKAI-EAST`, `P1 move YA-E-J1`; East J J J strings into a full guard → `BLOCKED`, P2's Reishi falls 51 a string (the pierce), P1's gauge stays 100; West's ward under Kenpachi's J J J → `BLOCKED` without blockstun, 26–27 a string, `P1 GUARDLESS BLOCK`, `P1 form BANKAI-EAST`, `P1 WARD BROKEN`, `P1 GUARD CRUSH` on the 4th, then `HIT`; (2379) the rifts `BLOCKED`, the cash-out `GUARD-BREAK` + `WARD BROKEN`; Shift+K at 2 m → `YA-KYOKU -> P2 GUARD-BREAK 90`, `-> P2 HIT 130`, at 6 m → `BLOCKED 130` only; West Shift+K → `KE-F1 -> P1 PARRIED 70`, `YA-W-COUNTER -> P2 HIT 150`, the gauge back to 100; Shift+L → `P1 BIND -> P2 HIT 40` exactly 16 f after the stab, J J → hits 3–4; as the bound Kenpachi Shift+J → `P1 BURST`; a Step in the tell → no `BIND` line. Shots `tests/shots/duel-yama-{kyokko,west-ward,shonetsu,ward-block,ward-crush}.png` (the rework) and `tests/shots/duel-stance-*.png` (east-idle, kyoku-break, kyoku-cone, kyoku-far, parry, counter, south-tell, south-bound, south-victim, south-burst, south-step) |
+| `duel-nome.json` | 90 | Nozarashi v2 and West's ward by keyboard (2380+k, the side camera): the ladder probe (`m` 38 → 100 and back; `P1 form RYOTE` at 40, `NOMIHOSE` at 100, `RYOTE` below 50, `NOZARASHI` below 25); DRINK (`P2 YA-E-J1 -> P1 BLOCKED 34`, `P1 DRINK 17 (+17 drunk)` plus the East pierce's chip on top, … `P1 GUARD CRUSH (drinking)`); the rift (`KE-N-F1 -> P2 BLOCKED 90`, 20 f later `RIFT -> P2 BLOCKED 50`; on a standing target `HIT 90`, `RIFT -> HIT 50`, and K K `KE-R-K2 -> HIT 68`); the cash-out (`CASH-OUT`, `form NOZARASHI`, `KE-METEOR-N -> P2 GUARD-BREAK 390`, then O: `KIKON on P2: -2 konpaku`); West's ward under RYOTE's K K K (`KE-R-K1 -> P1 BLOCKED 85`, `KE-R-K2 … 68`, `KE-R-K3 … 92`, 76 of the gauge a string, `GUARD CRUSH` and `form BANKAI-EAST` on the 2nd). Shots `tests/shots/duel-nome-*.png` |
+| `duel-strings.json` | 40 (`--fixed-dt 16.666667`) | the J / K strings by keyboard (2394+k, DUEL_STRINGS.md): Shikai J J J + O → `YA-J1`, `YA-J2`, `YA-J3`, `YA-KIKON` (O-ENDER: no aura, the strike 20 f after the press) `-> P2 HIT 70`; East K K K → `YA-E-K1`, `YA-E-K2`, `YA-E-K3` (the HUD's `攻 x2.2`: his gauge at 30); Kenpachi J K K + O → `KE-J1`, `KE-K2S`, `KE-K3`, `KE-KIKON`; RYOTE J J J and K K J → `KE-R-J1 J2 J3`, `KE-R-K1 K2 J3`; J J J → the kick; **J K J → `KE-J1`, `KE-K2S` and nothing more** (the third press eaten: J / K switch once). Shots `tests/shots/duel-string-{sodebi,o-ender,rakujitsu,tsuki,kick}.png`; the new clips' strips `duel-string-<clip>.png` come from `duel-view-strings.json` (dist/duelview) |
 | `duel-flow.json` | 34 | the menus by keyboard: VS PLAYER (P2 confirms with KP1), skip the intro, pause / resume, pause → CHARACTER SELECT → back to TITLE, then VS CPU HARD; check the `duel ->` lines; shot `duel-flow-vs-cpu-hard.png` |
 | `duel-perf.json` | 75 | 60 s of real-time CPU vs CPU (4003): the stats lines |
 | `duel-shots.json` | 90 | the screenshot set `tests/shots/duel-*.png`: title, mode, select, intro, neutral, hit, guard break, perfect Hoho, Hellfire, fire wave, Shiranui, Kaka, Meteor, the six cinematics, results, the HUD at 800×450 |
@@ -188,9 +193,9 @@ SwiftShader WebGPU). Every script waits 9 s for startup.
 Screenshots stall a script by ~0.5 s, so keys pressed right after one can arrive in the same frame
 as their release and be lost; keep shots out of timed key sequences.
 
-Stills of guard v3 (the garb guard under a Quick mash, its burnout, a rift and the cash-out absorbed by the garb, RYOTE's
-K K into the garb): `tests/shots/guard3-*.png`, from `duel-stances.json` (2372, 2379) and `duel-nome.json` (2385), taken
-with `run.mjs --fixed-dt 16.667` (the probes count sim ticks).
+Stills of the Bankai rework (KYOKKŌ's ray, the ward raised, SHŌNETSU JIGOKU's ring, the ward under a Quick mash, the
+broken ward back in East): `tests/shots/duel-yama-*.png`, from `duel-stances.json` (2370, 2372). (Guard v3's garb stills
+`guard3-*.png` were removed with the garb.)
 
 Stills of the Kenpachi batch (the awakening without an eyepatch, the three cups, DRINK, the rift, the cash-out, West's
 hold-U armour, the run facing the opponent): `python3 tests/batch-shots.py` → `tests/shots/batch-*.png` and the contact
@@ -226,10 +231,12 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P2 konpaku 0-4 ticks 9305 secs 155.1
+duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7
 ```
 
-(Guard v3, 2026-09-26: Reishi 1300, GUARD HOLD, Bankai's fed flame, West's garb guard and ranged armour, K3 and
+(The J / K strings, the O ender and KŌSEI, 2026-09-27 (DUEL_STRINGS.md): every pairing's lines changed; before them
+`winner P1 konpaku 2-0 ticks 7688 secs 128.1`. The Bankai rework and the slower guard refill, 2026-09-27 (DUEL_YAMA_REWORK.md): every pairing's lines changed; before
+it `winner P2 konpaku 0-4 ticks 9305 secs 155.1`. Guard v3, 2026-09-26: Reishi 1300, GUARD HOLD, Bankai's fed flame, West's garb guard and ranged armour, K3 and
 `*bankai-taken*` 1.2 change every pairing; its follow-up the same day (Bankai drains ×1.3, East feeds 0.05, the blade /
 line split) keeps this line and KK's, and changes YY and YK's hash lines; before it `winner P1 konpaku 7-0 ticks 7351 secs 122.5`, turbo and real
 time alike. The Kenpachi batch, 2026-09-26: West's hold-U armour changed YY and YK (KK stayed identical), Nozarashi v2 changed YK
@@ -266,9 +273,19 @@ CPU), win rates near even (YK within ±3 of 10 / 10). The gate runs ~15 min of t
 
 | Pairing | Median | Range | K.O. | Wins P1 / P2 |
 |---|---|---|---|---|
-| Yamamoto vs Yamamoto | 165.3 s | 123.3–231.9 | 20/20 | 11 / 9 |
-| Yamamoto vs Kenpachi | 155.1 s | 107.2–205.0 | 20/20 | Yamamoto 7 / Kenpachi 13 |
-| Kenpachi vs Kenpachi | 169.2 s | 111.9–196.9 | 20/20 | 13 / 7 |
+| Yamamoto vs Yamamoto | 129.4 s | 97.7–165.1 | 20/20 | 9 / 11 |
+| Yamamoto vs Kenpachi | 137.3 s | 77.0–196.1 | 20/20 | Yamamoto 10 / Kenpachi 10 |
+| Kenpachi vs Kenpachi | 130.4 s | 97.4–172.0 | 20/20 | 7 / 13 |
+
+(The J / K strings, the O ender and KŌSEI, the user's decisions 2026-09-27: K2 / K3 at 80 %, the CPU's string K 0.3,
+O ender 0.15, SP cancel 0.3 (one roll), chosen by runtime sweeps (debug 24000–29000 before 2113; DUEL_STRINGS.md §10
+has them). As designed the medians were YY 106.8 / YK 119.0 / KK 121.7 s. Before the strings: YY 128.6 s (88.2–160.2)
+14 / 6, YK 129.9 s (96.3–153.2) Yamamoto 10 / 10, KK 169.2 s (111.9–196.9) 15 / 5.)
+
+(The Bankai rework and the slower guard refill, the user's decisions 2026-09-27: `*pierce-max*` 0.45 and `*ward-mult*`
+1.1 chosen by runtime sweeps (debug 20000+k / 21000+k before 2113; DUEL_DESIGN §7 has the sweep). The win counts come
+from the per-match `duel -> RESULTS winner` lines, in gate order YY, YK, KK. Before it, guard v3 with its follow-up:
+YY 165.3 s (123.3–231.9) 11 / 9, YK 155.1 s (107.2–205.0) Yamamoto 7 / 13, KK 169.2 s (111.9–196.9) 13 / 7.)
 
 (Guard v3's follow-up, the user's decision 2026-09-26: every Bankai drain ×1.3, East's feed 0.05, the blade / line
 melee-ranged split; a deliberate nerf, no knob retuned. Before it: YY 181.8 s (135.5–230.4), YK 157.8 (115.2–194.9),
@@ -341,7 +358,7 @@ YY 1.9, YK 0.5, KK 0.2 (mostly Yamamoto's Signature / Shiranui once back in his 
 
 ```sh
 E=/media/8tsp/projects/ecl-24.5.10/ecl-emscripten-host/bin/ecl
-$E --norc --load tests/duel-rules-test.lisp      # duel-rules-test: 703 checks, ALL PASS
+$E --norc --load tests/duel-rules-test.lisp      # duel-rules-test: 1403 checks, ALL PASS
 $E --norc --load tests/duel-control-test.lisp    # duel-control-test: 53 checks, ALL PASS
 $E --norc --load tests/input-test.lisp           # input-test: 31 checks, ALL PASS  (engine vpad)
 $E --norc --load tests/cine-test.lisp            # cine-test: 18 checks, ALL PASS   (engine director)
@@ -350,25 +367,29 @@ $E --norc --load tests/cine-test.lisp            # cine-test: 18 checks, ALL PAS
 * **duel-rules-test** loads `tuning`, `rules`, `kit`, `yama`, `ken` over the engine's plain-CL
   `math`, `hitvol`, `input` (DEFCINE stubbed): the triangle and clash matrix; block / whiff
   advantage, including a frame-by-frame replay of every move of every form against its table;
-  damage and combo scaling; the contact rule; armour budgets; the Kikon rush (its phases with each
+  damage and combo scaling; the contact rule; armour budgets; the J / K strings (DUEL_STRINGS: every form's six routes
+  walked from J1 / K1, the §2.1 budget on every reachable link: J1 / K1 frames, J beats K, K2 / K3 at S_eff 14, every
+  link pair a combo on hit, the block gaps (K ≥ 11 f, J ≤ his own J1), J3 −4 / K3 −20 and its punish, the enders,
+  whiff R + 8 / R + 12, the copies equal their originals, the O ender always combos off link 3; route resolution through
+  `string-latch`: JKJ / KJK end at link 2, the last allowed press wins, an eaten press overwrites nothing, link 3 latches
+  nothing; the contact gate at every frame; KŌSEI's `kosei-mult` / `kosei-gain`); the Kikon rush (its phases with each
   module's aura / dash, reaches and press → hit times, cooldowns, `kikon-outcome`: guarded → nothing,
   held → the dash-in whose hit is the Kikon, released → a plain hit; the dash-in's window for every
   module (a non-red victim free `*kikon-follow-gap*` frames first, a red one reeling through it), its
   guard (blocked not red, unguardable red), its speed; every form's rush punishable on block), Konpaku
-  counts, Soul Break, time-up; the guard gauge (guard values, drain, crush advantage, the 12/s after
-  60 f refill, guardless 14/s, GUARD HOLD: `gg-regen` guarding, `gg-idle-next` frozen not restarted, Bankai's
-  `gg-feed` and the landed-string arithmetic) and
+  counts, Soul Break, time-up; the guard gauge (guard values, drain, crush advantage, the 5.5/s after
+  60 f refill, guardless 6.5/s, GUARD HOLD: `gg-regen` guarding, `gg-idle-next` frozen not restarted; East's pierce
+  `pierce-rate` and its hit / through-guard arithmetic, the ward never refilled) and
   the flash-step gauge (costs, regen, refund); Reiatsu 3/s; burns; Burst eligibility and the CPU's Burst rule; the run (stop, carry, brake, kit speeds);
   combo limits; the perfect-Hoho window; facing, movement and arena; AI helpers; hit
   volumes; kit sanity (every form's commands, costs and derived Nozarashi numbers); the Bankai stances
-  (the forms' numbers, the five burnout gates, the derivation rule and West's own South / North, both
-  stances' combos, the ender-gap rule, the L switch, the garb guard (half the guard value, the 8th Q string,
-  the scorch by kind) and East's recoil,
+  (DUEL_YAMA_REWORK: the forms' numbers, U's `:guard-to`, West's `:drop-to` / `:keep` via `kit-drop`, the ward in
+  `resolve-contact` (360°, a Breaker / guard-crush breaks it, unguardables through, a hazard in the parry window
+  blocked), KYOKKŌ and SHŌNETSU JIGOKU, East's combos, the ender-gap rule, Kenpachi's strings against the ward,
   KYOKUJITSUJIN's blade / cone against a guard, the parry window and counter, South's bind: cooldown,
-  follow-up window, unguardable, opener only, Burst-able, the Step / Hoho escape windows, `cast-point`); West's ranged
-  armour (`:ranged-armor` in `resolve-contact`: armoured from any side and in a Breaker's startup, a garb block when
-  guarded, the bind still binds; `ranged-damage`; which windows are `:ranged`); Reishi 1300; the run clip sets; Nozarashi v2 (DUEL_NOZARASHI_V2
-  §2.13 1–11: `nome-gain`, `meter-drain`, `ladder-rung`, `drink-split` / `drink-adv`, `cut-value` (K K into the garb: 24, scorch 30), the Kikon count and
+  follow-up window, unguardable, opener only, Burst-able, the Step / Hoho escape windows, `cast-point`); which windows
+  are `:ranged` (a parry can't catch them); Reishi 1300; the run clip sets; Nozarashi v2 (DUEL_NOZARASHI_V2
+  §2.13 1–11: `nome-gain`, `meter-drain`, `ladder-rung`, `drink-split` / `drink-adv`, `cut-value` (RYOTE's K K K: 69), the Kikon count and
   its cap, the register-kit parent-move rule, the three cups' tables and links, the rift's +8, the cash-out, the looks
   and the AI keys).
 * **duel-control-test**: the buffer window, consume and holds; command priority and modifier

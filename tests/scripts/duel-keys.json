@@ -14,6 +14,10 @@
 "down": false
 },
 {
+"at": 12.1,
+"eval": "Module._debug_cmd(2393)"
+},
+{
 "at": 12.3,
 "key": "KeyJ",
 "down": true

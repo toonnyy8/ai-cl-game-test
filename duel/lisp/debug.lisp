@@ -18,10 +18,10 @@
 ;;;;            skeletons, 4 Kyokujitsujin, 5 Split the Meteor, 6 guard break, 7 perfect Hoho,
 ;;;;            8 Ken stance, 9 Buttagiru, 10 Ken SP2 flurry, 11 EVOLUTION both, 12 Bankai form (+ 2 crack patches),
 ;;;;            13 Nozarashi form (cup 1), 14 P2 red, 15 cup 2 RYOTE, 16 cup 3 NOMIHOSE)
-;;;;   2315+k   frame probe, YY at 2 m: P1's move k (0 Q1, 1 Q3, 2 F2, 3 Taimatsu) into P2's held guard
+;;;;   2315+k   frame probe, YY at 2 m: P1's move k (0 J1, 1 K3, 2 J3, 3 Taimatsu) into P2's held guard
 ;;;;            -> "duel probe ... advantage"; 2319 trade probe: both Q1 on the same tick -> hash line
 ;;;;   2320     Burst test: human P1 Yamamoto (3 bars) at 2 m from Kenpachi, whose idle CPU mashes Quick for
-;;;;            60 steps (Q1 Q2 Q3): press Shift+J after the 2nd hit
+;;;;            60 steps (J1 J2 J3): press Shift+J after the 2nd hit
 ;;;;   2321     force a Burst Reverse now: P1 (in Kenpachi's Q2 hitstun) bursts out (screenshots)
 ;;;;   2327     guard gauge test: human P1 Yamamoto 2 m from Kenpachi pressing Quick for 20 s (hold U): the
 ;;;;            gauge drains, GUARD CRUSH, hits land while U is held, the guard back only when full
@@ -33,19 +33,19 @@
 ;;;;            4 plays (HARD), 5 stands, 0.1x slow motion 14 s (shots), 6 guards once hit (the dash-in is
 ;;;;            BLOCKED), 7 red and guards once hit (the Kikon anyway); the script holds O
 ;;;;   2326     force a clash now (Breaker vs Breaker: YK 3 m apart, the CLASH event; screenshots)
-;;;;   2370+k   Bankai stance tests (human P1; the script presses the keys; STANCE-TEST): 0 L switch + cooldown (East,
-;;;;            idle Kenpachi 3 m), 1 East into a guard kept full (recoil -> BURNOUT, then the guard drops),
-;;;;            2 West's garb guard under Kenpachi's Quick mash (U held: half the gauge, 5 scorch a hit -> BURNOUT on the
-;;;;            8th string), 3 / 4 East Shift+K into a guard at 2 / 6 m,
-;;;;            5 West parry (Kenpachi's F1 comes when the parry starts), 6 South cast on an idle Kenpachi 3 m,
-;;;;            7 / 8 human Kenpachi under a CPU's South at 5 m (7 normal speed, 8 0.25x slow motion 6 s), 9 West's ranged
-;;;;            armour (the :ranged probe: cup-3 Kenpachi at 4.8 m casts the rift twice, the cash-out, then cup 1's Meteor,
-;;;;            then the Meteor again at 3 m: its cleaver is melee; the script guards the second rift)
-;;;;   2380+k   Nozarashi v2 / West garb tests (human P1, P2's CPU off; NOME-TEST): 0 the ladder (NOME raised +12 every
+;;;;   2370+k   Bankai stance tests (human P1; the script presses the keys; STANCE-TEST): 0 East vs an idle Kenpachi
+;;;;            3 m (KYOKKO, U to West, SHONETSU JIGOKU, J drops to East), 1 East's J strings into a guard kept full (the
+;;;;            pierce's chip), 2 West's ward under Kenpachi's Quick mash (no blockstun, 28 a string, GUARD CRUSH on the
+;;;;            4th -> East), 3 / 4 East Shift+K into a guard at 2 / 6 m,
+;;;;            5 West parry (Kenpachi's F1 comes when the parry starts; P1's gauge at 40: the catch refills it), 6 South
+;;;;            cast on an idle Kenpachi 3 m, 7 / 8 human Kenpachi under a CPU's South at 5 m (7 normal speed, 8 0.25x slow
+;;;;            motion 6 s), 9 West's ward vs ranged hits (the :ranged probe: cup-3 Kenpachi at 4.8 m casts the rift twice,
+;;;;            the cash-out, then cup 1's Meteor, then the Meteor again at 3 m)
+;;;;   2380+k   Nozarashi v2 / West ward tests (human P1, P2's CPU off; NOME-TEST): 0 the ladder (NOME raised +12 every
 ;;;;            45 steps to 100, then left to drain: cups up, then down), 1 DRINK (cup 3, Bankai East mashes Quick into
 ;;;;            his held U), 2 / 3 KUKAN-GIRI's rift into a guard / a standing Yamamoto (K, K K), 4 the cash-out (cup 3,
-;;;;            Shift+K into a red Yamamoto's guard at 4 m, then O held: the Kikon is worth 2), 5 West's garb guard under
-;;;;            RYOTE's K K (the cut, halved: 24 of his guard gauge and 30 scorch per string)
+;;;;            Shift+K into a red Yamamoto's guard at 4 m, then O held: the Kikon is worth 2), 5 West's ward under
+;;;;            RYOTE's K K (the cut, x*WARD-MULT*: 53 of his guard gauge per string, GUARD CRUSH on the 2nd)
 ;;;;   2362+k   Phase 5 looks (force-special 62+k): 0 Taimatsu (YK 4.5 m), 1 Nadegiri (Hellfire, 5 m), 2 Yamamoto's
 ;;;;            Breaker (Ikkotsu, 6 m), 3 Kenpachi drinks cup 3 dry on entry (the NOMIHOSE rung event: the grin beat)
 ;;;;   2390     consing of the Phase 5 per-frame looks (10 draws each) -> "vfx5 consing" line
@@ -56,6 +56,17 @@
 ;;;;            (P1 must be Kenpachi, e.g. after 2315 or 2383) -> "grip drift" line
 ;;;;   2114+p   the seed gate of 2110+p with the combat log and a pace line every 60 ticks (scratchpad pace.py)
 ;;;;   2600+k   *RED-THRESHOLD* = k % (pacing the seed gate without a rebuild)
+;;;;   20000+k / 21000+k / 22000+k / 23000+k   balance knobs without a rebuild (the Bankai rework's gate tuning):
+;;;;            *WARD-MULT* / *PIERCE-MAX* = k / 100, *GG-REGEN* / *GG-REGEN-GUARDLESS* = k / 10
+;;;;   2393     the string test: the fighters of the running match 2.2 m apart, facing, idle, nothing held (scripts: a
+;;;;            string + the O ender, e.g. duel-touch.json)
+;;;;   2394+k   the string test (docs/DUEL_STRINGS.md): human P1 in form k (0 Yamamoto Shikai, 1 Bankai East, 2 Kenpachi
+;;;;            base, 3 RYOTE) 2.2 m from an idle Kenpachi (CPU off; East with his guard gauge at 30: KOSEI x2.4); the
+;;;;            script presses J / K / O (duel-strings.json)
+;;;;   24000+k / 25000+k / 26000+k   the strings' gate knobs without a rebuild: *AI-O-ENDER* = k / 100, NORMAL's
+;;;;            *AI-FOLLOW-GUARD-P* = k / 100, every K2 / K3 (and copy) deals k % of its written damage;
+;;;;            27000+k *KOSEI-REIATSU* = k / 100 (and *KOSEI-FS* half that), 28000+k *AI-STRING-FLASH-P* = k / 100,
+;;;;            29000+k *AI-SP-CANCEL-P* = k / 100
 ;;;;   2400 god (both fighters' Reishi is topped back up to 400 every frame; Kikon still lands)   2500+k human P1 vs an
 ;;;;            idle CPU (k: 0 Yama vs Ken, 1 Ken vs Yama, 2 Yama vs Yama, 3 Ken vs Ken)
 ;;;; Log lines: "duel -> STATE" (flow.lisp), "duel hash t=N ..." every 600 battle ticks (h = CPU heat),
@@ -109,8 +120,8 @@ g guard gauge, ! = guardless, m the kit meter: Inferno / NOME), n the Konpaku th
   "Trade probe: YY at 2 m, both start Q1 on the same step; 40 steps later the hash line."
   (ensure-battle :yamamoto :yamamoto)
   (place *p1* *p2* 2.0)
-  (dolist (e (list *p1* *p2*)) (start-move e (kit-move (kit-of e) :ya-q1)))
-  (setf *probe* (list :trade :ya-q1 *match-tick* nil nil nil)))
+  (dolist (e (list *p1* *p2*)) (start-move e (kit-move (kit-of e) :ya-j1)))
+  (setf *probe* (list :trade :ya-j1 *match-tick* nil nil nil)))
 
 (defun probe-mash ()
   "Burst test (2320): human P1 at 2 m from P2, whose (switched off) CPU mashes Quick (PROBE-UPDATE)."
@@ -124,7 +135,7 @@ g guard gauge, ! = guardless, m the kit meter: Inferno / NOME), n the Konpaku th
   (ensure-battle :yamamoto :kenpachi)
   (place *p1* *p2* 2.0)
   (setf (gauges-reiatsu (gauges *p1*)) *reiatsu-max*)
-  (start-move *p2* (kit-move (kit-of *p2*) :ke-q2))
+  (start-move *p2* (kit-move (kit-of *p2*) :ke-j2))
   (setf (fighter-sf (fighter *p2*)) 9)
   (set-reaction *p1* :flinch 18 (aref (pos-of *p2*) 0) (aref (pos-of *p2*) 2) 0.0)
   (setf (fighter-combo-hits (fighter *p1*)) 2)
@@ -178,8 +189,8 @@ gauge is full again (60 f + 7.1 s)."
 
 (defun stance-test (k)
   "Bankai stance test 2370+K (*STANCE-TESTS*: the pair, forms, distance): human P1, P2's CPU off. 1, 2 and 9 run
-a probe (:wall, :garb, :ranged: PROBE-UPDATE; 2: the script holds West's guard U); 3 and 4 hold P2's guard; 5 baits
-the parry (:parry-bait); 7 / 8 make P2 cast South at once; 9: P2 is a cup-3 Kenpachi (NOME 100)."
+a probe (:wall, :ward, :ranged: PROBE-UPDATE); 3 and 4 hold P2's guard; 5 baits the parry (:parry-bait, P1's guard
+gauge at 40); 7 / 8 make P2 cast South at once; 9: P2 is a cup-3 Kenpachi (NOME 100)."
   (destructuring-bind (c1 f1 c2 f2 d) (nth k *stance-tests*)
     (ensure-battle c1 c2)
     (force-form *p1* f1) (force-form *p2* f2)
@@ -193,10 +204,10 @@ the parry (:parry-bait); 7 / 8 make P2 cast South at once; 9: P2 is a cup-3 Kenp
       (setf (brain-press b) :guard (brain-press-mod b) nil (brain-press-left b) (if (member k '(1 3 4)) 999 0)))
     (case k
       (1 (setf *probe* (list :wall nil *match-tick* nil nil nil)))
-      (2 (setf *probe* (list :garb :quick *match-tick* nil nil nil)))
+      (2 (setf *probe* (list :ward :quick *match-tick* nil nil nil)))
       (9 (setf (gauges-meter (gauges *p2*)) 100f0 (gauges-meter-idle (gauges *p2*)) 0
                *probe* (list :ranged nil *match-tick* nil nil nil)))
-      (5 (setf *probe* (list :parry-bait nil *match-tick* nil nil nil)))
+      (5 (setf *probe* (list :parry-bait nil *match-tick* nil nil nil) (gauges-gg (gauges *p1*)) 40f0))
       ((7 8) (when (= k 8) (slowmo 0.25 6.0)) (force-cmd *p2* :sp2)))))
 
 (defparameter *nome-tests*
@@ -241,24 +252,20 @@ presses (J down every other step: the switched-off brain still writes its held b
                    (when (> dt 60) (setf (brain-press-left b) 0 *probe* nil))))
           (:trade
             (when (>= dt 40) (log-msg "duel probe trade ~a: ~a" name (state-hash-line)) (setf *probe* nil)))
-          (:wall (let ((b (brain *p2*)) (g1 (gauges *p1*)) (g2 (gauges *p2*)))   ; P2's guard kept full: P1's recoil
-                   (if af                                              ; burned out: guard 120 f more, then drop it
-                       (setf (brain-press-left b) (if (< (- *match-tick* af) 120) 999 0))
-                       (setf (gauges-gg g2) *gg-max* (gauges-guardless g2) nil))
-                   (when (and (not af) (burnout-p *p1*)) (setf (fourth *probe*) *match-tick*))
+          (:wall (let ((b (brain *p2*)) (g1 (gauges *p1*)) (g2 (gauges *p2*)))   ; P2's guard kept full: East's pierce
+                   (setf (gauges-gg g2) *gg-max* (gauges-guardless g2) nil)      ; chips through it
                    (when (and (member (state-of *p2*) '(:idle :guard)) (> (fighter-dist (fighter *p2*)) 2.6)
                               (member (state-of *p1*) '(:idle :guard)))
                      (place *p1* *p2* 2.0)
                      (setf (brain-press b) :guard (fighter-guard-t (fighter *p2*)) 30)
-                     (log-msg "duel probe wall t=~d P1 gg ~d~:[~; BURNOUT~] P2 r~d" dt (round (gauges-gg g1)) (burnout-p *p1*)
-                              (gauges-reishi g2)))
-                   (when (> dt 1500) (setf (brain-press-left b) 0 *probe* nil))))
-          (:garb (let ((b (brain *p2*)) (g1 (gauges *p1*)))   ; Kenpachi mashes Quick into West's garb guard
+                     (log-msg "duel probe wall t=~d P1 gg ~d P2 r~d" dt (round (gauges-gg g1)) (gauges-reishi g2)))
+                   (when (> dt 900) (setf (brain-press-left b) 0 *probe* nil))))
+          (:ward (let ((b (brain *p2*)) (g1 (gauges *p1*)))   ; Kenpachi mashes Quick into West's ward
                    (setf (brain-press b) :quick (brain-press-mod b) nil (brain-press-left b) (if (evenp dt) 1 0))
                    (when (and (eq (state-of *p2*) :idle) (> (fighter-dist (fighter *p2*)) 2.6) (member (state-of *p1*) '(:idle :guard)))
                      (place *p1* *p2* 2.0)
-                     (log-msg "duel probe garb t=~d P1 gg ~d~:[~; BURNOUT~] r~d P2 r~d" dt (round (gauges-gg g1)) (burnout-p *p1*)
-                              (gauges-reishi g1) (gauges-reishi (gauges *p2*))))
+                     (log-msg "duel probe ward t=~d P1 gg ~d~:[~; guardless~] ~a r~d P2 r~d" dt (round (gauges-gg g1))
+                              (gauges-guardless g1) (fighter-form (fighter *p1*)) (gauges-reishi g1) (gauges-reishi (gauges *p2*))))
                    (when (> dt 900) (setf (brain-press-left b) 0 *probe* nil))))
           (:ranged (let ((g1 (gauges *p1*)))              ; cup-3 Kenpachi's ranged hits on West (KUKAN-GIRI's rift x2,
                      (case dt                              ; the cash-out, then cup 1's Meteor at 4.8 m, then at 3 m:
@@ -338,9 +345,8 @@ screen punctuation with an impact splash and of a brush Latin line (callouts, bi
   "2328: bytes consed by 100 draws of each HUD gauge bar added with the gauges (guard, flash-step, cooldowns) and
 by 10 draws of each Bankai stance look (0 B each; the crossfade only while it runs)."
   (let ((c0 (cons-bytes)))
-    (dotimes (i 100) (%hud-guard 10f0 10f0 300f0 6f0 0.4f0 0.6f0 nil nil 1 *gg-seen* 0 1f0)
-                     (%hud-guard 10f0 10f0 300f0 6f0 0.4f0 0.6f0 t nil 2 *gg-seen* 1 1f0)
-                     (%gg-seen! *gg-seen* 0 50f0 1f0 t))
+    (dotimes (i 100) (%hud-guard 10f0 10f0 300f0 6f0 0.4f0 0.6f0 nil nil 1 1f0)
+                     (%hud-guard 10f0 10f0 300f0 6f0 0.4f0 0.6f0 t nil 3 1f0))
     (let ((c1 (cons-bytes)))
       (dotimes (i 100) (%hud-flash 10f0 30f0 300f0 6f0 0.8f0 nil t 1f0) (%hud-flash 10f0 30f0 300f0 6f0 0.8f0 t nil 1f0))
       (let ((c2 (cons-bytes)))
@@ -349,23 +355,25 @@ by 10 draws of each Bankai stance look (0 B each; the crossfade only while it ru
           (dotimes (i 100) (%hud-nome 10f0 70f0 300f0 6f0 0.55f0 nil 1 0.25f0 1f0) (%hud-nome 10f0 70f0 300f0 6f0 0.3f0 t 2 0.5f0 1f0))
           (log-msg "hud consing: 100 x 2 guard bars ~d B, 100 x 2 flash-step bars ~d B, 100 x 2 cooldown bars ~d B, 100 x 2 NOME bars ~d B"
                    (- c1 c0) (- c2 c1) (- c3 c2) (- (cons-bytes) c3))))))
-  ;; the Bankai stances' per-frame looks (10 draws each; particles emitted too): burned-out aura and blade,
-  ;; West's flame garb, the bound ash, the heat sheet, South's crack, the aura crossfade (DRAW-AURA); and
-  ;; the Phase-3 :heat aura for comparison
+  ;; the Bankai stances' per-frame looks (10 draws each; particles emitted too): West's flame garb, the bound ash,
+  ;; the heat sheet, KYOKKO's ray, South's crack, the aura crossfade (DRAW-AURA); and the Phase-3 :heat aura for
+  ;; comparison
   (macrolet ((per (name form)
                `(let ((c0 (cons-bytes))) (dotimes (i 10) ,form) (format nil "~a ~d" ,name (- (cons-bytes) c0)))))
     (log-msg "vfx consing (10 draws, B): ~{~a~^, ~}"
-             (list (per "ash" (vfx-aura 0f0 0f0 0f0 1.8f0 :ash 1f0 0.016f0))
-                   (per "garb" (vfx-aura 0f0 0f0 0f0 1.8f0 :garb 1f0 0.016f0))
+             (list (per "garb" (vfx-aura 0f0 0f0 0f0 1.8f0 :garb 1f0 0.016f0))
                    (per "bound" (vfx-aura 0f0 0f0 0f0 1.8f0 :bound 1f0 0.016f0))
                    (per "nomihose" (vfx-aura 0f0 0f0 0f0 2f0 :nomihose 1f0 0.016f0))
                    (per "rift" (vfx-rift 1f0 0f0 4.4f0 0f0 nil))
                    (per "heat(old)" (vfx-aura 0f0 0f0 0f0 1.8f0 :heat 1f0 0.016f0))
-                   (per "blade-ash" (vfx-blade-embers 0f0 1f0 0f0 0f0 1.8f0 -0.5f0 0.016f0 :ash t))
                    (per "blade(old)" (vfx-blade-embers 0f0 1f0 0f0 0f0 1.8f0 -0.5f0 0.016f0))
                    (per "kyoku" (vfx-line-cut 0f0 0f0 0f0 -9f0 0.2f0 0.67f0 :kyoku :dt 0.016f0))
+                   (per "kyokko" (vfx-line-cut 0f0 0f0 0f0 -4.6f0 0.1f0 0.23f0 :kyokko :dt 0.016f0))
                    (per "south" (vfx-line-cut 0f0 0f0 0f0 -1.2f0 0.1f0 0.93f0 :south :dt 0.016f0))
                    (per "enjo(old)" (vfx-line-cut 0f0 0f0 0f0 -9f0 0.2f0 0.67f0 :enjo :dt 0.016f0))
+                   (progn (kosei-mote *p1* 2.0 0.0 1.0 0.0)                     ; KOSEI's mote, 0.1 s into its flight
+                          (setf (aref *kosei-v* 0) (f32 (- (fx-clock) 0.1)))
+                          (per "kosei mote" (%kosei-mote 0 300f0 90f0 2f0)))
                    (let ((f (fighter *p1*)))
                      (format nil "~a, ~a" (per "aura crossfading" (draw-aura f (if (evenp i) :garb :heat) 0f0 0f0 0f0 1.8f0 1f0 0.016f0 1.0))
                              (progn (setf (aref *aura-t* (fighter-side f)) (f32 (- (fx-clock) 5.0)))   ; settled
@@ -397,6 +405,28 @@ by 10 draws of each Bankai stance look (0 B each; the crossfade only while it ru
   "Start kit command CMD on E now, whatever the gauges say."
   (setf (gauges-reiatsu (gauges e)) *reiatsu-max*)
   (let ((f (fighter e))) (to-idle e 0) (try-command e f cmd (getf '(:sp1 :flash :sp2 :sig :sig :sig :breaker :breaker) cmd))))
+
+(defun string-test (k)
+  "2394+k: human P1 in form K (Yamamoto Shikai, Bankai East, Kenpachi base, RYOTE) 2.2 m from an idle Kenpachi."
+  (destructuring-bind (c form) (nth k '((:yamamoto :base) (:yamamoto :bankai-east) (:kenpachi :base) (:kenpachi :ryote)))
+    (ensure-battle c :kenpachi)
+    (unless (eq (fighter-form (fighter *p1*)) form) (force-form *p1* form))
+    (when (eq form :ryote) (setf (gauges-meter (gauges *p1*)) 60f0))   ; NOME keeps him in cup 2 (NOME-STEP)
+    (when (eq form :bankai-east) (setf (gauges-gg (gauges *p1*)) 30f0))   ; a low gauge: KOSEI x2.4 (the HUD tag)
+    (place *p1* *p2* 2.2)))
+
+(defun scale-k-links (pct)
+  "Debug 26000+k: every K link entered mid-wind-up (a :flash move with :enter: K2, K3 and their copies) of every kit
+deals PCT % of its written damage (the seed gate's first lever, DUEL_STRINGS §6, without a rebuild)."
+  (maphash (lambda (c forms)
+             (declare (ignore c))
+             (loop for (nil . kit) in forms
+                   do (maphash (lambda (n m)
+                                 (declare (ignore n))
+                                 (when (and (eq (mv-kind m) :flash) (plusp (mv-enter m)))
+                                   (loop for w across (mv-hits m) do (setf (hw-dmg w) (round (* (mv-dmg m) pct) 100)))))
+                               (kit-moves kit))))
+           *kits*))
 
 (defun force-form (e form)
   (set-form e form)
@@ -621,7 +651,7 @@ move-beat choices of DRAW-FIGHTER."
         ((= c 2209) (setf *cine-hold* nil) (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 3.0) (match-over *p1*))
         ((<= 2200 c 2299) (force-cine (- c 2200)))
         ((<= 10000 c 19999) (cine-at (floor (- c 10000) 1000) (mod c 1000)))
-        ((<= 2315 c 2318) (probe-block (nth (- c 2315) '(:ya-q1 :ya-q3 :ya-f2 :ya-taimatsu))))
+        ((<= 2315 c 2318) (probe-block (nth (- c 2315) '(:ya-j1 :ya-k3 :ya-j3 :ya-taimatsu))))
         ((= c 2319) (probe-trade))
         ((= c 2320) (probe-mash))
         ((= c 2321) (force-burst))
@@ -635,9 +665,23 @@ move-beat choices of DRAW-FIGHTER."
         ((<= 2370 c 2379) (stance-test (- c 2370)))
         ((<= 2380 c 2385) (nome-test (- c 2380)))
         ((= c 2326) (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 3.0) (clash! *p1* *p2*))
+        ((= c 2393) (place *p1* *p2* 2.2)
+         (dolist (e (list *p1* *p2*))                   ; a switched-off CPU lets go of what it held (a guard)
+           (vpad-clear! (pilot-vpad (pilot e))) (let ((b (brain e))) (when b (setf (brain-press-left b) 0)))))
+        ((<= 2394 c 2397) (string-test (- c 2394)))
         ((<= 2300 c 2399) (force-special (- c 2300)))
         ((= c 2400) (setf *god* (not *god*)))
         ((<= 2600 c 2699) (setf *red-threshold* (/ (- c 2600) 100.0)))
+        ((<= 20000 c 20999) (setf *ward-mult* (/ (- c 20000) 100.0)))
+        ((<= 21000 c 21999) (setf *pierce-max* (/ (- c 21000) 100.0)))
+        ((<= 22000 c 22999) (setf *gg-regen* (/ (- c 22000) 10.0)))
+        ((<= 23000 c 23999) (setf *gg-regen-guardless* (/ (- c 23000) 10.0)))
+        ((<= 24000 c 24999) (setf *ai-o-ender* (/ (- c 24000) 100.0)))
+        ((<= 25000 c 25999) (setf (getf *ai-follow-guard-p* :normal) (/ (- c 25000) 100.0)))
+        ((<= 26000 c 26999) (scale-k-links (- c 26000)))
+        ((<= 27000 c 27999) (setf *kosei-reiatsu* (/ (- c 27000) 100.0) *kosei-fs* (/ (- c 27000) 200.0)))
+        ((<= 28000 c 28999) (setf *ai-string-flash-p* (/ (- c 28000) 100.0)))
+        ((<= 29000 c 29999) (setf *ai-sp-cancel-p* (/ (- c 29000) 100.0)))
         ((<= 2500 c 2503)
          (setf *picks* (nth (- c 2500) '((:yamamoto :kenpachi) (:kenpachi :yamamoto) (:yamamoto :yamamoto) (:kenpachi :kenpachi)))
                *mode* :vs-cpu *match-seed* 1 *probe* nil)

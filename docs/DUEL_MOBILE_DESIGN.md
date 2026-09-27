@@ -14,12 +14,13 @@ there is no local portrait 2P; future Bluetooth / Wi-Fi P2P netplay must stay po
 
 - **新模式「片手 ONE-HAND」**：手機直拿，一根拇指對戰電腦。預設右手，選項裡可以換成左手。
 - **防禦不再是「一碰就擋」**：拇指按著不動超過約 0.12 秒才開始防禦，比這短的就是點擊，也就是 Quick。這樣連段、跑步取消都不會被誤觸的防禦打斷。代價是預先防禦慢了約 7 格；反應型防禦反正本來就來不及，重招照樣擋得住。
-- **撥（flick）在劃過門檻的那一刻就出招**，不必等手指離開，延遲變得穩定。只有「往上撥 = Flash」要多等 80 ms 確認不是往前拖著跑。
-- **Hoho**：站著或防禦時，按住再往上撥。出招途中往上撥一律是 Flash，所以 J J K 分支不會誤觸成 Hoho。單手版少了「連段中取消成 Hoho」這一招。
+- **撥（flick）在劃過門檻的那一刻就出招**，不必等手指離開，延遲變得穩定。只有「往上撥 = Flash」要多等最多 150 ms 確認不是往前拖著跑；離開容許範圍後的前 120 ms 角色不會先走（2026-09-27 真機試玩後的調整，見 §13）。
+- **Hoho**：站著或防禦時，按住再往上撥。出招途中往上撥一律是 Flash（K），所以連段裡的 K 不會誤觸成 Hoho。單手版少了「連段中取消成 Hoho」這一招。
+- **連段**（2026-09-27，[DUEL_STRINGS.md](DUEL_STRINGS.md)）：點 = J、上撥 = K，最多三段，點與上撥之間最多換一次（多換的那一下會被忽略）；下一段在前一段的任何時候都可以先按（會記住，打中或被擋才出）。完整打中第 3 段後按 O 晶片是 O 收尾：點一下只有擊退，按住就衝上去接毀魂技。
 - **Burst**：被打中、硬直或浮空時往下撥，跟 Shift+J 一樣會記在緩衝裡。
-- **U 在每個型態都是防禦**（2026-09-26 的 guard v3 決定之後）：山本西的 U 改成「殘日獄衣」火焰防禦，野晒三杯的「喝」本來就是防禦，所以拇指按著不動就是防禦，任何型態都一樣。原本設計的「長按放開鎖住 U」手勢已經刪掉，因為再也沒有「U 不是防禦」的型態需要它。
+- **拇指按著不動就是 U**（2026-09-26 的 guard v3 決定之後）：野晒三杯的「喝」本來就是防禦，所以任何型態按著不動都一樣。原本設計的「長按放開鎖住 U」手勢已經刪掉。2026-09-27 山本卍解重製之後：在『東』按著不動就切到『西』（全方位防禦、沒有防禦硬直），切過去之後不會自己切回東，要出 L、SP1 以外的招式才回東（[DUEL_YAMA_REWORK.md](DUEL_YAMA_REWORK.md)）。
 - **放開拇指才會回防禦量表**：防禦中量表不回，等待回復的 1 秒也暫停計時（放開後接著算，不是重算）。所以單手時「拖、停、拖」的走位不會讓量表永遠回不來；防禦中拇指下的墨圈會變暗，提醒「抬起拇指喘口氣」。
-- **按鈕重新排過**：手勢區是一整塊至少 260×194 px 的連續區域。O 放在手勢區上方，其餘四顆（L、I、SP1、SP2）沿拇指側排成一列，不會碰到 Home 條和側邊的返回手勢區。覺醒要按住 0.3 秒。
+- **按鈕重新排過**：手勢區是一整塊 342×410 px 的連續區域（2026-09-27 從 260×194 擴大，並把圓鈕那一欄包進去：落在圓鈕判定圓裡算按鈕，其他地方都是手勢）。所有圓鈕比原設計高 100 px，O 放在手勢區上方，其餘四顆（L、I、SP1、SP2）沿拇指側排成一列，不會碰到 Home 條和側邊的返回手勢區。覺醒要按住 0.3 秒。
 - **防止誤退出**：會先 push 一筆瀏覽紀錄，擋住 Android 側滑返回和 iOS 返回，觸發時改成暫停；拇指那一側的邊緣也留 32 px 死區。
 - **鏡頭**：直向改為 FOV 66°，畫面往上平移 0.22，貼身時的轉角從 40° 降到 15°。所有調整都只在畫面端，Hoho 後鏡頭怎麼追上也只在畫面端做，不改模擬端的 `*behind-turn*`。這樣兩台手機將來連線，搖桿方向的換算也不會不同步。
 - **先做能玩的原型**：P0 直接做一個粗略但能打完整場的單手版，拿兩支真手機驗證；確定可行後才做直向排版、選單和 PWA。
@@ -79,12 +80,12 @@ contact cannot lock input. A contact that starts in a dead band never claims the
 
 | State / event | Condition | vpad writes | Meaning |
 |---|---|---|---|
-| **TAP** | lifted ≤ `tap-ms` (120) after down, travel < `slop` (10 px) | `:quick` pulse | Quick. Taps chain Q1 Q2 Q3; the J J K branch is tap, tap, flick↑. |
+| **TAP** | lifted ≤ `tap-ms` (120) after down, travel < `slop` (10 px) | `:quick` pulse | J (Quick). A string is three taps / flicks↑ with at most one change between tap and flick (JJJ, JJK, JKK, KKK, KKJ, KJJ; an extra change is eaten, DUEL_STRINGS §2.1); the latch takes each gesture any time during the link before. After a link-3 hit the O chip is the O ender (a tap: its hit; held: the dash-in to the Kikon; the LIGHT latch is not built). |
 | **REST** | still for `tap-ms` | U held (every form: since guard v3 U is a guard in every form, §3.4) | Guard (it blocks after the existing 2 f raise). Lifting after this point does **nothing** else. While a rest guards, the guard gauge neither refills nor counts its refill delay (GUARD HOLD, DUEL_DESIGN §4): **lift the thumb to breathe**. The delay is frozen, not restarted, so drag, rest, drag footsies still refill between rests. |
 | **FLICK** (not up) | travel reaches `flick-min` (28 px) within `flick-window` (120 ms) of leaving the slop | fires **at the crossing**: `:step` pulse + stick = stroke direction | Step (↓ back, ←/→ sidestep, diagonals). If the thumb keeps going past the run ring, `:step` stays held: the hop, then the run, as holding Space does. |
 | **FLICK ↓ in `:stun` / `:air`** | same | `:mod` + `:quick` | Burst Reverse, buffered like Shift+J (fires on hit 2 if pressed after hit 1) |
 | **HOHO** | a REST contact (≥ `tap-ms` still) in neutral or guard, then an up-stroke crossing `flick-min` | fires at the crossing: `:mod` + `:step` | Hoho from guard. The perfect-Hoho read is intact. |
-| **FLICK ↑ = F** | a fresh up-stroke (within `up-cone`, 60° either side of vertical since §13), or any up-stroke while in `:move` | `:flash` pulse once the thumb lifts within `up-lift-ms` (150 since §13; was 80) of the crossing; nothing moves before that | Flash, the Q2 → F branch. Not lifted in time → DRAG instead (forward walk or run). |
+| **FLICK ↑ = F** | a fresh up-stroke (within `up-cone`, 60° either side of vertical since §13), or any up-stroke while in `:move` | `:flash` pulse once the thumb lifts within `up-lift-ms` (150 since §13; was 80) of the crossing; nothing moves before that | K (Flash): a K link anywhere in a string. Not lifted in time → DRAG instead (forward walk or run). |
 | **DRAG** | left the slop, and the flick window closed without a flick (§13: until then the stroke is *undecided* and the stick stays at 0) | stick = Δ / `stick-r` (48 px); origin follows past 2 r | Walk / strafe (up = toward him, through the behind view) |
 | **DRAG far** | deflection ≥ `run-ring` (1.6 r) | `:step` held + stick | Dash then run; back inside 1.3 r releases Step (the existing brake) |
 | **Back to rest** | a drag returns inside the slop and stays still `tap-ms` | as REST | "Walk back, then block" without lifting |
@@ -161,7 +162,9 @@ P0, whose exit criteria include reach.
 - **No U latch.** This design had one (a long rest-and-release toggling U on) for the forms whose U was not a
   guard: West's hold-U armour and Nozarashi T3's DRINK. Guard v3 (the user's decision 2026-09-26) replaced West's
   armour with the garb guard, and DRINK already was a guard, so **U is a guard in every form** and a rest holds
-  it everywhere, exactly as §3.2. The latch, its knob, its glyph, its tests and its risk row are deleted.
+  it everywhere, exactly as §3.2. The latch, its knob, its glyph, its tests and its risk row are deleted. Since the
+  Bankai rework (2026-09-27, DUEL_YAMA_REWORK.md) a rest in Bankai East switches him to West (the ward: a 360° guard
+  with no blockstun); it doesn't flip back: an attack other than L / SP1 does.
 
 ### 3.5 Keyboard → one-hand map
 
@@ -187,7 +190,7 @@ P0, whose exit criteria include reach.
 - walking while pressing a chip (a two-thumb player can still do it: chips accept a second contact);
 - pre-emptive guard costs about 7 f more.
 
-Everything decisive remains: the O cancel from a string, the true Kikon hold and release, the perfect-Hoho
+Everything decisive remains: the O ender off a completed string, the true Kikon hold and release, the perfect-Hoho
 read, the triangle, guard-gauge pressure, run cancels with carry, SP holds, Burst timing and stance switching.
 
 ### 3.6 Assists
@@ -324,7 +327,7 @@ phone. Pixels dominate, and G7 caps them. Low Power Mode at 30 fps is absorbed b
    - (b) **new**: a `--fixed-dt` touch script (tap / flick / hold / chip / Kikon latch) run twice gives identical
      hash lines, which catches any wall-clock leakage into the recogniser.
 3. **Headless** (`--mobile --size 390x844`, DPR 2 or render-scale 0.5 for SwiftShader): `duel-touch-kit.json`
-   produces all 11 commands + guard (DRINK and West's garb included: a rest), walk, dash, and a Kikon on a red P2 (debug 2314).
+   produces all 11 commands + guard (DRINK and Bankai East → West included: a rest), walk, dash, and a Kikon on a red P2 (debug 2314).
    Screenshots `tests/shots/mobile-*.png`.
 4. **Probes**:
    - framing, at 4 sizes;

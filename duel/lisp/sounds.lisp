@@ -25,7 +25,8 @@
 ;;;;   :fire-wave        the Signature flame wave travelling
 ;;;;   :explode          fireball / fire dome detonation
 ;;;;   :sizzle           Bankai blade hit: heat erasing what it touches
-;;;;   :heat-flare       Bankai: the garb flaring (NISHI), the heat sheet, a burnout (low pitch): a thump + a long hiss
+;;;;   :heat-flare       Bankai: the garb flaring (U to West, SHONETSU's tell), the heat sheet, a broken ward (low pitch):
+;;;;                     a thump + a long hiss
 ;;;;   :ground-crack     ground split (Buttagiru, Split the Meteor, Bankai cracks)
 ;;;;   :bones            skeleton rattle (Bankai South)
 ;;;;   :kikon-slash      Kikon finishing cut (reverse swell into a heavy slash)

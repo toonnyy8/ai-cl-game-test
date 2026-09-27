@@ -1,8 +1,8 @@
 ;;;; combat.lisp — what happens when fighters touch (design-v1 §1, §3, §4): HIT-SYSTEM (clash check,
 ;;;; then COLLECT every fighter's and hazard's hits, then APPLY them all: a trade is a trade, no side
 ;;;; goes first; then settle the souls they broke), APPLY-HIT (the triangle, damage, reactions, chip,
-;;;; gauges, hitstop; the Kikon rush's strike becomes the Kikon here; the stance traits: taken, recoil,
-;;;; Bankai's fed guard gauge, West's garb (guard, scorch, ranged armour), the parry, burnout), Kikon / Soul Break / awakening
+;;;; gauges, hitstop, KOSEI; the Kikon rush's strike becomes the Kikon here; the Bankai stances: East's pierce, West's ward
+;;;; (360 deg, no blockstun, a crush / Guard Break drops him to East), the parry and its refill), Kikon / Soul Break / awakening
 ;;;; / form changes (all settled here, at connect time; cinema.lisp only presents them), the perfect-Hoho test and GAUGE-SYSTEM (regen, GUARD HOLD, burns,
 ;;;; form timers, Hellfire, EVOLUTION). Decisions are rules.lisp's; effects are EMITted for feedback.lisp.
 (in-package :duel)
@@ -25,12 +25,9 @@ at its end (SETTLE-SOULS), so a lethal trade breaks both souls and no side goes 
       (setf (gauges-awaken g) (f32 (gauge-add (gauges-awaken g) (awakening-gain dealt taken 0) *awaken-max*))))))
 
 (defun deal-damage (att def dmg)
-  "DEF loses DMG Reishi (ATT dealt it; a CPU attacker's anti-stall heat resets). A :burnout form (Bankai) with its
-heat on is fed the Reishi really removed (GG-FEED, at its kit's :feed). Reishi at 0 is an automatic Soul Break, settled at the end of
-the step (*SOUL-BREAKS*): returns T then."
+  "DEF loses DMG Reishi (ATT dealt it; a CPU attacker's anti-stall heat resets). Reishi at 0 is an automatic Soul
+Break, settled at the end of the step (*SOUL-BREAKS*): returns T then."
   (let ((ga (gauges att)) (gd (gauges def)) (b (brain att)))
-    (when (and (kit-burnout (kit-of att)) (heat-on-p att))   ; the damage he deals feeds the flame
-      (setf (gauges-gg ga) (f32 (gg-feed (gauges-gg ga) (min dmg (gauges-reishi gd)) (kit-feed (kit-of att))))))
     (setf (gauges-reishi gd) (max 0 (- (gauges-reishi gd) dmg)))
     (incf (gauges-dealt ga) dmg)
     (when b (setf (brain-heat b) 0f0))
@@ -64,26 +61,38 @@ drain delay."
     (when (and m (plusp amount) (zerop (gauges-form-left g)))
       (setf (gauges-meter g) (f32 (gauge-add (gauges-meter g) amount (getf m :max)))))))
 
+(defun kosei! (att g x y z)
+  "KOSEI (docs/DUEL_STRINGS.md §5): a contact of ATT's own melee hit window worth guard value G pays him Reiatsu and
+flash-step, x KOSEI-MULT of his guard gauge (x1 full .. x3 empty); the :kosei event (the HUD's mote from X Y Z)."
+  (let ((ga (gauges att)))
+    (multiple-value-bind (r fs m) (kosei-gain g (gauges-gg ga))
+      (setf (gauges-reiatsu ga) (f32 (gauge-add (gauges-reiatsu ga) r *reiatsu-max*))
+            (gauges-fs ga) (f32 (gauge-add (gauges-fs ga) fs *fs-max*)))
+      (emit :kosei att m x y z))))
+
 ;;; ---------------------------------------------------------------- one hit
 (defun drain-guard (e v &optional (why :block))
-  "E's guard gauge loses V, x*BANKAI-DRAIN* for a :burnout form (its regen waits *GG-DELAY* again). At 0 he is
-guardless until it is full
-(CAN-GUARD-P), and a :burnout form is burned out (BURNOUT-P) by WHY (:block :breaker :recoil: the :burnout
-event). T when this drain emptied it."
+  "E's guard gauge loses V (its regen waits *GG-DELAY* again). At 0 he is guardless until it is full (CAN-GUARD-P).
+T when this drain emptied it."
   (let ((g (gauges e)))
-    (multiple-value-bind (n crushed) (gg-drain (gauges-gg g) (if (kit-burnout (kit-of e)) (* *bankai-drain* v) v))
+    (multiple-value-bind (n crushed) (gg-drain (gauges-gg g) v)
       (setf (gauges-gg g) (f32 n) (gauges-gg-idle g) 0)
       (when (and crushed (not (gauges-guardless g)))
         (setf (gauges-guardless g) t)
-        (clog "~a GUARDLESS ~a" (side-name e) why)
-        (when (kit-burnout (kit-of e))
-          (emit :burnout e why)
-          (clog "~a BURNOUT ~a" (side-name e) why)))
+        (clog "~a GUARDLESS ~a" (side-name e) why))
       crushed)))
 
+(defun ward-drop (e)
+  "E's ward is broken (a GUARD CRUSH or a Guard Break of Bankai West): he drops to his kit's :drop-to form (East),
+the garb blown off (the :ward-crush event)."
+  (when (passive-p e :ward)
+    (set-form e (kit-drop-to (kit-of e)))
+    (emit :ward-crush e)
+    (clog "~a WARD BROKEN" (side-name e))))
+
 (defun scorch (att def &optional (n *scorch*))
-  "DEF's :scorch (Bankai West): a melee hit his parry caught (*SCORCH*) or his garb blocked (GARB-SCORCH) burns
-ATT N (a burn: never kills, no gauges, no heat reset, feeds no flame)."
+  "DEF's :scorch (Bankai West): a melee hit his parry caught burns ATT N (a burn: never kills, no gauges, no heat
+reset)."
   (when (and (passive-p def :scorch) (plusp n))
     (let ((g (gauges att))) (setf (gauges-reishi g) (burn (gauges-reishi g) n)))
     (emit :scorch att)
@@ -94,20 +103,25 @@ ATT N (a burn: never kills, no gauges, no heat reset, feeds no flame)."
 facing and push direction). MV, BONUS (damage added: the stance's stored) and CRUSH: ATT's move
 and its state when the hit was collected (in a trade the first hit applied may already have put ATT
 in hitstun). DEF-STATE and RED: DEF's triangle state and red-ness when collected. X Z: where to show
-it. Sets the global hitstop (sim timing). A ranged hit (a HAZARD, or a window flagged :ranged beyond its move's :melee-range) on a defender
-with the :garb (Bankai West) does *GARB-RANGED* of its damage and is armoured unless he guards. A Kikon rush strike (MV of kind :kikon) is guardable like any
+it. Sets the global hitstop (sim timing). A ranged hit (a HAZARD, or a window flagged :ranged beyond its move's
+:melee-range) can't be parried. A defender with the :ward (Bankai West) blocks from every side with no blockstun (what
+he does goes on: super armour); a crush or a Guard Break drops him to East (WARD-DROP). An attacker with :pierce
+(Bankai East) deals x(1 + k) (PIERCE-RATE of his guard gauge, x the move's :pierce-mult), and a block lets k x the
+damage through as chip (on top of a DRINK's taken half). A Kikon rush strike (MV of kind :kikon) is guardable like any
 hit; one that hits with ATT still holding the button that started it (KIKON-OUTCOME) knocks DEF back into
 a short stagger and ATT's rush dashes in after him to the follow-up strike (phase :follow), whose hit is the
 Kikon (no damage, queued in *KIKONS* for SETTLE-SOULS): a guard held during the dash blocks it unless DEF
 is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no effect)."
-  (let* ((fa (fighter att)) (fd (fighter def)) (heat (heat-on-p att))
-         (flags (heat-flags (hw-flags hw) heat))        ; burned out: East's blade doesn't break guard
+  (let* ((fa (fighter att)) (fd (fighter def)) (flags (hw-flags hw))
          (p (pos-of def))
          (d2 (+ (expt (- (aref p 0) sx) 2) (expt (- (aref p 2) sz) 2)))   ; DEF's distance (squared) from the attacker
          ;; ranged: not the attacker's own blade (a projectile, a line, a cone); a :ranged window with a :melee-range
          ;; (the Meteor, the cash-out, Buttagiru, Nadegiri) is the blade within it: one window, one hit
          (ranged (ranged-hit-p hazard flags (and mv (getf (mv-params mv) :melee-range)) d2))
-         (garb (passive-p def :garb))                   ; Bankai West's garb (off while burned out)
+         (ward (passive-p def :ward))                   ; Bankai West's ward
+         (k (if (passive-p att :pierce)                 ; Bankai East's pierce
+                (pierce-rate (gauges-gg (gauges att)) (or (and mv (getf (mv-params mv) :pierce-mult)) 1.0))
+                0.0))
          (rush (and mv (eq (mv-kind mv) :kikon)))
          (own (and mv (eq (fighter-move fa) mv)))       ; the attacker is still in that move
          (fstrike (and rush own (fighter-follow fa)))   ; the dash-in's strike: the Kikon if it hits
@@ -118,11 +132,11 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                                                   (and r (< d2 (* r r)))))
                                :in-front (in-front-p (yaw-of def) (aref p 0) (aref p 2) sx sz *guard-arc*)
                                :unguardable (or (member :unguardable flags) (and fstrike (kikon-follow-unguardable-p red)))
-                               :hazard ranged :ranged-armor (and ranged garb)))
-         (atk (kit-atk-mods (kit-of att) (- *konpaku-max* (gauges-konpaku (gauges att))) heat))
+                               :hazard ranged :ward ward))
+         (atk (kit-atk-mods (kit-of att) (- *konpaku-max* (gauges-konpaku (gauges att))) (if (eq res :blocked) 1.0 (+ 1.0 k))))
          (dmods (kit-def-mods (kit-of def)))
          (x (or x (aref p 0))) (z (or z (aref p 2))) (y (+ (aref p 1) 1.1))
-         (base (if (and ranged garb) (ranged-damage (+ (hw-dmg hw) bonus)) (+ (hw-dmg hw) bonus)))
+         (base (+ (hw-dmg hw) bonus))
          (outcome (and rush (kikon-outcome (vpad-down (pilot-vpad (pilot att)) :kikon) res fstrike)))
          (follow (eq outcome :follow)))                 ; knocked back, then the rusher dashes in to the follow-up
     (when (eq outcome :kikon)
@@ -136,6 +150,8 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
         (clog "~a ~a -> ~a ~a ~d" (side-name att) (if mv (mv-name mv) (if hazard (hazard-kind hazard) :counter))
               (side-name def) res base)
         (when (eq (contact-of res) :hit) (close-rifts def))   ; a rift closes if its owner is hit before it cuts
+        (when (and own (not ranged) (not (member res '(:parried :kikon))))   ; KOSEI: his own blade touched him
+          (kosei! att (or (hw-guard hw) 0) x y z))
         (when (eq res :counter) (respect def))
         (ecase res
           (:kikon nil)                                  ; settled at the end of the step (SETTLE-SOULS)
@@ -160,7 +176,7 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                  (emit :kikon-follow att def)
                  (emit :rush-dash att)
                  (clog "~a KIKON FOLLOW-UP on ~a~:[~; (red)~]" (side-name att) (side-name def) red)))))
-          (:armored                                     ; a move's armour (one hit spent), or the garb vs a ranged hit (free)
+          (:armored                                     ; a move's armour (one hit spent)
            (when (eq def-state :armor) (decf (fighter-armor-left fd)))
            (hitstop *hitstop-block*)
            (emit :armored def x y z)
@@ -171,6 +187,8 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
            (set-reaction att :stagger *parry-stun* (aref p 0) (aref p 2) *parry-slide*)
            (setf (fighter-armor-left fa) 0)
            (scorch att def)
+           (when (passive-p def :ward)                  ; West's GOKUI GAESHI: the catch refills his guard gauge
+             (setf (gauges-gg (gauges def)) (f32 *gg-max*) (gauges-gg-idle (gauges def)) 0))
            (emit :parried att def x y z)
            (let ((c (and (fighter-move fd) (kit-next (kit-of def) (mv-name (fighter-move fd)) :land))))
              (when c (start-move def c))))
@@ -181,35 +199,42 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
              (emit :absorbed def x y z)
              (deal-damage att def dmg)
              (nome-gain! def 0 0 dmg)))                 ; the stance drinks what it absorbs (NOME)
-          (:blocked                                     ; blockstun, chip, the guard gauge (at 0: GUARD CRUSH), recoil;
+          (:blocked                                     ; blockstun, chip, the guard gauge (at 0: GUARD CRUSH);
                                                         ; DRINK (NOMIHOSE's U): half the hit taken for real, half drunk;
-                                                        ; the garb (West's U): half the gauge, a melee attacker scorched
+                                                        ; the ward (Bankai West): x*WARD-MULT* of the gauge, no blockstun;
+                                                        ; East's pierce: k x the hit goes through (chip)
            (let* ((drink (passive-p def :drink))
                   (adv (let ((a (if (and mv (integerp (mv-adv-block mv))) (mv-adv-block mv) 0))) (if (and drink mv) (drink-adv a) a)))
                   (stun (if mv (blockstun (mv-total mv) (fighter-sf fa) adv) *hazard-blockstun*))
                   (v (let* ((v0 (or (hw-guard hw) *gg-hazard*)) (v1 (if (and mv (passive-p att :cut)) (cut-value v0 (mv-kind mv)) v0)))
-                       (if garb (garb-value v1) v1)))
-                  (chip (if drink 0 (chip-damage base (chip-rate (hw-chip hw) (and mv (kit-blade-chip (kit-of att))) heat)
-                                                 (gauges-reishi (gauges def))))))
-             (when (and mv (passive-p att :recoil)) (drain-guard att (recoil v) :recoil))   ; East pays too
-             (if (drain-guard def v)
-                 (progn (set-reaction def :guard-break *guard-crush-stun* sx sz *block-pushback*)
-                        (hitstop *hitstop-breaker*)
-                        (emit :guard-crush att def x y z)
-                        (clog "~a GUARD CRUSH~:[~; (drinking)~]" (side-name def) drink))
-                 (progn (set-blockstun def stun sx sz adv (and drink (kit-drink-clip (kit-of def))))
-                        (hitstop *hitstop-block*)
-                        (emit (if drink :drink :blocked) att def x y z)))
+                       (if ward (* *ward-mult* v1) v1)))
+                  (pierce (and (plusp k) k))
+                  (chip (chip-damage base (if drink pierce (or (hw-chip hw) (and mv (kit-blade-chip (kit-of att))) pierce))
+                                     (gauges-reishi (gauges def)))))
+             (cond ((drain-guard def v)
+                    (ward-drop def)
+                    (set-reaction def :guard-break *guard-crush-stun* sx sz *block-pushback*)
+                    (hitstop *hitstop-breaker*)
+                    (emit :guard-crush att def x y z)
+                    (clog "~a GUARD CRUSH~:[~; (drinking)~]" (side-name def) drink))
+                   (ward                                ; super armour: no blockstun, what he does goes on
+                    (set-slide def *block-pushback* 6 (- (aref p 0) sx) (- (aref p 2) sz))
+                    (setf (fighter-warded fd) *match-tick*)
+                    (hitstop *hitstop-block*)
+                    (emit :blocked att def x y z))
+                   (t (set-blockstun def stun sx sz adv (and drink (kit-drink-clip (kit-of def))))
+                      (hitstop *hitstop-block*)
+                      (emit (if drink :drink :blocked) att def x y z)))
              (when drink                                ; the drink: real damage (it may Soul Break him), NOME
                (multiple-value-bind (taken drunk) (drink-split (hit-damage base atk dmods 1 nil))
                  (deal-damage att def taken)
                  (nome-gain! def 0 0 drunk)
                  (clog "~a DRINK ~d (+~d drunk)" (side-name def) taken drunk)))
              (when (plusp chip) (deal-damage att def chip))
-             (when (and garb mv (not ranged)) (scorch att def (garb-scorch (mv-kind mv))))
              (when (and hazard (plusp (hw-meter hw))) (add-meter att *meter-on-block*))))
           (:guard-break
            (drain-guard def *gg-breaker* :breaker)
+           (ward-drop def)                              ; a Breaker blows West's ward off: East
            (set-reaction def :guard-break *guard-break-stun* sx sz *guard-break-kb*)
            (hitstop *hitstop-breaker*)
            (emit :guard-break att def x y z))
@@ -362,12 +387,10 @@ A short global hitstop."
 
 (defun awaken! (e)
   "Awakening (once per match): the kit's awakened form and its heal, then the form's :cine if it has
-one (both fighters idle after it). A :burnout form (Bankai) is lit: its guard gauge full, unless he is guardless
-(then he awakens burned out and relights on the timed refill: the awakening is no panic button)."
+one (both fighters idle after it). The guard gauge is left as it is."
   (let* ((g (gauges e)) (o (opp-of e)))
     (setf (gauges-awakened g) t (gauges-awaken g) 0f0 (gauges-evolution g) nil)
     (set-form e (kit-awaken-form (kit-of e)))
-    (when (and (kit-burnout (kit-of e)) (not (gauges-guardless g))) (setf (gauges-gg g) (f32 *gg-max*)))
     (let ((st (getf (kit-meter (kit-of e)) :start)))    ; NOME starts at 10
       (when st (setf (gauges-meter g) (f32 st) (gauges-meter-idle g) 0)))
     (setf (gauges-reishi g) (min (gauges-reishi-max g) (+ (gauges-reishi g) (kit-heal (kit-of e)))))
@@ -426,9 +449,8 @@ and frozen through the cinematic their looks would hang in its shots."
 
 (defun reset-round (a v)
   "After a Kikon / Soul Break (§1): both placed *RESET-DISTANCE* apart facing, *RESET-NEUTRAL* frames
-of neutral, P1 on the left of the view again, hazards cleared, the guard gauges full except a :burnout form's
-(Bankai's fed gauge is carried, a burnout too: the user's decision 2026-09-26), flash-step and Reiatsu kept, the
-kit's :reset-reiatsu (Kenpachi)."
+of neutral, P1 on the left of the view again, hazards cleared, the guard gauges full (and guardless cleared) for
+everyone, the forms kept, flash-step and Reiatsu kept, the kit's :reset-reiatsu (Kenpachi)."
   (let ((p (pos-of a)) (q (pos-of v)))
     (multiple-value-bind (ax az bx bz) (reset-placement (aref p 0) (aref p 2) (aref q 0) (aref q 2))
       (v3-set! p (f32 ax) 0f0 (f32 az)) (v3-set! q (f32 bx) 0f0 (f32 bz))))
@@ -439,8 +461,7 @@ kit's :reset-reiatsu (Kenpachi)."
     (let ((f (fighter e)) (g (gauges e)) (mo (motion e)))
       (setf (motion-grounded mo) t (motion-kb-left mo) 0 (fighter-lock f) *reset-neutral* (fighter-combo-dmg f) 0
             (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (kit-reset-reiatsu (kit-of e)) *reiatsu-max*)))
-      (unless (kit-burnout (kit-of e))
-        (setf (gauges-gg g) (f32 *gg-max*) (gauges-gg-idle g) 0 (gauges-guardless g) nil))
+      (setf (gauges-gg g) (f32 *gg-max*) (gauges-gg-idle g) 0 (gauges-guardless g) nil)
       (fill (motion-vel mo) 0f0)
       (vpad-clear! (pilot-vpad (pilot e)))
       (let ((b (brain e))) (when b (setf (brain-press-left b) 0)))   ; a CPU lets go of what it held (a rush's O)
@@ -467,16 +488,15 @@ a string), the rung NOME asks for (LADDER-RUNG, several steps at once), which is
 (defun gauge-system ()
   "Regen (Reiatsu; flash-step and the guard gauge after their delays: a full guard gauge ends
 guardless), timed forms (burn, drain, end), the meter's full form (Hellfire), EVOLUTION. GUARD HOLD: one
-guarding test (:guard / :guard-hit, not guardless) gates both the guard gauge's refill and its delay counter
-(frozen). A :burnout form (Bankai) refills only while guardless (burned out: the timed refill, then REIGNITE)."
+guarding test (:guard / :guard-hit, or Bankai West's ward, not guardless) gates both the guard gauge's refill and its
+delay counter (frozen): West never refills."
   (do-entities (e (f fighter) (g gauges))
     (let* ((kit (fighter-kit f))
-           (guarding (and (member (fighter-state f) '(:guard :guard-hit)) (not (gauges-guardless g))))
-           (fed (and (kit-burnout kit) (not (gauges-guardless g)))))   ; Bankai lit: fed by hits, never by time
+           (guarding (and (or (member (fighter-state f) '(:guard :guard-hit)) (passive-p e :ward)) (not (gauges-guardless g)))))
       (setf (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (reiatsu-gain 0 0 1) *reiatsu-max*))
             (gauges-fs g) (f32 (fs-regen (gauges-fs g) (gauges-fs-idle g)))
             (gauges-fs-idle g) (min 9999 (1+ (gauges-fs-idle g))))
-      (unless fed (setf (gauges-gg g) (f32 (gg-regen (gauges-gg g) (gauges-gg-idle g) (gauges-guardless g) guarding))))
+      (setf (gauges-gg g) (f32 (gg-regen (gauges-gg g) (gauges-gg-idle g) (gauges-guardless g) guarding)))
       (setf (gauges-gg-idle g) (gg-idle-next (gauges-gg-idle g) guarding))
       (when (and (gauges-guardless g) (>= (gauges-gg g) *gg-max*))
         (setf (gauges-guardless g) nil)
