@@ -1,7 +1,8 @@
 # SOUL DUEL: ONE-HAND (片手) mode, a portrait phone played with one thumb (design v2)
 
-> Status: **P0 + the PWA part of P3 built (2026-09-26, the user's decision: "a simple one-hand mode + PWA")**, not yet
-> tried on real phones; §12 lists what was built and where it deviates. P1, P2 and the rest of P3 are still design.
+> Status: **P0 + the PWA part of P3 built (2026-09-26, the user's decision: "a simple one-hand mode + PWA")**, played
+> on two real phones on 2026-09-27 and tuned from that playtest (§13); §12 lists what was built and where it deviates.
+> P1, P2 and the rest of P3 are still design.
 > Working notes (critiques, v1 drafts, research) were kept outside the repo; the debate outcome is recorded below.
 
 v1 is kept as `design-mobile-v1.md`. This version answers `critique-mobile.md` (1 BLOCKER, 8 MAJOR, 7 MINOR);
@@ -83,8 +84,8 @@ contact cannot lock input. A contact that starts in a dead band never claims the
 | **FLICK** (not up) | travel reaches `flick-min` (28 px) within `flick-window` (120 ms) of leaving the slop | fires **at the crossing**: `:step` pulse + stick = stroke direction | Step (↓ back, ←/→ sidestep, diagonals). If the thumb keeps going past the run ring, `:step` stays held: the hop, then the run, as holding Space does. |
 | **FLICK ↓ in `:stun` / `:air`** | same | `:mod` + `:quick` | Burst Reverse, buffered like Shift+J (fires on hit 2 if pressed after hit 1) |
 | **HOHO** | a REST contact (≥ `tap-ms` still) in neutral or guard, then an up-stroke crossing `flick-min` | fires at the crossing: `:mod` + `:step` | Hoho from guard. The perfect-Hoho read is intact. |
-| **FLICK ↑ = F** | a fresh up-stroke, or any up-stroke while in `:move` | `:flash` pulse once the thumb lifts within `up-lift-ms` (80) of the crossing | Flash, the Q2 → F branch. Not lifted in time → DRAG instead (forward walk or run). |
-| **DRAG** | left the slop without a flick | stick = Δ / `stick-r` (48 px); origin follows past 2 r | Walk / strafe (up = toward him, through the behind view) |
+| **FLICK ↑ = F** | a fresh up-stroke (within `up-cone`, 60° either side of vertical since §13), or any up-stroke while in `:move` | `:flash` pulse once the thumb lifts within `up-lift-ms` (150 since §13; was 80) of the crossing; nothing moves before that | Flash, the Q2 → F branch. Not lifted in time → DRAG instead (forward walk or run). |
+| **DRAG** | left the slop, and the flick window closed without a flick (§13: until then the stroke is *undecided* and the stick stays at 0) | stick = Δ / `stick-r` (48 px); origin follows past 2 r | Walk / strafe (up = toward him, through the behind view) |
 | **DRAG far** | deflection ≥ `run-ring` (1.6 r) | `:step` held + stick | Dash then run; back inside 1.3 r releases Step (the existing brake) |
 | **Back to rest** | a drag returns inside the slop and stays still `tap-ms` | as REST | "Walk back, then block" without lifting |
 | **CANCELED** | SDL FINGER_CANCELED | release whatever it held; never a tap | Idempotent for unknown or already-ended ids |
@@ -218,7 +219,8 @@ read, the triangle, guard-gauge pressure, run cancels with carry, SP holds, Burs
 | `slop` | 10 px |
 | `flick-min` | 28 px |
 | `flick-window` | 120 ms |
-| `up-lift-ms` | 80 ms |
+| `up-lift-ms` | 150 ms (80 until the §13 playtest) |
+| `up-cone` | 1.73 = tan 60°: a flick is up while \|dx\| ≤ 1.73 \|dy\| (45° until §13) |
 | `stick-r` | 48 px |
 | `run-ring` | 1.6 r |
 | `recenter` | 2 r |
@@ -437,9 +439,9 @@ The user asked for 「一個簡單的『手機單手直拿模式』，並以 PWA
 
 **Deviations from the design** (each a simplification, to be revisited in P1 / P2 if the phones ask for it):
 - G1 is a per-frame **event queue** (type, slot, x, y, timestamp), not a 10-finger state table: the recogniser needs the order and the times of the samples anyway.
-- The drag stick is live as soon as the thumb leaves the slop (the flick check runs alongside), so an up-flick walks forward for a few frames before its F.
+- ~~The drag stick is live as soon as the thumb leaves the slop (the flick check runs alongside), so an up-flick walks forward for a few frames before its F.~~ This is what broke K on the phones; fixed in §13 (the stick waits for the flick window).
 - After a non-up flick, Step stays held until the thumb stops for `tap-ms`, comes back under `flick-min`, or lifts (the design only said "past the run ring": this keeps flick → keep going = hop then run without a second Step press).
-- The layout is fixed CSS px from the edges (no millimetres, no `deck-layout-ok-p`, no SP fold for short screens); the pause chip is a tap at the thumb side, 200 CSS px from the top (not a 300 ms hold).
+- The layout is fixed CSS px from the edges (moved up and the pad enlarged in §13) (no millimetres, no `deck-layout-ok-p`, no SP fold for short screens); the pause chip is a tap at the thumb side, 200 CSS px from the top (not a 300 ms hold).
 - Portrait HUD: only the minimal fix. The text floor made the timer and the centre labels overlap the panels at 390 × 844, so in portrait the timer sits under the panels at half size and the panels' centre labels are drawn at half scale; the Kikon / Burst prompts move to 0.52 h in one-hand. No lens shift, no portrait camera (G6): the existing behind camera is playable at 390 × 844 (see the stills).
 - Service worker: **cache-first from one versioned cache** for every file, index.html included, instead of network-first index.html: a network-first page could pair a new index.html with an old index.js / index.wasm. Updates still land: the browser re-checks `sw.js` on each launch, the new build installs a new cache and takes over, and `pwa.js` reloads the page once.
 - The back trap, fullscreen / orientation lock, the service worker and the wake lock run only on a coarse pointer, so a desktop browser behaves exactly as before.
@@ -447,3 +449,49 @@ The user asked for 「一個簡單的『手機單手直拿模式』，並以 PWA
 
 **Known issues**: the duel's startup heap reads 87.1 MB instead of 55.4 MB (still under the 110 MB budget, wasm memory unchanged at 128 MB; RAVEN's identical binaries also flip between 57 and 71 MB, so it looks like a Boehm heap-growth threshold, not new data); the deck HUD's labels go through `hud-text` and cons a little per frame (not the 0 B of the P1 probe); a human P1 on desktop conses about +40 B / frame (two stick floats per vpad read).
 
+
+## 13. Playtest 1 and its fixes (the user's decision 2026-09-27)
+
+The user played P0 on two real phones.
+
+**Passed:** a NORMAL match finished one-handed; fps smooth; the back gesture pauses; the screen stays awake; the
+left-hand mirror works; the PWA launches offline.
+
+**Problems (verbatim):**
+1. 「步法和 K 非常難分開，非連擊中上撥幾乎會觸發步法而不觸發 K」: outside a string, an up-flick (K = F) almost always
+   stepped instead.
+2. 「整體按鍵位置應該要往上，手勢操作的接受範圍也要再擴大」: move the chips up; enlarge the gesture area.
+
+**Root cause of 1.** The drag stick went live the moment the thumb left the 10 px slop, and it stayed live in the
+up-pending phase while the F waited for the lift. A real flick keeps travelling well past the 28 px crossing
+(60–140 px), so from neutral the stick walked forward, and past the run ring (1.6 × 48 = 77 px) it held Step:
+the fighter hopped (a 24 f Step that no command cancels), and the F, when the lift came, was buffered into the hop
+and lost. When the lift came more than 80 ms after the crossing, which is common for a relaxed flick, there
+was no F at all, just a drag. A right thumb's "up" also sweeps up-left; beyond 45° it was read as a sidestep
+flick. Inside a string none of this showed, because a move ignores the stick and Step.
+
+**Fixes (engine/lisp/touch.lisp, knobs in `gesture-config`):**
+- A new recogniser phase, **undecided** (6): the stroke has left the slop but the flick window (`flick-window`,
+  120 ms) is still open. The stick reads 0 and Step is not held. The stroke becomes a DRAG when the window closes
+  (on the next motion or on the frame clock, so a thumb that stops also resolves), or a flick at the crossing.
+- The **up-pending** phase (4) no longer moves the stick or holds Step either: only a DRAG (2) does.
+- `up-lift-ms` 80 → **150 ms**; `up-cone` (new) **60°** either side of vertical (was 45°).
+- Cost: a slow drag starts moving up to 120 ms after it leaves the slop (the flick window), and a fast forward
+  stroke that is not lifted starts its walk / run up to 150 ms after the crossing. Timing still uses the SDL event
+  timestamps only.
+
+**Fixes for 2 (duel/lisp/onehand.lisp, CSS px at 390 × 844, right hand):**
+
+| | Before | Now |
+|---|---|---|
+| O, AWK (r 36, 26) | y 548 | y 448 (100 px up) |
+| L, I, SP1, SP2 (x 318, r 26) | y 564 / 632 / 700 / 768 | y 464 / 534 / 604 / 674 |
+| Flow pad | x 16–276, y 600–794 (260 × 194) | x 16–358, y 384–794 (342 × 410) |
+
+The pad now covers the chip column and O: a touch-down inside a chip's hit circle (radius + 8) takes the chip,
+as before; anywhere else in the pad starts a gesture, and a gesture that crosses a chip stays a gesture (chips
+claim only touch-downs). The left hand mirrors x (pad 32–374). The pause chip is unchanged.
+
+**Tests:** `tests/touch-test.lisp` adds a long neutral up-flick lifted 116 ms after the crossing (F, no stick, no
+Step), a 50° slanted up-flick (F), a slow drag (0 while undecided, then walks; the clock alone also resolves it),
+and flicks at a chip's boundary; `duel-touch.py` adds a 140 px up-flick from neutral (F, no Step in the log).

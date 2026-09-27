@@ -17,7 +17,8 @@
   (slop 10f0 :type single-float)          ; px a thumb may wander and still be a tap / rest
   (flick-min 28f0 :type single-float)     ; px of travel that makes a flick ...
   (flick-window 120f0 :type single-float) ; ... within this many ms of leaving the slop
-  (up-lift-ms 80f0 :type single-float)    ; an up-flick is F only if the thumb lifts this soon after the crossing
+  (up-lift-ms 150f0 :type single-float)   ; an up-flick is F only if the thumb lifts this soon after the crossing
+  (up-cone 1.73f0 :type single-float)     ; a flick is "up" while |dx| <= this x |dy| (1.73: 60 degrees either side)
   (stick-r 48f0 :type single-float)       ; px of drag for a full stick
   (run-ring 1.6f0 :type single-float)     ; stick radii: Step held (dash, run) beyond this ...
   (run-release 1.3f0 :type single-float)  ; ... released back inside this
@@ -36,7 +37,8 @@
 (defstruct (touch (:constructor make-touch (&key (cfg (make-gesture-config)))))
   "One recogniser. PHASE of the gesture contact: 0 none, 1 pending (still inside the slop since touch-down),
 2 drag, 3 rest (guard), 4 up-pending (an up-flick waiting for the lift), 5 spent (a Hoho fired: ignored
-until it lifts)."
+until it lifts), 6 undecided (left the slop, the flick window still open). Only a drag (2) moves the stick
+or holds Step, so a flick up never walks or dashes before its F (the user's playtest, 2026-09-27)."
   (cfg (make-gesture-config) :type gesture-config)
   (q (%f32s (* 5 +touch-events+)) :type (simple-array single-float (*)))   ; TOUCH-POLL's copy of the frame's events
   (dpx 1f0 :type single-float)                                             ; window px per CSS px
@@ -111,12 +113,12 @@ HOLDS: a list of ms each chip must be held first, default 0). Releases held chip
   (setf (touch-armed tr) 0 (touch-fx tr) dx (touch-fy tr) dy)
   (let ((x (touch-x tr)) (y (touch-y tr)) (ax (if (< dx 0f0) (- dx) dx)))
     (declare (single-float x y ax))
-    (cond ((and (< dy 0f0) (>= (- dy) ax))                    ; up (within 45 degrees)
+    (cond ((and (< dy 0f0) (>= (* (- dy) (%knob tr up-cone)) ax))   ; up (within UP-CONE)
            (if (and (= (touch-rested tr) 1) (touch-rest-up-ok tr))
                (progn (setf (touch-pend tr) (logior (touch-pend tr) +tp-hoho+) (touch-phase tr) 5)   ; Hoho at the crossing
                       (%glyph! tr 4 x y ms))
                (setf (touch-phase tr) 4 (touch-tup tr) ms)))  ; F, if the thumb lifts within UP-LIFT-MS
-          (t (setf (touch-pend tr) (logior (touch-pend tr) +tp-flick+) (touch-flick-hold tr) 1)
+          (t (setf (touch-pend tr) (logior (touch-pend tr) +tp-flick+) (touch-flick-hold tr) 1 (touch-phase tr) 2)
              (%glyph! tr 2 x y ms))))
   (setf (touch-rested tr) 0)
   nil)
@@ -135,7 +137,9 @@ HOLDS: a list of ms each chip must be held first, default 0). Releases held chip
         (declare (single-float ax ay d2 fm))
         (when (and (< (touch-tleave tr) 0f0) (> d2 (* slop slop))) (setf (touch-tleave tr) ms))
         (when (and (= (touch-armed tr) 1) (>= (touch-tleave tr) 0f0))
-          (cond ((> (- ms (touch-tleave tr)) (%knob tr flick-window)) (setf (touch-armed tr) 0 (touch-rested tr) 0))
+          (cond ((> (- ms (touch-tleave tr)) (%knob tr flick-window))
+                 (setf (touch-armed tr) 0 (touch-rested tr) 0)
+                 (when (= (touch-phase tr) 6) (setf (touch-phase tr) 2)))   ; no flick: it was a drag
                 ((>= d2 (* fm fm)) (%flick tr ax ay ms))))
         (when (and (= (touch-flick-hold tr) 1) (< d2 (* fm fm))) (setf (touch-flick-hold tr) 0)))
       ;; drag: the stick from the origin (which follows past RECENTER radii), Step held beyond the run ring
@@ -143,7 +147,7 @@ HOLDS: a list of ms each chip must be held first, default 0). Releases held chip
              (rc (* r (%knob tr recenter))))
         (declare (single-float r sx sy m2 rc))
         (when (and (member (touch-phase tr) '(1 3)) (> m2 (* slop slop)))
-          (setf (touch-phase tr) 2))
+          (setf (touch-phase tr) (if (= (touch-armed tr) 1) 6 2)))     ; a drag only once no flick can come
         (when (> m2 (* rc rc))
           (let ((k (/ rc (sqrt m2))))
             (declare (single-float k))
@@ -171,6 +175,8 @@ TAP-MS re-anchors (re-arming the flick) and, inside the slop of the stick origin
 held chips that need a hold come on."
   (declare (single-float now))
   (when (>= (touch-gid tr) 0)
+    (when (and (= (touch-phase tr) 6) (> (- now (touch-tleave tr)) (%knob tr flick-window)))
+      (setf (touch-phase tr) 2 (touch-armed tr) 0 (touch-rested tr) 0))
     (when (and (= (touch-phase tr) 4) (> (- now (touch-tup tr)) (%knob tr up-lift-ms)))
       (setf (touch-phase tr) 2))
     (when (and (/= (touch-phase tr) 5) (>= (- now (touch-pt tr)) (%knob tr tap-ms)))
@@ -257,7 +263,7 @@ latched while no fixed step ran stays pending until one does)."
 (defun touch-active-p (tr) "A gesture contact is down." (>= (touch-gid tr) 0))
 (defun touch-resting-p (tr) (= (touch-phase tr) 3))
 (defun touch-step-held-p (tr)
-  (and (member (touch-phase tr) '(2 4)) (or (= 1 (touch-flick-hold tr)) (= 1 (touch-run-hold tr)))))
+  (and (= (touch-phase tr) 2) (or (= 1 (touch-flick-hold tr)) (= 1 (touch-run-hold tr)))))
 (defun touch-flick-down-p (tr)
   "The last flick went down (within 45 degrees)."
   (let ((dx (touch-fx tr)) (dy (touch-fy tr))) (and (> dy 0f0) (>= dy (abs dx)))))
@@ -266,14 +272,14 @@ latched while no fixed step ran stays pending until one does)."
   (let ((r (%px tr stick-r)))
     (declare (single-float r))
     (cond ((logtest (touch-live tr) +tp-flick+) (/ (touch-fx tr) (%px tr flick-min)))
-          ((member (touch-phase tr) '(2 4)) (/ (- (touch-x tr) (touch-ox tr)) r))
+          ((= (touch-phase tr) 2) (/ (- (touch-x tr) (touch-ox tr)) r))
           (t 0f0))))
 (defun-fast touch-sy (tr)
   "The stick, y up."
   (let ((r (%px tr stick-r)))
     (declare (single-float r))
     (cond ((logtest (touch-live tr) +tp-flick+) (/ (- (touch-fy tr)) (%px tr flick-min)))
-          ((member (touch-phase tr) '(2 4)) (/ (- (touch-oy tr) (touch-y tr)) r))
+          ((= (touch-phase tr) 2) (/ (- (touch-oy tr) (touch-y tr)) r))
           (t 0f0))))
 (defun touch-chip-down-p (tr i) (logbitp i (touch-chip-on tr)))
 (defun touch-chip-hit-p (tr i) "Chip I was touched this frame." (logbitp i (touch-chip-hit tr)))

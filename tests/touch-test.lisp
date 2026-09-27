@@ -66,9 +66,37 @@
   (check (pulse tr engine::+tp-up+)))
 (fresh (tr)                                                 ; not lifted in time: a forward drag
   (feed tr 16 '(0 0 100 700 0) '(1 0 100 688 10) '(1 0 100 668 30))
-  (feed tr 130)
-  (feed tr 150 '(2 0 100 668 150))
+  (feed tr 200)
+  (check (> (touch-sy tr) 0.5))
+  (feed tr 216 '(2 0 100 668 210))
   (check (not (pulse tr engine::+tp-up+))))
+;;; the 2026-09-27 playtest: a neutral up-flick walked / dashed (the stick and the run ring were live before the
+;;; F confirm) and lost its F. Now nothing moves until the flick resolves, even for a long, slow-lifting stroke.
+(fresh (tr)
+  (feed tr 16 '(0 0 100 780 0) '(1 0 100 768 8) '(1 0 98 750 16))   ; left the slop: undecided, no stick
+  (check (and (zerop (touch-sy tr)) (not (touch-step-held-p tr))))
+  (feed tr 33 '(1 0 96 730 24) '(1 0 94 700 32) '(1 0 92 670 40) '(1 0 90 640 48))   ; 140 px: past the run ring
+  (take tr)
+  (check (and (zerop (touch-sy tr)) (zerop (touch-sx tr)) (not (touch-step-held-p tr))
+              (not (touch-pulse-p tr engine::+tp-flick+))))
+  (feed tr 150 '(2 0 90 640 140))                           ; lifted 116 ms after the crossing
+  (let ((l (engine::touch-live (take tr))))
+    (check (and (logtest l engine::+tp-up+) (not (logtest l engine::+tp-flick+))))))
+(fresh (tr)                                                 ; a right thumb's slanted up-flick (50 deg) is still up
+  (feed tr 16 '(0 0 200 750 0) '(1 0 190 742 8) '(1 0 175 732 16) '(1 0 170 725 24) '(2 0 170 725 60))
+  (let ((l (engine::touch-live (take tr))))
+    (check (and (logtest l engine::+tp-up+) (not (logtest l engine::+tp-flick+))))))
+(fresh (tr)                                                 ; a slow drag up still walks, once the window closes
+  (feed tr 16 '(0 0 100 700 0) '(1 0 100 694 40) '(1 0 100 688 80))
+  (check (zerop (touch-sy tr)))                             ; undecided (a flick could still come)
+  (feed tr 250 '(1 0 100 682 120) '(1 0 100 676 160) '(1 0 100 668 240))
+  (check (and (> (touch-sy tr) 0.6) (not (touch-step-held-p tr)) (not (pulse tr engine::+tp-up+))))
+  (feed tr 300)                                             ; the window also closes on the clock, no motion needed
+  (check (> (touch-sy tr) 0.6)))
+(fresh (tr)                                                 ; the clock alone ends the undecided phase
+  (feed tr 16 '(0 0 100 700 0) '(1 0 100 686 10))
+  (feed tr 200)
+  (check (> (touch-sy tr) 0.2)))
 ;;; HOHO: rest, then an up-stroke fires at the crossing when the game allows it (neutral / guard) ...
 (fresh (tr)
   (setf (engine::touch-rest-up-ok tr) t)
@@ -119,6 +147,18 @@
   (check (not (touch-chip-down-p tr 1)))
   (feed tr 360)
   (check (touch-chip-down-p tr 1)))
+;;; chips inside the pad (the 2026-09-27 deck: the pad spans the whole thumb area, chips win their hit circles):
+;;; a touch just inside a chip's hit circle holds the chip; one just outside starts a gesture, whose up-flick
+;;; crossing the chip is still an F (a chip only claims touch-downs)
+(let ((tr (touch-layout! (make-touch) 1 '(16 364 358 794) '((318 564 26)))))  ; L at the right edge, hit r 34
+  (feed tr 16 '(0 0 318 597 0))                                                 ; 33 px below its centre
+  (check (and (touch-chip-down-p tr 0) (= -1 (engine::touch-gid tr))))
+  (feed tr 40 '(2 0 318 597 30))
+  (feed tr 60 '(0 1 318 600 50) '(1 1 318 588 58) '(1 1 318 568 66) '(1 1 318 540 74) '(2 1 318 540 100))
+  (let ((l (engine::touch-live (take tr))))
+    (check (and (logtest l engine::+tp-up+) (not (touch-chip-down-p tr 0)))))
+  (feed tr 200 '(0 2 280 564 190) '(1 2 268 564 198) '(1 2 250 564 206))       ; beside it: a sidestep flick
+  (check (and (pulse tr engine::+tp-flick+) (touch-step-held-p tr))))
 ;;; a touch outside the pad and the chips starts no gesture (still a menu tap)
 (fresh (tr)
   (feed tr 16 '(0 0 50 100 0) '(2 0 50 100 40))

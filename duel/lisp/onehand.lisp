@@ -27,8 +27,10 @@ never offers it: the deck needs portrait)."
 ;;; ---------------------------------------------------------------- the deck (design §3.3)
 ;;; Chip i: 0 O, 1 L, 2 I, 3 SP1, 4 SP2, 5 AWAKEN (held 300 ms), 6 pause. CSS px from the right-hand
 ;;; layout at 390 x 844: x from the right edge, y from the bottom edge; the left hand mirrors x.
+;;; The user's playtest (2026-09-27): every chip 100 px higher, and the flow pad grown to the whole thumb area
+;;; (chips inside it win their hit circles: TOUCH-LAYOUT! tests chips first).
 (defparameter *chip-spots*
-  '((170 296 36 "O") (72 280 26 "L") (72 212 26 "I") (72 144 26 "SP1") (72 76 26 "SP2") (270 296 26 "AWK") (32 -200 22 "II"))
+  '((170 396 36 "O") (72 380 26 "L") (72 310 26 "I") (72 240 26 "SP1") (72 170 26 "SP2") (270 396 26 "AWK") (32 -200 22 "II"))
   "Per chip: x from the thumb-side edge, y from the bottom (negative: from the top), radius, label.")
 (defparameter *chip-holds* '(0 0 0 0 0 300 0))
 
@@ -36,7 +38,7 @@ never offers it: the deck needs portrait)."
   "Values: pad (x0 y0 x1 y1) and chips ((cx cy r) ...), window px, for the current window and *HAND*."
   (let* ((d (pixel-density)) (w (/ (window-width) d)) (h (/ (window-height) d)) (left (eq *hand* :left)))
     (flet ((x (from-right) (* d (if left from-right (- w from-right)))) (px (v) (* d v)))
-      (values (list (if left (px 114) (px 16)) (px (- h 244)) (if left (px (- w 16)) (px (- w 114))) (px (- h 50)))
+      (values (list (if left (px 32) (px 16)) (px (- h 460)) (if left (px (- w 16)) (px (- w 32))) (px (- h 50)))
               (loop for (cx cy r) in *chip-spots*
                     collect (list (x cx) (px (if (minusp cy) (- cy) (- h cy))) (px r)))))))
 

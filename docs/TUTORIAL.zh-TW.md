@@ -573,7 +573,7 @@ duel -> RESULTS winner P2 konpaku 0-4 ticks 9305 secs 155.1
 
 2026-09-26 起，SOUL DUEL 可以在手機上直拿、用一根拇指打電腦，也可以加到主畫面當成 App 開。設計在 [DUEL_MOBILE_DESIGN.md](DUEL_MOBILE_DESIGN.md)，§12 記錄了這次做了哪些、和設計哪裡不一樣。
 
-![單手模式：上面是雙方的量表，右下是按鈕，左下的框是手勢區](../tests/shots/mobile-battle.png)
+![單手模式：上面是雙方的量表，右下是按鈕，下半部的大框是手勢區（按在圓鈕上才是按鈕）](../tests/shots/mobile-battle.png)
 
 **怎麼組起來的。** 觸控不是另一套操作系統，只是 9.1 那個 vpad 的另一種輸入來源：
 
@@ -587,9 +587,9 @@ duel -> RESULTS winner P2 konpaku 0-4 ticks 9305 secs 155.1
 |---|---|
 | 在手勢區點一下 | Quick（J）；連點就是連段 |
 | 按著不動約 0.12 秒 | 防禦（U），放開才會回防禦量表 |
-| 拖曳 | 移動（WASD），往上是朝對手；拖遠一點是衝刺，再拖著是跑 |
+| 拖曳 | 移動（WASD），往上是朝對手；拖遠一點是衝刺，再拖著是跑。剛開始拖的約 0.12 秒角色不會動，先等著看是不是撥 |
 | 快速撥一下（下、左、右） | Step（Space），往下是後退 |
-| 往上撥然後馬上放開 | Flash（K） |
+| 往上撥然後放開（越過門檻後 0.15 秒內；左右偏 60° 以內都算往上） | Flash（K）。放開之前角色不會走也不會跳步 |
 | 先按著不動，再往上撥 | Hoho（Shift+Space），只在站著或防禦時 |
 | 被打中、硬直或浮空時往下撥 | Burst Reverse（Shift+J） |
 | O、L、I、SP1、SP2 圓鈕 | Kikon 突進（按著＝Kikon）、Signature、Breaker、SP1、SP2 |

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """duel-touch.py — writes tests/scripts/duel-touch.json: ONE-HAND by touch alone at 390x844 (run.mjs --mobile):
 title tap -> ONE-HAND VS CPU -> three select taps -> the intro skipped by a tap -> taps (Quick string), a rest (guard),
-flicks (Step), a drag far (dash / run), rest + flick up (Hoho), flick up + lift (F), the O and L chips, the pause
-chip. Hash lines (debug 2107) at the end: run it twice under --fixed-dt and they must match (the determinism gate).
+flicks (Step), a drag far (dash / run), rest + flick up (Hoho), flick up + lift (F), a long neutral up-flick lifted
+late (still F, no Step: the 2026-09-27 playtest), the O and L chips, the pause chip. Hash lines (debug 2107) at the end: run it twice under --fixed-dt and they must match (the determinism gate).
   python3 tests/scripts/duel-touch.py
   node tools/run.mjs dist/duel --mobile --size 390x844 --fixed-dt 16.666667 --secs 40 --script tests/scripts/duel-touch.json
   node tools/run.mjs dist/duel --mobile --size 390x844 --fixed-dt 16.666667 --secs 19 --script tests/scripts/duel-touch-left.json"""
@@ -34,8 +34,9 @@ stroke(24.0, [(PX, PY)], lift=False)                                           #
 for i, dy in enumerate((12, 24, 40)): s.append({"at": round(24.4 + 0.016 * i, 3), "touch": "move", "x": PX, "y": PY - dy})
 s.append({"at": 24.6, "touch": "end", "x": PX, "y": PY - 40})
 stroke(26.0, [(PX, PY), (PX, PY - 12), (PX, PY - 24), (PX, PY - 40)])        # flick up + lift: F
-s.append({"at": 27.5, "touch": "start", "x": 220, "y": 548}); s.append({"at": 28.2, "touch": "end", "x": 220, "y": 548})  # O held
-tap(29.5, 318, 564)                                 # L
+stroke(26.9, [(PX, PY + 60 - 20 * i) for i in range(8)], dt=0.016)            # 140 px up, lifted 96 ms after the crossing: F
+s.append({"at": 27.9, "touch": "start", "x": 220, "y": 444}); s.append({"at": 28.6, "touch": "end", "x": 220, "y": 444})  # O held
+tap(29.5, 318, 464)                                 # L
 s.append({"at": 31.0, "shot": "tests/shots/mobile-battle.png"})
 tap(32.0, 358, 200)                                  # the pause chip
 s.append({"at": 33.0, "shot": "tests/shots/mobile-pause.png"})
