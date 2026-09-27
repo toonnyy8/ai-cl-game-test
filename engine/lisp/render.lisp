@@ -68,6 +68,7 @@ file F (same directory, recursively), every // comment is removed, and so are bl
   (up (v3 0 1 0) :type f32vec)
   (shake (v3 0 0 0) :type f32vec)          ; world offset added to pos and target (screen shake)
   (fov (deg 60) :type single-float)        ; vertical, radians
+  (shift-y 0f0 :type single-float)         ; lens shift: the image moves up this much in NDC (2 = the frame height)
   (near 0.1f0 :type single-float)
   (far 400f0 :type single-float)
   ;; derived by UPDATE-CAMERA
@@ -91,6 +92,8 @@ file F (same directory, recursively), every // comment is removed, and so are bl
     (v3-set! (camera-upv cam) (aref v 1) (aref v 5) (aref v 9))
     (v3-set! (camera-forward cam) (- (aref v 2)) (- (aref v 6)) (- (aref v 10)))
     (m4-perspective! (camera-proj cam) (camera-fov cam) (window-aspect) (camera-near cam) (camera-far cam))
+    (let ((sy (camera-shift-y cam)))                ; an off-axis frustum (G6): ndc y += SY, the view is unchanged
+      (unless (= sy 0f0) (setf (m@ (camera-proj cam) 1 2) (- sy))))
     (m4-mul! (camera-view-proj cam) (camera-proj cam) v)
     (m4-invert! (camera-inv-view-proj cam) (camera-view-proj cam))
     cam))

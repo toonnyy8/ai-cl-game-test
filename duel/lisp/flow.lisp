@@ -238,7 +238,8 @@ won, NIL = a draw (a lethal trade took both souls' last Konpaku)."
                   (2 (go-select))
                   (3 (go-title))
                   (4 (toggle-cam)))))
-           ((and *cine* (or (pause-p) (and *one-hand* (tap-p)))) (skip-cine))
+           ;; battle cinematics (awakening, Kikon, Soul Break) can't be skipped (the user's decision
+           ;; 2026-09-28): Start pauses them like play, a tap does nothing
            ((or (pause-p) (focus-lost-p) (touch-pause-p)
                 (and *one-hand* (not (portrait-p))))              ; ONE-HAND turned to landscape: ROTATE TO PORTRAIT
             (setf *paused* t *menu* 0) (play-sfx :select))))

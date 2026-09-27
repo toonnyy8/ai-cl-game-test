@@ -31,8 +31,8 @@
    #:touch-step-held-p #:touch-flick-down-p #:touch-sx #:touch-sy #:touch-chip-down-p #:touch-chip-hit-p
    #:touch-tapped-p #:touch-tap-x #:touch-tap-y #:touch-rest-up-ok #:touch-flick-hold #:touch-rested
    #:touch-active-p #:touch-ox #:touch-oy #:touch-glyph #:touch-glyph-t #:touch-glyph-x #:touch-glyph-y #:touch-cfg #:touch-dpx
-   #:+tp-tap+ #:+tp-flick+ #:+tp-up+ #:+tp-hoho+
-   #:gesture-config #:make-gesture-config #:gc-tap-ms #:gc-slop #:gc-flick-min #:gc-flick-window #:gc-up-lift-ms
+   #:+tp-tap+ #:+tp-flick+ #:+tp-tap-hi+ #:+tp-hoho+ #:touch-split-y
+   #:gesture-config #:make-gesture-config #:gc-tap-ms #:gc-slop #:gc-flick-min #:gc-flick-window #:gc-up-cone #:gc-tap-split
    #:gc-stick-r #:gc-run-ring #:gc-run-release #:gc-recenter #:gc-chip-slop #:gc-menu-tap-ms
    ;; platform.lisp: window, time, input
    #:platform-init #:platform-poll #:*max-dt* #:window-width #:window-height #:window-aspect
@@ -43,7 +43,7 @@
    #:pad-count #:pad-connected-p #:pad-down #:pad-pressed #:pad-lx #:pad-ly #:pad-rx #:pad-ry #:pad-lt #:pad-rt
    ;; render.lisp: meshes, camera, look, frame, lights, fx batch
    #:wgsl #:mesh #:mesh-p #:mesh-id #:mesh-count #:make-mesh #:+vertex-floats+
-   #:camera #:*camera* #:make-camera #:camera-pos #:camera-target #:camera-up #:camera-shake #:camera-fov
+   #:camera #:*camera* #:make-camera #:camera-pos #:camera-target #:camera-up #:camera-shake #:camera-fov #:camera-shift-y
    #:camera-near #:camera-far #:camera-eye #:camera-right #:camera-upv #:camera-forward #:camera-view
    #:camera-proj #:camera-view-proj #:camera-inv-view-proj #:update-camera #:camera-look-at #:world-to-screen
    #:environment #:*env* #:make-environment #:env-sky-top #:env-fog-color #:env-fog-density #:env-fog-base
@@ -64,7 +64,7 @@
    #:mb-color #:mbc #:hexc #:mb-quad #:mb-poly-out #:mb-box #:mb-bevel-box #:mb-cylinder #:mb-cone #:mb-prism
    #:mb-sphere #:mb-capsule #:mb-wedge #:mb-plane #:mb-blade #:mb-hull #:mb-tube #:mb-flat-quad #:rim-vec
    ;; ui.lisp: 2D UI batch and bitmap text
-   #:+font-5x7+ #:*ui-min-css* #:ui-scale #:fit-scale #:ui-rect #:ui-gradient #:ui-rect-outline #:ui-bar #:%ui-poly4
+   #:+font-5x7+ #:*ui-min-css* #:*ui-text-min* #:ui-scale #:fit-scale #:ui-rect #:ui-gradient #:ui-rect-outline #:ui-bar #:%ui-poly4
    #:with-ui-verts #:uvtx
    #:ui-block-text #:ui-big-text #:ui-bitmap #:text-width #:ui-text
    ;; audio.lisp: synthesis toolkit, DEFSOUND, playback

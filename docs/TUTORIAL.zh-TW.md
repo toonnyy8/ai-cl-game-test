@@ -58,7 +58,7 @@ $E --norc --load tests/rules-test.lisp        # rules-test: ALL PASS
 $E --norc --load engine/lisp/package.lisp --load engine/lisp/math.lisp --load tests/test-math.lisp   # test-math: OK
 $E --norc --load tests/input-test.lisp        # input-test: 31 checks, ALL PASS
 $E --norc --load tests/cine-test.lisp         # cine-test: 18 checks, ALL PASS
-$E --norc --load tests/duel-rules-test.lisp   # duel-rules-test: 351 checks, ALL PASS
+$E --norc --load tests/duel-rules-test.lisp   # duel-rules-test: 1727 checks, ALL PASS
 $E --norc --load tests/duel-control-test.lisp # duel-control-test: 53 checks, ALL PASS
 ```
 
@@ -457,11 +457,13 @@ SOUL DUEL 這邊只有資料：`duel/lisp/control.lisp` 的 `*vpad-actions*`（�
 
 ### 9.2 角色是資料加掛鉤
 
-`duel/lisp/kit.lisp` 定義兩個宣告式的巨集：`defmove`（第 138～175 行，一招一個 plist）和 `defkit`（第 306～354 行，角色的一種型態一個 plist）。通用的戰鬥程式碼只讀它們產生的結構。
+`duel/lisp/kit.lisp` 定義兩個宣告式的巨集：`defmove`（第 140～178 行，一招一個 plist）和 `defkit`（第 319～371 行，角色的一種型態一個 plist）。通用的戰鬥程式碼只讀它們產生的結構。
 
-看山本的招牌技（`duel/lisp/yama.lisp` 第 32～38 行）：幀數、傷害、判定範圍都是數字，只有一件事資料做不到，就是「第 40 幀放出一道火焰波」，所以寫成 `:on-frame ((40 yama-fire-wave))`。`yama-fire-wave`（第 199～208 行）是普通函式，通用的 `main-phase-step`（`fighter.lisp` 第 402～420 行）在那一幀用 `funcall` 呼叫它（第 412 行）。為什麼寫符號而不是 `#'yama-fire-wave`？整個遊戲是一個編譯單元，招式資料在載入時就執行，那時後面的 `defun` 還沒定義，`#'` 會失敗；符號到真的要呼叫時才去找函式。
+看山本的招牌技（`duel/lisp/yama.lisp` 第 32～38 行）：幀數、傷害、判定範圍都是數字，只有一件事資料做不到，就是「第 40 幀放出一道火焰波」，所以寫成 `:on-frame ((40 yama-fire-wave))`。`yama-fire-wave`（第 199～208 行）是普通函式，通用的 `main-phase-step`（`fighter.lisp` 第 427～445 行）在那一幀用 `funcall` 呼叫它（第 437 行）。為什麼寫符號而不是 `#'yama-fire-wave`？整個遊戲是一個編譯單元，招式資料在載入時就執行，那時後面的 `defun` 還沒定義，`#'` 會失敗；符號到真的要呼叫時才去找函式。
 
-型態也是資料。劍八的野晒分成三杯（「呑め」量表的三階，`duel/lisp/ken.lisp` 第 125～175 行）：一杯片手只寫了「繼承 `:base`、起手 +2 幀、距離 ×1.3、換掉 SP1 和 Kikon」；二杯兩手繼承一杯，另外寫了自己的一整組劍道連段（`:grid`）和 +3 幀、×1.4；三杯繼承二杯、完全不推導，直接沿用二杯的招式，只把 K1 換成空間斬。其餘十幾招由 `register-kit`（`kit.lisp` 第 252～304 行）在載入時從原招式重新推導（第 292～299 行；不推導的型態拿上一型態的版本），沒有任何一招是複製貼上的。連段本身也是資料：`:grid` 列出六個動作加兩個「換過鍵的第二段」（`defmove-copy` 複製出來、只換名字），`string-grid` 展開成十條連線，「J／K 只能換一次」就寫在這十條線裡。數值可以直接寫 `tuning.lisp` 的變數名（例如 `:walk *walk-kenpachi*`），`resolve-tuning`（第 18～22 行）在載入時換成值。
+型態也是資料。劍八的野晒分成三杯（「呑め」量表的三階，`duel/lisp/ken.lisp` 第 160～211 行）：一杯片手只寫了「繼承 `:base`、起手 +2 幀、距離 ×1.3、換掉 SP1 和 Kikon」；二杯兩手繼承一杯，另外寫了自己的一整組劍道連段（`:grid`）和 +3 幀、×1.4；三杯繼承二杯、完全不推導，直接沿用二杯的招式，只把 K1 換成空間斬。其餘十幾招由 `register-kit`（`kit.lisp` 第 265～317 行）在載入時從原招式重新推導（第 305～312 行；不推導的型態拿上一型態的版本），沒有任何一招是複製貼上的。連段本身也是資料：`:grid` 列出六個動作加兩個「換過鍵的第二段」（`defmove-copy` 複製出來、只換名字），`string-grid` 展開成十條連線，「J／K 只能換一次」就寫在這十條線裡。數值可以直接寫 `tuning.lisp` 的變數名（例如 `:walk *walk-kenpachi*`），`resolve-tuning`（第 18～22 行）在載入時換成值。
+
+三杯之後還有第二次覺醒：**劍八的卍解**（`duel/lisp/ken.lisp` 第 215～250 行，設計與使用者的決定在 [DUEL_KEN_BANKAI.md](DUEL_KEN_BANKAI.md)）。這是「一場只能覺醒一次」唯一的例外（使用者 2026-09-27 的決定）：三杯（NOMIHOSE）、紅血、自由狀態下按 P 就進入 `:bankai`。代價是使用者 2026-09-28 定的：**劍八自己的魂魄直接變成 1，HP 回滿**，之後被 Kikon 或 Soul Break 一次就輸。「能不能開」也是資料：只有三杯的 kit 寫了 `:bankai-form :bankai`，卍解和之後的片腕都沒有，所以結構上一場只有一次；判斷寫成純函式 `bankai-allowed-p`（`rules.lisp`）。卍解的量表「腕」有 4 格，放在原本 NOME 的 kit 量表裡：K、L、SP1、SP2、I、O 每出一招扣一格並自損 60 靈子（`kit-pip-cmd-p`、`pip-spend`），5 秒沒扣格就自己裂一格（`pip-step`），扣光以後等這一招打完，手臂爆裂（`burst-due-p`、`combat.lisp` 的 `arm-burst!`），之後整場都是 `:kataude`（片腕：基本型的招式距離 ×0.7，由 `:reach-mult` 推導出來）。卍解的招式大多沿用舊動畫、只換數字；新的是三個片段（站姿、拳、咬）、一把斷刀、一個身體變體（`body-variant`：同一副骨架換調色盤、加角和手臂裂痕）和兩段過場。這些全部都在角色檔裡，通用檔案只多了幾個不帶名字的 kit 鍵（`:bankai-form`、`:pips`）和一個招式旗標 `:rend`（霸體與架式擋不住）。
 
 這條規矩有檢查：`grep -nE ':ya-|:ke-|yama|kenpachi' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow}.lisp` 必須什麼都印不出來，`tests/duel-rules-test.lisp` 最後也有同樣的檢查。所以加第三個角色不必改任何通用檔案（練習 8）。
 
@@ -471,14 +473,14 @@ SOUL DUEL 這邊只有資料：`duel/lisp/control.lisp` 的 `*vpad-actions*`（�
 
 SOUL DUEL 分兩段：
 
-- `fighter-system`（`fighter.lisp` 第 668～691 行）先把每個人「對手現在站哪」記下來（`fighter-ox`、`fighter-oz`），再讓兩個人各走一步，所以誰都看不到對方這一步的移動。一方對另一方造成的凍結、鎖輸入，等兩個人都走完才生效（第 680～684 行；Burst Reverse 也是這時才生效，第 685～690 行，而且在這一步的命中結算之前，所以 Kikon 突進還沒砍中時被 Burst，突進就中斷了，不管誰先走）。
-- `hit-system`（`duel/lisp/combat.lisp` 第 307～330 行）先檢查 Breaker 互撞，然後**收集**所有碰到的近戰與飛行道具命中（`collect-melee`，第 258～278 行），每一筆連同攻擊者當下的招式、蓄積的傷害、防守方當時紅不紅一起存進 `pending`（第 249～254 行），最後才一筆筆**套用**（`apply-hit`，第 101～246 行）。這一步確認的 Kikon 和靈子歸零的 Soul Break 在最後一起結算（`settle-souls`，第 425～448 行）：互砍到兩邊同時沒命就是平手。
+- `fighter-system`（`fighter.lisp` 第 698～721 行）先把每個人「對手現在站哪」記下來（`fighter-ox`、`fighter-oz`），再讓兩個人各走一步，所以誰都看不到對方這一步的移動。一方對另一方造成的凍結、鎖輸入，等兩個人都走完才生效（第 680～684 行；Burst Reverse 也是這時才生效，第 685～690 行，而且在這一步的命中結算之前，所以 Kikon 突進還沒砍中時被 Burst，突進就中斷了，不管誰先走）。
+- `hit-system`（`duel/lisp/combat.lisp` 第 307～330 行）先檢查 Breaker 互撞，然後**收集**所有碰到的近戰與飛行道具命中（`collect-melee`，第 258～278 行），每一筆連同攻擊者當下的招式、蓄積的傷害、防守方當時紅不紅一起存進 `pending`（第 249～254 行），最後才一筆筆**套用**（`apply-hit`，第 101～246 行）。這一步確認的 Kikon 和靈子歸零的 Soul Break 在最後一起結算（`settle-souls`，第 488～511 行）：互砍到兩邊同時沒命就是平手。
 
 程式碼審查時抓到的真實 bug 就是這個：`pending` 原本沒存攻擊者的招式，套用時才去讀，而第一筆命中已經把對方打進硬直、招式清空了，所以每次互砍 P2 的那一刀都少了屬性。修好之後，除錯指令 2319 讓兩個山本在同一步出 J1，兩邊靈子剩下的一樣多。
 
 ### 9.4 過場導演：規則決定，過場只負責呈現
 
-Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規則的一部分（「動畫播到第幾幀才扣命」），然後就不能跳過、不能快轉、測試也要等它。SOUL DUEL 的規矩是：**過場開始之前，結果已經算完了**。`settle-souls`（`combat.lisp` 第 425～448 行）先 `settle-konpaku` 扣掉魂魄、補滿靈子，最後才 `start-cine`，並把「接下來重置或結束比賽」交給 `:after`。所以跳過過場（Esc，或除錯指令 2100）什麼都不會少。
+Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規則的一部分（「動畫播到第幾幀才扣命」），然後就不能跳過、不能快轉、測試也要等它。SOUL DUEL 的規矩是：**過場開始之前，結果已經算完了**。`settle-souls`（`combat.lisp` 第 488～511 行）先 `settle-konpaku` 扣掉魂魄、補滿靈子，最後才 `start-cine`，並把「接下來重置或結束比賽」交給 `:after`。所以就算過場被跳過（除錯指令 2100），也什麼都不會少。對戰中的覺醒、Kikon、Soul Break 過場，玩家不能跳過（2026-09-28 使用者的決定）：按 Esc／Start 只會暫停，點螢幕也沒反應；只有開場和 K.O. 過場還能跳過。
 
 導演在引擎的 `engine/lisp/cine.lisp`。`defcine`（第 38～61 行）定義的腳本有兩種模式：
 
@@ -501,7 +503,7 @@ Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規�
 光是亂數分開還不夠。其他讓「同一個種子＝同一場比賽」成立的條件：
 
 - 裝置在固定步長裡讀（9.1），不是每幀讀。
-- 真人的搖桿方向透過「模擬擁有的視角方向」換算（`view-step`，`fighter.lisp` 第 112～124 行），而不是讀跟著真實時間平滑移動的攝影機。
+- 真人的搖桿方向透過「模擬擁有的視角方向」換算（`view-step`，`fighter.lisp` 第 132～144 行），而不是讀跟著真實時間平滑移動的攝影機。
 - 慢動作用「跳步」實作（`main.lisp` 第 34～36 行）：每步累加倍率，滿 1 才跑一個模擬幀，所以幀數永遠是整數。這個累加器 `*slow-acc*` 在每場開始時歸零（`start-match` 呼叫 `reset-slow-clock`）：完美 Hoho 的慢動作會留下零頭（0.5、0.75……），以前它會帶進下一場，讓下一場第一次慢動作錯開一步，結果同一個種子在測試關卡裡的成績取決於前面跑過哪些比賽。
 - 命中停頓由規則設定、過場在步長時鐘上跑（9.4）。
 - `dir-yaw`（`rules.lisp` 第 20～24 行）用 Common Lisp 的 `atan`（倍精度），不用引擎的 `yaw-to`（單精度 `atan2f`）：兩者差最後一位，就會長出另一場比賽，而參考紀錄是用前者錄的。
@@ -512,7 +514,7 @@ Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規�
 duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7
 ```
 
-（2026-09-27 J／K 連段、O 收尾與攻勢之後的值，三組的 hash 行全部改變；之前是山本卍解重製與防禦量表回復變慢之後的 `winner P1 konpaku 2-0 ticks 7688 secs 128.1`，再之前是 `winner P2 konpaku 0-4 ticks 9305 secs 155.1`。2026-09-26 guard v3 之後的值：靈子 1100 → 1300（使用者的決定：真人對戰比電腦對電腦快得多）、防禦中防禦量表不回、卍解的防禦量表只靠打中對手補（Kikon 重置時沿用）、山本西的 U 改成「殘日獄衣」火焰防禦（擋下扣一半、每一下近戰都燙傷對手，遠程攻擊只受 0.6 倍傷害而且不會被打出硬直）、野晒二杯掉得比較慢、東的受傷倍率 1.4 → 1.2。同一天的追加修改（卍解防禦量表被削減 ×1.3、東打人回復量減半為 0.05、劈開隕石等招式「刀身近處算近戰、遠處的斬線才算遠程」）沒有改變這一行，但 YK 的 hash 行和 YY 的結果變了。上一版是 `winner P1 konpaku 7-0 ticks 7351 secs 122.5`（劍八那一批：山本西「按住 U = 霸體」、野晒的三杯「呑め」量表、跑步時面向對手），再之前是 `winner P2 konpaku 0-3 ticks 8594 secs 143.2`。規則一改，這一行就要跟著換，同時更新 DUEL_GAMEPLAY.md、`tests/scripts/duel.py` 的註解和 `tests/style-cvc-ref.txt`。）
+（2026-09-28 Soul Break 新規則與劍八卍解之後，這一行和 YK、KK 的 hash 行都沒變，因為這兩場沒有 Soul Break、也沒有人開卍解；YY 從 t=4200 開始不同（Soul Break 改播毀魂技動畫，過場變長），結果變成 `winner P2 konpaku 0-4 ticks 6948 secs 115.8`。hash 行只有在有「腕」量表的型態才多印 `u<裂開倒數>` 和 `*`（爆裂待發），其他型態的行一個字都不變。2026-09-27 J／K 連段、O 收尾與攻勢之後的值，三組的 hash 行全部改變；之前是山本卍解重製與防禦量表回復變慢之後的 `winner P1 konpaku 2-0 ticks 7688 secs 128.1`，再之前是 `winner P2 konpaku 0-4 ticks 9305 secs 155.1`。2026-09-26 guard v3 之後的值：靈子 1100 → 1300（使用者的決定：真人對戰比電腦對電腦快得多）、防禦中防禦量表不回、卍解的防禦量表只靠打中對手補（Kikon 重置時沿用）、山本西的 U 改成「殘日獄衣」火焰防禦（擋下扣一半、每一下近戰都燙傷對手，遠程攻擊只受 0.6 倍傷害而且不會被打出硬直）、野晒二杯掉得比較慢、東的受傷倍率 1.4 → 1.2。同一天的追加修改（卍解防禦量表被削減 ×1.3、東打人回復量減半為 0.05、劈開隕石等招式「刀身近處算近戰、遠處的斬線才算遠程」）沒有改變這一行，但 YK 的 hash 行和 YY 的結果變了。上一版是 `winner P1 konpaku 7-0 ticks 7351 secs 122.5`（劍八那一批：山本西「按住 U = 霸體」、野晒的三杯「呑め」量表、跑步時面向對手），再之前是 `winner P2 konpaku 0-3 ticks 8594 secs 143.2`。規則一改，這一行就要跟著換，同時更新 DUEL_GAMEPLAY.md、`tests/scripts/duel.py` 的註解和 `tests/style-cvc-ref.txt`。）
 
 跑兩次、把所有 `^duel` 開頭的行 diff 一下，應該完全相同（指令在 DUEL_GAMEPLAY.md）。這就變成一個不用寫的回歸測試：任何「不該改變行為」的修改（重構、把程式搬進引擎）都必須讓這一行和十三行 hash 一字不差。把 SOUL DUEL 的東西收回引擎時，每一步都是這樣檢查的。
 
@@ -525,45 +527,45 @@ duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7
 讀進手把    ai.lisp 452-455            pilot-system → vpad-begin-step!（input.lisp 51-55）
                                         → p1-reader（fighter.lisp 26-28）→ vpad-read!（input.lisp 143-153）
                                         → vpad-set!（57-71）：Kikon 鈕按下，蓋上時間戳；之後每一步都是「按著」
-這一步      main.lisp 29-41            sim-step → sim-systems → fighter-system（fighter.lisp 668-691）
-                                        → fighter-step（648-666）→ neutral-step（313-342）
-指令        fighter.lisp 281-287       command! 依 *commands* 的順序找到被按下的 :kikon
-                                        → try-command（249-272）：模組的 90 幀冷卻開始 → start-move（149-173）：
+這一步      main.lisp 29-41            sim-step → sim-systems → fighter-system（fighter.lisp 698-721）
+                                        → fighter-step（678-696）→ neutral-step（338-367）
+指令        fighter.lisp 306-312       command! 依 *commands* 的順序找到被按下的 :kikon
+                                        → try-command（271-297）：模組的 90 幀冷卻開始 → start-move（169-193）：
                                         進入這一招，階段 :aura，頭上跳出 "KIKON"
-突進        fighter.lisp 373-400       kikon-rush-step，每一步問規則 kikon-rush-next-phase（rules.lisp 172-180），
+突進        fighter.lisp 398-425       kikon-rush-step，每一步問規則 kikon-rush-next-phase（rules.lisp 174-182），
                                         數字來自招式的 :params：瞄準 6 幀，炎上沒有衝刺（:dash-max 0）
-                                        → 直接出刀（enter-main，fighter.lisp 175-180）；第 4 幀火牆開始升起
+                                        → 直接出刀（enter-main，fighter.lisp 195-200）；第 4 幀火牆開始升起
 收集        combat.lisp 307-330        hit-system → collect-melee（258-278）：第 20 幀火線碰到了，
                                         記下劍八這時紅不紅（red-p）
-套用        combat.lisp 101-246        apply-hit：resolve-contact（rules.lisp 111-144）照常判定，
+套用        combat.lisp 101-246        apply-hit：resolve-contact（rules.lisp 111-146）照常判定，
                                         他防禦就是 :blocked；這次沒防禦，是 :hit。
-                                        第 140 行 kikon-outcome（rules.lisp 309-319）：砍中、而且「這一步」
+                                        第 140 行 kikon-outcome（rules.lisp 311-321）：砍中、而且「這一步」
                                         O 還按著 → :follow：劍八被擊退 2.5 公尺、踉蹌，照常吃 70 傷害，
                                         山本的招式進入 :follow 階段（第 175 行）
-衝入        fighter.lisp 373-400       kikon-rush-step 的 :follow：山本追著劍八衝過去，速度由
-                                        kikon-follow-speed（rules.lisp 337-340）算，剛好在 kikon-follow-wait
+衝入        fighter.lisp 398-425       kikon-rush-step 的 :follow：山本追著劍八衝過去，速度由
+                                        kikon-follow-speed（rules.lisp 339-342）算，剛好在 kikon-follow-wait
                                         （326-329）幀結束時到達出刀距離，然後再砍一次
-第二刀      combat.lisp 101-246        這一刀是 follow：劍八紅了，kikon-follow-unguardable-p（rules.lisp 321-324）
+第二刀      combat.lisp 101-246        這一刀是 follow：劍八紅了，kikon-follow-unguardable-p（rules.lisp 323-326）
                                         讓它不能防（他踉蹌的時間 kikon-follow-stun 也拖到這一刀之後）；
                                         kikon-outcome 回 :kikon（第 142 行），不扣靈子，排進 *kikons*
-結算        combat.lisp 425-448        settle-souls → settle-konpaku（408-423）→ kikon-result（rules.lisp 344-351）：
+結算        combat.lisp 488-511        settle-souls → settle-konpaku（471-486）→ kikon-result（rules.lisp 346-355）：
                                         扣 2 個魂魄（覺醒中 3 個），靈子補滿，發出 (:konpaku 劍八 2)
 表現        feedback.lisp 167          :konpaku → pips-shatter（hud.lisp 155-161）：HUD 上兩個魂魄碎掉
 過場        cine.lisp 66-78            start-cine 突進招式的 :cine（'yama-kikon-cine），之後每一步 cine-step（96-106）
                                         yama.lisp 339-363：鏡頭、字幕、火焰圓頂，第 142 幀魂魄碎裂
 結束        cinema.lisp 39-52          cine-end：恢復場景、忘掉過場中亂按的鍵（vpad-flush!）
-            combat.lisp 450-469        :after → reset-round：兩人相隔 8 公尺、48 幀不能動、防禦量表補滿
+            combat.lisp 513-532        :after → reset-round：兩人相隔 8 公尺、48 幀不能動、防禦量表補滿
                                         （每個人都一樣，卍解也是：2026-09-27 的重製拿掉了「沿用」）
                                         （魂魄打光的話改成 match-over，flow.lisp 136-143）
 ```
 
 換幾個條件，路線在哪裡分岔：
 
-- **O 在砍中之前就放開了**：`kikon-outcome` 回 NIL，`apply-hit` 走一般命中那條路，70 點傷害加擊退。這一刀如果剛好把靈子打到 0，就是一般的 Soul Break（`deal-damage` 排進 `*soul-breaks*`，同樣在 `settle-souls` 結算）。
+- **O 在砍中之前就放開了**：`kikon-outcome` 回 NIL，`apply-hit` 走一般命中那條路，70 點傷害加擊退。這一刀如果剛好把靈子打到 0，就是一般的 Soul Break（`deal-damage` 排進 `*soul-breaks*`，同樣在 `settle-souls` 結算）。Soul Break 扣的是**攻擊方當下型態**的 Kikon 數 + 1，上限 5（只有 Soul Break 放寬到 5，Kikon 還是 4；使用者 2026-09-27 的決定），播的過場也是攻擊方當下型態的毀魂技動畫（`kit-kikon-cine`，`kit.lisp`：那個型態的 O 招的 `:cine`），所以山本始解打出的 Soul Break 會播「城郭炎上」、扣 3 個魂魄。
 - **劍八防禦了第一刀**：不管紅不紅，都是 `:blocked`（−14，扣 20 防禦量表），`kikon-outcome` 回 NIL，什麼都不會接著發生。
 - **劍八沒變紅，被砍中，O 還按著**：一樣擊退、山本一樣衝進來，但劍八只踉蹌 16 幀（`*kikon-follow-stun*`），第二刀在他能動之後 12 幀才到（`*kikon-follow-gap*`）：衝刺中按住防禦就擋下（`:blocked`，不扣魂魄），也可以閃步或 Hoho。沒擋住，第二刀的 `kikon-outcome` 看到 FOLLOW 就回 `:kikon`，之後同上。
 - **劍八在閃步或 Hoho 的無敵幀裡**：`defender-state` 回 `:invuln`，`resolve-contact` 回 NIL，刀揮空，山本吃 30 幀的揮空硬直。
-- **連段打完的 O 收尾**（第三段 J3／K3 打中之後、還在取消視窗內按 O）：路線從 `main-phase-step` → `move-commands`（`fighter.lisp` 第 438～465 行）的 `:kikon` 那一格開始，`skip-aura` 跳過瞄準直接出刀（炎上沒有衝刺，所以當場就砍），其餘一樣。只有第三段打中才行：第三段被擋、揮空、停在第二段，或單發、SP、Breaker，都不能再取消成 O（2026-09-27 使用者的決定）。
+- **連段打完的 O 收尾**（第三段 J3／K3 打中之後、還在取消視窗內按 O）：路線從 `main-phase-step` → `move-commands`（`fighter.lisp` 第 463～495 行）的 `:kikon` 那一格開始，`skip-aura` 跳過瞄準直接出刀（炎上沒有衝刺，所以當場就砍），其餘一樣。只有第三段打中才行：第三段被擋、揮空、停在第二段，或單發、SP、Breaker，都不能再取消成 O（2026-09-27 使用者的決定）。
 
 注意「按著」是在**砍中的那一步**讀的：`vpad-down` 讀的是這一步 `pilot-system` 寫進 vpad 的狀態，所以重播同一串按鍵一定得到同一個結果。
 
@@ -573,7 +575,9 @@ duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7
 
 2026-09-26 起，SOUL DUEL 可以在手機上直拿、用一根拇指打電腦，也可以加到主畫面當成 App 開。設計在 [DUEL_MOBILE_DESIGN.md](DUEL_MOBILE_DESIGN.md)，§12 記錄了這次做了哪些、和設計哪裡不一樣。
 
-![單手模式：上面是雙方的量表，右下是按鈕，下半部的大框是手勢區（按在圓鈕上才是按鈕）](../tests/shots/mobile-battle.png)
+![單手模式：上面是對手的量表、最下面是自己的，右半邊是按鈕，下半部的大框是手勢區（按在圓鈕上才是按鈕）](../tests/shots/mobile-battle.png)
+
+**直拿的畫面**（2026-09-27 起，設計文件 §14）：量表依角色分上下，對手（P2）的在最上方、自己（P1）的在最下方的 Home 條上面，各佔整個寬度：第一行是名字、「攻 ×n」（攻勢倍率，1.5 倍以上才出現）和一個標籤（EVOLUTION、INFERNO／NOME／COOLDOWN 或 U 的效果），然後是血條、防禦量表，最後一行左邊是魂火（Konpaku），右邊是四個沒有字的小量表，顏色和電腦版一樣：靈壓三格、瞬步、覺醒、角色量表（或覺醒後 L／Shift+L 的冷卻）。計時器在上面那塊的右邊。鏡頭是直拿專用的背後視角：角色比較大、站在畫面中下方，拇指擋到腳沒關係；兩人拉開、靠牆或對手跑到旁邊時，鏡頭會自動拉廣，把兩個人的上半身都留在上下兩塊量表之間。過場動畫在直拿時鏡頭會往後退，讓人物不被切掉。選單在直拿時也重新排過（選項往下移、選角和結算改成上下排列）。電腦版的畫面完全沒變。
 
 **怎麼組起來的。** 觸控不是另一套操作系統，只是 9.1 那個 vpad 的另一種輸入來源：
 
@@ -581,16 +585,19 @@ duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7
 2. `engine/lisp/touch.lisp` 是純 Common Lisp 的手勢辨識器（主機上用 `tests/touch-test.lisp` 測），只看事件和時間戳記，不看幀數，所以在 30 fps 和 120 fps 下判斷一樣。
 3. `duel/lisp/onehand.lisp` 把手勢換成 P1 的 vpad 按鈕：`control.lisp` 的 P1 綁定多了 `(:touch :quick)` 這類項目，`p1-down-p` 看到 `:touch` 就問 `touch-button`。角色、規則和 AI 完全不知道玩家在用手機。
 
-**手勢（右手預設；選單的 HAND 可以換左手，整個按鈕區左右鏡像）：**
+**手勢（右手預設；選單的 HAND 可以換左手，整個按鈕區左右鏡像，上下的分法不變）：**
+
+2026-09-28 使用者的決定（設計文件 §15）：手勢區以中線（390 × 844 上是 y 589）分成上下兩塊，點下半塊是 J、點上半塊是 K；往上撥改成向前衝刺。手勢區上有一條淡淡的分隔線，邊上標著 F（上）和 Q（下）。
 
 | 動作 | 效果（對應鍵盤） |
 |---|---|
-| 在手勢區點一下 | J；點和上撥組成最多三段的連段（兩者之間最多換一次，下一段可以在前一段的任何時候先按） |
+| 點手勢區的下半塊 | J（Quick）。剛好點在線上也算下半 |
+| 點手勢區的上半塊 | K（Flash）。連段就是連點：JJK 是下、下、上，KKJ 是上、上、下（J／K 之間最多換一次，下一段可以在前一段的任何時候先點） |
 | 按著不動約 0.12 秒 | 防禦（U），放開才會回防禦量表 |
-| 拖曳 | 移動（WASD），往上是朝對手；拖遠一點是衝刺，再拖著是跑。剛開始拖的約 0.12 秒角色不會動，先等著看是不是撥 |
-| 快速撥一下（下、左、右） | Step（Space），往下是後退 |
-| 往上撥然後放開（越過門檻後 0.15 秒內；左右偏 60° 以內都算往上） | K（Flash），連段中的 K 也是它。放開之前角色不會走也不會跳步 |
-| 先按著不動，再往上撥 | Hoho（Shift+Space），只在站著或防禦時 |
+| 拖曳 | 移動（WASD），往上是朝對手；拖遠一點就按住 Step，變成跑。剛開始拖的約 0.12 秒角色不會動，先等著看是不是撥 |
+| 往上撥（左右偏 60° 以內都算往上） | 向前衝刺：往正前方的 Step（Space＋W），越過門檻就出，不用等放開；手指繼續往前推就接著跑 |
+| 快速撥一下（下、左、右） | Step（Space），往下是後退、左右是側步 |
+| 先按著不動，再往上撥 | Hoho（Shift+Space），只在站著或防禦時；沒先按住就是向前衝刺 |
 | 被打中、硬直或浮空時往下撥 | Burst Reverse（Shift+J） |
 | O、L、I、SP1、SP2 圓鈕 | Kikon 突進（按著＝Kikon；連段第三段打中後就是 O 收尾）、Signature、Breaker、SP1、SP2 |
 | AWK（EVOLUTION 時才出現，按住 0.3 秒） | 覺醒（P） |
@@ -606,7 +613,7 @@ python3 tests/scripts/duel-touch.py          # 產生觸控腳本
 node tools/run.mjs dist/duel --mobile --size 390x844 --fixed-dt 16.666667 --secs 40 --script tests/scripts/duel-touch.json
 ```
 
-`--mobile` 模擬 DPR 3 的觸控手機；腳本裡的 `{"at":1,"touch":"start","x":100,"y":700}` 是一根手指。同一個腳本跑兩次，`duel hash` 那幾行必須一模一樣。
+`--mobile` 模擬 DPR 3 的觸控手機；腳本裡的 `{"at":1,"touch":"start","x":100,"y":700}` 是一根手指。同一個腳本跑兩次，`duel hash` 那幾行必須一模一樣。直拿畫面的檢查：`python3 tests/mobile-probe.py` 在四種手機尺寸（外加一次 iPhone 的瀏海與 Home 條留白）看兩個角色的上半身有沒有都在畫面裡、沒被量表擋住，以及最小的字有沒有低於 11 CSS px；`python3 tests/scripts/duel-mobile.py` 產生一整套直拿截圖的腳本，`tests/mobile-sheet.py` 把它們排成一張對照圖（`tests/shots/mobile-review.png`）。
 
 **放到手機上：一定要 HTTPS。** WebGPU 和 service worker 都只在「安全的來源」上能用（HTTPS，或手機自己的 localhost），所以用 `python3 -m http.server` 在區網開 `http://192.168.x.x:8000` 手機上會直接顯示 WEBGPU UNAVAILABLE。三個辦法，挑一個：
 

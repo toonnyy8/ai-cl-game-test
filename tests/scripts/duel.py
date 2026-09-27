@@ -18,7 +18,8 @@
 # Determinism: run a cvc script twice (or once with turbo and once without: drop the 2102 step) and
 #   diff <(grep '^duel' run1.log) <(grep '^duel' run2.log)   -> empty.
 # Reference (the J / K strings, the O ender and KOSEI, 2026-09-27, docs/DUEL_STRINGS.md: K2 / K3 at 80 %, the CPU's
-# string K 0.3, O ender 0.15, SP cancel 0.3): duel-cvc-yk.json (seed 7) ends
+# string K 0.3, O ender 0.15, SP cancel 0.3; unchanged by the Soul Break rule and Kenpachi's Bankai, 2026-09-28,
+# docs/DUEL_KEN_BANKAI.md: that YK match has neither): duel-cvc-yk.json (seed 7) ends
 #   duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7    (turbo and real time alike; also after a gate)
 #   (before the strings, the Bankai rework + the slower guard refill: winner P1 konpaku 2-0 ticks 7688 secs 128.1;
 #   before the rework, guard v3: winner P2 konpaku 0-4 ticks 9305 secs 155.1; before guard v3, the Kenpachi batch: winner P1 konpaku 7-0 ticks 7351 secs 122.5; before the batch: winner P2 konpaku 0-3 ticks 8594 secs 143.2; before user review 3's slower cinematics: the same match with shorter cinematics, ticks 8384 secs 139.7 and ticks 8054 secs 134.2; P1 1-0 ticks 9438 secs 157.3 with the gauges and the O modules; P1 2-0 ticks 9780 secs 163.0 with the Kikon rush; P2 0-1 ticks 7298 secs 121.6 with the instant Kikon; 0-4 ticks 5857 secs 97.6 with a timed Bankai;
@@ -304,3 +305,32 @@ ev += [cmd(t, 2100), cmd(t + 0.1, 2101), cmd(t + 0.2, 2102), cmd(t + 0.3, 4003),
 t += 10
 ev += [cmd(t, 2101), cmd(t + 0.1, 4005), {"at": t + 5, "size": "800x450"}, shot(t + 7, "hud-800x450")]
 write("shots", ev)
+
+# Kenpachi's Bankai (docs/DUEL_KEN_BANKAI.md; run with --fixed-dt 16.666667 --secs 60). Expected log lines, in order:
+# "P1 BANKAI (konpaku -> 1, -8)" and the dump "... BANKAI r1300 k1 ... m4 u0" (P from cup 3 + red: Konpaku 1, Reishi
+# full, 4 pips); "UDE -KE-B-K1 3 left", "-KE-B-K2 2 left", "-KE-B-K3 1 left" (KKK, a pip each); the bite
+# "KE-B-BITE -> P2 HIT"; with 1 pip "UDE -KE-B-K1 0 left" then "ARM BURST" only after K1's recovery; 片腕 J "KE-J1".
+# Shots: tests/shots/duel-ken-bankai-*.png (the stance, the bite, TATE-GOTO, the burst, 片腕, the cinematics' key frames).
+def bshot(t, n): return {"at": round(t, 2), "shot": f"tests/shots/duel-ken-bankai-{n}.png"}
+t = T0
+ev = [cmd(t, 2386)]; ev += tap(t + 1.0, "KeyP"); ev += [cmd(t + 5.0, 2107)]; t += 5.5   # P: the Bankai (its cinematic plays)
+ev += [cmd(t, 2109), cmd(t + 0.1, 2387), bshot(t + 1.2, "stance")]; t += 1.6             # the side camera from here
+for k in ("KeyK", "KeyK", "KeyK"): ev += tap(t, k); t += 0.35                            # KKK: three pips
+t += 1.5; ev += [cmd(t, 2107)]; t += 0.3
+ev += [cmd(t, 2387)]; ev += tap(t + 0.5, "KeyL"); ev += [bshot(t + 0.5 + 0.17, "bite"), bshot(t + 0.5 + 0.35, "bite-b")]; t += 2.0
+ev += [cmd(t, 2387), cmd(t + 0.05, 2108)]
+ev += [key(t + 0.5, "ShiftLeft"), key(t + 0.55, "KeyK"), key(t + 0.65, "KeyK", False), key(t + 0.7, "ShiftLeft", False)]
+ev += [bshot(t + 0.55 + 0.42, "split"), bshot(t + 0.55 + 0.6, "split-b")]; t += 2.5
+ev += [cmd(t, 2388)]; ev += tap(t + 0.5, "KeyK")                                          # the last pip: the burst after it
+ev += [bshot(t + 0.5 + 0.72, "burst"), bshot(t + 0.5 + 0.85, "burst-b"), bshot(t + 0.5 + 1.2, "burst-c")]; t += 3.0
+ev += [cmd(t, 2389), bshot(t + 1.0, "kataude")]; ev += tap(t + 1.2, "KeyJ"); ev += [bshot(t + 1.2 + 0.13, "kataude-j")]; t += 2.5
+ev += [cmd(t, 2109)]; t += 0.3
+last = 0
+for k, frames in ((35000, (6, 26, 64, 92, 130, 176)), (36000, (8, 40, 74, 110, 150))):
+    last = 0
+    for f in frames:
+        ev.append(cmd(t, k + f)); wait = (f - last) / 60.0 + (1.2 if last == 0 else 0.35)
+        ev.append(bshot(t + wait, f"{'cine' if k == 35000 else 'kikon'}-{f:03d}")); t += wait + 0.1; last = f
+    t += 0.5
+ev.append(cmd(t, 2107))
+write("bankai", ev)

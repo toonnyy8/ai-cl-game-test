@@ -47,10 +47,30 @@ match (tinted)."
     (play-clip e (kit-stance kit) :blend 0)
     e))
 
+(defvar *hide-sets* (make-hash-table :test 'equal) "Hidden part tags -> HIDE-SET (made once per list).")
+
+(defun hide-set (tags)
+  "The DRAW-BODY :hide lists of a body with TAGS hidden, one per expression (:neutral :shout :hurt: the other two faces'
+tags added, since a non-NIL :hide replaces the face list): a vector made once per TAGS, or NIL when TAGS is empty."
+  (and tags
+       (or (gethash tags *hide-sets*)
+           (setf (gethash tags *hide-sets*)
+                 (coerce (loop for face in '(:neutral :shout :hurt) collect (append tags (face-hide face))) 'simple-vector)))))
+
+(defun face-hide-list (m face)
+  "The DRAW-BODY :hide list of model M (its HIDE-SET) with expression FACE shown, or NIL (the body's own face list)."
+  (let ((h (model-hide m))) (and h (svref h (case face (:shout 1) (:hurt 2) (t 0))))))
+
 (defun refresh-look (e)
-  "Weapon, hidden parts and idle clip of E's current form."
-  (let ((kit (kit-of e)) (m (model e)))
-    (setf (model-weapon m) (kit-weapon kit) (model-hide m) (kit-hide kit) (model-alpha m) 1f0)))
+  "Body, weapon and hidden parts of E's current form (the kit's :body, :weapon, :hide; a form with the arm meter shows
+one forearm crack per spent pip: :crack-1 .. :crack-4)."
+  (let* ((kit (kit-of e)) (m (model e)) (hide (kit-hide kit)))
+    (when (kit-pips kit)
+      (let ((spent (- (getf (kit-pips kit) :n) (round (gauges-meter (gauges e))))))
+        (setf hide (remove-if (lambda (tag) (let ((k (position tag '(:crack-1 :crack-2 :crack-3 :crack-4)))) (and k (< k spent))))
+                              hide))))
+    (setf (model-body m) (find-body (kit-body kit))
+          (model-weapon m) (kit-weapon kit) (model-hide m) (hide-set hide) (model-alpha m) 1f0)))
 
 ;;; ---------------------------------------------------------------- animation
 (defvar *missing-clips* nil "Clip names already reported missing.")
@@ -241,10 +261,12 @@ now (a perfect one refunds *FS-REFUND*)."
         (clog "~a PERFECT HOHO" (side-name e))))))
 
 (defun kit-command-ok-p (e command &optional (kit (kit-of e)))
-  "Can E start COMMAND's move (of KIT, default his form's) now: Reiatsu bars, and not cooling down (its :cooldown)?"
+  "Can E start COMMAND's move (of KIT, default his form's) now: Reiatsu bars, not cooling down (its :cooldown), and a
+pip of the arm meter left when the command spends one (Kenpachi's Bankai: KIT-PIP-CMD-P)?"
   (let ((i (position command *kit-commands*)))
     (and (>= (gauges-reiatsu (gauges e)) (* (kit-command-cost kit command) *reiatsu-bar*))
-         (or (null i) (zerop (aref (fighter-cd (fighter e)) i))))))
+         (or (null i) (zerop (aref (fighter-cd (fighter e)) i)))
+         (or (not (kit-pip-cmd-p kit command)) (>= (gauges-meter (gauges e)) 1f0)))))
 
 (defun try-command (e f cmd &optional button)
   "Start command CMD (pressed with vpad BUTTON: a hold / Breaker move watches it) if the rules allow
@@ -255,8 +277,10 @@ form's move; a refused one doesn't switch. T when something started."
       (:step (start-step e f) t)
       (:hoho (when (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f))
                (start-hoho e f) t))
-      (:awaken (when (awaken-allowed-p (member (fighter-state f) '(:idle :guard)) (gauges-awaken g) (gauges-awakened g))
-                 (awaken! e) t))
+      (:awaken (let ((free (member (fighter-state f) '(:idle :guard))))
+                 (cond ((awaken-allowed-p free (gauges-awaken g) (gauges-awakened g)) (awaken! e) t)
+                       ((and (kit-bankai-form kit) (bankai-allowed-p free (red-p (gauges-reishi g) (gauges-reishi-max g))))
+                        (bankai! e) t))))
       (:burst (when (burst-ok-p e) (setf (fighter-burst f) t) t))   ; applied after both stepped
       (t (let* ((to (kit-drop kit cmd))
                 (kit (if to (find-kit (fighter-character f) to) kit))
@@ -268,6 +292,7 @@ form's move; a refused one doesn't switch. T when something started."
              (when (plusp (mv-cooldown mv))
                (setf (aref (fighter-cd f) (position cmd *kit-commands*)) (mv-cooldown mv)))
              (when (eq cmd :kikon) (setf (fighter-kikon-n f) (kit-kikon-konpaku kit)))   ; its worth, fixed now
+             (when (kit-pip-cmd-p kit cmd) (arm-spend! e mv))                    ; the arm meter (Kenpachi's Bankai)
              (start-move e mv button)
              t))))))
 
@@ -461,8 +486,13 @@ rush's aura skipped. T when a new move / action started."
                            (progn (vpad-consume! vp button) t)))
         (let ((q (fighter-queued f)))                   ; the latched link, once the chain opens
           (when (and q (chain-open-p sf (mv-s mv) (mv-a mv) (mv-r mv) landed))
-            (start-move e (kit-next kit name q) (if (eq q :q) :quick :flash))
-            t)))))
+            (let ((next (kit-next kit name q)) (pip (kit-pip-cmd-p kit q)))
+              (cond ((and pip (< (gauges-meter (gauges e)) 1f0))   ; a K link with no pip left: the string ends here
+                     (setf (fighter-queued f) nil)
+                     nil)
+                    (t (when pip (arm-spend! e next))
+                       (start-move e next (if (eq q :q) :quick :flash))
+                       t))))))))
 
 (defun stun-step (e f vp)
   "A reaction / blockstun counts down (Burst Reverse may be pressed); then neutral (guard again if

@@ -80,6 +80,19 @@ device exists)."
                                       (:hunch (list k `(deg ,v)))
                                       (t (list k `(f32 ,v))))))))
 
+(defun body-variant (name of &key palette parts)
+  "Register body NAME as a variant of body OF: the same rig, scale and hurt cylinder (the sim can't tell them apart),
+PALETTE entries taking precedence over OF's, and PARTS ((joint shape ...) ...) added to those joints (Kenpachi's
+Bankai oni: a muted crimson skin, horns, irisless eyes, the forearm cracks)."
+  (let ((b (find-body of)))
+    (setf (gethash name *bodies*)
+          (%make-body :name name :scale (body-scale b) :width (body-width b) :hunch (body-hunch b)
+                      :hurt-r (body-hurt-r b) :hurt-h (body-hurt-h b) :rim (body-rim b) :props (body-props b)
+                      :girth (body-girth b) :palette (append palette (body-palette b))
+                      :spec (append (loop for (j . shapes) in (body-spec b)
+                                          collect (list* j (append shapes (rest (assoc j parts)))))
+                                    (remove-if (lambda (p) (assoc (first p) (body-spec b))) parts))))))
+
 (defun girth-shape (shape s)
   "SHAPE with its size and :at scaled by S = (sx sy sz) in its joint's frame (radii by (sx + sz) / 2)."
   (if (eq (first shape) :glow)

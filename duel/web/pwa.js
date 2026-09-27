@@ -1,6 +1,7 @@
 // SOUL DUEL page services (docs/DUEL_MOBILE_DESIGN.md G5, G10), loaded from the page head before the game.
 // The engine asks through globalThis.gamePage (engine/c/platform.c pf_page_get / pf_page_set):
-//   get 0 = touch-first device ((pointer: coarse)), 1 = back gestures since the last ask, 2 = saved HAND (1 right, 2 left)
+//   get 0 = touch-first device ((pointer: coarse)), 1 = back gestures since the last ask, 2 = saved HAND (1 right, 2 left),
+//       3 / 4 = the safe-area inset at the top / bottom, CSS px (env(safe-area-inset-*); tests set gamePage.testInsets = [top, bottom])
 //   set 0 = battle on / off (the screen wake lock), 1 = save HAND
 // On a touch-first device only: the history trap (the back gesture pauses instead of leaving), fullscreen +
 // portrait lock on the first tap (Android; iOS has no element fullscreen and runs the installed app standalone),
@@ -19,11 +20,27 @@
     }).catch(function () { lock = null; });
   }
   document.addEventListener('visibilitychange', wake);   // the lock is dropped when the page hides: take it again
+  var insets = null;                                     // measured once per window size (the game asks every frame)
+  window.addEventListener('resize', function () { insets = null; });
+  function inset(i) {
+    var t = globalThis.gamePage.testInsets;
+    if (t) return t[i] | 0;
+    if (!insets && document.body) {
+      var d = document.createElement('div');
+      d.style.cssText = 'position:fixed;visibility:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)';
+      document.body.appendChild(d);
+      var cs = getComputedStyle(d);
+      insets = [parseFloat(cs.paddingTop) || 0, parseFloat(cs.paddingBottom) || 0];
+      d.remove();
+    }
+    return insets ? Math.round(insets[i]) : 0;
+  }
   globalThis.gamePage = {
     get: function (k) {
       if (k === 0) return coarse ? 1 : 0;
       if (k === 1) { var b = back; back = 0; return b; }
       if (k === 2) return +(stored('soulduel.hand') || 0);
+      if (k === 3 || k === 4) return inset(k - 3);
       return 0;
     },
     set: function (k, v) {

@@ -1,0 +1,322 @@
+[
+{
+"at": 6.8,
+"eval": "globalThis.gamePage.testInsets = [47, 34]"
+},
+{
+"at": 6.9,
+"eval": "Module._debug_cmd(2106)"
+},
+{
+"at": 6.95,
+"eval": "Module._debug_cmd(2700)"
+},
+{
+"at": 7.0,
+"touch": "start",
+"x": 195,
+"y": 500
+},
+{
+"at": 7.05,
+"touch": "end",
+"x": 195,
+"y": 500
+},
+{
+"at": 8.0,
+"touch": "start",
+"x": 195,
+"y": 634
+},
+{
+"at": 8.05,
+"touch": "end",
+"x": 195,
+"y": 634
+},
+{
+"at": 9.2,
+"touch": "start",
+"x": 195,
+"y": 600
+},
+{
+"at": 9.25,
+"touch": "end",
+"x": 195,
+"y": 600
+},
+{
+"at": 10.0,
+"touch": "start",
+"x": 195,
+"y": 451
+},
+{
+"at": 10.05,
+"touch": "end",
+"x": 195,
+"y": 451
+},
+{
+"at": 11.0,
+"touch": "start",
+"x": 195,
+"y": 600
+},
+{
+"at": 11.05,
+"touch": "end",
+"x": 195,
+"y": 600
+},
+{
+"at": 12.0,
+"touch": "start",
+"x": 195,
+"y": 600
+},
+{
+"at": 12.05,
+"touch": "end",
+"x": 195,
+"y": 600
+},
+{
+"at": 13.0,
+"touch": "start",
+"x": 195,
+"y": 600
+},
+{
+"at": 13.05,
+"touch": "end",
+"x": 195,
+"y": 600
+},
+{
+"at": 14.5,
+"touch": "start",
+"x": 195,
+"y": 400
+},
+{
+"at": 14.55,
+"touch": "end",
+"x": 195,
+"y": 400
+},
+{
+"at": 15.0,
+"eval": "Module._debug_cmd(2105)"
+},
+{
+"at": 16.0,
+"shot": "tests/shots/mobile-insets-neutral.png"
+},
+{
+"at": 16.05,
+"eval": "Module._debug_cmd(2700)"
+},
+{
+"at": 16.5,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 17.05,
+"eval": "Module._debug_cmd(2700)"
+},
+{
+"at": 17.5,
+"touch": "start",
+"x": 146,
+"y": 697
+},
+{
+"at": 17.55,
+"touch": "end",
+"x": 146,
+"y": 697
+},
+{
+"at": 17.7,
+"touch": "start",
+"x": 146,
+"y": 697
+},
+{
+"at": 17.75,
+"touch": "end",
+"x": 146,
+"y": 697
+},
+{
+"at": 17.95,
+"touch": "start",
+"x": 146,
+"y": 697
+},
+{
+"at": 18.0,
+"touch": "end",
+"x": 146,
+"y": 697
+},
+{
+"at": 18.35,
+"touch": "start",
+"x": 220,
+"y": 448
+},
+{
+"at": 18.4,
+"touch": "end",
+"x": 220,
+"y": 448
+},
+{
+"at": 20.0,
+"eval": "Module._debug_cmd(2701)"
+},
+{
+"at": 20.55,
+"eval": "Module._debug_cmd(2700)"
+},
+{
+"at": 21.0,
+"eval": "Module._debug_cmd(2702)"
+},
+{
+"at": 21.55,
+"eval": "Module._debug_cmd(2700)"
+},
+{
+"at": 22.5,
+"touch": "start",
+"x": 358,
+"y": 200
+},
+{
+"at": 22.55,
+"touch": "end",
+"x": 358,
+"y": 200
+},
+{
+"at": 24.0,
+"touch": "start",
+"x": 195,
+"y": 392
+},
+{
+"at": 24.05,
+"touch": "end",
+"x": 195,
+"y": 392
+},
+{
+"at": 25.0,
+"eval": "Module._debug_cmd(2395)"
+},
+{
+"at": 25.1,
+"eval": "Module._debug_cmd(2105)"
+},
+{
+"at": 25.6,
+"touch": "start",
+"x": 146,
+"y": 697
+},
+{
+"at": 25.65,
+"touch": "end",
+"x": 146,
+"y": 697
+},
+{
+"at": 25.8,
+"touch": "start",
+"x": 146,
+"y": 697
+},
+{
+"at": 25.85,
+"touch": "end",
+"x": 146,
+"y": 697
+},
+{
+"at": 26.05,
+"touch": "start",
+"x": 146,
+"y": 697
+},
+{
+"at": 26.1,
+"touch": "end",
+"x": 146,
+"y": 697
+},
+{
+"at": 26.3,
+"shot": "tests/shots/mobile-insets-kosei.png"
+},
+{
+"at": 27.0,
+"eval": "Module._debug_cmd(2700)"
+},
+{
+"at": 28.0,
+"eval": "Module._debug_cmd(12030)"
+},
+{
+"at": 29.0,
+"shot": "tests/shots/mobile-insets-cine-kikon.png"
+},
+{
+"at": 29.5,
+"eval": "Module._debug_cmd(12080)"
+},
+{
+"at": 31.0,
+"eval": "Module._debug_cmd(10110)"
+},
+{
+"at": 32.5,
+"eval": "Module._debug_cmd(14030)"
+},
+{
+"at": 34.0,
+"eval": "Module._debug_cmd(11100)"
+},
+{
+"at": 35.5,
+"eval": "Module._debug_cmd(16010)"
+},
+{
+"at": 37.0,
+"eval": "Module._debug_cmd(2100)"
+},
+{
+"at": 37.1,
+"eval": "Module._debug_cmd(2100)"
+},
+{
+"at": 38.0,
+"eval": "Module._debug_cmd(2209)"
+},
+{
+"at": 46.0,
+"shot": "tests/shots/mobile-insets-results.png"
+},
+{
+"at": 46.5,
+"eval": "Module._debug_cmd(2704)"
+},
+{
+"at": 46.6,
+"eval": "Module._debug_cmd(2700)"
+}
+]

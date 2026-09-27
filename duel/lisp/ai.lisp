@@ -151,8 +151,9 @@ cancel into SP2 when the victim is on the ground (a launched victim would drop o
          (nf (kit-next kit (mv-name mv) :f))
          (bars (floor (gauges-reiatsu (gauges e)) *reiatsu-bar*)))
     (setf (brain-why b) :string)
+    (when (and nf (kit-pip-cmd-p kit :f) (< (gauges-meter (gauges e)) 1f0)) (setf nf nil))   ; no pip: no K link
     (cond ((fighter-queued f) nil)                      ; the next link is latched already
-          ((and nf (< (sim-rnd01) *ai-string-flash-p*)) :f)
+          ((and nf (< (sim-rnd01) (ai-table e :string-k *ai-string-flash-p*))) :f)
           (nq :q)
           (nf :f)
           ((and (>= (fighter-sf f) (fighter-land-sf f)) (ai-cancel-p e kit)) (why b :cancel :sig))
@@ -160,6 +161,28 @@ cancel into SP2 when the victim is on the ground (a launched victim would drop o
                 (= (fighter-sf f) (fighter-land-sf f)) (not (eq (state-of (opp-of e)) :air))
                 (< (sim-rnd01) *ai-sp-cancel-p*))              ; one roll, on the first step we see the hit
            :sp2))))
+
+(defvar *ai-bankai-mode* (vector nil nil)
+  "Per side, the CPU's Bankai entry: NIL = the kit's :bankai rule (AI-BANKAI-P), :SURE = the rule with its chance 1,
+:ALWAYS = whenever allowed, :NEVER (debug 31000 + 10 a + b: the gamble A/B, docs/DUEL_KEN_BANKAI.md).")
+
+(defun ai-bankai-p (e b bk)
+  "Enter the Bankai now (the kit's :bankai (:p :opp-below :opp-konpaku :own-konpaku); BANKAI-ALLOWED-P holds)? One roll
+per cup-3 stay. The entry leaves him 1 Konpaku, so he weighs his own: nothing to lose when he has no more than the
+opponent's next Soul Break would take (its count + 1, capped); else only as a finisher (the opponent at <= :opp-below of
+his Reishi or <= :opp-konpaku Konpaku) with <= :own-konpaku left."
+  (case (svref *ai-bankai-mode* (fighter-side (fighter e)))
+    (:always t)
+    (:never nil)
+    (t (unless (brain-bankai-rolled b)
+         (let* ((o (opp-of e)) (go (gauges o)) (k (gauges-konpaku (gauges e)))
+                (threat (min *soul-break-max-event* (+ (kit-kikon-konpaku (kit-of o)) *soul-break-extra*))))
+           (when (or (<= k threat)
+                     (and (<= k (getf bk :own-konpaku 9))
+                          (or (<= (gauges-reishi go) (* (getf bk :opp-below 0.0) (gauges-reishi-max go)))
+                              (<= (gauges-konpaku go) (getf bk :opp-konpaku 0)))))
+             (setf (brain-bankai-rolled b) t)
+             (< (sim-rnd01) (if (eq (svref *ai-bankai-mode* (fighter-side (fighter e))) :sure) 1.0 (getf bk :p 0.0)))))))))
 
 (defun ai-reflex (e b s d)
   "The reflexes (checked before the intent): a command keyword or NIL. S = the perceived opponent,
@@ -211,6 +234,10 @@ D = the perceived distance."
       ((and (kikon-ready-p e) (member (snap-state s) '(:stun :air)) (< d (ai-table e :kikon-range 7.0))
             (kit-command-ok-p e :kikon))
        (why b :kikon :kikon))
+      ;; the Bankai (cup 3, red, free: the kit's :bankai), before the cash-out
+      ((let ((bk (ai-table e :bankai)))
+         (and bk (kit-bankai-form kit) (member st '(:idle :guard)) (bankai-allowed-p t red) (ai-bankai-p e b bk)))
+       (why b :bankai :awaken))
       ;; NOMIHOSE's cash-out (the kit's :cashout): Shift+K only as a punish (he has >= :punish frames of recovery
       ;; or stun left, in the 12 m lane) or within :near m while NOME is below :below (it would drain away anyway)
       ((let ((c (ai-table e :cashout)))
@@ -295,6 +322,7 @@ D = the perceived distance."
                      (>= (- (snap-s s) (snap-sf s)) 6) (< (brain-hoho-roll b) (ai-table e :hoho 0.2)))
                 (why b :hoho :hoho))
                ((and red (eq (snap-kind s) :kikon)) (why b :anti-kikon :side-step))
+               ((member :grab (snap-flags s)) (why b :anti-grab :side-step))   ; a grab: nothing guards it
                ((< (brain-guard-roll b) (* chance guard-k)) :guard)
                ((< (brain-guard-roll b) chance) (why b :low-guard :side-step))))))))
 
@@ -317,11 +345,12 @@ shorter than NORMAL's delay); one roll (*AI-J-BEATS-K-P* by difficulty), also ou
       (let ((w (ai-table e :intents)) (hot (min 3.0 (/ heat 4.0))) (r (sim-rnd01)))
         (setf (brain-intent b)
               (cond ((ai-gg-low-p e) (weighted-pick r :zone 3 :defend 2))   ; low guard gauge: zone (the cone), no pressure
-                    (t (or (weighted-pick r :approach (getf w :approach 1)
-                                          :pressure (+ (getf w :pressure 1) hot (if (or (opp-guardless-p e) (opp-gg-low-p e)) 3 0))
-                                          :zone (getf w :zone 1)
-                                          :defend (getf w :defend 1))
-                           :approach))))))
+                    (t (let ((oi (getf (kit-ai (kit-of (opp-of e))) :opp-intent)))   ; facing a form a CPU waits out
+                         (or (weighted-pick r :approach (getf w :approach 1)
+                                            :pressure (+ (getf w :pressure 1) hot (if (or (opp-guardless-p e) (opp-gg-low-p e)) 3 0))
+                                            :zone (+ (getf w :zone 1) (getf oi :zone 0))
+                                            :defend (+ (getf w :defend 1) (getf oi :defend 0)))
+                             :approach)))))))
     (when (<= (decf (brain-strafe-t b)) 0)
       (setf (brain-strafe-t b) (+ (first *ai-strafe-time*) (floor (* (second *ai-strafe-time*) (sim-rnd01))))
             (brain-strafe b) (if (< (sim-rnd01) 0.5) -1f0 1f0)))
@@ -355,6 +384,8 @@ its middle), guard, attack (a weighted pick from the kit's band for D), or wait.
   (cond ((and (kikon-ready-p e) (< d (ai-table e :kikon-range 7.0)) (not (member (snap-state s) '(:down :wakeup :hoho)))
               (kit-command-ok-p e :kikon) (< (sim-rnd01) (ai-kikon-p e)))
          (ai-command b kit :kikon d) (setf (brain-why b) :kikon))
+        ((ai-pip-hurry-p e)                                ; the arm's next crack is near: spend the pip now
+         (ai-attack e b kit s d heat t))
         ((and (> d (+ hi *ai-dash-gap*)) (< (sim-rnd01) (ai-table e :dash 0.0)))
          (ai-dash b 1.0 (* 0.5 (+ lo hi))) (setf (brain-why b) :dash))
         ((and (< d (- lo *ai-dash-gap*))
@@ -366,15 +397,29 @@ its middle), guard, attack (a weighted pick from the kit's band for D), or wait.
         ((< (sim-rnd01) (min 0.9 (+ (getf *ai-aggression* (brain-intent b) 0.3) (* 0.04 heat)
                                     (* *ai-kosei-aggression* (- 1.0 (ai-gg e)))   ; KOSEI: a low gauge pays to attack
                                     (cond ((opp-guardless-p e) 0.3) ((opp-gg-low-p e) 0.2) (t 0.0)))))
-         (let* ((weights (copy-list (band-weights (ai-table e :moves) d))))
-           (when (getf weights :breaker)                  ; (a guardless opponent has no guard to break)
-             (setf (getf weights :breaker) (if (opp-guardless-p e) 0 (* (getf weights :breaker) (heat-breaker-mult heat)))))
-           (ai-stance-weights e s d weights)
-           (let ((cmd (apply #'weighted-pick (sim-rnd01) weights)))
-             (when (and cmd (or (not (member cmd *kit-commands*)) (kit-command-ok-p e cmd))
-                        (or (not (member cmd '(:q :f)))                  ; don't whiff a string at range
-                            (<= d (+ 0.2 (mv-reach (kit-command-move kit cmd))))))
-               (ai-command b kit cmd d) (setf (brain-why b) :neutral)))))))
+         (ai-attack e b kit s d heat nil))))
+
+(defun ai-pip-hurry-p (e)
+  "The kit's :pip-hurry: a pip of the arm is left and its crack is at most that many frames away."
+  (let ((h (ai-table e :pip-hurry)) (g (gauges e)))
+    (and h (kit-pips (kit-of e)) (>= (gauges-meter g) 1f0) (null (gauges-arm-pending g))
+         (>= (gauges-meter-idle g) (- *arm-crack* h)))))
+
+(defun ai-attack (e b kit s d heat hurry)
+  "A weighted pick from the kit's band for D, pressed when it may start (not a J / K out of its reach). HURRY: only the
+pip commands of the band (the arm's crack is near: AI-PIP-HURRY-P). T when something was pressed."
+  (let* ((weights (copy-list (band-weights (ai-table e :moves) d))))
+    (when (getf weights :breaker)                  ; (a guardless opponent has no guard to break)
+      (setf (getf weights :breaker) (if (opp-guardless-p e) 0 (* (getf weights :breaker) (heat-breaker-mult heat)))))
+    (ai-stance-weights e s d weights)
+    (when hurry
+      (loop for (cmd nil) on weights by #'cddr unless (and cmd (kit-pip-cmd-p kit cmd)) do (setf (getf weights cmd) 0)))
+    (let ((cmd (apply #'weighted-pick (sim-rnd01) weights)))
+      (when (and cmd (or (not (member cmd *kit-commands*)) (kit-command-ok-p e cmd))
+                 (or (not (member cmd '(:q :f)))                  ; don't whiff a string at range
+                     (<= d (+ 0.2 (mv-reach (kit-command-move kit cmd))))))
+        (ai-command b kit cmd d) (setf (brain-why b) (if hurry :pip-hurry :neutral))
+        t))))
 
 (defun ai-kikon-p (e)
   "The chance a neutral decision rushes a red opponent: the kit's :kikon-p (Nozarashi's cups 0.25 / 0.5 / 0.9:
@@ -411,6 +456,7 @@ fraction of the guard gauge."
       (setf (brain-head b) (mod (1+ (brain-head b)) n)
             (brain-heat b) (f32 (heat-after (brain-heat b) (> d *ai-heat-far*))))
       (vpad-stick! vp 0f0 0f0)
+      (unless (kit-bankai-form (fighter-kit f)) (setf (brain-bankai-rolled b) nil))   ; a new cup-3 stay rolls again
       (when (member (fighter-state f) '(:stun :air :down :wakeup :guard-hit))   ; just took it: respect
         (setf (brain-intent b) :defend (brain-intent-t b) *ai-respect*))
       (when (and (eq (fighter-state f) :guard-hit) (zerop (fighter-sf f)) (not (brain-off b)))   ; blocked: hold on through the string?

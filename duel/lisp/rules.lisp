@@ -108,14 +108,16 @@ opponent at DIST."
 ;;;              end, or a Kikon rush's dash)   :invuln    Step / Hoho iframes, down, wake-up
 ;;;   :parry     a parry move inside *PARRY-WINDOW* (Bankai West's GOKUI GAESHI)
 ;;; Bankai West's ward (passive :ward) reports :guard in his free states and own moves (fighter.lisp DEFENDER-STATE)
-(defun resolve-contact (def-state &key breaker guard-crush (in-front t) unguardable hazard ward)
+(defun resolve-contact (def-state &key breaker guard-crush (in-front t) unguardable hazard ward rend)
   "What one hit that touched the defender does. The attack: BREAKER (a Breaker strike),
 GUARD-CRUSH (Breaker property on another move),
 UNGUARDABLE (guard, stance, armour and a parry don't stop it, Step / Hoho iframes still do: the South
 bind; the Kikon rush's strike is guardable, KIKON-OUTCOME), HAZARD (a projectile / ground hit: a parry
 doesn't catch it; a :ranged hit window counts as one).
 The defender: DEF-STATE (above), IN-FRONT (the attacker is inside his guard arc; armour covers every
-side), WARD (Bankai West's ward: his guard covers 360 deg, and a hazard in his parry's window is blocked, not a hit). Returns
+side), WARD (Bankai West's ward: his guard covers 360 deg, and a hazard in his parry's window is blocked, not a hit).
+REND (Kenpachi's Bankai, docs/DUEL_KEN_BANKAI.md): armour and a stance don't stop it (armour -> a hit, a stance -> a
+stance break, like a Breaker); a guard, the ward and a parry still do. Returns
   NIL           no effect (invulnerable)
   :hit          damage + the move's reaction
   :counter      :hit with x*COUNTER-MULT* damage and +*COUNTER-STUN* frames
@@ -138,9 +140,9 @@ Breaker vs Breaker is a CLASH, decided before any contact (BREAKER-CLASH-P)."
       (:parry (if breaker :stance-break :parried))
       (:guard (if crush :guard-break :blocked))
       (:breaker :counter)
-      (:stance-in (if breaker :stance-break :counter))
-      (:stance (if breaker :stance-break :absorbed))
-      (:armor (if (or breaker unguardable) :hit :armored))
+      (:stance-in (if (or breaker rend) :stance-break :counter))
+      (:stance (if (or breaker rend) :stance-break :absorbed))
+      (:armor (if (or breaker unguardable rend) :hit :armored))
       (:neutral :hit))))
 
 (defun contact-of (res)
@@ -344,9 +346,11 @@ of the wait run out, never faster than the module's CAP."
 (defun kikon-result (konpaku count soul-break)
   "Konpaku settled at connect time: a Kikon removes COUNT (the attacker's kit :kikon-konpaku, read when his
 rush started: *KIKON-KONPAKU* 2, awakened *KIKON-KONPAKU-AWAKENED* 3, Nozarashi's cups 2 / 3 / 4); a SOUL-BREAK
-removes one more; never more than *KIKON-MAX-EVENT* per event. Values: konpaku-left lost ko-p. After it the
-victim's Reishi resets to max and both are placed by RESET-PLACEMENT."
-  (let* ((lost (min konpaku *kikon-max-event* (+ count (if soul-break *soul-break-extra* 0))))
+removes one more (COUNT is then the attacker's current form's count); a Kikon never more than *KIKON-MAX-EVENT*, a Soul
+Break never more than *SOUL-BREAK-MAX-EVENT* (the user's decision 2026-09-27). Values: konpaku-left lost ko-p. After it
+the victim's Reishi resets to max and both are placed by RESET-PLACEMENT."
+  (let* ((lost (min konpaku (if soul-break *soul-break-max-event* *kikon-max-event*)
+                    (+ count (if soul-break *soul-break-extra* 0))))
          (left (- konpaku lost)))
     (values left lost (<= left 0))))
 
@@ -381,6 +385,33 @@ victim's Reishi resets to max and both are placed by RESET-PLACEMENT."
 (defun timer-fill (frames-left total-frames max)
   "Display value of a gauge that drains as a timer (Inferno in Hellfire, Awakening in a timed awakening)."
   (if (<= total-frames 0) 0.0 (* max (/ (float frames-left) total-frames))))
+
+(defun bankai-allowed-p (free red)
+  "Kenpachi's Bankai (docs/DUEL_KEN_BANKAI.md): P in a form with :bankai-form (cup 3), FREE (idle / guard: DRINK
+included) and RED. No gauge; once a match by construction (no later form has :bankai-form)."
+  (and free red t))
+
+;;; ---------------------------------------------------------------- the arm meter UDE (Kenpachi's Bankai)
+(defun pip-spend (pips)
+  "Spend one of PIPS (a pip command's frame 0). Values: pips-after ok (NIL at 0: the command is refused)."
+  (if (>= pips 1) (values (1- pips) t) (values pips nil)))
+
+(defun pip-step (pips idle locked)
+  "The crack clock one frame later: IDLE (frames since the last spend or crack) counts unless LOCKED (the reset's
+neutral); at *ARM-CRACK* a pip cracks by itself. Values: pips idle cracked-p."
+  (cond (locked (values pips idle nil))
+        ((and (plusp pips) (>= (1+ idle) *arm-crack*)) (values (1- pips) 0 t))
+        (t (values pips (min 9999 (1+ idle)) nil))))
+
+(defun burst-due-p (pending current state)
+  "Does the pending arm burst fire now? PENDING: the move running when the last pip went (:NONE = none; NIL = no
+burst pending). It waits while he is still in that move (the 4th strike comes out in full, a Kikon rush started
+earlier finishes) and while he is in a reaction, blockstun, the air, down, waking up, a Hoho or a cinematic (STATE);
+any later move is interrupted by it (a masher can't dodge it)."
+  (and pending
+       (not (member state '(:stun :guard-hit :air :down :wakeup :hoho :cine :intro :win :lose)))
+       (not (and (eq state :move) (eq current pending)))
+       t))
 
 (defun hoho-allowed-p (stunned fs lockout-left)
   "Hoho needs *FS-HOHO* flash-step (FS), no block/hitstun (STUNNED) and the *HOHO-LOCKOUT* over."

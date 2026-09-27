@@ -28,7 +28,7 @@
   (anim (make-anim))
   (joints (make-f32 (* +nj+ 16)) :type f32vec)   ; +NJ+ world matrices, filled by POSE-FK! in the draw
   (weapon nil)                          ; weapon key in the right hand, NIL = none
-  (hide nil)                            ; body part tags not drawn (the kit's :hide)
+  (hide nil)                            ; body part tags not drawn: NIL or a HIDE-SET (fighter.lisp REFRESH-LOOK)
   (tint nil) (rim nil)                  ; mirror match: P2's tint / rim
   (flash 0f0 :type single-float)        ; real seconds of hit flash left
   (super 0f0 :type single-float)        ; real seconds of the SP rim-light "super flash" left
@@ -125,6 +125,8 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (form-left 0 :type fixnum)            ; frames left in a timed form (Hellfire)
   (form-total 0 :type fixnum)
   (burn-step 0 :type fixnum)            ; frames of the current form's burn so far
+  (arm-pending nil)                     ; Kenpachi's Bankai: the arm's last pip went: the move running then (:NONE = none),
+                                        ; until the burst fires (rules BURST-DUE-P); NIL = none pending
   ;; results
   (dealt 0 :type fixnum) (kikons 0 :type fixnum) (perfects 0 :type fixnum) (best-combo 0 :type fixnum))
 
@@ -154,6 +156,7 @@ is holding. Identity comes from the kit's :AI tables."
   (break-key -1 :type fixnum)           ; the guard episode the Breaker roll was made for
   (burst-t 0 :type fixnum) (burst-rolled nil)   ; frames in a combo past its 2nd hit; the Burst roll made
   (dash 0f0 :type single-float) (dash-to 0f0 :type single-float)   ; a held dash: +1 toward / -1 away, until this distance
+  (bankai-rolled nil)                   ; the Bankai entry roll of this cup-3 stay is made (ai.lisp AI-BANKAI-P)
   (act nil) (why nil)                   ; the last thing it decided and why (debug overlay, log)
   (off nil))                            ; debug: this CPU does nothing
 

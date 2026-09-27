@@ -122,10 +122,12 @@
   (let ((spec (resolve-tuning spec)))
     (setf (gethash name *moves*) (parse-move name spec))))
 
-(defmacro defmove-copy (name of)
+(defmacro defmove-copy (name of &rest overrides)
   "Move NAME: a copy of move OF (its plist, :enter and all) under another name: a switched string link (J2s, K2s),
-whose kit string allows only the new button (docs/DUEL_STRINGS.md §2.1; no new clip)."
-  `(register-move ,name (mv-spec (find-move ,of))))
+whose kit string allows only the new button (docs/DUEL_STRINGS.md §2.1; no new clip). OVERRIDES: keys that replace
+OF's (they go first in the plist, so DEFMOVE's &key takes them: the Bankai's MAPPUTATSU is LEAP CLEAVE with its own
+callout and cinematic)."
+  `(register-move ,name (append ',overrides (mv-spec (find-move ,of)))))
 
 (defun string-grid (grid)
   "A kit's :grid (J1 J2 J3 K1 K2 K3 J2s K2s) as its :strings: up to three links, each J (:q) or K (:f), switching
@@ -171,7 +173,8 @@ new button."
             link that must combo after a J and a K link alike (every K2 / K3: S_eff 14); a derived form adds its startup-add to it
   :blend    crossfade frames into the clip (default 0, attacks snap); :planted  weapon planted
             in the ground during the strike (drawn with DRAW-PLANTED-WEAPON)
-  hits: :stun  hitstun override (frames)"
+  hits: :stun  hitstun override (frames)
+  flags also: :rend (armour and a stance don't stop it: RESOLVE-CONTACT) :grab (a grab: the CPU never guards it)"
   `(register-move ,name ',spec))
 
 ;;; ================================================================ kits
@@ -193,6 +196,8 @@ new button."
   (form-name nil)                       ; the form's name on the HUD (default its keyword)
   (drink-clip nil)                      ; the clip of a drunk hit (DRINK)
   (respect-callout nil)                 ; said when the opponent outplays him (a counter-hit, a perfect Hoho, a parry, a Burst)
+  (bankai-form nil)                     ; P (red, free) in this form enters that form (Kenpachi's cup 3 -> :bankai)
+  (pips nil)                            ; the arm meter UDE (:n :cmds :to): a form whose heavy commands spend pips
   (commands nil)                ; plist command -> move name
   (strings nil)                 ; ((from-move command to-move) ...)
   (moves (make-hash-table :test 'eq))   ; move name -> this form's MOVE
@@ -230,6 +235,14 @@ else QUEUED: the press is eaten (after a switch the original button is ignored a
           (:sp1 *cost-sp*)
           (:sp2 (if (kit-awakening kit) *cost-sp-awakened* *cost-sp*))
           (t 0)))))
+(defun kit-pip-cmd-p (kit command)
+  "Does COMMAND spend a pip of the arm meter in KIT (its :pips :cmds)?"
+  (and (member command (getf (kit-pips kit) :cmds)) t))
+(defun kit-kikon-cine (kit)
+  "The cinematic a Soul Break by a fighter in KIT plays (the user's decision 2026-09-27): the form's Kikon cinematic, the
+one its O would play now (its :kikon move's :cine), else the generic SOUL-BREAK-CINE."
+  (let ((mv (kit-command-move kit :kikon)))
+    (or (and mv (mv-cine mv)) 'soul-break-cine)))
 (defun kit-drop (kit cmd)
   "The form a kit command CMD drops KIT's form to first (its :drop-to, unless CMD is in its :keep: Bankai West's
 attacks but SP1 / L go back to East), or NIL."
@@ -266,7 +279,7 @@ Cornered with LOST Konpaku."
                            (run-clips '(:sh-run :sh-skate-b :sh-slide-r :sh-slide-l)) (reishi *reishi-max*)
                            body weapon stance hide aura intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
                            enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
-                           kikon-konpaku meter-gain form-name drink-clip respect-callout
+                           kikon-konpaku meter-gain form-name drink-clip respect-callout bankai-form pips
                            (startup-add 0) (reach-mult 1.0) commands strings grid)
         merged
       (declare (ignore grid))
@@ -281,7 +294,7 @@ Cornered with LOST Konpaku."
                            :meter meter :reset-reiatsu reset-reiatsu :ai ai :cine cine :blade blade :grade grade
                            :kikon-konpaku (or kikon-konpaku (if awakening *kikon-konpaku-awakened* *kikon-konpaku*))
                            :meter-gain meter-gain :form-name (or form-name (symbol-name form)) :drink-clip drink-clip
-                           :respect-callout respect-callout
+                           :respect-callout respect-callout :bankai-form bankai-form :pips pips
                            :commands commands :strings strings :spec merged))
             (own (loop for (nil m) on (getf spec :commands) by #'cddr collect m)))
         ;; every move the form can reach. The derivation rule (design v2 §0): a move is as written when the
@@ -343,6 +356,10 @@ child's keys win, :commands merge per command, :strings add. Keys:
   :meter-gain (:dealt :taken :drunk) the meter per point dealt / lost / drunk (DRINK, the stance's absorb)
   :form-name :drink-clip :respect-callout  the HUD's form name; the clip of a drunk hit; the callout when the
                                      opponent outplays him
+  :bankai-form FORM                  P, red and free, enters FORM (Kenpachi's cup 3: the Bankai, docs/DUEL_KEN_BANKAI.md)
+  :pips (:n :cmds (cmd ...) :to FORM)  the arm meter (the kit meter holds the pips): each command in :cmds (and every
+                                     latched K link) spends one on its frame 0 (refused at 0); at 0 the arm bursts to
+                                     FORM (combat.lisp ARM-STEP)
   :blade (look power)                blade look drawn along the held weapon: (:fire 1.0) (:embers 1.0)
   :grade                             the world's grade while the form is on: NIL, or :SPOT (grey but the ember
                                      hue: the composite's spot-keep mode, main.lisp FORM-GRADE)

@@ -21,7 +21,8 @@
 (defun kit (c f) (find-kit c f))
 (defun mv (c f name) (kit-move (kit c f) name))
 (defparameter *forms* '((:yamamoto :base) (:yamamoto :hellfire) (:yamamoto :bankai-east) (:yamamoto :bankai-west)
-                        (:kenpachi :base) (:kenpachi :nozarashi) (:kenpachi :ryote) (:kenpachi :nomihose)))
+                        (:kenpachi :base) (:kenpachi :nozarashi) (:kenpachi :ryote) (:kenpachi :nomihose)
+                        (:kenpachi :bankai) (:kenpachi :kataude)))
 
 ;;; ================================================================ the triangle / clash matrix
 (check (eq (resolve-contact :neutral) :hit))
@@ -644,7 +645,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :ke-n-stance
     :sh-skate-b :sh-slide-r :sh-slide-l :ke-run :ke-skate-b :ke-slide-r :ke-slide-l   ; the runs (facing the opponent)
     :ke-r-stance :ke-drink     ; the cups
-    :ke-r-q1 :ke-r-q3 :ke-r-f1 :ke-r-f2 :ke-n-f1))   ; RYOTE's kendo set and KUKAN-GIRI (their own clips since Phase 5)
+    :ke-r-q1 :ke-r-q3 :ke-r-f1 :ke-r-f2 :ke-n-f1     ; RYOTE's kendo set and KUKAN-GIRI (their own clips since Phase 5)
+    :ke-b-stance :ke-b-fist :ke-b-bite))              ; the Bankai (docs/DUEL_KEN_BANKAI.md §12)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
 ;; DEFCINEs, which the host stubs)
 (let ((used (remove-duplicates (loop for cf in *forms* append (kit-clips (apply #'kit cf))))))
@@ -653,7 +655,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     (check (and (null extra) (null unused)))))
 ;; phase 2: art names, roster, form looks, the flurry, hazard hits
 (check (equal (mapcar #'kit-weapon (mapcar (lambda (cf) (apply #'kit cf)) *forms*))
-              '(:ryujin-jakka :ryujin-jakka :zanka :zanka :ken-katana :nozarashi :nozarashi :nozarashi)))         ; the art agent's keys
+              '(:ryujin-jakka :ryujin-jakka :zanka :zanka :ken-katana :nozarashi :nozarashi :nozarashi :ke-broken :ke-broken)))   ; the art agent's keys
 (check (equal *roster* '(:yamamoto :kenpachi)))
 (check (equal (kit-intro-weapon (kit :yamamoto :base)) '(:ya-cane 81)))              ; cane until 1.35 s
 (check (and (eq (kit-cine (kit :yamamoto :bankai-east)) 'yama-bankai-cine) (eq (kit-cine (kit :kenpachi :nozarashi)) 'ken-nozarashi-cine)
@@ -822,7 +824,18 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (= 2 (kit-kikon-konpaku (kit :yamamoto :hellfire)))))
   (check (and (= 2 (nth-value 1 (kikon-result 9 2 nil))) (= 3 (nth-value 1 (kikon-result 9 2 t)))
               (= 3 (nth-value 1 (kikon-result 9 3 nil))) (= 4 (nth-value 1 (kikon-result 9 3 t)))
-              (= 4 (nth-value 1 (kikon-result 9 4 nil))) (= 4 (nth-value 1 (kikon-result 9 4 t)))))   ; capped at 4
+              (= 4 (nth-value 1 (kikon-result 9 4 nil))) (= 5 (nth-value 1 (kikon-result 9 4 t)))))   ; Kikon cap 4, Soul Break 5
+  ;; the Soul Break rule (the user's decision 2026-09-27): the attacker's current count + 1, capped at 5 (a Kikon at 4);
+  ;; NOMIHOSE's Soul Break = 5; the cinematic is the attacker's current form's Kikon cinematic
+  (check (and (= 4 (nth-value 1 (kikon-result 9 5 nil))) (= 5 (nth-value 1 (kikon-result 9 5 t)))
+              (= 5 (nth-value 1 (kikon-result 9 (kit-kikon-konpaku t3) t))) (= 3 (nth-value 1 (kikon-result 9 (kit-kikon-konpaku t1) t)))
+              (= 4 (nth-value 1 (kikon-result 9 (kit-kikon-konpaku t2) t))) (= 2 (nth-value 1 (kikon-result 2 (kit-kikon-konpaku t3) t)))
+              (= 5 *soul-break-max-event*) (= 4 *kikon-max-event*)))
+  (check (and (eq 'ken-kikon-cine (kit-kikon-cine (kit :kenpachi :base))) (eq 'ken-sky-split-cine (kit-kikon-cine t1))
+              (eq 'ken-sky-split-cine (kit-kikon-cine t2)) (eq 'ken-sky-split-cine (kit-kikon-cine t3))
+              (eq 'yama-kikon-cine (kit-kikon-cine (kit :yamamoto :base))) (eq 'yama-kikon-cine (kit-kikon-cine (kit :yamamoto :hellfire)))
+              (eq 'yama-tenchi-cine (kit-kikon-cine (kit :yamamoto :bankai-east)))
+              (eq 'yama-tenchi-cine (kit-kikon-cine (kit :yamamoto :bankai-west)))))
   ;; 8. register-kit: NOMIHOSE plays RYOTE's moves (not re-derived); RYOTE's meteor / LEAP as written; Hellfire unchanged
   (check (and (eq (kit-move t3 :ke-r-j3) (kit-move t2 :ke-r-j3)) (= 10 (mv-s (kit-move t3 :ke-r-j3)))
               (= 21 (mv-s (kit-move t3 :ke-r-k3))) (eq (kit-move t3 :ke-r-j2) (kit-move t2 :ke-r-j2))
@@ -852,6 +865,83 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
   ;; AI keys: the Kikon chance by cup, the cash-out rule
   (check (and (~= 0.25 (getf (kit-ai t1) :kikon-p)) (~= 0.5 (getf (kit-ai t2) :kikon-p)) (~= 0.9 (getf (kit-ai t3) :kikon-p))
               (equal (getf (kit-ai t3) :cashout) '(:punish 30 :near 6.0 :below 60.0)) (null (getf (kit-ai t2) :cashout)))))
+
+;;; ================================================================ Kenpachi's Bankai and 片腕 (docs/DUEL_KEN_BANKAI.md, the user's decisions 2026-09-28)
+(let ((b (kit :kenpachi :bankai)) (a (kit :kenpachi :kataude)) (t3 (kit :kenpachi :nomihose)))
+  ;; 1. entry: P, free and red; only cup 3 has it (once a match: nothing after it does)
+  (check (and (bankai-allowed-p t t) (not (bankai-allowed-p nil t)) (not (bankai-allowed-p t nil))))
+  (check (equal (loop for cf in *forms* when (kit-bankai-form (apply #'kit cf)) collect cf) '((:kenpachi :nomihose))))
+  (check (and (eq (kit-bankai-form t3) :bankai) (eq (kit-cine b) 'ken-bankai-cine) (kit-awakening b) (kit-awakening a)))
+  ;; 2. the arm: 4 pips; spend 4 -> 3, 0 refused; the crack at 300 f, idle back to 0; locked frames don't count;
+  ;; 4 cracks = 1200 f of play
+  (check (and (equal (multiple-value-list (pip-spend 4)) '(3 t)) (equal (multiple-value-list (pip-spend 0)) '(0 nil))
+              (= 4 *arm-pips*) (= 300 *arm-crack*)))
+  (check (and (equal (multiple-value-list (pip-step 4 298 nil)) '(4 299 nil)) (equal (multiple-value-list (pip-step 4 299 nil)) '(3 0 t))
+              (equal (multiple-value-list (pip-step 4 299 t)) '(4 299 nil)) (equal (multiple-value-list (pip-step 0 5 nil)) '(0 6 nil))))
+  (check (= 1200 (let ((p 4) (i 0) (n 0)) (loop while (plusp p) do (multiple-value-setq (p i) (pip-step p i nil)) (incf n)) n)))
+  ;; 3. the pending burst: waits in the move that spent the last pip, in reactions / blockstun / air / down / Hoho, fires
+  ;; on anything else (a later move included)
+  (let ((m1 (kit-move b :ke-b-k1)) (m2 (kit-move b :ke-b-j1)))
+    (check (and (not (burst-due-p m1 m1 :move)) (burst-due-p m1 m2 :move) (burst-due-p m1 nil :idle) (burst-due-p :none nil :guard)
+                (not (burst-due-p m1 nil :stun)) (not (burst-due-p m1 nil :hoho)) (not (burst-due-p m1 nil :air))
+                (not (burst-due-p m1 nil :guard-hit)) (not (burst-due-p nil nil :idle)) (burst-due-p :none m2 :move))))
+  ;; 4. rend: armour -> a hit, a stance -> broken; a guard, the ward and a parry still hold
+  (check (and (eq (resolve-contact :armor :rend t) :hit) (eq (resolve-contact :stance :rend t) :stance-break)
+              (eq (resolve-contact :stance-in :rend t) :stance-break) (eq (resolve-contact :guard :rend t) :blocked)
+              (eq (resolve-contact :guard :rend t :ward t :in-front nil) :blocked) (eq (resolve-contact :parry :rend t) :parried)
+              (eq (resolve-contact :armor) :armored)))
+  ;; the bite beats every defence but iframes; +9 on hit (his J1, S 8, combos after it)
+  (let* ((bite (kit-command-move b :sig)) (w (svref (mv-hits bite) 0)))
+    (check (and (eq (mv-name bite) :ke-b-bite) (member :grab (mv-flags bite)) (member :unguardable (hw-flags w))
+                (~= 1.5 (mv-reach bite)) (eq :crumple (hw-react w))))
+    (check (every (lambda (st) (eq :hit (resolve-contact st :unguardable t :rend t))) '(:guard :stance :stance-in :armor :parry)))
+    (check (and (null (resolve-contact :invuln :unguardable t)) (eq :hit (resolve-contact :guard :unguardable t :ward t))))
+    (check (= 9 (on-hit-adv bite))) (check (> (on-hit-adv bite) (mv-s (kit-command-move b :q)))))
+  ;; the pip commands: K, L, SP1, SP2, I, O (and every latched K link: the latch reads :f); J, Step, Hoho, Burst, U, P don't
+  (check (and (equal (getf (kit-pips b) :cmds) '(:f :sig :sp1 :sp2 :breaker :kikon)) (eq :kataude (getf (kit-pips b) :to))
+              (kit-pip-cmd-p b :f) (kit-pip-cmd-p b :kikon) (not (kit-pip-cmd-p b :q)) (not (kit-pip-cmd-p b :awaken))
+              (null (kit-pips a)) (null (kit-pips t3))))
+  ;; 7. the Kikon counts: Bankai 4, 片腕 3 (the universal awakened count); their Soul Breaks 5 / 4 (the cap 5); the
+  ;; Soul Break cinematic is the form's Kikon cinematic
+  (check (and (= 4 (kit-kikon-konpaku b)) (= 3 (kit-kikon-konpaku a))
+              (= 5 (nth-value 1 (kikon-result 9 (kit-kikon-konpaku b) t))) (= 4 (nth-value 1 (kikon-result 9 (kit-kikon-konpaku a) t)))
+              (= 4 (nth-value 1 (kikon-result 9 (kit-kikon-konpaku b) nil)))))
+  (check (and (eq 'ken-oni-kikon-cine (kit-kikon-cine b)) (eq 'ken-kikon-cine (kit-kikon-cine a))
+              (equal "MAPPUTATSU" (mv-callout (kit-command-move b :kikon))) (eq :ke-kikon (mv-name (kit-command-move a :kikon)))))
+  ;; 8. B1 / B4: no NOME in the Bankai (no :meter-gain, no :ladder, the pips' meter), no cut; x1.2; U still DRINK
+  (check (and (null (kit-meter-gain b)) (null (getf (kit-meter b) :ladder)) (= 4 (getf (kit-meter b) :max)) (= 4 (getf (kit-meter b) :start))
+              (not (member :cut (kit-passives b))) (member :drink (kit-passives b)) (~= 1.2 (kit-mult b))
+              (null (kit-meter-gain a)) (null (kit-meter a)) (not (member :drink (kit-passives a))) (~= 1.0 (kit-mult a))))
+  ;; the K links: guard 28 / 28 / 36 (x2 of a K), rend; TATE-GOTO guard-crushes its whole line; SP2's :land is the punch
+  (flet ((g (name) (hw-guard (svref (mv-hits (kit-move b name)) 0))))
+    (check (and (= 28 (g :ke-b-k1)) (= 28 (g :ke-b-k2)) (= 28 (g :ke-b-k2s)) (= 36 (g :ke-b-k3))
+                (every (lambda (n) (member :rend (hw-flags (svref (mv-hits (kit-move b n)) 0)))) '(:ke-b-k1 :ke-b-k2 :ke-b-k3 :ke-b-punch)))))
+  (let ((sp (kit-command-move b :sp1)))
+    (check (and (eq (mv-name sp) :ke-b-split) (member :guard-crush (hw-flags (svref (mv-hits sp) 0))) (~= 6.0 (mv-reach sp))
+                (eq :ke-b-punch (mv-name (kit-next b :ke-charge :land))) (eq :ke-flurry (mv-name (kit-next a :ke-charge :land)))
+                (= 2 (kit-command-cost b :sp2)) (= 1 (kit-command-cost b :sp1)))))
+  ;; route damage on hit (x1.2, before Cornered; each hit rounded): KKK 444 (3 pips), JJK 272 (1)
+  (flet ((route-dmg (first presses)
+           (loop for n in (route b first presses) for i from 1
+                 sum (hit-damage (mv-dmg (kit-move b n)) (kit-atk-mods b 0) nil i nil))))
+    (check (and (= 444 (route-dmg :f '((:f) (:f)))) (= 272 (route-dmg :q '((:q) (:f)))))))
+  ;; 6. 片腕: the sword moves at reach x0.7 (J1 1.82, K1 2.10, K3 1.96), the kick, the Breaker and O as written; B2:
+  ;; every form's Breaker strike out-reaches its trigger, every Kikon strike *KIKON-TRIGGER* + 0.3
+  (check (and (~= 1.82 (mv-reach (kit-move a :ke-j1))) (~= 2.1 (mv-reach (kit-move a :ke-k1))) (~= 1.96 (mv-reach (kit-move a :ke-k3)))
+              (~= 2.2 (mv-reach (kit-next a :ke-j2 :q))) (~= 2.6 (mv-reach (kit-command-move a :breaker)))
+              (~= 2.4 (mv-reach (kit-command-move a :kikon))) (= 7 (mv-s (kit-move a :ke-j1)))))
+  (dolist (cf *forms*)
+    (let ((k (apply #'kit cf)))
+      (check (> (mv-reach (kit-command-move k :breaker)) *breaker-trigger*))
+      (check (> (mv-reach (kit-command-move k :kikon)) (+ *kikon-trigger* 0.3)))))
+  ;; the looks: the oni body in both, the aura only in the Bankai, the cracks hidden in 片腕, the wreck hidden in the Bankai
+  (check (and (eq :kenpachi-oni (kit-body b)) (eq :kenpachi-oni (kit-body a)) (eq :oni (kit-aura b)) (null (kit-aura a))
+              (member :arm-wreck (kit-hide b)) (not (member :arm-wreck (kit-hide a))) (member :crack-4 (kit-hide a))
+              (equal (kit-form-name b) "BANKAI") (equal (kit-form-name a) "KATAUDE")))
+  ;; AI keys: the entry rule on cup 3, the Bankai's K links / hurry / the opponent's wait
+  (check (and (equal (getf (kit-ai t3) :bankai) '(:p 0.6 :opp-below 0.6 :opp-konpaku 4 :own-konpaku 4))
+              (~= 0.6 (getf (kit-ai b) :string-k)) (= 90 (getf (kit-ai b) :pip-hurry))
+              (equal (getf (kit-ai b) :opp-intent) '(:zone 2 :defend 2)) (null (getf (kit-ai b) :cashout)))))
 
 ;; no character names in the generic files (design-v1 §12)
 (dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow"))

@@ -19,13 +19,19 @@
 (defvar *cine-grade* nil "The running cinematic's base grade (an *IMPACT-PRESETS* key, e.g. :spot) or NIL (CINE-GRADE).")
 (declaim (single-float *dutch*))
 (defvar *dutch* 0f0 "The shot's roll, degrees (LENS; camera.lisp DUEL-CAMERA applies it to a cinematic shot).")
+(declaim (single-float *lens-fov*))
+(defvar *lens-fov* (f32 (deg 60)) "The shot's LENS (radians) as the script set it: a portrait screen widens it (camera.lisp %PORTRAIT-DOLLY).")
+(defvar *cine-close* nil "The shot is a close-up of one fighter (SHOT-ON within *PT-CLOSE-SHOT*): a portrait screen keeps its
+lens, no dolly-back (camera.lisp %PORTRAIT-DOLLY; the user's decision 2026-09-28).")
+(defparameter *pt-close-shot* 5.0 "Portrait: a SHOT-ON at most this many metres from its fighter is a close-up.")
 (defvar *caption* nil "The running cinematic's brush title (a BCAP, brush.lisp), shown until it ends (hud.lisp).")
 (defvar *caption-out* nil "The title of a cinematic that just ended, slicing out over what follows (hud.lisp; Phase 6).")
+(defvar *aura-off* nil "An actor whose form aura is not drawn (a cinematic's shots before it bursts on), or NIL (CINE-END).")
 
 ;;; ---------------------------------------------------------------- the director's hooks
 (defun cine-begin (name a v)
   "A cinematic starts: no caption yet, the actors leave their sim states (standing still)."
-  (setf *caption* nil *caption-out* nil)
+  (setf *caption* nil *caption-out* nil *lens-fov* (f32 (deg 60)) *cine-close* nil)
   (dolist (e (list a v))
     (when (fighter e)
       (setf (fighter-state (fighter e)) :cine (fighter-sf (fighter e)) 0 (motion-kb-left (motion e)) 0)
@@ -41,7 +47,8 @@
 flash, give the actors back (the presses buffered during it forgotten: mashing through a
 cinematic fires nothing)."
   (setf *caption-out* (and *caption* (bcap-exit *caption*))   ; a title still up slices out over what follows
-        *caption* nil *card* nil *card-only* nil *cine-grade* nil *dutch* 0f0 (camera-fov *camera*) (f32 (deg 60)))
+        *caption* nil *card* nil *card-only* nil *cine-grade* nil *dutch* 0f0 (camera-fov *camera*) (f32 (deg 60))
+        *aura-off* nil)
   (v3-set! (camera-up *camera*) 0f0 1f0 0f0)
   (unsilhouette)
   (fill *ui-flash* 0f0)
@@ -59,6 +66,9 @@ cinematic fires nothing)."
 away, H high, looking at his body LOOK metres up, AHEAD metres in front of him. OFF > 0 aims the camera
 OFF metres to the shot's left of him, so he stands in the right part of the frame (< 0: the left part), leaving
 the other third to a caption."
+  (setf *cine-close* (<= dist *pt-close-shot*))
+  (when (and (/= off 0) (portrait-p))                             ; portrait (P2): the subject nearer the middle of the tall
+    (setf off (* (if *cine-close* 0.25 0.5) off)))               ; frame (a close-up keeps the lens: nearer still)
   (let* ((p (pos-of e)) (yaw (+ (yaw-of e) (deg ang)))
          (fx (fwd-x (yaw-of e))) (fz (fwd-z (yaw-of e)))
          (tx (- (+ (aref p 0) (* ahead fx)) (* off (fwd-z yaw)))) (tz (+ (aref p 2) (* ahead fz) (* off (fwd-x yaw)))))
@@ -66,6 +76,7 @@ the other third to a caption."
 
 (defun shot-pair (a v side dist h)
   "Both fighters from the SIDE (+1 / -1) of the A->V line, DIST metres from their midpoint."
+  (setf *cine-close* nil)
   (let* ((p (pos-of a)) (q (pos-of v)) (mx (* 0.5 (+ (aref p 0) (aref q 0)))) (mz (* 0.5 (+ (aref p 2) (aref q 2))))
          (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2))) (d (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))))
     (cine-cam (+ mx (* side dist (/ (- dz) d))) h (+ mz (* side dist (/ dx d))) mx 1.1 mz)))
@@ -154,7 +165,7 @@ Yamamoto (white haori) goes on black, Kenpachi (black robe) on white."
 (defun lens (fov &optional (roll 0))
   "The shot's vertical field of view FOV (degrees: 38 for a stand-off, 85-95 close and low for a thrust or a
 reveal: forced perspective) and its dutch ROLL (degrees). The end of the cinematic restores 60 and 0."
-  (setf (camera-fov *camera*) (f32 (deg fov)) *dutch* (f32 roll)))
+  (setf (camera-fov *camera*) (f32 (deg fov)) *lens-fov* (camera-fov *camera*) *dutch* (f32 roll)))
 
 (defun freeze (frames)
   "A held beat: the effects stop (particles, the fx clock's drawings, shake) for FRAMES 60 Hz frames of real

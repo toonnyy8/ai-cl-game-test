@@ -2,7 +2,7 @@
 ;;;; (tests/touch-test.lisp); platform.lisp's TOUCH-POLL feeds it the frame's finger events (engine/c/platform.c).
 ;;;;   (make-touch)                       a recogniser; (touch-layout! tr ...) sets its flow pad and chips
 ;;;;   (touch-feed! tr n)                 process N queued events (TOUCH-Q, 5 floats each), then the clock (TOUCH-NOW)
-;;;;   reads: TOUCH-PULSE-P (a latched tap / flick / up / hoho, see TOUCH-TAKE!), TOUCH-RESTING-P (guard),
+;;;;   reads: TOUCH-PULSE-P (a latched tap / high tap / flick / hoho, see TOUCH-TAKE!), TOUCH-RESTING-P (guard),
 ;;;;          TOUCH-STEP-HELD-P, TOUCH-SX / TOUCH-SY (the drag stick), TOUCH-CHIP-DOWN-P, TOUCH-TAPPED-P (menus)
 ;;;; Coordinates are window pixels; the knobs (GESTURE-CONFIG) are CSS px and ms, scaled by TOUCH-DPX.
 ;;;; A contact that starts in the flow pad is the gesture contact (the latest one wins); one that starts on a
@@ -17,8 +17,8 @@
   (slop 10f0 :type single-float)          ; px a thumb may wander and still be a tap / rest
   (flick-min 28f0 :type single-float)     ; px of travel that makes a flick ...
   (flick-window 120f0 :type single-float) ; ... within this many ms of leaving the slop
-  (up-lift-ms 150f0 :type single-float)   ; an up-flick is F only if the thumb lifts this soon after the crossing
-  (up-cone 1.73f0 :type single-float)     ; a flick is "up" while |dx| <= this x |dy| (1.73: 60 degrees either side)
+  (up-cone 1.73f0 :type single-float)     ; a flick is "up" (straight ahead) while |dx| <= this x |dy| (60 deg either side)
+  (tap-split 0.5f0 :type single-float)    ; a tap above this fraction of the pad's height is a high tap (TOUCH-SPLIT-Y)
   (stick-r 48f0 :type single-float)       ; px of drag for a full stick
   (run-ring 1.6f0 :type single-float)     ; stick radii: Step held (dash, run) beyond this ...
   (run-release 1.3f0 :type single-float)  ; ... released back inside this
@@ -26,7 +26,7 @@
   (chip-slop 8f0 :type single-float)      ; px added to a chip's radius for its hit circle
   (menu-tap-ms 350f0 :type single-float)) ; menus: a lift this soon, inside the slop, is a tap
 
-(defconstant +tp-tap+ 1) (defconstant +tp-flick+ 2) (defconstant +tp-up+ 4) (defconstant +tp-hoho+ 8)
+(defconstant +tp-tap+ 1) (defconstant +tp-flick+ 2) (defconstant +tp-tap-hi+ 4) (defconstant +tp-hoho+ 8)   ; tap: the low zone
 (defconstant +touch-fingers+ 10)
 (defconstant +touch-chips+ 8)
 (defconstant +touch-events+ 64)
@@ -36,9 +36,9 @@
 
 (defstruct (touch (:constructor make-touch (&key (cfg (make-gesture-config)))))
   "One recogniser. PHASE of the gesture contact: 0 none, 1 pending (still inside the slop since touch-down),
-2 drag, 3 rest (guard), 4 up-pending (an up-flick waiting for the lift), 5 spent (a Hoho fired: ignored
-until it lifts), 6 undecided (left the slop, the flick window still open). Only a drag (2) moves the stick
-or holds Step, so a flick up never walks or dashes before its F (the user's playtest, 2026-09-27)."
+2 drag, 3 rest (guard), 5 spent (a Hoho fired: ignored until it lifts), 6 undecided (left the slop, the flick
+window still open). Only a drag (2) moves the stick or holds Step, so a flick never walks before it fires (the
+user's playtest, 2026-09-27). (4, the up-flick waiting for its lift, went with the 2026-09-28 remap.)"
   (cfg (make-gesture-config) :type gesture-config)
   (q (%f32s (* 5 +touch-events+)) :type (simple-array single-float (*)))   ; TOUCH-POLL's copy of the frame's events
   (dpx 1f0 :type single-float)                                             ; window px per CSS px
@@ -58,7 +58,6 @@ or holds Step, so a flick up never walks or dashes before its F (the user's play
   (ax 0f0 :type single-float) (ay 0f0 :type single-float)          ; flick anchor (the last still point)
   (tleave -1f0 :type single-float) (armed 1 :type fixnum) (rested 0 :type fixnum)
   (px 0f0 :type single-float) (py 0f0 :type single-float) (pt 0f0 :type single-float)   ; still point, since
-  (tup 0f0 :type single-float)                                     ; up-flick crossing
   (flick-hold 0 :type fixnum) (run-hold 0 :type fixnum)
   (fx 0f0 :type single-float) (fy 0f0 :type single-float)          ; last flick's stroke (px, y down)
   ;; pulses: set by the recogniser (PEND), shown to exactly one reader call (LIVE, TOUCH-TAKE!)
@@ -69,7 +68,7 @@ or holds Step, so a flick up never walks or dashes before its F (the user's play
   (ft0 (%f32s +touch-fingers+) :type (simple-array single-float (*)))
   (fmoved (%fixs +touch-fingers+ 1) :type (simple-array fixnum (*)))   ; 1 = not a tap (moved, cancelled, unknown)
   (tapped 0 :type fixnum) (tap-x 0f0 :type single-float) (tap-y 0f0 :type single-float)
-  ;; feedback: the last recognised gesture (1 tap 2 flick 3 up 4 hoho 5 rest), when (ms) and where
+  ;; feedback: the last recognised gesture (1 tap 2 flick 3 high tap 4 hoho 5 rest 6 up-flick), when (ms) and where
   (glyph 0 :type fixnum) (glyph-t -1f4 :type single-float) (glyph-x 0f0 :type single-float) (glyph-y 0f0 :type single-float))
 
 ;;; ---------------------------------------------------------------- layout
@@ -113,13 +112,14 @@ HOLDS: a list of ms each chip must be held first, default 0). Releases held chip
   (setf (touch-armed tr) 0 (touch-fx tr) dx (touch-fy tr) dy)
   (let ((x (touch-x tr)) (y (touch-y tr)) (ax (if (< dx 0f0) (- dx) dx)))
     (declare (single-float x y ax))
-    (cond ((and (< dy 0f0) (>= (* (- dy) (%knob tr up-cone)) ax))   ; up (within UP-CONE)
-           (if (and (= (touch-rested tr) 1) (touch-rest-up-ok tr))
-               (progn (setf (touch-pend tr) (logior (touch-pend tr) +tp-hoho+) (touch-phase tr) 5)   ; Hoho at the crossing
-                      (%glyph! tr 4 x y ms))
-               (setf (touch-phase tr) 4 (touch-tup tr) ms)))  ; F, if the thumb lifts within UP-LIFT-MS
+    (cond ((and (< dy 0f0) (>= (* (- dy) (%knob tr up-cone)) ax)   ; up (within UP-CONE) from a rest: Hoho
+                (= (touch-rested tr) 1) (touch-rest-up-ok tr))
+           (setf (touch-pend tr) (logior (touch-pend tr) +tp-hoho+) (touch-phase tr) 5)
+           (%glyph! tr 4 x y ms))
           (t (setf (touch-pend tr) (logior (touch-pend tr) +tp-flick+) (touch-flick-hold tr) 1 (touch-phase tr) 2)
-             (%glyph! tr 2 x y ms))))
+             (if (and (< dy 0f0) (>= (* (- dy) (%knob tr up-cone)) ax))
+                 (progn (setf (touch-fx tr) 0f0) (%glyph! tr 6 x y ms))   ; up: straight ahead (a slanted thumb too)
+                 (%glyph! tr 2 x y ms)))))
   (setf (touch-rested tr) 0)
   nil)
 
@@ -158,27 +158,27 @@ HOLDS: a list of ms each chip must be held first, default 0). Releases held chip
                 ((< m2 (* rel rel)) (setf (touch-run-hold tr) 0)))))))
   nil)
 
+(defun-fast touch-split-y (tr)
+  "The window y splitting the pad's taps: above it a high tap (+TP-TAP-HI+), from it down a tap (+TP-TAP+)."
+  (let ((p (touch-pad tr)))
+    (+ (aref p 1) (* (%knob tr tap-split) (- (aref p 3) (aref p 1))))))
+
 (defun-fast %gesture-lift (tr ms)
   (declare (single-float ms))
-  (case (touch-phase tr)
-    (1 (when (<= (- ms (touch-t0 tr)) (%knob tr tap-ms))       ; never left the slop, short: a tap
-         (setf (touch-pend tr) (logior (touch-pend tr) +tp-tap+))
-         (%glyph! tr 1 (touch-x tr) (touch-y tr) ms)))
-    (4 (when (<= (- ms (touch-tup tr)) (%knob tr up-lift-ms))  ; an up-flick lifted in time: F
-         (setf (touch-pend tr) (logior (touch-pend tr) +tp-up+))
-         (%glyph! tr 3 (touch-x tr) (touch-y tr) ms))))
+  (when (and (= (touch-phase tr) 1) (<= (- ms (touch-t0 tr)) (%knob tr tap-ms)))   ; never left the slop, short: a tap
+    (let ((hi (< (touch-oy tr) (the single-float (touch-split-y tr)))))            ; where it went down
+      (setf (touch-pend tr) (logior (touch-pend tr) (if hi +tp-tap-hi+ +tp-tap+)))
+      (%glyph! tr (if hi 3 1) (touch-x tr) (touch-y tr) ms)))
   (%release tr))
 
 (defun-fast %touch-clock (tr now)
-  "Time-based transitions at NOW (ms): an up-flick not lifted in time turns into a drag; a thumb still for
+  "Time-based transitions at NOW (ms): an undecided stroke whose flick window closed is a drag; a thumb still for
 TAP-MS re-anchors (re-arming the flick) and, inside the slop of the stick origin, rests (guard);
 held chips that need a hold come on."
   (declare (single-float now))
   (when (>= (touch-gid tr) 0)
     (when (and (= (touch-phase tr) 6) (> (- now (touch-tleave tr)) (%knob tr flick-window)))
       (setf (touch-phase tr) 2 (touch-armed tr) 0 (touch-rested tr) 0))
-    (when (and (= (touch-phase tr) 4) (> (- now (touch-tup tr)) (%knob tr up-lift-ms)))
-      (setf (touch-phase tr) 2))
     (when (and (/= (touch-phase tr) 5) (>= (- now (touch-pt tr)) (%knob tr tap-ms)))
       (let* ((sx (- (touch-x tr) (touch-ox tr))) (sy (- (touch-y tr) (touch-oy tr))) (slop (%px tr slop))
              (in (<= (+ (* sx sx) (* sy sy)) (* slop slop))))

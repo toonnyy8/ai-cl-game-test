@@ -57,6 +57,10 @@
 (defvar *ui-min-css* 0
   "Text floor (docs/DUEL_MOBILE_DESIGN.md G4): UI-SCALE is at least enough for a 7-px glyph to be this many CSS
 px tall (0 = no floor, the desktop default; a phone in portrait wants about 11).")
+(defvar *ui-text-min* 1000
+  "Text probe: the smallest glyph pixel size (UI-TEXT scale / UI-BLOCK-TEXT px) drawn since a caller last reset it.")
+(defmacro note-text-px (px) `(let ((%p ,px)) (when (< %p *ui-text-min*) (setf *ui-text-min* %p))))
+
 (defun ui-scale ()
   "Suggested integer text/UI scale for the current window: 1 per ~360 px of height, capped at
 1 per 480 px of width so narrow / portrait windows keep text inside the screen; at least *UI-MIN-CSS*."
@@ -196,6 +200,7 @@ bottom/right (VERTICAL chooses the axis). Corners TL TR BR / TL BR BL."
   "Large text drawn as solid font-pixel blocks of PX pixels (crisp at any size, no atlas sampling).
 Y = top edge. SHEAR leans it (px per px of height, italic). Rows blend COLOR (top) -> COLOR2 (bottom).
 Returns the width in pixels. Conses a few boxed floats per call, nothing per font pixel."
+  (note-text-px px)
   (let* ((n (length str)) (px (f32 px)) (sh (* (f32 shear) px)) (w (* px (max 0 (- (* 6 n) 1))))
          (c1 (or color2 color)) (ca *bt-c0*) (cb *bt-c1*)
          (x0 (- (f32 x) (ecase align (:left 0.0) (:center (/ (+ w (* 7 sh)) 2)) (:right (+ w (* 7 sh)))))))
@@ -306,6 +311,7 @@ row's INTEGER-LENGTH. COLOR (top) → COLOR2 (bottom); SHEAR leans it (italic). 
 SHADOW: T or a color → 1-scale drop shadow. Returns the width in pixels. Conses only a few boxed
 numbers per line (the glyphs are written by %GLYPH-RUN)."
   (let ((s (max 1 (round scale))))
+    (note-text-px s)
     (when shadow
       (ui-text str (+ x s) (+ y s) :scale s :align align :color (if (eq shadow t) '(0 0 0 0.75) shadow)))
     (%col-floats (r g b a) color

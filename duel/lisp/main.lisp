@@ -105,7 +105,7 @@ white (drawing 1) then as a solid ink silhouette (2)."
   (let* ((m (model e)) (age (model-ghost-age m)) (b (model-body m)))
     (when (>= age 0.0)
       (let ((q (sage age 2f0)))
-        (cond ((< q (/ 2 24.0)) (draw-body b (model-ghost m) 0.0 0.0 0.0 0.0 :hide (model-hide m) :tint (model-tint m) :flash 1.0 :shadow nil))
+        (cond ((< q (/ 2 24.0)) (draw-body b (model-ghost m) 0.0 0.0 0.0 0.0 :hide (face-hide-list m :neutral) :tint (model-tint m) :flash 1.0 :shadow nil))
               ((< q (/ 4 24.0)) (draw-parts *no-parts* nil (model-ghost m) :toon *toon-body* :hulls (body-hulls b) :ink-tint *ghost-ink*))
               (t (setf age -2.0))))
       (setf (model-ghost-age m) (if (< age -1.0) -1f0 (f32 (+ age dt)))))))
@@ -127,7 +127,8 @@ ground): up over the first 8 f of the dash (or the dash-in), down over the strik
            (* h (- 1.0 (/ (fighter-sf f) (float (mv-s mv))))))
           (t 0.0))))
 
-(defparameter *hurt-cines* '(yama-kikon-cine yama-tenchi-cine ken-kikon-cine ken-sky-split-cine soul-break-cine ko-cine)
+(defparameter *hurt-cines* '(yama-kikon-cine yama-tenchi-cine ken-kikon-cine ken-sky-split-cine ken-oni-kikon-cine soul-break-cine
+                             ko-cine)
   "The cinematics whose victim (V) shows the hurt face; their attacker (A) shouts (every cinematic's A does but the intro's,
 TIME's and the K.O.'s winner).")
 
@@ -243,10 +244,11 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
     (when (and flashing (> rdt 0) (zerop (mod (fighter-hold f) 4))) (start-ghost e))   ; a new afterimage every 4 f
     (draw-ghost e rdt)
     (when (and (>= (model-alpha m) 0.999) (not flashing))   ; a vanishing Hoho body is not drawn: its afterimage is
-      (draw-body b (model-joints m) x y z yaw :weapon weapon :hide (model-hide m) :face (face-accent m (face-of e f m mv))
-                                            :tint (model-tint m)
-                                            :rim (if (> (model-super m) 0) *super-rim* (model-rim m))
-                                            :flash (if (> (model-flash m) 0) 0.45 0.0)))
+      (let ((face (face-accent m (face-of e f m mv))))    ; (a form's hidden parts: FACE-HIDE-LIST)
+        (draw-body b (model-joints m) x y z yaw :weapon weapon :hide (face-hide-list m face) :face face
+                                              :tint (model-tint m)
+                                              :rim (if (> (model-super m) 0) *super-rim* (model-rim m))
+                                              :flash (if (> (model-flash m) 0) 0.45 0.0))))
     (when (and mv (eq (mv-clip mv) :ya-sleeve) (eq (fighter-phase f) :main)   ; SODEBI: the empty left sleeve burns
                (< (- (mv-s mv) 4) (fighter-sf f) (+ (mv-s mv) (mv-a mv) 10)))
       (joint-point! *base* (model-joints m) (ji :lower-arm-l) 0f0 0f0 0f0)
@@ -273,12 +275,13 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
         (vfx-smear tr (blade-smear (blade e)) (case (first (kit-blade kit)) (:fire 0) ((:embers :charcoal) 2) (t 1)))))
     ;; auras: the form's, EVOLUTION ready, the Breaker (brightens over the strike startup), the Kikon rush
     (let ((age (fx-clock)))
-      (unless (or flashing (<= (model-alpha m) 0f0))      ; the form's aura, crossfaded; none round a body turned to
-                                                          ; ash (Tenchi Kaijin)
+      (unless (or flashing (<= (model-alpha m) 0f0) (eql e *aura-off*))   ; the form's aura, crossfaded; none round a body
+                                                          ; turned to ash (Tenchi Kaijin) or before a cinematic bursts it on
         (draw-aura f (kit-aura kit) x y z (* 1.1 (body-hurt-h b)) age rdt
                    (cond ((> (model-flare m) 0f0) (+ 1.0 (* 2.0 (model-flare m))))   ; West's garb flaring (a warded hit, SHONETSU)
                          ((and (eq look :charge) (not (eq (fighter-phase f) :main))) 1.5)
-                         (t 1.0))))
+                         ((and mv (eq (mv-kind mv) :kikon) (eq (kit-aura kit) :oni)) 0.15)   ; the oni pillar smoulders in
+                         (t 1.0))))                                                           ; his rush (its trail is the tell)
       (when (and (eq (fighter-state f) :stun) (eq (fighter-phase f) :bind))   ; bound by South: ash drifting at the feet
         (vfx-aura x y z (body-hurt-h b) :bound age rdt))
       (when (gauges-evolution (gauges e)) (vfx-aura x y z (body-hurt-h b) :evolution age rdt :rgb *evolution-rgb* :k 0.5))
@@ -356,17 +359,24 @@ spot-keep mode 4, docs/STYLE_STORM_DESIGN.md §3.6) while the form is on. An imp
 ;;; ---------------------------------------------------------------- the frame
 (defun menu-camera ()
   "Title: a slow orbit of the burning plaza; results: the winner from his front-right, on the right
-of the screen (the stats take the left third); select: both fighters from the front."
+of the screen (the stats take the left third); select: both fighters from the front. Portrait: see below."
+  (landscape-lens)
   (case *flow*
     ((:title :mode :controls) (let ((a (* 0.05 (elapsed-time))))
                                 (camera-look-at (* 11 (sin a)) 3.2 (* 11 (cos a)) 0 1.4 0)))
     (:results (let* ((w (if (eql *winner* 1) *p2* *p1*)) (p (pos-of w)) (yaw (yaw-of w))
                      (fx (fwd-x yaw)) (fz (fwd-z yaw)) (rx (- fz)) (rz fx))   ; his forward, his right
-                (camera-look-at (+ (aref p 0) (* 3.6 fx) (* 2.4 rx)) 1.7 (+ (aref p 2) (* 3.6 fz) (* 2.4 rz))
-                                (+ (aref p 0) (* 0.9 rx)) 1.15 (+ (aref p 2) (* 0.9 rz)))))
+                (if (portrait-p)                         ; portrait: from his front, in the top part (the card below)
+                    (progn (camera-look-at (+ (aref p 0) (* 5.2 fx) (* 1.2 rx)) 1.6 (+ (aref p 2) (* 5.2 fz) (* 1.2 rz))
+                                           (aref p 0) 1.0 (aref p 2))
+                           (portrait-lens 60 0.5))
+                    (camera-look-at (+ (aref p 0) (* 3.6 fx) (* 2.4 rx)) 1.7 (+ (aref p 2) (* 3.6 fz) (* 2.4 rz))
+                                    (+ (aref p 0) (* 0.9 rx)) 1.15 (+ (aref p 2) (* 0.9 rz))))))
     (t (let* ((p (pos-of *p1*)) (q (pos-of *p2*))
               (mx (* 0.5 (+ (aref p 0) (aref q 0)))) (mz (* 0.5 (+ (aref p 2) (aref q 2)))))
-         (camera-look-at mx 1.6 (+ mz 6.8) mx 1.15 mz)))))
+         (if (portrait-p)                                 ; portrait select: farther, the pair above the names
+             (progn (camera-look-at (- mx 11.5) 2.4 (+ mz 9.0) mx 1.0 mz) (portrait-lens 60 0.35))   ; a diagonal: the pair overlaps
+             (camera-look-at mx 1.6 (+ mz 6.8) mx 1.15 mz))))))
 
 (defun game-frame (rdt)
   "One frame (the engine runs it between BEGIN-FRAME and END-FRAME; RDT = real seconds). The effects run
@@ -390,7 +400,8 @@ on FDT: RDT, or 0 while paused (the fx clock, particles, stamps, shake, camera a
     (update-camera)
     (perf-mark)                                             ; "queue" = scene + HUD
     (unless *turbo* (draw-scene fdt))
-    (unless (svref *no-draw* 0) (hud-draw))))
+    (unless (svref *no-draw* 0) (hud-draw))
+    (when *frame-probe* (frame-probe-step))))
 
 (defun stats-tail ()
   (if (entity-alive-p *p1*)

@@ -101,6 +101,41 @@
   :adv-block -16 :vol (:cap 0.3 12.0 0.5 0.5) :on-hit :knockdown :kb 3.0 :flags (:ranged)
   :on-frame ((0 ken-drink-dry) (26 ken-meteor-cut)) :params (:crush-range 6.0 :melee-range 3.9))   ; blade <= cup 3's MEN 3.9 m
 
+;;; ================================================================ Bankai (卍解) and 片腕 KATAUDE (docs/DUEL_KEN_BANKAI.md)
+;;; The oni: the broken cleaver hacks, a fist, one gouge, one drop, the teeth, the shield-and-all cut, the punch and the
+;;; split. Every K link, L, SP1, SP2, I and O spends a pip of the arm (UDE); the K links and the specials :rend (armour
+;;; and his mirror's stance don't stop them). Frame data: the DUEL_STRINGS §2.1 budget (J 8 / 8 / 9, K1 17, K2 / K3 S_eff 14).
+(defmove :ke-b-j1 :kind :quick :clip :ke-q1 :clip-s 7 :startup 8 :active 3 :recovery 12 :dmg 38 :adv-block -2
+  :reach 3.2 :arc 100 :on-hit :flinch :slide 1.0)                   ; TATAKI-GIRI: hacked down, lunging like a beast
+(defmove :ke-b-j2 :kind :quick :clip :ke-q2 :clip-s 7 :startup 8 :active 3 :recovery 13 :dmg 38 :adv-block -2
+  :reach 3.2 :arc 100 :on-hit :flinch)                               ; NAGI-HARAI: the backhand sweep
+(defmove :ke-b-j3 :kind :quick :clip :ke-b-fist :startup 9 :active 3 :recovery 18 :dmg 50 :adv-block -4
+  :reach 2.0 :arc 60 :on-hit :stagger :slide 0.6 :flags (:ender))    ; GENKOTSU: a left hook to the face
+(defmove :ke-b-k1 :kind :flash :clip :ke-f1 :clip-s 16 :startup 17 :active 4 :recovery 20 :dmg 120 :adv-block -3
+  :reach 3.6 :arc 120 :on-hit :stagger :guard 28 :flags (:rend))     ; ONATA: the hatchet chop
+(defmove :ke-b-k2 :kind :flash :clip :ke-f2 :enter 6 :startup 20 :active 4 :recovery 24 :dmg 100 :adv-block -3
+  :reach 3.2 :arc 90 :on-hit :stagger :guard 28 :flags (:rend))      ; EGURI-AGE: gouging up from the floor
+(defmove :ke-b-k3 :kind :flash :clip :ke-r-f2 :clip-s 21 :enter 7 :startup 21 :active 5 :recovery 34 :dmg 150 :adv-block -20
+  :vol (:cap 0.3 4.0 1.2 0.55) :on-hit :crumple :guard 36 :flags (:ender :rend))   ; TATAKI-OTOSHI: the drop
+(defmove-copy :ke-b-j2s :ke-b-j2)
+(defmove-copy :ke-b-k2s :ke-b-k2)
+;; L, KAMICHIGIRI: a short lunge, the left hand clamps, the teeth: nothing guards it (guard, DRINK, the ward, a parry, a
+;; stance, armour); Step / Hoho iframes dodge it. +9 on hit: his J1 combos after it (knob: R 28 -> 30)
+(defmove :ke-b-bite :kind :sig :clip :ke-b-bite :callout "KAMICHIGIRI" :startup 10 :active 3 :recovery 28 :dmg 120
+  :reach 1.5 :arc 60 :slide 0.8 :on-hit :crumple :flags (:grab :unguardable :rend))
+;; Shift+K, TATE-GOTO: through guard and arm together: the whole 6 m line guard-crushes (a Guard Break)
+(defmove :ke-b-split :kind :sp :clip :ke-meteor :clip-s 26 :callout "TATE-GOTO" :startup 24 :active 4 :recovery 30 :dmg 260
+  :adv-block -16 :vol (:cap 0.3 6.0 0.5 0.5) :on-hit :knockdown :kb 3.0 :flags (:ranged :guard-crush :rend)
+  :on-frame ((24 ken-tate-goto)) :params (:melee-range 3.2))
+;; Shift+L's follow-up, NAGURI-TOBASHI: the charge connects, then a left straight into the chest, 6 m (not a command: the
+;; kit's (:ke-charge :land :ke-b-punch) string, which KEN-FLURRY starts)
+(defmove :ke-b-punch :kind :sp :clip :ke-b-fist :clip-s 9 :callout "NAGURI-TOBASHI" :startup 6 :active 3 :recovery 30 :dmg 150
+  :adv-block -16 :reach 2.0 :arc 90 :on-hit :knockback :kb 6.0 :guard 22 :flags (:rend))
+;; O, MAPPUTATSU: LEAP CLEAVE with the Bankai's Kikon cinematic (the Gerard cleaved in two)
+(defmove-copy :ke-b-kikon :ke-kikon-n :callout "MAPPUTATSU" :cine ken-oni-kikon-cine)
+;; 片腕: the base moves at reach x0.7 (the kit derives them); the kick is a leg: as written, under its own name
+(defmove-copy :ke-a-j3 :ke-j3)
+
 ;;; ================================================================ forms
 (defkit :kenpachi :base
   :name "KENPACHI" :body :kenpachi :weapon :ken-katana :stance :ke-stance
@@ -158,7 +193,7 @@
        :react (:projectile :sig :flash-startup :sig) :block-string 0.85))
 
 (defkit :kenpachi :nomihose :inherit :ryote        ; cup 3, NOMIHOSE (NOME = 100): no guard, U drinks; RYOTE's moves
-  :mult *nomihose-mult* :form-name "NOMIHOSE" :kikon-konpaku 4 :blade-chip *nomihose-chip*
+  :mult *nomihose-mult* :form-name "NOMIHOSE" :kikon-konpaku 4 :blade-chip *nomihose-chip* :bankai-form :bankai
   :passives (:projectile-cut :cut :drink) :aura :nomihose :drink-clip :ke-drink :enter-hook ken-nomihose-enter
   :commands (:f :ke-n-f1 :sp1 :ke-meteor-n)
   :strings ((:ke-n-f1 :f :ke-r-k2) (:ke-n-f1 :q :ke-r-j2s))   ; KUKAN-GIRI is cup 3's K1
@@ -169,7 +204,50 @@
                (6.0 99.0 :step 1 :kikon 1 nil 1))
        :guard 0.45 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 1.0 :kikon-range 9.0 :kikon-p 0.9 :o-ender 0.6
        :cashout (:punish 30 :near 6.0 :below 60.0)
+       ;; the Bankai as a finisher, weighing his own Konpaku (entry leaves him 1): nothing to lose (the opponent's next
+       ;; Soul Break would take them all anyway), or the opponent near the end (Reishi <= :opp-below, Konpaku <=
+       ;; :opp-konpaku) while he has <= :own-konpaku left; one roll per cup-3 stay (ai.lisp AI-BANKAI-P)
+       :bankai (:p 0.6 :opp-below 0.6 :opp-konpaku 4 :own-konpaku 4)
        :react (:projectile :sig :flash-startup :sig) :block-string 0.85))
+
+;;; the Bankai (P in cup 3, red, free: combat.lisp BANKAI!): his Konpaku -> 1, his Reishi -> full (the user's decisions
+;;; 2026-09-28); ×1.2; U is still DRINK; every heavy command spends a pip of the arm (UDE, the kit meter)
+(defkit :kenpachi :bankai :inherit :nomihose
+  :awakening t :mult *bankai-ken-mult* :heal 0 :form-name "BANKAI" :kikon-konpaku 4 :blade-chip *nomihose-chip*
+  :bankai-form nil :passives (:projectile-cut :drink)
+  :meter (:name "UDE" :max *arm-pips* :start *arm-pips*) :meter-gain nil
+  :pips (:n *arm-pips* :to :kataude :cmds (:f :sig :sp1 :sp2 :breaker :kikon))
+  :body :kenpachi-oni :weapon :ke-broken :stance :ke-b-stance :aura :oni :hide (:arm-wreck :crack-1 :crack-2 :crack-3 :crack-4)
+  :cine ken-bankai-cine :enter-hook nil :swing-sfx :whoosh-cleaver
+  :commands (:q :ke-b-j1 :f :ke-b-k1 :sig :ke-b-bite :sp1 :ke-b-split :sp2 :ke-charge :breaker :ke-breaker :kikon :ke-b-kikon)
+  :grid (:ke-b-j1 :ke-b-j2 :ke-b-j3 :ke-b-k1 :ke-b-k2 :ke-b-k3 :ke-b-j2s :ke-b-k2s)
+  :strings ((:ke-charge :land :ke-b-punch))
+  ;; all in: pressure, K links 0.6 (:string-k), the pips spent before they crack (:pip-hurry), the bite up close only;
+  ;; a CPU facing him backs off and waits the arm out (:opp-intent)
+  :ai (:intents (:approach 3 :pressure 7 :zone 0 :defend 0)
+       :ranges (:approach (2.0 4.5) :pressure (1.2 3.0) :zone (4.0 6.0) :defend (3.0 5.0))
+       :moves ((0.0 1.5 :q 3 :f 3 :sig 3 :breaker 1 nil 1)
+               (1.5 3.4 :q 4 :f 4 :breaker 1 nil 1)
+               (3.4 6.0 :sp1 3 :sp2 2 :step 1 nil 1)
+               (6.0 99.0 :kikon 1 :step 1 nil 1))
+       :guard 0.2 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 2 :dash 1.0 :kikon-range 10.6 :kikon-p 0.9 :o-ender 0.8
+       :string-k 0.6 :pip-hurry 90 :block-string 0.85 :opp-intent (:zone 2 :defend 2)))
+
+;;; 片腕 KATAUDE (the arm burst): the rest of the match. The base moves at reach x0.7 (the ruined arm can't extend); the
+;;; kick, the Breaker and O (CHARGE) as written; x1.0; U is a guard again; Kikon 3 (the universal awakened count)
+(defkit :kenpachi :kataude :inherit :base
+  :awakening t :form-name "KATAUDE" :kikon-konpaku 3 :mult 1.0 :reach-mult *kataude-reach*
+  :body :kenpachi-oni :weapon :ke-broken :aura nil :hide (:crack-1 :crack-2 :crack-3 :crack-4) :swing-sfx :whoosh-cleaver
+  :commands (:breaker :ke-breaker :kikon :ke-kikon)
+  :grid (:ke-j1 :ke-j2 :ke-a-j3 :ke-k1 :ke-k2 :ke-k3 :ke-j2s :ke-k2s)
+  :ai (:intents (:approach 2 :pressure 4 :zone 0 :defend 1)
+       :ranges (:approach (1.5 3.0) :pressure (1.0 2.0) :zone (4.0 6.0) :defend (3.0 5.0))
+       :moves ((0.0 2.0 :q 5 :f 2 :sig 2 :breaker 1 :sp2 1 nil 3)
+               (2.0 4.0 :f 1 :sp1 2 :step 1 nil 2)
+               (4.0 6.0 :sp2 2 nil 1)
+               (6.0 99.0 :step 1 :kikon 1 nil 1))
+       :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 2 :dash 0.9 :kikon-range 9.0 :kikon-p 0.5 :o-ender 0.25
+       :react (:projectile :sig :flash-startup :sig) :block-string 0.8))
 
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun ken-rift (e)
@@ -254,6 +332,13 @@ dash starts = guard-crushing (the Breaker property)."
     (ground-scar p (yaw-of e) '(2.0 5.0 8.0 11.0) 1.2))
   (emit :sfx :ground-crack e))
 
+(defun ken-tate-goto (e)
+  "TATE-GOTO: the cut goes through guard and arm and splits the ground 6 m ahead (a look)."
+  (let ((p (pos-of e)))
+    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 6.0 :life 50 :look :meteor)
+    (ground-scar p (yaw-of e) '(1.5 3.5 5.5) 1.0))
+  (emit :sfx :ground-crack e))
+
 ;;; ================================================================ cinematics
 ;;; The grammar of every cinematic is in cinema.lisp (docs/STYLE_STORM_DESIGN.md §5); Kenpachi (black robe, black
 ;;; hair) goes on the white card.
@@ -333,3 +418,88 @@ the 野晒 / 呑め、 stamp in black on a white card."
       (caption "野晒" :kanji2 "呑め、" :reading "NOME, NOZARASHI" :side 0 :ink t)
       (play-sfx :whoosh-cleaver))
   (at 80 (impact-frame :manga 10)))
+
+;;; ---------------------------------------------------------------- the Bankai (docs/DUEL_KEN_BANKAI.md §1.2, §3.1)
+(defparameter *forest-trunks* '((0.03 0.05) (0.1 0.022) (0.62 0.04) (0.71 0.018) (0.8 0.06) (0.93 0.03))
+  "The forest card's ink trunks: (x-fraction width-fraction) of the screen; Kenpachi kneels in the gap at the left third.")
+
+(defun ken-forest (cf)
+  "The Kusajishi forest (anime ep. 44, [A]; the user's decision 2026-09-28: Yachiru a tiny mono ink silhouette): on the
+white card, black ink trunks (a few branches), white petals falling on twos over them, and for two drawings (f24-31) a
+small ink child cut-out in front of him. UI space, a look (the cine clock CF)."
+  (let* ((w (window-width)) (h (window-height)) (ink '(0.03 0.03 0.047 1)) (paper '(0.96 0.96 0.94 1))
+         (dr (floor cf 2)))
+    (loop for (fx fw) in *forest-trunks* for i from 0
+          do (let* ((x (* fx w)) (tw (* fw w)) (lean (* (if (evenp i) 0.02 -0.015) w)))
+               (%ui-poly4 (+ x lean) 0 (+ x lean tw) 0 (+ x (* 1.2 tw)) h (- x (* 0.2 tw)) h ink ink)
+               (let ((by (* h (+ 0.18 (* 0.11 (mod i 3))))) (dir (if (evenp i) 1 -1)))      ; a branch
+                 (%ui-poly4 (+ x (* 0.5 tw)) by (+ x (* 0.5 tw) (* dir 0.09 w)) (- by (* 0.07 h))
+                            (+ x (* 0.5 tw) (* dir 0.09 w)) (- by (* 0.06 h)) (+ x (* 0.5 tw)) (+ by (* 0.02 h)) ink ink))))
+    (dotimes (k 18)                                      ; the petals, re-drawn every drawing
+      (let* ((px (* w (mod (+ (* k 0.137) (* 0.003 dr) (* 0.01 (sin (+ k dr)))) 1.0)))
+             (py (* h (mod (+ (* k 0.071) (* 0.012 dr)) 1.0))) (r (* 0.006 h)))
+        (%ui-poly4 px (- py r) (+ px r) py px (+ py r) (- px r) py paper paper)
+        (ui-rect-outline (- px r) (- py r) (* 2 r) (* 2 r) ink 1)))
+    (when (<= 24 cf 31)                                  ; Yachiru: 2 drawings, then gone
+      (let* ((cx (* 0.52 w)) (base (* 0.8 h)) (u (* 0.05 h)) (j (if (< cf 28) 0 (* 0.08 u))))
+        (%ui-poly4 (- cx (* 0.35 u)) (- base (* 1.3 u)) (+ cx (* 0.35 u)) (- base (* 1.3 u))
+                   (+ cx (* 0.6 u)) base (- cx (* 0.6 u)) base ink ink)                          ; the little kimono
+        (dotimes (k 8)                                                                             ; the head
+          (let ((a0 (* k 0.785)) (a1 (* (1+ k) 0.785)) (hx cx) (hy (- base (* 1.75 u) j)) (r (* 0.42 u)))
+            (%ui-poly4 hx hy (+ hx (* r (cos a0))) (+ hy (* r (sin a0))) (+ hx (* r (cos a1))) (+ hy (* r (sin a1))) hx hy ink ink)))
+        (%ui-poly4 (+ cx (* 0.2 u)) (- base (* 2.1 u) j) (+ cx (* 0.55 u)) (- base (* 2.35 u) j)
+                   (+ cx (* 0.5 u)) (- base (* 1.95 u) j) (+ cx (* 0.3 u)) (- base (* 1.9 u) j) ink ink)))))   ; a tuft
+
+(defcine ken-bankai-cine (a v :len 186 :hold 120)
+  "The Bankai (paced like user review 3: long holds, few shots; the user's decisions 2026-09-28): beat 0, Kenpachi down on
+one knee, head bowed, silence (ch. 669: beaten, bleeding out); the Kusajishi forest on a white card, ink trunks, petals,
+Yachiru a small ink cut-out for two drawings, the distorted doubled call (anime ep. 44); he rises into the crimson oni,
+the BLOOD pillar and two rings, a negative then a manga page; close, low, wide-angle on the face: horns, white irisless
+eyes, the roar held in silence; the black card, a BLOOD back-rim, the 卍解 column with the red hanko; a wide from behind,
+the pillar on ones. The rules are already settled (his Konpaku 1, Reishi full): only the looks here."
+  (at 0 (face-each-other a v)
+      (setf (model-body (model a)) (find-body :kenpachi) (model-weapon (model a)) :nozarashi *aura-off* a)
+      (cine-clip a :sh-crumple :blend 0 :time 0.95) (cine-clip v (kit-stance (kit-of v)) :blend 6)
+      (shot-on a 35 3.0 0.7 :look 0.9 :off -0.7) (lens 50 -6)
+      (hold-pose v 12) (freeze 12) (impact-frame :negative 2) (silence 12)   ; (a held pose would keep his standing one)
+      (let ((p (pos-of a))) (impact-splash (aref p 0) 0.4 (aref p 2) 10 0.05)))
+  (at 12 (card :white a) (shot-on a 20 3.6 0.8 :look 0.9 :off -1.0) (lens 44)
+      (caption "草鹿" :reading "KUSAJISHI" :sub "KEN-CHAN" :side 1 :ink t))
+  (at 14 (play-sfx :yachiru-call))
+  (during (12 58) (ken-forest cf))
+  (at 58 (card nil) (refresh-look a) (setf *aura-off* nil) (caption-exit)
+      (cine-clip a :ke-b-stance :blend 3)
+      (let ((p (pos-of a)))
+        (vfx-awaken-burst (aref p 0) 0.0 (aref p 2) :oni)
+        (vfx-shockwave (aref p 0) (aref p 2) 7.0 0.6 :pal +pal-blood+)
+        (vfx-shockwave (aref p 0) (aref p 2) 4.0 0.4 :pal +pal-ink+))
+      (shot-on a 25 5.2 1.0 :look 1.6) (lens 55)
+      (impact-frame :negative 1) (play-sfx :awaken-boom) (play-sfx :laugh :pitch 0.7) (shake 0.25 0.35))
+  (at 60 (impact-frame :manga 12))
+  (at 78 (shot-on a 14 1.05 1.5 :look 1.58) (lens 80 -8) (silence 20) (face-beat a :shout 0.6))
+  (at 108 (card :black a) (back-rim 58 0.82 0.06 0.11) (shot-on a 20 4.4 0.8 :look 1.3 :off 0.9) (lens 42)
+      (caption "卍解" :reading "BANKAI" :side 0 :hanko t))
+  (at 166 (card nil) (shot-on a 165 5.6 1.7 :look 1.4) (lens 50) (caption-exit))
+  (during (58 186) (let ((p (pos-of a)))                ; the pillar: full from the burst, on ones in the wide
+                     (vfx-aura (aref p 0) 0.0 (aref p 2) 2.4 :oni (/ cf 60.0) (cine-dt) :k (if (< cf 78) 1.0 0.8)))))
+
+(defcine ken-oni-kikon-cine (a v :len 162 :hold 40)
+  "The Bankai's Kikon MAPPUTATSU (also its Soul Break cinematic, the user's decision 2026-09-27): the sky split re-cut in the
+oni's colours: beat 0; the black card, a BLOOD back-rim, the oni silhouetted with the broken cleaver raised under 卍解 /
+MAPPUTATSU and the hanko, silence; one vertical cut: a negative, then a manga page, the white line splitting the victim
+and the screen, the halves shearing apart (ch. 669: the Vollständig Gerard cut in two); the split from the side, ash;
+Kenpachi laughing, head back."
+  (at 0 (face-each-other a v 2.6) (setf *aura-off* a)      ; (the pillar smoulders out: the cut reads)
+      (cine-clip a :ke-kikon-n :blend 2 :speed (/ 25.0 68.0)) (cine-clip v :sh-kikon-victim :blend 4)
+      (hold-both a v 12) (impact-frame :negative 2) (play-sfx :whoosh-cleaver))
+  (at 12 (card :black a) (back-rim 56 0.82 0.06 0.11) (shot-on a 60 4.2 0.7 :look 1.6 :ahead 1.3 :off 0.8) (lens 46 8)
+      (silence 56) (caption "卍解" :reading "BANKAI" :sub "MAPPUTATSU" :side 0 :hanko t))
+  (at 68 (card nil) (cine-slash v :heavy) (play-sfx :kikon-slash) (play-sfx :ground-crack) (shake 0.45 0.5)
+      (impact-frame :negative 2) (hold-both a v 12) (focus-lines 30)
+      (shot-on v 0 5.5 1.3 :look 1.1) (lens 55)                  ; face on: the line splits him and the screen
+      (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))
+      (let ((q (pos-of v))) (impact-splash (aref q 0) 1.0 (aref q 2) 16 0.08)))
+  (at 70 (impact-frame :manga 12))
+  (during (68 162) (let ((q (pos-of v))) (vfx-sky-split (aref q 0) (aref q 2) (yaw-of a) (/ (- cf 68) 60.0) 1.5)))
+  (at 102 (shot-on v 95 7.5 1.2 :look 1.0) (lens 50) (caption-exit))
+  (at 132 (shot-on a 60 4.6 0.7 :look 1.4) (lens 45) (face-beat a :shout 1.0 t) (play-sfx :laugh :pitch 0.8)))

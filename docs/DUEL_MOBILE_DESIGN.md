@@ -2,7 +2,10 @@
 
 > Status: **P0 + the PWA part of P3 built (2026-09-26, the user's decision: "a simple one-hand mode + PWA")**, played
 > on two real phones on 2026-09-27 and tuned from that playtest (§13); §12 lists what was built and where it deviates.
-> P1, P2 and the rest of P3 are still design.
+> **P2 (portrait presentation) built 2026-09-27** at the user's request, with two decisions of the user that replace
+> parts of §4.1 / §4.2 (§14). **2026-09-28: the gestures remapped** (tap zones J / K, up-flick = the forward dash), the
+> portrait HUD's flames enlarged onto the name row with thicker small gauges, and close-up cinematics not backed off (§15).
+> P1 and the rest of P3 are still design.
 > Working notes (critiques, v1 drafts, research) were kept outside the repo; the debate outcome is recorded below.
 
 v1 is kept as `design-mobile-v1.md`. This version answers `critique-mobile.md` (1 BLOCKER, 8 MAJOR, 7 MINOR);
@@ -14,15 +17,17 @@ there is no local portrait 2P; future Bluetooth / Wi-Fi P2P netplay must stay po
 
 - **新模式「片手 ONE-HAND」**：手機直拿，一根拇指對戰電腦。預設右手，選項裡可以換成左手。
 - **防禦不再是「一碰就擋」**：拇指按著不動超過約 0.12 秒才開始防禦，比這短的就是點擊，也就是 Quick。這樣連段、跑步取消都不會被誤觸的防禦打斷。代價是預先防禦慢了約 7 格；反應型防禦反正本來就來不及，重招照樣擋得住。
-- **撥（flick）在劃過門檻的那一刻就出招**，不必等手指離開，延遲變得穩定。只有「往上撥 = Flash」要多等最多 150 ms 確認不是往前拖著跑；離開容許範圍後的前 120 ms 角色不會先走（2026-09-27 真機試玩後的調整，見 §13）。
-- **Hoho**：站著或防禦時，按住再往上撥。出招途中往上撥一律是 Flash（K），所以連段裡的 K 不會誤觸成 Hoho。單手版少了「連段中取消成 Hoho」這一招。
-- **連段**（2026-09-27，[DUEL_STRINGS.md](DUEL_STRINGS.md)）：點 = J、上撥 = K，最多三段，點與上撥之間最多換一次（多換的那一下會被忽略）；下一段在前一段的任何時候都可以先按（會記住，打中或被擋才出）。完整打中第 3 段後按 O 晶片是 O 收尾：點一下只有擊退，按住就衝上去接毀魂技。
+- **撥（flick）在劃過門檻的那一刻就出招**，不必等手指離開，延遲變得穩定。離開容許範圍後的前 120 ms 角色不會先走（2026-09-27 真機試玩後的調整，見 §13）。
+- **2026-09-28 重新對應（使用者的決定，§15）**：手勢區以中線分上下兩塊，**點下半塊 = J（輕）、點上半塊 = K（重）**；**往上撥 = 向前衝刺**（往前的 Step，撥完手指繼續往前推就接著跑），不再是 K。
+- **Hoho**：站著或防禦時，按住不動再往上撥。沒先按住的往上撥一律是向前衝刺。單手版少了「連段中取消成 Hoho」這一招。
+- **連段**（2026-09-27，[DUEL_STRINGS.md](DUEL_STRINGS.md)）：點下半 = J、點上半 = K，最多三段，J 與 K 之間最多換一次（多換的那一下會被忽略）；下一段在前一段的任何時候都可以先按（會記住，打中或被擋才出）。完整打中第 3 段後按 O 晶片是 O 收尾：點一下只有擊退，按住就衝上去接毀魂技。
 - **Burst**：被打中、硬直或浮空時往下撥，跟 Shift+J 一樣會記在緩衝裡。
 - **拇指按著不動就是 U**（2026-09-26 的 guard v3 決定之後）：野晒三杯的「喝」本來就是防禦，所以任何型態按著不動都一樣。原本設計的「長按放開鎖住 U」手勢已經刪掉。2026-09-27 山本卍解重製之後：在『東』按著不動就切到『西』（全方位防禦、沒有防禦硬直），切過去之後不會自己切回東，要出 L、SP1 以外的招式才回東（[DUEL_YAMA_REWORK.md](DUEL_YAMA_REWORK.md)）。
 - **放開拇指才會回防禦量表**：防禦中量表不回，等待回復的 1 秒也暫停計時（放開後接著算，不是重算）。所以單手時「拖、停、拖」的走位不會讓量表永遠回不來；防禦中拇指下的墨圈會變暗，提醒「抬起拇指喘口氣」。
 - **按鈕重新排過**：手勢區是一整塊 342×410 px 的連續區域（2026-09-27 從 260×194 擴大，並把圓鈕那一欄包進去：落在圓鈕判定圓裡算按鈕，其他地方都是手勢）。所有圓鈕比原設計高 100 px，O 放在手勢區上方，其餘四顆（L、I、SP1、SP2）沿拇指側排成一列，不會碰到 Home 條和側邊的返回手勢區。覺醒要按住 0.3 秒。
 - **防止誤退出**：會先 push 一筆瀏覽紀錄，擋住 Android 側滑返回和 iOS 返回，觸發時改成暫停；拇指那一側的邊緣也留 32 px 死區。
-- **鏡頭**：直向改為 FOV 66°，畫面往上平移 0.22，貼身時的轉角從 40° 降到 15°。所有調整都只在畫面端，Hoho 後鏡頭怎麼追上也只在畫面端做，不改模擬端的 `*behind-turn*`。這樣兩台手機將來連線，搖桿方向的換算也不會不同步。
+- **鏡頭**（2026-09-27 做好，§14）：直拿時改用專用的背後鏡頭，角色放大、放在畫面中下方，拇指擋到腳沒關係（使用者的決定）；鏡頭會把兩個人一起框進上下兩塊量表之間，太遠或靠牆時自動拉廣。貼身時的轉角從 40° 降到 15°。所有調整都只在畫面端，Hoho 後鏡頭怎麼追上也只在畫面端做（最多提前 20°），不改模擬端的 `*behind-turn*`。這樣兩台手機將來連線，搖桿方向的換算也不會不同步。
+- **量表**（2026-09-27 做好，§14）：依角色分上下（使用者的決定）。對手的血條和量表在畫面最上方，自己的在最下方（Home 條上面），各佔整個寬度，所以字和條都能放大；計時器在上面那塊的右邊。文字最小 11 CSS px。
 - **先做能玩的原型**：P0 直接做一個粗略但能打完整場的單手版，拿兩支真手機驗證；確定可行後才做直向排版、選單和 PWA。
 - **延後的項目**：FULL 輔助、自動衝近、過場橫幅、震動、互動教學、觸控軌跡、主動 GC。LIGHT 輔助只保留「O 點一下就鎖住」。
 - **將來連線對戰**：觸控和輔助都只寫 vpad，連線時交換的是每一步的 vpad，模擬端不需要知道你是用手機操作。另外新增一個測試：同一段觸控腳本跑兩次，雜湊必須完全一樣。
@@ -222,8 +227,9 @@ read, the triangle, guard-gauge pressure, run cancels with carry, SP holds, Burs
 | `slop` | 10 px |
 | `flick-min` | 28 px |
 | `flick-window` | 120 ms |
-| `up-lift-ms` | 150 ms (80 until the §13 playtest) |
-| `up-cone` | 1.73 = tan 60°: a flick is up while \|dx\| ≤ 1.73 \|dy\| (45° until §13) |
+| `up-lift-ms` | deleted in §15 (was 150 ms; 80 until the §13 playtest) |
+| `up-cone` | 1.73 = tan 60°: a flick is up while \|dx\| ≤ 1.73 \|dy\| (45° until §13); since §15 an up-flick is the dash, straightened to dead ahead |
+| `tap-split` | 0.5 (§15): taps above this fraction of the pad's height are K, from it down J |
 | `stick-r` | 48 px |
 | `run-ring` | 1.6 r |
 | `recenter` | 2 r |
@@ -235,6 +241,9 @@ Run grace is cut: it existed only to rescue v1's guard-on-touch-down.
 ## 4. Portrait presentation
 
 ### 4.1 Camera (render-side only)
+
+> **As built (§14):** the user's decision of 2026-09-27 replaced the framing goal: larger fighters, low in the frame, the
+> thumb may cover their feet. The numbers below (66°, shift 0.22, the 16 %–deck band) are the v2 design, kept for the record.
 
 - One-hand mode uses **BEHIND**; the camera option is not shown.
 - **Per frame** in `duel-camera` when `portrait-p` and no cinematic, because cinema.lisp:42 resets the FOV to
@@ -252,6 +261,9 @@ Run grace is cut: it existed only to rescue v1's guard-on-touch-down.
 
 ### 4.2 HUD
 
+> **As built (§14):** the user's decision of 2026-09-27 splits the HUD by fighter instead: P2's block across the top, P1's
+> across the bottom, both full width. The gauges did not move onto the chips.
+
 - Top: the opponent's full panel in one row across the width. The own vital strip sits on the deck top.
 - Own secondary gauges go onto their controls:
   - Reiatsu pips on SP1 / SP2;
@@ -266,8 +278,11 @@ Run grace is cut: it existed only to rescue v1's guard-on-touch-down.
 
 ### 4.3 Cinematics (v2: full frame, no band)
 
+> **As built (§14):** as written, plus a dolly (the eye backs off the shot's target) so the tall frame's width holds a
+> landscape frame's central square; a shot's side offset is halved in portrait.
+
 - Cinematics play full-frame with the existing letterbox. In portrait a shot's `lens` uses max(fov, 66°) and no
-  lens shift; the deck is hidden (the sim is frozen, and a tap skips).
+  lens shift; the deck is hidden (the sim is frozen; a tap no longer skips, 2026-09-28).
 - The vertical brush captions hang down the tall frame; clamp the glyph size to `min(0.6 h / n, 0.36 W)`.
 - v1's band and its FOV formula are cut. A 129° full-frame FOV at `lens 88`, 55 % of pixels under the bars,
   bloom centred wrong. A proper band needs a viewport rect (G6b), deferred until stills show it is worth it.
@@ -348,7 +363,7 @@ phone. Pixels dominate, and G7 caps them. Low Power Mode at 30 fps is absorbed b
 |---|---|---|
 | **P0 playable prototype** | G1, G2 crude (rest / tap / flick / drag / the Hoho rule), G3, O / L / I / SP chips as plain circles, the glyph flash, G4, G5 (dvh + back trap), G7, G13; the existing behind camera and HUD at `--size 390x844` | On two real phones, a NORMAL match can be finished one-handed; gesture logs show misreads < 10 %; ≥ 50 fps after G7; the back gesture pauses instead of leaving; the P0 report tunes chip reach and knobs |
 | **P1 recogniser hardening** | every §3.2 rule, latency via SDL timestamps, the latest-contact rule, dead bands, CANCELED, Kikon latch (LIGHT), G14, host tests | touch-test + control-test pass; both determinism gates pass; 0 B per frame |
-| **P2 portrait presentation** | G6 lens shift, per-frame portrait camera, HUD re-layout, text floor, insets, deck-layout constraints at 4 sizes, cinematic lens clamp | framing and text probes pass at 4 sizes; mobile stills reviewed by the user; desktop stills unchanged |
+| **P2 portrait presentation** (built 2026-09-27, §14) | G6 lens shift, per-frame portrait camera, HUD re-layout, text floor, insets, deck-layout constraints at 4 sizes, cinematic lens clamp | framing and text probes pass at 4 sizes; mobile stills reviewed by the user; desktop stills unchanged |
 | **P3 mode + shell** | MODE entry and auto-detect, settings, G9 menu taps, static gesture card, G10 wake lock + PWA (standalone), G11 reload | a fresh profile reaches a match in < 60 s of taps; the PWA runs standalone portrait on iOS; wake lock holds a 5-min match |
 | **P4 tuning** | knobs, chip layout, auto-scale levels | playtest misreads < 5 %; a NORMAL median of 125–180 s; no throttle below 45 fps in 10 min |
 | **Later, only on evidence** | FULL assist, approach tap, cinematic band (G6b), haptics (G8), interactive tutorial, touch trail, `request-gc` (G12), select / results re-layout, calibration card | each needs a playtest or measurement that asks for it |
@@ -436,7 +451,7 @@ The user asked for 「一個簡單的『手機單手直拿模式』，並以 PWA
 | G3 vpad | `duel/lisp/control.lisp`, `fighter.lisp`, `onehand.lisp` | `(:touch name)` in P1's bindings; `p1-down-p` answers `:touch` through `touch-button`; the drag stick is added to pad 0's. Burst = a down-flick while P1 is in `:stun` / `:air` (decided per vpad read). Fighters, rules and the AI are untouched. |
 | Chips | `onehand.lisp` | O, L, I, SP1, SP2 as plain circles at the §3.3 spots (CSS px from the thumb-side and bottom edges; LEFT mirrors x), AWAKEN at its spot only at EVOLUTION (hold 300 ms), a pause chip II. The recognised gesture's word flashes over the thumb for 0.3 s; an ink ring marks the stick origin (dim while resting). |
 | G4 / G5 / G7 | `engine/lisp/ui.lisp`, `engine/web/shell.html`, `render.lisp` | `*ui-min-css*` 11 in any portrait window (desktop landscape: 0, unchanged); `100dvh`, `viewport-fit=cover`, no touch callout / tap highlight; back trap in `duel/web/pwa.js`; `*scene-scale-cap*` keeps the scene near 1.6 MP on a phone, `*auto-render-scale*` on coarse pointers. |
-| Mode entry | `flow.lisp`, `hud.lisp` | MODE lists ONE-HAND VS CPU and HAND RIGHT / LEFT first when the window is portrait or the pointer is coarse (preselected on a coarse portrait device); HAND is saved in `localStorage` (try/catch). One-hand = VS CPU, behind camera, no CAMERA option. CONTROLS shows a static gesture card. Menu rows are tap targets; the select screen reads a tap's third (left / right / confirm); a tap skips the intro and cinematics; the back gesture = Esc (back / pause). Landscape mid-match pauses with ROTATE TO PORTRAIT. |
+| Mode entry | `flow.lisp`, `hud.lisp` | MODE lists ONE-HAND VS CPU and HAND RIGHT / LEFT first when the window is portrait or the pointer is coarse (preselected on a coarse portrait device); HAND is saved in `localStorage` (try/catch). One-hand = VS CPU, behind camera, no CAMERA option. CONTROLS shows a static gesture card. Menu rows are tap targets; the select screen reads a tap's third (left / right / confirm); a tap skips the intro (battle cinematics can't be skipped: the user's decision 2026-09-28); the back gesture = Esc (back / pause). Landscape mid-match pauses with ROTATE TO PORTRAIT. |
 | PWA | `duel/web/` (copied into `dist/duel` by `build.sh`; `head.html` goes into the shell), `tools/pwa-icons.py` | `manifest.webmanifest` (standalone, portrait, colours, icons 192 / 512 / maskable 512), apple meta + `apple-touch-icon.png`, `sw.js` (versioned cache: `build.sh` writes a hash of the build into it), wake lock in battle (re-requested on `visibilitychange`), Android fullscreen + `orientation.lock('portrait')` on the first tap (not iOS). |
 | Tests | `tests/touch-test.lisp`, `tools/run.mjs --mobile [--dpr N]` (+ touch steps), `tests/scripts/duel-touch.py` → `duel-touch.json`, `duel-touch-left.json` | the headless script reaches a match by taps alone and produces Q, guard, Step (down, side), dash / run, Hoho, F, the Kikon rush and L; run twice under `--fixed-dt` its hash and combat lines are identical. Stills: `tests/shots/mobile-{battle,pause,left,rotate}.png` (390 × 844, DPR 3). |
 
@@ -498,3 +513,128 @@ claim only touch-downs). The left hand mirrors x (pad 32–374). The pause chip 
 **Tests:** `tests/touch-test.lisp` adds a long neutral up-flick lifted 116 ms after the crossing (F, no stick, no
 Step), a 50° slanted up-flick (F), a slow drag (0 while undecided, then walks; the clock alone also resolves it),
 and flicks at a chip's boundary; `duel-touch.py` adds a 140 px up-flick from neutral (F, no Step in the log).
+
+## 14. P2: portrait presentation (built 2026-09-27)
+
+The user's request 2026-09-27: 「再來請你調整手機模式的 UI 與運鏡。」 (adjust the mobile mode's UI and camera work). The
+stills of P0 showed the problems: the landscape HUD squeezed into two 0.36 w columns (nine Konpaku flames per side ran
+into each other, the combo counter sat on the timer, the labels were under the text floor), prompts and callouts cut off
+at the screen edge, the behind camera left the top half empty and put both fighters under the chips, and cinematics
+framed for 16:9 showed a sliver of their subject.
+
+**The user's decisions 2026-09-27** (given during the work; they replace parts of §4.1 and §4.2):
+1. 「血條跟各種計量表 UI 我認為可以依據人物分開放上面與下面，如此就能放大 UI 使其不至於太小。」 The HUD is split by
+   fighter: the opponent's (P2's) health and gauges across the top, the player's (P1's, the fighter near the camera)
+   across the bottom, each block full width so it can be larger.
+2. 「角色可以再放大然後往畫面中下方移動，就算被大拇指擋到人物下半身也沒關係。」 The fighters larger, lower in the frame;
+   the thumb covering their lower bodies is fine. The framing check became: both fighters' upper bodies and heads visible
+   and clear of the HUD blocks, at the four sizes, including at maximum separation.
+
+| Piece | Where | As built |
+|---|---|---|
+| G6 lens shift | `engine/lisp/render.lisp` | `camera-shift-y` (NDC, 0 = none): `update-camera` writes `-shift` into the projection's row 1 column 2 only when it is not 0, so every landscape frame's matrices are the same floats as before. `world-to-screen`, the fx billboards and the shaders use the matrices, so nothing else changed. |
+| Portrait camera | `duel/lisp/camera.lisp` `%portrait-camera` | Any battle in a portrait window (ONE-HAND, and CvC watched on a phone). Behind P1: `*pt-back*` 9 (x `*cam-close*` 0.6 = 5.4 m, + 0.2 m per metre of separation past 4 m), `*pt-up*` 2 m, `*pt-shoulder*` 0.5 m, the close-range swing `*pt-close*` 15° (landscape 40°). The orbit leads the sim's `*behind-yaw*` by at most `*pt-lead*` 20° toward P2 (smoothed at 8/s): the render-side catch-up after a Hoho or a sidestep; `*behind-yaw*` and `*behind-turn*` are untouched. The aim bisects the two fighters (azimuth: their centres; pitch: P1's near feet and 0.3 m over P2's head), within 20° of the orbit. The lens: the frame (`*band*`: under P2's block + 3 %, down to `*pt-frame-bottom*` 0.82 of the height) spans `*pt-band-fov*` 30°; the vertical FOV widens past that only when the pair needs it (a vertical fit, and a horizontal fit with 0.7 m of bulk), within `*pt-fov-min*` 40° .. `*pt-fov-max*` 100°, smoothed; the shift puts the aim on the frame's middle (0.089 at 390 × 844). Typical FOV 41–53°, about 64° right after a sidestep. 0 B per call except a boxed float when the FOV moves by > 0.1° (~3 B a frame). |
+| Cinematics | `camera.lisp` `%portrait-dolly`, `cinema.lisp` | §4.3's lens clamp: FOV at least `*pt-cine-fov*` 66°, no shift, and the eye backed off the shot's target so the frame's width holds the landscape frame's central square (factor tan(lens/2) / (tan(fov/2) aspect), at most `*pt-dolly-max*` 2.4, kept inside the 18 m ring). `LENS` records the script's FOV in `*lens-fov*`; `SHOT-ON` halves a shot's side offset. Captions: glyphs at most 0.36 W (§4.3), callout columns stop at the frame's bottom. |
+| HUD | `duel/lisp/hud.lisp` `hud-side-portrait` | Decision 1. P2's block under the top safe-area inset, P1's over the bottom one (at least 8 CSS px up), each 29 s tall (48 CSS px at DPR 3) on a soft ink gradient: row 1 the name at 1.4 s, the KOSEI tag (攻 ×n) after it, one label at the right end (EVOLUTION, else INFERNO / NOME / COOLDOWN, else U's tag) and on P2's block the timer; Reishi (5 s tall), the guard gauge (2 s); the Konpaku flames (r 2.4 s) at the left and four unlabelled small gauges beside them in the landscape colours: Reiatsu cells, flash step, Awakening, the kit meter or the L / Shift+L cooldowns. The combo counter hangs under P2's block / over P1's. KIKON / BURST prompts are centred under P2's block. Words (ANNOUNCE) use the frame's lanes; move callouts are smaller (0.03 h) and kept on the screen; callouts dodge the bottom block upward. The deck is hidden while paused. |
+| Insets (G5) | `duel/web/pwa.js`, `onehand.lisp` | page get 3 / 4 = `env(safe-area-inset-top / -bottom)` in CSS px, measured once per window size (tests: `gamePage.testInsets = [top, bottom]`). The top one moves P2's block, the bottom one P1's; the pad's bottom keeps 16 px over it (no change on today's phones). The chips stay where the §13 playtest put them. |
+| Menus | `hud.lisp`, `main.lisp` `menu-camera` | Portrait: the title's lines split to fit, MODE's rows from 0.52 h (toward the thumb), SELECT stacked (the pair from a diagonal above, P1 / P2 rows, tap help), RESULTS as the winner in the top part under 勝 and a black card with the table and the menu below, the gesture card's rows spread down the screen. |
+| Probes | `debug.lisp` 2700+k, `tests/mobile-probe.py`, `tests/scripts/duel-mobile.py`, `tests/mobile-sheet.py` | 2700: every 30th battle frame, both fighters' upper halves clear of the two blocks with ≥ 70 % of their width on the screen; the smallest pixel-font glyph (engine `*ui-text-min*`). 2701 24 m apart, 2702 P2 flashed to P1's side, 2703 1 m, 2704 consing. `mobile-probe.py`: a 45 s YK CvC plus five set shots at 360 × 780, 390 × 844, 430 × 932, 412 × 915 and 390 × 844 with iPhone insets. |
+
+**Results.** `mobile-probe.py`: ALL PASS, both upper halves clear in 83 / 83 CvC samples at every size, every set shot
+inside (1 m, 2.2 m, 24 m with the eye pulled in by the wall, the sidestep 0.1 s and 0.5 s after), the smallest glyph
+5 px = the floor at DPR 3. At 2.2 m P1's box fills 0.49 of the height and P2's 0.41 (P0's still: about 0.42 / 0.37, P1
+cut at the left edge); FOV 41–46° up close, 49° at 24 m, 63–65° just after the sidestep. Landscape is unchanged: 41 desktop duel stills byte-identical to a build of the previous commit, G1
+RAVEN identical, G2 CvC hashes unchanged, the duelstill identical, smoke passes; the touch script run twice under
+`--fixed-dt` gives identical hash and combat lines (the same sequence as the previous build); G3: frame time x1.008,
+startup heap 88.6 MB either way. The review sheets:
+`tests/shots/mobile-review.png` (battle, before / after), `mobile-review-screens.png` (cinematics, menus),
+`mobile-review-insets.png` (an iPhone's safe area).
+
+**Deviations from §4.** The fixed 66° / shift 0.22 camera became the fit above (decision 2 wants the fighters larger than
+66° allows; the band between the blocks is 0.87 h, not the 16 %–deck band). The own gauges did not move onto the chips
+(decision 1 gave them a full-width block instead). Still not built: millimetre deck sizing, `deck-layout-ok-p`, the SP
+fold for short screens (the deck is the §13 one in CSS px), chip faces (Reiatsu pips, cooldown sweeps).
+
+**Known issues.** The fighters' feet stand among the chips (decision 2). The right-hand brush callout column (P2's SP
+names) can overlap the chip column. The portrait HUD conses like the landscape one (about 1.5 KB a frame, HUD-TEXT);
+the camera and the dolly are 0 B but for the FOV writes. The CvC framing probe's box is the hurt cylinder + 0.25 m, so a
+wide sword swing can still cross the screen edge.
+
+## 15. The user's decisions 2026-09-28: the gesture remap, the portrait HUD rows, close-up cinematics
+
+**Requests (verbatim):**
+1. 「手勢模式［右手模式］幫我調整為朝上方滑動判別為向前衝刺，然後點擊區域改成分上下區塊來分開輕重攻擊。」 An upward swipe is
+   the forward dash; the tap area splits into an upper and a lower block for the light and the heavy attack.
+2. 「狀態列將魂魄改成獨立的一列，然後加粗血量與防禦外的量表。」 The Konpaku flames get a row of their own; the gauges other
+   than Reishi and the guard gauge get thicker.
+3. 「卍解跟毀魂技拍攝自身角色特寫時，可以不用全身入鏡。」 Bankai / Kikon close-ups of a fighter need not show the whole body.
+4. (follow-up to 2, the same day) 「魂魄火焰好像可以加大然後填滿在名字的後面耶？」 The flames larger, filling the name row
+   after the name. This replaces 2's separate flame row.
+
+### 15.1 The gestures (replaces the TAP, FLICK ↑ = F and HOHO rows of §3.2)
+
+The pad splits at `touch-split-y` = its top + `tap-split` (0.5) × its height: at 390 × 844 the pad is y 384–794 and the
+line is **y 589**. The **lower block is J** (light: the most used, where a resting right thumb already is), the **upper
+block is K** (heavy). Where the thumb went down decides; a tap exactly on the line is J. A touch-down inside a chip's hit
+circle is still the chip (the O chip and AWK sit in the upper block, L / I in the upper, SP1 / SP2 in the lower). The deck
+draws the line faintly across the pad and names the blocks F (above) / Q (below) at the pad's far edge. The left hand
+mirrors x only; the split is the same.
+
+| Gesture | vpad | Meaning |
+|---|---|---|
+| Tap, lower block | `:quick` pulse | J (Quick) |
+| Tap, upper block | `:flash` pulse | K (Flash); strings are zone taps: JJJ JJK JKK KKK KKJ KJJ, each tap latched during the link before |
+| Rest (still `tap-ms`) | `:guard` held | U, guard |
+| Drag | stick | walk; past the run ring `:step` held = the run |
+| **Flick up** (within `up-cone`, 60° of vertical) | `:step` pulse + stick straight ahead, at the crossing | **the forward dash**: a forward Step (2.5 m hop, i-frames); a thumb that keeps going past the run ring keeps Step held, so the hop becomes the run, exactly like the other flicks |
+| Flick down / sideways | `:step` + the stroke's direction | Step back / sidestep |
+| Flick down in `:stun` / `:air` | `:mod` + `:quick` | Burst Reverse |
+| Rest, then flick up (neutral / guard only) | `:mod` + `:step` | Hoho (unchanged: the rest first keeps it distinct from the dash) |
+| O chip: tap / hold | `:kikon` | the O ender after a link-3 hit / the Kikon rush, held = the Kikon (unchanged) |
+| L, I, SP1, SP2, AWK (hold 300 ms), II | unchanged | |
+
+What went: the up-pending phase (4), `up-lift-ms`, the `+tp-up+` pulse (now `+tp-tap-hi+`, the upper tap). What stayed:
+the undecided window (a stroke that left the slop reads a 0 stick until it is a flick or the 120 ms window closes: the
+dash never walks first, a slow drag still walks), and `up-cone`, which now straightens a slanted right-thumb up-flick to
+dead ahead (a flick past it keeps its direction: a sidestep). All times are SDL event timestamps. Latency: K is now a tap
+(on the lift, 60–120 ms after touch-down) instead of a crossing plus a lift; the dash fires at the crossing (≈ 47 ms).
+One hand no longer lacks a forward Step (§3.5).
+
+### 15.2 The portrait HUD blocks (replaces the last row of §14's HUD)
+
+Each block stays **29 s** tall (48 CSS px at 390 × 844; request 2's separate flame row made it 35 s / 58 px for a few
+hours, request 4 took it back). From its top:
+- **row 1: the name, then the nine Konpaku flames filling the rest of the row** (up to P2's timer): r = min(4 s, the free
+  width / 21.6), spaced evenly (at most 4.5 r apart), their base at the name's baseline + 1.5 s (was r 2.4 s, 3.2 r apart,
+  on the last row). `%hud-pips` takes the spacing as an argument; the landscape panel passes its 3.2 (unchanged floats);
+- Reishi (5 s), the guard gauge (2 s);
+- **the last row: the four small gauges, 4 s thick** (were 2.5 s) over the left 60 % (Reiatsu cells, flash step,
+  Awakening, the kit meter or the L / Shift+L cooldowns), and at its right end **the label** (EVOLUTION / INFERNO / NOME /
+  COOLDOWN / U's tag, moved off row 1) with **the KOSEI tag** (攻 ×n) right before it; its mote flies to the Reiatsu cells.
+  With both the longest label and KOSEI on a 360-wide screen the tag's brush mark may touch the fourth gauge.
+
+The camera frame follows the blocks (`*band*` from DECK-UPDATE), no camera knob changed. Landscape is unchanged.
+
+### 15.3 Close-up cinematics
+
+A `shot-on` at most `*pt-close-shot*` 5 m from its fighter is a close-up (`*cine-close*`; `shot-pair` and farther shots
+are not). In portrait a close-up keeps the script's lens and eye: no 66° floor and no dolly-back, so the fighter fills the
+frame's height as in landscape and his body may be cropped at the sides; its side offset is quartered (halved for the
+rest) so the face stays in while the caption keeps its column. Two-shots and wide shots keep §14's anti-crop dolly.
+Landscape is unchanged (the offset rule and `*cine-close*` act only in portrait).
+
+### 15.4 Tests
+
+`tests/touch-test.lisp` 60 checks: the zones and their boundary (on the line = J, just above = K, the pad's edges, a tap
+wandering across the line inside the slop keeps its touch-down zone, the `tap-split` knob), the six string routes by
+taps, the up-flick = a Step straight ahead at the crossing with no attack and nothing on the lift, a long up-stroke (no
+stick while undecided, then Step held past the run ring), the slanted up-flick straightened, a side flick past the cone,
+Hoho only after a rest, the dash from a fresh up-flick even when Hoho is allowed, a slow drag still walks, a chip's hit
+circle still wins. `duel-touch.py`: J J K + the O ender, K K J, the dash twice, Hoho, guard, Steps, the run, the Kikon;
+two `--fixed-dt` runs give identical hash and combat lines. `mobile-probe.py` (35 s blocks: ALL PASS at the four sizes and
+with iPhone insets; the final 29 s blocks: ALL PASS at 360 × 780 and 390 × 844, 83 / 83 each,
+every set shot inside; the landscape battle HUD stills byte-identical). Desktop: G1 RAVEN identical, G2 CvC = the
+reference, smoke, the frozen duel still identical, six landscape cinematic stills byte-identical to the previous build.
+Stills: `mobile-battle.png` (the split line), `mobile-gestures.png`, the `mobile-cine-*` close-ups, `mobile-review*.png`
+(before = the P2 commit). Known: the Bankai card's caption still sits over the silhouette (as in §14; now larger).
+

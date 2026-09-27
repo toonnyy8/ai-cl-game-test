@@ -170,7 +170,8 @@ Counters: `*draw-count*`, `*tri-count*` (last frame).
 ### Camera
 `*camera*` is a `camera` struct (`make-camera`): `camera-pos`, `camera-target`, `camera-up` (vec3s),
 `camera-shake` (vec3 offset added to pos and target — write it for screen shake),
-`camera-fov` (vertical radians, default 60°), `camera-near` 0.1, `camera-far` 400.
+`camera-fov` (vertical radians, default 60°), `camera-shift-y` (lens shift: the image moves up this much in NDC,
+default 0 = a centred frustum; a portrait screen uses it to put the subject off-centre), `camera-near` 0.1, `camera-far` 400.
 Derived by `(update-camera)`: `camera-eye`, `camera-right`, `camera-upv`, `camera-forward`,
 `camera-view`, `camera-proj`, `camera-view-proj`, `camera-inv-view-proj`.
 `(camera-look-at px py pz tx ty tz)` sets and updates. If you write the slots directly, call
@@ -324,6 +325,7 @@ so a call conses only a few boxed numbers. SOUL DUEL draws its hand-made kanji w
 `(ui-gradient x y w h color1 color2 &key (vertical t))`,
 `(ui-bar x y w h fraction color &key color2 bg border border-width)`,
 `(ui-scale)` → suggested integer scale for the window (1 per 360 px of height, capped at 1 per 480 px of width),
+`*ui-text-min*`: the smallest glyph pixel size UI-TEXT / UI-BLOCK-TEXT drew since a caller last reset it (a text-floor probe).
 `(fit-scale str want max-w)` → largest scale ≤ WANT at which STR fits MAX-W,
 `(ui-block-text str x y px &key color color2 shear align)` → big text drawn as solid font-pixel blocks (crisp,
 italic SHEAR, top→bottom gradient; ~100 B per call, nothing per font pixel),

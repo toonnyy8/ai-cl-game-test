@@ -132,7 +132,7 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                                                   (and r (< d2 (* r r)))))
                                :in-front (in-front-p (yaw-of def) (aref p 0) (aref p 2) sx sz *guard-arc*)
                                :unguardable (or (member :unguardable flags) (and fstrike (kikon-follow-unguardable-p red)))
-                               :hazard ranged :ward ward))
+                               :hazard ranged :ward ward :rend (member :rend flags)))
          (atk (kit-atk-mods (kit-of att) (- *konpaku-max* (gauges-konpaku (gauges att))) (if (eq res :blocked) 1.0 (+ 1.0 k))))
          (dmods (kit-def-mods (kit-of def)))
          (x (or x (aref p 0))) (z (or z (aref p 2))) (y (+ (aref p 1) 1.1))
@@ -399,7 +399,70 @@ one (both fighters idle after it). The guard gauge is left as it is."
         (start-cine (kit-cine (kit-of e)) e o :after (lambda () (to-idle e 0) (to-idle o 0)))
         (to-idle e 0))))
 
+;;; ---------------------------------------------------------------- Kenpachi's Bankai: the arm meter (docs/DUEL_KEN_BANKAI.md)
+(defun bankai! (e)
+  "The Bankai (P in cup 3, red, free: rules BANKAI-ALLOWED-P): the kit's :bankai-form, its arm meter full (the kit meter
+holds the pips, the crack clock at 0), his OWN Konpaku set to 1 and his Reishi refilled (the user's decisions
+2026-09-28: all his remaining souls for one full bar fought with the Bankai); the guard gauge, Reiatsu and flash-step as
+they are; then the form's :cine (both fighters idle after it)."
+  (let* ((g (gauges e)) (o (opp-of e)) (lost (- (gauges-konpaku g) 1)))
+    (set-form e (kit-bankai-form (kit-of e)))
+    (setf (gauges-meter g) (f32 (getf (kit-pips (kit-of e)) :n)) (gauges-meter-idle g) 0 (gauges-arm-pending g) nil
+          (gauges-konpaku g) 1 (gauges-reishi g) (gauges-reishi-max g))
+    (refresh-look e)
+    (when (plusp lost) (emit :konpaku e lost))
+    (emit :bankai e)
+    (clog "~a BANKAI (konpaku -> 1, -~d)" (side-name e) lost)
+    (if (kit-cine (kit-of e))
+        (start-cine (kit-cine (kit-of e)) e o :after (lambda () (to-idle e 0) (to-idle o 0)))
+        (to-idle e 0))))
+
+(defun arm-spend! (e mv)
+  "A pip command (or a latched K link) starts MV: one pip of the arm spent, the crack clock restarted, *ARM-SELF* burnt
+(BURN: never below 1). The last one: the burst is pending until MV is over (ARM-STEP)."
+  (let ((g (gauges e)))
+    (multiple-value-bind (n ok) (pip-spend (round (gauges-meter g)))
+      (when ok
+        (setf (gauges-meter g) (f32 n) (gauges-meter-idle g) 0 (gauges-reishi g) (burn (gauges-reishi g) *arm-self*))
+        (when (zerop n) (setf (gauges-arm-pending g) (or mv :none)))
+        (refresh-look e)
+        (emit :arm-spend e n)
+        (clog "~a UDE -~a ~d left" (side-name e) (if mv (mv-name mv) "") n)))))
+
+(defun arm-burst! (e)
+  "The arm bursts (the pending burst fired: rules BURST-DUE-P): the kit's :pips :to form (片腕), *ARM-BURST-SELF* burnt
+and a self-inflicted *ARM-BURST-STUN* crumple in place (hits on him during it are ordinary hits)."
+  (let ((g (gauges e)) (p (pos-of e)))
+    (setf (gauges-arm-pending g) nil)
+    (set-form e (getf (kit-pips (kit-of e)) :to))
+    (setf (gauges-meter g) 0f0 (gauges-meter-idle g) 0 (gauges-reishi g) (burn (gauges-reishi g) *arm-burst-self*))
+    (set-reaction e :crumple *arm-burst-stun* (aref p 0) (aref p 2) 0.0)
+    (callout e "GOMEN NE, KEN-CHAN")
+    (emit :arm-burst e)
+    (clog "~a ARM BURST r~d" (side-name e) (gauges-reishi g))))
+
+(defun arm-step (e f g)
+  "The arm meter per step (a form with :pips): the crack clock (rules PIP-STEP: paused while locked) cracks a pip every
+*ARM-CRACK* frames without a spend; once the last pip went, the pending burst fires when BURST-DUE-P says."
+  (let ((pend (gauges-arm-pending g)))
+    (if pend
+        (when (burst-due-p pend (fighter-move f) (fighter-state f)) (arm-burst! e))
+        (multiple-value-bind (n idle cracked) (pip-step (round (gauges-meter g)) (gauges-meter-idle g) (plusp (fighter-lock f)))
+          (setf (gauges-meter g) (f32 n) (gauges-meter-idle g) idle)
+          (when cracked
+            (when (zerop n) (setf (gauges-arm-pending g) (or (and (eq (fighter-state f) :move) (fighter-move f)) :none)))
+            (refresh-look e)
+            (emit :arm-crack e n)
+            (clog "~a UDE cracked, ~d left" (side-name e) n))))))
+
 ;;; ---------------------------------------------------------------- Kikon, Soul Break, reset
+(defun bankai-ready-p (e)
+  "May E enter his form's :bankai-form now (P: rules BANKAI-ALLOWED-P, free and red)? (The HUD's P BANKAI prompt, the
+phone's AWAKEN chip.)"
+  (let ((f (fighter e)) (g (gauges e)))
+    (and (kit-bankai-form (fighter-kit f))
+         (bankai-allowed-p (member (fighter-state f) '(:idle :guard)) (red-p (gauges-reishi g) (gauges-reishi-max g))))))
+
 (defun kikon-ready-p (e)
   "Is E's opponent red: would E's Kikon rush, connecting now with the button held, be the Kikon?
 (The HUD's HOLD O prompt, the CPU's rush.)"
@@ -407,7 +470,7 @@ one (both fighters idle after it). The guard gauge is left as it is."
 
 (defun settle-konpaku (att def soul-break)
   "Konpaku at connect time (KIKON-RESULT): DEF loses the Kikon's count (ATT's rush's, read when it started:
-FIGHTER-KIKON-N), or on a Soul Break his form's count + 1 (at most *KIKON-MAX-EVENT*); his Reishi refills.
+FIGHTER-KIKON-N), or on a Soul Break ATT's current form's count + 1 (at most *SOUL-BREAK-MAX-EVENT*); his Reishi refills.
 Returns T when DEF is out of Konpaku."
   (let ((gd (gauges def)))
     (multiple-value-bind (left lost ko) (kikon-result (gauges-konpaku gd)
@@ -426,8 +489,8 @@ Returns T when DEF is out of Konpaku."
   "The souls broken during this step's HIT-SYSTEM, settled together so no side goes first: every
 confirmed Kikon (*KIKONS*: the Kikon count) and every Reishi that reached 0 (*SOUL-BREAKS*: the
 count + 1; a Kikon's victim has no Soul Break on top, the Kikon refills his Reishi). Then one
-cinematic (the first Kikon's move :cine, else the Soul Break's), then the reset, or the finish (a
-draw when both souls ran out). The hazards still out are cleared first: the reset clears them anyway,
+cinematic (the first Kikon's move :cine, else the first Soul Break's attacker's Kikon cinematic: KIT-KIKON-CINE),
+then the reset, or the finish (a draw when both souls ran out). The hazards still out are cleared first: the reset clears them anyway,
 and frozen through the cinematic their looks would hang in its shots."
   (let* ((kk (reverse *kikons*))
          (sb (remove-if (lambda (s) (find (cdr s) kk :key #'second)) (reverse *soul-breaks*))))
@@ -442,7 +505,7 @@ and frozen through the cinematic their looks would hang in its shots."
                  (emit :kikon att def))
         (loop for (att . def) in sb do (emit :soul-break att def))
         (clear-hazards)
-        (start-cine (if kk (mv-cine (third (first kk))) 'soul-break-cine) a v
+        (start-cine (if kk (mv-cine (third (first kk))) (kit-kikon-cine (kit-of a))) a v
                     :after (lambda () (cond ((null kos) (reset-round a v))
                                             ((rest kos) (match-over nil))
                                             (t (match-over (opp-of (first kos)))))))))))
@@ -511,6 +574,7 @@ delay counter (frozen): West never refills."
           (incf (gauges-burn-step g))
           (when (zerop (decf (gauges-form-left g)))
             (set-form e (kit-inherit kit)))))
+      (when (kit-pips kit) (arm-step e f g))
       (let ((m (kit-meter kit)))
         (when (getf m :ladder) (nome-step e f g m))
         (when (and m (zerop (gauges-form-left g)) (>= (gauges-meter g) (getf m :max)) (getf m :full-form))

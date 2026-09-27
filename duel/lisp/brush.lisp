@@ -143,6 +143,11 @@ and slid by *BCLIP* while a caption slices out."
 (defvar *panel-box* (make-f32 8)
   "The HUD's two side panels this frame, per side x0 y0 x1 y1 in px (hud.lisp HUD-SIDE fills them; 0 when not drawn):
 the gameplay callouts, the side words and the brush callout columns keep clear of them (Phase 5).")
+(declaim (type f32vec *band*))
+(defvar *band* (fv 0.1 0.82 0.08 0.9)
+  "Portrait (docs/DUEL_MOBILE_DESIGN.md P2), fractions of the window height (onehand.lisp DECK-UPDATE): [0 1] the frame
+the portrait camera fits the fighters into (under P2's HUD block, down to *PT-FRAME-BOTTOM*: the thumb may cover their
+feet, the user's decision 2026-09-27); [2] the bottom of P2's block at the top, [3] the top of P1's block at the bottom.")
 (defmacro panel-hit (x0 y0 x1 y1)
   "The side (0 / 1) of the first HUD panel (*PANEL-BOX*) the box (X0 Y0 X1 Y1) overlaps, or NIL. Float forms; 0 B."
   `(let* ((%pb *panel-box*) (%x0 ,x0) (%y0 ,y0) (%x1 ,x1) (%y1 ,y1))
@@ -243,11 +248,16 @@ inside them, the reading and the chapter line shrink to fit their half of the sc
          (a (if exiting (f-clamp (/ (- 0.3f0 ex) 0.12f0) 0f0 1f0) 1f0))
          (n (f-max 1f0 (aref f 2))) (n2 (aref f 3)) (hk (bcap-hanko c)) (rd (bcap-reading c))
          (top (cond (res (* 0.03f0 hh)) (cine (* 0.1f0 hh))         ; a callout: under both HUD panels
-                    (t (f-max (* 0.27f0 hh) (+ (f-max (aref *panel-box* 3) (aref *panel-box* 7)) (* 0.012f0 hh))))))
-         (bot (cond (res (* 0.265f0 hh)) (cine (if (bcap-sub c) (* 0.84f0 hh) (* 0.895f0 hh))) (t (* 0.9f0 hh))))
+                    (t (f-max (* 0.27f0 hh) (+ (f-max (if (= (aref *panel-box* 1) 0f0) (aref *panel-box* 3) 0f0)   ; top panels
+                                                      (if (= (aref *panel-box* 5) 0f0) (aref *panel-box* 7) 0f0))
+                                               (* 0.012f0 hh))))))
+         (tall (> hh ww))                                                  ; portrait (P2): a callout keeps over the deck
+         (bot (cond (res (* 0.265f0 hh)) (cine (if (bcap-sub c) (* 0.84f0 hh) (* 0.895f0 hh)))
+                    (tall (* hh (aref *band* 1))) (t (* 0.9f0 hh))))
          (ls (if cine (* 0.034f0 hh) (* 0.026f0 hh))) (lsh (if rd (* 1.05f0 ls) 0f0))
          (nb (+ (f-max (+ n (if hk 0.58f0 0f0)) (if (> n2 0f0) (+ 0.35f0 (* 0.42f0 n2)) 0f0)) (if rd 0.15f0 0f0)))   ; em of the block
-         (sz (f-min (cond (cine (* 0.24f0 hh)) (res (* 0.2f0 hh)) (t (* 0.075f0 hh))) (/ (- bot top lsh) nb)))
+         (sz (f-min (f-min (cond (cine (* 0.24f0 hh)) (res (* 0.2f0 hh)) (t (* 0.075f0 hh))) (/ (- bot top lsh) nb))
+                    (if tall (* ww (if cine 0.36f0 0.3f0)) 1f9)))                ; portrait: at most 0.36 of the width (§4.3)
          (bh (+ (* sz nb) lsh))
          (k (f-min (cond ((= d 0) (if cine 1.8f0 1.4f0)) ((= d 1) (if cine 1.15f0 1.1f0)) (t 1f0)) (/ (- bot top) bh)))   ; the stamp
          (sx (case d (1 (* 0.012f0 hh)) (2 (* -0.008f0 hh)) (3 (* 0.004f0 hh)) (t 0f0)))    ; its drawn shake
@@ -261,6 +271,7 @@ inside them, the reading and the chapter line shrink to fit their half of the sc
          (bb *bcap-box*))
     (declare (type f32vec f bb) (fixnum d de)
              (single-float ww hh age secs ex a n n2 top bot ls lsh nb sz bh k sx gr gb pr pb ksz w2 cx kx ky yy yb))
+    (declare (ignorable tall))
     (when (or (and (> secs 0f0) (> age secs)) (>= ex 0.3f0)) (return-from draw-bcap nil))
     (setf (aref bb 0) 1f9 (aref bb 1) 1f9 (aref bb 2) -1f9 (aref bb 3) -1f9)
     (when (and (>= d 1) (or cine res) (not exiting))                     ; the ink splash, from drawing 1: beside the

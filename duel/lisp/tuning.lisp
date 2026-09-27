@@ -20,10 +20,12 @@ The §8 gate's pacing knob if seeded CPU matches run long (fix round: 0.10 .. 0.
 medians by only ~10 s, see p2-log).")
 (defparameter *kikon-konpaku* 2 "Konpaku a Kikon removes (a kit's default :kikon-konpaku).")
 (defparameter *kikon-konpaku-awakened* 3 "Konpaku a Kikon removes when the attacker is awakened (the default of an awakened kit).")
-(defparameter *soul-break-extra* 1 "A Soul Break (Reishi reached 0) removes the Kikon count + this ...")
+(defparameter *soul-break-extra* 1 "A Soul Break (Reishi reached 0) removes the attacker's current Kikon count + this ...")
 (defparameter *kikon-max-event* 4
-  "... but one event (a Kikon or a Soul Break) never removes more than this (Nozarashi v2 §2.7: every character
-needs >= 3 events to take 9 Konpaku).")
+  "... but a Kikon never removes more than this (Nozarashi v2 §2.7) ...")
+(defparameter *soul-break-max-event* 5
+  "... and a Soul Break never more than this (the user's decision 2026-09-27: the Soul Break's own cap, so NOMIHOSE's
+4 + 1 = 5; a Kikon stays capped at *KIKON-MAX-EVENT*).")
 ;;; the Kikon rush (the Kikon button, any time): aura, dash, then the kit's strike (frame data per kit)
 ;;; (each character's rush module sets its own aura, dash speed and range: the move's :params)
 (defparameter *kikon-trigger* 1.6
@@ -288,6 +290,18 @@ guard gauge: the rework).")
 (defparameter *stance-store-cap* 200 "... up to this.")
 (defparameter *stance-base-damage* 100 "Stance cut damage before the stored bonus.")
 (defparameter *stance-crush-at* 150 "Stored >= this: the cut crushes guard.")
+;;; Kenpachi's Bankai and 片腕 KATAUDE (docs/DUEL_KEN_BANKAI.md; the user's decisions 2026-09-28): a second awakening from
+;;; cup 3, red, P; his own Konpaku -> 1 and his Reishi -> full on entry; the arm meter UDE (the kit meter, GAUGES-METER)
+;;; spends a pip per heavy command; at 0 the arm bursts (then 片腕 for the rest of the match)
+(defparameter *bankai-ken-mult* 1.2 "Damage x in Kenpachi's Bankai.")
+(defparameter *arm-pips* 4 "The arm meter UDE: pips at the Bankai's entry (the 4th spent: the arm bursts).")
+(defparameter *arm-crack* 300 "A pip cracks by itself after this many frames without a spend (paused while locked): <= 20 s of Bankai.")
+(defparameter *arm-self* 60
+  "Reishi each spent pip burns (BURN: never below 1). The design's 30 against a red Kenpachi; x2 now that the entry refills
+him to full (the user's decision 2026-09-28): the gate's knob.")
+(defparameter *arm-burst-self* 120 "Reishi the burst burns (the design's 60, x2 with the full refill).")
+(defparameter *arm-burst-stun* 40 "The burst's self-inflicted crumple, frames.")
+(defparameter *kataude-reach* 0.7 "片腕 KATAUDE: reach x of his sword moves (the kick, the Breaker and O as written).")
 ;;; hazard shapes and timing (hazards.lisp)
 (defparameter *hazard-rehit* 16 "Frames a multi-hit hazard (pillars) waits between two hits.")
 (defparameter *wave-box* '(1.2 0.5) "Fire wave box: half-height, half-length (half-width = its :width / 2).")

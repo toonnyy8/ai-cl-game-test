@@ -36,6 +36,9 @@
 ;;;;   :evolution        the Awakening gauge is full
 ;;;;   :laugh            Ken's laugh-ish formant bark (no voice)
 ;;;;   :gulp             NOMIHOSE's DRINK: a throat thump and a wet swallow
+;;;;   :arm-crack        Kenpachi's Bankai: a pip of the arm spent / cracked (a bone creak and a crack)
+;;;;   :arm-burst        the arm bursting (a wet crack, a thump, spray)
+;;;;   :yachiru-call     the Bankai cinematic's forest: a detuned, doubled chirp chord (the call; no voice)
 ;;;;   :rift-open        KUKAN-GIRI's rift opening in the air (a thin rising shimmer)
 ;;;;   :rift-cut         the rift cutting (a bright slash, no reverse swell)
 ;;;;   :tier-up          a cup up the NOME ladder (a drum hit under a rising sweep)
@@ -293,6 +296,29 @@
     (au-mix! b (au-fnoise 0.18 :bp 420 :q 3 :decay 0.06) 0.03 0.6)
     (au-mix! b (au-fnoise 0.12 :bp 900 :q 5 :decay 0.03) 0.12 0.35)
     b))
+
+(defsound :arm-crack (:peak 0.8)
+  (let ((b (au-buf 0.5)))
+    (dotimes (i 8)                                     ; the creak: low dry clicks
+      (au-mix! b (au-fnoise 0.05 :bp (au-rrange 180 500) :q 4 :decay (au-rrange 0.01 0.03)) (* i 0.03) (au-rrange 0.4 0.7)))
+    (au-mix! b (au-fnoise 0.08 :bp 2200 :q 1.5 :decay 0.02) 0.26 1.0)   ; the crack
+    (au-thump! b 0.26 140 60 0.04 0.1 0.8)
+    b))
+
+(defsound :arm-burst (:peak 0.95)
+  (let ((b (au-buf 1.0)))
+    (au-thump! b 0.0 90 35 0.1 0.3 1.0)
+    (au-mix! b (au-fnoise 0.15 :bp 1800 :q 1.2 :decay 0.04) 0.0 0.9)
+    (dotimes (i 14)                                    ; the spray
+      (au-mix! b (au-fnoise 0.04 :bp (au-rrange 600 3000) :q 2 :decay 0.015) (au-rrange 0.02 0.4) (au-rrange 0.2 0.5)))
+    (au-mix! b (au-fnoise 0.6 :lp 700 :decay 0.25) 0.03 0.5)
+    (au-drive! b 1.6)))
+
+(defsound :yachiru-call (:peak 0.7)
+  (let ((b (au-buf 1.2)))                              ; two voices a few cents apart, each note doubled: the multiplicity
+    (loop for (at f) in '((0.0 1318) (0.0 1396) (0.18 1760) (0.18 1864) (0.36 1318) (0.36 1245))
+          do (au-ping! b at f 0.18 0.5 :attack 0.02))
+    (au-reverb! b 0.45 :size 1.4)))
 
 (defsound :rift-open (:peak 0.6)
   (let ((b (au-buf 0.7)))

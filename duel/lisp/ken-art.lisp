@@ -19,7 +19,7 @@
                     ;; the tattered haori V4 white, muted skin
                     :palette ((:skin #xCFA48C) (:skin-d #xB08C78) (:black #x16161E) (:white #xE8E8E4)
                               (:hair #x0C0C12) (:scar #x5A3430) (:teeth #xECECE8)
-                              (:eye #x0C0C12) (:crease #x7A5448) (:fold #xD8DCE4) (:obi #xC8CCD6) (:tabi #xE8E8E4) (:sole #x262833))
+                              (:eye #x0C0C12) (:pupil #x0C0C12) (:crease #x7A5448) (:fold #xD8DCE4) (:obi #xC8CCD6) (:tabi #xE8E8E4) (:sole #x262833))
                     :rim (#xFFE070 0.2)
                     :props (:shoulders 1.08 :arms 1.1 :legs 1.1))  ; the bare arms hang clear of the haori
   (:pelvis (:box 0.34 0.18 0.24 :c :black)
@@ -52,12 +52,12 @@
          (:wedge 0.024 0.042 0.03 :at (0 0.097 0.086) :rot (180 0 0) :c :skin)            ; nose
          ;; the left eye (his left = -x): narrow, small pupil, a heavy slanted lid and brow
          (:box 0.024 0.011 0.004 :at (-0.028 0.118 0.075) :c :teeth :tag :face-neutral)
-         (:box 0.008 0.011 0.005 :at (-0.024 0.118 0.0755) :c :eye :tag :face-neutral)
+         (:box 0.008 0.011 0.005 :at (-0.024 0.118 0.0755) :c :pupil :tag :face-neutral)
          (:box 0.035 0.006 0.005 :at (-0.028 0.125 0.0756) :rot (0 0 -10) :c :eye :tag :face-neutral)
          (:box 0.04 0.009 0.006 :at (-0.03 0.141 0.0757) :rot (0 0 -16) :c :eye :tag :face-neutral)
          ;; the right eye
          (:box 0.024 0.011 0.004 :at (0.028 0.118 0.075) :c :teeth :tag :face-neutral)
-         (:box 0.008 0.011 0.005 :at (0.024 0.118 0.0755) :c :eye :tag :face-neutral)
+         (:box 0.008 0.011 0.005 :at (0.024 0.118 0.0755) :c :pupil :tag :face-neutral)
          (:box 0.035 0.006 0.005 :at (0.028 0.125 0.0756) :rot (0 0 10) :c :eye :tag :face-neutral)
          (:box 0.04 0.009 0.006 :at (0.03 0.141 0.0757) :rot (0 0 16) :c :eye :tag :face-neutral)
          (:box 0.006 0.12 0.004 :at (-0.037 0.108 0.0765) :rot (0 0 8) :c :scar)                ; scar through the left eye
@@ -69,12 +69,12 @@
          ;; :face-shout, the berserker's roar / maniac laugh: eyes wide with pin pupils under a hard lid line, brows
          ;; high and hooked, the grin at full: a wide open dark mouth, both rows of teeth, corners up, cheek creases
          (:box 0.026 0.017 0.004 :at (-0.028 0.119 0.075) :c :teeth :tag :face-shout)
-         (:box 0.005 0.006 0.005 :at (-0.026 0.119 0.0755) :c :eye :tag :face-shout)
+         (:box 0.005 0.006 0.005 :at (-0.026 0.119 0.0755) :c :pupil :tag :face-shout)
          (:box 0.032 0.004 0.004 :at (-0.028 0.1285 0.0757) :rot (0 0 -6) :c :eye :tag :face-shout)
          (:box 0.04 0.008 0.006 :at (-0.03 0.149 0.0757) :rot (0 0 -22) :c :eye :tag :face-shout)
          (:box 0.016 0.007 0.006 :at (-0.054 0.151 0.0762) :rot (0 0 50) :c :eye :tag :face-shout)
          (:box 0.026 0.017 0.004 :at (0.028 0.119 0.075) :c :teeth :tag :face-shout)
-         (:box 0.005 0.006 0.005 :at (0.026 0.119 0.0755) :c :eye :tag :face-shout)
+         (:box 0.005 0.006 0.005 :at (0.026 0.119 0.0755) :c :pupil :tag :face-shout)
          (:box 0.032 0.004 0.004 :at (0.028 0.1285 0.0757) :rot (0 0 6) :c :eye :tag :face-shout)
          (:box 0.04 0.008 0.006 :at (0.03 0.149 0.0757) :rot (0 0 22) :c :eye :tag :face-shout)
          (:box 0.016 0.007 0.006 :at (0.054 0.151 0.0762) :rot (0 0 -50) :c :eye :tag :face-shout)
@@ -88,7 +88,7 @@
          ;; :face-hurt, a grimacing grin: the left (scar) eye open, the right squeezed shut, brows knotted with two
          ;; creases between them, clenched teeth bared (the clench line and tooth gaps in ink), one corner up
          (:box 0.024 0.008 0.004 :at (-0.028 0.117 0.075) :c :teeth :tag :face-hurt)
-         (:box 0.007 0.008 0.005 :at (-0.025 0.117 0.0755) :c :eye :tag :face-hurt)
+         (:box 0.007 0.008 0.005 :at (-0.025 0.117 0.0755) :c :pupil :tag :face-hurt)
          (:box 0.034 0.007 0.005 :at (-0.028 0.1225 0.0758) :rot (0 0 -18) :c :eye :tag :face-hurt)
          (:box 0.022 0.003 0.004 :at (0.028 0.1155 0.075) :c :teeth :tag :face-hurt)
          (:box 0.034 0.009 0.005 :at (0.028 0.1195 0.0758) :rot (0 0 20) :c :eye :tag :face-hurt)
@@ -147,6 +147,26 @@
   (:foot-r (:bevel 0.09 0.06 0.23 0.02 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.25 :at (0 -0.055 0.06) :c :sole))
   (:foot-l (:bevel 0.09 0.06 0.23 0.02 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.25 :at (0 -0.055 0.06) :c :sole)))
 
+;; the Bankai's oni (docs/DUEL_KEN_BANKAI.md §12, the user's decisions 2026-09-28: 片腕 stays the oni): the same body, the
+;; skin a MUTED crimson (S <= 0.45: not a spot colour), two short horns at the hairline, the pupils white (irisless), four
+;; thin BLOOD cracks on the right forearm (:crack-1 .. :crack-4, one shown per spent pip) and the torn forearm of 片腕
+;; (:arm-wreck: skin shards, raw strips, ink splits)
+(body-variant :kenpachi-oni :kenpachi
+  :palette '((:skin #x9A4A42) (:skin-d #x7A3630) (:pupil #xF4F2EA) (:horn #x6E302C) (:blood #xD0101C) (:wound #x5A1418)
+            (:split #x101018))
+  :parts '((:head (:cone 0.02 0.11 :at (0.042 0.245 0.07) :rot (0 -20 -18) :seg 6 :c :horn)
+                 (:cone 0.02 0.11 :at (-0.042 0.245 0.07) :rot (0 -20 18) :seg 6 :c :horn))
+          (:lower-arm-r (:glow 1.6 (:box 0.006 0.075 0.004 :at (0.0 -0.06 0.052) :rot (0 0 25) :c :blood) :crack-1)
+                        (:glow 1.6 (:box 0.004 0.075 0.006 :at (0.052 -0.1 0.012) :rot (0 0 -20) :c :blood) :crack-2)
+                        (:glow 1.6 (:box 0.006 0.075 0.004 :at (-0.01 -0.15 0.05) :rot (0 0 -30) :c :blood) :crack-3)
+                        (:glow 1.6 (:box 0.004 0.075 0.006 :at (0.05 -0.19 -0.01) :rot (0 0 15) :c :blood) :crack-4)
+                        (:wedge 0.035 0.07 0.02 :at (0.03 -0.07 0.045) :rot (0 0 30) :c :skin-d :tag :arm-wreck)
+                        (:wedge 0.03 0.06 0.02 :at (-0.03 -0.16 0.045) :rot (0 0 -25) :c :skin-d :tag :arm-wreck)
+                        (:box 0.014 0.12 0.008 :at (0.004 -0.12 0.052) :rot (0 0 10) :c :wound :tag :arm-wreck)
+                        (:box 0.008 0.1 0.012 :at (0.054 -0.15 0.0) :rot (0 0 -12) :c :wound :tag :arm-wreck)
+                        (:box 0.004 0.13 0.006 :at (-0.02 -0.1 0.056) :rot (0 0 -18) :c :split :tag :arm-wreck)
+                        (:box 0.006 0.11 0.004 :at (0.056 -0.08 0.02) :rot (0 0 8) :c :split :tag :arm-wreck))))
+
 ;;; ---------------------------------------------------------------- weapons
 (defweapon :ken-katana (:length 1.08)                  ; battered, notched, chipped
   (:solid (mb-blade mb :width 0.036 :guard-color '(0.25 0.24 0.22) :handle-color '(0.1 0.09 0.09) :wrap-color '(0.3 0.28 0.26) :blade nil))
@@ -184,6 +204,26 @@
           (mbc mb #x3A4A3E)                              ; the tassel, a dark green-grey
           (with-xform (mb (xform :y -0.76)) (mb-box mb 0.04 0.06 0.04))
           (with-xform (mb (xform :y -0.9 :z -0.02 :pitch 0.2)) (mb-box mb 0.05 0.22 0.03))))
+
+;; the Bankai's broken cleaver (anime ep. 44): Nozarashi's slab snapped off on a diagonal at ~1 m, ink-black with a white
+;; edge line, no guard, no cap, a long cloth-wrapped tang like the first Zangetsu's hilt; no fire, no glow
+(defweapon :ke-broken (:length 1.12 :base 0.18)
+  (:solid (mbc mb #x1C1C22)                              ; the slab, snapped
+          (with-xform (mb (xform :y 0.47 :z 0.07)) (mb-bevel-box mb 0.04 0.84 0.3 0.008))
+          (with-xform (mb (xform :y 0.95 :z 0.0 :pitch 0.55)) (mb-bevel-box mb 0.04 0.3 0.16 0.006))   ; the diagonal break
+          (mbc mb #x3A3A42)                              ; a dark fuller along the spine side
+          (with-xform (mb (xform :y 0.5 :z -0.03)) (mb-box mb 0.044 0.72 0.022))
+          (mbc mb #xE8E8E4)                              ; the white edge line
+          (with-xform (mb (xform :y 0.45 :z 0.22)) (mb-box mb 0.012 0.8 0.018))
+          (mbc mb #x0C0C10)                              ; the jagged break: bitten shards
+          (loop for (y z r) in '((0.88 0.2 0.5) (0.98 0.12 -0.4) (1.06 0.03 0.7))
+                do (with-xform (mb (xform :y y :z z :roll r)) (mb-box mb 0.046 0.04 0.05)))
+          (mbc mb #xD8D6CC)                              ; the long cloth-wrapped tang
+          (with-xform (mb (xform :y -0.4)) (mb-box mb 0.048 0.86 0.048))
+          (mbc mb #x3A3634)
+          (loop for i below 9 do (with-xform (mb (xform :y (- -0.02 (* i 0.095)) :roll 0.785)) (mb-box mb 0.034 0.034 0.056)))
+          (mbc mb #xD8D6CC)                              ; the loose end of the cloth, hanging
+          (with-xform (mb (xform :y -0.92 :z -0.03 :pitch 0.3)) (mb-box mb 0.04 0.24 0.012))))
 
 ;;; ---------------------------------------------------------------- poses
 (defpose :ke-stance ()
@@ -541,3 +581,38 @@
         (:root :f 0.6 :u -0.3) (:thigh-l :flex 55) (:knee-l :flex 60) (:spine :flex 25))
   (1.0 (:chest :twist 88))
   (1.5 :ke-n-stance))
+
+;;; ---------------------------------------------------------------- the Bankai (docs/DUEL_KEN_BANKAI.md §12): 3 clips
+;; the beast-like stance: hunched forward, knees wide, the left hand open like a claw, the broken cleaver dragging low in
+;; the right, head down but the eyes up; the shoulders heave
+(defpose :ke-b-stance (:base :ke-stance)
+  (:root :u -0.16) (:pelvis :twist 12) (:spine :flex 30) (:chest :twist -8 :flex 6) (:head :flex -26 :twist -4)
+  (:arm-r :flex 14 :side 26) (:elbow-r :flex 18) (:hand-r :flex -70 :twist 10)
+  (:arm-l :flex 48 :side 32) (:elbow-l :flex 62) (:hand-l :flex 25)
+  (:thigh-r :flex 22 :side 22) (:thigh-l :flex 40 :side 20) (:knee-r :flex 48) (:knee-l :flex 55))
+(defclip :ke-b-stance (0.8 :loop t :base :ke-b-stance)
+  (0) (0.4 (:chest :flex 12) (:spine :flex 26) (:root :u -0.13) (:head :flex -30)))
+;; J3 GENKOTSU / SP2's NAGURI-TOBASHI: the left hook from the hip, the whole body behind it, held 3 f on contact, the
+;; cleaver thrown out wide in the right
+(defstrike :ke-b-fist (9 3 18 :base :ke-b-stance)
+  (0)
+  (4 (:chest :twist 36) (:spine :flex 22) (:arm-l :flex 40 :side 60) (:elbow-l :flex 110) (:hand-l :flex 0)
+     (:root :u -0.14 :f -0.06) (:head :twist 12))                                          ; wound back
+  (7 (:chest :twist 42) (:root :f -0.08))                                                  ; held
+  (:s :snap (:chest :twist -48) (:spine :flex 20) (:arm-l :flex 92 :side 8) (:elbow-l :flex 22) (:hand-l :flex 0)
+      (:root :f 0.42 :u -0.12) (:thigh-l :flex 52) (:knee-l :flex 45) (:thigh-r :flex -18) (:arm-r :side 70 :flex 25)
+      (:head :twist -8))
+  (:a (:chest :twist -56) (:root :f 0.47))                                                 ; overshoot, held on contact
+  (20 (:chest :twist -50) (:root :f 0.44) (:arm-l :flex 80) (:elbow-l :flex 30))
+  (:end :ke-b-stance))
+;; L KAMICHIGIRI: coiled low, a lunge, the left hand clamps the arm, the head drives in, then the tearing jerk back
+(defstrike :ke-b-bite (10 3 28 :base :ke-b-stance)
+  (0)
+  (5 (:root :u -0.26 :f -0.05) (:spine :flex 42) (:knees :flex 62) (:arm-l :flex 40 :side 22) (:elbow-l :flex 45))
+  (8 (:root :u -0.28 :f -0.08) (:spine :flex 44))                                          ; coiled, held
+  (:s :snap (:root :f 0.72 :u -0.2) (:spine :flex 46) (:head :flex 12) (:arm-l :flex 96 :side 6) (:elbow-l :flex 22)
+      (:hand-l :flex 30) (:thigh-l :flex 60) (:knee-l :flex 50) (:thigh-r :flex -20) (:knee-r :flex 20))
+  (:a (:root :f 0.76) (:head :flex 20))                                                    ; the teeth in
+  (18 (:root :f 0.55 :u -0.12) (:spine :flex 12) (:head :flex -38) (:arm-l :flex 70 :side 24) (:elbow-l :flex 62))   ; torn off
+  (27 (:root :f 0.45 :u -0.14) (:head :flex -30) (:spine :flex 18))
+  (:end :ke-b-stance))

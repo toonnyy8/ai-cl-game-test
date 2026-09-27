@@ -9,6 +9,10 @@
 > a string's link-3 hit). DUEL_DESIGN §6.2 has the as-built tables.
 > **User override (2026-09-26): Kenpachi wears NO eyepatch in any form.** Every eyepatch mention below is superseded by the
 > "User decision after v2" section.
+> **Superseded in part (2026-09-27 / 28, the user's decisions; [DUEL_KEN_BANKAI.md](DUEL_KEN_BANKAI.md)):** a Soul Break's
+> cap is now **5** (Soul Breaks only; a Kikon stays at 4), so a cup-3 Soul Break takes 5, and it plays the attacker's Kikon
+> cinematic; cup 3 red + P opens **Kenpachi's Bankai** (his Konpaku → 1, Reishi → full), then 片腕 KATAUDE after the arm
+> bursts. "≥ 3 events to take 9" no longer holds for Soul Breaks (5 + 4).
 
 ## 給使用者的摘要（繁體中文）
 
@@ -312,7 +316,7 @@ attacker's arm smoking, against yellow flecks sucked into the cleaver.
   `kikon-n`; `settle-konpaku` uses it. A drain during the dash-in can't turn a 4 into a 3, and a cash-out
   can't keep a 4.
 - **Per-event cap 4** (`*kikon-max-event*`): a Soul Break adds +1 up to the cap. T3 Soul Break = 4, not
-  5; T1 Soul Break = 3.
+  5; T1 Soul Break = 3. *(Superseded 2026-09-27: the Soul Break's own cap is 5, `*soul-break-max-event*`: T3 Soul Break = 5.)*
 - Every character needs **≥ 3 events** to take 9 Konpaku (4 + 4 + 1).
 - A red opponent at T1 poses a real question: take 2 now, or climb for 4 and risk the comeback.
 

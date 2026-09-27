@@ -9,13 +9,13 @@
 
 ;; *TOUCH* *ONE-HAND* *HAND* *COARSE* *BACK-PRESS*: components.lisp (read by fighter.lisp and flow.lisp)
 (defvar *touch-burst* nil "This vpad read: the live flick is a Burst (down, P1 in hit / stun / air).")
-(defvar *deck-key* (list 0 0 0 nil nil) "Window w, h, density, hand, one-hand of the last TOUCH-LAYOUT!.")
+(defvar *deck-key* (list 0 0 0 nil nil 0 0 0) "Window w, h, density, hand, one-hand, safe top / bottom, UI scale of the last TOUCH-LAYOUT!.")
 (defvar *wake* nil "Wake lock requested (battle).")
-(defparameter *glyph-names* #("" "Q" "STEP" "F" "HOHO" "GUARD" "BURST") "TOUCH-GLYPH kinds (6: the duel's Burst).")
+(defparameter *glyph-names* #("" "Q" "STEP" "F" "HOHO" "GUARD" "DASH" "BURST") "TOUCH-GLYPH kinds (7: the duel's Burst).")
 (defvar *glyph-seen* -1f4 "TOUCH-GLYPH-T last logged.")
 
 ;;; page services (pf_page_get / pf_page_set, duel/web/pwa.js)
-(defconstant +pg-coarse+ 0) (defconstant +pg-back+ 1) (defconstant +pg-hand+ 2)
+(defconstant +pg-coarse+ 0) (defconstant +pg-back+ 1) (defconstant +pg-hand+ 2) (defconstant +pg-safe-top+ 3) (defconstant +pg-safe-bottom+ 4)
 (defconstant +ps-wake+ 0) (defconstant +ps-hand+ 1)
 
 (defun portrait-p () (> (window-height) (window-width)))
@@ -35,12 +35,16 @@ never offers it: the deck needs portrait)."
 (defparameter *chip-holds* '(0 0 0 0 0 300 0))
 
 (defun deck-layout ()
-  "Values: pad (x0 y0 x1 y1) and chips ((cx cy r) ...), window px, for the current window and *HAND*."
-  (let* ((d (pixel-density)) (w (/ (window-width) d)) (h (/ (window-height) d)) (left (eq *hand* :left)))
+  "Values: pad (x0 y0 x1 y1) and chips ((cx cy r) ...), window px, for the current window and *HAND*. P2 (safe-area
+insets): the pad keeps 16 CSS px over the home indicator (no change on today's phones: 50 >= 34 + 16) and a chip placed
+from the top (the pause chip) stays under the portrait HUD's top block. The chips' spots are the playtest's (§13), not
+moved by the insets: the user tuned them on the phones, insets included."
+  (let* ((d (pixel-density)) (w (/ (window-width) d)) (h (/ (window-height) d)) (left (eq *hand* :left))
+         (hud (/ (portrait-hud-bottom (ui-scale)) d)))
     (flet ((x (from-right) (* d (if left from-right (- w from-right)))) (px (v) (* d v)))
-      (values (list (if left (px 32) (px 16)) (px (- h 460)) (if left (px (- w 16)) (px (- w 32))) (px (- h 50)))
+      (values (list (if left (px 32) (px 16)) (px (- h 460)) (if left (px (- w 16)) (px (- w 32))) (px (- h (max 50 (+ *safe-bot* 16)))))
               (loop for (cx cy r) in *chip-spots*
-                    collect (list (x cx) (px (if (minusp cy) (- cy) (- h cy))) (px r)))))))
+                    collect (list (x cx) (px (if (minusp cy) (max (- cy) (+ hud 10 r)) (- h cy))) (px r)))))))
 
 (declaim (type f32vec *deck*))
 (defvar *deck* (make-f32 (+ 4 (* 3 7))) "The laid-out deck in window px: pad x0 y0 x1 y1, then cx cy r per chip.")
@@ -48,11 +52,18 @@ never offers it: the deck needs portrait)."
 (defun deck-update ()
   "Re-lay the deck when the window, the density, the hand or the mode changed (conses: not every frame).
 Outside ONE-HAND there is no pad and no chip: a stray finger only makes menu taps."
-  (let ((k *deck-key*) (w (window-width)) (h (window-height)) (d (pixel-density)))
-    (unless (and (= (first k) w) (= (second k) h) (= (third k) d) (eq (fourth k) *hand*) (eq (fifth k) *one-hand*))
-      (setf (first k) w (second k) h (third k) d (fourth k) *hand* (fifth k) *one-hand*)
+  (let ((k *deck-key*) (w (window-width)) (h (window-height)) (d (pixel-density)) (s (ui-scale))
+        (st (page-get +pg-safe-top+)) (sb (page-get +pg-safe-bottom+)))
+    (unless (and (= (first k) w) (= (second k) h) (= (third k) d) (eq (fourth k) *hand*) (eq (fifth k) *one-hand*)
+                 (= (sixth k) st) (= (seventh k) sb) (= (eighth k) s))
+      (setf (first k) w (second k) h (third k) d (fourth k) *hand* (fifth k) *one-hand* (sixth k) st (seventh k) sb (eighth k) s
+            *safe-top* st *safe-bot* sb)
       (multiple-value-bind (pad chips) (deck-layout)
         (replace *deck* (mapcar #'f32 (append pad (reduce #'append chips))))
+        ;; the portrait frame: under P2's HUD block down to *PT-FRAME-BOTTOM* (over P1's block); the blocks' edges
+        (let ((hb (/ (portrait-hud-bottom s) h)) (pt (/ (portrait-p1-top s h) h)))
+          (setf (aref *band* 0) (f32 (+ hb 0.03)) (aref *band* 1) (f32 (min *pt-frame-bottom* (- pt 0.03)))
+                (aref *band* 2) (f32 hb) (aref *band* 3) (f32 pt)))
         (if *one-hand*
             (touch-layout! *touch* d pad chips *chip-holds*)
             (touch-layout! *touch* d '(0 0 -1 -1) nil)))
@@ -100,10 +111,11 @@ frame's finger events."
     (setf *touch-burst* (and (touch-pulse-p tr +tp-flick+) (touch-flick-down-p tr)
                              *p1* (member (state-of *p1*) '(:stun :air)) t))
     (when *touch-burst*                                   ; no Step held after a Burst (it would buffer a Step)
-      (setf (touch-flick-hold tr) 0 (touch-glyph tr) 6))))
+      (setf (touch-flick-hold tr) 0 (touch-glyph tr) 7))))
 
 (defun touch-button (name)
-  "Is vpad button NAME down from the thumb deck (design §3.2 / §3.4)?"
+  "Is vpad button NAME down from the thumb deck (design §3.2 / §3.4; the 2026-09-28 remap, §15: a tap in the pad's
+low zone = J, high zone = K, an up-flick = a forward Step, the dash)?"
   (let* ((tr *touch*) (burst *touch-burst*))
     (flet ((chip (i) (touch-chip-down-p tr i)) (pulse (b) (touch-pulse-p tr b)))
       (case name
@@ -111,7 +123,7 @@ frame's finger events."
         (:quick (or (pulse +tp-tap+) burst))
         (:mod (or burst (pulse +tp-hoho+) (chip 3) (chip 4)))
         (:step (and (not burst) (or (pulse +tp-flick+) (pulse +tp-hoho+) (touch-step-held-p tr))))
-        (:flash (or (pulse +tp-up+) (chip 3)))
+        (:flash (or (pulse +tp-tap-hi+) (chip 3)))
         (:sig (or (chip 1) (chip 4)))
         (:breaker (chip 2))
         (:kikon (chip 0))
@@ -164,10 +176,18 @@ frame's finger events."
 (defparameter *chip-labels* (coerce (mapcar #'fourth *chip-spots*) 'simple-vector))
 
 (defun hud-deck (s)
-  "The thumb deck: the flow pad's outline, the chips (lit while held; AWAKEN only at EVOLUTION), the ink ring under
-the thumb, and the recognised gesture's glyph at the thumb for 0.3 s (the misread teacher)."
-  (let* ((tr *touch*) (d (touch-dpx tr)) (dk *deck*) (evo (and *p1* (gauges-evolution (gauges *p1*)))))
+  "The thumb deck: the flow pad's outline and its tap split (F above, Q below), the chips (lit while held; AWAKEN only
+at EVOLUTION or a Bankai ready), the ink ring under the thumb, and the recognised gesture's glyph at the thumb for 0.3 s
+(the misread teacher)."
+  (let* ((tr *touch*) (d (touch-dpx tr)) (dk *deck*)
+         (evo (and *p1* (or (gauges-evolution (gauges *p1*)) (bankai-ready-p *p1*)))))   ; AWAKEN: EVOLUTION, or the Bankai
+                                                                                          ; ready (cup 3, red, free)
     (%houtline (aref dk 0) (aref dk 1) (- (aref dk 2) (aref dk 0)) (- (aref dk 3) (aref dk 1)) 1f0 1f0 1f0 0.12f0)
+    (let* ((y (touch-split-y tr)) (left (eq *hand* :left))                  ; the tap zones' line, named at the far edge
+           (x (if left (- (aref dk 2) (* 6 d)) (+ (aref dk 0) (* 6 d)))) (al (if left :right :left)))
+      (%hrect (aref dk 0) y (- (aref dk 2) (aref dk 0)) (max 1f0 d) 1f0 1f0 1f0 0.18f0)
+      (hud-text "F" x (- y (* 13 s)) (* 1.5 s) '(1 1 1 0.4) :align al :shadow nil)
+      (hud-text "Q" x (+ y (* 3 s)) (* 1.5 s) '(1 1 1 0.4) :align al :shadow nil))
     (dotimes (i 7)
       (unless (and (= i 5) (not evo))
         (let ((on (touch-chip-down-p tr i)) (cx (aref dk (+ 4 (* 3 i)))) (cy (aref dk (+ 5 (* 3 i)))) (r (aref dk (+ 6 (* 3 i)))))
@@ -182,8 +202,9 @@ the thumb, and the recognised gesture's glyph at the thumb for 0.3 s (the misrea
                   '(1 0.85 0.4 1) :align :center)))))
 
 (defparameter *gesture-card*
-  '(("TAP" "QUICK  (TAP TAP TAP = STRING)") ("HOLD STILL" "GUARD") ("DRAG" "MOVE  (FAR = DASH / RUN)")
-    ("FLICK" "STEP  (DOWN = BACK)") ("FLICK UP + LIFT" "FLASH") ("HOLD, THEN FLICK UP" "HOHO")
+  '(("TAP LOW HALF" "QUICK  (J)") ("TAP HIGH HALF" "FLASH  (K)  3 TAPS = STRING") ("HOLD STILL" "GUARD")
+    ("DRAG" "MOVE  (FAR = RUN)") ("FLICK UP" "DASH  (KEEP GOING = RUN)") ("FLICK DOWN / SIDE" "STEP BACK / SIDESTEP")
+    ("HOLD, THEN FLICK UP" "HOHO")
     ("FLICK DOWN WHEN HIT" "BURST REVERSE") ("O" "KIKON RUSH  (HOLD = KIKON)") ("L / I" "SIGNATURE / BREAKER")
     ("SP1 / SP2" "SPECIALS") ("AWK (HOLD)" "AWAKEN") ("II / BACK" "PAUSE"))
   "The static gesture card (ONE-HAND's CONTROLS).")
@@ -193,7 +214,7 @@ the thumb, and the recognised gesture's glyph at the thumb for 0.3 s (the misrea
   (ui-big-text "ONE HAND" (floor w 2) (* 0.08 h) (* 3 s) *white* '(0.7 0.25 0.05 1) s)
   (let ((sc (fit-scale "FLICK DOWN WHEN HIT" s (* 0.9 w))))
     (loop for (a b) in *gesture-card* for i from 0
-          for y = (+ (* 0.18 h) (* i 22 sc)) do
+          for y = (+ (* 0.18 h) (* i (max (* 22 sc) (* 0.058 h)))) do   ; a tall screen: the rows spread down
             (ui-text a (floor w 2) y :scale sc :align :center :color *ember*)
             (ui-text b (floor w 2) (+ y (* 9 sc)) :scale (max 1 (fit-scale b sc (* 0.95 w))) :align :center :color *white*)))
   (ui-text "TAP TO GO BACK" (floor w 2) (* 0.94 h) :scale s :align :center :color *dim* :shadow t))

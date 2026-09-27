@@ -12,6 +12,7 @@
 ;;;;            (turbo; cinematics play: they are part of the match time), then "duel gate ..." lines
 ;;;;   2200+k   force cinematic k now and hold it (0 Bankai, 1 Nozarashi, 2 Jokaku Enjo, 3 Tenchi Kaijin,
 ;;;;            4 Ken Kikon, 5 sky split, 6 Soul Break, 7 intro, 8 K.O.)   2209 a K.O. of P2 (YK), then RESULTS
+;;;;            9 Ken Bankai (P1 in the Bankai), 10 MAPPUTATSU (2210)
 ;;;;   10000+1000k+f   stills: cinematic k (as 2200+k) held at frame f, the effects frozen there; when k already
 ;;;;            runs, it continues to frame f
 ;;;;   2300+k   force a special now (0 Hellfire + Ennetsu, 1 full Shiranui, 2 fire wave, 3 Kaka
@@ -67,6 +68,19 @@
 ;;;;            *AI-FOLLOW-GUARD-P* = k / 100, every K2 / K3 (and copy) deals k % of its written damage;
 ;;;;            27000+k *KOSEI-REIATSU* = k / 100 (and *KOSEI-FS* half that), 28000+k *AI-STRING-FLASH-P* = k / 100,
 ;;;;            29000+k *AI-SP-CANCEL-P* = k / 100
+;;;;   2700+k   portrait presentation (docs/DUEL_MOBILE_DESIGN.md P2): 0 the framing / text probe on (every 30th battle
+;;;;            frame off a cinematic: both fighters' upper halves clear of the two HUD blocks, >= 70 % of each one's width on
+;;;;            the screen; the smallest pixel-font
+;;;;            glyph drawn) and its "duel frame ..." line now; 1 the fighters 24 m apart; 2 P2 flashed to P1's side
+;;;;            (90 deg, 4 m: the camera's catch-up); 3 1 m apart; 4 consing of the portrait camera, dolly and HUD column
+;;;;            (100 calls each) -> "portrait consing" line
+;;;;   35000+f / 36000+f   stills of the Bankai cinematic / MAPPUTATSU held at frame f (as 10000+1000k+f, k 9 / 10)
+;;;;   2386+k   Kenpachi's Bankai tests (docs/DUEL_KEN_BANKAI.md; BANKAI-TEST): 0 cup 3 + red 3 m from an idle Yamamoto (P
+;;;;            enters), 1 in the Bankai at once 2.2 m, 2 the Bankai with 1 pip left, 3 片腕
+;;;;   30000+k  the seed gate plays seeds k+1 .. k+20;  31000+10a+b the CPUs' Bankai entry, P1 a / P2 b: 0 the kit's rule,
+;;;;            1 always (whenever allowed), 2 never, 3 the rule with its chance 1 (the gamble A/B);
+;;;;            32000+k *ARM-SELF* = k, 33000+k *ARM-BURST-SELF* = k, 34000+k *ARM-CRACK* = k; 37000+k the cup-3 CPU's
+;;;;            Bankai chance :p = k / 100, 38000+k its :own-konpaku = k
 ;;;;   2400 god (both fighters' Reishi is topped back up to 400 every frame; Kikon still lands)   2500+k human P1 vs an
 ;;;;            idle CPU (k: 0 Yama vs Ken, 1 Ken vs Yama, 2 Yama vs Yama, 3 Ken vs Ken)
 ;;;; Log lines: "duel -> STATE" (flow.lisp), "duel hash t=N ..." every 600 battle ticks (h = CPU heat),
@@ -87,11 +101,13 @@ g guard gauge, ! = guardless, m the kit meter: Inferno / NOME), n the Konpaku th
     (format s "duel hash t=~d" *match-tick*)
     (dolist (e (list *p1* *p2*))
       (let ((p (pos-of e)) (g (gauges e)) (f (fighter e)))
-        (format s " | ~d ~d ~d ~d ~a ~a r~d k~d a~d f~d g~d~:[~;!~] w~d m~d n~d~@[ h~d~]" (round (* 100 (aref p 0))) (round (* 100 (aref p 1)))
+        (format s " | ~d ~d ~d ~d ~a ~a r~d k~d a~d f~d g~d~:[~;!~] w~d m~d~@[ u~d~]~:[~;*~] n~d~@[ h~d~]" (round (* 100 (aref p 0))) (round (* 100 (aref p 1)))
                 (round (* 100 (aref p 2))) (round (* 100 (yaw-of e))) (fighter-state f) (fighter-form f)
                 (gauges-reishi g) (gauges-konpaku g) (round (gauges-reiatsu g)) (round (gauges-fs g)) (round (gauges-gg g))
                 (gauges-guardless g) (round (gauges-awaken g))
-                (round (gauges-meter g)) (fighter-kikon-n f) (and (brain e) (floor (brain-heat (brain e)))))))
+                (round (gauges-meter g)) (and (kit-pips (fighter-kit f)) (gauges-meter-idle g))   ; the arm's crack clock,
+                (gauges-arm-pending g)                                                          ; * = its burst pending
+                (fighter-kikon-n f) (and (brain e) (floor (brain-heat (brain e)))))))
     (format s " | cd ~{~d~^.~} ~{~d~^.~} | haz ~d" (coerce (fighter-cd (fighter *p1*)) 'list) (coerce (fighter-cd (fighter *p2*)) 'list)
             (let ((n 0)) (do-entities (h hazard) (incf n)) n))))
 
@@ -239,6 +255,26 @@ probe (the ladder), 1 the :drink probe (P2 mashes Quick), 2 / 4 hold P2's guard,
       (1 (setf *probe* (list :drink :quick *match-tick* nil nil nil)))
       (5 (setf *probe* (list :cut :flash *match-tick* nil nil nil))))))
 
+(defun bankai-test (k)
+  "Kenpachi's Bankai tests 2386+K (docs/DUEL_KEN_BANKAI.md; human P1 Kenpachi, P2 an idle Yamamoto CPU; the script presses
+the keys): 0 cup 3 (NOME 100), red (300), 3 m: P enters the Bankai (its cinematic); 1 in the Bankai at once (no
+cinematic), 2.2 m: KKK, a whiffed K, JJJ ...; 2 in the Bankai with 1 pip, 2.2 m: the 4th strike, then the burst; 3 片腕
+at 2.2 m."
+  (setf *probe* nil)
+  (ensure-battle :kenpachi :yamamoto)
+  (force-form *p1* :nomihose)
+  (place *p1* *p2* (if (zerop k) 3.0 2.2))
+  (let ((g (gauges *p1*)))
+    (fill (fighter-cd (fighter *p1*)) 0)
+    (setf (gauges-reiatsu g) *reiatsu-max* (gauges-fs g) *fs-max* (gauges-gg g) *gg-max* (gauges-guardless g) nil
+          (gauges-meter g) 100f0 (gauges-meter-idle g) 0 (gauges-reishi g) 300 (gauges-arm-pending g) nil))
+  (setf (gauges-reishi (gauges *p2*)) (gauges-reishi-max (gauges *p2*)))
+  (case k
+    ((1 2) (let ((*skip-cines* t)) (bankai! *p1*))
+     (when (= k 2) (setf (gauges-meter (gauges *p1*)) 1f0) (refresh-look *p1*))
+     (place *p1* *p2* 2.2))
+    (3 (force-form *p1* :kataude) (setf (gauges-reishi (gauges *p1*)) 900))))
+
 (defun probe-update ()
   "Per step: finish a running probe (the first tick each side is free again = both idle; the
 difference is the frame advantage, measured the way the fighters really step); the mash test's
@@ -353,8 +389,10 @@ by 10 draws of each Bankai stance look (0 B each; the crossfade only while it ru
         (dotimes (i 100) (%hud-cd 10f0 50f0 150f0 6f0 0.4f0 0f0 nil 1f0 0.5f0 0.2f0) (%hud-cd 10f0 50f0 150f0 6f0 1f0 0.7f0 t 1f0 0.5f0 0.2f0))
         (let ((c3 (cons-bytes)))
           (dotimes (i 100) (%hud-nome 10f0 70f0 300f0 6f0 0.55f0 nil 1 0.25f0 1f0) (%hud-nome 10f0 70f0 300f0 6f0 0.3f0 t 2 0.5f0 1f0))
-          (log-msg "hud consing: 100 x 2 guard bars ~d B, 100 x 2 flash-step bars ~d B, 100 x 2 cooldown bars ~d B, 100 x 2 NOME bars ~d B"
-                   (- c1 c0) (- c2 c1) (- c3 c2) (- (cons-bytes) c3))))))
+          (let ((c4 (cons-bytes)))
+            (dotimes (i 100) (%hud-arm 10f0 90f0 300f0 6f0 3 100 nil 1f0) (%hud-arm 10f0 90f0 300f0 6f0 1 260 t 1f0))
+            (log-msg "hud consing: 100 x 2 guard bars ~d B, 100 x 2 flash-step bars ~d B, 100 x 2 cooldown bars ~d B, 100 x 2 NOME bars ~d B, 100 x 2 UDE bars ~d B"
+                     (- c1 c0) (- c2 c1) (- c3 c2) (- c4 c3) (- (cons-bytes) c4)))))))
   ;; the Bankai stances' per-frame looks (10 draws each; particles emitted too): West's flame garb, the bound ash,
   ;; the heat sheet, KYOKKO's ray, South's crack, the aura crossfade (DRAW-AURA); and the Phase-3 :heat aura for
   ;; comparison
@@ -364,6 +402,8 @@ by 10 draws of each Bankai stance look (0 B each; the crossfade only while it ru
              (list (per "garb" (vfx-aura 0f0 0f0 0f0 1.8f0 :garb 1f0 0.016f0))
                    (per "bound" (vfx-aura 0f0 0f0 0f0 1.8f0 :bound 1f0 0.016f0))
                    (per "nomihose" (vfx-aura 0f0 0f0 0f0 2f0 :nomihose 1f0 0.016f0))
+                   (per "oni" (vfx-aura 0f0 0f0 0f0 2f0 :oni 1f0 0.016f0))                 ; Kenpachi's Bankai pillar
+                   (per "oni smoulder" (vfx-aura 0f0 0f0 0f0 2f0 :oni 1f0 0.016f0 :k 0.15f0))
                    (per "rift" (vfx-rift 1f0 0f0 4.4f0 0f0 nil))
                    (per "heat(old)" (vfx-aura 0f0 0f0 0f0 1.8f0 :heat 1f0 0.016f0))
                    (per "blade(old)" (vfx-blade-embers 0f0 1f0 0f0 0f0 1.8f0 -0.5f0 0.016f0))
@@ -447,12 +487,15 @@ deals PCT % of its written damage (the seed gate's first lever, DUEL_STRINGS §6
        (start-cine 'ken-sky-split-cine *p1* *p2*))
     (6 (ensure-battle :kenpachi :yamamoto) (place *p1* *p2* 3.0) (start-cine 'soul-break-cine *p1* *p2*))
     (7 (start-match))
-    (8 (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 3.0) (start-cine 'ko-cine *p1* *p2*)))
+    (8 (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 3.0) (start-cine 'ko-cine *p1* *p2*))
+    ((9 10) (ensure-battle :kenpachi :yamamoto) (place *p1* *p2* (if (= k 9) 5.0 3.0)) (force-form *p1* :bankai)
+     (setf (gauges-meter (gauges *p1*)) (f32 *arm-pips*)) (refresh-look *p1*)
+     (start-cine (if (= k 9) 'ken-bankai-cine 'ken-oni-kikon-cine) *p1* *p2*)))
   (setf *cine-hold* t)
   (when *cine* (setf (cine-hold *cine*) (cine-hold-frame (cine-name *cine*)))))
 
 (defparameter *cine-names* '(yama-bankai-cine ken-nozarashi-cine yama-kikon-cine yama-tenchi-cine ken-kikon-cine
-                               ken-sky-split-cine soul-break-cine intro-cine ko-cine)
+                               ken-sky-split-cine soul-break-cine intro-cine ko-cine ken-bankai-cine ken-oni-kikon-cine)
   "FORCE-CINE's numbering.")
 
 (defun cine-at (k f)
@@ -599,10 +642,11 @@ move-beat choices of DRAW-FIGHTER."
 (defvar *gate-results* nil "(pair secs ko-p) of the finished gate matches.")
 (defparameter *pairs* '((:yamamoto :yamamoto) (:yamamoto :kenpachi) (:kenpachi :kenpachi)))
 
+(defvar *gate-seed0* 0 "Debug 30000+k: the seed gate plays seeds k+1 .. k+20 (the 60-seed A/B in three runs).")
 (defun start-gate (p)
   (setf *turbo* t *skip-cines* nil *combat-log* nil *gate-log* nil *gate-results* nil
         *gate* (loop for pair in (if (= p 3) *pairs* (list (nth p *pairs*)))
-                     append (loop for seed from 1 to 20 collect (list seed pair))))
+                     append (loop for seed from (1+ *gate-seed0*) to (+ *gate-seed0* 20) collect (list seed pair))))
   (gate-update))
 
 (defvar *gate-busy* nil "A gate match is running.")
@@ -613,6 +657,9 @@ move-beat choices of DRAW-FIGHTER."
     (push (list *picks* (/ *match-tick* 60.0)
                 (or (zerop (gauges-konpaku (gauges *p1*))) (zerop (gauges-konpaku (gauges *p2*)))))
           *gate-results*)
+    (log-msg "duel gate row seed ~d ~a ~a secs ~,1f winner ~a forms ~a ~a" *match-seed* (first *picks*) (second *picks*)
+             (/ *match-tick* 60.0) (case *winner* (0 "P1") (1 "P2") (t "DRAW"))
+             (fighter-form (fighter *p1*)) (fighter-form (fighter *p2*)))   ; (the gamble A/B reads the final forms)
     (setf *gate-busy* nil))
   (unless *gate-busy*
     (cond (*gate* (destructuring-bind (seed pair) (pop *gate*) (start-cvc seed pair)) (setf *gate-busy* t))
@@ -630,7 +677,7 @@ move-beat choices of DRAW-FIGHTER."
   "Module._debug_cmd(C): see the file header."
   (setf *combat-log* t *stats-log* t)
   (log-msg "debug cmd ~d" c)
-  (unless (or (<= 2200 c 2299) (<= 10000 c 19999)) (setf *cine-hold* nil))
+  (unless (or (<= 2200 c 2299) (<= 10000 c 19999) (<= 35000 c 36999)) (setf *cine-hold* nil))
   (cond ((<= 2000 c 2099) (start-cvc (- c 2000) nil))
         ((<= 3000 c 3999) (start-cvc (- c 3000) '(:yamamoto :yamamoto)))
         ((<= 4000 c 4999) (start-cvc (- c 4000) '(:yamamoto :kenpachi)))
@@ -651,6 +698,7 @@ move-beat choices of DRAW-FIGHTER."
         ((= c 2209) (setf *cine-hold* nil) (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 3.0) (match-over *p1*))
         ((<= 2200 c 2299) (force-cine (- c 2200)))
         ((<= 10000 c 19999) (cine-at (floor (- c 10000) 1000) (mod c 1000)))
+        ((<= 35000 c 36999) (cine-at (+ 9 (floor (- c 35000) 1000)) (mod c 1000)))
         ((<= 2315 c 2318) (probe-block (nth (- c 2315) '(:ya-j1 :ya-k3 :ya-j3 :ya-taimatsu))))
         ((= c 2319) (probe-trade))
         ((= c 2320) (probe-mash))
@@ -664,11 +712,13 @@ move-beat choices of DRAW-FIGHTER."
         ((<= 2330 c 2361) (module-test (- c 2330)))
         ((<= 2370 c 2379) (stance-test (- c 2370)))
         ((<= 2380 c 2385) (nome-test (- c 2380)))
+        ((<= 2386 c 2389) (bankai-test (- c 2386)))
         ((= c 2326) (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 3.0) (clash! *p1* *p2*))
         ((= c 2393) (place *p1* *p2* 2.2)
          (dolist (e (list *p1* *p2*))                   ; a switched-off CPU lets go of what it held (a guard)
            (vpad-clear! (pilot-vpad (pilot e))) (let ((b (brain e))) (when b (setf (brain-press-left b) 0)))))
         ((<= 2394 c 2397) (string-test (- c 2394)))
+        ((<= 2700 c 2709) (portrait-test (- c 2700)))
         ((<= 2300 c 2399) (force-special (- c 2300)))
         ((= c 2400) (setf *god* (not *god*)))
         ((<= 2600 c 2699) (setf *red-threshold* (/ (- c 2600) 100.0)))
@@ -682,6 +732,15 @@ move-beat choices of DRAW-FIGHTER."
         ((<= 27000 c 27999) (setf *kosei-reiatsu* (/ (- c 27000) 100.0) *kosei-fs* (/ (- c 27000) 200.0)))
         ((<= 28000 c 28999) (setf *ai-string-flash-p* (/ (- c 28000) 100.0)))
         ((<= 29000 c 29999) (setf *ai-sp-cancel-p* (/ (- c 29000) 100.0)))
+        ((<= 30000 c 30999) (setf *gate-seed0* (- c 30000)))
+        ((<= 31000 c 31033) (let ((m '(nil :always :never :sure)))
+                              (setf (svref *ai-bankai-mode* 0) (nth (floor (- c 31000) 10) m)
+                                    (svref *ai-bankai-mode* 1) (nth (mod (- c 31000) 10) m))))
+        ((<= 32000 c 32999) (setf *arm-self* (- c 32000)))
+        ((<= 33000 c 33999) (setf *arm-burst-self* (- c 33000)))
+        ((<= 34000 c 34999) (setf *arm-crack* (- c 34000)))
+        ((<= 37000 c 37100) (setf (getf (getf (kit-ai (find-kit :kenpachi :nomihose)) :bankai) :p) (/ (- c 37000) 100.0)))
+        ((<= 38000 c 38009) (setf (getf (getf (kit-ai (find-kit :kenpachi :nomihose)) :bankai) :own-konpaku) (- c 38000)))
         ((<= 2500 c 2503)
          (setf *picks* (nth (- c 2500) '((:yamamoto :kenpachi) (:kenpachi :yamamoto) (:yamamoto :yamamoto) (:kenpachi :kenpachi)))
                *mode* :vs-cpu *match-seed* 1 *probe* nil)
@@ -706,6 +765,68 @@ hazards (orange)."
                        (dolist (v (hw-vols w)) (draw-vol v (aref p 0) (aref p 1) (aref p 2) yaw)))))))
     (do-entities (h (hz hazard))
       (when (hazard-hw hz) (ring (hazard-x hz) 1.0 (hazard-z hz) (max 0.3 (hazard-size hz)) 1.0 0.6 0.1)))))
+
+;;; ---------------------------------------------------------------- the portrait probes (2700+k)
+(defvar *frame-probe* nil "The framing / text probe runs (PORTRAIT-TEST 0).")
+(defvar *frame-counts* (make-array 6 :initial-element 0) "Samples, P1 in, P2 in, both in, frames seen, the frame counter.")
+(defvar *text-min* (list 1000 nil) "The smallest glyph px seen by the probe and the flow it was drawn in.")
+(declaim (type f32vec *probe-v*))
+(defvar *probe-v* (make-f32 3))
+
+(defun fighter-screen-box (e)
+  "Values x0 y0 x1 y1 (window px) of fighter E's drawn bulk (his hurt cylinder + 0.25 m around, 0.35 m over his head),
+or NIL when a corner is behind the camera."
+  (let* ((p (pos-of e)) (b (model-body (model e))) (r (+ 0.25 (body-hurt-r b))) (top (+ 0.35 (body-hurt-h b)))
+         (x0 1e9) (y0 1e9) (x1 -1e9) (y1 -1e9) (v *probe-v*))
+    (dolist (dx (list (- r) r) (values x0 y0 x1 y1))
+      (dolist (dz (list (- r) r))
+        (dolist (y (list 0.0 top))
+          (unless (world-to-screen v (f32 (+ (aref p 0) dx)) (f32 (+ (aref p 1) y)) (f32 (+ (aref p 2) dz))) (return-from fighter-screen-box nil))
+          (setf x0 (min x0 (aref v 0)) x1 (max x1 (aref v 0)) y0 (min y0 (aref v 1)) y1 (max y1 (aref v 1))))))))
+
+(defun frame-probe-step ()
+  "Once a frame after the HUD (main.lisp GAME-FRAME) while *FRAME-PROBE*: the text floor over every portrait screen, and
+every 30th battle frame (no cinematic, not paused) whether each fighter's box sits in the arena band."
+  (let ((c *frame-counts*) (w (window-width)) (h (window-height)))
+    (when (portrait-p)
+      (when (< *ui-text-min* (first *text-min*)) (setf *text-min* (list *ui-text-min* *flow*)))
+      (when (and (eq *flow* :battle) (not *cine*) (not *paused*) (zerop (mod (incf (svref c 5)) 30)))
+        (flet ((in (e) (multiple-value-bind (x0 y0 x1 y1) (fighter-screen-box e)   ; his upper half clear of both HUD blocks,
+                         (and x0 (>= (- (min x1 w) (max x0 0)) (* 0.7 (- x1 x0)))       ; >= 70 % of his width on the screen
+                              (>= y0 (* h (aref *band* 2))) (<= (* 0.5 (+ y0 y1)) (* h (aref *band* 3)))))))
+          (let ((a (in *p1*)) (b (in *p2*)))
+            (incf (svref c 0)) (when a (incf (svref c 1))) (when b (incf (svref c 2))) (when (and a b) (incf (svref c 3))))))))
+  (setf *ui-text-min* 1000))
+
+(defun frame-probe-line ()
+  (let ((c *frame-counts*) (n (max 1 (svref *frame-counts* 0))))
+    (log-msg "duel frame ~dx~d (css ~dx~d) band ~,3f-~,3f: p1 ~d/~d p2 ~d/~d both ~d/~d (~,1f %); text min ~a px in ~a, floor ~d px"
+             (window-width) (window-height) (round (window-width) (pixel-density)) (round (window-height) (pixel-density))
+             (aref *band* 2) (aref *band* 3) (svref c 1) (svref c 0) (svref c 2) (svref c 0) (svref c 3) (svref c 0)
+             (/ (* 100.0 (svref c 3)) n) (first *text-min*) (second *text-min*) (ceiling (* 11 (pixel-density)) 7))))
+
+(defun portrait-test (k)
+  (case k
+    (0 (if *frame-probe* (frame-probe-line) (setf *frame-probe* t))
+       (when (and *p1* (entity-alive-p *p1*))
+         (let ((d (pixel-density)))
+           (flet ((b (e) (multiple-value-list (fighter-screen-box e))))
+             (log-msg "duel frame boxes (css): p1 ~{~,0f~^ ~} p2 ~{~,0f~^ ~} fov ~,1f shift ~,3f eye ~{~,2f~^ ~} at ~{~,2f~^ ~}"
+                      (mapcar (lambda (v) (/ v d)) (b *p1*)) (mapcar (lambda (v) (/ v d)) (b *p2*))
+                      (/ (camera-fov *camera*) (deg 1)) (camera-shift-y *camera*) (coerce *cam-eye* 'list) (coerce *cam-at* 'list))))))
+    (1 (place *p1* *p2* 24.0))
+    (2 (let ((p (pos-of *p1*)) (yaw (yaw-of *p1*)))          ; to his left, 4 m, facing him: the view lags behind
+         (v3-set! (pos-of *p2*) (f32 (+ (aref p 0) (* 4 (fwd-z yaw)))) 0f0 (f32 (- (aref p 2) (* 4 (fwd-x yaw)))))
+         (face-each-other *p2* *p1*)))
+    (3 (place *p1* *p2* 1.0))
+    (4 (let ((c0 (cons-bytes)) (p (pos-of *p1*)) (q (pos-of *p2*)) (dt 0.016f0) (asp (f32 (window-aspect))))
+         (dotimes (i 100) (%portrait-camera p q dt nil))
+         (let ((c1 (cons-bytes)))
+           (dotimes (i 100) (%portrait-dolly asp))
+           (let ((c2 (cons-bytes)))
+             (log-msg "portrait consing: 100 x camera ~d B, 100 x dolly ~d B, 1 x the whole portrait HUD column ~d B"
+                      (- c1 c0) (- c2 c1)
+                      (let ((c3 (cons-bytes))) (hud-side-portrait *p1* (window-width) (window-height) (ui-scale)) (- (cons-bytes) c3)))))))))
 
 (defun debug-hud (w h s)
   (declare (ignore h))
