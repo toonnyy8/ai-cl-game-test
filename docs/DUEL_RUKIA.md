@@ -5,7 +5,9 @@ below, which override the body where they differ). It sits on the user's decisio
 `reports/血戰篇四角色格鬥設計研究.md` (its Rukia section, the six sidegrade rules, questions 1–5 and 7–11 at their defaults,
 question 6 overruled: an awakened Kikon still takes 3), the Soul Break rule (count + 1, cap 5, the attacker's current Kikon
 cinematic), unskippable battle cinematics, and the brief (awakening = the true-Shikai ability, 白霞罸 = the awakened Kikon
-cinematic, awakening never heals, awakened vs base differ in playstyle and not in power). The body below is the design as
+cinematic, awakening never heals, awakened vs base differ in playstyle and not in power; **relaxed by the user on
+2026-09-28**: the awakening may be the stronger choice as long as not awakening can still win, see "The awaken A/B across
+seed streams" at the end). The body below is the design as
 approved (numbers were proposals); the as-built values are in "Built: deviations", `duel/lisp/tuning.lisp` and
 `duel/lisp/rukia.lisp`; the measurements close the file. **The awakening was rebuilt the same day as a cold gauge of two
 stacked bars** (playtest 1 and the decisions after it): §4 and §8 describe the rework as built; its deviations, knobs and
@@ -453,6 +455,9 @@ KK 131.5 s**, YK Yamamoto 8 / Kenpachi 12.
 
 **The awaken A/B** (seeds 1–60, NORMAL; Rukia P1 with mode 1 "always on EVOLUTION" vs mode 2 "never"; RR: P1 with the mode
 against a P2 on the rule):
+- (**Superseded 2026-09-28** by the user's decision 「覺醒偏強沒關係，只要不是強到無法贏就好」: the pass is now "never awaken"
+  wins **≥ 20 of 60** against each opponent on each of ≥ 3 seed streams, with no target on the margin; see "The awaken
+  A/B across seed streams" at the end. The original criterion, kept as the record:)
 - **Pass**: in each pairing the win-count difference always − never is within the noise (**|Δ| ≤ 9 of 60**, the Kenpachi
   gamble's criterion, from ±2 of 20), **and at least one pairing has never > always** (expected RY). The rule mode (0) should be
   at least as good as the better of the two in both RY and RK (the adaptive choice pays); that is logged, not gated.
@@ -935,3 +940,42 @@ at the final 0.05 / 0.1 **+42 / +31 / +12**; with no roll at all (the old stream
 old stream's small Δ was its own luck (the knobs had been tuned on it): on a fresh stream the awakening is worth ~+10
 wins per 60 against Yamamoto and Kenpachi, an upgrade that predates this batch. Left for a balance pass (the levers of
 §9: `*rukia-awake-mult*`, zero's costs, the CPU's awakening rule).
+
+## The awaken A/B across seed streams (2026-09-28)
+
+**The user's decision (2026-09-28):** 「覺醒偏強沒關係，只要不是強到無法贏就好」: the awakening may be the stronger
+choice; what matters is that not awakening can still win. **The A/B's acceptance is now**: on each of **≥ 3 independent
+seed streams** (60 seeds each), the "never awaken" policy wins **≥ 20 of 60** against each opponent (RY, RK, and RR
+against a P2 on the rule). "Always" may be ahead; there is **no target on the margin** (the old |Δ| ≤ 9 of §9 is
+retired, and so is "at least one pairing has never > always").
+
+**Method.** One 60-seed run is one draw of the RNG stream: any extra CPU roll anywhere (playtest 2's K → L chance)
+reshuffles every later decision, and on the stream the knobs were tuned on (seeds 1–60 of the build before playtest 2) the
+margin read +2 / +3 / −1 while seeds 1–180 of a fresh stream read +42 / +31 / +12. So a result is only trusted when it
+holds on several disjoint seed windows of the same build: debug `39010` / `39020` (P1 Rukia always / never on EVOLUTION,
+P2 on the rule), `30000+k` (the gate plays seeds k+1 .. k+20), `2128` / `2129` / `2130` (RY / RK / RR alone), three runs per
+60-seed stream. A 60-match win count carries about ±4 of noise (one standard deviation near 50 %), so a stream is one
+sample, and a margin tuned on one stream says little about the next.
+
+**Measured** (the build as merged at c39dd9c, unchanged: no knob moved; P1 wins, always / never, always − never):
+
+| Pairing | seeds 201–260 | seeds 401–460 | seeds 601–660 | all 180 | never ≥ 20 on every stream |
+|---|---|---|---|---|---|
+| RY | 35 / **23** (+12) | 33 / **24** (+9) | 37 / **31** (+6) | 105 / 78 (+27) | yes (lowest 23) |
+| RK | 35 / **30** (+5) | 39 / **28** (+11) | 31 / **26** (+5) | 105 / 84 (+21) | yes (lowest 26) |
+| RR | 39 / **34** (+5) | 34 / **28** (+6) | 28 / **31** (−3) | 101 / 93 (+8) | yes (lowest 28) |
+
+The criterion holds, so **nothing was retuned** (the user's instruction: retune only a stream / pairing that fails, with
+the smallest change). The awakening is the stronger choice by ~+9 / +7 / +3 wins per 60 against Yamamoto / Kenpachi /
+herself, which the decision allows; the design's matchup table (§4.6) wanted the Shikai ahead against Yamamoto, and it
+isn't: the tightest cell is "never" vs Yamamoto on seeds 201–260 (23 of 60), about one standard deviation above the line.
+If a later change pushes a stream under 20, the levers found here (a trial before the decision, one stream set each):
+`*rukia-awake-mult*` 1.15 → 1.05 moved RY by about −9 per 180 and RK not measurably; the rest (the field's `:away`, the
+bands' `:taken`) were not finished. **Colder never weaker** holds on these 180 "always" seeds (her damage dealt per second
+in band, −18 / −50 / zero): vs Yamamoto 26.1 / 36.3 / 47.0, vs Kenpachi 20.5 / 28.6 / 56.1, vs Rukia 15.8 / 24.9 / 35.0.
+Time in band −18 59–64 %, −50 30–38 %, zero 3–8 %.
+
+**The seed gate** (debug 2125+k in parallel, seeds 1–20; identical to "Playtest 2: built"): YY 134.7 / YK 136.2 / KK 131.2
+/ RY 134.1 / RK 144.9 / RR 185.6 s, 120 / 120 K.O.; wins P1 9 / 12 / 13 / 13 / 13 / 12.
+
+**Knobs**: unchanged (the table under "The cold-gauge rework: built").
