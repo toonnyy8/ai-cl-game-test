@@ -36,13 +36,24 @@ select screen's difficulty page (up / down picks the row, left / right changes i
 the same table. The bindings are data: `*p1-bindings*` / `*p2-bindings*` in
 `duel/lisp/control.lisp`.
 
-**Flow** (`flow.lisp`, one `duel -> STATE` log line per change): TITLE → MODE (VS CPU / PRACTICE / VS PLAYER
-/ CPU VS CPU / SETTINGS / CONTROLS; the cursor starts on VS CPU) → SELECT (left / right picks P1, confirm, then P2 or the
+**Flow** (`flow.lisp`, one `duel -> STATE` log line per change): TITLE → MODE (VS CPU / ENDLESS / PRACTICE / VS
+PLAYER / CPU VS CPU / SETTINGS / CONTROLS; the cursor starts on VS CPU) → SELECT (left / right picks P1, confirm, then P2 or the
 CPU, then the CPU difficulty and, VS CPU / PRACTICE, the camera; back steps back) → INTRO (a 5 s cinematic; Esc or confirm
 skips) → BATTLE (Esc: RESUME / RESTART / CHARACTER SELECT / TITLE, VS CPU also CAMERA; losing focus
 pauses) → FINISH (K.O. or TIME
 cinematic) → RESULTS (REMATCH / CHARACTER SELECT / TITLE after 2.5 s). A menu match is seeded
 from the clock; REMATCH takes a new seed.
+
+**ENDLESS** (2026-09-29, [DUEL_ENDLESS.md](DUEL_ENDLESS.md); `endless-rules.lisp` + `endless.lisp`): one human P1
+against a gauntlet of CPU stages. SELECT: P1 picks, then START < EASY / NORMAL / HARD > (the ramp's floor; the plaza's P2
+is the stage-1 opponent) and, with two hands, the camera. Per stage INTRO → BATTLE → FINISH → **STAGE CLEAR** (flow
+state `:clear`, a `duel -> CLEAR` line: CONTINUE / REVERT (awakened only) / QUIT, input after 1 s) or the run's RESULTS
+(STAGES CLEARED, TIME, BEST, NEW RECORD, the run's totals; NEW RUN / CHARACTER SELECT / TITLE). The pause is RESUME /
+RETIRE (/ CAMERA). One-handed like VS CPU. The opponents come from a seeded bag (every character once per bag, never
+twice in a row); the CPU ramps a difficulty level every two stages to HARD, starts with half / full awakening from 5 /
+7, awakened from 9, Reishi +10 / +20 % from 9 / 12. P1 carries Konpaku + 2 (max 9), Reiatsu and flash step; Reishi and
+the guard gauge are full; Kenpachi's awakened forms all come back as Nozarashi cup 1 at NOME 10. The best record per
+character is saved by the page (`soulduel.endless.<slot>`: slot 2i = stages, 2i + 1 = seconds of roster index i).
 
 **One VS CPU** (2026-09-28, the user's request 「添加『練習模式』與『設定』…後將『one hand vs cpu』與『vs cpu』整合」):
 the separate ONE-HAND VS CPU and HAND rows are gone. VS CPU (and PRACTICE) is one-handed, with the thumb deck, the
@@ -92,11 +103,11 @@ Battle cinematics stay unskippable in PRACTICE too.
 `duel/MANIFEST` order: `package`, `tuning`, `rules`, `control` (plain CL, host-tested), `sounds`,
 `components`, `body`, `kit`, `cinema`, `stage`, `vfx`, `yama-art`, `ken-art`, `rukia-art`, `yama`, `ken`, `rukia`
 (the characters: data, hooks, cinematics), `fighter`, `combat`, `hazards`, `ai`, `camera`, `feedback`,
-`flow`, `hud`, `debug`, `main` (the generic systems; only `debug.lisp` names characters, to set up
-scenes). The module table is in ARCHITECTURE.md. The name-leak check (it must print nothing):
+`flow`, `hud`, `onehand`, `debug`, `endless`, `main` (the generic systems; only `debug.lisp` names characters, to set up
+scenes); `endless-rules` (plain CL, host-tested) follows the characters. The module table is in ARCHITECTURE.md. The name-leak check (it must print nothing):
 
 ```sh
-grep -nE ':ya-|:ke-|:ru-|yama|kenpachi|rukia' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow}.lisp
+grep -nE ':ya-|:ke-|:ru-|yama|kenpachi|rukia' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow,endless-rules,endless}.lisp
 ```
 
 Engine modules the duel was the first user of (moved into the engine by the harvest):
@@ -203,6 +214,7 @@ encoded in the integer.
 | 40000+f / 41000+f / 42000+f | stills of her Kikon 初の舞・月白 / 白霞罸 / the awakening held at frame f (k 11 / 12 / 13; 2211–2213 start them) |
 | 39000+10a+b | the CPUs' awakening, P1 a / P2 b: 0 the kit's `:awaken` rule, 1 always on EVOLUTION, 2 never (her A/B) |
 | 43000+k … 66000+k | her knobs without a rebuild (DUEL_RUKIA.md "Knobs (the rework)"): 43000 `*frost-slow*` k / 100, 44000 `*zero-brace-drain*` k / 10, 45000 `*freeze-touch*`, 46000 `*ru-cool-rate*` k, 47000 `*crack-self*`, 48000 zero's damage × k / 100, 49000 the awakening's melee share, 50000 / 53000 the `:cool` chance / distance, 51000 `*ru-thaw-lock*` k f, 54000 the Shikai's ZONE weight, 55000 zero's warming k / 10, 56000 / 57000 the −50 / −18 walk k / 10, 58000 the Shikai's damage, 60000 / 61000 the Shikai's / the bands' damage taken × k / 100, 62000 / 63000 `*ru-block-cool*` / `*ru-hit-warm*` k / 100, 65000 zero's field `:away` k / 100, 66000 `*field-floor*` k / 100 (every gate row is followed by a `duel band` line per awakened Rukia side) |
+| 80000+100c+n / 80980 / 80981 / 80982+k / 80990+p / 80992+p | ENDLESS (DUEL_ENDLESS.md §8): a debug run of roster c from stage n (seed 1, no record); clear the stage now; P1's Bankai (cup 3, Konpaku 4); P1 in his k-th form, then the clear; the autopilot (P1 a HARD CPU, policy p 0 CONTINUE / 1 REVERT) over every character × seeds 1–20 / once (P1's pick, seed 1) |
 | 32000+k … 38000+k | the Bankai's knobs without a rebuild: `*arm-self*` (32000), `*arm-burst-self*` (33000), `*arm-crack*` (34000) = k; the entry rule's `:p` = k / 100 (37000), `:own-konpaku` = k (38000) |
 
 Most scenario commands (2200–2319) first make sure the right battle runs (`ensure-battle`: a new
@@ -225,6 +237,7 @@ apart (`place`).
 | `duel page: coarse T hand RIGHT settings (0 0 2 2 0)` | startup: the device kind and the saved SETTINGS (option indices, `*settings*` order) |
 | `duel setting HAND LEFT` | a SETTINGS row changed (saved) |
 | `duel practice DUMMY  GUARD ALL`, `duel practice reset`, `duel practice K.O. -> reset` | a PRACTICE option changed, RESET POSITION, a K.O. in PRACTICE (no match end) |
+| `duel endless start seed S P1 c floor d`, `duel endless stage n vs c diff d reishi r awaken a seed s P1 form f konpaku k awaken w meter m`, `duel endless clear n konpaku a->b choice stay form f->g meter m ticks t`, `duel endless over stages n secs t best n2 secs t2 record T`, `duel endless gate P1 c policy p runs r median m stages (…)` | ENDLESS: a run starts, a stage starts (P2's ramp, P1's carry), a STAGE CLEAR choice, the run ends, the autopilot's summary per character |
 | `missing clip :name` | once per clip name the art lacks (the stance plays instead) |
 | `stats: fps … cons/frame … draws … particles … \| ms/frame sim … queue … render … \| BATTLE t … p1 STATE reishi p2 … \| heap … MB \| fx-dropped N` | the engine's 2 s stats line plus the duel's tail |
 
@@ -249,7 +262,10 @@ SwiftShader WebGPU). Every script waits 9 s for startup.
 | `duel-bankai.json` | 44 (`--fixed-dt 16.666667`) | Kenpachi's Bankai (2386+k, DUEL_KEN_BANKAI.md): P from cup 3 with ≤ 4 Konpaku → `P1 BANKAI (konpaku -> 1, -3)` and a dump `BANKAI r1300 k1 … m4 u0`; K K K → `UDE -KE-B-K1 3 left`, `-KE-B-K2 2 left`, `-KE-B-K3 1 left`; the bite `KE-B-BITE -> P2 HIT 120`; TATE-GOTO `KE-B-SPLIT -> P2 HIT 260`; one pip left: `UDE -KE-B-K1 0 left`, then `form KATAUDE` / `ARM BURST` only after that K1's recovery; 片腕 J1 `KE-J1`. Shots `tests/shots/duel-ken-bankai-*.png` (the stance, the bite, TATE-GOTO, the burst, 片腕, the two cinematics' key frames via 35000+f / 36000+f) |
 | `duel-strings.json` | 40 (`--fixed-dt 16.666667`) | the J / K strings by keyboard (2394+k, DUEL_STRINGS.md): Shikai J J J + O → `YA-J1`, `YA-J2`, `YA-J3`, `YA-KIKON` (O-ENDER: no aura, the strike 20 f after the press) `-> P2 HIT 70`; East K K K → `YA-E-K1`, `YA-E-K2`, `YA-E-K3` (the HUD's `攻 x2.2`: his gauge at 30); Kenpachi J K K + O → `KE-J1`, `KE-K2S`, `KE-K3`, `KE-KIKON`; RYOTE J J J and K K J → `KE-R-J1 J2 J3`, `KE-R-K1 K2 J3`; J J J → the kick; **J K J → `KE-J1`, `KE-K2S` and nothing more** (the third press eaten: J / K switch once). Shots `tests/shots/duel-string-{sodebi,o-ender,rakujitsu,tsuki,kick}.png`; the new clips' strips `duel-string-<clip>.png` come from `duel-view-strings.json` (dist/duelview) |
 | `duel-practice.json` | 62 (`--fixed-dt 16.666667`: real-time key timing on a loaded host loses string presses) | SETTINGS and PRACTICE by keyboard (1280×720): `duel -> SETTINGS`, `duel setting HAND LEFT`, `HAND RIGHT`, `CAMERA SIDE`, back to MODE, PRACTICE (`match seed … PRACTICE …`), J J J on the standing dummy (`YA-J1`, `YA-J2`, `YA-J3 -> P2 HIT`, then the dump shows P2 `r1300`: refilled), `duel practice DUMMY  GUARD ALL` (`YA-J1`, `YA-J2 -> P2 BLOCKED`), `DUMMY  GUARD AFTER HIT` (J → `HIT`, a J 0.8 s later → `BLOCKED`), `GAUGES  INFINITE` (the dump: P1 `a300 f100 w100`), CAMERA back to BEHIND (`duel camera`), the HP / KONPAKU rows (`duel practice P1 HP  50%` … `DUMMY KONPAKU  8`; dumps P1 `r650 k4`, P2 `r325 k8`, again after a hit and after `duel practice reset`); no `RESULTS`. Shots `tests/shots/duel-practice-{mode,settings,combo,pause,pause-rows}.png`; `practice-settings-sheet.png` (+ `mobile-practice-*.png`) is the review sheet |
-| `duel-flow.json` | 34 | the menus by keyboard: VS PLAYER (row 2 since PRACTICE; P2 confirms with KP1), skip the intro, pause / resume, pause → CHARACTER SELECT → back to TITLE, then VS CPU HARD; check the `duel ->` lines; shot `duel-flow-vs-cpu-hard.png` |
+| `duel-endless.json` | 150 (`--fixed-dt 16.666667`; add `--timeout 3000` under load) | ENDLESS by keyboard (DUEL_ENDLESS.md): MODE row 1, P1 Kenpachi, START NORMAL; 80980 → `duel -> CLEAR` (not awakened) → CONTINUE; 80987 (KATAUDE) → STAGE CLEAR awakened → REVERT: `clear 2 … choice revert form kataude->base`, then `stage 3 … P1 form base konpaku 9 awaken 100`; 80981 (the Bankai) + 80980 → CONTINUE: `choice stay form bankai->nozarashi meter 10`, `stage 4 … P1 form nozarashi konpaku 3 awaken 0 meter 10`; pause → RETIRE → `duel endless over stages 3 … record T`; NEW RUN → RETIRE → `over stages 0 … best 3`; then the autopilot once (80992): `duel endless over …`, `duel endless gate P1 kenpachi …`. Shots `tests/shots/duel-endless-*.png` |
+| `duel-endless-portrait.json` | 60 (`--mobile --size 390x844 --fixed-dt 16.666667`) | the same by taps, one-handed: MODE row 1, P1 Yamamoto, stage 1 cleared → CONTINUE (tapped), 80985 (BANKAI-WEST) → `CONTINUE  BANKAI-WEST -> BANKAI-EAST` / REVERT (tapped), the pause chip → RETIRE (tapped) → RESULTS. Shots `tests/shots/duel-endless-p-*.png`; `python3 tests/endless-sheet.py` → `duel-endless-sheet.png` |
+| `duel-endless-gate.json` | long (`--fixed-dt 16.666667 --secs 3000`) | the ENDLESS pacing check (80990: every character × seeds 1–20, CONTINUE; 80991 = REVERT): `duel endless gate` lines, the median stages per character |
+| `duel-flow.json` | 34 | the menus by keyboard: VS PLAYER (row 3 since ENDLESS; P2 confirms with KP1), skip the intro, pause / resume, pause → CHARACTER SELECT → back to TITLE, then VS CPU HARD; check the `duel ->` lines; shot `duel-flow-vs-cpu-hard.png` |
 | `duel-perf.json` | 75 | 60 s of real-time CPU vs CPU (4003): the stats lines |
 | `duel-shots.json` | 90 | the screenshot set `tests/shots/duel-*.png`: title, mode, select, intro, neutral, hit, guard break, perfect Hoho, Hellfire, fire wave, Shiranui, Kaka, Meteor, the six cinematics, results, the HUD at 800×450 |
 
@@ -450,13 +466,13 @@ YY 1.9, YK 0.5, KK 0.2 (mostly Yamamoto's Signature / Shiranui once back in his 
 
 ```sh
 E=/media/8tsp/projects/ecl-24.5.10/ecl-emscripten-host/bin/ecl
-$E --norc --load tests/duel-rules-test.lisp      # duel-rules-test: 2261 checks, ALL PASS (2472 before the cold-gauge rework deleted THAW / CRACK)
+$E --norc --load tests/duel-rules-test.lisp      # duel-rules-test: 2350 checks, ALL PASS (2323 before ENDLESS)
 $E --norc --load tests/duel-control-test.lisp    # duel-control-test: 71 checks, ALL PASS
 $E --norc --load tests/input-test.lisp           # input-test: 31 checks, ALL PASS  (engine vpad)
 $E --norc --load tests/cine-test.lisp            # cine-test: 18 checks, ALL PASS   (engine director)
 ```
 
-* **duel-rules-test** loads `tuning`, `rules`, `kit`, `yama`, `ken`, `rukia` over the engine's plain-CL
+* **duel-rules-test** loads `tuning`, `rules`, `kit`, `yama`, `ken`, `rukia`, `endless-rules` over the engine's plain-CL
   `math`, `hitvol`, `input` (DEFCINE stubbed): the triangle and clash matrix; block / whiff
   advantage, including a frame-by-frame replay of every move of every form against its table;
   damage and combo scaling; the contact rule; armour budgets; the J / K strings (DUEL_STRINGS: every form's six routes

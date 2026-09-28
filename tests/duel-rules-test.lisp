@@ -9,7 +9,7 @@
 ;; the character files also hold their hook functions and cinematics: those need the engine, so the
 ;; host skips the cinematics (a no-op DEFCINE) and never calls a hook
 (defmacro duel::defcine (&rest r) (declare (ignore r)) nil)
-(dolist (f '("tuning" "rules" "kit" "yama" "ken" "rukia"))
+(dolist (f '("tuning" "rules" "kit" "yama" "ken" "rukia" "endless-rules"))
   (load (merge-pathnames (format nil "../duel/lisp/~a.lisp" f) *load-truename*)))
 (in-package :duel)
 
@@ -1153,8 +1153,79 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (eq :m50 (temp-band-at 150.0 :m50 :guard)) (eq :m18 (temp-band-at 0.0 :m50 :run))
               (eq :m18 (temp-band-at 10.0 :m18 :move)) (eq :zero (temp-band-at 200.0 :m18 :idle)))))
 
+;; ================================================================ ENDLESS (docs/DUEL_ENDLESS.md, endless-rules.lisp)
+(defun snap (c f &rest kv)
+  (append kv (list :character c :form f :konpaku 5 :reiatsu 123.5 :fs 42.25 :awaken 37.0 :awakened (kit-awakening (kit c f))
+                   :meter 55.0)))
+(defun carry (c f choice &rest kv) (endless-carry (apply #'snap c f kv) choice))
+;; Konpaku + 2, at most 9; Reiatsu and flash step bit-identical; the rest comes from the fresh spawn
+(check (equal '(3 9 9 9) (mapcar (lambda (k) (getf (carry :yamamoto :base :stay :konpaku k) :konpaku)) '(1 7 8 9))))
+(check (every (lambda (cf) (let ((r (carry (first cf) (second cf) :stay)))
+                             (and (eql 123.5 (getf r :reiatsu)) (eql 42.25 (getf r :fs)))))
+              *forms*))
+;; not awakened: the awakening gauge and the kit meter (Inferno) kept; Hellfire ends like its timer: the base, meter 0
+(let ((r (carry :yamamoto :base :stay)))
+  (check (and (eq :base (getf r :form)) (eql 37.0 (getf r :awaken)) (null (getf r :awakened)) (eql 55.0 (getf r :meter)))))
+(let ((r (carry :yamamoto :hellfire :stay)))
+  (check (and (eq :base (getf r :form)) (eql 37.0 (getf r :awaken)) (zerop (getf r :meter)))))
+;; revert, every awakened form of every character: the base, not awakened, the awakening full, the meter 0
+(check (every (lambda (cf) (let ((r (carry (first cf) (second cf) :revert)))
+                             (and (eq :base (getf r :form)) (null (getf r :awakened)) (= *awaken-max* (getf r :awaken))
+                                  (zerop (getf r :meter)))))
+              (remove-if-not (lambda (cf) (kit-awakening (apply #'kit cf))) *forms*)))
+;; stay: Yamamoto East / West -> East; every Kenpachi awakened form -> cup 1 at NOME 10 (the user's decision 2026-09-29:
+;; no cup kept); Rukia's bands -> -18 at cold 0
+(check (every (lambda (f) (eq :bankai-east (getf (carry :yamamoto f :stay) :form))) '(:bankai-east :bankai-west)))
+(check (every (lambda (f) (let ((r (carry :kenpachi f :stay)))
+                            (and (eq :nozarashi (getf r :form)) (= *nome-awaken* (getf r :meter)) (getf r :awakened)
+                                 (zerop (getf r :awaken)))))
+              '(:nozarashi :ryote :nomihose :bankai :kataude)))
+(check (every (lambda (f) (let ((r (carry :rukia f :stay))) (and (eq :m18 (getf r :form)) (zerop (getf r :meter)))))
+              '(:m18 :m50 :zero)))
+(check (eq :base (getf (carry :kenpachi :base :stay) :form)))
+;; generic guards (a new character's forms must satisfy them): every stay target of an awakened form is awakened, none
+;; is any kit's :bankai-form or its arm's :to, and a timed form's stay target is not timed
+(let ((targets (loop for cf in *forms* when (kit-awakening (apply #'kit cf))
+                     collect (list (first cf) (endless-stay-form (apply #'kit cf)))))
+      (second-forms (loop for cf in *forms* for k = (apply #'kit cf)
+                          when (kit-bankai-form k) collect (list (first cf) (kit-bankai-form k))
+                          when (kit-pips k) collect (list (first cf) (getf (kit-pips k) :to)))))
+  (check (every (lambda (ct) (kit-awakening (apply #'kit ct))) targets))
+  (check (notany (lambda (ct) (member ct second-forms :test #'equal)) targets))
+  (check (every (lambda (cf) (null (kit-duration (kit (first cf) (endless-stay-form (apply #'kit cf))))))
+                (remove-if-not (lambda (cf) (kit-duration (apply #'kit cf))) *forms*))))
+;; §5: a Bankai at Konpaku 4 leaves 1, the clear gives 3, and cup 3 may take the Bankai again at 3
+(check (and (= 3 (getf (carry :kenpachi :bankai :stay :konpaku 1) :konpaku)) (bankai-allowed-p t 3)))
+;; the ramp: the difficulty never falls and clamps at HARD, equal from 12 on; the awakening and Reishi never fall
+(check (every (lambda (fl)
+                (loop for n from 1 to 40
+                      for d = (position (endless-difficulty fl n) '(:easy :normal :hard)) and d0 = -1 then d
+                      always (and d (>= d d0)) finally (return t)))
+              '(:easy :normal :hard)))
+(check (and (eq :hard (endless-difficulty :easy 5)) (eq :normal (endless-difficulty :easy 3)) (eq :hard (endless-difficulty :normal 3))
+            (eq :easy (endless-difficulty :easy 1)) (eq :hard (endless-difficulty :hard 1))
+            (every (lambda (fl) (loop for n from 12 to 60 always (equal (endless-ramp n) (endless-ramp 12)))) '(:easy :normal :hard))))
+(check (loop for n from 1 to 40 for r = (endless-ramp n) and r0 = (endless-ramp 1) then r
+             always (and (>= (third r) (third r0)) (or (fourth r) (not (fourth r0))) (>= (fifth r) (fifth r0)))))
+(check (equal '(0 50 100 100) (mapcar (lambda (n) (third (endless-ramp n))) '(4 5 7 9))))
+(check (and (not (fourth (endless-ramp 8))) (fourth (endless-ramp 9)) (= 110 (fifth (endless-ramp 11))) (= 120 (fifth (endless-ramp 12)))))
+;; the bag: each bag the roster once; never the same opponent twice in a row (seeds 1-200); a seed replays; seeds differ
+(flet ((run (seed n roster) (loop for s from 1 to n collect (endless-opponent seed s roster))))
+  (dolist (roster (list *roster* '(:a :b) '(:a :b :c :d :e)))
+    (let ((n (length roster)))
+      (check (loop for seed from 1 to 200 for r = (run seed (* 6 n) roster)
+                   always (and (loop for b below 6 always (null (set-exclusive-or (subseq r (* b n) (* (1+ b) n)) roster)))
+                               (loop for (a b) on r while b never (eq a b)))))))
+  (check (equal (run 7 12 *roster*) (run 7 12 *roster*)))
+  (check (> (length (remove-duplicates (loop for seed from 1 to 20 collect (run seed 3 *roster*)) :test #'equal)) 2)))
+(check (/= (endless-stage-seed 1 2) (endless-stage-seed 1 3) (endless-stage-seed 2 2)))
+;; the record: more stages wins, equal stages less time, an empty record (0) loses to any stage, 0 stages never writes
+(check (and (endless-better-p 3 500 2 100) (not (endless-better-p 2 50 3 900)) (endless-better-p 3 400 3 500)
+            (not (endless-better-p 3 500 3 500)) (not (endless-better-p 3 600 3 500)) (endless-better-p 1 999 0 0)
+            (not (endless-better-p 0 10 0 0))))
+
 ;; no character names in the generic files (design-v1 §12)
-(dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow"))
+(dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow" "endless-rules" "endless"))
   (with-open-file (in (merge-pathnames (format nil "../duel/lisp/~a.lisp" f) *load-truename*))
     (check (loop for line = (read-line in nil) while line
                  never (some (lambda (w) (search w line)) '(":ya-" ":ke-" ":ru-" "yama" "kenpachi" "rukia"))))))

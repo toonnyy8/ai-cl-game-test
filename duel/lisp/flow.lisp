@@ -1,5 +1,5 @@
-;;;; flow.lisp — the screens (design-v1 §6): TITLE → MODE (VS CPU / PRACTICE / VS PLAYER / CPU VS CPU / SETTINGS /
-;;;; CONTROLS) → SELECT (P1, then P2 / the CPU, then difficulty and, VS CPU / PRACTICE, the camera; both models on the
+;;;; flow.lisp — the screens (design-v1 §6): TITLE → MODE (VS CPU / ENDLESS / PRACTICE / VS PLAYER / CPU VS CPU /
+;;;; SETTINGS / CONTROLS; ENDLESS: endless.lisp, its STAGE CLEAR is the flow state :clear) → SELECT (P1, then P2 / the CPU, then difficulty and, VS CPU / PRACTICE, the camera; both models on the
 ;;;; plaza) → INTRO → BATTLE (pause: RESUME / RESTART / CHARACTER SELECT / TITLE, VS CPU also CAMERA; PRACTICE: RESUME /
 ;;;; RESET POSITION / DUMMY / HP REFILL / GAUGES / P1 HP / P1 KONPAKU / DUMMY HP / DUMMY KONPAKU / CHARACTER SELECT /
 ;;;; TITLE / CAMERA) → FINISH (K.O. / TIME) → RESULTS
@@ -15,12 +15,12 @@
 
 (defparameter *difficulties* '(:easy :normal :hard))
 
-(defvar *flow* :title "Screen: :title :mode :settings :controls :select :intro :battle :finish :results")
+(defvar *flow* :title "Screen: :title :mode :settings :controls :select :intro :battle :finish :results :clear (ENDLESS)")
 (defvar *ft* 0.0 "Real seconds on the current screen.")
 (defvar *menu* 0)
 (defvar *paused* nil)
-(defvar *mode* :vs-cpu "Match mode: :vs-cpu :practice :vs-player :cpu-cpu")
-(defun vs-cpu-p () "A human P1 against the CPU: VS CPU or PRACTICE (the camera option, the one-hand deck)." (member *mode* '(:vs-cpu :practice)))
+(defvar *mode* :vs-cpu "Match mode: :vs-cpu :endless :practice :vs-player :cpu-cpu")
+(defun vs-cpu-p () "A human P1 against the CPU: VS CPU, ENDLESS or PRACTICE (the camera option, the one-hand deck)." (member *mode* '(:vs-cpu :endless :practice)))
 (defvar *picks* (list (first *roster*) (second *roster*)) "Characters of P1 and P2 (kit.lisp *ROSTER*): Yamamoto, Kenpachi.")
 (defvar *difficulty* :normal)
 (defvar *cam-behind* t "The CAMERA setting of VS CPU / PRACTICE: BEHIND (P1's shoulder, the default) or SIDE (the pair camera).")
@@ -105,6 +105,7 @@ always behind when one-handed (the portrait camera; the setting is kept); VS PLA
 (defun go-select ()
   (setf *paused* nil *select-phase* 0)
   (abort-cine)
+  (when (eq *mode* :endless) (endless-new-seed))         ; the run's stage-1 opponent stands on the plaza
   (spawn-pair)
   (dolist (e (list *p1* *p2*)) (setf (fighter-state (fighter e)) :intro))
   (play-music :music-title)
@@ -128,6 +129,7 @@ always behind when one-handed (the portrait camera; the setting is kept); VS PLA
     (setf (gauges-konpaku (gauges e)) *konpaku-start*)
     (setf (fighter-state (fighter e)) :intro))
   (when (eq *mode* :practice) (practice-dummy!) (practice-set! *p1*) (practice-set! *p2*))
+  (when (eq *mode* :endless) (endless-apply!))            ; P1's carry, P2's ramp
   (play-music :music 0.2)
   (log-msg "duel match seed ~d ~a ~a vs ~a ~a" *match-seed* *mode* (first *picks*) (second *picks*) *difficulty*)
   (set-flow :intro)
@@ -176,7 +178,8 @@ both fighters' Konpaku and Reishi at their practice rows (PRACTICE-SET!)."
       (refresh-look e)
       (play-clip e (if won (or (kit-win (fighter-kit f)) (kit-stance (fighter-kit f))) :sh-lose) :blend 8)))
   (face-each-other *p1* *p2*)
-  (music-stop 1.0) (setf *music* nil))
+  (music-stop 1.0) (setf *music* nil)
+  (when (eq *mode* :endless) (endless-stage-end)))        ; a win: STAGE CLEAR; else the run's results
 
 (defun match-system ()
   "The match timer (sim frames) and time-up; PRACTICE: no timer, PRACTICE-STEP instead."
@@ -248,7 +251,9 @@ end) and, HP REFILL AUTO, its Reishi once it is out of its hit / block reactions
            (play-sfx :confirm)
            (let ((e (if (zerop side) *p1* *p2*)))
              (play-clip e (or (kit-intro (kit-of e)) (kit-stance (kit-of e))) :blend 4))
-           (setf *select-phase* (if (and (= *select-phase* 1) (eq *mode* :vs-player)) 3 (1+ *select-phase*))
+           (setf *select-phase* (cond ((and (= *select-phase* 1) (eq *mode* :vs-player)) 3)
+                                      ((eq *mode* :endless) 2)    ; ENDLESS: no P2 pick (the bag)
+                                      (t (1+ *select-phase*)))
                  *menu* 0)))
         (2 (let ((cam (and (vs-cpu-p) (not *one-hand*))))   ; row 0 the difficulty, row 1 (VS CPU) the camera
              (when (and cam (or (menu-up-p) (menu-down-p))) (setf *menu* (- 1 *menu*)) (play-sfx :select))
@@ -258,12 +263,14 @@ end) and, HP REFILL AUTO, its Reishi once it is out of its hit / block reactions
                    (setf *difficulty* (cycle *difficulty* *difficulties* (if (or (menu-left-p) (eql (tap-third) -1)) -1 1))))
                (play-sfx :select)))
            (when (or (confirm-p) (eql (tap-third) 0)) (play-sfx :confirm) (setf *select-phase* 3))))
-      (when (>= *select-phase* 3) (new-seed) (start-match))
+      (when (>= *select-phase* 3) (if (eq *mode* :endless) (endless-start) (progn (new-seed) (start-match))))
       (when (back-p)
         (play-sfx :back)
-        (if (zerop *select-phase*) (go-mode) (decf *select-phase*))))))
+        (cond ((zerop *select-phase*) (go-mode))
+              ((eq *mode* :endless) (setf *select-phase* 0))
+              (t (decf *select-phase*)))))))
 
-(defparameter *mode-menu* '("VS CPU" "PRACTICE" "VS PLAYER" "CPU VS CPU" "SETTINGS" "CONTROLS"))
+(defparameter *mode-menu* '("VS CPU" "ENDLESS" "PRACTICE" "VS PLAYER" "CPU VS CPU" "SETTINGS" "CONTROLS"))
 
 (defun settings-items ()
   "The SETTINGS rows as shown (label and chosen option), then BACK."
@@ -279,13 +286,15 @@ end) and, HP REFILL AUTO, its Reishi once it is out of its hit / block reactions
   (let ((row (nth i *settings*))) (set-setting (first row) (mod (+ (setting (first row)) dir) (length (third row))))))
 
 (defun pause-keys ()
-  "The pause menu's rows: PRACTICE's options replace RESTART; VS CPU / PRACTICE with two hands add the CAMERA toggle."
-  (append (if (eq *mode* :practice) '(:resume :reset :dummy :refill :gauges :p1-hp :p1-kon :dm-hp :dm-kon) '(:resume :restart))
-          '(:select :title)
+  "The pause menu's rows: PRACTICE's options replace RESTART; ENDLESS has RETIRE only (the run's results are one row
+away from the rest); VS CPU / ENDLESS / PRACTICE with two hands add the CAMERA toggle."
+  (append (case *mode* (:practice '(:resume :reset :dummy :refill :gauges :p1-hp :p1-kon :dm-hp :dm-kon))
+                (:endless '(:resume :retire)) (t '(:resume :restart)))
+          (unless (eq *mode* :endless) '(:select :title))
           (when (and (vs-cpu-p) (not *one-hand*)) '(:camera))))
 (defun pause-label (k)
   (case k
-    (:resume "RESUME") (:restart "RESTART") (:select "CHARACTER SELECT") (:title "TITLE") (:camera (camera-label))
+    (:resume "RESUME") (:restart "RESTART") (:retire "RETIRE") (:select "CHARACTER SELECT") (:title "TITLE") (:camera (camera-label))
     (:reset "RESET POSITION") (:dummy (format nil "DUMMY  ~a" (cdr (assoc *dummy* *dummies*))))
     (:refill (if *hp-refill* "HP REFILL  AUTO" "HP REFILL  OFF")) (:gauges (if *gauges-inf* "GAUGES  INFINITE" "GAUGES  NORMAL"))
     ((:p1-hp :p1-kon :dm-hp :dm-kon)
@@ -296,7 +305,7 @@ end) and, HP REFILL AUTO, its Reishi once it is out of its hit / block reactions
 (defun pause-do (k dir)
   "Pause row K chosen (DIR 1), or an option row moved by left / right (DIR -1 / 1)."
   (case k
-    (:resume (setf *paused* nil)) (:restart (start-match)) (:select (go-select)) (:title (go-title)) (:camera (toggle-cam))
+    (:resume (setf *paused* nil)) (:restart (start-match)) (:retire (endless-retire)) (:select (go-select)) (:title (go-title)) (:camera (toggle-cam))
     (:reset (practice-reset))
     (:dummy (setf *dummy* (cycle *dummy* (mapcar #'car *dummies*) dir)) (practice-dummy!))
     (:refill (setf *hp-refill* (not *hp-refill*))) (:gauges (setf *gauges-inf* (not *gauges-inf*)))
@@ -316,18 +325,18 @@ end) and, HP REFILL AUTO, its Reishi once it is out of its hit / block reactions
               (play-sfx :confirm) (go-mode)))
     (:mode (let ((i (menu-nav (length *mode-menu*))))
              (case i
-               ((0 1 2 3) (setf *mode* (nth i '(:vs-cpu :practice :vs-player :cpu-cpu))   ; VS CPU / PRACTICE: one-handed
-                                *one-hand* (and (< i 2) (one-hand-effective-p)))        ; when the setting is in effect
-                          (go-select))
-               (4 (set-flow :settings))
-               (5 (set-flow :controls))))
+               ((0 1 2 3 4) (setf *mode* (nth i '(:vs-cpu :endless :practice :vs-player :cpu-cpu))   ; VS CPU / ENDLESS /
+                                  *one-hand* (and (< i 3) (one-hand-effective-p)))   ; PRACTICE: one-handed when the
+                            (go-select))                                              ; setting is in effect
+               (5 (set-flow :settings))
+               (6 (set-flow :controls))))
            (when (back-p) (play-sfx :back) (go-title)))
     (:settings (let* ((n (length *settings*)) (i (menu-nav (1+ n))) (d (option-dir)))   ; confirm / a tap: the next option
-                 (cond ((eql i n) (go-mode 4))                                           ; BACK
+                 (cond ((eql i n) (go-mode 5))                                           ; BACK
                        (i (settings-step i 1))
                        ((and d (< *menu* n)) (play-sfx :select) (settings-step *menu* d))))
-               (when (back-p) (play-sfx :back) (go-mode 4)))
-    (:controls (when (or (back-p) (confirm-p) (tap-p)) (play-sfx :back) (go-mode 5)))
+               (when (back-p) (play-sfx :back) (go-mode 5)))
+    (:controls (when (or (back-p) (confirm-p) (tap-p)) (play-sfx :back) (go-mode 6)))
     (:select (select-update))
     ((:intro :finish) (when (and *cine* (or (pause-p) (confirm-p) (tap-p))) (skip-cine)))
     (:battle
@@ -342,8 +351,10 @@ end) and, HP REFILL AUTO, its Reishi once it is out of its hit / block reactions
            ((or (pause-p) (focus-lost-p) (touch-pause-p)
                 (and *one-hand* (not (portrait-p))))              ; ONE-HAND turned to landscape: ROTATE TO PORTRAIT
             (setf *paused* t *menu* 0) (play-sfx :select))))
-    (:results (when (> *ft* 2.5)                         ; a masher doesn't skip the results
-                (case (menu-nav 3)
-                  (0 (new-seed) (start-match))
-                  (1 (go-select))
-                  (2 (go-title)))))))
+    (:clear (endless-clear-update))
+    (:results (cond ((eq *mode* :endless) (endless-results-update))
+                    ((> *ft* 2.5)                        ; a masher doesn't skip the results
+                     (case (menu-nav 3)
+                       (0 (new-seed) (start-match))
+                       (1 (go-select))
+                       (2 (go-title))))))))

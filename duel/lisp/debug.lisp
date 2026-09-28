@@ -913,6 +913,7 @@ move-beat choices of DRAW-FIGHTER."
         ((<= 2300 c 2399) (force-special (- c 2300)))
         ((= c 2400) (setf *god* (not *god*)))
         ((<= 2600 c 2699) (setf *red-threshold* (/ (- c 2600) 100.0)))
+        ((<= 80000 c 80999) (endless-debug (- c 80000)))    ; ENDLESS (endless.lisp)
         ((<= 20000 c 20999) (setf *ward-mult* (/ (- c 20000) 100.0)))
         ((<= 21000 c 21999) (setf *pierce-max* (/ (- c 21000) 100.0)))
         ((<= 22000 c 22999) (setf *gg-regen* (/ (- c 22000) 10.0)))

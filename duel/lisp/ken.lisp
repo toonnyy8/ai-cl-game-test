@@ -160,6 +160,7 @@
 (defkit :kenpachi :nozarashi :inherit :base    ; cup 1, KATATE: one hand, as the awakening leaves him
   :awakening t :mult *nozarashi-mult* :startup-add *nozarashi-startup* :reach-mult *nozarashi-reach*
   :passives (:projectile-cut) :heal *nozarashi-heal* :form-name "KATATE" :kikon-konpaku 2
+  :endless-form :nozarashi                      ; ENDLESS: every cup (and the Bankai, inheriting it) stays as cup 1, NOME 10
   :weapon :nozarashi :stance :ke-n-stance :aura :reiatsu :swing-sfx :whoosh-cleaver
   :enter-clips (:ke-release :ke-nome) :cine ken-nozarashi-cine :respect-callout "OMOSHIREE!"
   :meter (:name "NOME" :max *nome-max* :start *nome-awaken*
@@ -237,7 +238,7 @@
 ;;; 片腕 KATAUDE (the arm burst): the rest of the match. The base moves at reach x0.7 (the ruined arm can't extend); the
 ;;; kick, the Breaker and O (CHARGE) as written; x1.0; U is a guard again; Kikon 3 (the universal awakened count)
 (defkit :kenpachi :kataude :inherit :base
-  :awakening t :form-name "KATAUDE" :kikon-konpaku 3 :mult 1.0 :reach-mult *kataude-reach*
+  :awakening t :form-name "KATAUDE" :kikon-konpaku 3 :mult 1.0 :reach-mult *kataude-reach* :endless-form :nozarashi
   :body :kenpachi-oni :weapon :ke-broken :aura nil :hide (:crack-1 :crack-2 :crack-3 :crack-4) :swing-sfx :whoosh-cleaver
   :stance :ke-b-stance :run-clips (:ke-b-run :ke-b-skate-b :ke-b-slide-r :ke-b-slide-l)   ; still the oni (the feral pass)
   :commands (:breaker :ke-breaker :kikon :ke-kikon)

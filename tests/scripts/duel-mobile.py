@@ -25,7 +25,7 @@ if insets: s.append({"at": 6.8, "eval": "globalThis.gamePage.testInsets = [47, 3
 ev(6.9, 2106)
 if not base: ev(6.95, 2700)                               # the framing / text probe on
 tap(7.0, 195, 500); shot(7.6, "mode")                        # title -> MODE
-tap(8.0, 195, mode_y + 5 * row_h); shot(8.6, "gestures")     # CONTROLS: the gesture card
+tap(8.0, 195, mode_y + 6 * row_h); shot(8.6, "gestures")     # CONTROLS (row 6): the gesture card
 tap(9.2, 195, 600)                                           # back to MODE
 tap(10.0, 195, mode_y)                                       # ONE-HAND VS CPU
 shot(10.6, "select")

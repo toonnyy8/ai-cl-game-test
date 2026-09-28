@@ -664,7 +664,10 @@ add a practice mode and settings (the handheld mode and its switch, etc.), then 
 choices below were made for the user as defaults; each is a value the user can revise.
 
 **MODE** is now VS CPU / PRACTICE / VS PLAYER / CPU VS CPU / SETTINGS / CONTROLS, the same on every device; the cursor
-starts on VS CPU (row 0), so a touch phone held upright still lands on it. The ONE-HAND VS CPU and HAND rows are gone.
+starts on VS CPU (row 0), so a touch phone held upright still lands on it. (2026-09-29: ENDLESS joined as row 1,
+[DUEL_ENDLESS.md](DUEL_ENDLESS.md); it is one-handed like VS CPU and PRACTICE, and the rows below it moved down one.
+Its portrait battle HUD adds `STAGE n` at 1.2 s, left-aligned under P2's block, clear of the pause chip on the right;
+STAGE CLEAR and its RESULTS use the portrait results card, their rows at 0.8 h.) The ONE-HAND VS CPU and HAND rows are gone.
 
 **One-hand is decided by the setting ONE-HAND MODE** (`control.lisp` `one-hand-on-p`, `onehand.lisp`
 `one-hand-effective-p`), read when VS CPU or PRACTICE is chosen:

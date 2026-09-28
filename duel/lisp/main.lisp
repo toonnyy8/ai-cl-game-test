@@ -367,7 +367,7 @@ of the screen (the stats take the left third); select: both fighters from the fr
   (case *flow*
     ((:title :mode :settings :controls) (let ((a (* 0.05 (elapsed-time))))
                                 (camera-look-at (* 11 (sin a)) 3.2 (* 11 (cos a)) 0 1.4 0)))
-    (:results (let* ((w (if (eql *winner* 1) *p2* *p1*)) (p (pos-of w)) (yaw (yaw-of w))
+    ((:results :clear) (let* ((w (if (eql *winner* 1) *p2* *p1*)) (p (pos-of w)) (yaw (yaw-of w))
                      (fx (fwd-x yaw)) (fz (fwd-z yaw)) (rx (- fz)) (rz fx))   ; his forward, his right
                 (if (portrait-p)                         ; portrait: from his front, in the top part (the card below)
                     (progn (camera-look-at (+ (aref p 0) (* 5.2 fx) (* 1.2 rx)) 1.6 (+ (aref p 2) (* 5.2 fz) (* 1.2 rz))
