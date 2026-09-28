@@ -772,7 +772,8 @@ modules): YY 168.1 s (149–204), YK 154.8 s (122–176), KK 150.3 s (117–177)
 
 ## 8. Flow and screens
 
-TITLE (press start) → MODE: VS CPU / PRACTICE / VS PLAYER / CPU VS CPU / SETTINGS / CONTROLS (2026-09-28: PRACTICE,
+TITLE (the logo, press start and the credit; the "YAMAMOTO GENRYUSAI VS ZARAKI KENPACHI" matchup line was removed
+at the user's request on 2026-09-29, the roster has grown past two) → MODE: VS CPU / PRACTICE / VS PLAYER / CPU VS CPU / SETTINGS / CONTROLS (2026-09-28: PRACTICE,
 SETTINGS, and ONE-HAND VS CPU merged into VS CPU: one-handed wherever the ONE-HAND setting is in effect; DUEL_GAMEPLAY.md
 "Flow", DUEL_MOBILE_DESIGN.md §16) → SELECT (P1 picks, then
 P2 or the CPU, then the CPU difficulty EASY / NORMAL / HARD; both models stand on the plaza;
@@ -990,3 +991,14 @@ user proves the abstraction). This keeps parallel character branches from collid
 never A/B passes when, on **each of at least 3 independent seed streams** (60 seeds each), the "never awaken" policy
 still wins **at least 20 of 60** against every opponent. The earlier "|always − never| ≤ 9" goal is dropped. A single
 stream is not enough: the knobs overfit the stream they are tuned on.
+
+## Playtest decision: faster NOME drain (the user, 2026-09-29)
+
+「稍微加快劍八 2、3 杯的下降速度……大概加快 1.5 倍」, then 「2、3 杯再降更快一點」: Kenpachi's NOME cups drain **2×**
+the old rate: RYOTE (cup 2) **3.0/s** after the 180 f pause (`*nome-drain-t2*` 1.5 → 3.0, the pre-guard-v3 rate),
+NOMIHOSE (cup 3) **20/s** always (`*nome-drain-t3*` 10 → 20). The §4 table rows above keep their history; these are the
+current values.
+Measured (seed gate, 20 seeds per pairing, all K.O.): YY 133.3 s (P1 9 / P2 11), YK 133.0 s (Yamamoto 15 / Kenpachi 5),
+KK 133.8 s, RY 133.9 s (Rukia 13), RK 142.7 s (Rukia 14 / Kenpachi 6), RR ~186 s. Kenpachi's CPU wins dropped (YK 8 → 5,
+RK 7 → 6 of 20): the faster drain makes the high cups harder to hold. Compensation knobs if he should win more: the cup 2 / 3
+damage (`*ryote-mult*` 1.15, `*nomihose-mult*` 1.20) or the NOME gains.

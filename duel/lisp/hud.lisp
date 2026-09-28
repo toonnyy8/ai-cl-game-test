@@ -298,8 +298,8 @@ flashes it). LOCK: the THAW lock after a CRACK (grey). CRACK 0..1: a BLOOD hairl
       (%hrect x (+ y (* 0.4f0 h)) w (f-max 1f0 (* 0.25f0 h)) 0.82f0 0.06f0 0.11f0 crack))
     nil))
 
-(declaim (type f32vec *crack-t*))
-(defvar *crack-t* (make-f32 2) "Per side: FX-CLOCK of her last CRACK (the cold gauge's BLOOD hairline).")
+(declaim (type f32vec *refused-t*))
+(defvar *refused-t* (make-f32 2) "Per side: FX-CLOCK of the last refused L press (its bar, or the cold gauge's cost, flashes).")
 
 (defun hud-temp (e kit x y w h right tm)
   "Draw E's cold gauge (KIT has a :temp meter) at (X Y), W x H: HUD-TEMP's numbers from the gauges and the form."
@@ -386,8 +386,6 @@ PIPS-SHATTER), and dim embers for the lost ones; PITCH radii apart (the landscap
             (%hbar bx y sw sh fill right 0.6f0 0.92f0 1f0 1f0 0.25f0 0.65f0 1f0 1f0)
             (%hbar bx y sw sh fill right 0.2f0 0.45f0 0.7f0 1f0))))))
 
-(declaim (type f32vec *refused-t*))
-(defvar *refused-t* (make-f32 2) "Per side: FX-CLOCK of the last refused L press (its bar, or the cold gauge's cost, flashes).")
 
 (defun hud-refused (e cmd)
   "E pressed CMD while it was cooling or short of cold (the :refused event): L's bar flashes."
@@ -893,15 +891,12 @@ its rows and shrinks its text to fit); *MENU* is highlighted."
 
 (defun hud-title (w h s)
   (ui-big-text "SOUL DUEL" (floor w 2) (* 0.34 h) (* 9 s) '(1 0.92 0.8 1) '(0.7 0.18 0.05 1) s)
-  (when (portrait-p)                                    ; portrait: the matchup on two lines, the credit on two
-    (ui-text "YAMAMOTO GENRYUSAI" (floor w 2) (* 0.44 h) :scale (fit-scale "YAMAMOTO GENRYUSAI" (* 2 s) (* 0.92 w)) :align :center :color *ember* :shadow t)
-    (ui-text "VS  ZARAKI KENPACHI" (floor w 2) (+ (* 0.44 h) (* 11 s)) :scale (fit-scale "VS  ZARAKI KENPACHI" (* 2 s) (* 0.92 w)) :align :center :color *ember* :shadow t)
+  (when (portrait-p)                                    ; portrait: the credit on two lines
     (when (< (mod (fx-clock) 1.2) 0.8)
       (ui-text "TAP TO START" (floor w 2) (* 0.68 h) :scale (* 2 s) :align :center :color *white* :shadow t))
     (ui-text "A FAN STUDY INSPIRED BY" (floor w 2) (- h (* 30 s)) :scale s :align :center :color '(0.93 0.93 0.96 1) :shadow t)
     (ui-text "BLEACH: REBIRTH OF SOULS" (floor w 2) (- h (* 20 s)) :scale s :align :center :color '(0.93 0.93 0.96 1) :shadow t)
     (return-from hud-title))
-  (ui-text "YAMAMOTO GENRYUSAI  VS  ZARAKI KENPACHI" (floor w 2) (* 0.46 h) :scale (* 2 s) :align :center :color *ember* :shadow t)
   (when (< (mod (fx-clock) 1.2) 0.8)
     (ui-text "PRESS START" (floor w 2) (* 0.68 h) :scale (* 2 s) :align :center :color *white* :shadow t))
   (ui-text "A FAN STUDY INSPIRED BY BLEACH: REBIRTH OF SOULS" (floor w 2) (- h (* 16 s)) :scale s :align :center

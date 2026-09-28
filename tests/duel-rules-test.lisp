@@ -810,10 +810,10 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
   ;; 1. nome-gain: three sources only
   (check (and (~= (nome-gain 125 0 0 gains) 10.0) (~= (nome-gain 0 200 0 gains) 24.0) (~= (nome-gain 0 0 62 gains) 18.6)
               (~= (nome-gain 0 18 17 gains) (+ 2.16 5.1))))
-  ;; 2. meter-drain: cup 1 never, cup 2 1.5/s after 180 idle frames (guard v3: was 3/s after 60), cup 3 10/s from the
-  ;; first frame (a gain doesn't pause it)
+  ;; 2. meter-drain: cup 1 never, cup 2 3/s after 180 idle frames (the user 2026-09-29: x2 of guard v3's 1.5), cup 3
+  ;; 20/s from the first frame (a gain doesn't pause it)
   (flet ((dr (i nome idle) (let ((r (nth i ladder))) (meter-drain nome (second r) (third r) idle))))
-    (check (and (~= (dr 0 30.0 999) 30.0) (~= (dr 1 50.0 179) 50.0) (~= (dr 1 50.0 180) 49.975) (~= (dr 2 90.0 0) (- 90.0 (/ 10.0 60)))
+    (check (and (~= (dr 0 30.0 999) 30.0) (~= (dr 1 50.0 179) 50.0) (~= (dr 1 50.0 180) 49.95) (~= (dr 2 90.0 0) (- 90.0 (/ 20.0 60)))
                 (~= (dr 2 0.05 0) 0.0))))
   ;; 3. ladder-rung: hysteresis, several steps at once
   (check (and (= 0 (ladder-rung 39.9 0 ladder)) (= 1 (ladder-rung 40.0 0 ladder)) (= 1 (ladder-rung 25.0 1 ladder))

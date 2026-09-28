@@ -517,7 +517,7 @@ frame: 0 B); N and WHITE literal fixnums."
   `(let* ((x ,x) (y ,y) (z ,z) (h ,h) (k ,k) (pal ,pal) (rad ,rad) (w ,w) (e (camera-eye *camera*)) (ex (- (aref e 0) x)) (ez (- (aref e 2) z)) (el (f-max 0.01f0 (f-sqrt (+ (* ex ex) (* ez ez)))))
          (dr (drawing-no)) (pk (toon-a pal (* 0.95f0 k))) (step (/ 6.2831855f0 ,(float n 1f0)))
          (wpal (+ +pal-hit+ (* 32f0 (i->f (f->i (/ pal 32f0)))))))   ; the white cores' palette, the same glass level
-    (declare (single-float x y z h k pal rad w) (type f32vec e) (single-float ex ez el dr pk step wpal))
+    (declare (single-float x y z h k pal rad w) (type f32vec e) (single-float ex ez el dr pk step wpal) (ignorable wpal))
     (dotimes (i ,n)
       (let* ((f (i->f i)) (ang (+ (* step f) (* 0.3f0 (hash01 f 1.3f0))))
              (c (f-cos ang)) (sn (f-sin ang)) (front (/ (+ (* ex c) (* ez sn)) el)))

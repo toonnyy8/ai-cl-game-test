@@ -55,6 +55,9 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
     (impact-frame :manga 2)
     (announce "COUNTER" :color '(0.82 0.06 0.11 1) :secs 0.6 :small t)))
 
+(declaim (type f32vec *crack-t*))
+(defvar *crack-t* (make-f32 2) "Per side: FX-CLOCK of her last CRACK (the cold gauge's BLOOD hairline).")
+
 (defun feedback-system ()
   "Show every event emitted since the last call, oldest first."
   (dolist (ev (take-events))

@@ -294,7 +294,7 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P2 konpaku 0-1 ticks 7365 secs 122.8
+duel -> RESULTS winner P1 konpaku 2-0 ticks 9636 secs 160.6
 ```
 
 (The string follow-up chase and Kenpachi's Bankai entry at <= 4 Konpaku, 2026-09-28 (DUEL_STRINGS.md §11,
