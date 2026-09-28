@@ -150,6 +150,50 @@
   (vpad-begin-step! vp) (vpad-set! vp :guard t) (vpad-set! vp :quick t) (vpad-flush! vp)
   (check (and (vpad-down vp :guard) (not (vpad-pressed vp :quick)) (null (vpad-command vp *commands*)))))
 
+;;; ---------------------------------------------------------------- SETTINGS and the merged VS CPU (2026-09-28)
+;; the defaults are the old behaviour: AUTO, RIGHT, the recogniser's tap-split 0.5 and flick-min 28, BEHIND
+(check (equal (map 'list (lambda (row) (nth (fourth row) (third row))) *settings*) '("AUTO" "RIGHT" "50%" "3" "BEHIND")))
+(check (and (= (setting-value :tap-split) 0.5) (= (setting-value :flick) 28) (equal (setting-value :camera) "BEHIND")))
+;; every row: VALUES (when given) match the options one to one; 3-5 SENSITIVITY steps
+(check (loop for row in *settings* always (or (null (fifth row)) (= (length (fifth row)) (length (third row))))))
+(check (<= 3 (length (third (assoc :flick *settings*))) 5))
+;; the page value: option index + 1; 0 (never saved, blocked storage) or out of range -> the default
+(check (and (= (setting-from-page :hand 2) 1) (= (setting-from-page :hand 1) 0) (= (setting-from-page :hand 0) 0)
+            (= (setting-from-page :hand 3) 0) (= (setting-from-page :hand -1) 0) (= (setting-from-page :tap-split 0) 2)
+            (= (setting-from-page :tap-split 5) 4) (= (setting-from-page :tap-split 6) 2)))
+;; ONE-HAND MODE: AUTO = a touch-first device held in portrait (the old preselection); ON only where it is offered
+;; (coarse or portrait: a landscape desktop never); OFF never. VS CPU and PRACTICE take the deck exactly then.
+(check (equal (loop for choice below 3
+                    collect (loop for (coarse portrait) in '((t t) (t nil) (nil t) (nil nil))
+                                  collect (one-hand-on-p choice coarse portrait)))
+              '((t nil nil nil) (t t t nil) (nil nil nil nil))))
+(let ((old (copy-seq *setting-ix*)))                     ; SETTING-VALUE follows the chosen index
+  (setf (svref *setting-ix* (setting-pos :flick)) 4 (svref *setting-ix* (setting-pos :hand)) 1)
+  (check (and (= (setting-value :flick) 18) (= (setting :hand) 1) (equal (setting-value :hand) "LEFT")))
+  (setf *setting-ix* old))
+
+;;; ---------------------------------------------------------------- the PRACTICE dummy's guard
+(check (every (lambda (st) (= 999 (dummy-guard-left :guard-all st 0))) '(:idle :stun :guard-hit)))
+(check (loop for d in '(:stand :cpu) always (loop for st in '(:idle :stun :guard-hit) always (zerop (dummy-guard-left d st 50)))))
+;; GUARD AFTER HIT: nothing before a hit; a hit (or a blocked one) holds it *DUMMY-GUARD-HOLD* frames; free, it counts down
+(check (zerop (dummy-guard-left :guard-hit :idle 0)))
+(check (every (lambda (st) (= *dummy-guard-hold* (dummy-guard-left :guard-hit st 3))) '(:stun :air :down :wakeup :guard-hit)))
+(check (let ((left *dummy-guard-hold*) (n 0))
+         (loop while (plusp left) do (setf left (dummy-guard-left :guard-hit :guard left)) (incf n))
+         (= n *dummy-guard-hold*)))
+
+;;; ---------------------------------------------------------------- PRACTICE's HP / KONPAKU rows
+(check (and (= (practice-reishi 1300 100) 1300) (= (practice-reishi 1300 50) 650) (= (practice-reishi 1300 10) 130)
+            (plusp (practice-reishi 1 10))))
+(check (< (practice-reishi 1300 25) (* 1300 *red-threshold*) (practice-reishi 1300 50)))   ; 25 %: red (the Kikon is live)
+(check (equal (first *practice-hp*) 100))                                                  ; the default row is full
+(check (and (= (konpaku-step 9 1 9) 1) (= (konpaku-step 1 -1 9) 9) (= (konpaku-step 4 1 9) 5) (= (konpaku-step 5 -1 9) 4)))
+
+;;; ---------------------------------------------------------------- the HUD's Konpaku at stake
+;; the attacker's form's Kikon worth (2 base, 3 awakened, 4 Kenpachi's Bankai), capped at what is left and at a Kikon's max
+(check (equal (mapcar (lambda (c) (konpaku-at-stake 9 c)) '(2 3 4 5)) (list 2 3 4 (min 5 *kikon-max-event*))))
+(check (and (= (konpaku-at-stake 3 4) 3) (= (konpaku-at-stake 1 2) 1) (= (konpaku-at-stake 0 3) 0)))
+
 (format t "duel-control-test: ~d checks, ~a~%" *checks*
         (if (zerop *fails*) "ALL PASS" (format nil "~d FAILED" *fails*)))
 (ext:quit (if (zerop *fails*) 0 1))

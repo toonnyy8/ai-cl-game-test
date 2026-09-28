@@ -65,6 +65,7 @@
           ((eq name :ya-ikkotsu) '((:yamamoto nil nil)))
           ((prefix-p name "YA-") '((:yamamoto :ryujin-jakka nil)))
           ((member name awake-ke) '((:kenpachi :nozarashi nil)))
+          ((prefix-p name "KE-B-") '((:kenpachi-oni :ke-broken (:arm-wreck :crack-1 :crack-2 :crack-3 :crack-4))))
           ((prefix-p name "KE-") '((:kenpachi :ken-katana nil)))
           ((prefix-p name "SK-") '((:skeleton nil nil)))
           (t '((:yamamoto :ryujin-jakka nil) (:kenpachi :ken-katana nil))))))

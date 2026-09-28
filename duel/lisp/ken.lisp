@@ -132,7 +132,7 @@
 (defmove :ke-b-punch :kind :sp :clip :ke-b-fist :clip-s 9 :callout "NAGURI-TOBASHI" :startup 6 :active 3 :recovery 30 :dmg 150
   :adv-block -16 :reach 2.0 :arc 90 :on-hit :knockback :kb 6.0 :guard 22 :flags (:rend))
 ;; O, MAPPUTATSU: LEAP CLEAVE with the Bankai's Kikon cinematic (the Gerard cleaved in two)
-(defmove-copy :ke-b-kikon :ke-kikon-n :callout "MAPPUTATSU" :cine ken-oni-kikon-cine)
+(defmove-copy :ke-b-kikon :ke-kikon-n :clip :ke-b-leap :callout "MAPPUTATSU" :cine ken-oni-kikon-cine)   ; (the oni's leap: art only)
 ;; 片腕: the base moves at reach x0.7 (the kit derives them); the kick is a leg: as written, under its own name
 (defmove-copy :ke-a-j3 :ke-j3)
 
@@ -218,6 +218,7 @@
   :meter (:name "UDE" :max *arm-pips* :start *arm-pips*) :meter-gain nil
   :pips (:n *arm-pips* :to :kataude :cmds (:f :sig :sp1 :sp2 :breaker :kikon))
   :body :kenpachi-oni :weapon :ke-broken :stance :ke-b-stance :aura :oni :hide (:arm-wreck :crack-1 :crack-2 :crack-3 :crack-4)
+  :run-clips (:ke-b-run :ke-b-skate-b :ke-b-slide-r :ke-b-slide-l)
   :cine ken-bankai-cine :enter-hook nil :swing-sfx :whoosh-cleaver
   :commands (:q :ke-b-j1 :f :ke-b-k1 :sig :ke-b-bite :sp1 :ke-b-split :sp2 :ke-charge :breaker :ke-breaker :kikon :ke-b-kikon)
   :grid (:ke-b-j1 :ke-b-j2 :ke-b-j3 :ke-b-k1 :ke-b-k2 :ke-b-k3 :ke-b-j2s :ke-b-k2s)
@@ -238,6 +239,7 @@
 (defkit :kenpachi :kataude :inherit :base
   :awakening t :form-name "KATAUDE" :kikon-konpaku 3 :mult 1.0 :reach-mult *kataude-reach*
   :body :kenpachi-oni :weapon :ke-broken :aura nil :hide (:crack-1 :crack-2 :crack-3 :crack-4) :swing-sfx :whoosh-cleaver
+  :stance :ke-b-stance :run-clips (:ke-b-run :ke-b-skate-b :ke-b-slide-r :ke-b-slide-l)   ; still the oni (the feral pass)
   :commands (:breaker :ke-breaker :kikon :ke-kikon)
   :grid (:ke-j1 :ke-j2 :ke-a-j3 :ke-k1 :ke-k2 :ke-k3 :ke-j2s :ke-k2s)
   :ai (:intents (:approach 2 :pressure 4 :zone 0 :defend 1)
@@ -468,7 +470,7 @@ the pillar on ones. The rules are already settled (his Konpaku 1, Reishi full): 
   (at 14 (play-sfx :yachiru-call))
   (during (12 58) (ken-forest cf))
   (at 58 (card nil) (refresh-look a) (setf *aura-off* nil) (caption-exit)
-      (cine-clip a :ke-b-stance :blend 3)
+      (cine-clip a :ke-b-roar :blend 2)
       (let ((p (pos-of a)))
         (vfx-awaken-burst (aref p 0) 0.0 (aref p 2) :oni)
         (vfx-shockwave (aref p 0) (aref p 2) 7.0 0.6 :pal +pal-blood+)
@@ -478,6 +480,7 @@ the pillar on ones. The rules are already settled (his Konpaku 1, Reishi full): 
   (at 60 (impact-frame :manga 12))
   (at 78 (shot-on a 14 1.05 1.5 :look 1.58) (lens 80 -8) (silence 20) (face-beat a :shout 0.6))
   (at 108 (card :black a) (back-rim 58 0.82 0.06 0.11) (shot-on a 20 4.4 0.8 :look 1.3 :off 0.9) (lens 42)
+      (cine-clip a :ke-b-stance :blend 8)
       (caption "卍解" :reading "BANKAI" :side 0 :hanko t))
   (at 166 (card nil) (shot-on a 165 5.6 1.7 :look 1.4) (lens 50) (caption-exit))
   (during (58 186) (let ((p (pos-of a)))                ; the pillar: full from the burst, on ones in the wide
@@ -490,7 +493,7 @@ MAPPUTATSU and the hanko, silence; one vertical cut: a negative, then a manga pa
 and the screen, the halves shearing apart (ch. 669: the Vollständig Gerard cut in two); the split from the side, ash;
 Kenpachi laughing, head back."
   (at 0 (face-each-other a v 2.6) (setf *aura-off* a)      ; (the pillar smoulders out: the cut reads)
-      (cine-clip a :ke-kikon-n :blend 2 :speed (/ 25.0 68.0)) (cine-clip v :sh-kikon-victim :blend 4)
+      (cine-clip a :ke-b-kikon :blend 2 :speed (/ 25.0 68.0)) (cine-clip v :sh-kikon-victim :blend 4)
       (hold-both a v 12) (impact-frame :negative 2) (play-sfx :whoosh-cleaver))
   (at 12 (card :black a) (back-rim 56 0.82 0.06 0.11) (shot-on a 60 4.2 0.7 :look 1.6 :ahead 1.3 :off 0.8) (lens 46 8)
       (silence 56) (caption "卍解" :reading "BANKAI" :sub "MAPPUTATSU" :side 0 :hanko t))

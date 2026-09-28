@@ -1,0 +1,858 @@
+[
+{
+"at": 9.0,
+"key": "Enter",
+"down": true
+},
+{
+"at": 9.08,
+"key": "Enter",
+"down": false
+},
+{
+"at": 9.8,
+"shot": "tests/shots/duel-practice-mode.png"
+},
+{
+"at": 11.0,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 11.08,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 11.25,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 11.33,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 11.5,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 11.58,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 11.75,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 11.83,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 12.2,
+"key": "Enter",
+"down": true
+},
+{
+"at": 12.28,
+"key": "Enter",
+"down": false
+},
+{
+"at": 12.8,
+"shot": "tests/shots/duel-practice-settings.png"
+},
+{
+"at": 14.0,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 14.08,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 14.3,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 14.38,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 14.6,
+"key": "ArrowLeft",
+"down": true
+},
+{
+"at": 14.68,
+"key": "ArrowLeft",
+"down": false
+},
+{
+"at": 14.9,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 14.98,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 15.15,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 15.23,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 15.4,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 15.48,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 15.8,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 15.88,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 16.2,
+"key": "Escape",
+"down": true
+},
+{
+"at": 16.28,
+"key": "Escape",
+"down": false
+},
+{
+"at": 16.6,
+"key": "ArrowUp",
+"down": true
+},
+{
+"at": 16.68,
+"key": "ArrowUp",
+"down": false
+},
+{
+"at": 16.85,
+"key": "ArrowUp",
+"down": true
+},
+{
+"at": 16.93,
+"key": "ArrowUp",
+"down": false
+},
+{
+"at": 17.1,
+"key": "ArrowUp",
+"down": true
+},
+{
+"at": 17.18,
+"key": "ArrowUp",
+"down": false
+},
+{
+"at": 17.6,
+"key": "Enter",
+"down": true
+},
+{
+"at": 17.68,
+"key": "Enter",
+"down": false
+},
+{
+"at": 18.1,
+"key": "Enter",
+"down": true
+},
+{
+"at": 18.18,
+"key": "Enter",
+"down": false
+},
+{
+"at": 18.6,
+"key": "Enter",
+"down": true
+},
+{
+"at": 18.68,
+"key": "Enter",
+"down": false
+},
+{
+"at": 19.1,
+"key": "Enter",
+"down": true
+},
+{
+"at": 19.18,
+"key": "Enter",
+"down": false
+},
+{
+"at": 20.6,
+"key": "Escape",
+"down": true
+},
+{
+"at": 20.68,
+"key": "Escape",
+"down": false
+},
+{
+"at": 22.5,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 23.0,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.05,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.12,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.17,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 23.4,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 23.45,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 24.1,
+"shot": "tests/shots/duel-practice-combo.png"
+},
+{
+"at": 25.5,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 26.0,
+"key": "Escape",
+"down": true
+},
+{
+"at": 26.08,
+"key": "Escape",
+"down": false
+},
+{
+"at": 26.6,
+"shot": "tests/shots/duel-practice-pause.png"
+},
+{
+"at": 27.6,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 27.68,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 27.85,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 27.93,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 28.1,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 28.18,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 28.6,
+"key": "Escape",
+"down": true
+},
+{
+"at": 28.68,
+"key": "Escape",
+"down": false
+},
+{
+"at": 29.1,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 29.6,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 29.65,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 29.72,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 29.77,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 30.0,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 30.05,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 31.6,
+"key": "Escape",
+"down": true
+},
+{
+"at": 31.68,
+"key": "Escape",
+"down": false
+},
+{
+"at": 32.1,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 32.18,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 32.35,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 32.43,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 32.6,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 32.68,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 33.1,
+"key": "Escape",
+"down": true
+},
+{
+"at": 33.18,
+"key": "Escape",
+"down": false
+},
+{
+"at": 33.6,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 34.1,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 34.18,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 34.9,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 34.98,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 36.6,
+"key": "Escape",
+"down": true
+},
+{
+"at": 36.68,
+"key": "Escape",
+"down": false
+},
+{
+"at": 37.0,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 37.08,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 37.25,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 37.33,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 37.5,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 37.58,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 37.75,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 37.83,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 38.2,
+"key": "Enter",
+"down": true
+},
+{
+"at": 38.28,
+"key": "Enter",
+"down": false
+},
+{
+"at": 38.6,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 38.68,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 38.8,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 38.88,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 39.0,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 39.08,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 39.2,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 39.28,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 39.4,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 39.48,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 39.6,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 39.68,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 39.8,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 39.88,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 40.2,
+"key": "Enter",
+"down": true
+},
+{
+"at": 40.28,
+"key": "Enter",
+"down": false
+},
+{
+"at": 40.7,
+"key": "Escape",
+"down": true
+},
+{
+"at": 40.78,
+"key": "Escape",
+"down": false
+},
+{
+"at": 41.6,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 42.1,
+"key": "Escape",
+"down": true
+},
+{
+"at": 42.18,
+"key": "Escape",
+"down": false
+},
+{
+"at": 42.5,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 42.58,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 42.7,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 42.78,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 42.9,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 42.98,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 43.1,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 43.18,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 43.3,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 43.38,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 43.7,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 43.78,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 43.9,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 43.98,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 44.2,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 44.28,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 44.5,
+"key": "ArrowLeft",
+"down": true
+},
+{
+"at": 44.58,
+"key": "ArrowLeft",
+"down": false
+},
+{
+"at": 44.7,
+"key": "ArrowLeft",
+"down": true
+},
+{
+"at": 44.78,
+"key": "ArrowLeft",
+"down": false
+},
+{
+"at": 44.9,
+"key": "ArrowLeft",
+"down": true
+},
+{
+"at": 44.98,
+"key": "ArrowLeft",
+"down": false
+},
+{
+"at": 45.1,
+"key": "ArrowLeft",
+"down": true
+},
+{
+"at": 45.18,
+"key": "ArrowLeft",
+"down": false
+},
+{
+"at": 45.3,
+"key": "ArrowLeft",
+"down": true
+},
+{
+"at": 45.38,
+"key": "ArrowLeft",
+"down": false
+},
+{
+"at": 45.7,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 45.78,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 46.0,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 46.08,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 46.2,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 46.28,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 46.4,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 46.48,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 46.8,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 46.88,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 47.1,
+"key": "ArrowLeft",
+"down": true
+},
+{
+"at": 47.18,
+"key": "ArrowLeft",
+"down": false
+},
+{
+"at": 47.7,
+"shot": "tests/shots/duel-practice-pause-rows.png"
+},
+{
+"at": 48.7,
+"key": "Escape",
+"down": true
+},
+{
+"at": 48.78,
+"key": "Escape",
+"down": false
+},
+{
+"at": 49.1,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 49.6,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 50.1,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 50.15,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 52.1,
+"eval": "Module._debug_cmd(2107)"
+},
+{
+"at": 52.6,
+"key": "Escape",
+"down": true
+},
+{
+"at": 52.68,
+"key": "Escape",
+"down": false
+},
+{
+"at": 53.0,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 53.08,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 53.4,
+"key": "Enter",
+"down": true
+},
+{
+"at": 53.48,
+"key": "Enter",
+"down": false
+},
+{
+"at": 54.6,
+"eval": "Module._debug_cmd(2107)"
+}
+]

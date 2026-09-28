@@ -38,7 +38,7 @@ the end of the match, as now.
 |---|---|---|---|
 | East | **U pressed** in a free state (idle, walk, run; buffered 10 f like any press) | West | Takes effect after `*guard-raise*` 2 f, like a guard. Refused while guardless (a dud tick and the grey bar flash). **Not** a cancel of an East move's startup or recovery, and not possible in hit/blockstun (Q5) |
 | West | U pressed / held | West | Nothing happens: West already guards. Holding U doesn't root him, so he walks by the stick |
-| West | any command other than **SP1** or **L**: J, K, Shift+L (South), I (Breaker), O (TENCHI) | East, **on the move's frame 0** | `try-command` sets the form to East, then starts East's move. The startup is taken at East's ×1.5. A command that East would refuse (cooldown, bars) refuses **without** switching |
+| West | any command other than **SP1** or **L**: J, K, Shift+L (South), I (Breaker), O (TENCHI) | East, **on the move's frame 0** | `try-command` sets the form to East, then starts East's move. The startup is taken at East's ×1.5. A command that East would refuse (an O cooldown, bars) refuses **without** switching (South has no cooldown since 2026-09-28) |
 | West | SP1 (GOKUI GAESHI), its counter `:ya-w-counter`, L (SHŌNETSU JIGOKU), Step, Hoho (and the perfect Hoho's auto-strike), the run, Burst Reverse | West | Not attacks under the spec, or part of SP1 / L |
 | West | the ward's hit empties the gauge: **GUARD CRUSH** | East, guardless | 40 f reel (`*guard-crush-stun*`), then guardless until full (60 f + 14/s: 8.1 s from 0). The garb gutters out (reuses `vfx-burnout`'s West look) |
 | West | a **Breaker** / `:guard-crush` hit: **Guard Break** | East | 50 f stun, −35 gauge, as a guard break on anyone. The garb is blown off (Q4) |
@@ -390,3 +390,17 @@ SHŌNETSU rarely (the ward-reversal needs a hit within 3 m with L ready and a 0.
 
 The G2 determinism reference changed for every pairing; YK (seed 7) now ends `duel -> RESULTS winner P1 konpaku 2-0
 ticks 7688 secs 128.1` (`tests/style-cvc-ref.txt`).
+
+## Playtest decision: South has no cooldown (the user, 2026-09-28)
+
+「山本的『南』本身就是消耗靈力計量表使出的 SP2，不需要有冷卻。」 MINAMI (South, `:ya-kaka`, his Bankai SP2) loses its
+600 f cooldown: like every SP2 its only limiter is the Reishi bar cost (2 bars).
+
+**Built (2026-09-28).** `:ya-kaka` has no `:cooldown` (its comment says so); nothing else in the game had a Shift+L
+cooldown, so the HUD's thin ember line under the L bar (`hud-cooldowns`' Shift+L path) and the second `*refused-t*` slot are
+deleted: the COOLDOWN row is one L bar (KYOKKŌ's 100 f / SHŌNETSU's 150 f), which is also all a refused press can flash.
+`ai.lisp` had no South-cooldown assumption (its weights and the trap reflex never read `fighter-cd`); in the logged YK
+gate (debug 2115, 20 seeds) the CPU cast South 8 times, no spam, so no AI gate was added. The G2 reference: YY (seed 7)
+keeps its result `winner P1 konpaku 2-0 ticks 9248 secs 154.1`; only its t=6600 hash line changed (South's cooldown slot
+reads 0 instead of 220). Seed gate (with the Rukia rework and Kenpachi's one pip per string): DUEL_RUKIA.md, "Measurements
+(the cold gauge rework)".

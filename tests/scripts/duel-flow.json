@@ -10,12 +10,22 @@
 "down": false
 },
 {
-"at": 9.6,
+"at": 9.5,
 "key": "ArrowDown",
 "down": true
 },
 {
-"at": 9.68,
+"at": 9.58,
+"key": "ArrowDown",
+"down": false
+},
+{
+"at": 9.75,
+"key": "ArrowDown",
+"down": true
+},
+{
+"at": 9.83,
 "key": "ArrowDown",
 "down": false
 },

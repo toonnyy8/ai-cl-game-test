@@ -7,7 +7,7 @@
 ;;;;   (:swing e kind)  (:super e)  (:breaker e) (:breaker-end e)  (:rush e) (:rush-dash e) (:kikon-follow att def)  (:step e)
 ;;;;   (:hit att def x y z hitstop counter-p dmg kind)  (:blocked att def x y z)  (:armored def x y z)
 ;;;;   (:absorbed def x y z)  (:guard-crush att def x y z) (:guard-back e)  (:guard-break att def x y z)  (:stance-break att def x y z)  (:clash x y z)
-;;;;   (:parried att def x y z)  (:scorch att)  (:ward-crush e)  (:refused e cmd)  (:kosei att m x y z)
+;;;;   (:parried att def x y z)  (:scorch att)  (:ward-crush e)  (:cold-crack e)  (:refused e cmd)  (:kosei att m x y z)
 ;;;;   (:hazard-cut x y z)  (:hoho-out e x z) (:hoho-in e x z) (:perfect e victim)  (:burst e attacker)
 ;;;;   (:launch e) (:land e)
 ;;;;   (:konpaku victim lost) (:kikon att victim) (:soul-break att victim)  (:awaken e) (:form e form)
@@ -43,7 +43,7 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
       (vfx-hit x y z look :dx dx :dz dz)
       (when (member look '(:heavy :counter :breaker))
         (hold-pose att 3) (smear def dx dz))
-      (sfx-at (cond ((eq kind :breaker) :punch) ((eq kind :fire) :explode) ((eq kind :bind) :bones) ((member blade '(:embers :charcoal)) :sizzle)
+      (sfx-at (cond ((eq kind :breaker) :punch) ((eq kind :fire) :explode) ((eq kind :bind) :bones) ((eq kind :ice) :freeze) ((member blade '(:embers :charcoal)) :sizzle)
                     ((eq kind :quick) :cut) (t :cut-heavy))
               x y z :gain (if (eq kind :quick) 0.8 1.0))))
   (setf (model-flash (model def)) (max 0.06 (/ hs 60.0)))
@@ -90,7 +90,7 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
         (:hit (apply #'show-hit args))
         (:blocked (destructuring-bind (att def x y z) args
                     (multiple-value-bind (dx dz) (hit-dir att def)
-                      (if (passive-p def :ward)                    ; West's ward: the guard's hexagon drawn in fire,
+                      (if (and (passive-p def :ward) (not (passive-p def :optic)))   ; West's ward: the guard's hexagon in fire,
                           (progn (vfx-garb-block x y z (- dx) (- dz)) (sfx-at :sizzle x y z)   ; the garb flares
                                  (setf (model-flare (model def)) (f32 (max (model-flare (model def)) 0.25))))
                           (vfx-hit x y z :guard :dx dx :dz dz))
@@ -115,6 +115,10 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
         (:ward-crush (let* ((e (first args)) (p (pos-of e)))   ; West's ward broken (crush / Guard Break): the garb
                        (vfx-burnout (aref p 0) (aref p 2) t)          ; gutters out (smoke, an ash ring), he is East
                        (sfx-on :sizzle e :pitch 0.6) (sfx-on :heat-flare e :pitch 0.6 :gain 0.8)))
+        (:cold-crack (let ((e (first args)))               ; Rukia's hand cracked at zero: the gauge's BLOOD hairline
+                       (setf (aref *crack-t* (fighter-side (fighter e))) (f32 (fx-clock)))
+                       (sfx-on :hand-crack e)
+                       (announce "CRACK" :color '(0.82 0.06 0.11 1) :secs 0.8 :small t :side (fighter-side (fighter e)))))
         (:refused (destructuring-bind (e cmd) args          ; still cooling: a dud tick, its HUD bar flashes
                     (sfx-on :clang e :gain 0.35 :pitch 1.6)
                     (hud-refused e cmd)))

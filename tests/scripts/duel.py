@@ -15,13 +15,15 @@
 #     strings, the latch, the O ender (shots tests/shots/duel-string-*.png)
 #   node tools/run.mjs dist/duel --secs 75  --script tests/scripts/duel-perf.json     real-time CPU vs CPU: stats lines
 #   node tools/run.mjs dist/duel --secs 140 --script tests/scripts/duel-shots.json    tests/shots/duel-*.png
+#   node tools/run.mjs dist/duel --secs 62 --fixed-dt 16.666667 --script tests/scripts/duel-practice.json   SETTINGS +
+#     PRACTICE by keyboard (--fixed-dt: on a loaded host real-time key timing drops string links)
 # Determinism: run a cvc script twice (or once with turbo and once without: drop the 2102 step) and
 #   diff <(grep '^duel' run1.log) <(grep '^duel' run2.log)   -> empty.
-# Reference (the J / K strings, the O ender and KOSEI, 2026-09-27, docs/DUEL_STRINGS.md: K2 / K3 at 80 %, the CPU's
-# string K 0.3, O ender 0.15, SP cancel 0.3; unchanged by the Soul Break rule and Kenpachi's Bankai, 2026-09-28,
-# docs/DUEL_KEN_BANKAI.md: that YK match has neither): duel-cvc-yk.json (seed 7) ends
-#   duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7    (turbo and real time alike; also after a gate)
-#   (before the strings, the Bankai rework + the slower guard refill: winner P1 konpaku 2-0 ticks 7688 secs 128.1;
+# Reference (the string follow-up chase and Kenpachi's Bankai entry at <= 4 Konpaku, 2026-09-28, docs/DUEL_STRINGS.md
+# §11, docs/DUEL_KEN_BANKAI.md): duel-cvc-yk.json (seed 7) ends
+#   duel -> RESULTS winner P2 konpaku 0-1 ticks 7365 secs 122.8    (turbo and real time alike; also after a gate)
+#   (before them, the J / K strings + the Soul Break rule + the Bankai: winner P2 konpaku 0-3 ticks 7123 secs 118.7;
+#   before the strings, the Bankai rework + the slower guard refill: winner P1 konpaku 2-0 ticks 7688 secs 128.1;
 #   before the rework, guard v3: winner P2 konpaku 0-4 ticks 9305 secs 155.1; before guard v3, the Kenpachi batch: winner P1 konpaku 7-0 ticks 7351 secs 122.5; before the batch: winner P2 konpaku 0-3 ticks 8594 secs 143.2; before user review 3's slower cinematics: the same match with shorter cinematics, ticks 8384 secs 139.7 and ticks 8054 secs 134.2; P1 1-0 ticks 9438 secs 157.3 with the gauges and the O modules; P1 2-0 ticks 9780 secs 163.0 with the Kikon rush; P2 0-1 ticks 7298 secs 121.6 with the instant Kikon; 0-4 ticks 5857 secs 97.6 with a timed Bankai;
 #   0-7 ticks 5302 secs 88.4 before Burst and the dash)
 import json
@@ -260,7 +262,7 @@ write("strings", ev)
 # -> skip (Esc) -> BATTLE -> pause (Esc) -> RESUME -> pause -> CHARACTER SELECT -> back ... -> TITLE;
 # then VS CPU HARD. Expected "duel -> STATE" lines in that order.
 t = T0
-ev = tap(t, "Enter") + tap(t + 0.6, "ArrowDown") + tap(t + 1.0, "Enter")         # VS PLAYER
+ev = tap(t, "Enter") + tap(t + 0.5, "ArrowDown") + tap(t + 0.75, "ArrowDown") + tap(t + 1.0, "Enter")   # VS PLAYER (row 2)
 ev += tap(t + 1.6, "KeyD") + tap(t + 2.0, "Enter") + tap(t + 2.4, "Numpad1")      # P1 Kenpachi, P2 confirms
 ev += tap(t + 4.0, "Escape") + tap(t + 6.0, "Escape") + tap(t + 6.6, "Enter")     # skip intro, pause, resume
 ev += tap(t + 8.0, "Escape") + tap(t + 8.4, "ArrowDown") + tap(t + 8.8, "ArrowDown") + tap(t + 9.2, "Enter")  # -> select
@@ -269,6 +271,60 @@ ev += tap(t + 11.5, "Enter") + tap(t + 12.0, "Enter") + tap(t + 12.6, "Enter") +
 ev += tap(t + 13.4, "KeyD") + tap(t + 14.2, "Enter")                             # VS CPU, HARD
 ev += [shot(t + 21, "flow-vs-cpu-hard")]
 write("flow", ev)
+
+# SETTINGS and PRACTICE by keyboard (the 2026-09-28 MODE menu: VS CPU / PRACTICE / VS PLAYER / CPU VS CPU / SETTINGS /
+# CONTROLS). Expected, in order: duel -> SETTINGS, duel setting HAND LEFT, ... HAND RIGHT, duel setting CAMERA SIDE,
+# duel camera CAMERA  SIDE (the pause menu flips it back: BEHIND), duel -> MODE, duel -> SELECT, the match seed line with
+# PRACTICE, duel -> BATTLE; J J J on the standing dummy: YA-J1 / J2 / J3 -> P2 HIT (the dump after it: P2 r1300, the
+# HP refilled); duel practice DUMMY  GUARD ALL, then J1 / J2 -> P2 BLOCKED; DUMMY  GUARD AFTER HIT: J1 -> HIT, then a J1
+# 0.5 s later -> BLOCKED; GAUGES  INFINITE (the dump: P1 a300 f100 w100); the HP / KONPAKU rows (P1 r650 k4, P2 r325
+# k8, again after a hit and after duel practice reset). No RESULTS line.
+# Shots: practice-mode, practice-settings, practice-combo (the counter stays up), practice-pause.
+t = T0                                   # (a shot stalls the page ~0.5 s: no key within 1 s after one)
+ev = tap(t, "Enter") + [shot(t + 0.8, "practice-mode")]                           # TITLE -> MODE
+t += 2.0
+for i in range(4): ev += tap(t + 0.25 * i, "ArrowDown")                            # SETTINGS (row 4)
+ev += tap(t + 1.2, "Enter") + [shot(t + 1.8, "practice-settings")]
+t += 3.0
+ev += tap(t, "ArrowDown") + tap(t + 0.3, "ArrowRight") + tap(t + 0.6, "ArrowLeft")   # HAND LEFT, back to RIGHT
+for i in range(3): ev += tap(t + 0.9 + 0.25 * i, "ArrowDown")                      # CAMERA
+ev += tap(t + 1.8, "ArrowRight") + tap(t + 2.2, "Escape")                          # SIDE; back to MODE (cursor on SETTINGS)
+for i in range(3): ev += tap(t + 2.6 + 0.25 * i, "ArrowUp")                        # PRACTICE (row 1)
+ev += tap(t + 3.6, "Enter") + tap(t + 4.1, "Enter") + tap(t + 4.6, "Enter") + tap(t + 5.1, "Enter")   # P1, P2, CPU
+ev += tap(t + 6.6, "Escape")                                                       # skip the intro
+t += 8.5
+ev += [cmd(t, 2393)] + tap(t + 0.5, "KeyJ", 0.05) + tap(t + 0.62, "KeyJ", 0.05) + tap(t + 0.9, "KeyJ", 0.05)   # J J J on STAND
+ev += [shot(t + 1.6, "practice-combo"), cmd(t + 3.0, 2107)]
+t += 3.5
+ev += tap(t, "Escape") + [shot(t + 0.6, "practice-pause")]
+t += 1.6
+ev += tap(t, "ArrowDown") + tap(t + 0.25, "ArrowDown") + tap(t + 0.5, "ArrowRight")    # DUMMY -> GUARD ALL
+ev += tap(t + 1.0, "Escape") + [cmd(t + 1.5, 2393)] + tap(t + 2.0, "KeyJ", 0.05) + tap(t + 2.12, "KeyJ", 0.05) + tap(t + 2.4, "KeyJ", 0.05)
+t += 4.0
+ev += tap(t, "Escape") + tap(t + 0.5, "ArrowDown") + tap(t + 0.75, "ArrowDown") + tap(t + 1.0, "ArrowRight")   # AFTER HIT
+ev += tap(t + 1.5, "Escape") + [cmd(t + 2.0, 2393)] + tap(t + 2.5, "KeyJ") + tap(t + 3.3, "KeyJ")
+t += 5.0
+ev += tap(t, "Escape")                                                             # GAUGES -> INFINITE, CAMERA -> BEHIND
+for i in range(4): ev += tap(t + 0.4 + 0.25 * i, "ArrowDown")
+ev += tap(t + 1.6, "Enter")
+for i in range(7): ev += tap(t + 2.0 + 0.2 * i, "ArrowDown")                      # CAMERA (row 11)
+ev += tap(t + 3.6, "Enter") + tap(t + 4.1, "Escape") + [cmd(t + 5.0, 2107)]
+t += 5.5
+# the HP / KONPAKU rows (the user's request 2026-09-28): P1 HP 100 -> 50 %, P1 KONPAKU 9 -> 4, DUMMY HP -> 25 %,
+# DUMMY KONPAKU 9 -> 8; the dump: P1 r650 k4 (INFINITE holds his Reishi at his row), P2 r325 k8
+ev += tap(t, "Escape")
+for i in range(5): ev += tap(t + 0.4 + 0.2 * i, "ArrowDown")                       # P1 HP (row 5)
+ev += tap(t + 1.6, "ArrowRight") + tap(t + 1.8, "ArrowRight") + tap(t + 2.1, "ArrowDown")
+for i in range(5): ev += tap(t + 2.4 + 0.2 * i, "ArrowLeft")                       # P1 KONPAKU 4
+ev += tap(t + 3.6, "ArrowDown")
+for i in range(3): ev += tap(t + 3.9 + 0.2 * i, "ArrowRight")                      # DUMMY HP 25 %
+ev += tap(t + 4.7, "ArrowDown") + tap(t + 5.0, "ArrowLeft")                         # DUMMY KONPAKU 8
+ev += [shot(t + 5.6, "practice-pause-rows")] + tap(t + 6.6, "Escape") + [cmd(t + 7.0, 2107)]
+t += 7.5
+ev += [cmd(t, 2393)] + tap(t + 0.5, "KeyJ", 0.05) + [cmd(t + 2.5, 2107)]            # a hit, then refilled to 25 %
+t += 3.0
+ev += tap(t, "Escape") + tap(t + 0.4, "ArrowDown") + tap(t + 0.8, "Enter") + [cmd(t + 2.0, 2107)]   # RESET POSITION: the rows again
+write("practice", ev)
 
 # 60 s of real-time CPU vs CPU for the stats lines (cons/frame, ms sim / queue / render, fx-dropped)
 write("perf", [cmd(T0, 4003), cmd(T0 + 64, 2107)])
@@ -334,3 +390,80 @@ for k, frames in ((35000, (6, 26, 64, 92, 130, 176)), (36000, (8, 40, 74, 110, 1
     t += 0.5
 ev.append(cmd(t, 2107))
 write("bankai", ev)
+
+# Kuchiki Rukia (docs/DUEL_RUKIA.md; run with --fixed-dt 16.666667 --secs 80, landscape, and duel-rukia-portrait.json with
+# --size 390x844). The select screen (the roster cycled to her by keyboard; in portrait by a tap on the right third),
+# then human P1 Rukia vs an idle Kenpachi (debug 2410+k): the Shikai (stance, TSUKISHIRO's ring and pillar, J1, K1, the
+# pirouette J3, K3, HAKUREN's stabs and wave, SHIRAFUNE), -18 C (TOSHU, HYOKA, HAKKA's pillar and lane), -50 C (HYOSHIN's
+# tell and quake), absolute zero (the freeze-touch on Kenpachi's J1, REIDO TOKETSU), the CRACK after a Breaker, then key
+# frames of her three cinematics (40000+f 月白, 41000+f 白霞罸, 42000+f 絶対零度). Shots tests/shots/duel-rukia[-p]-*.png.
+def rukia_script(tag, portrait):
+    def rs(t, n): return {"at": round(t, 2), "shot": f"{SHOTS}rukia{tag}-{n}.png"}
+    def stap(t, k): return [key(t, "ShiftLeft"), key(t + 0.02, k), key(t + 0.08, k, False), key(t + 0.1, "ShiftLeft", False)]
+    def touch(t, x, y): return [{"at": round(t, 2), "touch": "start", "x": x, "y": y}, {"at": round(t + 0.05, 2), "touch": "end", "x": x, "y": y}]
+    t = T0 - 0.5
+    ev = tap(t + 0.5, "Enter") + tap(t + 1.5, "Enter")                       # title -> MODE -> VS CPU: select
+    if portrait: ev += touch(t + 2.5, 350, 400) + touch(t + 3.0, 350, 400)   # the right third: next character, twice
+    else: ev += tap(t + 2.5, "ArrowRight") + tap(t + 3.0, "ArrowRight")
+    ev.append(rs(t + 3.8, "select")); t += 4.5
+    ev += [cmd(t, 2410)] + ([] if portrait else [cmd(t + 0.1, 2109)]); t += 1.2
+    ev.append(rs(t, "base-stance")); t += 0.3
+    ev += tap(t, "KeyL", 0.06); ev += [rs(t + 0.3, "tsukishiro-ring"), rs(t + 0.64, "tsukishiro-pillar")]; t += 1.6
+    ev += [cmd(t, 2393)]; t += 0.4
+    ev += tap(t, "KeyJ", 0.06); ev.append(rs(t + 0.12, "j1")); t += 0.9
+    ev += [cmd(t, 2393)]; t += 0.3
+    ev += tap(t, "KeyK", 0.06); ev.append(rs(t + 0.29, "k1")); t += 1.2
+    ev += [cmd(t, 2393)]; t += 0.3
+    ev += tap(t, "KeyJ", 0.06) + tap(t + 0.1, "KeyJ", 0.06) + tap(t + 0.3, "KeyJ", 0.06); ev.append(rs(t + 0.5, "j3-spin")); t += 1.4
+    ev += [cmd(t, 2393)]; t += 0.3
+    ev += tap(t, "KeyK", 0.06) + tap(t + 0.2, "KeyK", 0.06) + tap(t + 0.55, "KeyK", 0.06); ev.append(rs(t + 0.97, "k3-drop")); t += 1.8
+    ev += [cmd(t, 2410), cmd(t + 0.05, 2108)]; t += 0.4
+    ev += [key(t, "ShiftLeft"), key(t + 0.02, "KeyK"), rs(t + 0.8, "hakuren-stab"), key(t + 1.1, "KeyK", False),
+           key(t + 1.12, "ShiftLeft", False), rs(t + 1.45, "hakuren-wave")]; t += 2.4
+    ev += [cmd(t, 2410), cmd(t + 0.05, 2108)]; t += 0.4
+    ev += stap(t, "KeyL"); ev.append(rs(t + 0.3, "shirafune")); t += 1.3
+    ev += [cmd(t, 2411)]; t += 1.0
+    ev.append(rs(t, "m18-stance")); t += 0.2
+    ev += tap(t, "KeyK", 0.06); ev.append(rs(t + 0.29, "toshu")); t += 1.2
+    ev += [cmd(t, 2411)]; t += 0.3
+    ev += tap(t, "KeyK", 0.06) + tap(t + 0.2, "KeyK", 0.06) + tap(t + 0.55, "KeyK", 0.06); ev.append(rs(t + 1.0, "hyoka")); t += 1.8
+    ev += [cmd(t, 2411)]; t += 0.4
+    ev += tap(t, "KeyO", 0.06); ev += [rs(t + 0.2, "hakka-pillar"), rs(t + 0.5, "hakka-lane")]; t += 1.6
+    ev += [cmd(t, 2412)]; t += 1.0
+    ev.append(rs(t, "m50-stance")); ev += tap(t + 0.1, "KeyL", 0.06); ev += [rs(t + 0.3, "hyoshin-tell"), rs(t + 0.4, "hyoshin")]; t += 1.4
+    ev += [cmd(t, 2413)]; t += 0.25
+    ev.append(rs(t, "zero-freeze")); t += 1.0
+    ev.append(rs(t, "zero-stance")); t += 0.3
+    ev += tap(t, "KeyL", 0.06); ev.append(rs(t + 0.12, "reido")); t += 1.2
+    ev += [cmd(t, 2415)]; t += 1.3
+    ev.append(rs(t, "crack")); t += 0.4
+    if not portrait: ev.append(cmd(t, 2109)); t += 0.2
+    for k, frames in ((40000, (6, 40, 84, 114, 140, 160, 176)), (41000, (6, 20, 26, 50, 100, 126, 146, 164, 186)),
+                      (42000, (6, 24, 50, 80, 124))):
+        last = 0
+        for f in frames:
+            ev.append(cmd(t, k + f)); wait = (f - last) / 60.0 + (1.2 if last == 0 else 0.35)
+            ev.append(rs(t + wait, f"cine{k // 1000 - 40}-{f:03d}")); t += wait + 0.1; last = f
+        t += 0.5
+    ev.append(cmd(t, 2107))
+    return ev
+# K -> L (docs/DUEL_STRINGS.md §12; run with --fixed-dt 16.666667 --secs 60): human P1 Rukia 2.2 m from an idle Kenpachi
+# (debug 2420+k, *KL-TESTS*): per form K L, K K L, K K K L. Expected "duel probe kl" lines: each L hit with P2 still in
+# stun (left-before > 0, the combo count up); k 4 (-18, 10 cold): no RU-SHIMOBASHIRA; k 5 / 6 (a held guard): the L
+# blocked too. Shots tests/shots/duel-kl-<form>-<n>.png (the K hit, the L's ring / disc).
+def kl_script():
+    t = T0; ev = []
+    ev += tap(t, "Enter") + tap(t + 0.8, "Enter") + tap(t + 1.6, "ArrowRight") + tap(t + 2.0, "ArrowRight"); t += 3.5
+    for k, tag in ((0, "base"), (1, "m18"), (2, "m50"), (3, "zero"), (4, "cold"), (5, "block"), (6, "block18")):
+        for ks in (1, 2, 3):
+            ev.append(cmd(t, 2420 + k)); t0 = t + 0.6
+            for i in range(ks): ev += tap(t0 + [0, 0.2, 0.55][i], "KeyK", 0.05)
+            lt = t0 + [0.12, 0.35, 1.0][ks - 1]
+            ev += tap(lt, "KeyL", 0.05)
+            if k < 4: ev += [shot(lt + 0.25 + 0.2 * ks, f"kl-{tag}-{ks}a"), shot(lt + 0.55 + 0.2 * ks, f"kl-{tag}-{ks}b")]
+            t = t0 + 3.2
+    ev.append(cmd(t, 2107))
+    return ev
+write("rukia-kl", kl_script())
+write("rukia", rukia_script("", False))
+write("rukia-portrait", rukia_script("-p", True))

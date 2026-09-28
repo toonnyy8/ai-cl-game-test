@@ -1,15 +1,15 @@
 # SOUL DUEL — Game Design (as built)
 
-A 1v1 3D arena fighter modelled on *BLEACH: Rebirth of Souls* (RoS): Yamamoto Genryusai (TYBW)
-against Zaraki Kenpachi (TYBW), human or CPU on either side. It is the second game on the engine
+A 1v1 3D arena fighter modelled on *BLEACH: Rebirth of Souls* (RoS): three TYBW characters, Yamamoto Genryusai,
+Zaraki Kenpachi and Kuchiki Rukia (added 2026-09-28, DUEL_RUKIA.md), human or CPU on either side. It is the second game on the engine
 (`duel/`, package `DUEL`, `./build.sh duel` → `dist/duel`). How to build, play and test it:
 `DUEL_GAMEPLAY.md`. Why it looks the way it does and what it taught the engine: DEVLOG §14.
 
 This document describes the game **as built**. It started as the design contract written before
 any code (design v1, reconciled from a lead's draft and two critiques); every later change is
 folded in, and §12 lists what changed and why. Every number lives in code: shared knobs in
-`duel/lisp/tuning.lisp`, per-move frame data with the moves in `duel/lisp/yama.lisp` and
-`duel/lisp/ken.lisp`, pure rules in `duel/lisp/rules.lisp`. When this file and the code disagree,
+`duel/lisp/tuning.lisp`, per-move frame data with the moves in `duel/lisp/yama.lisp`,
+`duel/lisp/ken.lisp` and `duel/lisp/rukia.lisp`, pure rules in `duel/lisp/rules.lisp`. When this file and the code disagree,
 the code wins; the host test `tests/duel-rules-test.lisp` checks the move tables below.
 
 > **Fan study.** SOUL DUEL is a non-commercial fan study. The BLEACH characters, move and place
@@ -27,7 +27,7 @@ the code wins; the host test `tests/duel-rules-test.lisp` checks the move tables
   move frame 0 is its first frame, so it hits on frames S .. S+A−1.
 - Metres, y up, yaw 0 faces −Z (the engine's conventions). Reishi is an integer; gauges are floats.
 - Hit volumes are gameplay shapes in the attacker's frame (`:arc r deg`, `:cap a b h r`), not the
-  animated blade. Hurt cylinders: Yamamoto r 0.36 m / h 1.65 m, Kenpachi 0.45 / 2.0.
+  animated blade. Hurt cylinders: Yamamoto r 0.36 m / h 1.65 m, Kenpachi 0.45 / 2.0, Rukia 0.34 / 1.5.
 
 ## 1. How RoS maps onto SOUL DUEL
 
@@ -50,7 +50,7 @@ Deliberate deviations:
 | Guard gauge, guard break when it empties | A **guard gauge** (§4): each blocked hit drains its guard value; empty = GUARD CRUSH (40 f) and no guard until it is full again; the Breaker still breaks at once (and drains 35) | The user asked for it (design v3 G.2); the Breaker stays the "read" tool, the gauge the "pressure" tool |
 | Reverse gauge + Spiritual Power gauge | **Reiatsu** (3 bars) pays for SP1 / SP2 only; a **flash-step gauge** pays for Hoho and Burst Reverse | The user asked for it (design v3 G.1, G.3); two gauges with one job each |
 | Reverse Actions (Soul / Chain / Burst), the game picks one | Only **Burst Reverse**, its own command (mod + Quick) | The one a player must choose deliberately; Soul / Chain would need the Reverse gauge |
-| Sublimation (Kikon Channel), Spirit Drive, Reawakening | None: one awakening per match, **with one exception: Kenpachi's Bankai**, a second awakening from Nozarashi's cup 3 (red, P; no gauge; once a match by construction), paid with all his Konpaku but one (§6.2, [DUEL_KEN_BANKAI.md](DUEL_KEN_BANKAI.md)) | Scope; the exception is **the user's decision 2026-09-27** (the research report's question 1) **and 2026-09-28** (the entry's cost) |
+| Sublimation (Kikon Channel), Spirit Drive, Reawakening | None: one awakening per match, **with one exception: Kenpachi's Bankai**, a second awakening from Nozarashi's cup 3 (P with ≤ 4 of his own Konpaku, since 2026-09-28; it was red; no gauge; once a match by construction), paid with all his Konpaku but one (§6.2, [DUEL_KEN_BANKAI.md](DUEL_KEN_BANKAI.md)) | Scope; the exception is **the user's decision 2026-09-27** (the research report's question 1) **and 2026-09-28** (the entry's cost) |
 | Hakugeki, jump | None (Step, the dash and Hoho) | Scope |
 | Behind-the-back camera | Behind P1 in VS CPU (the default; the option SIDE switches it); the 3/4 pair camera in VS PLAYER and CPU VS CPU | One screen must show two humans; CPU matches are watched, not steered |
 
@@ -196,12 +196,17 @@ the switched link 2 (J2 after K1, K2 after J1) is a copy, `J2s` / `K2s` (`defmov
 new button (the kit key `:grid`, `string-grid`). After a switch a press of the old button is **eaten** (consumed,
 not latched, overwriting nothing): JKJ and KJK end at link 2. **The latch** (`string-latch`, `fighter-queued`): a J / K
 pressed any time during a link that can go on is stored (the last allowed press wins) and consumed from the vpad at
-once; presses during link 3 are plain buffered presses (a new J1 after it). **The contact gate**: the next link starts
-only if the link's own hit window touched the opponent (hit, counter, blocked by a guard / West's ward / DRINK,
-Kenpachi's stance, armour: `fighter-contact`; a hazard is not contact); on hit from the end of the active frames (true
-combos), on block in the last 3 f of recovery (`*chain-lead*`), on a **whiff never** (`chain-open-p`): the string stops
-at that swing and it recovers **R + 8** (a J link) / **R + 12** (a K link) (`*whiff-extra-j*` / `-k*`; other moves
-R + 6). **The budget** (every form, host-tested): J1 S 7–10 / A 3 / R 12, flinch, −2; K1 S 16–20 / A 4 / R 20–22,
+once; presses during link 3 are plain buffered presses (a new J1 after it). **The string gate** (the user's decision
+2026-09-28, DUEL_STRINGS §2.2 / §11): link 1 goes on only if its own hit window touched the opponent (hit, counter,
+blocked by a guard / West's ward / DRINK, Kenpachi's stance, armour: `fighter-contact`; a hazard is not contact); **once
+any link has touched him, every later pressed link comes out** (`fighter-chained`), even after a link that whiffed; on
+hit from the end of the active frames (true combos), on block or a carried whiff in the last 3 f of recovery
+(`*chain-lead*`), on a **link-1 whiff never** (`chain-open-p`): the string stops at that swing and it recovers **R + 8**
+(a J link) / **R + 12** (a K link) (`*whiff-extra-j*` / `-k*`; other moves R + 6). **The chase**: during a follow-up
+link's startup he closes in so its hit window reaches the defender, arriving `*chase-margin*` 0.4 m inside its reach
+(never nearer than `*lunge-stop*` 1.3 m) as it opens, at most `*chase-max*` 18 m/s, turning at least `*chase-track*`
+360 deg/s (`string-chase-speed`); it never passes or overshoots him, and it is motion only: a guard still blocks the
+link and Step / Hoho / down iframes still dodge it. **The budget** (every form, host-tested): J1 S 7–10 / A 3 / R 12, flinch, −2; K1 S 16–20 / A 4 / R 20–22,
 stagger, −3 (S(K1) − S(J1) ≥ 7: a J beats a K started together); J2 −2; K2 −3; **J3 −4** (stagger, +5 on hit),
 **K3 −20** (crumple: J1 and K1 punish it). Every K at link 2 / 3 **enters** mid-wind-up (`:enter`) at S_eff 14, so it
 combos after a J (A 3 + 14 < flinch 18) and a K link alike. On block the gap before the next link is S_eff − 1 − 3 −
@@ -300,7 +305,7 @@ absorbed hits 3 f.
 **The contact rule** (`contact-of`): for the attacker only a real hit counts as one (`:hit :counter
 :guard-break :stance-break`, the Kikon). A hit taken on armour or absorbed by the stance counts as a
 block: it opens the string only at block timing, no cancel and no on-land hook (Kenpachi's flurry needs a real
-hit); a whiff (no contact) opens nothing (the strings' contact gate). **Armour** is a hit budget (move key `:armor-hits`): from move frame 6 (`*armor-from*`) to the
+hit); a whiff (no contact) opens nothing for link 1 (the strings' gate; a later link carries the string, §4). **Armour** is a hit budget (move key `:armor-hits`): from move frame 6 (`*armor-from*`) to the
 end of the startup, or during a Kikon rush's dash (only CHARGE has one now). (Bankai West's ward is not armour: it is a
 guard without blockstun, §6.1.) A Breaker and an unguardable hit go through; nothing ignores armour (Nozarashi's `:ignore-armor` was
 removed). No armour is paid from the guard gauge. An SP start flashes the user's rim light and freezes the opponent alone for 4 f.
@@ -400,7 +405,7 @@ East moves:
 | K (link 3) | 落日 RAKUJITSU `:ya-e-k3` (clip `:ya-e-drop`) | 21/5/34, enters at f7 | 84 | −20 | the blade straight up, held, dropped: a vertical line 0.3 → 3.6 m, crumple; embers and a scorch on the plaza |
 | L | **旭光 KYOKKŌ** `:ya-e-kyokko` | 15/3/26 | 85 | −12 | a one-handed lunge (1.6 m over the startup), its point a line 0.2 → 4.6 m (hits ~6.2 m out), knockback 2 m, guard 22; **pierce ×2** (`:pierce-mult`: k 0.2–0.9): at a full gauge **162** on hit and **77 of 85 through a guard**; cancels any landed J / K link (`:cancel`); cooldown 100 f. The look: the ember edge flares white on f1, a white-cored ember ray along the line and a small ink sun at its tip on f15; on a block a white spark leaves the defender's back |
 | Shift+K | **KYOKUJITSUJIN**, the downward cut `:ya-kyoku` | 18/5/26 | 90 + 130 | −16 | the blade (f18–19, 0.3 → 2.4 m) **breaks guard** (a ward too); at f20 its tip bites the ground and a flat heat sheet runs out: a **25° / 9 m cone**, 130, knockback 4 m, **blockable, never a break** (guard 22), ranged (no parry catches it); both carry the pierce |
-| Shift+L | **MINAMI** (South), the bind `:ya-kaka` | 20/1/34 | 40 | — | 2 bars, cooldown 600 f (kept through resets); below |
+| Shift+L | **MINAMI** (South), the bind `:ya-kaka` | 20/1/34 | 40 | — | 2 bars, no cooldown (the user's decision 2026-09-28: like every SP2 the bars are its limiter); below |
 | I | Breaker (derived) | 7/4/18 | 150 | Guard Break | |
 | O | **KITA: TENCHI** `:ya-tenchi` | §6.3 | 70 | −14 | |
 
@@ -473,7 +478,7 @@ the cash-out is the one forced change), several steps at once:
 | Shift+K | Split the Meteor (as written) | Split the Meteor | **NOMIHOSE**, the cash-out |
 | Kikon (O) | LEAP CLEAVE, **2** Konpaku | LEAP CLEAVE, 3 | LEAP CLEAVE, **4** |
 | Look | one hand (`:ke-n-stance`), the base yellow aura | two-handed jōdan (`:ke-r-stance`, both fists on the long handle: the draw holds the left fist there between the keys
-too, restyle Phase 6), the awakened aura, a yellow ring, "RYOTE"; the kendo set's own clips (MEN, KESA, DO, KABUTO-WARI) | two-handed, the aura as a pillar (×1.6 tall); on entry the yellow pillar (a match's later cup 3s: a half-height flare), a 1 f negative, a 12 f manga page, "NOMIHOSE!" and the grin: his shout face held 0.9 s, the head thrown back (a look over any clip); KUKAN-GIRI's own clip; the rift drawn (a yellow lens slit, then the ink gash) |
+too, restyle Phase 6), the awakened aura, a yellow ring, "RYOTE"; the kendo set's own clips (MEN, KESA, DO, KABUTO-WARI) | two-handed, the aura as a pillar (×1.6 tall; see-through since 2026-09-28: half its MSAA samples, cups 1 / 2 three quarters, the user's request "it hid the view", STYLE_STORM_DESIGN reiatsu row); on entry the yellow pillar (a match's later cup 3s: a half-height flare), a 1 f negative, a 12 f manga page, "NOMIHOSE!" and the grin: his shout face held 0.9 s, the head thrown back (a look over any clip); KUKAN-GIRI's own clip; the rift drawn (a yellow lens slit, then the ink gash) |
 
 The HUD names the cup (KENPACHI KATATE / RYOTE / NOMIHOSE); NOME is a yellow bar in the kit meter's slot with a bright
 mark at 40, dim ticks at the floors 25 and 50, three cup pips, and a pulse within 10 of the current floor. Dropping to cup
@@ -527,8 +532,9 @@ with no derivation (cup 3) takes its parent's version of a move (`register-kit`)
 | Shift+K **NOMIHOSE** `:ke-meteor-n` | 26/4/30 | **390** | −16 | the whole cup at once: on its first frame NOME is 0 and he is back in cup 1 (`ken-drink-dry`), so the cut resolves at ×1.0 and an O after it is cup 1's 2-Konpaku Kikon (no O ender: it isn't a string); within 6 m (`:crush-range`) it **breaks guard** (Guard Break, −35), beyond it is blockable (guard 22); the cleaver within 3.9 m (cup 3's MEN reach) is melee, the line beyond it ranged (§6.1); 1 bar |
 
 **The Bankai 卍解 and 片腕 KATAUDE** ([DUEL_KEN_BANKAI.md](DUEL_KEN_BANKAI.md), built 2026-09-28; the user's decisions
-2026-09-27 / 28). A **second awakening**, the one exception to "one awakening per match" (§1): from cup 3, **red** and
-free (idle / guard, DRINK included), **P** enters `:bankai` (`bankai-allowed-p`, `:bankai-form :bankai` on NOMIHOSE only;
+2026-09-27 / 28). A **second awakening**, the one exception to "one awakening per match" (§1): from cup 3, with **at most
+4 of his own Konpaku left** (`*bankai-konpaku*`; the user's decision 2026-09-28, it was red Reishi) and free (idle /
+guard, DRINK included), **P** enters `:bankai` (`bankai-allowed-p`, `:bankai-form :bankai` on NOMIHOSE only;
 no gauge; the later forms have no `:bankai-form`, so once a match). On entry **his own Konpaku become 1 and his Reishi
 is refilled** (the user's decisions 2026-09-28: all his remaining souls for one full bar fought with the Bankai; any
 Kikon or Soul Break on him is now the K.O.). Cinematic `ken-bankai-cine` 186 f: down on one knee (ch. 669); the
@@ -573,7 +579,34 @@ LEAP CLEAVE off RYOTE's K3 at 4.2 m: 9 f of leap + S 11 inside the crumple's 40)
 | KITA: TENCHI `:ya-tenchi` | Bankai (both stances) | 10 | 36 m/s ≤ 14 f, locked | 10 m, ≤ 30 f | 6/2/26 | 2.4 m arc 110° | 32 | a flash step: the body vanishes into ink afterimages (one every 4 f), the Hoho's streaks at take-off, `:hoho-out`, `:kikon-slash` on the cut |
 | CHARGE `:ke-kikon` | Kenpachi base; 片腕 (worth 3) | 5 | 13 m/s ≤ 36 f, turning 150°/s | 9.4 m, ≤ 50 f | 9/3/24 | 2.4 m arc 110° | 30 | **armour 1 hit in the charge** (a REIATSU star + the laugh; a Breaker or a 2nd hit stops it); the aura ×1.5 |
 | LEAP CLEAVE `:ke-kikon-n` | Nozarashi (every cup; worth 2 / 3 / 4) | 8 | 18 m/s ≤ 30 f, locked | 10.6 m, ≤ 49 f | 11/3/24 | 3.08 m arc 160° | 30 | the widest strike; a DUST ring at take-off, the body drawn up to 1.6 m high (`:lift`, a look), a 3 m gash where it lands |
+| ENBU `:ru-kikon` | Rukia's Shikai (worth 2) | 6 | 24 m/s ≤ 16 f, locked | 8 m, ≤ 30 f | 8/3/24 | 2.4 m arc 360° | 30 | a flash step (TENCHI's afterimages) into MAI-SODE's pirouette; the Kikon 初の舞・月白 |
+| 白霞罸 HAKKA `:ru-hakka` | Rukia's awakened forms (worth 3) | 8 | none | 7.5 m | 20/3/30, locked | lane `:cap 0.5→7.5 h 1.2 r 1.2` | 30 | ENJO's shape in ice: a white pillar at her (f4), a sheet of ice along the lane (f20), frost 120 |
 | MAPPUTATSU `:ke-b-kikon` | Kenpachi's Bankai (worth 4) | LEAP CLEAVE's, copied (`defmove-copy` with override keys: its own callout and cinematic) | | | | | | a pip of the arm; the Bankai's aura smoulders during it |
+
+### 6.4 Kuchiki Rukia (`duel/lisp/rukia.lisp`, art `rukia-art.lisp`; the full design and the as-built deviations: DUEL_RUKIA.md)
+
+The TYBW lieutenant (black shihakushō, the armband, no haori; 1.44 m, `:rukia` body scale 0.8), Sode no Shirayuki white.
+**Shikai** `:base`: a light, fast J (J1 7 f, 34), K links that leave **frost** (a status: walk and run ×0.7 for the
+frames of the hit's `:frost`, capped at 150, never stacked; Step / Hoho untouched); L 月白 TSUKISHIRO (a ring under the
+opponent, a guardable pillar 24 f later: the uncuttable `:freeze` hazard, fragile: gone if she is hit first), SP1 白漣
+HAKUREN (held stabs, then a wave a side Step clears), SP2 白刀 SHIRAFUNE (a 5 m ice-blade thrust), the Breaker 這縄
+HAINAWA, the O module ENBU. **The awakening 絶対零度** (no heal) is **one cold gauge of two stacked bars** (the kit meter
+`:temp`, cold C 0–200; the temperature rework built 2026-09-28, DUEL_RUKIA.md §4): guarding cools her 90 / s (GUARD HOLD's
+test; bracing at zero), not guarding warms her (10 / 12 / 5 per s: zero warms slowest, the user's decision), a blocked blade
+cools her ×1.5 of its guard value, a real hit warms her ×0.2 of its damage. Bar 1 full → −50 °C `:m50`, both full →
+absolute zero `:zero`; bar 1 empty → −18 `:m18`, bar 2 empty → −50 (rules `temp-band`, switched only while she is free).
+Actions spend cold (the kit's `:cold`; at −18 only L, refused below its cost; zero's L and SPs cash the whole top bar).
+Colder is slower (walk 3.4 / 2.8 / rooted: no Step, Hoho, slide or chase) but stronger in every button (×1.15 / 1.5 /
+1.65 dealt, ×0.95 / 0.85 / 0.8 taken; reach ×1.0 / 1.1 / 1.35; frost on every hit 30 / 60 / 90 f; the L family 霜柱
+SHIMOBASHIRA r 2.5 → 氷震 HYŌSHIN r 3.5 → 零度凍結 REIDO TŌKETSU r 5.5; SP1 / SP2 / O longer and harder; blades Sode no
+Shirayuki / rimed `:ru-rime` / ice `:ru-ice`), and her **cold field** 寒域 (the kit's `:field`, r 3 / 4 / 5.5) scales only
+the away part of the opponent's walk / run (×0.85 / 0.7 / 0.55) and his away Step (×1 / 0.9 / 0.75), floor ×0.45 with
+frost. **Zero**: West's ward from every side, but **optical** (hazards and `:ranged` hits pass through it at ×1.0), the
+first warded melee hit freezes its attacker 18 f, no chip, rooted; U braces (no warming, the guard gauge drains 8 / s); no
+chosen exit: spending, warming or the forced **CRACK** (the ward crushed or broken: the gauge empties, 60 self-damage, a
+30 f crumple, 2 s of no cooling). The white look (zero and the 白霞罸 costume) has ice-blue keylines and brows (a per-body
+ink). Kikon cinematics: 初の舞・月白 (Konpaku 2), 卍解 白霞罸 (3); the awakening `ru-awaken-cine`. The Shikai ×1.5 dealt /
+×0.8 taken.
 
 ## 7. CPU AI (`duel/lisp/ai.lisp`: generic; identity = the kit's `:ai` table)
 
@@ -652,6 +685,14 @@ random number from `sim-rnd01` (seeded per match), so a seed replays the same ma
   the arm out). A committed `:grab` (the bite) is never guarded (a side Step). 片腕: the base table at 1.0–2.0 m,
   `:kikon-p` 0.5, `:o-ender` 0.25. Debug 31000+10a+b sets the entry per side (0 the rule, 1 always, 2 never, 3 the rule
   with p 1: the gamble A/B).
+- **Rukia's keys** (DUEL_RUKIA.md §7; generic code): `:awaken (:melee-share 0.6 :min-taken 150)` awakens only when
+  ≥ 60 % of the damage it took came from melee hits and it has taken ≥ 150 (`ai-awaken-p`; debug 39000+10a+b: 0 the rule,
+  1 always, 2 never); `:cool (:p :near :no-projectile :min-gg)` at −18 / −50 (a neutral decision within :near m holds U
+  for the frames the next band still needs, `temp-cool-frames`; not below :min-gg % of the guard gauge); at zero
+  `:brace (:p 0.2 :near 5.5 :min-gg 30)` holds U 20 f now and then while he is near; `:stun-follow` follows a stunned
+  opponent beyond J reach (SHIRAFUNE at 2.4–5 / 6 m); a `:rooted` form maps Step / Hoho / side Step to Q; the
+  South-tell reflex now reads any `:bind` move with a `:tell` (TSUKISHIRO's ring included); `:opp-intent` at zero makes
+  the opponent zone / wait.
 - **Intents** APPROACH / PRESSURE / ZONE / DEFEND, re-picked every 12 f from the kit's weights;
   each has a preferred range. In neutral the CPU walks to that range, strafes (direction re-rolled
   every 40–120 f), and every 40–80 f (NORMAL; EASY 56–96, HARD 20–60) decides: guard (close, the
@@ -684,7 +725,13 @@ much faster than CPU vs CPU; the user's decision 2026-09-26), every match by K.O
 near even (YK within ±3 of 10 / 10; a 20-match win count carries about ±2 of noise). **Latest (the Soul Break rule and
 Kenpachi's Bankai, the user's decisions 2026-09-27 / 28, DUEL_KEN_BANKAI.md): YY 131.8 s (99.7–165.1), YK 138.4 s
 (98.1–200.9), KK 131.5 s (97.4–174.2)**, 60/60 K.O.; wins YY 9 / 11, **YK Yamamoto 8 / Kenpachi 12**, KK 7 / 13
-(Bankai entries: 3 in YK, 6 in KK). After the Soul Break rule alone: YY 131.8, YK 138.0, KK 131.5 s, YK 9 / 11.
+(Bankai entries: 3 in YK, 6 in KK). **Latest (2026-09-28: Rukia's cold-gauge rework, Kenpachi's one pip per string,
+South without a cooldown; debug 2113, all six pairings): YY 134.7, YK 136.2 (Yamamoto 12 / 20), KK 131.2, RY 135.6
+(Rukia 11 / 20), RK 148.1 (Rukia 13 / 20), RR 183.1 s (P1 8 / 20)**, 120/120 K.O.; her awakening A/B (60 seeds, P1 always /
+never): RY 30 / 28, RK 35 / 32, RR 26 / 27 (DUEL_RUKIA.md, "Measurements (the cold gauge rework)"). **Before it (Rukia
+merged, debug 2113 plays all six pairings): YY 134.7, YK 137.1, KK 125.8, RY 144.0 (Rukia 9 / 20), RK 152.1 (Rukia
+12 / 20), RR 186.0 s (P1 10 / 20)**, 120/120 K.O.; her awakening A/B (60 seeds, P1 always / never / rule): RY 25 / 28 / 23, RK 34 / 37 / 34, RR 28 / 27 / 28
+(DUEL_RUKIA.md, Measurements). After the Soul Break rule alone: YY 131.8, YK 138.0, KK 131.5 s, YK 9 / 11.
 Before (the J / K strings, the
 O ender and KŌSEI, the user's decisions 2026-09-27, DUEL_STRINGS.md §10; K2 / K3 at 80 %, the string's K 0.3, the O
 ender 0.15, the SP cancel 0.3): YY 129.4 s (97.7–165.1), YK 137.3 s (77.0–196.1), KK 130.4 s (97.4–172.0), 60/60
@@ -720,13 +767,17 @@ modules): YY 168.1 s (149–204), YK 154.8 s (122–176), KK 150.3 s (117–177)
 
 ## 8. Flow and screens
 
-TITLE (press start) → MODE: VS CPU / VS PLAYER / CPU VS CPU / CONTROLS → SELECT (P1 picks, then
+TITLE (press start) → MODE: VS CPU / PRACTICE / VS PLAYER / CPU VS CPU / SETTINGS / CONTROLS (2026-09-28: PRACTICE,
+SETTINGS, and ONE-HAND VS CPU merged into VS CPU: one-handed wherever the ONE-HAND setting is in effect; DUEL_GAMEPLAY.md
+"Flow", DUEL_MOBILE_DESIGN.md §16) → SELECT (P1 picks, then
 P2 or the CPU, then the CPU difficulty EASY / NORMAL / HARD; both models stand on the plaza;
 mirror matches allowed, P2 tinted) → INTRO (5 s: each fighter's intro clip under his name, then
 "FIGHT!"; skippable) → BATTLE (pause: RESUME / RESTART / CHARACTER SELECT / TITLE) → FINISH (K.O.
 or TIME cinematic) → RESULTS (winner pose, stats per side: DAMAGE, KIKONS, PERFECT HOHOS, BEST
 COMBO, KONPAKU LEFT, and the TIME; REMATCH / CHARACTER SELECT / TITLE, accepted after 2.5 s).
 Menu matches take a clock seed; debug matches take a fixed seed (DUEL_GAMEPLAY.md).
+PRACTICE (P1 against a dummy: STAND / GUARD ALL / GUARD AFTER HIT / CPU) has no timer and no match end; its options are
+on the pause menu (DUEL_GAMEPLAY.md "PRACTICE").
 
 ## 9. Camera
 
@@ -735,7 +786,7 @@ Two cameras (camera.lisp). A human's stick is read through the **view direction 
 cannot depend on the frame rate; CPU pilots never read the view, so a CPU match cannot depend on
 the camera choice.
 
-- **Behind P1** (VS CPU; the default, option CAMERA: BEHIND / SIDE in the pause menu and on the
+- **Behind P1** (VS CPU and PRACTICE; the default, option CAMERA: BEHIND / SIDE in SETTINGS, the pause menu and on the
   select screen's difficulty page, up / down picks the row): the sim's view yaw turns toward P1 → P2
   at most 300°/s (after a Hoho behind either fighter it swings round in ~0.6 s instead of snapping;
   every start and reset snaps it). The eye stands 5.5 m behind and 2.3 m above P1 and 0.9 m to his
@@ -766,16 +817,24 @@ K.O. cinematic brings rain (thin steel streaks, small splash rings) as the orbit
 
 **HUD** (`hud.lisp`, P2 mirrored): Reishi bar (red and pulsing below 30 %, a white damage trail),
 the guard gauge right under it (steel, a white drain trail; guardless: grey with a red fill climbing
-back), 9 Konpaku soul flames that shatter, the REIATSU 3 bars, the FLASH STEP bar (steel-blue, ticks
+back), 9 Konpaku soul flames that shatter (the last N of them BLOOD red: what the opponent's Kikon would take if it
+landed now, N = his current form's `:kikon-konpaku` capped at the flames left, `konpaku-at-stake`; they pulse while the
+fighter is red, i.e. while that Kikon is live; the user's request 2026-09-28, which replaces "every flame red when red";
+the HP-0 Soul Break's + 1 is not shown), the REIATSU 3 bars, the FLASH STEP bar (steel-blue, ticks
 at 30 and 70, the part past 70 glowing while a Burst is possible), the AWAKEN bar (EVOLUTION blinks; shows the
 form name once awakened),
-Yamamoto's INFERNO bar (drains in Hellfire) or, in Bankai, two COOLDOWN bars (L, steel; South,
-ember; full = ready, a refused press flashes its bar), Kenpachi's NOME bar once awakened (yellow, the cup marks and pips:
+Yamamoto's INFERNO bar (drains in Hellfire) or, in Bankai (and any awakened form whose L has a cooldown), **one**
+COOLDOWN bar for L (steel; full = ready; L has one use per cooldown, never two charges); a refused press flashes it
+(playtest 1, 2026-09-28: the earlier two half bars, L | Shift+L, read as two L cells; the thin Shift+L line went with
+South's cooldown the same day), Kenpachi's NOME bar once awakened (yellow, the cup marks and pips:
 §6.2), in his Bankai the arm **UDE** in the same slot (the brush 腕 + UDE; four BLOOD claw-slash pips, a spent one INK
 with a white crack, a thin line draining under the next pip over its 300 f crack clock, flickering in its last 60 f;
 the portrait block shows the same pips), a blinking **P BANKAI** (KP+ / BACK) prompt while a human may enter it (the
 phone's AWAKEN chip lights on the same test), the awakening row's label naming the form, or what its U does (`U: WEST` in Bankai East, `WARD` in Bankai West,
-`U: DRINK` in Nozarashi's cup 3), the guard bar drawn 30 % darker while its owner guards below full
+`U: DRINK` in Nozarashi's cup 3), Rukia's **cold gauge** in the same slot once awakened (her awakened L has no cooldown,
+so no COOLDOWN row is drawn for her: the brush 凍 and the band, −18C / −50C / −273C, THAW in the lock after a CRACK; two
+stacked bars overlaid in one strip, bar 1 steel-ice, bar 2 white over it, three band pips, L's cost dimmed on the top
+bar, zero's bar pulsing, a BLOOD hairline on a CRACK; the portrait block the same; the U tag `U: COOL`, `U: BRACE`), the guard bar drawn 30 % darker while its owner guards below full
 (GUARD HOLD: no refill; always in Bankai West) and, in Bankai, **ember** (East's pierce reads it),
 the timer, the combo counter under the victim's bar ("5 HITS 212"), move-name callouts over the
 user ("KIKON" when a rush starts, the Kikon's own name when it becomes one), a HOLD O KIKON prompt
@@ -788,7 +847,7 @@ Brush captions (they slice out: a brush cut through the column, the halves slidi
 them or over what follows the cinematic; a gameplay column in its last 0.3 s): every cinematic stamps a vertical kanji column with a small romaji reading (城郭炎上 JOKAKU ENJO,
 北 天地灰尽 TENCHI KAIJIN, 卍解 残火の太刀 BANKAI, 野晒 呑め、NOME, NOZARASHI, 呑め、野晒 NOME, NOZARASHI on both of Kenpachi's Kikons (the sub line KIKON's quote / SKY
 SPLIT), 魂 SOUL BREAK,
-決着 K.O., 時間切れ TIME, the names 山本元柳斎重國 / 更木剣八 in the intro), a red 鬼 hanko on the Kikon names.
+決着 K.O., 時間切れ TIME, the names 山本元柳斎重國 / 更木剣八 / 朽木ルキア in the intro; Rukia's 初の舞 月白, 卍解 白霞罸, 絶対零度), a red 鬼 hanko on the Kikon names.
 In a fight the SP / technique names with kanji show as a small brush column at the user's side instead of the
 pixel callout over his head (不知火 SHIRANUI, 松明 TAIMATSU, 撫斬 NADEGIRI, ぶった斬る BUTTAGIRU,
 俺に斬れねえもんはねえ ORE NI KIRENEE MON WA NEE); the Bankai compass carries its direction in an inverted box:
@@ -816,9 +875,13 @@ the Bankai were held +30 f; the sim is frozen during a cinematic, so only match 
 | Nozarashi `ken-nozarashi-cine` | 72 | 108 | **108** | face + NOME release 28 (no eyepatch: the burst at f26), the pillar card 30, close low 20, the stamp card 30 |
 | Kenpachi's Bankai `ken-bankai-cine` | — | — | **186** | beat 0 12, the forest card 46, the burst 20, close low 30, the 卍解 card 58, wide 20 |
 | MAPPUTATSU `ken-oni-kikon-cine` | — | — | **162** | beat 0 12, the caption card 56, the cleave 34, side 30, end 30 (the sky split's beats) |
+| 初の舞・月白 `ru-kikon-cine` | — | — | **186** | Rukia's Shikai Kikon (DUEL_RUKIA.md §5.1) |
+| 白霞罸 `ru-hakka-cine` | — | — | **198** | her awakened Kikon (§5.2): the pillar, the Bankai kimono, the hand close-up |
+| 絶対零度 `ru-awaken-cine` | — | — | **132** | her awakening (§6) |
 | Soul Break / intro / K.O. / TIME | 96 / 300 / 150 / 120 | unchanged | unchanged | a Soul Break now plays the attacker's Kikon cinematic (§2); `soul-break-cine` is the fallback |
 
-**Audio** (`sounds.lisp`): 42 synthesized sounds: 40 SFX (swings, cuts, clang, guard break, the heat flare,
+**Audio** (`sounds.lisp`): 51 synthesized sounds (Rukia added five: frost tick, freeze, ice rise, ice shatter, hand
+crack): 49 SFX (swings, cuts, clang, guard break, the heat flare,
 Breaker hum and clash, Hoho, perfect chime, fire whoosh / roar / crackle / wave, explosion, ground
 crack, bones, Kikon slash, Konpaku shatter, awakening rise and boom, a laugh, the Bankai's arm crack and burst and the
 forest's doubled call …) and two music loops
@@ -898,9 +961,20 @@ batch: §4, §6.1, §6.2, §12):
 | Bankai's guard gauge (the rework) | fed by his hits, never by time; ×1.3 on every drain; carried through resets; full at the awakening | the universal refill **in East only** (West counts as guarding: GUARD HOLD); ×1.0 drains (West × `*ward-mult*`); refilled at resets like everyone's; the awakening leaves it; the parry's catch fills it | **The user's decision 2026-09-27** (the rework; the ×1.3 drain deleted, `*ward-mult*` replaces it) |
 | Guard gauge refill (all characters) | 12/s after 60 f; guardless 14/s | **5.5/s** after 60 f; guardless **6.5/s** (0 → 100: 1 s + 15.4 s) | **The user's request 2026-09-27** (「大幅減少防禦量表的恢復速度」); 46 % of the old rates |
 | CPU Breaker reflex vs Bankai West | a held guard only (`:guard` state) | Bankai West's ward counts as a held guard (its time in West as the hold), and as a guard for block-string pressure | The rework's anti-turtle key (DUEL_YAMA_REWORK §5), with **the user's decision 2026-09-27** that a Breaker flips West to East |
-| Strings | Q1 → Q2 → Q3, F1 → F2, the Q2 → F branch; a whiff chained like a block (in the last 3 f); whiff R + 6 | **up to three links, each J or K, switching at most once** (JJJ JJK JKK KKK KKJ KJJ; one move per link and button, the switched link 2 a copy); **the latch** (a press any time during the link, the last allowed wins; a press of the old button after a switch is eaten); **the contact gate** (a whiff never chains); whiff R + 8 (J) / R + 12 (K); the §4 budget (J beats K, K3 −20); 5 new clips (SODEBI, RAKUJITSU, KENKA-GERI, KOTE, MOROTE-ZUKI) | **The user's decision 2026-09-27** (the strings design r3 §0.1, all nine answers the defaults: strings aren't just two hits, J / K mix, 「K J 不要來回交錯」). DUEL_STRINGS.md |
+| Strings | Q1 → Q2 → Q3, F1 → F2, the Q2 → F branch; a whiff chained like a block (in the last 3 f); whiff R + 6 | **up to three links, each J or K, switching at most once** (JJJ JJK JKK KKK KKJ KJJ; one move per link and button, the switched link 2 a copy); **the latch** (a press any time during the link, the last allowed wins; a press of the old button after a switch is eaten); **the string gate** (a link-1 whiff never chains; after any contact every later link comes out and chases him, 2026-09-28); whiff R + 8 (J) / R + 12 (K); the §4 budget (J beats K, K3 −20); 5 new clips (SODEBI, RAKUJITSU, KENKA-GERI, KOTE, MOROTE-ZUKI) | **The user's decision 2026-09-27** (the strings design r3 §0.1, all nine answers the defaults: strings aren't just two hits, J / K mix, 「K J 不要來回交錯」). DUEL_STRINGS.md |
 | O cancel | the Kikon rush as a cancel of any landed move (Q, F, SP, Breaker) | **only off a link-3 hit** (the O ender, its aura skipped, always a combo); neutral O kept | **The user's decision 2026-09-27** (decisions 1–3, 6: keep neutral O, hit only, remove the other cancels, red = 30 %) |
 | KŌSEI | — | every contact of his own melee hit window pays Reiatsu 0.20 × g × m and flash-step 0.10 × g × m, m = 1 + 2 × (1 − guard gauge / 100) | **The user's request and decisions 2026-09-27** (reward aggression, more at a low guard gauge; Reiatsu and flash-step only, blocked hits count, projectiles and hazards don't) |
 | Strings' pacing | — | K2 / K3 at 80 % of the design's damage, the CPU's string K 0.3, O ender 0.15, SP cancel 0.3 (one roll), J beats K felt at once | The seed gate (DUEL_STRINGS §9, §10): as designed the medians fell to 107 / 119 / 122 s, under the 125 s floor |
 | Soul Break | the form's count + 1 (per-event cap 4), the generic `soul-break-cine` | the **attacker's current form's** count + 1, **cap 5 for Soul Breaks only** (a Kikon stays at 4), and the **attacker's Kikon cinematic** (`kit-kikon-cine`) | **The user's decisions 2026-09-27** (with the research report's answers) |
-| Kenpachi's second awakening | none: one awakening per match | **the Bankai** from cup 3 (red + P): Konpaku → 1, Reishi → full, the arm UDE (4 pips, 60 each, a crack per 300 f), then **片腕** for the rest of the match (§6.2, DUEL_KEN_BANKAI.md) | **The user's decisions 2026-09-27** (the one exception to the one-awakening rule, the entry, 4 pips, the red reiatsu, 片腕 at reach ×0.7) **and 2026-09-28** (Konpaku → 1, Reishi → full, the bite now, Yachiru a silhouette, 片腕 stays the oni, the CPU enters only as a finisher weighing its own Konpaku) |
+| Kenpachi's second awakening | none: one awakening per match | **the Bankai** from cup 3 (P with ≤ 4 of his own Konpaku; it was red + P): Konpaku → 1, Reishi → full, the arm UDE (4 pips, 60 each, a crack per 300 f), then **片腕** for the rest of the match (§6.2, DUEL_KEN_BANKAI.md) | **The user's decisions 2026-09-27** (the one exception to the one-awakening rule, the entry, 4 pips, the red reiatsu, 片腕 at reach ×0.7) **and 2026-09-28** (Konpaku → 1, Reishi → full, the bite now, Yachiru a silhouette, 片腕 stays the oni, the CPU enters only as a finisher weighing its own Konpaku; the entry at ≤ 4 Konpaku instead of red) |
+| Rukia (2026-09-28) | two characters | a **third**: Kuchiki Rukia, Shikai + 絶対零度 (DUEL_RUKIA.md), rebuilt the same day as a cold gauge of two stacked bars, with generic engine pieces: frost, the `:freeze` hazard kind, the `:temp` meter, `:optic` / `:freeze-touch` / `:chipless` passives, the kit slots `:field` / `:warm` / `:cold` / `:crush-hook` / `:frost-touch` / `:rooted` / `:reset-form` / `:u-tag`, per-body keylines | The user asked for a TYBW roster, then reworked the awakening after playtest 1; every piece is data or a generic rule, so the gate refs of the first two characters don't move with her |
+
+## Character code layout (the user, 2026-09-28)
+
+「每個角色用獨立的檔案實作，後續再將能復用的功能抽出到上層檔案中」. A new character is built in **its own files**
+(`duel/lisp/<name>.lisp` for the kit, moves, hooks, HUD meter and AI tables; `<name>-art.lisp` for bodies, clips, faces,
+auras and cinematics), including mechanics that look reusable. Shared files (rules, kit, combat, hazards, fighter, ai,
+hud, onehand, flow, debug) only get **small generic hook points** (a kit key that calls a function the character file
+supplies) and the one-line roster / MANIFEST registration. Duplication between characters is allowed at first; once
+two characters are merged, an **extraction pass** moves the pieces that really repeat into the shared files (the second
+user proves the abstraction). This keeps parallel character branches from colliding in shared code.

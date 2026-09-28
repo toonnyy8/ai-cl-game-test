@@ -4,7 +4,9 @@
 // erodes the shape). Flags: seed < 0 = an "along" shape (ribbon: the along coordinate is the heat, the
 // tip erodes first; its field is |uv.x|, and uv.y only moves the noise: 0 for ribbons, the distance along
 // a wall); |seed| >= 1000 = the charcoal style; pk >= 16 = a fan shape (stars, polygons,
-// shards: the field is the heat lane, 0 at the centre .. 1 exactly on the straight outline).
+// shards: the field is the heat lane, 0 at the centre .. 1 exactly on the straight outline); pk >= 32: a glass level
+// g = floor(pk / 32) (1..3) makes the shape see-through: its alpha is the coverage x g / 4, so alpha-to-coverage keeps g of
+// every 4 MSAA samples (without MSAA it stays opaque; g 0, every shape before it, is unchanged).
 // Output: the palette colour, alpha = coverage (alpha-to-coverage with MSAA; F.clk.y = the discard
 // threshold, 0.5 without MSAA). Noise is PCG-hashed (the same on every GPU) and steps on the fx clock
 // (F.clk.x, 24 Hz ticks): energy and fire change on twos, matter (styles 1, 3) on threes; fire scrolls
@@ -20,8 +22,10 @@ fn vnoise(p: vec2f) -> f32 {          // value noise on the integer lattice, smo
   return mix(mix(h21(i), h21(i + vec2f(1.0, 0.0)), u.x), mix(h21(i + vec2f(0.0, 1.0)), h21(i + vec2f(1.0, 1.0)), u.x), u.y);
 }
 @fragment fn fs_fx_toon(i: FxT) -> @location(0) vec4f {
-  let fan = i.pk >= 16.0;
-  let pk = select(i.pk, i.pk - 16.0, fan);
+  let glass = floor(i.pk / 32.0);
+  let pk0 = i.pk - 32.0 * glass;
+  let fan = pk0 >= 16.0;
+  let pk = select(pk0, pk0 - 16.0, fan);
   let p = min(u32(pk), 11u);
   let k = clamp(fract(pk), 0.01, 0.98);
   let core = PAL[4u * p]; let body = PAL[4u * p + 1u]; let shade = PAL[4u * p + 2u]; let edge = PAL[4u * p + 3u];
@@ -61,5 +65,5 @@ fn vnoise(p: vec2f) -> f32 {          // value noise on the integer lattice, smo
   var ew = 1.8 * edge.w * F.scr.w * (0.7 + 0.8 * wdir) * step(0.2, n3);   // px (x1.8: read at 720p), broken like a brush lift
   c = select(c, edge.rgb, d > k - ew * aa);
   c = mix(c, pow(F.fog.rgb, vec3f(1.0 / 2.2)), 0.6 * i.fog);           // fog tints the colour, not the coverage
-  return vec4f(c, cover);
+  return vec4f(c, select(cover, cover * 0.25 * glass, glass > 0.0));
 }

@@ -9,7 +9,7 @@
 ;; the character files also hold their hook functions and cinematics: those need the engine, so the
 ;; host skips the cinematics (a no-op DEFCINE) and never calls a hook
 (defmacro duel::defcine (&rest r) (declare (ignore r)) nil)
-(dolist (f '("tuning" "rules" "kit" "yama" "ken"))
+(dolist (f '("tuning" "rules" "kit" "yama" "ken" "rukia"))
   (load (merge-pathnames (format nil "../duel/lisp/~a.lisp" f) *load-truename*)))
 (in-package :duel)
 
@@ -22,7 +22,8 @@
 (defun mv (c f name) (kit-move (kit c f) name))
 (defparameter *forms* '((:yamamoto :base) (:yamamoto :hellfire) (:yamamoto :bankai-east) (:yamamoto :bankai-west)
                         (:kenpachi :base) (:kenpachi :nozarashi) (:kenpachi :ryote) (:kenpachi :nomihose)
-                        (:kenpachi :bankai) (:kenpachi :kataude)))
+                        (:kenpachi :bankai) (:kenpachi :kataude)
+                        (:rukia :base) (:rukia :m18) (:rukia :m50) (:rukia :zero)))
 
 ;;; ================================================================ the triangle / clash matrix
 (check (eq (resolve-contact :neutral) :hit))
@@ -95,6 +96,21 @@
 (check (loop for sf from 0 to 30 never (chain-open-p sf 9 3 12 nil)))
 (check (and (chain-open-p 21 9 3 12 :block) (not (chain-open-p 20 9 3 12 :block))
             (not (chain-open-p 24 9 3 12 :block))))
+;; the string gate (2026-09-28): a follow-up link (T: an earlier link touched him) carries the string even when it
+;; whiffed, at block timing; link 1's whiff (NIL) still never chains
+(check (and (chain-open-p 21 9 3 12 t) (not (chain-open-p 20 9 3 12 t)) (not (chain-open-p 24 9 3 12 t))))
+;; the follow-up's chase: reach its hit window, clamped, never past him
+(let ((g (max *lunge-stop* (- 2.6 *chase-margin*))))
+  (check (~= (string-chase-speed (+ g 1.4) 2.6 7) (* 60.0 (/ 1.4 7))))            ; arrives exactly at the hit frame
+  (check (~= (string-chase-speed 20.0 2.6 7) *chase-max*))                        ; clamped
+  (check (zerop (string-chase-speed g 2.6 7)))                                     ; close enough: no motion
+  (check (zerop (string-chase-speed 5.0 2.6 0)))                                   ; not after the startup
+  (check (<= (/ (string-chase-speed 3.0 2.6 1) 60.0) (- 3.0 g)))                  ; one frame never overshoots the goal
+  (check (zerop (string-chase-speed 1.3 1.5 5)))                                   ; a short reach stops at *LUNGE-STOP*
+  ;; simulated: a frame at a time from 6 m, he ends inside the reach by the hit and never nearer than the goal
+  (let ((d 6.0))
+    (loop for left from 14 downto 1 do (decf d (/ (string-chase-speed d 2.6 left) 60.0)))
+    (check (and (<= d 2.6) (>= d (- g 1e-4))))))
 (check (and (cancel-open-p 9 9 24 t) (cancel-open-p 23 9 24 t) (not (cancel-open-p 24 9 24 t))
             (not (cancel-open-p 10 9 24 nil))))
 (check (and (invulnerable-frame-p 3 *step-iframes*) (invulnerable-frame-p 9 *step-iframes*)
@@ -559,7 +575,9 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 (defparameter *kinds* '(:quick :flash :sig :sp :breaker :kikon))
 (dolist (cf *forms*)
   (let ((k (apply #'kit cf)))
-    (check (every (lambda (c) (kit-command-move k c)) *kit-commands*))
+    (check (every (lambda (c) (or (kit-command-move k c)      ; (or a command the form removes: Rukia's -50 / zero / THAW)
+                                  (member c (loop for (cc m) on (kit-commands k) by #'cddr unless m collect cc))))
+                  *kit-commands*))
     (check (every (lambda (s) (and (kit-move k (first s)) (kit-next k (first s) (second s)))) (kit-strings k)))
     (maphash
      (lambda (name m)
@@ -646,7 +664,11 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :sh-skate-b :sh-slide-r :sh-slide-l :ke-run :ke-skate-b :ke-slide-r :ke-slide-l   ; the runs (facing the opponent)
     :ke-r-stance :ke-drink     ; the cups
     :ke-r-q1 :ke-r-q3 :ke-r-f1 :ke-r-f2 :ke-n-f1     ; RYOTE's kendo set and KUKAN-GIRI (their own clips since Phase 5)
-    :ke-b-stance :ke-b-fist :ke-b-bite))              ; the Bankai (docs/DUEL_KEN_BANKAI.md §12)
+    :ke-b-stance :ke-b-fist :ke-b-bite                ; the Bankai (docs/DUEL_KEN_BANKAI.md §12)
+    :ke-b-leap :ke-b-run :ke-b-skate-b :ke-b-slide-r :ke-b-slide-l   ; its feral pass (2026-09-28; also 片腕)
+    :ru-stance :ru-intro :ru-win :ru-q1 :ru-q2 :ru-spin :ru-thrust :ru-ring :ru-drop :ru-tsukishiro :ru-stab :ru-hakuren
+    :ru-shirafune :ru-breaker :ru-hainawa :ru-cold-stance :ru-palm :ru-flower :ru-zero :ru-reido :ru-hakka   ; Rukia
+    :ru-palm-50 :ru-spin-50 :ru-flower-50 :ru-stab-2h))   ; her -50 key edits (zero's pinned J1 / K1 are body-variant clips)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
 ;; DEFCINEs, which the host stubs)
 (let ((used (remove-duplicates (loop for cf in *forms* append (kit-clips (apply #'kit cf))))))
@@ -655,8 +677,9 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     (check (and (null extra) (null unused)))))
 ;; phase 2: art names, roster, form looks, the flurry, hazard hits
 (check (equal (mapcar #'kit-weapon (mapcar (lambda (cf) (apply #'kit cf)) *forms*))
-              '(:ryujin-jakka :ryujin-jakka :zanka :zanka :ken-katana :nozarashi :nozarashi :nozarashi :ke-broken :ke-broken)))   ; the art agent's keys
-(check (equal *roster* '(:yamamoto :kenpachi)))
+              '(:ryujin-jakka :ryujin-jakka :zanka :zanka :ken-katana :nozarashi :nozarashi :nozarashi :ke-broken :ke-broken
+                :sode-no-shirayuki :sode-no-shirayuki :ru-rime :ru-ice)))
+(check (equal *roster* '(:yamamoto :kenpachi :rukia)))
 (check (equal (kit-intro-weapon (kit :yamamoto :base)) '(:ya-cane 81)))              ; cane until 1.35 s
 (check (and (eq (kit-cine (kit :yamamoto :bankai-east)) 'yama-bankai-cine) (eq (kit-cine (kit :kenpachi :nozarashi)) 'ken-nozarashi-cine)
             (null (kit-cine (kit :yamamoto :hellfire)))))
@@ -757,13 +780,12 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
                 (null (kikon-outcome t :parried nil))))
     (check (and (eq (mv-name c) :ya-w-counter) (= (mv-dmg c) 150) (eq (hw-react (svref (mv-hits c) 0)) :knockback)
                 (< (1+ (mv-s c)) *parry-stun*) (= *parry-stun* 32) (= *scorch* 15))))
-  ;; South, the bind: 20/1/34 (55 f), 2 bars, cooldown 600 (longer than the cast + the grab + the hold); the
+  ;; South, the bind: 20/1/34 (55 f), 2 bars and no cooldown (the user's decision 2026-09-28: the bars are its limiter); the
   ;; grab 16 f after the stab; 40 + bound 60; the follow-up window 41; unguardable (guard, stance, armour, parry
   ;; don't stop it; iframes do); it only opens a combo (else a flinch) and books 2 hits: 70 flash-step Bursts out
   (let* ((m (kit-command-move east :sp2)) (pa (mv-params m)))
-    (check (and (= (mv-total m) 55) (= (kit-command-cost east :sp2) 2) (= (mv-cooldown m) 600) (member :bind (mv-flags m))
+    (check (and (= (mv-total m) 55) (= (kit-command-cost east :sp2) 2) (= (mv-cooldown m) 0) (member :bind (mv-flags m))
                 (= (getf pa :delay) 16) (= (getf pa :dmg) 40) (= (getf pa :stun) *bind-stun* 60) (~= (getf pa :range) 10.0)
-                (> (mv-cooldown m) (+ (mv-s m) (getf pa :delay) (getf pa :stun)))
                 (= 41 (- (+ (mv-s m) (getf pa :delay) (getf pa :stun)) (mv-total m)))))
     (check (and (eq (resolve-contact :guard :unguardable t) :hit) (eq (resolve-contact :stance :unguardable t) :hit)
                 (eq (resolve-contact :armor :unguardable t) :hit) (eq (resolve-contact :parry :unguardable t :hazard t) :hit)
@@ -869,7 +891,9 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 ;;; ================================================================ Kenpachi's Bankai and 片腕 (docs/DUEL_KEN_BANKAI.md, the user's decisions 2026-09-28)
 (let ((b (kit :kenpachi :bankai)) (a (kit :kenpachi :kataude)) (t3 (kit :kenpachi :nomihose)))
   ;; 1. entry: P, free and red; only cup 3 has it (once a match: nothing after it does)
-  (check (and (bankai-allowed-p t t) (not (bankai-allowed-p nil t)) (not (bankai-allowed-p t nil))))
+  ;; the entry (2026-09-28): free with <= 4 of his own Konpaku (no longer red)
+  (check (and (= *bankai-konpaku* 4) (bankai-allowed-p t 4) (bankai-allowed-p t 1) (not (bankai-allowed-p nil 4))
+              (not (bankai-allowed-p t 5)) (not (bankai-allowed-p t 9))))
   (check (equal (loop for cf in *forms* when (kit-bankai-form (apply #'kit cf)) collect cf) '((:kenpachi :nomihose))))
   (check (and (eq (kit-bankai-form t3) :bankai) (eq (kit-cine b) 'ken-bankai-cine) (kit-awakening b) (kit-awakening a)))
   ;; 2. the arm: 4 pips; spend 4 -> 3, 0 refused; the crack at 300 f, idle back to 0; locked frames don't count;
@@ -920,7 +944,29 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     (check (and (eq (mv-name sp) :ke-b-split) (member :guard-crush (hw-flags (svref (mv-hits sp) 0))) (~= 6.0 (mv-reach sp))
                 (eq :ke-b-punch (mv-name (kit-next b :ke-charge :land))) (eq :ke-flurry (mv-name (kit-next a :ke-charge :land)))
                 (= 2 (kit-command-cost b :sp2)) (= 1 (kit-command-cost b :sp1)))))
-  ;; route damage on hit (x1.2, before Cornered; each hit rounded): KKK 444 (3 pips), JJK 272 (1)
+  ;; one pip per J / K string (the playtest decision 2026-09-28): owed from its first K link or its O ender, charged once
+  ;; he is out of the string (a whiff, a hit on him, the end, an SP / L cancel); JJJ owes none
+  (check (and (not (string-pip-due-p t :move :quick)) (not (string-pip-due-p t :move :flash)) (not (string-pip-due-p t :move :kikon))
+              (string-pip-due-p t :idle nil) (string-pip-due-p t :stun nil) (string-pip-due-p t :guard-hit nil)
+              (string-pip-due-p t :move :sp) (string-pip-due-p t :move :sig) (not (string-pip-due-p nil :idle nil))))
+  ;; the last pip's move comes out in full (the user's report 2026-09-28: the burst cut it): the pending burst follows
+  ;; the move's chain (a latched link, SP2's punch started by its hook, the O ender after a link 3: MOVE-FOLLOWS-P) and
+  ;; fires only once he is out of it; a new move of his own (J1 after the bite) is cut as before
+  (let* ((charge (kit-move b :ke-charge)) (punch (kit-next b :ke-charge :land)) (k1 (kit-move b :ke-b-k1))
+         (k2 (kit-next b :ke-b-k1 :f)) (k3 (kit-next b :ke-b-k2 :f)) (o (kit-command-move b :kikon))
+         (bite (kit-command-move b :sig)) (j1 (kit-command-move b :q)) (split (kit-command-move b :sp1)))
+    (check (and (move-follows-p b charge punch) (move-follows-p b k1 k2) (move-follows-p b k3 o) (move-follows-p b k1 (kit-next b :ke-b-k1 :q))
+                (not (move-follows-p b bite j1)) (not (move-follows-p b split j1)) (not (move-follows-p b k1 o))))
+    (flet ((burst-frame (pending frames)             ; ARM-STEP's rule over (state move) frames: the frame the burst fires
+             (loop for (st m) in frames for i from 0
+                   do (when (and (typep pending 'move) m (not (eq m pending)) (move-follows-p b pending m)) (setf pending m))
+                   when (burst-due-p pending m st) return i)))
+      (check (and (= 3 (burst-frame bite `((:move ,bite) (:move ,bite) (:move ,bite) (:idle nil))))          ; L
+                  (= 3 (burst-frame split `((:move ,split) (:move ,split) (:move ,split) (:idle nil))))   ; SP1
+                  (= 4 (burst-frame charge `((:move ,charge) (:move ,punch) (:move ,punch) (:move ,punch) (:idle nil))))   ; SP2
+                  (= 4 (burst-frame k2 `((:move ,k2) (:move ,k3) (:move ,o) (:stun nil) (:idle nil))))   ; a string + O
+                  (= 2 (burst-frame bite `((:move ,bite) (:guard-hit nil) (:move ,j1))))))))   ; a new move is cut
+  ;; route damage on hit (x1.2, before Cornered; each hit rounded): KKK 444 (1 pip), JJK 272 (1)
   (flet ((route-dmg (first presses)
            (loop for n in (route b first presses) for i from 1
                  sum (hit-damage (mv-dmg (kit-move b n)) (kit-atk-mods b 0) nil i nil))))
@@ -932,7 +978,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (~= 2.4 (mv-reach (kit-command-move a :kikon))) (= 7 (mv-s (kit-move a :ke-j1)))))
   (dolist (cf *forms*)
     (let ((k (apply #'kit cf)))
-      (check (> (mv-reach (kit-command-move k :breaker)) *breaker-trigger*))
+      (let ((br (kit-command-move k :breaker)))        ; (Rukia's rooted zero has none)
+        (check (or (null br) (> (mv-reach br) *breaker-trigger*))))
       (check (> (mv-reach (kit-command-move k :kikon)) (+ *kikon-trigger* 0.3)))))
   ;; the looks: the oni body in both, the aura only in the Bankai, the cracks hidden in 片腕, the wreck hidden in the Bankai
   (check (and (eq :kenpachi-oni (kit-body b)) (eq :kenpachi-oni (kit-body a)) (eq :oni (kit-aura b)) (null (kit-aura a))
@@ -943,11 +990,174 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (~= 0.6 (getf (kit-ai b) :string-k)) (= 90 (getf (kit-ai b) :pip-hurry))
               (equal (getf (kit-ai b) :opp-intent) '(:zone 2 :defend 2)) (null (getf (kit-ai b) :cashout)))))
 
+;;; ================================================================ Kuchiki Rukia (docs/DUEL_RUKIA.md)
+(let ((b (kit :rukia :base)) (m18 (kit :rukia :m18)) (m50 (kit :rukia :m50)) (z (kit :rukia :zero)))
+  ;; frost: max, not a sum; capped; x0.7 on walk / run only while it lasts
+  (check (and (= 90 (frost-next 60 90)) (= 90 (frost-next 90 60)) (= *frost-cap* (frost-next 140 400)) (= 150 *frost-cap*)
+              (~= (frost-speed 3.8 1) (* 3.8 *frost-slow*)) (~= (frost-speed 3.8 0) 3.8) (~= *frost-slow* 0.7)))
+  ;; the cold gauge (two stacked bars, the user's decision 2026-09-28): guarding cools *RU-COOL-RATE*/s, not guarding warms
+  ;; at the band's rate, clamped 0 .. 200
+  (check (and (~= 200.0 *cold-max*) (~= 100.0 *cold-bar*) (~= 1.5 (temp-next 0.0 t 10.0)) (~= 200.0 (temp-next 199.5 t 10.0))
+              (~= 0.0 (temp-next 0.1 nil 10.0)) (~= (- 150.0 (/ 12.0 60)) (temp-next 150.0 nil 12.0))))
+  ;; the bands with hysteresis by bars: -18 -> -50 at 100, back at 0; -50 -> zero at 200, back at 100; several at once
+  (check (and (eq :m18 (temp-band 99.9 :m18)) (eq :m50 (temp-band 100.0 :m18)) (eq :m50 (temp-band 0.5 :m50))
+              (eq :m18 (temp-band 0.0 :m50)) (eq :m50 (temp-band 199.0 :m50)) (eq :zero (temp-band 200.0 :m50))
+              (eq :zero (temp-band 100.5 :zero)) (eq :m50 (temp-band 100.0 :zero)) (eq :m18 (temp-band 0.0 :zero))
+              (eq :zero (temp-band 200.0 :m18)) (eq :m50 (temp-band 150.0 :m50))))
+  ;; the pacing (§1): guarding from -18 reaches zero in 134 f (2.2 s; the user's decision 2026-09-28: cool faster); a bar
+  ;; of -50 warms out in ~8 s, one of
+  ;; -18 in 10 s; zero's top bar in 20 s unbraced (the user's decision 2026-09-28: zero warms slowest, easier to hold)
+  (flet ((walk (c band guarding warm)
+           (loop for n from 1 to 2000 do (setf c (temp-next c guarding warm))
+                 when (not (eq band (temp-band c band))) return n)))
+    (check (and (= 67 (walk 0.0 :m18 t 0.0)) (= 67 (walk 100.0 :m50 t 0.0)) (= 67 (temp-cool-frames 0.0))
+                (<= 1190 (walk 200.0 :zero nil (kit-warm z)) 1210) (<= 480 (walk 100.0 :m50 nil (kit-warm m50)) 520)
+                (= 67 (temp-cool-frames 100.0)) (= 40 (temp-cool-frames 140.0)))))
+  ;; the kit side: a :temp meter of 200 in every band, warming 10 / 12 / 5 (zero the slowest), reset to -18
+  (check (and (eq (kit-awaken-form b) :m18) (every (lambda (k) (and (getf (kit-meter k) :temp) (~= 200.0 (getf (kit-meter k) :max)))) (list m18 m50 z))
+              (> (kit-warm m50) (kit-warm m18) (kit-warm z)) (null (kit-meter b))
+              (every (lambda (k) (eq (kit-reset-form k) :m18)) (list m18 m50 z)) (null (kit-reset-form b))
+              (null (kit-duration z)) (kit-rooted z) (notany #'kit-rooted (list b m18 m50)) (eq 'rukia-crack (kit-crush-hook z))
+              (null (kit-crush-hook m50)) (null (kit-drop-to z))))
+  ;; spending (§3, rescaled): at -18 only L (refused below its cost); at -50 / zero everything; zero's L and SPs cash the
+  ;; whole top bar (100: always back to -50); J / K cost the same whatever the link
+  (check (and (equal (kit-cold m18) '(:sig 25)) (= 0 (getf (kit-cold m18) :q 0)) (= 0 (getf (kit-cold m18) :step 0))
+              (every (lambda (c) (plusp (getf (kit-cold m50) c 0))) '(:q :f :sig :sp1 :sp2 :kikon :breaker :step :hoho))
+              (every (lambda (c) (>= (getf (kit-cold z) c 0) *cold-bar*)) '(:sig :sp1 :sp2))
+              (< (getf (kit-cold m18) :sig) (getf (kit-cold m50) :sig) (getf (kit-cold z) :sig))
+              (< (* 3 (getf (kit-cold z) :q)) *cold-bar*) (< (* 2 (getf (kit-cold z) :f)) *cold-bar*)))   ; zero's JJJ, KK fit its bar
+  ;; the field (§4.1): only the away part of a walk is scaled; a side Step untouched, a back Step x :step; the floor
+  (multiple-value-bind (vx vz) (field-velocity 2.0 0.0 1.0 0.0 0.55) (check (and (~= vx 1.1) (~= vz 0.0))))   ; straight away
+  (multiple-value-bind (vx vz) (field-velocity -2.0 1.0 1.0 0.0 0.55) (check (and (~= vx -2.0) (~= vz 1.0))))  ; toward / strafe
+  (multiple-value-bind (vx vz) (field-velocity 0.0 3.0 1.0 0.0 0.55) (check (and (~= vx 0.0) (~= vz 3.0))))   ; circling
+  (check (and (~= 2.5 (field-step 2.5 0.0 0.75)) (~= (* 2.5 0.75) (field-step 2.5 -1.0 0.75)) (~= 2.5 (field-step 2.5 1.0 0.75))
+              (< (* 2.5 0.75) (field-step 2.5 -0.5 0.75) 2.5)
+              (~= (field-k 0.55 t) (/ *field-floor* *frost-slow*)) (~= (field-k 0.85 t) 0.85) (~= (field-k 0.55 nil) 0.55)
+              (>= (* *frost-slow* (field-k 0.55 t)) (- *field-floor* 1e-4))))
+  (check (and (< (getf (kit-field m18) :r) (getf (kit-field m50) :r) (getf (kit-field z) :r))
+              (> (getf (kit-field m18) :away) (getf (kit-field m50) :away) (getf (kit-field z) :away))
+              (null (kit-field b)) (~= (getf (kit-field z) :r) (getf (mv-params (kit-command-move z :sig)) :radius))))
+  ;; colder is never weaker (the playtest fix, §4): damage x, frost on every hit, J / K reach, the L family (radius, damage),
+  ;; SP1 / SP2 / O reach and damage grow band by band; -50 and zero take less
+  (flet ((up (fn) (let ((v (mapcar fn (list m18 m50 z)))) (and (< (first v) (second v)) (< (second v) (third v)))))
+         (sig (k key) (getf (mv-params (kit-command-move k :sig)) key)))
+    (check (and (up #'kit-mult) (up #'kit-frost-touch) (up (lambda (k) (mv-reach (kit-command-move k :q))))
+                (up (lambda (k) (mv-reach (kit-command-move k :f)))) (up (lambda (k) (sig k :radius))) (up (lambda (k) (sig k :dmg)))
+                (up (lambda (k) (mv-reach (kit-command-move k :sp2)))) (up (lambda (k) (mv-dmg (kit-command-move k :sp2))))
+                (up (lambda (k) (mv-reach (kit-command-move k :kikon))))
+                (up (lambda (k) (getf (mv-params (kit-command-move k :sp1)) :dmg)))
+                (> (kit-taken m18) (kit-taken m50) (kit-taken z))
+                (~= 2.4 (mv-reach (kit-move m18 :ru-j1))) (~= 2.64 (mv-reach (kit-move m50 :ru-j1))) (~= 3.24 (mv-reach (kit-move z :ru-j1)))
+                (~= 4.3 (mv-reach (kit-command-move z :f))) (~= 3.51 (mv-reach (kit-move z :ru-j3))) (~= 2.86 (mv-reach (kit-move m50 :ru-j3-50)))
+                (~= 5.0 (mv-reach (kit-command-move m18 :sp2))) (~= 7.5 (mv-reach (kit-command-move z :sp2))))))
+  ;; rooted zero: at zero no chase, so each follow-up link must still reach after a blocked link's push from where a J1
+  ;; lands (its reach): J2 >= J1 - *BLOCK-PUSHBACK* (the x1.35 reach covers the 0.6 m push from 2.4)
+  (check (and (>= (+ (mv-reach (kit-move z :ru-z-j2)) 0.45) (+ 2.4 *block-pushback*))
+              (>= (+ (mv-reach (kit-move z :ru-k2)) 0.45) (+ 2.4 *block-pushback*))))
+  ;; the moves each band has: L SHIMOBASHIRA / HYOSHIN / REIDO (no cooldown: the gauge is the limiter, no COOLDOWN row);
+  ;; SP1 HAKUREN in every band (-50 faster stabs, zero no hold); no Breaker at zero; HAKKA in every band
+  (check (and (eq :ru-shimobashira (mv-name (kit-command-move m18 :sig))) (eq :ru-hyoshin (mv-name (kit-command-move m50 :sig)))
+              (eq :ru-reido (mv-name (kit-command-move z :sig))) (notany (lambda (k) (plusp (mv-cooldown (kit-command-move k :sig)))) (list m18 m50 z))
+              (eq :ru-hakuren (mv-name (kit-command-move m18 :sp1))) (equal '(12 48) (mv-hold (kit-command-move m50 :sp1)))
+              (null (mv-hold (kit-command-move z :sp1))) (null (kit-command-move z :breaker)) (kit-command-move m50 :breaker)
+              (every (lambda (k) (eq 'ru-hakka-cine (mv-cine (kit-command-move k :kikon)))) (list m18 m50 z))
+              (every (lambda (k) (null (kit-command-move k :step))) (list m18 m50 z))
+              (eq (mv-name (kit-command-move m18 :f)) :ru-a-k1) (eq (mv-name (kit-next m18 :ru-k2 :f)) :ru-a-k3)
+              (eq (mv-name (kit-next m50 :ru-j2 :q)) :ru-j3-50) (eq (mv-name (kit-next z :ru-j1 :q)) :ru-z-j2)
+              (eq (mv-name (kit-next z :ru-k2 :f)) :ru-z-k3) (= 2 (kit-command-cost m18 :sp2)) (= 1 (kit-command-cost b :sp2))))
+  ;; the passives: every band no chip; zero the ward, optic, freeze-touch
+  (check (and (equal (kit-passives m18) '(:chipless)) (equal (kit-passives m50) '(:chipless))
+              (equal (kit-passives z) '(:ward :optic :freeze-touch :chipless)) (null (kit-passives b)) (= 0 (kit-frost-touch b))
+              (~= *rukia-mult* (kit-mult b)) (~= *rukia-taken* (kit-taken b))))
+  ;; optic: a ranged hit on the zero ward lands as on an open defender (the defender state :neutral), a melee one is blocked
+  (check (and (optic-p t t t) (not (optic-p t t nil)) (not (optic-p nil t t)) (not (optic-p t nil t))
+              (eq (resolve-contact (if (optic-p t t t) :neutral :guard) :hazard t) :hit)
+              (eq (resolve-contact :guard :in-front nil :ward t) :blocked)))
+  ;; walk / run by band (colder is slower; zero rooted)
+  (check (and (~= (kit-walk b) 3.8) (~= (kit-run b) 9.0) (~= (kit-walk m18) 3.4) (~= (kit-run m18) 8.0) (~= (kit-walk m50) 2.8)
+              (~= (kit-run m50) 6.4) (~= (kit-walk z) 0.0) (~= (kit-run z) 0.0)))
+  ;; the Kikon counts: Shikai 2, every band 3; Soul Breaks 3 / 4; the cinematics
+  (check (and (= 2 (kit-kikon-konpaku b)) (every (lambda (k) (= 3 (kit-kikon-konpaku k))) (list m18 m50 z))
+              (= 3 (nth-value 1 (kikon-result 9 (kit-kikon-konpaku b) t))) (= 4 (nth-value 1 (kikon-result 9 (kit-kikon-konpaku m18) t)))
+              (eq 'ru-kikon-cine (kit-kikon-cine b)) (eq 'ru-hakka-cine (kit-kikon-cine m18)) (eq 'ru-hakka-cine (kit-kikon-cine z))
+              (eq 'ru-awaken-cine (kit-cine m18)) (= 0 (kit-heal m18))))
+  ;; the reaches: ENBU 8.0 m in <= 30 f; HAKKA's lane 6.5 / 7.5 / 9.0, no dash; J1 S7 beats every K1 in the game
+  (let ((en (kit-command-move b :kikon)))
+    (check (and (~= 8.0 (kikon-rush-reach (getf (mv-params en) :speed) (getf (mv-params en) :dash-max))) (= 30 (+ (getf (mv-params en) :aura) (getf (mv-params en) :dash-max) (mv-s en)))
+                (equal '(6.5 7.5 9.0) (mapcar (lambda (k) (mv-reach (kit-command-move k :kikon))) (list m18 m50 z)))
+                (zerop (getf (mv-params (kit-command-move z :kikon)) :dash-max)) (= 7 (mv-s (kit-command-move b :q)))
+                (< (mv-s (kit-command-move b :q)) (min (mv-s (mv :yamamoto :base :ya-k1)) (mv-s (mv :kenpachi :base :ke-k1)))))))
+  ;; fairness: TSUKISHIRO's circle + Kenpachi's hurt radius < a Step; every HAKUREN's widest half-width + his hurt radius
+  ;; < a Step (a side Step clears every wave, never shortened by the field); the ring's tell 24 f, one ring at a time
+  (let* ((ts (kit-command-move b :sig)) (pa (mv-params ts)))
+    (check (and (< (+ (getf pa :radius) 0.45) *step-distance*) (= 24 (getf pa :delay)) (> (mv-cooldown ts) (+ (mv-s ts) (getf pa :delay)))
+                (member :bind (mv-flags ts)) (equal (getf pa :tell) '(19 28))
+                (every (lambda (k) (let ((hp (mv-params (kit-command-move k :sp1))))
+                                     (< (+ (* 0.5 (+ (getf hp :width) (* 3 (getf hp :width-per)))) 0.45) *step-distance*)))
+                       (list b m18 m50 z))
+                (equal (mv-hold (kit-command-move b :sp1)) '(16 64))
+                (= 130 (let ((hp (mv-params (kit-command-move b :sp1)))) (+ (getf hp :dmg) (* 3 (getf hp :dmg-per))))))))
+  ;; frost on the hits: the K links, Shirafune, the new links
+  (flet ((fr (k n) (hw-frost (svref (mv-hits (kit-move k n)) 0))))
+    (check (and (= 60 (fr b :ru-k1)) (= 60 (fr b :ru-k2)) (= 90 (fr b :ru-k3)) (= 0 (fr b :ru-j1)) (= 150 (fr b :ru-shirafune))
+                (= 90 (fr m18 :ru-a-k1)) (= 120 (fr m18 :ru-a-k3)) (= 120 (fr m18 :ru-hakka-18)) (= 150 (fr z :ru-z-k3)))))
+  ;; the route damage on hit (before multipliers): KKK 208, JJJ 110, the O ender 63
+  (flet ((dmg (&rest names) (loop for n in names for i from 1 sum (hit-damage (mv-dmg (kit-move b n)) nil nil i nil))))
+    (check (and (= 110 (dmg :ru-j1 :ru-j2 :ru-j3)) (= 208 (dmg :ru-k1 :ru-k2 :ru-k3)) (= 63 (hit-damage 70 nil nil 4 nil)))))
+  ;; the looks and the HUD: the body variants, the blades, the hidden tags, the U tags, the band names
+  (check (and (eq :rukia (kit-body b)) (eq :rukia (kit-body m50)) (eq :rukia-zero (kit-body z))
+              (equal '(:sode-no-shirayuki :ru-rime :ru-ice) (mapcar #'kit-weapon (list m18 m50 z)))
+              (not (member :ice-trim (kit-hide m50))) (member :ice-trim (kit-hide m18)) (member :hand-crack (kit-hide z))
+              (equal (mapcar #'kit-u-tag (list m18 m50 z)) '("U: COOL" "U: COOL" "U: BRACE"))
+              (equal (mapcar #'kit-form-name (list m18 m50 z)) '("-18C" "-50C" "-273C"))))
+  ;; AI keys: the awakening rule, cooling (-50 not below half a guard gauge), bracing at zero, the stun follow-ups, the
+  ;; opponent's wait
+  (check (and (equal (getf (kit-ai b) :awaken) '(:melee-share 0.6 :min-taken 150)) (equal (getf (kit-ai b) :stun-follow) '(:sp2 2.4 5.0))
+              (equal (getf (kit-ai m18) :cool) '(:p 0.3 :near 3.5)) (= 50 (getf (getf (kit-ai m50) :cool) :min-gg))
+              (null (getf (kit-ai z) :cool)) (getf (kit-ai z) :brace) (null (getf (kit-ai z) :zero-exit))
+              (equal (getf (kit-ai z) :opp-intent) '(:zone 2 :defend 2)) (null (getf (kit-ai b) :opp-intent)))))
+
+;; L after a K link (the kit's :l-after-k, docs/DUEL_STRINGS.md §12, the user's decision 2026-09-28): every K link of
+;; every Rukia form (K1 K2 K2s K3) has one, no J link and no other character; the Shikai's is the combo copy of TSUKISHIRO,
+;; the bands' their own L. On hit it combos: from the K link's hit its A + the L's hit frame (the last :on-frame hook + a
+;; hazard's :delay) < the K link's hitstun; the Shikai's plain TSUKISHIRO wouldn't (its 24 f tell)
+(flet ((l-hit (l) (+ (first (car (last (mv-on-frame l)))) (or (getf (mv-params l) :delay) 0))))
+  (dolist (form '(:base :m18 :m50 :zero))
+    (let* ((k (kit :rukia form)) (ks (remove-if-not (lambda (l) (eq :f (car (last (third l))))) (link-moves k))))
+      (check (= 4 (length (remove-duplicates (mapcar #'first ks)))))
+      (dolist (l ks)
+        (let* ((m (first l)) (lm (kit-l-link k (mv-name m))) (w (svref (mv-hits m) 0)))
+          (check (and lm (eq (mv-kind lm) :sig)))
+          (check (< (+ (- (mv-s m) (hw-from w)) (mv-a m) (l-hit lm)) (hitstun (hw-react w))))))
+      (check (notany (lambda (l) (and (eq :q (car (last (third l)))) (kit-l-link k (mv-name (first l)))))
+                     (link-moves k)))))
+  (let* ((b (kit :rukia :base)) (lk (kit-l-link b :ru-k1)) (ts (kit-command-move b :sig)))
+    (check (and (eq :ru-tsukishiro-k (mv-name lk)) (= 18 (l-hit lk)) (= 34 (l-hit ts)) (= (mv-cooldown ts) (mv-cooldown lk))
+                (>= (+ 4 (l-hit ts)) 26)                                 ; the plain one misses the combo after a K1
+                (>= (mv-reach lk) (getf (mv-params lk) :range))           ; no chase: the ring is cast at him
+                (equal (mv-callout ts) (mv-callout lk)) (member :bind (mv-flags lk))))
+    (check (every (lambda (f) (eq (kit-l-link (kit :rukia f) :ru-k2) (kit-command-move (kit :rukia f) :sig))) '(:m18 :m50 :zero)))
+    (check (every (lambda (cf) (null (kit-l-after-k (apply #'kit cf)))) (remove :rukia *forms* :key #'first)))
+    (check (every (lambda (f) (numberp (getf (kit-ai (kit :rukia f)) :l-after-k))) '(:base :m18 :m50 :zero)))))
+
+;; the combo band lock with overdraft (the user's decision 2026-09-28): inside a combo the band holds whatever C does; L is
+;; refused short of its cold outside a combo, allowed on credit inside one while C > 0; once free the band re-resolves,
+;; several at once: -273 K K K (40 each) leaves 80, the chained L (100) overdraws to 0, and she lands at -18
+(let* ((z (kit :rukia :zero)) (kc (getf (kit-cold z) :f)) (lc (getf (kit-cold z) :sig))
+       (c (- *cold-max* (* 3 kc))))
+  (check (and (= 40 kc) (= 100 lc) (= 80 c)
+              (not (cold-ok-p c lc nil)) (cold-ok-p c lc t) (not (cold-ok-p 0.0 lc t)) (cold-ok-p 100.0 lc nil)
+              (eq :zero (temp-band-at c :zero :move)) (eq :zero (temp-band-at 0.0 :zero :move))   ; locked in the combo
+              (eq :zero (temp-band-at 0.0 :zero :stun)) (eq :m50 (temp-band-at 80.0 :zero :idle))
+              (eq :m18 (temp-band-at (max 0.0 (- c lc)) :zero :idle))                          ; the overdrawn combo: -18
+              (eq :m50 (temp-band-at 150.0 :m50 :guard)) (eq :m18 (temp-band-at 0.0 :m50 :run))
+              (eq :m18 (temp-band-at 10.0 :m18 :move)) (eq :zero (temp-band-at 200.0 :m18 :idle)))))
+
 ;; no character names in the generic files (design-v1 §12)
 (dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow"))
   (with-open-file (in (merge-pathnames (format nil "../duel/lisp/~a.lisp" f) *load-truename*))
     (check (loop for line = (read-line in nil) while line
-                 never (some (lambda (w) (search w line)) '(":ya-" ":ke-" "yama" "kenpachi"))))))
+                 never (some (lambda (w) (search w line)) '(":ya-" ":ke-" ":ru-" "yama" "kenpachi" "rukia"))))))
 
 (format t "duel-rules-test: ~d checks, ~a~%" *checks*
         (if (zerop *fails*) "ALL PASS" (format nil "~d FAILED" *fails*)))

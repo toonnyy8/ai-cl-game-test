@@ -511,10 +511,13 @@ An EMBER scorch ring under the walls."
   "A brush-flame aura (docs/STYLE_STORM_DESIGN.md §4.2 reiatsu, §4.3 Kikon rush): N tongues of palette PAL around
 the body at radius RAD (half-width W at the base), drawn only behind and at the sides (the ones between the camera and the body are left
 out, so the fighter stays readable inside), H tall x 0.8..1.25 with a lean, both re-drawn every drawing (twos),
-the palette's dark hairline, and when WHITE is 1 a white core line in the back ones. K = presence. A macro (the auras run every frame: 0 B); N and WHITE literal fixnums."
+the palette's dark hairline, and when WHITE is 1 a white core line in the back ones. K = presence. PAL may carry a glass
+level (+ 32 x g, fx-toon.frag.wgsl: see-through); the white cores take the same level. A macro (the auras run every
+frame: 0 B); N and WHITE literal fixnums."
   `(let* ((x ,x) (y ,y) (z ,z) (h ,h) (k ,k) (pal ,pal) (rad ,rad) (w ,w) (e (camera-eye *camera*)) (ex (- (aref e 0) x)) (ez (- (aref e 2) z)) (el (f-max 0.01f0 (f-sqrt (+ (* ex ex) (* ez ez)))))
-         (dr (drawing-no)) (pk (toon-a pal (* 0.95f0 k))) (step (/ 6.2831855f0 ,(float n 1f0))))
-    (declare (single-float x y z h k pal rad w) (type f32vec e) (single-float ex ez el dr pk step))
+         (dr (drawing-no)) (pk (toon-a pal (* 0.95f0 k))) (step (/ 6.2831855f0 ,(float n 1f0)))
+         (wpal (+ +pal-hit+ (* 32f0 (i->f (f->i (/ pal 32f0)))))))   ; the white cores' palette, the same glass level
+    (declare (single-float x y z h k pal rad w) (type f32vec e) (single-float ex ez el dr pk step wpal))
     (dotimes (i ,n)
       (let* ((f (i->f i)) (ang (+ (* step f) (* 0.3f0 (hash01 f 1.3f0))))
              (c (f-cos ang)) (sn (f-sin ang)) (front (/ (+ (* ex c) (* ez sn)) el)))
@@ -527,7 +530,7 @@ the palette's dark hairline, and when WHITE is 1 a white core line in the back o
                        :segs 6 :mode :toon)
             (when ,(if (eql white 1) '(< front -0.4f0) nil)
               (fx-ribbon bx (+ y 0.1f0) bz (* 0.7f0 lean c) (* 0.6f0 hh) (* 0.7f0 lean sn) 0.035f0 0f0 1f0 sd 0.1f0
-                         (toon-a +pal-hit+ (* 0.95f0 k)) 0.2f0 sd 0.1f0 (toon-a +pal-hit+ (* 0.95f0 k)) 0f0 0f0 :segs 3 :mode :toon))))))
+                         (toon-a wpal (* 0.95f0 k)) 0.2f0 sd 0.1f0 (toon-a wpal (* 0.95f0 k)) 0f0 0f0 :segs 3 :mode :toon))))))
      nil))
 
 (defmacro %kikon-aura (x y z h k)
@@ -539,20 +542,27 @@ white core lines in the back three, and a flat BLOOD ring at the feet. A macro: 
     (%tring x y z (+ 0.72f0 (* 0.06f0 (hash01 dr 8.3f0))) 0.07f0 +pal-blood+ (* 0.95f0 k) (i->f (mod (f->i dr) 7)))
     nil))
 
-(defmacro %reiatsu-aura (x y z h k awake)
+(defmacro %reiatsu-aura (x y z h k awake glass)
   "Kenpachi's reiatsu, yellow in every form (§4.2, user review 1). Base (AWAKE 0): 7 REIATSU tongues behind him at
 0.45 m, 0.8 x his height, white core lines, white flecks rising. Nozarashi (AWAKE 1): 9 wider tongues at 0.5 m, 1.05 x,
-3 thin inner white tongues, a flat REIATSU ring at the feet and a yellow light (its soft additive glow cut in Phase 6). A macro: 0 B."
-  `(let* ((x ,x) (y ,y) (z ,z) (h ,h) (k ,k) (dr (drawing-no)))
-    (declare (single-float x y z h k dr))
+3 thin inner white tongues, a flat REIATSU ring at the feet and a yellow light (its soft additive glow cut in Phase 6).
+GLASS (0..3): the tongues, cores and ring see-through, GLASS / 4 of them drawn (*REIATSU-GLASS*; the user's request
+2026-09-28: cup 3's pillar hid the view). A macro: 0 B."
+  `(let* ((x ,x) (y ,y) (z ,z) (h ,h) (k ,k) (dr (drawing-no)) (g (* 32f0 (i->f ,glass))))
+    (declare (single-float x y z h k dr g))
     (if (= ,awake 1)
         (progn
-          (%brush-aura x y z (* 1.05f0 h) k +pal-reiatsu+ 9 0.5f0 0.19f0 1)
-          (%brush-aura x y z (* 0.7f0 h) k +pal-hit+ 3 0.3f0 0.06f0 0)
-          (%tring x y z (+ 0.8f0 (* 0.06f0 (hash01 dr 8.3f0))) 0.06f0 +pal-reiatsu+ (* 0.95f0 k) (i->f (mod (f->i dr) 7)))
+          (%brush-aura x y z (* 1.05f0 h) k (+ +pal-reiatsu+ g) 9 0.5f0 0.19f0 1)
+          (%brush-aura x y z (* 0.7f0 h) k (+ +pal-hit+ g) 3 0.3f0 0.06f0 0)
+          (%tring x y z (+ 0.8f0 (* 0.06f0 (hash01 dr 8.3f0))) 0.06f0 (+ +pal-reiatsu+ g) (* 0.95f0 k) (i->f (mod (f->i dr) 7)))
           (%light x (+ y 1.2f0) z 1f0 0.8f0 0.25f0 5f0 0.7f0 8))
-        (%brush-aura x y z (* 0.8f0 h) k +pal-reiatsu+ 7 0.45f0 0.16f0 1))
+        (%brush-aura x y z (* 0.8f0 h) k (+ +pal-reiatsu+ g) 7 0.45f0 0.16f0 1))
     nil))
+
+(defparameter *reiatsu-glass* '(:reiatsu 3 :nozarashi 3 :nomihose 2 :oni 2 :oni-ink 3)
+  "Kenpachi's reiatsu, see-through (the glass level, 4 = opaque): the yellow, cups 1 / 2 draw 3 of 4 MSAA samples, cup 3's
+pillar 2 (the user's request 2026-09-28: it hid the view); the Bankai's red-and-black pillar (:oni, the same day): its
+BLOOD tongues 2, its taller INK tongues 3 (at 2 the black read as a grey smear). Render only.")
 
 (defvar *aura-now* (vector nil nil) "Per side: the body aura drawn now (main.lisp DRAW-AURA) ...")
 (defvar *aura-was* (vector nil nil) "... the one before it ...")
@@ -631,7 +641,8 @@ K is the presence (0..1). :heat also fades by *AURA-CAP* and when the camera is 
            (%t-blob (+ x (rnd-range -0.35f0 0.35f0)) (+ y (* h (rnd-range 0.1f0 0.8f0))) (+ z (rnd-range -0.35f0 0.35f0))
                     0f0 (rnd-range 0.8f0 1.6f0) 0f0 (rnd-range 0.4f0 0.7f0) (rnd-range 0.015f0 0.03f0) 0f0 0.1f0 +pal-hit+)))
         ((:reiatsu :nozarashi :nomihose)                  ; cups 1 / 2 / 3: base, awakened, pillar-scale (x1.6 tall)
-         (%reiatsu-aura x y z (if (eq kind :nomihose) (* 1.6f0 h) h) (f-clamp k 0f0 1f0) (if (eq kind :reiatsu) 0 1))
+         (%reiatsu-aura x y z (if (eq kind :nomihose) (* 1.6f0 h) h) ka (if (eq kind :reiatsu) 0 1)   ; (ka: the near-
+                        (the fixnum (getf *reiatsu-glass* kind 0)))                                   ; camera fade)
          (dotimes (i (n-of (case kind (:nomihose 22f0) (:nozarashi 12f0) (t 5f0)) dt))   ; white flecks rising
            (%t-blob (+ x (rnd-range -0.45f0 0.45f0)) (+ y (* h (rnd-range 0.1f0 0.8f0))) (+ z (rnd-range -0.45f0 0.45f0))
                     0f0 (rnd-range 1.2f0 2.4f0) 0f0 (rnd-range 0.3f0 0.6f0) (rnd-range 0.015f0 0.03f0) 0f0 0.1f0 +pal-hit+)))
@@ -644,10 +655,12 @@ K is the presence (0..1). :heat also fades by *AURA-CAP* and when the camera is 
                                                          ; (x1.4 tall) of BLOOD tongues over taller INK tongues, BLOOD flecks
                                                          ; rising; K < 1 during his Kikon rush: a smoulder (the rush's own
                                                          ; horizontal BLOOD trail stays the tell)
-         (let* ((kc (f-clamp k 0f0 1f0)))
-           (declare (single-float kc))
-           (%brush-aura x y z (* 1.35f0 h) kc +pal-ink+ 9 0.5f0 0.2f0 0)
-           (%brush-aura x y z (* 1.05f0 h) kc +pal-blood+ 9 0.4f0 0.16f0 1)
+         (let* ((kc (f-clamp k 0f0 1f0))                ; see-through (*REIATSU-GLASS* :oni / :oni-ink: the user's
+                (gb (* 32f0 (i->f (the fixnum (getf *reiatsu-glass* :oni 0)))))        ; request 2026-09-28), the ink
+                (gi (* 32f0 (i->f (the fixnum (getf *reiatsu-glass* :oni-ink 0))))))   ; denser so it stays black
+           (declare (single-float kc gb gi))
+           (%brush-aura x y z (* 1.35f0 h) kc (+ +pal-ink+ gi) 9 0.5f0 0.2f0 0)
+           (%brush-aura x y z (* 1.05f0 h) kc (+ +pal-blood+ gb) 9 0.4f0 0.16f0 1)
            (dotimes (i (n-of (* 18f0 kc) dt))
              (%t-blob (+ x (rnd-range -0.4f0 0.4f0)) (+ y (* h (rnd-range 0.1f0 1.2f0))) (+ z (rnd-range -0.4f0 0.4f0))
                       0f0 (rnd-range 1.5f0 3f0) 0f0 (rnd-range 0.4f0 0.7f0) (rnd-range 0.02f0 0.04f0) 0f0 0.15f0 +pal-blood+))
@@ -669,7 +682,8 @@ K is the presence (0..1). :heat also fades by *AURA-CAP* and when the camera is 
            (dotimes (i (n-of (* 14f0 pk) dt))
              (%t-blob (+ x (rnd-range -0.4f0 0.4f0)) (+ y (* h (rnd-range 0.2f0 0.9f0))) (+ z (rnd-range -0.4f0 0.4f0))
                       0f0 (rnd-range 1f0 2f0) 0f0 (rnd-range 0.3f0 0.6f0) (rnd-range 0.03f0 0.05f0) 0f0 0.2f0 +pal-blood+))
-           (%light x (+ y 1f0) z 1f0 0.3f0 0.2f0 5f0 (* 1.2f0 pk) 5))))
+           (%light x (+ y 1f0) z 1f0 0.3f0 0.2f0 5f0 (* 1.2f0 pk) 5)))
+        (t (when (and kind (fboundp kind)) (funcall kind x y z h ka dt))))   ; a draw function (Rukia's ice auras)
       nil)))
 
 (defun-fast vfx-breaker-ring (x z age)

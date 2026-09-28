@@ -145,6 +145,39 @@ eye: the frame's height matches the landscape one and the body may be cropped (t
     (when (/= (the single-float (camera-shift-y cam)) 0f0) (setf (camera-shift-y cam) 0f0))
     nil))
 
+(defparameter *cine-keep* 0.55
+  "A cinematic SHOT-ON's subject (his pelvis) stays within this fraction of the frame's half-width of its centre
+(%KEEP-SUBJECT; docs/DUEL_KEN_BANKAI.md §1.3). 1 = only keep him from leaving the frame.")
+(defparameter *pt-cine-keep* 0.3 "... on a portrait screen (a close-up there keeps its narrow lens: nearer the middle).")
+
+(defun-fast %keep-subject (aspect)
+  "A SHOT-ON's aim is scripted (:off / :ahead, tuned on 16:9) and the clip's root motion carries the body away from his
+feet (a leap, a charge or a cleave carries it up to 1.4 m): on a narrow frame (portrait keeps a close-up's lens)
+he left the shot. Slide *CAM-EYE* and *CAM-AT* sideways so his posed pelvis is within *CINE-KEEP* of the half-width at
+his depth; nothing moves while he already is. Render-side; the joints are the last drawn ones (1 frame old). 0 B."
+  (declare (single-float aspect))
+  (let ((e *cine-subject*))
+    (when (and e (model e))
+      (let* ((jm (model-joints (model e))) (o (* 16 (ji :pelvis)))
+             (eye *cam-eye*) (at *cam-at*)
+             (dx (- (aref at 0) (aref eye 0))) (dz (- (aref at 2) (aref eye 2)))
+             (l (f-sqrt (+ (* dx dx) (* dz dz)))))
+        (declare (type f32vec jm eye at) (fixnum o) (single-float dx dz l))
+        (when (> l 1f-3)
+          (let* ((ux (/ dx l)) (uz (/ dz l))                          ; the view's ground direction, its right (-uz ux)
+                 (sx (- (aref jm (+ o 12)) (aref eye 0))) (sz (- (aref jm (+ o 14)) (aref eye 2)))
+                 (depth (+ (* sx ux) (* sz uz))) (side (- (* sz ux) (* sx uz)))
+                 (fov (the single-float (camera-fov *camera*)))
+                 (lim (* (the single-float (if (< aspect 1f0) *pt-cine-keep* *cine-keep*)) depth aspect (/ (f-sin (* 0.5f0 fov)) (f-cos (* 0.5f0 fov)))))
+                 (sh (cond ((> side lim) (- side lim)) ((< side (- lim)) (+ side lim)) (t 0f0))))
+            (declare (single-float ux uz sx sz depth side fov lim sh))
+            (when (and (> depth 0.3f0) (/= sh 0f0))
+              (let ((mx (- (* sh uz))) (mz (* sh ux)))
+                (declare (single-float mx mz))
+                (setf (aref eye 0) (+ (aref eye 0) mx) (aref eye 2) (+ (aref eye 2) mz)
+                      (aref at 0) (+ (aref at 0) mx) (aref at 2) (+ (aref at 2) mz))))))))
+    nil))
+
 (defun landscape-lens ()
   "Back to the landscape lens (FOV 60, no shift) after the portrait one (a phone turned; the menus)."
   (when *pt-lens*
@@ -205,6 +238,7 @@ smoothing, e.g. a new round)."
   (cond (*cine-cam*
          (v3-copy! *cam-eye* *cine-eye*) (v3-copy! *cam-at* *cine-target*)
          (when (portrait-p) (%portrait-dolly (f32 (window-aspect))))
+         (%keep-subject (f32 (window-aspect)))
          (setf *cam-cut* t))
         ((and a b (portrait-p))                           ; a tall screen: the portrait camera, whatever the mode
          (%portrait-camera (pos-of a) (pos-of b) (f32 rdt) (or snap *cam-cut*))

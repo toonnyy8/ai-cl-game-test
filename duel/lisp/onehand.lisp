@@ -2,7 +2,9 @@
 ;;;; The engine's recogniser (engine/lisp/touch.lisp) turns the thumb into gestures; this file lays out the
 ;;;; flow pad and the chips, maps gestures to P1's vpad buttons (TOUCH-BUTTON, read through the (:touch ...)
 ;;;; bindings of control.lisp: fighters, rules and the AI never see touch), draws the deck, and talks to the
-;;;; page (duel/web/pwa.js: coarse pointer, back gesture, wake lock, the saved HAND).
+;;;; page (duel/web/pwa.js: coarse pointer, back gesture, wake lock, the saved SETTINGS). Since 2026-09-28 one-hand is a
+;;;; setting (ONE-HAND MODE AUTO / ON / OFF, control.lisp *SETTINGS*): VS CPU and PRACTICE use the deck wherever it is
+;;;; in effect (ONE-HAND-EFFECTIVE-P); SET-SETTING / APPLY-SETTINGS put HAND, TAP SPLIT, SENSITIVITY and CAMERA in force.
 ;;;;   per frame: ONEHAND-FRAME (before the flow)      per vpad read: TOUCH-READ-BEGIN (P1-READER)
 ;;;;   drawing:   HUD-DECK (battle), HUD-GESTURES (the static card that replaces CONTROLS)
 (in-package :duel)
@@ -15,14 +17,18 @@
 (defvar *glyph-seen* -1f4 "TOUCH-GLYPH-T last logged.")
 
 ;;; page services (pf_page_get / pf_page_set, duel/web/pwa.js)
-(defconstant +pg-coarse+ 0) (defconstant +pg-back+ 1) (defconstant +pg-hand+ 2) (defconstant +pg-safe-top+ 3) (defconstant +pg-safe-bottom+ 4)
-(defconstant +ps-wake+ 0) (defconstant +ps-hand+ 1)
+(defconstant +pg-coarse+ 0) (defconstant +pg-back+ 1) (defconstant +pg-safe-top+ 3) (defconstant +pg-safe-bottom+ 4)
+(defconstant +ps-wake+ 0)
+(defconstant +pg-setting+ 10 "Page get / set 10 + i: SETTINGS row i (control.lisp *SETTINGS* order), option index + 1.")
 
 (defun portrait-p () (> (window-height) (window-width)))
 (defun one-hand-offered-p ()
   "ONE-HAND is listed when the window is portrait or the device is touch-first (a landscape desktop window
 never offers it: the deck needs portrait)."
   (or *coarse* (portrait-p)))
+(defun one-hand-effective-p ()
+  "Would VS CPU / PRACTICE be one-handed here and now (the ONE-HAND MODE setting, control.lisp ONE-HAND-ON-P)?"
+  (one-hand-on-p (setting :one-hand) *coarse* (portrait-p)))
 
 ;;; ---------------------------------------------------------------- the deck (design §3.3)
 ;;; Chip i: 0 O, 1 L, 2 I, 3 SP1, 4 SP2, 5 AWAKEN (held 300 ms), 6 pause. CSS px from the right-hand
@@ -71,16 +77,29 @@ Outside ONE-HAND there is no pad and no chip: a stray finger only makes menu tap
       (setf *scene-scale-cap* (if (or *coarse* *one-hand*) (f32 (min 1.0 (sqrt (/ 1.6e6 (max 1 (* w h)))))) 1f0)))))
 
 (defun onehand-init ()
-  "Once, at start: ask the page for the device kind and the saved HAND."
-  (setf *coarse* (plusp (page-get +pg-coarse+))
-        *hand* (if (= 2 (page-get +pg-hand+)) :left :right))
+  "Once, at start: ask the page for the device kind and the saved SETTINGS (a missing or blocked storage answers 0:
+the defaults)."
+  (setf *coarse* (plusp (page-get +pg-coarse+)))
+  (loop for (key) in *settings* for i from 0
+        do (setf (svref *setting-ix* i) (setting-from-page key (page-get (+ +pg-setting+ i)))))
+  (apply-settings)
   (when *coarse* (setf *auto-render-scale* t))
-  (log-msg "duel page: coarse ~a hand ~a" *coarse* *hand*))
+  (log-msg "duel page: coarse ~a hand ~a settings ~a" *coarse* *hand* (coerce *setting-ix* 'list)))
 
-(defun set-hand (hand)
-  (setf *hand* hand)
-  (page-set +ps-hand+ (if (eq hand :left) 2 1))
-  (log-msg "duel hand ~a" hand))
+(defun apply-settings ()
+  "Put the SETTINGS in force: HAND, the recogniser's tap split and flick distance, the CAMERA option."
+  (let ((cfg (touch-cfg *touch*)))
+    (setf *hand* (if (= 1 (setting :hand)) :left :right)
+          (gc-tap-split cfg) (f32 (setting-value :tap-split))
+          (gc-flick-min cfg) (f32 (setting-value :flick))))
+  (set-cam-behind (zerop (setting :camera))))
+
+(defun set-setting (key i)
+  "SETTINGS row KEY to option I: in force now and saved by the page."
+  (setf (svref *setting-ix* (setting-pos key)) i)
+  (apply-settings)
+  (page-set (+ +pg-setting+ (setting-pos key)) (1+ i))
+  (log-msg "duel setting ~a ~a" key (nth i (third (assoc key *settings*)))))
 
 (defun onehand-frame ()
   "Every frame, before the flow: the page (back gesture, wake lock), the text floor, the deck, then this
@@ -162,6 +181,18 @@ low zone = J, high zone = K, an up-flick = a forward Step, the dash)?"
         (%hq (+ cx (* r c0)) (+ cy (* r s0)) (+ cx (* r1 c0)) (+ cy (* r1 s0)) (+ cx (* r1 c1)) (+ cy (* r1 s1))
              (+ cx (* r c1)) (+ cy (* r s1)) cr cg cb ca)))))
 
+(defun-fast %arc (cx cy r wd frac cr cg cb ca)
+  "FRAC (0..1) of a ring of radius R, WD px wide, clockwise from the top (Rukia's frost arc under the thumb)."
+  (declare (single-float cx cy r wd frac cr cg cb ca))
+  (let ((r1 (+ r wd)) (n (f->i (* 24f0 (f-clamp frac 0f0 1f0)))))
+    (declare (single-float r1) (fixnum n))
+    (dotimes (i n)
+      (let* ((a0 (- (* (i->f i) 0.2617994f0) 1.5707964f0)) (a1 (+ a0 0.2617994f0))
+             (c0 (f-cos a0)) (s0 (f-sin a0)) (c1 (f-cos a1)) (s1 (f-sin a1)))
+        (declare (single-float a0 a1 c0 s0 c1 s1))
+        (%hq (+ cx (* r c0)) (+ cy (* r s0)) (+ cx (* r1 c0)) (+ cy (* r1 s0)) (+ cx (* r1 c1)) (+ cy (* r1 s1))
+             (+ cx (* r c1)) (+ cy (* r s1)) cr cg cb ca)))))
+
 (defun-fast %disc (cx cy r cr cg cb ca)
   "A filled disc (a 24-gon)."
   (declare (single-float cx cy r cr cg cb ca))
@@ -195,7 +226,16 @@ at EVOLUTION or a Bankai ready), the ink ring under the thumb, and the recognise
           (%ring cx cy r (* 2f0 d) 1.0 (if on 0.85 0.55) (if on 0.4 0.3) (if on 1.0 0.7))
           (hud-text (svref *chip-labels* i) cx (- cy (* 3.5 s)) s *c-chip* :align :center :shadow nil))))
     (when (touch-active-p tr)                              ; the floating stick: an ink ring at its origin
-      (%ring (touch-ox tr) (touch-oy tr) (* d 48f0) (* 2f0 d) 1.0 1.0 1.0 (if (touch-resting-p tr) 0.35 0.6)))
+      (%ring (touch-ox tr) (touch-oy tr) (* d 48f0) (* 2f0 d) 1.0 1.0 1.0 (if (touch-resting-p tr) 0.35 0.6))
+      (let ((m (and *p1* (kit-meter (kit-of *p1*)))))      ; Rukia: resting cools her: the frost arc = C / 200 (the two
+        (when (getf m :temp)                                 ; bars round the ring, a notch at the half), grey in the THAW
+          (let* ((g (gauges *p1*)) (k (/ (gauges-meter g) *cold-max*)) (lock (plusp (gauges-meter-idle g)))   ; lock;
+                 (zero (eq (fighter-form (fighter *p1*)) :zero)) (r (* d 52f0)))                       ; white ring at zero
+            (when zero (%ring (touch-ox tr) (touch-oy tr) r (* 3f0 d) 1.0 1.0 1.0 0.35))
+            (if lock
+                (%arc (touch-ox tr) (touch-oy tr) r (* 3f0 d) k 0.55 0.56 0.6 0.8)
+                (%arc (touch-ox tr) (touch-oy tr) r (* 3f0 d) k 0.92 0.96 1.0 (if zero (+ 0.6 (* 0.4 (hud-pulse 3.0))) 0.9)))
+            (%hrect (- (touch-ox tr) d) (+ (touch-oy tr) r) (* 2f0 d) (* 3f0 d) 1.0 1.0 1.0 0.8))))) ; the half: bar 1 full
     (let ((age (- (* 1000f0 (elapsed-time)) (touch-glyph-t tr))))
       (when (and (< age 300) (plusp (touch-glyph tr)))
         (hud-text (svref *glyph-names* (touch-glyph tr)) (touch-glyph-x tr) (- (touch-glyph-y tr) (* 60 d)) (* 2 s)

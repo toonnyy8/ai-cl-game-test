@@ -45,11 +45,14 @@
   (rim nil)                             ; f32vec linear rgb x strength: silhouette rim (readability)
   (props nil)                           ; NIL or MAKE-RIG-PROPORTIONS vector: the last arg of POSE-FK!
   (girth nil)                           ; ((joint sx sy sz) ...): that joint's shapes scaled in its frame (GIRTH-SPEC)
+  (clips nil)                           ; plist clip -> clip this body plays instead (a variant's own walk / guard)
+  (ink nil)                             ; its own keyline colours (as *BODY-INK*), NIL = *BODY-INK*
   (parts (make-array +nj+ :initial-element nil) :type simple-vector)  ; untagged solid mesh per joint
   (extras nil)                          ; list of #(joint mesh tint emissive tag): glows + tagged parts
   (hulls nil))                          ; list of #(joint mesh tag): the ink outlines (BUILD-PARTS)
 
-(defparameter *body-ink* '((:skin . #x3A1E1A) (:skin-d . #x3A1E1A) (:black . #x4A5062) (:hair . #x4A5062) (t . #x101018))
+(defparameter *body-ink* '((:skin . #x3A1E1A) (:skin-d . #x3A1E1A) (:black . #x4A5062) (:hair . #x4A5062) (:brow . #x4A5062)
+                           (t . #x101018))
   "Ink of the body hulls by shape colour (docs/STYLE_STORM_DESIGN.md §2.4, §2.5): red-brown on skin, a cold
 grey keyline on black cloth and hair (dark on the ground, a separating line on the dark sky), near-black
 on everything else.")
@@ -80,15 +83,17 @@ device exists)."
                                       (:hunch (list k `(deg ,v)))
                                       (t (list k `(f32 ,v))))))))
 
-(defun body-variant (name of &key palette parts)
+(defun body-variant (name of &key palette parts clips ink)
   "Register body NAME as a variant of body OF: the same rig, scale and hurt cylinder (the sim can't tell them apart),
 PALETTE entries taking precedence over OF's, and PARTS ((joint shape ...) ...) added to those joints (Kenpachi's
-Bankai oni: a muted crimson skin, horns, irisless eyes, the forearm cracks)."
+Bankai oni: a muted crimson skin, horns, irisless eyes, the forearm cracks). CLIPS: a plist of the shared clips it
+plays its own way instead (FIGHTER.LISP PLAY-CLIP; the oni's prowl and guard): art only, the sim never reads a clip.
+INK: its own keyline colours (as *BODY-INK*; the white Rukia's ice blue)."
   (let ((b (find-body of)))
     (setf (gethash name *bodies*)
           (%make-body :name name :scale (body-scale b) :width (body-width b) :hunch (body-hunch b)
                       :hurt-r (body-hurt-r b) :hurt-h (body-hurt-h b) :rim (body-rim b) :props (body-props b)
-                      :girth (body-girth b) :palette (append palette (body-palette b))
+                      :girth (body-girth b) :palette (append palette (body-palette b)) :clips clips :ink ink
                       :spec (append (loop for (j . shapes) in (body-spec b)
                                           collect (list* j (append shapes (rest (assoc j parts)))))
                                     (remove-if (lambda (p) (assoc (first p) (body-spec b))) parts))))))
@@ -121,7 +126,7 @@ Bankai oni: a muted crimson skin, horns, irisless eyes, the forearm cracks)."
   "Build B's meshes (the engine's BUILD-PARTS): one per joint for untagged solid shapes, one per
 glow / per (joint, tag)."
   (multiple-value-bind (parts extras hulls)
-      (build-parts (girth-spec (body-spec b) (body-girth b)) (body-palette b) (body-width b) :ink *body-ink*)
+      (build-parts (girth-spec (body-spec b) (body-girth b)) (body-palette b) (body-width b) :ink (or (body-ink b) *body-ink*))
     (setf (body-parts b) parts (body-extras b) extras (body-hulls b) hulls))
   b)
 

@@ -1,21 +1,29 @@
-;;;; flow.lisp — the screens (design-v1 §6): TITLE → MODE (VS CPU / VS PLAYER / CPU VS CPU / CONTROLS)
-;;;; → SELECT (P1, then P2 / the CPU, then difficulty and, VS CPU, the camera; both models on the plaza)
-;;;; → INTRO → BATTLE (pause: RESUME / RESTART / CHARACTER SELECT / TITLE, VS CPU also CAMERA) → FINISH (K.O. / TIME) → RESULTS (REMATCH /
-;;;; SELECT / TITLE). Menus read the devices directly (either player's keys / pads); fighters only
-;;;; ever read their vpad. MATCH-SYSTEM (the timer, time-up) is the last sim system; the KO comes from
-;;;; a Kikon / Soul Break (combat.lisp AFTER-KIKON → MATCH-OVER). Log: "duel -> STATE" per change.
+;;;; flow.lisp — the screens (design-v1 §6): TITLE → MODE (VS CPU / PRACTICE / VS PLAYER / CPU VS CPU / SETTINGS /
+;;;; CONTROLS) → SELECT (P1, then P2 / the CPU, then difficulty and, VS CPU / PRACTICE, the camera; both models on the
+;;;; plaza) → INTRO → BATTLE (pause: RESUME / RESTART / CHARACTER SELECT / TITLE, VS CPU also CAMERA; PRACTICE: RESUME /
+;;;; RESET POSITION / DUMMY / HP REFILL / GAUGES / P1 HP / P1 KONPAKU / DUMMY HP / DUMMY KONPAKU / CHARACTER SELECT /
+;;;; TITLE / CAMERA) → FINISH (K.O. / TIME) → RESULTS
+;;;; (REMATCH / SELECT / TITLE). SETTINGS (2026-09-28): ONE-HAND MODE (AUTO / ON / OFF), HAND, TAP SPLIT, SENSITIVITY,
+;;;; CAMERA (control.lisp *SETTINGS*, saved by onehand.lisp). VS CPU and PRACTICE are one-handed (the thumb deck,
+;;;; onehand.lisp) whenever ONE-HAND MODE is in effect there (ONE-HAND-EFFECTIVE-P); there is no separate one-hand entry.
+;;;; PRACTICE: P1 against a dummy (P2's brain: switched off and guarding by DUMMY-GUARD-LEFT, or the CPU), no timer and
+;;;; no match end (PRACTICE-STEP refills the dummy to its HP / KONPAKU rows; a K.O. is a reset to both sides' rows). Menus read the devices directly (either
+;;;; player's keys / pads); fighters only ever read their vpad. MATCH-SYSTEM (the timer, time-up; PRACTICE-STEP) is
+;;;; the last sim system; the KO comes from a Kikon / Soul Break (combat.lisp AFTER-KIKON → MATCH-OVER).
+;;;; Log: "duel -> STATE" per change, "duel setting ..." / "duel practice ..." per option change.
 (in-package :duel)
 
 (defparameter *difficulties* '(:easy :normal :hard))
 
-(defvar *flow* :title "Screen: :title :mode :controls :select :intro :battle :finish :results")
+(defvar *flow* :title "Screen: :title :mode :settings :controls :select :intro :battle :finish :results")
 (defvar *ft* 0.0 "Real seconds on the current screen.")
 (defvar *menu* 0)
 (defvar *paused* nil)
-(defvar *mode* :vs-cpu "Match mode: :vs-cpu :vs-player :cpu-cpu")
-(defvar *picks* (list (first *roster*) (car (last *roster*))) "Characters of P1 and P2 (kit.lisp *ROSTER*).")
+(defvar *mode* :vs-cpu "Match mode: :vs-cpu :practice :vs-player :cpu-cpu")
+(defun vs-cpu-p () "A human P1 against the CPU: VS CPU or PRACTICE (the camera option, the one-hand deck)." (member *mode* '(:vs-cpu :practice)))
+(defvar *picks* (list (first *roster*) (second *roster*)) "Characters of P1 and P2 (kit.lisp *ROSTER*): Yamamoto, Kenpachi.")
 (defvar *difficulty* :normal)
-(defvar *cam-behind* t "The CAMERA option of VS CPU: BEHIND (P1's shoulder, the default) or SIDE (the pair camera).")
+(defvar *cam-behind* t "The CAMERA setting of VS CPU / PRACTICE: BEHIND (P1's shoulder, the default) or SIDE (the pair camera).")
 (defvar *select-phase* 0 "SELECT: 0 P1 picks, 1 P2 picks, 2 difficulty.")
 (defvar *p1* nil) (defvar *p2* nil)
 (defvar *timer* 0 "Match frames left.")
@@ -34,21 +42,21 @@
   (setf *flow* st *ft* 0.0 *menu* 0)
   (log-msg "duel -> ~a" st))
 
-(defun go-mode ()
-  "The MODE screen; ONE-HAND VS CPU is preselected on a touch-first device held in portrait, VS CPU otherwise."
+(defun go-mode (&optional (row 0))
+  "The MODE screen, the cursor on ROW (VS CPU, row 0, is preselected everywhere; back from SETTINGS / CONTROLS: theirs)."
   (set-flow :mode)
-  (when (and (one-hand-offered-p) (not (and *coarse* (portrait-p)))) (setf *menu* 2)))
+  (setf *menu* row))
 
 (defun set-cam-behind (on)
-  "Set the CAMERA option. Humans steer by the behind view only in VS CPU (fighter.lisp *VIEW-BEHIND*);
-VS PLAYER and CPU VS CPU keep the pair camera."
-  (setf *cam-behind* on *view-behind* (and on (eq *mode* :vs-cpu)) *cam-cut* t))
+  "Set the CAMERA option. Humans steer by the behind view only in VS CPU / PRACTICE (fighter.lisp *VIEW-BEHIND*), and
+always behind when one-handed (the portrait camera; the setting is kept); VS PLAYER and CPU VS CPU keep the pair camera."
+  (setf *cam-behind* on *view-behind* (and (or on *one-hand*) (vs-cpu-p) t) *cam-cut* t))
 
 (defun camera-label () (if *cam-behind* "CAMERA  BEHIND" "CAMERA  SIDE"))
 
 (defun toggle-cam ()
-  "The CAMERA option flips (pause menu, select screen, debug 2109)."
-  (set-cam-behind (not *cam-behind*))
+  "The CAMERA option flips (pause menu, select screen, SETTINGS, debug 2109); saved as the CAMERA setting."
+  (set-setting :camera (if *cam-behind* 1 0))
   (log-msg "duel camera ~a" (camera-label)))
 
 (defun battle-p () (member *flow* '(:intro :battle :finish)))
@@ -115,10 +123,11 @@ VS PLAYER and CPU VS CPU keep the pair camera."
   (clear-words)
   (sim-rnd-seed *match-seed*)
   (set-cam-behind *cam-behind*)
-  (spawn-pair :cpu1 (eq *mode* :cpu-cpu) :cpu2 (member *mode* '(:vs-cpu :cpu-cpu)))
+  (spawn-pair :cpu1 (eq *mode* :cpu-cpu) :cpu2 (not (eq *mode* :vs-player)))
   (dolist (e (list *p1* *p2*))
     (setf (gauges-konpaku (gauges e)) *konpaku-start*)
     (setf (fighter-state (fighter e)) :intro))
+  (when (eq *mode* :practice) (practice-dummy!) (practice-set! *p1*) (practice-set! *p2*))
   (play-music :music 0.2)
   (log-msg "duel match seed ~d ~a ~a vs ~a ~a" *match-seed* *mode* (first *picks*) (second *picks*) *difficulty*)
   (set-flow :intro)
@@ -135,7 +144,12 @@ during the intro, e.g. the menu's confirm)."
 
 (defun match-over (winner)
   "A Kikon / Soul Break took the last Konpaku: FINISH (K.O.), then RESULTS. WINNER: the fighter who
-won, NIL = a draw (a lethal trade took both souls' last Konpaku)."
+won, NIL = a draw (a lethal trade took both souls' last Konpaku). PRACTICE has no match end: the round resets with
+both fighters' Konpaku and Reishi at their practice rows (PRACTICE-SET!)."
+  (when (eq *mode* :practice)
+    (practice-set! *p1*) (practice-set! *p2*)
+    (log-msg "duel practice K.O. -> reset")
+    (return-from match-over (reset-round *p1* *p2*)))
   (let* ((w (cond ((null winner) :draw) ((eql winner *p1*) 0) (t 1)))
          (we (if (eql w 1) *p2* *p1*)) (le (if (eql w 1) *p1* *p2*)))
     (setf *winner* w)
@@ -165,9 +179,60 @@ won, NIL = a draw (a lethal trade took both souls' last Konpaku)."
   (music-stop 1.0) (setf *music* nil))
 
 (defun match-system ()
-  "The match timer (sim frames) and time-up; the periodic determinism hash."
+  "The match timer (sim frames) and time-up; PRACTICE: no timer, PRACTICE-STEP instead."
   (when (eq *flow* :battle)
-    (when (<= (decf *timer*) 0) (time-up))))
+    (cond ((eq *mode* :practice) (practice-step))
+          ((<= (decf *timer*) 0) (time-up)))))
+
+;;; ---------------------------------------------------------------- PRACTICE (P1 against a dummy)
+(defparameter *dummies* '((:stand . "STAND") (:guard-all . "GUARD ALL") (:guard-hit . "GUARD AFTER HIT") (:cpu . "CPU"))
+  "The DUMMY option: stands, guards everything, guards after a hit lands (control.lisp DUMMY-GUARD-LEFT), the CPU at
+the chosen difficulty.")
+(defvar *dummy* :stand "PRACTICE's DUMMY option.")
+(defvar *hp-refill* t "PRACTICE's HP REFILL: AUTO (T: the dummy's Reishi is full again once a combo on it ends) / OFF.")
+(defvar *gauges-inf* nil "PRACTICE's GAUGES: INFINITE (T: P1's Reishi at its P1 HP row; guard, Reiatsu, flash step, Awakening
+full) / NORMAL.")
+(defvar *practice-rows* (vector 100 *konpaku-max* 100 *konpaku-max*)
+  "PRACTICE's P1 HP (%), P1 KONPAKU, DUMMY HP (%), DUMMY KONPAKU: what RESET POSITION and the refills restore (full by
+default: the rows only change what \"full\" means). Indexed by side * 2 (+ 1 for the Konpaku).")
+
+(defun practice-hp (e) "E's Reishi at its practice HP row." (practice-reishi (gauges-reishi-max (gauges e)) (svref *practice-rows* (* 2 (fighter-side (fighter e))))))
+(defun practice-set! (e)
+  "E's Reishi and Konpaku to its practice rows (a row changed, RESET POSITION, a K.O.)."
+  (setf (gauges-reishi (gauges e)) (practice-hp e)
+        (gauges-konpaku (gauges e)) (svref *practice-rows* (1+ (* 2 (fighter-side (fighter e)))))))
+
+(defun practice-dummy! ()
+  "P2's brain for the DUMMY option: the CPU, or switched off holding nothing (PRACTICE-STEP holds its guard)."
+  (let ((b (brain *p2*)))
+    (setf (brain-off b) (not (eq *dummy* :cpu)) (brain-press-left b) 0 (brain-act b) nil)))
+
+(defun practice-step ()
+  "PRACTICE, each sim frame (MATCH-SYSTEM): the dummy's guard; its Konpaku always full (after a Kikon's reset: no match
+end) and, HP REFILL AUTO, its Reishi once it is out of its hit / block reactions; GAUGES INFINITE: P1's gauges full."
+  (let* ((f (fighter *p2*)) (g (gauges *p2*)) (b (brain *p2*)))
+    (unless (eq *dummy* :cpu)
+      (setf (brain-press b) :guard (brain-press-mod b) nil
+            (brain-press-left b) (dummy-guard-left *dummy* (fighter-state f) (brain-press-left b))))
+    (setf (gauges-konpaku g) (svref *practice-rows* 3))
+    (when (and *hp-refill* (not (member (fighter-state f) '(:stun :air :down :wakeup :guard-hit))))
+      (setf (gauges-reishi g) (practice-hp *p2*))))
+  (when *gauges-inf*
+    (let ((g (gauges *p1*)))
+      (setf (gauges-reishi g) (practice-hp *p1*)
+            (gauges-gg g) *gg-max* (gauges-guardless g) nil (gauges-reiatsu g) *reiatsu-max* (gauges-fs g) *fs-max*)
+      (unless (gauges-awakened g) (setf (gauges-awaken g) *awaken-max*)))))
+
+(defun practice-reset ()
+  "RESET POSITION: a fresh pair at the start (full resources, first forms), straight into the fight (no intro)."
+  (setf *paused* nil *pending* nil *soul-breaks* nil)
+  (abort-cine)
+  (clear-words)
+  (spawn-pair :cpu2 t)
+  (practice-dummy!)
+  (practice-set! *p1*) (practice-set! *p2*)
+  (log-msg "duel practice reset")
+  (begin-battle))
 
 ;;; ---------------------------------------------------------------- per-frame flow
 (defun select-update ()
@@ -185,7 +250,7 @@ won, NIL = a draw (a lethal trade took both souls' last Konpaku)."
              (play-clip e (or (kit-intro (kit-of e)) (kit-stance (kit-of e))) :blend 4))
            (setf *select-phase* (if (and (= *select-phase* 1) (eq *mode* :vs-player)) 3 (1+ *select-phase*))
                  *menu* 0)))
-        (2 (let ((cam (and (eq *mode* :vs-cpu) (not *one-hand*))))   ; row 0 the difficulty, row 1 (VS CPU) the camera
+        (2 (let ((cam (and (vs-cpu-p) (not *one-hand*))))   ; row 0 the difficulty, row 1 (VS CPU) the camera
              (when (and cam (or (menu-up-p) (menu-down-p))) (setf *menu* (- 1 *menu*)) (play-sfx :select))
              (when (or (menu-left-p) (menu-right-p) (member (tap-third) '(-1 1)))
                (if (and cam (= *menu* 1))
@@ -198,16 +263,49 @@ won, NIL = a draw (a lethal trade took both souls' last Konpaku)."
         (play-sfx :back)
         (if (zerop *select-phase*) (go-mode) (decf *select-phase*))))))
 
-(defparameter *mode-menu* '("VS CPU" "VS PLAYER" "CPU VS CPU" "CONTROLS"))
-(defun mode-items ()
-  "The MODE menu: ONE-HAND VS CPU and its HAND option first when ONE-HAND is offered (onehand.lisp)."
-  (if (one-hand-offered-p)
-      (list* "ONE-HAND VS CPU" (if (eq *hand* :left) "HAND  LEFT" "HAND  RIGHT") *mode-menu*)
-      *mode-menu*))
-(defparameter *pause-menu* '("RESUME" "RESTART" "CHARACTER SELECT" "TITLE"))
-(defun pause-items ()
-  "The pause menu: VS CPU adds the CAMERA toggle."
-  (if (and (eq *mode* :vs-cpu) (not *one-hand*)) (append *pause-menu* (list (camera-label))) *pause-menu*))
+(defparameter *mode-menu* '("VS CPU" "PRACTICE" "VS PLAYER" "CPU VS CPU" "SETTINGS" "CONTROLS"))
+
+(defun settings-items ()
+  "The SETTINGS rows as shown (label and chosen option), then BACK."
+  (append (loop for (key label opts) in *settings* collect (format nil "~a  ~a" label (nth (setting key) opts))) '("BACK")))
+(defun settings-note ()
+  "The selected SETTINGS row's note (ONE-HAND MODE: whether it is in effect here)."
+  (let ((row (nth *menu* *settings*)))
+    (cond ((null row) "")
+          ((eq (first row) :one-hand) (format nil "~a. HERE: ~:[OFF~;ON~]" (sixth row) (one-hand-effective-p)))
+          (t (sixth row)))))
+(defun settings-step (i dir)
+  "Move SETTINGS row I's option by DIR (it wraps)."
+  (let ((row (nth i *settings*))) (set-setting (first row) (mod (+ (setting (first row)) dir) (length (third row))))))
+
+(defun pause-keys ()
+  "The pause menu's rows: PRACTICE's options replace RESTART; VS CPU / PRACTICE with two hands add the CAMERA toggle."
+  (append (if (eq *mode* :practice) '(:resume :reset :dummy :refill :gauges :p1-hp :p1-kon :dm-hp :dm-kon) '(:resume :restart))
+          '(:select :title)
+          (when (and (vs-cpu-p) (not *one-hand*)) '(:camera))))
+(defun pause-label (k)
+  (case k
+    (:resume "RESUME") (:restart "RESTART") (:select "CHARACTER SELECT") (:title "TITLE") (:camera (camera-label))
+    (:reset "RESET POSITION") (:dummy (format nil "DUMMY  ~a" (cdr (assoc *dummy* *dummies*))))
+    (:refill (if *hp-refill* "HP REFILL  AUTO" "HP REFILL  OFF")) (:gauges (if *gauges-inf* "GAUGES  INFINITE" "GAUGES  NORMAL"))
+    ((:p1-hp :p1-kon :dm-hp :dm-kon)
+     (let ((i (position k '(:p1-hp :p1-kon :dm-hp :dm-kon))))
+       (format nil "~a ~a  ~d~:[~;%~]" (if (< i 2) "P1" "DUMMY") (if (evenp i) "HP" "KONPAKU") (svref *practice-rows* i) (evenp i))))))
+(defparameter *practice-option-keys* '(:dummy :refill :gauges :p1-hp :p1-kon :dm-hp :dm-kon) "PRACTICE's option rows.")
+(defun pause-items () (mapcar #'pause-label (pause-keys)))
+(defun pause-do (k dir)
+  "Pause row K chosen (DIR 1), or an option row moved by left / right (DIR -1 / 1)."
+  (case k
+    (:resume (setf *paused* nil)) (:restart (start-match)) (:select (go-select)) (:title (go-title)) (:camera (toggle-cam))
+    (:reset (practice-reset))
+    (:dummy (setf *dummy* (cycle *dummy* (mapcar #'car *dummies*) dir)) (practice-dummy!))
+    (:refill (setf *hp-refill* (not *hp-refill*))) (:gauges (setf *gauges-inf* (not *gauges-inf*)))
+    ((:p1-hp :p1-kon :dm-hp :dm-kon)                      ; the new value in force at once
+     (let* ((i (position k '(:p1-hp :p1-kon :dm-hp :dm-kon))) (v (svref *practice-rows* i)))
+       (setf (svref *practice-rows* i) (if (evenp i) (cycle v *practice-hp* dir) (konpaku-step v dir *konpaku-max*)))
+       (practice-set! (if (< i 2) *p1* *p2*)))))
+  (when (member k *practice-option-keys*) (log-msg "duel practice ~a" (pause-label k))))
+(defun option-dir () "Left / right this frame: -1 / 1, else NIL (an option row's value)." (cond ((menu-left-p) -1) ((menu-right-p) 1)))
 (defparameter *results-menu* '("REMATCH" "CHARACTER SELECT" "TITLE"))
 
 (defun flow-update (rdt)
@@ -216,28 +314,29 @@ won, NIL = a draw (a lethal trade took both souls' last Konpaku)."
   (case *flow*
     (:title (when (and (> *ft* 0.3) (or (confirm-p) (key-pressed :space) (any-pad-pressed :start) (tap-p)))
               (play-sfx :confirm) (go-mode)))
-    (:mode (let* ((off (if (one-hand-offered-p) 2 0)) (i (menu-nav (+ 4 off))))
-             (cond ((null i))
-                   ((and (= off 2) (= i 0))                   ; ONE-HAND VS CPU: the behind camera, the thumb deck
-                    (setf *one-hand* t *mode* :vs-cpu) (set-cam-behind t) (go-select))
-                   ((and (= off 2) (= i 1)) (set-hand (if (eq *hand* :left) :right :left)))
-                   (t (case (- i off)
-                        ((0 1 2) (setf *one-hand* nil *mode* (nth (- i off) '(:vs-cpu :vs-player :cpu-cpu))) (go-select))
-                        (3 (set-flow :controls))))))
+    (:mode (let ((i (menu-nav (length *mode-menu*))))
+             (case i
+               ((0 1 2 3) (setf *mode* (nth i '(:vs-cpu :practice :vs-player :cpu-cpu))   ; VS CPU / PRACTICE: one-handed
+                                *one-hand* (and (< i 2) (one-hand-effective-p)))        ; when the setting is in effect
+                          (go-select))
+               (4 (set-flow :settings))
+               (5 (set-flow :controls))))
            (when (back-p) (play-sfx :back) (go-title)))
-    (:controls (when (or (back-p) (confirm-p) (tap-p)) (play-sfx :back) (go-mode)))
+    (:settings (let* ((n (length *settings*)) (i (menu-nav (1+ n))) (d (option-dir)))   ; confirm / a tap: the next option
+                 (cond ((eql i n) (go-mode 4))                                           ; BACK
+                       (i (settings-step i 1))
+                       ((and d (< *menu* n)) (play-sfx :select) (settings-step *menu* d))))
+               (when (back-p) (play-sfx :back) (go-mode 4)))
+    (:controls (when (or (back-p) (confirm-p) (tap-p)) (play-sfx :back) (go-mode 5)))
     (:select (select-update))
     ((:intro :finish) (when (and *cine* (or (pause-p) (confirm-p) (tap-p))) (skip-cine)))
     (:battle
      (cond (*paused*
             (if (pause-p)
                 (setf *paused* nil)
-                (case (menu-nav (length (pause-items)))
-                  (0 (setf *paused* nil))
-                  (1 (start-match))
-                  (2 (go-select))
-                  (3 (go-title))
-                  (4 (toggle-cam)))))
+                (let* ((keys (pause-keys)) (i (menu-nav (length keys))) (d (option-dir)) (k (nth (or i *menu*) keys)))
+                  (cond (i (pause-do k 1))
+                        ((and d (member k (cons :camera *practice-option-keys*))) (play-sfx :select) (pause-do k d))))))
            ;; battle cinematics (awakening, Kikon, Soul Break) can't be skipped (the user's decision
            ;; 2026-09-28): Start pauses them like play, a tap does nothing
            ((or (pause-p) (focus-lost-p) (touch-pause-p)

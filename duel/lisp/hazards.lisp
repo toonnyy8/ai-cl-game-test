@@ -4,6 +4,8 @@
 ;;;;   :pillars   Ennetsu Jigoku: a ring of *ENNETSU-PILLARS* cylinders around where it erupted
 ;;;;   :line      a ground line cut / crack: a look only (Kyokujitsujin, Buttagiru, the Meteor, South's crack)
 ;;;;   :bind      South: a disc at the feet (radius SIZE, height Y) that grabs once its DELAY runs out
+;;;;   :freeze    Rukia's ice: the same disc (Tsukishiro's pillar, her quakes, the freeze-touch), out of reach of the
+;;;;              projectile cut (a blade can't cut the ground it stands on)
 ;;;;   :hand      South: a skeleton's arm clawing out of the ground (transform + model), a look only
 ;;;;   :rift      NOMIHOSE's KUKAN-GIRI: the blade's chord left in the air (its hitwin's volume, in the frame the owner
 ;;;;              had at the cut, fixed in the world) that cuts once its DELAY runs out; closed if the owner is hit first
@@ -13,11 +15,12 @@
 (in-package :duel)
 
 (defun spawn-hazard (kind owner &key (x 0.0) (y 0.0) (z 0.0) (yaw 0.0) (speed 0.0) (turn 0.0) (size 0.5)
-                                  (life 60) (delay 0) (hits 1) hw look)
-  "A new hazard of KIND for fighter OWNER. LIFE / DELAY in frames; HW = the HITWIN it deals (NIL = look only)."
+                                  (life 60) (delay 0) (hits 1) hw look src fragile)
+  "A new hazard of KIND for fighter OWNER. LIFE / DELAY in frames; HW = the HITWIN it deals (NIL = look only). SRC: its
+hit comes from the owner's position; FRAGILE: it closes while it waits if the owner is hit (CLOSE-RIFTS)."
   (spawn-entity (make-hazard :kind kind :owner owner :x (f32 x) :y (f32 y) :z (f32 z) :px (f32 x) :pz (f32 z)
                              :yaw (f32 yaw) :speed (f32 speed) :turn (f32 turn) :size (f32 size)
-                             :life life :delay delay :hits-left (if hw hits 0) :hw hw :look look)))
+                             :life life :delay delay :hits-left (if hw hits 0) :hw hw :look look :src src :fragile fragile)))
 
 (defun clear-hazards ()
   (do-entities (h hazard) (destroy-entity h)))
@@ -90,7 +93,7 @@ frames, grabs at the ankles, holds and crumbles (:sk-grab): South's look; the :b
                   (loop for i below *ennetsu-pillars*
                         for a of-type single-float = (+ (* i (/ +two-pi+ *ennetsu-pillars*)) (hazard-yaw hz))
                         thereis (cyl-cyl-hit-p (+ x (* s (cos a))) 0f0 (+ z (* s (sin a))) pr ph tx ty tz tr th))))
-      (:bind (cyl-cyl-hit-p x 0f0 z s y tx ty tz tr th))                 ; the feet: a disc SIZE x Y
+      ((:bind :freeze) (cyl-cyl-hit-p x 0f0 z s y tx ty tz tr th))       ; the feet: a disc SIZE x Y
       (:rift (let ((yaw (hazard-yaw hz)))
                (vol-hit-p (first (hw-vols (hazard-hw hz))) x 0f0 z (f32 (fwd-x yaw)) (f32 (fwd-z yaw)) tx ty tz tr th 0f0)))
       (t nil))))
@@ -99,9 +102,10 @@ frames, grabs at the ankles, holds and crumbles (:sk-grab): South's look; the :b
 (defun rift-mid-z (hz) (f32 (+ (hazard-z hz) (* 2.7 (fwd-z (hazard-yaw hz))))))
 
 (defun close-rifts (e)
-  "E was hit: his rifts that haven't cut yet close (KUKAN-GIRI's rift: a parried or traded blade leaves none)."
+  "E was hit: his rifts (and fragile hazards: Tsukishiro's circle) that haven't cut yet close (KUKAN-GIRI's rift: a
+parried or traded blade leaves none)."
   (do-entities (h (hz hazard))
-    (when (and (eq (hazard-kind hz) :rift) (eql (hazard-owner hz) e) (> (hazard-delay hz) 0))
+    (when (and (or (eq (hazard-kind hz) :rift) (hazard-fragile hz)) (eql (hazard-owner hz) e) (> (hazard-delay hz) 0))
       (emit :rift-close (rift-mid-x hz) (rift-mid-z hz))
       (clog "~a RIFT CLOSED" (side-name e))
       (destroy-entity h))))
@@ -114,7 +118,9 @@ frames, grabs at the ankles, holds and crumbles (:sk-grab): South's look; the :b
         (when (entity-alive-p tg)
           (let ((q (pos-of tg)) (b (model-body (model tg))))
             (when (hazard-touches-p hz (aref q 0) (aref q 1) (aref q 2) (body-hurt-r b) (body-hurt-h b))
-              (push (make-pending :att (hazard-owner hz) :def tg :hw (hazard-hw hz) :sx (hazard-x hz) :sz (hazard-z hz)
+              (push (make-pending :att (hazard-owner hz) :def tg :hw (hazard-hw hz)
+                                  :sx (if (hazard-src hz) (aref (pos-of (hazard-owner hz)) 0) (hazard-x hz))
+                                  :sz (if (hazard-src hz) (aref (pos-of (hazard-owner hz)) 2) (hazard-z hz))
                                   :hazard hz :state (defender-state tg))
                     *pending*))))))))
 
@@ -145,6 +151,8 @@ frames) and touches VICTIM's hurt cylinder grown by *PERFECT-INFLATE*."
       (let ((l (hazard-size hz)) (yaw (hazard-yaw hz)))
         (vfx-rift (+ (hazard-x hz) (* 1.0 (fwd-x yaw))) (+ (hazard-z hz) (* 1.0 (fwd-z yaw)))
                   (+ (hazard-x hz) (* l (fwd-x yaw))) (+ (hazard-z hz) (* l (fwd-z yaw))) (<= (hazard-delay hz) 0))))
+    (if (and (hazard-look hz) (not (keywordp (hazard-look hz))))   ; a draw function (Rukia's ice): it draws its tell too
+        (funcall (hazard-look hz) hz (f32 rdt))
     (when (<= (hazard-delay hz) 0)
       (let ((x (hazard-x hz)) (z (hazard-z hz)) (age (/ (hazard-age hz) 60.0)) (life (/ (hazard-life hz) 60.0)))
         (case (hazard-kind hz)
@@ -164,5 +172,5 @@ frames) and touches VICTIM's hurt cylinder grown by *PERFECT-INFLATE*."
                        (transform-yaw (transform h)) (body-scale (model-body m)) (body-hunch (model-body m)))
              (draw-body (model-body m) (model-joints m) (aref p 0) (aref p 1) (aref p 2) 0.0 :shadow nil   ; no disc: it hid the pale bones
                         :alpha (f32 (min 1.0 (max 0.0 (/ (- (hazard-life hz) (hazard-age hz)) 15.0)))))))
-          ((:bind :rift) nil)))))                         ; (their looks: the :south crack and the hands; VFX-RIFT)
+          ((:bind :rift :freeze) nil))))))                ; (their looks: the :south crack and the hands; VFX-RIFT)
   (wave-ghosts-draw (f32 rdt)))

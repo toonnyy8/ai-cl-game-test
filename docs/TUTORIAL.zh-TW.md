@@ -424,7 +424,7 @@ AI 出招     enemy.lisp 291       (enemy-attack e :rb-lunge ...) → start-move
 
 ## 第 9 步：第二款遊戲：SOUL DUEL
 
-RAVEN EDGE 是「一個玩家對一群敵人」。第二款遊戲 SOUL DUEL（`duel/`，DUEL 套件）刻意選了完全不同的類型：1 對 1 的 3D 競技場格鬥，參考《BLEACH: Rebirth of Souls》，山本元柳齋對更木劍八，兩邊都可以是人或電腦。這是一份非商業的同人練習作品，角色名稱應使用者要求使用，模型、動作、音效全部由程式產生。
+RAVEN EDGE 是「一個玩家對一群敵人」。第二款遊戲 SOUL DUEL（`duel/`，DUEL 套件）刻意選了完全不同的類型：1 對 1 的 3D 競技場格鬥，參考《BLEACH: Rebirth of Souls》，角色是山本元柳齋、更木劍八，以及 2026-09-28 加入的朽木露琪亞（[DUEL_RUKIA.md](DUEL_RUKIA.md)），兩邊都可以是人或電腦。這是一份非商業的同人練習作品，角色名稱應使用者要求使用，模型、動作、音效全部由程式產生。
 
 ![SOUL DUEL：黃昏的廣場上兩人對峙，上方是靈子條、9 個魂魄和各種量表](../tests/shots/duel-neutral.png)
 
@@ -435,7 +435,7 @@ python3 -m http.server -d dist/duel 8000
 
 操作、除錯指令和測試在 [DUEL_GAMEPLAY.md](DUEL_GAMEPLAY.md)，規則和全部招式表在 [DUEL_DESIGN.md](DUEL_DESIGN.md)。（一個常被問的規則：U 在大多數型態是防禦，有兩個例外。山本卍解（2026-09-27 使用者決定的重製，[DUEL_YAMA_REWORK.md](DUEL_YAMA_REWORK.md)）分成『東・旭日刃』和『西・殘日獄衣』：在東按住 U（站立、走路、跑步時）就切到西，面板標 `U: WEST`；西的「獄衣」是全方位（360°）的防禦，擋下攻擊**沒有防禦硬直**，照樣能走、Step、出 L 和 SP1，面板標 `WARD`，但西的防禦量表完全不會回，量表歸零（GUARD CRUSH）或被破防招打中都會被打回東；在西出 L、SP1 以外的任何招式，出招的第一格就回到東。東的傷害是 1 倍加上「穿透」：k = 0.1～0.5（防禦量表越滿越高），打中時 ×(1+k)，被擋時有 k 倍傷害穿過防禦（跟削血一樣不會打死人），代價是受到的傷害 ×1.5。新的 L 技：東是突刺「旭光 KYOKKŌ」（穿透加倍，量表滿時被擋也有 85 全部穿透），西是以自己為中心的火柱環「焦熱地獄 SHŌNETSU JIGOKU」（打完還是西）；西的 SP1 反擊「極意返し」接住攻擊時防禦量表回滿。野晒三杯的 `U: DRINK` 則把一半傷害喝成 NOME。防禦中防禦量表不會回；而且所有角色的防禦量表回復速度在 2026-09-27 應使用者要求大幅調慢：每秒 12 → 5.5，破防後每秒 14 → 6.5。另一個常被問的：J／K 連段（2026-09-27 使用者的決定，[DUEL_STRINGS.md](DUEL_STRINGS.md)）最多三段，每段 J（輕、快）或 K（重、慢、沒有霸體），J／K 最多只能切換一次，所以完整路線只有 JJJ、JJK、JKK、KKK、KKJ、KJJ 這六條；換過鍵之後再按原來的鍵會被吃掉。下一段在前一段的任何時候都能先按（記住，等碰到對手才出），揮空就停在那一刀並多吃硬直（J +8 格、K +12 格）。第三段打中之後才能按 O 收尾（跳過瞄準直接出刀，按住就衝上去接 Kikon）；單發、SP、Breaker 都不能再取消成 O。自己的近戰碰到對手（打中或被擋）還會拿到「攻勢」KŌSEI：靈壓和瞬步，自己的防禦量表越少拿越多，最多 3 倍。）這一步不重講前面教過的東西（ECS、純函式規則、事件），只看 RAVEN 沒教、而格鬥遊戲逼著你面對的五件事，最後追一次 Kikon（鬼魂技）從按住按鍵、突進、砍中到魂魄碎掉的完整路徑。
 
-`duel/MANIFEST` 的順序也分了層：`tuning`、`rules`、`control`、`kit` 是純 Common Lisp（主機上可測）；`yama*`、`ken*` 是兩個角色（資料、掛鉤函式、過場）；`fighter` 到 `main` 是通用的系統，其中規則、操作和各個系統（`rules`、`control`、`fighter`、`combat`、`hazards`、`ai`、`camera`、`flow`）**不准出現任何角色的名字**（只有除錯工具 `debug.lisp` 會指名角色來擺場景）。
+`duel/MANIFEST` 的順序也分了層：`tuning`、`rules`、`control`、`kit` 是純 Common Lisp（主機上可測）；`yama*`、`ken*`、`rukia*` 是三個角色（資料、掛鉤函式、過場）；`fighter` 到 `main` 是通用的系統，其中規則、操作和各個系統（`rules`、`control`、`fighter`、`combat`、`hazards`、`ai`、`camera`、`flow`）**不准出現任何角色的名字**（只有除錯工具 `debug.lisp` 會指名角色來擺場景）。
 
 ### 9.1 一個虛擬手把，給人、電腦和測試共用
 
@@ -463,9 +463,13 @@ SOUL DUEL 這邊只有資料：`duel/lisp/control.lisp` 的 `*vpad-actions*`（�
 
 型態也是資料。劍八的野晒分成三杯（「呑め」量表的三階，`duel/lisp/ken.lisp` 第 160～211 行）：一杯片手只寫了「繼承 `:base`、起手 +2 幀、距離 ×1.3、換掉 SP1 和 Kikon」；二杯兩手繼承一杯，另外寫了自己的一整組劍道連段（`:grid`）和 +3 幀、×1.4；三杯繼承二杯、完全不推導，直接沿用二杯的招式，只把 K1 換成空間斬。其餘十幾招由 `register-kit`（`kit.lisp` 第 265～317 行）在載入時從原招式重新推導（第 305～312 行；不推導的型態拿上一型態的版本），沒有任何一招是複製貼上的。連段本身也是資料：`:grid` 列出六個動作加兩個「換過鍵的第二段」（`defmove-copy` 複製出來、只換名字），`string-grid` 展開成十條連線，「J／K 只能換一次」就寫在這十條線裡。數值可以直接寫 `tuning.lisp` 的變數名（例如 `:walk *walk-kenpachi*`），`resolve-tuning`（第 18～22 行）在載入時換成值。
 
-三杯之後還有第二次覺醒：**劍八的卍解**（`duel/lisp/ken.lisp` 第 215～250 行，設計與使用者的決定在 [DUEL_KEN_BANKAI.md](DUEL_KEN_BANKAI.md)）。這是「一場只能覺醒一次」唯一的例外（使用者 2026-09-27 的決定）：三杯（NOMIHOSE）、紅血、自由狀態下按 P 就進入 `:bankai`。代價是使用者 2026-09-28 定的：**劍八自己的魂魄直接變成 1，HP 回滿**，之後被 Kikon 或 Soul Break 一次就輸。「能不能開」也是資料：只有三杯的 kit 寫了 `:bankai-form :bankai`，卍解和之後的片腕都沒有，所以結構上一場只有一次；判斷寫成純函式 `bankai-allowed-p`（`rules.lisp`）。卍解的量表「腕」有 4 格，放在原本 NOME 的 kit 量表裡：K、L、SP1、SP2、I、O 每出一招扣一格並自損 60 靈子（`kit-pip-cmd-p`、`pip-spend`），5 秒沒扣格就自己裂一格（`pip-step`），扣光以後等這一招打完，手臂爆裂（`burst-due-p`、`combat.lisp` 的 `arm-burst!`），之後整場都是 `:kataude`（片腕：基本型的招式距離 ×0.7，由 `:reach-mult` 推導出來）。卍解的招式大多沿用舊動畫、只換數字；新的是三個片段（站姿、拳、咬）、一把斷刀、一個身體變體（`body-variant`：同一副骨架換調色盤、加角和手臂裂痕）和兩段過場。這些全部都在角色檔裡，通用檔案只多了幾個不帶名字的 kit 鍵（`:bankai-form`、`:pips`）和一個招式旗標 `:rend`（霸體與架式擋不住）。
+三杯之後還有第二次覺醒：**劍八的卍解**（`duel/lisp/ken.lisp` 第 215～250 行，設計與使用者的決定在 [DUEL_KEN_BANKAI.md](DUEL_KEN_BANKAI.md)）。這是「一場只能覺醒一次」唯一的例外（使用者 2026-09-27 的決定）：三杯（NOMIHOSE）、自己剩下的魂魄**四個以下**、自由狀態下按 P 就進入 `:bankai`（2026-09-28 使用者改的：原本要紅血，現在改成「剩餘四魂以下」，`*bankai-konpaku*`）。代價是使用者 2026-09-28 定的：**劍八自己的魂魄直接變成 1，HP 回滿**，之後被 Kikon 或 Soul Break 一次就輸。「能不能開」也是資料：只有三杯的 kit 寫了 `:bankai-form :bankai`，卍解和之後的片腕都沒有，所以結構上一場只有一次；判斷寫成純函式 `bankai-allowed-p`（`rules.lisp`）。卍解的量表「腕」有 4 格，放在原本 NOME 的 kit 量表裡：L、SP1、SP2、I 和一般的 O 每出一招扣一格並自損 60 靈子（`kit-pip-cmd-p`、`pip-spend`）；J／K 連段則是**一整套只扣一格**（使用者 2026-09-28 試玩後的決定：原本每個 K 都扣，K 太貴），不管打完、被打斷還是揮空，都在這套連段結束的那一刻才扣（`gauges-arm-owed` 記著「這套還欠一格」，純函式 `string-pip-due-p` 判斷何時結帳），只有 J 的 JJJ 不扣；K 還是要有一格才能出，連段中途想用 SP／L 取消則要多留一格。5 秒沒扣格就自己裂一格（`pip-step`），扣光以後等這一招打完，手臂爆裂（`burst-due-p`、`combat.lisp` 的 `arm-burst!`），之後整場都是 `:kataude`（片腕：基本型的招式距離 ×0.7，由 `:reach-mult` 推導出來）。卍解的招式大多沿用舊動畫、只換數字；新的是三個片段（站姿、拳、咬）、一把斷刀、一個身體變體（`body-variant`：同一副骨架換調色盤、加角和手臂裂痕）和兩段過場。2026-09-28 使用者要「更野性」：站姿改成壓低前傾的野獸蹲姿（頭低、駝背、手臂鬆垮張開、斷刀拖在身後），走路、跑步、防禦也都換成這個鬼的樣子；共用的走路和防禦片段是用身體變體的 `:clips` 對照表換掉的（`play-clip` 查 `body-clips`），所以通用檔案仍然不帶角色名字。這些只改畫面，招式的幀數、距離、判定都沒變。這些全部都在角色檔裡，通用檔案只多了幾個不帶名字的 kit 鍵（`:bankai-form`、`:pips`）和一個招式旗標 `:rend`（霸體與架式擋不住）。
 
-這條規矩有檢查：`grep -nE ':ya-|:ke-|yama|kenpachi' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow}.lisp` 必須什麼都印不出來，`tests/duel-rules-test.lisp` 最後也有同樣的檢查。所以加第三個角色不必改任何通用檔案（練習 8）。
+這條規矩有檢查：`grep -nE ':ya-|:ke-|:ru-|yama|kenpachi|rukia' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow}.lisp` 必須什麼都印不出來，`tests/duel-rules-test.lisp` 最後也有同樣的檢查。所以加一個「用現有機制就能描述」的角色不必改任何通用檔案（練習 8）。
+
+第三個真正的角色**朽木露琪亞**（`duel/lisp/rukia.lisp`、`rukia-art.lisp`）示範了另一半：她帶來前兩個角色沒有的機制，這時通用檔案要改，但只加**不帶名字的鍵**，行為仍寫在她的資料裡。她的覺醒「絕對零度」是一條**冷度量表**（2026-09-28 試玩後重做）：冷度 0～200，畫成疊在一起的兩條（`:meter (:temp t :max 200)`）。防禦時每秒冷 90（一條 1.1 秒），沒防禦時回溫（每個溫度帶自己的 `:warm`：−18 每秒 10、−50 每秒 12、絕對零度最慢，每秒 5），被擋下的近戰讓她更冷、真的被打中讓她回溫。第一條滿就降到 −50 °C（`:m50`），兩條都滿是絕對零度（`:zero`）；第一條空了回 −18，第二條空了回 −50。「冷度在哪一帶就是哪個型態」寫成純函式 `temp-band`，每幀的變化是 `temp-next`（`rules.lisp`，主機上測）。出招花冷度是 kit 鍵 `:cold`（−18 只有 L 要花、不夠就不能出），「越冷越慢、對手越難離開她身邊」是 `:field`（寒域：只把對手「遠離她」的那一部分速度打折，純函式 `field-velocity`、`field-step`），「零度被破防就碎裂」是 `:crush-hook`，「不能閃步」是 `:rooted`（連招式的前衝和連段追身都關掉），「每回合重置回 −18」是 `:reset-form`，量表旁的「U: COOL」是 `:u-tag`。零度的防禦沿用山本西的 `:ward` 被動，另加三個被動：`:optic`（遠程和場上的危險物穿過防禦，`optic-p`）、`:freeze-touch`（第一個被擋下的近戰把攻擊者凍住）、`:chipless`。新的狀態「霜」（走路和跑步 ×0.7）是招式的一個鍵 `:frost 60` 加上戰士身上的一個計時器。凍結柱是新的危險物種類 `:freeze`（和 `:bind` 一樣是圓盤，但劍八的「斬斷飛行道具」砍不掉它）。電腦也一樣：`:awaken (:melee-share 0.6 :min-taken 150)`（吃到的傷害六成以上來自近戰才覺醒）、`:cool`（按住 U 冷到下一帶）、`:brace`（零度時按住 U 撐住）都是 `ai.lisp` 看得懂的通用鍵。結果：山本與劍八三組對戰的參考紀錄一個位元都沒變。
+
+**玩的時候看到什麼（露琪亞覺醒後）。** 量表列上只剩一條「凍」冷度量表：淺藍的是第一條，白色疊在上面的是第二條，左端三個小方塊亮幾個就是幾度（−18／−50／−273），右邊寫著目前的溫度。按住 U 防禦就會變冷；不防禦就慢慢回溫。第一條滿了變 −50，兩條都滿是 −273；回溫把上面那條用光，就退回上一帶。量表上顏色變暗的那一段是「現在按 L 會花掉的冷度」，不夠時那裡只剩一條白線，按了也出不來。越冷走得越慢，但每一招都打得更遠、更痛、動作也不一樣（L 從霜柱、氷震長到零度凍結，半徑 2.5 → 3.5 → 5.5 公尺），她身邊地上的白圈是「寒域」：對手在圈裡往外退會變慢、往後閃步會變短，往旁邊閃不受影響。−273 完全不能動，只能靠冰的距離和自動防禦；這時按住 U 是「撐住」：不會回溫，但防禦量表一直掉，掉光就碎裂（冷度歸零、自損、跪倒，2 秒內防禦不會降溫，量表變灰寫著 THAW）。手機單手模式時，拇指放著就是防禦，拇指圈外那道白弧就是冷度（一圈 = 兩條全滿）。**K 之後接 L**（2026-09-28 試玩後的決定，覺醒前後都可以）：K 連段的任何一下（K1、K2、K3）碰到對手時按 L，L 會像下一段一樣排進去，在那一下結束時接出來；打中的話對手還在硬直裡，就是一套連段（始解的月白換成出得比較快的版本，圓圈出現 10 幀後冰柱就冒出來；覺醒後就是那一帶自己的 L）。K 被擋下時 L 還是會出，但對手可以照常防禦。**連段裡溫度鎖住、可以透支**（同一天的決定）：從一套連段的第一下開始，到最後一個接上的動作（J／K 連段、K 接 L、O 收尾、SP 取消）打完為止，她一直用開始時那一帶的招式；這段期間 L 只要冷度還大於 0 就能出，不夠的部分透支，冷度最低到 0。連段結束後才按剩下的冷度重新決定溫度帶，可以一次掉好幾帶：冷度歸零就回 −18（連 −273 也是），−273 剩不到一條就回 −50。例如 −273 的 K K K（花 120，剩 80）再接 L（100）：L 照樣打出去，冷度歸零，放完回到 −18。連段以外，冷度不夠時 L 還是出不來。（這兩條規則是 `rules.lisp` 的純函式 `temp-band-at` 和 `cold-ok-p`，在主機上測。）這是通用的 kit 鍵 `:l-after-k`（`kit.lisp` 的 `kit-l-link`，閂鎖在 `fighter.lisp` 的 `move-commands`），寫法見 [DUEL_STRINGS.md](DUEL_STRINGS.md) §12。
 
 ### 9.3 同時結算的命中
 
@@ -511,10 +515,12 @@ Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規�
 驗證方法：每 600 步印一行 `duel hash`（`state-hash-line`，`duel/lisp/debug.lisp` 第 83～96 行，位置、朝向、每個量表、上一次 Kikon 突進值幾個魂魄、電腦的 heat）。`tests/scripts/duel-cvc-yk.json` 用種子 7 讓兩個電腦打完一場，最後一行一定是：
 
 ```
-duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7
+duel -> RESULTS winner P2 konpaku 0-1 ticks 7365 secs 122.8
 ```
 
-（2026-09-28 Soul Break 新規則與劍八卍解之後，這一行和 YK、KK 的 hash 行都沒變，因為這兩場沒有 Soul Break、也沒有人開卍解；YY 從 t=4200 開始不同（Soul Break 改播毀魂技動畫，過場變長），結果變成 `winner P2 konpaku 0-4 ticks 6948 secs 115.8`。hash 行只有在有「腕」量表的型態才多印 `u<裂開倒數>` 和 `*`（爆裂待發），其他型態的行一個字都不變。2026-09-27 J／K 連段、O 收尾與攻勢之後的值，三組的 hash 行全部改變；之前是山本卍解重製與防禦量表回復變慢之後的 `winner P1 konpaku 2-0 ticks 7688 secs 128.1`，再之前是 `winner P2 konpaku 0-4 ticks 9305 secs 155.1`。2026-09-26 guard v3 之後的值：靈子 1100 → 1300（使用者的決定：真人對戰比電腦對電腦快得多）、防禦中防禦量表不回、卍解的防禦量表只靠打中對手補（Kikon 重置時沿用）、山本西的 U 改成「殘日獄衣」火焰防禦（擋下扣一半、每一下近戰都燙傷對手，遠程攻擊只受 0.6 倍傷害而且不會被打出硬直）、野晒二杯掉得比較慢、東的受傷倍率 1.4 → 1.2。同一天的追加修改（卍解防禦量表被削減 ×1.3、東打人回復量減半為 0.05、劈開隕石等招式「刀身近處算近戰、遠處的斬線才算遠程」）沒有改變這一行，但 YK 的 hash 行和 YY 的結果變了。上一版是 `winner P1 konpaku 7-0 ticks 7351 secs 122.5`（劍八那一批：山本西「按住 U = 霸體」、野晒的三杯「呑め」量表、跑步時面向對手），再之前是 `winner P2 konpaku 0-3 ticks 8594 secs 143.2`。規則一改，這一行就要跟著換，同時更新 DUEL_GAMEPLAY.md、`tests/scripts/duel.py` 的註解和 `tests/style-cvc-ref.txt`。）
+（2026-09-28 加入露琪亞之後，這一行和 YY、KK 的 hash 行都沒變。hash 行只在她身上多印兩個欄位：`u<…>`（冷度量表的第二個數：碎裂之後還剩幾幀不能降溫）和 `fr<霜剩幾幀>`（被凍到的一方），她的冷度就是 `m<…>`；沒有這兩種狀態的行一個字都不變。同一天的冷度量表重做、劍八「一套連段扣一格」和山本「南」取消冷卻之後，這一行和 KK 仍然不變（種子 7 的兩場都沒有卍解的連段）；YY 的結果也一樣，只有 t=6600 那一行的冷卻欄位從 220 變成 0，因為南不再有冷卻。）
+
+（2026-09-28 連段追身與劍八卍解改成「剩四魂以下」就能開之後，三組的 hash 行全部改變；在那之前這一行是 `winner P2 konpaku 0-3 ticks 7123 secs 118.7`。2026-09-28 Soul Break 新規則與劍八卍解之後，這一行和 YK、KK 的 hash 行都沒變，因為這兩場沒有 Soul Break、也沒有人開卍解；YY 從 t=4200 開始不同（Soul Break 改播毀魂技動畫，過場變長），結果變成 `winner P2 konpaku 0-4 ticks 6948 secs 115.8`。hash 行只有在有「腕」量表的型態才多印 `u<裂開倒數>` 和 `*`（爆裂待發），其他型態的行一個字都不變。2026-09-27 J／K 連段、O 收尾與攻勢之後的值，三組的 hash 行全部改變；之前是山本卍解重製與防禦量表回復變慢之後的 `winner P1 konpaku 2-0 ticks 7688 secs 128.1`，再之前是 `winner P2 konpaku 0-4 ticks 9305 secs 155.1`。2026-09-26 guard v3 之後的值：靈子 1100 → 1300（使用者的決定：真人對戰比電腦對電腦快得多）、防禦中防禦量表不回、卍解的防禦量表只靠打中對手補（Kikon 重置時沿用）、山本西的 U 改成「殘日獄衣」火焰防禦（擋下扣一半、每一下近戰都燙傷對手，遠程攻擊只受 0.6 倍傷害而且不會被打出硬直）、野晒二杯掉得比較慢、東的受傷倍率 1.4 → 1.2。同一天的追加修改（卍解防禦量表被削減 ×1.3、東打人回復量減半為 0.05、劈開隕石等招式「刀身近處算近戰、遠處的斬線才算遠程」）沒有改變這一行，但 YK 的 hash 行和 YY 的結果變了。上一版是 `winner P1 konpaku 7-0 ticks 7351 secs 122.5`（劍八那一批：山本西「按住 U = 霸體」、野晒的三杯「呑め」量表、跑步時面向對手），再之前是 `winner P2 konpaku 0-3 ticks 8594 secs 143.2`。規則一改，這一行就要跟著換，同時更新 DUEL_GAMEPLAY.md、`tests/scripts/duel.py` 的註解和 `tests/style-cvc-ref.txt`。）
 
 跑兩次、把所有 `^duel` 開頭的行 diff 一下，應該完全相同（指令在 DUEL_GAMEPLAY.md）。這就變成一個不用寫的回歸測試：任何「不該改變行為」的修改（重構、把程式搬進引擎）都必須讓這一行和十三行 hash 一字不差。把 SOUL DUEL 的東西收回引擎時，每一步都是這樣檢查的。
 
@@ -566,6 +572,7 @@ duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7
 - **劍八沒變紅，被砍中，O 還按著**：一樣擊退、山本一樣衝進來，但劍八只踉蹌 16 幀（`*kikon-follow-stun*`），第二刀在他能動之後 12 幀才到（`*kikon-follow-gap*`）：衝刺中按住防禦就擋下（`:blocked`，不扣魂魄），也可以閃步或 Hoho。沒擋住，第二刀的 `kikon-outcome` 看到 FOLLOW 就回 `:kikon`，之後同上。
 - **劍八在閃步或 Hoho 的無敵幀裡**：`defender-state` 回 `:invuln`，`resolve-contact` 回 NIL，刀揮空，山本吃 30 幀的揮空硬直。
 - **連段打完的 O 收尾**（第三段 J3／K3 打中之後、還在取消視窗內按 O）：路線從 `main-phase-step` → `move-commands`（`fighter.lisp` 第 463～495 行）的 `:kikon` 那一格開始，`skip-aura` 跳過瞄準直接出刀（炎上沒有衝刺，所以當場就砍），其餘一樣。只有第三段打中才行：第三段被擋、揮空、停在第二段，或單發、SP、Breaker，都不能再取消成 O（2026-09-27 使用者的決定）。
+- **連段的第二、三段**（2026-09-28 使用者的決定：「只要普通攻擊擦到，攻擊方在接續的攻擊動畫中就會靠近對手」）：只要這一串裡**有任何一段碰到對手**（打中或被擋都算），之後按下的每一段都會打出來，就算中間某一段揮空也照樣接下去；只有第一段就揮空，才會停在那裡吃揮空硬直。接續的那一段在出招前搖（startup）裡會往對手靠近，剛好在判定出現時搆到他（`string-chase-speed`，`rules.lisp`；最快每秒 18 公尺 `*chase-max*`，停在招式距離內 0.4 公尺 `*chase-margin*`，不會穿過或衝過頭）。這只是「動作」：對手照樣可以防禦，閃步、Hoho、倒地的無敵幀照樣躲得掉。
 
 注意「按著」是在**砍中的那一步**讀的：`vpad-down` 讀的是這一步 `pilot-system` 寫進 vpad 的狀態，所以重播同一串按鍵一定得到同一個結果。
 
@@ -577,7 +584,7 @@ duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7
 
 ![單手模式：上面是對手的量表、最下面是自己的，右半邊是按鈕，下半部的大框是手勢區（按在圓鈕上才是按鈕）](../tests/shots/mobile-battle.png)
 
-**直拿的畫面**（2026-09-27 起，設計文件 §14）：量表依角色分上下，對手（P2）的在最上方、自己（P1）的在最下方的 Home 條上面，各佔整個寬度：第一行是名字、「攻 ×n」（攻勢倍率，1.5 倍以上才出現）和一個標籤（EVOLUTION、INFERNO／NOME／COOLDOWN 或 U 的效果），然後是血條、防禦量表，最後一行左邊是魂火（Konpaku），右邊是四個沒有字的小量表，顏色和電腦版一樣：靈壓三格、瞬步、覺醒、角色量表（或覺醒後 L／Shift+L 的冷卻）。計時器在上面那塊的右邊。鏡頭是直拿專用的背後視角：角色比較大、站在畫面中下方，拇指擋到腳沒關係；兩人拉開、靠牆或對手跑到旁邊時，鏡頭會自動拉廣，把兩個人的上半身都留在上下兩塊量表之間。過場動畫在直拿時鏡頭會往後退，讓人物不被切掉。選單在直拿時也重新排過（選項往下移、選角和結算改成上下排列）。電腦版的畫面完全沒變。
+**直拿的畫面**（2026-09-27 起，設計文件 §14）：量表依角色分上下，對手（P2）的在最上方、自己（P1）的在最下方的 Home 條上面，各佔整個寬度：第一行是名字、一個標籤（EVOLUTION、INFERNO／NOME／COOLDOWN、UDE、THAW 或 U 的效果；和名字後面的型態重複時不畫，例如露琪亞的溫度）、九團魂火（Konpaku），最右邊是「攻 ×n」（攻勢倍率，1.5 倍以上才出現；出現時魂火會縮小讓位，不會重疊）；然後是血條、防禦量表，最後一行是四個沒有字的小量表，和血條一樣長（2026-09-28 試玩後的決定），顏色和電腦版一樣：靈壓三格、瞬步、覺醒、角色量表（或覺醒後 L 的冷卻：只有一格，因為 L 一次用完就要等冷卻；劍八卍解是四格「腕」；露琪亞覺醒後這一格是她的冷度量表，兩條疊在一起）。計時器在上面那塊的右邊。鏡頭是直拿專用的背後視角：角色比較大、站在畫面中下方，拇指擋到腳沒關係；兩人拉開、靠牆或對手跑到旁邊時，鏡頭會自動拉廣，把兩個人的上半身都留在上下兩塊量表之間。過場動畫在直拿時鏡頭會往後退，讓人物不被切掉。選單在直拿時也重新排過（選項往下移、選角和結算改成上下排列）。電腦版的畫面完全沒變。
 
 **怎麼組起來的。** 觸控不是另一套操作系統，只是 9.1 那個 vpad 的另一種輸入來源：
 
@@ -585,7 +592,9 @@ duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7
 2. `engine/lisp/touch.lisp` 是純 Common Lisp 的手勢辨識器（主機上用 `tests/touch-test.lisp` 測），只看事件和時間戳記，不看幀數，所以在 30 fps 和 120 fps 下判斷一樣。
 3. `duel/lisp/onehand.lisp` 把手勢換成 P1 的 vpad 按鈕：`control.lisp` 的 P1 綁定多了 `(:touch :quick)` 這類項目，`p1-down-p` 看到 `:touch` 就問 `touch-button`。角色、規則和 AI 完全不知道玩家在用手機。
 
-**手勢（右手預設；選單的 HAND 可以換左手，整個按鈕區左右鏡像，上下的分法不變）：**
+**怎麼進入單手模式（2026-09-28 起）**：選單不再有單獨的「ONE-HAND VS CPU」。直接選 **VS CPU**（或 **PRACTICE** 練習模式）；在觸控手機上直拿時，它自動就是單手操作。要不要單手由 **SETTINGS**（設定）裡的 **ONE-HAND** 決定：AUTO（預設，觸控手機直拿時才開）、ON（直式視窗或觸控裝置都開，電腦的橫式視窗不會開）、OFF（永遠用鍵盤／手把的操作）。選到這一列時，下面那行字會告訴你「在這台裝置上現在是開還是關」。
+
+**手勢（右手預設；SETTINGS 的 HAND 可以換左手，整個按鈕區左右鏡像，上下的分法不變）：**
 
 2026-09-28 使用者的決定（設計文件 §15）：手勢區以中線（390 × 844 上是 y 589）分成上下兩塊，點下半塊是 J、點上半塊是 K；往上撥改成向前衝刺。手勢區上有一條淡淡的分隔線，邊上標著 F（上）和 Q（下）。
 
@@ -604,6 +613,33 @@ duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7
 | II 圓鈕，或手機的「返回」手勢 | 暫停 |
 
 選單直接點選項；選角畫面點左邊三分之一換上一個、右邊三分之一換下一個、中間確定。對戰中把手機轉成橫的會暫停並顯示 ROTATE TO PORTRAIT。
+
+**SETTINGS（設定）**：每一列點一下（或按左右鍵）就換到下一個值，立刻生效，也會存在瀏覽器裡（`localStorage` 的 `soulduel.onehand`、`soulduel.hand`、`soulduel.split`、`soulduel.flick`、`soulduel.camera`；無痕模式存不了就用預設值）。
+
+| 設定 | 值（粗體是預設） | 意思 |
+|---|---|---|
+| ONE-HAND | **AUTO**／ON／OFF | 見上面 |
+| HAND | **RIGHT**／LEFT | 按鈕區在哪一邊 |
+| TAP SPLIT | 40%／45%／**50%**／55%／60% | 手勢區上方多少比例算 K（點下去是 K 的區塊）；覺得 K 太容易誤觸就調小 |
+| SENSITIVITY | 1～5，預設 **3** | 撥動要劃多遠才算撥：1 是 40 px、3 是 28 px、5 是 18 px；數字越大越短就觸發 |
+| CAMERA | **BEHIND**／SIDE | 兩手操作 VS CPU／PRACTICE 的鏡頭（暫停選單也能切）；單手時一律用直拿的背後鏡頭 |
+
+這些預設值是先幫你選的，想改哪一個告訴我就好。
+
+**PRACTICE（練習模式）**：一般的選角畫面選兩個角色（任何型態都能在對戰中打出來），對一個假人練習。沒有計時、不會結束：假人的魂魄一直維持在設定值，被 K.O. 會直接重來一回合、雙方的魂魄和血都回到設定值。連段計數（幾下、多少傷害）會一直留在畫面上。暫停選單（單手時按 II 或手機的「返回」）多了這幾項，點一下或按左右鍵切換：
+
+| 項目 | 值（粗體是預設） | 效果 |
+|---|---|---|
+| DUMMY | **STAND**／GUARD ALL／GUARD AFTER HIT／CPU | 站著不動、全部防禦、被打中第一下之後才開始防（用來確認連段是不是真的連得上）、或交給電腦（用選角時選的難度） |
+| HP REFILL | **AUTO**／OFF | AUTO：連段一結束假人的血就回到 DUMMY HP 的值；OFF：不補，可以把它打到紅血練 Kikon |
+| GAUGES | **NORMAL**／INFINITE | INFINITE：自己的血維持在 P1 HP 的值，防禦量表、靈壓、瞬步、覺醒量表一直是滿的，覺醒和 SP 隨便試 |
+| P1 HP／DUMMY HP | **100%**／75／50／25／10% | 自己／假人的血，改了立刻生效；重置、補血、K.O. 之後也回到這個值。25% 就是紅血 |
+| P1 KONPAKU／DUMMY KONPAKU | 1～**9** | 自己／假人的魂魄數，改了立刻生效。劍八的卍解條件正在改成「三杯而且自己的魂魄 ≤ 4」（另一批工作），之後把 P1 KONPAKU 調到 4 以下就能試卍解 |
+| RESET POSITION | — | 兩人回到開場位置、型態回到最初、量表全滿，血和魂魄是上面四項的值 |
+
+**紅色的魂火**：兩邊量表上的魂火，最後幾顆會是深紅色，代表「對手現在放毀魂技（Kikon）打中的話會被削掉幾顆」：一般型態 2 顆、覺醒後 3 顆、劍八卍解的真っ二つ 4 顆，剩下的比這少就全紅。自己已經紅血（對手真的能放 Kikon）時，這幾顆會閃。直拿和橫拿的畫面都一樣。
+
+覺醒、Kikon 等戰鬥過場在練習模式裡一樣不能跳過。
 
 **在電腦上試。** 用 Chrome DevTools 的裝置模式選一支直式手機，或用測試工具：
 
@@ -664,17 +700,17 @@ Android 還有一個不用憑證的辦法：USB 接電腦，Chrome 的 `chrome:/
 
 > 提示：在 `duel/lisp/ken.lisp` 的 base 區塊仿照 `:ke-k3` 寫一個 `defmove`：`(defmove :ke-chase :kind :flash :clip :ke-q3 :clip-s 11 :enter 6 :startup 20 :active 5 :recovery 34 :dmg 70 :adv-block -20 :reach 2.8 :arc 180 :on-hit :crumple :flags (:ender))`。第三段的 K 要照 DUEL_STRINGS §2.1 的預算：`:enter` 讓實際起手是 14 格（前一段不管是 J 還是 K 都連得上）、被擋 −20、打中跪倒，`:ender` 讓它打中之後可以接 O 收尾。然後在 `(defkit :kenpachi :base …)` 的 `:strings` 加一列 `(:ke-j2 :f :ke-chase)`：自己寫的 `:strings` 排在 `:grid` 展開的十條線前面，`kit-next` 先找到它，所以蓋掉格子裡的 J2 → K3（K1 K2 → K3 不受影響）。野晒一杯會自動推導出它（起手 +2、`:enter` 也 +2、距離 ×1.3）；二杯、三杯有自己的格子，J2 是 `:ke-r-j2`，所以那一列在它們那裡用不到。動畫先借 `:ke-q3`；要用新的動畫名稱，就得在 `ken-art.lisp` 用 `defstrike` 做一個，並把名字加進 `tests/duel-rules-test.lisp` 的 `*clips-5*`。先跑 `$E --norc --load tests/duel-rules-test.lisp`（它會走遍每個型態的每一條連段、檢查幀數預算），再 `./build.sh duel`、`tools/pkgcheck.sh duel`，用除錯指令 2396（劍八對一個不動的劍八，相隔 2.2 公尺）按 J、J、K，在 console 找 `P1 move KE-CHASE`。注意連段只在碰到對手時才接：揮空就停在那一刀。
 
-**8. 加第三個角色。** 以劍八為底，複製出一個新角色 `:ronin`。
+**8. 再加一個角色。** 以劍八為底，複製出一個新角色 `:ronin`（第四個角色；露琪亞是怎麼加的見 9.2）。
 
 > 提示：通用檔案一行都不用改，要動的是這些：
 > 1. `cp duel/lisp/ken-art.lisp duel/lisp/ronin-art.lisp`、`cp duel/lisp/ken.lisp duel/lisp/ronin.lisp`。
 > 2. 兩個新檔裡，招式、姿勢、動畫的名稱是整個建置共用的關鍵字，要全部換掉前綴：`:ke-` → `:ro-`。身體與武器也一樣：`(defbody :kenpachi …)` → `:ronin`，`(defweapon :ken-katana …)`、`(defweapon :nozarashi …)` 換成新名字，`defkit` 裡的 `:body`、`:weapon` 跟著改。
 > 3. 全域函式名稱也會撞：`ken-stance-release`、`ken-ground-crack`、`ken-charge-tick`、`ken-flurry`、`ken-meteor-cut`、`cine-slash` 和三個過場 `ken-kikon-cine`、`ken-sky-split-cine`、`ken-nozarashi-cine` 都要改名，資料裡引用它們的符號（`:release`、`:on-frame`、`:tick`、`:on-land`、`:cine`）一起改。
 > 4. `(defkit :kenpachi :base …)` 和 `(defkit :kenpachi :nozarashi …)` 改成 `(defkit :ronin …)`，`:name "RONIN"`，數值隨你調。
-> 5. `duel/MANIFEST`：`lisp/ronin-art.lisp` 放在 `lisp/ken-art.lisp` 後面，`lisp/ronin.lisp` 放在 `lisp/ken.lisp` 後面（都要在 `lisp/fighter.lisp` 之前）。
-> 6. 角色選單不用改：`*roster*`（`kit.lisp` 第 202 行）在 `register-kit` 裡自動收集每個有 `:base` 型態的角色（第 300～301 行）。除錯指令 2000+s 從名單裡抽角色，所以電腦對戰也會抽到它；`debug.lisp` 的 `*pairs*` 只列了 YY／YK／KK，要讓節奏測試涵蓋新角色就加一組。
-> 7. 想讓主機測試也檢查它：在 `tests/duel-rules-test.lisp` 的載入清單（第 12 行）加 `"ronin"`，並更新 `*forms*`、`*clips-5*` 和 `(equal *roster* '(:yamamoto :kenpachi))` 那一項。
-> 8. `./build.sh duel`、`tools/pkgcheck.sh duel`（撞名或漏改的函式會出現在第二、三行），最後跑一次 `grep -nE ':ya-|:ke-|:ro-|yama|kenpachi|ronin' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow}.lisp`，應該什麼都印不出來。
+> 5. `duel/MANIFEST`：`lisp/ronin-art.lisp` 放在 `lisp/rukia-art.lisp` 後面，`lisp/ronin.lisp` 放在 `lisp/rukia.lisp` 後面（都要在 `lisp/fighter.lisp` 之前）。
+> 6. 角色選單不用改：`*roster*`（`kit.lisp` 第 202 行）在 `register-kit` 裡自動收集每個有 `:base` 型態的角色（第 300～301 行）。除錯指令 2000+s 從名單裡抽角色，所以電腦對戰也會抽到它；`debug.lisp` 的 `*pairs*` 列了 YY／YK／KK 和露琪亞的 RY／RK／RR，要讓節奏測試涵蓋新角色就加一組。
+> 7. 想讓主機測試也檢查它：在 `tests/duel-rules-test.lisp` 的載入清單（第 12 行）加 `"ronin"`，並更新 `*forms*`、`*clips-5*` 和 `(equal *roster* '(:yamamoto :kenpachi :rukia))` 那一項。
+> 8. `./build.sh duel`、`tools/pkgcheck.sh duel`（撞名或漏改的函式會出現在第二、三行），最後跑一次 `grep -nE ':ya-|:ke-|:ru-|:ro-|yama|kenpachi|rukia|ronin' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow}.lisp`，應該什麼都印不出來。
 
 ---
 

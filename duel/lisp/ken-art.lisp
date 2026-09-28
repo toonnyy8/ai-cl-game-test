@@ -154,6 +154,9 @@
 (body-variant :kenpachi-oni :kenpachi
   :palette '((:skin #x9A4A42) (:skin-d #x7A3630) (:pupil #xF4F2EA) (:horn #x6E302C) (:blood #xD0101C) (:wound #x5A1418)
             (:split #x101018))
+  ;; his own prowl and guard for the shared clips (the feral pass, 2026-09-28): art only
+  :clips '(:sh-guard :ke-b-guard :sh-guard-hit :ke-b-guard-hit :sh-walk-f :ke-b-walk-f :sh-walk-b :ke-b-walk-b
+           :sh-strafe-r :ke-b-strafe-r :sh-strafe-l :ke-b-strafe-l)
   :parts '((:head (:cone 0.02 0.11 :at (0.042 0.245 0.07) :rot (0 -20 -18) :seg 6 :c :horn)
                  (:cone 0.02 0.11 :at (-0.042 0.245 0.07) :rot (0 -20 18) :seg 6 :c :horn))
           (:lower-arm-r (:glow 1.6 (:box 0.006 0.075 0.004 :at (0.0 -0.06 0.052) :rot (0 0 25) :c :blood) :crack-1)
@@ -582,37 +585,124 @@
   (1.0 (:chest :twist 88))
   (1.5 :ke-n-stance))
 
-;;; ---------------------------------------------------------------- the Bankai (docs/DUEL_KEN_BANKAI.md §12): 3 clips
-;; the beast-like stance: hunched forward, knees wide, the left hand open like a claw, the broken cleaver dragging low in
-;; the right, head down but the eyes up; the shoulders heave
+;;; ---------------------------------------------------------------- the Bankai (docs/DUEL_KEN_BANKAI.md §12): the oni
+;; The feral pass (the user's request 2026-09-28, 「更野性」): a beast, not a swordsman. A deep forward-leaning crouch on
+;; bent, splayed legs, the back rounded and the shoulders hunched over it, the head low and thrust forward, the eyes up;
+;; the arms hang loose and wide, the left hand a claw, the broken cleaver dragged low behind him in the right. His strikes
+;; lunge from the crouch. Art only: the moves' S / A / R, reach and hit volumes are unchanged.
 (defpose :ke-b-stance (:base :ke-stance)
-  (:root :u -0.16) (:pelvis :twist 12) (:spine :flex 30) (:chest :twist -8 :flex 6) (:head :flex -26 :twist -4)
-  (:arm-r :flex 14 :side 26) (:elbow-r :flex 18) (:hand-r :flex -70 :twist 10)
-  (:arm-l :flex 48 :side 32) (:elbow-l :flex 62) (:hand-l :flex 25)
-  (:thigh-r :flex 22 :side 22) (:thigh-l :flex 40 :side 20) (:knee-r :flex 48) (:knee-l :flex 55))
+  (:root :u -0.3 :f 0.04) (:pelvis :twist 16) (:spine :flex 40) (:chest :flex 16 :twist -10) (:neck :flex 8)
+  (:head :flex -58 :twist -6)
+  (:arm-r :flex -16 :side 30 :twist 0) (:elbow-r :flex 22) (:hand-r :flex -100 :twist 10)
+  (:arm-l :flex 40 :side 42) (:elbow-l :flex 60) (:hand-l :flex 45)
+  (:thigh-r :flex -12 :side 22) (:knee-r :flex 60) (:thigh-l :flex 62 :side 22) (:knee-l :flex 84))
+;; the idle: the back heaves (breath through the teeth), the claw flexing, the blade tip scraping
 (defclip :ke-b-stance (0.8 :loop t :base :ke-b-stance)
-  (0) (0.4 (:chest :flex 12) (:spine :flex 26) (:root :u -0.13) (:head :flex -30)))
-;; J3 GENKOTSU / SP2's NAGURI-TOBASHI: the left hook from the hip, the whole body behind it, held 3 f on contact, the
-;; cleaver thrown out wide in the right
+  (0) (0.4 (:chest :flex 24) (:spine :flex 38) (:root :u -0.33) (:head :flex -62) (:hand-l :flex 60) (:elbow-l :flex 70)
+           (:hand-r :flex -96)))
+;; guard: crouched lower still behind the raised left forearm, the broken blade turned flat across the body
+(defpose :ke-b-guard (:base :ke-b-stance)
+  (:root :u -0.34) (:spine :flex 34) (:chest :flex 12 :twist -18) (:head :flex -44)
+  (:arm-r :flex 62 :side 18 :twist 20) (:elbow-r :flex 76) (:hand-r :twist 60 :flex -70)
+  (:arm-l :flex 82 :side 12) (:elbow-l :flex 118) (:hand-l :flex 30)
+  (:thigh-r :flex -6 :side 24) (:knee-r :flex 66) (:thigh-l :flex 60 :side 24) (:knee-l :flex 88))
+(defclip :ke-b-guard (0.6 :loop t :base :ke-b-guard) (0) (0.3 (:root :u -0.37) (:chest :flex 16)))
+(defclip :ke-b-guard-hit (0.2 :base :ke-b-guard)
+  (0) (0.05 :snap (:spine :flex 24) (:root :f -0.14 :u -0.3) (:head :flex -30)) (0.2 :ke-b-guard))
+;; the prowl and the run: the shared leg cycles laid under the crouch (deeper hips and knees, the back rounded more)
+(defun oni-keys (keys &key (du -0.28) (dthigh 38) (dknee 60) (dspine 18) (dhead -18))
+  "KEYS (DEFCLIP key lists of the shared walk / run legs) sunk into the oni's crouch: every :root :u, thigh and knee
+flex and the spine / head flex shifted by these."
+  (flet ((shift (spec)
+           (destructuring-bind (group &rest cv) spec
+             (cons group (loop for (ch v) on cv by #'cddr
+                               append (list ch (+ v (cond ((and (eq group :root) (eq ch :u)) du)
+                                                          ((not (eq ch :flex)) 0)
+                                                          ((member group '(:thigh-r :thigh-l :thighs)) dthigh)
+                                                          ((member group '(:knee-r :knee-l :knees)) dknee)
+                                                          ((eq group :spine) dspine)
+                                                          ((eq group :head) dhead)
+                                                          (t 0)))))))))
+    (loop for (tm . specs) in keys collect (cons tm (mapcar #'shift specs)))))
+(defparameter *oni-walk*
+  '((:ke-b-walk-f 0.9 ((0 (:thigh-r :flex 25) (:knee-r :flex 10) (:thigh-l :flex -15) (:knee-l :flex 20))
+                       (0.225 (:root :u -0.03) (:thigh-r :flex 0) (:knee-r :flex 20) (:thigh-l :flex 5) (:knee-l :flex 55))
+                       (0.45 (:root :u -0.05) (:thigh-l :flex 25) (:knee-l :flex 10) (:thigh-r :flex -15) (:knee-r :flex 20))
+                       (0.675 (:root :u -0.03) (:thigh-l :flex 0) (:knee-l :flex 20) (:thigh-r :flex 5) (:knee-r :flex 55))))
+    (:ke-b-walk-b 0.9 ((0 (:thigh-r :flex -15) (:knee-r :flex 20) (:thigh-l :flex 25) (:knee-l :flex 10))
+                       (0.225 (:root :u -0.03) (:thigh-r :flex 5) (:knee-r :flex 55) (:thigh-l :flex 0) (:knee-l :flex 20))
+                       (0.45 (:root :u -0.05) (:thigh-l :flex -15) (:knee-l :flex 20) (:thigh-r :flex 25) (:knee-r :flex 10))
+                       (0.675 (:root :u -0.03) (:thigh-l :flex 5) (:knee-l :flex 55) (:thigh-r :flex 0) (:knee-r :flex 20))))
+    (:ke-b-strafe-r 0.8 ((0 (:thigh-r :side 22 :flex 5) (:thigh-l :side -2 :flex 20) (:knee-l :flex 25) (:knee-r :flex 10))
+                         (0.2 (:root :u -0.04) (:thigh-r :side 8) (:knee-r :flex 45) (:thigh-l :side 5))
+                         (0.4 (:thigh-r :side 4) (:thigh-l :side 18 :flex 10) (:knee-l :flex 20))
+                         (0.6 (:root :u -0.04) (:thigh-l :side 5) (:knee-l :flex 45) (:thigh-r :side 10))))
+    (:ke-b-strafe-l 0.8 ((0 (:thigh-l :side 22 :flex 30) (:thigh-r :side -2 :flex 0) (:knee-r :flex 25) (:knee-l :flex 10))
+                         (0.2 (:root :u -0.04) (:thigh-l :side 8) (:knee-l :flex 45) (:thigh-r :side 12))
+                         (0.4 (:thigh-l :side 4) (:thigh-r :side 22 :flex -5) (:knee-r :flex 20))
+                         (0.6 (:root :u -0.04) (:thigh-r :side 8) (:knee-r :flex 45) (:thigh-l :side 10)))))
+  "The oni's prowl: the shared walk / strafe legs (body.lisp), each clip (name seconds keys) sunk by ONI-KEYS.")
+(loop for (name dur keys) in *oni-walk* do (build-clip name dur t :ke-b-stance (oni-keys keys)))
+;; the run: on the shoulder-rest set the blade rides his shoulder; the oni runs bent double, the blade trailing
+(loop for name in '(:ke-b-run :ke-b-skate-b :ke-b-slide-r :ke-b-slide-l)
+      for keys in (list *run-keys* *skate-keys* *slide-r-keys* *slide-l-keys*)
+      do (build-clip name 0.5 t :ke-b-stance (oni-keys keys :du -0.2 :dthigh 22 :dknee 40 :dspine 22 :dhead -22)))
+;; J3 GENKOTSU / SP2's NAGURI-TOBASHI: from the crouch he springs, the left hook thrown with the whole body, the cleaver
+;; flung out wide behind, held 3 f on contact
 (defstrike :ke-b-fist (9 3 18 :base :ke-b-stance)
   (0)
-  (4 (:chest :twist 36) (:spine :flex 22) (:arm-l :flex 40 :side 60) (:elbow-l :flex 110) (:hand-l :flex 0)
-     (:root :u -0.14 :f -0.06) (:head :twist 12))                                          ; wound back
-  (7 (:chest :twist 42) (:root :f -0.08))                                                  ; held
-  (:s :snap (:chest :twist -48) (:spine :flex 20) (:arm-l :flex 92 :side 8) (:elbow-l :flex 22) (:hand-l :flex 0)
-      (:root :f 0.42 :u -0.12) (:thigh-l :flex 52) (:knee-l :flex 45) (:thigh-r :flex -18) (:arm-r :side 70 :flex 25)
-      (:head :twist -8))
-  (:a (:chest :twist -56) (:root :f 0.47))                                                 ; overshoot, held on contact
-  (20 (:chest :twist -50) (:root :f 0.44) (:arm-l :flex 80) (:elbow-l :flex 30))
+  (4 (:chest :twist 40 :flex 20) (:spine :flex 46) (:arm-l :flex 30 :side 70) (:elbow-l :flex 115) (:hand-l :flex 0)
+     (:root :u -0.36 :f -0.1) (:head :twist 14 :flex -60) (:knee-l :flex 92) (:thigh-l :flex 66))    ; coiled lower
+  (7 (:chest :twist 46) (:root :u -0.37 :f -0.12))                                                  ; held
+  (:s :snap (:chest :twist -52 :flex 8) (:spine :flex 30) (:arm-l :flex 94 :side 6) (:elbow-l :flex 18) (:hand-l :flex 0)
+      (:root :f 0.5 :u -0.2) (:thigh-l :flex 58) (:knee-l :flex 52) (:thigh-r :flex -34) (:knee-r :flex 24)
+      (:arm-r :flex -40 :side 75) (:hand-r :flex -90) (:head :twist -10 :flex -40))
+  (:a (:chest :twist -60) (:root :f 0.56))                                                           ; overshoot, held
+  (20 (:chest :twist -52) (:root :f 0.5 :u -0.24) (:arm-l :flex 80) (:elbow-l :flex 34) (:spine :flex 36))
   (:end :ke-b-stance))
-;; L KAMICHIGIRI: coiled low, a lunge, the left hand clamps the arm, the head drives in, then the tearing jerk back
+;; L KAMICHIGIRI: down on all fours-low, a lunge, the left claw clamps the arm, the head drives in, the tearing jerk back
 (defstrike :ke-b-bite (10 3 28 :base :ke-b-stance)
   (0)
-  (5 (:root :u -0.26 :f -0.05) (:spine :flex 42) (:knees :flex 62) (:arm-l :flex 40 :side 22) (:elbow-l :flex 45))
-  (8 (:root :u -0.28 :f -0.08) (:spine :flex 44))                                          ; coiled, held
-  (:s :snap (:root :f 0.72 :u -0.2) (:spine :flex 46) (:head :flex 12) (:arm-l :flex 96 :side 6) (:elbow-l :flex 22)
-      (:hand-l :flex 30) (:thigh-l :flex 60) (:knee-l :flex 50) (:thigh-r :flex -20) (:knee-r :flex 20))
-  (:a (:root :f 0.76) (:head :flex 20))                                                    ; the teeth in
-  (18 (:root :f 0.55 :u -0.12) (:spine :flex 12) (:head :flex -38) (:arm-l :flex 70 :side 24) (:elbow-l :flex 62))   ; torn off
-  (27 (:root :f 0.45 :u -0.14) (:head :flex -30) (:spine :flex 18))
+  (5 (:root :u -0.44 :f -0.08) (:spine :flex 56) (:chest :flex 18) (:head :flex -66) (:knees :flex 96) (:thigh-l :flex 74)
+     (:arm-l :flex 60 :side 30) (:elbow-l :flex 40) (:hand-l :flex 50))
+  (8 (:root :u -0.46 :f -0.12) (:spine :flex 58))                                                   ; coiled, held
+  (:s :snap (:root :f 0.78 :u -0.26) (:spine :flex 50) (:chest :flex 10) (:head :flex -10) (:arm-l :flex 100 :side 8)
+      (:elbow-l :flex 20) (:hand-l :flex 55) (:thigh-l :flex 66) (:knee-l :flex 62) (:thigh-r :flex -34) (:knee-r :flex 22))
+  (:a (:root :f 0.82) (:head :flex 4))                                                               ; the teeth in
+  (18 (:root :f 0.6 :u -0.2) (:spine :flex 18) (:head :flex -48) (:arm-l :flex 70 :side 30) (:elbow-l :flex 62))  ; torn off
+  (27 (:root :f 0.5 :u -0.26) (:head :flex -52) (:spine :flex 30))
   (:end :ke-b-stance))
+;; O MAPPUTATSU's rush (the aura / dash; the strike is :ke-stance-cut): he drops almost to all fours, the claw on the
+;; ground, then springs, the broken cleaver swung up one-handed over his head, the claw reaching ahead
+(defclip :ke-b-leap (0.7 :base :ke-b-stance)
+  (0)
+  (0.13 (:root :u -0.5) (:knees :flex 104) (:thighs :flex 80) (:spine :flex 62) (:chest :flex 20) (:head :flex -70)
+        (:arm-l :flex 70 :side 20) (:elbow-l :flex 20) (:hand-l :flex 60) (:arm-r :flex -40 :side 40) (:hand-r :flex -95))
+  (0.25 (:root :u 0.05) (:thighs :flex 60) (:knees :flex 96) (:spine :flex 10) (:chest :flex 0) (:head :flex -30)
+        (:arm-r :flex 185 :side 20) (:elbow-r :flex 30) (:hand-r :twist 0 :flex -60) (:arm-l :flex 110 :side 30) (:elbow-l :flex 30))
+  (0.7 (:root :u 0.05) (:thighs :flex 55) (:knees :flex 90) (:arm-r :flex 188 :side 18) (:spine :flex 4)))
+;; the MAPPUTATSU cinematic (ken-oni-kikon-cine plays it at 25/68 speed: the snap at 0.42 lands on its frame 68): the
+;; wind-up is the beast rearing: sunk into the crouch, then up on his toes, back arched, the cleaver swung high over
+;; his head in the right, the left claw thrust out, the jaw open; then one vertical crash, lunging through
+(defclip :ke-b-kikon (1.5 :base :ke-b-stance)
+  (0)
+  (0.15 (:root :u -0.46) (:spine :flex 58) (:chest :flex 20) (:head :flex -68) (:knees :flex 100) (:thighs :flex 76)
+        (:arm-r :flex -45 :side 36) (:hand-r :flex -95) (:arm-l :flex 50 :side 50) (:elbow-l :flex 40))
+  (0.35 (:root :u -0.1 :f -0.1) (:spine :flex -16) (:chest :flex -10 :twist -20) (:head :flex -22)
+        (:arm-r :flex 195 :side 24) (:elbow-r :flex 36) (:hand-r :twist 0 :flex -70)
+        (:arm-l :flex 95 :side 40) (:elbow-l :flex 10) (:hand-l :flex 60)
+        (:thigh-r :flex -20 :side 16) (:knee-r :flex 40) (:thigh-l :flex 50 :side 16) (:knee-l :flex 60))
+  (0.42 :snap (:root :u -0.42 :f 0.8) (:spine :flex 66) (:chest :flex 16 :twist 10) (:head :flex -60)
+        (:arm-r :flex 30 :side 8) (:elbow-r :flex 5) (:hand-r :twist -10 :flex -110) (:arm-l :flex 40 :side 60) (:elbow-l :flex 30)
+        (:thigh-l :flex 78) (:knee-l :flex 84) (:thigh-r :flex -28) (:knee-r :flex 40))
+  (1.0 (:root :u -0.4 :f 0.8) (:spine :flex 62))
+  (1.5 :ke-b-stance (:root :f 0.8)))
+;; the Bankai's burst (ken-bankai-cine f58): he rises out of the crouch, head thrown back, arms flung wide and low, claws
+;; open, the knees still bent; then the roar comes forward at the opponent (the close-up on the face at f78)
+(defclip :ke-b-roar (1.0 :base :ke-b-stance)
+  (0 (:root :u -0.44) (:spine :flex 60) (:head :flex -70) (:knees :flex 100) (:thighs :flex 74))
+  (0.12 :snap (:root :u -0.2) (:spine :flex -10) (:chest :flex -14) (:neck :flex -10) (:head :flex -34)
+        (:arm-l :flex 20 :side 88) (:elbow-l :flex 30) (:hand-l :flex 60) (:arm-r :flex -10 :side 70) (:hand-r :flex -95)
+        (:thigh-r :flex -6 :side 24) (:knee-r :flex 50) (:thigh-l :flex 44 :side 24) (:knee-l :flex 64))
+  (0.3 (:spine :flex 14) (:chest :flex 4) (:neck :flex 0) (:head :flex -30) (:arm-l :side 92) (:arm-r :side 74))  ; at them
+  (1.0 (:spine :flex 16) (:chest :flex 6) (:head :flex -32) (:root :u -0.22)))

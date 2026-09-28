@@ -1,0 +1,856 @@
+[
+{
+"at": 9.0,
+"key": "Enter",
+"down": true
+},
+{
+"at": 9.08,
+"key": "Enter",
+"down": false
+},
+{
+"at": 9.8,
+"key": "Enter",
+"down": true
+},
+{
+"at": 9.88,
+"key": "Enter",
+"down": false
+},
+{
+"at": 10.6,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 10.68,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 11.0,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 11.08,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 12.5,
+"eval": "Module._debug_cmd(2420)"
+},
+{
+"at": 13.1,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 13.15,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 13.22,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 13.27,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 13.67,
+"shot": "tests/shots/duel-kl-base-1a.png"
+},
+{
+"at": 13.97,
+"shot": "tests/shots/duel-kl-base-1b.png"
+},
+{
+"at": 16.3,
+"eval": "Module._debug_cmd(2420)"
+},
+{
+"at": 16.9,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 16.95,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 17.1,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 17.15,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 17.25,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 17.3,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 17.9,
+"shot": "tests/shots/duel-kl-base-2a.png"
+},
+{
+"at": 18.2,
+"shot": "tests/shots/duel-kl-base-2b.png"
+},
+{
+"at": 20.1,
+"eval": "Module._debug_cmd(2420)"
+},
+{
+"at": 20.7,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 20.75,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 20.9,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 20.95,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 21.25,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 21.3,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 21.7,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 21.75,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 22.55,
+"shot": "tests/shots/duel-kl-base-3a.png"
+},
+{
+"at": 22.85,
+"shot": "tests/shots/duel-kl-base-3b.png"
+},
+{
+"at": 23.9,
+"eval": "Module._debug_cmd(2421)"
+},
+{
+"at": 24.5,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 24.55,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 24.62,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 24.67,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 25.07,
+"shot": "tests/shots/duel-kl-m18-1a.png"
+},
+{
+"at": 25.37,
+"shot": "tests/shots/duel-kl-m18-1b.png"
+},
+{
+"at": 27.7,
+"eval": "Module._debug_cmd(2421)"
+},
+{
+"at": 28.3,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 28.35,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 28.5,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 28.55,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 28.65,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 28.7,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 29.3,
+"shot": "tests/shots/duel-kl-m18-2a.png"
+},
+{
+"at": 29.6,
+"shot": "tests/shots/duel-kl-m18-2b.png"
+},
+{
+"at": 31.5,
+"eval": "Module._debug_cmd(2421)"
+},
+{
+"at": 32.1,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 32.15,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 32.3,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 32.35,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 32.65,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 32.7,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 33.1,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 33.15,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 33.95,
+"shot": "tests/shots/duel-kl-m18-3a.png"
+},
+{
+"at": 34.25,
+"shot": "tests/shots/duel-kl-m18-3b.png"
+},
+{
+"at": 35.3,
+"eval": "Module._debug_cmd(2422)"
+},
+{
+"at": 35.9,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 35.95,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 36.02,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 36.07,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 36.47,
+"shot": "tests/shots/duel-kl-m50-1a.png"
+},
+{
+"at": 36.77,
+"shot": "tests/shots/duel-kl-m50-1b.png"
+},
+{
+"at": 39.1,
+"eval": "Module._debug_cmd(2422)"
+},
+{
+"at": 39.7,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 39.75,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 39.9,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 39.95,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 40.05,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 40.1,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 40.7,
+"shot": "tests/shots/duel-kl-m50-2a.png"
+},
+{
+"at": 41.0,
+"shot": "tests/shots/duel-kl-m50-2b.png"
+},
+{
+"at": 42.9,
+"eval": "Module._debug_cmd(2422)"
+},
+{
+"at": 43.5,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 43.55,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 43.7,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 43.75,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 44.05,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 44.1,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 44.5,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 44.55,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 45.35,
+"shot": "tests/shots/duel-kl-m50-3a.png"
+},
+{
+"at": 45.65,
+"shot": "tests/shots/duel-kl-m50-3b.png"
+},
+{
+"at": 46.7,
+"eval": "Module._debug_cmd(2423)"
+},
+{
+"at": 47.3,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 47.35,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 47.42,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 47.47,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 47.87,
+"shot": "tests/shots/duel-kl-zero-1a.png"
+},
+{
+"at": 48.17,
+"shot": "tests/shots/duel-kl-zero-1b.png"
+},
+{
+"at": 50.5,
+"eval": "Module._debug_cmd(2423)"
+},
+{
+"at": 51.1,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 51.15,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 51.3,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 51.35,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 51.45,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 51.5,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 52.1,
+"shot": "tests/shots/duel-kl-zero-2a.png"
+},
+{
+"at": 52.4,
+"shot": "tests/shots/duel-kl-zero-2b.png"
+},
+{
+"at": 54.3,
+"eval": "Module._debug_cmd(2423)"
+},
+{
+"at": 54.9,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 54.95,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 55.1,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 55.15,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 55.45,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 55.5,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 55.9,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 55.95,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 56.75,
+"shot": "tests/shots/duel-kl-zero-3a.png"
+},
+{
+"at": 57.05,
+"shot": "tests/shots/duel-kl-zero-3b.png"
+},
+{
+"at": 58.1,
+"eval": "Module._debug_cmd(2424)"
+},
+{
+"at": 58.7,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 58.75,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 58.82,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 58.87,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 61.9,
+"eval": "Module._debug_cmd(2424)"
+},
+{
+"at": 62.5,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 62.55,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 62.7,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 62.75,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 62.85,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 62.9,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 65.7,
+"eval": "Module._debug_cmd(2424)"
+},
+{
+"at": 66.3,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 66.35,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 66.5,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 66.55,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 66.85,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 66.9,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 67.3,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 67.35,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 69.5,
+"eval": "Module._debug_cmd(2425)"
+},
+{
+"at": 70.1,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 70.15,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 70.22,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 70.27,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 73.3,
+"eval": "Module._debug_cmd(2425)"
+},
+{
+"at": 73.9,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 73.95,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 74.1,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 74.15,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 74.25,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 74.3,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 77.1,
+"eval": "Module._debug_cmd(2425)"
+},
+{
+"at": 77.7,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 77.75,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 77.9,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 77.95,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 78.25,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 78.3,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 78.7,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 78.75,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 80.9,
+"eval": "Module._debug_cmd(2426)"
+},
+{
+"at": 81.5,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 81.55,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 81.62,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 81.67,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 84.7,
+"eval": "Module._debug_cmd(2426)"
+},
+{
+"at": 85.3,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 85.35,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 85.5,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 85.55,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 85.65,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 85.7,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 88.5,
+"eval": "Module._debug_cmd(2426)"
+},
+{
+"at": 89.1,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 89.15,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 89.3,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 89.35,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 89.65,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 89.7,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 90.1,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 90.15,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 92.3,
+"eval": "Module._debug_cmd(2107)"
+}
+]

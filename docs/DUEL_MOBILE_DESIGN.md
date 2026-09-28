@@ -5,6 +5,8 @@
 > **P2 (portrait presentation) built 2026-09-27** at the user's request, with two decisions of the user that replace
 > parts of §4.1 / §4.2 (§14). **2026-09-28: the gestures remapped** (tap zones J / K, up-flick = the forward dash), the
 > portrait HUD's flames enlarged onto the name row with thicker small gauges, and close-up cinematics not backed off (§15).
+> **2026-09-28: one-hand is a setting** (§16): ONE-HAND MODE AUTO / ON / OFF on the new SETTINGS screen (with HAND, TAP
+> SPLIT, SENSITIVITY, CAMERA); ONE-HAND VS CPU is merged into VS CPU, and PRACTICE is one-handed the same way.
 > P1 and the rest of P3 are still design.
 > Working notes (critiques, v1 drafts, research) were kept outside the repo; the debate outcome is recorded below.
 
@@ -16,6 +18,7 @@ there is no local portrait 2P; future Bluetooth / Wi-Fi P2P netplay must stay po
 ## 給使用者的摘要（繁體中文）
 
 - **新模式「片手 ONE-HAND」**：手機直拿，一根拇指對戰電腦。預設右手，選項裡可以換成左手。
+- **2026-09-28 改成設定（§16）**：選單不再有單獨的「ONE-HAND VS CPU」，只有 VS CPU；新的 SETTINGS 畫面裡的 ONE-HAND（AUTO／ON／OFF，預設 AUTO＝觸控手機直拿時開）決定 VS CPU 和新的 PRACTICE 用不用拇指操作。HAND、點擊分界（TAP SPLIT）、撥動靈敏度（SENSITIVITY）、鏡頭也都在 SETTINGS，存在瀏覽器裡。
 - **防禦不再是「一碰就擋」**：拇指按著不動超過約 0.12 秒才開始防禦，比這短的就是點擊，也就是 Quick。這樣連段、跑步取消都不會被誤觸的防禦打斷。代價是預先防禦慢了約 7 格；反應型防禦反正本來就來不及，重招照樣擋得住。
 - **撥（flick）在劃過門檻的那一刻就出招**，不必等手指離開，延遲變得穩定。離開容許範圍後的前 120 ms 角色不會先走（2026-09-27 真機試玩後的調整，見 §13）。
 - **2026-09-28 重新對應（使用者的決定，§15）**：手勢區以中線分上下兩塊，**點下半塊 = J（輕）、點上半塊 = K（重）**；**往上撥 = 向前衝刺**（往前的 Step，撥完手指繼續往前推就接著跑），不再是 K。
@@ -318,6 +321,9 @@ phone. Pixels dominate, and G7 caps them. Low Power Mode at 30 fps is absorbed b
 
 ## 6. Mode integration
 
+> Superseded on 2026-09-28 by §16: one-hand is the ONE-HAND MODE setting, VS CPU and PRACTICE take the deck whenever it
+> is in effect; the separate ONE-HAND VS CPU and HAND rows are gone. The text below is the P0 design.
+
 - **ONE-HAND VS CPU** (`*mode* :vs-cpu`, `*one-hand* t`) is preselected when `(pointer: coarse)` and portrait.
   It is listed whenever the window is portrait or touch-first. Desktop testing uses `--size 390x844`, a narrow
   window, or devtools device mode; a landscape desktop window does not offer it, because the layout needs
@@ -535,7 +541,7 @@ framed for 16:9 showed a sliver of their subject.
 | G6 lens shift | `engine/lisp/render.lisp` | `camera-shift-y` (NDC, 0 = none): `update-camera` writes `-shift` into the projection's row 1 column 2 only when it is not 0, so every landscape frame's matrices are the same floats as before. `world-to-screen`, the fx billboards and the shaders use the matrices, so nothing else changed. |
 | Portrait camera | `duel/lisp/camera.lisp` `%portrait-camera` | Any battle in a portrait window (ONE-HAND, and CvC watched on a phone). Behind P1: `*pt-back*` 9 (x `*cam-close*` 0.6 = 5.4 m, + 0.2 m per metre of separation past 4 m), `*pt-up*` 2 m, `*pt-shoulder*` 0.5 m, the close-range swing `*pt-close*` 15° (landscape 40°). The orbit leads the sim's `*behind-yaw*` by at most `*pt-lead*` 20° toward P2 (smoothed at 8/s): the render-side catch-up after a Hoho or a sidestep; `*behind-yaw*` and `*behind-turn*` are untouched. The aim bisects the two fighters (azimuth: their centres; pitch: P1's near feet and 0.3 m over P2's head), within 20° of the orbit. The lens: the frame (`*band*`: under P2's block + 3 %, down to `*pt-frame-bottom*` 0.82 of the height) spans `*pt-band-fov*` 30°; the vertical FOV widens past that only when the pair needs it (a vertical fit, and a horizontal fit with 0.7 m of bulk), within `*pt-fov-min*` 40° .. `*pt-fov-max*` 100°, smoothed; the shift puts the aim on the frame's middle (0.089 at 390 × 844). Typical FOV 41–53°, about 64° right after a sidestep. 0 B per call except a boxed float when the FOV moves by > 0.1° (~3 B a frame). |
 | Cinematics | `camera.lisp` `%portrait-dolly`, `cinema.lisp` | §4.3's lens clamp: FOV at least `*pt-cine-fov*` 66°, no shift, and the eye backed off the shot's target so the frame's width holds the landscape frame's central square (factor tan(lens/2) / (tan(fov/2) aspect), at most `*pt-dolly-max*` 2.4, kept inside the 18 m ring). `LENS` records the script's FOV in `*lens-fov*`; `SHOT-ON` halves a shot's side offset. Captions: glyphs at most 0.36 W (§4.3), callout columns stop at the frame's bottom. |
-| HUD | `duel/lisp/hud.lisp` `hud-side-portrait` | Decision 1. P2's block under the top safe-area inset, P1's over the bottom one (at least 8 CSS px up), each 29 s tall (48 CSS px at DPR 3) on a soft ink gradient: row 1 the name at 1.4 s, the KOSEI tag (攻 ×n) after it, one label at the right end (EVOLUTION, else INFERNO / NOME / COOLDOWN, else U's tag) and on P2's block the timer; Reishi (5 s tall), the guard gauge (2 s); the Konpaku flames (r 2.4 s) at the left and four unlabelled small gauges beside them in the landscape colours: Reiatsu cells, flash step, Awakening, the kit meter or the L / Shift+L cooldowns. The combo counter hangs under P2's block / over P1's. KIKON / BURST prompts are centred under P2's block. Words (ANNOUNCE) use the frame's lanes; move callouts are smaller (0.03 h) and kept on the screen; callouts dodge the bottom block upward. The deck is hidden while paused. |
+| HUD | `duel/lisp/hud.lisp` `hud-side-portrait` | Decision 1. P2's block under the top safe-area inset, P1's over the bottom one (at least 8 CSS px up), each 29 s tall (48 CSS px at DPR 3) on a soft ink gradient: row 1 the name at 1.4 s, the KOSEI tag (攻 ×n) after it, one label at the right end (EVOLUTION, else INFERNO / NOME / COOLDOWN, else U's tag) and on P2's block the timer; Reishi (5 s tall), the guard gauge (2 s); the Konpaku flames (r 2.4 s) at the left and four unlabelled small gauges beside them in the landscape colours: Reiatsu cells, flash step, Awakening, the kit meter or the L cooldown (one bar, 2026-09-28; Rukia's awakened form draws her cold gauge there instead). The combo counter hangs under P2's block / over P1's. KIKON / BURST prompts are centred under P2's block. Words (ANNOUNCE) use the frame's lanes; move callouts are smaller (0.03 h) and kept on the screen; callouts dodge the bottom block upward. The deck is hidden while paused. |
 | Insets (G5) | `duel/web/pwa.js`, `onehand.lisp` | page get 3 / 4 = `env(safe-area-inset-top / -bottom)` in CSS px, measured once per window size (tests: `gamePage.testInsets = [top, bottom]`). The top one moves P2's block, the bottom one P1's; the pad's bottom keeps 16 px over it (no change on today's phones). The chips stay where the §13 playtest put them. |
 | Menus | `hud.lisp`, `main.lisp` `menu-camera` | Portrait: the title's lines split to fit, MODE's rows from 0.52 h (toward the thumb), SELECT stacked (the pair from a diagonal above, P1 / P2 rows, tap help), RESULTS as the winner in the top part under 勝 and a black card with the table and the menu below, the gesture card's rows spread down the screen. |
 | Probes | `debug.lisp` 2700+k, `tests/mobile-probe.py`, `tests/scripts/duel-mobile.py`, `tests/mobile-sheet.py` | 2700: every 30th battle frame, both fighters' upper halves clear of the two blocks with ≥ 70 % of their width on the screen; the smallest pixel-font glyph (engine `*ui-text-min*`). 2701 24 m apart, 2702 P2 flashed to P1's side, 2703 1 m, 2704 consing. `mobile-probe.py`: a 45 s YK CvC plus five set shots at 360 × 780, 390 × 844, 430 × 932, 412 × 915 and 390 × 844 with iPhone insets. |
@@ -608,8 +614,9 @@ hours, request 4 took it back). From its top:
   width / 21.6), spaced evenly (at most 4.5 r apart), their base at the name's baseline + 1.5 s (was r 2.4 s, 3.2 r apart,
   on the last row). `%hud-pips` takes the spacing as an argument; the landscape panel passes its 3.2 (unchanged floats);
 - Reishi (5 s), the guard gauge (2 s);
-- **the last row: the four small gauges, 4 s thick** (were 2.5 s) over the left 60 % (Reiatsu cells, flash step,
-  Awakening, the kit meter or the L / Shift+L cooldowns), and at its right end **the label** (EVOLUTION / INFERNO / NOME /
+- **the last row: the four small gauges, 4 s thick** (were 2.5 s) over the left 60 % (since the playtest decision at the
+  end of this file: the whole width, the label and KOSEI moved to row 1) (Reiatsu cells, flash step,
+  Awakening, the kit meter or the L cooldown), and at its right end **the label** (EVOLUTION / INFERNO / NOME /
   COOLDOWN / U's tag, moved off row 1) with **the KOSEI tag** (攻 ×n) right before it; its mote flies to the Reiatsu cells.
   With both the longest label and KOSEI on a 360-wide screen the tag's brush mark may touch the fourth gauge.
 
@@ -638,3 +645,83 @@ reference, smoke, the frozen duel still identical, six landscape cinematic still
 Stills: `mobile-battle.png` (the split line), `mobile-gestures.png`, the `mobile-cine-*` close-ups, `mobile-review*.png`
 (before = the P2 commit). Known: the Bankai card's caption still sits over the silhouette (as in §14; now larger).
 
+### 15.5 Rukia's temperature on the thumb (2026-09-28, DUEL_RUKIA.md §8)
+
+Her awakening cools with guarding, and on a phone a resting thumb is a guard. So while P1's kit meter is `:temp`, the
+floating stick's ink ring gains a **white frost arc** just outside it (r 52 d, 3 d thick). **Since the cold-gauge rework
+(2026-09-28, DUEL_RUKIA.md §4 / §8) the arc is the cold C / 200**, clockwise from the top: the two stacked bars go round
+the ring, and a white tick at the bottom marks the half (bar 1 full: −50). At absolute zero a white ring joins it and the
+arc pulses; a resting thumb there braces (the warming stops, the guard gauge drains). In the THAW lock after a CRACK the
+arc is grey. A flick or a rest-flick at zero is eaten (rooted). The portrait block shows the same cold gauge in the
+kit-meter slot of its last row (`%hud-temp` small: the two bars overlaid, the band pips, L's cost mark), the label the
+band (−18C / −50C / −273C, THAW in the lock). Landscape and every other character: unchanged. The portrait COOLDOWN cell
+of the other awakened forms is one L bar (the Shift+L line went with South's cooldown, 2026-09-28).
+
+## 16. One-hand as a setting; SETTINGS and PRACTICE (2026-09-28)
+
+**Request (verbatim):** 「請幫我添加『練習模式』與『設定』（調整手持模式與其開關等等）後將『one hand vs cpu』與『vs cpu』整合」:
+add a practice mode and settings (the handheld mode and its switch, etc.), then merge ONE-HAND VS CPU into VS CPU. The
+choices below were made for the user as defaults; each is a value the user can revise.
+
+**MODE** is now VS CPU / PRACTICE / VS PLAYER / CPU VS CPU / SETTINGS / CONTROLS, the same on every device; the cursor
+starts on VS CPU (row 0), so a touch phone held upright still lands on it. The ONE-HAND VS CPU and HAND rows are gone.
+
+**One-hand is decided by the setting ONE-HAND MODE** (`control.lisp` `one-hand-on-p`, `onehand.lisp`
+`one-hand-effective-p`), read when VS CPU or PRACTICE is chosen:
+
+| ONE-HAND | touch-first + portrait | touch-first, landscape | portrait window, not touch-first | landscape desktop |
+|---|---|---|---|---|
+| **AUTO** (default) | one-handed | — | — | — |
+| ON | one-handed | one-handed (paused until turned upright: ROTATE TO PORTRAIT) | one-handed | — (never offered) |
+| OFF | — | — | — | — |
+
+AUTO is exactly the old preselection (§6: ONE-HAND VS CPU was preselected on a coarse portrait device). Everything the
+old entry did happens through VS CPU when it is in effect: `*one-hand*` T (the deck, its chips and gesture prompts), the
+behind camera for steering (`set-cam-behind` now takes `*one-hand*` into account instead of overwriting the CAMERA
+setting), the portrait camera and HUD (they follow the window, as before), no CAMERA row in the pause menu, the pause chip
+and the back gesture. The CONTROLS screen still shows the gesture card wherever one-hand is offered.
+
+**SETTINGS** (`*settings*`, data; drawn by `hud-settings` in both orientations, rows are tap targets): ONE-HAND
+(AUTO / ON / OFF), HAND (RIGHT / LEFT), TAP SPLIT (40 / 45 / **50** / 55 / 60 %: the recogniser's `tap-split`), SENSITIVITY
+(1–5 = `flick-min` 40 / 34 / **28** / 23 / 18 CSS px), CAMERA (BEHIND / SIDE), BACK. Confirm, left / right or a tap changes a
+row; each change is in force at once (`apply-settings`: `*hand*`, the `gesture-config`, the camera) and saved. The note
+line under the rows explains the selected row; for ONE-HAND it says whether it is in effect here. No sound row: the
+engine exposes only the music bus gain.
+
+**Storage** (`duel/web/pwa.js`): page get / set 10 + i = row i (option index + 1; 0 = never saved) in localStorage
+`soulduel.onehand`, `soulduel.hand` (the key HAND used before, same values), `soulduel.split`, `soulduel.flick`,
+`soulduel.camera`. Every access is in try/catch; a missing, private or blocked storage gives 0 and the defaults. The page
+services 2 (get HAND) and 1 (set HAND) are replaced by these.
+
+**PRACTICE** is one-handed by the same rule; its pause menu (RESUME / RESET POSITION / DUMMY / HP REFILL / GAUGES /
+P1 HP / P1 KONPAKU / DUMMY HP / DUMMY KONPAKU / CHARACTER SELECT / TITLE: 11 rows one-handed) opens from the II chip or
+the back gesture like VS CPU's, and its option rows change on a tap. The rows are packed between 0.4 and 0.9 of the
+height, over P1's block (`hud-menu`'s BOTTOM). The rules are in DUEL_GAMEPLAY.md ("PRACTICE").
+
+**Konpaku at stake** (the same day): on both portrait blocks' name rows, as in landscape, the last N flames are BLOOD
+red, N = what the opponent's Kikon would take now (DUEL_DESIGN.md §10 HUD).
+
+**Tests.** `duel-control-test` 65 checks (the table above, the page value's decoding, the defaults = the old behaviour,
+the practice dummy's guard). `duel-touch.py`: the match is reached by the VS CPU row (the same tap as before: row 0), so
+`duel-touch.json`'s taps and its hash / combat lines are unchanged; `duel-touch-left.json` sets HAND LEFT through
+SETTINGS. `duel-mobile.py` needed no change (VS CPU and CONTROLS keep rows 0 and 5).
+
+## Playtest decision: full-width small gauges (the user, 2026-09-28)
+
+In the portrait split HUD, the row of side-by-side small gauges (SP / flash step / awakening and each character's own
+meters) is stretched to the **same length as the HP bar**.
+
+**Built (2026-09-28).** `hud-side-portrait` (hud.lisp): the last row's four small gauges (Reiatsu cells, flash step,
+Awakening, the kit meter: Inferno / NOME / UDE / Rukia's cold gauge / the L cooldown) now split the **whole block width**
+`bw`, the same as the Reishi bar and the guard gauge, for both blocks (P2 top, P1 bottom). The row had kept its right 40 %
+for the label and the KOSEI tag; those moved to **row 1**: the name, then the label (EVOLUTION / INFERNO / NOME / UDE /
+COOLDOWN / THAW / U's tag; not drawn when it only repeats the awakened form's name, e.g. Rukia's `-18C`, already in
+"RUKIA  -18C"), then the nine Konpaku flames in the width left, then the KOSEI tag (攻 ×n, `kosei-tag-w`) at the row's
+right end (P2: left of the timer); its mote still flies to the Reiatsu cells. The flames already size themselves to the
+free width (r = min(4 s, fw / 21.6), so they never overlap); a crowded row keeps them at r ≥ 3 s by first shortening the
+name (the awakened form's name / the character's), then dropping the label. The block stays 29 s, so the camera band,
+the pad (it ends 50 CSS px over the bottom, above P1's block) and the chips (all above P1's block, the pause chip under
+P2's) are unchanged and nothing new is drawn outside the blocks. Landscape (`hud-side`) is unchanged. Review: debug
+2430+k (`hud-review`: both sides in given forms, gauges part-full, KOSEI shown) at 390 × 844 for Yamamoto (Shikai,
+Hellfire, East, West), Kenpachi (base, the three cups, the Bankai, KATAUDE) and Rukia (Shikai, −18, −50, zero), P1 and
+P2.

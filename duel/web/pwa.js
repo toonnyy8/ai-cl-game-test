@@ -1,14 +1,18 @@
 // SOUL DUEL page services (docs/DUEL_MOBILE_DESIGN.md G5, G10), loaded from the page head before the game.
 // The engine asks through globalThis.gamePage (engine/c/platform.c pf_page_get / pf_page_set):
-//   get 0 = touch-first device ((pointer: coarse)), 1 = back gestures since the last ask, 2 = saved HAND (1 right, 2 left),
+//   get 0 = touch-first device ((pointer: coarse)), 1 = back gestures since the last ask,
 //       3 / 4 = the safe-area inset at the top / bottom, CSS px (env(safe-area-inset-*); tests set gamePage.testInsets = [top, bottom])
-//   set 0 = battle on / off (the screen wake lock), 1 = save HAND
+//       10 + i = SETTINGS row i as saved (option index + 1; 0 = never saved, or no storage: the game's default)
+//   set 0 = battle on / off (the screen wake lock), 10 + i = save SETTINGS row i
+// SETTINGS rows (duel/lisp/control.lisp *SETTINGS*, same order) live in localStorage as soulduel.<name>; every access is
+// wrapped in try/catch (private mode / blocked storage: nothing saved, the defaults).
 // On a touch-first device only: the history trap (the back gesture pauses instead of leaving), fullscreen +
 // portrait lock on the first tap (Android; iOS has no element fullscreen and runs the installed app standalone),
 // and the service worker (sw.js: the app starts offline). A desktop browser gets none of these.
 (function () {
   var coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
   var back = 0, wakeOn = false, lock = null;
+  var settings = ['onehand', 'hand', 'split', 'flick', 'camera'];   // soulduel.hand predates SETTINGS (same values)
   function stored(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function store(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode: not saved */ } }
   function wake() {
@@ -39,13 +43,13 @@
     get: function (k) {
       if (k === 0) return coarse ? 1 : 0;
       if (k === 1) { var b = back; back = 0; return b; }
-      if (k === 2) return +(stored('soulduel.hand') || 0);
+      if (k >= 10 && k < 10 + settings.length) return +(stored('soulduel.' + settings[k - 10]) || 0) | 0;
       if (k === 3 || k === 4) return inset(k - 3);
       return 0;
     },
     set: function (k, v) {
       if (k === 0 && coarse) { wakeOn = !!v; if (wakeOn) wake(); else if (lock && lock.release) { lock.release(); lock = null; } }
-      if (k === 1) store('soulduel.hand', String(v));
+      if (k >= 10 && k < 10 + settings.length) store('soulduel.' + settings[k - 10], String(v));
     }
   };
   if (!coarse) return;

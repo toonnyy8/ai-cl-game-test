@@ -10,9 +10,13 @@
 import json, re
 T0 = 9.0                     # startup (meshes + sound synthesis) is done by then
 SRC = ["duel/lisp/body.lisp", "duel/lisp/yama-art.lisp", "duel/lisp/ken-art.lisp"]
-clips = sorted({m.group(2).upper() for f in SRC for m in re.finditer(r"^\((defclip|defstrike) :([a-z0-9-]+)", open(f).read(), re.M)}
+clips = set({m.group(2).upper() for f in SRC for m in re.finditer(r"^\((defclip|defstrike) :([a-z0-9-]+)", open(f).read(), re.M)}
                | {n.upper() for f in SRC for m in re.finditer(r"^\(defrun :[a-z0-9-]+ ((?::[a-z0-9-]+ ?)+)\)", open(f).read(), re.M)
                   for n in m.group(1).replace(":", "").split()})    # (DEFRUN base run skate-b slide-r slide-l)
+clips |= {n.upper() for f in SRC for n in re.findall(r"^\s+'?\(\(?:([a-z0-9-]+) [\d.]+ \(\(", open(f).read(), re.M)}   # BUILD-CLIP tables
+clips |= {n.upper() for f in SRC for m in re.finditer(r"for name in '\(((?::[a-z0-9-]+ ?)+)\)", open(f).read())
+          for n in m.group(1).replace(":", "").split()}                  # (the oni's walk / run: ken-art.lisp)
+clips = sorted(clips)
 
 def script(name, build):
     ev, t = [], [T0]

@@ -1,6 +1,6 @@
 # SOUL DUEL — J / K strings, the O ender, and KŌSEI, the aggression reward (2026-09-27)
 
-Status: **built** (2026-09-27). §0–§8 are the design (r3) as the user decided it (§0.1); §9 records what the build does
+Status: **built** (2026-09-27). §0–§8 are the design (r3) as the user decided it (§0.1); §11 (2026-09-28) revises the gate: after any contact every later link comes out and chases the defender. §9 records what the build does
 differently, §10 the measurements (the seed gate). The as-built rules also live in DUEL_DESIGN.md §2, §3, §4, §6, §7.
 
 The design sat on top of [DUEL_YAMA_REWORK.md](DUEL_YAMA_REWORK.md) (East / West by U, where West's J / K are
@@ -36,7 +36,7 @@ guaranteed on red and guardable otherwise. Request 3 adds the **O ender** and **
 | Today (code) | Change |
 |---|---|
 | Q1 → Q2 → Q3, F1 → F2, the branch Q2 → F (`:enter` 6–8 f). J and K can't mix at link 2, and K can't go to 3 | **A 3-link grid**: link 1, 2, 3, each J or K, with **one move per (link, button)**: `J1 K1 J2 K2 J3 K3`. Link 3 depends on whether the string already switched, so the two **switched** link-2 moves are data aliases: `J2s` (J2 after K1) and `K2s` (K2 after J1) are the same frame data and clips as J2 / K2 (a `defmove` copy, **0 new clips**), with no switch-back string. `:strings`: `(J1 :q J2) (J1 :f K2s) (K1 :f K2) (K1 :q J2s) (J2 :q J3) (J2 :f K3) (K2 :f K3) (K2 :q J3) (J2s :q J3) (K2s :f K3)`, which gives 6 routes from 6 animated moves + 2 aliases. The Q3 ender and the Q2→F branch survive as J3 and K2 / K3 (their clips are reused, §3). Every K at link 2 / 3 enters through `:enter` |
-| `chain-open-p`: on a whiff (NIL contact) the string goes on | **Whiff never chains**: `(and contact …)`, one line. The gate applies at **every** link |
+| `chain-open-p`: on a whiff (NIL contact) the string goes on | **Whiff never chains**: `(and contact …)`, one line. The gate applies at **every** link (revised 2026-09-28: only link 1 is gated by its own contact; after any contact every later link comes out and chases him, §2.2, §11) |
 | The next press must fall in the 10 f vpad buffer before the chain opens | **Latch** (`fighter-queued`): a J / K press from the current link's frame 0 until its chain closes is stored, the last press wins, and it's consumed from the vpad at once (no double fire). It fires at chain open if that link made contact, and is dropped otherwise |
 | Whiff recovery R + 6 | J links R + **8**, K links R + **12** (`*whiff-extra-j*` / `*whiff-extra-k*`); other kinds keep 6 |
 | O cancel from **any landed move**, aura played | **Only from a link-3 move (J3 / K3) that hit** (flag `:ender`), and the aura is skipped. Single-hit, link-2, SP and Breaker → O cancels are deleted (decision 3) |
@@ -73,22 +73,34 @@ and light, K = slow and heavy, the third link is the finish**. The budget every 
 Link 2 and 3 K moves share S_eff 14, so one move combos after either button. The enders stagger or crumple instead of
 knocking back or launching, so the O ender can connect. The O strike does the knockback.
 
-### 2.2 The contact gate (every link)
-A link fires only if the **previous link's own hit window** touched the opponent (`fighter-contact` non-NIL):
+### 2.2 The string gate and the follow-up chase (revised 2026-09-28, §11)
+Link 1 is gated by its own contact; **once any link of the string has made contact (hit or block), every later pressed
+link comes out**, and it **chases** the defender during its startup so its hit window reaches him. The chase is motion
+only: the link can still be guarded, and Step / Hoho / down iframes still dodge it. (Until 2026-09-28 every link was
+gated by its own contact: a link that whiffed ended the string.)
 
-| Previous link's result | Next link? | Note |
+| This link's result | Next pressed link? | Note |
 |---|---|---|
-| hit, counter-hit | yes | combo timing |
-| blocked guard, **West's ward**, **DRINK** | yes | block timing (the 3 f lead, the gaps above) |
-| Kenpachi's stance absorb, CHARGE's rush armour | yes | the next link feeds the stance too. That's his "try to cut me", on purpose |
-| parried | moot | the attacker is in the 32 f parry stagger |
-| whiff, out of range, Step / Hoho / down iframes | **no** | the string stops there, with R + 8 (J) / R + 12 (K) |
-| only a hazard touched him (KUKAN-GIRI's rift) | **no** | hazards never set the move's contact |
-| trade | moot | he is in hitstun |
+| hit, counter-hit | yes, at hit timing (from `s + a`) | combo timing |
+| blocked guard, **West's ward**, **DRINK**, Kenpachi's stance absorb, CHARGE's rush armour | yes, at block timing (the last `*chain-lead*` 3 f) | the 3 f lead, the gaps of §2.1 |
+| whiff (out of range, Step / Hoho / down iframes), **link 1** | **no** | the string stops there, with R + 8 (J) / R + 12 (K) |
+| whiff, **link 2 or 3** (an earlier link touched him) | **yes**, at block timing | the string carries on (`fighter-chained`); unpressed, it recovers with its whiff recovery |
+| only a hazard touched him (KUKAN-GIRI's rift) | as a whiff | hazards never set the move's contact |
+| parried / trade | moot | he is in the parry stagger / in hitstun |
+
+**The chase** (`string-chase-speed`, rules.lisp; `main-phase-step`, fighter.lisp): during the startup of a follow-up link
+(one the latch started, `fighter-chained`), each frame he moves toward the defender at
+`min(*chase-max*, 60 × (d − goal) / frames-to-hit)` m/s, where `goal = max(*lunge-stop*, reach − *chase-margin*)`, and
+turns toward him at least `*chase-track*` deg/s. So he arrives `*chase-margin*` inside the link's reach exactly as its
+hit window opens; a frame never covers more than the gap left (no passing through or overshooting him; the fighters'
+push-apart holds too), and a move's own lunge (`:slide`) still applies when it is faster. Knobs (tuning.lisp):
+`*chase-max*` **18 m/s** (the Kikon dash's speed), `*chase-margin*` **0.4 m**, `*chase-track*` **360 deg/s** (a K
+link's own is 60). Link 1 never chases (it is not a follow-up).
 
 ### 2.3 Buffer and latch
 - A J / K pressed any time from a link's frame 0 until its chain closes is **latched**, and the last press wins. It
-  fires at chain open (on hit from `s + a`, on block at `total − 3`) and is discarded on a whiff.
+  fires at chain open (on hit from `s + a`, on block or a carried whiff at `total − 3`) and is discarded when link 1
+  whiffed (§2.2).
 - Presses during link 3 are plain vpad-buffered (10 f), so mashing J gives JJJ, a pause, then a new J1.
 - O is read from J3 / K3's hit frame to the end of its recovery (`cancel-open-p`), buffered 10 f.
 
@@ -353,4 +365,64 @@ In the final gate (7883 match seconds): 35 hits and 6 blocks a minute; per strin
 link 3 1122 (J3 612, K3 510); 331 O enders (red always, else 0.15 or the cup's); dash-in follow-ups on a red victim 263
 (224 Kikons), on one who wasn't red 148 (110 guarded, 14 Kikons); 7 J-beats-K interrupts; damage 35.6 per match second (YY
 28.6, as before the strings; KK 43.3, 35.8 before: Kenpachi's KKK and his SP2 off link 3). The G2 reference `duel-cvc-yk.json` (seed 7) ends
-`duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7`.
+`duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7` (after §11's chase: `winner P2 konpaku 0-1 ticks 7365 secs 122.8`).
+
+## 11. The string follow-up chase (the user's decision 2026-09-28)
+
+> 只要普通攻擊擦到，攻擊方在接續的攻擊動畫中就會靠近對手以保證後續的攻擊動作都能被打出來（這邊只講動作，不代表打出來就會造成傷害，還是能被防禦住）
+
+**Decision**: once any link of a J / K string has touched the defender (hit or block), every later link the attacker
+presses comes out, and during its startup he closes in so its hit window reaches the defender. It is motion only: the
+link can still be guarded, and Step / Hoho / down iframes still dodge it. A string whose first link never touches still
+stops with the whiff recovery (§2.2 has the rule and the knobs).
+
+**As built**: `chain-open-p` takes T for a follow-up link (`fighter-chained`: set when the latch starts a link, cleared by
+every other `start-move`), so a link that whiffed after an earlier contact still opens at block timing; `string-chase-speed`
+(rules.lisp) and `main-phase-step` (fighter.lisp) do the chase. Neither touches a move that isn't a follow-up link, so
+link 1, specials, cancels and the O ender are unchanged. No frame data, reach or hit volume changed. Host tests
+(`tests/duel-rules-test.lisp`): the carried gate at block timing, and the chase (arrives at the hit frame, clamped, never
+past the goal, stops at `*lunge-stop*`, a simulated 14 f chase from 6 m ends inside the reach).
+
+**The CPU** (ai.lisp checked): it presses the next link off its link's own contact (`string-reflex` on a hit, the block
+pressure on a block), so it never presses after a whiffed follow-up link: a CPU choice, not the gate. `j-beats-k-p`
+reads the attacker's K-link startup, which the chase doesn't change (it only moves him); nothing else read the old
+per-link gate. No AI change was needed.
+
+**Measured** (the seed gate, debug 2113, `--secs 1100`, 20 seeds × pairing, NORMAL; with the Bankai entry change of the
+same day, DUEL_KEN_BANKAI.md): the chase alone (first run) YY 134.7 / YK 128.6 / KK 136.1 s; final YY **134.7 s**
+(98.2–205.5), YK **137.1 s** (76.9–176.9, Yamamoto 10 / Kenpachi 10), KK **125.8 s** (99.6–183.9); 60 / 60 K.O. in each
+run. Before: YY 131.8 / YK 138.4 / KK 131.5 s. Inside the window (125–210 s), so no retune; KK sits near the floor
+(its Bankai now comes more often, DUEL_KEN_BANKAI.md), and `*chase-max*` / `*chase-margin*` are the first knobs if a later
+change pushes it under. G2 (`tests/style-cvc-ref.txt`): every pairing changed: YY `winner P1 konpaku 2-0 ticks 9248
+secs 154.1` (was `P2 0-4 ticks 6948 secs 115.8`), YK `winner P2 konpaku 0-1 ticks 7365 secs 122.8` (was `P2 0-3 ticks 7123
+secs 118.7`), KK `winner P2 konpaku 0-4 ticks 8225 secs 137.1` (was `P2 0-5 ticks 5930 secs 98.8`).
+
+## 12. L after a K link (the user's decision 2026-09-28)
+
+> 請讓露琪亞的 L 能串連在 K 結束後搭成 combo（無論覺醒前後都是）
+
+**Rule (generic, the kit key `:l-after-k`).** In a form with `:l-after-k`, an L pressed during a **K link** (K1, K2, K2s
+or K3: `kit-k-link-p`, the `:f` command's move or an `:f` follow-up) is **latched** like a J / K link (§2.3: the last
+press wins, so a later J / K replaces it and an L replaces a latched J / K; the press is consumed). It starts when **that K
+link's own contact** opens the chain (`chain-open-p` with the link's contact: on hit from `s + a`, on block in the last
+`*chain-lead*` frames); a whiffed K link drops it (the carried gate of §2.2 doesn't apply to L). It goes through L's own
+checks and costs as a command (`try-command` with the link's move: cooldown, Reiatsu, a `:temp` form's cold, which a
+chained L may **overdraw** while any is left, rules `cold-ok-p`, the combo band lock of DUEL_RUKIA.md §4.1–4.2; refused =
+the latch is dropped, the K link recovers as usual) and runs as a follow-up (`fighter-chained`: the chase of §2.2). The
+value is T (the form's own L) or a move name (a combo copy of it, e.g. a shorter startup): `kit-l-link`. A J link never
+takes it; a form without the key keeps the old behaviour exactly (a `:cancel` L still cancels a landed link, off hit only).
+
+**On hit it combos**: from the K link's hit, `A(K) + hit frame(L) < hitstun(K)` (stagger 26 after K1 / K2, crumple 40
+after K3), host-tested for every K link of every form that has the key. **On block** the L comes out at block timing and
+can be guarded as usual (it is not a guard crush; its own guard value drains). It is not an ender: no O after it.
+
+**AI**: `string-reflex` (the CPU's own link hit it) presses L with the kit's `:ai :l-after-k` chance, one roll on the
+hit's first step, when L may start (`kit-command-ok-p`).
+
+Rukia is the only form with the key (DUEL_RUKIA.md, "Playtest 2"). Yamamoto and Kenpachi are unchanged (the seed gate's
+YY / YK / KK rows are identical).
+
+**Measured** (2026-09-28): the probe `duel probe kl` (debug 2420+k, `tests/scripts/duel-rukia-kl.json`) shows each L
+landing inside the K link's stun (stun frames left at the L's hit: after K1 5 / 11 / 9 / 13 in Rukia's Shikai / −18 /
+−50 / −273, after K3 18 / 24 / 22 / 26) and the blocked cases guarded. The seed gate's YY / YK / KK rows are identical;
+Rukia's rows and the awaken A/B are in DUEL_RUKIA.md ("Playtest 2: built").

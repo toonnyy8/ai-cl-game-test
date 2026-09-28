@@ -21,7 +21,8 @@
 ;;;;               shrinks, the Breaker weight doubles at 8 — this is what makes matches end
 ;;;;   gauges      guards less as its guard gauge runs low (steps aside instead), never guardless;
 ;;;;               presses a guardless opponent; keeps a Burst's flash-step when a Burst would be worth it
-;;;;   stances     kit keys: :cancel (end a landed string with L), :low (L more often at low Reishi),
+;;;;   cold        Rukia's kit keys: :cool (hold U to the next band), :brace (hold U at absolute zero)
+;;;;   stances     kit keys: :cancel (end a landed string with L), :l-after-k (L after a K link that hit, p), :low (L more often at low Reishi),
 ;;;;               :gg-low (below it: back off and zone), :block-string (go on with a string the opponent
 ;;;;               blocks: guard pressure), :sig-gg (L halved below it of the guard gauge: KYOKKO pierces with a
 ;;;;               full edge), :ward-reversal (Bankai West: L when the ward just took a hit up close); a parry is
@@ -42,7 +43,8 @@
   (left 0 :type fixnum)                 ; frames left of his move (99 = still charging / dashing) or stun
   (start 0 :type fixnum)                ; tick his current move / guard began (one roll per event)
   (reach 0f0 :type single-float) (guard-t 0 :type fixnum) (projectile nil)
-  (flags nil))                          ; his move's :flags (:parry :bind ...)
+  (flags nil)                           ; his move's :flags (:parry :bind ...)
+  (tell nil))                           ; a :bind move's tell frames (its :params :tell; NIL = South's 21-30)
 
 (defun snap-take! (s o)
   "Fill SNAP S with fighter O as he is now."
@@ -55,6 +57,7 @@
         (let ((total (move-end-frame (mv-s mv) (mv-a mv) (mv-r mv) (mv-whiff mv) (fighter-contact f)
                                      (zerop (length (mv-hits mv))))))
           (setf (snap-kind s) (mv-kind mv) (snap-phase s) (fighter-phase f) (snap-s s) (mv-s mv) (snap-flags s) (mv-flags mv)
+                (snap-tell s) (getf (mv-params mv) :tell)
                 (snap-active-end s) (+ (mv-s mv) (mv-a mv)) (snap-reach s) (f32 (mv-reach mv))
                 (snap-left s) (if (eq (fighter-phase f) :main) (max 0 (- total (fighter-sf f))) 99)
                 (snap-start s) (- *match-tick* (fighter-sf f) (fighter-hold f))))
@@ -99,15 +102,16 @@ so far): one roll per combo at the difficulty's *AI-BURST-P*."
 (defun ai-command (b kit cmd d)
   "Press the buttons of kit command CMD at distance D (holding charge / stance / Breaker moves a
 while: a charge move is held to its full charge from beyond 7 m, where it has the time)."
-  (let ((r (sim-rnd01)))
-    (flet ((hold-for (mv lo spread) (if (mv-hold mv) (+ lo (floor (* r spread))) 1)))
+  (let ((r (sim-rnd01))
+        (cmd (if (and (kit-rooted kit) (member cmd '(:hoho :side-step :step))) :q cmd)))   ; rooted (Rukia's zero / THAW)
+    (flet ((hold-for (mv lo spread) (if (and mv (mv-hold mv)) (+ lo (floor (* r spread))) 1)))   ; (NIL: a form without it)
       (case cmd
         (:q (ai-press b :quick 1))
         (:f (ai-press b :flash 1))
         (:sig (ai-press b :sig (hold-for (kit-command-move kit :sig) 12 40)))
         ((:sp1 :sp1-full)                                 ; :sp1-full: a charge move held to its end
          (let ((mv (kit-command-move kit :sp1)))
-           (ai-press b :flash (if (and (mv-hold mv) (or (eq cmd :sp1-full) (> d 7.0))) (+ 2 (second (mv-hold mv)))
+           (ai-press b :flash (if (and mv (mv-hold mv) (or (eq cmd :sp1-full) (> d 7.0))) (+ 2 (second (mv-hold mv)))
                                   (hold-for mv 14 46))
                      :modded t :act :sp1)))
         (:sp2 (ai-press b :sig (if (< r 0.4) 20 1) :modded t :act :sp2))
@@ -139,7 +143,7 @@ while: a charge move is held to its full charge from beyond 7 m, where it has th
 (defun ai-cancel-p (e kit)
   "End a landed string with the kit's :cancel command (L, a :cancel Signature) now? Its chance, and it may start."
   (let* ((c (ai-table e :cancel)) (p (getf c :sig)) (mv (kit-command-move kit :sig)))
-    (and p (member :cancel (mv-flags mv)) (kit-command-ok-p e :sig) (< (sim-rnd01) p))))
+    (and p mv (member :cancel (mv-flags mv)) (kit-command-ok-p e :sig) (< (sim-rnd01) p))))
 
 (defun string-reflex (e b f mv)
   "Our link hit: go on with the string (the next link K *AI-STRING-FLASH-P* of the time, among the links KIT-NEXT
@@ -153,6 +157,10 @@ cancel into SP2 when the victim is on the ground (a launched victim would drop o
     (setf (brain-why b) :string)
     (when (and nf (kit-pip-cmd-p kit :f) (< (gauges-meter (gauges e)) 1f0)) (setf nf nil))   ; no pip: no K link
     (cond ((fighter-queued f) nil)                      ; the next link is latched already
+          ((let ((p (ai-table e :l-after-k 0.0)))       ; L after a K link (the kit's :l-after-k): one roll per hit
+             (and (plusp p) (= (fighter-sf f) (fighter-land-sf f)) (kit-l-link kit (mv-name mv)) (kit-command-ok-p e :sig kit nil t)
+                  (< (sim-rnd01) p)))
+           (why b :l-after-k :sig))
           ((and nf (< (sim-rnd01) (ai-table e :string-k *ai-string-flash-p*))) :f)
           (nq :q)
           (nf :f)
@@ -167,8 +175,8 @@ cancel into SP2 when the victim is on the ground (a launched victim would drop o
 :ALWAYS = whenever allowed, :NEVER (debug 31000 + 10 a + b: the gamble A/B, docs/DUEL_KEN_BANKAI.md).")
 
 (defun ai-bankai-p (e b bk)
-  "Enter the Bankai now (the kit's :bankai (:p :opp-below :opp-konpaku :own-konpaku); BANKAI-ALLOWED-P holds)? One roll
-per cup-3 stay. The entry leaves him 1 Konpaku, so he weighs his own: nothing to lose when he has no more than the
+  "Enter the Bankai now (the kit's :bankai (:p :opp-below :opp-konpaku :own-konpaku); BANKAI-ALLOWED-P holds: he has
+<= *BANKAI-KONPAKU* left, no longer red, the user's decision 2026-09-28)? One roll per cup-3 stay. The entry leaves him 1 Konpaku, so he weighs his own: nothing to lose when he has no more than the
 opponent's next Soul Break would take (its count + 1, capped); else only as a finisher (the opponent at <= :opp-below of
 his Reishi or <= :opp-konpaku Konpaku) with <= :own-konpaku left."
   (case (svref *ai-bankai-mode* (fighter-side (fighter e)))
@@ -183,6 +191,35 @@ his Reishi or <= :opp-konpaku Konpaku) with <= :own-konpaku left."
                               (<= (gauges-konpaku go) (getf bk :opp-konpaku 0)))))
              (setf (brain-bankai-rolled b) t)
              (< (sim-rnd01) (if (eq (svref *ai-bankai-mode* (fighter-side (fighter e))) :sure) 1.0 (getf bk :p 0.0)))))))))
+
+(defvar *ai-awaken-mode* (vector nil nil)
+  "Per side, the CPU's awakening on EVOLUTION: NIL = the kit's :awaken rule (AI-AWAKEN-P), :ALWAYS, :NEVER (debug 39000 + 10 a
++ b: Rukia's awaken A/B, docs/DUEL_RUKIA.md §9).")
+
+(defun ai-awaken-p (e)
+  "Awaken now (EVOLUTION)? The debug mode, else the kit's :awaken (:melee-share :min-taken): only once E has taken
+>= :min-taken damage, >= :melee-share of it from blades (Rukia: her cold body answers a melee opponent); no key: yes."
+  (case (svref *ai-awaken-mode* (fighter-side (fighter e)))
+    (:always t)
+    (:never nil)
+    (t (let ((r (ai-table e :awaken)) (g (gauges e)))
+         (or (null r)
+             (let* ((m (gauges-taken-melee g)) (all (+ m (gauges-taken-ranged g))))
+               (and (>= all (getf r :min-taken 0)) (>= m (* (getf r :melee-share 0.0) all)))))))))
+
+(defun ai-cool-p (e s d)
+  "The kit's :cool (:p :near :no-projectile :min-gg): at a neutral decision within :near m (no projectile of his out, with
+:no-projectile; the guard gauge at least :min-gg %: the crack comes from crushes), hold U to cool to the next band
+(Rukia's cold gauge), :p of the time."
+  (let ((c (ai-table e :cool)))
+    (and c (< d (getf c :near 3.0)) (not (and (getf c :no-projectile) (snap-projectile s)))
+         (>= (gauges-gg (gauges e)) (getf c :min-gg 0)) (< (sim-rnd01) (getf c :p 0.0)))))
+
+(defun ai-brace-p (e d)
+  "The kit's :brace (:p :near :min-gg): at absolute zero, hold U (bracing stops the warming, drains the guard gauge) while
+he is within :near m and the guard gauge is at least :min-gg %, :p of the decisions."
+  (let ((c (ai-table e :brace)))
+    (and c (< d (getf c :near 5.5)) (>= (gauges-gg (gauges e)) (getf c :min-gg 0)) (< (sim-rnd01) (getf c :p 1.0)))))
 
 (defun ai-reflex (e b s d)
   "The reflexes (checked before the intent): a command keyword or NIL. S = the perceived opponent,
@@ -200,7 +237,7 @@ D = the perceived distance."
       ;; our completed string (a link-3 hit): the O ender, on a red opponent always, else the kit's :o-ender chance;
       ;; one roll, on the first step we see the hit (its land frame)
       ((and (eq st :move) (eq (fighter-contact f) :hit) (member :ender (mv-flags mv))
-            (= (fighter-sf f) (fighter-land-sf f)) (kit-command-ok-p e :kikon)
+            (= (fighter-sf f) (fighter-land-sf f)) (kit-command-ok-p e :kikon kit t)
             (or (kikon-ready-p e) (< (sim-rnd01) (ai-table e :o-ender *ai-o-ender*))))
        (why b :o-ender :kikon))
       ;; our own hit: finish the string, else an SP / L cancel
@@ -236,7 +273,7 @@ D = the perceived distance."
        (why b :kikon :kikon))
       ;; the Bankai (cup 3, red, free: the kit's :bankai), before the cash-out
       ((let ((bk (ai-table e :bankai)))
-         (and bk (kit-bankai-form kit) (member st '(:idle :guard)) (bankai-allowed-p t red) (ai-bankai-p e b bk)))
+         (and bk (kit-bankai-form kit) (member st '(:idle :guard)) (bankai-allowed-p t (gauges-konpaku g)) (ai-bankai-p e b bk)))
        (why b :bankai :awaken))
       ;; NOMIHOSE's cash-out (the kit's :cashout): Shift+K only as a punish (he has >= :punish frames of recovery
       ;; or stun left, in the 12 m lane) or within :near m while NOME is below :below (it would drain away anyway)
@@ -250,14 +287,15 @@ D = the perceived distance."
        :sp1)
       ;; South's tell under us: its grab comes 16 f after the stab (real move frame 36); from what we see
       ;; (delayed), step sideways out of it (the anti-rush chance) or Hoho it (the Hoho roll; perfect late)
-      ((and (eq (snap-kind s) :sp) (member :bind (snap-flags s)) (eq (snap-phase s) :main)
-            (<= 21 (+ (snap-sf s) (brain-delay b)) 30))
+      ((and (member :bind (snap-flags s)) (eq (snap-phase s) :main)
+            (<= (first (or (snap-tell s) '(21 30))) (+ (snap-sf s) (brain-delay b)) (second (or (snap-tell s) '(21 30)))))
        (cond ((and hoho-ok (< (brain-hoho-roll b) (ai-table e :hoho 0.2))) (why b :anti-bind :hoho))
              ((< (brain-react-roll b) (getf *ai-anti-breaker-p* (brain-difficulty b) 0.5)) (why b :anti-bind :side-step))))
       ;; a parry up close: don't feed it; a Breaker breaks it (half the time), else wait
       ((and (member :parry (snap-flags s)) (eq (snap-phase s) :main) (< d 4.0))
        (and (< (brain-react-roll b) 0.5) (why b :anti-parry :breaker)))
-      ((and (gauges-evolution g) (>= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (ai-table e :awaken-above 0.0)))
+      ((and (gauges-evolution g) (>= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (ai-table e :awaken-above 0.0))
+            (ai-awaken-p e))
        :awaken)
       ;; we just blocked an ender (-12 ...): it's our turn, felt at once (no perception delay); a K3 (-20) HARD
       ;; punishes with K1 when it reaches
@@ -271,6 +309,11 @@ D = the perceived distance."
       ;; a stunned opponent (Guard Break, broken stance, our knockback) still stunned when Q1 lands
       ((and (eq (snap-state s) :stun) (>= (- (snap-left s) (brain-delay b)) (mv-s q)) (< d (+ (mv-reach q) 0.6)))
        (why b :follow-up :q))
+      ;; ... farther, the kit's :stun-follow (cmd lo hi): its move if it lands before he is free (Rukia: Shirafune, SOSEN)
+      ((let* ((sf (ai-table e :stun-follow)) (c (first sf)))
+         (and sf (eq (snap-state s) :stun) (<= (second sf) d (third sf)) (kit-command-ok-p e c)
+              (>= (- (snap-left s) (brain-delay b)) (mv-s (kit-command-move kit c)))))
+       (why b :stun-follow (first (ai-table e :stun-follow))))
       ;; the opponent is launched / down (untouchable for a while): the kit's :oki command
       ;; (Yamamoto: a full-charge Shiranui, which also fills Inferno -> Hellfire, whose burn he
       ;; only risks above :oki-above of his Reishi)
@@ -386,6 +429,12 @@ its middle), guard, attack (a weighted pick from the kit's band for D), or wait.
          (ai-command b kit :kikon d) (setf (brain-why b) :kikon))
         ((ai-pip-hurry-p e)                                ; the arm's next crack is near: spend the pip now
          (ai-attack e b kit s d heat t))
+        ((ai-cool-p e s d)                                 ; Rukia: hold U the frames the next colder band still needs
+         (ai-press b :guard (+ 2 (temp-cool-frames (gauges-meter (gauges e)))) :act :cool)
+         (setf (brain-why b) :cool))
+        ((ai-brace-p e d)                                  ; Rukia at zero: brace a while (the warming stops)
+         (ai-press b :guard 20 :act :brace)
+         (setf (brain-why b) :brace))
         ((and (> d (+ hi *ai-dash-gap*)) (< (sim-rnd01) (ai-table e :dash 0.0)))
          (ai-dash b 1.0 (* 0.5 (+ lo hi))) (setf (brain-why b) :dash))
         ((and (< d (- lo *ai-dash-gap*))
@@ -415,7 +464,7 @@ pip commands of the band (the arm's crack is near: AI-PIP-HURRY-P). T when somet
     (when hurry
       (loop for (cmd nil) on weights by #'cddr unless (and cmd (kit-pip-cmd-p kit cmd)) do (setf (getf weights cmd) 0)))
     (let ((cmd (apply #'weighted-pick (sim-rnd01) weights)))
-      (when (and cmd (or (not (member cmd *kit-commands*)) (kit-command-ok-p e cmd))
+      (when (and cmd (or (not (member cmd *kit-commands*)) (and (kit-command-move kit cmd) (kit-command-ok-p e cmd)))
                  (or (not (member cmd '(:q :f)))                  ; don't whiff a string at range
                      (<= d (+ 0.2 (mv-reach (kit-command-move kit cmd))))))
         (ai-command b kit cmd d) (setf (brain-why b) (if hurry :pip-hurry :neutral))

@@ -117,9 +117,10 @@
 ;; MINAMI, the bind: at f20 the blade is driven in and the point under the opponent (<= 10 m) is marked; a
 ;; :bind hazard grabs the feet there :delay frames later (f36), unguardable, 40 + bound *BIND-STUN* frames.
 ;; Step / Hoho out of the tell; a bound fighter may Burst (it books 2 combo hits); opener only
-;; (RULES COMBO-STEP); any hit frees him. 600 f cooldown (kept through resets).
+;; (RULES COMBO-STEP); any hit frees him. No cooldown: the 2 Reiatsu bars are its limiter, like every SP2 (the
+;; user's decision 2026-09-28).
 (defmove :ya-kaka :kind :sp :clip :ya-kaka :callout "MINAMI: KAKA JUMANOKUSHI DAISOJIN" :cost 2
-  :startup 20 :active 1 :recovery 34 :cooldown 600 :flags (:bind)
+  :startup 20 :active 1 :recovery 34 :flags (:bind)
   :on-frame ((20 yama-south))
   :params (:range 10.0 :radius 1.2 :height 0.6 :delay 16 :dmg 40 :stun *bind-stun* :hands 4))
 ;; O in Bankai, KITA: TENCHI: 10 f of aim, then a flash step, 36 m/s for at most 14 f, the direction

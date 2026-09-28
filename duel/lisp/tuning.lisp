@@ -193,6 +193,12 @@ then :down + :wakeup (iframes in both).")
 (defparameter *air-slide-frames* 20 "... over this many frames.")
 (defparameter *gravity* 22.0 "Airborne fighters fall at this (m/s^2).")
 (defparameter *lunge-stop* 1.3 "A lunging move (:slide) stops moving this close to the opponent.")
+;; the string follow-up's chase (docs/DUEL_STRINGS.md §2.2, the user's decision 2026-09-28): once a link of the string
+;; touched him, every later link closes in during its startup so its hit window reaches him (motion only: guard, Step /
+;; Hoho / down iframes still work)
+(defparameter *chase-max* 18.0 "A follow-up link closes in at most this fast (m/s; the Kikon dash's speed) ...")
+(defparameter *chase-margin* 0.4 "... to this far inside its reach (never nearer than *LUNGE-STOP*) ...")
+(defparameter *chase-track* 360.0 "... turning toward him at least this fast (deg/s; a K link's own is 60).")
 (defparameter *callout-frames* 90 "Frames a move name stays above its user.")
 (defparameter *combo-launches* 1 "Launches per combo; a later launch becomes a knockback.")
 (defparameter *combo-air-hits* 3 "Airborne hits per combo; the last one knocks down.")
@@ -294,6 +300,9 @@ guard gauge: the rework).")
 ;;; cup 3, red, P; his own Konpaku -> 1 and his Reishi -> full on entry; the arm meter UDE (the kit meter, GAUGES-METER)
 ;;; spends a pip per heavy command; at 0 the arm bursts (then 片腕 for the rest of the match)
 (defparameter *bankai-ken-mult* 1.2 "Damage x in Kenpachi's Bankai.")
+(defparameter *bankai-konpaku* 4
+  "Kenpachi may enter his Bankai (P in cup 3) with at most this many of his own Konpaku left (the user's decision
+2026-09-28, replacing the red-Reishi condition).")
 (defparameter *arm-pips* 4 "The arm meter UDE: pips at the Bankai's entry (the 4th spent: the arm bursts).")
 (defparameter *arm-crack* 300 "A pip cracks by itself after this many frames without a spend (paused while locked): <= 20 s of Bankai.")
 (defparameter *arm-self* 60
@@ -302,6 +311,60 @@ him to full (the user's decision 2026-09-28): the gate's knob.")
 (defparameter *arm-burst-self* 120 "Reishi the burst burns (the design's 60, x2 with the full refill).")
 (defparameter *arm-burst-stun* 40 "The burst's self-inflicted crumple, frames.")
 (defparameter *kataude-reach* 0.7 "片腕 KATAUDE: reach x of his sword moves (the kick, the Breaker and O as written).")
+;;; Kuchiki Rukia (docs/DUEL_RUKIA.md): frost, the one new status, and the cold gauge of 絶対零度 (the awakened bands
+;;; :m18 :m50 :zero; the kit meter holds the cold C, 0 .. *COLD-MAX*, two stacked bars: combat.lisp TEMP-STEP)
+(defparameter *walk-rukia* 3.8 "Rukia's walk (Shikai).")
+(defparameter *rukia-mult* 1.5
+  "Damage x of the Shikai (the base kit's :mult; 58000+k at run time). The seed gate's lever: the CPU's Shikai fights the
+opponents' awakened forms for most of a match (docs/DUEL_RUKIA.md, Measurements) ...")
+(defparameter *rukia-taken* 0.8 "... and the damage it takes x this (60000+k).")
+(defparameter *rukia-awake-mult* 1.15 "Damage x at -18 C (48000+k sets zero's, the colder-never-weaker lever) ...")
+(defparameter *rukia-m50-mult* 1.5 "... at -50 C ...")
+(defparameter *rukia-zero-mult* 1.65 "... and at absolute zero (melee and ranged alike).")
+(defparameter *rukia-awake-taken* 0.95 "Damage taken x at -18 C (61000+k scales every band) ...")
+(defparameter *rukia-m50-taken* 0.85 "... at -50 C (hardened) ...")
+(defparameter *rukia-zero-taken* 0.8 "... and at absolute zero (a ranged hit passes the ward: optic).")
+(defparameter *run-rukia* 9.0 "Rukia's run (Shikai).")
+(defparameter *walk-m18* 3.4 "-18 C: walk ...")
+(defparameter *run-m18* 8.0 "... and run.")
+(defparameter *walk-m50* 2.8 "-50 C: walk ...")
+(defparameter *run-m50* 6.4 "... and run. Absolute zero: rooted (0).")
+(defparameter *frost-slow* 0.7 "Frost: a frosted fighter walks and runs x this (Step, Hoho, lunges, dashes and frames untouched).")
+(defparameter *frost-cap* 150 "Frost: the timer never exceeds this (a hit sets it to max(current, n): it never stacks).")
+(defparameter *frost-touch* 30 "-18 C: every real hit of hers frosts this long (the kit's :frost-touch; a hit window's own :frost wins if longer) ...")
+(defparameter *frost-touch-m50* 60 "... at -50 C ...")
+(defparameter *frost-touch-zero* 90 "... at absolute zero.")
+(defparameter *cold-max* 200.0 "The cold gauge: two stacked bars of *COLD-BAR* (the user's decision 2026-09-28).")
+(defparameter *cold-bar* 100.0
+  "One bar of cold. -18 -> -50 when C reaches it, -50 -> -18 when C falls to 0; -50 -> zero when C reaches *COLD-MAX*,
+zero -> -50 when C falls to it (rules TEMP-BAND).")
+(defparameter *ru-cool-rate* 90.0
+  "Cold per second while she guards (the GUARD HOLD test; bracing at zero): a bar in 1.1 s, -18 -> zero in 2.2 s (the
+user's decision 2026-09-28: cool faster; the design's pacing was 3.3 s; 46000+k).")
+(defparameter *ru-block-cool* 1.5 "A blocked melee hit cools her this x its guard value (x1.5 with the faster cooling; 62000+k: x0.01).")
+(defparameter *ru-hit-warm* 0.2 "A real hit taken warms her this x its damage (63000+k: x0.01).")
+(defparameter *ru-warm-m18* 10.0 "Warming, cold per second while she isn't guarding, at -18 C (a full bar: 10 s) ...")
+(defparameter *ru-warm-m50* 12.0 "... at -50 C (a bar: 8.3 s) ...")
+(defparameter *ru-warm-zero* 5.0
+  "... at absolute zero, the slowest (the user's decision 2026-09-28: zero is easier to hold; half of -18's; unbraced 20 s
+to warm the top bar away; 55000+k).")
+(defparameter *ru-cold-m18* '(:sig 25)
+  "Cold each command spends at -18 C (the user's decision: only L; refused below its cost) ...")
+(defparameter *ru-cold-m50* '(:q 6 :f 12 :sig 36 :sp1 40 :sp2 40 :kikon 20 :breaker 20 :step 12 :hoho 20) "... at -50 C ...")
+(defparameter *ru-cold-zero* '(:q 20 :f 40 :sig 100 :sp1 100 :sp2 100 :kikon 60)
+  "... and at absolute zero (L and the SPs cash the whole top bar: she drops to -50; J / K / O 15 / 30 / 50 -> 20 / 40 / 60
+with the faster cooling: the A/B).")
+(defparameter *ru-field-m18* '(:r 3.0 :away 0.85 :step 1.0)
+  "The cold field 寒域 at -18 C: within :r m of her the opponent walks / runs away from her x :away, his away Step x :step ...")
+(defparameter *ru-field-m50* '(:r 4.0 :away 0.7 :step 0.9) "... at -50 C ...")
+(defparameter *ru-field-zero* '(:r 5.5 :away 0.55 :step 0.75) "... at absolute zero (65000+k: :away x0.01).")
+(defparameter *field-floor* 0.45 "The field x frost never slows the away walk below this (66000+k: x0.01).")
+(defparameter *zero-brace-drain* 8.0 "Absolute zero: bracing (U held) stops the warming but drains the guard gauge this per second (44000+k).")
+(defparameter *ru-thaw-lock* 120 "After a CRACK her guard doesn't cool for this many frames (51000+f).")
+(defparameter *crack-self* 60 "The CRACK (the ward crushed or broken at zero) burns this much (never below 1) ...")
+(defparameter *crack-stun* 30 "... and crumples her in place this long when she isn't in a reaction already.")
+(defparameter *freeze-touch* 18 "Absolute zero: the first melee hit the ward blocks freezes its attacker this long (once per zero visit; the
+design's 24 -> 18: the A/B).")
 ;;; hazard shapes and timing (hazards.lisp)
 (defparameter *hazard-rehit* 16 "Frames a multi-hit hazard (pillars) waits between two hits.")
 (defparameter *wave-box* '(1.2 0.5) "Fire wave box: half-height, half-length (half-width = its :width / 2).")
@@ -328,6 +391,11 @@ are the heavy ones).")
 (defparameter *ai-o-ender* 0.15
   "The O ender (a completed string: a link-3 hit) on an opponent who isn't red, per string: a kit's :o-ender, else
 this (on a red one always). A pacing knob of the seed gate (docs/DUEL_STRINGS.md §4, §6, §9: the design's 0.35 -> 0.15).")
+(defparameter *ai-ru-l-after-k* 0.05
+  "The CPU's L after a K link that hit, per hit (a kit's :ai :l-after-k; Rukia's Shikai, docs/DUEL_STRINGS.md §12). A
+pacing knob of the seed gate (debug 72000+k sets it to k / 100).")
+(defparameter *ai-ru-l-after-k-awake* 0.1
+  "The same in her awakened bands (the awaken A/B's knob: debug 73000+k sets it to k / 100).")
 (defparameter *ai-follow-guard-p* '(:easy 0.6 :normal 0.85 :hard 0.95)
   "A CPU who isn't red guards a Kikon rush's dash-in follow-up with this chance (the B1 knob: DUEL_STRINGS §6).")
 (defparameter *ai-j-beats-k-p* '(:easy 0.2 :normal 0.45 :hard 0.7)

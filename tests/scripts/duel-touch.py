@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """duel-touch.py — writes tests/scripts/duel-touch.json: ONE-HAND by touch alone at 390x844 (run.mjs --mobile):
-title tap -> ONE-HAND VS CPU -> three select taps -> the intro skipped by a tap -> zone taps (the 2026-09-28 remap: the
+title tap -> VS CPU (one-handed: ONE-HAND MODE AUTO on a touch device held upright) -> three select taps -> the intro skipped by a tap -> zone taps (the 2026-09-28 remap: the
 pad's low half = J, high half = K): the J J K string 2.2 m from the idle CPU (debug 2393) and the O chip (the O ender),
 a rest (guard), the K K J string, flicks (Step), a drag far (run), rest + flick up (Hoho), flick up (the forward dash),
 a long neutral up-flick (the dash at the crossing, no attack), the O and L chips, the pause chip. Hash lines (debug 2107) at the end: run it twice under --fixed-dt and they must match (the determinism gate).
@@ -21,7 +21,7 @@ PX, PY = 146, 697                                   # the flow pad's low half (J
 KX, KY = 146, 530                                   # its high half (K), clear of the O / AWK hit circles
 s.append({"at": 6.9, "eval": "Module._debug_cmd(2106)"})   # any debug command turns the combat log on
 tap(7.0, 195, 500)                                  # title
-tap(8.0, 195, 451)                                  # MODE: ONE-HAND VS CPU (row 0; the portrait rows start at 0.52 h since P2)
+tap(8.0, 195, 451)                                  # MODE: VS CPU (row 0; the portrait rows start at 0.52 h since P2)
 tap(9.0, 195, 600); tap(10.0, 195, 600); tap(11.0, 195, 600)   # select: P1, P2, difficulty (the middle third)
 tap(12.0, 195, 400)                                 # skip the intro
 s.append({"at": 13.0, "eval": "Module._debug_cmd(2105)"})   # the CPU idles while the gestures run (on again at 30 s)
@@ -51,11 +51,13 @@ for t in (36.0, 39.5): s.append({"at": t, "eval": "Module._debug_cmd(2107)"})
 json.dump(s, open("tests/scripts/duel-touch.json", "w"), indent=0)
 print(f"tests/scripts/duel-touch.json: {len(s)} steps")
 
-# duel-touch-left.json: HAND LEFT (the mirrored deck, saved by the page), a match, a drag held, then the phone turned
-# to landscape mid-match (paused: ROTATE TO PORTRAIT) and back.
+# duel-touch-left.json: HAND LEFT (SETTINGS, saved by the page: the mirrored deck), a match, a drag held, then the phone
+# turned to landscape mid-match (paused: ROTATE TO PORTRAIT) and back.
 s = []
-tap(7.0, 195, 500); tap(8.0, 195, 488)             # title; MODE row 1: HAND -> LEFT
-tap(9.0, 195, 451)                                  # ONE-HAND VS CPU
+ROW = 36.67                                         # a portrait menu row at 390 x 844 (22 s px, s = 5 at DPR 3)
+tap(7.0, 195, 500); tap(7.6, 195, 451 + 4 * ROW)   # title; MODE row 4: SETTINGS
+tap(8.2, 195, 451 + ROW); tap(8.8, 195, 451 + 5 * ROW)   # SETTINGS row 1: HAND -> LEFT; row 5: BACK
+tap(9.0 + 0.4, 195, 451)                            # VS CPU
 tap(10.0, 195, 600); tap(11.0, 195, 600); tap(12.0, 195, 600); tap(13.0, 195, 400)
 s.append({"at": 13.5, "eval": "Module._debug_cmd(2105)"})
 PX = 390 - 146

@@ -83,12 +83,21 @@ T when this drain emptied it."
       crushed)))
 
 (defun ward-drop (e)
-  "E's ward is broken (a GUARD CRUSH or a Guard Break of Bankai West): he drops to his kit's :drop-to form (East),
-the garb blown off (the :ward-crush event)."
+  "E's ward is broken (a GUARD CRUSH or a Guard Break): Bankai West drops to his kit's :drop-to form (East), the garb
+blown off (the :ward-crush event); a kit with a :crush-hook calls it instead (Rukia's CRACK)."
   (when (passive-p e :ward)
-    (set-form e (kit-drop-to (kit-of e)))
-    (emit :ward-crush e)
+    (let ((h (kit-crush-hook (kit-of e))))
+      (if h
+          (funcall h e)
+          (progn (set-form e (kit-drop-to (kit-of e))) (emit :ward-crush e))))
     (clog "~a WARD BROKEN" (side-name e))))
+
+(defun cold-add! (e n)
+  "E's cold gauge (a :temp kit meter) changes by N (a blocked melee hit cools her, a real hit warms her), clamped to
+0 .. *COLD-MAX*; the band follows once she is free (TEMP-STEP)."
+  (when (getf (kit-meter (kit-of e)) :temp)
+    (let ((g (gauges e)))
+      (setf (gauges-meter g) (f32 (max 0.0 (min *cold-max* (+ (gauges-meter g) n))))))))
 
 (defun scorch (att def &optional (n *scorch*))
   "DEF's :scorch (Bankai West): a melee hit his parry caught burns ATT N (a burn: never kills, no gauges, no heat
@@ -97,6 +106,18 @@ reset)."
     (let ((g (gauges att))) (setf (gauges-reishi g) (burn (gauges-reishi g) n)))
     (emit :scorch att)
     (clog "~a scorched ~d" (side-name att) n)))
+
+(defun freeze-touch! (e att)
+  "E's absolute zero (passive :freeze-touch, once per zero window): the melee hit her ward just blocked freezes ATT, a
+:bind hazard at his feet a frame later (unguardable, no damage, *FREEZE-TOUCH* frames: an opener that books 2 combo hits,
+so he may Burst)."
+  (let ((q (pos-of att)))
+    (setf (gauges-froze (gauges e)) t)
+    (spawn-hazard :freeze e :x (aref q 0) :z (aref q 2) :size 0.7 :y 2.2 :delay 1 :life 2
+                          :hw (make-hitwin :dmg 0 :react :bind :stun *freeze-touch* :hs *hitstop-heavy* :frost *freeze-touch*
+                                           :flags '(:unguardable :ice)))
+    (emit :sfx :freeze e)
+    (clog "~a FREEZE-TOUCH ~a" (side-name e) (side-name att))))
 
 (defun apply-hit (att def hw sx sz &key mv hazard def-state (bonus 0) crush x z red)
   "Apply hit HW of ATT (a fighter) to DEF, coming from (SX SZ) (the attacker or the HAZARD: guard
@@ -118,7 +139,9 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
          ;; ranged: not the attacker's own blade (a projectile, a line, a cone); a :ranged window with a :melee-range
          ;; (the Meteor, the cash-out, Buttagiru, Nadegiri) is the blade within it: one window, one hit
          (ranged (ranged-hit-p hazard flags (and mv (getf (mv-params mv) :melee-range)) d2))
-         (ward (passive-p def :ward))                   ; Bankai West's ward
+         (optic (optic-p (passive-p def :ward) (passive-p def :optic) ranged))   ; Rukia's absolute zero: ranged hits pass
+         (def-state (if (and optic (eq def-state :guard)) :neutral def-state))
+         (ward (and (passive-p def :ward) (not optic))) ; Bankai West's ward
          (k (if (passive-p att :pierce)                 ; Bankai East's pierce
                 (pierce-rate (gauges-gg (gauges att)) (or (and mv (getf (mv-params mv) :pierce-mult)) 1.0))
                 0.0))
@@ -134,7 +157,7 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                                :unguardable (or (member :unguardable flags) (and fstrike (kikon-follow-unguardable-p red)))
                                :hazard ranged :ward ward :rend (member :rend flags)))
          (atk (kit-atk-mods (kit-of att) (- *konpaku-max* (gauges-konpaku (gauges att))) (if (eq res :blocked) 1.0 (+ 1.0 k))))
-         (dmods (kit-def-mods (kit-of def)))
+         (dmods (if optic '(:mult 1.0) (kit-def-mods (kit-of def))))   ; (a ranged hit through Rukia's ward: x1.0 taken)
          (x (or x (aref p 0))) (z (or z (aref p 2))) (y (+ (aref p 1) 1.1))
          (base (+ (hw-dmg hw) bonus))
          (outcome (and rush (kikon-outcome (vpad-down (pilot-vpad (pilot att)) :kikon) res fstrike)))
@@ -163,12 +186,16 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
              (let* ((dmg (hit-damage base atk dmods hits (eq res :counter)))
                     (stun (cond (follow (kikon-follow-stun red (mv-s mv)))
                                 ((and (hw-stun hw) (eq react (hw-react hw))) (hw-stun hw))   ; (a bind in a combo: a flinch)
-                                (t (hitstun react (eq res :counter))))))
+                                (t (hitstun react (eq res :counter)))))
+                    (frost (max (hw-frost hw) (kit-frost-touch (kit-of att)))))
+               (when (plusp frost) (setf (fighter-frost fd) (frost-next (fighter-frost fd) frost)))   ; Rukia's ice
+               (if ranged (incf (gauges-taken-ranged (gauges def)) dmg) (incf (gauges-taken-melee (gauges def)) dmg))
+               (cold-add! def (- (* *ru-hit-warm* dmg)))  ; Rukia: a real hit warms her
                (setf (gauges-best-combo (gauges att)) (max hits (gauges-best-combo (gauges att))))
                (add-meter att (hw-meter hw))
                (hitstop (hw-hs hw))
                (emit :hit att def x y z (hw-hs hw) (eq res :counter) dmg
-                     (cond ((eq react :bind) :bind) (hazard :fire) (mv (mv-kind mv)) (t :counter)))
+                     (cond ((member :ice flags) :ice) ((eq react :bind) :bind) (hazard :fire) (mv (mv-kind mv)) (t :counter)))
                (unless (deal-damage att def dmg)          ; (a broken soul crumples in its cinematic)
                  (set-reaction def react stun sx sz (if follow *kikon-follow-kb* (hw-kb hw))))
                (when (and follow own)                     ; the rush dashes in, then strikes again (KIKON-RUSH-STEP)
@@ -209,8 +236,10 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                   (v (let* ((v0 (or (hw-guard hw) *gg-hazard*)) (v1 (if (and mv (passive-p att :cut)) (cut-value v0 (mv-kind mv)) v0)))
                        (if ward (* *ward-mult* v1) v1)))
                   (pierce (and (plusp k) k))
-                  (chip (chip-damage base (if drink pierce (or (hw-chip hw) (and mv (kit-blade-chip (kit-of att))) pierce))
-                                     (gauges-reishi (gauges def)))))
+                  (chip (if (passive-p def :chipless)       ; Rukia awakened: no chip on her
+                            0
+                            (chip-damage base (if drink pierce (or (hw-chip hw) (and mv (kit-blade-chip (kit-of att))) pierce))
+                                         (gauges-reishi (gauges def))))))
              (cond ((drain-guard def v)
                     (ward-drop def)
                     (set-reaction def :guard-break *guard-crush-stun* sx sz *block-pushback*)
@@ -220,6 +249,8 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                    (ward                                ; super armour: no blockstun, what he does goes on
                     (set-slide def *block-pushback* 6 (- (aref p 0) sx) (- (aref p 2) sz))
                     (setf (fighter-warded fd) *match-tick*)
+                    (when (and (passive-p def :freeze-touch) (not ranged) (not (gauges-froze (gauges def))))
+                      (freeze-touch! def att))           ; Rukia's absolute zero: whatever touches her freezes
                     (hitstop *hitstop-block*)
                     (emit :blocked att def x y z))
                    (t (set-blockstun def stun sx sz adv (and drink (kit-drink-clip (kit-of def))))
@@ -231,6 +262,7 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                  (nome-gain! def 0 0 drunk)
                  (clog "~a DRINK ~d (+~d drunk)" (side-name def) taken drunk)))
              (when (plusp chip) (deal-damage att def chip))
+             (when (and mv (not ranged)) (cold-add! def (* *ru-block-cool* (or (hw-guard hw) 0))))   ; Rukia: a blocked blade cools her
              (when (and hazard (plusp (hw-meter hw))) (add-meter att *meter-on-block*))))
           (:guard-break
            (drain-guard def *gg-breaker* :breaker)
@@ -408,6 +440,7 @@ they are; then the form's :cine (both fighters idle after it)."
   (let* ((g (gauges e)) (o (opp-of e)) (lost (- (gauges-konpaku g) 1)))
     (set-form e (kit-bankai-form (kit-of e)))
     (setf (gauges-meter g) (f32 (getf (kit-pips (kit-of e)) :n)) (gauges-meter-idle g) 0 (gauges-arm-pending g) nil
+          (gauges-arm-owed g) nil
           (gauges-konpaku g) 1 (gauges-reishi g) (gauges-reishi-max g))
     (refresh-look e)
     (when (plusp lost) (emit :konpaku e lost))
@@ -418,7 +451,8 @@ they are; then the form's :cine (both fighters idle after it)."
         (to-idle e 0))))
 
 (defun arm-spend! (e mv)
-  "A pip command (or a latched K link) starts MV: one pip of the arm spent, the crack clock restarted, *ARM-SELF* burnt
+  "A pip command starts MV (or a J / K string's pip is charged as it ends: MV the move running then, NIL none): one pip of
+the arm spent, the crack clock restarted, *ARM-SELF* burnt
 (BURN: never below 1). The last one: the burst is pending until MV is over (ARM-STEP)."
   (let ((g (gauges e)))
     (multiple-value-bind (n ok) (pip-spend (round (gauges-meter g)))
@@ -433,7 +467,7 @@ they are; then the form's :cine (both fighters idle after it)."
   "The arm bursts (the pending burst fired: rules BURST-DUE-P): the kit's :pips :to form (片腕), *ARM-BURST-SELF* burnt
 and a self-inflicted *ARM-BURST-STUN* crumple in place (hits on him during it are ordinary hits)."
   (let ((g (gauges e)) (p (pos-of e)))
-    (setf (gauges-arm-pending g) nil)
+    (setf (gauges-arm-pending g) nil (gauges-arm-owed g) nil)
     (set-form e (getf (kit-pips (kit-of e)) :to))
     (setf (gauges-meter g) 0f0 (gauges-meter-idle g) 0 (gauges-reishi g) (burn (gauges-reishi g) *arm-burst-self*))
     (set-reaction e :crumple *arm-burst-stun* (aref p 0) (aref p 2) 0.0)
@@ -442,8 +476,16 @@ and a self-inflicted *ARM-BURST-STUN* crumple in place (hits on him during it ar
     (clog "~a ARM BURST r~d" (side-name e) (gauges-reishi g))))
 
 (defun arm-step (e f g)
-  "The arm meter per step (a form with :pips): the crack clock (rules PIP-STEP: paused while locked) cracks a pip every
-*ARM-CRACK* frames without a spend; once the last pip went, the pending burst fires when BURST-DUE-P says."
+  "The arm meter per step (a form with :pips): the pip a finished J / K string owes is charged (rules STRING-PIP-DUE-P);
+the crack clock (rules PIP-STEP: paused while locked) cracks a pip every *ARM-CRACK* frames without a spend; once the
+last pip went, the pending burst fires when BURST-DUE-P says."
+  (let ((mv (and (eq (fighter-state f) :move) (fighter-move f))) (pend (gauges-arm-pending g)))
+    (when (string-pip-due-p (gauges-arm-owed g) (fighter-state f) (and mv (mv-kind mv)))
+      (setf (gauges-arm-owed g) nil)
+      (arm-spend! e mv))                                ; (a cancel out of the string: the burst waits for it too)
+    ;; the last pip's move goes on as a chain (a latched link, SP2's punch, the O ender): the burst waits for the chain
+    (when (and (typep pend 'move) mv (not (eq mv pend)) (move-follows-p (fighter-kit f) pend mv))
+      (setf (gauges-arm-pending g) mv)))
   (let ((pend (gauges-arm-pending g)))
     (if pend
         (when (burst-due-p pend (fighter-move f) (fighter-state f)) (arm-burst! e))
@@ -457,11 +499,11 @@ and a self-inflicted *ARM-BURST-STUN* crumple in place (hits on him during it ar
 
 ;;; ---------------------------------------------------------------- Kikon, Soul Break, reset
 (defun bankai-ready-p (e)
-  "May E enter his form's :bankai-form now (P: rules BANKAI-ALLOWED-P, free and red)? (The HUD's P BANKAI prompt, the
-phone's AWAKEN chip.)"
-  (let ((f (fighter e)) (g (gauges e)))
+  "May E enter his form's :bankai-form now (P: rules BANKAI-ALLOWED-P, free with <= *BANKAI-KONPAKU* Konpaku)? (The
+HUD's P BANKAI prompt, the phone's AWAKEN chip.)"
+  (let ((f (fighter e)))
     (and (kit-bankai-form (fighter-kit f))
-         (bankai-allowed-p (member (fighter-state f) '(:idle :guard)) (red-p (gauges-reishi g) (gauges-reishi-max g))))))
+         (bankai-allowed-p (member (fighter-state f) '(:idle :guard)) (gauges-konpaku (gauges e))))))
 
 (defun kikon-ready-p (e)
   "Is E's opponent red: would E's Kikon rush, connecting now with the button held, be the Kikon?
@@ -525,11 +567,33 @@ everyone, the forms kept, flash-step and Reiatsu kept, the kit's :reset-reiatsu 
       (setf (motion-grounded mo) t (motion-kb-left mo) 0 (fighter-lock f) *reset-neutral* (fighter-combo-dmg f) 0
             (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (kit-reset-reiatsu (kit-of e)) *reiatsu-max*)))
       (setf (gauges-gg g) (f32 *gg-max*) (gauges-gg-idle g) 0 (gauges-guardless g) nil)
+      (let ((rf (kit-reset-form (kit-of e))))          ; Rukia: absolute zero never carries over the reset (-18, C 0)
+        (when rf (set-form e rf) (setf (gauges-meter g) 0f0 (gauges-meter-idle g) 0)))
       (fill (motion-vel mo) 0f0)
       (vpad-clear! (pilot-vpad (pilot e)))
       (let ((b (brain e))) (when b (setf (brain-press-left b) 0)))   ; a CPU lets go of what it held (a rush's O)
       (to-idle e 0)))
   (emit :reset))
+
+;;; ---------------------------------------------------------------- Rukia's cold gauge (docs/DUEL_RUKIA.md §4)
+(defun temp-step (e f g kit)
+  "A :temp kit meter per step: the cold C (rules TEMP-NEXT) cools while she guards (:guard / :guard-hit; at absolute zero,
+where the ward is always up, bracing: U held while free, which drains the guard gauge *ZERO-BRACE-DRAIN* per second and
+ends in the CRACK when it runs out) and warms at the form's :warm otherwise. The THAW lock (GAUGES-METER-IDLE frames
+after a CRACK) stops the cooling. The band (the form, rules TEMP-BAND-AT) follows C only while she is free, so a combo
+(a string and everything chained to it) or a special finishes in the band it started in, and the band then re-resolves
+from what is left (an overdrawn -273 combo at C 0 lands at -18)."
+  (let* ((st (fighter-state f)) (free (member st '(:idle :guard :run))) (lock (gauges-meter-idle g))
+         (brace (and free (passive-p e :ward) (not (gauges-guardless g)) (vpad-down (pilot-vpad (pilot e)) :guard)))
+         (guarding (and (zerop lock) (or (member st '(:guard :guard-hit)) brace))))
+    (when (plusp lock) (setf (gauges-meter-idle g) (1- lock)))
+    (setf (gauges-meter g) (f32 (temp-next (gauges-meter g) guarding (kit-warm kit))))
+    (if (and brace (drain-guard e (/ *zero-brace-drain* 60.0) :brace))
+        (ward-drop e)                                   ; braced on credit until the gauge ran out: the CRACK
+        (let ((band (temp-band-at (gauges-meter g) (fighter-form f) st)))   ; locked while she is in a combo
+          (unless (eq band (fighter-form f))
+            (set-form e band)
+            (emit :sfx :frost-tick e))))))
 
 ;;; ---------------------------------------------------------------- gauges per step
 (defun nome-step (e f g m)
@@ -575,6 +639,7 @@ delay counter (frozen): West never refills."
           (when (zerop (decf (gauges-form-left g)))
             (set-form e (kit-inherit kit)))))
       (when (kit-pips kit) (arm-step e f g))
+      (when (getf (kit-meter kit) :temp) (temp-step e f g kit))
       (let ((m (kit-meter kit)))
         (when (getf m :ladder) (nome-step e f g m))
         (when (and m (zerop (gauges-form-left g)) (>= (gauges-meter g) (getf m :max)) (getf m :full-form))

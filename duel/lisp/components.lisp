@@ -80,6 +80,8 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (contact nil)                         ; what the move's hits did: NIL (whiff) :hit :block
   (queued nil)                          ; the latch: the J / K link (:q / :f) pressed during this string link
                                         ; (fires when its chain opens after contact; dropped on a whiff)
+  (chained nil)                         ; this move is a string follow-up link started by the latch: an earlier link of
+                                        ; the string touched him, so it chases (STRING-CHASE) and carries the gate
   (land-sf -1 :type fixnum)             ; move frame of the first connect (cancel windows open)
   (dmg-bonus 0 :type fixnum)            ; added to the move's damage (stance: stored)
   (crush nil)                           ; this move now crushes guard (stance >= 150, SP2 held)
@@ -104,6 +106,7 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   ;; as a victim: the running combo (reset when back to neutral)
   (combo-hits 0 :type fixnum) (combo-launches 0 :type fixnum) (combo-air 0 :type fixnum)
   (combo-dmg 0 :type fixnum)
+  (frost 0 :type fixnum)                ; frames of frost left: walk and run x*FROST-SLOW* (Rukia's ice, rules FROST-NEXT)
   ;; HUD (sim frames)
   (callout nil) (callout-t 0 :type fixnum))
 
@@ -127,6 +130,10 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (burn-step 0 :type fixnum)            ; frames of the current form's burn so far
   (arm-pending nil)                     ; Kenpachi's Bankai: the arm's last pip went: the move running then (:NONE = none),
                                         ; until the burst fires (rules BURST-DUE-P); NIL = none pending
+  (arm-owed nil)                        ; Kenpachi's Bankai: the J / K string he is in owes its one pip (charged when it ends)
+  (taken-melee 0 :type fixnum) (taken-ranged 0 :type fixnum)   ; damage taken from blades / ranged hits (the CPU's
+                                        ; :awaken rule: Rukia awakens against a melee opponent, ai.lisp AI-AWAKEN-P)
+  (froze nil)                           ; this absolute-zero visit's freeze-touch is spent (Rukia; cleared entering zero)
   ;; results
   (dealt 0 :type fixnum) (kikons 0 :type fixnum) (perfects 0 :type fixnum) (best-combo 0 :type fixnum))
 
@@ -174,7 +181,9 @@ its volume test and its look (hazards.lisp)."
   (age 0 :type fixnum) (life 0 :type fixnum) (delay 0 :type fixnum)   ; frames
   (hits-left 1 :type fixnum) (rehit 0 :type fixnum)   ; hits it may still deal; frames to the next
   (hw nil)                              ; the HITWIN it deals (NIL = a look only)
-  (look nil))                           ; look keyword for the draw (:kyoku :meteor :crack :south ...)
+  (src nil)                             ; T: a hit comes from the owner's position (a guard facing him blocks it)
+  (fragile nil)                         ; T: it closes while it waits if its owner is hit (CLOSE-RIFTS)
+  (look nil))                           ; a look keyword, or a draw function symbol (HAZARD-DRAW)                           ; look keyword for the draw (:kyoku :meteor :crack :south ...)
 
 ;;; ---------------------------------------------------------------- small helpers every file uses
 (declaim (inline pos-of yaw-of))

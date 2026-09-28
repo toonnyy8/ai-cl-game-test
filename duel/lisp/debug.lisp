@@ -8,7 +8,7 @@
 ;;;;   2107 dump both fighters (state, gauges) to the log    2108 fill both fighters' Reiatsu
 ;;;;   2109 toggle the CAMERA option (BEHIND / SIDE; the behind camera is VS CPU's)
 ;;;;   2120+k   perf: toggle drawing part k off (0 HUD, 1 fighters, 2 stage, 3 hazards + cine looks)
-;;;;   2110+p   the seed gate: seeds 1..20 of pairing p (0 YY, 1 YK, 2 KK, 3 all three) back to back
+;;;;   2110+p   the seed gate: seeds 1..20 of pairing p (0 YY, 1 YK, 2 KK, 3 all six: + RY RK RR) back to back
 ;;;;            (turbo; cinematics play: they are part of the match time), then "duel gate ..." lines
 ;;;;   2200+k   force cinematic k now and hold it (0 Bankai, 1 Nozarashi, 2 Jokaku Enjo, 3 Tenchi Kaijin,
 ;;;;            4 Ken Kikon, 5 sky split, 6 Soul Break, 7 intro, 8 K.O.)   2209 a K.O. of P2 (YK), then RESULTS
@@ -81,6 +81,34 @@
 ;;;;            1 always (whenever allowed), 2 never, 3 the rule with its chance 1 (the gamble A/B);
 ;;;;            32000+k *ARM-SELF* = k, 33000+k *ARM-BURST-SELF* = k, 34000+k *ARM-CRACK* = k; 37000+k the cup-3 CPU's
 ;;;;            Bankai chance :p = k / 100, 38000+k its :own-konpaku = k
+;;;;   Rukia (docs/DUEL_RUKIA.md): 6000+s / 7000+s / 8000+s seeded CPU vs CPU RY / RK / RR (P1 Rukia); 2118 the seed gate of
+;;;;            her three pairings (RY RK RR; 2113 now plays all six), 2119 RY and RK only, 2125+k pairing k alone (0 YY 1 YK
+;;;;            2 KK 3 RY 4 RK 5 RR: the gate in parallel), 2124 2118 with the combat log
+;;;;            (the pacing log); 2410+k her tests (RUKIA-TEST: human P1 Rukia, P2's CPU
+;;;;            off): 0 Shikai 5 m from Kenpachi, 1 -18 C 2.2 m, 2 -50 C 2.2 m, 3 zero 1.8 m, Kenpachi's J1 into the ward (the
+;;;;            freeze-touch), 4 zero, Yamamoto's full Shiranui from 7 m (optic: it hits), 5 zero, Kenpachi's Breaker from 5 m
+;;;;            (the CRACK), 6 zero, the same Breaker answered by REIDO TOKETSU within 5.5 m (a counter-hit), 7 zero left to
+;;;;            warm out (-50 after ~2.9 s), 8 zero 3 m from him (hold U: braced until the guard gauge runs out, the CRACK);
+;;;;            2420+k K -> L (RUKIA-KL-TEST, *KL-TESTS*: 0 Shikai, 1 -18, 2 -50, 3 zero, 4 -18 short of L's cold, 5 / 6 Shikai /
+;;;;            -18 into a held guard): "duel probe kl" lines per hit, his stun frames left before it; 72000+k / 73000+k her
+;;;;            CPU's :l-after-k = k / 100 in the Shikai / the three bands; 68001 the white Rukia's lashes dark again (the before still); 2430+k the portrait
+;;;;            HUD review (HUD-REVIEW, *HUD-REVIEW*: both sides in given forms and gauges, CPUs off);
+;;;;            40000+f / 41000+f / 42000+f stills of her Kikon / 白霞罸 / awakening cinematics held at frame f
+;;;;            (as 10000+1000k+f, k 11 / 12 / 13; 2211-2213 force them); 39000+10a+b the CPUs' awakening, P1 a / P2 b: 0 the
+;;;;            kit's :awaken rule, 1 always on EVOLUTION, 2 never (the A/B); knobs 43000+k *FROST-SLOW* = k / 100, 44000+k
+;;;;            *ZERO-BRACE-DRAIN* = k / 10 per s, 45000+k *FREEZE-TOUCH* = k, 46000+k *RU-COOL-RATE* = k per s, 47000+k
+;;;;            *CRACK-SELF* = k, 48000+k zero's damage x k / 100, 49000+k the awakening rule's :melee-share = k / 100,
+;;;;            50000+k the -18 / -50 CPU's :cool chance = k / 100, 51000+k *RU-THAW-LOCK* = k frames,
+;;;;            53000+k the :cool distance k / 10 m, 54000+k the Shikai CPU's ZONE intent weight k, 55000+k zero's warming
+;;;;            k / 10 per s, 56000+k / 57000+k the -50 / -18 walk k / 10 m/s, 58000+k the Shikai's damage x k / 100,
+;;;;            60000+k the Shikai's damage taken x k / 100, 61000+k the bands' (-18 k / 100, -50 x0.9, zero x0.889 of it),
+;;;;            62000+k *RU-BLOCK-COOL* = k / 100, 63000+k *RU-HIT-WARM* = k / 100, 65000+k zero's field :away = k / 100,
+;;;;            66000+k *FIELD-FLOOR* = k / 100, 67000+k P1's cold = k (0-200) and its band (review stills); 68000 the
+;;;;            white Rukia's bodies rebuilt with the old ink keyline and hair-coloured brows (before / after stills);
+;;;;            69000+f / 70000+f a close-up of the white Rukia's face at zero / in the 白霞罸 costume; 71000 Kenpachi's
+;;;;            reiatsu opaque <-> see-through (*REIATSU-GLASS*, before / after stills), 71001+k human P1 Kenpachi in cup
+;;;;            k+1 (4: the Bankai) 3 m from an idle Yamamoto. Every gate row is followed by a "duel band" line per awakened Rukia side
+;;;;            (BAND-ACC: frames, damage dealt / taken per band, zero visits and their exits, bracing frames, freeze-touches)
 ;;;;   2400 god (both fighters' Reishi is topped back up to 400 every frame; Kikon still lands)   2500+k human P1 vs an
 ;;;;            idle CPU (k: 0 Yama vs Ken, 1 Ken vs Yama, 2 Yama vs Yama, 3 Ken vs Ken)
 ;;;; Log lines: "duel -> STATE" (flow.lisp), "duel hash t=N ..." every 600 battle ticks (h = CPU heat),
@@ -101,17 +129,55 @@ g guard gauge, ! = guardless, m the kit meter: Inferno / NOME), n the Konpaku th
     (format s "duel hash t=~d" *match-tick*)
     (dolist (e (list *p1* *p2*))
       (let ((p (pos-of e)) (g (gauges e)) (f (fighter e)))
-        (format s " | ~d ~d ~d ~d ~a ~a r~d k~d a~d f~d g~d~:[~;!~] w~d m~d~@[ u~d~]~:[~;*~] n~d~@[ h~d~]" (round (* 100 (aref p 0))) (round (* 100 (aref p 1)))
+        (format s " | ~d ~d ~d ~d ~a ~a r~d k~d a~d f~d g~d~:[~;!~] w~d m~d~@[ u~d~]~:[~;*~] n~d~@[ fr~d~]~@[ h~d~]" (round (* 100 (aref p 0))) (round (* 100 (aref p 1)))
                 (round (* 100 (aref p 2))) (round (* 100 (yaw-of e))) (fighter-state f) (fighter-form f)
                 (gauges-reishi g) (gauges-konpaku g) (round (gauges-reiatsu g)) (round (gauges-fs g)) (round (gauges-gg g))
                 (gauges-guardless g) (round (gauges-awaken g))
-                (round (gauges-meter g)) (and (kit-pips (fighter-kit f)) (gauges-meter-idle g))   ; the arm's crack clock,
+                (round (gauges-meter g)) (and (or (kit-pips (fighter-kit f)) (getf (kit-meter (fighter-kit f)) :temp))   ; the arm's
+                                              (gauges-meter-idle g))                            ; crack clock / Rukia's warm clock,
                 (gauges-arm-pending g)                                                          ; * = its burst pending
-                (fighter-kikon-n f) (and (brain e) (floor (brain-heat (brain e)))))))
+                (fighter-kikon-n f) (and (plusp (fighter-frost f)) (fighter-frost f))           ; fr = frost left (Rukia's ice)
+                (and (brain e) (floor (brain-heat (brain e)))))))
     (format s " | cd ~{~d~^.~} ~{~d~^.~} | haz ~d" (coerce (fighter-cd (fighter *p1*)) 'list) (coerce (fighter-cd (fighter *p2*)) 'list)
             (let ((n 0)) (do-entities (h hazard) (incf n)) n))))
 
+(defvar *band-acc* (vector (make-array 18 :element-type 'fixnum :initial-element 0)
+                           (make-array 18 :element-type 'fixnum :initial-element 0))
+  "Per side, the cold bands' pacing (debug only: never read by the sim): frames, damage dealt and taken per band (-18
+-50 zero: 0-2, 3-5, 6-8), zero visits (9), exits by CRACK (10) and by spending / warming (11), bracing frames (12),
+freeze-touches (13), the last dealt / taken totals (14 15), the last band (16: -1 none) and freeze-touch flag (17).")
+
+(defun band-acc-reset ()
+  (dotimes (i 2) (let ((a (svref *band-acc* i))) (fill a 0) (setf (aref a 16) -1))))
+
+(defun band-acc-step ()
+  "Per battle step outside cinematics: every awakened Rukia side's band bookkeeping (BAND-ACC-LINE logs it)."
+  (when (and (eq *flow* :battle) (not *cine*) (entity-alive-p *p1*) (entity-alive-p *p2*))
+    (dolist (e (list *p1* *p2*))
+      (let* ((f (fighter e)) (a (svref *band-acc* (fighter-side f))) (g (gauges e)) (go (gauges (opp-of e)))
+             (b (position (fighter-form f) '(:m18 :m50 :zero))) (last (aref a 16))
+             (d (- (gauges-dealt g) (aref a 14))) (tk (- (gauges-dealt go) (aref a 15))))
+        (setf (aref a 14) (gauges-dealt g) (aref a 15) (gauges-dealt go))
+        (when b
+          (incf (aref a b)) (incf (aref a (+ 3 b)) d) (incf (aref a (+ 6 b)) tk)
+          (when (and (= b 2) (/= last 2)) (incf (aref a 9)))
+          (when (and (= last 2) (/= b 2)) (incf (aref a (if (and (= b 0) (plusp (gauges-meter-idle g))) 10 11))))
+          (when (and (= b 2) (vpad-down (pilot-vpad (pilot e)) :guard)) (incf (aref a 12)))
+          (when (and (gauges-froze g) (zerop (aref a 17))) (incf (aref a 13))))
+        (setf (aref a 16) (or b -1) (aref a 17) (if (gauges-froze g) 1 0))))))
+
+(defun band-acc-line ()
+  "The gate row's companion: a \"duel band\" line per side that was awakened Rukia."
+  (dotimes (i 2)
+    (let ((a (svref *band-acc* i)))
+      (when (plusp (+ (aref a 0) (aref a 1) (aref a 2)))
+        (log-msg "duel band seed ~d P~d vs ~a frames ~d ~d ~d dealt ~d ~d ~d taken ~d ~d ~d visits ~d crack ~d exit ~d brace ~d ft ~d"
+                 *match-seed* (1+ i) (fighter-character (fighter (if (zerop i) *p2* *p1*)))
+                 (aref a 0) (aref a 1) (aref a 2) (aref a 3) (aref a 4) (aref a 5) (aref a 6) (aref a 7) (aref a 8)
+                 (aref a 9) (aref a 10) (aref a 11) (aref a 12) (aref a 13))))))
+
 (defun hash-log ()
+  (band-acc-step)
   (when (and (eq *flow* :battle) (plusp *match-tick*) (zerop (mod *match-tick* 600)))
     (log-msg "~a" (state-hash-line)))
   (when (and *gate-log* (eq *flow* :battle) (plusp *match-tick*) (zerop (mod *match-tick* 60)))   ; pace.py reads these
@@ -257,9 +323,9 @@ probe (the ladder), 1 the :drink probe (P2 mashes Quick), 2 / 4 hold P2's guard,
 
 (defun bankai-test (k)
   "Kenpachi's Bankai tests 2386+K (docs/DUEL_KEN_BANKAI.md; human P1 Kenpachi, P2 an idle Yamamoto CPU; the script presses
-the keys): 0 cup 3 (NOME 100), red (300), 3 m: P enters the Bankai (its cinematic); 1 in the Bankai at once (no
-cinematic), 2.2 m: KKK, a whiffed K, JJJ ...; 2 in the Bankai with 1 pip, 2.2 m: the 4th strike, then the burst; 3 片腕
-at 2.2 m."
+the keys; his Konpaku at most *BANKAI-KONPAKU*, the entry's condition): 0 cup 3 (NOME 100), red (300), 3 m: P enters
+the Bankai (its cinematic); 1 in the Bankai at once (no cinematic), 2.2 m: KKK, a whiffed K, JJJ ...; 2 in the Bankai
+with 1 pip, 2.2 m: the 4th strike, then the burst; 3 片腕 at 2.2 m."
   (setf *probe* nil)
   (ensure-battle :kenpachi :yamamoto)
   (force-form *p1* :nomihose)
@@ -267,13 +333,88 @@ at 2.2 m."
   (let ((g (gauges *p1*)))
     (fill (fighter-cd (fighter *p1*)) 0)
     (setf (gauges-reiatsu g) *reiatsu-max* (gauges-fs g) *fs-max* (gauges-gg g) *gg-max* (gauges-guardless g) nil
-          (gauges-meter g) 100f0 (gauges-meter-idle g) 0 (gauges-reishi g) 300 (gauges-arm-pending g) nil))
+          (gauges-meter g) 100f0 (gauges-meter-idle g) 0 (gauges-reishi g) 300 (gauges-arm-pending g) nil
+          (gauges-konpaku g) (min (gauges-konpaku g) *bankai-konpaku*)))   ; the entry: <= 4 Konpaku (2026-09-28)
   (setf (gauges-reishi (gauges *p2*)) (gauges-reishi-max (gauges *p2*)))
   (case k
     ((1 2) (let ((*skip-cines* t)) (bankai! *p1*))
      (when (= k 2) (setf (gauges-meter (gauges *p1*)) 1f0) (refresh-look *p1*))
      (place *p1* *p2* 2.2))
     (3 (force-form *p1* :kataude) (setf (gauges-reishi (gauges *p1*)) 900))))
+
+(defparameter *rukia-tests*
+  ;; k: P1-form P2 P2-form distance
+  '((:base :kenpachi :base 5.0) (:m18 :kenpachi :base 2.2) (:m50 :kenpachi :base 2.2) (:zero :kenpachi :base 1.8)
+    (:zero :yamamoto :base 7.0) (:zero :kenpachi :base 5.0) (:zero :kenpachi :base 5.0) (:zero :kenpachi :base 4.0)
+    (:zero :kenpachi :base 3.0)))
+
+(defun rukia-test (k)
+  "Rukia's tests 2410+K (*RUKIA-TESTS*; human P1 Rukia, P2's CPU off): 3 P2's J1 into the ward (the freeze-touch), 4 P2's
+full Shiranui (optic), 5 P2's Breaker (the CRACK), 6 the Breaker answered by REIDO TOKETSU when it is within 5.5 m, 7
+zero left to warm out, 8 zero 3 m from him (hold U: braced to the CRACK). A :rukia probe logs \"duel probe rukia ...\" lines (form, state, Reishi, P2's state) every 10 f."
+  (destructuring-bind (f1 c2 f2 d) (nth k *rukia-tests*)
+    (setf *probe* nil)
+    (ensure-battle :rukia c2)
+    (force-form *p1* (if (eq f1 :zero) :m50 f1)) (force-form *p2* f2)
+    (place *p1* *p2* d)
+    (dolist (e (list *p1* *p2*))
+      (let ((g (gauges e)))
+        (fill (fighter-cd (fighter e)) 0)
+        (setf (gauges-reiatsu g) *reiatsu-max* (gauges-fs g) *fs-max* (gauges-gg g) *gg-max* (gauges-guardless g) nil
+              (gauges-reishi g) (gauges-reishi-max g) (gauges-meter g) 0f0 (gauges-meter-idle g) 0)))
+    (setf (gauges-meter (gauges *p1*)) (case f1 (:m50 150f0) (:zero *cold-max*) (t 0f0)))   ; the band's cold
+    (when (eq f1 :zero) (force-form *p1* :zero))
+    (setf *probe* (list :rukia k *match-tick* nil nil nil))
+    (let ((b (brain *p2*)))                             ; (the switched-off brain still writes its held button)
+      (case k
+        (3 (force-cmd *p2* :q))
+        (4 (force-cmd *p2* :sp1) (setf (brain-press b) :flash (brain-press-mod b) t (brain-press-left b) 70))
+        ((5 6) (force-cmd *p2* :breaker) (setf (brain-press b) :breaker (brain-press-mod b) nil (brain-press-left b) 60))))))
+
+(defparameter *kl-tests* '((:base 0 nil) (:m18 60 nil) (:m50 150 nil) (:zero 200 nil) (:m18 10 nil) (:base 0 t) (:m18 60 t))
+  "K -> L (2420+k): P1-form, its cold, P2 guarding. 4: -18 with 10 cold, short of L's 25 (refused); 5 / 6 blocked.")
+
+(defun rukia-kl-test (k)
+  "2420+k: human P1 Rukia (*KL-TESTS* k) 2.2 m from an idle Kenpachi (holding guard in 5 / 6); a :kl probe logs each hit
+P2 takes: its reaction, his stun frames left just before it (> 0: a combo), the combo count, P1's move and cold."
+  (destructuring-bind (form cold guard) (nth k *kl-tests*)
+    (setf *probe* nil)
+    (ensure-battle :rukia :kenpachi)
+    (force-form *p1* (if (eq form :zero) :m50 form)) (force-form *p2* :base)
+    (place *p1* *p2* 2.2)
+    (dolist (e (list *p1* *p2*))
+      (let ((g (gauges e)))
+        (fill (fighter-cd (fighter e)) 0)
+        (setf (gauges-reiatsu g) *reiatsu-max* (gauges-fs g) *fs-max* (gauges-gg g) *gg-max* (gauges-guardless g) nil
+              (gauges-reishi g) (gauges-reishi-max g) (gauges-meter g) 0f0 (gauges-meter-idle g) 0)))
+    (setf (gauges-meter (gauges *p1*)) (f32 cold))
+    (when (eq form :zero) (force-form *p1* :zero))
+    (when guard
+      (setf (fighter-state (fighter *p2*)) :guard (fighter-guard-t (fighter *p2*)) 30
+            (brain-press (brain *p2*)) :guard (brain-press-left (brain *p2*)) 999))
+    (setf *probe* (list :kl k *match-tick* 0 0 nil))))
+
+(defparameter *hud-review*
+  ;; P1 (character form meter) P2 (character form meter) low-gauge: the portrait HUD's last row in every form (stills)
+  '(((:yamamoto :base 60) (:kenpachi :base 0) nil) ((:yamamoto :hellfire 0) (:kenpachi :nozarashi 20) t)
+    ((:yamamoto :bankai-east 0) (:kenpachi :ryote 70) nil) ((:yamamoto :bankai-west 0) (:kenpachi :nomihose 100) t)
+    ((:kenpachi :bankai 3) (:yamamoto :base 100) nil) ((:kenpachi :kataude 0) (:rukia :base 0) t)
+    ((:rukia :base 0) (:rukia :m18 60) nil) ((:rukia :m50 150) (:rukia :zero 200) t) ((:rukia :m18 30) (:kenpachi :base 0) :evo)))
+
+(defun hud-review (k)
+  "2430+k: *HUD-REVIEW* k: P1 and P2 in those forms with those kit meters, CPUs off, 3 m apart, the gauges part-full
+(LOW: the guard gauges at 30, the KOSEI tag; :EVO P1's EVOLUTION announced)."
+  (destructuring-bind ((c1 f1 m1) (c2 f2 m2) low) (nth k *hud-review*)
+    (setf *probe* nil)
+    (ensure-battle c1 c2)
+    (place *p1* *p2* 3.0)
+    (loop for e in (list *p1* *p2*) for f in (list f1 f2) for m in (list m1 m2)
+          do (let ((g (gauges e)))
+               (unless (eq (fighter-form (fighter e)) f) (force-form e f))
+               (setf (gauges-meter g) (f32 m) (gauges-meter-idle g) 0 (gauges-reiatsu g) (* 1.6 *reiatsu-bar*)
+                     (gauges-fs g) (* 0.6 *fs-max*) (gauges-awaken g) (if (kit-awakening (kit-of e)) 0f0 45f0)
+                     (gauges-gg g) (if low 30f0 80f0) (gauges-reishi g) (round (* 0.7 (gauges-reishi-max g))))
+               (when (eq low :evo) (setf (gauges-evolution (gauges *p1*)) t (gauges-awaken (gauges *p1*)) 100f0))))))
 
 (defun probe-update ()
   "Per step: finish a running probe (the first tick each side is free again = both idle; the
@@ -333,6 +474,25 @@ presses (J down every other step: the switched-off brain still writes its held b
                (log-msg "duel probe ~(~a~) t=~d P1 gg ~d~:[~; guardless~] r~d m~d ~a" kind dt (round (gauges-gg g1))
                         (gauges-guardless g1) (gauges-reishi g1) (round (gauges-meter g1)) (fighter-form (fighter *p1*))))
              (when (> dt 900) (setf (brain-press-left b) 0 *probe* nil))))
+          (:rukia (let ((f1 (fighter *p1*)))                  ; Rukia's tests: 6 answers the Breaker with REIDO at 5.5 m
+                    (when (and (= name 6) (eq (fighter-form f1) :zero) (member (state-of *p1*) '(:idle))
+                               (eq (state-of *p2*) :move) (< (fighter-dist f1) 5.5))
+                      (try-command *p1* f1 :sig))
+
+                    (when (zerop (mod dt 10))
+                      (log-msg "duel probe rukia ~d t=~d P1 ~a ~a r~d gg ~d m~d fr~d | P2 ~a ~a r~d fr~d" name dt (fighter-form f1)
+                               (state-of *p1*) (gauges-reishi (gauges *p1*)) (round (gauges-gg (gauges *p1*)))
+                               (round (gauges-meter (gauges *p1*))) (fighter-frost f1)
+                               (state-of *p2*) (fighter-form (fighter *p2*)) (gauges-reishi (gauges *p2*)) (fighter-frost (fighter *p2*))))
+                    (when (> dt 420) (setf *probe* nil))))
+          (:kl (let* ((f2 (fighter *p2*)) (f1 (fighter *p1*)) (n (fighter-combo-hits f2)) (st (state-of *p2*)))
+                 (when (or (/= n af) (and (eq st :guard-hit) (not blocked)))   ; a hit (the combo count moved) or a block
+                   (log-msg "duel probe kl ~d t=~d P2 ~a ~a left-before ~d combo ~d | P1 ~a sf ~d m~d" name dt st
+                            (fighter-phase f2) df n (let ((mv (fighter-move f1))) (and mv (mv-name mv))) (fighter-sf f1)
+                            (round (gauges-meter (gauges *p1*)))))
+                 (setf *probe* (list :kl name t0 n (if (member st '(:stun :guard-hit)) (- (fighter-stun f2) (fighter-sf f2)) 0)
+                                     (eq st :guard-hit)))
+                 (when (> dt 240) (setf *probe* nil))))
           (:guard-after (when (eq (state-of *p2*) :stun)          ; hit: hold guard from now on
                           (let ((b (brain *p2*))) (setf (brain-press b) :guard (brain-press-left b) 999 *probe* nil))))
           (:pressure (let ((b (brain *p2*)))
@@ -490,13 +650,28 @@ deals PCT % of its written damage (the seed gate's first lever, DUEL_STRINGS §6
     (8 (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 3.0) (start-cine 'ko-cine *p1* *p2*))
     ((9 10) (ensure-battle :kenpachi :yamamoto) (place *p1* *p2* (if (= k 9) 5.0 3.0)) (force-form *p1* :bankai)
      (setf (gauges-meter (gauges *p1*)) (f32 *arm-pips*)) (refresh-look *p1*)
-     (start-cine (if (= k 9) 'ken-bankai-cine 'ken-oni-kikon-cine) *p1* *p2*)))
+     (start-cine (if (= k 9) 'ken-bankai-cine 'ken-oni-kikon-cine) *p1* *p2*))
+    ((11 12 13) (ensure-battle :rukia :kenpachi) (place *p1* *p2* (if (= k 13) 5.0 3.0))   ; Rukia's (docs/DUEL_RUKIA.md §5, §6)
+     (force-form *p1* (if (= k 11) :base :m18))
+     (start-cine (nth (- k 11) '(ru-kikon-cine ru-hakka-cine ru-awaken-cine)) *p1* *p2*))
+    ((14 15) (ensure-battle :rukia :kenpachi) (place *p1* *p2* 3.0) (force-form *p1* :zero)   ; the white Rukia's face
+     (start-cine (if (= k 14) 'ru-face-cine 'ru-face-bankai-cine) *p1* *p2*)))
   (setf *cine-hold* t)
   (when *cine* (setf (cine-hold *cine*) (cine-hold-frame (cine-name *cine*)))))
 
 (defparameter *cine-names* '(yama-bankai-cine ken-nozarashi-cine yama-kikon-cine yama-tenchi-cine ken-kikon-cine
-                               ken-sky-split-cine soul-break-cine intro-cine ko-cine ken-bankai-cine ken-oni-kikon-cine)
+                               ken-sky-split-cine soul-break-cine intro-cine ko-cine ken-bankai-cine ken-oni-kikon-cine
+                               ru-kikon-cine ru-hakka-cine ru-awaken-cine ru-face-cine ru-face-bankai-cine)
   "FORCE-CINE's numbering.")
+
+(defcine ru-face-cine (a v :len 60 :hold 30)
+  "Debug stills (69000+f): close on the white Rukia's face (absolute zero): the brows and the ice keyline."
+  (at 0 (face-each-other a v 3.0) (shot-on a 20 1.3 1.45 :look 1.4) (lens 28)))
+
+(defcine ru-face-bankai-cine (a v :len 60 :hold 30)
+  "Debug stills (70000+f): the same close-up in the 白霞罸 costume."
+  (at 0 (face-each-other a v 3.0) (setf (model-body (model a)) (find-body :rukia-bankai)) (face-beat a :neutral 2.0)
+      (shot-on a 20 1.3 1.45 :look 1.4) (lens 28)))
 
 (defun cine-at (k f)
   "Debug 10000 + 1000 K + F (stills): cinematic K held at frame F (MAIN.LISP CINE-HELD-P freezes the effects there);
@@ -633,6 +808,7 @@ move-beat choices of DRAW-FIGHTER."
 (defun start-cvc (seed pair)
   "Seeded CPU vs CPU (NORMAL): PAIR = (c1 c2), or NIL to draw both from SEED."
   (setf *match-seed* seed *mode* :cpu-cpu *difficulty* :normal)
+  (band-acc-reset)
   (sim-rnd-seed seed)
   (setf *picks* (or pair (list (nth (floor (* (length *roster*) (sim-rnd01))) *roster*)
                                (nth (floor (* (length *roster*) (sim-rnd01))) *roster*))))
@@ -640,12 +816,14 @@ move-beat choices of DRAW-FIGHTER."
 
 (defvar *gate* nil "Seed gate: (seed pair) matches still to run.")
 (defvar *gate-results* nil "(pair secs ko-p) of the finished gate matches.")
-(defparameter *pairs* '((:yamamoto :yamamoto) (:yamamoto :kenpachi) (:kenpachi :kenpachi)))
+(defparameter *pairs* '((:yamamoto :yamamoto) (:yamamoto :kenpachi) (:kenpachi :kenpachi)
+                        (:rukia :yamamoto) (:rukia :kenpachi) (:rukia :rukia)))
 
 (defvar *gate-seed0* 0 "Debug 30000+k: the seed gate plays seeds k+1 .. k+20 (the 60-seed A/B in three runs).")
 (defun start-gate (p)
   (setf *turbo* t *skip-cines* nil *combat-log* nil *gate-log* nil *gate-results* nil
-        *gate* (loop for pair in (if (= p 3) *pairs* (list (nth p *pairs*)))
+        *gate* (loop for pair in (case p (3 *pairs*) (4 (subseq *pairs* 3)) (5 (subseq *pairs* 3 5))
+                                   (t (list (nth (mod p 10) *pairs*))))   ; (10+k: pairing k alone)
                      append (loop for seed from (1+ *gate-seed0*) to (+ *gate-seed0* 20) collect (list seed pair))))
   (gate-update))
 
@@ -660,6 +838,7 @@ move-beat choices of DRAW-FIGHTER."
     (log-msg "duel gate row seed ~d ~a ~a secs ~,1f winner ~a forms ~a ~a" *match-seed* (first *picks*) (second *picks*)
              (/ *match-tick* 60.0) (case *winner* (0 "P1") (1 "P2") (t "DRAW"))
              (fighter-form (fighter *p1*)) (fighter-form (fighter *p2*)))   ; (the gamble A/B reads the final forms)
+    (band-acc-line)
     (setf *gate-busy* nil))
   (unless *gate-busy*
     (cond (*gate* (destructuring-bind (seed pair) (pop *gate*) (start-cvc seed pair)) (setf *gate-busy* t))
@@ -677,11 +856,18 @@ move-beat choices of DRAW-FIGHTER."
   "Module._debug_cmd(C): see the file header."
   (setf *combat-log* t *stats-log* t)
   (log-msg "debug cmd ~d" c)
-  (unless (or (<= 2200 c 2299) (<= 10000 c 19999) (<= 35000 c 36999)) (setf *cine-hold* nil))
+  (unless (or (<= 2200 c 2299) (<= 10000 c 19999) (<= 35000 c 36999) (<= 40000 c 42999) (<= 69000 c 70999)) (setf *cine-hold* nil))
   (cond ((<= 2000 c 2099) (start-cvc (- c 2000) nil))
         ((<= 3000 c 3999) (start-cvc (- c 3000) '(:yamamoto :yamamoto)))
         ((<= 4000 c 4999) (start-cvc (- c 4000) '(:yamamoto :kenpachi)))
         ((<= 5000 c 5999) (start-cvc (- c 5000) '(:kenpachi :kenpachi)))
+        ((<= 6000 c 6999) (start-cvc (- c 6000) '(:rukia :yamamoto)))
+        ((<= 7000 c 7999) (start-cvc (- c 7000) '(:rukia :kenpachi)))
+        ((<= 8000 c 8999) (start-cvc (- c 8000) '(:rukia :rukia)))
+        ((= c 2118) (start-gate 4))
+        ((= c 2119) (start-gate 5))
+        ((<= 2125 c 2130) (start-gate (+ 10 (- c 2125))))   ; one pairing alone: 0 YY 1 YK 2 KK 3 RY 4 RK 5 RR
+        ((= c 2124) (start-gate 4) (setf *combat-log* t *gate-log* t))   ; her three pairings with the combat log (pacing)
         ((= c 2100) (setf *skip-cines* (not *skip-cines*)) (when *skip-cines* (skip-cine)))
         ((= c 2101) (setf *konpaku-start* 2))
         ((= c 2102) (setf *turbo* (not *turbo*)))
@@ -699,6 +885,8 @@ move-beat choices of DRAW-FIGHTER."
         ((<= 2200 c 2299) (force-cine (- c 2200)))
         ((<= 10000 c 19999) (cine-at (floor (- c 10000) 1000) (mod c 1000)))
         ((<= 35000 c 36999) (cine-at (+ 9 (floor (- c 35000) 1000)) (mod c 1000)))
+        ((<= 40000 c 42999) (cine-at (+ 11 (floor (- c 40000) 1000)) (mod c 1000)))
+        ((<= 69000 c 70999) (cine-at (+ 14 (floor (- c 69000) 1000)) (mod c 1000)))   ; the white Rukia's face
         ((<= 2315 c 2318) (probe-block (nth (- c 2315) '(:ya-j1 :ya-k3 :ya-j3 :ya-taimatsu))))
         ((= c 2319) (probe-trade))
         ((= c 2320) (probe-mash))
@@ -713,6 +901,9 @@ move-beat choices of DRAW-FIGHTER."
         ((<= 2370 c 2379) (stance-test (- c 2370)))
         ((<= 2380 c 2385) (nome-test (- c 2380)))
         ((<= 2386 c 2389) (bankai-test (- c 2386)))
+        ((<= 2410 c 2418) (rukia-test (- c 2410)))
+        ((<= 2420 c 2426) (rukia-kl-test (- c 2420)))
+        ((<= 2430 c 2438) (hud-review (- c 2430)))
         ((= c 2326) (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 3.0) (clash! *p1* *p2*))
         ((= c 2393) (place *p1* *p2* 2.2)
          (dolist (e (list *p1* *p2*))                   ; a switched-off CPU lets go of what it held (a guard)
@@ -741,6 +932,54 @@ move-beat choices of DRAW-FIGHTER."
         ((<= 34000 c 34999) (setf *arm-crack* (- c 34000)))
         ((<= 37000 c 37100) (setf (getf (getf (kit-ai (find-kit :kenpachi :nomihose)) :bankai) :p) (/ (- c 37000) 100.0)))
         ((<= 38000 c 38009) (setf (getf (getf (kit-ai (find-kit :kenpachi :nomihose)) :bankai) :own-konpaku) (- c 38000)))
+        ((<= 39000 c 39022) (let ((m '(nil :always :never)))
+                              (setf (svref *ai-awaken-mode* 0) (nth (floor (- c 39000) 10) m)
+                                    (svref *ai-awaken-mode* 1) (nth (mod (- c 39000) 10) m))))
+        ((<= 43000 c 43100) (setf *frost-slow* (/ (- c 43000) 100.0)))
+        ((<= 44000 c 44999) (setf *zero-brace-drain* (/ (- c 44000) 10.0)))
+        ((<= 45000 c 45999) (setf *freeze-touch* (- c 45000)))
+        ((<= 46000 c 46999) (setf *ru-cool-rate* (float (- c 46000))))
+        ((<= 47000 c 47999) (setf *crack-self* (- c 47000)))
+        ((<= 48000 c 48300) (setf (kit-mult (find-kit :rukia :zero)) (/ (- c 48000) 100.0)))   ; zero's damage x k / 100
+        ((<= 49000 c 49099) (setf (getf (getf (kit-ai (find-kit :rukia :base)) :awaken) :melee-share) (/ (- c 49000) 100.0)))
+        ((<= 50000 c 50100) (dolist (f '(:m18 :m50)) (setf (getf (getf (kit-ai (find-kit :rukia f)) :cool) :p) (/ (- c 50000) 100.0))))
+        ((<= 51000 c 51999) (setf *ru-thaw-lock* (- c 51000)))
+        ((<= 53000 c 53099) (dolist (f '(:m18 :m50)) (setf (getf (getf (kit-ai (find-kit :rukia f)) :cool) :near) (/ (- c 53000) 10.0))))
+        ((<= 54000 c 54009) (setf (getf (getf (kit-ai (find-kit :rukia :base)) :intents) :zone) (- c 54000)))
+        ((<= 55000 c 55999) (setf (kit-warm (find-kit :rukia :zero)) (/ (- c 55000) 10.0)))   ; zero's warming k / 10 per s
+        ((<= 56000 c 56099) (setf (kit-walk (find-kit :rukia :m50)) (/ (- c 56000) 10.0)))
+        ((<= 57000 c 57099) (setf (kit-walk (find-kit :rukia :m18)) (/ (- c 57000) 10.0)))
+        ((<= 58000 c 58300) (setf (kit-mult (find-kit :rukia :base)) (/ (- c 58000) 100.0)))
+        ((<= 60000 c 60200) (setf (kit-taken (find-kit :rukia :base)) (/ (- c 60000) 100.0)))
+        ((<= 61000 c 61200) (loop for f in '(:m18 :m50 :zero) for r in '(1.0 0.9 0.889)   ; every band's damage taken,
+                                  do (setf (kit-taken (find-kit :rukia f)) (* r (/ (- c 61000) 100.0)))))   ; -18's = k / 100
+        ((<= 62000 c 62200) (setf *ru-block-cool* (/ (- c 62000) 100.0)))
+        ((<= 63000 c 63100) (setf *ru-hit-warm* (/ (- c 63000) 100.0)))
+        ((<= 65000 c 65100) (setf (getf (kit-field (find-kit :rukia :zero)) :away) (/ (- c 65000) 100.0)))
+        ((<= 66000 c 66100) (setf *field-floor* (/ (- c 66000) 100.0)))
+        ((<= 72000 c 72100) (setf (getf (kit-ai (find-kit :rukia :base)) :l-after-k) (/ (- c 72000) 100.0)))   ; her CPU's
+        ((<= 73000 c 73100) (dolist (f '(:m18 :m50 :zero))   ; L after a K link, k / 100 per hit: the Shikai / the bands
+                              (setf (getf (kit-ai (find-kit :rukia f)) :l-after-k) (/ (- c 73000) 100.0))))
+        ((= c 71000) (setf *reiatsu-glass*                      ; review stills: Kenpachi's reiatsu opaque / see-through
+                           (if (zerop (getf *reiatsu-glass* :nomihose)) '(:reiatsu 3 :nozarashi 3 :nomihose 2 :oni 2 :oni-ink 3)
+                               '(:reiatsu 0 :nozarashi 0 :nomihose 0 :oni 0 :oni-ink 0))))
+        ((<= 71001 c 71004) (ensure-battle :kenpachi :yamamoto) (place *p1* *p2* 3.0)   ; his cups 1-3 (4: the Bankai)
+                            (force-form *p1* (nth (- c 71001) '(:nozarashi :ryote :nomihose :bankai)))
+                            (setf (gauges-meter (gauges *p1*)) (f32 (nth (- c 71001) '(20 70 100 4)))   ; NOME holds the cup
+                                  (gauges-meter-idle (gauges *p1*)) 0))
+        ((= c 68000) (dolist (n '(:rukia-zero :rukia-bankai))   ; review stills: the white Rukia's look before the ice
+                       (let ((b (find-body n)))                ; keyline (the ink, brows the hair's colour)
+                         (setf (body-ink b) nil (body-palette b) (cons '(:brow #xE4E8EE) (body-palette b)))
+                         (build-body b))))
+        ((= c 68001) (dolist (n '(:rukia-zero :rukia-bankai))   ; review stills: the white Rukia's lashes before playtest 2
+                       (let ((b (find-body n)))                ; (the ink's dark, not the brows' ice)
+                         (setf (body-palette b) (cons '(:lid #x141016) (body-palette b)))
+                         (build-body b))))
+        ((<= 67000 c 67200) (let ((g (gauges *p1*)) (f (fighter *p1*)))   ; P1's cold = k and the band it asks for (stills)
+                              (setf (gauges-meter g) (f32 (- c 67000)))
+                              (when (getf (kit-meter (fighter-kit f)) :temp)
+                                (let ((b (temp-band (gauges-meter g) (fighter-form f))))
+                                  (unless (eq b (fighter-form f)) (force-form *p1* b))))))
         ((<= 2500 c 2503)
          (setf *picks* (nth (- c 2500) '((:yamamoto :kenpachi) (:kenpachi :yamamoto) (:yamamoto :yamamoto) (:kenpachi :kenpachi)))
                *mode* :vs-cpu *match-seed* 1 *probe* nil)

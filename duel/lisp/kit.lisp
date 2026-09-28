@@ -34,7 +34,8 @@
   (meter 0.0)                   ; the kit meter (Inferno) gained on hit
   (stun nil)                    ; hitstun override in frames (NIL = the reaction's, *REACTION-FRAMES*)
   (guard nil)                   ; guard gauge a block drains (GUARD-VALUE; NIL = a hazard's *GG-HAZARD*)
-  (flags nil))                  ; :breaker :guard-crush :unguardable :ranged
+  (frost 0 :type fixnum)        ; frames of frost a real hit sets (FROST-NEXT; Rukia's ice)
+  (flags nil))                  ; :breaker :guard-crush :unguardable :ranged :ice
 
 (defstruct (move (:conc-name mv-))
   "A move: frame data, hit windows and hooks. See DEFMOVE for the fields."
@@ -78,7 +79,7 @@
   (destructuring-bind (&key kind clip clip-2 callout startup active recovery whiff (dmg 0) adv-block
                          track reach (arc 90) (height '(0.2 2.0)) vol on-hit (kb 0.0) hs chip (meter 0.0)
                          cost hold (slide 0.0) flags hits on-frame tick release on-land cine params
-                         (enter 0) (blend 0.0) planted clip-s guard (armor-hits 0) (cooldown 0))
+                         (enter 0) (blend 0.0) planted clip-s guard (armor-hits 0) (cooldown 0) (frost 0))
       spec
     (let* ((breaker (eq kind :breaker))
            (s (+ startup-add (or startup (if breaker *breaker-startup* 0))))
@@ -95,13 +96,13 @@
            (flags (if breaker (adjoin :breaker flags) flags))
            (guard (guard-value kind adv-block guard)))
       (flet ((window (from to &key (dmg dmg) (on-hit react) (kb kb) ((:vol hit-vol)) ((:reach hit-reach))
-                                   (chip chip) (meter meter) (flags flags) (hs hs) stun (guard guard))
+                                   (chip chip) (meter meter) (flags flags) (hs hs) stun (guard guard) (frost frost))
                ;; a window's own :reach / :vol (scaled like the move's), else the move's volume
                (let ((v (cond (hit-reach (list* :arc (* reach-mult hit-reach) arc height))
                               (hit-vol (scale-vol-spec hit-vol reach-mult))
                               (t vol))))
                  (make-hitwin :from (+ from startup-add) :to (+ to startup-add) :dmg dmg :react on-hit
-                              :kb kb :hs hs :chip chip :meter meter :flags flags :stun stun :guard guard
+                              :kb kb :hs hs :chip chip :meter meter :flags flags :stun stun :guard guard :frost frost
                               :vols (and v (list (make-vol (first v) (rest v))))))))
         (make-move
          :name name :kind kind :clip clip :clip-2 clip-2 :callout callout
@@ -164,7 +165,8 @@ new button."
             :ranged (a hit delivered by fire / a ground line, not the blade: like a hazard, no parry catches it;
             with :params (:melee-range r) only beyond r of the attacker: nearer it is the blade, a melee hit;
             one window, so it still hits once)
-  :hits     ((from to &key dmg on-hit kb vol reach chip meter flags hs guard) ...) multi-hit windows;
+  :frost    frames of frost a real hit sets (the victim walks and runs x*FROST-SLOW*: Rukia's ice)
+  :hits     ((from to &key dmg on-hit kb vol reach chip meter flags hs guard frost) ...) multi-hit windows;
             default: one window [S, S+A) when the move has damage and a volume
   :on-frame ((frame hook) ...), :tick hook (every frame), :release hook (button released during
             :hold), :on-land hook (first hit connects), :cine hook (Kikon cinematic)
@@ -198,6 +200,16 @@ new button."
   (respect-callout nil)                 ; said when the opponent outplays him (a counter-hit, a perfect Hoho, a parry, a Burst)
   (bankai-form nil)                     ; P (red, free) in this form enters that form (Kenpachi's cup 3 -> :bankai)
   (pips nil)                            ; the arm meter UDE (:n :cmds :to): a form whose heavy commands spend pips
+  (crush-hook nil)                      ; called instead of the :drop-to switch when the ward breaks (Rukia's CRACK)
+  (rooted nil)                          ; no Step, Hoho, run, move slide or string chase in this form (Rukia's zero)
+  (field nil)                           ; the cold field (:r :away :step) round this fighter (Rukia's awakened bands)
+  (warm 0.0)                            ; a :temp meter's warming, cold per second while not guarding
+  (cold nil)                            ; plist command -> cold it spends (a :temp meter); L is refused without it
+  (frost-touch 0 :type fixnum)          ; frames of frost every real hit of this form sets
+  (reset-form nil)                      ; a Kikon / Soul Break reset puts the fighter in this form
+  (u-tag nil)                           ; the HUD's tag for what U does in the form (default by its passives)
+  (calm nil)                            ; the face never shouts in this form (a look: MAIN.LISP FACE-OF)
+  (l-after-k nil)                       ; L chained after a K link (docs/DUEL_STRINGS.md §12): T its L, or a move (a combo copy)
   (commands nil)                ; plist command -> move name
   (strings nil)                 ; ((from-move command to-move) ...)
   (moves (make-hash-table :test 'eq))   ; move name -> this form's MOVE
@@ -217,10 +229,26 @@ new button."
   "The string follow-up of MOVE-NAME for COMMAND (J1 -q-> J2, J2 -f-> K3 ...), a MOVE or NIL."
   (loop for (from cmd to) in (kit-strings kit)
         when (and (eq from move-name) (eq cmd command)) return (kit-move kit to)))
+(defun move-follows-p (kit mv next)
+  "Is move NEXT a continuation of move MV in KIT: its string follow-up for any button (a latched J / K link, a :land
+follow-up a hook starts: SP2's punch) or, after a link 3 (:ender), the O ender's rush? (The arm's pending burst waits
+through the whole chain: combat.lisp ARM-STEP.)"
+  (or (loop for (from nil to) in (kit-strings kit) thereis (and (eq from (mv-name mv)) (eq (kit-move kit to) next)))
+      (and (member :ender (mv-flags mv)) (eq (mv-kind next) :kikon) t)))
+
 (defun string-link-p (kit move-name)
   "Does MOVE-NAME go on as a J / K string (a :q or :f follow-up)? While it runs every J / K press is taken by the
 latch (STRING-LATCH); link 3 has none, so presses there are plain buffered presses (a new J1 after it)."
   (and (or (kit-next kit move-name :q) (kit-next kit move-name :f)) t))
+(defun kit-k-link-p (kit move-name)
+  "Is MOVE-NAME a K link of KIT's J / K strings: K1 (the :f command's move), or an :f follow-up (K2, K2s, K3)?"
+  (or (eq move-name (getf (kit-commands kit) :f))
+      (loop for (nil cmd to) in (kit-strings kit) thereis (and (eq cmd :f) (eq to move-name)))))
+(defun kit-l-link (kit move-name)
+  "The L link after K link MOVE-NAME (the kit's :l-after-k, docs/DUEL_STRINGS.md §12): the form's L (T) or the named
+combo copy of it, a MOVE; NIL when the form has none or MOVE-NAME is no K link."
+  (let ((l (kit-l-after-k kit)))
+    (and l (kit-k-link-p kit move-name) (if (eq l t) (kit-command-move kit :sig) (kit-move kit l)))))
 (defun string-latch (kit move-name command queued)
   "The latch (docs/DUEL_STRINGS.md §2.1, §2.3): a J / K press (COMMAND :q / :f) during string link MOVE-NAME, with
 QUEUED latched so far. The new latched command: COMMAND when the string may go on with it (the last press wins),
@@ -280,6 +308,7 @@ Cornered with LOST Konpaku."
                            body weapon stance hide aura intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
                            enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
                            kikon-konpaku meter-gain form-name drink-clip respect-callout bankai-form pips
+                           crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k calm
                            (startup-add 0) (reach-mult 1.0) commands strings grid)
         merged
       (declare (ignore grid))
@@ -295,6 +324,8 @@ Cornered with LOST Konpaku."
                            :kikon-konpaku (or kikon-konpaku (if awakening *kikon-konpaku-awakened* *kikon-konpaku*))
                            :meter-gain meter-gain :form-name (or form-name (symbol-name form)) :drink-clip drink-clip
                            :respect-callout respect-callout :bankai-form bankai-form :pips pips
+                           :crush-hook crush-hook :rooted rooted :field field :warm warm :cold cold
+                           :frost-touch frost-touch :reset-form reset-form :u-tag u-tag :l-after-k l-after-k :calm calm
                            :commands commands :strings strings :spec merged))
             (own (loop for (nil m) on (getf spec :commands) by #'cddr collect m)))
         ;; every move the form can reach. The derivation rule (design v2 §0): a move is as written when the
@@ -303,8 +334,9 @@ Cornered with LOST Konpaku."
         ;; with no derivation takes the parent's version of it (Nozarashi v2 §2.8: NOMIHOSE plays RYOTE's
         ;; derived moves, not the written ones)
         (dolist (m (remove-duplicates
-                    (append (loop for (nil m) on commands by #'cddr collect m)
-                            (loop for (from nil to) in strings collect from collect to))))
+                    (append (loop for (nil m) on commands by #'cddr when m collect m)   ; (a NIL command: none in this form)
+                            (loop for (from nil to) in strings collect from collect to)
+                            (and l-after-k (not (eq l-after-k t)) (list l-after-k)))))
           (let ((mv (find-move m)) (pmv (and parent (gethash m (kit-moves parent)))))
             (setf (gethash m (kit-moves kit))
                   (cond ((or (member m own) (not pmv)) mv)
@@ -360,6 +392,17 @@ child's keys win, :commands merge per command, :strings add. Keys:
   :pips (:n :cmds (cmd ...) :to FORM)  the arm meter (the kit meter holds the pips): each command in :cmds (and every
                                      latched K link) spends one on its frame 0 (refused at 0); at 0 the arm bursts to
                                      FORM (combat.lisp ARM-STEP)
+  :crush-hook SYMBOL                 a broken ward calls it instead of dropping to :drop-to (Rukia's CRACK)
+  :rooted T                          no Step / Hoho / run, no move slide or string chase   :reset-form FORM  the form
+                                     after a Kikon reset
+  :l-after-k T | MOVE                L latched during a K link (K1 / K2 / K2s / K3) starts when that link's chain opens
+                                     (its own contact, docs/DUEL_STRINGS.md §12): T the form's L, else MOVE, a combo copy
+  :calm T                            the face stays calm (no shout: a look, FACE-OF)
+  :u-tag STRING                      the HUD's tag for U   :meter (:name :max :temp t)  Rukia's cold gauge (combat.lisp
+                                     TEMP-STEP: the kit meter holds the cold C, the band is the form, rules TEMP-BAND)
+  :warm n  :cold (cmd n ...)         a :temp form's warming per second; the cold each command spends (L refused without)
+  :field (:r :away :step)            the cold field: the opponent within :r m moves away from her x :away, Steps away x :step
+  :frost-touch n                     every real hit of the form frosts n frames
   :blade (look power)                blade look drawn along the held weapon: (:fire 1.0) (:embers 1.0)
   :grade                             the world's grade while the form is on: NIL, or :SPOT (grey but the ember
                                      hue: the composite's spot-keep mode, main.lisp FORM-GRADE)

@@ -136,19 +136,20 @@ TIME's and the K.O.'s winner).")
   "Fighter E's expression this frame (docs/STYLE_STORM_DESIGN.md §2.5, Phase 5; a look, read from the state): a held
 face (MODEL-FACE-T) first; in a cinematic the attacker shouts and a Kikon's / Soul Break's / K.O.'s victim is hurt; hurt
 while stunned, airborne, down or lost; shouting through a non-Quick move from 10 f before its hit to 12 f after it (and
-through its charge, aura or dash phases)."
+through its charge, aura or dash phases). A :calm form (the white Rukia) never shouts."
   (let ((st (fighter-state f)))
     (cond ((> (model-face-t m) 0f0) (model-face m))
           ((eq st :cine)
            (let ((c *cine*))
              (cond ((null c) :neutral)
-                   ((eql e (cine-a c)) (if (member (cine-name c) '(intro-cine time-cine ko-cine)) :neutral :shout))
+                   ((eql e (cine-a c)) (if (or (kit-calm (fighter-kit f)) (member (cine-name c) '(intro-cine time-cine ko-cine)))
+                                           :neutral :shout))
                    ((member (cine-name c) *hurt-cines*) :hurt)
                    (t :neutral))))
           ((member st '(:stun :air :down :lose)) :hurt)
           ((and mv (eq st :move) (not (eq (mv-kind mv) :quick))
                 (or (not (eq (fighter-phase f) :main)) (<= (- (mv-s mv) 10) (fighter-sf f) (+ (mv-s mv) (mv-a mv) 12))))
-           :shout)
+           (if (kit-calm (fighter-kit f)) :neutral :shout))
           (t :neutral))))
 
 (defun face-beat (e face secs &optional head-back)
@@ -282,8 +283,10 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
                          ((and (eq look :charge) (not (eq (fighter-phase f) :main))) 1.5)
                          ((and mv (eq (mv-kind mv) :kikon) (eq (kit-aura kit) :oni)) 0.15)   ; the oni pillar smoulders in
                          (t 1.0))))                                                           ; his rush (its trail is the tell)
-      (when (and (eq (fighter-state f) :stun) (eq (fighter-phase f) :bind))   ; bound by South: ash drifting at the feet
-        (vfx-aura x y z (body-hurt-h b) :bound age rdt))
+      (if (plusp (fighter-frost f))                        ; frosted (Rukia's ice): the crust at his feet
+          (vfx-frost x z (/ (fighter-frost f) 60.0) rdt)
+          (when (and (eq (fighter-state f) :stun) (eq (fighter-phase f) :bind))   ; bound by South: ash drifting at the feet
+            (vfx-aura x y z (body-hurt-h b) :bound age rdt)))
       (when (gauges-evolution (gauges e)) (vfx-aura x y z (body-hurt-h b) :evolution age rdt :rgb *evolution-rgb* :k 0.5))
       (when (and mv (eq (mv-kind mv) :breaker))            ; the owner's colour over ink (§4 mapping)
         (let ((bk (case (first (kit-blade kit)) (:fire :breaker-fire) ((:embers :charcoal) :breaker-ember) (t :breaker))))
@@ -362,7 +365,7 @@ spot-keep mode 4, docs/STYLE_STORM_DESIGN.md §3.6) while the form is on. An imp
 of the screen (the stats take the left third); select: both fighters from the front. Portrait: see below."
   (landscape-lens)
   (case *flow*
-    ((:title :mode :controls) (let ((a (* 0.05 (elapsed-time))))
+    ((:title :mode :settings :controls) (let ((a (* 0.05 (elapsed-time))))
                                 (camera-look-at (* 11 (sin a)) 3.2 (* 11 (cos a)) 0 1.4 0)))
     (:results (let* ((w (if (eql *winner* 1) *p2* *p1*)) (p (pos-of w)) (yaw (yaw-of w))
                      (fx (fwd-x yaw)) (fz (fwd-z yaw)) (rx (- fz)) (rz fx))   ; his forward, his right

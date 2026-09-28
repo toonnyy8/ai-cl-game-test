@@ -29,13 +29,13 @@ measurements.
 | Rule | Value |
 |---|---|
 | Command | **P** (Awaken; KP+ / Back / LS+RS; the phone's AWAKEN chip, held 300 ms) |
-| Condition | form `:nomihose` (cup 3) **and** red (`red-p`, Reishi < 30 %) **and** free (`:idle` or `:guard`, DRINK included; not `:guard-hit`, not a move, not a run). No gauge. Pure rule `bankai-allowed-p (free red)`; the kit key `:bankai-form :bankai` exists only on `:nomihose` |
+| Condition | form `:nomihose` (cup 3) **and** ~~red (`red-p`, Reishi < 30 %)~~ **at most 4 of his own Konpaku left** (`*bankai-konpaku*` 4; the user's decision 2026-09-28, 「劍八的卍解條件從紅血改成在剩餘四魂以下」) **and** free (`:idle` or `:guard`, DRINK included; not `:guard-hit`, not a move, not a run). No gauge. Pure rule `bankai-allowed-p (free konpaku)`; the kit key `:bankai-form :bankai` exists only on `:nomihose` |
 | Once | structural: `:bankai` and `:kataude` have no `:bankai-form`, and there is no way back to cup 3 |
 | On entry | form `:bankai`; the kit meter becomes the arm: **4 pips** (`gauges-meter` 4, `gauges-meter-idle` 0 = the crack clock); ~~no heal~~ **his own Konpaku set to 1 and his Reishi refilled to full** (the user's decisions 2026-09-28, below); guard gauge, Reiatsu, flash-step, cooldowns untouched; NOME is gone (the meter slot now holds pips) |
 | Then | the cinematic (sim frozen), both fighters idle after it (as every awakening) |
-| Prevention (the opponent) | stay out of range until NOME drops under 50 (cup 3 lasts 5–10 s); or Kikon him first: he is red, so a Kikon rush hit held is a guaranteed Kikon |
+| Prevention (the opponent) | stay out of range until NOME drops under 50 (cup 3 lasts 5–10 s); or take his Konpaku first (with 4 or fewer left a Kikon or a Soul Break is close to the K.O. anyway) |
 
-### 1.2 Cinematic `ken-bankai-cine` (186 f, skippable; the review-3 pacing: long holds, few shots)
+### 1.2 Cinematic `ken-bankai-cine` (186 f, unskippable like every battle cinematic (DUEL_DESIGN §3); the review-3 pacing: long holds, few shots)
 | Shot | Frames | What | Canon source |
 |---|---|---|---|
 | beat 0 | 0–12 (12) | Kenpachi down on one knee, head bowed, the grin gone; ink-blood droplets; negative 2 f; silence | ch. 669: beaten, bleeding out [V] |
@@ -49,19 +49,37 @@ Clips: `:ke-release` (head down, from the Nozarashi awakening) held for beat 0; 
 primitives all exist (`card`, `back-rim`, `caption`, `impact-frame`, `lens`, `silence`, `hold-both`); new: a `:forest`
 card look (ink trunks, petals) and the child silhouette as a flat ink cut-out (Q3).
 
+### 1.3 Framing fix (2026-09-28): he stays in his own shots
+
+User report: 「劍八覺醒的毀魂技在準備揮刀的動畫看不到自己」, then 「劍八毀魂技無論常態還是始解卍解，在手持模式都有類似的運鏡問題」.
+In MAPPUTATSU's wind-up (the black card, f12–68) he was out of frame on a phone (390×844: only an arm and the blade at the
+edge) and at the frame's edge in landscape; the same on the phone in the Nozarashi sky split's card (f12–68) and at the
+end of the base Kikon's card, where the charge clip carries him forward.
+
+**Root cause**: `shot-on` aims at a scripted point (`:off` / `:ahead`, composed on 16:9), while the clips' root motion
+(the leap, the charge, the cleave: up to 1.4 m) carries the body away from his feet; and a portrait close-up keeps the
+script's narrow lens (the user's earlier decision: close-ups may crop the body), whose frame is only ~0.8 m wide at 4 m.
+**Fix** (render-side, every cinematic, both orientations): `shot-on` records its subject (`*cine-subject*`, cinema.lisp;
+`shot-pair` clears it) and `%keep-subject` (camera.lisp, after the portrait dolly) slides the eye and the aim sideways
+so his posed pelvis stays within `*cine-keep*` **0.55** (landscape) / `*pt-cine-keep*` **0.3** (portrait) of the frame's
+half-width at his depth. Nothing moves while he already is (so the approved compositions stay), close-ups still crop
+the body, the sim never reads the camera (G2 unchanged by it). Checked: Kenpachi's four Kikon / Soul Break cinematics
+(base, sky split, MAPPUTATSU; 片腕 reuses the base one) and the Bankai and Nozarashi entries, and Yamamoto's six
+cinematics in portrait: only Kenpachi's leap / charge shots had left the frame; Yamamoto's were already in shot.
+
 ## 2. The arm meter 「腕」 UDE
 
 | Rule | Value (knob) |
 |---|---|
 | Pips | **4** (`*arm-pips*`), shown in the kit meter slot |
-| What spends a pip | the start (frame 0) of every **K link** (K1 from neutral, K2 / K2s / K3 when the latch fires), **L**, **SP1**, **SP2**, **I** (the Breaker's aura frame), **O** (neutral rush and the O ender). Hit, block, whiff, clash or parried: spent all the same |
+| What spends a pip | **L**, **SP1**, **SP2**, **I** (the Breaker's aura frame) and the **neutral O**: one pip each, on frame 0. A **J / K string** with a K link or the O ender in it (K, KK, KKK, KJJ, JKK, JJK, JJJ + O …) costs **one pip in total**, owed from its first K link (or its O ender) and charged **once, when the string ends**: completed, broken off (a hit on him, a Burst), stopped by a whiff, or cancelled into an SP / L (which pays its own pip on top). The charge burns the Reishi self-cost and flashes the crack like any spend. Hit, block, whiff, clash or parried: charged all the same (the playtest decision 2026-09-28, §"Playtest decision" below) |
 | What doesn't | J links, Step, dash, Hoho, Burst Reverse, U (DRINK), P, the SP2 punch (part of SP2: a `:land` follow-up a hook starts) |
 | Self-cost | each spend burns **30** Reishi (`*arm-self*`; `burn`: never below 1, no gauges, no NOME, no heat) |
-| No pip left | a pip command is refused like a missing Reiatsu bar (`kit-command-ok-p`): a lower command may start instead; a latched K link doesn't start and the string ends at that link (the press is eaten, like the old button after a switch) |
+| No pip left | a pip command is refused like a missing Reiatsu bar (`kit-command-ok-p`): a lower command may start instead; a K link (K1 or a latched one) needs a pip available to start, else the string ends at that link (the press is eaten, like the old button after a switch). While a string owes its pip, an SP / L cancel out of it needs a second pip (the owed one is reserved); its O ender does not |
 | The crack | a pip cracks (−1, no self-cost) when **300 f** (`*arm-crack*`) pass without a spend; every spend or crack restarts the clock; the clock is paused while he is locked (`fighter-lock` > 0: the 48 f reset neutral) and while the sim is frozen (cinematics). Longest Bankai: 4 × 300 = 1200 f = **20 s** of play |
 | Burst trigger | pips reach 0 (a spend or a crack) → **pending**, remembering the move running at that moment (or none). It fires on the first frame he is not in that move, not in a reaction / blockstun / air / down / wake-up, and not in a Hoho. So the 4th strike always comes out in full, and a Kikon rush started earlier finishes |
 | Konpaku lost in Bankai | ~~a Kikon or Soul Break on him settles as usual, then the arm bursts quietly at the reset~~ **moot** (the user's decision 2026-09-28): he has 1 Konpaku, so any Kikon or Soul Break on him is the K.O. |
-| Strings | each K link is its own pip: JJK 1, KJJ 1, JKK 2, KKJ 2, KKK 3; JJJ 0. The O ender after link 3 is one more. So KKK + O = the whole arm in one combo |
+| Strings | **one pip per string**: JJK, KJJ, JKK, KKJ, KKK and any of them + the O ender cost 1; JJJ costs 0 (JJJ + the O ender 1). So the four pips are four strings, or strings and specials mixed (was: one per K link, KKK + O = the whole arm) |
 | DRINK | kept (cup 3's U, the `:drink` passive, existing code): a drunk hit costs half its damage for real (he is red: it can Soul Break him) and the guard value; the other half goes nowhere (the kit's `:meter-gain` is NIL). It never touches the pips |
 
 Rejected: "a drunk hit restarts the crack clock" (it would let the opponent's own pressure extend the Bankai past 20 s;
@@ -108,8 +126,9 @@ Notes:
   Knob: R 28 → 30 removes the guaranteed follow-up.
 - Budget check (§2.1): J1 8, J2 8, J3 9 (7–10 / 7–9 / 8–10), K1 17 (16–20; K1 − J1 = 9 ≥ 7), K2 20 / K3 21 (19–22, S_eff
   14), R and block advantages exactly the budget's. K2 / K3 combo after a J (A 3 + 14 = 17 ≤ 17) and a K (≤ 21).
-- Route damage on hit, ×1.2, before Cornered: JJJ 151, **JJK 271 (1 pip)**, KJJ 250 (1), KKJ 324 (2), JKK 346 (2),
-  **KKK 444 (3)**; + the O ender 76 (1 pip; as hit 4, ×0.9). Cup 3 for comparison: KKK ≈ 360 with its rift, JJK ≈ 246.
+- Route damage on hit, ×1.2, before Cornered: JJJ 151, **JJK 271 (1 pip)**, KJJ 250 (1), KKJ 324 (1), JKK 346 (1),
+  **KKK 444 (1)**; + the O ender 76 (inside the string's pip; the playtest decision 2026-09-28: one pip per string, was
+  1 per K link and 1 for the ender). Cup 3 for comparison: KKK ≈ 360 with its rift, JJK ≈ 246.
 - Blocked: J 8 each; K 28 / 28 / 36; KKK blocked = 92 (not a crush from full: the report's "raise the drain, never
   crush outright" rule), into West's ward ×1.1 = 101 (§10 M4).
 
@@ -219,10 +238,10 @@ rules run as today. Reason: the Bankai is a finisher; used at full-Reishi oppone
 ## 9. Balance
 
 **What he buys** (≤ 20 s, 4 pips):
-- per pip on hit, ×1.2: K1 144, K2 120, K3 180, the bite 144 + a guaranteed string, TATE-GOTO 312 (guard-breaking),
-  NAGURI-TOBASHI 210, O 76–84 or a Kikon 4; J links free (46 / 46 / 60).
+- per pip on hit, ×1.2: a whole K string (KKK 444, + the O ender), the bite 144 + a guaranteed string, TATE-GOTO 312
+  (guard-breaking), NAGURI-TOBASHI 210, a neutral O 76–84 or a Kikon 4; JJJ free (151).
 - the dream line: from an opponent at ≤ 60 % (≤ 780), K1 lands → KKK 444 → he is red → the O ender's follow-up is
-  unguardable → **Kikon 4**, with the burst hidden in the reset lock. That is 4 pips on one read.
+  unguardable → **Kikon 4**. One pip since the playtest decision (was 4 pips on one read).
 - pressure: blocked K links drain 28 / 28 / 36 and chip 20 %; the bite and TATE-GOTO beat guards; rend beats the
   mirror's stance and CHARGE armour.
 
@@ -352,7 +371,7 @@ exception, the muted crimson skin); DUEL_NOZARASHI_V2 a pointer.
 |---|---|
 | Body `:kenpachi-oni` | the same mesh; skin **muted crimson** (#9A4A42 / shade #7A3630, S ≤ 0.45: not a spot colour; hull ink unchanged); two short horns from the forehead hairline (cones in the skin colour, ink keyline, tag `:horns`); pupils white (**irisless**) in all three faces; the grin kept; four thin BLOOD-glow crack lines on the right forearm (`:crack-1..4`, shown one per spent pip); a torn right forearm (`:arm-wreck`: jagged skin shell, BLOOD strips, ink splits), shown only in 片腕 |
 | Weapon `:ke-broken` | the Nozarashi cleaver cut to ~1.15 m, the end snapped off on a diagonal (jagged wedge), no guard, a long cloth-wrapped tang like the first Zangetsu's hilt [A]; ink-black blade, a white edge highlight; no fire / glow |
-| Stance `:ke-b-stance` (new) | hunched forward, knees wide, the left hand open like a claw, the cleaver dragging low in the right, head down, shoulders rising on twos (the "beast-like stance") |
+| Stance `:ke-b-stance` (new; the feral pass 2026-09-28, below) | a deep forward-leaning crouch on bent, splayed legs, the back rounded, head low and thrust forward, the left hand a loose claw, the broken cleaver dragged behind him with its tip toward the floor; the back heaves (the "beast-like stance") |
 | `:ke-b-fist` (new) | J3 and SP2's punch: a left hook / straight from the hip, the whole body behind it, a 3 f hold on contact, the comet smear on the fist |
 | `:ke-b-bite` (new) | a low lunge, the left hand clamps, the head drives in, a jerk back with the teeth bared (the shout face), BLOOD spray on the tear |
 | Aura `:oni` | BLOOD tongues over taller INK tongues in a vertical pillar (×1.4 tall), BLOOD flecks rising, on twos; a smoulder (a few flecks) during his Kikon rush |
@@ -451,3 +470,88 @@ Read: with the entry rule the Bankai is **a gamble**, within the noise both ways
 +1 in YK, −2 in KK). Entering blindly, with many Konpaku left, is close to a suicide button against Yamamoto (−8,
 6 wins where 14 were there without it): the entry costs every Konpaku but one, which is the user's point. At the
 design's self-costs (30 / 60) the Bankai turned into a slight upgrade in YK (+5), so they were doubled with the refill.
+
+## The feral pass (the user's request 2026-09-28)
+
+> 劍八卍解的姿勢與動作更野性 (a beast-like oni)
+
+Art only: every move keeps its S / A / R, reach and hit volumes (the clips are timed by the same `defstrike` frames), and
+the sim never reads a clip, so the seed gate and G2 are untouched by it.
+
+| Item | Before | Now (`duel/lisp/ken-art.lisp`) |
+|---|---|---|
+| Stance / idle `:ke-b-stance` | hunched, knees a little bent, the cleaver held down in front | root −0.30, spine 40 + chest 16, head −58 (the eyes up), wide lead-leg crouch (thigh 62 / knee 84), the trailing leg back; the cleaver dragged behind, tip down; the idle heaves (chest, root, the claw flexing) |
+| Guard | the shared `:sh-guard` (upright) | `:ke-b-guard` / `:ke-b-guard-hit`: lower still, behind the raised left forearm, the broken blade flat across the body |
+| Walk / strafe | the shared `:sh-walk-*` / `:sh-strafe-*` | `:ke-b-walk-f/b`, `:ke-b-strafe-r/l`: the shared leg cycles sunk into the crouch (`oni-keys`: root −0.28, thighs +38, knees +60, spine +18) |
+| Run | the shoulder-rest set (`:ke-run` …) | `:ke-b-run`, `-skate-b`, `-slide-r/l`: the run legs under the crouch, bent double, the blade trailing (kit `:run-clips`) |
+| J3 / SP2 punch `:ke-b-fist` | a hook from the hip | coiled lower, springs out of the crouch, the hook with the whole body, the cleaver flung out behind |
+| L `:ke-b-bite` | a lunge from a crouch | down almost on all fours, then the lunge, the claw clamping, the head driving in |
+| O MAPPUTATSU rush | LEAP CLEAVE's `:ke-n-leap` | `:ke-b-leap`: dropped almost to all fours, then the spring, the broken cleaver swung up one-handed, the claw reaching ahead (`defmove-copy … :clip :ke-b-leap`) |
+| MAPPUTATSU cinematic wind-up | the sky split's `:ke-kikon-n` | `:ke-b-kikon` (same beat: the snap at 0.42 s = cine f68): sunk into the crouch, then rearing, back arched, the cleaver high over his head, the claw thrust out; one vertical crash lunging through |
+| Entry cinematic | `:ke-b-stance` from the burst | `:ke-b-roar` at the burst (rising out of the crouch, head back, arms flung wide, then the roar comes forward at the opponent for the f78 face close-up); the feral stance on the 卍解 card |
+
+The oni's own walk / guard are a body-level clip map (`body-variant … :clips`, `body-clips`, played by `play-clip`), so
+片腕, which keeps the oni body (Q4), prowls and guards the same way; 片腕 also takes the feral stance and run
+(`:stance :ke-b-stance :run-clips …`; it had the base `:ke-stance`, Built #13). New clips: 13, and the three Bankai clips redrawn (`tests/duel-rules-test.lisp`'s
+clip contract lists the five the kits use). Review stills: `tests/shots/duel-ken-feral-*.png` (before / after) and `tests/shots/duel-ken-cine-framing-*.png` (§1.3).
+
+## The entry at ≤ 4 Konpaku (the user's decision 2026-09-28)
+
+> 劍八的卍解條件從紅血改成在剩餘四魂以下
+
+P in cup 3 now needs **at most 4 of his own Konpaku** (`*bankai-konpaku*`), not red Reishi; everything else about the
+entry is unchanged (Konpaku → 1, Reishi → full, once a match). Callers: `bankai-ready-p` (combat.lisp: the HUD's P BANKAI
+prompt, the phone's AWAKEN chip), the P command (fighter.lisp), the CPU (`ai-reflex`); debug 2386+k caps his Konpaku at
+4. The CPU's rule is the same filter (nothing to lose, or the finisher with `:own-konpaku` 4, which the entry now
+implies), with one roll per cup-3 stay; it no longer needs to be red, so the refill can come at a high Reishi.
+
+**Measured** (the seed gate with the string chase of the same day, DUEL_STRINGS §11): YY 134.7 / YK **137.1** / KK **125.8 s**,
+60 / 60 K.O.; YK Yamamoto 10 / Kenpachi 10. Bankai entries: **YK 14** of 20 matches (the entrant won 7), **KK 19**
+(entrant won 6); with red (the chase alone): YK 0 / KK 3 (0 won); before both: YK 3 / KK 6 (0 of 9 won). The KK median sits at the floor's edge; the entry rule's `:p`
+(debug 37000+k) and `:own-konpaku` (38000+k) are the knobs if it goes under.
+
+## Playtest decision: one UDE pip per string (the user, 2026-09-28)
+
+「更木劍八卍解的 K 改成打完一套才扣腕」: a J / K **string** (K, KK, KKK then broken off, KJJ, JKK …, plus its O ender)
+costs **one** pip in total, not one per K link; per-K spending made K far too expensive. The pip, its Reishi self-cost and
+the crack flash are charged **once, when the string ends** (completed, broken off, or stopped by a whiff). A K link still
+needs a pip available to start (the B5 rule: at 0 pips the string can't start / continue a K link). Pure-J strings
+(JJJ) still cost nothing. L, SP1, SP2, I and the neutral O keep one pip per use.
+
+**Built (2026-09-28).** The gauges hold `arm-owed` (the string owes its pip). A K1 from neutral, a latched K link and
+the O ender set it instead of spending (`try-command`, `move-commands`); `arm-step` charges it (`arm-spend!`: the pip,
+`*arm-self*` burnt, the crack clock restarted, the `:arm-spend` crack flash) on the first frame he is not in a `:quick` /
+`:flash` link or the `:kikon` ender (rules `string-pip-due-p`, host-tested). A K link still needs one pip; while a pip is
+owed, any other pip command needs two (`kit-command-ok-p`), so an SP / L cancel can't run the string for free; the O
+ender is called with `ender` and needs one. The burst after the last pip is `:none`-pending, so it fires as soon as he is
+free (the string has already ended; a string cancelled into an SP / L charges with that move pending, so it comes out
+in full). The §2 table above is updated.
+
+**Fix: the last pip's move is cut by the burst (the user's report 2026-09-28).** 「劍八卍解後『腕』歸零的瞬間就會打斷當前
+的出招，導致最後一腕其實放不出來」. Reproduced with debug 2388 (the Bankai with 1 pip) and each pip command: L, SP1, I and
+the neutral O came out in full, but **SP2** did not: TATE-GOTO's partner NAGURI-TOBASHI (the charge's `:land`
+follow-up, started by the hook `ken-flurry`) is a different move, so `burst-due-p` saw "a later move" and fired on the
+punch's first frame. Before the one-pip-per-string change the same rule cut a **K string**: the pip spent on K2 was
+pending on K2, and the latched K3 (another move) triggered the burst. Root fix, in the one shared place (`arm-step`):
+the pending burst **follows the move's chain**: when the move running is a continuation of the pending one (its string
+follow-up for any button, a `:land` follow-up, or the O ender after a link 3: `move-follows-p` in kit.lisp), the pending
+move becomes that one, so the burst fires only when the whole chain is over; a new move of his own (J1 after the bite)
+is still cut. Host tests: `move-follows-p` on the Bankai's chains and the frame the burst fires for the last pip on L,
+SP1, SP2 (charge → punch), a K string + the O ender, and a new move after the bite. In game (debug 2388): SP2's punch
+now lands (150) and the burst fires after it. Measurements: the Rukia rework's gate, DUEL_RUKIA.md
+"Measurements (the cold gauge rework)".
+
+## Playtest decision: a see-through yellow reiatsu (the user, 2026-09-28)
+
+「劍八的黃色靈壓有辦法做成半透明嗎？不然三杯的時候真的有點擋視線」: Kenpachi's yellow reiatsu aura (cups 1–3, above
+all cup 3's pillar) is drawn semi-transparent so it no longer blocks the view (a render-only knob; docs/STYLE_STORM_DESIGN.md).
+The Bankai's red-and-black `:oni` aura is drawn see-through the same way (the user, 2026-09-28: 「劍八卍解的紅黑色靈壓也改成
+半透明的」).
+
+**Built (the `:oni` aura, 2026-09-28).** `vfx-aura :oni` (vfx.lisp) adds the glass level to both tongue sets through
+`*reiatsu-glass*`: the BLOOD tongues (and their white core lines, which take the same level) **2 / 4** of the MSAA samples,
+the taller INK tongues **3 / 4** (at 2 the black backing dithered into a grey smear against the dusk ground; at 3 it still
+reads black-and-red). The BLOOD flecks, the red light and the Bankai entry burst are unchanged; KATAUDE has no body aura.
+The same pillar in the Bankai entry cinematic is see-through too (one code path). The Kikon rush aura (`:kikon`) and every
+other fighter are untouched; RAVEN's G1 stills are byte-identical (no shader change) and the sim (G2) never reads it.
+Debug 71000 toggles every glass level off / on (before / after stills), 71004 puts human P1 Kenpachi in the Bankai.

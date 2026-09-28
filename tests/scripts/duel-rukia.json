@@ -1,0 +1,574 @@
+[
+{
+"at": 9.0,
+"key": "Enter",
+"down": true
+},
+{
+"at": 9.08,
+"key": "Enter",
+"down": false
+},
+{
+"at": 10.0,
+"key": "Enter",
+"down": true
+},
+{
+"at": 10.08,
+"key": "Enter",
+"down": false
+},
+{
+"at": 11.0,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 11.08,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 11.5,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 11.58,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 12.3,
+"shot": "tests/shots/duel-rukia-select.png"
+},
+{
+"at": 13.0,
+"eval": "Module._debug_cmd(2410)"
+},
+{
+"at": 13.1,
+"eval": "Module._debug_cmd(2109)"
+},
+{
+"at": 14.2,
+"shot": "tests/shots/duel-rukia-base-stance.png"
+},
+{
+"at": 14.5,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 14.56,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 14.8,
+"shot": "tests/shots/duel-rukia-tsukishiro-ring.png"
+},
+{
+"at": 15.14,
+"shot": "tests/shots/duel-rukia-tsukishiro-pillar.png"
+},
+{
+"at": 16.1,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 16.5,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 16.56,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 16.62,
+"shot": "tests/shots/duel-rukia-j1.png"
+},
+{
+"at": 17.4,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 17.7,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 17.76,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 17.99,
+"shot": "tests/shots/duel-rukia-k1.png"
+},
+{
+"at": 18.9,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 19.2,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.26,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.3,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.36,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.5,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.56,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.7,
+"shot": "tests/shots/duel-rukia-j3-spin.png"
+},
+{
+"at": 20.6,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 20.9,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 20.96,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 21.1,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 21.16,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 21.45,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 21.51,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 21.87,
+"shot": "tests/shots/duel-rukia-k3-drop.png"
+},
+{
+"at": 22.7,
+"eval": "Module._debug_cmd(2410)"
+},
+{
+"at": 22.75,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 23.1,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 23.12,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 23.9,
+"shot": "tests/shots/duel-rukia-hakuren-stab.png"
+},
+{
+"at": 24.2,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 24.22,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 24.55,
+"shot": "tests/shots/duel-rukia-hakuren-wave.png"
+},
+{
+"at": 25.5,
+"eval": "Module._debug_cmd(2410)"
+},
+{
+"at": 25.55,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 25.9,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 25.92,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 25.98,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 26.0,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 26.2,
+"shot": "tests/shots/duel-rukia-shirafune.png"
+},
+{
+"at": 27.2,
+"eval": "Module._debug_cmd(2411)"
+},
+{
+"at": 28.2,
+"shot": "tests/shots/duel-rukia-m18-stance.png"
+},
+{
+"at": 28.4,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 28.46,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 28.69,
+"shot": "tests/shots/duel-rukia-toshu.png"
+},
+{
+"at": 29.6,
+"eval": "Module._debug_cmd(2411)"
+},
+{
+"at": 29.9,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 29.96,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 30.1,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 30.16,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 30.45,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 30.51,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 30.9,
+"shot": "tests/shots/duel-rukia-hyoka.png"
+},
+{
+"at": 31.7,
+"eval": "Module._debug_cmd(2411)"
+},
+{
+"at": 32.1,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 32.16,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 32.3,
+"shot": "tests/shots/duel-rukia-hakka-pillar.png"
+},
+{
+"at": 32.6,
+"shot": "tests/shots/duel-rukia-hakka-lane.png"
+},
+{
+"at": 33.7,
+"eval": "Module._debug_cmd(2412)"
+},
+{
+"at": 34.7,
+"shot": "tests/shots/duel-rukia-m50-stance.png"
+},
+{
+"at": 34.8,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 34.86,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 35.0,
+"shot": "tests/shots/duel-rukia-hyoshin-tell.png"
+},
+{
+"at": 35.1,
+"shot": "tests/shots/duel-rukia-hyoshin.png"
+},
+{
+"at": 36.1,
+"eval": "Module._debug_cmd(2413)"
+},
+{
+"at": 36.35,
+"shot": "tests/shots/duel-rukia-zero-freeze.png"
+},
+{
+"at": 37.35,
+"shot": "tests/shots/duel-rukia-zero-stance.png"
+},
+{
+"at": 37.65,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 37.71,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 37.77,
+"shot": "tests/shots/duel-rukia-reido.png"
+},
+{
+"at": 38.85,
+"eval": "Module._debug_cmd(2415)"
+},
+{
+"at": 40.15,
+"shot": "tests/shots/duel-rukia-crack.png"
+},
+{
+"at": 40.55,
+"eval": "Module._debug_cmd(2109)"
+},
+{
+"at": 40.75,
+"eval": "Module._debug_cmd(40006)"
+},
+{
+"at": 42.05,
+"shot": "tests/shots/duel-rukia-cine0-006.png"
+},
+{
+"at": 42.15,
+"eval": "Module._debug_cmd(40040)"
+},
+{
+"at": 43.07,
+"shot": "tests/shots/duel-rukia-cine0-040.png"
+},
+{
+"at": 43.17,
+"eval": "Module._debug_cmd(40084)"
+},
+{
+"at": 44.25,
+"shot": "tests/shots/duel-rukia-cine0-084.png"
+},
+{
+"at": 44.35,
+"eval": "Module._debug_cmd(40114)"
+},
+{
+"at": 45.2,
+"shot": "tests/shots/duel-rukia-cine0-114.png"
+},
+{
+"at": 45.3,
+"eval": "Module._debug_cmd(40140)"
+},
+{
+"at": 46.08,
+"shot": "tests/shots/duel-rukia-cine0-140.png"
+},
+{
+"at": 46.18,
+"eval": "Module._debug_cmd(40160)"
+},
+{
+"at": 46.87,
+"shot": "tests/shots/duel-rukia-cine0-160.png"
+},
+{
+"at": 46.97,
+"eval": "Module._debug_cmd(40176)"
+},
+{
+"at": 47.58,
+"shot": "tests/shots/duel-rukia-cine0-176.png"
+},
+{
+"at": 48.18,
+"eval": "Module._debug_cmd(41006)"
+},
+{
+"at": 49.48,
+"shot": "tests/shots/duel-rukia-cine1-006.png"
+},
+{
+"at": 49.58,
+"eval": "Module._debug_cmd(41020)"
+},
+{
+"at": 50.17,
+"shot": "tests/shots/duel-rukia-cine1-020.png"
+},
+{
+"at": 50.27,
+"eval": "Module._debug_cmd(41026)"
+},
+{
+"at": 50.72,
+"shot": "tests/shots/duel-rukia-cine1-026.png"
+},
+{
+"at": 50.82,
+"eval": "Module._debug_cmd(41050)"
+},
+{
+"at": 51.57,
+"shot": "tests/shots/duel-rukia-cine1-050.png"
+},
+{
+"at": 51.67,
+"eval": "Module._debug_cmd(41100)"
+},
+{
+"at": 52.85,
+"shot": "tests/shots/duel-rukia-cine1-100.png"
+},
+{
+"at": 52.95,
+"eval": "Module._debug_cmd(41126)"
+},
+{
+"at": 53.73,
+"shot": "tests/shots/duel-rukia-cine1-126.png"
+},
+{
+"at": 53.83,
+"eval": "Module._debug_cmd(41146)"
+},
+{
+"at": 54.52,
+"shot": "tests/shots/duel-rukia-cine1-146.png"
+},
+{
+"at": 54.62,
+"eval": "Module._debug_cmd(41164)"
+},
+{
+"at": 55.27,
+"shot": "tests/shots/duel-rukia-cine1-164.png"
+},
+{
+"at": 55.37,
+"eval": "Module._debug_cmd(41186)"
+},
+{
+"at": 56.08,
+"shot": "tests/shots/duel-rukia-cine1-186.png"
+},
+{
+"at": 56.68,
+"eval": "Module._debug_cmd(42006)"
+},
+{
+"at": 57.98,
+"shot": "tests/shots/duel-rukia-cine2-006.png"
+},
+{
+"at": 58.08,
+"eval": "Module._debug_cmd(42024)"
+},
+{
+"at": 58.73,
+"shot": "tests/shots/duel-rukia-cine2-024.png"
+},
+{
+"at": 58.83,
+"eval": "Module._debug_cmd(42050)"
+},
+{
+"at": 59.62,
+"shot": "tests/shots/duel-rukia-cine2-050.png"
+},
+{
+"at": 59.72,
+"eval": "Module._debug_cmd(42080)"
+},
+{
+"at": 60.57,
+"shot": "tests/shots/duel-rukia-cine2-080.png"
+},
+{
+"at": 60.67,
+"eval": "Module._debug_cmd(42124)"
+},
+{
+"at": 61.75,
+"shot": "tests/shots/duel-rukia-cine2-124.png"
+},
+{
+"at": 62.35,
+"eval": "Module._debug_cmd(2107)"
+}
+]

@@ -219,12 +219,24 @@ recovery, e.g. the Breaker's 30) or R + *WHIFF-EXTRA*."
   (if contact r (or whiff (+ r *whiff-extra*))))
 
 (defun chain-open-p (sf s a r contact)
-  "May the next link of a string start at move frame SF? Only after CONTACT (the contact gate, docs/DUEL_STRINGS.md
-§2.2: a whiff, NIL, never chains). On :hit from the end of the active frames (the string combos); on :block only in
-the last *CHAIN-LEAD* frames of recovery, so a -2 link leaves a gap (Step / Hoho yes, J1 no)."
+  "May the next link of a string start at move frame SF? Only after CONTACT (the string gate, docs/DUEL_STRINGS.md
+§2.2): this link's own :hit / :block, or T when it is a follow-up link (an earlier link of the string touched him, so
+the string carries on even if this one whiffed); NIL (link 1 whiffed) never chains. On :hit from the end of the active
+frames (the string combos); otherwise (:block, or T) only in the last *CHAIN-LEAD* frames of recovery, so a -2 link
+leaves a gap (Step / Hoho yes, J1 no)."
   (let ((total (+ s a r)))
     (and contact (< sf total)
          (if (eq contact :hit) (>= sf (+ s a)) (>= sf (- total *chain-lead*))))))
+
+(defun string-chase-speed (d reach left)
+  "The follow-up link's chase (docs/DUEL_STRINGS.md §2.2): the speed (m/s, toward him) in its startup at distance D
+with LEFT frames to its hit, so it arrives *CHASE-MARGIN* inside its REACH (never nearer than *LUNGE-STOP*) exactly as
+the hit window opens: no faster than *CHASE-MAX*, 0 once he is that close. Each frame covers at most the gap left, so it
+never passes or overshoots him."
+  (let ((goal (max *lunge-stop* (- reach *chase-margin*))))
+    (if (and (> d goal) (> left 0))
+        (min *chase-max* (* 60.0 (/ (- d goal) left)))
+        0.0)))
 
 (defun cancel-open-p (sf hit-frame total landed)
   "On-hit cancel window (SP1 / SP2 / Hoho / a :cancel L from any J / K link, the O ender from a link-3 hit): the move
@@ -386,10 +398,11 @@ the victim's Reishi resets to max and both are placed by RESET-PLACEMENT."
   "Display value of a gauge that drains as a timer (Inferno in Hellfire, Awakening in a timed awakening)."
   (if (<= total-frames 0) 0.0 (* max (/ (float frames-left) total-frames))))
 
-(defun bankai-allowed-p (free red)
-  "Kenpachi's Bankai (docs/DUEL_KEN_BANKAI.md): P in a form with :bankai-form (cup 3), FREE (idle / guard: DRINK
-included) and RED. No gauge; once a match by construction (no later form has :bankai-form)."
-  (and free red t))
+(defun bankai-allowed-p (free konpaku)
+  "Kenpachi's Bankai (docs/DUEL_KEN_BANKAI.md §1.1): P in a form with :bankai-form (cup 3), FREE (idle / guard: DRINK
+included) with at most *BANKAI-KONPAKU* of his own KONPAKU left (the user's decision 2026-09-28; it was: red). No
+gauge; once a match by construction (no later form has :bankai-form)."
+  (and free (<= konpaku *bankai-konpaku*) t))
 
 ;;; ---------------------------------------------------------------- the arm meter UDE (Kenpachi's Bankai)
 (defun pip-spend (pips)
@@ -403,6 +416,12 @@ neutral); at *ARM-CRACK* a pip cracks by itself. Values: pips idle cracked-p."
         ((and (plusp pips) (>= (1+ idle) *arm-crack*)) (values (1- pips) 0 t))
         (t (values pips (min 9999 (1+ idle)) nil))))
 
+(defun string-pip-due-p (owed state kind)
+  "Is the pip a J / K string owes charged now (the playtest decision 2026-09-28: one pip per string, charged when it
+ends)? OWED: a K link or the O ender ran in it. It is charged once he is out of the string: anything but a move of KIND
+:quick / :flash (a link) or :kikon (the O ender; a neutral O can't start inside a string)."
+  (and owed (not (and (eq state :move) (member kind '(:quick :flash :kikon)))) t))
+
 (defun burst-due-p (pending current state)
   "Does the pending arm burst fire now? PENDING: the move running when the last pip went (:NONE = none; NIL = no
 burst pending). It waits while he is still in that move (the 4th strike comes out in full, a Kikon rush started
@@ -412,6 +431,65 @@ any later move is interrupted by it (a masher can't dodge it)."
        (not (member state '(:stun :guard-hit :air :down :wakeup :hoho :cine :intro :win :lose)))
        (not (and (eq state :move) (eq current pending)))
        t))
+
+;;; ---------------------------------------------------------------- Rukia (docs/DUEL_RUKIA.md): frost, the temperature
+(defun frost-next (cur n)
+  "The frost timer after a real hit that frosts N frames: max(CUR, N), capped at *FROST-CAP* (it never stacks)."
+  (min *frost-cap* (max cur n)))
+
+(defun frost-speed (speed frost)
+  "Walk / run SPEED of a fighter with FROST frames of frost left: x *FROST-SLOW* while it lasts."
+  (if (plusp frost) (* speed *frost-slow*) speed))
+
+(defun optic-p (ward optic ranged)
+  "Does a hit bypass the defender's ward (Rukia's absolute zero, passive :optic)? A RANGED hit (a hazard, a :ranged window
+beyond its :melee-range) on a WARD with OPTIC: it lands as on an open defender (the canon's optical loophole)."
+  (and ward optic ranged t))
+
+(defun temp-next (c guarding warm)
+  "Her cold C one frame later, clamped to 0 .. *COLD-MAX*: GUARDING (the GUARD HOLD test, or bracing at zero) cools her
+*RU-COOL-RATE* per second, else she warms WARM per second (the band's)."
+  (max 0.0 (min *cold-max* (if guarding (+ c (/ *ru-cool-rate* 60.0)) (- c (/ warm 60.0))))))
+
+(defun temp-band (c band)
+  "The band cold C asks for, from BAND (:m18 :m50 :zero): two stacked bars with hysteresis by bars (the user's decision
+2026-09-28). -18 -> -50 at C >= *COLD-BAR*; -50 -> -18 at C <= 0; -50 -> zero at C >= *COLD-MAX*; zero -> -50 at C <=
+*COLD-BAR* (several steps at once when C jumped)."
+  (ecase band
+    (:m18 (cond ((>= c *cold-max*) :zero) ((>= c *cold-bar*) :m50) (t :m18)))
+    (:m50 (cond ((>= c *cold-max*) :zero) ((<= c 0) :m18) (t :m50)))
+    (:zero (cond ((<= c 0) :m18) ((<= c *cold-bar*) :m50) (t :zero)))))
+
+(defun temp-band-at (c band state)
+  "The band after this step (the combo band lock, the user's decision 2026-09-28): while she is in a combo (any STATE but
+free: :idle :guard :run) BAND holds, so every link, the K -> L chain, the O ender and an SP cancel play the band the
+string began in; once free, the band cold C asks for (TEMP-BAND: several at once, -273 with C 0 -> -18)."
+  (if (member state '(:idle :guard :run)) (temp-band c band) band))
+
+(defun cold-ok-p (c cost combo)
+  "May a move costing COST cold start at cold C? Outside a combo only with the cost in hand; inside one (COMBO: a chained
+follow-up) on credit while any cold is left (the overdraft: C > 0, the spend clamps at 0)."
+  (or (>= c cost) (and combo (> c 0))))
+
+(defun temp-cool-frames (c)
+  "Frames of guarding from cold C to the next band's entry (a full bar)."
+  (ceiling (- (if (< c *cold-bar*) *cold-bar* *cold-max*) c) (/ *ru-cool-rate* 60.0)))
+
+(defun field-k (away frosted)
+  "The cold field's factor on the away part of a walk / run (already x*FROST-SLOW* when FROSTED): AWAY, but the two
+together never below *FIELD-FLOOR*."
+  (if frosted (max away (/ *field-floor* *frost-slow*)) away))
+
+(defun field-velocity (vx vz ux uz k)
+  "A walk / run velocity (VX VZ) inside her field: only its part along (UX UZ), the unit vector from her to him (moving
+away), is scaled by K; approaching and strafing are untouched. Values vx vz."
+  (let ((a (* (- 1.0 k) (max 0.0 (+ (* vx ux) (* vz uz))))))
+    (values (- vx (* a ux)) (- vz (* a uz)))))
+
+(defun field-step (dist toward s)
+  "A Step's DIST inside her field: TOWARD = cos of the angle between the hop and the way to her; a straight back Step x
+S, a diagonal one part of it, a side Step (TOWARD 0) or one toward her untouched."
+  (* dist (- 1.0 (* (- 1.0 s) (max 0.0 (- toward))))))
 
 (defun hoho-allowed-p (stunned fs lockout-left)
   "Hoho needs *FS-HOHO* flash-step (FS), no block/hitstun (STUNNED) and the *HOHO-LOCKOUT* over."
