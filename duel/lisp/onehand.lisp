@@ -228,6 +228,7 @@ at EVOLUTION or a Bankai ready), the ink ring under the thumb, and the recognise
     (when (touch-active-p tr)                              ; the floating stick: an ink ring at its origin
       (%ring (touch-ox tr) (touch-oy tr) (* d 48f0) (* 2f0 d) 1.0 1.0 1.0 (if (touch-resting-p tr) 0.35 0.6))
       (let ((m (and *p1* (kit-meter (kit-of *p1*)))))      ; Rukia: resting cools her: the frost arc = C / 200 (the two
+        (when (getf m :ring) (funcall (getf m :ring) *p1* (touch-ox tr) (touch-oy tr) d))   ; a character's own ring marks
         (when (getf m :temp)                                 ; bars round the ring, a notch at the half), grey in the THAW
           (let* ((g (gauges *p1*)) (k (/ (gauges-meter g) *cold-max*)) (lock (plusp (gauges-meter-idle g)))   ; lock;
                  (zero (eq (fighter-form (fighter *p1*)) :zero)) (r (* d 52f0)))                       ; white ring at zero

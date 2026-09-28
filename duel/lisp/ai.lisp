@@ -108,7 +108,8 @@ while: a charge move is held to its full charge from beyond 7 m, where it has th
       (case cmd
         (:q (ai-press b :quick 1))
         (:f (ai-press b :flash 1))
-        (:sig (ai-press b :sig (hold-for (kit-command-move kit :sig) 12 40)))
+        (:sig (ai-press b :sig (let ((h (getf (kit-ai kit) :sig-hold)))   ; a kit's own hold length (its :sig-hold function)
+                                 (if h (funcall h kit d) (hold-for (kit-command-move kit :sig) 12 40)))))
         ((:sp1 :sp1-full)                                 ; :sp1-full: a charge move held to its end
          (let ((mv (kit-command-move kit :sp1)))
            (ai-press b :flash (if (and mv (mv-hold mv) (or (eq cmd :sp1-full) (> d 7.0))) (+ 2 (second (mv-hold mv)))
@@ -259,6 +260,9 @@ D = the perceived distance."
             (< (brain-react-roll b) (getf *ai-follow-guard-p* (brain-difficulty b) 0.85)))
        (why b :anti-kikon :guard-long))
       ((not free) nil)
+      ;; a kit's own reflexes (its :reflex function), then the ones its opponent's kit asks of a CPU facing it (:opp-reflex)
+      ((let ((h (ai-table e :reflex))) (and h (funcall h e b s d))))
+      ((let ((h (getf (kit-ai (kit-of (opp-of e))) :opp-reflex))) (and h (funcall h e b s d))))
       ;; Bankai West's reversal: the ward just blocked a hit up close (no blockstun): SHONETSU JIGOKU (L) now and then
       ((let ((p (ai-table e :ward-reversal)))
          (and p (passive-p e :ward) (<= (- *match-tick* (fighter-warded f)) 1) (< (fighter-dist f) 3.0)

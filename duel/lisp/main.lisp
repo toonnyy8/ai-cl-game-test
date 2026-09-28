@@ -250,6 +250,7 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
                                               :tint (model-tint m)
                                               :rim (if (> (model-super m) 0) *super-rim* (model-rim m))
                                               :flash (if (> (model-flash m) 0) 0.45 0.0))))
+    (let ((h (kit-hook kit :draw))) (when h (funcall h e rdt)))   ; a character's own looks on the posed body (KIT-HOOK)
     (when (and mv (eq (mv-clip mv) :ya-sleeve) (eq (fighter-phase f) :main)   ; SODEBI: the empty left sleeve burns
                (< (- (mv-s mv) 4) (fighter-sf f) (+ (mv-s mv) (mv-a mv) 10)))
       (joint-point! *base* (model-joints m) (ji :lower-arm-l) 0f0 0f0 0f0)

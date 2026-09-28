@@ -9,7 +9,7 @@
 ;; the character files also hold their hook functions and cinematics: those need the engine, so the
 ;; host skips the cinematics (a no-op DEFCINE) and never calls a hook
 (defmacro duel::defcine (&rest r) (declare (ignore r)) nil)
-(dolist (f '("tuning" "rules" "kit" "yama" "ken" "rukia"))
+(dolist (f '("tuning" "rules" "kit" "yama" "ken" "rukia" "senjumaru"))
   (load (merge-pathnames (format nil "../duel/lisp/~a.lisp" f) *load-truename*)))
 (in-package :duel)
 
@@ -23,7 +23,9 @@
 (defparameter *forms* '((:yamamoto :base) (:yamamoto :hellfire) (:yamamoto :bankai-east) (:yamamoto :bankai-west)
                         (:kenpachi :base) (:kenpachi :nozarashi) (:kenpachi :ryote) (:kenpachi :nomihose)
                         (:kenpachi :bankai) (:kenpachi :kataude)
-                        (:rukia :base) (:rukia :m18) (:rukia :m50) (:rukia :zero)))
+                        (:rukia :base) (:rukia :m18) (:rukia :m50) (:rukia :zero)
+                        (:senjumaru :base) (:senjumaru :tsuji1) (:senjumaru :tsuji2) (:senjumaru :tsuji3) (:senjumaru :tsuji4)
+                        (:senjumaru :tsuji5) (:senjumaru :tsuji6)))
 
 ;;; ================================================================ the triangle / clash matrix
 (check (eq (resolve-contact :neutral) :hit))
@@ -668,7 +670,9 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :ke-b-leap :ke-b-run :ke-b-skate-b :ke-b-slide-r :ke-b-slide-l   ; its feral pass (2026-09-28; also 片腕)
     :ru-stance :ru-intro :ru-win :ru-q1 :ru-q2 :ru-spin :ru-thrust :ru-ring :ru-drop :ru-tsukishiro :ru-stab :ru-hakuren
     :ru-shirafune :ru-breaker :ru-hainawa :ru-cold-stance :ru-palm :ru-flower :ru-zero :ru-reido :ru-hakka   ; Rukia
-    :ru-palm-50 :ru-spin-50 :ru-flower-50 :ru-stab-2h))   ; her -50 key edits (zero's pinned J1 / K1 are body-variant clips)
+    :ru-palm-50 :ru-spin-50 :ru-flower-50 :ru-stab-2h   ; her -50 key edits (zero's pinned J1 / K1 are body-variant clips)
+    :sj-stance :sj-q1 :sj-q2 :sj-spin :sj-f1 :sj-f2 :sj-drop :sj-yank :sj-summon :sj-kasa :sj-breaker :sj-saidan :sj-intro
+    :sj-win :sj-loom-stance :sj-weave :sj-unravel :sj-tanmono :sj-makitori :sj-snip))   ; Senjumaru (:sj-awaken is the cine's)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
 ;; DEFCINEs, which the host stubs)
 (let ((used (remove-duplicates (loop for cf in *forms* append (kit-clips (apply #'kit cf))))))
@@ -678,8 +682,9 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 ;; phase 2: art names, roster, form looks, the flurry, hazard hits
 (check (equal (mapcar #'kit-weapon (mapcar (lambda (cf) (apply #'kit cf)) *forms*))
               '(:ryujin-jakka :ryujin-jakka :zanka :zanka :ken-katana :nozarashi :nozarashi :nozarashi :ke-broken :ke-broken
-                :sode-no-shirayuki :sode-no-shirayuki :ru-rime :ru-ice)))
-(check (equal *roster* '(:yamamoto :kenpachi :rukia)))
+                :sode-no-shirayuki :sode-no-shirayuki :ru-rime :ru-ice
+                :shigarami :shigarami :shigarami :shigarami :shigarami :shigarami :shigarami)))
+(check (equal *roster* '(:yamamoto :kenpachi :rukia :senjumaru)))
 (check (equal (kit-intro-weapon (kit :yamamoto :base)) '(:ya-cane 81)))              ; cane until 1.35 s
 (check (and (eq (kit-cine (kit :yamamoto :bankai-east)) 'yama-bankai-cine) (eq (kit-cine (kit :kenpachi :nozarashi)) 'ken-nozarashi-cine)
             (null (kit-cine (kit :yamamoto :hellfire)))))
@@ -1137,7 +1142,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
                 (>= (mv-reach lk) (getf (mv-params lk) :range))           ; no chase: the ring is cast at him
                 (equal (mv-callout ts) (mv-callout lk)) (member :bind (mv-flags lk))))
     (check (every (lambda (f) (eq (kit-l-link (kit :rukia f) :ru-k2) (kit-command-move (kit :rukia f) :sig))) '(:m18 :m50 :zero)))
-    (check (every (lambda (cf) (null (kit-l-after-k (apply #'kit cf)))) (remove :rukia *forms* :key #'first)))
+    (check (every (lambda (cf) (null (kit-l-after-k (apply #'kit cf)))) (remove-if (lambda (c) (member c '(:rukia :senjumaru))) *forms* :key #'first)))
     (check (every (lambda (f) (numberp (getf (kit-ai (kit :rukia f)) :l-after-k))) '(:base :m18 :m50 :zero)))))
 
 ;; the combo band lock with overdraft (the user's decision 2026-09-28): inside a combo the band holds whatever C does; L is
@@ -1153,11 +1158,89 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (eq :m50 (temp-band-at 150.0 :m50 :guard)) (eq :m18 (temp-band-at 0.0 :m50 :run))
               (eq :m18 (temp-band-at 10.0 :m18 :move)) (eq :zero (temp-band-at 200.0 :m18 :idle)))))
 
+;;; ================================================================ Senjumaru (docs/DUEL_SENJUMARU.md §10's host tests)
+(let ((b (kit :senjumaru :base)) (t1 (kit :senjumaru :tsuji1)) (t6 (kit :senjumaru :tsuji6)))
+  ;; the stitches: a hit sews 2, any other contact 1, a parry nothing, capped at 6; 179 idle frames keep them, the 180th
+  ;; drops one, then one per 30; a lock pauses the clock
+  (check (and (= 2 (hari-sew 0 :hit)) (= 2 (hari-sew 0 :counter)) (= 1 (hari-sew 0 :blocked)) (= 1 (hari-sew 0 :absorbed))
+              (= 1 (hari-sew 0 :armored)) (= 0 (hari-sew 0 :parried)) (= 0 (hari-sew 0 nil)) (= 6 (hari-sew 5 :hit))
+              (= 6 (hari-sew 6 :blocked))))
+  (flet ((run (n idle frames &optional locked)
+           (let ((fell 0)) (dotimes (i frames) (multiple-value-bind (n2 i2 f) (hari-step n idle locked) (setf n n2 idle i2) (when f (incf fell))))
+             (values n fell))))
+    (check (and (= 6 (run 6 0 179)) (= 5 (run 6 0 180)) (= 5 (run 6 0 209)) (= 4 (run 6 0 210)) (= 0 (run 6 0 330))
+                (= 1 (run 6 0 329)) (= 6 (run 6 0 400 t)) (= 0 (run 0 50 10)))))
+  (check (and (= 180 (hari-falls-in 3 0)) (= 1 (hari-falls-in 3 179)) (= 30 (hari-falls-in 3 180)) (= 1 (hari-falls-in 3 209))))
+  ;; 悪い癖: spikes from f10, 2 f apart, 10 each, unguardable, :spare; the last holds him to f38, she is free at f32: +6, no
+  ;; combo; the -k copy after a K link lands every spike inside the K link's stagger (A 4 + 8 + 2 x 5 = 22 < 26)
+  (let ((l (kit-command-move b :sig)) (lk (kit-l-link b :sj-k1)))
+    (check (and (eq :sj-warui-kuse (mv-name l)) (= 8 (mv-s l)) (= 32 (mv-total l)) (= 10 (getf (mv-params l) :first))
+                (= 6 (- (+ (getf (mv-params l) :first) (* *hari-gap* 5) *hari-last-stun*) (mv-total l)))
+                (eq :sj-warui-kuse-k (mv-name lk)) (= 6 (mv-s lk)) (= 8 (getf (mv-params lk) :first))
+                (< (+ 4 (getf (mv-params lk) :first) (* *hari-gap* 5)) (hitstun :stagger))
+                (>= (mv-reach lk) 9.0) (= 10 *hari-dmg*) (every (lambda (k) (kit-l-link b k)) '(:sj-k1 :sj-k2 :sj-k2s :sj-k3)))))
+  ;; the stitches pay: a hit JJJ is 6; blocked, the universal 24 / 46 of guard and 3 stitches either way
+  (check (= 6 (reduce #'hari-sew '(:hit :hit :hit) :initial-value 0)))
+  (check (= 3 (reduce #'hari-sew '(:blocked :blocked :blocked) :initial-value 0)))
+  ;; the Shikai's grid: the lightest (J1 28, KKK 184 on hit)
+  (check (and (= 28 (mv-dmg (kit-command-move b :q))) (= 184 (+ 60 (mv-dmg (mv :senjumaru :base :sj-k2)) (mv-dmg (mv :senjumaru :base :sj-k3))))
+              (= 92 (+ 28 28 36))))
+  ;; the soldier: 2 strikes, 300 f, 3.5 m/s (the user's decision), one stitch when it bursts; the umbrella: a guard over f4-27,
+  ;; the tendrils always fire, 40 + half the largest caught hit, at most 120, a side Step clears them (0.8 + 0.45 < 2.5)
+  (check (and (= 2 *shinpei-strikes*) (= 300 *shinpei-life*) (~= 3.5 *shinpei-speed*) (= 18 *shinpei-tell*)))
+  (let ((k (kit-command-move b :sp2)))
+    (check (and (member :shield (mv-flags k)) (= 4 (mv-s k)) (= 24 (mv-a k)) (eq 'senju-kasa-catch (getf (mv-params k) :catch))
+                (= 40 (kasa-damage 0)) (= 70 (kasa-damage 60)) (= 120 (kasa-damage 999)) (= 1 (kit-command-cost b :sp2))
+                (= 2 (kit-command-cost t1 :sp2)) (< (+ (* 0.5 (getf (mv-params k) :width)) 0.45) *step-distance*)
+                (member '(28 senju-kasa-fire) (mv-on-frame k) :test #'equal))))
+  ;; NUICHI: 7.7 m, <= 28 f; the Bankai's lane 8.5 m; Kikon 2 / 3, Soul Break 3 / 4
+  (let ((o (kit-command-move b :kikon)) (u (kit-command-move t1 :kikon)))
+    (flet ((pa (m k) (getf (mv-params m) k)))
+      (check (and (~= 7.7 (kikon-rush-reach (pa o :speed) (pa o :dash-max)) 0.05) (= 28 (+ (pa o :aura) (pa o :dash-max) (mv-s o)))
+                  (~= 8.5 (mv-reach u)) (= 2 (kit-kikon-konpaku b)) (= 3 (kit-kikon-konpaku t1)) (= 3 (kit-kikon-konpaku t6))
+                  (eq 'sj-kikon-cine (kit-kikon-cine b)) (eq 'sj-hata-cine (kit-kikon-cine t1))))))
+  ;; the loom: six forms in the fixed order, a release advances 1 -> 2 ... 6 -> 1; L held 20-60 (a pass per 20 f), the combo
+  ;; copy no hold, S 8, a follow-up with a 9 m reach (no chase); the skip is SP1 for a bar
+  (check (and (equal (loop for n from 1 to 6 collect (hank-next n)) '(2 3 4 5 6 1))
+              (equal (loop for n from 1 to 6 collect (form-hank (hank-form n))) '(1 2 3 4 5 6)) (null (form-hank :base))
+              (equal (mapcar #'weave-passes '(20 39 40 59 60 61)) '(1 1 2 2 3 3))))
+  (loop for n from 1 to 6
+        for k = (kit :senjumaru (hank-form n))
+        for l = (kit-command-move k :sig)
+        for lk = (kit-l-link k :sj-t-k1)
+        do (check (and (= n (getf (mv-params l) :hank)) (equal (mv-hold l) '(20 60)) (= 6 (mv-s l)) (member :bind (mv-flags l))
+                       (= n (getf (mv-params lk) :hank)) (null (mv-hold lk)) (= 8 (mv-s lk)) (getf (mv-params lk) :combo)
+                       (>= (mv-reach lk) 9.0) (eq :sj-tachinaoshi (mv-name (kit-command-move k :sp1)))
+                       (= 1 (kit-command-cost k :sp1)) (kit-awakening k) (zerop (kit-heal k))
+                       (zerop (mv-cooldown l)))))                 ; (no COOLDOWN row: the torn lock is L's timer)
+  ;; the combo cut: L after a K link hits before the K link's stagger ends (A 4 + S 8 + unfold 10 = 22 < 26)
+  (check (< (+ 4 8 *unfold-combo*) (hitstun :stagger)))
+  ;; the weave's scaling: radius, life, damage never smaller with more passes; every disc's full radius + Kenpachi's hurt r
+  ;; < a Step; the corridor's half-width too; the rings with no hit (眼 3.0, 星 3.5) are free of the rule
+  (loop for n in '(2 3 4) do (check (< (+ (hank-radius n 3) 0.45) *step-distance*)))
+  (check (< (+ (* 0.5 (hank 5 :width)) 0.45) *step-distance*))
+  (loop for n from 1 to 6
+        do (check (loop for p from 1 below 3
+                        always (and (or (not (hank n :r)) (<= (hank-radius n p) (hank-radius n (1+ p))))
+                                    (or (not (hank n :life)) (<= (hank-life n p) (hank-life n (1+ p))))
+                                    (or (not (hank n :dmg)) (<= (hank-damage n p) (hank-damage n (1+ p))))))))
+  (check (and (= 90 (hank-damage 2 3)) (= 72 (hank-damage 2 1)) (= 240 (hank-life 1 3)) (= 120 (hank-life 1 1))
+              (~= 2.4 (hank-radius 1 1)) (null (hank 1 :dmg)) (null (hank 6 :dmg))))
+  ;; the awakened grid: J1 J2 J3 K2 derived at x1.15, K1 4.2 m, MAKITORI 2.8 m with its pull to 1.4
+  (check (and (~= (* 1.15 2.4) (mv-reach (kit-command-move t1 :q))) (~= (* 1.15 2.8) (mv-reach (kit-next t1 :sj-j1 :f)))
+              (~= 4.2 (mv-reach (kit-command-move t1 :f))) (~= 2.8 (mv-reach (kit-next t1 :sj-k2 :f)))
+              (~= 1.4 (getf (mv-params (kit-next t1 :sj-k2 :f)) :pull)) (~= 3.3 (kit-walk t1)) (~= 3.6 (kit-walk b))))
+  ;; the CPU: the rule's keys, the loom's hold by distance (星 closer), the Shikai taps L
+  (check (and (equal (getf (kit-ai b) :awaken-rule) '(:ranged-share 0.3 :min-taken 150 :or-opp-rooted t))
+              (= 62 (senju-sig-hold t1 7.0)) (= 42 (senju-sig-hold t1 5.0)) (= 22 (senju-sig-hold t1 3.0))
+              (= 62 (senju-sig-hold t6 5.5)) (= 42 (senju-sig-hold t6 3.0)) (= 1 (senju-sig-hold b 3.0))
+              (~= 0.5 (getf (kit-ai t6) :opp-rush-hold)) (null (kit-reset-form t1)) (eq :base (kit-reset-form b)))))
+
 ;; no character names in the generic files (design-v1 §12)
 (dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow"))
   (with-open-file (in (merge-pathnames (format nil "../duel/lisp/~a.lisp" f) *load-truename*))
     (check (loop for line = (read-line in nil) while line
-                 never (some (lambda (w) (search w line)) '(":ya-" ":ke-" ":ru-" "yama" "kenpachi" "rukia"))))))
+                 never (some (lambda (w) (search w line)) '(":ya-" ":ke-" ":ru-" ":sj-" "yama" "kenpachi" "rukia" "senju"))))))
 
 (format t "duel-rules-test: ~d checks, ~a~%" *checks*
         (if (zerop *fails*) "ALL PASS" (format nil "~d FAILED" *fails*)))

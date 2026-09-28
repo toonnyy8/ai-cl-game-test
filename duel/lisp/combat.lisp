@@ -183,7 +183,8 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                (combo-step (if follow :stagger (hw-react hw)) (eq (fighter-state fd) :air) (fighter-combo-hits fd)
                            (fighter-combo-launches fd) (fighter-combo-air fd))
              (setf (fighter-combo-hits fd) hits (fighter-combo-launches fd) launches (fighter-combo-air fd) air)
-             (let* ((dmg (hit-damage base atk dmods hits (eq res :counter)))
+             (let* ((dmg (let ((d (hit-damage base atk dmods hits (eq res :counter))))   ; :spare never takes the last point
+                           (if (member :spare flags) (min d (max 0 (1- (gauges-reishi (gauges def))))) d)))
                     (stun (cond (follow (kikon-follow-stun red (mv-s mv)))
                                 ((and (hw-stun hw) (eq react (hw-react hw))) (hw-stun hw))   ; (a bind in a combo: a flinch)
                                 (t (hitstun react (eq res :counter)))))
@@ -195,7 +196,8 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                (add-meter att (hw-meter hw))
                (hitstop (hw-hs hw))
                (emit :hit att def x y z (hw-hs hw) (eq res :counter) dmg
-                     (cond ((member :ice flags) :ice) ((eq react :bind) :bind) (hazard :fire) (mv (mv-kind mv)) (t :counter)))
+                     (cond ((member :ice flags) :ice) ((eq react :bind) :bind) ((member :thread flags) :quick) (hazard :fire)
+                           (mv (mv-kind mv)) (t :counter)))
                (unless (deal-damage att def dmg)          ; (a broken soul crumples in its cinematic)
                  (set-reaction def react stun sx sz (if follow *kikon-follow-kb* (hw-kb hw))))
                (when (and follow own)                     ; the rush dashes in, then strikes again (KIKON-RUSH-STEP)
@@ -231,16 +233,18 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                                                         ; the ward (Bankai West): x*WARD-MULT* of the gauge, no blockstun;
                                                         ; East's pierce: k x the hit goes through (chip)
            (let* ((drink (passive-p def :drink))
+                  (catch (and ranged (fighter-move fd) (getf (mv-params (fighter-move fd)) :catch)))   ; a :shield move's catch
                   (adv (let ((a (if (and mv (integerp (mv-adv-block mv))) (mv-adv-block mv) 0))) (if (and drink mv) (drink-adv a) a)))
                   (stun (if mv (blockstun (mv-total mv) (fighter-sf fa) adv) *hazard-blockstun*))
                   (v (let* ((v0 (or (hw-guard hw) *gg-hazard*)) (v1 (if (and mv (passive-p att :cut)) (cut-value v0 (mv-kind mv)) v0)))
                        (if ward (* *ward-mult* v1) v1)))
                   (pierce (and (plusp k) k))
-                  (chip (if (passive-p def :chipless)       ; Rukia awakened: no chip on her
+                  (chip (if (or catch (passive-p def :chipless))   ; Rukia awakened: no chip on her
                             0
                             (chip-damage base (if drink pierce (or (hw-chip hw) (and mv (kit-blade-chip (kit-of att))) pierce))
                                          (gauges-reishi (gauges def))))))
-             (cond ((drain-guard def v)
+             (cond (catch (funcall catch def base) (hitstop *hitstop-block*) (emit :blocked att def x y z))   ; no gauge, no stun
+                   ((drain-guard def v)
                     (ward-drop def)
                     (set-reaction def :guard-break *guard-crush-stun* sx sz *block-pushback*)
                     (hitstop *hitstop-breaker*)
@@ -274,6 +278,8 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
            (set-reaction def :crumple *stance-break-stun* sx sz *stance-break-kb*)
            (hitstop *hitstop-breaker*)
            (emit :stance-break att def x y z)))
+        (let ((h (kit-hook (kit-of att) :hit))) (when h (funcall h att def res hw mv hazard ranged)))   ; a character's
+        (let ((h (kit-hook (kit-of def) :struck))) (when h (funcall h def att res hw mv hazard ranged)))   ; own hit rules
         (when (and first (mv-on-land mv) (not *cine*)) (funcall (mv-on-land mv) att)))
       res)))
 
@@ -640,6 +646,7 @@ delay counter (frozen): West never refills."
             (set-form e (kit-inherit kit)))))
       (when (kit-pips kit) (arm-step e f g))
       (when (getf (kit-meter kit) :temp) (temp-step e f g kit))
+      (let ((h (kit-hook kit :step))) (when h (funcall h e f g)))   ; a character's own meter (KIT-HOOK)
       (let ((m (kit-meter kit)))
         (when (getf m :ladder) (nome-step e f g m))
         (when (and m (zerop (gauges-form-left g)) (>= (gauges-meter g) (getf m :max)) (getf m :full-form))

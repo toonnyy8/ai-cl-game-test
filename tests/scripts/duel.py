@@ -2,6 +2,7 @@
 #   python3 tests/scripts/duel.py            (writes tests/scripts/duel-*.json)
 #   node tools/run.mjs dist/duel --secs 60  --script tests/scripts/duel-cvc-yk.json   seeded CPU vs CPU -> RESULTS
 #   node tools/run.mjs dist/duel --secs 1100 --script tests/scripts/duel-gate.json    20 seeds x YY/YK/KK: "duel gate" lines
+#     (2113 now plays all ten pairings incl. Senjumaru's SY SK SR SS: better one run per pairing with 2125+k, k 0-9, --secs 1500)
 #     (+ the combat log: 2107 turns it back on after the gate starts; scratchpad pt/attr.py-style analysers read it)
 #   node tools/run.mjs dist/duel --secs 20  --script tests/scripts/duel-probe.json    frame probes: "duel probe ... advantage
 #     A (table A)" for blocked Q1 / Q3 / F2 / Taimatsu (must be equal), then a mirror Q1 trade (same Reishi both sides)

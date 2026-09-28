@@ -1,7 +1,8 @@
 # SOUL DUEL — Game Design (as built)
 
-A 1v1 3D arena fighter modelled on *BLEACH: Rebirth of Souls* (RoS): three TYBW characters, Yamamoto Genryusai,
-Zaraki Kenpachi and Kuchiki Rukia (added 2026-09-28, DUEL_RUKIA.md), human or CPU on either side. It is the second game on the engine
+A 1v1 3D arena fighter modelled on *BLEACH: Rebirth of Souls* (RoS): four TYBW characters, Yamamoto Genryusai,
+Zaraki Kenpachi, Kuchiki Rukia (added 2026-09-28, DUEL_RUKIA.md) and Shutara Senjumaru (added 2026-09-29,
+DUEL_SENJUMARU.md), human or CPU on either side. It is the second game on the engine
 (`duel/`, package `DUEL`, `./build.sh duel` → `dist/duel`). How to build, play and test it:
 `DUEL_GAMEPLAY.md`. Why it looks the way it does and what it taught the engine: DEVLOG §14.
 
@@ -9,7 +10,7 @@ This document describes the game **as built**. It started as the design contract
 any code (design v1, reconciled from a lead's draft and two critiques); every later change is
 folded in, and §12 lists what changed and why. Every number lives in code: shared knobs in
 `duel/lisp/tuning.lisp`, per-move frame data with the moves in `duel/lisp/yama.lisp`,
-`duel/lisp/ken.lisp` and `duel/lisp/rukia.lisp`, pure rules in `duel/lisp/rules.lisp`. When this file and the code disagree,
+`duel/lisp/ken.lisp`, `duel/lisp/rukia.lisp` and `duel/lisp/senjumaru.lisp` (her knobs at its top), pure rules in `duel/lisp/rules.lisp`. When this file and the code disagree,
 the code wins; the host test `tests/duel-rules-test.lisp` checks the move tables below.
 
 > **Fan study.** SOUL DUEL is a non-commercial fan study. The BLEACH characters, move and place
@@ -27,7 +28,7 @@ the code wins; the host test `tests/duel-rules-test.lisp` checks the move tables
   move frame 0 is its first frame, so it hits on frames S .. S+A−1.
 - Metres, y up, yaw 0 faces −Z (the engine's conventions). Reishi is an integer; gauges are floats.
 - Hit volumes are gameplay shapes in the attacker's frame (`:arc r deg`, `:cap a b h r`), not the
-  animated blade. Hurt cylinders: Yamamoto r 0.36 m / h 1.65 m, Kenpachi 0.45 / 2.0, Rukia 0.34 / 1.5.
+  animated blade. Hurt cylinders: Yamamoto r 0.36 m / h 1.65 m, Kenpachi 0.45 / 2.0, Rukia 0.34 / 1.5, Senjumaru 0.36 / 1.7.
 
 ## 1. How RoS maps onto SOUL DUEL
 
@@ -581,6 +582,8 @@ LEAP CLEAVE off RYOTE's K3 at 4.2 m: 9 f of leap + S 11 inside the crumple's 40)
 | LEAP CLEAVE `:ke-kikon-n` | Nozarashi (every cup; worth 2 / 3 / 4) | 8 | 18 m/s ≤ 30 f, locked | 10.6 m, ≤ 49 f | 11/3/24 | 3.08 m arc 160° | 30 | the widest strike; a DUST ring at take-off, the body drawn up to 1.6 m high (`:lift`, a look), a 3 m gash where it lands |
 | ENBU `:ru-kikon` | Rukia's Shikai (worth 2) | 6 | 24 m/s ≤ 16 f, locked | 8 m, ≤ 30 f | 8/3/24 | 2.4 m arc 360° | 30 | a flash step (TENCHI's afterimages) into MAI-SODE's pirouette; the Kikon 初の舞・月白 |
 | 白霞罸 HAKKA `:ru-hakka` | Rukia's awakened forms (worth 3) | 8 | none | 7.5 m | 20/3/30, locked | lane `:cap 0.5→7.5 h 1.2 r 1.2` | 30 | ENJO's shape in ice: a white pillar at her (f4), a sheet of ice along the lane (f20), frost 120 |
+| NUICHI `:sj-kikon` | Senjumaru's Shikai (worth 2) | 6 | 26 m/s ≤ 14 f, locked | 7.7 m, ≤ 28 f | 8/3/24 | 2.4 m arc 200° | 30 | a flash step (TENCHI's afterimages) into the six-armed whirl; it sews (+2 / +1); the Kikon 仕立て直し |
+| UKIMON NO HATA `:sj-t-kikon` | Senjumaru's Bankai (worth 3) | 8 | none | 8.5 m | 20/3/30, locked | lane `:cap 0.5→8.5 h 1.2 r 1.2` | 30 | ENJO's shape: the red carpet rolls along the lane (f4), a glide in after it (`:follow-speed` 14); the Kikon 死出六色浮文機 |
 | MAPPUTATSU `:ke-b-kikon` | Kenpachi's Bankai (worth 4) | LEAP CLEAVE's, copied (`defmove-copy` with override keys: its own callout and cinematic) | | | | | | a pip of the arm; the Bankai's aura smoulders during it |
 
 ### 6.4 Kuchiki Rukia (`duel/lisp/rukia.lisp`, art `rukia-art.lisp`; the full design and the as-built deviations: DUEL_RUKIA.md)
@@ -607,6 +610,30 @@ chosen exit: spending, warming or the forced **CRACK** (the ward crushed or brok
 30 f crumple, 2 s of no cooling). The white look (zero and the 白霞罸 costume) has ice-blue keylines and brows (a per-body
 ink). Kikon cinematics: 初の舞・月白 (Konpaku 2), 卍解 白霞罸 (3); the awakening `ru-awaken-cine`. The Shikai ×1.5 dealt /
 ×0.8 taken.
+
+### 6.5 Shutara Senjumaru (`duel/lisp/senjumaru.lisp`, art `senjumaru-art.lisp`; the full design and the as-built deviations: DUEL_SENJUMARU.md)
+
+The Zero Division's Great Weave Guard: 158 cm on tall okobo, a white haori over a white over-robe, a gold crescent with
+rays, six gold bone arms (the rig's two + four drawn "echo arms" repeating every motion 2 / 4 f late; `:senjumaru` body,
+scale 0.88, the head ×1.3). **Shikai 刺絡 SHIGARAMI** `:base`: the lightest strings in the game (J1 28), but every contact of
+her J / K / O window **sews stitches** into his clothes (+2 a hit, +1 any other contact, 6 at most; the kit meter holds the
+count, 針 HARI; after 180 f without a new one they fall out one per 30 f). L 悪い癖 WARUI KUSE (refused at 0) pulls them all:
+one spike per stitch from f10, 2 f apart, 10 each, **unguardable, `:spare`** (never the last Reishi point: no Soul Break),
+stuck to him (a Hoho in the yank is perfect); after a K link its combo copy (S 6) lands inside the stagger. SP1 神兵
+SHINPEI: a Divine Soldier walks the line to him (3.5 m/s), winds up 18 f, thrusts (50, guarded facing her), twice at most;
+any of his windows or hazards kills it and it sews one stitch into him. SP2 傘 KASA: f4–27 a guard for melee, a **catch**
+for hazards and ranged hits (no stun, no gauge), then the tendrils always fire (40 + half the largest caught hit, ≤ 120).
+O 縫地 NUICHI (§6.3). **The Bankai 娑闥迦羅骸刺絡辻 SHIGARAMI NO TSUJI** (no heal) is six hank forms `:tsuji1`–`:tsuji6` in a
+fixed public order (the form is the hank the loom unravels next, 機 HATA on the HUD): L held weaves (20–60 f, 1–3 passes:
+radius ×0.8 / 0.9 / 1.0, life ×0.5 / 0.75 / 1.0, damage ×0.8 / 0.9 / 1.0), released it unfolds a zone under him (20 f,
+fragile: a hit on her during the weave or the unfold **tears** it, the hank lost, L locked 90 f), one live at a time;
+L after a K link cuts the live zone and unfolds the next in 10 f (a combo). 眼 reflects his waves / fireballs inside a
+3 m ring (his melee on her there costs him 30 %), 刃金 closes once (90, crumple, guard 24), 黒砂 drags his walk away and
+gulps 1–3 times, 褥 freezes him once (70, 40 f), 焼野原 a burning 2 m corridor from her to him (2 × 45, chip), 星 a 3.5 m
+dome round her draining his Reiatsu 30 / s and flash-step 15 / s. SP1 裁ち直し skips the next hank; J / K derived at reach
+×1.15 plus K1 TANMONO-UCHI (4.2 m) and K3 MAKITORI (pulls him to 1.4 m); walk 3.3. Kikon cinematics 仕立て直し (2),
+死出六色浮文機 (3); the awakening `sj-tsuji-cine`. Her rules live in her files behind the generic hook points listed in
+DUEL_SENJUMARU.md "Built".
 
 ## 7. CPU AI (`duel/lisp/ai.lisp`: generic; identity = the kit's `:ai` table)
 
@@ -725,7 +752,10 @@ much faster than CPU vs CPU; the user's decision 2026-09-26), every match by K.O
 near even (YK within ±3 of 10 / 10; a 20-match win count carries about ±2 of noise). **Latest (the Soul Break rule and
 Kenpachi's Bankai, the user's decisions 2026-09-27 / 28, DUEL_KEN_BANKAI.md): YY 131.8 s (99.7–165.1), YK 138.4 s
 (98.1–200.9), KK 131.5 s (97.4–174.2)**, 60/60 K.O.; wins YY 9 / 11, **YK Yamamoto 8 / Kenpachi 12**, KK 7 / 13
-(Bankai entries: 3 in YK, 6 in KK). **Latest (2026-09-28: Rukia's cold-gauge rework, Kenpachi's one pip per string,
+(Bankai entries: 3 in YK, 6 in KK). **Latest (2026-09-29: Senjumaru, debug 2125+k, all ten pairings; the six older ones
+unchanged): SY 143.2 (Senjumaru 10 / 20), SK 144.4 (11), SR 173.7 (14), SS 195.3 s (P1 7)**, 200/200 K.O.; her awakening
+A/B on three seed streams (DUEL_SENJUMARU.md): "never awaken" wins ≥ 22 of 60 against every opponent on every stream (the
+user's criterion 2026-09-28: the awakening may be stronger as long as it isn't unbeatable). **Before it (2026-09-28: Rukia's cold-gauge rework, Kenpachi's one pip per string,
 South without a cooldown; debug 2113, all six pairings): YY 134.7, YK 136.2 (Yamamoto 12 / 20), KK 131.2, RY 135.6
 (Rukia 11 / 20), RK 148.1 (Rukia 13 / 20), RR 183.1 s (P1 8 / 20)**, 120/120 K.O.; her awakening A/B (60 seeds, P1 always /
 never): RY 30 / 28, RK 35 / 32, RR 26 / 27 (DUEL_RUKIA.md, "Measurements (the cold gauge rework)"). **Before it (Rukia
@@ -878,6 +908,9 @@ the Bankai were held +30 f; the sim is frozen during a cinematic, so only match 
 | 初の舞・月白 `ru-kikon-cine` | — | — | **186** | Rukia's Shikai Kikon (DUEL_RUKIA.md §5.1) |
 | 白霞罸 `ru-hakka-cine` | — | — | **198** | her awakened Kikon (§5.2): the pillar, the Bankai kimono, the hand close-up |
 | 絶対零度 `ru-awaken-cine` | — | — | **132** | her awakening (§6) |
+| 仕立て直し `sj-kikon-cine` | — | — | **186** | Senjumaru's Shikai Kikon (DUEL_SENJUMARU.md §5.1): threads pin him, the black card, the tailoring, the knot, the needles burst |
+| 死出六色浮文機 `sj-hata-cine` | — | — | **198** | her Bankai's Kikon (§5.2): the wrap in the next hank's dye, the loom, the shears, the hanging bolt |
+| 娑闥迦羅骸刺絡辻 `sj-tsuji-cine` | — | — | **180** | her awakening (§6): three candles, the torii, the loom and carpet, the 卍解 card |
 | Soul Break / intro / K.O. / TIME | 96 / 300 / 150 / 120 | unchanged | unchanged | a Soul Break now plays the attacker's Kikon cinematic (§2); `soul-break-cine` is the fallback |
 
 **Audio** (`sounds.lisp`): 51 synthesized sounds (Rukia added five: frost tick, freeze, ice rise, ice shatter, hand
@@ -967,6 +1000,7 @@ batch: §4, §6.1, §6.2, §12):
 | Strings' pacing | — | K2 / K3 at 80 % of the design's damage, the CPU's string K 0.3, O ender 0.15, SP cancel 0.3 (one roll), J beats K felt at once | The seed gate (DUEL_STRINGS §9, §10): as designed the medians fell to 107 / 119 / 122 s, under the 125 s floor |
 | Soul Break | the form's count + 1 (per-event cap 4), the generic `soul-break-cine` | the **attacker's current form's** count + 1, **cap 5 for Soul Breaks only** (a Kikon stays at 4), and the **attacker's Kikon cinematic** (`kit-kikon-cine`) | **The user's decisions 2026-09-27** (with the research report's answers) |
 | Kenpachi's second awakening | none: one awakening per match | **the Bankai** from cup 3 (P with ≤ 4 of his own Konpaku; it was red + P): Konpaku → 1, Reishi → full, the arm UDE (4 pips, 60 each, a crack per 300 f), then **片腕** for the rest of the match (§6.2, DUEL_KEN_BANKAI.md) | **The user's decisions 2026-09-27** (the one exception to the one-awakening rule, the entry, 4 pips, the red reiatsu, 片腕 at reach ×0.7) **and 2026-09-28** (Konpaku → 1, Reishi → full, the bite now, Yachiru a silhouette, 片腕 stays the oni, the CPU enters only as a finisher weighing its own Konpaku; the entry at ≤ 4 Konpaku instead of red) |
+| Senjumaru (2026-09-29) | three characters | a **fourth**: Shutara Senjumaru, the stitches + the six-hank loom (DUEL_SENJUMARU.md), built in her own two files with generic hook points only: the kit's `:hooks` (`:step :cmd-ok :hit :struck :draw`), a hazard's `hook` / `data` (its own step, touch test and close), a move's `:shield` flag and `:catch` param, the hitwin flags `:spare` / `:thread`, the meter's `:draw` / `:label` / `:ring`, the AI's `:reflex` / `:opp-reflex` / `:sig-hold` | The user's request and the code-layout rule (below); every hook is inert for the other characters, so their gate refs don't move |
 | Rukia (2026-09-28) | two characters | a **third**: Kuchiki Rukia, Shikai + 絶対零度 (DUEL_RUKIA.md), rebuilt the same day as a cold gauge of two stacked bars, with generic engine pieces: frost, the `:freeze` hazard kind, the `:temp` meter, `:optic` / `:freeze-touch` / `:chipless` passives, the kit slots `:field` / `:warm` / `:cold` / `:crush-hook` / `:frost-touch` / `:rooted` / `:reset-form` / `:u-tag`, per-body keylines | The user asked for a TYBW roster, then reworked the awakening after playtest 1; every piece is data or a generic rule, so the gate refs of the first two characters don't move with her |
 
 ## Character code layout (the user, 2026-09-28)

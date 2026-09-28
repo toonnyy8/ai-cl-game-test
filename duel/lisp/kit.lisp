@@ -210,6 +210,7 @@ new button."
   (u-tag nil)                           ; the HUD's tag for what U does in the form (default by its passives)
   (calm nil)                            ; the face never shouts in this form (a look: MAIN.LISP FACE-OF)
   (l-after-k nil)                       ; L chained after a K link (docs/DUEL_STRINGS.md §12): T its L, or a move (a combo copy)
+  (hooks nil)                           ; plist of a character's own hooks (KIT-HOOK): :step :cmd-ok :hit :struck :draw
   (commands nil)                ; plist command -> move name
   (strings nil)                 ; ((from-move command to-move) ...)
   (moves (make-hash-table :test 'eq))   ; move name -> this form's MOVE
@@ -266,6 +267,11 @@ else QUEUED: the press is eaten (after a switch the original button is ignored a
 (defun kit-pip-cmd-p (kit command)
   "Does COMMAND spend a pip of the arm meter in KIT (its :pips :cmds)?"
   (and (member command (getf (kit-pips kit) :cmds)) t))
+(defun kit-hook (kit key)
+  "The function symbol a character file named for hook KEY in KIT's :hooks, or NIL (the generic code's small hook points:
+:step (e f g) per step, :cmd-ok (e command combo) may refuse a command, :hit / :struck (e other res hw mv hazard ranged)
+after a hit it dealt / took, :draw (e rdt) extra looks)."
+  (getf (kit-hooks kit) key))
 (defun kit-kikon-cine (kit)
   "The cinematic a Soul Break by a fighter in KIT plays (the user's decision 2026-09-27): the form's Kikon cinematic, the
 one its O would play now (its :kikon move's :cine), else the generic SOUL-BREAK-CINE."
@@ -308,7 +314,7 @@ Cornered with LOST Konpaku."
                            body weapon stance hide aura intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
                            enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
                            kikon-konpaku meter-gain form-name drink-clip respect-callout bankai-form pips
-                           crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k calm
+                           crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k calm hooks
                            (startup-add 0) (reach-mult 1.0) commands strings grid)
         merged
       (declare (ignore grid))
@@ -326,6 +332,7 @@ Cornered with LOST Konpaku."
                            :respect-callout respect-callout :bankai-form bankai-form :pips pips
                            :crush-hook crush-hook :rooted rooted :field field :warm warm :cold cold
                            :frost-touch frost-touch :reset-form reset-form :u-tag u-tag :l-after-k l-after-k :calm calm
+                           :hooks hooks
                            :commands commands :strings strings :spec merged))
             (own (loop for (nil m) on (getf spec :commands) by #'cddr collect m)))
         ;; every move the form can reach. The derivation rule (design v2 §0): a move is as written when the
@@ -398,6 +405,7 @@ child's keys win, :commands merge per command, :strings add. Keys:
   :l-after-k T | MOVE                L latched during a K link (K1 / K2 / K2s / K3) starts when that link's chain opens
                                      (its own contact, docs/DUEL_STRINGS.md §12): T the form's L, else MOVE, a combo copy
   :calm T                            the face stays calm (no shout: a look, FACE-OF)
+  :hooks (:step f :cmd-ok f :hit f :struck f :draw f)   a character file's own rules and looks (KIT-HOOK)
   :u-tag STRING                      the HUD's tag for U   :meter (:name :max :temp t)  Rukia's cold gauge (combat.lisp
                                      TEMP-STEP: the kit meter holds the cold C, the band is the form, rules TEMP-BAND)
   :warm n  :cold (cmd n ...)         a :temp form's warming per second; the cold each command spends (L refused without)

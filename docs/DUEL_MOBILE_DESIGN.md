@@ -725,3 +725,12 @@ P2's) are unchanged and nothing new is drawn outside the blocks. Landscape (`hud
 2430+k (`hud-review`: both sides in given forms, gauges part-full, KOSEI shown) at 390 × 844 for Yamamoto (Shikai,
 Hellfire, East, West), Kenpachi (base, the three cups, the Bankai, KATAUDE) and Rukia (Shikai, −18, −50, zero), P1 and
 P2.
+
+## Senjumaru on the thumb (2026-09-29, DUEL_SENJUMARU.md §8)
+
+No gesture changes. Her kit meter names a `:ring` function (onehand.lisp calls it while a thumb rests, the same hook
+Rukia's cold arc could use): in the Shikai six small BLOOD ticks round the ring, lit by the stitches; in the Bankai, while
+the L chip is held (the chip's down state is the weave), three pass ticks fill in the next hank's dye. The portrait block's
+last row draws her meter in the kit slot at small size (the needle pips or the six swatches, spanning the Reishi bar with
+the other small gauges); the label is `HARI n` or the next hank's short name (`ME`, `HAGANE`, `KOKUSA`, `SHITONE`,
+`YAKENOHARA`, `HOSHI`). A resting thumb is a guard in both forms; nothing of hers accrues from guarding.

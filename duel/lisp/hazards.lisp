@@ -15,12 +15,15 @@
 (in-package :duel)
 
 (defun spawn-hazard (kind owner &key (x 0.0) (y 0.0) (z 0.0) (yaw 0.0) (speed 0.0) (turn 0.0) (size 0.5)
-                                  (life 60) (delay 0) (hits 1) hw look src fragile)
+                                  (life 60) (delay 0) (hits 1) hw look src fragile hook data)
   "A new hazard of KIND for fighter OWNER. LIFE / DELAY in frames; HW = the HITWIN it deals (NIL = look only). SRC: its
-hit comes from the owner's position; FRAGILE: it closes while it waits if the owner is hit (CLOSE-RIFTS)."
+hit comes from the owner's position; FRAGILE: it closes while it waits if the owner is hit (CLOSE-RIFTS). HOOK: a
+character's function (h hz event &rest args) called with :step (each step, first: T skips the generic step), :close
+(CLOSE-RIFTS closed it) and :touches (the volume test of a kind this file doesn't know); DATA: what it keeps."
   (spawn-entity (make-hazard :kind kind :owner owner :x (f32 x) :y (f32 y) :z (f32 z) :px (f32 x) :pz (f32 z)
                              :yaw (f32 yaw) :speed (f32 speed) :turn (f32 turn) :size (f32 size)
-                             :life life :delay delay :hits-left (if hw hits 0) :hw hw :look look :src src :fragile fragile)))
+                             :life life :delay delay :hits-left (if hw hits 0) :hw hw :look look :src src :fragile fragile
+                             :hook hook :data data)))
 
 (defun clear-hazards ()
   (do-entities (h hazard) (destroy-entity h)))
@@ -43,6 +46,7 @@ frames, grabs at the ankles, holds and crumbles (:sk-grab): South's look; the :b
 
 ;;; ---------------------------------------------------------------- per step
 (defun hazard-step (h hz)
+  (let ((k (hazard-hook hz))) (when (and k (funcall k h hz :step)) (return-from hazard-step nil)))
   (when (> (hazard-delay hz) 0)
     (decf (hazard-delay hz))
     (when (and (zerop (hazard-delay hz)) (eq (hazard-kind hz) :hand))
@@ -96,7 +100,7 @@ frames, grabs at the ankles, holds and crumbles (:sk-grab): South's look; the :b
       ((:bind :freeze) (cyl-cyl-hit-p x 0f0 z s y tx ty tz tr th))       ; the feet: a disc SIZE x Y
       (:rift (let ((yaw (hazard-yaw hz)))
                (vol-hit-p (first (hw-vols (hazard-hw hz))) x 0f0 z (f32 (fwd-x yaw)) (f32 (fwd-z yaw)) tx ty tz tr th 0f0)))
-      (t nil))))
+      (t (let ((k (hazard-hook hz))) (and k (funcall k nil hz :touches tx ty tz tr th)))))))
 
 (defun rift-mid-x (hz) (f32 (+ (hazard-x hz) (* 2.7 (fwd-x (hazard-yaw hz))))))
 (defun rift-mid-z (hz) (f32 (+ (hazard-z hz) (* 2.7 (fwd-z (hazard-yaw hz))))))
@@ -108,6 +112,7 @@ parried or traded blade leaves none)."
     (when (and (or (eq (hazard-kind hz) :rift) (hazard-fragile hz)) (eql (hazard-owner hz) e) (> (hazard-delay hz) 0))
       (emit :rift-close (rift-mid-x hz) (rift-mid-z hz))
       (clog "~a RIFT CLOSED" (side-name e))
+      (let ((k (hazard-hook hz))) (when k (funcall k h hz :close)))
       (destroy-entity h))))
 
 (defun collect-hazard-hits ()

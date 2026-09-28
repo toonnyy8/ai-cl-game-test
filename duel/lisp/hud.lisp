@@ -578,7 +578,9 @@ from the base form when this form has none) and the tag of what U does in the fo
           (when (getf meter :temp)                      ; Rukia's cold gauge (the awakened form has no L cooldown: the row
             (hud-temp e kit ax (+ ay row) aw ah right tm) ; is hers alone)
             (hud-temp-label lx (+ ay row ty) ls right (temp-label g kit)))
-          (when (and meter (not (kit-awakening kit)))
+          (when (getf meter :draw)                      ; a character's own meter (its :draw function, e.g. Senjumaru's)
+            (funcall (getf meter :draw) e kit ax (+ ay row) aw ah right tm lx (+ ay row ty) ls))
+          (when (and meter (not (kit-awakening kit)) (not (getf meter :draw)))
             (let* ((my (+ ay row)) (burning (plusp (gauges-form-left g)))
                    (mfill (if burning
                               (timer-fill (gauges-form-left g) (gauges-form-total g) 1.0)
@@ -638,6 +640,7 @@ from the base form when this form has none) and the tag of what U does in the fo
 (defun portrait-label (g kit kh meter)
   "The one label of a portrait block, or NIL: EVOLUTION, the kit meter's name / COOLDOWN, U's tag."
   (cond ((gauges-evolution g) "EVOLUTION")
+        ((getf meter :label) (funcall (getf meter :label) g kit))   ; a character's own meter
         ((kit-pips kit) (getf meter :name))                ; UDE
         ((getf meter :temp) (temp-label g kit))            ; Rukia's band: -18C, -50C, -273C, THAW
         ((getf meter :ladder) (getf meter :name))
@@ -697,7 +700,7 @@ from the base form when this form has none) and the tag of what U does in the fo
     ;; cooldowns
     (let* ((x0 m) (a bw) (gap (* 3 s)) (cd (and (kit-awakening kit) (kit-command-move kit :sig)
                                                         (plusp (mv-cooldown (kit-command-move kit :sig)))))
-           (kitp (or (getf meter :ladder) (kit-pips kit) (getf meter :temp) cd (and meter (not (kit-awakening kit)))))
+           (kitp (or (getf meter :draw) (getf meter :ladder) (kit-pips kit) (getf meter :temp) cd (and meter (not (kit-awakening kit)))))
            (n (if kitp 4 3)) (gw (/ (- a (* (1- n) gap)) n)) (sw (/ (- gw (* 2 s)) 3))
            (timed (and (kit-awakening kit) (plusp (gauges-form-total g))))
            (hot (or (gauges-evolution g) (kit-awakening kit)))
@@ -709,7 +712,8 @@ from the base form when this form has none) and the tag of what U does in the fo
                  (if hot 0.6f0 1f0) (if hot 4f0 0f0) tm)
       (when kitp
         (let ((kx (+ x0 (* 3 (+ gw gap)))))
-          (cond ((kit-pips kit)                          ; UDE: the Bankai's arm
+          (cond ((getf meter :draw) (funcall (getf meter :draw) e kit kx yb gw bar nil tm nil nil nil))   ; its own meter
+                ((kit-pips kit)                          ; UDE: the Bankai's arm
                  (%hud-arm (f32 kx) (f32 yb) (f32 gw) (f32 bar) (round (gauges-meter g)) (gauges-meter-idle g) nil tm))
                 ((getf meter :temp) (hud-temp e kit kx yb gw bar nil tm))   ; Rukia's cold gauge
                 ((getf meter :ladder)

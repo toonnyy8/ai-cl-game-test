@@ -203,6 +203,10 @@ encoded in the integer.
 | 40000+f / 41000+f / 42000+f | stills of her Kikon 初の舞・月白 / 白霞罸 / the awakening held at frame f (k 11 / 12 / 13; 2211–2213 start them) |
 | 39000+10a+b | the CPUs' awakening, P1 a / P2 b: 0 the kit's `:awaken` rule, 1 always on EVOLUTION, 2 never (her A/B) |
 | 43000+k … 66000+k | her knobs without a rebuild (DUEL_RUKIA.md "Knobs (the rework)"): 43000 `*frost-slow*` k / 100, 44000 `*zero-brace-drain*` k / 10, 45000 `*freeze-touch*`, 46000 `*ru-cool-rate*` k, 47000 `*crack-self*`, 48000 zero's damage × k / 100, 49000 the awakening's melee share, 50000 / 53000 the `:cool` chance / distance, 51000 `*ru-thaw-lock*` k f, 54000 the Shikai's ZONE weight, 55000 zero's warming k / 10, 56000 / 57000 the −50 / −18 walk k / 10, 58000 the Shikai's damage, 60000 / 61000 the Shikai's / the bands' damage taken × k / 100, 62000 / 63000 `*ru-block-cool*` / `*ru-hit-warm*` k / 100, 65000 zero's field `:away` k / 100, 66000 `*field-floor*` k / 100 (every gate row is followed by a `duel band` line per awakened Rukia side) |
+| 2125+k (k 6–9) / 2135 | the seed gate of Senjumaru's pairings SY / SK / SR / SS alone / all four (2113 plays all ten); every gate row is followed by a `duel senju` line per side that played her (the pacing log: stitches sewn / fallen / detonated, soldiers, catches, weaves, torn, skips, zones by hank, reflections, mirror damage) |
+| 2450+k | Senjumaru's tests (`senju-test`, human P1, P2's CPU off unless noted; a `duel probe senju …` line): 0 the Shikai 2.2 m from Kenpachi, 1 six stitches and L at 5 m on a 50-Reishi Kenpachi (1 Reishi left), 2 the soldier vs an active Kenpachi, 3 the umbrella vs a full Shiranui, 4 `:tsuji1` at 3 m (hold L, then 2479: P2's J1 tears the weave), 5–10 each hank's form at 6 m, 11 the combo cut on `:tsuji4`, 12 zero Rukia before `:tsuji2`, 13 `:tsuji1` vs a Yamamoto CPU, 14 `:tsuji1` 5 m from Kenpachi; review stills: 20–25 hank k−19 unfolded under him, 26 six stitches on him, 27 the umbrella open, 28 a weave, 29 P2's J1 now |
+| 76000+f / 77000+f / 78000+f | stills of her Kikon 仕立て直し / 死出六色浮文機 / the awakening held at frame f |
+| 80000+ | her knobs without a rebuild (DUEL_SENJUMARU.md "Knobs"; senjumaru.lisp SENJU-KNOB) |
 | 32000+k … 38000+k | the Bankai's knobs without a rebuild: `*arm-self*` (32000), `*arm-burst-self*` (33000), `*arm-crack*` (34000) = k; the entry rule's `:p` = k / 100 (37000), `:own-konpaku` = k (38000) |
 
 Most scenario commands (2200–2319) first make sure the right battle runs (`ensure-battle`: a new
@@ -338,7 +342,9 @@ The harvest was checked this way after each step.
 `duel-gate.json` (20 seeds × pairing, NORMAL, turbo, cinematics included in the match time).
 Target: every match ends by K.O. (before the 300 s timer), **median 125–210 s** per pairing (125–180 s until guard
 v3: Reishi 1100 → 1300 is the user's decision 2026-09-26, because real human matches run much faster than CPU vs
-CPU), win rates near even (YK within ±3 of 10 / 10). The gate runs ~15 min of turbo now: `--secs 1100`.
+CPU), win rates near even (YK within ±3 of 10 / 10). The gate runs ~15 min of turbo for six pairings: `--secs 1100`; with
+Senjumaru's four (2026-09-29, ten pairings) run them in parallel instead: one run.mjs per pairing with 2125+k (k 0–9, `--secs
+1500` each, at most ~6 at once on a shared machine).
 
 | Pairing | Median | Range | K.O. | Wins P1 / P2 |
 |---|---|---|---|---|
@@ -348,6 +354,15 @@ CPU), win rates near even (YK within ±3 of 10 / 10). The gate runs ~15 min of t
 | Rukia vs Yamamoto | 135.6 s | 114.9–182.4 | 20/20 | Rukia 11 / Yamamoto 9 |
 | Rukia vs Kenpachi | 148.1 s | 104.1–200.8 | 20/20 | Rukia 13 / Kenpachi 7 |
 | Rukia vs Rukia | 183.1 s | 131.2–210.8 | 20/20 | 8 / 12 |
+| Senjumaru vs Yamamoto | 143.2 s | 83.9–180.6 | 20/20 | Senjumaru 10 / Yamamoto 10 |
+| Senjumaru vs Kenpachi | 144.4 s | 97.5–205.3 | 20/20 | Senjumaru 11 / Kenpachi 9 |
+| Senjumaru vs Rukia | 173.7 s | 133.1–239.3 | 20/20 | Senjumaru 14 / Rukia 6 |
+| Senjumaru vs Senjumaru | 195.3 s | 159.6–220.9 | 20/20 | 7 / 13 |
+
+(2026-09-29, Senjumaru (DUEL_SENJUMARU.md "Measurements"): the six older pairings replay exactly (their gate rows are the
+same as main's run of 2125+k on the final build: YY 134.7, YK 136.2, KK 131.2, RY 134.1, RK 144.9, RR 185.6 s); her
+awakening's A/B on three seed streams of 60, P1 always / never: SY 18/23, 22/25, 22/27; SK 22/33, 34/22, 29/28; SR 16/38,
+25/38, 17/32; SS 21/34, 14/40, 16/39: "never" wins ≥ 20 of 60 everywhere, the user's criterion.)
 
 (2026-09-28, the cold-gauge rework + one UDE pip per string + South without a cooldown (DUEL_RUKIA.md, "Measurements
 (the cold gauge rework)"): KK 125.8 → 131.2 and YK 137.1 → 136.2 from the one-pip rule, YY unchanged; her awakening's A/B
