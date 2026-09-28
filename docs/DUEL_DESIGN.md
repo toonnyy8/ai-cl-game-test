@@ -978,3 +978,10 @@ hud, onehand, flow, debug) only get **small generic hook points** (a kit key tha
 supplies) and the one-line roster / MANIFEST registration. Duplication between characters is allowed at first; once
 two characters are merged, an **extraction pass** moves the pieces that really repeat into the shared files (the second
 user proves the abstraction). This keeps parallel character branches from colliding in shared code.
+
+## Awakening balance target (the user, 2026-09-28)
+
+「覺醒偏強沒關係，只要不是強到無法贏就好」. For the new characters, awakening may be the stronger choice. The awaken vs
+never A/B passes when, on **each of at least 3 independent seed streams** (60 seeds each), the "never awaken" policy
+still wins **at least 20 of 60** against every opponent. The earlier "|always − never| ≤ 9" goal is dropped. A single
+stream is not enough: the knobs overfit the stream they are tuned on.
