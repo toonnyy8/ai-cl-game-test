@@ -1,0 +1,712 @@
+[
+{
+"at": 9.0,
+"key": "Enter",
+"down": true
+},
+{
+"at": 9.08,
+"key": "Enter",
+"down": false
+},
+{
+"at": 10.0,
+"key": "Enter",
+"down": true
+},
+{
+"at": 10.08,
+"key": "Enter",
+"down": false
+},
+{
+"at": 11.0,
+"touch": "start",
+"x": 350,
+"y": 400
+},
+{
+"at": 11.05,
+"touch": "end",
+"x": 350,
+"y": 400
+},
+{
+"at": 11.5,
+"touch": "start",
+"x": 350,
+"y": 400
+},
+{
+"at": 11.55,
+"touch": "end",
+"x": 350,
+"y": 400
+},
+{
+"at": 12.0,
+"touch": "start",
+"x": 350,
+"y": 400
+},
+{
+"at": 12.05,
+"touch": "end",
+"x": 350,
+"y": 400
+},
+{
+"at": 12.8,
+"shot": "tests/shots/duel-ichigo-p-select.png"
+},
+{
+"at": 13.5,
+"eval": "Module._debug_cmd(74000)"
+},
+{
+"at": 14.7,
+"shot": "tests/shots/duel-ichigo-p-base-stance.png"
+},
+{
+"at": 15.0,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 15.3,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 15.36,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 15.42,
+"shot": "tests/shots/duel-ichigo-p-j1.png"
+},
+{
+"at": 16.8,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 17.1,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 17.16,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 17.37,
+"shot": "tests/shots/duel-ichigo-p-k1.png"
+},
+{
+"at": 18.6,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 18.9,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 18.96,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.02,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.08,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.2,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.26,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.4,
+"shot": "tests/shots/duel-ichigo-p-j3-spin.png"
+},
+{
+"at": 20.4,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 20.7,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 20.76,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 20.82,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 20.88,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 21.0,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 21.06,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 21.67,
+"shot": "tests/shots/duel-ichigo-p-k3-drop.png"
+},
+{
+"at": 22.2,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 22.5,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 22.56,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 22.62,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 22.68,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 23.02,
+"shot": "tests/shots/duel-ichigo-p-k2s-koga.png"
+},
+{
+"at": 24.0,
+"eval": "Module._debug_cmd(74006)"
+},
+{
+"at": 24.05,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 24.5,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 24.56,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 24.8,
+"shot": "tests/shots/duel-ichigo-p-getsuga.png"
+},
+{
+"at": 25.0,
+"shot": "tests/shots/duel-ichigo-p-getsuga-b.png"
+},
+{
+"at": 26.3,
+"eval": "Module._debug_cmd(74006)"
+},
+{
+"at": 26.35,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 26.8,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 26.82,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 26.88,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 26.9,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 27.04,
+"shot": "tests/shots/duel-ichigo-p-juji-first.png"
+},
+{
+"at": 27.25,
+"shot": "tests/shots/duel-ichigo-p-juji.png"
+},
+{
+"at": 28.6,
+"eval": "Module._debug_cmd(74000)"
+},
+{
+"at": 28.65,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 29.1,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 29.12,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 29.18,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 29.2,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 29.28,
+"shot": "tests/shots/duel-ichigo-p-soga-dash.png"
+},
+{
+"at": 29.43,
+"shot": "tests/shots/duel-ichigo-p-soga.png"
+},
+{
+"at": 30.7,
+"eval": "Module._debug_cmd(74001)"
+},
+{
+"at": 30.75,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 31.9,
+"shot": "tests/shots/duel-ichigo-p-kessa-stance.png"
+},
+{
+"at": 32.2,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 32.26,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 32.38,
+"shot": "tests/shots/duel-ichigo-p-k-j1.png"
+},
+{
+"at": 33.2,
+"eval": "Module._debug_cmd(74001)"
+},
+{
+"at": 33.5,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 33.56,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 33.85,
+"shot": "tests/shots/duel-ichigo-p-k-k1.png"
+},
+{
+"at": 34.7,
+"eval": "Module._debug_cmd(74007)"
+},
+{
+"at": 34.75,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 35.1,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 35.16,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 35.52,
+"shot": "tests/shots/duel-ichigo-p-k-giant.png"
+},
+{
+"at": 36.4,
+"shot": "tests/shots/duel-ichigo-p-k-residue.png"
+},
+{
+"at": 37.5,
+"eval": "Module._debug_cmd(74001)"
+},
+{
+"at": 37.55,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 37.9,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 37.92,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 37.98,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 38.0,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 38.2,
+"shot": "tests/shots/duel-ichigo-p-k-hiki.png"
+},
+{
+"at": 38.45,
+"shot": "tests/shots/duel-ichigo-p-k-hiki-b.png"
+},
+{
+"at": 39.5,
+"eval": "Module._debug_cmd(74008)"
+},
+{
+"at": 39.55,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 39.9,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 39.92,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 39.98,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 40.0,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 40.3,
+"shot": "tests/shots/duel-ichigo-p-k-wall.png"
+},
+{
+"at": 40.9,
+"shot": "tests/shots/duel-ichigo-p-k-wall-b.png"
+},
+{
+"at": 41.7,
+"eval": "Module._debug_cmd(74001)"
+},
+{
+"at": 42.1,
+"key": "KeyU",
+"down": true
+},
+{
+"at": 42.16,
+"key": "KeyU",
+"down": false
+},
+{
+"at": 42.22,
+"shot": "tests/shots/duel-ichigo-p-k-parry.png"
+},
+{
+"at": 43.1,
+"eval": "Module._debug_cmd(74001)"
+},
+{
+"at": 43.5,
+"key": "Space",
+"down": true
+},
+{
+"at": 43.56,
+"key": "Space",
+"down": false
+},
+{
+"at": 43.7,
+"shot": "tests/shots/duel-ichigo-p-k-clone.png"
+},
+{
+"at": 43.88,
+"shot": "tests/shots/duel-ichigo-p-k-clone-slash.png"
+},
+{
+"at": 44.9,
+"eval": "Module._debug_cmd(74001)"
+},
+{
+"at": 45.3,
+"key": "KeyO",
+"down": true
+},
+{
+"at": 45.36,
+"key": "KeyO",
+"down": false
+},
+{
+"at": 45.7,
+"shot": "tests/shots/duel-ichigo-p-k-lane.png"
+},
+{
+"at": 46.7,
+"eval": "Module._debug_cmd(74002)"
+},
+{
+"at": 46.82,
+"key": "KeyU",
+"down": true
+},
+{
+"at": 46.88,
+"key": "KeyU",
+"down": false
+},
+{
+"at": 47.12,
+"shot": "tests/shots/duel-ichigo-p-k-catch.png"
+},
+{
+"at": 47.32,
+"shot": "tests/shots/duel-ichigo-p-k-yank.png"
+},
+{
+"at": 48.42,
+"eval": "Module._debug_cmd(74003)"
+},
+{
+"at": 49.27,
+"key": "KeyU",
+"down": true
+},
+{
+"at": 49.33,
+"key": "KeyU",
+"down": false
+},
+{
+"at": 49.42,
+"shot": "tests/shots/duel-ichigo-p-k-block-wave.png"
+},
+{
+"at": 50.92,
+"eval": "Module._debug_cmd(75006)"
+},
+{
+"at": 52.22,
+"shot": "tests/shots/duel-ichigo-p-cine0-006.png"
+},
+{
+"at": 52.32,
+"eval": "Module._debug_cmd(75040)"
+},
+{
+"at": 53.24,
+"shot": "tests/shots/duel-ichigo-p-cine0-040.png"
+},
+{
+"at": 53.34,
+"eval": "Module._debug_cmd(75090)"
+},
+{
+"at": 54.52,
+"shot": "tests/shots/duel-ichigo-p-cine0-090.png"
+},
+{
+"at": 54.62,
+"eval": "Module._debug_cmd(75116)"
+},
+{
+"at": 55.4,
+"shot": "tests/shots/duel-ichigo-p-cine0-116.png"
+},
+{
+"at": 55.5,
+"eval": "Module._debug_cmd(75140)"
+},
+{
+"at": 56.25,
+"shot": "tests/shots/duel-ichigo-p-cine0-140.png"
+},
+{
+"at": 56.35,
+"eval": "Module._debug_cmd(75160)"
+},
+{
+"at": 57.04,
+"shot": "tests/shots/duel-ichigo-p-cine0-160.png"
+},
+{
+"at": 57.14,
+"eval": "Module._debug_cmd(75178)"
+},
+{
+"at": 57.79,
+"shot": "tests/shots/duel-ichigo-p-cine0-178.png"
+},
+{
+"at": 58.39,
+"eval": "Module._debug_cmd(75206)"
+},
+{
+"at": 59.69,
+"shot": "tests/shots/duel-ichigo-p-cine1-006.png"
+},
+{
+"at": 59.79,
+"eval": "Module._debug_cmd(75230)"
+},
+{
+"at": 60.54,
+"shot": "tests/shots/duel-ichigo-p-cine1-030.png"
+},
+{
+"at": 60.64,
+"eval": "Module._debug_cmd(75270)"
+},
+{
+"at": 61.65,
+"shot": "tests/shots/duel-ichigo-p-cine1-070.png"
+},
+{
+"at": 61.75,
+"eval": "Module._debug_cmd(75310)"
+},
+{
+"at": 62.77,
+"shot": "tests/shots/duel-ichigo-p-cine1-110.png"
+},
+{
+"at": 62.87,
+"eval": "Module._debug_cmd(75335)"
+},
+{
+"at": 63.64,
+"shot": "tests/shots/duel-ichigo-p-cine1-135.png"
+},
+{
+"at": 63.74,
+"eval": "Module._debug_cmd(75360)"
+},
+{
+"at": 64.5,
+"shot": "tests/shots/duel-ichigo-p-cine1-160.png"
+},
+{
+"at": 64.6,
+"eval": "Module._debug_cmd(75382)"
+},
+{
+"at": 65.32,
+"shot": "tests/shots/duel-ichigo-p-cine1-182.png"
+},
+{
+"at": 65.92,
+"eval": "Module._debug_cmd(75406)"
+},
+{
+"at": 67.22,
+"shot": "tests/shots/duel-ichigo-p-cine2-006.png"
+},
+{
+"at": 67.32,
+"eval": "Module._debug_cmd(75430)"
+},
+{
+"at": 68.07,
+"shot": "tests/shots/duel-ichigo-p-cine2-030.png"
+},
+{
+"at": 68.17,
+"eval": "Module._debug_cmd(75460)"
+},
+{
+"at": 69.02,
+"shot": "tests/shots/duel-ichigo-p-cine2-060.png"
+},
+{
+"at": 69.12,
+"eval": "Module._debug_cmd(75484)"
+},
+{
+"at": 69.87,
+"shot": "tests/shots/duel-ichigo-p-cine2-084.png"
+},
+{
+"at": 69.97,
+"eval": "Module._debug_cmd(75520)"
+},
+{
+"at": 70.92,
+"shot": "tests/shots/duel-ichigo-p-cine2-120.png"
+},
+{
+"at": 71.02,
+"eval": "Module._debug_cmd(75560)"
+},
+{
+"at": 72.04,
+"shot": "tests/shots/duel-ichigo-p-cine2-160.png"
+},
+{
+"at": 72.64,
+"eval": "Module._debug_cmd(2107)"
+}
+]

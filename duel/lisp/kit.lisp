@@ -210,6 +210,8 @@ new button."
   (u-tag nil)                           ; the HUD's tag for what U does in the form (default by its passives)
   (calm nil)                            ; the face never shouts in this form (a look: MAIN.LISP FACE-OF)
   (l-after-k nil)                       ; L chained after a K link (docs/DUEL_STRINGS.md §12): T its L, or a move (a combo copy)
+  (hooks nil)                           ; plist hook point -> the character file's function (KIT-HOOK; docs/DUEL_DESIGN.md
+                                        ; "Character code layout")
   (commands nil)                ; plist command -> move name
   (strings nil)                 ; ((from-move command to-move) ...)
   (moves (make-hash-table :test 'eq))   ; move name -> this form's MOVE
@@ -263,6 +265,10 @@ else QUEUED: the press is eaten (after a switch the original button is ignored a
           (:sp1 *cost-sp*)
           (:sp2 (if (kit-awakening kit) *cost-sp-awakened* *cost-sp*))
           (t 0)))))
+(defun kit-hook (kit point)
+  "The character file's function for hook POINT in KIT (its :hooks plist), or NIL: the generic code calls it where the
+point is (docs/DUEL_DESIGN.md \"Character code layout\")."
+  (getf (kit-hooks kit) point))
 (defun kit-pip-cmd-p (kit command)
   "Does COMMAND spend a pip of the arm meter in KIT (its :pips :cmds)?"
   (and (member command (getf (kit-pips kit) :cmds)) t))
@@ -308,7 +314,7 @@ Cornered with LOST Konpaku."
                            body weapon stance hide aura intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
                            enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
                            kikon-konpaku meter-gain form-name drink-clip respect-callout bankai-form pips
-                           crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k calm
+                           crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k calm hooks
                            (startup-add 0) (reach-mult 1.0) commands strings grid)
         merged
       (declare (ignore grid))
@@ -326,7 +332,7 @@ Cornered with LOST Konpaku."
                            :respect-callout respect-callout :bankai-form bankai-form :pips pips
                            :crush-hook crush-hook :rooted rooted :field field :warm warm :cold cold
                            :frost-touch frost-touch :reset-form reset-form :u-tag u-tag :l-after-k l-after-k :calm calm
-                           :commands commands :strings strings :spec merged))
+                           :hooks hooks :commands commands :strings strings :spec merged))
             (own (loop for (nil m) on (getf spec :commands) by #'cddr collect m)))
         ;; every move the form can reach. The derivation rule (design v2 §0): a move is as written when the
         ;; form lists it in its own :commands or the parent form doesn't have it (new to this form: its
@@ -398,6 +404,10 @@ child's keys win, :commands merge per command, :strings add. Keys:
   :l-after-k T | MOVE                L latched during a K link (K1 / K2 / K2s / K3) starts when that link's chain opens
                                      (its own contact, docs/DUEL_STRINGS.md §12): T the form's L, else MOVE, a combo copy
   :calm T                            the face stays calm (no shout: a look, FACE-OF)
+  :hooks (point fn ...)              the character's own mechanics (KIT-HOOK): :u (U pressed; the form never guards),
+                                     :step (a Step's frame 0), :ok (e cmd: may the command start), :parried (a catch by
+                                     its parry), :tick (every sim step), :hud-guard (drawn over its guard bar), :deck
+                                     (the one-hand thumb ring)
   :u-tag STRING                      the HUD's tag for U   :meter (:name :max :temp t)  Rukia's cold gauge (combat.lisp
                                      TEMP-STEP: the kit meter holds the cold C, the band is the form, rules TEMP-BAND)
   :warm n  :cold (cmd n ...)         a :temp form's warming per second; the cold each command spends (L refused without)

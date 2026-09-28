@@ -467,3 +467,66 @@ def kl_script():
 write("rukia-kl", kl_script())
 write("rukia", rukia_script("", False))
 write("rukia-portrait", rukia_script("-p", True))
+
+# Kurosaki Ichigo (docs/DUEL_ICHIGO.md; run with --fixed-dt 16.666667 --secs 100, landscape, and duel-ichigo-portrait.json
+# with --size 390x844). The select screen (the roster cycled to him), then human P1 Ichigo vs an idle Kenpachi (debug
+# 74000+k, ICHIGO-TEST): the Shikai (stance, J1, K1, J3, K3, the cross KOGA, GETSUGA, JUJISHO, SOGA), KESSA (stance, J1's
+# chain, K1's sweep, the giant GETSUGA and its residue, KUSARI-BIKI, KUSARI-GAKI, the parry's flare, a Step's clone and its
+# slash, the KESSA lane), the catch of Kenpachi's K1 (74002, U timed), a Yamamoto wave blocked by the parry (74003), then
+# key frames of his three cinematics (75000+f the Shikai Kikon, 75200+f the KESSA Kikon, 75400+f the awakening).
+# Shots tests/shots/duel-ichigo[-p]-*.png (review stills).
+def ichigo_script(tag, portrait):
+    def rs(t, n): return {"at": round(t, 2), "shot": f"{SHOTS}ichigo{tag}-{n}.png"}
+    def stap(t, k): return [key(t, "ShiftLeft"), key(t + 0.02, k), key(t + 0.08, k, False), key(t + 0.1, "ShiftLeft", False)]
+    def touch(t, x, y): return [{"at": round(t, 2), "touch": "start", "x": x, "y": y}, {"at": round(t + 0.05, 2), "touch": "end", "x": x, "y": y}]
+    t = T0 - 0.5
+    ev = tap(t + 0.5, "Enter") + tap(t + 1.5, "Enter")
+    for i in range(3):
+        ev += touch(t + 2.5 + 0.5 * i, 350, 400) if portrait else tap(t + 2.5 + 0.5 * i, "ArrowRight")
+    ev.append(rs(t + 4.3, "select")); t += 5.0
+    ev += [cmd(t, 74000)] + ([] if portrait else [cmd(t + 0.1, 2109)]); t += 1.2
+    ev.append(rs(t, "base-stance")); t += 0.3
+    for keys, n, dt in ((["KeyJ"], "j1", 0.12), (["KeyK"], "k1", 0.27), (["KeyJ", "KeyJ", "KeyJ"], "j3-spin", 0.5),
+                        (["KeyK", "KeyK", "KeyK"], "k3-drop", 0.97), (["KeyJ", "KeyK"], "k2s-koga", 0.52)):
+        ev += [cmd(t, 2393)]; t += 0.3
+        for i, k in enumerate(keys): ev += tap(t + [0, 0.12, 0.3][i], k, 0.06)
+        ev.append(rs(t + dt, n)); t += 1.5
+    ev += [cmd(t, 74006), cmd(t + 0.05, 2108)]; t += 0.5
+    ev += tap(t, "KeyL", 0.06); ev += [rs(t + 0.3, "getsuga"), rs(t + 0.5, "getsuga-b")]; t += 1.8
+    ev += [cmd(t, 74006), cmd(t + 0.05, 2108)]; t += 0.5
+    ev += stap(t, "KeyK"); ev += [rs(t + 0.24, "juji-first"), rs(t + 0.45, "juji")]; t += 1.8
+    ev += [cmd(t, 74000), cmd(t + 0.05, 2108)]; t += 0.5
+    ev += stap(t, "KeyL"); ev += [rs(t + 0.18, "soga-dash"), rs(t + 0.33, "soga")]; t += 1.6
+    ev += [cmd(t, 74001), cmd(t + 0.05, 2108)]; t += 1.2
+    ev.append(rs(t, "kessa-stance")); t += 0.3
+    ev += tap(t, "KeyJ", 0.06); ev.append(rs(t + 0.18, "k-j1")); t += 1.0
+    ev += [cmd(t, 74001)]; t += 0.3
+    ev += tap(t, "KeyK", 0.06); ev.append(rs(t + 0.35, "k-k1")); t += 1.2
+    ev += [cmd(t, 74007), cmd(t + 0.05, 2108)]; t += 0.4
+    ev += tap(t, "KeyL", 0.06); ev += [rs(t + 0.42, "k-giant"), rs(t + 1.3, "k-residue")]; t += 2.4
+    ev += [cmd(t, 74001), cmd(t + 0.05, 2108)]; t += 0.4
+    ev += stap(t, "KeyK"); ev += [rs(t + 0.3, "k-hiki"), rs(t + 0.55, "k-hiki-b")]; t += 1.6
+    ev += [cmd(t, 74008), cmd(t + 0.05, 2108)]; t += 0.4
+    ev += stap(t, "KeyL"); ev += [rs(t + 0.4, "k-wall"), rs(t + 1.0, "k-wall-b")]; t += 1.8
+    ev += [cmd(t, 74001)]; t += 0.4
+    ev += tap(t, "KeyU", 0.06); ev.append(rs(t + 0.12, "k-parry")); t += 1.0
+    ev += [cmd(t, 74001)]; t += 0.4
+    ev += tap(t, "Space", 0.06); ev += [rs(t + 0.2, "k-clone"), rs(t + 0.38, "k-clone-slash")]; t += 1.4
+    ev += [cmd(t, 74001)]; t += 0.4
+    ev += tap(t, "KeyO", 0.06); ev.append(rs(t + 0.4, "k-lane")); t += 1.4
+    ev += [cmd(t, 74002)]; t += 0.12
+    ev += tap(t, "KeyU", 0.06); ev += [rs(t + 0.3, "k-catch"), rs(t + 0.5, "k-yank")]; t += 1.6
+    ev += [cmd(t, 74003)]; t += 0.5
+    ev += tap(t + 0.35, "KeyU", 0.06); ev += [rs(t + 0.5, "k-block-wave")]; t += 2.0
+    if not portrait: ev.append(cmd(t, 2109)); t += 0.2
+    for k, frames in ((75000, (6, 40, 90, 116, 140, 160, 178)), (75200, (6, 30, 70, 110, 135, 160, 182)),
+                      (75400, (6, 30, 60, 84, 120, 160))):
+        last = 0
+        for f in frames:
+            ev.append(cmd(t, k + f)); wait = (f - last) / 60.0 + (1.2 if last == 0 else 0.35)
+            ev.append(rs(t + wait, f"cine{(k - 75000) // 200}-{f:03d}")); t += wait + 0.1; last = f
+        t += 0.5
+    ev.append(cmd(t, 2107))
+    return ev
+write("ichigo", ichigo_script("", False))
+write("ichigo-portrait", ichigo_script("-p", True))

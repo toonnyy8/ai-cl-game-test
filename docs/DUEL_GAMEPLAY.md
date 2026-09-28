@@ -90,13 +90,14 @@ Battle cinematics stay unskippable in PRACTICE too.
 ## Files
 
 `duel/MANIFEST` order: `package`, `tuning`, `rules`, `control` (plain CL, host-tested), `sounds`,
-`components`, `body`, `kit`, `cinema`, `stage`, `vfx`, `yama-art`, `ken-art`, `rukia-art`, `yama`, `ken`, `rukia`
-(the characters: data, hooks, cinematics), `fighter`, `combat`, `hazards`, `ai`, `camera`, `feedback`,
+`components`, `body`, `kit`, `cinema`, `stage`, `vfx`, `yama-art`, `ken-art`, `rukia-art`, `ichigo-art`, `yama`, `ken`,
+`rukia`, `ichigo` (the characters: data, hooks, cinematics; Ichigo's mechanics live in his own files and the generic ones
+call them through the kit's `:hooks`, DUEL_DESIGN "Character code layout"), `fighter`, `combat`, `hazards`, `ai`, `camera`, `feedback`,
 `flow`, `hud`, `debug`, `main` (the generic systems; only `debug.lisp` names characters, to set up
 scenes). The module table is in ARCHITECTURE.md. The name-leak check (it must print nothing):
 
 ```sh
-grep -nE ':ya-|:ke-|:ru-|yama|kenpachi|rukia' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow}.lisp
+grep -nE ':ya-|:ke-|:ru-|:ic-|yama|kenpachi|rukia|ichigo' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow}.lisp
 ```
 
 Engine modules the duel was the first user of (moved into the engine by the harvest):
@@ -199,7 +200,8 @@ encoded in the integer.
 | 2410+k | her tests (`rukia-test`, human P1 Rukia, P2's CPU off; `duel-rukia.json`): 0 the Shikai 5 m from Kenpachi, 1 −18 °C / 2 −50 °C (cold 150) at 2.2 m, then zero (cold 200): 3 Kenpachi's J1 into the ward (the freeze-touch), 4 Yamamoto's full Shiranui through it (optic), 5 his Breaker (the CRACK), 6 the Breaker answered by REIDO TŌKETSU within 5.5 m, 7 zero left to warm out, 8 zero 3 m from him (hold U: bracing to the CRACK); a `duel probe rukia …` line every 10 f |
 | 67000+k / 68000 / 69000+f / 70000+f | review stills: P1's cold = k and its band; the white Rukia with the old ink keyline; a close-up of her face at zero / in the 白霞罸 costume held at frame f |
 | 71000 / 71001+k | review stills: Kenpachi's reiatsu opaque ↔ see-through (`*reiatsu-glass*`); human P1 Kenpachi in cup k+1 (4: the Bankai) 3 m from an idle Yamamoto |
-| 2125+k | one seed-gate pairing alone (0 YY, 1 YK, 2 KK, 3 RY, 4 RK, 5 RR): the six in parallel give the same rows as 2113 |
+| 2125+k | one seed-gate pairing alone (0 YY, 1 YK, 2 KK, 3 RY, 4 RK, 5 RR, 6 IY, 7 IK, 8 IR, 9 II; P1 the first): the ten in parallel give the same rows as 2113 (which plays all ten) |
+| 74000+k … 75599 | Ichigo (DUEL_ICHIGO.md "Knobs"; `ichigo-debug`, his own range through `*char-debug*`): 74000+k his tests (human P1 Ichigo, P2's CPU off; `duel-ichigo.json`): 0 / 1 the Shikai / KESSA 3 m from Kenpachi, 2 Kenpachi's K1 into KESSA (U: the catch), 3 Yamamoto's L wave at 7 m (U: blocked), 4 Kenpachi's Breaker (it breaks the parry), 5 the Shikai vs Yamamoto's wave (Shift+K cuts it), 6 / 7 the forms 8 m out, 8 KESSA vs the wave (Shift+L: the wall eats it), 9 KESSA vs Rukia; 74100+k … 74400+k the Shikai's / KESSA's damage dealt / taken × (0.5 + k / 100); 74500+k / 74600+k `*chain-u-cost*` / `*chain-catch*` = k; 74700+k `*clone-cost*`; 74800+k `*kessa-l-cost*`; 74900+k P1's chain gauge = 2k; 74950+k the CPU's parry chance k / 50; 75000+f / 75200+f / 75400+f stills of the Shikai Kikon / the KESSA Kikon / the awakening held at frame f |
 | 40000+f / 41000+f / 42000+f | stills of her Kikon 初の舞・月白 / 白霞罸 / the awakening held at frame f (k 11 / 12 / 13; 2211–2213 start them) |
 | 39000+10a+b | the CPUs' awakening, P1 a / P2 b: 0 the kit's `:awaken` rule, 1 always on EVOLUTION, 2 never (her A/B) |
 | 43000+k … 66000+k | her knobs without a rebuild (DUEL_RUKIA.md "Knobs (the rework)"): 43000 `*frost-slow*` k / 100, 44000 `*zero-brace-drain*` k / 10, 45000 `*freeze-touch*`, 46000 `*ru-cool-rate*` k, 47000 `*crack-self*`, 48000 zero's damage × k / 100, 49000 the awakening's melee share, 50000 / 53000 the `:cool` chance / distance, 51000 `*ru-thaw-lock*` k f, 54000 the Shikai's ZONE weight, 55000 zero's warming k / 10, 56000 / 57000 the −50 / −18 walk k / 10, 58000 the Shikai's damage, 60000 / 61000 the Shikai's / the bands' damage taken × k / 100, 62000 / 63000 `*ru-block-cool*` / `*ru-hit-warm*` k / 100, 65000 zero's field `:away` k / 100, 66000 `*field-floor*` k / 100 (every gate row is followed by a `duel band` line per awakened Rukia side) |
@@ -348,6 +350,14 @@ CPU), win rates near even (YK within ±3 of 10 / 10). The gate runs ~15 min of t
 | Rukia vs Yamamoto | 135.6 s | 114.9–182.4 | 20/20 | Rukia 11 / Yamamoto 9 |
 | Rukia vs Kenpachi | 148.1 s | 104.1–200.8 | 20/20 | Rukia 13 / Kenpachi 7 |
 | Rukia vs Rukia | 183.1 s | 131.2–210.8 | 20/20 | 8 / 12 |
+| Ichigo vs Yamamoto | 143.6 s | — | 20/20 | Ichigo 9 / Yamamoto 11 |
+| Ichigo vs Kenpachi | 143.2 s | — | 20/20 | Ichigo 7 / Kenpachi 13 |
+| Ichigo vs Rukia | 169.6 s | — | 20/20 | Ichigo 9 / Rukia 11 |
+| Ichigo vs Ichigo | 155.2 s | — | 20/20 | 10 / 10 |
+
+(2026-09-28, Ichigo added (DUEL_ICHIGO.md): the six rows above are byte-identical; debug 2113 now plays all ten pairings,
+2125+k one of them. His awaken A/B uses three seed streams (30000+o, o = 100 / 300 / 500, 60 seeds each) and the user's
+criterion: "never awaken" wins >= 20 of 60 per opponent on every stream; it wins 26-37.)
 
 (2026-09-28, the cold-gauge rework + one UDE pip per string + South without a cooldown (DUEL_RUKIA.md, "Measurements
 (the cold gauge rework)"): KK 125.8 → 131.2 and YK 137.1 → 136.2 from the one-pip rule, YY unchanged; her awakening's A/B

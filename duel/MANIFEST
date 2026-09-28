@@ -1,7 +1,7 @@
 # title: SOUL DUEL
 # SOUL DUEL sources in compile order, relative to this directory (the engine's come first, see
 # engine/MANIFEST). Order matters: macros, structs, components and special variables before their
-# users. tuning / rules / control / kit are plain CL (host-tested); yama / ken / rukia are the characters
+# users. tuning / rules / control / kit are plain CL (host-tested); yama / ken / rukia / ichigo are the characters
 # (data + hooks + cinematics); fighter ... main are the generic systems (no character names, except debug.lisp's test scenarios).
 lisp/package.lisp
 lisp/tuning.lisp
@@ -19,9 +19,11 @@ lisp/vfx.lisp
 lisp/yama-art.lisp
 lisp/ken-art.lisp
 lisp/rukia-art.lisp
+lisp/ichigo-art.lisp
 lisp/yama.lisp
 lisp/ken.lisp
 lisp/rukia.lisp
+lisp/ichigo.lisp
 lisp/fighter.lisp
 lisp/combat.lisp
 lisp/hazards.lisp

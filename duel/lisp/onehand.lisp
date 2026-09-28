@@ -11,7 +11,8 @@
 
 ;; *TOUCH* *ONE-HAND* *HAND* *COARSE* *BACK-PRESS*: components.lisp (read by fighter.lisp and flow.lisp)
 (defvar *touch-burst* nil "This vpad read: the live flick is a Burst (down, P1 in hit / stun / air).")
-(defvar *deck-key* (list 0 0 0 nil nil 0 0 0) "Window w, h, density, hand, one-hand, safe top / bottom, UI scale of the last TOUCH-LAYOUT!.")
+(defvar *deck-key* (list 0 0 0 nil nil 0 0 0 nil) "Window w, h, density, hand, one-hand, safe top / bottom, UI scale, the U chip of the
+last TOUCH-LAYOUT!.")
 (defvar *wake* nil "Wake lock requested (battle).")
 (defparameter *glyph-names* #("" "Q" "STEP" "F" "HOHO" "GUARD" "DASH" "BURST") "TOUCH-GLYPH kinds (7: the duel's Burst).")
 (defvar *glyph-seen* -1f4 "TOUCH-GLYPH-T last logged.")
@@ -39,6 +40,7 @@ never offers it: the deck needs portrait)."
   '((170 396 36 "O") (72 380 26 "L") (72 310 26 "I") (72 240 26 "SP1") (72 170 26 "SP2") (270 396 26 "AWK") (32 -200 22 "II"))
   "Per chip: x from the thumb-side edge, y from the bottom (negative: from the top), radius, label.")
 (defparameter *chip-holds* '(0 0 0 0 0 300 0))
+(defparameter *u-chip-holds* '(0 0 0 0 0 0 0) "... with the AWAKEN chip as U (U-CHIP-P): a tap.")
 
 (defun deck-layout ()
   "Values: pad (x0 y0 x1 y1) and chips ((cx cy r) ...), window px, for the current window and *HAND*. P2 (safe-area
@@ -59,11 +61,11 @@ moved by the insets: the user tuned them on the phones, insets included."
   "Re-lay the deck when the window, the density, the hand or the mode changed (conses: not every frame).
 Outside ONE-HAND there is no pad and no chip: a stray finger only makes menu taps."
   (let ((k *deck-key*) (w (window-width)) (h (window-height)) (d (pixel-density)) (s (ui-scale))
-        (st (page-get +pg-safe-top+)) (sb (page-get +pg-safe-bottom+)))
+        (st (page-get +pg-safe-top+)) (sb (page-get +pg-safe-bottom+)) (u (u-chip-p)))
     (unless (and (= (first k) w) (= (second k) h) (= (third k) d) (eq (fourth k) *hand*) (eq (fifth k) *one-hand*)
-                 (= (sixth k) st) (= (seventh k) sb) (= (eighth k) s))
+                 (= (sixth k) st) (= (seventh k) sb) (= (eighth k) s) (eq (ninth k) u))
       (setf (first k) w (second k) h (third k) d (fourth k) *hand* (fifth k) *one-hand* (sixth k) st (seventh k) sb (eighth k) s
-            *safe-top* st *safe-bot* sb)
+            (ninth k) u *safe-top* st *safe-bot* sb)
       (multiple-value-bind (pad chips) (deck-layout)
         (replace *deck* (mapcar #'f32 (append pad (reduce #'append chips))))
         ;; the portrait frame: under P2's HUD block down to *PT-FRAME-BOTTOM* (over P1's block); the blocks' edges
@@ -71,7 +73,7 @@ Outside ONE-HAND there is no pad and no chip: a stray finger only makes menu tap
           (setf (aref *band* 0) (f32 (+ hb 0.03)) (aref *band* 1) (f32 (min *pt-frame-bottom* (- pt 0.03)))
                 (aref *band* 2) (f32 hb) (aref *band* 3) (f32 pt)))
         (if *one-hand*
-            (touch-layout! *touch* d pad chips *chip-holds*)
+            (touch-layout! *touch* d pad chips (if u *u-chip-holds* *chip-holds*))
             (touch-layout! *touch* d '(0 0 -1 -1) nil)))
       ;; G7: the scene near 1.6 MP on a phone (the UI stays native)
       (setf *scene-scale-cap* (if (or *coarse* *one-hand*) (f32 (min 1.0 (sqrt (/ 1.6e6 (max 1 (* w h)))))) 1f0)))))
@@ -132,13 +134,18 @@ frame's finger events."
     (when *touch-burst*                                   ; no Step held after a Burst (it would buffer a Step)
       (setf (touch-flick-hold tr) 0 (touch-glyph tr) 7))))
 
+(defun u-chip-p ()
+  "P1's form has a :u hook (its U is a move, not a guard: a parry): a resting thumb does nothing and the spent
+AWAKEN chip is U (the user's default, DUEL_MOBILE_DESIGN §15.1)."
+  (and *one-hand* *p1* (entity-alive-p *p1*) (fighter *p1*) (kit-hook (kit-of *p1*) :u) t))
+
 (defun touch-button (name)
   "Is vpad button NAME down from the thumb deck (design §3.2 / §3.4; the 2026-09-28 remap, §15: a tap in the pad's
 low zone = J, high zone = K, an up-flick = a forward Step, the dash)?"
   (let* ((tr *touch*) (burst *touch-burst*))
     (flet ((chip (i) (touch-chip-down-p tr i)) (pulse (b) (touch-pulse-p tr b)))
       (case name
-        (:guard (touch-resting-p tr))
+        (:guard (if (u-chip-p) (chip 5) (touch-resting-p tr)))
         (:quick (or (pulse +tp-tap+) burst))
         (:mod (or burst (pulse +tp-hoho+) (chip 3) (chip 4)))
         (:step (and (not burst) (or (pulse +tp-flick+) (pulse +tp-hoho+) (touch-step-held-p tr))))
@@ -146,7 +153,7 @@ low zone = J, high zone = K, an up-flick = a forward Step, the dash)?"
         (:sig (or (chip 1) (chip 4)))
         (:breaker (chip 2))
         (:kikon (chip 0))
-        (:awaken (chip 5))))))
+        (:awaken (and (not (u-chip-p)) (chip 5)))))))
 
 (defun touch-pause-p () "The pause chip was touched this frame." (and *one-hand* (touch-chip-hit-p *touch* 6)))
 
@@ -211,7 +218,8 @@ low zone = J, high zone = K, an up-flick = a forward Step, the dash)?"
 at EVOLUTION or a Bankai ready), the ink ring under the thumb, and the recognised gesture's glyph at the thumb for 0.3 s
 (the misread teacher)."
   (let* ((tr *touch*) (d (touch-dpx tr)) (dk *deck*)
-         (evo (and *p1* (or (gauges-evolution (gauges *p1*)) (bankai-ready-p *p1*)))))   ; AWAKEN: EVOLUTION, or the Bankai
+         (u (u-chip-p))                                  ; a :u form: the chip is U
+         (evo (and *p1* (or u (gauges-evolution (gauges *p1*)) (bankai-ready-p *p1*)))))   ; AWAKEN: EVOLUTION, or the Bankai
                                                                                           ; ready (cup 3, red, free)
     (%houtline (aref dk 0) (aref dk 1) (- (aref dk 2) (aref dk 0)) (- (aref dk 3) (aref dk 1)) 1f0 1f0 1f0 0.12f0)
     (let* ((y (touch-split-y tr)) (left (eq *hand* :left))                  ; the tap zones' line, named at the far edge
@@ -224,9 +232,10 @@ at EVOLUTION or a Bankai ready), the ink ring under the thumb, and the recognise
         (let ((on (touch-chip-down-p tr i)) (cx (aref dk (+ 4 (* 3 i)))) (cy (aref dk (+ 5 (* 3 i)))) (r (aref dk (+ 6 (* 3 i)))))
           (%disc cx cy r 0.05 0.04 0.07 (if on 0.85 0.45))
           (%ring cx cy r (* 2f0 d) 1.0 (if on 0.85 0.55) (if on 0.4 0.3) (if on 1.0 0.7))
-          (hud-text (svref *chip-labels* i) cx (- cy (* 3.5 s)) s *c-chip* :align :center :shadow nil))))
+          (hud-text (if (and u (= i 5)) "U" (svref *chip-labels* i)) cx (- cy (* 3.5 s)) s *c-chip* :align :center :shadow nil))))
     (when (touch-active-p tr)                              ; the floating stick: an ink ring at its origin
       (%ring (touch-ox tr) (touch-oy tr) (* d 48f0) (* 2f0 d) 1.0 1.0 1.0 (if (touch-resting-p tr) 0.35 0.6))
+      (let ((h (and *p1* (kit-hook (kit-of *p1*) :deck)))) (when h (funcall h *p1* (touch-ox tr) (touch-oy tr) d)))   ; a form's own ring
       (let ((m (and *p1* (kit-meter (kit-of *p1*)))))      ; Rukia: resting cools her: the frost arc = C / 200 (the two
         (when (getf m :temp)                                 ; bars round the ring, a notch at the half), grey in the THAW
           (let* ((g (gauges *p1*)) (k (/ (gauges-meter g) *cold-max*)) (lock (plusp (gauges-meter-idle g)))   ; lock;
