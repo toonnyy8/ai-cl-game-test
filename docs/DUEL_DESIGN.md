@@ -799,7 +799,7 @@ modules): YY 168.1 s (149–204), YK 154.8 s (122–176), KK 150.3 s (117–177)
 ## 8. Flow and screens
 
 TITLE (the logo, press start and the credit; the "YAMAMOTO GENRYUSAI VS ZARAKI KENPACHI" matchup line was removed
-at the user's request on 2026-09-29, the roster has grown past two) → MODE: VS CPU / PRACTICE / VS PLAYER / CPU VS CPU / SETTINGS / CONTROLS (2026-09-28: PRACTICE,
+at the user's request on 2026-09-29, the roster has grown past two) → MODE: VS CPU / ENDLESS / PRACTICE / VS PLAYER / CPU VS CPU / SETTINGS / CONTROLS (2026-09-28: PRACTICE,
 SETTINGS, and ONE-HAND VS CPU merged into VS CPU: one-handed wherever the ONE-HAND setting is in effect; DUEL_GAMEPLAY.md
 "Flow", DUEL_MOBILE_DESIGN.md §16) → SELECT (P1 picks, then
 P2 or the CPU, then the CPU difficulty EASY / NORMAL / HARD; both models stand on the plaza;
@@ -810,6 +810,13 @@ COMBO, KONPAKU LEFT, and the TIME; REMATCH / CHARACTER SELECT / TITLE, accepted 
 Menu matches take a clock seed; debug matches take a fixed seed (DUEL_GAMEPLAY.md).
 PRACTICE (P1 against a dummy: STAND / GUARD ALL / GUARD AFTER HIT / CPU) has no timer and no match end; its options are
 on the pause menu (DUEL_GAMEPLAY.md "PRACTICE").
+ENDLESS 無限連戰 (2026-09-29, [DUEL_ENDLESS.md](DUEL_ENDLESS.md)): P1 alone against a gauntlet of CPU stages. SELECT is P1's
+pick and a START difficulty (the ramp's floor); each won stage goes to STAGE CLEAR (CONTINUE / REVERT when awakened /
+QUIT), a loss, a draw or RETIRE (its pause row) to the run's RESULTS (stages cleared, run time, the best record per
+character, NEW RUN). Between stages P1 carries Konpaku + 2 (max 9), Reiatsu and flash step; Reishi and the guard gauge
+are full; a stay-awakened carry uses the kit key `:endless-form` (Kenpachi: every awakened form → Nozarashi cup 1, NOME
+10). The opponents come from a seeded bag of the roster; the CPU ramps (a difficulty level every two stages to HARD, its
+awakening half / full / on from stages 5 / 7 / 9, Reishi +10 / +20 % from 9 / 12, flat from 12).
 
 ## 9. Camera
 
@@ -999,6 +1006,7 @@ batch: §4, §6.1, §6.2, §12):
 | Strings' pacing | — | K2 / K3 at 80 % of the design's damage, the CPU's string K 0.3, O ender 0.15, SP cancel 0.3 (one roll), J beats K felt at once | The seed gate (DUEL_STRINGS §9, §10): as designed the medians fell to 107 / 119 / 122 s, under the 125 s floor |
 | Soul Break | the form's count + 1 (per-event cap 4), the generic `soul-break-cine` | the **attacker's current form's** count + 1, **cap 5 for Soul Breaks only** (a Kikon stays at 4), and the **attacker's Kikon cinematic** (`kit-kikon-cine`) | **The user's decisions 2026-09-27** (with the research report's answers) |
 | Kenpachi's second awakening | none: one awakening per match | **the Bankai** from cup 3 (P with ≤ 4 of his own Konpaku; it was red + P): Konpaku → 1, Reishi → full, the arm UDE (4 pips, 60 each, a crack per 300 f), then **片腕** for the rest of the match (§6.2, DUEL_KEN_BANKAI.md) | **The user's decisions 2026-09-27** (the one exception to the one-awakening rule, the entry, 4 pips, the red reiatsu, 片腕 at reach ×0.7) **and 2026-09-28** (Konpaku → 1, Reishi → full, the bite now, Yachiru a silhouette, 片腕 stays the oni, the CPU enters only as a finisher weighing its own Konpaku; the entry at ≤ 4 Konpaku instead of red) |
+| ENDLESS (2026-09-29) | four match modes | a fifth, **ENDLESS 無限連戰** (DUEL_ENDLESS.md): a CPU gauntlet with a carry-over between stages, a seeded opponent bag, a ramp that plateaus at stage 12, a best record per character in the page's storage; its own files `endless-rules.lisp` (pure, host-tested) and `endless.lisp`, hook lines in flow / hud / main / debug and the kit key `:endless-form` | **The user's request and decisions 2026-09-29**: the recommended defaults (guard gauge full, an unused awakening kept, Kenpachi's Bankai once per stage, the ramp, a record per character), except that **Kenpachi does not keep his NOME cup**: every awakened form of his starts the next stage in cup 1 at NOME 10 |
 | Rukia (2026-09-28) | two characters | a **third**: Kuchiki Rukia, Shikai + 絶対零度 (DUEL_RUKIA.md), rebuilt the same day as a cold gauge of two stacked bars, with generic engine pieces: frost, the `:freeze` hazard kind, the `:temp` meter, `:optic` / `:freeze-touch` / `:chipless` passives, the kit slots `:field` / `:warm` / `:cold` / `:crush-hook` / `:frost-touch` / `:rooted` / `:reset-form` / `:u-tag`, per-body keylines | The user asked for a TYBW roster, then reworked the awakening after playtest 1; every piece is data or a generic rule, so the gate refs of the first two characters don't move with her |
 
 ## Character code layout (the user, 2026-09-28)

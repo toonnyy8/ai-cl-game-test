@@ -631,3 +631,19 @@ RAVEN EDGE 完成、引擎也拆出來之後，一個問題還沒有答案：這
 **越冷越強**在這 180 場「一定覺醒」裡還是成立（每秒傷害 −18／−50／−273：對山本 26.1／36.3／47.0、對劍八 20.5／28.6／56.1、對露琪亞 15.8／24.9／35.0）。設計的相剋表原本希望對山本時始解比較好，現在不是，最接近 20 場那條線的也是這一格；之後的改動如果讓哪一條亂數流掉到 20 以下，才照最小的改動去調那一組。
 
 **確認。** 節奏關卡（每組 20 場）和上一批完全一樣：YY 134.7、YK 136.2、KK 131.2、RY 134.1、RK 144.9、RR 185.6 秒，全部 K.O.。主機測試 touch 60、control 71、input 31、rules 2323、cine 18 全過；G2（YY／YK／KK 三行相同）、smoke、pkgcheck 通過。這一批只改文件（[DUEL_RUKIA.md](DUEL_RUKIA.md) 最後一節、[DUEL_DESIGN.md](DUEL_DESIGN.md) 的節奏關卡段落）。
+
+## 28. 無限連戰 ENDLESS（2026-09-29）
+
+使用者要一個「一直打電腦、看能撐幾關」的模式。設計先寫成文件給使用者看，問了六個問題；使用者照建議的預設回答了五個，只改了一個：劍八維持覺醒過關時**不保留 NOME 的杯數**，不管在野晒哪一杯、卍解還是片腕，下一關一律從野晒第 1 杯 KATATE、NOME 10 開始。完整的規則和決定在 [DUEL_ENDLESS.md](DUEL_ENDLESS.md)。
+
+**放在自己的檔案裡。** 跟新角色的規則一樣（DUEL_DESIGN「Character code layout」）：`endless-rules.lisp` 是純函式（難度曲線 `*endless-ramp*`、對手袋子、關卡種子、帶到下一關的規則 `endless-carry`、比紀錄 `endless-better-p`），主機的 `duel-rules-test` 直接載入；`endless.lisp` 是模式本身（整輪的狀態、STAGE CLEAR 和結算畫面、關卡標籤、存紀錄、除錯指令）。共用檔案只加掛勾：`flow.lisp` 的 MODE 列、選角跳過 P2、`start-match` 一行、`go-results` 一行、新的流程狀態 `:clear`、暫停的 RETIRE；`hud.lisp` 三行加上選角畫面的 START 字樣；`main.lisp` 讓 `:clear` 用結算的鏡頭；`debug.lisp` 一行轉給 `endless-debug`。同時有兩個分支在加 Ichigo 和 Senjumaru，所以對手袋子每次都從 `*roster*` 讀，新角色註冊了 `:base` 型態就自動進袋子。
+
+**帶到下一關的規則是資料。** 「維持覺醒時下一關是什麼型態」不寫角色名字，而是 kit 的新鍵 `:endless-form`：劍八的 `:nozarashi`（二杯、三杯、卍解都繼承它）和 `:kataude` 對到 `:nozarashi`，山本的 `:bankai-east`（西繼承它）對到東。沒有這個鍵時依序看 `:reset-form`（露琪亞回 −18）、限時型態的 `:inherit`（獄炎結束回始解）、最後才是原本的型態。角色量表的規則照 Kikon 重置：型態變了或有 `:endless-form`／`:reset-form` 就從新型態的 `:start` 開始（NOME 10），否則保留。主機測試對每個角色的每個覺醒型態都跑 REVERT 和 CONTINUE，另外有三條「通用護欄」給之後的角色：維持覺醒的目標一定是覺醒型態、不能是任何角色的 `:bankai-form` 或手臂的 `:pips :to`、限時型態的目標不能也是限時型態。
+
+**對手袋子不用 sim-rnd。** 它用自己的線性同餘產生器，用（整輪種子、第幾袋）當種子洗牌，所以對手順序不會因為前面的戰鬥多擲一次骰子就整個換掉；每一關的模擬種子也是整輪種子和關數的純函式，第 n 關可以單獨重播。主機測試對種子 1～200、名單 2／3／5 人都檢查每袋剛好每人一次、跨袋不連續遇到同一人。
+
+**紀錄走頁面的橋。** 跟 SETTINGS 一樣用 `page-get`／`page-set`：30 + 2i 是第 i 個角色通過的關數、31 + 2i 是秒數，`pwa.js` 存成 `soulduel.endless.<k−30>`，每次存取都包在 try/catch 裡（無痕或擋掉儲存時讀到 0，就是沒有紀錄）。每過一關、成績比較好就寫，所以中途關掉分頁紀錄也在；除錯跑的整輪不寫。
+
+**測試。** 主機測試 `duel-rules-test` 從 2323 項變成 2350 項。`tests/scripts/duel-endless.json`（橫向、鍵盤）從選單開始跑一整輪：第 1 關過關、第 2 關變成片腕後 REVERT、第 3 關開卍解後 CONTINUE（log 裡看得到 `form bankai->nozarashi meter 10` 和下一關 `konpaku 3`）、暫停 RETIRE、NEW RUN 讀回 BEST 3，最後用自動駕駛（P1 也是 HARD 電腦）打一整輪；`duel-endless-portrait.json` 用觸控在直式畫面跑一次。MODE 多了一列，所以 `duel-flow`、`duel-practice`、`duel-touch-left`、`duel-mobile` 裡按列數移動的地方都跟著改。截圖拼成 `tests/shots/duel-endless-sheet.png`。
+
+**跟設計不一樣的地方。** QUIT 之後結算畫面的 P1 還是勝利姿勢（他確實過了那一關）；NEW RECORD 用閃爍的方塊字，不是毛筆章；除錯 80982+k 改成「P1 換成自己 kit 的第 k 個型態再過關」，這樣除錯檔也不用寫角色名字；另外加了 80992+p，只跑一次自動駕駛，給腳本用。

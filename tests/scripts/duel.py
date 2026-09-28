@@ -262,7 +262,7 @@ write("strings", ev)
 # -> skip (Esc) -> BATTLE -> pause (Esc) -> RESUME -> pause -> CHARACTER SELECT -> back ... -> TITLE;
 # then VS CPU HARD. Expected "duel -> STATE" lines in that order.
 t = T0
-ev = tap(t, "Enter") + tap(t + 0.5, "ArrowDown") + tap(t + 0.75, "ArrowDown") + tap(t + 1.0, "Enter")   # VS PLAYER (row 2)
+ev = tap(t, "Enter") + tap(t + 0.4, "ArrowDown") + tap(t + 0.6, "ArrowDown") + tap(t + 0.8, "ArrowDown") + tap(t + 1.0, "Enter")   # VS PLAYER (row 3)
 ev += tap(t + 1.6, "KeyD") + tap(t + 2.0, "Enter") + tap(t + 2.4, "Numpad1")      # P1 Kenpachi, P2 confirms
 ev += tap(t + 4.0, "Escape") + tap(t + 6.0, "Escape") + tap(t + 6.6, "Enter")     # skip intro, pause, resume
 ev += tap(t + 8.0, "Escape") + tap(t + 8.4, "ArrowDown") + tap(t + 8.8, "ArrowDown") + tap(t + 9.2, "Enter")  # -> select
@@ -272,8 +272,8 @@ ev += tap(t + 13.4, "KeyD") + tap(t + 14.2, "Enter")                            
 ev += [shot(t + 21, "flow-vs-cpu-hard")]
 write("flow", ev)
 
-# SETTINGS and PRACTICE by keyboard (the 2026-09-28 MODE menu: VS CPU / PRACTICE / VS PLAYER / CPU VS CPU / SETTINGS /
-# CONTROLS). Expected, in order: duel -> SETTINGS, duel setting HAND LEFT, ... HAND RIGHT, duel setting CAMERA SIDE,
+# SETTINGS and PRACTICE by keyboard (the MODE menu since ENDLESS, 2026-09-29: VS CPU / ENDLESS / PRACTICE / VS PLAYER /
+# CPU VS CPU / SETTINGS / CONTROLS). Expected, in order: duel -> SETTINGS, duel setting HAND LEFT, ... HAND RIGHT, duel setting CAMERA SIDE,
 # duel camera CAMERA  SIDE (the pause menu flips it back: BEHIND), duel -> MODE, duel -> SELECT, the match seed line with
 # PRACTICE, duel -> BATTLE; J J J on the standing dummy: YA-J1 / J2 / J3 -> P2 HIT (the dump after it: P2 r1300, the
 # HP refilled); duel practice DUMMY  GUARD ALL, then J1 / J2 -> P2 BLOCKED; DUMMY  GUARD AFTER HIT: J1 -> HIT, then a J1
@@ -283,13 +283,13 @@ write("flow", ev)
 t = T0                                   # (a shot stalls the page ~0.5 s: no key within 1 s after one)
 ev = tap(t, "Enter") + [shot(t + 0.8, "practice-mode")]                           # TITLE -> MODE
 t += 2.0
-for i in range(4): ev += tap(t + 0.25 * i, "ArrowDown")                            # SETTINGS (row 4)
+for i in range(5): ev += tap(t + 0.2 * i, "ArrowDown")                             # SETTINGS (row 5)
 ev += tap(t + 1.2, "Enter") + [shot(t + 1.8, "practice-settings")]
 t += 3.0
 ev += tap(t, "ArrowDown") + tap(t + 0.3, "ArrowRight") + tap(t + 0.6, "ArrowLeft")   # HAND LEFT, back to RIGHT
 for i in range(3): ev += tap(t + 0.9 + 0.25 * i, "ArrowDown")                      # CAMERA
 ev += tap(t + 1.8, "ArrowRight") + tap(t + 2.2, "Escape")                          # SIDE; back to MODE (cursor on SETTINGS)
-for i in range(3): ev += tap(t + 2.6 + 0.25 * i, "ArrowUp")                        # PRACTICE (row 1)
+for i in range(3): ev += tap(t + 2.6 + 0.25 * i, "ArrowUp")                        # PRACTICE (row 2)
 ev += tap(t + 3.6, "Enter") + tap(t + 4.1, "Enter") + tap(t + 4.6, "Enter") + tap(t + 5.1, "Enter")   # P1, P2, CPU
 ev += tap(t + 6.6, "Escape")                                                       # skip the intro
 t += 8.5
@@ -530,3 +530,55 @@ def ichigo_script(tag, portrait):
     return ev
 write("ichigo", ichigo_script("", False))
 write("ichigo-portrait", ichigo_script("-p", True))
+# ENDLESS (docs/DUEL_ENDLESS.md; run with --fixed-dt 16.666667 --secs 110): a menu run, so it writes the record.
+# Landscape by keyboard: MODE row 1 (ENDLESS) -> P1 Kenpachi -> START NORMAL; stage 1 cleared by debug 80980 (STAGE
+# CLEAR not awakened: CONTINUE / QUIT) -> CONTINUE; stage 2: 80987 (his 5th form, KATAUDE) + the clear -> STAGE CLEAR
+# awakened -> REVERT; stage 3's line "P1 form base konpaku 9 awaken 100"; 80981 (the Bankai: Konpaku 1) + the clear ->
+# CONTINUE (BANKAI -> KATATE); stage 4's line "P1 form nozarashi konpaku 3 awaken 0 meter 10"; pause -> RETIRE ->
+# "duel endless over stages 3 ... record T"; NEW RUN -> pause -> RETIRE -> "over stages 0 ... best 3"; then the autopilot
+# once (80992: P1 Kenpachi as a HARD CPU, seed 1, CONTINUE every clear): "duel endless over" + "duel endless gate".
+# Portrait (--mobile --size 390x844, duel-endless-portrait.json, --secs 60) by taps: P1 Yamamoto, stage 1 cleared,
+# stage 2 in BANKAI-WEST (80985) -> REVERT, stage 3 retired from the pause chip.
+# Shots tests/shots/duel-endless-*.png; python3 tests/endless-sheet.py builds the contact sheet.
+def endless_script(portrait):
+    tag = "-p" if portrait else ""
+    def es(t, n): return {"at": round(t, 2), "shot": f"{SHOTS}endless{tag}-{n}.png"}
+    def touch(t, x, y): return [{"at": round(t, 2), "touch": "start", "x": x, "y": round(y)}, {"at": round(t + 0.05, 2), "touch": "end", "x": x, "y": round(y)}]
+    H, ROW = 844, 36.67                                  # portrait CSS px: a menu row is 22 s (s = 5 at DPR 3)
+    def row(y0, i): return y0 * H + 12 + i * ROW         # the i-th row of a HUD-MENU starting at Y0 (fraction of h)
+    t = T0; ev = [cmd(t - 0.5, 2106)]
+    if portrait:
+        ev += touch(t, 195, 500) + [es(t + 0.8, "mode")] + touch(t + 1.8, 195, row(0.52, 1))   # title; MODE row 1
+        ev += touch(t + 3.0, 195, 600) + [es(t + 3.8, "select")] + touch(t + 4.6, 195, 600)   # P1 Yamamoto; START NORMAL
+        ev += touch(t + 6.5, 195, 400)                                                         # skip the intro
+    else:
+        ev += tap(t, "Enter") + [es(t + 0.8, "mode")] + tap(t + 1.8, "ArrowDown") + tap(t + 2.1, "Enter")
+        ev += tap(t + 3.0, "KeyD") + tap(t + 3.3, "Enter") + [es(t + 3.9, "select")] + tap(t + 4.8, "Enter")
+        ev += tap(t + 6.5, "Escape")
+    t += 8.0
+    ev += [es(t, "hud"), cmd(t + 1.0, 80980), es(t + 6.0, "clear")]                           # stage 1 -> STAGE CLEAR
+    ev += touch(t + 7.0, 195, row(0.8, 0)) if portrait else tap(t + 7.0, "Enter")              # CONTINUE
+    ev += touch(t + 9.0, 195, 400) if portrait else tap(t + 9.0, "Escape")                     # skip the intro
+    t += 11.0
+    ev += [cmd(t, 80985 if portrait else 80987), es(t + 5.0, "clear-awakened")]              # stage 2, awakened
+    ev += touch(t + 6.0, 195, row(0.8, 1)) if portrait else tap(t + 6.0, "ArrowDown") + tap(t + 6.3, "Enter")   # REVERT
+    ev += touch(t + 8.0, 195, 400) if portrait else tap(t + 8.0, "Escape")
+    t += 10.0
+    if not portrait:
+        ev += [cmd(t, 80981), cmd(t + 9.0, 80980), es(t + 14.0, "clear-bankai")] + tap(t + 15.0, "Enter")   # stage 3
+        ev += tap(t + 17.0, "Escape"); t += 19.0
+    ev += [es(t, "hud-4" if not portrait else "hud-3")]
+    if portrait: ev += touch(t + 1.0, 358, 200) + [es(t + 1.8, "pause")] + touch(t + 2.6, 195, row(0.45, 1))   # II, RETIRE
+    else: ev += tap(t + 1.0, "Escape") + [es(t + 1.8, "pause")] + tap(t + 2.6, "ArrowDown") + tap(t + 2.9, "Enter")
+    ev += [es(t + 7.0, "results")]
+    t += 8.0
+    if not portrait:
+        ev += tap(t, "Enter") + tap(t + 8.0, "Escape") + tap(t + 8.4, "ArrowDown") + tap(t + 8.7, "Enter")   # the intro ran out
+        ev += [es(t + 13.0, "results-best")]; t += 14.0                                        # NEW RUN, retired: BEST 3
+        ev += [cmd(t, 80992)]                                                                  # the autopilot, one run
+    return ev
+write("endless", endless_script(False))
+write("endless-portrait", endless_script(True))
+# the ENDLESS pacing check (debug 80990: every character x seeds 1-20, CONTINUE policy; 80991 for REVERT): one
+# "duel endless over" line per run, then "duel endless gate P1 c policy stay runs 20 median m ..." per character
+write("endless-gate", [cmd(T0, 80990)])

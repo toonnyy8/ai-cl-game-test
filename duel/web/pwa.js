@@ -3,7 +3,8 @@
 //   get 0 = touch-first device ((pointer: coarse)), 1 = back gestures since the last ask,
 //       3 / 4 = the safe-area inset at the top / bottom, CSS px (env(safe-area-inset-*); tests set gamePage.testInsets = [top, bottom])
 //       10 + i = SETTINGS row i as saved (option index + 1; 0 = never saved, or no storage: the game's default)
-//   set 0 = battle on / off (the screen wake lock), 10 + i = save SETTINGS row i
+//       30 + k = ENDLESS best record slot k (roster index i: 30 + 2i stages, 31 + 2i seconds; 0 = none / no storage)
+//   set 0 = battle on / off (the screen wake lock), 10 + i = save SETTINGS row i, 30 + k = save ENDLESS slot k
 // SETTINGS rows (duel/lisp/control.lisp *SETTINGS*, same order) live in localStorage as soulduel.<name>; every access is
 // wrapped in try/catch (private mode / blocked storage: nothing saved, the defaults).
 // On a touch-first device only: the history trap (the back gesture pauses instead of leaving), fullscreen +
@@ -45,11 +46,13 @@
       if (k === 1) { var b = back; back = 0; return b; }
       if (k >= 10 && k < 10 + settings.length) return +(stored('soulduel.' + settings[k - 10]) || 0) | 0;
       if (k === 3 || k === 4) return inset(k - 3);
+      if (k >= 30 && k < 50) return +(stored('soulduel.endless.' + (k - 30)) || 0) | 0;
       return 0;
     },
     set: function (k, v) {
       if (k === 0 && coarse) { wakeOn = !!v; if (wakeOn) wake(); else if (lock && lock.release) { lock.release(); lock = null; } }
       if (k >= 10 && k < 10 + settings.length) store('soulduel.' + settings[k - 10], String(v));
+      if (k >= 30 && k < 50) store('soulduel.endless.' + (k - 30), String(v));
     }
   };
   if (!coarse) return;

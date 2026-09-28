@@ -672,6 +672,28 @@ Android 還有一個不用憑證的辦法：USB 接電腦，Chrome 的 `chrome:/
 
 **在兩支手機上要確認的事**：用單手打完一場 NORMAL；有沒有「想防禦卻出了 Quick」「想走路卻變成 Step」之類的誤判（大概幾次）；畫面順不順（開發者可以在 Chrome 遠端偵錯看 console 的 `stats: fps` 行）；對戰中滑「返回」是暫停而不是離開；對戰時螢幕不會自己變暗。
 
+### 9.8 無限連戰 ENDLESS
+
+MODE 選單第二列是 ENDLESS（2026-09-29，完整規則在 [DUEL_ENDLESS.md](DUEL_ENDLESS.md)）：一個人連續對上電腦，看能撐幾關。鍵盤、手把和觸控都能玩，單手模式跟 VS CPU 一樣由 ONE-HAND 設定決定。
+
+**開始。** 只有 P1 選角色，接著選 START（EASY／NORMAL／HARD），這是難度的起點。選角畫面右邊站的就是第一關的對手。
+
+**每一關。** 開場、對戰、K.O.（或時間到時領先）之後進入 STAGE CLEAR 畫面，上面寫著這一關和整輪的時間、魂魄變化、下一關的對手和難度。選項：
+
+- **CONTINUE**：直接打下一關。已經覺醒的話，會寫出你下一關是什麼型態（例如 `BANKAI-WEST -> BANKAI-EAST`）。
+- **REVERT**（只有已覺醒時才有）：回到覺醒前的型態，但覺醒量表是滿的，開場就能按 P 再覺醒一次。
+- **QUIT**：結束這一輪，看結算。
+
+畫面出現 1 秒後才接受輸入，免得連打把它跳過。暫停選單只有 RESUME 和 RETIRE（放棄這一關，直接看結算），沒有 RESTART。
+
+**帶到下一關的東西。** 靈子（血）和防禦量表回滿，魂魄 +2（最多 9 顆），靈壓和瞬步照舊；還沒覺醒的話，覺醒量表也照舊。維持覺醒時：山本的卍解一律回到「東」，獄炎是限時型態，過關就結束；劍八不管在野晒哪一杯、卍解或片腕，下一關都從**野晒第 1 杯 KATATE、NOME 10** 開始（使用者的決定）；露琪亞回到 −18 °C、冷度 0。劍八的卍解每一關都能開一次，但代價會跟著走：開卍解魂魄剩 1，過關 +2 變 3，下一關再開又回到 1。
+
+**對手越來越強。** 對手從一個打亂的「袋子」裡抽：每一輪每個角色各出現一次，不會連續兩關遇到同一個人，也會遇到跟自己一樣的角色。電腦難度每兩關升一級到 HARD；第 5 關起對手開場帶半條覺醒量表、第 7 關起是滿的、第 9 關起一開場就已經覺醒；第 9 關起對手靈子 +10%，第 12 關起 +20%，之後不再變強。
+
+**紀錄。** 成績是通過的關數，關數一樣時比總時間（只算對戰本身的時間）。每個角色各存一筆最佳紀錄在瀏覽器裡（localStorage 的 `soulduel.endless.*`，無痕模式存不了也不會出錯），每過一關就寫一次，所以中途關掉分頁紀錄也還在。結算畫面有 STAGES CLEARED、TIME、BEST，破紀錄時會閃 NEW RECORD，最下面是 NEW RUN／CHARACTER SELECT／TITLE。對戰中，橫向畫面在計時器下面、直式畫面在上方 P2 量表的左下方顯示 `STAGE n`。
+
+**程式怎麼放的。** 跟新角色一樣放在自己的檔案裡：`endless-rules.lisp` 是純函式（難度曲線、對手袋子、帶到下一關的規則、比紀錄），主機測試直接載入它；`endless.lisp` 是模式本身（畫面、存紀錄、除錯指令 80000～80999）。共用檔案只加了幾行掛勾，例如 `start-match` 裡的 `(when (eq *mode* :endless) (endless-apply!))`。角色要告訴模式「維持覺醒時下一關是什麼型態」，用的是一個 kit 鍵 `:endless-form`，所以之後新加的角色只要在資料裡寫這個鍵就好。想快速試：除錯指令 `80000 + 100 × 角色編號 + 關數` 直接跳到那一關，`80980` 立刻過關，`tests/scripts/duel-endless.json` 是一整輪的測試腳本。
+
 ---
 
 ## 第 10 步：練習
@@ -714,7 +736,7 @@ Android 還有一個不用憑證的辦法：USB 接電腦，Chrome 的 `chrome:/
 > 5. `duel/MANIFEST`：`lisp/ronin-art.lisp` 放在 `lisp/rukia-art.lisp` 後面，`lisp/ronin.lisp` 放在 `lisp/rukia.lisp` 後面（都要在 `lisp/fighter.lisp` 之前）。
 > 6. 角色選單不用改：`*roster*`（`kit.lisp` 第 202 行）在 `register-kit` 裡自動收集每個有 `:base` 型態的角色（第 300～301 行）。除錯指令 2000+s 從名單裡抽角色，所以電腦對戰也會抽到它；`debug.lisp` 的 `*pairs*` 列了 YY／YK／KK、露琪亞的 RY／RK／RR 和一護的 IY／IK／IR／II，要讓節奏測試涵蓋新角色就加一組。
 > 7. 想讓主機測試也檢查它：在 `tests/duel-rules-test.lisp` 的載入清單（第 12 行）加 `"ronin"`，並更新 `*forms*`、`*clips-5*` 和 `(equal *roster* '(:yamamoto :kenpachi :rukia))` 那一項。
-> 8. `./build.sh duel`、`tools/pkgcheck.sh duel`（撞名或漏改的函式會出現在第二、三行），最後跑一次 `grep -nE ':ya-|:ke-|:ru-|:ro-|yama|kenpachi|rukia|ronin' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow}.lisp`，應該什麼都印不出來。
+> 8. `./build.sh duel`、`tools/pkgcheck.sh duel`（撞名或漏改的函式會出現在第二、三行），最後跑一次 `grep -nE ':ya-|:ke-|:ru-|:ro-|yama|kenpachi|rukia|ronin' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow,endless-rules,endless}.lisp`，應該什麼都印不出來。
 
 ---
 

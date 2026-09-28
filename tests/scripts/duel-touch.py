@@ -55,7 +55,7 @@ print(f"tests/scripts/duel-touch.json: {len(s)} steps")
 # turned to landscape mid-match (paused: ROTATE TO PORTRAIT) and back.
 s = []
 ROW = 36.67                                         # a portrait menu row at 390 x 844 (22 s px, s = 5 at DPR 3)
-tap(7.0, 195, 500); tap(7.6, 195, 451 + 4 * ROW)   # title; MODE row 4: SETTINGS
+tap(7.0, 195, 500); tap(7.6, 195, 451 + 5 * ROW)   # title; MODE row 5: SETTINGS
 tap(8.2, 195, 451 + ROW); tap(8.8, 195, 451 + 5 * ROW)   # SETTINGS row 1: HAND -> LEFT; row 5: BACK
 tap(9.0 + 0.4, 195, 451)                            # VS CPU
 tap(10.0, 195, 600); tap(11.0, 195, 600); tap(12.0, 195, 600); tap(13.0, 195, 400)

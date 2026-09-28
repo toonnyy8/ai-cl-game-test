@@ -840,6 +840,7 @@ facing."
   (dolist (e (list *p1* *p2*))                                                   ; both panels first: the callouts
     (when (entity-alive-p e) (if (portrait-p) (hud-side-portrait e w h s) (hud-side e w h s))))
   (dolist (e (list *p1* *p2*)) (when (entity-alive-p e) (hud-world e w h s)))  ; keep clear of them
+  (when (eq *mode* :endless) (hud-endless-tag w h s))    ; STAGE n (endless.lisp)
   (when (eq *mode* :practice)                            ; no timer: PRACTICE's tag in its place (landscape)
     (unless (portrait-p) (hud-text "PRACTICE" (floor w 2) (* 0.06 h) (* 2 s) *dim* :align :center))
     (return-from hud-battle))
@@ -918,7 +919,7 @@ and the tap help (left / right third: choose, the middle: confirm)."
       (ui-text name (floor w 2) (+ y (* 10 s)) :scale (fit-scale name (* 3 s) (* 0.94 w)) :align :center
                :color (if active *white* *dim-ink*) :shadow active)))
   (when (and (/= *select-phase* 0) (/= *select-phase* 1) (not (eq *mode* :vs-player)))
-    (ui-text (format nil "CPU  < ~a >" (symbol-name *difficulty*)) (floor w 2) (* 0.82 h) :scale (* 2 s)
+    (ui-text (format nil "~a  < ~a >" (if (eq *mode* :endless) "START" "CPU") (symbol-name *difficulty*)) (floor w 2) (* 0.82 h) :scale (* 2 s)
              :align :center :color '(1 0.85 0.3 1) :shadow t))
   (ui-text "TAP LEFT / RIGHT: CHOOSE" (floor w 2) (- h (* 30 s)) :scale s :align :center :color *white* :shadow t)
   (ui-text "TAP THE MIDDLE: CONFIRM" (floor w 2) (- h (* 20 s)) :scale s :align :center :color *white* :shadow t))
@@ -935,7 +936,7 @@ and the tap help (left / right third: choose, the middle: confirm)."
                x (* 0.78 h) :scale (* 3 s) :align :center :color (if active *white* *dim-ink*) :shadow active)))
   (when (and (/= *select-phase* 0) (/= *select-phase* 1) (not (eq *mode* :vs-player)))
     (let ((cam (vs-cpu-p)))                             ; VS CPU / PRACTICE: a second row, up / down picks the row
-      (ui-text (format nil "CPU  < ~a >" (symbol-name *difficulty*)) (floor w 2) (* (if cam 0.85 0.88) h) :scale (* 2 s)
+      (ui-text (format nil "~a  < ~a >" (if (eq *mode* :endless) "START" "CPU") (symbol-name *difficulty*)) (floor w 2) (* (if cam 0.85 0.88) h) :scale (* 2 s)
                :align :center :color (if (and cam (= *menu* 1)) *dim-ink* '(1 0.85 0.3 1)) :shadow (not (and cam (= *menu* 1))))
       (when cam
         (ui-text (format nil "< ~a >" (camera-label)) (floor w 2) (* 0.9 h) :scale (* 2 s)
@@ -995,6 +996,7 @@ card over the lower part with the winner's name, the stats table and the menu."
 (defun hud-results (w h s)
   "RESULTS: a panel in the left part of the screen (the winner model stays visible on the right):
 WINNER + name, the stats table (P1 / P2 columns), the match time, the menu."
+  (when (eq *mode* :endless) (return-from hud-results (hud-endless-results w h s)))   ; the run's results (endless.lisp)
   (when (portrait-p) (return-from hud-results (hud-results-portrait w h s)))
   (let* ((rs (results-strings)) (sc (max 1 (round (* 1.5 s)))) (row (* 11 sc))
          (px (* 0.04 w)) (pw (+ (* 28 s) (* 131 sc))) (cx (+ px (* 0.5 pw))))   ; fits "PERFECT HOHOS" + 2 columns
@@ -1054,7 +1056,8 @@ WINNER + name, the stats table (P1 / P2 columns), the match time, the menu."
       (:controls (if (one-hand-offered-p) (hud-gestures w h s) (hud-controls w h s)))
       (:select (hud-select w h s))
       ((:battle :finish) (unless *cine* (hud-battle w h s) (when (and *one-hand* (portrait-p) (not *paused*)) (hud-deck s))))
-      (:results (hud-results w h s)))
+      (:results (hud-results w h s))
+      (:clear (hud-endless-clear w h s)))
     (draw-words w h)
     (when (and *paused* (eq *flow* :battle))
       (ui-rect 0 0 w h '(0 0 0 0.55))

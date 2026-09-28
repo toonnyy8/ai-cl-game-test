@@ -1,0 +1,178 @@
+[
+{
+"at": 8.5,
+"eval": "Module._debug_cmd(2106)"
+},
+{
+"at": 9.0,
+"touch": "start",
+"x": 195,
+"y": 500
+},
+{
+"at": 9.05,
+"touch": "end",
+"x": 195,
+"y": 500
+},
+{
+"at": 9.8,
+"shot": "tests/shots/duel-endless-p-mode.png"
+},
+{
+"at": 10.8,
+"touch": "start",
+"x": 195,
+"y": 488
+},
+{
+"at": 10.85,
+"touch": "end",
+"x": 195,
+"y": 488
+},
+{
+"at": 12.0,
+"touch": "start",
+"x": 195,
+"y": 600
+},
+{
+"at": 12.05,
+"touch": "end",
+"x": 195,
+"y": 600
+},
+{
+"at": 12.8,
+"shot": "tests/shots/duel-endless-p-select.png"
+},
+{
+"at": 13.6,
+"touch": "start",
+"x": 195,
+"y": 600
+},
+{
+"at": 13.65,
+"touch": "end",
+"x": 195,
+"y": 600
+},
+{
+"at": 15.5,
+"touch": "start",
+"x": 195,
+"y": 400
+},
+{
+"at": 15.55,
+"touch": "end",
+"x": 195,
+"y": 400
+},
+{
+"at": 17.0,
+"shot": "tests/shots/duel-endless-p-hud.png"
+},
+{
+"at": 18.0,
+"eval": "Module._debug_cmd(80980)"
+},
+{
+"at": 23.0,
+"shot": "tests/shots/duel-endless-p-clear.png"
+},
+{
+"at": 24.0,
+"touch": "start",
+"x": 195,
+"y": 687
+},
+{
+"at": 24.05,
+"touch": "end",
+"x": 195,
+"y": 687
+},
+{
+"at": 26.0,
+"touch": "start",
+"x": 195,
+"y": 400
+},
+{
+"at": 26.05,
+"touch": "end",
+"x": 195,
+"y": 400
+},
+{
+"at": 28.0,
+"eval": "Module._debug_cmd(80985)"
+},
+{
+"at": 33.0,
+"shot": "tests/shots/duel-endless-p-clear-awakened.png"
+},
+{
+"at": 34.0,
+"touch": "start",
+"x": 195,
+"y": 724
+},
+{
+"at": 34.05,
+"touch": "end",
+"x": 195,
+"y": 724
+},
+{
+"at": 36.0,
+"touch": "start",
+"x": 195,
+"y": 400
+},
+{
+"at": 36.05,
+"touch": "end",
+"x": 195,
+"y": 400
+},
+{
+"at": 38.0,
+"shot": "tests/shots/duel-endless-p-hud-3.png"
+},
+{
+"at": 39.0,
+"touch": "start",
+"x": 358,
+"y": 200
+},
+{
+"at": 39.05,
+"touch": "end",
+"x": 358,
+"y": 200
+},
+{
+"at": 39.8,
+"shot": "tests/shots/duel-endless-p-pause.png"
+},
+{
+"at": 40.6,
+"touch": "start",
+"x": 195,
+"y": 428
+},
+{
+"at": 40.65,
+"touch": "end",
+"x": 195,
+"y": 428
+},
+{
+"at": 45.0,
+"shot": "tests/shots/duel-endless-p-results.png"
+}
+]

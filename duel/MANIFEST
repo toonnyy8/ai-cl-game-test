@@ -24,6 +24,7 @@ lisp/yama.lisp
 lisp/ken.lisp
 lisp/rukia.lisp
 lisp/ichigo.lisp
+lisp/endless-rules.lisp
 lisp/fighter.lisp
 lisp/combat.lisp
 lisp/hazards.lisp
@@ -34,4 +35,5 @@ lisp/flow.lisp
 lisp/hud.lisp
 lisp/onehand.lisp
 lisp/debug.lisp
+lisp/endless.lisp
 lisp/main.lisp

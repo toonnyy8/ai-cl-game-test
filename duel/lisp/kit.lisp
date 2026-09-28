@@ -212,6 +212,7 @@ new button."
   (l-after-k nil)                       ; L chained after a K link (docs/DUEL_STRINGS.md §12): T its L, or a move (a combo copy)
   (hooks nil)                           ; plist hook point -> the character file's function (KIT-HOOK; docs/DUEL_DESIGN.md
                                         ; "Character code layout")
+  (endless-form nil)                    ; ENDLESS: the form a stay-awakened carry starts the next stage in (endless-rules.lisp)
   (commands nil)                ; plist command -> move name
   (strings nil)                 ; ((from-move command to-move) ...)
   (moves (make-hash-table :test 'eq))   ; move name -> this form's MOVE
@@ -314,7 +315,7 @@ Cornered with LOST Konpaku."
                            body weapon stance hide aura intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
                            enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
                            kikon-konpaku meter-gain form-name drink-clip respect-callout bankai-form pips
-                           crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k calm hooks
+                           crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k calm hooks endless-form
                            (startup-add 0) (reach-mult 1.0) commands strings grid)
         merged
       (declare (ignore grid))
@@ -331,7 +332,7 @@ Cornered with LOST Konpaku."
                            :meter-gain meter-gain :form-name (or form-name (symbol-name form)) :drink-clip drink-clip
                            :respect-callout respect-callout :bankai-form bankai-form :pips pips
                            :crush-hook crush-hook :rooted rooted :field field :warm warm :cold cold
-                           :frost-touch frost-touch :reset-form reset-form :u-tag u-tag :l-after-k l-after-k :calm calm
+                           :frost-touch frost-touch :reset-form reset-form :u-tag u-tag :l-after-k l-after-k :calm calm :endless-form endless-form
                            :hooks hooks :commands commands :strings strings :spec merged))
             (own (loop for (nil m) on (getf spec :commands) by #'cddr collect m)))
         ;; every move the form can reach. The derivation rule (design v2 §0): a move is as written when the
@@ -408,6 +409,8 @@ child's keys win, :commands merge per command, :strings add. Keys:
                                      :step (a Step's frame 0), :ok (e cmd: may the command start), :parried (a catch by
                                      its parry), :tick (every sim step), :hud-guard (drawn over its guard bar), :deck
                                      (the one-hand thumb ring)
+  :endless-form FORM                 ENDLESS: staying awakened starts the next stage in FORM, its meter at FORM's :start
+                                     (docs/DUEL_ENDLESS.md §4)
   :u-tag STRING                      the HUD's tag for U   :meter (:name :max :temp t)  Rukia's cold gauge (combat.lisp
                                      TEMP-STEP: the kit meter holds the cold C, the band is the form, rules TEMP-BAND)
   :warm n  :cold (cmd n ...)         a :temp form's warming per second; the cold each command spends (L refused without)

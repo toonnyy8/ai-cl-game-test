@@ -163,6 +163,7 @@
 
 (defkit :yamamoto :bankai-east :inherit :base
   :awakening t :taken *bankai-taken* :startup-add -1 :reach-mult 1.15 :guard-to :bankai-west
+  :endless-form :bankai-east                    ; ENDLESS: West (inheriting it) stays as East
   :blade (:embers 1.4) :grade :spot :passives (:projectile-cut :pierce) :meter nil   ; the body as it is (the charcoal
   ;; heat wisps), the charred blade with its ember-red edge line
   :weapon :zanka :aura :heat :enter-clips (:ya-bankai) :enter-hook yama-bankai-enter :swing-sfx :whoosh-heavy
