@@ -728,7 +728,12 @@ Kenpachi's Bankai, the user's decisions 2026-09-27 / 28, DUEL_KEN_BANKAI.md): YY
 (Bankai entries: 3 in YK, 6 in KK). **Latest (2026-09-28: Rukia's cold-gauge rework, Kenpachi's one pip per string,
 South without a cooldown; debug 2113, all six pairings): YY 134.7, YK 136.2 (Yamamoto 12 / 20), KK 131.2, RY 135.6
 (Rukia 11 / 20), RK 148.1 (Rukia 13 / 20), RR 183.1 s (P1 8 / 20)**, 120/120 K.O.; her awakening A/B (60 seeds, P1 always /
-never): RY 30 / 28, RK 35 / 32, RR 26 / 27 (DUEL_RUKIA.md, "Measurements (the cold gauge rework)"). **Before it (Rukia
+never): RY 30 / 28, RK 35 / 32, RR 26 / 27 (DUEL_RUKIA.md, "Measurements (the cold gauge rework)"). **The awaken A/B's
+target (the user's decision 2026-09-28, 「覺醒偏強沒關係，只要不是強到無法贏就好」)**: an awakening may be the stronger choice;
+the pass is that "never awaken" still wins **≥ 20 of 60** against each opponent on each of **≥ 3 disjoint 60-seed
+streams** (debug 30000+k), with no target on the always − never margin (the old |Δ| ≤ 9 is retired: one stream's margin
+moves with any extra CPU roll). Rukia's, seeds 201–260 / 401–460 / 601–660, never wins RY 23 / 24 / 31, RK 30 / 28 / 26, RR
+28–34 (always ahead by +27 / +21 / +8 over the 180; DUEL_RUKIA.md, "The awaken A/B across seed streams"). **Before it (Rukia
 merged, debug 2113 plays all six pairings): YY 134.7, YK 137.1, KK 125.8, RY 144.0 (Rukia 9 / 20), RK 152.1 (Rukia
 12 / 20), RR 186.0 s (P1 10 / 20)**, 120/120 K.O.; her awakening A/B (60 seeds, P1 always / never / rule): RY 25 / 28 / 23, RK 34 / 37 / 34, RR 28 / 27 / 28
 (DUEL_RUKIA.md, Measurements). After the Soul Break rule alone: YY 131.8, YK 138.0, KK 131.5 s, YK 9 / 11.
