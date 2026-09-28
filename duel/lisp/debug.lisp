@@ -814,15 +814,17 @@ move-beat choices of DRAW-FIGHTER."
                                (nth (floor (* (length *roster*) (sim-rnd01))) *roster*))))
   (start-match))
 
+(defvar *char-debug* nil "(lo hi fn): debug commands LO..HI a character file handles (FN of the command).")
 (defvar *gate* nil "Seed gate: (seed pair) matches still to run.")
 (defvar *gate-results* nil "(pair secs ko-p) of the finished gate matches.")
 (defparameter *pairs* '((:yamamoto :yamamoto) (:yamamoto :kenpachi) (:kenpachi :kenpachi)
-                        (:rukia :yamamoto) (:rukia :kenpachi) (:rukia :rukia)))
+                        (:rukia :yamamoto) (:rukia :kenpachi) (:rukia :rukia)
+                        (:ichigo :yamamoto) (:ichigo :kenpachi) (:ichigo :rukia) (:ichigo :ichigo)))
 
 (defvar *gate-seed0* 0 "Debug 30000+k: the seed gate plays seeds k+1 .. k+20 (the 60-seed A/B in three runs).")
 (defun start-gate (p)
   (setf *turbo* t *skip-cines* nil *combat-log* nil *gate-log* nil *gate-results* nil
-        *gate* (loop for pair in (case p (3 *pairs*) (4 (subseq *pairs* 3)) (5 (subseq *pairs* 3 5))
+        *gate* (loop for pair in (case p (3 *pairs*) (4 (subseq *pairs* 3 6)) (5 (subseq *pairs* 3 5))
                                    (t (list (nth (mod p 10) *pairs*))))   ; (10+k: pairing k alone)
                      append (loop for seed from (1+ *gate-seed0*) to (+ *gate-seed0* 20) collect (list seed pair))))
   (gate-update))
@@ -866,7 +868,8 @@ move-beat choices of DRAW-FIGHTER."
         ((<= 8000 c 8999) (start-cvc (- c 8000) '(:rukia :rukia)))
         ((= c 2118) (start-gate 4))
         ((= c 2119) (start-gate 5))
-        ((<= 2125 c 2130) (start-gate (+ 10 (- c 2125))))   ; one pairing alone: 0 YY 1 YK 2 KK 3 RY 4 RK 5 RR
+        ((<= 2125 c 2134) (start-gate (+ 10 (- c 2125))))   ; one pairing alone: 0 YY 1 YK 2 KK 3 RY 4 RK 5 RR 6 IY 7 IK 8 IR 9 II
+        ((loop for (lo hi fn) in *char-debug* thereis (and (<= lo c hi) (progn (funcall fn c) t))))   ; a character's own
         ((= c 2124) (start-gate 4) (setf *combat-log* t *gate-log* t))   ; her three pairings with the combat log (pacing)
         ((= c 2100) (setf *skip-cines* (not *skip-cines*)) (when *skip-cines* (skip-cine)))
         ((= c 2101) (setf *konpaku-start* 2))

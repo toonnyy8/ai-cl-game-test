@@ -530,7 +530,9 @@ from the base form when this form has none) and the tag of what U does in the fo
                   right (gauges-guardless g)
                   (logior (if (and (or ward (member (fighter-state f) '(:guard :guard-hit))) (< gf 1.0)) 1 0)
                           (if (or ward (passive-p e :pierce)) 2 0))
-                  tm))
+                  tm)
+      (let ((hk (kit-hook kit :hud-guard)))              ; a form's own look of the bar (drawn over it)
+        (when hk (funcall hk e x (+ y bh (* 2 s)) bw (max (* 3 s) (* 0.3 bh)) right s tm))))
     ;; KOSEI: the tag at the guard bar's inner end (on the Konpaku row, clear of the pips), the mote to the Reiatsu bars
     (hud-kosei side (gauges-gg g) (if right x (+ x bw)) (+ y bh (* 16 s) (* 0.5 (max (* 4.5 s) (* 0.013 h))))
                right (if right (- edge (* 0.12 w)) (+ edge (* 0.12 w))) (+ y bh (* 26 s)) s)
@@ -690,7 +692,8 @@ from the base form when this form has none) and the tag of what U does in the fo
       (%hud-guard (f32 m) (f32 gy) (f32 bw) (f32 (* 2 s)) (f32 gf) (aref *trail-v* ti) nil (gauges-guardless g)
                   (logior (if (and (or ward (member (fighter-state f) '(:guard :guard-hit))) (< gf 1.0)) 1 0)
                           (if (or ward (passive-p e :pierce)) 2 0))
-                  tm))
+                  tm)
+      (let ((hk (kit-hook kit :hud-guard))) (when hk (funcall hk e m gy bw (* 2 s) nil s tm))))
     ;; the small gauges (the last row, as long as the Reishi bar): Reiatsu cells, flash step, Awakening, the kit meter /
     ;; cooldowns
     (let* ((x0 m) (a bw) (gap (* 3 s)) (cd (and (kit-awakening kit) (kit-command-move kit :sig)

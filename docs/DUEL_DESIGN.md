@@ -1,7 +1,8 @@
 # SOUL DUEL — Game Design (as built)
 
 A 1v1 3D arena fighter modelled on *BLEACH: Rebirth of Souls* (RoS): three TYBW characters, Yamamoto Genryusai,
-Zaraki Kenpachi and Kuchiki Rukia (added 2026-09-28, DUEL_RUKIA.md), human or CPU on either side. It is the second game on the engine
+Zaraki Kenpachi, Kuchiki Rukia (added 2026-09-28, DUEL_RUKIA.md) and Kurosaki Ichigo (added 2026-09-28, DUEL_ICHIGO.md),
+human or CPU on either side. It is the second game on the engine
 (`duel/`, package `DUEL`, `./build.sh duel` → `dist/duel`). How to build, play and test it:
 `DUEL_GAMEPLAY.md`. Why it looks the way it does and what it taught the engine: DEVLOG §14.
 
@@ -9,7 +10,7 @@ This document describes the game **as built**. It started as the design contract
 any code (design v1, reconciled from a lead's draft and two critiques); every later change is
 folded in, and §12 lists what changed and why. Every number lives in code: shared knobs in
 `duel/lisp/tuning.lisp`, per-move frame data with the moves in `duel/lisp/yama.lisp`,
-`duel/lisp/ken.lisp` and `duel/lisp/rukia.lisp`, pure rules in `duel/lisp/rules.lisp`. When this file and the code disagree,
+`duel/lisp/ken.lisp`, `duel/lisp/rukia.lisp` and `duel/lisp/ichigo.lisp`, pure rules in `duel/lisp/rules.lisp`. When this file and the code disagree,
 the code wins; the host test `tests/duel-rules-test.lisp` checks the move tables below.
 
 > **Fan study.** SOUL DUEL is a non-commercial fan study. The BLEACH characters, move and place
@@ -27,7 +28,7 @@ the code wins; the host test `tests/duel-rules-test.lisp` checks the move tables
   move frame 0 is its first frame, so it hits on frames S .. S+A−1.
 - Metres, y up, yaw 0 faces −Z (the engine's conventions). Reishi is an integer; gauges are floats.
 - Hit volumes are gameplay shapes in the attacker's frame (`:arc r deg`, `:cap a b h r`), not the
-  animated blade. Hurt cylinders: Yamamoto r 0.36 m / h 1.65 m, Kenpachi 0.45 / 2.0, Rukia 0.34 / 1.5.
+  animated blade. Hurt cylinders: Yamamoto r 0.36 m / h 1.65 m, Kenpachi 0.45 / 2.0, Rukia 0.34 / 1.5, Ichigo 0.38 / 1.8.
 
 ## 1. How RoS maps onto SOUL DUEL
 
@@ -581,6 +582,8 @@ LEAP CLEAVE off RYOTE's K3 at 4.2 m: 9 f of leap + S 11 inside the crumple's 40)
 | LEAP CLEAVE `:ke-kikon-n` | Nozarashi (every cup; worth 2 / 3 / 4) | 8 | 18 m/s ≤ 30 f, locked | 10.6 m, ≤ 49 f | 11/3/24 | 3.08 m arc 160° | 30 | the widest strike; a DUST ring at take-off, the body drawn up to 1.6 m high (`:lift`, a look), a 3 m gash where it lands |
 | ENBU `:ru-kikon` | Rukia's Shikai (worth 2) | 6 | 24 m/s ≤ 16 f, locked | 8 m, ≤ 30 f | 8/3/24 | 2.4 m arc 360° | 30 | a flash step (TENCHI's afterimages) into MAI-SODE's pirouette; the Kikon 初の舞・月白 |
 | 白霞罸 HAKKA `:ru-hakka` | Rukia's awakened forms (worth 3) | 8 | none | 7.5 m | 20/3/30, locked | lane `:cap 0.5→7.5 h 1.2 r 1.2` | 30 | ENJO's shape in ice: a white pillar at her (f4), a sheet of ice along the lane (f20), frost 120 |
+| JŪJI `:ic-kikon` | Ichigo's Shikai (worth 2) | 6 | 30 m/s ≤ 14 f, locked | 8.6 m, ≤ 27 f | 7/3/24 | 2.6 m arc 140° | 30 | a flash step (TENCHI's afterimages) into the cross of both blades; the Kikon 月牙天衝 with a Gran Rey Cero |
+| KESSA `:ic-k-kikon` | Ichigo's KESSA (worth 3) | 6 | none | 8 m | 16/3/30, locked | lane `:cap 0.5→8.0 h 1.2 r 1.0` | 30 | ENJO's shape: a blood chain flung along the lane; the Kikon, the giant pitch-black 月牙天衝 |
 | MAPPUTATSU `:ke-b-kikon` | Kenpachi's Bankai (worth 4) | LEAP CLEAVE's, copied (`defmove-copy` with override keys: its own callout and cinematic) | | | | | | a pip of the arm; the Bankai's aura smoulders during it |
 
 ### 6.4 Kuchiki Rukia (`duel/lisp/rukia.lisp`, art `rukia-art.lisp`; the full design and the as-built deviations: DUEL_RUKIA.md)
@@ -607,6 +610,26 @@ chosen exit: spending, warming or the forced **CRACK** (the ward crushed or brok
 30 f crumple, 2 s of no cooling). The white look (zero and the 白霞罸 costume) has ice-blue keylines and brows (a per-body
 ink). Kikon cinematics: 初の舞・月白 (Konpaku 2), 卍解 白霞罸 (3); the awakening `ru-awaken-cine`. The Shikai ×1.5 dealt /
 ×0.8 taken.
+
+### 6.5 Kurosaki Ichigo (`duel/lisp/ichigo.lisp`, art `ichigo-art.lisp`; the full design and the as-built deviations: DUEL_ICHIGO.md)
+
+The TYBW substitute Shinigami (black shihakushō, no haori, the orange head; 1.80 m, `:ichigo` body, hurt r 0.38 / h 1.8,
+the half-Hollow's single horn in the Shikai). **Shikai 二刀の斬月** `:base`: two blades (the long cleaver `:zangetsu-long`
+in the right hand, the hiltless short blade a body part in the left fist); J the short blade (J1 7 f, 2.2 m), K the
+cleaver (guard 16 / 16 / 22); the switched link 2 is the **cross** (返牙 KAESHI-KIBA guard 12, 交牙 KŌGA 24: the same
+frames, both blades); L 月牙天衝 GETSUGA TENSHŌ (a 2.4 m crescent, 16 m/s, cooldown 100; a faster combo copy after a K
+link), SP1 月牙十字衝 JŪJISHŌ (a 3.6 m cross wave that cuts opponent waves and fireballs), SP2 双牙 SŌGA (a 5 m
+flash-step X cut, guard 30), the Breaker MINEUCHI, the O module JŪJI. ×1.6 dealt / ×0.8 taken. **The awakening 血鎖の一護
+KESSA NO ICHIGO** (no heal, permanent, Kikon 3): one blade (`:tensa`), two horns, blood chains; **no hold-guard**: U is the
+chain parry 鎖盾 (S4 A12 R24, 360°, the shared parry window; 20 of the guard gauge a press, a caught melee hit +40 and the
+yank 引鎖 HIKI-GUSARI to 1.8 m, +3; a hazard / ranged hit in it is blocked with no blockstun: the passive `:parry-block`);
+the guard gauge is the **blood-chain gauge** (the HUD re-skins its bar: CHAIN, a notch at 20); every Step leaves a clone
+that slashes 20 f later (15 of the gauge, only above 35; guarded facing him; gone if he is hit first); the chain J / K
+reach 3.4–4.5 m (J1 10 f); L the giant Getsuga (4 m, 30 of the gauge, no cooldown) and its residue 残月 (1.5 s); SP1 鎖引
+KUSARI-BIKI (a 7 m chain line: pull to 1.6 m, bind 40 f, +13), SP2 鎖垣 KUSARI-GAKI (a 5 m chain wall for 2 s that eats
+projectiles); O the lane module KESSA. ×1.15 dealt / ×0.9 taken; walk 3.6, run 9. Kikon cinematics: 月牙天衝 with a Gran
+Rey Cero (Konpaku 2, 186 f), the giant pitch-black 月牙天衝 (3, 192 f); the awakening `ic-kessa-cine` (168 f). Everything
+is in his two files; the shared files only call his `:hooks` (see "Character code layout").
 
 ## 7. CPU AI (`duel/lisp/ai.lisp`: generic; identity = the kit's `:ai` table)
 
@@ -717,6 +740,9 @@ random number from `sim-rnd01` (seeded per match), so a seed replays the same ma
   3 m, SP2 mostly at 4–6 m, guard 0.35, Hoho 0.2. Nozarashi: cup 1 as the base (the stance in the close band 3,
   `:kikon-p` 0.25: he toys with a red opponent), cup 2 PRESSURE 5 (Q 5, F 3 up close, `:kikon-p` 0.5, block-string
   0.85), cup 3 PRESSURE 6 / APPROACH 3 (Q 4, F 4, no stance, guard = DRINK 0.45, dash 1.0, `:kikon-p` 0.9, `:cashout`).
+
+**Latest (2026-09-28, Ichigo added: ten pairings, debug 2125+k in parallel): YY 134.7, YK 136.2, KK 131.2, RY 134.1, RK 144.9, RR 185.6 (the six rows identical), IY 143.6 (Ichigo 9 / 20), IK 143.2 (Ichigo 7 / 20), IR 169.6 (Ichigo 9 / 20), II 155.2 s (10 / 10)**, 200/200 K.O.; his
+awakening A/B in DUEL_ICHIGO.md "Measurements".
 
 **Pacing gate** (the regression test for all of the above): 20 seeded CPU-vs-CPU matches (NORMAL,
 cinematics included) per pairing YY, YK, KK must all end by K.O.; target **median 125–210 s** per pairing (125–180 s
@@ -1002,3 +1028,15 @@ Measured (seed gate, 20 seeds per pairing, all K.O.): YY 133.3 s (P1 9 / P2 11),
 KK 133.8 s, RY 133.9 s (Rukia 13), RK 142.7 s (Rukia 14 / Kenpachi 6), RR ~186 s. Kenpachi's CPU wins dropped (YK 8 → 5,
 RK 7 → 6 of 20): the faster drain makes the high cups harder to hold. Compensation knobs if he should win more: the cup 2 / 3
 damage (`*ryote-mult*` 1.15, `*nomihose-mult*` 1.20) or the NOME gains.
+
+## Character code layout: the first user
+
+**The first character built this way: Kurosaki Ichigo (2026-09-28, DUEL_ICHIGO.md).** His files hold his parry, clone,
+pull, chain gauge, projectile cut, HUD bar, thumb ring, CPU parry and debug commands. The shared files gained only generic
+hook points: the kit key **`:hooks`** (point → function, `kit-hook`) called at `:u` (U is a move: `u-press!`; the form
+never guards), `:step` (a Step's frame 0), `:ok` (may a command start), `:parried` (a catch by its parry), `:tick` (every
+sim step), `:hud-guard` (over the guard bar, both HUDs) and `:deck` (the one-hand thumb ring); the AI key `:reflex` (a
+function tried among the reflexes) and `ai-guard-k` (no guard rolls in a `:u` form); the passive `:parry-block`; the hazard
+flag `:blade` (a blade's hit look, not fire); the one-hand U chip (a `:u` form turns the spent AWAKEN chip into U, a rest
+does nothing); and `*char-debug*` (a character's own debug range). Registration: two MANIFEST lines, four `*pairs*` in
+debug.lisp; his brush names, callouts and glyphs are appended from `ichigo-art.lisp`.

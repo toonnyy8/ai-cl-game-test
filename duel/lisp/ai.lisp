@@ -132,6 +132,11 @@ while: a charge move is held to its full charge from beyond 7 m, where it has th
 
 (defun ai-gg (e) "E's guard gauge as a fraction." (/ (gauges-gg (gauges e)) *gg-max*))
 
+(defun ai-guard-k (e)
+  "How much of its guard chance E's CPU uses (AI-GUARD-MULT); none in a form whose U is a move (a :u hook: its own
+:reflex presses it)."
+  (if (kit-hook (kit-of e) :u) 0.0 (ai-guard-mult (gauges-gg (gauges e)) (gauges-guardless (gauges e)))))
+
 (defun ai-gg-low-p (e)
   "Below the kit's :gg-low of its guard gauge: back off, zone while it refills."
   (let ((k (ai-table e :gg-low))) (and k (< (ai-gg e) k))))
@@ -228,7 +233,7 @@ D = the perceived distance."
          (free (member st '(:idle :guard :run)))
          (red (red-p (gauges-reishi g) (gauges-reishi-max g)))
          (hoho-ok (and (zerop (fighter-hoho-lock f)) (>= (gauges-fs g) *fs-hoho*)))      ; flash-step for one
-         (guard-k (ai-guard-mult (gauges-gg g) (gauges-guardless g)))                  ; the guard gauge left
+         (guard-k (ai-guard-k e))                                                      ; the guard gauge left
          (q (kit-command-move kit :q)) (new-event (/= (snap-start s) (brain-roll-key b))))
     (when new-event                                       ; one roll per opponent action
       (setf (brain-roll-key b) (snap-start s) (brain-guard-roll b) (sim-rnd01) (brain-hoho-roll b) (sim-rnd01)
@@ -259,6 +264,8 @@ D = the perceived distance."
             (< (brain-react-roll b) (getf *ai-follow-guard-p* (brain-difficulty b) 0.85)))
        (why b :anti-kikon :guard-long))
       ((not free) nil)
+      ;; the form's own reflexes (the kit's :ai :reflex, a character file's function: a timed parry)
+      ((let ((h (ai-table e :reflex))) (and h (funcall h e b s d))))
       ;; Bankai West's reversal: the ward just blocked a hit up close (no blockstun): SHONETSU JIGOKU (L) now and then
       ((let ((p (ai-table e :ward-reversal)))
          (and p (passive-p e :ward) (<= (- *match-tick* (fighter-warded f)) 1) (< (fighter-dist f) 3.0)
@@ -441,7 +448,7 @@ its middle), guard, attack (a weighted pick from the kit's band for D), or wait.
               (< (sim-rnd01) (if (ai-gg-low-p e) 0.6 (ai-table e :dash-back 0.0))))
          (ai-dash b -1.0 (* 0.5 (+ lo hi))) (setf (brain-why b) :dash-back))
         ((and (< d 3.4) (< (sim-rnd01) (* (min 0.9 (+ (ai-table e :guard 0.3) (if (eq (brain-intent b) :defend) 0.2 0.0)))
-                                          (ai-guard-mult (gauges-gg (gauges e)) (gauges-guardless (gauges e))))))
+                                          (ai-guard-k e))))
          (ai-press b :guard (+ (first *ai-guard-hold*) (floor (* (second *ai-guard-hold*) (sim-rnd01))))))
         ((< (sim-rnd01) (min 0.9 (+ (getf *ai-aggression* (brain-intent b) 0.3) (* 0.04 heat)
                                     (* *ai-kosei-aggression* (- 1.0 (ai-gg e)))   ; KOSEI: a low gauge pays to attack

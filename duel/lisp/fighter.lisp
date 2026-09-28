@@ -216,6 +216,7 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
                      12 dx dz)))
       (setf (fighter-state f) :step (fighter-sf f) 0 (fighter-move f) nil)
       (fill (motion-vel (motion e)) 0f0)
+      (let ((h (kit-hook (fighter-kit f) :step))) (when h (funcall h e)))   ; the form's own take-off (a clone)
       (play-clip e (cond ((> (abs st) (abs to)) (if (> st 0) :sh-step-r :sh-step-l)) ((> to 0) :sh-step-f) (t :sh-step-b))
                  :blend 2)
       (clog "~a step~@[ ~a~]" (side-name e) (let ((b (brain e))) (and b (brain-why b))))
@@ -285,7 +286,8 @@ follow-up, overdraws while any cold is left: rules COLD-OK-P)?"
     (and (>= (gauges-reiatsu g) (* (kit-command-cost kit command) *reiatsu-bar*))
          (or (null i) (zerop (aref (fighter-cd (fighter e)) i)))
          (or (not (kit-pip-cmd-p kit command)) (>= (gauges-meter g) (if (and (gauges-arm-owed g) (not ender)) 2f0 1f0)))
-         (or (not (eq command :sig)) (cold-ok-p (gauges-meter g) (cold-cost kit :sig) combo)))))
+         (or (not (eq command :sig)) (cold-ok-p (gauges-meter g) (cold-cost kit :sig) combo))
+         (let ((h (kit-hook kit :ok))) (or (null h) (funcall h e command))))))   ; the form's own price
 
 (defun try-command (e f cmd &optional button ender with)
   "Start command CMD (pressed with vpad BUTTON: a hold / Breaker move watches it) if the rules allow
@@ -370,7 +372,14 @@ plist and the unit vector (UX UZ) from her to E; NIL without one."
 in most forms; cup 3's guard drinks (DRINK: combat.lisp); Bankai East's U switches to West (the kit's :guard-to),
 and West's ward is always up, so there U does nothing more (GUARD-P)."
   (let ((g (gauges e)))
-    (and (vpad-down vp :guard) (can-guard-p (gauges-gg g) (gauges-guardless g)))))
+    (and (vpad-down vp :guard) (can-guard-p (gauges-gg g) (gauges-guardless g))
+         (not (kit-hook (kit-of e) :u)))))              ; a form whose U is a move never guards (U-PRESS!)
+
+(defun u-press! (e f vp)
+  "A form with a :u hook (its U is a move, not a guard): a buffered U press calls it; T (the press used) when it started
+something."
+  (let ((h (kit-hook (fighter-kit f) :u)))
+    (and h (vpad-command-pressed-p vp :guard :any) (funcall h e) (progn (vpad-consume! vp :guard) t))))
 
 (defun guard-p (e vp)
   "Does U raise a guard now (held, allowed: GUARD-HELD-P)? Not in a form whose U switches (:guard-to) or whose ward
@@ -381,7 +390,7 @@ is always up (:ward)."
   "Idle / walk / strafe / guard: commands, then guard or walk, auto-facing. A form with :guard-to (Bankai East)
 switches to that form while U is held instead of guarding (from idle / walk; a run stops into this step too): its
 ward is up after *GUARD-RAISE* frames (FIGHTER-GUARD-T counts them, and keeps counting while he walks in it)."
-  (unless (and (zerop (fighter-lock f)) (command! e f vp *neutral-commands*))
+  (unless (and (zerop (fighter-lock f)) (or (command! e f vp *neutral-commands*) (u-press! e f vp)))
     (let ((v (motion-vel (motion e))))
       (when (and (zerop (fighter-lock f)) (kit-guard-to (fighter-kit f)) (guard-held-p e vp))
         (set-form e (kit-guard-to (fighter-kit f)))
@@ -597,7 +606,7 @@ clip follows the heading: forward run, side slide or back-skate (RUN-CLIP)."
            (let ((s (if (run-stop-p (fighter-dist f) (run-closing e f) speed) 0.0 (brake-speed speed sf))))
              (turn-to-opp e f (deg *face-rate*))
              (if (or (<= s 0) (>= sf *run-brake*)) (to-idle e) (run-velocity e s (fighter-run-yaw f)))))
-          ((and free (command! e f vp *run-commands*))
+          ((and free (or (command! e f vp *run-commands*) (u-press! e f vp)))
            (when (eq (fighter-state f) :move)
              (set-slide e (run-carry (fighter-dist f)) *run-carry-frames* vx vz)
              (clog "~a run -> ~a, carry ~,1f m" (side-name e) (mv-name (fighter-move f)) (run-carry (fighter-dist f)))))

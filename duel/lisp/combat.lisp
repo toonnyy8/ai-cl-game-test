@@ -141,7 +141,9 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
          (ranged (ranged-hit-p hazard flags (and mv (getf (mv-params mv) :melee-range)) d2))
          (optic (optic-p (passive-p def :ward) (passive-p def :optic) ranged))   ; Rukia's absolute zero: ranged hits pass
          (def-state (if (and optic (eq def-state :guard)) :neutral def-state))
-         (ward (and (passive-p def :ward) (not optic))) ; Bankai West's ward
+         (ward (and (or (passive-p def :ward)           ; Bankai West's ward; a :parry-block parry blocks what it can't catch
+                        (and (eq def-state :parry) (passive-p def :parry-block)))
+                    (not optic)))
          (k (if (passive-p att :pierce)                 ; Bankai East's pierce
                 (pierce-rate (gauges-gg (gauges att)) (or (and mv (getf (mv-params mv) :pierce-mult)) 1.0))
                 0.0))
@@ -195,7 +197,8 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                (add-meter att (hw-meter hw))
                (hitstop (hw-hs hw))
                (emit :hit att def x y z (hw-hs hw) (eq res :counter) dmg
-                     (cond ((member :ice flags) :ice) ((eq react :bind) :bind) (hazard :fire) (mv (mv-kind mv)) (t :counter)))
+                     (cond ((member :ice flags) :ice) ((eq react :bind) :bind) ((member :blade flags) :flash) (hazard :fire)
+                           (mv (mv-kind mv)) (t :counter)))
                (unless (deal-damage att def dmg)          ; (a broken soul crumples in its cinematic)
                  (set-reaction def react stun sx sz (if follow *kikon-follow-kb* (hw-kb hw))))
                (when (and follow own)                     ; the rush dashes in, then strikes again (KIKON-RUSH-STEP)
@@ -216,6 +219,7 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
            (scorch att def)
            (when (passive-p def :ward)                  ; West's GOKUI GAESHI: the catch refills his guard gauge
              (setf (gauges-gg (gauges def)) (f32 *gg-max*) (gauges-gg-idle (gauges def)) 0))
+           (let ((h (kit-hook (kit-of def) :parried))) (when h (funcall h def att)))   ; the parrying form's own catch
            (emit :parried att def x y z)
            (let ((c (and (fighter-move fd) (kit-next (kit-of def) (mv-name (fighter-move fd)) :land))))
              (when c (start-move def c))))
@@ -234,7 +238,7 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                   (adv (let ((a (if (and mv (integerp (mv-adv-block mv))) (mv-adv-block mv) 0))) (if (and drink mv) (drink-adv a) a)))
                   (stun (if mv (blockstun (mv-total mv) (fighter-sf fa) adv) *hazard-blockstun*))
                   (v (let* ((v0 (or (hw-guard hw) *gg-hazard*)) (v1 (if (and mv (passive-p att :cut)) (cut-value v0 (mv-kind mv)) v0)))
-                       (if ward (* *ward-mult* v1) v1)))
+                       (if (and ward (passive-p def :ward)) (* *ward-mult* v1) v1)))
                   (pierce (and (plusp k) k))
                   (chip (if (passive-p def :chipless)       ; Rukia awakened: no chip on her
                             0
@@ -639,6 +643,7 @@ delay counter (frozen): West never refills."
           (when (zerop (decf (gauges-form-left g)))
             (set-form e (kit-inherit kit)))))
       (when (kit-pips kit) (arm-step e f g))
+      (let ((h (kit-hook kit :tick))) (when h (funcall h e)))   ; the form's own per-step mechanics
       (when (getf (kit-meter kit) :temp) (temp-step e f g kit))
       (let ((m (kit-meter kit)))
         (when (getf m :ladder) (nome-step e f g m))
