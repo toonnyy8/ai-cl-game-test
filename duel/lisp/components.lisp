@@ -141,7 +141,8 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (stun-idle 0 :type fixnum)            ; frames since it last grew
   ;; results
   (dealt 0 :type fixnum) (kikons 0 :type fixnum) (perfects 0 :type fixnum) (best-combo 0 :type fixnum)
-  (counters 0 :type fixnum))            ; counter-hits dealt (the learning CPU's gate rows)
+  (counters 0 :type fixnum)             ; counter-hits dealt (the learning CPU's gate rows)
+  (evo-t -1 :type fixnum))              ; *MATCH-TICK* of the first EVOLUTION (-1 none; the gate's "duel evo" line)
 
 (defcomponent pilot
   "Who drives the fighter: a vpad (engine input.lisp). A human's has a device READER; the CPU's brain

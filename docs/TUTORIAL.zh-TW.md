@@ -529,7 +529,7 @@ Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規�
 驗證方法：每 600 步印一行 `duel hash`（`state-hash-line`，`duel/lisp/debug.lisp` 第 83～96 行，位置、朝向、每個量表、上一次 Kikon 突進值幾個魂魄、電腦的 heat）。`tests/scripts/duel-cvc-yk.json` 用種子 7 讓兩個電腦打完一場，最後一行一定是：
 
 ```
-duel -> RESULTS winner P2 konpaku 0-5 ticks 8247 secs 137.4
+duel -> RESULTS winner P2 konpaku 0-1 ticks 10625 secs 177.1
 ```
 
 （2026-09-29 加入隱藏的受擊值（被連續打太久會被打飛，DUEL_DESIGN.md「Hidden hit-stun tolerance」）之後，這一行變了：種子 7 裡山本被打飛兩次；YY、KK 不變。之前是 `winner P2 konpaku 0-6 ticks 5516 secs 91.9`。）
@@ -602,7 +602,7 @@ duel -> RESULTS winner P2 konpaku 0-5 ticks 8247 secs 137.4
 
 | 顏色 | 什麼時候 | 效果 |
 |---|---|---|
-| 白 SOUL REVERSE | 站著、走路、跑步、防禦中 | 期間每秒回 12 靈子、多回 15 靈壓、2 覺醒量表（防禦量表不加速，使用者的決定） |
+| 白 SOUL REVERSE | 站著、走路、跑步、防禦中 | 期間每秒回 12 靈子、多回 15 靈壓、1.4 覺醒量表（防禦量表不加速，使用者的決定） |
 | 藍 BURST REVERSE | 被連段打到第 2 下之後的硬直／浮空，或防禦硬直 | 原本的 Burst：打斷對手、推開 5 公尺、20 格無敵；期間防禦量表不用等就回（平常 2 倍，防禦中也有一半） |
 | 橙 CHAIN REVERSE | 自己的招式打中之後、收招結束前 | 收招立刻取消，12 格內的下一招前搖少 40%，什麼招都能接；期間打中拿的靈壓和覺醒量表 ×1.5 |
 

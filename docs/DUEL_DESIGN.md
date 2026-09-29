@@ -296,8 +296,8 @@ move (or Hoho, step, run) ends and he slides 5 m away over 20 f, not stunned; 8 
 hitstop; a blue shockwave, "BURST REVERSE" and a human's HUD prompt (SHIFT+J BURST) while it is
 possible. Rules: `burst-allowed-p` (rules.lisp), `burst-ok-p` / `burst!` (combat.lisp).
 
-**Fighting Spirit** (Awakening gauge, 0–100): +0.05 per damage dealt, +0.07 per damage taken,
-+15 per Konpaku lost. Full → "EVOLUTION" blinks and a faint aura shows. Awaken from idle, walk,
+**Fighting Spirit** (Awakening gauge, 0–100): +0.035 per damage dealt, +0.049 per damage taken,
++10.5 per Konpaku lost (×0.7 since 2026-09-30, "Slower awakening gauge" at the end; it was 0.05 / 0.07 / 15). Full → "EVOLUTION" blinks and a faint aura shows. Awaken from idle, walk,
 guard or blockstun, or wherever a Burst could be pressed (a reaction or airborne after the combo's 2nd
 hit, inputs not locked; no flash-step needed) → it breaks his attack exactly as a Burst does
 (`repel!`: his move ends, he slides 5 m away, she is invulnerable 20 f), then the form's cinematic
@@ -1308,7 +1308,7 @@ A projectile / hazard hit never opens ORANGE (like KOSEI, only the fighter's own
 
 | Mode | On the press | While it runs |
 | --- | --- | --- |
-| **WHITE** SOUL REVERSE | the shockwave, 8 f hitstop | Reishi **+12/s** (`*white-reishi*`, integer points, never past max); Reiatsu **+15/s** on top of the normal 3/s (`*white-reiatsu*`); the awakening gauge **+2/s** (`*white-awaken*`, not once awakened). No guard-gauge boost (the user's decision 2026-09-30). |
+| **WHITE** SOUL REVERSE | the shockwave, 8 f hitstop | Reishi **+12/s** (`*white-reishi*`, integer points, never past max); Reiatsu **+15/s** on top of the normal 3/s (`*white-reiatsu*`); the awakening gauge **+1.4/s** (`*white-awaken*`, 2 × the slower gauge's 0.7; not once awakened). No guard-gauge boost (the user's decision 2026-09-30). |
 | **BLUE** BURST REVERSE | today's Burst: `repel!` (the attacker's move / Hoho / step / run ends, he slides `*burst-push*` 5 m away, not stunned; the user neutral at once, invulnerable `*burst-invuln*` 20 f), 8 f hitstop | the guard gauge refills with no delay: `*blue-gg-mult*` **×2** its normal rate when not guarding (11/s, 13/s guardless), and **×0.5** (`*blue-gg-guarding*`, 2.75/s) **even while guarding** (normally GUARD HOLD stops it) |
 | **ORANGE** CHAIN REVERSE | the current move's remaining recovery is cancelled at once (neutral), 8 f hitstop and the shockwave; for the next `*chain-window*` **12** f the next move started has its startup cut by `*chain-cut*` **40 %** (at least 1 f of startup left; the skipped frames' hooks still run), and it may be any command: a J / K string from its first link, L, an SP, I, O | Reiatsu gained from hits dealt and from KOSEI **×1.5**, awakening gauge from hits dealt **×1.5** (`*orange-gain*`) |
 
@@ -1362,3 +1362,18 @@ wins of 60, streams 100 / 300 / 500): Rukia RY 36 / 38 / 34, RK 34 / 37 / 23, RR
 SK 30 / 30 / 22, SR 30 / 31 / 32, SS 38 / 36 / 29, SI 41 / 33 / 29: all ≥ 20. Ichigo IY 3 / 4 / 6, IK 8 / 5 / 6, IR 3 / 7 /
 4, II 2 / 3 / 4, SI 2 / 2 / 4: failing as before this change (the user's damage numbers, DUEL_ICHIGO.md; not tuned here).
 G2: YK now `winner P2 konpaku 0-5 ticks 8247 secs 137.4`. No burst number was retuned: every default held the gate.
+
+## Slower awakening gauge (the user, 2026-09-30)
+
+「幫我降低覺醒條的上升速度，延長覺醒所需要的時間」. Every source of the awakening gauge is ×0.7: `*awaken-dealt*`
+0.05 → **0.035** per damage dealt, `*awaken-taken*` 0.07 → **0.049** per damage taken, `*awaken-per-konpaku*` 15 →
+**10.5** per Konpaku lost, and WHITE's passive fill `*white-awaken*` 2 → **1.4**/s; ORANGE's ×1.5 on hits dealt applies
+on top of the reduced base. The ENDLESS opponents' head start (half / full gauge) is a fraction of the max, unchanged.
+
+**Measured** (native seed gate, seeds 1–20 × 15 pairings, both sides: a debug-only `duel evo` line after each gate row
+gives each side's first EVOLUTION, `gauges-evo-t`): every one of the 600 sides still reaches EVOLUTION; the median
+first EVOLUTION moved **44.2 s → 59.5 s** (+35 %), **28 % → 37 %** of the match's length. The gate: 300 / 300 K.O.,
+medians 137.1–201.6 s. The awaken A/B ("never" side's wins of 60, streams 100 / 300 / 500): RY 40 / 45 / 36, RK 38 / 33
+/ 37, RR 38 / 39 / 31, SY 28 / 37 / 29, SK 25 / 25 / 25, SR 32 / 36 / 29, SS 37 / 36 / 29, SI (Senjumaru) 41 / 33 / 33:
+all ≥ 20; Ichigo IY 5 / 8 / 13, IK 9 / 8 / 8, IR 1 / 6 / 3, II 5 / 1 / 3, SI (Ichigo) 2 / 2 / 4 still fail, as before
+(his damage numbers, DUEL_ICHIGO.md).

@@ -179,9 +179,10 @@ and can't guard until the gauge is full again.")
 
 ;;; ---------------------------------------------------------------- Fighting Spirit (awakening)
 (defparameter *awaken-max* 100.0 "Awakening gauge maximum: full = EVOLUTION (once per match).")
-(defparameter *awaken-dealt* 0.05 "Awakening per point of damage dealt.")
-(defparameter *awaken-taken* 0.07 "Awakening per point of damage taken.")
-(defparameter *awaken-per-konpaku* 15.0 "Awakening per Konpaku lost.")
+;; the slower awakening gauge (the user 2026-09-30, 「降低覺醒條的上升速度」): every fill source x0.7
+(defparameter *awaken-dealt* 0.035 "Awakening per point of damage dealt (0.05 until 2026-09-30).")
+(defparameter *awaken-taken* 0.049 "Awakening per point of damage taken (0.07 until 2026-09-30).")
+(defparameter *awaken-per-konpaku* 10.5 "Awakening per Konpaku lost (15 until 2026-09-30).")
 (defparameter *awaken-cine-seconds* 1.8 "Awakening cinematic (sim frozen; documentation only: the scripts own their :len).")
 
 ;;; ---------------------------------------------------------------- hit reactions, combos, hitstop
@@ -241,7 +242,7 @@ a combo (critique-design 1.7: not from hit 1).")
 (defparameter *burst-drain* 18.0 "Flash-step per second a running burst drains (100 -> 0 in 5.6 s, 70 in 3.9 s).")
 (defparameter *white-reishi* 12.0 "WHITE: Reishi regenerated per second (integer points).")
 (defparameter *white-reiatsu* 15.0 "WHITE: Reiatsu per second on top of *REIATSU-REGEN*.")
-(defparameter *white-awaken* 2.0 "WHITE: awakening gauge per second.")
+(defparameter *white-awaken* 1.4 "WHITE: awakening gauge per second (2.0 x the slower gauge's 0.7).")
 (defparameter *blue-gg-mult* 2.0 "BLUE: the guard gauge's normal refill rate x this (no delay) when not guarding ...")
 (defparameter *blue-gg-guarding* 0.5 "... and x this even while guarding (GUARD HOLD stops it otherwise).")
 (defparameter *chain-window* 12 "ORANGE: frames after the cancel in which the next move started has its startup cut ...")

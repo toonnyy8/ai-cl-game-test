@@ -287,7 +287,7 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <tr><td>防禦量表</td><td data-l="怎麼看">靈子條正下方的鋼色條。擋下攻擊會扣，扣光就 GUARD CRUSH（見<a href="#guard">防禦</a>）。防禦中顏色變暗 30%，代表這時不會回復；破防後變灰，紅色慢慢爬回，回滿時顯示 GUARD。</td></tr>
 <tr><td>靈壓 <i>REIATSU</i></td><td data-l="怎麼看">3 格，只用來出 SP1／SP2（各 1 格；覺醒型態的 SP2 要 2 格）。每秒自動回一點，造成或受到傷害、攻勢也會加。</td></tr>
 <tr><td>瞬步 <i>FLASH STEP</i></td><td data-l="怎麼看">鋼藍色的條，Hoho 花 30，爆氣要 70 以上才能開（30 和 70 有刻度）。超過 70 的部分用「現在按會開的那種爆氣」的顏色發光。爆氣中整條變成白／藍／橙色並一路往下掉，掉到 0 爆氣結束。平常用完 1 秒後每秒回 3，受傷也會回，完美 Hoho 退回 15（爆氣中這些都不會回）。</td></tr>
-<tr><td>覺醒 <i>AWAKEN</i></td><td data-l="怎麼看">造成傷害、受到傷害、失去魂魄（每顆 +15）都會累積。滿了會閃 <b>EVOLUTION</b>，角色身上出現淡淡的光，這時按 <kbd>P</kbd> 覺醒。覺醒後這裡顯示型態名稱。</td></tr>
+<tr><td>覺醒 <i>AWAKEN</i></td><td data-l="怎麼看">造成傷害、受到傷害、失去魂魄（每顆 +10.5）都會累積（每造成 1 點傷害 +0.035、每受到 1 點 +0.049，大約要打到比賽的三分之一以上才會滿）。滿了會閃 <b>EVOLUTION</b>，角色身上出現淡淡的光，這時按 <kbd>P</kbd> 覺醒。覺醒後這裡顯示型態名稱。</td></tr>
 <tr><td>角色量表</td><td data-l="怎麼看">各角色自己的：山本的 INFERNO（獄炎）與卍解後 L 的 COOLDOWN、劍八的 NOME（呑め）與卍解的腕 UDE、露琪亞覺醒後的冷度量表、一護血鎖的分身、千手丸的針 HARI／機 HATA。看<a href="#chars">各角色</a>。</td></tr>
 <tr><td>標籤</td><td data-l="怎麼看">名字旁可能出現 EVOLUTION、U 的特殊效果（U: WEST、WARD、U: DRINK、U: COOL……），以及「攻 ×n」（<a href="#kosei">攻勢</a>倍率 1.5 以上時出現）。</td></tr>
 <tr><td>計時器與連段數</td><td data-l="怎麼看">上方中間是剩餘秒數（300 秒）。被打的一方量表下會顯示「5 HITS 212」：這套連段打了幾下、多少傷害。ENDLESS 另外顯示 STAGE n。</td></tr>
@@ -362,7 +362,7 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <table>
 <thead><tr><th>模式</th><th>什麼時候</th><th>效果</th></tr></thead>
 <tbody>
-<tr><td>白色 <i>SOUL REVERSE</i></td><td data-l="什麼時候">站著、走路、跑步、防禦中（沒有在防禦硬直）</td><td data-l="效果">爆氣期間靈子每秒回 12（會自己回血）、靈壓每秒多回 15、覺醒量表每秒回 2。防禦量表不會回比較快。</td></tr>
+<tr><td>白色 <i>SOUL REVERSE</i></td><td data-l="什麼時候">站著、走路、跑步、防禦中（沒有在防禦硬直）</td><td data-l="效果">爆氣期間靈子每秒回 12（會自己回血）、靈壓每秒多回 15、覺醒量表每秒回 1.4。防禦量表不會回比較快。</td></tr>
 <tr><td>藍色 <i>BURST REVERSE</i></td><td data-l="什麼時候">被一套連段打到第 2 下之後的硬直或浮空；或是防禦硬直中（擋下任何一下都行）</td><td data-l="效果">你立刻恢復自由、落地，約 0.3 秒無敵；對手的招式（或 Hoho、Step、跑步）被打斷、被推開 5 公尺。爆氣期間防禦量表不用等就開始回：沒在防禦時是平常的 2 倍，<b>連防禦中也會以平常一半的速度回</b>。</td></tr>
 <tr><td>橙色 <i>CHAIN REVERSE</i></td><td data-l="什麼時候">自己的招式<b>打中</b>對手之後（被擋、揮空都不行），到那一招收招結束前</td><td data-l="效果">收招馬上取消。接下來 12 格（0.2 秒）內出的第一招，出招前搖縮短 40%，而且什麼招都能接：J／K 連段從頭再來、L、SP、抓技、O。爆氣期間打中得到的靈壓和覺醒量表 ×1.5。連段傷害遞減和隱藏的受擊承受值照樣算，所以不會無限連。</td></tr>
 </tbody></table>

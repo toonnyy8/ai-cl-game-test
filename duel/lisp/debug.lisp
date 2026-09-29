@@ -890,6 +890,8 @@ move-beat choices of DRAW-FIGHTER."
     (log-msg "duel gate row seed ~d ~a ~a secs ~,1f winner ~a forms ~a ~a blow ~d" *match-seed* (first *picks*) (second *picks*)
              (/ *match-tick* 60.0) (case *winner* (0 "P1") (1 "P2") (t "DRAW"))
              (fighter-form (fighter *p1*)) (fighter-form (fighter *p2*)) *blow-aways*)   ; (the gamble A/B reads the final forms)
+    (log-msg "duel evo seed ~d P1 ~,1f P2 ~,1f secs ~,1f" *match-seed*   ; the first EVOLUTION per side (-1: none)
+             (/ (gauges-evo-t (gauges *p1*)) 60.0) (/ (gauges-evo-t (gauges *p2*)) 60.0) (/ *match-tick* 60.0))
     (band-acc-line) (cup-acc-line)
     (senju-acc-line) (ichigo-acc-line)
     (when *learn-gate* (learn-gate-line))

@@ -383,7 +383,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 
 ;;; ================================================================ gauges
 (check (and (~= (reiatsu-gain 100 0) 8.0) (~= (reiatsu-gain 0 100) 10.0) (~= (reiatsu-gain 0 0 60) 3.0)))   ; SPs only: 3 / s
-(check (~= (awakening-gain 100 100 1) 27.0))
+(check (~= (awakening-gain 100 100 1) 18.9))                                ; x0.7 since 2026-09-30 (was 27)
+(check (and (~= *awaken-dealt* 0.035) (~= *awaken-taken* 0.049) (~= *awaken-per-konpaku* 10.5)))
 (check (and (~= (gauge-add 290.0 20.0 300.0) 300.0) (~= (gauge-add 5.0 -10.0 300.0) 0.0)))
 (check (equal (multiple-value-list (spend-bars 150.0 1)) '(50.0 t)))
 (check (equal (multiple-value-list (spend-bars 50.0 1)) '(50.0 nil)))
@@ -413,7 +414,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 ;; WHITE: Reishi +12 / s in whole points (60 f pay exactly 12), no guard-gauge boost (gg-regen has no WHITE input)
 (check (and (= 12 (loop for n from 1 to 60 sum (burst-heal n *white-reishi*))) (= 66 (loop for n from 1 to 333 sum (burst-heal n 12.0)))
             (= 1 (burst-heal 5 12.0)) (= 0 (burst-heal 4 12.0))))
-(check (and (~= *white-reishi* 12.0) (~= *white-reiatsu* 15.0) (~= *white-awaken* 2.0)))
+(check (and (~= *white-reishi* 12.0) (~= *white-reiatsu* 15.0) (~= *white-awaken* 1.4)))
 ;; BLUE: the guard gauge refills with no delay, x2 when free, x0.5 even while guarding (GUARD HOLD otherwise)
 (check (and (~= (gg-regen 50.0 0 nil nil :blue) (+ 50.0 (/ 11.0 60))) (~= (gg-regen 50.0 0 nil t :blue) (+ 50.0 (/ 2.75 60)))
             (~= (gg-regen 50.0 0 t nil :blue) (+ 50.0 (/ 13.0 60))) (~= (gg-regen 99.99 0 nil t :blue) 100.0)
@@ -423,7 +424,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 (check (and (= (chain-startup-cut 10 0) 4) (= (chain-startup-cut 20 0) 8) (= (chain-startup-cut 2 0) 0) (= (chain-startup-cut 1 0) 0)
             (= (chain-startup-cut 3 0) 1) (= (chain-startup-cut 12 2) 4) (= *chain-window* 12)))
 (check (and (~= (burst-gain-mult :orange) 1.5) (~= (burst-gain-mult :white) 1.0) (~= (burst-gain-mult nil) 1.0)))
-(check (and (~= (nth-value 0 (hit-gains 100 0 nil 1.5)) 12.0) (~= (nth-value 2 (hit-gains 100 0 nil 1.5)) 7.5)   ; x1.5 dealt
+(check (and (~= (nth-value 0 (hit-gains 100 0 nil 1.5)) 12.0) (~= (nth-value 2 (hit-gains 100 0 nil 1.5)) 5.25)   ; x1.5 dealt
             (~= (nth-value 0 (hit-gains 0 100 nil 1.5)) 10.0) (~= (nth-value 0 (hit-gains 100 0 nil)) 8.0)))    ; taken untouched
 ;; the Kikon refund: a flash-step bar (35) and a Reiatsu bar, clamped
 (check (and (equal (multiple-value-list (kikon-refund 10.0 50.0)) '(45.0 150.0))

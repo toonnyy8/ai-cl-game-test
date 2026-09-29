@@ -741,5 +741,6 @@ delay counter (frozen): West never refills."
           (emit :hellfire e)))
       (when (and (not (gauges-awakened g)) (not (gauges-evolution g)) (>= (gauges-awaken g) *awaken-max*))
         (setf (gauges-evolution g) t)
+        (when (minusp (gauges-evo-t g)) (setf (gauges-evo-t g) *match-tick*))
         (emit :evolution e)
         (clog "~a EVOLUTION" (side-name e))))))
