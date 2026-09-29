@@ -18,7 +18,7 @@ the measurements close the file. Everything of hers lives in those two files (th
   hit, at most 120; the user's decision). O 縫地 NUICHI is a flash step into the six-armed whirl (it sews); its Kikon is
   仕立て直し (the Nianzol kill, 2 Konpaku).
 - **The awakening 娑闥迦羅骸刺絡辻 (all anime-original) is a loom whose order is public.** It removes the stitches and
-  悪い癖, the soldier, NUICHI, and some walking speed. It adds six hanks cycling in a fixed order 1 → 6, one live at a time.
+  悪い癖, the soldier, NUICHI, and some walking speed. It adds six hanks cycling in a fixed order (黒砂 → 刃金 → 褥 → 焼野原 → 眼 → 星 since 2026-09-30: three SP1 pairs), one live at a time.
 - **L held weaves, L tapped releases** (the user, 2026-09-29): held ≥ 10 f she weaves (a pass per 20 f, up to 3, bigger
   and longer with each), summed over as many short segments as she likes on the same hank; a tap (< 10 f) unfolds it under
   him at the stored passes. A hit on her while she weaves **voids** the hank (its passes are lost, the queue
@@ -61,7 +61,7 @@ the measurements close the file. Everything of hers lives in those two files (th
 | She is weak in a straight fight: Gerard shatters her needle with one slash [V ch. 599] | the lightest strings in the game (J1 28) and short reach | out-range her; trade K for J |
 | Divine Soldiers fight for her; Pernida crushes the big one [V ch. 597, 599] | SP1 神兵: a proxy that walks at him and **dies to one hit** | swat it (it walks into his arc) |
 | The umbrella blocks Licht Regen and fires it back as tendrils [A ep. 25] | SP2 傘: catches projectiles and hazards, then fires back | don't shoot into it; strike her (melee is only guarded) or Break it |
-| The Bankai unravels **one hank at a time** [A ep. 26] | one live zone; the queue is public, 1→6 | read the next hank on the HUD; stand where it can't reach |
+| The Bankai unravels **one hank at a time** [A ep. 26] | one live zone; the queue is public (three SP1 pairs) | read the next hank on the HUD; stand where it can't reach |
 | Each hank must be **woven** before it is unravelled [A] | L is held to weave (20–60 f), visible and vulnerable | rush the weaver |
 | The Almighty frees Uryū; losing control breaks it [A ep. 27] | a hit on her while she weaves or unfolds **tears** the hank | hit her during the weave: the hank is lost and the loom locks for 90 f |
 | She is **cut off from her own Bankai** by Antithesis [A ep. 27] | not used (§12, dropped ideas) | — |
@@ -278,7 +278,7 @@ data, and the HUD reads it.
 
 | Rule | Value |
 |---|---|
-| **Queue** | fixed **1 → 6** (Q10), then back to 1: 眼 → 刃金 → 黒砂 → 褥 → 焼野原 → 星. The awakening enters `:tsuji1`. A Kikon / Soul Break reset keeps the form (no `:reset-form`) and clears the live zone (`clear-hazards`, built) |
+| **Queue** | fixed (Q10; `*hank-order*`, the user, 2026-09-30): **黒砂 → 刃金 → 褥 → 焼野原 → 眼 → 星**, then back to 黒砂: three SP1 pairs (§"The hank queue in three SP1 pairs"). Form `:tsujiN`'s next hank is still hank N (the table below keeps the canon numbers); only `hank-next` follows the queue. The awakening enters `:tsuji3` (黒砂). A Kikon / Soul Break reset keeps the form (no `:reset-form`) and clears the live zone (`clear-hazards`, built) |
 | **Weave** (L held, the user's split of 2026-09-29) | `:hold (1 600)` with `:release senju-weave-release`: a press held **≥ 10 f** (`*weave-tap*`) is a weave. Its frames count from then (those first 10 at once), **one pass per 20 f**, summed over every segment on the hank (`sjs-woven`, `weave-add`) up to 3 passes. Let go, the weave just stops: `:sj-weave-stop`, 1/0/5 (6 f), nothing unravels, the passes stay. A `:shuttle` clack marks each pass; the bolt between her hands (fragile) shows only while she weaves |
 | **Unravel** (L tapped) | a press let go **under 10 f** is the release: S 6, then the hank's zone is cast (§4.2) at the **stored passes** (`release-passes`), the stored passes reset and **the form advances to the next hank at once**. **With no pass stored the tap is refused** (the `:refused` cue, then the 6 f stop; since "J weaves, K releases"), and tapped while a zone lives it is refused the same way: the loom holds one hank (`weave-release-act`) |
 | **Scaling by passes** | radius ×0.8 / 0.9 / 1.0, life ×0.5 / 0.75 / 1.0 of the hank's full life, damage ×0.8 / 0.9 / 1.0. **More passes are never weaker** (host-tested per hank: radius, life and damage non-decreasing) |
@@ -347,7 +347,7 @@ no `:sew` and no count meter. Two links are new (the Rukia decision: "a small nu
 | Input | Move | S / A / R | Dmg | Block | Notes | Pose |
 |---|---|---|---|---|---|---|
 | L | **綛解かば KASE TOKABA** (the hank of the form) `:sj-kase-1` … `-6` [A: "一綛解かば…"] | held ≥ 10 f: the weave (any length, then 1/0/5 to stop); tapped < 10 f: 6/0/22 (the release at f6), **refused with no pass stored** | §4.2 | §4.2 | §4.1: weave, release, one live, void, torn. `:flags (:bind)` and `:params (:tell (…))` counted from the release, so a CPU victim's tell reflex reads it (Rukia's generic `:tell`). **After a K link:** `:sj-kase-N-k`, no hold, S 8, unfold 10 (the combo cut), refused with no pass stored. **After a J link:** 一越 HITOKOSHI `:sj-hitokoshi`, 8/0/10, +1 pass at f8, no release (§4.1) | held: the six hands weave in a ripple, the bolt growing a fold per pass; released: the upper pair flings it out and it unrolls where it lands |
-| Shift+K | SP1 **裁ち直し TACHINAOSHI** `:sj-tachinaoshi-1` … `-6` [G; A: she "cuts the pieces off the loom"] | 8/0/22 (releases at f8 and f14) | the two hanks' | the zones' | **Releases the next two hanks at once** (the user, 2026-09-29; it skipped the next hank before): f0 cuts the live zone(s) as the combo cut does, f8 and f14 each unravel the form's next hank under him with the combo cut's rules (unfold 10, both at the passes stored when SP1 began, **at least 1: the one release that needs nothing woven**; the coordinator's default: §"L: hold to weave"), the second beside the first (both live; neither cuts the other), and the form advances past both (+2, 6 → 1). 1 bar. A string ender through the universal SP cancel: off a landed link (a stagger, 26 f) the first zone strikes at +19 and the second at +25. `:flags (:bind)`, `:tell` = its first hitting hank's (10–22, or 16–28 when only the second hits; none for 星 + 眼) | two upper hands close shears in the air (`:sj-snip`), then the upper pair flings a bolt out twice (`:sj-unravel`); each hank's name is called out |
+| Shift+K | SP1 **裁ち直し TACHINAOSHI** `:sj-tachinaoshi-1` … `-6` [G; A: she "cuts the pieces off the loom"] | 8/0/22 (releases at f8 and f14) | the two hanks' | the zones' | **Releases the next two hanks at once** (the user, 2026-09-29; it skipped the next hank before): f0 cuts the live zone(s) as the combo cut does, f8 and f14 each unravel the form's next hank under him with the combo cut's rules (unfold 10, both at the passes stored when SP1 began, **at least 1: the one release that needs nothing woven**; the coordinator's default: §"L: hold to weave"), the second beside the first (both live; neither cuts the other), and the form advances past both (+2 in the queue, wrapping). 1 bar. A string ender through the universal SP cancel: off a landed link (a stagger, 26 f) the first zone strikes at +19 and the second at +25. `:flags (:bind)`, `:tell` = its first hitting hank's (10–22, or 16–28 when only the second hits (星 + 黒砂); none for 眼 + 星) | two upper hands close shears in the air (`:sj-snip`), then the upper pair flings a bolt out twice (`:sj-unravel`); each hank's name is called out |
 | Shift+L | SP2 **傘 KASA** (as §3.3) | 4/24/18 | 40 + ½ caught | | 2 bars (the universal awakened SP2 cost) | |
 | I | Breaker **裁断 SAIDAN** (as written, not derived) | §4 | 150 | Guard Break | a derived strike must out-reach its 2.2 m trigger (Kenpachi's §10 B2 lesson); it is written, so it isn't derived | |
 | O | Kikon module **浮文機 UKIMON NO HATA** `:sj-t-kikon` → Kikon **死出六色浮文機** | aura 8, no dash, strike 20/3/30, locked | 70 | −14 | **The lane:** ENJO's module shape; the **red carpet** rolls out along a locked lane `:cap 0.5 → 8.5 h 1.2 r 1.2` and a bolt of the next hank's dye wraps whatever it reaches; knockback 2; cooldown 90.<br>**The follow-up:** a straight glide along the carpet (`:follow-speed 14`).<br>**As the O ender:** S 20 < J3's stagger 26. Clip: `:sj-unravel` reused | both upper hands sweep down and out; the carpet runs from her clogs |
@@ -461,7 +461,7 @@ In portrait the close-ups follow DUEL_MOBILE_DESIGN §15.3 (a close-up keeps its
 
 **Condition:** the universal EVOLUTION, P from idle / walk / guard, once per match, **no heal**.
 - The stitches go to 0; the guard gauge, Reiatsu and flash-step are kept.
-- She enters `:tsuji1` (眼 next), with no zone live.
+- She enters `:tsuji3` (黒砂 next, the queue's first hank), with no zone live.
 - The CPU's timing is a rule (§7.1).
 
 **`sj-tsuji-cine` 娑闥迦羅骸刺絡辻 (180 f; unskippable)**
@@ -534,7 +534,9 @@ layout re-skinned):
 - a refused L flashes the row (`*refused-t*`);
 - the label is the brush 針 + `HARI`.
 
-**Awakened: 機 HATA.** **Six cloth swatches** in queue order (`%hud-loom`, gap N11), each in its hank's dye and pattern:
+**Awakened: 機 HATA.** **Six cloth swatches** in queue order, in three pairs with a wider gap between pairs (`%hud-loom`, gap N11), each in its hank's dye and pattern:
+- **SP1's two hanks are framed:** one gold frame round a designed pair, a grey frame round each swatch of a cross pair;
+  bright with a bar for SP1, dim without;
 - **the next hank is lit and raised**;
 - **the passes stored on it fill it in three steps** (every segment, so it reads between them; the same swatch in the
   portrait slot);
@@ -1083,6 +1085,51 @@ host-tested; her hook is `senju-siphon`. The probe 2480 (2450+30): 星 round her
   him 26 frames after the K1 hit (56) and 焼野原's corridor burns twice (36 + 36): 184 before scaling, the form ends on 星.
 
 **The seed gate after it** (seeds 1–20, 2125+k): SY 135.6 s (Senjumaru 12), SK 142.7 (6), SR 197.3 (11), SS 191.7 (P1 7 / P2 13), SI 163.6 (12); 100 / 100 K.O., every median in 125–210 s. SR is the one that moved (173.8 → 197.3): the loom awakens in most SR matches, and its zones now come two at a time.
+
+## The hank queue in three SP1 pairs (the user, 2026-09-30)
+
+「善哉，照你說的順序實作」: the queue was the canon chant order 眼 → 刃金 → 黒砂 → 褥 → 焼野原 → 星. It is now
+**黒砂 → 刃金 → 褥 → 焼野原 → 眼 → 星**, then back to 黒砂 (`*hank-order*`). SP1 releases the next hank at f8 and the one
+after at f14, so the order builds three designed pairs, the control hank first in each:
+
+| Pair | Role | Why |
+|---|---|---|
+| 黒砂 + 刃金 | offence | 黒砂's drag pulls him back as he flees; 刃金 closes on the same spot |
+| 褥 + 焼野原 | sure damage | 褥 freezes him; 焼野原's corridor runs from her through him |
+| 眼 + 星 | defence and resources | 眼 reflects his projectiles; 星 drains his Reiatsu / flash-step into hers |
+
+- **Mapping, not renumbering:** form `:tsujiN` is still "hank N next" and every hank keeps its number, data, dye, chant
+  title and numeral (一綛 万朶の眼 … 六綛 闇夜の星よ: the canon chant's, not the queue's place). Only `hank-next` reads the
+  queue; `tachi-hanks`, `weave-void` and the casts follow it. The awakening enters `:tsuji3` (黒砂).
+- **Parity:** `tachi-aligned-p`: SP1 from an even slot (黒砂, 褥, 眼 next) releases a designed pair; SP1 keeps the parity, a
+  single release (a tap, K → L, a voided weave) flips it. Off by one, SP1 catches the cross pairs 刃金 + 褥, 焼野原 + 眼 and
+  the wrap 星 + 黒砂 (he is drained in her dome while 黒砂 makes it hard to leave). Spending a hank now against keeping the
+  alignment for a full pair is the intended trade.
+- **`:tell`** per copy: 眼 + 星 none; 星 + 黒砂 16–28 (only the second hits); every other pair 10–22.
+- **HUD:** the six swatches in queue order, in three pairs (a wider gap between pairs). The two SP1 would release are
+  framed: one gold frame round a designed pair, a grey frame round each swatch of a cross pair; bright with a bar for SP1,
+  dim without. The one-hand ring shows no queue: unchanged. Stills (debug 2457 aligned 黒砂, 2456 cross 刃金): landscape
+  1280×720 and portrait 390×844 (mobile) checked.
+- **CPU** (her `:reflex` / `:sp-ender` / `:sig-hold`, `senju-pair-p`): in a free state with no zone live and SP1 affordable,
+  `*ai-senju-pair*` (0.04) per step it opens a designed pair that suits: 黒砂 + 刃金 under 3 m, 褥 + 焼野原 at 3–7 m, 眼 + 星
+  when he zones (beyond 7 m, or ≥ 30 % of what she took was ranged) or her intent is :defend. Off a landed string SP1 is
+  `*ai-senju-tachi*` (0.5) on a designed pair, half that on a cross pair. On a cross slot with a bar in hand her L wants one
+  pass: the quick single release that realigns. Between CPUs SP1 hanks went from 42 to 766 over the 100 Senjumaru matches.
+- **Host tests:** the queue and its wrap from the awakening's 黒砂, the pairs per alignment (repeated SP1 from the entry:
+  the three pairs then 黒砂 + 刃金 again; after one tap: the three cross pairs), the parity kept by SP1 and flipped by a
+  single release or a void, and `*hanks*` equal to its literal table (every hank's data unchanged).
+
+**The seed gate** (native, seeds 1–20): SY 140.5 s (P1 9 / 20), SK 153.6 (12), SR 183.9 (16), SS 181.0 (P1 15 / P2 5),
+SI 197.2 (10); 100 / 100 K.O., every median in 125–210 s. The ten pairings without her are row-identical to 6043192's.
+**Her awaken A/B** (`--cmd 39020`: P1 never awakens; "never" P1 wins of 60):
+
+| Stream | SY | SK | SR | SS | SI |
+|---|---|---|---|---|---|
+| 101–160 | 36 | 20 | 34 | 30 | 46 |
+| 301–360 | 32 | 36 | 33 | 36 | 36 |
+| 501–560 | 29 | 30 | 41 | 36 | 38 |
+
+Every cell ≥ 20 (SK on 101–160 exactly at the floor: the paired loom is stronger against Kenpachi there). No retune.
 
 ## L: hold to weave, tap to release (the user, 2026-09-29)
 

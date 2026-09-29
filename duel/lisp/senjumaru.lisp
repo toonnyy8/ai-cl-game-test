@@ -50,6 +50,7 @@
 (defparameter *mirror-k* 0.3 "眼: his melee contact on her inside the ring costs him this much of its damage.")
 (defparameter *ai-senju-hari* 0.1 "Her CPU's chance per free step to cash >= :min stitches out with L.")
 (defparameter *ai-senju-tachi* 0.5 "The loom's CPU's chance to end a landed string with SP1 (when one of its two hanks hits).")
+(defparameter *ai-senju-pair* 0.04 "The loom's CPU's chance per free step to open a designed SP1 pair that suits (SENJU-PAIR-P).")
 (defparameter *tachi-second* 6 "TACHINAOSHI: frames between its two releases.")
 
 ;;; the six hanks (死出六色浮文機), their values at 3 passes (§4.2)
@@ -61,13 +62,21 @@
     (5 :name "YAKENOHARA" :short "YAKENOHARA" :kanji "焼野原" :width 2.0 :max 10.0 :hits 2 :dmg 45 :life 150 :chip 0.12)
     (6 :name "YAMIYO NO HOSHIYO" :short "HOSHI" :kanji "闇夜の星よ" :r 3.5 :life 240 :reiatsu 30.0 :fs 15.0))
   "Hank number -> its plist.")
+(defparameter *hank-order* '(3 2 4 5 1 6)
+  "The loom's queue (the user, 2026-09-30): 黒砂 刃金 | 褥 焼野原 | 眼 星, then back to 黒砂. Three SP1 pairs (control, then
+the strike; the freeze, then the burn; the mirror, then the drain): SP1 from an even slot releases one of them.")
 
 ;;; ================================================================ rules (pure: host-tested)
 (defun hank (n key) "Hank N's value KEY (*HANKS*)." (getf (rest (assoc n *hanks*)) key))
-(defun hank-next (n) "The loom's next hank after N: 1 -> 2 ... 6 -> 1 (the fixed order, Q10)." (1+ (mod n 6)))
+(defun hank-next (n) "The loom's next hank after N in *HANK-ORDER*, the last wrapping to the first." (or (second (member n *hank-order*)) (first *hank-order*)))
+(defun hank-slot (n) "Hank N's place in the queue, 0-5." (position n *hank-order*))
+(defun tachi-aligned-p (n)
+  "SP1 from the form whose next hank is N releases a designed pair (黒砂+刃金, 褥+焼野原, 眼+星: N on an even slot), not a
+cross pair. SP1 keeps the parity; a single release (a tap, K -> L, a voided weave) flips it."
+  (evenp (hank-slot n)))
 (defun tachi-hanks (n)
   "SP1 裁ち直し from the form whose next hank is N (the user, 2026-09-29): values the two hanks it releases and the hank the
-loom is on after them (+2, 6 wraps to 1)."
+loom is on after them (+2 in *HANK-ORDER*, wrapping)."
   (values n (hank-next n) (hank-next (hank-next n))))
 (defun hank-hits-p (n) "Hank N's zone deals a hit (刃金 黒砂 褥 焼野原; 眼 and 星 don't)." (and (hank n :dmg) t))
 (defun hank-form (n) "The kit form whose next hank is N." (nth (1- n) '(:tsuji1 :tsuji2 :tsuji3 :tsuji4 :tsuji5 :tsuji6)))
@@ -212,12 +221,12 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 ;; second at +25. One copy per form: :tell is its first hitting hank's (a CPU victim's tell reflex, from the move's f0)
 (defmove :sj-tachinaoshi :kind :sp :clip :sj-snip :clip-s 16 :callout "TACHINAOSHI" :startup 8 :active 0 :recovery 22
   :reach 9.0 :flags (:bind) :on-frame ((0 senju-combo-cut) (8 senju-tachi-release) (14 senju-tachi-release)))
-(defmove-copy :sj-tachinaoshi-1 :sj-tachinaoshi :params (:tell (16 28)))   ; 眼 + 刃金 (the second hits)
-(defmove-copy :sj-tachinaoshi-2 :sj-tachinaoshi :params (:tell (10 22)))   ; 刃金 + 黒砂
-(defmove-copy :sj-tachinaoshi-3 :sj-tachinaoshi :params (:tell (10 22)))   ; 黒砂 + 褥
-(defmove-copy :sj-tachinaoshi-4 :sj-tachinaoshi :params (:tell (10 22)))   ; 褥 + 焼野原
-(defmove-copy :sj-tachinaoshi-5 :sj-tachinaoshi :params (:tell (10 22)))   ; 焼野原 + 星
-(defmove-copy :sj-tachinaoshi-6 :sj-tachinaoshi :params (:tell nil))       ; 星 + 眼: no hit
+(defmove-copy :sj-tachinaoshi-1 :sj-tachinaoshi :params (:tell nil))       ; 眼 + 星: no hit (a pair)
+(defmove-copy :sj-tachinaoshi-2 :sj-tachinaoshi :params (:tell (10 22)))   ; 刃金 + 褥 (cross)
+(defmove-copy :sj-tachinaoshi-3 :sj-tachinaoshi :params (:tell (10 22)))   ; 黒砂 + 刃金 (a pair)
+(defmove-copy :sj-tachinaoshi-4 :sj-tachinaoshi :params (:tell (10 22)))   ; 褥 + 焼野原 (a pair)
+(defmove-copy :sj-tachinaoshi-5 :sj-tachinaoshi :params (:tell (10 22)))   ; 焼野原 + 眼 (cross)
+(defmove-copy :sj-tachinaoshi-6 :sj-tachinaoshi :params (:tell (16 28)))   ; 星 + 黒砂 (cross; the second hits)
 ;; O, the Kikon module 浮文機 UKIMON NO HATA: ENJO's shape (no dash): the red carpet runs along a locked lane 8.5 m; its
 ;; Kikon is 死出六色浮文機
 (defmove :sj-t-kikon :kind :kikon :clip :sj-loom-stance :clip-2 :sj-unravel :clip-s 6 :callout "SHIDE NO ROKUSHIKI UKIMON NO HATA"
@@ -239,7 +248,8 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
   :commands (:q :sj-j1 :f :sj-k1 :sig :sj-warui-kuse :sp1 :sj-shinpei :sp2 :sj-kasa :breaker :sj-breaker :kikon :sj-kikon)
   :grid (:sj-j1 :sj-j2 :sj-j3 :sj-k1 :sj-k2 :sj-k3 :sj-j2s :sj-k2s)
   :l-after-k :sj-warui-kuse-k                   ; the scaled cash-out after a K link
-  :awaken-form :tsuji1 :reset-form :base        ; (a reset keeps the form and empties the stitches: the kit meter)
+  :awaken-form :tsuji3 :reset-form :base        ; (the queue's first hank, 黒砂; a reset keeps the form and empties the
+                                                ; stitches: the kit meter)
   :meter *senju-meter* :hooks *senju-hooks*
   ;; a close-range tailor: J1 up close, blocked strings still sew, the soldier and the O from range, L when the stitches
   ;; pay (:hari, SENJU-AI-REFLEX); she awakens against a zoner or a rooted form (:awaken-rule)
@@ -294,7 +304,7 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
               '((:sj-warui-kuse "悪い癖" "WARUI KUSE" nil) (:sj-warui-kuse-k "悪い癖" "WARUI KUSE" nil)
                 (:sj-shinpei "神兵" "SHINPEI" nil) (:sj-kasa "傘" "KASA" nil) (:sj-tachinaoshi "裁ち直し" "TACHINAOSHI" nil))
               (loop for n from 1 to 6 collect (list (intern (format nil "SJ-TACHINAOSHI-~d" n) :keyword) "裁ち直し" "TACHINAOSHI" nil))
-              (loop for n from 1 to 6
+              (loop for n from 1 to 6                   ; (the mark: the canon chant's numeral, 一綛 .. 六綛, not the queue's)
                     for mark in '("一" "二" "三" "四" "五" "六")
                     append (list (list (intern (format nil "SJ-KASE-~d" n) :keyword) (hank n :kanji) (hank n :name) mark)
                                  (list (intern (format nil "SJ-KASE-~d-K" n) :keyword) (hank n :kanji) (hank n :name) mark))))))
@@ -802,24 +812,39 @@ nothing from a hit, a block or his blade, and his Reiatsu / flash-step gains are
 (defun senju-ai-reflex (e b s d)
   "Her CPU's own reflexes (free states): awaken by :awaken-rule on EVOLUTION (the debug mode's :always / :never are the
 built rule's); the Shikai's L when the stitches pay (:hari (:min :hurry): >= :min now and then, always with >= 2 when the
-first falls within :hurry frames). A command or NIL."
-  (declare (ignore s d))
-  (let* ((f (fighter e)) (g (gauges e)) (kit (fighter-kit f)) (ai (kit-ai kit)))
+first falls within :hurry frames); the loom's SP1 on a designed pair that suits (SENJU-PAIR-P, no zone live, now and
+then). A command or NIL."
+  (declare (ignore s))
+  (let* ((f (fighter e)) (g (gauges e)) (kit (fighter-kit f)) (ai (kit-ai kit)) (n (form-hank (kit-form kit))))
     (cond ((and (gauges-evolution g) (not (gauges-awakened g)) (null (svref *ai-awaken-mode* (fighter-side f)))
                 (getf ai :awaken-rule) (senju-awaken-p e (getf ai :awaken-rule)))
            (why b :awaken-rule :awaken))
+          ((and n (null (senju-live-zones e)) (kit-command-ok-p e :sp1) (senju-pair-p e b d n) (< (sim-rnd01) *ai-senju-pair*))
+           (why b :pair :sp1))
           ((and (getf ai :hari) (hari-form-p e) (kit-command-ok-p e :sig))
            (let ((n (hari e)) (h (getf ai :hari)))
              (and (or (and (>= n 2) (<= (hari-falls-in n (gauges-meter-idle g)) (getf h :hurry 40)))
                       (and (>= n (getf h :min 4)) (< (sim-rnd01) *ai-senju-hari*)))
                   (why b :hari :sig)))))))
 
+(defun senju-pair-p (e b d n)
+  "Does the designed pair SP1 releases from next hank N suit now (a cross pair never does)? 黒砂 + 刃金 near him (under
+3 m), 褥 + 焼野原 at mid range (3-7 m), 眼 + 星 when he zones (beyond 7 m, or 30 % of what she took was ranged) or she
+defends."
+  (and (tachi-aligned-p n)
+       (case n
+         (3 (< d 3.0))
+         (4 (<= 3.0 d 7.0))
+         (1 (let ((g (gauges e)))
+              (or (> d 7.0) (eq (brain-intent b) :defend)
+                  (> (gauges-taken-ranged g) (* 0.3 (+ (gauges-taken-ranged g) (gauges-taken-melee g))))))))))
+
 (defun senju-sp-ender (e kit)
   "The loom's :sp-ender (ai.lisp STRING-REFLEX, a landed string's last link): SP1 when one of the two hanks it releases
-hits, *AI-SENJU-TACHI* of the time."
+hits, *AI-SENJU-TACHI* of the time on a designed pair, half that on a cross pair."
   (let ((n (form-hank (kit-form kit))))
     (and n (kit-command-ok-p e :sp1) (multiple-value-bind (a b) (tachi-hanks n) (or (hank-hits-p a) (hank-hits-p b)))
-         (< (sim-rnd01) *ai-senju-tachi*) :sp1)))
+         (< (sim-rnd01) (if (tachi-aligned-p n) *ai-senju-tachi* (* 0.5 *ai-senju-tachi*))) :sp1)))
 
 (defun senju-opp-reflex (e b s d)
   "A CPU facing her (her kit's :opp-reflex, read off her kit: every other pairing unchanged): while she holds a weave within
@@ -834,14 +859,17 @@ hits, *AI-SENJU-TACHI* of the time."
   "Frames her CPU holds L (E: her, for the stored passes): the Shikai taps it. The loom wants 3 passes beyond :far, 2 beyond
 :near and 1 inside :near (a tap needs one stored; 星, cast round her: :far 5 / :near 2.5); short of them it weaves one segment (at most
 *WEAVE-SEG* frames, never a stand into a rush: each segment is a new decision), else it taps (the release at the stored
-level)."
+level). On a cross slot with a bar for SP1 it wants one pass: the quick single release that realigns the pairs."
   (if (not (form-hank (kit-form kit)))
       1
       (let* ((w (getf (kit-ai kit) :weave)) (hoshi (eq (kit-form kit) :tsuji6))
              (far (if hoshi 5.0 (getf w :far 6.5))) (near (if hoshi 2.5 (getf w :near 4.0)))
              (want (cond ((> d far) 3) ((> d near) 2) (t 0))) (woven (if e (sjs-woven (sj e)) 0))
-             (want (if (and e (senju-live-zones e)) 3 (max 1 want))))   ; (a zone lives: weave the next one up meanwhile;
-                                                                          ; nothing stored: one pass, never a refused tap)
+             (fix (and e (not (tachi-aligned-p (form-hank (kit-form kit))))    ; (a cross slot, a bar: realign)
+                       (>= (floor (gauges-reiatsu (gauges e)) *reiatsu-bar*) (kit-command-cost kit :sp1))))
+             (want (cond ((and e (senju-live-zones e)) 3)   ; (a zone lives: weave the next one up meanwhile;
+                         (fix 1)                            ; nothing stored: one pass, never a refused tap)
+                         (t (max 1 want)))))
         (if (<= want (weave-stored woven))
             1
             (+ 1 (max *weave-tap* (min *weave-seg* (- (* want *weave-pass*) woven))))))))
@@ -871,20 +899,31 @@ level)."
 (defun senju-hud-meter (e kit x y w h right tm lx ly ls)
   "Her kit-meter row (LX LY LS: where the landscape label goes, NIL in the portrait slot): the Shikai's six needle pips
 (lit by the stitches, the next to fall flickering in its last 30 f, a refused L flashes the row) and the brush 針 HARI;
-the Bankai's six hank swatches in the loom's order (the next lit and raised, filling in three steps while she weaves, the
-live zones' draining, a torn one slashed, a refused release washing the next one white) and the brush 機 + the next
-hank's short name."
+the Bankai's six hank swatches in the queue's order, in its three SP1 pairs (the next lit and raised, filling in three
+steps while she weaves, the live zones' draining, a torn one slashed, a refused release washing the next one white; the
+two SP1 would release framed: one gold frame round a designed pair, a grey one round each of a cross pair; bright with
+the bar for it) and the brush 機 + the next hank's short name."
   (let* ((f (fighter e)) (g (gauges e)) (st (sj e)) (side (fighter-side f)) (x (f32 x)) (y (f32 y)) (w (f32 w)) (h (f32 h))
-         (pw (/ w 6.6)) (gap (* 0.12 pw)) (hh (* 2.6 h)) (y0 (- y (* 0.8 h))) (next (form-hank (kit-form kit)))
+         (next (form-hank (kit-form kit))) (pw (if next (/ w 7.5) (/ w 6.6))) (gap (* 0.12 pw)) (pgap (if next (* 0.45 pw) 0.0))
+         (hh (* 2.6 h)) (y0 (- y (* 0.8 h)))
          (refused (max 0.0 (- 1.0 (* 4.0 (- tm (aref *refused-t* side)))))))
+    (flet ((slot-x (i) (let ((o (+ (* i (+ pw gap)) (* (floor i 2) pgap)))) (f32 (if right (- (+ x w) o pw) (+ x o))))))
+    (when next                                          ; SP1's two hanks: a designed pair, or a cross pair
+      (let* ((s (hank-slot next)) (a (if (>= (floor (gauges-reiatsu g) *reiatsu-bar*) (kit-command-cost kit :sp1)) 1.0 0.35))
+             (top (f32 (- y0 (* 0.25 hh) 3))) (fh (f32 (+ (* 1.25 hh) 5))))
+        (if (tachi-aligned-p next)
+            (let ((x0 (min (slot-x s) (slot-x (1+ s)))))
+              (%houtline (f32 (- x0 3)) top (f32 (+ pw pw gap 6)) fh 0.76f0 0.66f0 0.4f0 (f32 a)))
+            (dolist (i (list s (mod (1+ s) 6)))
+              (%houtline (f32 (- (slot-x i) 2)) top (f32 (+ pw 4)) fh 0.55f0 0.55f0 0.6f0 (f32 (* 0.8 a)))))))
     (dotimes (i 6)
-      (let* ((px (f32 (if right (- (+ x w) (* (1+ i) (+ pw gap))) (+ x (* i (+ pw gap)))))))
+      (let* ((px (slot-x i)))
         (if (null next)
             (let* ((n (round (gauges-meter g))) (lit (< i n))
                    (flick (if (and lit (= i (1- n)) (<= (hari-falls-in n (gauges-meter-idle g)) 30))
                               (+ 0.35 (* 0.65 (%pulse (f32 tm) 8.0))) 1.0)))
               (%sj-needle px (f32 y0) (f32 pw) (f32 hh) lit (f32 flick)))
-            (let* ((k (1+ i)) (dye (hank-dye k)) (lit (= k next)) (lift (if lit (* 0.25 hh) 0.0))
+            (let* ((k (nth i *hank-order*)) (dye (hank-dye k)) (lit (= k next)) (lift (if lit (* 0.25 hh) 0.0))
                    (live (find k (senju-live-zones e) :key (lambda (z) (let ((hz (hazard z))) (if hz (sjh-hank (hazard-data hz)) 0)))))
                    (a (if (or lit live) 1.0 0.55)) (torn-age (- *match-tick* (sjs-torn st))))
               (%hrect px (f32 (- y0 lift)) (f32 pw) (f32 hh) (f32 (first dye)) (f32 (second dye)) (f32 (third dye)) (f32 a))
@@ -903,7 +942,7 @@ hank's short name."
                 (%hq (+ px (* 0.8 pw)) y0 (+ px pw) y0 (+ px (* 0.2 pw)) (+ y0 hh) px (+ y0 hh) 0.82f0 0.06f0 0.11f0
                      (f32 (max 0.3 (- 1.0 (/ torn-age 30.0)))))
                 (%hrect px (f32 (+ y0 hh 2)) (f32 (* pw (- 1.0 (/ torn-age (float *torn-lock*))))) (f32 (max 1.0 (* 0.3 h)))
-                        0.5f0 0.51f0 0.55f0 0.9f0))))))
+                        0.5f0 0.51f0 0.55f0 0.9f0)))))))
     (when (> refused 0.0) (%houtline (f32 (- x 2)) (f32 (- y0 2)) (f32 (+ w 4)) (f32 (+ hh 4)) 1f0 1f0 1f0 (f32 refused)))
     (when lx                                          ; the label: the brush 針 / 機 and HARI / the next hank
       (let* ((em (* 8 ls)) (kanji (if next "機" "針")) (col (if next '(0.76 0.66 0.4 1.0) '(0.82 0.06 0.11 1.0))))
