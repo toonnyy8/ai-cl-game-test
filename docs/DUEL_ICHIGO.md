@@ -1222,3 +1222,17 @@ main's new Kenpachi CPU. **Reading**: "always" is behind "never" in 14 of the 15
 the weaker choice (the KESSA CPU rarely banks clones, so its Kikon is mostly worth 2, and its reach is shorter than v1's
 chains). The user's rule only forbids the opposite; the levers if it should be stronger are `*kessa-taken*`, the clone
 banking in its AI and `*clone-scale*`.
+
+### Playtest look decisions (the user, 2026-09-29, after v2)
+
+- **漆黒の月牙天衝 thicker and pitch black** (「一護的卍解月牙要再更加厚實漆黑」, with a reference still of a thick black
+  crescent ring, smoky outer edge, bright inside). `vfx-ic-c-cut` now draws a crescent, not a band: the inner edge a clean
+  circle, the band grown outward (`ic-c-point-out`), 1.7 m thick opposite the gap tapering to 0.3 m at the two points,
+  three pure-ink layers; ragged dark smoke feathering off the outer edge (flickering, fading out); a pale halo behind the
+  rim so it reads on a dark stage. The BLOOD core and the white hairline are gone. Only its look changed (the Soul Break's
+  frames, the camera and the Konpaku are as before).
+- **The clones are grey-black phantoms** (「分身應該是看不清輪廓、散發著霧氣的灰黑色虛影」, then 「分身的輪廓邊線用白色」):
+  `ic-ghost :mist` (every clone state) and `ic-body-at` (千影's charging clones) draw KESSA tinted near-black and lifted to
+  grey (`*ic-mist-tint*` + flash), with a white rim light (`*ic-mist-rim*`) for the edge; in play each clone is drawn
+  twice, the second copy drifting a few cm and fainter, so the outline blurs; soft grey-black wisps rise off it
+  (`ic-mist`). The BLOOD ring at the feet stays (it marks the clone's side). The 残像 afterimages keep the pale look.

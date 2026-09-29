@@ -688,29 +688,53 @@ Rey Cero); presence K."
 (defvar *ic-clone-rim* nil "The clones' BLOOD rim (RIM-VEC, made at load in the art file).")
 (setf *ic-clone-rim* (rim-vec #xD0101C 1.4))
 
-(defun ic-ghost (hz clip tm alpha rim)
-  "Draw KESSA's body at HZ's spot and facing, posed at time TM of CLIP, at ALPHA, pale (a clone / an echo); RIM: a
-BLOOD ring at its feet."
+(defvar *ic-mist-tint* (hexc #x1E1E1E) "The clones' grey-black cast (the user 2026-09-29: a hazy grey-black phantom).")
+(defvar *ic-mist-rim* nil "The clones' rim: a white edge light round the grey phantom (the user 2026-09-29; RIM-VEC, made at load).")
+(setf *ic-mist-rim* (rim-vec #xFFFFFF 1.6))
+
+(defun ic-mist (x z alpha seed)
+  "Grey-black mist rising off a phantom at (X Z): six soft wisps climbing from its feet past its head, widening and fading."
+  (let ((clk (fx-clock)))
+    (dotimes (i 6)
+      (let* ((ph (mod (+ (* 0.5 clk) (/ i 6.0) (* 0.13 seed)) 1.0)) (a (+ (* 2.1 i) seed (* 0.6 clk)))
+             (r (+ 0.18 (* 0.2 ph))) (x0 (+ x (* r (cos a)))) (z0 (+ z (* r (sin a)))) (y0 (+ 0.1 (* 1.9 ph)))
+             (k (* alpha 0.8 (sin (* pi ph)))))
+        (fx-line x0 y0 z0 (+ x0 (* 0.15 (cos (+ a 1.0)))) (+ y0 0.55) (+ z0 (* 0.15 (sin (+ a 1.0))))
+                 (+ 0.25 (* 0.3 ph)) 0.2 0.2 0.21 k :end-width (+ 0.45 (* 0.4 ph)) :end-alpha 0.0 :mode :alpha)))))
+
+(defun ic-ghost (hz clip tm alpha rim &key (mist nil))
+  "Draw KESSA's body at HZ's spot and facing, posed at time TM of CLIP, at ALPHA; RIM: a BLOOD ring at its feet. MIST (a
+clone): a grey-black phantom with no clear outline (drawn twice, the second copy drifting a few cm, the dull rim) and mist
+rising off it; else pale (an echo)."
   (let* ((o (hazard-owner hz)) (side (if (and (entity-alive-p o) (fighter o)) (fighter-side (fighter o)) 0))
          (an (svref *ic-clone-anim* side)) (jm (svref *ic-clone-joints* side)) (b (find-body :ichigo))
-         (x (hazard-x hz)) (z (hazard-z hz)) (yaw (hazard-yaw hz)))
+         (x (hazard-x hz)) (z (hazard-z hz)) (yaw (hazard-yaw hz)) (hide (svref (hide-set '(:shikai :mark)) 0)))
     (anim-play an clip :blend 0 :time (f32 (max 0.0 tm)))
-    (pose-fk! jm (anim-eval an) (f32 x) 0f0 (f32 z) (f32 yaw) (body-scale b) (body-hunch b) (body-props b))
-    (draw-body b jm x 0.0 z yaw :weapon :tensa :hide (svref (hide-set '(:shikai :mark)) 0) :alpha (f32 alpha) :flash 0.35
-                                :shadow nil :rim *ic-clone-rim*)
+    (flet ((copy (x z a)
+             (pose-fk! jm (anim-eval an) (f32 x) 0f0 (f32 z) (f32 yaw) (body-scale b) (body-hunch b) (body-props b))
+             (if mist
+                 (draw-body b jm x 0.0 z yaw :weapon :tensa :hide hide :alpha (f32 a) :tint *ic-mist-tint* :flash 0.25
+                                             :shadow nil :rim *ic-mist-rim*)
+                 (draw-body b jm x 0.0 z yaw :weapon :tensa :hide hide :alpha (f32 a) :flash 0.35 :shadow nil
+                                             :rim *ic-clone-rim*))))
+      (cond (mist (let* ((clk (fx-clock)) (dx (* 0.06 (sin (* 5.0 clk)))) (dz (* 0.06 (cos (* 4.0 clk)))))
+                    (copy x z (* 0.75 alpha))
+                    (copy (+ x dx) (+ z dz) (* 0.4 alpha))
+                    (ic-mist x z alpha (hazard-x hz))))
+            (t (copy x z alpha))))
     (when rim (with-floats (x z alpha) (%tring x 0f0 z 0.55f0 0.04f0 +pal-blood+ (* 1.8f0 alpha) 3f0 24)))))
 
 (defun ichigo-clone-look (hz rdt)
-  "分身 a clone: KESSA's body at alpha 0.45, pale, a BLOOD rim and a BLOOD ring at its feet: idle in the stance, turning to
+  "分身 a clone: a grey-black phantom of KESSA at alpha 0.45, mist rising off it (IC-GHOST :mist), a BLOOD ring at its feet: idle in the stance, turning to
 him; answering, the answer's clip at its frame; charging, the run; fading over its last 20 f / 8 f."
   (declare (ignore rdt))
   (let* ((c (hazard-data hz)) (st (icc-state c)) (age (/ (hazard-age hz) 60.0))
          (a (* 0.45 (min 1.0 (/ (max 0 (icc-life c)) 20.0)) (min 1.0 (/ (hazard-age hz) 6.0)))))
     (case st
-      (:answer (let ((mv (icc-mv c))) (ic-ghost hz (mv-clip mv) (/ (* (max 0 (icc-sf c)) (mv-clip-speed mv)) 60.0) (max a 0.3) t)))
-      (:charge (ic-ghost hz :sh-run (* 1.5 age) 0.6 t))
-      (:fade (ic-ghost hz :ic-k-stance age (* 0.45 (max 0.0 (- 1.0 (/ (icc-fade c) 8.0)))) nil))
-      (t (ic-ghost hz :ic-k-stance age a t)))))
+      (:answer (let ((mv (icc-mv c))) (ic-ghost hz (mv-clip mv) (/ (* (max 0 (icc-sf c)) (mv-clip-speed mv)) 60.0) (max a 0.3) t :mist t)))
+      (:charge (ic-ghost hz :sh-run (* 1.5 age) 0.6 t :mist t))
+      (:fade (ic-ghost hz :ic-k-stance age (* 0.45 (max 0.0 (- 1.0 (/ (icc-fade c) 8.0)))) nil :mist t))
+      (t (ic-ghost hz :ic-k-stance age a t :mist t)))))
 
 (defun ichigo-echo-look (hz rdt)
   "残像 an afterimage: his move replayed behind him, alpha 0.35, pale, no ring."
@@ -992,13 +1016,15 @@ the plaza back, violet ash drifting."
                                  0f0 0.3f0 0f0 1.2f0 0.05f0 -0.05f0 0.1f0 +pal-ash+)))))
 
 ;; the cinematics' clones and the C (draw mode: posed and drawn one after another in one buffer)
-(defun ic-body-at (x z yaw clip tm alpha &key (y 0.0) (flash 0.35))
-  "KESSA's body at (X Y Z) facing YAW, posed at time TM of CLIP, at ALPHA, pale: a clone in a cinematic."
+(defun ic-body-at (x z yaw clip tm alpha &key (y 0.0))
+  "A clone of KESSA at (X Y Z) facing YAW, posed at time TM of CLIP, at ALPHA: the grey-black phantom (IC-GHOST's :mist
+look) in a cinematic."
   (let ((an (svref *ic-clone-anim* 0)) (jm (svref *ic-clone-joints* 0)) (b (find-body :ichigo)))
     (anim-play an clip :blend 0 :time (f32 (max 0.0 tm)))
     (pose-fk! jm (anim-eval an) (f32 x) (f32 y) (f32 z) (f32 yaw) (body-scale b) (body-hunch b) (body-props b))
-    (draw-body b jm x y z yaw :weapon :tensa :hide (svref (hide-set '(:shikai :mark)) 0) :alpha (f32 alpha) :flash flash
-                              :shadow nil :rim *ic-clone-rim*)))
+    (draw-body b jm x y z yaw :weapon :tensa :hide (svref (hide-set '(:shikai :mark)) 0) :alpha (f32 alpha)
+                              :tint *ic-mist-tint* :flash 0.12 :shadow nil :rim *ic-mist-rim*)   ; darker on a cinematic's black
+    (ic-mist x z (* 0.6 alpha) (+ x z))))
 
 (defun ic-c-point (px pz ux uz d th)
   "Values x y z of the C at angle TH (radians from its near point, over the top): the vertical ellipse in the plane of
@@ -1007,21 +1033,41 @@ plaza it runs along the ground (the crack)."
   (let ((h (* 0.5 d)))
     (values (+ px (* ux (- h (* h (cos th))))) (max 0.03 (+ 2.4 (* 3.2 (sin th)))) (+ pz (* uz (- h (* h (cos th))))))))
 
+(defun ic-c-point-out (px pz ux uz d th o)
+  "IC-C-POINT pushed O metres outward from the C's inner edge (both radii grown by O)."
+  (let ((h (* 0.5 d)) (hx (+ (* 0.5 d) o)))
+    (values (+ px (* ux (- h (* hx (cos th))))) (max 0.03 (+ 2.4 (* (+ 3.2 o) (sin th)))) (+ pz (* uz (- h (* hx (cos th))))))))
+
 (defun vfx-ic-c-cut (px pz ux uz d k lo hi &key (scale 1.0) (flare 0.0))
-  "漆黒の月牙天衝's C: an ink band 0.5 m thick with a white hairline outside and a BLOOD core, from fraction LO to HI of
-its arc (0 = the V tip over his head, 1 = the Ʌ tip at his knees; the gap +-32 deg round him), SCALE x its band (the
-counter's small C), FLARE its white rim brightened (the impact)."
-  (let* ((g0 (deg 32)) (g1 (deg 328)) (n 28))
-    (dotimes (i n)
-      (let* ((u0 (/ i (float n))) (u1 (/ (1+ i) (float n))))
-        (when (and (> u1 lo) (< u0 hi))
-          (let ((t0 (+ g0 (* (- g1 g0) (max lo u0)))) (t1 (+ g0 (* (- g1 g0) (min hi u1)))))
-            (multiple-value-bind (x0 y0 z0) (ic-c-point px pz ux uz d t0)
-              (multiple-value-bind (x1 y1 z1) (ic-c-point px pz ux uz d t1)
-                (fx-line x0 y0 z0 x1 y1 z1 (* scale 0.36) 0.95 0.95 0.93 (min 1.0 (* k (+ 0.8 flare))) :mode :alpha)   ; the white edge
-                (fx-line x0 y0 z0 x1 y1 z1 (* scale 0.3) 0.02 0.02 0.03 k :mode :alpha)                              ; the ink band
-                (fx-line x0 y0 z0 x1 y1 z1 (* scale 0.22) 0.02 0.02 0.03 k :mode :alpha)
-                (fx-line x0 y0 z0 x1 y1 z1 (* scale 0.05) 0.82 0.06 0.11 k :mode :alpha)))))))))                     ; the BLOOD core
+  "漆黒の月牙天衝's C (the user's reference 2026-09-29: a thick pitch-black crescent with a smoky rim): the inner edge a
+clean circle, the band grown outward, thickest opposite the gap (1.6 m) and tapering to the two points; black smoke
+feathering off its outer edge on a pale backlight halo (it reads on a dark stage). Drawn from fraction LO to HI of its
+arc (0 = the V tip over his head, 1 = the Ʌ tip at his knees; the gap +-32 deg round him), SCALE x its band (the
+counter's small C), FLARE its halo brightened (the impact)."
+  (let* ((g0 (deg 32)) (g1 (deg 328)) (n 40) (clk (fx-clock)))
+    (flet ((w (u) (* scale (+ 0.3 (* 1.4 (expt (max 0.0 (sin (* pi u))) 0.6))))))   ; the crescent's thickness at U
+      (dotimes (i n)
+        (let* ((u0 (/ i (float n))) (u1 (/ (1+ i) (float n))))
+          (when (and (> u1 lo) (< u0 hi))
+            (let* ((v0 (max lo u0)) (v1 (min hi u1))
+                   (t0 (+ g0 (* (- g1 g0) v0))) (t1 (+ g0 (* (- g1 g0) v1)))
+                   (w0 (w v0)) (w1 (w v1)))
+              (flet ((seg (f0 f1 wid r g b a &optional (fade 1.0))   ; a line from offset f0*w to f1*w (thickness fractions)
+                       (multiple-value-bind (x0 y0 z0) (ic-c-point-out px pz ux uz d t0 (* f0 w0))
+                         (multiple-value-bind (x1 y1 z1) (ic-c-point-out px pz ux uz d t1 (* f1 w1))
+                           (fx-line x0 y0 z0 x1 y1 z1 (* wid w0) r g b a :end-width (* wid w1) :end-alpha (* fade a)
+                                    :mode :alpha)))))
+                ;; the pale halo behind the rim
+                (seg 1.15 1.15 0.9 0.92 0.92 0.9 (min 1.0 (* k (+ 0.22 (* 0.5 flare)))))
+                ;; the smoke: ragged dark wisps off the outer edge, flickering
+                (dotimes (j 3)
+                  (let* ((nz (sin (+ (* 12.9898 i) (* 78.233 j) (* 7.0 clk))))
+                         (f (+ 1.0 (* 0.28 (abs nz)) (* 0.1 j))))
+                    (seg f (+ f (* 0.25 (abs nz))) (+ 0.2 (* 0.15 (abs nz))) 0.06 0.06 0.07 (* k (- 0.6 (* 0.15 j))) 0.0)))
+                ;; the pitch-black band, three layers from the inner edge out
+                (seg 0.83 0.83 0.4 0.01 0.01 0.015 k)
+                (seg 0.5 0.5 0.42 0.01 0.01 0.015 k)
+                (seg 0.17 0.17 0.4 0.01 0.01 0.015 k)))))))))
 
 (defun ic-line-from (a v)
   "Values px pz ux uz d: A's feet, the unit vector to V, the distance."
