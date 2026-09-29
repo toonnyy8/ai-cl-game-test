@@ -1175,6 +1175,7 @@ kit `:meter :draw / :label`, the hazard `hook` / `data` (clones, afterimages and
 | `*clone-scale*`; `*clone-burst-dmg*`; `*clone-konpaku*` | 0.7; 30; (2 2 3 4) | 74910+k (k / 20); 74800+k |
 | `*zanzo-life*` / `*zanzo-lag*` / `*zanzo-mult*` | 360 / 10 / 0.5 | — |
 | `*ai-ic-parry-p*` / `*ai-ic-parry-bs-p*` / `*ai-kessa-o-p*`; KESSA's `:o-ender` | 0.35 / 0.3 / 0.04; 0.6 | 74950+k (k / 50) |
+| `*ai-kessa-bank-at*` / `*ai-kessa-clone-j-p*` (2026-09-29, "The CPU with the stance and the clones") | 0.45 / 0.08 | — |
 
 Other commands: 74000+k his tests (0 / 1 the forms 3 m from an idle Kenpachi, 2 Kenpachi's K1 into KESSA (the catch), 3
 Yamamoto's wave into the parry, 4 the Breaker through it, 5 JUJISHO's cut, 6 the Shikai 8 m out, 7 / 8 KESSA with three
@@ -1288,3 +1289,94 @@ stand and swing; they no longer rush at the opponent.
   傷害從 0.7 倍升回到 0.8 倍」): `*ichigo-mult*` 1.3 → **1.0**, `*kessa-mult*` 1.1 → **0.95**, `*ichigo-taken*` 0.7 →
   **0.8**. Not a gate, the user's call; the native gate, read for information: IY 180.5 s (Ichigo 5 / 15), IK 184.5 (7 / 13),
   IR 182.1 (3 / 17), II 250.4, SI 230.9 (Ichigo 4 / 16), all 20/20 K.O.; II and SI are over the 210 s ceiling.
+
+### The CPU with the stance and the clones (the user, 2026-09-29)
+
+「一護的 AI 是不是不擅長使用『架式』跟『分身』作戰？看他應戰能力其實不太好」 Is Ichigo's CPU bad at fighting with the
+stance and the clones? Yes, measured. Only his CPU changed (his kit's `:ai` tables and his AI functions in ichigo.lisp);
+no damage number moved (`*ichigo-mult*` 1.0, `*kessa-mult*` 0.95, `*ichigo-taken*` 0.8 stay the user's).
+
+**The pacing log.** Each gate row now has a `duel ichigo` line per side that played him (`ic-count` into the per-side
+state, carried over between matches like Senjumaru's; `tools/simgate.py` keeps it with the row). It counts every move
+instance of his by name with its contact at its end (`-hit` / `-blk` / `-whf`), the stance's neutral entries by distance
+(`ic-tsuki-d3` / `-d5` / `-dfar`), each clone made (Step: tap, dash or back-dash, and IN ≤ 2.4 m / MID ≤ 3.0 / OUT of
+the opponent; Hoho), refused (and the guard gauge then), answers, clone hits / blocks / whiffed strings, expiries,
+evictions and clones lost when he was hit, every J / K press with its live clones and those in reach, every KESSA O by
+the clones at the press (`o-red-n` on a red opponent, `o-poke-n` otherwise), every Kikon he lands by form and worth, and
+the frames in KESSA. Debug only: it draws no random number, so the rows are the same with it (checked, 100/100).
+
+**What the CPU did wrong** (seeds 1–20, before, per match):
+
+- **The stance was almost never a choice.** 0.8–2.0 entries a match, and from neutral only 0.2–0.9: its band started at
+  2.6 m while his PRESSURE range is 1.0–1.8, so most of it came from L after a K link that hit. When used it worked
+  (RANGETSU hit 0.3–0.9 of 0.3–1.1).
+- **The clones were never banked for 千影.** On a red opponent O went out with 0–1 clones 1.9–3.6 times a match and with
+  2–3 only 0.0–0.1: KESSA's Kikons were worth 2 almost every time (2.0–3.2 a match worth 2, 0.1–0.2 worth 3 or 4). The
+  O ender (always on a red opponent) and the stun rush fire the moment he goes red, so clones had to be up before that,
+  and nothing put them there; the only O-with-clones rule rolled 4 % a step whether he was red or not.
+- **Clones out of reach, and J / K not aimed at them.** A third to a half of the Step clones stood out of reach (the
+  forward dash posts one where it took off); only about a third of the J presses had a clone in reach, because the CPU
+  presses J / K only within its own reach.
+
+**The fixes.**
+
+- **The Shikai's stance at the right range**: `:sig` in all three near bands (1 at 0–1.6 m, 2 at 1.6–2.6, 4 at
+  2.6–5.0); `ichigo-ai-stance` picks by reach: RANGETSU (lunge + reach 4.8 m) or TSUKI-OTOSHI on a guard within 4.2 m,
+  TSUKI-OTOSHI (5.6 m) or the dash in to 5.4 m, the dash in to 7.5 m, else the Getsuga.
+- **Banking for 千影** (`ichigo-ai-kessa`): once the opponent's Reishi is under `*ai-kessa-bank-at*` 0.45 (red is 0.30),
+  O ready, he not reeling, KESSA side-Steps to post clones up to 2 (3 with ≥ 40 guard gauge), 3 m out and never into a
+  hit that is coming; meanwhile the reflex spends none of them (no clone-poke, no 4 % O). The O itself stays the generic
+  ender / rush, which now finds them. These are the "out of reach" Step clones in the table below: a banked clone only
+  has to live until O (it charges from anywhere within the rush).
+- **J / K on a clone in reach** (`clone-idle-in-reach`, `*ai-kessa-clone-j-p*` 0.08 a step): an idle clone within 2.4 m of
+  him → K when his K1 reaches (1.6–3.0 m), else J (the clones' heavies reach 3.0 m).
+- Tried and dropped: banking only once he is red plus the CPU's own O rush with ≥ 2 clones (too late, the ender had
+  already gone with 0–1; the neutral rush gets guarded: IY 0 / 20), J / K on a clone at 0.15 a step (the same within the
+  noise), 3 clones only from 60 gauge (II / SI back to 208–210 s), the Shikai's Breaker at half weight (no change).
+
+**Counters, before → after** (seeds 1–20, per match of the Ichigo side):
+
+| per match | IY | IK | IR | II P1 | II P2 | SI |
+|---|---|---|---|---|---|---|
+| stance entries (all) | 2.0 → 3.0 | 1.3 → 2.6 | 0.8 → 1.8 | 1.3 → 2.3 | 1.3 → 2.2 | 0.9 → 2.0 |
+| from neutral | 0.9 → 2.1 | 0.2 → 1.2 | 0.5 → 1.1 | 0.5 → 1.4 | 0.4 → 1.6 | 0.3 → 1.3 |
+| RANGETSU (J) / hit | 1.1/0.9 → 1.8/1.6 | 0.7/0.6 → 1.6/1.4 | 0.5/0.3 → 1.0/0.8 | 0.7/0.6 → 1.4/1.2 | 0.5/0.4 → 1.1/0.9 | 0.3/0.3 → 1.2/1.1 |
+| TSUKI-OTOSHI (K) / hit | 0.5/0.3 → 0.8/0.3 | 0.3/0.3 → 0.7/0.4 | 0.1/0.1 → 0.5/0.1 | 0.3/0.1 → 0.6/0.1 | 0.6/0.5 → 0.8/0.2 | 0.1/0.1 → 0.6/0.2 |
+| Getsuga (L) / wave hit | 0.5/0.5 → 0.4/0.4 | 0.3/0.2 → 0.4/0.3 | 0.2/0.1 → 0.2/0.2 | 0.3/0.2 → 0.2/0.2 | 0.3/0.2 → 0.2/0.2 | 0.4/0.3 → 0.2/0.1 |
+| clones: Step / Hoho | 4.3/3.4 → 12.3/2.9 | 5.7/4.0 → 9.5/3.4 | 8.9/3.0 → 15.3/3.2 | 7.5/4.8 → 14.8/3.3 | 7.3/4.4 → 14.2/3.1 | 7.8/4.4 → 14.3/3.0 |
+| Step clones out of reach | 2.4 → 9.9 | 1.9 → 5.8 | 4.3 → 10.7 | 3.3 → 11.7 | 3.0 → 10.5 | 3.5 → 9.2 |
+| refused (gauge) | 0.0 → 0.2 | 1.1 → 1.3 | 0.1 → 0.5 | 0.1 → 0.8 | 0.3 → 0.3 | 0.2 → 0.4 |
+| clone hits / blocks | 4.8/0.1 → 7.0/1.2 | 6.5/0.1 → 10.3/0.2 | 5.2/0.2 → 10.8/1.2 | 9.2/0.3 → 9.6/0.7 | 7.7/0.2 → 9.7/0.9 | 7.8/0.2 → 9.8/0.7 |
+| clones lost to a hit on him | 2.8 → 5.7 | 2.4 → 3.0 | 2.9 → 3.9 | 4.0 → 6.9 | 4.5 → 6.5 | 4.5 → 6.2 |
+| J presses / with a clone in reach | 24.9/9.1 → 23.2/9.5 | 25.1/10.4 → 26.9/13.6 | 28.4/8.0 → 37.0/17.8 | 41.4/13.2 → 29.6/13.1 | 35.1/11.2 → 30.9/13.8 | 35.5/12.0 → 33.1/15.2 |
+| O on a red opponent: 0–1 / 2–3 clones | 2.8/0.1 → 1.2/1.1 | 2.1/0.1 → 1.9/1.3 | 1.9/0.1 → 1.2/1.6 | 3.4/0.1 → 1.6/1.6 | 3.6/0.0 → 2.0/1.3 | 3.1/0.1 → 1.6/1.4 |
+| KESSA Kikons worth 2 / 3 / 4 | 2.2/0.1/0.0 → 1.3/0.2/0.6 | 2.0/0.1/0.0 → 1.4/0.3/0.3 | 1.9/0.1/0.1 → 1.4/0.5/0.4 | 3.2/0.1/0.0 → 1.4/0.5/0.5 | 2.7/0.1/0.0 → 1.4/0.3/0.6 | 2.5/0.1/0.0 → 1.4/0.3/0.5 |
+| seconds in KESSA | 79 → 76 | 83 → 74 | 111 → 113 | 148 → 110 | 145 → 111 | 138 → 112 |
+
+**The gate** (native, seeds 1–20; 300/300 K.O.; the ten pairings without Ichigo are identical to before):
+
+| Pairing | Before: median, Ichigo's wins | After |
+|---|---|---|
+| IY | 180.5 s, 5 / 20 | **177.7 s, 13 / 20** |
+| IK | 184.5 s, 7 / 20 | **172.4 s, 15 / 20** |
+| IR | 182.1 s, 3 / 20 | **190.8 s, 10 / 20** |
+| II | 250.4 s | **206.6 s** (13 / 7) |
+| SI | 230.9 s, 4 / 20 | **197.2 s, 8 / 20** |
+| YY … SS (10) | 137.4–198.3 s | unchanged |
+
+On seeds 1–60 (before → after): IY 12 → 33, IK 26 → 40, IR 10 → 30, SI 11 → 26 of 60 for Ichigo; medians IY 174 → 174,
+IK 182 → 174, IR 192 → 197, II 249 → 200, SI 219 → 205 s. The 20-seed counts swing by ±5 between near-identical builds
+(a changed random draw re-deals every match), so the 60-seed numbers are the better read: IK is now above even (Kenpachi
+was already his best pairing), the others near it.
+
+**The awaken A/B** (P1 Ichigo "never awaken", 39020; SI: P2, 39002; Ichigo's wins of 60, streams 100 / 300 / 500):
+
+| | IY | IK | IR | II | SI |
+|---|---|---|---|---|---|
+| Before | 3 / 4 / 2 | 10 / 10 / 9 | 4 / 3 / 5 | 11 / 11 / 11 | 1 / 0 / 1 |
+| After | 5 / 2 / 2 | 10 / 5 / 8 | 4 / 7 / 3 | 2 / 4 / 4 | 0 / 1 / 3 |
+
+**Fails, before and after.** "Never awaken" was already far under 20 of 60 on the user's damage numbers (1.0 / 0.8): a
+Shikai that never awakens is too weak, whatever its CPU does. For information, the Shikai at ×1.3 (74180, stream 100)
+wins IY 15, IK 17, IR 15: still under 20. The stance changes left it where it was; II fell because the P2 Ichigo, who
+awakens, got the better KESSA. Lifting it is a damage decision (`*ichigo-mult*` / `*ichigo-taken*`), left to the user.
