@@ -1423,9 +1423,9 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
       (check (and (~= 7.7 (kikon-rush-reach (pa o :speed) (pa o :dash-max)) 0.05) (= 28 (+ (pa o :aura) (pa o :dash-max) (mv-s o)))
                   (~= 8.5 (mv-reach u)) (= 2 (kit-kikon-konpaku b)) (= 3 (kit-kikon-konpaku t1)) (= 3 (kit-kikon-konpaku t6))
                   (eq 'sj-kikon-cine (kit-kikon-cine b)) (eq 'sj-hata-cine (kit-kikon-cine t1))))))
-  ;; the loom: six forms in the fixed order, a release advances 1 -> 2 ... 6 -> 1; L held 20-60 (a pass per 20 f), the combo
-  ;; copy no hold, S 8, a follow-up with a 9 m reach (no chase); the skip is SP1 for a bar
-  (check (and (equal (loop for n from 1 to 6 collect (hank-next n)) '(2 3 4 5 6 1))
+  ;; the loom: six forms, form k's next hank is k; a release advances along the queue (the user, 2026-09-30): 黒砂 刃金 褥
+  ;; 焼野原 眼 星, then 黒砂 again; L held 20-60 (a pass per 20 f), the combo copy no hold, S 8, a 9 m reach (no chase)
+  (check (and (equal (loop for n from 1 to 6 collect (hank-next n)) '(6 4 2 5 1 3))
               (equal (loop for n from 1 to 6 collect (form-hank (hank-form n))) '(1 2 3 4 5 6)) (null (form-hank :base))
               (equal (mapcar #'weave-passes '(20 39 40 59 60 61)) '(1 1 2 2 3 3))))
   (loop for n from 1 to 6
@@ -1473,7 +1473,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (= 60 (seg 45 40)) (= 3 (weave-stored (seg 0 200)))            ; capped at three passes
               (= 30 (seg 30 9))                                             ; a tap keeps what is stored
               (= 1 (release-passes 0)) (= 1 (release-passes 19)) (= 2 (release-passes 45)) (= 3 (release-passes 60))
-              (equal '(4 0) (multiple-value-list (weave-void 3))) (equal '(1 0) (multiple-value-list (weave-void 6))))))
+              (equal '(2 0) (multiple-value-list (weave-void 3))) (equal '(3 0) (multiple-value-list (weave-void 6))))))
 (check (and (eq :sig (mv-kind (find-move :sj-weave-stop))) (= 6 (mv-total (find-move :sj-weave-stop)))))
 
 ;; J weaves, K releases (the user, 2026-09-29): a release needs a stored pass: a tap with nothing woven is refused (the cue,
@@ -1509,7 +1509,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 ;; zone(s) at f0 and releases at f8 and f14 (the combo cut's rules); off a landed link both land inside a stagger (26 f:
 ;; cancel frame +1, then S + unfold); its :tell is its first hitting hank's; 1 bar
 (check (equal (loop for n from 1 to 6 collect (multiple-value-list (tachi-hanks n)))
-              '((1 2 3) (2 3 4) (3 4 5) (4 5 6) (5 6 1) (6 1 2))))
+              '((1 6 3) (2 4 5) (3 2 4) (4 5 1) (5 1 6) (6 3 2))))
 (loop for n from 1 to 6
       for k = (kit :senjumaru (hank-form n))
       for sp = (kit-command-move k :sp1)
@@ -1519,9 +1519,35 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
                      (< (+ 1 8 *unfold-combo*) (hitstun :stagger)) (< (+ 1 8 *tachi-second* *unfold-combo*) (hitstun :stagger))
                      (equal (getf (mv-params sp) :tell)
                             (cond ((hank-hits-p n) '(10 22)) ((hank-hits-p (hank-next n)) '(16 28)))))))
-(check (and (null (getf (mv-params (kit-command-move (kit :senjumaru :tsuji6) :sp1)) :tell))   ; 星 + 眼: no hit
+(check (and (null (getf (mv-params (kit-command-move (kit :senjumaru :tsuji1) :sp1)) :tell))   ; 眼 + 星: no hit
+            (equal '(16 28) (getf (mv-params (kit-command-move (kit :senjumaru :tsuji6) :sp1)) :tell))   ; 星 + 黒砂
             (eq 'senju-sp-ender (getf (kit-ai (kit :senjumaru :tsuji1)) :sp-ender))
             (null (getf (kit-ai (kit :senjumaru :tsuji1)) :skip))))
+
+;; The queue in three SP1 pairs (the user, 2026-09-30): 黒砂 → 刃金 → 褥 → 焼野原 → 眼 → 星, wrapping to 黒砂; the awakening
+;; enters 黒砂's form; SP1 from an even slot releases a designed pair (黒砂+刃金, 褥+焼野原, 眼+星), from an odd one a cross
+;; pair (刃金+褥, 焼野原+眼, 星+黒砂); SP1 keeps the parity, a single release (or a voided weave) flips it; each hank keeps its data
+(let* ((b (kit :senjumaru :base)) (n0 (form-hank (kit-awaken-form b))))
+  (check (and (eq :tsuji3 (kit-awaken-form b)) (= 3 n0) (equal "黒砂の腸" (hank n0 :kanji)) (equal *hank-order* '(3 2 4 5 1 6))))
+  (check (equal (loop repeat 7 for n = n0 then (hank-next n) collect (hank n :short))
+                '("KOKUSA" "HAGANE" "SHITONE" "YAKENOHARA" "ME" "HOSHI" "KOKUSA")))
+  (flet ((pair (n) (multiple-value-bind (a c) (tachi-hanks n) (list a c))))
+    (check (equal (mapcar #'pair (remove-if-not #'tachi-aligned-p *hank-order*)) '((3 2) (4 5) (1 6))))
+    (check (equal (mapcar #'pair (remove-if #'tachi-aligned-p *hank-order*)) '((2 4) (5 1) (6 3))))
+    (dolist (n *hank-order*)
+      (check (eq (tachi-aligned-p n) (tachi-aligned-p (nth-value 2 (tachi-hanks n)))))      ; SP1 keeps the parity
+      (check (not (eq (tachi-aligned-p n) (tachi-aligned-p (hank-next n)))))                ; a single release flips it
+      (check (not (eq (tachi-aligned-p n) (tachi-aligned-p (weave-void n))))))              ; so does a voided weave
+    ;; repeated SP1 from the entry: the three pairs, then 黒砂 + 刃金 again; one tap first: the cross pairs
+    (check (equal (loop repeat 4 for n = n0 then (nth-value 2 (tachi-hanks n)) collect (pair n)) '((3 2) (4 5) (1 6) (3 2))))
+    (check (equal (loop repeat 3 for n = (hank-next n0) then (nth-value 2 (tachi-hanks n)) collect (pair n)) '((2 4) (5 1) (6 3))))))
+(check (equal *hanks*
+              '((1 :name "BANRA NO ME" :short "ME" :kanji "万朶の眼" :r 3.0 :life 240)
+                (2 :name "HAGANE NO YOROI" :short "HAGANE" :kanji "刃金のよろい" :r 2.0 :rise 16 :dmg 90 :guard 24 :after 20)
+                (3 :name "KOKUSA NO HARAWATA" :short "KOKUSA" :kanji "黒砂の腸" :r 2.0 :life 240 :away 0.4 :period 60 :swirl 12 :dmg 40)
+                (4 :name "ITETSUKU SHITONE" :short "SHITONE" :kanji "凍てつく褥" :r 2.0 :life 240 :dmg 70 :freeze 40 :frost 60)
+                (5 :name "YAKENOHARA" :short "YAKENOHARA" :kanji "焼野原" :width 2.0 :max 10.0 :hits 2 :dmg 45 :life 150 :chip 0.12)
+                (6 :name "YAMIYO NO HOSHIYO" :short "HOSHI" :kanji "闇夜の星よ" :r 3.5 :life 240 :reiatsu 30.0 :fs 15.0))))
 
 ;; 星 siphons (the user, 2026-09-29): inside her live star he gains nothing; his Reiatsu / flash-step gains go to her, his
 ;; Fighting Spirit (and every kit meter: combat.lisp SIPHON-OF) is lost; the drain gives her what it really took, capped
