@@ -101,15 +101,16 @@ Battle cinematics stay unskippable in PRACTICE too.
 ## Files
 
 `duel/MANIFEST` order: `package`, `tuning`, `rules`, `control` (plain CL, host-tested), `sounds`,
-`components`, `body`, `kit`, `cinema`, `stage`, `vfx`, `yama-art`, `ken-art`, `rukia-art`, `ichigo-art`, `yama`, `ken`,
-`rukia`, `ichigo` (the characters: data, hooks, cinematics; Ichigo's mechanics live in his own files and the generic ones
-call them through the kit's `:hooks`, DUEL_DESIGN "Character code layout"), `endless-rules` (plain CL, host-tested),
-`fighter`, `combat`, `hazards`, `ai`, `camera`, `feedback`, `flow`, `hud`, `onehand`, `debug`, `endless`, `main` (the
+`components`, `body`, `kit`, `cinema`, `stage`, `vfx`, `yama-art`, `ken-art`, `rukia-art`, `ichigo-art`, `senjumaru-art`,
+`yama`, `ken`, `rukia`, `ichigo` (the characters: data, hooks, cinematics; Ichigo's and Senjumaru's mechanics live in their
+own files and the generic ones call them through the kit's `:hooks`, DUEL_DESIGN "Character code layout"), `endless-rules`
+(plain CL, host-tested), `fighter`, `combat`, `hazards`, `ai`, `camera`, `feedback`, `flow`, `hud`, `onehand`, `senjumaru`
+(after hud / onehand: her meter uses their drawing macros), `debug`, `endless`, `main` (the
 generic systems; only `debug.lisp` names characters, to set up scenes). The module table is in ARCHITECTURE.md. The
 name-leak check (it must print nothing):
 
 ```sh
-grep -nE ':ya-|:ke-|:ru-|:ic-|yama|kenpachi|rukia|ichigo' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow,endless-rules,endless}.lisp
+grep -nE ':ya-|:ke-|:ru-|:ic-|:sj-|yama|kenpachi|rukia|ichigo|senju' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow,endless-rules,endless}.lisp
 ```
 
 Engine modules the duel was the first user of (moved into the engine by the harvest):
@@ -212,12 +213,16 @@ encoded in the integer.
 | 2410+k | her tests (`rukia-test`, human P1 Rukia, P2's CPU off; `duel-rukia.json`): 0 the Shikai 5 m from Kenpachi, 1 −18 °C / 2 −50 °C (cold 150) at 2.2 m, then zero (cold 200): 3 Kenpachi's J1 into the ward (the freeze-touch), 4 Yamamoto's full Shiranui through it (optic), 5 his Breaker (the CRACK), 6 the Breaker answered by REIDO TŌKETSU within 5.5 m, 7 zero left to warm out, 8 zero 3 m from him (hold U: bracing to the CRACK); a `duel probe rukia …` line every 10 f |
 | 67000+k / 68000 / 69000+f / 70000+f | review stills: P1's cold = k and its band; the white Rukia with the old ink keyline; a close-up of her face at zero / in the 白霞罸 costume held at frame f |
 | 71000 / 71001+k | review stills: Kenpachi's reiatsu opaque ↔ see-through (`*reiatsu-glass*`); human P1 Kenpachi in cup k+1 (4: the Bankai) 3 m from an idle Yamamoto |
-| 2125+k | one seed-gate pairing alone (0 YY, 1 YK, 2 KK, 3 RY, 4 RK, 5 RR, 6 IY, 7 IK, 8 IR, 9 II; P1 the first): the ten in parallel give the same rows as 2113 (which plays all ten) |
+| 2125+k | one seed-gate pairing alone (0 YY, 1 YK, 2 KK, 3 RY, 4 RK, 5 RR, 6 IY, 7 IK, 8 IR, 9 II, 10 SY, 11 SK, 12 SR, 13 SS, 14 SI; P1 the first): the fifteen in parallel give the same rows as 2113 (which plays all fifteen) |
 | 74000+k … 75599 | Ichigo (DUEL_ICHIGO.md "Knobs"; `ichigo-debug`, his own range through `*char-debug*`): 74000+k his tests (human P1 Ichigo, P2's CPU off; `duel-ichigo.json`): 0 / 1 the Shikai / KESSA 3 m from Kenpachi, 2 Kenpachi's K1 into KESSA (U: the catch), 3 Yamamoto's L wave at 7 m (U: blocked), 4 Kenpachi's Breaker (it breaks the parry), 5 the Shikai vs Yamamoto's wave (Shift+K cuts it), 6 / 7 the forms 8 m out, 8 KESSA vs the wave (Shift+L: the wall eats it), 9 KESSA vs Rukia; 74100+k … 74400+k the Shikai's / KESSA's damage dealt / taken × (0.5 + k / 100); 74500+k / 74600+k `*chain-u-cost*` / `*chain-catch*` = k; 74700+k `*clone-cost*`; 74800+k `*kessa-l-cost*`; 74900+k P1's chain gauge = 2k; 74950+k the CPU's parry chance k / 50; 75000+f / 75200+f / 75400+f stills of the Shikai Kikon / the KESSA Kikon / the awakening held at frame f |
 | 40000+f / 41000+f / 42000+f | stills of her Kikon 初の舞・月白 / 白霞罸 / the awakening held at frame f (k 11 / 12 / 13; 2211–2213 start them) |
 | 39000+10a+b | the CPUs' awakening, P1 a / P2 b: 0 the kit's `:awaken` rule, 1 always on EVOLUTION, 2 never (her A/B) |
 | 43000+k … 66000+k | her knobs without a rebuild (DUEL_RUKIA.md "Knobs (the rework)"): 43000 `*frost-slow*` k / 100, 44000 `*zero-brace-drain*` k / 10, 45000 `*freeze-touch*`, 46000 `*ru-cool-rate*` k, 47000 `*crack-self*`, 48000 zero's damage × k / 100, 49000 the awakening's melee share, 50000 / 53000 the `:cool` chance / distance, 51000 `*ru-thaw-lock*` k f, 54000 the Shikai's ZONE weight, 55000 zero's warming k / 10, 56000 / 57000 the −50 / −18 walk k / 10, 58000 the Shikai's damage, 60000 / 61000 the Shikai's / the bands' damage taken × k / 100, 62000 / 63000 `*ru-block-cool*` / `*ru-hit-warm*` k / 100, 65000 zero's field `:away` k / 100, 66000 `*field-floor*` k / 100 (every gate row is followed by a `duel band` line per awakened Rukia side) |
 | 80000+100c+n / 80980 / 80981 / 80982+k / 80990+p / 80992+p | ENDLESS (DUEL_ENDLESS.md §8): a debug run of roster c from stage n (seed 1, no record); clear the stage now; P1's Bankai (cup 3, Konpaku 4); P1 in his k-th form, then the clear; the autopilot (P1 a HARD CPU, policy p 0 CONTINUE / 1 REVERT) over every character × seeds 1–20 / once (P1's pick, seed 1) |
+| 2125+k (k 10–14) / 2140 | the seed gate of Senjumaru's pairings SY / SK / SR / SS / SI alone / all five (2113 plays all fifteen); every gate row is followed by a `duel senju` line per side that played her (the pacing log: stitches sewn / fallen / detonated, soldiers, catches, weaves, torn, skips, zones by hank, reflections, mirror damage) |
+| 2450+k | Senjumaru's tests (`senju-test`, her range through `*char-debug*`, human P1, P2's CPU off unless noted; a `duel probe senju …` line): 0 the Shikai 2.2 m from Kenpachi, 1 six stitches and L at 5 m on a 50-Reishi Kenpachi (1 Reishi left), 2 the soldier vs an active Kenpachi, 3 the umbrella vs a full Shiranui, 4 `:tsuji1` at 3 m (hold L, then 2479: P2's J1 tears the weave), 5–10 each hank's form at 6 m, 11 the combo cut on `:tsuji4`, 12 zero Rukia before `:tsuji2`, 13 `:tsuji1` vs a Yamamoto CPU, 14 `:tsuji1` 5 m from Kenpachi; review stills: 20–25 hank k−19 unfolded under him, 26 six stitches on him, 27 the umbrella open, 28 a weave, 29 P2's J1 now |
+| 76000+f / 77000+f / 78000+f | stills of her Kikon 仕立て直し / 死出六色浮文機 / the awakening held at frame f |
+| 90000+ | her knobs without a rebuild (DUEL_SENJUMARU.md "Knobs"; senjumaru.lisp SENJU-KNOB; 80000+ on her branch, moved off ENDLESS's range) |
 | 32000+k … 38000+k | the Bankai's knobs without a rebuild: `*arm-self*` (32000), `*arm-burst-self*` (33000), `*arm-crack*` (34000) = k; the entry rule's `:p` = k / 100 (37000), `:own-konpaku` = k (38000) |
 
 Most scenario commands (2200–2319) first make sure the right battle runs (`ensure-battle`: a new
@@ -357,24 +362,35 @@ The harvest was checked this way after each step.
 `duel-gate.json` (20 seeds × pairing, NORMAL, turbo, cinematics included in the match time).
 Target: every match ends by K.O. (before the 300 s timer), **median 125–210 s** per pairing (125–180 s until guard
 v3: Reishi 1100 → 1300 is the user's decision 2026-09-26, because real human matches run much faster than CPU vs
-CPU), win rates near even (YK within ±3 of 10 / 10). The gate runs ~15 min of turbo now: `--secs 1100`.
+CPU), win rates near even (YK within ±3 of 10 / 10). The gate runs ~15 min of turbo for six pairings: `--secs 1100`; with
+fifteen pairings (2026-09-29: Ichigo's four, Senjumaru's five) run them in parallel instead: one run.mjs per pairing with
+2125+k (k 0–14, `--secs 1500` each, at most 4 at once on a shared machine).
 
 | Pairing | Median | Range | K.O. | Wins P1 / P2 |
 |---|---|---|---|---|
 | Yamamoto vs Yamamoto | 134.7 s | 98.2–205.5 | 20/20 | 9 / 11 |
-| Yamamoto vs Kenpachi | 136.2 s | 87.1–176.9 | 20/20 | Yamamoto 12 / Kenpachi 8 |
-| Kenpachi vs Kenpachi | 131.2 s | 99.6–183.9 | 20/20 | 13 / 7 |
-| Rukia vs Yamamoto | 135.6 s | 114.9–182.4 | 20/20 | Rukia 11 / Yamamoto 9 |
-| Rukia vs Kenpachi | 148.1 s | 104.1–200.8 | 20/20 | Rukia 13 / Kenpachi 7 |
-| Rukia vs Rukia | 183.1 s | 131.2–210.8 | 20/20 | 8 / 12 |
-| Ichigo vs Yamamoto | 143.6 s | — | 20/20 | Ichigo 9 / Yamamoto 11 |
-| Ichigo vs Kenpachi | 143.2 s | — | 20/20 | Ichigo 7 / Kenpachi 13 |
-| Ichigo vs Rukia | 169.6 s | — | 20/20 | Ichigo 9 / Rukia 11 |
-| Ichigo vs Ichigo | 155.2 s | — | 20/20 | 10 / 10 |
+| Yamamoto vs Kenpachi | 138.1 s | 87.1–183.9 | 20/20 | Yamamoto 15 / Kenpachi 5 |
+| Kenpachi vs Kenpachi | 133.9 s | 110.7–175.9 | 20/20 | 14 / 6 |
+| Rukia vs Yamamoto | 134.1 s | 88.3–163.5 | 20/20 | Rukia 13 / Yamamoto 7 |
+| Rukia vs Kenpachi | 143.1 s | 99.3–200.8 | 20/20 | Rukia 14 / Kenpachi 6 |
+| Rukia vs Rukia | 185.6 s | 144.8–253.9 | 20/20 | 12 / 8 |
+| Ichigo vs Yamamoto | 143.6 s | 87.8–182.6 | 20/20 | Ichigo 9 / Yamamoto 11 |
+| Ichigo vs Kenpachi | 142.5 s | 94.6–213.2 | 20/20 | Ichigo 9 / Kenpachi 11 |
+| Ichigo vs Rukia | 169.6 s | 121.7–221.9 | 20/20 | Ichigo 9 / Rukia 11 |
+| Ichigo vs Ichigo | 155.2 s | 117.0–177.5 | 20/20 | 10 / 10 |
+| Senjumaru vs Yamamoto | 143.2 s | 83.9–180.6 | 20/20 | Senjumaru 10 / Yamamoto 10 |
+| Senjumaru vs Kenpachi | 136.9 s | 87.2–197.5 | 20/20 | Senjumaru 9 / Kenpachi 11 |
+| Senjumaru vs Rukia | 173.7 s | 133.1–239.3 | 20/20 | Senjumaru 14 / Rukia 6 |
+| Senjumaru vs Senjumaru | 195.3 s | 159.6–220.9 | 20/20 | 7 / 13 |
+| Senjumaru vs Ichigo | 170.6 s | 104.3–186.6 | 20/20 | Senjumaru 12 / Ichigo 8 |
 
-(2026-09-28, Ichigo added (DUEL_ICHIGO.md): the six rows above are byte-identical; debug 2113 now plays all ten pairings,
-2125+k one of them. His awaken A/B uses three seed streams (30000+o, o = 100 / 300 / 500, 60 seeds each) and the user's
-criterion: "never awaken" wins >= 20 of 60 per opponent on every stream; it wins 26-37.)
+(2026-09-29, the Senjumaru merge and hook unification (DEVLOG §30): seeds 1–20, one run per pairing with 2125+k, 300/300
+K.O. The ten pairings main already had replay **row for row** as main 202c33c's build (checked on both builds): the
+Kenpachi rows carry the faster NOME drain (DUEL_DESIGN "Playtest decision"). Her SY / SR / SS rows equal her branch's;
+SK moved 144.4 → 136.9 s (Senjumaru 11 → 9) with that drain. SI is new. Its awaken A/B (seeds 1–60 / 61–120 / 121–180,
+39000+10a+b; always / never): P1 Senjumaru 22/37, 19/33, 19/30; P2 Ichigo 22/34, 31/32, 30/40: "never" wins ≥ 30 of 60
+on every stream, the user's criterion. Earlier: Ichigo's A/B (streams 30000+o, o = 100 / 300 / 500) "never" wins 26–37;
+Senjumaru's (her branch) SY 18/23, 22/25, 22/27; SK 22/33, 34/22, 29/28; SR 16/38, 25/38, 17/32; SS 21/34, 14/40, 16/39.)
 
 (2026-09-28, the cold-gauge rework + one UDE pip per string + South without a cooldown (DUEL_RUKIA.md, "Measurements
 (the cold gauge rework)"): KK 125.8 → 131.2 and YK 137.1 → 136.2 from the one-pip rule, YY unchanged; her awakening's A/B

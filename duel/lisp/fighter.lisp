@@ -287,7 +287,7 @@ follow-up, overdraws while any cold is left: rules COLD-OK-P)?"
          (or (null i) (zerop (aref (fighter-cd (fighter e)) i)))
          (or (not (kit-pip-cmd-p kit command)) (>= (gauges-meter g) (if (and (gauges-arm-owed g) (not ender)) 2f0 1f0)))
          (or (not (eq command :sig)) (cold-ok-p (gauges-meter g) (cold-cost kit :sig) combo))
-         (let ((h (kit-hook kit :ok))) (or (null h) (funcall h e command))))))   ; the form's own price
+         (let ((h (kit-hook kit :ok))) (or (null h) (funcall h e command combo))))))   ; the form's own price / refusal
 
 (defun try-command (e f cmd &optional button ender with)
   "Start command CMD (pressed with vpad BUTTON: a hold / Breaker move watches it) if the rules allow
@@ -348,7 +348,11 @@ still start."
           ((and (eq cmd :sig) (kit-command-move kit :sig) (< (gauges-meter (gauges e)) (cold-cost kit :sig)))
            (vpad-consume! vp button)
            (emit :refused e cmd)
-           (clog "~a refused ~a: cold ~d" (side-name e) cmd (round (gauges-meter (gauges e)))))))
+           (clog "~a refused ~a: cold ~d" (side-name e) cmd (round (gauges-meter (gauges e)))))
+          ((let ((h (kit-hook kit :ok))) (and h (kit-command-move kit cmd) (not (funcall h e cmd nil))))
+           (vpad-consume! vp button)
+           (emit :refused e cmd)
+           (clog "~a refused ~a: kit" (side-name e) cmd))))
   nil)
 
 (defun opp-field (e f)
@@ -709,6 +713,8 @@ still :parry); never in a reaction (a bind, a Guard Break, a crush reel: no armo
                    ((and (member :stance (mv-flags mv)) (eq (fighter-phase f) :hold))
                     (if (< (fighter-hold f) *stance-in*) :stance-in :stance))
                    ((and (member :parry (mv-flags mv)) (eq (fighter-phase f) :main) (parry-frame-p sf)) :parry)
+                   ((and (member :shield (mv-flags mv)) (eq (fighter-phase f) :main) (<= (mv-s mv) sf) (< sf (+ (mv-s mv) (mv-a mv))))
+                    :guard)                                        ; a :shield move's window is a guard (its catch: APPLY-HIT)
                    (t open)))
       (t :neutral))))
 

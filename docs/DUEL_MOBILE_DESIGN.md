@@ -738,3 +738,12 @@ laid out again with no 300 ms hold on it; `u-chip-p`, `*u-chip-holds*`, onehand.
 gauge as a BLOOD arc (gauge / 100, dim below 20) with a white tick at U's 20 (the kit's `:deck` hook, ichigo.lisp). The
 portrait block needs nothing new: the chain gauge is the guard row, which already spans the Reishi bar, and it carries
 the CHAIN label and notches (`:hud-guard`). Every other character and landscape: unchanged.
+
+## 18. Senjumaru on the thumb (2026-09-29, DUEL_SENJUMARU.md §8)
+
+No gesture changes. Her thumb-ring marks are her kit's `:deck` hook (the one Ichigo's chain arc uses; her branch
+had it as the meter's `:ring`, unified in the merge, DEVLOG §30): in the Shikai six small BLOOD ticks round the ring, lit by the stitches; in the Bankai, while
+the L chip is held (the chip's down state is the weave), three pass ticks fill in the next hank's dye. The portrait block's
+last row draws her meter in the kit slot at small size (the needle pips or the six swatches, spanning the Reishi bar with
+the other small gauges); the label is `HARI n` or the next hank's short name (`ME`, `HAGANE`, `KOKUSA`, `SHITONE`,
+`YAKENOHARA`, `HOSHI`). A resting thumb is a guard in both forms; nothing of hers accrues from guarding.

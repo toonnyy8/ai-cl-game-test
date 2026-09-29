@@ -168,8 +168,9 @@
   "E spends N of the chain gauge (his own spend: the refill waits *GG-DELAY* again; never guardless by it)."
   (let ((g (gauges e))) (setf (gauges-gg g) (f32 (max 0.0 (- (gauges-gg g) n))) (gauges-gg-idle g) 0)))
 
-(defun ichigo-ok (e cmd)
-  "KESSA's :ok hook: L is refused below its *KESSA-L-COST* chain."
+(defun ichigo-ok (e cmd combo)
+  "KESSA's :ok hook: L is refused below its *KESSA-L-COST* chain (the press eaten with the :refused cue)."
+  (declare (ignore combo))
   (or (not (eq cmd :sig)) (>= (gauges-gg (gauges e)) *kessa-l-cost*)))
 
 (defun ichigo-l-spend (e) "The giant Getsuga's frame 0: its chain." (chain-spend! e *kessa-l-cost*))
@@ -300,9 +301,10 @@ contact, no KOSEI."
       (emit :sfx :clone e)
       (clog "~a CLONE gg ~d" (side-name e) (round (gauges-gg g))))))
 
-(defun ichigo-tick (e)
+(defun ichigo-tick (e f g)
   "Both forms' :tick hook: JUJISHO's cross wave and the chain wall (its look's box) CUT every opponent wave / fireball
 they touch (a blade can't cut the ground: his rings and binds stay)."
+  (declare (ignore f g))
   (do-entities (h (hz hazard))
     (when (and (eql (hazard-owner hz) e) (member (hazard-look hz) '(ichigo-juji-look ichigo-wall-look))
                (<= (hazard-delay hz) 0) (< (hazard-age hz) (hazard-life hz)))
@@ -361,7 +363,6 @@ an ink link every 10, a white notch at U's 20 and a dim one at the clone's 35, t
     (%arc (f32 cx) (f32 cy) (+ (f32 r) (* 3f0 d)) (* 2f0 d) (f32 (/ *chain-u-cost* *gg-max*)) 1.0 1.0 1.0 0.35)))
 
 ;;; ================================================================ debug (74000+, docs/DUEL_ICHIGO.md "Knobs")
-(defvar *char-debug* nil "(lo hi fn): debug commands a character file handles (debug.lisp).")
 (pushnew '(74000 75599 ichigo-debug) *char-debug* :test #'equal)
 
 (defparameter *ichigo-tests*

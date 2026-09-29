@@ -270,6 +270,7 @@ else QUEUED: the press is eaten (after a switch the original button is ignored a
   "The character file's function for hook POINT in KIT (its :hooks plist), or NIL: the generic code calls it where the
 point is (docs/DUEL_DESIGN.md \"Character code layout\")."
   (getf (kit-hooks kit) point))
+(defvar *char-debug* nil "(lo hi fn): debug commands LO..HI a character file handles (debug.lisp calls FN with the command).")
 (defun kit-pip-cmd-p (kit command)
   "Does COMMAND spend a pip of the arm meter in KIT (its :pips :cmds)?"
   (and (member command (getf (kit-pips kit) :cmds)) t))
@@ -405,10 +406,13 @@ child's keys win, :commands merge per command, :strings add. Keys:
   :l-after-k T | MOVE                L latched during a K link (K1 / K2 / K2s / K3) starts when that link's chain opens
                                      (its own contact, docs/DUEL_STRINGS.md §12): T the form's L, else MOVE, a combo copy
   :calm T                            the face stays calm (no shout: a look, FACE-OF)
-  :hooks (point fn ...)              the character's own mechanics (KIT-HOOK): :u (U pressed; the form never guards),
-                                     :step (a Step's frame 0), :ok (e cmd: may the command start), :parried (a catch by
-                                     its parry), :tick (every sim step), :hud-guard (drawn over its guard bar), :deck
-                                     (the one-hand thumb ring)
+  :hooks (point fn ...)              the character's own mechanics (KIT-HOOK; DUEL_DESIGN.md, Character code
+                                     layout): :u (e: U pressed; the form never guards), :step (e: a Step's frame 0),
+                                     :ok (e cmd combo: may the command start; NIL refuses it with the :refused cue),
+                                     :tick (e f g: every sim step), :hit / :struck (e other res hw mv hazard ranged: after
+                                     a hit it dealt / took), :parried (e att: a catch by its parry), :draw (e rdt: looks
+                                     on the posed body), :hud-guard (drawn over its guard bar), :deck (e x y d: the
+                                     one-hand thumb ring)
   :endless-form FORM                 ENDLESS: staying awakened starts the next stage in FORM, its meter at FORM's :start
                                      (docs/DUEL_ENDLESS.md §4)
   :u-tag STRING                      the HUD's tag for U   :meter (:name :max :temp t)  Rukia's cold gauge (combat.lisp

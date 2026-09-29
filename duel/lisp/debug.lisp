@@ -655,13 +655,15 @@ deals PCT % of its written damage (the seed gate's first lever, DUEL_STRINGS §6
      (force-form *p1* (if (= k 11) :base :m18))
      (start-cine (nth (- k 11) '(ru-kikon-cine ru-hakka-cine ru-awaken-cine)) *p1* *p2*))
     ((14 15) (ensure-battle :rukia :kenpachi) (place *p1* *p2* 3.0) (force-form *p1* :zero)   ; the white Rukia's face
-     (start-cine (if (= k 14) 'ru-face-cine 'ru-face-bankai-cine) *p1* *p2*)))
+     (start-cine (if (= k 14) 'ru-face-cine 'ru-face-bankai-cine) *p1* *p2*))
+    ((16 17 18) (senju-force-cine (- k 16))))                ; Senjumaru's (senjumaru.lisp)
   (setf *cine-hold* t)
   (when *cine* (setf (cine-hold *cine*) (cine-hold-frame (cine-name *cine*)))))
 
 (defparameter *cine-names* '(yama-bankai-cine ken-nozarashi-cine yama-kikon-cine yama-tenchi-cine ken-kikon-cine
                                ken-sky-split-cine soul-break-cine intro-cine ko-cine ken-bankai-cine ken-oni-kikon-cine
-                               ru-kikon-cine ru-hakka-cine ru-awaken-cine ru-face-cine ru-face-bankai-cine)
+                               ru-kikon-cine ru-hakka-cine ru-awaken-cine ru-face-cine ru-face-bankai-cine
+                               sj-kikon-cine sj-hata-cine sj-tsuji-cine)
   "FORCE-CINE's numbering.")
 
 (defcine ru-face-cine (a v :len 60 :hold 30)
@@ -809,23 +811,25 @@ move-beat choices of DRAW-FIGHTER."
   "Seeded CPU vs CPU (NORMAL): PAIR = (c1 c2), or NIL to draw both from SEED."
   (setf *match-seed* seed *mode* :cpu-cpu *difficulty* :normal)
   (band-acc-reset)
+  (senju-acc-reset)
   (sim-rnd-seed seed)
   (setf *picks* (or pair (list (nth (floor (* (length *roster*) (sim-rnd01))) *roster*)
                                (nth (floor (* (length *roster*) (sim-rnd01))) *roster*))))
   (start-match))
 
-(defvar *char-debug* nil "(lo hi fn): debug commands LO..HI a character file handles (FN of the command).")
 (defvar *gate* nil "Seed gate: (seed pair) matches still to run.")
 (defvar *gate-results* nil "(pair secs ko-p) of the finished gate matches.")
 (defparameter *pairs* '((:yamamoto :yamamoto) (:yamamoto :kenpachi) (:kenpachi :kenpachi)
                         (:rukia :yamamoto) (:rukia :kenpachi) (:rukia :rukia)
-                        (:ichigo :yamamoto) (:ichigo :kenpachi) (:ichigo :rukia) (:ichigo :ichigo)))
+                        (:ichigo :yamamoto) (:ichigo :kenpachi) (:ichigo :rukia) (:ichigo :ichigo)
+                        (:senjumaru :yamamoto) (:senjumaru :kenpachi) (:senjumaru :rukia) (:senjumaru :senjumaru)
+                        (:senjumaru :ichigo)))
 
 (defvar *gate-seed0* 0 "Debug 30000+k: the seed gate plays seeds k+1 .. k+20 (the 60-seed A/B in three runs).")
 (defun start-gate (p)
   (setf *turbo* t *skip-cines* nil *combat-log* nil *gate-log* nil *gate-results* nil
-        *gate* (loop for pair in (case p (3 *pairs*) (4 (subseq *pairs* 3 6)) (5 (subseq *pairs* 3 5))
-                                   (t (list (nth (mod p 10) *pairs*))))   ; (10+k: pairing k alone)
+        *gate* (loop for pair in (case p (3 *pairs*) (4 (subseq *pairs* 3 6)) (5 (subseq *pairs* 3 5)) (6 (subseq *pairs* 10))
+                                   (t (list (nth (if (< p 10) p (- p 10)) *pairs*))))   ; (10+k: pairing k alone)
                      append (loop for seed from (1+ *gate-seed0*) to (+ *gate-seed0* 20) collect (list seed pair))))
   (gate-update))
 
@@ -841,6 +845,7 @@ move-beat choices of DRAW-FIGHTER."
              (/ *match-tick* 60.0) (case *winner* (0 "P1") (1 "P2") (t "DRAW"))
              (fighter-form (fighter *p1*)) (fighter-form (fighter *p2*)))   ; (the gamble A/B reads the final forms)
     (band-acc-line)
+    (senju-acc-line)
     (setf *gate-busy* nil))
   (unless *gate-busy*
     (cond (*gate* (destructuring-bind (seed pair) (pop *gate*) (start-cvc seed pair)) (setf *gate-busy* t))
@@ -858,7 +863,8 @@ move-beat choices of DRAW-FIGHTER."
   "Module._debug_cmd(C): see the file header."
   (setf *combat-log* t *stats-log* t)
   (log-msg "debug cmd ~d" c)
-  (unless (or (<= 2200 c 2299) (<= 10000 c 19999) (<= 35000 c 36999) (<= 40000 c 42999) (<= 69000 c 70999)) (setf *cine-hold* nil))
+  (unless (or (<= 2200 c 2299) (<= 10000 c 19999) (<= 35000 c 36999) (<= 40000 c 42999) (<= 69000 c 70999))
+    (setf *cine-hold* nil))
   (cond ((<= 2000 c 2099) (start-cvc (- c 2000) nil))
         ((<= 3000 c 3999) (start-cvc (- c 3000) '(:yamamoto :yamamoto)))
         ((<= 4000 c 4999) (start-cvc (- c 4000) '(:yamamoto :kenpachi)))
@@ -868,7 +874,9 @@ move-beat choices of DRAW-FIGHTER."
         ((<= 8000 c 8999) (start-cvc (- c 8000) '(:rukia :rukia)))
         ((= c 2118) (start-gate 4))
         ((= c 2119) (start-gate 5))
-        ((<= 2125 c 2134) (start-gate (+ 10 (- c 2125))))   ; one pairing alone: 0 YY 1 YK 2 KK 3 RY 4 RK 5 RR 6 IY 7 IK 8 IR 9 II
+        ((<= 2125 c 2139) (start-gate (+ 10 (- c 2125))))   ; one pairing alone: 0 YY 1 YK 2 KK 3 RY 4 RK 5 RR 6 IY 7 IK 8 IR
+                                                            ; 9 II 10 SY 11 SK 12 SR 13 SS 14 SI
+        ((= c 2140) (start-gate 6))                         ; Senjumaru's five pairings (SY SK SR SS SI)
         ((loop for (lo hi fn) in *char-debug* thereis (and (<= lo c hi) (progn (funcall fn c) t))))   ; a character's own
         ((= c 2124) (start-gate 4) (setf *combat-log* t *gate-log* t))   ; her three pairings with the combat log (pacing)
         ((= c 2100) (setf *skip-cines* (not *skip-cines*)) (when *skip-cines* (skip-cine)))
