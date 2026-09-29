@@ -9,19 +9,20 @@
 (in-package :duel)
 
 ;;; ================================================================ Shikai (base)
-;;; the J / K strings (docs/DUEL_STRINGS.md §2.1 budget): J1 7 f beats every K1 in the game; the K links frost
+;;; the J / K strings (docs/DUEL_STRINGS.md §2.1 budget): J1 7 f beats every K1 in the game; the K links frost. The reach
+;;; since the J cut (§13): J 0.6x, close; K -10 %
 (defmove :ru-j1 :kind :quick :clip :ru-q1 :startup 7 :active 3 :recovery 12 :dmg 34 :adv-block -2
-  :reach 2.4 :arc 100 :on-hit :flinch :slide 0.6)                               ; HATSUSHIMO: a one-handed flat cut
+  :reach 1.44 :arc 100 :on-hit :flinch :slide 0.6)                              ; HATSUSHIMO: a one-handed flat cut
 (defmove :ru-j2 :kind :quick :clip :ru-q2 :startup 7 :active 3 :recovery 13 :dmg 34 :adv-block -2
-  :reach 2.2 :arc 100 :on-hit :flinch)                               ; KAZAHANA: the backhand along the same line
+  :reach 1.32 :arc 100 :on-hit :flinch)                              ; KAZAHANA: the backhand along the same line
 (defmove :ru-j3 :kind :quick :clip :ru-spin :startup 8 :active 3 :recovery 18 :dmg 42 :adv-block -4
-  :reach 2.6 :arc 200 :on-hit :stagger :flags (:ender))              ; MAI-SODE: the pirouette, the ribbon whipping round
+  :reach 1.56 :arc 200 :on-hit :stagger :flags (:ender))             ; MAI-SODE: the pirouette, the ribbon whipping round
 (defmove :ru-k1 :kind :flash :clip :ru-thrust :startup 17 :active 4 :recovery 20 :dmg 66 :adv-block -3
-  :vol (:cap 0.2 3.2 1.1 0.3) :on-hit :stagger :frost 60)            ; SHIMO-TSUKI: the fencer's lunge
+  :vol (:cap 0.2 2.8 1.1 0.3) :on-hit :stagger :frost 60)            ; SHIMO-TSUKI: the fencer's lunge
 (defmove :ru-k2 :kind :flash :clip :ru-ring :enter 7 :startup 21 :active 4 :recovery 24 :dmg 58 :adv-block -3
-  :reach 2.8 :arc 140 :on-hit :stagger :frost 60)                    ; HYORIN: the rising turn, a white ring
+  :reach 2.5 :arc 140 :on-hit :stagger :frost 60)                    ; HYORIN: the rising turn, a white ring
 (defmove :ru-k3 :kind :flash :clip :ru-drop :enter 7 :startup 21 :active 5 :recovery 34 :dmg 84 :adv-block -20
-  :vol (:cap 0.3 3.0 1.2 0.35) :on-hit :crumple :frost 90 :flags (:ender)
+  :vol (:cap 0.3 2.7 1.2 0.35) :on-hit :crumple :frost 90 :flags (:ender)
   :on-frame ((21 rukia-snow-burst)))                                 ; NADARE: both hands, held, dropped; snow bursts
 (defmove-copy :ru-j2s :ru-j2)
 (defmove-copy :ru-k2s :ru-k2)
@@ -58,19 +59,19 @@
 ;; at his feet. -50 derives it (reach x1.1) with key-edited clips; zero (x1.35, rooted) swaps J2 / K1 / K3. The frames
 ;; never change with the band (DUEL_STRINGS §2.1): colder is longer reach, harder hits and other motions.
 (defmove :ru-a-k1 :kind :flash :clip :ru-palm :startup 17 :active 4 :recovery 20 :dmg 66 :adv-block -3
-  :vol (:cap 0.2 2.2 1.2 0.35) :slide 0.8 :on-hit :stagger :frost 90)
+  :vol (:cap 0.2 2.0 1.2 0.35) :slide 0.8 :on-hit :stagger :frost 90)
 (defmove :ru-a-k3 :kind :flash :clip :ru-flower :enter 7 :startup 21 :active 5 :recovery 34 :dmg 84 :adv-block -20
-  :reach 2.7 :arc 160 :height (0.0 1.4) :on-hit :crumple :frost 120 :flags (:ender) :on-frame ((21 rukia-ice-flower)))
+  :reach 2.4 :arc 160 :height (0.0 1.4) :on-hit :crumple :frost 120 :flags (:ender) :on-frame ((21 rukia-ice-flower)))
 ;; -50 (the links it doesn't derive are written at x1.1): palm and blade together, the pirouette two-handed, both palms down
-(defmove-copy :ru-a-k1-50 :ru-a-k1 :clip :ru-palm-50 :vol (:cap 0.2 2.42 1.2 0.35))
-(defmove-copy :ru-j3-50 :ru-j3 :clip :ru-spin-50 :reach 2.86)
-(defmove-copy :ru-a-k3-50 :ru-a-k3 :clip :ru-flower-50 :reach 2.97)
+(defmove-copy :ru-a-k1-50 :ru-a-k1 :clip :ru-palm-50 :vol (:cap 0.2 2.2 1.2 0.35))
+(defmove-copy :ru-j3-50 :ru-j3 :clip :ru-spin-50 :reach 1.72)
+(defmove-copy :ru-a-k3-50 :ru-a-k3 :clip :ru-flower-50 :reach 2.64)
 ;; absolute zero (written at x1.35): J2 a palm backhand (the TOSHU clip re-timed), K1 SHIMO-TSUKI's thrust with the ice
 ;; blade (the reach she lost with her feet), K3 HYOKA with a frost that lasts
-(defmove-copy :ru-z-j2 :ru-j2 :clip :ru-palm :clip-s 17 :reach 2.97)
+(defmove-copy :ru-z-j2 :ru-j2 :clip :ru-palm :clip-s 17 :reach 1.78)
 (defmove-copy :ru-z-j2s :ru-z-j2)
-(defmove-copy :ru-z-k1 :ru-k1 :vol (:cap 0.2 4.3 1.1 0.3) :frost 90)
-(defmove-copy :ru-z-k3 :ru-a-k3 :reach 3.65 :frost 150)
+(defmove-copy :ru-z-k1 :ru-k1 :vol (:cap 0.2 3.78 1.1 0.3) :frost 90)
+(defmove-copy :ru-z-k3 :ru-a-k3 :reach 3.24 :frost 150)
 ;; L, one family that grows with the cold (the playtest fix: colder is never weaker): a disc round her, guardable
 ;; facing her (:src). -18 SHIMOBASHIRA, the frost pillars (r 2.5); -50 HYOSHIN, the ice quake (r 3.5, crumple); zero
 ;; REIDO TOKETSU (r 5.5 = the field, a 45 f freeze: a counter-hit on a Breaker's dash; it cashes the top bar)
@@ -114,8 +115,9 @@
   ;; a mid-range zoner: the ring and the waves at 5-8 m, J1 up close, Shirafune on a frozen / staggered victim
   ;; (:stun-follow); she awakens only against a melee opponent (:awaken: >= 60 % of >= 150 taken from blades)
   :ai (:intents (:approach 2 :pressure 3 :zone 2 :defend 1)
-       :ranges (:approach (2.8 5.0) :pressure (1.4 2.6) :zone (5.0 7.5) :defend (3.5 6.0))
-       :moves ((0.0 2.8 :q 6 :f 2 :breaker 1 :sp2 1)
+       :ranges (:approach (2.8 5.0) :pressure (1.0 2.4) :zone (5.0 7.5) :defend (3.5 6.0))
+       :moves ((0.0 1.8 :q 6 :f 2 :breaker 1 :sp2 1)                   ; J up close only (DUEL_STRINGS §13), K beyond
+               (1.8 2.8 :f 4 :breaker 1 :sp2 1)
                (2.8 5.0 :f 1 :sp2 2 :sig 2 :kikon 1 :step 1)
                (5.0 8.0 :sig 4 :sp1 2 :kikon 2 :step 1)
                (8.0 99.0 :sp1 2 :kikon 2 nil 1))
@@ -134,8 +136,9 @@
   :grid (:ru-j1 :ru-j2 :ru-j3 :ru-a-k1 :ru-k2 :ru-a-k3 :ru-j2s :ru-k2s)
   :l-after-k t                                  ; L after a K link: the band's own L (S 10-14: a combo as it is)
   :ai (:intents (:approach 2 :pressure 3 :zone 1 :defend 2)
-       :ranges (:approach (2.5 4.5) :pressure (1.3 2.4) :zone (4.5 7.0) :defend (3.0 5.0))
-       :moves ((0.0 2.8 :q 5 :f 2 :breaker 1 :sig 1)
+       :ranges (:approach (2.5 4.5) :pressure (1.0 2.2) :zone (4.5 7.0) :defend (3.0 5.0))
+       :moves ((0.0 1.8 :q 5 :f 2 :breaker 1 :sig 1)
+               (1.8 2.8 :f 3 :breaker 1 :sig 1)
                (2.8 5.0 :sp2 2 :step 1 nil 2)
                (5.0 99.0 :sp1 2 nil 2))
        :guard 0.5 :hoho 0.3 :dash 0.2 :dash-back 0.2 :o-ender 0.25 :l-after-k *ai-ru-l-after-k-awake* :kikon-range 6.5 :sp-cancel-bars 2
@@ -150,8 +153,9 @@
   :commands (:f :ru-a-k1-50 :sig :ru-hyoshin :sp1 :ru-hakuren-50 :sp2 :ru-shirafune-50 :kikon :ru-hakka)
   :grid (:ru-j1 :ru-j2 :ru-j3-50 :ru-a-k1-50 :ru-k2 :ru-a-k3-50 :ru-j2s :ru-k2s)
   :ai (:intents (:approach 1 :pressure 3 :zone 0 :defend 2)
-       :ranges (:approach (2.0 3.5) :pressure (1.2 2.4) :zone (3.0 5.0) :defend (2.0 3.5))
-       :moves ((0.0 3.5 :q 4 :f 2 :sig 3)
+       :ranges (:approach (2.0 3.5) :pressure (1.0 2.3) :zone (3.0 5.0) :defend (2.0 3.5))
+       :moves ((0.0 1.9 :q 4 :f 2 :sig 3)
+               (1.9 3.5 :f 3 :sig 3)
                (3.5 99.0 :sp2 1 :sp1 1 nil 2))
        :guard 0.45 :hoho 0.25 :dash 0.1 :dash-back 0.1 :o-ender 0.25 :l-after-k *ai-ru-l-after-k-awake* :kikon-range 7.5 :sp-cancel-bars 2
        :cool (:p 0.35 :near 4.0 :no-projectile t :min-gg 50) :stun-follow (:sp2 2.4 6.0)))
@@ -169,11 +173,12 @@
   :enter-hook rukia-zero-enter :calm t                ; the white Rukia's face stays composed (never the shout)
   :commands (:f :ru-z-k1 :sig :ru-reido :sp1 :ru-hakuren-0 :sp2 :ru-shirafune-0 :kikon :ru-hakka-0 :breaker nil)
   :grid (:ru-j1 :ru-z-j2 :ru-j3 :ru-z-k1 :ru-k2 :ru-z-k3 :ru-z-j2s :ru-k2s)
-  ;; it can't move: answers within its reach (J / K to 3.5 m, K1 4.3, REIDO 5.5, SHIRAFUNE 7.5, HAKUREN's wave to 14),
+  ;; it can't move: answers within its reach (J to 2.1 m, K to 3.4, K1 3.8, REIDO 5.5, SHIRAFUNE 7.5, HAKUREN's wave to 14),
   ;; braces now and then while he is near and the guard gauge can pay; a CPU facing her backs off and waits it out (:opp-intent)
   :ai (:intents (:approach 0 :pressure 3 :zone 0 :defend 2)
        :ranges (:approach (0.0 99.0) :pressure (0.0 99.0) :zone (0.0 99.0) :defend (0.0 99.0))
-       :moves ((0.0 3.5 :q 4 :f 3)
+       :moves ((0.0 2.2 :q 4 :f 3)
+               (2.2 3.5 :f 4 nil 1)
                (3.5 5.5 :sig 3 :f 1 nil 1)
                (5.5 7.5 :sp2 1 :sp1 2 nil 2)
                (7.5 14.0 :sp1 2 nil 2)

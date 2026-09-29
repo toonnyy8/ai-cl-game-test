@@ -54,20 +54,22 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
 
 ;;; ================================================================ 二刀の斬月 (base)
 ;;; J is the short blade (fast, short), K the long cleaver (slow, long, heavy on the gauge); a switched link 2 is the
-;;; CROSS: both blades at once, the same frames, a heavier guard value (KAESHI-KIBA 12, KOGA 24)
+;;; CROSS: both blades at once, the same frames, a heavier guard value (KAESHI-KIBA 12, KOGA 24). The reach since the J cut
+;;; (docs/DUEL_STRINGS.md §13): J1 / J2 0.5x (the short blade, a step in; KAESHI-KIBA's X closed at his chest: :ic-cross-j),
+;;; J3 0.6x (the cleaver held up in the turn), K -10 %
 (defmove :ic-j1 :kind :quick :clip :ic-q1 :startup 7 :active 3 :recovery 12 :dmg 32 :adv-block -2 :guard 8
-  :reach 2.2 :arc 100 :on-hit :flinch :slide 0.6)                        ; KOKIBA: the short blade flicked, reversed
+  :reach 1.1 :arc 100 :on-hit :flinch :slide 0.6)                        ; KOKIBA: the short blade flicked, reversed
 (defmove :ic-j2 :kind :quick :clip :ic-q2 :startup 7 :active 3 :recovery 13 :dmg 32 :adv-block -2 :guard 8
-  :reach 2.2 :arc 100 :on-hit :flinch)                                   ; KAESHI: the wrist turns, back across
+  :reach 1.1 :arc 100 :on-hit :flinch)                                   ; KAESHI: the wrist turns, back across
 (defmove :ic-j3 :kind :quick :clip :ic-spin :startup 8 :active 3 :recovery 18 :dmg 40 :adv-block -4 :guard 8
-  :reach 2.4 :arc 200 :on-hit :stagger :flags (:ender))                  ; SOSEN-GIRI: a full turn, both blades out
+  :reach 1.44 :arc 200 :on-hit :stagger :flags (:ender))                 ; SOSEN-GIRI: a full turn, both blades out
 (defmove :ic-k1 :kind :flash :clip :ic-f1 :startup 16 :active 4 :recovery 20 :dmg 68 :adv-block -3 :guard 16
-  :reach 3.0 :arc 150 :on-hit :stagger)                                  ; OKIBA: the cleaver's waist-high sweep
+  :reach 2.7 :arc 150 :on-hit :stagger)                                  ; OKIBA: the cleaver's waist-high sweep
 (defmove :ic-k2 :kind :flash :clip :ic-f2 :enter 6 :startup 20 :active 4 :recovery 24 :dmg 60 :adv-block -3 :guard 16
-  :reach 3.0 :arc 90 :on-hit :stagger)                                   ; SHOGA: up from the floor
+  :reach 2.7 :arc 90 :on-hit :stagger)                                   ; SHOGA: up from the floor
 (defmove :ic-k3 :kind :flash :clip :ic-drop :enter 7 :startup 21 :active 5 :recovery 34 :dmg 84 :adv-block -20 :guard 22
-  :vol (:cap 0.3 3.4 1.2 0.35) :on-hit :crumple :flags (:ender))         ; RAKUGA: both hands, held, dropped
-(defmove-copy :ic-j2s :ic-j2 :clip :ic-cross :clip-s 7 :guard 12)        ; KAESHI-KIBA: after K1, under the cleaver's return
+  :vol (:cap 0.3 3.0 1.2 0.35) :on-hit :crumple :flags (:ender))         ; RAKUGA: both hands, held, dropped
+(defmove-copy :ic-j2s :ic-j2 :clip :ic-cross-j :clip-s 7 :guard 12)        ; KAESHI-KIBA: after K1, under the cleaver's return
 (defmove-copy :ic-k2s :ic-k2 :clip :ic-cross :clip-s 14 :guard 24)       ; KOGA: after J1, both blades in an X
 ;; GETSUGA TENSHO (the stance's L branch): at f14 a crescent leaves the long blade: a :wave 2.4 m wide (a side Step always
 ;; clears it), 16 m/s over 10 m; blocked, the hazard's 14 f blockstun
@@ -107,18 +109,19 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
 
 ;;; ================================================================ 血鎖の一護 KESSA NO ICHIGO (the awakening)
 ;;; one white slab, no point and no guard: cuts only (the clones carry the range now); the J one-handed, the K two-handed
-(defmove :ic-k-j1 :kind :quick :clip :ic-k-cut :startup 8 :active 3 :recovery 12 :dmg 30 :adv-block -2 :guard 8
-  :reach 2.6 :arc 110 :on-hit :flinch)                                   ; 板薙 ITA-NAGI: swept up and across
+;;; (since the J cut, §13: J 0.6x with the slab's cuts pulled in, :ic-k-jab / :ic-k-wrap-j; the clones keep the long clips)
+(defmove :ic-k-j1 :kind :quick :clip :ic-k-jab :startup 8 :active 3 :recovery 12 :dmg 30 :adv-block -2 :guard 8
+  :reach 1.56 :arc 110 :on-hit :flinch)                                  ; 板薙 ITA-NAGI: swept up and across
 (defmove :ic-k-j2 :kind :quick :clip :ic-k-back :startup 8 :active 3 :recovery 13 :dmg 30 :adv-block -2 :guard 8
-  :reach 2.6 :arc 110 :on-hit :flinch)                                   ; 返板 KAESHI-ITA: the backhand
-(defmove :ic-k-j3 :kind :quick :clip :ic-k-wrap :startup 9 :active 3 :recovery 18 :dmg 40 :adv-block -4 :guard 8
-  :reach 2.8 :arc 200 :on-hit :stagger :flags (:ender))                  ; 板旋 ITA-SEN: a full turn at arm's length
+  :reach 1.56 :arc 110 :on-hit :flinch)                                  ; 返板 KAESHI-ITA: the backhand
+(defmove :ic-k-j3 :kind :quick :clip :ic-k-wrap-j :clip-s 10 :startup 9 :active 3 :recovery 18 :dmg 40 :adv-block -4 :guard 8
+  :reach 1.68 :arc 200 :on-hit :stagger :flags (:ender))                 ; 板旋 ITA-SEN: a full turn, the slab held close
 (defmove :ic-k-k1 :kind :flash :clip :ic-f1 :clip-s 16 :startup 18 :active 4 :recovery 20 :dmg 66 :adv-block -3 :guard 14
-  :reach 3.2 :arc 150 :on-hit :stagger)                                  ; 大板 OITA: the waist-high sweep
+  :reach 2.9 :arc 150 :on-hit :stagger)                                  ; 大板 OITA: the waist-high sweep
 (defmove :ic-k-k2 :kind :flash :clip :ic-f2 :clip-s 20 :enter 6 :startup 20 :active 4 :recovery 24 :dmg 58 :adv-block -3
-  :guard 14 :reach 3.2 :arc 90 :on-hit :stagger)                         ; 昇板 SHO-ITA: the rising cut
+  :guard 14 :reach 2.9 :arc 90 :on-hit :stagger)                         ; 昇板 SHO-ITA: the rising cut
 (defmove :ic-k-k3 :kind :flash :clip :ic-drop :clip-s 21 :enter 7 :startup 21 :active 5 :recovery 34 :dmg 80 :adv-block -20
-  :guard 20 :vol (:cap 0.3 3.6 1.2 0.35) :on-hit :crumple :flags (:ender))   ; 天鎖落 TENSA-OTOSHI: dropped with both hands
+  :guard 20 :vol (:cap 0.3 3.2 1.2 0.35) :on-hit :crumple :flags (:ender))   ; 天鎖落 TENSA-OTOSHI: dropped with both hands
 (defmove-copy :ic-k-j2s :ic-k-j2)                                         ; one blade: no cross links
 (defmove-copy :ic-k-k2s :ic-k-k2)
 ;; the clones' answers (not a kit's: ICHIGO-CLONE-STEP plays them): J a heavy, K a light (the user's reversal)
@@ -179,8 +182,9 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
   ;; rushdown: J pressure at 1.4-2.4 m, the cleaver's K links into a guard (:block-string), the stance and SOGA in the
   ;; middle (the stance's branch: ICHIGO-AI-STANCE), JUJISHO against a projectile; he awakens once he has taken 150
   :ai (:intents (:approach 2 :pressure 4 :zone 0 :defend 1)
-       :ranges (:approach (2.6 5.0) :pressure (1.4 2.4) :zone (5.0 7.0) :defend (3.0 5.0))
-       :moves ((0.0 2.6 :q 5 :f 3 :breaker 1 :sp2 1)
+       :ranges (:approach (2.6 5.0) :pressure (1.0 1.8) :zone (5.0 7.0) :defend (3.0 5.0))
+       :moves ((0.0 1.6 :q 5 :f 2 :breaker 1 :sp2 1)                   ; J up close only (DUEL_STRINGS §13), K beyond
+               (1.6 2.6 :f 4 :breaker 1 :sp2 1)
                (2.6 5.0 :sig 3 :sp2 2 :f 1 :step 1)
                (5.0 9.0 :sp2 2 :sig 2 :sp1 1 :kikon 1)
                (9.0 99.0 :sp1 2 :kikon 1 nil 1))
@@ -202,12 +206,13 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
   ;; a mid-close brawler with posts: every back hop and Hoho posts a clone; the parry and O by the clones in its
   ;; :reflex (ICHIGO-AI-KESSA), from blockstun in the :tick hook
   :ai (:intents (:approach 3 :pressure 4 :zone 0 :defend 1)
-       :ranges (:approach (2.6 6.0) :pressure (1.6 2.6) :zone (3.0 4.0) :defend (3.5 5.5))
-       :moves ((0.0 2.8 :q 5 :f 3 :breaker 1 :step 1)
+       :ranges (:approach (2.6 6.0) :pressure (1.0 2.0) :zone (3.0 4.0) :defend (3.5 5.5))
+       :moves ((0.0 1.8 :q 5 :f 3 :breaker 1 :step 1)
+               (1.8 2.8 :f 5 :breaker 1 :step 1)
                (2.8 5.0 :f 2 :step 2 :sp2 1 :q 1)
                (5.0 9.0 :sp1 2 :hoho 2 :kikon 1 :step 1)
                (9.0 99.0 :kikon 1 :hoho 2 nil 1))
-       :guard 0.4 :hoho 0.4 :dash 0.6 :dash-back 0.2 :o-ender 0.6 :l-after-k 0.0 :sp-cancel-bars 9
+       :guard 0.4 :hoho 0.4 :dash 0.6 :dash-back 0.2 :o-ender 0.6 :attack 0.15 :l-after-k 0.0 :sp-cancel-bars 9
        :kikon-range 8.6 :stun-follow (:sp1 3.8 7.0) :reflex ichigo-ai-kessa))
 
 ;;; ================================================================ pure rules (host-tested: tests/duel-rules-test.lisp)

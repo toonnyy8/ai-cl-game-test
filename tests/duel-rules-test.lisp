@@ -52,16 +52,14 @@
             (eq (resolve-contact :parry :hazard t :ward t) :blocked) (eq (resolve-contact :parry :hazard t) :hit)
             (eq (resolve-contact :parry :ward t) :parried) (eq (resolve-contact :parry :unguardable t :ward t) :hit)
             (null (resolve-contact :invuln :ward t))))
-;; the melee / ranged split (the user's decision 2026-09-26): the Meteor's cleaver within 3.4 m (KATATE's Q reach), the
-;; cash-out's within 3.9 m (cup 3's MEN), Buttagiru's within 2.6 m, Nadegiri's within 2.4 m are melee; beyond, the line
+;; the melee / ranged split (the user's decision 2026-09-26): the Meteor's cleaver within 3.4 m, the cash-out's within
+;; 3.9 m, Buttagiru's within 2.6 m, Nadegiri's within 2.4 m are melee; beyond, the line. (They were the J1 reaches of their
+;; forms until the J cut of 2026-09-29, docs/DUEL_STRINGS.md §13: an SP's own blade, so they stay)
 (check (and (ranged-hit-p t nil nil 0.0) (not (ranged-hit-p nil nil nil 100.0)) (ranged-hit-p nil '(:ranged) nil 1.0)
             (not (ranged-hit-p nil '(:ranged) 3.4 (* 3.4 3.4))) (ranged-hit-p nil '(:ranged) 3.4 (* 3.5 3.5))))
 (flet ((mr (name) (getf (mv-params (find-move name)) :melee-range)))
   (check (and (~= (mr :ke-meteor) 3.4) (~= (mr :ke-meteor-n) 3.9) (~= (mr :ke-buttagiru) 2.6) (~= (mr :ya-nadegiri) 2.4)
               (null (mr :ya-kyoku)) (null (mr :ya-taimatsu))
-              (< (abs (- (mr :ke-meteor) (mv-reach (mv :kenpachi :nozarashi :ke-j1)))) 0.05)
-              (~= (mr :ke-meteor-n) (mv-reach (mv :kenpachi :nomihose :ke-r-j1)))
-              (~= (mr :ke-buttagiru) (mv-reach (mv :kenpachi :base :ke-j1))) (~= (mr :ya-nadegiri) (mv-reach (mv :yamamoto :base :ya-j1)))
               (= 1 (length (mv-hits (find-move :ke-meteor-n)))) (= 1 (length (mv-hits (find-move :ke-meteor)))))))
 ;; the contact rule: only a real hit is a hit for the attacker (armour, absorb, parry, block are :block)
 (check (every (lambda (r) (eq (contact-of r) :hit)) '(:hit :counter :guard-break :stance-break :kikon)))
@@ -74,7 +72,7 @@
 ;; the Breaker's pre-strike phases
 (check (and (eq (breaker-next-phase :aura 11 t 9.0) :aura) (eq (breaker-next-phase :aura 12 t 9.0) :dash)))
 (check (eq (breaker-next-phase :dash 20 t 9.0) :dash))
-(check (eq (breaker-next-phase :dash 1 t 2.0) :strike))                   ; in range
+(check (eq (breaker-next-phase :dash 1 t 0.9) :strike))                   ; in range
 (check (eq (breaker-next-phase :dash 5 nil 9.0) :dash))                   ; a tap still dashes a bit
 (check (eq (breaker-next-phase :dash 12 nil 9.0) :strike))
 (check (eq (breaker-next-phase :dash 45 t 9.0) :strike))
@@ -85,6 +83,22 @@
               (~= (mv-track b) *track-breaker*) (= (hw-hs (svref (mv-hits b) 0)) 10))))
 ;; a Q1 thrown on seeing the aura beats the fastest Breaker (aura 12 + strike startup 8)
 (check (< (mv-s (mv :yamamoto :base :ya-j1)) (+ *breaker-aura* *breaker-startup*)))
+;; 防 > J > I > 防 (the user, 2026-09-29; docs/DUEL_STRINGS.md §14): guard blocks J (above), a Breaker breaks the guard
+;; (above), and J beats the grab: in every form with a Breaker its strike reaches less far than J1, and J1 has a press
+;; window against the dash: the Breaker's aura, dash and strike startup are :breaker (any hit counters it), so J1 connects
+;; when its last active frame meets the dash inside J1's reach + the thinnest hurt radius (0.34, Rukia's) and its first
+;; active frame comes before the strike's (the dash stops at *BREAKER-TRIGGER*, then *BREAKER-STARTUP* frames). The dash
+;; at its fastest (*BREAKER-SPEED-MAX*); the trigger clears the widest pair of hurt radii (0.9: both Kenpachi) and a
+;; triggered strike reaches the thinnest
+(check (and (> *breaker-trigger* 0.9) (> (+ *breaker-reach* 0.34) *breaker-trigger*)))
+(dolist (cf *forms*)
+  (let* ((k (apply #'kit cf)) (br (kit-command-move k :breaker)) (j1 (kit-command-move k :q)))
+    (when br
+      (let* ((v (/ *breaker-speed-max* 60.0)) (s (mv-s j1)) (a (mv-a j1))
+             (d-hi (+ (mv-reach j1) 0.34 (* v (+ s a -1))))              ; the farthest press: its last active frame meets him
+             (d-lo (+ *breaker-trigger* (* v (max 0 (- s (mv-s br)))))))  ; the nearest: J1 hits before the strike does
+        (check (or (and (< (mv-reach br) (mv-reach j1)) (> (+ (mv-reach j1) 0.34) *breaker-trigger*) (< d-lo d-hi))
+                   (format t "~a: grab ~,2f m, J1 ~,2f m S ~d, window ~,2f..~,2f m~%" cf (mv-reach br) (mv-reach j1) s d-lo d-hi)))))))
 
 ;;; ================================================================ block / whiff advantage
 (check (= (blockstun 24 9 -2) 13))
@@ -108,7 +122,7 @@
   (check (zerop (string-chase-speed g 2.6 7)))                                     ; close enough: no motion
   (check (zerop (string-chase-speed 5.0 2.6 0)))                                   ; not after the startup
   (check (<= (/ (string-chase-speed 3.0 2.6 1) 60.0) (- 3.0 g)))                  ; one frame never overshoots the goal
-  (check (zerop (string-chase-speed 1.3 1.5 5)))                                   ; a short reach stops at *LUNGE-STOP*
+  (check (zerop (string-chase-speed *lunge-stop* 1.2 5)))                          ; a short reach stops at *LUNGE-STOP*
   ;; simulated: a frame at a time from 6 m, he ends inside the reach by the hit and never nearer than the goal
   (let ((d 6.0))
     (loop for left from 14 downto 1 do (decf d (/ (string-chase-speed d 2.6 left) 60.0)))
@@ -458,7 +472,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 (check (equal (multiple-value-list (combo-step :flinch nil 9 0 0)) '(:knockdown 10 0 0)))  ; cap 10
 
 ;;; ================================================================ perfect Hoho
-;; Yama's Q1 (window [9,12), 2.4 m arc) from the origin facing -Z; our cylinder r 0.4 h 1.8
+;; Yama's Q1 (window [9,12), 0.96 m arc) from the origin facing -Z; our cylinder r 0.4 h 1.8
 (let* ((q1 (mv :yamamoto :base :ya-j1)) (w (svref (mv-hits q1) 0)))
   (flet ((perfect (sf z) (perfect-hoho-p sf (hw-from w) (hw-to w) (hw-vols w)
                                          0f0 0f0 0f0 0f0 -1f0 0f0 0f0 (float z 1f0) 0.4f0 1.8f0)))
@@ -466,8 +480,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     (check (not (perfect 0 -2.0)))            ; 9 f away: too early
     (check (perfect 10 -2.0))                 ; active now
     (check (not (perfect 12 -2.0)))           ; over
-    (check (perfect 3 -3.5))                  ; out of reach, but inside the 1 m inflation
-    (check (not (perfect 3 -4.5)))))
+    (check (perfect 3 -2.2))                  ; out of reach, but inside the 1 m inflation
+    (check (not (perfect 3 -2.6)))))
 
 ;;; ================================================================ facing, movement, arena
 (check (~= (turn-toward 0.0 (deg 90) (deg 18)) (deg 18)))
@@ -610,14 +624,15 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 (check (eq (mv-name (kit-command-move (kit :yamamoto :hellfire) :sp2)) :ya-nadegiri))
 (check (eq (mv-name (kit-command-move (kit :yamamoto :hellfire) :sp1)) :ya-shiranui))  ; inherited
 (check (eq (mv-name (kit-command-move (kit :yamamoto :bankai-east) :kikon)) :ya-tenchi))
-;; the Kikon rush of every form: a strike with a cinematic, clearly punishable on block (Q1 of either
-;; character fits, also after the block pushback from the trigger range), reach beyond the trigger
+;; the Kikon rush of every form: a strike with a cinematic, clearly punishable on block (-14; K1 of either character
+;; reaches it after the block pushback from the trigger range: J1 did until the J cut of 2026-09-29, now it walks in),
+;; reach beyond the trigger
 (dolist (cf *forms*)
   (let ((m (kit-command-move (apply #'kit cf) :kikon)))
     (check (and (eq (mv-kind m) :kikon) (mv-cine m) (= 1 (length (mv-hits m))) (<= (mv-adv-block m) -12)
                 (> (mv-reach m) *kikon-trigger*) (plusp (mv-dmg m))
-                (<= (+ *kikon-trigger* *block-pushback*) (min (mv-reach (mv :yamamoto :base :ya-j1))
-                                                              (mv-reach (mv :kenpachi :base :ke-j1))))))))
+                (<= (+ *kikon-trigger* *block-pushback*) (min (mv-reach (mv :yamamoto :base :ya-k1))
+                                                              (mv-reach (mv :kenpachi :base :ke-k1))))))))
 ;; the O modules (design v2 §B): cooldown 90, a melee strike with its cinematic, reach and press -> hit,
 ;; aura >= 5 (>= 8 for a locked dash), armour <= 1 hit; the melee ones strike from *KIKON-TRIGGER* (a
 ;; blocked strike stays punishable); ENJO has no dash (a lane, locked)
@@ -650,8 +665,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 ;; Nozarashi: derived by the kit, not copied (startup +3, reach x1.4), own moves as written
 (let ((base (mv :kenpachi :base :ke-j1)) (noz (mv :kenpachi :nozarashi :ke-j1)))
   (check (and (= (mv-s base) 7) (= (mv-s noz) 9) (= (mv-r noz) 12) (= (mv-dmg noz) 35)
-              (~= (mv-reach noz) (* 2.6 1.3)) (= (hw-from (svref (mv-hits noz) 0)) 9)
-              (~= (aref (first (hw-vols (svref (mv-hits noz) 0))) 1) (* 2.6 1.3)))))
+              (~= (mv-reach noz) (* 1.04 1.3)) (= (hw-from (svref (mv-hits noz) 0)) 9)
+              (~= (aref (first (hw-vols (svref (mv-hits noz) 0))) 1) (* 1.04 1.3)))))
 (check (= (mv-s (mv :kenpachi :nozarashi :ke-stance)) 10))
 (check (= (mv-s (mv :kenpachi :nozarashi :ke-breaker)) 10))
 (check (~= (aref (first (hw-vols (svref (mv-hits (mv :kenpachi :nozarashi :ke-charge)) 0))) 2) (* 1.4 1.3)))
@@ -672,17 +687,18 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :ke-r-stance :ke-drink     ; the cups
     :ke-r-q1 :ke-r-q3 :ke-r-f1 :ke-r-f2 :ke-n-f1     ; RYOTE's kendo set and KUKAN-GIRI (their own clips since Phase 5)
     :ke-b-stance :ke-b-fist :ke-b-bite                ; the Bankai (docs/DUEL_KEN_BANKAI.md §12)
+    :ke-b-hook :ic-cross-j :ic-k-jab :ic-k-wrap-j     ; the J cut's close J links (DUEL_STRINGS §13)
     :ke-b-leap :ke-b-run :ke-b-skate-b :ke-b-slide-r :ke-b-slide-l   ; its feral pass (2026-09-28; also 片腕)
     :ru-stance :ru-intro :ru-win :ru-q1 :ru-q2 :ru-spin :ru-thrust :ru-ring :ru-drop :ru-tsukishiro :ru-stab :ru-hakuren
     :ru-shirafune :ru-breaker :ru-hainawa :ru-cold-stance :ru-palm :ru-flower :ru-zero :ru-reido :ru-hakka   ; Rukia
     :ru-palm-50 :ru-spin-50 :ru-flower-50 :ru-stab-2h   ; her -50 key edits (zero's pinned J1 / K1 are body-variant clips)
     :ic-stance :ic-intro :ic-win :ic-q1 :ic-q2 :ic-spin :ic-f1 :ic-f2 :ic-drop :ic-cross :ic-getsuga :ic-juji :ic-breaker
-    :ic-mine :ic-k-stance :ic-k-cut :ic-k-back :ic-k-wrap :ic-k-parry :ic-k-yank :ic-k-zanzo   ; Ichigo (DUEL_ICHIGO §10, v2)
+    :ic-mine :ic-k-stance :ic-k-back :ic-k-parry :ic-k-yank :ic-k-zanzo   ; Ichigo (DUEL_ICHIGO §10, v2)
     :ic-tsuki :ic-rangetsu :ic-tsuki-otoshi
     :sj-stance :sj-q1 :sj-q2 :sj-spin :sj-f1 :sj-f2 :sj-drop :sj-yank :sj-summon :sj-kasa :sj-breaker :sj-saidan :sj-intro
     :sj-win :sj-loom-stance :sj-weave :sj-unravel :sj-tanmono :sj-makitori :sj-snip))   ; Senjumaru (:sj-awaken is the cine's)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
-;; DEFCINEs, which the host stubs)
+;; DEFCINEs, which the host stubs; KESSA's clones play :ic-k-cut / :ic-k-wrap, ICHIGO-CLONE-STEP)
 (let ((used (remove-duplicates (loop for cf in *forms* append (kit-clips (apply #'kit cf))))))
   (let ((extra (set-difference used *clips-5*)) (unused (set-difference *clips-5* used)))
     (when (or extra unused) (format t "  clips not in §5: ~s, §5 clips unused: ~s~%" extra unused))
@@ -874,7 +890,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
   ;; 8. register-kit: NOMIHOSE plays RYOTE's moves (not re-derived); RYOTE's meteor / LEAP as written; Hellfire unchanged
   (check (and (eq (kit-move t3 :ke-r-j3) (kit-move t2 :ke-r-j3)) (= 10 (mv-s (kit-move t3 :ke-r-j3)))
               (= 21 (mv-s (kit-move t3 :ke-r-k3))) (eq (kit-move t3 :ke-r-j2) (kit-move t2 :ke-r-j2))
-              (~= (mv-reach (kit-move t2 :ke-r-j2)) 3.6) (~= (mv-reach (kit-move t2 :ke-r-j3)) 3.8)))
+              (~= (mv-reach (kit-move t2 :ke-r-j2)) 1.44) (~= (mv-reach (kit-move t2 :ke-r-j3)) 1.52)))
   (check (and (eq (kit-move t2 :ke-meteor) (find-move :ke-meteor)) (eq (kit-move t2 :ke-kikon-n) (find-move :ke-kikon-n))
               (eq (kit-command-move t3 :kikon) (find-move :ke-kikon-n))
               (eq (kit-move (kit :yamamoto :hellfire) :ya-j1) (find-move :ya-j1))))
@@ -985,15 +1001,15 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
            (loop for n in (route b first presses) for i from 1
                  sum (hit-damage (mv-dmg (kit-move b n)) (kit-atk-mods b 0) nil i nil))))
     (check (and (= 444 (route-dmg :f '((:f) (:f)))) (= 272 (route-dmg :q '((:q) (:f)))))))
-  ;; 6. 片腕: the sword moves at reach x0.7 (J1 1.82, K1 2.10, K3 1.96), the kick, the Breaker and O as written; B2:
+  ;; 6. 片腕: the sword moves at reach x0.7 (J1 0.73, K1 1.96, K3 1.89), the kick, the Breaker and O as written; B2:
   ;; every form's Breaker strike out-reaches its trigger, every Kikon strike *KIKON-TRIGGER* + 0.3
-  (check (and (~= 1.82 (mv-reach (kit-move a :ke-j1))) (~= 2.1 (mv-reach (kit-move a :ke-k1))) (~= 1.96 (mv-reach (kit-move a :ke-k3)))
-              (~= 2.2 (mv-reach (kit-next a :ke-j2 :q))) (~= 2.6 (mv-reach (kit-command-move a :breaker)))
+  (check (and (~= 0.728 (mv-reach (kit-move a :ke-j1))) (~= 1.96 (mv-reach (kit-move a :ke-k1))) (~= 1.89 (mv-reach (kit-move a :ke-k3)))
+              (~= 0.88 (mv-reach (kit-next a :ke-j2 :q))) (~= *breaker-reach* (mv-reach (kit-command-move a :breaker)))
               (~= 2.4 (mv-reach (kit-command-move a :kikon))) (= 7 (mv-s (kit-move a :ke-j1)))))
   (dolist (cf *forms*)
     (let ((k (apply #'kit cf)))
       (let ((br (kit-command-move k :breaker)))        ; (Rukia's rooted zero has none)
-        (check (or (null br) (> (mv-reach br) *breaker-trigger*))))
+        (check (or (null br) (> (+ (mv-reach br) 0.34) *breaker-trigger*))))   ; (with the thinnest hurt radius)
       (check (> (mv-reach (kit-command-move k :kikon)) (+ *kikon-trigger* 0.3)))))
   ;; the looks: the oni body in both, the aura only in the Bankai, the cracks hidden in 片腕, the wreck hidden in the Bankai
   (check (and (eq :kenpachi-oni (kit-body b)) (eq :kenpachi-oni (kit-body a)) (eq :oni (kit-aura b)) (null (kit-aura a))
@@ -1061,13 +1077,14 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
                 (up (lambda (k) (mv-reach (kit-command-move k :kikon))))
                 (up (lambda (k) (getf (mv-params (kit-command-move k :sp1)) :dmg)))
                 (> (kit-taken m18) (kit-taken m50) (kit-taken z))
-                (~= 2.4 (mv-reach (kit-move m18 :ru-j1))) (~= 2.64 (mv-reach (kit-move m50 :ru-j1))) (~= 3.24 (mv-reach (kit-move z :ru-j1)))
-                (~= 4.3 (mv-reach (kit-command-move z :f))) (~= 3.51 (mv-reach (kit-move z :ru-j3))) (~= 2.86 (mv-reach (kit-move m50 :ru-j3-50)))
+                (~= 1.44 (mv-reach (kit-move m18 :ru-j1))) (~= 1.584 (mv-reach (kit-move m50 :ru-j1))) (~= 1.944 (mv-reach (kit-move z :ru-j1)))
+                (~= 3.78 (mv-reach (kit-command-move z :f))) (~= 2.106 (mv-reach (kit-move z :ru-j3))) (~= 1.72 (mv-reach (kit-move m50 :ru-j3-50)))
                 (~= 5.0 (mv-reach (kit-command-move m18 :sp2))) (~= 7.5 (mv-reach (kit-command-move z :sp2))))))
   ;; rooted zero: at zero no chase, so each follow-up link must still reach after a blocked link's push from where a J1
-  ;; lands (its reach): J2 >= J1 - *BLOCK-PUSHBACK* (the x1.35 reach covers the 0.6 m push from 2.4)
-  (check (and (>= (+ (mv-reach (kit-move z :ru-z-j2)) 0.45) (+ 2.4 *block-pushback*))
-              (>= (+ (mv-reach (kit-move z :ru-k2)) 0.45) (+ 2.4 *block-pushback*))))
+  ;; lands (the Shikai J1's reach): J2 >= J1 - *BLOCK-PUSHBACK* (the x1.35 reach covers the 0.6 m push)
+  (let ((j1 (mv-reach (kit-move m18 :ru-j1))))
+    (check (and (>= (+ (mv-reach (kit-move z :ru-z-j2)) 0.45) (+ j1 *block-pushback*))
+                (>= (+ (mv-reach (kit-move z :ru-k2)) 0.45) (+ j1 *block-pushback*)))))
   ;; the moves each band has: L SHIMOBASHIRA / HYOSHIN / REIDO (no cooldown: the gauge is the limiter, no COOLDOWN row);
   ;; SP1 HAKUREN in every band (-50 faster stabs, zero no hold); no Breaker at zero; HAKKA in every band
   (check (and (eq :ru-shimobashira (mv-name (kit-command-move m18 :sig))) (eq :ru-hyoshin (mv-name (kit-command-move m50 :sig)))
@@ -1179,7 +1196,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     (check (and (= 8 (gv b :ic-j2)) (= 12 (gv b :ic-j2s)) (= 16 (gv b :ic-k2)) (= 24 (gv b :ic-k2s)) (= 22 (gv b :ic-k3))
                 (eq :ic-cross (mv-clip (kit-move b :ic-k2s))) (equal (mv-spec (kit-move ks :ic-k-k2)) (mv-spec (kit-move ks :ic-k-k2s)))))
     ;; KESSA's cuts: ordinary reach (J 2.6, K 3.2), routes on hit JJJ 100 / KKK 204, blocked KKK drains 48
-    (check (and (~= 2.6 (mv-reach kj1)) (~= 3.2 (mv-reach kk1)) (<= (mv-reach (kit-move ks :ic-k-k3)) 3.6)
+    (check (and (~= 1.56 (mv-reach kj1)) (~= 2.9 (mv-reach kk1)) (<= (mv-reach (kit-move ks :ic-k-k3)) 3.6)
                 (= 100 (+ (mv-dmg kj1) (mv-dmg (kit-move ks :ic-k-j2)) (mv-dmg (kit-move ks :ic-k-j3))))
                 (= 204 (+ (mv-dmg kk1) (mv-dmg (kit-move ks :ic-k-k2)) (mv-dmg (kit-move ks :ic-k-k3))))
                 (= 48 (+ (gv ks :ic-k-k1) (gv ks :ic-k-k2) (gv ks :ic-k-k3))))))
@@ -1246,7 +1263,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
   (check (and (= 2 (kit-kikon-konpaku b)) (= 3 (kit-kikon-konpaku ks)) (kit-awakening ks) (zerop (kit-heal ks))
               (eq 'ic-kessa-getsuga-cine (kit-kikon-cine ks)) (eq 'ic-kikon-cine (kit-kikon-cine b))
               (eq 'ic-kessa-kikon-cine (mv-cine (kit-command-move ks :kikon)))
-              (~= 8.6 (kikon-rush-reach 30.0 14)) (> (mv-reach (kit-command-move ks :breaker)) *breaker-trigger*)))
+              (~= 8.6 (kikon-rush-reach 30.0 14)) (> (+ (mv-reach (kit-command-move ks :breaker)) 0.34) *breaker-trigger*)))
   ;; a side Step (2.5 m) clears every crescent: its half-width + Kenpachi's hurt r < 2.5
   (check (every (lambda (w) (< (+ (* 0.5 w) kr) *step-distance*))
                 (list (getf (mv-params (kit-next b :ic-tsuki :tsuki-l)) :width) (getf (mv-params (kit-command-move b :sp1)) :width))))
@@ -1398,10 +1415,10 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
                                     (or (not (hank n :dmg)) (<= (hank-damage n p) (hank-damage n (1+ p))))))))
   (check (and (= 90 (hank-damage 2 3)) (= 72 (hank-damage 2 1)) (= 240 (hank-life 1 3)) (= 120 (hank-life 1 1))
               (~= 2.4 (hank-radius 1 1)) (null (hank 1 :dmg)) (null (hank 6 :dmg))))
-  ;; the awakened grid: J1 J2 J3 K2 as the Shikai's (no reach derivation: the playtest), K1 4.2 m, MAKITORI 2.8 m with its
+  ;; the awakened grid: J1 J2 J3 K2 as the Shikai's (no reach derivation: the playtest), K1 3.8 m, MAKITORI 2.5 m with its
   ;; pull to 1.4
-  (check (and (~= 2.4 (mv-reach (kit-command-move t1 :q))) (~= 2.8 (mv-reach (kit-next t1 :sj-j1 :f)))
-              (~= 4.2 (mv-reach (kit-command-move t1 :f))) (~= 2.8 (mv-reach (kit-next t1 :sj-k2 :f)))
+  (check (and (~= 1.44 (mv-reach (kit-command-move t1 :q))) (~= 2.5 (mv-reach (kit-next t1 :sj-j1 :f)))
+              (~= 3.8 (mv-reach (kit-command-move t1 :f))) (~= 2.5 (mv-reach (kit-next t1 :sj-k2 :f)))
               (~= 1.4 (getf (mv-params (kit-next t1 :sj-k2 :f)) :pull)) (~= 3.3 (kit-walk t1)) (~= 3.6 (kit-walk b))))
   ;; the CPU: the rule's keys, the loom's hold by distance (星 closer), the Shikai taps L
   (check (and (equal (getf (kit-ai b) :awaken-rule) '(:ranged-share 0.3 :min-taken 150 :or-opp-rooted t))
@@ -1453,44 +1470,85 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 (check (every (lambda (f) (eq 'senju-siphon (kit-hook (kit :senjumaru f) :siphon))) '(:base :tsuji1 :tsuji6)))
 (check (every (lambda (cf) (or (eq (first cf) :senjumaru) (null (kit-hook (apply #'kit cf) :siphon)))) *forms*))
 
-;; Senjumaru's reach matches the art (the user's playtest, 2026-09-29; DUEL_SENJUMARU.md "Playtest: reach matches the
-;; art"): every J / K link of every form reaches no more than 0.15 m past (or short of) what she strikes with at its hit
-;; frames: the needle's tip (the rig's FK over her own poses, read from senjumaru-art.lisp; radial for an arc, ahead for a
-;; capsule) or its K prop's far end (*SJ-STRIKE-REACH*). The volume's far edge is where his hurt cylinder's near side may
-;; stand (an arc's r, a capsule's b + r). The host has no C: anim.lisp's float intrinsics as plain CL
+;; The reach matches the art (the user's playtests, 2026-09-29: first Senjumaru's, DUEL_SENJUMARU.md "Playtest: reach
+;; matches the art"; then every character's J / K, docs/DUEL_STRINGS.md §13): at a J / K link's hit frames what it strikes
+;; with reaches the volume's far edge, where his hurt cylinder's near side may stand (an arc's r, a capsule's b + r): the
+;; held weapon's tip (the rig's FK over the art files' own poses and bodies; radial for an arc, ahead for a capsule), the
+;; fist / foot / sleeve of a strike that isn't the blade (*STRIKERS*), or Senjumaru's K prop's far end (*SJ-STRIKE-REACH*).
+;; The Breaker's strike too (its clip 2: the grab is close, §14; it may fall short, never over).
+;; Within 0.15 m either way for the J links and Senjumaru's K props; the other K links, and every link of the forms that play
+;; another form's clip at another reach or blade (*REACH-ONE-SIDED*), may fall short (fire, ice, cloth and the ember line
+;; carry them) but never pass the edge by more than 0.15 m. 片腕 KATAUDE is
+;; the exception: the base clips at x0.7 with the broken cleaver (the ruined arm; pass the edge by up to 0.6 m, as before
+;; the J cut). The host has no C: anim.lisp's float intrinsics as plain CL
 (defmacro engine::f-max (a b) `(max ,a ,b))
 (defmacro engine::f-mod (a b) `(mod ,a ,b))
 (defmacro engine::f-sin (a) `(sin ,a))
 (defmacro engine::f-cos (a) `(cos ,a))
 (defmacro engine::f-wrap (a) `(let ((x ,a)) (- x (* 6.2831853f0 (floor (+ x 3.14159265f0) 6.2831853f0)))))
 (load (merge-pathnames "../engine/lisp/anim.lisp" *load-truename*))
-(let ((scale nil) (needle nil) (strike nil))
-  (with-open-file (in (merge-pathnames "../duel/lisp/senjumaru-art.lisp" *load-truename*))
-    (let ((*package* (find-package :duel)))
-      (loop for form = (read in nil in) until (eq form in)
-            when (consp form)
-              do (case (first form)
-                   ((defpose defclip defstrike) (eval form))
-                   (defun (when (eq (second form) 'sj-okobo-props) (eval form)))
-                   (defparameter (when (eq (second form) '*sj-strike-reach*) (setf strike (eval (third form)))))
-                   (defbody (when (eq (second form) :senjumaru) (setf scale (getf (third form) :scale))))
-                   (defweapon (when (eq (second form) :shigarami) (setf needle (getf (third form) :length))))))))
-  (let ((jm (make-f32 (* 16 +nj+))) (pose (make-f32 +pose-n+)) (v (make-f32 3)) (props (sj-okobo-props)))
-    (flet ((tip (clip fr)                              ; the needle's tip at clip frame FR: values radial, ahead (m)
-             (clip-sample! pose (find-clip clip) (/ fr 60.0))
-             (pose-fk! jm pose 0f0 0f0 0f0 0f0 (f32 scale) 0f0 props)   ; (yaw 0 faces -Z)
-             (joint-point! v jm (ji :weapon-r) 0f0 0f0 (f32 (- needle)))
-             (values (sqrt (+ (expt (aref v 0) 2) (expt (aref v 2) 2))) (- (aref v 2)))))
-      (dolist (cf (remove :senjumaru *forms* :key #'first :test-not #'eq))
-        (let ((k (apply #'kit cf)))
-          (dolist (name (remove-duplicates (loop for (from nil to) in (kit-strings k) collect from collect to)))
-            (let* ((mv (kit-move k name)) (vol (first (hw-vols (svref (mv-hits mv) 0)))) (cap (> (aref vol 0) 0.5))
-                   (edge (if cap (+ (aref vol 2) (aref vol 4)) (aref vol 1)))
-                   (art (or (third (assoc (mv-clip mv) strike))
-                            (loop for fr from (mv-s mv) below (+ (mv-s mv) (mv-a mv))
-                                  maximize (multiple-value-bind (r ahead) (tip (mv-clip mv) fr) (if cap ahead r))))))
-              (check (or (<= (abs (- art edge)) 0.15)
-                         (format t "~a ~a: the volume ends ~,2f m, the art ~,2f m~%" (second cf) name edge art))))))))))
+(defparameter *strikers* '((:ya-sleeve . :hand-l) (:ke-kick . :foot-r) (:ke-b-hook . :hand-l) (:ic-q1 . :hand-l)
+                           (:ic-q2 . :hand-l) (:ru-palm . :hand-l)
+                           (:ya-ikkotsu . :hand-r) (:ke-shoulder . :shoulder-l) (:ru-hainawa . :hand-l) (:sj-saidan . :hand-r))
+  "Clip -> the joint that strikes when it isn't the held weapon's tip (Ichigo's Shikai J: the short blade held reversed
+along the left forearm, so the fist leads).")
+(defparameter *reach-one-sided* '((:yamamoto :bankai-east) (:yamamoto :bankai-west) (:kenpachi :nozarashi)
+                                  (:kenpachi :bankai) (:rukia :zero)))
+(let ((bodies nil) (weapons nil) (strike nil))
+  (dolist (art '("yama" "ken" "rukia" "ichigo" "senjumaru"))
+    (with-open-file (in (merge-pathnames (format nil "../duel/lisp/~a-art.lisp" art) *load-truename*))
+      (let ((*package* (find-package :duel)))
+        (loop for form = (read in nil in) until (eq form in)
+              when (consp form)
+                do (case (first form)
+                     ((defpose defclip defstrike) (eval form))
+                     (defun (when (eq (second form) 'sj-okobo-props) (eval form)))
+                     (defparameter (when (eq (second form) '*sj-strike-reach*) (setf strike (eval (third form)))))
+                     (defbody (push (cons (second form) (third form)) bodies))
+                     (defweapon (push (cons (second form) (getf (third form) :length)) weapons)))))))
+  (let ((jm (make-f32 (* 16 +nj+))) (pose (make-f32 +pose-n+)) (v (make-f32 3))
+        (min-hurt (loop for (nil . b) in bodies minimize (getf b :hurt-r))) (max-hurt (loop for (nil . b) in bodies maximize (getf b :hurt-r))))
+    ;; J is close (the J cut): the chase and a lunge stop at *LUNGE-STOP*, outside any two hurt cylinders' push-apart, and
+    ;; every J follow-up's chase goal is inside its reach + the thinnest hurt radius (it connects)
+    (check (> *lunge-stop* (* 2 max-hurt)))
+    (dolist (cf *forms*)
+      (let* ((k (apply #'kit cf)) (b (cdr (assoc (kit-body k) bodies)))
+             (b (or b (cdr (assoc (first cf) bodies))))                  ; (a body variant: the rig of its character)
+             (props (if (eq (first cf) :senjumaru) (sj-okobo-props) (and (getf b :props) (apply #'make-rig-proportions (getf b :props)))))
+             (wlen (cdr (assoc (kit-weapon k) weapons))))
+        (dolist (lm (append (link-moves k) (let ((br (kit-command-move k :breaker))) (and br (list (list br :breaker))))))
+          (let* ((mv (first lm)) (hw (svref (mv-hits mv) 0)) (vol (first (hw-vols hw))) (cap (> (aref vol 0) 0.5))
+                 (edge (if cap (+ (aref vol 2) (aref vol 4)) (aref vol 1)))
+                 (clip (if (eq (second lm) :breaker) (mv-clip-2 mv) (mv-clip mv)))   ; (the Breaker's strike: its clip 2)
+                 (striker (cdr (assoc clip *strikers*)))
+                 (art (or (third (assoc clip strike))
+                          (loop for sf from (hw-from hw) below (hw-to hw)
+                                maximize (progn
+                                           (clip-sample! pose (find-clip clip) (/ (* sf (mv-clip-speed mv)) 60.0))
+                                           (pose-fk! jm pose 0f0 0f0 0f0 0f0 (f32 (getf b :scale)) (f32 (deg (getf b :hunch 0))) props)
+                                           (if striker                            ; (yaw 0 faces -Z)
+                                               (joint-point! v jm (joint-index striker) 0f0 0f0 0f0)
+                                               (joint-point! v jm (ji :weapon-r) 0f0 0f0 (f32 (- wlen))))
+                                           (if cap (- (aref v 2)) (sqrt (+ (expt (aref v 0) 2) (expt (aref v 2) 2))))))))
+                 (d (- art edge)))
+            (when (eq (mv-kind mv) :quick)
+              (check (<= (max *lunge-stop* (- (mv-reach mv) *chase-margin*)) (- (+ (mv-reach mv) min-hurt) 0.02))))
+            (check (or (if (equal cf '(:kenpachi :kataude))
+                           (<= d 0.6)
+                           (and (<= d 0.15)
+                                (or (>= d -0.15)
+                                    (and (not (assoc clip strike))   ; (her K props: both ways)
+                                         (or (member cf *reach-one-sided* :test #'equal) (member (mv-kind mv) '(:flash :breaker)))))))
+                       (format t "~a ~a: the volume ends ~,2f m, the art ~,2f m~%" (second cf) (mv-name mv) edge art)))))))))
+
+;; J is short, K long (the user, 2026-09-29, docs/DUEL_STRINGS.md §13): in every form every K link reaches at least 0.5 m further
+;; than any J link at the same position of the string
+(dolist (cf *forms*)
+  (let ((lm (link-moves (apply #'kit cf))))
+    (loop for n from 1 to 3
+          do (let ((j (loop for (m k) in lm when (and (= k n) (eq (mv-kind m) :quick)) maximize (mv-reach m)))
+                   (kk (loop for (m k) in lm when (and (= k n) (eq (mv-kind m) :flash)) minimize (mv-reach m))))
+               (check (or (>= (- kk j) 0.5) (format t "~a link ~d: J ~,2f K ~,2f~%" cf n j kk)))))))
 
 ;; no character names in the generic files (design-v1 §12)
 (dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow" "endless-rules" "endless"))

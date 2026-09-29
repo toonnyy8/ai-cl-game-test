@@ -182,13 +182,13 @@ So the routes that switch at link 2 (JK…, KJ…) are the ones that grind the g
 
 | Link | Name | Clip | S/A/R (enter → S_eff) | Dmg | React | Blk | Whiff | Volume | Guard | Pose (one line) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| J1 | 小牙 KOKIBA `:ic-j1` [G] | **new** `:ic-q1` | 7/3/12 | 32 | flinch | −2 | 20 | 2.2 m 100°, slide 0.6 | 8 | the short blade flicked from the reverse grip, stepping in |
-| J2 | 返し KAESHI `:ic-j2` [G] | **new** `:ic-q2` | 7/3/13 | 32 | flinch | −2 | 21 | 2.2 m 100° | 8 | the wrist turns, the short blade back across |
-| J3 | 双旋 SŌSEN-GIRI `:ic-j3` (ender) [G] | **new** `:ic-spin` | 8/3/18 | 40 | stagger | −4 | 26 | 2.4 m 200° | 8 | a full turn with both blades out, long high and short low |
-| K1 | 大牙 ŌKIBA `:ic-k1` [G] | **new** `:ic-f1` | 16/4/20 | 68 | stagger | −3 | 32 | 3.0 m 150° | 16 | the long cleaver drawn back past the hip, a waist-high sweep |
-| K2 | 昇牙 SHŌGA `:ic-k2` [G] | **new** `:ic-f2` | 20/4/24 (6 → 14) | 60 | stagger | −3 | 36 | 3.0 m 90° | 16 | from the floor up, the cleaver's hole whistling; 4 f hold at the top |
-| K3 | 落牙 RAKUGA `:ic-k3` (ender) [G] | **new** `:ic-drop` | 21/5/34 (7 → 14) | 84 | crumple | −20 | 46 | line 0.3 → 3.4, h 1.2 | 22 | both hands on the long blade, held 3 f, dropped |
-| J2s | 返牙 KAESHI-KIBA `:ic-j2s` | `:ic-cross` (clip-s 7) | as J2 | 32 | flinch | −2 | 21 | 2.2 m 100° | **12** | the short blade under the long one's return |
+| J1 | 小牙 KOKIBA `:ic-j1` [G] | **new** `:ic-q1` | 7/3/12 | 32 | flinch | −2 | 20 | **1.1 m** 100° (was 2.2), slide 0.6 | 8 | the short blade flicked from the reverse grip, stepping in |
+| J2 | 返し KAESHI `:ic-j2` [G] | **new** `:ic-q2` | 7/3/13 | 32 | flinch | −2 | 21 | **1.1 m** 100° (was 2.2) | 8 | the wrist turns, the short blade back across |
+| J3 | 双旋 SŌSEN-GIRI `:ic-j3` (ender) [G] | **new** `:ic-spin` | 8/3/18 | 40 | stagger | −4 | 26 | **1.44 m** 200° (was 2.4) | 8 | a full turn with both blades out, long high and short low |
+| K1 | 大牙 ŌKIBA `:ic-k1` [G] | **new** `:ic-f1` | 16/4/20 | 68 | stagger | −3 | 32 | **2.7 m** 150° (was 3.0) | 16 | the long cleaver drawn back past the hip, a waist-high sweep |
+| K2 | 昇牙 SHŌGA `:ic-k2` [G] | **new** `:ic-f2` | 20/4/24 (6 → 14) | 60 | stagger | −3 | 36 | **2.7 m** 90° (was 3.0) | 16 | from the floor up, the cleaver's hole whistling; 4 f hold at the top |
+| K3 | 落牙 RAKUGA `:ic-k3` (ender) [G] | **new** `:ic-drop` | 21/5/34 (7 → 14) | 84 | crumple | −20 | 46 | line 0.3 → **3.0** (was 3.4), h 1.2 | 22 | both hands on the long blade, held 3 f, dropped |
+| J2s | 返牙 KAESHI-KIBA `:ic-j2s` | `:ic-cross` (clip-s 7) | as J2 | 32 | flinch | −2 | 21 | **1.1 m** 100° (was 2.2; its own close clip `:ic-cross-j`) | **12** | the short blade under the long one's return |
 | K2s | 交牙 KŌGA `:ic-k2s` | `:ic-cross` | as K2 | 60 | stagger | −3 | 36 | 2.8 m 110° | **24** | both blades cross in an X from high to low |
 
 **Budget check:**
@@ -1053,12 +1053,12 @@ dash. Its bands: `:sig 3` at 2.6–5 m, `:sig 2` at 5–9 m; L after a K link 0.
 
 | Link | Name | Clip | S / A / R | Dmg | React | Block | Reach | Guard |
 |---|---|---|---|---|---|---|---|---|
-| J1 | 板薙 ITA-NAGI | `:ic-k-cut` | 8 / 3 / 12 | 30 | flinch | −2 | 2.6 m 110° | 8 |
-| J2 | 返板 KAESHI-ITA | `:ic-k-back` | 8 / 3 / 13 | 30 | flinch | −2 | 2.6 m 110° | 8 |
-| J3 | 板旋 ITA-SEN | `:ic-k-wrap` | 9 / 3 / 18 | 40 | stagger | −4 | 2.8 m 200° | 8 |
-| K1 | 大板 ŌITA | `:ic-f1` | 18 / 4 / 20 | 66 | stagger | −3 | 3.2 m 150° | 14 |
-| K2 | 昇板 SHŌ-ITA | `:ic-f2` | 20 / 4 / 24 (enter 6) | 58 | stagger | −3 | 3.2 m 90° | 14 |
-| K3 | 天鎖落 TENSA-OTOSHI | `:ic-drop` | 21 / 5 / 34 (enter 7) | 80 | crumple | −20 | line 0.3 → 3.6 | 20 |
+| J1 | 板薙 ITA-NAGI | `:ic-k-cut` | 8 / 3 / 12 | 30 | flinch | −2 | **1.56 m** 110° (was 2.6; `:ic-k-jab`) | 8 |
+| J2 | 返板 KAESHI-ITA | `:ic-k-back` | 8 / 3 / 13 | 30 | flinch | −2 | **1.56 m** 110° (was 2.6) | 8 |
+| J3 | 板旋 ITA-SEN | `:ic-k-wrap` | 9 / 3 / 18 | 40 | stagger | −4 | **1.68 m** 200° (was 2.8; `:ic-k-wrap-j`) | 8 |
+| K1 | 大板 ŌITA | `:ic-f1` | 18 / 4 / 20 | 66 | stagger | −3 | **2.9 m** 150° (was 3.2) | 14 |
+| K2 | 昇板 SHŌ-ITA | `:ic-f2` | 20 / 4 / 24 (enter 6) | 58 | stagger | −3 | **2.9 m** 90° (was 3.2) | 14 |
+| K3 | 天鎖落 TENSA-OTOSHI | `:ic-drop` | 21 / 5 / 34 (enter 7) | 80 | crumple | −20 | line 0.3 → **3.2** (was 3.6) | 20 |
 
 Routes on hit before the multiplier: JJJ 100, KKK 204. U is a **normal guard** again (the chain gauge, its HUD skin, the
 `:u` / `:hud-guard` hooks and the one-hand U chip are gone).

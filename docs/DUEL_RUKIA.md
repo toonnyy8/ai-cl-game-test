@@ -141,12 +141,12 @@ Kikon **2**, Soul Break 3.
 ### 3.2 J / K grid (DUEL_STRINGS §2.1; K2 / K3 at 80 % as for every form)
 | Link | Name | Clip | S/A/R (enter → S_eff) | Dmg | React | Blk | Whiff | Volume | Guard | Extra | Pose (one line) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| J1 | 初霜 HATSUSHIMO `:ru-j1` | **new** `:ru-q1` | 7/3/12 | 34 | flinch | −2 | 20 | 2.2 m 100° | 8 | — | from a low forward stance, a one-handed flat cut, the ribbon trailing the arc |
-| J2 | 風花 KAZAHANA `:ru-j2` / `:ru-j2s` | **new** `:ru-q2` | 7/3/13 | 34 | flinch | −2 | 21 | 2.2 m 100° | 8 | — | the wrist turns over, a backhand along the same line; the ribbon flips over the blade |
-| J3 | 舞袖 MAI-SODE `:ru-j3` (ender) | **new** `:ru-spin` | 9/3/18 | 42 | stagger | −4 | 26 | 2.6 m 200° | 8 | — | a full pirouette on the ball of the foot, the blade at arm's length and the ribbon whipping round: "the dance" |
-| K1 | 霜突 SHIMO-TSUKI `:ru-k1` | **new** `:ru-thrust` | 17/4/20 | 66 | stagger | −3 | 32 | line 0.2 → 3.2 | 14 | frost 60 | a fencer's lunge, back arm out for balance, the white point driven straight |
-| K2 | 氷輪 HYŌRIN `:ru-k2` / `:ru-k2s` | **new** `:ru-ring` | 21/4/24 (7 → 14) | 58 | stagger | −3 | 36 | 2.8 m 140° | 14 | frost 60 | a rising turn; the snowflake guard traces a white ring for 3 drawings |
-| K3 | 雪崩 NADARE `:ru-k3` (ender) | **new** `:ru-drop` | 21/5/34 (7 → 14) | 84 | crumple | −20 | 46 | line 0.3 → 3.0, h 1.2 | 18 | frost 90 | both hands, the blade high and held 3 f, dropped; snow bursts from the plaza at the point |
+| J1 | 初霜 HATSUSHIMO `:ru-j1` | **new** `:ru-q1` | 7/3/12 | 34 | flinch | −2 | 20 | **1.44 m** 100° (2.4 before the J cut, §3.2 note) | 8 | — | from a low forward stance, a one-handed flat cut, the ribbon trailing the arc |
+| J2 | 風花 KAZAHANA `:ru-j2` / `:ru-j2s` | **new** `:ru-q2` | 7/3/13 | 34 | flinch | −2 | 21 | **1.32 m** 100° (was 2.2) | 8 | — | the wrist turns over, a backhand along the same line; the ribbon flips over the blade |
+| J3 | 舞袖 MAI-SODE `:ru-j3` (ender) | **new** `:ru-spin` | 9/3/18 | 42 | stagger | −4 | 26 | **1.56 m** 200° (was 2.6) | 8 | — | a full pirouette on the ball of the foot, the blade at arm's length and the ribbon whipping round: "the dance" |
+| K1 | 霜突 SHIMO-TSUKI `:ru-k1` | **new** `:ru-thrust` | 17/4/20 | 66 | stagger | −3 | 32 | line 0.2 → **2.8** (was 3.2) | 14 | frost 60 | a fencer's lunge, back arm out for balance, the white point driven straight |
+| K2 | 氷輪 HYŌRIN `:ru-k2` / `:ru-k2s` | **new** `:ru-ring` | 21/4/24 (7 → 14) | 58 | stagger | −3 | 36 | **2.5 m** 140° (was 2.8) | 14 | frost 60 | a rising turn; the snowflake guard traces a white ring for 3 drawings |
+| K3 | 雪崩 NADARE `:ru-k3` (ender) | **new** `:ru-drop` | 21/5/34 (7 → 14) | 84 | crumple | −20 | 46 | line 0.3 → **2.7** (was 3.0), h 1.2 | 18 | frost 90 | both hands, the blade high and held 3 f, dropped; snow bursts from the plaza at the point |
 
 - Budget check: J1 7, J2 7, J3 9 (7–10 / 7–9 / 8–10); K1 17 (16–20; K1 − J1 = 10 ≥ 7); K2 / K3 S_eff 14; R and block advantage
   exactly the budget's. K2 / K3 combo after a J (A 3 + 14 = 17 ≤ 17) and after a K (≤ 21).
@@ -263,12 +263,12 @@ look: a dim white ring on the plaza at the radius (the band's aura).
 
 | Link | −18 | −50 | −273 |
 |---|---|---|---|
-| J1 HATSUSHIMO | 2.4 m | 2.64 m | 3.24 m (the pinned-feet cut `:ru-q1-z`) |
-| J2 KAZAHANA | 2.2 m | 2.42 m | 2.97 m, **a palm backhand** (`:ru-palm` re-timed to S 7) |
-| J3 MAI-SODE | 2.6 m | 2.86 m, **two-handed and low** (`:ru-spin-50`) | 3.51 m, the ice blade |
-| K1 | 凍手 TŌSHU, 2.2 m | TŌSHU with the blade driven in beside the palm (`:ru-palm-50`), 2.42 m | **SHIMO-TSUKI's thrust with the ice blade, 4.3 m**, planted (`:ru-thrust-z`) |
-| K2 HYŌRIN | 2.8 m | 3.08 m | 3.78 m |
-| K3 氷華 HYŌKA | 2.7 m, crumple | 2.97 m, **both palms** (`:ru-flower-50`), the flower 1.2× | 3.65 m, frost 150, the flower 1.8× |
+| J1 HATSUSHIMO | **1.44 m** (was 2.4) | **1.58 m** (2.64) | **1.94 m** (3.24) (the pinned-feet cut `:ru-q1-z`) |
+| J2 KAZAHANA | **1.32 m** (was 2.2) | **1.45 m** (2.42) | **1.78 m** (2.97), **a palm backhand** (`:ru-palm` re-timed to S 7) |
+| J3 MAI-SODE | **1.56 m** (was 2.6) | **1.72 m** (2.86), **two-handed and low** (`:ru-spin-50`) | **2.11 m** (3.51), the ice blade |
+| K1 | 凍手 TŌSHU, **2.0 m** (was 2.2) | TŌSHU with the blade driven in beside the palm (`:ru-palm-50`), **2.2 m** (2.42) | **SHIMO-TSUKI's thrust with the ice blade, 3.78 m** (4.3), planted (`:ru-thrust-z`) |
+| K2 HYŌRIN | **2.5 m** (was 2.8) | **2.75 m** (3.08) | **3.38 m** (3.78) |
+| K3 氷華 HYŌKA | **2.4 m** (was 2.7), crumple | **2.64 m** (2.97), **both palms** (`:ru-flower-50`), the flower 1.2× | **3.24 m** (3.65), frost 150, the flower 1.8× |
 
 **The rest by band:**
 

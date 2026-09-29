@@ -180,12 +180,12 @@ The soldier and the umbrella let her work from 3–7 m.
 
 | Link | Name | Clip | S/A/R (enter → S_eff) | Dmg | React | Blk | Whiff | Volume | Guard | Pose (one line) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| J1 | 一針 HITOHARI `:sj-j1` [G] | **new** `:sj-q1` | 7/3/12 | 28 | flinch | −2 | 20 | 2.4 m 90°, slide 0.5 | 8 | the upper right hand jabs the needle; the echo hands ripple behind it |
-| J2 | 返し縫い KAESHINUI `:sj-j2` / `-j2s` [G] | **new** `:sj-q2` | 7/3/13 | 28 | flinch | −2 | 21 | 2.4 m 110° | 8 | the backstitch: the needle drawn back across, the thread pulled taut |
-| J3 | 千手 SENJU `:sj-j3` (ender) [G] | **new** `:sj-spin` | 8/3/18 | 36 | stagger | −4 | 26 | **2.4 m** 220° (2.6 before the playtest) | 8 | all six hands fan out and whirl in a ring of needles; the clogs stay planted |
-| K1 | 待ち針 MACHIBARI `:sj-k1` [G] | **new** `:sj-f1` | 17/4/20 | 60 | stagger | −3 | 32 | line 0.3 → 3.2 | 14 | two hands draw long pins back past the hip and drive them straight out |
-| K2 | 纏り MATSURI `:sj-k2` / `-k2s` [G] | **new** `:sj-f2` | 21/4/24 (7 → 14) | 50 | stagger | −3 | 36 | 2.8 m 140° | 14 | the hem stitch: a rising loop of thread whipped up and over him |
-| K3 | 絎け KUKE `:sj-k3` (ender) [G] | **new** `:sj-drop` | 21/5/34 (7 → 14) | 74 | crumple | −20 | 46 | 2.8 m 160°, h 0–1.4 | 18 | the blind stitch: all six hands slam pins down round his feet, held 3 f |
+| J1 | 一針 HITOHARI `:sj-j1` [G] | **new** `:sj-q1` | 7/3/12 | 28 | flinch | −2 | 20 | **1.44 m** 90° (was 2.4), slide 0.5 | 8 | the upper right hand jabs the needle; the echo hands ripple behind it |
+| J2 | 返し縫い KAESHINUI `:sj-j2` / `-j2s` [G] | **new** `:sj-q2` | 7/3/13 | 28 | flinch | −2 | 21 | **1.44 m** 110° (was 2.4) | 8 | the backstitch: the needle drawn back across, the thread pulled taut |
+| J3 | 千手 SENJU `:sj-j3` (ender) [G] | **new** `:sj-spin` | 8/3/18 | 36 | stagger | −4 | 26 | **1.44 m** 220° (2.4 before the J cut, 2.6 before the first playtest) | 8 | all six hands fan out and whirl in a ring of needles; the clogs stay planted |
+| K1 | 待ち針 MACHIBARI `:sj-k1` [G] | **new** `:sj-f1` | 17/4/20 | 60 | stagger | −3 | 32 | line 0.3 → **2.9** (was 3.2) | 14 | two hands draw long pins back past the hip and drive them straight out |
+| K2 | 纏り MATSURI `:sj-k2` / `-k2s` [G] | **new** `:sj-f2` | 21/4/24 (7 → 14) | 50 | stagger | −3 | 36 | **2.5 m** 140° (was 2.8) | 14 | the hem stitch: a rising loop of thread whipped up and over him |
+| K3 | 絎け KUKE `:sj-k3` (ender) [G] | **new** `:sj-drop` | 21/5/34 (7 → 14) | 74 | crumple | −20 | 46 | **2.5 m** 160° (was 2.8), h 0–1.4 | 18 | the blind stitch: all six hands slam pins down round his feet, held 3 f |
 
 Since the playtest every reach is where the art strikes: the J links' is the tip of the needle (now as tall as she is),
 and K1 / K2 / K3 each throw a prop out to their volume (below, "Playtest: reach matches the art").
@@ -329,9 +329,9 @@ no `:sew` and no count meter. Two links are new (the Rukia decision: "a small nu
 
 | Link | Name | Clip | S/A/R (enter → S_eff) | Dmg | React | Blk | Whiff | Volume | Guard | Pose |
 |---|---|---|---|---|---|---|---|---|---|---|
-| J1 / J2 / J3 / K2 | as §3.2 | base clips | as §3.2 | 28 / 28 / 36 / 50 | as §3.2 | as §3.2 | | 2.4 / 2.4 / 2.4 / 2.8 m (2.76 / 2.76 / 2.99 / 3.22 before the playtest) | as §3.2 | the needle; K2's loop of thread |
-| K1 | 反物打ち TANMONO-UCHI `:sj-t-k1` [G] | **new** `:sj-tanmono` | 17/4/20 | 56 | stagger | −3 | 32 | **line 0.3 → 4.2** | 14 | a bolt of cloth flung straight out from two hands and snapped back |
-| K3 | 巻き取り MAKITORI `:sj-t-k3` (ender) [G] | **new** `:sj-makitori` | 21/5/34 (7 → 14) | 72 | crumple | −20 | 46 | 2.8 m 160° | 18 | cloth wraps him from the feet up, then the hands haul it in: **pulled to 1.4 m** (Ichigo's `:pull`, gap 6) |
+| J1 / J2 / J3 / K2 | as §3.2 | base clips | as §3.2 | 28 / 28 / 36 / 50 | as §3.2 | as §3.2 | | **1.44 / 1.44 / 1.44 / 2.5 m** (2.4 / 2.4 / 2.4 / 2.8 before the J cut; 2.76 / 2.76 / 2.99 / 3.22 before the first playtest) | as §3.2 | the needle; K2's loop of thread |
+| K1 | 反物打ち TANMONO-UCHI `:sj-t-k1` [G] | **new** `:sj-tanmono` | 17/4/20 | 56 | stagger | −3 | 32 | **line 0.3 → 3.8** (was 4.2) | 14 | a bolt of cloth flung straight out from two hands and snapped back |
+| K3 | 巻き取り MAKITORI `:sj-t-k3` (ender) [G] | **new** `:sj-makitori` | 21/5/34 (7 → 14) | 72 | crumple | −20 | 46 | **2.5 m** 160° (was 2.8) | 18 | cloth wraps him from the feet up, then the hands haul it in: **pulled to 1.4 m** (Ichigo's `:pull`, gap 6) |
 
 - **Budget:** unchanged from §3.2 (host-tested on `:tsuji1`; the other five forms inherit it).
 - **Routes on hit:** JJJ 92, JJK 128, JKK 150, KKK 178, KKJ 142, KJJ 120 (base 92 / 130 / 152 / 184 / 146 / 124, **plus
@@ -998,6 +998,8 @@ that + his hurt r, 0.36–0.45). What she strikes with is the tip of the needle 
 capsule; the rig's FK over her own poses) or the K link's prop at its far end. The echo arms never reach past her rig
 hands (they follow them, turned about her spine), so they don't count.
 
+- (**Superseded 2026-09-29 by the J cut**, DUEL_STRINGS.md §13: J is light, short and fast for everyone; her J is 1.44 m,
+  the needle 1.2 m, the K props shortened with their volumes. The record of the first playtest follows.)
 - **The J links (the needle).** The first try trimmed the reach to the old 0.9 m needle's tip (1.6 m, then 2.0 m with a
   1.35 m needle): the seed gate had her win SY 1–4 / 20, SR 2 / 20, SI 2 / 20 (medians still inside the window), and
   `*senju-mult*` 2.0 moved SY only to 5 / 20 while pulling its median to 127.9 s. Her strings were being outranged, not

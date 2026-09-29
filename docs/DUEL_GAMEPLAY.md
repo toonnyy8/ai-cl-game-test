@@ -318,8 +318,12 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P2 konpaku 0-6 ticks 5516 secs 91.9
+duel -> RESULTS winner P2 konpaku 0-6 ticks 7879 secs 131.3
 ```
+
+(The J cut and the closer grab, 2026-09-29 (DUEL_STRINGS.md §13–§14): every pairing changed; YY `winner P1 konpaku 1-0
+ticks 8342 secs 139.0`, KK `winner P2 konpaku 0-1 ticks 7967 secs 132.8`. Before it this line was `winner P2 konpaku 0-6
+ticks 5516 secs 91.9`.)
 
 (Kenpachi's more aggressive CPU in cups 2 / 3, AI only, 2026-09-29 (DUEL_NOZARASHI_V2.md, "The CPU after the faster
 drain"): YK and KK changed (KK `winner P2 konpaku 0-6 ticks 5603 secs 93.4`), YY unchanged. Before it, after the 2× NOME
@@ -372,21 +376,27 @@ fifteen pairings (2026-09-29: Ichigo's four, Senjumaru's five) run them in paral
 
 | Pairing | Median | Range | K.O. | Wins P1 / P2 |
 |---|---|---|---|---|
-| Yamamoto vs Yamamoto | 134.7 s | 98.2–205.5 | 20/20 | 9 / 11 |
-| Yamamoto vs Kenpachi | 121.1 s (accepted, the user 2026-09-29) | 79.6–182.4 | 20/20 | Yamamoto 13 / Kenpachi 7 |
-| Kenpachi vs Kenpachi | 127.7 s | 88.4–180.4 | 20/20 | 9 / 11 |
-| Rukia vs Yamamoto | 133.7 s | 88.3–163.5 | 20/20 | Rukia 12 / Yamamoto 8 |
-| Rukia vs Kenpachi | 130.8 s | 100.0–181.1 | 20/20 | Rukia 13 / Kenpachi 7 |
-| Rukia vs Rukia | 170.1 s | 125.6–253.9 | 20/20 | 12 / 8 |
-| Ichigo vs Yamamoto | 148.0 s | 120.3–184.3 | 20/20 | Ichigo 7 / Yamamoto 13 |
-| Ichigo vs Kenpachi | 147.1 s | 110.8–189.0 | 20/20 | Ichigo 9 / Kenpachi 11 |
-| Ichigo vs Rukia | 179.3 s | 130.5–228.1 | 20/20 | Ichigo 6 / Rukia 14 |
-| Ichigo vs Ichigo | 194.1 s | 111.8–247.6 | 20/20 | 12 / 8 |
-| Senjumaru vs Yamamoto | 136.8 s | 95.2–165.5 | 20/20 | Senjumaru 12 / Yamamoto 8 |
-| Senjumaru vs Kenpachi | 132.9 s | 98.0–191.3 | 20/20 | Senjumaru 6 / Kenpachi 14 |
-| Senjumaru vs Rukia | 176.0 s | 151.9–206.0 | 20/20 | Senjumaru 12 / Rukia 8 |
-| Senjumaru vs Senjumaru | 190.5 s | 135.9–225.2 | 20/20 | 8 / 12 |
-| Senjumaru vs Ichigo | 180.5 s | 92.6–224.0 | 20/20 | Senjumaru 15 / Ichigo 5 |
+| Yamamoto vs Yamamoto | 152.4 s | 116.2–188.8 | 20/20 | 9 / 11 |
+| Yamamoto vs Kenpachi | 139.2 s | 105.9–208.7 | 20/20 | Yamamoto 14 / Kenpachi 6 |
+| Kenpachi vs Kenpachi | 137.4 s | 97.1–167.2 | 20/20 | 7 / 13 |
+| Rukia vs Yamamoto | 144.8 s | 101.8–160.6 | 20/20 | Rukia 8 / Yamamoto 12 |
+| Rukia vs Kenpachi | 141.6 s | 95.9–219.0 | 20/20 | Rukia 14 / Kenpachi 6 |
+| Rukia vs Rukia | 182.2 s | 154.3–233.9 | 20/20 | 10 / 10 |
+| Ichigo vs Yamamoto | 147.4 s | 106.3–182.7 | 20/20 | Ichigo 10 / Yamamoto 10 |
+| Ichigo vs Kenpachi | 152.5 s | 105.7–208.5 | 20/20 | Ichigo 16 / Kenpachi 4 |
+| Ichigo vs Rukia | 190.0 s | 147.6–242.6 | 20/20 | Ichigo 6 / Rukia 14 |
+| Ichigo vs Ichigo | 201.2 s | 131.9–257.1 | 20/20 | 9 / 11 |
+| Senjumaru vs Yamamoto | 151.0 s | 128.3–186.7 | 20/20 | Senjumaru 4 / Yamamoto 16 |
+| Senjumaru vs Kenpachi | 155.8 s | 111.1–177.8 | 20/20 | Senjumaru 12 / Kenpachi 8 |
+| Senjumaru vs Rukia | 199.7 s | 119.4–229.9 | 20/20 | Senjumaru 12 / Rukia 8 |
+| Senjumaru vs Senjumaru | 192.3 s | 107.1–237.3 | 20/20 | 8 / 12 |
+| Senjumaru vs Ichigo | 197.4 s | 110.0–263.4 | 20/20 | Senjumaru 13 / Ichigo 7 |
+
+(2026-09-29, the J cut and the closer grab (DUEL_STRINGS.md §13–§14, DEVLOG §36): J 0.4–0.6× (Yamamoto and Kenpachi 0.4, Ichigo's
+J1 / J2 0.5, his J3 / KESSA, Rukia and Senjumaru 0.6), K a little shorter, the Breaker at 0.95 / 0.7 m, the CPU tables for close J:
+seeds 1–20, one run per pairing with 2125+k, 300/300 K.O., every median inside 125–210 s, YK too (the rows before it:
+YY 134.7, YK 121.1 (accepted), KK 127.7, RY 133.7, RK 130.8, RR 170.1, IY 148.0, IK 147.1, IR 179.3, II 194.1, SY 136.8,
+SK 132.9, SR 176.0, SS 190.5, SI 180.5 s).)
 
 (2026-09-29, main after Kenpachi's CPU aggression, the awakening breaking his attack, Senjumaru's playtest batch and Ichigo v2 (DEVLOG §31–§34): seeds 1–20, one run per pairing, 300/300 K.O. **Yamamoto vs Kenpachi's median is 121.1 s, under the 125 s floor; the user accepted it (「劍八那邊就這樣給過即可」)**: Kenpachi's CPU was tuned to sit on the floor (DUEL_NOZARASHI_V2.md), and a cup-3 `:tempo` 0.7 trial fixed YK (126.4 s) but broke KK (117.8 s), so the tuned CPU stays.)
 

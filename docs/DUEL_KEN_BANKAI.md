@@ -101,12 +101,12 @@ stance → a stance break, like a Breaker); a guard, DRINK, West's ward and a pa
 
 | Input | Name | Clip | S/A/R (enter) | Dmg (×1.2) | React | Blk | Whiff | Volume | Guard | Pip | Through guard / armour | Pose (one line) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| J1 | 叩き斬り TATAKI-GIRI `:ke-b-j1` | `:ke-q1` | 8/3/12 | 38 (46) | flinch | −2 | 20 | 3.2 m 100°, lunge 1.0 | 8 | — | chip 20 % | the broken cleaver hacked down from the shoulder, lunging, head low like a beast |
-| J2 | 薙ぎ払い NAGI-HARAI `:ke-b-j2` / `-j2s` | `:ke-q2` | 8/3/13 | 38 (46) | flinch | −2 | 21 | 3.2 m 100° | 8 | — | chip 20 % | the backhand sweep back across, the torn haori whipping |
-| J3 | 拳骨 GENKOTSU `:ke-b-j3` (ender) | **new** `:ke-b-fist` | 9/3/18 | 50 (60) | stagger | −4 | 26 | 2.0 m 60°, lunge 0.6 | 8 | — | chip 20 % | a left hook to the face, the cleaver held out wide in the right; the ink impact mark on the jaw |
-| K1 | 大鉈 ŌNATA `:ke-b-k1` | `:ke-f1` | 17/4/20 | 120 (144) | stagger | −3 | 32 | 3.6 m 120° | **28** | 1 | ×2 guard, chip 20 %, **rend** | the hatchet chop: wound over the right shoulder, the whole torso turning, a crack of red light along the forearm |
-| K2 | 抉り上げ EGURI-AGE `:ke-b-k2` / `-k2s` | `:ke-f2` | 20/4/24 (6 → 14) | 100 (120) | stagger | −3 | 36 | 3.2 m 90° | **28** | 1 | ×2 guard, chip, rend | from the floor up, gouging; he rises on his toes, 4 f hold at the top |
-| K3 | 叩き落とし TATAKI-OTOSHI `:ke-b-k3` (ender) | `:ke-r-f2` (clip-s 21) | 21/5/34 (7 → 14) | 150 (180) | crumple | −20 | 46 | line 0.3 → 4.0 | **36** | 1 | ×2 guard, chip, rend | the cleaver high in both hands, held 3 f, dropped; the victim crumples |
+| J1 | 叩き斬り TATAKI-GIRI `:ke-b-j1` | `:ke-q1` | 8/3/12 | 38 (46) | flinch | −2 | 20 | **1.28 m** 100° (was 3.2), lunge 1.0 | 8 | — | chip 20 % | the broken cleaver hacked down from the shoulder, lunging, head low like a beast |
+| J2 | 薙ぎ払い NAGI-HARAI `:ke-b-j2` / `-j2s` | `:ke-q2` | 8/3/13 | 38 (46) | flinch | −2 | 21 | **1.28 m** 100° (was 3.2) | 8 | — | chip 20 % | the backhand sweep back across, the torn haori whipping |
+| J3 | 拳骨 GENKOTSU `:ke-b-j3` (ender) | **new** `:ke-b-fist` | 9/3/18 | 50 (60) | stagger | −4 | 26 | **0.8 m** 60° (was 2.0; its own close clip `:ke-b-hook`), lunge 0.6 | 8 | — | chip 20 % | a left hook to the face, the cleaver held out wide in the right; the ink impact mark on the jaw |
+| K1 | 大鉈 ŌNATA `:ke-b-k1` | `:ke-f1` | 17/4/20 | 120 (144) | stagger | −3 | 32 | **3.4 m** 120° (was 3.6) | **28** | 1 | ×2 guard, chip 20 %, **rend** | the hatchet chop: wound over the right shoulder, the whole torso turning, a crack of red light along the forearm |
+| K2 | 抉り上げ EGURI-AGE `:ke-b-k2` / `-k2s` | `:ke-f2` | 20/4/24 (6 → 14) | 100 (120) | stagger | −3 | 36 | **3.0 m** 90° (was 3.2) | **28** | 1 | ×2 guard, chip, rend | from the floor up, gouging; he rises on his toes, 4 f hold at the top |
+| K3 | 叩き落とし TATAKI-OTOSHI `:ke-b-k3` (ender) | `:ke-r-f2` (clip-s 21) | 21/5/34 (7 → 14) | 150 (180) | crumple | −20 | 46 | line 0.3 → **3.7** (was 4.0) | **36** | 1 | ×2 guard, chip, rend | the cleaver high in both hands, held 3 f, dropped; the victim crumples |
 | L | 噛み千切り KAMICHIGIRI `:ke-b-bite` | **new** `:ke-b-bite` | 10/3/28 | 120 (144) | crumple | — | 34 | 1.5 m 60° | — | 1 | **unguardable** (guard, DRINK, ward, parry, stance, armour all fail; Step / Hoho iframes dodge) | a lunge, the left hand clamps the opponent's arm, the head drives in, a tearing jerk back (a BLOOD spray) |
 | Shift+K | 盾ごと TATE-GOTO `:ke-b-split` | `:ke-meteor` | 24/4/30 | 260 (312) | knockdown, kb 3 | Guard Break | 36 | vertical line 0.3 → 6.0, 1 m wide | — | 1 + 1 bar | `:guard-crush` over the whole line (Guard Break 50 f, −35), rend | the two-handed overhead through guard and arm together; the ground splits 6 m (the meteor's look, shorter) |
 | Shift+L | 殴り飛ばし NAGURI-TOBASHI | `:ke-charge` (as written) → `:ke-b-punch` | charge 14 / dash 26 / 24; punch 6/3/30 | 25 + 150 (30 + 180) | the punch: knockback **6 m** | −16 | as the charge | charge as built; punch 2.0 m 90° | 22 | 1 + 2 bars | punch: rend; the charge still guard-crushes when held at its dash (as built) | the charge, then a **left** straight into the chest (the `:ke-b-fist` clip at clip-s 9 → 6), the victim sent flying |
@@ -162,7 +162,7 @@ variant of `vfx-sky-split`.
 | Input | Move | Rule |
 |---|---|---|
 | J / K grid | base ARAGIRI, KAESHIGIRI, ŌBURI, KIRIAGE, BUNMAWASHI **derived at reach ×0.7** (`*kataude-reach*`, startup +0): J1 1.82 m, K1 2.10, K3 1.96 | the ruined arm can't extend; the frame budget is untouched (S unchanged) |
-| J3 | KENKA-GERI **as written** (2.2 m) | a leg: the arm doesn't matter (listed as its own move) |
+| J3 | KENKA-GERI **as written** (0.88 m since the J cut; 2.2 m before) | a leg: the arm doesn't matter (listed as its own move) |
 | L | the stance "KITTE MIRO YO" derived (cut 1.96 m) | he still takes hits smiling |
 | Shift+K / Shift+L | Buttagiru / charge → flurry, derived | SP2 2 bars (awakened) |
 | I | the shoulder charge **as written** | the Breaker strike must out-reach its 2.2 m trigger (§10 B2) |

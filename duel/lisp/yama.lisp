@@ -11,21 +11,22 @@
 ;;; the J / K strings (docs/DUEL_STRINGS.md §3.1): up to three links, each J or K, switching at most once (JJJ JJK JKK KKK
 ;;; KKJ KJJ). One move per (link, button); J2s / K2s, the switched link 2, are copies (DEFMOVE-COPY) whose string allows
 ;;; only the new button. Every K at link 2 / 3 enters at S_eff 14 (:enter), so it combos after a J and a K link alike;
-;;; the enders (:ender) stagger / crumple, and their hit opens the O ender. Hellfire plays these at x1.3. K2 / K3 deal
+;;; the enders (:ender) stagger / crumple, and their hit opens the O ender. Hellfire plays these at x1.3. The reach since the J
+;;; cut (docs/DUEL_STRINGS.md §13): J 0.4x (close, the art pulled in), K a little shorter (the fire carries it). K2 / K3 deal
 ;;; 80 % of the design's numbers (the seed gate's first lever, docs/DUEL_STRINGS.md §9: 80 -> 64, 110 -> 88; East 75 -> 60,
 ;;; 105 -> 84).
 (defmove :ya-j1 :kind :quick :clip :ya-q1 :startup 9 :active 3 :recovery 12 :dmg 38 :adv-block -2
-  :reach 2.4 :arc 100 :on-hit :flinch)                               ; HISEN: the flat cut from the draw
+  :reach 0.96 :arc 100 :on-hit :flinch)                              ; HISEN: the flat cut from the draw
 (defmove :ya-j2 :kind :quick :clip :ya-q2 :startup 8 :active 3 :recovery 13 :dmg 38 :adv-block -2
-  :reach 2.4 :arc 100 :on-hit :flinch)                               ; KAESHIBI: the backhand along the same line
+  :reach 0.96 :arc 100 :on-hit :flinch)                              ; KAESHIBI: the backhand along the same line
 (defmove :ya-j3 :kind :quick :clip :ya-sleeve :startup 9 :active 3 :recovery 18 :dmg 45 :adv-block -4
-  :reach 2.2 :arc 140 :on-hit :stagger :flags (:ender))              ; SODEBI: the burning empty sleeve
+  :reach 0.88 :arc 140 :on-hit :stagger :flags (:ender))             ; SODEBI: the burning empty sleeve
 (defmove :ya-k1 :kind :flash :clip :ya-f1 :startup 18 :active 4 :recovery 20 :dmg 75 :adv-block -3
-  :reach 3.0 :arc 150 :on-hit :stagger :meter *inferno-flash*)      ; HOMURA-NAGI: the waist-high sweep
+  :reach 2.6 :arc 150 :on-hit :stagger :meter *inferno-flash*)      ; HOMURA-NAGI: the waist-high sweep
 (defmove :ya-k2 :kind :flash :clip :ya-f2 :enter 8 :startup 22 :active 4 :recovery 24 :dmg 64 :adv-block -3
-  :reach 2.6 :arc 90 :on-hit :stagger :meter *inferno-flash*)       ; SHOEN: the rising flame column
+  :reach 2.3 :arc 90 :on-hit :stagger :meter *inferno-flash*)       ; SHOEN: the rising flame column
 (defmove :ya-k3 :kind :flash :clip :ya-q3 :clip-s 12 :enter 8 :startup 22 :active 5 :recovery 34 :dmg 88 :adv-block -20
-  :reach 2.8 :arc 120 :on-hit :crumple :meter *inferno-flash* :flags (:ender))   ; ENBAKU: the dome at his feet
+  :reach 2.4 :arc 120 :on-hit :crumple :meter *inferno-flash* :flags (:ender))   ; ENBAKU: the dome at his feet
 (defmove-copy :ya-j2s :ya-j2)
 (defmove-copy :ya-k2s :ya-k2)
 ;; two cuts (f16, f28), then the wave hazard leaves the blade at f40 (-6 on block at range)
@@ -60,8 +61,8 @@
 ;;; ================================================================ Hellfire (Gokuen)
 (defmove :ya-nadegiri :kind :sp :clip :ya-nadegiri :callout "NADEGIRI" :cost 2
   :startup 20 :active 4 :recovery 30 :dmg 240 :adv-block -16
-  :vol (:cap 0.3 8.0 1.0 0.5) :on-hit :knockdown :kb 3.0 :flags (:ranged)   ; line 8 m: the blade within Q1's
-  :params (:melee-range 2.4))                                        ; reach 2.4 m, ranged beyond
+  :vol (:cap 0.3 8.0 1.0 0.5) :on-hit :knockdown :kb 3.0 :flags (:ranged)   ; line 8 m: the blade within 2.4 m
+  :params (:melee-range 2.4))                                        ; (Q1's reach until the J cut), ranged beyond
 
 ;;; ================================================================ Bankai: Zanka no Tachi (docs/DUEL_YAMA_REWORK.md)
 ;;; The compass: O = North (KITA: TENCHI), Shift+L = South (the bind), U = East -> West (the kit's :guard-to), L = each
@@ -71,17 +72,17 @@
 ;;; ---------------------------------------------------------------- East, Kyokujitsujin: fast thin lines, the pierce
 ;; the East strings (docs/DUEL_STRINGS.md §3.2): thin ember lines, the sun's path
 (defmove :ya-e-j1 :kind :quick :clip :ya-q1 :clip-s 9 :startup 8 :active 3 :recovery 12 :dmg 34 :adv-block -2
-  :vol (:cap 0.2 3.1 1.1 0.25) :on-hit :flinch)                      ; HIZASHI: a flat edge line 3.1 m
+  :vol (:cap 0.2 1.24 1.1 0.25) :on-hit :flinch)                     ; HIZASHI: a flat edge line 1.24 m
 (defmove :ya-e-j2 :kind :quick :clip :ya-q2 :clip-s 8 :startup 7 :active 3 :recovery 13 :dmg 38 :adv-block -2
-  :vol (:cap 0.2 3.1 1.1 0.25) :on-hit :flinch)                      ; ZANSHO: the return stroke
+  :vol (:cap 0.2 1.24 1.1 0.25) :on-hit :flinch)                     ; ZANSHO: the return stroke
 (defmove :ya-e-j3 :kind :quick :clip :ya-e-thrust :clip-s 11 :startup 8 :active 3 :recovery 18 :dmg 42 :adv-block -4
-  :vol (:cap 0.2 3.6 1.1 0.3) :on-hit :stagger :flags (:ender))      ; SENKO: a short thrust, no lunge
+  :vol (:cap 0.2 1.44 1.1 0.3) :on-hit :stagger :flags (:ender))     ; SENKO: a short thrust, no lunge
 (defmove :ya-e-k1 :kind :flash :clip :ya-f1 :clip-s 18 :startup 16 :active 4 :recovery 20 :dmg 70 :adv-block -3
-  :vol (:cap 0.2 3.8 1.1 0.3) :on-hit :stagger)                     ; KAGERO: the wide sweep
+  :vol (:cap 0.2 3.4 1.1 0.3) :on-hit :stagger)                     ; KAGERO: the wide sweep
 (defmove :ya-e-k2 :kind :flash :clip :ya-f2 :clip-s 22 :enter 5 :startup 19 :active 4 :recovery 24 :dmg 60 :adv-block -3
-  :vol (:cap 0.2 3.8 1.3 0.35) :on-hit :stagger)                    ; NISSHO: the rising cut
+  :vol (:cap 0.2 3.4 1.3 0.35) :on-hit :stagger)                    ; NISSHO: the rising cut
 (defmove :ya-e-k3 :kind :flash :clip :ya-e-drop :enter 7 :startup 21 :active 5 :recovery 34 :dmg 84 :adv-block -20
-  :vol (:cap 0.3 3.6 1.2 0.3) :on-hit :crumple :flags (:ender))      ; RAKUJITSU: the vertical drop, the setting sun
+  :vol (:cap 0.3 3.2 1.2 0.3) :on-hit :crumple :flags (:ender))      ; RAKUJITSU: the vertical drop, the setting sun
 (defmove-copy :ya-e-j2s :ya-e-j2)
 (defmove-copy :ya-e-k2s :ya-e-k2)
 ;; L in East: KYOKKO (旭光), the first ray of the rising sun: a one-handed lunge (1.6 m over the startup) whose point
@@ -142,8 +143,9 @@
   :meter (:name "INFERNO" :max *inferno-max* :full-form :hellfire)
   :awaken-form :bankai-east
   :ai (:intents (:approach 1 :pressure 1 :zone 3 :defend 1)
-       :ranges (:approach (3.0 6.0) :pressure (1.5 3.0) :zone (7.0 9.5) :defend (4.0 7.0))
-       :moves ((0.0 3.0 :q 4 :f 2 :breaker 1 :sp2 1 :step 1)
+       :ranges (:approach (3.0 6.0) :pressure (1.0 2.6) :zone (7.0 9.5) :defend (4.0 7.0))
+       :moves ((0.0 1.3 :q 4 :f 1 :breaker 1 :sp2 1 :step 1)          ; J up close only (DUEL_STRINGS §13), K beyond
+               (1.3 3.0 :f 3 :breaker 1 :sp2 1 :step 1)
                (3.0 5.0 :f 1 :sig 2 :step 2 nil 2)
                (5.0 7.0 :sig 4 :sp1 1 :step 1 nil 1)
                (7.0 99.0 :sp1 4 :sig 2 :kikon 1 nil 1))                ; ENJO as a poke from range
@@ -155,8 +157,9 @@
   :enter-clips (:ya-hellfire) :enter-hook yama-ennetsu :aura :hellfire
   :commands (:sp2 :ya-nadegiri)
   :ai (:intents (:approach 1 :pressure 4 :zone 0 :defend 0)
-       :ranges (:approach (3.0 5.0) :pressure (1.5 3.0) :zone (6.0 8.0) :defend (4.0 7.0))
-       :moves ((0.0 3.0 :q 3 :f 3 :sp2 2 :breaker 1)
+       :ranges (:approach (3.0 5.0) :pressure (1.0 2.6) :zone (6.0 8.0) :defend (4.0 7.0))
+       :moves ((0.0 1.3 :q 3 :f 2 :sp2 2 :breaker 1)
+               (1.3 3.0 :f 3 :sp2 2 :breaker 1)
                (3.0 8.0 :f 1 :sig 2 :step 2)
                (8.0 99.0 :sp1 2 :step 2))
        :guard 0.4 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 1 :dash 0.5 :kikon-range 9.0))
@@ -174,8 +177,9 @@
   ;; off and zones while it refills; KYOKKO (L) in the close and middle bands, halved below :sig-gg of the gauge (it
   ;; pierces with a full edge), and ends a landed string half the time (:cancel); low Reishi: L x3 (:low)
   :ai (:intents (:approach 2 :pressure 4 :zone 1 :defend 0)
-       :ranges (:approach (3.0 5.0) :pressure (1.5 3.0) :zone (5.0 8.0) :defend (4.0 7.0))
-       :moves ((0.0 3.0 :q 5 :f 2 :breaker 1 :sig 2 :sp2 1 nil 1)
+       :ranges (:approach (3.0 5.0) :pressure (1.0 3.0) :zone (5.0 8.0) :defend (4.0 7.0))
+       :moves ((0.0 1.6 :q 5 :f 2 :breaker 1 :sig 2 :sp2 1 nil 1)
+               (1.6 3.0 :f 4 :breaker 1 :sig 2 :sp2 1 nil 1)
                (3.0 6.0 :f 1 :sp1 2 :sig 2 :step 1 nil 1)
                (6.0 99.0 :sp1 3 :step 1 nil 1))
        :guard 0.45 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 9 :dash 0.6 :dash-back 0.3 :kikon-range 9.0
@@ -190,8 +194,9 @@
   ;; the ward holds (U does nothing more); every pick but L / SP1 is East's move (the drop); parries a Flash startup it
   ;; can still catch (:react); SHONETSU when the ward just took a hit up close (:ward-reversal)
   :ai (:intents (:approach 2 :pressure 2 :zone 0 :defend 2)
-       :ranges (:approach (2.5 4.5) :pressure (1.2 2.5) :zone (3.5 5.0) :defend (2.5 4.5))
-       :moves ((0.0 3.0 :q 3 :f 2 :sig 2 :breaker 1 :sp2 1 nil 3)
+       :ranges (:approach (2.5 4.5) :pressure (1.0 2.5) :zone (3.5 5.0) :defend (2.5 4.5))
+       :moves ((0.0 1.6 :q 3 :f 2 :sig 2 :breaker 1 :sp2 1 nil 3)
+               (1.6 3.0 :f 3 :sig 2 :breaker 1 :sp2 1 nil 3)
                (3.0 6.0 :f 1 :sp1 2 :step 1 nil 2)
                (6.0 99.0 :sp1 2 :step 1 nil 2))
        :guard 0.3 :hoho 0.3 :awaken-above 0.4 :sp-cancel-bars 9 :dash 0.4 :dash-back 0.2 :kikon-range 9.0

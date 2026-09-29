@@ -114,20 +114,21 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 
 ;;; ================================================================ Shikai 刺絡 SHIGARAMI (base)
 ;;; the J / K strings (docs/DUEL_STRINGS.md §2.1 budget): the lightest in the game; every contact sews (SENJU-HIT). Every
-;;; reach is where the art strikes (the user's playtest, 2026-09-29): the J links to the tip of the needle, now as tall as
-;;; she is (2.4 m), the K links to their props' far ends (senjumaru-art.lisp *SJ-STRIKE-REACH*; the host test checks)
+;;; reach is where the art strikes (the user's playtest, 2026-09-29): the J links to the tip of the needle (1.44 m since the
+;;; J cut, docs/DUEL_STRINGS.md §13: J light, short and fast, 0.6x; the needle 1.2 m), the K links to their props' far ends
+;;; (senjumaru-art.lisp *SJ-STRIKE-REACH*; the host test checks)
 (defmove :sj-j1 :kind :quick :clip :sj-q1 :startup 7 :active 3 :recovery 12 :dmg 28 :adv-block -2
-  :reach 2.4 :arc 90 :on-hit :flinch :slide 0.5)                     ; HITOHARI: the upper right hand jabs the needle
+  :reach 1.44 :arc 90 :on-hit :flinch :slide 0.5)                    ; HITOHARI: the upper right hand jabs the needle
 (defmove :sj-j2 :kind :quick :clip :sj-q2 :startup 7 :active 3 :recovery 13 :dmg 28 :adv-block -2
-  :reach 2.4 :arc 110 :on-hit :flinch)                               ; KAESHINUI: the backstitch
+  :reach 1.44 :arc 110 :on-hit :flinch)                              ; KAESHINUI: the backstitch
 (defmove :sj-j3 :kind :quick :clip :sj-spin :startup 8 :active 3 :recovery 18 :dmg 36 :adv-block -4
-  :reach 2.4 :arc 220 :on-hit :stagger :flags (:ender))              ; SENJU: all six hands whirl in a ring of needles
+  :reach 1.44 :arc 220 :on-hit :stagger :flags (:ender))             ; SENJU: all six hands whirl in a ring of needles
 (defmove :sj-k1 :kind :flash :clip :sj-f1 :startup 17 :active 4 :recovery 20 :dmg 60 :adv-block -3
-  :vol (:cap 0.3 3.2 1.1 0.3) :on-hit :stagger)                      ; MACHIBARI: two long pins driven straight out
+  :vol (:cap 0.3 2.9 1.1 0.3) :on-hit :stagger)                      ; MACHIBARI: two long pins driven straight out
 (defmove :sj-k2 :kind :flash :clip :sj-f2 :enter 7 :startup 21 :active 4 :recovery 24 :dmg 50 :adv-block -3
-  :reach 2.8 :arc 140 :on-hit :stagger)                              ; MATSURI: the hem stitch, a loop whipped over him
+  :reach 2.5 :arc 140 :on-hit :stagger)                              ; MATSURI: the hem stitch, a loop whipped over him
 (defmove :sj-k3 :kind :flash :clip :sj-drop :enter 7 :startup 21 :active 5 :recovery 34 :dmg 74 :adv-block -20
-  :reach 2.8 :arc 160 :height (0.0 1.4) :on-hit :crumple :flags (:ender))   ; KUKE: pins slammed down round his feet
+  :reach 2.5 :arc 160 :height (0.0 1.4) :on-hit :crumple :flags (:ender))   ; KUKE: pins slammed down round his feet
 (defmove-copy :sj-j2s :sj-j2)
 (defmove-copy :sj-k2s :sj-k2)
 ;; L 悪い癖 WARUI KUSE: refused at 0 stitches; frame 0 spends them all: one unguardable spike (10, :spare) every 2 f from
@@ -158,9 +159,9 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 ;;; ================================================================ 娑闥迦羅骸刺絡辻 SHIGARAMI NO TSUJI (the six hank forms)
 ;; the J / K grid as the Shikai's (the same needle and loop: no reach derivation, the playtest), no sewing; two new links
 (defmove :sj-t-k1 :kind :flash :clip :sj-tanmono :startup 17 :active 4 :recovery 20 :dmg 56 :adv-block -3
-  :vol (:cap 0.3 4.2 1.1 0.3) :on-hit :stagger)                      ; TANMONO-UCHI: a bolt flung out and snapped back
+  :vol (:cap 0.3 3.8 1.1 0.3) :on-hit :stagger)                      ; TANMONO-UCHI: a bolt flung out and snapped back
 (defmove :sj-t-k3 :kind :flash :clip :sj-makitori :enter 7 :startup 21 :active 5 :recovery 34 :dmg 72 :adv-block -20
-  :reach 2.8 :arc 160 :height (0.0 1.4) :on-hit :crumple :flags (:ender)
+  :reach 2.5 :arc 160 :height (0.0 1.4) :on-hit :crumple :flags (:ender)
   :params (:pull 1.4))                                               ; MAKITORI: wrapped and hauled in to 1.4 m
 ;; L 綛解かば KASE TOKABA (the user, 2026-09-29): held >= *WEAVE-TAP* f it weaves (a pass per 20 f, summed over segments on
 ;; the hank: SENJU-WEAVE-TICK); let go, the weave stops (6 f, SENJU-WEAVE-RELEASE), nothing unravels. A tap (< 10 f)
@@ -220,8 +221,9 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
   ;; a close-range tailor: J1 up close, blocked strings still sew, the soldier and the O from range, L when the stitches
   ;; pay (:hari, SENJU-AI-REFLEX); she awakens against a zoner or a rooted form (:awaken-rule)
   :ai (:intents (:approach 2 :pressure 4 :zone 0 :defend 1)
-       :ranges (:approach (2.4 5.0) :pressure (1.3 2.4) :zone (5.0 8.0) :defend (3.0 5.0))
-       :moves ((0.0 2.6 :q 6 :f 2 :breaker 1)
+       :ranges (:approach (2.4 5.0) :pressure (1.0 1.9) :zone (5.0 8.0) :defend (3.0 5.0))
+       :moves ((0.0 1.7 :q 6 :f 2 :breaker 1)                          ; J up close only (DUEL_STRINGS §13), K beyond
+               (1.7 2.6 :f 4 :breaker 1)
                (2.6 6.0 :sp1 2 :kikon 1 :step 1 nil 1)
                (6.0 99.0 :sp1 2 :kikon 2 nil 1))
        :guard 0.4 :hoho 0.3 :dash 0.7 :dash-back 0.1 :block-string 0.8 :o-ender 0.3 :l-after-k 0.3 :sp-cancel-bars 9   ; (no SP2
@@ -233,8 +235,9 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 
 (defparameter *tsuji-ai*
   '(:intents (:approach 1 :pressure 1 :zone 4 :defend 2)
-    :ranges (:approach (2.6 5.0) :pressure (1.4 2.6) :zone (5.0 8.0) :defend (4.0 6.0))
-    :moves ((0.0 2.8 :q 3 :f 2 :breaker 1 :step 2)
+    :ranges (:approach (2.6 5.0) :pressure (1.0 2.4) :zone (5.0 8.0) :defend (4.0 6.0))
+    :moves ((0.0 1.7 :q 3 :f 2 :breaker 1 :step 2)
+            (1.7 2.8 :f 3 :breaker 1 :step 2)
             (2.8 4.0 :f 2 :step 2 nil 1)
             (4.0 5.0 :f 1 :sig 2 :step 1 nil 1)
             (5.0 9.0 :sig 5 :kikon 1 nil 1)
