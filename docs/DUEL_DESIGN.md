@@ -1324,6 +1324,10 @@ first), so it is never lost to the "no gains during a burst" rule.
 
 ### Interactions
 
+- **The user's answers (2026-09-30):** BLUE also gives **one Reiatsu bar** on the press, as RoS does; the CPU uses WHITE
+  more (`*ai-white-p*` 0.15 → 0.3, `*ai-white-range*` 6 → 5 m); the rest as proposed (blockstun BLUE chip-only on the
+  phone, start 70 / drain 18/s / nothing spent up front, Kikon refund 35). In practice with GAUGES INFINITE the
+  flash-step gauge is not refilled while a burst runs: it burns to 0, the burst ends, then it refills.
 - **Awakening** (`awaken-state-p`) is unchanged and still breaks attacks like BLUE (`repel!`); a burst running when he
   awakens goes on (the cinematic freezes the sim, so it doesn't drain there). An awakening and a BLUE pressed on the same
   step: the cinematic wins, as before.

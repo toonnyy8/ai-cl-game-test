@@ -450,7 +450,8 @@ move's recovery, the next move started within *CHAIN-WINDOW* f has its startup c
   (let ((o (opp-of e)) (g (gauges e)) (f (fighter e)))
     (setf (gauges-burst g) mode (gauges-burst-t g) 0 (gauges-fs-idle g) 0)
     (case mode
-      (:blue (repel! e))
+      (:blue (repel! e)                                   ; + one Reiatsu bar, as RoS does (the user 2026-09-30)
+       (setf (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) *reiatsu-bar* *reiatsu-max*))))
       (:orange (to-idle e 0) (setf (fighter-chain f) *chain-window*)))
     (hitstop *burst-hitstop*)
     (emit :burst e o mode)

@@ -242,7 +242,8 @@ end) and, HP REFILL AUTO, its Reishi once it is out of its hit / block reactions
   (when *gauges-inf*
     (let ((g (gauges *p1*)))
       (setf (gauges-reishi g) (practice-hp *p1*)
-            (gauges-gg g) *gg-max* (gauges-guardless g) nil (gauges-reiatsu g) *reiatsu-max* (gauges-fs g) *fs-max*)
+            (gauges-gg g) *gg-max* (gauges-guardless g) nil (gauges-reiatsu g) *reiatsu-max*)
+      (unless (gauges-burst g) (setf (gauges-fs g) *fs-max*))   ; a burst burns it down first (the user 2026-09-30)
       (unless (gauges-awakened g) (setf (gauges-awaken g) *awaken-max*)))))
 
 (defun practice-reset ()

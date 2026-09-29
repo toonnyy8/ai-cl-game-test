@@ -529,7 +529,7 @@ Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規�
 驗證方法：每 600 步印一行 `duel hash`（`state-hash-line`，`duel/lisp/debug.lisp` 第 83～96 行，位置、朝向、每個量表、上一次 Kikon 突進值幾個魂魄、電腦的 heat）。`tests/scripts/duel-cvc-yk.json` 用種子 7 讓兩個電腦打完一場，最後一行一定是：
 
 ```
-duel -> RESULTS winner P2 konpaku 0-1 ticks 10625 secs 177.1
+duel -> RESULTS winner P1 konpaku 1-0 ticks 12426 secs 207.1
 ```
 
 （2026-09-29 加入隱藏的受擊值（被連續打太久會被打飛，DUEL_DESIGN.md「Hidden hit-stun tolerance」）之後，這一行變了：種子 7 裡山本被打飛兩次；YY、KK 不變。之前是 `winner P2 konpaku 0-6 ticks 5516 secs 91.9`。）
@@ -666,7 +666,7 @@ duel -> RESULTS winner P2 konpaku 0-1 ticks 10625 secs 177.1
 |---|---|---|
 | DUMMY | **STAND**／GUARD ALL／GUARD AFTER HIT／CPU | 站著不動、全部防禦、被打中第一下之後才開始防（用來確認連段是不是真的連得上）、或交給電腦（用選角時選的難度） |
 | HP REFILL | **AUTO**／OFF | AUTO：連段一結束假人的血就回到 DUMMY HP 的值；OFF：不補，可以把它打到紅血練 Kikon |
-| GAUGES | **NORMAL**／INFINITE | INFINITE：自己的血維持在 P1 HP 的值，防禦量表、靈壓、瞬步、覺醒量表一直是滿的，覺醒和 SP 隨便試 |
+| GAUGES | **NORMAL**／INFINITE | INFINITE：自己的血維持在 P1 HP 的值，防禦量表、靈壓、瞬步、覺醒量表一直是滿的，覺醒和 SP 隨便試（爆氣時瞬步量表照樣燒到 0、爆氣結束才回滿） |
 | P1 HP／DUMMY HP | **100%**／75／50／25／10% | 自己／假人的血，改了立刻生效；重置、補血、K.O. 之後也回到這個值。25% 就是紅血 |
 | P1 KONPAKU／DUMMY KONPAKU | 1～**9** | 自己／假人的魂魄數，改了立刻生效。劍八的卍解條件正在改成「三杯而且自己的魂魄 ≤ 4」（另一批工作），之後把 P1 KONPAKU 調到 4 以下就能試卍解 |
 | RESET POSITION | — | 兩人回到開場位置、型態回到最初、量表全滿，血和魂魄是上面四項的值 |

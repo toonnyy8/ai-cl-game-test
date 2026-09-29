@@ -459,9 +459,9 @@ than its perception delay after the combo's *BURST-MIN-HITS*th hit.")
 (defparameter *ai-burst-low* 0.5 "Burst is worth it below this fraction of Reishi ...")
 (defparameter *ai-orange-p* '(:easy 0.1 :normal 0.25 :hard 0.4)
   "Chance a CPU whose string hit and can't go on (no further link) CHAIN-REVERSEs (ORANGE) and restarts it with Q1.")
-(defparameter *ai-white-p* 0.15 "Chance per neutral decision a CPU behind on Reishi SOUL-REVERSEs (WHITE) ...")
+(defparameter *ai-white-p* 0.3 "(0.15 -> 0.3 and 6 -> 5 m, the user 2026-09-30: use WHITE more) Chance per neutral decision a CPU behind on Reishi SOUL-REVERSEs (WHITE) ...")
 (defparameter *ai-white-behind* 0.15 "... behind by at least this fraction of its max Reishi ...")
-(defparameter *ai-white-range* 6.0 "... and at least this far (m) from him.")
+(defparameter *ai-white-range* 5.0 "... and at least this far (m) from him.")
 (defparameter *ai-dash-gap* 2.5
   "The CPU dashes (the kit's :dash / :dash-back chance, at a neutral decision) when it stands this
 far outside its preferred range: toward it from beyond, away from it from inside; it lets go in the

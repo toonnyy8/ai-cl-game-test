@@ -318,7 +318,7 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P2 konpaku 0-1 ticks 10625 secs 177.1
+duel -> RESULTS winner P1 konpaku 1-0 ticks 12426 secs 207.1
 ```
 
 (The slower awakening gauge, ×0.7, the user 2026-09-30: YK changed again, it was `winner P2 konpaku 0-5 ticks 8247 secs
