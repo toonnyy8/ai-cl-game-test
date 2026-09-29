@@ -1,10 +1,10 @@
-// SOUL DUEL's service worker: the installed app starts offline. build.sh replaces the version below with a hash
-// of the build, so every new build installs a fresh cache; pwa.js reloads the page once when the new worker takes
+// SOUL DUEL's service worker: the installed app starts offline (the manual too). build.sh replaces the version below
+// with a hash of the build and the page files, so every new build installs a fresh cache; pwa.js reloads the page once when the new worker takes
 // over, and the old caches are deleted. Everything is served cache-first from ONE version, so index.html, index.js
 // and index.wasm always come from the same build (a network-first index.html could pair a new page with an old
 // index.js / index.wasm until the reload).
-var VERSION = 'soulduel-bf18448feb53';
-var FILES = ['./', 'index.html', 'index.js', 'index.wasm', 'pwa.js', 'manifest.webmanifest',
+var VERSION = 'soulduel-36d954b1b158';
+var FILES = ['./', 'index.html', 'index.js', 'index.wasm', 'pwa.js', 'manifest.webmanifest', 'manual.html',
              'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(VERSION)
