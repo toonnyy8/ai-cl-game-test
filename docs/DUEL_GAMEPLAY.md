@@ -374,6 +374,14 @@ CPU), win rates near even (YK within ±3 of 10 / 10). The gate runs ~15 min of t
 fifteen pairings (2026-09-29: Ichigo's four, Senjumaru's five) run them in parallel instead: one run.mjs per pairing with
 2125+k (k 0–14, `--secs 1500` each, at most 4 at once on a shared machine).
 
+**Gate policy (the user, 2026-09-29: the gates were getting too long with five characters).** (1) **Only what changed:**
+a change inside one character's files runs that character's five pairings and its awaken A/B; a change to shared rules
+(combat, fighter, rules, ai, tuning, kit) runs all fifteen. (2) **Two stages:** first 10 seeds per pairing (debug
+31100+10 before 2125+k); a pairing passes at once when all 10 are K.O. and its median sits inside 135–200 s (10 s clear of
+the 125–210 window); otherwise it is rerun with the full 20 (31120, or no knob), which is the verdict. (3) Planned: a
+host-native, render-free sim runner (one core per match) for the statistical gates; the G2 bit-exact references stay on
+the browser build.
+
 | Pairing | Median | Range | K.O. | Wins P1 / P2 | Blow-aways |
 |---|---|---|---|---|---|
 | Yamamoto vs Yamamoto | 134.7 s | 98.2–205.5 | 20/20 | 9 / 11 | 0 |

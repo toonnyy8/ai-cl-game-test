@@ -34,7 +34,8 @@
 ;; the clones 分身 BUNSHIN
 (defparameter *clone-max* 3 "Live clones at most; a 4th replaces the oldest.")
 (defparameter *clone-life* 300 "A clone's frames (74700+k: 10k).")
-(defparameter *clone-step-gap* 40 "A Step leaves a clone at most once per this many frames.")
+(defparameter *clone-cost* 15.0 "A clone (Step or Hoho) spends this much guard gauge; below it, or guardless, no clone (the user
+2026-09-29: the v2 rework had made them free).")
 (defparameter *clone-lag* 6 "A clone's answer starts this long after the press.")
 (defparameter *clone-scale* 0.7 "A clone hit's damage x (its guard value too): every clone answers every press (the user's
 choice), so the per-hit share is the knob (the worst case, a J string with three clones, docs/DUEL_ICHIGO.md v2).")
@@ -236,7 +237,6 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
 ;;; ================================================================ per-side state (the sim's; a new fighter entity = a fresh one)
 (defstruct (ics (:conc-name ics-))
   (e nil)                                     ; the fighter it belongs to
-  (step-clone -9999 :type fixnum)             ; *MATCH-TICK* of the last Step clone
   (hoho-done nil) (dashed nil) (getsuga-at -9999 :type fixnum) (o-live nil)
   (seen nil) (seen-main nil)                  ; the move the afterimage watch last saw start
   (hist (make-array 48 :initial-element 0f0)) (hist-i 0 :type fixnum)   ; his last 16 (x z yaw): the echoes replay them
@@ -390,19 +390,27 @@ Konpaku hint (the user 2026-09-29: it followed the kit's fixed 3)."
     (emit :sfx :clone e)
     (clog "~a CLONE ~a ~d" (side-name e) src (1+ (- (length live) (if i 1 0))))))
 
+(defun clone-pay! (e)
+  "Pay *CLONE-COST* of E's guard gauge for a clone: T when paid; NIL (no clone, nothing spent) below it or guardless."
+  (let ((g (gauges e)))
+    (when (and (not (gauges-guardless g)) (>= (gauges-gg g) *clone-cost*))
+      (gg-spend! e *clone-cost*)
+      t)))
+
 (defun ichigo-step-clone (e)
-  "KESSA's :step hook: a Step's take-off point leaves a clone, at most once per *CLONE-STEP-GAP*."
-  (let ((st (ic e)))
-    (when (>= (- *match-tick* (ics-step-clone st)) *clone-step-gap*)
-      (setf (ics-step-clone st) *match-tick*)
-      (let ((p (pos-of e))) (ichigo-clone-spawn e (aref p 0) (aref p 2) :step)))))
+  "KESSA's :step hook: every Step's take-off point leaves a clone, paid (CLONE-PAY!; the user 2026-09-29: no gap between
+them, the guard gauge is the limit)."
+  (when (clone-pay! e)
+    (let ((p (pos-of e))) (ichigo-clone-spawn e (aref p 0) (aref p 2) :step))))
 
 (defun hoho-clone (e)
-  "A Hoho's reappearance leaves a clone 1.6 m in front of the opponent (the line from Ichigo, behind him, through him)."
-  (let* ((q (pos-of (opp-of e))) (p (pos-of e)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
+  "A Hoho's reappearance leaves a clone 1.6 m in front of the opponent (the line from Ichigo, behind him, through him),
+paid (CLONE-PAY!)."
+  (when (clone-pay! e)
+   (let* ((q (pos-of (opp-of e))) (p (pos-of e)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
          (l (max 1e-3 (sqrt (+ (* dx dx) (* dz dz))))))
     (multiple-value-bind (x z) (clamp-to-circle (+ (aref q 0) (* 1.6 (/ dx l))) (+ (aref q 2) (* 1.6 (/ dz l))) (- *arena-radius* 0.4))
-      (ichigo-clone-spawn e x z :hoho))))
+      (ichigo-clone-spawn e x z :hoho)))))
 
 (defun clone-link (c weight link)
   "Clone C starts answer LINK with WEIGHT (link 1 after the lag)."

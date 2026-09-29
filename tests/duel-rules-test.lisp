@@ -1247,10 +1247,10 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (eq :flinch (hw-react (svref (mv-hits (clone-move :f 1)) 0)))))
   ;; the Kikon's Konpaku by the clones at the O press (the user's table 0 / 1 / 2 / 3 -> 2 / 2 / 3 / 4, at most 4)
   (check (and (equal '(2 2 3 4) (mapcar #'clone-konpaku '(0 1 2 3))) (= 4 (clone-konpaku 5)) (<= (clone-konpaku 3) *kikon-max-event*)))
-  ;; a clone's life and fate: 300 f, 3 at most (the oldest replaced), a Step's at most every 40 f; its string touched him
+  ;; a clone's life and fate: 300 f, 3 at most (the oldest replaced), 15 guard gauge each (no Step gap); its string touched him
   ;; (hit or block): it fades, a whiff keeps it (idle), its time up: it fades; a real hit on Ichigo (not a block, not a
   ;; parry) clears them all
-  (check (and (= 300 *clone-life*) (= 3 *clone-max*) (= 40 *clone-step-gap*)
+  (check (and (= 300 *clone-life*) (= 3 *clone-max*) (= 15.0 *clone-cost*)
               (eq :idle (clone-after-string nil 100)) (eq :fade (clone-after-string t 100)) (eq :fade (clone-after-string nil 0))
               (null (clone-evict '(5 9))) (= 1 (clone-evict '(7 3 9)))
               (clone-vanish-p :hit) (clone-vanish-p :counter) (clone-vanish-p :guard-break)

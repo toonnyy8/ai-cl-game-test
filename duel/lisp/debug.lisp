@@ -77,7 +77,7 @@
 ;;;;   35000+f / 36000+f   stills of the Bankai cinematic / MAPPUTATSU held at frame f (as 10000+1000k+f, k 9 / 10)
 ;;;;   2386+k   Kenpachi's Bankai tests (docs/DUEL_KEN_BANKAI.md; BANKAI-TEST): 0 cup 3 + red 3 m from an idle Yamamoto (P
 ;;;;            enters), 1 in the Bankai at once 2.2 m, 2 the Bankai with 1 pip left, 3 片腕
-;;;;   30000+k  the seed gate plays seeds k+1 .. k+20;  31000+10a+b the CPUs' Bankai entry, P1 a / P2 b: 0 the kit's rule,
+;;;;   30000+k  the seed gate plays seeds k+1 .. k+N (31100+n: N = n, default 20);  31000+10a+b the CPUs' Bankai entry, P1 a / P2 b: 0 the kit's rule,
 ;;;;            1 always (whenever allowed), 2 never, 3 the rule with its chance 1 (the gamble A/B);
 ;;;;            32000+k *ARM-SELF* = k, 33000+k *ARM-BURST-SELF* = k, 34000+k *ARM-CRACK* = k; 37000+k the cup-3 CPU's
 ;;;;            Bankai chance :p = k / 100, 38000+k its :own-konpaku = k
@@ -863,12 +863,13 @@ move-beat choices of DRAW-FIGHTER."
                         (:senjumaru :yamamoto) (:senjumaru :kenpachi) (:senjumaru :rukia) (:senjumaru :senjumaru)
                         (:senjumaru :ichigo)))
 
-(defvar *gate-seed0* 0 "Debug 30000+k: the seed gate plays seeds k+1 .. k+20 (the 60-seed A/B in three runs).")
+(defvar *gate-seed0* 0 "Debug 30000+k: the seed gate plays seeds k+1 .. k+N (the 60-seed A/B in three runs).")
+(defvar *gate-seeds* 20 "Debug 31100+n: seeds per pairing N (the quick pass plays 10; the user 2026-09-29: two-stage gates).")
 (defun start-gate (p)
   (setf *turbo* t *skip-cines* nil *combat-log* nil *gate-log* nil *gate-results* nil
         *gate* (loop for pair in (case p (3 *pairs*) (4 (subseq *pairs* 3 6)) (5 (subseq *pairs* 3 5)) (6 (subseq *pairs* 10))
                                    (t (list (nth (if (< p 10) p (- p 10)) *pairs*))))   ; (10+k: pairing k alone)
-                     append (loop for seed from (1+ *gate-seed0*) to (+ *gate-seed0* 20) collect (list seed pair))))
+                     append (loop for seed from (1+ *gate-seed0*) to (+ *gate-seed0* *gate-seeds*) collect (list seed pair))))
   (gate-update))
 
 (defvar *gate-busy* nil "A gate match is running.")
@@ -974,6 +975,7 @@ move-beat choices of DRAW-FIGHTER."
         ((<= 28000 c 28999) (setf *ai-string-flash-p* (/ (- c 28000) 100.0)))
         ((<= 29000 c 29999) (setf *ai-sp-cancel-p* (/ (- c 29000) 100.0)))
         ((<= 30000 c 30999) (setf *gate-seed0* (- c 30000)))
+        ((<= 31101 c 31199) (setf *gate-seeds* (- c 31100)))
         ((<= 31000 c 31033) (let ((m '(nil :always :never :sure)))
                               (setf (svref *ai-bankai-mode* 0) (nth (floor (- c 31000) 10) m)
                                     (svref *ai-bankai-mode* 1) (nth (mod (- c 31000) 10) m))))

@@ -1065,8 +1065,7 @@ Routes on hit before the multiplier: JJJ 100, KKK 204. U is a **normal guard** a
 
 ### KESSA: the clones 分身 BUNSHIN
 
-- **Made by** a Step (a tap or a dash's hop) at its take-off point, at most once per 40 f (`*clone-step-gap*`), free; and
-  by a Hoho, 1.6 m in front of the opponent on the line from Ichigo (behind him) through him. At most 3 live
+- **Made by** a Step (a tap or a dash's hop) at its take-off point, every Step (no gap), and by a Hoho, 1.6 m in front of the opponent on the line from Ichigo (behind him) through him. At most 3 live
   (`*clone-max*`): a 4th replaces the oldest. Each lives 300 f (`*clone-life*`). A clone is KESSA's body at alpha 0.45, a
   BLOOD rim and a BLOOD ring at its feet; it can't be hit.
 - **They answer J / K, reversed** (the user's choice: **every** live clone answers every press): J → a heavy 影断
@@ -1273,3 +1272,10 @@ stand and swing; they no longer rush at the opponent.
 
   "Never" wins ≥ 20 of 60 in every cell (the user's criterion); IK is the tight one (20 / 20 / 33, main had 23 / 21 / 25).
   No Ichigo knob changed.
+
+- **A clone costs guard gauge again, with no Step gap** (the user 2026-09-29: 「我發現一護卍解產生分身已經不再消耗防禦量表了？」 →
+  「改」, then 「順便取消 40 幀一個分身的限制」). v2 had dropped v1's clone cost with the chain gauge (its rejected list: "the
+  gauge is U's again; the gap, the cap and the life are enough"); that was the design agent's call, not the user's. Now
+  every clone, a Step's or a Hoho's, spends **15** guard gauge (`*clone-cost*`, `clone-pay!`); below 15, or guardless, the
+  Step / Hoho happens without a clone and nothing is spent. `*clone-step-gap*` (40 f) is gone: the gauge, the cap of 3 and
+  the 300 f life are the limits, and each clone thins the guard that KESSA's normal guard and parry (10) also use.
