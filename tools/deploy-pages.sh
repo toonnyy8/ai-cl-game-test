@@ -14,7 +14,8 @@ if [ ! -d "$WT" ]; then
     git worktree add -q --detach "$WT" && git -C "$WT" checkout -q --orphan gh-pages
   fi
 fi
-git -C "$WT" rm -rq --ignore-unmatch . >/dev/null
+git -C "$WT" rm -rfq --ignore-unmatch . >/dev/null
+git -C "$WT" clean -fdxq   # (a fresh orphan starts with main's tree staged: drop it all)
 cp -r dist/duel/. "$WT"/
 touch "$WT"/.nojekyll
 git -C "$WT" add -A
