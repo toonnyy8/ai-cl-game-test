@@ -7,7 +7,7 @@
 ;;;; cinematics. The Getsuga is mono (an ink crescent, a white rim); BLOOD only in KESSA's chains and rims and the
 ;;;; cinematics' Cero core (docs/STYLE_STORM_DESIGN.md §A.2): no spot hue of his own.
 (in-package :duel)
-(declaim (special *p1* *p2*))                         ; (flow.lisp's: the auras find their fighter)
+(declaim (special *p1* *p2* *ic-pose-ang*))           ; (flow.lisp's: the auras find their fighter; ichigo.lisp's)
 
 ;;; ---------------------------------------------------------------- body
 ;; 1.80 m (scale 1.0), lean (width 0.96); the hurt cylinder r 0.38 / h 1.80. One black mass (the robe and the hakama),
@@ -130,10 +130,10 @@
          (:box 0.006 0.034 0.003 :at (-0.03 0.2 0.04) :rot (200 30 0) :c :hair-l :tag :shikai)
          ;; the half-Hollow's horn: a flat white blade from the left temple, swept sideways and back (both forms);
          ;; KESSA's second on the right
-         (:box 0.012 0.03 0.2 :at (-0.14 0.2 -0.01) :rot (-68 8 0) :c :horn)
-         (:wedge 0.012 0.03 0.05 :at (-0.235 0.212 -0.048) :rot (-68 8 -90) :c :horn)
-         (:box 0.012 0.03 0.2 :at (0.14 0.2 -0.01) :rot (68 8 0) :c :horn :tag :kessa)
-         (:wedge 0.012 0.03 0.05 :at (0.235 0.212 -0.048) :rot (68 8 90) :c :horn :tag :kessa)
+         (:box 0.012 0.03 0.2 :at (-0.137 0.2 -0.064) :rot (-50 10 0) :c :horn)
+         (:wedge 0.012 0.03 0.05 :at (-0.232 0.214 -0.145) :rot (-50 10 -90) :c :horn)
+         (:box 0.012 0.03 0.2 :at (0.137 0.2 -0.064) :rot (50 10 0) :c :horn :tag :kessa)
+         (:wedge 0.012 0.03 0.05 :at (0.232 0.214 -0.145) :rot (50 10 90) :c :horn :tag :kessa)
          ;; KESSA's left half-face: black from the brow to the jaw, the eye's pupil BLOOD
          (:box 0.052 0.1 0.001 :at (-0.027 0.108 0.0609) :c :mask :tag :kessa)
          (:box 0.008 0.01 0.003 :at (-0.024 0.119 0.0633) :c :blood :tag :kessa)
@@ -377,19 +377,19 @@
 
 ;;; ---------------------------------------------------------------- the stance 月待 TSUKIMACHI (v2 §2)
 (defpose :ic-tsuki (:base :ic-stance)                  ; side-on: the short blade thrust at him point-first, the cleaver
-  (:root :u -0.12) (:pelvis :twist 52) (:spine :flex 8) (:chest :twist 18) (:neck :twist -44) (:head :flex -4 :twist -26)   ; high
-  (:arm-l :flex 84 :side 4) (:elbow-l :flex 4) (:hand-l :flex -86)                                              ; back
-  (:arm-r :flex 150 :side 46) (:elbow-r :flex 96) (:hand-r :twist 0 :flex 6)
+  (:root :u -0.12) (:pelvis :twist -40) (:spine :flex 8) (:chest :twist -24) (:neck :twist 40) (:head :flex -4 :twist 22)   ; high
+  (:arm-l :side 86 :flex 36) (:elbow-l :flex 4) (:hand-l :flex -86)                                             ; back
+  (:arm-r :flex 166 :side 34) (:elbow-r :flex 50) (:hand-r :twist 0 :flex -36)
   (:thigh-l :flex 34 :side 10) (:knee-l :flex 18) (:thigh-r :flex -22 :side 14) (:knee-r :flex 46))
 (defclip :ic-tsuki (1.2 :loop t :base :ic-tsuki)
   (0) (0.6 (:root :u -0.135) (:elbow-l :flex 8) (:elbow-r :flex 100)))
 
 (defpose :ic-rangetsu-a (:base :ic-tsuki)              ; RANGETSU: the short blade high across ...
-  (:root :f 0.4 :u -0.16) (:pelvis :twist 30) (:chest :twist -8) (:neck :twist -20)
-  (:arm-l :side 86 :flex 118) (:elbow-l :flex 6) (:hand-l :flex -86)
+  (:root :f 0.4 :u -0.16) (:pelvis :twist -6) (:chest :twist -16) (:neck :twist 10) (:head :twist 6)
+  (:arm-l :side 88 :flex 112) (:elbow-l :flex 6) (:hand-l :flex -86)
   (:thigh-l :flex 52) (:knee-l :flex 50) (:thigh-r :flex -30) (:knee-r :flex 20))
 (defpose :ic-rangetsu-b (:base :ic-rangetsu-a)         ; ... and low back
-  (:chest :twist 26) (:arm-l :side 60 :flex 28) (:elbow-l :flex 10 :twist -150) (:root :f 0.42 :u -0.2))
+  (:chest :twist 20) (:neck :twist -10) (:arm-l :side 70 :flex 26) (:elbow-l :flex 10 :twist -150) (:root :f 0.42 :u -0.2))
 (defstrike :ic-rangetsu (8 12 18 :base :ic-tsuki)
   (0)
   (5 (:root :f 0.2 :u -0.18) (:pelvis :twist 40) (:chest :twist 24) (:arm-l :flex 70 :side 30) (:elbow-l :flex 60))
@@ -402,7 +402,7 @@
   (:end :ic-stance))
 
 (defpose :ic-otoshi-up (:base :ic-stance)              ; TSUKI-OTOSHI: leapt, both blades raised overhead ...
-  (:root :u 0.45 :f 0.3) (:pelvis :twist 8) (:spine :flex -14) (:chest :twist 0) (:neck :twist 0) (:head :flex -24)
+  (:root :u 0.06 :f 0.3) (:pelvis :twist 8) (:spine :flex -14) (:chest :twist 0) (:neck :twist 0) (:head :flex -24)
   (:arm-r :flex 172 :side 14) (:elbow-r :flex 20) (:hand-r :flex -30)
   (:arm-l :flex 168 :side 14) (:elbow-l :flex 20) (:hand-l :flex -86)
   (:thigh-r :flex 60) (:knee-r :flex 90) (:thigh-l :flex 30) (:knee-l :flex 80))
@@ -415,7 +415,7 @@
   (0)
   (5 (:root :u -0.22 :f 0.1) (:knees :flex 60) (:thighs :flex 40) (:arm-r :flex 120) (:arm-l :flex 110))
   (10 :ic-otoshi-up)
-  (15 :ic-otoshi-up (:root :u 0.3 :f 0.42))
+  (15 :ic-otoshi-up (:root :u 0.04 :f 0.42))
   (:s :snap :ic-otoshi-hit)
   (:a :ic-otoshi-hit (:root :u -0.32))
   (40 (:root :u -0.2 :f 0.34) (:spine :flex 30))
@@ -486,6 +486,17 @@
        (:thigh-r :flex 4) (:thigh-l :flex -4) (:knees :flex 4))
   (2.0 (:root :u -0.01 :yaw -16) (:head :flex 6 :twist 20)))
 
+(defclip :ic-cero-raise (1.0 :base :ic-stance)         ; the Cero Kikon's raise: the cleaver overhead one-handed, the arm
+  (0)                                                  ; straight, the blade 35 deg past vertical, up and forward
+  (0.2 (:root :u -0.1) (:pelvis :twist 14) (:spine :flex -8) (:chest :twist 16) (:neck :twist -10) (:head :flex -22 :twist -8)
+       (:arm-r :flex 158 :side 8) (:elbow-r :flex 2) (:hand-r :twist 0 :flex -64)
+       (:arm-l :flex 24 :side 36) (:elbow-l :flex 30) (:hand-l :flex -40)
+       (:thigh-r :flex -18 :side 10) (:knee-r :flex 30) (:thigh-l :flex 30 :side 8) (:knee-l :flex 28))
+  (1.0 (:root :u -0.11) (:pelvis :twist 14) (:spine :flex -9) (:chest :twist 16) (:neck :twist -10) (:head :flex -24 :twist -8)
+       (:arm-r :flex 160 :side 8) (:elbow-r :flex 2) (:hand-r :twist 0 :flex -64)
+       (:arm-l :flex 24 :side 36) (:elbow-l :flex 30) (:hand-l :flex -40)
+       (:thigh-r :flex -18 :side 10) (:knee-r :flex 30) (:thigh-l :flex 30 :side 8) (:knee-l :flex 28)))
+
 (defclip :ic-awaken (2.8 :base :ic-stance)             ; the awakening: head down, the blades lowered, the short blade brought
   (0 (:root :u -0.02) (:spine :flex 16) (:head :flex 30) (:arm-r :flex 10 :side 14) (:elbow-r :flex 10) (:hand-r :flex -80)   ; into
      (:arm-l :flex 10 :side 14) (:elbow-l :flex 10) (:hand-l :flex -80) (:knees :flex 8))                                      ; the
@@ -538,7 +549,7 @@
 
 (defpose :ic-k-parry-up (:base :ic-k-stance)         ; L KUSARI-TATE: the slab raised vertical before him, the flat out, the
   (:root :u -0.1) (:pelvis :twist 6) (:spine :flex 6) (:chest :twist 4) (:head :flex 4)            ; left palm on the flat
-  (:arm-r :flex 62 :side 18) (:elbow-r :flex 70) (:hand-r :twist 90 :flex 20)
+  (:arm-r :flex 46 :side -16) (:elbow-r :flex 88) (:hand-r :twist 0 :flex 70)
   (:arm-l :flex 58 :side -8) (:elbow-l :flex 84) (:hand-l :flex 10)
   (:thigh-r :flex 22 :side 8) (:knee-r :flex 30) (:thigh-l :flex 6 :side 8) (:knee-l :flex 28))
 (defstrike :ic-k-parry (2 24 18 :base :ic-k-stance)
@@ -809,7 +820,7 @@ a trace in his own Kikon rush)."
                 (:ic-k-zanzo "残像" "ZANZO" "血"))))
 
 ;; the brush glyphs his names and captions need beyond the shared set (tools/glyph-bake.py's functions on the same font,
-;; Yuji Syuku, SIL OFL 1.1: duel/FONT-LICENSE-YujiSyuku.txt): 黒 崎 一 護 牙 衝 字 血 鎖 双 引 垣 王 虚 漆
+;; Yuji Syuku, SIL OFL 1.1: duel/FONT-LICENSE-YujiSyuku.txt): 黒 崎 一 護 牙 衝 字 血 鎖 双 引 垣 王 虚 漆, v2's 影 待 分 身 像
 (setf *glyph-outlines*
       (append *glyph-outlines*
               '(
@@ -828,38 +839,155 @@ a trace in his own Kikon rush)."
     (29579 1000 (933 877 922 879 910 878 889 867 757 856 624 852 501 856 410 865 265 890 232 910 212 912 175 907 158 901 121 878 89 846 79 829 73 800 146 806 232 805 474 786 472 563 355 565 303 583 275 582 259 577 232 556 210 526 188 480 266 488 472 487 468 340 465 308 456 279 439 258 312 264 272 275 254 286 236 281 205 262 180 232 162 198 150 164 165 160 182 161 235 177 274 183 343 183 620 167 700 152 712 138 766 146 854 196 861 232 748 236 696 242 685 234 678 242 667 246 622 247 611 251 606 244 551 252 568 283 560 346 557 481 644 472 663 455 704 460 751 474 779 487 799 507 807 534 763 545 663 549 555 560 548 780 593 783 738 780 744 778 749 764 754 762 812 767 868 784 902 803 929 829 950 863)) ; 王
     (34394 1000 (884 380 810 450 754 438 706 420 704 407 709 394 747 338 701 330 650 330 476 343 414 344 473 354 505 367 525 389 529 406 527 426 608 419 664 422 702 432 734 458 720 471 684 479 524 478 519 510 521 542 564 545 670 538 706 542 737 556 759 584 697 594 607 600 554 626 546 622 530 602 487 591 462 570 450 540 446 484 411 495 379 492 350 479 315 453 312 433 354 439 446 431 446 416 439 404 400 369 399 360 406 348 308 363 289 370 273 381 285 389 308 423 290 546 275 584 262 599 263 629 258 650 223 744 179 839 176 832 172 835 145 878 158 881 230 880 405 863 410 698 402 653 393 634 382 619 366 608 367 601 373 597 434 611 467 630 478 642 486 656 489 671 480 756 482 859 543 858 553 780 554 626 607 600 616 606 634 632 626 692 622 793 659 759 711 676 691 644 691 631 744 636 777 648 801 670 807 686 808 706 784 724 736 782 714 800 686 812 668 813 650 802 622 804 619 856 688 855 713 859 728 841 852 876 890 901 905 918 864 928 842 928 696 912 503 916 413 924 343 936 307 947 289 960 232 946 201 930 138 889 131 906 100 930 93 942 36 940 94 854 155 730 198 612 218 518 221 464 215 433 203 412 162 376 142 335 123 317 145 301 156 300 203 312 306 300 436 291 436 130 380 84 366 57 412 54 451 57 489 66 520 82 531 94 537 108 539 124 522 158 521 181 588 171 642 168 676 176 710 199 683 217 647 226 519 231 512 283 654 275 738 275 748 270 753 258 840 277 885 295 922 326 938 346) (338 826 310 812 274 781 274 746 264 676 288 679 308 688 324 701 337 718 352 760 355 806 351 829)) ; 虚
     (28422 1000 (927 750 892 746 870 738 833 717 744 641 720 665 702 676 644 704 611 662 637 644 646 632 664 591 672 594 687 588 670 554 660 540 594 482 580 490 551 489 526 501 473 551 447 563 454 570 417 595 484 639 500 655 511 675 514 704 491 710 479 709 446 695 414 661 397 623 387 623 382 632 367 637 368 646 348 660 344 672 320 682 314 693 281 704 284 714 280 723 271 730 231 739 231 747 240 752 241 757 234 756 226 761 221 796 231 789 234 816 238 822 247 824 237 865 207 936 184 933 147 918 119 893 71 834 91 824 103 825 138 840 164 859 221 760 201 760 207 771 182 773 137 767 136 760 121 753 181 722 183 729 187 729 198 710 227 689 234 679 250 683 262 676 241 676 268 659 321 609 344 602 344 591 351 582 395 548 507 419 504 394 527 383 527 345 481 376 398 442 333 481 271 500 273 493 270 488 257 496 250 490 217 485 231 470 266 453 352 397 407 345 424 345 437 327 460 309 477 288 377 274 370 261 354 253 354 235 378 222 405 217 495 216 531 211 523 156 491 56 509 53 525 54 556 66 583 88 614 126 606 179 607 200 658 193 674 179 752 198 783 216 796 228 807 242 797 256 672 258 624 264 604 271 628 288 696 313 717 330 769 353 819 395 888 469 884 482 852 487 822 477 753 439 731 433 686 383 597 320 586 350 597 426 677 479 865 588 946 643 965 660 980 682 986 709 984 725) (610 908 605 926 588 954 521 931 481 908 455 877 448 858 510 866 524 862 534 847 543 771 542 657 537 598 514 521 517 514 543 512 567 523 596 553 607 577 601 674 615 849) (214 557 214 563 178 553 149 537 81 489 74 461 38 413 27 390 88 397 123 410 153 430 184 461 198 482 220 529 227 556) (277 256 254 254 231 240 197 212 174 200 170 178 144 132 141 116 170 117 218 129 256 153 272 171 284 192 297 246) (429 823 413 844 404 866 386 863 358 850 335 829 297 781 307 778 317 768 328 767 356 782 367 785 416 746 434 741 487 757 491 767) (807 862 781 869 760 864 741 853 704 818 684 806 675 784 632 740 624 718 651 722 700 737 744 764 784 804 811 855)) ; 漆
+    (24433 1000 (391 478 296 489 206 506 122 533 56 492 32 461 44 457 68 464 111 464 254 444 303 440 308 434 309 404 219 400 195 388 184 378 168 344 173 335 182 337 183 237 164 220 116 196 121 190 119 168 208 147 423 125 432 122 448 103 502 104 568 121 586 134 592 144 592 154 581 174 570 182 535 200 447 229 446 167 366 168 308 174 276 184 252 201 245 222 250 246 369 234 406 240 438 259 416 274 402 278 281 291 251 299 260 349 331 347 425 327 447 229 535 200 513 346 500 354 494 372 485 378 456 376 386 385 380 399 380 420 398 428 423 428 482 407 529 419 570 436 584 448 594 464) (557 565 541 574 524 605 514 644 503 634 496 637 438 582 434 547 353 550 313 559 280 575 267 586 269 664 391 653 430 643 438 582 496 637 506 665 501 683 494 691 464 688 527 736 550 762 566 795 571 841 533 843 516 837 487 814 475 798 458 762 451 724 457 692 451 691 391 693 384 754 390 874 382 918 372 942 337 936 282 915 230 887 167 845 146 874 127 871 112 864 102 853 85 826 78 811 101 788 151 722 171 703 189 719 199 744 213 765 190 811 170 827 213 847 234 852 287 856 307 855 318 840 324 821 326 777 321 713 310 706 284 703 264 720 239 718 214 706 185 684 188 678 203 680 201 619 191 590 180 578 148 561 166 539 223 532 367 506 446 499 485 503 522 513 553 532 578 561) (885 769 871 772 845 785 779 848 755 862 741 865 710 897 689 910 653 926 612 936 570 939 526 935 532 924 544 924 540 918 529 920 690 824 750 780 777 755 825 700 808 674 808 651 862 656 895 669 920 693 926 711 928 733) (874 492 859 493 762 579 682 633 607 663 611 656 628 651 632 644 588 656 548 650 561 633 562 625 618 597 669 565 803 452 786 430 784 417 812 410 842 410 881 422 898 440 902 452 899 481) (837 262 669 378 646 385 643 378 638 379 607 390 595 386 577 369 728 262 800 200 769 168 762 155 827 150 868 160 900 182 910 198 914 218)) ; 影
+    (24453 1000 (905 490 742 486 784 526 790 539 794 555 784 564 784 574 818 572 878 584 915 602 941 627 929 635 902 640 818 632 780 638 784 813 781 860 772 900 758 934 736 964 722 976 668 963 578 917 562 872 546 860 539 849 539 839 617 875 624 868 636 869 630 859 651 858 675 866 689 855 698 841 703 824 707 788 708 723 703 637 590 640 477 661 511 673 586 717 596 766 596 793 592 804 566 812 547 801 511 757 483 703 474 665 451 668 404 646 388 637 370 609 406 606 419 593 694 576 681 492 546 504 426 528 385 505 353 473 382 457 400 452 550 440 589 433 592 409 590 340 490 347 462 344 434 332 423 322 406 286 583 278 580 212 554 99 553 88 562 85 582 92 617 111 643 114 643 127 668 137 665 147 684 169 687 184 666 240 664 273 767 263 780 248 796 251 848 265 880 280 904 303 912 317 849 324 725 327 661 333 657 400 650 427 707 429 819 424 868 426 891 430 927 444 968 481) (394 389 382 393 332 473 301 508 312 627 311 875 316 953 283 943 257 920 238 888 220 833 239 824 240 801 248 808 250 806 242 755 243 746 250 740 246 704 249 575 231 593 185 654 164 668 164 681 135 702 96 742 72 757 52 763 15 760 15 754 39 725 67 699 81 672 127 617 141 591 174 559 231 478 250 466 243 463 255 453 256 440 267 440 271 424 279 424 282 405 298 372 278 334 280 314 362 322 383 334 390 350 402 364) (333 240 240 338 185 378 160 373 118 357 132 342 150 337 154 328 151 323 156 320 170 318 172 311 159 314 157 310 186 294 199 274 175 294 243 218 281 166 253 122 250 101 270 100 288 108 311 102 323 104 359 122 365 134 374 131 389 149 392 160 390 183 384 196) (610 863 571 851 584 850 616 861)) ; 待
+    (20998 1000 (744 514 743 530 734 532 723 545 713 547 699 568 677 754 662 814 647 853 618 900 596 920 573 928 544 928 526 923 450 891 398 823 389 806 383 765 436 805 466 821 470 814 491 815 528 804 556 777 585 722 602 656 609 584 606 491 500 492 463 498 472 528 460 596 394 738 382 759 350 789 310 842 290 853 278 876 247 905 221 915 214 912 210 902 221 902 238 883 243 874 235 878 220 898 230 867 247 856 284 788 292 777 300 775 362 610 373 563 380 516 370 511 342 512 321 526 317 537 299 537 283 531 259 508 220 452 153 515 140 537 127 530 120 544 73 582 54 582 47 575 26 582 14 582 87 507 167 415 216 352 261 282 323 168 290 122 299 116 323 126 336 115 360 118 390 129 398 144 428 166 430 178 387 247 372 264 350 277 350 294 336 298 324 310 259 409 237 431 272 453 280 449 347 445 360 442 380 428 426 435 582 431 603 428 618 423 629 414 726 454 751 478 759 494) (962 526 920 535 866 532 813 512 785 475 704 393 659 333 533 105 560 118 619 158 722 264 774 310 914 397 948 434 964 464 972 491)) ; 分
+    (36523 1000 (850 406 848 417 823 448 819 461 804 465 738 518 710 549 695 574 691 599 703 621 685 635 681 675 595 666 549 691 449 767 406 795 460 829 503 848 551 855 578 853 593 801 595 666 681 675 688 858 679 915 665 953 627 958 590 955 524 933 492 911 463 884 439 853 421 820 398 809 380 814 352 839 330 848 327 865 233 918 207 925 181 927 153 921 155 915 152 913 120 908 208 860 290 806 290 814 283 817 286 821 295 818 299 811 294 806 318 786 337 782 339 770 348 760 377 747 372 744 366 747 366 742 377 736 388 740 392 738 395 723 417 717 449 681 468 678 504 650 499 642 490 640 422 652 340 678 311 682 304 699 263 698 224 692 191 679 162 659 225 636 296 620 251 571 241 537 261 500 272 455 276 391 273 316 260 312 224 282 211 278 227 254 247 247 261 247 274 232 295 225 345 218 402 142 362 106 344 84 355 70 454 75 486 84 505 101 508 114 504 135 428 208 455 212 574 203 600 190 650 189 698 207 724 225 741 247 766 254 767 264 774 268 769 281 758 289 705 310 696 345 596 336 593 286 585 248 494 253 433 262 352 288 356 305 349 353 398 350 494 332 556 361 582 380 520 386 382 408 346 409 347 453 343 474 450 456 497 455 539 465 575 490 399 519 339 519 335 537 336 564 362 609 549 576 567 570 581 560 590 545 596 336 696 345 688 420 680 455 715 431 732 407 741 378 734 348 750 342 779 345 844 385)) ; 身
+    (20687 1000 (977 828 971 836 927 863 886 855 851 838 784 792 782 779 761 743 741 723 727 687 691 641 684 651 682 673 692 785 618 767 615 742 581 771 485 832 453 858 516 864 579 856 595 837 613 796 618 767 692 785 691 814 684 838 685 851 667 890 616 955 536 922 489 911 476 895 440 872 396 890 376 893 370 878 359 868 343 863 356 856 369 860 383 843 414 829 420 818 446 801 486 764 565 701 601 666 604 658 604 645 553 682 464 738 381 799 346 810 344 800 334 790 329 777 510 643 580 579 568 579 541 592 465 638 418 678 354 710 314 671 350 658 407 619 442 605 436 602 476 569 502 554 501 547 496 544 476 541 468 548 467 555 452 554 440 548 408 512 414 480 410 412 367 376 396 354 415 354 418 339 451 333 550 329 586 322 610 264 622 223 625 205 592 203 535 210 448 297 386 348 348 370 313 364 306 356 367 298 379 290 388 289 385 276 421 237 473 164 458 128 450 118 474 108 499 112 514 124 523 120 532 124 567 156 628 150 639 144 647 131 688 130 707 134 744 148 796 185 786 204 778 208 723 219 707 231 693 250 672 292 656 311 663 324 722 315 746 296 766 299 807 308 849 324 883 348 896 364 863 389 840 424 753 414 751 366 720 360 644 368 650 404 643 478 582 438 577 373 500 380 471 394 476 488 575 483 582 438 643 478 703 476 743 483 753 414 840 424 826 468 818 518 814 522 751 520 625 528 622 535 623 543 647 563 716 600 746 589 799 555 785 538 783 529 874 533 888 537 901 546 912 560 909 583 855 608 769 639 794 660 889 708 919 729 942 756 954 764 981 802) (369 200 348 213 244 375 255 418 261 486 257 731 262 884 275 928 274 935 257 937 241 934 214 916 192 888 169 840 194 806 204 554 200 436 101 546 70 574 34 593 13 599 3 566 14 543 56 502 156 370 267 178 262 165 231 128 227 115 282 110 327 120 360 147 373 171 375 182)) ; 像
                 )))
 
 ;;; ---------------------------------------------------------------- cinematics (§5, §6; unskippable, SHOT-ON framed)
-(defcine ic-kikon-cine (a v :len 186 :hold 112)
-  "月牙天衝 with a Gran Rey Cero (the Shikai's Kikon; the user's decision 2026-09-28): beat 0, the X held; a white card,
-Ichigo black, the blades' white edges the only lines, the 月牙天衝 / 王虚の閃光 stamp, silence; low on him: the long blade
-held out, a Cero gathering on its edge, red in black; from behind the victim: the black crescent with its BLOOD core
-tearing at him; a held push-in, in silence; the impact: a negative, a manga page, the Konpaku; a wide, ash drifting."
+;; 王虚の閃光を込めた月牙天衝, the Shikai's Kikon (v2 §3, the three reference frames): the cinematic-only palette, the
+;; user's decision (2026-09-29): gold on the raised blade, red and pink-violet on the Cero Getsuga; in play the Getsuga
+;; stays mono
+(defparameter +ic-gold+ '(1.0 0.76 0.23) "The Cero's gold rim #FFC23A (its core #FFF6D0).")
+(defparameter +ic-violet+ '(0.75 0.25 0.91) "The pink-violet glow #C040E8.")
+(defparameter +ic-cero-core+ '(0.35 0.04 0.06) "The ring's dark blood-red disc #5A0A10.")
+
+(defun ic-rgb (c) (values (f32 (first c)) (f32 (second c)) (f32 (third c))))
+
+(defun ic-blade (e)
+  "Fill *IC-V* / *IC-W* with E's held blade's base and tip."
+  (let ((m (model e)))
+    (body-weapon-base (model-body m) (model-weapon m) (model-joints m) *ic-v*)
+    (body-weapon-tip (model-body m) (model-weapon m) (model-joints m) *ic-w*)))
+
+(defun vfx-ic-orb (x y z r k)
+  "The gold orb on the blade's tip: a white-yellow core in a gold-orange rim, its light."
+  (multiple-value-bind (gr gg gb) (ic-rgb +ic-gold+)
+    (fx-line x (- y r) z x (+ y r) z (* 1.4 r) gr gg gb (* 0.8 k))
+    (fx-line x (- y (* 0.6 r)) z x (+ y (* 0.6 r)) z (* 0.8 r) 1.0 0.96 0.82 k)
+    (%light (f32 x) (f32 y) (f32 z) gr gg gb 5f0 (f32 (* 2.5 k)) 8)))
+
+(defun vfx-ic-thread (e x y z k)
+  "The thread of reiatsu from his horn's tip to the orb (gold, pulsing brighter every 6 f)."
+  (let ((h (ic-joint e (joint-index :head) *ic-v* -0.26 0.215 0.06)))
+    (multiple-value-bind (gr gg gb) (ic-rgb +ic-gold+)
+      (fx-line (aref h 0) (aref h 1) (aref h 2) x y z 0.012 gr gg gb k))))
+
+(defun vfx-ic-hook (x y z yaw s k)
+  "The orb burst into a hooked flame crescent curling back over the blade's tip: gold-orange, a red inner band; S m."
+  (let* ((fx (fwd-x yaw)) (fz (fwd-z yaw)) (n 10))
+    (multiple-value-bind (gr gg gb) (ic-rgb +ic-gold+)
+      (dotimes (i n)
+        (let* ((a0 (* 3.9 (/ i (float n)))) (a1 (* 3.9 (/ (1+ i) (float n))))   ; a curl of ~225 deg, back over the tip
+               (r0 (* s 0.5 (- 1.0 (* 0.12 (/ i (float n)))))) (r1 (* s 0.5 (- 1.0 (* 0.12 (/ (1+ i) (float n))))))
+               (x0 (+ x (* r0 (sin a0) (- fx)))) (y0 (+ y (* r0 (- 1.0 (cos a0))))) (z0 (+ z (* r0 (sin a0) (- fz))))
+               (x1 (+ x (* r1 (sin a1) (- fx)))) (y1 (+ y (* r1 (- 1.0 (cos a1))))) (z1 (+ z (* r1 (sin a1) (- fz))))
+               (w (* s 0.09 (sin (* 3.14 (/ (+ i 0.5) n))))))
+          (fx-line x0 y0 z0 x1 y1 z1 (* 1.6 w) gr gg gb (* 0.9 k))
+          (fx-line x0 y0 z0 x1 y1 z1 (* 0.6 w) 0.85 0.1 0.12 k :mode :alpha)))
+      (%light (f32 x) (f32 (+ y (* 0.4 s))) (f32 z) gr gg gb 7f0 (f32 (* 2.2 k)) 8))))
+
+(defun vfx-ic-flame-body (e k tm)
+  "The gold-orange flame of reiatsu swallowing his whole body, 1.5x his height, its edges torn into points: tongues of
+gold round him licking up, flickering with TM (the cinematic frame)."
+  (let ((p (pos-of e)))
+    (multiple-value-bind (gr gg gb) (ic-rgb +ic-gold+)
+      (dotimes (i 28)
+        (let* ((a (+ (* i 0.2244) (* 0.05 (sin (* 0.7 i))))) (r (+ 0.55 (* 0.25 (sin (+ (* 3.1 i) (* 0.2 tm))))))
+               (y0 (* 2.2 (/ (mod (* 7 i) 11) 11.0))) (l (+ 0.7 (* 0.6 (abs (sin (+ (* 1.7 i) (* 0.35 tm)))))))
+               (x0 (+ (aref p 0) (* r (cos a)))) (z0 (+ (aref p 2) (* r (sin a)))))
+          (fx-line x0 y0 z0 (+ x0 (* 0.2 (cos a))) (+ y0 l) (+ z0 (* 0.2 (sin a))) 0.2 gr gg gb (* 0.55 k) :end-width 0.0)
+          (fx-line x0 y0 z0 (+ x0 (* 0.1 (cos a))) (+ y0 (* 0.6 l)) (+ z0 (* 0.1 (sin a))) 0.09 1.0 0.95 0.8 (* 0.5 k)
+                   :end-width 0.0))))
+    (%light (aref p 0) 1.4f0 (aref p 2) 1.0f0 0.62f0 0.2f0 6f0 (f32 (* 2.0 k)) 8)))
+
+(defun vfx-ic-red-blade (e k)
+  "The gold drained out of the blade: the whole length a red slash in a pink-violet glow."
+  (ic-blade e)
+  (let ((b *ic-v*) (w *ic-w*))
+    (multiple-value-bind (vr vg vb) (ic-rgb +ic-violet+)
+      (fx-line (aref b 0) (aref b 1) (aref b 2) (aref w 0) (aref w 1) (aref w 2) 0.22 vr vg vb (* 0.7 k))
+      (fx-line (aref b 0) (aref b 1) (aref b 2) (aref w 0) (aref w 1) (aref w 2) 0.07 0.82 0.06 0.11 k :mode :alpha)
+      (%light (aref w 0) (aref w 1) (aref w 2) vr vg vb 5f0 (f32 (* 2.0 k)) 8))))
+
+(defun vfx-ic-cero-ring (x y z ux uz rot k)
+  "The Cero Getsuga: a ring 8 m across of violet reiatsu, a dark blood-red disc filling it, four gold spike-slashes on
+its outside at the diagonals (a diamond); its plane faces along (UX UZ), turned ROT radians about it."
+  (let* ((rx (- uz)) (rz ux) (n 32) (r 4.0))
+    (flet ((pt (a rr) (values (+ x (* rr (cos a) rx)) (+ y (* rr (sin a))) (+ z (* rr (cos a) rz)))))
+      (multiple-value-bind (cr cg cb) (ic-rgb +ic-cero-core+)
+        (dotimes (i 48)                                   ; the disc: an overlapping fan of dark wedges
+          (let ((a (+ rot (* i 0.1309))))
+            (multiple-value-bind (x1 y1 z1) (pt a (* 0.95 r))
+              (fx-line x y z x1 y1 z1 0.05 cr cg cb (* 0.95 k) :mode :alpha :end-width 0.9)))))
+      (multiple-value-bind (vr vg vb) (ic-rgb +ic-violet+)
+        (dotimes (i n)                                    ; the violet band
+          (multiple-value-bind (x0 y0 z0) (pt (+ rot (* i (/ 6.2832 n))) r)
+            (multiple-value-bind (x1 y1 z1) (pt (+ rot (* (1+ i) (/ 6.2832 n))) r)
+              (fx-line x0 y0 z0 x1 y1 z1 0.5 vr vg vb (* 0.9 k) :mode :alpha)
+              (fx-line x0 y0 z0 x1 y1 z1 0.25 vr vg vb (* 0.5 k))))))
+      (multiple-value-bind (gr gg gb) (ic-rgb +ic-gold+)
+        (dotimes (i 4)                                    ; the four gold spikes at the diagonals
+          (let ((a (+ rot 0.785 (* i 1.5708))))
+            (multiple-value-bind (x0 y0 z0) (pt (- a 0.3) (* 1.15 r))
+              (multiple-value-bind (x1 y1 z1) (pt (+ a 0.3) (* 1.15 r))
+                (multiple-value-bind (x2 y2 z2) (pt a (* 1.45 r))
+                  (fx-line x0 y0 z0 x2 y2 z2 0.22 gr gg gb k :end-width 0.02)
+                  (fx-line x1 y1 z1 x2 y2 z2 0.22 gr gg gb k :end-width 0.02)))))))
+      (%light (f32 x) (f32 y) (f32 z) 0.75f0 0.25f0 0.91f0 10f0 (f32 (* 3.0 k)) 9))))
+
+(defcine ic-kikon-cine (a v :len 186 :hold 150)
+  "月牙天衝 with a Gran Rey Cero, the Shikai's Kikon (v2 §3; the reference's three beats): beat 0, the X held; a white card,
+the 月牙天衝 / 王虚の閃光 stamp, silence; the raise, from low in front: the cleaver overhead one-handed, a gold orb growing
+on its tip, a thread of light from the horn to it; the ignition: the orb bursts into a hooked flame crescent, his body
+swallowed in gold flame, then the blade a red slash in a pink-violet glow; the swing; from behind and below him, the pale
+pink sky and the Cero Getsuga: a violet ring round a dark blood-red disc, four gold spikes in a diamond; the impact;
+the plaza back, violet ash drifting."
   (at 0 (face-each-other a v 2.6) (shot-on a 60 3.6 1.1 :look 1.1) (lens 50)
       (cine-clip a :ic-cross :blend 2 :time 0.18) (cine-clip v :sh-kikon-victim :blend 4)
       (hold-both a v 12) (impact-frame :negative 2) (play-sfx :whoosh-heavy :pitch 1.1))
   (at 12 (card :white a) (shot-on a 30 3.2 0.7 :look 1.1 :off -0.8) (lens 44 -8) (silence 58)
       (caption "月牙天衝" :kanji2 "王虚の閃光" :reading "GETSUGA TENSHO" :sub "GRAN REY CERO  KIKON" :side 1 :ink t :hanko t))
-  (at 70 (card nil) (caption-exit) (shot-on a 95 3.0 0.8 :look 1.3 :off 0.5) (lens 66 6)
-      (cine-clip a :ic-getsuga :blend 4 :speed 0.3) (play-sfx :awaken-rise :pitch 0.8))
-  (during (70 106) (multiple-value-bind (x y z) (actor-point a 1.4)   ; the Cero on the long blade
-                     (let ((yaw (yaw-of a)))
-                       (vfx-ic-cero (+ x (* 1.3 (fwd-x yaw))) (+ y 0.2) (+ z (* 1.3 (fwd-z yaw)))
-                                    (* 0.3 (min 1.0 (/ (- cf 68) 20.0))) 0.95 (cine-dt)))))
-  (at 104 (cine-clip a :ic-getsuga :blend 0 :time 0.2) (shot-on v 160 6.0 1.2 :look 1.3) (lens 58)
-      (play-sfx :getsuga) (play-sfx :explode :pitch 0.6 :gain 0.6))
-  (during (104 150) (let* ((p (pos-of a)) (q (pos-of v)) (u (min 1.0 (/ (- cf 104) 24.0))) (yaw (yaw-of a)))
-                      (vfx-ic-crescent (+ (aref p 0) (* u (- (aref q 0) (aref p 0)))) 1.3 (+ (aref p 2) (* u (- (aref q 2) (aref p 2))))
-                                       yaw 5.0 0.95 0.5 2)))
-  (at 128 (hold-both a v 22) (silence 22) (lens 66))
-  (during (128 150) (shot-on v 150 (- 4.2 (* 0.9 u)) (+ 0.8 (* 0.2 u)) :look 1.3))
-  (at 150 (impact-frame :negative 2)
-      (multiple-value-bind (x y z) (actor-point v 1.0) (vfx-konpaku-shatter x (+ y 0.1) z 3) (vfx-hit x (+ y 0.3) z :heavy))
+  (at 70 (card :black a) (caption-exit) (face-each-other a v 7.0) (shot-on a 40 4.6 0.5 :look 2.3) (lens 46)
+      (cine-clip a :ic-cero-raise :blend 6) (play-sfx :awaken-rise :pitch 0.8))
+  (during (70 100) (let ((q (pos-of a)) (yaw (yaw-of a)))   ; a violet haze at the frame's right edge
+                     (multiple-value-bind (vr vg vb) (ic-rgb +ic-violet+)
+                       (fx-line (+ (aref q 0) (* 3.0 (fwd-z yaw)) (* -2.0 (fwd-x yaw))) 0.5 (- (aref q 2) (* 3.0 (fwd-x yaw)) (* 2.0 (fwd-z yaw)))
+                                (+ (aref q 0) (* 3.4 (fwd-z yaw)) (* -2.0 (fwd-x yaw))) 3.5 (- (aref q 2) (* 3.4 (fwd-x yaw)) (* 2.0 (fwd-z yaw)))
+                                1.2 vr vg vb 0.25))))
+  (during (80 100) (progn (ic-blade a)                     ; the orb on the tip, the thread from the horn
+                          (let* ((w *ic-w*) (x (aref w 0)) (y (aref w 1)) (z (aref w 2)))
+                            (vfx-ic-orb x y z (+ 0.05 (* 0.3 u)) 0.95)
+                            (vfx-ic-thread a x y z (if (< (mod cf 6) 2) 0.95 0.55)))))
+  (at 100 (lens 52) (play-sfx :getsuga :pitch 1.2) (play-sfx :awaken-boom :pitch 0.7 :gain 0.6))
+  (during (100 128) (progn (ic-blade a)
+                           (let* ((w *ic-w*) (k (if (< cf 116) 0.95 (max 0.1 (- 0.95 (* 0.08 (- cf 116)))))))
+                             (vfx-ic-hook (aref w 0) (aref w 1) (aref w 2) (yaw-of a) 1.6 k))
+                           (vfx-ic-flame-body a (if (< cf 120) 0.95 0.5) cf)
+                           (when (>= cf 116) (vfx-ic-red-blade a (min 1.0 (/ (- cf 114) 6.0))))))
+  (at 128 (card nil) (shot-on a 90 4.2 1.2 :look 1.3) (lens 46) (cine-clip a :ic-getsuga :blend 0 :time 0.2) (play-sfx :getsuga))
+  (during (128 138) (vfx-ic-red-blade a 0.9))
+  (at 132 (impact-frame :negative 2))
+  (at 138 (card :white) (shot-on a 200 3.4 0.5 :look 2.6 :off 0.8) (lens 36) (play-sfx :explode :pitch 0.6)
+      (let ((e *env*)) (v3-set! (env-sky-top e) 0.94f0 0.85f0 0.86f0) (v3-set! (env-fog-color e) 0.94f0 0.85f0 0.86f0)))
+  (during (138 162) (let* ((p (pos-of a)) (q (pos-of v)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
+                           (d (max 0.1 (sqrt (+ (* dx dx) (* dz dz))))) (uu (min 1.0 (/ (- cf 136) 22.0))))
+                      (vfx-ic-cero-ring (+ (aref p 0) (* dx (+ 0.15 (* 0.85 uu)))) 2.4 (+ (aref p 2) (* dz (+ 0.15 (* 0.85 uu))))
+                                        (/ dx d) (/ dz d) (* 0.14 (/ cf 60.0)) 0.95)))
+  (at 160 (card nil) (shot-on v 150 5.0 1.2 :look 1.3) (lens 58) (impact-frame :negative 2)
+      (multiple-value-bind (x y z) (actor-point v 1.0) (vfx-konpaku-shatter x (+ y 0.1) z 2) (vfx-hit x (+ y 0.3) z :heavy))
       (let ((q (pos-of v))) (impact-splash (aref q 0) 0.0 (aref q 2) 14 0.08))
       (play-sfx :getsuga :pitch 0.7) (play-sfx :konpaku-shatter) (shake 0.3 0.4))
-  (at 152 (impact-frame :manga 12))
-  (at 170 (shot-on a 170 5.2 1.0 :look 1.2) (lens 48) (cine-clip a :ic-stance :blend 8)))
+  (at 162 (impact-frame :manga 12))
+  (during (160 172) (let ((q (pos-of v)))                  ; the ring bursting on him
+                      (vfx-ic-cero-ring (aref q 0) 2.0 (aref q 2) 1.0 0.0 0.0 (max 0.05 (- 0.9 (* 1.2 u))))))
+  (at 172 (shot-on a 170 5.2 1.0 :look 1.2) (lens 48) (cine-clip a :ic-stance :blend 8))
+  (during (172 186) (let ((q (pos-of v)))                  ; violet ash drifting
+                      (when (< (rnd01) 0.5)
+                        (%t-blob (+ (aref q 0) (rnd-range -2f0 2f0)) (rnd-range 0.5f0 3f0) (+ (aref q 2) (rnd-range -2f0 2f0))
+                                 0f0 0.3f0 0f0 1.2f0 0.05f0 -0.05f0 0.1f0 +pal-ash+)))))
 
 ;; the cinematics' clones and the C (draw mode: posed and drawn one after another in one buffer)
 (defun ic-body-at (x z yaw clip tm alpha &key (y 0.0) (flash 0.35))
@@ -888,8 +1016,9 @@ counter's small C), FLARE its white rim brightened (the impact)."
           (let ((t0 (+ g0 (* (- g1 g0) (max lo u0)))) (t1 (+ g0 (* (- g1 g0) (min hi u1)))))
             (multiple-value-bind (x0 y0 z0) (ic-c-point px pz ux uz d t0)
               (multiple-value-bind (x1 y1 z1) (ic-c-point px pz ux uz d t1)
-                (fx-line x0 y0 z0 x1 y1 z1 (* scale 0.34) 0.95 0.95 0.93 (min 1.0 (* k (+ 0.8 flare))) :mode :alpha)   ; the white edge
-                (fx-line x0 y0 z0 x1 y1 z1 (* scale 0.26) 0.03 0.03 0.05 k :mode :alpha)                             ; the ink band
+                (fx-line x0 y0 z0 x1 y1 z1 (* scale 0.36) 0.95 0.95 0.93 (min 1.0 (* k (+ 0.8 flare))) :mode :alpha)   ; the white edge
+                (fx-line x0 y0 z0 x1 y1 z1 (* scale 0.3) 0.02 0.02 0.03 k :mode :alpha)                              ; the ink band
+                (fx-line x0 y0 z0 x1 y1 z1 (* scale 0.22) 0.02 0.02 0.03 k :mode :alpha)
                 (fx-line x0 y0 z0 x1 y1 z1 (* scale 0.05) 0.82 0.06 0.11 k :mode :alpha)))))))))                     ; the BLOOD core
 
 (defun ic-line-from (a v)
@@ -930,14 +1059,14 @@ three, then twelve at once; one white frame; behind Ichigo, low, facing away, th
                      (destructuring-bind (waves per) *cine-clone-waves*
                        (dotimes (w waves)
                          (dotimes (i per)
-                           (ic-cine-charge (aref q 0) (aref q 2) (+ (* w 1.5708) 0.785 (* (- i 1) 0.35)) (+ 30 (* 16 w)) cf 30.0
-                                           (if (= i 1) 3.5 0.0) (nth (mod (+ w i) 3) clips))))
+                           (ic-cine-charge (aref q 0) (aref q 2) (+ 0.5 3.1416 (* 6.2832 (/ (+ 8 (* 16 w)) 80.0)) (* (- i 1) 0.6))
+                                           (+ 30 (* 16 w)) cf 22.0 (if (= i 1) 3.5 0.0) (nth (mod (+ w i) 3) clips))))
                        (dotimes (i 12)                  ; the last: every direction at once
                          (ic-cine-charge (aref q 0) (aref q 2) (* i 0.5236) 96 cf 45.0 (if (oddp i) 2.5 0.0) (nth (mod i 3) clips))))))
   (at 34 (play-sfx :cut)) (at 50 (play-sfx :cut :pitch 1.1)) (at 66 (play-sfx :cut :pitch 0.95)) (at 82 (play-sfx :cut :pitch 1.15))
   (at 100 (play-sfx :cut-heavy) (play-sfx :clone :pitch 0.6) (shake 0.2 0.3))
   (at 110 (card nil) (ui-flash 1 1 1 1 6.0) (silence 10) (lens 50))
-  (at 120 (face-each-other a v 3.2) (card :black) (back-rim 56 0.82 0.06 0.11) (shot-on a 180 2.6 0.55 :look 1.3 :off -0.5)
+  (at 120 (face-each-other a v 3.2) (card :black) (back-rim 56 0.82 0.06 0.11) (shot-on a 155 3.2 0.55 :look 1.3 :off -0.5)
       (cine-clip a :ic-k-stance :blend 0) (cine-clip v :sh-crumple :blend 0)
       (caption "千影" :reading "SEN'EI" :sub "KESSA NO ICHIGO  KIKON" :side 1 :hanko t))
   (at 124 (impact-frame :negative 2)
@@ -954,7 +1083,7 @@ points; the victim: the impact, the Konpaku; back inside the C as it burns away 
   (at 0 (face-each-other a v 6.0) (shot-on a 60 4.0 1.1 :look 1.1) (lens 50)
       (cine-clip a :ic-k-cut :blend 2 :time 0.15) (cine-clip v :sh-kikon-victim :blend 4)
       (hold-both a v 12) (impact-frame :negative 2) (silence 12))
-  (at 12 (shot-on a 20 2.4 0.35 :look 1.9) (lens 70) (cine-clip a :ic-drop :blend 6 :time (/ 17.0 60.0) :speed 0.0)
+  (at 12 (shot-on a 20 3.6 0.6 :look 2.2) (lens 60) (cine-clip a :ic-drop :blend 6 :time (/ 17.0 60.0) :speed 0.0)
       (play-sfx :awaken-rise :pitch 0.5))
   (during (12 48) (let ((m (model a)) (w *ic-w*) (b *ic-v*))   ; the black glow gathering on the slab
                     (body-weapon-tip (model-body m) :tensa (model-joints m) w)
@@ -973,10 +1102,10 @@ points; the victim: the impact, the Konpaku; back inside the C as it burns away 
   (during (100 112) (multiple-value-bind (px pz ux uz d) (ic-line-from a v)   ; wide, side-on: the cut, its trail round
                       (cine-cam (+ px (* 0.5 d ux) (* 14.0 (- uz))) 2.6 (+ pz (* 0.5 d uz) (* 14.0 ux)) (+ px (* 0.5 d ux)) 2.4 (+ pz (* 0.5 d uz)))
                       (vfx-ic-c-cut px pz ux uz d 0.95 0.0 (min 1.0 (* 1.4 u)))))
-  (at 112 (lens 32) (silence 20))
+  (at 112 (lens 50) (silence 20))
   (during (112 140) (multiple-value-bind (px pz ux uz d) (ic-line-from a v)   ; inside the C, looking back through the gap
-                      (let ((c (- (* 0.5 d) (* 0.8 u))))
-                        (cine-cam (+ px (* c ux)) 2.3 (+ pz (* c uz)) px 1.9 pz))
+                      (let ((c (- (* 0.72 d) (* 0.6 u))))
+                        (cine-cam (+ px (* c ux)) 2.4 (+ pz (* c uz)) px 2.4 pz))
                       (vfx-ic-c-cut px pz ux uz d (+ 0.8 (* 0.15 (sin (* 0.4 cf)))) 0.0 1.0)))
   (at 140 (shot-on v 160 5.0 1.3 :look 1.3) (lens 58) (impact-frame :negative 2)
       (multiple-value-bind (x y z) (actor-point v 1.0) (vfx-konpaku-shatter x (+ y 0.1) z 4) (vfx-hit x (+ y 0.3) z :heavy))
@@ -984,10 +1113,14 @@ points; the victim: the impact, the Konpaku; back inside the C as it burns away 
       (play-sfx :konpaku-shatter) (play-sfx :chain-snap) (shake 0.3 0.4))
   (at 142 (impact-frame :manga 12))
   (during (140 160) (multiple-value-bind (px pz ux uz d) (ic-line-from a v) (vfx-ic-c-cut px pz ux uz d 0.95 0.0 1.0 :flare (- 1.0 u))))
-  (at 160 (cine-clip a :ic-k-stance :blend 10) (lens 34))
+  (at 160 (cine-clip a :ic-k-stance :blend 10) (lens 50))
   (during (160 180) (multiple-value-bind (px pz ux uz d) (ic-line-from a v)   ; it burns away from both points inward
-                      (cine-cam (+ px (* 0.5 d ux)) 2.3 (+ pz (* 0.5 d uz)) px 1.9 pz)
+                      (cine-cam (+ px (* 0.66 d ux)) 2.4 (+ pz (* 0.66 d uz)) px 2.4 pz)
                       (vfx-ic-c-cut px pz ux uz d (- 0.9 (* 0.5 u)) (* 0.5 u) (- 1.0 (* 0.5 u))))))
+
+(defcine ic-pose-cine (a v :len 9999 :hold 1)
+  "Debug stills (ichigo.lisp ICHIGO-POSE, 74990+k): the camera on P1 at *IC-POSE-ANG* degrees."
+  (at 0 (shot-on a *ic-pose-ang* 3.6 1.1 :look 1.0) (lens 42)))
 
 (defcine ic-kessa-cine (a v :len 168 :hold 120)
   "血鎖の一護 KESSA NO ICHIGO (the awakening, 168 f): beat 0, the blades lowered, head down, silence; close on his face:

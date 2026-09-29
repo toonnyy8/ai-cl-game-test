@@ -10,7 +10,7 @@
 ;;;; Most of his mechanics run in his :tick hook (after the hits of the step): the stance's follow-ups, the parry from
 ;;;; blockstun, the clones' answers (a J / K press edge), the Hoho clone, the O charge, the afterimages.
 (in-package :duel)
-(declaim (special *p1* *p2* *match-tick* *mode*))    ; (flow.lisp's: the debug tests, the per-match state, practice)
+(declaim (special *p1* *p2* *match-tick* *mode* *gate* *gate-seed0* *pairs*))   ; (flow.lisp's, debug.lisp's)
 
 ;;; ================================================================ knobs (debug 74000-75599, ICHIGO-DEBUG)
 (defparameter *walk-ichigo* 4.2 "Ichigo's walk (Shikai).")
@@ -19,8 +19,8 @@
 (defparameter *run-kessa* 9.0 "KESSA's run.")
 (defparameter *ichigo-mult* 1.6 "The Shikai's damage x (74100+k: 0.5 + k / 100) ...")
 (defparameter *ichigo-taken* 0.8 "... and the damage it takes x (74200+k).")
-(defparameter *kessa-mult* 1.15 "KESSA's damage x (74300+k) ...")
-(defparameter *kessa-taken* 0.9 "... and the damage it takes x (74400+k).")
+(defparameter *kessa-mult* 1.25 "KESSA's damage x (74300+k) ...")
+(defparameter *kessa-taken* 1.0 "... and the damage it takes x (74400+k).")
 ;; the Shikai's stance 月待 TSUKIMACHI
 (defparameter *tsuki-up* 6 "The stance's frame where it is up: the follow-ups fire from here.")
 (defparameter *tsuki-tap* 30 "Frames the stance holds past its f6 on a tap of L ...")
@@ -201,13 +201,13 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
   :l-after-k nil
   ;; a mid-close brawler with posts: every back hop and Hoho posts a clone; the parry and O by the clones in its
   ;; :reflex (ICHIGO-AI-KESSA), from blockstun in the :tick hook
-  :ai (:intents (:approach 2 :pressure 3 :zone 1 :defend 2)
-       :ranges (:approach (2.8 6.0) :pressure (1.6 2.8) :zone (3.0 4.0) :defend (3.5 5.5))
+  :ai (:intents (:approach 3 :pressure 4 :zone 0 :defend 1)
+       :ranges (:approach (2.6 6.0) :pressure (1.6 2.6) :zone (3.0 4.0) :defend (3.5 5.5))
        :moves ((0.0 2.8 :q 5 :f 3 :breaker 1 :step 1)
-               (2.8 5.0 :step 3 :sp2 1 :f 1 nil 1)
-               (5.0 9.0 :sp1 2 :hoho 1 :kikon 1 nil 2)
-               (9.0 99.0 :kikon 1 :hoho 1 nil 2))
-       :guard 0.4 :hoho 0.4 :dash 0.3 :dash-back 0.4 :o-ender 0.3 :l-after-k 0.0 :sp-cancel-bars 9
+               (2.8 5.0 :f 2 :step 2 :sp2 1 :q 1)
+               (5.0 9.0 :sp1 2 :hoho 2 :kikon 1 :step 1)
+               (9.0 99.0 :kikon 1 :hoho 2 nil 1))
+       :guard 0.4 :hoho 0.4 :dash 0.6 :dash-back 0.2 :o-ender 0.6 :l-after-k 0.0 :sp-cancel-bars 9
        :kikon-range 8.6 :stun-follow (:sp1 3.8 7.0) :reflex ichigo-ai-kessa))
 
 ;;; ================================================================ pure rules (host-tested: tests/duel-rules-test.lisp)
@@ -249,7 +249,7 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
 ;;; hazard data: a clone (ICC), an afterimage (ICE); their hits are :ic-hit hazards whose data is the clone / :echo
 (defstruct (icc (:conc-name icc-))
   (state :idle) (born 0 :type fixnum) (life 0 :type fixnum) (fade 0 :type fixnum) (src nil)
-  (link 0 :type fixnum) (mv nil) (sf 0 :type fixnum) (queued nil)
+  (link 0 :type fixnum) (mv nil) (sf 0 :type fixnum) (queued nil)   ; (the presses waiting for its next links)
   (hit nil)                                   ; this link's own contact (:hit / :block)
   (touched nil)                               ; any link of this string touched him: the carried gate; spent at its end
   (lunge 0.0))
@@ -402,19 +402,21 @@ guard (or a gauge < 50) else RANGETSU; the middle, the dash in or the Getsuga; f
 (defun clone-link (c weight link)
   "Clone C starts answer LINK with WEIGHT (link 1 after the lag)."
   (setf (icc-state c) :answer (icc-mv c) (clone-move weight link) (icc-link c) link
-        (icc-sf c) (if (= link 1) (- *clone-lag*) 0) (icc-queued c) nil (icc-hit c) nil (icc-lunge c) *clone-lunge*)
-  (when (= link 1) (setf (icc-touched c) nil)))
+        (icc-sf c) (if (= link 1) (- *clone-lag*) 0) (icc-hit c) nil (icc-lunge c) *clone-lunge*)
+  (when (= link 1) (setf (icc-touched c) nil (icc-queued c) nil)))
 
 (defun ichigo-press (e button)
   "A J / K press edge of E's (the user's choice: EVERY clone answers): an idle clone within *CLONE-ANSWER-RANGE* starts
-its string; an answering one latches the press for its next link (the last press wins)."
+its string; an answering one queues the press for a later link (each press one link, in order, 3 links at most: the
+clone plays his whole string back, *CLONE-LAG* behind)."
   (let ((w (if (eq button :quick) :q :f)) (q (pos-of (opp-of e))))
     (dolist (h (ichigo-clones e))
       (let* ((hz (hazard h)) (c (hazard-data hz)))
         (case (icc-state c)
           (:idle (when (<= (sqrt (+ (expt (- (aref q 0) (hazard-x hz)) 2) (expt (- (aref q 2) (hazard-z hz)) 2))) *clone-answer-range*)
                    (clone-link c w 1)))
-          (:answer (when (< (icc-link c) 3) (setf (icc-queued c) w))))))))
+          (:answer (when (< (+ (icc-link c) (length (icc-queued c))) 3)   ; each press one link, in order
+                     (setf (icc-queued c) (append (icc-queued c) (list w))))))))))
 
 (defun ichigo-strike (e x z yaw hw mult data)
   "A clone's / an echo's hit: an :ic-hit hazard with HW at MULT (ECHO-HITWIN) in the frame (X Z YAW), for its active
@@ -446,7 +448,7 @@ if it touched him, else it idles where it stands."
                (emit :sfx :whoosh-heavy e))
              (cond ((and (icc-queued c) (< (icc-link c) 3)
                          (chain-open-p sf s (mv-a mv) (mv-r mv) (or (icc-hit c) (icc-touched c))))
-                    (clone-link c (icc-queued c) (1+ (icc-link c))))
+                    (clone-link c (pop (icc-queued c)) (1+ (icc-link c))))
                    ((>= sf (+ s (mv-a mv) (mv-r mv)))
                     (if (eq (clone-after-string (icc-touched c) (icc-life c)) :fade)
                         (clone-fade c)
@@ -573,12 +575,13 @@ ZANZO runs."
 
 (defun ichigo-catch (e att)
   "KESSA's :parried hook: +*KESSA-PARRY-CATCH* guard gauge, the attacker's stagger lengthened to *KESSA-PARRY-STUN*, a
-12 f hitstop, the kiin, 0.3 s of slow motion; the counter is the :land string (ZANGETSU-GAESHI)."
+12 f hitstop, a white flash, the kiin, 0.3 s of slow motion; the counter is the :land string (ZANGETSU-GAESHI)."
   (let ((g (gauges e)) (fa (fighter att)))
     (setf (gauges-gg g) (f32 (min *gg-max* (+ (gauges-gg g) *kessa-parry-catch*))) (gauges-gg-idle g) 0)
     (when (eq (fighter-state fa) :stun) (setf (fighter-stun fa) *kessa-parry-stun*)))
   (hitstop 12)
   (slowmo 0.4 0.3)
+  (ui-flash 1 1 1 0.55 7.0)                             ; the white flash frame
   (emit :sfx :parry-ting e)
   (emit :sfx :chain-snap e)
   (clog "~a PARRY CATCH gg ~d" (side-name e) (round (gauges-gg (gauges e)))))
@@ -701,22 +704,22 @@ the 4-Konpaku Kikon), under them ZANZO's white bar draining, the label BUNSHIN x
 the Kikon's worth)."
   (declare (ignore kit))
   (let* ((st (ic e)) (hs (ichigo-clones e)) (live (remove-if-not (lambda (h) (clone-live-p (hazard-data (hazard h)))) hs))
-         (n (length live)) (pw (/ w 3.6)) (hh (* 2.4 h)) (y0 (- y (* 0.7 h)))
+         (n (length live)) (pw (/ w 3.6)) (hh (* 3.6 h)) (y0 (- (+ y (* 0.5 h)) (* 0.5 hh)))
          (flash (max 0.0 (- 1.0 (/ (- *match-tick* (ics-o-at st)) 40.0))))
          (pulse (if (= n 3) (+ 0.6 (* 0.4 (abs (sin (* 6.0 tm))))) 1.0)))
     (dotimes (i 3)
       (let* ((px (if right (- (+ x w) (* (1+ i) (+ pw (* 0.2 pw)))) (+ x (* i (+ pw (* 0.2 pw))))))
              (c (and (< i n) (hazard-data (hazard (nth i live))))) (cx (+ px (* 0.5 pw))))
-        (if c
-            (progn
-              (ui-rect (- cx (* 0.32 pw)) (+ y0 (* 0.3 hh)) (* 0.64 pw) (* 0.7 hh) (list 0.82 0.06 0.11 pulse))   ; the rim
-              (ui-rect (- cx (* 0.22 pw)) (+ y0 (* 0.34 hh)) (* 0.44 pw) (* 0.62 hh) (list 0.95 0.95 0.93 pulse))  ; the body
-              (ui-rect (- cx (* 0.17 pw)) y0 (* 0.34 pw) (* 0.28 hh) (list 0.95 0.95 0.93 pulse))                ; the head
-              (%arc (f32 cx) (f32 (+ y0 (* 0.5 hh))) (f32 (* 0.62 hh)) (f32 (max 1.0 (* 0.08 hh)))
-                    (f32 (max 0.0 (min 1.0 (/ (icc-life c) (float *clone-life*))))) 0.95 0.9 0.85 0.8))
-            (progn
-              (ui-rect (- cx (* 0.22 pw)) (+ y0 (* 0.34 hh)) (* 0.44 pw) (* 0.62 hh) '(0.3 0.3 0.34 0.6))
-              (ui-rect (- cx (* 0.17 pw)) y0 (* 0.34 pw) (* 0.28 hh) '(0.3 0.3 0.34 0.6))))
+        (flet ((figure (col rim)                       ; a small standing silhouette: head, shoulders, the robe
+                 (when rim (ui-rect (- cx (* 0.27 hh)) (+ y0 (* 0.27 hh)) (* 0.54 hh) (* 0.75 hh) rim))
+                 (ui-rect (- cx (* 0.12 hh)) y0 (* 0.24 hh) (* 0.26 hh) col)
+                 (ui-rect (- cx (* 0.22 hh)) (+ y0 (* 0.3 hh)) (* 0.44 hh) (* 0.7 hh) col)))
+          (if c
+              (progn
+                (figure (list 0.95 0.95 0.93 pulse) (list 0.82 0.06 0.11 pulse))
+                (%arc (f32 cx) (f32 (+ y0 (* 0.5 hh))) (f32 (* 0.62 hh)) (f32 (max 1.0 (* 0.08 hh)))   ; its life
+                      (f32 (max 0.0 (min 1.0 (/ (icc-life c) (float *clone-life*))))) 0.95 0.9 0.85 0.8))
+              (figure '(0.3 0.3 0.34 0.6) nil)))
         (when (> flash 0.0) (ui-rect (- cx (* 0.4 pw)) (- y0 2) (* 0.8 pw) (+ hh 4) (list 1.0 1.0 1.0 (* 0.5 flash))))))
     (let ((z (block zz (do-entities (h (hz hazard)) (when (and (eql (hazard-owner hz) e) (eq (hazard-look hz) 'ichigo-zanzo-look))
                                                        (return-from zz hz))))))
@@ -788,10 +791,11 @@ it already runs it continues to F."
   (when *cine* (setf *cine-hold* t (cine-hold *cine*) f)))
 
 (defun ichigo-debug (c)
-  "74000+k ICHIGO-TEST k; 74100+k .. 74400+k the forms' damage dealt / taken x (0.5 + k / 100) (Shikai dealt, taken,
+  "74000+k ICHIGO-TEST k, 74080+k the 60-seed gate of pairing k (ICHIGO-AB-GATE); 74100+k .. 74400+k the forms' damage dealt / taken x (0.5 + k / 100) (Shikai dealt, taken,
 KESSA dealt, taken); 74500+k the parry window's length = k (from f2); 74600+k *KESSA-PARRY-CATCH* = k; 74700+k
 *CLONE-LIFE* = 10k; 74800+k *CLONE-BURST-DMG* = k; 74900+k (k 0-3) P1's clones = k, 74905 log P2's combo; 74910+k
-*CLONE-SCALE* = k / 20 (k < 40); 74950+k *AI-IC-PARRY-P* = k / 50 (k < 40); 74990+k a pose still (*ICHIGO-POSES*); 75000 + 150 i + k stills of cinematic i (0 the Shikai
+*CLONE-SCALE* = k / 20 (k < 40); 74950+k *AI-IC-PARRY-P* = k / 50 (k < 40); 74990+k a pose still (*ICHIGO-POSES*), 74989
+its camera turned 90 deg; 75000 + 150 i + k stills of cinematic i (0 the Shikai
 Kikon, 1 千影, 2 the awakening, 3 the KESSA Getsuga Soul Break) held at frame 2k."
   (when (>= c 75000)
     (return-from ichigo-debug
@@ -799,7 +803,7 @@ Kikon, 1 千影, 2 the awakening, 3 the KESSA Getsuga Soul Break) held at frame 
                       (* 2 (mod (- c 75000) 150)))))
   (let ((k (mod c 100)) (b (floor (- c 74000) 100)))
     (case b
-      (0 (ichigo-test k))
+      (0 (if (>= k 80) (ichigo-ab-gate (- k 80)) (ichigo-test k)))
       (1 (setf (kit-mult (find-kit :ichigo :base)) (+ 0.5 (/ k 100.0))))
       (2 (setf (kit-taken (find-kit :ichigo :base)) (+ 0.5 (/ k 100.0))))
       (3 (setf (kit-mult (find-kit :ichigo :kessa)) (+ 0.5 (/ k 100.0))))
@@ -809,6 +813,7 @@ Kikon, 1 千影, 2 the awakening, 3 the KESSA Getsuga Soul Break) held at frame 
       (7 (setf *clone-life* (* 10 k)))
       (8 (setf *clone-burst-dmg* k))
       (9 (cond ((< k 4) (ichigo-set-clones *p1* k))
+               ((= k 89) (setf *ic-pose-ang* (mod (+ *ic-pose-ang* 90.0) 360.0)))
                ((= k 5) (let ((f (fighter *p2*)))
                           (log-msg "duel ichigo combo P2 hits ~d dmg ~d reishi ~d" (fighter-combo-hits f) (fighter-combo-dmg f)
                                    (gauges-reishi (gauges *p2*)))))
@@ -822,8 +827,17 @@ Kikon, 1 千影, 2 the awakening, 3 the KESSA Getsuga Soul Break) held at frame 
     (:base :ic-cero-raise 1.0))
   "74990+k: P1 Ichigo (in the form) frozen at time (s) of the clip, 3 m from an idle Kenpachi (pose review stills).")
 
+(defun ichigo-ab-gate (k)
+  "74080+k: the seed gate of pairing k (*PAIRS*, debug.lisp) over 60 seeds from *GATE-SEED0* + 1: one A/B stream in one run
+(with 39000+10a+b for the awakening mode)."
+  (start-gate (+ 10 k))                                 ; (it starts seed +1 at once)
+  (setf *gate* (loop for seed from (+ 2 *gate-seed0*) to (+ 60 *gate-seed0*) collect (list seed (nth k *pairs*)))))
+
+(defvar *ic-pose-ang* 30.0 "The pose stills' camera angle round P1 (74989 turns it 90 deg).")
 (defun ichigo-pose (k)
   (destructuring-bind (form clip tm) (nth k *ichigo-poses*)
+    (abort-cine)
     (ichigo-test (if (eq form :base) 0 1))
-    (setf (fighter-state (fighter *p1*)) :cine)
+    (setf *cine-hold* t)
+    (start-cine 'ic-pose-cine *p1* *p2*)
     (play-clip *p1* clip :blend 0 :time tm :speed 0.0)))

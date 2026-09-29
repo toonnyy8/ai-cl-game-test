@@ -729,15 +729,15 @@ P2's) are unchanged and nothing new is drawn outside the blocks. Landscape (`hud
 Hellfire, East, West), Kenpachi (base, the three cups, the Bankai, KATAUDE) and Rukia (Shikai, −18, −50, zero), P1 and
 P2.
 
-## 17. Ichigo's KESSA on the thumb (2026-09-28, DUEL_ICHIGO.md §8)
+## 17. Ichigo's KESSA on the thumb (2026-09-28, DUEL_ICHIGO.md §8; v2 2026-09-29)
 
-KESSA has no hold-guard: its U is the chain parry (20 of the chain gauge a press). A resting thumb is U on this deck, so
-it would fire a parry on every rest. In a form whose U is a move (the kit's `:u` hook) **a resting thumb does nothing**
-(rest → up-flick is still the Hoho), and **the spent AWAKEN chip becomes U** (labelled U, drawn always, a tap: the deck is
-laid out again with no 300 ms hold on it; `u-chip-p`, `*u-chip-holds*`, onehand.lisp). The thumb ring gains the chain
-gauge as a BLOOD arc (gauge / 100, dim below 20) with a white tick at U's 20 (the kit's `:deck` hook, ichigo.lisp). The
-portrait block needs nothing new: the chain gauge is the guard row, which already spans the Reishi bar, and it carries
-the CHAIN label and notches (`:hud-guard`). Every other character and landscape: unchanged.
+**v2 (the playtest redesign):** KESSA guards again, so a resting thumb is guard in both forms and the spent AWAKEN chip is
+spent as for every character (no `:u` hook: `u-chip-p` is false). L is the parry, on the L chip as usual; from blockstun
+too (the thumb resting on guard, a tap of L). The thumb ring shows three BLOOD dots for his live clones (the kit's `:deck`
+hook). The portrait block's kit slot draws the clone pips (the kit meter's `:draw`), labelled `BUNSHIN`.
+
+(v1, 2026-09-28, superseded: KESSA had no hold-guard, U was the chain parry, a resting thumb did nothing and the spent
+AWAKEN chip became U; the ring showed the chain gauge.)
 
 ## 18. Senjumaru on the thumb (2026-09-29, DUEL_SENJUMARU.md §8)
 

@@ -1,12 +1,33 @@
 # SOUL DUEL: Kurosaki Ichigo (TYBW), dual Zangetsu and 血鎖の一護 KESSA NO ICHIGO
 
-Status: **built 2026-09-28** (the design below with the user's decisions of the same day, "User decisions" near the end,
-which override the body where they differ). The body is the design as approved (its numbers were proposals); the
-as-built values are in "Built: deviations", "Knobs" (`duel/lisp/ichigo.lisp`), and the measurements close the file.
-Code layout (the user's rule, DUEL_DESIGN "Character code layout"): everything of his is in `duel/lisp/ichigo.lisp` and
-`duel/lisp/ichigo-art.lisp`; the shared files only gained small generic hook points (the kit's `:hooks`, see "Built").
+Status: **v2 built 2026-09-29** (the playtest redesign: "Playtest redesign decisions", "v2 decisions" and "v2: built"
+at the end of this file, which override everything above them where they differ). v1 was built 2026-09-28: the design
+below with the user's decisions of that day ("User decisions"); its as-built values are in "Built: deviations", "Knobs"
+and "Measurements". Code layout (the user's rule, DUEL_DESIGN "Character code layout"): everything of his is in
+`duel/lisp/ichigo.lisp` and `duel/lisp/ichigo-art.lisp`; the shared files only gained small generic hook points.
 
-## Summary
+## Summary (v2)
+
+- **The Shikai 二刀の斬月 is a close-range rushdown.** The half-Hollow's single flat white horn; the sleeves end just
+  past the elbow. J the short blade (J1 7 f, 2.2 m), K the long cleaver; a switched link 2 is the **cross**. **L is the
+  stance 月待 TSUKIMACHI** (RoS's Syzygy): from f6, J 乱月 RANGETSU (a lunge, four slashes), K 月落 TSUKI-OTOSHI (a
+  pounce, guard 30), L GETSUGA TENSHŌ (at the old L's f14), Step 月渡 TSUKIWATARI (a flash-step dash back into the
+  stance). SP1 月牙十字衝 JŪJISHŌ, SP2 双牙 SŌGA, O the flash-step cross JŪJI; its Kikon is **王虚の閃光を込めた月牙天衝**,
+  rebuilt from the reference frames (a gold orb on the raised blade, a hooked flame crescent, the red blade in a pink-violet
+  glow, a violet ring round a dark blood-red disc: the palette exception is this cinematic's alone).
+- **The awakening 血鎖の一護 KESSA NO ICHIGO** follows the figures (barefoot, the hair split black on his left, the left
+  half of the face black, two flat white horns, the robe open on a dark red disc, blood coils; a white pointless,
+  guardless slab). **U is a normal guard**; **L the parry 鎖盾**, made easy (from blockstun too, the window f2–25, 10 of
+  the guard gauge, a white rim light as its timer, a catch staggers 40 f and the counter 残月返し follows); J / K pure cuts;
+  **the clones 分身** (a Step leaves one where it took off, a Hoho in front of the opponent; up to 3 for 5 s): **every clone
+  answers every J / K press** with J → a heavy, K → a light, 6 f behind, in his combo at ×0.7; **O 影討 KAGE-UCHI** sends
+  them all into the strike (+30 each) and its Kikon **千影** is worth **2 / 2 / 3 / 4 Konpaku by the clones at the press**;
+  his Soul Break plays **漆黒の月牙天衝** (a huge C-shaped cut hanging in the air); SP2 **残像 ZANZŌ** echoes every attack
+  10 f later at half damage for 6 s; SP1 鎖引 KUSARI-BIKI pulls.
+- **Balance**: the awakening may be the stronger choice, but "never awaken" must still win ≥ 20 of 60 on each of three
+  seed streams against every opponent (measured under "v2: built").
+
+## Summary (v1, 2026-09-28, superseded where v2 differs)
 
 - **The Shikai 二刀の斬月 is a close-range rushdown.** He starts with the half-Hollow's **single horn** (the user's decision).
   J is the short blade (fast and short: J1 7 f, 2.2 m); K is the long cleaver (slower, longer, heavy on the guard gauge). A
@@ -973,3 +994,191 @@ Reference images the user supplied live in `.refs/` (git-ignored, third-party ar
     land: the user never managed one, even in practice mode, so it must get much easier.
 12. **The KESSA blade** is close to a long rectangular greatsword with **no point and no guard**
     (`.refs/Ichigo-of-the-Blood-Chains/`).
+
+## v2 decisions (the user, 2026-09-29)
+
+The v2 design (the playtest redesign above, written up as tables with six questions) was answered the same day; these
+answers override the design's defaults:
+
+1. **Every clone answers each J / K string**, not only the nearest one. Balanced by per-clone damage and the combo's
+   scaling, not by overriding the choice: clone hits join the victim's combo (its scaling, the 10th hit a knockdown) and
+   grant no KŌSEI, the clones are capped at 3, and a clone hit deals ×0.7 of its written damage (`*clone-scale*`).
+2. **The Kikon's Konpaku by the clones at the O press: 0 / 1 / 2 / 3 → 2 / 2 / 3 / 4.** (The design proposed 2 / 3 / 3 / 4;
+   one clone is now worth no more than none.)
+3. A Step leaves its clone at the take-off point, a Hoho in front of the opponent: yes.
+4. The parry (L) may be pressed from blockstun, its window f2–25: yes.
+5. Gold and pink-violet are allowed in the Cero Getsuga cinematic only (in play the Getsuga stays mono): yes.
+6. The KESSA look follows the figures (barefoot, black / orange split hair, the left half of the face black, flat sideways
+   white horns, the red chest emblem): yes.
+
+## v2: built (2026-09-29)
+
+Everything below is in `duel/lisp/ichigo.lisp` and `ichigo-art.lisp`. It replaces §3.3 (L), §4 (the KESSA kit) and §5
+(the cinematics) of the design above; the Shikai's J / K grid, the cross links, JŪJISHŌ, SŌGA, the Breaker, the awakening
+rule and the Shikai's ×1.6 / ×0.8 stand.
+
+### Both forms: the look
+
+- **Sleeves**: the shihakushō sleeve ends just past the elbow in a flared black cuff (0.20 m, wider than the upper arm)
+  with a white lining; the forearm is bare. KESSA's cuff is torn: three ragged teeth, a gap in the lining.
+- **The horn**: the half-Hollow's horn is a **flat white blade** from the left temple, swept sideways and back (both forms);
+  KESSA adds the right one.
+- **KESSA** (`:tag :kessa`, the Shikai's own parts `:tag :shikai`): the hair split, black on his left (a second cap and the
+  left spikes in #1A1418); the left half of the face black from the brow to the jaw, that eye's pupil BLOOD (the white
+  half-Hollow marking stays only in the awakening cinematic's first beat, `:tag :mark`, hidden in KESSA); the kosode open to
+  the navel, a dark red disc (#6E1418) on the sternum and black lines down the abdomen; a ragged white band at the waist;
+  dark maroon coils at the neck, wrists and ankles with BLOOD glints (the neat chain links are gone); barefoot, the
+  hakama's hem torn.
+- **The KESSA blade** `:tensa`: a long straight white slab (#ECECEA), 1.55 m × 0.17 m × 0.025 m, no point, no guard; a
+  cold-grey hairline on the edge side; a jagged black line down the flat's middle (5 segments zig-zagging, both faces);
+  the end cut square with a 45° notch at the edge-side corner; a white hilt with a faint grey diamond wrap.
+
+### Shikai L: the stance 月待 TSUKIMACHI (RoS's Syzygy; the names are ours)
+
+| | Value |
+|---|---|
+| Stance `:ic-tsuki` (`:sig`) | up at **f6**, then held **30 f** (a tap) or up to **60 f** while L is held, R 14 (80 f); no defence (hit as neutral); re-aims at 360°/s |
+| Follow-ups | the first J / K / L / Step from f6 (buffered from the press): the stance's non-button `:strings` (`:tsuki-j` …), started by the `:tick` hook (`tsuki-step`) |
+| J 乱月 RANGETSU `:ic-tsuki-j` | S8 A12 R18, a 2.4 m lunge, four short-blade slashes at f8 / 11 / 14 / 17, 18 each (72), the 4th a stagger; −6 on block, guard 5 each |
+| K 月落 TSUKI-OTOSHI `:ic-tsuki-k` | S18 A4 R30, a 3.0 m pounce, both blades slammed: 100, crumple, **guard 30**, −10 |
+| L GETSUGA TENSHŌ `:ic-tsuki-l` | the old wave at S8, so L, L fires at f14 (the old L); its own cooldown 100 f (the stance has none); refused with the cue while it cools |
+| Step 月渡 TSUKIWATARI `:ic-tsuki-dash` | 3.5 m in the stick direction (neutral: at him) over 12 f, iframes f0–8, TENCHI's afterimages; back in the stance at f6 (a fresh window); **once per stance**, 10 flash step |
+| L after a K link | `:ic-tsuki-k2`, the stance entered at f4 (2 f to its f6): every branch combos off K1 / K2 / K3 (host test) |
+
+The CPU's branch (at the stance's f6, in the `:tick` hook): after a K link's hit J 0.5 / K 0.3 / L 0.2; within 3 m
+TSUKI-OTOSHI on a guard (or a gauge under 50) else RANGETSU; 3–5.5 m the dash or the Getsuga; farther the Getsuga or the
+dash. Its bands: `:sig 3` at 2.6–5 m, `:sig 2` at 5–9 m; L after a K link 0.3.
+
+### KESSA J / K: cuts only (the slab has no point)
+
+| Link | Name | Clip | S / A / R | Dmg | React | Block | Reach | Guard |
+|---|---|---|---|---|---|---|---|---|
+| J1 | 板薙 ITA-NAGI | `:ic-k-cut` | 8 / 3 / 12 | 30 | flinch | −2 | 2.6 m 110° | 8 |
+| J2 | 返板 KAESHI-ITA | `:ic-k-back` | 8 / 3 / 13 | 30 | flinch | −2 | 2.6 m 110° | 8 |
+| J3 | 板旋 ITA-SEN | `:ic-k-wrap` | 9 / 3 / 18 | 40 | stagger | −4 | 2.8 m 200° | 8 |
+| K1 | 大板 ŌITA | `:ic-f1` | 18 / 4 / 20 | 66 | stagger | −3 | 3.2 m 150° | 14 |
+| K2 | 昇板 SHŌ-ITA | `:ic-f2` | 20 / 4 / 24 (enter 6) | 58 | stagger | −3 | 3.2 m 90° | 14 |
+| K3 | 天鎖落 TENSA-OTOSHI | `:ic-drop` | 21 / 5 / 34 (enter 7) | 80 | crumple | −20 | line 0.3 → 3.6 | 20 |
+
+Routes on hit before the multiplier: JJJ 100, KKK 204. U is a **normal guard** again (the chain gauge, its HUD skin, the
+`:u` / `:hud-guard` hooks and the one-hand U chip are gone).
+
+### KESSA: the clones 分身 BUNSHIN
+
+- **Made by** a Step (a tap or a dash's hop) at its take-off point, at most once per 40 f (`*clone-step-gap*`), free; and
+  by a Hoho, 1.6 m in front of the opponent on the line from Ichigo (behind him) through him. At most 3 live
+  (`*clone-max*`): a 4th replaces the oldest. Each lives 300 f (`*clone-life*`). A clone is KESSA's body at alpha 0.45, a
+  BLOOD rim and a BLOOD ring at its feet; it can't be hit.
+- **They answer J / K, reversed** (the user's choice: **every** live clone within 6 m of the opponent answers every
+  press): J → a heavy 影断 KAGE-DACHI (`:ic-f1`, S16, 50, stagger; link 3 `:ic-drop` S18, 60, crumple), K → a light 影薙
+  KAGE-NAGI (`:ic-k-cut`, S8, 26, flinch; link 3 `:ic-k-wrap` S9, 32, stagger), **6 f after the press** (`*clone-lag*`),
+  closing in up to 3 m per link. A J press's heavy lands at f22, inside Ichigo's J1 flinch; a K press's light at f14,
+  before his K1; the opponent's J1 (7 f) still beats it.
+- **Their strings are their own**: each press is one link (up to 3, in order); a link opens the next only on its own
+  contact (hit or block), after which every queued press comes out. Contact → the clone finishes its string and fades;
+  a whiff → it idles where it stands; Ichigo really hit (not a block) → every clone vanishes; its time up → it fades.
+- **A clone's hit** is an `:ic-hit` hazard with the answer's own hit window (its volume, its reaction) at **×0.7**
+  (`*clone-scale*`) damage and guard value: guarded facing Ichigo wherever the clone stands (`:src`), a hazard blockstun,
+  no KŌSEI, in the victim's combo (its scaling; the 10th hit a knockdown; Burst from the 2nd).
+- **The worst case** (debug 74008: three clones beside him, 2.2 m from an idle Kenpachi, a J string): J1, J2, three
+  heavies, J3, three heavies = 9 hits, **268** (Kenpachi's Reishi 1300 → 1032); a K string with three clones 244. The
+  theoretical worst (JKK, the 10-hit cap) ≈ 290. The game's other max strings (3 links × the form's damage): Yamamoto
+  227–295, Kenpachi 210–300 (his Bankai 444), Rukia 239–343, Senjumaru 276–294, the Shikai 339. At ×1.0 the J string would
+  be 343 (the top of that band), so the knob is ×0.7.
+
+### KESSA L: the parry 鎖盾 KUSARI-TATE, made much easier
+
+| | Value |
+|---|---|
+| Input | L from idle / walk / run / guard, **and from blockstun** (the blockstun ends; the `:tick` hook starts it) |
+| Window | **f2–25** (24 f, twice the old 12), 360°: the move's own `:params :window` (shared hook H4) |
+| Cost | **10 guard gauge** on frame 0 (refused below 10 or guardless) |
+| Whiff | S2 A24 R18 (44 f), hit as neutral outside the window |
+| Catch (a guardable melee hit) | no damage; the attacker staggers **40 f**; **+20 gauge** (net +10); a 12 f hitstop, a white flash, a bright "kiin" (`:parry-ting`), 0.3 s at 0.4× slow motion; then the counter |
+| Ranged / hazard in the window | blocked with no blockstun (`:parry-block`), its guard value drained |
+| Counter 残月返し ZANGETSU-GAESHI | the `:land` string: a pull to 1.6 m, S6 A3 R22, 80, crumple: **+15**, J1 combos; brush callout 鎖盾 |
+| Tells | on press the chains flare and a soft rising shimmer (`:parry-open`); while the window is open **a white rim light fading linearly** (its brightness is the timer) |
+| Practice mode | a missed parry says **LATE** (hit within 3 f of pressing L) or **EARLY** (hit in its recovery) over his head |
+
+The CPU: L when a hit it can see (as perceived) lands 4–22 f out, one roll per opponent action at 0.35; from blockstun
+after a blocked K link, 0.3, pressed so the string's next hit falls in the window.
+
+### KESSA SP2: 残像 ZANZŌ
+
+`:ic-k-zanzo` (S12 R16, 2 bars, refused while it runs): for **360 f** every attack of his (J / K links, SP1, the O
+strike, the counter; not the Breaker) is echoed **10 f later** by an afterimage (his body at alpha 0.35 replaying the move
+where he stood then) whose hits deal **×0.5** damage and guard value (a hazard: guarded facing him, gone if he is hit,
+no KŌSEI, in the combo). J1's echo hits at f18; RANGETSU's four at f18 / 21 / 24 / 27. The HUD shows a white bar
+draining under the clone pips.
+
+### KESSA O: 影討 KAGE-UCHI, and its Kikon 千影 SEN'EI
+
+- The rush `:ic-k-kikon`: aura 6, a flash-step dash at 30 m/s ≤ 14 f (8.6 m), a vertical cut S7 A3 R24, 70, knockback,
+  −14, guard 20, cooldown 90.
+- **At the O press** (a neutral rush or the ender) every live clone charges (the lead one mid-string included) and bursts
+  on the strike's frame: the strike deals **70 + 30 × n** (its bonus, one hit, one scaling step); the clones add no hit
+  and no timing of their own, so the O ender and the held-O Kikon are the universal ones.
+- **The Kikon's worth**: **2 / 2 / 3 / 4 Konpaku** for 0 / 1 / 2 / 3 clones at the press (`*clone-konpaku*`, the user's
+  table); a Soul Break stays the form's 3 + 1 = 4.
+- **千影** (192 f; SF6's Shun Goku Satsu): beat 0; the plaza drops to black with the victim alone, Ichigo gone in a
+  flash step; the camera orbits him while clones charge through him from a 9 m ring, four waves of three, then twelve at
+  once; one white frame; behind Ichigo, low, facing away, the victim collapsed beyond: the brush 千影, the hanko, the
+  impact, the Konpaku; wide.
+- **His Soul Break** plays **漆黒の月牙天衝** (the kit's `:soul-break-cine`, shared hook H2; 180 f): the slab raised
+  overhead, a black glow gathering on it; a black card, 月牙天衝 / 漆黒; wide and side-on, one top-down cut whose trail
+  keeps going round into a huge C hanging in the air (a vertical ellipse through the victim, 3.2 m tall about h 2.4, its
+  gap ±32° round Ichigo: the V tip over his head, the Ʌ tip at his knees, the part under the plaza a crack); the camera
+  inside the C looking back through the gap at him; the impact; the C burning away from both tips.
+
+### The Shikai's Kikon: 王虚の閃光を込めた月牙天衝 (186 f, rebuilt from the reference frames)
+
+Beat 0 and the white caption card as built; **the raise** (f70–100, a black card, low in front, a violet haze at one
+side): the cleaver overhead one-handed (`:ic-cero-raise`), a gold orb growing on its tip, a thread of gold light from the
+horn's tip to it; **the ignition** (f100–128): the orb bursts into a hooked gold flame crescent with a red inner band
+curling back over the tip, his body swallowed in gold-orange flame, then (f116) the blade a red slash in a pink-violet
+glow; **the swing** (f128); **the Cero Getsuga** (f138–160, from behind and below him, the sky pale pink): a violet ring
+8 m across round a dark blood-red disc, four gold spikes at its diagonals (a diamond), turning as it flies; the impact;
+the aftermath with violet ash. The palette exception (gold #FFC23A, violet #C040E8, the disc #5A0A10) lives only in this
+cinematic's `defparameter`s.
+
+### HUD and one hand
+
+The guard bar is the universal one in both forms. KESSA's kit-meter row: three clone pips (lit per live clone, each
+with a thin arc of its life, pulsing at 3), ZANZŌ's white bar under them, the label `BUNSHIN xN`; on an O press the pips
+flash and the label adds the Kikon's worth. One hand: rest is guard again; the thumb ring shows three BLOOD dots for the
+clones (`:deck`).
+
+### Code: the shared hook points
+
+The design listed six (H1–H6). Four were not needed: the `:tick` hook (which runs after the hits of every step) reads
+the J / K press edges for the clones (H3), starts the parry from blockstun (H5) and the stance's follow-ups (H6), and
+sets the Kikon's worth when it sees the O rush start (H1). Two generic points were added, both inert for a character
+that doesn't use them:
+
+| # | Where | Key | Change |
+|---|---|---|---|
+| H2 | kit.lisp `kit-kikon-cine` | kit `:hooks :soul-break-cine` (a cinematic's name) | a Soul Break plays the form's own cinematic, else its Kikon cinematic (as before) |
+| H4 | rules.lisp `parry-frame-p`, fighter.lisp `defender-state` | move `:params :window (lo hi)` | a parry move's own window, else the shared `*parry-window*` (GOKUI GAESHI unchanged) |
+
+Existing hooks used: `:tick`, `:step` (the Step clone), `:ok` (the parry's price, ZANZŌ refused while on), `:parried` (the
+catch), `:hit` (a clone learns its contact), `:struck` (a real hit clears the clones; the practice judge), `:deck`, the
+kit `:meter :draw / :label`, the hazard `hook` / `data` (clones, afterimages and their hits), the AI `:reflex`.
+
+### Knobs (`duel/lisp/ichigo.lisp`; debug 74000–75599)
+
+| Knob | Value | Debug |
+|---|---|---|
+| `*ichigo-mult*` / `*ichigo-taken*`; `*kessa-mult*` / `*kessa-taken*` | 1.6 / 0.8; **1.25 / 1.0** (v1: 1.15 / 0.9) | 74100+k … 74400+k (0.5 + k / 100) |
+| `*tsuki-up*` / `*tsuki-tap*` / `*tsuki-max*`; `*tsuki-dash-fs*`; `*tsuki-getsuga-cd*` | 6 / 30 / 60; 10; 100 | — |
+| `*kessa-parry-cost*` / `*kessa-parry-catch*` / `*kessa-parry-stun*`; the window | 10 / 20 / 40; f2–25 | 74600+k (catch); 74500+k (window f2–(k+1)) |
+| `*clone-max*` / `*clone-life*` / `*clone-step-gap*` / `*clone-lag*` / `*clone-lunge*` / `*clone-answer-range*` | 3 / 300 / 40 / 6 / 3.0 / 6.0 | 74700+k (life 10k) |
+| `*clone-scale*`; `*clone-burst-dmg*`; `*clone-konpaku*` | 0.7; 30; (2 2 3 4) | 74910+k (k / 20); 74800+k |
+| `*zanzo-life*` / `*zanzo-lag*` / `*zanzo-mult*` | 360 / 10 / 0.5 | — |
+| `*ai-ic-parry-p*` / `*ai-ic-parry-bs-p*` / `*ai-kessa-o-p*`; KESSA's `:o-ender` | 0.35 / 0.3 / 0.04; 0.6 | 74950+k (k / 50) |
+
+Other commands: 74000+k his tests (0 / 1 the forms 3 m from an idle Kenpachi, 2 Kenpachi's K1 into KESSA (the catch), 3
+Yamamoto's wave into the parry, 4 the Breaker through it, 5 JUJISHO's cut, 6 the Shikai 8 m out, 7 / 8 KESSA with three
+clones 8 m / 2.2 m from an idle Kenpachi (8: the worst-case J string), 9 KESSA 4 m from Rukia, 10 Kenpachi's J1 into
+KESSA); 74080+k the 60-seed gate of pairing k (one A/B stream in one run); 74900+k (k 0–3) P1's clones = k, 74905 logs
+P2's combo; 74989 / 74990+k pose stills (the camera turned 90°); 75000 + 150 i + k stills of cinematic i (0 the Cero
+Kikon, 1 千影, 2 the awakening, 3 漆黒の月牙天衝) at frame 2k.

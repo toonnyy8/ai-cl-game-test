@@ -584,7 +584,7 @@ LEAP CLEAVE off RYOTE's K3 at 4.2 m: 9 f of leap + S 11 inside the crumple's 40)
 | ENBU `:ru-kikon` | Rukia's Shikai (worth 2) | 6 | 24 m/s ≤ 16 f, locked | 8 m, ≤ 30 f | 8/3/24 | 2.4 m arc 360° | 30 | a flash step (TENCHI's afterimages) into MAI-SODE's pirouette; the Kikon 初の舞・月白 |
 | 白霞罸 HAKKA `:ru-hakka` | Rukia's awakened forms (worth 3) | 8 | none | 7.5 m | 20/3/30, locked | lane `:cap 0.5→7.5 h 1.2 r 1.2` | 30 | ENJO's shape in ice: a white pillar at her (f4), a sheet of ice along the lane (f20), frost 120 |
 | JŪJI `:ic-kikon` | Ichigo's Shikai (worth 2) | 6 | 30 m/s ≤ 14 f, locked | 8.6 m, ≤ 27 f | 7/3/24 | 2.6 m arc 140° | 30 | a flash step (TENCHI's afterimages) into the cross of both blades; the Kikon 月牙天衝 with a Gran Rey Cero |
-| KESSA `:ic-k-kikon` | Ichigo's KESSA (worth 3) | 6 | none | 8 m | 16/3/30, locked | lane `:cap 0.5→8.0 h 1.2 r 1.0` | 30 | ENJO's shape: a blood chain flung along the lane; the Kikon, the giant pitch-black 月牙天衝 |
+| KAGE-UCHI `:ic-k-kikon` | Ichigo's KESSA (worth 2 / 2 / 3 / 4 by his clones at the press) | 6 | 30 m/s ≤ 14 f, locked | 8.6 m, ≤ 27 f | 7/3/24 | 2.8 m arc 120° | 30 | a flash step into a vertical cut; every live clone charges and bursts on the strike's frame (+30 each to its damage); the Kikon 千影 (v2, 2026-09-29) |
 | NUICHI `:sj-kikon` | Senjumaru's Shikai (worth 2) | 6 | 26 m/s ≤ 14 f, locked | 7.7 m, ≤ 28 f | 8/3/24 | 2.4 m arc 200° | 30 | a flash step (TENCHI's afterimages) into the six-armed whirl; it sews (+2 / +1); the Kikon 仕立て直し |
 | UKIMON NO HATA `:sj-t-kikon` | Senjumaru's Bankai (worth 3) | 8 | none | 8.5 m | 20/3/30, locked | lane `:cap 0.5→8.5 h 1.2 r 1.2` | 30 | ENJO's shape: the red carpet rolls along the lane (f4), a glide in after it (`:follow-speed` 14); the Kikon 死出六色浮文機 |
 | MAPPUTATSU `:ke-b-kikon` | Kenpachi's Bankai (worth 4) | LEAP CLEAVE's, copied (`defmove-copy` with override keys: its own callout and cinematic) | | | | | | a pip of the arm; the Bankai's aura smoulders during it |
@@ -614,25 +614,29 @@ chosen exit: spending, warming or the forced **CRACK** (the ward crushed or brok
 ink). Kikon cinematics: 初の舞・月白 (Konpaku 2), 卍解 白霞罸 (3); the awakening `ru-awaken-cine`. The Shikai ×1.5 dealt /
 ×0.8 taken.
 
-### 6.5 Kurosaki Ichigo (`duel/lisp/ichigo.lisp`, art `ichigo-art.lisp`; the full design and the as-built deviations: DUEL_ICHIGO.md)
+### 6.5 Kurosaki Ichigo (`duel/lisp/ichigo.lisp`, art `ichigo-art.lisp`; the full design and the as-built deviations: DUEL_ICHIGO.md, v2 of 2026-09-29)
 
-The TYBW substitute Shinigami (black shihakushō, no haori, the orange head; 1.80 m, `:ichigo` body, hurt r 0.38 / h 1.8,
-the half-Hollow's single horn in the Shikai). **Shikai 二刀の斬月** `:base`: two blades (the long cleaver `:zangetsu-long`
-in the right hand, the hiltless short blade a body part in the left fist); J the short blade (J1 7 f, 2.2 m), K the
-cleaver (guard 16 / 16 / 22); the switched link 2 is the **cross** (返牙 KAESHI-KIBA guard 12, 交牙 KŌGA 24: the same
-frames, both blades); L 月牙天衝 GETSUGA TENSHŌ (a 2.4 m crescent, 16 m/s, cooldown 100; a faster combo copy after a K
-link), SP1 月牙十字衝 JŪJISHŌ (a 3.6 m cross wave that cuts opponent waves and fireballs), SP2 双牙 SŌGA (a 5 m
-flash-step X cut, guard 30), the Breaker MINEUCHI, the O module JŪJI. ×1.6 dealt / ×0.8 taken. **The awakening 血鎖の一護
-KESSA NO ICHIGO** (no heal, permanent, Kikon 3): one blade (`:tensa`), two horns, blood chains; **no hold-guard**: U is the
-chain parry 鎖盾 (S4 A12 R24, 360°, the shared parry window; 20 of the guard gauge a press, a caught melee hit +40 and the
-yank 引鎖 HIKI-GUSARI to 1.8 m, +3; a hazard / ranged hit in it is blocked with no blockstun: the passive `:parry-block`);
-the guard gauge is the **blood-chain gauge** (the HUD re-skins its bar: CHAIN, a notch at 20); every Step leaves a clone
-that slashes 20 f later (15 of the gauge, only above 35; guarded facing him; gone if he is hit first); the chain J / K
-reach 3.4–4.5 m (J1 10 f); L the giant Getsuga (4 m, 30 of the gauge, no cooldown) and its residue 残月 (1.5 s); SP1 鎖引
-KUSARI-BIKI (a 7 m chain line: pull to 1.6 m, bind 40 f, +13), SP2 鎖垣 KUSARI-GAKI (a 5 m chain wall for 2 s that eats
-projectiles); O the lane module KESSA. ×1.15 dealt / ×0.9 taken; walk 3.6, run 9. Kikon cinematics: 月牙天衝 with a Gran
-Rey Cero (Konpaku 2, 186 f), the giant pitch-black 月牙天衝 (3, 192 f); the awakening `ic-kessa-cine` (168 f). Everything
-is in his two files; the shared files only call his `:hooks` (see "Character code layout").
+The TYBW substitute Shinigami (black shihakushō with the sleeves ending just past the elbow, no haori, the orange head;
+1.80 m, `:ichigo` body, hurt r 0.38 / h 1.8, the half-Hollow's flat white horn on the left). **Shikai 二刀の斬月** `:base`:
+two blades (the long cleaver `:zangetsu-long` in the right hand, the hiltless short blade a body part in the left fist);
+J the short blade (J1 7 f, 2.2 m), K the cleaver (guard 16 / 16 / 22); the switched link 2 is the **cross** (返牙
+KAESHI-KIBA guard 12, 交牙 KŌGA 24); **L the stance 月待 TSUKIMACHI** (up at f6, held 30 f / 60 while L is held, no
+defence): J 乱月 RANGETSU (a lunge and four slashes, 72, −6), K 月落 TSUKI-OTOSHI (a pounce, 100, crumple, guard 30, −10),
+L GETSUGA TENSHŌ (the old wave, at f14 from L, L; cooldown 100), Step 月渡 TSUKIWATARI (a 3.5 m flash-step dash back into
+the stance, once per stance); after a K link the stance opens at f4 and every branch combos. SP1 月牙十字衝 JŪJISHŌ (a 3.6
+m cross wave that cuts opponent waves and fireballs), SP2 双牙 SŌGA, the Breaker MINEUCHI, the O module JŪJI. ×1.6 dealt /
+×0.8 taken. **The awakening 血鎖の一護 KESSA NO ICHIGO** (no heal, permanent): one white slab without point or guard
+(`:tensa`), two horns, the hair split black, the left half-face black, barefoot, blood coils; **a normal guard**; J / K
+pure cuts (J 2.6 m, K 3.2 m); **L the parry 鎖盾** (from blockstun too, its own window f2–25, 10 of the guard gauge, a
+catch +20 and a 40 f stagger, the counter 残月返し +15); **the clones 分身**: a Step (at its take-off point) or a Hoho (in
+front of him) leaves one, up to 3, 5 s each; **every clone answers every J / K press, reversed** (J a heavy, K a light,
+6 f behind, ×0.7 damage, in his combo, no KŌSEI), fades once its string touched him, all vanish when he is really hit;
+SP1 鎖引 KUSARI-BIKI (pull to 1.6 m, bind 40 f); SP2 残像 ZANZŌ (6 s: every attack echoed 10 f later at ×0.5); O
+影討 KAGE-UCHI (the clones charge and burst into the strike, +30 each), its Kikon **千影** worth 2 / 2 / 3 / 4 Konpaku by
+the clones at the press; his Soul Break plays **漆黒の月牙天衝** (the kit's `:soul-break-cine`). ×1.25 dealt / ×1.0 taken;
+walk 3.6, run 9. Kikon cinematics: 王虚の閃光を込めた月牙天衝 (the Cero Getsuga: gold and pink-violet, this cinematic
+only; 186 f), 千影 (192 f), 漆黒の月牙天衝 (the Soul Break, 180 f); the awakening `ic-kessa-cine` (168 f). Everything is in
+his two files; the shared files only call his `:hooks` (see "Character code layout").
 
 ### 6.6 Shutara Senjumaru (`duel/lisp/senjumaru.lisp`, art `senjumaru-art.lisp`; the full design and the as-built deviations: DUEL_SENJUMARU.md)
 
@@ -1129,6 +1133,8 @@ both files register with (her ranges were hard-coded, and her knobs moved 80000+
 | hazard | `hook (h hz event …)`, `data` | `:step` first (T skips the generic step), `:touches` for a kind hazards.lisp doesn't know, `:close` from `close-rifts` | Senjumaru |
 | hit flags | `:blade` (a `:flash` hit look), `:thread` (a `:quick` look), `:spare` (never the last Reishi point) | `apply-hit` | Ichigo; Senjumaru |
 | move / passive | `:shield` flag + `:catch` param (a guard window that catches ranged hits); passive `:parry-block` (a parry blocks what it can't catch) | `defender-state`, `apply-hit` | Senjumaru; Ichigo |
+| move | `:params :window (lo hi)` | a `:parry` move's own window (rules `parry-frame-p`, `defender-state`), else the shared `*parry-window*` | Ichigo (v2: f2–25) |
+| kit `:hooks` | `:soul-break-cine` (a cinematic's name) | the form's Soul Break cinematic (`kit-kikon-cine`), else its Kikon cinematic | Ichigo (v2: 漆黒の月牙天衝) |
 | debug | `*char-debug*` `(lo hi fn)` | `debug-cmd` hands a range to the character file | Ichigo 74000–75599; Senjumaru 2450–2479, 76000–78999, 90000–99999 |
 
 Left separate on purpose (each has one user, and the mechanics differ): `:blade` / `:thread` (two hit looks of a
