@@ -31,8 +31,11 @@
 ;;;;   J beats K   out of a blocked link, J1 into the string's next K link while it has the frames (J-BEATS-K-P)
 ;;;;   burst       combo'd past its 2nd hit for its perception delay, *FS-BURST* flash-step, and worth it
 ;;;;               (AI-BURST-WANTED-P): one roll per combo (*AI-BURST-P* by difficulty)
-;;;;   dash        far outside its range: hold Step toward it (the kit's :dash chance), or away from a
-;;;;               too-close opponent (:dash-back), released once the range is reached
+;;;;   dash        far outside its range (the kit's :dash-gap, else *AI-DASH-GAP*): hold Step toward it (the kit's :dash
+;;;;               chance), or away from a too-close opponent (:dash-back), released once the range is reached
+;;;;   tempo       kit keys: :tempo (x the neutral decision interval), :attack (+ the neutral attack chance),
+;;;;               :neutral-guard (a neutral guard's chance, else :guard), :respect (frames in DEFEND after taking it,
+;;;;               else *AI-RESPECT*): Kenpachi's cups keep NOME fed (docs/DUEL_NOZARASHI_V2.md, "The CPU after the faster drain")
 (in-package :duel)
 
 (defstruct snap
@@ -402,7 +405,9 @@ shorter than NORMAL's delay); one roll (*AI-J-BEATS-K-P* by difficulty), also ou
         (vpad-stick! vp (if (<= lo d hi) (brain-strafe b) (* 0.3 (brain-strafe b)))
                      (cond ((> d hi) 1f0) ((< d lo) -1f0) (t 0f0)))
         (when (<= (decf (brain-decide-t b)) 0)
-          (setf (brain-decide-t b) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
+          (setf (brain-decide-t b) (let ((n (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
+                                         (k (ai-table e :tempo)))                ; the kit's :tempo: x its interval
+                                     (if k (max 1 (round (* k n))) n)))
           (ai-decide e b kit s d lo hi heat))))))
 
 (defun opp-guardless-p (e)
@@ -435,15 +440,16 @@ its middle), guard, attack (a weighted pick from the kit's band for D), or wait.
         ((ai-brace-p e d)                                  ; Rukia at zero: brace a while (the warming stops)
          (ai-press b :guard 20 :act :brace)
          (setf (brain-why b) :brace))
-        ((and (> d (+ hi *ai-dash-gap*)) (< (sim-rnd01) (ai-table e :dash 0.0)))
+        ((and (> d (+ hi (ai-table e :dash-gap *ai-dash-gap*))) (< (sim-rnd01) (ai-table e :dash 0.0)))
          (ai-dash b 1.0 (* 0.5 (+ lo hi))) (setf (brain-why b) :dash))
         ((and (< d (- lo *ai-dash-gap*))
               (< (sim-rnd01) (if (ai-gg-low-p e) 0.6 (ai-table e :dash-back 0.0))))
          (ai-dash b -1.0 (* 0.5 (+ lo hi))) (setf (brain-why b) :dash-back))
-        ((and (< d 3.4) (< (sim-rnd01) (* (min 0.9 (+ (ai-table e :guard 0.3) (if (eq (brain-intent b) :defend) 0.2 0.0)))
+        ((and (< d 3.4) (< (sim-rnd01) (* (min 0.9 (+ (ai-table e :neutral-guard (ai-table e :guard 0.3))
+                                                      (if (eq (brain-intent b) :defend) 0.2 0.0)))
                                           (ai-guard-mult (gauges-gg (gauges e)) (gauges-guardless (gauges e))))))
          (ai-press b :guard (+ (first *ai-guard-hold*) (floor (* (second *ai-guard-hold*) (sim-rnd01))))))
-        ((< (sim-rnd01) (min 0.9 (+ (getf *ai-aggression* (brain-intent b) 0.3) (* 0.04 heat)
+        ((< (sim-rnd01) (min 0.9 (+ (getf *ai-aggression* (brain-intent b) 0.3) (* 0.04 heat) (ai-table e :attack 0.0)
                                     (* *ai-kosei-aggression* (- 1.0 (ai-gg e)))   ; KOSEI: a low gauge pays to attack
                                     (cond ((opp-guardless-p e) 0.3) ((opp-gg-low-p e) 0.2) (t 0.0)))))
          (ai-attack e b kit s d heat nil))))
@@ -507,7 +513,7 @@ fraction of the guard gauge."
       (vpad-stick! vp 0f0 0f0)
       (unless (kit-bankai-form (fighter-kit f)) (setf (brain-bankai-rolled b) nil))   ; a new cup-3 stay rolls again
       (when (member (fighter-state f) '(:stun :air :down :wakeup :guard-hit))   ; just took it: respect
-        (setf (brain-intent b) :defend (brain-intent-t b) *ai-respect*))
+        (setf (brain-intent b) :defend (brain-intent-t b) (ai-table e :respect *ai-respect*)))
       (when (and (eq (fighter-state f) :guard-hit) (zerop (fighter-sf f)) (not (brain-off b)))   ; blocked: hold on through the string?
         (when (< (sim-rnd01) (getf *ai-hold-guard* (brain-difficulty b) 0.85))
           (ai-press b :guard (+ (fighter-stun f) 20) :act :hold)))   ; (no reflex drops it: BRAIN-STEP)

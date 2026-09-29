@@ -21,7 +21,8 @@
 #   diff <(grep '^duel' run1.log) <(grep '^duel' run2.log)   -> empty.
 # Reference (the string follow-up chase and Kenpachi's Bankai entry at <= 4 Konpaku, 2026-09-28, docs/DUEL_STRINGS.md
 # §11, docs/DUEL_KEN_BANKAI.md): duel-cvc-yk.json (seed 7) ends
-#   duel -> RESULTS winner P1 konpaku 2-0 ticks 9636 secs 160.6    (turbo and real time alike; also after a gate)
+#   duel -> RESULTS winner P2 konpaku 0-6 ticks 5516 secs 91.9    (turbo and real time alike; also after a gate)
+#   (before Kenpachi's more aggressive cup 2 / 3 CPU, 2026-09-29, docs/DUEL_NOZARASHI_V2.md: winner P1 konpaku 2-0 ticks 9636 secs 160.6)
 #   (before them, the J / K strings + the Soul Break rule + the Bankai: winner P2 konpaku 0-3 ticks 7123 secs 118.7;
 #   before the strings, the Bankai rework + the slower guard refill: winner P1 konpaku 2-0 ticks 7688 secs 128.1;
 #   before the rework, guard v3: winner P2 konpaku 0-4 ticks 9305 secs 155.1; before guard v3, the Kenpachi batch: winner P1 konpaku 7-0 ticks 7351 secs 122.5; before the batch: winner P2 konpaku 0-3 ticks 8594 secs 143.2; before user review 3's slower cinematics: the same match with shorter cinematics, ticks 8384 secs 139.7 and ticks 8054 secs 134.2; P1 1-0 ticks 9438 secs 157.3 with the gauges and the O modules; P1 2-0 ticks 9780 secs 163.0 with the Kikon rush; P2 0-1 ticks 7298 secs 121.6 with the instant Kikon; 0-4 ticks 5857 secs 97.6 with a timed Bankai;

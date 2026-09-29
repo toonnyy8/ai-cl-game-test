@@ -1002,3 +1002,15 @@ Measured (seed gate, 20 seeds per pairing, all K.O.): YY 133.3 s (P1 9 / P2 11),
 KK 133.8 s, RY 133.9 s (Rukia 13), RK 142.7 s (Rukia 14 / Kenpachi 6), RR ~186 s. Kenpachi's CPU wins dropped (YK 8 → 5,
 RK 7 → 6 of 20): the faster drain makes the high cups harder to hold. Compensation knobs if he should win more: the cup 2 / 3
 damage (`*ryote-mult*` 1.15, `*nomihose-mult*` 1.20) or the NOME gains.
+
+**Kenpachi's CPU after it (AI only, 2026-09-29).** The user: 「是劍八 ai 的積極性太低導致難以維持在高杯狀態達到穩定輸出，這才使得勝率太低」
+(the character is strong enough in human hands). The cup log showed cup 2 never drains to cup 1 and cup 3 almost never
+drains to cup 2: nearly every cup 3 ended in the CPU's own near cash-out (NOME 0, cup 1) about 2 s in, and a quarter of
+cup 3 was spent beyond 4.2 m. His `:ai` tables in cups 2 / 3 now press (no DEFEND, no idle option at range, a dash from
+0.3–0.5 m outside his range, 30 / 0 f of respect, a neutral guard 0.1, cup 3 deciding 1.7× as often with +0.2 attack,
+DRINK 0.7), the near cash-out waits for NOME < 55, and LEAP CLEAVE rushes from ≤ 5 m; five generic ai.lisp keys
+(`:tempo :attack :neutral-guard :respect :dash-gap`). No tuning number changed. Cup 3 share 9 → 14 % (YK), stay 1.9 →
+2.8 s. Gate (20 seeds, all K.O.): YY 134.7 s (9 / 11), **YK 125.4 s (Yamamoto 13 / Kenpachi 7)**, **KK 125.1 s (9 / 11)**,
+RY 134.1 s (Rukia 13), **RK 134.4 s (Rukia 12 / Kenpachi 8)**, RR 185.6 s; YY / RY / RR identical per seed. YK over seeds 1–60: Kenpachi 22 (18 before). More
+aggression raised his wins further (YK 9, 30 of seeds 1–60 against 18 before) but put YK / KK under the 125 s floor:
+YK and KK now sit on it. DUEL_NOZARASHI_V2.md "The CPU after the faster drain" has the tables.

@@ -175,7 +175,8 @@
                (3.4 4.2 :f 1 :sp1 2 :step 1 nil 2)
                (4.2 6.0 :sp1 4 :sp2 2 nil 1)
                (6.0 99.0 :step 1 :kikon 1 nil 1))
-       :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 0.8 :kikon-range 9.0 :kikon-p 0.25 :o-ender 0.25
+       ;; (:kikon-range 5 m in every cup: LEAP CLEAVE's direction is locked at take-off, and from 9 m it mostly whiffed)
+       :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 0.8 :kikon-range 5.0 :kikon-p 0.25 :o-ender 0.25
        :react (:projectile :sig :flash-startup :sig) :block-string 0.8))
 
 (defkit :kenpachi :ryote :inherit :nozarashi       ; cup 2, RYOTE (NOME >= 40): two-handed kendo, the cut
@@ -183,27 +184,35 @@
   :passives (:projectile-cut :cut) :stance :ke-r-stance :aura :nozarashi :enter-hook ken-ryote-enter
   :commands (:q :ke-r-j1 :f :ke-r-k1 :sp1 :ke-meteor :kikon :ke-kikon-n)   ; (the cup-1 moves as written: not re-derived)
   :grid (:ke-r-j1 :ke-r-j2 :ke-r-j3 :ke-r-k1 :ke-r-k2 :ke-r-k3 :ke-r-j2s :ke-r-k2s)
-  :ai (:intents (:approach 2 :pressure 5 :zone 0 :defend 1)
+  ;; after the 2x NOME drain (docs/DUEL_NOZARASHI_V2.md, "The CPU after the faster drain"): no DEFEND intent, no idle
+  ;; option at range, a neutral guard 0.1 (a guard against a committed move stays 0.35), a dash from 0.5 m outside his
+  ;; range, 30 f of respect after a hit instead of 120, and a blocked string goes on 0.95 of the time
+  :ai (:intents (:approach 2 :pressure 6 :zone 0 :defend 0)
        :ranges (:approach (2.0 4.5) :pressure (1.5 3.5) :zone (4.0 6.0) :defend (3.0 5.0))
-       :moves ((0.0 3.4 :q 5 :f 3 :sig 1 :breaker 1 nil 3)
-               (3.4 4.2 :f 2 :sp1 2 :step 1 nil 2)
-               (4.2 6.0 :sp1 4 :sp2 2 nil 1)
-               (6.0 99.0 :step 1 :kikon 1 nil 1))
-       :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 0.8 :kikon-range 9.0 :kikon-p 0.5 :o-ender 0.35
-       :react (:projectile :sig :flash-startup :sig) :block-string 0.85))
+       :moves ((0.0 3.4 :q 5 :f 3 :sig 1 :breaker 1 nil 1)
+               (3.4 4.2 :f 2 :sp1 2 :step 1 nil 1)
+               (4.2 6.0 :sp1 4 :sp2 2 :step 1)
+               (6.0 99.0 :step 1 :kikon 1))
+       :guard 0.35 :neutral-guard 0.1 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 1.0 :dash-gap 0.5 :kikon-range 5.0
+       :kikon-p 0.5 :o-ender 0.35 :respect 30
+       :react (:projectile :sig :flash-startup :sig) :block-string 0.95))
 
 (defkit :kenpachi :nomihose :inherit :ryote        ; cup 3, NOMIHOSE (NOME = 100): no guard, U drinks; RYOTE's moves
   :mult *nomihose-mult* :form-name "NOMIHOSE" :kikon-konpaku 4 :blade-chip *nomihose-chip* :bankai-form :bankai
   :passives (:projectile-cut :cut :drink) :aura :nomihose :drink-clip :ke-drink :enter-hook ken-nomihose-enter
   :commands (:f :ke-n-f1 :sp1 :ke-meteor-n)
   :strings ((:ke-n-f1 :f :ke-r-k2) (:ke-n-f1 :q :ke-r-j2s))   ; KUKAN-GIRI is cup 3's K1
-  :ai (:intents (:approach 3 :pressure 6 :zone 0 :defend 0)
+  ;; the cup drains 20/s: never idle at range (a dash from 0.3 m outside, no wait option), decide 1.7x as often
+  ;; (:tempo 0.6, :attack +0.2), no respect, drink (U) a committed move 0.7 of the time (the drunk half feeds NOME), and
+  ;; the near cash-out only once NOME < 55 (just before the drop to cup 2, which keeps 50)
+  :ai (:intents (:approach 3 :pressure 7 :zone 0 :defend 0)
        :ranges (:approach (2.0 4.5) :pressure (1.5 3.5) :zone (4.0 6.0) :defend (3.0 5.0))
-       :moves ((0.0 3.4 :q 4 :f 4 :breaker 1 nil 2)
-               (3.4 6.0 :f 2 :step 1 nil 1)
-               (6.0 99.0 :step 1 :kikon 1 nil 1))
-       :guard 0.45 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 1.0 :kikon-range 9.0 :kikon-p 0.9 :o-ender 0.6
-       :cashout (:punish 30 :near 6.0 :below 60.0)
+       :moves ((0.0 3.4 :q 4 :f 4 :breaker 1 nil 1)
+               (3.4 6.0 :f 2 :step 2)
+               (6.0 99.0 :step 1 :kikon 1))
+       :guard 0.7 :neutral-guard 0.1 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 1.0 :dash-gap 0.3 :kikon-range 5.0
+       :kikon-p 0.9 :o-ender 0.6 :tempo 0.6 :attack 0.2 :respect 0
+       :cashout (:punish 30 :near 6.0 :below 55.0)
        ;; the Bankai as a finisher, weighing his own Konpaku (entry leaves him 1): nothing to lose (the opponent's next
        ;; Soul Break would take them all anyway), or the opponent near the end (Reishi <= :opp-below, Konpaku <=
        ;; :opp-konpaku) while he has <= :own-konpaku left; one roll per cup-3 stay (ai.lisp AI-BANKAI-P)

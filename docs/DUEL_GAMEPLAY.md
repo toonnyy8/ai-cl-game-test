@@ -294,8 +294,12 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P1 konpaku 2-0 ticks 9636 secs 160.6
+duel -> RESULTS winner P2 konpaku 0-6 ticks 5516 secs 91.9
 ```
+
+(Kenpachi's more aggressive CPU in cups 2 / 3, AI only, 2026-09-29 (DUEL_NOZARASHI_V2.md, "The CPU after the faster
+drain"): YK and KK changed (KK `winner P2 konpaku 0-6 ticks 5603 secs 93.4`), YY unchanged. Before it, after the 2× NOME
+drain, this line was `winner P1 konpaku 2-0 ticks 9636 secs 160.6`.)
 
 (The string follow-up chase and Kenpachi's Bankai entry at <= 4 Konpaku, 2026-09-28 (DUEL_STRINGS.md §11,
 DUEL_KEN_BANKAI.md): every pairing's lines changed; YY `winner P1 konpaku 2-0 ticks 9248 secs 154.1` (the chase alone),
