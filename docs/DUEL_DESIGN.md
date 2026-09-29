@@ -1327,6 +1327,11 @@ first), so it is never lost to the "no gains during a burst" rule.
 
 ### Interactions
 
+- **ORANGE from L / O and from hazards** (the user 2026-09-30: 「L 跟 O 只要有觸發對手的防禦/被擊狀態應該也要能銜接橙色爆氣」,
+  「包含一護卍解的分身打中對手時都應該要能觸發橙色爆氣」): `burst-mode-of` also gives ORANGE (a) during his own `:sig` /
+  `:kikon` move whenever the opponent is in hitstun, blockstun or airborne (a blocked L / O counts; its hazards count), and
+  (b) when he is free (idle / guard / run) while the opponent reels (hitstun / airborne) from one of his hazards, e.g.
+  KESSA's clones, which would otherwise be WHITE. Native gate unchanged (the CPU does not press ORANGE from those states).
 - **The user's answers (2026-09-30):** BLUE also gives **one Reiatsu bar** on the press, as RoS does; the CPU uses WHITE
   more (`*ai-white-p*` 0.15 → 0.3, `*ai-white-range*` 6 → 5 m); the rest as proposed (blockstun BLUE chip-only on the
   phone, start 70 / drain 18/s / nothing spent up front, Kikon refund 35). In practice with GAUGES INFINITE the

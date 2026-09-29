@@ -419,12 +419,19 @@ his Breaker / Kikon rush dash is within 0.5 m of its trigger range."
 
 ;;; ---------------------------------------------------------------- Burst Reverse
 (defun burst-mode-of (e)
-  "The burst mode E's state gives a press now (rules BURST-MODE; ORANGE: his move's own hit landed and its cancel window
-is open, not a Kikon rush), or NIL."
-  (let* ((f (fighter e)) (mv (fighter-move f)) (st (fighter-state f)))
-    (burst-mode st (plusp (fighter-lock f)) (fighter-combo-hits f)
-                (and (eq st :move) mv (eq (fighter-phase f) :main) (not (eq (mv-kind mv) :kikon))
-                     (cancel-open-p (fighter-sf f) (fighter-land-sf f) (mv-total mv) (eq (fighter-contact f) :hit))))))
+  "The burst mode E's state gives a press now (rules BURST-MODE), or NIL. ORANGE: his move's own hit landed and its
+cancel window is open; or his L / O (a :sig or :kikon move, hazards included) has the opponent in hitstun or blockstun
+right now (a blocked L / O counts too); or he is free while the opponent reels from one of his hazards (KESSA's clones,
+a zone: the user 2026-09-30), which would otherwise be WHITE."
+  (let* ((f (fighter e)) (mv (fighter-move f)) (st (fighter-state f)) (o (fighter-opp f))
+         (os (and o (entity-alive-p o) (fighter-state (fighter o)))))
+    (if (and (member st '(:idle :guard :run)) (member os '(:stun :air)) (zerop (fighter-lock f)))
+        :orange
+        (burst-mode st (plusp (fighter-lock f)) (fighter-combo-hits f)
+                    (and (eq st :move) mv (eq (fighter-phase f) :main)
+                         (if (member (mv-kind mv) '(:sig :kikon))
+                             (member os '(:stun :guard-hit :air))
+                             (cancel-open-p (fighter-sf f) (fighter-land-sf f) (mv-total mv) (eq (fighter-contact f) :hit))))))))
 
 (defun burst-ok-p (e)
   "May E burst now (rules BURST-ALLOWED-P): the mode (:white :blue :orange) or NIL."
