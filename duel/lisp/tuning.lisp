@@ -239,7 +239,8 @@ a combo (critique-design 1.7: not from hit 1).")
 ;; the three burst modes (docs/DUEL_DESIGN.md "Burst modes", the user 2026-09-30): the state at the press picks WHITE /
 ;; BLUE / ORANGE; every one needs *FS-BURST*, spends nothing up front and drains the flash-step gauge to 0
 (defparameter *burst-drain* 18.0 "Flash-step per second a running burst drains (100 -> 0 in 5.6 s, 70 in 3.9 s).")
-(defparameter *white-reishi* 24.0 "WHITE (and the awakening's regen): Reishi regenerated per second (integer points; 12 -> 24, the user 2026-09-30).")
+(defparameter *white-reishi* 70.0 "WHITE (and the awakening's regen): Reishi regenerated per second (integer points; 12 -> 24 -> 70, the user
+2026-09-30: a full-length run, 5.55 s, restores ~30 % of 1300).")
 (defparameter *white-reiatsu* 15.0 "WHITE: Reiatsu per second on top of *REIATSU-REGEN*.")
 (defparameter *white-awaken* 1.4 "WHITE: awakening gauge per second (2.0 x the slower gauge's 0.7).")
 (defparameter *blue-gg-mult* 2.0 "BLUE: the guard gauge's normal refill rate x this (no delay) when not guarding ...")

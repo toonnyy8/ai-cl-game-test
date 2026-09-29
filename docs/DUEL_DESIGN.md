@@ -1311,7 +1311,7 @@ A projectile / hazard hit never opens ORANGE (like KOSEI, only the fighter's own
 
 | Mode | On the press | While it runs |
 | --- | --- | --- |
-| **WHITE** SOUL REVERSE | the shockwave, 8 f hitstop | Reishi **+24/s** (`*white-reishi*`, integer points, never past max; 12 → 24 by the user 2026-09-30); Reiatsu **+15/s** on top of the normal 3/s (`*white-reiatsu*`); the awakening gauge **+1.4/s** (`*white-awaken*`, 2 × the slower gauge's 0.7; not once awakened). No guard-gauge boost (the user's decision 2026-09-30). |
+| **WHITE** SOUL REVERSE | the shockwave, 8 f hitstop | Reishi **+70/s** (`*white-reishi*`, integer points, never past max; 12 → 24 → 70 by the user 2026-09-30: a full 5.55 s run restores ~30 % of 1300); Reiatsu **+15/s** on top of the normal 3/s (`*white-reiatsu*`); the awakening gauge **+1.4/s** (`*white-awaken*`, 2 × the slower gauge's 0.7; not once awakened). No guard-gauge boost (the user's decision 2026-09-30). |
 | **BLUE** BURST REVERSE | today's Burst: `repel!` (the attacker's move / Hoho / step / run ends, he slides `*burst-push*` 5 m away, not stunned; the user neutral at once, invulnerable `*burst-invuln*` 20 f), 8 f hitstop | the guard gauge refills with no delay: `*blue-gg-mult*` **×2** its normal rate when not guarding (11/s, 13/s guardless), and **×0.5** (`*blue-gg-guarding*`, 2.75/s) **even while guarding** (normally GUARD HOLD stops it) |
 | **ORANGE** CHAIN REVERSE | the current move's remaining recovery is cancelled at once (neutral), 8 f hitstop and the shockwave; for the next `*chain-window*` **12** f the next move started has its startup cut by `*chain-cut*` **40 %** (at least 1 f of startup left; the skipped frames' hooks still run), and it may be any command: a J / K string from its first link, L, an SP, I, O | Reiatsu gained from hits dealt and from KOSEI **×1.5**, awakening gauge from hits dealt **×1.5** (`*orange-gain*`) |
 
@@ -1336,7 +1336,7 @@ first), so it is never lost to the "no gains during a burst" rule.
   opponent reeling (hitstun / airborne) from his hazards gives ORANGE, so KESSA's J / K whiff with a clone hit shows
   「SHIFT+J CHAIN」 and bursts. Native gate and G2 unchanged.
 - **The awakening's regen** (the user 2026-09-30: 「發動覺醒後進入與白色爆氣狀態一樣的量表恢復狀態，時長跟閃步量表全滿時一樣久，
-  可以與爆氣狀態重疊」): `awaken!` and Kenpachi's `bankai!` start WHITE's regen (`white-regen!`: Reishi +24/s, Reiatsu
+  可以與爆氣狀態重疊」): `awaken!` and Kenpachi's `bankai!` start WHITE's regen (`white-regen!`: Reishi +70/s, Reiatsu
   +15/s) for `awake-regen-frames` = *fs-max* / *burst-drain* s (333 f), on its own clock (`gauges-awake-regen`): it
   spends no flash-step and overlaps any burst (a WHITE burst on top stacks). A fainter white aura shows it. Native gate:
   300/300 K.O., medians 138.5–205.1 s; G2 yy / kk changed; Rukia / Senjumaru A/B ≥ 21 of 60 per cell.
