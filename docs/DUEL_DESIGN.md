@@ -1156,8 +1156,11 @@ and `gauge-system`; the gauge is `gauges-stun`):
 - **It never steals a Kikon or a Soul Break:** a Kikon rush's strike adds its points but never triggers the blow-away
   (its Kikon, or its follow-up dash, resolves first; the next hit does); a hit that breaks the soul plays its cinematic
   and sets no reaction at all. A Kikon / Soul Break reset clears the gauge.
-- **`*combo-cap*` stays** as the hard backstop (hit 10 of a combo is a knockdown), and so do the launch and air-hit
-  limits: the stun gauge covers what they miss, the loops across neutral.
+- **`*combo-cap*` is gone** (the user 2026-09-30: 「統一移除十連擊後強制倒地的設定」): no hit-count knockdown; the launch
+  and air-hit limits stay, and the stun gauge ends long combos. **While the attacker's ORANGE burst runs, the victim's
+  tolerance is lifted** (「在開啟橙色爆氣時會暫時關閉對手的受擊上限設定」): stun still accrues and decays, but no
+  blow-away triggers until ORANGE ends (bounded by its flash-step drain, ≤ ~5.6 s). Native gate after both: 300/300
+  K.O., medians 132.9–202.1 s; G2 unchanged.
 - **Hidden:** no HUD, no practice-mode number (there is no practice debug overlay to hang it on).
 - **The CPU accepts it** (no AI change): a blow-away is a knockdown, which its `:oki` logic already plays around, and the
   gauge is hidden from human players too.

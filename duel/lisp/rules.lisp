@@ -656,8 +656,8 @@ when STORED >= *STANCE-CRUSH-AT*)."
 (defun combo-step (react airborne hits launches air-hits)
   "Book one more connected hit of a combo (counters reset when the victim returns to neutral).
 REACT the move's reaction, AIRBORNE the victim's state, HITS / LAUNCHES / AIR-HITS the combo so
-far. The combo limits turn REACT: a 2nd launch -> :knockback, the *COMBO-AIR-HITS*th airborne hit
-or the *COMBO-CAP*th hit -> :knockdown. A :bind (South) only opens a combo: on a victim already in one it
+far. The combo limits turn REACT: a 2nd launch -> :knockback, the *COMBO-AIR-HITS*th airborne hit -> :knockdown (no
+hit-count cap since the user 2026-09-30: the hidden stun tolerance ends long combos). A :bind (South) only opens a combo: on a victim already in one it
 is a :flinch; as the opener it books *BURST-MIN-HITS* hits, so the bound victim may Burst at once.
 Values: react hits launches air-hits (the new HITS is this hit's COMBO-INDEX for HIT-DAMAGE)."
   (let* ((bind (and (eq react :bind) (zerop hits)))
@@ -665,7 +665,6 @@ Values: react hits launches air-hits (the new HITS is this hit's COMBO-INDEX for
          (air-hits (if airborne (1+ air-hits) air-hits))
          (react (cond (bind :bind)
                       ((eq react :bind) :flinch)
-                      ((>= hits *combo-cap*) :knockdown)
                       ((and airborne (>= air-hits *combo-air-hits*)) :knockdown)
                       ((and (eq react :launch) (>= launches *combo-launches*)) :knockback)
                       (t react))))

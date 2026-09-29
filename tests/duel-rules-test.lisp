@@ -505,7 +505,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 (check (equal (multiple-value-list (combo-step :launch nil 2 1 0)) '(:knockback 3 1 0)))   ; 1 launch
 (check (equal (multiple-value-list (combo-step :flinch t 3 1 1)) '(:flinch 4 1 2)))
 (check (equal (multiple-value-list (combo-step :flinch t 4 1 2)) '(:knockdown 5 1 3)))     ; 3 air hits
-(check (equal (multiple-value-list (combo-step :flinch nil 9 0 0)) '(:knockdown 10 0 0)))  ; cap 10
+(check (equal (multiple-value-list (combo-step :flinch nil 9 0 0)) '(:flinch 10 0 0)))  ; no hit cap (the user 2026-09-30)
 ;; the hidden hit-stun tolerance (docs/DUEL_DESIGN.md, the user 2026-09-29)
 (check (= (stun-weight :flinch nil) 1))
 (check (= (stun-weight :stagger nil) 2))

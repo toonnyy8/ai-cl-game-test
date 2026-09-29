@@ -212,7 +212,6 @@ then :down + :wakeup (iframes in both).")
 (defparameter *combo-full-hits* 3 "Hits 1..this deal full damage...")
 (defparameter *combo-decay* 0.10 "... then each hit deals this much less ...")
 (defparameter *combo-floor* 0.40 "... down to this fraction.")
-(defparameter *combo-cap* 10 "Hit N of a combo is a forced knockdown (the backstop under the stun tolerance).")
 ;; the hidden hit-stun tolerance (docs/DUEL_DESIGN.md "Hidden hit-stun tolerance", the user 2026-09-29): every connected
 ;; hit fills the victim's hidden stun gauge; the hit that takes it past his kit's :stun-tolerance blows him away
 (defparameter *stun-weights* '(:flinch 1 :bind 1 :stagger 2 :crumple 3 :knockback 3 :launch 3 :knockdown 3 :heavy 3)

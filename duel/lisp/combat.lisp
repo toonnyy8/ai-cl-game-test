@@ -206,7 +206,8 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
              ;; resolves first), nor a Soul Break's hit (DEAL-DAMAGE: no reaction)
              (let* ((gd (gauges def))
                     (st (stun-add (gauges-stun gd) (if follow :stagger (hw-react hw)) (and mv (member (mv-kind mv) '(:sp :kikon)))))
-                    (blow (and (not rush) (stun-over-p st (stun-tolerance-of (kit-of def)))))
+                    (blow (and (not rush) (not (eq (gauges-burst (gauges att)) :orange))   ; ORANGE lifts his tolerance
+                               (stun-over-p st (stun-tolerance-of (kit-of def)))))
                     (react (if blow :knockdown react))
                     (dmg (let ((d (hit-damage base atk dmods hits (eq res :counter))))   ; :spare never takes the last point
                            (if (member :spare flags) (min d (max 0 (1- (gauges-reishi (gauges def))))) d)))
