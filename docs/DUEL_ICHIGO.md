@@ -930,3 +930,46 @@ The history (the same criterion, earlier builds): ×1.0 everywhere and the range
 IY / IK / IR and the CPU hardly ever awakened; with the timed parry, Shikai ×1.5 / 0.8 and KESSA ×1.3 / 0.8: "always"
 ahead by +15 to +23 on most cells, "never" 11–19 in II and 18 in IY (stream 100); Shikai ×1.6, KESSA ×1.15 / 0.8: "never"
 18 in II on stream 300, every other cell ≥ 23; KESSA ×1.15 / 0.9: the table above.
+
+## Playtest redesign decisions (the user, 2026-09-29)
+
+Reference images the user supplied live in `.refs/` (git-ignored, third-party art: not committed): `.refs/Ichigo/`
+(sleeves; `Getsuga-Tenshō/` the Cero-infused Getsuga charge-up, frame by frame) and `.refs/Ichigo-of-the-Blood-Chains/`
+(the KESSA look and blade).
+
+**Shikai**
+1. In both forms the sleeves end **just past the elbow** (`.refs/Ichigo/`).
+2. **L enters a stance**, as TYBW Ichigo's special in Bleach: Rebirth of Souls: from the stance, the follow-up J / K / L
+   each fire a different kind of attack.
+3. **The Cero-infused Getsuga Tenshō (base Kikon):** he raises the cleaver, pours reiatsu in from the half-hollow single
+   horn, the blade becomes a red slash shot through with a pink-violet glow, and he fires it forward
+   (`.refs/Ichigo/Getsuga-Tenshō/` 1–3 break down the charge-up).
+
+**Bankai (KESSA)**
+1. **O commands every clone on the field to a self-destructing charge** at the opponent; the damage scales with the
+   clone count. **The Kikon's damage is tied to the number of clones on the field when O is pressed**, and its cinematic
+   becomes countless clones charging from every direction (reference: Street Fighter 6, Akuma's Shun Goku Satsu).
+2. When the Kikon fires automatically because the opponent's HP reached 0 (the Soul Break), its cinematic is the
+   **Getsuga Tenshō** instead.
+3. **The KESSA Getsuga Tenshō (cinematic):** he raises the blade, reiatsu gathers on it as a black glow, then a
+   top-to-bottom vertical cut. It reads less as a flying slash and more as a **huge C-shaped cut left hanging in the air**;
+   at the end Ichigo stands in the C's gap and the camera shoots from inside the C out through the gap:
+   ```
+     V
+   Ichigo
+     Ʌ
+   ```
+4. **J / K redesigned:** the openers no longer carry chains that turn them into area attacks.
+5. A **flash step (Hoho) also leaves a clone** in front of the opponent.
+6. **Clones stay on the field for a while**, then vanish; **at most three** at once.
+7. A clone vanishes when: its time runs out, **or** Ichigo himself is hit, **or** that clone deals damage to the
+   opponent or is blocked.
+8. **Clones answer J / K** with their own attack: **J → a heavy, K → a light**, the reverse of Ichigo himself.
+9. **A clone's combo is judged on its own**, and the clone only vanishes after its own combo finishes. A clone starts
+   its attack a little later than Ichigo.
+10. **SP2 becomes an afterimage state:** for a while every action of his comes with a clone afterimage, so each becomes
+    a two-hit attack.
+11. **U is a normal guard again**, and **L becomes the old parry (the stance/parry move)**. The parry was far too hard to
+    land: the user never managed one, even in practice mode, so it must get much easier.
+12. **The KESSA blade** is close to a long rectangular greatsword with **no point and no guard**
+    (`.refs/Ichigo-of-the-Blood-Chains/`).

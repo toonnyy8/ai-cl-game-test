@@ -12,3 +12,6 @@
 /tests/shots/style-*
 !/tests/shots/style-1a-proportions-*.png
 !/tests/shots/style-2-gallery.png
+
+# user-supplied reference images (third-party art: never commit)
+/.refs/
