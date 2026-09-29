@@ -4,7 +4,7 @@
 ;;;; RESET POSITION / DUMMY / HP REFILL / GAUGES / P1 HP / P1 KONPAKU / DUMMY HP / DUMMY KONPAKU / CHARACTER SELECT /
 ;;;; TITLE / CAMERA) → FINISH (K.O. / TIME) → RESULTS
 ;;;; (REMATCH / SELECT / TITLE). SETTINGS (2026-09-28): ONE-HAND MODE (AUTO / ON / OFF), HAND, TAP SPLIT, SENSITIVITY,
-;;;; CAMERA (control.lisp *SETTINGS*, saved by onehand.lisp). VS CPU and PRACTICE are one-handed (the thumb deck,
+;;;; CAMERA, LEARNING CPU (control.lisp *SETTINGS*, saved by onehand.lisp), then RESET LEARNING (ai.lisp LEARN-RESET-ALL). VS CPU and PRACTICE are one-handed (the thumb deck,
 ;;;; onehand.lisp) whenever ONE-HAND MODE is in effect there (ONE-HAND-EFFECTIVE-P); there is no separate one-hand entry.
 ;;;; PRACTICE: P1 against a dummy (P2's brain: switched off and guarding by DUMMY-GUARD-LEFT, or the CPU), no timer and
 ;;;; no match end (PRACTICE-STEP refills the dummy to its HP / KONPAKU rows; a K.O. is a reset to both sides' rows). Menus read the devices directly (either
@@ -130,6 +130,7 @@ always behind when one-handed (the portrait camera; the setting is kept); VS PLA
     (setf (fighter-state (fighter e)) :intro))
   (when (eq *mode* :practice) (practice-dummy!) (practice-set! *p1*) (practice-set! *p2*))
   (when (eq *mode* :endless) (endless-apply!))            ; P1's carry, P2's ramp
+  (learn-match-start)
   (play-music :music 0.2)
   (log-msg "duel match seed ~d ~a ~a vs ~a ~a" *match-seed* *mode* (first *picks*) (second *picks*) *difficulty*)
   (set-flow :intro)
@@ -166,7 +167,25 @@ both fighters' Konpaku and Reishi at their practice rows (PRACTICE-SET!)."
     (set-flow :finish)
     (start-cine 'time-cine (if (eql w 1) *p2* *p1*) (if (eql w 1) *p1* *p2*) :after #'go-results)))
 
+(defun learn-match-start ()
+  "The learning CPU (docs/DUEL_LEARNING.md): VS CPU and ENDLESS with LEARNING CPU on, P2 (the CPU facing the human)
+learns; never CPU VS CPU, PRACTICE or after a debug command (every gate stays exactly as it was)."
+  (when (and (member *mode* '(:vs-cpu :endless)) (zerop (setting :learn)) (not *learn-debug-off*) (brain *p2*))
+    (learn-attach! *p2*)))
+
+(defun learn-match-end ()
+  "The match is over: every learner's human's form takes the result, and its table is saved (page storage; blocked:
+it lives on in memory)."
+  (dolist (e (list *p1* *p2*))
+    (let ((l (and (brain e) (brain-learn (brain e)))))
+      (when l
+        (let ((tab (lrn-tab l)) (side (fighter-side (fighter e))))
+          (setf (ltab-form tab) (learn-form-after (ltab-form tab) (cond ((eql *winner* side) -1.0) ((eql *winner* :draw) 0.0) (t 1.0))
+                                                  *learn-form-match*))
+          (learn-save (position (fighter-character (fighter e)) *roster*)))))))
+
 (defun go-results ()
+  (learn-match-end)
   (let* ((g1 (gauges *p1*)) (g2 (gauges *p2*)))
     (set-flow :results)
     (log-msg "duel -> RESULTS winner ~a konpaku ~d-~d ticks ~d secs ~,1f"
@@ -272,13 +291,17 @@ end) and, HP REFILL AUTO, its Reishi once it is out of its hit / block reactions
 
 (defparameter *mode-menu* '("VS CPU" "ENDLESS" "PRACTICE" "VS PLAYER" "CPU VS CPU" "SETTINGS" "CONTROLS"))
 
+(defvar *learn-reset-t* -9.0 "*FT* when RESET LEARNING was chosen (its note says so for a moment).")
 (defun settings-items ()
-  "The SETTINGS rows as shown (label and chosen option), then BACK."
-  (append (loop for (key label opts) in *settings* collect (format nil "~a  ~a" label (nth (setting key) opts))) '("BACK")))
+  "The SETTINGS rows as shown (label and chosen option), then RESET LEARNING and BACK."
+  (append (loop for (key label opts) in *settings* collect (format nil "~a  ~a" label (nth (setting key) opts)))
+          '("RESET LEARNING" "BACK")))
 (defun settings-note ()
   "The selected SETTINGS row's note (ONE-HAND MODE: whether it is in effect here)."
   (let ((row (nth *menu* *settings*)))
-    (cond ((null row) "")
+    (cond ((and (null row) (= *menu* (length *settings*)))
+           (if (< (- *ft* *learn-reset-t*) 2.0) "DONE: EVERY CPU FORGOT WHAT IT LEARNED" "THE CPUS FORGET WHAT THEY LEARNED"))
+          ((null row) "")
           ((eq (first row) :one-hand) (format nil "~a. HERE: ~:[OFF~;ON~]" (sixth row) (one-hand-effective-p)))
           (t (sixth row)))))
 (defun settings-step (i dir)
@@ -331,8 +354,9 @@ away from the rest); VS CPU / ENDLESS / PRACTICE with two hands add the CAMERA t
                (5 (set-flow :settings))
                (6 (set-flow :controls))))
            (when (back-p) (play-sfx :back) (go-title)))
-    (:settings (let* ((n (length *settings*)) (i (menu-nav (1+ n))) (d (option-dir)))   ; confirm / a tap: the next option
-                 (cond ((eql i n) (go-mode 5))                                           ; BACK
+    (:settings (let* ((n (length *settings*)) (i (menu-nav (+ 2 n))) (d (option-dir)))   ; confirm / a tap: the next option
+                 (cond ((eql i (1+ n)) (go-mode 5))                                      ; BACK
+                       ((eql i n) (learn-reset-all) (setf *learn-reset-t* *ft*))         ; RESET LEARNING
                        (i (settings-step i 1))
                        ((and d (< *menu* n)) (play-sfx :select) (settings-step *menu* d))))
                (when (back-p) (play-sfx :back) (go-mode 5)))

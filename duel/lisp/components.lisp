@@ -137,7 +137,8 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (stun 0f0 :type single-float)         ; the hidden hit-stun (rules STUN-ADD / STUN-DECAY; no HUD)
   (stun-idle 0 :type fixnum)            ; frames since it last grew
   ;; results
-  (dealt 0 :type fixnum) (kikons 0 :type fixnum) (perfects 0 :type fixnum) (best-combo 0 :type fixnum))
+  (dealt 0 :type fixnum) (kikons 0 :type fixnum) (perfects 0 :type fixnum) (best-combo 0 :type fixnum)
+  (counters 0 :type fixnum))            ; counter-hits dealt (the learning CPU's gate rows)
 
 (defcomponent pilot
   "Who drives the fighter: a vpad (engine input.lisp). A human's has a device READER; the CPU's brain
@@ -167,6 +168,8 @@ is holding. Identity comes from the kit's :AI tables."
   (dash 0f0 :type single-float) (dash-to 0f0 :type single-float)   ; a held dash: +1 toward / -1 away, until this distance
   (bankai-rolled nil)                   ; the Bankai entry roll of this cup-3 stay is made (ai.lisp AI-BANKAI-P)
   (act nil) (why nil)                   ; the last thing it decided and why (debug overlay, log)
+  (learn nil)                           ; the learning CPU (ai.lisp LRN; NIL = off: nothing of it runs)
+  (habit nil)                           ; debug: a scripted player's habit (debug.lisp HABIT-FIRE)
   (off nil))                            ; debug: this CPU does nothing
 
 (defcomponent hazard

@@ -36,6 +36,9 @@
 ;;;;   tempo       kit keys: :tempo (x the neutral decision interval), :attack (+ the neutral attack chance),
 ;;;;               :neutral-guard (a neutral guard's chance, else :guard), :respect (frames in DEFEND after taking it,
 ;;;;               else *AI-RESPECT*): Kenpachi's cups keep NOME fed (docs/DUEL_NOZARASHI_V2.md, "The CPU after the faster drain")
+;;;;   learning    a CPU facing a human (VS CPU / ENDLESS, the LEARNING CPU setting) carries a learner (BRAIN-LEARN, the end
+;;;;               of this file; learn.lisp): it predicts his next action per situation and answers it, and weighs the
+;;;;               kit's :moves by a bandit; NIL (every CPU vs CPU, every gate): nothing of it runs (docs/DUEL_LEARNING.md)
 (in-package :duel)
 
 (defstruct snap
@@ -47,6 +50,7 @@
   (start 0 :type fixnum)                ; tick his current move / guard began (one roll per event)
   (reach 0f0 :type single-float) (guard-t 0 :type fixnum) (projectile nil)
   (flags nil)                           ; his move's :flags (:parry :bind ...)
+  (contact nil)                         ; what his move touched so far (NIL = nothing yet: a whiff when it ends)
   (tell nil))                           ; a :bind move's tell frames (its :params :tell; NIL = South's 21-30)
 
 (defun snap-take! (s o)
@@ -60,11 +64,12 @@
         (let ((total (move-end-frame (mv-s mv) (mv-a mv) (mv-r mv) (mv-whiff mv) (fighter-contact f)
                                      (zerop (length (mv-hits mv))))))
           (setf (snap-kind s) (mv-kind mv) (snap-phase s) (fighter-phase f) (snap-s s) (mv-s mv) (snap-flags s) (mv-flags mv)
+                (snap-contact s) (fighter-contact f)
                 (snap-tell s) (getf (mv-params mv) :tell)
                 (snap-active-end s) (+ (mv-s mv) (mv-a mv)) (snap-reach s) (f32 (mv-reach mv))
                 (snap-left s) (if (eq (fighter-phase f) :main) (max 0 (- total (fighter-sf f))) 99)
                 (snap-start s) (- *match-tick* (fighter-sf f) (fighter-hold f))))
-        (setf (snap-kind s) nil (snap-phase s) nil (snap-reach s) 0f0 (snap-flags s) nil
+        (setf (snap-kind s) nil (snap-phase s) nil (snap-reach s) 0f0 (snap-flags s) nil (snap-contact s) nil
               (snap-left s) (if (eq st :stun) (max 0 (- (fighter-stun f) (fighter-sf f))) 0)
               (snap-start s) (if (eq st :guard) (- *match-tick* (fighter-guard-t f)) -1)))
     s))
@@ -461,6 +466,8 @@ its middle), guard, attack (a weighted pick from the kit's band for D), or wait.
          (ai-command b kit :kikon d e) (setf (brain-why b) :kikon))
         ((ai-pip-hurry-p e)                                ; the arm's next crack is near: spend the pip now
          (ai-attack e b kit s d heat t))
+        ((and (brain-habit b) (habit-neutral e b kit d)))  ; debug: a scripted player's habit
+        ((and (brain-learn b) (learn-neutral e b s d)))    ; the learning CPU reads him (its own random stream)
         ((ai-cool-p e s d)                                 ; Rukia: hold U the frames the next colder band still needs
          (ai-press b :guard (+ 2 (temp-cool-frames (gauges-meter (gauges e)))) :act :cool)
          (setf (brain-why b) :cool))
@@ -496,12 +503,15 @@ pip commands of the band (the arm's crack is near: AI-PIP-HURRY-P). T when somet
     (ai-stance-weights e s d weights)
     (when hurry
       (loop for (cmd nil) on weights by #'cddr unless (and cmd (kit-pip-cmd-p kit cmd)) do (setf (getf weights cmd) 0)))
+    (when (brain-learn b) (learn-weights (brain-learn b) d weights))   ; the bandit's factors (learning CPU only)
     (let ((cmd (apply #'weighted-pick (sim-rnd01) weights)))
-      (when (and cmd (or (not (member cmd *kit-commands*)) (and (kit-command-move kit cmd) (kit-command-ok-p e cmd)))
-                 (or (not (member cmd '(:q :f)))                  ; don't whiff a string at range
-                     (<= d (+ 0.2 (mv-reach (kit-command-move kit cmd))))))
-        (ai-command b kit cmd d e) (setf (brain-why b) (if hurry :pip-hurry :neutral))
-        t))))
+      (cond ((and cmd (or (not (member cmd *kit-commands*)) (and (kit-command-move kit cmd) (kit-command-ok-p e cmd)))
+                  (or (not (member cmd '(:q :f)))                  ; don't whiff a string at range
+                      (<= d (+ 0.2 (mv-reach (kit-command-move kit cmd))))))
+             (ai-command b kit cmd d e) (setf (brain-why b) (if hurry :pip-hurry :neutral))
+             (when (brain-learn b) (learn-window e (brain-learn b) d weights cmd))
+             t)
+            ((and (null cmd) (brain-learn b)) (learn-window e (brain-learn b) d weights nil) nil)))))
 
 (defun ai-kikon-p (e)
   "The chance a neutral decision rushes a red opponent: the kit's :kikon-p (Nozarashi's cups 0.25 / 0.5 / 0.9:
@@ -537,6 +547,7 @@ fraction of the guard gauge."
            (p (pos-of e)) (d (sqrt (+ (expt (- (snap-x s) (aref p 0)) 2) (expt (- (snap-z s) (aref p 2)) 2)))))
       (setf (brain-head b) (mod (1+ (brain-head b)) n)
             (brain-heat b) (f32 (heat-after (brain-heat b) (> d *ai-heat-far*))))
+      (when (and (brain-learn b) (not (brain-off b))) (learn-step e b s d))   ; the learning CPU watches (perceived)
       (vpad-stick! vp 0f0 0f0)
       (unless (kit-bankai-form (fighter-kit f)) (setf (brain-bankai-rolled b) nil))   ; a new cup-3 stay rolls again
       (when (member (fighter-state f) '(:stun :air :down :wakeup :guard-hit))   ; just took it: respect
@@ -555,6 +566,8 @@ fraction of the guard gauge."
                (if (burst-ok-p e) (ai-press b :quick 1 :modded t :act :burst) (ai-press b :awaken 1))
                (setf (brain-why b) :burst))
               ((j-beats-k-p e b) (ai-press b :quick 1) (setf (brain-why b) :j-beats-k))
+              ((and (brain-habit b) (habit-fire e b s d)))                     ; debug: a scripted player's habit
+              ((and (brain-learn b) (learn-fire e b s d)))                     ; the learning CPU's planned counter
               ((and (> (brain-press-left b) 0)                                    ; a reflex may drop a guard / a dash,
                     (or (eq (brain-act b) :hold)                                   ; not a guard held through a string
                         (not (or (eq (brain-press b) :guard) (eq (brain-act b) :dash)))))
@@ -583,3 +596,174 @@ fraction of the guard gauge."
   "Every human fighter's vpad reads its devices this step (inside the step: determinism)."
   (do-entities (e (pl pilot) (f fighter))
     (unless (brain e) (vpad-begin-step! (pilot-vpad pl)))))
+
+;;; ---------------------------------------------------------------- the learning CPU (learn.lisp; docs/DUEL_LEARNING.md)
+;;; Only a CPU facing a human carries one (flow.lisp LEARN-MATCH-START: VS CPU, ENDLESS, the SETTINGS toggle; never CPU VS
+;;; CPU or a debug command). Without it (BRAIN-LEARN NIL) none of this runs: the CPU draws and decides exactly as before.
+;;; It sees what the CPU sees (the delayed SNAP; its own state at once), never an input, and it only chooses among the
+;;; kit's own commands; its dice are its own stream (LEARN-RND), never SIM-RND01.
+(defvar *learn-tables* (make-array 10 :initial-element nil)
+  "Per roster index, that CPU character's learned table (LTAB), loaded from the page on first use (LEARN-TABLE).")
+(defvar *learn-debug-off* nil "A debug command ran: no learner is attached any more (the gates stay exactly as they were).")
+(defvar *learn-use* '(:model :bandit) "Its parts in use (the learning gate's A/B: 200000+, ON 2 model only, 3 bandit only).")
+(defparameter *learn-read-t* 60 "Frames after a counter it counts as paid off (damage dealt, none taken).")
+(defconstant +pg-learn+ 100 "Page get / set 100 + 1000 i: roster index i's saved table (entry count; + 1 + j entry j).")
+
+(defstruct lrn
+  "A learner's state within one match (BRAIN-LEARN); TAB is its character's table, kept across matches."
+  tab
+  (sit -1 :type fixnum) (ep-t 0 :type fixnum) (away 0f0 :type single-float)   ; the open episode, his way away since
+  (hx 0f0 :type single-float) (hz 0f0 :type single-float) (hstate :idle) (hstart -1 :type fixnum) (hcontact nil)
+  (own :idle)                                                                 ; ... the human (perceived) and we, last step
+  (cmd nil) (delay 0 :type fixnum) (pend-t 0 :type fixnum)                    ; the planned counter, its wait, its life
+  (arm -1 :type fixnum) (bin 0 :type fixnum) (prob 0f0 :type single-float)    ; the bandit's open window
+  (win-t 0 :type fixnum) (w-dealt 0 :type fixnum) (w-taken 0 :type fixnum)
+  (form-t 0 :type fixnum) (f-dealt 0 :type fixnum) (f-taken 0 :type fixnum)   ; the form clock
+  (rng 1)
+  (stats nil) (last nil)                                                      ; per counter (cmd reads paid); the last
+  (reads 0 :type fixnum) (paid 0 :type fixnum) (read-t 0 :type fixnum) (r-dealt 0 :type fixnum) (r-taken 0 :type fixnum))
+
+(defun learn-table (i)
+  "Roster index I's table: in memory, else the page's (LEARN-DECODE; nothing saved or no storage: a fresh one)."
+  (or (svref *learn-tables* i)
+      (setf (svref *learn-tables* i)
+            (let* ((base (+ +pg-learn+ (* 1000 i))) (n (min 999 (max 0 (page-get base)))))
+              (learn-decode (loop for j from 1 to n collect (page-get (+ base j))))))))
+
+(defun learn-save (i)
+  "Roster index I's table to the page (entries first, then the count, which commits them)."
+  (let ((tab (svref *learn-tables* i)) (base (+ +pg-learn+ (* 1000 i))))
+    (when tab
+      (let ((codes (learn-encode tab)))
+        (loop for c in codes for j from 1 do (page-set (+ base j) c))
+        (page-set base (length codes))))))
+
+(defun learn-reset-all ()
+  "SETTINGS' RESET LEARNING: every table forgotten, in memory and on the page."
+  (dotimes (i (length *learn-tables*))
+    (setf (svref *learn-tables* i) nil)
+    (page-set (+ +pg-learn+ (* 1000 i)) 0))
+  (log-msg "duel learning reset"))
+
+(defun learn-attach! (e)
+  "Give CPU E a learner over its character's table (its own stream seeded from the sim stream's state: no draw)."
+  (let ((o (opp-of e)) (i (position (fighter-character (fighter e)) *roster*)))
+    (setf (brain-learn (brain e))
+          (make-lrn :tab (learn-table i) :hx (aref (pos-of o) 0) :hz (aref (pos-of o) 2)
+                    :rng (1+ (mod (* 7919 (sim-rnd-state)) 2147483647))))))
+
+(defun learn-roll-p (l)
+  "Take the model's counter now? Its own stream against p_exploit for the human's form."
+  (multiple-value-bind (r st) (learn-rnd (lrn-rng l))
+    (setf (lrn-rng l) st)
+    (< r (learn-p-exploit (ltab-form (lrn-tab l))))))
+
+(defun learn-step (e b s d)
+  "Each step (BRAIN-STEP): open / close the episodes and count the human's action (the perceived SNAP S, D), plan an
+event's counter at its onset, and run the clocks: the counter's wait, the bandit's window, a read's outcome, the form."
+  (let* ((l (brain-learn b)) (tab (lrn-tab l)) (own (state-of e)) (hs (snap-state s)) (hprev (lrn-hstate l))
+         (p (pos-of e)) (dealt (gauges-dealt (gauges e))) (taken (gauges-dealt (gauges (opp-of e))))
+         (dx (- (snap-x s) (lrn-hx l))) (dz (- (snap-z s) (lrn-hz l))))
+    (when (and (> d 0.01) (< (+ (* dx dx) (* dz dz)) 0.25))   ; his way away from us (a Hoho's jump is no walk)
+      (incf (lrn-away l) (f32 (/ (+ (* dx (- (snap-x s) (aref p 0))) (* dz (- (snap-z s) (aref p 2)))) d))))
+    (let ((on (learn-onset hprev hs (lrn-hcontact l) (lrn-own l) own (lrn-sit l) d)))
+      (when on
+        (setf (lrn-sit l) on (lrn-ep-t l) 0 (lrn-away l) 0f0)
+        (when (< on +learn-events+) (learn-plan b l on))))
+    (let ((sit (lrn-sit l)))
+      (when (>= sit 0)
+        (let ((act (learn-action hprev hs (snap-kind s) (/= (snap-start s) (lrn-hstart l)) (lrn-away l))))
+          (cond (act (learn-observe! tab sit act) (setf (lrn-sit l) -1))
+                ((> (incf (lrn-ep-t l)) (learn-episode sit))
+                 (when (eq hs :guard) (learn-observe! tab sit (learn-act :guard)))   ; he held guard through it
+                 (setf (lrn-sit l) -1))))))
+    (when (lrn-cmd l)
+      (when (plusp (lrn-delay l)) (decf (lrn-delay l)))
+      (when (<= (decf (lrn-pend-t l)) 0) (setf (lrn-cmd l) nil)))
+    (when (and (>= (lrn-arm l) 0) (<= (decf (lrn-win-t l)) 0)) (learn-settle l dealt taken))
+    (when (and (plusp (lrn-read-t l)) (zerop (decf (lrn-read-t l))) (= taken (lrn-r-taken l))
+               (or (> dealt (lrn-r-dealt l)) (eq (lrn-last l) :guard)))   ; (a guard pays by taking nothing)
+      (incf (lrn-paid l)) (incf (third (assoc (lrn-last l) (lrn-stats l)))))
+    (when (>= (incf (lrn-form-t l)) *learn-form-t*)             ; his damage balance moves his form
+      (setf (ltab-form tab) (learn-form-after (ltab-form tab) (learn-reward (- taken (lrn-f-taken l)) (- dealt (lrn-f-dealt l)))
+                                              *learn-form-k*)
+            (lrn-form-t l) 0 (lrn-f-dealt l) dealt (lrn-f-taken l) taken))
+    (setf (lrn-hx l) (snap-x s) (lrn-hz l) (snap-z s) (lrn-hstate l) hs (lrn-hstart l) (snap-start s)
+          (lrn-hcontact l) (snap-contact s) (lrn-own l) own)))
+
+(defun learn-plan (b l sit)
+  "An event's onset: when the model is confident and the roll says read him, plan its counter for the episode (on his
+wake-up, a strike timed to meet the end of it: what the perception delay already cost and ~8 f of startup before it)."
+  (multiple-value-bind (act p n) (learn-predict (lrn-tab l) sit)
+    (when (and act (learn-counter act) (member :model *learn-use*) (learn-confident-p p n) (learn-roll-p l))
+      (let ((c (learn-counter act)))
+        (setf (lrn-cmd l) c (lrn-pend-t l) (learn-episode sit)
+              (lrn-delay l) (if (and (= sit 0) (member c '(:q :breaker)))
+                                (max 0 (- (getf *reaction-frames* :wakeup) (brain-delay b) 8))
+                                0))))))
+
+(defun learn-fire (e b s d)
+  "The planned counter, once due and we are free: T when it pressed. :HOHO-PUNISH waits for his Hoho (seen through the
+perception delay) and swings where he reappears."
+  (let ((l (brain-learn b)) (f (fighter e)))
+    (when (and (lrn-cmd l) (<= (lrn-delay l) 0) (member (fighter-state f) '(:idle :guard :run)) (zerop (fighter-lock f))
+               (or (not (eq (lrn-cmd l) :hoho-punish)) (eq (snap-state s) :hoho)))
+      (let ((c (lrn-cmd l))) (setf (lrn-cmd l) nil) (learn-press e b (if (eq c :hoho-punish) :q c) d (eq c :hoho-punish))))))
+
+(defun learn-press (e b cmd d &optional anywhere)
+  "Press counter CMD at distance D when it can go (a J / K only within its reach, unless ANYWHERE: he reappears behind
+us; an SP's Hoho without flash-step is a guard): T when pressed; the read is counted."
+  (let* ((kit (kit-of e)) (f (fighter e)) (g (gauges e))
+         (cmd (if (and (eq cmd :hoho) (not (and (zerop (fighter-hoho-lock f)) (>= (gauges-fs g) *fs-hoho*)))) :guard cmd))
+         (mv (and (member cmd *kit-commands*) (kit-command-move kit cmd))))
+    (when (case cmd
+            ((:q :f) (and mv (kit-command-ok-p e cmd) (or anywhere (<= d (+ (mv-reach mv) 0.4)))))
+            (:guard (plusp (ai-guard-k e)))
+            (:hoho t)
+            (t (and mv (kit-command-ok-p e cmd))))
+      (if (eq cmd :guard) (ai-press b :guard 30) (ai-command b kit cmd d e))
+      (clog "~a read ~a d ~,1f" (side-name e) cmd d)
+      (let ((l (brain-learn b)))
+        (incf (lrn-reads l))
+        (let ((st (or (assoc cmd (lrn-stats l)) (car (push (list cmd 0 0) (lrn-stats l))))))
+          (incf (second st)) (setf (lrn-last l) cmd))
+        (setf (brain-why b) :read (lrn-read-t l) *learn-read-t* (lrn-r-dealt l) (gauges-dealt g)
+              (lrn-r-taken l) (gauges-dealt (gauges (opp-of e))))
+        t))))
+
+(defun learn-neutral (e b s d)
+  "A neutral decision (AI-DECIDE) with a learner: read him for the band he is in (its counter, T when pressed); a
+predicted Hoho is only primed (the decision goes on: the bait)."
+  (declare (ignore s))
+  (let ((l (brain-learn b)))
+    (multiple-value-bind (act p n) (learn-predict (lrn-tab l) (learn-band d))
+      (when (and act (learn-counter act) (member :model *learn-use*) (learn-confident-p p n) (learn-roll-p l))
+        (let ((c (learn-counter act)))
+          (if (eq c :hoho-punish)
+              (progn (setf (lrn-cmd l) c (lrn-delay l) 0 (lrn-pend-t l) 60)   ; don't feed his Hoho: wait
+                     (ai-press b :guard 12) (setf (brain-why b) :read-wait) t)
+              (learn-press e b c d)))))))
+
+(defun learn-weights (l d weights)
+  "The bandit's factors on a neutral pick's WEIGHTS (a fresh plist, edited in place) for distance D."
+  (let ((bin (learn-bin d)) (tab (lrn-tab l)))
+    (when (member :bandit *learn-use*)
+      (loop for tail on weights by #'cddr
+            for arm = (position (car tail) *learn-arms*)
+            when arm do (setf (cadr tail) (* (cadr tail) (learn-mult tab bin arm)))))))
+
+(defun learn-window (e l d weights cmd)
+  "The bandit's window for arm CMD, picked from WEIGHTS (its probability for the importance weight): the one still open
+is settled first."
+  (let ((arm (position cmd *learn-arms*)) (dealt (gauges-dealt (gauges e))) (taken (gauges-dealt (gauges (opp-of e))))
+        (sum (loop for (nil w) on weights by #'cddr sum w)))
+    (when (and arm (plusp sum) (member :bandit *learn-use*))
+      (when (>= (lrn-arm l) 0) (learn-settle l dealt taken))
+      (setf (lrn-arm l) arm (lrn-bin l) (learn-bin d) (lrn-prob l) (f32 (/ (getf weights cmd 0) sum))
+            (lrn-win-t l) *learn-window* (lrn-w-dealt l) dealt (lrn-w-taken l) taken))))
+
+(defun learn-settle (l dealt taken)
+  "Close the bandit's window: its damage balance rewards its arm (LEARN-REWARD!)."
+  (learn-reward! (lrn-tab l) (lrn-bin l) (lrn-arm l) (lrn-prob l)
+                 (learn-reward (- dealt (lrn-w-dealt l)) (- taken (lrn-w-taken l))))
+  (setf (lrn-arm l) -1))
