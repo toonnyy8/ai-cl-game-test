@@ -16,13 +16,28 @@
   "(attacker . victim) of every Reishi that reached 0 during this step's HIT-SYSTEM: settled together
 at its end (SETTLE-SOULS), so a lethal trade breaks both souls and no side goes first.")
 
-(defun gain-gauges (e dealt taken)
-  "Reiatsu, flash-step and Fighting Spirit for dealing DEALT / taking TAKEN damage."
+(defun siphon-of (e)
+  "The fighter taking E's gains now, or NIL: the opponent's kit's :siphon hook (o e) is true while something of his drains
+E (a zone he stands in). Asked at every gain, so it ends the frame the zone ends or E leaves it. Siphoned, E gains nothing
+from a hit, a block, a parry or his own blade (GAIN-GAUGES, KOSEI!, NOME-GAIN!, ADD-METER, COLD-ADD!, the parry's
+refill, SETTLE-KONPAKU's Fighting Spirit); his Reiatsu and flash-step gains go to that fighter, the rest is lost."
+  (let* ((o (opp-of e)) (h (and (entity-alive-p o) (kit-hook (kit-of o) :siphon))))
+    (and h (funcall h o e) o)))
+
+(defun pay-gauges (e r fs)
+  "E gains R Reiatsu and FS flash-step (each kept at its max)."
   (let ((g (gauges e)))
-    (setf (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (reiatsu-gain dealt taken) *reiatsu-max*))
-          (gauges-fs g) (f32 (gauge-add (gauges-fs g) (* taken *fs-taken*) *fs-max*)))
-    (unless (gauges-awakened g)
-      (setf (gauges-awaken g) (f32 (gauge-add (gauges-awaken g) (awakening-gain dealt taken 0) *awaken-max*))))))
+    (setf (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) r *reiatsu-max*))
+          (gauges-fs g) (f32 (gauge-add (gauges-fs g) fs *fs-max*)))))
+
+(defun gain-gauges (e dealt taken)
+  "Reiatsu, flash-step and Fighting Spirit for dealing DEALT / taking TAKEN damage (HIT-GAINS; siphoned: SIPHON-OF)."
+  (let ((g (gauges e)) (to (siphon-of e)))
+    (multiple-value-bind (r fs aw sr sfs) (hit-gains dealt taken to)
+      (pay-gauges e r fs)
+      (when to (pay-gauges to sr sfs))
+      (unless (gauges-awakened g)
+        (setf (gauges-awaken g) (f32 (gauge-add (gauges-awaken g) aw *awaken-max*)))))))
 
 (defun deal-damage (att def dmg)
   "DEF loses DMG Reishi (ATT dealt it; a CPU attacker's anti-stall heat resets). Reishi at 0 is an automatic Soul
@@ -44,7 +59,7 @@ Break, settled at the end of the step (*SOUL-BREAKS*): returns T then."
   "NOME (a form with :meter-gain: Nozarashi's cups) for DEALT / TAKEN / DRUNK points; a gain restarts RYOTE's
 drain delay."
   (let ((mg (kit-meter-gain (kit-of e))))
-    (when mg
+    (when (and mg (not (siphon-of e)))
       (let ((n (nome-gain dealt taken drunk mg)) (g (gauges e)))
         (when (plusp n)
           (setf (gauges-meter g) (f32 (gauge-add (gauges-meter g) n (getf (kit-meter (kit-of e)) :max 100.0)))
@@ -58,17 +73,17 @@ drain delay."
 (defun add-meter (e amount)
   "The kit meter (Inferno) of E's form, if it has one and isn't running as a timer."
   (let ((g (gauges e)) (m (kit-meter (kit-of e))))
-    (when (and m (plusp amount) (zerop (gauges-form-left g)))
+    (when (and m (plusp amount) (zerop (gauges-form-left g)) (not (siphon-of e)))
       (setf (gauges-meter g) (f32 (gauge-add (gauges-meter g) amount (getf m :max)))))))
 
 (defun kosei! (att g x y z)
   "KOSEI (docs/DUEL_STRINGS.md §5): a contact of ATT's own melee hit window worth guard value G pays him Reiatsu and
-flash-step, x KOSEI-MULT of his guard gauge (x1 full .. x3 empty); the :kosei event (the HUD's mote from X Y Z)."
-  (let ((ga (gauges att)))
-    (multiple-value-bind (r fs m) (kosei-gain g (gauges-gg ga))
-      (setf (gauges-reiatsu ga) (f32 (gauge-add (gauges-reiatsu ga) r *reiatsu-max*))
-            (gauges-fs ga) (f32 (gauge-add (gauges-fs ga) fs *fs-max*)))
-      (emit :kosei att m x y z))))
+flash-step, x KOSEI-MULT of his guard gauge (x1 full .. x3 empty); the :kosei event (the HUD's mote from X Y Z). Siphoned
+(SIPHON-OF), it pays the siphoning side."
+  (let ((to (or (siphon-of att) att)))
+    (multiple-value-bind (r fs m) (kosei-gain g (gauges-gg (gauges att)))
+      (pay-gauges to r fs)
+      (emit :kosei to m x y z))))
 
 ;;; ---------------------------------------------------------------- one hit
 (defun drain-guard (e v &optional (why :block))
@@ -95,7 +110,7 @@ blown off (the :ward-crush event); a kit with a :crush-hook calls it instead (Ru
 (defun cold-add! (e n)
   "E's cold gauge (a :temp kit meter) changes by N (a blocked melee hit cools her, a real hit warms her), clamped to
 0 .. *COLD-MAX*; the band follows once she is free (TEMP-STEP)."
-  (when (getf (kit-meter (kit-of e)) :temp)
+  (when (and (getf (kit-meter (kit-of e)) :temp) (or (<= n 0) (not (siphon-of e))))   ; (siphoned: no cooling)
     (let ((g (gauges e)))
       (setf (gauges-meter g) (f32 (max 0.0 (min *cold-max* (+ (gauges-meter g) n))))))))
 
@@ -219,9 +234,9 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
            (set-reaction att :stagger *parry-stun* (aref p 0) (aref p 2) *parry-slide*)
            (setf (fighter-armor-left fa) 0)
            (scorch att def)
-           (when (passive-p def :ward)                  ; West's GOKUI GAESHI: the catch refills his guard gauge
+           (when (and (passive-p def :ward) (not (siphon-of def)))   ; West's GOKUI GAESHI: the catch refills his guard gauge
              (setf (gauges-gg (gauges def)) (f32 *gg-max*) (gauges-gg-idle (gauges def)) 0))
-           (let ((h (kit-hook (kit-of def) :parried))) (when h (funcall h def att)))   ; the parrying form's own catch
+           (let ((h (kit-hook (kit-of def) :parried))) (when (and h (not (siphon-of def))) (funcall h def att)))   ; its own catch
            (emit :parried att def x y z)
            (let ((c (and (fighter-move fd) (kit-next (kit-of def) (mv-name (fighter-move fd)) :land))))
              (when c (start-move def c))))
@@ -535,7 +550,7 @@ Returns T when DEF is out of Konpaku."
                                                       (if soul-break (kit-kikon-konpaku (kit-of att)) (fighter-kikon-n (fighter att)))
                                                       soul-break)
       (setf (gauges-konpaku gd) left (gauges-reishi gd) (gauges-reishi-max gd))
-      (unless (gauges-awakened gd)
+      (unless (or (gauges-awakened gd) (siphon-of def))
         (setf (gauges-awaken gd) (f32 (gauge-add (gauges-awaken gd) (awakening-gain 0 0 lost) *awaken-max*))))
       (incf (gauges-kikons (gauges att)))
       (emit :konpaku def lost)

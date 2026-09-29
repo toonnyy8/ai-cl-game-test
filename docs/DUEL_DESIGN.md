@@ -1136,10 +1136,12 @@ both files register with (her ranges were hard-coded, and her knobs moved 80000+
 | kit `:hooks` | `:draw (e rdt)` | looks on the posed body (`draw-fighter`) | Senjumaru |
 | kit `:hooks` | `:hud-guard (e x y w h right s tm)` | over the guard bar, both HUDs | Ichigo |
 | kit `:hooks` | `:deck (e x y d)` | the one-hand thumb ring | Ichigo, Senjumaru |
+| kit `:hooks` | `:siphon (o e)` | read off the **opponent's** kit at every gain of E (`siphon-of`): true while something of O's takes E's gains (E gains nothing from a hit, block, parry or his blade; his Reiatsu / flash-step go to O) | Senjumaru (星) |
 | kit `:meter` | `:draw`, `:label` | the kit-meter row / portrait slot, the portrait label | Senjumaru |
 | kit `:ai` | `:reflex (e b s d)` | among the CPU's reflexes | Ichigo, Senjumaru |
 | kit `:ai` | `:opp-reflex (e b s d)` | read off the **opponent's** kit: what a CPU facing this form does | Senjumaru |
-| kit `:ai` | `:sig-hold (kit d)` | how long the CPU holds L | Senjumaru |
+| kit `:ai` | `:sig-hold (kit d e)` | how long the CPU holds L (E: the fighter, for state such as her stored weave) | Senjumaru |
+| kit `:ai` | `:sp-ender (e kit)` | a landed string's last link: the kit's own SP ender (a command or NIL), before the generic SP2 cancel (`string-reflex`) | Senjumaru (SP1's two hanks) |
 | hazard | `hook (h hz event …)`, `data` | `:step` first (T skips the generic step), `:touches` for a kind hazards.lisp doesn't know, `:close` from `close-rifts` | Senjumaru |
 | hit flags | `:blade` (a `:flash` hit look), `:thread` (a `:quick` look), `:spare` (never the last Reishi point) | `apply-hit` | Ichigo; Senjumaru |
 | move / passive | `:shield` flag + `:catch` param (a guard window that catches ranged hits); passive `:parry-block` (a parry blocks what it can't catch) | `defender-state`, `apply-hit` | Senjumaru; Ichigo |

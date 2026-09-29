@@ -110,7 +110,7 @@ estimated as the combo's average so far): one roll per combo at the difficulty's
       (setf (brain-burst-rolled b) t)
       (< (sim-rnd01) (getf *ai-burst-p* (brain-difficulty b) 0.4)))))
 
-(defun ai-command (b kit cmd d)
+(defun ai-command (b kit cmd d &optional e)
   "Press the buttons of kit command CMD at distance D (holding charge / stance / Breaker moves a
 while: a charge move is held to its full charge from beyond 7 m, where it has the time)."
   (let ((r (sim-rnd01))
@@ -120,7 +120,7 @@ while: a charge move is held to its full charge from beyond 7 m, where it has th
         (:q (ai-press b :quick 1))
         (:f (ai-press b :flash 1))
         (:sig (ai-press b :sig (let ((h (getf (kit-ai kit) :sig-hold)))   ; a kit's own hold length (its :sig-hold function)
-                                 (if h (funcall h kit d) (hold-for (kit-command-move kit :sig) 12 40)))))
+                                 (if h (funcall h kit d e) (hold-for (kit-command-move kit :sig) 12 40)))))
         ((:sp1 :sp1-full)                                 ; :sp1-full: a charge move held to its end
          (let ((mv (kit-command-move kit :sp1)))
            (ai-press b :flash (if (and mv (mv-hold mv) (or (eq cmd :sp1-full) (> d 7.0))) (+ 2 (second (mv-hold mv)))
@@ -182,6 +182,9 @@ cancel into SP2 when the victim is on the ground (a launched victim would drop o
           (nq :q)
           (nf :f)
           ((and (>= (fighter-sf f) (fighter-land-sf f)) (ai-cancel-p e kit)) (why b :cancel :sig))
+          ((let ((h (ai-table e :sp-ender)))            ; the kit's own SP ender (its function picks it, or NIL)
+             (and h (= (fighter-sf f) (fighter-land-sf f)) (not (eq (state-of (opp-of e)) :air))
+                  (let ((c (funcall h e kit))) (and c (why b :sp-ender c))))))
           ((and (>= bars (ai-table e :sp-cancel-bars 1)) (kit-command-ok-p e :sp2)
                 (= (fighter-sf f) (fighter-land-sf f)) (not (eq (state-of (opp-of e)) :air))
                 (< (sim-rnd01) *ai-sp-cancel-p*))              ; one roll, on the first step we see the hit
@@ -449,7 +452,7 @@ the Kikon rush on a red opponent within its range (*AI-KIKON-P*), dash to / from
 its middle), guard, attack (a weighted pick from the kit's band for D), or wait."
   (cond ((and (kikon-ready-p e) (< d (ai-table e :kikon-range 7.0)) (not (member (snap-state s) '(:down :wakeup :hoho)))
               (kit-command-ok-p e :kikon) (< (sim-rnd01) (ai-kikon-p e)))
-         (ai-command b kit :kikon d) (setf (brain-why b) :kikon))
+         (ai-command b kit :kikon d e) (setf (brain-why b) :kikon))
         ((ai-pip-hurry-p e)                                ; the arm's next crack is near: spend the pip now
          (ai-attack e b kit s d heat t))
         ((ai-cool-p e s d)                                 ; Rukia: hold U the frames the next colder band still needs
@@ -491,7 +494,7 @@ pip commands of the band (the arm's crack is near: AI-PIP-HURRY-P). T when somet
       (when (and cmd (or (not (member cmd *kit-commands*)) (and (kit-command-move kit cmd) (kit-command-ok-p e cmd)))
                  (or (not (member cmd '(:q :f)))                  ; don't whiff a string at range
                      (<= d (+ 0.2 (mv-reach (kit-command-move kit cmd))))))
-        (ai-command b kit cmd d) (setf (brain-why b) (if hurry :pip-hurry :neutral))
+        (ai-command b kit cmd d e) (setf (brain-why b) (if hurry :pip-hurry :neutral))
         t))))
 
 (defun ai-kikon-p (e)
@@ -552,7 +555,7 @@ fraction of the guard gauge."
                (decf (brain-press-left b)))
               (t (let ((cmd (ai-reflex e b s d)))
                    (cond ((and cmd (not (and (eq cmd :guard) (eq (brain-press b) :guard) (> (brain-press-left b) 0))))
-                          (ai-command b (kit-of e) cmd d))
+                          (ai-command b (kit-of e) cmd d e))
                          ((> (brain-press-left b) 0) (decf (brain-press-left b)))
                          ((member (fighter-state f) '(:idle :run)) (ai-neutral e b s d)))))))
       (setf (brain-was b) (fighter-state f))

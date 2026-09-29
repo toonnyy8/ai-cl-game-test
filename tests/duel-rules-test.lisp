@@ -1339,9 +1339,10 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
         for k = (kit :senjumaru (hank-form n))
         for l = (kit-command-move k :sig)
         for lk = (kit-l-link k :sj-t-k1)
-        do (check (and (= n (getf (mv-params l) :hank)) (equal (mv-hold l) '(20 60)) (= 6 (mv-s l)) (member :bind (mv-flags l))
+        do (check (and (= n (getf (mv-params l) :hank)) (equal (mv-hold l) '(1 600)) (= 6 (mv-s l)) (member :bind (mv-flags l))
+                       (eq 'senju-weave-release (mv-release l)) (null (mv-release lk))
                        (= n (getf (mv-params lk) :hank)) (null (mv-hold lk)) (= 8 (mv-s lk)) (getf (mv-params lk) :combo)
-                       (>= (mv-reach lk) 9.0) (eq :sj-tachinaoshi (mv-name (kit-command-move k :sp1)))
+                       (>= (mv-reach lk) 9.0) (eq (intern (format nil "SJ-TACHINAOSHI-~d" n) :keyword) (mv-name (kit-command-move k :sp1)))
                        (= 1 (kit-command-cost k :sp1)) (kit-awakening k) (zerop (kit-heal k))
                        (zerop (mv-cooldown l)))))                 ; (no COOLDOWN row: the torn lock is L's timer)
   ;; the combo cut: L after a K link hits before the K link's stagger ends (A 4 + S 8 + unfold 10 = 22 < 26)
@@ -1357,15 +1358,99 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
                                     (or (not (hank n :dmg)) (<= (hank-damage n p) (hank-damage n (1+ p))))))))
   (check (and (= 90 (hank-damage 2 3)) (= 72 (hank-damage 2 1)) (= 240 (hank-life 1 3)) (= 120 (hank-life 1 1))
               (~= 2.4 (hank-radius 1 1)) (null (hank 1 :dmg)) (null (hank 6 :dmg))))
-  ;; the awakened grid: J1 J2 J3 K2 derived at x1.15, K1 4.2 m, MAKITORI 2.8 m with its pull to 1.4
-  (check (and (~= (* 1.15 2.4) (mv-reach (kit-command-move t1 :q))) (~= (* 1.15 2.8) (mv-reach (kit-next t1 :sj-j1 :f)))
+  ;; the awakened grid: J1 J2 J3 K2 as the Shikai's (no reach derivation: the playtest), K1 4.2 m, MAKITORI 2.8 m with its
+  ;; pull to 1.4
+  (check (and (~= 2.4 (mv-reach (kit-command-move t1 :q))) (~= 2.8 (mv-reach (kit-next t1 :sj-j1 :f)))
               (~= 4.2 (mv-reach (kit-command-move t1 :f))) (~= 2.8 (mv-reach (kit-next t1 :sj-k2 :f)))
               (~= 1.4 (getf (mv-params (kit-next t1 :sj-k2 :f)) :pull)) (~= 3.3 (kit-walk t1)) (~= 3.6 (kit-walk b))))
   ;; the CPU: the rule's keys, the loom's hold by distance (星 closer), the Shikai taps L
   (check (and (equal (getf (kit-ai b) :awaken-rule) '(:ranged-share 0.3 :min-taken 150 :or-opp-rooted t))
-              (= 62 (senju-sig-hold t1 7.0)) (= 42 (senju-sig-hold t1 5.0)) (= 22 (senju-sig-hold t1 3.0))
-              (= 62 (senju-sig-hold t6 5.5)) (= 42 (senju-sig-hold t6 3.0)) (= 1 (senju-sig-hold b 3.0))
+              (= 31 (senju-sig-hold t1 7.0)) (= 31 (senju-sig-hold t1 5.0)) (= 1 (senju-sig-hold t1 3.0))   ; a segment; a tap
+              (= 31 (senju-sig-hold t6 5.5)) (= 31 (senju-sig-hold t6 3.0)) (= 1 (senju-sig-hold b 3.0))
               (~= 0.5 (getf (kit-ai t6) :opp-rush-hold)) (null (kit-reset-form t1)) (eq :base (kit-reset-form b)))))
+
+;; L: hold to weave, tap to release (the user, 2026-09-29): under 10 f is a tap; a weave's frames count from its 10th (those
+;; 10 at once), one a frame after, summed over segments on the hank up to 3 passes; a release (the tap, K -> L, SP1) makes
+;; the stored passes, at least 1; a hit while weaving voids the hank (the next one, nothing woven)
+(flet ((seg (woven frames) (loop for h from 1 to frames do (setf woven (weave-add woven h))) woven))
+  (check (and (= 10 *weave-tap*) (weave-tap-p 9) (not (weave-tap-p 10))
+              (= 0 (seg 0 9)) (= 10 (seg 0 10)) (= 15 (seg 0 15))            ; a tap weaves nothing; a hold counts from f1
+              (= 30 (seg (seg 0 15) 15)) (= 1 (weave-stored (seg (seg 0 15) 15)))   ; two segments of 15: one pass
+              (= 45 (seg (seg (seg 0 15) 15) 15)) (= 2 (weave-stored 45))
+              (= 60 (seg 45 40)) (= 3 (weave-stored (seg 0 200)))            ; capped at three passes
+              (= 30 (seg 30 9))                                             ; a tap keeps what is stored
+              (= 1 (release-passes 0)) (= 1 (release-passes 19)) (= 2 (release-passes 45)) (= 3 (release-passes 60))
+              (equal '(4 0) (multiple-value-list (weave-void 3))) (equal '(1 0) (multiple-value-list (weave-void 6))))))
+(check (and (eq :sig (mv-kind (find-move :sj-weave-stop))) (= 6 (mv-total (find-move :sj-weave-stop)))))
+
+;; SP1 裁ち直し releases the next two hanks (the user, 2026-09-29): the queue moves +2 (6 wraps to 1); the move cuts the live
+;; zone(s) at f0 and releases at f8 and f14 (the combo cut's rules); off a landed link both land inside a stagger (26 f:
+;; cancel frame +1, then S + unfold); its :tell is its first hitting hank's; 1 bar
+(check (equal (loop for n from 1 to 6 collect (multiple-value-list (tachi-hanks n)))
+              '((1 2 3) (2 3 4) (3 4 5) (4 5 6) (5 6 1) (6 1 2))))
+(loop for n from 1 to 6
+      for k = (kit :senjumaru (hank-form n))
+      for sp = (kit-command-move k :sp1)
+      do (check (and (eq :sp (mv-kind sp)) (= 8 (mv-s sp)) (= 30 (mv-total sp)) (= 1 (kit-command-cost k :sp1))
+                     (equal (mv-on-frame sp) '((0 senju-combo-cut) (8 senju-tachi-release) (14 senju-tachi-release)))
+                     (= 6 *tachi-second*)
+                     (< (+ 1 8 *unfold-combo*) (hitstun :stagger)) (< (+ 1 8 *tachi-second* *unfold-combo*) (hitstun :stagger))
+                     (equal (getf (mv-params sp) :tell)
+                            (cond ((hank-hits-p n) '(10 22)) ((hank-hits-p (hank-next n)) '(16 28)))))))
+(check (and (null (getf (mv-params (kit-command-move (kit :senjumaru :tsuji6) :sp1)) :tell))   ; 星 + 眼: no hit
+            (eq 'senju-sp-ender (getf (kit-ai (kit :senjumaru :tsuji1)) :sp-ender))
+            (null (getf (kit-ai (kit :senjumaru :tsuji1)) :skip))))
+
+;; 星 siphons (the user, 2026-09-29): inside her live star he gains nothing; his Reiatsu / flash-step gains go to her, his
+;; Fighting Spirit (and every kit meter: combat.lisp SIPHON-OF) is lost; the drain gives her what it really took, capped
+(multiple-value-bind (r fs aw sr sfs) (hit-gains 100 40 nil)
+  (check (and (~= r (reiatsu-gain 100 40)) (~= fs (* 40 *fs-taken*)) (~= aw (awakening-gain 100 40 0)) (zerop sr) (zerop sfs))))
+(multiple-value-bind (r fs aw sr sfs) (hit-gains 100 40 t)
+  (check (and (zerop r) (zerop fs) (zerop aw) (~= sr (reiatsu-gain 100 40)) (~= sfs (* 40 *fs-taken*)) (plusp sr) (plusp sfs))))
+(multiple-value-bind (his hers) (gauge-move 50.0 0.5 20.0 100.0) (check (and (~= his 49.5) (~= hers 20.5))))
+(multiple-value-bind (his hers) (gauge-move 0.2 0.5 20.0 100.0) (check (and (~= his 0.0) (~= hers 20.2))))   ; what it took
+(multiple-value-bind (his hers) (gauge-move 50.0 0.5 99.8 100.0) (check (and (~= his 49.5) (~= hers 100.0))))  ; capped
+(check (every (lambda (f) (eq 'senju-siphon (kit-hook (kit :senjumaru f) :siphon))) '(:base :tsuji1 :tsuji6)))
+(check (every (lambda (cf) (or (eq (first cf) :senjumaru) (null (kit-hook (apply #'kit cf) :siphon)))) *forms*))
+
+;; Senjumaru's reach matches the art (the user's playtest, 2026-09-29; DUEL_SENJUMARU.md "Playtest: reach matches the
+;; art"): every J / K link of every form reaches no more than 0.15 m past (or short of) what she strikes with at its hit
+;; frames: the needle's tip (the rig's FK over her own poses, read from senjumaru-art.lisp; radial for an arc, ahead for a
+;; capsule) or its K prop's far end (*SJ-STRIKE-REACH*). The volume's far edge is where his hurt cylinder's near side may
+;; stand (an arc's r, a capsule's b + r). The host has no C: anim.lisp's float intrinsics as plain CL
+(defmacro engine::f-max (a b) `(max ,a ,b))
+(defmacro engine::f-mod (a b) `(mod ,a ,b))
+(defmacro engine::f-sin (a) `(sin ,a))
+(defmacro engine::f-cos (a) `(cos ,a))
+(defmacro engine::f-wrap (a) `(let ((x ,a)) (- x (* 6.2831853f0 (floor (+ x 3.14159265f0) 6.2831853f0)))))
+(load (merge-pathnames "../engine/lisp/anim.lisp" *load-truename*))
+(let ((scale nil) (needle nil) (strike nil))
+  (with-open-file (in (merge-pathnames "../duel/lisp/senjumaru-art.lisp" *load-truename*))
+    (let ((*package* (find-package :duel)))
+      (loop for form = (read in nil in) until (eq form in)
+            when (consp form)
+              do (case (first form)
+                   ((defpose defclip defstrike) (eval form))
+                   (defun (when (eq (second form) 'sj-okobo-props) (eval form)))
+                   (defparameter (when (eq (second form) '*sj-strike-reach*) (setf strike (eval (third form)))))
+                   (defbody (when (eq (second form) :senjumaru) (setf scale (getf (third form) :scale))))
+                   (defweapon (when (eq (second form) :shigarami) (setf needle (getf (third form) :length))))))))
+  (let ((jm (make-f32 (* 16 +nj+))) (pose (make-f32 +pose-n+)) (v (make-f32 3)) (props (sj-okobo-props)))
+    (flet ((tip (clip fr)                              ; the needle's tip at clip frame FR: values radial, ahead (m)
+             (clip-sample! pose (find-clip clip) (/ fr 60.0))
+             (pose-fk! jm pose 0f0 0f0 0f0 0f0 (f32 scale) 0f0 props)   ; (yaw 0 faces -Z)
+             (joint-point! v jm (ji :weapon-r) 0f0 0f0 (f32 (- needle)))
+             (values (sqrt (+ (expt (aref v 0) 2) (expt (aref v 2) 2))) (- (aref v 2)))))
+      (dolist (cf (remove :senjumaru *forms* :key #'first :test-not #'eq))
+        (let ((k (apply #'kit cf)))
+          (dolist (name (remove-duplicates (loop for (from nil to) in (kit-strings k) collect from collect to)))
+            (let* ((mv (kit-move k name)) (vol (first (hw-vols (svref (mv-hits mv) 0)))) (cap (> (aref vol 0) 0.5))
+                   (edge (if cap (+ (aref vol 2) (aref vol 4)) (aref vol 1)))
+                   (art (or (third (assoc (mv-clip mv) strike))
+                            (loop for fr from (mv-s mv) below (+ (mv-s mv) (mv-a mv))
+                                  maximize (multiple-value-bind (r ahead) (tip (mv-clip mv) fr) (if cap ahead r))))))
+              (check (or (<= (abs (- art edge)) 0.15)
+                         (format t "~a ~a: the volume ends ~,2f m, the art ~,2f m~%" (second cf) name edge art))))))))))
 
 ;; no character names in the generic files (design-v1 §12)
 (dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow" "endless-rules" "endless"))

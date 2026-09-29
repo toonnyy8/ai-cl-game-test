@@ -161,11 +161,13 @@ on the clogs."
   (:foot-l (:bevel 0.09 0.06 0.2 0.02 :at (0 -0.03 0.05) :c :wrap)))
 
 ;;; ---------------------------------------------------------------- the needle and the spear
-;; 刺絡 SHIGARAMI: a white-gold sewing needle ~0.9 m, the eye just behind her fist (the red thread runs from it: SENJU-DRAW)
-(defweapon :shigarami (:length 0.9 :base 0.1)
+;; 刺絡 SHIGARAMI: a white-gold sewing needle as tall as she is, 1.8 m (1.58 m at her scale; 0.9 until the playtest: her J
+;; reach is its tip),
+;; the eye just behind her fist (the red thread runs from it: SENJU-DRAW)
+(defweapon :shigarami (:length 1.8 :base 0.1)
   (:solid (mbc mb #xEDE6D0)
-          (with-xform (mb (xform :y 0.42)) (mb-cylinder mb 0.012 0.84 :segments 6 :top-radius 0.005))
-          (with-xform (mb (xform :y 0.87)) (mb-cone mb 0.005 0.05 :segments 4))
+          (with-xform (mb (xform :y 0.87)) (mb-cylinder mb 0.016 1.74 :segments 6 :top-radius 0.005))
+          (with-xform (mb (xform :y 1.77)) (mb-cone mb 0.005 0.05 :segments 4))
           (mbc mb #xC2A866)
           (with-xform (mb (xform :y -0.03)) (mb-box mb 0.026 0.05 0.012))
           (mbc mb #x16161E)
@@ -225,6 +227,14 @@ rolled bolt of it: the weave, the wrap, the hanging bolts)."
           (loop for x in '(-0.018 -0.006 0.006 0.018) for l in '(0.06 0.07 0.075 0.065)
                 do (with-xform (mb (xform :x x :y (+ 0.045 (* 0.5 l)))) (mb-box mb 0.009 l 0.009)))
           (with-xform (mb (xform :x -0.03 :y 0.03 :z 0.015 :roll 0.4)) (mb-box mb 0.009 0.05 0.009))))
+(defweapon :sj-pin (:length 1.0)                    ; a unit marking pin along +Y, the head at 0 (MACHIBARI, KUKE: SJ-SEG)
+  (:solid :ink 0 (mbc mb #xEDE6D0) (with-xform (mb (xform :y 0.47)) (mb-cylinder mb 1.0 0.94 :segments 6 :top-radius 0.6))
+          (with-xform (mb (xform :y 0.97)) (mb-cone mb 0.6 0.06 :segments 4))
+          (mbc mb #xC2A866) (with-xform (mb (xform :y 0.015)) (mb-cylinder mb 1.9 0.03 :segments 8))))
+(defweapon :sj-stake (:length 0.8)                  ; a pin standing point-down, its head 0.8 m up (KUKE: SJ-PROP)
+  (:solid (mbc mb #xEDE6D0) (with-xform (mb (xform :y 0.43)) (mb-cylinder mb 0.018 0.74 :segments 6))
+          (with-xform (mb (xform :y 0.03 :roll 3.14159)) (mb-cone mb 0.018 0.06 :segments 4))
+          (mbc mb #xC2A866) (with-xform (mb (xform :y 0.8)) (mb-sphere mb 0.04 :segments 6 :rings 4))))
 (defweapon :sj-strip (:length 1.0)                   ; a loose strip of madder cloth (the aura, the burning procession)
   (:solid :ink 0 (mbc mb #x7A2E34) (with-xform (mb (xform :y 0.5)) (mb-box mb 0.14 1.0 0.008))
           (mbc mb #xB89A5A) (with-xform (mb (xform :y 0.03)) (mb-box mb 0.145 0.02 0.01))))
@@ -308,7 +318,7 @@ rolled bolt of it: the weave, the wrap, the hanging bolts)."
 
 ;; J1 HITOHARI: the upper right hand jabs the needle straight out
 (defpose :sj-q1-hit (:base :sj-stance)
-  (:root :f 0.2 :u -0.05) (:pelvis :twist 18) (:chest :twist 16) (:neck :twist -12) (:head :twist -10)
+  (:root :f 0.32 :u -0.05) (:pelvis :twist 18) (:chest :twist 16) (:neck :twist -12) (:head :twist -10)
   (:arm-r :flex 92 :side 4) (:elbow-r :flex 2) (:hand-r :twist 0 :flex -90)
   (:arm-l :flex 20 :side 60) (:elbow-l :flex 40)
   (:thigh-r :flex 20) (:knee-r :flex 20) (:thigh-l :flex -8) (:knee-l :flex 8))
@@ -316,13 +326,13 @@ rolled bolt of it: the weave, the wrap, the hanging bolts)."
   (0)
   (3 (:chest :twist -14) (:arm-r :flex 60 :side 10) (:elbow-r :flex 110) (:hand-r :flex -80) (:root :u -0.03))
   (:s :snap :sj-q1-hit)
-  (:a (:root :f 0.22) (:arm-r :flex 93))
+  (:a (:root :f 0.34) (:arm-r :flex 93))
   (16 (:root :f 0.1) (:arm-r :flex 70 :side 18) (:elbow-r :flex 60) (:hand-r :flex -50) (:chest :twist 4))
   (:end :sj-stance))
 
 ;; J2 KAESHINUI: the backstitch: the needle drawn back across him, the thread taut
 (defpose :sj-q2-hit (:base :sj-stance)
-  (:root :f 0.16 :u -0.05 :yaw -8) (:pelvis :twist 16) (:chest :twist -22) (:neck :twist 10) (:head :twist 6)
+  (:root :f 0.28 :u -0.05 :yaw -8) (:pelvis :twist 16) (:chest :twist -22) (:neck :twist 10) (:head :twist 6)
   (:arm-r :side 86 :flex 30) (:elbow-r :flex 10 :twist 140) (:hand-r :twist 0 :flex -84)
   (:arm-l :flex 60 :side 20) (:elbow-l :flex 50) (:hand-l :flex -40))
 (defstrike :sj-q2 (7 3 13 :base :sj-stance)
@@ -339,9 +349,9 @@ rolled bolt of it: the weave, the wrap, the hanging bolts)."
   (4 (:root :u -0.04 :yaw -20) (:chest :twist -30) (:arm-r :side 80 :flex 10) (:elbow-r :flex 10) (:hand-r :flex -80)
      (:arm-l :side 80 :flex 10) (:elbow-l :flex 10) (:hand-l :flex -40))
   (6 (:root :yaw -30) (:chest :twist -36))
-  (:s :snap (:root :yaw 330 :u -0.02 :f 0.1) (:chest :twist 10) (:arm-r :side 88 :flex 40) (:elbow-r :flex 0) (:hand-r :flex -88)
+  (:s :snap (:root :yaw 330 :u -0.02 :f 0.2) (:chest :twist 10) (:arm-r :side 88 :flex 40) (:elbow-r :flex 0) (:hand-r :flex -88)
       (:arm-l :side 88 :flex 40) (:elbow-l :flex 0) (:hand-l :flex -60))
-  (:a (:root :yaw 360 :f 0.12) (:chest :twist 14))
+  (:a (:root :yaw 360 :f 0.22) (:chest :twist 14))
   (22 (:root :yaw 360 :u -0.02 :f 0.06) (:arm-r :side 50 :flex 40) (:elbow-r :flex 40) (:hand-r :flex -50)
       (:arm-l :side 60 :flex 30) (:elbow-l :flex 50))
   (:end :sj-stance (:root :yaw 360)))
@@ -624,6 +634,67 @@ framing the crescent (eased over ~0.1 s either way)."
                    (sj-thread x0 y0 z0 x1 y1 z1 (- 0.9 (* 0.12 lag)) 0.004 (float lag))
                    (setf x0 x1 y0 y1 z0 z1)))))))
 
+;; the K links' props (the user's playtest, 2026-09-29: the reach matches the art; docs/DUEL_SENJUMARU.md "Playtest"):
+;; each is out to its move's hit-volume far edge at the hit frames. The host test (duel-rules-test) checks these against
+;; the volumes, and the J links' needle tip against theirs
+(defparameter *sj-strike-reach*
+  '((:sj-f1 :pins 3.5) (:sj-f2 :loop 2.8) (:sj-drop :stakes 2.8) (:sj-tanmono :bolt 4.5) (:sj-makitori :wrap 2.8))
+  "Clip -> (kind far): the prop the clip's K link throws and its far end, metres from her centre along her facing
+(MACHIBARI's two long pins, MATSURI's loop of thread, KUKE's pins round his feet, TANMONO-UCHI's bolt, MAKITORI's cloth).")
+
+(defun sj-strike-out (sf s a)
+  "0..1: how far a K prop is out at move frame SF (S / A: the move's): flung over the 4 frames before S, all the way out
+through the active frames, drawn back over the 8 after."
+  (cond ((< sf s) (max 0.0 (min 1.0 (/ (- sf (- s 4)) 4.0))))
+        ((< sf (+ s a)) 1.0)
+        (t (max 0.0 (- 1.0 (/ (- sf (+ s a)) 8.0))))))
+
+(defun sj-strike-props (e f)
+  "The K link's prop (*SJ-STRIKE-REACH*), drawn from her rig hands out to its far end."
+  (let* ((mv (fighter-move f))
+         (spec (and mv (eq (fighter-state f) :move) (eq (fighter-phase f) :main) (rest (assoc (mv-clip mv) *sj-strike-reach*))))
+         (sf (fighter-sf f)) (k (if spec (sj-strike-out sf (mv-s mv) (mv-a mv)) 0.0)))
+    (when (> k 0.0)
+      (let* ((jm (model-joints (model e))) (p (pos-of e)) (cx (aref p 0)) (cz (aref p 2)) (yaw (yaw-of e))
+             (fx (fwd-x yaw)) (fz (fwd-z yaw)) (v *sj-p*) (w *sj-q*) (d (second spec)))
+        (joint-point! v jm (ji :hand-r) 0f0 -0.06f0 0f0)
+        (joint-point! w jm (ji :hand-l) 0f0 -0.06f0 0f0)
+        (flet ((fwd (x z) (+ (* (- x cx) fx) (* (- z cz) fz)))            ; metres ahead of her centre
+               (turned (a) (let ((c (cos (deg a))) (s (sin (deg a)))) (values (- (* c fx) (* s fz)) (+ (* s fx) (* c fz))))))
+          (ecase (first spec)
+            (:pins                                     ; MACHIBARI: a long pin out of each hand, straight ahead
+             (dolist (h (list v w))
+               (let* ((x (aref h 0)) (y (aref h 1)) (z (aref h 2)) (hf (fwd x z)) (l (* k (- d hf))))
+                 (when (> l 0.05) (sj-seg :sj-pin x y z (+ x (* l fx)) y (+ z (* l fz)) 0.016)))))
+            (:loop                                     ; MATSURI: a loop of thread whipped up from the needle and down
+             (joint-point! v jm (ji :weapon-r) 0f0 0f0 -1.8f0)           ; ahead at him (two strands)
+             (let* ((x0 (aref v 0)) (y0 (aref v 1)) (z0 (aref v 2)) (r (* k d)) (ex (+ cx (* r fx))) (ez (+ cz (* r fz)))
+                    (mx (* 0.5 (+ x0 ex))) (my (+ (max y0 2.2) 0.5)) (mz (* 0.5 (+ z0 ez))))
+               (dotimes (strand 2)
+                 (let ((px x0) (py y0) (pz z0) (lx (* strand 0.06 (- fz))) (lz (* strand 0.06 fx)))
+                   (loop for i from 1 to 10
+                         do (let* ((u (/ i 10.0)) (a (* (- 1 u) (- 1 u))) (b (* 2 u (- 1 u))) (c (* u u))
+                                   (qx (+ (* a x0) (* b mx) (* c ex) (* u lx))) (qy (+ (* a y0) (* b (- my (* 0.1 strand))) (* c 0.6)))
+                                   (qz (+ (* a z0) (* b mz) (* c ez) (* u lz))))
+                              (sj-thread px py pz qx qy qz (* 0.95 k) 0.011 (float (+ i (* 10 strand))))
+                              (setf px qx py qy pz qz)))))))
+            (:stakes                                   ; KUKE: five pins slammed down round his feet, threads from the hands
+             (let ((drop (if (< sf (mv-s mv)) (* 1.2 (- 1.0 k)) 0.0)) (a (if (< sf (mv-s mv)) 1.0 k)))
+               (dotimes (i 5)
+                 (multiple-value-bind (dx dz) (turned (* 20 (- i 2)))
+                   (let* ((r (* d (if (evenp i) 1.0 0.75))) (x (+ cx (* r dx))) (z (+ cz (* r dz))) (h (if (evenp i) v w)))
+                     (sj-prop :sj-stake x drop z :alpha a)
+                     (sj-thread (aref h 0) (aref h 1) (aref h 2) x (+ 0.8 drop) z (* 0.9 a) 0.006 (float i)))))))
+            (:bolt                                     ; TANMONO-UCHI: a bolt of cloth flung straight out from both hands
+             (let* ((x (* 0.5 (+ (aref v 0) (aref w 0)))) (y (* 0.5 (+ (aref v 1) (aref w 1)))) (z (* 0.5 (+ (aref v 2) (aref w 2))))
+                    (l (* k (- d (fwd x z)))))
+               (when (> l 0.05) (sj-seg :sj-strip x y z (+ x (* l fx)) y (+ z (* l fz)) 2.6))))
+            (:wrap                                     ; MAKITORI: a cloth from each hand down to his feet
+             (loop for h in (list v w) for s in '(-10 10)
+                   do (multiple-value-bind (dx dz) (turned s)
+                        (let ((r (max (fwd (aref h 0) (aref h 2)) (* k d))))
+                          (sj-seg :sj-strip (aref h 0) (aref h 1) (aref h 2) (+ cx (* r dx)) 0.35 (+ cz (* r dz)) 1.6)))))))))))
+
 (defun sj-stitches-on (o n)
   "N red threads standing out of opponent O's torso: the stitches she has sewn into his clothes (a look, from her meter)."
   (let* ((m (model o)) (jm (model-joints m)) (v *sj-p*) (yaw (yaw-of o)))
@@ -662,6 +733,7 @@ Bankai's domain."
     (when (> rdt 0) (sj-hist-push side (model-joints m)))
     (when (>= (model-alpha m) 0.999)
       (sj-echo-arms e side m rdt)
+      (sj-strike-props e f)
       (when (eq (fighter-form f) :base) (sj-needle-thread e m)))
     (when (and (entity-alive-p o) (eq (fighter-form f) :base) (plusp (round (gauges-meter (gauges e)))))
       (sj-stitches-on o (round (gauges-meter (gauges e)))))
@@ -774,8 +846,8 @@ Bankai's domain."
   (declare (ignore rdt))
   (let ((e (hazard-owner hz)))
     (when (entity-alive-p e)
-      (let* ((d (hazard-data hz)) (f (fighter e)) (jm (model-joints (model e))) (v *sj-p*) (w *sj-q*)
-             (p (min 3 (max 1 (floor (max 1 (fighter-hold f)) *weave-pass*)))))
+      (let* ((d (hazard-data hz)) (jm (model-joints (model e))) (v *sj-p*) (w *sj-q*)
+             (p (max 1 (senju-stored e))))
         (joint-point! v jm (ji :hand-r) 0f0 -0.06f0 0f0)
         (joint-point! w jm (ji :hand-l) 0f0 -0.06f0 0f0)
         (let* ((mx (* 0.5 (+ (aref v 0) (aref w 0)))) (my (* 0.5 (+ (aref v 1) (aref w 1)))) (mz (* 0.5 (+ (aref v 2) (aref w 2))))

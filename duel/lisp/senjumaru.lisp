@@ -39,7 +39,9 @@
 (defparameter *shinpei-life* 300 "Frames it lasts.")
 (defparameter *kasa-base* 40 "傘: the tendrils' damage with nothing caught (the user's decision: it always fires).")
 (defparameter *kasa-cap* 120 "... + half the largest caught hit, at most this.")
-(defparameter *weave-pass* 20 "Frames of L held per pass of the weave (1-3).")
+(defparameter *weave-pass* 20 "Frames of weaving per pass (1-3), summed over every segment on the hank.")
+(defparameter *weave-tap* 10 "L held fewer frames is a tap (the release); this many is a weave (the user, 2026-09-29).")
+(defparameter *weave-seg* 30 "The loom's CPU weaves at most this many frames per segment.")
 (defparameter *unfold* 20 "Frames every zone unfolds (the tell; fragile: a hit on her tears it).")
 (defparameter *unfold-combo* 10 "... the combo cut's (L after a K link).")
 (defparameter *torn-lock* 90 "Frames L is locked after a torn hank.")
@@ -47,6 +49,8 @@
 (defparameter *hank-life-mult* 1.0 "Every zone's life x (a pacing knob).")
 (defparameter *mirror-k* 0.3 "眼: his melee contact on her inside the ring costs him this much of its damage.")
 (defparameter *ai-senju-hari* 0.1 "Her CPU's chance per free step to cash >= :min stitches out with L.")
+(defparameter *ai-senju-tachi* 0.5 "The loom's CPU's chance to end a landed string with SP1 (when one of its two hanks hits).")
+(defparameter *tachi-second* 6 "TACHINAOSHI: frames between its two releases.")
 
 ;;; the six hanks (死出六色浮文機), their values at 3 passes (§4.2)
 (defparameter *hanks*
@@ -61,9 +65,24 @@
 ;;; ================================================================ rules (pure: host-tested)
 (defun hank (n key) "Hank N's value KEY (*HANKS*)." (getf (rest (assoc n *hanks*)) key))
 (defun hank-next (n) "The loom's next hank after N: 1 -> 2 ... 6 -> 1 (the fixed order, Q10)." (1+ (mod n 6)))
+(defun tachi-hanks (n)
+  "SP1 裁ち直し from the form whose next hank is N (the user, 2026-09-29): values the two hanks it releases and the hank the
+loom is on after them (+2, 6 wraps to 1)."
+  (values n (hank-next n) (hank-next (hank-next n))))
+(defun hank-hits-p (n) "Hank N's zone deals a hit (刃金 黒砂 褥 焼野原; 眼 and 星 don't)." (and (hank n :dmg) t))
 (defun hank-form (n) "The kit form whose next hank is N." (nth (1- n) '(:tsuji1 :tsuji2 :tsuji3 :tsuji4 :tsuji5 :tsuji6)))
 (defun form-hank (form) "The next hank of FORM, or NIL (the Shikai)." (let ((i (position form '(:tsuji1 :tsuji2 :tsuji3 :tsuji4 :tsuji5 :tsuji6)))) (and i (1+ i))))
 (defun weave-passes (hold) "Passes a weave of HOLD frames made: one per *WEAVE-PASS*, 1-3." (max 1 (min 3 (floor hold *weave-pass*))))
+(defun weave-add (woven hold)
+  "The hank's woven frames after one more frame of L held, the press's HOLDth: nothing while it may still be a tap (under
+*WEAVE-TAP*), those frames at once when it becomes a weave, then one a frame; at most three passes' worth."
+  (cond ((< hold *weave-tap*) woven)
+        ((= hold *weave-tap*) (min (* 3 *weave-pass*) (+ woven *weave-tap*)))
+        (t (min (* 3 *weave-pass*) (1+ woven)))))
+(defun weave-stored (woven) "Passes WOVEN frames hold (0-3)." (min 3 (floor woven *weave-pass*)))
+(defun release-passes (woven) "Passes a release makes (a tap, K -> L, SP1): the stored ones, at least 1." (max 1 (weave-stored woven)))
+(defun weave-tap-p (hold) "An L press released after HOLD frames is a tap (the release), not a weave." (< hold *weave-tap*))
+(defun weave-void (n) "A hit on her while she weaves hank N: it is void. Values the next hank and the woven frames (0)." (values (hank-next n) 0))
 (defun hank-scale (passes)
   "The weave's scaling by PASSES (1-3): values radius x, life x, damage x (0.8 / 0.9 / 1.0, 0.5 / 0.75 / 1.0, 0.8 / 0.9 /
 1.0: more passes are never weaker)."
@@ -94,13 +113,15 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 (defun hank-life (n passes) "Hank N's life after PASSES (x *HANK-LIFE-MULT*)." (multiple-value-bind (r l) (hank-scale passes) (declare (ignore r)) (round (* l *hank-life-mult* (hank n :life)))))
 
 ;;; ================================================================ Shikai 刺絡 SHIGARAMI (base)
-;;; the J / K strings (docs/DUEL_STRINGS.md §2.1 budget): the lightest in the game; every contact sews (SENJU-HIT)
+;;; the J / K strings (docs/DUEL_STRINGS.md §2.1 budget): the lightest in the game; every contact sews (SENJU-HIT). Every
+;;; reach is where the art strikes (the user's playtest, 2026-09-29): the J links to the tip of the needle, now as tall as
+;;; she is (2.4 m), the K links to their props' far ends (senjumaru-art.lisp *SJ-STRIKE-REACH*; the host test checks)
 (defmove :sj-j1 :kind :quick :clip :sj-q1 :startup 7 :active 3 :recovery 12 :dmg 28 :adv-block -2
   :reach 2.4 :arc 90 :on-hit :flinch :slide 0.5)                     ; HITOHARI: the upper right hand jabs the needle
 (defmove :sj-j2 :kind :quick :clip :sj-q2 :startup 7 :active 3 :recovery 13 :dmg 28 :adv-block -2
   :reach 2.4 :arc 110 :on-hit :flinch)                               ; KAESHINUI: the backstitch
 (defmove :sj-j3 :kind :quick :clip :sj-spin :startup 8 :active 3 :recovery 18 :dmg 36 :adv-block -4
-  :reach 2.6 :arc 220 :on-hit :stagger :flags (:ender))              ; SENJU: all six hands whirl in a ring of needles
+  :reach 2.4 :arc 220 :on-hit :stagger :flags (:ender))              ; SENJU: all six hands whirl in a ring of needles
 (defmove :sj-k1 :kind :flash :clip :sj-f1 :startup 17 :active 4 :recovery 20 :dmg 60 :adv-block -3
   :vol (:cap 0.3 3.2 1.1 0.3) :on-hit :stagger)                      ; MACHIBARI: two long pins driven straight out
 (defmove :sj-k2 :kind :flash :clip :sj-f2 :enter 7 :startup 21 :active 4 :recovery 24 :dmg 50 :adv-block -3
@@ -135,22 +156,24 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
   :params (:aura 6 :aim 120.0 :speed 26.0 :dash-max 14 :dash-track 0.0 :look :flash-step :sfx :hoho-out))
 
 ;;; ================================================================ 娑闥迦羅骸刺絡辻 SHIGARAMI NO TSUJI (the six hank forms)
-;; the J / K grid derived at reach x1.15 (cloth on every hand), no sewing; two new links
+;; the J / K grid as the Shikai's (the same needle and loop: no reach derivation, the playtest), no sewing; two new links
 (defmove :sj-t-k1 :kind :flash :clip :sj-tanmono :startup 17 :active 4 :recovery 20 :dmg 56 :adv-block -3
   :vol (:cap 0.3 4.2 1.1 0.3) :on-hit :stagger)                      ; TANMONO-UCHI: a bolt flung out and snapped back
 (defmove :sj-t-k3 :kind :flash :clip :sj-makitori :enter 7 :startup 21 :active 5 :recovery 34 :dmg 72 :adv-block -20
   :reach 2.8 :arc 160 :height (0.0 1.4) :on-hit :crumple :flags (:ender)
   :params (:pull 1.4))                                               ; MAKITORI: wrapped and hauled in to 1.4 m
-;; L 綛解かば KASE TOKABA: held 20-60 f (a pass per 20 f, SENJU-WEAVE-TICK), released: S 6, the hank unravels
-;; (SENJU-UNRAVEL) and the form advances. :bind + :tell: a CPU victim's tell reflex, counted from the release
+;; L 綛解かば KASE TOKABA (the user, 2026-09-29): held >= *WEAVE-TAP* f it weaves (a pass per 20 f, summed over segments on
+;; the hank: SENJU-WEAVE-TICK); let go, the weave stops (6 f, SENJU-WEAVE-RELEASE), nothing unravels. A tap (< 10 f)
+;; releases: S 6, the hank unravels at the stored passes (at least 1; SENJU-UNRAVEL) and the form advances. :bind + :tell:
+;; a CPU victim's tell reflex, counted from the release
 (defmacro def-kase (n callout tell tell-k)
   (let ((name (intern (format nil "SJ-KASE-~d" n) :keyword)) (k (intern (format nil "SJ-KASE-~d-K" n) :keyword)))
     `(progn
-       (defmove ,name :kind :sig :clip :sj-weave :clip-2 :sj-unravel :callout ,callout :hold (20 60)
-         :startup 6 :active 0 :recovery 22 :tick senju-weave-tick :on-frame ((6 senju-unravel)) :flags (:bind)
-         :params (:hank ,n :tell ,tell))
-       ;; after a K link (the combo cut, the overdraft rule): no hold, 1 pass, S 8, unfold 10; the live zone is cut
-       (defmove-copy ,k ,name :hold nil :tick nil :startup 8 :clip :sj-unravel :clip-s 6 :reach 9.0
+       (defmove ,name :kind :sig :clip :sj-weave :clip-2 :sj-unravel :callout ,callout :hold (1 600)
+         :startup 6 :active 0 :recovery 22 :tick senju-weave-tick :release senju-weave-release :on-frame ((6 senju-unravel))
+         :flags (:bind) :params (:hank ,n :tell ,tell))
+       ;; after a K link (the combo cut, the overdraft rule): no hold, the stored passes, S 8, unfold 10; the live zone is cut
+       (defmove-copy ,k ,name :hold nil :tick nil :release nil :startup 8 :clip :sj-unravel :clip-s 6 :reach 9.0
          :on-frame ((0 senju-combo-cut) (8 senju-unravel)) :params (:hank ,n :combo t :tell ,tell-k)))))
 (def-kase 1 "BANRA NO ME" nil nil)                ; 眼: no hit of its own
 (def-kase 2 "HAGANE NO YOROI" (34 44) (10 22))    ; 刃金: closes 16 f after the unfold (the combo cut: at its end)
@@ -158,9 +181,20 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 (def-kase 4 "ITETSUKU SHITONE" (18 30) (10 22))   ; 褥: armed once unfolded
 (def-kase 5 "YAKENOHARA" (18 30) (10 22))         ; 焼野原: burns once unfolded
 (def-kase 6 "YAMIYO NO HOSHIYO" nil nil)          ; 星: no hit
-;; Shift+K SP1 裁ち直し TACHINAOSHI: 1 bar, the next hank is cut off the loom (the form advances)
-(defmove :sj-tachinaoshi :kind :sp :clip :sj-snip :callout "TACHINAOSHI" :startup 12 :active 0 :recovery 18
-  :on-frame ((12 senju-skip)))
+;; the weave let go: 6 f back to the loom stance (no hit, no release)
+(defmove :sj-weave-stop :kind :sig :clip :sj-loom-stance :startup 1 :active 0 :recovery 5 :whiff 5)
+;; Shift+K SP1 裁ち直し TACHINAOSHI (the user, 2026-09-29): 1 bar, no weave: frame 0 cuts the live zone(s) (the combo cut's
+;; rule), f8 and f14 release the next two hanks as the combo cut does (1 pass, unfold 10; the form advances past both: +2).
+;; A string ender (the universal SP cancel off a landed link): after a stagger (26 f) the first zone lands at +19, the
+;; second at +25. One copy per form: :tell is its first hitting hank's (a CPU victim's tell reflex, from the move's f0)
+(defmove :sj-tachinaoshi :kind :sp :clip :sj-snip :clip-s 16 :callout "TACHINAOSHI" :startup 8 :active 0 :recovery 22
+  :reach 9.0 :flags (:bind) :on-frame ((0 senju-combo-cut) (8 senju-tachi-release) (14 senju-tachi-release)))
+(defmove-copy :sj-tachinaoshi-1 :sj-tachinaoshi :params (:tell (16 28)))   ; 眼 + 刃金 (the second hits)
+(defmove-copy :sj-tachinaoshi-2 :sj-tachinaoshi :params (:tell (10 22)))   ; 刃金 + 黒砂
+(defmove-copy :sj-tachinaoshi-3 :sj-tachinaoshi :params (:tell (10 22)))   ; 黒砂 + 褥
+(defmove-copy :sj-tachinaoshi-4 :sj-tachinaoshi :params (:tell (10 22)))   ; 褥 + 焼野原
+(defmove-copy :sj-tachinaoshi-5 :sj-tachinaoshi :params (:tell (10 22)))   ; 焼野原 + 星
+(defmove-copy :sj-tachinaoshi-6 :sj-tachinaoshi :params (:tell nil))       ; 星 + 眼: no hit
 ;; O, the Kikon module 浮文機 UKIMON NO HATA: ENJO's shape (no dash): the red carpet runs along a locked lane 8.5 m; its
 ;; Kikon is 死出六色浮文機
 (defmove :sj-t-kikon :kind :kikon :clip :sj-loom-stance :clip-2 :sj-unravel :clip-s 6 :callout "SHIDE NO ROKUSHIKI UKIMON NO HATA"
@@ -171,7 +205,8 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 ;;; ================================================================ forms
 (defparameter *senju-meter* '(:name "HARI" :max 6 :start 0 :draw senju-hud-meter :label senju-hud-label)
   "Her one resource per form, on the kit-meter row: the stitches (the Shikai) or the loom (the Bankai).")
-(defparameter *senju-hooks* '(:tick senju-tick :ok senju-ok :hit senju-hit :struck senju-struck :draw senju-draw :deck senju-ring))
+(defparameter *senju-hooks* '(:tick senju-tick :ok senju-ok :hit senju-hit :struck senju-struck :draw senju-draw :deck senju-ring
+                              :siphon senju-siphon))
 
 (defkit :senjumaru :base
   :name "SENJUMARU" :body :senjumaru :weapon :shigarami :stance :sj-stance :calm t
@@ -205,30 +240,33 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
             (5.0 9.0 :sig 5 :kikon 1 nil 1)
             (9.0 99.0 :sig 2 nil 2))
     :guard 0.45 :hoho 0.35 :dash 0.2 :dash-back 0.6 :o-ender 0.2 :l-after-k 0.3 :sp-cancel-bars 9 :kikon-range 8.5
-    :react (:projectile :sp2) :weave (:far 6.5 :near 4.0) :skip (:ranged-below 0.2)
+    :react (:projectile :sp2) :weave (:far 6.5 :near 4.0) :sp-ender senju-sp-ender
     :opp-rush-hold 0.5 :opp-reflex senju-opp-reflex :reflex senju-ai-reflex :sig-hold senju-sig-hold)
-  "The loom's CPU (every hank form; 星's weave distances and 眼's skip are read by form in SENJU-SIG-HOLD / the reflex).")
+  "The loom's CPU (every hank form; 星's weave distances are read by form in SENJU-SIG-HOLD; SP1 ends a string: SENJU-SP-ENDER).")
 
 (defkit :senjumaru :tsuji1 :inherit :base
-  :awakening t :heal 0 :form-name "TSUJI" :reach-mult 1.15 :walk *walk-tsuji* :run *run-tsuji*
+  :awakening t :heal 0 :form-name "TSUJI" :walk *walk-tsuji* :run *run-tsuji*
   :mult *tsuji-mult* :taken *tsuji-taken* :reset-form nil :stance :sj-loom-stance :aura senju-aura-tsuji :cine sj-tsuji-cine
-  :commands (:f :sj-t-k1 :sig :sj-kase-1 :sp1 :sj-tachinaoshi :sp2 :sj-kasa :breaker :sj-breaker :kikon :sj-t-kikon)
+  :commands (:f :sj-t-k1 :sig :sj-kase-1 :sp1 :sj-tachinaoshi-1 :sp2 :sj-kasa :breaker :sj-breaker :kikon :sj-t-kikon)
   :grid (:sj-j1 :sj-j2 :sj-j3 :sj-t-k1 :sj-k2 :sj-t-k3 :sj-j2s :sj-k2s)
   :l-after-k :sj-kase-1-k :meter *senju-meter* :ai *tsuji-ai*)
-(defkit :senjumaru :tsuji2 :inherit :tsuji1 :commands (:sig :sj-kase-2) :l-after-k :sj-kase-2-k)
-(defkit :senjumaru :tsuji3 :inherit :tsuji1 :commands (:sig :sj-kase-3) :l-after-k :sj-kase-3-k)
-(defkit :senjumaru :tsuji4 :inherit :tsuji1 :commands (:sig :sj-kase-4) :l-after-k :sj-kase-4-k)
-(defkit :senjumaru :tsuji5 :inherit :tsuji1 :commands (:sig :sj-kase-5) :l-after-k :sj-kase-5-k)
-(defkit :senjumaru :tsuji6 :inherit :tsuji1 :commands (:sig :sj-kase-6) :l-after-k :sj-kase-6-k)
+(defkit :senjumaru :tsuji2 :inherit :tsuji1 :commands (:sig :sj-kase-2 :sp1 :sj-tachinaoshi-2) :l-after-k :sj-kase-2-k)
+(defkit :senjumaru :tsuji3 :inherit :tsuji1 :commands (:sig :sj-kase-3 :sp1 :sj-tachinaoshi-3) :l-after-k :sj-kase-3-k)
+(defkit :senjumaru :tsuji4 :inherit :tsuji1 :commands (:sig :sj-kase-4 :sp1 :sj-tachinaoshi-4) :l-after-k :sj-kase-4-k)
+(defkit :senjumaru :tsuji5 :inherit :tsuji1 :commands (:sig :sj-kase-5 :sp1 :sj-tachinaoshi-5) :l-after-k :sj-kase-5-k)
+(defkit :senjumaru :tsuji6 :inherit :tsuji1 :commands (:sig :sj-kase-6 :sp1 :sj-tachinaoshi-6) :l-after-k :sj-kase-6-k)
 
 ;; her names in the brush tables (brush.lisp): the intro's column and the technique columns at her side (not on the host)
 (when (boundp '*brush-names*)
 (setf *brush-names* (append (remove :senjumaru *brush-names* :key #'first) '((:senjumaru "修多羅千手丸" "SHUTARA SENJUMARU")))
       *brush-callouts*
-      (append (remove-if (lambda (c) (member (first c) '(:sj-warui-kuse :sj-warui-kuse-k :sj-shinpei :sj-kasa :sj-tachinaoshi)))
+      (append (remove-if (lambda (c) (member (first c) '(:sj-warui-kuse :sj-warui-kuse-k :sj-shinpei :sj-kasa :sj-tachinaoshi
+                                                          :sj-tachinaoshi-1 :sj-tachinaoshi-2 :sj-tachinaoshi-3
+                                                          :sj-tachinaoshi-4 :sj-tachinaoshi-5 :sj-tachinaoshi-6)))
                          *brush-callouts*)
               '((:sj-warui-kuse "悪い癖" "WARUI KUSE" nil) (:sj-warui-kuse-k "悪い癖" "WARUI KUSE" nil)
                 (:sj-shinpei "神兵" "SHINPEI" nil) (:sj-kasa "傘" "KASA" nil) (:sj-tachinaoshi "裁ち直し" "TACHINAOSHI" nil))
+              (loop for n from 1 to 6 collect (list (intern (format nil "SJ-TACHINAOSHI-~d" n) :keyword) "裁ち直し" "TACHINAOSHI" nil))
               (loop for n from 1 to 6
                     for mark in '("一" "二" "三" "四" "五" "六")
                     append (list (list (intern (format nil "SJ-KASE-~d" n) :keyword) (hank n :kanji) (hank n :name) mark)
@@ -239,8 +277,10 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
   (caught 0 :type fixnum)                 ; the umbrella's largest caught hit (this umbrella)
   (soldier -1) (live -1) (bolt -1)        ; handles: her soldier, her live zone, the weave's bolt
   (live-hank 0 :type fixnum) (live-life 1 :type fixnum)   ; the live zone's hank and life (the HUD's drain)
+  (live2 -1)                              ; TACHINAOSHI's first zone while its second is the live one
+  (woven 0 :type fixnum)                  ; frames woven on the form's hank (every segment; WEAVE-ADD)
+  (tachi 0 :type fixnum)                  ; TACHINAOSHI: the woven frames both its hanks release at
   (torn -9999 :type fixnum) (torn-hank 0 :type fixnum)   ; *MATCH-TICK* of the last torn hank, and which
-  (skip -9999 :type fixnum) (skip-hank 0 :type fixnum)   ; ... of the last skip
   (acc nil))                              ; the pacing log's counters (debug)
 (defvar *sj* (vector (make-sjs) (make-sjs)) "Per side: her loom, soldier and umbrella.")
 (defun sj (e) (svref *sj* (fighter-side (fighter e))))
@@ -278,12 +318,10 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
       (when fell (sj-count e :fallen) (clog "~a stitch fell, ~d left" (side-name e) n)))))
 
 (defun senju-ok (e command combo)
-  "Her kit's refusals: the Shikai's L at 0 stitches; the Bankai's L while one of her zones lives (the loom holds one
-hank), unless it is the combo cut (COMBO: L after a K link, which cuts the live one)."
-  (or (not (eq command :sig))
-      (if (hari-form-p e)
-          (>= (hari e) 1)
-          (or combo (not (entity-alive-p (sjs-live (sj e))))))))
+  "Her kit's refusals: the Shikai's L at 0 stitches. (The Bankai's L always starts: it may weave while a zone lives; its
+tap releases only when none does, SENJU-WEAVE-RELEASE; the combo cut cuts the live one.)"
+  (declare (ignore combo))
+  (or (not (eq command :sig)) (not (hari-form-p e)) (>= (hari e) 1)))
 
 (defun senju-hit (att def res hw mv hazard ranged)
   "After a hit she dealt (her kit's :hit): her own J / K / O window's contact sews (the Shikai); MAKITORI hauls him in to
@@ -321,9 +359,8 @@ after the reaction, whose own slide it replaces)."
 (defun senju-struck (def att res hw mv hazard ranged)
   "After a hit she took (her kit's :struck): 眼's mirror: while her live ring stands under him, each of his melee contacts
 on her (hit or block) burns him *MIRROR-K* of its damage (never kills)."
-  (let* ((st (sj def)) (z (sjs-live st)))
-    (when (and mv (not hazard) (not ranged) (member (contact-of res) '(:hit :block)) (entity-alive-p z)
-               (= 1 (sjs-live-hank st)))
+  (let ((z (senju-live-zone def 1)))
+    (when (and mv (not hazard) (not ranged) (member (contact-of res) '(:hit :block)) z)
       (let ((hz (hazard z)))
         (when (and hz (<= (hazard-delay hz) 0))
           (let* ((q (pos-of att)) (dx (- (aref q 0) (hazard-x hz))) (dz (- (aref q 2) (hazard-z hz))))
@@ -484,18 +521,32 @@ Step clears it), *KASA-BASE* + half the largest caught hit (<= *KASA-CAP*), stag
   (emit :sfx :cloth-unfurl e))
 
 ;;; ---------------------------------------------------------------- the loom: weave, unravel, torn, skip
+(defun senju-stored (e) "The passes woven on her form's hank (0-3)." (weave-stored (sjs-woven (sj e))))
+
 (defun senju-weave-tick (e)
-  "L held (the weave): the bolt between her hands (a fragile hazard: a hit on her tears it, SENJU-TORN) and a shuttle clack
-per pass."
+  "L held: from *WEAVE-TAP* frames on it is a weave: the hank's woven frames grow (WEAVE-ADD), the bolt is between her hands
+(a fragile hazard: a hit on her voids the hank, SENJU-TORN), a shuttle clack per pass."
   (let* ((f (fighter e)) (h (fighter-hold f)) (st (sj e)))
-    (when (eq (fighter-phase f) :hold)
-      (when (= h 1)
+    (when (and (eq (fighter-phase f) :hold) (>= h *weave-tap*))
+      (when (= h *weave-tap*)
         (destroy-entity (sjs-bolt st))
         (let ((p (pos-of e)))
           (setf (sjs-bolt st) (senju-spawn :fx e (make-sjh :kind :bolt :hank (move-param e :hank)) :x (aref p 0) :z (aref p 2)
                                            :yaw (yaw-of e) :size 1.0 :life 10000 :delay 10000 :fragile t :look 'senju-bolt-look))))
-      (when (and (zerop (mod h *weave-pass*)) (<= h (* 3 *weave-pass*)))
-        (emit :sfx :shuttle e)))))
+      (let ((w (sjs-woven st)) (w2 (weave-add (sjs-woven st) h)))
+        (setf (sjs-woven st) w2)
+        (when (> (weave-stored w2) (weave-stored w))
+          (sj-count e :passes-woven)
+          (emit :sfx :shuttle e))))))
+
+(defun senju-weave-release (e)
+  "L let go (the move's :release): a tap goes on to the release (S 6, SENJU-UNRAVEL); a weave just stops (the bolt goes, the
+passes stay on the hank), 6 f back to the stance."
+  (let* ((f (fighter e)) (st (sj e)) (tap (weave-tap-p (fighter-hold f))))
+    (unless (and tap (null (senju-live-zones e)))      ; (the loom holds one hank: a tap over a live zone only stops)
+      (destroy-entity (sjs-bolt st))
+      (unless tap (sj-count e :weave-segments))
+      (start-move e (find-move :sj-weave-stop)))))
 
 (defun senju-bolt-step (h hz d)
   "The weave's bolt, each step: it stays in her hands while she weaves (the hold, then the S frames before the unravel);
@@ -508,48 +559,72 @@ gone silently otherwise (only a hit tears it: CLOSE-RIFTS)."
         (progn (destroy-entity h) t))))
 
 (defun senju-torn (e hank advance)
-  "A hit on her tore the hank (the weave's bolt or the unfolding zone): L locked *TORN-LOCK* (its cooldown timer: no
-COOLDOWN row), and a torn weave loses its hank (ADVANCE: the form moves on; an unfolding one had already moved on)."
+  "A hit on her tore the hank. While she weaves (ADVANCE): it is void (the user, 2026-09-29): its passes are lost and the
+form moves on to the next hank (WEAVE-VOID), no lock. An unfolding zone (it had already moved the form on): L locked
+*TORN-LOCK* (its cooldown timer: no COOLDOWN row)."
   (let ((f (fighter e)) (st (sj e)))
-    (setf (aref (fighter-cd f) (position :sig *kit-commands*)) *torn-lock*
-          (sjs-torn st) *match-tick* (sjs-torn-hank st) hank)
-    (when (and advance (form-hank (fighter-form f)))
-      (set-form e (hank-form (hank-next (form-hank (fighter-form f))))))
+    (setf (sjs-torn st) *match-tick* (sjs-torn-hank st) hank)
+    (if (and advance (form-hank (fighter-form f)))
+        (multiple-value-bind (next woven) (weave-void (form-hank (fighter-form f)))
+          (setf (sjs-woven st) woven)
+          (set-form e (hank-form next)))
+        (setf (aref (fighter-cd f) (position :sig *kit-commands*)) *torn-lock*))
     (sj-count e :torn)
     (emit :sfx :shears e)
     (clog "~a TORN hank ~d" (side-name e) hank)))
 
-(defun senju-combo-cut (e)
-  "The combo cut's frame 0: the live zone ends (not torn), the next one unravels under him."
-  (let ((st (sj e)))
-    (when (entity-alive-p (sjs-live st)) (destroy-entity (sjs-live st)) (sj-count e :combo-cuts))))
+(defun senju-live-zones (e) "Her live zones (one, or TACHINAOSHI's two)." (let ((st (sj e))) (remove-if-not #'entity-alive-p (list (sjs-live st) (sjs-live2 st)))))
+(defun senju-live-zone (e n)
+  "Her live zone of hank N, unfolded, or NIL."
+  (find-if (lambda (z) (let ((hz (hazard z))) (and hz (<= (hazard-delay hz) 0) (= n (sjh-hank (hazard-data hz))))))
+           (senju-live-zones e)))
+(defun senju-cut-live (e)
+  "Every live zone of hers ends (not torn). T when there was one."
+  (let ((st (sj e)) (any (senju-live-zones e)))
+    (destroy-entity (sjs-live st)) (destroy-entity (sjs-live2 st))
+    (and any t)))
 
-(defun senju-skip (e)
-  "TACHINAOSHI f12: the next hank is cut off the loom (the form advances; a live zone is untouched)."
-  (let* ((f (fighter e)) (n (form-hank (fighter-form f))) (st (sj e)))
+(defun senju-combo-cut (e)
+  "The combo cut's frame 0 (and TACHINAOSHI's): the live zones end (not torn), the next unravel under him."
+  (when (senju-cut-live e) (sj-count e :combo-cuts)))
+
+(defun senju-tachi-release (e)
+  "TACHINAOSHI's f8 / f14: the form's next hank unravels as the combo cut's does (unfold *UNFOLD-COMBO*) at the passes
+stored when the move began (both hanks; the coordinator's default, 2026-09-29) and the form advances; the second keeps
+the first alive beside it (LIVE2). Its name is called out."
+  (let* ((f (fighter e)) (st (sj e)) (n (form-hank (fighter-form f))) (second (> (fighter-sf f) (mv-s (fighter-move f)))))
     (when n
-      (setf (sjs-skip st) *match-tick* (sjs-skip-hank st) n)
-      (set-form e (hank-form (hank-next n)))
-      (sj-count e :skips)
-      (emit :sfx :shears e)
-      (clog "~a SKIP hank ~d" (side-name e) n))))
+      (if second
+          (setf (sjs-live2 st) (sjs-live st) (sjs-live st) -1)   ; the first stays
+          (setf (sjs-tachi st) (sjs-woven st)))                 ; (the level both use)
+      (senju-cast e n (release-passes (sjs-tachi st)) *unfold-combo*)
+      (sj-count e :tachi-hanks)
+      (clog "~a TACHINAOSHI hank ~d" (side-name e) n)
+      (callout e (hank n :name))
+      (play-clip e :sj-unravel :blend 0 :time (/ 6 60.0)))))   ; (the fling of the unravel, once per hank)
 
 (defun senju-unravel (e)
   "L's release + S (or the combo cut's S): the weave's bolt goes, the hank of the move unravels as its zone (unfolding
 *UNFOLD* / *UNFOLD-COMBO* frames, fragile: SENJU-TORN), the form advances to the next hank."
   (let* ((f (fighter e)) (st (sj e)) (n (move-param e :hank)) (combo (move-param e :combo))
-         (passes (if combo 1 (weave-passes (fighter-charge f)))) (unfold (if combo *unfold-combo* *unfold*))
-         (p (pos-of e)) (q (pos-of (opp-of e))))
+         (passes (release-passes (sjs-woven st))) (unfold (if combo *unfold-combo* *unfold*)))
     (destroy-entity (sjs-bolt st))
-    (destroy-entity (sjs-live st))
+    (senju-cut-live e)
+    (senju-cast e n passes unfold)
+    (sj-count e :weaves)
+    (clog "~a UNRAVEL hank ~d passes ~d~:[~; (combo)~]" (side-name e) n passes combo)))
+
+(defun senju-cast (e n passes unfold)
+  "Hank N unravels as her live zone at the cast point under him (PASSES, UNFOLD frames); the form advances past it."
+  (let* ((st (sj e)) (p (pos-of e)) (q (pos-of (opp-of e))))
     (multiple-value-bind (cx cz) (cast-point (aref p 0) (aref p 2) (aref q 0) (aref q 2) *hank-range*)
       (let ((z (senju-zone e n passes unfold cx cz)))
         (setf (sjs-live st) z (sjs-live-hank st) n
               (sjs-live-life st) (max 1 (let ((hz (hazard z))) (if hz (hazard-life hz) 1))))))
     (set-form e (hank-form (hank-next n)))
-    (sj-count e (hank-key n "CAST")) (sj-count e :weaves) (sj-count e :passes passes)
-    (emit :sfx :cloth-unfurl e)
-    (clog "~a UNRAVEL hank ~d passes ~d~:[~; (combo)~]" (side-name e) n passes combo)))
+    (setf (sjs-woven st) 0)                             ; (a new hank: nothing woven on it yet)
+    (sj-count e (hank-key n "CAST")) (sj-count e :passes passes)
+    (emit :sfx :cloth-unfurl e)))
 
 (defun senju-zone (e n passes unfold cx cz)
   "Hank N's zone at (CX CZ) (the cast point; 焼野原 runs from her, 星 is round her) after PASSES: its hazard, unfolding
@@ -579,7 +654,8 @@ UNFOLD frames (fragile), with SENJU-HZ as its hook."
 
 (defun senju-zone-step (h hz d)
   "A zone, each step once unfolded (HAZARD-AGE = frames since): 眼 turns his waves back; 刃金 closes once; 黒砂 drags his
-walk away from its centre and gulps; 褥 and 焼野原 end once spent; 星 drains his Reiatsu and flash-step."
+walk away from its centre and gulps; 褥 and 焼野原 end once spent; 星 drains his Reiatsu and flash-step into hers (what it
+really takes, each of hers kept at its max; the user, 2026-09-29: SENJU-SIPHON takes his gains too)."
   (let* ((e (hazard-owner hz)) (o (hazard-target hz)) (n (sjh-hank d)) (age (hazard-age hz)))
     (when (or (plusp (hazard-delay hz)) (not (entity-alive-p o))) (return-from senju-zone-step nil))
     (let* ((q (pos-of o)) (dx (- (aref q 0) (hazard-x hz))) (dz (- (aref q 2) (hazard-z hz)))
@@ -619,12 +695,21 @@ walk away from its centre and gulps; 褥 and 焼野原 end once spent; 星 drain
                (emit :sfx :ground-crack e))))
         ((4 5) (when (<= (hazard-hits-left hz) 0)          ; spent: the loom is free
                  (destroy-entity h) (return-from senju-zone-step t)))
-        (6 (when inside                                     ; the star drains him
-             (let ((g (gauges o)))
-               (setf (gauges-reiatsu g) (f32 (max 0.0 (- (gauges-reiatsu g) (/ (hank 6 :reiatsu) 60.0))))
-                     (gauges-fs g) (f32 (max 0.0 (- (gauges-fs g) (/ (hank 6 :fs) 60.0)))))
+        (6 (when inside                                     ; the star drains him into her
+             (let ((g (gauges o)) (mine (gauges e)))
+               (multiple-value-bind (his hers) (gauge-move (gauges-reiatsu g) (/ (hank 6 :reiatsu) 60.0) (gauges-reiatsu mine) *reiatsu-max*)
+                 (setf (gauges-reiatsu g) (f32 his) (gauges-reiatsu mine) (f32 hers)))
+               (multiple-value-bind (his hers) (gauge-move (gauges-fs g) (/ (hank 6 :fs) 60.0) (gauges-fs mine) *fs-max*)
+                 (setf (gauges-fs g) (f32 his) (gauges-fs mine) (f32 hers)))
                (sj-count e :drain-frames)))))))
   nil)
+
+(defun senju-siphon (e o)
+  "Her kit's :siphon hook (combat.lisp SIPHON-OF): O stands in her live 星, unfolded (the user, 2026-09-29): he gains
+nothing from a hit, a block or his blade, and his Reiatsu / flash-step gains are hers."
+  (let ((z (senju-live-zone e 6)))
+    (and z (let ((hz (hazard z)) (q (pos-of o)))
+             (<= (+ (expt (- (aref q 0) (hazard-x hz)) 2) (expt (- (aref q 2) (hazard-z hz)) 2)) (expt (sjh-r (hazard-data hz)) 2))))))
 
 (defun senju-closed (h hz d)
   "CLOSE-RIFTS closed one of her fragile hazards (a real hit on her): a weave's bolt or an unfolding zone is torn."
@@ -672,7 +757,7 @@ walk away from its centre and gulps; 褥 and 焼野原 end once spent; 星 drain
 (defun senju-ai-reflex (e b s d)
   "Her CPU's own reflexes (free states): awaken by :awaken-rule on EVOLUTION (the debug mode's :always / :never are the
 built rule's); the Shikai's L when the stitches pay (:hari (:min :hurry): >= :min now and then, always with >= 2 when the
-first falls within :hurry frames); 眼's skip against a brawler (:skip (:ranged-below)). A command or NIL."
+first falls within :hurry frames). A command or NIL."
   (declare (ignore s d))
   (let* ((f (fighter e)) (g (gauges e)) (kit (fighter-kit f)) (ai (kit-ai kit)))
     (cond ((and (gauges-evolution g) (not (gauges-awakened g)) (null (svref *ai-awaken-mode* (fighter-side f)))
@@ -682,11 +767,14 @@ first falls within :hurry frames); 眼's skip against a brawler (:skip (:ranged-
            (let ((n (hari e)) (h (getf ai :hari)))
              (and (or (and (>= n 2) (<= (hari-falls-in n (gauges-meter-idle g)) (getf h :hurry 40)))
                       (and (>= n (getf h :min 4)) (< (sim-rnd01) *ai-senju-hari*)))
-                  (why b :hari :sig))))
-          ((and (eq (fighter-form f) :tsuji1) (getf ai :skip) (kit-command-ok-p e :sp1)
-                (let ((r (gauges-taken-ranged g)) (all (+ (gauges-taken-ranged g) (gauges-taken-melee g))))
-                  (and (> all 0) (< r (* (getf (getf ai :skip) :ranged-below 0.0) all)))))
-           (why b :skip :sp1)))))
+                  (why b :hari :sig)))))))
+
+(defun senju-sp-ender (e kit)
+  "The loom's :sp-ender (ai.lisp STRING-REFLEX, a landed string's last link): SP1 when one of the two hanks it releases
+hits, *AI-SENJU-TACHI* of the time."
+  (let ((n (form-hank (kit-form kit))))
+    (and n (kit-command-ok-p e :sp1) (multiple-value-bind (a b) (tachi-hanks n) (or (hank-hits-p a) (hank-hits-p b)))
+         (< (sim-rnd01) *ai-senju-tachi*) :sp1)))
 
 (defun senju-opp-reflex (e b s d)
   "A CPU facing her (her kit's :opp-reflex, read off her kit: every other pairing unchanged): while she holds a weave within
@@ -697,14 +785,20 @@ first falls within :hurry frames); 眼's skip against a brawler (:skip (:ranged-
       (cond ((and (< d (ai-table e :kikon-range 7.0)) (kit-command-ok-p e :kikon)) (why b :tear :kikon))
             (t (ai-dash b 1.0 1.8) (why b :tear :pressed))))))
 
-(defun senju-sig-hold (kit d)
-  "Frames her CPU holds L: the Shikai taps it; the loom weaves 3 passes beyond :far, 2 beyond :near, else 1 (星, cast round
-her, :far 5 / :near 2.5)."
+(defun senju-sig-hold (kit d &optional e)
+  "Frames her CPU holds L (E: her, for the stored passes): the Shikai taps it. The loom wants 3 passes beyond :far, 2 beyond
+:near and none inside :near (星, cast round her: :far 5 / :near 2.5); short of them it weaves one segment (at most
+*WEAVE-SEG* frames, never a stand into a rush: each segment is a new decision), else it taps (the release at the stored
+level)."
   (if (not (form-hank (kit-form kit)))
       1
       (let* ((w (getf (kit-ai kit) :weave)) (hoshi (eq (kit-form kit) :tsuji6))
-             (far (if hoshi 5.0 (getf w :far 6.5))) (near (if hoshi 2.5 (getf w :near 4.0))))
-        (cond ((> d far) (+ 2 (* 3 *weave-pass*))) ((> d near) (+ 2 (* 2 *weave-pass*))) (t (+ 2 *weave-pass*))))))
+             (far (if hoshi 5.0 (getf w :far 6.5))) (near (if hoshi 2.5 (getf w :near 4.0)))
+             (want (cond ((> d far) 3) ((> d near) 2) (t 0))) (woven (if e (sjs-woven (sj e)) 0))
+             (want (if (and e (senju-live-zones e)) 3 want)))   ; (a zone lives: weave the next one up meanwhile)
+        (if (<= want (weave-stored woven))
+            1
+            (+ 1 (max *weave-tap* (min *weave-seg* (- (* want *weave-pass*) woven))))))))
 
 ;;; ================================================================ HUD: her meter (hud.lisp's meter :draw / :label; the kit's :deck)
 (defparameter *hank-dyes*
@@ -732,7 +826,7 @@ her, :far 5 / :near 2.5)."
   "Her kit-meter row (LX LY LS: where the landscape label goes, NIL in the portrait slot): the Shikai's six needle pips
 (lit by the stitches, the next to fall flickering in its last 30 f, a refused L flashes the row) and the brush 針 HARI;
 the Bankai's six hank swatches in the loom's order (the next lit and raised, filling in three steps while she weaves, the
-live zone's draining, a torn one slashed, a skipped one sliding out) and the brush 機 + the next hank's short name."
+live zones' draining, a torn one slashed) and the brush 機 + the next hank's short name."
   (let* ((f (fighter e)) (g (gauges e)) (st (sj e)) (side (fighter-side f)) (x (f32 x)) (y (f32 y)) (w (f32 w)) (h (f32 h))
          (pw (/ w 6.6)) (gap (* 0.12 pw)) (hh (* 2.6 h)) (y0 (- y (* 0.8 h))) (next (form-hank (kit-form kit)))
          (refused (max 0.0 (- 1.0 (* 4.0 (- tm (aref *refused-t* side)))))))
@@ -744,17 +838,16 @@ live zone's draining, a torn one slashed, a skipped one sliding out) and the bru
                               (+ 0.35 (* 0.65 (%pulse (f32 tm) 8.0))) 1.0)))
               (%sj-needle px (f32 y0) (f32 pw) (f32 hh) lit (f32 flick)))
             (let* ((k (1+ i)) (dye (hank-dye k)) (lit (= k next)) (lift (if lit (* 0.25 hh) 0.0))
-                   (live (and (= k (sjs-live-hank st)) (entity-alive-p (sjs-live st)))) (a (if (or lit live) 1.0 0.55))
-                   (skip-age (- *match-tick* (sjs-skip st))) (torn-age (- *match-tick* (sjs-torn st)))
-                   (slide (if (and (= k (sjs-skip-hank st)) (<= 0 skip-age 20)) (* 0.05 skip-age hh) 0.0)))
-              (%hrect px (f32 (- y0 lift slide)) (f32 pw) (f32 hh) (f32 (first dye)) (f32 (second dye)) (f32 (third dye)) (f32 a))
-              (%houtline px (f32 (- y0 lift slide)) (f32 pw) (f32 hh) (if lit 0.76f0 0.3f0) (if lit 0.66f0 0.3f0) (if lit 0.4f0 0.34f0) 1f0)
-              (when (and lit (eq (fighter-phase f) :hold) (fighter-move f) (eq (getf (mv-params (fighter-move f)) :hank) k))
-                (let ((p (min 3 (floor (fighter-hold f) *weave-pass*))))   ; the weave's passes fill it in three steps
+                   (live (find k (senju-live-zones e) :key (lambda (z) (let ((hz (hazard z))) (if hz (sjh-hank (hazard-data hz)) 0)))))
+                   (a (if (or lit live) 1.0 0.55)) (torn-age (- *match-tick* (sjs-torn st))))
+              (%hrect px (f32 (- y0 lift)) (f32 pw) (f32 hh) (f32 (first dye)) (f32 (second dye)) (f32 (third dye)) (f32 a))
+              (%houtline px (f32 (- y0 lift)) (f32 pw) (f32 hh) (if lit 0.76f0 0.3f0) (if lit 0.66f0 0.3f0) (if lit 0.4f0 0.34f0) 1f0)
+              (when lit                                  ; the passes stored on it fill it in three steps (every segment)
+                (let ((p (senju-stored e)))
                   (%hrect px (f32 (+ (- y0 lift) (* hh (- 1.0 (/ p 3.0))))) (f32 pw) (f32 (* hh (/ p 3.0)))
                           0.95f0 0.9f0 0.8f0 0.55f0)))
               (when live                                 ; the live zone's life, draining
-                (let* ((hz (hazard (sjs-live st)))
+                (let* ((hz (hazard live))
                        (fr (if hz (if (plusp (hazard-delay hz)) 1.0 (max 0.0 (- 1.0 (/ (hazard-age hz) (float (max 1 (hazard-life hz))))))) 0.0)))
                   (%hrect px (f32 (+ y0 hh 2)) (f32 (* pw fr)) (f32 (max 1.0 (* 0.3 h))) 0.95f0 0.9f0 0.85f0 (f32 (+ 0.6 (* 0.4 (%pulse (f32 tm) 2.0)))))))
               (when (and (= k (sjs-torn-hank st)) (<= 0 torn-age *torn-lock*))   ; torn: a BLOOD slash, the lock grey
@@ -815,7 +908,8 @@ pass ticks filling in the next hank's dye."
 stitches, L at 5 m on a 50-Reishi Kenpachi (the spikes: 1 Reishi left); 2 the soldier vs an active Kenpachi CPU; 3 the
 umbrella vs Yamamoto's full Shiranui; 4 a 3-pass weave hit at hold f30 (torn: the form +1, L locked); 5-10 hank k-4 cast at
 Kenpachi 6 m (the zone's life logged); 11 the combo cut after K1 on a live 褥; 12 zero Rukia in 刃金; 13 the awakened
-Senjumaru vs a Yamamoto CPU (眼 reflecting); 14 P1 awakened 5 m from Kenpachi (a script weaves)."
+Senjumaru vs a Yamamoto CPU (眼 reflecting); 14 P1 awakened 5 m from Kenpachi (a script weaves); 30 the siphon
+probe (星 round her, Kenpachi inside at 2.2 m, both at 0 Reiatsu / 20 flash-step; 2479 then has him hit her)."
   (flet ((setup (c2 form dist &key cpu)
            (ensure-battle :senjumaru c2 :cpu cpu)
            (when (brain *p1*) (setf (brain-off (brain *p1*)) t))
@@ -841,7 +935,11 @@ Senjumaru vs a Yamamoto CPU (眼 reflecting); 14 P1 awakened 5 m from Kenpachi (
       (26 (setup :kenpachi :base 2.6) (set-hari *p1* 6))  ; the stitches on him (the threads, the pips)
       (27 (setup :yamamoto :base 6.0) (try-command *p1* (fighter *p1*) :sp2))   ; the umbrella
       (28 (setup :kenpachi :tsuji3 5.0) (try-command *p1* (fighter *p1*) :sig :sig))   ; a weave (held by nobody: 1 pass)
-      (29 (force-cmd *p2* :q)))                         ; P2's J1 now (the torn-weave probe: hold L, then 2479)
+      (29 (force-cmd *p2* :q))                          ; P2's J1 now (the torn-weave probe: hold L, then 2479)
+      (30 (setup :kenpachi :tsuji6 2.2)                 ; the siphon probe: 星 round her, him inside, both gauges low;
+       (let ((p (pos-of *p1*)) (st (sj *p1*)))          ; then 2479 (his J1 on her: her Reiatsu grows, his doesn't)
+         (setf (sjs-live st) (senju-zone *p1* 6 3 1 (aref p 0) (aref p 2)) (sjs-live-hank st) 6))
+       (dolist (e (list *p1* *p2*)) (setf (gauges-reiatsu (gauges e)) 0f0 (gauges-fs (gauges e)) 20f0))))
     (senju-probe-line (format nil "test ~d" k))))
 
 (defun senju-knob (c)
@@ -858,7 +956,8 @@ Senjumaru vs a Yamamoto CPU (眼 reflecting); 14 P1 awakened 5 m from Kenpachi (
           ((<= 95500 c 95999) (kits (tsuji) (lambda (k) (setf (kit-walk k) (/ (- c 95500) 100.0)))))
           ((<= 96000 c 96499) (setf *hank-life-mult* (/ (- c 96000) 100.0)))
           ((<= 96500 c 96999) (setf *hank-range* (/ (- c 96500) 10.0)))
-          ((<= 97000 c 97009) (setf (mv-cost (find-move :sj-tachinaoshi)) (- c 97000)))
+          ((<= 97000 c 97009) (loop for n from 1 to 6
+                                    do (setf (mv-cost (find-move (intern (format nil "SJ-TACHINAOSHI-~d" n) :keyword))) (- c 97000))))
           ((<= 97100 c 97199) (setf *mirror-k* (/ (- c 97100) 100.0)))
           ((<= 97200 c 97209) (setf *shinpei-strikes* (- c 97200)))
           ((<= 97300 c 97309) (kits (tsuji) (lambda (k) (setf (getf (getf (kit-ai k) :intents) :zone) (- c 97300)))))
@@ -884,7 +983,7 @@ Senjumaru vs a Yamamoto CPU (眼 reflecting); 14 P1 awakened 5 m from Kenpachi (
   (cond ((< c 2500) (senju-test (- c 2450)))
         ((< c 79000) (cine-at (+ 16 (floor (- c 76000) 1000)) (mod c 1000)))
         (t (senju-knob c))))
-(dolist (r '((2450 2479 senju-debug) (76000 78999 senju-debug) (90000 99999 senju-debug)))
+(dolist (r '((2450 2489 senju-debug) (76000 78999 senju-debug) (90000 99999 senju-debug)))
   (pushnew r *char-debug* :test #'equal))
 
 ;;; ================================================================ cinematics (§5, §6; unskippable; every shot SHOT-ON its subject)
