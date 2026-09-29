@@ -421,8 +421,8 @@ his Breaker / Kikon rush dash is within 0.5 m of its trigger range."
 (defun burst-mode-of (e)
   "The burst mode E's state gives a press now (rules BURST-MODE), or NIL. ORANGE: his move's own hit landed and its
 cancel window is open; or his L / O (a :sig or :kikon move, hazards included) has the opponent in hitstun or blockstun
-right now (a blocked L / O counts too); or he is free while the opponent reels from one of his hazards (KESSA's clones,
-a zone: the user 2026-09-30), which would otherwise be WHITE."
+right now (a blocked L / O counts too); or, free or in any move, while the opponent reels (hitstun / airborne) from one of
+his hazards (KESSA's clones hitting while his own swing missed, a zone: the user 2026-09-30); free, that replaces WHITE."
   (let* ((f (fighter e)) (mv (fighter-move f)) (st (fighter-state f)) (o (fighter-opp f))
          (os (and o (entity-alive-p o) (fighter-state (fighter o)))))
     (if (and (member st '(:idle :guard :run)) (member os '(:stun :air)) (zerop (fighter-lock f)))
@@ -431,7 +431,8 @@ a zone: the user 2026-09-30), which would otherwise be WHITE."
                     (and (eq st :move) mv (eq (fighter-phase f) :main)
                          (if (member (mv-kind mv) '(:sig :kikon))
                              (member os '(:stun :guard-hit :air))
-                             (cancel-open-p (fighter-sf f) (fighter-land-sf f) (mv-total mv) (eq (fighter-contact f) :hit))))))))
+                             (or (member os '(:stun :air))   ; he reels from my hazard / clone though this move missed
+                                 (cancel-open-p (fighter-sf f) (fighter-land-sf f) (mv-total mv) (eq (fighter-contact f) :hit)))))))))
 
 (defun burst-ok-p (e)
   "May E burst now (rules BURST-ALLOWED-P): the mode (:white :blue :orange) or NIL."
