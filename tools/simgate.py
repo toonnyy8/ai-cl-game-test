@@ -48,6 +48,7 @@ def build():
     # the wasm build's libm is emscripten's musl; glibc's sinf / expf ... differ in the last bit now and then, and a
     # CPU match drifts apart from there (DEVLOG §38). So the very same musl sources, built for the host, go in front of
     # glibc (LD_PRELOAD): the Lisp's inline calls and libecl's (SIN, EXP, EXPT ...) both land there.
+    os.makedirs(os.path.dirname(MUSLM), exist_ok=True)   # (a fresh checkout has no build/simgate)
     if not os.path.exists(MUSLM):
         m = f'{EMSDK}/upstream/emscripten/system/lib/libc/musl'
         gcc_inc = subprocess.run(['gcc', '-print-file-name=include'], capture_output=True, text=True).stdout.strip()

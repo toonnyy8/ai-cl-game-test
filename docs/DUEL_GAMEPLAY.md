@@ -420,6 +420,13 @@ above (medians, ranges, wins, blow-aways) exactly; `--cvc` passes G2's three ref
 in 14 s wall at `-j 16` (the machine at load ~45 from other browser gates), 15 × 10 in 8 s; the browser took ~160 s
 per 10-seed pairing (~6 cores each), about an hour for the 20-seed gate at 4 at once.
 
+(2026-09-29, main after merging the J/K cut + closer grab, the hidden hit-stun tolerance, the KESSA clone cost, KESSA
+×1.35 and Shikai taken ×0.7, on the native gate (tools/simgate.py, seeds 1–20): 300/300 K.O.; medians YY 152.4, YK 148.7,
+KK 137.4, RY 143.1, RK 151.8, RR 191.4, IY 146.4, IK 148.0, IR 192.0, II 198.3, SY 151.6, SK 156.1, SR 190.5, SS 186.4,
+SI 200.6 s. Awaken A/B ("never" wins of 60, streams 100 / 300 / 500): every cell ≥ 20 (Ichigo 26–41, Rukia 32–40,
+Senjumaru 20–41). **Then the user cut Ichigo's damage (Shikai 1.6 → 1.3, KESSA 1.35 → 1.1) without a gate (「不用再做測試」)**,
+so the Ichigo rows below are stale until the next gate.)
+
 | Pairing | Median | Range | K.O. | Wins P1 / P2 | Blow-aways |
 |---|---|---|---|---|---|
 | Yamamoto vs Yamamoto | 134.7 s | 98.2–205.5 | 20/20 | 9 / 11 | 0 |

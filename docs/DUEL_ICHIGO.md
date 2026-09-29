@@ -1279,3 +1279,8 @@ stand and swing; they no longer rush at the opponent.
   every clone, a Step's or a Hoho's, spends **15** guard gauge (`*clone-cost*`, `clone-pay!`); below 15, or guardless, the
   Step / Hoho happens without a clone and nothing is spent. `*clone-step-gap*` (40 f) is gone: the gauge, the cap of 3 and
   the 300 f life are the limits, and each clone thins the guard that KESSA's normal guard and parry (10) also use.
+- **Damage down, both forms** (the user 2026-09-29: 「一護始解跟卍解都太強了，請將傷害倍率降低（不用再做測試）」): the Shikai's
+  `*ichigo-mult*` 1.6 → **1.3**, KESSA's `*kessa-mult*` 1.35 → **1.1** (it had just gone 1.25 → 1.35 to bring II's
+  median under 210 s). No gate was run for this, at the user's word. Just before it, the merged build (J/K cut + hit-stun +
+  clone cost) had `*ichigo-taken*` 0.8 → 0.7 so the never-awaken A/B cleared 20 of 60 vs Kenpachi / Senjumaru (all 15
+  pairings then 300/300 K.O., medians 137–201 s, every A/B cell ≥ 20, measured on the native gate).
