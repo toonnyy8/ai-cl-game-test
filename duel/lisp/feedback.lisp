@@ -8,7 +8,7 @@
 ;;;;   (:hit att def x y z hitstop counter-p dmg kind)  (:blocked att def x y z)  (:armored def x y z)
 ;;;;   (:absorbed def x y z)  (:guard-crush att def x y z) (:guard-back e)  (:guard-break att def x y z)  (:stance-break att def x y z)  (:clash x y z)
 ;;;;   (:parried att def x y z)  (:scorch att)  (:ward-crush e)  (:cold-crack e)  (:refused e cmd)  (:kosei att m x y z)
-;;;;   (:hazard-cut x y z)  (:hoho-out e x z) (:hoho-in e x z) (:perfect e victim)  (:burst e attacker)
+;;;;   (:hazard-cut x y z)  (:hoho-out e x z) (:hoho-in e x z) (:perfect e victim)  (:burst e attacker mode) (:burst-end e)
 ;;;;   (:launch e) (:land e)
 ;;;;   (:konpaku victim lost) (:kikon att victim) (:soul-break att victim)  (:awaken e) (:form e form)
 ;;;;   (:evolution e) (:hellfire e)  (:skeleton-rise x z)  (:sfx key e)  (:reset)
@@ -163,11 +163,12 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
                     (vfx-hoho x 1.0 z t :dx (fwd-x (yaw-of e)) :dz (fwd-z (yaw-of e))) (sfx-on :hoho-in e)))
         (:perfect (play-sfx :perfect) (setf *punch-t* 0.5)
          (announce "PERFECT" :color '(1 1 1 1) :secs 0.9))
-        (:burst (let* ((e (first args)) (p (pos-of e)) (x (aref p 0)) (z (aref p 2)))   ; mono in the notan world (STEEL)
-                  (vfx-burst x (aref p 1) z)
-                  (sfx-on :clash e :pitch 0.7) (sfx-on :hoho-in e)
+        (:burst (let* ((e (first args)) (m (third args)) (p (pos-of e)) (x (aref p 0)) (z (aref p 2)))   ; the stamp mono
+                  (vfx-burst x (aref p 1) z)                                                  ; (STEEL), the word in
+                  (sfx-on :clash e :pitch (if (eq m :white) 0.9 0.7)) (sfx-on :hoho-in e)    ; the burst's colour
                   (shake 0.15 0.25)
-                  (announce "BURST REVERSE" :color '(0.78 0.83 0.89 1) :secs 1.0 :small t)))
+                  (announce (burst-name m) :color (burst-color m) :secs 1.0 :small t)))
+        (:burst-end (sfx-on :hoho-out (first args) :gain 0.5 :pitch 0.8))
         (:launch (sfx-on :launch (first args) :gain 0.8))
         (:land (let ((e (first args))) (sfx-on :land e)
                  (let ((p (pos-of e))) (vfx-shockwave (aref p 0) (aref p 2) 1.2 0.3 :pal +pal-dust+)

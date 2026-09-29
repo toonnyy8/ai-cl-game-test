@@ -391,8 +391,43 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
             (not (hoho-allowed-p nil 100.0 10)) (not (hoho-allowed-p nil 29.0 0))))
 (check (and (awaken-allowed-p t 100.0 nil) (not (awaken-allowed-p t 100.0 t)) (not (awaken-allowed-p nil 100.0 nil))
             (not (awaken-allowed-p t 99.0 nil))))
-(check (and (burst-allowed-p t 2 70.0) (not (burst-allowed-p t 1 100.0)) (not (burst-allowed-p t 2 69.0))))  ; flash-step 70
-(check (not (burst-allowed-p nil 5 100.0)))                                 ; not in hitstun: no Burst
+;; the burst modes (docs/DUEL_DESIGN.md "Burst modes", the user 2026-09-30): the state picks the mode
+(check (and (eq (burst-mode :stun nil 2 nil) :blue) (eq (burst-mode :air nil 3 nil) :blue) (null (burst-mode :stun nil 1 nil))
+            (eq (burst-mode :guard-hit nil 0 nil) :blue)                        ; blockstun: from any blocked hit
+            (eq (burst-mode :move nil 0 t) :orange) (null (burst-mode :move nil 0 nil))   ; a hit's window / a whiff or block
+            (eq (burst-mode :idle nil 0 nil) :white) (eq (burst-mode :guard nil 0 nil) :white) (eq (burst-mode :run nil 0 nil) :white)
+            (null (burst-mode :step nil 0 nil)) (null (burst-mode :hoho nil 0 nil)) (null (burst-mode :down nil 5 nil))
+            (null (burst-mode :cine nil 0 nil)) (null (burst-mode :idle t 0 nil)) (null (burst-mode :stun t 5 nil))))   ; locked
+(check (and (burst-allowed-p :white 70.0 nil) (burst-allowed-p :orange 70.0 nil) (burst-allowed-p :blue 100.0 nil)   ; 70 for every mode
+            (not (burst-allowed-p :white 69.9 nil)) (not (burst-allowed-p :blue 69.0 nil)) (not (burst-allowed-p :orange 60.0 nil))
+            (not (burst-allowed-p nil 100.0 nil)) (not (burst-allowed-p :white 100.0 :blue))))   ; no mode / one running
+;; the drain: 18 / s, to 0 then it ends; from 70 3.9 s, from 100 5.6 s
+(check (and (= *burst-drain* 18) (~= (burst-drain 50.0) (- 50.0 0.3)) (~= (burst-drain 0.1) 0.0)))
+(flet ((frames (fs) (loop for n from 1 do (setf fs (burst-drain fs)) when (<= fs 0.0) return n)))
+  (check (and (<= 232 (frames 70.0) 234) (<= 332 (frames 100.0) 334))))
+;; no flash-step gain during a burst; Hoho below one bar spends what is left
+(check (and (~= (burst-fs-gain 12.0 nil) 12.0) (~= (burst-fs-gain 12.0 :white) 0.0) (~= (burst-fs-gain 15.0 :orange) 0.0)))
+(check (and (hoho-allowed-p nil 12.0 0 :white) (hoho-allowed-p nil 0.1 0 :blue) (not (hoho-allowed-p nil 0.0 0 :blue))
+            (not (hoho-allowed-p nil 12.0 0)) (not (hoho-allowed-p nil 12.0 5 :white)) (not (hoho-allowed-p t 50.0 0 :white))))
+(check (and (~= (hoho-cost 12.0 :white) 12.0) (~= (hoho-cost 80.0 :white) 30.0) (~= (hoho-cost 80.0 nil) 30.0)))
+;; WHITE: Reishi +12 / s in whole points (60 f pay exactly 12), no guard-gauge boost (gg-regen has no WHITE input)
+(check (and (= 12 (loop for n from 1 to 60 sum (burst-heal n *white-reishi*))) (= 66 (loop for n from 1 to 333 sum (burst-heal n 12.0)))
+            (= 1 (burst-heal 5 12.0)) (= 0 (burst-heal 4 12.0))))
+(check (and (~= *white-reishi* 12.0) (~= *white-reiatsu* 15.0) (~= *white-awaken* 2.0)))
+;; BLUE: the guard gauge refills with no delay, x2 when free, x0.5 even while guarding (GUARD HOLD otherwise)
+(check (and (~= (gg-regen 50.0 0 nil nil :blue) (+ 50.0 (/ 11.0 60))) (~= (gg-regen 50.0 0 nil t :blue) (+ 50.0 (/ 2.75 60)))
+            (~= (gg-regen 50.0 0 t nil :blue) (+ 50.0 (/ 13.0 60))) (~= (gg-regen 99.99 0 nil t :blue) 100.0)
+            (~= (gg-regen 50.0 999 nil t) 50.0)))                            ; outside BLUE: GUARD HOLD as ever
+;; ORANGE: the cancel window is the hit's cancel window (first hit frame .. end of recovery); the startup cut 40 %, >= 1 f left
+(check (and (cancel-open-p 12 10 30 t) (not (cancel-open-p 9 10 30 t)) (not (cancel-open-p 30 10 30 t)) (not (cancel-open-p 12 10 30 nil))))
+(check (and (= (chain-startup-cut 10 0) 4) (= (chain-startup-cut 20 0) 8) (= (chain-startup-cut 2 0) 0) (= (chain-startup-cut 1 0) 0)
+            (= (chain-startup-cut 3 0) 1) (= (chain-startup-cut 12 2) 4) (= *chain-window* 12)))
+(check (and (~= (burst-gain-mult :orange) 1.5) (~= (burst-gain-mult :white) 1.0) (~= (burst-gain-mult nil) 1.0)))
+(check (and (~= (nth-value 0 (hit-gains 100 0 nil 1.5)) 12.0) (~= (nth-value 2 (hit-gains 100 0 nil 1.5)) 7.5)   ; x1.5 dealt
+            (~= (nth-value 0 (hit-gains 0 100 nil 1.5)) 10.0) (~= (nth-value 0 (hit-gains 100 0 nil)) 8.0)))    ; taken untouched
+;; the Kikon refund: a flash-step bar (35) and a Reiatsu bar, clamped
+(check (and (equal (multiple-value-list (kikon-refund 10.0 50.0)) '(45.0 150.0))
+            (equal (multiple-value-list (kikon-refund 90.0 250.0)) '(100.0 300.0))))
 ;; the flash-step gauge (design v3 G.1): Hoho 30, Burst 70, no Reiatsu; 3 / s after 60 f; +0.03 per damage taken
 (check (and (= *fs-hoho* 30) (= *fs-burst* 70) (= *fs-refund* 15) (~= *fs-taken* 0.03) (= *fs-max* 100)))
 (check (and (~= (fs-regen 50.0 59) 50.0) (~= (fs-regen 50.0 60) 50.05) (~= (fs-regen 99.99 600) 100.0)))
@@ -856,8 +891,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
                 (null (resolve-contact :invuln :unguardable t))))
     (check (equal (multiple-value-list (combo-step :bind nil 0 0 0)) '(:bind 2 0 0)))       ; the opener: 2 hits
     (check (equal (multiple-value-list (combo-step :bind nil 1 0 0)) '(:flinch 2 0 0)))     ; in a combo: a flinch
-    (check (and (burst-allowed-p t (nth-value 1 (combo-step :bind nil 0 0 0)) *fs-burst*)
-                (not (burst-allowed-p t (nth-value 1 (combo-step :bind nil 0 0 0)) (1- *fs-burst*)))))
+    (check (and (burst-allowed-p (burst-mode :stun nil (nth-value 1 (combo-step :bind nil 0 0 0)) nil) *fs-burst* nil)
+                (not (burst-allowed-p (burst-mode :stun nil (nth-value 1 (combo-step :bind nil 0 0 0)) nil) (1- *fs-burst*) nil))))
     (check (equal (multiple-value-list (combo-step :flinch nil 2 0 0)) '(:flinch 3 0 0)))   ; the follow-up is hit 3
     ;; the escapes: a Step pressed from the stab's f16 carries him past the grab disc; one pressed f28-33 has
     ;; its iframes over the grab (f36-37); a Hoho pressed f23-35 too; walking doesn't (16 f of walk < the disc)

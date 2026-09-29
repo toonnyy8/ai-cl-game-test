@@ -289,6 +289,9 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
           (when (and (eq (fighter-state f) :stun) (eq (fighter-phase f) :bind))   ; bound by South: ash drifting at the feet
             (vfx-aura x y z (body-hurt-h b) :bound age rdt)))
       (when (gauges-evolution (gauges e)) (vfx-aura x y z (body-hurt-h b) :evolution age rdt :rgb *evolution-rgb* :k 0.5))
+      (let ((bm (gauges-burst (gauges e))))              ; a running burst: its colour (docs/DUEL_DESIGN.md "Burst modes")
+        (when (and bm (> (model-alpha m) 0f0) (not (eq (fighter-state f) :cine)))
+          (vfx-aura x y z (body-hurt-h b) (case bm (:white :burst-white) (:blue :burst-blue) (t :burst-orange)) age rdt)))
       (when (and mv (eq (mv-kind mv) :breaker))            ; the owner's colour over ink (§4 mapping)
         (let ((bk (case (first (kit-blade kit)) (:fire :breaker-fire) ((:embers :charcoal) :breaker-ember) (t :breaker))))
           (unless (eq (fighter-phase f) :main)

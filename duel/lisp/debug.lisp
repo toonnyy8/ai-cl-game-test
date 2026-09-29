@@ -24,6 +24,8 @@
 ;;;;   2320     Burst test: human P1 Yamamoto (3 bars) at 2 m from Kenpachi, whose idle CPU mashes Quick for
 ;;;;            60 steps (J1 J2 J3): press Shift+J after the 2nd hit
 ;;;;   2321     force a Burst Reverse now: P1 (in Kenpachi's Q2 hitstun) bursts out (screenshots)
+;;;;   2322-2324 a burst on P1 now (YK 3.5 m apart, CPUs off, P1 flash-step full): 2322 WHITE, 2323 BLUE, 2324 ORANGE (its aura,
+;;;;            the HUD bar draining in its colour; screenshots); 2325 the same scene, no burst (the bar's glow, the RV chip)
 ;;;;   2327     guard gauge test: human P1 Yamamoto 2 m from Kenpachi pressing Quick for 20 s (hold U): the
 ;;;;            gauge drains, GUARD CRUSH, hits land while U is held, the guard back only when full
 ;;;;   2328     consing of the new HUD gauge bars (100 draws each) -> "hud consing" line; the Bankai stances' looks
@@ -263,7 +265,7 @@ KATAUDE (0-4), rung changes 1->2 (5), 2->3 (6), 3->2 (7), 2->1 (8), 3->1 (9: the
   (setf (fighter-sf (fighter *p2*)) 9)
   (set-reaction *p1* :flinch 18 (aref (pos-of *p2*) 0) (aref (pos-of *p2*) 2) 0.0)
   (setf (fighter-combo-hits (fighter *p1*)) 2)
-  (burst! *p1*))
+  (burst! *p1* :blue))
 
 (defparameter *module-tests* '((:yamamoto :base) (:yamamoto :bankai-east) (:kenpachi :base) (:kenpachi :nozarashi))
   "The O (Kikon rush) modules by form: ENJO, TENCHI, CHARGE, LEAP CLEAVE.")
@@ -586,7 +588,7 @@ by 10 draws of each Bankai stance look (0 B each; the crossfade only while it ru
     (dotimes (i 100) (%hud-guard 10f0 10f0 300f0 6f0 0.4f0 0.6f0 nil nil 1 1f0)
                      (%hud-guard 10f0 10f0 300f0 6f0 0.4f0 0.6f0 t nil 3 1f0))
     (let ((c1 (cons-bytes)))
-      (dotimes (i 100) (%hud-flash 10f0 30f0 300f0 6f0 0.8f0 nil t 1f0) (%hud-flash 10f0 30f0 300f0 6f0 0.8f0 t nil 1f0))
+      (dotimes (i 100) (%hud-flash 10f0 30f0 300f0 6f0 0.8f0 nil :blue nil 1f0) (%hud-flash 10f0 30f0 300f0 6f0 0.8f0 t nil :orange 1f0))
       (let ((c2 (cons-bytes)))
         (dotimes (i 100) (%hud-cd 10f0 50f0 150f0 6f0 0.4f0 0f0 nil 1f0 0.5f0 0.2f0) (%hud-cd 10f0 50f0 150f0 6f0 1f0 0.7f0 t 1f0 0.5f0 0.2f0))
         (let ((c3 (cons-bytes)))
@@ -1018,6 +1020,9 @@ matches); a \"duel learn row\" per match."
         ((<= 2420 c 2426) (rukia-kl-test (- c 2420)))
         ((<= 2430 c 2438) (hud-review (- c 2430)))
         ((= c 2326) (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 3.0) (clash! *p1* *p2*))
+        ((<= 2322 c 2325) (ensure-battle :yamamoto :kenpachi) (place *p1* *p2* 3.5)
+         (setf (gauges-fs (gauges *p1*)) *fs-max* (gauges-burst (gauges *p1*)) nil *one-hand* (one-hand-effective-p))   ; (the deck)
+         (when (< c 2325) (burst! *p1* (nth (- c 2322) '(:white :blue :orange)))))
         ((= c 2393) (place *p1* *p2* 2.2)
          (dolist (e (list *p1* *p2*))                   ; a switched-off CPU lets go of what it held (a guard)
            (vpad-clear! (pilot-vpad (pilot e))) (let ((b (brain e))) (when b (setf (brain-press-left b) 0)))))

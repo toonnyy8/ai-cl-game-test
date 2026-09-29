@@ -193,6 +193,16 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
     (clog "~a move ~a~@[ ~a~]" (side-name e) (mv-name mv) (let ((b (brain e))) (and b (brain-why b))))
     (when (eq (fighter-phase f) :main)                 ; a hook on the move's first frame (NOMIHOSE's cash-out)
       (loop for (fr hook) in (mv-on-frame mv) when (= fr enter) do (funcall hook e)))
+    (when (plusp (fighter-chain f))                     ; ORANGE: the first move after the cancel starts later in its
+      (setf (fighter-chain f) 0)                        ; startup (the skipped frames' hooks run now, in order)
+      (let ((cut (if (eq (fighter-phase f) :main) (chain-startup-cut (mv-s mv) enter) 0)))
+        (when (plusp cut)
+          (loop for fr from (1+ enter) to (+ enter cut) while (eq (fighter-move f) mv)
+                do (loop for (hf hook) in (mv-on-frame mv) when (= hf fr) do (funcall hook e)))
+          (when (eq (fighter-move f) mv)
+            (setf (fighter-sf f) (+ enter cut))
+            (play-clip e (mv-clip mv) :blend 0 :speed (mv-clip-speed mv) :time (/ (* (+ enter cut) (mv-clip-speed mv)) 60.0))
+            (clog "~a chain cut ~d f" (side-name e) cut)))))
     mv))
 
 (defun enter-main (e f mv)
@@ -249,10 +259,10 @@ back-skate, or a side slide (the kit's :run-clips)."
   (setf (gauges-fs g) (f32 (max 0.0 (- (gauges-fs g) amount))) (gauges-fs-idle g) 0))
 
 (defun start-hoho (e f)
-  "Hoho: spend *FS-HOHO* flash-step, vanish, reappear behind the opponent (HOHO-STEP). Checks PERFECT
-now (a perfect one refunds *FS-REFUND*)."
+  "Hoho: spend *FS-HOHO* flash-step (during a burst what is left, if less: HOHO-COST), vanish, reappear behind the
+opponent (HOHO-STEP). Checks PERFECT now (a perfect one refunds *FS-REFUND*, not during a burst)."
   (let ((g (gauges e)))
-    (spend-fs g *fs-hoho*)
+    (spend-fs g (hoho-cost (gauges-fs g) (gauges-burst g)))
     (setf (fighter-perfect f) (perfect-now-p e)          ; (before leaving the move: a cancel Hoho)
           (fighter-state f) :hoho (fighter-sf f) 0 (fighter-move f) nil
           (fighter-hoho-lock f) (+ *hoho-frames* *hoho-lockout*))
@@ -262,7 +272,7 @@ now (a perfect one refunds *FS-REFUND*)."
     (when (fighter-perfect f)
       (let ((o (opp-of e)))
         (incf (gauges-perfects g))
-        (setf (gauges-fs g) (f32 (min *fs-max* (+ (gauges-fs g) *fs-refund*))))
+        (setf (gauges-fs g) (f32 (min *fs-max* (+ (gauges-fs g) (burst-fs-gain *fs-refund* (gauges-burst g))))))
         (setf (fighter-lock-next (fighter o)) *perfect-lock*)
         (respect o)
         (slowmo *perfect-slowmo-scale* *perfect-slowmo-seconds*)
@@ -298,13 +308,13 @@ something started."
   (let ((g (gauges e)) (kit (fighter-kit f)))
     (case cmd
       (:step (unless (kit-rooted kit) (cold-spend! e kit :step) (start-step e f) t))   ; a rooted form (Rukia's zero) refuses
-      (:hoho (when (and (not (kit-rooted kit)) (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f)))   ; Step and Hoho
+      (:hoho (when (and (not (kit-rooted kit)) (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)))   ; Step and Hoho
                (cold-spend! e kit :hoho) (start-hoho e f) t))
       (:awaken (let ((free (awaken-state-p e f)))
                  (cond ((awaken-allowed-p free (gauges-awaken g) (gauges-awakened g)) (awaken! e) t)
                        ((and (kit-bankai-form kit) (bankai-allowed-p free (gauges-konpaku g)))
                         (bankai! e) t))))
-      (:burst (when (burst-ok-p e) (setf (fighter-burst f) t) t))   ; applied after both stepped
+      (:burst (let ((m (burst-ok-p e))) (when m (setf (fighter-burst f) m) t)))   ; applied after both stepped
       (t (let* ((to (kit-drop kit cmd))
                 (kit (if to (find-kit (fighter-character f) to) kit))
                 (mv (if (and with (not to)) with (kit-command-move kit cmd))))
@@ -330,11 +340,11 @@ awakening breaks his attack as a Burst does (REPEL!; the user 2026-09-29)."
     (or (member s '(:idle :guard :guard-hit))
         (and (member s '(:stun :air)) (zerop (fighter-lock f)) (>= (fighter-combo-hits f) *burst-min-hits*)))))
 
-(defparameter *neutral-commands* '(:kikon :awaken :hoho :step :breaker :sp2 :sp1 :sig :f :q)
-  "Commands from idle / walk / guard. :kikon starts the Kikon rush at any time (whether it becomes a
+(defparameter *neutral-commands* '(:kikon :awaken :hoho :burst :step :breaker :sp2 :sp1 :sig :f :q)
+  "Commands from idle / walk / guard (:burst: WHITE). :kikon starts the Kikon rush at any time (whether it becomes a
 Kikon is decided when its strike connects: combat.lisp APPLY-HIT).")
 
-(defparameter *run-commands* '(:kikon :hoho :step :breaker :sp2 :sp1 :sig :f :q)
+(defparameter *run-commands* '(:kikon :hoho :burst :step :breaker :sp2 :sp1 :sig :f :q)
   "Commands a run cancels into at once (neutral's, without Awaken); Step again = a new hop.")
 
 (defun command! (e f vp allowed)
@@ -541,7 +551,7 @@ L's own checks (cooldown, cold, the kit's :ok with the link as COMBO; a refused 
 action started."
   (let ((kit (fighter-kit f)) (landed (fighter-contact f)) (name (mv-name mv)))
     (or (loop for (cmd button mod) in *commands*
-              thereis (and (member cmd '(:kikon :q :f :sp1 :sp2 :sig :hoho))
+              thereis (and (member cmd '(:kikon :q :f :sp1 :sp2 :sig :hoho :burst))
                            (vpad-command-pressed-p vp button mod)
                            (case cmd
                              (:kikon (and (member :ender (mv-flags mv))   ; the O ender: a completed string
@@ -560,6 +570,7 @@ action started."
                                                     (refused-cue e f :sig vp button l))   ; refused: the cue, eaten
                                                 nil)
                                          (cancel-into e f kit mv sf landed cmd button))))
+                             (:burst (try-command e f cmd button))   ; ORANGE (BURST-OK-P: his hit landed)
                              (t (cancel-into e f kit mv sf landed cmd button)))
                            (progn (vpad-consume! vp button) t)))
         (let ((q (fighter-queued f)))                   ; the latched link, once the chain opens
@@ -787,6 +798,7 @@ still :parry); never in a reaction (a bind, a Guard Break, a crush reel: no armo
       (:run (run-step e f vp))
       (:hoho (hoho-step e f))
       ((:air :down :wakeup) (air-step e f vp))))
+  (when (> (fighter-chain f) 0) (decf (fighter-chain f)))   ; ORANGE's window: *CHAIN-WINDOW* steps after the cancel
   (fighter-physics e)
   (anim-advance (model-anim (model e)) +step+))
 
@@ -807,10 +819,11 @@ step: a symmetric sim), step each, then keep them apart."
       (setf (fighter-freeze f) (max (fighter-freeze f) (fighter-freeze-next f))
             (fighter-lock f) (max (fighter-lock f) (fighter-lock-next f))
             (fighter-freeze-next f) 0 (fighter-lock-next f) 0))
-    ;; a Burst pressed this step applies now, unless a cinematic began (an awakening on the same step
-    ;; wins); it ends the attacker's move, so a Kikon rush that hasn't connected yet is escaped
+    ;; a burst pressed this step applies now, unless a cinematic began (an awakening on the same step
+    ;; wins); BLUE ends the attacker's move, so a Kikon rush that hasn't connected yet is escaped
     (do-entities (e (f fighter))
-      (when (fighter-burst f)
-        (setf (fighter-burst f) nil)
-        (unless *cine* (burst! e))))
+      (let ((m (fighter-burst f)))
+        (when m
+          (setf (fighter-burst f) nil)
+          (unless *cine* (burst! e m)))))
     (when (and a b) (separate-fighters a b))))

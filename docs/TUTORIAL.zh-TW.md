@@ -491,7 +491,7 @@ v2 在通用檔案只多了兩個掛鉤點：kit 的 `:hooks` 可以寫 `:soul-b
 
 SOUL DUEL 分兩段：
 
-- `fighter-system`（`fighter.lisp` 第 698～721 行）先把每個人「對手現在站哪」記下來（`fighter-ox`、`fighter-oz`），再讓兩個人各走一步，所以誰都看不到對方這一步的移動。一方對另一方造成的凍結、鎖輸入，等兩個人都走完才生效（第 680～684 行；Burst Reverse 也是這時才生效，第 685～690 行，而且在這一步的命中結算之前，所以 Kikon 突進還沒砍中時被 Burst，突進就中斷了，不管誰先走）。
+- `fighter-system`（`fighter.lisp` 第 698～721 行）先把每個人「對手現在站哪」記下來（`fighter-ox`、`fighter-oz`），再讓兩個人各走一步，所以誰都看不到對方這一步的移動。一方對另一方造成的凍結、鎖輸入，等兩個人都走完才生效（第 680～684 行；爆氣也是這時才生效（`fighter-burst` 存著按下時決定的模式），而且在這一步的命中結算之前，所以 Kikon 突進還沒砍中時被 Burst，突進就中斷了，不管誰先走）。
 - `hit-system`（`duel/lisp/combat.lisp` 第 307～330 行）先檢查 Breaker 互撞，然後**收集**所有碰到的近戰與飛行道具命中（`collect-melee`，第 258～278 行），每一筆連同攻擊者當下的招式、蓄積的傷害、防守方當時紅不紅一起存進 `pending`（第 249～254 行），最後才一筆筆**套用**（`apply-hit`，第 101～246 行）。這一步確認的 Kikon 和靈子歸零的 Soul Break 在最後一起結算（`settle-souls`，第 488～511 行）：互砍到兩邊同時沒命就是平手。
 
 程式碼審查時抓到的真實 bug 就是這個：`pending` 原本沒存攻擊者的招式，套用時才去讀，而第一筆命中已經把對方打進硬直、招式清空了，所以每次互砍 P2 的那一刀都少了屬性。修好之後，除錯指令 2319 讓兩個山本在同一步出 J1，兩邊靈子剩下的一樣多。
@@ -529,7 +529,7 @@ Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規�
 驗證方法：每 600 步印一行 `duel hash`（`state-hash-line`，`duel/lisp/debug.lisp` 第 83～96 行，位置、朝向、每個量表、上一次 Kikon 突進值幾個魂魄、電腦的 heat）。`tests/scripts/duel-cvc-yk.json` 用種子 7 讓兩個電腦打完一場，最後一行一定是：
 
 ```
-duel -> RESULTS winner P2 konpaku 0-3 ticks 7662 secs 127.7
+duel -> RESULTS winner P2 konpaku 0-5 ticks 8247 secs 137.4
 ```
 
 （2026-09-29 加入隱藏的受擊值（被連續打太久會被打飛，DUEL_DESIGN.md「Hidden hit-stun tolerance」）之後，這一行變了：種子 7 裡山本被打飛兩次；YY、KK 不變。之前是 `winner P2 konpaku 0-6 ticks 5516 secs 91.9`。）
@@ -596,6 +596,20 @@ duel -> RESULTS winner P2 konpaku 0-3 ticks 7662 secs 127.7
 
 和第 8 步 RAVEN 的一刀比一比：「判定」和「結算」一樣是純函式，事件一樣交給 feedback；多出來的是兩件格鬥遊戲才需要的事：輸入經過 vpad，而結算之後才有過場。
 
+### 9.6.1 三種爆氣（玩家版）
+
+使用者 2026-09-30 把原本只有「被打時脫身」的 Shift+J 分成三種，參考 BLEACH Rebirth of Souls 的 Reverse Action：同一個鍵，**按下那一刻在做什麼**就決定是哪一種。
+
+| 顏色 | 什麼時候 | 效果 |
+|---|---|---|
+| 白 SOUL REVERSE | 站著、走路、跑步、防禦中 | 期間每秒回 12 靈子、多回 15 靈壓、2 覺醒量表（防禦量表不加速，使用者的決定） |
+| 藍 BURST REVERSE | 被連段打到第 2 下之後的硬直／浮空，或防禦硬直 | 原本的 Burst：打斷對手、推開 5 公尺、20 格無敵；期間防禦量表不用等就回（平常 2 倍，防禦中也有一半） |
+| 橙 CHAIN REVERSE | 自己的招式打中之後、收招結束前 | 收招立刻取消，12 格內的下一招前搖少 40%，什麼招都能接；期間打中拿的靈壓和覺醒量表 ×1.5 |
+
+三種都要瞬步量表 70 以上（使用者：「一樣維持要兩格才能爆氣」），開的時候不扣，之後每秒掉 18，到 0 結束；期間瞬步量表不會回，但不滿一格也能 Hoho（花掉剩下的）。Kikon 打中時攻擊方拿回 35 瞬步和 1 格靈壓。
+
+讀程式的順序：選模式是純函式 `burst-mode`、`burst-allowed-p`（`rules.lisp`），`combat.lisp` 的 `burst-mode-of` 把戰士的狀態餵給它；`burst!` 開始、`burst-step`（在 `gauge-system` 裡）每格扣量表和白色的回復、`burst-end!` 結束；橙色的前搖縮短在 `fighter.lisp` 的 `start-move`（`fighter-chain` 是剩下的格數）。量表和光環的顏色在 `vfx.lisp` 的 `burst-color`，藍色是新加的第 13 個卡通調色盤（`engine/shaders/fx-toon-pal.wgsl` 的 12 號）。設計和數字在 [DUEL_DESIGN.md](DUEL_DESIGN.md) 的「Burst modes」。
+
 ### 9.7 手機單手模式（片手 ONE-HAND）與安裝成 App
 
 2026-09-26 起，SOUL DUEL 可以在手機上直拿、用一根拇指打電腦，也可以加到主畫面當成 App 開。設計在 [DUEL_MOBILE_DESIGN.md](DUEL_MOBILE_DESIGN.md)，§12 記錄了這次做了哪些、和設計哪裡不一樣。
@@ -625,7 +639,9 @@ duel -> RESULTS winner P2 konpaku 0-3 ticks 7662 secs 127.7
 | 往上撥（左右偏 60° 以內都算往上） | 向前衝刺：往正前方的 Step（Space＋W），越過門檻就出，不用等放開；手指繼續往前推就接著跑 |
 | 快速撥一下（下、左、右） | Step（Space），往下是後退、左右是側步 |
 | 先按著不動，再往上撥 | Hoho（Shift+Space），只在站著或防禦時；沒先按住就是向前衝刺 |
-| 被打中、硬直或浮空時往下撥 | Burst Reverse（Shift+J） |
+| 被打中、硬直或浮空時往下撥 | 藍色爆氣 BURST REVERSE（Shift+J） |
+| 自己的招式打中後往下撥 | 橙色爆氣 CHAIN REVERSE（Shift+J） |
+| RV 圓鈕（O 的上方，可以爆氣時才出現） | 爆氣，任何模式（Shift+J）；站著或防禦時就是白色爆氣 |
 | O、L、I、SP1、SP2 圓鈕 | Kikon 突進（按著＝Kikon；連段第三段打中後就是 O 收尾）、Signature、Breaker、SP1、SP2 |
 | AWK（EVOLUTION 時才出現，按住 0.3 秒） | 覺醒（P） |
 | II 圓鈕，或手機的「返回」手勢 | 暫停 |

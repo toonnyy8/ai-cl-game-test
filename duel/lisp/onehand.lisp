@@ -10,7 +10,8 @@
 (in-package :duel)
 
 ;; *TOUCH* *ONE-HAND* *HAND* *COARSE* *BACK-PRESS*: components.lisp (read by fighter.lisp and flow.lisp)
-(defvar *touch-burst* nil "This vpad read: the live flick is a Burst (down, P1 in hit / stun / air).")
+(defvar *touch-burst* nil "This vpad read: the live flick is a burst (down, P1 in hit / stun / air: BLUE; his move's hit
+landed: ORANGE).")
 (defvar *deck-key* (list 0 0 0 nil nil 0 0 0 nil) "Window w, h, density, hand, one-hand, safe top / bottom, UI scale, the U chip of the
 last TOUCH-LAYOUT!.")
 (defvar *wake* nil "Wake lock requested (battle).")
@@ -38,15 +39,16 @@ never offers it: the deck needs portrait)."
   (one-hand-on-p (setting :one-hand) *coarse* (portrait-p)))
 
 ;;; ---------------------------------------------------------------- the deck (design §3.3)
-;;; Chip i: 0 O, 1 L, 2 I, 3 SP1, 4 SP2, 5 AWAKEN (held 300 ms), 6 pause. CSS px from the right-hand
+;;; Chip i: 0 O, 1 L, 2 I, 3 SP1, 4 SP2, 5 AWAKEN (held 300 ms), 6 pause, 7 RV (REVERSE: a burst, any mode; shown while one is possible, 2026-09-30). CSS px from the right-hand
 ;;; layout at 390 x 844: x from the right edge, y from the bottom edge; the left hand mirrors x.
 ;;; The user's playtest (2026-09-27): every chip 100 px higher, and the flow pad grown to the whole thumb area
 ;;; (chips inside it win their hit circles: TOUCH-LAYOUT! tests chips first).
 (defparameter *chip-spots*
-  '((170 396 36 "O") (72 380 26 "L") (72 310 26 "I") (72 240 26 "SP1") (72 170 26 "SP2") (270 396 26 "AWK") (32 -200 22 "II"))
+  '((170 396 36 "O") (72 380 26 "L") (72 310 26 "I") (72 240 26 "SP1") (72 170 26 "SP2") (270 396 26 "AWK") (32 -200 22 "II")
+    (170 472 22 "RV"))
   "Per chip: x from the thumb-side edge, y from the bottom (negative: from the top), radius, label.")
-(defparameter *chip-holds* '(0 0 0 0 0 300 0))
-(defparameter *u-chip-holds* '(0 0 0 0 0 0 0) "... with the AWAKEN chip as U (U-CHIP-P): a tap.")
+(defparameter *chip-holds* '(0 0 0 0 0 300 0 0))
+(defparameter *u-chip-holds* '(0 0 0 0 0 0 0 0) "... with the AWAKEN chip as U (U-CHIP-P): a tap.")
 
 (defun deck-layout ()
   "Values: pad (x0 y0 x1 y1) and chips ((cx cy r) ...), window px, for the current window and *HAND*. P2 (safe-area
@@ -61,7 +63,7 @@ moved by the insets: the user tuned them on the phones, insets included."
                     collect (list (x cx) (px (if (minusp cy) (max (- cy) (+ hud 10 r)) (- h cy))) (px r)))))))
 
 (declaim (type f32vec *deck*))
-(defvar *deck* (make-f32 (+ 4 (* 3 7))) "The laid-out deck in window px: pad x0 y0 x1 y1, then cx cy r per chip.")
+(defvar *deck* (make-f32 (+ 4 (* 3 8))) "The laid-out deck in window px: pad x0 y0 x1 y1, then cx cy r per chip.")
 
 (defun deck-update ()
   "Re-lay the deck when the window, the density, the hand or the mode changed (conses: not every frame).
@@ -135,8 +137,8 @@ frame's finger events."
   "Start of P1's vpad read: this read's pulses (TOUCH-TAKE!) and whether a down-flick is a Burst."
   (let ((tr *touch*))
     (touch-take! tr)
-    (setf *touch-burst* (and (touch-pulse-p tr +tp-flick+) (touch-flick-down-p tr)
-                             *p1* (member (state-of *p1*) '(:stun :air)) t))
+    (setf *touch-burst* (and (touch-pulse-p tr +tp-flick+) (touch-flick-down-p tr) *p1*
+                             (or (member (state-of *p1*) '(:stun :air)) (eq (burst-ok-p *p1*) :orange)) t))
     (when *touch-burst*                                   ; no Step held after a Burst (it would buffer a Step)
       (setf (touch-flick-hold tr) 0 (touch-glyph tr) 7))))
 
@@ -152,8 +154,8 @@ low zone = J, high zone = K, an up-flick = a forward Step, the dash)?"
     (flet ((chip (i) (touch-chip-down-p tr i)) (pulse (b) (touch-pulse-p tr b)))
       (case name
         (:guard (if (u-chip-p) (chip 5) (touch-resting-p tr)))
-        (:quick (or (pulse +tp-tap+) burst))
-        (:mod (or burst (pulse +tp-hoho+) (chip 3) (chip 4)))
+        (:quick (or (pulse +tp-tap+) burst (chip 7)))         ; RV: a burst in any mode (the state picks it)
+        (:mod (or burst (pulse +tp-hoho+) (chip 3) (chip 4) (chip 7)))
         (:step (and (not burst) (or (pulse +tp-flick+) (pulse +tp-hoho+) (touch-step-held-p tr))))
         (:flash (or (pulse +tp-tap-hi+) (chip 3)))
         (:sig (or (chip 1) (chip 4)))
@@ -233,8 +235,8 @@ at EVOLUTION or a Bankai ready), the ink ring under the thumb, and the recognise
       (%hrect (aref dk 0) y (- (aref dk 2) (aref dk 0)) (max 1f0 d) 1f0 1f0 1f0 0.18f0)
       (hud-text "F" x (- y (* 13 s)) (* 1.5 s) '(1 1 1 0.4) :align al :shadow nil)
       (hud-text "Q" x (+ y (* 3 s)) (* 1.5 s) '(1 1 1 0.4) :align al :shadow nil))
-    (dotimes (i 7)
-      (unless (and (= i 5) (not evo))
+    (dotimes (i 8)
+      (unless (or (and (= i 5) (not evo)) (and (= i 7) (not (and *p1* (burst-ok-p *p1*)))))   ; RV: while a burst is possible
         (let ((on (touch-chip-down-p tr i)) (cx (aref dk (+ 4 (* 3 i)))) (cy (aref dk (+ 5 (* 3 i)))) (r (aref dk (+ 6 (* 3 i)))))
           (%disc cx cy r 0.05 0.04 0.07 (if on 0.85 0.45))
           (%ring cx cy r (* 2f0 d) 1.0 (if on 0.85 0.55) (if on 0.4 0.3) (if on 1.0 0.7))
@@ -263,7 +265,8 @@ at EVOLUTION or a Bankai ready), the ink ring under the thumb, and the recognise
   '(("TAP LOW HALF" "QUICK  (J)") ("TAP HIGH HALF" "FLASH  (K)  3 TAPS = STRING") ("HOLD STILL" "GUARD")
     ("DRAG" "MOVE  (FAR = RUN)") ("FLICK UP" "DASH  (KEEP GOING = RUN)") ("FLICK DOWN / SIDE" "STEP BACK / SIDESTEP")
     ("HOLD, THEN FLICK UP" "HOHO")
-    ("FLICK DOWN WHEN HIT" "BURST REVERSE") ("O" "KIKON RUSH  (HOLD = KIKON)") ("L / I" "SIGNATURE / BREAKER")
+    ("FLICK DOWN WHEN HIT" "BURST  (AS YOUR HIT LANDS: CHAIN)") ("O / RV" "KIKON RUSH (HOLD = KIKON) / REVERSE")
+    ("L / I" "SIGNATURE / BREAKER")
     ("SP1 / SP2" "SPECIALS") ("AWK (HOLD)" "AWAKEN") ("II / BACK" "PAUSE"))
   "The static gesture card (ONE-HAND's CONTROLS).")
 

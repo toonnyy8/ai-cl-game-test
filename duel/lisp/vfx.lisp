@@ -564,6 +564,15 @@ GLASS (0..3): the tongues, cores and ring see-through, GLASS / 4 of them drawn (
 pillar 2 (the user's request 2026-09-28: it hid the view); the Bankai's red-and-black pillar (:oni, the same day): its
 BLOOD tongues 2, its taller INK tongues 3 (at 2 the black read as a grey smear). Render only.")
 
+;;; the burst modes' colours and names (docs/DUEL_DESIGN.md "Burst modes"): the HUD bar, the word, the aura
+(defvar *c-burst-white* (list 0.95 0.96 1.0 1.0))
+(defvar *c-burst-blue* (list 0.4 0.66 1.0 1.0))
+(defvar *c-burst-orange* (list 1.0 0.58 0.18 1.0))
+(defun burst-color (mode)
+  "The RGBA list of burst MODE (:white :blue :orange); callers may change its alpha (ALPHA!)."
+  (case mode (:white *c-burst-white*) (:blue *c-burst-blue*) (t *c-burst-orange*)))
+(defun burst-name (mode) (case mode (:white "SOUL REVERSE") (:blue "BURST REVERSE") (t "CHAIN REVERSE")))
+
 (defvar *aura-now* (vector nil nil) "Per side: the body aura drawn now (main.lisp DRAW-AURA) ...")
 (defvar *aura-was* (vector nil nil) "... the one before it ...")
 (declaim (type f32vec *aura-t*))
@@ -634,6 +643,17 @@ K is the presence (0..1). :heat also fades by *AURA-CAP* and when the camera is 
                    (fx-ribbon (+ x (* 0.42f0 c)) (+ y (* 0.25f0 h)) (+ z (* 0.42f0 sn)) (* lean c) hh (* lean sn) 0.15f0 0.01f0
                               1f0 sd 0.35f0 (toon-a +pal-black-smoke+ (* 0.9f0 ka)) 0.2f0 sd 0.35f0
                               (toon-a +pal-black-smoke+ (* 0.9f0 ka)) (+ f d3) 0.3f0 :segs 7 :mode :toon)))))))
+        ((:burst-white :burst-blue :burst-orange)        ; a running burst (docs/DUEL_DESIGN.md "Burst modes"): 8 brush
+                                                         ; tongues in its colour (white HIT / BLUE / orange FIRE) with white
+                                                         ; cores, a ring at the feet, flecks rising
+         (let* ((kc (f-clamp k 0f0 1f0)) (dr (drawing-no))
+                (pal (case kind (:burst-white +pal-hit+) (:burst-blue +pal-blue+) (t +pal-fire+))))
+           (declare (single-float kc dr pal))
+           (%brush-aura x y z (* 0.95f0 h) kc pal 8 0.46f0 0.15f0 1)
+           (%tring x y z (+ 0.7f0 (* 0.05f0 (hash01 dr 4.1f0))) 0.05f0 pal (* 0.9f0 kc) (i->f (mod (f->i dr) 5)))
+           (dotimes (i (n-of 8f0 dt))
+             (%t-blob (+ x (rnd-range -0.4f0 0.4f0)) (+ y (* h (rnd-range 0.1f0 0.8f0))) (+ z (rnd-range -0.4f0 0.4f0))
+                      0f0 (rnd-range 1.2f0 2.2f0) 0f0 (rnd-range 0.3f0 0.5f0) (rnd-range 0.02f0 0.035f0) 0f0 0.1f0 pal))))
         (:evolution                                      ; EVOLUTION ready (universal: mono, Phase 5): 5 thin STEEL brush tongues
                                                          ; behind him and white flecks rising (RGB is ignored)
          (%brush-aura x y z (* 0.85f0 h) (* 0.8f0 (f-clamp k 0f0 1f0)) +pal-steel+ 5 0.33f0 0.09f0 0)

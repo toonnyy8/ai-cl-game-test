@@ -29,8 +29,10 @@
 ;;;;               never attacked into; South's tell is stepped out of (the trap reflex); an opponent in a ward
 ;;;;               (Bankai West) is seen as guarding (SNAP-TAKE!): the Breaker reflex breaks it
 ;;;;   J beats K   out of a blocked link, J1 into the string's next K link while it has the frames (J-BEATS-K-P)
-;;;;   burst       combo'd past its 2nd hit for its perception delay, *FS-BURST* flash-step, and worth it
-;;;;               (AI-BURST-WANTED-P): one roll per combo (*AI-BURST-P* by difficulty)
+;;;;   burst       BLUE: combo'd past its 2nd hit for its perception delay, *FS-BURST* flash-step, and worth it
+;;;;               (AI-BURST-WANTED-P): one roll per combo (*AI-BURST-P* by difficulty); ORANGE: a string link that
+;;;;               hit with no link after it (AI-ORANGE-P), then Q1 in the startup-cut window (AI-CHAIN-FOLLOW-P);
+;;;;               WHITE: behind on Reishi, far from him, at a neutral decision (AI-WHITE-P)
 ;;;;   dash        far outside its range (the kit's :dash-gap, else *AI-DASH-GAP*): hold Step toward it (the kit's :dash
 ;;;;               chance), or away from a too-close opponent (:dash-back), released once the range is reached
 ;;;;   tempo       kit keys: :tempo (x the neutral decision interval), :attack (+ the neutral attack chance),
@@ -140,7 +142,8 @@ while: a charge move is held to its full charge from beyond 7 m, where it has th
         (:guard-long (ai-press b :guard 40 :act :guard))    ; through a stagger and the dash-in after it
         (:kikon (let ((mv (kit-command-move kit :kikon)))                ; held through the strike (aura + dash + S)
                   (ai-press b :kikon (+ (rush-param mv :aura) (rush-param mv :dash-max) (mv-s mv) 4))))
-        (:awaken (ai-press b :awaken 1))))))
+        (:awaken (ai-press b :awaken 1))
+        (:burst (ai-press b :quick 1 :modded t :act :burst))))))   ; the state picks the mode
 
 ;;; ---------------------------------------------------------------- decisions
 (defun ai-table (e key &optional default) (getf (kit-ai (kit-of e)) key default))
@@ -194,7 +197,37 @@ cancel into SP2 when the victim is on the ground (a launched victim would drop o
           ((and (>= bars (ai-table e :sp-cancel-bars 1)) (kit-command-ok-p e :sp2)
                 (= (fighter-sf f) (fighter-land-sf f)) (not (eq (state-of (opp-of e)) :air))
                 (< (sim-rnd01) *ai-sp-cancel-p*))              ; one roll, on the first step we see the hit
-           :sp2))))
+           :sp2)
+          ((and (not nq) (not nf) (= (fighter-sf f) (fighter-land-sf f)) (ai-orange-p e b f))
+           (why b :orange :burst)))))
+
+(defun ai-orange-p (e b f)
+  "CHAIN REVERSE (ORANGE) out of a string link that hit and has no link after it? Allowed (BURST-OK-P :orange), the victim
+reeling on the ground within Q1's reach, and healthy (a Burst isn't worth keeping the flash-step for: AI-BURST-WANTED-P):
+one roll (*AI-ORANGE-P* by difficulty)."
+  (let ((g (gauges e)) (o (opp-of e)))
+    (and (eq (burst-ok-p e) :orange) (eq (state-of o) :stun)
+         (< (fighter-dist f) (+ (mv-reach (kit-command-move (fighter-kit f) :q)) 0.2))
+         (not (ai-burst-wanted-p (gauges-reishi g) (gauges-reishi-max g) 0))
+         (< (sim-rnd01) (getf *ai-orange-p* (brain-difficulty b) 0.25)))))
+
+(defun ai-chain-follow-p (e)
+  "In ORANGE's startup-cut window, free, the victim still reeling within Q1's reach: restart the string (felt at once:
+its own combo)."
+  (let ((f (fighter e)))
+    (and (plusp (fighter-chain f)) (member (fighter-state f) '(:idle :guard)) (zerop (fighter-lock f))
+         (not (vpad-down (pilot-vpad (pilot e)) :quick))   ; (J still held from the burst's press: let go first, a new press)
+         (member (state-of (opp-of e)) '(:stun :air))
+         (< (fighter-dist f) (+ (mv-reach (kit-command-move (fighter-kit f) :q)) 0.4)))))
+
+(defun ai-white-p (e s d)
+  "SOUL REVERSE (WHITE) at a neutral decision: allowed, at least *AI-WHITE-RANGE* m from an opponent not attacking, behind
+on Reishi by *AI-WHITE-BEHIND* of the max (fractions), *AI-WHITE-P* of the time."
+  (let ((g (gauges e)) (go (gauges (opp-of e))))
+    (and (eq (burst-ok-p e) :white) (>= d *ai-white-range*) (not (eq (snap-state s) :move))
+         (>= (- (/ (gauges-reishi go) (float (gauges-reishi-max go))) (/ (gauges-reishi g) (float (gauges-reishi-max g))))
+             *ai-white-behind*)
+         (< (sim-rnd01) *ai-white-p*))))
 
 (defvar *ai-bankai-mode* (vector nil nil)
   "Per side, the CPU's Bankai entry: NIL = the kit's :bankai rule (AI-BANKAI-P), :SURE = the rule with its chance 1,
@@ -253,7 +286,7 @@ D = the perceived distance."
   (let* ((f (fighter e)) (g (gauges e)) (kit (fighter-kit f)) (st (fighter-state f)) (mv (fighter-move f))
          (free (member st '(:idle :guard :run)))
          (red (red-p (gauges-reishi g) (gauges-reishi-max g)))
-         (hoho-ok (and (zerop (fighter-hoho-lock f)) (>= (gauges-fs g) *fs-hoho*)))      ; flash-step for one
+         (hoho-ok (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)))   ; flash-step for one
          (guard-k (ai-guard-k e))                                                      ; the guard gauge left
          (q (kit-command-move kit :q)) (new-event (/= (snap-start s) (brain-roll-key b))))
     (when new-event                                       ; one roll per opponent action
@@ -464,6 +497,7 @@ its middle), guard, attack (a weighted pick from the kit's band for D), or wait.
   (cond ((and (kikon-ready-p e) (< d (ai-table e :kikon-range 7.0)) (not (member (snap-state s) '(:down :wakeup :hoho)))
               (kit-command-ok-p e :kikon) (< (sim-rnd01) (ai-kikon-p e)))
          (ai-command b kit :kikon d e) (setf (brain-why b) :kikon))
+        ((ai-white-p e s d) (ai-command b kit :burst d e) (setf (brain-why b) :white))
         ((ai-pip-hurry-p e)                                ; the arm's next crack is near: spend the pip now
          (ai-attack e b kit s d heat t))
         ((and (brain-habit b) (habit-neutral e b kit d)))  ; debug: a scripted player's habit
@@ -565,6 +599,7 @@ fraction of the guard gauge."
         (cond ((ai-burst-roll e b)                                                ; a Burst, else the awakening
                (if (burst-ok-p e) (ai-press b :quick 1 :modded t :act :burst) (ai-press b :awaken 1))
                (setf (brain-why b) :burst))
+              ((ai-chain-follow-p e) (ai-press b :quick 1) (setf (brain-why b) :chain))   ; ORANGE's restart
               ((j-beats-k-p e b) (ai-press b :quick 1) (setf (brain-why b) :j-beats-k))
               ((and (brain-habit b) (habit-fire e b s d)))                     ; debug: a scripted player's habit
               ((and (brain-learn b) (learn-fire e b s d)))                     ; the learning CPU's planned counter
@@ -714,7 +749,7 @@ perception delay) and swings where he reappears."
   "Press counter CMD at distance D when it can go (a J / K only within its reach, unless ANYWHERE: he reappears behind
 us; an SP's Hoho without flash-step is a guard): T when pressed; the read is counted."
   (let* ((kit (kit-of e)) (f (fighter e)) (g (gauges e))
-         (cmd (if (and (eq cmd :hoho) (not (and (zerop (fighter-hoho-lock f)) (>= (gauges-fs g) *fs-hoho*)))) :guard cmd))
+         (cmd (if (and (eq cmd :hoho) (not (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)))) :guard cmd))
          (mv (and (member cmd *kit-commands*) (kit-command-move kit cmd))))
     (when (case cmd
             ((:q :f) (and mv (kit-command-ok-p e cmd) (or anywhere (<= d (+ (mv-reach mv) 0.4)))))

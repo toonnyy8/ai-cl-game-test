@@ -51,7 +51,7 @@ Deliberate deviations:
 | Yamamoto awakens into a stronger Shikai; Kenpachi removes his eyepatch | Yamamoto's awakening is **Bankai: Zanka no Tachi**; Kenpachi's is **Nozarashi** (the cleaver, released by "NOME"; **Kenpachi wears no eyepatch in any form**: in TYBW he has not worn it since the start of the arc, the user's decision 2026-09-26), then climbed in three cups (§6.2); both last to the end of the match | TYBW versions, as the user asked |
 | Guard gauge, guard break when it empties | A **guard gauge** (§4): each blocked hit drains its guard value; empty = GUARD CRUSH (40 f) and no guard until it is full again; the Breaker still breaks at once (and drains 35) | The user asked for it (design v3 G.2); the Breaker stays the "read" tool, the gauge the "pressure" tool |
 | Reverse gauge + Spiritual Power gauge | **Reiatsu** (3 bars) pays for SP1 / SP2 only; a **flash-step gauge** pays for Hoho and Burst Reverse | The user asked for it (design v3 G.1, G.3); two gauges with one job each |
-| Reverse Actions (Soul / Chain / Burst), the game picks one | Only **Burst Reverse**, its own command (mod + Quick) | The one a player must choose deliberately; Soul / Chain would need the Reverse gauge |
+| Reverse Actions (Soul / Chain / Burst), the game picks one | All three on mod + Quick, the state picks one (since 2026-09-30, "Burst modes" at the end): WHITE / BLUE / **orange** CHAIN; the flash-step gauge pays (≥ 70, drained to 0), no Reverse gauge | The user's decision 2026-09-30 (it was Burst Reverse only) |
 | Sublimation (Kikon Channel), Spirit Drive, Reawakening | None: one awakening per match, **with one exception: Kenpachi's Bankai**, a second awakening from Nozarashi's cup 3 (P with ≤ 4 of his own Konpaku, since 2026-09-28; it was red; no gauge; once a match by construction), paid with all his Konpaku but one (§6.2, [DUEL_KEN_BANKAI.md](DUEL_KEN_BANKAI.md)) | Scope; the exception is **the user's decision 2026-09-27** (the research report's question 1) **and 2026-09-28** (the entry's cost) |
 | Hakugeki, jump | None (Step, the dash and Hoho) | Scope |
 | Behind-the-back camera | Behind P1 in VS CPU (the default; the option SIDE switches it); the 3/4 pair camera in VS PLAYER and CPU VS CPU | One screen must show two humans; CPU matches are watched, not steered |
@@ -259,8 +259,8 @@ climbing back, "GUARD" when it returns). The Breaker still breaks at once (Guard
 guard value (`cut-value`, `*cut-mult*`); his J links don't (a blocked RYOTE J J J is 24, K K K 69, into
 West's ward too, ×1.1: the 2nd K K K crushes it).
 
-**Flash-step gauge** (0–100, full at the start, kept through Kikon resets): Hoho costs 30, Burst
-Reverse 70; +3/s once 60 f pass after the last spend, +0.03 per damage taken (a full Reishi bar is
+**Flash-step gauge** (0–100, full at the start, kept through Kikon resets): Hoho costs 30; a burst (any of the three
+modes, "Burst modes" at the end) needs 70 and then drains it to 0, gaining nothing meanwhile; +3/s once 60 f pass after the last spend, +0.03 per damage taken (a full Reishi bar is
 +33); a perfect Hoho refunds 15. Full: Hoho ×3, or Burst + Hoho. HUD: a steel-blue bar under
 REIATSU with ticks at 30 and 70; the part past 70 glows while a Burst is possible.
 
@@ -284,7 +284,8 @@ active now or within 8 f overlaps our hurt cylinder grown by 1 m, or his Breaker
 2.7 m (his Kikon rush dash within 2.1 m). Then: "PERFECT", 0.45 s of 0.25× slow motion for both, the opponent's inputs locked 40 f,
 and the Hoho ends in an automatic counter strike on f14 (60 damage, 36 f stun).
 
-**Burst Reverse** (modifier + Quick, 70 flash-step; blue, as in RoS): only in hitstun or airborne (launched
+**Burst Reverse** (modifier + Quick, 70 flash-step; blue, as in RoS; since 2026-09-30 the BLUE one of three burst modes, also
+from blockstun, draining the gauge instead of spending 70: "Burst modes" at the end; the rest of this paragraph is its press): only in hitstun or airborne (launched
 or knocked down) after the **2nd hit** of a combo, inputs not locked (so never against a perfect
 Hoho's counter strike, which is hit 1 anyway), never during a cinematic. It is pressed in the
 victim's step but applied once both fighters have stepped (before the hits of that step are
@@ -1262,3 +1263,102 @@ beginner tips. Player-facing wording, no internal names; when the rules change, 
   window, so an installed app stays in its window. Keyboard / pad (up from VS CPU wraps to it) and a tap reach it like any
   row. Without the page service (the native sim gate) it does nothing; the menu is not sim, so the gates don't move.
   The pause menu has no MANUAL row: leaving the page mid-match would drop the match.
+
+## Burst modes: white / blue / orange (the user, 2026-09-30)
+
+「幫我從 shift + j 的爆氣中斷衍生出三種爆氣模式，這部分信息可以參考 bleach ROS 的設計」, then 「一樣維持要兩格才能爆氣」
+(every burst still needs two bars, the old Burst threshold) and 「白色爆氣取消防禦量表恢復量增加的功能」 (WHITE gives no
+guard-gauge regen). One button (Shift+J, mod + Quick) now starts one of three bursts; the fighter's state at the press
+picks the colour. While any burst runs, the flash-step gauge drains to 0 and the burst ends there.
+
+**From RoS** (its "Reverse Actions", L2 + □, the game picks the type by the situation): the three types and their
+names, SOUL REVERSE (white, neutral: HP and Spiritual Power recover), CHAIN REVERSE (an anywhere-cancel on your own
+attack that lets the next move out at once and raises Spiritual Power gains; yellow in RoS, **orange** here by the
+user's brief) and BURST REVERSE (blue, the victim's combo breaker, guard gauge recovery); one button, the state
+decides; a gauge that pays for it and that Hoho interacts with. **Ours:** the gauge is the flash-step gauge, not a
+separate Reverse gauge; the drain-to-0 duration; Hoho allowed below a bar during it; the exact numbers; the startup cut;
+the Kikon refund.
+
+### Which mode (rules `burst-mode`, combat `burst-mode-of`)
+
+Inputs not locked (`fighter-lock` 0), not in a cinematic, no burst already running, flash-step ≥ `*fs-burst*` **70**
+(the user's "two bars", every mode; the user's decision 2026-09-30: no lower floor for WHITE / ORANGE):
+
+| State at the press | Mode |
+| --- | --- |
+| `:stun` / `:air` past the combo's `*burst-min-hits*` (2nd) hit, or `:guard-hit` (blockstun, from any blocked hit) | **BLUE** |
+| `:move` (phase `:main`, not a Kikon rush) whose own melee window **hit** (not a block), from its first hit frame to the end of its recovery (`cancel-open-p` on `fighter-land-sf`) | **ORANGE** |
+| `:idle` / walk / `:guard` (no blockstun) / `:run` | **WHITE** |
+| a whiffed or blocked move, Step, Hoho, `:down` / `:wakeup`, a cinematic, locked | none (the press does nothing) |
+
+A projectile / hazard hit never opens ORANGE (like KOSEI, only the fighter's own blade counts).
+
+### Cost, drain, end
+
+- **Nothing is spent up front** (the user's default 2026-09-30); the drain is the cost: `*burst-drain*` **18** flash-step
+  per second from the press. Started at 70 it lasts 3.9 s, at 100 5.6 s.
+- During a burst the flash-step gauge **gains nothing**: no regen, no damage-taken gain, no KOSEI flash-step, no perfect-
+  Hoho refund, nothing a siphon would pay (`pay-gauges`, rules `burst-fs-gain`).
+- **Hoho below one bar:** during a burst a Hoho needs only flash-step > 0 (not `*fs-hoho*` 30); it spends 30 or what is
+  left (rules `hoho-cost`), so a Hoho at 12 empties the gauge and ends the burst. The Hoho lockout still applies.
+- The burst **ends** when the gauge reaches 0 (the regen delay `*fs-delay*` restarts then), or at a Kikon / Soul Break
+  (the round reset ends both fighters' bursts, before the refund below).
+
+### Effects
+
+| Mode | On the press | While it runs |
+| --- | --- | --- |
+| **WHITE** SOUL REVERSE | the shockwave, 8 f hitstop | Reishi **+12/s** (`*white-reishi*`, integer points, never past max); Reiatsu **+15/s** on top of the normal 3/s (`*white-reiatsu*`); the awakening gauge **+2/s** (`*white-awaken*`, not once awakened). No guard-gauge boost (the user's decision 2026-09-30). |
+| **BLUE** BURST REVERSE | today's Burst: `repel!` (the attacker's move / Hoho / step / run ends, he slides `*burst-push*` 5 m away, not stunned; the user neutral at once, invulnerable `*burst-invuln*` 20 f), 8 f hitstop | the guard gauge refills with no delay: `*blue-gg-mult*` **×2** its normal rate when not guarding (11/s, 13/s guardless), and **×0.5** (`*blue-gg-guarding*`, 2.75/s) **even while guarding** (normally GUARD HOLD stops it) |
+| **ORANGE** CHAIN REVERSE | the current move's remaining recovery is cancelled at once (neutral), 8 f hitstop and the shockwave; for the next `*chain-window*` **12** f the next move started has its startup cut by `*chain-cut*` **40 %** (at least 1 f of startup left; the skipped frames' hooks still run), and it may be any command: a J / K string from its first link, L, an SP, I, O | Reiatsu gained from hits dealt and from KOSEI **×1.5**, awakening gauge from hits dealt **×1.5** (`*orange-gain*`) |
+
+The combo's damage scaling, its launch / air-hit limits and the hidden hit-stun tolerance all still apply to an ORANGE
+extension, so the blow-away ends any loop.
+
+### Kikon refund
+
+Every **Kikon** that connects (the rush's strike confirmed as the Kikon; not a Soul Break) gives its user one bar of
+flash-step, `*kikon-fs-refund*` **35** (half of the burst's two bars, so two Kikons pay for a burst), and one Reiatsu bar
+(`*kikon-reiatsu-refund*` 100), each clamped to its max. It lands after the burst ends (the Kikon's reset ends bursts
+first), so it is never lost to the "no gains during a burst" rule.
+
+### Interactions
+
+- **Awakening** (`awaken-state-p`) is unchanged and still breaks attacks like BLUE (`repel!`); a burst running when he
+  awakens goes on (the cinematic freezes the sim, so it doesn't drain there). An awakening and a BLUE pressed on the same
+  step: the cinematic wins, as before.
+- **Hidden hit-stun / blow-away:** BLUE ends the combo as before; ORANGE extends a combo, so the tolerance ends it.
+- **KOSEI:** its flash-step part pays nothing during a burst; its Reiatsu part is ×1.5 in ORANGE.
+- **Kikon cinematics:** they end every burst (above); a burst aura is never drawn on a fighter in `:cine`.
+
+### CPU
+
+- **BLUE** replaces its Burst roll (same rule: past the 2nd hit for its perception delay, worth it, one roll per combo,
+  `*ai-burst-p*`); never from blockstun.
+- **ORANGE:** when its string link hit and the string has no further link (the last link, or a K link out of pips), the
+  victim is on the ground and it is healthy (not `ai-burst-wanted-p`), `*ai-orange-p*` by difficulty; then Q1 on the
+  first free frame (the restart, felt at once: its own combo).
+- **WHITE:** at a neutral decision, behind on Reishi by ≥ `*ai-white-behind*` of max and ≥ `*ai-white-range*` m away,
+  `*ai-white-p*` of the time.
+
+### HUD / VFX / touch
+
+- The flash-step bar is drawn in the burst's colour while it drains (white / blue / orange); outside a burst the part
+  past 70 glows while a burst is possible, in the colour it would be.
+- A brush-flame aura on the fighter in the burst's colour for the whole burst (white HIT tongues, BLUE: a new toon
+  palette 12, orange FIRE tongues); the shockwave stamp on the press; the callout SOUL REVERSE / BURST REVERSE / CHAIN
+  REVERSE in the colour. A human's prompt (SHIFT+J BURST / CHAIN) shows only for BLUE and ORANGE (WHITE is available
+  most of neutral: the bar's glow says so).
+- One-hand: a down-flick is BLUE (hitstun / air, as before) and ORANGE (your move hit); every mode is also on a new
+  **RV** chip above the O chip (shown while a burst is possible).
+- Learning CPU: a burst is not an action class (the model's situations never see the human's hitstun, a burst from
+  neutral has no counter, and the stored table format stays 9 classes); an ORANGE restart is seen as the move it starts.
+
+### Measured (native seed gate, 2026-09-30)
+
+15 pairings × 20 seeds: 300 / 300 K.O., medians 129.9–207.8 s (before 137.4–203.9). In 15 CvC matches (YY / YK / KK
+seeds 1–5): 58 BLUE, 12 ORANGE (every one restarted with a cut J1, 2–3 f cut), 2 WHITE. The awaken A/B ("never" side's
+wins of 60, streams 100 / 300 / 500): Rukia RY 36 / 38 / 34, RK 34 / 37 / 23, RR 36 / 32 / 37; Senjumaru SY 30 / 32 / 36,
+SK 30 / 30 / 22, SR 30 / 31 / 32, SS 38 / 36 / 29, SI 41 / 33 / 29: all ≥ 20. Ichigo IY 3 / 4 / 6, IK 8 / 5 / 6, IR 3 / 7 /
+4, II 2 / 3 / 4, SI 2 / 2 / 4: failing as before this change (the user's damage numbers, DUEL_ICHIGO.md; not tuned here).
+G2: YK now `winner P2 konpaku 0-5 ticks 8247 secs 137.4`. No burst number was retuned: every default held the gate.
