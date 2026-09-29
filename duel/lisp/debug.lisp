@@ -176,8 +176,46 @@ freeze-touches (13), the last dealt / taken totals (14 15), the last band (16: -
                  (aref a 0) (aref a 1) (aref a 2) (aref a 3) (aref a 4) (aref a 5) (aref a 6) (aref a 7) (aref a 8)
                  (aref a 9) (aref a 10) (aref a 11) (aref a 12) (aref a 13))))))
 
+(defvar *cup-acc* (vector (make-array 15 :element-type 'fixnum :initial-element 0)
+                          (make-array 15 :element-type 'fixnum :initial-element 0))
+  "Per side, Kenpachi's NOME cups (debug only: never read by the sim): frames in KATATE / RYOTE / NOMIHOSE / BANKAI /
+KATAUDE (0-4), rung changes 1->2 (5), 2->3 (6), 3->2 (7), 2->1 (8), 3->1 (9: the cash-out), frames at > 4.2 m in cup 2
+/ 3 (10 11), frames guarding (or drinking) in cup 2 / 3 (12 13), the last form (14: -1 none).")
+
+(defun cup-acc-reset ()
+  (dotimes (i 2) (let ((a (svref *cup-acc* i))) (fill a 0) (setf (aref a 14) -1))))
+
+(defun cup-acc-step ()
+  "Per battle step outside cinematics: every Kenpachi side's cup bookkeeping (CUP-ACC-LINE logs it)."
+  (when (and (eq *flow* :battle) (not *cine*) (entity-alive-p *p1*) (entity-alive-p *p2*))
+    (dolist (e (list *p1* *p2*))
+      (let* ((f (fighter e)) (a (svref *cup-acc* (fighter-side f)))
+             (c (and (eq (fighter-character f) :kenpachi)
+                     (position (fighter-form f) '(:nozarashi :ryote :nomihose :bankai :kataude))))
+             (last (aref a 14)))
+        (when c
+          (incf (aref a c))
+          (let ((k (cond ((and (= last 0) (= c 1)) 5) ((and (= last 1) (= c 2)) 6) ((and (= last 2) (= c 1)) 7)
+                         ((and (= last 1) (= c 0)) 8) ((and (= last 2) (= c 0)) 9))))
+            (when k (incf (aref a k))))
+          (when (<= 1 c 2)
+            (when (> (fighter-dist f) 4.2) (incf (aref a (+ 9 c))))
+            (when (member (fighter-state f) '(:guard :guard-hit)) (incf (aref a (+ 11 c))))))
+        (setf (aref a 14) (or c -1))))))
+
+(defun cup-acc-line ()
+  "The gate row's companion: a \"duel cups\" line per side that was awakened Kenpachi."
+  (dotimes (i 2)
+    (let ((a (svref *cup-acc* i)))
+      (when (plusp (+ (aref a 0) (aref a 1) (aref a 2) (aref a 3) (aref a 4)))
+        (log-msg "duel cups seed ~d P~d vs ~a frames ~{~d~^ ~} up12 ~d up23 ~d dn32 ~d dn21 ~d cash ~d far ~d ~d guard ~d ~d"
+                 *match-seed* (1+ i) (fighter-character (fighter (if (zerop i) *p2* *p1*)))
+                 (coerce (subseq a 0 5) 'list) (aref a 5) (aref a 6) (aref a 7) (aref a 8) (aref a 9)
+                 (aref a 10) (aref a 11) (aref a 12) (aref a 13))))))
+
 (defun hash-log ()
   (band-acc-step)
+  (cup-acc-step)
   (when (and (eq *flow* :battle) (plusp *match-tick*) (zerop (mod *match-tick* 600)))
     (log-msg "~a" (state-hash-line)))
   (when (and *gate-log* (eq *flow* :battle) (plusp *match-tick*) (zerop (mod *match-tick* 60)))   ; pace.py reads these
@@ -810,7 +848,7 @@ move-beat choices of DRAW-FIGHTER."
 (defun start-cvc (seed pair)
   "Seeded CPU vs CPU (NORMAL): PAIR = (c1 c2), or NIL to draw both from SEED."
   (setf *match-seed* seed *mode* :cpu-cpu *difficulty* :normal)
-  (band-acc-reset)
+  (band-acc-reset) (cup-acc-reset)
   (senju-acc-reset)
   (sim-rnd-seed seed)
   (setf *picks* (or pair (list (nth (floor (* (length *roster*) (sim-rnd01))) *roster*)
@@ -844,7 +882,7 @@ move-beat choices of DRAW-FIGHTER."
     (log-msg "duel gate row seed ~d ~a ~a secs ~,1f winner ~a forms ~a ~a" *match-seed* (first *picks*) (second *picks*)
              (/ *match-tick* 60.0) (case *winner* (0 "P1") (1 "P2") (t "DRAW"))
              (fighter-form (fighter *p1*)) (fighter-form (fighter *p2*)))   ; (the gamble A/B reads the final forms)
-    (band-acc-line)
+    (band-acc-line) (cup-acc-line)
     (senju-acc-line)
     (setf *gate-busy* nil))
   (unless *gate-busy*

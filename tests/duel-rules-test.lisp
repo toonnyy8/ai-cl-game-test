@@ -897,9 +897,10 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
   (check (and (eq (kit-stance t1) :ke-n-stance) (eq (kit-stance t2) :ke-r-stance) (eq (kit-stance t3) :ke-r-stance)
               (equal (mapcar #'kit-form-name (list t1 t2 t3)) '("KATATE" "RYOTE" "NOMIHOSE"))
               (eq (kit-aura t3) :nomihose) (eq (kit-drink-clip t3) :ke-drink) (equal (kit-respect-callout t2) "OMOSHIREE!")))
-  ;; AI keys: the Kikon chance by cup, the cash-out rule
+  ;; AI keys: the Kikon chance by cup, the cash-out rule (the near cash-out below 55 since the 2x drain: DUEL_NOZARASHI_V2.md,
+  ;; "The CPU after the faster drain")
   (check (and (~= 0.25 (getf (kit-ai t1) :kikon-p)) (~= 0.5 (getf (kit-ai t2) :kikon-p)) (~= 0.9 (getf (kit-ai t3) :kikon-p))
-              (equal (getf (kit-ai t3) :cashout) '(:punish 30 :near 6.0 :below 60.0)) (null (getf (kit-ai t2) :cashout)))))
+              (equal (getf (kit-ai t3) :cashout) '(:punish 30 :near 6.0 :below 55.0)) (null (getf (kit-ai t2) :cashout)))))
 
 ;;; ================================================================ Kenpachi's Bankai and 片腕 (docs/DUEL_KEN_BANKAI.md, the user's decisions 2026-09-28)
 (let ((b (kit :kenpachi :bankai)) (a (kit :kenpachi :kataude)) (t3 (kit :kenpachi :nomihose)))
