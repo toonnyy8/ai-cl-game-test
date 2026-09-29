@@ -1140,6 +1140,15 @@ host-tested; her hook is `senju-siphon`. The probe 2480 (2450+30): 星 round her
   a tap or K1 → L before any J → L is refused (`refused L: 0 passes stored`, `refused SIG: kit`); SP1 at 0 passes still
   releases 褥 and 焼野原.
 
+**The seed gate after it** (seeds 1–20, 2125+k): SY 143.9 s (Senjumaru 10), SK 132.9 (6), SR 186.1 (6), SS 197.9 (P1 9 /
+P2 11), SI 180.5 (16); 100 / 100 K.O., every median in 125–210 s. The pacing lines: the loom's CPU threw 134 quick weaves
+(SR 63, SS 47, SY 16, SI 8), made 36 releases by tap / K → L and 44 SP1 hanks, and **refused 0 releases** (it never taps
+at 0). **The awaken A/B** (P1 "never awaken", debug 39020, seeds 1–60 / 61–120 / 121–180 through 30000+k): SY 28 / 28 / 27,
+SK 27 / 29 / 25, SR 37 / 38 / 37, SS 40 / 41 / 40, SI 45 / 44 / 43 wins of 60: ≥ 25 everywhere (the criterion: ≥ 20). No
+retune. The awakened loom lost ground in SR (Senjumaru 13 → 6 wins in the gate, "never" 38 of 60): with nothing woven it
+can no longer throw a free 1-pass zone. If the user wants it back, the levers are `:l-after-j` (more quick weaves) and
+the CPU's long weave distances.
+
 ## Playtest: the drapes fade near the camera (the user, 2026-09-29)
 
 「千手丸卍解後，如果太接近場邊就會被布幕遮蔽視線。」 The 18 drapes hang on the plaza's rim at r 16.8 m, 4 m tall, but the
