@@ -606,7 +606,7 @@ the first alive beside it (LIVE2). Its name is called out."
 (defun senju-unravel (e)
   "L's release + S (or the combo cut's S): the weave's bolt goes, the hank of the move unravels as its zone (unfolding
 *UNFOLD* / *UNFOLD-COMBO* frames, fragile: SENJU-TORN), the form advances to the next hank."
-  (let* ((f (fighter e)) (st (sj e)) (n (move-param e :hank)) (combo (move-param e :combo))
+  (let* ((st (sj e)) (n (move-param e :hank)) (combo (move-param e :combo))
          (passes (release-passes (sjs-woven st))) (unfold (if combo *unfold-combo* *unfold*)))
     (destroy-entity (sjs-bolt st))
     (senju-cut-live e)
