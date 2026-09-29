@@ -1338,7 +1338,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
         for k = (kit :senjumaru (hank-form n))
         for l = (kit-command-move k :sig)
         for lk = (kit-l-link k :sj-t-k1)
-        do (check (and (= n (getf (mv-params l) :hank)) (equal (mv-hold l) '(20 60)) (= 6 (mv-s l)) (member :bind (mv-flags l))
+        do (check (and (= n (getf (mv-params l) :hank)) (equal (mv-hold l) '(1 600)) (= 6 (mv-s l)) (member :bind (mv-flags l))
+                       (eq 'senju-weave-release (mv-release l)) (null (mv-release lk))
                        (= n (getf (mv-params lk) :hank)) (null (mv-hold lk)) (= 8 (mv-s lk)) (getf (mv-params lk) :combo)
                        (>= (mv-reach lk) 9.0) (eq (intern (format nil "SJ-TACHINAOSHI-~d" n) :keyword) (mv-name (kit-command-move k :sp1)))
                        (= 1 (kit-command-cost k :sp1)) (kit-awakening k) (zerop (kit-heal k))
@@ -1363,9 +1364,23 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (~= 1.4 (getf (mv-params (kit-next t1 :sj-k2 :f)) :pull)) (~= 3.3 (kit-walk t1)) (~= 3.6 (kit-walk b))))
   ;; the CPU: the rule's keys, the loom's hold by distance (星 closer), the Shikai taps L
   (check (and (equal (getf (kit-ai b) :awaken-rule) '(:ranged-share 0.3 :min-taken 150 :or-opp-rooted t))
-              (= 62 (senju-sig-hold t1 7.0)) (= 42 (senju-sig-hold t1 5.0)) (= 22 (senju-sig-hold t1 3.0))
-              (= 62 (senju-sig-hold t6 5.5)) (= 42 (senju-sig-hold t6 3.0)) (= 1 (senju-sig-hold b 3.0))
+              (= 31 (senju-sig-hold t1 7.0)) (= 31 (senju-sig-hold t1 5.0)) (= 1 (senju-sig-hold t1 3.0))   ; a segment; a tap
+              (= 31 (senju-sig-hold t6 5.5)) (= 31 (senju-sig-hold t6 3.0)) (= 1 (senju-sig-hold b 3.0))
               (~= 0.5 (getf (kit-ai t6) :opp-rush-hold)) (null (kit-reset-form t1)) (eq :base (kit-reset-form b)))))
+
+;; L: hold to weave, tap to release (the user, 2026-09-29): under 10 f is a tap; a weave's frames count from its 10th (those
+;; 10 at once), one a frame after, summed over segments on the hank up to 3 passes; a release (the tap, K -> L, SP1) makes
+;; the stored passes, at least 1; a hit while weaving voids the hank (the next one, nothing woven)
+(flet ((seg (woven frames) (loop for h from 1 to frames do (setf woven (weave-add woven h))) woven))
+  (check (and (= 10 *weave-tap*) (weave-tap-p 9) (not (weave-tap-p 10))
+              (= 0 (seg 0 9)) (= 10 (seg 0 10)) (= 15 (seg 0 15))            ; a tap weaves nothing; a hold counts from f1
+              (= 30 (seg (seg 0 15) 15)) (= 1 (weave-stored (seg (seg 0 15) 15)))   ; two segments of 15: one pass
+              (= 45 (seg (seg (seg 0 15) 15) 15)) (= 2 (weave-stored 45))
+              (= 60 (seg 45 40)) (= 3 (weave-stored (seg 0 200)))            ; capped at three passes
+              (= 30 (seg 30 9))                                             ; a tap keeps what is stored
+              (= 1 (release-passes 0)) (= 1 (release-passes 19)) (= 2 (release-passes 45)) (= 3 (release-passes 60))
+              (equal '(4 0) (multiple-value-list (weave-void 3))) (equal '(1 0) (multiple-value-list (weave-void 6))))))
+(check (and (eq :sig (mv-kind (find-move :sj-weave-stop))) (= 6 (mv-total (find-move :sj-weave-stop)))))
 
 ;; SP1 裁ち直し releases the next two hanks (the user, 2026-09-29): the queue moves +2 (6 wraps to 1); the move cuts the live
 ;; zone(s) at f0 and releases at f8 and f14 (the combo cut's rules); off a landed link both land inside a stagger (26 f:
