@@ -525,8 +525,10 @@ Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規�
 驗證方法：每 600 步印一行 `duel hash`（`state-hash-line`，`duel/lisp/debug.lisp` 第 83～96 行，位置、朝向、每個量表、上一次 Kikon 突進值幾個魂魄、電腦的 heat）。`tests/scripts/duel-cvc-yk.json` 用種子 7 讓兩個電腦打完一場，最後一行一定是：
 
 ```
-duel -> RESULTS winner P1 konpaku 2-0 ticks 9636 secs 160.6
+duel -> RESULTS winner P2 konpaku 0-6 ticks 5516 secs 91.9
 ```
+
+（2026-09-29 劍八電腦在二、三杯變得更積極（只改 AI，[DUEL_NOZARASHI_V2.md](DUEL_NOZARASHI_V2.md)「The CPU after the faster drain」）之後，這一行和 KK 變了，YY 不變；之前（NOME 下降加快兩倍之後）是 `winner P1 konpaku 2-0 ticks 9636 secs 160.6`。）
 
 （2026-09-28 加入露琪亞之後，這一行和 YY、KK 的 hash 行都沒變。hash 行只在她身上多印兩個欄位：`u<…>`（冷度量表的第二個數：碎裂之後還剩幾幀不能降溫）和 `fr<霜剩幾幀>`（被凍到的一方），她的冷度就是 `m<…>`；沒有這兩種狀態的行一個字都不變。同一天的冷度量表重做、劍八「一套連段扣一格」和山本「南」取消冷卻之後，這一行和 KK 仍然不變（種子 7 的兩場都沒有卍解的連段）；YY 的結果也一樣，只有 t=6600 那一行的冷卻欄位從 220 變成 0，因為南不再有冷卻。）
 

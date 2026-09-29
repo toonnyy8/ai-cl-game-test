@@ -669,3 +669,62 @@ guard gauge".
 - **The phone**: the U latch of DUEL_MOBILE_DESIGN §3.4 is deleted: a resting thumb holds DRINK and the garb like any
   guard.
 
+
+## The CPU after the faster drain (2026-09-29)
+
+After the 2× NOME drain (DUEL_DESIGN, "Playtest decision: faster NOME drain") Kenpachi's CPU won 5 of 20 against
+Yamamoto and 6 of 20 against Rukia. The user watched it and judged: 「是劍八 ai 的積極性太低導致難以維持在高杯狀態達到穩定輸出，
+這才使得勝率太低。實際操作起來感覺劍八的強度還是蠻足夠的。」 The CPU is too passive to hold the high cups; the character is
+strong enough in human hands. So this pass changes **only the AI** (`:ai` tables in ken.lisp, five generic keys in
+ai.lisp); no tuning.lisp number, move or rule changed.
+
+**Diagnosis first.** A debug-only cup log (`*cup-acc*`, debug.lisp; a `duel cups` line after every gate row for each
+awakened Kenpachi side: frames per form, rung changes, frames beyond 4.2 m and frames guarding in cups 2 / 3) over the
+seed gate's YK / KK / RK matches:
+
+- **Cup 2 never drains to cup 1** (0 drops 2 → 1 in 60 matches; RYOTE's 180 f pause is long enough).
+- **Cup 3 almost never drains to cup 2** (0.1–0.2 a match): nearly every cup 3 ended in the CPU's own **near cash-out**
+  (1.9–2.0 a match), which sets NOME to 0 and cup 1. At 20/s cup 3 falls from 100 to the old `:below 60` in 2 s, so
+  cup 3 lasted 1.7–2.3 s and the CPU spent about a third of its awake time back in KATATE.
+- **Cup 3 idles at range**: 23–26 % of its frames beyond 4.2 m; the far bands had a "wait" option and the dash only
+  fired 2.5 m outside the preferred range.
+- The combat log (pace lines, the gate's YK with 2115) put his Konpaku losses in RYOTE (4.2 a match lost vs 1.9
+  taken), mostly to Yamamoto's East string → O ender Kikon on a red Kenpachi. LEAP CLEAVE rushed from up to 9 m whiffed
+  23 of 34 times (its direction locks at take-off).
+
+**What changed (AI only).**
+
+| Form | Before | After |
+|---|---|---|
+| KATATE (cup 1) | `:kikon-range 9.0` | `:kikon-range 5.0` (the same in cups 2 and 3: rush from where the leap lands) |
+| RYOTE (cup 2) | intents pressure 5 / defend 1; bands with a "wait" option weighted 3 / 2 / 1 / 1; `:dash 0.8` from 2.5 m outside; respect 120 f after a hit; block string 0.85 | pressure 6 / **defend 0**; "wait" 1 / 1 / 0 / 0 (a Step or the Meteor instead at range); **`:dash 1.0` from 0.5 m outside** (`:dash-gap`); **`:respect 30`**; **`:neutral-guard 0.1`** (a guard against a committed move stays 0.35); block string 0.95 |
+| NOMIHOSE (cup 3) | pressure 6; bands with "wait" 2 / 1 / 1; dash from 2.5 m; drink 0.45; near cash-out below 60 | pressure 7; "wait" 1 / 0 / 0; **dash from 0.3 m outside**; **`:tempo 0.6`** (decides 1.7× as often), **`:attack +0.2`**, **`:respect 0`**, `:neutral-guard 0.1`; **DRINK a committed move 0.7** (the drunk half feeds NOME at 0.30 a point); **near cash-out only below 55** (just before the drop to cup 2, which keeps 50 NOME) |
+| Base, Bankai, KATAUDE | — | unchanged (see below) |
+
+The new generic keys (ai.lisp; a kit without them plays exactly as before, so YY / RY / RR are unchanged):
+`:tempo` (× the neutral decision interval), `:attack` (+ the neutral attack chance), `:neutral-guard` (a neutral guard's
+chance, else `:guard`), `:respect` (frames in DEFEND after taking a hit, else `*ai-respect*`), `:dash-gap` (else
+`*ai-dash-gap*`).
+
+**Cup stats, before → after** (seed gate, seeds 1–20; seconds per match; KK counts both sides):
+
+| | vs Yamamoto | vs Kenpachi | vs Rukia |
+|---|---|---|---|
+| KATATE / RYOTE / NOMIHOSE | 17.9 / 25.5 / 5.2 → 16.5 / 22.7 / 7.7 | 20.9 / 30.9 / 6.5 → 15.4 / 25.2 / 9.0 | 27.6 / 40.7 / 4.5 → 19.2 / 34.8 / 5.8 |
+| share of awake time in cup 3 | 9 % → 14 % | 10 % → 16 % | 5 % → 8 % |
+| mean cup-3 stay | 1.9 → 2.8 s | 2.3 → 3.6 s | 1.7 → 2.3 s |
+| cup 3 → 2 (drain) / 3 → 1 (cash-out) per match | 0.2 / 1.9 → 0.8 / 1.4 | 0.2 / 1.9 → 0.8 / 1.1 | 0.1 / 2.0 → 0.6 / 1.2 |
+| cup 2 → 1 per match | 0.0 → 0.0 | 0.0 → 0.0 | 0.0 → 0.1 |
+| frames beyond 4.2 m in cup 3 | 23 % → 22 % | 23 % → 15 % | 26 % → 15 % |
+
+**Gate** (20 seeds per pairing, all K.O.): YK 138.1 → **125.4 s**, Kenpachi 5 → **7** (seeds 1–60: 18 → 22 of 60; seeds 21–60 run at medians 121.8 / 121.1 s, before 123.8 / 131.6); KK 133.9 → **125.1 s**, 14 / 6 →
+**9 / 11**; RK 143.1 → **134.4 s**, Kenpachi 6 → **8**; YY 134.7, RY 134.1, RR 185.6 s unchanged (identical per seed).
+
+**What didn't work, and the limit.** More aggression makes both sides' Konpaku go faster: every variant that raised his
+wins further shortened YK / KK below the 125 s floor. The strongest (cup 2 `:tempo 0.6` + `:attack 0.2`, the near
+cash-out at 60) won 9 / 20 YK (30 / 60 over seeds 1–60, against the old 18 / 60) but put KK at 112 s and YK at 124 s. A
+punish-only cash-out kept cup 3 longer but lost wins against Yamamoto (390 at East's ×1.5 taken is his biggest single hit); a lower
+Bankai entry chance (0.3) lengthened matches but cost wins too; a lower cup-2 Kikon chance changed nothing. Twenty
+seeds carry about ±2 wins of noise: read the win column as "up by about two", not as exact.
+The base form and the Bankai were left alone: the base form already leads (Yamamoto loses 1.25 Konpaku in it a match,
+Kenpachi 0.65), and a faster Bankai costs pace the gate doesn't have.
