@@ -17,9 +17,9 @@
 (defparameter *run-ichigo* 10.0 "Ichigo's run (Shikai).")
 (defparameter *walk-kessa* 3.6 "KESSA's walk.")
 (defparameter *run-kessa* 9.0 "KESSA's run.")
-(defparameter *ichigo-mult* 1.3 "The Shikai's damage x (74100+k: 0.5 + k / 100; the user 2026-09-29: too strong, 1.6 -> 1.3, untested) ...")
-(defparameter *ichigo-taken* 0.7 "... and the damage it takes x (74200+k; 0.8 -> 0.7 after the J/K cut + hit-stun merge: the never-awaken A/B fell to 17-19 of 60 vs Senjumaru / Kenpachi).")
-(defparameter *kessa-mult* 1.1 "KESSA's damage x (74300+k) (1.25 -> 1.35 after the J/K cut + hit-stun merge; the user 2026-09-29: too strong, -> 1.1, untested) ...")
+(defparameter *ichigo-mult* 1.0 "The Shikai's damage x (74100+k: 0.5 + k / 100; the user 2026-09-29: 1.6 -> 1.3 -> 1.0) ...")
+(defparameter *ichigo-taken* 0.8 "... and the damage it takes x (74200+k; 0.7 for one build, back to 0.8 by the user 2026-09-29).")
+(defparameter *kessa-mult* 0.95 "KESSA's damage x (74300+k; the user 2026-09-29: 1.35 -> 1.1 -> 0.95) ...")
 (defparameter *kessa-taken* 1.0 "... and the damage it takes x (74400+k).")
 ;; the Shikai's stance 月待 TSUKIMACHI
 (defparameter *tsuki-up* 6 "The stance's frame where it is up: the follow-ups fire from here.")

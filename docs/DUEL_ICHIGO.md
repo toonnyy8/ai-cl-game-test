@@ -1284,3 +1284,7 @@ stand and swing; they no longer rush at the opponent.
   median under 210 s). No gate was run for this, at the user's word. Just before it, the merged build (J/K cut + hit-stun +
   clone cost) had `*ichigo-taken*` 0.8 → 0.7 so the never-awaken A/B cleared 20 of 60 vs Kenpachi / Senjumaru (all 15
   pairings then 300/300 K.O., medians 137–201 s, every A/B cell ≥ 20, measured on the native gate).
+- **Damage 1.0 / 0.95, taken 0.8** (the user 2026-09-29, after the cut above: 「一護始解跟卍解的倍率到 1 跟 0.95，始解受到的
+  傷害從 0.7 倍升回到 0.8 倍」): `*ichigo-mult*` 1.3 → **1.0**, `*kessa-mult*` 1.1 → **0.95**, `*ichigo-taken*` 0.7 →
+  **0.8**. Not a gate, the user's call; the native gate, read for information: IY 180.5 s (Ichigo 5 / 15), IK 184.5 (7 / 13),
+  IR 182.1 (3 / 17), II 250.4, SI 230.9 (Ichigo 4 / 16), all 20/20 K.O.; II and SI are over the 210 s ceiling.
