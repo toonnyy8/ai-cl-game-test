@@ -162,7 +162,8 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
   "The stance's follow-ups: non-button strings (KIT-NEXT) the :tick hook starts (TSUKI-STEP).")
 (defparameter *ichigo-hooks* '(:tick ichigo-tick :hit ichigo-hit :struck ichigo-struck))
 (defparameter *kessa-hooks* '(:tick ichigo-tick :step ichigo-step-clone :ok ichigo-ok :parried ichigo-catch :hit ichigo-hit
-                              :struck ichigo-struck :deck ichigo-deck :soul-break-cine ic-kessa-getsuga-cine))
+                              :struck ichigo-struck :deck ichigo-deck :soul-break-cine ic-kessa-getsuga-cine
+                              :kikon-worth ichigo-kikon-worth))
 
 (defkit :ichigo :base
   :name "ICHIGO" :body :ichigo :weapon :zangetsu-long :stance :ic-stance :hide (:kessa :mark)
@@ -370,6 +371,10 @@ guard (or a gauge < 50) else RANGETSU; the middle, the dash in or the Getsuga; f
     (do-entities (h (hz hazard)) (when (and (eql (hazard-owner hz) e) (clone-p hz)) (push h out)))
     (sort out #'< :key (lambda (h) (icc-born (hazard-data (hazard h)))))))
 (defun clone-live-p (c) (member (icc-state c) '(:idle :answer)))
+(defun ichigo-kikon-worth (e)
+  "KESSA's :kikon-worth hook: what 千影 would take if O were pressed now (CLONE-KONPAKU of the live clones), for the red
+Konpaku hint (the user 2026-09-29: it followed the kit's fixed 3)."
+  (clone-konpaku (count-if (lambda (h) (clone-live-p (hazard-data (hazard h)))) (ichigo-clones e))))
 (defun clone-count (e) "E's live clones (idle or answering)." (count-if (lambda (h) (clone-live-p (hazard-data (hazard h)))) (ichigo-clones e)))
 (defun clone-fade (c) (setf (icc-state c) :fade (icc-fade c) 0))
 

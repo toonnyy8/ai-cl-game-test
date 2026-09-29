@@ -550,6 +550,14 @@ HUD's P BANKAI prompt, the phone's AWAKEN chip.)"
     (and (kit-bankai-form (fighter-kit f))
          (bankai-allowed-p (awaken-state-p e f) (gauges-konpaku (gauges e))))))
 
+(defun kikon-worth (e)
+  "Konpaku E's Kikon would take now: a running rush's worth (fixed at its start), else the kit's :kikon-worth hook (E) (a
+worth that follows the fighter's state), else the kit's :kikon-konpaku. (The red Konpaku hint: hud.lisp AT-STAKE.)"
+  (let* ((f (fighter e)) (mv (fighter-move f)) (h (kit-hook (kit-of e) :kikon-worth)))
+    (cond ((and mv (eq (fighter-state f) :move) (eq (mv-kind mv) :kikon)) (fighter-kikon-n f))
+          (h (funcall h e))
+          (t (kit-kikon-konpaku (kit-of e))))))
+
 (defun kikon-ready-p (e)
   "Is E's opponent red: would E's Kikon rush, connecting now with the button held, be the Kikon?
 (The HUD's HOLD O prompt, the CPU's rush.)"

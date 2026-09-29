@@ -367,10 +367,10 @@ PIPS-SHATTER), and dim embers for the lost ones; PITCH radii apart (the landscap
               (t (%soul-flame cx py (* 0.5f0 r) 0f0 0.3f0 0.3f0 0.35f0 0.3f0 0.3f0 0.3f0 0.35f0 0.6f0)))))))
 
 (defun at-stake (e)
-  "E's Konpaku flames the opponent's Kikon would take if it landed now: his current form's worth (the kit's
-:kikon-konpaku, what the rush reads when it starts), capped (control.lisp KONPAKU-AT-STAKE)."
+  "E's Konpaku flames the opponent's Kikon would take if it landed now: its current worth (combat.lisp KIKON-WORTH:
+the running rush's, a kit's :kikon-worth hook, else its :kikon-konpaku), capped (control.lisp KONPAKU-AT-STAKE)."
   (let ((o (fighter-opp (fighter e))))
-    (if (and o (entity-alive-p o)) (konpaku-at-stake (gauges-konpaku (gauges e)) (kit-kikon-konpaku (kit-of o))) 0)))
+    (if (and o (entity-alive-p o)) (konpaku-at-stake (gauges-konpaku (gauges e)) (kikon-worth o)) 0)))
 
 (defun-fast %hud-reiatsu (x y sw sh gap ra right)
   "Reiatsu: 3 bars of *REIATSU-BAR* each (full ones bright), from the panel's outer edge."
