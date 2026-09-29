@@ -851,7 +851,7 @@ modules): YY 168.1 s (149–204), YK 154.8 s (122–176), KK 150.3 s (117–177)
 ## 8. Flow and screens
 
 TITLE (the logo, press start and the credit; the "YAMAMOTO GENRYUSAI VS ZARAKI KENPACHI" matchup line was removed
-at the user's request on 2026-09-29, the roster has grown past two) → MODE: VS CPU / ENDLESS / PRACTICE / VS PLAYER / CPU VS CPU / SETTINGS / CONTROLS (2026-09-28: PRACTICE,
+at the user's request on 2026-09-29, the roster has grown past two) → MODE: VS CPU / ENDLESS / PRACTICE / VS PLAYER / CPU VS CPU / SETTINGS / CONTROLS / MANUAL (the in-game manual, below; 2026-09-28: PRACTICE,
 SETTINGS, and ONE-HAND VS CPU merged into VS CPU: one-handed wherever the ONE-HAND setting is in effect; DUEL_GAMEPLAY.md
 "Flow", DUEL_MOBILE_DESIGN.md §16) → SELECT (P1 picks, then
 P2 or the CPU, then the CPU difficulty EASY / NORMAL / HARD; both models stand on the plaza;
@@ -1241,3 +1241,24 @@ Left separate on purpose (each has one user, and the mechanics differ): `:blade`
 hazard blade) and `:parry-block` / `:shield` (a parry that blocks vs a guard window that catches). A third user of either
 is the moment to fold them into one key. Registration of a new character: two MANIFEST lines, its `*pairs*` rows in
 debug.lisp (the gate is now 15 pairings, 2125+k with k 0–14), its brush names / glyphs appended from its art file.
+
+## In-game manual (the user, 2026-09-30)
+
+「完成後請寫一個中文版的遊戲系統與角色操作的 html 說明文件，並在遊戲中可以跳轉到說明頁中。」 A Traditional Chinese
+player manual: modes and menus (VS CPU, ENDLESS, PRACTICE and its options, SETTINGS, portrait / landscape), the controls
+(keyboard, pad, the one-hand gestures and chips), the HUD and every gauge, the core rules (J / K strings, 防 > J > I > 防,
+guard gauge, Step / Hoho, Kikon and Soul Break, Burst, the awakening, KOSEI, the hidden blow-away, the learning CPU), one
+collapsible section per character (every form's J / K / L / SP1 / SP2 / I / O, the awakening, its own gauge, tips) and
+beginner tips. Player-facing wording, no internal names; when the rules change, the manual changes with them.
+
+- **Source:** `duel/web/manual.html`, one self-contained page (inline CSS and a few lines of JS, no external fonts or
+  scripts; forced dark, `#07070c`; mobile first: tables turn into stacked cards under 640 px, no horizontal scroll at
+  390 px). Its sticky 「← 返回遊戲」 link goes to `./`.
+- **Build / cache:** `build.sh` copies every `duel/web` file but `head.html` next to `index.html`, so it lands in
+  `dist/duel/manual.html`. `sw.js` lists it in `FILES` (the installed app opens it offline); the service worker's
+  version hash now covers the page files too (`index.*` + `duel/web/*`), so a manual-only edit also installs a fresh cache.
+- **The menu row:** MODE's last row **MANUAL** (flow.lisp `*mode-menu*`; ASCII, as the pixel font has no CJK) calls
+  onehand.lisp `open-manual`: page set 1 (`+ps-manual+`), and `pwa.js` does `location.href = 'manual.html'` in the same
+  window, so an installed app stays in its window. Keyboard / pad (up from VS CPU wraps to it) and a tap reach it like any
+  row. Without the page service (the native sim gate) it does nothing; the menu is not sim, so the gates don't move.
+  The pause menu has no MANUAL row: leaving the page mid-match would drop the match.

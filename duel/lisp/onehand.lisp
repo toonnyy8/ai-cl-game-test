@@ -19,8 +19,14 @@ last TOUCH-LAYOUT!.")
 
 ;;; page services (pf_page_get / pf_page_set, duel/web/pwa.js)
 (defconstant +pg-coarse+ 0) (defconstant +pg-back+ 1) (defconstant +pg-safe-top+ 3) (defconstant +pg-safe-bottom+ 4)
-(defconstant +ps-wake+ 0)
+(defconstant +ps-wake+ 0) (defconstant +ps-manual+ 1 "Page set 1: open the manual page (manual.html) in this window.")
 (defconstant +pg-setting+ 10 "Page get / set 10 + i: SETTINGS row i (control.lisp *SETTINGS* order), option index + 1.")
+
+(defun open-manual ()
+  "MODE's MANUAL row: the page opens manual.html in the same window (an installed app stays in its window; the
+manual's back link returns). Without the page service (the native gate) nothing happens."
+  (log-msg "duel manual")
+  (page-set +ps-manual+ 1))
 
 (defun portrait-p () (> (window-height) (window-width)))
 (defun one-hand-offered-p ()

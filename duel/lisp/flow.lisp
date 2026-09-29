@@ -1,5 +1,5 @@
 ;;;; flow.lisp — the screens (design-v1 §6): TITLE → MODE (VS CPU / ENDLESS / PRACTICE / VS PLAYER / CPU VS CPU /
-;;;; SETTINGS / CONTROLS; ENDLESS: endless.lisp, its STAGE CLEAR is the flow state :clear) → SELECT (P1, then P2 / the CPU, then difficulty and, VS CPU / PRACTICE, the camera; both models on the
+;;;; SETTINGS / CONTROLS / MANUAL (the page's manual.html, onehand.lisp OPEN-MANUAL); ENDLESS: endless.lisp, its STAGE CLEAR is the flow state :clear) → SELECT (P1, then P2 / the CPU, then difficulty and, VS CPU / PRACTICE, the camera; both models on the
 ;;;; plaza) → INTRO → BATTLE (pause: RESUME / RESTART / CHARACTER SELECT / TITLE, VS CPU also CAMERA; PRACTICE: RESUME /
 ;;;; RESET POSITION / DUMMY / HP REFILL / GAUGES / P1 HP / P1 KONPAKU / DUMMY HP / DUMMY KONPAKU / CHARACTER SELECT /
 ;;;; TITLE / CAMERA) → FINISH (K.O. / TIME) → RESULTS
@@ -289,7 +289,7 @@ end) and, HP REFILL AUTO, its Reishi once it is out of its hit / block reactions
               ((eq *mode* :endless) (setf *select-phase* 0))
               (t (decf *select-phase*)))))))
 
-(defparameter *mode-menu* '("VS CPU" "ENDLESS" "PRACTICE" "VS PLAYER" "CPU VS CPU" "SETTINGS" "CONTROLS"))
+(defparameter *mode-menu* '("VS CPU" "ENDLESS" "PRACTICE" "VS PLAYER" "CPU VS CPU" "SETTINGS" "CONTROLS" "MANUAL"))
 
 (defvar *learn-reset-t* -9.0 "*FT* when RESET LEARNING was chosen (its note says so for a moment).")
 (defun settings-items ()
@@ -352,7 +352,8 @@ away from the rest); VS CPU / ENDLESS / PRACTICE with two hands add the CAMERA t
                                   *one-hand* (and (< i 3) (one-hand-effective-p)))   ; PRACTICE: one-handed when the
                             (go-select))                                              ; setting is in effect
                (5 (set-flow :settings))
-               (6 (set-flow :controls))))
+               (6 (set-flow :controls))
+               (7 (open-manual))))
            (when (back-p) (play-sfx :back) (go-title)))
     (:settings (let* ((n (length *settings*)) (i (menu-nav (+ 2 n))) (d (option-dir)))   ; confirm / a tap: the next option
                  (cond ((eql i (1+ n)) (go-mode 5))                                      ; BACK

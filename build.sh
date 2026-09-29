@@ -50,7 +50,8 @@ emcc -O2 -DECL_C_COMPATIBLE_VARIADIC_DISPATCH -I. -Ivendor/ecl/include -Ivendor/
   --shell-file "$OUT/shell.html" ${EMCC_EXTRA:-} -o "$DIST/index.html"
 if [ -n "$WEB" ] && [ -d "$WEB" ]; then
   for f in "$WEB"/*; do [ "$(basename "$f")" = head.html ] || cp "$f" "$DIST/"; done
-  # a service worker's cache name carries the build's hash: every new build installs a fresh cache
-  [ -f "$DIST/sw.js" ] && sed -i "s/@VERSION@/$(cat "$DIST"/index.html "$DIST"/index.js "$DIST"/index.wasm | sha1sum | cut -c1-12)/" "$DIST/sw.js"
+  # a service worker's cache name carries the hash of the build and the page files (e.g. a manual edit alone):
+  # every change installs a fresh cache
+  [ -f "$DIST/sw.js" ] && sed -i "s/@VERSION@/$(cat "$DIST"/index.html "$DIST"/index.js "$DIST"/index.wasm "$WEB"/* | sha1sum | cut -c1-12)/" "$DIST/sw.js"
 fi
 echo "built $DIST/index.html"
