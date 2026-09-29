@@ -300,7 +300,7 @@ something started."
       (:step (unless (kit-rooted kit) (cold-spend! e kit :step) (start-step e f) t))   ; a rooted form (Rukia's zero) refuses
       (:hoho (when (and (not (kit-rooted kit)) (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f)))   ; Step and Hoho
                (cold-spend! e kit :hoho) (start-hoho e f) t))
-      (:awaken (let ((free (member (fighter-state f) '(:idle :guard))))
+      (:awaken (let ((free (awaken-state-p e f)))
                  (cond ((awaken-allowed-p free (gauges-awaken g) (gauges-awakened g)) (awaken! e) t)
                        ((and (kit-bankai-form kit) (bankai-allowed-p free (gauges-konpaku g)))
                         (bankai! e) t))))
@@ -320,6 +320,15 @@ something started."
              (cold-spend! e kit cmd)                                             ; Rukia's cold
              (start-move e mv button)
              t))))))
+
+(defun awaken-state-p (e f)
+  "May E awaken (or take Kenpachi's Bankai) from its state: free (idle / guard / blockstun), or where a Burst could be
+pressed (a reaction or airborne, inputs not locked, past the combo's *BURST-MIN-HITS*th hit), no flash-step needed: the
+awakening breaks his attack as a Burst does (REPEL!; the user 2026-09-29)."
+  (declare (ignore e))
+  (let ((s (fighter-state f)))
+    (or (member s '(:idle :guard :guard-hit))
+        (and (member s '(:stun :air)) (zerop (fighter-lock f)) (>= (fighter-combo-hits f) *burst-min-hits*)))))
 
 (defparameter *neutral-commands* '(:kikon :awaken :hoho :step :breaker :sp2 :sp1 :sig :f :q)
   "Commands from idle / walk / guard. :kikon starts the Kikon rush at any time (whether it becomes a
@@ -576,7 +585,7 @@ cold). T when a new move / action started."
 (defun stun-step (e f vp)
   "A reaction / blockstun counts down (Burst Reverse may be pressed); then neutral (guard again if
 Guard is held)."
-  (when (zerop (fighter-lock f)) (command! e f vp '(:burst)))
+  (when (zerop (fighter-lock f)) (command! e f vp '(:burst :awaken)))
   (when (>= (incf (fighter-sf f)) (fighter-stun f))
     (to-idle e)
     (when (guard-p e vp) (setf (fighter-state f) :guard (fighter-guard-t f) *guard-raise*) (play-clip e :sh-guard :blend 3))))
@@ -644,7 +653,7 @@ clip follows the heading: forward run, side slide or back-skate (RUN-CLIP)."
 (defun air-step (e f vp)
   "Airborne until landing (Burst Reverse may be pressed), then :down 30 f and :wakeup 30 f (both
 invulnerable)."
-  (when (and (eq (fighter-state f) :air) (zerop (fighter-lock f))) (command! e f vp '(:burst)))
+  (when (and (eq (fighter-state f) :air) (zerop (fighter-lock f))) (command! e f vp '(:burst :awaken)))
   (let ((sf (incf (fighter-sf f))) (mo (motion e)))
     (case (fighter-state f)
       (:air (when (and (motion-grounded mo) (> sf 2))

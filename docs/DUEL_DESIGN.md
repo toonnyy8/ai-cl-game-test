@@ -287,9 +287,12 @@ hitstop; a blue shockwave, "BURST REVERSE" and a human's HUD prompt (SHIFT+J BUR
 possible. Rules: `burst-allowed-p` (rules.lisp), `burst-ok-p` / `burst!` (combat.lisp).
 
 **Fighting Spirit** (Awakening gauge, 0–100): +0.05 per damage dealt, +0.07 per damage taken,
-+15 per Konpaku lost. Full → "EVOLUTION" blinks and a faint aura shows. Awaken from idle, walk or
-guard → the form's cinematic (the sim is frozen). **Once per match** for each fighter; the gauge
-stops filling after it.
++15 per Konpaku lost. Full → "EVOLUTION" blinks and a faint aura shows. Awaken from idle, walk,
+guard or blockstun, or wherever a Burst could be pressed (a reaction or airborne after the combo's 2nd
+hit, inputs not locked; no flash-step needed) → it breaks his attack exactly as a Burst does
+(`repel!`: his move ends, he slides 5 m away, she is invulnerable 20 f), then the form's cinematic
+(the sim is frozen). **Once per match** for each fighter; the gauge stops filling after it.
+Kenpachi's Bankai (the second awakening) follows the same state rule and breaks the attack too.
 
 **Hit reactions**: flinch 18 f, stagger 26 f, knockback 30 f with a slide (≤ 18 f), launch
 (airborne, up 7.5 m/s, gravity 22 m/s²), knockdown (airborne 3.5 m/s), then down 30 f and wake-up
@@ -1064,6 +1067,17 @@ user proves the abstraction). This keeps parallel character branches from collid
 never A/B passes when, on **each of at least 3 independent seed streams** (60 seeds each), the "never awaken" policy
 still wins **at least 20 of 60** against every opponent. The earlier "|always − never| ≤ 9" goal is dropped. A single
 stream is not enough: the knobs overfit the stream they are tuned on.
+
+## Playtest decision: the awakening breaks his attack (the user, 2026-09-29)
+
+「將覺醒瞬間增加與 shift+J 的爆氣相同，能打斷對手攻擊的效果」. The moment of awakening now does what a Burst Reverse
+does (`repel!`, split out of `burst!` in combat.lisp): the attacker's move / Hoho / step / run ends and he slides
+`*burst-push*` away, the awakener is neutral and invulnerable `*burst-invuln*` f; then the cinematic. To make that
+reachable under pressure, the awakening (and Kenpachi's Bankai, the second awakening) may be pressed where a Burst could
+(`awaken-state-p`, fighter.lisp: free, blockstun, or a reaction / airborne past the combo's 2nd hit, inputs not locked;
+no flash-step spent) as well as from idle / walk / guard. The CPU uses it the same way: when its once-per-combo Burst
+roll fires and a Burst is not possible (no flash-step) but its kit's awaken rule says awaken, it awakens out of the combo
+(`ai-awaken-break-p`, ai.lisp). No tuning number changed. Measured: see DEVLOG §34.
 
 ## Playtest decision: faster NOME drain (the user, 2026-09-29)
 

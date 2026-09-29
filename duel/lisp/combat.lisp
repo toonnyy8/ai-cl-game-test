@@ -395,13 +395,10 @@ combo's 2nd hit, *FS-BURST* flash-step."
     (burst-allowed-p (and (member (fighter-state f) '(:stun :air)) (zerop (fighter-lock f)))
                      (fighter-combo-hits f) (gauges-fs (gauges e)))))
 
-(defun burst! (e)
-  "Burst Reverse (FIGHTER-SYSTEM applies it once both fighters have stepped): E spends
-*FS-BURST* flash-step and is neutral at once (on the ground), invulnerable *BURST-INVULN* f, his combo
-over; the attacker's move / Hoho / step / run ends and he slides *BURST-PUSH* away, not stunned.
-A short global hitstop."
-  (let* ((f (fighter e)) (g (gauges e)) (mo (motion e)) (o (fighter-opp f)) (p (pos-of e)) (q (pos-of o)))
-    (spend-fs g *fs-burst*)
+(defun repel! (e)
+  "E breaks free (a Burst Reverse, an awakening): neutral at once (on the ground), invulnerable *BURST-INVULN* f, his
+combo over; the opponent's move / Hoho / step / run ends and he slides *BURST-PUSH* away, not stunned."
+  (let* ((f (fighter e)) (mo (motion e)) (o (fighter-opp f)) (p (pos-of e)) (q (pos-of o)))
     (setf (aref p 1) 0f0 (motion-grounded mo) t (motion-kb-left mo) 0)
     (to-idle e 0)
     (setf (fighter-invuln f) *burst-invuln*)
@@ -409,7 +406,14 @@ A short global hitstop."
       (to-idle o 0)
       (setf (model-alpha (model o)) 1f0))
     (set-slide o *burst-push* *burst-push-frames* (- (aref q 0) (aref p 0)) (- (aref q 2) (aref p 2)))
-    (respect o)
+    (respect o)))
+
+(defun burst! (e)
+  "Burst Reverse (FIGHTER-SYSTEM applies it once both fighters have stepped): E spends *FS-BURST* flash-step and breaks
+free (REPEL!). A short global hitstop."
+  (let ((o (opp-of e)))
+    (spend-fs (gauges e) *fs-burst*)
+    (repel! e)
     (hitstop *burst-hitstop*)
     (emit :burst e o)
     (clog "~a BURST" (side-name e))))
@@ -428,9 +432,10 @@ A short global hitstop."
     (clog "~a form ~a" (side-name e) form)))
 
 (defun awaken! (e)
-  "Awakening (once per match): the kit's awakened form and its heal, then the form's :cine if it has
-one (both fighters idle after it). The guard gauge is left as it is."
+  "Awakening (once per match): E breaks free as a Burst does (REPEL!), the kit's awakened form and its heal, then the
+form's :cine if it has one (both fighters idle after it). The guard gauge is left as it is."
   (let* ((g (gauges e)) (o (opp-of e)))
+    (repel! e)                                          ; the moment breaks his attack, as a Burst (the user 2026-09-29)
     (setf (gauges-awakened g) t (gauges-awaken g) 0f0 (gauges-evolution g) nil)
     (set-form e (kit-awaken-form (kit-of e)))
     (let ((st (getf (kit-meter (kit-of e)) :start)))    ; NOME starts at 10
@@ -448,6 +453,7 @@ holds the pips, the crack clock at 0), his OWN Konpaku set to 1 and his Reishi r
 2026-09-28: all his remaining souls for one full bar fought with the Bankai); the guard gauge, Reiatsu and flash-step as
 they are; then the form's :cine (both fighters idle after it)."
   (let* ((g (gauges e)) (o (opp-of e)) (lost (- (gauges-konpaku g) 1)))
+    (repel! e)                                          ; the second awakening breaks his attack too
     (set-form e (kit-bankai-form (kit-of e)))
     (setf (gauges-meter g) (f32 (getf (kit-pips (kit-of e)) :n)) (gauges-meter-idle g) 0 (gauges-arm-pending g) nil
           (gauges-arm-owed g) nil
@@ -513,7 +519,7 @@ last pip went, the pending burst fires when BURST-DUE-P says."
 HUD's P BANKAI prompt, the phone's AWAKEN chip.)"
   (let ((f (fighter e)))
     (and (kit-bankai-form (fighter-kit f))
-         (bankai-allowed-p (member (fighter-state f) '(:idle :guard)) (gauges-konpaku (gauges e))))))
+         (bankai-allowed-p (awaken-state-p e f) (gauges-konpaku (gauges e))))))
 
 (defun kikon-ready-p (e)
   "Is E's opponent red: would E's Kikon rush, connecting now with the button held, be the Kikon?

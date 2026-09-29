@@ -91,12 +91,20 @@ until the distance passes TO (BRAIN-STEP lets go)."
   (ai-press b :step *ai-dash-frames* :act :dash)
   (setf (brain-dash b) (f32 dir) (brain-dash-to b) (f32 to)))
 
+(defun ai-awaken-break-p (e)
+  "Could E's CPU awaken out of this combo (the awakening breaks it as a Burst does)? Ready (EVOLUTION), in a state that
+allows it (AWAKEN-STATE-P) and its kit's rule says awaken (:awaken-above, AI-AWAKEN-P)."
+  (let ((g (gauges e)))
+    (and (gauges-evolution g) (awaken-state-p e (fighter e))
+         (>= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (ai-table e :awaken-above 0.0))
+         (ai-awaken-p e))))
+
 (defun ai-burst-roll (e b)
-  "Burst Reverse now? No sooner than the perception delay after the combo's 2nd hit (BRAIN-BURST-T),
-allowed (BURST-OK-P) and worth it (AI-BURST-WANTED-P, the next hit estimated as the combo's average
-so far): one roll per combo at the difficulty's *AI-BURST-P*."
+  "Burst Reverse (or the awakening, which breaks a combo too: AI-AWAKEN-BREAK-P) now? No sooner than the perception
+delay after the combo's 2nd hit (BRAIN-BURST-T), allowed (BURST-OK-P) and worth it (AI-BURST-WANTED-P, the next hit
+estimated as the combo's average so far): one roll per combo at the difficulty's *AI-BURST-P*."
   (let ((f (fighter e)) (g (gauges e)))
-    (when (and (not (brain-burst-rolled b)) (>= (brain-burst-t b) (brain-delay b)) (burst-ok-p e)
+    (when (and (not (brain-burst-rolled b)) (>= (brain-burst-t b) (brain-delay b)) (or (burst-ok-p e) (ai-awaken-break-p e))
                (ai-burst-wanted-p (gauges-reishi g) (gauges-reishi-max g)
                                   (floor (fighter-combo-dmg f) (max 1 (fighter-combo-hits f)))))
       (setf (brain-burst-rolled b) t)
@@ -534,7 +542,9 @@ fraction of the guard gauge."
                  (if (> (brain-dash b) 0) (<= d (brain-dash-to b)) (>= d (brain-dash-to b))))
         (setf (brain-press-left b) 0 (brain-decide-t b) 1))                      ; decide now (out of the run)
       (unless (or (brain-off b) (> (fighter-lock f) 0) (eq (fighter-state f) :cine))
-        (cond ((ai-burst-roll e b) (ai-press b :quick 1 :modded t :act :burst) (setf (brain-why b) :burst))
+        (cond ((ai-burst-roll e b)                                                ; a Burst, else the awakening
+               (if (burst-ok-p e) (ai-press b :quick 1 :modded t :act :burst) (ai-press b :awaken 1))
+               (setf (brain-why b) :burst))
               ((j-beats-k-p e b) (ai-press b :quick 1) (setf (brain-why b) :j-beats-k))
               ((and (> (brain-press-left b) 0)                                    ; a reflex may drop a guard / a dash,
                     (or (eq (brain-act b) :hold)                                   ; not a guard held through a string
