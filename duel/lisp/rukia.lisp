@@ -28,10 +28,10 @@
 (defmove-copy :ru-k2s :ru-k2)
 ;; L, SOME NO MAI: TSUKISHIRO: at f10 the point under the opponent (<= :range m, CAST-POINT) gets a white ring (the tell);
 ;; :delay frames later a pillar of ice erupts in it: a :bind disc, guardable from her side (:src), fragile (it closes if
-;; she is hit first): :dmg + frozen :stun frames + frost. A Step (2.5 m) always clears it. One ring at a time (cooldown).
-(defmove :ru-tsukishiro :kind :sig :clip :ru-tsukishiro :callout "SOME NO MAI: TSUKISHIRO" :startup 10 :active 0
-  :recovery 26 :cooldown 150 :flags (:bind) :on-frame ((10 rukia-tsukishiro))
-  :params (:range 8.0 :radius 1.8 :height 3.0 :delay 24 :dmg 60 :stun 36 :guard 14 :frost 90 :life 8 :tell (19 28)))
+;; she is hit first): :dmg + frozen :stun frames + frost. A Step (2.5 m) always clears it. No cooldown: S 12 / R 36.
+(defmove :ru-tsukishiro :kind :sig :clip :ru-tsukishiro :callout "SOME NO MAI: TSUKISHIRO" :startup 12 :active 0
+  :recovery 36 :flags (:bind) :on-frame ((12 rukia-tsukishiro))   ; (no cooldown, the user 2026-09-29: S 12 / R 36 instead)
+  :params (:range 8.0 :radius 1.8 :height 3.0 :delay 24 :dmg 60 :stun 36 :guard 14 :frost 90 :life 8 :tell (21 30)))
 ;; TSUKISHIRO after a K link (the kit's :l-after-k, the user's decision 2026-09-28: K -> L is a combo): the ring at f8, the
 ;; pillar 10 f later (f18 < a K link's stagger 26 - its A 4), its clip played at 10 / 8. Its reach is the ring's range, so
 ;; the follow-up chase (which closes to the reach) leaves her where she stands: the ring is cast at him

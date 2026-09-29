@@ -979,3 +979,10 @@ Time in band −18 59–64 %, −50 30–38 %, zero 3–8 %.
 / RY 134.1 / RK 144.9 / RR 185.6 s, 120 / 120 K.O.; wins P1 9 / 12 / 13 / 13 / 13 / 12.
 
 **Knobs**: unchanged (the table under "The cold-gauge rework: built").
+
+### No cooldown on TSUKISHIRO (the user, 2026-09-29)
+
+「請取消一護跟露琪亞 L 技的冷卻時間，如果要避免惡意連放的話，設計適當的前後搖破綻就好了」: SOME NO MAI: TSUKISHIRO loses its
+150 f cooldown. Instead S 10 → **12** and R 26 → **36** (48 f a cast; the move now outlasts its pillar, S 12 + delay 24 =
+f36, so there is still one ring at a time), the CPU victim's tell shifted to (21 30); the K→L combo copy keeps S 8 / delay
+10 and inherits R 36. Native gate: RY 139.8 s (Rukia 12 / 20), RK 154.5 (13), RR 176.9, IR 190.8, all K.O.

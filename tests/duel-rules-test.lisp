@@ -1154,10 +1154,11 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
                 (zerop (getf (mv-params (kit-command-move z :kikon)) :dash-max)) (= 7 (mv-s (kit-command-move b :q)))
                 (< (mv-s (kit-command-move b :q)) (min (mv-s (mv :yamamoto :base :ya-k1)) (mv-s (mv :kenpachi :base :ke-k1)))))))
   ;; fairness: TSUKISHIRO's circle + Kenpachi's hurt radius < a Step; every HAKUREN's widest half-width + his hurt radius
-  ;; < a Step (a side Step clears every wave, never shortened by the field); the ring's tell 24 f, one ring at a time
+  ;; < a Step (a side Step clears every wave, never shortened by the field); the ring's tell 24 f, one ring at a time (no
+  ;; cooldown since 2026-09-29: the move outlasts its pillar)
   (let* ((ts (kit-command-move b :sig)) (pa (mv-params ts)))
-    (check (and (< (+ (getf pa :radius) 0.45) *step-distance*) (= 24 (getf pa :delay)) (> (mv-cooldown ts) (+ (mv-s ts) (getf pa :delay)))
-                (member :bind (mv-flags ts)) (equal (getf pa :tell) '(19 28))
+    (check (and (< (+ (getf pa :radius) 0.45) *step-distance*) (= 24 (getf pa :delay)) (> (mv-total ts) (+ (mv-s ts) (getf pa :delay)))
+                (member :bind (mv-flags ts)) (equal (getf pa :tell) '(21 30))
                 (every (lambda (k) (let ((hp (mv-params (kit-command-move k :sp1))))
                                      (< (+ (* 0.5 (+ (getf hp :width) (* 3 (getf hp :width-per)))) 0.45) *step-distance*)))
                        (list b m18 m50 z))
@@ -1198,7 +1199,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
       (check (notany (lambda (l) (and (eq :q (car (last (third l)))) (kit-l-link k (mv-name (first l)))))
                      (link-moves k)))))
   (let* ((b (kit :rukia :base)) (lk (kit-l-link b :ru-k1)) (ts (kit-command-move b :sig)))
-    (check (and (eq :ru-tsukishiro-k (mv-name lk)) (= 18 (l-hit lk)) (= 34 (l-hit ts)) (= (mv-cooldown ts) (mv-cooldown lk))
+    (check (and (eq :ru-tsukishiro-k (mv-name lk)) (= 18 (l-hit lk)) (= 36 (l-hit ts)) (zerop (mv-cooldown ts)) (zerop (mv-cooldown lk))   ; (no L cooldown: the user 2026-09-29)
                 (>= (+ 4 (l-hit ts)) 26)                                 ; the plain one misses the combo after a K1
                 (>= (mv-reach lk) (getf (mv-params lk) :range))           ; no chase: the ring is cast at him
                 (equal (mv-callout ts) (mv-callout lk)) (member :bind (mv-flags lk))))

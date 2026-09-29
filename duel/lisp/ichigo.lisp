@@ -26,7 +26,6 @@
 (defparameter *tsuki-tap* 30 "Frames the stance holds past its f6 on a tap of L ...")
 (defparameter *tsuki-max* 60 "... and at most while L is held; then R 14.")
 (defparameter *tsuki-dash-fs* 10.0 "TSUKIWATARI's flash-step price (once per stance).")
-(defparameter *tsuki-getsuga-cd* 100 "The stance's Getsuga branch cooldown (the stance itself has none).")
 ;; KESSA's parry 鎖盾 KUSARI-TATE (L)
 (defparameter *kessa-parry-cost* 10.0 "The parry's guard-gauge price on its frame 0 (refused below it or guardless) ...")
 (defparameter *kessa-parry-catch* 20.0 "... a catch refunds this (net +10; 74600+k) ...")
@@ -75,7 +74,7 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
 (defmove-copy :ic-k2s :ic-k2 :clip :ic-cross :clip-s 14 :guard 24)       ; KOGA: after J1, both blades in an X
 ;; GETSUGA TENSHO (the stance's L branch): at f14 a crescent leaves the long blade: a :wave 2.4 m wide (a side Step always
 ;; clears it), 16 m/s over 10 m; blocked, the hazard's 14 f blockstun
-(defmove :ic-getsuga :kind :sig :clip :ic-getsuga :callout "GETSUGA TENSHO" :startup 14 :active 0 :recovery 24 :cooldown 100
+(defmove :ic-getsuga :kind :sig :clip :ic-getsuga :callout "GETSUGA TENSHO" :startup 14 :active 0 :recovery 34
   :reach 10.0 :on-frame ((14 ichigo-getsuga))
   :params (:width 2.4 :speed 16.0 :range 10.0 :dmg 90 :react :knockback :kb 2.5 :guard 18 :look ichigo-getsuga-look))
 ;; L, 月待 TSUKIMACHI (v2 §2; RoS's Syzygy): side-on, the short blade thrust at him, the cleaver drawn back; up at f6, then
@@ -91,7 +90,8 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
   :hits ((8 9) (11 12) (14 15) (17 20 :on-hit :stagger)))                ; 乱月 RANGETSU: a lunge, four short-blade slashes
 (defmove :ic-tsuki-k :kind :sig :clip :ic-tsuki-otoshi :callout "TSUKI-OTOSHI" :startup 18 :active 4 :recovery 30 :dmg 100
   :adv-block -10 :guard 30 :reach 2.6 :arc 100 :slide 3.0 :on-hit :crumple)   ; 月落: the pounce, both blades slammed
-(defmove-copy :ic-tsuki-l :ic-getsuga :startup 8 :clip-s 14 :cooldown 0 :on-frame ((8 ichigo-getsuga)))
+;; (no cooldown, the user 2026-09-29: the branch's R 34 after a crescent, plus the stance's entry, is what stops a spam)
+(defmove-copy :ic-tsuki-l :ic-getsuga :startup 8 :clip-s 14 :on-frame ((8 ichigo-getsuga)))
 (defmove :ic-tsuki-dash :kind :sig :clip :ic-tsuki :startup 12 :active 0 :recovery 0
   :on-frame ((0 ichigo-tsuki-dash) (11 ichigo-tsuki-return)))            ; 月渡 TSUKIWATARI: the flash-step dash
 ;; Shift+K, GETSUGA JUJISHO: the long blade's crescent forms at f12, the short blade's at f20, fused into one cross wave
@@ -245,7 +245,7 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
 ;;; ================================================================ per-side state (the sim's; a new fighter entity = a fresh one)
 (defstruct (ics (:conc-name ics-))
   (e nil)                                     ; the fighter it belongs to
-  (hoho-done nil) (dashed nil) (getsuga-at -9999 :type fixnum) (o-live nil)
+  (hoho-done nil) (dashed nil) (o-live nil)
   (seen nil) (seen-main nil)                  ; the move the afterimage watch last saw start
   (hist (make-array 48 :initial-element 0f0)) (hist-i 0 :type fixnum)   ; his last 16 (x z yaw): the echoes replay them
   (rim nil) (rim-saved nil) (parry-sf -1 :type fixnum)
@@ -322,8 +322,6 @@ LOOK; a blade's hit (:blade)."
           (destroy-entity o))))))
 
 ;;; ================================================================ the Shikai's stance
-(defun getsuga-ready-p (st) (>= (- *match-tick* (ics-getsuga-at st)) *tsuki-getsuga-cd*))
-
 (defun tsuki-pressed (vp)
   "The stance's follow-up a human pressed (buffered, unmodified): :tsuki-j / -k / -l / -step, or NIL."
   (cond ((vpad-command-pressed-p vp :quick nil) :tsuki-j) ((vpad-command-pressed-p vp :flash nil) :tsuki-k)
@@ -331,7 +329,7 @@ LOOK; a blade's hit (:blade)."
 
 (defun tsuki-step (e f st mv)
   "One step of the stance (MV): it re-aims at him; from f6 the first J / K / L / Step fires its branch (a CPU's is picked
-once at f6: ICHIGO-AI-STANCE); L on cooldown is refused (the cue), a Step without its flash step or after the stance's one
+once at f6: ICHIGO-AI-STANCE); no cooldown on L (the user 2026-09-29: its recovery is the price), a Step without its flash step or after the stance's one
 dash waits (a plain Step after the stance); past the hold (30 f, 60 while L is held) the stance recovers (R 14)."
   (let* ((sf (fighter-sf f)) (vp (pilot-vpad (pilot e))) (b (brain e)))
     (turn-to-opp e f (track-step 360.0))
@@ -339,14 +337,12 @@ dash waits (a plain Step after the stance); past the hold (30 f, 60 while L is h
       (let* ((cmd (if b (and (= sf *tsuki-up*) (ichigo-ai-stance e f st)) (tsuki-pressed vp)))
              (button (getf '(:tsuki-j :quick :tsuki-k :flash :tsuki-l :sig :tsuki-step :step) cmd))
              (ok (case cmd
-                   (:tsuki-l (or (getsuga-ready-p st) (progn (emit :refused e :sig) (unless b (vpad-consume! vp :sig)) nil)))
                    (:tsuki-step (and (not (ics-dashed st)) (>= (gauges-fs (gauges e)) *tsuki-dash-fs*)))
                    ((nil) nil)
                    (t t))))
         (when ok
           (unless b (vpad-consume! vp button))
           (case cmd
-            (:tsuki-l (setf (ics-getsuga-at st) *match-tick*))
             (:tsuki-step (spend-fs (gauges e) *tsuki-dash-fs*) (setf (ics-dashed st) t)))
           (start-move e (kit-next (fighter-kit f) (mv-name mv) cmd))
           (return-from tsuki-step nil))))
@@ -370,7 +366,7 @@ dash waits (a plain Step after the stance); past the hold (30 f, 60 while L is h
 L; within 4.2 m (RANGETSU's lunge + reach 4.8) TSUKI-OTOSHI on a guard (or a gauge < 50) else mostly RANGETSU; to 5.4 m
 (the pounce's 5.6) TSUKI-OTOSHI or the dash in (a fresh stance at 1-2 m); farther the dash within 7.5 m, else the Getsuga."
   (let* ((o (opp-of e)) (fo (fighter o)) (d (fighter-dist f)) (r (sim-rnd01))
-         (getsuga (getsuga-ready-p st)) (dash (and (not (ics-dashed st)) (>= (gauges-fs (gauges e)) *tsuki-dash-fs*))))
+         (getsuga t) (dash (and (not (ics-dashed st)) (>= (gauges-fs (gauges e)) *tsuki-dash-fs*))))
     (cond ((member (fighter-state fo) '(:stun :air))
            (cond ((< r 0.5) :tsuki-j) ((< r 0.8) :tsuki-k) (getsuga :tsuki-l) (t :tsuki-j)))
           ((<= d 4.2)

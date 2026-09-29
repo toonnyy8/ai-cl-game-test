@@ -1169,7 +1169,7 @@ kit `:meter :draw / :label`, the hazard `hook` / `data` (clones, afterimages and
 | Knob | Value | Debug |
 |---|---|---|
 | `*ichigo-mult*` / `*ichigo-taken*`; `*kessa-mult*` / `*kessa-taken*` | 1.6 / 0.8; **1.25 / 1.0** (v1: 1.15 / 0.9) | 74100+k … 74400+k (0.5 + k / 100) |
-| `*tsuki-up*` / `*tsuki-tap*` / `*tsuki-max*`; `*tsuki-dash-fs*`; `*tsuki-getsuga-cd*` | 6 / 30 / 60; 10; 100 | — |
+| `*tsuki-up*` / `*tsuki-tap*` / `*tsuki-max*`; `*tsuki-dash-fs*` | 6 / 30 / 60; 10 (the Getsuga branch's 100 f cooldown is gone, 2026-09-29) | — |
 | `*kessa-parry-cost*` / `*kessa-parry-catch*` / `*kessa-parry-stun*`; the window | 10 / 20 / 40; f2–25 | 74600+k (catch); 74500+k (window f2–(k+1)) |
 | `*clone-max*` / `*clone-life*` / `*clone-step-gap*` / `*clone-lag*` | 3 / 300 / 40 / 6 (`*clone-lunge*` 3.0 and `*clone-answer-range*` 6.0 removed: the clones swing in place) | 74700+k (life 10k) |
 | `*clone-scale*`; `*clone-burst-dmg*`; `*clone-konpaku*` | 0.7; 30; (2 2 3 4) | 74910+k (k / 20); 74800+k |
@@ -1380,3 +1380,8 @@ was already his best pairing), the others near it.
 Shikai that never awakens is too weak, whatever its CPU does. For information, the Shikai at ×1.3 (74180, stream 100)
 wins IY 15, IK 17, IR 15: still under 20. The stance changes left it where it was; II fell because the P2 Ichigo, who
 awakens, got the better KESSA. Lifting it is a damage decision (`*ichigo-mult*` / `*ichigo-taken*`), left to the user.
+- **No cooldown on L** (the user 2026-09-29: 「請取消一護跟露琪亞 L 技的冷卻時間，如果要避免惡意連放的話，設計適當的前後搖破綻
+  就好了」): the stance's Getsuga branch loses `*tsuki-getsuga-cd*` (100 f) and GETSUGA TENSHO its `:cooldown 100`; the
+  price is the recovery, R 24 → **34** (the branch: stance up f6 + S 8 + R 34, a crescent at most every ~48 f, a side
+  Step always clears it). Native gate: IY 178.4 s (Ichigo 14 / 20), IK 172.2 (13), IR 190.8 (8), II 206.6, SI 197.2 (9),
+  all K.O.
