@@ -377,15 +377,48 @@ Target: every match ends by K.O. (before the 300 s timer), **median 125–210 s*
 v3: Reishi 1100 → 1300 is the user's decision 2026-09-26, because real human matches run much faster than CPU vs
 CPU), win rates near even (YK within ±3 of 10 / 10). The gate runs ~15 min of turbo for six pairings: `--secs 1100`; with
 fifteen pairings (2026-09-29: Ichigo's four, Senjumaru's five) run them in parallel instead: one run.mjs per pairing with
-2125+k (k 0–14, `--secs 1500` each, at most 4 at once on a shared machine).
+2125+k (k 0–14, `--secs 1500` each, at most 4 at once on a shared machine). Since 2026-09-29 the gate runs natively
+instead: `python3 tools/simgate.py` gives the same rows (see "The native sim gate" below).
 
 **Gate policy (the user, 2026-09-29: the gates were getting too long with five characters).** (1) **Only what changed:**
 a change inside one character's files runs that character's five pairings and its awaken A/B; a change to shared rules
 (combat, fighter, rules, ai, tuning, kit) runs all fifteen. (2) **Two stages:** first 10 seeds per pairing (debug
 31100+10 before 2125+k); a pairing passes at once when all 10 are K.O. and its median sits inside 135–200 s (10 s clear of
-the 125–210 window); otherwise it is rerun with the full 20 (31120, or no knob), which is the verdict. (3) Planned: a
-host-native, render-free sim runner (one core per match) for the statistical gates; the G2 bit-exact references stay on
-the browser build.
+the 125–210 window); otherwise it is rerun with the full 20 (31120, or no knob), which is the verdict. (3) **The seed
+gates and the awaken A/B streams run on the host-native sim gate** (`tools/simgate.py`, below; built 2026-09-29, DEVLOG
+§38); the browser keeps G2 (`style-gates.py cvc`, the bit-exact references), smoke, duelstill and the touch scripts.
+
+**The native sim gate (`tools/simgate.py`).** The same Lisp as `./build.sh duel` (engine + duel MANIFESTs, nothing
+forked, no `#+` guard in any game file), compiled by the 32-bit host ECL with `gcc -m32 -msse2 -mfpmath=sse
+-ffp-contract=off` into `build/simgate/duel.fas` (~2 min, redone when a source is newer). The engine's C layer is
+`tools/simgate/stubs.c`: the real random streams (`engine/c/rng.c`), everything else a headless leaf (no window, no GPU:
+meshes get ids and frames draw nothing; no audio device, so no sound is synthesized; a desktop page with nothing saved;
+virtual 1/60 s time). `tools/simgate/run.lisp` starts it as the page would and runs the real frame (`%FRAME`: flow,
+gate, 120 turbo steps, camera, HUD; the scene is never drawn in turbo) with the gate's debug commands, one core per
+process. Usage:
+
+```
+python3 tools/simgate.py                          # all 15 pairings, seeds 1-20 = 2125+k for k 0..14
+python3 tools/simgate.py --pairs 0,1,2 --seeds 10 # the quick pass (31110) for YY YK KK
+python3 tools/simgate.py --pairs 9 --seed0 100 --seeds 60 --cmd 39020   # one awaken A/B stream
+python3 tools/simgate.py --cvc                    # self-check: G2's three matches vs tests/style-cvc-ref.txt
+```
+
+It prints every `duel gate row` (with its `duel band` / `cups` / `senju` lines) and the page's summary line per pairing,
+plus `duel gate A B wins P1 n P2 m DRAW d blow b`. `--cmd N` (repeatable) queues any debug knob before the gate command;
+`-j` sets the processes (default 16). One process plays a pairing's seeds back to back, as the page does: Senjumaru's
+per-side state (`*sj*`, senjumaru.lisp) is not reset between matches, so her SR / SS rows depend on the matches played
+before them; `--chunk N` (seeds per process) is faster for one long stream but then differs from the page on her
+pairings. The wasm build's libm is emscripten's musl, and glibc's `sinf` / `expf` / ... differ from it in the last bit
+now and then (3 of 15 pairings drifted a few cm by t=7200, one row changed), so `simgate.py` builds the same musl math
+sources from the emsdk (`build/simgate/muslm.so`) and preloads them (`LD_PRELOAD`: the Lisp's inline calls and libecl's
+both land there); running `tools/simgate/run.lisp` by hand without it gives glibc's math.
+**Validation (2026-09-29, 4a58f3e):** all 15 pairings × seeds 1–10 in the browser (31110, 2125+k) and natively: 150 / 150
+rows identical, and every compared line (the 600-tick `duel hash` lines, RESULTS, rows, band / cups / senju lines,
+the summaries): 2693 / 2693. At seeds 1–20 the ten pairings Ichigo's later changes do not touch reproduce the table
+above (medians, ranges, wins, blow-aways) exactly; `--cvc` passes G2's three references. **Speed:** all 15 × 20 seeds
+in 14 s wall at `-j 16` (the machine at load ~45 from other browser gates), 15 × 10 in 8 s; the browser took ~160 s
+per 10-seed pairing (~6 cores each), about an hour for the 20-seed gate at 4 at once.
 
 | Pairing | Median | Range | K.O. | Wins P1 / P2 | Blow-aways |
 |---|---|---|---|---|---|
