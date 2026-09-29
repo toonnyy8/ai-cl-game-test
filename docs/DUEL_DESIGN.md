@@ -1082,6 +1082,9 @@ reachable under pressure, the awakening (and Kenpachi's Bankai, the second awake
 no flash-step spent) as well as from idle / walk / guard. The CPU uses it the same way: when its once-per-combo Burst
 roll fires and a Burst is not possible (no flash-step) but its kit's awaken rule says awaken, it awakens out of the combo
 (`ai-awaken-break-p`, ai.lisp). No tuning number changed. Measured: see DEVLOG §34.
+The integrated seed gate after it (with Kenpachi's CPU, Senjumaru's batch and Ichigo v2; DUEL_GAMEPLAY's table): 300/300
+K.O., every median inside 125–210 s except **Yamamoto vs Kenpachi, 121.1 s, which the user accepted** (「劍八那邊就這樣給過即可」,
+2026-09-29): a cup-3 `:tempo` 0.7 trial fixed YK (126.4 s) but broke KK (117.8 s), so Kenpachi's tuned CPU stays.
 
 ## Playtest decision: faster NOME drain (the user, 2026-09-29)
 

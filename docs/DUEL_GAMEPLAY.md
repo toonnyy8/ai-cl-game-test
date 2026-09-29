@@ -373,20 +373,22 @@ fifteen pairings (2026-09-29: Ichigo's four, Senjumaru's five) run them in paral
 | Pairing | Median | Range | K.O. | Wins P1 / P2 |
 |---|---|---|---|---|
 | Yamamoto vs Yamamoto | 134.7 s | 98.2–205.5 | 20/20 | 9 / 11 |
-| Yamamoto vs Kenpachi | 138.1 s | 87.1–183.9 | 20/20 | Yamamoto 15 / Kenpachi 5 |
-| Kenpachi vs Kenpachi | 133.9 s | 110.7–175.9 | 20/20 | 14 / 6 |
-| Rukia vs Yamamoto | 134.1 s | 88.3–163.5 | 20/20 | Rukia 13 / Yamamoto 7 |
-| Rukia vs Kenpachi | 143.1 s | 99.3–200.8 | 20/20 | Rukia 14 / Kenpachi 6 |
-| Rukia vs Rukia | 185.6 s | 144.8–253.9 | 20/20 | 12 / 8 |
-| Ichigo vs Yamamoto | 144.3 s | 120.3–184.3 | 20/20 | Ichigo 8 / Yamamoto 12 |
-| Ichigo vs Kenpachi | 147.1 s | 110.8–189.0 | 20/20 | Ichigo 8 / Kenpachi 12 |
-| Ichigo vs Rukia | 175.0 s | 126.7–223.8 | 20/20 | Ichigo 6 / Rukia 14 |
-| Ichigo vs Ichigo | 189.6 s | 111.8–247.6 | 20/20 | 9 / 11 |
-| Senjumaru vs Yamamoto | 143.2 s | 83.9–180.6 | 20/20 | Senjumaru 10 / Yamamoto 10 |
-| Senjumaru vs Kenpachi | 136.9 s | 87.2–197.5 | 20/20 | Senjumaru 9 / Kenpachi 11 |
-| Senjumaru vs Rukia | 173.7 s | 133.1–239.3 | 20/20 | Senjumaru 14 / Rukia 6 |
-| Senjumaru vs Senjumaru | 195.3 s | 159.6–220.9 | 20/20 | 7 / 13 |
-| Senjumaru vs Ichigo | 176.7 s | 137.0–231.9 | 20/20 | Senjumaru 17 / Ichigo 3 |
+| Yamamoto vs Kenpachi | 121.1 s (accepted, the user 2026-09-29) | 79.6–182.4 | 20/20 | Yamamoto 13 / Kenpachi 7 |
+| Kenpachi vs Kenpachi | 127.7 s | 88.4–180.4 | 20/20 | 9 / 11 |
+| Rukia vs Yamamoto | 133.7 s | 88.3–163.5 | 20/20 | Rukia 12 / Yamamoto 8 |
+| Rukia vs Kenpachi | 130.8 s | 100.0–181.1 | 20/20 | Rukia 13 / Kenpachi 7 |
+| Rukia vs Rukia | 170.1 s | 125.6–253.9 | 20/20 | 12 / 8 |
+| Ichigo vs Yamamoto | 148.0 s | 120.3–184.3 | 20/20 | Ichigo 7 / Yamamoto 13 |
+| Ichigo vs Kenpachi | 147.1 s | 110.8–189.0 | 20/20 | Ichigo 9 / Kenpachi 11 |
+| Ichigo vs Rukia | 179.3 s | 130.5–228.1 | 20/20 | Ichigo 6 / Rukia 14 |
+| Ichigo vs Ichigo | 194.1 s | 111.8–247.6 | 20/20 | 12 / 8 |
+| Senjumaru vs Yamamoto | 136.8 s | 95.2–165.5 | 20/20 | Senjumaru 12 / Yamamoto 8 |
+| Senjumaru vs Kenpachi | 132.9 s | 98.0–191.3 | 20/20 | Senjumaru 6 / Kenpachi 14 |
+| Senjumaru vs Rukia | 176.0 s | 151.9–206.0 | 20/20 | Senjumaru 12 / Rukia 8 |
+| Senjumaru vs Senjumaru | 190.5 s | 135.9–225.2 | 20/20 | 8 / 12 |
+| Senjumaru vs Ichigo | 180.5 s | 92.6–224.0 | 20/20 | Senjumaru 15 / Ichigo 5 |
+
+(2026-09-29, main after Kenpachi's CPU aggression, the awakening breaking his attack, Senjumaru's playtest batch and Ichigo v2 (DEVLOG §31–§34): seeds 1–20, one run per pairing, 300/300 K.O. **Yamamoto vs Kenpachi's median is 121.1 s, under the 125 s floor; the user accepted it (「劍八那邊就這樣給過即可」)**: Kenpachi's CPU was tuned to sit on the floor (DUEL_NOZARASHI_V2.md), and a cup-3 `:tempo` 0.7 trial fixed YK (126.4 s) but broke KK (117.8 s), so the tuned CPU stays.)
 
 (2026-09-29, Ichigo v2 (DUEL_ICHIGO.md "v2: built", DEVLOG §33), on main 97f40c1: the five Ichigo rows above are v2's; the other ten replay main's rows exactly (the two shared hook points are inert). Its awaken A/B, "never" wins 21–42 of 60 on every stream.)
 
