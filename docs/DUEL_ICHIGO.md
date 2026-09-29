@@ -1385,3 +1385,7 @@ awakens, got the better KESSA. Lifting it is a damage decision (`*ichigo-mult*` 
   price is the recovery, R 24 → **34** (the branch: stance up f6 + S 8 + R 34, a crescent at most every ~48 f, a side
   Step always clears it). Native gate: IY 178.4 s (Ichigo 14 / 20), IK 172.2 (13), IR 190.8 (8), II 206.6, SI 197.2 (9),
   all K.O.
+- **TSUKI-OTOSHI leaps farther** (the user 2026-09-30: 「一護的架勢 L > K 的跳躍距離增加到比閃身更長一點」): the pounce's
+  slide 3.0 → **4.0 m**, just past TSUKIWATARI's 3.5 m dash; its reach from the stance 5.6 → 6.6 m, and the CPU's
+  TSUKI-OTOSHI band 5.4 → 6.4 m. Native gate: IY 164.2 s (Ichigo 14 / 20), IK 171.6 (14), IR 193.6 (7), II 202.9,
+  SI 197.2 (10), all K.O.; G2 unchanged.

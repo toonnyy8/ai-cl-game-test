@@ -89,7 +89,7 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
   :adv-block -6 :guard 5 :reach 2.4 :arc 120 :slide 2.4 :hs *hitstop-light*
   :hits ((8 9) (11 12) (14 15) (17 20 :on-hit :stagger)))                ; 乱月 RANGETSU: a lunge, four short-blade slashes
 (defmove :ic-tsuki-k :kind :sig :clip :ic-tsuki-otoshi :callout "TSUKI-OTOSHI" :startup 18 :active 4 :recovery 30 :dmg 100
-  :adv-block -10 :guard 30 :reach 2.6 :arc 100 :slide 3.0 :on-hit :crumple)   ; 月落: the pounce, both blades slammed
+  :adv-block -10 :guard 30 :reach 2.6 :arc 100 :slide 4.0 :on-hit :crumple)   ; 月落: the pounce (4 m, past TSUKIWATARI's 3.5: the user 2026-09-30)
 ;; (no cooldown, the user 2026-09-29: the branch's R 34 after a crescent, plus the stance's entry, is what stops a spam)
 (defmove-copy :ic-tsuki-l :ic-getsuga :startup 8 :clip-s 14 :on-frame ((8 ichigo-getsuga)))
 (defmove :ic-tsuki-dash :kind :sig :clip :ic-tsuki :startup 12 :active 0 :recovery 0
@@ -363,8 +363,8 @@ dash waits (a plain Step after the stance); past the hold (30 f, 60 while L is h
 
 (defun ichigo-ai-stance (e f st)
   "The CPU's branch at the stance's f6 (DUEL_ICHIGO v2 §10; by reach, the user 2026-09-29): after a K link's hit J / K /
-L; within 4.2 m (RANGETSU's lunge + reach 4.8) TSUKI-OTOSHI on a guard (or a gauge < 50) else mostly RANGETSU; to 5.4 m
-(the pounce's 5.6) TSUKI-OTOSHI or the dash in (a fresh stance at 1-2 m); farther the dash within 7.5 m, else the Getsuga."
+L; within 4.2 m (RANGETSU's lunge + reach 4.8) TSUKI-OTOSHI on a guard (or a gauge < 50) else mostly RANGETSU; to 6.4 m
+(the pounce's 6.6) TSUKI-OTOSHI or the dash in (a fresh stance at 1-2 m); farther the dash within 7.5 m, else the Getsuga."
   (let* ((o (opp-of e)) (fo (fighter o)) (d (fighter-dist f)) (r (sim-rnd01))
          (getsuga t) (dash (and (not (ics-dashed st)) (>= (gauges-fs (gauges e)) *tsuki-dash-fs*))))
     (cond ((member (fighter-state fo) '(:stun :air))
@@ -373,7 +373,7 @@ L; within 4.2 m (RANGETSU's lunge + reach 4.8) TSUKI-OTOSHI on a guard (or a gau
            (if (or (member (fighter-state fo) '(:guard :guard-hit)) (< (gauges-gg (gauges o)) 50))
                (if (< r 0.6) :tsuki-k :tsuki-j)
                (if (< r 0.7) :tsuki-j :tsuki-k)))
-          ((<= d 5.4) (if (and dash (< r 0.5)) :tsuki-step :tsuki-k))
+          ((<= d 6.4) (if (and dash (< r 0.5)) :tsuki-step :tsuki-k))
           ((and dash (<= d 7.5) (< r 0.6)) :tsuki-step)
           (getsuga :tsuki-l)
           (dash :tsuki-step))))
