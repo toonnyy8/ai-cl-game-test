@@ -145,7 +145,7 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
     <ol><li><a href="#win">勝負：靈子與魂魄</a></li><li><a href="#strings">J／K 連段</a></li>
     <li><a href="#triangle">防 &gt; J &gt; I &gt; 防</a></li><li><a href="#guard">防禦與防禦量表</a></li>
     <li><a href="#move">Step、跑步、Hoho</a></li><li><a href="#kikon">Kikon 與 Soul Break</a></li>
-    <li><a href="#burst">Burst Reverse</a></li><li><a href="#awaken">覺醒</a></li>
+    <li><a href="#burst">爆氣（三種模式）</a></li><li><a href="#awaken">覺醒</a></li>
     <li><a href="#kosei">攻勢 KŌSEI</a></li><li><a href="#blow">被連續打太久會被打飛</a></li>
     <li><a href="#learn">會學習的電腦</a></li></ol></li>
   <li><a href="#chars">角色</a>
@@ -241,11 +241,11 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <tr><td>SP1</td><td data-l="P1"><kbd>Shift</kbd>+<kbd>K</kbd></td><td data-l="P2"><kbd>Enter</kbd>+<kbd>2</kbd></td><td data-l="手把"><kbd>LT</kbd>+<kbd>Y</kbd></td></tr>
 <tr><td>SP2</td><td data-l="P1"><kbd>Shift</kbd>+<kbd>L</kbd></td><td data-l="P2"><kbd>Enter</kbd>+<kbd>3</kbd></td><td data-l="手把"><kbd>LT</kbd>+<kbd>B</kbd></td></tr>
 <tr><td>Hoho（瞬步繞背）</td><td data-l="P1"><kbd>Shift</kbd>+<kbd>Space</kbd></td><td data-l="P2"><kbd>Enter</kbd>+<kbd>0</kbd></td><td data-l="手把"><kbd>LT</kbd>+<kbd>A</kbd></td></tr>
-<tr><td>Burst Reverse（爆氣）</td><td data-l="P1"><kbd>Shift</kbd>+<kbd>J</kbd></td><td data-l="P2"><kbd>Enter</kbd>+<kbd>1</kbd></td><td data-l="手把"><kbd>LT</kbd>+<kbd>X</kbd></td></tr>
+<tr><td>爆氣（白／藍／橙，依狀態自動決定）</td><td data-l="P1"><kbd>Shift</kbd>+<kbd>J</kbd></td><td data-l="P2"><kbd>Enter</kbd>+<kbd>1</kbd></td><td data-l="手把"><kbd>LT</kbd>+<kbd>X</kbd></td></tr>
 <tr><td>覺醒</td><td data-l="P1"><kbd>P</kbd></td><td data-l="P2">數字鍵 <kbd>+</kbd></td><td data-l="手把"><kbd>Back</kbd>，或 <kbd>LS</kbd>+<kbd>RS</kbd> 同按</td></tr>
 <tr><td>暫停</td><td data-l="P1"><kbd>Esc</kbd></td><td data-l="P2"><kbd>Esc</kbd></td><td data-l="手把"><kbd>Start</kbd></td></tr>
 </tbody></table>
-<p class="note">同時按下好幾個鍵時，優先順序是：Kikon → 覺醒 → Hoho → Burst → Step → 抓技 → SP2 → SP1 → L → K → J。所以亂按 J+K 會出 K；按了但條件不夠（例如靈壓不足）的指令不會擋住下面的指令。</p>
+<p class="note">同時按下好幾個鍵時，優先順序是：Kikon → 覺醒 → Hoho → 爆氣 → Step → 抓技 → SP2 → SP1 → L → K → J。所以亂按 J+K 會出 K；按了但條件不夠（例如靈壓不足）的指令不會擋住下面的指令。</p>
 
 <h3 id="touch">觸控（單手模式）</h3>
 <p>手機直拿時用一根拇指玩。預設右手：畫面右側是圓鈕，下半部的大框是手勢區。手勢區中間有一條淡淡的分隔線，邊上標著 F（上）和 Q（下）。按在圓鈕上才算按圓鈕。</p>
@@ -259,9 +259,11 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <tr><td>往上撥</td><td data-l="效果">向前衝刺（往前的 Step），手指繼續往前推就接著跑</td></tr>
 <tr><td>往下、左、右快速撥</td><td data-l="效果">Step：往下是後退、左右是側步</td></tr>
 <tr><td>先按著不動，再往上撥</td><td data-l="效果">Hoho（只在站著或防禦時）</td></tr>
-<tr><td>被打中、硬直或浮空時往下撥</td><td data-l="效果">Burst Reverse</td></tr>
+<tr><td>被打中、硬直或浮空時往下撥</td><td data-l="效果">藍色爆氣 BURST REVERSE</td></tr>
+<tr><td>自己的招式打中對手後往下撥</td><td data-l="效果">橙色爆氣 CHAIN REVERSE</td></tr>
 <tr><td>O 圓鈕</td><td data-l="效果">Kikon 突進（按住＝Kikon；連段第三段打中後按＝O 收尾）</td></tr>
 <tr><td>L、I、SP1、SP2 圓鈕</td><td data-l="效果">招牌技、抓技、SP1、SP2</td></tr>
+<tr><td>RV 圓鈕（O 的上方）</td><td data-l="效果">爆氣：任何模式都行（可以爆氣時才出現）。站著、走路、防禦中按是白色爆氣</td></tr>
 <tr><td>AWK 圓鈕</td><td data-l="效果">覺醒（EVOLUTION 時才出現，按住 0.3 秒）</td></tr>
 <tr><td>II 圓鈕、手機「返回」</td><td data-l="效果">暫停</td></tr>
 </tbody></table>
@@ -284,13 +286,13 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <tr><td>魂魄 <i>KONPAKU</i></td><td data-l="怎麼看">名字旁的 9 團魂火，就是命數，被打光就輸。<b>最後幾團深紅色的</b>代表「對手的 Kikon 現在打中的話會被削掉幾顆」；自己紅血時它們會閃，提醒你危險。</td></tr>
 <tr><td>防禦量表</td><td data-l="怎麼看">靈子條正下方的鋼色條。擋下攻擊會扣，扣光就 GUARD CRUSH（見<a href="#guard">防禦</a>）。防禦中顏色變暗 30%，代表這時不會回復；破防後變灰，紅色慢慢爬回，回滿時顯示 GUARD。</td></tr>
 <tr><td>靈壓 <i>REIATSU</i></td><td data-l="怎麼看">3 格，只用來出 SP1／SP2（各 1 格；覺醒型態的 SP2 要 2 格）。每秒自動回一點，造成或受到傷害、攻勢也會加。</td></tr>
-<tr><td>瞬步 <i>FLASH STEP</i></td><td data-l="怎麼看">鋼藍色的條，Hoho 花 30、Burst 花 70（30 和 70 有刻度）。超過 70 的部分發光時代表可以 Burst。用完 1 秒後每秒回 3，受傷也會回，完美 Hoho 退回 15。</td></tr>
-<tr><td>覺醒 <i>AWAKEN</i></td><td data-l="怎麼看">造成傷害、受到傷害、失去魂魄（每顆 +15）都會累積。滿了會閃 <b>EVOLUTION</b>，角色身上出現淡淡的光，這時按 <kbd>P</kbd> 覺醒。覺醒後這裡顯示型態名稱。</td></tr>
+<tr><td>瞬步 <i>FLASH STEP</i></td><td data-l="怎麼看">鋼藍色的條，Hoho 花 30，爆氣要 70 以上才能開（30 和 70 有刻度）。超過 70 的部分用「現在按會開的那種爆氣」的顏色發光。爆氣中整條變成白／藍／橙色並一路往下掉，掉到 0 爆氣結束。平常用完 1 秒後每秒回 3，受傷也會回，完美 Hoho 退回 15（爆氣中這些都不會回）。</td></tr>
+<tr><td>覺醒 <i>AWAKEN</i></td><td data-l="怎麼看">造成傷害、受到傷害、失去魂魄（每顆 +10.5）都會累積（每造成 1 點傷害 +0.035、每受到 1 點 +0.049，大約要打到比賽的三分之一以上才會滿）。滿了會閃 <b>EVOLUTION</b>，角色身上出現淡淡的光，這時按 <kbd>P</kbd> 覺醒。覺醒後這裡顯示型態名稱。</td></tr>
 <tr><td>角色量表</td><td data-l="怎麼看">各角色自己的：山本的 INFERNO（獄炎）與卍解後 L 的 COOLDOWN、劍八的 NOME（呑め）與卍解的腕 UDE、露琪亞覺醒後的冷度量表、一護血鎖的分身、千手丸的針 HARI／機 HATA。看<a href="#chars">各角色</a>。</td></tr>
 <tr><td>標籤</td><td data-l="怎麼看">名字旁可能出現 EVOLUTION、U 的特殊效果（U: WEST、WARD、U: DRINK、U: COOL……），以及「攻 ×n」（<a href="#kosei">攻勢</a>倍率 1.5 以上時出現）。</td></tr>
 <tr><td>計時器與連段數</td><td data-l="怎麼看">上方中間是剩餘秒數（300 秒）。被打的一方量表下會顯示「5 HITS 212」：這套連段打了幾下、多少傷害。ENDLESS 另外顯示 STAGE n。</td></tr>
 </tbody></table>
-<p><b>畫面上的提示</b>：對手紅血時出現 <span class="pill">HOLD O KIKON</span>（按住 O 就能取魂）；你被連段、可以脫身時出現 <span class="pill s">SHIFT+J BURST</span>；劍八能開卍解時閃 <span class="pill g">P BANKAI</span>。大字：COUNTER（反擊命中，傷害 ×1.25）、GUARD BREAK（被抓技破防）、GUARD CRUSH（防禦量表被打光）、CLASH（兩個抓技撞在一起）、PERFECT（完美 Hoho）、BURST REVERSE、KIKON／GUARD IT!（Kikon 追擊衝過來，趕快防）、PARRY（招架成功）。</p>
+<p><b>畫面上的提示</b>：對手紅血時出現 <span class="pill">HOLD O KIKON</span>（按住 O 就能取魂）；你被連段、可以脫身時出現 <span class="pill s">SHIFT+J BURST</span>，自己的招式打中、可以用橙色爆氣接下去時出現 SHIFT+J CHAIN；劍八能開卍解時閃 <span class="pill g">P BANKAI</span>。大字：COUNTER（反擊命中，傷害 ×1.25）、GUARD BREAK（被抓技破防）、GUARD CRUSH（防禦量表被打光）、CLASH（兩個抓技撞在一起）、PERFECT（完美 Hoho）、SOUL REVERSE／BURST REVERSE／CHAIN REVERSE（三種爆氣，字的顏色就是爆氣的顏色）、KIKON／GUARD IT!（Kikon 追擊衝過來，趕快防）、PARRY（招架成功）。</p>
 
 <!-- ================================================================ rules -->
 <h2 id="rules">核心規則 <small>RULES</small></h2>
@@ -347,7 +349,7 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <li>按 <kbd>O</kbd>：角色瞄準、衝向對手、出一刀（有的角色不衝，是遠距離的火牆或冰牆）。這一刀<b>一定可以被防禦、閃避</b>，被擋就什麼都沒有（而且你有破綻）。</li>
 <li>砍中的那一刻 <kbd>O</kbd> <b>還按著</b>：對手被擊退 2.5 公尺、踉蹌，你追著衝上去再砍一刀，這一刀打中就是 Kikon，播放角色的鬼魂技演出。
   <ul>
-  <li><b>對手紅血</b>（靈子低於 30%）：他一直踉蹌到你砍到為止，這一刀<b>不能防</b>，除非他 Burst 或你被打斷，就是確定的 Kikon。</li>
+  <li><b>對手紅血</b>（靈子低於 30%）：他一直踉蹌到你砍到為止，這一刀<b>不能防</b>，除非他開藍色爆氣或你被打斷，就是確定的 Kikon。</li>
   <li><b>對手沒紅血</b>：他在你衝過來時已經可以動（畫面會出現 KIKON／GUARD IT!），按住防禦就擋得下，也可以 Step 或 Hoho 閃開。</li>
   </ul></li>
 <li>砍中之前就放開 <kbd>O</kbd>：只是一般的一刀（70 傷害加擊退）。</li>
@@ -355,19 +357,27 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <p>Kikon 削掉的魂魄數看<b>攻擊方當下的型態</b>：一般型態 2 顆，覺醒型態 3 顆，少數型態更多（劍八野晒第三杯和卍解 4 顆、一護的千影看分身數）。一次 Kikon 最多削 4 顆，剩下的比這少就全削光。魂魄上紅色的那幾顆就是這個數字。</p>
 <p><b>Soul Break（魂碎）</b>：把對手的靈子打到 0，就會自動削魂魄，數量是「攻擊方當下型態的 Kikon 數 + 1」（最多 5 顆），並播放攻擊方的鬼魂技演出（一護血鎖有專屬的魂碎演出）。互砍同時把對方打到 0 時，兩邊都會碎；兩邊的魂魄同時用完就是平手。</p>
 
-<h3 id="burst">Burst Reverse（爆氣）</h3>
+<h3 id="burst">爆氣（Shift+J，三種模式）</h3>
+<p>同一個按鍵 <kbd>Shift</kbd>+<kbd>J</kbd>，<b>按下去那一刻你在做什麼</b>決定是哪一種（參考 BLEACH Rebirth of Souls 的 Reverse Action）。三種都要瞬步量表 <b>70 以上</b>（兩格）才能開，開的時候不扣量表；開了之後瞬步量表每秒掉 18，掉到 0 就結束（從 70 開大約 3.9 秒，滿的 100 大約 5.6 秒）。</p>
+<table>
+<thead><tr><th>模式</th><th>什麼時候</th><th>效果</th></tr></thead>
+<tbody>
+<tr><td>白色 <i>SOUL REVERSE</i></td><td data-l="什麼時候">站著、走路、跑步、防禦中（沒有在防禦硬直）</td><td data-l="效果">爆氣期間靈子每秒回 12（會自己回血）、靈壓每秒多回 15、覺醒量表每秒回 1.4。防禦量表不會回比較快。</td></tr>
+<tr><td>藍色 <i>BURST REVERSE</i></td><td data-l="什麼時候">被一套連段打到第 2 下之後的硬直或浮空；或是防禦硬直中（擋下任何一下都行）</td><td data-l="效果">你立刻恢復自由、落地，約 0.3 秒無敵；對手的招式（或 Hoho、Step、跑步）被打斷、被推開 5 公尺。爆氣期間防禦量表不用等就開始回：沒在防禦時是平常的 2 倍，<b>連防禦中也會以平常一半的速度回</b>。</td></tr>
+<tr><td>橙色 <i>CHAIN REVERSE</i></td><td data-l="什麼時候">自己的招式<b>打中</b>對手之後（被擋、揮空都不行），到那一招收招結束前</td><td data-l="效果">收招馬上取消。接下來 12 格（0.2 秒）內出的第一招，出招前搖縮短 40%，而且什麼招都能接：J／K 連段從頭再來、L、SP、抓技、O。爆氣期間打中得到的靈壓和覺醒量表 ×1.5。連段傷害遞減和隱藏的受擊承受值照樣算，所以不會無限連。</td></tr>
+</tbody></table>
 <ul>
-<li><kbd>Shift</kbd>+<kbd>J</kbd>，花 70 瞬步。只能在<b>被一套連段打到第 2 下之後</b>、還在硬直或浮空中時按（畫面會提示 SHIFT+J BURST）。</li>
-<li>效果：你立刻恢復自由、落地，約 0.3 秒無敵；對手正在出的招式（或 Hoho、Step、跑步）被打斷，他被推開 5 公尺（不會硬直）。</li>
-<li>在 Kikon 突進的那一刀或追擊砍到你之前按，就能逃掉 Kikon。</li>
-<li>所以瞬步最好留著 70 以上當保命用。</li>
+<li><b>爆氣期間瞬步量表完全不會回</b>（不自然回、挨打不回、攻勢不回、完美 Hoho 不退）。但是<b>不滿一格（30）也能 Hoho</b>，只要量表還有剩：Hoho 會把剩下的全花掉，量表到 0 爆氣就結束。</li>
+<li>在 Kikon 突進的那一刀或追擊砍到你之前開藍色爆氣，就能逃掉 Kikon。</li>
+<li><b>Kikon 打中</b>（真的取到魂）時，攻擊方拿回一格瞬步（35）和一格靈壓（100）。Kikon／Soul Break 後的重新開局會結束雙方的爆氣，所以這些是爆氣結束後才加上去的。</li>
+<li>瞬步最好留著 70 以上，被壓的時候才能開藍色爆氣脫身。</li>
 </ul>
 
 <h3 id="awaken">覺醒</h3>
 <ul>
 <li>覺醒量表滿了（EVOLUTION）按 <kbd>P</kbd>。<b>一場只能覺醒一次</b>（劍八的卍解是唯一的第二次覺醒）。</li>
-<li>能按的時機：站著、走路、防禦、防禦硬直中，<b>以及任何能按 Burst 的時候</b>（被連段打到第 2 下之後的硬直或浮空），而且不花瞬步。</li>
-<li><b>覺醒的瞬間像 Burst 一樣打斷對手</b>：他的招式中斷、被推開 5 公尺，你短暫無敵，接著播放覺醒演出（不能跳過）。所以被壓著打時，覺醒也是一種脫身手段。</li>
+<li>能按的時機：站著、走路、防禦、防禦硬直中，<b>以及被連段打到第 2 下之後的硬直或浮空</b>（能開藍色爆氣的時候），而且不花瞬步。</li>
+<li><b>覺醒的瞬間像藍色爆氣一樣打斷對手</b>：他的招式中斷、被推開 5 公尺，你短暫無敵，接著播放覺醒演出（不能跳過）。所以被壓著打時，覺醒也是一種脫身手段。</li>
 <li>覺醒後大多會換一套招式和特殊規則，Kikon 削 3 顆魂魄。每個角色覺醒後的變化看<a href="#chars">各角色</a>；除了山本的獄炎，覺醒都維持到比賽結束。</li>
 </ul>
 
@@ -560,7 +570,7 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <li><b>二杯 RYOTE</b>：<b>3 秒</b>沒漲 NOME 就開始每秒掉 3。<b>跌破 25</b> 退回一杯，<b>到 100</b> 升三杯。</li>
 <li><b>三杯 NOMIHOSE</b>：<b>每秒掉 20，一直掉</b>，喝也不會讓它暫停。<b>跌破 50</b> 退回二杯（NOME 還有 50 左右），不補的話大約 2.5 秒就掉下去。</li>
 <li><b>換杯的時機</b>：只在他沒出招時才換（站著、走路、防禦、跑步）。連段途中過了門檻，會等招式打完才升或降，所以不會打到一半換招。唯一的例外是三杯的 <kbd>Shift</kbd>+<kbd>K</kbd>：出招當下就回一杯。</li>
-<li><b>卍解</b>（第二次覺醒，一場一次）：<b>在三杯、自己剩下的魂魄 4 顆以下</b>時按 <kbd>P</kbd>，不需要量表。跟覺醒一樣，被壓著打時（能 Burst 的時候）也能按，會把對手的攻擊打斷。代價：<b>自己的魂魄直接變成 1 顆</b>，之後被 Kikon 或 Soul Break 打中一次就輸；換來<b>靈子回滿</b>和四格「腕」。</li>
+<li><b>卍解</b>（第二次覺醒，一場一次）：<b>在三杯、自己剩下的魂魄 4 顆以下</b>時按 <kbd>P</kbd>，不需要量表。跟覺醒一樣，被壓著打時（能開藍色爆氣的時候）也能按，會把對手的攻擊打斷。代價：<b>自己的魂魄直接變成 1 顆</b>，之後被 Kikon 或 Soul Break 打中一次就輸；換來<b>靈子回滿</b>和四格「腕」。</li>
 <li><b>「腕」UDE 4 格</b>：<kbd>L</kbd>、<kbd>Shift</kbd>+<kbd>K</kbd>、<kbd>Shift</kbd>+<kbd>L</kbd>、<kbd>I</kbd>、單按的 <kbd>O</kbd> 每次 1 格。J／K 連段裡只要有 K 或 O 收尾，<b>整套只算 1 格</b>，在連段結束時才扣（打中、被擋、揮空都一樣）；純 JJJ 不扣。每扣一格自損 60 靈子（不會把自己扣死）。<b>5 秒</b>沒扣格，會自己裂掉一格（不扣血）。沒有格子時，要花格的招式就出不來。</li>
 <li><b>手臂爆裂</b>：最後一格用掉後，等那一招（連同它接出來的追擊）打完，右臂爆開：自損 120 靈子、原地跪倒約 0.7 秒，這段時間很容易被反擊。之後整場都是<b>片腕 KATAUDE</b>。</li>
 <li>連戰模式（ENDLESS）：不管打完時是哪一杯、卍解或片腕，下一關都從一杯 KATATE、NOME 10 開始，卍解每關都能再開一次。</li>
@@ -647,9 +657,8 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 </tbody></table>
 <ul>
 <li><b>完全不能動</b>：不能走、跑、Step、Hoho，招式也不會往前衝。</li>
-<li><b>冰之防禦</b>：360° 自動防禦，擋下時沒有防禦硬直，但防禦量表不會回復。</li>
+<li><b>冰之防禦</b>：360° 自動防禦，近戰、飛行道具和場上的危險物都擋得下，擋下時沒有防禦硬直，但防禦量表不會回復。</li>
 <li><b>凍觸</b>：每次進入 −273 °C 後，第一下被擋下的近戰攻擊會把攻擊者凍住約 0.3 秒。</li>
-<li><b>光學破綻</b>：飛行道具、場上的危險物和遠程攻擊會穿過冰之防禦，而且傷害不打折。</li>
 <li><b>碎裂 CRACK</b>：冰之防禦被擋到壓碎、撐住時防禦量表用光，或被 Breaker 破防，冷度立刻歸零回到 −18 °C，扣 60 靈子（不會因此倒下），當場跪倒約 0.5 秒，接下來 2 秒防禦不會降溫（量表變灰、寫著 THAW）。</li>
 <li>沒有主動離開的方法：只能靠出招花掉冷度、自然回溫，或被打出碎裂。</li>
 </ul>
@@ -660,7 +669,7 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <li><b>變冷與回溫</b>：按住 <kbd>U</kbd> 防禦就變冷（約 1.1 秒一條，從 −18 到 −273 約 2.2 秒）；擋下對手的近戰攻擊冷得更快；沒在防禦時慢慢回溫（一條在 −18 約 10 秒、−50 約 8 秒、−273 最慢，約 20 秒）；真的被打中也會回溫，傷害越重回溫越多。</li>
 <li><b>溫度帶</b>：第一條滿 → −50 °C；兩條都滿 → −273 °C；上面那條用空，就退回上一帶（−273 掉到一條以下回 −50，−50 歸零回 −18）。溫度帶只在她自由時（站著、走路、防禦、跑步）才切換，出到一半的招式照原本那一帶打完。</li>
 <li><b>越冷越怎樣</b>：走路 3.8 → 3.4 → 2.8 公尺／秒，−273 完全不能動；造成的傷害逐帶提高、受到的傷害逐帶減少；招式距離 1.0 → 1.1 → 1.35 倍；打中上霜的時間越來越長；L 從霜柱（半徑 2.5）長成氷震（3.5）再到零度凍結（5.5）；白漣、白刀、白霞罸也更遠更痛。三帶都不吃防禦削血。</li>
-<li><b>寒域</b>：她腳邊地上的白圈，半徑 3／4／5.5 公尺。對手在圈裡「往遠離她的方向」走或跑會變慢（越冷越慢），往後 Step 在 −50 和 −273 會變短；靠近、繞圈、往側面 Step 都不受影響，Hoho、Burst 和各種衝刺也不受影響。她被打到硬直或倒地時寒域暫停。</li>
+<li><b>寒域</b>：她腳邊地上的白圈，半徑 3／4／5.5 公尺。對手在圈裡「往遠離她的方向」走或跑會變慢（越冷越慢），往後 Step 在 −50 和 −273 會變短；靠近、繞圈、往側面 Step 都不受影響，Hoho、爆氣和各種衝刺也不受影響。她被打到硬直或倒地時寒域暫停。</li>
 <li><b>花冷度</b>（一條 = 100）：−18 °C 只有 L 花 25。−50 °C 每個動作都花：J 6、K 12、L 36、SP 40、O 20、I 20、Step 12、Hoho 20。−273 °C：J 20、K 40、O 60，L／SP1／SP2 各 100。冷度不夠時只有 L 會被拒絕，其他動作照出、冷度扣到 0 為止。</li>
 <li><b>連段鎖溫、可以透支</b>：從一套連段的第一下，到最後接上的動作（J／K 連段、K 接 L、O 收尾、SP 取消）打完為止，都用開始那一帶的招式；這期間只要冷度大於 0，接在 K 後面的 L 就能出，不夠的部分透支到 0。連段結束才依剩下的冷度重新決定溫度帶，可能一次掉好幾帶。例：−273 的 K K K（花 120，剩 80）再接 L（100），零度凍結照樣打出，冷度歸零，放完直接回到 −18。</li>
 </ul>
@@ -675,7 +684,7 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <li>面對近戰壓制型的對手，覺醒後乾脆擋：被擋下的攻擊讓她冷得更快，擋幾套就到 −50 甚至 −273。怕遠程的對手：飛行道具會穿過 −273 的冰之防禦，被打中還會回溫。</li>
 <li>−273 時等對手進 5.5 公尺：零度凍結能打中衝過來的 Breaker；被凍觸凍住的人用 J 懲罰。不要一直撐住 U，防禦量表見底就是碎裂。</li>
 <li>−18 冷度不到 25 時 L 按不出來，先按住 U 攢一點冷度再放；想省冷度就別在 −50 亂 Step。</li>
-<li>她很輕，被連段容易被打飛：被壓制時不要硬拚，用 Burst 或 Step 拉開再重新放冰。</li>
+<li>她很輕，被連段容易被打飛：被壓制時不要硬拚，用藍色爆氣或 Step 拉開再重新放冰。</li>
 </ul>
 </details>
 </section>
@@ -829,9 +838,9 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <li><b>記住 防 &gt; J &gt; I &gt; 防。</b>對手一直防就抓（<kbd>I</kbd>）；對手愛抓就按 J；被壓著時先防，找空隙 Step 或 Hoho。</li>
 <li><b>對手紅血就想 Kikon。</b>最穩的是三段連段打中之後按住 <kbd>O</kbd>（O 收尾）；直接按住 O 突進也行，但要小心被防或閃。</li>
 <li><b>看魂魄的紅色。</b>自己的魂火最後幾顆變紅，代表對手一次 Kikon 能拿走的數量；紅了又在閃，就別亂衝。</li>
-<li><b>瞬步留 70。</b>被連段時用 <kbd>Shift</kbd>+<kbd>J</kbd> 爆氣脫身；覺醒量表滿了，被打時按 <kbd>P</kbd> 覺醒也能打斷對手。</li>
+<li><b>瞬步留 70。</b>被連段時用 <kbd>Shift</kbd>+<kbd>J</kbd> 開藍色爆氣脫身；自己打中時可以開橙色爆氣把連段接長；拉開距離、血比對手少時開白色爆氣回血；覺醒量表滿了，被打時按 <kbd>P</kbd> 覺醒也能打斷對手。</li>
 <li><b>別讓防禦量表見底。</b>一直防不會回，量表空了會有很長一段時間不能防；找機會放開 U 走位或反擊。</li>
-<li><b>手機上：</b>拇指放著就是防禦，下半點 J、上半點 K，往上撥向前衝，按住再往上撥是 Hoho，被打時往下撥是 Burst。</li>
+<li><b>手機上：</b>拇指放著就是防禦，下半點 J、上半點 K，往上撥向前衝，按住再往上撥是 Hoho，被打時往下撥是藍色爆氣，自己打中時往下撥是橙色爆氣，RV 圓鈕任何爆氣都能開。</li>
 <li><b>角色入門順序：</b>劍八（耐打、直來直往）→ 山本（遠距離火焰）→ 一護（架勢和分身）→ 露琪亞（冷度管理）→ 千手丸（針和織布，最需要規劃）。</li>
 </ol>
 
