@@ -81,7 +81,24 @@ loom is on after them (+2, 6 wraps to 1)."
         (t (min (* 3 *weave-pass*) (1+ woven)))))
 (defun weave-stored (woven) "Passes WOVEN frames hold (0-3)." (min 3 (floor woven *weave-pass*)))
 (defun release-passes (woven) "Passes a release makes (a tap, K -> L, SP1): the stored ones, at least 1." (max 1 (weave-stored woven)))
+(defun release-ok-p (woven)
+  "May a tap or K -> L release the hank with WOVEN frames on it: only with a pass stored (the user, 2026-09-29: \"J weaves,
+K releases\"; SP1 is the one exception, it releases at 0 as at 1)."
+  (>= (weave-stored woven) 1))
+(defun quick-weave (woven) "J -> L HITOKOSHI: one more pass on the hank at once (its frames + *WEAVE-PASS*), at most three." (min (* 3 *weave-pass*) (+ woven *weave-pass*)))
 (defun weave-tap-p (hold) "An L press released after HOLD frames is a tap (the release), not a weave." (< hold *weave-tap*))
+(defun weave-release-act (hold woven live)
+  "What letting L go after HOLD frames does, WOVEN frames on the hank, LIVE: a zone of hers lives. :stop (a weave: it just
+stops), :release (a tap with a pass stored and no zone live), else :refused (a tap with nothing woven, or over a live
+zone: the loom holds one hank; the :refused cue, then it stops)."
+  (cond ((not (weave-tap-p hold)) :stop)
+        ((and (release-ok-p woven) (not live)) :release)
+        (t :refused)))
+(defun loom-ok-p (command combo woven)
+  "May a Bankai form's COMMAND start, WOVEN frames on the hank? Everything but K -> L always: L from neutral (it may
+weave), J -> L (the quick weave), SP1 (it releases at 0 as at 1); K -> L (a COMBO move with :combo in its params) only
+with a pass stored (RELEASE-OK-P)."
+  (or (not (eq command :sig)) (not (and (move-p combo) (getf (mv-params combo) :combo))) (release-ok-p woven)))
 (defun weave-void (n) "A hit on her while she weaves hank N: it is void. Values the next hank and the woven frames (0)." (values (hank-next n) 0))
 (defun hank-scale (passes)
   "The weave's scaling by PASSES (1-3): values radius x, life x, damage x (0.8 / 0.9 / 1.0, 0.5 / 0.75 / 1.0, 0.8 / 0.9 /
@@ -181,6 +198,11 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 (def-kase 4 "ITETSUKU SHITONE" (18 30) (10 22))   ; 褥: armed once unfolded
 (def-kase 5 "YAKENOHARA" (18 30) (10 22))         ; 焼野原: burns once unfolded
 (def-kase 6 "YAMIYO NO HOSHIYO" nil nil)          ; 星: no hit
+;; J -> L 一越 HITOKOSHI (the user, 2026-09-29: "J weaves, K releases"): L after a J link (the kit's :l-after-j) throws the
+;; shuttle once: +1 pass on the form's hank at f8 (QUICK-WEAVE, at most 3), never a release; 8/0/10. No bolt, so no void:
+;; a hit before f8 just loses the pass. From a J1 / J2 hit (flinch 18, A 3): 18 - 3 - 18 = -3; from J3 (stagger 26): +5;
+;; blocked (the chain opens 3 f before the link ends): J1 / J2 -2 + 3 - 18 = -17, J3 -4 + 3 - 18 = -19
+(defmove :sj-hitokoshi :kind :sig :clip :sj-weave :startup 8 :active 0 :recovery 10 :on-frame ((8 senju-quick-weave)))
 ;; the weave let go: 6 f back to the loom stance (no hit, no release)
 (defmove :sj-weave-stop :kind :sig :clip :sj-loom-stance :startup 1 :active 0 :recovery 5 :whiff 5)
 ;; Shift+K SP1 裁ち直し TACHINAOSHI (the user, 2026-09-29): 1 bar, no weave: frame 0 cuts the live zone(s) (the combo cut's
@@ -239,7 +261,8 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
             (4.0 5.0 :f 1 :sig 2 :step 1 nil 1)
             (5.0 9.0 :sig 5 :kikon 1 nil 1)
             (9.0 99.0 :sig 2 nil 2))
-    :guard 0.45 :hoho 0.35 :dash 0.2 :dash-back 0.6 :o-ender 0.2 :l-after-k 0.3 :sp-cancel-bars 9 :kikon-range 8.5
+    :guard 0.45 :hoho 0.35 :dash 0.2 :dash-back 0.6 :o-ender 0.2 :l-after-k 0.3 :l-after-j 0.35 :sp-cancel-bars 9
+    :kikon-range 8.5
     :react (:projectile :sp2) :weave (:far 6.5 :near 4.0) :sp-ender senju-sp-ender
     :opp-rush-hold 0.5 :opp-reflex senju-opp-reflex :reflex senju-ai-reflex :sig-hold senju-sig-hold)
   "The loom's CPU (every hank form; 星's weave distances are read by form in SENJU-SIG-HOLD; SP1 ends a string: SENJU-SP-ENDER).")
@@ -249,7 +272,7 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
   :mult *tsuji-mult* :taken *tsuji-taken* :reset-form nil :stance :sj-loom-stance :aura senju-aura-tsuji :cine sj-tsuji-cine
   :commands (:f :sj-t-k1 :sig :sj-kase-1 :sp1 :sj-tachinaoshi-1 :sp2 :sj-kasa :breaker :sj-breaker :kikon :sj-t-kikon)
   :grid (:sj-j1 :sj-j2 :sj-j3 :sj-t-k1 :sj-k2 :sj-t-k3 :sj-j2s :sj-k2s)
-  :l-after-k :sj-kase-1-k :meter *senju-meter* :ai *tsuji-ai*)
+  :l-after-k :sj-kase-1-k :l-after-j :sj-hitokoshi :meter *senju-meter* :ai *tsuji-ai*)
 (defkit :senjumaru :tsuji2 :inherit :tsuji1 :commands (:sig :sj-kase-2 :sp1 :sj-tachinaoshi-2) :l-after-k :sj-kase-2-k)
 (defkit :senjumaru :tsuji3 :inherit :tsuji1 :commands (:sig :sj-kase-3 :sp1 :sj-tachinaoshi-3) :l-after-k :sj-kase-3-k)
 (defkit :senjumaru :tsuji4 :inherit :tsuji1 :commands (:sig :sj-kase-4 :sp1 :sj-tachinaoshi-4) :l-after-k :sj-kase-4-k)
@@ -318,10 +341,11 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
       (when fell (sj-count e :fallen) (clog "~a stitch fell, ~d left" (side-name e) n)))))
 
 (defun senju-ok (e command combo)
-  "Her kit's refusals: the Shikai's L at 0 stitches. (The Bankai's L always starts: it may weave while a zone lives; its
-tap releases only when none does, SENJU-WEAVE-RELEASE; the combo cut cuts the live one.)"
-  (declare (ignore combo))
-  (or (not (eq command :sig)) (not (hari-form-p e)) (>= (hari e) 1)))
+  "Her kit's refusals: the Shikai's L at 0 stitches; the Bankai's K -> L with no pass stored (LOOM-OK-P; its L from
+neutral always starts: it may weave, and its tap is refused at release, SENJU-WEAVE-RELEASE; J -> L always weaves)."
+  (cond ((not (eq command :sig)) t)
+        ((hari-form-p e) (>= (hari e) 1))
+        (t (loom-ok-p command combo (sjs-woven (sj e))))))
 
 (defun senju-hit (att def res hw mv hazard ranged)
   "After a hit she dealt (her kit's :hit): her own J / K / O window's contact sews (the Shikai); MAKITORI hauls him in to
@@ -540,13 +564,25 @@ Step clears it), *KASA-BASE* + half the largest caught hit (<= *KASA-CAP*), stag
           (emit :sfx :shuttle e))))))
 
 (defun senju-weave-release (e)
-  "L let go (the move's :release): a tap goes on to the release (S 6, SENJU-UNRAVEL); a weave just stops (the bolt goes, the
-passes stay on the hank), 6 f back to the stance."
-  (let* ((f (fighter e)) (st (sj e)) (tap (weave-tap-p (fighter-hold f))))
-    (unless (and tap (null (senju-live-zones e)))      ; (the loom holds one hank: a tap over a live zone only stops)
+  "L let go (the move's :release, WEAVE-RELEASE-ACT): a tap with a pass stored goes on to the release (S 6,
+SENJU-UNRAVEL); a weave just stops (the bolt goes, the passes stay on the hank), 6 f back to the stance; a tap with
+nothing woven or over a live zone is refused (the :refused cue: the HUD's loom row flashes), then stops."
+  (let* ((f (fighter e)) (st (sj e)) (act (weave-release-act (fighter-hold f) (sjs-woven st) (senju-live-zones e))))
+    (unless (eq act :release)
+      (if (eq act :stop)
+          (sj-count e :weave-segments)
+          (progn (emit :refused e :sig) (sj-count e :refused) (clog "~a refused L: ~d passes stored" (side-name e) (senju-stored e))))
       (destroy-entity (sjs-bolt st))
-      (unless tap (sj-count e :weave-segments))
       (start-move e (find-move :sj-weave-stop)))))
+
+(defun senju-quick-weave (e)
+  "HITOKOSHI f8 (J -> L): one pass onto the form's hank at once (QUICK-WEAVE, at most three), the shuttle's clack."
+  (let* ((st (sj e)) (w (sjs-woven st)) (w2 (quick-weave w)))
+    (setf (sjs-woven st) w2)
+    (when (> (weave-stored w2) (weave-stored w)) (sj-count e :passes-woven))
+    (sj-count e :quick-weaves)
+    (emit :sfx :shuttle e)
+    (clog "~a HITOKOSHI ~d passes" (side-name e) (weave-stored w2))))
 
 (defun senju-bolt-step (h hz d)
   "The weave's bolt, each step: it stays in her hands while she weaves (the hold, then the S frames before the unravel);
@@ -787,7 +823,7 @@ hits, *AI-SENJU-TACHI* of the time."
 
 (defun senju-sig-hold (kit d &optional e)
   "Frames her CPU holds L (E: her, for the stored passes): the Shikai taps it. The loom wants 3 passes beyond :far, 2 beyond
-:near and none inside :near (星, cast round her: :far 5 / :near 2.5); short of them it weaves one segment (at most
+:near and 1 inside :near (a tap needs one stored; 星, cast round her: :far 5 / :near 2.5); short of them it weaves one segment (at most
 *WEAVE-SEG* frames, never a stand into a rush: each segment is a new decision), else it taps (the release at the stored
 level)."
   (if (not (form-hank (kit-form kit)))
@@ -795,7 +831,8 @@ level)."
       (let* ((w (getf (kit-ai kit) :weave)) (hoshi (eq (kit-form kit) :tsuji6))
              (far (if hoshi 5.0 (getf w :far 6.5))) (near (if hoshi 2.5 (getf w :near 4.0)))
              (want (cond ((> d far) 3) ((> d near) 2) (t 0))) (woven (if e (sjs-woven (sj e)) 0))
-             (want (if (and e (senju-live-zones e)) 3 want)))   ; (a zone lives: weave the next one up meanwhile)
+             (want (if (and e (senju-live-zones e)) 3 (max 1 want))))   ; (a zone lives: weave the next one up meanwhile;
+                                                                          ; nothing stored: one pass, never a refused tap)
         (if (<= want (weave-stored woven))
             1
             (+ 1 (max *weave-tap* (min *weave-seg* (- (* want *weave-pass*) woven))))))))
@@ -826,7 +863,8 @@ level)."
   "Her kit-meter row (LX LY LS: where the landscape label goes, NIL in the portrait slot): the Shikai's six needle pips
 (lit by the stitches, the next to fall flickering in its last 30 f, a refused L flashes the row) and the brush 針 HARI;
 the Bankai's six hank swatches in the loom's order (the next lit and raised, filling in three steps while she weaves, the
-live zones' draining, a torn one slashed) and the brush 機 + the next hank's short name."
+live zones' draining, a torn one slashed, a refused release washing the next one white) and the brush 機 + the next
+hank's short name."
   (let* ((f (fighter e)) (g (gauges e)) (st (sj e)) (side (fighter-side f)) (x (f32 x)) (y (f32 y)) (w (f32 w)) (h (f32 h))
          (pw (/ w 6.6)) (gap (* 0.12 pw)) (hh (* 2.6 h)) (y0 (- y (* 0.8 h))) (next (form-hank (kit-form kit)))
          (refused (max 0.0 (- 1.0 (* 4.0 (- tm (aref *refused-t* side)))))))
@@ -845,7 +883,9 @@ live zones' draining, a torn one slashed) and the brush 機 + the next hank's sh
               (when lit                                  ; the passes stored on it fill it in three steps (every segment)
                 (let ((p (senju-stored e)))
                   (%hrect px (f32 (+ (- y0 lift) (* hh (- 1.0 (/ p 3.0))))) (f32 pw) (f32 (* hh (/ p 3.0)))
-                          0.95f0 0.9f0 0.8f0 0.55f0)))
+                          0.95f0 0.9f0 0.8f0 0.55f0))
+                  (when (> refused 0.0)                  ; a refused release (nothing woven): the swatch washes white
+                    (%hrect px (f32 (- y0 lift)) (f32 pw) (f32 hh) 1f0 1f0 1f0 (f32 (* 0.85 refused)))))
               (when live                                 ; the live zone's life, draining
                 (let* ((hz (hazard live))
                        (fr (if hz (if (plusp (hazard-delay hz)) 1.0 (max 0.0 (- 1.0 (/ (hazard-age hz) (float (max 1 (hazard-life hz))))))) 0.0)))

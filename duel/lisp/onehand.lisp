@@ -232,6 +232,9 @@ at EVOLUTION or a Bankai ready), the ink ring under the thumb, and the recognise
         (let ((on (touch-chip-down-p tr i)) (cx (aref dk (+ 4 (* 3 i)))) (cy (aref dk (+ 5 (* 3 i)))) (r (aref dk (+ 6 (* 3 i)))))
           (%disc cx cy r 0.05 0.04 0.07 (if on 0.85 0.45))
           (%ring cx cy r (* 2f0 d) 1.0 (if on 0.85 0.55) (if on 0.4 0.3) (if on 1.0 0.7))
+          (when (= i 1)                                  ; a refused L (cooling, cold, its kit's refusal): the chip flashes
+            (let ((fl (f32 (- 1.0 (* 4.0 (- (fx-clock) (aref *refused-t* 0)))))))
+              (when (> fl 0.0) (%disc cx cy r 1.0 1.0 1.0 (* 0.7f0 fl)) (%ring cx cy (* 1.15 r) (* 3f0 d) 1.0 1.0 1.0 fl))))
           (hud-text (if (and u (= i 5)) "U" (svref *chip-labels* i)) cx (- cy (* 3.5 s)) s *c-chip* :align :center :shadow nil))))
     (when (touch-active-p tr)                              ; the floating stick: an ink ring at its origin
       (%ring (touch-ox tr) (touch-oy tr) (* d 48f0) (* 2f0 d) 1.0 1.0 1.0 (if (touch-resting-p tr) 0.35 0.6))

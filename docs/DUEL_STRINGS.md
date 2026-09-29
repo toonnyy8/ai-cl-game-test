@@ -412,6 +412,11 @@ the latch is dropped, the K link recovers as usual) and runs as a follow-up (`fi
 value is T (the form's own L) or a move name (a combo copy of it, e.g. a shorter startup): `kit-l-link`. A J link never
 takes it; a form without the key keeps the old behaviour exactly (a `:cancel` L still cancels a landed link, off hit only).
 
+**The J twin `:l-after-j`** (2026-09-29, Senjumaru's "J weaves, K releases"): the same latch after a **J link** (J1, J2,
+J2s or J3: `kit-j-link-p`), the value a move of that form (her 一越 HITOKOSHI, a one-pass weave). The CPU reads `:ai
+:l-after-j` for a J link as it reads `:l-after-k` for a K link. A refused L link (either key) now gets the `:refused` cue
+and its press is eaten, as a refused neutral command always did; the kit's `:ok` hook gets the link's move as `combo`.
+
 **On hit it combos**: from the K link's hit, `A(K) + hit frame(L) < hitstun(K)` (stagger 26 after K1 / K2, crumple 40
 after K3), host-tested for every K link of every form that has the key. **On block** the L comes out at block timing and
 can be guarded as usual (it is not a guard crush; its own guard value drains). It is not an ender: no O after it.

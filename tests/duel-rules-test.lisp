@@ -1405,7 +1405,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (~= 1.4 (getf (mv-params (kit-next t1 :sj-k2 :f)) :pull)) (~= 3.3 (kit-walk t1)) (~= 3.6 (kit-walk b))))
   ;; the CPU: the rule's keys, the loom's hold by distance (星 closer), the Shikai taps L
   (check (and (equal (getf (kit-ai b) :awaken-rule) '(:ranged-share 0.3 :min-taken 150 :or-opp-rooted t))
-              (= 31 (senju-sig-hold t1 7.0)) (= 31 (senju-sig-hold t1 5.0)) (= 1 (senju-sig-hold t1 3.0))   ; a segment; a tap
+              (= 31 (senju-sig-hold t1 7.0)) (= 31 (senju-sig-hold t1 5.0)) (= 21 (senju-sig-hold t1 3.0))   ; a segment; one pass
               (= 31 (senju-sig-hold t6 5.5)) (= 31 (senju-sig-hold t6 3.0)) (= 1 (senju-sig-hold b 3.0))
               (~= 0.5 (getf (kit-ai t6) :opp-rush-hold)) (null (kit-reset-form t1)) (eq :base (kit-reset-form b)))))
 
@@ -1422,6 +1422,35 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (= 1 (release-passes 0)) (= 1 (release-passes 19)) (= 2 (release-passes 45)) (= 3 (release-passes 60))
               (equal '(4 0) (multiple-value-list (weave-void 3))) (equal '(1 0) (multiple-value-list (weave-void 6))))))
 (check (and (eq :sig (mv-kind (find-move :sj-weave-stop))) (= 6 (mv-total (find-move :sj-weave-stop)))))
+
+;; J weaves, K releases (the user, 2026-09-29): a release needs a stored pass: a tap with nothing woven is refused (the cue,
+;; then it stops), as over a live zone; a weave just stops; K -> L (the -k copies) is refused at 0 passes, J -> L never
+;; (it weaves), nor SP1 (it releases at 0 as at 1, RELEASE-PASSES); J -> L is HITOKOSHI in every loom form after every
+;; J link (+1 pass at f8, at most 3; 8/0/10: -3 after a J1 / J2 hit, +5 after J3, <= -17 blocked), none in the Shikai
+(let ((t1 (kit :senjumaru :tsuji1)) (hk (find-move :sj-hitokoshi)))
+  (check (and (not (release-ok-p 0)) (not (release-ok-p 19)) (release-ok-p 20)
+              (eq :refused (weave-release-act 5 0 nil)) (eq :refused (weave-release-act 9 19 nil))      ; a tap at 0 passes
+              (eq :release (weave-release-act 5 20 nil)) (eq :refused (weave-release-act 5 60 t))
+              (eq :stop (weave-release-act 10 0 nil)) (eq :stop (weave-release-act 40 60 t))))
+  (check (and (not (loom-ok-p :sig (kit-l-link t1 :sj-t-k1) 0)) (not (loom-ok-p :sig (kit-l-link t1 :sj-k2) 19))   ; K -> L
+              (loom-ok-p :sig (kit-l-link t1 :sj-t-k1) 20) (loom-ok-p :sig nil 0) (loom-ok-p :sig hk 0)
+              (loom-ok-p :sp1 nil 0) (= 1 (release-passes 0))))                                                ; SP1 at 0
+  (check (and (= 20 (quick-weave 0)) (= 1 (weave-stored (quick-weave 0))) (= 35 (quick-weave 15))              ; +1 pass
+              (= 2 (weave-stored (quick-weave (quick-weave 0)))) (= 60 (quick-weave 45)) (= 60 (quick-weave 60))  ; cap 3
+              (= 3 (weave-stored (quick-weave (quick-weave (quick-weave (quick-weave 0))))))))
+  (check (and (eq :sig (mv-kind hk)) (= 8 (mv-s hk)) (= 18 (mv-total hk)) (null (mv-hold hk))
+              (equal (mv-on-frame hk) '((8 senju-quick-weave))) (null (getf (mv-params hk) :combo))))
+  (let ((j1 (kit-command-move t1 :q)) (j3 (kit-next t1 :sj-j2 :q)))
+    (check (= -3 (- (hitstun :flinch) (mv-a j1) (mv-total hk))))                          ; safe-ish on hit
+    (check (= 5 (- (hitstun :stagger) (mv-a j3) (mv-total hk))))
+    (check (<= (- (+ (mv-adv-block j1) *chain-lead*) (mv-total hk)) -17)))              ; punishable blocked
+  (loop for n from 1 to 6
+        for k = (kit :senjumaru (hank-form n))
+        do (check (and (every (lambda (j) (eq hk (kit-l-link k j))) '(:sj-j1 :sj-j2 :sj-j3 :sj-j2s))
+                       (every (lambda (j) (getf (mv-params (kit-l-link k j)) :combo)) '(:sj-t-k1 :sj-k2 :sj-k2s :sj-t-k3))
+                       (~= 0.35 (getf (kit-ai k) :l-after-j)))))
+  (check (notany (lambda (j) (kit-l-link (kit :senjumaru :base) j)) '(:sj-j1 :sj-j2 :sj-j3 :sj-j2s)))
+  (check (every (lambda (cf) (or (eq (first cf) :senjumaru) (null (kit-l-after-j (apply #'kit cf))))) *forms*)))
 
 ;; SP1 裁ち直し releases the next two hanks (the user, 2026-09-29): the queue moves +2 (6 wraps to 1); the move cuts the live
 ;; zone(s) at f0 and releases at f8 and f14 (the combo cut's rules); off a landed link both land inside a stagger (26 f:
