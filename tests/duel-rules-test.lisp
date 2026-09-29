@@ -1340,7 +1340,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
         for lk = (kit-l-link k :sj-t-k1)
         do (check (and (= n (getf (mv-params l) :hank)) (equal (mv-hold l) '(20 60)) (= 6 (mv-s l)) (member :bind (mv-flags l))
                        (= n (getf (mv-params lk) :hank)) (null (mv-hold lk)) (= 8 (mv-s lk)) (getf (mv-params lk) :combo)
-                       (>= (mv-reach lk) 9.0) (eq :sj-tachinaoshi (mv-name (kit-command-move k :sp1)))
+                       (>= (mv-reach lk) 9.0) (eq (intern (format nil "SJ-TACHINAOSHI-~d" n) :keyword) (mv-name (kit-command-move k :sp1)))
                        (= 1 (kit-command-cost k :sp1)) (kit-awakening k) (zerop (kit-heal k))
                        (zerop (mv-cooldown l)))))                 ; (no COOLDOWN row: the torn lock is L's timer)
   ;; the combo cut: L after a K link hits before the K link's stagger ends (A 4 + S 8 + unfold 10 = 22 < 26)
@@ -1366,6 +1366,24 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (= 62 (senju-sig-hold t1 7.0)) (= 42 (senju-sig-hold t1 5.0)) (= 22 (senju-sig-hold t1 3.0))
               (= 62 (senju-sig-hold t6 5.5)) (= 42 (senju-sig-hold t6 3.0)) (= 1 (senju-sig-hold b 3.0))
               (~= 0.5 (getf (kit-ai t6) :opp-rush-hold)) (null (kit-reset-form t1)) (eq :base (kit-reset-form b)))))
+
+;; SP1 裁ち直し releases the next two hanks (the user, 2026-09-29): the queue moves +2 (6 wraps to 1); the move cuts the live
+;; zone(s) at f0 and releases at f8 and f14 (the combo cut's rules); off a landed link both land inside a stagger (26 f:
+;; cancel frame +1, then S + unfold); its :tell is its first hitting hank's; 1 bar
+(check (equal (loop for n from 1 to 6 collect (multiple-value-list (tachi-hanks n)))
+              '((1 2 3) (2 3 4) (3 4 5) (4 5 6) (5 6 1) (6 1 2))))
+(loop for n from 1 to 6
+      for k = (kit :senjumaru (hank-form n))
+      for sp = (kit-command-move k :sp1)
+      do (check (and (eq :sp (mv-kind sp)) (= 8 (mv-s sp)) (= 30 (mv-total sp)) (= 1 (kit-command-cost k :sp1))
+                     (equal (mv-on-frame sp) '((0 senju-combo-cut) (8 senju-tachi-release) (14 senju-tachi-release)))
+                     (= 6 *tachi-second*)
+                     (< (+ 1 8 *unfold-combo*) (hitstun :stagger)) (< (+ 1 8 *tachi-second* *unfold-combo*) (hitstun :stagger))
+                     (equal (getf (mv-params sp) :tell)
+                            (cond ((hank-hits-p n) '(10 22)) ((hank-hits-p (hank-next n)) '(16 28)))))))
+(check (and (null (getf (mv-params (kit-command-move (kit :senjumaru :tsuji6) :sp1)) :tell))   ; 星 + 眼: no hit
+            (eq 'senju-sp-ender (getf (kit-ai (kit :senjumaru :tsuji1)) :sp-ender))
+            (null (getf (kit-ai (kit :senjumaru :tsuji1)) :skip))))
 
 ;; 星 siphons (the user, 2026-09-29): inside her live star he gains nothing; his Reiatsu / flash-step gains go to her, his
 ;; Fighting Spirit (and every kit meter: combat.lisp SIPHON-OF) is lost; the drain gives her what it really took, capped

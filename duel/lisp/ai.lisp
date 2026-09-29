@@ -171,6 +171,9 @@ cancel into SP2 when the victim is on the ground (a launched victim would drop o
           (nq :q)
           (nf :f)
           ((and (>= (fighter-sf f) (fighter-land-sf f)) (ai-cancel-p e kit)) (why b :cancel :sig))
+          ((let ((h (ai-table e :sp-ender)))            ; the kit's own SP ender (its function picks it, or NIL)
+             (and h (= (fighter-sf f) (fighter-land-sf f)) (not (eq (state-of (opp-of e)) :air))
+                  (let ((c (funcall h e kit))) (and c (why b :sp-ender c))))))
           ((and (>= bars (ai-table e :sp-cancel-bars 1)) (kit-command-ok-p e :sp2)
                 (= (fighter-sf f) (fighter-land-sf f)) (not (eq (state-of (opp-of e)) :air))
                 (< (sim-rnd01) *ai-sp-cancel-p*))              ; one roll, on the first step we see the hit
