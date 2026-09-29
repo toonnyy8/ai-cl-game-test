@@ -93,7 +93,7 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
         (:hit (apply #'show-hit args))
         (:blocked (destructuring-bind (att def x y z) args
                     (multiple-value-bind (dx dz) (hit-dir att def)
-                      (if (and (passive-p def :ward) (not (passive-p def :optic)))   ; West's ward: the guard's hexagon in fire,
+                      (if (and (passive-p def :ward) (not (passive-p def :freeze-touch)))   ; West's ward (not the ice one): the hexagon in fire,
                           (progn (vfx-garb-block x y z (- dx) (- dz)) (sfx-at :sizzle x y z)   ; the garb flares
                                  (setf (model-flare (model def)) (f32 (max (model-flare (model def)) 0.25))))
                           (vfx-hit x y z :guard :dx dx :dz dz))

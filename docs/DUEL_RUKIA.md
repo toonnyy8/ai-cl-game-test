@@ -986,3 +986,11 @@ Time in band −18 59–64 %, −50 30–38 %, zero 3–8 %.
 150 f cooldown. Instead S 10 → **12** and R 26 → **36** (48 f a cast; the move now outlasts its pillar, S 12 + delay 24 =
 f36, so there is still one ring at a time), the CPU victim's tell shifted to (21 30); the K→L combo copy keeps S 8 / delay
 10 and inherits R 36. Native gate: RY 139.8 s (Rukia 12 / 20), RK 154.5 (13), RR 176.9, IR 190.8, all K.O.
+
+### −273 guards ranged hits too (the user, 2026-09-30)
+
+「［修改設定］露琪亞的 -273° 將飛行道具也納入防禦冰之防禦的範圍」: the zero ward now blocks projectiles, hazards and
+`:ranged` windows as well as melee. The `:optic` passive is removed from `:zero` (the canon optical loophole above is no
+longer modelled; `optic-p` stays in rules.lisp, unused). The garb-block look now keys on `:freeze-touch` so her blocks keep
+the ice look, not West's fire. Native gate: RY 139.8 s (Rukia 12 / 20), RK 154.5 (14), RR 176.9, IR 193.4, SR 189.9, all
+K.O.; her A/B ("never" wins of 60, streams 100 / 300 / 500): RY 33 / 27 / 35, RK 42 / 33 / 35, RR 33 / 39 / 32.

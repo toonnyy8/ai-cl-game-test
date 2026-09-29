@@ -1,7 +1,7 @@
 ;;;; rukia.lisp — KUCHIKI RUKIA (TYBW), docs/DUEL_RUKIA.md: her moves (DEFMOVE) and her four forms (DEFKIT): :base (the
 ;;;; Shikai 舞え、袖白雪, a mid-range placer of ice) and the awakening 絶対零度 ZETTAI REIDO, a cold gauge of two stacked
 ;;;; bars (the kit meter, C 0-200: combat.lisp TEMP-STEP, rules TEMP-BAND) whose band is the form: :m18 (-18 C), :m50
-;;;; (-50 C, bar 1 full) and :zero (-273.15 C, both full: rooted, the ward with freeze-touch, optic). Guarding cools her,
+;;;; (-50 C, bar 1 full) and :zero (-273.15 C, both full: rooted, the ward with freeze-touch, ranged hits guarded too). Guarding cools her,
 ;;;; not guarding warms her, actions spend cold (at -18 only L); colder is slower but longer, harder and wider in every
 ;;;; button, and the opponent is slower to leave her field. A CRACK (the zero ward broken) empties the gauge. Clip names
 ;;;; are the art contract (rukia-art.lisp). Below the data: her hooks and her three cinematics (DEFCINE). Every name
@@ -163,12 +163,13 @@
 
 ;;; -273.15 C, absolute zero (both bars full): rooted (no walk, run, Step, Hoho, slide or chase: the user's decision), the
 ;;; strongest version of every button at reach x1.35 with the ice blade, the largest field; the ward (360 deg, no
-;;; blockstun, never refills) whose first melee hit freezes its attacker, ranged hits pass it (optic, x1.0); U braces
+;;; blockstun, never refills) whose first melee hit freezes its attacker; ranged hits are guarded too (no optic since the
+;;; user 2026-09-30); U braces
 ;;; (stops the warming, drains the guard gauge). No chosen exit: she leaves by spending the top bar, by warming, or by
 ;;; the CRACK (the ward crushed or broken: RUKIA-CRACK)
 (defkit :rukia :zero :inherit :m18
   :reach-mult 1.35 :form-name "-273C" :walk 0.0 :run 0.0 :rooted t :mult *rukia-zero-mult* :taken *rukia-zero-taken*
-  :passives (:ward :optic :freeze-touch :chipless) :frost-touch *frost-touch-zero* :warm *ru-warm-zero* :cold *ru-cold-zero*
+  :passives (:ward :freeze-touch :chipless) :frost-touch *frost-touch-zero* :warm *ru-warm-zero* :cold *ru-cold-zero*
   :field *ru-field-zero* :crush-hook rukia-crack :u-tag "U: BRACE"
   :body :rukia-zero :weapon :ru-ice :hide (:ice-trim :hand-crack) :stance :ru-zero :aura rukia-aura-zero
   :enter-hook rukia-zero-enter :calm t                ; the white Rukia's face stays composed (never the shout)

@@ -1133,7 +1133,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (eq (mv-name (kit-next z :ru-k2 :f)) :ru-z-k3) (= 2 (kit-command-cost m18 :sp2)) (= 1 (kit-command-cost b :sp2))))
   ;; the passives: every band no chip; zero the ward, optic, freeze-touch
   (check (and (equal (kit-passives m18) '(:chipless)) (equal (kit-passives m50) '(:chipless))
-              (equal (kit-passives z) '(:ward :optic :freeze-touch :chipless)) (null (kit-passives b)) (= 0 (kit-frost-touch b))
+              (equal (kit-passives z) '(:ward :freeze-touch :chipless)) (null (kit-passives b)) (= 0 (kit-frost-touch b))
               (~= *rukia-mult* (kit-mult b)) (~= *rukia-taken* (kit-taken b))))
   ;; optic: a ranged hit on the zero ward lands as on an open defender (the defender state :neutral), a melee one is blocked
   (check (and (optic-p t t t) (not (optic-p t t nil)) (not (optic-p nil t t)) (not (optic-p t nil t))
