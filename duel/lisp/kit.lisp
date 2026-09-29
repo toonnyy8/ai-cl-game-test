@@ -275,10 +275,11 @@ point is (docs/DUEL_DESIGN.md \"Character code layout\")."
   "Does COMMAND spend a pip of the arm meter in KIT (its :pips :cmds)?"
   (and (member command (getf (kit-pips kit) :cmds)) t))
 (defun kit-kikon-cine (kit)
-  "The cinematic a Soul Break by a fighter in KIT plays (the user's decision 2026-09-27): the form's Kikon cinematic, the
-one its O would play now (its :kikon move's :cine), else the generic SOUL-BREAK-CINE."
+  "The cinematic a Soul Break by a fighter in KIT plays (the user's decision 2026-09-27): the form's own (its :hooks
+:soul-break-cine, a cinematic's name), else its Kikon cinematic, the one its O would play now (its :kikon move's :cine),
+else the generic SOUL-BREAK-CINE."
   (let ((mv (kit-command-move kit :kikon)))
-    (or (and mv (mv-cine mv)) 'soul-break-cine)))
+    (or (kit-hook kit :soul-break-cine) (and mv (mv-cine mv)) 'soul-break-cine)))
 (defun kit-drop (kit cmd)
   "The form a kit command CMD drops KIT's form to first (its :drop-to, unless CMD is in its :keep: Bankai West's
 attacks but SP1 / L go back to East), or NIL."

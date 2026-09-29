@@ -181,9 +181,10 @@ the dash strikes within *KIKON-TRIGGER* or after DASH-MAX frames (its range)."
     (:aura (cond ((< frames aura) :aura) ((or (zerop dash-max) (<= dist *kikon-trigger*)) :strike) (t :dash)))
     (:dash (if (or (<= dist *kikon-trigger*) (>= frames dash-max)) :strike :dash))))
 
-(defun parry-frame-p (sf)
-  "Is move frame SF of a parry move inside *PARRY-WINDOW* (it catches a melee hit: RESOLVE-CONTACT :parry)?"
-  (invulnerable-frame-p sf *parry-window*))
+(defun parry-frame-p (sf &optional window)
+  "Is move frame SF of a parry move inside its WINDOW (lo hi), inclusive (the move's :params :window), else the shared
+*PARRY-WINDOW* (it catches a melee hit: RESOLVE-CONTACT :parry)?"
+  (invulnerable-frame-p sf (or window *parry-window*)))
 
 (defun kikon-rush-reach (speed dash-max)
   "How far a rush module reaches: its dash (SPEED m/s for DASH-MAX frames) + *KIKON-TRIGGER*."

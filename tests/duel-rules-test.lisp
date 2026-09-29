@@ -677,7 +677,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :ru-shirafune :ru-breaker :ru-hainawa :ru-cold-stance :ru-palm :ru-flower :ru-zero :ru-reido :ru-hakka   ; Rukia
     :ru-palm-50 :ru-spin-50 :ru-flower-50 :ru-stab-2h   ; her -50 key edits (zero's pinned J1 / K1 are body-variant clips)
     :ic-stance :ic-intro :ic-win :ic-q1 :ic-q2 :ic-spin :ic-f1 :ic-f2 :ic-drop :ic-cross :ic-getsuga :ic-juji :ic-breaker
-    :ic-mine :ic-k-stance :ic-k-thrust :ic-k-lash :ic-k-wrap :ic-k-parry :ic-k-yank :ic-k-wall   ; Ichigo (DUEL_ICHIGO §10)
+    :ic-mine :ic-k-stance :ic-k-cut :ic-k-back :ic-k-wrap :ic-k-parry :ic-k-yank :ic-k-zanzo   ; Ichigo (DUEL_ICHIGO §10, v2)
+    :ic-tsuki :ic-rangetsu :ic-tsuki-otoshi
     :sj-stance :sj-q1 :sj-q2 :sj-spin :sj-f1 :sj-f2 :sj-drop :sj-yank :sj-summon :sj-kasa :sj-breaker :sj-saidan :sj-intro
     :sj-win :sj-loom-stance :sj-weave :sj-unravel :sj-tanmono :sj-makitori :sj-snip))   ; Senjumaru (:sj-awaken is the cine's)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
@@ -1165,58 +1166,97 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (eq :m50 (temp-band-at 150.0 :m50 :guard)) (eq :m18 (temp-band-at 0.0 :m50 :run))
               (eq :m18 (temp-band-at 10.0 :m18 :move)) (eq :zero (temp-band-at 200.0 :m18 :idle)))))
 
-;; Ichigo (docs/DUEL_ICHIGO.md §10 host tests): the cross copies, the parry, the yank, the pull, the clone, L after K,
-;; the Kikon counts, the side Steps, the chain gauge's prices, the awakening rule, the removed tools
-(let* ((b (kit :ichigo :base)) (ks (kit :ichigo :kessa)) (parry (kit-move ks :ic-k-parry)) (yank (kit-move ks :ic-k-yank))
-       (hiki (kit-move ks :ic-k-hiki)) (kj1 (kit-command-move ks :q)) (hk (svref (mv-hits hiki) 0))
+;; Ichigo v2 (docs/DUEL_ICHIGO.md "v2: built"): the cross copies, the stance and its branches (every one combos after a K
+;; link), KESSA's cuts, the clones (their timing, the Konpaku table, their fate), the parry's own window (GOKUI GAESHI's
+;; unchanged), the counter, the afterimages, the pull, the Kikon counts and cinematics, the removed tools
+(let* ((b (kit :ichigo :base)) (ks (kit :ichigo :kessa)) (parry (kit-move ks :ic-k-parry)) (gaeshi (kit-move ks :ic-k-gaeshi))
+       (hiki (kit-move ks :ic-k-hiki)) (kj1 (kit-command-move ks :q)) (kk1 (kit-command-move ks :f)) (hk (svref (mv-hits hiki) 0))
+       (tsuki (kit-command-move b :sig)) (tk2 (kit-l-link b :ic-k1)) (win (getf (mv-params parry) :window))
        (kr 0.45))                                          ; Kenpachi's hurt r (ken-art.lisp: the host loads no body)
   (flet ((gv (k n) (hw-guard (svref (mv-hits (kit-move k n)) 0))))
     ;; the CROSS: J2s / K2s = J2 / K2 with guard 12 / 24 (J2 / K2 8 / 16); KESSA's copies are plain (one blade)
     (check (and (= 8 (gv b :ic-j2)) (= 12 (gv b :ic-j2s)) (= 16 (gv b :ic-k2)) (= 24 (gv b :ic-k2s)) (= 22 (gv b :ic-k3))
                 (eq :ic-cross (mv-clip (kit-move b :ic-k2s))) (equal (mv-spec (kit-move ks :ic-k-k2)) (mv-spec (kit-move ks :ic-k-k2s)))))
-    ;; blocked: KKK and J-KOGA-K3 drain 54, KESSA's KKK 34
-    (check (and (= 54 (+ (gv b :ic-k1) (gv b :ic-k2) (gv b :ic-k3))) (= 54 (+ (gv b :ic-j1) (gv b :ic-k2s) (gv b :ic-k3)))
-                (= 34 (+ (gv ks :ic-k-k1) (gv ks :ic-k-k2) (gv ks :ic-k-k3))))))
-  ;; the parry: its window is the shared *PARRY-WINDOW* (GOKUI GAESHI's 4-15, unchanged); a U press, not a command
-  (check (and (member :parry (mv-flags parry)) (= (mv-s parry) (first *parry-window*))
-              (= (+ (mv-s parry) (mv-a parry) -1) (second *parry-window*)) (parry-frame-p 4) (not (parry-frame-p 3))
-              (eq (kit-next ks :ic-k-parry :land) yank) (eq 'ichigo-parry (kit-hook ks :u)) (null (kit-hook b :u))
+    ;; KESSA's cuts: ordinary reach (J 2.6, K 3.2), routes on hit JJJ 100 / KKK 204, blocked KKK drains 48
+    (check (and (~= 2.6 (mv-reach kj1)) (~= 3.2 (mv-reach kk1)) (<= (mv-reach (kit-move ks :ic-k-k3)) 3.6)
+                (= 100 (+ (mv-dmg kj1) (mv-dmg (kit-move ks :ic-k-j2)) (mv-dmg (kit-move ks :ic-k-j3))))
+                (= 204 (+ (mv-dmg kk1) (mv-dmg (kit-move ks :ic-k-k2)) (mv-dmg (kit-move ks :ic-k-k3))))
+                (= 48 (+ (gv ks :ic-k-k1) (gv ks :ic-k-k2) (gv ks :ic-k-k3))))))
+  ;; the stance: up at f6, 30 f held (60 with L held) then R 14, no hits (hit as neutral); its branches are non-button
+  ;; strings; L after a K link opens it at f4; L, L fires the Getsuga at the old L's f14; the dash comes back at f6
+  (check (and (= 6 (mv-s tsuki)) (= 80 (mv-total tsuki)) (zerop (length (mv-hits tsuki))) (eq :ic-tsuki-k2 (mv-name tk2))
+              (= 4 (mv-enter tk2)) (= 6 (mv-enter (find-move :ic-tsuki-re))) (= 80 (+ *tsuki-up* *tsuki-max* 14))
+              (eq (kit-next b :ic-tsuki :tsuki-j) (find-move :ic-tsuki-j)) (eq (kit-next b :ic-tsuki-k2 :tsuki-k) (find-move :ic-tsuki-k))
+              (eq (kit-next b :ic-tsuki-re :tsuki-step) (find-move :ic-tsuki-dash))
+              (eq (kit-next b :ic-tsuki-dash :tsuki-back) (find-move :ic-tsuki-re))
+              (= 14 (+ *tsuki-up* (mv-s (kit-next b :ic-tsuki :tsuki-l)))) (null (kit-l-link b :ic-j1))
+              (not (string-link-p b :ic-tsuki))))
+  ;; RANGETSU: four hits, -6 on block (J1 7 f doesn't punish it); TSUKI-OTOSHI: guard 30, -10
+  (let ((rj (find-move :ic-tsuki-j)) (rk (find-move :ic-tsuki-k)))
+    (check (and (= 4 (length (mv-hits rj))) (= 72 (* 4 (mv-dmg rj))) (= -6 (mv-adv-block rj)) (= 30 (hw-guard (svref (mv-hits rk) 0)))
+                (= -10 (mv-adv-block rk)) (eq :crumple (hw-react (svref (mv-hits rk) 0))))))
+  ;; every branch combos off a K link's hit: its A + 2 (the stance's f4 -> f6) + the branch's first hit (the wave's travel
+  ;; from 1 m out to 3 m) < the K link's hitstun
+  (dolist (k '(:ic-k1 :ic-k2 :ic-k3))
+    (let* ((m (kit-move b k)) (st (hitstun (hw-react (svref (mv-hits m) 0)))))
+      (check (and (< (+ (mv-a m) 2 (mv-first-hit (kit-next b :ic-tsuki-k2 :tsuki-j))) st)
+                  (< (+ (mv-a m) 2 (mv-first-hit (kit-next b :ic-tsuki-k2 :tsuki-k))) st)
+                  (< (+ (mv-a m) 2 (mv-s (kit-next b :ic-tsuki-k2 :tsuki-l)) (ceiling (* 60 (/ 2.0 16.0)))) st)))))
+  ;; the clones: a J press's heavy lands inside Ichigo's J1 flinch (between J1 and J2), a K press's light before his K1;
+  ;; an opponent's J1 (7 f) beats the light (a real hit on Ichigo clears every clone)
+  (check (and (= 22 (clone-hit-frame :q)) (= 14 (clone-hit-frame :f))
+              (< (mv-s kj1) (clone-hit-frame :q) (+ (mv-s kj1) (hitstun :flinch))) (< (clone-hit-frame :f) (mv-s kk1))
+              (< (mv-s (mv :kenpachi :base :ke-j1)) (clone-hit-frame :f))
+              (eq :stagger (hw-react (svref (mv-hits (clone-move :q 1)) 0))) (eq :crumple (hw-react (svref (mv-hits (clone-move :q 3)) 0)))
+              (eq :flinch (hw-react (svref (mv-hits (clone-move :f 1)) 0)))))
+  ;; the Kikon's Konpaku by the clones at the O press (the user's table 0 / 1 / 2 / 3 -> 2 / 2 / 3 / 4, at most 4)
+  (check (and (equal '(2 2 3 4) (mapcar #'clone-konpaku '(0 1 2 3))) (= 4 (clone-konpaku 5)) (<= (clone-konpaku 3) *kikon-max-event*)))
+  ;; a clone's life and fate: 300 f, 3 at most (the oldest replaced), a Step's at most every 40 f; its string touched him
+  ;; (hit or block): it fades, a whiff keeps it (idle), its time up: it fades; a real hit on Ichigo (not a block, not a
+  ;; parry) clears them all
+  (check (and (= 300 *clone-life*) (= 3 *clone-max*) (= 40 *clone-step-gap*)
+              (eq :idle (clone-after-string nil 100)) (eq :fade (clone-after-string t 100)) (eq :fade (clone-after-string nil 0))
+              (null (clone-evict '(5 9))) (= 1 (clone-evict '(7 3 9)))
+              (clone-vanish-p :hit) (clone-vanish-p :counter) (clone-vanish-p :guard-break)
+              (not (clone-vanish-p :blocked)) (not (clone-vanish-p :parried)) (not (clone-vanish-p nil))))
+  ;; the parry: its own window f2-25 (24 f; the move's :window), 360 deg, 10 of the gauge, R 18; GOKUI GAESHI keeps the
+  ;; shared 4-15; a catch staggers 40 f, and ZANGETSU-GAESHI (the :land string) is +15: his J1 combos
+  (check (and (member :parry (mv-flags parry)) (equal '(2 25) win) (= 2 (mv-s parry)) (= 24 (mv-a parry)) (= 44 (mv-total parry))
+              (parry-frame-p 2 win) (parry-frame-p 25 win) (not (parry-frame-p 1 win)) (not (parry-frame-p 26 win))
+              (parry-frame-p 4) (parry-frame-p 15) (not (parry-frame-p 3)) (not (parry-frame-p 16))
+              (eq (kit-next ks :ic-k-parry :land) gaeshi) (= 10 *kessa-parry-cost*) (= 20 *kessa-parry-catch*)
+              (= 40 *kessa-parry-stun*) (< (mv-s gaeshi) *kessa-parry-stun*)
+              (= 15 (- (+ (mv-s gaeshi) (hitstun :crumple)) (mv-total gaeshi))) (< (mv-s kj1) 15)
               (member :parry-block (kit-passives ks)) (not (member :parry-block (kit-passives b)))))
-  ;; a :parry-block parry blocks a hazard (combat.lisp passes WARD for it) and catches a melee hit
+  ;; a :parry-block parry blocks a hazard and catches a melee hit
   (check (and (eq (resolve-contact :parry :hazard t :ward t) :blocked) (eq (resolve-contact :parry) :parried)
               (eq (resolve-contact :parry :breaker t) :stance-break) (eq (resolve-contact :parry :unguardable t) :hit)))
-  ;; the yank after a catch: +3, not a combo (his J1 is 10 f)
-  (check (= 3 (- *parry-stun* (mv-total yank))))
-  (check (< 3 (mv-s kj1)))
-  ;; KUSARI-BIKI: the far part ranged (beyond 3.8 m), bound 40 f from its f16 hit: +13, so his J1 (10 f) combos
+  ;; the afterimages: each hit repeats *ZANZO-LAG* (10) f later at x0.5 damage and guard, a blade's hit: J1's at f18,
+  ;; RANGETSU's four at f18 21 24 27
+  (let ((w (echo-hitwin (svref (mv-hits kj1) 0) *zanzo-mult*)))
+    (check (and (equal '(18) (echo-hit-frames kj1)) (equal '(18 21 24 27) (echo-hit-frames (find-move :ic-tsuki-j)))
+                (= 15 (hw-dmg w)) (~= 4.0 (hw-guard w)) (member :blade (hw-flags w)) (eq :flinch (hw-react w))
+                (= 360 *zanzo-life*))))
+  ;; KUSARI-BIKI: the far part ranged (beyond 3.8 m), bound 40 f from its f16 hit: +13, so his J1 (8 f) combos
   (check (and (member :ranged (hw-flags hk)) (= 40 (hw-stun hk)) (eq :bind (hw-react hk))
               (~= 3.8 (getf (mv-params hiki) :melee-range)) (= 13 (- (+ (hw-from hk) (hw-stun hk)) (mv-total hiki)))
               (< (mv-s kj1) 13)))
-  ;; the clone: slashes *CLONE-DELAY* f after a 24 f Step, a flinch: +14, his J1 combos; made at >= 35
-  (check (and (= 14 (- (+ *clone-delay* (hitstun :flinch)) *step-frames*))
-              (< (+ *step-frames* (mv-s kj1)) (+ *clone-delay* (hitstun :flinch)))
-              (= 35 (+ *clone-cost* *clone-reserve*)) (= 20 *chain-u-cost*) (= 40 *chain-catch*) (= 30 *kessa-l-cost*)))
-  ;; L after a K link: the combo copies hit (their wave at 16 / 18 m/s from 1 m out) inside a K link's stagger from 3 m
-  ;; (the Shikai) / 4 m (KESSA); the plain Shikai L doesn't
-  (flet ((l-hit (l d) (+ (first (car (last (mv-on-frame l)))) (ceiling (* 60 (/ (- d 1.0) (getf (mv-params l) :speed)))))))
-    (let ((lb (kit-l-link b :ic-k1)) (lk (kit-l-link ks :ic-k-k1)))
-      (check (and (eq :ic-getsuga-k (mv-name lb)) (eq :ic-k-getsuga-k (mv-name lk)) (eq lb (kit-l-link b :ic-k3))
-                  (< (+ 4 (l-hit lb 3.0)) (hitstun :stagger)) (>= (+ 4 (l-hit (kit-command-move b :sig) 3.0)) (hitstun :stagger))
-                  (< (+ 4 (l-hit lk 4.0)) (hitstun :stagger)) (null (kit-l-link b :ic-j1))
-                  (= (mv-cooldown (kit-command-move b :sig)) (mv-cooldown lb)) (zerop (mv-cooldown lk))))))
-  ;; the Kikon counts 2 / 3 (a Soul Break 3 / 4); the O ender's modules; the Breaker's strike out-reaches its trigger
+  ;; the Kikon counts 2 / 3 (a Soul Break 3 / 4); KESSA's Soul Break plays the Getsuga (its :soul-break-cine), its O 千影
   (check (and (= 2 (kit-kikon-konpaku b)) (= 3 (kit-kikon-konpaku ks)) (kit-awakening ks) (zerop (kit-heal ks))
+              (eq 'ic-kessa-getsuga-cine (kit-kikon-cine ks)) (eq 'ic-kikon-cine (kit-kikon-cine b))
+              (eq 'ic-kessa-kikon-cine (mv-cine (kit-command-move ks :kikon)))
               (~= 8.6 (kikon-rush-reach 30.0 14)) (> (mv-reach (kit-command-move ks :breaker)) *breaker-trigger*)))
   ;; a side Step (2.5 m) clears every crescent: its half-width + Kenpachi's hurt r < 2.5
   (check (every (lambda (w) (< (+ (* 0.5 w) kr) *step-distance*))
-                (list (getf (mv-params (kit-command-move b :sig)) :width) (getf (mv-params (kit-command-move b :sp1)) :width)
-                      (getf (mv-params (kit-command-move ks :sig)) :width))))
-  ;; the removed base tools (sidegrade rule 2): no JUJISHO, no SOGA, no cross links; slower
-  (check (and (not (eq (kit-command-move ks :sp1) (kit-command-move b :sp1))) (not (eq (kit-command-move ks :sp2) (kit-command-move b :sp2)))
-              (< (kit-walk ks) (kit-walk b)) (< (kit-run ks) (kit-run b))))
-  ;; the CPU's awakening: against a zoner (>= 35 % of >= 150 from ranged hits); KESSA never holds a guard
-  (check (and (equal (getf (kit-ai b) :awaken) '(:min-taken 150)) (eq 'ichigo-ai-parry (getf (kit-ai ks) :reflex)) (equal (kit-u-tag ks) "U: CHAIN")
-              (equal (kit-form-name ks) "KESSA") (member :kessa (kit-hide b)) (member :shikai (kit-hide ks)))))
+                (list (getf (mv-params (kit-next b :ic-tsuki :tsuki-l)) :width) (getf (mv-params (kit-command-move b :sp1)) :width))))
+  ;; U is a guard again in both forms (no :u hook, no chain skin); the removed base tools (sidegrade rule 2): no JUJISHO,
+  ;; no SOGA, no cross links, no stance; slower
+  (check (and (null (kit-hook ks :u)) (null (kit-hook ks :hud-guard)) (null (kit-u-tag ks)) (null (kit-l-after-k ks))
+              (not (eq (kit-command-move ks :sp1) (kit-command-move b :sp1))) (not (eq (kit-command-move ks :sp2) (kit-command-move b :sp2)))
+              (not (eq (kit-command-move ks :sig) tsuki)) (< (kit-walk ks) (kit-walk b)) (< (kit-run ks) (kit-run b))))
+  ;; the CPU: the awakening after 150 taken; KESSA guards (0.4) and parries / sends the clones by its :reflex
+  (check (and (equal (getf (kit-ai b) :awaken) '(:min-taken 150)) (eq 'ichigo-ai-kessa (getf (kit-ai ks) :reflex))
+              (~= 0.4 (getf (kit-ai ks) :guard)) (equal (kit-form-name ks) "KESSA") (member :kessa (kit-hide b)) (member :shikai (kit-hide ks)))))
 ;; ================================================================ ENDLESS (docs/DUEL_ENDLESS.md, endless-rules.lisp)
 (defun snap (c f &rest kv)
   (append kv (list :character c :form f :konpaku 5 :reiatsu 123.5 :fs 42.25 :awaken 37.0 :awakened (kit-awakening (kit c f))

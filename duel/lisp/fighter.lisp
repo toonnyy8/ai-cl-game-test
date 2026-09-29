@@ -712,7 +712,7 @@ still :parry); never in a reaction (a bind, a Guard Break, a crush reel: no armo
                     :armor)
                    ((and (member :stance (mv-flags mv)) (eq (fighter-phase f) :hold))
                     (if (< (fighter-hold f) *stance-in*) :stance-in :stance))
-                   ((and (member :parry (mv-flags mv)) (eq (fighter-phase f) :main) (parry-frame-p sf)) :parry)
+                   ((and (member :parry (mv-flags mv)) (eq (fighter-phase f) :main) (parry-frame-p sf (getf (mv-params mv) :window))) :parry)
                    ((and (member :shield (mv-flags mv)) (eq (fighter-phase f) :main) (<= (mv-s mv) sf) (< sf (+ (mv-s mv) (mv-a mv))))
                     :guard)                                        ; a :shield move's window is a guard (its catch: APPLY-HIT)
                    (t open)))
