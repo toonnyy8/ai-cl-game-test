@@ -107,6 +107,7 @@
   :name "RUKIA" :body :rukia :weapon :sode-no-shirayuki :stance :ru-stance :hide (:ice-trim :hand-crack)
   :intro :ru-intro :win :ru-win :intro-callout "MAE, SODE NO SHIRAYUKI" :intro-weapon (:ru-katana 70)
   :walk *walk-rukia* :run *run-rukia* :reishi *reishi-max* :swing-sfx :whoosh-light :mult *rukia-mult* :taken *rukia-taken*
+  :stun-tolerance 13.0                          ; the hidden stun (DUEL_DESIGN.md): light, blown away sooner
   :commands (:q :ru-j1 :f :ru-k1 :sig :ru-tsukishiro :sp1 :ru-hakuren :sp2 :ru-shirafune :breaker :ru-breaker :kikon :ru-kikon)
   :grid (:ru-j1 :ru-j2 :ru-j3 :ru-k1 :ru-k2 :ru-k3 :ru-j2s :ru-k2s)
   :l-after-k :ru-tsukishiro-k                   ; L after K1 / K2 / K3 (docs/DUEL_STRINGS.md §12): the combo ring

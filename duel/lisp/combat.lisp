@@ -8,6 +8,7 @@
 (in-package :duel)
 
 ;;; ---------------------------------------------------------------- damage and gauges
+(defvar *blow-aways* 0 "Blow-aways (the hidden stun past a tolerance) this match: the gate rows' count.")
 (defvar *kikons* nil
   "(attacker victim move) of every Kikon rush strike confirmed during this step's HIT-SYSTEM
 (KIKON-CONFIRM-P): settled with the Soul Breaks at its end (SETTLE-SOULS).")
@@ -200,12 +201,20 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                (combo-step (if follow :stagger (hw-react hw)) (eq (fighter-state fd) :air) (fighter-combo-hits fd)
                            (fighter-combo-launches fd) (fighter-combo-air fd))
              (setf (fighter-combo-hits fd) hits (fighter-combo-launches fd) launches (fighter-combo-air fd) air)
-             (let* ((dmg (let ((d (hit-damage base atk dmods hits (eq res :counter))))   ; :spare never takes the last point
+             ;; the hidden stun (every connected hit, hazards and clones too); past his tolerance this hit blows him away:
+             ;; a knockdown sliding ~5 m, the gauge back to 0. A Kikon rush's strike never does (its Kikon / follow-up
+             ;; resolves first), nor a Soul Break's hit (DEAL-DAMAGE: no reaction)
+             (let* ((gd (gauges def))
+                    (st (stun-add (gauges-stun gd) (if follow :stagger (hw-react hw)) (and mv (member (mv-kind mv) '(:sp :kikon)))))
+                    (blow (and (not rush) (stun-over-p st (stun-tolerance-of (kit-of def)))))
+                    (react (if blow :knockdown react))
+                    (dmg (let ((d (hit-damage base atk dmods hits (eq res :counter))))   ; :spare never takes the last point
                            (if (member :spare flags) (min d (max 0 (1- (gauges-reishi (gauges def))))) d)))
                     (stun (cond (follow (kikon-follow-stun red (mv-s mv)))
                                 ((and (hw-stun hw) (eq react (hw-react hw))) (hw-stun hw))   ; (a bind in a combo: a flinch)
                                 (t (hitstun react (eq res :counter)))))
                     (frost (max (hw-frost hw) (kit-frost-touch (kit-of att)))))
+               (setf (gauges-stun gd) (if blow 0f0 (f32 st)) (gauges-stun-idle gd) 0)
                (when (plusp frost) (setf (fighter-frost fd) (frost-next (fighter-frost fd) frost)))   ; Rukia's ice
                (if ranged (incf (gauges-taken-ranged (gauges def)) dmg) (incf (gauges-taken-melee (gauges def)) dmg))
                (cold-add! def (- (* *ru-hit-warm* dmg)))  ; Rukia: a real hit warms her
@@ -217,7 +226,12 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                            ((member :thread flags) :quick) (hazard :fire)
                            (mv (mv-kind mv)) (t :counter)))
                (unless (deal-damage att def dmg)          ; (a broken soul crumples in its cinematic)
-                 (set-reaction def react stun sx sz (if follow *kikon-follow-kb* (hw-kb hw))))
+                 (if blow
+                     (progn (set-reaction def react stun sx sz *stun-blow-kb*)   ; the blow-away
+                            (incf *blow-aways*)
+                            (clog "~a BLOWN AWAY by ~a (stun tolerance ~,1f, combo hit ~d)" (side-name def) (side-name att)
+                                  (stun-tolerance-of (kit-of def)) hits))
+                     (set-reaction def react stun sx sz (if follow *kikon-follow-kb* (hw-kb hw)))))
                (when (and follow own)                     ; the rush dashes in, then strikes again (KIKON-RUSH-STEP)
                  (setf (fighter-phase fa) :follow (fighter-hold fa) 0 (fighter-follow fa) t)
                  (emit :kikon-follow att def)
@@ -586,7 +600,7 @@ and frozen through the cinematic their looks would hang in its shots."
 (defun reset-round (a v)
   "After a Kikon / Soul Break (§1): both placed *RESET-DISTANCE* apart facing, *RESET-NEUTRAL* frames
 of neutral, P1 on the left of the view again, hazards cleared, the guard gauges full (and guardless cleared) for
-everyone, the forms kept, flash-step and Reiatsu kept, the kit's :reset-reiatsu (Kenpachi)."
+everyone, the hidden stun cleared, the forms kept, flash-step and Reiatsu kept, the kit's :reset-reiatsu (Kenpachi)."
   (let ((p (pos-of a)) (q (pos-of v)))
     (multiple-value-bind (ax az bx bz) (reset-placement (aref p 0) (aref p 2) (aref q 0) (aref q 2))
       (v3-set! p (f32 ax) 0f0 (f32 az)) (v3-set! q (f32 bx) 0f0 (f32 bz))))
@@ -597,7 +611,7 @@ everyone, the forms kept, flash-step and Reiatsu kept, the kit's :reset-reiatsu 
     (let ((f (fighter e)) (g (gauges e)) (mo (motion e)))
       (setf (motion-grounded mo) t (motion-kb-left mo) 0 (fighter-lock f) *reset-neutral* (fighter-combo-dmg f) 0
             (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (kit-reset-reiatsu (kit-of e)) *reiatsu-max*)))
-      (setf (gauges-gg g) (f32 *gg-max*) (gauges-gg-idle g) 0 (gauges-guardless g) nil)
+      (setf (gauges-gg g) (f32 *gg-max*) (gauges-gg-idle g) 0 (gauges-guardless g) nil (gauges-stun g) 0f0)
       (let ((rf (kit-reset-form (kit-of e))))          ; Rukia: absolute zero never carries over the reset (-18, C 0)
         (when rf (set-form e rf) (setf (gauges-meter g) 0f0 (gauges-meter-idle g) 0)))
       (fill (motion-vel mo) 0f0)
@@ -656,6 +670,8 @@ delay counter (frozen): West never refills."
             (gauges-fs-idle g) (min 9999 (1+ (gauges-fs-idle g))))
       (setf (gauges-gg g) (f32 (gg-regen (gauges-gg g) (gauges-gg-idle g) (gauges-guardless g) guarding)))
       (setf (gauges-gg-idle g) (gg-idle-next (gauges-gg-idle g) guarding))
+      (setf (gauges-stun g) (f32 (stun-decay (gauges-stun g) (gauges-stun-idle g)))   ; the hidden stun's decay
+            (gauges-stun-idle g) (min 9999 (1+ (gauges-stun-idle g))))
       (when (and (gauges-guardless g) (>= (gauges-gg g) *gg-max*))
         (setf (gauges-guardless g) nil)
         (emit :guard-back e)

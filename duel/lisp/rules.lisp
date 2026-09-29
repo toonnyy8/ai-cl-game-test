@@ -628,6 +628,20 @@ Values: react hits launches air-hits (the new HITS is this hit's COMBO-INDEX for
                       (t react))))
     (values react hits (if (eq react :launch) (1+ launches) launches) air-hits)))
 
+;;; ================================================================ the hidden hit-stun tolerance (DUEL_DESIGN.md)
+(defun stun-weight (react heavy)
+  "The stun points of a connected hit with written reaction REACT (*STUN-WEIGHTS*, any other 1); HEAVY (an SP / Kikon-rush
+strike) is worth at least :heavy."
+  (max (getf *stun-weights* react 1) (if heavy (getf *stun-weights* :heavy 3) 0)))
+
+(defun stun-add (stun react heavy) "STUN after one more connected hit (STUN-WEIGHT)." (+ stun (stun-weight react heavy)))
+
+(defun stun-decay (stun idle)
+  "STUN one frame later, IDLE frames after the last hit: -*STUN-DECAY* per second from *STUN-DELAY*, never below 0."
+  (if (>= idle *stun-delay*) (max 0.0 (- stun (/ *stun-decay* 60.0))) stun))
+
+(defun stun-over-p (stun tolerance) "Is STUN past TOLERANCE (the hit that did it is the blow-away)?" (> stun tolerance))
+
 ;;; ================================================================ perfect Hoho (§3)
 (defun threat-window-p (sf from to)
   "An opponent hit window [FROM, TO) of his move now at frame SF is active, or becomes active

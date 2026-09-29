@@ -302,6 +302,8 @@ Kenpachi's Bankai (the second awakening) follows the same state rule and breaks 
 becomes a knockback), 3 airborne hits (the third knocks down, and the falling victim is then
 invulnerable), damage 100 % for hits 1–3 then −10 % per hit down to 40 %, hit 10 = forced
 knockdown.
+On top of them the hidden hit-stun tolerance (below, "Hidden hit-stun tolerance"): the hit that takes the victim's
+hidden stun past his form's tolerance blows him away; hit 10 stays as the hard backstop.
 
 **Hitstop** is global and part of the rules (set in combat.lisp when a hit is applied): Quick
 hits 4 f, other hits 8 f, Breaker hit / Guard Break / Guard Crush / clash 10 f, blocked / armoured /
@@ -1108,6 +1110,60 @@ DRINK 0.7), the near cash-out waits for NOME < 55, and LEAP CLEAVE rushes from �
 RY 134.1 s (Rukia 13), **RK 134.4 s (Rukia 12 / Kenpachi 8)**, RR 185.6 s; YY / RY / RR identical per seed. YK over seeds 1–60: Kenpachi 22 (18 before). More
 aggression raised his wins further (YK 9, 30 of seeds 1–60 against 18 before) but put YK / KK under the 125 s floor:
 YK and KK now sit on it. DUEL_NOZARASHI_V2.md "The CPU after the faster drain" has the tables.
+
+## Hidden hit-stun tolerance (the user, 2026-09-29)
+
+「所有角色應該要設一個隱藏的受擊數值，如果一套連段讓受擊數值超過承受範圍，那就會讓對手飛出去避免被卡在原處無限壓制。」
+Every fighter has a hidden stun gauge (受擊值). A combo that pushes it past what his form can take sends him flying, so
+nobody can be pinned in place forever: the combo counters reset whenever the victim is back in neutral, so a loop with
+tiny gaps (strings, clone hits, hazards, enders) could re-pin him with no end; the stun gauge does not reset there.
+
+**The rule** (rules.lisp `stun-weight` / `stun-add` / `stun-decay` / `stun-over-p`, applied in combat.lisp `apply-hit`
+and `gauge-system`; the gauge is `gauges-stun`):
+
+- **Every connected hit** (a real hit or a counter-hit, never a block) adds points by its written reaction
+  (`*stun-weights*`, tuning.lisp): **flinch 1, bind 1, stagger 2, crumple / knockback / launch / knockdown 3**, any other
+  1; an SP or a Kikon-rush strike is worth **at least 3** (`:heavy`). Hazard hits and Ichigo's clone / afterimage hits
+  count the same way (they are hits like any other).
+- **Decay:** nothing for **45 f** after the last hit (`*stun-delay*`), then **−6 per second** (`*stun-decay*`), never
+  below 0. It never resets when a combo ends: a string every 20 f of neutral still fills it (host test), while strings
+  2 s apart never do.
+- **The tolerance** is a generic kit key, `:stun-tolerance` (the default `*stun-tolerance*` 16 for a form without one;
+  awakened forms inherit it through `:inherit` like every kit key):
+
+  | Character | Tolerance | Why |
+  |---|---|---|
+  | Kenpachi | **26** | he takes the most; 22 put KK at 123.5 s (37 blow-aways) under the 125 s floor, 26 at 131.8 s |
+  | Yamamoto | **18** | the old man stands a long beating |
+  | Ichigo (both forms) | **16** | the middle (the default) |
+  | Rukia | **13** | light: blown away sooner |
+  | Senjumaru | **13** | a weaver, not a brawler |
+
+- **The blow-away:** the hit that takes the gauge **past** the tolerance becomes a **knockdown** with `*stun-blow-kb*` 8
+  (× `*air-slide*` 0.6: a ~5 m slide away from the attacker over 20 f; the existing knockdown / slide code), the gauge
+  goes back to 0, and the normal fall / down / wake-up invulnerability follows, so the combo ends. The combat log says
+  `P2 BLOWN AWAY by P1 (stun tolerance 18.0, combo hit 8)`; the gate row ends in `blow N` (the match's count).
+- **It never steals a Kikon or a Soul Break:** a Kikon rush's strike adds its points but never triggers the blow-away
+  (its Kikon, or its follow-up dash, resolves first; the next hit does); a hit that breaks the soul plays its cinematic
+  and sets no reaction at all. A Kikon / Soul Break reset clears the gauge.
+- **`*combo-cap*` stays** as the hard backstop (hit 10 of a combo is a knockdown), and so do the launch and air-hit
+  limits: the stun gauge covers what they miss, the loops across neutral.
+- **Hidden:** no HUD, no practice-mode number (there is no practice debug overlay to hang it on).
+- **The CPU accepts it** (no AI change): a blow-away is a knockdown, which its `:oki` logic already plays around, and the
+  gauge is hidden from human players too.
+
+**Measured** (seeds 1–20, 2125+k, with Ichigo's clones swinging in place; 300/300 K.O., every median in 125–210 s):
+
+| YY | YK | KK | RY | RK | RR | IY | IK | IR | II | SY | SK | SR | SS | SI |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 134.7 | **128.2** | 131.8 | 134.6 | 136.5 | 169.1 | 143.8 | 142.7 | 186.9 | 201.8 | 140.2 | 133.0 | 164.1 | 195.3 | 189.7 |
+| 0 | 13 | 6 | 7 | 28 | 1 | 1 | 32 | 18 | 17 | 7 | 33 | 27 | 81 | 43 |
+
+(second row: blow-aways over the 20 matches.) Before: 134.7 / 121.1 / 127.7 / 133.7 / 130.8 / 170.1 / 148.0 / 147.1 /
+179.3 / 194.1 / 143.9 / 132.9 / 186.1 / 197.9 / 180.5. Between CPUs the blow-away is rare (0–4 a match; most in the
+Senjumaru mirror, whose hazards and 13 fill it); YY never reaches it and replays row for row. YK rose over the floor
+(121.1 → 128.2 s, Yamamoto 15 / Kenpachi 5: the long Kenpachi strings on Yamamoto now end in a knockdown). G2: YK's
+seed 7 changed (Yamamoto blown away twice), YY and KK are unchanged.
 
 ## Character code layout: the first user
 

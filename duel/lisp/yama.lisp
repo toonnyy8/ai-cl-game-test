@@ -136,6 +136,7 @@
   :name "YAMAMOTO" :body :yamamoto :weapon :ryujin-jakka :stance :ya-stance
   :intro :ya-intro :win :ya-win :intro-callout "BANSHO ISSAI KAIJIN TO NASE" :intro-weapon (:ya-cane 81)
   :walk *walk-yamamoto* :run *run-yamamoto* :reishi *reishi-max* :blade (:fire 1.0) :swing-sfx :fire-whoosh
+  :stun-tolerance 18.0                          ; the hidden stun (DUEL_DESIGN.md): the old man stands a long beating
   :commands (:q :ya-j1 :f :ya-k1 :sig :ya-sig :sp1 :ya-shiranui :sp2 :ya-taimatsu
              :breaker :ya-breaker :kikon :ya-kikon)
   :grid (:ya-j1 :ya-j2 :ya-j3 :ya-k1 :ya-k2 :ya-k3 :ya-j2s :ya-k2s)

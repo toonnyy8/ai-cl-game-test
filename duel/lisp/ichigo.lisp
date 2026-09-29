@@ -36,8 +36,6 @@
 (defparameter *clone-life* 300 "A clone's frames (74700+k: 10k).")
 (defparameter *clone-step-gap* 40 "A Step leaves a clone at most once per this many frames.")
 (defparameter *clone-lag* 6 "A clone's answer starts this long after the press.")
-(defparameter *clone-lunge* 3.0 "A clone closes in at most this far per link (the chase).")
-(defparameter *clone-answer-range* 6.0 "An idle clone answers only within this of the opponent.")
 (defparameter *clone-scale* 0.7 "A clone hit's damage x (its guard value too): every clone answers every press (the user's
 choice), so the per-hit share is the knob (the worst case, a J string with three clones, docs/DUEL_ICHIGO.md v2).")
 (defparameter *clone-burst-dmg* 30 "O's strike gains this per charging clone (74800+k).")
@@ -170,6 +168,7 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
   :name "ICHIGO" :body :ichigo :weapon :zangetsu-long :stance :ic-stance :hide (:kessa :mark)
   :intro :ic-intro :win :ic-win :intro-callout "ZANGETSU"
   :walk *walk-ichigo* :run *run-ichigo* :reishi *reishi-max* :swing-sfx :whoosh-heavy :mult *ichigo-mult* :taken *ichigo-taken*
+  :stun-tolerance 16.0                          ; the hidden stun (DUEL_DESIGN.md): the middle (KESSA inherits it)
   :commands (:q :ic-j1 :f :ic-k1 :sig :ic-tsuki :sp1 :ic-juji :sp2 :ic-soga :breaker :ic-breaker :kikon :ic-kikon)
   :grid (:ic-j1 :ic-j2 :ic-j3 :ic-k1 :ic-k2 :ic-k3 :ic-j2s :ic-k2s)
   :strings *tsuki-strings*
@@ -203,8 +202,10 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
   ;; :reflex (ICHIGO-AI-KESSA), from blockstun in the :tick hook
   :ai (:intents (:approach 3 :pressure 4 :zone 0 :defend 1)
        :ranges (:approach (2.6 6.0) :pressure (1.6 2.6) :zone (3.0 4.0) :defend (3.5 5.5))
+       ;; the clones swing in place (the user, 2026-09-29): a Step posts one where he took off, so at 2.8-5 m the Hoho
+       ;; (a clone 1.6 m in front of him, Ichigo behind him) takes half the Step's share
        :moves ((0.0 2.8 :q 5 :f 3 :breaker 1 :step 1)
-               (2.8 5.0 :f 2 :step 2 :sp2 1 :q 1)
+               (2.8 5.0 :f 2 :step 1 :hoho 1 :sp2 1 :q 1)
                (5.0 9.0 :sp1 2 :hoho 2 :kikon 1 :step 1)
                (9.0 99.0 :kikon 1 :hoho 2 nil 1))
        :guard 0.4 :hoho 0.4 :dash 0.6 :dash-back 0.2 :o-ender 0.6 :l-after-k 0.0 :sp-cancel-bars 9
@@ -251,8 +252,7 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
   (state :idle) (born 0 :type fixnum) (life 0 :type fixnum) (fade 0 :type fixnum) (src nil)
   (link 0 :type fixnum) (mv nil) (sf 0 :type fixnum) (queued nil)   ; (the presses waiting for its next links)
   (hit nil)                                   ; this link's own contact (:hit / :block)
-  (touched nil)                               ; any link of this string touched him: the carried gate; spent at its end
-  (lunge 0.0))
+  (touched nil))                              ; any link of this string touched him: the carried gate; spent at its end
 (defstruct (ice (:conc-name ice-)) (mv nil) (sf 0 :type fixnum) (end 0 :type fixnum))
 
 ;;; ================================================================ helpers
@@ -402,19 +402,18 @@ guard (or a gauge < 50) else RANGETSU; the middle, the dash in or the Getsuga; f
 (defun clone-link (c weight link)
   "Clone C starts answer LINK with WEIGHT (link 1 after the lag)."
   (setf (icc-state c) :answer (icc-mv c) (clone-move weight link) (icc-link c) link
-        (icc-sf c) (if (= link 1) (- *clone-lag*) 0) (icc-hit c) nil (icc-lunge c) *clone-lunge*)
+        (icc-sf c) (if (= link 1) (- *clone-lag*) 0) (icc-hit c) nil)
   (when (= link 1) (setf (icc-touched c) nil (icc-queued c) nil)))
 
 (defun ichigo-press (e button)
-  "A J / K press edge of E's (the user's choice: EVERY clone answers): an idle clone within *CLONE-ANSWER-RANGE* starts
-its string; an answering one queues the press for a later link (each press one link, in order, 3 links at most: the
-clone plays his whole string back, *CLONE-LAG* behind)."
-  (let ((w (if (eq button :quick) :q :f)) (q (pos-of (opp-of e))))
+  "A J / K press edge of E's (the user's choice: EVERY clone answers): an idle clone starts its string where it stands
+(the user, 2026-09-29: the clones swing in place); an answering one queues the press for a later link (each press one
+link, in order, 3 links at most: the clone plays his whole string back, *CLONE-LAG* behind)."
+  (let ((w (if (eq button :quick) :q :f)))
     (dolist (h (ichigo-clones e))
-      (let* ((hz (hazard h)) (c (hazard-data hz)))
+      (let ((c (hazard-data (hazard h))))
         (case (icc-state c)
-          (:idle (when (<= (sqrt (+ (expt (- (aref q 0) (hazard-x hz)) 2) (expt (- (aref q 2) (hazard-z hz)) 2))) *clone-answer-range*)
-                   (clone-link c w 1)))
+          (:idle (clone-link c w 1))
           (:answer (when (< (+ (icc-link c) (length (icc-queued c))) 3)   ; each press one link, in order
                      (setf (icc-queued c) (append (icc-queued c) (list w))))))))))
 
@@ -432,17 +431,12 @@ frames; guarded facing Ichigo (:src); a hazard: no KOSEI, it counts in his combo
       (vol-hit-p (first (hw-vols (hazard-hw hz))) (hazard-x hz) 0f0 (hazard-z hz) (f32 (fwd-x yaw)) (f32 (fwd-z yaw))
                  tx ty tz tr th 0f0))))
 
-(defun clone-answer-step (e hz c d dx dz)
-  "An answering clone, one frame: the lag; its chase in the startup (at most *CLONE-LUNGE*); its hit; its next link once
-the chain opens (its own contact, CHAIN-OPEN-P; after a touch every latched press goes on); at the string's end it fades
-if it touched him, else it idles where it stands."
+(defun clone-answer-step (e hz c)
+  "An answering clone, one frame: the lag; its hit, struck where it stands (no chase: the user, 2026-09-29), facing him;
+its next link once the chain opens (its own contact, CHAIN-OPEN-P; after a touch every latched press goes on); at the
+string's end it fades if it touched him, else it idles where it stands."
   (let* ((mv (icc-mv c)) (sf (incf (icc-sf c))) (s (mv-s mv)))
-    (cond ((< sf 0) nil)
-          ((< sf s)
-           (let ((step (min (* (string-chase-speed d (mv-reach mv) (- s sf)) +step+) (icc-lunge c))))
-             (when (and (> step 0) (> d 0.01))
-               (decf (icc-lunge c) step)
-               (setf (hazard-x hz) (f32 (+ (hazard-x hz) (* step (/ dx d)))) (hazard-z hz) (f32 (+ (hazard-z hz) (* step (/ dz d))))))))
+    (cond ((< sf s) nil)
           (t (when (= sf s)
                (ichigo-strike e (hazard-x hz) (hazard-z hz) (hazard-yaw hz) (svref (mv-hits mv) 0) *clone-scale* c)
                (emit :sfx :whoosh-heavy e))
@@ -471,7 +465,7 @@ if it touched him, else it idles where it stands."
         (setf (hazard-yaw hz) (f32 (angle-wrap (turn-toward (hazard-yaw hz) (dir-yaw dx dz) (track-step 720.0))))))
       (ecase (icc-state c)
         (:idle (when (<= (icc-life c) 0) (clone-fade c)))
-        (:answer (clone-answer-step e hz c d dx dz))
+        (:answer (clone-answer-step e hz c))
         (:charge
          (let ((s (min (* 40.0 +step+) (max 0.0 (- d 1.0)))) (f (fighter e)))
            (when (> d 0.01)

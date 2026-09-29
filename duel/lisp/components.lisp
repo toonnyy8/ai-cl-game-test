@@ -134,6 +134,8 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (taken-melee 0 :type fixnum) (taken-ranged 0 :type fixnum)   ; damage taken from blades / ranged hits (the CPU's
                                         ; :awaken rule: Rukia awakens against a melee opponent, ai.lisp AI-AWAKEN-P)
   (froze nil)                           ; this absolute-zero visit's freeze-touch is spent (Rukia; cleared entering zero)
+  (stun 0f0 :type single-float)         ; the hidden hit-stun (rules STUN-ADD / STUN-DECAY; no HUD)
+  (stun-idle 0 :type fixnum)            ; frames since it last grew
   ;; results
   (dealt 0 :type fixnum) (kikons 0 :type fixnum) (perfects 0 :type fixnum) (best-combo 0 :type fixnum))
 

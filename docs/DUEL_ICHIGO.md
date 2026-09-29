@@ -1069,10 +1069,11 @@ Routes on hit before the multiplier: JJJ 100, KKK 204. U is a **normal guard** a
   by a Hoho, 1.6 m in front of the opponent on the line from Ichigo (behind him) through him. At most 3 live
   (`*clone-max*`): a 4th replaces the oldest. Each lives 300 f (`*clone-life*`). A clone is KESSA's body at alpha 0.45, a
   BLOOD rim and a BLOOD ring at its feet; it can't be hit.
-- **They answer J / K, reversed** (the user's choice: **every** live clone within 6 m of the opponent answers every
-  press): J → a heavy 影断 KAGE-DACHI (`:ic-f1`, S16, 50, stagger; link 3 `:ic-drop` S18, 60, crumple), K → a light 影薙
-  KAGE-NAGI (`:ic-k-cut`, S8, 26, flinch; link 3 `:ic-k-wrap` S9, 32, stagger), **6 f after the press** (`*clone-lag*`),
-  closing in up to 3 m per link. A J press's heavy lands at f22, inside Ichigo's J1 flinch; a K press's light at f14,
+- **They answer J / K, reversed** (the user's choice: **every** live clone answers every press): J → a heavy 影断
+  KAGE-DACHI (`:ic-f1`, S16, 50, stagger, 3.0 m; link 3 `:ic-drop` S18, 60, crumple, a 3.4 m line), K → a light 影薙
+  KAGE-NAGI (`:ic-k-cut`, S8, 26, flinch, 2.4 m; link 3 `:ic-k-wrap` S9, 32, stagger, 2.8 m), **6 f after the press**
+  (`*clone-lag*`), **in place**, turned to face him (see "Clones swing in place" below: the 3 m chase and the 6 m
+  answer range are gone). A J press's heavy lands at f22, inside Ichigo's J1 flinch; a K press's light at f14,
   before his K1; the opponent's J1 (7 f) still beats it.
 - **Their strings are their own**: each press is one link (up to 3, in order); a link opens the next only on its own
   contact (hit or block), after which every queued press comes out. Contact → the clone finishes its string and fades;
@@ -1171,7 +1172,7 @@ kit `:meter :draw / :label`, the hazard `hook` / `data` (clones, afterimages and
 | `*ichigo-mult*` / `*ichigo-taken*`; `*kessa-mult*` / `*kessa-taken*` | 1.6 / 0.8; **1.25 / 1.0** (v1: 1.15 / 0.9) | 74100+k … 74400+k (0.5 + k / 100) |
 | `*tsuki-up*` / `*tsuki-tap*` / `*tsuki-max*`; `*tsuki-dash-fs*`; `*tsuki-getsuga-cd*` | 6 / 30 / 60; 10; 100 | — |
 | `*kessa-parry-cost*` / `*kessa-parry-catch*` / `*kessa-parry-stun*`; the window | 10 / 20 / 40; f2–25 | 74600+k (catch); 74500+k (window f2–(k+1)) |
-| `*clone-max*` / `*clone-life*` / `*clone-step-gap*` / `*clone-lag*` / `*clone-lunge*` / `*clone-answer-range*` | 3 / 300 / 40 / 6 / 3.0 / 6.0 | 74700+k (life 10k) |
+| `*clone-max*` / `*clone-life*` / `*clone-step-gap*` / `*clone-lag*` | 3 / 300 / 40 / 6 (`*clone-lunge*` 3.0 and `*clone-answer-range*` 6.0 removed: the clones swing in place) | 74700+k (life 10k) |
 | `*clone-scale*`; `*clone-burst-dmg*`; `*clone-konpaku*` | 0.7; 30; (2 2 3 4) | 74910+k (k / 20); 74800+k |
 | `*zanzo-life*` / `*zanzo-lag*` / `*zanzo-mult*` | 360 / 10 / 0.5 | — |
 | `*ai-ic-parry-p*` / `*ai-ic-parry-bs-p*` / `*ai-kessa-o-p*`; KESSA's `:o-ender` | 0.35 / 0.3 / 0.04; 0.6 | 74950+k (k / 50) |
@@ -1236,3 +1237,39 @@ banking in its AI and `*clone-scale*`.
   grey (`*ic-mist-tint*` + flash), with a white rim light (`*ic-mist-rim*`) for the edge; in play each clone is drawn
   twice, the second copy drifting a few cm and fainter, so the outline blurs; soft grey-black wisps rise off it
   (`ic-mist`). The BLOOD ring at the feet stays (it marks the clone's side). The 残像 afterimages keep the pale look.
+
+### Clones swing in place (the user, 2026-09-29)
+
+「一護的分身在 J /K 時應該要留在原地揮刀，而不是衝向對手攻擊。」 When Ichigo presses J / K, his clones stay where they
+stand and swing; they no longer rush at the opponent.
+
+- **In place.** `clone-answer-step` lost its chase (up to 3 m per link in the startup, `*clone-lunge*`): an answering
+  clone waits out its lag, then strikes where it stands, turned to face him (it keeps turning at 720°/s in every state
+  but its fade). Its hit volume is the answer move's own in the clone's frame, so it connects only when he is inside that
+  reach (the heavy 3.0 m 150°, its link 3 a 3.4 m line; the light 2.4 m 110°, its link 3 2.8 m 200°). No reach changed.
+- **Every clone answers** each press (the v2 rule), now wherever it stands: the 6 m answer range (`*clone-answer-range*`)
+  went with the chase, since a clone that doesn't move answers the same whether he is 2 m or 8 m away; a clone out of
+  reach whiffs its string and idles where it stands (the v2 whiff rule), so it is still there for the next press or O.
+- **Unchanged:** reversed (J a heavy, K a light), 6 f late, its own combo (a link opens the next on its own contact), it
+  fades after a string that touched him or on the listed events (time up, Ichigo really hit); O's KAGE-UCHI still sends
+  every clone charging at him (`:charge`, the only movement a clone has).
+- **The CPU** no longer counts on a clone closing 3 m: KESSA's 2.8–5 m band trades half of its Step (a clone left where
+  he took off, usually out of reach) for a Hoho (`:step 2` → `:step 1 :hoho 1`): a Hoho's clone appears 1.6 m in front of
+  the opponent, with Ichigo behind him, so both are in reach for the next J / K. Its close band still steps (a clone at
+  arm's length).
+- **Measured** (seeds 1–20, 2125+k, this change alone on main 97e06d5; 100/100 K.O.): IY 143.8 s (Ichigo 5), IK 145.6
+  (3), IR 184.6 (6), II 202.2, SI 185.8 (Ichigo 4); before: 148.0 / 147.1 / 179.3 / 194.1 / 180.5. KESSA's clones land
+  less often, so the mirror runs longer (II +8 s, inside the 210 s ceiling). The other ten pairings are untouched (no
+  shared code changed).
+- **With the hidden hit-stun tolerance on top** (DUEL_DESIGN.md "Hidden hit-stun tolerance"; Ichigo's tolerance 16, both
+  forms): IY 143.8, IK 142.7, IR 186.9, II 201.8, SI 189.7 s. **The awaken A/B** on that build (P1 Ichigo "never awaken",
+  debug 39020, SI: P2, 39002; streams `30000+o`, o = 100 / 300 / 500, `74080+k`; Ichigo's wins of 60):
+
+  | Stream | IY | IK | IR | II | SI |
+  |---|---|---|---|---|---|
+  | 100 | 27 | 20 | 32 | 37 | 30 |
+  | 300 | 24 | 20 | 30 | 44 | 31 |
+  | 500 | 27 | 33 | 35 | 45 | 29 |
+
+  "Never" wins ≥ 20 of 60 in every cell (the user's criterion); IK is the tight one (20 / 20 / 33, main had 23 / 21 / 25).
+  No Ichigo knob changed.

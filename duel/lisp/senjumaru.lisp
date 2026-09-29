@@ -234,6 +234,7 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
   :name "SENJUMARU" :body :senjumaru :weapon :shigarami :stance :sj-stance :calm t
   :intro :sj-intro :win :sj-win :intro-callout "SHIGARAMI"
   :walk *walk-senju* :run *run-senju* :reishi *reishi-max* :swing-sfx :whoosh-light :mult *senju-mult* :taken *senju-taken*
+  :stun-tolerance 13.0                          ; the hidden stun (DUEL_DESIGN.md): a weaver, not a brawler: blown away sooner
   :commands (:q :sj-j1 :f :sj-k1 :sig :sj-warui-kuse :sp1 :sj-shinpei :sp2 :sj-kasa :breaker :sj-breaker :kikon :sj-kikon)
   :grid (:sj-j1 :sj-j2 :sj-j3 :sj-k1 :sj-k2 :sj-k3 :sj-j2s :sj-k2s)
   :l-after-k :sj-warui-kuse-k                   ; the scaled cash-out after a K link
