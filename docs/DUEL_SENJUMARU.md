@@ -1140,6 +1140,22 @@ host-tested; her hook is `senju-siphon`. The probe 2480 (2450+30): 星 round her
   a tap or K1 → L before any J → L is refused (`refused L: 0 passes stored`, `refused SIG: kit`); SP1 at 0 passes still
   releases 褥 and 焼野原.
 
+## Playtest: the drapes fade near the camera (the user, 2026-09-29)
+
+「千手丸卍解後，如果太接近場邊就會被布幕遮蔽視線。」 The 18 drapes hang on the plaza's rim at r 16.8 m, 4 m tall, but the
+camera may stand out to r 18 (`*cam-max-r*`): with a fighter at the arena's edge (r 15) the behind / portrait camera and
+the landscape pair camera end up outside the drapes, and a drape filled the frame. Nothing in camera.lisp or stage.lisp
+handled occlusion (the stage's wall ring is at 19 m, behind the eye), so the fix is hers, in the look: `sj-domain` measures
+every drape's depth along the camera's view (`*cam-eye*` → `*cam-at*`, on the plaza) against the **nearer fighter's**
+depth, and `sj-rim-alpha` fades it: opaque from 0.5 m behind him on (the backdrop stays), down to alpha **0.15** at 1.5 m
+in front of him (`*sj-drape-fade*` (1.5 2.0 0.15); an alpha below 1 draws in the transparent pass, no depth write). The
+torii-loom gets the same fade. It reads the camera each frame, so it holds for the landscape pair camera, the behind /
+portrait camera and the cinematics alike, and it only touches drapes between the camera and the fighters (the others are
+behind the camera or out of frame). Stills (debug 2481–2484, landscape 1280×720 behind and pair cameras, portrait
+390×844; 99600 is the before): the pair at the edge on a tangent (2481) was a wall of cloth, now two ghosted drapes; P1's
+back to the rim (2483, portrait) had a drape over her, now she is clear; P2's back to the rim (2484) keeps the drapes
+behind him opaque. No sim change.
+
 ## Built: deviations from the design, and why
 
 | Item | Design | Built | Why |
@@ -1197,6 +1213,7 @@ replay byte-identically, `style-gates.py cvc`):
 | the six hanks (`*hanks*`) | §4.2's values at 3 passes | — |
 | SP1's cost (the two-hank release) / its CPU chance | 1 bar / 0.5 | 97000+k (every form's copy) / — |
 | AI: `*ai-senju-hari*`, base `:block-string` / `:dash`, the loom's ZONE weight / `:opp-rush-hold`, the rule's `:ranged-share` / `:min-taken`, `:sp-cancel-bars` | 0.1, 0.8 / 0.7, 4 / 0.5, 0.3 / 150, 9 | 97700+k, 97500+k / 97600+k, 97300+k / 97400+k, 99100+k / 99200+k (×10), 99400+k |
+| the drapes' fade `*sj-drape-fade*` (lead / ramp / floor, senjumaru-art.lisp) | 1.5 m / 2.0 m / 0.15 | 99500+k (the floor ×0.01; 99600 off) |
 | A/B mode per side (0 the rule, 1 always, 2 never) | 0 | 39000 + 10a + b |
 
 Other commands: 2125+10 … 2125+14 her gate pairings alone (SY SK SR SS SI; 2125+6 … +9 and 2135 on her branch), 2140 all

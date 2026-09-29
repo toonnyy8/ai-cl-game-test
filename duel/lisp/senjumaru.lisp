@@ -949,7 +949,9 @@ stitches, L at 5 m on a 50-Reishi Kenpachi (the spikes: 1 Reishi left); 2 the so
 umbrella vs Yamamoto's full Shiranui; 4 a 3-pass weave hit at hold f30 (torn: the form +1, L locked); 5-10 hank k-4 cast at
 Kenpachi 6 m (the zone's life logged); 11 the combo cut after K1 on a live 褥; 12 zero Rukia in 刃金; 13 the awakened
 Senjumaru vs a Yamamoto CPU (眼 reflecting); 14 P1 awakened 5 m from Kenpachi (a script weaves); 30 the siphon
-probe (星 round her, Kenpachi inside at 2.2 m, both at 0 Reiatsu / 20 flash-step; 2479 then has him hit her)."
+probe (星 round her, Kenpachi inside at 2.2 m, both at 0 Reiatsu / 20 flash-step; 2479 then has him hit her); 31-34 the
+awakened Senjumaru near the rim (the drapes' fade stills): the pair on a tangent at z +14.8 / -14.8, P1 at the rim with P2
+3 m inward, and swapped."
   (flet ((setup (c2 form dist &key cpu)
            (ensure-battle :senjumaru c2 :cpu cpu)
            (when (brain *p1*) (setf (brain-off (brain *p1*)) t))
@@ -976,6 +978,15 @@ probe (星 round her, Kenpachi inside at 2.2 m, both at 0 Reiatsu / 20 flash-ste
       (27 (setup :yamamoto :base 6.0) (try-command *p1* (fighter *p1*) :sp2))   ; the umbrella
       (28 (setup :kenpachi :tsuji3 5.0) (try-command *p1* (fighter *p1*) :sig :sig))   ; a weave (held by nobody: 1 pass)
       (29 (force-cmd *p2* :q))                          ; P2's J1 now (the torn-weave probe: hold L, then 2479)
+      ((31 32 33 34)                                    ; the drapes near the rim (stills): 31 / 32 the pair on a tangent
+       (setup :kenpachi :tsuji1 3.0)                    ; at z +14.8 / -14.8; 33 P1 at the rim (14.9 m at 80 deg: a drape behind her), P2 3 m inward; 34 swapped
+       (let ((p (pos-of *p1*)) (q (pos-of *p2*)))
+         (case k
+           (31 (setf (aref p 2) 14.8f0 (aref q 2) 14.8f0))
+           (32 (setf (aref p 2) -14.8f0 (aref q 2) -14.8f0))
+           ((33 34) (let ((c (f32 (cos (deg 80.0)))) (sn (f32 (sin (deg 80.0)))) (a (if (= k 33) 14.9f0 11.9f0)))   ; (a drape
+                      (v3-set! p (* a c) 0f0 (* a sn)) (v3-set! q (* (- 26.8f0 a) c) 0f0 (* (- 26.8f0 a) sn))))))        ; hangs at 80 deg)
+       (face-each-other *p1* *p2*) (setf *cam-cut* t))
       (30 (setup :kenpachi :tsuji6 2.2)                 ; the siphon probe: 星 round her, him inside, both gauges low;
        (let ((p (pos-of *p1*)) (st (sj *p1*)))          ; then 2479 (his J1 on her: her Reiatsu grows, his doesn't)
          (setf (sjs-live st) (senju-zone *p1* 6 3 1 (aref p 0) (aref p 2)) (sjs-live-hank st) 6))
@@ -1014,7 +1025,8 @@ probe (星 round her, Kenpachi inside at 2.2 m, both at 0 Reiatsu / 20 flash-ste
                               (setf (getf (getf (kit-ai (find-kit :senjumaru :base)) :awaken-rule) :ranged-share) (/ (- c 99100) 100.0)))
           ((<= 99200 c 99299) (setf (getf (getf (kit-ai (find-kit :senjumaru :base)) :awaken-rule) :min-taken) (* 10 (- c 99200))))
           ((<= 99300 c 99399) (setf (kit-walk (find-kit :senjumaru :base)) (/ (- c 99300) 10.0)))
-          ((<= 99400 c 99409) (kits (cons :base (tsuji)) (lambda (k) (setf (getf (kit-ai k) :sp-cancel-bars) (- c 99400))))))
+          ((<= 99400 c 99409) (kits (cons :base (tsuji)) (lambda (k) (setf (getf (kit-ai k) :sp-cancel-bars) (- c 99400)))))
+          ((<= 99500 c 99600) (setf (third *sj-drape-fade*) (/ (- c 99500) 100.0))))   ; the drapes' fade floor (100: off)
     (log-msg "duel senju knob ~d" c)))
 
 (defun senju-debug (c)

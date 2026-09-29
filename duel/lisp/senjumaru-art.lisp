@@ -703,10 +703,30 @@ through the active frames, drawn back over the 8 after."
       (let* ((a (+ yaw (* i 1.047) 0.5)) (x (aref v 0)) (y (+ (aref v 1) (* 0.08 (- i 2.5)))) (z (aref v 2)))
         (sj-thread x y z (+ x (* 0.28 (sin a))) (- y 0.12) (+ z (* 0.28 (cos a))) 0.95 0.005 (float i))))))
 
+(declaim (special *cam-eye* *cam-at*))               ; (camera.lisp loads later)
+(defparameter *sj-drape-fade* '(1.5 2.0 0.15)
+  "The domain's props on the rim fade in front of the fighters (the playtest, 2026-09-29: near the rim the drapes hid them):
+a prop LEAD metres or more nearer the camera than the nearer fighter is at alpha FLOOR, from there it ramps up to 1 over
+RAMP metres (lead ramp floor; debug 99500+k sets the floor to k / 100).")
+
+(defun sj-rim-alpha (x z near vx vz)
+  "The alpha of a domain prop at (X Z): its depth along the camera's view (unit VX VZ, from *CAM-EYE*) against NEAR, the
+nearer fighter's depth; 1 behind him (the backdrop), down to the floor in front of him (*SJ-DRAPE-FADE*)."
+  (destructuring-bind (lead ramp floor) *sj-drape-fade*
+    (let ((d (- (+ (* (- x (aref *cam-eye* 0)) vx) (* (- z (aref *cam-eye* 2)) vz)) near)))
+      (max floor (min 1.0 (/ (+ d lead) ramp))))))
+
 (defun sj-domain (e side)
   "The Bankai's domain (a look, §10 N12): madder drapes hung on the plaza's rim, the golden torii-loom at the rim behind
-where she awakened (placed once); red threads from it to her upper hands while she weaves."
-  (let ((o (opp-of e)) (at (svref *sj-loom-at* side)))
+where she awakened (placed once); red threads from it to her upper hands while she weaves. The camera can stand outside
+the drapes' ring (it keeps to *CAM-MAX-R* 18 m, the drapes hang at 16.8), so the ones between it and the fighters fade
+(SJ-RIM-ALPHA), in every camera: landscape, the portrait / behind camera, the cinematics."
+  (let* ((o (opp-of e)) (at (svref *sj-loom-at* side))
+         (ex (aref *cam-eye* 0)) (ez (aref *cam-eye* 2))
+         (vx (- (aref *cam-at* 0) ex)) (vz (- (aref *cam-at* 2) ez)) (vl (max 1e-3 (sqrt (+ (* vx vx) (* vz vz)))))
+         (vx (/ vx vl)) (vz (/ vz vl))
+         (near (flet ((depth (q) (+ (* (- (aref q 0) ex) vx) (* (- (aref q 2) ez) vz))))
+                 (if (entity-alive-p o) (min (depth (pos-of e)) (depth (pos-of o))) (depth (pos-of e))))))
     (unless (and at (eql (first at) e))
       (let* ((p (pos-of e)) (q (pos-of o)) (dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2)))
              (l (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))) (x (* 15.6 (/ dx l))) (z (* 15.6 (/ dz l))))
@@ -715,10 +735,11 @@ where she awakened (placed once); red threads from it to her upper hands while s
                  (kit-awakening (kit-of o)))                ; two awakened Senjumarus drape the rim once
       (dotimes (i 18)
         (let ((a (* i (/ (* 2 pi) 18))))
-          (sj-prop :sj-drape (* 16.8 (cos a)) 0.0 (* 16.8 (sin a)) :yaw (- (/ pi 2) a)))))
+          (let ((x (* 16.8 (cos a))) (z (* 16.8 (sin a))))
+            (sj-prop :sj-drape x 0.0 z :yaw (- (/ pi 2) a) :alpha (sj-rim-alpha x z near vx vz))))))
     (destructuring-bind (ee x z yaw) at
       (declare (ignore ee))
-      (sj-prop :sj-torii x 0.0 z :yaw yaw)
+      (sj-prop :sj-torii x 0.0 z :yaw yaw :alpha (sj-rim-alpha x z near vx vz))
       (let ((f (fighter e)))
         (when (and (eq (fighter-state f) :move) (eq (fighter-phase f) :hold))
           (let* ((jm (model-joints (model e))) (v *sj-q*))
