@@ -6,7 +6,7 @@
 //       30 + k = ENDLESS best record slot k (roster index i: 30 + 2i stages, 31 + 2i seconds; 0 = none / no storage)
 //       100 + 1000 i = the learning CPU's saved table of roster index i: its entry count; 100 + 1000 i + 1 + j = entry j
 //       (docs/DUEL_LEARNING.md; localStorage soulduel.learn.<i>, the integers comma-separated)
-//   set 0 = battle on / off (the screen wake lock), 10 + i = save SETTINGS row i, 30 + k = save ENDLESS slot k,
+//   set 0 = battle on / off (the screen wake lock), 1 = open the manual (manual.html, this window), 10 + i = save SETTINGS row i, 30 + k = save ENDLESS slot k,
 //       100 + 1000 i + 1 + j = table entry j (kept here), then 100 + 1000 i = n commits the first n entries (0: forget it)
 // SETTINGS rows (duel/lisp/control.lisp *SETTINGS*, same order) live in localStorage as soulduel.<name>; every access is
 // wrapped in try/catch (private mode / blocked storage: nothing saved, the defaults).
@@ -59,6 +59,7 @@
       return 0;
     },
     set: function (k, v) {
+      if (k === 1) location.href = 'manual.html';        // MODE's MANUAL row; the manual links back to ./
       if (k === 0 && coarse) { wakeOn = !!v; if (wakeOn) wake(); else if (lock && lock.release) { lock.release(); lock = null; } }
       if (k >= 10 && k < 10 + settings.length) store('soulduel.' + settings[k - 10], String(v));
       if (k >= 30 && k < 50) store('soulduel.endless.' + (k - 30), String(v));
