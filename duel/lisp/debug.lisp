@@ -847,7 +847,7 @@ move-beat choices of DRAW-FIGHTER."
 
 (defun start-cvc (seed pair)
   "Seeded CPU vs CPU (NORMAL): PAIR = (c1 c2), or NIL to draw both from SEED."
-  (setf *match-seed* seed *mode* :cpu-cpu *difficulty* :normal)
+  (setf *match-seed* seed *mode* :cpu-cpu *difficulty* :normal *blow-aways* 0)
   (band-acc-reset) (cup-acc-reset)
   (senju-acc-reset)
   (sim-rnd-seed seed)
@@ -879,9 +879,9 @@ move-beat choices of DRAW-FIGHTER."
     (push (list *picks* (/ *match-tick* 60.0)
                 (or (zerop (gauges-konpaku (gauges *p1*))) (zerop (gauges-konpaku (gauges *p2*)))))
           *gate-results*)
-    (log-msg "duel gate row seed ~d ~a ~a secs ~,1f winner ~a forms ~a ~a" *match-seed* (first *picks*) (second *picks*)
+    (log-msg "duel gate row seed ~d ~a ~a secs ~,1f winner ~a forms ~a ~a blow ~d" *match-seed* (first *picks*) (second *picks*)
              (/ *match-tick* 60.0) (case *winner* (0 "P1") (1 "P2") (t "DRAW"))
-             (fighter-form (fighter *p1*)) (fighter-form (fighter *p2*)))   ; (the gamble A/B reads the final forms)
+             (fighter-form (fighter *p1*)) (fighter-form (fighter *p2*)) *blow-aways*)   ; (the gamble A/B reads the final forms)
     (band-acc-line) (cup-acc-line)
     (senju-acc-line)
     (setf *gate-busy* nil))

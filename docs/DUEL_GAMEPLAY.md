@@ -238,9 +238,9 @@ apart (`place`).
 | `duel hash t=600 \| x y z yaw STATE FORM r<reishi> k<konpaku> a<reiatsu> f<flash-step> g<guard>[!] w<awaken> m<meter> n<kikon> h<heat> \| … \| cd <P1 cooldowns> <P2> \| haz N` | every 600 battle steps: positions in cm, yaw in 0.01 rad, gauges (`!` = guardless; m = Inferno or NOME, the FORM = Nozarashi's cup), n = the Konpaku the last Kikon rush was worth, CPU heat, each command slot's cooldown, hazard count (the determinism check) |
 | `duel -> RESULTS winner P1 konpaku 7-0 ticks 7351 secs 122.5` | the match result (winner, Konpaku P1-P2, sim steps, seconds) |
 | `duel gate YAMAMOTO KENPACHI: 20 matches, KOs 20, median … s, min …, max … \| …` | the seed gate summary |
-| `duel gate row seed N P1CHAR P2CHAR secs … winner P1\|P2 forms F1 F2` | one per gate match: its final forms (BANKAI / KATAUDE: he entered the Bankai; the gamble A/B reads them) |
+| `duel gate row seed N P1CHAR P2CHAR secs … winner P1\|P2 forms F1 F2 blow N` | one per gate match: its final forms (BANKAI / KATAUDE: he entered the Bankai; the gamble A/B reads them) and the match's blow-aways (the hidden hit-stun tolerance, DUEL_DESIGN.md) |
 | `duel probe YA-J1 blocked: attacker free at +27, defender at +25, advantage -2 (table -2)` | a frame probe |
-| `[  tick] P1 move YA-J1 [why]` (the CPU's why: `STRING`, `O-ENDER`, `J-BEATS-K`, `PRESSURE`, …), `P1 YA-J1 -> P2 HIT 38`, `P1 YA-KIKON -> P2 KIKON 70` (a rush strike that became the Kikon; `BLOCKED` / `HIT` otherwise), `P1 KIKON FOLLOW-UP on P2 [(red)]` (it hit with O held: the knockback and the dash-in), `P1 BURNOUT RECOIL` (… `BLOCK` / `ARMOUR` / `BREAKER`: a Bankai stance's gauge ran out) and `P1 GUARDLESS BLOCK` (any gauge, by cause), `P1 form BANKAI-WEST` (the L switch), `P1 refused SIG: cooling 61` (a press while it cools), `P2 scorched 15` (West's armour / parry), `P1 BIND -> P2 HIT 40` (South's grab), `P1 KIKON on P2: -2 konpaku, 7 left`, `P1 GUARD CRUSH` / `P1 GUARD BACK`, `P1 form HELLFIRE`, Nozarashi's cups `P1 form RYOTE` / `NOMIHOSE` / `NOZARASHI`, `P1 DRINK 21 (+20 drunk)`, `P1 GUARD CRUSH (drinking)`, `P1 RIFT -> P2 HIT 50`, `P1 RIFT CLOSED`, `P1 CASH-OUT` (why `CASHOUT-PUNISH` / `-NEAR` on the move line), `KIKON on P2: -3 konpaku, 6 left (RYOTE)` (the attacker's form), `P1 PERFECT HOHO`, `P1 EVOLUTION`, `CLASH`, `cine NAME`, `P1 step [why]` / `P1 dash [why]` (a run starts; why DASH / DASH-BACK for the CPU) / `P1 run -> YA-Q1, carry 1.0 m` / `P1 BURST` / `hoho` / `guard` | the combat log (`clog`, components.lisp): move starts (with the CPU's reason), every applied hit and its result, Konpaku, forms, events |
+| `[  tick] P1 move YA-J1 [why]` (the CPU's why: `STRING`, `O-ENDER`, `J-BEATS-K`, `PRESSURE`, …), `P1 YA-J1 -> P2 HIT 38`, `P1 YA-KIKON -> P2 KIKON 70` (a rush strike that became the Kikon; `BLOCKED` / `HIT` otherwise), `P1 KIKON FOLLOW-UP on P2 [(red)]` (it hit with O held: the knockback and the dash-in), `P1 BURNOUT RECOIL` (… `BLOCK` / `ARMOUR` / `BREAKER`: a Bankai stance's gauge ran out) and `P1 GUARDLESS BLOCK` (any gauge, by cause), `P1 form BANKAI-WEST` (the L switch), `P1 refused SIG: cooling 61` (a press while it cools), `P2 scorched 15` (West's armour / parry), `P1 BIND -> P2 HIT 40` (South's grab), `P1 KIKON on P2: -2 konpaku, 7 left`, `P1 GUARD CRUSH` / `P1 GUARD BACK`, `P1 form HELLFIRE`, Nozarashi's cups `P1 form RYOTE` / `NOMIHOSE` / `NOZARASHI`, `P1 DRINK 21 (+20 drunk)`, `P1 GUARD CRUSH (drinking)`, `P1 RIFT -> P2 HIT 50`, `P1 RIFT CLOSED`, `P1 CASH-OUT` (why `CASHOUT-PUNISH` / `-NEAR` on the move line), `KIKON on P2: -3 konpaku, 6 left (RYOTE)` (the attacker's form), `P1 PERFECT HOHO`, `P1 EVOLUTION`, `P2 BLOWN AWAY by P1 (stun tolerance 18.0, combo hit 8)` (the hidden hit-stun tolerance, DUEL_DESIGN.md), `CLASH`, `cine NAME`, `P1 step [why]` / `P1 dash [why]` (a run starts; why DASH / DASH-BACK for the CPU) / `P1 run -> YA-Q1, carry 1.0 m` / `P1 BURST` / `hoho` / `guard` | the combat log (`clog`, components.lisp): move starts (with the CPU's reason), every applied hit and its result, Konpaku, forms, events |
 | `duel camera CAMERA  SIDE` | the CAMERA option changed (menu or 2109) |
 | `duel page: coarse T hand RIGHT settings (0 0 2 2 0)` | startup: the device kind and the saved SETTINGS (option indices, `*settings*` order) |
 | `duel setting HAND LEFT` | a SETTINGS row changed (saved) |
@@ -318,8 +318,12 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P2 konpaku 0-6 ticks 5516 secs 91.9
+duel -> RESULTS winner P1 konpaku 5-0 ticks 6708 secs 111.8
 ```
+
+(The hidden hit-stun tolerance, 2026-09-29 (DUEL_DESIGN.md "Hidden hit-stun tolerance"): Yamamoto is blown away twice in
+seed 7 (ticks 1663 and 4743, combo hit 8 past his 18), so YK changed; YY and KK are unchanged (no blow-away in them).
+Before it: `winner P2 konpaku 0-6 ticks 5516 secs 91.9`.)
 
 (Kenpachi's more aggressive CPU in cups 2 / 3, AI only, 2026-09-29 (DUEL_NOZARASHI_V2.md, "The CPU after the faster
 drain"): YK and KK changed (KK `winner P2 konpaku 0-6 ticks 5603 secs 93.4`), YY unchanged. Before it, after the 2× NOME
@@ -369,6 +373,31 @@ v3: Reishi 1100 → 1300 is the user's decision 2026-09-26, because real human m
 CPU), win rates near even (YK within ±3 of 10 / 10). The gate runs ~15 min of turbo for six pairings: `--secs 1100`; with
 fifteen pairings (2026-09-29: Ichigo's four, Senjumaru's five) run them in parallel instead: one run.mjs per pairing with
 2125+k (k 0–14, `--secs 1500` each, at most 4 at once on a shared machine).
+
+| Pairing | Median | Range | K.O. | Wins P1 / P2 | Blow-aways |
+|---|---|---|---|---|---|
+| Yamamoto vs Yamamoto | 134.7 s | 98.2–205.5 | 20/20 | 9 / 11 | 0 |
+| Yamamoto vs Kenpachi | 128.2 s | 79.6–182.4 | 20/20 | Yamamoto 15 / Kenpachi 5 | 13 |
+| Kenpachi vs Kenpachi | 131.8 s | 88.4–180.4 | 20/20 | 11 / 9 | 6 |
+| Rukia vs Yamamoto | 134.6 s | 88.3–163.5 | 20/20 | Rukia 13 / Yamamoto 7 | 7 |
+| Rukia vs Kenpachi | 136.5 s | 93.4–186.6 | 20/20 | Rukia 13 / Kenpachi 7 | 28 |
+| Rukia vs Rukia | 169.1 s | 125.6–253.9 | 20/20 | 12 / 8 | 1 |
+| Ichigo vs Yamamoto | 143.8 s | 98.8–226.9 | 20/20 | Ichigo 5 / Yamamoto 15 | 1 |
+| Ichigo vs Kenpachi | 142.7 s | 107.4–183.9 | 20/20 | Ichigo 7 / Kenpachi 13 | 32 |
+| Ichigo vs Rukia | 186.9 s | 143.2–252.2 | 20/20 | Ichigo 6 / Rukia 14 | 18 |
+| Ichigo vs Ichigo | 201.8 s | 110.5–237.6 | 20/20 | 11 / 9 | 17 |
+| Senjumaru vs Yamamoto | 140.2 s | 95.2–165.5 | 20/20 | Senjumaru 10 / Yamamoto 10 | 7 |
+| Senjumaru vs Kenpachi | 133.0 s | 96.1–175.4 | 20/20 | Senjumaru 6 / Kenpachi 14 | 33 |
+| Senjumaru vs Rukia | 164.1 s | 106.7–230.9 | 20/20 | Senjumaru 4 / Rukia 16 | 27 |
+| Senjumaru vs Senjumaru | 195.3 s | 149.9–244.5 | 20/20 | 13 / 7 | 81 |
+| Senjumaru vs Ichigo | 189.7 s | 124.3–233.0 | 20/20 | Senjumaru 14 / Ichigo 6 | 43 |
+
+(2026-09-29, Ichigo's clones swinging in place and the hidden hit-stun tolerance (DUEL_DESIGN.md "Hidden hit-stun
+tolerance", DEVLOG §37): seeds 1–20, one run per pairing with 2125+k, 300/300 K.O., every median inside 125–210 s;
+**YK is back over the floor (121.1 → 128.2 s)**. YY replays row for row (no blow-away in it). Blow-aways: the match's
+count in its gate row.)
+
+The rows before it (DEVLOG §34's integrated gate; §35's Senjumaru batch then moved SY / SK / SR / SS / SI to 143.9 / 132.9 / 186.1 / 197.9 / 180.5 s):
 
 | Pairing | Median | Range | K.O. | Wins P1 / P2 |
 |---|---|---|---|---|

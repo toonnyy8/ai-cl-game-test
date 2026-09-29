@@ -456,6 +456,41 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 (check (equal (multiple-value-list (combo-step :flinch t 3 1 1)) '(:flinch 4 1 2)))
 (check (equal (multiple-value-list (combo-step :flinch t 4 1 2)) '(:knockdown 5 1 3)))     ; 3 air hits
 (check (equal (multiple-value-list (combo-step :flinch nil 9 0 0)) '(:knockdown 10 0 0)))  ; cap 10
+;; the hidden hit-stun tolerance (docs/DUEL_DESIGN.md, the user 2026-09-29)
+(check (= (stun-weight :flinch nil) 1))
+(check (= (stun-weight :stagger nil) 2))
+(check (every (lambda (r) (= (stun-weight r nil) 3)) '(:crumple :knockback :launch :knockdown)))
+(check (= (stun-weight :flinch t) 3))                                     ; an SP / Kikon-rush strike: at least 3
+(check (= (stun-weight :clash nil) 1))                                    ; any other reaction: 1
+(check (= (stun-add 4.0 :stagger nil) 6.0))
+(check (= (stun-decay 10.0 (1- *stun-delay*)) 10.0))                      ; no decay inside the delay
+(check (~= (stun-decay 10.0 *stun-delay*) (- 10.0 (/ *stun-decay* 60.0))))   ; then -*STUN-DECAY* per second
+(check (= (stun-decay 0.01 999) 0.0))                                     ; never below 0
+(check (~= (let ((s 12.0)) (dotimes (i (+ *stun-delay* 60) s) (setf s (stun-decay s i)))) (- 12.0 *stun-decay*) 0.05))   ; 1 s past it
+(check (and (not (stun-over-p 16.0 16.0)) (stun-over-p 16.5 16.0)))       ; past it, not at it
+(check (= (stun-tolerance-of (kit :ichigo :base)) 16.0))                  ; per kit
+(check (= (stun-tolerance-of (kit :kenpachi :base)) 26.0))
+(check (= (stun-tolerance-of (kit :rukia :base)) 13.0))
+(check (= (stun-tolerance-of (kit :kenpachi :bankai)) 26.0))              ; derived forms inherit it
+(check (= (stun-tolerance-of (kit :ichigo :kessa)) 16.0))
+(check (= (stun-tolerance-of (kit :senjumaru :tsuji6)) 13.0))
+(check (every (lambda (cf) (plusp (stun-tolerance-of (apply #'kit cf)))) *forms*))
+(check (= (stun-tolerance-of (make-kit)) *stun-tolerance*))              ; no key: the default
+;; a re-pin loop with gaps: a J string (flinch flinch stagger), 20 f of neutral, again ... it still blows him away
+(check (let ((s 0.0) (idle 0) (tol 16.0) (strings 0))
+         (loop repeat 20 until (stun-over-p s tol)
+               do (incf strings)
+                  (dolist (r '(:flinch :flinch :stagger))
+                    (unless (stun-over-p s tol) (setf s (stun-add s r nil) idle 0)
+                            (dotimes (i 20) (setf s (stun-decay s idle)) (incf idle))))
+                  (dotimes (i 20) (setf s (stun-decay s idle)) (incf idle)))
+         (and (stun-over-p s tol) (<= strings 5))))
+;; ... while strings 2 s apart never fill it
+(check (let ((s 0.0) (idle 0) (over nil))
+         (loop repeat 20
+               do (dolist (r '(:flinch :flinch :stagger)) (setf s (stun-add s r nil) idle 0 over (or over (stun-over-p s 16.0))))
+                  (dotimes (i 120) (setf s (stun-decay s idle)) (incf idle)))
+         (not over)))
 
 ;;; ================================================================ perfect Hoho
 ;; Yama's Q1 (window [9,12), 2.4 m arc) from the origin facing -Z; our cylinder r 0.4 h 1.8

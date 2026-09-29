@@ -1261,3 +1261,15 @@ stand and swing; they no longer rush at the opponent.
   (3), IR 184.6 (6), II 202.2, SI 185.8 (Ichigo 4); before: 148.0 / 147.1 / 179.3 / 194.1 / 180.5. KESSA's clones land
   less often, so the mirror runs longer (II +8 s, inside the 210 s ceiling). The other ten pairings are untouched (no
   shared code changed).
+- **With the hidden hit-stun tolerance on top** (DUEL_DESIGN.md "Hidden hit-stun tolerance"; Ichigo's tolerance 16, both
+  forms): IY 143.8, IK 142.7, IR 186.9, II 201.8, SI 189.7 s. **The awaken A/B** on that build (P1 Ichigo "never awaken",
+  debug 39020, SI: P2, 39002; streams `30000+o`, o = 100 / 300 / 500, `74080+k`; Ichigo's wins of 60):
+
+  | Stream | IY | IK | IR | II | SI |
+  |---|---|---|---|---|---|
+  | 100 | 27 | 20 | 32 | 37 | 30 |
+  | 300 | 24 | 20 | 30 | 44 | 31 |
+  | 500 | 27 | 33 | 35 | 45 | 29 |
+
+  "Never" wins ≥ 20 of 60 in every cell (the user's criterion); IK is the tight one (20 / 20 / 33, main had 23 / 21 / 25).
+  No Ichigo knob changed.

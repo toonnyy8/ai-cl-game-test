@@ -168,6 +168,7 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
   :name "ICHIGO" :body :ichigo :weapon :zangetsu-long :stance :ic-stance :hide (:kessa :mark)
   :intro :ic-intro :win :ic-win :intro-callout "ZANGETSU"
   :walk *walk-ichigo* :run *run-ichigo* :reishi *reishi-max* :swing-sfx :whoosh-heavy :mult *ichigo-mult* :taken *ichigo-taken*
+  :stun-tolerance 16.0                          ; the hidden stun (DUEL_DESIGN.md): the middle (KESSA inherits it)
   :commands (:q :ic-j1 :f :ic-k1 :sig :ic-tsuki :sp1 :ic-juji :sp2 :ic-soga :breaker :ic-breaker :kikon :ic-kikon)
   :grid (:ic-j1 :ic-j2 :ic-j3 :ic-k1 :ic-k2 :ic-k3 :ic-j2s :ic-k2s)
   :strings *tsuki-strings*

@@ -21,9 +21,10 @@
 #     PRACTICE by keyboard (--fixed-dt: on a loaded host real-time key timing drops string links)
 # Determinism: run a cvc script twice (or once with turbo and once without: drop the 2102 step) and
 #   diff <(grep '^duel' run1.log) <(grep '^duel' run2.log)   -> empty.
-# Reference (the string follow-up chase and Kenpachi's Bankai entry at <= 4 Konpaku, 2026-09-28, docs/DUEL_STRINGS.md
-# §11, docs/DUEL_KEN_BANKAI.md): duel-cvc-yk.json (seed 7) ends
-#   duel -> RESULTS winner P2 konpaku 0-6 ticks 5516 secs 91.9    (turbo and real time alike; also after a gate)
+# Reference (the hidden hit-stun tolerance, 2026-09-29, docs/DUEL_DESIGN.md "Hidden hit-stun tolerance"): duel-cvc-yk.json
+# (seed 7) ends
+#   duel -> RESULTS winner P1 konpaku 5-0 ticks 6708 secs 111.8    (turbo and real time alike; also after a gate)
+#   (before it, a blow-away-free match: winner P2 konpaku 0-6 ticks 5516 secs 91.9)
 #   (before Kenpachi's more aggressive cup 2 / 3 CPU, 2026-09-29, docs/DUEL_NOZARASHI_V2.md: winner P1 konpaku 2-0 ticks 9636 secs 160.6)
 #   (before them, the J / K strings + the Soul Break rule + the Bankai: winner P2 konpaku 0-3 ticks 7123 secs 118.7;
 #   before the strings, the Bankai rework + the slower guard refill: winner P1 konpaku 2-0 ticks 7688 secs 128.1;

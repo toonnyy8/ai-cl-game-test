@@ -143,6 +143,7 @@
   :walk *walk-kenpachi* :run *run-kenpachi* :run-clips (:ke-run :ke-skate-b :ke-slide-r :ke-slide-l) :reishi *reishi-max* :aura :reiatsu
   :cornered *cornered-per-konpaku* :cornered-max *cornered-max* :reset-reiatsu *reset-reiatsu-bonus*
   :absorb-sfx :laugh
+  :stun-tolerance 26.0                          ; the hidden stun (DUEL_DESIGN.md): he takes the most before he flies
   :commands (:q :ke-j1 :f :ke-k1 :sig :ke-stance :sp1 :ke-buttagiru :sp2 :ke-charge
              :breaker :ke-breaker :kikon :ke-kikon)
   :grid (:ke-j1 :ke-j2 :ke-j3 :ke-k1 :ke-k2 :ke-k3 :ke-j2s :ke-k2s)
