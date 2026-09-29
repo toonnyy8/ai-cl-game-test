@@ -378,15 +378,17 @@ fifteen pairings (2026-09-29: Ichigo's four, Senjumaru's five) run them in paral
 | Rukia vs Yamamoto | 134.1 s | 88.3–163.5 | 20/20 | Rukia 13 / Yamamoto 7 |
 | Rukia vs Kenpachi | 143.1 s | 99.3–200.8 | 20/20 | Rukia 14 / Kenpachi 6 |
 | Rukia vs Rukia | 185.6 s | 144.8–253.9 | 20/20 | 12 / 8 |
-| Ichigo vs Yamamoto | 143.6 s | 87.8–182.6 | 20/20 | Ichigo 9 / Yamamoto 11 |
-| Ichigo vs Kenpachi | 142.5 s | 94.6–213.2 | 20/20 | Ichigo 9 / Kenpachi 11 |
-| Ichigo vs Rukia | 169.6 s | 121.7–221.9 | 20/20 | Ichigo 9 / Rukia 11 |
-| Ichigo vs Ichigo | 155.2 s | 117.0–177.5 | 20/20 | 10 / 10 |
+| Ichigo vs Yamamoto | 144.3 s | 120.3–184.3 | 20/20 | Ichigo 8 / Yamamoto 12 |
+| Ichigo vs Kenpachi | 147.1 s | 110.8–189.0 | 20/20 | Ichigo 8 / Kenpachi 12 |
+| Ichigo vs Rukia | 175.0 s | 126.7–223.8 | 20/20 | Ichigo 6 / Rukia 14 |
+| Ichigo vs Ichigo | 189.6 s | 111.8–247.6 | 20/20 | 9 / 11 |
 | Senjumaru vs Yamamoto | 143.2 s | 83.9–180.6 | 20/20 | Senjumaru 10 / Yamamoto 10 |
 | Senjumaru vs Kenpachi | 136.9 s | 87.2–197.5 | 20/20 | Senjumaru 9 / Kenpachi 11 |
 | Senjumaru vs Rukia | 173.7 s | 133.1–239.3 | 20/20 | Senjumaru 14 / Rukia 6 |
 | Senjumaru vs Senjumaru | 195.3 s | 159.6–220.9 | 20/20 | 7 / 13 |
-| Senjumaru vs Ichigo | 170.6 s | 104.3–186.6 | 20/20 | Senjumaru 12 / Ichigo 8 |
+| Senjumaru vs Ichigo | 176.7 s | 137.0–231.9 | 20/20 | Senjumaru 17 / Ichigo 3 |
+
+(2026-09-29, Ichigo v2 (DUEL_ICHIGO.md "v2: built", DEVLOG §33), on main 97f40c1: the five Ichigo rows above are v2's; the other ten replay main's rows exactly (the two shared hook points are inert). Its awaken A/B, "never" wins 21–42 of 60 on every stream.)
 
 (2026-09-29, the Senjumaru merge and hook unification (DEVLOG §30): seeds 1–20, one run per pairing with 2125+k, 300/300
 K.O. The ten pairings main already had replay **row for row** as main 202c33c's build (checked on both builds): the

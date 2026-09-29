@@ -1,11 +1,13 @@
-;;;; ichigo-art.lisp — KUROSAKI ICHIGO (TYBW) as art data (docs/DUEL_ICHIGO.md §2, §10): his body (a substitute
-;;;; Shinigami's black shihakusho, no haori, the orange spiky head, the half-Hollow's single horn on the left; the KESSA
-;;;; parts tagged :kessa: the second horn, the faint left marking, the blood-chain links at neck, wrists and ankles; the
-;;;; Shikai's short blade tagged :shikai), his weapons (the long cleaver :zangetsu-long with its hole, the Bankai's one
-;;;; blade :tensa; the hiltless short blade is a body part in the left fist), every :ic-* pose and clip, his looks (the
-;;;; crescents, the chains, the clone, the auras), his four sounds, his brush glyphs and names, and his three
-;;;; cinematics. The Getsuga is mono (an ink crescent, a white rim); BLOOD only in KESSA's chains and rims and the
-;;;; cinematics' Cero core (docs/STYLE_STORM_DESIGN.md §A.2): no spot hue of his own.
+;;;; ichigo-art.lisp — KUROSAKI ICHIGO (TYBW) as art data (docs/DUEL_ICHIGO.md §2, §10, v2 "built"): his body (a
+;;;; substitute Shinigami's black shihakusho, the sleeves ending just past the elbow, the orange spiky head, the
+;;;; half-Hollow's flat white horn on the left; the KESSA parts tagged :kessa per the figures: the hair split black on his
+;;;; left, the left half-face black, the second horn, the robe open on a dark red disc, blood coils, bare feet, torn hems;
+;;;; the Shikai's own parts tagged :shikai), his weapons (the long cleaver :zangetsu-long, KESSA's white pointless slab
+;;;; :tensa; the hiltless short blade is a body part in the left fist), every :ic-* pose and clip, his looks (the
+;;;; crescents, the clones and afterimages, the parry's flare), his sounds, glyphs and names, and his cinematics: the Cero
+;;;; Getsuga (the Shikai Kikon; the one place gold and pink-violet are allowed), 千影 (KESSA's Kikon), 漆黒の月牙天衝 (his
+;;;; Soul Break) and the awakening. In play the Getsuga is mono (an ink crescent, a white rim); BLOOD in KESSA's coils and
+;;;; rims (docs/STYLE_STORM_DESIGN.md §A.2).
 (in-package :duel)
 (declaim (special *p1* *p2* *ic-pose-ang*))           ; (flow.lisp's: the auras find their fighter; ichigo.lisp's)
 
@@ -934,8 +936,8 @@ its outside at the diagonals (a diamond); its plane faces along (UX UZ), turned 
             (multiple-value-bind (x0 y0 z0) (pt (- a 0.3) (* 1.15 r))
               (multiple-value-bind (x1 y1 z1) (pt (+ a 0.3) (* 1.15 r))
                 (multiple-value-bind (x2 y2 z2) (pt a (* 1.45 r))
-                  (fx-line x0 y0 z0 x2 y2 z2 0.22 gr gg gb k :end-width 0.02)
-                  (fx-line x1 y1 z1 x2 y2 z2 0.22 gr gg gb k :end-width 0.02)))))))
+                  (fx-line x0 y0 z0 x2 y2 z2 0.22 gr gg gb k :end-width 0.02 :mode :alpha)
+                  (fx-line x1 y1 z1 x2 y2 z2 0.22 gr gg gb k :end-width 0.02 :mode :alpha)))))))
       (%light (f32 x) (f32 y) (f32 z) 0.75f0 0.25f0 0.91f0 10f0 (f32 (* 3.0 k)) 9))))
 
 (defcine ic-kikon-cine (a v :len 186 :hold 150)
@@ -970,11 +972,11 @@ the plaza back, violet ash drifting."
   (at 128 (card nil) (shot-on a 90 4.2 1.2 :look 1.3) (lens 46) (cine-clip a :ic-getsuga :blend 0 :time 0.2) (play-sfx :getsuga))
   (during (128 138) (vfx-ic-red-blade a 0.9))
   (at 132 (impact-frame :negative 2))
-  (at 138 (card :white) (shot-on a 200 3.4 0.5 :look 2.6 :off 0.8) (lens 36) (play-sfx :explode :pitch 0.6)
+  (at 138 (card :white) (shot-on a 200 5.2 0.5 :look 2.6 :off 0.8) (lens 36) (play-sfx :explode :pitch 0.6)
       (let ((e *env*)) (v3-set! (env-sky-top e) 0.94f0 0.85f0 0.86f0) (v3-set! (env-fog-color e) 0.94f0 0.85f0 0.86f0)))
   (during (138 162) (let* ((p (pos-of a)) (q (pos-of v)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
                            (d (max 0.1 (sqrt (+ (* dx dx) (* dz dz))))) (uu (min 1.0 (/ (- cf 136) 22.0))))
-                      (vfx-ic-cero-ring (+ (aref p 0) (* dx (+ 0.15 (* 0.85 uu)))) 2.4 (+ (aref p 2) (* dz (+ 0.15 (* 0.85 uu))))
+                      (vfx-ic-cero-ring (+ (aref p 0) (* dx (+ 0.3 (* 0.7 uu)))) 2.4 (+ (aref p 2) (* dz (+ 0.3 (* 0.7 uu))))
                                         (/ dx d) (/ dz d) (* 0.14 (/ cf 60.0)) 0.95)))
   (at 160 (card nil) (shot-on v 150 5.0 1.2 :look 1.3) (lens 58) (impact-frame :negative 2)
       (multiple-value-bind (x y z) (actor-point v 1.0) (vfx-konpaku-shatter x (+ y 0.1) z 2) (vfx-hit x (+ y 0.3) z :heavy))
@@ -1102,9 +1104,9 @@ points; the victim: the impact, the Konpaku; back inside the C as it burns away 
   (during (100 112) (multiple-value-bind (px pz ux uz d) (ic-line-from a v)   ; wide, side-on: the cut, its trail round
                       (cine-cam (+ px (* 0.5 d ux) (* 14.0 (- uz))) 2.6 (+ pz (* 0.5 d uz) (* 14.0 ux)) (+ px (* 0.5 d ux)) 2.4 (+ pz (* 0.5 d uz)))
                       (vfx-ic-c-cut px pz ux uz d 0.95 0.0 (min 1.0 (* 1.4 u)))))
-  (at 112 (lens 50) (silence 20))
+  (at 112 (lens 74) (silence 20))
   (during (112 140) (multiple-value-bind (px pz ux uz d) (ic-line-from a v)   ; inside the C, looking back through the gap
-                      (let ((c (- (* 0.72 d) (* 0.6 u))))
+                      (let ((c (- (* 0.84 d) (* 0.5 u))))
                         (cine-cam (+ px (* c ux)) 2.4 (+ pz (* c uz)) px 2.4 pz))
                       (vfx-ic-c-cut px pz ux uz d (+ 0.8 (* 0.15 (sin (* 0.4 cf)))) 0.0 1.0)))
   (at 140 (shot-on v 160 5.0 1.3 :look 1.3) (lens 58) (impact-frame :negative 2)
@@ -1113,9 +1115,9 @@ points; the victim: the impact, the Konpaku; back inside the C as it burns away 
       (play-sfx :konpaku-shatter) (play-sfx :chain-snap) (shake 0.3 0.4))
   (at 142 (impact-frame :manga 12))
   (during (140 160) (multiple-value-bind (px pz ux uz d) (ic-line-from a v) (vfx-ic-c-cut px pz ux uz d 0.95 0.0 1.0 :flare (- 1.0 u))))
-  (at 160 (cine-clip a :ic-k-stance :blend 10) (lens 50))
+  (at 160 (cine-clip a :ic-k-stance :blend 10) (lens 74))
   (during (160 180) (multiple-value-bind (px pz ux uz d) (ic-line-from a v)   ; it burns away from both points inward
-                      (cine-cam (+ px (* 0.66 d ux)) 2.4 (+ pz (* 0.66 d uz)) px 2.4 pz)
+                      (cine-cam (+ px (* 0.8 d ux)) 2.4 (+ pz (* 0.8 d uz)) px 2.4 pz)
                       (vfx-ic-c-cut px pz ux uz d (- 0.9 (* 0.5 u)) (* 0.5 u) (- 1.0 (* 0.5 u))))))
 
 (defcine ic-pose-cine (a v :len 9999 :hold 1)

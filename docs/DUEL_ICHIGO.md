@@ -1182,3 +1182,43 @@ clones 8 m / 2.2 m from an idle Kenpachi (8: the worst-case J string), 9 KESSA 4
 KESSA); 74080+k the 60-seed gate of pairing k (one A/B stream in one run); 74900+k (k 0–3) P1's clones = k, 74905 logs
 P2's combo; 74989 / 74990+k pose stills (the camera turned 90°); 75000 + 150 i + k stills of cinematic i (0 the Cero
 Kikon, 1 千影, 2 the awakening, 3 漆黒の月牙天衝) at frame 2k.
+
+### Balance: what moved, and the measurements (v2)
+
+Built on main 97f40c1 (Kenpachi's CPU pressing in cups 2 / 3), merged into this branch before tuning. Every number
+below is measured (fixed-seed CPU vs CPU, NORMAL, turbo, cinematics included).
+
+| What | First built | Now | Why |
+|---|---|---|---|
+| `*clone-scale*` | ×1.0 (heavy 50) | **×0.7** | the worst case with every clone answering (above): ×1.0 put a J string with three clones at 343, the top of the game's band |
+| The clones' presses | one latched press (like his own latch) | **a queue, one link per press** | 6 f behind him, his second and third presses both fell in the clone's link 1: clones played two links of a three-link string, and O always found them spent |
+| KESSA's CPU | intents A2 P3 Z1 D2, bands with waits, dash 0.3 | **A3 P4 Z0 D1**, no waits under 9 m, dash 0.6, back-dash 0.2 | II ran 240–258 s: the mirror stood apart |
+| KESSA's `:o-ender` | 0.15 + 0.15 n (the design) → 0.3 | **0.6** | the O ender is the Kikon in CPU play (the clones are rarely banked, so it is mostly worth 2): II 238 → 205 s |
+| `*kessa-mult*` / `*kessa-taken*` | 1.15 / 0.9 | **1.25 / 1.0** | II 205 → 190 s with IK still 147 s |
+
+**The seed gate** (seeds 1–20, 2125+k one pairing per run):
+
+| Pairing | K.O. | Median | Wins P1 / P2 |
+|---|---|---|---|
+| IY | 20 / 20 | **144.3 s** | Ichigo 8 / Yamamoto 12 |
+| IK | 20 / 20 | **147.1 s** | Ichigo 8 / Kenpachi 12 |
+| IR | 20 / 20 | **175.0 s** | Ichigo 6 / Rukia 14 |
+| II | 20 / 20 | **189.6 s** | 9 / 11 |
+| SI | 20 / 20 | **176.7 s** | Senjumaru 17 / Ichigo 3 |
+| YY / YK / KK / RY / RK / RR | 120 / 120 | 134.7 / 125.4 / 125.1 / 134.1 / 134.4 / 185.6 | main's rows (the shared hooks are inert) |
+| SY / SK / SR / SS | 80 / 80 | 143.2 / 133.0 / 173.7 / 195.3 | Senjumaru 10 / 8 / 14, SS 7-13 (main's rows) |
+
+**The awaken A/B** (three seed streams of 60, `30000+o` with o = 100 / 300 / 500 and `74080+k` (60 seeds in one run);
+P1 Ichigo "always" / "never" awakening on EVOLUTION vs the opponent on its rule; SI: P2 Ichigo; Ichigo's wins of 60):
+
+| Stream | IY always / never | IK | IR | II | SI |
+|---|---|---|---|---|---|
+| 100 | 18 / **27** | 26 / **23** | 21 / **32** | 31 / **40** | 14 / **34** |
+| 300 | 16 / **24** | 20 / **21** | 22 / **29** | 24 / **42** | 15 / **22** |
+| 500 | 17 / **27** | 21 / **25** | 17 / **34** | 26 / **42** | 15 / **33** |
+
+**Pass**: "never" wins 21–42 of 60 in every cell (the gate: ≥ 20). The tightest cell is IK on stream 300 (21), against
+main's new Kenpachi CPU. **Reading**: "always" is behind "never" in 14 of the 15 cells: between CPUs the v2 awakening is
+the weaker choice (the KESSA CPU rarely banks clones, so its Kikon is mostly worth 2, and its reach is shorter than v1's
+chains). The user's rule only forbids the opposite; the levers if it should be stronger are `*kessa-taken*`, the clone
+banking in its AI and `*clone-scale*`.
