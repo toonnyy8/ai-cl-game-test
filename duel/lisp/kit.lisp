@@ -210,6 +210,7 @@ new button."
   (u-tag nil)                           ; the HUD's tag for what U does in the form (default by its passives)
   (calm nil)                            ; the face never shouts in this form (a look: MAIN.LISP FACE-OF)
   (l-after-k nil)                       ; L chained after a K link (docs/DUEL_STRINGS.md §12): T its L, or a move (a combo copy)
+  (l-after-j nil)                       ; ... after a J link (J1 / J2 / J2s / J3): T its L, or a move
   (hooks nil)                           ; plist hook point -> the character file's function (KIT-HOOK; docs/DUEL_DESIGN.md
                                         ; "Character code layout")
   (endless-form nil)                    ; ENDLESS: the form a stay-awakened carry starts the next stage in (endless-rules.lisp)
@@ -247,11 +248,15 @@ latch (STRING-LATCH); link 3 has none, so presses there are plain buffered press
   "Is MOVE-NAME a K link of KIT's J / K strings: K1 (the :f command's move), or an :f follow-up (K2, K2s, K3)?"
   (or (eq move-name (getf (kit-commands kit) :f))
       (loop for (nil cmd to) in (kit-strings kit) thereis (and (eq cmd :f) (eq to move-name)))))
+(defun kit-j-link-p (kit move-name)
+  "Is MOVE-NAME a J link of KIT's J / K strings: J1 (the :q command's move), or a :q follow-up (J2, J2s, J3)?"
+  (or (eq move-name (getf (kit-commands kit) :q))
+      (loop for (nil cmd to) in (kit-strings kit) thereis (and (eq cmd :q) (eq to move-name)))))
 (defun kit-l-link (kit move-name)
-  "The L link after K link MOVE-NAME (the kit's :l-after-k, docs/DUEL_STRINGS.md §12): the form's L (T) or the named
-combo copy of it, a MOVE; NIL when the form has none or MOVE-NAME is no K link."
-  (let ((l (kit-l-after-k kit)))
-    (and l (kit-k-link-p kit move-name) (if (eq l t) (kit-command-move kit :sig) (kit-move kit l)))))
+  "The L link after string link MOVE-NAME (docs/DUEL_STRINGS.md §12): after a K link the kit's :l-after-k, after a J
+link its :l-after-j; the form's L (T) or the named copy of it, a MOVE; NIL when the form has none for that link."
+  (let ((l (cond ((kit-k-link-p kit move-name) (kit-l-after-k kit)) ((kit-j-link-p kit move-name) (kit-l-after-j kit)))))
+    (and l (if (eq l t) (kit-command-move kit :sig) (kit-move kit l)))))
 (defun string-latch (kit move-name command queued)
   "The latch (docs/DUEL_STRINGS.md §2.1, §2.3): a J / K press (COMMAND :q / :f) during string link MOVE-NAME, with
 QUEUED latched so far. The new latched command: COMMAND when the string may go on with it (the last press wins),
@@ -317,7 +322,7 @@ Cornered with LOST Konpaku."
                            body weapon stance hide aura intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
                            enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
                            kikon-konpaku meter-gain form-name drink-clip respect-callout bankai-form pips
-                           crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k calm hooks endless-form
+                           crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k l-after-j calm hooks endless-form
                            (startup-add 0) (reach-mult 1.0) commands strings grid)
         merged
       (declare (ignore grid))
@@ -334,7 +339,7 @@ Cornered with LOST Konpaku."
                            :meter-gain meter-gain :form-name (or form-name (symbol-name form)) :drink-clip drink-clip
                            :respect-callout respect-callout :bankai-form bankai-form :pips pips
                            :crush-hook crush-hook :rooted rooted :field field :warm warm :cold cold
-                           :frost-touch frost-touch :reset-form reset-form :u-tag u-tag :l-after-k l-after-k :calm calm :endless-form endless-form
+                           :frost-touch frost-touch :reset-form reset-form :u-tag u-tag :l-after-k l-after-k :l-after-j l-after-j :calm calm :endless-form endless-form
                            :hooks hooks :commands commands :strings strings :spec merged))
             (own (loop for (nil m) on (getf spec :commands) by #'cddr collect m)))
         ;; every move the form can reach. The derivation rule (design v2 §0): a move is as written when the
@@ -345,7 +350,7 @@ Cornered with LOST Konpaku."
         (dolist (m (remove-duplicates
                     (append (loop for (nil m) on commands by #'cddr when m collect m)   ; (a NIL command: none in this form)
                             (loop for (from nil to) in strings collect from collect to)
-                            (and l-after-k (not (eq l-after-k t)) (list l-after-k)))))
+                            (loop for l in (list l-after-k l-after-j) when (and l (not (eq l t))) collect l))))
           (let ((mv (find-move m)) (pmv (and parent (gethash m (kit-moves parent)))))
             (setf (gethash m (kit-moves kit))
                   (cond ((or (member m own) (not pmv)) mv)
@@ -406,6 +411,7 @@ child's keys win, :commands merge per command, :strings add. Keys:
                                      after a Kikon reset
   :l-after-k T | MOVE                L latched during a K link (K1 / K2 / K2s / K3) starts when that link's chain opens
                                      (its own contact, docs/DUEL_STRINGS.md §12): T the form's L, else MOVE, a combo copy
+  :l-after-j T | MOVE                the same after a J link (J1 / J2 / J2s / J3)
   :calm T                            the face stays calm (no shout: a look, FACE-OF)
   :hooks (point fn ...)              the character's own mechanics (KIT-HOOK; DUEL_DESIGN.md, Character code
                                      layout): :u (e: U pressed; the form never guards), :step (e: a Step's frame 0),

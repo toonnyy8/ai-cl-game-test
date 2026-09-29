@@ -345,10 +345,10 @@ buffered command that can't start (Kikon too early, no bar, cooling down) doesn'
                      (or (try-command e f cmd button) (refused-cue e f cmd vp button))
                      (progn (vpad-consume! vp button) t))))
 
-(defun refused-cue (e f cmd vp button)
-  "A kit command pressed while it cools down (its :cooldown: L, South, the O module), or L without its cold (Rukia): the
-press is eaten with a cue, the :refused event (a flash of its HUD bar, a dud tick). NIL: the commands below it may
-still start."
+(defun refused-cue (e f cmd vp button &optional combo)
+  "A kit command pressed while it cools down (its :cooldown: L, South, the O module), or L without its cold (Rukia), or
+one its kit's :ok hook refuses (COMBO: the chained L link, as KIT-COMMAND-OK-P got it): the press is eaten with a cue,
+the :refused event (a flash of its HUD bar, a dud tick). NIL: the commands below it may still start."
   (let ((i (position cmd *kit-commands*)) (kit (fighter-kit f)))
     (cond ((and i (plusp (aref (fighter-cd f) i)))
            (vpad-consume! vp button)
@@ -358,7 +358,7 @@ still start."
            (vpad-consume! vp button)
            (emit :refused e cmd)
            (clog "~a refused ~a: cold ~d" (side-name e) cmd (round (gauges-meter (gauges e)))))
-          ((let ((h (kit-hook kit :ok))) (and h (kit-command-move kit cmd) (not (funcall h e cmd nil))))
+          ((let ((h (kit-hook kit :ok))) (and h (kit-command-move kit cmd) (not (funcall h e cmd combo))))
            (vpad-consume! vp button)
            (emit :refused e cmd)
            (clog "~a refused ~a: kit" (side-name e) cmd))))
@@ -535,9 +535,10 @@ refused one doesn't hide the next). A J / K press during a string link is latche
 press wins, a press of the button the string switched away from is eaten) and consumed at once; the latched link
 starts when the chain opens (CHAIN-OPEN-P: once any link of the string touched him, docs/DUEL_STRINGS.md §2.2) and
 chases him in its startup (STRING-CHASE-SPEED). O is the ender: only off a link-3 (:ender) hit, the
-rush's aura skipped. L during a K link of a form with :l-after-k is latched too (KIT-L-LINK, docs/DUEL_STRINGS.md §12):
-it starts when that K link's own contact opens the chain, as a follow-up (the chase), under L's own checks (cooldown,
-cold). T when a new move / action started."
+rush's aura skipped. L during a K link of a form with :l-after-k (a J link: :l-after-j) is latched too (KIT-L-LINK,
+docs/DUEL_STRINGS.md §12): it starts when that link's own contact opens the chain, as a follow-up (the chase), under
+L's own checks (cooldown, cold, the kit's :ok with the link as COMBO; a refused one gets the cue). T when a new move /
+action started."
   (let ((kit (fighter-kit f)) (landed (fighter-contact f)) (name (mv-name mv)))
     (or (loop for (cmd button mod) in *commands*
               thereis (and (member cmd '(:kikon :q :f :sp1 :sp2 :sig :hoho))
@@ -551,12 +552,14 @@ cold). T when a new move / action started."
                                         (setf (fighter-queued f) (string-latch kit name cmd (fighter-queued f)))
                                         (vpad-consume! vp button))
                                       nil)
-                             (:sig (if (kit-l-link kit name)   ; L after a K link: latched like a link
-                                       (progn (when (kit-command-ok-p e :sig (fighter-kit f) nil t)
-                                                (setf (fighter-queued f) :sig)
-                                                (vpad-consume! vp button))
-                                              nil)
-                                       (cancel-into e f kit mv sf landed cmd button)))
+                             (:sig (let ((l (kit-l-link kit name)))   ; L after a J / K link: latched like a link
+                                     (if l
+                                         (progn (if (kit-command-ok-p e :sig (fighter-kit f) nil l)
+                                                    (progn (setf (fighter-queued f) :sig)
+                                                           (vpad-consume! vp button))
+                                                    (refused-cue e f :sig vp button l))   ; refused: the cue, eaten
+                                                nil)
+                                         (cancel-into e f kit mv sf landed cmd button))))
                              (t (cancel-into e f kit mv sf landed cmd button)))
                            (progn (vpad-consume! vp button) t)))
         (let ((q (fighter-queued f)))                   ; the latched link, once the chain opens

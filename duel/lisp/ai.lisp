@@ -22,7 +22,7 @@
 ;;;;   gauges      guards less as its guard gauge runs low (steps aside instead), never guardless;
 ;;;;               presses a guardless opponent; keeps a Burst's flash-step when a Burst would be worth it
 ;;;;   cold        Rukia's kit keys: :cool (hold U to the next band), :brace (hold U at absolute zero)
-;;;;   stances     kit keys: :cancel (end a landed string with L), :l-after-k (L after a K link that hit, p), :low (L more often at low Reishi),
+;;;;   stances     kit keys: :cancel (end a landed string with L), :l-after-k (L after a K link that hit, p; :l-after-j the same after a J link), :low (L more often at low Reishi),
 ;;;;               :gg-low (below it: back off and zone), :block-string (go on with a string the opponent
 ;;;;               blocks: guard pressure), :sig-gg (L halved below it of the guard gauge: KYOKKO pierces with a
 ;;;;               full edge), :ward-reversal (Bankai West: L when the ward just took a hit up close); a parry is
@@ -174,8 +174,9 @@ cancel into SP2 when the victim is on the ground (a launched victim would drop o
     (setf (brain-why b) :string)
     (when (and nf (kit-pip-cmd-p kit :f) (< (gauges-meter (gauges e)) 1f0)) (setf nf nil))   ; no pip: no K link
     (cond ((fighter-queued f) nil)                      ; the next link is latched already
-          ((let ((p (ai-table e :l-after-k 0.0)))       ; L after a K link (the kit's :l-after-k): one roll per hit
-             (and (plusp p) (= (fighter-sf f) (fighter-land-sf f)) (kit-l-link kit (mv-name mv)) (kit-command-ok-p e :sig kit nil t)
+          ((let ((p (ai-table e (if (kit-k-link-p kit (mv-name mv)) :l-after-k :l-after-j) 0.0))   ; L after a K link
+                 (l (kit-l-link kit (mv-name mv))))                                                  ; (a J link: :l-after-j):
+             (and (plusp p) (= (fighter-sf f) (fighter-land-sf f)) l (kit-command-ok-p e :sig kit nil l)   ; one roll per hit
                   (< (sim-rnd01) p)))
            (why b :l-after-k :sig))
           ((and nf (< (sim-rnd01) (ai-table e :string-k *ai-string-flash-p*))) :f)
