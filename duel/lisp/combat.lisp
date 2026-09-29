@@ -473,17 +473,28 @@ move's recovery, the next move started within *CHAIN-WINDOW* f has its startup c
       (setf (gauges-burst g) nil (gauges-burst-t g) 0 (gauges-fs-idle g) 0 (fighter-chain (fighter e)) 0)
       (emit :burst-end e))))
 
+(defun white-regen! (g n)
+  "WHITE's regen on its frame N (1-based): Reishi, Reiatsu and (not yet awakened) the awakening gauge."
+  (setf (gauges-reishi g) (min (gauges-reishi-max g) (+ (gauges-reishi g) (burst-heal n *white-reishi*)))
+        (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (/ *white-reiatsu* 60.0) *reiatsu-max*)))
+  (unless (gauges-awakened g)
+    (setf (gauges-awaken g) (f32 (gauge-add (gauges-awaken g) (/ *white-awaken* 60.0) *awaken-max*)))))
+
 (defun burst-step (e g)
-  "A running burst, one frame: the flash-step drains (BURST-DRAIN), WHITE's regen (Reishi, Reiatsu, awakening); at 0 it
-ends."
+  "A running burst, one frame: the flash-step drains (BURST-DRAIN), WHITE's regen (WHITE-REGEN!); at 0 it ends."
   (let ((n (incf (gauges-burst-t g))))
     (setf (gauges-fs g) (f32 (burst-drain (gauges-fs g))))
-    (when (eq (gauges-burst g) :white)
-      (setf (gauges-reishi g) (min (gauges-reishi-max g) (+ (gauges-reishi g) (burst-heal n *white-reishi*)))
-            (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (/ *white-reiatsu* 60.0) *reiatsu-max*)))
-      (unless (gauges-awakened g)
-        (setf (gauges-awaken g) (f32 (gauge-add (gauges-awaken g) (/ *white-awaken* 60.0) *awaken-max*)))))
+    (when (eq (gauges-burst g) :white) (white-regen! g n))
     (when (<= (gauges-fs g) 0.0) (burst-end! e))))
+
+(defun awake-regen-frames ()
+  "How long the awakening's regen runs: as long as a burst from a full flash-step gauge (*FS-MAX* / *BURST-DRAIN*)."
+  (round (* 60 (/ *fs-max* *burst-drain*))))
+
+(defun start-awake-regen! (g)
+  "An awakening (or Kenpachi's Bankai) starts WHITE's regen for AWAKE-REGEN-FRAMES, on its own clock: it overlaps a burst
+and spends no flash-step (the user 2026-09-30)."
+  (setf (gauges-awake-regen g) (awake-regen-frames) (gauges-awake-t g) 0))
 
 ;;; ---------------------------------------------------------------- forms, awakening
 (defun set-form (e form)
@@ -503,6 +514,7 @@ ends."
 form's :cine if it has one (both fighters idle after it). The guard gauge is left as it is."
   (let* ((g (gauges e)) (o (opp-of e)))
     (repel! e)                                          ; the moment breaks his attack, as a Burst (the user 2026-09-29)
+    (start-awake-regen! g)                              ; then WHITE's regen for a full burst's time (the user 2026-09-30)
     (setf (gauges-awakened g) t (gauges-awaken g) 0f0 (gauges-evolution g) nil)
     (set-form e (kit-awaken-form (kit-of e)))
     (let ((st (getf (kit-meter (kit-of e)) :start)))    ; NOME starts at 10
@@ -521,6 +533,7 @@ holds the pips, the crack clock at 0), his OWN Konpaku set to 1 and his Reishi r
 they are; then the form's :cine (both fighters idle after it)."
   (let* ((g (gauges e)) (o (opp-of e)) (lost (- (gauges-konpaku g) 1)))
     (repel! e)                                          ; the second awakening breaks his attack too
+    (start-awake-regen! g)
     (set-form e (kit-bankai-form (kit-of e)))
     (setf (gauges-meter g) (f32 (getf (kit-pips (kit-of e)) :n)) (gauges-meter-idle g) 0 (gauges-arm-pending g) nil
           (gauges-arm-owed g) nil
@@ -721,6 +734,9 @@ delay counter (frozen): West never refills."
           (burst-step e g)                               ; a burst: the gauge drains, no regen
           (setf (gauges-fs g) (f32 (fs-regen (gauges-fs g) (gauges-fs-idle g)))
                 (gauges-fs-idle g) (min 9999 (1+ (gauges-fs-idle g)))))
+      (when (plusp (gauges-awake-regen g))                ; the awakening's regen (overlaps a burst)
+        (decf (gauges-awake-regen g))
+        (white-regen! g (incf (gauges-awake-t g))))
       (setf (gauges-gg g) (f32 (gg-regen (gauges-gg g) (gauges-gg-idle g) (gauges-guardless g) guarding
                                          (eq (gauges-burst g) :blue))))
       (setf (gauges-gg-idle g) (gg-idle-next (gauges-gg-idle g) guarding))

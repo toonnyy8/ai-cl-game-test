@@ -1332,6 +1332,11 @@ first), so it is never lost to the "no gains during a burst" rule.
   `:kikon` move whenever the opponent is in hitstun, blockstun or airborne (a blocked L / O counts; its hazards count), and
   (b) when he is free (idle / guard / run) while the opponent reels (hitstun / airborne) from one of his hazards, e.g.
   KESSA's clones, which would otherwise be WHITE. Native gate unchanged (the CPU does not press ORANGE from those states).
+- **The awakening's regen** (the user 2026-09-30: 「發動覺醒後進入與白色爆氣狀態一樣的量表恢復狀態，時長跟閃步量表全滿時一樣久，
+  可以與爆氣狀態重疊」): `awaken!` and Kenpachi's `bankai!` start WHITE's regen (`white-regen!`: Reishi +12/s, Reiatsu
+  +15/s) for `awake-regen-frames` = *fs-max* / *burst-drain* s (333 f), on its own clock (`gauges-awake-regen`): it
+  spends no flash-step and overlaps any burst (a WHITE burst on top stacks). A fainter white aura shows it. Native gate:
+  300/300 K.O., medians 138.5–205.1 s; G2 yy / kk changed; Rukia / Senjumaru A/B ≥ 21 of 60 per cell.
 - **The user's answers (2026-09-30):** BLUE also gives **one Reiatsu bar** on the press, as RoS does; the CPU uses WHITE
   more (`*ai-white-p*` 0.15 → 0.3, `*ai-white-range*` 6 → 5 m); the rest as proposed (blockstun BLUE chip-only on the
   phone, start 70 / drain 18/s / nothing spent up front, Kikon refund 35). In practice with GAUGES INFINITE the
