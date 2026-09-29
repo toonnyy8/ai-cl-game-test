@@ -10,7 +10,7 @@
 ;;;; Most of his mechanics run in his :tick hook (after the hits of the step): the stance's follow-ups, the parry from
 ;;;; blockstun, the clones' answers (a J / K press edge), the Hoho clone, the O charge, the afterimages.
 (in-package :duel)
-(declaim (special *p1* *p2* *match-tick* *mode* *gate* *gate-seed0* *pairs*))   ; (flow.lisp's, debug.lisp's)
+(declaim (special *p1* *p2* *match-tick* *mode* *gate* *gate-seed0* *pairs* *match-seed*))   ; (flow.lisp's, debug.lisp's)
 
 ;;; ================================================================ knobs (debug 74000-75599, ICHIGO-DEBUG)
 (defparameter *walk-ichigo* 4.2 "Ichigo's walk (Shikai).")
@@ -49,7 +49,10 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
 (defparameter *ai-ic-l-after-k* 0.3 "The Shikai CPU's stance after a K link that hit (per hit).")
 (defparameter *ai-ic-parry-p* 0.35 "KESSA's CPU parries a hit it sees coming into the window this often (74950+k: k / 50).")
 (defparameter *ai-ic-parry-bs-p* 0.3 "... and parries from blockstun after a blocked K link this often.")
-(defparameter *ai-kessa-o-p* 0.04 "KESSA's CPU: O per step with >= 2 clones within 8.6 m (x2 with 3).")
+(defparameter *ai-kessa-o-p* 0.04 "KESSA's CPU: O per step with >= 2 clones within 8.6 m (x2 with 3), before the bank.")
+(defparameter *ai-kessa-bank-at* 0.45 "KESSA's CPU banks clones for 千影 (side Steps to 2, 3 with the gauge) once the
+opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the ender, the rush) takes 3-4 Konpaku.")
+(defparameter *ai-kessa-clone-j-p* 0.08 "KESSA's CPU: J / K per step while an idle clone is in its answer's reach of him.")
 
 ;;; ================================================================ 二刀の斬月 (base)
 ;;; J is the short blade (fast, short), K the long cleaver (slow, long, heavy on the gauge); a switched link 2 is the
@@ -184,9 +187,9 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
   ;; middle (the stance's branch: ICHIGO-AI-STANCE), JUJISHO against a projectile; he awakens once he has taken 150
   :ai (:intents (:approach 2 :pressure 4 :zone 0 :defend 1)
        :ranges (:approach (2.6 5.0) :pressure (1.0 1.8) :zone (5.0 7.0) :defend (3.0 5.0))
-       :moves ((0.0 1.6 :q 5 :f 2 :breaker 1 :sp2 1)                   ; J up close only (DUEL_STRINGS §13), K beyond
-               (1.6 2.6 :f 4 :breaker 1 :sp2 1)
-               (2.6 5.0 :sig 3 :sp2 2 :f 1 :step 1)
+       :moves ((0.0 1.6 :q 5 :f 2 :breaker 1 :sp2 1 :sig 1)            ; J up close only (DUEL_STRINGS §13), K beyond
+               (1.6 2.6 :f 4 :sig 2 :breaker 1 :sp2 1)                ; the stance from 1.6 m (RANGETSU's lunge reaches)
+               (2.6 5.0 :sig 4 :sp2 2 :f 1 :step 1)
                (5.0 9.0 :sp2 2 :sig 2 :sp1 1 :kikon 1)
                (9.0 99.0 :sp1 2 :kikon 1 nil 1))
        :guard 0.4 :hoho 0.3 :dash 0.8 :dash-back 0.1 :block-string 0.8 :l-after-k *ai-ic-l-after-k* :sp-cancel-bars 1
@@ -247,11 +250,19 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
   (hist (make-array 48 :initial-element 0f0)) (hist-i 0 :type fixnum)   ; his last 16 (x z yaw): the echoes replay them
   (rim nil) (rim-saved nil) (parry-sf -1 :type fixnum)
   (bs-key -1 :type fixnum) (bs-at -1 :type fixnum)    ; the CPU's parry from blockstun: which blockstun, pressed on which frame
-  (o-at -9999 :type fixnum) (o-n 0 :type fixnum))     ; the last O press and its clones (the HUD's flash)
+  (o-at -9999 :type fixnum) (o-n 0 :type fixnum)      ; the last O press and its clones (the HUD's flash)
+  (acc nil) (acc-mv nil) (acc-sf 0 :type fixnum) (acc-hit nil) (acc-kikons 0 :type fixnum))   ; the pacing log (debug)
 (defvar *ic* (vector (make-ics) (make-ics)) "Per side: Ichigo's state.")
 (defun ic (e)
+  "E's state; a new fighter entity (a new match) gets a fresh one, keeping only the pacing log's counters."
   (let* ((i (fighter-side (fighter e))) (st (svref *ic* i)))
-    (if (eql (ics-e st) e) st (setf (svref *ic* i) (make-ics :e e)))))
+    (if (eql (ics-e st) e) st (setf (svref *ic* i) (make-ics :e e :acc (ics-acc st))))))
+(defmacro ic-count (e key &optional (n 1)) `(incf (getf (ics-acc (ic ,e)) ,key 0) ,n))
+(defun ic-key (&rest parts) (intern (format nil "~{~a~^-~}" parts) :keyword))
+(defun ic-reach-key (x z e)
+  "The pacing log's reach bucket of a point (X Z) to E's opponent: IN (<= 2.4 m, a light's), MID (<= 3.0, a heavy's), OUT."
+  (let* ((q (pos-of (opp-of e))) (d (sqrt (+ (expt (- (aref q 0) x) 2) (expt (- (aref q 2) z) 2)))))
+    (cond ((<= d 2.4) "IN") ((<= d 3.0) "MID") (t "OUT"))))
 
 ;;; hazard data: a clone (ICC), an afterimage (ICE); their hits are :ic-hit hazards whose data is the clone / :echo
 (defstruct (icc (:conc-name icc-))
@@ -355,18 +366,21 @@ dash waits (a plain Step after the stance); past the hold (30 f, 60 while L is h
 (defun ichigo-tsuki-return (e) "TSUKIWATARI f11: back in the stance, a fresh window." (start-move e (kit-next (kit-of e) :ic-tsuki-dash :tsuki-back)))
 
 (defun ichigo-ai-stance (e f st)
-  "The CPU's branch at the stance's f6 (DUEL_ICHIGO v2 §10): after a K link's hit J / K / L; close, TSUKI-OTOSHI on a
-guard (or a gauge < 50) else RANGETSU; the middle, the dash in or the Getsuga; far, the Getsuga or the dash."
+  "The CPU's branch at the stance's f6 (DUEL_ICHIGO v2 §10; by reach, the user 2026-09-29): after a K link's hit J / K /
+L; within 4.2 m (RANGETSU's lunge + reach 4.8) TSUKI-OTOSHI on a guard (or a gauge < 50) else mostly RANGETSU; to 5.4 m
+(the pounce's 5.6) TSUKI-OTOSHI or the dash in (a fresh stance at 1-2 m); farther the dash within 7.5 m, else the Getsuga."
   (let* ((o (opp-of e)) (fo (fighter o)) (d (fighter-dist f)) (r (sim-rnd01))
          (getsuga (getsuga-ready-p st)) (dash (and (not (ics-dashed st)) (>= (gauges-fs (gauges e)) *tsuki-dash-fs*))))
     (cond ((member (fighter-state fo) '(:stun :air))
            (cond ((< r 0.5) :tsuki-j) ((< r 0.8) :tsuki-k) (getsuga :tsuki-l) (t :tsuki-j)))
-          ((<= d 3.0)
+          ((<= d 4.2)
            (if (or (member (fighter-state fo) '(:guard :guard-hit)) (< (gauges-gg (gauges o)) 50))
-               (if (< r 0.5) :tsuki-k :tsuki-j)
+               (if (< r 0.6) :tsuki-k :tsuki-j)
                (if (< r 0.7) :tsuki-j :tsuki-k)))
-          ((<= d 5.5) (cond ((and dash (< r 0.5)) :tsuki-step) (getsuga :tsuki-l) (t :tsuki-j)))
-          (t (cond ((and getsuga (< r 0.8)) :tsuki-l) (dash :tsuki-step) (getsuga :tsuki-l))))))
+          ((<= d 5.4) (if (and dash (< r 0.5)) :tsuki-step :tsuki-k))
+          ((and dash (<= d 7.5) (< r 0.6)) :tsuki-step)
+          (getsuga :tsuki-l)
+          (dash :tsuki-step))))
 
 ;;; ================================================================ KESSA: the clones 分身
 (defun clone-p (hz) (icc-p (hazard-data hz)))
@@ -388,7 +402,7 @@ Konpaku hint (the user 2026-09-29: it followed the kit's fixed 3)."
   (let* ((live (remove-if-not (lambda (h) (clone-live-p (hazard-data (hazard h)))) (ichigo-clones e)))
          (i (clone-evict (mapcar (lambda (h) (icc-born (hazard-data (hazard h)))) live)))
          (q (pos-of (opp-of e))))
-    (when i (clone-fade (hazard-data (hazard (nth i live)))))
+    (when i (clone-fade (hazard-data (hazard (nth i live)))) (ic-count e :clone-evicted))
     (spawn-hazard :fx e :x x :z z :yaw (dir-yaw (- (aref q 0) x) (- (aref q 2) z)) :size 0.5 :life 99999
                         :look 'ichigo-clone-look :hook 'ichigo-clone-hz
                         :data (make-icc :born *match-tick* :life *clone-life* :src src))
@@ -405,16 +419,22 @@ Konpaku hint (the user 2026-09-29: it followed the kit's fixed 3)."
 (defun ichigo-step-clone (e)
   "KESSA's :step hook: every Step's take-off point leaves a clone, paid (CLONE-PAY!; the user 2026-09-29: no gap between
 them, the guard gauge is the limit)."
-  (when (clone-pay! e)
-    (let ((p (pos-of e))) (ichigo-clone-spawn e (aref p 0) (aref p 2) :step))))
+  (let ((why (let ((b (brain e))) (if (and b (eq (brain-act b) :dash)) (if (> (brain-dash b) 0) "DASH" "BACKDASH") "TAP"))))
+    (if (clone-pay! e)
+        (let ((p (pos-of e)))
+          (ic-count e (ic-key "CLONE-STEP" why (ic-reach-key (aref p 0) (aref p 2) e)))
+          (ichigo-clone-spawn e (aref p 0) (aref p 2) :step))
+        (progn (ic-count e (ic-key "REFUSED-STEP" why)) (ic-count e :refused-gg (round (gauges-gg (gauges e))))))))
 
 (defun hoho-clone (e)
   "A Hoho's reappearance leaves a clone 1.6 m in front of the opponent (the line from Ichigo, behind him, through him),
 paid (CLONE-PAY!)."
-  (when (clone-pay! e)
+  (if (not (clone-pay! e))
+   (progn (ic-count e :refused-hoho) (ic-count e :refused-gg (round (gauges-gg (gauges e)))))
    (let* ((q (pos-of (opp-of e))) (p (pos-of e)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
          (l (max 1e-3 (sqrt (+ (* dx dx) (* dz dz))))))
     (multiple-value-bind (x z) (clamp-to-circle (+ (aref q 0) (* 1.6 (/ dx l))) (+ (aref q 2) (* 1.6 (/ dz l))) (- *arena-radius* 0.4))
+      (ic-count e :clone-hoho)
       (ichigo-clone-spawn e x z :hoho)))))
 
 (defun clone-link (c weight link)
@@ -427,11 +447,19 @@ paid (CLONE-PAY!)."
   "A J / K press edge of E's (the user's choice: EVERY clone answers): an idle clone starts its string where it stands
 (the user, 2026-09-29: the clones swing in place); an answering one queues the press for a later link (each press one
 link, in order, 3 links at most: the clone plays his whole string back, *CLONE-LAG* behind)."
-  (let ((w (if (eq button :quick) :q :f)))
+  (let ((w (if (eq button :quick) :q :f)) (reach (if (eq button :quick) "3.0" "2.4")))
+    (ic-count e (ic-key "PRESS" w))
+    (dolist (h (ichigo-clones e))
+      (let ((c (hazard-data (hazard h))))
+        (when (clone-live-p c)
+          (ic-count e (ic-key "PRESS" w "CLONES"))
+          (when (or (string= (ic-reach-key (hazard-x (hazard h)) (hazard-z (hazard h)) e) "IN")
+                    (and (eq w :q) (string= (ic-reach-key (hazard-x (hazard h)) (hazard-z (hazard h)) e) "MID")))
+            (ic-count e (ic-key "PRESS" w "INREACH" reach))))))
     (dolist (h (ichigo-clones e))
       (let ((c (hazard-data (hazard h))))
         (case (icc-state c)
-          (:idle (clone-link c w 1))
+          (:idle (ic-count e :clone-answers) (clone-link c w 1))
           (:answer (when (< (+ (icc-link c) (length (icc-queued c))) 3)   ; each press one link, in order
                      (setf (icc-queued c) (append (icc-queued c) (list w))))))))))
 
@@ -462,6 +490,7 @@ string's end it fades if it touched him, else it idles where it stands."
                          (chain-open-p sf s (mv-a mv) (mv-r mv) (or (icc-hit c) (icc-touched c))))
                     (clone-link c (pop (icc-queued c)) (1+ (icc-link c))))
                    ((>= sf (+ s (mv-a mv) (mv-r mv)))
+                    (unless (icc-touched c) (ic-count e :clone-whiff-strings))
                     (if (eq (clone-after-string (icc-touched c) (icc-life c)) :fade)
                         (clone-fade c)
                         (setf (icc-state c) :idle (icc-queued c) nil))))))))
@@ -482,7 +511,7 @@ string's end it fades if it touched him, else it idles where it stands."
       (unless (eq (icc-state c) :fade)
         (setf (hazard-yaw hz) (f32 (angle-wrap (turn-toward (hazard-yaw hz) (dir-yaw dx dz) (track-step 720.0))))))
       (ecase (icc-state c)
-        (:idle (when (<= (icc-life c) 0) (clone-fade c)))
+        (:idle (when (<= (icc-life c) 0) (ic-count e :clone-expired) (clone-fade c)))
         (:answer (clone-answer-step e hz c))
         (:charge
          (let ((s (min (* 40.0 +step+) (max 0.0 (- d 1.0)))) (f (fighter e)))
@@ -508,7 +537,7 @@ string's end it fades if it touched him, else it idles where it stands."
         (when (clone-p hz) (push (cons (hazard-x hz) (hazard-z hz)) at))
         (destroy-entity h)))
     (dolist (p at) (ichigo-look e 'ichigo-burst-look (car p) (cdr p) :size 0.6 :life 12))
-    (when at (clog "~a CLONES GONE ~d" (side-name e) (length at)))))
+    (when at (ic-count e :clones-vanished (length at)) (clog "~a CLONES GONE ~d" (side-name e) (length at)))))
 
 (defun ichigo-o-press (e f st)
   "O pressed (a neutral rush or the ender): N = the live clones; they all charge; the strike gains *CLONE-BURST-DMG* x N (its
@@ -517,6 +546,7 @@ bonus); the Kikon is worth CLONE-KONPAKU N."
     (dolist (h (ichigo-clones e))
       (let ((c (hazard-data (hazard h))))
         (when (clone-live-p c) (incf n) (setf (icc-state c) :charge))))
+    (ic-count e (ic-key (if (kikon-ready-p e) "O-RED" "O-POKE") n))
     (setf (fighter-kikon-n f) (clone-konpaku n) (fighter-dmg-bonus f) (* n *clone-burst-dmg*)
           (ics-o-at st) *match-tick* (ics-o-n st) n)
     (clog "~a KAGE-UCHI clones ~d konpaku ~d" (side-name e) n (clone-konpaku n))))
@@ -633,13 +663,49 @@ kept for the practice judge (ICHIGO-STRUCK)."
           (setf (model-rim m) (parry-rim (- 1.0 (/ (- sf (first w)) (float (max 1 (- (second w) (first w)))))))))
         (when (ics-rim-saved st) (setf (model-rim m) (ics-rim st) (ics-rim-saved st) nil)))))
 
+;;; ================================================================ the pacing log (debug; docs/DUEL_ICHIGO.md "The CPU with the stance and the clones")
+(defun ic-acc-watch (e f st)
+  "Each move instance of his, by name, and at its end its contact (NAME-HIT / -BLK / -WHF); the stance's entries by
+distance; the ticks in KESSA; each Kikon he lands, by form and worth."
+  (let* ((mv (and (eq (fighter-state f) :move) (fighter-move f))) (sf (fighter-sf f)) (old (ics-acc-mv st)))
+    (when (and old (or (not (eq mv old)) (< sf (ics-acc-sf st))))
+      (ic-count e (ic-key (mv-name old) (case (ics-acc-hit st) (:hit "HIT") (:block "BLK") (t "WHF"))))
+      (setf (ics-acc-mv st) nil))
+    (when (and mv (not (ics-acc-mv st)))
+      (setf (ics-acc-mv st) mv (ics-acc-hit st) nil)
+      (ic-count e (mv-name mv))
+      (when (member (mv-name mv) '(:ic-tsuki :ic-tsuki-k2))
+        (let ((d (fighter-dist f))) (ic-count e (ic-key (mv-name mv) (cond ((<= d 3.0) "D3") ((<= d 5.5) "D5") (t "DFAR")))))))
+    (when mv
+      (setf (ics-acc-sf st) sf)
+      (let ((c (fighter-contact f)))
+        (when c (setf (ics-acc-hit st) (if (or (eq c :hit) (eq (ics-acc-hit st) :hit)) :hit :block)))))
+    (when (eq (fighter-form f) :kessa) (ic-count e :kessa-ticks))
+    (let ((k (gauges-kikons (gauges e))))
+      (when (> k (ics-acc-kikons st))
+        (setf (ics-acc-kikons st) k)
+        (ic-count e (ic-key "KIKON" (fighter-form f) (fighter-kikon-n f)))))))
+
+(defun ichigo-acc-reset () (dotimes (i 2) (setf (ics-acc (svref *ic* i)) nil)))
+(defun ichigo-acc-line ()
+  "After a gate row: a \"duel ichigo\" line per side that played him (the pacing log)."
+  (dolist (e (list *p1* *p2*))
+    (when (and (entity-alive-p e) (eq (fighter-character (fighter e)) :ichigo))
+      (log-msg "duel ichigo ~a seed ~d awakened ~a ~{~(~a~) ~a~^ ~}" (side-name e) *match-seed* (gauges-awakened (gauges e))
+               (ics-acc (ic e))))))
+
 ;;; ================================================================ his hooks
 (defun ichigo-hit (att def res hw mv hazard ranged)
   "Both forms' :hit hook: a clone's hit tells its clone what it did (its string's gate and its fate)."
   (declare (ignore def hw mv ranged))
+  (when (and hazard (eq (hazard-look hazard) 'ichigo-getsuga-look) (contact-of res))
+    (ic-count att (ic-key "GETSUGA-WAVE" (contact-of res))))
+  (when (and hazard (eq (hazard-look hazard) 'ichigo-juji-look) (contact-of res))
+    (ic-count att (ic-key "JUJI-WAVE" (contact-of res))))
   (when hazard
     (let ((c (hazard-data hazard)))
       (when (and (icc-p c) (contact-of res))
+        (ic-count att (ic-key "CLONE" (contact-of res)))
         (setf (icc-hit c) (contact-of res) (icc-touched c) t)
         (clog "~a clone ~a" (side-name att) res)))))
 
@@ -659,6 +725,7 @@ missed parry says EARLY (hit in its recovery) or LATE (hit within 3 f of pressin
 edges they answer, the Hoho clone, the O charge), the parry from blockstun and its tell, the afterimages."
   (declare (ignore g))
   (let ((st (ic e)))
+    (ic-acc-watch e f st)
     (ichigo-cut e)
     (if (eq (fighter-form f) :kessa)
         (let* ((vp (pilot-vpad (pilot e))) (state (fighter-state f)) (mv (and (eq state :move) (fighter-move f))))
@@ -692,19 +759,42 @@ edges they answer, the Hoho clone, the O charge), the parry from blockstun and i
           (when (<= lo fr hi) (setf hit t)))))
     hit))
 
+(defun clone-idle-in-reach (e)
+  "The reach bucket of E's best idle clone to the opponent (docs/DUEL_ICHIGO.md \"The CPU with the stance and the
+clones\"): :light (<= 2.4 m: both answers land), :heavy (<= 3.0 m: J's heavy lands), or NIL."
+  (let ((best nil) (q (pos-of (opp-of e))))
+    (dolist (h (ichigo-clones e) best)
+      (let* ((hz (hazard h)) (c (hazard-data hz))
+             (dd (sqrt (+ (expt (- (aref q 0) (hazard-x hz)) 2) (expt (- (aref q 2) (hazard-z hz)) 2)))))
+        (when (eq (icc-state c) :idle)
+          (cond ((<= dd 2.4) (setf best :light)) ((and (<= dd 3.0) (null best)) (setf best :heavy))))))))
+
 (defun ichigo-ai-kessa (e b s d)
   "KESSA's CPU reflexes (free states): L when a hit it can see (the opponent's move, as perceived) or a projectile will land
-4-22 frames out (inside the window f2-25), one roll per opponent action at *AI-IC-PARRY-P*, with the price in hand;
-O with >= 2 clones within 8.6 m, *AI-KESSA-O-P* per step (x2 with 3)."
-  (let ((g (gauges e)))
-    (cond ((and (>= (gauges-gg g) *kessa-parry-cost*) (not (gauges-guardless g)) (< (brain-react-roll b) *ai-ic-parry-p*)
+4-22 frames out (inside the window f2-25), one roll per opponent action at *AI-IC-PARRY-P*, with the price in hand.
+The Kikon near (his Reishi under *AI-KESSA-BANK-AT*, O ready, not reeling): bank clones with side Steps, 3 m out and not
+into a coming hit (2, 3 with the gauge for them); the O itself stays the generic ender / rush, which then finds them (千影
+3-4 Konpaku), and nothing below spends them meanwhile. An idle clone in reach of him: J (the clones' heavies) or K (their lights, his K1 in reach),
+*AI-KESSA-CLONE-J-P* per step. Else O with >= 2 clones within 8.6 m, *AI-KESSA-O-P* per step (x2 with 3)."
+  (let* ((g (gauges e)) (n (clone-count e)) (gg (gauges-gg g)) (pay (and (not (gauges-guardless g)) (>= gg *clone-cost*))))
+    (cond ((and (>= gg *kessa-parry-cost*) (not (gauges-guardless g)) (< (brain-react-roll b) *ai-ic-parry-p*)
                 (let ((lead (- (snap-s s) (snap-sf s) (brain-delay b))))
                   (or (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (member (snap-kind s) '(:quick :flash :sig :sp :kikon))
                            (<= 4 lead 22) (< d (+ (snap-reach s) 0.6)))
                       (incoming-hazard-in e 4 22))))
            (why b :parry :sig))
-          ((let ((n (clone-count e)))
-             (and (>= n 2) (<= d 8.6) (kit-command-ok-p e :kikon) (< (sim-rnd01) (* (if (>= n 3) 2 1) *ai-kessa-o-p*))))
+          ((and (let ((go (gauges (opp-of e)))) (< (gauges-reishi go) (* *ai-kessa-bank-at* (gauges-reishi-max go))))
+                (kit-command-ok-p e :kikon) (not (member (snap-state s) '(:stun :air :down :wakeup :hoho))))
+           (and pay (< n (if (>= gg (+ *clone-cost* 25.0)) 3 2)) (>= d 3.0)
+                (not (and (eq (snap-state s) :move) (< (snap-sf s) (snap-active-end s)) (< d (+ (snap-reach s) 1.0))))
+                (why b :bank :side-step)))
+          ((and (not (member :parry (snap-flags s))) (not (member (snap-state s) '(:down :wakeup :hoho)))
+                (< (sim-rnd01) *ai-kessa-clone-j-p*))
+           (let ((r (clone-idle-in-reach e)))
+             (cond ((null r) nil)
+                   ((and (eq r :light) (<= 1.6 d 3.0)) (why b :clone-reach :f))
+                   (t (why b :clone-reach :q)))))
+          ((and (>= n 2) (<= d 8.6) (kit-command-ok-p e :kikon) (< (sim-rnd01) (* (if (>= n 3) 2 1) *ai-kessa-o-p*)))
            (why b :clones :kikon)))))
 
 ;;; ================================================================ the HUD: the clones' row (the kit meter's :draw / :label, :deck)

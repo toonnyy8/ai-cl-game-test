@@ -86,7 +86,7 @@ def run(job):
             ticks, ko = int(m[3]), m[1] == '0' or m[2] == '0'
         elif line.startswith('duel gate row '):
             rows.append([int(line.split()[4]), ticks, ko, line, []])
-        elif rows and re.match(r'duel (band|cups|senju) ', line):
+        elif rows and re.match(r'duel (band|cups|senju|ichigo) ', line):
             rows[-1][4].append(line)
     if len(rows) != n:
         sys.exit(f'[simgate] pairing {k} seeds {s0 + 1}-{s0 + n}: {len(rows)} rows\n' + r.stdout[-2000:])
