@@ -161,13 +161,13 @@ on the clogs."
   (:foot-l (:bevel 0.09 0.06 0.2 0.02 :at (0 -0.03 0.05) :c :wrap)))
 
 ;;; ---------------------------------------------------------------- the needle and the spear
-;; 刺絡 SHIGARAMI: a white-gold sewing needle as tall as she is, 1.8 m (1.58 m at her scale; 0.9 until the playtest: her J
-;; reach is its tip),
-;; the eye just behind her fist (the red thread runs from it: SENJU-DRAW)
-(defweapon :shigarami (:length 1.8 :base 0.1)
+;; 刺絡 SHIGARAMI: a white-gold sewing needle, 1.2 m (1.06 m at her scale; 1.8 m, as tall as she is, from the first reach
+;; playtest until the second, 2026-09-29: J is light, short and fast, so the needle is two thirds of it and her J reach
+;; its tip, close in), the eye just behind her fist (the red thread runs from it: SENJU-DRAW)
+(defweapon :shigarami (:length 1.2 :base 0.1)
   (:solid (mbc mb #xEDE6D0)
-          (with-xform (mb (xform :y 0.87)) (mb-cylinder mb 0.016 1.74 :segments 6 :top-radius 0.005))
-          (with-xform (mb (xform :y 1.77)) (mb-cone mb 0.005 0.05 :segments 4))
+          (with-xform (mb (xform :y 0.57)) (mb-cylinder mb 0.016 1.14 :segments 6 :top-radius 0.005))
+          (with-xform (mb (xform :y 1.17)) (mb-cone mb 0.005 0.05 :segments 4))
           (mbc mb #xC2A866)
           (with-xform (mb (xform :y -0.03)) (mb-box mb 0.026 0.05 0.012))
           (mbc mb #x16161E)
@@ -318,22 +318,22 @@ rolled bolt of it: the weave, the wrap, the hanging bolts)."
 
 ;; J1 HITOHARI: the upper right hand jabs the needle straight out
 (defpose :sj-q1-hit (:base :sj-stance)
-  (:root :f 0.32 :u -0.05) (:pelvis :twist 18) (:chest :twist 16) (:neck :twist -12) (:head :twist -10)
-  (:arm-r :flex 92 :side 4) (:elbow-r :flex 2) (:hand-r :twist 0 :flex -90)
+  (:root :f 0.06 :u -0.05) (:pelvis :twist 18) (:chest :twist 16) (:neck :twist -12) (:head :twist -10)
+  (:arm-r :flex 80 :side 4) (:elbow-r :flex 20) (:hand-r :twist 0 :flex -64)
   (:arm-l :flex 20 :side 60) (:elbow-l :flex 40)
   (:thigh-r :flex 20) (:knee-r :flex 20) (:thigh-l :flex -8) (:knee-l :flex 8))
 (defstrike :sj-q1 (7 3 12 :base :sj-stance)
   (0)
   (3 (:chest :twist -14) (:arm-r :flex 60 :side 10) (:elbow-r :flex 110) (:hand-r :flex -80) (:root :u -0.03))
   (:s :snap :sj-q1-hit)
-  (:a (:root :f 0.34) (:arm-r :flex 93))
-  (16 (:root :f 0.1) (:arm-r :flex 70 :side 18) (:elbow-r :flex 60) (:hand-r :flex -50) (:chest :twist 4))
+  (:a (:root :f 0.08) (:arm-r :flex 81))
+  (16 (:root :f 0.03) (:arm-r :flex 70 :side 18) (:elbow-r :flex 60) (:hand-r :flex -50) (:chest :twist 4))
   (:end :sj-stance))
 
 ;; J2 KAESHINUI: the backstitch: the needle drawn back across him, the thread taut
 (defpose :sj-q2-hit (:base :sj-stance)
-  (:root :f 0.28 :u -0.05 :yaw -8) (:pelvis :twist 16) (:chest :twist -22) (:neck :twist 10) (:head :twist 6)
-  (:arm-r :side 86 :flex 30) (:elbow-r :flex 10 :twist 140) (:hand-r :twist 0 :flex -84)
+  (:root :f 0.06 :u -0.05 :yaw -8) (:pelvis :twist 16) (:chest :twist -22) (:neck :twist 10) (:head :twist 6)
+  (:arm-r :side 50 :flex 30) (:elbow-r :flex 80 :twist 140) (:hand-r :twist 0 :flex -84)
   (:arm-l :flex 60 :side 20) (:elbow-l :flex 50) (:hand-l :flex -40))
 (defstrike :sj-q2 (7 3 13 :base :sj-stance)
   (0)
@@ -349,9 +349,9 @@ rolled bolt of it: the weave, the wrap, the hanging bolts)."
   (4 (:root :u -0.04 :yaw -20) (:chest :twist -30) (:arm-r :side 80 :flex 10) (:elbow-r :flex 10) (:hand-r :flex -80)
      (:arm-l :side 80 :flex 10) (:elbow-l :flex 10) (:hand-l :flex -40))
   (6 (:root :yaw -30) (:chest :twist -36))
-  (:s :snap (:root :yaw 330 :u -0.02 :f 0.2) (:chest :twist 10) (:arm-r :side 88 :flex 40) (:elbow-r :flex 0) (:hand-r :flex -88)
-      (:arm-l :side 88 :flex 40) (:elbow-l :flex 0) (:hand-l :flex -60))
-  (:a (:root :yaw 360 :f 0.22) (:chest :twist 14))
+  (:s :snap (:root :yaw 330 :u -0.02 :f 0.04) (:chest :twist 10) (:arm-r :side 60 :flex 40) (:elbow-r :flex 65) (:hand-r :flex -88)
+      (:arm-l :side 60 :flex 40) (:elbow-l :flex 65) (:hand-l :flex -60))
+  (:a (:root :yaw 360 :f 0.05) (:chest :twist 14))
   (22 (:root :yaw 360 :u -0.02 :f 0.06) (:arm-r :side 50 :flex 40) (:elbow-r :flex 40) (:hand-r :flex -50)
       (:arm-l :side 60 :flex 30) (:elbow-l :flex 50))
   (:end :sj-stance (:root :yaw 360)))
@@ -448,9 +448,9 @@ rolled bolt of it: the weave, the wrap, the hanging bolts)."
   (0 (:arm-r :flex 90 :side 60) (:elbow-r :flex 10) (:arm-l :flex 90 :side 60) (:elbow-l :flex 10) (:root :u -0.06))
   (5 (:arm-r :side 70) (:arm-l :side 70))
   (:s :snap (:arm-r :flex 92 :side -6) (:elbow-r :flex 0) (:hand-r :flex -80) (:arm-l :flex 92 :side -6) (:elbow-l :flex 0)
-      (:hand-l :flex -80) (:root :f 0.3 :u -0.08) (:spine :flex 10))
-  (:a (:root :f 0.32))
-  (24 (:root :f 0.14) (:arm-r :flex 70 :side 20) (:elbow-r :flex 50) (:arm-l :flex 40 :side 40) (:elbow-l :flex 50))
+      (:hand-l :flex -80) (:root :f 0.14 :u -0.08) (:spine :flex 10))
+  (:a (:root :f 0.16))
+  (24 (:root :f 0.07) (:arm-r :flex 70 :side 20) (:elbow-r :flex 50) (:arm-l :flex 40 :side 40) (:elbow-l :flex 50))
   (:end :sj-stance))
 
 ;; the intro (the needle drawn out of the air, the thread following), the win (she threads the needle), the awakening's
@@ -638,7 +638,7 @@ framing the crescent (eased over ~0.1 s either way)."
 ;; each is out to its move's hit-volume far edge at the hit frames. The host test (duel-rules-test) checks these against
 ;; the volumes, and the J links' needle tip against theirs
 (defparameter *sj-strike-reach*
-  '((:sj-f1 :pins 3.5) (:sj-f2 :loop 2.8) (:sj-drop :stakes 2.8) (:sj-tanmono :bolt 4.5) (:sj-makitori :wrap 2.8))
+  '((:sj-f1 :pins 3.2) (:sj-f2 :loop 2.5) (:sj-drop :stakes 2.5) (:sj-tanmono :bolt 4.1) (:sj-makitori :wrap 2.5))
   "Clip -> (kind far): the prop the clip's K link throws and its far end, metres from her centre along her facing
 (MACHIBARI's two long pins, MATSURI's loop of thread, KUKE's pins round his feet, TANMONO-UCHI's bolt, MAKITORI's cloth).")
 
@@ -667,7 +667,7 @@ through the active frames, drawn back over the 8 after."
                (let* ((x (aref h 0)) (y (aref h 1)) (z (aref h 2)) (hf (fwd x z)) (l (* k (- d hf))))
                  (when (> l 0.05) (sj-seg :sj-pin x y z (+ x (* l fx)) y (+ z (* l fz)) 0.016)))))
             (:loop                                     ; MATSURI: a loop of thread whipped up from the needle and down
-             (joint-point! v jm (ji :weapon-r) 0f0 0f0 -1.8f0)           ; ahead at him (two strands)
+             (joint-point! v jm (ji :weapon-r) 0f0 0f0 -1.2f0)           ; ahead at him (two strands)
              (let* ((x0 (aref v 0)) (y0 (aref v 1)) (z0 (aref v 2)) (r (* k d)) (ex (+ cx (* r fx))) (ez (+ cz (* r fz)))
                     (mx (* 0.5 (+ x0 ex))) (my (+ (max y0 2.2) 0.5)) (mz (* 0.5 (+ z0 ez))))
                (dotimes (strand 2)

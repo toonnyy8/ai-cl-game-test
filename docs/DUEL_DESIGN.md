@@ -37,7 +37,7 @@ Kept from RoS: two layers of health (Reishi bar + Konpaku lives), **9 Konpaku**,
 **30 %** Reishi, Kikon moves as the only way to break a Konpaku (the Kikon button rushes in and
 strikes; a strike that lands with the button still held knocks him back and the rusher dashes in to
 the Kikon, which he can guard unless he is red), Soul Break at 0 Reishi (it plays the attacker's Kikon cinematic), Kikon
-counts 2 / 3 (awakened) and Soul Break +1, the Attack > Breaker > Guard > Attack triangle, a guard
+counts 2 / 3 (awakened) and Soul Break +1, the Attack > Breaker > Guard > Attack triangle (since 2026-09-29 with J the attack that beats the grab: 防 > J > I > 防, §4), a guard
 gauge whose break leaves the defender unable to guard, Breaker vs Breaker clash, Hoho (reappear
 behind, perfect Hoho counter) and Burst Reverse (blue, breaks a combo) on their own flash-step gauge,
 the dash (hold Step), the camera behind the player, the Fighting
@@ -218,11 +218,20 @@ no knockback) so the O ender (§2) connects; the knockback is the O strike's.
 
 **Breaker** (hold): pink aura for 12 f, then a dash toward the opponent while held (at least 12 f,
 at most 45 f, 9 → 10 m/s), then the strike (S8 A4 R18; 30 f recovery on a whiff) as soon as he is
-within 2.2 m. Against a guard → **Guard Break** (50 f stun). Against a non-guarding fighter → 150
+within **0.95 m** (centre to centre; its reach **0.7 m**). Against a guard → **Guard Break** (50 f stun). Against a non-guarding fighter → 150
 damage and a 3 m knockback. Against Kenpachi's stance → breaks it (40 f crumple). No armour:
 any hit during its aura, dash or strike startup is a **counter-hit** (×1.25 damage, +10 f
 hitstun). Breaker vs Breaker (both dashing or striking within 3 m) → **CLASH**: both pushed apart
 4 m, 24 f stun, no damage.
+
+**防 > J > I > 防** (the user, 2026-09-29: 「抓技範圍必須比輕攻擊更短，這樣才能達到 防 > J > I > 防 這樣的循環克制」;
+docs/DUEL_STRINGS.md §14). Guard blocks J; J beats the grab (I): the Breaker's strike reaches **0.7 m**, shorter than
+every form's J1 (0.73 m in 片腕 … 1.94 m at −273 °C), so a J1 pressed as the dash comes in counter-hits it (its aura, dash
+and strike startup have no armour); I breaks the guard. The trigger, 0.95 m, sits just outside the widest pair of hurt
+radii (0.9 m, two Kenpachis), so every pair can reach it, and 0.7 m + the thinnest hurt radius (0.34 m) > 0.95 m, so a
+triggered strike connects. Before the rule: trigger 2.2 m, reach 2.6 m. Host-tested per form (`duel-rules-test`): the
+grab is shorter than J1, and J1 has a press window against the dash at its fastest (e.g. Yamamoto's J1, S 9, from
+1.1 m to 3.1 m away from him; every J1 with S ≤ 8 even after the trigger).
 
 **Guard gauge** (0–100, both characters; full at the start and after every Kikon reset): each
 **blocked** hit drains its move's **guard value** (`guard-value`, rules.lisp; a move or hitwin
@@ -511,14 +520,14 @@ with no derivation (cup 3) takes its parent's version of a move (`register-kit`)
 
 | Move (cup 1, KATATE) | S / A / R | Reach | Notes |
 |---|---|---|---|
-| J1 / J2 | 9/3/12, 9/3/13 | 3.38 | every link pair combos (`:enter` grows with the startup: S_eff 14) |
-| J3 (the kick) | 10/3/18 | 2.86 | |
-| K1 | 18/4/20 | 3.90 | |
-| K2 / K3 | 22/4/24, 22/5/34 (both enter at f8) | 3.38 / 3.64 | |
+| J1 / J2 | 9/3/12, 9/3/13 | **1.35** (3.38 before the J cut) | every link pair combos (`:enter` grows with the startup: S_eff 14) |
+| J3 (the kick) | 10/3/18 | **1.14** (2.86) | |
+| K1 | 18/4/20 | **3.64** (3.90) | |
+| K2 / K3 | 22/4/24, 22/5/34 (both enter at f8) | **3.25 / 3.51** (3.38 / 3.64) | |
 | Stance cut | 10/4/24 | 3.64 | hold unchanged (6 f in, ≤ 60 f) |
 | SP1 **Split the Meteor** `:ke-meteor` | 26/4/30 | 12 m line | 240, knockdown, splits the ground; the cleaver within **3.4 m** (KATATE's Q reach) is melee, the line beyond it **ranged** (a Bankai West armours it at ×0.6, §6.1); the cash-out splits at 3.9 m (cup 3's MEN), Buttagiru's at 2.6 m (its crack beyond) |
 | SP2 charge / flurry | 16/26/24; flurry S12 | 1.82 / 2.86 | 2 bars |
-| Breaker | strike 10/4/18 | 3.38 | still triggers at 2.2 m |
+| Breaker | strike 10/4/18 | **0.91** (3.38) | triggers at **0.95 m** (2.2 before the grab rule, DUEL_STRINGS §14) |
 | Kikon module **LEAP CLEAVE** `:ke-kikon-n` | crouch 8 f, leap 18 m/s ≤ 30 f (locked), strike 11/3/24 | 3.08, 160° | its own move in every cup (§6.3) |
 
 | Move (cup 2, RYOTE; ×1.15) | S / A / R | Dmg | Block | Volume | Guard (the cut) | Notes |

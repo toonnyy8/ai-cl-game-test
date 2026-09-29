@@ -93,13 +93,17 @@ instead (true combos); on a whiff never (the contact gate, §2.2).")
 (defparameter *breaker-dash-max* 45 "Longest dash while the button is held.")
 (defparameter *breaker-speed-min* 9.0 "Dash speed at the start of the dash (m/s)...")
 (defparameter *breaker-speed-max* 10.0 "... rising to this at *breaker-dash-max*.")
-(defparameter *breaker-trigger* 2.2 "The strike starts when the opponent is within this range.")
+(defparameter *breaker-trigger* 0.95
+  "The strike starts when the opponent is within this range (centre to centre; 2.2 until the user's 2026-09-29 rule 防 > J >
+I > 防, docs/DUEL_STRINGS.md §14: the grab only from up close, just outside the widest pair of hurt radii, 0.9).")
 (defparameter *breaker-startup* 8 "Strike startup (the aura brightens over it: the 'hit it now' tell).")
 (defparameter *breaker-active* 4 "Strike active frames.")
 (defparameter *breaker-recovery* 18 "Strike recovery.")
 (defparameter *breaker-whiff* 30 "Strike recovery after a whiff.")
 (defparameter *breaker-damage* 150 "Strike damage on a non-guarding opponent.")
-(defparameter *breaker-reach* 2.6 "Strike hit reach (> trigger range, so a triggered strike connects).")
+(defparameter *breaker-reach* 0.7
+  "Strike hit reach (2.6 until 2026-09-29): under every form's J1 reach (J beats I, 防 > J > I > 防), and with the thinnest
+hurt radius (0.34) past the trigger range, so a triggered strike connects.")
 (defparameter *breaker-knockback* 3.0 "Strike knockback slide.")
 (defparameter *guard-break-stun* 50 "Stun of a Guard Break.")
 (defparameter *stance-break-stun* 40 "Crumple of a stance broken by a Breaker.")
@@ -192,7 +196,9 @@ then :down + :wakeup (iframes in both).")
 (defparameter *air-slide* 0.6 "An airborne reaction slides this x the hit's :kb (1 m without one) ...")
 (defparameter *air-slide-frames* 20 "... over this many frames.")
 (defparameter *gravity* 22.0 "Airborne fighters fall at this (m/s^2).")
-(defparameter *lunge-stop* 1.3 "A lunging move (:slide) stops moving this close to the opponent.")
+(defparameter *lunge-stop* 0.95
+  "A lunging move (:slide) stops moving this close to the opponent (1.3 until the J cut of 2026-09-29, docs/DUEL_STRINGS.md
+§13: a J reaches ~1 m + his hurt radius, so the lunge and the chase stop inside that; above the widest pair of hurt radii, 0.9).")
 ;; the string follow-up's chase (docs/DUEL_STRINGS.md §2.2, the user's decision 2026-09-28): once a link of the string
 ;; touched him, every later link closes in during its startup so its hit window reaches him (motion only: guard, Step /
 ;; Hoho / down iframes still work)
@@ -421,7 +427,10 @@ off it (Kenpachi's flurry): a seed-gate pacing knob (docs/DUEL_STRINGS.md §9)."
 (defparameter *ai-guard-break-p* 0.4 "... with this probability.")
 (defparameter *ai-anti-breaker-p* '(:easy 0.4 :normal 0.55 :hard 0.7) "Answer an incoming Breaker aura.")
 (defparameter *ai-anti-breaker-range* 5.0 "... seen within this range: Hoho (a bar), Q1 beyond ...")
-(defparameter *ai-anti-breaker-q* 1.8 "... this range, else a sideways Step.")
+(defparameter *ai-anti-breaker-q* 1.8 "... this range, else a sideways Step (a Kikon rush).")
+(defparameter *ai-anti-breaker-j* 1.4
+  "A Breaker's dash: J1 once it is within J1's reach + this (J beats I, docs/DUEL_STRINGS.md §14: the dash covers ~1.2-1.5 m
+in J1's startup, so J1's active frames meet it inside J1's reach).")
 (defparameter *ai-react-p* 0.7 "Chance of a kit :react answer (Kenpachi's stance) to what triggers it.")
 (defparameter *ai-threat-margin* 1.5 "A committed opponent move is a threat within its reach + this.")
 (defparameter *ai-projectile-range* 7.0 "An incoming projectile is 'seen' within this range.")

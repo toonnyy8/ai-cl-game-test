@@ -9,20 +9,21 @@
 
 ;;; ================================================================ base
 ;;; the J / K strings (docs/DUEL_STRINGS.md §3.3): no school, a street fighter with a sword who kicks. The grid as
-;;; Yamamoto's (yama.lisp): up to three links, switching J / K at most once; every K at link 2 / 3 at S_eff 14, at 80 % of
+;;; Yamamoto's (yama.lisp): up to three links, switching J / K at most once (the reach since the J cut, DUEL_STRINGS §13: J 0.4x,
+;;; K nearly as long as before: his long swings); every K at link 2 / 3 at S_eff 14, at 80 % of
 ;;; the design's damage (the seed gate: 75 -> 60, 100 -> 80; RYOTE 85 -> 68, 115 -> 92)
 (defmove :ke-j1 :kind :quick :clip :ke-q1 :startup 7 :active 3 :recovery 12 :dmg 35 :adv-block -2
-  :reach 2.6 :arc 100 :on-hit :flinch :slide 0.8)                    ; ARAGIRI: a lazy slash, lunge 0.8 m
+  :reach 1.04 :arc 100 :on-hit :flinch :slide 0.8)                   ; ARAGIRI: a lazy slash, lunge 0.8 m
 (defmove :ke-j2 :kind :quick :clip :ke-q2 :startup 7 :active 3 :recovery 13 :dmg 35 :adv-block -2
-  :reach 2.6 :arc 100 :on-hit :flinch)                               ; KAESHIGIRI: the backhand
+  :reach 1.04 :arc 100 :on-hit :flinch)                              ; KAESHIGIRI: the backhand
 (defmove :ke-j3 :kind :quick :clip :ke-kick :startup 8 :active 3 :recovery 18 :dmg 42 :adv-block -4
-  :reach 2.2 :arc 60 :on-hit :stagger :flags (:ender))               ; KENKA-GERI: a front kick to the gut
+  :reach 0.88 :arc 60 :on-hit :stagger :flags (:ender))              ; KENKA-GERI: a front kick to the gut
 (defmove :ke-k1 :kind :flash :clip :ke-f1 :startup 16 :active 4 :recovery 20 :dmg 70 :adv-block -3
-  :reach 3.0 :arc 120 :on-hit :stagger)                              ; OBURI: the huge two-handed swing
+  :reach 2.8 :arc 120 :on-hit :stagger)                              ; OBURI: the huge two-handed swing
 (defmove :ke-k2 :kind :flash :clip :ke-f2 :enter 6 :startup 20 :active 4 :recovery 24 :dmg 60 :adv-block -3
-  :reach 2.6 :arc 90 :on-hit :stagger)                               ; KIRIAGE: from the floor up
+  :reach 2.5 :arc 90 :on-hit :stagger)                               ; KIRIAGE: from the floor up
 (defmove :ke-k3 :kind :flash :clip :ke-q3 :clip-s 11 :enter 6 :startup 20 :active 5 :recovery 34 :dmg 80 :adv-block -20
-  :reach 2.8 :arc 360 :on-hit :crumple :flags (:ender))              ; BUNMAWASHI: the full spin
+  :reach 2.7 :arc 360 :on-hit :crumple :flags (:ender))              ; BUNMAWASHI: the full spin
 (defmove-copy :ke-j2s :ke-j2)
 (defmove-copy :ke-k2s :ke-k2)
 ;; "KITTE MIRO YO": :hold = 6 f in (hit = counter-hit), then super armour up to 60 f storing damage;
@@ -36,7 +37,7 @@
 (defmove :ke-buttagiru :kind :sp :clip :ke-buttagiru :callout "BUTTAGIRU"
   :startup 22 :active 4 :recovery 26 :dmg 180 :adv-block -14 :slide 5.0
   :vol (:cap 0.0 3.0 0.5 0.6) :on-hit :knockdown :kb 2.0 :flags (:ranged) :on-frame ((22 ken-ground-crack))
-  :params (:melee-range 2.6))                          ; the blade within Q1's reach 2.6 m, the crack beyond: ranged
+  :params (:melee-range 2.6))                          ; the blade within 2.6 m (Q1's reach until the J cut), the crack beyond: ranged
 ;; dash 6 m at 14 m/s during the 26 active frames (the tick hook); contact = flurry hit 1 of 5
 ;; (25 each), then :KE-FLURRY (4 more + a 60 launcher). Still holding at the dash: guard-crushing.
 (defmove :ke-charge :kind :sp :clip :ke-charge :clip-2 :ke-flurry :callout "ORE NI KIRENEE MON WA NEE"
@@ -63,7 +64,7 @@
 (defmove :ke-meteor :kind :sp :clip :ke-meteor :callout "SPLIT THE METEOR"
   :startup 26 :active 4 :recovery 30 :dmg 240 :adv-block -16
   :vol (:cap 0.3 12.0 0.5 0.5) :on-hit :knockdown :kb 3.0 :flags (:ranged) :on-frame ((26 ken-meteor-cut))
-  :params (:melee-range 3.4))                          ; the cleaver within KATATE's Q reach (3.38 m), the line beyond: ranged
+  :params (:melee-range 3.4))                          ; the cleaver within 3.4 m (KATATE's Q reach until the J cut), the line beyond: ranged
 ;; O in Nozarashi, LEAP CLEAVE (his own move: not derived): 8 f of crouch, then a leap at 18 m/s for at
 ;; most 30 f, the direction locked at take-off (the height is a look, :lift), then the widest cleave,
 ;; 3.08 m over 160 deg, and a gash where it lands: 10.6 m, <= 49 f. Cooldown 90.
@@ -75,24 +76,24 @@
 ;;; ---------------------------------------------------------------- RYOTE (cup 2): two-handed kendo, straight and long
 ;;; (their own clips, ken-art.lisp; :clip-s = the clip's authored S, so each plays at speed 1)
 (defmove :ke-r-j1 :kind :quick :clip :ke-r-q1 :clip-s 10 :startup 10 :active 3 :recovery 12 :dmg 40 :adv-block -2
-  :vol (:cap 0.3 3.9 1.2 0.5) :on-hit :flinch)                       ; MEN: the straight overhead
+  :vol (:cap 0.3 1.56 1.2 0.5) :on-hit :flinch)                      ; MEN: the straight overhead
 (defmove :ke-r-j2 :kind :quick :clip :ke-r-kote :startup 9 :active 3 :recovery 13 :dmg 38 :adv-block -2
-  :reach 3.6 :arc 60 :on-hit :flinch)                                ; KOTE: the small wrist snap
+  :reach 1.44 :arc 60 :on-hit :flinch)                               ; KOTE: the small wrist snap
 (defmove :ke-r-j3 :kind :quick :clip :ke-r-q3 :clip-s 14 :startup 10 :active 3 :recovery 18 :dmg 48 :adv-block -4
-  :reach 3.8 :arc 140 :on-hit :stagger :flags (:ender))              ; KESA: the diagonal
+  :reach 1.52 :arc 140 :on-hit :stagger :flags (:ender))             ; KESA: the diagonal
 (defmove :ke-r-k1 :kind :flash :clip :ke-r-f1 :clip-s 19 :startup 19 :active 4 :recovery 20 :dmg 85 :adv-block -3
-  :reach 4.2 :arc 160 :on-hit :stagger)                              ; DO: the wide body cut
+  :reach 3.9 :arc 160 :on-hit :stagger)                              ; DO: the wide body cut
 (defmove :ke-r-k2 :kind :flash :clip :ke-r-tsuki :enter 7 :startup 21 :active 4 :recovery 24 :dmg 68 :adv-block -3
-  :vol (:cap 0.3 4.4 1.2 0.5) :on-hit :stagger)                      ; MOROTE-ZUKI: both hands drive it straight out
+  :vol (:cap 0.3 4.0 1.2 0.5) :on-hit :stagger)                      ; MOROTE-ZUKI: both hands drive it straight out
 (defmove :ke-r-k3 :kind :flash :clip :ke-r-f2 :clip-s 21 :enter 7 :startup 21 :active 5 :recovery 34 :dmg 92 :adv-block -20
-  :vol (:cap 0.3 4.2 1.2 0.55) :on-hit :crumple :flags (:ender))      ; KABUTO-WARI: the helm splitter
+  :vol (:cap 0.3 3.9 1.2 0.55) :on-hit :crumple :flags (:ender))      ; KABUTO-WARI: the helm splitter
 (defmove-copy :ke-r-j2s :ke-r-j2)
 (defmove-copy :ke-r-k2s :ke-r-k2)
 ;;; ---------------------------------------------------------------- NOMIHOSE (cup 3)
 ;; K: KUKAN-GIRI, the space cut: its blade leaves a rift in the air (f20) that cuts again *RIFT-DELAY* frames
 ;; later (KEN-RIFT: a :rift hazard, closed if he is hit before it cuts)
 (defmove :ke-n-f1 :kind :flash :clip :ke-n-f1 :clip-s 20 :callout "KUKAN-GIRI" :startup 20 :active 4 :recovery 22 :dmg 90
-  :adv-block -4 :reach 4.2 :arc 150 :on-hit :stagger :on-frame ((20 ken-rift))
+  :adv-block -4 :reach 3.9 :arc 150 :on-hit :stagger :on-frame ((20 ken-rift))
   :params (:rift-dmg 50 :rift-guard 12 :rift-chip 0.2 :rift-vol (:cap 1.0 4.4 1.4 0.5)))
 ;; Shift+K: NOMIHOSE, Split the Meteor with the whole cup: on its first frame NOME is 0 and he is back in cup 1
 ;; (KEN-DRINK-DRY), so it resolves at KATATE's x1.0 and an O after it is KATATE's 2-Konpaku Kikon (no O ender: not a string). 390; within
@@ -106,17 +107,17 @@
 ;;; split. Every K link, L, SP1, SP2, I and O spends a pip of the arm (UDE); the K links and the specials :rend (armour
 ;;; and his mirror's stance don't stop them). Frame data: the DUEL_STRINGS §2.1 budget (J 8 / 8 / 9, K1 17, K2 / K3 S_eff 14).
 (defmove :ke-b-j1 :kind :quick :clip :ke-q1 :clip-s 7 :startup 8 :active 3 :recovery 12 :dmg 38 :adv-block -2
-  :reach 3.2 :arc 100 :on-hit :flinch :slide 1.0)                   ; TATAKI-GIRI: hacked down, lunging like a beast
+  :reach 1.28 :arc 100 :on-hit :flinch :slide 1.0)                  ; TATAKI-GIRI: hacked down, lunging like a beast
 (defmove :ke-b-j2 :kind :quick :clip :ke-q2 :clip-s 7 :startup 8 :active 3 :recovery 13 :dmg 38 :adv-block -2
-  :reach 3.2 :arc 100 :on-hit :flinch)                               ; NAGI-HARAI: the backhand sweep
-(defmove :ke-b-j3 :kind :quick :clip :ke-b-fist :startup 9 :active 3 :recovery 18 :dmg 50 :adv-block -4
-  :reach 2.0 :arc 60 :on-hit :stagger :slide 0.6 :flags (:ender))    ; GENKOTSU: a left hook to the face
+  :reach 1.28 :arc 100 :on-hit :flinch)                              ; NAGI-HARAI: the backhand sweep
+(defmove :ke-b-j3 :kind :quick :clip :ke-b-hook :startup 9 :active 3 :recovery 18 :dmg 50 :adv-block -4
+  :reach 0.8 :arc 60 :on-hit :stagger :slide 0.6 :flags (:ender))    ; GENKOTSU: a left hook to the face
 (defmove :ke-b-k1 :kind :flash :clip :ke-f1 :clip-s 16 :startup 17 :active 4 :recovery 20 :dmg 120 :adv-block -3
-  :reach 3.6 :arc 120 :on-hit :stagger :guard 28 :flags (:rend))     ; ONATA: the hatchet chop
+  :reach 3.4 :arc 120 :on-hit :stagger :guard 28 :flags (:rend))     ; ONATA: the hatchet chop
 (defmove :ke-b-k2 :kind :flash :clip :ke-f2 :enter 6 :startup 20 :active 4 :recovery 24 :dmg 100 :adv-block -3
-  :reach 3.2 :arc 90 :on-hit :stagger :guard 28 :flags (:rend))      ; EGURI-AGE: gouging up from the floor
+  :reach 3.0 :arc 90 :on-hit :stagger :guard 28 :flags (:rend))      ; EGURI-AGE: gouging up from the floor
 (defmove :ke-b-k3 :kind :flash :clip :ke-r-f2 :clip-s 21 :enter 7 :startup 21 :active 5 :recovery 34 :dmg 150 :adv-block -20
-  :vol (:cap 0.3 4.0 1.2 0.55) :on-hit :crumple :guard 36 :flags (:ender :rend))   ; TATAKI-OTOSHI: the drop
+  :vol (:cap 0.3 3.7 1.2 0.55) :on-hit :crumple :guard 36 :flags (:ender :rend))   ; TATAKI-OTOSHI: the drop
 (defmove-copy :ke-b-j2s :ke-b-j2)
 (defmove-copy :ke-b-k2s :ke-b-k2)
 ;; L, KAMICHIGIRI: a short lunge, the left hand clamps, the teeth: nothing guards it (guard, DRINK, the ward, a parry, a
@@ -150,8 +151,9 @@
   :strings ((:ke-charge :land :ke-flurry))
   :awaken-form :nozarashi
   :ai (:intents (:approach 2 :pressure 4 :zone 0 :defend 1)
-       :ranges (:approach (2.0 4.0) :pressure (1.5 3.0) :zone (4.0 6.0) :defend (3.0 5.0))
-       :moves ((0.0 3.0 :q 5 :f 2 :breaker 1 :sp2 1 :sig 2 nil 3)
+       :ranges (:approach (2.0 4.0) :pressure (1.0 2.6) :zone (4.0 6.0) :defend (3.0 5.0))
+       :moves ((0.0 1.3 :q 5 :f 2 :breaker 1 :sp2 1 :sig 2 nil 3)    ; J up close only (DUEL_STRINGS §13), K beyond
+               (1.3 3.0 :f 4 :breaker 1 :sp2 1 :sig 2 nil 3)
                (3.0 4.0 :f 1 :sp1 2 :step 1 nil 2)
                (4.0 6.0 :sp1 4 :sp2 2 nil 1)
                (6.0 99.0 :step 1 :kikon 1 nil 1))                      ; the charge / leap as a poke
@@ -172,8 +174,9 @@
   ;; toys with his opponent (a Kikon only 0.25 per decision until the last minute: it is worth 2 here; the O ender on
   ;; one who isn't red per cup, :o-ender, docs/DUEL_STRINGS.md §4)
   :ai (:intents (:approach 2 :pressure 4 :zone 0 :defend 1)
-       :ranges (:approach (2.0 4.0) :pressure (1.5 3.0) :zone (4.0 6.0) :defend (3.0 5.0))
-       :moves ((0.0 3.4 :q 5 :f 2 :sig 3 :breaker 1 :sp2 1 nil 3)
+       :ranges (:approach (2.0 4.0) :pressure (1.2 3.0) :zone (4.0 6.0) :defend (3.0 5.0))
+       :moves ((0.0 1.6 :q 5 :f 2 :sig 3 :breaker 1 :sp2 1 nil 3)
+               (1.6 3.4 :f 4 :sig 3 :breaker 1 :sp2 1 nil 3)
                (3.4 4.2 :f 1 :sp1 2 :step 1 nil 2)
                (4.2 6.0 :sp1 4 :sp2 2 nil 1)
                (6.0 99.0 :step 1 :kikon 1 nil 1))
@@ -190,8 +193,9 @@
   ;; option at range, a neutral guard 0.1 (a guard against a committed move stays 0.35), a dash from 0.5 m outside his
   ;; range, 30 f of respect after a hit instead of 120, and a blocked string goes on 0.95 of the time
   :ai (:intents (:approach 2 :pressure 6 :zone 0 :defend 0)
-       :ranges (:approach (2.0 4.5) :pressure (1.5 3.5) :zone (4.0 6.0) :defend (3.0 5.0))
-       :moves ((0.0 3.4 :q 5 :f 3 :sig 1 :breaker 1 nil 1)
+       :ranges (:approach (2.0 4.5) :pressure (1.2 3.2) :zone (4.0 6.0) :defend (3.0 5.0))
+       :moves ((0.0 1.7 :q 5 :f 3 :sig 1 :breaker 1 nil 1)
+               (1.7 3.4 :f 5 :sig 1 :breaker 1 nil 1)
                (3.4 4.2 :f 2 :sp1 2 :step 1 nil 1)
                (4.2 6.0 :sp1 4 :sp2 2 :step 1)
                (6.0 99.0 :step 1 :kikon 1))
@@ -208,8 +212,9 @@
   ;; (:tempo 0.6, :attack +0.2), no respect, drink (U) a committed move 0.7 of the time (the drunk half feeds NOME), and
   ;; the near cash-out only once NOME < 55 (just before the drop to cup 2, which keeps 50)
   :ai (:intents (:approach 3 :pressure 7 :zone 0 :defend 0)
-       :ranges (:approach (2.0 4.5) :pressure (1.5 3.5) :zone (4.0 6.0) :defend (3.0 5.0))
-       :moves ((0.0 3.4 :q 4 :f 4 :breaker 1 nil 1)
+       :ranges (:approach (2.0 4.5) :pressure (1.2 3.2) :zone (4.0 6.0) :defend (3.0 5.0))
+       :moves ((0.0 1.7 :q 4 :f 4 :breaker 1 nil 1)
+               (1.7 3.4 :f 5 :breaker 1 nil 1)
                (3.4 6.0 :f 2 :step 2)
                (6.0 99.0 :step 1 :kikon 1))
        :guard 0.7 :neutral-guard 0.1 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 1.0 :dash-gap 0.3 :kikon-range 5.0
@@ -239,7 +244,7 @@
   :ai (:intents (:approach 3 :pressure 7 :zone 0 :defend 0)
        :ranges (:approach (2.0 4.5) :pressure (1.2 3.0) :zone (4.0 6.0) :defend (3.0 5.0))
        :moves ((0.0 1.5 :q 3 :f 3 :sig 3 :breaker 1 nil 1)
-               (1.5 3.4 :q 4 :f 4 :breaker 1 nil 1)
+               (1.5 3.4 :f 5 :breaker 1 nil 1)
                (3.4 6.0 :sp1 3 :sp2 2 :step 1 nil 1)
                (6.0 99.0 :kikon 1 :step 1 nil 1))
        :guard 0.2 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 2 :dash 1.0 :kikon-range 10.6 :kikon-p 0.9 :o-ender 0.8
@@ -254,8 +259,9 @@
   :commands (:breaker :ke-breaker :kikon :ke-kikon)
   :grid (:ke-j1 :ke-j2 :ke-a-j3 :ke-k1 :ke-k2 :ke-k3 :ke-j2s :ke-k2s)
   :ai (:intents (:approach 2 :pressure 4 :zone 0 :defend 1)
-       :ranges (:approach (1.5 3.0) :pressure (1.0 2.0) :zone (4.0 6.0) :defend (3.0 5.0))
-       :moves ((0.0 2.0 :q 5 :f 2 :sig 2 :breaker 1 :sp2 1 nil 3)
+       :ranges (:approach (1.5 3.0) :pressure (0.9 1.8) :zone (4.0 6.0) :defend (3.0 5.0))
+       :moves ((0.0 1.1 :q 5 :f 2 :sig 2 :breaker 1 :sp2 1 nil 3)
+               (1.1 2.0 :f 4 :sig 2 :breaker 1 :sp2 1 nil 3)
                (2.0 4.0 :f 1 :sp1 2 :step 1 nil 2)
                (4.0 6.0 :sp2 2 nil 1)
                (6.0 99.0 :step 1 :kikon 1 nil 1))

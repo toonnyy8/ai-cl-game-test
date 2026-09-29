@@ -351,15 +351,20 @@ D = the perceived distance."
             (>= (- (snap-left s) (brain-delay b)) (mv-s q)) (< d (+ (mv-reach q) 0.4)))
        (why b :punish :q))
       ;; an incoming Breaker, a Kikon rush, or a rush's follow-up strike coming (it hit us, not red): guard
-      ;; a rush when not red (the chance by difficulty); else Hoho through its dash (flash-step), Q1 it
-      ;; while it has the room, else Step sideways (a Hoho in the aura only reappears in front of the dash)
+      ;; a rush when not red (the chance by difficulty); else Hoho through its dash (flash-step); a Breaker: J1 as its dash
+      ;; runs into J1's reach (J beats I, docs/DUEL_STRINGS.md §14: waiting till then); a rush: Q1 it while it has the room,
+      ;; else Step sideways (a Hoho in the aura only reappears in front of the dash)
       ((and (member (snap-kind s) '(:breaker :kikon)) (member (snap-phase s) '(:aura :dash :follow))
             (< d (if (eq (snap-phase s) :follow) (+ (snap-reach s) *ai-threat-margin*) *ai-anti-breaker-range*))
-            (< (brain-react-roll b) (getf *ai-anti-breaker-p* (brain-difficulty b) 0.5)))
+            (< (brain-react-roll b) (getf *ai-anti-breaker-p* (brain-difficulty b) 0.5))
+            (or (not (eq (snap-kind s) :breaker))
+                (and (eq (snap-phase s) :dash)
+                     (or (and hoho-ok (< (brain-hoho-roll b) (ai-table e :hoho 0.2))) (< d (+ (mv-reach q) *ai-anti-breaker-j*))))))
        (why b :anti-breaker
             (cond ((and (eq (snap-kind s) :kikon) (not red) (plusp guard-k)) :guard)
                   ((and (eq (snap-phase s) :dash) hoho-ok (< (brain-hoho-roll b) (ai-table e :hoho 0.2)))
                    :hoho)
+                  ((eq (snap-kind s) :breaker) :q)
                   ((> d *ai-anti-breaker-q*) :q)
                   (t :side-step))))
       ;; the kit's reactions: stance vs a projectile / a Flash startup it can still beat (stance-in

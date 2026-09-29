@@ -529,7 +529,7 @@ Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規�
 驗證方法：每 600 步印一行 `duel hash`（`state-hash-line`，`duel/lisp/debug.lisp` 第 83～96 行，位置、朝向、每個量表、上一次 Kikon 突進值幾個魂魄、電腦的 heat）。`tests/scripts/duel-cvc-yk.json` 用種子 7 讓兩個電腦打完一場，最後一行一定是：
 
 ```
-duel -> RESULTS winner P1 konpaku 5-0 ticks 6708 secs 111.8
+duel -> RESULTS winner P2 konpaku 0-3 ticks 7662 secs 127.7
 ```
 
 （2026-09-29 加入隱藏的受擊值（被連續打太久會被打飛，DUEL_DESIGN.md「Hidden hit-stun tolerance」）之後，這一行變了：種子 7 裡山本被打飛兩次；YY、KK 不變。之前是 `winner P2 konpaku 0-6 ticks 5516 secs 91.9`。）

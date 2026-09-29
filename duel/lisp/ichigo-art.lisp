@@ -271,7 +271,7 @@
 
 ;;; ---------------------------------------------------------------- the Shikai grid (§3.2)
 (defpose :ic-q1-hit (:base :ic-stance)                 ; J1 KOKIBA: the short blade flicked across, stepping in
-  (:root :f 0.26 :u -0.13 :yaw -4) (:pelvis :twist 18) (:spine :flex 10) (:chest :twist -14) (:neck :twist 6) (:head :twist 4)
+  (:root :f 0.5 :u -0.13 :yaw -4) (:pelvis :twist 18) (:spine :flex 10) (:chest :twist -14) (:neck :twist 6) (:head :twist 4)
   (:arm-l :side 88 :flex 104) (:elbow-l :flex 6) (:hand-l :flex -86)
   (:arm-r :flex -30 :side 30) (:elbow-r :flex 16) (:hand-r :flex -40)
   (:thigh-l :flex 46 :side 4) (:knee-l :flex 46) (:thigh-r :flex -24) (:knee-r :flex 22))
@@ -280,22 +280,22 @@
   (3 (:root :u -0.08 :yaw 10) (:chest :twist 30) (:neck :twist -10) (:arm-l :side 88 :flex -6) (:elbow-l :flex 18)
      (:hand-l :flex -84) (:arm-r :flex -20 :side 26))
   (:s :snap :ic-q1-hit)
-  (8 (:chest :twist -18) (:arm-l :flex 110) (:root :f 0.28))
-  (:a (:chest :twist -17) (:arm-l :flex 108) (:root :f 0.28))
+  (8 (:chest :twist -18) (:arm-l :flex 110) (:root :f 0.5))
+  (:a (:chest :twist -17) (:arm-l :flex 108) (:root :f 0.5))
   (16 (:chest :twist -10) (:arm-l :side 50 :flex 70) (:elbow-l :flex 30) (:hand-l :flex -70) (:root :f 0.12 :u -0.1))
   (:end :ic-stance))
 
 (defpose :ic-q2-hit (:base :ic-stance)                 ; J2 KAESHI: the wrist turned, the short blade back across
-  (:root :f 0.22 :u -0.11 :yaw 6) (:pelvis :twist 26) (:spine :flex 8) (:chest :twist 16) (:neck :twist -8)
-  (:arm-l :side 88 :flex 36) (:elbow-l :flex 6 :twist -160) (:hand-l :flex -86)
+  (:root :f 0.5 :u -0.11 :yaw 6) (:pelvis :twist 26) (:spine :flex 8) (:chest :twist 16) (:neck :twist -8)
+  (:arm-l :side 40 :flex 90) (:elbow-l :flex 6 :twist -160) (:hand-l :flex -86)
   (:arm-r :flex -24 :side 34) (:elbow-r :flex 20) (:hand-r :flex -40)
   (:thigh-l :flex 38) (:knee-l :flex 40) (:thigh-r :flex -20) (:knee-r :flex 22))
 (defstrike :ic-q2 (7 3 13 :base :ic-stance)
   (0)
   (3 (:root :u -0.09 :yaw -8) (:chest :twist -26) (:arm-l :side 88 :flex 126) (:elbow-l :flex 20 :twist -160) (:hand-l :flex -80))
   (:s :snap :ic-q2-hit)
-  (8 (:chest :twist 18) (:arm-l :flex 32) (:root :f 0.24))
-  (:a (:chest :twist 17) (:arm-l :flex 34) (:root :f 0.23))
+  (8 (:chest :twist 18) (:root :f 0.5))
+  (:a (:chest :twist 17) (:root :f 0.5))
   (17 (:chest :twist 6) (:arm-l :side 40 :flex 44) (:elbow-l :flex 30 :twist -40) (:hand-l :flex -64) (:root :f 0.08 :u -0.08))
   (:end :ic-stance))
 
@@ -304,11 +304,11 @@
   (4 (:root :u -0.12 :yaw 18) (:knees :flex 40) (:chest :twist 30) (:arm-l :side 88 :flex -10) (:elbow-l :flex 6)
      (:arm-r :side 70 :flex -20) (:elbow-r :flex 10) (:hand-r :flex -80))
   (6 (:root :u -0.14 :yaw 28) (:chest :twist 36))
-  (:s :snap (:root :yaw -360 :u -0.04 :f 0.3) (:pelvis :twist 16) (:chest :twist -8) (:neck :twist 8)
-      (:arm-l :side 70 :flex 40) (:elbow-l :flex 4) (:hand-l :flex -88) (:arm-r :side 100 :flex 30) (:elbow-r :flex 4)
-      (:hand-r :flex -88) (:thigh-l :flex 20) (:knee-l :flex 24) (:thigh-r :flex 10 :side 14) (:knee-r :flex 30))
-  (:a (:root :yaw -382 :u -0.05 :f 0.32) (:chest :twist -12))
-  (22 (:root :yaw -372 :u -0.08 :f 0.3) (:arm-l :side 40 :flex 40) (:elbow-l :flex 30) (:arm-r :side 40 :flex 10) (:elbow-r :flex 20))
+  (:s :snap (:root :yaw -360 :u -0.04 :f 0.03) (:pelvis :twist 16) (:chest :twist -8) (:neck :twist 8)
+      (:arm-l :side 70 :flex 40) (:elbow-l :flex 4) (:hand-l :flex -88) (:arm-r :side 40 :flex 100) (:elbow-r :flex 20)
+      (:hand-r :flex -40) (:thigh-l :flex 20) (:knee-l :flex 24) (:thigh-r :flex 10 :side 14) (:knee-r :flex 30))
+  (:a (:root :yaw -382 :u -0.05 :f 0.05) (:chest :twist -12))
+  (22 (:root :yaw -372 :u -0.08 :f 0.04) (:arm-l :side 40 :flex 40) (:elbow-l :flex 30) (:arm-r :side 40 :flex 10) (:elbow-r :flex 20))
   (:end :ic-stance (:root :yaw -360)))
 
 (defpose :ic-f1-hit (:base :ic-stance)                 ; K1 OKIBA: the cleaver's waist-high sweep, a deep step
@@ -375,6 +375,20 @@
   (:s :snap :ic-cross-hit)
   (:a (:root :f 0.38) (:arm-r :flex 76) (:arm-l :flex 76))
   (26 (:root :f 0.2 :u -0.1) (:arm-r :side 40 :flex 30) (:elbow-r :flex 20) (:arm-l :side 40 :flex 40) (:elbow-l :flex 40))
+  (:end :ic-stance))
+
+;; J2s KAESHI-KIBA alone (the J cut, docs/DUEL_STRINGS.md §13): the X closed in at his chest, under the cleaver's return
+(defpose :ic-cross-j-hit (:base :ic-cross-hit)
+  (:root :f 0.02 :u -0.12) (:spine :flex 14)
+  (:arm-r :side 15 :flex 80) (:elbow-r :flex 80) (:hand-r :twist -40 :flex -60)
+  (:arm-l :side 30 :flex 80) (:elbow-l :flex 60) (:hand-l :twist -40 :flex -80))
+(defstrike :ic-cross-j (7 3 24 :base :ic-stance)
+  (0)
+  (3 (:root :u -0.04 :f 0.02) (:spine :flex -8) (:arm-r :side 70 :flex 160) (:elbow-r :flex 20) (:hand-r :flex -60)
+     (:arm-l :side 70 :flex 160) (:elbow-l :flex 20) (:hand-l :flex -60) (:head :flex -16))
+  (:s :snap :ic-cross-j-hit)
+  (:a (:root :f 0.04))
+  (26 (:root :f 0.02 :u -0.1) (:arm-r :side 40 :flex 30) (:elbow-r :flex 20) (:arm-l :side 40 :flex 40) (:elbow-l :flex 40))
   (:end :ic-stance))
 
 ;;; ---------------------------------------------------------------- the stance 月待 TSUKIMACHI (v2 §2)
@@ -525,18 +539,32 @@
   (18 (:root :f 0.12 :u -0.06) (:chest :twist 8) (:arm-r :side 44 :flex 50) (:elbow-r :flex 18) (:hand-r :flex -64))
   (:end :ic-k-stance))
 
-;; J2 返板 KAESHI-ITA: the backhand, the flat turned, the slab's weight carrying the wrist round
+;; KESSA's J1 alone (the J cut, docs/DUEL_STRINGS.md §13): ITA-NAGI swept up from close, the slab ending raised across in
+;; front of him (the clones keep the long sweep above)
+(defpose :ic-k-jab-hit (:base :ic-k-cut-hit)
+  (:root :f 0.02) (:arm-r :side 50 :flex 40) (:elbow-r :flex 60) (:hand-r :twist 0 :flex -40))
+(defstrike :ic-k-jab (8 3 12 :base :ic-k-stance)
+  (0)
+  (4 (:root :u -0.1 :yaw 8) (:chest :twist -28) (:neck :twist 12) (:arm-r :side 70 :flex -26) (:elbow-r :flex 12)
+     (:hand-r :twist 0 :flex -70) (:arm-l :flex 30 :side 20) (:knees :flex 26))
+  (:s :snap :ic-k-jab-hit)
+  (:a (:chest :twist 28) (:root :f 0.04))
+  (18 (:root :f 0.02 :u -0.06) (:chest :twist 8) (:arm-r :side 44 :flex 50) (:elbow-r :flex 18) (:hand-r :flex -64))
+  (:end :ic-k-stance))
+
+;; J2 返板 KAESHI-ITA: the backhand, the flat turned, the slab's weight carrying the wrist round (shorter since the J cut,
+;; docs/DUEL_STRINGS.md §13: the elbow bent, the slab ends across in front of him)
 (defpose :ic-k-back-hit (:base :ic-k-stance)
-  (:root :f 0.22 :u -0.1 :yaw 8) (:pelvis :twist 26) (:spine :flex 8) (:chest :twist -22) (:neck :twist 14)
-  (:arm-r :side 86 :flex 24) (:elbow-r :flex 4 :twist -150) (:hand-r :flex -84)
+  (:root :f 0.02 :u -0.1 :yaw 8) (:pelvis :twist 26) (:spine :flex 8) (:chest :twist -22) (:neck :twist 14)
+  (:arm-r :side 50 :flex 20) (:elbow-r :flex 100 :twist -150) (:hand-r :flex -120)
   (:arm-l :flex 20 :side 40) (:elbow-l :flex 30) (:hand-l :flex -20)
   (:thigh-r :flex 38) (:knee-r :flex 40) (:thigh-l :flex -22) (:knee-l :flex 18))
 (defstrike :ic-k-back (8 3 13 :base :ic-k-stance)
   (0)
   (4 (:root :u -0.08 :yaw -10) (:chest :twist 30) (:arm-r :side 86 :flex 130) (:elbow-r :flex 16 :twist -150) (:hand-r :flex -78))
   (:s :snap :ic-k-back-hit)
-  (:a (:arm-r :flex 18) (:chest :twist -24) (:root :f 0.24))
-  (19 (:chest :twist -6) (:arm-r :side 40 :flex 30) (:elbow-r :flex 26 :twist -40) (:hand-r :flex -66) (:root :f 0.08 :u -0.06))
+  (:a (:chest :twist -24) (:root :f 0.04))
+  (19 (:chest :twist -6) (:arm-r :side 40 :flex 30) (:elbow-r :flex 26 :twist -40) (:hand-r :flex -66) (:root :f 0.02 :u -0.06))
   (:end :ic-k-stance))
 
 (defstrike :ic-k-wrap (10 3 18 :base :ic-k-stance)     ; J3 KUSARI-MAKI: a turn, the blade out, the chain wrapping round him
@@ -546,6 +574,18 @@
   (:s :snap (:root :yaw 360 :u -0.04 :f 0.2) (:chest :twist 10) (:arm-r :side 90 :flex 40) (:elbow-r :flex 0) (:hand-r :flex -88)
       (:arm-l :side 80 :flex 20) (:elbow-l :flex 10))
   (:a (:root :yaw 380 :f 0.22))
+  (24 (:root :yaw 370 :u -0.05) (:arm-r :side 40 :flex 20) (:elbow-r :flex 16) (:arm-l :side 30 :flex 10))
+  (:end :ic-k-stance (:root :yaw 360)))
+
+;; KESSA's J3 alone (§13): the turn with the elbow bent, the slab close in front, the chain wrapping round him (the
+;; clones keep the arm's-length wrap above)
+(defstrike :ic-k-wrap-j (10 3 18 :base :ic-k-stance)
+  (0)
+  (5 (:root :u -0.08 :yaw -20) (:chest :twist -30) (:arm-r :side 80 :flex -10) (:elbow-r :flex 6) (:hand-r :flex -86)
+     (:arm-l :side 60 :flex 60) (:knees :flex 24))
+  (:s :snap (:root :yaw 360 :u -0.04 :f 0.02) (:chest :twist 10) (:arm-r :side 20 :flex 20) (:elbow-r :flex 60) (:hand-r :flex -40)
+      (:arm-l :side 80 :flex 20) (:elbow-l :flex 10))
+  (:a (:root :yaw 380 :f 0.04))
   (24 (:root :yaw 370 :u -0.05) (:arm-r :side 40 :flex 20) (:elbow-r :flex 16) (:arm-l :side 30 :flex 10))
   (:end :ic-k-stance (:root :yaw 360)))
 

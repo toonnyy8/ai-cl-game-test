@@ -1,7 +1,7 @@
 # SOUL DUEL — J / K strings, the O ender, and KŌSEI, the aggression reward (2026-09-27)
 
 Status: **built** (2026-09-27). §0–§8 are the design (r3) as the user decided it (§0.1); §11 (2026-09-28) revises the gate: after any contact every later link comes out and chases the defender. §9 records what the build does
-differently, §10 the measurements (the seed gate). The as-built rules also live in DUEL_DESIGN.md §2, §3, §4, §6, §7.
+differently, §10 the measurements (the seed gate). §13 (2026-09-29) cuts every J to 0.4–0.6× and every K a little (J light, short and fast; K heavy, long and slow), §14 puts the grab under J (防 > J > I > 防). The as-built rules also live in DUEL_DESIGN.md §2, §3, §4, §6, §7.
 
 The design sat on top of [DUEL_YAMA_REWORK.md](DUEL_YAMA_REWORK.md) (East / West by U, where West's J / K are
 East's moves, pierce, the ward) and on the shared guard regen cut to about 40–50 % (`*gg-regen*` 12 → ~5.5/s).
@@ -133,36 +133,36 @@ Identity: an old man's economy, one arm, fire does the work.
 
 | Link | Name | Clip | S/A/R | Dmg | React | Blk | Whiff | Volume | Pose (one line) |
 |---|---|---|---|---|---|---|---|---|---|
-| J1 | 火閃 HISEN | `:ya-q1` | 9/3/12 | 38 | flinch | −2 | 20 | 2.4 m 100° | from the draw, a flat right-to-left cut, the haori trailing, the flame tongue hangs 2 drawings |
-| J2 | 返し火 KAESHIBI | `:ya-q2` | 8/3/13 | 38 | flinch | −2 | 21 | 2.4 m 100° | the wrist turns over, a backhand along the same line; the flame reverses into a ring |
-| J3 | 袖火 SODEBI | **new** `:ya-sleeve` | 9/3/18 | 45 | stagger | −4 | 26 | 2.2 m 140° | he whips the **empty left sleeve**, which catches fire, across the face: a one-armed silhouette, the sleeve a FIRE ribbon |
-| K1 | 焔薙 HOMURA-NAGI | `:ya-f1` | 18/4/20 | 75 | stagger | −3 | 32 | 3.0 m 150° | a long anticipation, the blade drawn back past his hip, then a waist-high sweep that fans fire; +20 Inferno |
-| K2 | 昇焔 SHŌEN | `:ya-f2` | 22/4/24 (8 → 14) | 80 | stagger | −3 | 36 | 2.6 m 90° | he sinks and rises with the cut, a flame column blooms; 4 f hold at the top; +20 Inferno |
-| K3 | 焔爆 ENBAKU | `:ya-q3` | 22/5/34 (8 → 14) | 110 | crumple | −20 | 46 | 2.8 m 120° | the blade stabbed down at his feet, the flame bursts out in a dome, beard and sleeve blown back; 4 f hold; +20 Inferno |
+| J1 | 火閃 HISEN | `:ya-q1` | 9/3/12 | 38 | flinch | −2 | 20 | **0.96 m** 100° (was 2.4) | from the draw, a flat right-to-left cut, the haori trailing, the flame tongue hangs 2 drawings |
+| J2 | 返し火 KAESHIBI | `:ya-q2` | 8/3/13 | 38 | flinch | −2 | 21 | **0.96 m** 100° (was 2.4) | the wrist turns over, a backhand along the same line; the flame reverses into a ring |
+| J3 | 袖火 SODEBI | **new** `:ya-sleeve` | 9/3/18 | 45 | stagger | −4 | 26 | **0.88 m** 140° (was 2.2) | he whips the **empty left sleeve**, which catches fire, across the face: a one-armed silhouette, the sleeve a FIRE ribbon |
+| K1 | 焔薙 HOMURA-NAGI | `:ya-f1` | 18/4/20 | 75 | stagger | −3 | 32 | **2.6 m** 150° (was 3.0) | a long anticipation, the blade drawn back past his hip, then a waist-high sweep that fans fire; +20 Inferno |
+| K2 | 昇焔 SHŌEN | `:ya-f2` | 22/4/24 (8 → 14) | 80 | stagger | −3 | 36 | **2.3 m** 90° (was 2.6) | he sinks and rises with the cut, a flame column blooms; 4 f hold at the top; +20 Inferno |
+| K3 | 焔爆 ENBAKU | `:ya-q3` | 22/5/34 (8 → 14) | 110 | crumple | −20 | 46 | **2.4 m** 120° (was 2.8) | the blade stabbed down at his feet, the flame bursts out in a dome, beard and sleeve blown back; 4 f hold; +20 Inferno |
 
 ### 3.2 Yamamoto: Bankai East (`:bankai-east`; West's J / K drop to these). New clips: **1**
 Identity: thin ember lines, the sun's path. ×1.0 + pierce, taken ×1.5 (rework).
 
 | Link | Name | Clip | S/A/R | Dmg | React | Blk | Whiff | Volume | Pose |
 |---|---|---|---|---|---|---|---|---|---|
-| J1 | 日差 HIZASHI | `:ya-q1` | 8/3/12 | 34 | flinch | −2 | 20 | line 3.1 | a flat edge line, no fire; a white-hot scratch hangs 1 drawing |
-| J2 | 残照 ZANSHŌ | `:ya-q2` | 7/3/13 | 38 | flinch | −2 | 21 | line 3.1 | the return stroke; the two afterglows cross into an X (his scar) for 6 f |
-| J3 | 穿光 SENKŌ | `:ya-e-thrust` | 8/3/18 | 42 | stagger | −4 | 26 | line 3.6 | a short straight thrust, no lunge (KYOKKŌ is the lunge) |
-| K1 | 陽炎 KAGERŌ | `:ya-f1` | 16/4/20 | 70 | stagger | −3 | 32 | line 3.8 | a wide sweep; the air behind it shimmers (a heat-haze band on twos) |
-| K2 | 日昇 NISSHŌ | `:ya-f2` | 19/4/24 (5 → 14) | 75 | stagger | −3 | 36 | line 3.8 h 1.3 | a rising cut; the edge traces a half-disc, a rising sun, for 3 drawings |
-| K3 | 落日 RAKUJITSU | **new** `:ya-e-drop` | 21/5/34 (7 → 14) | 105 | crumple | −20 | 46 | vertical line 0.3 → 3.6 | the blade straight up, one-armed, held 3 f, falling in a vertical arc (the setting sun); ember sparks on the plaza |
+| J1 | 日差 HIZASHI | `:ya-q1` | 8/3/12 | 34 | flinch | −2 | 20 | line **1.24** (was 3.1) | a flat edge line, no fire; a white-hot scratch hangs 1 drawing |
+| J2 | 残照 ZANSHŌ | `:ya-q2` | 7/3/13 | 38 | flinch | −2 | 21 | line **1.24** (was 3.1) | the return stroke; the two afterglows cross into an X (his scar) for 6 f |
+| J3 | 穿光 SENKŌ | `:ya-e-thrust` | 8/3/18 | 42 | stagger | −4 | 26 | line **1.44** (was 3.6) | a short straight thrust, no lunge (KYOKKŌ is the lunge) |
+| K1 | 陽炎 KAGERŌ | `:ya-f1` | 16/4/20 | 70 | stagger | −3 | 32 | line **3.4** (was 3.8) | a wide sweep; the air behind it shimmers (a heat-haze band on twos) |
+| K2 | 日昇 NISSHŌ | `:ya-f2` | 19/4/24 (5 → 14) | 75 | stagger | −3 | 36 | line **3.4** h 1.3 (was 3.8) | a rising cut; the edge traces a half-disc, a rising sun, for 3 drawings |
+| K3 | 落日 RAKUJITSU | **new** `:ya-e-drop` | 21/5/34 (7 → 14) | 105 | crumple | −20 | 46 | vertical line 0.3 → **3.2** (was 3.6) | the blade straight up, one-armed, held 3 f, falling in a vertical arc (the setting sun); ember sparks on the plaza |
 
 ### 3.3 Kenpachi: base (`:base`). New clips: **1**
 Identity: no school, a street fighter with a sword who kicks.
 
 | Link | Name | Clip | S/A/R | Dmg | React | Blk | Whiff | Volume | Pose |
 |---|---|---|---|---|---|---|---|---|---|
-| J1 | 荒斬 ARAGIRI | `:ke-q1` | 7/3/12 | 35 | flinch | −2 | 20 | 2.6 m 100°, lunge 0.8 | a lazy one-handed slash thrown from the shoulder, grinning |
-| J2 | 返斬 KAESHIGIRI | `:ke-q2` | 7/3/13 | 35 | flinch | −2 | 21 | 2.6 m 100° | the backhand back across, the haori flaring |
-| J3 | 喧嘩蹴り KENKA-GERI | **new** `:ke-kick` | 8/3/18 | 42 | stagger | −4 | 26 | 2.2 m 60° | a flat front kick to the gut, the sword held out wide the other way |
-| K1 | 大振り ŌBURI | `:ke-f1` | 16/4/20 | 70 | stagger | −3 | 32 | 3.0 m 120° | a huge two-handed wind-up over the right shoulder, the whole torso turning |
-| K2 | 斬り上げ KIRIAGE | `:ke-f2` | 20/4/24 (6 → 14) | 75 | stagger | −3 | 36 | 2.6 m 90° | both hands, from the floor up; hold at the top, arms wide |
-| K3 | ぶん回し BUNMAWASHI | `:ke-q3` | 20/5/34 (6 → 14) | 100 | crumple | −20 | 46 | 2.8 m 360° | the swing carries him into a full spin, the blade at arm's length; smear on the whole turn |
+| J1 | 荒斬 ARAGIRI | `:ke-q1` | 7/3/12 | 35 | flinch | −2 | 20 | **1.04 m** 100° (was 2.6), lunge 0.8 | a lazy one-handed slash thrown from the shoulder, grinning |
+| J2 | 返斬 KAESHIGIRI | `:ke-q2` | 7/3/13 | 35 | flinch | −2 | 21 | **1.04 m** 100° (was 2.6) | the backhand back across, the haori flaring |
+| J3 | 喧嘩蹴り KENKA-GERI | **new** `:ke-kick` | 8/3/18 | 42 | stagger | −4 | 26 | **0.88 m** 60° (was 2.2) | a flat front kick to the gut, the sword held out wide the other way |
+| K1 | 大振り ŌBURI | `:ke-f1` | 16/4/20 | 70 | stagger | −3 | 32 | **2.8 m** 120° (was 3.0) | a huge two-handed wind-up over the right shoulder, the whole torso turning |
+| K2 | 斬り上げ KIRIAGE | `:ke-f2` | 20/4/24 (6 → 14) | 75 | stagger | −3 | 36 | **2.5 m** 90° (was 2.6) | both hands, from the floor up; hold at the top, arms wide |
+| K3 | ぶん回し BUNMAWASHI | `:ke-q3` | 20/5/34 (6 → 14) | 100 | crumple | −20 | 46 | **2.7 m** 360° (was 2.8) | the swing carries him into a full spin, the blade at arm's length; smear on the whole turn |
 
 ### 3.4 Kenpachi: Nozarashi cups
 - **Cup 1 KATATE**: derived from base (+2 f, reach ×1.3), the same clips with the cleaver. New clips: **0**. `:enter`
@@ -171,12 +171,12 @@ Identity: no school, a street fighter with a sword who kicks.
 
 | Link | Name | Clip | S/A/R | Dmg | React | Blk | Whiff | Volume | Pose |
 |---|---|---|---|---|---|---|---|---|---|
-| J1 | 面 MEN | `:ke-r-q1` | 10/3/12 | 40 | flinch | −2 | 20 | line 0.3 → 3.9 | jōdan, a straight overhead, the kiai |
-| J2 | 小手 KOTE | **new** `:ke-r-kote` | 9/3/13 | 38 | flinch | −2 | 21 | 3.6 m 60° | a small wrist snap: the only small motion in the set |
-| J3 | 袈裟 KESA | `:ke-r-q3` | 10/3/18 | 48 | stagger | −4 | 26 | 3.8 m 140° | a diagonal through the shoulder line, the follow-through low |
-| K1 | 胴 DO | `:ke-r-f1` | 19/4/20 | 85 | stagger | −3 | 32 | 4.2 m 160° | the wide body cut |
-| K2 | 諸手突き MOROTE-ZUKI | **new** `:ke-r-tsuki` | 21/4/24 (7 → 14) | 85 | stagger | −3 | 36 | line 0.3 → 4.4 | both hands drive the cleaver straight out, the back foot sliding; hold 4 f fully extended |
-| K3 | 兜割り KABUTO-WARI | `:ke-r-f2` | 21/5/34 (7 → 14) | 115 | crumple | −20 | 46 | line 0.3 → 4.2 | the cleaver high, held, dropped; the victim crumples to his knees |
+| J1 | 面 MEN | `:ke-r-q1` | 10/3/12 | 40 | flinch | −2 | 20 | line 0.3 → **1.56** (was 3.9) | jōdan, a straight overhead, the kiai |
+| J2 | 小手 KOTE | **new** `:ke-r-kote` | 9/3/13 | 38 | flinch | −2 | 21 | **1.44 m** 60° (was 3.6) | a small wrist snap: the only small motion in the set |
+| J3 | 袈裟 KESA | `:ke-r-q3` | 10/3/18 | 48 | stagger | −4 | 26 | **1.52 m** 140° (was 3.8) | a diagonal through the shoulder line, the follow-through low |
+| K1 | 胴 DO | `:ke-r-f1` | 19/4/20 | 85 | stagger | −3 | 32 | **3.9 m** 160° (was 4.2) | the wide body cut |
+| K2 | 諸手突き MOROTE-ZUKI | **new** `:ke-r-tsuki` | 21/4/24 (7 → 14) | 85 | stagger | −3 | 36 | line 0.3 → **4.0** (was 4.4) | both hands drive the cleaver straight out, the back foot sliding; hold 4 f fully extended |
+| K3 | 兜割り KABUTO-WARI | `:ke-r-f2` | 21/5/34 (7 → 14) | 115 | crumple | −20 | 46 | line 0.3 → **3.9** (was 4.2) | the cleaver high, held, dropped; the victim crumples to his knees |
 
 - **Cup 3 NOMIHOSE** (×1.20): RYOTE's moves, except **K1 = KUKAN-GIRI** (as built, 20/4/22, 90, −4, the rift, which makes
   a blocked K1 +8 net). New clips: **0**. After a blocked KUKAN-GIRI the next link's gap is closed by the rift: that's
@@ -431,3 +431,210 @@ YY / YK / KK rows are identical).
 landing inside the K link's stun (stun frames left at the L's hit: after K1 5 / 11 / 9 / 13 in Rukia's Shikai / −18 /
 −50 / −273, after K3 18 / 24 / 22 / 26) and the blocked cases guarded. The seed gate's YY / YK / KK rows are identical;
 Rukia's rows and the awaken A/B are in DUEL_RUKIA.md ("Playtest 2: built").
+
+## 13. Playtest: shorter J/K, J light-short-fast, K heavy-long-slow (the user, 2026-09-29)
+
+> 請將所有角色的 J K 攻擊距離都縮短（千手丸的針長度也做對應的縮短），j 是輕短快的攻擊、k 是重長慢的攻擊。
+>
+> J 縮短 60%，K 依據 J 距離與角色特性而定。
+>
+> 如果太短也可以提高一點 J 的距離，依角色的動作與特色抓 4~6 成的距離，不用真的卡死長度。只是距離要記得跟動畫模組匹配。
+
+**The rule.** J is the light, short, fast attack: every J link's reach is 0.4–0.6 × what it was, chosen per character, and
+the art must match it (the visible strike within about 0.15 m of the volume's far edge). K is the heavy, long, slow one:
+its reach follows J and the character, and stays clearly longer than J (every K is at least 0.5 m longer than any J at
+the same link, host-tested). Startups are unchanged: J 7–10 f, K1 16–19 f, K2 / K3 S_eff 14 (the frame audit below).
+
+"Reach" is the volume's far edge from the attacker's centre (an arc's r, a capsule's b + r); a hit lands when the
+defender's centre is within reach + his hurt radius (0.34 Rukia … 0.45 Kenpachi), so a J of 0.96 m connects at about
+1.3–1.4 m centre to centre: true close range.
+
+**The factor per character (J) and the K beside it** (every form's derived reach follows: KATATE ×1.3, RYOTE ×1.4 of the
+base moves it doesn't write, 片腕 ×0.7, East ×1.15, −50 °C ×1.1, zero ×1.35):
+
+| Character | J factor | Why | K | Why |
+|---|---|---|---|---|
+| Yamamoto | **0.4** | an old man's economy: short cuts close to the body, the sleeve whip in his face | −10…−15 % | the fire carries the reach (the sweep, the column, the dome) |
+| Kenpachi | **0.4** | a brawler's hacks and the kick, thrown up close | −4…−7 % (RYOTE −7…−9 %) | his long heavy swings stay long: the body of his game |
+| Rukia | **0.6** | the dance's cuts at arm's length (at 0.4 her Shikai lost to everyone: the A/B below) | −10 % | the fencer's lunge, the ring and the ice keep their length |
+| Ichigo | **0.5** (J1 / J2), **0.6** (J3, KESSA) | the Shikai's J1 / J2 are the short blade, one step in; the turn (J3) swings the cleaver held up, KESSA's slab has the length of a blade | −10 % | the cleaver / the slab at full length |
+| Senjumaru | **0.6** | a tailor's reach: the needle two thirds of its length (1.8 → 1.2 m), the jabs at arm's length | −10 % | the pins, the thread and the cloth still fly out |
+
+At 0.4 for everyone the gate (below) broke the window only where these two meet: II 283, SI 244, IR 237, SS 227 s (their CPUs press J up close and their J damage is the lightest in the game); at 0.6 II / SS / SI fell by 70 / 30 / 30 s (a J-reach-only trial). Rukia went to 0.6 too: at 0.4 her pairings were inside the window but her Shikai lost (RY 6, RK 5, SR 2 of 20) and the awaken A/B's "never" won only 11 / 17 / 16 of 60 against Yamamoto (the user's floor is 20). Yamamoto and Kenpachi stay at 0.4: their pairings sat inside the window.
+
+**The reach, old → new** (m; J1 / J2 / J3, K1 / K2 / K3; a capsule's b):
+
+| Form | J old | J new | K old | K new |
+|---|---|---|---|---|
+| Yamamoto Shikai (Hellfire the same) | 2.4 / 2.4 / 2.2 | **0.96 / 0.96 / 0.88** | 3.0 / 2.6 / 2.8 | **2.6 / 2.3 / 2.4** |
+| Yamamoto East (West drops to it) | 3.1 / 3.1 / 3.6 | **1.24 / 1.24 / 1.44** | 3.8 / 3.8 / 3.6 | **3.4 / 3.4 / 3.2** |
+| Kenpachi base | 2.6 / 2.6 / 2.2 | **1.04 / 1.04 / 0.88** | 3.0 / 2.6 / 2.8 | **2.8 / 2.5 / 2.7** |
+| Kenpachi KATATE (×1.3) | 3.38 / 3.38 / 2.86 | **1.35 / 1.35 / 1.14** | 3.9 / 3.38 / 3.64 | **3.64 / 3.25 / 3.51** |
+| Kenpachi RYOTE | 3.9 / 3.6 / 3.8 | **1.56 / 1.44 / 1.52** | 4.2 / 4.4 / 4.2 | **3.9 / 4.0 / 3.9** |
+| Kenpachi NOMIHOSE (RYOTE's; K1 KUKAN-GIRI) | as RYOTE | as RYOTE | 4.2 / 4.4 / 4.2 | **3.9 / 4.0 / 3.9** |
+| Kenpachi Bankai | 3.2 / 3.2 / 2.0 | **1.28 / 1.28 / 0.8** | 3.6 / 3.2 / 4.0 | **3.4 / 3.0 / 3.7** |
+| Kenpachi 片腕 (×0.7; the kick as written) | 1.82 / 1.82 / 2.2 | **0.73 / 0.73 / 0.88** | 2.1 / 1.82 / 1.96 | **1.96 / 1.75 / 1.89** |
+| Rukia Shikai | 2.4 / 2.2 / 2.6 | **1.44 / 1.32 / 1.56** | 3.2 / 2.8 / 3.0 | **2.8 / 2.5 / 2.7** |
+| Rukia −18 °C (K1 TŌSHU, K3 HYŌKA) | as the Shikai | as the Shikai | 2.2 / 2.8 / 2.7 | **2.0 / 2.5 / 2.4** |
+| Rukia −50 °C | 2.64 / 2.42 / 2.86 | **1.58 / 1.45 / 1.72** | 2.42 / 3.08 / 2.97 | **2.2 / 2.75 / 2.64** |
+| Rukia −273 °C | 3.24 / 2.97 / 3.51 | **1.94 / 1.78 / 2.11** | 4.3 / 3.78 / 3.65 | **3.78 / 3.38 / 3.24** |
+| Ichigo Shikai | 2.2 / 2.2 / 2.4 | **1.1 / 1.1 / 1.44** | 3.0 / 3.0 / 3.4 | **2.7 / 2.7 / 3.0** |
+| Ichigo KESSA | 2.6 / 2.6 / 2.8 | **1.56 / 1.56 / 1.68** | 3.2 / 3.2 / 3.6 | **2.9 / 2.9 / 3.2** |
+| Senjumaru Shikai | 2.4 / 2.4 / 2.4 | **1.44 / 1.44 / 1.44** | 3.2 / 2.8 / 2.8 | **2.9 / 2.5 / 2.5** |
+| Senjumaru 辻 (K1 TANMONO, K3 MAKITORI) | as the Shikai | as the Shikai | 4.2 / 2.8 / 2.8 | **3.8 / 2.5 / 2.5** |
+
+Out of scope and unchanged: L / SP / O / Kikon / Breaker moves (the Breaker changed for its own reason, §14), the chase
+markers (`:sj-warui-kuse-k`, `:ru-tsukishiro-k`, the `-k` L copies: reach 9 / 8 m is where the chase stops, not a strike),
+the melee / ranged splits of SPs (`:melee-range` 2.4 / 2.6 / 3.4 / 3.9 m: an SP's own blade, they were the J1 reaches of
+their forms until now) and KESSA's clones' answers (`:ic-c-*`, the clones keep the long clips).
+
+**The art** (`duel-rules-test` measures it: the rig's FK over the art files' own poses at the hit frames; see "The check"):
+- **Senjumaru**: the needle 刺絡 1.8 → **1.2 m** (1.06 m at her scale; `:loop`'s thread starts at the new tip); the
+  three J hit poses pulled in (the lunge 0.32 → 0.06 m, the needle arm's elbow bent 20–80°): the tips at 1.47 / 1.43 /
+  1.46 m for 1.44. The K props shortened with their volumes (`*sj-strike-reach*`: pins 3.5 → 3.2, the loop 2.8 → 2.5,
+  the stakes 2.8 → 2.5, the bolt 4.5 → 4.1, the wrap 2.8 → 2.5 m).
+- **Yamamoto**: KAESHIBI's backhand ends with the elbow bent and the blade lowered (1.61 → 0.99 m); SODEBI's lunge
+  0.28 → 0.06 m (the sleeve 1.10 → 0.91); HISEN was already at 0.87. East's SENKŌ shares KYOKKŌ's thrust clip: its lunge
+  0.5 → 0.22 m (the tip 2.12 → 1.84 ahead for 1.74; KYOKKŌ's line still runs 4.6 m).
+- **Kenpachi**: ARAGIRI and KAESHIGIRI thrown from where he stands (the 0.36–0.45 m lunges → 0.04) with the blade
+  angled down: the katana's tip at 1.06 / 0.97 for 1.04, the cleaver's (KATATE) at 1.39 / 1.47 for 1.35. KENKA-GERI a
+  chambered push kick (the foot 1.54 → 0.96). RYOTE's three J links end with the cleaver's point at the plaza in front
+  of him (MEN's point 3.04 → 2.15 ahead for 2.06, KOTE's 2.81 → 1.45, KESA's 2.55 → 1.53): a 1.7 m cleaver can only be
+  that close pointing down. The Bankai's GENKOTSU has its own close clip, `:ke-b-hook` (the fist 1.41 → 0.87 for 0.8);
+  SP2's NAGURI-TOBASHI keeps `:ke-b-fist`.
+- **Rukia**: HATSUSHIMO's lunge kept (0.32 m) with the elbow bent 10°, KAZAHANA's elbow 20° and its lunge 0.2 → 0.02 m,
+  MAI-SODE's lunge 0.3 → 0.22 with the elbow bent 75°: 1.39 / 1.30 / 1.51 m for 1.44 / 1.32 / 1.56 (−50's rime blade 1.46 /
+  1.38 for 1.58 / 1.45, its two-handed pirouette 1.62 for 1.72).
+- **Ichigo**: the Shikai's J1 / J2 are the short blade held reversed along the forearm, so the fist is the strike: one
+  step further in (the root 0.26 → 0.5 m; J2's arm brought forward) for 1.10 / 1.00 m at 1.1. SŌSEN-GIRI holds the cleaver
+  up in the turn (the tip 2.53 → 1.48 for 1.44). KAESHI-KIBA (J2s) has its own clip, `:ic-cross-j`: the X closed in at his
+  chest (2.56 → 1.10); K2s, SŌGA and the O keep `:ic-cross`. KESSA's J links: the elbow bent and the lunge gone (ITA-NAGI
+  `:ic-k-jab` 2.25 → 1.62, KAESHI-ITA 2.50 → 1.62, ITA-SEN `:ic-k-wrap-j` 2.56 → 1.74, for 1.56 / 1.56 / 1.68); the clones
+  keep the long `:ic-k-cut` / `:ic-k-wrap`.
+- **The shared clips** (a J clip another move also plays): HISEN's `:ya-q1` (TENCHI's strike), MAI-SODE's `:ru-spin`
+  (ENBU's strike) and SENJU's `:sj-spin` (her O's strike) are closer now; those strikes' volumes are the O's, so they
+  under-reach on screen (the flash step and the O's effects carry them). SENKŌ's pull shortens KYOKKŌ's pose by 0.28 m.
+- **K**: every K link is at or under its edge (none over by more than 0.15 m); most under-reach on the rig alone (the
+  fire, the ice, the cloth and the smears carry them), as before the cut.
+
+**The check** (`tests/duel-rules-test.lisp`, the generalization of DUEL_SENJUMARU.md's): every character's art file is
+read (its poses, clips, body scale / hunch / proportions, weapons), and every J / K link reachable in every form (and the
+Breaker's strike, §14) is posed at its hit frames: the weapon's tip, or the fist / foot / sleeve of a strike that isn't
+the blade (`*strikers*`), or Senjumaru's K prop. J links and her props: within 0.15 m either way. K links, the Breaker and
+the forms that play another form's clip at another reach or blade (East, KATATE, the Bankai, −273 °C: `*reach-one-sided*`):
+never more than 0.15 m past the edge (they may fall short). **片腕 KATAUDE is the exception**: the base clips at ×0.7 with
+the broken cleaver pass the edge by up to 0.36 m (J) and 0.58 m (K3's spin), as K3 did before the cut (0.51); a close
+clip set for it is the fix if it shows. A deliberate over-reach (Senjumaru's J1 elbow back at 2°) fails it.
+
+**Close range works** (`*lunge-stop*` 1.3 → **0.95 m**, tuning.lisp): a lunge (`:slide`) and the follow-up chase stop at
+it, just outside the widest pair of hurt radii (0.9 m) and inside every J's reach + the thinnest hurt radius (the host
+test checks both for every J link of every form: with 1.3 Yamamoto's J3 (0.88 + 0.34 = 1.22) and every 片腕 J would stop out
+of reach). On hit a J link doesn't push him (flinch has no knockback), so J2 / J3 connect without a chase; on block the
+0.6 m pushback is closed by the chase (not at −273 °C, which is rooted: its J2 still reaches after the push from where a
+Shikai J1 lands, 1.78 + 0.45 ≥ 1.44 + 0.6, host-tested).
+
+**What changed with it.**
+- **J beats K** (the CPU's reflex, §4) now needs him inside J1's reach: from a K link's own range (2.3–4.0 m) a J can't
+  reach, so K is the mid-range poke and J the close one, as asked. Blocked K strings keep their gaps (≥ 11 f), so a
+  defender who is close still interrupts with J.
+- **A blocked O strike (−14)**: it lands 1.6 m out and pushes 0.6 m, and a J1 can no longer reach from there (it could
+  at 2.4 m): the punish now walks in or uses K1's reach (host test: K1 reaches 2.2 m).
+- **The CPU tables** (every kit's `:ai`): the pressure range comes in to 1.0–2.4 / 2.6 m (RYOTE and the cups 1.2–3.2,
+  片腕 0.9–1.8, Ichigo's Shikai 1.0–1.8, KESSA 1.0–2.0, Senjumaru 1.0–1.9), and the close band splits at J's reach +
+  ~0.3–0.5 m: J links inside it, the K weight takes the J weight beyond (a J picked out of reach was a lost decision,
+  `ai-attack`). KESSA's CPU attacks a little more (`:attack` 0.15, the gate below).
+- **The frame audit** (J ≤ 8 f, K ≥ 14 f): K holds everywhere (K1 16–19, K2 / K3 enter at S_eff 14). J over 8 f, as
+  designed and not retimed: Yamamoto's J1 / J3 9 (Hellfire too), KATATE's 9 / 9 / 10 (+2 derivation), RYOTE's
+  10 / 9 / 10 (NOMIHOSE too), the Bankai's J3 9, KESSA's J3 9.
+
+**The gate** (seeds 1–20, one run per pairing, debug 2125+k, `--fixed-dt 16.666667`; §13 and §14 together, the final
+build; 300 / 300 K.O., every median in 125–210 s; YK, 121.1 s before and accepted by the user under the floor, is back
+inside at 139.2 s):
+
+| Pairing | Median (before) | Range | Wins P1 / P2 (before) |
+|---|---|---|---|
+| YY | **152.4** (134.7) | 116.2–188.8 | 9 / 11 (9 / 11) |
+| YK | **139.2** (121.1) | 105.9–208.7 | Yamamoto 14 / 6 (13 / 7) |
+| KK | **137.4** (127.7) | 97.1–167.2 | 7 / 13 (9 / 11) |
+| RY | **144.8** (133.7) | 101.8–160.6 | Rukia 8 / 12 (12 / 8) |
+| RK | **141.6** (130.8) | 95.9–219.0 | Rukia 14 / 6 (13 / 7) |
+| RR | **182.2** (170.1) | 154.3–233.9 | 10 / 10 (12 / 8) |
+| IY | **147.4** (148.0) | 106.3–182.7 | Ichigo 10 / 10 (7 / 13) |
+| IK | **152.5** (147.1) | 105.7–208.5 | Ichigo 16 / 4 (9 / 11) |
+| IR | **190.0** (179.3) | 147.6–242.6 | Ichigo 6 / 14 (6 / 14) |
+| II | **201.2** (194.1) | 131.9–257.1 | 9 / 11 (12 / 8) |
+| SY | **151.0** (136.8) | 128.3–186.7 | Senjumaru 4 / 16 (12 / 8) |
+| SK | **155.8** (132.9) | 111.1–177.8 | Senjumaru 12 / 8 (6 / 14) |
+| SR | **199.7** (176.0) | 119.4–229.9 | Senjumaru 12 / 8 (12 / 8) |
+| SS | **192.3** (190.5) | 107.1–237.3 | 8 / 12 (8 / 12) |
+| SI | **197.4** (180.5) | 110.0–263.4 | Senjumaru 13 / 7 (15 / 5) |
+
+Almost every pairing is longer: close-range J connects less often than the 2.4 m J did. The runs that led here: the
+data alone (the old CPU tables, YY / YK / KK) 148.7 / 155.4 / 150.7 s; the CPU tables of §13 brought those three to
+152.4 / 139.2 / 137.4 but left II 283, SI 244, IR 237, SS 227 s; Ichigo's and Senjumaru's J at 0.6 (a reach-only trial)
+cut II / SS / SI to 209 / 199 / 211 s; their pressure ranges pulled in (the Shikai 1.0–1.8, KESSA 1.0–2.0, Senjumaru
+1.0–1.9) and KESSA's CPU `:attack` +0.15 (its neutral attack chance) brought II / SI / IR to 197 / 193 / 192 s (the final
+build then set the Shikai's J1 / J2 at 0.5, J3 0.6). At J 0.4 Rukia's pairings were inside the window (RY 159.3, RK
+169.4, RR 193.7, IR 200.9, SR 182.2 s) but she lost (RY 6, RK 5, SR 2 of 20) and failed the awaken A/B, so her J went to
+0.6 (the table above: RY / RK / RR / IR / SR re-run on it; the other ten don't involve her). Knobs if a later change needs
+them: the J factors inside 0.4–0.6, the `:pressure` ranges, KESSA's `:attack`, `*lunge-stop*`.
+
+**The awaken A/B** (DUEL_RUKIA.md "The awaken A/B across seed streams": P1 "never awaken", debug 39020, against the
+opponent on its own rule; three 60-seed streams, seeds 1–60 / 61–120 / 121–180 through 30000+k; P1's wins of 60; the
+user's floor is 20 on every stream):
+
+| Pairing | 1–60 | 61–120 | 121–180 |
+|---|---|---|---|
+| RY | 35 | 35 | 34 |
+| RK | 37 | 37 | 41 |
+| RR | 31 | 32 | 38 |
+| IY | 30 | 34 | 34 |
+| IK | 25 | 23 | 27 |
+| IR | 25 | 27 | 26 |
+| II | 30 | 32 | 27 |
+| SY | 29 | 27 | 34 |
+| SK | 30 | 27 | 27 |
+| SR | 30 | 40 | 30 |
+| SS | 31 | 32 | 32 |
+| SI | 32 | — | — |
+
+Every run clears the floor (the lowest: IK 23). SI's second and third streams were not run: SI's matches are the longest
+in the game and the shared machine was loaded (seeds 1–60 took ~40 min); its last A/B (DUEL_SENJUMARU.md) read 32 / 30 /
+33. At Rukia's J 0.4 the first A/B failed: RY 11 / 17 / 16, RK 22 / 21 / 11 (hence her 0.6). Yamamoto and Kenpachi have
+no A/B procedure of their own.
+
+## 14. The grab needs to be closer: 防 > J > I > 防 (the user, 2026-09-29)
+
+> 抓技 I 的範圍也太大了，需要更接近才觸發判定
+>
+> 抓技範圍必須比輕攻擊更短，這樣才能達到 防 > J > I > 防 這樣的循環克制
+
+**The rule.** A loop: guard beats J (it blocks it), J beats I (the grab), I beats guard (the Guard Break). J beats I
+because the grab reaches less far than every J1 and has no armour: its aura, dash and strike startup are `:breaker`
+(`defender-state`), so any hit counters it (×1.25, +10 f).
+
+**The numbers** (tuning.lisp, shared, no per-character change): `*breaker-trigger*` 2.2 → **0.95 m** (the dash turns into
+the strike this close, centre to centre), `*breaker-reach*` 2.6 → **0.7 m**.
+- 0.7 m is under every form's J1 (the shortest: 片腕's 0.73, then Yamamoto's 0.96; the derived Breakers
+  scale with their forms: KATATE 0.91 < 1.35, RYOTE / NOMIHOSE / the Bankai 0.98 < 1.28–1.56, East 0.81 < 1.24, −50 °C 0.77 < 1.58).
+- 0.95 m is just outside the widest pair of hurt radii (two Kenpachis, 0.45 + 0.45 = 0.9: the push-apart), so every pair
+  can reach it; the dash (9–10 m/s, 0.15–0.17 m a frame) gets there before it is pushed apart.
+- 0.7 m + the thinnest hurt radius (0.34, Rukia) = 1.04 > 0.95 m, so a triggered strike connects (it hits at
+  centre distance ≤ reach + his hurt radius, `collect-melee`).
+
+**The frame math of J beats I** (host-tested per form, `duel-rules-test`): the dash at its fastest, v = 10 m/s = 0.167 m
+a frame. J1 (startup S, active A, reach R) pressed while the dash is d away connects when its last active frame meets
+the dash inside R + 0.34: d ≤ R + 0.34 + v (S + A − 1) — and when its first active frame comes before the Breaker's
+strike does (the dash stops at 0.95, then the strike's 8 f startup): d ≥ 0.95 + v max(0, S − 8). Yamamoto's J1 (S 9,
+0.96 m): from **1.1 to 3.1 m**; Kenpachi's (S 7, 1.04 m): from 0.95 m (and even in the strike's first frame) to 2.9 m;
+RYOTE's MEN (S 10, 1.56 m): 1.3–3.9 m. Every form's window is open.
+
+**The art.** The strike (the Breaker's clip 2) at the new distance (the same FK check, one-sided): IKKOTSU's punch
+(Yamamoto) thrown from where he stands (the lunge 0.4 → 0 m: the fist 1.13 → 0.77 for 0.7), SAIDAN's shears (Senjumaru)
+0.3 → 0.14 m (0.86 → 0.72); Kenpachi's shoulder (0.65), HAINAWA's fingers (0.82) and MINEUCHI's flat (0.66) were
+already there.
+
+**The CPU.** Its Breaker bands stay up to ~3 m (the dash closes the gap: a 12 f tap still runs ~1.9 m). Against an
+incoming Breaker (`ai-reflex`, the anti-breaker branch) it now waits for the dash to come within J1's reach +
+`*ai-anti-breaker-j*` (1.4 m) and presses J1 (J beats I); the Hoho through the dash stays (its roll first); against a
+Kikon rush nothing changed. `*ai-guard-break-range*` (3 m) is unchanged: the dash closes that too.
