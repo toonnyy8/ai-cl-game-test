@@ -1110,6 +1110,7 @@ both files register with (her ranges were hard-coded, and her knobs moved 80000+
 | kit `:hooks` | `:draw (e rdt)` | looks on the posed body (`draw-fighter`) | Senjumaru |
 | kit `:hooks` | `:hud-guard (e x y w h right s tm)` | over the guard bar, both HUDs | Ichigo |
 | kit `:hooks` | `:deck (e x y d)` | the one-hand thumb ring | Ichigo, Senjumaru |
+| kit `:hooks` | `:siphon (o e)` | read off the **opponent's** kit at every gain of E (`siphon-of`): true while something of O's takes E's gains (E gains nothing from a hit, block, parry or his blade; his Reiatsu / flash-step go to O) | Senjumaru (星) |
 | kit `:meter` | `:draw`, `:label` | the kit-meter row / portrait slot, the portrait label | Senjumaru |
 | kit `:ai` | `:reflex (e b s d)` | among the CPU's reflexes | Ichigo, Senjumaru |
 | kit `:ai` | `:opp-reflex (e b s d)` | read off the **opponent's** kit: what a CPU facing this form does | Senjumaru |

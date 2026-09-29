@@ -387,6 +387,21 @@ the victim's Reishi resets to max and both are placed by RESET-PLACEMENT."
   "Fighting Spirit earned by dealing / taking damage and losing LOST Konpaku."
   (+ (* dealt *awaken-dealt*) (* taken *awaken-taken*) (* lost *awaken-per-konpaku*)))
 
+(defun hit-gains (dealt taken siphoned)
+  "What dealing DEALT / taking TAKEN damage pays (combat.lisp GAIN-GAUGES). Values: his Reiatsu, flash-step and Fighting
+Spirit, then the Reiatsu and flash-step of the side SIPHONED says takes his gains (the opponent's kit's :siphon hook): he
+keeps none of them, his Reiatsu and flash-step go to that side, the Fighting Spirit is lost."
+  (let ((r (reiatsu-gain dealt taken)) (fs (* taken *fs-taken*)))
+    (if siphoned
+        (values 0.0 0.0 0.0 r fs)
+        (values r fs (awakening-gain dealt taken 0) 0.0 0.0))))
+
+(defun gauge-move (from amount to max)
+  "Take up to AMOUNT out of gauge FROM (never below 0) into gauge TO (kept at most MAX): values FROM and TO after. TO gets
+what was really taken, not AMOUNT."
+  (let ((took (max 0.0 (min from amount))))
+    (values (- from took) (gauge-add to took max))))
+
 (defun spend-bars (reiatsu bars)
   "Spend BARS of Reiatsu. Values: reiatsu-after ok (NIL = not enough, nothing spent)."
   (let ((cost (* bars *reiatsu-bar*)))

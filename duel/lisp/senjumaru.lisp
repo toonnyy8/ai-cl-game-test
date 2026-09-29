@@ -173,7 +173,8 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 ;;; ================================================================ forms
 (defparameter *senju-meter* '(:name "HARI" :max 6 :start 0 :draw senju-hud-meter :label senju-hud-label)
   "Her one resource per form, on the kit-meter row: the stitches (the Shikai) or the loom (the Bankai).")
-(defparameter *senju-hooks* '(:tick senju-tick :ok senju-ok :hit senju-hit :struck senju-struck :draw senju-draw :deck senju-ring))
+(defparameter *senju-hooks* '(:tick senju-tick :ok senju-ok :hit senju-hit :struck senju-struck :draw senju-draw :deck senju-ring
+                              :siphon senju-siphon))
 
 (defkit :senjumaru :base
   :name "SENJUMARU" :body :senjumaru :weapon :shigarami :stance :sj-stance :calm t
@@ -581,7 +582,8 @@ UNFOLD frames (fragile), with SENJU-HZ as its hook."
 
 (defun senju-zone-step (h hz d)
   "A zone, each step once unfolded (HAZARD-AGE = frames since): 眼 turns his waves back; 刃金 closes once; 黒砂 drags his
-walk away from its centre and gulps; 褥 and 焼野原 end once spent; 星 drains his Reiatsu and flash-step."
+walk away from its centre and gulps; 褥 and 焼野原 end once spent; 星 drains his Reiatsu and flash-step into hers (what it
+really takes, each of hers kept at its max; the user, 2026-09-29: SENJU-SIPHON takes his gains too)."
   (let* ((e (hazard-owner hz)) (o (hazard-target hz)) (n (sjh-hank d)) (age (hazard-age hz)))
     (when (or (plusp (hazard-delay hz)) (not (entity-alive-p o))) (return-from senju-zone-step nil))
     (let* ((q (pos-of o)) (dx (- (aref q 0) (hazard-x hz))) (dz (- (aref q 2) (hazard-z hz)))
@@ -621,12 +623,24 @@ walk away from its centre and gulps; 褥 and 焼野原 end once spent; 星 drain
                (emit :sfx :ground-crack e))))
         ((4 5) (when (<= (hazard-hits-left hz) 0)          ; spent: the loom is free
                  (destroy-entity h) (return-from senju-zone-step t)))
-        (6 (when inside                                     ; the star drains him
-             (let ((g (gauges o)))
-               (setf (gauges-reiatsu g) (f32 (max 0.0 (- (gauges-reiatsu g) (/ (hank 6 :reiatsu) 60.0))))
-                     (gauges-fs g) (f32 (max 0.0 (- (gauges-fs g) (/ (hank 6 :fs) 60.0)))))
+        (6 (when inside                                     ; the star drains him into her
+             (let ((g (gauges o)) (mine (gauges e)))
+               (multiple-value-bind (his hers) (gauge-move (gauges-reiatsu g) (/ (hank 6 :reiatsu) 60.0) (gauges-reiatsu mine) *reiatsu-max*)
+                 (setf (gauges-reiatsu g) (f32 his) (gauges-reiatsu mine) (f32 hers)))
+               (multiple-value-bind (his hers) (gauge-move (gauges-fs g) (/ (hank 6 :fs) 60.0) (gauges-fs mine) *fs-max*)
+                 (setf (gauges-fs g) (f32 his) (gauges-fs mine) (f32 hers)))
                (sj-count e :drain-frames)))))))
   nil)
+
+(defun senju-siphon (e o)
+  "Her kit's :siphon hook (combat.lisp SIPHON-OF): O stands in her live 星, unfolded (the user, 2026-09-29): he gains
+nothing from a hit, a block or his blade, and his Reiatsu / flash-step gains are hers."
+  (let ((z (sjs-live (sj e))))
+    (and (entity-alive-p z)
+         (let* ((hz (hazard z)) (d (and hz (hazard-data hz))))
+           (and d (= 6 (sjh-hank d)) (<= (hazard-delay hz) 0)
+                (let ((q (pos-of o)))
+                  (<= (+ (expt (- (aref q 0) (hazard-x hz)) 2) (expt (- (aref q 2) (hazard-z hz)) 2)) (expt (sjh-r d) 2))))))))
 
 (defun senju-closed (h hz d)
   "CLOSE-RIFTS closed one of her fragile hazards (a real hit on her): a weave's bolt or an unfolding zone is torn."
@@ -817,7 +831,8 @@ pass ticks filling in the next hank's dye."
 stitches, L at 5 m on a 50-Reishi Kenpachi (the spikes: 1 Reishi left); 2 the soldier vs an active Kenpachi CPU; 3 the
 umbrella vs Yamamoto's full Shiranui; 4 a 3-pass weave hit at hold f30 (torn: the form +1, L locked); 5-10 hank k-4 cast at
 Kenpachi 6 m (the zone's life logged); 11 the combo cut after K1 on a live 褥; 12 zero Rukia in 刃金; 13 the awakened
-Senjumaru vs a Yamamoto CPU (眼 reflecting); 14 P1 awakened 5 m from Kenpachi (a script weaves)."
+Senjumaru vs a Yamamoto CPU (眼 reflecting); 14 P1 awakened 5 m from Kenpachi (a script weaves); 30 the siphon
+probe (星 round her, Kenpachi inside at 2.2 m, both at 0 Reiatsu / 20 flash-step; 2479 then has him hit her)."
   (flet ((setup (c2 form dist &key cpu)
            (ensure-battle :senjumaru c2 :cpu cpu)
            (when (brain *p1*) (setf (brain-off (brain *p1*)) t))
@@ -843,7 +858,11 @@ Senjumaru vs a Yamamoto CPU (眼 reflecting); 14 P1 awakened 5 m from Kenpachi (
       (26 (setup :kenpachi :base 2.6) (set-hari *p1* 6))  ; the stitches on him (the threads, the pips)
       (27 (setup :yamamoto :base 6.0) (try-command *p1* (fighter *p1*) :sp2))   ; the umbrella
       (28 (setup :kenpachi :tsuji3 5.0) (try-command *p1* (fighter *p1*) :sig :sig))   ; a weave (held by nobody: 1 pass)
-      (29 (force-cmd *p2* :q)))                         ; P2's J1 now (the torn-weave probe: hold L, then 2479)
+      (29 (force-cmd *p2* :q))                          ; P2's J1 now (the torn-weave probe: hold L, then 2479)
+      (30 (setup :kenpachi :tsuji6 2.2)                 ; the siphon probe: 星 round her, him inside, both gauges low;
+       (let ((p (pos-of *p1*)) (st (sj *p1*)))          ; then 2479 (his J1 on her: her Reiatsu grows, his doesn't)
+         (setf (sjs-live st) (senju-zone *p1* 6 3 1 (aref p 0) (aref p 2)) (sjs-live-hank st) 6))
+       (dolist (e (list *p1* *p2*)) (setf (gauges-reiatsu (gauges e)) 0f0 (gauges-fs (gauges e)) 20f0))))
     (senju-probe-line (format nil "test ~d" k))))
 
 (defun senju-knob (c)
@@ -886,7 +905,7 @@ Senjumaru vs a Yamamoto CPU (眼 reflecting); 14 P1 awakened 5 m from Kenpachi (
   (cond ((< c 2500) (senju-test (- c 2450)))
         ((< c 79000) (cine-at (+ 16 (floor (- c 76000) 1000)) (mod c 1000)))
         (t (senju-knob c))))
-(dolist (r '((2450 2479 senju-debug) (76000 78999 senju-debug) (90000 99999 senju-debug)))
+(dolist (r '((2450 2489 senju-debug) (76000 78999 senju-debug) (90000 99999 senju-debug)))
   (pushnew r *char-debug* :test #'equal))
 
 ;;; ================================================================ cinematics (§5, §6; unskippable; every shot SHOT-ON its subject)

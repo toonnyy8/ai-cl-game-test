@@ -1367,6 +1367,18 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (= 62 (senju-sig-hold t6 5.5)) (= 42 (senju-sig-hold t6 3.0)) (= 1 (senju-sig-hold b 3.0))
               (~= 0.5 (getf (kit-ai t6) :opp-rush-hold)) (null (kit-reset-form t1)) (eq :base (kit-reset-form b)))))
 
+;; 星 siphons (the user, 2026-09-29): inside her live star he gains nothing; his Reiatsu / flash-step gains go to her, his
+;; Fighting Spirit (and every kit meter: combat.lisp SIPHON-OF) is lost; the drain gives her what it really took, capped
+(multiple-value-bind (r fs aw sr sfs) (hit-gains 100 40 nil)
+  (check (and (~= r (reiatsu-gain 100 40)) (~= fs (* 40 *fs-taken*)) (~= aw (awakening-gain 100 40 0)) (zerop sr) (zerop sfs))))
+(multiple-value-bind (r fs aw sr sfs) (hit-gains 100 40 t)
+  (check (and (zerop r) (zerop fs) (zerop aw) (~= sr (reiatsu-gain 100 40)) (~= sfs (* 40 *fs-taken*)) (plusp sr) (plusp sfs))))
+(multiple-value-bind (his hers) (gauge-move 50.0 0.5 20.0 100.0) (check (and (~= his 49.5) (~= hers 20.5))))
+(multiple-value-bind (his hers) (gauge-move 0.2 0.5 20.0 100.0) (check (and (~= his 0.0) (~= hers 20.2))))   ; what it took
+(multiple-value-bind (his hers) (gauge-move 50.0 0.5 99.8 100.0) (check (and (~= his 49.5) (~= hers 100.0))))  ; capped
+(check (every (lambda (f) (eq 'senju-siphon (kit-hook (kit :senjumaru f) :siphon))) '(:base :tsuji1 :tsuji6)))
+(check (every (lambda (cf) (or (eq (first cf) :senjumaru) (null (kit-hook (apply #'kit cf) :siphon)))) *forms*))
+
 ;; Senjumaru's reach matches the art (the user's playtest, 2026-09-29; DUEL_SENJUMARU.md "Playtest: reach matches the
 ;; art"): every J / K link of every form reaches no more than 0.15 m past (or short of) what she strikes with at its hit
 ;; frames: the needle's tip (the rig's FK over her own poses, read from senjumaru-art.lisp; radial for an arc, ahead for a

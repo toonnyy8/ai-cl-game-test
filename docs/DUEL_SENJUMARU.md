@@ -305,7 +305,9 @@ The values are at 3 passes.
 | 3 | **三綛解かば 黒砂の腸 KOKUSA NO HARAWATA**, the black-sand pit | a pit **r 2.0** under him, a black spiral | 240 f | **Drag:** while his centre is inside, the away part of his walk / run (from the pit's centre) is ×**0.4** (`field-velocity` about the pit's centre, Rukia's built rule; `:step 1.0`: **Steps are never shortened**).<br>**Gulps:** from the unfold's end, every **60 f**, 1 / 2 / 3 times by passes: the sand swirls for 12 f (the tell), then a disc hit r 2.0, **40**, stagger, **pulled to the centre** (Ichigo's `:pull 0.0`, gap 6, toward the hazard's own position) | `:zone` with `:field` (N5) + a `:think` for the gulps (N4) |
 | 4 | **四綛解かば 凍てつく褥 ITETSUKU SHITONE**, the freezing bed | a snowflake bed **r 2.0** under him | 240 f, or until it freezes | **A mine:** armed from the unfold's end for its whole life; the first time he touches it: **70**, **frozen 40 f** (the `:bind` reaction: it opens a combo and books 2 hits, so Burst is legal), **frost 60** (Rukia's frost status, built). Then it is spent and the life ends | `:freeze`-kind disc (built) with `:life` |
 | 5 | **五綛解かば 焼野原 YAKENOHARA**, the burning field | a **corridor**: a lane from 1 m in front of her toward him, length = the distance to him + 1.5 m (≤ 10 m), **width 2.0** (half 1.0: 1.0 + 0.45 < 2.5, so a side Step clears it); two processions of burning madder cloths with ink trees line it | 150 f | Up to **2 hits, 16 f apart** (the pillars' rehit): **45** each, stagger, **fire chip 12 %**, guard 12. A lane from her feet: anti-approach | a stationary `:wave` (speed 0, as Ichigo's residue), `:hits 2` |
-| 6 | **六綛解かば 闇夜の星よ YAMIYO NO HOSHIYO**, the star of the dark night | a dome **r 3.5** centred **on her** (where she stood at the release) | 240 f | **Drain:** while he is inside, his **Reiatsu −30/s and flash-step −15/s** (`:drain`, gap N5); she gains nothing (not a ramp). Canon: it "drains the target's energy" through a copy of Auswählen.<br>What the drain does: it denies his Hoho and his Burst, so the cycle's last hank sets up her O ender and her Kikon ("to be caught in the end").<br>No hit | `:zone` with `:drain` (N5) |
+| 6 | **六綛解かば 闇夜の星よ YAMIYO NO HOSHIYO**, the star of the dark night | a dome **r 3.5** centred **on her** (where she stood at the release) | 240 f | **Drain:** while he is inside, his **Reiatsu −30/s and flash-step −15/s** (`:drain`, gap N5), **and it siphons** (the user, 2026-09-29): what the drain
+really takes goes to her (each gauge capped at its max), and inside it he gains nothing from any hit, block, parry or
+his own blade (Reiatsu, flash-step, Fighting Spirit, a kit meter); his Reiatsu / flash-step gains go to her. Canon: it "drains the target's energy" through a copy of Auswählen.<br>What the drain does: it denies his Hoho and his Burst, so the cycle's last hank sets up her O ender and her Kikon ("to be caught in the end").<br>No hit | `:zone` with `:drain` (N5) |
 
 **Where each hank points** (so the fixed order still reads as a plan):
 1. Under him, against his shooting.
@@ -862,7 +864,7 @@ landscape and portrait):
 | 黒砂 r / away / gulp period / dmg | 2.0 / 0.4 / 60 f / 40 | |
 | 褥 r / dmg / freeze / frost | 2.0 / 70 / 40 / 60 | |
 | 焼野原 width / max length / hits / dmg / life | 2.0 / 10 / 2 / 45 / 150 | |
-| 星 r / drain (R, FS per s) / life | 3.5 / 30, 15 / 240 | |
+| 星 r / drain (R, FS per s) / life | 3.5 / 30, 15 / 240 | the drain and his Reiatsu / flash-step gains go to her (the siphon) |
 | skip cost | 1 bar | |
 | AI | `:awaken :ranged-share` 0.3, `:min-taken` 150, `:or-opp-rooted` t; `:hari` 4 / 40; `:weave` 6.5 / 4.0; `:skip :ranged-below` 0.2; `:opp-rush-hold` 0.5; base `:block-string` 0.8; zone weight 4 | |
 | art | `(:head 1.3 …)`, echo spread ±28° / ±52°, lag 2 / 4 f, aura alpha 0.45 | stills review |
@@ -885,7 +887,7 @@ landscape and portrait):
 | M3 | MAJOR | **眼 is dead weight vs Kenpachi** in a fixed order, and the skip costs a bar | intended matchup texture (the base form is the answer vs Kenpachi); the 30 % mirror gives 眼 a melee use; the "trap" knob list makes the skip free |
 | M4 | MAJOR | **Blocked contact sews**, so blocking her becomes a losing option (a "no-guard" character) | guarding still halves what she gets (1 vs 2) and saves the string damage; the detonation can be Hoho'd; knob: `:sew :block` 0 on J links |
 | M5 | MAJOR | **黒砂's drag + gulps + pull** could hold him in a stun lock | 3 gulps max, 60 f apart (34 f free between them); a Step is never shortened (r 2.0 + 0.45 < 2.5); gulps book as combo hits (Burst legal after the 2nd); guard facing her blocks each |
-| M6 | MAJOR | **星 drains flash-step**, so a drained victim can't Burst her O ender: every O ender → Kikon on red | she must stand inside her own 3.5 m dome to use it (the rusher's range); he can leave (no hit, no drag); it is the queue's last hank, once per cycle; knob: drain 15 → 10 |
+| M6 | MAJOR | **星 drains flash-step**, so a drained victim can't Burst her O ender: every O ender → Kikon on red | she must stand inside her own 3.5 m dome to use it (the rusher's range); he can leave (no hit, no drag); it is the queue's last hank, once per cycle; knob: drain 15 → 10. Since the siphon (2026-09-29) it also feeds her and freezes his gains inside: the same answer (he walks out), and the knobs in order are the radius, the life, the drain |
 | M7 | MAJOR | **The corridor is a `:wave`**, so Nozarashi's projectile cut and Ichigo's `:cuts` delete it | accepted and canon-flavoured (a blade through cloth); the discs and zones are not cuttable (`:freeze` / `:zone` kinds) |
 | M8 | MAJOR | **The awakened SP2 at 2 bars** overlaps 眼 and makes the umbrella rare | accepted: the universal rule; 眼 carries anti-projectile duty in the awakened form |
 | M9 | MAJOR | **The universal awakened Kikon 3** biases "always" | offsets: no stitches, the weave risk, the slower walk; the A/B knob list starts with `*tsuji-mult*` |
@@ -1029,6 +1031,23 @@ volume's far edge within 0.15 m.
 143.2 / 136.9 / 173.7 / 195.3 / 170.6).
 
 ---
+
+## 星 siphons (the user, 2026-09-29)
+
+「在千手丸第 6 綛「星」的範圍內，對手無論受擊還是攻擊都不應該回復量表，然後吸收的量表應該要反還到千手丸自己身上」.
+**Inside her live, unfolded 星 he gains no gauge at all**, whether he is hit, blocks, parries or lands his own blade: no
+Reiatsu, flash-step or Fighting Spirit, no kit meter (NOME, Inferno, the cold, the chain / ward refills, the Konpaku-loss
+Fighting Spirit). **What he would have gained in Reiatsu and flash-step goes to her**, each capped at her max; the rest is
+lost (she is awakened: no Fighting Spirit, and her loom has no meter to feed). **The drain goes to her too**: each frame
+she gets what it really took (not the nominal 30 / 15 per s), capped. Passive regen is not a gain from a hit and stays.
+
+How: one generic hook, the opponent kit's `:siphon (o e)` (DUEL_DESIGN "Character code layout"), which `siphon-of` in
+combat.lisp asks at every gain (so it ends the frame the zone ends or he steps out: no state to clear). The pure part is
+rules.lisp `hit-gains` (his gains, or zero and hers) and `gauge-move` (a capped transfer of what was really taken),
+host-tested; her hook is `senju-siphon`. The probe 2480 (2450+30): 星 round her, Kenpachi inside, both at 0 Reiatsu;
+2479 has him J1 her twice: her Reiatsu 2 → 30 → 75, his flash-step drained 16 → 0 into hers, his Reiatsu unmoved.
+
+**The seed gate after it** (seeds 1–20, 2125+k): SY 135.6 s, SK 142.7, SR 173.8, SS 187.2, SI 166.7, 100 / 100 K.O., every row identical to the reach fix's: between CPUs the loom rarely reaches 星 with him standing inside it, so no gain was ever siphoned in those 100 matches (the probe 2480 is the check that it works).
 
 ## Built: deviations from the design, and why
 
