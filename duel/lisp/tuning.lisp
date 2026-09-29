@@ -134,7 +134,7 @@ hurt radius (0.34) past the trigger range, so a triggered strike connects.")
 ;;; ---------------------------------------------------------------- flash-step gauge (design v3 G.1): Hoho, Burst
 (defparameter *fs-max* 100.0 "Flash-step gauge maximum; full at the match start, kept through Kikon resets.")
 (defparameter *fs-hoho* 30.0 "Flash-step a Hoho costs.")
-(defparameter *fs-burst* 70.0 "Flash-step a Burst Reverse costs.")
+(defparameter *fs-burst* 70.0 "Flash-step every burst mode needs to start (the user's \"two bars\"; the drain is the cost).")
 (defparameter *fs-regen* 3.0 "Flash-step per second ...")
 (defparameter *fs-delay* 60 "... once this many frames passed since the last spend.")
 (defparameter *fs-taken* 0.03 "Flash-step per point of damage taken (a full 1300 Reishi bar = +39).")
@@ -179,9 +179,10 @@ and can't guard until the gauge is full again.")
 
 ;;; ---------------------------------------------------------------- Fighting Spirit (awakening)
 (defparameter *awaken-max* 100.0 "Awakening gauge maximum: full = EVOLUTION (once per match).")
-(defparameter *awaken-dealt* 0.05 "Awakening per point of damage dealt.")
-(defparameter *awaken-taken* 0.07 "Awakening per point of damage taken.")
-(defparameter *awaken-per-konpaku* 15.0 "Awakening per Konpaku lost.")
+;; the slower awakening gauge (the user 2026-09-30, 「降低覺醒條的上升速度」): every fill source x0.7
+(defparameter *awaken-dealt* 0.035 "Awakening per point of damage dealt (0.05 until 2026-09-30).")
+(defparameter *awaken-taken* 0.049 "Awakening per point of damage taken (0.07 until 2026-09-30).")
+(defparameter *awaken-per-konpaku* 10.5 "Awakening per Konpaku lost (15 until 2026-09-30).")
 (defparameter *awaken-cine-seconds* 1.8 "Awakening cinematic (sim frozen; documentation only: the scripts own their :len).")
 
 ;;; ---------------------------------------------------------------- hit reactions, combos, hitstop
@@ -236,6 +237,19 @@ a combo (critique-design 1.7: not from hit 1).")
 (defparameter *burst-push* 5.0 "Burst pushes the attacker this far (no stun; his move ends) ...")
 (defparameter *burst-push-frames* 20 "... over this many frames.")
 (defparameter *burst-hitstop* 8 "Global hitstop of a Burst.")
+;; the three burst modes (docs/DUEL_DESIGN.md "Burst modes", the user 2026-09-30): the state at the press picks WHITE /
+;; BLUE / ORANGE; every one needs *FS-BURST*, spends nothing up front and drains the flash-step gauge to 0
+(defparameter *burst-drain* 18.0 "Flash-step per second a running burst drains (100 -> 0 in 5.6 s, 70 in 3.9 s).")
+(defparameter *white-reishi* 12.0 "WHITE: Reishi regenerated per second (integer points).")
+(defparameter *white-reiatsu* 15.0 "WHITE: Reiatsu per second on top of *REIATSU-REGEN*.")
+(defparameter *white-awaken* 1.4 "WHITE: awakening gauge per second (2.0 x the slower gauge's 0.7).")
+(defparameter *blue-gg-mult* 2.0 "BLUE: the guard gauge's normal refill rate x this (no delay) when not guarding ...")
+(defparameter *blue-gg-guarding* 0.5 "... and x this even while guarding (GUARD HOLD stops it otherwise).")
+(defparameter *chain-window* 12 "ORANGE: frames after the cancel in which the next move started has its startup cut ...")
+(defparameter *chain-cut* 0.4 "... by this fraction (at least 1 f of startup left).")
+(defparameter *orange-gain* 1.5 "ORANGE: Reiatsu from hits dealt and KOSEI, awakening from hits dealt, x this.")
+(defparameter *kikon-fs-refund* 35.0 "A Kikon that connects gives its user this flash-step (one of the burst's two bars) ...")
+(defparameter *kikon-reiatsu-refund* 100.0 "... and this Reiatsu (one bar); after any burst ended.")
 
 ;;; ================================================================ §4 damage multipliers
 (defparameter *hellfire-mult* 1.30 "Damage x in Hellfire (Gokuen).")
@@ -443,6 +457,11 @@ in J1's startup, so J1's active frames meet it inside J1's reach).")
   "Chance (one roll per combo) the CPU bursts once it is worth it (AI-BURST-WANTED-P), no sooner
 than its perception delay after the combo's *BURST-MIN-HITS*th hit.")
 (defparameter *ai-burst-low* 0.5 "Burst is worth it below this fraction of Reishi ...")
+(defparameter *ai-orange-p* '(:easy 0.1 :normal 0.25 :hard 0.4)
+  "Chance a CPU whose string hit and can't go on (no further link) CHAIN-REVERSEs (ORANGE) and restarts it with Q1.")
+(defparameter *ai-white-p* 0.15 "Chance per neutral decision a CPU behind on Reishi SOUL-REVERSEs (WHITE) ...")
+(defparameter *ai-white-behind* 0.15 "... behind by at least this fraction of its max Reishi ...")
+(defparameter *ai-white-range* 6.0 "... and at least this far (m) from him.")
 (defparameter *ai-dash-gap* 2.5
   "The CPU dashes (the kit's :dash / :dash-back chance, at a neutral decision) when it stands this
 far outside its preferred range: toward it from beyond, away from it from inside; it lets go in the

@@ -26,15 +26,15 @@ refill, SETTLE-KONPAKU's Fighting Spirit); his Reiatsu and flash-step gains go t
     (and h (funcall h o e) o)))
 
 (defun pay-gauges (e r fs)
-  "E gains R Reiatsu and FS flash-step (each kept at its max)."
+  "E gains R Reiatsu and FS flash-step (each kept at its max; no flash-step during a burst: BURST-FS-GAIN)."
   (let ((g (gauges e)))
     (setf (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) r *reiatsu-max*))
-          (gauges-fs g) (f32 (gauge-add (gauges-fs g) fs *fs-max*)))))
+          (gauges-fs g) (f32 (gauge-add (gauges-fs g) (burst-fs-gain fs (gauges-burst g)) *fs-max*)))))
 
 (defun gain-gauges (e dealt taken)
   "Reiatsu, flash-step and Fighting Spirit for dealing DEALT / taking TAKEN damage (HIT-GAINS; siphoned: SIPHON-OF)."
   (let ((g (gauges e)) (to (siphon-of e)))
-    (multiple-value-bind (r fs aw sr sfs) (hit-gains dealt taken to)
+    (multiple-value-bind (r fs aw sr sfs) (hit-gains dealt taken to (burst-gain-mult (gauges-burst g)))
       (pay-gauges e r fs)
       (when to (pay-gauges to sr sfs))
       (unless (gauges-awakened g)
@@ -83,7 +83,7 @@ flash-step, x KOSEI-MULT of his guard gauge (x1 full .. x3 empty); the :kosei ev
 (SIPHON-OF), it pays the siphoning side."
   (let ((to (or (siphon-of att) att)))
     (multiple-value-bind (r fs m) (kosei-gain g (gauges-gg (gauges att)))
-      (pay-gauges to r fs)
+      (pay-gauges to (* r (burst-gain-mult (gauges-burst (gauges att)))) fs)   ; ORANGE: x1.5 Reiatsu
       (emit :kosei to m x y z))))
 
 ;;; ---------------------------------------------------------------- one hit
@@ -417,12 +417,18 @@ his Breaker / Kikon rush dash is within 0.5 m of its trigger range."
         (hazard-threat-p o e))))
 
 ;;; ---------------------------------------------------------------- Burst Reverse
+(defun burst-mode-of (e)
+  "The burst mode E's state gives a press now (rules BURST-MODE; ORANGE: his move's own hit landed and its cancel window
+is open, not a Kikon rush), or NIL."
+  (let* ((f (fighter e)) (mv (fighter-move f)) (st (fighter-state f)))
+    (burst-mode st (plusp (fighter-lock f)) (fighter-combo-hits f)
+                (and (eq st :move) mv (eq (fighter-phase f) :main) (not (eq (mv-kind mv) :kikon))
+                     (cancel-open-p (fighter-sf f) (fighter-land-sf f) (mv-total mv) (eq (fighter-contact f) :hit))))))
+
 (defun burst-ok-p (e)
-  "May E Burst now (rules BURST-ALLOWED-P): in a reaction or airborne, inputs not locked, past the
-combo's 2nd hit, *FS-BURST* flash-step."
-  (let ((f (fighter e)))
-    (burst-allowed-p (and (member (fighter-state f) '(:stun :air)) (zerop (fighter-lock f)))
-                     (fighter-combo-hits f) (gauges-fs (gauges e)))))
+  "May E burst now (rules BURST-ALLOWED-P): the mode (:white :blue :orange) or NIL."
+  (let ((m (burst-mode-of e)) (g (gauges e)))
+    (and (burst-allowed-p m (gauges-fs g) (gauges-burst g)) m)))
 
 (defun repel! (e)
   "E breaks free (a Burst Reverse, an awakening): neutral at once (on the ground), invulnerable *BURST-INVULN* f, his
@@ -437,15 +443,38 @@ combo over; the opponent's move / Hoho / step / run ends and he slides *BURST-PU
     (set-slide o *burst-push* *burst-push-frames* (- (aref q 0) (aref p 0)) (- (aref q 2) (aref p 2)))
     (respect o)))
 
-(defun burst! (e)
-  "Burst Reverse (FIGHTER-SYSTEM applies it once both fighters have stepped): E spends *FS-BURST* flash-step and breaks
-free (REPEL!). A short global hitstop."
-  (let ((o (opp-of e)))
-    (spend-fs (gauges e) *fs-burst*)
-    (repel! e)
+(defun burst! (e mode)
+  "A burst of MODE starts (FIGHTER-SYSTEM applies it once both fighters have stepped; docs/DUEL_DESIGN.md \"Burst
+modes\"): nothing spent, the flash-step drains from now (GAUGE-SYSTEM). BLUE breaks free (REPEL!); ORANGE cancels his
+move's recovery, the next move started within *CHAIN-WINDOW* f has its startup cut (START-MOVE). A short global hitstop."
+  (let ((o (opp-of e)) (g (gauges e)) (f (fighter e)))
+    (setf (gauges-burst g) mode (gauges-burst-t g) 0 (gauges-fs-idle g) 0)
+    (case mode
+      (:blue (repel! e))
+      (:orange (to-idle e 0) (setf (fighter-chain f) *chain-window*)))
     (hitstop *burst-hitstop*)
-    (emit :burst e o)
-    (clog "~a BURST" (side-name e))))
+    (emit :burst e o mode)
+    (clog "~a BURST ~a fs ~,1f" (side-name e) mode (gauges-fs g))))
+
+(defun burst-end! (e)
+  "E's burst ends (its flash-step ran out, or a Kikon / Soul Break reset): the regen delay restarts."
+  (let ((g (gauges e)))
+    (when (gauges-burst g)
+      (clog "~a BURST END ~a" (side-name e) (gauges-burst g))
+      (setf (gauges-burst g) nil (gauges-burst-t g) 0 (gauges-fs-idle g) 0 (fighter-chain (fighter e)) 0)
+      (emit :burst-end e))))
+
+(defun burst-step (e g)
+  "A running burst, one frame: the flash-step drains (BURST-DRAIN), WHITE's regen (Reishi, Reiatsu, awakening); at 0 it
+ends."
+  (let ((n (incf (gauges-burst-t g))))
+    (setf (gauges-fs g) (f32 (burst-drain (gauges-fs g))))
+    (when (eq (gauges-burst g) :white)
+      (setf (gauges-reishi g) (min (gauges-reishi-max g) (+ (gauges-reishi g) (burst-heal n *white-reishi*)))
+            (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (/ *white-reiatsu* 60.0) *reiatsu-max*)))
+      (unless (gauges-awakened g)
+        (setf (gauges-awaken g) (f32 (gauge-add (gauges-awaken g) (/ *white-awaken* 60.0) *awaken-max*)))))
+    (when (<= (gauges-fs g) 0.0) (burst-end! e))))
 
 ;;; ---------------------------------------------------------------- forms, awakening
 (defun set-form (e form)
@@ -591,6 +620,11 @@ and frozen through the cinematic their looks would hang in its shots."
          (sb (remove-if (lambda (s) (find (cdr s) kk :key #'second)) (reverse *soul-breaks*))))
     (setf *kikons* nil *soul-breaks* nil)
     (when (or kk sb)
+      (do-entities (e (f fighter)) (burst-end! e))   ; the reset ends every burst, before the Kikon's refund
+      (loop for (att nil nil) in kk                   ; a Kikon that connected: a flash-step bar and a Reiatsu bar back
+            do (let ((g (gauges att)))
+                 (multiple-value-bind (fs r) (kikon-refund (gauges-fs g) (gauges-reiatsu g))
+                   (setf (gauges-fs g) (f32 fs) (gauges-reiatsu g) (f32 r)))))
       (let ((kos (append (loop for (att def nil) in kk when (settle-konpaku att def nil) collect def)
                          (loop for (att . def) in sb when (settle-konpaku att def t) collect def)))
             (a (if kk (first (first kk)) (car (first sb))))
@@ -673,10 +707,13 @@ delay counter (frozen): West never refills."
   (do-entities (e (f fighter) (g gauges))
     (let* ((kit (fighter-kit f))
            (guarding (and (or (member (fighter-state f) '(:guard :guard-hit)) (passive-p e :ward)) (not (gauges-guardless g)))))
-      (setf (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (reiatsu-gain 0 0 1) *reiatsu-max*))
-            (gauges-fs g) (f32 (fs-regen (gauges-fs g) (gauges-fs-idle g)))
-            (gauges-fs-idle g) (min 9999 (1+ (gauges-fs-idle g))))
-      (setf (gauges-gg g) (f32 (gg-regen (gauges-gg g) (gauges-gg-idle g) (gauges-guardless g) guarding)))
+      (setf (gauges-reiatsu g) (f32 (gauge-add (gauges-reiatsu g) (reiatsu-gain 0 0 1) *reiatsu-max*)))
+      (if (gauges-burst g)
+          (burst-step e g)                               ; a burst: the gauge drains, no regen
+          (setf (gauges-fs g) (f32 (fs-regen (gauges-fs g) (gauges-fs-idle g)))
+                (gauges-fs-idle g) (min 9999 (1+ (gauges-fs-idle g)))))
+      (setf (gauges-gg g) (f32 (gg-regen (gauges-gg g) (gauges-gg-idle g) (gauges-guardless g) guarding
+                                         (eq (gauges-burst g) :blue))))
       (setf (gauges-gg-idle g) (gg-idle-next (gauges-gg-idle g) guarding))
       (setf (gauges-stun g) (f32 (stun-decay (gauges-stun g) (gauges-stun-idle g)))   ; the hidden stun's decay
             (gauges-stun-idle g) (min 9999 (1+ (gauges-stun-idle g))))
@@ -704,5 +741,6 @@ delay counter (frozen): West never refills."
           (emit :hellfire e)))
       (when (and (not (gauges-awakened g)) (not (gauges-evolution g)) (>= (gauges-awaken g) *awaken-max*))
         (setf (gauges-evolution g) t)
+        (when (minusp (gauges-evo-t g)) (setf (gauges-evo-t g) *match-tick*))
         (emit :evolution e)
         (clog "~a EVOLUTION" (side-name e))))))

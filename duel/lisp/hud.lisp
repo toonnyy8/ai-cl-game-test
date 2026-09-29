@@ -3,7 +3,8 @@
 ;;;; white damage trail), the guard gauge under it (steel, a white drain trail, 30 % darker while he guards below full
 ;;;; (GUARD HOLD: no refill; Bankai West's ward always); Bankai's is ember (East's pierce reads it); guardless: grey with
 ;;;; a red fill climbing back), *KONPAKU-MAX* Konpaku soul flames that shatter, Reiatsu 3 bars, the flash-step bar
-;;;; (ticks at a Hoho's and a Burst's cost; the Burst part glows while a Burst is possible), Awakening bar (EVOLUTION
+;;;; (ticks at a Hoho's cost and the burst threshold; the part past it glows in the mode's colour while a burst is possible,
+;;;; the fill is the running burst's colour as it drains), Awakening bar (EVOLUTION
 ;;;; blinks; drains in a timed awakening; WARD while Bankai West's ward is up), the kit meter
 ;;;; (Inferno; drains in Hellfire) or, for an awakened form whose L has a cooldown, the L cooldown bar (one cell; a thin
 ;;;; ember line under it while a Shift+L with a cooldown cools; a refused press flashes its bar), the timer, the
@@ -194,20 +195,27 @@ red fill climbs back (pulsing) until it is full and he can guard again."
         (progn (%hbar x y bw bh trail right 1f0 1f0 1f0 0.95f0)
                (%hbar x y bw bh frac right r0 g0 b0 1f0 r1 g1 b1 1f0)))))
 
-(defun-fast %hud-flash (x y w h fill right burst tm)
-  "The flash-step bar: dark back, a steel-blue FILL (0..1), white ticks at a Hoho's and a Burst's cost;
-while a Burst is possible (BURST) the part past the Burst tick glows."
+(defun-fast %hud-flash (x y w h fill right burst running tm)
+  "The flash-step bar: dark back, a steel-blue FILL (0..1), white ticks at a Hoho's and a burst's threshold; while a
+burst RUNNING (its mode) drains it, the fill is that burst's colour (BURST-COLOR) with a pulsing bright edge; while one is
+possible (BURST: the mode a press would start) the part past the burst tick glows in that mode's colour."
   (declare (single-float x y w h fill tm))
   (let* ((hk (/ (the single-float (f32 *fs-hoho*)) (the single-float (f32 *fs-max*))))
          (bk (/ (the single-float (f32 *fs-burst*)) (the single-float (f32 *fs-max*))))
          (p (%pulse tm 4.0)))
     (declare (single-float hk bk p))
     (%hrect x y w h 0.05f0 0.04f0 0.07f0 0.75f0)
-    (%hbar x y w h fill right 0.55f0 0.75f0 1f0 1f0 0.25f0 0.45f0 0.8f0 1f0)
+    (if running
+        (let* ((c (burst-color running)) (r (f32 (first c))) (g (f32 (second c))) (b (f32 (third c))))
+          (declare (single-float r g b))
+          (%hbar x y w h fill right r g b 1f0 (* 0.7f0 r) (* 0.7f0 g) (* 0.7f0 b) 1f0)
+          (%hrect (if right (+ x (* w (- 1f0 fill))) (+ x (* w fill) -2f0)) (- y 1f0) 2f0 (+ h 2f0) 1f0 1f0 1f0 (+ 0.4f0 (* 0.6f0 p))))
+        (%hbar x y w h fill right 0.55f0 0.75f0 1f0 1f0 0.25f0 0.45f0 0.8f0 1f0))
     (when (and burst (> fill bk))
-      (let* ((sw (* w (- fill bk))) (sx (if right (+ x (- w fill)) (+ x (* w bk)))))
+      (let* ((sw (* w (- fill bk))) (sx (if right (+ x (- w fill)) (+ x (* w bk))))
+             (c (burst-color burst)))
         (declare (single-float sw sx))
-        (%hrect sx (- y 1f0) sw (+ h 2f0) 0.85f0 0.95f0 1f0 (+ 0.5f0 (* 0.5f0 p)))))
+        (%hrect sx (- y 1f0) sw (+ h 2f0) (f32 (first c)) (f32 (second c)) (f32 (third c)) (+ 0.5f0 (* 0.5f0 p)))))
     (%hrect (if right (+ x (* w (- 1f0 hk))) (+ x (* w hk))) (- y 2f0) 1f0 (+ h 4f0) 1f0 1f0 1f0 0.9f0)
     (%hrect (if right (+ x (* w (- 1f0 bk))) (+ x (* w bk))) (- y 2f0) 1f0 (+ h 4f0) 1f0 1f0 1f0 0.9f0)))
 
@@ -496,7 +504,11 @@ from the base form when this form has none) and the tag of what U does in the fo
 (defvar *c-evo* (list 1.0 0.85 0.3 1.0))
 (defvar *u-tag* (list 1.0 0.72 0.35 1.0))
 (defvar *c-kikon* (list 1.0 0.2 0.25 1.0))
-(defvar *c-burst* (list 0.5 0.75 1.0 1.0))
+(defun burst-prompt (mode keys)
+  "The HUD prompt for burst MODE (:blue BURST, :orange CHAIN) pressed with KEYS (:flick :pad :kp :key): a literal."
+  (if (eq mode :orange)
+      (case keys (:flick "FLICK DOWN  CHAIN") (:pad "LT+X  CHAIN") (:kp "KP ENTER+KP1  CHAIN") (t "SHIFT+J  CHAIN"))
+      (case keys (:flick "FLICK DOWN  BURST") (:pad "LT+X  BURST") (:kp "KP ENTER+KP1  BURST") (t "SHIFT+J  BURST"))))
 (defvar *c-callout* (list 1.0 0.85 0.55 1.0))
 
 (defparameter *arm-kanji* "腕")
@@ -551,7 +563,7 @@ from the base form when this form has none) and the tag of what U does in the fo
              (hot (or (gauges-evolution g) (kit-awakening kit)))
              (afill (cond (timed (timer-fill (gauges-form-left g) (gauges-form-total g) 1.0))
                           ((kit-awakening kit) 1.0) (t (/ (gauges-awaken g) *awaken-max*)))))
-        (%hud-flash (f32 ax) (f32 fy) (f32 aw) (f32 ah) (f32 (/ (gauges-fs g) *fs-max*)) right (burst-ok-p e) tm)
+        (%hud-flash (f32 ax) (f32 fy) (f32 aw) (f32 ah) (f32 (/ (gauges-fs g) *fs-max*)) right (burst-ok-p e) (gauges-burst g) tm)
         (hud-text "FLASH STEP" lx (+ fy ty) ls '(0.6 0.78 1 0.9) :align align)
         (%hud-thin (f32 ax) (f32 ay) (f32 aw) (f32 ah) (f32 afill) right 1f0 (if hot 0.85f0 0.75f0) 0.3f0
                    (if hot 0.6f0 1f0) (if hot 4f0 0f0) tm)
@@ -612,10 +624,10 @@ from the base form when this form has none) and the tag of what U does in the fo
              (hud-text (if (pad-connected-p side) "HOLD RT  KIKON" (if right "HOLD KP6  KIKON" "HOLD O  KIKON"))
                        (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 3 s) (alpha! *c-kikon* (+ 0.5 (* 0.5 (hud-pulse 4.0))))
                        :align :center))
-            ((burst-ok-p e)
-             (hud-text (cond (*one-hand* "FLICK DOWN  BURST") ((pad-connected-p side) "LT+X  BURST")
-                             (right "KP ENTER+KP1  BURST") (t "SHIFT+J  BURST"))
-                       (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 2 s) (alpha! *c-burst* (+ 0.5 (* 0.5 (hud-pulse 4.0))))
+            ((member (burst-ok-p e) '(:blue :orange))    ; (WHITE: most of neutral; the bar's glow says it)
+             (hud-text (burst-prompt (burst-ok-p e) (cond (*one-hand* :flick) ((pad-connected-p side) :pad)
+                                                          (right :kp) (t :key)))
+                       (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 2 s) (alpha! (burst-color (burst-ok-p e)) (+ 0.5 (* 0.5 (hud-pulse 4.0))))
                        :align :center))))))
 
 ;;; ---------------------------------------------------------------- portrait blocks (P2, docs/DUEL_MOBILE_DESIGN.md §4.2)
@@ -708,7 +720,7 @@ from the base form when this form has none) and the tag of what U does in the fo
            (afill (cond (timed (timer-fill (gauges-form-left g) (gauges-form-total g) 1.0))
                         ((kit-awakening kit) 1.0) (t (/ (gauges-awaken g) *awaken-max*)))))
       (%hud-reiatsu (f32 x0) (f32 yb) (f32 sw) (f32 bar) (f32 s) (gauges-reiatsu g) nil)
-      (%hud-flash (f32 (+ x0 gw gap)) (f32 yb) (f32 gw) (f32 bar) (f32 (/ (gauges-fs g) *fs-max*)) nil (burst-ok-p e) tm)
+      (%hud-flash (f32 (+ x0 gw gap)) (f32 yb) (f32 gw) (f32 bar) (f32 (/ (gauges-fs g) *fs-max*)) nil (burst-ok-p e) (gauges-burst g) tm)
       (%hud-thin (f32 (+ x0 (* 2 (+ gw gap)))) (f32 yb) (f32 gw) (f32 bar) (f32 afill) nil 1f0 (if hot 0.85f0 0.75f0) 0.3f0
                  (if hot 0.6f0 1f0) (if hot 4f0 0f0) tm)
       (when kitp
@@ -746,9 +758,9 @@ from the base form when this form has none) and the tag of what U does in the fo
               ((kikon-ready-p e)
                (prompt (if *one-hand* "HOLD O  KIKON" (if (pad-connected-p side) "HOLD RT  KIKON" "HOLD O  KIKON"))
                        (alpha! *c-kikon* (+ 0.5 (* 0.5 (hud-pulse 4.0))))))
-              ((burst-ok-p e)
-               (prompt (cond (*one-hand* "FLICK DOWN  BURST") ((pad-connected-p side) "LT+X  BURST") (t "SHIFT+J  BURST"))
-                       (alpha! *c-burst* (+ 0.5 (* 0.5 (hud-pulse 4.0)))))))))))
+              ((member (burst-ok-p e) '(:blue :orange))
+               (prompt (burst-prompt (burst-ok-p e) (cond (*one-hand* :flick) ((pad-connected-p side) :pad) (t :key)))
+                       (alpha! (burst-color (burst-ok-p e)) (+ 0.5 (* 0.5 (hud-pulse 4.0)))))))))))
 
 ;;; ---------------------------------------------------------------- over the fighters
 (defvar *callout-box* (vector nil 0 0 0 0) "The callout drawn first this frame: #(drawn x0 y0 x1 y1).")
@@ -876,7 +888,7 @@ its rows and shrinks its text to fit); *MENU* is highlighted."
   '(("MOVE" "W A S D" "ARROWS") ("QUICK" "J" "KP1") ("FLASH" "K" "KP2") ("SIGNATURE" "L" "KP3")
     ("GUARD" "U" "KP4") ("BREAKER" "I" "KP5") ("KIKON RUSH (HOLD = KIKON)" "O" "KP6") ("STEP" "SPACE" "KP0")
     ("REIATSU (HOLD)" "LSHIFT" "KP ENTER") ("AWAKEN" "P" "KP +") ("SP1 / SP2" "SHIFT+K / SHIFT+L" "")
-    ("HOHO" "SHIFT+SPACE" "") ("BURST REVERSE" "SHIFT+J" "") ("DASH" "HOLD SPACE" "HOLD KP0") ("PAUSE" "ESC" "")))
+    ("HOHO" "SHIFT+SPACE" "") ("BURST (WHITE BLUE ORANGE)" "SHIFT+J" "") ("DASH" "HOLD SPACE" "HOLD KP0") ("PAUSE" "ESC" "")))
 
 (defun hud-controls (w h s)
   (ui-rect 0 0 w h '(0 0 0 0.7))

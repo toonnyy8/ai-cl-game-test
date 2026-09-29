@@ -388,14 +388,15 @@ the victim's Reishi resets to max and both are placed by RESET-PLACEMENT."
   "Fighting Spirit earned by dealing / taking damage and losing LOST Konpaku."
   (+ (* dealt *awaken-dealt*) (* taken *awaken-taken*) (* lost *awaken-per-konpaku*)))
 
-(defun hit-gains (dealt taken siphoned)
+(defun hit-gains (dealt taken siphoned &optional (mult 1.0))
   "What dealing DEALT / taking TAKEN damage pays (combat.lisp GAIN-GAUGES). Values: his Reiatsu, flash-step and Fighting
 Spirit, then the Reiatsu and flash-step of the side SIPHONED says takes his gains (the opponent's kit's :siphon hook): he
-keeps none of them, his Reiatsu and flash-step go to that side, the Fighting Spirit is lost."
-  (let ((r (reiatsu-gain dealt taken)) (fs (* taken *fs-taken*)))
+keeps none of them, his Reiatsu and flash-step go to that side, the Fighting Spirit is lost. MULT scales the Reiatsu and
+Fighting Spirit of the DEALT part (ORANGE: BURST-GAIN-MULT)."
+  (let ((r (+ (* mult dealt *reiatsu-dealt*) (reiatsu-gain 0 taken))) (fs (* taken *fs-taken*)))
     (if siphoned
         (values 0.0 0.0 0.0 r fs)
-        (values r fs (awakening-gain dealt taken 0) 0.0 0.0))))
+        (values r fs (+ (* mult (awakening-gain dealt 0 0)) (awakening-gain 0 taken 0)) 0.0 0.0))))
 
 (defun gauge-move (from amount to max)
   "Take up to AMOUNT out of gauge FROM (never below 0) into gauge TO (kept at most MAX): values FROM and TO after. TO gets
@@ -507,19 +508,59 @@ away), is scaled by K; approaching and strafing are untouched. Values vx vz."
 S, a diagonal one part of it, a side Step (TOWARD 0) or one toward her untouched."
   (* dist (- 1.0 (* (- 1.0 s) (max 0.0 (- toward))))))
 
-(defun hoho-allowed-p (stunned fs lockout-left)
-  "Hoho needs *FS-HOHO* flash-step (FS), no block/hitstun (STUNNED) and the *HOHO-LOCKOUT* over."
-  (and (not stunned) (>= fs *fs-hoho*) (<= lockout-left 0)))
+(defun hoho-allowed-p (stunned fs lockout-left &optional bursting)
+  "Hoho needs *FS-HOHO* flash-step (FS; during a burst, BURSTING, any FS > 0: the burst modes), no block/hitstun
+(STUNNED) and the *HOHO-LOCKOUT* over."
+  (and (not stunned) (if bursting (> fs 0.0) (>= fs *fs-hoho*)) (<= lockout-left 0)))
+
+(defun hoho-cost (fs bursting)
+  "Flash-step a Hoho spends: *FS-HOHO*, or during a burst what is left of it when less (the gauge to 0 ends the burst)."
+  (if bursting (min fs *fs-hoho*) *fs-hoho*))
 
 (defun awaken-allowed-p (free gauge used)
   "Awaken: FREE (idle / walk / guard only), the gauge full, not USED yet this match."
   (and free (not used) (>= gauge *awaken-max*)))
 
-(defun burst-allowed-p (in-hitstun combo-hits fs)
-  "Burst Reverse: IN-HITSTUN (a grounded reaction or airborne, inputs not locked) after the
-*BURST-MIN-HITS*th hit of the combo (COMBO-HITS), *FS-BURST* flash-step (FS). A Kikon connecting on
-the same step wins (the shell applies a Burst only when no cinematic started)."
-  (and in-hitstun (>= combo-hits *burst-min-hits*) (>= fs *fs-burst*)))
+(defun burst-mode (state locked combo-hits chain-open)
+  "The burst a press would start from fighter STATE (docs/DUEL_DESIGN.md \"Burst modes\"), or NIL: never while LOCKED;
+:BLUE in a reaction / airborne past the combo's *BURST-MIN-HITS*th hit (COMBO-HITS) or in blockstun; :ORANGE in a move
+whose own hit landed, while its cancel window is open (CHAIN-OPEN: the shell's CANCEL-OPEN-P); :WHITE free (idle / walk,
+guard, run)."
+  (unless locked
+    (case state
+      ((:stun :air) (and (>= combo-hits *burst-min-hits*) :blue))
+      (:guard-hit :blue)
+      (:move (and chain-open :orange))
+      ((:idle :guard :run) :white))))
+
+(defun burst-allowed-p (mode fs active)
+  "May a burst start: a MODE (BURST-MODE), none ACTIVE, *FS-BURST* flash-step (FS: every mode, the user's two bars). A
+Kikon connecting on the same step wins (the shell applies a burst only when no cinematic started)."
+  (and mode (not active) (>= fs *fs-burst*)))
+
+(defun burst-drain (fs)
+  "Flash-step one frame into a running burst: -*BURST-DRAIN*/s, never below 0 (at 0 the burst ends)."
+  (max 0.0 (- fs (/ *burst-drain* 60.0))))
+
+(defun burst-fs-gain (gain mode)
+  "The flash-step a GAIN pays while burst MODE runs: nothing (no gain of any kind during a burst)."
+  (if mode 0.0 gain))
+
+(defun burst-heal (n rate)
+  "Integer points a per-second RATE pays on frame N (1-based) of a burst: the whole points crossed on that frame."
+  (- (floor (* n rate) 60) (floor (* (1- n) rate) 60)))
+
+(defun burst-gain-mult (mode) "Reiatsu / awakening from hits dealt x this in burst MODE (ORANGE's *ORANGE-GAIN*)." (if (eq mode :orange) *orange-gain* 1.0))
+
+(defun chain-startup-cut (s enter)
+  "ORANGE's startup cut: frames skipped at the start of a move of startup S entered on frame ENTER: *CHAIN-CUT* of its
+startup, leaving at least 1 f."
+  (max 0 (min (floor (* *chain-cut* (- s enter))) (- s enter 1))))
+
+(defun kikon-refund (fs reiatsu)
+  "A Kikon connected: its user's flash-step and Reiatsu after the refund (*KIKON-FS-REFUND*, *KIKON-REIATSU-REFUND*),
+clamped. Values: fs reiatsu."
+  (values (gauge-add fs *kikon-fs-refund* *fs-max*) (gauge-add reiatsu *kikon-reiatsu-refund* *reiatsu-max*)))
 
 (defun fs-regen (fs idle)
   "Flash-step one frame later: +*FS-REGEN*/s once IDLE (frames since the last spend) reaches
@@ -541,13 +582,15 @@ advantage ADV <= *GG-ENDER-ADV*)."
   "The guard gauge GG after a drain of V. Values: new-gg crushed-p (it reached 0: GUARD CRUSH / guardless)."
   (let ((n (max 0.0 (- gg v)))) (values n (<= n 0.0))))
 
-(defun gg-regen (gg idle guardless guarding)
+(defun gg-regen (gg idle guardless guarding &optional blue)
   "The guard gauge one frame later: nothing while GUARDING (GUARD HOLD) or before *GG-DELAY* frames without a
 drain (IDLE), then *GG-REGEN*/s (*GG-REGEN-GUARDLESS*/s while GUARDLESS), capped at *GG-MAX*. Bankai West's ward
-counts as guarding (combat.lisp GAUGE-SYSTEM): he refills only in East."
-  (if (or guarding (< idle *gg-delay*))
-      gg
-      (min *gg-max* (+ gg (/ (if guardless *gg-regen-guardless* *gg-regen*) 60.0)))))
+counts as guarding (combat.lisp GAUGE-SYSTEM): he refills only in East. In a BLUE burst there is no delay and the rate
+is x*BLUE-GG-MULT*, x*BLUE-GG-GUARDING* while guarding."
+  (let ((rate (/ (if guardless *gg-regen-guardless* *gg-regen*) 60.0)))
+    (cond (blue (min *gg-max* (+ gg (* rate (if guarding *blue-gg-guarding* *blue-gg-mult*)))))
+          ((or guarding (< idle *gg-delay*)) gg)
+          (t (min *gg-max* (+ gg rate))))))
 
 (defun gg-idle-next (idle guarding)
   "GUARD HOLD: the refill delay counter (frames since the last drain) one frame later: frozen while GUARDING

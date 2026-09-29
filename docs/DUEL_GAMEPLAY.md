@@ -318,8 +318,12 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P2 konpaku 0-3 ticks 7662 secs 127.7
+duel -> RESULTS winner P2 konpaku 0-1 ticks 10625 secs 177.1
 ```
+
+(The slower awakening gauge, ×0.7, the user 2026-09-30: YK changed again, it was `winner P2 konpaku 0-5 ticks 8247 secs
+137.4` after the three burst modes (DUEL_DESIGN "Burst modes", the same day), which changed all three; before them YK was
+`winner P2 konpaku 0-3 ticks 7662 secs 127.7`.)
 
 (The J/K cut + closer grab merged with the hidden hit-stun tolerance and the KESSA clone cost, 2026-09-29: YK changed
 again; YY and KK equal the J/K-cut branch's. On the J/K-cut branch alone YK was `winner P2 konpaku 0-6 ticks 7879 secs

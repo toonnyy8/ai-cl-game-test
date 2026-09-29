@@ -97,7 +97,7 @@
    ;; particle kinds, screen punctuation
    #:fx-clock #:fx-clock-advance #:sage #:toon-a #:fx-envelope #:fx-disc #:fx-star #:fx-shard #:fx-crescent #:fx-wall
    #:+pal-fire+ #:+pal-ember+ #:+pal-reiatsu+ #:+pal-ink+ #:+pal-steel+ #:+pal-hit+ #:+pal-smoke+ #:+pal-dust+
-   #:+pal-ash+ #:+pal-soul+ #:+pal-blood+ #:+pal-black-smoke+ #:+p-t-blob+ #:+p-t-shard+
+   #:+pal-ash+ #:+pal-soul+ #:+pal-blood+ #:+pal-black-smoke+ #:+pal-blue+ #:+p-t-blob+ #:+p-t-shard+
    #:ui-focus-lines #:ui-speed-lines #:ui-ink-splash
    ;; cine.lisp: the cinematic director (scripted cutscenes inside the fixed step)
    #:defcine #:cine #:*cine* #:cine-name #:cine-cf #:cine-a #:cine-v #:cine-hold #:cine-hold-frame

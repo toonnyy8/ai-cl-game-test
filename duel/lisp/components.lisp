@@ -98,7 +98,8 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (stored 0 :type fixnum)               ; stance: damage absorbed
   (charge 0 :type fixnum)               ; hold frames when a charge move was released (Shiranui)
   (perfect nil)                         ; this Hoho was perfect: its counter strike is pending
-  (burst nil)                           ; a Burst Reverse was pressed this step (applied after both stepped)
+  (burst nil)                           ; the burst mode pressed this step (:white :blue :orange; applied after both stepped)
+  (chain 0 :type fixnum)                ; ORANGE: frames the next move started still has its startup cut
   (invuln 0 :type fixnum)               ; frames of invulnerability left (after a Burst)
   (ox 0f0 :type single-float) (oz 0f0 :type single-float)   ; the opponent at the start of this step
   (dist 0f0 :type single-float)         ; ... and the distance to him
@@ -117,6 +118,8 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (reiatsu 0f0 :type single-float)      ; 0..300 (3 bars): SPs
   (fs *fs-max* :type single-float)      ; flash-step 0..100: Hoho, Burst (kept through resets)
   (fs-idle 0 :type fixnum)              ; frames since the last flash-step spend
+  (burst nil)                           ; the running burst: :white :blue :orange, NIL = none (it drains FS to 0)
+  (burst-t 0 :type fixnum)              ; frames it has run (WHITE's integer Reishi regen)
   (gg *gg-max* :type single-float)      ; guard gauge 0..100 (full again at every reset)
   (gg-idle 0 :type fixnum)              ; frames since the last guard drain
   (guardless nil)                       ; the guard gauge hit 0: no guard until it is full again
@@ -138,7 +141,8 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (stun-idle 0 :type fixnum)            ; frames since it last grew
   ;; results
   (dealt 0 :type fixnum) (kikons 0 :type fixnum) (perfects 0 :type fixnum) (best-combo 0 :type fixnum)
-  (counters 0 :type fixnum))            ; counter-hits dealt (the learning CPU's gate rows)
+  (counters 0 :type fixnum)             ; counter-hits dealt (the learning CPU's gate rows)
+  (evo-t -1 :type fixnum))              ; *MATCH-TICK* of the first EVOLUTION (-1 none; the gate's "duel evo" line)
 
 (defcomponent pilot
   "Who drives the fighter: a vpad (engine input.lisp). A human's has a device READER; the CPU's brain
