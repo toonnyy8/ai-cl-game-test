@@ -17,8 +17,8 @@ gate's summary line, plus a wins / blow-aways line.
 39000+10a+b, 74385, ...). Pairing k is debug.lisp *PAIRS*' index (0 YY 1 YK 2 KK 3 RY 4 RK 5 RR 6 IY 7 IK 8 IR 9 II
 10 SY 11 SK 12 SR 13 SS 14 SI). The build (build/simgate/duel.fas, ~2 min) is redone when a source is newer.
 One process plays a pairing's seeds back to back, as the page does. --chunk N splits them over processes (faster for
-one long stream) but a match may then differ from the page's: Senjumaru's per-side state (*SJ*) is not reset between
-matches, so her rows depend on the matches played before them in the same process (DEVLOG §38).
+one long stream); rows are the same either way (Senjumaru's per-side state carried over between matches until
+2026-09-29, DEVLOG §38-§39: SJ now makes a fresh one per fighter).
 """
 import argparse, concurrent.futures as cf, math, os, re, subprocess, sys
 

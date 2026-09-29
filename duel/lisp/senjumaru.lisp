@@ -301,6 +301,7 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 
 ;;; ================================================================ per-side state (the sim's; reset with every match)
 (defstruct (sjs (:conc-name sjs-))
+  (e nil)                                 ; the fighter it belongs to: a new match's fighter gets a fresh state (SJ)
   (caught 0 :type fixnum)                 ; the umbrella's largest caught hit (this umbrella)
   (soldier -1) (live -1) (bolt -1)        ; handles: her soldier, her live zone, the weave's bolt
   (live-hank 0 :type fixnum) (live-life 1 :type fixnum)   ; the live zone's hank and life (the HUD's drain)
@@ -310,7 +311,11 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
   (torn -9999 :type fixnum) (torn-hank 0 :type fixnum)   ; *MATCH-TICK* of the last torn hank, and which
   (acc nil))                              ; the pacing log's counters (debug)
 (defvar *sj* (vector (make-sjs) (make-sjs)) "Per side: her loom, soldier and umbrella.")
-(defun sj (e) (svref *sj* (fighter-side (fighter e))))
+(defun sj (e)
+  "E's state; a new fighter entity (a new match) gets a fresh one, keeping only the pacing log's counters (the native
+gate found the loom's woven frames, torn clock and handles carried over from the match before: DEVLOG §38)."
+  (let* ((i (fighter-side (fighter e))) (st (svref *sj* i)))
+    (if (eql (sjs-e st) e) st (setf (svref *sj* i) (make-sjs :e e :acc (sjs-acc st))))))
 (defmacro sj-count (e key &optional (n 1)) `(incf (getf (sjs-acc (sj ,e)) ,key 0) ,n))
 
 ;;; hazard data: her hazards carry one of these (HAZARD-DATA) and SENJU-HZ as their hook
