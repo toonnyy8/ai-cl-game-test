@@ -185,7 +185,7 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <tr><td>RESET POSITION</td><td data-l="值">—</td><td data-l="效果">兩人回到開場位置、型態回到最初、量表全滿。</td></tr>
 <tr><td>DUMMY</td><td data-l="值"><b>STAND</b>／GUARD ALL／GUARD AFTER HIT／CPU</td><td data-l="效果">站著不動／全部防禦／被打中第一下之後才開始防（用來確認連段是不是真的連得上）／交給電腦（用選角時的難度）。</td></tr>
 <tr><td>HP REFILL</td><td data-l="值"><b>AUTO</b>／OFF</td><td data-l="效果">AUTO：連段結束後假人的靈子回到設定值；OFF：不補，可以打到紅血練 Kikon。</td></tr>
-<tr><td>GAUGES</td><td data-l="值"><b>NORMAL</b>／INFINITE</td><td data-l="效果">INFINITE：自己的靈子維持設定值，防禦量表、靈壓、瞬步、覺醒量表一直是滿的，SP 和覺醒隨便試。</td></tr>
+<tr><td>GAUGES</td><td data-l="值"><b>NORMAL</b>／INFINITE</td><td data-l="效果">INFINITE：自己的靈子維持設定值，防禦量表、靈壓、瞬步、覺醒量表一直是滿的，SP 和覺醒隨便試。爆氣時瞬步量表照樣會燒到 0、爆氣結束後才回滿。</td></tr>
 <tr><td>P1 HP／DUMMY HP</td><td data-l="值"><b>100%</b>／75／50／25／10%</td><td data-l="效果">自己／假人的靈子。25% 就是紅血。</td></tr>
 <tr><td>P1 KONPAKU／DUMMY KONPAKU</td><td data-l="值">1～<b>9</b></td><td data-l="效果">自己／假人的魂魄數。把 P1 KONPAKU 調到 4 以下，就能試劍八的卍解。</td></tr>
 </tbody></table>
@@ -363,7 +363,7 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <thead><tr><th>模式</th><th>什麼時候</th><th>效果</th></tr></thead>
 <tbody>
 <tr><td>白色 <i>SOUL REVERSE</i></td><td data-l="什麼時候">站著、走路、跑步、防禦中（沒有在防禦硬直）</td><td data-l="效果">爆氣期間靈子每秒回 12（會自己回血）、靈壓每秒多回 15、覺醒量表每秒回 1.4。防禦量表不會回比較快。</td></tr>
-<tr><td>藍色 <i>BURST REVERSE</i></td><td data-l="什麼時候">被一套連段打到第 2 下之後的硬直或浮空；或是防禦硬直中（擋下任何一下都行）</td><td data-l="效果">你立刻恢復自由、落地，約 0.3 秒無敵；對手的招式（或 Hoho、Step、跑步）被打斷、被推開 5 公尺。爆氣期間防禦量表不用等就開始回：沒在防禦時是平常的 2 倍，<b>連防禦中也會以平常一半的速度回</b>。</td></tr>
+<tr><td>藍色 <i>BURST REVERSE</i></td><td data-l="什麼時候">被一套連段打到第 2 下之後的硬直或浮空；或是防禦硬直中（擋下任何一下都行）</td><td data-l="效果">你立刻恢復自由、落地，約 0.3 秒無敵；對手的招式（或 Hoho、Step、跑步）被打斷、被推開 5 公尺，並且<b>立刻得到一格 SP（靈壓）</b>。爆氣期間防禦量表不用等就開始回：沒在防禦時是平常的 2 倍，<b>連防禦中也會以平常一半的速度回</b>。</td></tr>
 <tr><td>橙色 <i>CHAIN REVERSE</i></td><td data-l="什麼時候">自己的招式<b>打中</b>對手之後（被擋、揮空都不行），到那一招收招結束前</td><td data-l="效果">收招馬上取消。接下來 12 格（0.2 秒）內出的第一招，出招前搖縮短 40%，而且什麼招都能接：J／K 連段從頭再來、L、SP、抓技、O。爆氣期間打中得到的靈壓和覺醒量表 ×1.5。連段傷害遞減和隱藏的受擊承受值照樣算，所以不會無限連。</td></tr>
 </tbody></table>
 <ul>
