@@ -94,13 +94,15 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 (defun hank-life (n passes) "Hank N's life after PASSES (x *HANK-LIFE-MULT*)." (multiple-value-bind (r l) (hank-scale passes) (declare (ignore r)) (round (* l *hank-life-mult* (hank n :life)))))
 
 ;;; ================================================================ Shikai 刺絡 SHIGARAMI (base)
-;;; the J / K strings (docs/DUEL_STRINGS.md §2.1 budget): the lightest in the game; every contact sews (SENJU-HIT)
+;;; the J / K strings (docs/DUEL_STRINGS.md §2.1 budget): the lightest in the game; every contact sews (SENJU-HIT). Every
+;;; reach is where the art strikes (the user's playtest, 2026-09-29): the J links to the tip of the needle, now as tall as
+;;; she is (2.4 m), the K links to their props' far ends (senjumaru-art.lisp *SJ-STRIKE-REACH*; the host test checks)
 (defmove :sj-j1 :kind :quick :clip :sj-q1 :startup 7 :active 3 :recovery 12 :dmg 28 :adv-block -2
   :reach 2.4 :arc 90 :on-hit :flinch :slide 0.5)                     ; HITOHARI: the upper right hand jabs the needle
 (defmove :sj-j2 :kind :quick :clip :sj-q2 :startup 7 :active 3 :recovery 13 :dmg 28 :adv-block -2
   :reach 2.4 :arc 110 :on-hit :flinch)                               ; KAESHINUI: the backstitch
 (defmove :sj-j3 :kind :quick :clip :sj-spin :startup 8 :active 3 :recovery 18 :dmg 36 :adv-block -4
-  :reach 2.6 :arc 220 :on-hit :stagger :flags (:ender))              ; SENJU: all six hands whirl in a ring of needles
+  :reach 2.4 :arc 220 :on-hit :stagger :flags (:ender))              ; SENJU: all six hands whirl in a ring of needles
 (defmove :sj-k1 :kind :flash :clip :sj-f1 :startup 17 :active 4 :recovery 20 :dmg 60 :adv-block -3
   :vol (:cap 0.3 3.2 1.1 0.3) :on-hit :stagger)                      ; MACHIBARI: two long pins driven straight out
 (defmove :sj-k2 :kind :flash :clip :sj-f2 :enter 7 :startup 21 :active 4 :recovery 24 :dmg 50 :adv-block -3
@@ -135,7 +137,7 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
   :params (:aura 6 :aim 120.0 :speed 26.0 :dash-max 14 :dash-track 0.0 :look :flash-step :sfx :hoho-out))
 
 ;;; ================================================================ 娑闥迦羅骸刺絡辻 SHIGARAMI NO TSUJI (the six hank forms)
-;; the J / K grid derived at reach x1.15 (cloth on every hand), no sewing; two new links
+;; the J / K grid as the Shikai's (the same needle and loop: no reach derivation, the playtest), no sewing; two new links
 (defmove :sj-t-k1 :kind :flash :clip :sj-tanmono :startup 17 :active 4 :recovery 20 :dmg 56 :adv-block -3
   :vol (:cap 0.3 4.2 1.1 0.3) :on-hit :stagger)                      ; TANMONO-UCHI: a bolt flung out and snapped back
 (defmove :sj-t-k3 :kind :flash :clip :sj-makitori :enter 7 :startup 21 :active 5 :recovery 34 :dmg 72 :adv-block -20
@@ -210,7 +212,7 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
   "The loom's CPU (every hank form; 星's weave distances and 眼's skip are read by form in SENJU-SIG-HOLD / the reflex).")
 
 (defkit :senjumaru :tsuji1 :inherit :base
-  :awakening t :heal 0 :form-name "TSUJI" :reach-mult 1.15 :walk *walk-tsuji* :run *run-tsuji*
+  :awakening t :heal 0 :form-name "TSUJI" :walk *walk-tsuji* :run *run-tsuji*
   :mult *tsuji-mult* :taken *tsuji-taken* :reset-form nil :stance :sj-loom-stance :aura senju-aura-tsuji :cine sj-tsuji-cine
   :commands (:f :sj-t-k1 :sig :sj-kase-1 :sp1 :sj-tachinaoshi :sp2 :sj-kasa :breaker :sj-breaker :kikon :sj-t-kikon)
   :grid (:sj-j1 :sj-j2 :sj-j3 :sj-t-k1 :sj-k2 :sj-t-k3 :sj-j2s :sj-k2s)

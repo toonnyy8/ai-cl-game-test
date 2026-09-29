@@ -1356,8 +1356,9 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
                                     (or (not (hank n :dmg)) (<= (hank-damage n p) (hank-damage n (1+ p))))))))
   (check (and (= 90 (hank-damage 2 3)) (= 72 (hank-damage 2 1)) (= 240 (hank-life 1 3)) (= 120 (hank-life 1 1))
               (~= 2.4 (hank-radius 1 1)) (null (hank 1 :dmg)) (null (hank 6 :dmg))))
-  ;; the awakened grid: J1 J2 J3 K2 derived at x1.15, K1 4.2 m, MAKITORI 2.8 m with its pull to 1.4
-  (check (and (~= (* 1.15 2.4) (mv-reach (kit-command-move t1 :q))) (~= (* 1.15 2.8) (mv-reach (kit-next t1 :sj-j1 :f)))
+  ;; the awakened grid: J1 J2 J3 K2 as the Shikai's (no reach derivation: the playtest), K1 4.2 m, MAKITORI 2.8 m with its
+  ;; pull to 1.4
+  (check (and (~= 2.4 (mv-reach (kit-command-move t1 :q))) (~= 2.8 (mv-reach (kit-next t1 :sj-j1 :f)))
               (~= 4.2 (mv-reach (kit-command-move t1 :f))) (~= 2.8 (mv-reach (kit-next t1 :sj-k2 :f)))
               (~= 1.4 (getf (mv-params (kit-next t1 :sj-k2 :f)) :pull)) (~= 3.3 (kit-walk t1)) (~= 3.6 (kit-walk b))))
   ;; the CPU: the rule's keys, the loom's hold by distance (星 closer), the Shikai taps L
@@ -1365,6 +1366,45 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (= 62 (senju-sig-hold t1 7.0)) (= 42 (senju-sig-hold t1 5.0)) (= 22 (senju-sig-hold t1 3.0))
               (= 62 (senju-sig-hold t6 5.5)) (= 42 (senju-sig-hold t6 3.0)) (= 1 (senju-sig-hold b 3.0))
               (~= 0.5 (getf (kit-ai t6) :opp-rush-hold)) (null (kit-reset-form t1)) (eq :base (kit-reset-form b)))))
+
+;; Senjumaru's reach matches the art (the user's playtest, 2026-09-29; DUEL_SENJUMARU.md "Playtest: reach matches the
+;; art"): every J / K link of every form reaches no more than 0.15 m past (or short of) what she strikes with at its hit
+;; frames: the needle's tip (the rig's FK over her own poses, read from senjumaru-art.lisp; radial for an arc, ahead for a
+;; capsule) or its K prop's far end (*SJ-STRIKE-REACH*). The volume's far edge is where his hurt cylinder's near side may
+;; stand (an arc's r, a capsule's b + r). The host has no C: anim.lisp's float intrinsics as plain CL
+(defmacro engine::f-max (a b) `(max ,a ,b))
+(defmacro engine::f-mod (a b) `(mod ,a ,b))
+(defmacro engine::f-sin (a) `(sin ,a))
+(defmacro engine::f-cos (a) `(cos ,a))
+(defmacro engine::f-wrap (a) `(let ((x ,a)) (- x (* 6.2831853f0 (floor (+ x 3.14159265f0) 6.2831853f0)))))
+(load (merge-pathnames "../engine/lisp/anim.lisp" *load-truename*))
+(let ((scale nil) (needle nil) (strike nil))
+  (with-open-file (in (merge-pathnames "../duel/lisp/senjumaru-art.lisp" *load-truename*))
+    (let ((*package* (find-package :duel)))
+      (loop for form = (read in nil in) until (eq form in)
+            when (consp form)
+              do (case (first form)
+                   ((defpose defclip defstrike) (eval form))
+                   (defun (when (eq (second form) 'sj-okobo-props) (eval form)))
+                   (defparameter (when (eq (second form) '*sj-strike-reach*) (setf strike (eval (third form)))))
+                   (defbody (when (eq (second form) :senjumaru) (setf scale (getf (third form) :scale))))
+                   (defweapon (when (eq (second form) :shigarami) (setf needle (getf (third form) :length))))))))
+  (let ((jm (make-f32 (* 16 +nj+))) (pose (make-f32 +pose-n+)) (v (make-f32 3)) (props (sj-okobo-props)))
+    (flet ((tip (clip fr)                              ; the needle's tip at clip frame FR: values radial, ahead (m)
+             (clip-sample! pose (find-clip clip) (/ fr 60.0))
+             (pose-fk! jm pose 0f0 0f0 0f0 0f0 (f32 scale) 0f0 props)   ; (yaw 0 faces -Z)
+             (joint-point! v jm (ji :weapon-r) 0f0 0f0 (f32 (- needle)))
+             (values (sqrt (+ (expt (aref v 0) 2) (expt (aref v 2) 2))) (- (aref v 2)))))
+      (dolist (cf (remove :senjumaru *forms* :key #'first :test-not #'eq))
+        (let ((k (apply #'kit cf)))
+          (dolist (name (remove-duplicates (loop for (from nil to) in (kit-strings k) collect from collect to)))
+            (let* ((mv (kit-move k name)) (vol (first (hw-vols (svref (mv-hits mv) 0)))) (cap (> (aref vol 0) 0.5))
+                   (edge (if cap (+ (aref vol 2) (aref vol 4)) (aref vol 1)))
+                   (art (or (third (assoc (mv-clip mv) strike))
+                            (loop for fr from (mv-s mv) below (+ (mv-s mv) (mv-a mv))
+                                  maximize (multiple-value-bind (r ahead) (tip (mv-clip mv) fr) (if cap ahead r))))))
+              (check (or (<= (abs (- art edge)) 0.15)
+                         (format t "~a ~a: the volume ends ~,2f m, the art ~,2f m~%" (second cf) name edge art))))))))))
 
 ;; no character names in the generic files (design-v1 §12)
 (dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow" "endless-rules" "endless"))

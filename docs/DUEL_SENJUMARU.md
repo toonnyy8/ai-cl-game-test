@@ -180,10 +180,13 @@ The soldier and the umbrella let her work from 3–7 m.
 |---|---|---|---|---|---|---|---|---|---|---|
 | J1 | 一針 HITOHARI `:sj-j1` [G] | **new** `:sj-q1` | 7/3/12 | 28 | flinch | −2 | 20 | 2.4 m 90°, slide 0.5 | 8 | the upper right hand jabs the needle; the echo hands ripple behind it |
 | J2 | 返し縫い KAESHINUI `:sj-j2` / `-j2s` [G] | **new** `:sj-q2` | 7/3/13 | 28 | flinch | −2 | 21 | 2.4 m 110° | 8 | the backstitch: the needle drawn back across, the thread pulled taut |
-| J3 | 千手 SENJU `:sj-j3` (ender) [G] | **new** `:sj-spin` | 8/3/18 | 36 | stagger | −4 | 26 | 2.6 m 220° | 8 | all six hands fan out and whirl in a ring of needles; the clogs stay planted |
+| J3 | 千手 SENJU `:sj-j3` (ender) [G] | **new** `:sj-spin` | 8/3/18 | 36 | stagger | −4 | 26 | **2.4 m** 220° (2.6 before the playtest) | 8 | all six hands fan out and whirl in a ring of needles; the clogs stay planted |
 | K1 | 待ち針 MACHIBARI `:sj-k1` [G] | **new** `:sj-f1` | 17/4/20 | 60 | stagger | −3 | 32 | line 0.3 → 3.2 | 14 | two hands draw long pins back past the hip and drive them straight out |
 | K2 | 纏り MATSURI `:sj-k2` / `-k2s` [G] | **new** `:sj-f2` | 21/4/24 (7 → 14) | 50 | stagger | −3 | 36 | 2.8 m 140° | 14 | the hem stitch: a rising loop of thread whipped up and over him |
 | K3 | 絎け KUKE `:sj-k3` (ender) [G] | **new** `:sj-drop` | 21/5/34 (7 → 14) | 74 | crumple | −20 | 46 | 2.8 m 160°, h 0–1.4 | 18 | the blind stitch: all six hands slam pins down round his feet, held 3 f |
+
+Since the playtest every reach is where the art strikes: the J links' is the tip of the needle (now as tall as she is),
+and K1 / K2 / K3 each throw a prop out to their volume (below, "Playtest: reach matches the art").
 
 **Budget check:**
 - Startups: J1 7, J2 7, J3 8 (limits 7–10 / 7–9 / 8–10). K1 17 (limit 16–20; K1 − J1 = 10 ≥ 7). K2 / K3 enter at S_eff 14.
@@ -314,20 +317,21 @@ The values are at 3 passes.
 
 The chants [A] are the zones' brush columns. Canon ties each cloth to one Sternritter; that is not used.
 
-### 4.3 The awakened J / K (the base grid derived, reach ×1.15, **no sewing**; two new links)
+### 4.3 The awakened J / K (the base grid as it is, **no sewing**; two new links)
 
-The arms now carry strips of cloth, so the grid is derived at **reach ×1.15** (`:reach-mult 1.15`; frames unchanged). The
-kit has no `:sew` and no count meter. Two links are new (the Rukia decision: "a small number of new moves"):
+The grid was first derived at reach ×1.15 (`:reach-mult 1.15`, "the arms carry strips of cloth"); no cloth was ever drawn
+on the hands, so the playtest (below) dropped the derivation: the awakened J1 / J2 / J3 / K2 are the Shikai's. The kit has
+no `:sew` and no count meter. Two links are new (the Rukia decision: "a small number of new moves"):
 
 | Link | Name | Clip | S/A/R (enter → S_eff) | Dmg | React | Blk | Whiff | Volume | Guard | Pose |
 |---|---|---|---|---|---|---|---|---|---|---|
-| J1 / J2 / J3 / K2 | as §3.2, derived | base clips | as §3.2 | 28 / 28 / 36 / 50 | as §3.2 | as §3.2 | | 2.76 / 2.76 / 2.99 / 3.22 m | as §3.2 | a strip of cloth trails each hand (an fx) |
+| J1 / J2 / J3 / K2 | as §3.2 | base clips | as §3.2 | 28 / 28 / 36 / 50 | as §3.2 | as §3.2 | | 2.4 / 2.4 / 2.4 / 2.8 m (2.76 / 2.76 / 2.99 / 3.22 before the playtest) | as §3.2 | the needle; K2's loop of thread |
 | K1 | 反物打ち TANMONO-UCHI `:sj-t-k1` [G] | **new** `:sj-tanmono` | 17/4/20 | 56 | stagger | −3 | 32 | **line 0.3 → 4.2** | 14 | a bolt of cloth flung straight out from two hands and snapped back |
 | K3 | 巻き取り MAKITORI `:sj-t-k3` (ender) [G] | **new** `:sj-makitori` | 21/5/34 (7 → 14) | 72 | crumple | −20 | 46 | 2.8 m 160° | 18 | cloth wraps him from the feet up, then the hands haul it in: **pulled to 1.4 m** (Ichigo's `:pull`, gap 6) |
 
 - **Budget:** unchanged from §3.2 (host-tested on `:tsuji1`; the other five forms inherit it).
 - **Routes on hit:** JJJ 92, JJK 128, JKK 150, KKK 178, KKJ 142, KJJ 120 (base 92 / 130 / 152 / 184 / 146 / 124, **plus
-  60 of stitches** there). The awakened strings reach farther, deal about 3 % less, and leave nothing behind.
+  60 of stitches** there). The awakened strings deal about 3 % less and leave nothing behind; K1 reaches farther (the bolt).
 - **Blocked:** JJJ 24, KKK 46.
 
 ### 4.4 The rest of the awakened buttons
@@ -979,6 +983,50 @@ three independent seed streams (60 seeds each), P1 Senjumaru playing "never awak
 each opponent** (SY, SK, SR, SS; the opponent on its own rule). The design's "|always − never| ≤ 9" and "SK favours
 never" (§9) are no longer gates; they are logged below as nice-to-have. (A single stream was found to overfit: every
 extra CPU roll reshuffles a whole match, so one stream's 60 seeds can swing a pairing by ±15.)
+
+## Playtest: reach matches the art (the user, 2026-09-29)
+
+「千手丸的 J／K 判定距離比動畫顯示的長很多，很難判斷距離」: the user played her and could not read her range. **The rule
+applied: every J / K link's hit volume ends where the art strikes at its hit frames, within 0.15 m.** The volume's far
+edge is where his hurt cylinder's near side may stand (an arc's radius, a capsule's end + its radius; he connects up to
+that + his hurt r, 0.36–0.45). What she strikes with is the tip of the needle (radial for an arc, straight ahead for a
+capsule; the rig's FK over her own poses) or the K link's prop at its far end. The echo arms never reach past her rig
+hands (they follow them, turned about her spine), so they don't count.
+
+- **The J links (the needle).** The first try trimmed the reach to the old 0.9 m needle's tip (1.6 m, then 2.0 m with a
+  1.35 m needle): the seed gate had her win SY 1–4 / 20, SR 2 / 20, SI 2 / 20 (medians still inside the window), and
+  `*senju-mult*` 2.0 moved SY only to 5 / 20 while pulling its median to 127.9 s. Her strings were being outranged, not
+  out-damaged. So the **needle grew instead: 0.9 → 1.8 m, as tall as she is** (1.58 m at her scale 0.88; Shigarami is a
+  giant sewing needle), and each hit pose lunges a little deeper (`:root :f` +0.10–0.12). Its tip now reaches 2.35–2.37 m
+  at the hit frames: J1 / J2 keep **2.4 m**, J3 is trimmed 2.6 → **2.4 m**.
+- **The K links (thread, pins, cloth)** get a prop that reaches the volume, drawn from her hands during the hit (flung over
+  the 4 frames before S, out through the active frames, drawn back over 8: `senjumaru-art.lisp` `*SJ-STRIKE-REACH*`,
+  `SJ-STRIKE-PROPS`); no K volume moved.
+- **The Bankai's ×1.15 derivation** ("cloth on every hand") had no cloth drawn, so it went: its J1–J3 / K2 are the Shikai's
+  (and its Breaker is the universal 2.6 m again, not 2.99).
+
+| Form | Link | Volume far edge, before → now (m) | The art's far end, before → now (m) | Change |
+|---|---|---|---|---|
+| both | J1 HITOHARI | 2.4 (TSUJI 2.76) → **2.4** | needle tip 1.49 → **2.37** | needle 0.9 → 1.8 m; hit pose `:root :f` 0.2 → 0.32 |
+| both | J2 KAESHINUI / J2s | 2.4 (2.76) → **2.4** | 1.52 → **2.36** | the needle; `:root :f` 0.16 → 0.28 |
+| both | J3 SENJU | 2.6 (2.99) → **2.4** | 1.52 → **2.35** | trimmed; the needle; `:root :f` 0.1 → 0.2 |
+| Shikai | K1 MACHIBARI | 3.5 (capsule 0.3–3.2, r 0.3), kept | needle tip 1.67 → **two long pins to 3.5** | lengthened (a pin out of each hand, straight ahead) |
+| both | K2 MATSURI / K2s | 2.8 (TSUJI 3.22) → **2.8** | needle overhead, 0.1 → **a loop of thread to 2.8** | lengthened (two red strands whipped from the needle's tip up and down at him) |
+| Shikai | K3 KUKE | 2.8, h 0–1.4, kept | needle tip 1.56 → **pins round his feet at 2.8** | lengthened (five pins slammed into the plaza at 2.1–2.8 m, ±40°, threads to her hands) |
+| TSUJI | K1 TANMONO-UCHI | 4.5 (capsule 0.3–4.2, r 0.3), kept | needle tip 1.52 → **a bolt of cloth to 4.5** | lengthened (a flat madder band from both hands) |
+| TSUJI | K3 MAKITORI | 2.8, h 0–1.4, kept | hands 0.2 → **cloth to his feet at 2.8** | lengthened (a strip from each hand down to 0.35 m, ±10°) |
+
+The heights agree: the needle at 1.3–1.5 m and the J arcs' 0.2–2.0, the pins and the bolt at the hands' 1.1 m (the
+capsules' h 1.1), the loop landing at 0.6 m, KUKE / MAKITORI at the feet (h 0–1.4). **The CPU** (§7.2) keeps its tables:
+the J reach it reads (`mv-reach`, 2.4) is unchanged; only the Bankai's J / K2 got shorter, inside its 0–2.8 band's
+"don't whiff at range" test. **The string chase** (`string-chase-speed`) reads the reaches as before. **The host test**
+(`duel-rules-test`, after the Senjumaru block) loads `anim.lisp` and her poses read from `senjumaru-art.lisp`, runs the FK
+over every J / K link's active frames in all seven forms and checks the tip (or `*SJ-STRIKE-REACH*`'s far end) against the
+volume's far edge within 0.15 m.
+
+**The seed gate after it** (seeds 1–20, 2125+k, one run per pairing): SY 135.6 s (Senjumaru 11 / Yamamoto 9), SK 142.7
+(6 / 14), SR 173.8 (11 / 9), SS 187.2 (10 / 10), SI 166.7 (10 / 10); 100 / 100 K.O., every median in 125–210 s (before:
+143.2 / 136.9 / 173.7 / 195.3 / 170.6).
 
 ---
 
