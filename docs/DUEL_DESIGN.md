@@ -1174,6 +1174,21 @@ Senjumaru mirror, whose hazards and 13 fill it); YY never reaches it and replays
 (121.1 → 128.2 s, Yamamoto 15 / Kenpachi 5: the long Kenpachi strings on Yamamoto now end in a knockdown). G2: YK's
 seed 7 changed (Yamamoto blown away twice), YY and KK are unchanged.
 
+## Learning CPU (the user, 2026-09-29)
+
+「簡單的學習演算法，能快速從與玩家的對戰中學習」, then 「好，幫我開分支實作！」 on the plan. The full design is in
+DUEL_LEARNING.md. In short:
+
+- **The learner.** A CPU facing a human learns: an n-gram model of the human's next action in 8 situations (9 action
+  classes, order 1 backed off to order 0, counts decayed x0.97), answered by 防 > J > I > 防 counters. It also runs a
+  discounted EXP3 bandit on the kit's `:moves` weights, rewarded by the damage balance of the next 90 f.
+- **How much it reads.** p_exploit = clamp(0.35 + 0.4 x the human's form, 0.15, 0.6): it reads a winner more and a
+  loser less. It never reads inputs and never beats its perception delay.
+- **Where it plays.** VS CPU (also one-handed) and ENDLESS, P2 only. SETTINGS has LEARNING CPU (default ON) and RESET
+  LEARNING. The tables are kept per CPU character in `soulduel.learn.<i>`.
+- **Where it doesn't.** CPU VS CPU, PRACTICE and every debug run stay exactly as they were: the native gate is
+  row-identical, and G2 passes.
+
 ## Character code layout: the first user
 
 **The first character built this way: Kurosaki Ichigo (2026-09-28, DUEL_ICHIGO.md).** His files hold his parry, clone,

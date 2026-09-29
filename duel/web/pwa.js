@@ -4,7 +4,10 @@
 //       3 / 4 = the safe-area inset at the top / bottom, CSS px (env(safe-area-inset-*); tests set gamePage.testInsets = [top, bottom])
 //       10 + i = SETTINGS row i as saved (option index + 1; 0 = never saved, or no storage: the game's default)
 //       30 + k = ENDLESS best record slot k (roster index i: 30 + 2i stages, 31 + 2i seconds; 0 = none / no storage)
-//   set 0 = battle on / off (the screen wake lock), 10 + i = save SETTINGS row i, 30 + k = save ENDLESS slot k
+//       100 + 1000 i = the learning CPU's saved table of roster index i: its entry count; 100 + 1000 i + 1 + j = entry j
+//       (docs/DUEL_LEARNING.md; localStorage soulduel.learn.<i>, the integers comma-separated)
+//   set 0 = battle on / off (the screen wake lock), 10 + i = save SETTINGS row i, 30 + k = save ENDLESS slot k,
+//       100 + 1000 i + 1 + j = table entry j (kept here), then 100 + 1000 i = n commits the first n entries (0: forget it)
 // SETTINGS rows (duel/lisp/control.lisp *SETTINGS*, same order) live in localStorage as soulduel.<name>; every access is
 // wrapped in try/catch (private mode / blocked storage: nothing saved, the defaults).
 // On a touch-first device only: the history trap (the back gesture pauses instead of leaving), fullscreen +
@@ -13,9 +16,14 @@
 (function () {
   var coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
   var back = 0, wakeOn = false, lock = null;
-  var settings = ['onehand', 'hand', 'split', 'flick', 'camera'];   // soulduel.hand predates SETTINGS (same values)
+  var settings = ['onehand', 'hand', 'split', 'flick', 'camera', 'learn'];   // soulduel.hand predates SETTINGS (same values)
   function stored(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function store(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode: not saved */ } }
+  var learn = {};                                        // roster index -> the learning CPU's table (integers)
+  function ltab(i) {
+    if (!learn[i]) { var s = stored('soulduel.learn.' + i); learn[i] = s ? s.split(',').map(Number) : []; }
+    return learn[i];
+  }
   function wake() {
     if (!wakeOn || lock || document.visibilityState !== 'visible' || !navigator.wakeLock) return;
     lock = true;
@@ -47,12 +55,18 @@
       if (k >= 10 && k < 10 + settings.length) return +(stored('soulduel.' + settings[k - 10]) || 0) | 0;
       if (k === 3 || k === 4) return inset(k - 3);
       if (k >= 30 && k < 50) return +(stored('soulduel.endless.' + (k - 30)) || 0) | 0;
+      if (k >= 100 && k < 10100) { var t = ltab(((k - 100) / 1000) | 0), j = (k - 100) % 1000; return j ? (t[j - 1] | 0) : t.length; }
       return 0;
     },
     set: function (k, v) {
       if (k === 0 && coarse) { wakeOn = !!v; if (wakeOn) wake(); else if (lock && lock.release) { lock.release(); lock = null; } }
       if (k >= 10 && k < 10 + settings.length) store('soulduel.' + settings[k - 10], String(v));
       if (k >= 30 && k < 50) store('soulduel.endless.' + (k - 30), String(v));
+      if (k >= 100 && k < 10100) {
+        var i = ((k - 100) / 1000) | 0, j = (k - 100) % 1000, t = ltab(i);
+        if (j) t[j - 1] = v | 0;
+        else { t.length = Math.max(0, v | 0); store('soulduel.learn.' + i, t.join(',')); }
+      }
     }
   };
   if (!coarse) return;

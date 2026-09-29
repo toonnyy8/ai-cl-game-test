@@ -193,7 +193,7 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
         (when (eq (contact-of res) :hit) (close-rifts def))   ; a rift closes if its owner is hit before it cuts
         (when (and own (not ranged) (not (member res '(:parried :kikon))))   ; KOSEI: his own blade touched him
           (kosei! att (or (hw-guard hw) 0) x y z))
-        (when (eq res :counter) (respect def))
+        (when (eq res :counter) (respect def) (incf (gauges-counters (gauges att))))
         (ecase res
           (:kikon nil)                                  ; settled at the end of the step (SETTLE-SOULS)
           ((:hit :counter)

@@ -109,6 +109,10 @@
 ;;;;            reiatsu opaque <-> see-through (*REIATSU-GLASS*, before / after stills), 71001+k human P1 Kenpachi in cup
 ;;;;            k+1 (4: the Bankai) 3 m from an idle Yamamoto. Every gate row is followed by a "duel band" line per awakened Rukia side
 ;;;;            (BAND-ACC: frames, damage dealt / taken per band, zero visits and their exits, bracing frames, freeze-touches)
+;;;;   200000 + 1000 h + 100 c1 + 10 c2 + m   the learning gate (docs/DUEL_LEARNING.md): seeds as the seed gate, P1 (roster
+;;;;            c1) a CPU with habit h (*HABITS*: 0 plain, 1 J on wake-up, 2 guard after a block, 3 grab-happy, 4 Hoho-happy),
+;;;;            P2 (roster c2) learning by m (0 off, 1 all, 2 model only, 3 bandit only), fresh at the start, kept across
+;;;;            the matches; a "duel learn row" per match. Every other debug command switches learning off (*LEARN-DEBUG-OFF*)
 ;;;;   2400 god (both fighters' Reishi is topped back up to 400 every frame; Kikon still lands)   2500+k human P1 vs an
 ;;;;            idle CPU (k: 0 Yama vs Ken, 1 Ken vs Yama, 2 Yama vs Yama, 3 Ken vs Ken)
 ;;;; Log lines: "duel -> STATE" (flow.lisp), "duel hash t=N ..." every 600 battle ticks (h = CPU heat),
@@ -873,6 +877,7 @@ move-beat choices of DRAW-FIGHTER."
   (gate-update))
 
 (defvar *gate-busy* nil "A gate match is running.")
+(defvar *learn-gate* nil "The learning gate running (START-LEARN-GATE): (habit learn-p).")
 
 (defun gate-update ()
   "Per frame: record a finished gate match, start the next, summarise at the end."
@@ -885,9 +890,11 @@ move-beat choices of DRAW-FIGHTER."
              (fighter-form (fighter *p1*)) (fighter-form (fighter *p2*)) *blow-aways*)   ; (the gamble A/B reads the final forms)
     (band-acc-line) (cup-acc-line)
     (senju-acc-line) (ichigo-acc-line)
+    (when *learn-gate* (learn-gate-line))
     (setf *gate-busy* nil))
   (unless *gate-busy*
-    (cond (*gate* (destructuring-bind (seed pair) (pop *gate*) (start-cvc seed pair)) (setf *gate-busy* t))
+    (cond (*gate* (destructuring-bind (seed pair) (pop *gate*) (start-cvc seed pair)) (setf *gate-busy* t)
+                  (when *learn-gate* (learn-gate-setup)))
           (*gate-results*
            (dolist (pair *pairs*)
              (let* ((rs (remove pair *gate-results* :key #'first :test-not #'equal))
@@ -896,15 +903,71 @@ move-beat choices of DRAW-FIGHTER."
                  (log-msg "duel gate ~a ~a: ~d matches, KOs ~d, median ~,1f s, min ~,1f, max ~,1f | ~{~,0f~^ ~}"
                           (first pair) (second pair) (length secs) (count-if #'third rs)
                           (nth (floor (length secs) 2) secs) (first secs) (car (last secs)) secs))))
-           (setf *gate-results* nil *turbo* nil)))))
+           (setf *gate-results* nil *turbo* nil *learn-gate* nil)))))
+
+;;; ---------------------------------------------------------------- the learning CPU's gate (docs/DUEL_LEARNING.md)
+(defparameter *habits* #(nil :wake-j :block-guard :grab :hoho)
+  "The scripted players (debug 200000+): 0 a plain CPU, 1 J on every wake-up, 2 guard after every block, 3 grab-happy
+(the Breaker at every close neutral decision), 4 Hoho-happy (Hoho at neutral decisions and into every committed move).")
+
+(defun start-learn-gate (h c1 c2 on)
+  "200000 + 1000 H + 100 C1 + 10 C2 + ON: seeds *GATE-SEED0* + 1 .. + *GATE-SEEDS* back to back, P1 (roster C1) a CPU with
+habit H (*HABITS*), P2 (roster C2) the CPU, learning when ON (its table fresh at the start, kept in memory across the
+matches); a \"duel learn row\" per match."
+  (fill *learn-tables* nil)
+  (let ((pair (list (nth c1 *roster*) (nth c2 *roster*))))
+    (setf *turbo* t *skip-cines* nil *combat-log* nil *gate-log* nil *gate-results* nil *gate-busy* nil
+          *gate* (loop for seed from (1+ *gate-seed0*) to (+ *gate-seed0* *gate-seeds*) collect (list seed pair))
+          *learn-gate* (list (svref *habits* h) (plusp on))
+          *learn-use* (case on (2 '(:model)) (3 '(:bandit)) (t '(:model :bandit)))))
+  (gate-update))
+
+(defun learn-gate-setup ()
+  "A learning-gate match began: P1's habit, P2's learner."
+  (setf (brain-habit (brain *p1*)) (first *learn-gate*))
+  (when (second *learn-gate*) (learn-attach! *p2*)))
+
+(defun learn-gate-line ()
+  "The learning gate's row: the result, damage, P2's counter-hits, its reads (and those that paid), p_exploit, the form."
+  (let* ((l (brain-learn (brain *p2*))) (tab (and l (lrn-tab l))))
+    (log-msg "duel learn row seed ~d habit ~a ~a ~a learn ~:[off~;on~] winner ~a dealt ~d ~d counters ~d ~d reads ~d paid ~d pexp ~,2f form ~,2f~@[ model~{ ~a~}~]~@[ by~{ ~{~(~a~)~* ~d/~d~}~}~]"
+             *match-seed* (first *learn-gate*) (first *picks*) (second *picks*) l (case *winner* (0 "P1") (1 "P2") (t "DRAW"))
+             (gauges-dealt (gauges *p1*)) (gauges-dealt (gauges *p2*)) (gauges-counters (gauges *p1*)) (gauges-counters (gauges *p2*))
+             (if l (lrn-reads l) 0) (if l (lrn-paid l) 0) (if tab (learn-p-exploit (ltab-form tab)) 0.0) (if tab (ltab-form tab) 0.0)
+             (and tab (loop for k across *learn-situations* for i from 0    ; the model's prediction per situation
+                            collect (multiple-value-bind (act p n) (learn-predict tab i)
+                                      (format nil "~(~a~)=~:[-~;~:*~(~a~)~]~,2f/~,1f" k (and act (aref *learn-actions* act)) p n))))
+             (and l (mapcar (lambda (x) (list (first x) nil (second x) (third x))) (lrn-stats l))))))
+
+(defun habit-fire (e b s d)
+  "A scripted player's habit before its reflexes (BRAIN-STEP): T when it pressed."
+  (let* ((f (fighter e)) (g (gauges e)) (was (brain-was b))
+         (hoho-ok (and (zerop (fighter-hoho-lock f)) (>= (gauges-fs g) *fs-hoho*))))
+    (when (and (member (fighter-state f) '(:idle :guard :run)) (zerop (fighter-lock f)))
+      (case (brain-habit b)
+        (:wake-j (when (eq was :wakeup) (ai-press b :quick 1) (setf (brain-why b) :habit)))
+        (:block-guard (when (eq was :guard-hit) (ai-press b :guard 40 :act :hold) (setf (brain-why b) :habit)))
+        (:hoho (when (and hoho-ok (eq (snap-state s) :move) (member (snap-kind s) '(:quick :flash :sig :sp :breaker))
+                          (< (snap-sf s) (snap-active-end s)) (< d (+ (snap-reach s) *ai-threat-margin*)))
+                 (ai-press b :step 1 :modded t :act :hoho) (setf (brain-why b) :habit)))))))
+
+(defun habit-neutral (e b kit d)
+  "A scripted player's habit at a neutral decision (AI-DECIDE): T when it pressed."
+  (let ((f (fighter e)) (g (gauges e)))
+    (case (brain-habit b)
+      (:grab (when (and (< d 2.6) (kit-command-ok-p e :breaker))
+               (ai-command b kit :breaker d e) (setf (brain-why b) :habit)))
+      (:hoho (when (and (< d 7.0) (zerop (fighter-hoho-lock f)) (>= (gauges-fs g) *fs-hoho*) (< (sim-rnd01) 0.5))
+               (ai-command b kit :hoho d e) (setf (brain-why b) :habit))))))
 
 (defun debug-command (c)
   "Module._debug_cmd(C): see the file header."
-  (setf *combat-log* t *stats-log* t)
+  (setf *combat-log* t *stats-log* t *learn-debug-off* t)   ; (no learner in any debug run: LEARN-GATE attaches its own)
   (log-msg "debug cmd ~d" c)
   (unless (or (<= 2200 c 2299) (<= 10000 c 19999) (<= 35000 c 36999) (<= 40000 c 42999) (<= 69000 c 70999))
     (setf *cine-hold* nil))
   (cond ((<= 2000 c 2099) (start-cvc (- c 2000) nil))
+        ((<= 200000 c 204443) (start-learn-gate (floor (- c 200000) 1000) (mod (floor c 100) 10) (mod (floor c 10) 10) (mod c 10)))
         ((<= 3000 c 3999) (start-cvc (- c 3000) '(:yamamoto :yamamoto)))
         ((<= 4000 c 4999) (start-cvc (- c 4000) '(:yamamoto :kenpachi)))
         ((<= 5000 c 5999) (start-cvc (- c 5000) '(:kenpachi :kenpachi)))

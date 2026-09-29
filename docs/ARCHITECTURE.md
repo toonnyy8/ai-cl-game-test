@@ -325,6 +325,7 @@ run to run). Its cinematics run inside the fixed step through the engine's direc
 | lisp/tuning.lisp      | the shared balance knobs (rules, gauges, forms, AI); per-move frame data lives with the moves |
 | lisp/rules.lisp       | the functional core: triangle / clash, frame advantage, damage, Kikon / Konpaku, gauges, AI helpers (plain CL), tested by tests/duel-rules-test.lisp |
 | lisp/control.lisp     | the controls as data on the engine's vpad: buttons, command table, P1 / P2 bindings (plain CL, tests/duel-control-test.lisp) |
+| lisp/learn.lisp       | the learning CPU's pure part: player model, bandit, p_exploit, storage format (plain CL, tests/learn-test.lisp; docs/DUEL_LEARNING.md) |
 | lisp/sounds.lisp      | data: the sound bank (DEFSOUND)                             |
 | lisp/components.lisp  | every DEFCOMPONENT (transform, motion, model, fighter, gauges, pilot, brain, hazard …) |
 | lisp/body.lisp        | DEFBODY (engine shape spec + rig proportions), DEFWEAPON, DRAW-BODY, shared poses / reaction clips |
