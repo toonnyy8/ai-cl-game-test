@@ -255,7 +255,7 @@ his Reishi or <= :opp-konpaku Konpaku) with <= :own-konpaku left."
     (:never nil)
     (t (unless (brain-bankai-rolled b)
          (let* ((o (opp-of e)) (go (gauges o)) (k (gauges-konpaku (gauges e)))
-                (threat (min *soul-break-max-event* (+ (kit-kikon-konpaku (kit-of o)) *soul-break-extra*))))
+                (threat (min *soul-break-max-event* (+ (kikon-worth o) *soul-break-extra*))))
            (when (or (<= k threat)
                      (and (<= k (getf bk :own-konpaku 9))
                           (or (<= (gauges-reishi go) (* (getf bk :opp-below 0.0) (gauges-reishi-max go)))

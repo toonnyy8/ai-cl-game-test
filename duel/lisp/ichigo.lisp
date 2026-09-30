@@ -388,7 +388,7 @@ L; within 4.2 m (RANGETSU's lunge + reach 4.8) TSUKI-OTOSHI on a guard (or a gau
 (defun clone-live-p (c) (member (icc-state c) '(:idle :answer)))
 (defun ichigo-kikon-worth (e)
   "KESSA's :kikon-worth hook: what 千影 would take if O were pressed now (CLONE-KONPAKU of the live clones), for the red
-Konpaku hint (the user 2026-09-29: it followed the kit's fixed 3)."
+Konpaku hint (the user 2026-09-29: it followed the kit's fixed 3) and his Soul Break (this + 1, the user 2026-09-30)."
   (clone-konpaku (count-if (lambda (h) (clone-live-p (hazard-data (hazard h)))) (ichigo-clones e))))
 (defun clone-count (e) "E's live clones (idle or answering)." (count-if (lambda (h) (clone-live-p (hazard-data (hazard h)))) (ichigo-clones e)))
 (defun clone-fade (c) (setf (icc-state c) :fade (icc-fade c) 0))

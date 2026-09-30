@@ -376,7 +376,7 @@ of the wait run out, never faster than the module's CAP."
 (defun kikon-result (konpaku count soul-break)
   "Konpaku settled at connect time: a Kikon removes COUNT (the attacker's kit :kikon-konpaku, read when his
 rush started: *KIKON-KONPAKU* 2, awakened *KIKON-KONPAKU-AWAKENED* 3, Nozarashi's cups 2 / 3 / 4); a SOUL-BREAK
-removes one more (COUNT is then the attacker's current form's count); a Kikon never more than *KIKON-MAX-EVENT*, a Soul
+removes one more (COUNT is then the attacker's KIKON-WORTH: his form's count, KESSA's by his clones); a Kikon never more than *KIKON-MAX-EVENT*, a Soul
 Break never more than *SOUL-BREAK-MAX-EVENT* (the user's decision 2026-09-27). Values: konpaku-left lost ko-p. After it
 the victim's Reishi resets to max and both are placed by RESET-PLACEMENT."
   (let* ((lost (min konpaku (if soul-break *soul-break-max-event* *kikon-max-event*)

@@ -21,7 +21,8 @@ and "Measurements". Code layout (the user's rule, DUEL_DESIGN "Character code la
   the guard gauge, a white rim light as its timer, a catch staggers 40 f and the counter 残月返し follows); J / K pure cuts;
   **the clones 分身** (a Step leaves one where it took off, a Hoho in front of the opponent; up to 3 for 5 s): **every clone
   answers every J / K press** with J → a heavy, K → a light, 6 f behind, in his combo at ×0.7; **O 影討 KAGE-UCHI** sends
-  them all into the strike (+30 each) and its Kikon **千影** is worth **2 / 2 / 3 / 4 Konpaku by the clones at the press**;
+  them all into the strike (+30 each) and its Kikon **千影** is worth **2 / 2 / 3 / 4 Konpaku by the clones at the press**
+  (his Soul Break that + 1 by the live clones, 3 / 3 / 4 / 5, the user 2026-09-30);
   his Soul Break plays **漆黒の月牙天衝** (a huge C-shaped cut hanging in the air); SP2 **残像 ZANZŌ** echoes every attack
   10 f later at half damage for 6 s; SP1 鎖引 KUSARI-BIKI pulls.
 - **Balance**: the awakening may be the stronger choice, but "never awaken" must still win ≥ 20 of 60 on each of three
@@ -236,7 +237,7 @@ Canon notes:
 
 Half-Hollowfied, then Bankai: the two blades become one, and blood-chain reiatsu bursts from his neck, hands and feet [A,
 official description]. It is **permanent**, like every awakening, with **no heal** (`:heal 0`) (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal").
-- Kikon **3** (the universal awakened count), Soul Break 4.
+- Kikon **3** (the universal awakened count), Soul Break 4 (superseded 2026-09-30: the Soul Break follows the clones, §"The Kikon's worth").
 - Damage ×1.0 dealt and taken (`*kessa-mult*`, `*kessa-taken*`); the A/B tunes them.
 - Walk **3.6**, run **9.0** (`*walk-kessa*`, `*run-kessa*`): he holds ground at chain range.
 - HUD form name "KESSA"; the awakening row reads KESSA NO ICHIGO; U tag `U: CHAIN`.
@@ -412,7 +413,7 @@ BLOOD back-rim** (Kenpachi's Bankai precedent).
 | impact | 150–170 (20) | a negative, then a 12 f manga page (white; the BLOOD soul flame the only colour); the X bursts, "a blinding explosion that engulfs the area"; the Konpaku shatter; `:getsuga` low + `:konpaku-shatter`, shake |
 | aftermath | 170–186 (16) | wide from behind Ichigo (`shot-on a`): both blades lowered, ash drifting |
 
-### 5.2 Kessa: `ic-kessa-kikon-cine` **血鎖斬月 KESSA ZANGETSU** (192 f; Kikon 3, Soul Break 4) [A abilities; G the name and the sequence]
+### 5.2 Kessa: `ic-kessa-kikon-cine` **血鎖斬月 KESSA ZANGETSU** (192 f; Kikon 3, Soul Break 4; since 2026-09-30 千影 by the clones, a Soul Break that + 1) [A abilities; G the name and the sequence]
 
 | Shot | Frames | What |
 |---|---|---|
@@ -704,7 +705,7 @@ Reused: `:whoosh-light`, `:whoosh-heavy`, `:cut`, `:clang`, `:hoho-out`, `:kikon
 - **L after K:** the two combo copies (`:ic-getsuga-k`, `:ic-k-getsuga-k`) combo after each K link (A(K) + the L's hit
   frame at the link's reach < 26 / 40).
 - **Reaches:** every Breaker strike > 2.2; every Kikon strike > 1.9.
-- **Kikon counts:** 2 / 3; Soul Break 3 / 4.
+- **Kikon counts:** 2 / 3; Soul Break 3 / 4 (KESSA's since 2026-09-30: 3 / 3 / 4 / 5 by his live clones).
 - **Side Steps:** the half-widths + Kenpachi's hurt r < 2.5 (GETSUGA 1.2, JŪJISHŌ 1.8, the giant one 2.0).
 - **Costs:** `:gg-cost` refusal (U at 19 refused, 20 allowed); the clone only at ≥ 35.
 - **`:cuts`:** a wave destroys a fireball it overlaps and leaves a `:freeze` disc alone.
@@ -1119,7 +1120,9 @@ draining under the clone pips.
   on the strike's frame: the strike deals **70 + 30 × n** (its bonus, one hit, one scaling step); the clones add no hit
   and no timing of their own, so the O ender and the held-O Kikon are the universal ones.
 - **The Kikon's worth**: **2 / 2 / 3 / 4 Konpaku** for 0 / 1 / 2 / 3 clones at the press (`*clone-konpaku*`, the user's
-  table); a Soul Break stays the form's 3 + 1 = 4.
+  table); a Soul Break takes the same worth + 1: **3 / 3 / 4 / 5** by his live clones when it lands (the user
+  2026-09-30: `settle-konpaku` reads `kikon-worth`, the hook `ichigo-kikon-worth`; a Soul Break by the O strike itself
+  keeps the clones counted at the press). Before it the Soul Break stayed the form's 3 + 1 = 4.
 - **千影** (192 f; SF6's Shun Goku Satsu): beat 0; the plaza drops to black with the victim alone, Ichigo gone in a
   flash step; the camera orbits him while clones charge through him from a 9 m ring, four waves of three, then twelve at
   once; one white frame; behind Ichigo, low, facing away, the victim collapsed beyond: the brush 千影, the hanko, the

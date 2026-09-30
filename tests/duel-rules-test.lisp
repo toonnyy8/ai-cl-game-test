@@ -370,6 +370,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 (check (equal (multiple-value-list (kikon-result 6 2 nil)) '(4 2 nil)))
 (check (equal (multiple-value-list (kikon-result 6 3 nil)) '(3 3 nil)))           ; awakened
 (check (equal (multiple-value-list (kikon-result 6 2 t)) '(3 3 nil)))           ; Soul Break +1
+(check (equal (multiple-value-list (kikon-result 6 4 t)) '(1 5 nil)))           ; KESSA's 3 clones: 4 + 1 = the cap 5
 (check (equal (multiple-value-list (kikon-result 6 3 t)) '(2 4 nil)))
 (check (equal (multiple-value-list (kikon-result 2 2 nil)) '(0 2 t)))
 (check (equal (multiple-value-list (kikon-result 1 3 t)) '(0 1 t)))

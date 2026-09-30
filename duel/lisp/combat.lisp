@@ -604,7 +604,7 @@ HUD's P BANKAI prompt, the phone's AWAKEN chip.)"
 
 (defun kikon-worth (e)
   "Konpaku E's Kikon would take now: a running rush's worth (fixed at its start), else the kit's :kikon-worth hook (E) (a
-worth that follows the fighter's state), else the kit's :kikon-konpaku. (The red Konpaku hint: hud.lisp AT-STAKE.)"
+worth that follows the fighter's state), else the kit's :kikon-konpaku. (The red Konpaku hint: hud.lisp AT-STAKE; a Soul Break takes this + 1: SETTLE-KONPAKU.)"
   (let* ((f (fighter e)) (mv (fighter-move f)) (h (kit-hook (kit-of e) :kikon-worth)))
     (cond ((and mv (eq (fighter-state f) :move) (eq (mv-kind mv) :kikon)) (fighter-kikon-n f))
           (h (funcall h e))
@@ -617,11 +617,12 @@ worth that follows the fighter's state), else the kit's :kikon-konpaku. (The red
 
 (defun settle-konpaku (att def soul-break)
   "Konpaku at connect time (KIKON-RESULT): DEF loses the Kikon's count (ATT's rush's, read when it started:
-FIGHTER-KIKON-N), or on a Soul Break ATT's current form's count + 1 (at most *SOUL-BREAK-MAX-EVENT*); his Reishi refills.
+FIGHTER-KIKON-N), or on a Soul Break ATT's KIKON-WORTH now + 1 (at most *SOUL-BREAK-MAX-EVENT*: KESSA's follows his
+clones, 3 clones 4 + 1 = 5, the user 2026-09-30); his Reishi refills.
 Returns T when DEF is out of Konpaku."
   (let ((gd (gauges def)))
     (multiple-value-bind (left lost ko) (kikon-result (gauges-konpaku gd)
-                                                      (if soul-break (kit-kikon-konpaku (kit-of att)) (fighter-kikon-n (fighter att)))
+                                                      (if soul-break (kikon-worth att) (fighter-kikon-n (fighter att)))
                                                       soul-break)
       (setf (gauges-konpaku gd) left (gauges-reishi gd) (gauges-reishi-max gd))
       (unless (or (gauges-awakened gd) (siphon-of def))
