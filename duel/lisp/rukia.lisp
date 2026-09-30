@@ -131,7 +131,7 @@
   :awakening t :form-name "-18C" :walk *walk-m18* :run *run-m18* :passives (:chipless) :frost-touch *frost-touch*
   :mult *rukia-awake-mult* :taken *rukia-awake-taken*
   :meter (:name "COLD" :max *cold-max* :temp t) :warm *ru-warm-m18* :cold *ru-cold-m18* :field *ru-field-m18*
-  :reset-form :m18 :u-tag "U: COOL"
+  :reset-form :m18 :u-tag "U: COOL" :hooks (:hoho rukia-hoho-cold)
   :stance :ru-cold-stance :aura rukia-aura-cold :cine ru-awaken-cine :swing-sfx :whoosh-light
   :commands (:f :ru-a-k1 :sig :ru-shimobashira :kikon :ru-hakka-18)
   :grid (:ru-j1 :ru-j2 :ru-j3 :ru-a-k1 :ru-k2 :ru-a-k3 :ru-j2s :ru-k2s)
@@ -159,7 +159,7 @@
                (1.9 3.5 :f 3 :sig 3)
                (3.5 99.0 :sp2 1 :sp1 1 nil 2))
        :guard 0.45 :hoho 0.25 :dash 0.1 :dash-back 0.1 :o-ender 0.25 :l-after-k *ai-ru-l-after-k-awake* :kikon-range 7.5 :sp-cancel-bars 2
-       :cool (:p 0.35 :near 4.0 :no-projectile t :min-gg 50) :stun-follow (:sp2 2.4 6.0)))
+       :cool (:p 0.35 :near 4.0 :no-projectile t :min-gg 50) :stun-follow (:sp2 2.4 6.0) :reflex rukia-ai-hoho-in))
 
 ;;; -273.15 C, absolute zero (both bars full): rooted (no walk, run, Step, Hoho, slide or chase: the user's decision), the
 ;;; strongest version of every button at reach x1.35 with the ice blade, the largest field; the ward (360 deg, no
@@ -303,11 +303,36 @@ Its cold (the whole top bar) drops her to -50 once she is free."
     (rukia-look e 'rukia-sheet-look (aref p 0) (aref p 2) :yaw (yaw-of e) :size (mv-reach (fighter-move (fighter e))) :life 34))
   (emit :sfx :kikon-slash e))
 
+(defparameter *ru-hoho-cold* 50.0 "Cold a Hoho adds when she reappears behind him (-18 / -50; the user 2026-09-30: dive in and freeze).")
+
+(defun rukia-hoho-cold (e)
+  "The awakened bands' :hoho hook (the user 2026-09-30, 「Hoho 可以增加冷度量表」): reappearing behind him adds
+*RU-HOHO-COLD*, and the band follows at once (TEMP-BAND; the steps' own resolve waits until she is free and warms her
+first, so a Hoho to exactly 200 would never reach zero): she lands next to him at -273, the ward up (RUKIA-ZERO-ENTER).
+Not in the THAW after a CRACK."
+  (let* ((g (gauges e)) (f (fighter e)) (c (min *cold-max* (+ (gauges-meter g) *ru-hoho-cold*))) (band (temp-band c (fighter-form f))))
+    (when (plusp (gauges-meter-idle g)) (return-from rukia-hoho-cold))   ; the THAW: nothing cools her
+    (setf (gauges-meter g) (f32 c))
+    (unless (eq band (fighter-form f))
+      (set-form e band)
+      (emit :sfx :frost-tick e))))
+
+(defparameter *ai-ru-hoho-in* 0.05 "-50's CPU: chance per free step to Hoho in when that Hoho reaches -273 (RUKIA-AI-HOHO-IN).")
+
+(defun rukia-ai-hoho-in (e b s d)
+  "-50's :ai :reflex: beyond 3 m, when a Hoho's cold (RUKIA-HOHO-COLD) would reach -273 and the Hoho is allowed, dive in
+now and then (*AI-RU-HOHO-IN* per free step). A command or NIL."
+  (declare (ignore s))
+  (let ((g (gauges e)) (f (fighter e)))
+    (and (> d 3.0) (zerop (gauges-meter-idle g)) (>= (+ (gauges-meter g) *ru-hoho-cold*) *cold-max*)
+         (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)) (< (sim-rnd01) *ai-ru-hoho-in*)
+         (why b :hoho-in :hoho))))
+
 (defun rukia-zero-enter (e)
-  "Absolute zero (:zero's :enter-hook): entered from a held guard, the ward is up at once (no hole); a new visit's
+  "Absolute zero (:zero's :enter-hook): entered from a held guard or a Hoho's arrival, the ward is up at once (no hole); a new visit's
 freeze-touch; the white burst."
   (let ((f (fighter e)))
-    (when (member (fighter-state f) '(:guard :guard-hit)) (setf (fighter-guard-t f) *guard-raise*))
+    (when (member (fighter-state f) '(:guard :guard-hit :hoho)) (setf (fighter-guard-t f) *guard-raise*))   ; (a Hoho: RUKIA-HOHO-COLD)
     (setf (gauges-froze (gauges e)) nil)
     (let ((p (pos-of e))) (rukia-look e 'rukia-burst-look (aref p 0) (aref p 2) :size 1.4 :life 24))
     (emit :sfx :freeze e)

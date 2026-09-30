@@ -309,7 +309,7 @@ something started."
     (case cmd
       (:step (unless (kit-rooted kit) (cold-spend! e kit :step) (start-step e f) t))   ; a rooted form (Rukia's zero) refuses
       (:hoho (when (and (not (kit-rooted kit)) (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)))   ; Step and Hoho
-               (cold-spend! e kit :hoho) (start-hoho e f) t))
+               (start-hoho e f) t))
       (:awaken (let ((free (awaken-state-p e f)))
                  (cond ((awaken-allowed-p free (gauges-awaken g) (gauges-awakened g)) (awaken! e) t)
                        ((and (kit-bankai-form kit) (bankai-allowed-p free (gauges-konpaku g)))
@@ -682,7 +682,8 @@ clip follows the heading: forward run, side slide or back-skate (RUN-CLIP)."
         (multiple-value-bind (x z yaw) (hoho-destination (aref q 0) (aref q 2) (yaw-of o))
           (setf (aref p 0) (f32 x) (aref p 2) (f32 z) (transform-yaw (transform e)) (f32 yaw))))
       (play-clip e :sh-hoho-in :blend 0)
-      (let ((p (pos-of e))) (emit :hoho-in e (aref p 0) (aref p 2))))
+      (let ((p (pos-of e))) (emit :hoho-in e (aref p 0) (aref p 2)))
+      (let ((h (kit-hook (fighter-kit f) :hoho))) (when h (funcall h e))))   ; the form's own arrival (Rukia's cold)
     (when (and (= sf *hoho-counter-pose*) (fighter-perfect f))
       (play-clip e (mv-clip (kit-command-move (fighter-kit f) :q)) :blend 0 :time 0.1))
     (when (>= sf *hoho-frames*) (to-idle e 3))))

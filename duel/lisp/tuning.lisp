@@ -379,7 +379,7 @@ user's decision 2026-09-28: cool faster; the design's pacing was 3.3 s; 46000+k)
 to warm the top bar away; 55000+k).")
 (defparameter *ru-cold-m18* '(:sig 25)
   "Cold each command spends at -18 C (the user's decision: only L; refused below its cost) ...")
-(defparameter *ru-cold-m50* '(:q 6 :f 12 :sig 36 :sp1 40 :sp2 40 :kikon 20 :breaker 20 :step 12 :hoho 20) "... at -50 C ...")
+(defparameter *ru-cold-m50* '(:q 6 :f 12 :sig 36 :sp1 40 :sp2 40 :kikon 20 :breaker 20 :step 12) "... at -50 C (a Hoho adds cold: rukia.lisp *RU-HOHO-COLD*) ...")
 (defparameter *ru-cold-zero* '(:q 20 :f 40 :sig 100 :sp1 100 :sp2 100 :kikon 60)
   "... and at absolute zero (L and the SPs cash the whole top bar: she drops to -50; J / K / O 15 / 30 / 50 -> 20 / 40 / 60
 with the faster cooling: the A/B).")

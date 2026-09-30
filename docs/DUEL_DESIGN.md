@@ -1475,3 +1475,9 @@ Rukia 9 → 15, SR Senjumaru 9 → 14; IK Ichigo 12 → 15. The awaken A/B ("nev
 SS 30 / 29 / 24, SI (Senjumaru) 39 / 27 / 35; Ichigo IY 4 / 3 / 1, IK 2 / 9 / 4, IR 4 / 3 / 5, II 4 / 3 / 2, failing as
 before (since the user's damage numbers). Not retuned. G2: yy's hash lines and kk changed (kk now `winner P2 konpaku 0-1
 ticks 9747 secs 162.4`), YK unchanged.
+
+## Rukia: a Hoho adds cold (2026-09-30)
+
+A new generic hook point, `:hoho` (kit `:hooks`; `hoho-step` calls it on the reappearance frame). Rukia's awakened bands
+use it: a Hoho adds 50 cold and the band follows at once, so a Hoho can land her behind him at -273 (docs/DUEL_RUKIA.md
+"A Hoho adds cold"). Zero stays rooted.

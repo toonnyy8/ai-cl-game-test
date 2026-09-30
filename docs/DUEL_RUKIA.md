@@ -994,3 +994,21 @@ f36, so there is still one ring at a time), the CPU victim's tell shifted to (21
 longer modelled; `optic-p` stays in rules.lisp, unused). The garb-block look now keys on `:freeze-touch` so her blocks keep
 the ice look, not West's fire. Native gate: RY 139.8 s (Rukia 12 / 20), RK 154.5 (14), RR 176.9, IR 193.4, SR 189.9, all
 K.O.; her A/B ("never" wins of 60, streams 100 / 300 / 500): RY 33 / 27 / 35, RK 42 / 33 / 35, RR 33 / 39 / 32.
+
+### A Hoho adds cold: dive in and freeze (the user, 2026-09-30)
+
+The user wanted -273 to reach the opponent better and chose 「Hoho 可以增加冷度量表」 over a Hoho at zero: a Hoho (which
+always reappears behind him, from any distance) closes in, enters -273 on arrival, and the zero field (5.5 m, retreat
+x0.55, back Steps x0.75) then holds him. Zero stays rooted (no Hoho there). Built:
+
+- The awakened bands' `:hooks (:hoho rukia-hoho-cold)` (-18, inherited by -50 and zero; zero never Hohos): on the Hoho's
+  reappearance frame (`*hoho-appear*`, the new generic `:hoho` hook point in `hoho-step`) cold **+50** (`*ru-hoho-cold*`,
+  capped at 200), and the band follows at once (`temp-band`: the gauge step resolves only once she is free and warms her
+  first, so a Hoho to 200 would never reach zero otherwise). Not in the THAW.
+- -50's Hoho no longer spends cold (was 20): `*ru-cold-m50*` has no `:hoho`, and `cold-spend! :hoho` is gone.
+- Zero entered by a Hoho raises the ward at once, as from a held guard (`rukia-zero-enter` also on `:hoho`).
+- -50's CPU: `:reflex rukia-ai-hoho-in`, beyond 3 m when this Hoho reaches -273, `*ai-ru-hoho-in*` 0.05 per free step.
+
+Checked in-game (debug 2422 then 67165: -50 at 165 cold, Hoho): `P1 ZERO` on the reappearance frame, U: BRACE. Native
+gate (seeds 1-20): RY 169.5 s (Rukia 12 / 20), RK 151.6 (16), RR 197.6, IR 202.7 (Rukia 17), SR 199.4 (Rukia 14; was 6),
+all K.O.; her A/B ("never" wins of 60, streams 100 / 300 / 500): RY 23 / 41 / 27, RK 31 / 34 / 23, RR 27 / 24 / 27.

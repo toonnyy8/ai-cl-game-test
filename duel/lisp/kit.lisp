@@ -419,7 +419,7 @@ child's keys win, :commands merge per command, :strings add. Keys:
   :stun-tolerance n                  the hidden stun the form takes before the blow-away (default *STUN-TOLERANCE*;
                                      a derived form inherits it)
   :hooks (point fn ...)              the character's own mechanics (KIT-HOOK; DUEL_DESIGN.md, Character code
-                                     layout): :u (e: U pressed; the form never guards), :step (e: a Step's frame 0),
+                                     layout): :u (e: U pressed; the form never guards), :step (e: a Step's frame 0), :hoho (e: a Hoho reappears),
                                      :ok (e cmd combo: may the command start; NIL refuses it with the :refused cue),
                                      :tick (e f g: every sim step), :hit / :struck (e other res hw mv hazard ranged: after
                                      a hit it dealt / took), :parried (e att: a catch by its parry), :draw (e rdt: looks
