@@ -598,11 +598,34 @@ action started."
 
 (defun stun-step (e f vp)
   "A reaction / blockstun counts down (Burst Reverse may be pressed); then neutral (guard again if
-Guard is held)."
+Guard is held). Blockstun past its end waits while the guard lock holds him (FIGHTER-GLOCK: his attacker may still
+chain); only BLUE and the awakening break it."
   (when (zerop (fighter-lock f)) (command! e f vp '(:burst :awaken)))
-  (when (>= (incf (fighter-sf f)) (fighter-stun f))
+  (when (and (>= (incf (fighter-sf f)) (fighter-stun f)) (not (and (eq (fighter-state f) :guard-hit) (fighter-glock f))))
     (to-idle e)
     (when (guard-p e vp) (setf (fighter-state f) :guard (fighter-guard-t f) *guard-raise*) (play-clip e :sh-guard :blend 3))))
+
+(defun chain-more-p (e f mv)
+  "Can E's move MV still go on into a follow-up (the guard lock's MORE): a next J / K link, an L link L may start, the
+on-hit cancels (its hit landed: SP, Hoho, a :cancel L, the O ender), or ORANGE (BURST-OK-P, a blocked L / O included)?"
+  (let ((kit (fighter-kit f)) (name (mv-name mv)))
+    (or (string-link-p kit name)
+        (let ((l (kit-l-link kit name))) (and l (kit-command-ok-p e :sig kit nil l)))
+        (and (eq (fighter-contact f) :hit) (member (mv-kind mv) '(:quick :flash)))
+        (eq (burst-ok-p e) :orange))))
+
+(defun guard-lock-of (f)
+  "Does the guard lock hold F (in blockstun) on his next step (rules GUARD-LOCKED-P, his attacker's side read here)?"
+  (let* ((o (fighter-opp f)) (fo (and o (entity-alive-p o) (fighter o))) (mv (and fo (eq (fighter-state fo) :move) (fighter-move fo))))
+    (and fo
+         (guard-locked-p (fighter-state f) (fighter-glock f) (fighter-chain fo) (fighter-state fo) (fighter-phase fo)
+                         (fighter-sf fo) (if mv (mv-s mv) 0) (if mv (mv-a mv) 0) (if mv (mv-r mv) 0)
+                         (and mv (or (fighter-contact fo) (fighter-chained fo)))
+                         (and mv (eq (fighter-state f) :guard-hit) (chain-more-p o fo mv))))))
+
+(defun guard-locked-now-p (f)
+  "Is F held past his blockstun's end by the guard lock right now (the HUD's LOCK tint, the CPU)?"
+  (and (eq (fighter-state f) :guard-hit) (fighter-glock f) (>= (fighter-sf f) (fighter-stun f))))
 
 (defun step-step (e f vp)
   "The hop; at its end a Step still held becomes a run (so holding never shortens a Step)."
@@ -826,4 +849,6 @@ step: a symmetric sim), step each, then keep them apart."
         (when m
           (setf (fighter-burst f) nil)
           (unless *cine* (burst! e m)))))
+    ;; the guard lock, judged once both stepped (and any burst applied), read by the blockstun on the next step
+    (do-entities (e (f fighter)) (setf (fighter-glock f) (guard-lock-of f)))
     (when (and a b) (separate-fighters a b))))

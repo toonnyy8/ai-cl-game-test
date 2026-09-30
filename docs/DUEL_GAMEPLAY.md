@@ -110,7 +110,7 @@ generic systems; only `debug.lisp` names characters, to set up scenes). The modu
 name-leak check (it must print nothing):
 
 ```sh
-grep -nE ':ya-|:ke-|:ru-|:ic-|:sj-|yama|kenpachi|rukia|ichigo|senju' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow,endless-rules,endless}.lisp
+grep -nE ':ya-|:ke-|:ru-|:ic-|:sj-|yama|kenpachi|rukia|ichigo|senju' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow,endless-rules,endless,learn}.lisp
 ```
 
 Engine modules the duel was the first user of (moved into the engine by the harvest):
@@ -318,8 +318,11 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P1 konpaku 1-0 ticks 12426 secs 207.1
+duel -> RESULTS winner P1 konpaku 3-0 ticks 10862 secs 181.0
 ```
+
+(The guard lock, the user 2026-09-30 (DUEL_DESIGN "Guard lock"): all three changed; YK was `winner P1 konpaku 1-0
+ticks 12426 secs 207.1` from BLUE's Reiatsu bar through the Reishi regen 70/s.)
 
 (The slower awakening gauge, ×0.7, the user 2026-09-30: YK changed again, it was `winner P2 konpaku 0-5 ticks 8247 secs
 137.4` after the three burst modes (DUEL_DESIGN "Burst modes", the same day), which changed all three; before them YK was

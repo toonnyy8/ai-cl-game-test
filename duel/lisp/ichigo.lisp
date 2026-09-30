@@ -637,7 +637,7 @@ link *AI-IC-PARRY-BS-P* of the time, on the frame that puts the string's next hi
               (setf (ics-bs-at st) (max 1 (- (fighter-stun f) 6))))))
         (setf (ics-bs-key st) sf)
         (when (= sf (ics-bs-at st)) (setf (ics-bs-at st) -1) (ai-press b :sig 2)))))
-  (when (and (vpad-command-pressed-p vp :sig nil) (kit-command-ok-p e :sig))
+  (when (and (vpad-command-pressed-p vp :sig nil) (kit-command-ok-p e :sig) (not (guard-locked-now-p f)))   ; (not held by the guard lock)
     (vpad-consume! vp :sig)
     (start-move e (kit-command-move (fighter-kit f) :sig))
     (clog "~a parry from blockstun" (side-name e))))

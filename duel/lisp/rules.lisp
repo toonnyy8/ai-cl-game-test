@@ -244,6 +244,23 @@ never passes or overshoots him."
 LANDED, from its first hit frame HIT-FRAME until its recovery ends (TOTAL)."
   (and landed (>= sf hit-frame) (< sf total)))
 
+;; ---------------------------------------------------------------- the guard lock (the user 2026-09-30)
+(defun guard-locked-p (def-state was chain-left state phase sf s a r touched more)
+  "The guard lock (docs/DUEL_DESIGN.md \"Guard lock\"): does a defender in blockstun (DEF-STATE :guard-hit) stay there,
+guarding and unable to act, once his blockstun would end, because his attacker may still chain? Judged after both
+stepped, for the defender's next step. The attacker: ORANGE's window open (CHAIN-LEFT > 0) while he is free (STATE
+:idle / :guard: the next move he starts is the chain); or in a :move (PHASE, move frame SF of S / A / R) that TOUCHED him
+(a hit or a block, or it is a string follow-up) with MORE it may still start (a J / K link, an L link, an on-hit cancel,
+ORANGE) and a frame left to start it on (SF + 1 < S + A + R: CHAIN-OPEN-P / CANCEL-OPEN-P end there); or, WAS locked
+last step, a follow-up he just started that has not passed its active frames (its pre-strike PHASE, or SF < S + A). The
+escapes (a BLUE burst, the awakening) leave blockstun, so the lock is over. Hazards never hold it."
+  (and (eq def-state :guard-hit)
+       (or (and (plusp chain-left) (member state '(:idle :guard)))
+           (and (eq state :move)
+                (or (and was (or (not (eq phase :main)) (< sf (+ s a))))
+                    (and touched more (< (1+ sf) (+ s a r))))))
+       t))
+
 (defun invulnerable-frame-p (sf window)
   "Is move frame SF inside the inclusive iframe WINDOW (from to), e.g. *STEP-IFRAMES*?"
   (and window (<= (first window) sf (second window))))
