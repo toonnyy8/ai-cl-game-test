@@ -529,9 +529,10 @@ Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規�
 驗證方法：每 600 步印一行 `duel hash`（`state-hash-line`，`duel/lisp/debug.lisp` 第 83～96 行，位置、朝向、每個量表、上一次 Kikon 突進值幾個魂魄、電腦的 heat）。`tests/scripts/duel-cvc-yk.json` 用種子 7 讓兩個電腦打完一場，最後一行一定是：
 
 ```
-duel -> RESULTS winner P1 konpaku 7-0 ticks 9328 secs 155.5
+duel -> RESULTS winner P2 konpaku 0-6 ticks 9044 secs 150.7
 ```
 
+（2026-10-01 完美 Hoho 的前置窗 8 → 12 幀之後，YK 這一場變了；之前是 `winner P1 konpaku 7-0 ticks 9328 secs 155.5`。）
 （2026-09-30 基礎 AI 學會新規則（對手靈子快見底時改用普通攻擊打出魂碎、L／O 打中也會開橙色爆氣）之後，三場都變了；之前是 `winner P2 konpaku 0-1 ticks 10288 secs 171.5`。）
 
 （2026-09-30 山本卍解「東」的防禦量表回復改成 1/4（破防後照舊）之後，這一行變了；減半時是 `winner P2 konpaku 0-1 ticks 10983 secs 183.1`，之前（防禦鎖定之後）是 `winner P1 konpaku 3-0 ticks 10862 secs 181.0`。）

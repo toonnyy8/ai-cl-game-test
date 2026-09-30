@@ -552,7 +552,9 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
   (flet ((perfect (sf z) (perfect-hoho-p sf (hw-from w) (hw-to w) (hw-vols w)
                                          0f0 0f0 0f0 0f0 -1f0 0f0 0f0 (float z 1f0) 0.4f0 1.8f0)))
     (check (perfect 3 -2.0))                  ; active in 6 f: perfect
-    (check (not (perfect 0 -2.0)))            ; 9 f away: too early
+    (check (perfect 0 -2.0))                  ; 9 f away: inside the 12 f lead (8 until 2026-10-01)
+    (check (not (perfect-hoho-p 0 (+ (hw-from w) 4) (+ (hw-to w) 4) (hw-vols w)   ; 13 f away: too early
+                                0f0 0f0 0f0 0f0 -1f0 0f0 0f0 -2f0 0.4f0 1.8f0)))
     (check (perfect 10 -2.0))                 ; active now
     (check (not (perfect 12 -2.0)))           ; over
     (check (perfect 3 -2.2))                  ; out of reach, but inside the 1 m inflation

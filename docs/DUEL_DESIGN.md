@@ -280,7 +280,7 @@ contact sends one ember mote from the hit to the Reiatsu bars (sized by m).
 **Hoho** (30 flash-step): vanish and reappear 1.6 m behind the opponent facing him on f6; invulnerable
 f1–f14, 24 f total; not usable in blockstun / hitstun; 60 f lockout between two. It can also
 cancel any J / K link on hit (so can SP1 / SP2 and a `:cancel` L). **Perfect Hoho**: an opponent hit window (move or hazard)
-active now or within 8 f overlaps our hurt cylinder grown by 1 m, or his Breaker dash is within
+active now or within 12 f (8 until 2026-10-01, the user: a wider timing) overlaps our hurt cylinder grown by 1 m, or his Breaker dash is within
 2.7 m (his Kikon rush dash within 2.1 m). Then: "PERFECT", 0.45 s of 0.25× slow motion for both, the opponent's inputs locked 40 f,
 and the Hoho ends in an automatic counter strike on f14 (60 damage, 36 f stun).
 
@@ -545,7 +545,7 @@ with no derivation (cup 3) takes its parent's version of a move (`register-kit`)
 | Move (cup 3, NOMIHOSE; ×1.20) | S / A / R | Dmg | Block | Notes |
 |---|---|---|---|---|
 | J1, links 2 / 3, L, Shift+L, I, O | cup 2's | | | chip 20 % on block; Kikon **4** |
-| K **KUKAN-GIRI** `:ke-n-f1` | 20/4/22 | 90 | −4 | 4.2 m, 150°, stagger; at f20 its chord stays in the air: the **rift** (hazard `:rift`, a line 1.0 → 4.4 m, fixed in the world) cuts 20 f later (`*rift-delay*`): 50, stagger, knockback 1 m, guard 12, chip 20 %. On block it cuts inside N-F1's blockstun: **+8** (it closes the gap before link 2); on hit link 2 combos off it (K → MOROTE-ZUKI, J → KOTE: cup 3's K1 of the grid); on a whiff it stands there as a trap (a Hoho that touches it within 8 f is perfect) and whiffs R + 12. It closes if he is really hit before it cuts; the rift is no contact (a whiffed K1 whose rift hits gets no link 2) |
+| K **KUKAN-GIRI** `:ke-n-f1` | 20/4/22 | 90 | −4 | 4.2 m, 150°, stagger; at f20 its chord stays in the air: the **rift** (hazard `:rift`, a line 1.0 → 4.4 m, fixed in the world) cuts 20 f later (`*rift-delay*`): 50, stagger, knockback 1 m, guard 12, chip 20 %. On block it cuts inside N-F1's blockstun: **+8** (it closes the gap before link 2); on hit link 2 combos off it (K → MOROTE-ZUKI, J → KOTE: cup 3's K1 of the grid); on a whiff it stands there as a trap (a Hoho that touches it within 12 f is perfect) and whiffs R + 12. It closes if he is really hit before it cuts; the rift is no contact (a whiffed K1 whose rift hits gets no link 2) |
 | Shift+K **NOMIHOSE** `:ke-meteor-n` | 26/4/30 | **390** | −16 | the whole cup at once: on its first frame NOME is 0 and he is back in cup 1 (`ken-drink-dry`), so the cut resolves at ×1.0 and an O after it is cup 1's 2-Konpaku Kikon (no O ender: it isn't a string); within 6 m (`:crush-range`) it **breaks guard** (Guard Break, −35), beyond it is blockable (guard 22); the cleaver within 3.9 m (cup 3's MEN reach) is melee, the line beyond it ranged (§6.1); 1 bar |
 
 **The Bankai 卍解 and 片腕 KATAUDE** ([DUEL_KEN_BANKAI.md](DUEL_KEN_BANKAI.md), built 2026-09-28; the user's decisions
