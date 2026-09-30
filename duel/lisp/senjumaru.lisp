@@ -282,7 +282,7 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
   "The loom's CPU (every hank form; 星's weave distances are read by form in SENJU-SIG-HOLD; SP1 ends a string: SENJU-SP-ENDER).")
 
 (defkit :senjumaru :tsuji1 :inherit :base
-  :awakening t :heal 0 :form-name "TSUJI" :walk *walk-tsuji* :run *run-tsuji*
+  :awakening t :form-name "TSUJI" :walk *walk-tsuji* :run *run-tsuji*
   :mult *tsuji-mult* :taken *tsuji-taken* :reset-form nil :stance :sj-loom-stance :aura senju-aura-tsuji :cine sj-tsuji-cine
   :commands (:f :sj-t-k1 :sig :sj-kase-1 :sp1 :sj-tachinaoshi-1 :sp2 :sj-kasa :breaker :sj-breaker :kikon :sj-t-kikon)
   :grid (:sj-j1 :sj-j2 :sj-j3 :sj-t-k1 :sj-k2 :sj-t-k3 :sj-j2s :sj-k2s)

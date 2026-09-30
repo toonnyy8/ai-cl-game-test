@@ -128,7 +128,7 @@
 ;;; -18 C, the awakening's first band: the Shikai grid (+ TOSHU / HYOKA), frost on every hit, no chip on her; U guards
 ;;; and cools (the cold gauge, the kit meter); only L spends cold here (the user's decision 2026-09-28)
 (defkit :rukia :m18 :inherit :base
-  :awakening t :heal 0 :form-name "-18C" :walk *walk-m18* :run *run-m18* :passives (:chipless) :frost-touch *frost-touch*
+  :awakening t :form-name "-18C" :walk *walk-m18* :run *run-m18* :passives (:chipless) :frost-touch *frost-touch*
   :mult *rukia-awake-mult* :taken *rukia-awake-taken*
   :meter (:name "COLD" :max *cold-max* :temp t) :warm *ru-warm-m18* :cold *ru-cold-m18* :field *ru-field-m18*
   :reset-form :m18 :u-tag "U: COOL"

@@ -162,7 +162,7 @@
 
 (defkit :kenpachi :nozarashi :inherit :base    ; cup 1, KATATE: one hand, as the awakening leaves him
   :awakening t :mult *nozarashi-mult* :startup-add *nozarashi-startup* :reach-mult *nozarashi-reach*
-  :passives (:projectile-cut) :heal *nozarashi-heal* :form-name "KATATE" :kikon-konpaku 2
+  :passives (:projectile-cut) :form-name "KATATE" :kikon-konpaku 2
   :endless-form :nozarashi                      ; ENDLESS: every cup (and the Bankai, inheriting it) stays as cup 1, NOME 10
   :weapon :nozarashi :stance :ke-n-stance :aura :reiatsu :swing-sfx :whoosh-cleaver
   :enter-clips (:ke-release :ke-nome) :cine ken-nozarashi-cine :respect-callout "OMOSHIREE!"
@@ -229,7 +229,7 @@
 ;;; the Bankai (P in cup 3, red, free: combat.lisp BANKAI!): his Konpaku -> 1, his Reishi -> full (the user's decisions
 ;;; 2026-09-28); ×1.2; U is still DRINK; every heavy command spends a pip of the arm (UDE, the kit meter)
 (defkit :kenpachi :bankai :inherit :nomihose
-  :awakening t :mult *bankai-ken-mult* :heal 0 :form-name "BANKAI" :kikon-konpaku 4 :blade-chip *nomihose-chip*
+  :awakening t :mult *bankai-ken-mult* :form-name "BANKAI" :kikon-konpaku 4 :blade-chip *nomihose-chip*
   :bankai-form nil :passives (:projectile-cut :drink)
   :meter (:name "UDE" :max *arm-pips* :start *arm-pips*) :meter-gain nil
   :pips (:n *arm-pips* :to :kataude :cmds (:f :sig :sp1 :sp2 :breaker :kikon))

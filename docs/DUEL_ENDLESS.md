@@ -224,7 +224,7 @@ online boards.
 ## Design notes kept from the review
 
 1. **For Yamamoto and Rukia REVERT dominates stay**: the gauge is kept full, so stay only saves a cinematic, and revert
-   also allows holding the awakening back. The choice matters most for Kenpachi (revert banks his +150 awakening heal).
+   also allows holding the awakening back. The choice matters most for Kenpachi (revert banks his +150 awakening heal; since 2026-09-30 every character's awakening heals 20 % of max Reishi, so a revert banks it for everyone).
    Accepted: the user asked for the choice, not for balance between the two.
 2. **Running out the clock**: time-up wins clear stages, and ENDLESS rewards not losing Konpaku; watch the autopilot's
    time-up count.

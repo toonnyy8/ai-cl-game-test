@@ -72,7 +72,7 @@ the measurements close the file. Everything of hers lives in those two files (th
      the stitches (its strings deal −3 %, and there are no free unguardable 60s), walks slower, and pays for every zone
      with a visible weave. The A/B's knobs are in §9.
   2. **Named removals.** Awakening removes 刺絡の針 (the stitches) and 悪い癖, 神兵, 縫地, and some walking speed (§4.8).
-  3. **No heal.**
+  3. **No heal.** (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal").
   4. **Voluntary cheap, forced expensive.** A voluntary short weave costs nothing but zone size. A torn weave costs the
      hank and a 90 f lock.
   5. **The choice happens mid-match.** P is manual; the CPU follows a rule (§7.1).
@@ -260,7 +260,7 @@ universal ones.
 The Bankai [A ep. 26]: a torii becomes a golden loom that pours out red bolts, a red carpet runs out as a crossroads (辻),
 and cloth walls enclose the space. The loom weaves a patterned bolt for each enemy and unravels **one hank at a time** into
 an environment that wears the target down.
-- It is **permanent**, like every awakening, with **no heal** (`:heal 0`).
+- It is **permanent**, like every awakening, with **no heal** (`:heal 0`) (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal").
 - Kikon **3** (the universal awakened count), Soul Break 4.
 - Damage ×1.0 dealt and taken (`*tsuji-mult*`, `*tsuji-taken*`).
 - Walk **3.3**, run **8.0** (`*walk-tsuji*`, `*run-tsuji*`): the loom holds her to her ground.
@@ -459,7 +459,7 @@ In portrait the close-ups follow DUEL_MOBILE_DESIGN §15.3 (a close-up keeps its
 
 ## 6. The awakening: condition and entry cinematic
 
-**Condition:** the universal EVOLUTION, P from idle / walk / guard, once per match, **no heal**.
+**Condition:** the universal EVOLUTION, P from idle / walk / guard, once per match, **no heal** (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal").
 - The stitches go to 0; the guard gauge, Reiatsu and flash-step are kept.
 - She enters `:tsuji3` (黒砂 next, the queue's first hank), with no zone live.
 - The CPU's timing is a rule (§7.1).

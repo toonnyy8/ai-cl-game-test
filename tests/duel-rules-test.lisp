@@ -1182,7 +1182,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
   (check (and (= 2 (kit-kikon-konpaku b)) (every (lambda (k) (= 3 (kit-kikon-konpaku k))) (list m18 m50 z))
               (= 3 (nth-value 1 (kikon-result 9 (kit-kikon-konpaku b) t))) (= 4 (nth-value 1 (kikon-result 9 (kit-kikon-konpaku m18) t)))
               (eq 'ru-kikon-cine (kit-kikon-cine b)) (eq 'ru-hakka-cine (kit-kikon-cine m18)) (eq 'ru-hakka-cine (kit-kikon-cine z))
-              (eq 'ru-awaken-cine (kit-cine m18)) (= 0 (kit-heal m18))))
+              (eq 'ru-awaken-cine (kit-cine m18))))
   ;; the reaches: ENBU 8.0 m in <= 30 f; HAKKA's lane 6.5 / 7.5 / 9.0, no dash; J1 S7 beats every K1 in the game
   (let ((en (kit-command-move b :kikon)))
     (check (and (~= 8.0 (kikon-rush-reach (getf (mv-params en) :speed) (getf (mv-params en) :dash-max))) (= 30 (+ (getf (mv-params en) :aura) (getf (mv-params en) :dash-max) (mv-s en)))
@@ -1332,7 +1332,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (~= 3.8 (getf (mv-params hiki) :melee-range)) (= 13 (- (+ (hw-from hk) (hw-stun hk)) (mv-total hiki)))
               (< (mv-s kj1) 13)))
   ;; the Kikon counts 2 / 3 (a Soul Break 3 / 4); KESSA's Soul Break plays the Getsuga (its :soul-break-cine), its O 千影
-  (check (and (= 2 (kit-kikon-konpaku b)) (= 3 (kit-kikon-konpaku ks)) (kit-awakening ks) (zerop (kit-heal ks))
+  (check (and (= 2 (kit-kikon-konpaku b)) (= 3 (kit-kikon-konpaku ks)) (kit-awakening ks)
               (eq 'ic-kessa-getsuga-cine (kit-kikon-cine ks)) (eq 'ic-kikon-cine (kit-kikon-cine b))
               (eq 'ic-kessa-kikon-cine (mv-cine (kit-command-move ks :kikon)))
               (~= 8.6 (kikon-rush-reach 30.0 14)) (> (+ (mv-reach (kit-command-move ks :breaker)) 0.34) *breaker-trigger*)))
@@ -1472,7 +1472,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
                        (eq 'senju-weave-release (mv-release l)) (null (mv-release lk))
                        (= n (getf (mv-params lk) :hank)) (null (mv-hold lk)) (= 8 (mv-s lk)) (getf (mv-params lk) :combo)
                        (>= (mv-reach lk) 9.0) (eq (intern (format nil "SJ-TACHINAOSHI-~d" n) :keyword) (mv-name (kit-command-move k :sp1)))
-                       (= 1 (kit-command-cost k :sp1)) (kit-awakening k) (zerop (kit-heal k))
+                       (= 1 (kit-command-cost k :sp1)) (kit-awakening k)
                        (zerop (mv-cooldown l)))))                 ; (no COOLDOWN row: the torn lock is L's timer)
   ;; the combo cut: L after a K link hits before the K link's stagger ends (A 4 + S 8 + unfold 10 = 22 < 26)
   (check (< (+ 4 8 *unfold-combo*) (hitstun :stagger)))

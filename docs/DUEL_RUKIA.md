@@ -24,7 +24,7 @@ measurements are in "The cold-gauge rework: built" near the end.
   Guardable, one Step clears it, it vanishes if she is hit first, one at a time.
 - SP1 次の舞・白漣 HAKUREN: held, one to four stabs into the plaza, then a wide wave of cold that a side Step clears. SP2 参の舞・
   白刀 SHIRAFUNE: a 5 m ice-blade thrust. I = 縛道の四・這縄 HAINAWA (the Breaker). O = ENBU, a flash-step rush into a spin.
-- **The awakening 絶対零度 (no heal)**, rebuilt 2026-09-28 (the temperature rework, §4): **one cold gauge, two stacked
+- **The awakening 絶対零度 (no heal (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal"))**, rebuilt 2026-09-28 (the temperature rework, §4): **one cold gauge, two stacked
   bars (cold C 0–200)**. Guarding cools her (90 / s: a bar in 1.1 s), not guarding warms her, blocked blades cool her, real hits warm her.
   Bar 1 full → −50 °C; both full → −273.15 °C; bar 1 empty again → −18, bar 2 empty → −50. Actions spend cold (at −18
   only L, refused below its cost). Colder is slower (walk 3.4 / 2.8 / rooted) but hits harder and farther with other
@@ -190,7 +190,7 @@ SHIMO-TSUKI, HYŌRIN, NADARE, ENBU.
 The awakening is the true power: her own body temperature drops. It is **permanent**, like every awakening. **Since the
 temperature rework (built 2026-09-28, the user's decisions in "Playtest 1" and after it) its only resource is one cold
 gauge**, two stacked bars; the band the gauge sits in is the kit form (like Nozarashi's cups), so walk, run, commands,
-damage, reach, aura, stance and blade stay data. **No heal** (`:heal 0`). Kikon **3** in every band (the universal
+damage, reach, aura, stance and blade stay data. **No heal** (`:heal 0`) (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal"). Kikon **3** in every band (the universal
 awakened count), Soul Break 4. The step ladder, its timers, THAW and the L cooldown are gone.
 
 ### 4.1 The cold gauge (the kit meter `:temp`, cold C 0–200)
@@ -352,7 +352,7 @@ close-ups follow §15.3 of the mobile design (a close-up keeps the lens; the bod
 
 ## 6. The awakening: condition and entry cinematic
 
-**Condition**: the universal Fighting Spirit gauge (EVOLUTION), P from idle / walk / guard, once per match. **No heal**. The
+**Condition**: the universal Fighting Spirit gauge (EVOLUTION), P from idle / walk / guard, once per match. **No heal** (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal"). The
 guard gauge, Reiatsu and flash-step are kept. She enters **−18 °C** with C 0. The CPU's timing is a rule, not a reflex (§7).
 
 **`ru-awaken-cine` 絶対零度 (132 f)**

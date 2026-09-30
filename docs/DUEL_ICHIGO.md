@@ -89,7 +89,7 @@ seed gate and the A/B decide them. Structure and depth follow `docs/DUEL_RUKIA.m
 - The six sidegrade rules (report §「跨角色原則」), and where each is met:
   1. **Kikon count.** The awakened count stays 3 (the user's decision); the design offsets it: Kessa's strings deal about −10 %, he has no hold-guard, and the A/B's knobs are in §9.
   2. **Named removals.** Kessa loses hold-guard, 月牙十字衝, the cross links, 双牙 SŌGA and walking speed (§4.8).
-  3. **No heal.** The awakening restores nothing.
+  3. **No heal.** The awakening restores nothing. (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal").
   4. **Active cheap, forced expensive.** Catch vs whiff: +40 vs −20. Running his own gauge empty (U refused until 20) vs a GUARD CRUSH (guardless until full).
   5. **The choice happens mid-match.** P is manual; the CPU follows a rule (§7.1).
   6. **The Fighting Spirit gauge** is unchanged.
@@ -235,7 +235,7 @@ Canon notes:
 ## 4. The awakened kit: 血鎖の一護 KESSA NO ICHIGO (form `:kessa`) [A]
 
 Half-Hollowfied, then Bankai: the two blades become one, and blood-chain reiatsu bursts from his neck, hands and feet [A,
-official description]. It is **permanent**, like every awakening, with **no heal** (`:heal 0`).
+official description]. It is **permanent**, like every awakening, with **no heal** (`:heal 0`) (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal").
 - Kikon **3** (the universal awakened count), Soul Break 4.
 - Damage ×1.0 dealt and taken (`*kessa-mult*`, `*kessa-taken*`); the A/B tunes them.
 - Walk **3.6**, run **9.0** (`*walk-kessa*`, `*run-kessa*`): he holds ground at chain range.
@@ -432,7 +432,7 @@ close-ups follow DUEL_MOBILE_DESIGN §15.3.
 
 ## 6. The awakening: condition and entry cinematic
 
-**Condition:** the universal EVOLUTION, P from idle / walk / guard, once per match, **no heal** (Q7). The chain gauge (the
+**Condition:** the universal EVOLUTION, P from idle / walk / guard, once per match, **no heal** (Q7) (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal"). The chain gauge (the
 guard gauge), Reiatsu and flash-step are kept as they are. The CPU's timing is a rule (§7.1).
 
 **`ic-kessa-cine` 血鎖の一護 (168 f; unskippable)**

@@ -610,6 +610,8 @@ duel -> RESULTS winner P1 konpaku 3-0 ticks 10862 secs 181.0
 
 三種都要瞬步量表 70 以上（使用者：「一樣維持要兩格才能爆氣」），開的時候不扣，之後每秒掉 18，到 0 結束；期間瞬步量表不會回，但不滿一格也能 Hoho（花掉剩下的）。Kikon 打中時攻擊方拿回 35 瞬步和 1 格靈壓。
 
+**覺醒先回兩成血**（使用者 2026-09-30：「統一幫我覺醒先恢復 20% 血量」）：每個角色覺醒的那一刻都先回最大靈子的 20%（1300 的 260），之後才是和白色爆氣一樣的持續回復。以前這是每個型態自己的 kit 鍵 `:heal`（只有野晒回 150，其他都是 0）；現在改成一個共用的數字 `*awaken-heal*`（`tuning.lisp`），在 `combat.lisp` 的 `awaken!` 裡加上去，`:heal` 這個鍵就刪掉了。劍八的卍解本來就回滿，不受影響。
+
 讀程式的順序：選模式是純函式 `burst-mode`、`burst-allowed-p`（`rules.lisp`），`combat.lisp` 的 `burst-mode-of` 把戰士的狀態餵給它；`burst!` 開始、`burst-step`（在 `gauge-system` 裡）每格扣量表和白色的回復、`burst-end!` 結束；橙色的前搖縮短在 `fighter.lisp` 的 `start-move`（`fighter-chain` 是剩下的格數）。量表和光環的顏色在 `vfx.lisp` 的 `burst-color`，藍色是新加的第 13 個卡通調色盤（`engine/shaders/fx-toon-pal.wgsl` 的 12 號）。設計和數字在 [DUEL_DESIGN.md](DUEL_DESIGN.md) 的「Burst modes」。
 
 ### 9.7 手機單手模式（片手 ONE-HAND）與安裝成 App

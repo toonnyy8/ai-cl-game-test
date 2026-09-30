@@ -511,7 +511,7 @@ and spends no flash-step (the user 2026-09-30)."
     (clog "~a form ~a" (side-name e) form)))
 
 (defun awaken! (e)
-  "Awakening (once per match): E breaks free as a Burst does (REPEL!), the kit's awakened form and its heal, then the
+  "Awakening (once per match): E breaks free as a Burst does (REPEL!), the kit's awakened form, *AWAKEN-HEAL* of max Reishi, then the
 form's :cine if it has one (both fighters idle after it). The guard gauge is left as it is."
   (let* ((g (gauges e)) (o (opp-of e)))
     (repel! e)                                          ; the moment breaks his attack, as a Burst (the user 2026-09-29)
@@ -520,7 +520,7 @@ form's :cine if it has one (both fighters idle after it). The guard gauge is lef
     (set-form e (kit-awaken-form (kit-of e)))
     (let ((st (getf (kit-meter (kit-of e)) :start)))    ; NOME starts at 10
       (when st (setf (gauges-meter g) (f32 st) (gauges-meter-idle g) 0)))
-    (setf (gauges-reishi g) (min (gauges-reishi-max g) (+ (gauges-reishi g) (kit-heal (kit-of e)))))
+    (setf (gauges-reishi g) (min (gauges-reishi-max g) (+ (gauges-reishi g) (round (* *awaken-heal* (gauges-reishi-max g))))))
     (emit :awaken e)
     (if (kit-cine (kit-of e))
         (start-cine (kit-cine (kit-of e)) e o :after (lambda () (to-idle e 0) (to-idle o 0)))

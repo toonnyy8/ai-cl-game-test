@@ -198,7 +198,7 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
 ;;; KESSA NO ICHIGO: permanent, no heal, Kikon 3 (O: 2-4 by the clones). A normal guard; L the parry (and from blockstun);
 ;;; a clone on a Step (:step) and a Hoho; the clones' answers, the O charge and the afterimages in his :tick hook
 (defkit :ichigo :kessa :inherit :base
-  :awakening t :heal 0 :form-name "KESSA" :walk *walk-kessa* :run *run-kessa* :mult *kessa-mult* :taken *kessa-taken*
+  :awakening t :form-name "KESSA" :walk *walk-kessa* :run *run-kessa* :mult *kessa-mult* :taken *kessa-taken*
   :weapon :tensa :hide (:shikai :mark) :stance :ic-k-stance :aura ichigo-aura-kessa :cine ic-kessa-cine
   :passives (:parry-block)
   :hooks *kessa-hooks*

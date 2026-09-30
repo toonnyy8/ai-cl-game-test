@@ -186,7 +186,7 @@ new button."
 (defstruct (kit (:conc-name kit-))
   "One character in one form. See DEFKIT for the fields."
   (character nil) (form nil) (inherit nil) (name nil)
-  (awakening nil) (awaken-form nil) (duration nil) (burn 0.0) (heal 0)
+  (awakening nil) (awaken-form nil) (duration nil) (burn 0.0)
   (mult 1.0) (taken 1.0) (guard-to nil) (drop-to nil) (keep nil) (cornered 0.0) (cornered-max 0.0) (passives nil) (blade-chip nil)
   (walk 3.0) (run 8.0) (run-clips '(:sh-run :sh-skate-b :sh-slide-r :sh-slide-l)) (reishi *reishi-max*) (body nil) (weapon nil) (stance nil) (hide nil) (aura nil)
   (intro nil) (win nil) (intro-callout nil) (intro-weapon nil) (callout nil)
@@ -318,7 +318,7 @@ Cornered with LOST Konpaku."
                         (append spec (loop for (k v) on pspec by #'cddr
                                            unless (member k '(:inherit :startup-add :reach-mult :grid))
                                              append (list k v))))))
-    (destructuring-bind (&key inherit name awakening awaken-form duration (burn 0.0) (heal 0) (mult 1.0) (taken 1.0) guard-to drop-to keep
+    (destructuring-bind (&key inherit name awakening awaken-form duration (burn 0.0) (mult 1.0) (taken 1.0) guard-to drop-to keep
                            (cornered 0.0) (cornered-max 0.0) passives blade-chip (walk 3.0) (run 8.0)
                            (run-clips '(:sh-run :sh-skate-b :sh-slide-r :sh-slide-l)) (reishi *reishi-max*)
                            body weapon stance hide aura intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
@@ -330,7 +330,7 @@ Cornered with LOST Konpaku."
       (declare (ignore grid))
       (let ((kit (make-kit :character character :form form :inherit inherit :name name
                            :awakening awakening :awaken-form awaken-form :duration duration :burn burn
-                           :heal heal :mult mult :taken taken :guard-to guard-to :drop-to drop-to :keep keep :cornered cornered :cornered-max cornered-max
+                           :mult mult :taken taken :guard-to guard-to :drop-to drop-to :keep keep :cornered cornered :cornered-max cornered-max
                            :passives passives :blade-chip blade-chip :walk walk :run run :run-clips run-clips :reishi reishi :body body
                            :weapon weapon :stance stance :hide hide :aura aura :intro intro :win win
                            :intro-callout intro-callout :intro-weapon intro-weapon :callout callout
@@ -390,7 +390,7 @@ child's keys win, :commands merge per command, :strings add. Keys:
   :drop-to FORM :keep (cmd ...)      any kit command not in :keep switches to FORM on its frame 0 and starts
                                      FORM's move (Bankai West: every attack but SP1 / L goes back to East)
   :awakening T (an awakened form)    :awaken-form FORM (what Awaken turns this character into)
-  :duration seconds (NIL = permanent; then back to :inherit)   :burn Reishi fraction/s   :heal
+  :duration seconds (NIL = permanent; then back to :inherit)   :burn Reishi fraction/s
   :startup-add :reach-mult           derive the inherited moves (not inherited themselves)
   :meter (:name :max :full-form)     the character's meter (Inferno -> :hellfire)
   :enter-clips :enter-hook :exit-hook  form change presentation

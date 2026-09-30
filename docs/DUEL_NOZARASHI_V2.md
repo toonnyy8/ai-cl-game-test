@@ -144,7 +144,7 @@ Folded into A:
 - Walk 4.4 m/s, run 10 m/s. The run uses the new faces-the-opponent clip set (forward run / side slide /
   back-skate), **shared by every cup**: the cleaver is carried on the shoulder while running, and the cup
   reads from the aura and the eyepatch.
-- Kept: Cornered (+5 % per Konpaku lost, max +25 %), +10 Reiatsu per reset, the awakening's 150 heal.
+- Kept: Cornered (+5 % per Konpaku lost, max +25 %), +10 Reiatsu per reset, the awakening's 150 heal (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal").
 - **Removed: `:ignore-armor`.** With West's new hold-U armour (same batch), ignore-armour would make
   West's U worthless against Nozarashi. The cut (×1.5 guard drain on armour too) replaces it: his heavy
   cuts burn West out faster instead of passing through.
@@ -475,7 +475,7 @@ Rules test (host):
     - **removed when Kenpachi is hit before f40**;
     - a Hoho whose start is within 8 f of the cut and touches it is perfect.
 11. Cash-out: NOME 0 and form T1 at f0; damage 390 at ×1.0; the guard break only on the ≤ 6 m window.
-12. Awakening: T1, NOME 10, heal 150, patch on. The first T3 reveals the patch, and it stays off after
+12. Awakening: T1, NOME 10, heal 150 (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal"), patch on. The first T3 reveals the patch, and it stays off after
     a drop.
 13. A reset keeps NOME, the rung and the cooldowns, and clears the rifts.
 

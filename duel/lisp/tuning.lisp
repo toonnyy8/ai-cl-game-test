@@ -183,6 +183,8 @@ and can't guard until the gauge is full again.")
 (defparameter *awaken-dealt* 0.035 "Awakening per point of damage dealt (0.05 until 2026-09-30).")
 (defparameter *awaken-taken* 0.049 "Awakening per point of damage taken (0.07 until 2026-09-30).")
 (defparameter *awaken-per-konpaku* 10.5 "Awakening per Konpaku lost (15 until 2026-09-30).")
+(defparameter *awaken-heal* 0.20 "Every awakening heals this fraction of max Reishi at once (the user 2026-09-30; before it only
+Nozarashi healed, 150).")
 (defparameter *awaken-cine-seconds* 1.8 "Awakening cinematic (sim frozen; documentation only: the scripts own their :len).")
 
 ;;; ---------------------------------------------------------------- hit reactions, combos, hitstop
@@ -293,7 +295,6 @@ guard gauge: the rework).")
 (defparameter *parry-stun* 32 "... the parried attacker staggers this long (his move ends) ...")
 (defparameter *parry-slide* 0.5 "... sliding this far.")
 (defparameter *bind-stun* 60 "South (the bind): frames the victim's feet are held. Pacing knob (design v3 §E): 60 -> 45.")
-(defparameter *nozarashi-heal* 150 "Reishi Nozarashi's awakening heals.")
 (defparameter *nozarashi-reach* 1.3 "Nozarashi KATATE (cup 1): reach x of the inherited moves (1.4 before the ladder).")
 (defparameter *nozarashi-startup* 2 "Nozarashi KATATE (cup 1): extra startup frames of the inherited moves (3 before: F1->F2 was a 0 gap).")
 (defparameter *ryote-reach* 1.4 "RYOTE (cup 2): reach x of the base moves it doesn't list.")

@@ -611,7 +611,7 @@ The TYBW lieutenant (black shihakushō, the armband, no haori; 1.44 m, `:rukia` 
 frames of the hit's `:frost`, capped at 150, never stacked; Step / Hoho untouched); L 月白 TSUKISHIRO (a ring under the
 opponent, a guardable pillar 24 f later: the uncuttable `:freeze` hazard, fragile: gone if she is hit first), SP1 白漣
 HAKUREN (held stabs, then a wave a side Step clears), SP2 白刀 SHIRAFUNE (a 5 m ice-blade thrust), the Breaker 這縄
-HAINAWA, the O module ENBU. **The awakening 絶対零度** (no heal) is **one cold gauge of two stacked bars** (the kit meter
+HAINAWA, the O module ENBU. **The awakening 絶対零度** (no heal (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal")) is **one cold gauge of two stacked bars** (the kit meter
 `:temp`, cold C 0–200; the temperature rework built 2026-09-28, DUEL_RUKIA.md §4): guarding cools her 90 / s (GUARD HOLD's
 test; bracing at zero), not guarding warms her (10 / 12 / 5 per s: zero warms slowest, the user's decision), a blocked blade
 cools her ×1.5 of its guard value, a real hit warms her ×0.2 of its damage. Bar 1 full → −50 °C `:m50`, both full →
@@ -640,7 +640,7 @@ defence): J 乱月 RANGETSU (a lunge and four slashes, 72, −6), K 月落 TSUKI
 L GETSUGA TENSHŌ (the old wave, at f14 from L, L; cooldown 100), Step 月渡 TSUKIWATARI (a 3.5 m flash-step dash back into
 the stance, once per stance); after a K link the stance opens at f4 and every branch combos. SP1 月牙十字衝 JŪJISHŌ (a 3.6
 m cross wave that cuts opponent waves and fireballs), SP2 双牙 SŌGA, the Breaker MINEUCHI, the O module JŪJI. ×1.6 dealt /
-×0.8 taken. **The awakening 血鎖の一護 KESSA NO ICHIGO** (no heal, permanent): one white slab without point or guard
+×0.8 taken. **The awakening 血鎖の一護 KESSA NO ICHIGO** (no heal (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal"), permanent): one white slab without point or guard
 (`:tensa`), two horns, the hair split black, the left half-face black, barefoot, blood coils; **a normal guard**; J / K
 pure cuts (J 2.6 m, K 3.2 m); **L the parry 鎖盾** (from blockstun too, its own window f2–25, 10 of the guard gauge, a
 catch +20 and a 40 f stagger, the counter 残月返し +15); **the clones 分身**: a Step (at its take-off point) or a Hoho (in
@@ -665,7 +665,7 @@ stuck to him (a Hoho in the yank is perfect); after a K link its combo copy (S 6
 SHINPEI: a Divine Soldier walks the line to him (3.5 m/s), winds up 18 f, thrusts (50, guarded facing her), twice at most;
 any of his windows or hazards kills it and it sews one stitch into him. SP2 傘 KASA: f4–27 a guard for melee, a **catch**
 for hazards and ranged hits (no stun, no gauge), then the tendrils always fire (40 + half the largest caught hit, ≤ 120).
-O 縫地 NUICHI (§6.3). **The Bankai 娑闥迦羅骸刺絡辻 SHIGARAMI NO TSUJI** (no heal) is six hank forms `:tsuji1`–`:tsuji6` in a
+O 縫地 NUICHI (§6.3). **The Bankai 娑闥迦羅骸刺絡辻 SHIGARAMI NO TSUJI** (no heal (superseded 2026-09-30: every awakening heals 20 % of max Reishi, DUEL_DESIGN.md "Awakening heal")) is six hank forms `:tsuji1`–`:tsuji6` in a
 fixed public order (the form is the hank the loom unravels next, 機 HATA on the HUD): L held weaves (20–60 f, 1–3 passes:
 radius ×0.8 / 0.9 / 1.0, life ×0.5 / 0.75 / 1.0, damage ×0.8 / 0.9 / 1.0), released it unfolds a zone under him (20 f,
 fragile: a hit on her during the weave or the unfold **tears** it, the hank lost, L locked 90 f), one live at a time;
@@ -1458,3 +1458,20 @@ konpaku 3-0 ticks 10862 secs 181.0`.
 
 **Escapes confirmed (the user, 2026-09-30: 「兩者都行」):** both BLUE and the awakening (Kenpachi's Bankai included) break
 the guard lock.
+
+## Awakening heal (2026-09-30)
+
+The user: 「統一幫我覺醒先恢復 20% 血量」. Every awakening (`awaken!`) now heals **`*awaken-heal*` 0.20 of max Reishi** (260
+of 1300) at once, before the awakening's WHITE-like regen window (`start-awake-regen!`). This replaces the per-kit `:heal`
+key, which is deleted: only Nozarashi healed (150), every other awakening healed 0. Kenpachi's Bankai (`bankai!`) still
+refills to full, unchanged. In Endless, a revert re-banks the heal for every character (it banked Kenpachi's 150 before).
+
+### Measured (native seed gate, 2026-09-30)
+
+15 pairings × 20 seeds: 300 / 300 K.O., medians 150.2–226.6 s (before: 151.2–226.3). Over 210: II 226.6 (was 226.3), SI
+214.0 (was 221.4). Wins moved toward Rukia (awakened from her guard, she now gains the heal): RK Rukia 15 → 18 of 20, IR
+Rukia 9 → 15, SR Senjumaru 9 → 14; IK Ichigo 12 → 15. The awaken A/B ("never" wins of 60, streams 100 / 300 / 500): RY 23
+/ 41 / 27, RK 31 / 34 / 23, RR 32 / 32 / 36; SY 32 / 32 / 30, SK **19 / 20 / 17** (before 19 / 21 / 14), SR 25 / 27 / 27,
+SS 30 / 29 / 24, SI (Senjumaru) 39 / 27 / 35; Ichigo IY 4 / 3 / 1, IK 2 / 9 / 4, IR 4 / 3 / 5, II 4 / 3 / 2, failing as
+before (since the user's damage numbers). Not retuned. G2: yy's hash lines and kk changed (kk now `winner P2 konpaku 0-1
+ticks 9747 secs 162.4`), YK unchanged.
