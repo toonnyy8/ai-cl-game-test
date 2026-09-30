@@ -1496,3 +1496,11 @@ secs 183.1`), kk unchanged.
 `*east-gg-regen*` 0.25 (5.5 -> 1.375 / s) and `gg-regen` applies MULT only when not guardless (6.5 / s after a crush, as
 everyone). Native gate (seeds 1-20): YY 165.9 s, YK 166.9 (Yamamoto 13 / 20), RY 160.7 (Rukia 13), IY 181.3 (Yamamoto
 13), SY 157.5 (Yamamoto 11), all K.O. and in the band. G2: yy's hash lines and yk changed (yk now `winner P2 konpaku 0-1 ticks 10288 secs 171.5`).
+
+## Soul Break refund (2026-09-30)
+
+The user: 「Soul Break 也給與一樣的收益」. A Soul Break now refunds its attacker as a connected Kikon does
+(`settle-souls`: every attacker of the step's Kikons and Soul Breaks, once, gets `kikon-refund`: +35 flash-step, +1
+Reiatsu bar, after the reset ended the bursts). Native gate (15 x 20): 300 / 300 K.O., medians 152.6-218.8 s (II 213.4
+-> 204.7, back inside; SI 218.8 over, unchanged). Awaken A/B as before (Rukia, Senjumaru >= 20 but SK 17 / 20 / 19; Ichigo
+failing). G2: yy's hash lines changed, yk and kk unchanged.

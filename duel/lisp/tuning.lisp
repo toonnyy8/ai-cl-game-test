@@ -250,7 +250,7 @@ a combo (critique-design 1.7: not from hit 1).")
 (defparameter *chain-window* 12 "ORANGE: frames after the cancel in which the next move started has its startup cut ...")
 (defparameter *chain-cut* 0.4 "... by this fraction (at least 1 f of startup left).")
 (defparameter *orange-gain* 1.5 "ORANGE: Reiatsu from hits dealt and KOSEI, awakening from hits dealt, x this.")
-(defparameter *kikon-fs-refund* 35.0 "A Kikon that connects gives its user this flash-step (one of the burst's two bars) ...")
+(defparameter *kikon-fs-refund* 35.0 "A Kikon that connects (or a Soul Break: the user 2026-09-30) gives its user this flash-step (one of the burst's two bars) ...")
 (defparameter *kikon-reiatsu-refund* 100.0 "... and this Reiatsu (one bar); after any burst ended.")
 
 ;;; ================================================================ §4 damage multipliers

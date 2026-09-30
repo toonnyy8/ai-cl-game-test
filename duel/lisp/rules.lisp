@@ -575,7 +575,7 @@ startup, leaving at least 1 f."
   (max 0 (min (floor (* *chain-cut* (- s enter))) (- s enter 1))))
 
 (defun kikon-refund (fs reiatsu)
-  "A Kikon connected: its user's flash-step and Reiatsu after the refund (*KIKON-FS-REFUND*, *KIKON-REIATSU-REFUND*),
+  "A Kikon connected (or a Soul Break, since 2026-09-30): its user's flash-step and Reiatsu after the refund (*KIKON-FS-REFUND*, *KIKON-REIATSU-REFUND*),
 clamped. Values: fs reiatsu."
   (values (gauge-add fs *kikon-fs-refund* *fs-max*) (gauge-add reiatsu *kikon-reiatsu-refund* *reiatsu-max*)))
 

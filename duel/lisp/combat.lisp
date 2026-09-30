@@ -644,10 +644,10 @@ and frozen through the cinematic their looks would hang in its shots."
     (setf *kikons* nil *soul-breaks* nil)
     (when (or kk sb)
       (do-entities (e (f fighter)) (burst-end! e))   ; the reset ends every burst, before the Kikon's refund
-      (loop for (att nil nil) in kk                   ; a Kikon that connected: a flash-step bar and a Reiatsu bar back
-            do (let ((g (gauges att)))
-                 (multiple-value-bind (fs r) (kikon-refund (gauges-fs g) (gauges-reiatsu g))
-                   (setf (gauges-fs g) (f32 fs) (gauges-reiatsu g) (f32 r)))))
+      (dolist (att (remove-duplicates (append (mapcar #'first kk) (mapcar #'car sb))))   ; a Kikon that connected, or
+        (let ((g (gauges att)))                         ; a Soul Break (the user 2026-09-30): a flash-step bar and a Reiatsu bar back
+          (multiple-value-bind (fs r) (kikon-refund (gauges-fs g) (gauges-reiatsu g))
+            (setf (gauges-fs g) (f32 fs) (gauges-reiatsu g) (f32 r)))))
       (let ((kos (append (loop for (att def nil) in kk when (settle-konpaku att def nil) collect def)
                          (loop for (att . def) in sb when (settle-konpaku att def t) collect def)))
             (a (if kk (first (first kk)) (car (first sb))))
