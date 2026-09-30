@@ -22,7 +22,7 @@ At every decision, with probability **p_exploit** the CPU takes the model's coun
 confident. Otherwise it draws from the bandit-adjusted table. p_exploit follows the human's recent results: it reads a
 human who is winning more, and one who is losing less.
 
-## 2. Situations (8)
+## 2. Situations (8; 9 since v2, §10: `:c-hit`)
 
 A situation is seen from the CPU about the human. The human's state is the **perceived** one (the delayed `snap`, as
 every CPU reflex sees him). The CPU's own state is felt at once, as the existing AI does. `learn-onset` decides which
@@ -40,7 +40,7 @@ situation begins on a step:
 Events (0–4) override an open neutral episode. An episode closes on his first action, or at its timeout. A timeout
 while he holds guard counts as `:guard`.
 
-## 3. Action classes (9)
+## 3. Action classes (9; 10 since v2, §10: `:burst`)
 
 `learn-action` classifies what he starts:
 
@@ -207,3 +207,51 @@ matches; ch = P2's counter-hits per match):
 - In the browser, a learning gate run twice showed the table saved to `soulduel.learn.1` and loaded back by the second
   run (the wake-up evidence went on from 2.9 to 4.7).
 - The SETTINGS stills fit in landscape 1280×720 and portrait 390×844.
+
+## 10. v2: the newer mechanics (the user, 2026-09-30)
+
+The user asked whether the learner picks up the mechanics added after it (the three bursts, the guard lock, Rukia's Hoho
+into -273 ...), then 「幫我把你推薦的都加進去，並更新基礎 AI」. Built:
+
+- **A burst is an action class** (`:burst`, the 10th): his burst is read from his gauge at once (its aura; the snap
+  carries no burst). **A new event situation `:c-hit`** (index 5; the neutral bands move to 6-8): our string's hit that
+  makes his burst possible (his combo reaches `*burst-min-hits*` and his flash-step has `*fs-burst*`). There only a
+  burst is his action (the knockback is not backing off); the combo ending or the 75 f timeout counts as `:guard` (he
+  took it). Per-situation counters (`*learn-sit-counters*`): a predicted burst in `:c-hit` is **baited** (`:bait`: the
+  string ends at its 2nd hit, `string-reflex`, then a guard: his BLUE breaks nothing and costs his flash-step); a
+  burst predicted in neutral (WHITE, regenerating) is rushed (`:dash-in`).
+- **The bandit has contexts**: the form's index in its character's kits (definition order, 8) x the kit meter's third
+  (3), so 24 x 5 bins x 10 arms. A neutral Hoho the kit's band leaves out gets `*learn-hoho-w*` 0.3 (when it may go),
+  so a Hoho can be learned where it pays (e.g. -50 near a full cold gauge: Rukia's dive into -273).
+- **Burst bandits**: per colour (WHITE / BLUE / ORANGE) a use / don't two-armed EXP3 (`learn-burst-p`: p e^u / (p e^u +
+  (1-p) e^n)) re-weights the base AI's own roll (`ai-burst-rolled`: `*ai-white-p*`, `*ai-burst-p*`, `*ai-orange-p*`;
+  the same one draw of the sim stream). A decision opens a 90 f window (unless one is open); its reward is the damage
+  balance plus the Reishi healed (no soul lost in it).
+- **Storage format 2** (`learn-encode`): indices 0-89 order 0, 100-999 order 1, 1000-2199 the bandit (its 300 largest),
+  2300-2308 the last classes, 2400-2405 the burst scores, 2950 the form, 2999 the version. A saved format 1 table is
+  read into it: the model (situations shifted past `:c-hit`) and the form carried over, the old bandit dropped.
+
+**The base AI** (every CPU; the gates change):
+
+- **The Soul Break finish** (`ai-sb-finish-p`): with the opponent under `*ai-sb-finish*` 0.08 of his Reishi, no Kikon
+  rush and no O ender: hits finish him, the Soul Break takes the Kikon count + 1.
+- **ORANGE off an L / O hit** (the rule since the user's 2026-09-30 decision): `ai-orange-p` also on a landed `:sig` /
+  `:kikon` move, as off a string's last link.
+
+**Measured.** Native seed gate (15 x 20): 300 / 300 K.O., medians 153.0-218.8 s (II 213.4, SI 218.8 over 210, as before
+at 226.6 / 214.0). The awaken A/B ("never" wins of 60, streams 100 / 300 / 500): RY 35 / 37 / 34, RK 34 / 28 / 26, RR 32 /
+27 / 27; SY 31 / 29 / 28, SK 17 / 21 / 17 (failing as before), SR 34 / 24 / 29, SS 30 / 28 / 23, SI (Senjumaru) 39 / 27 /
+32; Ichigo 1-8, failing as before. G2: all three changed (yk now `winner P1 konpaku 7-0 ticks 9328 secs 155.5`).
+
+The learning gate (P2's win rate, 30 matches x 4 fresh runs = 120 per cell; habit 5 is new: a burst-happy player,
+BLUE at every chance):
+
+| Human (P1) habit | YK: plain / learner | KR: plain / learner |
+|---|---|---|
+| plain CPU | .48 / **.68** | .72 / **.73** |
+| grab-happy | .68 / **.82** | .60 / **.84** |
+| Hoho-happy | .40 / **.60** | .67 / **.86** |
+| burst-happy | .59 / **.68** | .68 / **.75** |
+
+Against the burst-happy player the model predicts `:c-hit` = burst at 0.73 (a plain CPU player: guard, 0.86), and its
+guard reads (the bait's guard among them) pay 92-93 %.

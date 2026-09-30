@@ -467,6 +467,8 @@ than its perception delay after the combo's *BURST-MIN-HITS*th hit.")
 (defparameter *ai-white-p* 0.3 "(0.15 -> 0.3 and 6 -> 5 m, the user 2026-09-30: use WHITE more) Chance per neutral decision a CPU behind on Reishi SOUL-REVERSEs (WHITE) ...")
 (defparameter *ai-white-behind* 0.15 "... behind by at least this fraction of its max Reishi ...")
 (defparameter *ai-white-range* 5.0 "... and at least this far (m) from him.")
+(defparameter *ai-sb-finish* 0.08
+  "Under this fraction of his max Reishi the CPU finishes with hits (the Soul Break: the Kikon count + 1), no Kikon rush\n(2026-09-30, the base AI learning the newer rules; AI-SB-FINISH-P).")
 (defparameter *ai-dash-gap* 2.5
   "The CPU dashes (the kit's :dash / :dash-back chance, at a neutral decision) when it stands this
 far outside its preferred range: toward it from beyond, away from it from inside; it lets go in the

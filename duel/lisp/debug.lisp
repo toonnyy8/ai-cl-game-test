@@ -910,9 +910,10 @@ move-beat choices of DRAW-FIGHTER."
            (setf *gate-results* nil *turbo* nil *learn-gate* nil)))))
 
 ;;; ---------------------------------------------------------------- the learning CPU's gate (docs/DUEL_LEARNING.md)
-(defparameter *habits* #(nil :wake-j :block-guard :grab :hoho)
+(defparameter *habits* #(nil :wake-j :block-guard :grab :hoho :burst)
   "The scripted players (debug 200000+): 0 a plain CPU, 1 J on every wake-up, 2 guard after every block, 3 grab-happy
-(the Breaker at every close neutral decision), 4 Hoho-happy (Hoho at neutral decisions and into every committed move).")
+(the Breaker at every close neutral decision), 4 Hoho-happy (Hoho at neutral decisions and into every committed move),
+5 burst-happy (BLUE at every chance: AI-BURST-ROLL's chance 1).")
 
 (defun start-learn-gate (h c1 c2 on)
   "200000 + 1000 H + 100 C1 + 10 C2 + ON: seeds *GATE-SEED0* + 1 .. + *GATE-SEEDS* back to back, P1 (roster C1) a CPU with
@@ -971,7 +972,7 @@ matches); a \"duel learn row\" per match."
   (unless (or (<= 2200 c 2299) (<= 10000 c 19999) (<= 35000 c 36999) (<= 40000 c 42999) (<= 69000 c 70999))
     (setf *cine-hold* nil))
   (cond ((<= 2000 c 2099) (start-cvc (- c 2000) nil))
-        ((<= 200000 c 204443) (start-learn-gate (floor (- c 200000) 1000) (mod (floor c 100) 10) (mod (floor c 10) 10) (mod c 10)))
+        ((<= 200000 c 205443) (start-learn-gate (floor (- c 200000) 1000) (mod (floor c 100) 10) (mod (floor c 10) 10) (mod c 10)))
         ((<= 3000 c 3999) (start-cvc (- c 3000) '(:yamamoto :yamamoto)))
         ((<= 4000 c 4999) (start-cvc (- c 4000) '(:yamamoto :kenpachi)))
         ((<= 5000 c 5999) (start-cvc (- c 5000) '(:kenpachi :kenpachi)))

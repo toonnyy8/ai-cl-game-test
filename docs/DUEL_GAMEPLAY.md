@@ -318,8 +318,11 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P2 konpaku 0-1 ticks 10288 secs 171.5
+duel -> RESULTS winner P1 konpaku 7-0 ticks 9328 secs 155.5
 ```
+
+(The base AI after the newer rules, 2026-09-30 (DUEL_LEARNING.md "v2"): the Soul Break finish and ORANGE off an L / O hit;
+all three changed; YK was `winner P2 konpaku 0-1 ticks 10288 secs 171.5`.)
 
 (East's refill then x0.25 with the guardless refill unchanged, the same day: yy's hash lines and yk changed again; x0.5
 gave `winner P2 konpaku 0-1 ticks 10983 secs 183.1`.)

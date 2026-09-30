@@ -106,6 +106,11 @@ allows it (AWAKEN-STATE-P) and its kit's rule says awaken (:awaken-above, AI-AWA
          (>= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (ai-table e :awaken-above 0.0))
          (ai-awaken-p e))))
 
+(defun ai-sb-finish-p (e)
+  "E's opponent is nearly out of Reishi (under *AI-SB-FINISH* of his max): finish him with hits, the Soul Break (the
+Kikon count + 1), not the Kikon rush he might still guard or dodge."
+  (let ((go (gauges (opp-of e)))) (< (gauges-reishi go) (* *ai-sb-finish* (gauges-reishi-max go)))))
+
 (defun ai-burst-roll (e b)
   "Burst Reverse (or the awakening, which breaks a combo too: AI-AWAKEN-BREAK-P) now? No sooner than the perception
 delay after the combo's 2nd hit (BRAIN-BURST-T), allowed (BURST-OK-P) and worth it (AI-BURST-WANTED-P, the next hit
@@ -114,10 +119,12 @@ string the guard lock holds him in while his guard gauge is low (AI-GG-LOW-P), o
   (let ((f (fighter e)) (g (gauges e)))
     (when (and (not (brain-burst-rolled b)) (>= (brain-burst-t b) (brain-delay b)) (or (burst-ok-p e) (ai-awaken-break-p e))
                (or (eq (fighter-state f) :guard-hit)      ; (the clock runs there only for a guard-locked string on a low guard)
+                   (eq (brain-habit b) :burst)           ; (debug: the burst-happy scripted player, whenever it may)
                    (ai-burst-wanted-p (gauges-reishi g) (gauges-reishi-max g)
                                       (floor (fighter-combo-dmg f) (max 1 (fighter-combo-hits f))))))
       (setf (brain-burst-rolled b) t)
-      (< (sim-rnd01) (getf *ai-burst-p* (brain-difficulty b) 0.4)))))
+      (ai-burst-rolled e b (burst-ok-p e) (if (eq (brain-habit b) :burst) 1.0   ; (debug: the burst-happy scripted player)
+                                               (getf *ai-burst-p* (brain-difficulty b) 0.4))))))
 
 (defun ai-command (b kit cmd d &optional e)
   "Press the buttons of kit command CMD at distance D (holding charge / stance / Breaker moves a
@@ -184,6 +191,9 @@ cancel into SP2 when the victim is on the ground (a launched victim would drop o
     (setf (brain-why b) :string)
     (when (and nf (kit-pip-cmd-p kit :f) (< (gauges-meter (gauges e)) 1f0)) (setf nf nil))   ; no pip: no K link
     (cond ((fighter-queued f) nil)                      ; the next link is latched already
+          ((and (brain-learn b) (eq (lrn-cmd (brain-learn b)) :bait)   ; a learner baits his predicted burst: the string
+                (>= (fighter-combo-hits (fighter (opp-of e))) 2))       ; ends at its 2nd hit (then a guard: LEARN-FIRE)
+           (why b :bait nil))
           ((let ((p (ai-table e (if (kit-k-link-p kit (mv-name mv)) :l-after-k :l-after-j) 0.0))   ; L after a K link
                  (l (kit-l-link kit (mv-name mv))))                                                  ; (a J link: :l-after-j):
              (and (plusp p) (= (fighter-sf f) (fighter-land-sf f)) l (kit-command-ok-p e :sig kit nil l)   ; one roll per hit
@@ -211,7 +221,7 @@ one roll (*AI-ORANGE-P* by difficulty)."
     (and (eq (burst-ok-p e) :orange) (eq (state-of o) :stun)
          (< (fighter-dist f) (+ (mv-reach (kit-command-move (fighter-kit f) :q)) 0.2))
          (not (ai-burst-wanted-p (gauges-reishi g) (gauges-reishi-max g) 0))
-         (< (sim-rnd01) (getf *ai-orange-p* (brain-difficulty b) 0.25)))))
+         (ai-burst-rolled e b :orange (getf *ai-orange-p* (brain-difficulty b) 0.25)))))
 
 (defun ai-chain-follow-p (e)
   "In ORANGE's startup-cut window, free, the victim still reeling within Q1's reach: restart the string (felt at once:
@@ -222,14 +232,14 @@ its own combo)."
          (member (state-of (opp-of e)) '(:stun :air))
          (< (fighter-dist f) (+ (mv-reach (kit-command-move (fighter-kit f) :q)) 0.4)))))
 
-(defun ai-white-p (e s d)
+(defun ai-white-p (e b s d)
   "SOUL REVERSE (WHITE) at a neutral decision: allowed, at least *AI-WHITE-RANGE* m from an opponent not attacking, behind
 on Reishi by *AI-WHITE-BEHIND* of the max (fractions), *AI-WHITE-P* of the time."
   (let ((g (gauges e)) (go (gauges (opp-of e))))
     (and (eq (burst-ok-p e) :white) (>= d *ai-white-range*) (not (eq (snap-state s) :move))
          (>= (- (/ (gauges-reishi go) (float (gauges-reishi-max go))) (/ (gauges-reishi g) (float (gauges-reishi-max g))))
              *ai-white-behind*)
-         (< (sim-rnd01) *ai-white-p*))))
+         (ai-burst-rolled e b :white *ai-white-p*))))
 
 (defvar *ai-bankai-mode* (vector nil nil)
   "Per side, the CPU's Bankai entry: NIL = the kit's :bankai rule (AI-BANKAI-P), :SURE = the rule with its chance 1,
@@ -297,13 +307,17 @@ D = the perceived distance."
     (cond
       ;; our completed string (a link-3 hit): the O ender, on a red opponent always, else the kit's :o-ender chance;
       ;; one roll, on the first step we see the hit (its land frame)
-      ((and (eq st :move) (eq (fighter-contact f) :hit) (member :ender (mv-flags mv))
+      ((and (eq st :move) (eq (fighter-contact f) :hit) (member :ender (mv-flags mv)) (not (ai-sb-finish-p e))
             (= (fighter-sf f) (fighter-land-sf f)) (kit-command-ok-p e :kikon kit t)
             (or (kikon-ready-p e) (< (sim-rnd01) (ai-table e :o-ender *ai-o-ender*))))
        (why b :o-ender :kikon))
       ;; our own hit: finish the string, else an SP / L cancel
       ((and (eq st :move) (eq (fighter-contact f) :hit) (member (mv-kind mv) '(:quick :flash)))
        (string-reflex e b f mv))
+      ;; our L / O hit him (he reels): CHAIN REVERSE (ORANGE) on it too, as off a string's last link
+      ((and (eq st :move) (eq (fighter-contact f) :hit) (member (mv-kind mv) '(:sig :kikon))
+            (= (fighter-sf f) (fighter-land-sf f)) (ai-orange-p e b f))
+       (why b :orange :burst))
       ;; guard pressure (the kit's :block-string): a link the opponent blocked goes on, pressed just before the chain
       ;; opens (one roll per link): a J link, a K link only *AI-BLOCK-K-P* of the time (his J interrupts it), never a
       ;; punishable ender (K3): the string resets instead (below); not below :gg-low or into a parry
@@ -334,7 +348,7 @@ D = the perceived distance."
        (why b :pressure :q))
       ;; a red opponent still reeling from our hits (or bound): rush him
       ((and (kikon-ready-p e) (member (snap-state s) '(:stun :air)) (< d (ai-table e :kikon-range 7.0))
-            (kit-command-ok-p e :kikon))
+            (kit-command-ok-p e :kikon) (not (ai-sb-finish-p e)))
        (why b :kikon :kikon))
       ;; the Bankai (cup 3, red, free: the kit's :bankai), before the cash-out
       ((let ((bk (ai-table e :bankai)))
@@ -497,9 +511,9 @@ OPP-GG-LOW-P)? Only while the opponent really holds guard (or a ward), never bel
 the Kikon rush on a red opponent within its range (*AI-KIKON-P*), dash to / from that range (until
 its middle), guard, attack (a weighted pick from the kit's band for D), or wait."
   (cond ((and (kikon-ready-p e) (< d (ai-table e :kikon-range 7.0)) (not (member (snap-state s) '(:down :wakeup :hoho)))
-              (kit-command-ok-p e :kikon) (< (sim-rnd01) (ai-kikon-p e)))
+              (kit-command-ok-p e :kikon) (not (ai-sb-finish-p e)) (< (sim-rnd01) (ai-kikon-p e)))
          (ai-command b kit :kikon d e) (setf (brain-why b) :kikon))
-        ((ai-white-p e s d) (ai-command b kit :burst d e) (setf (brain-why b) :white))
+        ((ai-white-p e b s d) (ai-command b kit :burst d e) (setf (brain-why b) :white))
         ((ai-pip-hurry-p e)                                ; the arm's next crack is near: spend the pip now
          (ai-attack e b kit s d heat t))
         ((and (brain-habit b) (habit-neutral e b kit d)))  ; debug: a scripted player's habit
@@ -539,7 +553,7 @@ pip commands of the band (the arm's crack is near: AI-PIP-HURRY-P). T when somet
     (ai-stance-weights e s d weights)
     (when hurry
       (loop for (cmd nil) on weights by #'cddr unless (and cmd (kit-pip-cmd-p kit cmd)) do (setf (getf weights cmd) 0)))
-    (when (brain-learn b) (learn-weights (brain-learn b) d weights))   ; the bandit's factors (learning CPU only)
+    (when (brain-learn b) (setf weights (learn-weights e (brain-learn b) d weights)))   ; the bandit (learning CPU only)
     (let ((cmd (apply #'weighted-pick (sim-rnd01) weights)))
       (cond ((and cmd (or (not (member cmd *kit-commands*)) (and (kit-command-move kit cmd) (kit-command-ok-p e cmd)))
                   (or (not (member cmd '(:q :f)))                  ; don't whiff a string at range
@@ -654,7 +668,10 @@ fraction of the guard gauge."
   (hx 0f0 :type single-float) (hz 0f0 :type single-float) (hstate :idle) (hstart -1 :type fixnum) (hcontact nil)
   (own :idle)                                                                 ; ... the human (perceived) and we, last step
   (cmd nil) (delay 0 :type fixnum) (pend-t 0 :type fixnum)                    ; the planned counter, its wait, its life
-  (arm -1 :type fixnum) (bin 0 :type fixnum) (prob 0f0 :type single-float)    ; the bandit's open window
+  (arm -1 :type fixnum) (bin 0 :type fixnum) (prob 0f0 :type single-float)    ; the bandit's open window (BIN: its row)
+  (bw -1 :type fixnum) (bw-used nil) (bw-prob 0f0 :type single-float) (bw-t 0 :type fixnum)   ; a burst bandit's window
+  (bw-dealt 0 :type fixnum) (bw-taken 0 :type fixnum) (bw-reishi 0 :type fixnum) (bw-konpaku 0 :type fixnum)
+  (hburst nil) (hcombo 0 :type fixnum)                                        ; his burst, our combo's hits on him, last step
   (win-t 0 :type fixnum) (w-dealt 0 :type fixnum) (w-taken 0 :type fixnum)
   (form-t 0 :type fixnum) (f-dealt 0 :type fixnum) (f-taken 0 :type fixnum)   ; the form clock
   (rng 1)
@@ -704,21 +721,30 @@ event's counter at its onset, and run the clocks: the counter's wait, the bandit
          (dx (- (snap-x s) (lrn-hx l))) (dz (- (snap-z s) (lrn-hz l))))
     (when (and (> d 0.01) (< (+ (* dx dx) (* dz dz)) 0.25))   ; his way away from us (a Hoho's jump is no walk)
       (incf (lrn-away l) (f32 (/ (+ (* dx (- (snap-x s) (aref p 0))) (* dz (- (snap-z s) (aref p 2)))) d))))
-    (let ((on (learn-onset hprev hs (lrn-hcontact l) (lrn-own l) own (lrn-sit l) d)))
+    (let ((on (learn-onset hprev hs (lrn-hcontact l) (lrn-own l) own (lrn-sit l) d
+                           (let ((n (fighter-combo-hits (fighter (opp-of e)))))   ; our string's hit that opens his burst
+                             (and (= n *burst-min-hits*) (/= (lrn-hcombo l) n)   ; (while his HUD bar has it)
+                                  (>= (gauges-fs (gauges (opp-of e))) *fs-burst*))))))
       (when on
         (setf (lrn-sit l) on (lrn-ep-t l) 0 (lrn-away l) 0f0)
         (when (< on +learn-events+) (learn-plan b l on))))
     (let ((sit (lrn-sit l)))
       (when (>= sit 0)
-        (let ((act (learn-action hprev hs (snap-kind s) (/= (snap-start s) (lrn-hstart l)) (lrn-away l))))
+        (let* ((burst (and (gauges-burst (gauges (opp-of e))) (not (lrn-hburst l))))   ; (a burst: its aura, at once)
+               (c-hit (= sit (learn-sit :c-hit)))                ; (reeling, only a burst is his: the knockback isn't)
+               (act (if c-hit
+                        (and burst (learn-act :burst))
+                        (learn-action hprev hs (snap-kind s) (/= (snap-start s) (lrn-hstart l)) (lrn-away l) burst))))
           (cond (act (learn-observe! tab sit act) (setf (lrn-sit l) -1))
-                ((> (incf (lrn-ep-t l)) (learn-episode sit))
-                 (when (eq hs :guard) (learn-observe! tab sit (learn-act :guard)))   ; he held guard through it
+                ((or (> (incf (lrn-ep-t l)) (learn-episode sit)) (and c-hit (not (member hs '(:stun :air)))))
+                 (when (or (eq hs :guard) c-hit)                 ; he held guard through it / took our string
+                   (learn-observe! tab sit (learn-act :guard)))
                  (setf (lrn-sit l) -1))))))
     (when (lrn-cmd l)
       (when (plusp (lrn-delay l)) (decf (lrn-delay l)))
       (when (<= (decf (lrn-pend-t l)) 0) (setf (lrn-cmd l) nil)))
     (when (and (>= (lrn-arm l) 0) (<= (decf (lrn-win-t l)) 0)) (learn-settle l dealt taken))
+    (when (and (>= (lrn-bw l) 0) (<= (decf (lrn-bw-t l)) 0)) (learn-burst-settle e l dealt taken))
     (when (and (plusp (lrn-read-t l)) (zerop (decf (lrn-read-t l))) (= taken (lrn-r-taken l))
                (or (> dealt (lrn-r-dealt l)) (eq (lrn-last l) :guard)))   ; (a guard pays by taking nothing)
       (incf (lrn-paid l)) (incf (third (assoc (lrn-last l) (lrn-stats l)))))
@@ -726,6 +752,7 @@ event's counter at its onset, and run the clocks: the counter's wait, the bandit
       (setf (ltab-form tab) (learn-form-after (ltab-form tab) (learn-reward (- taken (lrn-f-taken l)) (- dealt (lrn-f-dealt l)))
                                               *learn-form-k*)
             (lrn-form-t l) 0 (lrn-f-dealt l) dealt (lrn-f-taken l) taken))
+    (setf (lrn-hburst l) (and (gauges-burst (gauges (opp-of e))) t) (lrn-hcombo l) (fighter-combo-hits (fighter (opp-of e))))
     (setf (lrn-hx l) (snap-x s) (lrn-hz l) (snap-z s) (lrn-hstate l) hs (lrn-hstart l) (snap-start s)
           (lrn-hcontact l) (snap-contact s) (lrn-own l) own)))
 
@@ -733,8 +760,8 @@ event's counter at its onset, and run the clocks: the counter's wait, the bandit
   "An event's onset: when the model is confident and the roll says read him, plan its counter for the episode (on his
 wake-up, a strike timed to meet the end of it: what the perception delay already cost and ~8 f of startup before it)."
   (multiple-value-bind (act p n) (learn-predict (lrn-tab l) sit)
-    (when (and act (learn-counter act) (member :model *learn-use*) (learn-confident-p p n) (learn-roll-p l))
-      (let ((c (learn-counter act)))
+    (when (and act (learn-counter act sit) (member :model *learn-use*) (learn-confident-p p n) (learn-roll-p l))
+      (let ((c (learn-counter act sit)))
         (setf (lrn-cmd l) c (lrn-pend-t l) (learn-episode sit)
               (lrn-delay l) (if (and (= sit 0) (member c '(:q :breaker)))
                                 (max 0 (- (getf *reaction-frames* :wakeup) (brain-delay b) 8))
@@ -746,7 +773,8 @@ perception delay) and swings where he reappears."
   (let ((l (brain-learn b)) (f (fighter e)))
     (when (and (lrn-cmd l) (<= (lrn-delay l) 0) (member (fighter-state f) '(:idle :guard :run)) (zerop (fighter-lock f))
                (or (not (eq (lrn-cmd l) :hoho-punish)) (eq (snap-state s) :hoho)))
-      (let ((c (lrn-cmd l))) (setf (lrn-cmd l) nil) (learn-press e b (if (eq c :hoho-punish) :q c) d (eq c :hoho-punish))))))
+      (let ((c (lrn-cmd l))) (setf (lrn-cmd l) nil)
+        (learn-press e b (case c (:hoho-punish :q) (:bait :guard) (t c)) d (eq c :hoho-punish))))))
 
 (defun learn-press (e b cmd d &optional anywhere)
   "Press counter CMD at distance D when it can go (a J / K only within its reach, unless ANYWHERE: he reappears behind
@@ -757,9 +785,9 @@ us; an SP's Hoho without flash-step is a guard): T when pressed; the read is cou
     (when (case cmd
             ((:q :f) (and mv (kit-command-ok-p e cmd) (or anywhere (<= d (+ (mv-reach mv) 0.4)))))
             (:guard (plusp (ai-guard-k e)))
-            (:hoho t)
+            ((:hoho :dash-in) t)
             (t (and mv (kit-command-ok-p e cmd))))
-      (if (eq cmd :guard) (ai-press b :guard 30) (ai-command b kit cmd d e))
+      (case cmd (:guard (ai-press b :guard 30)) (:dash-in (ai-dash b 1.0 1.5)) (t (ai-command b kit cmd d e)))
       (clog "~a read ~a d ~,1f" (side-name e) cmd d)
       (let ((l (brain-learn b)))
         (incf (lrn-reads l))
@@ -782,13 +810,26 @@ predicted Hoho is only primed (the decision goes on: the bait)."
                      (ai-press b :guard 12) (setf (brain-why b) :read-wait) t)
               (learn-press e b c d)))))))
 
-(defun learn-weights (l d weights)
-  "The bandit's factors on a neutral pick's WEIGHTS (a fresh plist, edited in place) for distance D."
-  (let ((bin (learn-bin d)) (tab (lrn-tab l)))
+(defun learn-context (e)
+  "E's bandit context (LEARN-CTX): its form's index in its character's kits (definition order) x its kit meter's third."
+  (let* ((kit (kit-of e)) (forms (gethash (kit-character kit) *kits*)) (m (kit-meter kit)))
+    (learn-ctx (- (length forms) 1 (or (position (kit-form kit) forms :key #'car) 0))
+               (if m (/ (gauges-meter (gauges e)) (float (getf m :max 100))) 0.0))))
+
+(defparameter *learn-hoho-w* 0.3 "A learner's base weight for a neutral Hoho its kit's band leaves out (so it can learn one).")
+
+(defun learn-weights (e l d weights)
+  "The bandit's factors on a neutral pick's WEIGHTS (a fresh plist) for distance D in E's context; a Hoho the band leaves
+out gets *LEARN-HOHO-W* first when it may go. Returns the plist."
+  (let ((row (learn-row (learn-context e) (learn-bin d))) (tab (lrn-tab l)) (f (fighter e)) (g (gauges e)))
     (when (member :bandit *learn-use*)
+      (unless (or (getf weights :hoho) (kit-rooted (kit-of e))
+                  (not (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))))
+        (setf weights (list* :hoho *learn-hoho-w* weights)))
       (loop for tail on weights by #'cddr
             for arm = (position (car tail) *learn-arms*)
-            when arm do (setf (cadr tail) (* (cadr tail) (learn-mult tab bin arm)))))))
+            when arm do (setf (cadr tail) (* (cadr tail) (learn-mult tab row arm)))))
+    weights))
 
 (defun learn-window (e l d weights cmd)
   "The bandit's window for arm CMD, picked from WEIGHTS (its probability for the importance weight): the one still open
@@ -797,7 +838,7 @@ is settled first."
         (sum (loop for (nil w) on weights by #'cddr sum w)))
     (when (and arm (plusp sum) (member :bandit *learn-use*))
       (when (>= (lrn-arm l) 0) (learn-settle l dealt taken))
-      (setf (lrn-arm l) arm (lrn-bin l) (learn-bin d) (lrn-prob l) (f32 (/ (getf weights cmd 0) sum))
+      (setf (lrn-arm l) arm (lrn-bin l) (learn-row (learn-context e) (learn-bin d)) (lrn-prob l) (f32 (/ (getf weights cmd 0) sum))
             (lrn-win-t l) *learn-window* (lrn-w-dealt l) dealt (lrn-w-taken l) taken))))
 
 (defun learn-settle (l dealt taken)
@@ -805,3 +846,30 @@ is settled first."
   (learn-reward! (lrn-tab l) (lrn-bin l) (lrn-arm l) (lrn-prob l)
                  (learn-reward (- dealt (lrn-w-dealt l)) (- taken (lrn-w-taken l))))
   (setf (lrn-arm l) -1))
+
+(defun learn-burst-open (e l color used prob)
+  "A burst decision of COLOR (USED or not, that branch's probability from PROB) opens its bandit's window, unless one is
+open (the rolls come in bursts: a WHITE one each neutral decision)."
+  (let ((c (position color *learn-burst-colors*)) (g (gauges e)))
+    (when (and c (< (lrn-bw l) 0) (member :bandit *learn-use*))
+      (setf (lrn-bw l) c (lrn-bw-used l) used (lrn-bw-prob l) (f32 (if used prob (- 1 prob))) (lrn-bw-t l) *learn-window*
+            (lrn-bw-dealt l) (gauges-dealt g) (lrn-bw-taken l) (gauges-dealt (gauges (opp-of e)))
+            (lrn-bw-reishi l) (gauges-reishi g) (lrn-bw-konpaku l) (gauges-konpaku g)))))
+
+(defun learn-burst-settle (e l dealt taken)
+  "Close the burst window: the damage balance, plus the Reishi healed (WHITE) when no soul was lost in it."
+  (let* ((g (gauges e)) (tk (- taken (lrn-bw-taken l)))
+         (healed (if (= (gauges-konpaku g) (lrn-bw-konpaku l)) (max 0 (+ (- (gauges-reishi g) (lrn-bw-reishi l)) tk)) 0)))
+    (learn-burst-reward! (lrn-tab l) (lrn-bw l) (lrn-bw-used l) (lrn-bw-prob l) (learn-reward (- dealt (lrn-bw-dealt l)) tk healed))
+    (setf (lrn-bw l) -1)))
+
+(defun ai-burst-chance (b color p)
+  "The base AI's chance P of a burst of COLOR, re-weighted by a learning CPU's burst bandit (LEARN-BURST-P)."
+  (let ((l (brain-learn b)) (c (position color *learn-burst-colors*)))
+    (if (and l c (member :bandit *learn-use*)) (learn-burst-p (lrn-tab l) c p) p)))
+
+(defun ai-burst-rolled (e b color p)
+  "Roll a burst of COLOR at the base chance P (a learner's bandit re-weighting it, and opening its window): T to burst."
+  (let* ((q (ai-burst-chance b color p)) (yes (< (sim-rnd01) q)))
+    (when (brain-learn b) (learn-burst-open e (brain-learn b) color yes q))
+    yes))
