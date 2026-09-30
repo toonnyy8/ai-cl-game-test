@@ -261,9 +261,10 @@ a combo (critique-design 1.7: not from hit 1).")
 (defparameter *bankai-taken* 1.5
   "Damage x Bankai East takes (the defender's :taken): the extreme stance. The Bankai rework (the user's spec
 2026-09-27, docs/DUEL_YAMA_REWORK.md): 1.2 -> 1.5, East only (West takes x1.0). Not a tuning knob: the spec's value.")
-(defparameter *east-gg-regen* 0.5
+(defparameter *east-gg-regen* 0.25
   "Bankai East's guard gauge refills at this x of everyone's rate (the user 2026-09-30, 「大幅降低山本『東 旭日刃』時的
-防禦量表恢復速度」: 5.5 -> 2.75 / s, 6.5 -> 3.25 guardless; West never refills, so this is his whole refill).")
+防禦量表恢復速度」: x0.5, then 「破防後恢復速度不變，但東的恢復速度改成原本的 1/4」: 5.5 -> 1.375 / s; guardless
+unchanged, 6.5; West never refills, so this is his whole refill).")
 (defparameter *pierce-min* 0.1
   "Bankai East's pierce (passive :pierce, rules PIERCE-RATE): k = this at an empty guard gauge ...")
 (defparameter *pierce-max* 0.45

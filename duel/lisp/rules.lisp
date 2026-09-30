@@ -603,8 +603,8 @@ advantage ADV <= *GG-ENDER-ADV*)."
   "The guard gauge one frame later: nothing while GUARDING (GUARD HOLD) or before *GG-DELAY* frames without a
 drain (IDLE), then *GG-REGEN*/s (*GG-REGEN-GUARDLESS*/s while GUARDLESS), capped at *GG-MAX*. Bankai West's ward
 counts as guarding (combat.lisp GAUGE-SYSTEM): he refills only in East. In a BLUE burst there is no delay and the rate
-is x*BLUE-GG-MULT*, x*BLUE-GG-GUARDING* while guarding. MULT: the form's :gg-regen (Bankai East's *EAST-GG-REGEN*)."
-  (let ((rate (* mult (/ (if guardless *gg-regen-guardless* *gg-regen*) 60.0))))
+is x*BLUE-GG-MULT*, x*BLUE-GG-GUARDING* while guarding. MULT: the form's :gg-regen (Bankai East's *EAST-GG-REGEN*), not while guardless."
+  (let ((rate (/ (if guardless *gg-regen-guardless* (* mult *gg-regen*)) 60.0)))
     (cond (blue (min *gg-max* (+ gg (* rate (if guarding *blue-gg-guarding* *blue-gg-mult*)))))
           ((or guarding (< idle *gg-delay*)) gg)
           (t (min *gg-max* (+ gg rate))))))

@@ -414,3 +414,8 @@ is his whole one; the pierce (fuller gauge, sharper blade) and West's ward last 
 Native gate (seeds 1-20): YY 165.9 s, YK 159.1 (Yamamoto 14 / 20), RY 161.5 (10 / 10), IY 194.2 (10 / 10), SY 158.5
 (Senjumaru 11), all K.O. and in the band. G2: yy's hash lines and yk changed (yk now `winner P2 konpaku 0-1 ticks 10983
 secs 183.1`), kk unchanged.
+
+**Then x0.25, guardless unchanged (the user, the same day: 「破防後恢復速度不變，但東的恢復速度改成原本的 1/4」):**
+`*east-gg-regen*` 0.25 (5.5 -> 1.375 / s) and `gg-regen` applies MULT only when not guardless (6.5 / s after a crush, as
+everyone). Native gate (seeds 1-20): YY 165.9 s, YK 166.9 (Yamamoto 13 / 20), RY 160.7 (Rukia 13), IY 181.3 (Yamamoto
+13), SY 157.5 (Yamamoto 11), all K.O. and in the band. G2: yy's hash lines and yk changed (yk now `winner P2 konpaku 0-1 ticks 10288 secs 171.5`).

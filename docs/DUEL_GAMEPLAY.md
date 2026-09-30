@@ -318,8 +318,11 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P2 konpaku 0-1 ticks 10983 secs 183.1
+duel -> RESULTS winner P2 konpaku 0-1 ticks 10288 secs 171.5
 ```
+
+(East's refill then x0.25 with the guardless refill unchanged, the same day: yy's hash lines and yk changed again; x0.5
+gave `winner P2 konpaku 0-1 ticks 10983 secs 183.1`.)
 
 (Bankai East's guard gauge refilling at x0.5, the user 2026-09-30 (DUEL_DESIGN "Bankai East's guard refill"): yy's hash
 lines and yk changed; YK was `winner P1 konpaku 3-0 ticks 10862 secs 181.0` from the guard lock on (the awakening heal kept it).)
