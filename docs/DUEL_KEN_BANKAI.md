@@ -208,7 +208,8 @@ New clips: **0**. Later (the user's decision): the bite and the foot-grab throw 
 
 **Entering (the CPU in cup 3).** New `:nomihose` AI key `:bankai (:p 0.6 :opp-below 0.6 :opp-konpaku 4)`: a free-state
 reflex **before the cash-out reflex**: when `bankai-allowed-p` holds and the opponent's Reishi ≤ 60 % of max or his
-Konpaku ≤ 4, one roll per cup-3 stay (a brain field keyed on the stay's start tick) at 0.6 → P. Otherwise the cash-out
+Konpaku ≤ 4, one roll per cup-3 stay (a brain field keyed on the stay's start tick) at 0.6 → P (0.9 since 2026-09-30, the
+user: more CPU Bankai; the gate's Kenpachi reached the Bankai in 64 % → 80 % of matches). Otherwise the cash-out
 rules run as today. Reason: the Bankai is a finisher; used at full-Reishi opponents it is mostly the downside.
 
 **In Bankai** (the `:bankai` kit `:ai`):

@@ -223,7 +223,7 @@
        ;; the Bankai as a finisher, weighing his own Konpaku (entry leaves him 1): nothing to lose (the opponent's next
        ;; Soul Break would take them all anyway), or the opponent near the end (Reishi <= :opp-below, Konpaku <=
        ;; :opp-konpaku) while he has <= :own-konpaku left; one roll per cup-3 stay (ai.lisp AI-BANKAI-P)
-       :bankai (:p 0.6 :opp-below 0.6 :opp-konpaku 4 :own-konpaku 4)
+       :bankai (:p 0.9 :opp-below 0.6 :opp-konpaku 4 :own-konpaku 4)
        :react (:projectile :sig :flash-startup :sig) :block-string 0.85))
 
 ;;; the Bankai (P in cup 3, red, free: combat.lisp BANKAI!): his Konpaku -> 1, his Reishi -> full (the user's decisions

@@ -744,7 +744,7 @@ random number from `sim-rnd01` (seeded per match), so a seed replays the same ma
   Breaker half the time). South's tell under the CPU (the caster's real move frame 21–30): a sideways Step
   (the anti-rush roll) or a Hoho (its roll). A bound CPU Bursts by the usual Burst rule.
 - **Kenpachi's Bankai** (kit keys, DUEL_KEN_BANKAI.md §8, the user's decision 2026-09-28: the CPU enters only as a
-  finisher and weighs its own Konpaku): `:bankai (:p 0.6 :opp-below 0.6 :opp-konpaku 4 :own-konpaku 4)` on cup 3, a free-
+  finisher and weighs its own Konpaku; p 0.6 → 0.9 the user 2026-09-30, more Bankai): `:bankai (:p 0.9 :opp-below 0.6 :opp-konpaku 4 :own-konpaku 4)` on cup 3, a free-
   state reflex before the cash-out: when the Bankai is allowed and either **nothing is lost** (its Konpaku ≤ the
   opponent's next Soul Break count) or the opponent is near the end (Reishi ≤ 60 % or Konpaku ≤ 4) while it has ≤ 4
   Konpaku, one roll per cup-3 stay at 0.6 → P (`ai-bankai-p`). In the Bankai: PRESSURE 7 / APPROACH 3, the bite only
@@ -1504,3 +1504,17 @@ The user: 「Soul Break 也給與一樣的收益」. A Soul Break now refunds it
 Reiatsu bar, after the reset ended the bursts). Native gate (15 x 20): 300 / 300 K.O., medians 152.6-218.8 s (II 213.4
 -> 204.7, back inside; SI 218.8 over, unchanged). Awaken A/B as before (Rukia, Senjumaru >= 20 but SK 17 / 20 / 19; Ichigo
 failing). G2: yy's hash lines changed, yk and kk unchanged.
+
+## The CPU awakens more (the user, 2026-09-30)
+
+"Increase every CPU's chance to open its Bankai; Senjumaru's CPU rarely does." Measured on the 15-pairing gate (seeds
+1–20, 120 matches per character, the form at the end): Yamamoto, Rukia and Ichigo awakened in every match (Rukia 118 /
+120 after it), Senjumaru in 32 / 120 and Kenpachi reached the Bankai in 77 / 120. Changes (AI keys only):
+- **Senjumaru**: the generic `:awaken (:min-taken 150)` (as Ichigo) in place of her zoner / rooted rule → 120 / 120.
+- **Kenpachi's Bankai**: `:bankai :p` 0.6 → 0.9 → 96 / 120.
+- **Yamamoto**: base `:awaken-above` 0.4 → 0: he may awaken (and awaken out of a combo) at any Reishi, for when a human
+  keeps him under 40 % (the awakening heals 20 % now).
+
+The gate after it: 300 / 300 K.O., every median in 125–210 s (SI 218.8 → 178.3). "Never awaken" A/B (P1 never vs the P2
+CPU): Senjumaru SY 29 / 25 / 28, SK 18 / 26 / 23, SR 34 / 24 / 28, SS 20 / 24 / 19, SI 38 / 27 / 31; Rukia's ≥ 26;
+Ichigo's 1–9 as before (failing since the damage numbers, not retuned). G2: yy changed, yk and kk unchanged.

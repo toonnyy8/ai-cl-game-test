@@ -150,7 +150,7 @@
                (3.0 5.0 :f 1 :sig 2 :step 2 nil 2)
                (5.0 7.0 :sig 4 :sp1 1 :step 1 nil 1)
                (7.0 99.0 :sp1 4 :sig 2 :kikon 1 nil 1))                ; ENJO as a poke from range
-       :guard 0.45 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 2 :oki :sp1-full :oki-above 0.6
+       :guard 0.45 :hoho 0.35 :awaken-above 0.0 :sp-cancel-bars 2 :oki :sp1-full :oki-above 0.6
        :dash 0.25 :dash-back 0.5 :kikon-range 9.0))
 
 (defkit :yamamoto :hellfire :inherit :base

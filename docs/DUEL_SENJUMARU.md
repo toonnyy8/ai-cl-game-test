@@ -490,7 +490,10 @@ The rule reuses the damage-source counters (`gauges-taken-melee` / `-ranged`, bu
 key:
 `:awaken (:ranged-share 0.3 :min-taken 150 :or-opp-rooted t)`. On EVOLUTION she awakens once she has taken ≥ 150 **and
 either ≥ 30 % of it came from ranged hits** (hazards and `:ranged` windows), **or the opponent is in a `:rooted` form**
-(zero Rukia: one line beside Ichigo's key, gap N10).
+(zero Rukia: one line beside Ichigo's key, gap N10). **Superseded 2026-09-30** (the user: "increase every CPU's chance to
+open its Bankai"; this rule left her awakened in 27 % of the gate's CPU matches): she now uses Ichigo's generic
+`:awaken (:min-taken 150)`; the `:awaken-rule` key, `senju-awaken-p` and debug 99100+k are gone (99200+k now sets
+`:awaken`'s `:min-taken`). The gate after it: awakened in 120 / 120.
 - **vs Kenpachi** (nearly all melee) she stays base, which §4.9 predicts is right.
 - **vs Yamamoto, vs Kessa, vs base Rukia's rings and waves:** she awakens once the zoning has landed.
 - **vs zero Rukia:** at once.
@@ -1228,7 +1231,7 @@ behind him opaque. No sim change.
 | 黒砂's drag | `field-velocity` about the pit | the same arithmetic as a position correction in the pit's step (after his walk / run moved him) | no shared-file change; Steps (slides) are untouched as designed |
 | Torn during the unfold | the hank lost, L locked | L locked; the form had already advanced at the release, so no second advance | torn during the weave: the hank lost **and** L locked, as designed |
 | The combo cut's zones | "刃金 closes without its 16 f rise, 黒砂's first gulp without its swirl" | as designed, and their `:tell` windows moved to the unfold's end | the tell reflex reads them |
-| The awakening rule | Ichigo's `:awaken :ranged-share` + `:or-opp-rooted` | her `:reflex` applies `:awaken-rule (:ranged-share 0.3 :min-taken 150 :or-opp-rooted t)`; the built `:awaken` key is set so it never fires | the debug A/B modes (39000+10a+b: always / never) still decide first |
+| The awakening rule (superseded 2026-09-30: the generic `:awaken (:min-taken 150)`) | Ichigo's `:awaken :ranged-share` + `:or-opp-rooted` | her `:reflex` applies `:awaken-rule (:ranged-share 0.3 :min-taken 150 :or-opp-rooted t)`; the built `:awaken` key is set so it never fires | the debug A/B modes (39000+10a+b: always / never) still decide first |
 | The tell reflex "from the release" fix | a change in ai.lisp | none needed | the hank moves' `:tell` counts main-phase frames, which start at the release |
 | MAKITORI / the gulps' pull | Ichigo's `:pull` | her `:hit` hook slides him to 1.4 m of her (8 f) / to the pit's centre (10 f) after the reaction | no shared change |
 | HUD awakening row | "SHIGARAMI NO TSUJI" | the form name `TSUJI` (the name line reads SENJUMARU  TSUJI) | one form name serves both lines |
@@ -1270,7 +1273,7 @@ replay byte-identically, `style-gates.py cvc`):
 | `*hank-range*` / `*hank-life-mult*` / `*mirror-k*` | 9.0 / 1.0 / 0.3 | 96500+k (×0.1) / 96000+k / 97100+k (×0.01) |
 | the six hanks (`*hanks*`) | §4.2's values at 3 passes | — |
 | SP1's cost (the two-hank release) / its CPU chance | 1 bar / 0.5 | 97000+k (every form's copy) / — |
-| AI: `*ai-senju-hari*`, base `:block-string` / `:dash`, the loom's ZONE weight / `:opp-rush-hold`, the rule's `:ranged-share` / `:min-taken`, `:sp-cancel-bars` | 0.1, 0.8 / 0.7, 4 / 0.5, 0.3 / 150, 9 | 97700+k, 97500+k / 97600+k, 97300+k / 97400+k, 99100+k / 99200+k (×10), 99400+k |
+| AI: `*ai-senju-hari*`, base `:block-string` / `:dash`, the loom's ZONE weight / `:opp-rush-hold`, `:awaken`'s `:min-taken` (2026-09-30), `:sp-cancel-bars` | 0.1, 0.8 / 0.7, 4 / 0.5, 150, 9 | 97700+k, 97500+k / 97600+k, 97300+k / 97400+k, 99200+k (×10), 99400+k |
 | the drapes' fade `*sj-drape-fade*` (lead / ramp / floor, senjumaru-art.lisp) | 1.5 m / 2.0 m / 0.15 | 99500+k (the floor ×0.01; 99600 off) |
 | A/B mode per side (0 the rule, 1 always, 2 never) | 0 | 39000 + 10a + b |
 

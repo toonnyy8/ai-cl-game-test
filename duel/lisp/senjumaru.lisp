@@ -252,7 +252,8 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
                                                 ; stitches: the kit meter)
   :meter *senju-meter* :hooks *senju-hooks*
   ;; a close-range tailor: J1 up close, blocked strings still sew, the soldier and the O from range, L when the stitches
-  ;; pay (:hari, SENJU-AI-REFLEX); she awakens against a zoner or a rooted form (:awaken-rule)
+  ;; pay (:hari, SENJU-AI-REFLEX); she awakens as Ichigo does, once she has taken 150 (:awaken; the user 2026-09-30:
+  ;; her old rule, a zoner or a rooted form only, left the Bankai to 27 % of CPU matches)
   :ai (:intents (:approach 2 :pressure 4 :zone 0 :defend 1)
        :ranges (:approach (2.4 5.0) :pressure (1.0 1.9) :zone (5.0 8.0) :defend (3.0 5.0))
        :moves ((0.0 1.7 :q 6 :f 2 :breaker 1)                          ; J up close only (DUEL_STRINGS §13), K beyond
@@ -262,8 +263,7 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
        :guard 0.4 :hoho 0.3 :dash 0.7 :dash-back 0.1 :block-string 0.8 :o-ender 0.3 :l-after-k 0.3 :sp-cancel-bars 9   ; (no SP2
                                                 ; cancel: 傘 is no combo ender; the bars go to the soldier and the umbrella)
        :kikon-range 7.7 :react (:projectile :sp2)
-       :awaken (:min-taken 1000000)            ; (the built rule never fires: :awaken-rule, in SENJU-AI-REFLEX, decides)
-       :awaken-rule (:ranged-share 0.3 :min-taken 150 :or-opp-rooted t)
+       :awaken (:min-taken 150)
        :hari (:min 4 :hurry 40) :reflex senju-ai-reflex :sig-hold senju-sig-hold))
 
 (defparameter *tsuji-ai*
@@ -801,25 +801,14 @@ nothing from a hit, a block or his blade, and his Reiatsu / flash-step gains are
       (:touches (senju-touches hz d a b c dd ee)))))
 
 ;;; ================================================================ AI (the kit's :reflex / :opp-reflex / :sig-hold)
-(defun senju-awaken-p (e rule)
-  "The awakening rule (:awaken-rule (:ranged-share :min-taken :or-opp-rooted)): once she has taken :min-taken, and either
-:ranged-share of it came from ranged hits, or the opponent is in a rooted form."
-  (let* ((g (gauges e)) (r (gauges-taken-ranged g)) (all (+ r (gauges-taken-melee g))))
-    (and (>= all (getf rule :min-taken 0))
-         (or (>= r (* (getf rule :ranged-share 1.0) all))
-             (and (getf rule :or-opp-rooted) (kit-rooted (kit-of (opp-of e))))))))
 
 (defun senju-ai-reflex (e b s d)
-  "Her CPU's own reflexes (free states): awaken by :awaken-rule on EVOLUTION (the debug mode's :always / :never are the
-built rule's); the Shikai's L when the stitches pay (:hari (:min :hurry): >= :min now and then, always with >= 2 when the
+  "Her CPU's own reflexes (free states): the Shikai's L when the stitches pay (:hari (:min :hurry): >= :min now and then, always with >= 2 when the
 first falls within :hurry frames); the loom's SP1 on a designed pair that suits (SENJU-PAIR-P, no zone live, now and
 then). A command or NIL."
   (declare (ignore s))
   (let* ((f (fighter e)) (g (gauges e)) (kit (fighter-kit f)) (ai (kit-ai kit)) (n (form-hank (kit-form kit))))
-    (cond ((and (gauges-evolution g) (not (gauges-awakened g)) (null (svref *ai-awaken-mode* (fighter-side f)))
-                (getf ai :awaken-rule) (senju-awaken-p e (getf ai :awaken-rule)))
-           (why b :awaken-rule :awaken))
-          ((and n (null (senju-live-zones e)) (kit-command-ok-p e :sp1) (senju-pair-p e b d n) (< (sim-rnd01) *ai-senju-pair*))
+    (cond ((and n (null (senju-live-zones e)) (kit-command-ok-p e :sp1) (senju-pair-p e b d n) (< (sim-rnd01) *ai-senju-pair*))
            (why b :pair :sp1))
           ((and (getf ai :hari) (hari-form-p e) (kit-command-ok-p e :sig))
            (let ((n (hari e)) (h (getf ai :hari)))
@@ -1069,9 +1058,7 @@ awakened Senjumaru near the rim (the drapes' fade stills): the pair on a tangent
           ((<= 98000 c 98099) (setf *hari-dmg* (- c 98000)))
           ((<= 98100 c 98999) (setf *hari-idle* (- c 98100)))
           ((<= 99000 c 99099) (setf *hari-sew-block* (- c 99000)))
-          ((<= 99100 c 99199) (kits (tsuji) (lambda (k) (setf (getf (getf (kit-ai k) :awaken-rule) :ranged-share) (/ (- c 99100) 100.0))))
-                              (setf (getf (getf (kit-ai (find-kit :senjumaru :base)) :awaken-rule) :ranged-share) (/ (- c 99100) 100.0)))
-          ((<= 99200 c 99299) (setf (getf (getf (kit-ai (find-kit :senjumaru :base)) :awaken-rule) :min-taken) (* 10 (- c 99200))))
+          ((<= 99200 c 99299) (setf (getf (getf (kit-ai (find-kit :senjumaru :base)) :awaken) :min-taken) (* 10 (- c 99200))))
           ((<= 99300 c 99399) (setf (kit-walk (find-kit :senjumaru :base)) (/ (- c 99300) 10.0)))
           ((<= 99400 c 99409) (kits (cons :base (tsuji)) (lambda (k) (setf (getf (kit-ai k) :sp-cancel-bars) (- c 99400)))))
           ((<= 99500 c 99600) (setf (third *sj-drape-fade*) (/ (- c 99500) 100.0))))   ; the drapes' fade floor (100: off)

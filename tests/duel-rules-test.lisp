@@ -1091,7 +1091,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (member :arm-wreck (kit-hide b)) (not (member :arm-wreck (kit-hide a))) (member :crack-4 (kit-hide a))
               (equal (kit-form-name b) "BANKAI") (equal (kit-form-name a) "KATAUDE")))
   ;; AI keys: the entry rule on cup 3, the Bankai's K links / hurry / the opponent's wait
-  (check (and (equal (getf (kit-ai t3) :bankai) '(:p 0.6 :opp-below 0.6 :opp-konpaku 4 :own-konpaku 4))
+  (check (and (equal (getf (kit-ai t3) :bankai) '(:p 0.9 :opp-below 0.6 :opp-konpaku 4 :own-konpaku 4))
               (~= 0.6 (getf (kit-ai b) :string-k)) (= 90 (getf (kit-ai b) :pip-hurry))
               (equal (getf (kit-ai b) :opp-intent) '(:zone 2 :defend 2)) (null (getf (kit-ai b) :cashout)))))
 
@@ -1499,7 +1499,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (~= 3.8 (mv-reach (kit-command-move t1 :f))) (~= 2.5 (mv-reach (kit-next t1 :sj-k2 :f)))
               (~= 1.4 (getf (mv-params (kit-next t1 :sj-k2 :f)) :pull)) (~= 3.3 (kit-walk t1)) (~= 3.6 (kit-walk b))))
   ;; the CPU: the rule's keys, the loom's hold by distance (星 closer), the Shikai taps L
-  (check (and (equal (getf (kit-ai b) :awaken-rule) '(:ranged-share 0.3 :min-taken 150 :or-opp-rooted t))
+  (check (and (equal (getf (kit-ai b) :awaken) '(:min-taken 150))
               (= 31 (senju-sig-hold t1 7.0)) (= 31 (senju-sig-hold t1 5.0)) (= 21 (senju-sig-hold t1 3.0))   ; a segment; one pass
               (= 31 (senju-sig-hold t6 5.5)) (= 31 (senju-sig-hold t6 3.0)) (= 1 (senju-sig-hold b 3.0))
               (~= 0.5 (getf (kit-ai t6) :opp-rush-hold)) (null (kit-reset-form t1)) (eq :base (kit-reset-form b)))))
