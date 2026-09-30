@@ -119,8 +119,9 @@ frame's finger events."
   (let ((wake (and *coarse* (battle-p) t)))
     (unless (eq wake *wake*) (setf *wake* wake) (page-set +ps-wake+ (if wake 1 0))))
   (deck-update)
-  (setf (touch-rest-up-ok *touch*)                        ; a rested up-flick is a Hoho only from neutral / guard
-        (and *one-hand* *p1* (entity-alive-p *p1*) (member (state-of *p1*) '(:idle :guard)) t))
+  (setf (touch-rest-up-ok *touch*)                        ; a rested up-flick is a Hoho from neutral / guard, and in a
+        (and *one-hand* *p1* (entity-alive-p *p1*)          ; J / K link's open on-hit cancel (the user 2026-09-30)
+             (or (member (state-of *p1*) '(:idle :guard)) (hoho-cancel-open-p (fighter *p1*))) t))
   (touch-poll *touch*)
   (unless (sim-running-p) (touch-take! *touch*))            ; menus / pause: no gesture pulse waits for the match
   (let ((g (touch-glyph-t *touch*)))                        ; the combat log names each recognised gesture

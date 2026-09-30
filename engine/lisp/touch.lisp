@@ -50,7 +50,7 @@ user's playtest, 2026-09-27). (4, the up-flick waiting for its lift, went with t
   (chip-t (%f32s +touch-chips+) :type (simple-array single-float (*)))     ; when it went down
   (chip-on 0 :type fixnum) (chip-hit 0 :type fixnum)                       ; bits: down now / touched this frame
   (now 0f0 :type single-float)              ; the clock TOUCH-FEED! runs to (ms, set by the caller)
-  (rest-up-ok nil)                          ; the game: may a rested up-flick be a Hoho now (neutral / guard)?
+  (rest-up-ok nil)                          ; the game: may a rested up-flick be a Hoho now (neutral / guard / an open on-hit cancel)?
   ;; the gesture contact
   (gid -1 :type fixnum) (phase 0 :type fixnum)
   (t0 0f0 :type single-float) (x 0f0 :type single-float) (y 0f0 :type single-float)

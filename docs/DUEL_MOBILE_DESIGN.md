@@ -22,7 +22,7 @@ there is no local portrait 2P; future Bluetooth / Wi-Fi P2P netplay must stay po
 - **防禦不再是「一碰就擋」**：拇指按著不動超過約 0.12 秒才開始防禦，比這短的就是點擊，也就是 Quick。這樣連段、跑步取消都不會被誤觸的防禦打斷。代價是預先防禦慢了約 7 格；反應型防禦反正本來就來不及，重招照樣擋得住。
 - **撥（flick）在劃過門檻的那一刻就出招**，不必等手指離開，延遲變得穩定。離開容許範圍後的前 120 ms 角色不會先走（2026-09-27 真機試玩後的調整，見 §13）。
 - **2026-09-28 重新對應（使用者的決定，§15）**：手勢區以中線分上下兩塊，**點下半塊 = J（輕）、點上半塊 = K（重）**；**往上撥 = 向前衝刺**（往前的 Step，撥完手指繼續往前推就接著跑），不再是 K。
-- **Hoho**：站著或防禦時，按住不動再往上撥。沒先按住的往上撥一律是向前衝刺。單手版少了「連段中取消成 Hoho」這一招。
+- **Hoho**：站著或防禦時，按住不動再往上撥。沒先按住的往上撥一律是向前衝刺。~~單手版少了「連段中取消成 Hoho」這一招。~~ 2026-09-30 使用者要求補回：J／K 打中後、可以取消的時段內（打中到收招結束），按住再往上撥也是 Hoho，用來取消攻擊（§15.2）。
 - **連段**（2026-09-27，[DUEL_STRINGS.md](DUEL_STRINGS.md)）：點下半 = J、點上半 = K，最多三段，J 與 K 之間最多換一次（多換的那一下會被忽略）；下一段在前一段的任何時候都可以先按（會記住，打中或被擋才出）。完整打中第 3 段後按 O 晶片是 O 收尾：點一下只有擊退，按住就衝上去接毀魂技。
 - **Burst**：被打中、硬直或浮空時往下撥，跟 Shift+J 一樣會記在緩衝裡。
 - **拇指按著不動就是 U**（2026-09-26 的 guard v3 決定之後）：野晒三杯的「喝」本來就是防禦，所以任何型態按著不動都一樣。原本設計的「長按放開鎖住 U」手勢已經刪掉。2026-09-27 山本卍解重製之後：在『東』按著不動就切到『西』（全方位防禦、沒有防禦硬直），切過去之後不會自己切回東，要出 L、SP1 以外的招式才回東（[DUEL_YAMA_REWORK.md](DUEL_YAMA_REWORK.md)）。
@@ -192,7 +192,7 @@ P0, whose exit criteria include reach.
 | Esc | ⏸ (hold 300 ms), app switch, or a back gesture |
 
 **What one hand loses** compared with keyboard:
-- the Hoho *cancel* from a landed string;
+- ~~the Hoho *cancel* from a landed string;~~ (restored 2026-09-30, §15.2)
 - Hoho out of a run (rest first);
 - a forward Step (use the run);
 - walking while pressing a chip (a two-thumb player can still do it: chips accept a second contact);
@@ -595,7 +595,7 @@ mirrors x only; the split is the same.
 | **Flick up** (within `up-cone`, 60° of vertical) | `:step` pulse + stick straight ahead, at the crossing | **the forward dash**: a forward Step (2.5 m hop, i-frames); a thumb that keeps going past the run ring keeps Step held, so the hop becomes the run, exactly like the other flicks |
 | Flick down / sideways | `:step` + the stroke's direction | Step back / sidestep |
 | Flick down in `:stun` / `:air` | `:mod` + `:quick` | Burst Reverse |
-| Rest, then flick up (neutral / guard only) | `:mod` + `:step` | Hoho (unchanged: the rest first keeps it distinct from the dash) |
+| Rest, then flick up (neutral / guard; and a J / K link's open on-hit cancel since 2026-09-30, §15.2) | `:mod` + `:step` | Hoho (unchanged: the rest first keeps it distinct from the dash) |
 | O chip: tap / hold | `:kikon` | the O ender after a link-3 hit / the Kikon rush, held = the Kikon (unchanged) |
 | L, I, SP1, SP2, AWK (hold 300 ms), II | unchanged | |
 
@@ -747,3 +747,14 @@ the L chip is held (the chip's down state is the weave), three pass ticks fill i
 last row draws her meter in the kit slot at small size (the needle pips or the six swatches, spanning the Reishi bar with
 the other small gauges); the label is `HARI n` or the next hank's short name (`ME`, `HAGANE`, `KOKUSA`, `SHITONE`,
 `YAKENOHARA`, `HOSHI`). A resting thumb is a guard in both forms; nothing of hers accrues from guarding.
+
+### 15.2 The Hoho cancel restored (the user, 2026-09-30)
+
+The user asked whether one hand can Hoho-cancel an attack (it could not: §4 listed it as lost, review item 3). Of two
+options (a contextual HOHO chip like RV, or the rested up-flick also inside the cancel window) the user chose to try the
+gesture: `touch-rest-up-ok` is now also true while P1 is in a J / K link whose on-hit cancel is open (`hoho-cancel-open-p`,
+fighter.lisp: the link landed, from its hit frame until its recovery ends, as `cancel-into` reads it). Anywhere else an
+up-stroke in `:move` is still F / the dash. Checked with `run.mjs --mobile` (debug 2325 then 2420: base Rukia 2.2 m from
+an idle Kenpachi): a K tap, RU-K1 hits on t 105, a rest and an up-flick read HOHO on t 111, `P1 hoho` on t 114 (the
+cancel). The risk review item 3 named remains inside that window only: a thumb resting after a landed hit and flicking up
+Hohos (30 flash-step) instead of dashing, where a dash could not cancel the link anyway.

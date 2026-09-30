@@ -589,6 +589,13 @@ action started."
                        (setf (fighter-chained f) t)
                        t)))))))))
 
+(defun hoho-cancel-open-p (f)
+  "Is F in a J / K link whose on-hit cancel is open (a Hoho would cancel it now: CANCEL-INTO)? (The one-hand deck's
+rested up-flick.)"
+  (let ((mv (fighter-move f)))
+    (and (eq (fighter-state f) :move) mv (member (mv-kind mv) '(:quick :flash))
+         (cancel-open-p (fighter-sf f) (fighter-land-sf f) (mv-total mv) (eq (fighter-contact f) :hit)))))
+
 (defun cancel-into (e f kit mv sf landed cmd button)
   "An on-hit cancel out of J / K link MV: SPs, Hoho, a :cancel Signature (L)."
   (and (member (mv-kind mv) '(:quick :flash))
