@@ -758,3 +758,16 @@ up-stroke in `:move` is still F / the dash. Checked with `run.mjs --mobile` (deb
 an idle Kenpachi): a K tap, RU-K1 hits on t 105, a rest and an up-flick read HOHO on t 111, `P1 hoho` on t 114 (the
 cancel). The risk review item 3 named remains inside that window only: a thumb resting after a landed hit and flicking up
 Hohos (30 flash-step) instead of dashing, where a dash could not cancel the link anyway.
+
+**Then any up-flick while attacking (the user, the same day):** 「攻擊中往上撥是向前衝刺」 did almost nothing (a move takes
+no Step; only the vpad's 10-frame buffer turned a flick in a move's last 10 frames into a dash out of its recovery), so
+the user made every up-flick in `:move` a Hoho, no rest needed: `touch-up-hoho` (engine touch.lisp, set by onehand.lisp
+while P1 is in `:move`); the rested one stays neutral / guard (`touch-rest-up-ok`), and `hoho-cancel-open-p` is gone.
+In a landed J / K link it is the Hoho cancel; elsewhere a flick in a move's last 10 frames buffers a Hoho out of its
+recovery instead of the dash. Checked: RU-K1 hits on t 105, a plain up-flick reads HOHO on t 108, `P1 hoho` t 114.
+
+**ORANGE's down-flick no longer back-steps (the user, the same day).** The thumb running on past the run ring after the
+flick held Step (`run-hold`; the old fix only cleared `flick-hold`), so once ORANGE freed the recovery he stepped back
+along the stick. A flick the game takes for a burst now spends the contact (`touch-spend!`: phase 5 as after a Hoho, no
+stick, no Step held, the flick pulse dropped) until it lifts. Checked: RU-K1 hit, a down-flick running 110 px on: `P1
+BURST ORANGE`, no `P1 step` after it (before: `P1 step` on t 123).

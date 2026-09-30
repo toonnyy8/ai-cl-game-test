@@ -119,9 +119,9 @@ frame's finger events."
   (let ((wake (and *coarse* (battle-p) t)))
     (unless (eq wake *wake*) (setf *wake* wake) (page-set +ps-wake+ (if wake 1 0))))
   (deck-update)
-  (setf (touch-rest-up-ok *touch*)                        ; a rested up-flick is a Hoho from neutral / guard, and in a
-        (and *one-hand* *p1* (entity-alive-p *p1*)          ; J / K link's open on-hit cancel (the user 2026-09-30)
-             (or (member (state-of *p1*) '(:idle :guard)) (hoho-cancel-open-p (fighter *p1*))) t))
+  (let ((st (and *one-hand* *p1* (entity-alive-p *p1*) (state-of *p1*))))
+    (setf (touch-rest-up-ok *touch*) (and (member st '(:idle :guard)) t)   ; a rested up-flick is a Hoho from neutral / guard,
+          (touch-up-hoho *touch*) (eq st :move)))            ; any up-flick while attacking (the user 2026-09-30: no dash there)
   (touch-poll *touch*)
   (unless (sim-running-p) (touch-take! *touch*))            ; menus / pause: no gesture pulse waits for the match
   (let ((g (touch-glyph-t *touch*)))                        ; the combat log names each recognised gesture
@@ -140,8 +140,9 @@ frame's finger events."
     (touch-take! tr)
     (setf *touch-burst* (and (touch-pulse-p tr +tp-flick+) (touch-flick-down-p tr) *p1*
                              (or (member (state-of *p1*) '(:stun :air)) (eq (burst-ok-p *p1*) :orange)) t))
-    (when *touch-burst*                                   ; no Step held after a Burst (it would buffer a Step)
-      (setf (touch-flick-hold tr) 0 (touch-glyph tr) 7))))
+    (when *touch-burst*                                   ; the contact is spent: no stick, no Step held after a Burst (the
+      (touch-spend! tr)                                   ; thumb running on past the run ring held Step: ORANGE's freed
+      (setf (touch-glyph tr) 7))))                        ; recovery back-stepped; the user 2026-09-30)
 
 (defun u-chip-p ()
   "P1's form has a :u hook (its U is a move, not a guard: a parry): a resting thumb does nothing and the spent

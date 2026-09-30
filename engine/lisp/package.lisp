@@ -29,7 +29,7 @@
    ;; touch.lisp: the one-thumb gesture recogniser (plain CL); platform.lisp feeds it (TOUCH-POLL)
    #:make-touch #:touch #:touch-layout! #:touch-feed! #:touch-take! #:touch-pulse-p #:touch-resting-p
    #:touch-step-held-p #:touch-flick-down-p #:touch-sx #:touch-sy #:touch-chip-down-p #:touch-chip-hit-p
-   #:touch-tapped-p #:touch-tap-x #:touch-tap-y #:touch-rest-up-ok #:touch-flick-hold #:touch-rested
+   #:touch-tapped-p #:touch-tap-x #:touch-tap-y #:touch-rest-up-ok #:touch-up-hoho #:touch-spend! #:touch-flick-hold #:touch-rested
    #:touch-active-p #:touch-ox #:touch-oy #:touch-glyph #:touch-glyph-t #:touch-glyph-x #:touch-glyph-y #:touch-cfg #:touch-dpx
    #:+tp-tap+ #:+tp-flick+ #:+tp-tap-hi+ #:+tp-hoho+ #:touch-split-y
    #:gesture-config #:make-gesture-config #:gc-tap-ms #:gc-slop #:gc-flick-min #:gc-flick-window #:gc-up-cone #:gc-tap-split

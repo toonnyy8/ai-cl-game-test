@@ -644,7 +644,7 @@ duel -> RESULTS winner P2 konpaku 0-1 ticks 10288 secs 171.5
 | 拖曳 | 移動（WASD），往上是朝對手；拖遠一點就按住 Step，變成跑。剛開始拖的約 0.12 秒角色不會動，先等著看是不是撥 |
 | 往上撥（左右偏 60° 以內都算往上） | 向前衝刺：往正前方的 Step（Space＋W），越過門檻就出，不用等放開；手指繼續往前推就接著跑 |
 | 快速撥一下（下、左、右） | Step（Space），往下是後退、左右是側步 |
-| 先按著不動，再往上撥 | Hoho（Shift+Space），站著或防禦時；以及自己的 J／K 打中後可以取消的時候（2026-09-30 使用者要的，`onehand.lisp` 用 `fighter.lisp` 的 `hoho-cancel-open-p` 判斷）；沒先按住就是向前衝刺 |
+| 先按著不動，再往上撥 | Hoho（Shift+Space），站著或防禦時；沒先按住就是向前衝刺。**攻擊中**（2026-09-30 使用者：攻擊中本來就不能衝刺）任何往上撥都是 Hoho，不用先按住，打中後就是 Hoho 取消（`onehand.lisp` 設 `touch-up-hoho`） |
 | 被打中、硬直或浮空時往下撥 | 藍色爆氣 BURST REVERSE（Shift+J） |
 | 自己的招式打中後往下撥 | 橙色爆氣 CHAIN REVERSE（Shift+J） |
 | RV 圓鈕（O 的上方，可以爆氣時才出現） | 爆氣，任何模式（Shift+J）；站著或防禦時就是白色爆氣 |

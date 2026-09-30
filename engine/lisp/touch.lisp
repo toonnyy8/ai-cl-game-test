@@ -50,7 +50,8 @@ user's playtest, 2026-09-27). (4, the up-flick waiting for its lift, went with t
   (chip-t (%f32s +touch-chips+) :type (simple-array single-float (*)))     ; when it went down
   (chip-on 0 :type fixnum) (chip-hit 0 :type fixnum)                       ; bits: down now / touched this frame
   (now 0f0 :type single-float)              ; the clock TOUCH-FEED! runs to (ms, set by the caller)
-  (rest-up-ok nil)                          ; the game: may a rested up-flick be a Hoho now (neutral / guard / an open on-hit cancel)?
+  (rest-up-ok nil)                          ; the game: may a rested up-flick be a Hoho now (neutral / guard)?
+  (up-hoho nil)                             ; the game: is any up-flick a Hoho now, no rest needed (while attacking)?
   ;; the gesture contact
   (gid -1 :type fixnum) (phase 0 :type fixnum)
   (t0 0f0 :type single-float) (x 0f0 :type single-float) (y 0f0 :type single-float)
@@ -112,8 +113,8 @@ HOLDS: a list of ms each chip must be held first, default 0). Releases held chip
   (setf (touch-armed tr) 0 (touch-fx tr) dx (touch-fy tr) dy)
   (let ((x (touch-x tr)) (y (touch-y tr)) (ax (if (< dx 0f0) (- dx) dx)))
     (declare (single-float x y ax))
-    (cond ((and (< dy 0f0) (>= (* (- dy) (%knob tr up-cone)) ax)   ; up (within UP-CONE) from a rest: Hoho
-                (= (touch-rested tr) 1) (touch-rest-up-ok tr))
+    (cond ((and (< dy 0f0) (>= (* (- dy) (%knob tr up-cone)) ax)   ; up (within UP-CONE) from a rest, or any while the
+                (or (touch-up-hoho tr) (and (= (touch-rested tr) 1) (touch-rest-up-ok tr))))   ; game says so: Hoho
            (setf (touch-pend tr) (logior (touch-pend tr) +tp-hoho+) (touch-phase tr) 5)
            (%glyph! tr 4 x y ms))
           (t (setf (touch-pend tr) (logior (touch-pend tr) +tp-flick+) (touch-flick-hold tr) 1 (touch-phase tr) 2)
@@ -260,6 +261,12 @@ latched while no fixed step ran stays pending until one does)."
   (setf (touch-live tr) (touch-pend tr) (touch-pend tr) 0)
   tr)
 (defun touch-pulse-p (tr bit) (logtest (touch-live tr) bit))
+(defun touch-spend! (tr)
+  "The game took this read's flick for itself (a burst): the contact gives nothing more until it lifts, as after a Hoho
+(no stick, no Step held however far the thumb travels on)."
+  (setf (touch-phase tr) 5 (touch-flick-hold tr) 0 (touch-run-hold tr) 0
+        (touch-live tr) (logandc2 (touch-live tr) +tp-flick+))
+  tr)
 (defun touch-active-p (tr) "A gesture contact is down." (>= (touch-gid tr) 0))
 (defun touch-resting-p (tr) (= (touch-phase tr) 3))
 (defun touch-step-held-p (tr)
