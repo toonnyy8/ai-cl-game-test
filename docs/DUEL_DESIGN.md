@@ -1455,3 +1455,6 @@ clause: 229.2, so not that). Not retuned (Ichigo's numbers are the user's). The 
 27, already failing stream 100), SR 24 / 32 / 30, SS 30 / 30 / 24, SI (Senjumaru) 36 / 30 / 36; Ichigo IY 6 / 2 / 3, IK 3 /
 9 / 3, IR 4 / 4 / 6, II 6 / 3 / 3, SI (Ichigo) 3 / 2 / 2, failing as before. G2: all three changed; YK now `winner P1
 konpaku 3-0 ticks 10862 secs 181.0`.
+
+**Escapes confirmed (the user, 2026-09-30: 「兩者都行」):** both BLUE and the awakening (Kenpachi's Bankai included) break
+the guard lock.
