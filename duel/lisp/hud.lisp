@@ -388,7 +388,7 @@ the running rush's, a kit's :kikon-worth hook, else its :kikon-konpaku), capped 
   (let* ((bar (the single-float (f32 *reiatsu-bar*))))
     (declare (single-float bar))
     (dotimes (i 3)
-      (let* ((fi (i->f i)) (bx (if right (- x (* (+ fi 1f0) (+ sw gap))) (+ x (* fi (+ sw gap)))))
+      (let* ((fi (i->f i)) (bx (if right (- x (* (+ fi 1f0) sw) (* fi gap)) (+ x (* fi (+ sw gap)))))
              (fill (f-clamp (/ (- ra (* fi bar)) bar) 0f0 1f0)))
         (declare (single-float fi bx fill))
         (%hrect bx y sw sh 0.05f0 0.04f0 0.07f0 0.75f0)
