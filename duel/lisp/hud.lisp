@@ -214,7 +214,7 @@ possible (BURST: the mode a press would start) the part past the burst tick glow
           (%hrect (if right (+ x (* w (- 1f0 fill))) (+ x (* w fill) -2f0)) (- y 1f0) 2f0 (+ h 2f0) 1f0 1f0 1f0 (+ 0.4f0 (* 0.6f0 p))))
         (%hbar x y w h fill right 0.55f0 0.75f0 1f0 1f0 0.25f0 0.45f0 0.8f0 1f0))
     (when (and burst (> fill bk))
-      (let* ((sw (* w (- fill bk))) (sx (if right (+ x (- w fill)) (+ x (* w bk))))
+      (let* ((sw (* w (- fill bk))) (sx (if right (+ x (* w (- 1f0 fill))) (+ x (* w bk))))   ; (right: fills from the right edge)
              (c (burst-color burst)))
         (declare (single-float sw sx))
         (%hrect sx (- y 1f0) sw (+ h 2f0) (f32 (first c)) (f32 (second c)) (f32 (third c)) (+ 0.5f0 (* 0.5f0 p)))))
