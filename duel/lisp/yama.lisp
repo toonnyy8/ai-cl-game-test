@@ -106,11 +106,11 @@
 (defmove :ya-w-shonetsu :kind :sig :clip :ya-shonetsu :clip-s 14 :callout "SHONETSU JIGOKU" :startup 16 :active 0
   :recovery 24 :cooldown 150 :on-frame ((0 yama-shonetsu-tell) (16 yama-shonetsu))
   :params (:size 2.0 :life 48 :hits 2 :dmg 45 :kb 2.0 :guard 12))
-;; Shift+K in West: GOKUI GAESHI, a parry (f4-15, *PARRY-WINDOW*); a melee hit in it staggers the attacker
+;; Shift+K in West: GOKUI GAESHI, a parry (f2-25, *PARRY-WINDOW*: Ichigo's KUSARI-TATE window, the user 2026-10-01); a melee hit in it staggers the attacker
 ;; *PARRY-STUN*, refills his guard gauge and starts the counter (the :land string: combat.lisp APPLY-HIT :parried).
 ;; 46 f parried or not; he stays West through it and the counter (both SP1)
-(defmove :ya-w-parry :kind :sp :clip :ya-w-parry :callout "GOKUI GAESHI" :startup 4 :active 12 :recovery 30 :flags (:parry)
-  :on-frame ((4 yama-parry-up)))
+(defmove :ya-w-parry :kind :sp :clip :ya-w-parry :callout "GOKUI GAESHI" :startup 2 :active 24 :recovery 20 :flags (:parry)
+  :on-frame ((2 yama-parry-up)))
 (defmove :ya-w-counter :kind :sig :clip :ya-w-counter :startup 6 :active 3 :recovery 24 :dmg 150 :adv-block -12
   :vol (:arc 2.6 120 0.0 2.0) :on-hit :knockback :kb 3.0)
 

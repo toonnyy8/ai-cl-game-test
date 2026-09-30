@@ -537,7 +537,7 @@
 (defpose :ya-w-parry-hit (:base :ya-stance)
   (:root :u -0.12) (:knees :flex 40) (:chest :twist 10) (:arm-r :flex 75 :side -20) (:elbow-r :flex 80)
   (:hand-r :twist 90 :flex -10) (:arm-l :side 45) (:spine :flex 12) (:head :flex -10))
-(defstrike :ya-w-parry (4 12 30 :base :ya-stance)      ; West Shift+K, GOKUI GAESHI: the blade upright before him, the garb up
+(defstrike :ya-w-parry (2 24 20 :base :ya-stance)      ; West Shift+K, GOKUI GAESHI: the blade upright before him, the garb up
   (0)
   (:s :snap :ya-w-parry-hit)
   (6 (:root :u -0.15) (:knees :flex 45) (:arm-l :side 54) (:spine :flex 14))

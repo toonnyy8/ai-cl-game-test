@@ -295,7 +295,8 @@ the seed gate (see *PIERCE-MAX*).")
 ;;; than SP1 / L drops West back to East
 (defparameter *scorch* 15 "West (:scorch): a melee hit his parry catches burns the attacker this much (never kills; the parry also refills his
 guard gauge: the rework).")
-(defparameter *parry-window* '(4 15) "GOKUI GAESHI: the move frames (inclusive) its parry catches a melee hit ...")
+(defparameter *parry-window* '(2 25) "GOKUI GAESHI: the move frames (inclusive) its parry catches a melee hit (f2-25, KUSARI-TATE's
+window: the user 2026-10-01; was f4-15) ...")
 (defparameter *parry-stun* 32 "... the parried attacker staggers this long (his move ends) ...")
 (defparameter *parry-slide* 0.5 "... sliding this far.")
 (defparameter *bind-stun* 60 "South (the bind): frames the victim's feet are held. Pacing knob (design v3 §E): 60 -> 45.")

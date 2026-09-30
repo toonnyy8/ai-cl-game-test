@@ -92,7 +92,7 @@ check is skipped (360°, Q3). So `resolve-contact` returns what a guard gets:
 
 **Not warded:** his reaction states (flinch / stagger / knockback / launch / bound / guard-break / crush reels). A combo
 that an unguardable or a Guard Break opened plays out normally, so there are no "armoured combos". His parry's
-window frames (f4–15) are `:parry` (checked before the ward), so a melee hit there is **parried**, not blocked.
+window frames (f2–25 since 2026-10-01, Ichigo's KUSARI-TATE window; was f4–15) are `:parry` (checked before the ward), so a melee hit there is **parried**, not blocked.
 
 **Movement:** walk 3.2 m/s, run 8 m/s, Step, Hoho, Burst, all unchanged. There is no jump in the game.
 
@@ -178,7 +178,7 @@ reads right (the blade cuts the fire), so it's kept.
 | Form | SP1 | Change |
 |---|---|---|
 | East | **KYOKUJITSUJIN** (as built: the blade f18–19 breaks guard, the cone at f20, 9 m 25°, 130, ranged, blockable) | The blade's guard break no longer turns off in burnout (burnout is gone, and so is the `:heat` flag). The cone and the blade carry pierce. On West the cone is simply blocked (no ranged ×0.6) |
-| West | **GOKUI GAESHI** (the parry: 1 bar, window f4–15, 46 f; a melee catch staggers the attacker 32 f, scorches him 15, and counters `:ya-w-counter` 150) | **New: the catch sets his guard gauge to 100** (`gauges-gg` ← `*gg-max*`, idle counter 0; the spec's 成功觸發反擊 = the catch that starts the counter). He **stays West** through the parry and the counter (both are SP1). If the gauge was guardless… it can't be: guardless means East. The whiffed parry's recovery is warded (spec literal; Q7) |
+| West | **GOKUI GAESHI** (the parry: 1 bar, window f4–15 (f2–25 since 2026-10-01), 46 f; a melee catch staggers the attacker 32 f, scorches him 15, and counters `:ya-w-counter` 150) | **New: the catch sets his guard gauge to 100** (`gauges-gg` ← `*gg-max*`, idle counter 0; the spec's 成功觸發反擊 = the catch that starts the counter). He **stays West** through the parry and the counter (both are SP1). If the gauge was guardless… it can't be: guardless means East. The whiffed parry's recovery is warded (spec literal; Q7) |
 
 ## 4. Deletions, additions, knobs
 

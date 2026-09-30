@@ -771,3 +771,11 @@ flick held Step (`run-hold`; the old fix only cleared `flick-hold`), so once ORA
 along the stick. A flick the game takes for a burst now spends the contact (`touch-spend!`: phase 5 as after a Hoho, no
 stick, no Step held, the flick pulse dropped) until it lifts. Checked: RU-K1 hit, a down-flick running 110 px on: `P1
 BURST ORANGE`, no `P1 step` after it (before: `P1 step` on t 123).
+
+**A perfect up-flick is a Hoho (the user, 2026-10-01).** 「玩家要做到完美閃步的難度太高了…在完美閃步的時間點手勢上滑，就自動將
+墊步改成閃步」: resting first and then flicking inside the perfect window was too hard on a phone. `touch-up-hoho` is now
+also true while P1 is free (`:idle` / `:guard` / `:run`), can afford a Hoho (not rooted, `hoho-allowed-p`) and
+`perfect-now-p` holds (onehand.lisp `perfect-up-p`): any up-flick then is a Hoho, which is perfect; outside that moment
+an unrested up-flick is still the dash. The keyboard / pad are unchanged. Checked (`run.mjs --mobile`, debug 2325 then
+2320: human Yamamoto 2 m from Kenpachi mashing J): a plain up-flick at t 8.70 / 8.73 s reads HOHO on tick 86, `P1 PERFECT
+HOHO` t 87, the counter hits t 119; at 8.76 / 8.79 s (J1 already hit him) DASH as before.

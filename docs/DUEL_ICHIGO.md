@@ -1161,7 +1161,7 @@ that doesn't use them:
 | # | Where | Key | Change |
 |---|---|---|---|
 | H2 | kit.lisp `kit-kikon-cine` | kit `:hooks :soul-break-cine` (a cinematic's name) | a Soul Break plays the form's own cinematic, else its Kikon cinematic (as before) |
-| H4 | rules.lisp `parry-frame-p`, fighter.lisp `defender-state` | move `:params :window (lo hi)` | a parry move's own window, else the shared `*parry-window*` (GOKUI GAESHI unchanged) |
+| H4 | rules.lisp `parry-frame-p`, fighter.lisp `defender-state` | move `:params :window (lo hi)` | a parry move's own window, else the shared `*parry-window*` (GOKUI GAESHI; the same f2–25 since 2026-10-01) |
 
 Existing hooks used: `:tick`, `:step` (the Step clone), `:ok` (the parry's price, ZANZŌ refused while on), `:parried` (the
 catch), `:hit` (a clone learns its contact), `:struck` (a real hit clears the clones; the practice judge), `:deck`, the

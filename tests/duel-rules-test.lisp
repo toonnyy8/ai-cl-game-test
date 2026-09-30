@@ -645,7 +645,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     ;; Bankai East / West (DUEL_STRINGS §3.2; the rework's L moves)
     (:ya-e-j1 8 3 12 34 -2) (:ya-e-j2 7 3 13 38 -2) (:ya-e-j3 8 3 18 42 -4) (:ya-e-k1 16 4 20 70 -3)
     (:ya-e-k2 19 4 24 60 -3) (:ya-e-k3 21 5 34 84 -20) (:ya-e-kyokko 15 3 26 85 -12) (:ya-w-shonetsu 16 0 24 0 nil)
-    (:ya-w-parry 4 12 30 0 nil) (:ya-w-counter 6 3 24 150 -12)
+    (:ya-w-parry 2 24 20 0 nil) (:ya-w-counter 6 3 24 150 -12)
     (:ke-j1 7 3 12 35 -2) (:ke-j2 7 3 13 35 -2) (:ke-j3 8 3 18 42 -4) (:ke-k1 16 4 20 70 -3)
     (:ke-k2 20 4 24 60 -3) (:ke-k3 20 5 34 80 -20) (:ke-stance 8 4 24 100 -14) (:ke-buttagiru 22 4 26 180 -14)
     (:ke-charge 14 ? ? 25 -16) (:ke-breaker 8 4 18 150 :guard-break) (:ke-meteor 26 4 30 240 ?)
@@ -871,11 +871,11 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
           (kk (* *ward-mult* (+ (cut-value (gv (kit :kenpachi :ryote) :ke-r-k1) :flash) (cut-value (gv (kit :kenpachi :ryote) :ke-r-k2) :flash)
                                 (cut-value (gv (kit :kenpachi :ryote) :ke-r-k3) :flash)))))
       (check (and (< (* 3 qs) *gg-max*) (>= (* 4 qs) *gg-max*) (< kk *gg-max*) (>= (* 2 kk) *gg-max*)))))
-  ;; GOKUI GAESHI: the parry catches a melee hit on f4-15 (12 f = its active frames), not a hazard, not an
+  ;; GOKUI GAESHI: the parry catches a melee hit on f2-25 (24 f = its active frames; Ichigo's window, 2026-10-01), not a hazard, not an
   ;; unguardable one; a Breaker breaks it; parried = a block for the attacker (no string, no Kikon); the counter
   ;; (150, knockback) lands inside the parried attacker's stagger: guaranteed
   (let ((p (kit-command-move west :sp1)) (c (kit-next west :ya-w-parry :land)))
-    (check (and (not (parry-frame-p 3)) (parry-frame-p 4) (parry-frame-p 15) (not (parry-frame-p 16))
+    (check (and (not (parry-frame-p 1)) (parry-frame-p 2) (parry-frame-p 25) (not (parry-frame-p 26))
                 (= (mv-a p) (1+ (- (second *parry-window*) (first *parry-window*)))) (= (mv-s p) (first *parry-window*))
                 (member :parry (mv-flags p)) (zerop (length (mv-hits p))) (= (mv-total p) 46) (= (kit-command-cost west :sp1) 1)))
     (check (and (eq (resolve-contact :parry) :parried) (eq (resolve-contact :parry :in-front nil) :parried)
@@ -1315,11 +1315,11 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (null (clone-evict '(5 9))) (= 1 (clone-evict '(7 3 9)))
               (clone-vanish-p :hit) (clone-vanish-p :counter) (clone-vanish-p :guard-break)
               (not (clone-vanish-p :blocked)) (not (clone-vanish-p :parried)) (not (clone-vanish-p nil))))
-  ;; the parry: its own window f2-25 (24 f; the move's :window), 360 deg, 10 of the gauge, R 18; GOKUI GAESHI keeps the
-  ;; shared 4-15; a catch staggers 40 f, and ZANGETSU-GAESHI (the :land string) is +15: his J1 combos
+  ;; the parry: its own window f2-25 (24 f; the move's :window), 360 deg, 10 of the gauge, R 18; GOKUI GAESHI's shared
+  ;; window is the same f2-25 since 2026-10-01; a catch staggers 40 f, and ZANGETSU-GAESHI (the :land string) is +15: his J1 combos
   (check (and (member :parry (mv-flags parry)) (equal '(2 25) win) (= 2 (mv-s parry)) (= 24 (mv-a parry)) (= 44 (mv-total parry))
               (parry-frame-p 2 win) (parry-frame-p 25 win) (not (parry-frame-p 1 win)) (not (parry-frame-p 26 win))
-              (parry-frame-p 4) (parry-frame-p 15) (not (parry-frame-p 3)) (not (parry-frame-p 16))
+              (parry-frame-p 2) (parry-frame-p 25) (not (parry-frame-p 1)) (not (parry-frame-p 26))
               (eq (kit-next ks :ic-k-parry :land) gaeshi) (= 10 *kessa-parry-cost*) (= 20 *kessa-parry-catch*)
               (= 40 *kessa-parry-stun*) (< (mv-s gaeshi) *kessa-parry-stun*)
               (= 15 (- (+ (mv-s gaeshi) (hitstun :crumple)) (mv-total gaeshi))) (< (mv-s kj1) 15)
