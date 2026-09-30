@@ -86,6 +86,7 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (dmg-bonus 0 :type fixnum)            ; added to the move's damage (stance: stored)
   (crush nil)                           ; this move now crushes guard (stance >= 150, SP2 held)
   (stun 0 :type fixnum)                 ; frames the reaction / blockstun lasts
+  (glock nil)                           ; blockstun: the guard lock holds him (his attacker may still chain; GUARD-LOCK-OF)
   (block-adv 0 :type fixnum)            ; block advantage of the last melee hit blocked (CPU punish)
   (freeze 0 :type fixnum)               ; frames this fighter alone is frozen (super freeze)
   (lock 0 :type fixnum)                 ; frames inputs are ignored (reset neutral, perfect Hoho victim)

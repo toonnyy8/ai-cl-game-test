@@ -109,11 +109,13 @@ allows it (AWAKEN-STATE-P) and its kit's rule says awaken (:awaken-above, AI-AWA
 (defun ai-burst-roll (e b)
   "Burst Reverse (or the awakening, which breaks a combo too: AI-AWAKEN-BREAK-P) now? No sooner than the perception
 delay after the combo's 2nd hit (BRAIN-BURST-T), allowed (BURST-OK-P) and worth it (AI-BURST-WANTED-P, the next hit
-estimated as the combo's average so far): one roll per combo at the difficulty's *AI-BURST-P*."
+estimated as the combo's average so far): one roll per combo at the difficulty's *AI-BURST-P*. In blockstun: a
+string the guard lock holds him in while his guard gauge is low (AI-GG-LOW-P), one roll per locked string."
   (let ((f (fighter e)) (g (gauges e)))
     (when (and (not (brain-burst-rolled b)) (>= (brain-burst-t b) (brain-delay b)) (or (burst-ok-p e) (ai-awaken-break-p e))
-               (ai-burst-wanted-p (gauges-reishi g) (gauges-reishi-max g)
-                                  (floor (fighter-combo-dmg f) (max 1 (fighter-combo-hits f)))))
+               (or (eq (fighter-state f) :guard-hit)      ; (the clock runs there only for a guard-locked string on a low guard)
+                   (ai-burst-wanted-p (gauges-reishi g) (gauges-reishi-max g)
+                                      (floor (fighter-combo-dmg f) (max 1 (fighter-combo-hits f))))))
       (setf (brain-burst-rolled b) t)
       (< (sim-rnd01) (getf *ai-burst-p* (brain-difficulty b) 0.4)))))
 
@@ -589,7 +591,8 @@ fraction of the guard gauge."
       (when (and (eq (fighter-state f) :guard-hit) (zerop (fighter-sf f)) (not (brain-off b)))   ; blocked: hold on through the string?
         (when (< (sim-rnd01) (getf *ai-hold-guard* (brain-difficulty b) 0.85))
           (ai-press b :guard (+ (fighter-stun f) 20) :act :hold)))   ; (no reflex drops it: BRAIN-STEP)
-      (if (and (member (fighter-state f) '(:stun :air)) (>= (fighter-combo-hits f) *burst-min-hits*))
+      (if (or (and (member (fighter-state f) '(:stun :air)) (>= (fighter-combo-hits f) *burst-min-hits*))
+              (and (eq (fighter-state f) :guard-hit) (fighter-glock f) (ai-gg-low-p e)))   ; a locked string on a low guard
           (incf (brain-burst-t b))                                                ; the Burst clock
           (setf (brain-burst-t b) 0 (brain-burst-rolled b) nil))
       (when (and (eq (brain-act b) :dash) (> (brain-press-left b) 0)              ; a dash reached its range:

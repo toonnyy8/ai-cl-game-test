@@ -182,7 +182,8 @@ pulsing when RED), a thin outline (red and pulsing when RED)."
 (defun-fast %hud-guard (x y bw bh frac trail right guardless mode tm)
   "The guard gauge: dark back, white drain TRAIL, the fill by MODE bits: 1 30 % darker (he guards below full: GUARD
 HOLD, no refill; Bankai West's ward), 2 ember (Bankai: East's pierce reads it), else steel; GUARDLESS: a grey bar whose
-red fill climbs back (pulsing) until it is full and he can guard again."
+red fill climbs back (pulsing) until it is full and he can guard again. Bit 4: LOCK, a pulsing blue rim (the guard lock
+holds him past his blockstun: only BLUE breaks it)."
   (declare (single-float x y bw bh frac trail tm) (fixnum mode))
   (let* ((p (%pulse tm 3.0)) (k (if (logtest mode 1) 0.7f0 1f0)) (em (logtest mode 2))
          (r0 (* k (if em 1f0 0.84f0))) (g0 (* k (if em 0.62f0 0.88f0))) (b0 (* k (if em 0.25f0 0.94f0)))
@@ -193,7 +194,8 @@ red fill climbs back (pulsing) until it is full and he can guard again."
         (progn (%hrect x y bw bh 0.32f0 0.32f0 0.35f0 0.9f0)
                (%hbar x y bw bh frac right 0.9f0 0.12f0 0.15f0 (+ 0.6f0 (* 0.4f0 p)) 0.6f0 0.02f0 0.05f0 (+ 0.6f0 (* 0.4f0 p))))
         (progn (%hbar x y bw bh trail right 1f0 1f0 1f0 0.95f0)
-               (%hbar x y bw bh frac right r0 g0 b0 1f0 r1 g1 b1 1f0)))))
+               (%hbar x y bw bh frac right r0 g0 b0 1f0 r1 g1 b1 1f0)))
+    (when (logtest mode 4) (%houtline (- x 1f0) (- y 1f0) (+ bw 2f0) (+ bh 2f0) 0.35f0 0.6f0 1f0 (+ 0.5f0 (* 0.4f0 p))))))
 
 (defun-fast %hud-flash (x y w h fill right burst running tm)
   "The flash-step bar: dark back, a steel-blue FILL (0..1), white ticks at a Hoho's and a burst's threshold; while a
@@ -541,7 +543,7 @@ from the base form when this form has none) and the tag of what U does in the fo
       (%hud-guard (f32 x) (f32 (+ y bh (* 2 s))) (f32 bw) (f32 (max (* 3 s) (* 0.3 bh))) (f32 gf) (aref *trail-v* ti)
                   right (gauges-guardless g)
                   (logior (if (and (or ward (member (fighter-state f) '(:guard :guard-hit))) (< gf 1.0)) 1 0)
-                          (if (or ward (passive-p e :pierce)) 2 0))
+                          (if (or ward (passive-p e :pierce)) 2 0) (if (guard-locked-now-p f) 4 0))
                   tm)
       (let ((hk (kit-hook kit :hud-guard)))              ; a form's own look of the bar (drawn over it)
         (when hk (funcall hk e x (+ y bh (* 2 s)) bw (max (* 3 s) (* 0.3 bh)) right s tm))))
@@ -706,7 +708,7 @@ from the base form when this form has none) and the tag of what U does in the fo
       (setf (aref *trail-v* ti) (f32 (if (> tr gf) (max gf (- tr (* 0.5 (hud-dt)))) gf)))
       (%hud-guard (f32 m) (f32 gy) (f32 bw) (f32 (* 2 s)) (f32 gf) (aref *trail-v* ti) nil (gauges-guardless g)
                   (logior (if (and (or ward (member (fighter-state f) '(:guard :guard-hit))) (< gf 1.0)) 1 0)
-                          (if (or ward (passive-p e :pierce)) 2 0))
+                          (if (or ward (passive-p e :pierce)) 2 0) (if (guard-locked-now-p f) 4 0))
                   tm)
       (let ((hk (kit-hook kit :hud-guard))) (when hk (funcall hk e m gy bw (* 2 s) nil s tm))))
     ;; the small gauges (the last row, as long as the Reishi bar): Reiatsu cells, flash step, Awakening, the kit meter /

@@ -1397,3 +1397,61 @@ medians 137.1–201.6 s. The awaken A/B ("never" side's wins of 60, streams 100 
 / 37, RR 38 / 39 / 31, SY 28 / 37 / 29, SK 25 / 25 / 25, SR 32 / 36 / 29, SS 37 / 36 / 29, SI (Senjumaru) 41 / 33 / 33:
 all ≥ 20; Ichigo IY 5 / 8 / 13, IK 9 / 8 / 8, IR 1 / 6 / 3, II 5 / 1 / 3, SI (Ichigo) 2 / 2 / 4 still fail, as before
 (his damage numbers, DUEL_ICHIGO.md).
+
+## Guard lock until the attacker's chain ends (the user, 2026-09-30)
+
+「如果被打中的話，即使防禦下來也會等對方能成串的動作都打完後才能行解除防禦開始行動。（除非用藍色爆氣脫離）」: once
+caught, even a blocked string holds the defender until the attacker has run out of things to chain; only a BLUE burst
+gets him out.
+
+**The rule** (rules `guard-locked-p`, fighter `guard-lock-of` / `stun-step`). A defender in blockstun (`:guard-hit`)
+whose blockstun would end stays in it, still guarding and unable to act, while the lock holds. It is judged once both
+fighters have stepped (after any burst applied), stored in `fighter-glock` and read by the defender's next step, so it
+is the same whichever side steps first. It holds while the attacker:
+
+- is in a `:move` that touched him (a hit or a block, or it is a string follow-up: `fighter-chained`) and has **more**
+  it may still start (`chain-more-p`): a next J / K link (`string-link-p`), an L link L could start now (`kit-l-link` +
+  `kit-command-ok-p`), the on-hit cancels (its hit landed: SP, Hoho, a `:cancel` L, the O ender), or ORANGE
+  (`burst-ok-p` → `:orange`, which includes a blocked L / O); and a frame is left to start it on: move frame
+  `sf + 1 < S + A + R` (`chain-open-p` and `cancel-open-p` both close at `S + A + R`);
+- **or** was holding him last step and has just started a follow-up that has not passed its active frames (a pre-strike
+  phase, or `sf < S + A`): the lock carries into the link, the L link, the O ender, an ORANGE restart;
+- **or** is free with ORANGE's `*chain-window*` still open (`fighter-chain` > 0, `:idle` / `:guard`): the next move he
+  starts is the chain.
+
+Anything else ends it (the window closed, a Step / Hoho / run, a new neutral action): the defender then leaves at the
+later of his own blockstun's end and now. Hazards (projectiles, fields, clones, rifts) never hold it: only the
+attacker's own move chain does.
+
+**What it does to frame data** (the host test replays it for every string link of every form): a blocked link that can
+still go on now leaves the defender free on the same step as the attacker (0, where it was −2 / −4 …), so nothing can
+be squeezed between the links; a link with nothing after it (link 3 with no L link ready) keeps its block advantage, so
+enders stay punishable exactly as before. On block the cancels (on-hit only) and the O ender never count; ORANGE counts
+only for a blocked L / O (the burst modes' rule), so a blocked L is safe while its user holds two bars of flash-step.
+
+**Escapes.** A BLUE burst (Shift+J from blockstun) still works during the lock and breaks it (`repel!`). The awakening
+(and Kenpachi's Bankai) is also still allowed from blockstun (`awaken-state-p`) and breaks the attack the same way; the
+user named only BLUE, so this is our default, **open question for the user**. Nothing else: blockstun takes only those
+two presses (`stun-step`), and Ichigo's parry from blockstun (KESSA's L) is refused while the lock holds him past his
+own blockstun (`guard-locked-now-p`). A guard crush mid-lock replaces it (the crush is a `:stun` reaction).
+
+**Guard gauge.** Every blocked link still drains it as before, so a long locked string can crush the guard; intended.
+
+**Cue.** While the lock holds him past his own blockstun (`guard-locked-now-p`) the guard bar gets a pulsing blue rim
+(`%hud-guard` mode bit 4; the BLUE burst's colour, the way out). The pose is the blockstun's, held.
+
+**CPU.** The defender's inputs simply fail in the lock (blockstun takes nothing but the escapes). Its punish (`:block-
+punish`, `j-beats-k-p`) fires on the step blockstun ends (`brain-was` `:guard-hit` → free), which is now the lock's end.
+BLUE out of blockstun: the burst clock now also runs while the lock holds him and his guard gauge is below the kit's
+`:gg-low` (AI-GG-LOW-P), one roll per locked string (`*ai-burst-p*`, no Reishi test). Attackers are unchanged.
+
+### Measured (native seed gate, 2026-09-30)
+
+15 pairings × 20 seeds: 300 / 300 K.O., medians 151.2–226.3 s (main f091bfc: 140.5–217.0). IR 216.6 → **205.9** (back
+inside), SI 217.0 → 221.4, II 204.5 → **226.3** (new over the 210 s ceiling). Over seeds 1–60: IR 210.1 → 205.9, II
+216.8 → 226.3, SI 214.1 → 214.1: II was already over on main at 60 seeds; the lock adds ~10 s there (without the ORANGE
+clause: 229.2, so not that). Not retuned (Ichigo's numbers are the user's). The awaken A/B ("never" wins of 60, streams
+100 / 300 / 500): RY 29 / 38 / 38, RK 29 / 34 / 22, RR 34 / 33 / 32; SY 32 / 28 / 28, SK **19 / 21 / 14** (main: 18 / 23 /
+27, already failing stream 100), SR 24 / 32 / 30, SS 30 / 30 / 24, SI (Senjumaru) 36 / 30 / 36; Ichigo IY 6 / 2 / 3, IK 3 /
+9 / 3, IR 4 / 4 / 6, II 6 / 3 / 3, SI (Ichigo) 3 / 2 / 2, failing as before. G2: all three changed; YK now `winner P1
+konpaku 3-0 ticks 10862 secs 181.0`.

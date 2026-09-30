@@ -1677,6 +1677,48 @@ along the left forearm, so the fist leads).")
                    (kk (loop for (m k) in lm when (and (= k n) (eq (mv-kind m) :flash)) minimize (mv-reach m))))
                (check (or (>= (- kk j) 0.5) (format t "~a link ~d: J ~,2f K ~,2f~%" cf n j kk)))))))
 
+;;; ---------------------------------------------------------------- the guard lock (the user 2026-09-30, DUEL_DESIGN.md "Guard lock")
+;; the lock holds a blockstun past its end while the attacker's move may still chain; it ends when that can't happen
+(check (guard-locked-p :guard-hit nil 0 :move :main 20 10 3 12 t t))                ; frame 20 of 25: a chain may still start
+(check (not (guard-locked-p :guard-hit nil 0 :move :main 24 10 3 12 t t)))          ; frame 24: the last chance was 24
+(check (not (guard-locked-p :guard-hit nil 0 :move :main 20 10 3 12 t nil)))        ; nothing left to chain (a link 3)
+(check (not (guard-locked-p :guard-hit nil 0 :move :main 20 10 3 12 nil t)))        ; his move never touched him
+(check (not (guard-locked-p :guard-hit t 0 :idle nil 0 0 0 0 nil nil)))             ; a new neutral action ends it
+(check (not (guard-locked-p :guard-hit t 0 :step nil 0 0 0 0 nil nil)))
+;; a follow-up he started carries it through its startup and active frames, then its own window decides
+(check (and (guard-locked-p :guard-hit t 0 :move :main 3 10 3 12 t nil) (guard-locked-p :guard-hit t 0 :move :hold 0 10 3 12 t nil)
+            (guard-locked-p :guard-hit t 0 :move :main 12 10 3 12 t nil) (not (guard-locked-p :guard-hit t 0 :move :main 13 10 3 12 t nil))))
+(check (and (guard-locked-p :guard-hit t 5 :idle nil 0 0 0 0 nil nil)                ; ORANGE's window: the next move is the chain
+            (not (guard-locked-p :guard-hit t 5 :step nil 0 0 0 0 nil nil))))
+;; the escapes: BLUE (and the awakening) leave blockstun, the lock with it; BLUE is still a blockstun press
+(check (and (eq (burst-mode :guard-hit nil 0 nil) :blue) (not (guard-locked-p :idle t 5 :move :main 20 10 3 12 t t))))
+(defun locked-free-steps (mv more)
+  "FREE-STEPS with the guard lock (fighter.lisp STUN-STEP / FIGHTER-SYSTEM): MV blocked on its first hit, MORE = it may
+chain. The lock is judged after each step (from the hit's next one: the hit lands after the fighters stepped) for the
+defender's next step. Values: the attacker's and the defender's first actionable step."
+  (let* ((enter (mv-enter mv)) (h (- (mv-first-hit mv) enter))
+         (end (move-end-frame (mv-s mv) (mv-a mv) (mv-r mv) (mv-whiff mv) :block nil))
+         (stun (blockstun (mv-total mv) (mv-first-hit mv) (mv-adv-block mv))) (lock nil))
+    (values (loop for step from 1 when (>= (+ enter step) end) return (1+ step))
+            (loop for step from (1+ h) for sf from 1
+                  when (and (>= sf stun) (not lock)) return (1+ step)
+                  do (let ((fr (+ enter step)))
+                       (setf lock (guard-locked-p :guard-hit lock 0 (if (>= fr end) :idle :move) :main fr
+                                                  (mv-s mv) (mv-a mv) (mv-r mv) t more)))))))
+;; every blocked string link that goes on holds the defender to even (the attacker's move ends as he is freed); a link
+;; that can't (link 3, no L link ready) keeps its block advantage: an ender is still punishable
+(dolist (cf *forms*)
+  (let ((k (apply #'kit cf)))
+    (dolist (row (link-moves k))
+      (let ((m (first row)))
+        (when (and (integerp (mv-adv-block m)) (plusp (length (mv-hits m))))
+          (multiple-value-bind (att def) (locked-free-steps m (string-link-p k (mv-name m)))
+            (check (or (= (- def att) (if (string-link-p k (mv-name m)) (max 0 (mv-adv-block m)) (mv-adv-block m)))
+                       (format t "~a ~a: lock ~d, adv ~d~%" cf (mv-name m) (- def att) (mv-adv-block m))))))))))
+(let* ((k (kit :yamamoto :base)) (j1 (kit-command-move k :q)) (j3 (kit-next k (mv-name (kit-next k (mv-name j1) :q)) :q)))
+  (check (and (string-link-p k (mv-name j1)) (not (string-link-p k (mv-name j3))) (< (mv-adv-block j3) -2)
+              (= (mv-adv-block j3) (multiple-value-bind (a d) (locked-free-steps j3 nil) (- d a))))))
+
 ;; no character names in the generic files (design-v1 §12)
 (dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow" "endless-rules" "endless"))
   (with-open-file (in (merge-pathnames (format nil "../duel/lisp/~a.lisp" f) *load-truename*))
