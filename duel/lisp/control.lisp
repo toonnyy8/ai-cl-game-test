@@ -74,7 +74,8 @@ TOUCH-BUTTON; its drag stick is added like pad 0's). Menus read the devices dire
     (:tap-split "TAP SPLIT" ("40%" "45%" "50%" "55%" "60%") 2 (0.4 0.45 0.5 0.55 0.6) "THE PAD'S TOP PART THAT TAPS K")
     (:flick "SENSITIVITY" ("1" "2" "3" "4" "5") 2 (40 34 28 23 18) "HIGHER: A SHORTER FLICK")
     (:camera "CAMERA" ("BEHIND" "SIDE") 0 nil "VS CPU AND PRACTICE, TWO HANDS")
-    (:learn "LEARNING CPU" ("ON" "OFF") 0 nil "VS CPU AND ENDLESS: THE CPU LEARNS YOUR HABITS"))
+    (:learn "LEARNING CPU" ("ON" "OFF") 0 nil "VS CPU AND ENDLESS: THE CPU LEARNS YOUR HABITS")
+    (:hint "PERFECT HINT" ("OFF" "ON") 0 nil "HOHO! OVER YOU WHEN A HOHO NOW IS PERFECT"))   ; the user 2026-10-01
   "SETTINGS rows: (key label option-labels default-index values note). VALUES (else the labels) are what the options
 mean: TAP SPLIT the recogniser's tap-split, SENSITIVITY its flick-min in CSS px (28 = the design's §3.8 default).")
 

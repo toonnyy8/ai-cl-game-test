@@ -512,6 +512,7 @@ from the base form when this form has none) and the tag of what U does in the fo
       (case keys (:flick "FLICK DOWN  CHAIN") (:pad "LT+X  CHAIN") (:kp "KP ENTER+KP1  CHAIN") (t "SHIFT+J  CHAIN"))
       (case keys (:flick "FLICK DOWN  BURST") (:pad "LT+X  BURST") (:kp "KP ENTER+KP1  BURST") (t "SHIFT+J  BURST"))))
 (defvar *c-callout* (list 1.0 0.85 0.55 1.0))
+(defvar *c-hint* (list 0.6 0.95 1.0 1.0) "PERFECT HINT's HOHO!.")
 
 (defparameter *arm-kanji* "腕")
 (defparameter *c-blood* (list 0.82 0.06 0.11 1.0))
@@ -831,6 +832,16 @@ when he is red."
     (when (red-p (gauges-reishi g) (gauges-reishi-max g))
       (vfx-soul-flame (aref p 0) top (aref p 2) (fx-clock)))))
 
+(defun hud-hint (e h)
+  "PERFECT HINT (SETTINGS, the user 2026-10-01): HOHO! at human fighter E's head while a Hoho started now would be
+perfect (PERFECT-UP-P: a free state, the Hoho affordable, PERFECT-NOW-P)."
+  (let ((p (pos-of e)) (v *hud-v*))
+    (when (and (= 1 (setting :hint)) (not (cpu-p e)) (perfect-up-p e (state-of e))
+               (world-to-screen v (aref p 0) (+ (aref p 1) (body-hurt-h (model-body (model e))) 0.15) (aref p 2)))
+      (set-line (aref v 0) (aref v 1) (* (if (portrait-p) 0.035 0.045) h) *c-hint*)
+      (setf (aref *bl* 7) (line-width "HOHO!"))
+      (brush-line "HOHO!"))))
+
 (defvar *timer-strings* (make-array 1000 :initial-element nil) "Seconds -> their string, made once.")
 
 (declaim (type f32vec *hud-v2*))
@@ -857,7 +868,7 @@ facing."
   (dolist (e (list *p1* *p2*)) (when (entity-alive-p e) (hud-rush-lines e)))
   (dolist (e (list *p1* *p2*))                                                   ; both panels first: the callouts
     (when (entity-alive-p e) (if (portrait-p) (hud-side-portrait e w h s) (hud-side e w h s))))
-  (dolist (e (list *p1* *p2*)) (when (entity-alive-p e) (hud-world e w h s)))  ; keep clear of them
+  (dolist (e (list *p1* *p2*)) (when (entity-alive-p e) (hud-world e w h s) (hud-hint e h)))  ; keep clear of them
   (when (eq *mode* :endless) (hud-endless-tag w h s))    ; STAGE n (endless.lisp)
   (when (eq *mode* :practice)                            ; no timer: PRACTICE's tag in its place (landscape)
     (unless (portrait-p) (hud-text "PRACTICE" (floor w 2) (* 0.06 h) (* 2 s) *dim* :align :center))
@@ -906,7 +917,7 @@ its rows and shrinks its text to fit); *MENU* is highlighted."
 (defun hud-settings (w h s)
   "SETTINGS: the rows (confirm, left / right or a tap changes one), BACK, the selected row's note and the help line."
   (ui-big-text "SETTINGS" (floor w 2) (* 0.2 h) (fit-scale "SETTINGS" (* 6 s) (* 0.8 w)) '(1 0.92 0.8 1) '(0.7 0.18 0.05 1) s)
-  (hud-menu (settings-items) (if (portrait-p) 0.52 0.42) w h s)   ; where MODE's rows are
+  (hud-menu (settings-items) (if (portrait-p) 0.46 0.36) w h s (/ w 2) (/ (- h (* 38 s)) h))   ; above the note (7 rows since PERFECT HINT)
   (let ((note (settings-note)) (help (if (touch-tap-zones-p) "TAP A ROW TO CHANGE IT" "LEFT / RIGHT CHANGE    ESC BACK")))
     (ui-text note (floor w 2) (- h (* 34 s)) :scale (fit-scale note s (* 0.94 w)) :align :center :color *ember* :shadow t)
     (ui-text help (floor w 2) (- h (* 20 s)) :scale (fit-scale help s (* 0.94 w)) :align :center :color *dim* :shadow t)))

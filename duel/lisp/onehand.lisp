@@ -112,9 +112,9 @@ the defaults)."
   (log-msg "duel setting ~a ~a" key (nth i (third (assoc key *settings*)))))
 
 (defun perfect-up-p (e st)
-  "Would an up-flick by E (in state ST) now make a PERFECT Hoho? Then it is one, rested or not, where it would be a
-Step (the user 2026-10-01: the perfect timing is too hard to hit from a rest on a phone). Free states that take a Hoho,
-the Hoho affordable (TRY-COMMAND's rule), PERFECT-NOW-P."
+  "Would a Hoho by E (in state ST) started now be PERFECT? Then a one-hand up-flick is one, rested or not, where it
+would be a Step (the user 2026-10-01: the perfect timing is too hard to hit from a rest on a phone), and PERFECT HINT
+shows it (hud.lisp HUD-HINT). Free states that take a Hoho, the Hoho affordable (TRY-COMMAND's rule), PERFECT-NOW-P."
   (let ((f (fighter e)) (g (gauges e)))
     (and (member st '(:idle :guard :run)) (battle-p) (not (kit-rooted (fighter-kit f)))
          (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))

@@ -756,6 +756,8 @@ MODE 選單第二列是 ENDLESS（2026-09-29，完整規則在 [DUEL_ENDLESS.md]
 - **LEARNING CPU**：ON／OFF，預設 ON。
 - **RESET LEARNING**：讓每個電腦角色忘掉學到的東西。
 
+（2026-10-01 起 SETTINGS 在 LEARNING CPU 下面多一列 **PERFECT HINT**：OFF／ON，預設 OFF，存成 `soulduel.hint`。開啟後，真人操作的角色在「現在 Hoho 就是完美 Hoho」的那段時間，頭上會出現藍白色的 HOHO!。判斷和手機的「完美時機上撥自動變 Hoho」是同一個函式 `perfect-up-p`（站著／防禦／跑步、Hoho 用得起、`perfect-now-p`），畫在 `hud.lisp` 的 `hud-hint`。七列設定加上 RESET LEARNING、BACK 會壓到下面的說明文字，所以 `hud-settings` 把選單往上移，並限制選單的底線在說明文字上方。）
+
 學到的東西每個電腦角色各存一份，存在瀏覽器裡（`soulduel.learn.*`），每場結束時寫入。無痕模式下存不了，就只記到關掉分頁為止。練習模式和 CPU VS CPU 不會學習。
 
 ---

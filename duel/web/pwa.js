@@ -16,7 +16,7 @@
 (function () {
   var coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
   var back = 0, wakeOn = false, lock = null;
-  var settings = ['onehand', 'hand', 'split', 'flick', 'camera', 'learn'];   // soulduel.hand predates SETTINGS (same values)
+  var settings = ['onehand', 'hand', 'split', 'flick', 'camera', 'learn', 'hint'];   // soulduel.hand predates SETTINGS (same values)
   function stored(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function store(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode: not saved */ } }
   var learn = {};                                        // roster index -> the learning CPU's table (integers)
