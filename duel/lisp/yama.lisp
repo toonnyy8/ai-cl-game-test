@@ -166,7 +166,7 @@
        :guard 0.4 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 1 :dash 0.5 :kikon-range 9.0))
 
 (defkit :yamamoto :bankai-east :inherit :base
-  :awakening t :taken *bankai-taken* :startup-add -1 :reach-mult 1.15 :guard-to :bankai-west
+  :awakening t :taken *bankai-taken* :startup-add -1 :reach-mult 1.15 :guard-to :bankai-west :gg-regen *east-gg-regen*
   :endless-form :bankai-east                    ; ENDLESS: West (inheriting it) stays as East
   :blade (:embers 1.4) :grade :spot :passives (:projectile-cut :pierce) :meter nil   ; the body as it is (the charcoal
   ;; heat wisps), the charred blade with its ember-red edge line

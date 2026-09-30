@@ -1481,3 +1481,13 @@ ticks 9747 secs 162.4`), YK unchanged.
 A new generic hook point, `:hoho` (kit `:hooks`; `hoho-step` calls it on the reappearance frame). Rukia's awakened bands
 use it: a Hoho adds 50 cold and the band follows at once, so a Hoho can land her behind him at -273 (docs/DUEL_RUKIA.md
 "A Hoho adds cold"). Zero stays rooted.
+
+## Bankai East's guard refill (2026-09-30)
+
+The user: 「大幅降低山本『東 旭日刃』時的防禦量表恢復速度」. A new generic kit key `:gg-regen` (x the guard gauge's refill
+rate in the form, default 1.0; rules `gg-regen`'s MULT) and Bankai East sets `*east-gg-regen*` **0.5**: 5.5 -> 2.75 / s,
+guardless 6.5 -> 3.25 / s, a BLUE burst's boost from that. West (which inherits it) never refills anyway, so East's refill
+is his whole one; the pierce (fuller gauge, sharper blade) and West's ward last half as long between refills.
+Native gate (seeds 1-20): YY 165.9 s, YK 159.1 (Yamamoto 14 / 20), RY 161.5 (10 / 10), IY 194.2 (10 / 10), SY 158.5
+(Senjumaru 11), all K.O. and in the band. G2: yy's hash lines and yk changed (yk now `winner P2 konpaku 0-1 ticks 10983
+secs 183.1`), kk unchanged.

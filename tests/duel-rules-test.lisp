@@ -416,6 +416,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
             (= 1 (burst-heal 5 12.0)) (= 0 (burst-heal 4 12.0))))
 (check (and (~= *white-reishi* 70.0) (~= *white-reiatsu* 15.0) (~= *white-awaken* 1.4)))
 ;; BLUE: the guard gauge refills with no delay, x2 when free, x0.5 even while guarding (GUARD HOLD otherwise)
+(check (and (~= (gg-regen 50.0 999 nil nil nil 0.5) (+ 50.0 (/ (* 0.5 *gg-regen*) 60)))   ; a form's :gg-regen (Bankai East)
+            (= 0.5 (kit-gg-regen (find-kit :yamamoto :bankai-east))) (= 1.0 (kit-gg-regen (find-kit :yamamoto :base)))))
 (check (and (~= (gg-regen 50.0 0 nil nil :blue) (+ 50.0 (/ 11.0 60))) (~= (gg-regen 50.0 0 nil t :blue) (+ 50.0 (/ 2.75 60)))
             (~= (gg-regen 50.0 0 t nil :blue) (+ 50.0 (/ 13.0 60))) (~= (gg-regen 99.99 0 nil t :blue) 100.0)
             (~= (gg-regen 50.0 999 nil t) 50.0)))                            ; outside BLUE: GUARD HOLD as ever

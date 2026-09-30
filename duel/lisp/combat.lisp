@@ -739,7 +739,7 @@ delay counter (frozen): West never refills."
         (decf (gauges-awake-regen g))
         (white-regen! g (incf (gauges-awake-t g))))
       (setf (gauges-gg g) (f32 (gg-regen (gauges-gg g) (gauges-gg-idle g) (gauges-guardless g) guarding
-                                         (eq (gauges-burst g) :blue))))
+                                         (eq (gauges-burst g) :blue) (kit-gg-regen kit))))
       (setf (gauges-gg-idle g) (gg-idle-next (gauges-gg-idle g) guarding))
       (setf (gauges-stun g) (f32 (stun-decay (gauges-stun g) (gauges-stun-idle g)))   ; the hidden stun's decay
             (gauges-stun-idle g) (min 9999 (1+ (gauges-stun-idle g))))

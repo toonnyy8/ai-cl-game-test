@@ -210,6 +210,7 @@ new button."
   (u-tag nil)                           ; the HUD's tag for what U does in the form (default by its passives)
   (calm nil)                            ; the face never shouts in this form (a look: MAIN.LISP FACE-OF)
   (stun-tolerance nil)                  ; the hidden stun it takes (NIL: *STUN-TOLERANCE*; STUN-TOLERANCE-OF)
+  (gg-regen 1.0)                        ; x the guard gauge's refill rate in this form (rules GG-REGEN)
   (l-after-k nil)                       ; L chained after a K link (docs/DUEL_STRINGS.md §12): T its L, or a move (a combo copy)
   (l-after-j nil)                       ; ... after a J link (J1 / J2 / J2s / J3): T its L, or a move
   (hooks nil)                           ; plist hook point -> the character file's function (KIT-HOOK; docs/DUEL_DESIGN.md
@@ -325,7 +326,7 @@ Cornered with LOST Konpaku."
                            enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
                            kikon-konpaku meter-gain form-name drink-clip respect-callout bankai-form pips
                            crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k l-after-j calm hooks endless-form
-                           stun-tolerance (startup-add 0) (reach-mult 1.0) commands strings grid)
+                           stun-tolerance (gg-regen 1.0) (startup-add 0) (reach-mult 1.0) commands strings grid)
         merged
       (declare (ignore grid))
       (let ((kit (make-kit :character character :form form :inherit inherit :name name
@@ -342,7 +343,7 @@ Cornered with LOST Konpaku."
                            :respect-callout respect-callout :bankai-form bankai-form :pips pips
                            :crush-hook crush-hook :rooted rooted :field field :warm warm :cold cold
                            :frost-touch frost-touch :reset-form reset-form :u-tag u-tag :l-after-k l-after-k :l-after-j l-after-j :calm calm :endless-form endless-form
-                           :stun-tolerance stun-tolerance
+                           :stun-tolerance stun-tolerance :gg-regen gg-regen
                            :hooks hooks :commands commands :strings strings :spec merged))
             (own (loop for (nil m) on (getf spec :commands) by #'cddr collect m)))
         ;; every move the form can reach. The derivation rule (design v2 §0): a move is as written when the
@@ -416,6 +417,7 @@ child's keys win, :commands merge per command, :strings add. Keys:
                                      (its own contact, docs/DUEL_STRINGS.md §12): T the form's L, else MOVE, a combo copy
   :l-after-j T | MOVE                the same after a J link (J1 / J2 / J2s / J3)
   :calm T                            the face stays calm (no shout: a look, FACE-OF)
+  :gg-regen x                        x the guard gauge's refill rate in this form (default 1.0)
   :stun-tolerance n                  the hidden stun the form takes before the blow-away (default *STUN-TOLERANCE*;
                                      a derived form inherits it)
   :hooks (point fn ...)              the character's own mechanics (KIT-HOOK; DUEL_DESIGN.md, Character code
