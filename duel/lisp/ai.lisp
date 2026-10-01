@@ -315,7 +315,7 @@ D = the perceived distance."
       ;; our hit landed and only the guard cancel's share of its recovery is left (no link latched): guard out of it,
       ;; unless we see him still reeling past our recovery's end
       ((and (eq st :move) (not (fighter-queued f))
-            (guard-cancel-open-p (fighter-sf f) (mv-s mv) (mv-a mv) (mv-r mv) (fighter-contact f))
+            (guard-cancel-open-p (fighter-sf f) (mv-s mv) (mv-a mv) (mv-r mv) (fighter-contact f) (eq (mv-kind mv) :quick))
             (not (and (member (snap-state s) '(:stun :air :down :wakeup))
                       (> (- (snap-left s) (brain-delay b)) (- (mv-total mv) (fighter-sf f))))))
        (why b :guard-cancel :guard-cancel))
@@ -465,11 +465,15 @@ D = the perceived distance."
   "J beats K (docs/DUEL_STRINGS.md §4): on the first free step after our blockstun, the string's next link is a K link
 (no armour) still at least S(J1) + 2 frames from its hit, inside our J1's reach: J1 gets there first. Felt at once,
 like the block punish (the gap of a blocked string, not a read through the perception delay: a K link's startup is
-shorter than NORMAL's delay); one roll (*AI-J-BEATS-K-P* by difficulty), also out of a guard held through the string."
+shorter than NORMAL's delay); one roll (*AI-J-BEATS-K-P* by difficulty), also out of a guard held through the string.
+Also out of his blocked J while it still recovers (the user 2026-10-02: a blocked J leaves the defender *QUICK-BLOCK-ADV*
+more; J strings alone shouldn't crush a guard, the CPU's included)."
   (let* ((f (fighter e)) (o (fighter-opp f)) (fo (fighter o)) (om (fighter-move fo)) (q (kit-command-move (fighter-kit f) :q)))
     (and (eq (brain-was b) :guard-hit) (member (fighter-state f) '(:idle :guard)) (zerop (fighter-lock f))
-         (eq (fighter-state fo) :move) (eq (fighter-phase fo) :main) (eq (mv-kind om) :flash)
-         (>= (- (mv-s om) (fighter-sf fo)) (+ (mv-s q) 2)) (< (fighter-dist f) (+ (mv-reach q) 0.2))
+         (eq (fighter-state fo) :move) (eq (fighter-phase fo) :main)
+         (or (and (eq (mv-kind om) :flash) (>= (- (mv-s om) (fighter-sf fo)) (+ (mv-s q) 2)))
+             (and (eq (mv-kind om) :quick) (>= (fighter-sf fo) (+ (mv-s om) (mv-a om)))))   ; his blocked J still recovering
+         (< (fighter-dist f) (+ (mv-reach q) 0.2))
          (< (sim-rnd01) (getf *ai-j-beats-k-p* (brain-difficulty b) 0.45)))))
 
 (defun ai-neutral (e b s d)

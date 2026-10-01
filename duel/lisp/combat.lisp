@@ -269,7 +269,9 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                                                         ; East's pierce: k x the hit goes through (chip)
            (let* ((drink (passive-p def :drink))
                   (catch (and ranged (fighter-move fd) (getf (mv-params (fighter-move fd)) :catch)))   ; a :shield move's catch
-                  (adv (let ((a (if (and mv (integerp (mv-adv-block mv))) (mv-adv-block mv) 0))) (if (and drink mv) (drink-adv a) a)))
+                  (adv (let ((a (if (and mv (integerp (mv-adv-block mv))) (mv-adv-block mv) 0)))
+                         (- (if (and drink mv) (drink-adv a) a)          ; (the attacker's advantage: a blocked J's
+                            (if (and mv (eq (mv-kind mv) :quick)) *quick-block-adv* 0))))   ; defender is free sooner)
                   (stun (if mv (blockstun (mv-total mv) (fighter-sf fa) adv) *hazard-blockstun*))
                   (v (let* ((v0 (or (hw-guard hw) *gg-hazard*)) (v1 (if (and mv (passive-p att :cut)) (cut-value v0 (mv-kind mv)) v0)))
                        (if (and ward (passive-p def :ward)) (* *ward-mult* v1) v1)))

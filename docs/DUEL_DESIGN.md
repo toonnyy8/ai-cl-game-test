@@ -1550,6 +1550,29 @@ Ichigo's 1–9 as before (failing since the damage numbers, not retuned). G2: yy
   before). G2: all three changed (yy winner P2 konpaku 0-1 ticks 11440 secs 190.7, yk 0-1 ticks 7997 secs 133.3, kk
   0-1 ticks 8876 secs 147.9).
 
+## J and guard trade places faster (the user, 2026-10-02)
+
+The user: "然後我希望減少防禦的後搖，使雙方不會被單純的 j 連段打到破防理想上應該是提高 j 跟防禦之間互換的速度？" The user
+picked two of the three options offered: the J guard cancel on block and the shorter blockstun. Lowering a blocked J's guard
+drain (8) was not picked.
+
+- **Guard -> J.** A blocked J (any `:quick` move) gives its defender `*quick-block-adv*` (3) more frames: `APPLY-HIT`
+  subtracts 3 from the attacker's block advantage before `BLOCKSTUN`, so J1 at -2 is now -5. `FIGHTER-BLOCK-ADV` stores it
+  too, so the CPU's punish reads it. The guard lock (`GUARD-LOCKED-P`) still holds the defender through a string's links;
+  the extra frames count once the string can't go on (after J3) or the attacker stops. That is where a masher restarts
+  J1.
+- **J -> guard.** `GUARD-CANCEL-OPEN-P` takes QUICK: a J may also guard-cancel on block, over the last half of its
+  recovery. Every other kind still needs a hit.
+- **The CPU.** `J-BEATS-K-P` also fires out of the opponent's blocked J while it still recovers (move frame >= S + A):
+  J1, under the same roll (`*ai-j-beats-k-p*`). Without this the CPU only held guard and was crushed as often as before.
+- **First try, wrong sign.** It added the 3 to the advantage, which is the attacker's, and so lengthened the blockstun.
+  The gate showed no change (54 -> 51 crushes), and the sign was flipped.
+- **Measured.**
+  - All 15 pairings K.O., 20-seed medians 137.2–207.2 s.
+  - The never-awaken A/B on streams 100/300/500: Rukia >= 21, Senjumaru >= 20, Ichigo failing as before.
+  - The masher (40 matches vs HARD): the CPU crushed 54 -> 22 times, 93 CPU J interrupts, the masher crushed once.
+  - G2 changed: yy P1 3-0 171.0 s, yk P1 3-0 138.4 s, kk P2 0-7 152.4 s.
+
 ## ASSIST: AUTO GUARD / AUTO COMBO / AUTO BREAK (the user, 2026-10-01)
 
 Three SETTINGS rows, all OFF by default: the CPU's own rules press for a human fighter (a parry or Hoho as a hit comes,

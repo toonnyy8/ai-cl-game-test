@@ -244,12 +244,13 @@ never passes or overshoots him."
 LANDED, from its first hit frame HIT-FRAME until its recovery ends (TOTAL)."
   (and landed (>= sf hit-frame) (< sf total)))
 
-(defun guard-cancel-open-p (sf s a r contact)
-  "The guard cancel: may a move with S / A / R whose own hit landed (CONTACT :hit; a block or a whiff never) end in a
-guard at move frame SF? From the frame *GUARD-CANCEL* of its recovery is left (the last floor(R x *GUARD-CANCEL*)
-frames) to its end."
+(defun guard-cancel-open-p (sf s a r contact &optional quick)
+  "The guard cancel: may a move with S / A / R whose own hit landed (CONTACT :hit; a whiff never; a block only for a
+QUICK (J) move, the user 2026-10-02: J and guard trade places fast) end in a guard at move frame SF? From the frame
+*GUARD-CANCEL* of its recovery is left (the last floor(R x *GUARD-CANCEL*) frames) to its end."
   (let ((total (+ s a r)))
-    (and (eq contact :hit) (>= sf (- total (floor (* r *guard-cancel*)))) (< sf total))))
+    (and (or (eq contact :hit) (and quick (eq contact :block)))
+         (>= sf (- total (floor (* r *guard-cancel*)))) (< sf total))))
 
 ;; ---------------------------------------------------------------- the guard lock (the user 2026-09-30)
 (defun guard-locked-p (def-state was chain-left state phase sf s a r touched more)
