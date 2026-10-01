@@ -239,6 +239,12 @@ never passes or overshoots him."
         (min *chase-max* (* 60.0 (/ (- d goal) left)))
         0.0)))
 
+(defun ray-room (x z ux uz r)
+  "How far a point (X Z) inside the circle of radius R may move along the unit vector (UX UZ) before it reaches the
+circle (0 when it is already on or outside it): the arena's room for a push (PUSH-APART)."
+  (let* ((b (+ (* x ux) (* z uz))) (c (- (+ (* x x) (* z z)) (* r r))) (disc (- (* b b) c)))
+    (if (or (>= c 0) (< disc 0)) 0.0 (max 0.0 (+ (- b) (sqrt disc))))))
+
 (defun cancel-open-p (sf hit-frame total landed)
   "On-hit cancel window (SP1 / SP2 / Hoho / a :cancel L from any J / K link, the O ender from a link-3 hit): the move
 LANDED, from its first hit frame HIT-FRAME until its recovery ends (TOTAL)."

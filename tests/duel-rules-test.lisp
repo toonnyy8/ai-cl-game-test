@@ -429,6 +429,9 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 (check (and (= 0.5 *guard-cancel*) (not (guard-cancel-open-p 36 21 4 24 :hit)) (guard-cancel-open-p 37 21 4 24 :hit)
             (guard-cancel-open-p 48 21 4 24 :hit) (not (guard-cancel-open-p 49 21 4 24 :hit))
             (not (guard-cancel-open-p 40 21 4 24 :block)) (not (guard-cancel-open-p 40 21 4 24 nil))))
+;; the arena's room for a push (RAY-ROOM): from the centre 5 to an r 5 edge; at 4 m out along +x, 1 left that way and 9 back
+(check (and (< (abs (- (ray-room 0.0 0.0 1.0 0.0 5.0) 5.0)) 1e-4) (< (abs (- (ray-room 4.0 0.0 1.0 0.0 5.0) 1.0)) 1e-4)
+            (< (abs (- (ray-room 4.0 0.0 -1.0 0.0 5.0) 9.0)) 1e-4) (= 0.0 (ray-room 5.0 0.0 1.0 0.0 5.0))))
 ;; a J (QUICK) may guard-cancel on block too (the user 2026-10-02): J1 9/3/12 opens f18-23; never on a whiff
 (check (and (guard-cancel-open-p 18 9 3 12 :block t) (not (guard-cancel-open-p 17 9 3 12 :block t))
             (not (guard-cancel-open-p 24 9 3 12 :block t)) (not (guard-cancel-open-p 20 9 3 12 nil t))

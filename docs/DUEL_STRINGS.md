@@ -367,7 +367,49 @@ link 3 1122 (J3 612, K3 510); 331 O enders (red always, else 0.15 or the cup's);
 28.6, as before the strings; KK 43.3, 35.8 before: Kenpachi's KKK and his SP2 off link 3). The G2 reference `duel-cvc-yk.json` (seed 7) ends
 `duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7` (after §11's chase: `winner P2 konpaku 0-1 ticks 7365 secs 122.8`).
 
+## 15. Close in on the opener's hit, push out at the end (the user, 2026-10-02)
+
+The user, in four messages:
+
+> 請幫我做系統的修正， JK 普攻連段中：讓 J3 跟 K3 分別會將對手推出 J1 與 K1 的攻擊範圍，攻擊角色本身不會位移。
+>
+> *攻擊角色取消 J/K 的位移
+>
+> 只要在 J1 K1 擊中時會把距離拉近貼身位置，打完後就推開，沒擊中的話就不會靠近
+>
+> 如果卡到場邊會無法在推動受攻擊方，則會把攻擊者推開。 / 讓攻擊方衝過去
+
+Asked which displacement, the user picked removing the chase. Asked when to push, the user picked "when the string
+ends", over "on the hit".
+
+**The rules:**
+
+- **No chase for J / K links.** `MAIN-PHASE-STEP` gives a follow-up link of kind `:quick` / `:flash` no chase speed. §11's
+  chase stays for the L link after a K. A move's own `:slide` lunge stays too, e.g. Rukia's and Kenpachi's J1. The gate
+  is unchanged: after a contact every later link still comes out, it just no longer closes in.
+- **The opener's hit closes in.** A string's opener is the kit's `:q` / `:f` command move, not a follow-up. When it
+  HITS (`APPLY-HIT`, not a block or a whiff), the attacker slides to `*string-pull-to*` (0.7 m) from his victim over
+  `*string-pull-frames*` (6). A blocked opener's later links may now fall short after the block pushback, which leaves
+  a blocked string gaps and fewer guard crushes.
+- **The ender's end pushes out** (`ENDER-PUSH`). The J / K ender (`:ender`: J3, K3) hit, and its move ends or is guard
+  cancelled with no follow-up started. While its victim still reels, it pushes him to the attacker's J1 reach (after J3)
+  or K1 reach (after K3), + `*ender-push*` (0.3 m), over 8 f. The O ender, L, SP2 and ORANGE off the ender start before
+  that, so they still connect. Measured in CPU matches: J3 pushes about 0.8 m, K3 about 2.3 m.
+- **The edge** (`PUSH-APART`, `RAY-ROOM` in rules.lisp). Whatever the arena's circle leaves no room for pushes the
+  attacker back instead. In 40 masher matches, 60 of 773 pushes moved the attacker.
+
+**Measured:**
+
+- In four CPU matches, J2 hit 59 of 60 times, J3 44 of 47, K3 26 of 29.
+- All 15 pairings K.O., medians 135.3–209.3 s.
+- The never-awaken A/B is >= 22 on every row.
+- The masher's wins: HARD 21 %, NORMAL 59 %; with AUTO GUARD ALWAYS 53 % / 90 %.
+- G2: yy P1 3-0 162.4 s, yk P2 0-1 134.7 s, kk P2 0-7 112.8 s.
+
 ## 11. The string follow-up chase (the user's decision 2026-09-28)
+
+**Superseded for J / K links on 2026-10-02 (§15).** Only the L link's chase remains.
+
 
 > 只要普通攻擊擦到，攻擊方在接續的攻擊動畫中就會靠近對手以保證後續的攻擊動作都能被打出來（這邊只講動作，不代表打出來就會造成傷害，還是能被防禦住）
 

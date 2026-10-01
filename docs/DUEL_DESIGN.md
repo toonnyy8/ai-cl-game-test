@@ -1573,6 +1573,22 @@ drain (8) was not picked.
   - The masher (40 matches vs HARD): the CPU crushed 54 -> 22 times, 93 CPU J interrupts, the masher crushed once.
   - G2 changed: yy P1 3-0 171.0 s, yk P1 3-0 138.4 s, kk P2 0-7 152.4 s.
 
+## Strings: close in on the opener's hit, push out at the end; the CPU's gap steps (the user, 2026-10-02)
+
+The rules are in docs/DUEL_STRINGS.md §15:
+
+- J / K links no longer chase.
+- A J1 / K1 hit dashes the attacker to 0.7 m.
+- J3 / K3 ending the string pushes the victim out of the attacker's J1 / K1 reach + 0.3 m, or the attacker, when the
+  edge holds the victim.
+
+The CPU additions:
+
+- **`AI-GAP-STEP-P`.** Out of blocking a J masher's J that still recovers beyond its own J1 reach, the CPU back-Steps
+  (`*ai-gap-step-p*` EASY 0.2, NORMAL 0.5, HARD 0.75).
+- **`AI-WAKE-STEP`'s other half.** It is now a Hoho or a back Step, no longer a side Step. Holding Guard 40 f instead
+  of 20 was tried: the masher's wins went up (HARD 34 %), so it stays at 20.
+
 ## The CPU guards first out of a hit, against a J masher (the user, 2026-10-02)
 
 The user: "但目前 CPU 被 J 纏上後除了爆氣就是被打飛 沒有其他脫離方式欸，是 CPU 的應對設計出問題嗎"

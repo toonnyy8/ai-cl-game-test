@@ -632,16 +632,27 @@ wins vs HARD 69 -> 74 %, 2026-10-02)."
 (defun ai-wake-step (e b d)
   "The CPU's first free step out of a hit or a wake-up with him close (BRAIN-STEP): hold Guard *AI-WAKE-GUARD-FRAMES*
 (*AI-WAKE-GUARD-P* by difficulty x AI-GUARD-K: a low gauge guards less), else half the time a Hoho (flash-step to spare)
-or a side Step out of his string's line; else nothing (a reflex may still act)."
+or a back Step out of his reach (the user 2026-10-02); else nothing (a reflex may still act)."
   (let* ((f (fighter e)) (g (gauges e)) (r (sim-rnd01)) (p (* (getf *ai-wake-guard-p* (brain-difficulty b) 0.6) (ai-guard-k e))))
     (cond ((< r p) (ai-press b :guard *ai-wake-guard-frames* :act :hold) (setf (brain-why b) :wake-guard))
           ((< r (+ p (* 0.5 (- 1.0 p))))
            (ai-command b (kit-of e)
                        (if (and (not (kit-rooted (kit-of e))) (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))
                                 (ai-hoho-spare-p (gauges-fs g) (gauges-reishi g) (gauges-reishi-max g)))
-                           :hoho :side-step)
+                           :hoho :step)                       ; (a Step with the stick at rest: the back hop)
                        d e)
            (setf (brain-why b) :wake-out)))))
+
+(defun ai-gap-step-p (e b)
+  "The gap after his blocked J string (the user 2026-10-02): our first free step out of blocking his J that still
+recovers, too far for our J1 (J-BEATS-OPEN-P's window but its reach), against a J masher: back-Step out of his restart
+(*AI-GAP-STEP-P* by difficulty), so his J whiffs."
+  (let* ((f (fighter e)) (o (fighter-opp f)) (fo (fighter o)) (om (fighter-move fo)) (q (kit-command-move (fighter-kit f) :q)))
+    (and (eq (brain-was b) :guard-hit) (member (fighter-state f) '(:idle :guard)) (zerop (fighter-lock f))
+         (not (kit-rooted (fighter-kit f))) (ai-mash-p b)
+         (eq (fighter-state fo) :move) (eq (fighter-phase fo) :main) (eq (mv-kind om) :quick)
+         (>= (fighter-sf fo) (+ (mv-s om) (mv-a om))) (>= (fighter-dist f) (+ (mv-reach q) 0.2))
+         (< (sim-rnd01) (getf *ai-gap-step-p* (brain-difficulty b) 0.5)))))
 
 (defun brain-step (e b)
   "One step of the CPU: perceive, then hold / reflex / neutral, written to the vpad."
@@ -675,6 +686,7 @@ or a side Step out of his string's line; else nothing (a reflex may still act)."
                (setf (brain-why b) :burst))
               ((ai-chain-follow-p e) (ai-press b :quick 1) (setf (brain-why b) :chain))   ; ORANGE's restart
               ((j-beats-k-p e b) (ai-press b :quick 1) (setf (brain-why b) :j-beats-k))
+              ((ai-gap-step-p e b) (ai-press b :step 1 :act :step) (setf (brain-why b) :gap-step))   ; out of his restart
               ((and (brain-habit b) (habit-fire e b s d)))                     ; debug: a scripted player's habit
               ((and (brain-learn b) (learn-fire e b s d)))                     ; the learning CPU's planned counter
               ((and (> (brain-press-left b) 0)                                    ; a reflex may drop a guard / a dash,

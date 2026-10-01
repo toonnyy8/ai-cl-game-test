@@ -91,6 +91,16 @@ share of its recovery is left, so a hit doesn't leave its owner open (GUARD-CANC
   "ASSIST (the user, 2026-10-01; docs/DUEL_ASSIST.md): a move the assist pressed deals this x its damage (its Hoho is never
 perfect): playing it by hand still pays.")
 (defparameter *assist-tag-frames* 45 "Frames the AUTO tag shows over a fighter after the assist pressed for him.")
+(defparameter *ender-push* 0.3
+  "A J / K string's ender (J3 / K3) that hit and ends the string (its move ends, or a guard cancel, no follow-up started)
+pushes its still-reeling victim out of the attacker's J1 reach (J3) / K1 reach (K3) + this many metres; the attacker
+doesn't move (the user 2026-10-02: a restarted string has to walk in again; the O ender, L, SP2 and ORANGE off it start
+before, so they still connect: ENDER-PUSH) ...")
+(defparameter *ender-push-frames* 8 "... over this many frames.")
+(defparameter *string-pull-to* 0.7
+  "A string's opener (J1 / K1) that HITS dashes its attacker in to this distance from his victim (the user 2026-10-02: the
+links no longer chase, so a hit brings them point-blank; a block or a whiff never does) ...")
+(defparameter *string-pull-frames* 6 "... over this many frames.")
 (defparameter *quick-block-adv* 3
   "A blocked J (a :quick move) leaves its defender this many frames more than its written block advantage (the user,
 2026-10-02: J strings alone shouldn't crush a guard; out of a blocked J the defender's own J comes sooner). The guard
@@ -496,6 +506,8 @@ middle of the range.")
 after a reaction or a wake-up, with him within *AI-WAKE-GUARD-RANGE*, the CPU holds Guard *AI-WAKE-GUARD-FRAMES* with
 this chance (x its guard gauge's AI-GUARD-MULT), not waiting to see his next move (his J1 is faster than its perception
 delay); the rest of the time it Hohos or Steps aside half the time (AI-WAKE-STEP).")
+(defparameter *ai-gap-step-p* '(:easy 0.2 :normal 0.5 :hard 0.75)
+  "Out of blocking a J masher's J that still recovers beyond our J1's reach: back-Step with this chance (AI-GAP-STEP-P).")
 (defparameter *ai-wake-guard-frames* 20 "... held this long (his restarted string comes in it; then J out of it: J-BEATS-K-P).")
 (defparameter *ai-wake-guard-range* 3.0 "... when he is within this many metres (as perceived).")
 (defparameter *ai-hold-guard* '(:easy 0.97 :normal 0.92 :hard 0.8)

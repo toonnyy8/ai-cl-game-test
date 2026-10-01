@@ -512,7 +512,9 @@ the end (MOVE-END-FRAME)."
     (fill v 0f0)
     (when (< sf s)
       (let* ((chained (fighter-chained f)) (rooted (kit-rooted (fighter-kit f)))   ; (rooted: her reach is the ice's)
-             (chase (if (and chained (not rooted)) (string-chase-speed (fighter-dist f) (mv-reach mv) (- s sf)) 0.0))
+             (chase (if (and chained (not rooted) (not (member (mv-kind mv) '(:quick :flash))))   ; J / K links: no chase
+                        (string-chase-speed (fighter-dist f) (mv-reach mv) (- s sf))                 ; (the user 2026-10-02)
+                        0.0))
              (slide (if (and (> (mv-slide mv) 0) (> (fighter-dist f) *lunge-stop*) (not rooted)) (* 60.0 (/ (mv-slide mv) s)) 0.0))
              (sp (max chase slide)))                  ; a lunge stopping at the opponent; a follow-up link's chase
         (turn-to-opp e f (track-step (if chained (max (mv-track mv) *chase-track*) (mv-track mv))))
@@ -528,6 +530,7 @@ the end (MOVE-END-FRAME)."
             ((and (zerop (fighter-lock f)) (guard-cancel-open-p sf s (mv-a mv) (mv-r mv) (fighter-contact f) (eq (mv-kind mv) :quick))
                   (guard-held-p e vp))                  ; the guard cancel: U held after its hit landed
              (clog "~a guard cancel ~a f~d" (side-name e) (mv-name mv) sf)
+             (ender-push e f mv)
              (to-idle e)                                ; (a :guard-to / :ward form: neutral, whose U does the rest)
              (setf (fighter-gc-left f) (- (+ s (mv-a mv) (mv-r mv)) sf))   ; no attack before its recovery would have ended
              (when (guard-p e vp)
@@ -535,7 +538,30 @@ the end (MOVE-END-FRAME)."
                (play-clip e :sh-guard :blend 3)))
             ((>= sf (move-end-frame s (mv-a mv) (mv-r mv) (mv-whiff mv) (fighter-contact f)
                                     (zerop (length (mv-hits mv)))))
+             (ender-push e f mv)
              (to-idle e))))))
+
+(defun push-apart (a b dist frames)
+  "Push fighter B DIST metres away from A over FRAMES; what the arena's edge leaves no room for pushes A back instead (the
+user 2026-10-02: a victim against the wall can't be moved, so the attacker is). Values B's and A's share."
+  (let* ((p (pos-of a)) (q (pos-of b)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
+         (l (max 1e-4 (sqrt (+ (* dx dx) (* dz dz))))) (ux (/ dx l)) (uz (/ dz l))
+         (room (ray-room (aref q 0) (aref q 2) ux uz (- *arena-radius* (body-hurt-r (model-body (model b))))))
+         (mb (min dist room)) (ma (- dist mb)))
+    (when (> mb 0.01) (set-slide b mb frames ux uz))
+    (when (> ma 0.01) (set-slide a ma frames (- ux) (- uz)))
+    (values mb ma)))
+
+(defun ender-push (e f mv)
+  "E's J / K string ender MV (J3 / K3) hit and ends here, no follow-up started (its move ends, or a guard cancel): his
+victim, still reeling, is pushed out of E's J1 reach (J3) or K1 reach (K3), + *ENDER-PUSH* (the user 2026-10-02: a
+restarted string has to walk in again). E doesn't move, unless the arena's edge holds his victim (PUSH-APART)."
+  (when (and (member (mv-kind mv) '(:quick :flash)) (member :ender (mv-flags mv)) (eq (fighter-contact f) :hit))
+    (let* ((o (fighter-opp f)) (opener (kit-command-move (fighter-kit f) (if (eq (mv-kind mv) :quick) :q :f)))
+           (push (and opener (- (+ (mv-reach opener) *ender-push*) (fighter-dist f)))))
+      (when (and push (plusp push) o (entity-alive-p o) (eq (fighter-state (fighter o)) :stun))
+        (multiple-value-bind (mb ma) (push-apart e o push *ender-push-frames*)
+          (clog "~a ender push ~a ~,1f m (attacker ~,1f)" (side-name e) (mv-name mv) mb ma))))))
 
 (defun move-step (e f vp)
   "Advance the current move one frame: its pre-strike phase, or the move proper."
