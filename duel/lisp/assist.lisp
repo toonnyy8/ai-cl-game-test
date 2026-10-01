@@ -15,6 +15,8 @@
 ;;;;                against his SP), and baits a predicted burst out of our string (its 2nd hit, then a guard)
 ;;;;   SP in neutral (the user, 2026-10-02) AUTO COMBO's J pressed while free first asks the CPU's own SP rules (AUTO-SP): the
 ;;;;                kit's :oki on a downed opponent, its :stun-follow on a stunned one
+;;;;   J back        (the user, 2026-10-02) AUTO GUARD also presses J on the first free step out of blocking his J (or K) link
+;;;;                that still recovers (J-BEATS-OPEN-P, the CPU's own window): guard -> J at once, J mashing answered
 ;;;; A CPU never has it, except the debug gate's button-masher (habit :dumb, *ASSIST-DEBUG*): CPU-vs-CPU gates are unchanged.
 (in-package :duel)
 
@@ -57,7 +59,7 @@ result, its table is saved."
 *ASSIST-DEBUG*, no other CPU."
   (let ((b (brain e)))
     (cond ((null b) (list (setting :auto-guard) (= 1 (setting :auto-combo)) (= 1 (setting :auto-break))))
-          ((eq (brain-habit b) :dumb) *assist-debug*))))
+          ((and (eq (brain-habit b) :dumb) (zerop (fighter-side (fighter e)))) *assist-debug*))))   ; (P1's: the gate's)
 
 (defun parry-command (e kit)
   "The command of KIT's parry move (a :parry flag) E may start now, or NIL."
@@ -141,7 +143,9 @@ BREAK may press one."
           (progn (decf (brain-press-left b))                 ; a held press (the Breaker's dash, O through the strike, a
                  (vpad-hold! vp (brain-press b))             ; charge, the bait's guard: his J mashing doesn't restart the string)
                  (when (eq (brain-press b) :guard) (vpad-consume! vp :quick) (setf (fighter-queued f) nil)))
-          (let ((cmd (or (and free (plusp (first cfg)) (or (= 2 (first cfg)) (vpad-down vp :guard)) (auto-guard e f))
+          (let ((cmd (or (and free (plusp (first cfg)) (or (= 2 (first cfg)) (vpad-down vp :guard))
+                              (or (auto-guard e f)
+                                  (and (j-beats-open-p e b) (why b :j-back :q))))   ; guard -> J out of his blocked string
                          (and (second cfg) (eq st :move) (auto-combo e f b side vp))
                          (and (third cfg) free (auto-break e f vp))
                          (and (second cfg) free (vpad-command-pressed-p vp :quick nil)
@@ -152,7 +156,8 @@ BREAK may press one."
               (vpad-stamp! vp (brain-press b) (brain-press-mod b))
               (decf (brain-press-left b))
               (setf (fighter-assist-next f) t (svref *assist-tag* side) *assist-tag-frames*)
-              (clog "~a assist ~a" (side-name e) cmd)))))))
+              (clog "~a assist ~a" (side-name e) cmd))))
+      (setf (brain-was b) st))))   ; (J-BEATS-OPEN-P: the step after blockstun)
 
 (defun assist-system ()
   "Every assisted fighter's step (between BRAIN-SYSTEM and FIGHTER-SYSTEM)."

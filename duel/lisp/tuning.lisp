@@ -446,6 +446,10 @@ pacing knob of the seed gate (debug 72000+k sets it to k / 100).")
   "A CPU who isn't red guards a Kikon rush's dash-in follow-up with this chance (the B1 knob: DUEL_STRINGS §6).")
 (defparameter *ai-j-beats-k-p* '(:easy 0.2 :normal 0.45 :hard 0.7)
   "J beats K: an opponent's K link still >= S(J1) + 2 frames from its hit, within J1's reach: J1 with this chance.")
+(defparameter *ai-mash-window* 120 "J mashing (the user 2026-10-02): his J starts seen within this many frames ...")
+(defparameter *ai-mash-starts* 4 "... at least this many (a J string is 3): he mashes J (AI-MASH-P).")
+(defparameter *ai-anti-mash-j-p* 0.9 "Against a J masher, J out of his blocked J with this chance (else *AI-J-BEATS-K-P*) ...")
+(defparameter *ai-anti-mash-hoho* 0.5 "... and Hoho his coming J with at least this chance (2 x the kit's :hoho, at least this).")
 (defparameter *ai-sp-cancel-p* 0.3
   "A string that ends on a hit with no link left (link 3, or a link the CPU doesn't go on from) is cancelled into SP2
 with this chance, one roll (the kit's :sp-cancel-bars permitting). Link 3 staggers / crumples, so SP2 always combos

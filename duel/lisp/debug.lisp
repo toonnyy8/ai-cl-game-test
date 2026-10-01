@@ -115,6 +115,7 @@
 ;;;;            c1) a CPU with habit h (*HABITS*: 0 plain, 1 J on wake-up, 2 guard after a block, 3 grab-happy, 4 Hoho-happy,
 ;;;;            5 burst-happy, 6 the button-masher of ASSIST's gate: 81000 + g + 3 c + 6 b its assist, g AUTO GUARD 0-2, c / b
 ;;;;            AUTO COMBO / BREAK on; 81020+i the gates' CPU difficulty (0 EASY 1 NORMAL 2 HARD), 81100+k *ASSIST-MULT* = k / 100;
+;;;;            81030+i the assist's learner off / on, 81040+i P2 a button-masher too (unassisted: the anti-mash check);
 ;;;;            tools/assistgate.py; docs/DUEL_ASSIST.md),
 ;;;;            P2 (roster c2) learning by m (0 off, 1 all, 2 model only, 3 bandit only), fresh at the start, kept across
 ;;;;            the matches; a "duel learn row" per match. Every other debug command switches learning off (*LEARN-DEBUG-OFF*)
@@ -918,6 +919,7 @@ move-beat choices of DRAW-FIGHTER."
 (defparameter *dumb-delay* 24 "The button-masher sees as late as an EASY CPU (frames).")
 (defparameter *dumb-guard-p* 0.5 "... and guards this share of the moves he sees coming.")
 
+(defvar *dumb-p2* nil "Debug 81040+i: P2 of the learning gate is a button-masher too (ASSIST's anti-mash check).")
 (defparameter *habits* #(nil :wake-j :block-guard :grab :hoho :burst :dumb)
   "The scripted players (debug 200000+): 0 a plain CPU, 1 J on every wake-up, 2 guard after every block, 3 grab-happy
 (the Breaker at every close neutral decision), 4 Hoho-happy (Hoho at neutral decisions and into every committed move),
@@ -939,6 +941,7 @@ matches); a \"duel learn row\" per match."
   "A learning-gate match began: P1's habit, P2's learner."
   (setf (brain-habit (brain *p1*)) (first *learn-gate*))
   (when (eq (first *learn-gate*) :dumb) (setf (brain-delay (brain *p1*)) *dumb-delay*))
+  (when *dumb-p2* (setf (brain-habit (brain *p2*)) :dumb (brain-delay (brain *p2*)) *dumb-delay*))
   (when (second *learn-gate*) (learn-attach! *p2*)))
 
 (defun learn-gate-line ()
@@ -1064,6 +1067,7 @@ Never a Step, Hoho, L, SP, Breaker, O, Burst or awakening of its own: those come
         ((<= 81000 c 81011) (let ((k (- c 81000)))          ; ASSIST for the :dumb player (guard + 3 combo + 6 break)
                               (setf *assist-debug* (list (mod k 3) (oddp (floor k 3)) (>= k 6)))))
         ((<= 81100 c 81200) (setf *assist-mult* (/ (- c 81100) 100.0)))   ; ASSIST's x0.8 (its gate)
+        ((<= 81040 c 81041) (setf *dumb-p2* (= c 81041)))   ; ASSIST's gate: P2 a button-masher too (never assisted)
         ((<= 81030 c 81031) (setf *assist-learn* (= c 81031)))   ; ASSIST's learner off / on (its gate A/B)
         ((<= 81020 c 81022) (setf *gate-difficulty* (nth (- c 81020) '(:easy :normal :hard))))
         ((<= 20000 c 20999) (setf *ward-mult* (/ (- c 20000) 100.0)))

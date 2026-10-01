@@ -175,3 +175,23 @@ uses them:
 neutral decisions, not on a masher's every press.
 
 **What the two rules add.** In 8 seeds of RU vs RU they fired 2 oki SP1s and the stun follow-ups.
+
+## J back, against J mashing (the user, 2026-10-02)
+
+AUTO GUARD, under its trigger (U held for HOLD U, always for ALWAYS), also presses J on the first free step after
+blocking his J or K link that still recovers. This is `J-BEATS-OPEN-P`, the CPU's own window without its roll: guard
+-> J at once.
+
+The assist's brain counts his J starts too (`AI-MASH-P`). Its `STRING-REFLEX` therefore sees the same masher the CPU
+does.
+
+**Test**, with debug 81040+i / `--p2-dumb 1`: P2 is a button-masher too, never assisted. P1's wins out of 500:
+
+| P1's assist | P1 wins |
+|---|---|
+| none | 40 % |
+| AUTO GUARD HOLD U | 47 % |
+| AUTO GUARD ALWAYS | 50 % |
+| all three, ALWAYS | 40 % (AUTO COMBO takes it back, as against the CPU) |
+
+Masher vs HARD after both AIs' anti-mash rules: 69 % (k0), 86 % (k2).

@@ -1573,6 +1573,29 @@ drain (8) was not picked.
   - The masher (40 matches vs HARD): the CPU crushed 54 -> 22 times, 93 CPU J interrupts, the masher crushed once.
   - G2 changed: yy P1 3-0 171.0 s, yk P1 3-0 138.4 s, kk P2 0-7 152.4 s.
 
+## Both AIs answer J mashing (the user, 2026-10-02)
+
+The user: "請同時更新敵我雙方 AI 的基本策略，讓他們知道如何應對 j 連打"
+
+- **Seeing it.** A brain records the ticks of his perceived J starts (`BRAIN-PERCEIVE`: `jkey` / `jstarts`).
+  `AI-MASH-P` is true at `*ai-mash-starts*` (4) or more within `*ai-mash-window*` (120 f). A J string is 3, so a
+  restarted string counts as mashing.
+- **The CPU.**
+  - J out of his blocked J while it still recovers: `J-BEATS-K-P` rolls `*ai-anti-mash-j-p*` (0.9) instead of the
+    difficulty's.
+  - A Hoho into his coming J: at least `*ai-anti-mash-hoho*` (0.5), twice the kit's `:hoho`.
+- **The assist.** AUTO GUARD (under its trigger) presses J on the first free step after blocking his J or K link
+  that still recovers (`J-BEATS-OPEN-P`, the CPU's window without the roll), on top of its parry / Hoho.
+- **Tried and dropped: safer string enders.** No L after a link and no O ender unless he is red, while he mashes. It
+  raised the masher's wins vs HARD 69 -> 74 %: those enders are the CPU's damage.
+- **Measured.**
+  - All 15 pairings K.O., 20-seed medians 137.2–206.8 s.
+  - G2 unchanged (CPUs rarely mash each other).
+  - The never-awaken A/B: Rukia and Senjumaru >= 20.
+  - The masher vs HARD: 71 -> 69 %. The CPU's guard crushed 10 times in 40 matches (54 before the J / guard change),
+    88 perfect Hohos.
+  - Masher vs masher, P1 assisted: none 40 %, HOLD U 47 %, ALWAYS 50 %.
+
 ## ASSIST: AUTO GUARD / AUTO COMBO / AUTO BREAK (the user, 2026-10-01)
 
 Three SETTINGS rows, all OFF by default: the CPU's own rules press for a human fighter (a parry or Hoho as a hit comes,

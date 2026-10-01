@@ -454,8 +454,11 @@ D = the perceived distance."
             (< (snap-sf s) (snap-active-end s)) (< d (+ (snap-reach s) *ai-threat-margin*)))
        (let ((chance (+ (ai-table e :guard 0.3) (if (eq (brain-intent b) :defend) 0.25 0.0))))
          (cond ((and hoho-ok (ai-hoho-spare-p (gauges-fs g) (gauges-reishi g) (gauges-reishi-max g))
-                     (>= (- (snap-s s) (snap-sf s)) 6) (< (brain-hoho-roll b) (ai-table e :hoho 0.2)))
-                (why b :hoho :hoho))
+                     (>= (- (snap-s s) (snap-sf s)) 6)
+                     (< (brain-hoho-roll b) (if (and (eq (snap-kind s) :quick) (ai-mash-p b))   ; a masher's J: Hoho it more
+                                                (max *ai-anti-mash-hoho* (* 2 (ai-table e :hoho 0.2)))
+                                                (ai-table e :hoho 0.2))))
+                (why b (if (ai-mash-p b) :anti-mash :hoho) :hoho))
                ((and red (eq (snap-kind s) :kikon)) (why b :anti-kikon :side-step))
                ((member :grab (snap-flags s)) (why b :anti-grab :side-step))   ; a grab: nothing guards it
                ((< (brain-guard-roll b) (* chance guard-k)) :guard)
@@ -467,14 +470,18 @@ D = the perceived distance."
 like the block punish (the gap of a blocked string, not a read through the perception delay: a K link's startup is
 shorter than NORMAL's delay); one roll (*AI-J-BEATS-K-P* by difficulty), also out of a guard held through the string.
 Also out of his blocked J while it still recovers (the user 2026-10-02: a blocked J leaves the defender *QUICK-BLOCK-ADV*
-more; J strings alone shouldn't crush a guard, the CPU's included)."
+more; J strings alone shouldn't crush a guard, the CPU's included); against a J masher (AI-MASH-P) *AI-ANTI-MASH-J-P*."
+  (and (j-beats-open-p e b)
+       (< (sim-rnd01) (if (ai-mash-p b) *ai-anti-mash-j-p* (getf *ai-j-beats-k-p* (brain-difficulty b) 0.45)))))
+
+(defun j-beats-open-p (e b)
+  "J-BEATS-K-P's window without its roll (the assist's AUTO GUARD presses J in it: assist.lisp)."
   (let* ((f (fighter e)) (o (fighter-opp f)) (fo (fighter o)) (om (fighter-move fo)) (q (kit-command-move (fighter-kit f) :q)))
     (and (eq (brain-was b) :guard-hit) (member (fighter-state f) '(:idle :guard)) (zerop (fighter-lock f))
          (eq (fighter-state fo) :move) (eq (fighter-phase fo) :main)
          (or (and (eq (mv-kind om) :flash) (>= (- (mv-s om) (fighter-sf fo)) (+ (mv-s q) 2)))
              (and (eq (mv-kind om) :quick) (>= (fighter-sf fo) (+ (mv-s om) (mv-a om)))))   ; his blocked J still recovering
-         (< (fighter-dist f) (+ (mv-reach q) 0.2))
-         (< (sim-rnd01) (getf *ai-j-beats-k-p* (brain-difficulty b) 0.45)))))
+         (< (fighter-dist f) (+ (mv-reach q) 0.2)))))
 
 (defun ai-neutral (e b s d)
   "No reflex fired: walk to the intent's range, and now and then decide (AI-DECIDE)."
@@ -608,7 +615,19 @@ distance to it (the assist's learner perceives the same way: assist.lisp)."
     (let* ((s (or (svref ring (mod (- (brain-head b) (brain-delay b)) n)) cur))
            (p (pos-of e)) (d (sqrt (+ (expt (- (snap-x s) (aref p 0)) 2) (expt (- (snap-z s) (aref p 2)) 2)))))
       (setf (brain-head b) (mod (1+ (brain-head b)) n))
+      (when (and (eq (snap-state s) :move) (eq (snap-kind s) :quick) (/= (snap-start s) (brain-jkey b)))   ; a J of his begins
+        (setf (brain-jkey b) (snap-start s))
+        (push *match-tick* (brain-jstarts b)))
+      (when (brain-jstarts b)                               ; only the window's
+        (setf (brain-jstarts b) (delete-if (lambda (t0) (> (- *match-tick* t0) *ai-mash-window*)) (brain-jstarts b))))
       (values s d))))
+
+(defun ai-mash-p (b)
+  "Is he mashing J, as brain B saw him: *AI-MASH-STARTS* J starts within *AI-MASH-WINDOW* frames (the user 2026-10-02:
+both AIs answer J mashing: J out of his recovering blocked J (J-BEATS-K-P, *AI-ANTI-MASH-J-P*), Hoho his coming J
+(*AI-ANTI-MASH-HOHO*)? Not safer string enders: no L / O ender against him cost more damage than it saved (the masher's
+wins vs HARD 69 -> 74 %, 2026-10-02)."
+  (>= (length (brain-jstarts b)) *ai-mash-starts*))
 
 (defun brain-step (e b)
   "One step of the CPU: perceive, then hold / reflex / neutral, written to the vpad."

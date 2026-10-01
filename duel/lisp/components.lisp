@@ -179,6 +179,7 @@ is holding. Identity comes from the kit's :AI tables."
   (act nil) (why nil)                   ; the last thing it decided and why (debug overlay, log)
   (learn nil)                           ; the learning CPU (ai.lisp LRN; NIL = off: nothing of it runs)
   (habit nil)                           ; debug: a scripted player's habit (debug.lisp HABIT-FIRE)
+  (jkey -1 :type fixnum) (jstarts nil)  ; his last perceived J's start; the ticks his J's started (AI-MASH-P)
   (off nil))                            ; debug: this CPU does nothing
 
 (defcomponent hazard
