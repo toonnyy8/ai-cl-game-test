@@ -101,6 +101,7 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (perfect nil)                         ; this Hoho was perfect: its counter strike is pending
   (assist-next nil)                     ; the assist pressed for him: the next move / Hoho he starts is assisted (assist.lisp)
   (assisted nil)                        ; the current move is assisted: x*ASSIST-MULT* damage
+  (gc-left 0 :type fixnum)              ; frames a guard cancel still keeps attacks out (COMMAND!: its recovery's rest)
   (burst nil)                           ; the burst mode pressed this step (:white :blue :orange; applied after both stepped)
   (chain 0 :type fixnum)                ; ORANGE: frames the next move started still has its startup cut
   (invuln 0 :type fixnum)               ; frames of invulnerability left (after a Burst)

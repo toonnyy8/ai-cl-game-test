@@ -352,9 +352,12 @@ Kikon is decided when its strike connects: combat.lisp APPLY-HIT).")
 
 (defun command! (e f vp allowed)
   "The highest-priority buffered command among ALLOWED that can start now; consumes its press. A
-buffered command that can't start (Kikon too early, no bar, cooling down) doesn't hide the ones below it."
+buffered command that can't start (Kikon too early, no bar, cooling down) doesn't hide the ones below it. Out of a
+guard cancel no attack starts before the cancelled move's recovery would have ended (FIGHTER-GC-LEFT; the press stays
+buffered): the cancel is a guard, never a faster restart (the user 2026-10-02: J3 -> guard cancel -> J1 looped J strings)."
   (loop for (cmd button mod) in *commands*
         thereis (and (member cmd allowed) (vpad-command-pressed-p vp button mod)
+                     (not (and (plusp (fighter-gc-left f)) (member cmd *kit-commands*)))
                      (or (try-command e f cmd button) (refused-cue e f cmd vp button))
                      (progn (vpad-consume! vp button) t))))
 
@@ -526,6 +529,7 @@ the end (MOVE-END-FRAME)."
                   (guard-held-p e vp))                  ; the guard cancel: U held after its hit landed
              (clog "~a guard cancel ~a f~d" (side-name e) (mv-name mv) sf)
              (to-idle e)                                ; (a :guard-to / :ward form: neutral, whose U does the rest)
+             (setf (fighter-gc-left f) (- (+ s (mv-a mv) (mv-r mv)) sf))   ; no attack before its recovery would have ended
              (when (guard-p e vp)
                (setf (fighter-state f) :guard (fighter-guard-t f) 0)
                (play-clip e :sh-guard :blend 3)))
@@ -819,6 +823,7 @@ still :parry); never in a reaction (a bind, a Guard Break, a crush reel: no armo
   (when (> (fighter-freeze f) 0) (decf (fighter-freeze f)) (return-from fighter-step nil))
   (when (> (fighter-lock f) 0) (decf (fighter-lock f)))
   (when (> (fighter-hoho-lock f) 0) (decf (fighter-hoho-lock f)))
+  (when (> (fighter-gc-left f) 0) (decf (fighter-gc-left f)))
   (when (> (fighter-invuln f) 0) (decf (fighter-invuln f)))
   (when (> (fighter-callout-t f) 0) (decf (fighter-callout-t f)))
   (when (> (fighter-frost f) 0) (decf (fighter-frost f)))

@@ -1573,6 +1573,26 @@ drain (8) was not picked.
   - The masher (40 matches vs HARD): the CPU crushed 54 -> 22 times, 93 CPU J interrupts, the masher crushed once.
   - G2 changed: yy P1 3-0 171.0 s, yk P1 3-0 138.4 s, kk P2 0-7 152.4 s.
 
+## The guard cancel is a guard, not a faster restart (the user's bug report, 2026-10-02)
+
+The user: "等等，現在兩組 j 連段之間幾乎沒有空隙，光是連打 j 就能消掉半條血了！"
+
+- **The bug** (from "Guard cancel on hit", 2026-10-01).
+  - J3 hits on its move frame 9 and staggers him 26 f. Its recovery runs 20 more frames, and J1 takes 7–9 to hit, so
+    a restarted string used to leave him free about 3 f first.
+  - The guard cancel cut the recovery's last half (9 f). From the guard, J1 could start at once and hit him still in
+    his stagger, so J1 J2 J3 [cancel] J1 ... looped until the stun tolerance blew him away.
+  - On a phone the resting thumb is the guard, so mashing J alone did it.
+  - In the browser (debug 2394, U held, J mashed): guard cancel at J3 f21, then J1 hit 10 f later, every round.
+- **The fix.** A guard cancel sets `FIGHTER-GC-LEFT` to the frames its move's recovery still had. Until they run out,
+  `COMMAND!` starts none of the kit's commands (J K L SP I O). The press stays buffered, so a mashed J comes out exactly
+  where it would have without the cancel. Hoho, Step, the bursts and the awakening are free. Now J1 hits 8 f after he
+  is free: a guard stops it.
+- **The CPUs used it too.** All 15 pairings' medians moved (130.2–213.1 s at 20 seeds; Ichigo vs Ichigo 201.1 s at 60
+  seeds). G2 changed: yy P1 3-0 165.5 s, yk P2 0-1 139.6 s, kk P1 1-0 167.3 s.
+- **Never-awaken A/B.** Rukia >= 20 on every stream. Senjumaru's base vs Rukia (SR) falls to 17 / 20 / 29 on streams
+  100 / 300 / 500, from 27 / 31 / 20 before the fix. The other Senjumaru rows are >= 20.
+
 ## Both AIs answer J mashing (the user, 2026-10-02)
 
 The user: "請同時更新敵我雙方 AI 的基本策略，讓他們知道如何應對 j 連打"
