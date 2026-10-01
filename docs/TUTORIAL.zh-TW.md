@@ -514,6 +514,7 @@ SOUL DUEL 分兩段：
 - **電腦**：擋下後用 J 反擊的機率提高到 0.9；看到他的 J 打過來，Hoho 的機率至少 0.5。
 - **我方輔助**：AUTO GUARD 在擋下對手還在收招的 J 時，自動出 J（`j-beats-open-p`，就是電腦用的同一個時機，只是不擲骰）。
 - **試過但拿掉**：連打時不出 L 和 O 收尾。這讓電腦少打很多傷害，反而更容易輸（笨玩家勝率 69 → 74%）。
+- **電腦被打中後先防禦（`ai-wake-step`）**：對手在連打 J 時，電腦從被打中的硬直、倒地起身恢復的第一幀，如果對手在 3 公尺內，就直接按住防禦 20 幀，不等看到他出招（它的反應延遲比 J1 的出招還慢）。按住的機率：EASY 0.25、NORMAL 0.4、HARD 0.85。沒按的那些時候，一半會 Hoho 或側步。擋下之後就接上面的 J 反擊。
 
 ### 9.4 過場導演：規則決定，過場只負責呈現
 
@@ -548,7 +549,7 @@ Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規�
 驗證方法：每 600 步印一行 `duel hash`（`state-hash-line`，`duel/lisp/debug.lisp` 第 83～96 行，位置、朝向、每個量表、上一次 Kikon 突進值幾個魂魄、電腦的 heat）。`tests/scripts/duel-cvc-yk.json` 用種子 7 讓兩個電腦打完一場，最後一行一定是：
 
 ```
-duel -> RESULTS winner P2 konpaku 0-1 ticks 8379 secs 139.6
+duel -> RESULTS winner P1 konpaku 1-0 ticks 9219 secs 153.6
 ```
 
 （2026-10-01 完美 Hoho 的前置窗 8 → 12 幀之後，YK 這一場變了；之前是 `winner P1 konpaku 7-0 ticks 9328 secs 155.5`。）

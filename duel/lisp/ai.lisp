@@ -629,6 +629,20 @@ both AIs answer J mashing: J out of his recovering blocked J (J-BEATS-K-P, *AI-A
 wins vs HARD 69 -> 74 %, 2026-10-02)."
   (>= (length (brain-jstarts b)) *ai-mash-starts*))
 
+(defun ai-wake-step (e b d)
+  "The CPU's first free step out of a hit or a wake-up with him close (BRAIN-STEP): hold Guard *AI-WAKE-GUARD-FRAMES*
+(*AI-WAKE-GUARD-P* by difficulty x AI-GUARD-K: a low gauge guards less), else half the time a Hoho (flash-step to spare)
+or a side Step out of his string's line; else nothing (a reflex may still act)."
+  (let* ((f (fighter e)) (g (gauges e)) (r (sim-rnd01)) (p (* (getf *ai-wake-guard-p* (brain-difficulty b) 0.6) (ai-guard-k e))))
+    (cond ((< r p) (ai-press b :guard *ai-wake-guard-frames* :act :hold) (setf (brain-why b) :wake-guard))
+          ((< r (+ p (* 0.5 (- 1.0 p))))
+           (ai-command b (kit-of e)
+                       (if (and (not (kit-rooted (kit-of e))) (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))
+                                (ai-hoho-spare-p (gauges-fs g) (gauges-reishi g) (gauges-reishi-max g)))
+                           :hoho :side-step)
+                       d e)
+           (setf (brain-why b) :wake-out)))))
+
 (defun brain-step (e b)
   "One step of the CPU: perceive, then hold / reflex / neutral, written to the vpad."
   (let* ((f (fighter e)) (vp (pilot-vpad (pilot e))) (o (fighter-opp f)))
@@ -643,6 +657,10 @@ wins vs HARD 69 -> 74 %, 2026-10-02)."
       (when (and (eq (fighter-state f) :guard-hit) (zerop (fighter-sf f)) (not (brain-off b)))   ; blocked: hold on through the string?
         (when (< (sim-rnd01) (getf *ai-hold-guard* (brain-difficulty b) 0.85))
           (ai-press b :guard (+ (fighter-stun f) 20) :act :hold)))   ; (no reflex drops it: BRAIN-STEP)
+      (when (and (member (brain-was b) '(:stun :air :down :wakeup)) (member (fighter-state f) '(:idle :guard :run))
+                 (zerop (fighter-lock f)) (< d *ai-wake-guard-range*) (not (brain-off b)) (not (brain-habit b))
+                 (ai-mash-p b))                                                 ; (against a J masher: CPU pacing stays)
+        (ai-wake-step e b d))                                                   ; out of a hit: guard first
       (if (or (and (member (fighter-state f) '(:stun :air)) (>= (fighter-combo-hits f) *burst-min-hits*))
               (and (eq (fighter-state f) :guard-hit) (fighter-glock f) (ai-gg-low-p e)))   ; a locked string on a low guard
           (incf (brain-burst-t b))                                                ; the Burst clock

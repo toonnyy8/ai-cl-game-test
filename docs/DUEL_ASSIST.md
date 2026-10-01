@@ -195,3 +195,19 @@ does.
 | all three, ALWAYS | 40 % (AUTO COMBO takes it back, as against the CPU) |
 
 Masher vs HARD after both AIs' anti-mash rules: 69 % (k0), 86 % (k2).
+
+## After the CPU learned to guard out of a hit (2026-10-02)
+
+Two changes moved the masher's numbers:
+
+- **The guard-cancel fix.** J3 -> guard cancel -> J1 no longer loops (DUEL_DESIGN.md).
+- **The CPU's `AI-WAKE-STEP`.** Against a J masher, the CPU holds Guard on its first free step out of a hit.
+
+Since then the masher alone loses to HARD, and the assist matters as designed:
+
+| assist (k) | vs NORMAL | vs HARD |
+|---|---|---|
+| none (0) | 56% | 23% |
+| GUARD HOLD U (1) | — | 31% |
+| GUARD ALWAYS (2) | 79% | 54% |
+| ALWAYS + COMBO + BREAK (11) | 79% | 51% |

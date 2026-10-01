@@ -1573,6 +1573,32 @@ drain (8) was not picked.
   - The masher (40 matches vs HARD): the CPU crushed 54 -> 22 times, 93 CPU J interrupts, the masher crushed once.
   - G2 changed: yy P1 3-0 171.0 s, yk P1 3-0 138.4 s, kk P2 0-7 152.4 s.
 
+## The CPU guards first out of a hit, against a J masher (the user, 2026-10-02)
+
+The user: "但目前 CPU 被 J 纏上後除了爆氣就是被打飛 沒有其他脫離方式欸，是 CPU 的應對設計出問題嗎"
+
+- **The gap.** The CPU reacts to what it perceives, 8 f late at HARD and 14 f at NORMAL, and a J1 hits in 7–9 f. It
+  held Guard through a blocked string (`*ai-hold-guard*`), but had no rule for leaving a hit's stun.
+- **Measured on the masher, guard-cancel fix in, 40 matches vs HARD.** After the CPU took a J3:
+  - It did nothing in 852 of 1019 cases.
+  - The masher's next J hit 960 times and was blocked 50 times.
+- **The rule (`AI-WAKE-STEP`).** On its first free step after a reaction, a launch or a wake-up, with him within
+  `*ai-wake-guard-range*` (3 m) and mashing J (`AI-MASH-P`):
+  - It holds Guard `*ai-wake-guard-frames*` (20) with `*ai-wake-guard-p*` (EASY 0.25, NORMAL 0.4, HARD 0.85; x its
+    guard gauge's `AI-GUARD-K`), without waiting to see his move.
+  - Otherwise, half the time, it Hohos (flash-step to spare) or Steps aside.
+  - A guarded restart then meets `J-BEATS-K-P`'s J out of his recovering J.
+- **Tuning.** At first the rule applied with no masher condition and NORMAL at 0.6. Ichigo vs Ichigo went to 211.2 s
+  at 60 seeds; a 14-frame hold made it 215.5 s (noise). The masher condition alone left it at 214.8 s, because the
+  CPUs' own J restarts count. NORMAL at 0.4 gave 204.4 s.
+- **Measured.**
+  - After a J3: hit 960 -> 413, blocked 50 -> 310.
+  - The masher's wins: HARD 69 -> 23 %, NORMAL 98 -> 56 %.
+  - With the assist vs HARD: HOLD U 31 %, ALWAYS 54 %, all three 51 %. Vs NORMAL: ALWAYS 79 %.
+  - 15 pairings K.O., medians 136.3–204.4 s. The never-awaken A/B is >= 21 on every row, so Senjumaru vs Rukia passes
+    again.
+  - G2: yy P1 4-0 127.9 s, yk P1 1-0 153.6 s, kk P2 0-1 157.1 s.
+
 ## The guard cancel is a guard, not a faster restart (the user's bug report, 2026-10-02)
 
 The user: "等等，現在兩組 j 連段之間幾乎沒有空隙，光是連打 j 就能消掉半條血了！"

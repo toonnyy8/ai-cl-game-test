@@ -491,6 +491,13 @@ than its perception delay after the combo's *BURST-MIN-HITS*th hit.")
 far outside its preferred range: toward it from beyond, away from it from inside; it lets go in the
 middle of the range.")
 (defparameter *ai-dash-frames* 70 "Longest the CPU holds a dash.")
+(defparameter *ai-wake-guard-p* '(:easy 0.25 :normal 0.4 :hard 0.85)
+  "Out of a hit (the user 2026-10-02: a CPU caught by J strings had no way out but a burst): on its first free step
+after a reaction or a wake-up, with him within *AI-WAKE-GUARD-RANGE*, the CPU holds Guard *AI-WAKE-GUARD-FRAMES* with
+this chance (x its guard gauge's AI-GUARD-MULT), not waiting to see his next move (his J1 is faster than its perception
+delay); the rest of the time it Hohos or Steps aside half the time (AI-WAKE-STEP).")
+(defparameter *ai-wake-guard-frames* 20 "... held this long (his restarted string comes in it; then J out of it: J-BEATS-K-P).")
+(defparameter *ai-wake-guard-range* 3.0 "... when he is within this many metres (as perceived).")
 (defparameter *ai-hold-guard* '(:easy 0.97 :normal 0.92 :hard 0.8)
   "In blockstun a CPU keeps holding Guard through the string with this chance per blocked hit, whatever its
 guard gauge (turtling mid-string is what a Guard Crush punishes): the easier CPU turtles and gets crushed,
