@@ -1446,16 +1446,23 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
                 (= 6 (- (+ (getf (mv-params l) :first) (* *hari-gap* 5) *hari-last-stun*) (mv-total l)))
                 (eq :sj-warui-kuse-k (mv-name lk)) (= 6 (mv-s lk)) (= 8 (getf (mv-params lk) :first))
                 (< (+ 4 (getf (mv-params lk) :first) (* *hari-gap* 5)) (hitstun :stagger))
-                (>= (mv-reach lk) 9.0) (= 10 *hari-dmg*) (every (lambda (k) (kit-l-link b k)) '(:sj-k1 :sj-k2 :sj-k2s :sj-k3)))))
+                (>= (mv-reach lk) 9.0) (= 13 *hari-dmg*) (every (lambda (k) (kit-l-link b k)) '(:sj-k1 :sj-k2 :sj-k2s :sj-k3)))))
   ;; the stitches pay: a hit JJJ is 6; blocked, the universal 24 / 46 of guard and 3 stitches either way
   (check (= 6 (reduce #'hari-sew '(:hit :hit :hit) :initial-value 0)))
   (check (= 3 (reduce #'hari-sew '(:blocked :blocked :blocked) :initial-value 0)))
-  ;; the Shikai's grid: the lightest (J1 28, KKK 184 on hit)
-  (check (and (= 28 (mv-dmg (kit-command-move b :q))) (= 184 (+ 60 (mv-dmg (mv :senjumaru :base :sj-k2)) (mv-dmg (mv :senjumaru :base :sj-k3))))
-              (= 92 (+ 28 28 36))))
-  ;; the soldier: 2 strikes, 300 f, 3.5 m/s (the user's decision), one stitch when it bursts; the umbrella: a guard over f4-27,
+  ;; the Shikai's grid: the lightest (the user, 2026-10-01: J x0.9, K x0.8: J1 25, JJJ 82, KKK 147 on hit; the Bankai's
+  ;; K1 45, K3 58)
+  (check (and (= 25 (mv-dmg (kit-command-move b :q))) (= 82 (+ 25 (mv-dmg (mv :senjumaru :base :sj-j2)) (mv-dmg (mv :senjumaru :base :sj-j3))))
+              (= 147 (+ (mv-dmg (kit-command-move b :f)) (mv-dmg (mv :senjumaru :base :sj-k2)) (mv-dmg (mv :senjumaru :base :sj-k3))))
+              (= 45 (mv-dmg (mv :senjumaru :tsuji1 :sj-t-k1))) (= 58 (mv-dmg (mv :senjumaru :tsuji1 :sj-t-k3)))))
+  ;; the soldier: one string of three, 300 f, 3.5 m/s (the user's decision), one stitch when it bursts; it moves the frame
+  ;; she is free (2026-10-01); each flinch outlasts the next wind-up (+4 for the hitstop: a true combo); the umbrella: a guard over f4-27,
   ;; the tendrils always fire, 40 + half the largest caught hit, at most 120, a side Step clears them (0.8 + 0.45 < 2.5)
-  (check (and (= 2 *shinpei-strikes*) (= 300 *shinpei-life*) (~= 3.5 *shinpei-speed*) (= 18 *shinpei-tell*)))
+  (check (and (= 3 (length *shinpei-combo*)) (= 300 *shinpei-life*) (~= 3.5 *shinpei-speed*)
+              (= (mv-total (kit-command-move b :sp1)) (+ 10 *shinpei-rise*))
+              (member '(10 senju-shinpei) (mv-on-frame (kit-command-move b :sp1)) :test #'equal)
+              (loop for (h nx) on *shinpei-combo* while nx always (>= (seventh h) (+ (first nx) 4)))
+              (= 74 (reduce #'+ *shinpei-combo* :key #'fifth))))
   (let ((k (kit-command-move b :sp2)))
     (check (and (member :shield (mv-flags k)) (= 4 (mv-s k)) (= 24 (mv-a k)) (eq 'senju-kasa-catch (getf (mv-params k) :catch))
                 (= 40 (kasa-damage 0)) (= 70 (kasa-damage 60)) (= 120 (kasa-damage 999)) (= 1 (kit-command-cost b :sp2))
@@ -1493,8 +1500,9 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
                         always (and (or (not (hank n :r)) (<= (hank-radius n p) (hank-radius n (1+ p))))
                                     (or (not (hank n :life)) (<= (hank-life n p) (hank-life n (1+ p))))
                                     (or (not (hank n :dmg)) (<= (hank-damage n p) (hank-damage n (1+ p))))))))
-  (check (and (= 90 (hank-damage 2 3)) (= 72 (hank-damage 2 1)) (= 240 (hank-life 1 3)) (= 120 (hank-life 1 1))
-              (~= 2.4 (hank-radius 1 1)) (null (hank 1 :dmg)) (null (hank 6 :dmg))))
+  (check (and (= 126 (hank-damage 2 3)) (= 90 (hank-damage 2 2)) (= 63 (hank-damage 2 1)) (= 288 (hank-life 1 3))
+              (= 120 (hank-life 1 1)) (~= 2.1 (hank-radius 1 1)) (null (hank 1 :dmg)) (null (hank 6 :dmg))
+              (~= 24.0 (hank-fx 4 :freeze 1)) (~= 60.0 (hank-fx 4 :freeze 3)) (~= 45.0 (hank-fx 6 :reiatsu 3))))
   ;; the awakened grid: J1 J2 J3 K2 as the Shikai's (no reach derivation: the playtest), K1 3.8 m, MAKITORI 2.5 m with its
   ;; pull to 1.4
   (check (and (~= 1.44 (mv-reach (kit-command-move t1 :q))) (~= 2.5 (mv-reach (kit-next t1 :sj-j1 :f)))

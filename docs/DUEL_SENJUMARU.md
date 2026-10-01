@@ -10,9 +10,9 @@ the measurements close the file. Everything of hers lives in those two files (th
 
 - **The Shikai 刺絡 SHIGARAMI is a close-range tailor: sew first, detonate later.** Every J / K / O contact sews stitches
   into his clothes (+2 on a hit, +1 on a block, 6 at most); red threads stand out of his torso, and 3 s without a new
-  stitch they start to fall out one by one. L 悪い癖 WARUI KUSE pulls them all out at once: 10 each, **unguardable**, never
+  stitch they start to fall out one by one. L 悪い癖 WARUI KUSE pulls them all out at once: 13 each (21 after her ×1.6; 10 until 2026-10-01), **unguardable**, never
   a Soul Break (the last Reishi point is spared). Out of a combo it is a frame trap; after a K link it is a combo (scaled).
-- **The other buttons**: SP1 神兵 SHINPEI summons a Divine Soldier that walks the line to him and thrusts twice at most; one
+- **The other buttons**: SP1 神兵 SHINPEI summons a Divine Soldier that stands until she is free, walks the line to him and strikes **one three-hit string** (since 2026-10-01; two lone thrusts before); one
   hit kills it, and it **bursts into thread and sews one stitch into whoever destroyed it** (the user's decision). SP2 傘 KASA
   catches projectiles and hazards (no stun, no gauge) and **always** fires the tendrils back (40 + half the largest caught
   hit, at most 120; the user's decision). O 縫地 NUICHI is a flash step into the six-armed whirl (it sews); its Kikon is
@@ -58,7 +58,7 @@ the measurements close the file. Everything of hers lives in those two files (th
 | Canon | Mechanic | The opponent's verb |
 |---|---|---|
 | She re-tailors Nianzol's robe unnoticed; the needles left in it impale him from inside; "my bad habit" [V ch. 598–599] | base: her J/K contacts **sew stitches** into his clothes; L 悪い癖 pulls them all, **unguardable** | break contact (the stitches fall out after 3 s); read the yank and Hoho through it |
-| She is weak in a straight fight: Gerard shatters her needle with one slash [V ch. 599] | the lightest strings in the game (J1 28) and short reach | out-range her; trade K for J |
+| She is weak in a straight fight: Gerard shatters her needle with one slash [V ch. 599] | the lightest strings in the game (J1 25) and short reach | out-range her; trade K for J |
 | Divine Soldiers fight for her; Pernida crushes the big one [V ch. 597, 599] | SP1 神兵: a proxy that walks at him and **dies to one hit** | swat it (it walks into his arc) |
 | The umbrella blocks Licht Regen and fires it back as tendrils [A ep. 25] | SP2 傘: catches projectiles and hazards, then fires back | don't shoot into it; strike her (melee is only guarded) or Break it |
 | The Bankai unravels **one hank at a time** [A ep. 26] | one live zone; the queue is public (three SP1 pairs) | read the next hank on the HUD; stand where it can't reach |
@@ -181,14 +181,17 @@ The soldier and the umbrella let her work from 3–7 m.
 
 ### 3.2 J / K grid (DUEL_STRINGS §2.1; K2 / K3 at 80 % as for every form; every link sews)
 
+Since 2026-10-01 (the user) every form's J is ×0.9 and K ×0.8 of the values in brackets; the routes below are the
+old ones (§"The soldier's string, lighter strings, wider weave steps" has the new).
+
 | Link | Name | Clip | S/A/R (enter → S_eff) | Dmg | React | Blk | Whiff | Volume | Guard | Pose (one line) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| J1 | 一針 HITOHARI `:sj-j1` [G] | **new** `:sj-q1` | 7/3/12 | 28 | flinch | −2 | 20 | **1.44 m** 90° (was 2.4), slide 0.5 | 8 | the upper right hand jabs the needle; the echo hands ripple behind it |
-| J2 | 返し縫い KAESHINUI `:sj-j2` / `-j2s` [G] | **new** `:sj-q2` | 7/3/13 | 28 | flinch | −2 | 21 | **1.44 m** 110° (was 2.4) | 8 | the backstitch: the needle drawn back across, the thread pulled taut |
-| J3 | 千手 SENJU `:sj-j3` (ender) [G] | **new** `:sj-spin` | 8/3/18 | 36 | stagger | −4 | 26 | **1.44 m** 220° (2.4 before the J cut, 2.6 before the first playtest) | 8 | all six hands fan out and whirl in a ring of needles; the clogs stay planted |
-| K1 | 待ち針 MACHIBARI `:sj-k1` [G] | **new** `:sj-f1` | 17/4/20 | 60 | stagger | −3 | 32 | line 0.3 → **2.9** (was 3.2) | 14 | two hands draw long pins back past the hip and drive them straight out |
-| K2 | 纏り MATSURI `:sj-k2` / `-k2s` [G] | **new** `:sj-f2` | 21/4/24 (7 → 14) | 50 | stagger | −3 | 36 | **2.5 m** 140° (was 2.8) | 14 | the hem stitch: a rising loop of thread whipped up and over him |
-| K3 | 絎け KUKE `:sj-k3` (ender) [G] | **new** `:sj-drop` | 21/5/34 (7 → 14) | 74 | crumple | −20 | 46 | **2.5 m** 160° (was 2.8), h 0–1.4 | 18 | the blind stitch: all six hands slam pins down round his feet, held 3 f |
+| J1 | 一針 HITOHARI `:sj-j1` [G] | **new** `:sj-q1` | 7/3/12 | 25 (28) | flinch | −2 | 20 | **1.44 m** 90° (was 2.4), slide 0.5 | 8 | the upper right hand jabs the needle; the echo hands ripple behind it |
+| J2 | 返し縫い KAESHINUI `:sj-j2` / `-j2s` [G] | **new** `:sj-q2` | 7/3/13 | 25 (28) | flinch | −2 | 21 | **1.44 m** 110° (was 2.4) | 8 | the backstitch: the needle drawn back across, the thread pulled taut |
+| J3 | 千手 SENJU `:sj-j3` (ender) [G] | **new** `:sj-spin` | 8/3/18 | 32 (36) | stagger | −4 | 26 | **1.44 m** 220° (2.4 before the J cut, 2.6 before the first playtest) | 8 | all six hands fan out and whirl in a ring of needles; the clogs stay planted |
+| K1 | 待ち針 MACHIBARI `:sj-k1` [G] | **new** `:sj-f1` | 17/4/20 | 48 (60) | stagger | −3 | 32 | line 0.3 → **2.9** (was 3.2) | 14 | two hands draw long pins back past the hip and drive them straight out |
+| K2 | 纏り MATSURI `:sj-k2` / `-k2s` [G] | **new** `:sj-f2` | 21/4/24 (7 → 14) | 40 (50) | stagger | −3 | 36 | **2.5 m** 140° (was 2.8) | 14 | the hem stitch: a rising loop of thread whipped up and over him |
+| K3 | 絎け KUKE `:sj-k3` (ender) [G] | **new** `:sj-drop` | 21/5/34 (7 → 14) | 59 (74) | crumple | −20 | 46 | **2.5 m** 160° (was 2.8), h 0–1.4 | 18 | the blind stitch: all six hands slam pins down round his feet, held 3 f |
 
 Since the playtest every reach is where the art strikes: the J links' is the tip of the needle (now as tall as she is),
 and K1 / K2 / K3 each throw a prop out to their volume (below, "Playtest: reach matches the art").
@@ -209,8 +212,8 @@ and K1 / K2 / K3 each throw a prop out to their volume (below, "Playtest: reach 
 
 | Input | Move | S / A / R | Dmg | Block | Notes | Pose |
 |---|---|---|---|---|---|---|
-| L | **悪い癖 WARUI KUSE** `:sj-warui-kuse` [V line ch. 599; G move] | 8/0/24 (32 f) | 10 × n | **unguardable** | **Refused at 0 stitches** (the refused flash on the needle pips; `kit-command-ok-p` reads the count, gap N1). No cooldown: the stitches are its limiter.<br>**Spent on frame 0:** all n stitches (1–6).<br>**The spikes:** from f10, one every 2 f (f10, 12 … 20). Each is a disc hazard **stuck to him** (the `:freeze` kind, r 0.2, h 1.8, `:stick t`, gap N5): **10** each, flags `:unguardable :ranged :spare` (gap N2: **never takes his last Reishi point, so no Soul Break**, the research report's rule). The react is a flinch with **stun 8** (the last one **18**).<br>**Frames:** chained 2 f apart, the spikes hold him through f20 + 18 = f38; she is free at f32, so she is **+6: a frame trap, not a combo** (her J1 lands at f39).<br>**Ranged:** no parry catches it and it pays no KŌSEI.<br>**The counterplay:** Step / Hoho iframes dodge the spikes (each is a hazard hit). Since they sit inside him, **a Hoho pressed during f0–f20 is always a perfect Hoho** (`hazard-threat-p`); the 8 f yank can't be reacted to, so this is a read.<br>**After a K link** (the kit's `:l-after-k :sj-warui-kuse-k`, DUEL_STRINGS §12): the combo copy, S6, spikes from f8. From a K link's hit: A 4 + 8 + 2 × (n − 1) ≤ 22 < stagger 26, so **it combos, with the combo scaling**. Out of a combo it is unscaled: waiting pays more (§3.5) | three upper hands grip the threads and yank them back over her shoulder; the needles burst from inside his clothes |
-| Shift+K | SP1 **神兵 SHINPEI** `:sj-shinpei` [V ch. 597 / 599; Brave Souls SA3] | 16/0/22 | 50 × ≤ 2 | guard 14 | **The summon:** at f14 a tapestry drops 1.5 m ahead of her on the line to him (a look, [V ch. 598]); at f16 a Divine Soldier steps out of it.<br>**The soldier** (a `:clone`-kind hazard with a body, Ichigo's gap 8, plus a `:think` hook, gap N4, and `:frail`, gap N3): 1.9 m, faceless, cloth-wrapped, with a spear (body `:shinpei`, §10).<br>- It **walks at him along the line at 2.4 m/s** (turning 120°/s), so it arrives in front of him, inside his arc.<br>- Within 2.4 m it stops and winds up (**tell 18 f**, the spear drawn back), then thrusts: a `:rift`-style hit whose volume is in its frame, `:cap 0.3 → 2.6 h 1.2 r 0.35`, **50**, stagger, guard 14.<br>- It rests 50 f, then walks and strikes again; **2 strikes max**, life **300 f**.<br>**Guarding it:** `:src` = Senjumaru, so a guard facing her blocks it (no front / back unblockable; Ichigo's B3 rule).<br>**Frail:** any of his melee hit windows or hazards that touches its cylinder (r 0.4, h 1.8) destroys it (Pernida crushed one [V]), with a cloth-burst look.<br>**Limits:** one at a time (a new one replaces the old); cleared at resets; no contact (no string, no KŌSEI, no stitches). 1 bar | two lower hands part an unseen tapestry to the side; the upper pair gestures him forward |
+| L | **悪い癖 WARUI KUSE** `:sj-warui-kuse` [V line ch. 599; G move] | 8/0/24 (32 f) | 13 × n (10 until 2026-10-01) | **unguardable** | **Refused at 0 stitches** (the refused flash on the needle pips; `kit-command-ok-p` reads the count, gap N1). No cooldown: the stitches are its limiter.<br>**Spent on frame 0:** all n stitches (1–6).<br>**The spikes:** from f10, one every 2 f (f10, 12 … 20). Each is a disc hazard **stuck to him** (the `:freeze` kind, r 0.2, h 1.8, `:stick t`, gap N5): **10** each, flags `:unguardable :ranged :spare` (gap N2: **never takes his last Reishi point, so no Soul Break**, the research report's rule). The react is a flinch with **stun 8** (the last one **18**).<br>**Frames:** chained 2 f apart, the spikes hold him through f20 + 18 = f38; she is free at f32, so she is **+6: a frame trap, not a combo** (her J1 lands at f39).<br>**Ranged:** no parry catches it and it pays no KŌSEI.<br>**The counterplay:** Step / Hoho iframes dodge the spikes (each is a hazard hit). Since they sit inside him, **a Hoho pressed during f0–f20 is always a perfect Hoho** (`hazard-threat-p`); the 8 f yank can't be reacted to, so this is a read.<br>**After a K link** (the kit's `:l-after-k :sj-warui-kuse-k`, DUEL_STRINGS §12): the combo copy, S6, spikes from f8. From a K link's hit: A 4 + 8 + 2 × (n − 1) ≤ 22 < stagger 26, so **it combos, with the combo scaling**. Out of a combo it is unscaled: waiting pays more (§3.5) | three upper hands grip the threads and yank them back over her shoulder; the needles burst from inside his clothes |
+| Shift+K | SP1 **神兵 SHINPEI** `:sj-shinpei` [V ch. 597 / 599; Brave Souls SA3] | 16/0/22 (**10/0/10 since 2026-10-01**) | 50 × ≤ 2 (**now 20 + 20 + 34, one string**) | guard 14 | **Superseded 2026-10-01** (§"The soldier's string, lighter strings, wider weave steps"); the first build: **The summon:** at f14 a tapestry drops 1.5 m ahead of her on the line to him (a look, [V ch. 598]); at f16 a Divine Soldier steps out of it.<br>**The soldier** (a `:clone`-kind hazard with a body, Ichigo's gap 8, plus a `:think` hook, gap N4, and `:frail`, gap N3): 1.9 m, faceless, cloth-wrapped, with a spear (body `:shinpei`, §10).<br>- It **walks at him along the line at 2.4 m/s** (turning 120°/s), so it arrives in front of him, inside his arc.<br>- Within 2.4 m it stops and winds up (**tell 18 f**, the spear drawn back), then thrusts: a `:rift`-style hit whose volume is in its frame, `:cap 0.3 → 2.6 h 1.2 r 0.35`, **50**, stagger, guard 14.<br>- It rests 50 f, then walks and strikes again; **2 strikes max**, life **300 f**.<br>**Guarding it:** `:src` = Senjumaru, so a guard facing her blocks it (no front / back unblockable; Ichigo's B3 rule).<br>**Frail:** any of his melee hit windows or hazards that touches its cylinder (r 0.4, h 1.8) destroys it (Pernida crushed one [V]), with a cloth-burst look.<br>**Limits:** one at a time (a new one replaces the old); cleared at resets; no contact (no string, no KŌSEI, no stitches). 1 bar | two lower hands part an unseen tapestry to the side; the upper pair gestures him forward |
 | Shift+L | SP2 **傘 KASA** `:sj-kasa` [A ep. 25] | 4/24/18 (46 f) | 40 + ½ caught | guard (melee) | **The umbrella:** at f4 the six hands spread an umbrella of red thread between them (the ribs are the arms). The window is **f4–27**, the move's own S / A (Ichigo's gap 4: the parry window read from the move).<br>**Melee in the window:** it is **a guard** (the `:shield` flag, gap N9): front 200°, normal blockstun (which ends the umbrella), the gauge drains its guard value; **a Breaker breaks it** (Guard Break) [research].<br>**A hazard or a `:ranged` hit in the window:** **caught**. It is blocked from the front 200° with **no blockstun and no gauge drain** (Ichigo's gap 5 `:parry-block` branch), and it is **recorded** (the `:catch` hook, gap N9): the caught hit's damage, keeping the largest.<br>**At f28, if anything was caught:** she fires the **tendrils** back, a `:wave` from her toward him: 16 m/s over 10 m, width 1.6 (half 0.8, so a side Step clears it), **40 + ½ of the largest caught hit** (cap 120), stagger, guard 14, `:ranged`. Nothing caught: nothing fires, and the 18 f recovery is a punish window.<br>**Unguardable hits** (South's bind, a red dash-in) go through. 1 bar (**2 bars awakened**, the universal SP2 rule) | the six arms open like ribs, the thread canopy snapping taut; then the canopy inverts and the threads lash out |
 | I | Breaker **裁断 SAIDAN** `:sj-breaker` [G] | §4 (universal) | 150 | Guard Break | the universal Breaker (aura 12, the dash, strike 8/4/18, reach 2.6). The strike is two upper hands closing like shears on his guard, with a thread snip (`:shears`). Brush Latin (the Breaker rule) | glides low on the clogs, the arms folded back; the shears snap shut |
 | O | Kikon module **縫地 NUICHI** `:sj-kikon` [A: "sews a foe to the ground", ep. 26] → Kikon **仕立て直し** | aura 6, **flash step 26 m/s ≤ 14 f** (locked), strike 8/3/24 | 70 | −14 | **Reach:** 1.6 + 6.1 = **7.7 m**, ≤ 28 f from the press.<br>**The strike:** `:sj-spin` reused, **2.4 m 200°**, knockback 2.5; threads shoot from all six hands into the plaza round his feet (a look). **It sews** (+2 / +1). Cooldown 90; TENCHI's flash-step look.<br>**As the O ender** (off J3 at 2.6 m): 1 m of dash (3 f) + S 8 = 11 f < stagger 26 | a vanish, then the whirl of hands |
@@ -281,7 +284,7 @@ data, and the HUD reads it.
 | **Queue** | fixed (Q10; `*hank-order*`, the user, 2026-09-30): **黒砂 → 刃金 → 褥 → 焼野原 → 眼 → 星**, then back to 黒砂: three SP1 pairs (§"The hank queue in three SP1 pairs"). Form `:tsujiN`'s next hank is still hank N (the table below keeps the canon numbers); only `hank-next` follows the queue. The awakening enters `:tsuji3` (黒砂). A Kikon / Soul Break reset keeps the form (no `:reset-form`) and clears the live zone (`clear-hazards`, built) |
 | **Weave** (L held, the user's split of 2026-09-29) | `:hold (1 600)` with `:release senju-weave-release`: a press held **≥ 10 f** (`*weave-tap*`) is a weave. Its frames count from then (those first 10 at once), **one pass per 20 f**, summed over every segment on the hank (`sjs-woven`, `weave-add`) up to 3 passes. Let go, the weave just stops: `:sj-weave-stop`, 1/0/5 (6 f), nothing unravels, the passes stay. A `:shuttle` clack marks each pass; the bolt between her hands (fragile) shows only while she weaves |
 | **Unravel** (L tapped) | a press let go **under 10 f** is the release: S 6, then the hank's zone is cast (§4.2) at the **stored passes** (`release-passes`), the stored passes reset and **the form advances to the next hank at once**. **With no pass stored the tap is refused** (the `:refused` cue, then the 6 f stop; since "J weaves, K releases"), and tapped while a zone lives it is refused the same way: the loom holds one hank (`weave-release-act`) |
-| **Scaling by passes** | radius ×0.8 / 0.9 / 1.0, life ×0.5 / 0.75 / 1.0 of the hank's full life, damage ×0.8 / 0.9 / 1.0. **More passes are never weaker** (host-tested per hank: radius, life and damage non-decreasing) |
+| **Scaling by passes** | (since 2026-10-01, `*pass-scale*`) radius ×0.7 / 0.85 / 1.0, life ×0.5 / 0.8 / 1.2 of the hank's listed life, damage ×0.7 / 1.0 / 1.4, **effect ×0.6 / 1.0 / 1.5** (刃金's guard, 黒砂's drag, 褥's freeze and frost, 焼野原's chip, 星's drain, 眼's mirror); until then radius ×0.8 / 0.9 / 1.0, life ×0.5 / 0.75 / 1.0, damage ×0.8 / 0.9 / 1.0 and no effect scale. **More passes are never weaker** (host-tested per hank: radius, life and damage non-decreasing) |
 | **Unfold** (the tell) | every zone first **unfolds for 20 f**: a bolt of its dye unrolls onto its shape (`:cloth-unfurl`). It is **fragile** while it unfolds |
 | **One live** (gap N8) | a tap is **refused while one of her zones lives** (it only stops, 6 f), but she may weave meanwhile (since 2026-09-29; L was refused outright before): the loom holds one hank. The HUD's live swatch shows its life draining. A zone whose one-shot effect is spent ends then, and the loom is free again |
 | **Void / torn** (the forced exit) | a real hit on her **while she weaves** (a counter-hit, a Guard Break or a Kikon strike included) **voids** the hank (the user, 2026-09-29): its stored passes are lost and **the form advances** to the next hank, no lock (`weave-void`). A hit while she is not weaving keeps the stored passes. A hit **during the unfold** tears the zone: **L is locked 90 f** (the hook sets L's cooldown timer; L's own `:cooldown` stays 0, so no COOLDOWN row is drawn). The weave's bolt and the unfolding zone are fragile hazards whose `:on-close` hook (gap N7) calls `senju-torn`. A BLOOD slash crosses the swatch |
@@ -302,7 +305,8 @@ Common rules for every zone:
 - **every disc's full radius is ≤ 2.0 m**, so r + Kenpachi's hurt r 0.45 < the 2.5 m Step, and one Step from the centre
   always gets out.
 
-The values are at 3 passes.
+The values below are the hanks' listed values: the first build's 3 passes, since 2026-10-01 the 2-pass values (3 passes
+is ×1.4 damage, ×1.5 effect, ×1.2 life).
 
 | # | Hank [A name and chant] | Shape, where | Life | Effect | Hazard (gap) |
 |---|---|---|---|---|---|
@@ -333,9 +337,9 @@ no `:sew` and no count meter. Two links are new (the Rukia decision: "a small nu
 
 | Link | Name | Clip | S/A/R (enter → S_eff) | Dmg | React | Blk | Whiff | Volume | Guard | Pose |
 |---|---|---|---|---|---|---|---|---|---|---|
-| J1 / J2 / J3 / K2 | as §3.2 | base clips | as §3.2 | 28 / 28 / 36 / 50 | as §3.2 | as §3.2 | | **1.44 / 1.44 / 1.44 / 2.5 m** (2.4 / 2.4 / 2.4 / 2.8 before the J cut; 2.76 / 2.76 / 2.99 / 3.22 before the first playtest) | as §3.2 | the needle; K2's loop of thread |
-| K1 | 反物打ち TANMONO-UCHI `:sj-t-k1` [G] | **new** `:sj-tanmono` | 17/4/20 | 56 | stagger | −3 | 32 | **line 0.3 → 3.8** (was 4.2) | 14 | a bolt of cloth flung straight out from two hands and snapped back |
-| K3 | 巻き取り MAKITORI `:sj-t-k3` (ender) [G] | **new** `:sj-makitori` | 21/5/34 (7 → 14) | 72 | crumple | −20 | 46 | **2.5 m** 160° (was 2.8) | 18 | cloth wraps him from the feet up, then the hands haul it in: **pulled to 1.4 m** (Ichigo's `:pull`, gap 6) |
+| J1 / J2 / J3 / K2 | as §3.2 | base clips | as §3.2 | 25 / 25 / 32 / 40 | as §3.2 | as §3.2 | | **1.44 / 1.44 / 1.44 / 2.5 m** (2.4 / 2.4 / 2.4 / 2.8 before the J cut; 2.76 / 2.76 / 2.99 / 3.22 before the first playtest) | as §3.2 | the needle; K2's loop of thread |
+| K1 | 反物打ち TANMONO-UCHI `:sj-t-k1` [G] | **new** `:sj-tanmono` | 17/4/20 | 45 (56) | stagger | −3 | 32 | **line 0.3 → 3.8** (was 4.2) | 14 | a bolt of cloth flung straight out from two hands and snapped back |
+| K3 | 巻き取り MAKITORI `:sj-t-k3` (ender) [G] | **new** `:sj-makitori` | 21/5/34 (7 → 14) | 58 (72) | crumple | −20 | 46 | **2.5 m** 160° (was 2.8) | 18 | cloth wraps him from the feet up, then the hands haul it in: **pulled to 1.4 m** (Ichigo's `:pull`, gap 6) |
 
 - **Budget:** unchanged from §3.2 (host-tested on `:tsuji1`; the other five forms inherit it).
 - **Routes on hit:** JJJ 92, JJK 128, JKK 150, KKK 178, KKJ 142, KJJ 120 (base 92 / 130 / 152 / 184 / 146 / 124, **plus
@@ -866,8 +870,8 @@ landscape and portrait):
 | `*tsuji-mult*` / `*tsuji-taken*` | 1.0 / 1.0 | awakened; the A/B's first knobs |
 | `:sew` | hit 2 / block 1 | senju.lisp |
 | `*hari-max*` / `*hari-idle*` / `*hari-fall*` | 6 / 180 / 30 | the stitches' cap and decay |
-| `*hari-dmg*` / spike gap / last flinch | 10 / 2 f / 18 | WARUI KUSE (+6 on its own) |
-| soldier speed / tell / dmg / rest / strikes / life | 2.4 m/s / 18 f / 50 / 50 f / 2 / 300 f | senju.lisp params |
+| `*hari-dmg*` / spike gap / last flinch | 13 (10 until 2026-10-01) / 2 f / 18 | WARUI KUSE (+6 on its own) |
+| soldier speed / rise / string / life | 3.5 m/s / 10 f / `*shinpei-combo*` 18 f → 20, 14 f → 20, 16 f → 34 / 300 f | since 2026-10-01 (tell / dmg / rest / strikes 18 f / 50 / 50 f / 2 before) |
 | umbrella window / fire-back base / cap | f4–27 / 40 / 120 | SP2 |
 | NUICHI speed / dash-max | 26 m/s / 14 f | reach 7.7 |
 | `*weave-pass*` / passes | 20 f / 1–3 | the hold |
@@ -1216,6 +1220,64 @@ behind the camera or out of frame). Stills (debug 2481–2484, landscape 1280×7
 390×844; 99600 is the before): the pair at the edge on a tangent (2481) was a wall of cloth, now two ghosted drapes; P1's
 back to the rim (2483, portrait) had a drape over her, now she is clear; P2's back to the rim (2484) keeps the drapes
 behind him opaque. No sim change.
+
+## The soldier's string, lighter strings, wider weave steps (the user, 2026-10-01)
+
+「始解的 SP1 改成一段神兵的連擊，然後在神兵開始動作前千手丸就結束前搖可以配合神兵一同進攻。始解 L 的傷害從 16 改成 20。所有型態
+的 K 傷害變 0.8 倍，J 改為 0.9 倍。提高並增加卍解織物每階段之間的傷害與效果差距。」
+
+**SP1 神兵: one string, and she attacks with it.**
+- `:sj-shinpei` is **10/0/10** (was 16/0/22): the tapestry drops at f8, the soldier steps out at f10 and **stands
+  `*shinpei-rise*` 10 f**, so it starts to move on f20, the frame she is free. She can walk in behind it, or zone.
+- It walks at him as before (3.5 m/s, stops within 2.4 m), then strikes **one string** (`*shinpei-combo*`), then fades:
+
+  | Hit | Wind-up | Clip | Volume | Dmg (×1.6) | React |
+  |---|---|---|---|---|---|
+  | 1 thrust | 18 f from its stop | `:ru-q1` | line 0.3 → 2.6 | 20 (32) | flinch 22 |
+  | 2 sweep | 14 f | `:ru-ring` | arc r 2.8, 160° | 20 (32) | flinch 24 |
+  | 3 thrust | 16 f | `:ru-thrust` | line 0.3 → 3.0 | 34 (54) | stagger |
+
+- Each flinch outlasts the next wind-up by ≥ 4 f (host-tested), so **a landed first hit is a true combo** (74 base;
+  debug 2452: 3 HITs 118 on Kenpachi); blocked it is a guard string (guard 14 each). Each hit is spawned waiting as its
+  wind-up starts (a hazard threat: a Hoho read is perfect), turned at him. It is frail as before: a hit on it also
+  cancels the waiting hit.
+- `*shinpei-strikes*`, `*shinpei-rest*`, `*shinpei-tell*`, `*shinpei-dmg*` and debug 97200 are gone.
+
+**L 悪い癖: `*hari-dmg*` 10 → 13.** The user asked for 20 after her ×1.6; a hit window's damage is an integer, so 13
+(21) it is (12 would be 19).
+
+**Every form's J ×0.9, K ×0.8** (rounded):
+
+| | J1 | J2 | J3 | K1 | K2 | K3 |
+|---|---|---|---|---|---|---|
+| Shikai | 28 → 25 | 28 → 25 | 36 → 32 | 60 → 48 | 50 → 40 | 74 → 59 |
+| Bankai | 25 | 25 | 32 | 56 → 45 (TANMONO-UCHI) | 40 | 72 → 58 (MAKITORI) |
+
+Routes on hit (base): Shikai JJJ 82, JJK 109, JKK 124, KKK 147, KKJ 120, KJJ 105; Bankai JJJ 82, JJK 108, JKK 123,
+KKK 143, KKJ 117, KJJ 102.
+
+**The weave's steps: wider, and a stronger top** (`*pass-scale*`; `hank-scale` values four rows, `hank-fx`):
+
+| Passes | 1 | 2 | 3 |
+|---|---|---|---|
+| radius | ×0.7 (0.8) | ×0.85 (0.9) | ×1.0 (1.0) |
+| life | ×0.5 (0.5) | ×0.8 (0.75) | ×1.2 (1.0) |
+| damage | ×0.7 (0.8) | ×1.0 (0.9) | ×1.4 (1.0) |
+| effect (new) | ×0.6 | ×1.0 | ×1.5 |
+
+- The radius tops at 1.0: every hitting disc's edge stays a Step away (2.0 + 0.45 < 2.5, host-tested).
+- What the effect scales: 刃金's guard damage 14 / 24 / 36; 黒砂's drag (the away part of his walk lost) 36 / 60 / 90 %;
+  褥's freeze 24 / 40 / 60 f and frost 36 / 60 / 90 f; 焼野原's chip 7 / 12 / 18 %; 星's drain 18 / 30 / 45 Reiatsu/s
+  and 9 / 15 / 22.5 flash-step/s; 眼's mirror 18 / 30 / 45 %. 黒砂 still gulps 1 / 2 / 3 times.
+- Damage by passes, base (×1.55 in the Bankai): 刃金 63 / 90 / 126; 黒砂 28 / 40 / 56 a gulp; 褥 49 / 70 / 98;
+  焼野原 32 / 45 / 63 a hit (×2).
+- The 1-pass releases (K → L, SP1 裁ち直し) are now ×0.7: a weave pays more than it did, a quick release less.
+
+**Measurements** (native gate, no knob moved):
+- Her five pairings, all K.O.: SY 157.1 s (8–12), SK 151.9 s (17–3) at 20 seeds; SR 185.1 s (23–37), SS 188.3 s,
+  SI 206.1 s (30–30) at 60 seeds (SI read 215.3 at 20 seeds).
+- Never awaken (`--cmd 39020`, 60 a stream), streams 100 / 300 / 500: SY 24 / 21 / 25, SK 26 / 26 / 23,
+  SR 32 / 27 / 22, SS 25 / 30 / 26, SI 39 / 32 / 31: all ≥ 20 (SK and SS were 17–19 before).
 
 ## Built: deviations from the design, and why
 

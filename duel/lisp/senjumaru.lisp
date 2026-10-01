@@ -25,17 +25,22 @@
 (defparameter *hari-fall* 30 "Then one falls every this many frames.")
 (defparameter *hari-sew-hit* 2 "Stitches a hit (or counter-hit) of her J / K / O sews.")
 (defparameter *hari-sew-block* 1 "Stitches any other contact sews (a block, the ward, DRINK, armour, the stance).")
-(defparameter *hari-dmg* 10 "悪い癖: each spike (unguardable, :spare: never the last Reishi point).")
+(defparameter *hari-dmg* 13 "悪い癖: each spike (unguardable, :spare: never the last Reishi point; the user 2026-10-01: 16 -> ~20
+after the Shikai's x1.6, 13 x 1.6 = 21: the hit window's damage is an integer).")
 (defparameter *hari-gap* 2 "Frames between two spikes.")
 (defparameter *hari-stun* 8 "A spike's flinch.")
 (defparameter *hari-last-stun* 18 "The last spike's flinch (she is +6 after it: a frame trap, not a combo).")
 (defparameter *shinpei-speed* 3.5 "The Divine Soldier's walk, m/s (the user's decision 2026-09-28: 2.4 -> 3.5).")
 (defparameter *shinpei-turn* 120.0 "Its turn, degrees / s.")
 (defparameter *shinpei-near* 2.4 "It stops and winds up within this many metres of him.")
-(defparameter *shinpei-tell* 18 "Its wind-up (the spear drawn back), frames.")
-(defparameter *shinpei-dmg* 50 "Its thrust.")
-(defparameter *shinpei-rest* 50 "Frames it rests after a thrust.")
-(defparameter *shinpei-strikes* 2 "Thrusts at most.")
+(defparameter *shinpei-rise* 10 "Frames it stands in the tapestry: it moves the frame she is free (the user, 2026-10-01).")
+(defparameter *shinpei-combo*
+  '((18 :ru-q1 7 (:cap 0.3 2.6 1.2 0.35) 20 :flinch 22)
+    (14 :ru-ring 21 (:arc 2.8 160 0.0 1.8) 20 :flinch 24)
+    (16 :ru-thrust 17 (:cap 0.3 3.0 1.2 0.35) 34 :stagger nil))
+  "Its one string (the user, 2026-10-01: a combo, no second approach): per hit its wind-up (frames from its stop, then
+from the previous hit), its clip and that clip's startup (played to land on the hit), its volume, damage, reaction and
+flinch (each flinch outlasts the next wind-up: a true combo once the first lands; blocked, a guard string).")
 (defparameter *shinpei-life* 300 "Frames it lasts.")
 (defparameter *kasa-base* 40 "傘: the tendrils' damage with nothing caught (the user's decision: it always fires).")
 (defparameter *kasa-cap* 120 "... + half the largest caught hit, at most this.")
@@ -109,11 +114,18 @@ weave), J -> L (the quick weave), SP1 (it releases at 0 as at 1); K -> L (a COMB
 with a pass stored (RELEASE-OK-P)."
   (or (not (eq command :sig)) (not (and (move-p combo) (getf (mv-params combo) :combo))) (release-ok-p woven)))
 (defun weave-void (n) "A hit on her while she weaves hank N: it is void. Values the next hank and the woven frames (0)." (values (hank-next n) 0))
+(defparameter *pass-scale* '((0.7 0.85 1.0) (0.5 0.8 1.2) (0.7 1.0 1.4) (0.6 1.0 1.5))
+  "The weave's scaling by passes 1 / 2 / 3, rows radius, life, damage, effect (the user, 2026-10-01: wider steps, a
+stronger top; the radius tops at 1.0, a disc's edge stays a Step away).")
 (defun hank-scale (passes)
-  "The weave's scaling by PASSES (1-3): values radius x, life x, damage x (0.8 / 0.9 / 1.0, 0.5 / 0.75 / 1.0, 0.8 / 0.9 /
-1.0: more passes are never weaker)."
+  "The weave's scaling by PASSES (1-3): values radius x, life x, damage x, effect x (*PASS-SCALE*: more passes are never
+weaker)."
   (let ((i (1- (max 1 (min 3 passes)))))
-    (values (nth i '(0.8 0.9 1.0)) (nth i '(0.5 0.75 1.0)) (nth i '(0.8 0.9 1.0)))))
+    (values-list (mapcar (lambda (row) (nth i row)) *pass-scale*))))
+(defun hank-fx (n key passes)
+  "Hank N's effect KEY after PASSES (the effect scale): 刃金's guard damage, 黒砂's drag, 褥's freeze and frost, 焼野原's
+chip, 星's drain (and 眼's mirror, *MIRROR-K* x the same)."
+  (* (nth-value 3 (hank-scale passes)) (hank n key)))
 (defun hari-sew (n res)
   "The stitch count after one contact of her J / K / O window resolved as RES (RESOLVE-CONTACT): a real hit sews
 *HARI-SEW-HIT*, any other contact *HARI-SEW-BLOCK*, capped at *HARI-MAX*; a parry sews nothing."
@@ -139,21 +151,22 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 (defun hank-life (n passes) "Hank N's life after PASSES (x *HANK-LIFE-MULT*)." (multiple-value-bind (r l) (hank-scale passes) (declare (ignore r)) (round (* l *hank-life-mult* (hank n :life)))))
 
 ;;; ================================================================ Shikai 刺絡 SHIGARAMI (base)
-;;; the J / K strings (docs/DUEL_STRINGS.md §2.1 budget): the lightest in the game; every contact sews (SENJU-HIT). Every
+;;; the J / K strings (docs/DUEL_STRINGS.md §2.1 budget): the lightest in the game (the user, 2026-10-01: every form's J
+;;; x0.9, K x0.8); every contact sews (SENJU-HIT). Every
 ;;; reach is where the art strikes (the user's playtest, 2026-09-29): the J links to the tip of the needle (1.44 m since the
 ;;; J cut, docs/DUEL_STRINGS.md §13: J light, short and fast, 0.6x; the needle 1.2 m), the K links to their props' far ends
 ;;; (senjumaru-art.lisp *SJ-STRIKE-REACH*; the host test checks)
-(defmove :sj-j1 :kind :quick :clip :sj-q1 :startup 7 :active 3 :recovery 12 :dmg 28 :adv-block -2
+(defmove :sj-j1 :kind :quick :clip :sj-q1 :startup 7 :active 3 :recovery 12 :dmg 25 :adv-block -2
   :reach 1.44 :arc 90 :on-hit :flinch :slide 0.5)                    ; HITOHARI: the upper right hand jabs the needle
-(defmove :sj-j2 :kind :quick :clip :sj-q2 :startup 7 :active 3 :recovery 13 :dmg 28 :adv-block -2
+(defmove :sj-j2 :kind :quick :clip :sj-q2 :startup 7 :active 3 :recovery 13 :dmg 25 :adv-block -2
   :reach 1.44 :arc 110 :on-hit :flinch)                              ; KAESHINUI: the backstitch
-(defmove :sj-j3 :kind :quick :clip :sj-spin :startup 8 :active 3 :recovery 18 :dmg 36 :adv-block -4
+(defmove :sj-j3 :kind :quick :clip :sj-spin :startup 8 :active 3 :recovery 18 :dmg 32 :adv-block -4
   :reach 1.44 :arc 220 :on-hit :stagger :flags (:ender))             ; SENJU: all six hands whirl in a ring of needles
-(defmove :sj-k1 :kind :flash :clip :sj-f1 :startup 17 :active 4 :recovery 20 :dmg 60 :adv-block -3
+(defmove :sj-k1 :kind :flash :clip :sj-f1 :startup 17 :active 4 :recovery 20 :dmg 48 :adv-block -3
   :vol (:cap 0.3 2.9 1.1 0.3) :on-hit :stagger)                      ; MACHIBARI: two long pins driven straight out
-(defmove :sj-k2 :kind :flash :clip :sj-f2 :enter 7 :startup 21 :active 4 :recovery 24 :dmg 50 :adv-block -3
+(defmove :sj-k2 :kind :flash :clip :sj-f2 :enter 7 :startup 21 :active 4 :recovery 24 :dmg 40 :adv-block -3
   :reach 2.5 :arc 140 :on-hit :stagger)                              ; MATSURI: the hem stitch, a loop whipped over him
-(defmove :sj-k3 :kind :flash :clip :sj-drop :enter 7 :startup 21 :active 5 :recovery 34 :dmg 74 :adv-block -20
+(defmove :sj-k3 :kind :flash :clip :sj-drop :enter 7 :startup 21 :active 5 :recovery 34 :dmg 59 :adv-block -20
   :reach 2.5 :arc 160 :height (0.0 1.4) :on-hit :crumple :flags (:ender))   ; KUKE: pins slammed down round his feet
 (defmove-copy :sj-j2s :sj-j2)
 (defmove-copy :sj-k2s :sj-k2)
@@ -164,11 +177,12 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 ;; after a K link (the kit's :l-after-k, DUEL_STRINGS §12): S 6, spikes from f8: A 4 + 8 + 2 x 5 < stagger 26, a combo
 ;; (scaled). Its reach is 9 m: the follow-up chase leaves her where she stands (the needles are in him)
 (defmove-copy :sj-warui-kuse-k :sj-warui-kuse :startup 6 :clip-s 8 :reach 9.0 :params (:first 8))
-;; Shift+K SP1 神兵 SHINPEI: a tapestry drops 1.5 m ahead (f14), a Divine Soldier steps out (f16): it walks the line to him,
-;; winds up 18 f, thrusts (guarded facing her), rests, twice at most, 300 f; frail: any of his windows or hazards kills
-;; it, and it sews one stitch into him as it bursts (the user's decision 2026-09-28)
-(defmove :sj-shinpei :kind :sp :clip :sj-summon :callout "SHINPEI" :startup 16 :active 0 :recovery 22
-  :on-frame ((14 senju-tapestry) (16 senju-shinpei)))
+;; Shift+K SP1 神兵 SHINPEI: a tapestry drops 1.5 m ahead (f8), a Divine Soldier steps out (f10) and stands until she is
+;; free (f20, *SHINPEI-RISE*: they attack together; the user, 2026-10-01); then it walks the line to him and strikes
+;; one string (*SHINPEI-COMBO*: thrust, sweep, thrust; guarded facing her), then fades, 300 f at most; frail: any of his
+;; windows or hazards kills it, and it sews one stitch into him as it bursts (the user's decision 2026-09-28)
+(defmove :sj-shinpei :kind :sp :clip :sj-summon :clip-s 16 :callout "SHINPEI" :startup 10 :active 0 :recovery 10
+  :on-frame ((8 senju-tapestry) (10 senju-shinpei)))
 ;; Shift+L SP2 傘 KASA: f4-27 the umbrella: a guard for melee (:shield), a catch for hazards / ranged hits (no stun, no
 ;; gauge: :catch), then at f28 the tendrils always fire (the user's decision): 40 + half the largest caught hit, <= 120
 (defmove :sj-kasa :kind :sp :clip :sj-kasa :callout "KASA" :startup 4 :active 24 :recovery 18 :flags (:shield)
@@ -184,9 +198,9 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 
 ;;; ================================================================ 娑闥迦羅骸刺絡辻 SHIGARAMI NO TSUJI (the six hank forms)
 ;; the J / K grid as the Shikai's (the same needle and loop: no reach derivation, the playtest), no sewing; two new links
-(defmove :sj-t-k1 :kind :flash :clip :sj-tanmono :startup 17 :active 4 :recovery 20 :dmg 56 :adv-block -3
+(defmove :sj-t-k1 :kind :flash :clip :sj-tanmono :startup 17 :active 4 :recovery 20 :dmg 45 :adv-block -3
   :vol (:cap 0.3 3.8 1.1 0.3) :on-hit :stagger)                      ; TANMONO-UCHI: a bolt flung out and snapped back
-(defmove :sj-t-k3 :kind :flash :clip :sj-makitori :enter 7 :startup 21 :active 5 :recovery 34 :dmg 72 :adv-block -20
+(defmove :sj-t-k3 :kind :flash :clip :sj-makitori :enter 7 :startup 21 :active 5 :recovery 34 :dmg 58 :adv-block -20
   :reach 2.5 :arc 160 :height (0.0 1.4) :on-hit :crumple :flags (:ender)
   :params (:pull 1.4))                                               ; MAKITORI: wrapped and hauled in to 1.4 m
 ;; L 綛解かば KASE TOKABA (the user, 2026-09-29): held >= *WEAVE-TAP* f it weaves (a pass per 20 f, summed over segments on
@@ -408,7 +422,7 @@ on her (hit or block) burns him *MIRROR-K* of its damage (never kills)."
         (when (and hz (<= (hazard-delay hz) 0))
           (let* ((q (pos-of att)) (dx (- (aref q 0) (hazard-x hz))) (dz (- (aref q 2) (hazard-z hz))))
             (when (<= (+ (* dx dx) (* dz dz)) (expt (hazard-size hz) 2))
-              (let ((n (round (* *mirror-k* (hw-dmg hw)))) (g (gauges att)))
+              (let ((n (round (* *mirror-k* (nth-value 3 (hank-scale (sjh-passes (hazard-data hz)))) (hw-dmg hw)))) (g (gauges att)))
                 (when (plusp n)
                   (setf (gauges-reishi g) (burn (gauges-reishi g) n))
                   (setf (sjh-look-t (hazard-data hz)) (f32 (fx-clock)))
@@ -441,20 +455,20 @@ is perfect (they are hazard threats from the start)."
     (values (+ (aref p 0) (* k (/ dx d))) (+ (aref p 2) (* k (/ dz d))) (dir-yaw dx dz))))
 
 (defun senju-tapestry (e)
-  "SP1 f14: a tapestry drops where the soldier steps out (a look)."
+  "SP1 f8: a tapestry drops where the soldier steps out (a look)."
   (multiple-value-bind (x z yaw) (senju-shinpei-point e)
     (senju-look e 'senju-tapestry-look x z :yaw yaw :size 1.0 :life 40))
   (emit :sfx :cloth-unfurl e))
 
 (defun senju-shinpei (e)
-  "SP1 f16: the Divine Soldier (one at a time: a new one replaces the old)."
+  "SP1 f10: the Divine Soldier (one at a time: a new one replaces the old), standing in the tapestry *SHINPEI-RISE*."
   (let ((st (sj e)))
     (destroy-entity (sjs-soldier st))
     (multiple-value-bind (x z yaw) (senju-shinpei-point e)
       (let ((m (make-model :body (find-body :shinpei) :weapon :sj-spear)))
-        (anim-play (model-anim m) :sh-walk-f :blend 0)
+        (anim-play (model-anim m) :sj-stance :blend 0)
         (setf (sjs-soldier st)
-              (senju-spawn :soldier e (make-sjh :kind :soldier :phase :walk :model m) :x x :z z :yaw yaw :size 0.4
+              (senju-spawn :soldier e (make-sjh :kind :soldier :phase :rise :model m) :x x :z z :yaw yaw :size 0.4
                            :life *shinpei-life* :look 'senju-soldier-look))))
     (sj-count e :soldiers)
     (clog "~a SHINPEI" (side-name e))))
@@ -478,7 +492,7 @@ is perfect (they are hazard threats from the start)."
 (defun senju-soldier-step (h hz d)
   "The soldier, each step: frail first (his window or hazard on it: it bursts into red thread and sews one stitch into
 him); walks the line to him (*SHINPEI-SPEED*, turning *SHINPEI-TURN*), stops within *SHINPEI-NEAR*, winds up
-*SHINPEI-TELL* (its thrust is spawned then, waiting: a hazard threat), rests, twice at most, then fades."
+*SHINPEI-COMBO*'s string (SENJU-SHINPEI-STRIKE), then fades; it stands *SHINPEI-RISE* first."
   (let* ((e (hazard-owner hz)) (o (hazard-target hz)) (m (sjh-model d)))
     (when (or (not (entity-alive-p e)) (not (entity-alive-p o))) (return-from senju-soldier-step nil))
     (anim-advance (model-anim m) +step+)
@@ -495,31 +509,39 @@ him); walks the line to him (*SHINPEI-SPEED*, turning *SHINPEI-TURN*), stops wit
     (let* ((q (pos-of o)) (dx (- (aref q 0) (hazard-x hz))) (dz (- (aref q 2) (hazard-z hz))) (dist (sqrt (+ (* dx dx) (* dz dz)))))
       (incf (sjh-clock d))
       (case (sjh-phase d)
+        (:rise (when (>= (sjh-clock d) *shinpei-rise*)
+                 (setf (sjh-phase d) :walk (sjh-clock d) 0)
+                 (anim-play (model-anim m) :sh-walk-f :blend 4)))
         (:walk
          (setf (hazard-yaw hz) (f32 (angle-wrap (turn-toward (hazard-yaw hz) (dir-yaw dx dz) (track-step *shinpei-turn*)))))
          (if (<= dist *shinpei-near*)
-             (let ((yaw (hazard-yaw hz)))
-               (setf (sjh-phase d) :tell (sjh-clock d) 0)
-               (anim-play (model-anim m) :ru-thrust :blend 3 :speed (/ 17.0 *shinpei-tell*))
-               (setf (sjh-link d)
-                     (senju-spawn :sj-hit e (make-sjh :kind :thrust :vol (make-vol :cap '(0.3 2.6 1.2 0.35)))
-                                  :x (hazard-x hz) :z (hazard-z hz) :yaw yaw :delay *shinpei-tell* :life 2 :src t
-                                  :hw (make-hitwin :dmg *shinpei-dmg* :react :stagger :hs *hitstop-heavy* :guard 14
-                                                   :flags '(:thread)))))
+             (progn (setf (sjh-phase d) :tell (sjh-clock d) 0 (sjh-n d) 0)
+                    (senju-shinpei-strike e hz d dx dz))
              (let ((s (* *shinpei-speed* +step+)) (yaw (hazard-yaw hz)))
                (multiple-value-bind (x z) (clamp-to-circle (+ (hazard-x hz) (* s (fwd-x yaw))) (+ (hazard-z hz) (* s (fwd-z yaw)))
                                                            (- *arena-radius* 0.4))
                  (setf (hazard-x hz) (f32 x) (hazard-z hz) (f32 z))))))
-        (:tell (when (>= (sjh-clock d) (+ *shinpei-tell* 4))
+        (:tell (when (>= (sjh-clock d) (first (nth (sjh-n d) *shinpei-combo*)))   ; this hit lands: wind up the next
                  (incf (sjh-n d))
-                 (setf (sjh-phase d) (if (>= (sjh-n d) *shinpei-strikes*) :fade :rest) (sjh-clock d) 0)
-                 (anim-play (model-anim m) :sj-stance :blend 8)))
-        (:rest (when (>= (sjh-clock d) *shinpei-rest*)
-                 (setf (sjh-phase d) :walk (sjh-clock d) 0)
-                 (anim-play (model-anim m) :sh-walk-f :blend 6)))
-        (:fade (when (= (sjh-clock d) 1) (anim-play (model-anim m) :sh-crumple :blend 4))
-               (when (>= (sjh-clock d) 30) (destroy-entity h) (return-from senju-soldier-step t))))))
+                 (setf (sjh-clock d) 0)
+                 (if (< (sjh-n d) (length *shinpei-combo*))
+                     (senju-shinpei-strike e hz d dx dz)
+                     (setf (sjh-phase d) :fade))))
+        (:fade (when (= (sjh-clock d) 12) (anim-play (model-anim m) :sh-crumple :blend 4))
+               (when (>= (sjh-clock d) 42) (destroy-entity h) (return-from senju-soldier-step t))))))
   nil)
+
+(defun senju-shinpei-strike (e hz d dx dz)
+  "The soldier winds up its string's hit (SJH-N D) at him (DX DZ away): it turns to him, plays the hit's clip to land on
+its frame, and spawns the hit waiting that long (a hazard threat: a perfect Hoho reads it)."
+  (destructuring-bind (wind clip clip-s vol dmg react stun) (nth (sjh-n d) *shinpei-combo*)
+    (let ((yaw (f32 (dir-yaw dx dz))))
+      (setf (hazard-yaw hz) yaw)
+      (anim-play (model-anim (sjh-model d)) clip :blend 3 :speed (/ (float clip-s) wind))
+      (setf (sjh-link d)
+            (senju-spawn :sj-hit e (make-sjh :kind :thrust :vol (make-vol (first vol) (rest vol)))
+                         :x (hazard-x hz) :z (hazard-z hz) :yaw yaw :delay wind :life 2 :src t
+                         :hw (make-hitwin :dmg dmg :react react :stun stun :hs *hitstop-heavy* :guard 14 :flags '(:thread)))))))
 
 ;;; ---------------------------------------------------------------- 傘 KASA: the umbrella
 (defun senju-kasa-open (e)
@@ -690,8 +712,8 @@ UNFOLD frames (fragile), with SENJU-HZ as its hook."
          (p (pos-of e)))
     (case n
       (4 (senju-spawn :freeze e d :x cx :z cz :size r :y 0.6 :delay unfold :life life :src t :fragile t :look 'senju-zone-look
-                      :hw (make-hitwin :dmg dmg :react :bind :stun (hank 4 :freeze) :hs *hitstop-heavy* :guard 12
-                                       :frost (hank 4 :frost) :flags '(:ice))))
+                      :hw (make-hitwin :dmg dmg :react :bind :stun (round (hank-fx 4 :freeze passes)) :hs *hitstop-heavy* :guard 12
+                                       :frost (round (hank-fx 4 :frost passes)) :flags '(:ice))))
       (5 (let* ((q (pos-of (opp-of e))) (yaw (face-yaw-to e (aref q 0) (aref q 2)))
                 (dist (sqrt (+ (expt (- (aref q 0) (aref p 0)) 2) (expt (- (aref q 2) (aref p 2)) 2))))
                 (len (min (hank 5 :max) (+ 0.5 dist))) (mid (+ 1.0 (* 0.5 len))))   ; from 1 m ahead of her, past him 1.5 m
@@ -699,7 +721,7 @@ UNFOLD frames (fragile), with SENJU-HZ as its hook."
            (senju-spawn :sj-lane e d :x (+ (aref p 0) (* mid (fwd-x yaw))) :z (+ (aref p 2) (* mid (fwd-z yaw))) :yaw yaw
                         :size (* 0.5 (hank 5 :width)) :delay unfold :life life :hits (hank 5 :hits) :src t :fragile t
                         :look 'senju-zone-look
-                        :hw (make-hitwin :dmg dmg :react :stagger :hs *hitstop-heavy* :guard 12 :chip (hank 5 :chip)))))
+                        :hw (make-hitwin :dmg dmg :react :stagger :hs *hitstop-heavy* :guard 12 :chip (hank-fx 5 :chip passes)))))
       (6 (setf (sjh-x0 d) (aref p 0) (sjh-z0 d) (aref p 2))
          (senju-spawn :sj-zone e d :x (aref p 0) :z (aref p 2) :size r :delay unfold :life life :src t :fragile t
                       :look 'senju-zone-look))
@@ -729,14 +751,14 @@ really takes, each of hers kept at its max; the user, 2026-09-29: SENJU-SIPHON t
              (senju-spawn :freeze e (make-sjh :kind :maiden :hank 2) :x (hazard-x hz)
                           :z (hazard-z hz) :size (sjh-r d) :y 2.2 :life 2 :src t
                           :hw (make-hitwin :dmg (hank-damage 2 (sjh-passes d)) :react :crumple :hs *hitstop-heavy*
-                                           :guard (hank 2 :guard) :flags '(:thread)))
+                                           :guard (round (hank-fx 2 :guard (sjh-passes d))) :flags '(:thread)))
              (setf (hazard-life hz) (+ age (hank 2 :after)))
              (emit :sfx :ground-crack e)))
         (3 (when (and inside (member (fighter-state (fighter o)) '(:idle :run)))   ; the drag: walking / running away
              (let* ((v (motion-vel (motion o))) (ux (/ dx (max dist 1e-3))) (uz (/ dz (max dist 1e-3)))
                     (along (+ (* (aref v 0) ux) (* (aref v 2) uz))))
                (when (> along 0)
-                 (let ((k (* (- 1.0 (hank 3 :away)) along +step+)))
+                 (let ((k (* (min 1.0 (* (nth-value 3 (hank-scale (sjh-passes d))) (- 1.0 (hank 3 :away)))) along +step+)))
                    (setf (aref q 0) (f32 (- (aref q 0) (* k ux))) (aref q 2) (f32 (- (aref q 2) (* k uz))))))))
            (let ((period (hank 3 :period)))                 ; the gulps: 1 / 2 / 3 by passes, a 12 f swirl before each
              (when (and (< (sjh-n d) (sjh-passes d))
@@ -752,9 +774,9 @@ really takes, each of hers kept at its max; the user, 2026-09-29: SENJU-SIPHON t
                  (destroy-entity h) (return-from senju-zone-step t)))
         (6 (when inside                                     ; the star drains him into her
              (let ((g (gauges o)) (mine (gauges e)))
-               (multiple-value-bind (his hers) (gauge-move (gauges-reiatsu g) (/ (hank 6 :reiatsu) 60.0) (gauges-reiatsu mine) *reiatsu-max*)
+               (multiple-value-bind (his hers) (gauge-move (gauges-reiatsu g) (/ (hank-fx 6 :reiatsu (sjh-passes d)) 60.0) (gauges-reiatsu mine) *reiatsu-max*)
                  (setf (gauges-reiatsu g) (f32 his) (gauges-reiatsu mine) (f32 hers)))
-               (multiple-value-bind (his hers) (gauge-move (gauges-fs g) (/ (hank 6 :fs) 60.0) (gauges-fs mine) *fs-max*)
+               (multiple-value-bind (his hers) (gauge-move (gauges-fs g) (/ (hank-fx 6 :fs (sjh-passes d)) 60.0) (gauges-fs mine) *fs-max*)
                  (setf (gauges-fs g) (f32 his) (gauges-fs mine) (f32 hers)))
                (sj-count e :drain-frames)))))))
   nil)
@@ -1047,7 +1069,6 @@ awakened Senjumaru near the rim (the drapes' fade stills): the pair on a tangent
           ((<= 97000 c 97009) (loop for n from 1 to 6
                                     do (setf (mv-cost (find-move (intern (format nil "SJ-TACHINAOSHI-~d" n) :keyword))) (- c 97000))))
           ((<= 97100 c 97199) (setf *mirror-k* (/ (- c 97100) 100.0)))
-          ((<= 97200 c 97209) (setf *shinpei-strikes* (- c 97200)))
           ((<= 97300 c 97309) (kits (tsuji) (lambda (k) (setf (getf (getf (kit-ai k) :intents) :zone) (- c 97300)))))
           ((<= 97400 c 97499) (kits (tsuji) (lambda (k) (setf (getf (kit-ai k) :opp-rush-hold) (/ (- c 97400) 100.0)))))
           ((<= 97500 c 97599) (setf (getf (kit-ai (find-kit :senjumaru :base)) :block-string) (/ (- c 97500) 100.0)))
