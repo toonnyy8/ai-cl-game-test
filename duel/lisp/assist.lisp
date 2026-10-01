@@ -8,6 +8,11 @@
 ;;;;   AUTO COMBO   J pressed during a J / K link that hit: the CPU's choice, made on the hit's land frame (STRING-REFLEX: a
 ;;;;                link, L, SP2, ORANGE; the O ender off a link-3 hit on a red opponent: the Kikon); J itself is left as his own press
 ;;;;   AUTO BREAK   J pressed, free, while he has guarded >= *AI-GUARD-BREAK-HOLD* f within *AI-GUARD-BREAK-RANGE*: the Breaker
+;;;;   LEARNING     (the user, 2026-10-02: no row of its own) while any of the three is on, the assist learns HIS habits as the
+;;;;                learning CPU learns a human's (learn.lisp's model, LEARN-STEP on what it perceives at HARD's delay), one
+;;;;                table per opponent character (*ASSIST-LEARN-TABLES*, saved apart). AUTO COMBO then also answers a J
+;;;;                pressed in neutral with the counter to his predicted next move (AUTO-READ: K against his K / I, a Hoho
+;;;;                against his SP), and baits a predicted burst out of our string (its 2nd hit, then a guard)
 ;;;; A CPU never has it, except the debug gate's button-masher (habit :dumb, *ASSIST-DEBUG*): CPU-vs-CPU gates are unchanged.
 (in-package :duel)
 
@@ -15,6 +20,35 @@
 (defvar *assist-brains* (vector nil nil) "Per side, the brain the assist borrows (AI-COMMAND's press, STRING-REFLEX's fields).")
 (defvar *assist-plan* (vector nil nil) "Per side, (move . command): AUTO COMBO's choice for that move's hit (NIL: none left).")
 (defvar *assist-tag* (vector 0 0) "Per side, frames the AUTO tag still shows over the fighter.")
+(defvar *assist-tick* (vector 0 0) "Per side, the match tick of its last step (a smaller one: a new match, a fresh brain).")
+(defvar *assist-learn* t "Debug 81030+i: the assist's learner on (1) / off (0) (ASSIST's gate A/B).")
+
+(defun assist-brain (e side)
+  "SIDE's assist brain: a fresh one each match (HARD's perception), with a learner over his character's table."
+  (let ((b (svref *assist-brains* side)))
+    (when (or (null b) (< *match-tick* (svref *assist-tick* side)))
+      (let ((o (opp-of e)))
+        (setf b (make-brain :difficulty :hard :delay (getf *ai-delay* :hard))
+              (svref *assist-brains* side) b (svref *assist-plan* side) nil)
+        (when *assist-learn*
+          (setf (brain-learn b)
+                (make-lrn :tab (learn-table (position (fighter-character (fighter o)) *roster*)
+                                            *assist-learn-tables* +pg-assist-learn+)
+                          :hx (aref (pos-of o) 0) :hz (aref (pos-of o) 2)
+                          :rng (1+ (mod (* 7907 (sim-rnd-state)) 2147483647)))))))
+    (setf (svref *assist-tick* side) *match-tick*)
+    b))
+
+(defun assist-learn-end (winner)
+  "The match is over (LEARN-MATCH-END, WINNER its side, :draw or NIL): each assist learner's opponent's form takes the
+result, its table is saved."
+  (dolist (e (list *p1* *p2*))
+    (let* ((side (fighter-side (fighter e))) (b (svref *assist-brains* side)) (l (and b (brain-learn b))))
+      (when (and l (entity-alive-p e) (assist-config e))
+        (let ((tab (lrn-tab l)))
+          (setf (ltab-form tab) (learn-form-after (ltab-form tab) (cond ((eql winner side) -1.0) ((eql winner :draw) 0.0) (t 1.0))
+                                                  *learn-form-match*))
+          (learn-save (position (fighter-character (fighter (opp-of e))) *roster*) *assist-learn-tables* +pg-assist-learn+))))))
 
 (defun assist-config (e)
   "E's assist as (guard combo break), GUARD 0 off / 1 HOLD U / 2 ALWAYS, or NIL: a human's SETTINGS, the :dumb CPU's
@@ -46,12 +80,30 @@ STRING-REFLEX with the latch emptied); pressed once J was pressed in this move (
                          :kikon
                          (let ((q (fighter-queued f)))
                            (setf (fighter-queued f) nil)
-                           (prog1 (string-reflex e b f mv) (setf (fighter-queued f) q)))))))
+                           (prog1 (or (string-reflex e b f mv)
+                                      (and (eq (brain-why b) :bait) (setf (lrn-cmd (brain-learn b)) nil) :guard-long))   ; the bait
+                             (setf (fighter-queued f) q)))))))
     (let ((cmd (cdr (svref *assist-plan* side))))
-      (when (and cmd (not (eq cmd :q)) (or (fighter-queued f) (vpad-pressed vp :quick)))
+      (when (and cmd (not (eq cmd :q)) (or (fighter-queued f) (vpad-pressed vp :quick) (eq cmd :guard-long)))
         (setf (svref *assist-plan* side) nil)
         (unless (member cmd '(:f :sig)) (setf (fighter-queued f) nil))   ; a cancel / burst / ender replaces the latched link
         cmd))))
+
+(defun auto-read (e f b d vp)
+  "AUTO COMBO's read: J pressed while free, the learner's counter to his predicted next move (an event's planned one, else
+his distance band's, when confident and its roll says read him): K (he presses K or I: J's own answer is J), a Hoho (an
+SP coming); NIL for the rest (J stays his). Not the Breaker the learning CPU answers a guard with: a CPU sees it coming
+and J's it (the gate, 2026-10-02: 404 of them in 40 matches, the masher's wins 51 -> 42 %); AUTO BREAK is that answer."
+  (let ((l (brain-learn b)))
+    (when (and l (vpad-command-pressed-p vp :quick nil))
+      (let ((c (or (and (lrn-cmd l) (<= (lrn-delay l) 0) (prog1 (lrn-cmd l) (setf (lrn-cmd l) nil)))
+                   (multiple-value-bind (act p n) (learn-predict (lrn-tab l) (learn-band d))
+                     (and act (learn-confident-p p n) (learn-roll-p l) (learn-counter act)))))
+            (g (gauges e)) (kit (fighter-kit f)))
+        (case c
+          (:hoho (and (not (kit-rooted kit)) (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)) :hoho))
+          (:q (let ((mv (kit-command-move kit :f)))      ; J beats K / I: his J; a K reaching further than J, ours
+                (and mv (kit-command-ok-p e :f) (<= (mv-reach (kit-command-move kit :q)) d (+ (mv-reach mv) 0.4)) :f))))))))
 
 (defun auto-break (e f vp)
   "AUTO BREAK: J pressed while free and he holds a long guard close by: the Breaker, or NIL."
@@ -64,15 +116,20 @@ STRING-REFLEX with the latch emptied); pressed once J was pressed in this move (
 (defun assist-step (e cfg)
   "One step of E's assist CFG (ASSIST-CONFIG): a press it holds goes on, else AUTO GUARD / COMBO / BREAK may press one."
   (let* ((f (fighter e)) (side (fighter-side f)) (vp (pilot-vpad (pilot e)))
-         (b (or (svref *assist-brains* side) (setf (svref *assist-brains* side) (make-brain :difficulty :hard :delay 8))))
-         (st (fighter-state f)) (free (and (member st '(:idle :guard :run)) (zerop (fighter-lock f)))))
+         (b (assist-brain e side))
+         (st (fighter-state f)) (free (and (member st '(:idle :guard :run)) (zerop (fighter-lock f))))
+         (d (multiple-value-bind (s d) (brain-perceive e b (opp-of e))   ; the learner watches him (HARD's delay)
+              (when (brain-learn b) (learn-step e b s d))
+              d)))
     (when (plusp (svref *assist-tag* side)) (decf (svref *assist-tag* side)))
     (if (plusp (brain-press-left b))
-        (progn (decf (brain-press-left b))                   ; a held press (the Breaker's dash, O through the strike)
-               (vpad-hold! vp (brain-press b)))
+        (progn (decf (brain-press-left b))                   ; a held press (the Breaker's dash, O through the strike, the
+               (vpad-hold! vp (brain-press b))               ; bait's guard: his J mashing doesn't restart the string)
+               (when (eq (brain-press b) :guard) (vpad-consume! vp :quick) (setf (fighter-queued f) nil)))
         (let ((cmd (or (and free (plusp (first cfg)) (or (= 2 (first cfg)) (vpad-down vp :guard)) (auto-guard e f))
                        (and (second cfg) (eq st :move) (auto-combo e f b side vp))
-                       (and (third cfg) free (auto-break e f vp)))))
+                       (and (third cfg) free (auto-break e f vp))
+                       (and (second cfg) free (auto-read e f b d vp)))))
           (when cmd
             (vpad-consume! vp :quick)                       ; the J it answered (a guard's press: none)
             (ai-command b (fighter-kit f) cmd (fighter-dist f) e)

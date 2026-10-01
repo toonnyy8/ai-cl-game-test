@@ -915,6 +915,9 @@ move-beat choices of DRAW-FIGHTER."
            (setf *gate-results* nil *turbo* nil *learn-gate* nil)))))
 
 ;;; ---------------------------------------------------------------- the learning CPU's gate (docs/DUEL_LEARNING.md)
+(defparameter *dumb-delay* 24 "The button-masher sees as late as an EASY CPU (frames).")
+(defparameter *dumb-guard-p* 0.5 "... and guards this share of the moves he sees coming.")
+
 (defparameter *habits* #(nil :wake-j :block-guard :grab :hoho :burst :dumb)
   "The scripted players (debug 200000+): 0 a plain CPU, 1 J on every wake-up, 2 guard after every block, 3 grab-happy
 (the Breaker at every close neutral decision), 4 Hoho-happy (Hoho at neutral decisions and into every committed move),
@@ -961,9 +964,6 @@ matches); a \"duel learn row\" per match."
         (:hoho (when (and hoho-ok (eq (snap-state s) :move) (member (snap-kind s) '(:quick :flash :sig :sp :breaker))
                           (< (snap-sf s) (snap-active-end s)) (< d (+ (snap-reach s) *ai-threat-margin*)))
                  (ai-press b :step 1 :modded t :act :hoho) (setf (brain-why b) :habit)))))))
-
-(defparameter *dumb-delay* 24 "The button-masher sees as late as an EASY CPU (frames).")
-(defparameter *dumb-guard-p* 0.5 "... and guards this share of the moves he sees coming.")
 
 (defun dumb-step (e b s d)
   "The button-masher (habit :dumb, ASSIST's gate, docs/DUEL_ASSIST.md): nothing of the CPU's play, only what a new player
@@ -1064,6 +1064,7 @@ Never a Step, Hoho, L, SP, Breaker, O, Burst or awakening of its own: those come
         ((<= 81000 c 81011) (let ((k (- c 81000)))          ; ASSIST for the :dumb player (guard + 3 combo + 6 break)
                               (setf *assist-debug* (list (mod k 3) (oddp (floor k 3)) (>= k 6)))))
         ((<= 81100 c 81200) (setf *assist-mult* (/ (- c 81100) 100.0)))   ; ASSIST's x0.8 (its gate)
+        ((<= 81030 c 81031) (setf *assist-learn* (= c 81031)))   ; ASSIST's learner off / on (its gate A/B)
         ((<= 81020 c 81022) (setf *gate-difficulty* (nth (- c 81020) '(:easy :normal :hard))))
         ((<= 20000 c 20999) (setf *ward-mult* (/ (- c 20000) 100.0)))
         ((<= 21000 c 21999) (setf *pierce-max* (/ (- c 21000) 100.0)))

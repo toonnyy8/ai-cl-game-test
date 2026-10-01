@@ -595,16 +595,23 @@ fraction of the guard gauge."
       (setf (getf weights :sig) (* 0.5 (getf weights :sig)))))
   weights)
 
+(defun brain-perceive (e b o)
+  "Brain B of E sees opponent O this step: his SNAP goes into the ring; values the SNAP of BRAIN-DELAY steps ago and the
+distance to it (the assist's learner perceives the same way: assist.lisp)."
+  (let* ((ring (brain-ring b)) (n (length ring))
+         (cur (or (svref ring (brain-head b)) (setf (svref ring (brain-head b)) (make-snap)))))
+    (snap-take! cur o)
+    (let* ((s (or (svref ring (mod (- (brain-head b) (brain-delay b)) n)) cur))
+           (p (pos-of e)) (d (sqrt (+ (expt (- (snap-x s) (aref p 0)) 2) (expt (- (snap-z s) (aref p 2)) 2)))))
+      (setf (brain-head b) (mod (1+ (brain-head b)) n))
+      (values s d))))
+
 (defun brain-step (e b)
   "One step of the CPU: perceive, then hold / reflex / neutral, written to the vpad."
-  (let* ((f (fighter e)) (vp (pilot-vpad (pilot e))) (o (fighter-opp f)) (ring (brain-ring b)) (n (length ring)))
+  (let* ((f (fighter e)) (vp (pilot-vpad (pilot e))) (o (fighter-opp f)))
     (vpad-begin-step! vp)
-    (let ((cur (or (svref ring (brain-head b)) (setf (svref ring (brain-head b)) (make-snap)))))
-      (snap-take! cur o))
-    (let* ((s (or (svref ring (mod (- (brain-head b) (brain-delay b)) n)) (svref ring (brain-head b))))
-           (p (pos-of e)) (d (sqrt (+ (expt (- (snap-x s) (aref p 0)) 2) (expt (- (snap-z s) (aref p 2)) 2)))))
-      (setf (brain-head b) (mod (1+ (brain-head b)) n)
-            (brain-heat b) (f32 (heat-after (brain-heat b) (> d *ai-heat-far*))))
+    (multiple-value-bind (s d) (brain-perceive e b o)
+      (setf (brain-heat b) (f32 (heat-after (brain-heat b) (> d *ai-heat-far*))))
       (when (and (brain-learn b) (not (brain-off b))) (learn-step e b s d))   ; the learning CPU watches (perceived)
       (vpad-stick! vp 0f0 0f0)
       (unless (kit-bankai-form (fighter-kit f)) (setf (brain-bankai-rolled b) nil))   ; a new cup-3 stay rolls again
@@ -669,6 +676,10 @@ fraction of the guard gauge."
 (defvar *learn-use* '(:model :bandit) "Its parts in use (the learning gate's A/B: 200000+, ON 2 model only, 3 bandit only).")
 (defparameter *learn-read-t* 60 "Frames after a counter it counts as paid off (damage dealt, none taken).")
 (defconstant +pg-learn+ 100 "Page get / set 100 + 1000 i: roster index i's saved table (entry count; + 1 + j entry j).")
+(defvar *assist-learn-tables* (make-array 10 :initial-element nil)
+  "ASSIST's learner (assist.lisp): per roster index, what a human's assist learned of THAT character's CPU (LTAB, its form
+the CPU's), kept apart from the CPUs' tables of the human.")
+(defconstant +pg-assist-learn+ 10100 "Page get / set 10100 + 1000 i: *ASSIST-LEARN-TABLES* i, as +PG-LEARN+ (pwa.js soulduel.learn.a<i>).")
 
 (defstruct lrn
   "A learner's state within one match (BRAIN-LEARN); TAB is its character's table, kept across matches."
@@ -687,16 +698,17 @@ fraction of the guard gauge."
   (stats nil) (last nil)                                                      ; per counter (cmd reads paid); the last
   (reads 0 :type fixnum) (paid 0 :type fixnum) (read-t 0 :type fixnum) (r-dealt 0 :type fixnum) (r-taken 0 :type fixnum))
 
-(defun learn-table (i)
-  "Roster index I's table: in memory, else the page's (LEARN-DECODE; nothing saved or no storage: a fresh one)."
-  (or (svref *learn-tables* i)
-      (setf (svref *learn-tables* i)
-            (let* ((base (+ +pg-learn+ (* 1000 i))) (n (min 999 (max 0 (page-get base)))))
+(defun learn-table (i &optional (tables *learn-tables*) (pg +pg-learn+))
+  "Roster index I's table in TABLES (page base PG; the assist's: *ASSIST-LEARN-TABLES*): in memory, else the page's
+(LEARN-DECODE; nothing saved or no storage: a fresh one)."
+  (or (svref tables i)
+      (setf (svref tables i)
+            (let* ((base (+ pg (* 1000 i))) (n (min 999 (max 0 (page-get base)))))
               (learn-decode (loop for j from 1 to n collect (page-get (+ base j))))))))
 
-(defun learn-save (i)
-  "Roster index I's table to the page (entries first, then the count, which commits them)."
-  (let ((tab (svref *learn-tables* i)) (base (+ +pg-learn+ (* 1000 i))))
+(defun learn-save (i &optional (tables *learn-tables*) (pg +pg-learn+))
+  "Roster index I's table of TABLES to the page (base PG; entries first, then the count, which commits them)."
+  (let ((tab (svref tables i)) (base (+ pg (* 1000 i))))
     (when tab
       (let ((codes (learn-encode tab)))
         (loop for c in codes for j from 1 do (page-set (+ base j) c))
@@ -705,8 +717,9 @@ fraction of the guard gauge."
 (defun learn-reset-all ()
   "SETTINGS' RESET LEARNING: every table forgotten, in memory and on the page."
   (dotimes (i (length *learn-tables*))
-    (setf (svref *learn-tables* i) nil)
-    (page-set (+ +pg-learn+ (* 1000 i)) 0))
+    (setf (svref *learn-tables* i) nil (svref *assist-learn-tables* i) nil)
+    (page-set (+ +pg-learn+ (* 1000 i)) 0)
+    (page-set (+ +pg-assist-learn+ (* 1000 i)) 0))
   (log-msg "duel learning reset"))
 
 (defun learn-attach! (e)

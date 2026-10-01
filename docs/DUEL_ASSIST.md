@@ -94,3 +94,51 @@ What it says:
   - The ender is now red-only (the Kikon, the Konpaku-taking hit). The CPU's coin-flip O ender on a non-red opponent is
     gone.
   - AUTO COMBO still makes the strings the CPU plays (K links, L, SP2, ORANGE, the Kikon): flashier, not stronger.
+
+## Learning his habits (the user, 2026-10-02)
+
+The user: "Can our CPU learn the enemy's habits too?"
+
+**Decision:** no row of its own (the user picked this over a fourth AUTO READ row). While any of the three rows is on, the
+assist learns.
+
+**What it does:**
+
+- **The learner.**
+  - A brain's perception at HARD's delay (`BRAIN-PERCEIVE`, now shared with `BRAIN-STEP`) feeds `LEARN-STEP`, so the
+    learning CPU's player model is turned on the CPU.
+  - One table is kept per opponent character in `*ASSIST-LEARN-TABLES*`. They are saved on the page as
+    `soulduel.learn.a<i>` (page 10100 + 1000 i) and wiped by RESET LEARNING.
+  - At the match's end, its form takes the result (`ASSIST-LEARN-END`).
+- **AUTO COMBO's read** (`AUTO-READ`). A J pressed in neutral becomes the counter to his predicted next move, taken from
+  the event's planned counter, else his band's when confident and the roll says read:
+  - K against his K or I, when he stands beyond J's reach and inside K's.
+  - A Hoho against his SP.
+  - Anything else leaves J as his.
+- **The bait.** When `STRING-REFLEX`'s learner bait applies (he is predicted to burst at our string's 2nd hit), the
+  string ends there with a held guard (`:guard-long`), so the guard cancel catches his BLUE.
+
+**The gate:** vs HARD, P1's wins out of 500.
+
+| assist (k) | learner off | first try | Breaker read dropped |
+|---|---|---|---|
+| COMBO (3) | 51% | 42% | 51% |
+| HOLD U + COMBO + BREAK (10) | 65% | 52% | 65% |
+| ALWAYS + COMBO + BREAK (11) | 80% | 76% | 80% |
+
+- **The Breaker read made it worse.** The learning CPU answers a predicted guard with the Breaker, and the first try did
+  too: 404 of them in 40 matches. A CPU sees the Breaker's aura and dash, and J's or Hohos it. So the read no longer
+  uses it; AUTO BREAK (a guard already held long) is that answer.
+- **Without it, the learner changes almost nothing** (40 matches, k3):
+  - About 12 more assisted K.
+  - No bait.
+  - Wins 18 → 19.
+- **Why so little:** a CPU's choices follow its state, which the model doesn't see.
+  - It bursts only when a burst is worth it: under half its Reishi, or the next hit would make it red. HARD then bursts
+    85 % of the time (144 BLUE in those 40 matches).
+  - The model's :c-hit row doesn't see the Reishi. Taking the string stays the likelier prediction there, so no bait
+    was ever planned.
+  - The rest of its play reacts to what it sees.
+
+  The learner was built for a human, whose habits repeat. It is kept: neutral against the CPU, and the same tables
+  would read a human opponent (VS PLAYER).

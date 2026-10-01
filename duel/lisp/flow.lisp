@@ -182,7 +182,8 @@ it lives on in memory)."
         (let ((tab (lrn-tab l)) (side (fighter-side (fighter e))))
           (setf (ltab-form tab) (learn-form-after (ltab-form tab) (cond ((eql *winner* side) -1.0) ((eql *winner* :draw) 0.0) (t 1.0))
                                                   *learn-form-match*))
-          (learn-save (position (fighter-character (fighter e)) *roster*)))))))
+          (learn-save (position (fighter-character (fighter e)) *roster*))))))
+  (assist-learn-end *winner*))
 
 (defun go-results ()
   (learn-match-end)
