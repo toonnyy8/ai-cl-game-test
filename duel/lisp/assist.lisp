@@ -13,6 +13,8 @@
 ;;;;                table per opponent character (*ASSIST-LEARN-TABLES*, saved apart). AUTO COMBO then also answers a J
 ;;;;                pressed in neutral with the counter to his predicted next move (AUTO-READ: K against his K / I, a Hoho
 ;;;;                against his SP), and baits a predicted burst out of our string (its 2nd hit, then a guard)
+;;;;   SP in neutral (the user, 2026-10-02) AUTO COMBO's J pressed while free first asks the CPU's own SP rules (AUTO-SP): the
+;;;;                kit's :oki on a downed opponent, its :stun-follow on a stunned one
 ;;;; A CPU never has it, except the debug gate's button-masher (habit :dumb, *ASSIST-DEBUG*): CPU-vs-CPU gates are unchanged.
 (in-package :duel)
 
@@ -89,13 +91,27 @@ STRING-REFLEX with the latch emptied); pressed once J was pressed in this move (
         (unless (member cmd '(:f :sig)) (setf (fighter-queued f) nil))   ; a cancel / burst / ender replaces the latched link
         cmd))))
 
-(defun auto-read (e f b d vp)
+(defun auto-sp (e b s d)
+  "AUTO COMBO's SP in neutral (the user, 2026-10-02), by the CPU's own rules as AI-REFLEX uses them: the kit's :oki on a
+launched / downed opponent (a full-charge SP1: Yamamoto's Shiranui, Rukia's), its :stun-follow on a stunned one it still
+reaches (Rukia's SP2, Ichigo's SP1). NIL: none. Not the SP share of the kit's :moves band (AI-ATTACK's neutral pick): on
+every J it turned ~1 in 6 into an SP2 into his guard (129 of 435 blocked, the Reiatsu gone; the gate 51 -> 40 %)."
+  (let* ((kit (kit-of e)) (g (gauges e)) (sf (ai-table e :stun-follow)) (c (first sf)))
+    (cond ((and (member (snap-state s) '(:air :down)) (eq (ai-table e :oki) :sp1-full) (mv-hold (kit-command-move kit :sp1))
+                (kit-command-ok-p e :sp1) (> d 3.0)
+                (>= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (ai-table e :oki-above 0.0)))
+           :sp1-full)
+          ((and sf (eq (snap-state s) :stun) (<= (second sf) d (third sf)) (kit-command-ok-p e c)
+                (>= (- (snap-left s) (brain-delay b)) (mv-s (kit-command-move kit c))))
+           c))))
+
+(defun auto-read (e f b d)
   "AUTO COMBO's read: J pressed while free, the learner's counter to his predicted next move (an event's planned one, else
 his distance band's, when confident and its roll says read him): K (he presses K or I: J's own answer is J), a Hoho (an
 SP coming); NIL for the rest (J stays his). Not the Breaker the learning CPU answers a guard with: a CPU sees it coming
 and J's it (the gate, 2026-10-02: 404 of them in 40 matches, the masher's wins 51 -> 42 %); AUTO BREAK is that answer."
   (let ((l (brain-learn b)))
-    (when (and l (vpad-command-pressed-p vp :quick nil))
+    (when l
       (let ((c (or (and (lrn-cmd l) (<= (lrn-delay l) 0) (prog1 (lrn-cmd l) (setf (lrn-cmd l) nil)))
                    (multiple-value-bind (act p n) (learn-predict (lrn-tab l) (learn-band d))
                      (and act (learn-confident-p p n) (learn-roll-p l) (learn-counter act)))))
@@ -114,29 +130,29 @@ and J's it (the gate, 2026-10-02: 404 of them in 40 matches, the masher's wins 5
          :breaker)))
 
 (defun assist-step (e cfg)
-  "One step of E's assist CFG (ASSIST-CONFIG): a press it holds goes on, else AUTO GUARD / COMBO / BREAK may press one."
-  (let* ((f (fighter e)) (side (fighter-side f)) (vp (pilot-vpad (pilot e)))
-         (b (assist-brain e side))
-         (st (fighter-state f)) (free (and (member st '(:idle :guard :run)) (zerop (fighter-lock f))))
-         (d (multiple-value-bind (s d) (brain-perceive e b (opp-of e))   ; the learner watches him (HARD's delay)
-              (when (brain-learn b) (learn-step e b s d))
-              d)))
-    (when (plusp (svref *assist-tag* side)) (decf (svref *assist-tag* side)))
-    (if (plusp (brain-press-left b))
-        (progn (decf (brain-press-left b))                   ; a held press (the Breaker's dash, O through the strike, the
-               (vpad-hold! vp (brain-press b))               ; bait's guard: his J mashing doesn't restart the string)
-               (when (eq (brain-press b) :guard) (vpad-consume! vp :quick) (setf (fighter-queued f) nil)))
-        (let ((cmd (or (and free (plusp (first cfg)) (or (= 2 (first cfg)) (vpad-down vp :guard)) (auto-guard e f))
-                       (and (second cfg) (eq st :move) (auto-combo e f b side vp))
-                       (and (third cfg) free (auto-break e f vp))
-                       (and (second cfg) free (auto-read e f b d vp)))))
-          (when cmd
-            (vpad-consume! vp :quick)                       ; the J it answered (a guard's press: none)
-            (ai-command b (fighter-kit f) cmd (fighter-dist f) e)
-            (vpad-stamp! vp (brain-press b) (brain-press-mod b))
-            (decf (brain-press-left b))
-            (setf (fighter-assist-next f) t (svref *assist-tag* side) *assist-tag-frames*)
-            (clog "~a assist ~a" (side-name e) cmd))))))
+  "One step of E's assist CFG (ASSIST-CONFIG): its learner watches him; a press it holds goes on, else AUTO GUARD / COMBO /
+BREAK may press one."
+  (let* ((f (fighter e)) (side (fighter-side f)) (vp (pilot-vpad (pilot e))) (b (assist-brain e side))
+         (st (fighter-state f)) (free (and (member st '(:idle :guard :run)) (zerop (fighter-lock f)))))
+    (multiple-value-bind (s d) (brain-perceive e b (opp-of e))   ; him as HARD's delay sees him
+      (when (brain-learn b) (learn-step e b s d))
+      (when (plusp (svref *assist-tag* side)) (decf (svref *assist-tag* side)))
+      (if (plusp (brain-press-left b))
+          (progn (decf (brain-press-left b))                 ; a held press (the Breaker's dash, O through the strike, a
+                 (vpad-hold! vp (brain-press b))             ; charge, the bait's guard: his J mashing doesn't restart the string)
+                 (when (eq (brain-press b) :guard) (vpad-consume! vp :quick) (setf (fighter-queued f) nil)))
+          (let ((cmd (or (and free (plusp (first cfg)) (or (= 2 (first cfg)) (vpad-down vp :guard)) (auto-guard e f))
+                         (and (second cfg) (eq st :move) (auto-combo e f b side vp))
+                         (and (third cfg) free (auto-break e f vp))
+                         (and (second cfg) free (vpad-command-pressed-p vp :quick nil)
+                              (or (auto-sp e b s d) (auto-read e f b d))))))
+            (when cmd
+              (vpad-consume! vp :quick)                     ; the J it answered (a guard's press: none)
+              (ai-command b (fighter-kit f) cmd (fighter-dist f) e)
+              (vpad-stamp! vp (brain-press b) (brain-press-mod b))
+              (decf (brain-press-left b))
+              (setf (fighter-assist-next f) t (svref *assist-tag* side) *assist-tag-frames*)
+              (clog "~a assist ~a" (side-name e) cmd)))))))
 
 (defun assist-system ()
   "Every assisted fighter's step (between BRAIN-SYSTEM and FIGHTER-SYSTEM)."

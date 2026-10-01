@@ -142,3 +142,36 @@ assist learns.
 
   The learner was built for a human, whose habits repeat. It is kept: neutral against the CPU, and the same tables
   would read a human opponent (VS PLAYER).
+
+## SP in neutral (the user, 2026-10-02)
+
+The user asked whether the assist covers SP1 / SP2. Before this change it did in three places:
+
+- AUTO COMBO's SP2 cancel off a string hit (`STRING-REFLEX`).
+- Senjumaru's SP1 ender (her kit's `:sp-ender`).
+- Bankai West's parry under AUTO GUARD, since GOKUI GAESHI is West's SP1.
+
+The user then asked for SPs in neutral too.
+
+**What it does now.** A J pressed while free first asks `AUTO-SP`, which applies the CPU's own rules as `AI-REFLEX`
+uses them:
+
+- **On a launched or downed opponent**, more than 3 m away: the kit's `:oki`, a full-charge SP1 (Yamamoto's and
+  Rukia's Shiranui-type charge).
+- **On a stunned opponent inside the kit's `:stun-follow` range**, still stunned when the move lands: that command
+  (Rukia's SP2, Ichigo's SP1).
+
+**The gate** (vs HARD, P1's wins out of 500):
+
+| assist (k) | before | with the band roll | oki / stun-follow only |
+|---|---|---|---|
+| COMBO (3) | 51% | 40% | 51% |
+| HOLD U + COMBO + BREAK (10) | 65% | 53% | 65% |
+| ALWAYS + COMBO + BREAK (11) | 80% | 72% | 80% |
+
+**Why the band roll was dropped.** The first version also rolled the SP share of the kit's `:moves` band, which is
+`AI-ATTACK`'s neutral pick. Applied to every J press, that turned about 1 in 6 presses into an SP2 into a guard: 129 of
+435 SP2 were blocked, and each one spent the Reiatsu the string cancels need. The CPU makes that pick only at its
+neutral decisions, not on a masher's every press.
+
+**What the two rules add.** In 8 seeds of RU vs RU they fired 2 oki SP1s and the stun follow-ups.
