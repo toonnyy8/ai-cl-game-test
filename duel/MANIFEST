@@ -32,6 +32,7 @@ lisp/fighter.lisp
 lisp/combat.lisp
 lisp/hazards.lisp
 lisp/ai.lisp
+lisp/assist.lisp
 lisp/camera.lisp
 lisp/feedback.lisp
 lisp/flow.lisp

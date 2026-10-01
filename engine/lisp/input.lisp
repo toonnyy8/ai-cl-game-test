@@ -108,6 +108,18 @@ included) and not consumed?"
   "Was ACTION's buffered press made with the modifier held?"
   (= 1 (aref (vpad-modded vp) (vpad-index vp action))))
 
+(defun vpad-stamp! (vp action &optional modded)
+  "Press ACTION this step (buffered, MODDED or not), whether or not it is held already: a press made for the player
+(SOUL DUEL's assist), where VPAD-SET! would see no edge."
+  (let ((i (vpad-index vp action)))
+    (setf (aref (vpad-downs vp) i) 1 (aref (vpad-press vp) i) (vpad-tick vp) (aref (vpad-modded vp) i) (if modded 1 0))
+    vp))
+
+(defun vpad-hold! (vp action)
+  "Keep ACTION down this step without a new press (a hold made for the player after VPAD-STAMP!)."
+  (setf (aref (vpad-downs vp) (vpad-index vp action)) 1)
+  vp)
+
 (defun vpad-consume! (vp action)
   "Use up ACTION's buffered press."
   (setf (aref (vpad-press vp) (vpad-index vp action)) +no-press+)

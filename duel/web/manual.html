@@ -211,6 +211,9 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <tr><td>CAMERA</td><td data-l="值"><b>BEHIND</b>／SIDE</td><td data-l="意思">兩手操作 VS CPU／PRACTICE 的鏡頭：角色背後，或側面雙人鏡頭。單手時一律是直拿專用的背後鏡頭。</td></tr>
 <tr><td>LEARNING CPU</td><td data-l="值"><b>ON</b>／OFF</td><td data-l="意思">VS CPU 和 ENDLESS 的電腦會不會學你的習慣。</td></tr>
 <tr><td>PERFECT HINT</td><td data-l="值"><b>OFF</b>／ON</td><td data-l="意思">完美 Hoho 提示：開啟後，現在 Hoho 就會是完美 Hoho 的那一刻，你的角色頭上會亮出藍白色的 <b>HOHO!</b>（站著、防禦或跑步中，瞬步量表夠用時）。</td></tr>
+<tr><td>AUTO GUARD</td><td data-l="值"><b>OFF</b>／HOLD U／ALWAYS</td><td data-l="意思">自動防禦：對手的攻擊快打到你時，替你出架招（有架招的型態，例如一護 KESSA 的 L、山本 Bankai West 的 GOKUI GAESHI），沒有架招就 Hoho 閃開。HOLD U：按住 U 時才幫你；ALWAYS：只要沒在出招就幫你。自動的 Hoho 不算完美（沒有反擊、慢動作和瞬步回補）。</td></tr>
+<tr><td>AUTO COMBO</td><td data-l="值"><b>OFF</b>／ON</td><td data-l="意思">自動連段：J 或 K 打中後再按 J，下一招由電腦挑（K 段、L、SP2、ORANGE；第三段打中紅血的對手時接 O 變 Kikon）。電腦挑 J 時就照你的 J 出。</td></tr>
+<tr><td>AUTO BREAK</td><td data-l="值"><b>OFF</b>／ON</td><td data-l="意思">自動破防：對手在 3 公尺內一直防禦（0.4 秒以上）時，你按 J 會變成 Breaker。</td></tr>
 <tr><td>RESET LEARNING</td><td data-l="值">—</td><td data-l="意思">讓每個電腦角色忘掉學到的東西（畫面會顯示 DONE）。</td></tr>
 </tbody></table>
 
@@ -345,6 +348,7 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <li><b>跑步</b>（按住 <kbd>Space</kbd>）：跳完之後接著跑，跑的時候一直面向對手（往前衝、側滑、倒退都可以）。跑步中可以直接出任何招，招式會順勢往前滑 1 公尺；放開就煞車。跑步沒有無敵。</li>
 <li><b>Hoho</b>（<kbd>Shift</kbd>+<kbd>Space</kbd>，瞬步 30）：消失，出現在對手背後 1.6 公尺並面向他，出招的大部分時間無敵。兩次 Hoho 之間要隔 1 秒；防禦硬直和被打的硬直中不能用。J／K 打中時也可以用 Hoho 取消。</li>
 <li><b>完美 Hoho</b>：在對手的攻擊（或抓技、Kikon 突進）正要打到你時（打到前約 0.2 秒內，或攻擊正在判定中）Hoho，會顯示 <b>PERFECT</b>：短暫慢動作、對手約 0.7 秒不能動，Hoho 結束時自動反擊（60 傷害），還退回 15 瞬步。抓不到時機的話，可以在 SETTINGS 打開 <b>PERFECT HINT</b>，時機到時角色頭上會出現 <b>HOHO!</b>。</li>
+<li><b>輔助（AUTO GUARD／AUTO COMBO／AUTO BREAK）</b>：在 SETTINGS 打開後，電腦會照自己的判斷替你架招或 Hoho、接連段、破防，每次幫你按時角色頭上會出現 <b>AUTO</b>。代價是電腦替你出的招只有 <b>0.8 倍傷害</b>，自動 Hoho 也不會是完美 Hoho，所以自己打出來還是比較划算。三項預設都是 OFF。</li>
 </ul>
 
 <h3 id="kikon">Kikon 與 Soul Break</h3>

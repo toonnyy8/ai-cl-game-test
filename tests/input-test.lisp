@@ -27,6 +27,14 @@
   (steps vp 1) (check (and (vpad-pressed vp :jump) (not (vpad-pressed vp :jump 1))))
   (vpad-consume! vp :jump) (check (not (vpad-pressed vp :jump))))
 
+;;; a stamped press (VPAD-STAMP!): buffered even while the button is already held, modded as asked; VPAD-HOLD! no press
+(let ((vp (pad)))
+  (vpad-begin-step! vp) (vpad-set! vp :attack t) (vpad-consume! vp :attack)
+  (vpad-stamp! vp :attack t)
+  (check (and (vpad-down vp :attack) (vpad-pressed vp :attack) (vpad-modded-p vp :attack)))
+  (vpad-begin-step! vp) (vpad-consume! vp :attack) (vpad-hold! vp :jump)
+  (check (and (vpad-down vp :jump) (not (vpad-pressed vp :jump)))))
+
 ;;; holds: steps held, no re-press while held, release
 (let ((vp (pad)))
   (vpad-begin-step! vp) (vpad-set! vp :guard t) (vpad-consume! vp :guard)

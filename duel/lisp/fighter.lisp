@@ -161,7 +161,7 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
   "Back to neutral: stance clip, combo over (a victim leaving his reaction ends the combo)."
   (let ((f (fighter e)))
     (setf (fighter-state f) :idle (fighter-sf f) 0 (fighter-phase f) nil (fighter-move f) nil
-          (fighter-crush f) nil (fighter-dmg-bonus f) 0
+          (fighter-crush f) nil (fighter-dmg-bonus f) 0 (fighter-assist-next f) nil
           (fighter-combo-hits f) 0 (fighter-combo-launches f) 0 (fighter-combo-air f) 0)
     (fill (motion-vel (motion e)) 0f0)
     (play-clip e (kit-stance (fighter-kit f)) :blend blend)))
@@ -176,6 +176,7 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
           (fighter-contact f) nil (fighter-queued f) nil (fighter-chained f) nil (fighter-land-sf f) -1 (fighter-dmg-bonus f) 0 (fighter-crush f) nil
           (fighter-stored f) 0                           ; an interrupted stance keeps nothing
           (fighter-button f) button (fighter-hold f) 0 (fighter-perfect f) nil
+          (fighter-assisted f) (fighter-assist-next f) (fighter-assist-next f) nil   ; ASSIST: pressed for him
           (fighter-follow f) nil (fighter-armor-left f) (mv-armor-hits mv)
           (fighter-phase f) (cond ((member (mv-kind mv) '(:breaker :kikon)) :aura) ((mv-hold mv) :hold) (t :main)))
     (fill (motion-vel (motion e)) 0f0)
@@ -260,10 +261,12 @@ back-skate, or a side slide (the kit's :run-clips)."
 
 (defun start-hoho (e f)
   "Hoho: spend *FS-HOHO* flash-step (during a burst what is left, if less: HOHO-COST), vanish, reappear behind the
-opponent (HOHO-STEP). Checks PERFECT now (a perfect one refunds *FS-REFUND*, not during a burst)."
+opponent (HOHO-STEP). Checks PERFECT now (a perfect one refunds *FS-REFUND*, not during a burst; one the assist pressed
+is never perfect)."
   (let ((g (gauges e)))
     (spend-fs g (hoho-cost (gauges-fs g) (gauges-burst g)))
-    (setf (fighter-perfect f) (perfect-now-p e)          ; (before leaving the move: a cancel Hoho)
+    (setf (fighter-perfect f) (and (not (fighter-assist-next f)) (perfect-now-p e))   ; (before leaving the move: a cancel
+          (fighter-assist-next f) nil                                                ; Hoho; an assisted one: never)
           (fighter-state f) :hoho (fighter-sf f) 0 (fighter-move f) nil
           (fighter-hoho-lock f) (+ *hoho-frames* *hoho-lockout*))
     (fill (motion-vel (motion e)) 0f0)

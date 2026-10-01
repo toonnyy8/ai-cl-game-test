@@ -1080,3 +1080,30 @@ J／K 縮短、受擊值、分身消耗三批合併後，照新的測試規則�
 - **提示跟著變**：HUD 的爆氣（「SHIFT+J  CHAIN」）、Kikon（「HOLD O  KIKON」）提示改由 `key-prompt` 依目前的對應組出，換鍵時清快取；P2 鍵盤原本寫死的「KP ENTER+KP1」也是從對應來的。選單操作鍵（Enter／J、Esc／K）固定。
 - **測試**：操作測試 86 項（互換、跨玩家、手把各自、存碼、重設、提示）；實機：在 CONTROLS 把 P1 QUICK 改成 H、P2 QUICK 改成 KP9，localStorage 存成 `bind.4=8`、`bind.104=72`；重開後 debug 2450 按 J 沒反應、按 H 出 SJ-J1。模擬沒有變（原生 `--cvc` 三場都過）。
 
+
+## 68. 輔助：AUTO GUARD／AUTO COMBO／AUTO BREAK（2026-10-01）
+
+使用者：「萊醬萊醬，我打不過 AI（哭泣），他們各種完美閃避、架招、破防跟華麗的 combo 一個接一個把我打爛。能不能幫我規劃一個 AI 輔助戰鬥系統，讓我能簡單的打出這些華麗的操作 QQ」
+
+- **使用者的決定**：
+  - 做成 SETTINGS 的分項常駐開關，不另加按鍵，也不是副駕駛。
+  - 輔助打出的招要稍弱：傷害 ×0.8，自動 Hoho 不算完美。
+  - 自動防禦的觸發方式本身也是設定：OFF／HOLD U／ALWAYS。
+- **設定**：SETTINGS 在 PERFECT HINT 下多三列，預設都是 OFF，存成 `soulduel.autoguard`／`autocombo`／`autobreak`：
+  - **AUTO GUARD**：對手的招快打到時（`perfect-now-p`），對近戰招出這個型態的架招，否則 Hoho。
+  - **AUTO COMBO**：J／K 打中的那一幀由 `string-reflex` 決定下一招（K 段、L、SP2、ORANGE；第三段打中紅血對手時接 O，也就是 Kikon），玩家按了 J 才替他換。
+  - **AUTO BREAK**：對手在 3 公尺內守超過 0.4 秒時，J 換成 Breaker。
+
+  每次替玩家按鍵，頭上都會閃 AUTO。
+- **做法**（`duel/lisp/assist.lisp`，新檔）：
+  - `assist-system` 排在 `brain-system` 和 `fighter-system` 之間，借一個 CPU 腦的 `ai-command` 決定要按什麼、按多久。
+  - 引擎多了 `vpad-stamp!`（按鈕已經按著也能補一次按壓）和 `vpad-hold!`，另有輸入測試。
+  - `fighter-assist-next` 在 `start-move` 時變成 `fighter-assisted`，`apply-hit` 對這招乘上 `*assist-mult*`；`start-hoho` 看到這個標記就不判完美。
+  - CPU 永遠沒有輔助，所以 CPU 對 CPU 的模擬一格都沒變（原生 `--cvc` 三場都過）。
+- **笨玩家測試**（`tools/assistgate.py`，debug habit `:dumb`）：
+  - 這個新手看得跟 EASY 一樣慢，對手出招時只有一半會按 U，在 J1 距離內連打 J，其他時候往前走。它打 25 組角色 × 20 場。
+  - 結果和原本的預想不同：不開輔助就贏 NORMAL 98%、HARD 72%。也就是說，近身連打 J 加上一半的防禦，CPU 就應付不來。這是 CPU 本身的弱點，和輔助無關，另外回報給使用者。
+  - 對 HARD：AUTO GUARD 讓勝率 72 → 77%（HOLD U）／88%（ALWAYS），AUTO BREAK 76%，AUTO COMBO 反而降到 51%。
+  - AUTO COMBO 降的原因：它挑的每一招都比一直重開 J 串慢。×1.0 也只有 48%，所以不是 ×0.8 造成的。
+  - 一次拿掉一種選擇測試時，拿掉 O 收尾最多（62%）。所以 O 收尾改成只在對手紅血時（就是 Kikon）才出，不再跟 CPU 一樣擲骰。
+  - 結論：AUTO COMBO 讓連段變華麗，但不會變強。

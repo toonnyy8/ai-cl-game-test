@@ -20,6 +20,7 @@ matches run before it in the page."
   "One sim frame: the systems in order (a Kikon / Soul Break may start a cinematic mid-way; the
 rest of the frame then waits for it)."
   (brain-system)                        ; CPU players write their vpads
+  (assist-system)                       ; ASSIST presses for a human (assist.lisp)
   (fighter-system)                      ; vpad → commands → state machine → physics
   (unless *cine* (hazard-system))       ; projectiles, pillars, South's grab and hands
   (unless *cine* (hit-system))          ; collect every hit, then apply them together

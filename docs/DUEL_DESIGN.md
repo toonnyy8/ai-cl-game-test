@@ -1550,6 +1550,12 @@ Ichigo's 1–9 as before (failing since the damage numbers, not retuned). G2: yy
   before). G2: all three changed (yy winner P2 konpaku 0-1 ticks 11440 secs 190.7, yk 0-1 ticks 7997 secs 133.3, kk
   0-1 ticks 8876 secs 147.9).
 
+## ASSIST: AUTO GUARD / AUTO COMBO / AUTO BREAK (the user, 2026-10-01)
+
+Three SETTINGS rows, all OFF by default: the CPU's own rules press for a human fighter (a parry or Hoho as a hit comes,
+the next move of a string after his J, a Breaker for his J into a long guard). An assisted move deals x0.8, and an
+assisted Hoho is never perfect. The design and its gate are in docs/DUEL_ASSIST.md.
+
 ## CONTROLS: keyboard and pad rebinding (the user, 2026-10-01)
 
 「然後在幫我添加自訂按鍵的功能（只要鍵盤跟搖桿就好）」

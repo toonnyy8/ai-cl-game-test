@@ -87,6 +87,10 @@ instead (true combos); on a whiff never (the contact gate, §2.2).")
 (defparameter *guard-cancel* 0.5
   "The guard cancel (the user, 2026-10-01): a move whose own hit landed may end in a guard (Guard held) once only this
 share of its recovery is left, so a hit doesn't leave its owner open (GUARD-CANCEL-OPEN-P).")
+(defparameter *assist-mult* 0.8
+  "ASSIST (the user, 2026-10-01; docs/DUEL_ASSIST.md): a move the assist pressed deals this x its damage (its Hoho is never
+perfect): playing it by hand still pays.")
+(defparameter *assist-tag-frames* 45 "Frames the AUTO tag shows over a fighter after the assist pressed for him.")
 (defparameter *counter-mult* 1.25 "Damage multiplier of a counter-hit (Breaker / stance hit during startup).")
 (defparameter *counter-stun* 10 "Extra hitstun frames of a counter-hit.")
 

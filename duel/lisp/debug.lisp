@@ -112,7 +112,10 @@
 ;;;;            k+1 (4: the Bankai) 3 m from an idle Yamamoto. Every gate row is followed by a "duel band" line per awakened Rukia side
 ;;;;            (BAND-ACC: frames, damage dealt / taken per band, zero visits and their exits, bracing frames, freeze-touches)
 ;;;;   200000 + 1000 h + 100 c1 + 10 c2 + m   the learning gate (docs/DUEL_LEARNING.md): seeds as the seed gate, P1 (roster
-;;;;            c1) a CPU with habit h (*HABITS*: 0 plain, 1 J on wake-up, 2 guard after a block, 3 grab-happy, 4 Hoho-happy),
+;;;;            c1) a CPU with habit h (*HABITS*: 0 plain, 1 J on wake-up, 2 guard after a block, 3 grab-happy, 4 Hoho-happy,
+;;;;            5 burst-happy, 6 the button-masher of ASSIST's gate: 81000 + g + 3 c + 6 b its assist, g AUTO GUARD 0-2, c / b
+;;;;            AUTO COMBO / BREAK on; 81020+i the gates' CPU difficulty (0 EASY 1 NORMAL 2 HARD), 81100+k *ASSIST-MULT* = k / 100;
+;;;;            tools/assistgate.py; docs/DUEL_ASSIST.md),
 ;;;;            P2 (roster c2) learning by m (0 off, 1 all, 2 model only, 3 bandit only), fresh at the start, kept across
 ;;;;            the matches; a "duel learn row" per match. Every other debug command switches learning off (*LEARN-DEBUG-OFF*)
 ;;;;   2400 god (both fighters' Reishi is topped back up to 400 every frame; Kikon still lands)   2500+k human P1 vs an
@@ -851,9 +854,11 @@ move-beat choices of DRAW-FIGHTER."
                      (per "move-beats" (move-beats e f m mv 0f0 0f0 0f0 0f0)))))
     (setf (model-beat m) 0f0)))
 
+(defvar *gate-difficulty* :normal "Debug 81020+i: the gates' CPU difficulty (0 EASY 1 NORMAL 2 HARD; ASSIST's gate).")
+
 (defun start-cvc (seed pair)
-  "Seeded CPU vs CPU (NORMAL): PAIR = (c1 c2), or NIL to draw both from SEED."
-  (setf *match-seed* seed *mode* :cpu-cpu *difficulty* :normal *blow-aways* 0)
+  "Seeded CPU vs CPU (*GATE-DIFFICULTY*, NORMAL): PAIR = (c1 c2), or NIL to draw both from SEED."
+  (setf *match-seed* seed *mode* :cpu-cpu *difficulty* *gate-difficulty* *blow-aways* 0)
   (band-acc-reset) (cup-acc-reset)
   (senju-acc-reset) (ichigo-acc-reset)
   (sim-rnd-seed seed)
@@ -910,10 +915,10 @@ move-beat choices of DRAW-FIGHTER."
            (setf *gate-results* nil *turbo* nil *learn-gate* nil)))))
 
 ;;; ---------------------------------------------------------------- the learning CPU's gate (docs/DUEL_LEARNING.md)
-(defparameter *habits* #(nil :wake-j :block-guard :grab :hoho :burst)
+(defparameter *habits* #(nil :wake-j :block-guard :grab :hoho :burst :dumb)
   "The scripted players (debug 200000+): 0 a plain CPU, 1 J on every wake-up, 2 guard after every block, 3 grab-happy
 (the Breaker at every close neutral decision), 4 Hoho-happy (Hoho at neutral decisions and into every committed move),
-5 burst-happy (BLUE at every chance: AI-BURST-ROLL's chance 1).")
+5 burst-happy (BLUE at every chance: AI-BURST-ROLL's chance 1), 6 the button-masher (DUMB-STEP: ASSIST's gate).")
 
 (defun start-learn-gate (h c1 c2 on)
   "200000 + 1000 H + 100 C1 + 10 C2 + ON: seeds *GATE-SEED0* + 1 .. + *GATE-SEEDS* back to back, P1 (roster C1) a CPU with
@@ -930,6 +935,7 @@ matches); a \"duel learn row\" per match."
 (defun learn-gate-setup ()
   "A learning-gate match began: P1's habit, P2's learner."
   (setf (brain-habit (brain *p1*)) (first *learn-gate*))
+  (when (eq (first *learn-gate*) :dumb) (setf (brain-delay (brain *p1*)) *dumb-delay*))
   (when (second *learn-gate*) (learn-attach! *p2*)))
 
 (defun learn-gate-line ()
@@ -956,6 +962,26 @@ matches); a \"duel learn row\" per match."
                           (< (snap-sf s) (snap-active-end s)) (< d (+ (snap-reach s) *ai-threat-margin*)))
                  (ai-press b :step 1 :modded t :act :hoho) (setf (brain-why b) :habit)))))))
 
+(defparameter *dumb-delay* 24 "The button-masher sees as late as an EASY CPU (frames).")
+(defparameter *dumb-guard-p* 0.5 "... and guards this share of the moves he sees coming.")
+
+(defun dumb-step (e b s d)
+  "The button-masher (habit :dumb, ASSIST's gate, docs/DUEL_ASSIST.md): nothing of the CPU's play, only what a new player
+does: hold U while a move of his comes, seen late (*DUMB-DELAY*) and only *DUMB-GUARD-P* of his moves, mash J (a press
+every 8 f) within J1's reach, else walk at him.
+Never a Step, Hoho, L, SP, Breaker, O, Burst or awakening of its own: those come from the assist (*ASSIST-DEBUG*). T."
+  (let ((vp (pilot-vpad (pilot e))) (reach (mv-reach (kit-command-move (kit-of e) :q))))
+    (setf (brain-press-left b) 0)                       ; every step decides afresh (a press lasts that step)
+    (when (/= (snap-start s) (brain-roll-key b))        ; one guard roll per move of his
+      (setf (brain-roll-key b) (snap-start s) (brain-guard-roll b) (sim-rnd01)))
+    (cond ((and (eq (snap-state s) :move) (< (brain-guard-roll b) *dumb-guard-p*) (member (snap-kind s) '(:quick :flash :sig :sp :breaker :kikon))
+                (< (snap-sf s) (snap-active-end s)) (< d (+ (snap-reach s) *ai-threat-margin*)))
+           (ai-press b :guard 1 :act :guard))
+          ((< d (+ reach 0.3)) (when (zerop (mod *match-tick* 8)) (ai-press b :quick 1)))
+          (t (vpad-stick! vp 0f0 1f0)))
+    (setf (brain-why b) :dumb)
+    t))
+
 (defun habit-neutral (e b kit d)
   "A scripted player's habit at a neutral decision (AI-DECIDE): T when it pressed."
   (let ((f (fighter e)) (g (gauges e)))
@@ -972,7 +998,7 @@ matches); a \"duel learn row\" per match."
   (unless (or (<= 2200 c 2299) (<= 10000 c 19999) (<= 35000 c 36999) (<= 40000 c 42999) (<= 69000 c 70999))
     (setf *cine-hold* nil))
   (cond ((<= 2000 c 2099) (start-cvc (- c 2000) nil))
-        ((<= 200000 c 205443) (start-learn-gate (floor (- c 200000) 1000) (mod (floor c 100) 10) (mod (floor c 10) 10) (mod c 10)))
+        ((<= 200000 c 206443) (start-learn-gate (floor (- c 200000) 1000) (mod (floor c 100) 10) (mod (floor c 10) 10) (mod c 10)))
         ((<= 3000 c 3999) (start-cvc (- c 3000) '(:yamamoto :yamamoto)))
         ((<= 4000 c 4999) (start-cvc (- c 4000) '(:yamamoto :kenpachi)))
         ((<= 5000 c 5999) (start-cvc (- c 5000) '(:kenpachi :kenpachi)))
@@ -1035,6 +1061,10 @@ matches); a \"duel learn row\" per match."
         ((= c 2400) (setf *god* (not *god*)))
         ((<= 2600 c 2699) (setf *red-threshold* (/ (- c 2600) 100.0)))
         ((<= 80000 c 80999) (endless-debug (- c 80000)))    ; ENDLESS (endless.lisp)
+        ((<= 81000 c 81011) (let ((k (- c 81000)))          ; ASSIST for the :dumb player (guard + 3 combo + 6 break)
+                              (setf *assist-debug* (list (mod k 3) (oddp (floor k 3)) (>= k 6)))))
+        ((<= 81100 c 81200) (setf *assist-mult* (/ (- c 81100) 100.0)))   ; ASSIST's x0.8 (its gate)
+        ((<= 81020 c 81022) (setf *gate-difficulty* (nth (- c 81020) '(:easy :normal :hard))))
         ((<= 20000 c 20999) (setf *ward-mult* (/ (- c 20000) 100.0)))
         ((<= 21000 c 21999) (setf *pierce-max* (/ (- c 21000) 100.0)))
         ((<= 22000 c 22999) (setf *gg-regen* (/ (- c 22000) 10.0)))

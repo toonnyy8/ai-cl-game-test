@@ -99,6 +99,8 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (stored 0 :type fixnum)               ; stance: damage absorbed
   (charge 0 :type fixnum)               ; hold frames when a charge move was released (Shiranui)
   (perfect nil)                         ; this Hoho was perfect: its counter strike is pending
+  (assist-next nil)                     ; the assist pressed for him: the next move / Hoho he starts is assisted (assist.lisp)
+  (assisted nil)                        ; the current move is assisted: x*ASSIST-MULT* damage
   (burst nil)                           ; the burst mode pressed this step (:white :blue :orange; applied after both stepped)
   (chain 0 :type fixnum)                ; ORANGE: frames the next move started still has its startup cut
   (invuln 0 :type fixnum)               ; frames of invulnerability left (after a Burst)

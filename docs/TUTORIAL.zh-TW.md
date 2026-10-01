@@ -763,6 +763,8 @@ MODE 選單第二列是 ENDLESS（2026-09-29，完整規則在 [DUEL_ENDLESS.md]
 
 （2026-10-01 起 SETTINGS 在 LEARNING CPU 下面多一列 **PERFECT HINT**：OFF／ON，預設 OFF，存成 `soulduel.hint`。開啟後，真人操作的角色在「現在 Hoho 就是完美 Hoho」的那段時間，頭上會出現藍白色的 HOHO!。判斷和手機的「完美時機上撥自動變 Hoho」是同一個函式 `perfect-up-p`（站著／防禦／跑步、Hoho 用得起、`perfect-now-p`），畫在 `hud.lisp` 的 `hud-hint`。七列設定加上 RESET LEARNING、BACK 會壓到下面的說明文字，所以 `hud-settings` 把選單往上移，並限制選單的底線在說明文字上方。）
 
+（2026-10-01 起 PERFECT HINT 下面再多三列輔助：**AUTO GUARD**（OFF／HOLD U／ALWAYS）、**AUTO COMBO**（OFF／ON）、**AUTO BREAK**（OFF／ON），預設都是 OFF，存成 `soulduel.autoguard`、`.autocombo`、`.autobreak`。程式在 `duel/lisp/assist.lisp`：它不另外寫一套 AI，而是在你的手把讀完之後、角色讀手把之前，借 CPU 自己的函式替你按鍵。自動防禦看 `perfect-now-p`，對手快打到時出架招，沒有就出 Hoho；自動連段在 J／K 打中的那一幀用 `string-reflex` 決定下一招，等你按了 J 才替你換成那一招；自動破防在對手久守時把你的 J 換成 Breaker。電腦替你出的招傷害 ×0.8（`*assist-mult*`），自動 Hoho 不算完美。電腦對電腦的對戰沒有真人，輔助完全不會啟動，所以平衡測試不受影響。設計和測試數據在 `docs/DUEL_ASSIST.md`。）
+
 學到的東西每個電腦角色各存一份，存在瀏覽器裡（`soulduel.learn.*`），每場結束時寫入。無痕模式下存不了，就只記到關掉分頁為止。練習模式和 CPU VS CPU 不會學習。
 
 ---

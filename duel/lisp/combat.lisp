@@ -174,7 +174,8 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                                :in-front (in-front-p (yaw-of def) (aref p 0) (aref p 2) sx sz *guard-arc*)
                                :unguardable (or (member :unguardable flags) (and fstrike (kikon-follow-unguardable-p red)))
                                :hazard ranged :ward ward :rend (member :rend flags)))
-         (atk (kit-atk-mods (kit-of att) (- *konpaku-max* (gauges-konpaku (gauges att))) (if (eq res :blocked) 1.0 (+ 1.0 k))))
+         (atk (kit-atk-mods (kit-of att) (- *konpaku-max* (gauges-konpaku (gauges att)))
+                            (* (if (eq res :blocked) 1.0 (+ 1.0 k)) (if (and own (fighter-assisted fa)) *assist-mult* 1.0))))   ; ASSIST
          (dmods (if optic '(:mult 1.0) (kit-def-mods (kit-of def))))   ; (a ranged hit through Rukia's ward: x1.0 taken)
          (x (or x (aref p 0))) (z (or z (aref p 2))) (y (+ (aref p 1) 1.1))
          (base (+ (hw-dmg hw) bonus))

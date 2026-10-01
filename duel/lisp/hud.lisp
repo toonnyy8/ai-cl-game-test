@@ -832,10 +832,18 @@ when he is red."
     (when (red-p (gauges-reishi g) (gauges-reishi-max g))
       (vfx-soul-flame (aref p 0) top (aref p 2) (fx-clock)))))
 
+(defvar *c-auto* (list 1.0 0.72 0.3 1.0) "ASSIST's AUTO tag.")
+
 (defun hud-hint (e h)
   "PERFECT HINT (SETTINGS, the user 2026-10-01): HOHO! at human fighter E's head while a Hoho started now would be
-perfect (PERFECT-UP-P: a free state, the Hoho affordable, PERFECT-NOW-P)."
+perfect (PERFECT-UP-P: a free state, the Hoho affordable, PERFECT-NOW-P). ASSIST: AUTO above him for *ASSIST-TAG-FRAMES*
+after the assist pressed for him."
   (let ((p (pos-of e)) (v *hud-v*))
+    (when (and (plusp (svref *assist-tag* (fighter-side (fighter e))))
+               (world-to-screen v (aref p 0) (+ (aref p 1) (body-hurt-h (model-body (model e))) 0.45) (aref p 2)))
+      (set-line (aref v 0) (aref v 1) (* (if (portrait-p) 0.03 0.038) h) *c-auto*)
+      (setf (aref *bl* 7) (line-width "AUTO"))
+      (brush-line "AUTO"))
     (when (and (= 1 (setting :hint)) (not (cpu-p e)) (perfect-up-p e (state-of e))
                (world-to-screen v (aref p 0) (+ (aref p 1) (body-hurt-h (model-body (model e))) 0.15) (aref p 2)))
       (set-line (aref v 0) (aref v 1) (* (if (portrait-p) 0.035 0.045) h) *c-hint*)
