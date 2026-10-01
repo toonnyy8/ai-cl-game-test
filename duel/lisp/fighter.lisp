@@ -517,11 +517,18 @@ the end (MOVE-END-FRAME)."
     (when (mv-tick mv) (funcall (mv-tick mv) e))
     (loop for w across (mv-hits mv) when (= sf (hw-from w))
           do (emit :swing e (mv-kind mv)) (return))
-    (when (and (eq (fighter-move f) mv)                   ; a hook may have started another move
-               (not (and (zerop (fighter-lock f)) (move-commands e f vp mv sf)))
-               (>= sf (move-end-frame s (mv-a mv) (mv-r mv) (mv-whiff mv) (fighter-contact f)
-                                      (zerop (length (mv-hits mv))))))
-      (to-idle e))))
+    (when (eq (fighter-move f) mv)                        ; a hook may have started another move
+      (cond ((and (zerop (fighter-lock f)) (move-commands e f vp mv sf)))
+            ((and (zerop (fighter-lock f)) (guard-cancel-open-p sf s (mv-a mv) (mv-r mv) (fighter-contact f))
+                  (guard-held-p e vp))                  ; the guard cancel: U held after its hit landed
+             (clog "~a guard cancel ~a f~d" (side-name e) (mv-name mv) sf)
+             (to-idle e)                                ; (a :guard-to / :ward form: neutral, whose U does the rest)
+             (when (guard-p e vp)
+               (setf (fighter-state f) :guard (fighter-guard-t f) 0)
+               (play-clip e :sh-guard :blend 3)))
+            ((>= sf (move-end-frame s (mv-a mv) (mv-r mv) (mv-whiff mv) (fighter-contact f)
+                                    (zerop (length (mv-hits mv)))))
+             (to-idle e))))))
 
 (defun move-step (e f vp)
   "Advance the current move one frame: its pre-strike phase, or the move proper."

@@ -1518,3 +1518,35 @@ failing). G2: yy's hash lines changed, yk and kk unchanged.
 The gate after it: 300 / 300 K.O., every median in 125–210 s (SI 218.8 → 178.3). "Never awaken" A/B (P1 never vs the P2
 CPU): Senjumaru SY 29 / 25 / 28, SK 18 / 26 / 23, SR 34 / 24 / 28, SS 20 / 24 / 19, SI 38 / 27 / 31; Rukia's ≥ 26;
 Ichigo's 1–9 as before (failing since the damage numbers, not retuned). G2: yy changed, yk and kk unchanged.
+
+## Guard cancel on hit (the user, 2026-10-01)
+
+「我想讓當前角色在成功擊傷對手透過防禦取消一部分的後搖硬值，避免有些角色在成功攻擊後反而陷入不利的狀況。」
+
+- **The rule** (`guard-cancel-open-p`, rules.lisp; `*guard-cancel*` 0.5, tuning.lisp): a move whose **own hit landed**
+  (`fighter-contact` :hit; a block or a whiff never) may end in a guard over the **last half of its recovery**:
+  from move frame S + A + R − floor(R × 0.5) to its end, U held (`guard-held-p`). Every move kind with a hit window
+  (J / K links, L, SP, the Breaker, a Kikon strike); a move whose hits are hazards (a fireball, Senjumaru's zones) has no
+  contact of its own, so it has no guard cancel.
+- **What it is:** only a guard. Chains, SP / Hoho / L cancels and ORANGE are checked first and keep their windows; a
+  link latched by then starts before the guard cancel opens (a hit chains from the end of the active frames). The guard
+  starts like a neutral one (`*guard-raise*` 2 f). In a form whose U is no guard (Bankai East's `:guard-to`, West's ward)
+  it returns to neutral, where U does that form's thing (East: the switch to West, so East's recovery after a hit can
+  now be cut into West). A form whose U is a move (`:u` hook) never guards, so never guard-cancels.
+- **Why half:** a host survey of every move's last hit window (hit on its first active frame, hitstop aside): 29 of 124
+  were negative on hit. Most were −2 / −3 (every K2, the knockback SPs and Kikon strikes); with the cancel they read
+  +10 to +13 for the guard. Two stay negative: Kenpachi's `:ke-charge` −32 → −20 and Yamamoto's L −21 → −8 (heavy by
+  design).
+- **The CPU** (ai.lisp `ai-reflex`, before the string reflex): its hit landed, no link latched, the window is open, and it
+  doesn't see him still reeling past its own recovery's end (the delayed snapshot's `left` minus its reaction delay):
+  it presses U for 4 f (`:guard-cancel`), then neutral decides.
+- One-hand: the thumb left resting after a tap is the guard (0.12 s), so it needs no new gesture.
+- Host-tested (K2 21/4/24: f37–48 on hit, never on a block or a whiff); harness: Senjumaru's K1 (17/4/20, 41 f) on
+  Kenpachi, U held: `guard cancel SJ-K1 f31`.
+- **The gate after it** (all 15 pairings, shared rule): 300 / 300 K.O., 20-seed medians 139.8–212.4 s; SI 212.4, IR
+  202.3, II 203.3 re-read at 60 seeds: 206.3, 195.8, 206.3. "Never awaken" A/B (streams 100 / 300 / 500): Rukia RY
+  41 / 37 / 42, RK 34 / 41 / 35, RR 36 / 32 / 35; Senjumaru SY 31 / 31 / 29, SK 26 / 25 / 26, SR 23 / 24 / 27,
+  SS 34 / 33 / 38, SI 26 / 25 / 33; Ichigo IY 16 / 10 / 14, IK 17 / 12 / 10, IR 6 / 4 / 7, II 8 / 5 / 8 (failing as
+  before). G2: all three changed (yy winner P2 konpaku 0-1 ticks 11440 secs 190.7, yk 0-1 ticks 7997 secs 133.3, kk
+  0-1 ticks 8876 secs 147.9).
+

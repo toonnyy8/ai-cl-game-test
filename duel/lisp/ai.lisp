@@ -149,6 +149,7 @@ while: a charge move is held to its full charge from beyond 7 m, where it has th
         (:hoho (ai-press b :step 1 :modded t :act :hoho))
         (:guard (ai-press b :guard (+ 10 (floor (* r 20)))))
         (:guard-long (ai-press b :guard 40 :act :guard))    ; through a stagger and the dash-in after it
+        (:guard-cancel (ai-press b :guard 4))               ; the guard cancel, then neutral decides
         (:kikon (let ((mv (kit-command-move kit :kikon)))                ; held through the strike (aura + dash + S)
                   (ai-press b :kikon (+ (rush-param mv :aura) (rush-param mv :dash-max) (mv-s mv) 4))))
         (:awaken (ai-press b :awaken 1))
@@ -311,6 +312,13 @@ D = the perceived distance."
             (= (fighter-sf f) (fighter-land-sf f)) (kit-command-ok-p e :kikon kit t)
             (or (kikon-ready-p e) (< (sim-rnd01) (ai-table e :o-ender *ai-o-ender*))))
        (why b :o-ender :kikon))
+      ;; our hit landed and only the guard cancel's share of its recovery is left (no link latched): guard out of it,
+      ;; unless we see him still reeling past our recovery's end
+      ((and (eq st :move) (not (fighter-queued f))
+            (guard-cancel-open-p (fighter-sf f) (mv-s mv) (mv-a mv) (mv-r mv) (fighter-contact f))
+            (not (and (member (snap-state s) '(:stun :air :down :wakeup))
+                      (> (- (snap-left s) (brain-delay b)) (- (mv-total mv) (fighter-sf f))))))
+       (why b :guard-cancel :guard-cancel))
       ;; our own hit: finish the string, else an SP / L cancel
       ((and (eq st :move) (eq (fighter-contact f) :hit) (member (mv-kind mv) '(:quick :flash)))
        (string-reflex e b f mv))

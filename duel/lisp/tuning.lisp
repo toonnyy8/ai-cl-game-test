@@ -84,6 +84,9 @@ attacker recovery to measure advantage against, so it is a fixed stun.")
 this leaves S_eff(next) - 2 frames of gap (J2 after J1: 5-7 f): Step / Hoho fit, J1 doesn't; a K link leaves >= 11 f,
 so any J1 interrupts it (docs/DUEL_STRINGS.md §2.1). On hit the chain opens at the end of the active frames
 instead (true combos); on a whiff never (the contact gate, §2.2).")
+(defparameter *guard-cancel* 0.5
+  "The guard cancel (the user, 2026-10-01): a move whose own hit landed may end in a guard (Guard held) once only this
+share of its recovery is left, so a hit doesn't leave its owner open (GUARD-CANCEL-OPEN-P).")
 (defparameter *counter-mult* 1.25 "Damage multiplier of a counter-hit (Breaker / stance hit during startup).")
 (defparameter *counter-stun* 10 "Extra hitstun frames of a counter-hit.")
 

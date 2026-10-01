@@ -425,6 +425,10 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
             (~= (gg-regen 50.0 999 nil t) 50.0)))                            ; outside BLUE: GUARD HOLD as ever
 ;; ORANGE: the cancel window is the hit's cancel window (first hit frame .. end of recovery); the startup cut 40 %, >= 1 f left
 (check (and (cancel-open-p 12 10 30 t) (not (cancel-open-p 9 10 30 t)) (not (cancel-open-p 30 10 30 t)) (not (cancel-open-p 12 10 30 nil))))
+;; the guard cancel (the user, 2026-10-01): only after its own hit, over the last half of the recovery (K2 21/4/24: f37-44)
+(check (and (= 0.5 *guard-cancel*) (not (guard-cancel-open-p 36 21 4 24 :hit)) (guard-cancel-open-p 37 21 4 24 :hit)
+            (guard-cancel-open-p 48 21 4 24 :hit) (not (guard-cancel-open-p 49 21 4 24 :hit))
+            (not (guard-cancel-open-p 40 21 4 24 :block)) (not (guard-cancel-open-p 40 21 4 24 nil))))
 (check (and (= (chain-startup-cut 10 0) 4) (= (chain-startup-cut 20 0) 8) (= (chain-startup-cut 2 0) 0) (= (chain-startup-cut 1 0) 0)
             (= (chain-startup-cut 3 0) 1) (= (chain-startup-cut 12 2) 4) (= *chain-window* 12)))
 (check (and (~= (burst-gain-mult :orange) 1.5) (~= (burst-gain-mult :white) 1.0) (~= (burst-gain-mult nil) 1.0)))
