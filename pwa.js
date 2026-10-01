@@ -7,7 +7,7 @@
 //       30 + k = ENDLESS best record slot k (roster index i: 30 + 2i stages, 31 + 2i seconds; 0 = none / no storage)
 //       100 + 1000 i = the learning CPU's saved table of roster index i: its entry count; 100 + 1000 i + 1 + j = entry j
 //       (docs/DUEL_LEARNING.md; localStorage soulduel.learn.<i>, the integers comma-separated)
-//   set 0 = battle on / off (the screen wake lock), 1 = open the manual (manual.html, this window), 10 + i = save SETTINGS row i, 30 + k = save ENDLESS slot k, 20000 + .. = save a CONTROLS binding (soulduel.bind.<k - 20000>),
+//   set 0 = battle on / off (the screen wake lock), 1 = open the manual (manual.html, this window), 10 + i = save SETTINGS row i, 30 + k = save ENDLESS slot k, 10100 + 1000 i (+ 1 + j) = the assist's learned table of CPU i (soulduel.learn.a<i>), 20000 + .. = save a CONTROLS binding (soulduel.bind.<k - 20000>),
 //       100 + 1000 i + 1 + j = table entry j (kept here), then 100 + 1000 i = n commits the first n entries (0: forget it)
 // SETTINGS rows (duel/lisp/control.lisp *SETTINGS*, same order) live in localStorage as soulduel.<name>; every access is
 // wrapped in try/catch (private mode / blocked storage: nothing saved, the defaults).
@@ -17,7 +17,7 @@
 (function () {
   var coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
   var back = 0, wakeOn = false, lock = null;
-  var settings = ['onehand', 'hand', 'split', 'flick', 'camera', 'learn', 'hint'];   // soulduel.hand predates SETTINGS (same values)
+  var settings = ['onehand', 'hand', 'split', 'flick', 'camera', 'learn', 'hint', 'autoguard', 'autocombo', 'autobreak'];   // soulduel.hand predates SETTINGS (same values)
   function stored(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function store(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode: not saved */ } }
   var learn = {};                                        // roster index -> the learning CPU's table (integers)
@@ -58,6 +58,7 @@
       if (k >= 30 && k < 50) return +(stored('soulduel.endless.' + (k - 30)) || 0) | 0;
       if (k >= 20000 && k < 20200) return +(stored('soulduel.bind.' + (k - 20000)) || 0) | 0;
       if (k >= 100 && k < 10100) { var t = ltab(((k - 100) / 1000) | 0), j = (k - 100) % 1000; return j ? (t[j - 1] | 0) : t.length; }
+      if (k >= 10100 && k < 20000) { var t = ltab('a' + (((k - 10100) / 1000) | 0)), j = (k - 10100) % 1000; return j ? (t[j - 1] | 0) : t.length; }
       return 0;
     },
     set: function (k, v) {
@@ -70,6 +71,11 @@
         var i = ((k - 100) / 1000) | 0, j = (k - 100) % 1000, t = ltab(i);
         if (j) t[j - 1] = v | 0;
         else { t.length = Math.max(0, v | 0); store('soulduel.learn.' + i, t.join(',')); }
+      }
+      if (k >= 10100 && k < 20000) {                     // the assist's learner: soulduel.learn.a<i> (what it learned of CPU i)
+        var ai = 'a' + (((k - 10100) / 1000) | 0), aj = (k - 10100) % 1000, at = ltab(ai);
+        if (aj) at[aj - 1] = v | 0;
+        else { at.length = Math.max(0, v | 0); store('soulduel.learn.' + ai, at.join(',')); }
       }
     }
   };
