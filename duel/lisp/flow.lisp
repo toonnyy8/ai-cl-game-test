@@ -309,6 +309,34 @@ end) and, HP REFILL AUTO, its Reishi once it is out of its hit / block reactions
   "Move SETTINGS row I's option by DIR (it wraps)."
   (let ((row (nth i *settings*))) (set-setting (first row) (mod (+ (setting (first row)) dir) (length (third row))))))
 
+(defvar *bind-col* 0 "CONTROLS: the column, 0 P1 KEY, 1 P1 PAD, 2 P2 KEY, 3 P2 PAD.")
+(defvar *capture* nil "CONTROLS: waiting for the key / pad button of the selected cell.")
+(defun controls-update ()
+  "CONTROLS (the user, 2026-10-01: keyboard and pad rebinding): up / down a row, left / right a column, confirm waits
+for the new key (a KEY column) or button (a PAD column: that player's pad) and binds it (REBIND: a swap if taken), saved
+at once; Escape / Start cancels the wait. Then RESET DEFAULTS and BACK."
+  (let ((n (length *bind-actions*)))
+    (cond (*capture*
+           (let ((side (floor *bind-col* 2)) (dev (if (evenp *bind-col*) :key :pad)))
+             (if (or (key-pressed :escape) (any-pad-pressed :start) *back-press*)
+                 (progn (setf *capture* nil) (play-sfx :back))
+                 (let ((name (if (eq dev :key)
+                                 (find-if #'key-pressed *bind-keys*)
+                                 (find-if (lambda (b) (pad-pressed b side)) *bind-pads*))))
+                   (when name
+                     (setf *capture* nil)
+                     (rebind *bind-pair* side (nth *menu* *bind-actions*) dev name)
+                     (save-bindings)
+                     (play-sfx :confirm)
+                     (log-msg "duel bind P~d ~a ~a ~a" (1+ side) (nth *menu* *bind-actions*) dev name))))))
+          (t (let ((i (menu-nav (+ 2 n))))
+               (when (and (< *menu* n) (or (menu-left-p) (menu-right-p)))
+                 (setf *bind-col* (mod (+ *bind-col* (if (menu-left-p) -1 1)) 4)) (play-sfx :select))
+               (cond ((eql i (1+ n)) (go-mode 6))
+                     ((eql i n) (reset-bindings *bind-pair*) (save-bindings) (log-msg "duel bind reset"))
+                     (i (setf *capture* t)))
+               (when (back-p) (play-sfx :back) (go-mode 6)))))))
+
 (defun pause-keys ()
   "The pause menu's rows: PRACTICE's options replace RESTART; ENDLESS has RETIRE only (the run's results are one row
 away from the rest); VS CPU / ENDLESS / PRACTICE with two hands add the CAMERA toggle."
@@ -362,7 +390,9 @@ away from the rest); VS CPU / ENDLESS / PRACTICE with two hands add the CAMERA t
                        (i (settings-step i 1))
                        ((and d (< *menu* n)) (play-sfx :select) (settings-step *menu* d))))
                (when (back-p) (play-sfx :back) (go-mode 5)))
-    (:controls (when (or (back-p) (confirm-p) (tap-p)) (play-sfx :back) (go-mode 6)))
+    (:controls (if (one-hand-offered-p)                  ; a phone: the gestures page
+                   (when (or (back-p) (confirm-p) (tap-p)) (play-sfx :back) (go-mode 6))
+                   (controls-update)))
     (:select (select-update))
     ((:intro :finish) (when (and *cine* (or (pause-p) (confirm-p) (tap-p))) (skip-cine)))
     (:battle

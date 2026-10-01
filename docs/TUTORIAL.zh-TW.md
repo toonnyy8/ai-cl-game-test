@@ -453,6 +453,8 @@ SOUL DUEL 這邊只有資料：`duel/lisp/control.lisp` 的 `*vpad-actions*`（�
 
 誰來寫？真人：`pilot-system`（`duel/lisp/ai.lisp` 第 452～455 行）在每一步呼叫 `vpad-begin-step!`，它執行 vpad 的讀取器 `p1-reader`（`duel/lisp/fighter.lisp` 第 26～28 行）。電腦：`brain-step`（`ai.lisp` 第 403～446 行）想好要按什麼，最後一樣用 `vpad-set!` 把每顆按鈕寫進去（第 440 行）。`spawn-fighter`（`fighter.lisp` 第 31～48 行）裡，「人或電腦」只差在 vpad 有沒有讀取器、實體有沒有 `brain` 元件。
 
+**自訂按鍵（2026-10-01 使用者）。** 因為按鍵對應本來就是資料，CONTROLS 畫面只是在原地改這兩張 plist：`control.lisp` 的 `*p1-default-bindings*`／`*p2-default-bindings*` 是預設，`*p1-bindings*`／`*p2-bindings*` 是一份 `copy-tree` 的活資料，讀取器每一步讀的就是它。`rebind` 把某玩家某動作在某裝置（`:key`／`:pad`）上的「第一個單名輸入」換成新的名字；新名字已經有人用時互換（鍵盤只有一個，所以在兩個玩家之間找；手把各自一個，只在自己的找），組合鍵 `(:pad :ls :rs)` 和觸控輸入不動。存檔是 `bind-code`：0 表示和預設一樣，否則是名字在 `*bind-keys*`／`*bind-pads*` 裡的位置加一，透過 `page-set 20000 + 100 side + i (+ 50 手把)` 交給 `pwa.js` 存進 `soulduel.bind.*`（20000 起跳，避開學習型 CPU 用的 100～10099）。HUD 的爆氣、Kikon 提示改由 `key-prompt` 從目前的對應組字串，換鍵時清掉快取，平常每幀不配置記憶體。這些都在主機測試裡（`tests/duel-control-test.lisp`）。
+
 好處：電腦只能做人做得到的事；`tests/duel-control-test.lisp` 可以檢查「經過按鍵對應讀進來」和「直接注入」結果完全一樣；而且因為輸入是在固定步長裡讀的，同一串按鍵每次都得到同一場比賽（9.5）。
 
 ### 9.2 角色是資料加掛鉤

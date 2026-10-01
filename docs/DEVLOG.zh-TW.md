@@ -1070,3 +1070,13 @@ J／K 縮短、受擊值、分身消耗三批合併後，照新的測試規則�
 - **手機單手**：出招後拇指停著 0.12 秒就是防禦，不用新手勢。
 - **測試**：主機測試（K2 21/4/24 打中時第 37～48 幀，被擋、揮空都沒有）；實機 debug 2450 千手丸 K1（17/4/20，41 幀）打中劍八後按住 U，第 31 幀 `guard cancel SJ-K1 f31`。全部十五組 K.O.，20 場中位數 139.8～212.4 秒；SI 212.4、IR 202.3、II 203.3 用 60 場重量是 206.3、195.8、206.3，都在範圍內。不覺醒 A/B（100／300／500 流）：露琪亞 32～42、千手丸 23～38 全部 ≥ 20；一護 4～17，照舊沒過。G2 三場都變了：yy `winner P2 konpaku 0-1 ticks 11440 secs 190.7`、yk `winner P2 konpaku 0-1 ticks 7997 secs 133.3`、kk `winner P2 konpaku 0-1 ticks 8876 secs 147.9`，原生 `--cvc` 自我檢查三場都過。
 
+## 67. 自訂按鍵（鍵盤與手把，2026-10-01）
+
+使用者：「然後在幫我添加自訂按鍵的功能（只要鍵盤跟搖桿就好）」
+
+- **畫面**：MODE 的 CONTROLS（非觸控、橫式視窗；手機照舊顯示手勢卡）從靜態按鍵表改成可以改的表：十三列動作（四個移動、J K L U I O、Space、Shift、P）× 四欄（P1 鍵盤、P1 手把、P2 鍵盤、P2 手把），下面是 RESET DEFAULTS、BACK。上下選列、左右選欄，Enter 後格子閃「PRESS A KEY／PRESS A BUTTON」，按下的鍵（鍵盤欄）或該玩家手把的按鈕（手把欄）就綁上，Esc／Start 取消。底下列出跟著變的組合（SP1 = REIATSU+FLASH 等）。
+- **規則**（`control.lisp`，主機測試）：換的是每個動作在該裝置的第一個單名輸入；新鍵已被用就互換，鍵盤在兩個玩家之間互換，手把只在自己的手把內；`(:pad :ls :rs)` 這種組合和觸控不動。Escape 和 Start 不能綁（暫停、取消）。可綁的鍵：字母、數字、F1～F12、空白、Enter、Tab、標點、方向鍵、九宮格、Shift／Ctrl／Alt 等；手把：A B X Y LB RB LT RT LS RS BACK 和十字鍵。
+- **存檔**：`pwa.js` 的 page 20000 + 100 side + i（+ 50 是手把），localStorage `soulduel.bind.*`，0 = 預設。一開始先用了 200～399，結果和學習型 CPU 的表（100～10099）重疊，改到 20000。
+- **提示跟著變**：HUD 的爆氣（「SHIFT+J  CHAIN」）、Kikon（「HOLD O  KIKON」）提示改由 `key-prompt` 依目前的對應組出，換鍵時清快取；P2 鍵盤原本寫死的「KP ENTER+KP1」也是從對應來的。選單操作鍵（Enter／J、Esc／K）固定。
+- **測試**：操作測試 86 項（互換、跨玩家、手把各自、存碼、重設、提示）；實機：在 CONTROLS 把 P1 QUICK 改成 H、P2 QUICK 改成 KP9，localStorage 存成 `bind.4=8`、`bind.104=72`；重開後 debug 2450 按 J 沒反應、按 H 出 SJ-J1。模擬沒有變（原生 `--cvc` 三場都過）。
+

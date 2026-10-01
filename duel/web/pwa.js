@@ -3,10 +3,11 @@
 //   get 0 = touch-first device ((pointer: coarse)), 1 = back gestures since the last ask,
 //       3 / 4 = the safe-area inset at the top / bottom, CSS px (env(safe-area-inset-*); tests set gamePage.testInsets = [top, bottom])
 //       10 + i = SETTINGS row i as saved (option index + 1; 0 = never saved, or no storage: the game's default)
+//       20000 + 100 side + i (+ 50: the pad) = CONTROLS binding of row i (duel/lisp/control.lisp BIND-CODE; 0 = default)
 //       30 + k = ENDLESS best record slot k (roster index i: 30 + 2i stages, 31 + 2i seconds; 0 = none / no storage)
 //       100 + 1000 i = the learning CPU's saved table of roster index i: its entry count; 100 + 1000 i + 1 + j = entry j
 //       (docs/DUEL_LEARNING.md; localStorage soulduel.learn.<i>, the integers comma-separated)
-//   set 0 = battle on / off (the screen wake lock), 1 = open the manual (manual.html, this window), 10 + i = save SETTINGS row i, 30 + k = save ENDLESS slot k,
+//   set 0 = battle on / off (the screen wake lock), 1 = open the manual (manual.html, this window), 10 + i = save SETTINGS row i, 30 + k = save ENDLESS slot k, 20000 + .. = save a CONTROLS binding (soulduel.bind.<k - 20000>),
 //       100 + 1000 i + 1 + j = table entry j (kept here), then 100 + 1000 i = n commits the first n entries (0: forget it)
 // SETTINGS rows (duel/lisp/control.lisp *SETTINGS*, same order) live in localStorage as soulduel.<name>; every access is
 // wrapped in try/catch (private mode / blocked storage: nothing saved, the defaults).
@@ -55,6 +56,7 @@
       if (k >= 10 && k < 10 + settings.length) return +(stored('soulduel.' + settings[k - 10]) || 0) | 0;
       if (k === 3 || k === 4) return inset(k - 3);
       if (k >= 30 && k < 50) return +(stored('soulduel.endless.' + (k - 30)) || 0) | 0;
+      if (k >= 20000 && k < 20200) return +(stored('soulduel.bind.' + (k - 20000)) || 0) | 0;
       if (k >= 100 && k < 10100) { var t = ltab(((k - 100) / 1000) | 0), j = (k - 100) % 1000; return j ? (t[j - 1] | 0) : t.length; }
       return 0;
     },
@@ -63,6 +65,7 @@
       if (k === 0 && coarse) { wakeOn = !!v; if (wakeOn) wake(); else if (lock && lock.release) { lock.release(); lock = null; } }
       if (k >= 10 && k < 10 + settings.length) store('soulduel.' + settings[k - 10], String(v));
       if (k >= 30 && k < 50) store('soulduel.endless.' + (k - 30), String(v));
+      if (k >= 20000 && k < 20200) store('soulduel.bind.' + (k - 20000), String(v));
       if (k >= 100 && k < 10100) {
         var i = ((k - 100) / 1000) | 0, j = (k - 100) % 1000, t = ltab(i);
         if (j) t[j - 1] = v | 0;

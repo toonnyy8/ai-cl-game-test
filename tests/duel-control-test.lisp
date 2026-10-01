@@ -137,6 +137,31 @@
   (vpad-begin-step! vp)
   (check (equal (command vp) '(:sp2 :sig)))
   (check (~= (vpad-sy vp) -1.0)))                                     ; analog stick passes through
+;; CONTROLS (the user, 2026-10-01): a rebind swaps (one keyboard over both players, a pad per player), changes the
+;; live bindings the readers use, saves as codes (0 = default) and resets; the prompts follow
+(let ((pair (vector (copy-tree *p1-default-bindings*) (copy-tree *p2-default-bindings*))))
+  (flet ((n (side a dev) (binding-name (svref pair side) a dev)))
+    (check (equal (key-prompt pair 0 :key :chain) "SHIFT+J  CHAIN"))
+    (check (equal (key-prompt pair 0 :pad :burst) "LT+X  BURST"))
+    (check (equal (key-prompt pair 1 :key :kikon) "HOLD KP6  KIKON"))
+    (check (rebind pair 0 :quick :key :k))                          ; J -> K: FLASH takes J
+    (check (and (eq :k (n 0 :quick :key)) (eq :j (n 0 :flash :key)) (equal (key-prompt pair 0 :key :chain) "SHIFT+K  CHAIN")))
+    (check (not (rebind pair 0 :quick :key :k)))                    ; the same key: nothing
+    (check (rebind pair 0 :guard :key :up))                         ; P2's UP: P2 takes U
+    (check (and (eq :up (n 0 :guard :key)) (eq :u (n 1 :up :key))))
+    (check (rebind pair 1 :quick :pad :a))                          ; P2's pad: STEP takes X, P1's pad untouched
+    (check (and (eq :a (n 1 :quick :pad)) (eq :x (n 1 :step :pad)) (eq :x (n 0 :quick :pad)) (eq :a (n 0 :step :pad))))
+    (check (and (= 0 (bind-code 0 :sig :key pair)) (= (1+ (position :k *bind-keys*)) (bind-code 0 :quick :key pair))
+                (eq :k (bind-from-code (bind-code 0 :quick :key pair) :key)) (null (bind-from-code 0 :key))
+                (null (bind-from-code 999 :pad))))
+    (check (member '(:pad :ls :rs) (getf (svref pair 0) :awaken) :test #'equal))   ; chords untouched
+    (reset-bindings pair)
+    (check (and (equal (svref pair 0) *p1-default-bindings*) (equal (svref pair 1) *p2-default-bindings*)))
+    (check (every (lambda (a) (and (member (n 0 a :key) *bind-keys*) (member (n 1 a :key) *bind-keys*)
+                                   (member (n 0 a :pad) *bind-pads*) (member (n 1 a :pad) *bind-pads*)))
+                  *bind-actions*))
+    (check (and (= (length *bind-actions*) (length *bind-row-names*)) (string= "SHIFT" (bind-label :lshift))
+                (string= "KP1" (bind-label :kp-1)) (string= "D-UP" (bind-label :dpad-up)) (string= "-" (bind-label nil))))))
 ;; every action has a binding for both players
 (check (loop for a across *vpad-actions* always (and (getf *p1-bindings* a) (getf *p2-bindings* a))))
 

@@ -1550,3 +1550,23 @@ Ichigo's 1–9 as before (failing since the damage numbers, not retuned). G2: yy
   before). G2: all three changed (yy winner P2 konpaku 0-1 ticks 11440 secs 190.7, yk 0-1 ticks 7997 secs 133.3, kk
   0-1 ticks 8876 secs 147.9).
 
+## CONTROLS: keyboard and pad rebinding (the user, 2026-10-01)
+
+「然後在幫我添加自訂按鍵的功能（只要鍵盤跟搖桿就好）」
+
+- **Screen** (flow.lisp `controls-update`, hud.lisp `hud-controls`): MODE's CONTROLS on a landscape non-touch window (a
+  phone keeps the gestures card) is a table: 13 rows (`*bind-actions*`: up down left right quick flash sig guard breaker
+  kikon step mod awaken) × 4 columns (P1 KEY, P1 PAD, P2 KEY, P2 PAD), then RESET DEFAULTS and BACK. Confirm on a cell
+  waits (`*capture*`) for a key (`*bind-keys*`, a KEY column) or a button of that player's pad (`*bind-pads*`, pad slot
+  = side); Escape / Start / the browser's back cancel. The menus' own keys (Enter / J, Esc / K, the arrows / WASD) stay
+  fixed.
+- **Rule** (control.lisp `rebind`, host-tested): an action's binding on a device is its first one-name input of that
+  device; chords (`(:pad :ls :rs)`) and touch inputs are kept. A name already bound swaps with the old one: on the keyboard
+  over both players (one keyboard), on a pad within that player's (his own pad). `*p1-bindings*` / `*p2-bindings*` are
+  live copies of `*p1-default-bindings*` / `*p2-default-bindings*`, changed in place, so the readers need nothing new.
+- **Saved** (onehand.lisp `save-bindings` / `load-bindings`, pwa.js): page 20000 + 100 side + i (+ 50 the pad),
+  localStorage `soulduel.bind.<k>`; `bind-code` 0 = the default, else 1 + the name's place in its list. (Not 200: the
+  learning CPU's tables use 100–10099.)
+- **Prompts** (control.lisp `key-prompt`, cached until a rebind): the HUD's BURST / CHAIN and HOLD .. KIKON text reads the
+  current bindings of that side and device (P2's keyboard KP ENTER+KP1 included); the one-hand flick prompts are fixed.
+

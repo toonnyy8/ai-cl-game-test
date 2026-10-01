@@ -22,6 +22,8 @@ last TOUCH-LAYOUT!.")
 (defconstant +pg-coarse+ 0) (defconstant +pg-back+ 1) (defconstant +pg-safe-top+ 3) (defconstant +pg-safe-bottom+ 4)
 (defconstant +ps-wake+ 0) (defconstant +ps-manual+ 1 "Page set 1: open the manual page (manual.html) in this window.")
 (defconstant +pg-setting+ 10 "Page get / set 10 + i: SETTINGS row i (control.lisp *SETTINGS* order), option index + 1.")
+(defconstant +pg-bind+ 20000 "Page get / set 20000 + 100 side + i: that player's key for *BIND-ACTIONS* row i, + 50: his pad
+button (control.lisp BIND-CODE: 0 the default).")
 
 (defun open-manual ()
   "MODE's MANUAL row: the page opens manual.html in the same window (an installed app stays in its window; the
@@ -93,6 +95,7 @@ the defaults)."
   (loop for (key) in *settings* for i from 0
         do (setf (svref *setting-ix* i) (setting-from-page key (page-get (+ +pg-setting+ i)))))
   (apply-settings)
+  (load-bindings)
   (when *coarse* (setf *auto-render-scale* t))
   (log-msg "duel page: coarse ~a hand ~a settings ~a" *coarse* *hand* (coerce *setting-ix* 'list)))
 
@@ -103,6 +106,20 @@ the defaults)."
           (gc-tap-split cfg) (f32 (setting-value :tap-split))
           (gc-flick-min cfg) (f32 (setting-value :flick))))
   (set-cam-behind (zerop (setting :camera))))
+
+(defun bind-page-key (side i device) (+ +pg-bind+ (* 100 side) i (if (eq device :pad) 50 0)))
+(defun load-bindings ()
+  "CONTROLS: the saved keys and pad buttons (a code out of range or 0: the default), applied as rebinds in row order."
+  (dotimes (side 2)
+    (loop for a in *bind-actions* for i from 0
+          do (dolist (dev '(:key :pad))
+               (let ((n (bind-from-code (page-get (bind-page-key side i dev)) dev)))
+                 (when n (rebind *bind-pair* side a dev n)))))))
+(defun save-bindings ()
+  "CONTROLS: every binding of both players to the page (0 where it is the default)."
+  (dotimes (side 2)
+    (loop for a in *bind-actions* for i from 0
+          do (dolist (dev '(:key :pad)) (page-set (bind-page-key side i dev) (bind-code side a dev *bind-pair*))))))
 
 (defun set-setting (key i)
   "SETTINGS row KEY to option I: in force now and saved by the page."

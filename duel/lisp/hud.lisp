@@ -506,11 +506,12 @@ from the base form when this form has none) and the tag of what U does in the fo
 (defvar *c-evo* (list 1.0 0.85 0.3 1.0))
 (defvar *u-tag* (list 1.0 0.72 0.35 1.0))
 (defvar *c-kikon* (list 1.0 0.2 0.25 1.0))
-(defun burst-prompt (mode keys)
-  "The HUD prompt for burst MODE (:blue BURST, :orange CHAIN) pressed with KEYS (:flick :pad :kp :key): a literal."
-  (if (eq mode :orange)
-      (case keys (:flick "FLICK DOWN  CHAIN") (:pad "LT+X  CHAIN") (:kp "KP ENTER+KP1  CHAIN") (t "SHIFT+J  CHAIN"))
-      (case keys (:flick "FLICK DOWN  BURST") (:pad "LT+X  BURST") (:kp "KP ENTER+KP1  BURST") (t "SHIFT+J  BURST"))))
+(defun burst-prompt (mode keys side)
+  "The HUD prompt for burst MODE (:blue BURST, :orange CHAIN) of SIDE pressed with KEYS (:flick, else :pad / :key: his
+bindings, CONTROLS-KEY-PROMPT)."
+  (if (eq keys :flick)
+      (if (eq mode :orange) "FLICK DOWN  CHAIN" "FLICK DOWN  BURST")
+      (key-prompt *bind-pair* side keys (if (eq mode :orange) :chain :burst))))
 (defvar *c-callout* (list 1.0 0.85 0.55 1.0))
 (defvar *c-hint* (list 0.6 0.95 1.0 1.0) "PERFECT HINT's HOHO!.")
 
@@ -628,8 +629,7 @@ from the base form when this form has none) and the tag of what U does in the fo
                        (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 3 s) (alpha! *c-kikon* (+ 0.5 (* 0.5 (hud-pulse 4.0))))
                        :align :center))
             ((member (burst-ok-p e) '(:blue :orange))    ; (WHITE: most of neutral; the bar's glow says it)
-             (hud-text (burst-prompt (burst-ok-p e) (cond (*one-hand* :flick) ((pad-connected-p side) :pad)
-                                                          (right :kp) (t :key)))
+             (hud-text (burst-prompt (burst-ok-p e) (cond (*one-hand* :flick) ((pad-connected-p side) :pad) (t :key)) side)
                        (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 2 s) (alpha! (burst-color (burst-ok-p e)) (+ 0.5 (* 0.5 (hud-pulse 4.0))))
                        :align :center))))))
 
@@ -759,10 +759,10 @@ from the base form when this form has none) and the tag of what U does in the fo
                (prompt (if *one-hand* "AWAKEN  BANKAI" (if (pad-connected-p side) "BACK  BANKAI" "P  BANKAI"))
                        (alpha! *c-blood* (+ 0.5 (* 0.5 (hud-pulse 4.0))))))
               ((kikon-ready-p e)
-               (prompt (if *one-hand* "HOLD O  KIKON" (if (pad-connected-p side) "HOLD RT  KIKON" "HOLD O  KIKON"))
+               (prompt (if *one-hand* "HOLD O  KIKON" (key-prompt *bind-pair* side (if (pad-connected-p side) :pad :key) :kikon))
                        (alpha! *c-kikon* (+ 0.5 (* 0.5 (hud-pulse 4.0))))))
               ((member (burst-ok-p e) '(:blue :orange))
-               (prompt (burst-prompt (burst-ok-p e) (cond (*one-hand* :flick) ((pad-connected-p side) :pad) (t :key)))
+               (prompt (burst-prompt (burst-ok-p e) (cond (*one-hand* :flick) ((pad-connected-p side) :pad) (t :key)) side)
                        (alpha! (burst-color (burst-ok-p e)) (+ 0.5 (* 0.5 (hud-pulse 4.0)))))))))))
 
 ;;; ---------------------------------------------------------------- over the fighters
@@ -897,22 +897,33 @@ its rows and shrinks its text to fit); *MENU* is highlighted."
                          (+ y (* 7 sc) (* 0.5 (- dy (* 7 sc))))))
         (ui-text it (round cx) y :scale sc :align :center :color (if sel *white* '(0.8 0.78 0.85 1)) :shadow t)))))
 
-(defparameter *controls-text*
-  '(("MOVE" "W A S D" "ARROWS") ("QUICK" "J" "KP1") ("FLASH" "K" "KP2") ("SIGNATURE" "L" "KP3")
-    ("GUARD" "U" "KP4") ("BREAKER" "I" "KP5") ("KIKON RUSH (HOLD = KIKON)" "O" "KP6") ("STEP" "SPACE" "KP0")
-    ("REIATSU (HOLD)" "LSHIFT" "KP ENTER") ("AWAKEN" "P" "KP +") ("SP1 / SP2" "SHIFT+K / SHIFT+L" "")
-    ("HOHO" "SHIFT+SPACE" "") ("BURST (WHITE BLUE ORANGE)" "SHIFT+J" "") ("DASH" "HOLD SPACE" "HOLD KP0") ("PAUSE" "ESC" "")))
-
 (defun hud-controls (w h s)
+  "CONTROLS (the user, 2026-10-01): each action's key and pad button for P1 and P2, the selected cell lit (blinking
+while it waits for a key), then RESET DEFAULTS and BACK; the fixed combinations and the help below."
   (ui-rect 0 0 w h '(0 0 0 0.7))
-  (ui-big-text "CONTROLS" (floor w 2) (* 0.1 h) (* 4 s) *white* '(0.7 0.25 0.05 1) s)
-  (loop for (a p1 p2) in *controls-text* for i from 0
-        for y = (+ (* 0.2 h) (* i 14 s)) do
-          (ui-text a (* 0.3 w) y :scale s :align :right :color *dim*)
-          (ui-text p1 (* 0.36 w) y :scale s :color *white*)
-          (ui-text p2 (* 0.62 w) y :scale s :color *white*))
-  (ui-text "P1: KEYBOARD LEFT + PAD 1      P2: ARROWS + NUMPAD + PAD 2      PAD: X Y B = Q F SIG, LB GUARD, RB BREAKER, RT KIKON, A STEP (HOLD = DASH), LT MOD, LT+X BURST"
-           (floor w 2) (* 0.9 h) :scale 1 :align :center :color *dim*))
+  (ui-big-text "CONTROLS" (floor w 2) (* 0.08 h) (* 4 s) *white* '(0.7 0.25 0.05 1) s)
+  (let* ((n (length *bind-actions*)) (dy (* 12 s)) (y0 (* 0.2 h)) (cols (list (* 0.42 w) (* 0.54 w) (* 0.68 w) (* 0.8 w)))
+         (wait (and *capture* (< (mod (fx-clock) 0.6) 0.4))))
+    (loop for t1 in '("P1 KEY" "P1 PAD" "P2 KEY" "P2 PAD") for x in cols
+          do (ui-text t1 (round x) (- y0 dy) :scale s :align :center :color '(1 0.85 0.3 1)))
+    (loop for a in *bind-actions* for label in *bind-row-names* for i from 0 for y = (+ y0 (* i dy))
+          do (ui-text label (round (* 0.34 w)) y :scale s :align :right :color (if (= i *menu*) *white* *dim*))
+             (loop for x in cols for c from 0
+                   for sel = (and (= i *menu*) (= c *bind-col*))
+                   for txt = (if (and sel *capture*) (if (evenp c) "PRESS A KEY" "PRESS A BUTTON")
+                                 (bind-label (binding-name (svref *bind-pair* (floor c 2)) a (if (evenp c) :key :pad))))
+                   do (when (and sel (not (and *capture* (not wait))))
+                        (ui-rect (- x (* 0.055 w)) (- y (* 2 s)) (* 0.11 w) (* 11 s) '(0.8 0.3 0.05 0.8)))
+                      (ui-text txt (round x) y :scale (fit-scale txt s (* 0.11 w)) :align :center :color *white*)))
+    (loop for it in '("RESET DEFAULTS" "BACK") for i from n for y = (+ y0 (* (+ i 0.4) dy))
+          do (when (= i *menu*)
+               (ui-rect (- (* 0.5 w) (* 0.12 w)) (- y (* 2 s)) (* 0.24 w) (* 11 s) '(0.8 0.3 0.05 0.8)))
+             (ui-text it (floor w 2) y :scale s :align :center :color *white*)))
+  (let ((help (if *capture* "PRESS THE NEW KEY OR BUTTON    ESC / START: CANCEL"
+                  "UP / DOWN: ACTION    LEFT / RIGHT: COLUMN    ENTER: CHANGE    ESC: BACK"))
+        (combos "SP1 = REIATSU+FLASH   SP2 = REIATSU+SIGNATURE   HOHO = REIATSU+STEP   BURST = REIATSU+QUICK   DASH = HOLD STEP   PAUSE = ESC / START"))
+    (ui-text combos (floor w 2) (- h (* 34 s)) :scale (fit-scale combos s (* 0.96 w)) :align :center :color *dim*)
+    (ui-text help (floor w 2) (- h (* 20 s)) :scale (fit-scale help s (* 0.96 w)) :align :center :color *ember* :shadow t)))
 
 (defun hud-settings (w h s)
   "SETTINGS: the rows (confirm, left / right or a tap changes one), BACK, the selected row's note and the help line."
