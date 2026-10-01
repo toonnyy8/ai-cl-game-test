@@ -231,7 +231,7 @@ its own combo)."
     (and (plusp (fighter-chain f)) (member (fighter-state f) '(:idle :guard)) (zerop (fighter-lock f))
          (not (vpad-down (pilot-vpad (pilot e)) :quick))   ; (J still held from the burst's press: let go first, a new press)
          (member (state-of (opp-of e)) '(:stun :air))
-         (< (fighter-dist f) (+ (mv-reach (kit-command-move (fighter-kit f) :q)) 0.4)))))
+         (< (fighter-dist f) (+ (mv-reach (kit-command-move (fighter-kit f) :q)) 2.0)))))   ; (it chases: FIGHTER-END-CHASE)
 
 (defun ai-white-p (e b s d)
   "SOUL REVERSE (WHITE) at a neutral decision: allowed, at least *AI-WHITE-RANGE* m from an opponent not attacking, behind

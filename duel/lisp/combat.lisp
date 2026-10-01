@@ -234,6 +234,8 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                             (clog "~a BLOWN AWAY by ~a (stun tolerance ~,1f, combo hit ~d)" (side-name def) (side-name att)
                                   (stun-tolerance-of (kit-of def)) hits))
                      (progn (set-reaction def react stun sx sz (if follow *kikon-follow-kb* (hw-kb hw)))
+                            (when (and own (not hazard) (member :ender (mv-flags mv)) (member (mv-kind mv) '(:quick :flash)))
+                              (ender-push att def mv))                       ; J3 / K3: out of J1 / K1's reach at once
                             (when (and own (not hazard) (not (fighter-chained fa))   ; a string's opener (J1 / K1) hit:
                                        (member (mv-kind mv) '(:quick :flash))         ; the attacker dashes in to
                                        (eq mv (kit-command-move (kit-of att) (if (eq (mv-kind mv) :quick) :q :f))))

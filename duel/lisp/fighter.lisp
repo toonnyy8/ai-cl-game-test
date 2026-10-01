@@ -171,7 +171,11 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
 
 (defun start-move (e mv &optional button)
   "Enter move MV (a MOVE of E's kit). Frame (MV-ENTER mv) is this step; MOVE-STEP advances it."
-  (let ((f (fighter e)) (enter (mv-enter mv)))
+  (let* ((f (fighter e)) (enter (mv-enter mv)) (old (and (eq (fighter-state f) :move) (fighter-move f)))
+         (off-ender (or (plusp (fighter-chain f))                       ; ORANGE's restart, or a move started off a J / K
+                        (and old (member :ender (mv-flags old)) (member (mv-kind old) '(:quick :flash))   ; ender that hit
+                             (eq (fighter-contact f) :hit)))))          ; (pushed away: it chases him, MAIN-PHASE-STEP)
+    (setf (fighter-end-chase f) off-ender)
     (setf (fighter-state f) :move (fighter-move f) mv (fighter-sf f) enter (fighter-hits f) 0
           (fighter-contact f) nil (fighter-queued f) nil (fighter-chained f) nil (fighter-land-sf f) -1 (fighter-dmg-bonus f) 0 (fighter-crush f) nil
           (fighter-stored f) 0                           ; an interrupted stance keeps nothing
@@ -495,14 +499,17 @@ module's :follow-speed, else its :speed, else 14 m/s), then the strike again, th
                  (setf (fighter-hits f) 0 (fighter-contact f) nil (fighter-land-sf f) -1)
                  (enter-main e f mv)))
         (let ((next (kikon-rush-next-phase phase (fighter-hold f) (fighter-dist f)
-                                           :aura (rush-param mv :aura) :dash-max (rush-param mv :dash-max))))
+                                           :aura (rush-param mv :aura) :dash-max (rush-dash-max f mv))))
+          (when (and (eq next :strike) (eq phase :dash) (fighter-end-chase f) (< (fighter-hold f) (rush-dash-max f mv))
+                     (plusp (motion-kb-left (motion (fighter-opp f)))))   ; off a pushing ender: he still slides away,
+            (setf next :dash))                                             ; dash on (the strike would miss him)
           (cond ((eq next :strike) (enter-main e f mv))
                 (t (unless (eq next phase)
                      (setf (fighter-phase f) next (fighter-hold f) 0)
                      (emit :rush-dash e))
                    (if (eq next :dash)
                        (progn (turn-to-opp e f (track-step (rush-param mv :dash-track)))
-                              (run-velocity e (rush-param mv :speed)))
+                              (run-velocity e (rush-dash-speed f mv)))
                        (turn-to-opp e f (track-step (rush-param mv :aim))))))))))
 
 (defun main-phase-step (e f vp mv)
@@ -512,8 +519,11 @@ the end (MOVE-END-FRAME)."
     (fill v 0f0)
     (when (< sf s)
       (let* ((chained (fighter-chained f)) (rooted (kit-rooted (fighter-kit f)))   ; (rooted: her reach is the ice's)
-             (chase (if (and chained (not rooted) (not (member (mv-kind mv) '(:quick :flash))))   ; J / K links: no chase
-                        (string-chase-speed (fighter-dist f) (mv-reach mv) (- s sf))                 ; (the user 2026-10-02)
+             (chase (if (and (not rooted)
+                             (or (fighter-end-chase f)                                            ; off a pushing ender
+                                 (and chained (not (member (mv-kind mv) '(:quick :flash))))))    ; J / K links: no chase
+                        (string-chase-speed (fighter-dist f) (mv-reach mv) (- s sf)               ; (the user 2026-10-02)
+                                            (if (fighter-end-chase f) *ender-chase-max* *chase-max*))
                         0.0))
              (slide (if (and (> (mv-slide mv) 0) (> (fighter-dist f) *lunge-stop*) (not rooted)) (* 60.0 (/ (mv-slide mv) s)) 0.0))
              (sp (max chase slide)))                  ; a lunge stopping at the opponent; a follow-up link's chase
@@ -530,7 +540,6 @@ the end (MOVE-END-FRAME)."
             ((and (zerop (fighter-lock f)) (guard-cancel-open-p sf s (mv-a mv) (mv-r mv) (fighter-contact f) (eq (mv-kind mv) :quick))
                   (guard-held-p e vp))                  ; the guard cancel: U held after its hit landed
              (clog "~a guard cancel ~a f~d" (side-name e) (mv-name mv) sf)
-             (ender-push e f mv)
              (to-idle e)                                ; (a :guard-to / :ward form: neutral, whose U does the rest)
              (setf (fighter-gc-left f) (- (+ s (mv-a mv) (mv-r mv)) sf))   ; no attack before its recovery would have ended
              (when (guard-p e vp)
@@ -538,7 +547,6 @@ the end (MOVE-END-FRAME)."
                (play-clip e :sh-guard :blend 3)))
             ((>= sf (move-end-frame s (mv-a mv) (mv-r mv) (mv-whiff mv) (fighter-contact f)
                                     (zerop (length (mv-hits mv)))))
-             (ender-push e f mv)
              (to-idle e))))))
 
 (defun push-apart (a b dist frames)
@@ -552,16 +560,17 @@ user 2026-10-02: a victim against the wall can't be moved, so the attacker is). 
     (when (> ma 0.01) (set-slide a ma frames (- ux) (- uz)))
     (values mb ma)))
 
-(defun ender-push (e f mv)
-  "E's J / K string ender MV (J3 / K3) hit and ends here, no follow-up started (its move ends, or a guard cancel): his
-victim, still reeling, is pushed out of E's J1 reach (J3) or K1 reach (K3), + *ENDER-PUSH* (the user 2026-10-02: a
-restarted string has to walk in again). E doesn't move, unless the arena's edge holds his victim (PUSH-APART)."
-  (when (and (member (mv-kind mv) '(:quick :flash)) (member :ender (mv-flags mv)) (eq (fighter-contact f) :hit))
-    (let* ((o (fighter-opp f)) (opener (kit-command-move (fighter-kit f) (if (eq (mv-kind mv) :quick) :q :f)))
-           (push (and opener (- (+ (mv-reach opener) *ender-push*) (fighter-dist f)))))
-      (when (and push (plusp push) o (entity-alive-p o) (eq (fighter-state (fighter o)) :stun))
-        (multiple-value-bind (mb ma) (push-apart e o push *ender-push-frames*)
-          (clog "~a ender push ~a ~,1f m (attacker ~,1f)" (side-name e) (mv-name mv) mb ma))))))
+(defun ender-push (e o mv)
+  "E's J / K string ender MV (J3 / K3) just hit O: O is pushed out of the reach of E's J1 (after J3) or K1 (after K3) --
+its reach + its own lunge + O's body + *ENDER-PUSH* (the user 2026-10-02: a restarted string must not reach him; pushed
+at the hit). E doesn't move, unless the arena's edge holds O (PUSH-APART). What E starts off the ender chases him
+(START-MOVE: FIGHTER-END-CHASE)."
+  (let* ((f (fighter e)) (opener (kit-command-move (fighter-kit f) (if (eq (mv-kind mv) :quick) :q :f)))
+         (push (and opener (- (+ (mv-reach opener) (mv-slide opener) (body-hurt-r (model-body (model o))) *ender-push*)
+                              (fighter-dist f)))))
+    (when (and push (plusp push))
+      (multiple-value-bind (mb ma) (push-apart e o push *ender-push-frames*)
+        (clog "~a ender push ~a ~,1f m (attacker ~,1f)" (side-name e) (mv-name mv) mb ma)))))
 
 (defun move-step (e f vp)
   "Advance the current move one frame: its pre-strike phase, or the move proper."
@@ -571,11 +580,20 @@ restarted string has to walk in again). E doesn't move, unless the arena's edge 
       ((:aura :dash :follow) (if (eq (mv-kind mv) :kikon) (kikon-rush-step e f mv) (breaker-phase-step e f vp mv)))
       (t (main-phase-step e f vp mv)))))
 
+(defun rush-dash-max (f mv)
+  "The rush MV's dash frames: its module's :dash-max, at least *ENDER-O-DASH* for an O ender off a J3 / K3 that pushed
+him away (FIGHTER-END-CHASE; the user 2026-10-02: K3 -> O whiffed), so it reaches him."
+  (if (fighter-end-chase f) (max *ender-o-dash* (rush-param mv :dash-max)) (rush-param mv :dash-max)))
+(defun rush-dash-speed (f mv)
+  "The rush MV's dash speed: its module's :speed, at least *ENDER-O-SPEED* off a pushing ender (RUSH-DASH-MAX)."
+  (if (fighter-end-chase f) (max *ender-o-speed* (rush-param mv :speed)) (rush-param mv :speed)))
+
 (defun skip-aura (e f)
   "The O ender (docs/DUEL_STRINGS.md §2.4): the Kikon rush just started off a link-3 hit skips its aura: its strike
 at once within *KIKON-TRIGGER* (or a module with no dash), else its dash."
   (let ((mv (fighter-move f)))
-    (if (eq (kikon-rush-next-phase :aura 0 (fighter-dist f) :aura 0 :dash-max (rush-param mv :dash-max)) :strike)
+    (if (and (not (fighter-end-chase f))                    ; (off a pushing ender: always the dash, he is sliding away)
+             (eq (kikon-rush-next-phase :aura 0 (fighter-dist f) :aura 0 :dash-max (rush-dash-max f mv)) :strike))
         (enter-main e f mv)
         (progn (setf (fighter-phase f) :dash (fighter-hold f) 0) (emit :rush-dash e)))))
 

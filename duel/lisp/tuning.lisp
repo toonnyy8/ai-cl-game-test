@@ -91,12 +91,17 @@ share of its recovery is left, so a hit doesn't leave its owner open (GUARD-CANC
   "ASSIST (the user, 2026-10-01; docs/DUEL_ASSIST.md): a move the assist pressed deals this x its damage (its Hoho is never
 perfect): playing it by hand still pays.")
 (defparameter *assist-tag-frames* 45 "Frames the AUTO tag shows over a fighter after the assist pressed for him.")
-(defparameter *ender-push* 0.3
-  "A J / K string's ender (J3 / K3) that hit and ends the string (its move ends, or a guard cancel, no follow-up started)
-pushes its still-reeling victim out of the attacker's J1 reach (J3) / K1 reach (K3) + this many metres; the attacker
-doesn't move (the user 2026-10-02: a restarted string has to walk in again; the O ender, L, SP2 and ORANGE off it start
-before, so they still connect: ENDER-PUSH) ...")
+(defparameter *ender-push* 0.05
+  "A J / K string's ender (J3 / K3) that hits pushes its victim at once out of the attacker's J1 (J3) / K1 (K3) reach:
+that move's reach + its lunge (:slide) + the victim's body + this many metres (his walk-in while both recover); the
+attacker doesn't move (the user 2026-10-02: J1 / K1 must not reach him straight away). What the attacker starts off the
+ender (the O ender's dash, L, SP, ORANGE's restart) chases him (FIGHTER-END-CHASE) ...")
 (defparameter *ender-push-frames* 8 "... over this many frames.")
+(defparameter *ender-o-dash* 24 "The O ender off a pushing J3 / K3 dashes at least this many frames ...")
+(defparameter *ender-o-speed* 16.0 "... at least this fast (m/s), and on while he still slides (KIKON-RUSH-STEP): it reaches him.")
+(defparameter *ender-chase-max* 40.0
+  "A move started off a pushing J3 / K3 (L, SP, ORANGE's J1) chases him this fast at most (m/s): the follow-ups start as
+the hitstop ends, while he is still being pushed (the user 2026-10-02: K3 -> O whiffed).")
 (defparameter *string-pull-to* 0.7
   "A string's opener (J1 / K1) that HITS dashes its attacker in to this distance from his victim (the user 2026-10-02: the
 links no longer chase, so a hit brings them point-blank; a block or a whiff never does) ...")

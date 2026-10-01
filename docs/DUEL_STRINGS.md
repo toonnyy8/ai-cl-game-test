@@ -367,6 +367,51 @@ link 3 1122 (J3 612, K3 510); 331 O enders (red always, else 0.15 or the cup's);
 28.6, as before the strings; KK 43.3, 35.8 before: Kenpachi's KKK and his SP2 off link 3). The G2 reference `duel-cvc-yk.json` (seed 7) ends
 `duel -> RESULTS winner P2 konpaku 0-3 ticks 7123 secs 118.7` (after §11's chase: `winner P2 konpaku 0-1 ticks 7365 secs 122.8`).
 
+## 16. The push at the ender's hit, just out of reach; the follow-ups chase (the user, 2026-10-02)
+
+The user, after trying §15:
+
+> 萊醬你推的距離太短了， J1 K1 都還是能直接打中，然後果然還是設計成一打完就推開好了。其他的連段設置就再麻煩你調整囉~
+>
+> 不能設成剛好在範圍外面嗎？ / 我發現 K3 反而接不上 O 了 / 內戰的數據超時沒關係
+
+**What changed from §15:**
+
+- **The push comes at J3's / K3's hit.** `ENDER-PUSH` is called from `APPLY-HIT`, no longer at the string's end.
+- **The push is just out of reach.** The victim goes to the attacker's J1 / K1 reach + that move's own lunge (`:slide`)
+  + the victim's body radius (hurt-r) + `*ender-push*` (0.05 m). §15 used reach + 0.3 m and left out the lunge and the
+  body, so J1 / K1 still reached. Pushes measured: J3 0.6–2.0 m, K3 2.3–3.1 m.
+- **Moves started off a pushing ender chase him.** `START-MOVE` sets `FIGHTER-END-CHASE` for a move started while the
+  old one was a J / K ender that hit, or for ORANGE's restart.
+  - In its startup, such a move chases at up to `*ender-chase-max*` (40 m/s): L, SP2, the restarted J1.
+  - The O ender always takes its dash, even inside the trigger range (`SKIP-AURA`). The dash runs at least
+    `*ender-o-dash*` (24 f) at `*ender-o-speed*` (16 m/s) or faster, and goes on while the victim still slides
+    (`RUSH-DASH-MAX`, `RUSH-DASH-SPEED`).
+  - The bug the user found: the follow-ups start as the hitstop ends, the same step the 8-frame push starts. TENCHI
+    took its strike at 0.72 m and swung at a man sliding 3.1 m away.
+- **The CPU.** ORANGE's restart (`AI-CHAIN-FOLLOW-P`) accepts J1 reach + 2.0 m, because the restart chases.
+- **Edge pushes and mirror matches.** `PUSH-APART` still pushes the attacker when the arena's edge holds the victim. The
+  user: mirror matches may run over the median ceiling.
+
+**Measured (11 CPU matches):**
+
+| Follow-up off the ender | Connected | Before the chase fix |
+|---|---|---|
+| O after K3 | 29 of 31 (no-push baseline 35 of 37) | 22 of 27 |
+| O after J3 | 21 of 31 | — |
+| L / SP / ORANGE restart | 25 / 17 / 11 hits, 5 whiffs | — |
+
+- The O-after-J3 misses were BLUE bursts and perfect Hohos.
+- The CPU's J1 stun follow-up now whiffs, 20 times: the restart no longer reaches.
+
+**Gates:**
+
+- All 15 pairings K.O., 20-seed medians 147.5–210.2 s; SR 196.1 s and IR 204.2 s at 60 seeds.
+- The never-awaken A/B is >= 21.
+- G2: yy P2 0-2 157.4 s, yk P1 4-0 119.1 s, kk P1 1-0 181.7 s.
+- The masher's wins: HARD 28 %, NORMAL 71 %; with AUTO GUARD ALWAYS 59 % / 93 %. Both are higher than in §15 (21 % /
+  59 %).
+
 ## 15. Close in on the opener's hit, push out at the end (the user, 2026-10-02)
 
 The user, in four messages:

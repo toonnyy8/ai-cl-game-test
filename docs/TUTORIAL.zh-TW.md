@@ -549,7 +549,7 @@ Kikon、覺醒、K.O. 都有最長約 2 秒的過場。過場很容易變成規�
 驗證方法：每 600 步印一行 `duel hash`（`state-hash-line`，`duel/lisp/debug.lisp` 第 83～96 行，位置、朝向、每個量表、上一次 Kikon 突進值幾個魂魄、電腦的 heat）。`tests/scripts/duel-cvc-yk.json` 用種子 7 讓兩個電腦打完一場，最後一行一定是：
 
 ```
-duel -> RESULTS winner P2 konpaku 0-1 ticks 8081 secs 134.7
+duel -> RESULTS winner P1 konpaku 4-0 ticks 7147 secs 119.1
 ```
 
 （2026-10-01 完美 Hoho 的前置窗 8 → 12 幀之後，YK 這一場變了；之前是 `winner P1 konpaku 7-0 ticks 9328 secs 155.5`。）
@@ -615,6 +615,10 @@ duel -> RESULTS winner P2 konpaku 0-1 ticks 8081 secs 134.7
 - **劍八沒變紅，被砍中，O 還按著**：一樣擊退、山本一樣衝進來，但劍八只踉蹌 16 幀（`*kikon-follow-stun*`），第二刀在他能動之後 12 幀才到（`*kikon-follow-gap*`）：衝刺中按住防禦就擋下（`:blocked`，不扣魂魄），也可以閃步或 Hoho。沒擋住，第二刀的 `kikon-outcome` 看到 FOLLOW 就回 `:kikon`，之後同上。
 - **劍八在閃步或 Hoho 的無敵幀裡**：`defender-state` 回 `:invuln`，`resolve-contact` 回 NIL，刀揮空，山本吃 30 幀的揮空硬直。
 - **連段打完的 O 收尾**（第三段 J3／K3 打中之後、還在取消視窗內按 O）：路線從 `main-phase-step` → `move-commands`（`fighter.lisp` 第 463～495 行）的 `:kikon` 那一格開始，`skip-aura` 跳過瞄準直接出刀（炎上沒有衝刺，所以當場就砍），其餘一樣。只有第三段打中才行：第三段被擋、揮空、停在第二段，或單發、SP、Breaker，都不能再取消成 O（2026-09-27 使用者的決定）。
+- **推開改在 J3／K3 打中時（2026-10-02 第二版）**：`ender-push` 改由 `apply-hit` 在打中當下呼叫，推到攻擊方 J1／K1 的招式距離＋該招自己的衝刺（`:slide`）＋對手身體半徑＋0.05 公尺（`*ender-push*`），也就是「剛好在範圍外」。從 J3／K3 接出去的招（`fighter-end-chase`）會追上去：
+  - L、SP2、ORANGE 重開的 J1：出招前搖的追擊速度上限是 40 m/s（`*ender-chase-max*`）。
+  - O 收尾：一定先衝刺（`skip-aura`）；衝刺至少 24 幀、每秒至少 16 公尺，而且對手還在滑動時會繼續衝（`rush-dash-max`／`rush-dash-speed`）。
+  - 使用者發現 K3 → O 接不上，原因是接續招在打擊停頓結束時就開始，那時推開才剛開始；O 突進在 0.72 公尺就直接揮刀，對手卻被推開了 3.1 公尺。
 - **連段的貼身與推開**（2026-10-02 使用者的決定，取代下一條的追擊）：
   - J／K 的接續段不再往前追。改成連段第一段（`kit-command-move` 的 `:q`／`:f`，而且不是接續段）**打中**時，攻擊方在 6 幀內衝到距離對手 0.7 公尺（`*string-pull-to*`，寫在 `apply-hit`）；被擋或揮空都不會靠近。
   - J3／K3（`:ender`）打中，而且收招結束或防禦取消時都沒有接任何招（`ender-push`，在 `main-phase-step` 裡），還在硬直的對手會被推到攻擊方 J1（J3）或 K1（K3）的距離外再多 0.3 公尺（`*ender-push*`）。O 收尾、L、SP2、ORANGE 都在這之前開始，所以照樣接得上。

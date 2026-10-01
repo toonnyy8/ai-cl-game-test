@@ -229,14 +229,14 @@ leaves a gap (Step / Hoho yes, J1 no)."
     (and contact (< sf total)
          (if (eq contact :hit) (>= sf (+ s a)) (>= sf (- total *chain-lead*))))))
 
-(defun string-chase-speed (d reach left)
+(defun string-chase-speed (d reach left &optional (cap *chase-max*))
   "The follow-up link's chase (docs/DUEL_STRINGS.md §2.2): the speed (m/s, toward him) in its startup at distance D
 with LEFT frames to its hit, so it arrives *CHASE-MARGIN* inside its REACH (never nearer than *LUNGE-STOP*) exactly as
-the hit window opens: no faster than *CHASE-MAX*, 0 once he is that close. Each frame covers at most the gap left, so it
+the hit window opens: no faster than CAP (*CHASE-MAX*; *ENDER-CHASE-MAX* off a pushing ender), 0 once he is that close. Each frame covers at most the gap left, so it
 never passes or overshoots him."
   (let ((goal (max *lunge-stop* (- reach *chase-margin*))))
     (if (and (> d goal) (> left 0))
-        (min *chase-max* (* 60.0 (/ (- d goal) left)))
+        (min cap (* 60.0 (/ (- d goal) left)))
         0.0)))
 
 (defun ray-room (x z ux uz r)
