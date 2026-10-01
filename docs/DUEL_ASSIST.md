@@ -50,7 +50,7 @@ gives the buttons and how long to hold them.
 - **AUTO BREAK**: J pressed while free, with the opponent holding a guard (or Bankai West's ward) for at least
   `*ai-guard-break-hold*` (24 f) within `*ai-guard-break-range*` (3 m), not guardless, and the Breaker allowed. The J
   becomes the Breaker, held as the CPU holds it.
-- **The AUTO tag**: shown over the fighter for `*assist-tag-frames*` (45 f) after each assisted press (`HUD-HINT`). The
+- **The AUTO tag**: shown at the fighter's feet (move callouts use the space over heads) for `*assist-tag-frames*` (45 f) after each assisted press (`HUD-HINT`). The
   combat log prints "P1 assist <cmd>".
 
 ## The gate: the button-masher (`tools/assistgate.py`)

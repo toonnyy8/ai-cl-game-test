@@ -836,11 +836,11 @@ when he is red."
 
 (defun hud-hint (e h)
   "PERFECT HINT (SETTINGS, the user 2026-10-01): HOHO! at human fighter E's head while a Hoho started now would be
-perfect (PERFECT-UP-P: a free state, the Hoho affordable, PERFECT-NOW-P). ASSIST: AUTO above him for *ASSIST-TAG-FRAMES*
+perfect (PERFECT-UP-P: a free state, the Hoho affordable, PERFECT-NOW-P). ASSIST: AUTO at his feet for *ASSIST-TAG-FRAMES*
 after the assist pressed for him."
   (let ((p (pos-of e)) (v *hud-v*))
     (when (and (plusp (svref *assist-tag* (fighter-side (fighter e))))
-               (world-to-screen v (aref p 0) (+ (aref p 1) (body-hurt-h (model-body (model e))) 0.45) (aref p 2)))
+               (world-to-screen v (aref p 0) (- (aref p 1) 0.25) (aref p 2)))   ; at his feet (move callouts own the space over heads)
       (set-line (aref v 0) (aref v 1) (* (if (portrait-p) 0.03 0.038) h) *c-auto*)
       (setf (aref *bl* 7) (line-width "AUTO"))
       (brush-line "AUTO"))

@@ -1094,7 +1094,7 @@ J／K 縮短、受擊值、分身消耗三批合併後，照新的測試規則�
   - **AUTO COMBO**：J／K 打中的那一幀由 `string-reflex` 決定下一招（K 段、L、SP2、ORANGE；第三段打中紅血對手時接 O，也就是 Kikon），玩家按了 J 才替他換。
   - **AUTO BREAK**：對手在 3 公尺內守超過 0.4 秒時，J 換成 Breaker。
 
-  每次替玩家按鍵，頭上都會閃 AUTO。
+  每次替玩家按鍵，角色腳邊都會閃 AUTO（一開始畫在頭上，會和對手的招式名稱疊在一起，2026-10-02 移到腳邊）。
 - **做法**（`duel/lisp/assist.lisp`，新檔）：
   - `assist-system` 排在 `brain-system` 和 `fighter-system` 之間，借一個 CPU 腦的 `ai-command` 決定要按什麼、按多久。
   - 引擎多了 `vpad-stamp!`（按鈕已經按著也能補一次按壓）和 `vpad-hold!`，另有輸入測試。
