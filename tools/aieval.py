@@ -68,7 +68,7 @@ def main():
         for fu in cf.as_completed(futs):
             kind = futs[fu]
             (c1, c2, h, nn, d), res, (nm, kos) = fu.result()
-            side = 0 if c1 == c else 1                  # C's seat
+            side = 1 if kind == 'mash' else (0 if c1 == c else 1)   # C's seat (the masher is always P1, C's mirror too)
             if kind == 'pace':
                 secs = sorted(s for _, s, _ in res)
                 med = statistics.median(secs) if secs else 999.0
