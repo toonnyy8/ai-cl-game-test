@@ -333,12 +333,12 @@ now and then (*AI-RU-HOHO-IN* per free step). A command or NIL."
 
 ;;; ---------------------------------------------------------------- her CPU's action policy (AI v2, docs/DUEL_AI_V2.md)
 ;;; Every chance is per difficulty (EASY <= NORMAL <= HARD; NORMAL near the shipped CPU, HARD the full version).
-(defparameter *ai-ru-k-ender-l* '(:easy 0.0 :normal 0.05 :hard 0.9)
+(defparameter *ai-ru-k-ender-l* '(:easy 0.0 :normal 0.02 :hard 0.9)
   "Her K3 (the K ender, crumple) hit: the band's L chained after it (the K -> L latch: TSUKISHIRO-K, SHIMOBASHIRA, HYOSHIN,
 REIDO), per ender hit (RUKIA-AI-SP-ENDER).")
-(defparameter *ai-ru-j-ender-sp2* '(:easy 0.1 :normal 0.3 :hard 0.85)
+(defparameter *ai-ru-j-ender-sp2* '(:easy 0.1 :normal 0.15 :hard 0.85)
   "Her J3 (the J ender, stagger) hit: SHIRAFUNE off it (it chases the pushed victim), per ender hit, the bars permitting.")
-(defparameter *ai-ru-ender-o* '(:easy 0.0 :normal 0.05 :hard 0.9)
+(defparameter *ai-ru-ender-o* '(:easy 0.0 :normal 0.02 :hard 0.9)
   "An ender hit with neither of those taken: the O ender after all (it chases the pushed victim), per ender hit.")
 
 (defun rukia-ai-p (e plist)
@@ -366,15 +366,15 @@ would cash the top bar for less than REIDO). A command or NIL."
 ;;; saw (the perception delay counted) is PERFECT (combat.lisp PERFECT-NOW-P): the automatic counter, his inputs locked,
 ;;; a stunned victim behind whom she reappears, and half the flash-step back. Then she cashes the stun with her own ice.
 ;;; Every chance is per difficulty (EASY <= NORMAL <= HARD; NORMAL near the shipped CPU, HARD the full version).
-(defparameter *ai-ru-ph-breaker* '(:easy 0.0 :normal 0.1 :hard 0.95)
+(defparameter *ai-ru-ph-breaker* '(:easy 0.0 :normal 0.05 :hard 0.95)
   "An incoming Breaker / Kikon rush (aura or dash): a Hoho timed into its strike (RUKIA-AI-PERFECT-HOHO), per phase of his.")
-(defparameter *ai-ru-ph-move* '(:easy 0.0 :normal 0.05 :hard 0.8)
+(defparameter *ai-ru-ph-move* '(:easy 0.0 :normal 0.02 :hard 0.8)
   "A committed K / L / SP of his whose hit window she can still reach in time: the timed Hoho, per move of his.")
-(defparameter *ai-ru-ph-mash* '(:easy 0.0 :normal 0.05 :hard 0.8)
+(defparameter *ai-ru-ph-mash* '(:easy 0.0 :normal 0.02 :hard 0.8)
   "A J masher (AI-MASH-P) recovering from his J: the Hoho timed into the next J he will press, per J of his.")
 (defparameter *ai-ru-ph-move-fs* 60.0
   "The flash-step a Hoho on a K / L / SP of his leaves untouched below (one Hoho kept for a Breaker; a masher's J spends it all).")
-(defparameter *ai-ru-ph-cash* '(:easy 0.0 :normal 0.1 :hard 0.9)
+(defparameter *ai-ru-ph-cash* '(:easy 0.0 :normal 0.05 :hard 0.9)
   "A stunned opponent within SHIRAFUNE's line whose stun outlasts its startup (the counter of a perfect Hoho ...): SP2.")
 
 (defun rukia-ai-perfect-hoho (e b s d)
@@ -415,7 +415,7 @@ masher restarts his J as soon as his recovering one ends. A Hoho started inside 
                       (< d (+ (snap-reach s) 1.0)) (< roll (rukia-ai-p e *ai-ru-ph-mash*)))
              (go-when (- (+ (- (snap-left s) dl) (snap-s s)) *perfect-lead*) 1))))))))
 
-(defparameter *ai-ru-cash-o* '(:easy 0.0 :normal 0.05 :hard 0.9)
+(defparameter *ai-ru-cash-o* '(:easy 0.0 :normal 0.02 :hard 0.9)
   "A stun neither SHIRAFUNE (no bar) nor the band's disc L can cash, short but long enough for her O (the Shikai's ENBU
 rush: aura + its dash + S): the O, not a J string, per stun (the cash roll's share).")
 
@@ -468,11 +468,11 @@ steps out of: about one in six lands, the wave about two in three), per decision
 ;;; own ward's block is felt, no perception delay: the frozen attacker is still frozen at its f10), and a Breaker's dash
 ;;; is met by the disc (a counter-hit on the dash, docs/DUEL_RUKIA.md 4.4) instead of J1. REIDO cashes the top bar (back
 ;;; to -50), which a CRACK would empty entirely anyway.
-(defparameter *ai-ru-z-ward-reido* '(:easy 0.0 :normal 0.05 :hard 0.9)
+(defparameter *ai-ru-z-ward-reido* '(:easy 0.0 :normal 0.02 :hard 0.9)
   "Absolute zero: the ward just blocked a hit within REIDO's radius - 0.5 (the first melee one froze him): REIDO, per block.")
 (defparameter *ai-ru-z-ward-window* 24
   "Ticks after the ward's block within which she still answers it (the block's and the freeze's hitstops pass first).")
-(defparameter *ai-ru-z-anti-breaker* '(:easy 0.0 :normal 0.1 :hard 0.9)
+(defparameter *ai-ru-z-anti-breaker* '(:easy 0.0 :normal 0.05 :hard 0.9)
   "Absolute zero: a Breaker whose dash reaches REIDO's radius - 0.5 at its f10 (or its aura seen inside it): REIDO, per phase.")
 
 (defun rukia-ai-zero (e b s d)
