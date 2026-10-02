@@ -342,6 +342,13 @@ D = the perceived distance."
             (< (brain-react-roll b) (getf *ai-follow-guard-p* (brain-difficulty b) 0.85)))
        (why b :anti-kikon :guard-long))
       ((not free) nil)
+      ;; the learning CPU's neutral read (LEARN-NEUTRAL) on its own clock, before the kit's reflexes: several take the
+      ;; neutral decision over (AI v2: Yamamoto's rush veto, Rukia's zone wave, Ichigo's conversion ... reset the decision
+      ;; clock and pick themselves; Kenpachi's walk-in :WAITs, so AI-NEUTRAL's clock stops) and starved a read made inside
+      ;; AI-DECIDE. A read pressed: the decision is made (:WAIT presses nothing more)
+      ((and (brain-learn b) (learn-read-due e b s d))
+       (setf (brain-decide-t b) (ai-decide-time e b))
+       :wait)
       ;; the form's own reflexes (the kit's :ai :reflex, a character file's function: Ichigo's timed parry, Senjumaru's
       ;; weave), then the ones its opponent's kit asks of a CPU facing it (:opp-reflex)
       ((let ((h (ai-table e :reflex))) (and h (funcall h e b s d))))
@@ -505,10 +512,13 @@ more; J strings alone shouldn't crush a guard, the CPU's included); against a J 
         (vpad-stick! vp (if (<= lo d hi) (brain-strafe b) (* 0.3 (brain-strafe b)))
                      (cond ((> d hi) 1f0) ((< d lo) -1f0) (t 0f0)))
         (when (<= (decf (brain-decide-t b)) 0)
-          (setf (brain-decide-t b) (let ((n (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
-                                         (k (ai-table e :tempo)))                ; the kit's :tempo: x its interval
-                                     (if k (max 1 (round (* k n))) n)))
+          (setf (brain-decide-t b) (ai-decide-time e b))
           (ai-decide e b kit s d lo hi heat))))))
+
+(defun ai-decide-time (e b)
+  "Frames to the next neutral decision: the difficulty's *AI-THINK* + up to 40, x the kit's :tempo."
+  (let ((n (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01))))) (k (ai-table e :tempo)))
+    (if k (max 1 (round (* k n))) n)))
 
 (defun opp-guardless-p (e)
   "E's opponent can't guard (his guard gauge ran out): press him (AI-NEUTRAL, AI-DECIDE)."
@@ -536,7 +546,6 @@ its middle), guard, attack (a weighted pick from the kit's band for D), or wait.
         ((ai-pip-hurry-p e)                                ; the arm's next crack is near: spend the pip now
          (ai-attack e b kit s d heat t))
         ((and (brain-habit b) (habit-neutral e b kit d)))  ; debug: a scripted player's habit
-        ((and (brain-learn b) (learn-neutral e b s d)))    ; the learning CPU reads him (its own random stream)
         ((ai-cool-p e s d)                                 ; Rukia: hold U the frames the next colder band still needs
          (ai-press b :guard (+ 2 (temp-cool-frames (gauges-meter (gauges e)))) :act :cool)
          (setf (brain-why b) :cool))
@@ -749,7 +758,8 @@ the CPU's), kept apart from the CPUs' tables of the human.")
   (form-t 0 :type fixnum) (f-dealt 0 :type fixnum) (f-taken 0 :type fixnum)   ; the form clock
   (rng 1)
   (stats nil) (last nil)                                                      ; per counter (cmd reads paid); the last
-  (reads 0 :type fixnum) (paid 0 :type fixnum) (read-t 0 :type fixnum) (r-dealt 0 :type fixnum) (r-taken 0 :type fixnum))
+  (reads 0 :type fixnum) (paid 0 :type fixnum) (read-t 0 :type fixnum) (r-dealt 0 :type fixnum) (r-taken 0 :type fixnum)
+  (read-clock 0 :type fixnum))                                                ; frames to its next neutral read (AI-REFLEX)
 
 (defun learn-table (i &optional (tables *learn-tables*) (pg +pg-learn+))
   "Roster index I's table in TABLES (page base PG; the assist's: *ASSIST-LEARN-TABLES*): in memory, else the page's
@@ -815,6 +825,7 @@ event's counter at its onset, and run the clocks: the counter's wait, the bandit
                  (when (or (eq hs :guard) c-hit)                 ; he held guard through it / took our string
                    (learn-observe! tab sit (learn-act :guard)))
                  (setf (lrn-sit l) -1))))))
+    (when (plusp (lrn-read-clock l)) (decf (lrn-read-clock l)))   ; the neutral read's clock (AI-REFLEX)
     (when (lrn-cmd l)
       (when (plusp (lrn-delay l)) (decf (lrn-delay l)))
       (when (<= (decf (lrn-pend-t l)) 0) (setf (lrn-cmd l) nil)))
@@ -872,8 +883,26 @@ us; an SP's Hoho without flash-step is a guard): T when pressed; the read is cou
               (lrn-r-taken l) (gauges-dealt (gauges (opp-of e))))
         t))))
 
+(defun learn-neutral-due-p (e b s)
+  "A learning CPU's neutral read is due this step: its own clock (LRN-READ-CLOCK, run by LEARN-STEP) is out, both are free
+(the learner's neutral bands), no Kikon rush on a red opponent nor a pip hurry comes first (AI-DECIDE's order); no
+scripted habit."
+  (let ((l (brain-learn b)))
+    (and l (not (brain-habit b)) (<= (lrn-read-clock l) 0)
+         (member (fighter-state (fighter e)) '(:idle :run)) (member (snap-state s) '(:idle :guard :run))
+         (not (kikon-ready-p e)) (not (ai-pip-hurry-p e)))))
+
+(defun learn-read-due (e b s d)
+  "AI-REFLEX: the neutral read when due (LEARN-NEUTRAL-DUE-P; the clock's next interval *AI-THINK* + up to 40 from its own
+stream): T when it pressed."
+  (when (learn-neutral-due-p e b s)
+    (let ((l (brain-learn b)))
+      (multiple-value-bind (r st) (learn-rnd (lrn-rng l))
+        (setf (lrn-rng l) st (lrn-read-clock l) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 r))))))
+    (learn-neutral e b s d)))
+
 (defun learn-neutral (e b s d)
-  "A neutral decision (AI-DECIDE) with a learner: read him for the band he is in (its counter, T when pressed); a
+  "A neutral read (AI-REFLEX, on the learner's own clock): read him for the band he is in (its counter, T when pressed); a
 predicted Hoho is only primed (the decision goes on: the bait)."
   (declare (ignore s))
   (let ((l (brain-learn b)))
