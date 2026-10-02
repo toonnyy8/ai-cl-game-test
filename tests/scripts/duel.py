@@ -23,7 +23,7 @@
 #   diff <(grep '^duel' run1.log) <(grep '^duel' run2.log)   -> empty.
 # Reference (the hidden hit-stun tolerance and the J/K cut, 2026-09-29, docs/DUEL_DESIGN.md "Hidden hit-stun tolerance",
 # docs/DUEL_STRINGS.md): duel-cvc-yk.json (seed 7) ends
-#   duel -> RESULTS winner P1 konpaku 4-0 ticks 7147 secs 119.1    (turbo and real time alike; also after a gate)
+#   duel -> RESULTS winner P1 konpaku 1-0 ticks 8178 secs 136.3    (turbo and real time alike; also after a gate)
 #   (before the perfect Hoho's 12-frame lead, 2026-10-01: winner P1 konpaku 7-0 ticks 9328 secs 155.5)
 #   (before Kenpachi's more aggressive cup 2 / 3 CPU, 2026-09-29, docs/DUEL_NOZARASHI_V2.md: winner P1 konpaku 2-0 ticks 9636 secs 160.6)
 #   (before them, the J / K strings + the Soul Break rule + the Bankai: winner P2 konpaku 0-3 ticks 7123 secs 118.7;

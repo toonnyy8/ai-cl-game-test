@@ -456,6 +456,7 @@ steps out of: about one in six lands, the wave about two in three), per decision
 
 (defun rukia-ai-zone (e b s d)
   "Her Shikai's neutral decision at range, at HARD half the time: HAKUREN (SP1, held: AI-COMMAND). A command or NIL."
+  (declare (ignore s))
   (when (and (<= (brain-decide-t b) 1) (eq (kit-form (kit-of e)) :base) (<= 5.0 d 11.0)
              (kit-command-ok-p e :sp1) (let ((p (rukia-ai-p e *ai-ru-zone-wave*))) (and (plusp p) (< (sim-rnd01) p))))
     ;; (the next decision as AI-NEUTRAL times it; her kit has no :tempo)

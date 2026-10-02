@@ -318,7 +318,7 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P1 konpaku 4-0 ticks 7147 secs 119.1
+duel -> RESULTS winner P1 konpaku 1-0 ticks 8178 secs 136.3
 ```
 
 (The perfect Hoho's lead 8 -> 12 frames, 2026-10-01: yk changed; before it `winner P1 konpaku 7-0 ticks 9328 secs 155.5`.)
