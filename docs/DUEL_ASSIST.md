@@ -35,6 +35,9 @@ gives the buttons and how long to hold them.
   - `TO-IDLE` clears it, so a refused press doesn't mark a later move.
 - **AUTO GUARD**: the fighter is free (idle / guard / run, no input lock), and U is held for HOLD U. A hit is about to
   land when `PERFECT-NOW-P` holds: one of his hit volumes is active now or within 12 f.
+  - First, since AI v2 (2026-10-02), the form's own defensive answers: the function its kit's `:ai` names
+    `:assist-guard` (the timed anti-Breaker hit, the timed Hoho, Rukia's REIDO at zero, Ichigo's red guard, the loom's
+    Hoho through a Breaker), on the assist's brain as the CPU sees him (`AUTO-GUARD-KIT`; docs/DUEL_AI_V2.md).
   - Against his melee move, the form's parry: a kit command whose move has `:parry` and that may start (Ichigo's KESSA
     L, Yamamoto's GOKUI GAESHI).
   - Otherwise a Hoho, if allowed and the form isn't rooted.

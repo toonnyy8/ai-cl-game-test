@@ -84,7 +84,8 @@ scripted habit within the first match.
 A J or K counter is pressed only within its reach + 0.4 m, and every counter only when `kit-command-ok-p` allows it.
 Event counters are planned at the onset and pressed once the CPU is free. On his wake-up, a J / Breaker waits so that
 it meets the end of the wake-up: 30 f, less the perception delay, less ~8 f of startup. Neutral counters replace the
-neutral decision (`ai-decide`, after the Kikon and pip-hurry checks).
+neutral decision (since AI v2, 2026-10-02: on the learner's own clock in `ai-reflex`, before the kit's `:reflex`, both free,
+after the Kikon and pip-hurry checks; `learn-read-due`, docs/DUEL_AI_V2.md).
 
 ## 5. The bandit
 
