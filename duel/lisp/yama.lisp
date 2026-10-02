@@ -150,8 +150,10 @@
                (3.0 5.0 :f 1 :sig 2 :step 2 nil 2)
                (5.0 7.0 :sig 4 :sp1 1 :step 1 nil 1)
                (7.0 99.0 :sp1 4 :sig 2 :kikon 1 nil 1))                ; ENJO as a poke from range
-       :guard 0.45 :hoho 0.35 :awaken-above 0.0 :sp-cancel-bars 2 :oki :sp1-full :oki-above 0.6
-       :dash 0.25 :dash-back 0.5 :kikon-range 9.0))
+       :guard 0.45 :hoho 0.35 :awaken-above 0.0 :sp-cancel-bars 2 :o-ender 0.0 :oki :sp1-full :oki-above 0.6
+       :dash 0.25 :dash-back 0.5 :kikon-range 9.0
+       ;; the CPU's own hooks (the end of this file): the O ender only through :sp-ender (never ENJO off a J3: :o-ender 0)
+       :sp-ender yama-sp-ender :reflex yama-ai-reflex))
 
 (defkit :yamamoto :hellfire :inherit :base
   :callout "GOKUEN" :mult *hellfire-mult* :duration *hellfire-seconds* :burn *hellfire-burn* :blade (:fire 1.3)
@@ -163,7 +165,8 @@
                (1.3 3.0 :f 3 :sp2 2 :breaker 1)
                (3.0 8.0 :f 1 :sig 2 :step 2)
                (8.0 99.0 :sp1 2 :step 2))
-       :guard 0.4 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 1 :dash 0.5 :kikon-range 9.0))
+       :guard 0.4 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 1 :o-ender 0.0 :dash 0.5 :kikon-range 9.0
+       :sp-ender yama-sp-ender :reflex yama-ai-reflex))
 
 (defkit :yamamoto :bankai-east :inherit :base
   :awakening t :taken *bankai-taken* :startup-add -1 :reach-mult 1.15 :guard-to :bankai-west :gg-regen *east-gg-regen*
@@ -184,7 +187,8 @@
                (3.0 6.0 :f 1 :sp1 2 :sig 2 :step 1 nil 1)
                (6.0 99.0 :sp1 3 :step 1 nil 1))
        :guard 0.45 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 9 :dash 0.6 :dash-back 0.3 :kikon-range 9.0
-       :cancel (:sig 0.5) :low (0.4 :sig 3) :gg-low 0.3 :block-string 0.85 :sig-gg 0.6))
+       :cancel (:sig 0.5) :low (0.4 :sig 3) :gg-low 0.3 :block-string 0.85 :sig-gg 0.6
+       :sp-ender yama-sp-ender :reflex yama-ai-reflex))
 
 (defkit :yamamoto :bankai-west :inherit :bankai-east
   :taken 1.0 :guard-to nil :drop-to :bankai-east :keep (:sig :sp1) :passives (:ward :scorch)
@@ -201,7 +205,8 @@
                (3.0 6.0 :f 1 :sp1 2 :step 1 nil 2)
                (6.0 99.0 :sp1 2 :step 1 nil 2))
        :guard 0.3 :hoho 0.3 :awaken-above 0.4 :sp-cancel-bars 9 :dash 0.4 :dash-back 0.2 :kikon-range 9.0
-       :react (:flash-startup :sp1) :ward-reversal 0.35))
+       :react (:flash-startup :sp1) :ward-reversal 0.35
+       :sp-ender yama-sp-ender :reflex yama-ai-reflex))
 
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun yama-fire-wave (e)
@@ -340,6 +345,106 @@ the ground there cracks (a look) and :hands skeleton hands claw out; a :bind haz
         (let ((a (* i (/ +two-pi+ (move-param e :hands)))))
           (spawn-hand e (+ x (* 0.7 r (fwd-x a))) (+ z (* 0.7 r (fwd-z a))) (+ a +pi+) (- delay 8)))))
     (emit :sfx :ground-crack e)))
+
+;;; ================================================================ the CPU (the kit's :ai hooks; ai.lisp; docs/DUEL_AI_V2.md)
+(defun yama-dif (e p)
+  "E's CPU's chance from P, a plist by difficulty (:easy :normal :hard); no brain (an assisted human): NORMAL's."
+  (let ((b (brain e))) (getf p (if b (brain-difficulty b) :normal) (getf p :normal))))
+
+(defparameter *yama-breaker-step* 0.16 "A Breaker's dash per frame (9.6 m/s, *BREAKER-SPEED-MIN* .. -MAX): what the delay hides.")
+
+(defun yama-ai-reflex (e b s d)
+  "Every form's :reflex (ai.lisp AI-REFLEX, free states, before the generic answers): YAMA-ANTI-BREAKER, then
+YAMA-STUN-SP. A command or NIL."
+  (or (yama-anti-breaker e b s d) (yama-stun-sp e b s d) (yama-rush-veto e b s d)))
+
+(defparameter *yama-rush-far* 5.0
+  "A red opponent answers a rush he sees within *AI-ANTI-BREAKER-RANGE* (J1 beyond 1.8 m, a side Step inside): TENCHI
+from farther out is on him before he sees it in that range.")
+
+(defun yama-rush-frames (e d)
+  "Frames from the O press to his rush's strike at distance D: the aura, the dash (TENCHI 36 m/s; ENJO none), the startup."
+  (let* ((mv (kit-command-move (kit-of e) :kikon)) (sp (/ (rush-param mv :speed) 60.0)))
+    (+ (rush-param mv :aura) (mv-s mv)
+       (if (plusp (rush-param mv :dash-max))
+           (min (rush-param mv :dash-max) (ceiling (max 0.0 (- d (mv-reach mv))) sp))
+           0))))
+
+(defun yama-rush-ok-p (e b s d)
+  "Does the rush on a red opponent land: TENCHI from beyond *YAMA-RUSH-FAR*, ENJO beyond its lane's 1 m start, or either
+before he is free (a stun or a move's recovery)."
+  (let ((dash (plusp (rush-param (kit-command-move (kit-of e) :kikon) :dash-max))))
+    (or (>= d (if dash *yama-rush-far* 1.5))
+        (and (or (eq (snap-state s) :stun)
+                 (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s))))
+             (>= (- (snap-left s) (brain-delay b)) (yama-rush-frames e d))))))
+
+(defun yama-rush-veto (e b s d)
+  "The rush on a red opponent only where it lands (YAMA-RUSH-OK-P). The generic rush, at a neutral decision or on his
+stun, from 1-5 m was answered more than it hit (his J1 counter-hit 2.5 : 1 at 2-3 m; a side Step whiffed it within 1.8 m).
+On his stun: J1's follow-up if it is in reach and time, else wait (:wait presses nothing); at a neutral decision: that
+decision's attack pick instead (AI-ATTACK). Chance by difficulty; a command or NIL."
+  (when (and (kikon-ready-p e) (< d (ai-table e :kikon-range 7.0)) (kit-command-ok-p e :kikon) (not (ai-sb-finish-p e))
+             (not (yama-rush-ok-p e b s d)))
+    (let ((p (yama-dif e '(:easy 0.0 :normal 0.0 :hard 0.9))) (q (kit-command-move (kit-of e) :q)))
+      (cond ((eq (snap-state s) :stun)
+             (when (< (brain-react-roll b) p)
+               (if (and (< d (+ (mv-reach q) 0.6)) (>= (- (snap-left s) (brain-delay b)) (mv-s q)))
+                   (why b :follow-up :q)
+                   :wait)))
+            ((and (<= (brain-decide-t b) 1) (member (fighter-state (fighter e)) '(:idle :run))
+                  (not (member (snap-state s) '(:down :wakeup :hoho :air))) (plusp p) (< (sim-rnd01) p))
+             (setf (brain-decide-t b) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
+             (ai-attack e b (kit-of e) s d (brain-heat b) nil)
+             nil)))))
+
+(defun yama-anti-breaker (e b s d)
+  "J beats I on his own short J. The generic answer presses J1 once the dash is seen within J1's reach + 1.4 m, but the
+dash ran on through the perception delay and Yamamoto's J1 (0.96 m, 9 f) then met the strike late (the Shikai's anti-Breaker
+J1 won 32 of ~190, the grab the rest). Here J1 goes when its active frames meet him: his real distance now (seen, minus
+what the dash ran unseen, *YAMA-BREAKER-STEP* a frame), the aura left, then J1's reach + 0.3 (his body) reached by the end
+of J1's active frames and his strike (the trigger range, then its startup) not out before J1's. Out of the aura too: a
+Guard Break's Breaker starts within 3 m, and its dash is in J1's reach before the CPU sees it run."
+  (let* ((kit (kit-of e)) (q (kit-command-move kit :q)))
+    (when (and q (eq (snap-kind s) :breaker) (member (snap-phase s) '(:aura :dash)) (kit-command-ok-p e :q))
+      (let* ((el (- *match-tick* (snap-start s)))                        ; real frames since the phase we see began
+             (dash (eq (snap-phase s) :dash))
+             (aura (if dash 0 (max 0 (- *breaker-aura* el))))            ; its aura left
+             (ran (if dash (min el (brain-delay b)) (max 0 (- el *breaker-aura*))))   ; his dash since what we see
+             (x (- d (* ran *yama-breaker-step*)))                        ; his real distance now
+             (in (+ aura (/ (max 0.0 (- x (mv-reach q) 0.3)) *yama-breaker-step*)))   ; frames till J1 reaches him
+             (strike (+ aura (/ (max 0.0 (- x *breaker-trigger*)) *yama-breaker-step*) *breaker-startup*)))
+        (and (<= in (+ (mv-s q) (mv-a q) -2)) (< (+ (mv-s q) 1) strike)
+             (< (brain-react-roll b) (yama-dif e '(:easy 0.0 :normal 0.0 :hard 0.85)))
+             (why b :anti-breaker :q))))))
+
+(defun yama-stun-sp (e b s d)
+  "A stunned opponent (Guard Break, a crumple, a knockback) beyond J1's follow-up reach (the generic follow-up's J1 + 0.6 m)
+but in the fire's: the form's paid SP if it lands before he is free (the Shikai's / Hellfire's SP2 cone, 4 m; East's
+KYOKUJITSUJIN, the blade then the 9 m sheet), one roll per stun (the reaction roll). A command or NIL."
+  (let* ((kit (kit-of e)) (q (kit-command-move kit :q))
+         (sp (case (kit-form kit) (:bankai-east :sp1) ((:base :hellfire) :sp2)))
+         (mv (and sp (kit-command-move kit sp))))
+    (when (and mv q (eq (snap-state s) :stun)
+               (or (> d (+ (mv-reach q) 0.6))      ; (close: East's sheet over the J follow-up, a bar kept for the confirm)
+                   (and (eq sp :sp1) (>= (floor (gauges-reiatsu (gauges e)) *reiatsu-bar*) 2))) (< d (if (eq sp :sp1) 6.0 3.8))
+               (kit-command-ok-p e sp) (>= (- (snap-left s) (brain-delay b)) (+ (mv-s mv) (if (eq sp :sp1) 8 2)))
+               (< (brain-react-roll b) (yama-dif e '(:easy 0.0 :normal 0.0 :hard 0.7))))
+      (why b :stun-sp sp))))
+
+(defun yama-sp-ender (e kit)
+  "Every form's :sp-ender (ai.lisp STRING-REFLEX: a J3 / K3 that hit, no link after it, the O ender not taken): confirm the
+pushed victim with the form's best chaser (DUEL_STRINGS §16: L, SP and the O ender off a pushing ender chase him): the
+paid SP when its bars are there (Hellfire's NADEGIRI 240, East's KYOKUJITSUJIN 90 + 130, the Shikai's TAIMATSU 120),
+else the O ender (ENJO / TENCHI, cooldown 90), but never ENJO off a J3: it has no dash, and 20 f after J3's short
+stagger he guards it (97 of 113 blocked, -14). Chance by difficulty; a command or NIL."
+  (let* ((sp (case (kit-form kit) ((:base :hellfire) :sp2) (:bankai-east :sp1)))   ; (West's SP1 is the parry)
+         (mv (fighter-move (fighter e))) (o (kit-command-move kit :kikon)))
+    (cond ((and sp (kit-command-ok-p e sp kit) (< (sim-rnd01) (yama-dif e '(:easy 0.1 :normal 0.3 :hard 0.95)))) sp)
+          ((and o (kit-command-ok-p e :kikon kit t) (not (ai-sb-finish-p e))
+                (not (and (eq (mv-kind mv) :quick) (eql 0 (rush-param o :dash-max))))   ; (ENJO off J3)
+                (< (sim-rnd01) (yama-dif e '(:easy 0.05 :normal 0.15 :hard 0.85))))
+           :kikon))))
 
 ;;; ================================================================ cinematics
 ;;; The grammar of every cinematic is in cinema.lisp (docs/STYLE_STORM_DESIGN.md §5); Yamamoto (white haori) goes on

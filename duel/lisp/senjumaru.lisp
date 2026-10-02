@@ -277,8 +277,9 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
        :guard 0.4 :hoho 0.3 :dash 0.7 :dash-back 0.1 :block-string 0.8 :o-ender 0.3 :l-after-k 0.3 :sp-cancel-bars 9   ; (no SP2
                                                 ; cancel: 傘 is no combo ender; the bars go to the soldier and the umbrella)
        :kikon-range 7.7 :react (:projectile :sp2)
-       :awaken (:min-taken 150)
-       :hari (:min 4 :hurry 40) :reflex senju-ai-reflex :sig-hold senju-sig-hold))
+       :awaken (:min-taken 150) :awaken-above 1.01   ; (the generic awakening off, free and combo-break alike: SENJU-AWAKEN
+                                                ; awakens on :awaken's rule below a share by difficulty, :awaken-below)
+       :hari (:min 4 :hurry 40) :reflex senju-ai-reflex :sig-hold senju-sig-hold :sp-ender senju-base-ender))
 
 (defparameter *tsuji-ai*
   '(:intents (:approach 1 :pressure 1 :zone 4 :defend 2)
@@ -824,13 +825,189 @@ nothing from a hit, a block or his blade, and his Reiatsu / flash-step gains are
 
 ;;; ================================================================ AI (the kit's :reflex / :opp-reflex / :sig-hold)
 
+;;; The action policy v2 (docs/DUEL_AI_V2.md; research_notes/ai-v2-drsi/senjumaru): every chance below by difficulty
+;;; (SENJU-DP: EASY <= NORMAL <= HARD, NORMAL near the shipped CPU, HARD the full version).
+;;;   enders    a J3 / K3 that hit pushes him out: the O ender (it always dashes after him) at :o-ender-p; else, after K3,
+;;;             the stitches' L (WARUI KUSE, its K copy chases) with >= 3 stitches. The loom: SP1 first (SENJU-SP-ENDER).
+;;;   punish    a recovery seen too far for J1: K1 (its line reaches 2.9 m, the loom's 3.8 m) when it lands in time, else the
+;;;             O (the flash step: aura 6 + the dash at 26 m/s + S 8; the loom's lane: aura 8 + S 20) within its range
+;;;   stitches  the spikes are unguardable: L with >= 3 stitches on a guard, a recovery or a reel he can't Hoho out of
+;;;             before f10; against a J masher (AI-MASH-P: he never steps out) with >= 2
+;;;   breaker   a guard held past *AI-GUARD-BREAK-HOLD* up close: SAIDAN at :break-p (the generic roll's 0.4 at NORMAL);
+;;;             his own Breaker coming: the O meets it in its aura / dash (:anti-breaker-p; her J1 only by frames)
+;;;   neutral   the Shikai's decisions at :neutral-p from *SENJU-NEUTRAL* (Breaker / K1 / O over J trades); the loom
+;;;             keeps the kit's bands and its SP1 pairs (closer loom bands and fewer pairs both measured worse)
+;;;   round 2   the Shikai's neutral leans on J1 up close (its neutral K1 / O lost more than they dealt, J1 netted +100 a
+;;;             use); the loom's endgame: Hoho / Step his Breaker's dash (her J1 answer lost the trade), and the lane's
+;;;             3-Konpaku Kikon rush on a red foe at :red-rush-p
+(defparameter *senju-dp*
+  '(:o-ender-p (:easy 0.0 :normal 0.05 :hard 0.85)
+    :l-ender-p (:easy 0.0 :normal 0.05 :hard 0.7)
+    :punish-p (:easy 0.0 :normal 0.1 :hard 0.8)
+    :hari-p (:easy 0.0 :normal 0.1 :hard 0.85)
+    :break-p (:easy 0.3 :normal 0.4 :hard 0.7)
+    :anti-breaker-p (:easy 0.0 :normal 0.1 :hard 0.85)
+    :neutral-p (:easy 0.0 :normal 0.0 :hard 0.7)
+    ;; the set-play conversion (cell b1a0, stacked in b0a1): SENJU-SETPLAY-REFLEX, SENJU-OKI, the loom's TACHINAOSHI ender
+    :follow-p (:easy 0.0 :normal 0.15 :hard 0.9)
+    :escort-p (:easy 0.0 :normal 0.1 :hard 0.8)
+    :oki-p (:easy 0.0 :normal 0.2 :hard 0.9)
+    :tachi-p (:easy 0.3 :normal 0.5 :hard 0.9)
+    ;; the late awakening (cell b0a2): awaken only once her Reishi share is at most this (1.0 = the shipped rule)
+    :awaken-below (:easy 1.0 :normal 1.0 :hard 0.28)
+    ;; the loom's endgame (round 2): Hoho / Step his Breaker's dash (SENJU-POLICY-REFLEX)
+    :loom-anti-breaker-p (:easy 0.0 :normal 0.1 :hard 0.85)
+    ;; the loom's Kikon rush on a red foe at a neutral decision (round 2; the generic *AI-KIKON-P* 0.5 stays under it)
+    :red-rush-p (:easy 0.0 :normal 0.0 :hard 0.8))
+  "Her CPU's policy chances by difficulty (SENJU-DP).")
+
+(defparameter *senju-neutral*
+  '((0.0 1.7 :q 6 :breaker 2)
+    (1.7 2.6 :breaker 2 :f 1 nil 2)
+    (2.6 7.5 :kikon 1 :sp1 1 nil 3))
+  "The Shikai's neutral bands of the policy (:neutral-p of the decisions): the Breaker on the guard every CPU holds, K1
+and the O where J1 can't reach; beyond 7.5 m the kit's own bands.")
+
+(defun senju-dp (b key)
+  "Policy chance KEY of *SENJU-DP* at brain B's difficulty."
+  (let ((p (getf *senju-dp* key))) (getf p (brain-difficulty b) (getf p :normal 0.0))))
+
+(defun senju-o-arrive (mv d)
+  "Frames her O rush MV takes to strike from D m: its aura, the dash to its strike reach, its startup."
+  (+ (rush-param mv :aura) (mv-s mv)
+     (if (plusp (rush-param mv :speed)) (ceiling (* 60 (max 0.0 (- d (mv-reach mv)))) (rush-param mv :speed)) 0)))
+
+(defun senju-policy-reflex (e b s d)
+  "The policy's free-state reflexes (above): the far punish, the stitches on a hit he can't leave, the long guard's
+Breaker. A command or NIL."
+  (let* ((f (fighter e)) (kit (fighter-kit f)) (q (kit-command-move kit :q)) (k (kit-command-move kit :f))
+         (o (kit-command-move kit :kikon)) (left (- (snap-left s) (brain-delay b))))
+    (cond
+      ;; his Breaker's aura / dash coming (it strikes from 0.95 m, under her J1's reach only by frames): the Shikai's O
+      ;; meets it from up to 6 m (aura 6 + the flash step + S 8); the loom's lane (aura 8 + S 20) only from 3 m out
+      ((and o (eq (snap-kind s) :breaker) (member (snap-phase s) '(:aura :dash)) (< d 6.0)
+            (or (hari-form-p e) (> d 3.0)) (kit-command-ok-p e :kikon)
+            (< (brain-react-roll b) (senju-dp b :anti-breaker-p)))
+       (why b :anti-breaker-o :kikon))
+      ;; the loom (round 2): his Breaker's dash inside the lane's 3 m: Hoho through it, else Step aside (the generic J1
+      ;; answer, her short needle pressed through the perception delay, lost the trade: Rukia's Breaker -104 a use)
+      ((and (not (hari-form-p e)) (eq (snap-kind s) :breaker) (eq (snap-phase s) :dash) (< d 6.0)
+            (< (brain-react-roll b) (senju-dp b :loom-anti-breaker-p)))
+       (let ((g (gauges e)))
+         (why b :loom-anti-breaker
+              (if (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)) :hoho :side-step))))
+      ;; a neutral decision due (AI-NEUTRAL's clock), the Shikai: the policy's own bands (*SENJU-NEUTRAL*) at :neutral-p
+      ;; (the loom keeps the kit's: its zoning bands measured better than close ones)
+      ((and (hari-form-p e) (member (fighter-state f) '(:idle :run)) (<= (brain-decide-t b) 1)
+            (not (and (eq (brain-act b) :dash) (plusp (brain-press-left b))))
+            (not (member (snap-state s) '(:down :wakeup :hoho)))
+            (band-weights *senju-neutral* d)
+            (< (sim-rnd01) (senju-dp b :neutral-p)))
+       (setf (brain-decide-t b) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
+       (let ((c (apply #'weighted-pick (sim-rnd01) (band-weights *senju-neutral* d))))
+         (and c (kit-command-ok-p e c)
+              (or (not (member c '(:q :f))) (<= d (+ 0.2 (mv-reach (kit-command-move kit c)))))
+              (not (and (eq c :kikon) (ai-sb-finish-p e)))
+              (why b :neutral-v2 c))))
+      ;; a neutral decision due, the loom, he is red within the lane's range (round 2): the lane's Kikon (3 Konpaku;
+      ;; it netted +70 a use in the loom against every opponent) at :red-rush-p (the generic roll: *AI-KIKON-P*)
+      ((and (not (hari-form-p e)) o (member (fighter-state f) '(:idle :run)) (<= (brain-decide-t b) 1)
+            (kikon-ready-p e) (not (ai-sb-finish-p e)) (< d (ai-table e :kikon-range 7.0))
+            (not (member (snap-state s) '(:down :wakeup :hoho))) (kit-command-ok-p e :kikon)
+            (< (sim-rnd01) (senju-dp b :red-rush-p)))
+       (setf (brain-decide-t b) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
+       (why b :red-rush :kikon))
+      ;; a recovery out of J1's reach: K1, else the O
+      ((and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s)) (< (snap-left s) 99)
+            (>= d (+ (mv-reach q) 0.4)) (< (brain-react-roll b) (senju-dp b :punish-p)))
+       (cond ((and k (< d (+ (mv-reach k) 0.2)) (>= left (+ (mv-s k) 1)) (kit-command-ok-p e :f)) (why b :far-punish :f))
+             ((and o (< d (ai-table e :kikon-range 7.0)) (>= left (+ (senju-o-arrive o d) 1)) (kit-command-ok-p e :kikon)
+                   (not (ai-sb-finish-p e)))
+              (why b :far-punish :kikon))))
+      ;; the stitches: unguardable, so a guard, a recovery or a reel is where they land
+      ((and (hari-form-p e) (>= (hari e) 2) (kit-command-ok-p e :sig)
+            (or (and (>= (hari e) 3)
+                     (or (member (snap-state s) '(:guard :guard-hit))
+                         (and (member (snap-state s) '(:move :stun)) (< (snap-left s) 99) (>= left 12))))
+                (ai-mash-p b))
+            (< (brain-hoho-roll b) (senju-dp b :hari-p)))
+       (why b :hari-sure :sig))
+      ;; a long guard up close: SAIDAN (the generic roll's key: one roll per guard)
+      ((and (eq (snap-state s) :guard) (>= (snap-guard-t s) *ai-guard-break-hold*) (< d *ai-guard-break-range*)
+            (/= (brain-break-key b) (snap-start s)) (kit-command-ok-p e :breaker))
+       (setf (brain-break-key b) (snap-start s))
+       (and (< (sim-rnd01) (senju-dp b :break-p)) (why b :guard-break :breaker))))))
+
+(defun senju-soldier-live-p (e)
+  "Her Divine Soldier stands, walks or strikes (not fading)."
+  (let ((id (sjs-soldier (sj e))))
+    (and (entity-alive-p id) (let ((hz (hazard id))) (and hz (member (sjh-phase (hazard-data hz)) '(:rise :walk :tell)))))))
+
+(defun senju-setplay-reflex (e b s d)
+  "The set-play policy's reflexes (above): FOLLOW returns a command; ESCORT only moves the intent (NIL)."
+  (let* ((kit (kit-of e)) (q (kit-command-move kit :q)) (k (kit-command-move kit :f)) (o (kit-command-move kit :kikon))
+         (left (- (snap-left s) (brain-delay b))))
+    (cond
+      ((and (eq (snap-state s) :stun) (< (snap-left s) 99) (>= d (+ (mv-reach q) 0.6))   ; (closer: the generic Q follow-up)
+            (not (ai-mash-p b)) (< (brain-react-roll b) (senju-dp b :follow-p)))
+       (cond ((and k (<= d (+ (mv-reach k) 0.1)) (>= left (+ (mv-s k) 1)) (kit-command-ok-p e :f)) (why b :set-follow :f))
+             ((and o (<= d (ai-table e :kikon-range 7.0)) (>= left (+ (senju-o-arrive o d) 1)) (kit-command-ok-p e :kikon)
+                   (not (ai-sb-finish-p e)))
+              (why b :set-follow :kikon))
+             ;; nothing of hers reaches him in time: what is stuck in him or laid under him does (the spikes from f10;
+             ;; TACHINAOSHI's first hank at f8 + the combo cut's 10 f unfold)
+             ((and (hari-form-p e) (>= (hari e) 2) (>= left 11) (kit-command-ok-p e :sig)) (why b :set-follow :sig))
+             ((and (form-hank (kit-form kit)) (>= left 19) (kit-command-ok-p e :sp1)
+                   (multiple-value-bind (a2 b2) (tachi-hanks (form-hank (kit-form kit))) (or (hank-hits-p a2) (hank-hits-p b2))))
+              (why b :set-follow :sp1))))
+      ((and (member (snap-state s) '(:down :wakeup)) (<= 2.5 d *hank-range*) (< (brain-react-roll b) (senju-dp b :oki-p)))
+       (senju-oki e b s kit))
+      ((and (> d 2.4) (senju-soldier-live-p e) (< (brain-hoho-roll b) (senju-dp b :escort-p)))
+       (setf (brain-intent b) :pressure (brain-intent-t b) (max (brain-intent-t b) 20))
+       nil))))
+
+(defun senju-oki (e b s kit)
+  "He is down (invulnerable: :down then :wakeup, 30 f each) out of her reach: set the next threat where he gets up. The loom
+with a hitting hank next (刃金 黒砂 褥 焼野原) and nothing live: weave while nothing stored (he can't tear it), else tap
+the release so it is out when he is up (褥 / 黒砂 / 焼野原 last; 刃金 closes once, 43 f after the tap: only when that is
+past his wake-up); the Shikai: the soldier (SP1) walks to him. A command or NIL."
+  (let ((n (form-hank (kit-form kit)))
+        (inv (- (if (eq (snap-state s) :down) (- 60 (snap-sf s)) (- 30 (snap-sf s))) (brain-delay b))))
+    (cond ((and n (member n '(2 3 4 5)) (null (senju-live-zones e)) (kit-command-ok-p e :sig))
+           (cond ((< (senju-stored e) 1) (why b :oki-weave :sig))
+                 ((or (/= n 2) (<= inv 43)) (why b :oki-tap :sig))))
+          ((and (hari-form-p e) (not (senju-soldier-live-p e)) (kit-command-ok-p e :sp1)) (why b :oki-soldier :sp1)))))
+
+(defun senju-base-ender (e kit)
+  "The Shikai's :sp-ender (ai.lisp STRING-REFLEX, a J3 / K3 that hit, the push begun): the O ender (:o-ender-p; not
+when hits finish him, AI-SB-FINISH-P); else after K3 the stitches' L with >= 3 (:l-ender-p)."
+  (let* ((b (brain e)) (f (fighter e)) (mv (fighter-move f)))
+    (cond ((and (member :ender (mv-flags mv)) (not (ai-sb-finish-p e)) (kit-command-ok-p e :kikon kit t)
+                (< (sim-rnd01) (senju-dp b :o-ender-p)))
+           :kikon)
+          ((and (kit-k-link-p kit (mv-name mv)) (>= (hari e) 3) (kit-l-link kit (mv-name mv))
+                (kit-command-ok-p e :sig kit nil (kit-l-link kit (mv-name mv))) (< (sim-rnd01) (senju-dp b :l-ender-p)))
+           :sig))))
+
+(defun senju-awaken (e b)
+  "The awakening (the generic one is off: :awaken-above 1.01): EVOLUTION ready, the Shikai, free, she has taken :awaken's
+:min-taken (150, the shipped rule) and her Reishi share is at most :awaken-below (HARD 0.28: late, so the strong Shikai
+lasts and the 20 % heal lands when it counts; NORMAL 1.0: the shipped rule, free states only). :awaken or NIL."
+  (let ((g (gauges e)))
+    (and (gauges-evolution g) (hari-form-p e) (awaken-state-p e (fighter e))
+         (>= (+ (gauges-taken-melee g) (gauges-taken-ranged g)) (getf (ai-table e :awaken) :min-taken 0))
+         (<= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (senju-dp b :awaken-below))
+         (why b :awaken-late :awaken))))
+
 (defun senju-ai-reflex (e b s d)
-  "Her CPU's own reflexes (free states): the Shikai's L when the stitches pay (:hari (:min :hurry): >= :min now and then, always with >= 2 when the
+  "Her CPU's own reflexes (free states): the policy's (SENJU-POLICY-REFLEX); the Shikai's L when the stitches pay (:hari (:min :hurry): >= :min now and then, always with >= 2 when the
 first falls within :hurry frames); the loom's SP1 on a designed pair that suits (SENJU-PAIR-P, no zone live, now and
 then). A command or NIL."
-  (declare (ignore s))
   (let* ((f (fighter e)) (g (gauges e)) (kit (fighter-kit f)) (ai (kit-ai kit)) (n (form-hank (kit-form kit))))
-    (cond ((and n (null (senju-live-zones e)) (kit-command-ok-p e :sp1) (senju-pair-p e b d n) (< (sim-rnd01) *ai-senju-pair*))
+    (cond ((senju-awaken e b))
+          ((senju-policy-reflex e b s d))
+          ((senju-setplay-reflex e b s d))
+          ((and n (null (senju-live-zones e)) (kit-command-ok-p e :sp1) (senju-pair-p e b d n) (< (sim-rnd01) *ai-senju-pair*))
            (why b :pair :sp1))
           ((and (getf ai :hari) (hari-form-p e) (kit-command-ok-p e :sig))
            (let ((n (hari e)) (h (getf ai :hari)))
@@ -852,10 +1029,13 @@ defends."
 
 (defun senju-sp-ender (e kit)
   "The loom's :sp-ender (ai.lisp STRING-REFLEX, a landed string's last link): SP1 when one of the two hanks it releases
-hits, *AI-SENJU-TACHI* of the time on a designed pair, half that on a cross pair."
-  (let ((n (form-hank (kit-form kit))))
-    (and n (kit-command-ok-p e :sp1) (multiple-value-bind (a b) (tachi-hanks n) (or (hank-hits-p a) (hank-hits-p b)))
-         (< (sim-rnd01) (if (tachi-aligned-p n) *ai-senju-tachi* (* 0.5 *ai-senju-tachi*))) :sp1)))
+hits, *AI-SENJU-TACHI* of the time on a designed pair, half that on a cross pair; else (the policy v2) the O ender, the
+lane, at :o-ender-p (not when hits finish him)."
+  (let ((n (form-hank (kit-form kit))) (mv (fighter-move (fighter e))))
+    (or (and n (kit-command-ok-p e :sp1) (multiple-value-bind (a b) (tachi-hanks n) (or (hank-hits-p a) (hank-hits-p b)))
+             (< (sim-rnd01) (* (if (brain e) (senju-dp (brain e) :tachi-p) *ai-senju-tachi*) (if (tachi-aligned-p n) 1.0 0.5))) :sp1)
+        (and (brain e) (member :ender (mv-flags mv)) (not (ai-sb-finish-p e)) (kit-command-ok-p e :kikon kit t)
+             (< (sim-rnd01) (senju-dp (brain e) :o-ender-p)) :kikon))))
 
 (defun senju-opp-reflex (e b s d)
   "A CPU facing her (her kit's :opp-reflex, read off her kit: every other pairing unchanged): while she holds a weave within
@@ -871,7 +1051,7 @@ hits, *AI-SENJU-TACHI* of the time on a designed pair, half that on a cross pair
 :near and 1 inside :near (a tap needs one stored; 星, cast round her: :far 5 / :near 2.5); short of them it weaves one segment (at most
 *WEAVE-SEG* frames, never a stand into a rush: each segment is a new decision), else it taps (the release at the stored
 level). On a cross slot with a bar for SP1 it wants one pass: the quick single release that realigns the pairs."
-  (if (not (form-hank (kit-form kit)))
+  (if (or (not (form-hank (kit-form kit))) (and e (brain e) (eq (brain-why (brain e)) :oki-tap)))   ; (the oki's tap)
       1
       (let* ((w (getf (kit-ai kit) :weave)) (hoshi (eq (kit-form kit) :tsuji6))
              (far (if hoshi 5.0 (getf w :far 6.5))) (near (if hoshi 2.5 (getf w :near 4.0)))

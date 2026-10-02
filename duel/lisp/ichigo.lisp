@@ -46,8 +46,10 @@ choice), so the per-hit share is the knob (the worst case, a J string with three
 (defparameter *zanzo-mult* 0.5 "... at this x of its damage and guard value.")
 ;; the CPU
 (defparameter *ai-ic-l-after-k* 0.3 "The Shikai CPU's stance after a K link that hit (per hit).")
-(defparameter *ai-ic-parry-p* 0.35 "KESSA's CPU parries a hit it sees coming into the window this often (74950+k: k / 50).")
-(defparameter *ai-ic-parry-bs-p* 0.3 "... and parries from blockstun after a blocked K link this often.")
+(defparameter *ai-ic-parry-p* 0.35 "KESSA's CPU parries a hit it sees coming into the window this often (74950+k: k / 50;
+NORMAL's: EASY 0.6x, HARD every one, the v2 layering) ...")
+(defparameter *ai-ic-parry-bs-p* 0.3 "... and parries from blockstun after a blocked K link this often (NORMAL's: EASY 0.6x,
+HARD 0.8).")
 (defparameter *ai-kessa-o-p* 0.04 "KESSA's CPU: O per step with >= 2 clones within 8.6 m (x2 with 3), before the bank.")
 (defparameter *ai-kessa-bank-at* 0.45 "KESSA's CPU banks clones for 千影 (side Steps to 2, 3 with the gauge) once the
 opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the ender, the rush) takes 3-4 Konpaku.")
@@ -193,7 +195,8 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
                (5.0 9.0 :sp2 2 :sig 2 :sp1 1 :kikon 1)
                (9.0 99.0 :sp1 2 :kikon 1 nil 1))
        :guard 0.4 :hoho 0.3 :dash 0.8 :dash-back 0.1 :block-string 0.8 :l-after-k *ai-ic-l-after-k* :sp-cancel-bars 1
-       :kikon-range 8.6 :react (:projectile :sp1) :awaken (:min-taken 150)))
+       :kikon-range 8.6 :react (:projectile :sp1) :awaken (:min-taken 150)
+       :reflex ichigo-ai-shikai :sp-ender ichigo-ai-ender))
 
 ;;; KESSA NO ICHIGO: permanent, no heal, Kikon 3 (O: 2-4 by the clones). A normal guard; L the parry (and from blockstun);
 ;;; a clone on a Step (:step) and a Hoho; the clones' answers, the O charge and the afterimages in his :tick hook
@@ -219,7 +222,8 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
                (5.0 9.0 :sp1 2 :hoho 2 :kikon 1 :step 1)
                (9.0 99.0 :kikon 1 :hoho 2 nil 1))
        :guard 0.4 :hoho 0.4 :dash 0.6 :dash-back 0.2 :o-ender 0.6 :attack 0.15 :l-after-k 0.0 :sp-cancel-bars 9
-       :kikon-range 8.6 :stun-follow (:sp1 3.8 7.0) :reflex ichigo-ai-kessa))
+       :kikon-range 8.6 :stun-follow (:sp1 3.8 7.0) :reflex ichigo-ai-kessa
+       :sp-ender ichigo-ai-ender))
 
 ;;; ================================================================ pure rules (host-tested: tests/duel-rules-test.lisp)
 (defun clone-konpaku (n) "The Kikon's Konpaku with N clones at the O press (*CLONE-KONPAKU*)." (nth (max 0 (min 3 n)) *clone-konpaku*))
@@ -633,7 +637,9 @@ link *AI-IC-PARRY-BS-P* of the time, on the frame that puts the string's next hi
         (when (or (< (ics-bs-key st) 0) (< sf (ics-bs-key st)))   ; a new blockstun (a block restarts it at 0)
           (setf (ics-bs-at st) -1)
           (let ((om (fighter-move (fighter (opp-of e)))))
-            (when (and om (eq (mv-kind om) :flash) (< (sim-rnd01) *ai-ic-parry-bs-p*))
+            (when (and om (or (and (eq (mv-kind om) :flash) (< (sim-rnd01) (ic-p b (* 0.6 *ai-ic-parry-bs-p*) *ai-ic-parry-bs-p* 0.8)))
+                              ;; v2: a J masher's blocked J: his next J lands in the window (EASY 0 / NORMAL 0 / HARD 0.6)
+                              (and (eq (mv-kind om) :quick) (not (brain-habit b)) (ai-mash-p b) (< (sim-rnd01) (ic-p b 0.0 0.0 0.6)))))
               (setf (ics-bs-at st) (max 1 (- (fighter-stun f) 6))))))
         (setf (ics-bs-key st) sf)
         (when (= sf (ics-bs-at st)) (setf (ics-bs-at st) -1) (ai-press b :sig 2)))))
@@ -766,19 +772,31 @@ clones\"): :light (<= 2.4 m: both answers land), :heavy (<= 3.0 m: J's heavy lan
           (cond ((<= dd 2.4) (setf best :light)) ((and (<= dd 3.0) (null best)) (setf best :heavy))))))))
 
 (defun ichigo-ai-kessa (e b s d)
-  "KESSA's CPU reflexes (free states): L when a hit it can see (the opponent's move, as perceived) or a projectile will land
+  "KESSA's CPU reflexes (free states). v2 first (by difficulty, ICHIGO-AI-MASH / -PERFECT-HOHO, then the parry at EASY 0.6x
+/ NORMAL x1 / HARD 1.0, ICHIGO-AI-LONG-PUNISH, ZANZO): L when a hit it can see (the opponent's move, as perceived) or a projectile will land
 4-22 frames out (inside the window f2-25), one roll per opponent action at *AI-IC-PARRY-P*, with the price in hand.
 The Kikon near (his Reishi under *AI-KESSA-BANK-AT*, O ready, not reeling): bank clones with side Steps, 3 m out and not
 into a coming hit (2, 3 with the gauge for them); the O itself stays the generic ender / rush, which then finds them (千影
 3-4 Konpaku), and nothing below spends them meanwhile. An idle clone in reach of him: J (the clones' heavies) or K (their lights, his K1 in reach),
 *AI-KESSA-CLONE-J-P* per step. Else O with >= 2 clones within 8.6 m, *AI-KESSA-O-P* per step (x2 with 3)."
   (let* ((g (gauges e)) (n (clone-count e)) (gg (gauges-gg g)) (pay (and (not (gauges-guardless g)) (>= gg *clone-cost*))))
-    (cond ((and (>= gg *kessa-parry-cost*) (not (gauges-guardless g)) (< (brain-react-roll b) *ai-ic-parry-p*)
+    (cond ((ichigo-ai-mash e b s d))
+          ((ichigo-ai-perfect-hoho e b s d))
+          ((ichigo-ai-red e b s d))                     ; (the Konpaku economy: HARD only)
+          ((ichigo-ai-convert e b s d))
+          ((and (>= gg *kessa-parry-cost*) (not (gauges-guardless g))
+                (< (brain-react-roll b) (ic-p b (* 0.6 *ai-ic-parry-p*) *ai-ic-parry-p* 1.0))
                 (let ((lead (- (snap-s s) (snap-sf s) (brain-delay b))))
                   (or (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (member (snap-kind s) '(:quick :flash :sig :sp :kikon))
                            (<= 4 lead 22) (< d (+ (snap-reach s) 0.6)))
                       (incoming-hazard-in e 4 22))))
            (why b :parry :sig))
+          ((ichigo-ai-long-punish e b s d))
+          ;; v2: ZANZO (2 bars, none running: every attack echoed at half, signature damage) at 2.6-7 m or while he is
+          ;; down / launched, he not attacking; HARD 0.15 a step, EASY / NORMAL never
+          ((and (or (<= 2.6 d 7.0) (member (snap-state s) '(:down :air))) (not (eq (snap-state s) :move))
+                (kit-command-ok-p e :sp2) (< (sim-rnd01) (ic-p b 0.0 0.0 0.15)))
+           (why b :zanzo :sp2))
           ((and (let ((go (gauges (opp-of e)))) (< (gauges-reishi go) (* *ai-kessa-bank-at* (gauges-reishi-max go))))
                 (kit-command-ok-p e :kikon) (not (member (snap-state s) '(:stun :air :down :wakeup :hoho))))
            (and pay (< n (if (>= gg (+ *clone-cost* 25.0)) 3 2)) (>= d 3.0)
@@ -792,6 +810,141 @@ into a coming hit (2, 3 with the gauge for them); the O itself stays the generic
                    (t (why b :clone-reach :q)))))
           ((and (>= n 2) (<= d 8.6) (kit-command-ok-p e :kikon) (< (sim-rnd01) (* (if (>= n 3) 2 1) *ai-kessa-o-p*)))
            (why b :clones :kikon)))))
+
+;;; ================================================================ the CPU v2 (docs/DUEL_AI_V2.md; every chance by difficulty)
+(defun ic-p (b easy normal hard)
+  "A chance by brain B's difficulty: EASY <= NORMAL <= HARD (the user's layering, 2026-10-02)."
+  (getf (list :easy easy :normal normal :hard hard) (brain-difficulty b) normal))
+
+(defun ic-hits-p (mv) (and mv (plusp (length (mv-hits mv)))))
+
+(defun ichigo-ai-long-punish (e b s d)
+  "Out of J's reach, an opponent still recovering (his move past its active frames, as perceived) or reeling: the
+longest tool of the form that lands before he is free (K1; else the SP that hits: SOGA's 5 m lunge, KUSARI-BIKI's 7 m
+chain), one roll per his action (the react roll) at (EASY 0 / NORMAL 0.15 / HARD 0.8). The generic punish keeps J's reach."
+  (let* ((kit (kit-of e)) (left (- (snap-left s) (brain-delay b))))
+    (when (and (or (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s)))
+                   (eq (snap-state s) :stun))
+               (< (snap-left s) 99)
+               (> d (+ (mv-reach (kit-command-move kit :q)) 0.4))
+               (< (brain-react-roll b) (ic-p b 0.0 0.15 0.8)))
+      (loop for c in '(:f :sp2 :sp1)
+            for mv = (kit-command-move kit c)
+            when (and (ic-hits-p mv) (kit-command-ok-p e c) (> left (mv-s mv))
+                      (<= d (+ (mv-reach mv) (mv-slide mv) 0.1)))
+              return (why b :long-punish c)))))
+
+(defun ichigo-ai-mash (e b s d)
+  "Against a J masher (AI-MASH-P, his perceived J starts): KESSA lays the parry where his next J lands (within 2 m, he not
+guarding; it catches J, the counter crumples); either form K1s him walking in from out of his J (1.7-2.8 m). Per step
+(EASY 0 / NORMAL 0.03 / HARD 0.25)."
+  (when (and (ai-mash-p b) (not (member (snap-state s) '(:guard :guard-hit :down :wakeup :hoho :stun :air))))
+    (let ((g (gauges e)) (kessa (eq (kit-form (kit-of e)) :kessa)))
+      (cond ((and kessa (<= d 2.0) (not (gauges-guardless g)) (>= (gauges-gg g) (+ *kessa-parry-cost* 10.0))
+                  (kit-command-ok-p e :sig) (< (sim-rnd01) (ic-p b 0.0 0.03 0.25)))
+             (why b :mash-parry :sig))
+            ((and (<= 1.7 d 2.8) (not (eq (snap-state s) :move)) (kit-command-ok-p e :f)
+                  (< (sim-rnd01) (ic-p b 0.0 0.03 0.25)))
+             (why b :mash-poke :f))))))
+
+(defun ichigo-ai-perfect-hoho (e b s d)
+  "The timed Hoho. His strike (any move with active frames in its main phase, as perceived: a slow J, K, L, SP, the
+Breaker's strike, an O strike) lands 0-11 frames from now (its startup left minus our perception delay) within its reach
++ 1.5 m: Hoho now, inside the perfect window (*PERFECT-LEAD* 12: the automatic counter strike, his inputs locked 40 f,
+15 flash-step back; KESSA's Hoho also posts a clone in front of him). One roll per his action (the Hoho roll) at (EASY 0 /
+NORMAL 0 / HARD 1.0); only the Hoho's own price, no Burst reserve (the perfect refund pays most of it back), not in a burst."
+  (let ((g (gauges e)) (f (fighter e)) (lead (- (snap-s s) (snap-sf s) (brain-delay b))))
+    (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (member (snap-kind s) '(:quick :flash :sig :sp :breaker :kikon))
+         (> (snap-active-end s) (snap-s s)) (<= 0 lead 11) (< d (+ (snap-reach s) 1.5))
+         (not (kit-rooted (kit-of e)))
+         (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))
+         (not (gauges-burst g))
+         (< (brain-hoho-roll b) (ic-p b 0.0 0.0 1.0))
+         (why b :perfect-hoho :hoho))))
+
+(defun ichigo-bank-target (e b)
+  "(b0a1: b1a0's always-bank / HARD O-poke-off measured worse on top of b0a0; KESSA banks as shipped. This is only the
+bank ICHIGO-AI-CONVERT waits for.) KESSA's clones wanted for the Kikon (千影: 2 / 2 / 3 / 4 Konpaku by 0-3 clones; his Soul Break that + 1): shipped 2, 3
+with the guard gauge for them (*CLONE-COST* + 25); HARD 3 down to *CLONE-COST* + 10 of the gauge."
+  (let ((gg (gauges-gg (gauges e))))
+    (if (>= gg (+ *clone-cost* (if (eq (brain-difficulty b) :hard) 10.0 25.0))) 3 2)))
+
+(defun ichigo-ai-red (e b s d)
+  "We are red (his Kikon ready): live through it. His rush coming (aura, dash or the strike's startup, as perceived,
+within 11 m): hold guard (the first strike is guardable red or not, KIKON-OUTCOME; the generic CPU only Hohos / Steps /
+J1s it when red; blocked he is -14), one roll per his action, the gauge able to take the 20. Else SOUL REVERSE (WHITE,
++70 Reishi a second) to climb out of red while he isn't swinging at us, a roll a step: guarding alone only turned his
+Kikons into Soul Breaks (worth one more). EASY / NORMAL 0 (the generic play), HARD 0.95 / 0.25."
+  (let ((g (gauges e)))
+    (when (and (red-p (gauges-reishi g) (gauges-reishi-max g)) (plusp (ic-p b 0.0 0.0 1.0)))
+      (cond ((and (eq (snap-state s) :move) (eq (snap-kind s) :kikon)
+                  (or (member (snap-phase s) '(:aura :dash)) (and (eq (snap-phase s) :main) (< (snap-sf s) (snap-active-end s))))
+                  (< d 11.0) (plusp (ai-guard-k e)) (>= (gauges-gg g) 21.0)
+                  (< (brain-react-roll b) 0.95))
+             (why b :red-guard :guard-long))
+            ((and (eq (burst-ok-p e) :white)
+                  (not (and (eq (snap-state s) :move) (< (snap-sf s) (snap-active-end s)) (< d (+ (snap-reach s) 1.5))))
+                  (< (sim-rnd01) 0.25))
+             (why b :red-white :burst))))))
+
+(defun ichigo-rush-frames (d)
+  "Frames from an O press at D m to its strike landing (both forms' rush: aura 6, 30 m/s to 1.6 m, S 7, + 2)."
+  (+ 6 (max 0 (ceiling (- d 1.6) 0.5)) 7 2))
+
+(defun ichigo-ai-convert (e b s d)
+  "He is red (our Kikon ready; HARD only, EASY / NORMAL keep the generic play): turn it into the most Konpaku.
+- KESSA's worth is its clones (2 / 2 / 3 / 4): no rush until the bank is up (ICHIGO-BANK-TARGET); the bank itself is
+  ICHIGO-AI-KESSA's side Steps; up close a back Step posts one too.
+- The rush only where his answer can't come: the generic CPU answers a rush it sees within 5 m (J1 / Hoho / Step), so
+  rush when he is busy (recovering from a move, as perceived, longer than our rush takes: 0.9 per his action) or from
+  7-8.4 m (he sees it inside 5 m only as it strikes: 0.3 a step); KESSA with its bank also chains him (KUSARI-BIKI at
+  3.8-7 m, 0.15 a step: bound, the generic stun rush follows, every clone with it).
+- Closer, the neutral decision is ours, without the generic neutral rush: J / K strings (their ender's O comes always on
+  a red man, with the bank)."
+  (when (and (kikon-ready-p e) (not (ai-sb-finish-p e)) (kit-command-ok-p e :kikon)
+             (plusp (ic-p b 0.0 0.0 1.0))
+             (not (member (snap-state s) '(:down :wakeup :hoho))))
+    (let* ((kessa (eq (kit-form (kit-of e)) :kessa)) (g (gauges e))
+           (short (and kessa (< (clone-count e) (ichigo-bank-target e b))
+                       (not (gauges-guardless g)) (>= (gauges-gg g) *clone-cost*)))
+           (left (- (snap-left s) (brain-delay b)))
+           (attacking (and (eq (snap-state s) :move) (< (snap-sf s) (snap-active-end s)))))
+      (cond ((and (not short) (< d 8.4) (eq (snap-state s) :move) (eq (snap-phase s) :main)
+                  (>= (snap-sf s) (snap-active-end s)) (< (snap-left s) 99) (>= left (ichigo-rush-frames d))
+                  (< (brain-react-roll b) 0.9))
+             (why b :rush-busy :kikon))
+            ((and (not short) (<= 7.0 d 8.4) (not attacking) (< (sim-rnd01) 0.3))
+             (why b :rush-far :kikon))
+            ((and kessa (not short) (>= (clone-count e) 2) (<= 3.8 d 7.0) (not attacking) (kit-command-ok-p e :sp1)
+                  (< (sim-rnd01) 0.15))
+             (why b :chain :sp1))
+            ((and (< d 7.0) (<= (brain-decide-t b) 1))
+             (setf (brain-decide-t b) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
+             (cond ((and short (< d 3.0) (not attacking)) (why b :bank :step))   ; (a back hop: a clone where it took off)
+                   (short nil)                                                    ; (ICHIGO-AI-KESSA side-Steps it)
+                   ;; (AI-ATTACK presses itself; :none keeps that press: no band below 5 m holds :kikon)
+                   ((and (< d 5.0) (< (sim-rnd01) 0.7) (ai-attack e b (kit-of e) s d (brain-heat b) nil)) :none)))))))
+
+;;; (b0a1: b0a0's reactive layer stacked with b1a0's Konpaku economy)
+(defun ichigo-ai-shikai (e b s d)
+  "The Shikai's :reflex (v2): the masher's answers, the timed Hoho, our red phase, the conversion on a red man, then the
+long punish."
+  (or (ichigo-ai-mash e b s d) (ichigo-ai-perfect-hoho e b s d) (ichigo-ai-red e b s d) (ichigo-ai-convert e b s d)
+      (ichigo-ai-long-punish e b s d)))
+
+(defun ichigo-ai-ender (e kit)
+  "Both forms' :sp-ender (ai.lisp STRING-REFLEX: our J3 / K3 hit, the victim pushed just out of reach, no O ender rolled):
+what chases him (a move started off a pushing ender chases, docs/DUEL_STRINGS.md §16). The Shikai: SOGA (SP2, 130) with a
+bar, else the O poke (70); KESSA: KUSARI-BIKI (SP1: the chain pulls him back to 1.6 m and binds him 40 f, then the J
+follow-up). HARD: the SP 0.95, the Shikai's O poke all of the rest; NORMAL / EASY none (the generic SP cancel stays, the
+shipped behaviour). NIL without a brain (the ASSIST's AUTO COMBO calls STRING-REFLEX for a human: the generic play)."
+  (let ((b (brain e)))
+    (when b
+      (let ((bars (floor (gauges-reiatsu (gauges e)) *reiatsu-bar*)) (r (sim-rnd01)))
+        (if (eq (kit-form kit) :kessa)
+            (and (>= bars 1) (kit-command-ok-p e :sp1) (< r (ic-p b 0.0 0.0 0.95)) :sp1)
+            (cond ((and (>= bars 1) (kit-command-ok-p e :sp2) (< r (ic-p b 0.0 0.0 0.95))) :sp2)
+                  ((and (kit-command-ok-p e :kikon kit t) (< r (ic-p b 0.0 0.0 1.0))) :kikon)))))))
 
 ;;; ================================================================ the HUD: the clones' row (the kit meter's :draw / :label, :deck)
 (defun ichigo-hud-label (g kit) "The portrait label." (declare (ignore g kit)) "BUNSHIN")
