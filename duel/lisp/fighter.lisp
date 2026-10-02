@@ -231,7 +231,7 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
                                          (getf k :step))
                              *step-distance*))
                      12 dx dz)))
-      (setf (fighter-state f) :step (fighter-sf f) 0 (fighter-move f) nil)
+      (setf (fighter-state f) :step (fighter-sf f) 0 (fighter-move f) nil (fighter-queued f) nil)   ; (the J latch)
       (fill (motion-vel (motion e)) 0f0)
       (let ((h (kit-hook (fighter-kit f) :step))) (when h (funcall h e)))   ; the form's own take-off (a clone)
       (play-clip e (cond ((> (abs st) (abs to)) (if (> st 0) :sh-step-r :sh-step-l)) ((> to 0) :sh-step-f) (t :sh-step-b))
@@ -692,9 +692,17 @@ on-hit cancels (its hit landed: SP, Hoho, a :cancel L, the O ender), or ORANGE (
   (and (eq (fighter-state f) :guard-hit) (fighter-glock f) (>= (fighter-sf f) (fighter-stun f))))
 
 (defun step-step (e f vp)
-  "The hop; at its end a Step still held becomes a run (so holding never shortens a Step)."
-  (when (>= (incf (fighter-sf f)) *step-frames*)
-    (if (and (zerop (fighter-lock f)) (vpad-down vp :step)) (start-run e f) (to-idle e))))
+  "The hop; at its end a Step still held becomes a run (so holding never shortens a Step). From *STEP-J-CANCEL* (the
+hop landed) J cancels the rest into J1 (the user 2026-10-02); a J pressed earlier in the hop is latched for it."
+  (let ((j (find :q *commands* :key #'first)))
+    (when (and (zerop (fighter-lock f)) (vpad-command-pressed-p vp (second j) (third j)))
+      (vpad-consume! vp (second j))
+      (setf (fighter-queued f) :q))
+    (unless (and (fighter-queued f) (>= (fighter-sf f) *step-j-cancel*) (zerop (fighter-gc-left f))
+                 (try-command e f :q (second j)))
+      (when (>= (incf (fighter-sf f)) *step-frames*)
+        (setf (fighter-queued f) nil)
+        (if (and (zerop (fighter-lock f)) (vpad-down vp :step)) (start-run e f) (to-idle e))))))
 
 (defun run-velocity (e speed &optional (yaw (yaw-of e)))
   "E moves at SPEED along YAW (default his facing)."

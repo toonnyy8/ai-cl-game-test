@@ -61,6 +61,8 @@ again, so he can guard it (not red), Step or Hoho out (KIKON-FOLLOW-WAIT).")
 (defparameter *step-distance* 2.5 "Step hop length (stick direction; neutral = back).")
 (defparameter *step-frames* 24 "Step total frames.")
 (defparameter *step-iframes* '(3 9) "Step invulnerable frames, inclusive.")
+(defparameter *step-j-cancel* 12
+  "From this Step frame (the hop's slide is over) J cancels the rest of the Step into J1 (the user, 2026-10-02).")
 (defparameter *run-yamamoto* 8.0 "Yamamoto's run (dash) speed: Step held past the hop.")
 (defparameter *run-kenpachi* 10.0 "Kenpachi's run speed.")
 (defparameter *run-turn* 300.0 "Degrees per second a runner turns toward the stick direction.")

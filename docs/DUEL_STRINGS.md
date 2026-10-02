@@ -749,3 +749,18 @@ string after it), and a **Guard Break** counts as landed too.
   SS 179.6. Awaken A/B (60 seeds, streams 100 / 300 / 500): RR 33 / 31 / 30 vs 27 / 29 / 30, SS 32 / 29 / 32 vs
   28 / 31 / 28, every row ≥ 20. Host tests: rules 4433, control 86, learn 100, input 33, all pass. G2: all three
   changed (yy P1 3-0 138.1 s, yk P2 0-1 119.5 s, kk P2 0-1 197.8 s).
+
+## 18. Step → J cancels the Step's recovery (the user, 2026-10-02)
+
+The user: 「然後再添加墊步（step）可以接 J 取消後搖」.
+
+- **The cancel** (`step-step`): from Step frame `*step-j-cancel*` = 12 (the 2.5 m hop's 12-frame slide is over, past the
+  f3–f9 iframes) J starts J1 through `try-command`, the remaining 12 frames skipped. Not out of a guard cancel's
+  `gc-left`. Only J (the user's ask); K, L, SPs and the Breaker still wait for the Step's end.
+- **The latch**: a J pressed earlier in the hop (consumed, kept in `fighter-queued`, cleared at a new Step and at the
+  Step's end) comes out at f12; without it a J pressed in the first frames would leave the 10-step input buffer first.
+- **Measured** (a throwaway masher that Steps in from > 2 m and taps J on the Step's f2, 3 matches): 78 of 81 Step → J1
+  started 13 steps after the Step (its f12).
+- **The CPU** is unchanged (no new reflex). Its own J presses during a Step now come out at f12: the cross pairings and
+  G2 are bit-identical; the mirrors YY (median 130.2 → 122.0 s) and II (max 240.3 → 252.1 s) moved; awaken A/B identical
+  (RR 33 / 31 / 30, SS 32 / 29 / 32 of 60). Host tests all pass.
