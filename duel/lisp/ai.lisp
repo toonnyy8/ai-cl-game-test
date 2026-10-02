@@ -325,6 +325,11 @@ D = the perceived distance."
             (= (fighter-sf f) (fighter-land-sf f)) (kit-command-ok-p e :kikon kit t)
             (or (kikon-ready-p e) (< (sim-rnd01) (ai-table e :o-ender *ai-o-ender*))))
        (why b :o-ender :kikon))
+      ;; our Breaker landed (a hit or a Guard Break): open a string off it, K1 the kit's :string-k share of the time
+      ((and (eq st :move) (eq (fighter-contact f) :hit) (eq (mv-kind mv) :breaker) (>= (fighter-sf f) (fighter-land-sf f)))
+       (flet ((ok (c) (and (or (kit-command-move kit c) (kit-drop kit c)) (kit-command-ok-p e c))))
+         (why b :breaker-string (cond ((and (ok :f) (< (sim-rnd01) (ai-table e :string-k *ai-string-flash-p*))) :f)
+                                      ((ok :q) :q) ((ok :f) :f)))))
       ;; our hit landed and only the guard cancel's share of its recovery is left (no link latched): guard out of it,
       ;; unless we see him still reeling past our recovery's end
       ((and (eq st :move) (not (fighter-queued f))
@@ -712,6 +717,8 @@ recovers, too far for our J1 (J-BEATS-OPEN-P's window but its reach), against a 
               ((and (brain-habit b) (habit-fire e b s d)))                     ; debug: a scripted player's habit
               ((and (brain-learn b) (learn-fire e b s d)))                     ; the learning CPU's planned counter
               ((and (> (brain-press-left b) 0)                                    ; a reflex may drop a guard / a dash,
+                    (not (and (eq (fighter-state f) :move) (eq (mv-kind (fighter-move f)) :breaker)   ; or a Breaker's
+                              (eq (fighter-contact f) :hit)))                                          ; hold once it landed
                     (or (eq (brain-act b) :hold)                                   ; not a guard held through a string
                         (not (or (eq (brain-press b) :guard) (eq (brain-act b) :dash)))))
                (decf (brain-press-left b)))

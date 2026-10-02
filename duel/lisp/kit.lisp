@@ -90,7 +90,7 @@
                     (and rr (* reach-mult rr))))
            (vol (cond (vol (scale-vol-spec vol reach-mult))
                       (reach (list* :arc reach arc height))))
-           (react (or on-hit (if breaker :knockback :flinch)))
+           (react (or on-hit (if breaker :stagger :flinch)))   ; (a Breaker: :knockback until 2026-10-02)
            (kb (if (and breaker (zerop kb)) *breaker-knockback* kb))
            (hs (or hs (case kind (:quick *hitstop-light*) (:breaker *hitstop-breaker*) (t *hitstop-heavy*))))
            (flags (if breaker (adjoin :breaker flags) flags))

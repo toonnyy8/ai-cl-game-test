@@ -725,3 +725,27 @@ already there.
 incoming Breaker (`ai-reflex`, the anti-breaker branch) it now waits for the dash to come within J1's reach +
 `*ai-anti-breaker-j*` (1.4 m) and presses J1 (J beats I); the Hoho through the dash stays (its roll first); against a
 Kikon rush nothing changed. `*ai-guard-break-range*` (3 m) is unchanged: the dash closes that too.
+
+## 17. The Breaker opens a combo (the user, 2026-10-02)
+
+The user: 「幫我把 break 改成可以作為 combo 的起手式」, then chose: a landed Breaker **cancels into J1 / K1** (a whole
+string after it), and a **Guard Break** counts as landed too.
+
+- **Its hit staggers in place**: the Breaker's default reaction is `:stagger` (26 f) with a 0.3 m slide
+  (`*breaker-knockback*`; it was `:knockback`, 3 m, out of every J1's reach). A Guard Break is as before (50 f, 0.8 m).
+- **The cancel** (`move-commands`): while a Breaker's contact is `:hit` (a hit, a counter, a Guard Break or a stance
+  break: `contact-of`), from its hit frame to the end of its recovery (`cancel-open-p`), J or K starts J1 or K1 through
+  `try-command` (the command's own checks; a form without that command refuses). Not O, not an SP: the Breaker still
+  has no O cancel (§2.4).
+- **J1 / K1 chase him**: `start-move` marks a move started off a landed Breaker `end-chase` (as one off a J3 / K3 ender),
+  so its startup dashes in up to `*ender-chase-max*` (a Guard Break's 0.8 m slide is past some J1s). It is the string's
+  opener (not chained), so its hit pulls the attacker in (§15), and the string goes on: J2 / K2, J3 / K3, the O ender.
+- **The CPU** (`ai-reflex`): a Breaker that landed opens a string, K1 the kit's `:string-k` share of the time, else
+  J1; this sits above the guard cancel, and a Breaker's I hold no longer hides the reflexes once it landed. Measured
+  (Yamamoto mirror, 3 matches): 123 of 125 landed Breakers followed 11 f after the hit (its hitstop + 1), 119 of them hit.
+  ASSIST needs nothing new: a human presses J / K, and AUTO COMBO takes the string from J1's hit.
+- **Gate** (native sim, 20 seeds): all 15 pairings K.O.; cross medians 129.0–176.8 s (YK 132.3, RY 148.7, RK 152.5,
+  IY 160.1, IK 170.6, IR 167.7, SY 129.0, SK 152.5, SR 174.2, SI 176.8); mirrors YY 130.2, KK 142.2, RR 188.4, II 205.7,
+  SS 179.6. Awaken A/B (60 seeds, streams 100 / 300 / 500): RR 33 / 31 / 30 vs 27 / 29 / 30, SS 32 / 29 / 32 vs
+  28 / 31 / 28, every row ≥ 20. Host tests: rules 4433, control 86, learn 100, input 33, all pass. G2: all three
+  changed (yy P1 3-0 138.1 s, yk P2 0-1 119.5 s, kk P2 0-1 197.8 s).

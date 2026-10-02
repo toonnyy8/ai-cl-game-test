@@ -219,7 +219,10 @@ no knockback) so the O ender (§2) connects; the knockback is the O strike's.
 **Breaker** (hold): pink aura for 12 f, then a dash toward the opponent while held (at least 12 f,
 at most 45 f, 9 → 10 m/s), then the strike (S8 A4 R18; 30 f recovery on a whiff) as soon as he is
 within **0.95 m** (centre to centre; its reach **0.7 m**). Against a guard → **Guard Break** (50 f stun). Against a non-guarding fighter → 150
-damage and a 3 m knockback. Against Kenpachi's stance → breaks it (40 f crumple). No armour:
+damage and a stagger in place (26 f, 0.3 m; a 3 m knockback until 2026-10-02). **The Breaker opens a combo** (the user,
+2026-10-02: 「幫我把 break 改成可以作為 combo 的起手式」): from its hit or Guard Break to the end of its recovery, J / K
+cancels it into J1 / K1, which chases him in its startup like a move off an ender; the full string and the O ender
+follow (docs/DUEL_STRINGS.md §17). Against Kenpachi's stance → breaks it (40 f crumple). No armour:
 any hit during its aura, dash or strike startup is a **counter-hit** (×1.25 damage, +10 f
 hitstun). Breaker vs Breaker (both dashing or striking within 3 m) → **CLASH**: both pushed apart
 4 m, 24 f stun, no damage.

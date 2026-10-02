@@ -130,7 +130,8 @@ I > 防, docs/DUEL_STRINGS.md §14: the grab only from up close, just outside th
 (defparameter *breaker-reach* 0.7
   "Strike hit reach (2.6 until 2026-09-29): under every form's J1 reach (J beats I, 防 > J > I > 防), and with the thinnest
 hurt radius (0.34) past the trigger range, so a triggered strike connects.")
-(defparameter *breaker-knockback* 3.0 "Strike knockback slide.")
+(defparameter *breaker-knockback* 0.3
+  "Strike slide: a stagger in place (3.0 m knockback until 2026-10-02: the Breaker opens a combo, J1 / K1 cancel off it).")
 (defparameter *guard-break-stun* 50 "Stun of a Guard Break.")
 (defparameter *stance-break-stun* 40 "Crumple of a stance broken by a Breaker.")
 (defparameter *clash-range* 3.0 "Breaker vs Breaker (both dashing/striking) within this range = CLASH.")

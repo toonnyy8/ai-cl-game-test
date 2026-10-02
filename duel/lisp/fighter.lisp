@@ -174,7 +174,9 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
   (let* ((f (fighter e)) (enter (mv-enter mv)) (old (and (eq (fighter-state f) :move) (fighter-move f)))
          (off-ender (or (plusp (fighter-chain f))                       ; ORANGE's restart, or a move started off a J / K
                         (and old (member :ender (mv-flags old)) (member (mv-kind old) '(:quick :flash))   ; ender that hit
-                             (eq (fighter-contact f) :hit)))))          ; (pushed away: it chases him, MAIN-PHASE-STEP)
+                             (eq (fighter-contact f) :hit))
+                        (and old (eq (mv-kind old) :breaker) (eq (fighter-contact f) :hit)))))   ; J1 / K1 off a Breaker
+                                                                ; that landed (pushed away: it chases him, MAIN-PHASE-STEP)
     (setf (fighter-end-chase f) off-ender)
     (setf (fighter-state f) :move (fighter-move f) mv (fighter-sf f) enter (fighter-hits f) 0
           (fighter-contact f) nil (fighter-queued f) nil (fighter-chained f) nil (fighter-land-sf f) -1 (fighter-dmg-bonus f) 0 (fighter-crush f) nil
@@ -602,7 +604,8 @@ at once within *KIKON-TRIGGER* (or a module with no dash), else its dash."
 refused one doesn't hide the next). A J / K press during a string link is latched (STRING-LATCH: the last allowed
 press wins, a press of the button the string switched away from is eaten) and consumed at once; the latched link
 starts when the chain opens (CHAIN-OPEN-P: once any link of the string touched him, docs/DUEL_STRINGS.md §2.2) and
-chases him in its startup (STRING-CHASE-SPEED). O is the ender: only off a link-3 (:ender) hit, the
+chases him in its startup (STRING-CHASE-SPEED). A Breaker that landed (a hit or a Guard Break) cancels into J1 / K1 (the
+string's opener, chasing him; docs/DUEL_STRINGS.md §17). O is the ender: only off a link-3 (:ender) hit, the
 rush's aura skipped. L during a K link of a form with :l-after-k (a J link: :l-after-j) is latched too (KIT-L-LINK,
 docs/DUEL_STRINGS.md §12): it starts when that link's own contact opens the chain, as a follow-up (the chase), under
 L's own checks (cooldown, cold, the kit's :ok with the link as COMBO; a refused one gets the cue). T when a new move /
@@ -616,10 +619,13 @@ action started."
                                           (cancel-open-p sf (fighter-land-sf f) (mv-total mv) (eq landed :hit))
                                           (try-command e f cmd button t)
                                           (progn (skip-aura e f) t)))
-                             ((:q :f) (when (string-link-p kit name)   ; the latch takes every J / K press
-                                        (setf (fighter-queued f) (string-latch kit name cmd (fighter-queued f)))
-                                        (vpad-consume! vp button))
-                                      nil)
+                             ((:q :f) (cond ((string-link-p kit name)   ; the latch takes every J / K press
+                                             (setf (fighter-queued f) (string-latch kit name cmd (fighter-queued f)))
+                                             (vpad-consume! vp button)
+                                             nil)
+                                            ((eq (mv-kind mv) :breaker)   ; the Breaker opens a string: J1 / K1 off its
+                                             (and (cancel-open-p sf (fighter-land-sf f) (mv-total mv) (eq landed :hit))   ; hit
+                                                  (try-command e f cmd button)))))   ; or Guard Break (the user 2026-10-02)
                              (:sig (let ((l (kit-l-link kit name)))   ; L after a J / K link: latched like a link
                                      (if l
                                          (progn (if (kit-command-ok-p e :sig (fighter-kit f) nil l)
