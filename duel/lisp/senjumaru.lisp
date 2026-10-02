@@ -998,11 +998,13 @@ when hits finish him, AI-SB-FINISH-P); else after K3 the stitches' L with >= 3 (
 (defun senju-awaken (e b)
   "The awakening (the generic one is off: :awaken-above 1.01): EVOLUTION ready, the Shikai, free, she has taken :awaken's
 :min-taken (150, the shipped rule) and her Reishi share is at most :awaken-below (HARD 0.28: late, so the strong Shikai
-lasts and the 20 % heal lands when it counts; NORMAL 1.0: the shipped rule, free states only). :awaken or NIL."
+lasts and the 20 % heal lands when it counts; NORMAL 1.0: the shipped rule, free states only). The :awaken rule and the
+gates' debug mode (never / always: the awaken A/B) through AI-AWAKEN-P. :awaken or NIL."
   (let ((g (gauges e)))
     (and (gauges-evolution g) (hari-form-p e) (awaken-state-p e (fighter e))
-         (>= (+ (gauges-taken-melee g) (gauges-taken-ranged g)) (getf (ai-table e :awaken) :min-taken 0))
-         (<= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (senju-dp b :awaken-below))
+         (ai-awaken-p e)
+         (or (eq (svref *ai-awaken-mode* (fighter-side (fighter e))) :always)
+             (<= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (senju-dp b :awaken-below)))
          (why b :awaken-late :awaken))))
 
 (defun senju-ai-reflex (e b s d)
