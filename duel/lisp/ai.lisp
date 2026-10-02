@@ -325,6 +325,13 @@ D = the perceived distance."
             (= (fighter-sf f) (fighter-land-sf f)) (kit-command-ok-p e :kikon kit t)
             (or (kikon-ready-p e) (< (sim-rnd01) (ai-table e :o-ender *ai-o-ender*))))
        (why b :o-ender :kikon))
+      ;; Step -> J: our Step lands him within J1's reach and he isn't mid-attack (a Breaker is: J beats it): J at f10, the
+      ;; latch starts J1 at the Step's *STEP-J-CANCEL*; one roll per Step
+      ((and (eq st :step) (= (fighter-sf f) (- *step-j-cancel* 2)) q (< (fighter-dist f) (+ (mv-reach q) *ai-step-j-margin*))   ; (our own hop)
+            (not (and (eq (snap-state s) :move) (< (snap-sf s) (snap-active-end s)) (not (eq (snap-kind s) :breaker))))
+            (not (eq (snap-state s) :hoho))
+            (< (sim-rnd01) (getf *ai-step-j-p* (brain-difficulty b) 0.0)))
+       (why b :step-j :q))
       ;; our Breaker landed (a hit or a Guard Break): open a string off it, K1 the kit's :string-k share of the time
       ((and (eq st :move) (eq (fighter-contact f) :hit) (eq (mv-kind mv) :breaker) (>= (fighter-sf f) (fighter-land-sf f)))
        (flet ((ok (c) (and (or (kit-command-move kit c) (kit-drop kit c)) (kit-command-ok-p e c))))
@@ -557,6 +564,7 @@ OPP-GG-LOW-P)? Only while the opponent really holds guard (or a ward), never bel
   "A neutral decision, at distance D with the preferred range LO..HI (S: the perceived opponent):
 the Kikon rush on a red opponent within its range (*AI-KIKON-P*), dash to / from that range (until
 its middle), guard, attack (a weighted pick from the kit's band for D), or wait."
+  (let ((q (kit-command-move kit :q)))
   (cond ((and (kikon-ready-p e) (< d (ai-table e :kikon-range 7.0)) (not (member (snap-state s) '(:down :wakeup :hoho)))
               (kit-command-ok-p e :kikon) (not (ai-sb-finish-p e)) (< (sim-rnd01) (ai-kikon-p e)))
          (ai-command b kit :kikon d e) (setf (brain-why b) :kikon))
@@ -570,6 +578,11 @@ its middle), guard, attack (a weighted pick from the kit's band for D), or wait.
         ((ai-brace-p e d)                                  ; Rukia at zero: brace a while (the warming stops)
          (ai-press b :guard 20 :act :brace)
          (setf (brain-why b) :brace))
+        ((let ((r (and q (mv-reach q))))                  ; Step -> J: a forward Step that lands within J1's reach
+           (and r (not (kit-rooted kit)) (> d (+ r *ai-step-j-margin*)) (< d (+ r *step-distance* -0.2))
+                (not (and (eq (snap-state s) :move) (< (snap-sf s) (snap-active-end s)))) (not (eq (snap-state s) :hoho))
+                (< (sim-rnd01) (getf *ai-step-in-p* (brain-difficulty b) 0.0))))
+         (ai-dash b 1.0 (mv-reach q)) (setf (brain-why b) :step-in))
         ((and (> d (+ hi (ai-table e :dash-gap *ai-dash-gap*))) (< (sim-rnd01) (ai-table e :dash 0.0)))
          (ai-dash b 1.0 (* 0.5 (+ lo hi))) (setf (brain-why b) :dash))
         ((and (< d (- lo *ai-dash-gap*))
@@ -582,7 +595,7 @@ its middle), guard, attack (a weighted pick from the kit's band for D), or wait.
         ((< (sim-rnd01) (min 0.9 (+ (getf *ai-aggression* (brain-intent b) 0.3) (* 0.04 heat) (ai-table e :attack 0.0)
                                     (* *ai-kosei-aggression* (- 1.0 (ai-gg e)))   ; KOSEI: a low gauge pays to attack
                                     (cond ((opp-guardless-p e) 0.3) ((opp-gg-low-p e) 0.2) (t 0.0)))))
-         (ai-attack e b kit s d heat nil))))
+         (ai-attack e b kit s d heat nil)))))
 
 (defun ai-pip-hurry-p (e)
   "The kit's :pip-hurry: a pip of the arm is left and its crack is at most that many frames away."

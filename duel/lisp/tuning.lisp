@@ -516,6 +516,13 @@ this chance (x its guard gauge's AI-GUARD-MULT), not waiting to see his next mov
 delay); the rest of the time it Hohos or Steps aside half the time (AI-WAKE-STEP).")
 (defparameter *ai-gap-step-p* '(:easy 0.2 :normal 0.5 :hard 0.75)
   "Out of blocking a J masher's J that still recovers beyond our J1's reach: back-Step with this chance (AI-GAP-STEP-P).")
+(defparameter *ai-step-in-p* '(:easy 0.05 :normal 0.12 :hard 0.25)
+  "Step -> J (the user 2026-10-02): at a neutral decision where a forward Step lands within J1's reach, Step in with this
+chance (AI-DECIDE) ...")
+(defparameter *ai-step-j-p* '(:easy 0.3 :normal 0.6 :hard 0.9)
+  "... and out of any Step of ours that lands him within J1's reach + *AI-STEP-J-MARGIN* (he isn't mid-attack), J at
+Step f10 with this chance (the latch starts J1 at *STEP-J-CANCEL*; AI-REFLEX).")
+(defparameter *ai-step-j-margin* 0.1 "(J1's own lunge closes a little more.)")
 (defparameter *ai-wake-guard-frames* 20 "... held this long (his restarted string comes in it; then J out of it: J-BEATS-K-P).")
 (defparameter *ai-wake-guard-range* 3.0 "... when he is within this many metres (as perceived).")
 (defparameter *ai-hold-guard* '(:easy 0.97 :normal 0.92 :hard 0.8)

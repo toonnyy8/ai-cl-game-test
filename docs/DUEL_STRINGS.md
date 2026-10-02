@@ -764,3 +764,21 @@ The user: 「然後再添加墊步（step）可以接 J 取消後搖」.
 - **The CPU** is unchanged (no new reflex). Its own J presses during a Step now come out at f12: the cross pairings and
   G2 are bit-identical; the mirrors YY (median 130.2 → 122.0 s) and II (max 240.3 → 252.1 s) moved; awaken A/B identical
   (RR 33 / 31 / 30, SS 32 / 29 / 32 of 60). Host tests all pass.
+
+## 19. The CPU learns both (the user, 2026-10-02)
+
+The user: 「幫我教 CPU 跟更新的兩個機制」 (the Breaker as a combo starter, §17; Step → J, §18).
+
+- **The Breaker** was already taught with §17 (a landed Breaker → J1 / K1, `ai-reflex`); nothing new.
+- **Step in** (`ai-decide`, before the dash): at a neutral decision where a forward Step lands within J1's reach
+  (J1 reach + `*ai-step-j-margin*` < d < J1 reach + `*step-distance*` − 0.2), he isn't mid-attack or in a Hoho, and the
+  form isn't rooted: Step forward (`ai-dash` to J1's reach), `*ai-step-in-p*` EASY 0.05 / NORMAL 0.12 / HARD 0.25.
+- **J out of a Step** (`ai-reflex`): at Step f10 (one roll per Step: step-ins, dash-ins, gap back-steps, wake-up
+  Steps), with the real distance (its own hop) < J1 reach + 0.1 and him not mid-attack (a Breaker is fine: J beats it)
+  nor in a Hoho: J, `*ai-step-j-p*` 0.3 / 0.6 / 0.9; the latch starts J1 at f12.
+- **Measured** (HARD, 8 pairings, 1 seed): 272 Step → J1, 122 hit, 9 counter, 42 blocked, 99 no contact (most of
+  those interrupted by his faster hit or dodged; before the real-distance and Hoho checks 46 of 132).
+- **Gate** (20 seeds): all 15 pairings K.O.; cross medians 124.4–193.2 s, YK re-run at 60 seeds 131.3 s (the floor 125);
+  mirrors YY 130.9, KK 144.8, RR 174.1, II 204.4, SS 194.2. Awaken A/B: RR 37 / 33 / 30 vs 23 / 27 / 30, SS 29 / 34 /
+  33 vs 31 / 26 / 27, every row ≥ 20. The masher (no assist) vs HARD 3 % (was 4 %), with AUTO GUARD ALWAYS 41 % (41);
+  vs NORMAL 54 %. Host tests all pass. G2: yy P2 0-3 145.8 s, yk P2 0-3 107.2 s, kk P2 0-5 147.7 s.

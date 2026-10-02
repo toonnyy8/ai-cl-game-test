@@ -161,6 +161,7 @@ Step does not).
 **Step** (tap): a 2.5 m hop in the stick direction (neutral = back), invulnerable f3–f9, 24 f. **J cancels its
 recovery** (the user, 2026-10-02: 「添加墊步（step）可以接 J 取消後搖」): from f12 (`*step-j-cancel*`, the hop's slide
 over, past the iframes) J starts J1 at once; a J pressed earlier in the hop is latched for f12 (docs/DUEL_STRINGS.md §18).
+The CPU Steps in where a forward Step lands within J1 reach and J-cancels its Steps that land him in reach (§19).
 
 **Dash** (hold Step): the hop happens as above; if Step is still held when its 24 f end, the
 fighter **runs** (`:run`): Yamamoto 8 m/s, Kenpachi 10 m/s (Nozarashi inherits 10), moving in the

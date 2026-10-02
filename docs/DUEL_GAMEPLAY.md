@@ -318,10 +318,11 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P2 konpaku 0-1 ticks 7168 secs 119.5
+duel -> RESULTS winner P2 konpaku 0-3 ticks 6432 secs 107.2
 ```
 
-(The Breaker opens a combo, 2026-10-02 (DUEL_STRINGS.md §17): all three changed; before it `winner P1 konpaku 1-0 ticks 8178
+(The CPU learns Step -> J, 2026-10-02 (DUEL_STRINGS.md §19): all three changed; before it `winner P2 konpaku 0-1 ticks 7168
+secs 119.5`.) (The Breaker opens a combo, 2026-10-02 (DUEL_STRINGS.md §17): all three changed; before it `winner P1 konpaku 1-0 ticks 8178
 secs 136.3`.) (The perfect Hoho's lead 8 -> 12 frames, 2026-10-01: yk changed; before it `winner P1 konpaku 7-0 ticks 9328 secs 155.5`.)
 (The base AI after the newer rules, 2026-09-30 (DUEL_LEARNING.md "v2"): the Soul Break finish and ORANGE off an L / O hit;
 all three changed; YK was `winner P2 konpaku 0-1 ticks 10288 secs 171.5`.)
