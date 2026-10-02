@@ -158,6 +158,21 @@ while: a charge move is held to its full charge from beyond 7 m, where it has th
 ;;; ---------------------------------------------------------------- decisions
 (defun ai-table (e key &optional default) (getf (kit-ai (kit-of e)) key default))
 
+(defvar *ai-brain* nil
+  "The brain deciding for a fighter that has none (a human): the ASSIST's borrowed brain while ASSIST-STEP runs for him.")
+
+(defun ai-brain (e)
+  "E's deciding brain for the kits' CPU code (their :sp-ender, :sig-hold, :assist-guard ...): the assist's while it runs for
+him (*AI-BRAIN*; the gate's masher has a brain of its own), else his own (a CPU), else NIL."
+  (or *ai-brain* (brain e)))
+
+(defun ai-event-rolls (b s)
+  "One roll per opponent action (his SNAP S starts a new one): brain B's guard / Hoho / reaction rolls (AI-REFLEX; the
+assist's AUTO GUARD for the kit's :assist-guard)."
+  (when (/= (snap-start s) (brain-roll-key b))
+    (setf (brain-roll-key b) (snap-start s) (brain-guard-roll b) (sim-rnd01) (brain-hoho-roll b) (sim-rnd01)
+          (brain-react-roll b) (sim-rnd01))))
+
 (defun why (b reason cmd) "Note REASON (debug) and return CMD." (setf (brain-why b) reason) cmd)
 
 (defun ai-gg (e) "E's guard gauge as a fraction." (/ (gauges-gg (gauges e)) *gg-max*))
@@ -301,10 +316,8 @@ D = the perceived distance."
          (red (red-p (gauges-reishi g) (gauges-reishi-max g)))
          (hoho-ok (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)))   ; flash-step for one
          (guard-k (ai-guard-k e))                                                      ; the guard gauge left
-         (q (kit-command-move kit :q)) (new-event (/= (snap-start s) (brain-roll-key b))))
-    (when new-event                                       ; one roll per opponent action
-      (setf (brain-roll-key b) (snap-start s) (brain-guard-roll b) (sim-rnd01) (brain-hoho-roll b) (sim-rnd01)
-            (brain-react-roll b) (sim-rnd01)))
+         (q (kit-command-move kit :q)))
+    (ai-event-rolls b s)                                  ; one roll per opponent action
     (cond
       ;; our completed string (a link-3 hit): the O ender, on a red opponent always, else the kit's :o-ender chance;
       ;; one roll, on the first step we see the hit (its land frame)

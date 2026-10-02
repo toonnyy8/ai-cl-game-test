@@ -159,7 +159,7 @@
                (6.0 99.0 :step 1 :kikon 1 nil 1))                      ; the charge / leap as a poke
        :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 0.8 :kikon-range 9.0
        :react (:projectile :sig :flash-startup :sig) :block-string 0.8
-       :reflex ken-ai-reflex :sp-ender ken-sp-ender :sig-hold ken-sig-hold))   ; a blocked string goes on (guard pressure)
+       :reflex ken-ai-reflex :assist-guard ken-assist-guard :sp-ender ken-sp-ender :sig-hold ken-sig-hold))   ; a blocked string goes on (guard pressure)
 
 (defkit :kenpachi :nozarashi :inherit :base    ; cup 1, KATATE: one hand, as the awakening leaves him
   :awakening t :mult *nozarashi-mult* :startup-add *nozarashi-startup* :reach-mult *nozarashi-reach*
@@ -184,7 +184,7 @@
        ;; (:kikon-range 5 m in every cup: LEAP CLEAVE's direction is locked at take-off, and from 9 m it mostly whiffed)
        :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 0.8 :kikon-range 5.0 :kikon-p 0.25 :o-ender 0.25
        :react (:projectile :sig :flash-startup :sig) :block-string 0.8
-       :reflex ken-ai-reflex :sp-ender ken-sp-ender :sig-hold ken-sig-hold))
+       :reflex ken-ai-reflex :assist-guard ken-assist-guard :sp-ender ken-sp-ender :sig-hold ken-sig-hold))
 
 (defkit :kenpachi :ryote :inherit :nozarashi       ; cup 2, RYOTE (NOME >= 40): two-handed kendo, the cut
   :mult *ryote-mult* :startup-add *ryote-startup* :reach-mult *ryote-reach* :form-name "RYOTE" :kikon-konpaku 3
@@ -204,7 +204,7 @@
        :guard 0.35 :neutral-guard 0.1 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 1 :dash 1.0 :dash-gap 0.5 :kikon-range 5.0
        :kikon-p 0.5 :o-ender 0.35 :respect 30
        :react (:projectile :sig :flash-startup :sig) :block-string 0.95
-       :reflex ken-ai-reflex :sp-ender ken-sp-ender :sig-hold ken-sig-hold))
+       :reflex ken-ai-reflex :assist-guard ken-assist-guard :sp-ender ken-sp-ender :sig-hold ken-sig-hold))
 
 (defkit :kenpachi :nomihose :inherit :ryote        ; cup 3, NOMIHOSE (NOME = 100): no guard, U drinks; RYOTE's moves
   :mult *nomihose-mult* :form-name "NOMIHOSE" :kikon-konpaku 4 :blade-chip *nomihose-chip* :bankai-form :bankai
@@ -228,7 +228,7 @@
        ;; :opp-konpaku) while he has <= :own-konpaku left; one roll per cup-3 stay (ai.lisp AI-BANKAI-P)
        :bankai (:p 0.9 :opp-below 0.6 :opp-konpaku 4 :own-konpaku 4)
        :react (:projectile :sig :flash-startup :sig) :block-string 0.85
-       :reflex ken-ai-reflex :sp-ender ken-sp-ender :sig-hold ken-sig-hold))
+       :reflex ken-ai-reflex :assist-guard ken-assist-guard :sp-ender ken-sp-ender :sig-hold ken-sig-hold))
 
 ;;; the Bankai (P in cup 3, red, free: combat.lisp BANKAI!): his Konpaku -> 1, his Reishi -> full (the user's decisions
 ;;; 2026-09-28); ×1.2; U is still DRINK; every heavy command spends a pip of the arm (UDE, the kit meter)
@@ -253,7 +253,7 @@
                (6.0 99.0 :kikon 1 :step 1 nil 1))
        :guard 0.2 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 2 :dash 1.0 :kikon-range 10.6 :kikon-p 0.9 :o-ender 0.8
        :string-k 0.6 :pip-hurry 90 :block-string 0.85 :opp-intent (:zone 2 :defend 2)
-       :reflex ken-ai-reflex :sp-ender ken-sp-ender :sig-hold ken-sig-hold))
+       :reflex ken-ai-reflex :assist-guard ken-assist-guard :sp-ender ken-sp-ender :sig-hold ken-sig-hold))
 
 ;;; 片腕 KATAUDE (the arm burst): the rest of the match. The base moves at reach x0.7 (the ruined arm can't extend); the
 ;;; kick, the Breaker and O (CHARGE) as written; x1.0; U is a guard again; Kikon 3 (the universal awakened count)
@@ -272,7 +272,7 @@
                (6.0 99.0 :step 1 :kikon 1 nil 1))
        :guard 0.35 :hoho 0.2 :awaken-above 0.0 :sp-cancel-bars 2 :dash 0.9 :kikon-range 9.0 :kikon-p 0.5 :o-ender 0.25
        :react (:projectile :sig :flash-startup :sig) :block-string 0.8
-       :reflex ken-ai-reflex :sp-ender ken-sp-ender :sig-hold ken-sig-hold))
+       :reflex ken-ai-reflex :assist-guard ken-assist-guard :sp-ender ken-sp-ender :sig-hold ken-sig-hold))
 
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun ken-rift (e)
@@ -422,6 +422,11 @@ dash starts = guard-crushing (the Breaker property)."
       (ken-first-strike e b s d)
       (ken-lunge e b s d)
       (ken-walk-in e b s d)))
+
+(defun ken-assist-guard (e b s d)
+  "His forms' :assist-guard (assist.lisp AUTO GUARD): his defensive answers only, the timed anti-Breaker hit and the Hoho
+into a K / L / SP's perfect lead."
+  (or (ken-anti-breaker e b s d) (ken-hoho-commit e b s d)))
 
 (defun ken-bankai-gate (e b)
   "The Bankai leaves him 1 Konpaku: at HARD (*KEN-AI-BANKAI-STRICT*) only as a finisher or with little to lose: <= 2 of his
@@ -588,8 +593,8 @@ his string and cuts back (KEN-SIG-HOLD holds it through the string)."
 (defun ken-sp-ender (e kit)
   "His forms' :sp-ender (ai.lisp STRING-REFLEX: a landed string's last link, the O ender's own roll failed): the O ender
 anyway, *KEN-AI-O-ENDER* by difficulty (not on a red opponent: that already rushes; not to finish a Soul Break), else
-Shift+L (the charge into the flurry; it chases off the ender) *KEN-AI-SP2-ENDER*."
-  (let ((b (brain e)))
+Shift+L (the charge into the flurry; it chases off the ender) *KEN-AI-SP2-ENDER*. (AI-BRAIN: the assist's for a human.)"
+  (let ((b (ai-brain e)))
     (when b
       (cond ((ken-line-ender-p e kit b) :sp1)
             ((and (not (kikon-ready-p e)) (not (ai-sb-finish-p e)) (kit-command-ok-p e :kikon kit t)
@@ -614,7 +619,7 @@ damage, before the O ender (63) or the charge (two bars, ~185); not NOMIHOSE's c
   (declare (ignore d))
   (let ((mv (kit-command-move kit :sig)))
     (cond ((not (and mv (mv-hold mv))) 1)                                  ; (the Bankai's bite: a tap)
-          ((and e (brain e) (ken-stance-p kit) (ai-mash-p (brain e))) 36)
+          ((and e (ai-brain e) (ken-stance-p kit) (ai-mash-p (ai-brain e))) 36)
           (t (+ 12 (floor (* (sim-rnd01) 40)))))))
 
 ;;; ================================================================ cinematics

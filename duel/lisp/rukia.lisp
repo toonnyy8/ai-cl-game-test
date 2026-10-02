@@ -124,7 +124,7 @@
                (8.0 99.0 :sp1 2 :kikon 2 nil 1))
        :guard 0.4 :hoho 0.35 :sp-cancel-bars 1 :oki :sp1-full :oki-above 0.4 :dash 0.5 :dash-back 0.4 :kikon-range 8.0
        :stun-follow (:sp2 2.4 5.0) :awaken (:melee-share 0.6 :min-taken 150) :l-after-k *ai-ru-l-after-k*
-       :sp-ender rukia-ai-sp-ender :reflex rukia-ai-reflex))
+       :sp-ender rukia-ai-sp-ender :reflex rukia-ai-reflex :assist-guard rukia-assist-guard))
 
 ;;; -18 C, the awakening's first band: the Shikai grid (+ TOSHU / HYOKA), frost on every hit, no chip on her; U guards
 ;;; and cools (the cold gauge, the kit meter); only L spends cold here (the user's decision 2026-09-28)
@@ -144,7 +144,7 @@
                (2.8 5.0 :sp2 2 :step 1 nil 2)
                (5.0 99.0 :sp1 2 nil 2))
        :guard 0.5 :hoho 0.3 :dash 0.2 :dash-back 0.2 :o-ender 0.25 :l-after-k *ai-ru-l-after-k-awake* :kikon-range 6.5 :sp-cancel-bars 2
-       :cool (:p 0.3 :near 3.5) :stun-follow (:sp2 2.4 5.0) :sp-ender rukia-ai-sp-ender :reflex rukia-ai-reflex))
+       :cool (:p 0.3 :near 3.5) :stun-follow (:sp2 2.4 5.0) :sp-ender rukia-ai-sp-ender :reflex rukia-ai-reflex :assist-guard rukia-assist-guard))
 
 ;;; -50 C: slower, hardened, reach x1.1, the rime blade, HYOSHIN for L; every action spends cold now; the whole bar 1
 ;;; spent (C 0) warms her back to -18, both bars full is absolute zero
@@ -160,7 +160,7 @@
                (1.9 3.5 :f 3 :sig 3)
                (3.5 99.0 :sp2 1 :sp1 1 nil 2))
        :guard 0.45 :hoho 0.25 :dash 0.1 :dash-back 0.1 :o-ender 0.25 :l-after-k *ai-ru-l-after-k-awake* :kikon-range 7.5 :sp-cancel-bars 2
-       :cool (:p 0.35 :near 4.0 :no-projectile t :min-gg 50) :stun-follow (:sp2 2.4 6.0) :reflex rukia-ai-reflex
+       :cool (:p 0.35 :near 4.0 :no-projectile t :min-gg 50) :stun-follow (:sp2 2.4 6.0) :reflex rukia-ai-reflex :assist-guard rukia-assist-guard
        :sp-ender rukia-ai-sp-ender))
 
 ;;; -273.15 C, absolute zero (both bars full): rooted (no walk, run, Step, Hoho, slide or chase: the user's decision), the
@@ -189,7 +189,7 @@
                (14.0 99.0 nil 1))
        :guard 0.0 :hoho 0.0 :o-ender 0.25 :l-after-k *ai-ru-l-after-k-awake* :kikon-range 9.0 :sp-cancel-bars 2
        :brace (:p 0.2 :near 5.5 :min-gg 30) :opp-intent (:zone 2 :defend 2) :sp-ender rukia-ai-sp-ender
-       :reflex rukia-ai-reflex))
+       :reflex rukia-ai-reflex :assist-guard rukia-assist-guard))
 
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun rukia-look (e kind x z &key (yaw 0.0) (size 1.0) (life 30) (delay 0) fragile)
@@ -343,7 +343,7 @@ REIDO), per ender hit (RUKIA-AI-SP-ENDER).")
 
 (defun rukia-ai-p (e plist)
   "PLIST's chance (:easy :normal :hard) at E's CPU difficulty (NORMAL's without a brain)."
-  (let ((b (brain e))) (getf plist (if b (brain-difficulty b) :normal) (getf plist :normal 0.0))))
+  (let ((b (ai-brain e))) (getf plist (if b (brain-difficulty b) :normal) (getf plist :normal 0.0))))
 
 (defun rukia-ai-bars-p (e)
   "Bars enough for an SP and the kit's reserve (:sp-cancel-bars) after it."
@@ -517,6 +517,12 @@ RUKIA-AI-SP-ENDER; b0a0's anti-Breaker J1 and guard break cost strength on top o
       (and (eq (kit-form (kit-of e)) :m50) (rukia-ai-hoho-in e b s d))
       (rukia-ai-zone e b s d)
       (rukia-ai-band-disc e b s d)))
+
+(defun rukia-assist-guard (e b s d)
+  "Her forms' :assist-guard (assist.lisp AUTO GUARD): her defensive answers only, REIDO at zero (a ward block, a Breaker)
+and the timed Hoho."
+  (or (and (eq (kit-form (kit-of e)) :zero) (rukia-ai-zero e b s d))
+      (rukia-ai-perfect-hoho e b s d)))
 
 (defun rukia-zero-enter (e)
   "Absolute zero (:zero's :enter-hook): entered from a held guard or a Hoho's arrival, the ward is up at once (no hole); a new visit's

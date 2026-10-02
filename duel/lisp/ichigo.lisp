@@ -196,7 +196,7 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
                (9.0 99.0 :sp1 2 :kikon 1 nil 1))
        :guard 0.4 :hoho 0.3 :dash 0.8 :dash-back 0.1 :block-string 0.8 :l-after-k *ai-ic-l-after-k* :sp-cancel-bars 1
        :kikon-range 8.6 :react (:projectile :sp1) :awaken (:min-taken 150)
-       :reflex ichigo-ai-shikai :sp-ender ichigo-ai-ender))
+       :reflex ichigo-ai-shikai :assist-guard ichigo-assist-guard :sp-ender ichigo-ai-ender))
 
 ;;; KESSA NO ICHIGO: permanent, no heal, Kikon 3 (O: 2-4 by the clones). A normal guard; L the parry (and from blockstun);
 ;;; a clone on a Step (:step) and a Hoho; the clones' answers, the O charge and the afterimages in his :tick hook
@@ -222,7 +222,7 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
                (5.0 9.0 :sp1 2 :hoho 2 :kikon 1 :step 1)
                (9.0 99.0 :kikon 1 :hoho 2 nil 1))
        :guard 0.4 :hoho 0.4 :dash 0.6 :dash-back 0.2 :o-ender 0.6 :attack 0.15 :l-after-k 0.0 :sp-cancel-bars 9
-       :kikon-range 8.6 :stun-follow (:sp1 3.8 7.0) :reflex ichigo-ai-kessa
+       :kikon-range 8.6 :stun-follow (:sp1 3.8 7.0) :reflex ichigo-ai-kessa :assist-guard ichigo-assist-guard
        :sp-ender ichigo-ai-ender))
 
 ;;; ================================================================ pure rules (host-tested: tests/duel-rules-test.lisp)
@@ -869,6 +869,21 @@ with the guard gauge for them (*CLONE-COST* + 25); HARD 3 down to *CLONE-COST* +
   (let ((gg (gauges-gg (gauges e))))
     (if (>= gg (+ *clone-cost* (if (eq (brain-difficulty b) :hard) 10.0 25.0))) 3 2)))
 
+(defun ichigo-ai-red-guard (e b s d)
+  "ICHIGO-AI-RED's guard: red (HARD), his rush coming within 11 m: hold guard through its strike, one roll per his action."
+  (let ((g (gauges e)))
+    (and (red-p (gauges-reishi g) (gauges-reishi-max g)) (plusp (ic-p b 0.0 0.0 1.0))
+         (eq (snap-state s) :move) (eq (snap-kind s) :kikon)
+         (or (member (snap-phase s) '(:aura :dash)) (and (eq (snap-phase s) :main) (< (snap-sf s) (snap-active-end s))))
+         (< d 11.0) (plusp (ai-guard-k e)) (>= (gauges-gg g) 21.0)
+         (< (brain-react-roll b) 0.95)
+         (why b :red-guard :guard-long))))
+
+(defun ichigo-assist-guard (e b s d)
+  "Both forms' :assist-guard (assist.lisp AUTO GUARD): the defensive answers only, the timed Hoho and the red guard of a
+rush (KESSA's parry is AUTO GUARD's own, PARRY-COMMAND)."
+  (or (ichigo-ai-perfect-hoho e b s d) (ichigo-ai-red-guard e b s d)))
+
 (defun ichigo-ai-red (e b s d)
   "We are red (his Kikon ready): live through it. His rush coming (aura, dash or the strike's startup, as perceived,
 within 11 m): hold guard (the first strike is guardable red or not, KIKON-OUTCOME; the generic CPU only Hohos / Steps /
@@ -877,11 +892,7 @@ J1s it when red; blocked he is -14), one roll per his action, the gauge able to 
 Kikons into Soul Breaks (worth one more). EASY / NORMAL 0 (the generic play), HARD 0.95 / 0.25."
   (let ((g (gauges e)))
     (when (and (red-p (gauges-reishi g) (gauges-reishi-max g)) (plusp (ic-p b 0.0 0.0 1.0)))
-      (cond ((and (eq (snap-state s) :move) (eq (snap-kind s) :kikon)
-                  (or (member (snap-phase s) '(:aura :dash)) (and (eq (snap-phase s) :main) (< (snap-sf s) (snap-active-end s))))
-                  (< d 11.0) (plusp (ai-guard-k e)) (>= (gauges-gg g) 21.0)
-                  (< (brain-react-roll b) 0.95))
-             (why b :red-guard :guard-long))
+      (cond ((ichigo-ai-red-guard e b s d))
             ((and (eq (burst-ok-p e) :white)
                   (not (and (eq (snap-state s) :move) (< (snap-sf s) (snap-active-end s)) (< d (+ (snap-reach s) 1.5))))
                   (< (sim-rnd01) 0.25))
@@ -937,8 +948,8 @@ long punish."
 what chases him (a move started off a pushing ender chases, docs/DUEL_STRINGS.md §16). The Shikai: SOGA (SP2, 130) with a
 bar, else the O poke (70); KESSA: KUSARI-BIKI (SP1: the chain pulls him back to 1.6 m and binds him 40 f, then the J
 follow-up). HARD: the SP 0.95, the Shikai's O poke all of the rest; NORMAL / EASY none (the generic SP cancel stays, the
-shipped behaviour). NIL without a brain (the ASSIST's AUTO COMBO calls STRING-REFLEX for a human: the generic play)."
-  (let ((b (brain e)))
+shipped behaviour). AI-BRAIN: for a human the ASSIST's borrowed (HARD) brain (its AUTO COMBO calls STRING-REFLEX)."
+  (let ((b (ai-brain e)))
     (when b
       (let ((bars (floor (gauges-reiatsu (gauges e)) *reiatsu-bar*)) (r (sim-rnd01)))
         (if (eq (kit-form kit) :kessa)

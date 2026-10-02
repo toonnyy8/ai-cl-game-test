@@ -153,7 +153,7 @@
        :guard 0.45 :hoho 0.35 :awaken-above 0.0 :sp-cancel-bars 2 :o-ender 0.0 :oki :sp1-full :oki-above 0.6
        :dash 0.25 :dash-back 0.5 :kikon-range 9.0
        ;; the CPU's own hooks (the end of this file): the O ender only through :sp-ender (never ENJO off a J3: :o-ender 0)
-       :sp-ender yama-sp-ender :reflex yama-ai-reflex))
+       :sp-ender yama-sp-ender :reflex yama-ai-reflex :assist-guard yama-anti-breaker))
 
 (defkit :yamamoto :hellfire :inherit :base
   :callout "GOKUEN" :mult *hellfire-mult* :duration *hellfire-seconds* :burn *hellfire-burn* :blade (:fire 1.3)
@@ -166,7 +166,7 @@
                (3.0 8.0 :f 1 :sig 2 :step 2)
                (8.0 99.0 :sp1 2 :step 2))
        :guard 0.4 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 1 :o-ender 0.0 :dash 0.5 :kikon-range 9.0
-       :sp-ender yama-sp-ender :reflex yama-ai-reflex))
+       :sp-ender yama-sp-ender :reflex yama-ai-reflex :assist-guard yama-anti-breaker))
 
 (defkit :yamamoto :bankai-east :inherit :base
   :awakening t :taken *bankai-taken* :startup-add -1 :reach-mult 1.15 :guard-to :bankai-west :gg-regen *east-gg-regen*
@@ -188,7 +188,7 @@
                (6.0 99.0 :sp1 3 :step 1 nil 1))
        :guard 0.45 :hoho 0.35 :awaken-above 0.4 :sp-cancel-bars 9 :dash 0.6 :dash-back 0.3 :kikon-range 9.0
        :cancel (:sig 0.5) :low (0.4 :sig 3) :gg-low 0.3 :block-string 0.85 :sig-gg 0.6
-       :sp-ender yama-sp-ender :reflex yama-ai-reflex))
+       :sp-ender yama-sp-ender :reflex yama-ai-reflex :assist-guard yama-anti-breaker))
 
 (defkit :yamamoto :bankai-west :inherit :bankai-east
   :taken 1.0 :guard-to nil :drop-to :bankai-east :keep (:sig :sp1) :passives (:ward :scorch)
@@ -206,7 +206,7 @@
                (6.0 99.0 :sp1 2 :step 1 nil 2))
        :guard 0.3 :hoho 0.3 :awaken-above 0.4 :sp-cancel-bars 9 :dash 0.4 :dash-back 0.2 :kikon-range 9.0
        :react (:flash-startup :sp1) :ward-reversal 0.35
-       :sp-ender yama-sp-ender :reflex yama-ai-reflex))
+       :sp-ender yama-sp-ender :reflex yama-ai-reflex :assist-guard yama-anti-breaker))
 
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun yama-fire-wave (e)
@@ -348,8 +348,9 @@ the ground there cracks (a look) and :hands skeleton hands claw out; a :bind haz
 
 ;;; ================================================================ the CPU (the kit's :ai hooks; ai.lisp; docs/DUEL_AI_V2.md)
 (defun yama-dif (e p)
-  "E's CPU's chance from P, a plist by difficulty (:easy :normal :hard); no brain (an assisted human): NORMAL's."
-  (let ((b (brain e))) (getf p (if b (brain-difficulty b) :normal) (getf p :normal))))
+  "E's CPU's chance from P, a plist by difficulty (:easy :normal :hard): its brain's (AI-BRAIN: an assisted human's is the
+assist's HARD one); no brain: NORMAL's."
+  (let ((b (ai-brain e))) (getf p (if b (brain-difficulty b) :normal) (getf p :normal))))
 
 (defparameter *yama-breaker-step* 0.16 "A Breaker's dash per frame (9.6 m/s, *BREAKER-SPEED-MIN* .. -MAX): what the delay hides.")
 

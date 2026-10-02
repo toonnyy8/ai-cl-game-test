@@ -3,8 +3,9 @@
 ;;;; reads it: the player gives the intent (U held, J pressed), the CPU's own rules pick the move and press its buttons
 ;;;; (AI-COMMAND on a borrowed brain). A move it pressed is ASSISTED (FIGHTER-ASSIST-NEXT, taken by START-MOVE / START-HOHO):
 ;;;; x*ASSIST-MULT* damage (APPLY-HIT), and its Hoho is never PERFECT. The AUTO tag shows over him (HUD-HINT).
-;;;;   AUTO GUARD   OFF / HOLD U / ALWAYS: free (and U held, for HOLD U) and a hit about to land (PERFECT-NOW-P, unperceived:
-;;;;                the price is the x0.8): the form's parry against a melee move, else a Hoho
+;;;;   AUTO GUARD   OFF / HOLD U / ALWAYS: free (and U held, for HOLD U): first the form's own defensive answers (its kit's
+;;;;                :assist-guard, the CPU's timed ones: AI v2, 2026-10-02), then a hit about to land (PERFECT-NOW-P,
+;;;;                unperceived: the price is the x0.8): the form's parry against a melee move, else a Hoho
 ;;;;   AUTO COMBO   J pressed during a J / K link that hit: the CPU's choice, made on the hit's land frame (STRING-REFLEX: a
 ;;;;                link, L, SP2, ORANGE; the O ender off a link-3 hit on a red opponent: the Kikon); J itself is left as his own press
 ;;;;   AUTO BREAK   J pressed, free, while he has guarded >= *AI-GUARD-BREAK-HOLD* f within *AI-GUARD-BREAK-RANGE*: the Breaker
@@ -65,6 +66,16 @@ result, its table is saved."
   "The command of KIT's parry move (a :parry flag) E may start now, or NIL."
   (find-if (lambda (c) (let ((mv (kit-command-move kit c))) (and mv (member :parry (mv-flags mv)) (kit-command-ok-p e c kit))))
            *kit-commands*))
+
+(defun auto-guard-kit (e b s d)
+  "AUTO GUARD's first answer: the form's own defensive reflexes, the function its kit's :ai names :assist-guard (Yamamoto's
+and Kenpachi's timed anti-Breaker hit, Rukia's and Ichigo's timed Hoho, Rukia's REIDO at zero, Ichigo's red guard of a
+rush, the loom's Hoho through a Breaker ...; never a neutral decision or an offensive reflex), on brain B as the CPU sees
+(S, D). A command or NIL (its :WAIT, nothing yet: the generic answer may still go)."
+  (let ((h (ai-table e :assist-guard)))
+    (when h
+      (ai-event-rolls b s)                                  ; (its rolls, one per action of his, as AI-REFLEX rolls them)
+      (let ((c (funcall h e b s d))) (and (not (eq c :wait)) c)))))
 
 (defun auto-guard (e f)
   "AUTO GUARD: a hit about to land (PERFECT-NOW-P): the parry against his melee move, else a Hoho when allowed; or NIL."
@@ -137,6 +148,7 @@ BREAK may press one."
   (let* ((f (fighter e)) (side (fighter-side f)) (vp (pilot-vpad (pilot e))) (b (assist-brain e side))
          (st (fighter-state f)) (free (and (member st '(:idle :guard :run)) (zerop (fighter-lock f)))))
     (multiple-value-bind (s d) (brain-perceive e b (opp-of e))   ; him as HARD's delay sees him
+     (let ((*ai-brain* b))                                     ; (the kits' CPU code decides on this brain: AI-BRAIN)
       (when (brain-learn b) (learn-step e b s d))
       (when (plusp (svref *assist-tag* side)) (decf (svref *assist-tag* side)))
       (if (plusp (brain-press-left b))
@@ -144,7 +156,7 @@ BREAK may press one."
                  (vpad-hold! vp (brain-press b))             ; charge, the bait's guard: his J mashing doesn't restart the string)
                  (when (eq (brain-press b) :guard) (vpad-consume! vp :quick) (setf (fighter-queued f) nil)))
           (let ((cmd (or (and free (plusp (first cfg)) (or (= 2 (first cfg)) (vpad-down vp :guard))
-                              (or (auto-guard e f)
+                              (or (auto-guard-kit e b s d) (auto-guard e f)
                                   (and (j-beats-open-p e b) (why b :j-back :q))))   ; guard -> J out of his blocked string
                          (and (second cfg) (eq st :move) (auto-combo e f b side vp))
                          (and (third cfg) free (auto-break e f vp))
@@ -156,7 +168,7 @@ BREAK may press one."
               (vpad-stamp! vp (brain-press b) (brain-press-mod b))
               (decf (brain-press-left b))
               (setf (fighter-assist-next f) t (svref *assist-tag* side) *assist-tag-frames*)
-              (clog "~a assist ~a" (side-name e) cmd))))
+              (clog "~a assist ~a" (side-name e) cmd)))))
       (setf (brain-was b) st))))   ; (J-BEATS-OPEN-P: the step after blockstun)
 
 (defun assist-system ()

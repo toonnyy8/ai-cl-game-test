@@ -279,7 +279,7 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
        :kikon-range 7.7 :react (:projectile :sp2)
        :awaken (:min-taken 150) :awaken-above 1.01   ; (the generic awakening off, free and combo-break alike: SENJU-AWAKEN
                                                 ; awakens on :awaken's rule below a share by difficulty, :awaken-below)
-       :hari (:min 4 :hurry 40) :reflex senju-ai-reflex :sig-hold senju-sig-hold :sp-ender senju-base-ender))
+       :hari (:min 4 :hurry 40) :reflex senju-ai-reflex :assist-guard senju-loom-anti-breaker :sig-hold senju-sig-hold :sp-ender senju-base-ender))
 
 (defparameter *tsuji-ai*
   '(:intents (:approach 1 :pressure 1 :zone 4 :defend 2)
@@ -293,7 +293,7 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
     :guard 0.45 :hoho 0.35 :dash 0.2 :dash-back 0.6 :o-ender 0.2 :l-after-k 0.3 :l-after-j 0.35 :sp-cancel-bars 9
     :kikon-range 8.5
     :react (:projectile :sp2) :weave (:far 6.5 :near 4.0) :sp-ender senju-sp-ender
-    :opp-rush-hold 0.5 :opp-reflex senju-opp-reflex :reflex senju-ai-reflex :sig-hold senju-sig-hold)
+    :opp-rush-hold 0.5 :opp-reflex senju-opp-reflex :reflex senju-ai-reflex :assist-guard senju-loom-anti-breaker :sig-hold senju-sig-hold)
   "The loom's CPU (every hank form; 星's weave distances are read by form in SENJU-SIG-HOLD; SP1 ends a string: SENJU-SP-ENDER).")
 
 (defkit :senjumaru :tsuji1 :inherit :base
@@ -877,6 +877,16 @@ and the O where J1 can't reach; beyond 7.5 m the kit's own bands.")
   (+ (rush-param mv :aura) (mv-s mv)
      (if (plusp (rush-param mv :speed)) (ceiling (* 60 (max 0.0 (- d (mv-reach mv)))) (rush-param mv :speed)) 0)))
 
+(defun senju-loom-anti-breaker (e b s d)
+  "The loom (round 2): his Breaker's dash within 6 m: Hoho through it, else Step aside (the generic J1 answer, her short
+needle pressed through the perception delay, lost the trade: Rukia's Breaker -104 a use). Also the loom's :assist-guard
+(assist.lisp AUTO GUARD; the Shikai has none: its answer is the O). A command or NIL."
+  (let ((f (fighter e)) (g (gauges e)))
+    (and (not (hari-form-p e)) (eq (snap-kind s) :breaker) (eq (snap-phase s) :dash) (< d 6.0)
+         (< (brain-react-roll b) (senju-dp b :loom-anti-breaker-p))
+         (why b :loom-anti-breaker
+              (if (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)) :hoho :side-step)))))
+
 (defun senju-policy-reflex (e b s d)
   "The policy's free-state reflexes (above): the far punish, the stitches on a hit he can't leave, the long guard's
 Breaker. A command or NIL."
@@ -891,11 +901,7 @@ Breaker. A command or NIL."
        (why b :anti-breaker-o :kikon))
       ;; the loom (round 2): his Breaker's dash inside the lane's 3 m: Hoho through it, else Step aside (the generic J1
       ;; answer, her short needle pressed through the perception delay, lost the trade: Rukia's Breaker -104 a use)
-      ((and (not (hari-form-p e)) (eq (snap-kind s) :breaker) (eq (snap-phase s) :dash) (< d 6.0)
-            (< (brain-react-roll b) (senju-dp b :loom-anti-breaker-p)))
-       (let ((g (gauges e)))
-         (why b :loom-anti-breaker
-              (if (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)) :hoho :side-step))))
+      ((senju-loom-anti-breaker e b s d))
       ;; a neutral decision due (AI-NEUTRAL's clock), the Shikai: the policy's own bands (*SENJU-NEUTRAL*) at :neutral-p
       ;; (the loom keeps the kit's: its zoning bands measured better than close ones)
       ((and (hari-form-p e) (member (fighter-state f) '(:idle :run)) (<= (brain-decide-t b) 1)
@@ -981,7 +987,7 @@ past his wake-up); the Shikai: the soldier (SP1) walks to him. A command or NIL.
 (defun senju-base-ender (e kit)
   "The Shikai's :sp-ender (ai.lisp STRING-REFLEX, a J3 / K3 that hit, the push begun): the O ender (:o-ender-p; not
 when hits finish him, AI-SB-FINISH-P); else after K3 the stitches' L with >= 3 (:l-ender-p)."
-  (let* ((b (brain e)) (f (fighter e)) (mv (fighter-move f)))
+  (let* ((b (ai-brain e)) (f (fighter e)) (mv (fighter-move f)))
     (cond ((and (member :ender (mv-flags mv)) (not (ai-sb-finish-p e)) (kit-command-ok-p e :kikon kit t)
                 (< (sim-rnd01) (senju-dp b :o-ender-p)))
            :kikon)
@@ -1033,9 +1039,9 @@ hits, *AI-SENJU-TACHI* of the time on a designed pair, half that on a cross pair
 lane, at :o-ender-p (not when hits finish him)."
   (let ((n (form-hank (kit-form kit))) (mv (fighter-move (fighter e))))
     (or (and n (kit-command-ok-p e :sp1) (multiple-value-bind (a b) (tachi-hanks n) (or (hank-hits-p a) (hank-hits-p b)))
-             (< (sim-rnd01) (* (if (brain e) (senju-dp (brain e) :tachi-p) *ai-senju-tachi*) (if (tachi-aligned-p n) 1.0 0.5))) :sp1)
-        (and (brain e) (member :ender (mv-flags mv)) (not (ai-sb-finish-p e)) (kit-command-ok-p e :kikon kit t)
-             (< (sim-rnd01) (senju-dp (brain e) :o-ender-p)) :kikon))))
+             (< (sim-rnd01) (* (if (ai-brain e) (senju-dp (ai-brain e) :tachi-p) *ai-senju-tachi*) (if (tachi-aligned-p n) 1.0 0.5))) :sp1)
+        (and (ai-brain e) (member :ender (mv-flags mv)) (not (ai-sb-finish-p e)) (kit-command-ok-p e :kikon kit t)
+             (< (sim-rnd01) (senju-dp (ai-brain e) :o-ender-p)) :kikon))))
 
 (defun senju-opp-reflex (e b s d)
   "A CPU facing her (her kit's :opp-reflex, read off her kit: every other pairing unchanged): while she holds a weave within
@@ -1051,7 +1057,7 @@ lane, at :o-ender-p (not when hits finish him)."
 :near and 1 inside :near (a tap needs one stored; 星, cast round her: :far 5 / :near 2.5); short of them it weaves one segment (at most
 *WEAVE-SEG* frames, never a stand into a rush: each segment is a new decision), else it taps (the release at the stored
 level). On a cross slot with a bar for SP1 it wants one pass: the quick single release that realigns the pairs."
-  (if (or (not (form-hank (kit-form kit))) (and e (brain e) (eq (brain-why (brain e)) :oki-tap)))   ; (the oki's tap)
+  (if (or (not (form-hank (kit-form kit))) (and e (ai-brain e) (eq (brain-why (ai-brain e)) :oki-tap)))   ; (the oki's tap)
       1
       (let* ((w (getf (kit-ai kit) :weave)) (hoshi (eq (kit-form kit) :tsuji6))
              (far (if hoshi 5.0 (getf w :far 6.5))) (near (if hoshi 2.5 (getf w :near 4.0)))
