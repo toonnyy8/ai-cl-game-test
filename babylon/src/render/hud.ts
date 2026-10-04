@@ -193,7 +193,8 @@ function sidePortrait(e: Ent, wd: World, human: boolean, top: number, ps: number
 
 export type Project = (x: number, y: number, z: number) => [number, number] | null;
 
-export interface BattleHud { portrait: boolean; practice: boolean; hint: boolean; prompt: (side: number) => string }
+export interface BattleHud { portrait: boolean; practice: boolean; hint: boolean; prompt: (side: number) => string;
+  tag?: string | null }                                 // ENDLESS: STAGE n (hud.lisp HUD-ENDLESS-TAG)
 
 export function drawBattle(wd: World, project: Project, o: BattleHud): void {
   g.clearRect(0, 0, w, h);
@@ -214,6 +215,10 @@ export function drawBattle(wd: World, project: Project, o: BattleHud): void {
     if (p) text(e.f.callout, p[0], p[1], 9 * s, '#ffd98c', 'center', Math.min(1, e.f.calloutT / 15));
   }
   if (!o.portrait) text(timer, w / 2, 0.035 * h, (o.practice ? 10 : 22) * s, !o.practice && secs < 30 ? '#ff4d4d' : '#ffffff', 'center');
+  if (o.tag) {                                                                    // landscape under the timer, portrait left under P2's block
+    if (o.portrait) { const pm = portraitMetrics(); text(o.tag, 4 * pm.s, pm.hudBottom + pm.s, 6 * pm.s, '#e2deea'); }
+    else text(o.tag, w / 2, 0.13 * h, 10 * s, '#c8c4d4', 'center');
+  }
   drawWords();
 }
 

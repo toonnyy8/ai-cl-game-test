@@ -154,3 +154,9 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   (`soulduel.learn.<i>`, `soulduel.learn.a<i>`, comma-separated integers), so both builds share them. The CPU learns in
   VS CPU (and ENDLESS once ported), never in CPU VS CPU or PRACTICE. Open: AUTO COMBO's bait branch in assist.lisp never
   presses :guard-long (the SETF returns NIL; ported as it behaves, likely a Lisp bug).
+- 2026-10-04: M6c ENDLESS: `src/sim/endless-rules.ts` (endless-rules.lisp; `test/endless.test.ts` ports its host tests),
+  `src/sim/endless.ts` (the run; `MatchOpts.setup` = ENDLESS-APPLY!, called before the learner attaches; the record in
+  the page's `soulduel.endless.<k>` slots, shared with the Lisp build), the screens in `src/ui/flow.ts` (SELECT with
+  STAGE 1's opponent and START, STAGE CLEAR, RETIRE, the run's RESULTS), the STAGE tag in `render/hud.ts`,
+  `tools/endless.ts` (the autopilot, endless.lisp 80992's job). The autopilot vs the native Lisp running the same run:
+  every Y / K / R stage identical bit for bit (91 of 91), Ichigo / Senjumaru stages drift with their open f32 parity.

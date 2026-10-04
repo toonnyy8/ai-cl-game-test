@@ -12,7 +12,7 @@ import { PortraitCamera, applyLens, clearLens } from './render/portrait';
 import { clearHud, drawBattle, hudCtx, hudEvents, hudSize, resetHud, resizeHud } from './render/hud';
 import { drawTouch, onehandFrame, perfectHintP, portraitMetrics, portraitP } from './input/onehand';
 import { kikonPrompt } from './input/bindings';
-import { F, flowFrame, practiceP, simRunning, startFlow, touchMode } from './ui/flow';
+import { F, endlessTag, flowFrame, practiceP, simRunning, startFlow, touchMode } from './ui/flow';
 import './ui/pwa';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
@@ -100,7 +100,7 @@ engine.runRenderLoop(() => {
   // HUD
   if (m && F.screen === 'battle' && !F.paused) {
     drawBattle(m.w, project, { portrait: portraitP(), practice: practiceP(), hint: perfectHintP(m.w),
-                               prompt: (side) => (F.oneHand && side === 0 ? 'HOLD O  KIKON' : kikonPrompt(side)) });
+                               prompt: (side) => (F.oneHand && side === 0 ? 'HOLD O  KIKON' : kikonPrompt(side)), tag: endlessTag() });
     drawTouch(hudCtx(), m.w);
   } else clearHud();
 });

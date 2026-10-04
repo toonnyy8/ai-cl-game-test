@@ -243,3 +243,22 @@ online boards.
 - **The carry is named on a note line** over short rows (CONTINUE / REVERT / QUIT) instead of in the CONTINUE row:
   `CONTINUE  BANKAI-WEST -> BANKAI-EAST` did not fit the landscape panel.
 - `main.lisp`'s `menu-camera` got one key (`:clear` joins `:results`), and the select screen's CPU row reads START.
+
+## The Babylon.js build (`babylon/`, M6c, 2026-10-04)
+
+- **Code**: `babylon/src/sim/endless-rules.ts` (endless-rules.lisp function for function; the bag's LCG multiplies with
+  `Math.imul`, exact mod 2^31), `babylon/src/sim/endless.ts` (the run: a `Run` makes each stage's `Match`, whose
+  `MatchOpts.setup` hook is ENDLESS-APPLY!; the log lines above, word for word; `autoRun` = the autopilot), the screens in
+  `babylon/src/ui/flow.ts` (SELECT: P1, STAGE 1's opponent, START, CAMERA; STAGE CLEAR after 1 s; the pause's RESUME /
+  RETIRE (+ CAMERA); the run's RESULTS after 2.5 s), the STAGE tag in `babylon/src/render/hud.ts`.
+- **Shared record**: the page's slots (`soulduel.endless.<2i>` stages, `<2i+1>` seconds, roster index i), so the Lisp and
+  the Babylon build on one origin share the best records, as they share the learned tables.
+- **Tests**: `babylon/test/endless.test.ts` ports this section's host tests check for check, plus a replay, the record
+  slots and STAGE CLEAR's rows / notes.
+- **Autopilot vs the native Lisp**: `npx tsx babylon/tools/endless.ts --p1 rukia --seed 1 [--seeds N] [--policy
+  stay|revert]` against the native build running the same run (P1 a HARD CPU, NORMAL floor, cinematics played, no
+  learner). 5 characters x seeds 1-10 x both policies: every stage between Yamamoto, Kenpachi and Rukia (91 of 91, up to
+  each run's first divergence) gives the same log, RESULTS and hash lines bit for bit, carry and ramp included; stages
+  with Ichigo or Senjumaru drift by a centimetre where their single-float parity is still open.
+- **Not ported**: the debug entries 80000-80999 (the flow exposes `duelFlow.startRun()` and `duelFlow.endlessDebugClear()`
+  = 80980 for the harness; the autopilot is the headless tool); the select screen's best-record note is new.
