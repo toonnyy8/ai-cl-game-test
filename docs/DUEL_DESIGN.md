@@ -875,7 +875,8 @@ QUIT), a loss, a draw or RETIRE (its pause row) to the run's RESULTS (stages cle
 character, NEW RUN). Between stages P1 carries Konpaku + 2 (max 9), Reiatsu and flash step; Reishi and the guard gauge
 are full; a stay-awakened carry uses the kit key `:endless-form` (Kenpachi: every awakened form → Nozarashi cup 1, NOME
 10). The opponents come from a seeded bag of the roster; the CPU ramps (a difficulty level every two stages to HARD, its
-awakening half / full / on from stages 5 / 7 / 9, Reishi +10 / +20 % from 9 / 12, flat from 12).
+awakening half / full / on from stages 5 / 7 / 9, Reishi +10 / +20 % from 9 / 12, flat from 12). The Babylon.js build plays the same
+ENDLESS (`babylon/src/sim/endless*.ts`, DUEL_ENDLESS.md "The Babylon.js build") and shares the record slots.
 
 ## 9. Camera
 

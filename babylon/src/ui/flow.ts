@@ -2,9 +2,13 @@
 // PRACTICE / VS PLAYER / CPU VS CPU / SETTINGS / CONTROLS / MANUAL) -> SELECT (P1, P2 or the CPU, the difficulty and,
 // VS CPU / PRACTICE with two hands, the camera; both picks stand on the plaza) -> INTRO -> BATTLE (pause: RESUME /
 // RESTART / CHARACTER SELECT / TITLE (+ CAMERA); PRACTICE: its options) -> FINISH -> RESULTS (REMATCH / SELECT / TITLE).
+// ENDLESS (endless.lisp's screens; the run is src/sim/endless.ts): SELECT has P1, STAGE 1's opponent (the bag) and the
+// START difficulty; a won stage -> STAGE CLEAR (CONTINUE / REVERT / QUIT, after 1 s) -> the next stage; a lost one, QUIT or
+// the pause's RETIRE -> the run's RESULTS (NEW RUN / CHARACTER SELECT / TITLE, after 2.5 s).
 // Menus read every device (either player's keys, any pad, taps); fighters only read their vpads. Per frame: flowFrame.
-// ponytail: ENDLESS is listed but not ported (its row says so).
-import { Match } from '../sim/match';
+import { Match, abortCine, goResults as matchResults, matchOver } from '../sim/match';
+import { Run, endlessBest, endlessNewSeed, mmSs, setEndlessStore } from '../sim/endless';
+import { endlessOpponent } from '../sim/endless-rules';
 import { ROSTER, findKit } from '../sim/kit';
 import { W, setWorld, type World } from '../sim/types';
 import { DUMMIES, P, PRACTICE_HP, konpakuStep, practiceDummy, practiceHooks, practiceReset, practiceSet } from '../sim/practice';
@@ -14,11 +18,11 @@ import { PAD_A, PAD_B, PAD_DOWN, PAD_LEFT, PAD_RIGHT, PAD_START, PAD_UP, takePad
 import { BIND_ACTIONS, BIND_ROW_NAMES, PAIR, bindLabel, bindableKey, bindablePad, readP1, readP2, rebind, resetBindings,
   saveBindings, type Device } from '../input/bindings';
 import { COARSE, oneHandEffectiveP, oneHandOfferedP, portraitP, takeBack, touch, touchPauseP } from '../input/onehand';
-import { SETTINGS, onSettings, setSetting, setting } from './settings';
+import { SETTINGS, onSettings, setSetting, setting, store, stored } from './settings';
 import { nav, refresh, sel as menuSel, show, type Page, type Row } from './menus';
 
 export type Mode = 'vs-cpu' | 'endless' | 'practice' | 'vs-player' | 'cpu-cpu';
-type Screen = 'title' | 'mode' | 'settings' | 'controls' | 'select' | 'battle' | 'results';
+type Screen = 'title' | 'mode' | 'settings' | 'controls' | 'select' | 'battle' | 'results' | 'clear';
 const DIFFICULTIES = ['easy', 'normal', 'hard'];
 const MODE_MENU: [string, Mode | 'settings' | 'controls' | 'manual'][] = [['VS CPU', 'vs-cpu'], ['ENDLESS', 'endless'],
   ['PRACTICE', 'practice'], ['VS PLAYER', 'vs-player'], ['CPU VS CPU', 'cpu-cpu'], ['SETTINGS', 'settings'],
@@ -43,7 +47,11 @@ export const F = {
   note: '',                                // a transient note on the MODE screen
   bindCol: 0, capture: false,              // CONTROLS: the column (P1 KEY, P1 PAD, P2 KEY, P2 PAD), waiting for a key
   onMatch: (_m: Match | null) => {},       // main.ts: a new world to draw (or none)
+  endlessSeed: 1,                          // ENDLESS: the next run's seed (SELECT shows its stage-1 opponent)
+  run: null as Run | null,                 // ENDLESS: the run being played
 };
+// the ENDLESS record in the page's slots (pwa.js page get / set 30 + k: localStorage soulduel.endless.<k>)
+setEndlessStore({ get: (k) => +(stored(k) || 0) | 0, set: (k, v) => store(k, String(v)) });
 onSettings(() => { F.camBehind = setting('camera') === 0; if (F.match) setCamBehind(); });
 
 const vsCpuP = () => F.mode === 'vs-cpu' || F.mode === 'endless' || F.mode === 'practice';
@@ -73,14 +81,13 @@ function goMode(row = 0): void {
   setScreen('mode', () => ({
     title: 'MODE', back: goTitle, note: F.note || undefined,
     rows: MODE_MENU.map(([label, k], i): Row => ({ label, act: () => modeChosen(k, i),
-      note: k === 'endless' ? 'ENDLESS: NOT IN THIS BUILD YET' : k === 'manual' ? 'THE PLAYER MANUAL (ZH-TW)' : undefined })),
+      note: k === 'endless' ? 'A GAUNTLET OF CPU STAGES' : k === 'manual' ? 'THE PLAYER MANUAL (ZH-TW)' : undefined })),
   }), row);
 }
 function modeChosen(k: Mode | 'settings' | 'controls' | 'manual', i: number): void {
   if (k === 'settings') goSettings();
   else if (k === 'controls') goControls();
   else if (k === 'manual') location.href = 'manual.html';   // the manual's back link returns to ./
-  else if (k === 'endless') F.note = 'ENDLESS IS NOT PORTED TO THIS BUILD YET';
   else {
     F.mode = k;
     F.oneHand = i < 3 && oneHandEffectiveP();               // VS CPU / PRACTICE: one-handed where the setting is in effect
@@ -144,17 +151,24 @@ function preview(): void {
   setMatch(m);
 }
 function goSelect(): void {
+  if (F.mode === 'endless') {                              // a fresh run seed: its stage-1 opponent stands on the plaza
+    F.endlessSeed = endlessNewSeed();
+    F.picks[1] = ROSTER.indexOf(endlessOpponent(F.endlessSeed, 1, ROSTER));
+  }
   preview();
   setScreen('select', () => {
-    const cpu2 = F.mode !== 'vs-player', cam = vsCpuP() && !F.oneHand;
+    const cpu2 = F.mode !== 'vs-player', cam = vsCpuP() && !F.oneHand, endless = F.mode === 'endless';
+    const best = endlessBest(ROSTER[F.picks[0]]);
     const rows: Row[] = [
-      { label: F.mode === 'cpu-cpu' ? 'CPU 1' : 'P1', value: kitName(F.picks[0]), dir: (d) => pick(0, d) },
-      { label: cpu2 ? 'CPU' : 'P2', value: kitName(F.picks[1]), dir: (d) => pick(1, d) },
+      { label: F.mode === 'cpu-cpu' ? 'CPU 1' : 'P1', value: kitName(F.picks[0]), dir: (d) => pick(0, d),
+        note: endless ? (best[0] ? `BEST  ${best[0]} STAGES  ${mmSs(best[1])}` : 'BEST  -') : undefined },
+      endless ? { label: 'STAGE 1', value: kitName(F.picks[1]), note: 'THE OPPONENTS COME FROM A SHUFFLED BAG' }
+        : { label: cpu2 ? 'CPU' : 'P2', value: kitName(F.picks[1]), dir: (d) => pick(1, d) },
     ];
-    if (cpu2) rows.push({ label: F.mode === 'practice' ? 'DUMMY CPU' : 'DIFFICULTY', value: F.difficulty.toUpperCase(),
+    if (cpu2) rows.push({ label: F.mode === 'practice' ? 'DUMMY CPU' : endless ? 'START' : 'DIFFICULTY', value: F.difficulty.toUpperCase(),
       dir: (d) => { F.difficulty = DIFFICULTIES[wrap(DIFFICULTIES.indexOf(F.difficulty) + d, 3)]; } });
     if (cam) rows.push({ label: 'CAMERA', value: cameraLabel(), dir: toggleCam });
-    rows.push({ label: 'FIGHT', cls: 'go', act: startMatch }, { label: 'BACK', act: () => goMode() });
+    rows.push({ label: 'FIGHT', cls: 'go', act: endless ? () => startRun() : startMatch }, { label: 'BACK', act: () => goMode() });
     return { title: MODE_MENU.find(([, k]) => k === F.mode)![0], cls: 'select', back: () => goMode(), rows,
              sub: F.oneHand ? 'ONE-HAND' : undefined };
   }, 0);
@@ -176,10 +190,68 @@ function startMatch(): void {
   setScreen('battle', null);
 }
 
-type PauseKey = 'resume' | 'restart' | 'select' | 'title' | 'camera' | 'reset' | 'dummy' | 'refill' | 'gauges' | 'p1-hp' | 'p1-kon' | 'dm-hp' | 'dm-kon';
+// ---------------------------------------------------------------- ENDLESS
+const flushRun = () => { for (const l of F.run?.log ?? []) console.log(l); if (F.run) F.run.log = []; };
+function enterStage(m: Match): void { setMatch(m); setCamBehind(); flushRun(); setScreen('battle', null); }
+/** A run of P1's pick from the START difficulty with the seed SELECT showed (NEW RUN: a fresh one). */
+function startRun(seed = F.endlessSeed): void {
+  F.run = new Run(ROSTER[F.picks[0]], F.difficulty, seed,
+                  { opts: { readers: [readP1, null], learn: setting('learn') === 0 } });
+  enterStage(F.run.start());
+}
+/** The stage's results are up: its stats into the run; a win is STAGE CLEAR, anything else the run's RESULTS. */
+function stageEnd(): void {
+  const run = F.run!;
+  let clear = false;
+  withWorld(F.match!.w, () => { clear = run.stageEnd(); });
+  flushRun();
+  if (clear) goClear(); else goRunResults();
+}
+function goClear(): void {
+  const run = F.run!, l = run.clear!;
+  setScreen('clear', () => ({
+    title: l.title, cls: 'results endless',
+    html: `<div class="big">${l.times}</div><table>${[['KONPAKU', l.konpaku.replace('KONPAKU  ', '')], ['REISHI  GUARD', 'FULL'],
+      ['REIATSU  FLASH STEP', 'KEPT']]
+      .map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table><div class="next">${l.next}</div>` +
+      (l.ramp ? `<div class="ramp">${l.ramp.trim()}</div>` : ''),
+    rows: F.ft > 1.0 ? l.rows.map((k, i): Row => ({ label: l.labels[i], note: l.notes[i], cls: i ? '' : 'go', act: () => choose(k) })) : [],
+  }));
+}
+function choose(k: 'stay' | 'revert' | 'quit'): void {
+  const m = F.run!.choose(k);
+  if (m) enterStage(m); else { flushRun(); goRunResults(); }
+}
+function goRunResults(): void {
+  const run = F.run!, o = run.over!;
+  setScreen('results', () => ({
+    title: 'ENDLESS', sub: o.title.replace('ENDLESS  ', ''), cls: 'results endless',
+    html: `<div class="big">${o.stages}</div><div>${o.time}</div><div class="dim">${o.best}</div>` +
+      (run.record ? '<div class="record">NEW RECORD</div>' : '') +
+      `<table>${o.stats.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table><div class="dim foes">${o.foes}</div>`,
+    rows: F.ft > 2.5 ? [{ label: 'NEW RUN', act: () => { F.endlessSeed = endlessNewSeed(); F.picks[1] = ROSTER.indexOf(endlessOpponent(F.endlessSeed, 1, ROSTER)); startRun(); } },
+                        { label: 'CHARACTER SELECT', act: goSelect }, { label: 'TITLE', act: goTitle }] : [],
+  }));
+}
+/** The pause's RETIRE: the stage is lost, the run's RESULTS (endless-retire). */
+function retire(): void {
+  setPaused(false);
+  withWorld(F.match!.w, () => { F.match!.w.winner = 1; abortCine(); matchResults(); });
+}
+/** The battle HUD's tag: STAGE n in ENDLESS. */
+export const endlessTag = (): string | null => (F.mode === 'endless' && F.run && F.screen === 'battle' ? `STAGE ${F.run.stage}` : null);
+/** Debug (endless.lisp 80980): clear the running stage now (P2's last Konpaku: the K.O. path to STAGE CLEAR). */
+function endlessDebugClear(): void {
+  const m = F.match;
+  if (F.mode !== 'endless' || !m || (m.w.flow !== 'intro' && m.w.flow !== 'battle')) return;
+  withWorld(m.w, () => { abortCine(); m.w.p2.g.konpaku = 0; matchOver(m.w.p1); });
+}
+
+type PauseKey = 'resume' | 'restart' | 'retire' | 'select' | 'title' | 'camera' | 'reset' | 'dummy' | 'refill' | 'gauges' | 'p1-hp' | 'p1-kon' | 'dm-hp' | 'dm-kon';
 function pauseKeys(): PauseKey[] {
-  const k: PauseKey[] = F.mode === 'practice' ? ['resume', 'reset', 'dummy', 'refill', 'gauges', 'p1-hp', 'p1-kon', 'dm-hp', 'dm-kon'] : ['resume', 'restart'];
-  k.push('select', 'title');
+  const k: PauseKey[] = F.mode === 'practice' ? ['resume', 'reset', 'dummy', 'refill', 'gauges', 'p1-hp', 'p1-kon', 'dm-hp', 'dm-kon']
+    : F.mode === 'endless' ? ['resume', 'retire'] : ['resume', 'restart'];
+  if (F.mode !== 'endless') k.push('select', 'title');      // ENDLESS: the run's RESULTS are one row away from the rest
   if (vsCpuP() && !F.oneHand) k.push('camera');
   return k;
 }
@@ -189,6 +261,7 @@ function pauseRow(k: PauseKey): Row {
   switch (k) {
     case 'resume': return { label: 'RESUME', act: () => setPaused(false) };
     case 'restart': return { label: 'RESTART', act: startMatch };
+    case 'retire': return { label: 'RETIRE', act: retire, note: 'END THE RUN HERE' };
     case 'select': return { label: 'CHARACTER SELECT', act: goSelect };
     case 'title': return { label: 'TITLE', act: goTitle };
     case 'camera': return { label: 'CAMERA', value: cameraLabel(), dir: toggleCam };
@@ -257,7 +330,7 @@ export function flowFrame(rdt: number): void {
   const m = F.match;
   if (F.screen === 'battle' && m) {
     const w = m.w;
-    if (w.flow === 'results') { goResults(); return; }
+    if (w.flow === 'results') { if (F.mode === 'endless' && F.run) stageEnd(); else goResults(); return; }
     if (F.paused) {
       if (F.rotate && portraitP()) { setPaused(false); return; }
       if (pauseP) { setPaused(false); return; }
@@ -273,8 +346,9 @@ export function flowFrame(rdt: number): void {
     }
   }
   if (F.screen === 'title' && (has('Space') || anyPad(pads, PAD_START)) && F.ft > 0.3) { goMode(); return; }
-  if (F.screen === 'results' && (confirm || backP) && F.ft <= 2.5) return;
-  if (F.screen === 'results' && F.ft > 2.5 && F.ft - rdt <= 2.5) refresh();   // the rows appear
+  const wait = F.screen === 'results' ? 2.5 : F.screen === 'clear' ? 1.0 : 0;   // a masher doesn't skip these screens
+  if (wait && (confirm || backP) && F.ft <= wait) return;
+  if (wait && F.ft > wait && F.ft - rdt <= wait) refresh();   // the rows appear
   for (const [p, a] of [[up, 'up'], [down, 'down'], [left, 'left'], [right, 'right'], [confirm, 'confirm'], [backP, 'back']] as const)
     if (p) nav(a);
 }
@@ -291,4 +365,4 @@ export const practiceP = (): boolean => F.mode === 'practice';
 
 export function startFlow(): void { goTitle(); }
 // debug / harness: jump straight to a screen or a match
-Object.assign(globalThis, { duelFlow: { F, goMode, goSelect, goSettings, goControls, startMatch, setPaused, touch } });
+Object.assign(globalThis, { duelFlow: { F, goMode, goSelect, goSettings, goControls, startMatch, setPaused, touch, startRun, endlessDebugClear } });

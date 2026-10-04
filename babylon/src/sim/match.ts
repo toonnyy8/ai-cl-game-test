@@ -203,6 +203,8 @@ export interface MatchOpts {
   /** P2 (the CPU facing a human) learns: VS CPU / ENDLESS with the LEARNING CPU setting on (never CPU VS CPU, PRACTICE). */
   learn?: boolean;
   practice?: PracticeHooks;
+  /** Runs after the spawn, before the learner attaches (flow.lisp START-MATCH's ENDLESS-APPLY! line). */
+  setup?: () => void;
 }
 export class Match {
   readonly w = new World();
@@ -219,6 +221,7 @@ export class Match {
     W.rng.seed(o.seed);
     spawnPair(o.p1, o.p2, { cpu1: o.cpu1, cpu2: o.cpu2, difficulty: o.difficulty, readers: o.readers });
     for (const e of fighters()) { e.g.konpaku = o.konpakuStart ?? T.konpakuMax; e.f.state = 'intro'; }
+    o.setup?.();                                                     // ENDLESS: P1's carry, P2's ramp (endless.ts apply)
     learnMatchStart(!!o.learn);
     practice = o.practice ?? null;
     practice?.start();
