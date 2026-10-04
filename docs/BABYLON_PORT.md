@@ -213,3 +213,10 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   camera-facing red threads between `senjuPoints`; her gold arms join the Hoho afterimages; Rukia's ribbon is a verlet
   strip hung from her blade's `pommel` node (`vfx/strands.ts`). Gate unchanged (YY 130.9, YK 124.4, KK 144.8, RR 174.1,
   II 204.4, SS 194.2 s).
+- 2026-10-05: **M1–M6 done.** Merged the look polish (Fable 5.1's spec: framing 30–48 %, keep-off 3.2 m, alpha smear,
+  no base-form aura, larger HUD, thinner gold arms), procedural audio (all 63 Lisp sounds + music on WebAudio, cues on
+  sim frames) and the cinematics (22 shot scripts summing to the sim's lengths, impact-frame grades). State: 215 tests;
+  the sim matches the native Lisp bit for bit (15 pairings × 60 seeds; `tools/parity/parity.py`); gate medians equal the
+  native ones. Known gaps: some caption kanji are not in the baked glyph set (the reading shows), a few cinematic beats
+  simplified (K.O. rain, Cero orb, candles; SEN'EI with 6 clones), Rukia's Bankai body is her zero body in white, the
+  ink arc ribbon reads as a slab on wide swings, the landscape touch layer awaits the user's playtest.
