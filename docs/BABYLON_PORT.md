@@ -112,3 +112,9 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   event (Hellfire, an awakening); with the Lisp's awakenings off (39022) and Hellfire removed, YY 16/20 and YK 15/20
   seeds end on the same tick, and the gate gives YY 15/20 K.O. median 337.8 s, YK 250.7 s (TS: 17/20 324.0, 251.3).
   So the M2 medians (YY 324, YK 251, KK 234 s; YK 3-17) are the base kits' own: the reference medians need M3.
+- 2026-10-04: merged M3b Kenpachi (KK matches the native Lisp event for event; gate 142.9 s vs Lisp 144.8) and M4 Rukia
+  (RK / RR seeds 1-5 identical to the Lisp; cold, flash-step, hidden stun in f32). Paused by the usage limit with work
+  left uncommitted in worktrees: M3a Yamamoto (`../ai-cl-game-test-wt-m3yama`), M5-B1 look (`-wt-m5`), Ichigo
+  (`-wt-ichigo`), Senjumaru (`-wt-senju`, SK 5/5 identical when paused), M6a assist/learn (`-wt-assist`), M6b touch /
+  screens (`-wt-touch`). Next: resume each, merge (expect conflicts in the f32 fixes: Rukia's branch already made
+  flash-step and hidden stun f32), then a batch making positions f32 (RR seed 20 / YK seed 3 drift), then ENDLESS.

@@ -15,7 +15,11 @@ export const BODIES: Record<string, Body> = {
   yamamoto: { name: 'yamamoto', hurtR: 0.36, hurtH: 1.65 },
   kenpachi: { name: 'kenpachi', hurtR: 0.45, hurtH: 2.0 },
   'kenpachi-oni': { name: 'kenpachi-oni', hurtR: 0.45, hurtH: 2.0 },   // body-variant of kenpachi: the same hurt cylinder
+  rukia: { name: 'rukia', hurtR: 0.34, hurtH: 1.5 },
+  'rukia-zero': { name: 'rukia-zero', hurtR: 0.34, hurtH: 1.5 },     // body-variants of rukia: the same hurt cylinder
+  'rukia-bankai': { name: 'rukia-bankai', hurtR: 0.34, hurtH: 1.5 },
   skeleton: { name: 'skeleton', hurtR: 0.3, hurtH: 1.7 },
+  ichigo: { name: 'ichigo', hurtR: 0.38, hurtH: 1.8 },
   senjumaru: { name: 'senjumaru', hurtR: 0.36, hurtH: 1.7 },
 };
 export const findBody = (name: string | null): Body => (name && BODIES[name]) || { name: name ?? 'default', hurtR: 0.35, hurtH: 1.8 };

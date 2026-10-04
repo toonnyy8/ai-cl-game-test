@@ -9,8 +9,10 @@ declare const process: { argv: string[]; execPath: string; exit(c: number): neve
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const cp: any = await import('node:child_process' as string);
 
-const CHARS: Record<string, string> = { y: 'yama', k: 'ken', s: 'senjumaru' };
-const LISP_MEDIAN: Record<string, number> = { yy: 139.0, yk: 159.5, kk: 151.6, sy: 170.7, sk: 160.1, sr: 194.9, ss: 206.4, si: 182.4 };
+const CHARS: Record<string, string> = { y: 'yama', k: 'ken', r: 'rukia', i: 'ichigo', s: 'senjumaru' };
+const LISP_MEDIAN: Record<string, number> = {   // docs/DUEL_AI_V2.md "Gates (final)"
+  yy: 139.0, yk: 159.5, kk: 151.6, ry: 163.1, rk: 150.3, rr: 208.2, iy: 178.9, ik: 170.0, ir: 206.2, ii: 213.0,
+  sy: 170.7, sk: 160.1, sr: 194.9, ss: 206.4, si: 182.4 };
 interface Job { pair: string; seed: number; ai: 'ai' | 'stub' }
 interface Row extends Job { winner: string; ko: boolean; secs: number }
 

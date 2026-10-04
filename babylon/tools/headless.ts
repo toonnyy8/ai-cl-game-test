@@ -11,7 +11,7 @@ import { brainStep } from '../src/sim/ai';
 // ponytail: no @types/node for one global
 declare const process: { argv: string[] };
 
-const ALIAS: Record<string, string> = { yama: 'yamamoto', ken: 'kenpachi', y: 'yamamoto', k: 'kenpachi', s: 'senjumaru' };
+const ALIAS: Record<string, string> = { yama: 'yamamoto', ken: 'kenpachi', y: 'yamamoto', k: 'kenpachi', r: 'rukia', i: 'ichigo', s: 'senjumaru' };
 
 export function runSeed(p1: string, p2: string, seed: number, ai: 'ai' | 'stub' = 'ai'): string[] {
   setBrainStep(ai === 'stub' ? stubBrainStep : brainStep);

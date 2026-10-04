@@ -71,8 +71,8 @@ export function hazardStep(hz: Hazard): void {
 }
 /** Move / age every hazard one fixed step. */
 export function hazardSystem(): void {
-  // (dead ones stay as holes: slot order) The Lisp ECS walks the slots below *top* as it was when the loop began: a hazard
-  // a hook spawns into a later hole is stepped in this pass, one past the last live slot is not
+  // (dead ones stay as holes: slot order.) Like the Lisp's DO-ENTITIES over *TOP* fixed at the start: a hazard a hook
+  // spawns into a later hole is stepped in this pass, one appended past the last live slot is not (Ichigo's clone hits)
   let n = W.hazards.length;
   while (n > 0 && !W.hazards[n - 1].alive) n--;
   for (let i = 0; i < n; i++) { const hz = W.hazards[i]; if (hz.alive) hazardStep(hz); }
