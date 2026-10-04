@@ -128,3 +128,11 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   give the same combat log and hash lines bit for bit (90 of 90). The native seed gate (`simgate.py`, matches back to
   back in one process) differs slightly from single matches (YY 130.9 vs 129.5 s, KK 144.8 vs 142.9 s).
 
+- 2026-10-04: merged M4 Ichigo and Senjumaru (the S meter's state: `senjuMeter(e)`), M3a Yamamoto + the single-float sim
+  (f32 values and op-by-op rounding, f32 pi, musl sinf/cosf in `src/sim/sinf.ts`): YY / YK / KK seeds 1-20 and RY / RK /
+  RR 1-10 match the native Lisp bit for bit, one native match per process (the native simgate.py's back-to-back runs
+  differ slightly: Lisp state carries over between matches). TS gate, 15 pairings x 20 seeds: all K.O., 2.8 s total.
+  M6b platform: DOM menus (`src/ui/`), CONTROLS rebinding (`soulduel.babylon.bind`), VS PLAYER, PRACTICE
+  (`src/sim/practice.ts`), touch recogniser + thumb deck (`src/input/{touch,onehand}.ts`), portrait camera / HUD,
+  PWA. The landscape two-thumb layer is new (the Lisp has none): it needs the user's playtest. Not yet: ENDLESS, the
+  learner / ASSIST in force (M6a), separate P1 / P2 pick phases.
