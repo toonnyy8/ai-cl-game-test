@@ -1,4 +1,5 @@
-// hud.ts <- duel/lisp/hud.lisp at a functional level (plain type, no brush look): per side, P2 mirrored, the name, Reishi
+// hud.ts <- duel/lisp/hud.lisp at a functional level, drawn in ink (M5 B4: brush bars, brush type from the Lisp's glyph
+// outlines, ink dots; the primitives are vfx/inkhud.ts, the cinematic cards vfx/card.ts): per side, P2 mirrored, the name, Reishi
 // (red under T.redThreshold, a white damage trail), the guard gauge, 9 Konpaku pips, Reiatsu 3 bars, flash step (ticks at
 // the Hoho cost and the burst threshold), Awakening (EVOLUTION), the kit meter; the timer; the combo counter under the
 // victim's bar; move callouts over the user's head; big words from the sim events; the HOLD O KIKON prompt; the
@@ -11,6 +12,10 @@ import { kitCommandOkP } from '../sim/fighter';
 import { findKit } from '../sim/kit';
 import type { Ent, SimEvent, World } from '../sim/types';
 import { portraitMetrics } from '../input/onehand';
+import { HANKS, senjuMeter } from '../chars/senjumaru';
+import { brushWidth, inkText } from './vfx/brush';
+import { brushBar, inkDot, slashPip, swash } from './vfx/inkhud';
+import { CAPS, drawCard } from './vfx/card';
 
 const cv = document.getElementById('hud') as HTMLCanvasElement;
 const g = cv.getContext('2d')!;
@@ -27,19 +32,15 @@ export function clearHud(): void { g.clearRect(0, 0, w, h); }
 
 const P_COL = ['#ff9a4d', '#80b3ff'];
 function text(str: string, x: number, y: number, px: number, color: string, align: CanvasTextAlign = 'left', alpha = 1): void {
-  g.font = `bold ${Math.round(px)}px system-ui, "Segoe UI", sans-serif`;
-  g.textAlign = align; g.textBaseline = 'top'; g.globalAlpha = alpha;
-  const mw = 0.94 * w;                                              // a long line is squeezed, never cut
-  g.fillStyle = 'rgba(0,0,0,0.7)'; g.fillText(str, x + Math.max(1, px / 14), y + Math.max(1, px / 14), mw);
-  g.fillStyle = color; g.fillText(str, x, y, mw);
-  g.globalAlpha = 1;
+  px *= 1.12;                                                       // brush type: the em holds less ink than a sans cap
+  const tw = brushWidth(g, str, px);
+  if (tw > 0.94 * w) px *= (0.94 * w) / tw;                         // a long line is squeezed, never cut
+  inkText(g, str, x, y - px * 0.1, px, color, align === 'right' || align === 'end' ? 'right' : align === 'center' ? 'center' : 'left', alpha);
 }
 function rect(x: number, y: number, ww: number, hh: number, color: string): void { g.fillStyle = color; g.fillRect(x, y, ww, hh); }
 /** A bar of width BW filled FRAC from its outer edge (RIGHT: P2's side, filled from the right). */
-function bar(x: number, y: number, bw: number, bh: number, frac: number, right: boolean, color: string, back = 'rgba(0,0,0,0.55)'): void {
-  rect(x, y, bw, bh, back);
-  const f = Math.max(0, Math.min(1, frac)) * bw;
-  rect(right ? x + bw - f : x, y, f, bh, color);
+function bar(x: number, y: number, bw: number, bh: number, frac: number, right: boolean, color: string, back = true): void {
+  brushBar(g, x, y, bw, bh, frac, right, color, back);
 }
 const pulse = (hz: number) => 0.5 + 0.5 * Math.sin(performance.now() / 1000 * 2 * Math.PI * hz);
 const kitName = (character: string) => findKit(character, 'base').name ?? character.toUpperCase();
@@ -70,19 +71,65 @@ export function hudEvents(ev: SimEvent[]): void {
       case 'clash': announce('CLASH', '#ffffff', 0.8, true); break;
       case 'burst': announce(`${String(e.args[2]).toUpperCase()} BURST`, e.args[2] === 'blue' ? '#60a8ff' : e.args[2] === 'orange' ? '#ff9a40' : '#ffffff', 0.9, true); break;
       case 'hit': if (e.args[6]) announce('COUNTER', '#fff070', 0.7, true); break;
-      case 'cine': if (e.args[0] === 'ko-cine') announce('K.O.', '#ff3040', 2.4); else if (e.args[0] === 'time-cine') announce('TIME', '#ffffff', 2.0); break;
+      // (K.O. / TIME: their cards, vfx/card.ts, carry the words)
       case 'cine-end': if (e.args[0] === 'intro-cine') announce('FIGHT', '#ffe0b0', 1.0); break;
     }
   }
 }
 
+/** The big words, stamped in on twos (x1.6, x1.15, then x1) over a brush swash: ink, or vermilion for the red ones. */
 function drawWords(): void {
   const t = now();
   words = words.filter((x) => t - x.t0 < x.secs);
   for (const x of words) {
-    const k = (t - x.t0) / x.secs, a = k > 0.7 ? (1 - k) / 0.3 : 1;
-    text(x.text, w / 2, h * (x.small ? 0.3 : 0.42), (x.small ? 14 : 30) * s, x.color, 'center', a);
+    const k = (t - x.t0) / x.secs, a = k > 0.7 ? (1 - k) / 0.3 : 1, step = Math.floor((t - x.t0) * 12);
+    const sc = step === 0 ? 1.6 : step === 1 ? 1.15 : 1, px = (x.small ? 14 : 30) * s * sc, cy = h * (x.small ? 0.3 : 0.42);
+    const tw = Math.min(0.96 * w, brushWidth(g, x.text, px * 1.12));
+    swash(g, w / 2, cy + px * 0.55, tw + 1.6 * px, px * 1.9, x.color === '#ff3040' ? '#14110f' : 'rgba(20,17,15,0.85)', 0.8 * a);
+    text(x.text, w / 2, cy - (px - (x.small ? 14 : 30) * s) / 2, px, x.color, 'center', a);
   }
+}
+
+// ---------------------------------------------------------------- the kit meter row
+const PAPER = '#f4efe2', VERMILION = '#e0302a', GOLD = '#f5d54a';
+const DYE: Record<number, string> = { 1: '#9a82c8', 2: '#d8b860', 3: '#4a4a56', 4: '#8fb4d8', 5: '#c0484f', 6: '#5a6aa6' };
+/** E's kit meter in the BW x BH slot at (X Y) (RIGHT: P2's, mirrored); LABEL names it (null: no label, the portrait row).
+ *  Senjumaru: the stitches (HARI) or the loom's queue of hanks (senjuMeter); a meter of <= 4 (Kenpachi's arm UDE, Ichigo's
+ *  clones): pips; else a brush bar (the form's burn while it burns), with NOME's three cups. */
+function kitMeter(e: Ent, x: number, y: number, bw: number, bh: number, right: boolean, label: ((s: string, col: string) => void) | null): void {
+  const f = e.f, gg = e.g, kit = f.kit, meter = kit.meter as { name?: string; max?: number; ladder?: unknown[][] } | null;
+  const r = Math.max(2.2 * s, bh * 0.9), pitch = r * 2.7, cy = y + bh / 2;
+  const at = (i: number) => (right ? x + bw - r - i * pitch : x + r + i * pitch);
+  if (f.character === 'senjumaru') {
+    const sm = senjuMeter(e);
+    if (sm.mode === 'hari') {
+      for (let i = 0; i < 6; i++) inkDot(g, at(i), cy, r * 0.8, i < sm.stitches ? GOLD : null,
+        i === sm.stitches - 1 && sm.fallsIn != null && sm.fallsIn < 60 ? 0.4 + 0.6 * pulse(6) : 1);
+      label?.('HARI', GOLD);
+    } else {
+      sm.order.forEach((n, i) => inkDot(g, at(i), cy, n === sm.next ? r * 1.15 : r * 0.7, DYE[n], n === sm.next ? 1 : 0.55));
+      sm.live.forEach((z, i) => brushBar(g, right ? x : x + bw - (i + 1) * bw * 0.22, cy + r * 1.3, bw * 0.2, Math.max(2, bh * 0.45), z.left, right, DYE[z.hank], false));
+      const torn = sm.torn.age < sm.torn.lock && sm.torn.hank > 0;
+      label?.(torn ? `${HANKS[sm.torn.hank]?.short ?? ''} TORN` : sm.short, torn ? VERMILION : sm.sp1.aligned && sm.sp1.ready ? GOLD : '#e8d8a8');
+    }
+    return;
+  }
+  if (!meter?.max) return;
+  if (meter.max <= 4) {                                                   // pips: the arm (blood slashes), the clones (dots)
+    const lit = Math.round(gg.meter);
+    for (let i = 0; i < meter.max; i++)
+      if (kit.pips) slashPip(g, at(i) - r * 1.2, cy - r * 1.2, r * 2.4, i < lit);
+      else inkDot(g, at(i), cy, r * 0.8, i < lit ? VERMILION : null);
+    label?.(meter.name ?? 'METER', kit.pips ? VERMILION : '#ff8c40');
+    return;
+  }
+  const burning = gg.formLeft > 0;
+  bar(x, y, bw, bh, burning ? gg.formLeft / Math.max(1, gg.formTotal) : gg.meter / meter.max, right, burning ? '#ff6a1a' : '#ff8c40');
+  if (meter.ladder) {                                                     // NOME: the cups, the current one and below lit
+    const rung = meter.ladder.findIndex((l) => l[0] === f.form);
+    for (let i = 0; i < 3; i++) inkDot(g, at(i), cy, r * 0.7, i <= rung ? '#fffbe0' : null);
+  }
+  label?.(meter.name ?? 'METER', '#ff8c40');
 }
 
 // ---------------------------------------------------------------- the battle HUD
@@ -93,9 +140,8 @@ function side(e: Ent, human: boolean, inBattle: boolean, prompt: string): void {
   const frac = gg.reishi / gg.reishiMax, red = redP(gg.reishi, gg.reishiMax);
   text(`${kit.name ?? f.character.toUpperCase()}${f.form !== 'base' ? '  ' + kit.formName : ''}`, edge, y - 9 * s, 7 * s, P_COL[sd], al);
   trail[sd] = trail[sd] > frac ? Math.max(frac, trail[sd] - 0.35 / 60) : frac;
-  bar(x, y, bw, bh, trail[sd], right, '#f4f4f0');
-  const rf = Math.max(0, Math.min(1, frac)) * bw;
-  rect(right ? x + bw - rf : x, y, rf, bh, red ? `rgba(230,40,40,${0.75 + 0.25 * pulse(3)})` : '#e8c060');
+  bar(x, y, bw, bh, trail[sd], right, PAPER);
+  brushBar(g, x, y, bw, bh, frac, right, red ? VERMILION : '#e8b94a', false, red ? 0.75 + 0.25 * pulse(3) : 1);
   // the guard gauge (grey while guardless, darker while he holds guard)
   const gf = gg.gg / T.ggMax, gy = y + bh + 2 * s, gh = Math.max(3 * s, 0.3 * bh);
   bar(x, gy, bw, gh, gf, right, gg.guardless ? '#806060' : f.state === 'guard' || f.state === 'guard-hit' ? '#6d8fb8' : '#a8c4e8');
@@ -103,8 +149,7 @@ function side(e: Ent, human: boolean, inBattle: boolean, prompt: string): void {
   const py = y + bh + 16 * s, pr = Math.max(4.5 * s, 0.013 * h) * 0.7;
   for (let i = 0; i < T.konpakuMax; i++) {
     const cx = right ? edge - pr - i * 3.2 * pr : edge + pr + i * 3.2 * pr;
-    g.beginPath(); g.arc(cx, py, pr, 0, 2 * Math.PI);
-    g.fillStyle = i < gg.konpaku ? (red ? '#ff5050' : '#ffe2a0') : 'rgba(255,255,255,0.15)'; g.fill();
+    inkDot(g, cx, py, pr, i < gg.konpaku ? (red ? VERMILION : '#ffe2a0') : null);
   }
   // Reiatsu: 3 bars
   const sy = y + bh + 25 * s, sw = 0.075 * w, sh = Math.max(3 * s, 0.011 * h), gap = 3 * s, row = 11 * s;
@@ -124,12 +169,7 @@ function side(e: Ent, human: boolean, inBattle: boolean, prompt: string): void {
   lab('FLASH STEP', fy, '#9cc7ff', lx);
   bar(ax, ay, aw, ah, gg.awaken / T.awakenMax, right, gg.evolution ? '#ffd94d' : '#e8c070');
   if (gg.evolution) lab('EVOLUTION', ay, `rgba(255,217,77,${0.4 + 0.6 * pulse(3)})`, lx); else lab('AWAKEN', ay, '#f2cc66', lx);
-  const meter = kit.meter as { name?: string; max?: number } | null;
-  if (meter?.max) {
-    const burning = gg.formLeft > 0;
-    bar(ax, my, aw, ah, burning ? gg.formLeft / Math.max(1, gg.formTotal) : gg.meter / meter.max, right, burning ? '#ff6a1a' : '#ff8c40');
-    lab(meter.name ?? 'METER', my, '#ff8c40', lx);
-  }
+  kitMeter(e, ax, my, aw, ah, right, (str, col) => lab(str, my, col, lx));
   // the combo counter under this side's bar (this side is the victim)
   const c = combo[sd];
   if (f.comboHits > 1 && f.comboDmg > 0) { c.str = `${f.comboHits} HITS  ${f.comboDmg}`; c.t0 = now(); }
@@ -151,24 +191,21 @@ function sidePortrait(e: Ent, wd: World, human: boolean, top: number, ps: number
   rect(0, y - 2 * ps, w, blockH + 4 * ps, grad as unknown as string);
   const name = `${kit.name ?? f.character.toUpperCase()}${f.form !== 'base' && kit.formName ? '  ' + kit.formName : ''}`;
   text(name, x, y + ps, 6 * ps, P_COL[sd]);
-  g.font = `bold ${Math.round(6 * ps)}px system-ui, "Segoe UI", sans-serif`;
-  let fx = x + g.measureText(name).width + 4 * ps;
+  let fx = x + brushWidth(g, name, 6 * ps * 1.12) + 4 * ps;
   if (gg.evolution) {
     text('EVOLUTION', fx, y + 1.8 * ps, 4.5 * ps, `rgba(255,217,77,${0.4 + 0.6 * pulse(3)})`);
-    g.font = `bold ${Math.round(4.5 * ps)}px system-ui, "Segoe UI", sans-serif`;
-    fx += g.measureText('EVOLUTION').width + 4 * ps;
+    fx += brushWidth(g, 'EVOLUTION', 4.5 * ps * 1.12) + 4 * ps;
   }
   const fend = timerStr ? w - m - 14 * ps : w - m, red = redP(gg.reishi, gg.reishiMax);
   const pr = Math.min(2.6 * ps, (fend - fx) / (T.konpakuMax * 2.6)), pitch = Math.min(3.4 * pr, (fend - fx) / T.konpakuMax);
   for (let i = 0; i < T.konpakuMax; i++) {
-    g.beginPath(); g.arc(fx + pr + i * pitch, y + 4 * ps, pr, 0, 2 * Math.PI);
-    g.fillStyle = i < gg.konpaku ? (red ? '#ff5050' : '#ffe2a0') : 'rgba(255,255,255,0.15)'; g.fill();
+    inkDot(g, fx + pr + i * pitch, y + 4 * ps, pr, i < gg.konpaku ? (red ? VERMILION : '#ffe2a0') : null);
   }
   if (timerStr) text(timerStr, w - m, y, 8 * ps, timerStr.length < 3 && +timerStr < 30 ? '#ff4d4d' : '#ffffff', 'right');
   const frac = gg.reishi / gg.reishiMax, ry = y + 9 * ps, rh = 5 * ps;
   trail[sd] = trail[sd] > frac ? Math.max(frac, trail[sd] - 0.35 / 60) : frac;
-  bar(x, ry, bw, rh, trail[sd], false, '#f4f4f0');
-  rect(x, ry, Math.max(0, Math.min(1, frac)) * bw, rh, red ? `rgba(230,40,40,${0.75 + 0.25 * pulse(3)})` : '#e8c060');
+  bar(x, ry, bw, rh, trail[sd], false, PAPER);
+  brushBar(g, x, ry, bw, rh, frac, false, red ? VERMILION : '#e8b94a', false, red ? 0.75 + 0.25 * pulse(3) : 1);
   bar(x, ry + rh + ps, bw, 2 * ps, gg.gg / T.ggMax, false, gg.guardless ? '#806060' : f.state === 'guard' || f.state === 'guard-hit' ? '#6d8fb8' : '#a8c4e8');
   const sy = ry + rh + 5 * ps, sh = 4 * ps, gap = 3 * ps, cw = (bw - 3 * gap) / 4;
   for (let i = 0; i < 3; i++) {                                                  // Reiatsu: 3 cells in the first quarter
@@ -178,11 +215,7 @@ function sidePortrait(e: Ent, wd: World, human: boolean, top: number, ps: number
   const burst = gg.burst;
   bar(x + cw + gap, sy, cw, sh, gg.fs / T.fsMax, false, burst === 'blue' ? '#4f9dff' : burst === 'orange' ? '#ff9a40' : burst ? '#ffffff' : '#9cc4ff');
   bar(x + 2 * (cw + gap), sy, cw, sh, gg.awaken / T.awakenMax, false, gg.evolution ? '#ffd94d' : '#e8c070');
-  const meter = kit.meter as { max?: number } | null;
-  if (meter?.max) {
-    const burning = gg.formLeft > 0;
-    bar(x + 3 * (cw + gap), sy, cw, sh, burning ? gg.formLeft / Math.max(1, gg.formTotal) : gg.meter / meter.max, false, burning ? '#ff6a1a' : '#ff8c40');
-  }
+  kitMeter(e, x + 3 * (cw + gap), sy, cw, sh, false, null);
   const c = combo[sd], cy = sd === 1 ? y + blockH + 4 * ps : y - 12 * ps;       // under P2's block / over P1's
   if (f.comboHits > 1 && f.comboDmg > 0) { c.str = `${f.comboHits} HITS  ${f.comboDmg}`; c.t0 = now(); }
   if (now() - c.t0 < 1.2) text(c.str, w / 2, cy, 7 * ps, '#ffe699', 'center');
@@ -213,7 +246,10 @@ export function drawBattle(wd: World, project: Project, o: BattleHud): void {
     const p = project(e.pos[0], e.pos[1] + e.body.hurtH + 0.45, e.pos[2]);
     if (p) text(e.f.callout, p[0], p[1], 9 * s, '#ffd98c', 'center', Math.min(1, e.f.calloutT / 15));
   }
-  if (!o.portrait) text(timer, w / 2, 0.035 * h, (o.practice ? 10 : 22) * s, !o.practice && secs < 30 ? '#ff4d4d' : '#ffffff', 'center');
+  if (!o.portrait) {
+    if (!o.practice) inkDot(g, w / 2, 0.035 * h + 13 * s, 17 * s, '#14110f', 0.8);
+    text(timer, w / 2, 0.035 * h, (o.practice ? 10 : 22) * s, !o.practice && secs < 30 ? '#ff4d4d' : PAPER, 'center');
+  }
   drawWords();
 }
 
@@ -222,8 +258,12 @@ function drawCine(wd: World): void {
   rect(0, 0, w, h, 'rgba(0,0,0,0.45)');
   rect(0, 0, w, 0.09 * h, '#000'); rect(0, 0.91 * h, w, 0.09 * h, '#000');
   const title = c.name.replace(/-cine$/, '').replace(/^(yama|ken)-/, '').replace(/-/g, ' ').toUpperCase();
+  const cap = CAPS[c.name];
   if (c.name === 'intro-cine') {
-    text(`${kitName(wd.p1.f.character)}   VS   ${kitName(wd.p2.f.character)}`, w / 2, 0.42 * h, 22 * s, '#ffffff', 'center');
+    swash(g, w / 2, 0.42 * h + 14 * s, 0.9 * w, 60 * s, '#14110f', 0.85);
+    text(`${kitName(wd.p1.f.character)}   VS   ${kitName(wd.p2.f.character)}`, w / 2, 0.42 * h, 22 * s, PAPER, 'center');
+  } else if (cap) {
+    drawCard(g, cap, c.cf, c.len, w, h, c.a.f.side === 0 ? 0 : 1);
   } else {
     const ty = (h > w ? 0.2 : 0.4) * h;                                             // portrait: clear of the big words
     text(title, w / 2, ty, 24 * s, '#ffe0b0', 'center');

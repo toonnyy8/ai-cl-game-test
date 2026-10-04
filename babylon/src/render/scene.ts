@@ -1,26 +1,21 @@
 // scene.ts: the M5 look (docs/BABYLON_PORT.md "M5 look": anime cel objects, ink-brush effects, screen-space outlines,
 // decal faces, skinned bodies). The plaza keeps duel/lisp/stage.lisp's dimensions (stone disc r 15.1 with joint rings at
 // 11.3 / 13.2, the curb to 15.6, broken whitewashed walls at r 19) in a muted daylight palette so the fighters read;
-// fighters are body.ts skeletons posed by anim.ts; hazards stay simple emissive meshes; hit sparks are ink.ts brush
+// fighters are body.ts skeletons posed by anim.ts; hazards, auras, blade arcs, afterimages are vfx/; hit sparks are ink.ts brush
 // sprites. Right-handed like the sim (Y up, yaw 0 faces -Z), so sim positions and yaws go in unchanged.
 import {
-  Color3, Color4, FreeCamera, Mesh, MeshBuilder, Scene, StandardMaterial, TransformNode, Vector3, VertexBuffer,
+  Color3, Color4, FreeCamera, Mesh, MeshBuilder, Scene, TransformNode, Vector3, VertexBuffer,
   type AbstractEngine,
 } from '@babylonjs/core';
-import { fwdX, fwdZ } from '../sim/math';
-import type { Ent, Hazard, SimEvent, World } from '../sim/types';
+import type { Ent, SimEvent, World } from '../sim/types';
 import { CelMaterial } from './cel';
 import { createOutline, type Outline } from './outline';
 import { buildBody, type BuiltBody } from './body';
 import { Animator } from './anim';
 import { InkSparks, inkMaterials, type InkMats } from './ink';
+import { Vfx } from './vfx';
 
 const hex = (h: number) => new Color3(((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255);
-function emissive(scene: Scene, color: Color3): StandardMaterial {
-  const m = new StandardMaterial('m', scene);
-  m.diffuseColor = color; m.specularColor = Color3.Black(); m.emissiveColor = color; m.disableLighting = true;
-  return m;
-}
 /** Paint every vertex of M one colour (the stage meshes merge into vertex-coloured batches). */
 function paint(m: Mesh, c: number): Mesh {
   const col = hex(c), n = m.getTotalVertices(), a: number[] = [];
@@ -103,21 +98,21 @@ export class FighterView {
   }
 }
 
-// ---------------------------------------------------------------- the battle view: fighters, hazards, sparks
-const HAZ_COLOR: Record<string, number> = { wave: 0xff6a1a, fireball: 0xffa040, enjo: 0xff5a10, crack: 0x262a36 };
-
+// ---------------------------------------------------------------- the battle view: fighters, ink VFX (vfx/), sparks
 export class BattleView {
   fighters: FighterView[];
-  hazards = new Map<Hazard, Mesh>();
+  vfx: Vfx;
   sparks: InkSparks;
   t = 0;
   constructor(readonly scene: Scene, w: World, stage: Stage) {
     this.fighters = [new FighterView(scene, w.p1, stage.outline), new FighterView(scene, w.p2, stage.outline)];
     this.sparks = new InkSparks(scene, stage.ink);
+    this.vfx = new Vfx(scene, this.fighters);
   }
 
   events(ev: SimEvent[], w: World): void {
     const S = this.sparks;
+    this.vfx.events(ev, w);
     for (const e of ev) {
       const a = e.args as number[], xyz = (i: number): [number, number, number] => [a[i], a[i + 1], a[i + 2]];
       const at = (side: number): [number, number, number] => { const p = (side === 0 ? w.p1 : w.p2).pos; return [p[0], p[1] + 1.1, p[2]]; };
@@ -138,35 +133,13 @@ export class BattleView {
   update(w: World, rdt: number): void {
     this.t += rdt;
     this.fighters[0].update(w.p1, rdt, this.t); this.fighters[1].update(w.p2, rdt, this.t);
-    // hazards: one mesh per live hazard
-    for (const [hz, m] of this.hazards) if (!hz.alive || !w.hazards.includes(hz)) { m.dispose(false, true); this.hazards.delete(hz); }
-    for (const hz of w.hazards) {
-      if (!hz.alive) continue;
-      let m = this.hazards.get(hz);
-      if (!m) { m = this.hazardMesh(hz); this.hazards.set(hz, m); }
-      const len = hz.kind === 'line' ? hz.size : 0;
-      m.position.set(hz.x + 0.5 * len * fwdX(hz.yaw), hz.kind === 'fireball' ? hz.y : hz.kind === 'line' ? 0.02 : hz.kind === 'wave' ? 0.8 : 0.3,
-                     hz.z + 0.5 * len * fwdZ(hz.yaw));
-      m.rotation.y = hz.yaw;
-      m.isVisible = hz.delay <= 0;
-      m.visibility = hz.life > 0 ? Math.max(0.15, 1 - hz.age / hz.life) : 1;
-    }
+    this.vfx.update(w, rdt);
     this.sparks.step(rdt);
-  }
-
-  hazardMesh(hz: Hazard): Mesh {
-    const s = this.scene;
-    const m = hz.kind === 'wave' ? MeshBuilder.CreateBox('wave', { width: 2 * hz.size, height: 1.6, depth: 0.35 }, s)
-      : hz.kind === 'fireball' ? MeshBuilder.CreateSphere('fireball', { diameter: 2 * hz.size, segments: 12 }, s)
-      : hz.kind === 'line' ? MeshBuilder.CreateBox('line', { width: 0.3, height: 0.02, depth: hz.size }, s)
-      : MeshBuilder.CreateSphere(hz.kind, { diameter: 0.6, segments: 8 }, s);
-    m.material = emissive(s, hex(HAZ_COLOR[hz.look ?? hz.kind] ?? 0xffc080));
-    return m;
   }
 
   dispose(): void {
     for (const f of this.fighters) f.dispose();
-    for (const m of this.hazards.values()) m.dispose(false, true);
+    this.vfx.dispose();
     this.sparks.dispose();
   }
 }

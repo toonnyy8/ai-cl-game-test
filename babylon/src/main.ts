@@ -7,6 +7,7 @@ import type { Match } from './sim/match';
 import { BattleView, createScene } from './render/scene';
 import { updateCel } from './render/cel';
 import { installSheet } from './render/sheet';
+import { installVfxDebug } from './render/vfx/debug';
 import { DuelCamera } from './render/camera';
 import { PortraitCamera, applyLens, clearLens } from './render/portrait';
 import { clearHud, drawBattle, hudCtx, hudEvents, hudSize, resetHud, resizeHud } from './render/hud';
@@ -32,6 +33,7 @@ async function makeEngine(): Promise<AbstractEngine> {
 const engine = await makeEngine();
 const stage = createScene(engine), { scene, cam } = stage;
 installSheet(engine, stage);                         // window.duelRender: the still sheet + render stats (debug)
+installVfxDebug(engine, stage);                      // window.duelVfx: the ink VFX / HUD still scenes (debug)
 const duelCam = new DuelCamera(), ptCam = new PortraitCamera();
 resizeHud();
 addEventListener('resize', () => { engine.resize(); resizeHud(); });
