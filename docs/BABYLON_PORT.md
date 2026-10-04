@@ -82,3 +82,8 @@ the seed, `slowAcc`, hitstop and pending; the hidden hit-stun; `fighter-step` co
   behind cameras on the sim's view; hud.lisp's panels in plain type), `src/input/{keyboard,gamepad}.ts` (control.lisp
   P1 bindings). VS CPU sets `W.viewBehind`; length-only cinematics dim the screen with their name. `window.duel.match`
   is the harness handle (`tools/run.mjs babylon/dist --script ...`, eval `duel.match.runToEnd()`).
+- 2026-10-04: Fable 5.1's fidelity review of M1-sim: faithful on every listed trap and 14 sampled moves, all 220 tuning
+  knobs equal. Fixed from it: hazards keep the Lisp ECS's lowest-free-slot order (dead ones stay as holes, readers skip
+  them); `defkit` also walks a parent's shadowed command moves (the Lisp's appended plist, `Kit.cmdMoves`); `hitDamage`,
+  `chipDamage`, `cutValue`, `stanceStore` round each product to f32 like the single-float Lisp, so integer damages match
+  the design tables (test/damage32.test.ts).

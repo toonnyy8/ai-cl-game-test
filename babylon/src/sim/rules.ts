@@ -208,10 +208,18 @@ export interface DefMods { mult?: number }
  *  defender's :taken, the combo scaling and the counter-hit multiplier, stacked. */
 export function hitDamage(base: number, atk: AtkMods | null, def: DefMods | null, comboIndex: number, counterHit: boolean): number {
   if (base <= 0) return 0;
-  return Math.max(1, roundHalfEven(base * (atk?.mult ?? 1.0)
-    * corneredMult(atk?.cornered ?? 0, atk?.lost ?? 0, atk?.corneredMax ?? 0)
-    * (def?.mult ?? 1.0) * comboScale(comboIndex) * (counterHit ? T.counterMult : 1.0)));
+  // the Lisp multiplies in single-float, left to right: round each product to f32 so the integer damage agrees with it
+  let x = f32(base * f32(atk?.mult ?? 1.0));
+  x = f32(x * corneredMult32(atk?.cornered ?? 0, atk?.lost ?? 0, atk?.corneredMax ?? 0));
+  x = f32(x * f32(def?.mult ?? 1.0));
+  x = f32(x * comboScale32(comboIndex));
+  x = f32(x * (counterHit ? f32(T.counterMult) : 1.0));
+  return Math.max(1, roundHalfEven(x));
 }
+const f32 = Math.fround;
+const comboScale32 = (n: number): number =>
+  n <= T.comboFullHits ? 1.0 : Math.max(f32(T.comboFloor), f32(1.0 - f32(f32(T.comboDecay) * (n - T.comboFullHits))));
+const corneredMult32 = (per: number, lost: number, cap: number): number => f32(1.0 + Math.min(f32(cap), f32(f32(per) * lost)));
 
 /** Bankai East's pierce k at guard gauge GG, x a move's :pierce-mult. */
 export const pierceRate = (gg: number, mult = 1.0): number => mult * (T.pierceMin + (T.pierceMax - T.pierceMin) * (gg / T.ggMax));
@@ -224,7 +232,7 @@ export function castPoint(px: number, pz: number, tx: number, tz: number, range:
 
 /** Chip of a blocked hit worth DMG at RATE (null = none) on a defender with REISHI: chip never kills. */
 export const chipDamage = (dmg: number, rate: number | null | undefined, reishi: number): number =>
-  !rate || rate <= 0 ? 0 : Math.max(0, Math.min(roundHalfEven(dmg * rate), reishi - 1));
+  !rate || rate <= 0 ? 0 : Math.max(0, Math.min(roundHalfEven(f32(dmg * f32(rate))), reishi - 1));
 
 /** Reishi a form's burn takes on its STEPth frame (0-based): whole points, a whole second burns exactly the rate. */
 export function burnAmount(maxReishi: number, fractionPerSecond: number, step: number): number {
@@ -418,11 +426,11 @@ export const rangedHitP = (hazard: unknown, flags: readonly string[], meleeRange
 export const drinkSplit = (dmg: number): [number, number] => [Math.ceil(dmg / 2), Math.floor(dmg / 2)];
 export const drinkAdv = (adv: number): number => adv - T.drinkAdv;
 export const cutValue = (v: number, kind: string, mult = T.cutMult): number =>
-  kind === 'flash' || kind === 'sig' || kind === 'sp' ? roundHalfEven(v * mult) : v;
+  kind === 'flash' || kind === 'sig' || kind === 'sp' ? roundHalfEven(f32(v * f32(mult))) : v;
 
 // ---------------------------------------------------------------- stance (a Signature kind)
 export const stanceStore = (stored: number, taken: number): number =>
-  Math.min(T.stanceStoreCap, stored + roundHalfEven(taken * T.stanceStoreRate));
+  Math.min(T.stanceStoreCap, stored + roundHalfEven(f32(taken * f32(T.stanceStoreRate))));
 export const stanceRelease = (stored: number): [number, boolean] => [T.stanceBaseDamage + stored, stored >= T.stanceCrushAt];
 
 // ================================================================ combos (§3)

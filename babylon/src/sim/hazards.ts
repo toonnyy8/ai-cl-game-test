@@ -31,7 +31,9 @@ export function spawnHazard(kind: string, owner: Ent, o: HazardOpts = {}): Hazar
   h.yaw = o.yaw ?? 0; h.speed = o.speed ?? 0; h.turn = o.turn ?? 0; h.size = o.size ?? 0.5;
   h.life = o.life ?? 60; h.delay = o.delay ?? 0; h.hw = o.hw ?? null; h.hitsLeft = h.hw ? (o.hits ?? 1) : 0;
   h.look = o.look ?? null; h.src = !!o.src; h.fragile = !!o.fragile; h.hook = o.hook ?? null; h.data = o.data ?? null;
-  W.hazards.push(h);
+  // the Lisp ECS spawns into the lowest free slot and walks slots in order: reuse the first dead hole
+  const hole = W.hazards.findIndex((x) => !x.alive);
+  if (hole >= 0) W.hazards[hole] = h; else W.hazards.push(h);
   return h;
 }
 export function clearHazards(): void { for (const h of W.hazards) h.alive = false; W.hazards = []; }
@@ -69,8 +71,7 @@ export function hazardStep(hz: Hazard): void {
 }
 /** Move / age every hazard one fixed step. */
 export function hazardSystem(): void {
-  for (const hz of [...W.hazards]) if (hz.alive) hazardStep(hz);
-  W.hazards = W.hazards.filter((h) => h.alive);
+  for (const hz of [...W.hazards]) if (hz.alive) hazardStep(hz);   // (dead ones stay as holes: slot order)
 }
 
 // ---------------------------------------------------------------- volumes

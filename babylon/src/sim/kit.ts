@@ -228,6 +228,7 @@ export interface Kit {
   commands: Record<string, string | null>;   // command -> move name
   strings: StringRow[];
   moves: Map<string, Move>;                  // move name -> this form's Move
+  cmdMoves: string[];                        // every command move down the inherit chain, shadowed ones too (the Lisp plist)
   spec: KitSpec;
 }
 
@@ -345,10 +346,11 @@ export function defkit(character: string, form: string, spec: KitSpec): Kit {
     calm: !!m.calm, stunTolerance: def(m.stunTolerance, null), ggRegen: def(m.ggRegen, 1.0),
     lAfterK: def(m.lAfterK, null), lAfterJ: def(m.lAfterJ, null), hooks: def(m.hooks, null), endlessForm: def(m.endlessForm, null),
     commands, strings, moves: new Map(), spec: m,
+    cmdMoves: [...Object.values(spec.commands ?? {}).filter((v): v is string => !!v), ...(parent?.cmdMoves ?? [])],
   };
   const own = Object.values(spec.commands ?? {});
   const names = new Set<string>();
-  for (const v of Object.values(commands)) if (v) names.add(v);     // (a null command: none in this form)
+  for (const v of kit.cmdMoves) names.add(v);     // (a null command: none in this form; a parent's shadowed one still counts)
   for (const [from, , to] of strings) { names.add(from); names.add(to); }
   for (const l of [kit.lAfterK, kit.lAfterJ]) if (l && l !== true) names.add(l);
   for (const n of names) {

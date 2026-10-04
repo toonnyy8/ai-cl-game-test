@@ -163,6 +163,7 @@ export class BattleView {
     // hazards: one mesh per live hazard
     for (const [hz, m] of this.hazards) if (!hz.alive || !w.hazards.includes(hz)) { m.dispose(false, true); this.hazards.delete(hz); }
     for (const hz of w.hazards) {
+      if (!hz.alive) continue;
       let m = this.hazards.get(hz);
       if (!m) { m = this.hazardMesh(hz); this.hazards.set(hz, m); }
       const len = hz.kind === 'line' ? hz.size : 0;

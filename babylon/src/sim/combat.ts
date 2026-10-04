@@ -391,7 +391,6 @@ export function hitSystem(): void {
       else if (mv && mv === fa.move) fa.hits |= 1 << h.i;            // (an on-land hook may have started the next move)
     }
   }
-  W.hazards = W.hazards.filter((hz) => hz.alive);
   settleSouls();
 }
 
