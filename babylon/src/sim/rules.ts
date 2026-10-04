@@ -409,10 +409,12 @@ export const canGuardP = (gg: number, guardless: boolean): boolean => gg > 0 && 
 
 // ---------------------------------------------------------------- NOME: Nozarashi's three-cup ladder
 export type Rung = [string, number, number, number, number];
+// (in single floats like the Lisp: NOME and its gains are f32)
 export const nomeGain = (dealt: number, taken: number, drunk: number, gains: object): number =>
-  dealt * getf(gains, 'dealt', 0) + taken * getf(gains, 'taken', 0) + drunk * getf(gains, 'drunk', 0);
+  f32(f32(f32(dealt * f32(getf(gains, 'dealt', 0))) + f32(taken * f32(getf(gains, 'taken', 0))))
+      + f32(drunk * f32(getf(gains, 'drunk', 0))));
 export const meterDrain = (nome: number, rate: number, delay: number, idle: number): number =>
-  rate > 0 && idle >= delay ? Math.max(0, nome - rate / 60) : nome;
+  rate > 0 && idle >= delay ? Math.max(0, f32(nome - f32(rate / 60))) : nome;
 export function ladderRung(nome: number, rung: number, ladder: Rung[]): number {
   let i = rung;
   const n = ladder.length;

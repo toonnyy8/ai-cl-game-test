@@ -76,7 +76,7 @@ export function nomeGainBang(e: Ent, dealt: number, taken: number, drunk: number
   const mg = kitOf(e).meterGain;
   if (mg && !siphonOf(e)) {
     const n = nomeGain(dealt, taken, drunk, mg), g = e.g;
-    if (n > 0) { g.meter = gaugeAdd(g.meter, n, kitOf(e).meter?.max ?? 100); g.meterIdle = 0; }
+    if (n > 0) { g.meter = Math.fround(gaugeAdd(g.meter, n, kitOf(e).meter?.max ?? 100)); g.meterIdle = 0; }   // (NOME is an f32)
   }
 }
 /** The opponent outplayed E: E's respectCallout (a callout only). */
@@ -297,6 +297,7 @@ export function applyHit(att: Ent, def: Ent, hw: HitWin, sx: number, sz: number,
         const [taken, drunk] = drinkSplit(hitDamage(base, atk, dmods, 1, false));
         dealDamage(att, def, taken);
         nomeGainBang(def, 0, 0, drunk);
+        clog(() => `${sideName(def)} DRINK ${taken} (+${drunk} drunk)`);
       }
       if (chip > 0) dealDamage(att, def, chip);
       if (mv && !ranged) coldAdd(def, T.ruBlockCool * (hw.guard ?? 0));   // Rukia: a blocked blade cools her
@@ -514,6 +515,7 @@ export function bankai(e: Ent): void {
   refreshLook(e);
   if (lost > 0) emit('konpaku', e, lost);
   emit('bankai', e);
+  clog(() => `${sideName(e)} BANKAI (konpaku -> 1, -${lost})`);
   const cine = kitOf(e).cine;
   if (cine) startCine(cine, e, o, () => { toIdle(e, 0); toIdle(o, 0); });
   else toIdle(e, 0);
@@ -528,6 +530,7 @@ export function armSpend(e: Ent, mv: Move | null): void {
     if (n === 0) g.armPending = mv ?? 'none';
     refreshLook(e);
     emit('arm-spend', e, n);
+    clog(() => `${sideName(e)} UDE -${mv ? mv.name.toUpperCase() : ''} ${n} left`);
   }
 }
 /** The arm bursts: the kit's pips.to form, T.armBurstSelf burnt and a self-inflicted crumple. */
@@ -539,6 +542,7 @@ export function armBurst(e: Ent): void {
   setReaction(e, 'crumple', T.armBurstStun, p[0], p[2], 0);
   callout(e, 'GOMEN NE, KEN-CHAN');
   emit('arm-burst', e);
+  clog(() => `${sideName(e)} ARM BURST r${g.reishi}`);
 }
 /** The arm meter per step: a finished string's owed pip, the crack clock, the pending burst. */
 export function armStep(e: Ent, f: Fighter, g: Gauges): void {
@@ -554,6 +558,7 @@ export function armStep(e: Ent, f: Fighter, g: Gauges): void {
       if (n === 0) g.armPending = (f.state === 'move' ? f.move : null) ?? 'none';
       refreshLook(e);
       emit('arm-crack', e, n);
+      clog(() => `${sideName(e)} UDE cracked, ${n} left`);
     }
   }
 }

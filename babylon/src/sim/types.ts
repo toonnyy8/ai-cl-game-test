@@ -14,6 +14,7 @@ export interface Body { name: string; hurtR: number; hurtH: number }
 export const BODIES: Record<string, Body> = {
   yamamoto: { name: 'yamamoto', hurtR: 0.36, hurtH: 1.65 },
   kenpachi: { name: 'kenpachi', hurtR: 0.45, hurtH: 2.0 },
+  'kenpachi-oni': { name: 'kenpachi-oni', hurtR: 0.45, hurtH: 2.0 },   // body-variant of kenpachi: the same hurt cylinder
   skeleton: { name: 'skeleton', hurtR: 0.3, hurtH: 1.7 },
 };
 export const findBody = (name: string | null): Body => (name && BODIES[name]) || { name: name ?? 'default', hurtR: 0.35, hurtH: 1.8 };

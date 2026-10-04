@@ -1,13 +1,14 @@
-// ken.ts <- duel/lisp/ken.lisp, the BASE form only: ZARAKI KENPACHI's moves (defmove), his base kit (defkit) and the
-// hooks it uses. Nozarashi's three cups (NOME), the Bankai and KATAUDE are M3: Awaken is refused until those kits are
-// registered. Clip names are the art contract. The kit's ai table is data (M2 ports ai.lisp and the ken-* CPU hooks).
+// ken.ts <- duel/lisp/ken.lisp: ZARAKI KENPACHI's moves (defmove), his forms (defkit: base, Nozarashi's three NOME cups
+// nozarashi / ryote / nomihose, the Bankai, KATAUDE) and their hooks. The generic NOME ladder, drink, cut, projectile-cut
+// and the arm meter are combat.ts's. Clip names are the art contract; cinematics are length-only (match.ts CINES).
 import { T } from '../sim/tuning';
 import { getf, mod } from '../sim/math';
 import { aiHohoSpareP, bankaiAllowedP, hohoAllowedP, stanceRelease } from '../sim/rules';
-import { defkit, defmove, defmoveCopy, kitCommandMove, kitNext, registerHooks, type Kit, type Move } from '../sim/kit';
-import { emit, kitOf, oppOf, simRnd01, stateOf, type Brain, type Ent, type Snap } from '../sim/types';
+import { defkit, defmove, defmoveCopy, kitCommandMove, kitNext, makeHitwin, registerHooks, type Kit, type Move } from '../sim/kit';
+import { makeVol } from '../sim/hitvol';
+import { clog, emit, kitOf, oppOf, sideName, simRnd01, stateOf, type Brain, type Ent, type Snap } from '../sim/types';
 import { callout, kitCommandOkP, moveParam, startMove } from '../sim/fighter';
-import { kikonReadyP } from '../sim/combat';
+import { kikonReadyP, setForm } from '../sim/combat';
 import { aiBrain, aiMashP, aiSbFinishP, aiTable, guardingP, why } from '../sim/ai';
 import { spawnHazard } from '../sim/hazards';
 import type { Action } from '../sim/vpad';
@@ -60,6 +61,76 @@ defmove('ke-kikon', { kind: 'kikon', clip: 'ke-charge', clip2: 'ke-stance-cut', 
   armorHits: 1, cooldown: 90,
   params: { aura: 5, aim: 120.0, speed: 13.0, dashMax: 36, dashTrack: 150.0, look: 'charge', sfx: 'laugh' } });
 
+// ================================================================ Nozarashi
+defmove('ke-meteor', { kind: 'sp', clip: 'ke-meteor', callout: 'SPLIT THE METEOR',
+  startup: 26, active: 4, recovery: 30, dmg: 240, advBlock: -16,
+  vol: ['cap', 0.3, 12.0, 0.5, 0.5], onHit: 'knockdown', kb: 3.0, flags: ['ranged'], onFrame: [[26, 'ken-meteor-cut']],
+  params: { meleeRange: 3.4 } });                                    // the cleaver within 3.4 m, the line beyond: ranged
+// O in Nozarashi, LEAP CLEAVE (his own move: not derived): 8 f of crouch, then a leap at 18 m/s for at most 30 f, the
+// direction locked at take-off, then the widest cleave, 3.08 m over 160 deg, and a gash where it lands. Cooldown 90.
+defmove('ke-kikon-n', { kind: 'kikon', clip: 'ke-n-leap', clip2: 'ke-stance-cut', clipS: 8, callout: 'SKY SPLIT', cine: 'ken-sky-split-cine',
+  startup: 11, active: 3, recovery: 24, dmg: 70, advBlock: -14, reach: 3.08, arc: 160, onHit: 'knockback', kb: 2.5, cooldown: 90,
+  onFrame: [[11, 'ken-leap-cleave']],
+  params: { aura: 8, aim: 120.0, speed: 18.0, dashMax: 30, dashTrack: 0.0, look: 'leap', lift: 1.6, sfx: 'whoosh-cleaver' } });
+
+// ---------------------------------------------------------------- RYOTE (cup 2): two-handed kendo, straight and long
+defmove('ke-r-j1', { kind: 'quick', clip: 'ke-r-q1', clipS: 10, startup: 10, active: 3, recovery: 12, dmg: 40, advBlock: -2,
+  vol: ['cap', 0.3, 1.56, 1.2, 0.5], onHit: 'flinch' });            // MEN: the straight overhead
+defmove('ke-r-j2', { kind: 'quick', clip: 'ke-r-kote', startup: 9, active: 3, recovery: 13, dmg: 38, advBlock: -2,
+  reach: 1.44, arc: 60, onHit: 'flinch' });                         // KOTE: the small wrist snap
+defmove('ke-r-j3', { kind: 'quick', clip: 'ke-r-q3', clipS: 14, startup: 10, active: 3, recovery: 18, dmg: 48, advBlock: -4,
+  reach: 1.52, arc: 140, onHit: 'stagger', flags: ['ender'] });     // KESA: the diagonal
+defmove('ke-r-k1', { kind: 'flash', clip: 'ke-r-f1', clipS: 19, startup: 19, active: 4, recovery: 20, dmg: 85, advBlock: -3,
+  reach: 3.9, arc: 160, onHit: 'stagger' });                        // DO: the wide body cut
+defmove('ke-r-k2', { kind: 'flash', clip: 'ke-r-tsuki', enter: 7, startup: 21, active: 4, recovery: 24, dmg: 68, advBlock: -3,
+  vol: ['cap', 0.3, 4.0, 1.2, 0.5], onHit: 'stagger' });            // MOROTE-ZUKI: both hands drive it straight out
+defmove('ke-r-k3', { kind: 'flash', clip: 'ke-r-f2', clipS: 21, enter: 7, startup: 21, active: 5, recovery: 34, dmg: 92, advBlock: -20,
+  vol: ['cap', 0.3, 3.9, 1.2, 0.55], onHit: 'crumple', flags: ['ender'] });   // KABUTO-WARI: the helm splitter
+defmoveCopy('ke-r-j2s', 'ke-r-j2');
+defmoveCopy('ke-r-k2s', 'ke-r-k2');
+// ---------------------------------------------------------------- NOMIHOSE (cup 3)
+// K: KUKAN-GIRI, the space cut: its blade leaves a rift in the air (f20) that cuts again T.riftDelay frames later
+// (ken-rift: a rift hazard, closed if he is hit before it cuts)
+defmove('ke-n-f1', { kind: 'flash', clip: 'ke-n-f1', clipS: 20, callout: 'KUKAN-GIRI', startup: 20, active: 4, recovery: 22, dmg: 90,
+  advBlock: -4, reach: 3.9, arc: 150, onHit: 'stagger', onFrame: [[20, 'ken-rift']],
+  params: { riftDmg: 50, riftGuard: 12, riftChip: 0.2, riftVol: ['cap', 1.0, 4.4, 1.4, 0.5] } });
+// Shift+K: NOMIHOSE, Split the Meteor with the whole cup: on its first frame NOME is 0 and he is back in cup 1
+// (ken-drink-dry), so it resolves at KATATE's x1.0. 390; within 6 m it breaks guard (crushRange), beyond it is blockable
+defmove('ke-meteor-n', { kind: 'sp', clip: 'ke-meteor', callout: 'NOMIHOSE', startup: 26, active: 4, recovery: 30, dmg: 390,
+  advBlock: -16, vol: ['cap', 0.3, 12.0, 0.5, 0.5], onHit: 'knockdown', kb: 3.0, flags: ['ranged'],
+  onFrame: [[0, 'ken-drink-dry'], [26, 'ken-meteor-cut']], params: { crushRange: 6.0, meleeRange: 3.9 } });
+
+// ================================================================ Bankai and KATAUDE (docs/DUEL_KEN_BANKAI.md)
+// Every K link, L, SP1, SP2, I and O spends a pip of the arm (UDE); the K links and the specials rend.
+defmove('ke-b-j1', { kind: 'quick', clip: 'ke-q1', clipS: 7, startup: 8, active: 3, recovery: 12, dmg: 38, advBlock: -2,
+  reach: 1.28, arc: 100, onHit: 'flinch', slide: 1.0 });            // TATAKI-GIRI: hacked down, lunging like a beast
+defmove('ke-b-j2', { kind: 'quick', clip: 'ke-q2', clipS: 7, startup: 8, active: 3, recovery: 13, dmg: 38, advBlock: -2,
+  reach: 1.28, arc: 100, onHit: 'flinch' });                        // NAGI-HARAI: the backhand sweep
+defmove('ke-b-j3', { kind: 'quick', clip: 'ke-b-hook', startup: 9, active: 3, recovery: 18, dmg: 50, advBlock: -4,
+  reach: 0.8, arc: 60, onHit: 'stagger', slide: 0.6, flags: ['ender'] });   // GENKOTSU: a left hook to the face
+defmove('ke-b-k1', { kind: 'flash', clip: 'ke-f1', clipS: 16, startup: 17, active: 4, recovery: 20, dmg: 120, advBlock: -3,
+  reach: 3.4, arc: 120, onHit: 'stagger', guard: 28, flags: ['rend'] });    // ONATA: the hatchet chop
+defmove('ke-b-k2', { kind: 'flash', clip: 'ke-f2', enter: 6, startup: 20, active: 4, recovery: 24, dmg: 100, advBlock: -3,
+  reach: 3.0, arc: 90, onHit: 'stagger', guard: 28, flags: ['rend'] });     // EGURI-AGE: gouging up from the floor
+defmove('ke-b-k3', { kind: 'flash', clip: 'ke-r-f2', clipS: 21, enter: 7, startup: 21, active: 5, recovery: 34, dmg: 150, advBlock: -20,
+  vol: ['cap', 0.3, 3.7, 1.2, 0.55], onHit: 'crumple', guard: 36, flags: ['ender', 'rend'] });   // TATAKI-OTOSHI: the drop
+defmoveCopy('ke-b-j2s', 'ke-b-j2');
+defmoveCopy('ke-b-k2s', 'ke-b-k2');
+// L, KAMICHIGIRI: a short lunge, the left hand clamps, the teeth: nothing guards it; Step / Hoho iframes dodge it
+defmove('ke-b-bite', { kind: 'sig', clip: 'ke-b-bite', callout: 'KAMICHIGIRI', startup: 10, active: 3, recovery: 28, dmg: 120,
+  reach: 1.5, arc: 60, slide: 0.8, onHit: 'crumple', flags: ['grab', 'unguardable', 'rend'] });
+// Shift+K, TATE-GOTO: through guard and arm together: the whole 6 m line guard-crushes
+defmove('ke-b-split', { kind: 'sp', clip: 'ke-meteor', clipS: 26, callout: 'TATE-GOTO', startup: 24, active: 4, recovery: 30, dmg: 260,
+  advBlock: -16, vol: ['cap', 0.3, 6.0, 0.5, 0.5], onHit: 'knockdown', kb: 3.0, flags: ['ranged', 'guard-crush', 'rend'],
+  onFrame: [[24, 'ken-tate-goto']], params: { meleeRange: 3.2 } });
+// Shift+L's follow-up, NAGURI-TOBASHI: the charge connects, then a left straight into the chest (the kit's string)
+defmove('ke-b-punch', { kind: 'sp', clip: 'ke-b-fist', clipS: 9, callout: 'NAGURI-TOBASHI', startup: 6, active: 3, recovery: 30, dmg: 150,
+  advBlock: -16, reach: 2.0, arc: 90, onHit: 'knockback', kb: 6.0, guard: 22, flags: ['rend'] });
+// O, MAPPUTATSU: LEAP CLEAVE with the Bankai's Kikon cinematic
+defmoveCopy('ke-b-kikon', 'ke-kikon-n', { clip: 'ke-b-leap', callout: 'MAPPUTATSU', cine: 'ken-oni-kikon-cine' });
+// KATAUDE: the base moves at reach x0.7 (the kit derives them); the kick is a leg: as written, under its own name
+defmoveCopy('ke-a-j3', 'ke-j3');
+
 // ================================================================ forms
 defkit('kenpachi', 'base', {
   name: 'KENPACHI', body: 'kenpachi', weapon: 'ken-katana', stance: 'ke-stance',
@@ -83,6 +154,120 @@ defkit('kenpachi', 'base', {
         guard: 0.35, hoho: 0.2, awakenAbove: 0.0, spCancelBars: 1, dash: 0.8, kikonRange: 9.0,
         react: { projectile: 'sig', 'flash-startup': 'sig' }, blockString: 0.8,
         reflex: 'ken-ai-reflex', assistGuard: 'ken-assist-guard', spEnder: 'ken-sp-ender', sigHold: 'ken-sig-hold' },
+});
+
+const KEN_AI_HOOKS = { reflex: 'ken-ai-reflex', assistGuard: 'ken-assist-guard', spEnder: 'ken-sp-ender', sigHold: 'ken-sig-hold' };
+const KEN_REACT = { projectile: 'sig', 'flash-startup': 'sig' };
+
+defkit('kenpachi', 'nozarashi', {                // cup 1, KATATE: one hand, as the awakening leaves him
+  inherit: 'base',
+  awakening: true, mult: T.nozarashiMult, startupAdd: T.nozarashiStartup, reachMult: T.nozarashiReach,
+  passives: ['projectile-cut'], formName: 'KATATE', kikonKonpaku: 2,
+  endlessForm: 'nozarashi',
+  weapon: 'nozarashi', stance: 'ke-n-stance', aura: 'reiatsu', swingSfx: 'whoosh-cleaver',
+  enterClips: ['ke-release', 'ke-nome'], cine: 'ken-nozarashi-cine', respectCallout: 'OMOSHIREE!',
+  meter: { name: 'NOME', max: T.nomeMax, start: T.nomeAwaken,
+           ladder: [['nozarashi', 0.0, 0, 0.0, 0.0], ['ryote', T.nomeDrainT2, T.nomeDelay, T.nomeUpT2, T.nomeDownT2],
+                    ['nomihose', T.nomeDrainT3, 0, T.nomeUpT3, T.nomeDownT3]] },
+  meterGain: { dealt: T.nomeDealt, taken: T.nomeTaken, drunk: T.nomeDrunk },
+  commands: { sp1: 'ke-meteor', kikon: 'ke-kikon-n' },
+  // toys with his opponent (a Kikon only 0.25 per decision until the last minute; the O ender per cup, oEnder)
+  ai: { intents: { approach: 2, pressure: 4, zone: 0, defend: 1 },
+        ranges: { approach: [2.0, 4.0], pressure: [1.2, 3.0], zone: [4.0, 6.0], defend: [3.0, 5.0] },
+        moves: [[0.0, 1.6, 'q', 5, 'f', 2, 'sig', 3, 'breaker', 1, 'sp2', 1, null, 3],
+                [1.6, 3.4, 'f', 4, 'sig', 3, 'breaker', 1, 'sp2', 1, null, 3],
+                [3.4, 4.2, 'f', 1, 'sp1', 2, 'step', 1, null, 2],
+                [4.2, 6.0, 'sp1', 4, 'sp2', 2, null, 1],
+                [6.0, 99.0, 'step', 1, 'kikon', 1, null, 1]],
+        guard: 0.35, hoho: 0.2, awakenAbove: 0.0, spCancelBars: 1, dash: 0.8, kikonRange: 5.0, kikonP: 0.25, oEnder: 0.25,
+        react: KEN_REACT, blockString: 0.8, ...KEN_AI_HOOKS },
+});
+
+defkit('kenpachi', 'ryote', {                    // cup 2, RYOTE (NOME >= 40): two-handed kendo, the cut
+  inherit: 'nozarashi',
+  mult: T.ryoteMult, startupAdd: T.ryoteStartup, reachMult: T.ryoteReach, formName: 'RYOTE', kikonKonpaku: 3,
+  passives: ['projectile-cut', 'cut'], stance: 'ke-r-stance', aura: 'nozarashi', enterHook: 'ken-ryote-enter',
+  commands: { q: 'ke-r-j1', f: 'ke-r-k1', sp1: 'ke-meteor', kikon: 'ke-kikon-n' },   // (the cup-1 moves as written)
+  grid: ['ke-r-j1', 'ke-r-j2', 'ke-r-j3', 'ke-r-k1', 'ke-r-k2', 'ke-r-k3', 'ke-r-j2s', 'ke-r-k2s'],
+  // after the 2x NOME drain: no DEFEND intent, no idle option at range, a neutral guard 0.1, a dash from 0.5 m outside
+  // his range, 30 f of respect after a hit, a blocked string goes on 0.95 of the time
+  ai: { intents: { approach: 2, pressure: 6, zone: 0, defend: 0 },
+        ranges: { approach: [2.0, 4.5], pressure: [1.2, 3.2], zone: [4.0, 6.0], defend: [3.0, 5.0] },
+        moves: [[0.0, 1.7, 'q', 5, 'f', 3, 'sig', 1, 'breaker', 1, null, 1],
+                [1.7, 3.4, 'f', 5, 'sig', 1, 'breaker', 1, null, 1],
+                [3.4, 4.2, 'f', 2, 'sp1', 2, 'step', 1, null, 1],
+                [4.2, 6.0, 'sp1', 4, 'sp2', 2, 'step', 1],
+                [6.0, 99.0, 'step', 1, 'kikon', 1]],
+        guard: 0.35, neutralGuard: 0.1, hoho: 0.2, awakenAbove: 0.0, spCancelBars: 1, dash: 1.0, dashGap: 0.5, kikonRange: 5.0,
+        kikonP: 0.5, oEnder: 0.35, respect: 30,
+        react: KEN_REACT, blockString: 0.95, ...KEN_AI_HOOKS },
+});
+
+defkit('kenpachi', 'nomihose', {                 // cup 3, NOMIHOSE (NOME = 100): no guard, U drinks; RYOTE's moves
+  inherit: 'ryote',
+  mult: T.nomihoseMult, formName: 'NOMIHOSE', kikonKonpaku: 4, bladeChip: T.nomihoseChip, bankaiForm: 'bankai',
+  passives: ['projectile-cut', 'cut', 'drink'], aura: 'nomihose', drinkClip: 'ke-drink', enterHook: 'ken-nomihose-enter',
+  commands: { f: 'ke-n-f1', sp1: 'ke-meteor-n' },
+  strings: [['ke-n-f1', 'f', 'ke-r-k2'], ['ke-n-f1', 'q', 'ke-r-j2s']],   // KUKAN-GIRI is cup 3's K1
+  // the cup drains 20/s: never idle at range, decide 1.7x as often, no respect, drink a committed move 0.7 of the time,
+  // the near cash-out only once NOME < 55; the Bankai as a finisher, weighing his own Konpaku (one roll per cup-3 stay)
+  ai: { intents: { approach: 3, pressure: 7, zone: 0, defend: 0 },
+        ranges: { approach: [2.0, 4.5], pressure: [1.2, 3.2], zone: [4.0, 6.0], defend: [3.0, 5.0] },
+        moves: [[0.0, 1.7, 'q', 4, 'f', 4, 'breaker', 1, null, 1],
+                [1.7, 3.4, 'f', 5, 'breaker', 1, null, 1],
+                [3.4, 6.0, 'f', 2, 'step', 2],
+                [6.0, 99.0, 'step', 1, 'kikon', 1]],
+        guard: 0.7, neutralGuard: 0.1, hoho: 0.2, awakenAbove: 0.0, spCancelBars: 1, dash: 1.0, dashGap: 0.3, kikonRange: 5.0,
+        kikonP: 0.9, oEnder: 0.6, tempo: 0.6, attack: 0.2, respect: 0,
+        cashout: { punish: 30, near: 6.0, below: 55.0 },
+        bankai: { p: 0.9, oppBelow: 0.6, oppKonpaku: 4, ownKonpaku: 4 },
+        react: KEN_REACT, blockString: 0.85, ...KEN_AI_HOOKS },
+});
+
+// the Bankai (P in cup 3 with <= 4 own Konpaku: combat.ts bankai): his Konpaku -> 1, his Reishi -> full; x1.2; U is
+// still DRINK; every heavy command spends a pip of the arm (UDE, the kit meter)
+defkit('kenpachi', 'bankai', {
+  inherit: 'nomihose',
+  awakening: true, mult: T.bankaiKenMult, formName: 'BANKAI', kikonKonpaku: 4, bladeChip: T.nomihoseChip,
+  bankaiForm: null, passives: ['projectile-cut', 'drink'],
+  meter: { name: 'UDE', max: T.armPips, start: T.armPips }, meterGain: null,
+  pips: { n: T.armPips, to: 'kataude', cmds: ['f', 'sig', 'sp1', 'sp2', 'breaker', 'kikon'] },
+  body: 'kenpachi-oni', weapon: 'ke-broken', stance: 'ke-b-stance', aura: 'oni', hide: ['arm-wreck', 'crack-1', 'crack-2', 'crack-3', 'crack-4'],
+  runClips: ['ke-b-run', 'ke-b-skate-b', 'ke-b-slide-r', 'ke-b-slide-l'],
+  cine: 'ken-bankai-cine', enterHook: null, swingSfx: 'whoosh-cleaver',
+  commands: { q: 'ke-b-j1', f: 'ke-b-k1', sig: 'ke-b-bite', sp1: 'ke-b-split', sp2: 'ke-charge', breaker: 'ke-breaker', kikon: 'ke-b-kikon' },
+  grid: ['ke-b-j1', 'ke-b-j2', 'ke-b-j3', 'ke-b-k1', 'ke-b-k2', 'ke-b-k3', 'ke-b-j2s', 'ke-b-k2s'],
+  strings: [['ke-charge', 'land', 'ke-b-punch']],
+  // all in: pressure, K links 0.6 (stringK), the pips spent before they crack (pipHurry), the bite up close only; a CPU
+  // facing him backs off and waits the arm out (oppIntent)
+  ai: { intents: { approach: 3, pressure: 7, zone: 0, defend: 0 },
+        ranges: { approach: [2.0, 4.5], pressure: [1.2, 3.0], zone: [4.0, 6.0], defend: [3.0, 5.0] },
+        moves: [[0.0, 1.5, 'q', 3, 'f', 3, 'sig', 3, 'breaker', 1, null, 1],
+                [1.5, 3.4, 'f', 5, 'breaker', 1, null, 1],
+                [3.4, 6.0, 'sp1', 3, 'sp2', 2, 'step', 1, null, 1],
+                [6.0, 99.0, 'kikon', 1, 'step', 1, null, 1]],
+        guard: 0.2, hoho: 0.2, awakenAbove: 0.0, spCancelBars: 2, dash: 1.0, kikonRange: 10.6, kikonP: 0.9, oEnder: 0.8,
+        stringK: 0.6, pipHurry: 90, blockString: 0.85, oppIntent: { zone: 2, defend: 2 }, ...KEN_AI_HOOKS },
+});
+
+// KATAUDE (the arm burst): the rest of the match. The base moves at reach x0.7; the kick, the Breaker and O (CHARGE) as
+// written; x1.0; U is a guard again; Kikon 3
+defkit('kenpachi', 'kataude', {
+  inherit: 'base',
+  awakening: true, formName: 'KATAUDE', kikonKonpaku: 3, mult: 1.0, reachMult: T.kataudeReach, endlessForm: 'nozarashi',
+  body: 'kenpachi-oni', weapon: 'ke-broken', aura: null, hide: ['crack-1', 'crack-2', 'crack-3', 'crack-4'], swingSfx: 'whoosh-cleaver',
+  stance: 'ke-b-stance', runClips: ['ke-b-run', 'ke-b-skate-b', 'ke-b-slide-r', 'ke-b-slide-l'],   // still the oni
+  commands: { breaker: 'ke-breaker', kikon: 'ke-kikon' },
+  grid: ['ke-j1', 'ke-j2', 'ke-a-j3', 'ke-k1', 'ke-k2', 'ke-k3', 'ke-j2s', 'ke-k2s'],
+  ai: { intents: { approach: 2, pressure: 4, zone: 0, defend: 1 },
+        ranges: { approach: [1.5, 3.0], pressure: [0.9, 1.8], zone: [4.0, 6.0], defend: [3.0, 5.0] },
+        moves: [[0.0, 1.1, 'q', 5, 'f', 2, 'sig', 2, 'breaker', 1, 'sp2', 1, null, 3],
+                [1.1, 2.0, 'f', 4, 'sig', 2, 'breaker', 1, 'sp2', 1, null, 3],
+                [2.0, 4.0, 'f', 1, 'sp1', 2, 'step', 1, null, 2],
+                [4.0, 6.0, 'sp2', 2, null, 1],
+                [6.0, 99.0, 'step', 1, 'kikon', 1, null, 1]],
+        guard: 0.35, hoho: 0.2, awakenAbove: 0.0, spCancelBars: 2, dash: 0.9, kikonRange: 9.0, kikonP: 0.5, oEnder: 0.25,
+        react: KEN_REACT, blockString: 0.8, ...KEN_AI_HOOKS },
 });
 
 // ================================================================ hooks (called through the data's names)
@@ -118,6 +303,43 @@ registerHooks({
       startMove(e, kitNext(kitOf(e), 'ke-charge', 'land')!);
       e.f.contact = 'hit'; e.f.landSf = 0;
     }
+  },
+  /** KUKAN-GIRI f20: the blade's chord stays in the air as a rift, fixed in the world, that cuts T.riftDelay frames later
+   *  (a 2 f window): a rift hazard (hazards.ts); it closes if he is hit before it cuts. */
+  'ken-rift'(e: Ent) {
+    spawnHazard('rift', e, { x: e.pos[0], z: e.pos[2], yaw: e.yaw, size: 4.4, delay: 1 + T.riftDelay, life: 2,
+      hw: makeHitwin({ dmg: moveParam(e, 'riftDmg'), react: 'stagger', kb: 1.0, hs: T.hitstopHeavy,
+                       chip: moveParam(e, 'riftChip'), guard: moveParam(e, 'riftGuard'), vols: [makeVol(moveParam(e, 'riftVol'))] }) });
+    emit('sfx', 'rift-open', e);
+  },
+  /** NOMIHOSE (Shift+K in cup 3), its first frame: the whole cup is drunk at once: NOME 0 and cup 1 now (the one rung
+   *  change that doesn't wait for him to be free), so the cut and an O after it resolve in KATATE. */
+  'ken-drink-dry'(e: Ent) {
+    e.g.meter = 0;
+    clog(() => `${sideName(e)} CASH-OUT`);
+    setForm(e, 'nozarashi');
+  },
+  /** Cup 2: the left hand closes on the handle (a look: a yellow ring). */
+  'ken-ryote-enter'(e: Ent) { emit('shockwave', e.pos[0], e.pos[2], 2.5, 0.35, [1.0, 0.85, 0.25]); },
+  /** Cup 3: the yellow pillar (full on the first cup 3 of a match, then a half-height flare: the renderer counts them),
+   *  2 rings, a negative frame and a manga page (a look). */
+  'ken-nomihose-enter'(e: Ent) { emit('nomihose-enter', e, e.pos[0], e.pos[2]); },
+  /** LEAP CLEAVE lands: a short gash split into the ground ahead (a look). */
+  'ken-leap-cleave'(e: Ent) {
+    spawnHazard('line', e, { x: e.pos[0], z: e.pos[2], yaw: e.yaw, size: 3.0, life: 45, look: 'meteor' });
+    emit('sfx', 'ground-crack', e);
+  },
+  /** Split the Meteor: the cleave splits the ground 12 m ahead (a look). */
+  'ken-meteor-cut'(e: Ent) {
+    spawnHazard('line', e, { x: e.pos[0], z: e.pos[2], yaw: e.yaw, size: 12.0, life: 60, look: 'meteor' });
+    emit('ground-scar', e.pos[0], e.pos[2], e.yaw, [2.0, 5.0, 8.0, 11.0], 1.2);
+    emit('sfx', 'ground-crack', e);
+  },
+  /** TATE-GOTO: the cut goes through guard and arm and splits the ground 6 m ahead (a look). */
+  'ken-tate-goto'(e: Ent) {
+    spawnHazard('line', e, { x: e.pos[0], z: e.pos[2], yaw: e.yaw, size: 6.0, life: 50, look: 'meteor' });
+    emit('ground-scar', e.pos[0], e.pos[2], e.yaw, [1.5, 3.5, 5.5], 1.0);
+    emit('sfx', 'ground-crack', e);
   },
 });
 
@@ -306,6 +528,11 @@ registerHooks({
     return kenAntiBreaker(e, b, s, d) ?? kenAntiMash(e, b, s, d) ?? kenHohoCommit(e, b, s, d) ?? kenNoReset(e, b, d)
       ?? kenSigPunish(e, b, s, d) ?? kenFarPunish(e, b, s, d) ?? kenFirstStrike(e, b, s, d) ?? kenLunge(e, b, s, d)
       ?? kenWalkIn(e, b, s, d);
+  },
+  /** His forms' assistGuard (assist.lisp AUTO GUARD, M6): his defensive answers only, the timed anti-Breaker hit and the
+   *  Hoho into a K / L / SP's perfect lead. */
+  'ken-assist-guard'(e: Ent, b: Brain, s: Snap, d: number): string | null {
+    return kenAntiBreaker(e, b, s, d) ?? kenHohoCommit(e, b, s, d);
   },
   /** His spEnder (a landed string's last link, the O ender's own roll failed): the SP1 line ender, the O ender anyway
    *  (not on a red opponent: that already rushes), else Shift+L (the charge into the flurry). */
