@@ -60,8 +60,11 @@ export class Vpad {
   }
   /** Set the stick (X right, Y up), clamped to unit length. */
   stick(x: number, y: number): this {
-    const m2 = x * x + y * y;
-    if (m2 > 1) { const m = Math.sqrt(m2); x /= m; y /= m; }
+    // (single floats, as the Lisp's vpad-stick!: the CPU's stick feeds the walk velocity)
+    const f32 = Math.fround;
+    x = f32(x); y = f32(y);
+    const m2 = f32(f32(x * x) + f32(y * y));
+    if (m2 > 1) { const m = f32(Math.sqrt(m2)); x = f32(x / m); y = f32(y / m); }
     this.sx = x; this.sy = y;
     return this;
   }

@@ -4,7 +4,7 @@
 // Kikon here), Kikon / Soul Break / awakening / form changes (settled here, at connect time; cinematics only present
 // them), the perfect-Hoho test and gaugeSystem. Decisions are rules.ts's; effects are emitted for the renderer.
 import { T } from './tuning';
-import { fwdX, fwdZ, roundHalfEven } from './math';
+import { f32, fwdX, fwdZ, roundHalfEven } from './math';
 import {
   awakeningGain, breakerClashP, burn, burnAmount, burstAllowedP, burstDrain, burstDueP, burstFsGain, burstGainMult, burstHeal,
   burstMode, blockstun, cancelOpenP, chipDamage, comboStep, contactOf, cutValue, drinkAdv, drinkSplit, fsRegen, frostNext,
@@ -43,7 +43,7 @@ export function siphonOf(e: Ent): Ent | null {
 export function payGauges(e: Ent, r: number, fs: number): void {
   const g = e.g;
   g.reiatsu = gaugeAdd(g.reiatsu, r, T.reiatsuMax);
-  g.fs = gaugeAdd(g.fs, burstFsGain(fs, g.burst), T.fsMax);
+  g.fs = Math.fround(gaugeAdd(g.fs, burstFsGain(fs, g.burst), T.fsMax));
 }
 /** Reiatsu, flash-step and Fighting Spirit for dealing DEALT / taking TAKEN damage. */
 export function gainGauges(e: Ent, dealt: number, taken: number): void {
@@ -91,7 +91,7 @@ export function addMeter(e: Ent, amount: number): void {
 export function kosei(att: Ent, g: number, x: number, y: number, z: number): void {
   const to = siphonOf(att) ?? att;
   const [r, fs, m] = koseiGain(g, att.g.gg);
-  payGauges(to, r * burstGainMult(att.g.burst), fs);                 // ORANGE: x1.5 Reiatsu
+  payGauges(to, f32(r * burstGainMult(att.g.burst)), fs);                 // ORANGE: x1.5 Reiatsu
   emit('kosei', to, m, x, y, z);
 }
 
@@ -115,7 +115,7 @@ export function wardDrop(e: Ent): void {
 }
 /** E's cold gauge (a temp kit meter) changes by N, clamped to 0 .. T.coldMax. */
 export function coldAdd(e: Ent, n: number): void {
-  if (kitOf(e).meter?.temp && (n <= 0 || !siphonOf(e))) e.g.meter = Math.max(0, Math.min(T.coldMax, e.g.meter + n));
+  if (kitOf(e).meter?.temp && (n <= 0 || !siphonOf(e))) e.g.meter = Math.max(0, Math.min(T.coldMax, Math.fround(e.g.meter + n)));
 }
 /** DEF's scorch (Bankai West): a melee hit his parry caught burns ATT N (never kills). */
 export function scorch(att: Ent, def: Ent, n = T.scorch): void {
@@ -145,7 +145,7 @@ export interface ApplyOpts {
 export function applyHit(att: Ent, def: Ent, hw: HitWin, sx: number, sz: number, o: ApplyOpts): Contact | null {
   const mv = o.mv ?? null, hazard = o.hazard ?? null, bonus = o.bonus ?? 0, red = !!o.red;
   const fa = att.f, fd = def.f, flags = hw.flags, p = def.pos;
-  const d2 = (p[0] - sx) ** 2 + (p[2] - sz) ** 2;                    // DEF's distance (squared) from the attacker
+  const d2 = f32(f32(f32(p[0] - sx) ** 2) + f32(f32(p[2] - sz) ** 2));                   // DEF's distance (squared) from the attacker
   const ranged = rangedHitP(hazard, flags, mv?.params.meleeRange, d2);
   const optic = opticP(passiveP(def, 'ward'), passiveP(def, 'optic'), ranged);   // Rukia's absolute zero: ranged hits pass
   const defState: DefState = optic && o.defState === 'guard' ? 'neutral' : o.defState;
@@ -163,7 +163,7 @@ export function applyHit(att: Ent, def: Ent, hw: HitWin, sx: number, sz: number,
     hazard: ranged, ward, rend: flags.includes('rend'),
   });
   const atk = kitAtkMods(kitOf(att), T.konpakuMax - att.g.konpaku,
-                         (res === 'blocked' ? 1.0 : 1.0 + k) * (own && fa.assisted ? T.assistMult : 1.0));   // ASSIST
+                         f32((res === 'blocked' ? 1.0 : f32(1.0 + k)) * (own && fa.assisted ? T.assistMult : 1.0)));   // ASSIST
   const dmods = optic ? { mult: 1.0 } : kitDefMods(kitOf(def));
   const x = o.x ?? p[0], z = o.z ?? p[2], y = p[1] + 1.1;
   const base = hw.dmg + bonus;
@@ -204,7 +204,7 @@ export function applyHit(att: Ent, def: Ent, hw: HitWin, sx: number, sz: number,
       gd.stun = blow ? 0 : st; gd.stunIdle = 0;
       if (frost > 0) fd.frost = frostNext(fd.frost, frost);          // Rukia's ice
       if (ranged) def.g.takenRanged += dmg; else def.g.takenMelee += dmg;
-      coldAdd(def, -(T.ruHitWarm * dmg));                            // Rukia: a real hit warms her
+      coldAdd(def, -Math.fround(Math.fround(T.ruHitWarm) * dmg));                            // Rukia: a real hit warms her
       att.g.bestCombo = Math.max(hits, att.g.bestCombo);
       addMeter(att, hw.meter);
       hitstop(hw.hs);
@@ -215,14 +215,14 @@ export function applyHit(att: Ent, def: Ent, hw: HitWin, sx: number, sz: number,
         if (blow) {
           setReaction(def, react, stun, sx, sz, T.stunBlowKb);       // the blow-away
           W.blowAways++;
-          clog(() => `${sideName(def)} BLOWN AWAY by ${sideName(att)} (combo hit ${hits})`);
+          clog(() => `${sideName(def)} BLOWN AWAY by ${sideName(att)} (stun tolerance ${stunToleranceOf(kitOf(def)).toFixed(1)}, combo hit ${hits})`);
         } else {
           setReaction(def, react, stun, sx, sz, follow ? T.kikonFollowKb : hw.kb);
           if (own && !hazard && mv!.flags.includes('ender') && (mv!.kind === 'quick' || mv!.kind === 'flash'))
             enderPush(att, def, mv!);                                // J3 / K3: out of J1 / K1's reach at once
           if (own && !hazard && !fa.chained && (mv!.kind === 'quick' || mv!.kind === 'flash')
               && mv === kitCommandMove(kitOf(att), mv!.kind === 'quick' ? 'q' : 'f')) {   // a string's opener hit: the
-            const pull = Math.sqrt(d2) - T.stringPullTo;                 // attacker dashes in point-blank, so the
+            const pull = f32(f32(Math.sqrt(d2)) - f32(T.stringPullTo));                // attacker dashes in point-blank, so the
             if (pull > 0.01) setSlide(att, pull, T.stringPullFrames, p[0] - sx, p[2] - sz);   // links reach him
           }
         }
@@ -342,7 +342,7 @@ export function collectMelee(e: Ent, f: Fighter): void {
     });
   }
 }
-const volHit = (v: Vol, p: number[], fx: number, fz: number, q: number[], o: Ent): boolean =>
+const volHit = (v: Vol, p: ArrayLike<number>, fx: number, fz: number, q: ArrayLike<number>, o: Ent): boolean =>
   volHitP(v, p[0], p[1], p[2], fx, fz, q[0], q[1], q[2], o.body.hurtR, o.body.hurtH, 0);
 
 /** Nozarashi (projectile-cut): an open window of E's move destroys the opponent's hazards it touches. */
@@ -460,8 +460,8 @@ export function burstEnd(e: Ent): void {
 /** WHITE's regen on its frame N (1-based): Reishi, Reiatsu and (not yet awakened) the awakening gauge. */
 export function whiteRegen(g: Gauges, n: number): void {
   g.reishi = Math.min(g.reishiMax, g.reishi + burstHeal(n, T.whiteReishi));
-  g.reiatsu = gaugeAdd(g.reiatsu, T.whiteReiatsu / 60, T.reiatsuMax);
-  if (!g.awakened) g.awaken = gaugeAdd(g.awaken, T.whiteAwaken / 60, T.awakenMax);
+  g.reiatsu = gaugeAdd(g.reiatsu, f32(T.whiteReiatsu / 60), T.reiatsuMax);
+  if (!g.awakened) g.awaken = gaugeAdd(g.awaken, f32(T.whiteAwaken / 60), T.awakenMax);
 }
 /** A running burst, one frame: the flash-step drains, WHITE's regen; at 0 it ends. */
 export function burstStep(e: Ent, g: Gauges): void {
@@ -602,7 +602,7 @@ export function settleSouls(): void {
   for (const e of fighters()) burstEnd(e);                           // the reset ends every burst, before the refund
   for (const att of new Set([...kk.map((k) => k[0]), ...sb.map((s) => s[0])])) {   // a flash-step bar and a Reiatsu bar back
     const g = att.g;
-    [g.fs, g.reiatsu] = kikonRefund(g.fs, g.reiatsu);
+    [g.fs, g.reiatsu] = kikonRefund(g.fs, g.reiatsu); g.fs = Math.fround(g.fs);
   }
   const kos: Ent[] = [];
   for (const [att, def] of kk) if (settleKonpaku(att, def, false)) kos.push(def);

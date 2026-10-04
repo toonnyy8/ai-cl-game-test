@@ -122,3 +122,32 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   tick until a sim divergence (the BLUE burst / flash-step floats); the masher's assist gate per setting matches the
   Lisp's within a seed or two (vs HARD: k0 0/20, k2 16/20, k11 13/20; Lisp 0, 16, 14). Kept as the Lisp behaves:
   AUTO-COMBO's bait never yields :guard-long (its SETF returns NIL).
+- 2026-10-04: merged M3b Kenpachi (KK matches the native Lisp event for event; gate 142.9 s vs Lisp 144.8) and M4 Rukia
+  (RK / RR seeds 1-5 identical to the Lisp; cold, flash-step, hidden stun in f32). Paused by the usage limit with work
+  left uncommitted in worktrees: M3a Yamamoto (`../ai-cl-game-test-wt-m3yama`), M5-B1 look (`-wt-m5`), Ichigo
+  (`-wt-ichigo`), Senjumaru (`-wt-senju`, SK 5/5 identical when paused), M6a assist/learn (`-wt-assist`), M6b touch /
+  screens (`-wt-touch`). Next: resume each, merge (expect conflicts in the f32 fixes: Rukia's branch already made
+  flash-step and hidden stun f32), then a batch making positions f32 (RR seed 20 / YK seed 3 drift), then ENDLESS.
+- 2026-10-04: M3a Yamamoto: `src/chars/yama.ts` has all four forms (Hellfire with Ennetsu and NADEGIRI; Bankai East /
+  West with KYOKKO, KYOKUJITSUJIN, SHONETSU, the parry and its counter, MINAMI's bind, TENCHI) and their hooks. The sim
+  now computes in single floats wherever the Lisp does: positions, velocities, yaw, the gauges, hazards and the Brain's
+  floats are stored f32 (Float32Array / f32 setters), the tuning knobs are rounded to f32 at load, and the movement,
+  facing, distance, slide, chase, field and gauge arithmetic is f32 op by op; `fwdX` / `fwdZ` run a port of musl's
+  sinf / cosf (`src/sim/sinf.ts`: musl isn't always correctly rounded, the Lisp build runs on it). Checked against the
+  native Lisp (`tools/simgate/run-log.lisp`, one match per process): YY, YK, KK seeds 1-20 and RY, RK, RR seeds 1-10
+  give the same combat log and hash lines bit for bit (90 of 90). The native seed gate (`simgate.py`, matches back to
+  back in one process) differs slightly from single matches (YY 130.9 vs 129.5 s, KK 144.8 vs 142.9 s).
+
+- 2026-10-04: merged M4 Ichigo and Senjumaru (the S meter's state: `senjuMeter(e)`), M3a Yamamoto + the single-float sim
+  (f32 values and op-by-op rounding, f32 pi, musl sinf/cosf in `src/sim/sinf.ts`): YY / YK / KK seeds 1-20 and RY / RK /
+  RR 1-10 match the native Lisp bit for bit, one native match per process (the native simgate.py's back-to-back runs
+  differ slightly: Lisp state carries over between matches). TS gate, 15 pairings x 20 seeds: all K.O., 2.8 s total.
+  M6b platform: DOM menus (`src/ui/`), CONTROLS rebinding (`soulduel.babylon.bind`), VS PLAYER, PRACTICE
+  (`src/sim/practice.ts`), touch recogniser + thumb deck (`src/input/{touch,onehand}.ts`), portrait camera / HUD,
+  PWA. The landscape two-thumb layer is new (the Lisp has none): it needs the user's playtest. Not yet: ENDLESS, the
+  learner / ASSIST in force (M6a), separate P1 / P2 pick phases.
+- 2026-10-04: merged M6a and wired it: SETTINGS' LEARNING CPU / AUTO GUARD / COMBO / BREAK rows are in force
+  (`src/ui/settings.ts`); the learned tables live in localStorage under the Lisp page's keys and format
+  (`soulduel.learn.<i>`, `soulduel.learn.a<i>`, comma-separated integers), so both builds share them. The CPU learns in
+  VS CPU (and ENDLESS once ported), never in CPU VS CPU or PRACTICE. Open: AUTO COMBO's bait branch in assist.lisp never
+  presses :guard-long (the SETF returns NIL; ported as it behaves, likely a Lisp bug).

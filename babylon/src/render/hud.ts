@@ -2,12 +2,15 @@
 // (red under T.redThreshold, a white damage trail), the guard gauge, 9 Konpaku pips, Reiatsu 3 bars, flash step (ticks at
 // the Hoho cost and the burst threshold), Awakening (EVOLUTION), the kit meter; the timer; the combo counter under the
 // victim's bar; move callouts over the user's head; big words from the sim events; the HOLD O KIKON prompt; the
-// cinematic dim + caption; title, select, results and pause screens. Canvas2D on #hud, device pixels.
+// cinematic dim + caption. In a portrait window (onehand.lisp / hud.lisp HUD-SIDE-PORTRAIT, DUEL_MOBILE_DESIGN §14-§15.2) P2's
+// block runs across the top and P1's across the bottom instead. The menus are DOM (src/ui/menus.ts). Canvas2D on #hud,
+// device pixels.
 import { T } from '../sim/tuning';
 import { redP } from '../sim/rules';
 import { kitCommandOkP } from '../sim/fighter';
 import { findKit } from '../sim/kit';
 import type { Ent, SimEvent, World } from '../sim/types';
+import { portraitMetrics } from '../input/onehand';
 
 const cv = document.getElementById('hud') as HTMLCanvasElement;
 const g = cv.getContext('2d')!;
@@ -15,16 +18,20 @@ let w = 0, h = 0, s = 1;
 export function resizeHud(): void {
   const d = devicePixelRatio || 1;
   w = cv.width = Math.round(innerWidth * d); h = cv.height = Math.round(innerHeight * d);
-  s = Math.max(1, h / 360);
+  s = Math.max(1, Math.min(h / 360, w / 480));                    // engine ui.lisp UI-SCALE; portrait: the 11 CSS px floor
+  if (h > w) s = Math.max(s, Math.ceil((11 * d) / 7));
 }
 export const hudSize = (): [number, number] => [w, h];
+export const hudCtx = (): CanvasRenderingContext2D => g;
+export function clearHud(): void { g.clearRect(0, 0, w, h); }
 
 const P_COL = ['#ff9a4d', '#80b3ff'];
 function text(str: string, x: number, y: number, px: number, color: string, align: CanvasTextAlign = 'left', alpha = 1): void {
   g.font = `bold ${Math.round(px)}px system-ui, "Segoe UI", sans-serif`;
   g.textAlign = align; g.textBaseline = 'top'; g.globalAlpha = alpha;
-  g.fillStyle = 'rgba(0,0,0,0.7)'; g.fillText(str, x + Math.max(1, px / 14), y + Math.max(1, px / 14));
-  g.fillStyle = color; g.fillText(str, x, y);
+  const mw = 0.94 * w;                                              // a long line is squeezed, never cut
+  g.fillStyle = 'rgba(0,0,0,0.7)'; g.fillText(str, x + Math.max(1, px / 14), y + Math.max(1, px / 14), mw);
+  g.fillStyle = color; g.fillText(str, x, y, mw);
   g.globalAlpha = 1;
 }
 function rect(x: number, y: number, ww: number, hh: number, color: string): void { g.fillStyle = color; g.fillRect(x, y, ww, hh); }
@@ -79,7 +86,7 @@ function drawWords(): void {
 }
 
 // ---------------------------------------------------------------- the battle HUD
-function side(e: Ent, human: boolean, inBattle: boolean): void {
+function side(e: Ent, human: boolean, inBattle: boolean, prompt: string): void {
   const f = e.f, gg = e.g, kit = f.kit, sd = f.side, right = sd === 1;
   const m = 0.03 * w, bw = 0.36 * w, x = right ? w - m - bw : m, edge = right ? x + bw : x;
   const al: CanvasTextAlign = right ? 'right' : 'left', y = 0.05 * h, bh = Math.max(7 * s, 0.028 * h);
@@ -130,22 +137,83 @@ function side(e: Ent, human: boolean, inBattle: boolean): void {
   // the Kikon prompt for a human whose opponent is red
   const o = f.opp!;
   if (human && inBattle && redP(o.g.reishi, o.g.reishiMax) && kitCommandOkP(e, 'kikon'))
-    text('HOLD O  KIKON', right ? 0.75 * w : 0.25 * w, 0.78 * h, 9 * s, '#ff3340', 'center', 0.5 + 0.5 * pulse(4));
+    text(prompt, right ? 0.75 * w : 0.25 * w, 0.78 * h, 9 * s, '#ff3340', 'center', 0.5 + 0.5 * pulse(4));
+}
+
+// ---------------------------------------------------------------- the portrait blocks (hud.lisp HUD-SIDE-PORTRAIT)
+/** E's block: row 1 the name, a label (EVOLUTION / the form) and the nine Konpaku flames (P2: the timer at its right end);
+ *  Reishi; the guard gauge; the four small gauges across the width (Reiatsu cells, flash step, Awakening, the kit meter). */
+function sidePortrait(e: Ent, wd: World, human: boolean, top: number, ps: number, blockH: number, timerStr: string | null, prompt: string): void {
+  const f = e.f, gg = e.g, kit = f.kit, sd = f.side;
+  const m = 4 * ps, x = m, bw = w - 2 * m, y = top;
+  const grad = g.createLinearGradient(0, y - 2 * ps, 0, y + blockH);
+  grad.addColorStop(0, 'rgba(6,6,12,0.0)'); grad.addColorStop(0.25, 'rgba(6,6,12,0.55)'); grad.addColorStop(1, 'rgba(6,6,12,0.55)');
+  rect(0, y - 2 * ps, w, blockH + 4 * ps, grad as unknown as string);
+  const name = `${kit.name ?? f.character.toUpperCase()}${f.form !== 'base' && kit.formName ? '  ' + kit.formName : ''}`;
+  text(name, x, y + ps, 6 * ps, P_COL[sd]);
+  g.font = `bold ${Math.round(6 * ps)}px system-ui, "Segoe UI", sans-serif`;
+  let fx = x + g.measureText(name).width + 4 * ps;
+  if (gg.evolution) {
+    text('EVOLUTION', fx, y + 1.8 * ps, 4.5 * ps, `rgba(255,217,77,${0.4 + 0.6 * pulse(3)})`);
+    g.font = `bold ${Math.round(4.5 * ps)}px system-ui, "Segoe UI", sans-serif`;
+    fx += g.measureText('EVOLUTION').width + 4 * ps;
+  }
+  const fend = timerStr ? w - m - 14 * ps : w - m, red = redP(gg.reishi, gg.reishiMax);
+  const pr = Math.min(2.6 * ps, (fend - fx) / (T.konpakuMax * 2.6)), pitch = Math.min(3.4 * pr, (fend - fx) / T.konpakuMax);
+  for (let i = 0; i < T.konpakuMax; i++) {
+    g.beginPath(); g.arc(fx + pr + i * pitch, y + 4 * ps, pr, 0, 2 * Math.PI);
+    g.fillStyle = i < gg.konpaku ? (red ? '#ff5050' : '#ffe2a0') : 'rgba(255,255,255,0.15)'; g.fill();
+  }
+  if (timerStr) text(timerStr, w - m, y, 8 * ps, timerStr.length < 3 && +timerStr < 30 ? '#ff4d4d' : '#ffffff', 'right');
+  const frac = gg.reishi / gg.reishiMax, ry = y + 9 * ps, rh = 5 * ps;
+  trail[sd] = trail[sd] > frac ? Math.max(frac, trail[sd] - 0.35 / 60) : frac;
+  bar(x, ry, bw, rh, trail[sd], false, '#f4f4f0');
+  rect(x, ry, Math.max(0, Math.min(1, frac)) * bw, rh, red ? `rgba(230,40,40,${0.75 + 0.25 * pulse(3)})` : '#e8c060');
+  bar(x, ry + rh + ps, bw, 2 * ps, gg.gg / T.ggMax, false, gg.guardless ? '#806060' : f.state === 'guard' || f.state === 'guard-hit' ? '#6d8fb8' : '#a8c4e8');
+  const sy = ry + rh + 5 * ps, sh = 4 * ps, gap = 3 * ps, cw = (bw - 3 * gap) / 4;
+  for (let i = 0; i < 3; i++) {                                                  // Reiatsu: 3 cells in the first quarter
+    const c = (cw - 2 * ps) / 3;
+    bar(x + i * (c + ps), sy, c, sh, (gg.reiatsu - i * T.reiatsuBar) / T.reiatsuBar, false, '#70c8ff');
+  }
+  const burst = gg.burst;
+  bar(x + cw + gap, sy, cw, sh, gg.fs / T.fsMax, false, burst === 'blue' ? '#4f9dff' : burst === 'orange' ? '#ff9a40' : burst ? '#ffffff' : '#9cc4ff');
+  bar(x + 2 * (cw + gap), sy, cw, sh, gg.awaken / T.awakenMax, false, gg.evolution ? '#ffd94d' : '#e8c070');
+  const meter = kit.meter as { max?: number } | null;
+  if (meter?.max) {
+    const burning = gg.formLeft > 0;
+    bar(x + 3 * (cw + gap), sy, cw, sh, burning ? gg.formLeft / Math.max(1, gg.formTotal) : gg.meter / meter.max, false, burning ? '#ff6a1a' : '#ff8c40');
+  }
+  const c = combo[sd], cy = sd === 1 ? y + blockH + 4 * ps : y - 12 * ps;       // under P2's block / over P1's
+  if (f.comboHits > 1 && f.comboDmg > 0) { c.str = `${f.comboHits} HITS  ${f.comboDmg}`; c.t0 = now(); }
+  if (now() - c.t0 < 1.2) text(c.str, w / 2, cy, 7 * ps, '#ffe699', 'center');
+  const o = f.opp!;
+  if (human && wd.flow === 'battle' && redP(o.g.reishi, o.g.reishiMax) && kitCommandOkP(e, 'kikon'))
+    text(prompt, w / 2, portraitMetrics().hudBottom + 14 * ps, 7 * ps, '#ff3340', 'center', 0.5 + 0.5 * pulse(4));
 }
 
 export type Project = (x: number, y: number, z: number) => [number, number] | null;
 
-export function drawBattle(wd: World, project: Project): void {
+export interface BattleHud { portrait: boolean; practice: boolean; hint: boolean; prompt: (side: number) => string }
+
+export function drawBattle(wd: World, project: Project, o: BattleHud): void {
   g.clearRect(0, 0, w, h);
   if (wd.cine) { drawCine(wd); drawWords(); return; }
-  for (const e of [wd.p1, wd.p2]) side(e, !e.brain, wd.flow === 'battle');
+  const secs = Math.min(999, Math.ceil(Math.max(0, wd.timer) / 60)), timer = o.practice ? 'PRACTICE' : String(secs);
+  if (o.portrait) {
+    const pm = portraitMetrics();
+    sidePortrait(wd.p2, wd, !wd.p2.brain, pm.top, pm.s, pm.blockH, timer, o.prompt(1));
+    sidePortrait(wd.p1, wd, !wd.p1.brain, pm.p1Top, pm.s, pm.blockH, null, o.prompt(0));
+  } else for (const e of [wd.p1, wd.p2]) side(e, !e.brain, wd.flow === 'battle', o.prompt(e.f.side));
+  if (o.hint) {                                                                   // PERFECT HINT over P1
+    const p = project(wd.p1.pos[0], wd.p1.pos[1] + wd.p1.body.hurtH + 0.8, wd.p1.pos[2]);
+    if (p) text('HOHO!', p[0], p[1], 11 * s, '#9ff0ff', 'center');
+  }
   for (const e of [wd.p1, wd.p2]) {                                              // callouts over the user's head
     if (e.f.calloutT <= 0 || !e.f.callout) continue;
     const p = project(e.pos[0], e.pos[1] + e.body.hurtH + 0.45, e.pos[2]);
     if (p) text(e.f.callout, p[0], p[1], 9 * s, '#ffd98c', 'center', Math.min(1, e.f.calloutT / 15));
   }
-  const secs = Math.min(999, Math.ceil(Math.max(0, wd.timer) / 60));
-  text(String(secs), w / 2, 0.035 * h, 22 * s, secs < 30 ? '#ff4d4d' : '#ffffff', 'center');
+  if (!o.portrait) text(timer, w / 2, 0.035 * h, (o.practice ? 10 : 22) * s, !o.practice && secs < 30 ? '#ff4d4d' : '#ffffff', 'center');
   drawWords();
 }
 
@@ -157,57 +225,9 @@ function drawCine(wd: World): void {
   if (c.name === 'intro-cine') {
     text(`${kitName(wd.p1.f.character)}   VS   ${kitName(wd.p2.f.character)}`, w / 2, 0.42 * h, 22 * s, '#ffffff', 'center');
   } else {
-    text(title, w / 2, 0.4 * h, 24 * s, '#ffe0b0', 'center');
-    text(kitName(c.a.f.character), w / 2, 0.4 * h + 30 * s, 10 * s, P_COL[c.a.f.side], 'center');
+    const ty = (h > w ? 0.2 : 0.4) * h;                                             // portrait: clear of the big words
+    text(title, w / 2, ty, 24 * s, '#ffe0b0', 'center');
+    text(kitName(c.a.f.character), w / 2, ty + 30 * s, 10 * s, P_COL[c.a.f.side], 'center');
   }
   rect(0.3 * w, 0.88 * h, 0.4 * w * (c.cf / c.len), 2 * s, 'rgba(255,255,255,0.5)');
-}
-
-// ---------------------------------------------------------------- screens
-export function drawTitle(): void {
-  g.clearRect(0, 0, w, h);
-  rect(0, 0, w, h, 'rgba(0,0,0,0.35)');
-  text('SOUL DUEL', w / 2, 0.3 * h, 48 * s, '#ffebcc', 'center');
-  text('A FAN STUDY INSPIRED BY BLEACH: REBIRTH OF SOULS', w / 2, 0.3 * h + 58 * s, 8 * s, '#c8c4d0', 'center');
-  text('PRESS ENTER', w / 2, 0.7 * h, 12 * s, '#ffffff', 'center', 0.4 + 0.6 * pulse(1));
-}
-
-export interface Sel { row: number; p1: number; p2: number; mode: number }
-export const MODES = ['VS CPU', 'CPU VS CPU'];
-export function drawSelect(sel: Sel, roster: string[]): void {
-  g.clearRect(0, 0, w, h);
-  rect(0, 0, w, h, 'rgba(0,0,0,0.45)');
-  text('CHARACTER SELECT', w / 2, 0.12 * h, 18 * s, '#ffebcc', 'center');
-  const rows: [string, string][] = [['P1', kitName(roster[sel.p1])], ['P2', kitName(roster[sel.p2])], ['MODE', MODES[sel.mode]], ['', 'FIGHT']];
-  rows.forEach(([k, v], i) => {
-    const y = 0.32 * h + i * 26 * s, on = i === sel.row;
-    if (k) text(k, w / 2 - 20 * s, y, 11 * s, on ? '#ffffff' : '#9a98a6', 'right');
-    text(i < 3 ? `<  ${v}  >` : v, w / 2 + (k ? 0 : -0), y, 11 * s, on ? '#ffd27a' : '#c8c4d0', k ? 'left' : 'center');
-  });
-  text('W/S ROW   A/D CHANGE   ENTER FIGHT   ESC BACK', w / 2, 0.85 * h, 7 * s, '#a8a6b4', 'center');
-}
-
-export function drawResults(wd: World, menu: boolean): void {
-  g.clearRect(0, 0, w, h);
-  const px = 0.04 * w, pw = 0.42 * w, cx = px + pw / 2;
-  rect(px, 0, pw, h, 'rgba(8,8,12,0.9)');
-  const win = wd.winner === 0 ? wd.p1 : wd.winner === 1 ? wd.p2 : null;
-  text(win ? 'WINNER' : 'DRAW', cx, 0.12 * h, 26 * s, win ? '#ffffff' : '#c8c4d0', 'center');
-  if (win) text(`${win.f.kit.name}  (P${win.f.side + 1})`, cx, 0.12 * h + 32 * s, 12 * s, P_COL[win.f.side], 'center');
-  const y0 = 0.36 * h, row = 16 * s, c1 = px + pw * 0.68, c2 = px + pw * 0.88, lx = px + 10 * s;
-  text('P1', c1, y0, 9 * s, P_COL[0], 'center'); text('P2', c2, y0, 9 * s, P_COL[1], 'center');
-  const val = (e: Ent) => [e.g.dealt, e.g.kikons, e.g.perfects, e.g.bestCombo, e.g.konpaku];
-  ['DAMAGE', 'KIKONS', 'PERFECT HOHOS', 'BEST COMBO', 'KONPAKU LEFT'].forEach((label, i) => {
-    const y = y0 + (i + 1) * row, a = val(wd.p1)[i], b = val(wd.p2)[i];
-    text(label, lx, y, 9 * s, '#b8b4c4'); text(String(a), c1, y, 9 * s, '#fff', 'center'); text(String(b), c2, y, 9 * s, '#fff', 'center');
-  });
-  text('TIME', lx, y0 + 6 * row, 9 * s, '#b8b4c4');
-  text(`${Math.round(wd.tick / 60)} S`, (c1 + c2) / 2, y0 + 6 * row, 9 * s, '#fff', 'center');
-  if (menu) text('ENTER  CHARACTER SELECT', cx, 0.8 * h, 9 * s, '#ffd27a', 'center', 0.5 + 0.5 * pulse(1));
-}
-
-export function drawPause(): void {
-  rect(0, 0, w, h, 'rgba(0,0,0,0.55)');
-  text('PAUSED', w / 2, 0.3 * h, 32 * s, '#ffffff', 'center');
-  text('ESC  RESUME        ENTER  QUIT TO SELECT', w / 2, 0.5 * h, 9 * s, '#d8d4e0', 'center');
 }
