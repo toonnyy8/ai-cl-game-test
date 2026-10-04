@@ -14,6 +14,8 @@ import { gaugeSystem, hitSystem } from './combat';
 import { clearHazards, hazardSystem } from './hazards';
 import type { Vpad } from './vpad';
 import { brainStep } from './ai';
+import { assistLearnEnd, assistSystem } from './assist';
+import { learnMatchEnd, learnMatchStart } from './learn';
 
 // ---------------------------------------------------------------- cinematics (length-only)
 /** Each script's length (its DEFCINE :len) and its frame-0 sim beat: FACE-EACH-OTHER, with a GAP for a flash step. */
@@ -108,6 +110,7 @@ export function timeUp(): void {
 }
 export function goResults(): void {
   const g1 = W.p1.g, g2 = W.p2.g;
+  learnMatchEnd(); assistLearnEnd(W.winner);                        // the learners' forms take the result, tables saved
   setFlow('results');
   logMsg(`duel -> RESULTS winner ${W.winner === 0 ? 'P1' : W.winner === 1 ? 'P2' : 'DRAW'} konpaku ${g1.konpaku}-${g2.konpaku}` +
          ` ticks ${W.tick} secs ${(W.tick / 60).toFixed(1)}`);
@@ -145,6 +148,7 @@ export function brainSystem(): void {
 /** One sim frame: the systems in order (a Kikon / Soul Break may start a cinematic mid-way: the rest then waits). */
 export function simSystems(): void {
   brainSystem();
+  assistSystem();                                                    // ASSIST presses for a human (assist.ts)
   fighterSystem();
   if (!W.cine) hazardSystem();
   if (!W.cine) hitSystem();
@@ -185,6 +189,8 @@ export interface MatchOpts {
   p1: string; p2: string; seed: number; cpu1?: boolean; cpu2?: boolean; difficulty?: string;
   readers?: [((vp: Vpad) => void) | null, ((vp: Vpad) => void) | null];
   konpakuStart?: number;
+  /** P2 (the CPU facing a human) learns: VS CPU / ENDLESS with the LEARNING CPU setting on (never CPU VS CPU, PRACTICE). */
+  learn?: boolean;
 }
 export class Match {
   readonly w = new World();
@@ -201,6 +207,7 @@ export class Match {
     W.rng.seed(o.seed);
     spawnPair(o.p1, o.p2, { cpu1: o.cpu1, cpu2: o.cpu2, difficulty: o.difficulty, readers: o.readers });
     for (const e of fighters()) { e.g.konpaku = o.konpakuStart ?? T.konpakuMax; e.f.state = 'intro'; }
+    learnMatchStart(!!o.learn);
     logMsg(`duel match seed ${o.seed} ${o.p1} vs ${o.p2} ${o.difficulty ?? 'normal'}`);
     setFlow('intro');
     startCine('intro-cine', W.p1, W.p2, beginBattle);

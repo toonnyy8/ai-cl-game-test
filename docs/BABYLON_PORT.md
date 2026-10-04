@@ -112,3 +112,13 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   event (Hellfire, an awakening); with the Lisp's awakenings off (39022) and Hellfire removed, YY 16/20 and YK 15/20
   seeds end on the same tick, and the gate gives YY 15/20 K.O. median 337.8 s, YK 250.7 s (TS: 17/20 324.0, 251.3).
   So the M2 medians (YY 324, YK 251, KK 234 s; YK 3-17) are the base kits' own: the reference medians need M3.
+- 2026-10-04: M6a ASSIST + learning CPU (sim only): `src/sim/assist.ts` (assist.lisp; `ASSIST` = the SETTINGS rows the UI
+  sets, run by `assistSystem` between brainSystem and fighterSystem; the kits' CPU hooks see the borrowed brain through
+  `withAiBrain`), `src/sim/learn.ts` (learn.lisp + ai.lisp's learner; f32 tables; its own `learnRnd` stream; tables kept
+  by an injectable `LearnStore`, `setLearnStore` (memory by default; the browser's localStorage keys `soulduel.learn.<i>`
+  / `.a<i>`); `MatchOpts.learn` attaches P2's learner (VS CPU / ENDLESS only)), `src/sim/habits.ts` (debug.lisp's scripted
+  players), `tools/learngate.ts` (the learning gate and ASSIST's gate), `test/learn.test.ts` (the 100 checks of
+  tests/learn-test.lisp), `test/assist.test.ts`. KK vs the native Lisp: the learner's per-step state matches tick for
+  tick until a sim divergence (the BLUE burst / flash-step floats); the masher's assist gate per setting matches the
+  Lisp's within a seed or two (vs HARD: k0 0/20, k2 16/20, k11 13/20; Lisp 0, 16, 14). Kept as the Lisp behaves:
+  AUTO-COMBO's bait never yields :guard-long (its SETF returns NIL).
