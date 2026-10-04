@@ -24,7 +24,7 @@ export function installSheet(engine: AbstractEngine, stage: Stage): void {
     const roster = only ? [only] : ROSTER;
     roster.forEach((who, r) => cols.forEach((col, i) => {
       const e = new Match({ p1: who, p2: who, seed: 1, cpu1: true, cpu2: true }).start().w.p1, f = e.f;
-      e.pos = [(i - (cols.length - 1) / 2) * 1.7, 0, roster.length > 1 ? (r - 0.5) * -2.0 : 0]; e.yaw = Math.PI + 0.5; e.look.alpha = 1;
+      e.pos.set([(i - (cols.length - 1) / 2) * 1.7, 0, roster.length > 1 ? (r - 0.5) * -2.0 : 0]); e.yaw = Math.PI + 0.5; e.look.alpha = 1;
       const [st, a, b] = col.split(':');
       f.state = (st === 'slash' ? 'move' : st) as FState; f.sf = 0; f.phase = null;
       if (st === 'slash' || st === 'move') {

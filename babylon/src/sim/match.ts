@@ -6,7 +6,7 @@
 // -> gauge -> match. Hitstop freezes the sim; slow motion runs it on a fraction of the steps (slowAcc), so a sim frame is
 // always a whole frame and the same seed replays the same match at any frame rate.
 import { T } from './tuning';
-import { deg, roundHalfEven } from './math';
+import { deg, f32, len32, roundHalfEven } from './math';
 import { dirYaw, timeUpWinner } from './rules';
 import { Brain, Ent, W, World, emit, fighters, logMsg, setWorld, type Cine } from './types';
 import { fighterSystem, playClip, refreshLook, spawnFighter, toIdle, viewStep } from './fighter';
@@ -17,23 +17,29 @@ import { brainStep } from './ai';
 
 // ---------------------------------------------------------------- cinematics (length-only)
 /** Each script's length (its DEFCINE :len) and its frame-0 sim beat: FACE-EACH-OTHER, with a GAP for a flash step. */
-export const CINES: Record<string, { len: number; face?: boolean; gap?: number }> = {
+export const CINES: Record<string, { len: number; face?: boolean; gap?: number; at?: [number, number][] }> = {
   'intro-cine': { len: 300, face: true }, 'ko-cine': { len: 150, face: true }, 'time-cine': { len: 120 },
   'soul-break-cine': { len: 96, face: true },
   'yama-kikon-cine': { len: 186, gap: 3.2 }, 'yama-tenchi-cine': { len: 168, gap: 2.4 }, 'yama-bankai-cine': { len: 138 },
   'ken-kikon-cine': { len: 192, gap: 2.0 }, 'ken-sky-split-cine': { len: 162, gap: 2.6 }, 'ken-nozarashi-cine': { len: 108 },
   'ken-bankai-cine': { len: 186, face: true }, 'ken-oni-kikon-cine': { len: 162, gap: 2.6 },
+  'ru-kikon-cine': { len: 186, gap: 2.4 }, 'ru-hakka-cine': { len: 198, gap: 3.0 }, 'ru-awaken-cine': { len: 132 },
+  // (AT: later FACE-EACH-OTHER beats, [cine frame, gap]: they move the actors too)
+  'ic-kikon-cine': { len: 186, gap: 2.6, at: [[70, 7.0]] }, 'ic-kessa-kikon-cine': { len: 192, gap: 2.6, at: [[120, 3.2]] },
+  'ic-kessa-getsuga-cine': { len: 180, gap: 6.0 }, 'ic-kessa-cine': { len: 168 },
+  'sj-kikon-cine': { len: 186, gap: 2.4 }, 'sj-hata-cine': { len: 198, gap: 3.5 }, 'sj-tsuji-cine': { len: 180 },
 };
 
 /** Turn A and V to face each other; with GAP, first put A GAP metres in front of V (a flash step). */
 export function faceEachOther(a: Ent, v: Ent, gap: number | null = null): void {
   const p = a.pos, q = v.pos;
   if (gap != null) {
-    const dx = p[0] - q[0], dz = p[2] - q[2], d = Math.max(0.01, Math.sqrt(dx * dx + dz * dz));
-    p[0] = q[0] + gap * (dx / d); p[2] = q[2] + gap * (dz / d); p[1] = 0;
+    // (singles op by op, as the Lisp: the actors' new places carry on into the fight)
+    const dx = f32(p[0] - q[0]), dz = f32(p[2] - q[2]), d = Math.max(f32(0.01), len32(dx, dz)), g = f32(gap);
+    p[0] = q[0] + f32(g * f32(dx / d)); p[2] = q[2] + f32(g * f32(dz / d)); p[1] = 0;
   }
-  a.yaw = dirYaw(q[0] - p[0], q[2] - p[2]);
-  v.yaw = dirYaw(p[0] - q[0], p[2] - q[2]);
+  a.yaw = dirYaw(f32(q[0] - p[0]), f32(q[2] - p[2]));
+  v.yaw = dirYaw(f32(p[0] - q[0]), f32(p[2] - q[2]));
   q[1] = 0;
 }
 
@@ -63,6 +69,7 @@ export function cineStep(): void {
   const c = W.cine!;
   if (c.skip) { endCine(); return; }
   c.cf++;
+  for (const [fr, gap] of CINES[c.name]?.at ?? []) if (fr === c.cf) faceEachOther(c.a, c.v, gap);
   for (const e of [c.a, c.v]) e.look.clipTime += e.look.clipSpeed / 60;
   if (c.cf >= c.len) endCine();
 }
@@ -93,6 +100,7 @@ export function beginBattle(): void {
 
 /** A Kikon / Soul Break took the last Konpaku: FINISH (K.O.), then RESULTS. WINNER null = a draw. */
 export function matchOver(winner: Ent | null): void {
+  if (practice) { practice.ko(); logMsg('duel practice K.O. -> reset'); return; }   // PRACTICE: no match end
   const w = winner === null ? 'draw' : winner === W.p1 ? 0 : 1;
   const we = w === 1 ? W.p2 : W.p1, le = w === 1 ? W.p1 : W.p2;
   W.winner = w;
@@ -110,7 +118,7 @@ export function goResults(): void {
   const g1 = W.p1.g, g2 = W.p2.g;
   setFlow('results');
   logMsg(`duel -> RESULTS winner ${W.winner === 0 ? 'P1' : W.winner === 1 ? 'P2' : 'DRAW'} konpaku ${g1.konpaku}-${g2.konpaku}` +
-         ` ticks ${W.tick} secs ${(W.tick / 60).toFixed(1)}`);
+         ` ticks ${W.tick} secs ${Math.fround(W.tick / 60).toFixed(1)}`);
   for (const e of fighters()) {
     const won = W.winner === e.f.side;
     e.f.state = won ? 'win' : 'lose';
@@ -121,8 +129,11 @@ export function goResults(): void {
 }
 /** The match timer (sim frames) and time-up. */
 export function matchSystem(): void {
-  if (W.flow === 'battle' && --W.timer <= 0) timeUp();
+  if (W.flow === 'battle') { if (practice) practice.step(); else if (--W.timer <= 0) timeUp(); }
 }
+/** PRACTICE (practice.ts, flow.lisp): its start (after the spawn), per-frame step (in place of the timer) and K.O. reset. */
+export interface PracticeHooks { start(): void; step(): void; ko(): void }
+let practice: PracticeHooks | null = null;
 
 // ---------------------------------------------------------------- the fixed step
 /** A step without a sim frame (hitstop, slow motion, cinematic): the humans' devices are read into their vpads without
@@ -172,7 +183,7 @@ export function stateHashLine(): string {
   for (const e of fighters()) {
     const p = e.pos, g = e.g, f = e.f;
     const u = f.kit.pips || f.kit.meter?.temp ? ` u${g.meterIdle}` : '';
-    s += ` | ${r(100 * p[0])} ${r(100 * p[1])} ${r(100 * p[2])} ${r(100 * e.yaw)} ${f.state.toUpperCase()} ${f.form.toUpperCase()}` +
+    s += ` | ${r(f32(100 * p[0]))} ${r(f32(100 * p[1]))} ${r(f32(100 * p[2]))} ${r(f32(100 * e.yaw))} ${f.state.toUpperCase()} ${f.form.toUpperCase()}` +
          ` r${g.reishi} k${g.konpaku} a${r(g.reiatsu)} f${r(g.fs)} g${r(g.gg)}${g.guardless ? '!' : ''} w${r(g.awaken)}` +
          ` m${r(g.meter)}${u}${g.armPending ? '*' : ''} n${f.kikonN}${f.frost > 0 ? ` fr${f.frost}` : ''}` +
          `${e.brain ? ` h${Math.floor(e.brain.heat)}` : ''}`;
@@ -185,6 +196,7 @@ export interface MatchOpts {
   p1: string; p2: string; seed: number; cpu1?: boolean; cpu2?: boolean; difficulty?: string;
   readers?: [((vp: Vpad) => void) | null, ((vp: Vpad) => void) | null];
   konpakuStart?: number;
+  practice?: PracticeHooks;
 }
 export class Match {
   readonly w = new World();
@@ -201,13 +213,15 @@ export class Match {
     W.rng.seed(o.seed);
     spawnPair(o.p1, o.p2, { cpu1: o.cpu1, cpu2: o.cpu2, difficulty: o.difficulty, readers: o.readers });
     for (const e of fighters()) { e.g.konpaku = o.konpakuStart ?? T.konpakuMax; e.f.state = 'intro'; }
+    practice = o.practice ?? null;
+    practice?.start();
     logMsg(`duel match seed ${o.seed} ${o.p1} vs ${o.p2} ${o.difficulty ?? 'normal'}`);
     setFlow('intro');
     startCine('intro-cine', W.p1, W.p2, beginBattle);
     return this;
   }
   /** One fixed step (makes this match's World current first). */
-  step(): void { setWorld(this.w); simStep(); }
+  step(): void { setWorld(this.w); practice = this.opts.practice ?? null; simStep(); }
   /** The battle runs (intro, battle, finish); false once the results are up. */
   running(): boolean { return this.w.flow !== 'results'; }
   /** The events since the last call (the renderer's / feedback's queue). */
