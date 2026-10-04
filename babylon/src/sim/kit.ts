@@ -205,7 +205,7 @@ export interface KitSpec {
   grade?: string; kikonKonpaku?: number; meterGain?: Params | null; formName?: string; drinkClip?: string;
   respectCallout?: string; bankaiForm?: string | null; pips?: Params | null; crushHook?: string; rooted?: boolean;
   field?: Params; warm?: number; cold?: Params; frostTouch?: number; resetForm?: string; uTag?: string;
-  lAfterK?: string | true; lAfterJ?: string | true; calm?: boolean; hooks?: Record<string, string>; endlessForm?: string;
+  lAfterK?: string | true | null; lAfterJ?: string | true | null; calm?: boolean; hooks?: Record<string, string>; endlessForm?: string;
   stunTolerance?: number; ggRegen?: number; startupAdd?: number; reachMult?: number;
   commands?: Record<string, string | null>; strings?: StringRow[]; grid?: string[];
 }

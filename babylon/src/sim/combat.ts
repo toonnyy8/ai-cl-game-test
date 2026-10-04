@@ -215,7 +215,7 @@ export function applyHit(att: Ent, def: Ent, hw: HitWin, sx: number, sz: number,
         if (blow) {
           setReaction(def, react, stun, sx, sz, T.stunBlowKb);       // the blow-away
           W.blowAways++;
-          clog(() => `${sideName(def)} BLOWN AWAY by ${sideName(att)} (combo hit ${hits})`);
+          clog(() => `${sideName(def)} BLOWN AWAY by ${sideName(att)} (stun tolerance ${stunToleranceOf(kitOf(def)).toFixed(1)}, combo hit ${hits})`);
         } else {
           setReaction(def, react, stun, sx, sz, follow ? T.kikonFollowKb : hw.kb);
           if (own && !hazard && mv!.flags.includes('ender') && (mv!.kind === 'quick' || mv!.kind === 'flash'))
