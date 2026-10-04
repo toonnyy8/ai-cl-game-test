@@ -65,6 +65,22 @@ the seed, `slowAcc`, hitstop and pending; the hidden hit-stun; `fighter-step` co
 | M5 look | new Babylon models and motions (redrawn, timed to the frame data), VFX, real cinematics, audio | visual review; gate unchanged |
 | M6 platform | screens, touch deck, ASSIST, practice, ENDLESS, learning CPU | phone smoke test, ENDLESS run |
 
+## M5 look: the user's decisions (2026-10-04)
+
+Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the user chose otherwise:
+
+- **A new style, not v4 notan.** Objects (characters, weapons, stage) in **anime cel shading**: full colour close to the
+  TYBW anime / *Rebirth of Souls*, hard-edged two-tone shadows, bold outlines, reiatsu glow. **Effects in ink brush**:
+  ink washes, brush strokes, paper-like texture, few colours (slashes, auras, Kikon / Soul Break words, hit sparks).
+- **Outlines: a screen-space edge post-process** (depth + normal edges), not inverted hulls.
+- **Faces: a flat decal plane with three expressions** (neutral / shout / hurt), chosen by state.
+- **Bodies: skinned meshes on a Babylon `Skeleton`** (procedural geometry and procedural weights), so cloth bends at
+  the joints; not rigid parts.
+- Kept from Fable's proposal: animation is a pose library plus per-move key poses placed in the move's phase
+  coordinates (0 start, 1 = frame S, 2 = end of active, 3 = end) and sampled from the fighter's `sf`, so frame-data
+  changes never touch the art; hit-stop holds the pose for free; one cross-fade between clips; CPU `ParticleSystem`
+  (GPU particles don't exist on the WebGL2 path); cinematics as shot scripts whose frames sum to the cine's `len`.
+
 ## Status
 
 - 2026-10-04: plan adopted, scaffold created.
