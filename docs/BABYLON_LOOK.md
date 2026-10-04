@@ -57,6 +57,23 @@ the charge, KITTE MIRO YO. Readability: the weapon smeared along the arc during 
 the blade-tip history (dry brush; ink normal, red for Kikon / awakened, slate on block), a 1-frame white flash on the
 first hit frame, camera shake 0.05–0.2 m by damage over 8 f, a 6 % zoom punch on a Kikon.
 
+Done (B2-look): `cel.ts` threshold 0.18 with a 0.01 band; per-vertex lit / shadow pairs (a `shade` attribute; `pair(lit,
+shadow)` or a `[lit, shadow]` tuple anywhere a colour is taken, else a derived warm / cool shadow); a third, lit crease
+band on dark colours; the rim is screen-space (the G-buffer depth a few px away from the light on screen is background
+or farther), h/160 px in the character's reiatsu colour (`spec.reiatsu`, else scene.ts `REIATSU`), x1.3 awakened, x1.4
+gathering; the key light is fixed in the world; contact shadows on the floor material. `outline.ts`: fighters h/300,
+weapons 1 px (h/300 on both sides swallowed a blade at battle distance), creases at 1 px (0.5–0.8), hair silhouette
+only, the stage 1 px at 30 %; the ink id comes from its own render target (an INKID pass of the outlined meshes), not
+the colour alpha, so blended VFX can't change it; paper grain 2 % + vignette after FXAA. `kimono()`: separate hakama legs
+(ankle 0.44 H) with four light pleat lines each, the koshiita, haori hem / vents (three panels below the vent top),
+lapels as flat bands from the neck into the V, options `haori: false` (or `noHaori`), `sleeves: 'full' | 'none' |
+'torn' | 'flared'` (+ `lining`), `haoriSleeves: 'none'`, `emptyL`, `bareR`. Faces: 512 px cells (drawers keep 256-unit
+coordinates), plane 0.9 H. Camera: x0.7, lower (1.85 m + 0.1 / m), FOV 50, the shorter >= 35 % (while both fit), the
+taller <= 60 %; HUD top band needed: 18 % (heads reach 0.12–0.2 of the frame from the top at close range). The
+animator: per-character `poses` overrides and bespoke `Clip`s from `clipFor`; smear ribbon over active frames; a
+one-render-frame white flash on the victim's hit; shake by damage, Kikon / Soul Break punch. Yamamoto: every move has
+a bespoke clip (render/clips/yama.ts); Bankai East / West bodies as the user decided; Hellfire has no body look.
+
 ## B3: the other bodies and every awakened form
 
 - **Rukia** (DUEL_RUKIA §2): 1.44 m, all-black shihakusho, no haori, white lieutenant armband on the left arm, short

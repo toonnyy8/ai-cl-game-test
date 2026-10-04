@@ -2,6 +2,9 @@
 // (pose.ts phase: u = 1 on frame S, 2 at the end of the active frames; multi-hit moves key each window), so the hit
 // pose lands on the hit frames and hit-stop holds it for free (sf does not advance). Locomotion cycles run on real
 // time scaled by the speed. One cross-fade (per-bone slerp from the last shown pose) when the clip changes.
+// Per character (render/clips/<who>.ts): the idle stance, POSES overriding library poses by name (guard, runA, hoho ...)
+// and clipFor, which may answer a library clip's name or a bespoke Clip keyed in the move's phase u (w for multi-hit).
+// ACTIVE: the move is in its active frames (the scene's blade smear).
 import { Quaternion, Vector3 } from '@babylonjs/core';
 import type { Move } from '../sim/kit';
 import type { Ent } from '../sim/types';
@@ -24,7 +27,7 @@ const ID = Quaternion.Identity();
 
 // ---------------------------------------------------------------- clips (built per stance)
 const k = (at: number, pose: PoseSpec, ease?: 'in' | 'out' | 'io' | 'lin') => ({ at, pose, ease });
-function clips(idle: PoseSpec) {
+function clips(idle: PoseSpec, P: Poses) {
   return {
     slash: [k(0, idle), k(0.85, P.slashWind, 'out'), k(1, P.slashHit, 'in'), k(2, P.slashEnd, 'out'), k(3, idle)],
     backhand: [k(0, idle), k(0.85, P.slashEnd, 'out'), k(1, P.slashHit, 'in'), k(2, P.slashWind, 'out'), k(3, idle)],
@@ -43,18 +46,30 @@ function clips(idle: PoseSpec) {
     multi0: [k(0, idle), k(0.8, P.slashWind, 'out'), k(1, P.slashHit, 'in'), k(2, P.slashEnd, 'out'), k(3, idle)],
     react: (p: PoseSpec): Clip => [k(0, idle), k(0.12, p, 'out'), k(0.6, p), k(1, idle)],
     wakeup: [k(0, P.down), k(0.5, P.kneel), k(1, idle)],
+    walk: [k(0, P.walkA), k(1, P.walkB), k(2, mirror(P.walkA)), k(3, mirror(P.walkB)), k(4, P.walkA)],
+    run: [k(0, P.runA), k(1, mirror(P.runA)), k(2, P.runA)],
   };
 }
 type Clips = ReturnType<typeof clips>;
 export type ClipName = keyof Clips;
 const idleOf = (who: string) => CLIPS[who]?.idle ?? P.idleKen;
+type Poses = typeof P;
+const POSES = new Map<string, Poses>();
+/** WHO's pose library: P with the character's overrides. */
+const posesOf = (who: string): Poses => { let p = POSES.get(who); if (!p) { p = { ...P, ...CLIPS[who]?.poses } as Poses; POSES.set(who, p); } return p; };
 const CACHE = new Map<string, Clips>();
-const clipsFor = (who: string) => { let c = CACHE.get(who); if (!c) { c = clips(idleOf(who)); CACHE.set(who, c); } return c; };
+const clipsFor = (who: string) => { let c = CACHE.get(who); if (!c) { c = clips(idleOf(who), posesOf(who)); CACHE.set(who, c); } return c; };
 
-/** The clip for a move's main phase: WHO's table (render/clips/<who>.ts) first, else the generic mapping. */
-export function clipNameFor(who: string, mv: Move): ClipName {
+/** The clip for a move's main phase: WHO's table (render/clips/<who>.ts) first (a library name or a bespoke Clip),
+ *  else the generic mapping. */
+export function clipFor(who: string, mv: Move): ClipName | Clip {
   const c = (mv.clip2 && mv.kind !== 'sp' ? mv.clip2 : mv.clip) ?? '';
   return CLIPS[who]?.clipFor(c, mv) ?? moveClipName(mv);
+}
+/** The library clip name for a move (a bespoke clip answers its generic mapping). */
+export function clipNameFor(who: string, mv: Move): ClipName {
+  const c = clipFor(who, mv);
+  return Array.isArray(c) ? moveClipName(mv) : c;
 }
 /** The generic mapping from a move's clip name (the art contract) and kind; unknown moves slash on their frames. */
 export function moveClipName(mv: Move): ClipName {
@@ -79,21 +94,22 @@ export class Animator {
   cycle = 0;              // locomotion phase (0..1 a stride pair)
   face: number = FACE.neutral;
   flash = 0;
+  active = false;
   private tq = new Quaternion();
   constructor(public body: BuiltBody, readonly who: string) {}   // (body: swapped on a form change)
 
   update(e: Ent, rdt: number, t: number): void {
-    const f = e.f, C = clipsFor(this.who), idle = idleOf(this.who);
+    const f = e.f, C = clipsFor(this.who), idle = idleOf(this.who), P = posesOf(this.who);
     let key: string = f.state, a: PoseSpec = idle, b: PoseSpec = idle, x = 0, spin = 0;
     const kb = (c: Clip, at: number) => { [a, b, x] = sampleKeys(c, at); };
-    this.face = FACE.neutral; this.flash = 0;
+    this.face = FACE.neutral; this.flash = 0; this.active = false;
     switch (f.state) {
       case 'idle': case 'intro': case 'cine': {
         const clip = e.look.clip ?? '', sp = Math.hypot(e.mo.vel[0], e.mo.vel[2]);
         if (f.state === 'idle' && sp > 0.1 && /walk|strafe/.test(clip)) {
           key = 'walk';
           this.cycle = (this.cycle + (rdt * sp) / (1.3 * this.body.spec.height) * (clip.endsWith('-b') ? -1 : 1) + 1) % 1;
-          kb(WALK, this.cycle * 4);
+          kb(C.walk, this.cycle * 4);
         } else { const br = Math.sin(t * 2.2) * 2; a = b = merge(idle, { chest: [(idle.chest?.[0] ?? 0) + br, idle.chest?.[1] ?? 0, idle.chest?.[2] ?? 0] }); }
         break;
       }
@@ -104,7 +120,7 @@ export class Animator {
         const sp = Math.hypot(e.mo.vel[0], e.mo.vel[2]);
         if (f.phase === 'brake' || sp < 0.5) { key = 'brake'; a = b = P.step; break; }
         this.cycle = (this.cycle + (rdt * sp) / (2.4 * this.body.spec.height)) % 1;
-        kb(RUN, this.cycle * 2);
+        kb(C.run, this.cycle * 2);
         break;
       }
       case 'hoho': a = b = P.hoho; break;
@@ -113,9 +129,11 @@ export class Animator {
         key = `move:${mv.name}:${f.phase}`;
         if (f.phase === 'hold' || f.phase === 'aura') { a = b = P.hold; this.face = FACE.shout; break; }
         if (f.phase === 'dash' || f.phase === 'follow') { a = b = P.dash; this.face = FACE.shout; break; }
-        const name = clipNameFor(this.who, mv), ph = phase(mv, f.sf);
-        if (name === 'multi0') kb(ph.i === 0 ? C.multi0 : ph.i % 2 ? C.multiB : C.multiA, ph.w);
+        const name = clipFor(this.who, mv), ph = phase(mv, f.sf);
+        if (Array.isArray(name)) kb(name, ph.u);
+        else if (name === 'multi0') kb(ph.i === 0 ? C.multi0 : ph.i % 2 ? C.multiB : C.multiA, ph.w);
         else kb(C[name] as Clip, ph.u);
+        this.active = mv.hits.length > 1 ? ph.w >= 0.9 && ph.w <= 2.05 : ph.u >= 0.9 && ph.u <= 2.05;
         if (name === 'spin' && ph.u > 1) spin = 360 * Math.min(1, ph.u - 1);
         if (ph.u > 0.8 && ph.u < 2.2 || mv.kind === 'sp' || mv.kind === 'kikon') this.face = FACE.shout;
         break;
@@ -127,10 +145,9 @@ export class Animator {
           : react === 'stagger' || react === 'guard-break' ? P.stagger : P.flinch;
         kb(react === 'crumple' ? [k(0, P.flinch), k(0.25, P.crumple, 'out'), k(0.8, P.crumple), k(1, idle)] : C.react(p), f.sf / Math.max(1, f.stun));
         this.face = FACE.hurt;
-        this.flash = f.sf < 4 ? 0.7 * (1 - f.sf / 4) : 0;
         break;
       }
-      case 'air': a = b = P.air; this.face = FACE.hurt; this.flash = f.sf < 4 ? 0.7 * (1 - f.sf / 4) : 0; break;
+      case 'air': a = b = P.air; this.face = FACE.hurt; break;
       case 'down': a = b = P.down; this.face = FACE.hurt; break;
       case 'wakeup': kb(C.wakeup, f.sf / 30); break;
       case 'win': a = b = P.win; break;
@@ -163,5 +180,3 @@ export class Animator {
     bones.pelvis.position = rig.rest.pelvis.add(this.pos);
   }
 }
-const WALK: Clip = [k(0, merge(P.walkA)), k(1, P.walkB), k(2, mirror(P.walkA)), k(3, mirror(P.walkB)), k(4, P.walkA)];
-const RUN: Clip = [k(0, P.runA), k(1, mirror(P.runA)), k(2, P.runA)];

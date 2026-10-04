@@ -70,6 +70,7 @@ engine.runRenderLoop(() => {
     const ev = m.takeEvents();
     for (const e of ev) if (e.kind === 'perfect') duelCam.punchT = 0.5;
     for (const e of ev) if (e.kind === 'cine-end') { duelCam.cut = true; ptCam.cut = true; }
+    duelCam.events(ev);                                    // hit shake, Kikon zoom punch
     view?.events(ev, m.w);
     hudEvents(ev);
     for (const l of m.takeLog()) if (l.startsWith('duel -> RESULTS') || l.startsWith('duel match')) console.log(l);
@@ -83,6 +84,7 @@ engine.runRenderLoop(() => {
   } else {
     clearLens(cam);
     if (m) {
+      duelCam.aspect = engine.getAspectRatio(cam);
       duelCam.update(m.w, live);
       cam.position.copyFrom(duelCam.eye); cam.setTarget(duelCam.at);
       if (F.screen === 'select' && portraitP())                // a tall menu frame: back off so both picks show
