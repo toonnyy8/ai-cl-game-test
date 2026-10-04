@@ -7,6 +7,10 @@ Fable 5.1 as the discussion advisor. Decisions:
   cinematics, VFX, touch, ASSIST, ENDLESS, one committed milestone at a time.
 - **Location:** `babylon/` in this repo, its own Vite + TS package, committed to main; it shares `docs/` with the Lisp
   build (the user, 2026-10-04).
+- **Models and animations may be redrawn** (the user, 2026-10-04): the Babylon version does not have to copy the Lisp
+  rig, `*-art.lisp` clips or body parts; it designs its own models and motions. What stays fixed is the sim's frame data
+  (startup / active / recovery, reach, hit volumes, cinematic lengths): an animation is timed to the move's frames,
+  never the other way round.
 
 ## Strategy (Fable 5.1's recommendation, adopted)
 
@@ -58,7 +62,7 @@ the seed, `slowAcc`, hitstop and pending; the hidden hit-stun; `fighter-step` co
 | M2 CPU | `ai.lisp` with both base kits' `:ai` tables | headless gate: YY / YK / KK all K.O., medians within range |
 | M3 depth | hazards, Inferno / Hellfire, awakenings (Bankai, Nozarashi cups, NOME, Ken Bankai), hidden stun, burst modes, guard lock / cancel; cinematics as length-only | 3 pairings + awaken A/B |
 | M4 roster | Rukia, Ichigo, Senjumaru | 15 pairings pass the gate |
-| M5 look | Babylon rig and clips, VFX, real cinematics, audio | visual review; gate unchanged |
+| M5 look | new Babylon models and motions (redrawn, timed to the frame data), VFX, real cinematics, audio | visual review; gate unchanged |
 | M6 platform | screens, touch deck, ASSIST, practice, ENDLESS, learning CPU | phone smoke test, ENDLESS run |
 
 ## Status
