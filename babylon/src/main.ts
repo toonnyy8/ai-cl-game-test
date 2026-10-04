@@ -15,6 +15,7 @@ import { drawTouch, onehandFrame, perfectHintP, portraitMetrics, portraitP } fro
 import { kikonPrompt } from './input/bindings';
 import { F, endlessTag, flowFrame, practiceP, simRunning, startFlow, touchMode } from './ui/flow';
 import './ui/pwa';
+import { audioEvents, audioFrame, setListener } from './audio';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 
@@ -35,6 +36,7 @@ const stage = createScene(engine), { scene, cam } = stage;
 installSheet(engine, stage);                         // window.duelRender: the still sheet + render stats (debug)
 installVfxDebug(engine, stage);                      // window.duelVfx: the ink VFX / HUD still scenes (debug)
 const duelCam = new DuelCamera(), ptCam = new PortraitCamera();
+setListener(cam);                                    // the camera hears the world (src/audio)
 resizeHud();
 addEventListener('resize', () => { engine.resize(); resizeHud(); });
 
@@ -75,8 +77,10 @@ engine.runRenderLoop(() => {
     duelCam.events(ev);                                    // hit shake, Kikon zoom punch
     view?.events(ev, m.w);
     hudEvents(ev);
+    audioEvents(ev, m.w);
     for (const l of m.takeLog()) if (l.startsWith('duel -> RESULTS') || l.startsWith('duel match')) console.log(l);
   }
+  audioFrame(F.screen, F.match?.w ?? null);             // the screen's music, the cinematic's sound beats
   // camera
   const live = F.paused ? 0 : rdt;
   if (m && battle && portraitP() && !m.w.cine) {
