@@ -83,6 +83,9 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   changes never touch the art; hit-stop holds the pose for free; one cross-fade between clips; CPU `ParticleSystem`
   (GPU particles don't exist on the WebGL2 path); cinematics as shot scripts whose frames sum to the cine's `len`.
 
+- The look spec for M5 B2–B5 (Fable 5.1's review of B1 + the user's answers on Kenpachi's TYBW hair and Yamamoto's
+  Bankai body): [BABYLON_LOOK.md](BABYLON_LOOK.md).
+
 ## Status
 
 - 2026-10-04: plan adopted, scaffold created.
