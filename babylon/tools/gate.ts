@@ -39,7 +39,8 @@ if (ci >= 0) {                                                       // a child:
     cp.execFile(process.execPath, ['--import', 'tsx', process.argv[1], '--child', JSON.stringify(share)],
       { maxBuffer: 1 << 26 }, (err: unknown, out: string) => (err ? fail(err) : ok(out.trim().split('\n').map((l) => JSON.parse(l)))));
   })))).flat();
-  const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b), h = s.length >> 1; return s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2; };
+  // the Lisp gate's median: (nth (floor n 2) sorted), the upper middle of an even count (debug.lisp GATE-UPDATE)
+  const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[xs.length >> 1];
   console.log(`seeds ${start}-${start + n - 1}, CPU vs CPU ${ai === 'stub' ? 'stub' : 'NORMAL'}`);
   console.log('pair  K.O.   P1  P2  draw  median s  lisp s');
   for (const pair of pairs) {

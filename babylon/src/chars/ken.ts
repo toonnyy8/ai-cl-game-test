@@ -2,7 +2,7 @@
 // nozarashi / ryote / nomihose, the Bankai, KATAUDE) and their hooks. The generic NOME ladder, drink, cut, projectile-cut
 // and the arm meter are combat.ts's. Clip names are the art contract; cinematics are length-only (match.ts CINES).
 import { T } from '../sim/tuning';
-import { getf, mod } from '../sim/math';
+import { fwdX, fwdZ, getf, mod } from '../sim/math';
 import { aiHohoSpareP, bankaiAllowedP, hohoAllowedP, stanceRelease } from '../sim/rules';
 import { defkit, defmove, defmoveCopy, kitCommandMove, kitNext, makeHitwin, registerHooks, type Kit, type Move } from '../sim/kit';
 import { makeVol } from '../sim/hitvol';
@@ -293,7 +293,7 @@ registerHooks({
       if (sf === mv.s && e.pilot.vpad.down(f.button as Action)) f.crush = true;
       if (mv.s <= sf && sf < mv.s + mv.a && f.contact === null && f.dist > 1.2) {
         const v = e.mo.vel, sp = moveParam(e, 'dashSpeed');
-        v[0] = sp * -Math.sin(e.yaw); v[2] = sp * -Math.cos(e.yaw);
+        v[0] = sp * fwdX(e.yaw); v[2] = sp * fwdZ(e.yaw);   // (musl sinf / cosf, as the Lisp's fwd-x / fwd-z)
       }
     }
   },

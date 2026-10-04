@@ -10,7 +10,7 @@ import { volHitP, type Vol } from './hitvol';
 
 // ================================================================ angles and positions
 /** The yaw that faces direction (DX DZ) (CL's double ATAN, as the seeded replays were recorded with). */
-export const dirYaw = (dx: number, dz: number): number => Math.fround(Math.atan2(-dx, -dz));   // (CL ATAN on singles)
+export const dirYaw = (dx: number, dz: number): number => Math.fround(Math.atan2(-Math.fround(dx), -Math.fround(dz)));   // (CL ATAN on singles)
 /** A :track value (degrees per second) as radians per frame. */
 export const trackStep = (degPerSecond: number): number => deg(Math.fround(degPerSecond / 60));
 
