@@ -72,11 +72,11 @@ function setWake(on: boolean): void {
 }
 
 // ---------------------------------------------------------------- portrait metrics (the HUD blocks, the camera band)
-/** Portrait layout in device px: UI scale S (text floor 11 CSS px: ceil(11 dpr / 7)), the blocks' height, P2's block top,
+/** Portrait layout in device px: UI scale S (text floor 13 CSS px: ceil(13 dpr / 7)), the blocks' height, P2's block top,
  *  its bottom, P1's block top, and the camera BAND [top, bottom] as fractions of the height (onehand.lisp DECK-UPDATE). */
 export function portraitMetrics(): { s: number; blockH: number; top: number; hudBottom: number; p1Top: number; band: [number, number] } {
   const d = devicePixelRatio || 1, h = innerHeight * d;
-  const s = Math.ceil((11 * d) / 7), blockH = 29 * s, top = Math.max(4, inset(0)) * d;
+  const s = Math.ceil((13 * d) / 7), blockH = 29 * s, top = Math.max(4, inset(0)) * d;
   const hudBottom = top + blockH, p1Top = h - Math.max(8, inset(1) + 4) * d - blockH;
   return { s, blockH, top, hudBottom, p1Top, band: [hudBottom / h + 0.03, Math.min(0.82, p1Top / h - 0.03)] };
 }

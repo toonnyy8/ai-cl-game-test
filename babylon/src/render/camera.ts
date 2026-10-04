@@ -4,18 +4,29 @@
 // The sim owns the direction the human stick steers by; this only places the render camera. Real time, per frame.
 // ponytail: no portrait camera, no cinematic shots (cinematics are length-only: the pair camera frames them).
 // M5 B2 (BABYLON_LOOK.md "Camera"): the pair camera 0.7 x closer and lower, FOV 50 deg (scene.ts), never a fighter
-// under 35 % of the frame height unless the pair can't fit across the frame then, and the taller never over 60 % (anime
-// framing 45-60 %; it keeps heads under the HUD's top band); the readability kicks: a shake of
+// under 30 % of the frame height unless the pair can't fit across the frame then, and the taller never over 48 %, AT at
+// 0.55 x the taller's height (Polish: heads stay under the HUD's top band), the eye never nearer than 3.2 m to either
+// fighter (pair and behind; a swung cleaver can't fill the lens); the readability kicks: a shake of
 // 0.05-0.2 m by the hit's damage over 8 frames, a 6 % zoom punch on a Kikon / Soul Break (render time, deterministic).
 import { Vector3 } from '@babylonjs/core';
 import { angleWrap, fwdX, fwdZ } from '../sim/math';
 import type { Ent, SimEvent, World } from '../sim/types';
 
-const ORBIT_RATE = 10, DIST_RATE = 5, MAX_R = 18, CLOSE = 0.6 * 0.7, FOV = 50 * Math.PI / 180, MIN_FRAC = 0.35, MAX_FRAC = 0.6;
+const ORBIT_RATE = 10, DIST_RATE = 5, MAX_R = 18, CLOSE = 0.6 * 0.7, FOV = 50 * Math.PI / 180, MIN_FRAC = 0.30, MAX_FRAC = 0.48;
+/** The hard minimum eye distance from either fighter (m): a swung blade never fills the lens. */
+const MIN_EYE = 3.2;
 const SHAKE_T = 8 / 60, PUNCH_T = 0.4, PUNCH = 0.06;
-const BEHIND_BACK = 5.5, BEHIND_UP = 2, BEHIND_SHOULDER = 0.9, BEHIND_WIDEN = 0.2, BEHIND_LOOK = 0.6, BEHIND_CLOSE = 40,
+const BEHIND_CLOSE_K = 0.55, BEHIND_BACK = 5.5, BEHIND_UP = 2, BEHIND_SHOULDER = 0.9, BEHIND_WIDEN = 0.2, BEHIND_LOOK = 0.6, BEHIND_CLOSE = 40,
   BEHIND_RATE = 8;
 const D2R = Math.PI / 180;
+/** (EX EZ) pushed out to MIN_EYE (horizontal) from each fighter. */
+function keepOff(ex: number, ez: number, ...es: Ent[]): [number, number] {
+  for (const e of es) {
+    const o = e.pos, dx = ex - o[0], dz = ez - o[2], d = Math.hypot(dx, dz);
+    if (d < MIN_EYE && d > 0.001) { ex = o[0] + dx * (MIN_EYE / d); ez = o[2] + dz * (MIN_EYE / d); }
+  }
+  return [ex, ez];
+}
 
 export class DuelCamera {
   eye = new Vector3(0, 3, 12);
@@ -64,7 +75,7 @@ export class DuelCamera {
     const p = a.pos, q = b.pos, c = this.anchor;
     const sep = Math.hypot(q[0] - p[0], q[2] - p[2]);
     const wide = BEHIND_WIDEN * Math.max(0, sep - 4);
-    let back = CLOSE * (BEHIND_BACK + wide) * (this.punchT > 0 ? 0.6 : 1);
+    let back = BEHIND_CLOSE_K * (BEHIND_BACK + wide) * (this.punchT > 0 ? 0.6 : 1);
     const off = D2R * BEHIND_CLOSE * Math.max(0, Math.min(1, (6 - sep) / 4));
     const side = BEHIND_SHOULDER + back * Math.sin(off);
     const fx = fwdX(yaw), fz = fwdZ(yaw);
@@ -75,10 +86,7 @@ export class DuelCamera {
     const r = Math.hypot(ex, ez), k = Math.min(1, MAX_R / Math.max(0.01, r));
     const h = BEHIND_UP + 0.33 * wide + 0.4 * (r - k * r);                         // pulled in by the wall: rise instead
     ex *= k; ez *= k;
-    for (const e of [a, b]) {                                                       // never inside a fighter
-      const o = e.pos, dx = ex - o[0], dz = ez - o[2], d = Math.hypot(dx, dz), min = 0.5 + e.body.hurtR;
-      if (d < min && d > 0.001) { ex = o[0] + dx * (min / d); ez = o[2] + dz * (min / d); }
-    }
+    [ex, ez] = keepOff(ex, ez, a, b);
     this.eye.set(ex, h, ez);
     this.at.set(c[0] + BEHIND_LOOK * sep * fx, 1.1, c[1] + BEHIND_LOOK * sep * fz);
   }
@@ -89,10 +97,10 @@ export class DuelCamera {
     const ux = sep > 0.01 ? dx / sep : 1, uz = sep > 0.01 ? dz / sep : 0;
     const ang = Math.atan2(w.viewZ, w.viewX);
     const h = 1.85 + 0.1 * sep, c = this.mid;
-    // the frame-height floor: the shorter fighter >= 35 % of the frame (an eye distance), unless both can't fit across
+    // the frame-height floor: the shorter fighter >= 30 % of the frame (an eye distance), unless both can't fit across
     const t = Math.tan(FOV / 2), hmin = Math.min(w.p1.body.hurtH, w.p2.body.hurtH), hmax = Math.max(w.p1.body.hurtH, w.p2.body.hurtH);
     const horiz = (eyeD: number) => Math.sqrt(Math.max(1, eyeD ** 2 - (0.5 * sep) ** 2 - (h - 0.9) ** 2));
-    const near = horiz(hmin / (2 * MIN_FRAC * t)), far = horiz(hmax / (2 * MAX_FRAC * t));   // 35 % floor, 60 % ceiling
+    const near = horiz(hmin / (2 * MIN_FRAC * t)), far = horiz(hmax / (2 * MAX_FRAC * t));   // 30 % floor, 48 % ceiling
     const fit = (0.5 * sep + 0.9) / (t * this.aspect);
     const dist = Math.max(far, Math.min(CLOSE * Math.max(6, 4.5 + 0.85 * sep), Math.max(near, fit))) * (this.punchT > 0 ? 0.6 : 1);
     if (this.cut) { this.ang = ang; this.dist = dist; this.cut = false; c.x = mx; c.z = mz; }
@@ -105,7 +113,8 @@ export class DuelCamera {
     const back = 0.05 * this.dist;                                                  // 3/4: a little behind P1
     const ex = c.x + this.dist * Math.cos(this.ang) - back * ux, ez = c.z + this.dist * Math.sin(this.ang) - back * uz;
     const k = Math.min(1, MAX_R / Math.max(0.01, Math.hypot(ex, ez)));
-    this.eye.set(k * ex, h, k * ez);
-    this.at.set(c.x, 1.0, c.z);
+    const [kx, kz] = keepOff(k * ex, k * ez, w.p1, w.p2);
+    this.eye.set(kx, h, kz);
+    this.at.set(c.x, 0.55 * hmax, c.z);                                             // AT at 0.55 x the taller's height
   }
 }

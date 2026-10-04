@@ -101,7 +101,7 @@ export function brushText(g: G, s: string, x: number, y: number, px: number, fil
 export function inkText(g: G, s: string, x: number, y: number, px: number, fill: string,
                         align: 'left' | 'center' | 'right' = 'left', alpha = 1): number {
   g.globalAlpha = alpha;
-  const o = Math.max(1, px / 16);
+  const o = Math.max(1, px / 10);
   brushText(g, s, x + o, y + o, px, 'rgba(10,8,8,0.85)', align);
   const w = brushText(g, s, x, y, px, fill, align);
   g.globalAlpha = 1;

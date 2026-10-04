@@ -12,7 +12,7 @@ import type { BoneName } from '../pose';
 /** Lit / shadow pairs (BABYLON_LOOK B2 palette); L registers the pair (body.ts pair) so every part gets its shadow half. */
 export const KC = {
   skin: [0xe4b48c, 0xb2724f], oni: [0x9e3a32, 0x5e1e1c], hair: [0x2a2b38, 0x0e0f15], hairHi: [0xd8dce4, 0x8c93a6],
-  black: [0x2b2d3a, 0x121319], haori: [0xf6f3ec, 0xa9b2cf], obi: [0xe9e4d6, 0x9a9db5], scar: [0xa65a48, 0x6e3428],
+  black: [0x2b2d3a, 0x121319], haori: [0xf6f3ed, 0xc3c9dd], obi: [0xe9e4d6, 0x9a9db5], scar: [0xa65a48, 0x6e3428],
   blade: [0xf4f6fa, 0x9aa6c0], steel: [0x9aa4b4, 0x5c6478], spine: [0x3a3f4c, 0x1e2129], cloth: [0xe6e0cf, 0x9c968a],
   wrap: [0x4a4440, 0x26221f], brass: [0xb8a274, 0x786846], tassel: [0x3f6e52, 0x22402e], broken: [0x1c1c22, 0x0c0c10],
   blood: [0xc8242a, 0x7a1014],
@@ -252,7 +252,7 @@ export function brokenCleaver(scene: Scene) {
   const P: { vd: VertexData; c: number }[] = [];
   P.push({ vd: prism([[0.08, -0.09], [0.74, -0.09], [0.8, -0.02], [0.86, 0.02], [0.92, 0.1], [1.0, 0.14], [0.97, 0.2], [0.08, 0.2]], 0.042),
     c: L(KC.broken) });
-  P.push({ vd: prism([[0.08, 0.2], [0.97, 0.2], [0.95, 0.24], [0.08, 0.24]], 0.02), c: L(KC.haori) });        // the white edge line
+  P.push({ vd: prism([[0.08, 0.2], [0.97, 0.2], [0.95, 0.24], [0.08, 0.24]], 0.02), c: L([0xf6f3ec, 0xa9b2cf]) });        // the white edge line
   P.push({ vd: bx(0.046, 0.12, 0.7, -0.05, -0.02), c: 0x3a3a42 });
   P.push(...handle(0.08, -0.56, L(KC.cloth)));
   P.push({ vd: bx(0.012, -0.8, -0.56, -0.03, 0.02, 0.3), c: L(KC.cloth) });  // the cloth's loose end
