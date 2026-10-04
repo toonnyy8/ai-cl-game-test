@@ -71,7 +71,11 @@ export function hazardStep(hz: Hazard): void {
 }
 /** Move / age every hazard one fixed step. */
 export function hazardSystem(): void {
-  for (const hz of [...W.hazards]) if (hz.alive) hazardStep(hz);   // (dead ones stay as holes: slot order)
+  // (dead ones stay as holes: slot order) The Lisp ECS walks the slots below *top* as it was when the loop began: a hazard
+  // a hook spawns into a later hole is stepped in this pass, one past the last live slot is not
+  let n = W.hazards.length;
+  while (n > 0 && !W.hazards[n - 1].alive) n--;
+  for (let i = 0; i < n; i++) { const hz = W.hazards[i]; if (hz.alive) hazardStep(hz); }
 }
 
 // ---------------------------------------------------------------- volumes
