@@ -86,6 +86,14 @@ first hit frame, camera shake 0.05–0.2 m by damage over 8 f, a 6 % zoom punch 
 export `spec`, `parts(sp, rig)`, `drawFace`, `weapon`, awakened forms as a `variant` plus extra parts;
 `render/clips/<char>.ts` holds the move → clip table and that character's clips (`anim.ts` looks them up by character).
 
+Done (M5 split): `body.ts` exports the helpers (`tube`, `ellipsoid`, `limb`, `box`, `T`, `hex`, `rig`, `rigid`, `katana`,
+`inkLine`), the shared shihakusho `kimono(sp, r, head?)`, `plainBody(spec overrides)` for placeholders, `CharBody`
+(`spec`, `parts(sp, rig)`, `drawFace(g, expr)`, `weapon(scene, sp, rig)`, `variant(form) → BodyVariant | null`) and
+`buildBody(scene, key, charBody, mat, weaponMat)`. `bodies/index.ts`: `BODIES` and `bodyFor(character, form) → {key,
+body}`; `FighterView` keeps one built body per key and swaps on `fighter.form` changes. `clips/index.ts`: `CLIPS` of
+`{ clipFor(clip, move) → ClipName | null, idle? }`; `anim.ts` `clipNameFor(who, move)` falls back to `moveClipName`.
+Rukia / Ichigo / Senjumaru are `plainBody` placeholders (1.5 / 1.8 / 1.7 m, violet / orange / gold) until B3.
+
 ## B4: VFX and the ink HUD
 
 Hazard looks (wave, fireball, Ennetsu pillars, line, crack, Tsukishiro ring, rifts, Shonetsu); auras (base, awakened,

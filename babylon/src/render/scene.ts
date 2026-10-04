@@ -12,6 +12,7 @@ import type { Ent, Hazard, SimEvent, World } from '../sim/types';
 import { CelMaterial } from './cel';
 import { createOutline, type Outline } from './outline';
 import { buildBody, type BuiltBody } from './body';
+import { bodyFor } from './bodies';
 import { Animator } from './anim';
 import { InkSparks, inkMaterials, type InkMats } from './ink';
 
@@ -74,20 +75,41 @@ export function createScene(engine: AbstractEngine): Stage {
 // ---------------------------------------------------------------- fighters
 const NO_TINT = new Color4(0, 0, 0, 0);
 export class FighterView {
-  root: TransformNode; body: BuiltBody; anim: Animator; mat: CelMaterial; wmat: CelMaterial;
-  constructor(scene: Scene, e: Ent, readonly outline: Outline) {
+  root: TransformNode; body!: BuiltBody; anim: Animator; mat: CelMaterial; wmat: CelMaterial;
+  bodies = new Map<string, BuiltBody>();         // one body per (character, variant): a form change swaps, never rebuilds
+  bodyKey = '';
+  constructor(readonly scene: Scene, e: Ent, readonly outline: Outline) {
     this.root = new TransformNode('fighter', scene);
     this.mat = new CelMaterial('fighter', scene, { ink: 1, threshold: 0.0 });
     this.wmat = new CelMaterial('weapon', scene, { ink: 0.5, shadow: new Color3(0.55, 0.58, 0.72) });
-    this.body = buildBody(scene, e.f.character, this.mat, this.wmat);
-    this.body.mesh.parent = this.root;
-    this.body.mesh.alwaysSelectAsActiveMesh = true;                             // posed limbs leave the rest bounds
-    this.body.weapon.alwaysSelectAsActiveMesh = true;
-    outline.add(this.body.mesh); outline.add(this.body.weapon);
+    this.useBody(e);
     this.anim = new Animator(this.body, e.f.character);
   }
 
+  /** Show the body of E's current form (fighter.form picks the CharBody variant). */
+  useBody(e: Ent): void {
+    const { key, body: cb } = bodyFor(e.f.character, e.f.form);
+    if (key === this.bodyKey) return;
+    if (this.body) {
+      this.outline.remove(this.body.mesh); this.outline.remove(this.body.weapon);
+      for (const m of [this.body.mesh, this.body.weapon, this.body.face]) m.setEnabled(false);
+    }
+    let b = this.bodies.get(key);
+    if (!b) {
+      b = buildBody(this.scene, key, cb, this.mat, this.wmat);
+      b.mesh.parent = this.root;
+      b.mesh.alwaysSelectAsActiveMesh = true;                                   // posed limbs leave the rest bounds
+      b.weapon.alwaysSelectAsActiveMesh = true;
+      this.bodies.set(key, b);
+    }
+    for (const m of [b.mesh, b.weapon, b.face]) m.setEnabled(true);
+    this.outline.add(b.mesh); this.outline.add(b.weapon);
+    this.body = b; this.bodyKey = key;
+    if (this.anim) this.anim.body = b;
+  }
+
   update(e: Ent, rdt: number, t: number): void {
+    this.useBody(e);
     this.root.position.set(e.pos[0], e.pos[1], e.pos[2]);
     this.root.rotation.y = e.yaw;
     this.anim.update(e, rdt, t);
@@ -98,8 +120,10 @@ export class FighterView {
   }
   dispose(): void {
     this.outline.remove(this.body.mesh); this.outline.remove(this.body.weapon);
-    this.body.weapon.dispose(); this.body.face.dispose(); this.body.faceTex.dispose(); this.body.faceMat.dispose();
-    this.body.mesh.dispose(); this.body.skeleton.dispose(); this.mat.dispose(); this.wmat.dispose(); this.root.dispose();
+    for (const b of this.bodies.values()) {
+      b.weapon.dispose(); b.face.dispose(); b.faceTex.dispose(); b.faceMat.dispose(); b.mesh.dispose(); b.skeleton.dispose();
+    }
+    this.mat.dispose(); this.wmat.dispose(); this.root.dispose();
   }
 }
 

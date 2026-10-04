@@ -3,7 +3,9 @@
 // the hurt cylinder). Every part is built at rest in character space (metres, x = his right, y = up, he faces -z),
 // coloured per vertex and weighted to its 1-2 nearest candidate bone segments (inverse distance^4: rigid mid-limb, a
 // smooth blend at the joints), then all parts merge into ONE mesh per fighter (one draw). Weapons are separate rigid
-// meshes attached to the hand bone; the face is a flat decal with three expressions (face.ts style canvas, drawn here).
+// meshes attached to the hand bone; the face is a flat decal with three expressions (one canvas cell each).
+// This file holds the generic machinery (geometry helpers, the rig, the shared shihakusho body, merge / skin weights,
+// the face decal, a katana); each character's look is a CharBody in render/bodies/<char>.ts (registry: bodies/index.ts).
 import {
   Bone, Color3, DynamicTexture, Matrix, Mesh, MeshBuilder, Quaternion, Scene, Skeleton, StandardMaterial, Texture,
   Vector3, VertexData, type Material,
@@ -16,23 +18,22 @@ export interface BodySpec {
   chest: [number, number]; waist: [number, number]; hip: [number, number];   // torso half-widths (x, z), head units
   limb: number; hand: number;     // limb thickness, hand size multipliers
   skin: number; black: number; haori: number; obi: number; hair: number;
-  hairStyle: 'bald' | 'spiky';
-  beard: boolean; bells: boolean;
+  collar: number;                 // depth of the collar's V, body units (Kenpachi's open chest is deep)
   haoriHem: number;               // the haori hem height, in body units (8-head figure: knee 2.15, ankle 0.35)
   haoriSleeves: 'long' | 'torn';
   tattered: boolean;
-  face: 'yama' | 'ken';
-  weapon: 'ryujin' | 'ken';
 }
 
-export const SPECS: Record<string, BodySpec> = {
-  yamamoto: { height: 1.65, heads: 7.5, shoulder: 0.95, chest: [0.66, 0.42], waist: [0.52, 0.38], hip: [0.6, 0.4], limb: 0.9,
-    hand: 1.25, skin: 0xe6c3a0, black: 0x24252e, haori: 0xf1efe8, obi: 0xe4e1d8, hair: 0xf2f0ea, hairStyle: 'bald',
-    beard: true, bells: false, haoriHem: 1.2, haoriSleeves: 'long', tattered: false, face: 'yama', weapon: 'ryujin' },
-  kenpachi: { height: 2.0, heads: 8, shoulder: 1.18, chest: [0.86, 0.52], waist: [0.62, 0.44], hip: [0.66, 0.46], limb: 1.2,
-    hand: 1.2, skin: 0xdcae86, black: 0x22232c, haori: 0xeeece4, obi: 0xe0ddd2, hair: 0x1b1c24, hairStyle: 'spiky',
-    beard: false, bells: true, haoriHem: 1.6, haoriSleeves: 'torn', tattered: true, face: 'ken', weapon: 'ken' },
-};
+/** One character's look. VARIANT(form): overrides for an awakened form's body, or null (the base body). */
+export interface CharBody {
+  spec: BodySpec;
+  parts(sp: BodySpec, r: Rig): Part[];
+  /** Draw expression EXPR (FACE.*) into one 256 px cell; G is translated to the cell, ink line style set. */
+  drawFace(g: CanvasRenderingContext2D, expr: number): void;
+  weapon(scene: Scene, sp: BodySpec, r: Rig): Mesh;
+  variant(form: string): BodyVariant | null;
+}
+export type BodyVariant = Partial<Pick<CharBody, 'parts' | 'drawFace' | 'weapon'>> & { spec?: Partial<BodySpec> };
 
 const PARENT: Record<BoneName, BoneName | null> = {
   pelvis: null, spine: 'pelvis', chest: 'spine', neck: 'chest', head: 'neck',
@@ -40,15 +41,16 @@ const PARENT: Record<BoneName, BoneName | null> = {
   shoulderL: 'chest', armL: 'shoulderL', foreL: 'armL', handL: 'foreL', weaponL: 'handL',
   thighR: 'pelvis', shinR: 'thighR', footR: 'shinR', thighL: 'pelvis', shinL: 'thighL', footL: 'shinL',
 };
-const hex = (h: number) => new Color3(((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255);
+export const hex = (h: number) => new Color3(((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255);
 
-interface Part { vd: VertexData; color: Color3; bones: BoneName[] }
-type Ring = [number, number, number, number?, number?];       // y, rx, rz, cx, cz
+export interface Part { vd: VertexData; color: Color3; bones: BoneName[] }
+export type Add = (vd: VertexData, color: number | Color3, bones: BoneName[]) => void;
+export type Ring = [number, number, number, number?, number?];       // y, rx, rz, cx, cz
 
 /** A tube along y through elliptical rings (closed by giving the end rings ~0 radius). The arc a0..a1 (radians, 0 =
  *  front -z, +pi/2 = his right) leaves it open (a haori's front); DOUBLE adds the inside, LIP gives each ring's angle a
  *  y offset (tattered hems). */
-function tube(rings: Ring[], seg = 14, o: { a0?: number; a1?: number; double?: boolean; lip?: (a: number, j: number) => number } = {}): VertexData {
+export function tube(rings: Ring[], seg = 14, o: { a0?: number; a1?: number; double?: boolean; lip?: (a: number, j: number) => number } = {}): VertexData {
   const a0 = o.a0 ?? 0, a1 = o.a1 ?? Math.PI * 2, closed = o.a0 === undefined;
   const pos: number[] = [], idx: number[] = [], n = seg + 1;
   rings.forEach(([y, rx, rz, cx = 0, cz = 0], j) => {
@@ -90,7 +92,7 @@ function weldSeam(vd: VertexData, rows: number, n: number): void {
   void rows;
 }
 /** An ellipsoid centred at C with radii R. */
-function ellipsoid(c: [number, number, number], r: [number, number, number], seg = 14, rows = 9): VertexData {
+export function ellipsoid(c: [number, number, number], r: [number, number, number], seg = 14, rows = 9): VertexData {
   const rings: Ring[] = [];
   for (let j = 0; j <= rows; j++) {
     const t = Math.PI * (1 - j / rows), s = Math.max(1e-3, Math.sin(t));
@@ -98,16 +100,16 @@ function ellipsoid(c: [number, number, number], r: [number, number, number], seg
   }
   return tube(rings, seg);
 }
-function box(w: number, h: number, d: number, m: Matrix): VertexData {
+export function box(w: number, h: number, d: number, m: Matrix): VertexData {
   const vd = VertexData.CreateBox({ width: w, height: h, depth: d });
   vd.transform(m);
   return vd;
 }
-const T = (x: number, y: number, z: number, rx = 0, ry = 0, rz = 0) =>
+export const T = (x: number, y: number, z: number, rx = 0, ry = 0, rz = 0) =>
   Matrix.Compose(Vector3.One(), Quaternion.RotationYawPitchRoll(ry, rx, rz), new Vector3(x, y, z));
 
 /** A limb segment from A to B (points) as a tapered tube with radii ra -> rb, a little rounded at both ends. */
-function limb(a: Vector3, b: Vector3, ra: number, rb: number, seg = 10, flat = 1): VertexData {
+export function limb(a: Vector3, b: Vector3, ra: number, rb: number, seg = 10, flat = 1): VertexData {
   const len = Vector3.Distance(a, b);
   const vd = tube([[-0.25 * ra, 0.01, 0.01], [0, ra * 0.85, ra * 0.85 * flat], [0.15 * len, ra, ra * flat],
     [0.85 * len, rb, rb * flat], [len, rb * 0.85, rb * 0.85 * flat], [len + 0.25 * rb, 0.01, 0.01]], seg);
@@ -152,10 +154,12 @@ function segDist(p: Vector3, a: Vector3, b: Vector3): number {
   return Vector3.Distance(p, a.add(ab.scale(t)));
 }
 
-// ---------------------------------------------------------------- parts
-function buildParts(sp: BodySpec, r: Rig): Part[] {
+// ---------------------------------------------------------------- the shared shihakusho + haori body
+/** Kosode, collar, obi, head, arms with sleeves, the haori, the hakama, tabi and zori. HEAD(add, hc) adds the
+ *  character's hair / beard right after the bare head (hc = the skull's centre). */
+export function kimono(sp: BodySpec, r: Rig, head?: (add: Add, hc: [number, number, number]) => void): Part[] {
   const { rest: R, H, bs } = r, parts: Part[] = [];
-  const add = (vd: VertexData, color: number | Color3, bones: BoneName[]) =>
+  const add: Add = (vd, color, bones) =>
     parts.push({ vd, color: typeof color === 'number' ? hex(color) : color, bones });
   const y = (v: number) => v * bs, L = sp.limb;
   const torsoB: BoneName[] = ['pelvis', 'spine', 'chest', 'neck', 'shoulderR', 'shoulderL'];
@@ -164,8 +168,8 @@ function buildParts(sp: BodySpec, r: Rig): Part[] {
   add(tube([[y(3.95), 0.02, 0.02], [y(4.0), hx * H * 0.9, hz * H * 0.9], [y(4.4), hx * H, hz * H], [y(5.0), wx * H, wz * H],
     [y(5.6), cx * H * 0.95, cz * H], [y(6.2), cx * H, cz * H * 1.02, 0, 0.02 * H], [y(6.55), cx * H * 0.92, cz * H * 0.9, 0, 0.04 * H],
     [y(6.75), 0.3 * H, 0.3 * H, 0, 0.05 * H], [y(6.8), 0.02, 0.02, 0, 0.05 * H]], 16), sp.black, torsoB);
-  // the collar: the white juban lapels in a V, skin inside it (Kenpachi's chest shows more)
-  const deep = sp.face === 'ken' ? 1.25 : 0.7;
+  // the collar: the white juban lapels in a V, skin inside it
+  const deep = sp.collar;
   add(tube([[y(6.75 - deep), 0.02, 0.02, 0, -cz * H * 0.98], [y(6.75 - deep * 0.6), 0.14 * H * deep, 0.04 * H, 0, -cz * H * 1.0],
     [y(6.6), 0.3 * H, 0.05 * H, 0, -cz * H * 0.92], [y(6.8), 0.26 * H, 0.04 * H, 0, -cz * H * 0.7]], 8), sp.skin, ['chest', 'neck']);
   for (const s of [1, -1]) {
@@ -183,37 +187,7 @@ function buildParts(sp: BodySpec, r: Rig): Part[] {
   add(ellipsoid([0, hc[1] - 0.3 * H, hc[2] - 0.24 * H], [0.24 * H, 0.17 * H, 0.2 * H]), sp.skin, ['head']);    // jaw
   add(ellipsoid([0, hc[1] - 0.02 * H, hc[2] - 0.43 * H], [0.045 * H, 0.09 * H, 0.06 * H], 6, 5), sp.skin, ['head']);   // nose
   for (const s of [1, -1]) add(ellipsoid([s * 0.37 * H, hc[1], hc[2] + 0.02 * H], [0.05 * H, 0.12 * H, 0.08 * H], 6, 5), sp.skin, ['head']);
-  if (sp.hairStyle === 'spiky') {
-    // the cap of hair, then spikes radiating back and out, a bell on each tip
-    add(ellipsoid([0, hc[1] + 0.06 * H, hc[2] + 0.03 * H], [0.39 * H, 0.47 * H, 0.44 * H], 16, 10), sp.hair, ['head']);
-    // spikes radiating out from the crown and the back of the head in two rows, a bell on every tip
-    let i = 0;
-    for (const [el, nAz, len0] of [[0.75, 7, 0.95], [0.25, 9, 1.15], [-0.15, 6, 1.0]] as const)
-      for (let j = 0; j < nAz; j++, i++) {
-        const az = (-0.85 + (1.7 * (j + 0.5)) / nAz) * Math.PI * (el > 0.5 ? 0.85 : el > 0 ? 0.8 : 0.6);   // 0 = straight back (+z)
-        const d = new Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)).normalize();
-        const base = new Vector3(hc[0] + d.x * 0.25 * H, hc[1] + 0.12 * H + d.y * 0.25 * H, hc[2] + d.z * 0.25 * H);
-        const tip = base.add(d.scale((len0 + 0.25 * Math.sin(i * 2.3)) * H));
-        add(limb(base, tip, 0.14 * H, 0.012, 6), sp.hair, ['head']);
-        if (sp.bells) add(ellipsoid([tip.x, tip.y - 0.04 * H, tip.z], [0.08 * H, 0.08 * H, 0.08 * H], 7, 5), 0xe7c24e, ['head']);
-      }
-    // forelock strands over the brow
-    for (const s of [-1, 0, 1]) add(limb(new Vector3(s * 0.15 * H, hc[1] + 0.4 * H, hc[2] - 0.36 * H),
-      new Vector3(s * 0.25 * H, hc[1] + 0.12 * H, hc[2] - 0.47 * H), 0.07 * H, 0.01, 5), sp.hair, ['head']);
-  }
-  if (sp.beard) {
-    // the long white beard from the jaw to the obi (upper half rides the head, the rest the chest), a moustache
-    const bz = hc[2] - 0.3 * H;
-    add(tube([[hc[1] - 0.12 * H, 0.3 * H, 0.12 * H, 0, bz + 0.06 * H], [hc[1] - 0.42 * H, 0.3 * H, 0.18 * H, 0, bz - 0.05 * H],
-      [hc[1] - 0.9 * H, 0.27 * H, 0.17 * H, 0, -cz * H - 0.12 * H], [y(5.6), 0.2 * H, 0.14 * H, 0, -cz * H - 0.12 * H],
-      [y(5.0), 0.12 * H, 0.1 * H, 0, -wz * H - 0.12 * H], [y(4.75), 0.03 * H, 0.03 * H, 0, -wz * H - 0.1 * H]], 12),
-      sp.hair, ['head', 'neck', 'chest']);
-    for (const s of [1, -1]) add(limb(new Vector3(s * 0.04 * H, hc[1] - 0.12 * H, hc[2] - 0.42 * H),
-      new Vector3(s * 0.36 * H, hc[1] - 0.42 * H, hc[2] - 0.3 * H), 0.06 * H, 0.015, 6), sp.hair, ['head']);
-    // the long drooping eyebrows
-    for (const s of [1, -1]) add(limb(new Vector3(s * 0.1 * H, hc[1] + 0.12 * H, hc[2] - 0.41 * H),
-      new Vector3(s * 0.44 * H, hc[1] - 0.12 * H, hc[2] - 0.3 * H), 0.045 * H, 0.012, 6), sp.hair, ['head']);
-  }
+  head?.(add, hc);
   // arms: kosode sleeve over the upper arm, a wide hanging sleeve, forearm skin, the big hand
   for (const s of [1, -1] as const) {
     const S = s > 0 ? 'R' : 'L', sh = R[`shoulder${S}`], arm = R[`arm${S}`], el = R[`fore${S}`], wr = R[`hand${S}`];
@@ -227,7 +201,7 @@ function buildParts(sp: BodySpec, r: Rig): Part[] {
     sl.transform(T(el.x * 0.5 + arm.x * 0.5, arm.y - 0.05 * H, arm.z));
     add(sl, sp.black, [`arm${S}`, `fore${S}`] as BoneName[]);
     // the hand: palm block, a rolled fist of fingers, the thumb
-    const hs = sp.hand * H, hm = Matrix.Translation(wr.x, wr.y, wr.z);
+    const hs = sp.hand * H;
     add(ellipsoid([wr.x, wr.y - 0.22 * hs, wr.z], [0.12 * hs, 0.24 * hs, 0.2 * hs], 8, 6), sp.skin, [`hand${S}`, `fore${S}`] as BoneName[]);
     add(ellipsoid([wr.x - s * 0.02 * hs, wr.y - 0.46 * hs, wr.z - 0.02 * hs], [0.15 * hs, 0.14 * hs, 0.22 * hs], 8, 6), sp.skin, [`hand${S}`] as BoneName[]);
     add(limb(new Vector3(wr.x - s * 0.1 * hs, wr.y - 0.12 * hs, wr.z - 0.18 * hs), new Vector3(wr.x - s * 0.14 * hs, wr.y - 0.36 * hs, wr.z - 0.26 * hs),
@@ -262,7 +236,6 @@ function buildParts(sp: BodySpec, r: Rig): Part[] {
       [kn.y, lr * 1.35, lr * 1.45, s * 0.06 * H, 0], [an.y + 0.25 * bs, lr * 1.6, lr * 1.7, s * 0.07 * H, 0],
       [an.y + 0.12 * bs, lr * 1.62, lr * 1.72, s * 0.07 * H, 0], [an.y + 0.11 * bs, lr * 0.5, lr * 0.5, s * 0.06 * H, 0]], 14),
     sp.black, ['pelvis', `thigh${S}`, `shin${S}`] as BoneName[]);
-    void th;
     // the white tabi and the straw zori
     add(limb(new Vector3(an.x, an.y + 0.15 * bs, an.z + 0.05 * H), new Vector3(an.x, an.y - 0.15 * bs, an.z - 0.05 * H), 0.16 * H, 0.15 * H, 8),
       0xf3f3ee, [`shin${S}`, `foot${S}`] as BoneName[]);
@@ -278,8 +251,9 @@ export interface BuiltBody {
   weapon: Mesh; face: Mesh; faceTex: DynamicTexture; faceMat: StandardMaterial;
 }
 
-export function buildBody(scene: Scene, key: string, mat: Material, weaponMat: Material): BuiltBody {
-  const sp = SPECS[key] ?? SPECS.kenpachi, r = rig(sp);
+/** Build CB's skinned mesh, weapon and face decal (KEY names the Babylon objects). */
+export function buildBody(scene: Scene, key: string, cb: CharBody, mat: Material, weaponMat: Material): BuiltBody {
+  const sp = cb.spec, r = rig(sp);
   const names = Object.keys(PARENT) as BoneName[];
   const skeleton = new Skeleton(`${key}-skel`, `${key}-skel`, scene);
   const bones = {} as Record<BoneName, Bone>;
@@ -291,7 +265,7 @@ export function buildBody(scene: Scene, key: string, mat: Material, weaponMat: M
   // merge the parts, weighting each vertex
   const pos: number[] = [], nrm: number[] = [], col: number[] = [], idx: number[] = [], mi: number[] = [], mw: number[] = [];
   const tmp = new Vector3();
-  for (const part of buildParts(sp, r)) {
+  for (const part of cb.parts(sp, r)) {
     const P = part.vd.positions as number[], N = part.vd.normals as number[], I = part.vd.indices as number[], base = pos.length / 3;
     for (let i = 0; i < P.length; i += 3) {
       pos.push(P[i], P[i + 1], P[i + 2]); nrm.push(N[i], N[i + 1], N[i + 2]);
@@ -310,12 +284,12 @@ export function buildBody(scene: Scene, key: string, mat: Material, weaponMat: M
   vd.applyToMesh(mesh);
   mesh.skeleton = skeleton; mesh.numBoneInfluencers = 2; mesh.material = mat;
   // weapon (rigid, attached to the right hand's grip)
-  const weapon = buildWeapon(scene, sp, r.H);
+  const weapon = cb.weapon(scene, sp, r);
   weapon.material = weaponMat;
   weapon.attachToBone(bones.weaponR, mesh);
   // face decal on the head bone
   const H = r.H, faceTex = new DynamicTexture(`${key}-face`, { width: 768, height: 256 }, scene, true);
-  drawFaces(faceTex, sp.face);
+  drawFaces(faceTex, cb.drawFace);
   faceTex.hasAlpha = true; faceTex.uScale = 1 / 3; faceTex.wrapU = Texture.CLAMP_ADDRESSMODE;
   const faceMat = new StandardMaterial(`${key}-facemat`, scene);
   faceMat.diffuseTexture = faceTex; faceMat.useAlphaFromDiffuseTexture = true; faceMat.transparencyMode = 1;   // alpha test
@@ -328,28 +302,8 @@ export function buildBody(scene: Scene, key: string, mat: Material, weaponMat: M
   return { mesh, skeleton, bones, rig: r, spec: sp, weapon, face, faceTex, faceMat };
 }
 
-/** Katana in the fist: the grip at the weapon bone, the blade forward (-z). Ryujin Jakka: a wooden cane hilt, no guard.
- *  Kenpachi's: a long notched blade (the chips), a small dark guard and a wrapped grip. */
-function buildWeapon(scene: Scene, sp: BodySpec, H: number): Mesh {
-  const ken = sp.weapon === 'ken', blade = ken ? 1.3 : 0.86, grip = ken ? 0.3 : 0.24, w = ken ? 0.036 : 0.03;
-  const parts: { vd: VertexData; c: number }[] = [];
-  const rings: Ring[] = [];
-  const n = 28;
-  for (let i = 0; i <= n; i++) {
-    const t = i / n, chip = ken && i % 6 === 4 ? 0.8 : 1;
-    const tip = t > 0.9 ? 1 - (t - 0.9) / 0.1 * 0.95 : 1;
-    rings.push([t * blade, 0.006, w * chip * tip, 0, w * (1 - chip * tip) * 0.5]);
-  }
-  const bl = tube(rings, 4);
-  // the blade leaves the fist along the forearm's line, tipped 20 deg forward (the grip's angle in a fist)
-  const mt = 20 * Math.PI / 180, dy = -Math.cos(mt), dz = -Math.sin(mt), g0 = 0.07;
-  bl.transform(T(0, dy * g0, dz * g0, Math.PI + mt));
-  parts.push({ vd: bl, c: ken ? 0xb8bcc6 : 0xd0d4de });
-  const gr = tube([[0, 0.016, 0.02], [grip, 0.017, 0.021], [grip + 0.01, 0.005, 0.005]], 8);
-  gr.transform(T(0, dy * g0, dz * g0, mt));
-  parts.push({ vd: gr, c: ken ? 0x2b2b38 : 0x6b4a2e });
-  if (ken) parts.push({ vd: box(0.012, 0.075, 0.09, T(0, dy * g0, dz * g0, mt)), c: 0x3a3426 });
-  void H;
+/** Merge rigid vertex-coloured pieces into one mesh (weapons). */
+export function rigid(scene: Scene, name: string, parts: { vd: VertexData; c: number }[]): Mesh {
   const pos: number[] = [], nrm: number[] = [], col: number[] = [], idx: number[] = [];
   for (const p of parts) {
     const base = pos.length / 3, c = hex(p.c);
@@ -359,49 +313,74 @@ function buildWeapon(scene: Scene, sp: BodySpec, H: number): Mesh {
   }
   const vd = new VertexData();
   Object.assign(vd, { positions: pos, normals: nrm, colors: col, indices: idx });
-  const m = new Mesh('weapon', scene);
+  const m = new Mesh(name, scene);
   vd.applyToMesh(m);
   return m;
 }
 
+/** A katana in the fist: the grip at the weapon bone, the blade forward (-z). CHIPS notches the edge; GUARD (colour)
+ *  adds a small tsuba. */
+export function katana(scene: Scene, o: { blade: number; grip: number; w: number; bladeC: number; gripC: number; chips?: boolean; guard?: number }): Mesh {
+  const parts: { vd: VertexData; c: number }[] = [];
+  const rings: Ring[] = [];
+  const n = 28;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, chip = o.chips && i % 6 === 4 ? 0.8 : 1;
+    const tip = t > 0.9 ? 1 - (t - 0.9) / 0.1 * 0.95 : 1;
+    rings.push([t * o.blade, 0.006, o.w * chip * tip, 0, o.w * (1 - chip * tip) * 0.5]);
+  }
+  const bl = tube(rings, 4);
+  // the blade leaves the fist along the forearm's line, tipped 20 deg forward (the grip's angle in a fist)
+  const mt = 20 * Math.PI / 180, dy = -Math.cos(mt), dz = -Math.sin(mt), g0 = 0.07;
+  bl.transform(T(0, dy * g0, dz * g0, Math.PI + mt));
+  parts.push({ vd: bl, c: o.bladeC });
+  const gr = tube([[0, 0.016, 0.02], [o.grip, 0.017, 0.021], [o.grip + 0.01, 0.005, 0.005]], 8);
+  gr.transform(T(0, dy * g0, dz * g0, mt));
+  parts.push({ vd: gr, c: o.gripC });
+  if (o.guard !== undefined) parts.push({ vd: box(0.012, 0.075, 0.09, T(0, dy * g0, dz * g0, mt)), c: o.guard });
+  return rigid(scene, 'weapon', parts);
+}
+
 // ---------------------------------------------------------------- faces: neutral / shout / hurt, one 256 px cell each
 export const FACE = { neutral: 0, shout: 1, hurt: 2 } as const;
-function drawFaces(t: DynamicTexture, who: 'yama' | 'ken'): void {
+/** A bold ink polyline (x0 y0 x1 y1 ...) in the current stroke style: a head is ~40 px on screen. */
+export function inkLine(g: CanvasRenderingContext2D, w: number, ...p: number[]): void {
+  g.lineWidth = w * 2.2;
+  g.beginPath(); g.moveTo(p[0], p[1]); for (let i = 2; i < p.length; i += 2) g.lineTo(p[i], p[i + 1]); g.stroke();
+}
+function drawFaces(t: DynamicTexture, draw: CharBody['drawFace']): void {
   const g = t.getContext() as CanvasRenderingContext2D;
   g.clearRect(0, 0, 768, 256);
   for (let e = 0; e < 3; e++) {
     g.save(); g.translate(e * 256, 0);
     g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = '#1a1414'; g.fillStyle = '#1a1414';
-    const line = (w: number, ...p: number[]) => { g.lineWidth = w * 2.2;   // bold: a head is ~40 px on screen
-      g.beginPath(); g.moveTo(p[0], p[1]); for (let i = 2; i < p.length; i += 2) g.lineTo(p[i], p[i + 1]); g.stroke(); };
-    const eye = (x: number, s: number) => {        // s = +1 his left (screen right), -1 his right
-      if (who === 'yama') {
-        if (e === 0) line(5, x - 22 * s, 122, x, 126, x + 20 * s, 120);                 // the old man's narrow slit
-        if (e === 1) { g.fillStyle = '#fff'; g.beginPath(); g.ellipse(x, 124, 20, 9, 0, 0, 7); g.fill(); g.fillStyle = '#1a1414';
-          g.beginPath(); g.arc(x - 2 * s, 124, 8, 0, 7); g.fill(); line(5, x - 24 * s, 116, x + 22 * s, 120); }
-        if (e === 2) line(6, x - 22 * s, 118, x, 128, x + 20 * s, 122);
-      } else {
-        if (e === 2) { line(6, x - 24 * s, 116, x + 20 * s, 128); line(6, x - 24 * s, 132, x + 20 * s, 126); return; }
-        g.fillStyle = '#fff'; g.beginPath(); g.moveTo(x - 26 * s, 128); g.quadraticCurveTo(x, 110, x + 24 * s, 120); g.quadraticCurveTo(x, 136, x - 26 * s, 128); g.fill();
-        g.fillStyle = '#1a1414'; g.beginPath(); g.arc(x - 3 * s, 124, e === 1 ? 6 : 10, 0, 7); g.fill();
-        line(5, x - 28 * s, 128, x, 112, x + 26 * s, 118);
-      }
-    };
-    eye(92, -1); eye(164, 1);
-    // brows (Yamamoto's are geometry; Kenpachi's angle down hard)
-    if (who === 'ken') { const k = e === 1 ? 14 : e === 2 ? -6 : 8; line(8, 62, 96, 112, 104 + k); line(8, 194, 96, 144, 104 + k); }
-    else if (e > 0) { line(5, 70, 104, 110, 112); line(5, 186, 104, 146, 112); }
-    // scars: Yamamoto's cross on the brow, Kenpachi's long cut down over his left eye (screen right)
-    g.strokeStyle = '#8a4a3a';
-    if (who === 'yama') { line(4, 110, 40, 146, 76); line(4, 146, 40, 110, 76); line(3, 120, 30, 136, 30); }
-    else { line(5, 178, 60, 160, 190); line(3, 150, 70, 136, 200); }
-    g.strokeStyle = '#1a1414';
-    // mouth (Yamamoto's sits under the moustache; drawn anyway for shout / hurt)
-    if (e === 0) { if (who === 'ken') line(5, 100, 196, 128, 200, 160, 190); }
-    if (e === 1) { g.fillStyle = '#3a1214'; g.beginPath(); g.ellipse(128, 196, who === 'ken' ? 34 : 24, who === 'ken' ? 22 : 18, 0, 0, 7); g.fill();
-      g.fillStyle = '#f4f0e8'; g.fillRect(100, 180, 56, 7); g.fillRect(104, 207, 48, 5); }
-    if (e === 2) { line(6, 96, 204, 112, 194, 128, 202, 144, 194, 160, 204); }
+    draw(g, e);
     g.restore();
   }
   t.update();
+}
+
+// ---------------------------------------------------------------- placeholder bodies (until a character gets its own)
+const PLAIN: BodySpec = { height: 1.7, heads: 7.5, shoulder: 1.0, chest: [0.7, 0.44], waist: [0.55, 0.4], hip: [0.62, 0.42], limb: 1,
+  hand: 1.15, skin: 0xe8c4a0, black: 0x24252e, haori: 0xf1efe8, obi: 0xe4e1d8, hair: 0x1b1c24, collar: 0.8, haoriHem: 1.6,
+  haoriSleeves: 'long', tattered: false };
+/** The shared shihakusho body with a hair cap, a plain face and a katana; O overrides the spec (height, colours). */
+export function plainBody(o: Partial<BodySpec>): CharBody {
+  return {
+    spec: { ...PLAIN, ...o },
+    parts: (sp, r) => kimono(sp, r, (add, hc) =>
+      add(ellipsoid([0, hc[1] + 0.06 * r.H, hc[2] + 0.03 * r.H], [0.39 * r.H, 0.47 * r.H, 0.44 * r.H], 16, 10), sp.hair, ['head'])),
+    drawFace: (g, e) => {
+      for (const x of [92, 164]) {
+        if (e === 2) { inkLine(g, 5, x - 20, 118, x + 20, 128); continue; }
+        g.fillStyle = '#fff'; g.beginPath(); g.ellipse(x, 124, 20, 11, 0, 0, 7); g.fill();
+        g.fillStyle = '#1a1414'; g.beginPath(); g.arc(x, 124, e === 1 ? 6 : 9, 0, 7); g.fill();
+        inkLine(g, 5, x - 22, 104, x + 22, 102);
+      }
+      if (e === 1) { g.beginPath(); g.ellipse(128, 196, 22, 16, 0, 0, 7); g.fill(); }
+      else inkLine(g, 5, 108, 198, 148, 198);
+    },
+    weapon: (scene) => katana(scene, { blade: 0.9, grip: 0.25, w: 0.03, bladeC: 0xd0d4de, gripC: 0x2b2b38, guard: 0x3a3426 }),
+    variant: () => null,
+  };
 }

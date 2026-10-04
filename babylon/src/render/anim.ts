@@ -7,6 +7,7 @@ import type { Move } from '../sim/kit';
 import type { Ent } from '../sim/types';
 import { BONES, P, merge, mirror, phase, sampleKeys, type BoneName, type Clip, type PoseSpec } from './pose';
 import { FACE, type BuiltBody } from './body';
+import { CLIPS } from './clips';
 
 const D2R = Math.PI / 180;
 const cache = new WeakMap<PoseSpec, Map<string, Quaternion>>();
@@ -45,24 +46,26 @@ function clips(idle: PoseSpec) {
   };
 }
 type Clips = ReturnType<typeof clips>;
-const IDLE: Record<string, PoseSpec> = { yamamoto: P.idleYama, kenpachi: P.idleKen };
-const CLIPS = new Map<string, Clips>();
-const clipsFor = (who: string) => { let c = CLIPS.get(who); if (!c) { c = clips(IDLE[who] ?? P.idleKen); CLIPS.set(who, c); } return c; };
+export type ClipName = keyof Clips;
+const idleOf = (who: string) => CLIPS[who]?.idle ?? P.idleKen;
+const CACHE = new Map<string, Clips>();
+const clipsFor = (who: string) => { let c = CACHE.get(who); if (!c) { c = clips(idleOf(who)); CACHE.set(who, c); } return c; };
 
-/** The clip for a move's main phase, from its clip name (the art contract) and kind; unknown moves slash on their frames. */
-export function moveClipName(mv: Move): keyof Clips {
-  const c = (mv.clip2 && mv.kind !== 'sp' ? mv.clip2 : mv.clip) ?? '', ken = c.startsWith('ke');
+/** The clip for a move's main phase: WHO's table (render/clips/<who>.ts) first, else the generic mapping. */
+export function clipNameFor(who: string, mv: Move): ClipName {
+  const c = (mv.clip2 && mv.kind !== 'sp' ? mv.clip2 : mv.clip) ?? '';
+  return CLIPS[who]?.clipFor(c, mv) ?? moveClipName(mv);
+}
+/** The generic mapping from a move's clip name (the art contract) and kind; unknown moves slash on their frames. */
+export function moveClipName(mv: Move): ClipName {
+  const c = (mv.clip2 && mv.kind !== 'sp' ? mv.clip2 : mv.clip) ?? '';
   if (mv.hits.length > 1) return 'multi0';
   if (c.includes('kick')) return 'kick';
   if (c.endsWith('q2')) return 'backhand';
   if (c.includes('sleeve')) return 'sleeve';
-  if (c.endsWith('q3')) return ken ? 'spin' : 'heavy';
+  if (c.endsWith('q3')) return 'heavy';
   if (c.endsWith('f2')) return 'rise';
-  if (c.endsWith('f1')) return ken ? 'heavy' : 'slash';
-  if (c.includes('buttagiru')) return 'leap';
-  if (c.includes('taimatsu') || c.includes('shiranui') || c.includes('ikkotsu')) return 'palm';
-  if (c.includes('shoulder')) return 'shoulder';
-  if (c.includes('charge') || c.includes('enjo')) return 'thrust';
+  if (c.endsWith('f1')) return 'slash';
   return mv.kind === 'flash' ? 'heavy' : 'slash';
 }
 
@@ -77,10 +80,10 @@ export class Animator {
   face: number = FACE.neutral;
   flash = 0;
   private tq = new Quaternion();
-  constructor(readonly body: BuiltBody, readonly who: string) {}
+  constructor(public body: BuiltBody, readonly who: string) {}   // (body: swapped on a form change)
 
   update(e: Ent, rdt: number, t: number): void {
-    const f = e.f, C = clipsFor(this.who), idle = IDLE[this.who] ?? P.idleKen;
+    const f = e.f, C = clipsFor(this.who), idle = idleOf(this.who);
     let key: string = f.state, a: PoseSpec = idle, b: PoseSpec = idle, x = 0, spin = 0;
     const kb = (c: Clip, at: number) => { [a, b, x] = sampleKeys(c, at); };
     this.face = FACE.neutral; this.flash = 0;
@@ -110,7 +113,7 @@ export class Animator {
         key = `move:${mv.name}:${f.phase}`;
         if (f.phase === 'hold' || f.phase === 'aura') { a = b = P.hold; this.face = FACE.shout; break; }
         if (f.phase === 'dash' || f.phase === 'follow') { a = b = P.dash; this.face = FACE.shout; break; }
-        const name = moveClipName(mv), ph = phase(mv, f.sf);
+        const name = clipNameFor(this.who, mv), ph = phase(mv, f.sf);
         if (name === 'multi0') kb(ph.i === 0 ? C.multi0 : ph.i % 2 ? C.multiB : C.multiA, ph.w);
         else kb(C[name] as Clip, ph.u);
         if (name === 'spin' && ph.u > 1) spin = 360 * Math.min(1, ph.u - 1);
