@@ -47,9 +47,12 @@ function clips(idle: PoseSpec) {
 }
 type Clips = ReturnType<typeof clips>;
 export type ClipName = keyof Clips;
-const idleOf = (who: string) => CLIPS[who]?.idle ?? P.idleKen;
+const idleOf = (who: string, form = 'base') => CLIPS[who]?.stance?.(form)?.idle ?? CLIPS[who]?.idle ?? P.idleKen;
 const CACHE = new Map<string, Clips>();
-const clipsFor = (who: string) => { let c = CACHE.get(who); if (!c) { c = clips(idleOf(who)); CACHE.set(who, c); } return c; };
+const clipsFor = (who: string, form = 'base') => {
+  const key = `${who}:${form}`;
+  let c = CACHE.get(key); if (!c) { c = clips(idleOf(who, form)); CACHE.set(key, c); } return c;
+};
 
 /** The clip for a move's main phase: WHO's table (render/clips/<who>.ts) first, else the generic mapping. */
 export function clipNameFor(who: string, mv: Move): ClipName {
@@ -83,7 +86,7 @@ export class Animator {
   constructor(public body: BuiltBody, readonly who: string) {}   // (body: swapped on a form change)
 
   update(e: Ent, rdt: number, t: number): void {
-    const f = e.f, C = clipsFor(this.who), idle = idleOf(this.who);
+    const f = e.f, C = clipsFor(this.who, f.form), idle = idleOf(this.who, f.form), st = CLIPS[this.who]?.stance?.(f.form);
     let key: string = f.state, a: PoseSpec = idle, b: PoseSpec = idle, x = 0, spin = 0;
     const kb = (c: Clip, at: number) => { [a, b, x] = sampleKeys(c, at); };
     this.face = FACE.neutral; this.flash = 0;
@@ -97,14 +100,14 @@ export class Animator {
         } else { const br = Math.sin(t * 2.2) * 2; a = b = merge(idle, { chest: [(idle.chest?.[0] ?? 0) + br, idle.chest?.[1] ?? 0, idle.chest?.[2] ?? 0] }); }
         break;
       }
-      case 'guard': a = b = P.guard; break;
-      case 'guard-hit': kb([k(0, P.guard), k(0.25, P.guardHit, 'out'), k(1, P.guard)], f.sf / Math.max(1, f.stun)); break;
+      case 'guard': a = b = st?.guard ?? P.guard; break;
+      case 'guard-hit': { const g = st?.guard ?? P.guard; kb([k(0, g), k(0.25, P.guardHit, 'out'), k(1, g)], f.sf / Math.max(1, f.stun)); break; }
       case 'step': a = b = P.step; break;
       case 'run': {
         const sp = Math.hypot(e.mo.vel[0], e.mo.vel[2]);
         if (f.phase === 'brake' || sp < 0.5) { key = 'brake'; a = b = P.step; break; }
         this.cycle = (this.cycle + (rdt * sp) / (2.4 * this.body.spec.height)) % 1;
-        kb(RUN, this.cycle * 2);
+        kb(st?.run ?? RUN, this.cycle * 2);
         break;
       }
       case 'hoho': a = b = P.hoho; break;
@@ -113,10 +116,11 @@ export class Animator {
         key = `move:${mv.name}:${f.phase}`;
         if (f.phase === 'hold' || f.phase === 'aura') { a = b = P.hold; this.face = FACE.shout; break; }
         if (f.phase === 'dash' || f.phase === 'follow') { a = b = P.dash; this.face = FACE.shout; break; }
-        const name = clipNameFor(this.who, mv), ph = phase(mv, f.sf);
-        if (name === 'multi0') kb(ph.i === 0 ? C.multi0 : ph.i % 2 ? C.multiB : C.multiA, ph.w);
+        const name = clipNameFor(this.who, mv), ph = phase(mv, f.sf), own = CLIPS[this.who]?.clip?.(mv, f.form);
+        if (own) kb(own, ph.u);                 // the character's own clip, keyed in u
+        else if (name === 'multi0') kb(ph.i === 0 ? C.multi0 : ph.i % 2 ? C.multiB : C.multiA, ph.w);
         else kb(C[name] as Clip, ph.u);
-        if (name === 'spin' && ph.u > 1) spin = 360 * Math.min(1, ph.u - 1);
+        if (!own && name === 'spin' && ph.u > 1) spin = 360 * Math.min(1, ph.u - 1);
         if (ph.u > 0.8 && ph.u < 2.2 || mv.kind === 'sp' || mv.kind === 'kikon') this.face = FACE.shout;
         break;
       }
