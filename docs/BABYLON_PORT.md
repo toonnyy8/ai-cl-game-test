@@ -73,6 +73,8 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   TYBW anime / *Rebirth of Souls*, hard-edged two-tone shadows, bold outlines, reiatsu glow. **Effects in ink brush**:
   ink washes, brush strokes, paper-like texture, few colours (slashes, auras, Kikon / Soul Break words, hit sparks).
 - **Outlines: a screen-space edge post-process** (depth + normal edges), not inverted hulls.
+- **Proportions close to the anime's** (the user, 2026-10-04): realistic-anime bodies, about 7.5–8 heads for adults,
+  small heads, long legs and limbs, big hands; not chibi, not box dolls. Total heights stay the hurt cylinders'.
 - **Faces: a flat decal plane with three expressions** (neutral / shout / hurt), chosen by state.
 - **Bodies: skinned meshes on a Babylon `Skeleton`** (procedural geometry and procedural weights), so cloth bends at
   the joints; not rigid parts.
