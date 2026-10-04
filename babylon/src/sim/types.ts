@@ -8,6 +8,7 @@ import { TimeState } from './time';
 import { newSimRng, type Rng } from './rng';
 import type { HitWin, Kit, Move } from './kit';
 import type { DefState } from './rules';
+import type { Lrn } from './learn';
 
 // ---------------------------------------------------------------- bodies (body.lisp / *-art.lisp: the hurt cylinder only)
 export interface Body { name: string; hurtR: number; hurtH: number }
@@ -178,7 +179,8 @@ export class Brain {
   // (dash dashTo: a held dash, +1 toward / -1 away, until this distance)
   bankaiRolled = false;
   act: string | null = null; why: string | null = null;
-  learn: null = null;           // the learning CPU (learn.lisp, M6): always null, its call sites skipped
+  learn: Lrn | null = null;     // the learning CPU (learn.ts; null = off: nothing of it runs)
+  habit: string | null = null;  // debug: a scripted player's habit (habits.ts; the learning / ASSIST gates)
   jkey = -1; jstarts: number[] = [];   // his last perceived J's start; the ticks his J's started (aiMashP)
   sx = 0; sy = 0;               // the stick it writes this step (stub)
   constructor(difficulty = 'normal', delay = 14) { this.difficulty = difficulty; this.delay = delay; }

@@ -10,8 +10,8 @@
 //               move for the distance band (aiNeutral, aiDecide, aiAttack)
 //   heat        grows without dealing damage: the range shrinks, the Breaker weight doubles (matches end)
 //   burst       BLUE out of a combo (aiBurstRoll), ORANGE off a string link that hit (aiOrangeP), WHITE behind on Reishi
-// The learning CPU (learn.lisp) is M6: Brain.learn stays null and every learner call site is skipped (no draws either,
-// as in the Lisp with BRAIN-LEARN NIL). The debug habits (BRAIN-HABIT, BRAIN-OFF, DUMB-STEP) aren't ported.
+// The learning CPU (learn.ts) runs only where Brain.learn is set (no learner: no draws, as in the Lisp with BRAIN-LEARN
+// NIL); the scripted players (Brain.habit, habits.ts) only in the learning / ASSIST gates. BRAIN-OFF (PRACTICE) isn't ported.
 import { T } from './tuning';
 import { f32, getf, len32, mod, weightedPick } from './math';
 import {
@@ -26,6 +26,8 @@ import { VPAD_ACTIONS, type Action } from './vpad';
 import { Snap, W, kitOf, oppOf, passiveP, simRnd01, stateOf, type Brain, type Ent, type FState } from './types';
 import { awakenStateP, kitCommandOkP, rushParam } from './fighter';
 import { burstOkP, kikonReadyP, kikonWorth } from './combat';
+import { aiBurstChance, learnBurstRolled, learnFire, learnReadDue, learnStep, learnWeights, learnWindow } from './learn';
+import { dumbStep, habitFire, habitNeutral } from './habits';
 
 const FREE: readonly FState[] = ['idle', 'guard', 'run'];
 const diffP = (table: object, b: Brain, dflt: number): number => getf(table, b.difficulty, dflt);
@@ -137,13 +139,21 @@ export function aiCommand(b: Brain, kit: Kit, cmd0: string, d: number, e: Ent | 
 
 // ---------------------------------------------------------------- decisions
 export const aiTable = <V = any>(e: Ent, key: string, dflt: V = null as V): V => getf<V>(kitOf(e).ai, key, dflt);   // eslint-disable-line @typescript-eslint/no-explicit-any
-/** E's deciding brain for the kits' CPU hooks (the ASSIST's borrowed brain is M6: his own, else null). */
-export const aiBrain = (e: Ent): Brain | null => e.brain;
+let assistBrain: Brain | null = null;
+/** E's deciding brain for the kits' CPU hooks: the ASSIST's borrowed brain while assistStep runs for him (withAiBrain),
+ *  else his own (a CPU), else null. */
+export const aiBrain = (e: Ent): Brain | null => assistBrain ?? e.brain;
+/** Run FN with B as aiBrain's answer (the Lisp's LET of *AI-BRAIN*). */
+export function withAiBrain<R>(b: Brain, fn: () => R): R {
+  const old = assistBrain;
+  assistBrain = b;
+  try { return fn(); } finally { assistBrain = old; }
+}
 /** Note REASON (debug) and return CMD. */
 export function why<C>(b: Brain, reason: string, cmd: C): C { b.why = reason; return cmd; }
 
 /** One roll per opponent action (his SNAP S starts a new one): the guard / Hoho / reaction rolls. */
-function aiEventRolls(b: Brain, s: Snap): void {
+export function aiEventRolls(b: Brain, s: Snap): void {
   if (s.start !== b.rollKey) {
     b.rollKey = s.start; b.guardRoll = simRnd01(); b.hohoRoll = simRnd01(); b.reactRoll = simRnd01();
   }
@@ -178,15 +188,20 @@ export function aiSbFinishP(e: Ent): boolean { const go = oppOf(e).g; return go.
 function aiBurstRoll(e: Ent, b: Brain): boolean {
   const f = e.f, g = e.g;
   if (!b.burstRolled && b.burstT >= b.delay && (burstOkP(e) || aiAwakenBreakP(e))
-      && (f.state === 'guard-hit' || aiBurstWantedP(g.reishi, g.reishiMax, Math.floor(f.comboDmg / Math.max(1, f.comboHits))))) {
+      && (f.state === 'guard-hit' || b.habit === 'burst'                  // (debug: the burst-happy scripted player)
+          || aiBurstWantedP(g.reishi, g.reishiMax, Math.floor(f.comboDmg / Math.max(1, f.comboHits))))) {
     b.burstRolled = true;
-    return aiBurstRolled(b, diffP(T.aiBurstP, b, 0.4));
+    return aiBurstRolled(e, b, burstOkP(e), b.habit === 'burst' ? 1.0 : diffP(T.aiBurstP, b, 0.4));
   }
   return false;
 }
 
-/** Roll a burst at chance P (the learner's bandit re-weighting is M6): true to burst. */
-const aiBurstRolled = (_b: Brain, p: number): boolean => simRnd01() < p;
+/** Roll a burst of COLOR at the base chance P (a learner's bandit re-weighting it, and opening its window): true to burst. */
+function aiBurstRolled(e: Ent, b: Brain, color: string | null, p: number): boolean {
+  const q = aiBurstChance(b, color, p), yes = simRnd01() < q;
+  learnBurstRolled(e, b, color, yes, q);
+  return yes;
+}
 
 /** End a landed string with the kit's cancel command (L, a cancel Signature) now? */
 function aiCancelP(e: Ent, kit: Kit): boolean {
@@ -196,13 +211,15 @@ function aiCancelP(e: Ent, kit: Kit): boolean {
 
 /** Our link hit: go on with the string (K T.aiStringFlashP of the time among the links kitNext allows), or end it with L
  *  (the kit's cancel / lAfterK), the kit's SP ender, an SP2 cancel on a grounded victim, or ORANGE. */
-function stringReflex(e: Ent, b: Brain, f: Ent['f'], mv: Move): string | null {
+export function stringReflex(e: Ent, b: Brain, f: Ent['f'], mv: Move): string | null {
   const kit = f.kit, nq = kitNext(kit, mv.name, 'q');
   let nf = kitNext(kit, mv.name, 'f');
   const bars = Math.floor(e.g.reiatsu / T.reiatsuBar), landed = f.sf === f.landSf;
   b.why = 'string';
   if (nf && kitPipCmdP(kit, 'f') && e.g.meter < 1) nf = null;          // no pip: no K link
   if (f.queued) return null;                                           // the next link is latched already
+  if (b.learn?.cmd === 'bait' && oppOf(e).f.comboHits >= 2) return why(b, 'bait', null);   // a learner baits his burst: the
+                                                                       // string ends at its 2nd hit (then a guard: learnFire)
   {
     const p = aiTable(e, kitKLinkP(kit, mv.name) ? 'lAfterK' : 'lAfterJ', 0.0), l = kitLLink(kit, mv.name);
     if (p > 0 && landed && l && kitCommandOkP(e, 'sig', kit, false, l) && simRnd01() < p) return why(b, 'l-after-k', 'sig');
@@ -231,7 +248,7 @@ function aiOrangeP(e: Ent, b: Brain, f: Ent['f']): boolean {
   return burstOkP(e) === 'orange' && stateOf(oppOf(e)) === 'stun'
     && f.dist < kitCommandMove(f.kit, 'q')!.reach + 0.2
     && !aiBurstWantedP(g.reishi, g.reishiMax, 0)
-    && aiBurstRolled(b, diffP(T.aiOrangeP, b, 0.25));
+    && aiBurstRolled(e, b, 'orange', diffP(T.aiOrangeP, b, 0.25));
 }
 
 /** In ORANGE's startup-cut window, free, the victim still reeling within Q1's reach: restart the string. */
@@ -247,7 +264,7 @@ function aiChainFollowP(e: Ent): boolean {
 function aiWhiteP(e: Ent, b: Brain, s: Snap, d: number): boolean {
   return burstOkP(e) === 'white' && d >= T.aiWhiteRange && s.state !== 'move'
     && reishiFrac(oppOf(e)) - reishiFrac(e) >= T.aiWhiteBehind
-    && aiBurstRolled(b, T.aiWhiteP);
+    && aiBurstRolled(e, b, 'white', T.aiWhiteP);
 }
 
 /** Per side, the CPU's Bankai entry: null = the kit's bankai rule, 'sure' = its chance 1, 'always', 'never' (debug A/B). */
@@ -347,7 +364,8 @@ export function aiReflex(e: Ent, b: Brain, s: Snap, d: number): string | null {
       && b.reactRoll < diffP(T.aiFollowGuardP, b, 0.85))
     return why(b, 'anti-kikon', 'guard-long');
   if (!free) return null;
-  // (the learning CPU's neutral read: M6)
+  // the learning CPU's neutral read on its own clock, before the kit's reflexes; a read pressed: the decision is made
+  if (b.learn && learnReadDue(e, b, s, d)) { b.decideT = aiDecideTime(e, b); return 'wait'; }
   // the form's own reflexes (the kit's reflex hook), then the ones its opponent's kit asks of a CPU facing it
   {
     const h = aiTable<string | null>(e, 'reflex');
@@ -536,6 +554,7 @@ function aiDecide(e: Ent, b: Brain, kit: Kit, s: Snap, d: number, lo: number, hi
     aiCommand(b, kit, 'kikon', d, e); b.why = 'kikon';
   } else if (aiWhiteP(e, b, s, d)) { aiCommand(b, kit, 'burst', d, e); b.why = 'white'; }
   else if (aiPipHurryP(e)) aiAttack(e, b, kit, s, d, heat, true);       // the arm's next crack is near: spend the pip
+  else if (b.habit && habitNeutral(e, b, kit, d)) { /* debug: a scripted player's habit */ }
   else if (aiCoolP(e, s, d)) {                                         // Rukia: hold U the frames the next band needs
     aiPress(b, 'guard', 2 + tempCoolFrames(e.g.meter), false, 'cool'); b.why = 'cool';
   } else if (aiBraceP(e, d)) { aiPress(b, 'guard', 20, false, 'brace'); b.why = 'brace'; }
@@ -571,12 +590,15 @@ export function aiAttack(e: Ent, b: Brain, kit: Kit, s: Snap, d: number, heat: n
   if (brk) brk[1] = oppGuardlessP(e) ? 0 : brk[1] * heatBreakerMult(heat);
   aiStanceWeights(e, s, d, weights);
   if (hurry) for (const kw of weights) if (!(kw[0] && kitPipCmdP(kit, kw[0]))) kw[1] = 0;
+  if (b.learn) learnWeights(e, b.learn, d, weights);                   // the bandit (learning CPU only)
   const cmd = weightedPick(simRnd01(), weights);
   if (cmd && (!(KIT_COMMANDS as readonly string[]).includes(cmd) || (kitCommandMove(kit, cmd) && kitCommandOkP(e, cmd)))
       && (!(cmd === 'q' || cmd === 'f') || d <= 0.2 + kitCommandMove(kit, cmd)!.reach)) {   // don't whiff a string at range
     aiCommand(b, kit, cmd, d, e); b.why = hurry ? 'pip-hurry' : 'neutral';
+    if (b.learn) learnWindow(e, b.learn, d, weights, cmd);
     return true;
   }
+  if (cmd == null && b.learn) learnWindow(e, b.learn, d, weights, null);
   return false;
 }
 
@@ -626,6 +648,7 @@ export function brainStep(e: Ent, b: Brain): void {
   vp.beginStep();
   const [s, d] = brainPerceive(e, b, o);
   b.heat = heatAfter(b.heat, d > T.aiHeatFar);
+  if (b.learn) learnStep(e, b, s, d);                                  // the learning CPU watches (perceived)
   vp.stick(0, 0);
   if (!f.kit.bankaiForm) b.bankaiRolled = false;                       // a new cup-3 stay rolls again
   if ((['stun', 'air', 'down', 'wakeup', 'guard-hit'] as FState[]).includes(f.state)) {   // just took it: respect
@@ -634,7 +657,7 @@ export function brainStep(e: Ent, b: Brain): void {
   if (f.state === 'guard-hit' && f.sf === 0                            // blocked: hold on through the string?
       && simRnd01() < diffP(T.aiHoldGuard, b, 0.85)) aiPress(b, 'guard', f.stun + 20, false, 'hold');
   if ((['stun', 'air', 'down', 'wakeup'] as FState[]).includes(b.was) && FREE.includes(f.state) && f.lock === 0
-      && d < T.aiWakeGuardRange && aiMashP(b))                        // out of a hit vs a J masher: guard first
+      && d < T.aiWakeGuardRange && !b.habit && aiMashP(b))            // out of a hit vs a J masher: guard first
     aiWakeStep(e, b, d);
   if (((f.state === 'stun' || f.state === 'air') && f.comboHits >= T.burstMinHits)
       || (f.state === 'guard-hit' && f.glock && aiGgLowP(e))) b.burstT++;  // the Burst clock
@@ -643,12 +666,15 @@ export function brainStep(e: Ent, b: Brain): void {
     b.pressLeft = 0; b.decideT = 1;                                    // decide now (out of the run)
   }
   if (!(f.lock > 0 || f.state === 'cine')) {
-    if (aiBurstRoll(e, b)) {                                           // a Burst, else the awakening
+    if (b.habit === 'dumb') dumbStep(e, b, s, d);                      // debug: the button-masher (ASSIST's gate)
+    else if (aiBurstRoll(e, b)) {                                      // a Burst, else the awakening
       if (burstOkP(e)) aiPress(b, 'quick', 1, true, 'burst'); else aiPress(b, 'awaken', 1);
       b.why = 'burst';
     } else if (aiChainFollowP(e)) { aiPress(b, 'quick', 1); b.why = 'chain'; }   // ORANGE's restart
     else if (jBeatsKP(e, b)) { aiPress(b, 'quick', 1); b.why = 'j-beats-k'; }
     else if (aiGapStepP(e, b)) { aiPress(b, 'step', 1, false, 'step'); b.why = 'gap-step'; }
+    else if (b.habit && habitFire(e, b, s, d)) { /* debug: a scripted player's habit */ }
+    else if (b.learn && learnFire(e, b, s, d)) { /* the learning CPU's planned counter */ }
     else if (b.pressLeft > 0                                           // a reflex may drop a guard / a dash, or a Breaker's
              && !(f.state === 'move' && f.move!.kind === 'breaker' && f.contact === 'hit')   // hold once it landed
              && (b.act === 'hold' || !(b.press === 'guard' || b.act === 'dash'))) b.pressLeft--;

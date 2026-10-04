@@ -2,14 +2,92 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>SOUL DUEL (Babylon.js)</title>
-<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}canvas{display:block;width:100%;height:100%}#hud{position:fixed;inset:0;pointer-events:none}</style>
+<!-- the installable app (duel/web/head.html): manifest, icons, standalone on iOS -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#07070c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="SOUL DUEL">
+<style>
+:root { --ink: #ecebf2; --dim: #a9a7b8; --title: #ffebcc; --ember: #e0782a; --gold: #ffd27a; --panel: rgba(10,10,18,0.78);
+        --line: rgba(255,255,255,0.12); color-scheme: dark; }
+html, body { margin: 0; height: 100%; height: 100dvh; background: #07070c; overflow: hidden; overscroll-behavior: none;
+  touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+canvas { display: block; width: 100%; height: 100%; }
+#hud { position: fixed; inset: 0; pointer-events: none; }
+#ui { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--ink);
+  font: 600 16px/1.3 system-ui, "Segoe UI", sans-serif; letter-spacing: 0.04em;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); box-sizing: border-box; }
+#ui[hidden] { display: none; }
+.page { width: min(440px, 100%); max-height: 100%; overflow-y: auto; touch-action: pan-y; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 14px; padding: 22px 18px 18px; box-sizing: border-box;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.title { margin: 0 0 6px; text-align: center; font-size: 26px; letter-spacing: 0.18em; color: var(--title); font-weight: 800; }
+.sub { text-align: center; color: var(--dim); font-size: 12px; letter-spacing: 0.12em; margin-bottom: 10px; }
+.rows { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 46px; padding: 0 14px;
+  border-radius: 10px; background: rgba(255,255,255,0.04); border: 1px solid transparent; cursor: pointer; }
+.row.on { background: rgba(224,120,42,0.16); border-color: var(--ember); }
+.row.go .label { color: var(--gold); }
+.label { white-space: nowrap; }
+.value { display: flex; align-items: center; gap: 4px; color: var(--gold); }
+.arrow { display: inline-flex; width: 30px; height: 38px; align-items: center; justify-content: center; font-size: 22px;
+  color: var(--dim); border-radius: 8px; }
+.arrow:active { background: rgba(255,255,255,0.1); }
+.opt { min-width: 72px; text-align: center; }
+.label { overflow: hidden; text-overflow: ellipsis; }
+.note { margin-top: 12px; min-height: 2.6em; font-size: 12px; color: var(--dim); text-align: center; letter-spacing: 0.08em; }
+.foot { margin-top: 10px; text-align: center; color: var(--gold); font-size: 14px; letter-spacing: 0.2em; animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.35; } }
+/* the title screen: no panel, the big name */
+.title-page { border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; cursor: pointer;
+  width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+.title-page .title { font-size: clamp(40px, 13vw, 96px); text-shadow: 0 4px 30px rgba(224,120,42,0.6); }
+.title-page .foot { margin-top: 18vh; }
+/* the pause panel: the battle stays visible */
+.pause { background: rgba(10,10,18,0.66); }
+/* CONTROLS: four columns of cells */
+.controls { width: min(720px, 100%); }
+.controls .row { min-height: 34px; }
+.heads, .cells { display: grid; grid-template-columns: repeat(4, 92px); gap: 6px; }
+.heads { grid-template-columns: 1fr repeat(4, 92px); padding: 0 14px; font-size: 11px; color: var(--dim); text-align: center; }
+.cell { text-align: center; padding: 6px 0; border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--ink); }
+.cell.on { outline: 2px solid var(--ember); }
+.cell.wait { background: var(--ember); color: #000; animation: pulse 0.8s infinite; }
+/* the gestures card and the results table */
+.card dl { margin: 6px 0 0; display: grid; gap: 2px; text-align: center; }
+.card dt { color: var(--ember); font-size: 13px; margin-top: 6px; }
+.card dd { margin: 0; font-size: 14px; }
+.results table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+.results td, .results th { padding: 5px 4px; text-align: center; border-bottom: 1px solid var(--line); }
+.results td:first-child { text-align: left; color: var(--dim); }
+.results th:nth-child(2) { color: #ff9a4d; } .results th:nth-child(3) { color: #80b3ff; }
+/* ENDLESS: STAGE CLEAR and the run's results */
+.endless .extra { text-align: center; font-size: 14px; white-space: pre-wrap; }
+.endless .big { font-size: 18px; color: var(--ink); margin: 2px 0 4px; }
+.endless .dim { color: var(--dim); }
+.endless td:last-child { text-align: right; }
+.endless .next { margin-top: 10px; color: var(--ember); }
+.endless .ramp { color: var(--dim); font-size: 12px; margin-top: 2px; }
+.endless .record { color: var(--ember); letter-spacing: 0.2em; margin-top: 4px; animation: record 1s step-end infinite; }
+@keyframes record { 70% { color: #fff; } }
+.endless .foes { margin-top: 8px; letter-spacing: 0.3em; }
+@media (orientation: portrait) { #ui { align-items: flex-end; } .title-page { align-self: center; } }
+@media (max-height: 760px) { .row { min-height: 38px; } .rows { gap: 4px; margin-top: 8px; } .page { padding-top: 14px; } }
+.page { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.25) transparent; }
+.title-page { background: radial-gradient(ellipse at center, rgba(7,7,12,0.55), rgba(7,7,12,0) 70%); }
+.title-page .sub, .title-page .foot { text-shadow: 0 1px 6px #000, 0 0 2px #000; color: #d8d4e0; }
+</style>
 </head>
 <body>
 <canvas id="game"></canvas>
 <canvas id="hud"></canvas>
+<div id="ui" hidden></div>
 <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

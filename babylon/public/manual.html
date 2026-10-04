@@ -1,0 +1,884 @@
+<!doctype html>
+<!-- SOUL DUEL's player manual (zh-TW), shipped next to index.html (build.sh copies duel/web/*; sw.js caches it).
+     One self-contained page: no external fonts or scripts, so it works offline in the installed app. The game's
+     MODE menu row MANUAL opens it (pwa.js gamePage.set(1)); 「返回遊戲」 goes back to ./ . DUEL_DESIGN.md "In-game manual". -->
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07070c">
+<meta name="color-scheme" content="dark">
+<title>SOUL DUEL 說明</title>
+<style>
+:root {
+  --bg: #07070c; --panel: #11111a; --panel2: #171722; --line: #2a2a38;
+  --ink: #ecebf2; --dim: #a9a7b8; --title: #ffebcc;
+  --blood: #c8283a; --ember: #e0782a; --steel: #7fa3c8; --gold: #e3c16f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 64px; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.75 "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Heiti TC", system-ui, sans-serif;
+  overflow-wrap: anywhere;
+}
+a { color: var(--ember); }
+a:hover { color: var(--title); }
+.top {
+  position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px; padding-top: max(10px, env(safe-area-inset-top));
+  background: rgba(7, 7, 12, 0.94); border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.top .back {
+  flex: none; padding: 6px 14px; border: 1px solid var(--blood); border-radius: 4px;
+  color: var(--ink); text-decoration: none; font-weight: 700; background: #2a0b10;
+}
+.top .back:hover { background: var(--blood); color: #fff; }
+.top .name { font-weight: 800; letter-spacing: 0.12em; color: var(--title); white-space: nowrap; }
+.top .toggle { margin-left: auto; flex: none; font: inherit; font-size: 14px; color: var(--dim); background: none;
+  border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+main { max-width: 900px; margin: 0 auto; padding: 0 16px 64px; }
+header.hero { padding: 28px 0 8px; border-bottom: 3px solid var(--blood); margin-bottom: 8px; }
+header.hero h1 { margin: 0; font-size: 34px; line-height: 1.2; letter-spacing: 0.08em; color: var(--title);
+  text-shadow: 0 0 18px rgba(200, 40, 58, 0.45); }
+header.hero p { margin: 6px 0 0; color: var(--dim); }
+h2 { margin: 48px 0 12px; padding-left: 12px; border-left: 5px solid var(--blood); font-size: 25px; line-height: 1.35;
+  color: var(--title); }
+h2 small, h3 small { font-weight: 400; color: var(--dim); font-size: 0.62em; letter-spacing: 0.04em; }
+h3 { margin: 30px 0 8px; font-size: 20px; color: var(--ink); }
+h4 { margin: 22px 0 6px; font-size: 17px; color: var(--gold); }
+p { margin: 8px 0; }
+ul, ol { padding-left: 1.3em; margin: 8px 0; }
+li { margin: 3px 0; }
+b { color: #fff; }
+kbd {
+  display: inline-block; min-width: 1.6em; padding: 0 5px; margin: 0 1px; text-align: center;
+  font: 700 0.86em/1.5 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; color: #fff;
+  background: #23232f; border: 1px solid #44445a; border-bottom-width: 2px; border-radius: 4px; white-space: nowrap;
+}
+.note, .tip { padding: 10px 14px; border-radius: 4px; background: var(--panel); border-left: 3px solid var(--steel);
+  color: var(--ink); }
+.tip { border-left-color: var(--ember); }
+.warn { border-left-color: var(--blood); }
+nav.toc { margin: 18px 0 8px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+nav.toc b { display: block; margin-bottom: 4px; color: var(--title); }
+nav.toc ol { margin: 0; padding-left: 1.4em; columns: 2 240px; column-gap: 24px; }
+nav.toc li { break-inside: avoid; }
+nav.toc ol ol { columns: 1; margin: 0 0 4px; font-size: 14px; }
+nav.toc a { color: var(--ink); text-decoration: none; }
+nav.toc a:hover { color: var(--ember); text-decoration: underline; }
+table { width: 100%; border-collapse: collapse; margin: 10px 0 14px; font-size: 15px; line-height: 1.6; }
+th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { color: var(--gold); font-weight: 700; background: var(--panel2); white-space: nowrap; }
+td:first-child { white-space: nowrap; }
+tbody tr:nth-child(odd) td { background: rgba(255, 255, 255, 0.018); }
+i { font-style: normal; color: var(--dim); font-size: 0.9em; letter-spacing: 0.02em; }
+.pill { display: inline-block; padding: 0 7px; border-radius: 3px; font-size: 13px; font-weight: 700; line-height: 1.7;
+  background: #2a0b10; color: #ffb3bc; border: 1px solid #5a1a24; }
+.pill.s { background: #0f1a26; color: #b9d5f0; border-color: #28415c; }
+.pill.g { background: #241d0b; color: var(--gold); border-color: #5a4a1a; }
+/* characters: collapsible */
+section.char { margin: 14px 0; }
+section.char details { border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+section.char summary { list-style: none; cursor: pointer; padding: 12px 16px; display: flex; flex-wrap: wrap;
+  align-items: baseline; gap: 4px 14px; border-left: 5px solid var(--blood); border-radius: 6px; }
+section.char summary::-webkit-details-marker { display: none; }
+section.char summary::after { content: "展開 ▾"; margin-left: auto; font-size: 13px; color: var(--dim); }
+section.char details[open] summary::after { content: "收合 ▴"; }
+section.char details[open] summary { border-bottom: 1px solid var(--line); border-radius: 6px 6px 0 0; }
+section.char summary h3 { margin: 0; font-size: 21px; color: var(--title); }
+section.char .tagline { color: var(--dim); font-size: 15px; }
+section.char details > :not(summary) { margin-left: 16px; margin-right: 16px; }
+section.char details > :last-child { margin-bottom: 16px; }
+section.char details > table { width: calc(100% - 32px); }
+table.moves td:nth-child(2) { color: #fff; }
+ul.tips li::marker { color: var(--ember); }
+footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--dim); font-size: 14px; }
+/* phones: tables become stacked cards, never a horizontal scroll */
+@media (max-width: 640px) {
+  body { font-size: 15.5px; }
+  header.hero h1 { font-size: 28px; }
+  h2 { font-size: 22px; }
+  table, tbody, tr, td { display: block; width: auto; }
+  thead { display: none; }
+  tr { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  td { border: 0; padding: 2px 4px; white-space: normal !important; }
+  tbody tr:nth-child(odd) td { background: none; }
+  td:first-child { font-weight: 700; color: var(--gold); }
+  td[data-l]::before { content: attr(data-l) "："; color: var(--dim); font-size: 0.9em; }
+  table.keys td[data-l] { display: inline-block; width: auto; margin-right: 14px; }
+  table.moves tr { display: grid; grid-template-columns: auto 1fr; column-gap: 10px; }
+  table.moves td:nth-child(1) { grid-column: 1; }
+  table.moves td:nth-child(2) { grid-column: 2; font-weight: 700; }
+  table.moves td:nth-child(n+3) { grid-column: 1 / -1; }
+  table.moves td:nth-child(4)::before { content: "要點："; color: var(--ember); font-size: 0.9em; }
+  section.char details > :not(summary) { margin-left: 12px; margin-right: 12px; }
+  section.char details > table { width: auto; }
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="back" href="./">← 返回遊戲</a>
+  <span class="name">SOUL DUEL</span>
+  <button class="toggle" type="button" id="all">角色全部展開</button>
+</div>
+<main>
+<header class="hero">
+  <h1>SOUL DUEL 遊戲說明</h1>
+  <p>1 對 1 的 3D 格鬥遊戲：模式、操作、畫面、規則和五個角色的招式。一部以《BLEACH: Rebirth of Souls》為靈感的非商業同人練習作品，模型、動作和聲音都是程式產生的。</p>
+</header>
+
+<nav class="toc" aria-label="目錄">
+<b>目錄</b>
+<ol>
+  <li><a href="#modes">模式與選單</a>
+    <ol><li><a href="#flow">從標題到對戰</a></li><li><a href="#practice">練習模式 PRACTICE</a></li>
+    <li><a href="#endless">無限連戰 ENDLESS</a></li><li><a href="#settings">設定 SETTINGS</a></li>
+    <li><a href="#orient">直拿與橫拿</a></li></ol></li>
+  <li><a href="#controls">操作</a>
+    <ol><li><a href="#keys">鍵盤與手把</a></li><li><a href="#touch">觸控（單手模式）</a></li><li><a href="#menukeys">選單操作</a></li></ol></li>
+  <li><a href="#hud">畫面與量表</a></li>
+  <li><a href="#rules">核心規則</a>
+    <ol><li><a href="#win">勝負：靈子與魂魄</a></li><li><a href="#strings">J／K 連段</a></li>
+    <li><a href="#triangle">防 &gt; J &gt; I &gt; 防</a></li><li><a href="#guard">防禦與防禦量表</a></li>
+    <li><a href="#move">Step、跑步、Hoho</a></li><li><a href="#kikon">Kikon 與 Soul Break</a></li>
+    <li><a href="#burst">爆氣（三種模式）</a></li><li><a href="#awaken">覺醒</a></li>
+    <li><a href="#kosei">攻勢 KŌSEI</a></li><li><a href="#blow">被連續打太久會被打飛</a></li>
+    <li><a href="#learn">會學習的電腦</a></li></ol></li>
+  <li><a href="#chars">角色</a>
+    <ol><li><a href="#ch-yama">山本元柳齋重國</a></li><li><a href="#ch-ken">更木劍八</a></li>
+    <li><a href="#ch-rukia">朽木露琪亞</a></li><li><a href="#ch-ichigo">黑崎一護</a></li>
+    <li><a href="#ch-senju">修多羅千手丸</a></li></ol></li>
+  <li><a href="#newbie">新手建議</a></li>
+</ol>
+</nav>
+
+<!-- ================================================================ modes -->
+<h2 id="modes">模式與選單 <small>MODES</small></h2>
+
+<h3 id="flow">從標題到對戰</h3>
+<p>標題畫面按任何確定鍵（或點螢幕）進入 <b>MODE</b> 選單：</p>
+<table>
+<thead><tr><th>選項</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>VS CPU</td><td data-l="內容">你對電腦。在觸控手機上直拿時，會自動變成單手操作（看設定的 ONE-HAND）。電腦預設會學習你的習慣（<a href="#learn">會學習的電腦</a>）。</td></tr>
+<tr><td>ENDLESS</td><td data-l="內容">無限連戰：一個人連續打電腦，看能過幾關（<a href="#endless">下方說明</a>）。</td></tr>
+<tr><td>PRACTICE</td><td data-l="內容">練習模式：對假人練習，沒有時間限制、不會結束（<a href="#practice">下方說明</a>）。</td></tr>
+<tr><td>VS PLAYER</td><td data-l="內容">兩個人在同一台電腦對戰：P1 用鍵盤左半邊或 1 號手把，P2 用方向鍵加數字鍵盤或 2 號手把。</td></tr>
+<tr><td>CPU VS CPU</td><td data-l="內容">電腦對電腦，看戲用。</td></tr>
+<tr><td>SETTINGS</td><td data-l="內容">設定：單手模式、慣用手、觸控靈敏度、鏡頭、學習型電腦（<a href="#settings">下方說明</a>）。</td></tr>
+<tr><td>CONTROLS</td><td data-l="內容">按鍵設定：P1、P2 的鍵盤和手把按鍵都可以改，改完自動存檔；在觸控裝置或直式視窗上顯示手勢卡。</td></tr>
+<tr><td>MANUAL</td><td data-l="內容">打開這份說明。按左上角「返回遊戲」回到遊戲。</td></tr>
+</tbody></table>
+<p><b>選角（SELECT）</b>：先選 P1，再選 P2（或電腦的角色），最後選電腦難度 EASY／NORMAL／HARD。可以選同一個角色（P2 會換色）。VS CPU 和 PRACTICE 用兩手操作時，這一頁也能切換鏡頭 CAMERA（上下鍵選列、左右鍵切換）。</p>
+<p><b>對戰</b>：開場演出（可跳過）→「FIGHT!」→ 一場最長 300 秒。一方的魂魄全部被打光就結束（K.O.）；時間到時魂魄多的贏，一樣多就比靈子剩下的比例，再一樣就平手。結算畫面列出雙方的傷害、Kikon 次數、完美 Hoho、最長連段、剩下的魂魄和時間，2.5 秒後可選 REMATCH／CHARACTER SELECT／TITLE。</p>
+<p><b>暫停</b>：<kbd>Esc</kbd>、手把 <kbd>Start</kbd>、單手模式的 II 圓鈕或手機的「返回」手勢。選項有 RESUME／RESTART／CHARACTER SELECT／TITLE（兩手操作的 VS CPU 另有 CAMERA）。視窗失去焦點也會自動暫停。覺醒、Kikon、Soul Break 的演出不能跳過（按暫停只會暫停）；開場和 K.O. 演出可以跳過。</p>
+
+<h3 id="practice">練習模式 PRACTICE</h3>
+<p>一樣先選兩個角色（任何型態都能在對戰中打出來）。假人不會輸：被 K.O. 就直接重來一回合。連段計數（幾下、多少傷害）會一直留在畫面上。暫停選單多了這些選項，點一下或按左右鍵切換：</p>
+<table>
+<thead><tr><th>選項</th><th>值（粗體為預設）</th><th>效果</th></tr></thead>
+<tbody>
+<tr><td>RESET POSITION</td><td data-l="值">—</td><td data-l="效果">兩人回到開場位置、型態回到最初、量表全滿。</td></tr>
+<tr><td>DUMMY</td><td data-l="值"><b>STAND</b>／GUARD ALL／GUARD AFTER HIT／CPU</td><td data-l="效果">站著不動／全部防禦／被打中第一下之後才開始防（用來確認連段是不是真的連得上）／交給電腦（用選角時的難度）。</td></tr>
+<tr><td>HP REFILL</td><td data-l="值"><b>AUTO</b>／OFF</td><td data-l="效果">AUTO：連段結束後假人的靈子回到設定值；OFF：不補，可以打到紅血練 Kikon。</td></tr>
+<tr><td>GAUGES</td><td data-l="值"><b>NORMAL</b>／INFINITE</td><td data-l="效果">INFINITE：自己的靈子維持設定值，防禦量表、靈壓、瞬步、覺醒量表一直是滿的，SP 和覺醒隨便試。爆氣時瞬步量表照樣會燒到 0、爆氣結束後才回滿。</td></tr>
+<tr><td>P1 HP／DUMMY HP</td><td data-l="值"><b>100%</b>／75／50／25／10%</td><td data-l="效果">自己／假人的靈子。25% 就是紅血。</td></tr>
+<tr><td>P1 KONPAKU／DUMMY KONPAKU</td><td data-l="值">1～<b>9</b></td><td data-l="效果">自己／假人的魂魄數。把 P1 KONPAKU 調到 4 以下，就能試劍八的卍解。</td></tr>
+</tbody></table>
+
+<h3 id="endless">無限連戰 ENDLESS</h3>
+<ul>
+<li><b>開始</b>：只有 P1 選角色，再選 START 難度（EASY／NORMAL／HARD）當起點。選角畫面右邊站的就是第一關的對手。</li>
+<li><b>每一關</b>打贏（K.O. 或時間到時領先）之後是 STAGE CLEAR 畫面：這一關和整輪的時間、魂魄變化、下一關的對手和難度。選 <b>CONTINUE</b> 繼續；已經覺醒時可選 <b>REVERT</b>：回到覺醒前的型態，但覺醒量表是滿的，開場就能再按 P 覺醒一次；<b>QUIT</b> 結束這一輪。畫面出現 1 秒後才接受輸入。</li>
+<li><b>帶到下一關</b>：靈子和防禦量表回滿，魂魄 +2（最多 9），靈壓和瞬步照舊，還沒覺醒時覺醒量表也照舊。維持覺醒時：山本的卍解回到「東」（獄炎是限時型態，過關就結束）；劍八不管在哪一杯、卍解或片腕，都從野晒第 1 杯開始；露琪亞回到 −18 °C。劍八的卍解每一關都能開一次，代價也跟著走。</li>
+<li><b>對手越來越強</b>：對手從打亂的名單裡抽，每一輪每個角色各出現一次、不會連續兩關同一人。電腦每兩關升一級難度到 HARD；第 5 關起對手開場帶半條覺醒量表、第 7 關起是滿的、第 9 關起一開場就已覺醒；第 9 關起對手靈子 +10%，第 12 關起 +20%，之後不再變強。</li>
+<li><b>紀錄</b>：比過了幾關，一樣時比總時間。每個角色各存一筆最佳紀錄（存在瀏覽器裡），每過一關就寫一次。暫停選單只有 RESUME 和 RETIRE（放棄，直接看結算）。</li>
+</ul>
+
+<h3 id="settings">設定 SETTINGS</h3>
+<p>每一列點一下（或按左右鍵、確定鍵）就換到下一個值，立刻生效，並存在瀏覽器裡（無痕模式存不了時用預設值）。選到某一列時，下方那行字會說明它的作用。</p>
+<table>
+<thead><tr><th>設定</th><th>值（粗體為預設）</th><th>意思</th></tr></thead>
+<tbody>
+<tr><td>ONE-HAND</td><td data-l="值"><b>AUTO</b>／ON／OFF</td><td data-l="意思">單手模式。AUTO：觸控手機直拿時才開；ON：直式視窗或觸控裝置都開（電腦的橫式視窗不會）；OFF：永遠用鍵盤／手把操作。下方會顯示「在這台裝置上現在是開還是關」。</td></tr>
+<tr><td>HAND</td><td data-l="值"><b>RIGHT</b>／LEFT</td><td data-l="意思">按鈕區在哪一邊（左手時左右鏡像）。</td></tr>
+<tr><td>TAP SPLIT</td><td data-l="值">40／45／<b>50</b>／55／60%</td><td data-l="意思">手勢區上方多少比例算 K。常誤觸 K 就調小。</td></tr>
+<tr><td>SENSITIVITY</td><td data-l="值">1～5，預設 <b>3</b></td><td data-l="意思">撥動要劃多遠才算撥；數字越大，越短就觸發。</td></tr>
+<tr><td>CAMERA</td><td data-l="值"><b>BEHIND</b>／SIDE</td><td data-l="意思">兩手操作 VS CPU／PRACTICE 的鏡頭：角色背後，或側面雙人鏡頭。單手時一律是直拿專用的背後鏡頭。</td></tr>
+<tr><td>LEARNING CPU</td><td data-l="值"><b>ON</b>／OFF</td><td data-l="意思">VS CPU 和 ENDLESS 的電腦會不會學你的習慣。</td></tr>
+<tr><td>PERFECT HINT</td><td data-l="值"><b>OFF</b>／ON</td><td data-l="意思">完美 Hoho 提示：開啟後，現在 Hoho 就會是完美 Hoho 的那一刻，你的角色頭上會亮出藍白色的 <b>HOHO!</b>（站著、防禦或跑步中，瞬步量表夠用時）。</td></tr>
+<tr><td>AUTO GUARD</td><td data-l="值"><b>OFF</b>／HOLD U／ALWAYS</td><td data-l="意思">自動防禦：對手的攻擊快打到你時，替你出架招（有架招的型態，例如一護 KESSA 的 L、山本 Bankai West 的 GOKUI GAESHI），沒有架招就 Hoho 閃開。HOLD U：按住 U 時才幫你；ALWAYS：只要沒在出招就幫你。自動的 Hoho 不算完美（沒有反擊、慢動作和瞬步回補）。</td></tr>
+<tr><td>AUTO COMBO</td><td data-l="值"><b>OFF</b>／ON</td><td data-l="意思">自動連段：J 或 K 打中後再按 J，下一招由電腦挑（K 段、L、SP2、ORANGE；第三段打中紅血的對手時接 O 變 Kikon）。電腦挑 J 時就照你的 J 出。空檔按 J 時，對手倒地就替你放蓄滿的 SP1 追擊，對手暈眩就放角色的 SP 追擊。開著任何一項輔助時，電腦也會記住每個對手的出招習慣：空檔按 J 時，改出剋制他下一步的招；預測他會爆氣時，打兩段就收手防禦，讓他的爆氣落空。</td></tr>
+<tr><td>AUTO BREAK</td><td data-l="值"><b>OFF</b>／ON</td><td data-l="意思">自動破防：對手在 3 公尺內一直防禦（0.4 秒以上）時，你按 J 會變成 Breaker。</td></tr>
+<tr><td>RESET LEARNING</td><td data-l="值">—</td><td data-l="意思">讓每個電腦角色忘掉學到的東西（畫面會顯示 DONE）。</td></tr>
+</tbody></table>
+
+<h3 id="orient">直拿與橫拿</h3>
+<ul>
+<li><b>橫拿（電腦、平板橫放）</b>：量表在上方，P1 在左、P2 在右。VS CPU 預設是角色背後的鏡頭，VS PLAYER 和 CPU VS CPU 是側面雙人鏡頭。</li>
+<li><b>直拿（手機）</b>：對手的量表在最上方，自己的在最下方；鏡頭是直拿專用的背後視角，兩人拉開時自動拉廣。單手模式時，右半邊是按鈕、下半部的大框是手勢區（<a href="#touch">觸控操作</a>）。選單、選角和結算畫面也重新排過。</li>
+<li>單手模式對戰中把手機轉成橫的會暫停，並顯示 ROTATE TO PORTRAIT。</li>
+<li>可以把遊戲「加到主畫面」當成 App 開（Android Chrome：選單 →「安裝應用程式」；iPhone Safari：分享 →「加入主畫面」）。裝好後沒有網路也能開，這份說明也一樣。</li>
+</ul>
+
+<!-- ================================================================ controls -->
+<h2 id="controls">操作 <small>CONTROLS</small></h2>
+<p>移動是相對於對手的：往前（<kbd>W</kbd>、搖桿往上）就是朝對手，左右是繞著對手走。沒有跳躍。按鍵有 10 幀（約 0.17 秒）的緩衝，稍微早按也算。</p>
+
+<h3 id="keys">鍵盤與手把</h3>
+<p>下表是預設按鍵。在 MODE 選單的 <b>CONTROLS</b> 可以自訂：上下選動作、左右選欄位（P1 鍵盤、P1 手把、P2 鍵盤、P2 手把），按 <kbd>Enter</kbd> 後按下新的鍵或手把按鈕就完成，<kbd>Esc</kbd>／<kbd>Start</kbd> 取消。新按鍵如果已經被別的動作用了，兩個動作會互換（鍵盤在 P1、P2 之間也會互換，手把只在同一個玩家的手把內）。設定會自動存在瀏覽器裡，<b>RESET DEFAULTS</b> 恢復預設。SP、Hoho、爆氣這些組合鍵跟著改：例如把 J 改到 <kbd>H</kbd>，爆氣就變成 <kbd>Shift</kbd>+<kbd>H</kbd>，畫面上的提示也會跟著變。選單本身的操作（<kbd>Enter</kbd>／<kbd>J</kbd> 確定、<kbd>Esc</kbd>／<kbd>K</kbd> 返回、<kbd>Esc</kbd> 暫停）固定不變。觸控的手勢不在這裡設定。</p>
+<table class="keys">
+<thead><tr><th>動作</th><th>P1 鍵盤</th><th>P2 鍵盤</th><th>手把</th></tr></thead>
+<tbody>
+<tr><td>移動</td><td data-l="P1"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></td><td data-l="P2">方向鍵</td><td data-l="手把">左搖桿／十字鍵</td></tr>
+<tr><td>J 輕攻擊</td><td data-l="P1"><kbd>J</kbd></td><td data-l="P2">數字鍵 <kbd>1</kbd></td><td data-l="手把"><kbd>X</kbd></td></tr>
+<tr><td>K 重攻擊</td><td data-l="P1"><kbd>K</kbd></td><td data-l="P2">數字鍵 <kbd>2</kbd></td><td data-l="手把"><kbd>Y</kbd></td></tr>
+<tr><td>L 招牌技</td><td data-l="P1"><kbd>L</kbd></td><td data-l="P2">數字鍵 <kbd>3</kbd></td><td data-l="手把"><kbd>B</kbd></td></tr>
+<tr><td>U 防禦（按住）</td><td data-l="P1"><kbd>U</kbd></td><td data-l="P2">數字鍵 <kbd>4</kbd></td><td data-l="手把"><kbd>LB</kbd></td></tr>
+<tr><td>I 抓技 Breaker（按住衝得更遠）</td><td data-l="P1"><kbd>I</kbd></td><td data-l="P2">數字鍵 <kbd>5</kbd></td><td data-l="手把"><kbd>RB</kbd></td></tr>
+<tr><td>O Kikon 突進（按住＝Kikon）</td><td data-l="P1"><kbd>O</kbd></td><td data-l="P2">數字鍵 <kbd>6</kbd></td><td data-l="手把"><kbd>RT</kbd></td></tr>
+<tr><td>Step（按住＝跑）</td><td data-l="P1"><kbd>Space</kbd></td><td data-l="P2">數字鍵 <kbd>0</kbd></td><td data-l="手把"><kbd>A</kbd></td></tr>
+<tr><td>靈壓修飾鍵（按住）</td><td data-l="P1">左 <kbd>Shift</kbd></td><td data-l="P2">數字鍵 <kbd>Enter</kbd></td><td data-l="手把"><kbd>LT</kbd></td></tr>
+<tr><td>SP1</td><td data-l="P1"><kbd>Shift</kbd>+<kbd>K</kbd></td><td data-l="P2"><kbd>Enter</kbd>+<kbd>2</kbd></td><td data-l="手把"><kbd>LT</kbd>+<kbd>Y</kbd></td></tr>
+<tr><td>SP2</td><td data-l="P1"><kbd>Shift</kbd>+<kbd>L</kbd></td><td data-l="P2"><kbd>Enter</kbd>+<kbd>3</kbd></td><td data-l="手把"><kbd>LT</kbd>+<kbd>B</kbd></td></tr>
+<tr><td>Hoho（瞬步繞背）</td><td data-l="P1"><kbd>Shift</kbd>+<kbd>Space</kbd></td><td data-l="P2"><kbd>Enter</kbd>+<kbd>0</kbd></td><td data-l="手把"><kbd>LT</kbd>+<kbd>A</kbd></td></tr>
+<tr><td>爆氣（白／藍／橙，依狀態自動決定）</td><td data-l="P1"><kbd>Shift</kbd>+<kbd>J</kbd></td><td data-l="P2"><kbd>Enter</kbd>+<kbd>1</kbd></td><td data-l="手把"><kbd>LT</kbd>+<kbd>X</kbd></td></tr>
+<tr><td>覺醒</td><td data-l="P1"><kbd>P</kbd></td><td data-l="P2">數字鍵 <kbd>+</kbd></td><td data-l="手把"><kbd>Back</kbd>，或 <kbd>LS</kbd>+<kbd>RS</kbd> 同按</td></tr>
+<tr><td>暫停</td><td data-l="P1"><kbd>Esc</kbd></td><td data-l="P2"><kbd>Esc</kbd></td><td data-l="手把"><kbd>Start</kbd></td></tr>
+</tbody></table>
+<p class="note">同時按下好幾個鍵時，優先順序是：Kikon → 覺醒 → Hoho → 爆氣 → Step → 抓技 → SP2 → SP1 → L → K → J。所以亂按 J+K 會出 K；按了但條件不夠（例如靈壓不足）的指令不會擋住下面的指令。</p>
+
+<h3 id="touch">觸控（單手模式）</h3>
+<p>手機直拿時用一根拇指玩。預設右手：畫面右側是圓鈕，下半部的大框是手勢區。手勢區中間有一條淡淡的分隔線，邊上標著 F（上）和 Q（下）。按在圓鈕上才算按圓鈕。</p>
+<table>
+<thead><tr><th>手勢</th><th>效果（對應鍵盤）</th></tr></thead>
+<tbody>
+<tr><td>點手勢區下半塊</td><td data-l="效果">J 輕攻擊（剛好點在線上也算下半）</td></tr>
+<tr><td>點手勢區上半塊</td><td data-l="效果">K 重攻擊。連段就是連點：JJK 是下、下、上</td></tr>
+<tr><td>按著不動約 0.12 秒</td><td data-l="效果">防禦 U（拇指放著就是在防禦）</td></tr>
+<tr><td>拖曳</td><td data-l="效果">移動，往上是朝對手；拖遠一點就變成跑</td></tr>
+<tr><td>往上撥</td><td data-l="效果">向前衝刺（往前的 Step），手指繼續往前推就接著跑。<b>攻擊中往上撥是 Hoho</b>（不用先按住）：自己的 J／K 打中後就是 Hoho 取消。<b>對手的攻擊正好要打到你（完美 Hoho 的時機）時往上撥，會自動變成 Hoho</b>，不用先按住，就是完美 Hoho</td></tr>
+<tr><td>往下、左、右快速撥</td><td data-l="效果">Step：往下是後退、左右是側步</td></tr>
+<tr><td>先按著不動，再往上撥</td><td data-l="效果">Hoho（站著或防禦時；攻擊中直接往上撥就是 Hoho）</td></tr>
+<tr><td>被打中、硬直或浮空時往下撥</td><td data-l="效果">藍色爆氣 BURST REVERSE</td></tr>
+<tr><td>自己的招式打中對手後往下撥</td><td data-l="效果">橙色爆氣 CHAIN REVERSE</td></tr>
+<tr><td>O 圓鈕</td><td data-l="效果">Kikon 突進（按住＝Kikon；連段第三段打中後按＝O 收尾）</td></tr>
+<tr><td>L、I、SP1、SP2 圓鈕</td><td data-l="效果">招牌技、抓技、SP1、SP2</td></tr>
+<tr><td>RV 圓鈕（O 的上方）</td><td data-l="效果">爆氣：任何模式都行（可以爆氣時才出現）。站著、走路、防禦中按是白色爆氣</td></tr>
+<tr><td>AWK 圓鈕</td><td data-l="效果">覺醒（EVOLUTION 時才出現，按住 0.3 秒）</td></tr>
+<tr><td>II 圓鈕、手機「返回」</td><td data-l="效果">暫停</td></tr>
+</tbody></table>
+<p>拇指圈外面有些角色的專屬標記：露琪亞的冷度白弧、一護血鎖的三個紅點（分身）、千手丸的針數或織布趟數。</p>
+
+<h3 id="menukeys">選單操作</h3>
+<ul>
+<li>移動游標：<kbd>W</kbd>／<kbd>S</kbd>、方向鍵、十字鍵。改選項：<kbd>A</kbd>／<kbd>D</kbd>、左右方向鍵。</li>
+<li>確定：<kbd>Enter</kbd>、<kbd>J</kbd>、數字鍵 <kbd>1</kbd> 或 <kbd>Enter</kbd>、手把 <kbd>A</kbd>。返回：<kbd>Esc</kbd>、<kbd>K</kbd>、數字鍵 <kbd>2</kbd>、手把 <kbd>B</kbd>、手機「返回」。</li>
+<li>觸控：直接點選項。選角畫面點左邊三分之一換上一個、右邊三分之一換下一個、中間確定。</li>
+</ul>
+
+<!-- ================================================================ HUD -->
+<h2 id="hud">畫面與量表 <small>HUD</small></h2>
+<p>橫拿時自己（P1）的量表在左上、對手在右上；直拿時對手在最上方、自己在最下方，最後一行是四個小量表（靈壓、瞬步、覺醒、角色量表），和血條一樣長。</p>
+<table>
+<thead><tr><th>量表</th><th>怎麼看</th></tr></thead>
+<tbody>
+<tr><td>靈子 <i>REISHI</i></td><td data-l="怎麼看">就是血量，每人 1300。低於 30% 時變紅並跳動，這就是「紅血」：對手的 Kikon 可以直接取走你的魂魄。白色殘影是剛受到的傷害。</td></tr>
+<tr><td>魂魄 <i>KONPAKU</i></td><td data-l="怎麼看">名字旁的 9 團魂火，就是命數，被打光就輸。<b>最後幾團深紅色的</b>代表「對手的 Kikon 現在打中的話會被削掉幾顆」；自己紅血時它們會閃，提醒你危險。</td></tr>
+<tr><td>防禦量表</td><td data-l="怎麼看">靈子條正下方的鋼色條。擋下攻擊會扣，扣光就 GUARD CRUSH（見<a href="#guard">防禦</a>）。防禦中顏色變暗 30%，代表這時不會回復；被對手的連段鎖在防禦裡時，條的外框會閃藍光（見<a href="#guard">防禦</a>）；破防後變灰，紅色慢慢爬回，回滿時顯示 GUARD。</td></tr>
+<tr><td>靈壓 <i>REIATSU</i></td><td data-l="怎麼看">3 格，只用來出 SP1／SP2（各 1 格；覺醒型態的 SP2 要 2 格）。每秒自動回一點，造成或受到傷害、攻勢也會加。</td></tr>
+<tr><td>瞬步 <i>FLASH STEP</i></td><td data-l="怎麼看">鋼藍色的條，Hoho 花 30，爆氣要 70 以上才能開（30 和 70 有刻度）。超過 70 的部分用「現在按會開的那種爆氣」的顏色發光。爆氣中整條變成白／藍／橙色並一路往下掉，掉到 0 爆氣結束。平常用完 1 秒後每秒回 3，受傷也會回，完美 Hoho 退回 15（爆氣中這些都不會回）。</td></tr>
+<tr><td>覺醒 <i>AWAKEN</i></td><td data-l="怎麼看">造成傷害、受到傷害、失去魂魄（每顆 +10.5）都會累積（每造成 1 點傷害 +0.035、每受到 1 點 +0.049，大約要打到比賽的三分之一以上才會滿）。滿了會閃 <b>EVOLUTION</b>，角色身上出現淡淡的光，這時按 <kbd>P</kbd> 覺醒。覺醒後這裡顯示型態名稱。</td></tr>
+<tr><td>角色量表</td><td data-l="怎麼看">各角色自己的：山本的 INFERNO（獄炎）與卍解後 L 的 COOLDOWN、劍八的 NOME（呑め）與卍解的腕 UDE、露琪亞覺醒後的冷度量表、一護血鎖的分身、千手丸的針 HARI／機 HATA。看<a href="#chars">各角色</a>。</td></tr>
+<tr><td>標籤</td><td data-l="怎麼看">名字旁可能出現 EVOLUTION、U 的特殊效果（U: WEST、WARD、U: DRINK、U: COOL……），以及「攻 ×n」（<a href="#kosei">攻勢</a>倍率 1.5 以上時出現）。</td></tr>
+<tr><td>計時器與連段數</td><td data-l="怎麼看">上方中間是剩餘秒數（300 秒）。被打的一方量表下會顯示「5 HITS 212」：這套連段打了幾下、多少傷害。ENDLESS 另外顯示 STAGE n。</td></tr>
+</tbody></table>
+<p><b>畫面上的提示</b>：對手紅血時出現 <span class="pill">HOLD O KIKON</span>（按住 O 就能取魂）；你被連段、可以脫身時出現 <span class="pill s">SHIFT+J BURST</span>，自己的招式打中、可以用橙色爆氣接下去時出現 SHIFT+J CHAIN；劍八能開卍解時閃 <span class="pill g">P BANKAI</span>。大字：COUNTER（反擊命中，傷害 ×1.25）、GUARD BREAK（被抓技破防）、GUARD CRUSH（防禦量表被打光）、CLASH（兩個抓技撞在一起）、PERFECT（完美 Hoho）、SOUL REVERSE／BURST REVERSE／CHAIN REVERSE（三種爆氣，字的顏色就是爆氣的顏色）、KIKON／GUARD IT!（Kikon 追擊衝過來，趕快防）、PARRY（招架成功）。</p>
+
+<!-- ================================================================ rules -->
+<h2 id="rules">核心規則 <small>RULES</small></h2>
+
+<h3 id="win">勝負：靈子與魂魄</h3>
+<ul>
+<li>每人有 <b>靈子</b>（血，1300）和 <b>9 顆魂魄</b>（命）。魂魄歸零就輸。</li>
+<li>一般攻擊只扣靈子。<b>要削魂魄只有兩種方法</b>：Kikon，或把靈子打到 0 的 Soul Break（<a href="#kikon">下方</a>）。</li>
+<li>削掉魂魄之後，被削的一方靈子補滿，兩人拉開 8 公尺重新站好（約 0.8 秒不能動），防禦量表回滿；其他量表和型態照舊。</li>
+<li>防禦時，飛行道具和火焰等少數攻擊會削一點靈子（削血），但削血不會打死人。</li>
+</ul>
+
+<h3 id="strings">J／K 連段</h3>
+<ul>
+<li><b>J 是輕攻擊</b>：短、快、傷害低，貼身用。<b>K 是重攻擊</b>：長、慢、傷害高，出手時沒有霸體。兩人同時出手時 J 會先打到。</li>
+<li>連段<b>最多三段</b>，每一段是 J 或 K，<b>J／K 之間最多只能換一次</b>，所以完整路線只有 <b>JJJ、JJK、JKK、KKK、KKJ、KJJ</b>。換過鍵之後再按原來的鍵會被吃掉（例如 J K J 只會出到第二段）。</li>
+<li><b>貼身與推開</b>：連段的第一段（J1 或 K1）<b>打中</b>時，攻擊方會衝到對手面前，讓後面幾段打得到；被擋或揮空就不會靠近，後面幾段也不會往前追，可能打不到。J3／K3 一打中，對手就被推到你 J1（J3）或 K1（K3）的攻擊範圍外一點點，重開連段得先走過去；從 J3／K3 接出去的 O 收尾、L、SP2、橙色爆氣重開會自動追上去。對手卡在場邊推不動時，改把攻擊方推開。</li>
+<li>下一段可以在前一段的<b>任何時候先按</b>（以最後一次按的為準），招式碰到對手的那一刻才接出來。</li>
+<li><b>第一段揮空就停在那一刀</b>，還會多吃一點硬直（K 比 J 更久）。只要這一串<b>有任何一段碰到對手</b>（打中或被擋都算），之後按的每一段都會出，而且會自動往對手靠近；但對手照樣可以防禦、閃避。</li>
+<li><b>被擋之後</b>：J 的破綻很小；K 的第三段破綻很大，會被對手的 J 反擊。SP 和大部分招牌技被擋也會被反擊。</li>
+<li><b>O 收尾</b>：第三段<b>打中</b>之後按 <kbd>O</kbd>，直接出 Kikon 突進的斬擊（不用瞄準），一定接得上；按著不放就是 Kikon（對手紅血時）。第三段被擋、揮空、只打兩段，或單發招式、SP、抓技之後，都不能接 O。</li>
+<li><b>取消</b>：J／K 打中時，可以用 Hoho、SP1、SP2 取消接下去（有些角色的 L 也可以）。</li>
+<li><b>防禦取消</b>：任何招式<b>打中</b>對手後，收招的後半段按住 <kbd>U</kbd> 就直接轉成防禦，少吃一半的破綻，打中之後不會反而被反擊。取消後到原本收招結束前不能出攻擊招（這段時間按的招會在結束時才出），所以不能拿來加快重開連段；Hoho、側步可以（揮空不行；被擋的話只有 J 可以；飛行道具和場地效果不算自己打中）。</li>
+<li><b>J 與防禦的切換</b>：被擋下的 J，防禦方的格擋硬直少 3 幀，連段打完或對方停手時，你可以先出 J 反擊；攻擊方的 J 被擋也能在收招後半段按住 <kbd>U</kbd> 轉成防禦。單純連打 J 不容易打破防禦，電腦也會趁對方的 J 還在收招時出 J 反擊；發現對手一直連打 J 時，電腦更常這樣反擊，也更常用 Hoho 閃到背後；被 J 打中、硬直結束時，會先按住防禦（或閃開）再說，不會站著再吃一輪。開著 AUTO GUARD 時，擋下對手的 J、對方還在收招，也會自動替你出 J 反擊。連段中間仍然會被防禦鎖鎖住。手機單手模式出招後拇指停在螢幕上就是防禦，不用額外手勢。</li>
+<li><b>K 接 L</b>：露琪亞、一護、千手丸的 K 任一段碰到對手時按 <kbd>L</kbd>，L 會像下一段一樣排進去，在那一下結束時接出來（打中的話就是一套連段）。千手丸的卍解還有 J 接 L。詳見各角色。</li>
+<li><b>連段傷害衰減</b>：一套連段前 3 下是全傷害，之後每下少 10%，最低 40%；一套連段只能打浮空一次、空中最多 3 下；沒有「第幾下強制倒地」，連段太長時由隱藏的受擊值把人打飛（自己開<b>橙色爆氣</b>期間，對手不會被打飛）。</li>
+</ul>
+
+<h3 id="triangle">防 &gt; J &gt; I &gt; 防</h3>
+<p>遊戲的基本剋制循環：</p>
+<ul>
+<li><b>防禦擋住 J</b>（和所有一般攻擊）。</li>
+<li><b>J 打抓技</b>：抓技 <kbd>I</kbd>（Breaker）衝過來時身上沒有霸體，被任何攻擊打到都是 COUNTER；而抓技只抓得到 0.7 公尺，比每個角色的 J 都短，所以看到對方衝過來就按 J。</li>
+<li><b>抓技破防</b>：抓到防禦中的對手是 <b>GUARD BREAK</b>，對手硬直很久、防禦量表扣 35，你可以接連段。抓到沒在防禦的對手是 150 傷害，對手原地踉蹌。<b>抓技是連段的起手式</b>：抓中或破防之後馬上按 <kbd>J</kbd> 或 <kbd>K</kbd>，會取消成 J1／K1 並追上去，接著照常打完整套連段、再用 O 收尾。</li>
+</ul>
+<p>抓技的用法：按住 <kbd>I</kbd>，身上先亮粉紅光（約 0.2 秒），接著朝對手衝，按越久衝越遠，貼近到約 1 公尺才出手。衝刺轉身很慢，所以側步可以閃過。兩人的抓技撞在一起是 CLASH：兩邊彈開、沒有傷害。劍八始解的 L 架勢被抓技打到也會被破。</p>
+
+<h3 id="guard">防禦與防禦量表</h3>
+<ul>
+<li>按住 <kbd>U</kbd> 防禦，擋正面約 200 度；背後被打照樣中。擋下攻擊會被推開一點、有防禦硬直。</li>
+<li>每擋下一次就扣防禦量表（輕攻擊少、重攻擊和 SP 多）。<b>防禦中量表不會回復</b>；放開防禦、而且 1 秒沒被削之後才每秒回 5.5，從空到滿大約 18 秒。</li>
+<li><b>擋下之後會被鎖住</b>：只要對手這一招還能接下一招（J／K 的下一段、接在連段後的 L、打中時的取消、還能開的橙色爆氣），防禦硬直結束後你也<b>繼續維持防禦、不能動</b>，直到他接不下去為止（他真的接了，就一路鎖到那一招）。所以一整串連段擋完之前不能插嘴；連段最後一段或接不下去的招式照樣有破綻可以反擊。鎖住時防禦量表的外框閃藍光，唯一的脫身方法是<b>藍色爆氣</b>（覺醒也行）。飛行道具、火焰等不算，不會把你鎖住。</li>
+<li>量表扣光時那一下還是擋得住，但接著是 <b>GUARD CRUSH</b>：踉蹌約 0.7 秒，而且量表回滿之前<b>完全不能防禦</b>（條變灰，紅色慢慢爬回）。</li>
+<li>少數型態的 U 不是普通防禦：山本卍解「東」按 U 會切到「西」、劍八野晒第三杯是「呑」、露琪亞絕對零度是「撐住」。看各角色。</li>
+</ul>
+
+<h3 id="move">Step、跑步、Hoho</h3>
+<ul>
+<li><b>Step</b>（點 <kbd>Space</kbd>）：往搖桿方向跳 2.5 公尺（不推方向是往後），跳的前半段無敵，可以閃過攻擊。跳完落地後（第 12 幀起）按 <kbd>J</kbd> 會直接取消剩下的後搖、出 J1；跳的途中先按 J 也行，落地就出。往前 Step 再接 J 可以快速貼近。電腦也會這樣用：在差一步的距離往前 Step 接 J，閃開之後對手若在 J 的範圍內也會馬上接 J；抓技抓中後也會直接接連段。</li>
+<li><b>跑步</b>（按住 <kbd>Space</kbd>）：跳完之後接著跑，跑的時候一直面向對手（往前衝、側滑、倒退都可以）。跑步中可以直接出任何招，招式會順勢往前滑 1 公尺；放開就煞車。跑步沒有無敵。</li>
+<li><b>Hoho</b>（<kbd>Shift</kbd>+<kbd>Space</kbd>，瞬步 30）：消失，出現在對手背後 1.6 公尺並面向他，出招的大部分時間無敵。兩次 Hoho 之間要隔 1 秒；防禦硬直和被打的硬直中不能用。J／K 打中時也可以用 Hoho 取消。</li>
+<li><b>完美 Hoho</b>：在對手的攻擊（或抓技、Kikon 突進）正要打到你時（打到前約 0.2 秒內，或攻擊正在判定中）Hoho，會顯示 <b>PERFECT</b>：短暫慢動作、對手約 0.7 秒不能動，Hoho 結束時自動反擊（60 傷害），還退回 15 瞬步。抓不到時機的話，可以在 SETTINGS 打開 <b>PERFECT HINT</b>，時機到時角色頭上會出現 <b>HOHO!</b>。</li>
+<li><b>輔助（AUTO GUARD／AUTO COMBO／AUTO BREAK）</b>：在 SETTINGS 打開後，電腦會照自己的判斷替你架招或 Hoho、接連段、破防，每次幫你按時角色腳邊會出現 <b>AUTO</b>。代價是電腦替你出的招只有 <b>0.8 倍傷害</b>，自動 Hoho 也不會是完美 Hoho，所以自己打出來還是比較划算。三項預設都是 OFF。</li>
+</ul>
+
+<h3 id="kikon">Kikon 與 Soul Break</h3>
+<p><b>Kikon（鬼魂技）</b>是削魂魄的主要手段。每個角色（每個型態）的 <kbd>O</kbd> 都有自己的突進方式，任何時候都能按（冷卻 1.5 秒）：</p>
+<ol>
+<li>按 <kbd>O</kbd>：角色瞄準、衝向對手、出一刀（有的角色不衝，是遠距離的火牆或冰牆）。這一刀<b>一定可以被防禦、閃避</b>，被擋就什麼都沒有（而且你有破綻）。</li>
+<li>砍中的那一刻 <kbd>O</kbd> <b>還按著</b>：對手被擊退 2.5 公尺、踉蹌，你追著衝上去再砍一刀，這一刀打中就是 Kikon，播放角色的鬼魂技演出。
+  <ul>
+  <li><b>對手紅血</b>（靈子低於 30%）：他一直踉蹌到你砍到為止，這一刀<b>不能防</b>，除非他開藍色爆氣或你被打斷，就是確定的 Kikon。</li>
+  <li><b>對手沒紅血</b>：他在你衝過來時已經可以動（畫面會出現 KIKON／GUARD IT!），按住防禦就擋得下，也可以 Step 或 Hoho 閃開。</li>
+  </ul></li>
+<li>砍中之前就放開 <kbd>O</kbd>：只是一般的一刀（70 傷害加擊退）。</li>
+</ol>
+<p>Kikon 削掉的魂魄數看<b>攻擊方當下的型態</b>：一般型態 2 顆，覺醒型態 3 顆，少數型態更多（劍八野晒第三杯和卍解 4 顆、一護的千影看分身數）。一次 Kikon 最多削 4 顆，剩下的比這少就全削光。魂魄上紅色的那幾顆就是這個數字。</p>
+<p><b>Soul Break（魂碎）</b>：把對手的靈子打到 0，就會自動削魂魄，數量是「攻擊方當下型態的 Kikon 數 + 1」（最多 5 顆；一護血鎖看打出時的分身數，見下方），並播放攻擊方的鬼魂技演出（一護血鎖有專屬的魂碎演出）。互砍同時把對方打到 0 時，兩邊都會碎；兩邊的魂魄同時用完就是平手。攻擊方和 Kikon 打中一樣拿回一格瞬步（35）和一格靈壓（100）。</p>
+
+<h3 id="burst">爆氣（Shift+J，三種模式）</h3>
+<p>同一個按鍵 <kbd>Shift</kbd>+<kbd>J</kbd>，<b>按下去那一刻你在做什麼</b>決定是哪一種（參考 BLEACH Rebirth of Souls 的 Reverse Action）。三種都要瞬步量表 <b>70 以上</b>（兩格）才能開，開的時候不扣量表；開了之後瞬步量表每秒掉 18，掉到 0 就結束（從 70 開大約 3.9 秒，滿的 100 大約 5.6 秒）。</p>
+<table>
+<thead><tr><th>模式</th><th>什麼時候</th><th>效果</th></tr></thead>
+<tbody>
+<tr><td>白色 <i>SOUL REVERSE</i></td><td data-l="什麼時候">站著、走路、跑步、防禦中（沒有在防禦硬直）</td><td data-l="效果">爆氣期間靈子每秒回 70（會自己回血，滿量表約 5.6 秒可回約 3 成）、靈壓每秒多回 15、覺醒量表每秒回 1.4。防禦量表不會回比較快。</td></tr>
+<tr><td>藍色 <i>BURST REVERSE</i></td><td data-l="什麼時候">被一套連段打到第 2 下之後的硬直或浮空；或是防禦硬直中（擋下任何一下都行）</td><td data-l="效果">你立刻恢復自由、落地，約 0.3 秒無敵；對手的招式（或 Hoho、Step、跑步）被打斷、被推開 5 公尺，並且<b>立刻得到一格 SP（靈壓）</b>。被對手的連段<b>鎖在防禦裡時也能開</b>，這是脫離鎖定的唯一方法（覺醒除外）。爆氣期間防禦量表不用等就開始回：沒在防禦時是平常的 2 倍，<b>連防禦中也會以平常一半的速度回</b>。</td></tr>
+<tr><td>橙色 <i>CHAIN REVERSE</i></td><td data-l="什麼時候">自己的 J／K 等招式<b>打中</b>對手之後、到那一招收招結束前（被擋、揮空不行）；自己的 <b>L 或 O</b> 讓對手進入被打或防禦硬直時（被擋也可以）；或對手正被你的<b>分身或場上攻擊物打中</b>時，不管你自己有沒有在出招、有沒有打中（例如一護卍解按 J／K，自己揮空但分身打中）</td><td data-l="效果">收招馬上取消。接下來 12 格（0.2 秒）內出的第一招，出招前搖縮短 40%，而且什麼招都能接：J／K 連段從頭再來、L、SP、抓技、O。爆氣期間打中得到的靈壓和覺醒量表 ×1.5。連段傷害遞減照樣算；爆氣期間對手不會被隱藏受擊值打飛，但閃步量表燒完爆氣就結束，所以不會無限連。</td></tr>
+</tbody></table>
+<ul>
+<li><b>爆氣期間瞬步量表完全不會回</b>（不自然回、挨打不回、攻勢不回、完美 Hoho 不退）。但是<b>不滿一格（30）也能 Hoho</b>，只要量表還有剩：Hoho 會把剩下的全花掉，量表到 0 爆氣就結束。</li>
+<li>在 Kikon 突進的那一刀或追擊砍到你之前開藍色爆氣，就能逃掉 Kikon。</li>
+<li><b>Kikon 打中</b>（真的取到魂）<b>或打出 Soul Break</b> 時，攻擊方拿回一格瞬步（35）和一格靈壓（100）。Kikon／Soul Break 後的重新開局會結束雙方的爆氣，所以這些是爆氣結束後才加上去的。</li>
+<li>瞬步最好留著 70 以上，被壓的時候才能開藍色爆氣脫身。</li>
+</ul>
+
+<h3 id="awaken">覺醒</h3>
+<ul>
+<li>覺醒量表滿了（EVOLUTION）按 <kbd>P</kbd>。<b>一場只能覺醒一次</b>（劍八的卍解是唯一的第二次覺醒）。</li>
+<li>能按的時機：站著、走路、防禦、防禦硬直中，<b>以及被連段打到第 2 下之後的硬直或浮空</b>（能開藍色爆氣的時候），而且不花瞬步。</li>
+<li><b>覺醒的瞬間像藍色爆氣一樣打斷對手</b>：他的招式中斷、被推開 5 公尺，你短暫無敵，接著播放覺醒演出（不能跳過）。所以被壓著打時，覺醒也是一種脫身手段；被對手的連段鎖在防禦裡時也能按，跟藍色爆氣一樣能脫離鎖定。</li>
+<li><b>覺醒先回兩成血</b>：按下覺醒的那一刻，所有角色都立刻回復最大靈子的 20%（260），接著才是下面的持續回復。</li>
+<li><b>覺醒後的回復</b>：演出結束後約 5.6 秒（和閃步量表全滿時的爆氣一樣久），得到和白色爆氣一樣的量表回復（靈子每秒 +70，完整 5.6 秒約回 3 成、靈壓每秒 +15），身上有淡淡的白光。它不花閃步量表，也可以和任何爆氣同時存在。劍八的卍解也有。</li>
+<li>覺醒後大多會換一套招式和特殊規則，Kikon 削 3 顆魂魄。每個角色覺醒後的變化看<a href="#chars">各角色</a>；除了山本的獄炎，覺醒都維持到比賽結束。</li>
+</ul>
+
+<h3 id="kosei">攻勢 KŌSEI</h3>
+<p>鼓勵進攻的獎勵：你自己的<b>近戰攻擊碰到對手</b>（打中、被擋、被架勢吸收都算）就會拿到靈壓和瞬步。<b>你自己的防禦量表越少，拿得越多</b>，最多 3 倍。飛行道具、場上的火焰冰柱等、揮空、Kikon 都不算。倍率到 1.5 以上時，魂魄那一行的右端會顯示「攻 ×n」。</p>
+
+<h3 id="blow">被連續打太久會被打飛</h3>
+<p>每個角色身上有一個<b>看不到的受擊值</b>：每被打中一下就加一點（重的攻擊加得多，被擋不算），停手一小段時間後才慢慢退。超過角色的承受範圍時，那一下會把人<b>打飛約 5 公尺、倒地起身</b>，這套壓制就結束了。所以就算每套連段之間留一點空檔，也不能一直把人壓在原地打。</p>
+<p>承受範圍：<b>劍八最耐打</b>，山本其次，一護中等，<b>露琪亞和千手丸最容易被打飛</b>。畫面上不顯示這個數值；Kikon 和 Soul Break 不會被它搶走。</p>
+<p>例外：攻擊方開著<b>橙色爆氣</b>時，對手暫時不會被打飛（受擊值照樣累積），橙色爆氣結束後的下一下才可能打飛。沒有「第幾下一定倒地」的規則。</p>
+
+<h3 id="learn">會學習的電腦</h3>
+<ul>
+<li>VS CPU（包括單手模式）和 ENDLESS 的電腦會從你的打法學習（設定 LEARNING CPU，預設開）。</li>
+<li>它記下你在幾種情況下接著做什麼：你起身時、它起身時、你擋完一串攻擊後、它擋完你的連段後、你揮空後、<b>它的連段打中你、你可以爆氣時</b>，以及近、中、遠距離的對峙。爆氣也算在你的動作裡。</li>
+<li>你在某個情況常做同一件事，它就照「防 &gt; J &gt; I &gt; 防」準備對策：你習慣擋，它用抓技；你習慣按 J，它先擋；你習慣抓，它搶先出 J；你愛用步法，它就不出招，等你現身再打；你被連段時習慣開藍色爆氣，它就打兩下就停手防禦，讓你的爆氣落空；你在遠處開白色爆氣回血，它就衝過來。</li>
+<li>它也會慢慢調整自己常出的招，而且分開記「現在是哪個型態、自己的角色量表到哪裡」，例如露琪亞 −50 度冷度快滿時用 Hoho 衝進去凍結划不划算。自己的白／藍／橙色爆氣什麼時候開值得，它也會照結果慢慢調。</li>
+<li><b>電腦的覺醒</b>：覺醒量表滿、自己也吃過一些傷害後，電腦大多會馬上覺醒（露琪亞主要是對上近戰對手時）；劍八在三杯、自己剩 4 顆魂魄以下時大多會開卍解。</li>
+<li>它看到的和一般電腦一樣，有反應延遲，也不會讀你的按鍵，只是根據你過去的習慣猜。你一直輸，它就少猜你一點；你一直贏，它就更常猜你。</li>
+<li>每個電腦角色各存一份學習紀錄（存在瀏覽器裡，每場結束時寫入）。SETTINGS 的 RESET LEARNING 可以清掉。練習模式和 CPU VS CPU 不會學習。</li>
+</ul>
+
+<!-- ================================================================ characters -->
+<h2 id="chars">角色 <small>FIGHTERS</small></h2>
+<p>點角色名稱展開。表格裡的 <kbd>J</kbd>／<kbd>K</kbd> 是三段連段各段的招式；<kbd>Shift</kbd>+<kbd>K</kbd> 是 SP1、<kbd>Shift</kbd>+<kbd>L</kbd> 是 SP2（各花靈壓 1 格，覺醒型態的 SP2 花 2 格，另有註明的例外）。</p>
+<section class="char" id="ch-yama">
+<details>
+<summary><h3>山本元柳齋重國 <small>YAMAMOTO GENRYUSAI（YAMAMOTO）</small></h3><span class="tagline">用火焰控場的老將，攢滿火力變身獄炎，卍解後在「東的刀鋒」和「西的獄衣」之間切換</span></summary>
+<p>始解的山本動作偏慢，靠 K 的火焰、L 的火焰波和 Shift+K 的追蹤火球從中遠距離壓人，J 只在貼身時才打得到。打中累積 INFERNO 量表，滿了自動變成限時 10 秒的獄炎：傷害大幅提高，但每秒都在燒自己的靈子。覺醒卍解後分成兩種架勢：東攻擊力高還能穿透防禦，但不能防禦、挨打也更痛；西全方位擋下攻擊又沒有防禦硬直，但防禦量表完全不會回。他比一般角色耐打，要挨比較長的連段才會被打飛。</p>
+
+<h4>始解 流刃若火 <i>RYUJIN JAKKA</i></h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>火閃 <i>HISEN</i> → 返し火 <i>KAESHIBI</i> → 袖火 <i>SODEBI</i></td><td>拔刀橫斬、反手回斬，第三段用燃燒的空袖甩過去，打中會讓對手踉蹌。</td><td>距離很短，只有貼身才打得到。袖火打中後可以按 <kbd>O</kbd> 收尾。</td></tr>
+<tr><td><kbd>K</kbd></td><td>焔薙 <i>HOMURA-NAGI</i> → 昇焔 <i>SHŌEN</i> → 焔爆 <i>ENBAKU</i></td><td>腰高的橫掃、往上竄的火柱，最後在腳邊炸開火焰圓頂讓對手跪倒。</td><td>火焰讓 K 打得比 J 遠。每打中一下 INFERNO +20。焔爆被擋的破綻很大。</td></tr>
+<tr><td><kbd>L</kbd></td><td>流刃若火 <i>RYUJIN JAKKA</i></td><td>先砍兩刀，接著從刀上放出一道寬 3.5 公尺、飛 12 公尺的火焰波，打中會擊退。</td><td>整招很長，適合在遠處放。每一下打中 INFERNO +15，火焰波被擋也 +5。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>不知火 <i>SHIRANUI</i>（SP1）</td><td>按住蓄力（最長約 1 秒），放開丟出會追蹤對手的火球，飛 20 公尺。</td><td>蓄越久越快、越痛（90～170）。蓄滿丟出時 INFERNO 直接填滿。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>松明 <i>TAIMATSU</i>（SP2）</td><td>往前噴出 4 公尺、90° 的火焰扇面，120 傷害並大幅擊退。</td><td>範圍寬，拿來趕走貼身的對手。被擋的破綻不小。</td></tr>
+<tr><td><kbd>I</kbd></td><td>一骨 <i>IKKOTSU</i>（Breaker）</td><td>把刀插在地上，一拳打出去，破壞對手的防禦。</td><td>150 傷害。抓取範圍只有 0.7 公尺，比 J 還短，要貼得很近。</td></tr>
+<tr><td><kbd>O</kbd></td><td>Kikon 模組「炎上」<i>ENJO</i> → 鬼魂技 城郭炎上 <i>JOKAKU ENJO</i></td><td>不衝刺，瞄準一下後沿著一條直線升起火牆，在 1～9 公尺處爆開。按住 O 打中紅血對手就是城郭炎上：火牆合成圓頂引爆，打碎魂魄 2 顆。</td><td>站在原地就能打到 9 公尺外。當 O 收尾時跳過瞄準直接爆開。被擋會被反擊，冷卻 1.5 秒。</td></tr>
+</tbody></table>
+<p class="note">INFERNO 量表：K 打中 +20、L 打中每下 +15、火焰波或火球被擋 +5、蓄滿的不知火一次填滿。J 不會加量表。量表一滿就自動進入獄炎。</p>
+
+<h4>獄炎 <i>GOKUEN</i>（INFERNO 滿時，限時 10 秒）</h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>撫斬 <i>NADEGIRI</i>（SP2）</td><td>一刀掃出 8 公尺長的斬線，240 傷害並擊倒。</td><td>要靈壓 2 格。被擋的破綻很大，最好確定打得到再出。</td></tr>
+</tbody></table>
+<p class="note">其餘按鍵同始解，但所有招式傷害提高。進入時身邊會噴出炎熱地獄 <i>ENNETSU JIGOKU</i>：一圈火柱，最多打中兩下、每下 60，同時也燒掉自己 30 靈子。獄炎期間每秒燒掉自己最大靈子的 5 %（不會燒到 0）。INFERNO 量表改成倒數，歸零就回到始解。</p>
+
+<h4>卍解 殘火の太刀 <i>ZANKA NO TACHI</i>：東 旭日刃 <i>KYOKUJITSUJIN</i>（BANKAI-EAST）</h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>日差 <i>HIZASHI</i> → 殘照 <i>ZANSHŌ</i> → 穿光 <i>SENKŌ</i></td><td>細細的火紅刀線：橫斬、回斬，第三段短刺讓對手踉蹌。</td><td>比始解的 J 快一點、也長一點。穿光打中後可以按 <kbd>O</kbd> 收尾。</td></tr>
+<tr><td><kbd>K</kbd></td><td>陽炎 <i>KAGERŌ</i> → 日昇 <i>NISSHŌ</i> → 落日 <i>RAKUJITSU</i></td><td>大範圍橫掃、上撩，最後把刀高舉直直劈下讓對手跪倒。</td><td>落日被擋的破綻很大，而且東受到的傷害變多，別亂收尾。</td></tr>
+<tr><td><kbd>L</kbd></td><td>旭光 <i>KYOKKŌ</i></td><td>單手往前突刺 1.6 公尺，刀尖射出一道光線，大約打到 6 公尺外，擊退 2 公尺。</td><td>穿透加倍：量表滿時打中 162、被擋也有 77 穿過防禦。J／K 任何一段打中後都能接。冷卻約 1.7 秒（和西的 L 共用）。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>旭日刃 <i>KYOKUJITSUJIN</i>（SP1）</td><td>刀直劈下來，近身的刀身會破防（連西的獄衣也破）；接著刀尖咬進地面，熱浪往前衝出 25°、9 公尺的扇面，130 傷害。</td><td>近的破防、遠的熱浪可以防禦但不能被招架。兩段都有穿透。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>南 火火十万億死大葬陣 <i>MINAMI: KAKA JŪMANOKUSHI DAISŌJIN</i>（SP2）</td><td>把刀插進地面，在對手腳下（10 公尺內）畫出一圈裂痕，約 0.3 秒後骸骨手抓住腳：40 傷害並定住 1 秒。</td><td>不能防禦、不能招架，只能用 Step 或 Hoho 躲。只能當連段的起手。靈壓 2 格，沒有冷卻。</td></tr>
+<tr><td><kbd>I</kbd></td><td>一骨 <i>IKKOTSU</i>（Breaker）</td><td>同始解，出手快一點。</td><td>—</td></tr>
+<tr><td><kbd>O</kbd></td><td>Kikon 模組「北」<i>KITA: TENCHI</i> → 鬼魂技 天地灰尽 <i>TENCHI KAIJIN</i></td><td>瞄準一下後瞬步直衝（方向起跳就鎖定），一刀斜斬，最遠 10 公尺。按住 O 打中紅血對手就是天地灰尽，打碎魂魄 3 顆。</td><td>對手在瞄準時往旁邊閃就會落空。冷卻 1.5 秒。</td></tr>
+<tr><td><kbd>U</kbd></td><td>切換到西</td><td>站著、走路或跑步時按 U，就換成西・殘日獄衣。</td><td>東<b>不能防禦</b>，U 就是切換。出招中、硬直中或破防後都不能切。</td></tr>
+</tbody></table>
+<p class="note">東的特性「穿透」：防禦量表越滿，刀越利。打中時傷害多 10～45 %；被擋時有同樣比例的傷害穿過防禦（和削血一樣不會打死人）。代價是東受到的傷害變多（×1.5）。防禦量表只在東會回復，而且速度只有一般的 <b>1/4</b>（每秒約 1.4），這也是它唯一回復的地方；破防後的回復照一般速度（每秒 6.5）。</p>
+
+<h4>卍解：西 殘日獄衣 <i>ZANJITSU GOKUI</i>（BANKAI-WEST）</h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>L</kbd></td><td>焦熱地獄 <i>SHŌNETSU JIGOKU</i></td><td>把刀插在地上，獄衣猛烈燃起（預兆），接著以自己為中心噴出一圈火柱，每下 45、最多兩下，會讓對手踉蹌。</td><td>火柱打在離他約 1～3 公尺的地方，站在 3 公尺外就打不到。放完仍然是西。冷卻 2.5 秒（和旭光共用）。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>極意返し <i>GOKUI GAESHI</i>（SP1）</td><td>招架：按下後約 0.4 秒內（和一護的鎖盾一樣寬）接住近戰攻擊，對手踉蹌並被燙傷 15，山本自動反擊 150。</td><td>接住時<b>防禦量表回滿</b>。飛行道具和南的束縛接不住；Breaker 會打破它。沒接到也還在獄衣裡。</td></tr>
+<tr><td><kbd>U</kbd></td><td>—</td><td>什麼都不會發生，獄衣本來就一直在擋。</td><td>按住 U 也照樣能走動。</td></tr>
+<tr><td><kbd>J</kbd> <kbd>K</kbd> <kbd>I</kbd> <kbd>O</kbd> <kbd>Shift</kbd>+<kbd>L</kbd></td><td>回到東</td><td>出招的第一格就換回東，出的是東的招式。</td><td>起手階段已經是東，挨打會受到 ×1.5 傷害。</td></tr>
+</tbody></table>
+<p class="note">獄衣：站著、走路、跑步、Step／Hoho 沒有無敵的時候，以及出 L、SP1 的時候，他都在防禦，而且是 360°。擋下攻擊<b>沒有防禦硬直</b>，照樣能走、能出招，只是每一下都削防禦量表。</p>
+<ul>
+<li>在西防禦量表<b>完全不會回復</b>，只有極意返し接住攻擊時回滿。</li>
+<li>量表被削光（GUARD CRUSH）：踉蹌一下、被打回東，而且量表回滿之前都不能再切到西。</li>
+<li>被 Breaker 或會破防的招式打中：破防並被打回東。不能防禦的攻擊（南的束縛、紅血時 Kikon 的第二刀）會直接穿過獄衣。</li>
+<li>西受到與造成的傷害都是一般的 1 倍。</li>
+</ul>
+
+<h4>覺醒條件與變化</h4>
+<ul>
+<li>EVOLUTION 滿時按 <kbd>P</kbd> 覺醒成卍解（一場一次）。不回復靈子。卍解一直維持到比賽結束。</li>
+<li>覺醒時所有火焰被吸進刀裡：INFERNO 歸零，之後不會再有獄炎。防禦量表維持原本的量。</li>
+<li>覺醒後從東開始。Kikon／Soul Break 之後維持目前的架勢，防禦量表回滿。</li>
+<li>東：傷害提高（穿透），受到的傷害變多。西：傷害不變，但幾乎所有攻擊都被擋下。</li>
+</ul>
+
+<h4>角色量表</h4>
+<p>始解時角色量表是 INFERNO：一條慢慢填滿的火焰條，滿了就進入獄炎，這時同一條改成倒數，縮完獄炎就結束。卍解後這一格換成 L 的 COOLDOWN 條（鋼色，滿格 = L 可以用；冷卻中按 L 會閃一下）。卍解的防禦量表是火紅色，越滿東的穿透越強；在西時量表變暗，提醒你它不會回。覺醒量表那一列會寫出目前按 U 的效果：東是 <b>U: WEST</b>，西是 <b>WARD</b>。手機直拿時，最下面一行四個小量表的最後一個就是 INFERNO／COOLDOWN，U 的效果標籤在名字那一行。</p>
+
+<h4>技巧</h4>
+<ul class="tips">
+<li>始解想早點進獄炎，就多用 K 和 L 打人，或在遠處把不知火蓄滿丟出去。但獄炎每秒燒血，進入時還會自損 30，靈子太低時要小心別剛好把量表填滿。</li>
+<li>始解最安全的連段是 J J J（袖火）打中後按住 <kbd>O</kbd>：炎上會直接爆開，對手紅血時就是城郭炎上。焔爆和落日被擋都很危險，K 收尾前先確定會打中。</li>
+<li>東沒有防禦。站著不動時習慣按一下 <kbd>U</kbd> 進西，要出手再出招回東；U 只有在招式<b>打中</b>後的收招後半段能取消東的收招（直接進西），被擋下後就只能吃對手的反擊。</li>
+<li>東的量表越滿越痛：先在東把量表養滿，再用旭光或 J／K 接旭光穿過對手的防禦。量表低時退開等它回來，比硬打划算。</li>
+<li>西不怕連段但怕 Breaker。對手貼上來狂打時用焦熱地獄把他逼開，看到對手的 K 起手就用極意返し接，順便回滿量表；看到對手要出 <kbd>I</kbd>，就用 J 先打斷它（出 J 會回東）。</li>
+<li>南的束縛打中後對手會被定住約 1 秒：接東的 J／K 連段、旭日刃，或對手紅血時接北的天地灰尽。手機單手模式時拇指放著就等於按 U，所以東會自動切到西。</li>
+</ul>
+</details>
+</section>
+
+<section class="char" id="ch-ken">
+<details>
+<summary><h3>更木劍八 <small>ZARAKI KENPACHI（KENPACHI）</small></h3><span class="tagline">吃招換招、越打越強的血戰狂人</span></summary>
+<p>劍八靠又長又重的 K 和 L 架式「斬ってみろよ」硬吃對手的攻擊，再用更大的一刀還回去。J 很短（約 1 公尺），K 慢但砍得遠。覺醒後的「野晒」會把流的血喝進 NOME 量表，一杯一杯變強，最後還能在三杯開卍解。缺點是強的型態都撐不久：杯數會往下掉，卍解會吃掉自己的魂魄和手臂。他是全角色裡<b>最耐打</b>的，連段要打很久才會把他打飛。越被逼越強：每少一顆魂魄，傷害 +5 %（最多 +25 %）；每次重置靈壓 +10。</p>
+
+<h4>基本型態 <small>KENPACHI</small></h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>荒斬 <i>ARAGIRI</i> → 返斬 <i>KAESHIGIRI</i> → 喧嘩蹴り <i>KENKA-GERI</i></td><td>隨手一砍（往前衝 0.8 公尺）、反手一刀，最後一腳正踢踢到踉蹌。</td><td>距離只有約 1 公尺，要貼身才打得到。</td></tr>
+<tr><td><kbd>K</kbd></td><td>大振り <i>ŌBURI</i> → 斬り上げ <i>KIRIAGE</i> → ぶん回し <i>BUNMAWASHI</i></td><td>雙手大揮、從地上往上撩，最後轉一圈 360° 把人砍到跪倒。</td><td>約 2.5～2.8 公尺，是他的主力距離；第三段被擋很虧。</td></tr>
+<tr><td><kbd>L</kbd>（按住）</td><td>架式 <i>KITTE MIRO YO</i>（斬ってみろよ）</td><td>擺架式最多 1 秒：這段期間有霸體，被打照樣扣血但不會硬直，吃下的傷害存起來（最多 200）。放開（或 1 秒到）出一刀：100 + 存下的傷害；存到 150 以上這刀會破防。</td><td>剛擺出的一瞬間被打算反擊（Counter）。怕 <kbd>I</kbd>：Breaker 會直接打破架式。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td><i>BUTTAGIRU</i>（SP1）</td><td>跳起 5 公尺當頭劈下，180 傷害、擊倒，地上裂開一道 3 公尺的裂痕。</td><td>刀身近處算近戰，前方的裂痕算遠程。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td><i>ORE NI KIRENEE MON WA NEE</i>（SP2）</td><td>往前衝約 6 公尺，碰到對手就接四連斬加一記挑飛（25 × 5 + 60）。</td><td>衝出去那一刻還按著 <kbd>Shift</kbd>+<kbd>L</kbd>，這一衝會破防。</td></tr>
+<tr><td><kbd>I</kbd></td><td>肩撞 <i>SHOULDER CHARGE</i></td><td>Breaker：150 傷害，破防。</td><td>跟所有抓技一樣很短，被 J 打斷。</td></tr>
+<tr><td><kbd>O</kbd></td><td>Kikon 模組「衝鋒」<i>CHARGE</i></td><td>大笑著往前衝（最遠約 9 公尺，會轉向追人），衝的時候能硬吃一下攻擊；Kikon 演出是一陣亂斬，最後一刀穿過對手。</td><td>魂魄 2 顆。第二下攻擊或 Breaker 能停下這一衝。</td></tr>
+</tbody></table>
+
+<h4>野晒 一杯 片手 <small>KATATE</small></h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd> / <kbd>K</kbd> / <kbd>L</kbd></td><td>同基本型態（單手持大刀）</td><td>每招都砍得更遠（約 1.3 倍）。</td><td>起手慢一點點。傷害和基本型態一樣。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>劈開隕石 <i>SPLIT THE METEOR</i></td><td>一刀往前劈開 12 公尺的直線，240 傷害、擊倒。</td><td>線只有 1 公尺寬，往旁邊 Step 就躲得掉。3.4 公尺內算近戰，更遠算遠程。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>同基本型態</td><td>衝鋒 → 連斬。</td><td>覺醒後花靈壓 2 格。</td></tr>
+<tr><td><kbd>I</kbd></td><td>肩撞 <i>SHOULDER CHARGE</i></td><td>同基本型態。</td><td></td></tr>
+<tr><td><kbd>O</kbd></td><td>Kikon 模組「跳躍劈砍」<i>LEAP CLEAVE</i></td><td>蹲下後往前跳（最遠約 10 公尺），落地一記 160° 的大劈；Kikon 演出「呑め、野晒」<i>SKY SPLIT</i>，天空被劈成兩半。</td><td>魂魄只拿 <b>2</b> 顆。起跳時方向就定了，對手往旁邊閃就會落空。</td></tr>
+</tbody></table>
+<p class="note">一杯能斬掉飛行道具，NOME 不會掉。杯數怎麼升降見下方「覺醒條件與變化」。</p>
+
+<h4>野晒 二杯 両手 <small>RYOTE</small></h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>面 <i>MEN</i> → 小手 <i>KOTE</i> → 袈裟 <i>KESA</i></td><td>雙手劍道：正面直劈、小小的打手腕、斜劈到踉蹌。</td><td>面是一條往前的細線，打正前方；袈裟比較寬。</td></tr>
+<tr><td><kbd>K</kbd></td><td>胴 <i>DO</i> → 諸手突き <i>MOROTE-ZUKI</i> → 兜割り <i>KABUTO-WARI</i></td><td>橫砍身體、雙手直刺、當頭劈到跪倒。</td><td>最遠約 4 公尺，直又長。</td></tr>
+<tr><td><kbd>L</kbd> / <kbd>Shift</kbd>+<kbd>K</kbd> / <kbd>Shift</kbd>+<kbd>L</kbd> / <kbd>I</kbd></td><td>架式、劈開隕石、衝鋒、肩撞</td><td>同一杯的招式，傷害提高。</td><td>K、L、SP 被擋時，削對手防禦量表 1.5 倍（「斬」）。</td></tr>
+<tr><td><kbd>O</kbd></td><td><i>LEAP CLEAVE</i></td><td>同一杯。</td><td>魂魄 <b>3</b> 顆。</td></tr>
+</tbody></table>
+<p class="note">雙手握刀、靈壓變大，名字旁寫 RYOTE。其餘同一杯。</p>
+
+<h4>野晒 三杯 飲み干せ <small>NOMIHOSE</small></h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>面 <i>MEN</i> → 小手 <i>KOTE</i> → 袈裟 <i>KESA</i></td><td>同二杯，傷害再提高。</td><td>被擋也會削掉對手 20 % 的傷害（削血）。</td></tr>
+<tr><td><kbd>K</kbd></td><td>空間斬 <i>KUKAN-GIRI</i> → 諸手突き → 兜割り</td><td>第一段砍過的地方在空中留下一道裂縫，約 0.3 秒後再斬一次（50 傷害、踉蹌）。</td><td>被擋時裂縫補上的這一下讓他佔優勢；打中可以接第二段。揮空時裂縫就是陷阱，走進去會被砍。他在裂縫斬下前被打中，裂縫就消失。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>一口喝乾 <i>NOMIHOSE</i></td><td>用整杯換一刀劈開隕石：<b>390</b> 傷害，<b>6 公尺內破防</b>，更遠可以擋。</td><td>出招第一格 NOME 就歸零、立刻回到一杯，所以這刀以一杯的倍率算，之後的 Kikon 也只值 2 顆。</td></tr>
+<tr><td><kbd>U</kbd>（按住）</td><td>喝 <i>DRINK</i></td><td>取代防禦：擋下的攻擊他真的吃一半傷害，另一半被刀喝進 NOME。</td><td>每次喝都照常扣防禦量表，量表空了就不能喝。吃下的那一半會扣血，也可能被打出 Soul Break。Breaker、背後的攻擊照樣打得到。</td></tr>
+<tr><td><kbd>L</kbd> / <kbd>Shift</kbd>+<kbd>L</kbd> / <kbd>I</kbd></td><td>同二杯</td><td>傷害提高。</td><td></td></tr>
+<tr><td><kbd>O</kbd></td><td><i>LEAP CLEAVE</i></td><td>同一杯。</td><td>魂魄 <b>4</b> 顆（按下 O 那一刻的杯數決定）。</td></tr>
+</tbody></table>
+<p class="note">進三杯時黃色靈壓柱沖天、畫面變成黑白漫畫格。面板在 U 的位置寫 <b>U: DRINK</b>。三杯掉得很快，見下方規則。</p>
+
+<h4>卍解 <small>BANKAI</small></h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>叩き斬り <i>TATAKI-GIRI</i> → 薙ぎ払い <i>NAGI-HARAI</i> → 拳骨 <i>GENKOTSU</i></td><td>用斷刀往下砍、反手橫掃，最後一記左勾拳。</td><td>JJJ 不花「腕」。</td></tr>
+<tr><td><kbd>K</kbd></td><td>大鉈 <i>ŌNATA</i> → 抉り上げ <i>EGURI-AGE</i> → 叩き落とし <i>TATAKI-OTOSHI</i></td><td>劈柴般的重砍、從地上往上挖、高舉後砸下，傷害很高。</td><td>霸體和架式擋不住（防禦可以），削防禦量表是一般 K 的兩倍。含 K 的一整套連段只花 1 格「腕」。</td></tr>
+<tr><td><kbd>L</kbd></td><td>噛み千切り <i>KAMICHIGIRI</i></td><td>往前撲 0.8 公尺，抓住手臂咬下去：120 傷害、跪倒。</td><td><b>什麼都擋不住</b>（防禦、喝、架式、霸體都一樣），只能用 Step／Hoho 的無敵躲。咬中後 J 接得上。1 格。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>盾ごと <i>TATE-GOTO</i></td><td>連盾帶手一刀劈開，前方 6 公尺整條線都破防，260 傷害。</td><td>1 格腕 + 靈壓 1 格。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>衝鋒 → 殴り飛ばし <i>NAGURI-TOBASHI</i></td><td>衝鋒碰到對手後，一記左直拳打進胸口，150 傷害，把人打飛 6 公尺。</td><td>1 格腕 + 靈壓 2 格。</td></tr>
+<tr><td><kbd>I</kbd></td><td>肩撞 <i>SHOULDER CHARGE</i></td><td>同基本型態。</td><td>1 格。</td></tr>
+<tr><td><kbd>O</kbd></td><td>Kikon 模組 真っ二つ <i>MAPPUTATSU</i></td><td>跳躍劈砍的鬼版本；Kikon 演出「卍解 真っ二つ」，一刀把對手連同畫面縱向劈開。</td><td>魂魄 <b>4</b> 顆（Soul Break 5 顆）。單按 O 花 1 格；當連段的 O 收尾則算在那套連段的 1 格裡。</td></tr>
+<tr><td><kbd>U</kbd>（按住）</td><td>喝 <i>DRINK</i></td><td>同三杯，但喝下的一半不再變成任何東西。</td><td>不花腕。</td></tr>
+</tbody></table>
+<p class="note">傷害提高，被擋的刀照樣削血。「腕」的規則見下方。</p>
+
+<h4>片腕 <small>KATAUDE</small></h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd> / <kbd>K</kbd> / <kbd>L</kbd></td><td>基本型態的連段與架式</td><td>右臂廢了，刀砍不遠：距離只剩 0.7 倍。</td><td>喧嘩蹴り是用腳，距離不變。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd> / <kbd>Shift</kbd>+<kbd>L</kbd></td><td><i>BUTTAGIRU</i> / 衝鋒 → 連斬</td><td>同基本型態，距離縮短。</td><td>SP2 花靈壓 2 格。</td></tr>
+<tr><td><kbd>O</kbd></td><td>Kikon 模組「衝鋒」<i>CHARGE</i></td><td>同基本型態（用基本型態的 Kikon 演出）。</td><td>魂魄 <b>3</b> 顆。</td></tr>
+<tr><td><kbd>U</kbd></td><td>防禦</td><td>回到普通防禦，不能喝了。</td><td></td></tr>
+</tbody></table>
+<p class="note">傷害回到 1 倍，沒有 NOME、杯數、裂縫和劈開隕石。其餘同基本型態，一直持續到比賽結束。</p>
+
+<h4>覺醒條件與變化</h4>
+<ul>
+<li><b>覺醒「呑め、野晒」</b>：覺醒量表滿（EVOLUTION）時按 <kbd>P</kbd>。回復兩成靈子（和所有角色一樣），一場只能一次，<b>永久</b>。從一杯 KATATE、NOME 10 開始。</li>
+<li><b>NOME 怎麼漲</b>（0～100，重置後保留）：只有三個來源。造成傷害（每 100 點 +8）、自己受到傷害（每 100 點 +12）、「喝」下的傷害最多（每 100 點 +30，L 架式吸收的傷害也算）。所以用架式硬吃對手的連段是升杯最快的方法。</li>
+<li><b>一杯 KATATE</b>：NOME 不會掉。<b>到 40</b> 升二杯。</li>
+<li><b>二杯 RYOTE</b>：<b>3 秒</b>沒漲 NOME 就開始每秒掉 3。<b>跌破 25</b> 退回一杯，<b>到 100</b> 升三杯。</li>
+<li><b>三杯 NOMIHOSE</b>：<b>每秒掉 20，一直掉</b>，喝也不會讓它暫停。<b>跌破 50</b> 退回二杯（NOME 還有 50 左右），不補的話大約 2.5 秒就掉下去。</li>
+<li><b>換杯的時機</b>：只在他沒出招時才換（站著、走路、防禦、跑步）。連段途中過了門檻，會等招式打完才升或降，所以不會打到一半換招。唯一的例外是三杯的 <kbd>Shift</kbd>+<kbd>K</kbd>：出招當下就回一杯。</li>
+<li><b>卍解</b>（第二次覺醒，一場一次）：<b>在三杯、自己剩下的魂魄 4 顆以下</b>時按 <kbd>P</kbd>，不需要量表。跟覺醒一樣，被壓著打時（能開藍色爆氣的時候）也能按，會把對手的攻擊打斷。代價：<b>自己的魂魄直接變成 1 顆</b>，之後被 Kikon 或 Soul Break 打中一次就輸；換來<b>靈子回滿</b>和四格「腕」。</li>
+<li><b>「腕」UDE 4 格</b>：<kbd>L</kbd>、<kbd>Shift</kbd>+<kbd>K</kbd>、<kbd>Shift</kbd>+<kbd>L</kbd>、<kbd>I</kbd>、單按的 <kbd>O</kbd> 每次 1 格。J／K 連段裡只要有 K 或 O 收尾，<b>整套只算 1 格</b>，在連段結束時才扣（打中、被擋、揮空都一樣）；純 JJJ 不扣。每扣一格自損 60 靈子（不會把自己扣死）。<b>5 秒</b>沒扣格，會自己裂掉一格（不扣血）。沒有格子時，要花格的招式就出不來。</li>
+<li><b>手臂爆裂</b>：最後一格用掉後，等那一招（連同它接出來的追擊）打完，右臂爆開：自損 120 靈子、原地跪倒約 0.7 秒，這段時間很容易被反擊。之後整場都是<b>片腕 KATAUDE</b>。</li>
+<li>連戰模式（ENDLESS）：不管打完時是哪一杯、卍解或片腕，下一關都從一杯 KATATE、NOME 10 開始，卍解每關都能再開一次。</li>
+</ul>
+
+<h4>角色量表</h4>
+<p><b>電腦版（橫拿）</b>：名字那一行會寫目前的型態（KENPACHI KATATE／RYOTE／NOMIHOSE／BANKAI／KATAUDE），覺醒列的標籤在三杯和卍解時改成 <b>U: DRINK</b>。下面一行是黃色的 <b>NOME</b> 條：40 的位置有一條亮線（升二杯），25 和 50 有暗的刻度（二杯、三杯的下限）；條內三個小方塊亮幾個就是第幾杯。在二杯、三杯時，NOME 離這一杯的下限不到 10 整條會閃，表示快要掉杯了（滿格就是 100，升三杯）。可以開卍解時畫面會閃紅字 <b>P BANKAI</b>。卍解後這一行換成紅色爪痕狀的四格「腕 UDE」：用掉的格子變黑、有一道白色裂痕；下一格下方的白線是 5 秒的裂開倒數，最後 1 秒那一格會閃。片腕時沒有角色量表。</p>
+<p><b>手機（直拿）</b>：最下面一行四個小量表的第四格就是 NOME 條（同樣的刻度和杯數方塊），卍解後換成四格腕。可以開卍解時中間會出現 <b>P BANKAI</b>（單手模式是 <b>AWAKEN BANKAI</b>，AWAKEN 晶片也會亮）。</p>
+
+<h4>技巧</h4>
+<ul class="tips">
+<li>J 很短，K 才是他的距離：在 2～3 公尺用 K1 大振り戳人，對手衝進來再用 J 或 L 接。</li>
+<li>L 架式專門對付連段：看到對手開始一整套就按住 L，吃完再放開。存到 150 以上那刀會破防。但對手按 <kbd>I</kbd> 就會打破架式，別對著會抓的人一直擺。</li>
+<li>三杯只有兩三秒，進去就要決定：6 公尺內直接 <kbd>Shift</kbd>+<kbd>K</kbd> 一口喝乾（390、破防），或用空間斬 K 接 K 打一套高傷連段，或自己剩 4 魂以下時按 <kbd>P</kbd> 開卍解。</li>
+<li>越晚收尾越值錢：一杯的 Kikon 只拿 2 顆、二杯 3 顆、三杯 4 顆。對手紅血時，衡量一下是現在拿 2 顆，還是先升杯再拿。</li>
+<li>卍解時一套 KKK + O 收尾也只花 1 格腕，比單發特殊技划算；噛み千切り什麼都擋不住，咬中後接 J。別讓格子放著裂掉，每 5 秒至少用掉一格。</li>
+<li>最後一格腕盡量用在能把對手推遠的招式（例如 <kbd>Shift</kbd>+<kbd>L</kbd> 把人打飛 6 公尺的直拳），爆裂後跪倒那 0.7 秒對手才打不到你。</li>
+</ul>
+</details>
+</section>
+
+<section class="char" id="ch-rukia">
+<details>
+<summary><h3>朽木露琪亞 <small>KUCHIKI RUKIA（RUKIA）</small></h3><span class="tagline">在對手腳下種冰的中距離舞者，覺醒後越冷越強、也越走不動</span></summary>
+<p>始解的露琪亞身材嬌小、J 很快，靠「冰放在哪裡」取勝：5～8 公尺用月白與白漣逼對手閃步，K 打中留下「霜」讓對手走不掉。覺醒「絶対零度」後以一條冷度量表當唯一資源，防禦讓她變冷、越冷越慢卻越痛、越遠，到 −273 °C 完全不能動，換來全方位的冰之防禦。她很輕，<b>比較容易被一套連段打飛</b>（隱藏的受擊承受值是全角色最低的一檔）。</p>
+
+<p class="note"><b>霜</b>：被霜附著的對手走路和跑步變成 0.7 倍，持續一小段時間（不會疊加，只取較長的那次）。Step、Hoho、突進都不受影響，所以「用走的逃出冰圈會失敗，Step 才逃得掉」。始解時 K 打中會上霜；覺醒後每一下打中都會上霜，越冷上得越久。</p>
+
+<h4>始解 舞え、袖白雪 <i>SODE NO SHIRAYUKI</i></h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>初霜 <i>HATSUSHIMO</i> → 風花 <i>KAZAHANA</i> → 舞袖 <i>MAI-SODE</i></td><td>單手平斬、反手回斬，第三段轉身一圈、緞帶甩開。</td><td>出手很快但很短，只在貼身時用；第三段是收尾，可接 <kbd>O</kbd>。</td></tr>
+<tr><td><kbd>K</kbd></td><td>霜突 <i>SHIMO-TSUKI</i> → 氷輪 <i>HYŌRIN</i> → 雪崩 <i>NADARE</i></td><td>西洋劍式突刺、上旋畫出白環、雙手高舉下劈，雪從地面炸起。</td><td>約 2.5～2.8 公尺，打中都會上霜；第三段讓對手跪倒。</td></tr>
+<tr><td><kbd>L</kbd></td><td>初の舞・月白 <i>SOME NO MAI: TSUKISHIRO</i></td><td>對手腳下（最遠 8 公尺）先出現白圈，約 0.4 秒後冰柱從圈裡竄起，把人凍住約 0.6 秒並上霜。</td><td>可以防禦；Step 一次就能跳出圈；她在冰柱出現前被打中，圈就消失。沒有冷卻，但收招很長，場上一次只會有一個圈。</td></tr>
+<tr><td><kbd>K</kbd> → <kbd>L</kbd></td><td>月白（連段版）</td><td>K 連段任一下碰到對手時按 L，會接出快速版月白：圈出現後很快就冒冰柱。</td><td>K 打中時是確定連段；K 被擋時 L 照樣出，但對手能防。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>次の舞・白漣 <i>TSUGI NO MAI: HAKUREN</i></td><td>按住蓄力，每隔一下往地上刺一次（最多 4 次、各冒一根冰刺）；放開放出一道冷氣浪，打中會凍住。</td><td>刺得越多，浪越寬越痛，最遠約 11 公尺。浪再寬，往側面 Step 都閃得掉。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>参の舞・白刀 <i>SAN NO MAI: SHIRAFUNE</i></td><td>冰刃從刀尖長出，5 公尺的突刺，擊退並長時間上霜。</td><td>中距離打對手揮空的破綻；月白凍住對手後，6 公尺內接它最痛。</td></tr>
+<tr><td><kbd>I</kbd></td><td>縛道の四・這縄 <i>BAKUDŌ NO YON: HAINAWA</i></td><td>衝刺後左手一揮，白色光繩綁住對手雙臂，打破防禦。</td><td>通用的 Breaker 抓技，距離很短。</td></tr>
+<tr><td><kbd>O</kbd></td><td>円舞 <i>ENBU</i> → Kikon 初の舞・月白</td><td>瞬步突進（最遠約 8 公尺）接一圈 360° 的轉身斬，擊退。</td><td>她的接近與懲罰手段；Kikon 過場「初の舞・月白」，打碎魂魄 2 顆。</td></tr>
+</tbody></table>
+
+<h4>絶対零度 −18 °C <i>ZETTAI REIDO</i>（HUD：-18C）</h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>初霜 → 風花 → 舞袖</td><td>同始解，但每一下打中都上霜。</td><td>−18 °C 時 J 不花冷度。</td></tr>
+<tr><td><kbd>K</kbd></td><td>凍手 <i>TŌSHU</i> → 氷輪 <i>HYŌRIN</i> → 氷華 <i>HYŌKA</i></td><td>K1 換成左掌抓住並凍結的短突進；K3 手掌按進地面，對手腳下炸出冰花，讓他跪倒。</td><td>K1 約 2 公尺、K3 約 2.4 公尺，比始解的 K 短一點。</td></tr>
+<tr><td><kbd>L</kbd></td><td>霜柱 <i>SHIMOBASHIRA</i></td><td>以她為中心、半徑 2.5 公尺的一圈霜柱，打中踉蹌並上霜。</td><td>花冷度 25，不夠就按不出來。360° 都打得到，但面向她可以防禦。</td></tr>
+<tr><td><kbd>K</kbd> → <kbd>L</kbd></td><td>霜柱</td><td>K 連段碰到對手時按 L，直接接出這一帶自己的 L。</td><td>打中就是連段；連段中冷度不夠也能透支（見下方說明）。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>白漣 <i>HAKUREN</i></td><td>同始解。</td><td>不花冷度。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>白刀 <i>SHIRAFUNE</i></td><td>同始解，5 公尺突刺。</td><td>不花冷度。</td></tr>
+<tr><td><kbd>I</kbd></td><td>這縄 <i>HAINAWA</i></td><td>同始解。</td><td>不花冷度。</td></tr>
+<tr><td><kbd>O</kbd></td><td>白霞罸 <i>HAKKA NO TOGAME</i> → Kikon 卍解 白霞罸</td><td>不衝刺：原地舉刀，冰柱立起，再把刀放平，寒氣沿著一條鎖定的直線從刀尖奔出（6.5 公尺）。</td><td>取代月白與円舞；Kikon 過場「卍解 白霞罸」，打碎魂魄 3 顆（每個溫度帶都一樣）。</td></tr>
+<tr><td><kbd>U</kbd></td><td>防禦（U: COOL）</td><td>一般防禦，同時讓她變冷。</td><td>按住約 1.1 秒填滿一條冷度。</td></tr>
+</tbody></table>
+
+<h4>絶対零度 −50 °C（HUD：-50C）</h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>初霜 → 風花 → 舞袖（雙手低旋）</td><td>距離 1.1 倍，第三段改成雙手壓低的旋斬。</td><td>每段花冷度 6。</td></tr>
+<tr><td><kbd>K</kbd></td><td>凍手（掌與刀）→ 氷輪 → 氷華（雙掌）</td><td>K1 手掌與插地的刀一起凍；K3 雙掌按地，冰花更大。</td><td>每段花冷度 12；刀身結了一層霜。</td></tr>
+<tr><td><kbd>L</kbd></td><td>氷震 <i>HYŌSHIN</i></td><td>雙手握刀插地的冰震，半徑 3.5 公尺，打中讓對手跪倒。</td><td>花冷度 36，不夠就按不出來。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>白漣</td><td>蓄力刺得更快，浪更快、更遠（約 12 公尺）、更痛。</td><td>花冷度 40。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>白刀</td><td>突刺延長到 6 公尺，更痛。</td><td>花冷度 40。</td></tr>
+<tr><td><kbd>I</kbd></td><td>這縄</td><td>同始解。</td><td>花冷度 20。</td></tr>
+<tr><td><kbd>O</kbd></td><td>白霞罸</td><td>寒氣直線延長到 7.5 公尺。</td><td>花冷度 20；Step 花 12；Hoho 反而<b>加</b>冷度 50（見下）。</td></tr>
+</tbody></table>
+<p class="note">其餘同 −18 °C。走路和跑步明顯變慢。</p>
+
+<h4>絶対零度 −273 °C 絕對零度（HUD：-273C）</h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>初霜 → 手掌反拍 → 舞袖（冰刃）</td><td>距離 1.35 倍，J2 換成手掌反拍，拿的是整把冰做的刀。</td><td>每段花冷度 20。貼身凍住對手後，用 J 懲罰。</td></tr>
+<tr><td><kbd>K</kbd></td><td>霜突（冰刃）→ 氷輪 → 氷華</td><td>K1 變回突刺，冰刃伸到約 3.8 公尺；K3 的冰花讓霜維持更久。</td><td>每段花冷度 40。</td></tr>
+<tr><td><kbd>L</kbd></td><td>零度凍結 <i>REIDO TŌKETSU</i></td><td>半徑 5.5 公尺（和寒域一樣大）的凍結，打中把對手凍住約 0.75 秒。</td><td>花冷度 100，也就是整條上層：放完、恢復自由後回到 −50。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>白漣</td><td>不用蓄力，四刺一次到位，放出最寬、最痛的浪（約 14 公尺）。</td><td>花冷度 100。往側面 Step 還是閃得掉。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>白刀</td><td>原地不動的 7.5 公尺突刺，打中讓對手跪倒。</td><td>花冷度 100。</td></tr>
+<tr><td><kbd>I</kbd></td><td>（無）</td><td>腳被凍在地上，不能用 Breaker。</td><td></td></tr>
+<tr><td><kbd>O</kbd></td><td>白霞罸</td><td>寒氣直線延長到 9 公尺。</td><td>花冷度 60。</td></tr>
+<tr><td><kbd>U</kbd></td><td>撐住（U: BRACE）</td><td>防禦本來就一直開著；按住 U 讓冷度停止回溫，代價是防禦量表每秒掉 8。</td><td>防禦量表掉光就「碎裂」CRACK。</td></tr>
+</tbody></table>
+<ul>
+<li><b>完全不能動</b>：不能走、跑、Step、Hoho，招式也不會往前衝。</li>
+<li><b>冰之防禦</b>：360° 自動防禦，近戰、飛行道具和場上的危險物都擋得下，擋下時沒有防禦硬直，但防禦量表不會回復。</li>
+<li><b>凍觸</b>：每次進入 −273 °C 後，第一下被擋下的近戰攻擊會把攻擊者凍住約 0.3 秒。</li>
+<li><b>碎裂 CRACK</b>：冰之防禦被擋到壓碎、撐住時防禦量表用光，或被 Breaker 破防，冷度立刻歸零回到 −18 °C，扣 60 靈子（不會因此倒下），當場跪倒約 0.5 秒，接下來 2 秒防禦不會降溫（量表變灰、寫著 THAW）。</li>
+<li>沒有主動離開的方法：只能靠出招花掉冷度、自然回溫，或被打出碎裂。</li>
+</ul>
+
+<h4>覺醒條件與變化</h4>
+<ul>
+<li>覺醒量表（EVOLUTION）滿時按 <kbd>P</kbd>（時機見<a href="#awaken">覺醒</a>）。一場一次、永久，和所有角色一樣先回兩成靈子；防禦量表、靈壓、瞬步量表照舊。進場是 −18 °C、冷度 0。每次 Kikon／Soul Break 後的重新開局也回到 −18 °C、冷度 0。</li>
+<li><b>變冷與回溫</b>：按住 <kbd>U</kbd> 防禦就變冷（約 1.1 秒一條，從 −18 到 −273 約 2.2 秒）；擋下對手的近戰攻擊冷得更快；沒在防禦時慢慢回溫（一條在 −18 約 10 秒、−50 約 8 秒、−273 最慢，約 20 秒）；真的被打中也會回溫，傷害越重回溫越多。</li>
+<li><b>溫度帶</b>：第一條滿 → −50 °C；兩條都滿 → −273 °C；上面那條用空，就退回上一帶（−273 掉到一條以下回 −50，−50 歸零回 −18）。溫度帶只在她自由時（站著、走路、防禦、跑步）才切換，出到一半的招式照原本那一帶打完。</li>
+<li><b>越冷越怎樣</b>：走路 3.8 → 3.4 → 2.8 公尺／秒，−273 完全不能動；造成的傷害逐帶提高、受到的傷害逐帶減少；招式距離 1.0 → 1.1 → 1.35 倍；打中上霜的時間越來越長；L 從霜柱（半徑 2.5）長成氷震（3.5）再到零度凍結（5.5）；白漣、白刀、白霞罸也更遠更痛。三帶都不吃防禦削血。</li>
+<li><b>寒域</b>：她腳邊地上的白圈，半徑 3／4／5.5 公尺。對手在圈裡「往遠離她的方向」走或跑會變慢（越冷越慢），往後 Step 在 −50 和 −273 會變短；靠近、繞圈、往側面 Step 都不受影響，Hoho、爆氣和各種衝刺也不受影響。她被打到硬直或倒地時寒域暫停。</li>
+<li><b>花冷度</b>（一條 = 100）：−18 °C 只有 L 花 25。−50 °C 每個動作都花：J 6、K 12、L 36、SP 40、O 20、I 20、Step 12。−273 °C：J 20、K 40、O 60，L／SP1／SP2 各 100。冷度不夠時只有 L 會被拒絕，其他動作照出、冷度扣到 0 為止。</li>
+<li><b>Hoho 變冷、衝進去凍結</b>：覺醒後（−18、−50 °C）用 Hoho 繞到對手背後時，冷度 <b>+50</b>，而且溫度帶當場跟著變。−50 °C 冷度 150 以上時，一次 Hoho 就在對手身後直接進入 −273 °C，冰之防禦立刻就緒，對手已經在寒域裡。碎裂後 2 秒的回溫期間 Hoho 不會變冷。</li>
+<li><b>連段鎖溫、可以透支</b>：從一套連段的第一下，到最後接上的動作（J／K 連段、K 接 L、O 收尾、SP 取消）打完為止，都用開始那一帶的招式；這期間只要冷度大於 0，接在 K 後面的 L 就能出，不夠的部分透支到 0。連段結束才依剩下的冷度重新決定溫度帶，可能一次掉好幾帶。例：−273 的 K K K（花 120，剩 80）再接 L（100），零度凍結照樣打出，冷度歸零，放完直接回到 −18。</li>
+</ul>
+
+<h4>角色量表</h4>
+<p>始解沒有角色量表。覺醒後，角色量表那一列只有一條「凍」冷度量表：淺藍的是第一條，白色疊在上面的是第二條；內側三個冰晶亮幾個就是第幾帶（−18 一個、−50 兩個、−273 三個），標籤寫 <b>-18C／-50C／-273C</b>。量表上變暗的那一段是「現在按 L 會花掉的冷度」，冷度不夠時那裡只剩一條白線，按了 L 會閃一下。在 −273 時上層那條會脈動，快掉回 −50 時閃爍。碎裂時量表上閃過一道紅色裂痕並出現「CRACK」，之後 2 秒變灰、標籤寫 THAW。上一列的「U: COOL」（−273 時是「U: BRACE」）提醒你現在按 U 的作用。手機直式畫面是最後一列的第四個小量表，讀法相同，右端標籤就是目前的溫度帶。單手模式時拇指放著就是防禦（變冷），拇指圈外那道白弧就是冷度（一整圈 = 兩條全滿，底部的白色刻度 = −50），−273 時多一圈白環，碎裂後弧變灰。</p>
+
+<h4>技巧</h4>
+<ul class="tips">
+<li>始解在 5～8 公尺放月白，逼對手 Step；凍住後 6 公尺內接白刀，貼身就接 J 連段。對手上霜後用走的逃不出白圈。</li>
+<li>K 打中就按 L：始解接快速版月白，覺醒後接那一帶的 L，是最穩的收尾。−273 的 K K K 接零度凍結是最痛的一套，但打完會直接回到 −18。</li>
+<li>面對近戰壓制型的對手，覺醒後乾脆擋：被擋下的攻擊讓她冷得更快，擋幾套就到 −50 甚至 −273。怕遠程的對手：飛行道具會穿過 −273 的冰之防禦，被打中還會回溫。</li>
+<li>−273 時等對手進 5.5 公尺：零度凍結能打中衝過來的 Breaker；被凍觸凍住的人用 J 懲罰。不要一直撐住 U，防禦量表見底就是碎裂。</li>
+<li>−18 冷度不到 25 時 L 按不出來，先按住 U 攢一點冷度再放；想省冷度就別在 −50 亂 Step。</li>
+<li>她很輕，被連段容易被打飛：被壓制時不要硬拚，用藍色爆氣或 Step 拉開再重新放冰。</li>
+</ul>
+</details>
+</section>
+
+<section class="char" id="ch-ichigo">
+<details>
+<summary><h3>黑崎一護 <small>KUROSAKI ICHIGO（ICHIGO）</small></h3><span class="tagline">雙刀近身猛攻，覺醒後帶著分身圍毆</span></summary>
+<p>始解「二刀の斬月」是貼身壓制型：左手短刀（J）快而短，右手大刀（K）慢、遠、削防禦量表多，L 的架勢「月待」可以派生四種攻擊。覺醒「血鎖の一護」換成一把白色平板大劍，靠招架和最多三個分身打人，分身擺得好時傷害和 Kikon 魂魄都很可觀，擺不好就只是比較慢的始解。缺點是沒有牽制用的遠距離招，碰到放飛行道具的對手得自己衝進去。耐打程度中等，一套連段挨太多下時會被打飛，時機和一般角色差不多。</p>
+
+<h4>二刀の斬月（始解）</h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>小牙 <i>KOKIBA</i> → 返し <i>KAESHI</i> → 双旋 <i>SŌSEN-GIRI</i></td><td>反手短刀的快砍，第三段雙刀轉一圈，打中會讓對手踉蹌。</td><td>全遊戲最快一級的 J，但距離只有約 1.1 公尺，要貼身。</td></tr>
+<tr><td><kbd>K</kbd></td><td>大牙 <i>ŌKIBA</i> → 昇牙 <i>SHŌGA</i> → 落牙 <i>RAKUGA</i></td><td>大刀橫掃、上撩、雙手下劈（約 2.7～3 公尺）。</td><td>每一下都削很多防禦量表，是他磨防禦的主力。</td></tr>
+<tr><td>換鍵的第二段</td><td>交牙 <i>KŌGA</i>（J 之後按 K）／返牙 <i>KAESHI-KIBA</i>（K 之後按 J）</td><td>「十字」：兩把刀同時砍。</td><td>時間和傷害同一般第二段，但削防禦量表更多；J → 交牙 → K 被擋下時削得和 KKK 一樣多。</td></tr>
+<tr><td><kbd>L</kbd></td><td>架勢 月待 <i>TSUKIMACHI</i></td><td>短刀指向對手擺出架勢，按住 <kbd>L</kbd> 最多撐 1 秒（點一下約 0.5 秒）；架勢一成形就能接下面四種派生。</td><td>架勢中沒有防禦，被打就是直接吃招。K 打中後馬上按 <kbd>L</kbd> 會更快進入架勢，四種派生都接得成連段。</td></tr>
+<tr><td>架勢中 <kbd>J</kbd></td><td>乱月 <i>RANGETSU</i></td><td>往前突進約 2.4 公尺，短刀四連斬，最後一下讓對手踉蹌。</td><td>中距離最好用的打點。被擋下稍微不利。</td></tr>
+<tr><td>架勢中 <kbd>K</kbd></td><td>月落 <i>TSUKI-OTOSHI</i></td><td>跳起 4 公尺撲過去，雙刀砸下，打中讓對手癱倒。</td><td>比月渡衝得還遠，削防禦量表極多；出手慢，被擋下要吃反擊。</td></tr>
+<tr><td>架勢中 <kbd>L</kbd></td><td>月牙天衝 <i>GETSUGA TENSHŌ</i></td><td>飛出一道寬約 2.4 公尺的黑色月牙，射程約 10 公尺，打中把人擊退。</td><td>沒有冷卻，但收招很長；對手往旁邊 Step 就躲得掉，別在近距離亂放。</td></tr>
+<tr><td>架勢中 <kbd>Space</kbd></td><td>月渡 <i>TSUKIWATARI</i></td><td>往搖桿方向（不按就是朝對手）瞬步 3.5 公尺，起步時無敵，落地回到新的架勢。</td><td>花瞬步量表 10，每次架勢只能用一次。拿來貼近、繞開飛行道具，再接乱月或月落。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>SP1 月牙十字衝 <i>GETSUGA JŪJISHŌ</i></td><td>兩道月牙合成十字，寬約 3.6 公尺、射程約 12 公尺，打倒對手。</td><td>靈壓 1 格。會把碰到的對手飛行波和火球砍掉，但砍不掉地上的冰圈之類。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>SP2 双牙 <i>SŌGA</i></td><td>瞬步突進約 5 公尺，雙刀 X 字斬，擊退。</td><td>靈壓 1 格。削防禦量表極多，也適合懲罰揮空；被擋下會被 J1 反擊。</td></tr>
+<tr><td><kbd>I</kbd></td><td>崩防 峰打ち <i>MINEUCHI</i></td><td>通用的崩防抓技，用大刀的刀背砸。</td><td>和其他角色一樣要非常近才抓得到。</td></tr>
+<tr><td><kbd>O</kbd></td><td>十字 <i>JŪJI</i> → Kikon「王虚の閃光を込めた月牙天衝」</td><td>瞬步衝刺（最遠約 8.6 公尺）接雙刀十字斬；按住 <kbd>O</kbd> 打中紅血對手就是 Kikon，拿走魂魄 2 顆。</td><td>Soul Break 也播同一段演出。</td></tr>
+</tbody></table>
+<p class="note">始解的傷害倍率是標準值，受到的傷害比較少（覺醒後會變多）。</p>
+
+<h4>血鎖の一護 <i>KESSA NO ICHIGO</i>（覺醒）</h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>板薙 <i>ITA-NAGI</i> → 返板 <i>KAESHI-ITA</i> → 板旋 <i>ITA-SEN</i></td><td>單手揮平板大劍，第三段轉身一圈，讓對手踉蹌。</td><td>距離約 1.6 公尺，比始解的 J 長一點、慢一格。沒有十字連段。</td></tr>
+<tr><td><kbd>K</kbd></td><td>大板 <i>ŌITA</i> → 昇板 <i>SHŌ-ITA</i> → 天鎖落 <i>TENSA-OTOSHI</i></td><td>雙手橫掃、上撩、直劈（約 2.9～3.2 公尺），最後一下讓對手癱倒。</td><td>純砍擊，削防禦量表比始解的 K 少一點。</td></tr>
+<tr><td><kbd>U</kbd></td><td>防禦</td><td>一般防禦。</td><td>—</td></tr>
+<tr><td><kbd>L</kbd></td><td>招架 鎖盾 <i>KUSARI-TATE</i> → 反擊 残月返し <i>ZANGETSU-GAESHI</i></td><td>按下後約 0.4 秒內全方位接住近戰攻擊：不受傷，對手硬直很久，接著自動把對手拉近反擊（打中讓對手癱倒，還能再接 J）。</td><td>花防禦量表 10，接住回 20。防禦硬直中也能按（但被對手的連段鎖住、硬直本身已經結束的那段不行）。飛行道具在判定內會被無硬直擋下。揮空會露出破綻。</td></tr>
+<tr><td><kbd>Space</kbd>／<kbd>Shift</kbd>+<kbd>Space</kbd></td><td>分身 <i>BUNSHIN</i></td><td>Step 在起跳點、Hoho 在對手正前方 1.6 公尺留下一個分身，最多 3 個（第 4 個會頂掉最舊的），各留 5 秒。</td><td>每個分身花防禦量表 15，不夠時照樣 Step／Hoho，只是沒有分身。分身不會被打。</td></tr>
+<tr><td>（分身的回應）</td><td>影断 <i>KAGE-DACHI</i>／影薙 <i>KAGE-NAGI</i></td><td>每按一次 J／K，每一個分身都站在原地轉向對手揮刀，而且是反過來的：J → 重斬（約 3 公尺）、K → 輕斬（約 2.4 公尺），比本體晚一點出手。</td><td>傷害七成，算在同一套連段裡。對手面向一護就擋得住。分身打到或被擋就把自己那串打完消失，揮空就留在原地；一護被打中時全部消失。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>SP1 鎖引 <i>KUSARI-BIKI</i></td><td>甩出鎖鏈，最遠約 7 公尺，打中把對手拉到 1.6 公尺並綁住一下。</td><td>靈壓 1 格。拉過來之後接一串 J 是連段。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>SP2 残像 <i>ZANZŌ</i></td><td>6 秒內他的每一招都會在一瞬間之後多一道殘影照打一次，傷害一半。</td><td>靈壓 2 格。J／K、SP1、O、招架反擊都有殘影，崩防沒有。持續中不能再開。</td></tr>
+<tr><td><kbd>I</kbd></td><td>崩防 峰打ち <i>MINEUCHI</i></td><td>同始解。</td><td>—</td></tr>
+<tr><td><kbd>O</kbd></td><td>影討 <i>KAGE-UCHI</i> → Kikon「千影 <i>SEN'EI</i>」</td><td>瞬步衝刺接一記直劈；按下時場上每個分身都一起衝過去，每個讓這一擊多 30 傷害。</td><td>Kikon 的魂魄看按 <kbd>O</kbd> 時的分身數：0／1／2／3 個 → 2／2／3／4 顆。Soul Break 也看分身數（打出時場上的分身，0／1／2／3 個 → 3／3／4／5 顆），播的是「漆黒の月牙天衝」。</td></tr>
+</tbody></table>
+<p class="note">覺醒後走路和跑步都比始解慢一點。防禦量表同時是招架和分身的本錢，一直 Step 擺分身，防禦就會變薄。練習模式中招架太早或太晚，頭上會顯示 EARLY／LATE。</p>
+
+<h4>覺醒條件與變化</h4>
+<ul>
+<li>覺醒量表滿了之後按 <kbd>P</kbd>（時機見<a href="#awaken">覺醒</a>），整場一次，<b>不回復靈子</b>，覺醒後一直維持到比賽結束。</li>
+<li>本體的傷害比始解略低，受到的傷害變多；傷害主要改由分身和殘影補上。</li>
+<li><kbd>U</kbd> 仍是一般防禦，<kbd>L</kbd> 從架勢變成招架，Step 和 Hoho 會留分身；始解的十字連段、架勢、月牙十字衝、双牙都沒了。</li>
+<li>覺醒後的 Kikon 是千影（依分身數 2～4 顆魂魄），Soul Break 再多 1 顆（3～5 顆）。</li>
+</ul>
+
+<h4>角色量表</h4>
+<p>始解沒有專屬量表。覺醒後量表列顯示三個小人：亮起的（白色、紅框）是現有分身，外圈細弧是它剩下的時間，三個全亮時會閃動，代表這時按 <kbd>O</kbd> 的千影值 4 顆魂魄。開殘像時小人下方有一條逐漸縮短的白條。旁邊的字是 <b>BUNSHIN ×分身數</b>，按 <kbd>O</kbd> 的瞬間會多顯示這次值幾顆魂魄。對手紅血時，他的魂魄列上「會被拿走幾顆」的提示也跟著分身數變。手機直拿時標籤同樣是 BUNSHIN；單手模式在拇指圈外有三個紅點代表分身。</p>
+
+<h4>技巧</h4>
+<ul class="tips">
+<li>始解的基本功：貼身 J 起手，換鍵成交牙接 K3，被擋也能大削防禦量表；K 打中後立刻 <kbd>L</kbd> 進架勢，接乱月或月落收尾。</li>
+<li>中距離擺架勢，看對手反應選派生：想打人用乱月，對手在防禦就用月落砸防禦量表，對手站得遠就月渡貼上去再派生一次。架勢中沒有防禦，別在對手出招前擺。</li>
+<li>面對山本、露琪亞這類放飛行道具的對手，用月牙十字衝把波砍掉順便打人，或用月渡從側面繞進去。</li>
+<li>覺醒後先用 Step 往旁邊、Hoho 繞到對手面前擺分身，讓分身站在對手身邊再按 J／K；J 叫出分身的重斬，最適合在身邊有 2～3 個分身時連按。</li>
+<li>對手快紅血時先存到 3 個分身，再用連段結尾的 <kbd>O</kbd> 接千影，一次拿 4 顆魂魄；帶著 3 個分身把靈子打到 0 的 Soul Break 更是 5 顆。存分身時別被打中，一中全沒。</li>
+<li>招架判定很寬：防禦擋下第一下之後馬上按 <kbd>L</kbd>，常常就能接住下一下。防禦量表低於 10 時按不出來。</li>
+</ul>
+</details>
+</section>
+
+<section class="char" id="ch-senju">
+<details>
+<summary><h3>修多羅千手丸 <small>SHUTARA SENJUMARU（SENJUMARU）</small></h3><span class="tagline">先縫針、後引爆的裁縫師；覺醒後用織機在場上佈陣</span></summary>
+<p>千手丸的單發傷害是全遊戲最輕的，J 也很短，真正的傷害藏在「針」裡：始解時每次近身碰到對手都會縫針，之後用 L 一口氣拉出來，不能防。覺醒後改成用織機依固定順序放出六種場地效果，從 4～9 公尺外控制對手的走位。她的身板很薄，是全角色最容易被連續攻擊打飛的一位（和露琪亞並列），不適合跟人硬拚。</p>
+
+<h4>始解 刺絡 <i>SHIGARAMI</i></h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>一針 <i>HITOHARI</i> → 返し縫い <i>KAESHINUI</i> → 千手 <i>SENJU</i></td><td>用和她一樣高的大針刺擊，第三段六隻手一起轉圈刺出。判定約 1.44 公尺。</td><td>J1 出手很快，貼身時搶得過任何人的 K。每一段都會縫針。</td></tr>
+<tr><td><kbd>K</kbd></td><td>待ち針 <i>MACHIBARI</i> → 纏り <i>MATSURI</i> → 絎け <i>KUKE</i></td><td>K1 兩根長珠針直刺（約 2.9 公尺），K2 甩出一圈紅線，K3 把針釘在對手腳邊讓他跪倒。</td><td>K1 是她始解最長的普攻。K 段打中後可以接 <kbd>L</kbd>。</td></tr>
+<tr><td><kbd>L</kbd></td><td>悪い癖 <i>WARUI KUSE</i></td><td>把對手身上所有的針一次拉出來，每根針一下，<b>不能防禦</b>。</td><td>沒有針時按不出來（量表閃一下）。不會打出 Soul Break。K 段打中後接 L 就是連段；單獨出手則是讓對手難以反擊的壓制。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>SP1 神兵 <i>SHINPEI</i></td><td>召喚一名布兵，她收招的同時布兵開始行動：沿直線走向對手，打出<b>刺、掃、刺三連擊</b>（第一下打中就是一套連段），打完消失。</td><td>千手丸收招很快，可以跟在布兵後面一起進攻。布兵挨一下就碎，但碎掉時會在打它的人身上縫一針：理它、不理它都有代價。同時只有一隻。靈壓 1 格。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>SP2 傘 <i>KASA</i></td><td>六隻手撐開紅線傘：對近戰是防禦，對飛行道具和場地危險物是「接住」（不硬直、不扣防禦量表）。</td><td>結束時一定射出紅線反擊（10 公尺、橫向 Step 可閃），接到的攻擊越重反擊越痛。Breaker 能破傘，不能防的攻擊會穿過。靈壓 1 格。</td></tr>
+<tr><td><kbd>I</kbd></td><td>Breaker 裁断 <i>SAIDAN</i></td><td>兩隻手像剪刀一樣合上，破防。</td><td>通用抓技，距離很短，要貼身才觸發。</td></tr>
+<tr><td><kbd>O</kbd></td><td>縫地 <i>NUICHI</i> → Kikon 仕立て直し <i>SHITATE-NAOSHI</i></td><td>瞬步衝刺後六手旋刺，最遠約 7.7 公尺；打中也會縫針。</td><td>Kikon 奪走魂魄 2 顆。可當第三段打中後的 O 收尾。</td></tr>
+</tbody></table>
+<p class="note"><b>針 HARI：</b>她的 J／K／O 碰到對手就縫針，打中 2 針、被防 1 針（被彈開不算），最多 6 針，對手胸前會冒出一根根紅線。3 秒沒有縫新針，針會每 0.5 秒掉一根。所以被防住的連段照樣在累積不能防的傷害；布兵、傘的反擊不會縫針。對手可以用 Step 或 Hoho 的無敵時間躲掉拉針。</p>
+
+<h4>卍解 娑闥迦羅骸刺絡辻 <i>SHATATSU KARAGARA SHIGARAMI NO TSUJI</i>（HUD：TSUJI）</h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>一針 <i>HITOHARI</i> → 返し縫い <i>KAESHINUI</i> → 千手 <i>SENJU</i></td><td>同始解，但不再縫針。</td><td>J 段結尾接 <kbd>L</kbd> 就是一越（見下）。</td></tr>
+<tr><td><kbd>K</kbd></td><td>反物打ち <i>TANMONO-UCHI</i> → 纏り <i>MATSURI</i> → 巻き取り <i>MAKITORI</i></td><td>K1 甩出一匹布直打（約 3.8 公尺）；K3 用布捲住對手腳下，拉到身前約 1.4 公尺。</td><td>K 段打中後接 <kbd>L</kbd> 可以把織好的綛混進連段放出。</td></tr>
+<tr><td><kbd>L</kbd>（按住）</td><td>織布</td><td>按住超過約 0.17 秒開始織下一綛，每 1/3 秒織一趟，最多 3 趟。</td><td>可以分好幾段織，趟數會留著。<b>織布中被打中，這一綛作廢</b>，直接跳下一綛。</td></tr>
+<tr><td><kbd>L</kbd>（短按）</td><td>綛解かば <i>KASE TOKABA</i></td><td>在對手腳下展開下一綛（至少要先織好 1 趟），展開時間約 1/3 秒。</td><td>一趟都沒織、或場上已有她的綛時放不出來（布閃白）。展開時被打中就撕毀，L 鎖 1.5 秒。</td></tr>
+<tr><td>J 段 → <kbd>L</kbd></td><td>一越 <i>HITOKOSHI</i></td><td>J 打中或被防後按 L，拋一次梭子，馬上多織一趟（最多 3 趟），不會放出。</td><td>最快、最安全的織法：J 打中後接只差一點點，J3 打中後接甚至有利。<b>被防住時會被反擊。</b></td></tr>
+<tr><td>K 段 → <kbd>L</kbd></td><td>綛解かば（連段版）</td><td>取消掉場上的綛，把下一綛直接放在硬直中的對手腳下，展開只要一半時間。</td><td>刃金、黒砂、褥、焼野原會直接接上連段。一樣至少要織好 1 趟。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>SP1 裁ち直し <i>TACHINAOSHI</i></td><td>剪斷場上的綛，連續放出接下來的<b>兩綛</b>，兩綛可以同時存在。</td><td>唯一不用先織的放法（沒織也當 1 趟）。可以取消普攻打中後的硬直當連段收尾。靈壓 1 格。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>SP2 傘 <i>KASA</i></td><td>同始解。</td><td>覺醒後要靈壓 2 格。</td></tr>
+<tr><td><kbd>I</kbd></td><td>Breaker 裁断 <i>SAIDAN</i></td><td>同始解。</td><td>通用抓技。</td></tr>
+<tr><td><kbd>O</kbd></td><td>浮文機 <i>UKIMON NO HATA</i> → Kikon 死出六色浮文機 <i>SHIDE NO ROKUSHIKI UKIMON NO HATA</i></td><td>不衝刺，紅地毯沿直線鋪出約 8.5 公尺，布捲住碰到的人。</td><td>Kikon 奪走魂魄 3 顆。可當第三段打中後的 O 收尾。</td></tr>
+</tbody></table>
+<p class="note"><b>機 HATA 的六綛</b>永遠照固定順序輪流：黒砂 → 刃金 → 褥 → 焼野原 → 眼 → 星 → 回到黒砂（綛名前面的一～六是原作咒文的編號，不是順序）。放出一綛就換下一綛；場上同時只有一綛（SP1 例外，一次兩綛）。織的趟數越多，範圍越大、持續越久、傷害越高、效果越強，每一趟差距明顯：1／2／3 趟的傷害約 0.7／1／1.4 倍，凍結時間、拖慢、吸取、反射、削血、防禦量表消耗等效果 0.6／1／1.5 倍，範圍 0.7／0.85／1 倍，持續時間 0.5／0.8／1.2 倍。K 接 L 和 SP1 放出的是 1 趟。以下是 3 趟的效果：</p>
+<ol>
+<li><b>一綛 万朶の眼</b> <i>BANRA NO ME</i>：對手腳下一圈 3 公尺的鏡眼，約 5 秒。他的波動、火球進到圈內會被反射回去；他站在圈內打中或被防住她，自己也要吃 45% 的傷害。本身不打人。</li>
+<li><b>二綛 刃金のよろい</b> <i>HAGANE NO YOROI</i>：對手腳下 2 公尺的鐵處女，金色刃板升起後合上一次，重擊並讓人跪倒；防禦要扣三倍的防禦量表。</li>
+<li><b>三綛 黒砂の腸</b> <i>KOKUSA NO HARAWATA</i>：對手腳下 2 公尺的黑砂坑，約 5 秒。往坑外走、跑幾乎走不動（Step 不受影響）；砂旋轉一下之後吞噬，把人拉回中心，依趟數吞 1～3 次。</li>
+<li><b>四綛 凍てつく褥</b> <i>ITETSUKU SHITONE</i>：對手腳下 2 公尺的雪花地雷，約 5 秒。第一次踩到就被凍住約 1 秒並附加寒氣，觸發後消失。</li>
+<li><b>五綛 焼野原</b> <i>YAKENOHARA</i>：從她面前往對手方向燒出一條寬 2 公尺的火焰走廊，約 3 秒，最多打兩下，被防也會削血（約 18%）。專門擋對手衝過來。</li>
+<li><b>六綛 闇夜の星よ</b> <i>YAMIYO NO HOSHIYO</i>：以<b>她自己</b>為中心 3.5 公尺的圓頂，約 5 秒。對手在裡面時靈壓、瞬步量表持續被吸走給她（每秒 45／22.5），而且不管打人、挨打都拿不到任何量表。本身不打人。</li>
+</ol>
+<p class="note"><b>SP1 的三組搭配。</b>這個順序是兩兩一組排的，SP1 一次放兩綛時剛好放出一組，而且都是先控制、後出手：</p>
+<ul>
+<li><b>黒砂＋刃金（進攻）：</b>黒砂把想逃的他拖回坑裡，刃金就在同一個位置合上。</li>
+<li><b>褥＋焼野原（確實的傷害）：</b>褥先把他凍住，焼野原的火焰走廊從她面前一路燒過他。</li>
+<li><b>眼＋星（防守與資源）：</b>眼反射他的飛行道具，星吸走他的靈壓和瞬步量表給她。</li>
+</ul>
+<p class="note">一直用 SP1 就會一直對齊這三組。中間短按 L 或 K 接 L 單放一綛，就會錯開一格，之後 SP1 放出的是「交叉組」：刃金＋褥、焼野原＋眼，以及繞回開頭的星＋黒砂（他在她的圓頂裡被吸量表，黒砂又讓他很難離開，也不差）。要現在先花掉一綛，還是留著對齊等一整組，是自己的選擇。量表上六塊布也分成三組排；SP1 會放出的兩塊布有框：一組是金框，交叉組是兩個灰框，靈壓不到 1 格時框會變暗。</p>
+<p class="note">會打人的圓形範圍半徑都不超過 2 公尺，焼野原的寬度也只有 2 公尺，對手一次 Step 一定出得去。</p>
+
+<h4>覺醒條件與變化</h4>
+<ul>
+<li>覺醒量表滿了按 <kbd>P</kbd>（時機見<a href="#awaken">覺醒</a>），整場一次，和所有角色一樣先回兩成靈子，覺醒後維持到比賽結束。</li>
+<li>始解的針、悪い癖、神兵、縫地全部拿掉，身上剩下的針歸零；靈壓、瞬步量表、防禦量表保留。從順序的第一綛「黒砂」開始。</li>
+<li>走路和跑步變慢一點，造成的傷害略低一點、受到的傷害略多一點，換來從遠處控場的六綛。</li>
+<li>適合對上愛在遠處丟飛行道具的對手（眼會把攻擊反射回去）或站樁的型態；面對一路衝過來的近戰型，始解的針通常比較好用。</li>
+</ul>
+
+<h4>角色量表</h4>
+<p><b>始解：針 HARI。</b>量表列是六根金色的針，每縫一針就亮起一條紅線；下一根快要掉的針會閃。按 L 卻沒有針時整列會閃一下。<br>
+<b>卍解：機 HATA。</b>量表列換成六塊布，照順序排好，每塊是一綛的顏色和花紋。抬起來、亮著的那塊就是下一綛，標籤是 機 加上它的簡稱（ME、HAGANE、KOKUSA、SHITONE、YAKENOHARA、HOSHI）。織布時那塊布會分三段填滿，表示織了幾趟。正在場上生效的那綛下方有一條漸漸變短的線；被撕毀時布上出現一道紅色斜線，接著灰色倒數（L 被鎖住）。放不出來時下一塊布會閃白。<br>
+<b>手機直向：</b>靈子條下方的小格子裡是縮小版的六根針或六塊布，標籤顯示「HARI 針數」或下一綛的簡稱。單手模式時拇指圈旁的六個小點是針；覺醒後按住 L 晶片就是織布，三個小方塊依趟數填上下一綛的顏色，放不出來時 L 晶片會閃白。</p>
+
+<h4>技巧</h4>
+<ul class="tips">
+<li>始解的基本循環：貼身用 J1 起手，整套連段打中就縫滿 6 針。想穩穩收下就 K 段接 L；想要更多傷害就先退開，趁針還沒掉（3 秒內）再單獨拉針，傷害不會被連段遞減打折。</li>
+<li>對手愛防禦就讓他防：被防住的連段照樣縫針，防禦量表也在掉，之後拉針他防不了。但記得他可以用 Hoho 或 Step 的無敵躲掉，拉針要用讀的。</li>
+<li>中距離先叫神兵走在前面，對手拍掉它就被縫一針，趁他揮空的空檔用 O 的縫地衝進去。對上會丟飛行道具的角色，先開傘接住，接到的攻擊越重，反擊越痛。</li>
+<li>卍解的打法：用 J 結尾的連段接 L（一越）把布織滿，再用 K 連段接 L 把織好的綛混進連段放出。一越被防住會被反擊，只在確定打中時用。</li>
+<li>看量表規劃順序：知道下一綛是什麼就能提早準備。看到金框再按 SP1：例如下一綛是褥時用 SP1，會連續放出褥和焼野原，凍住之後火焰走廊接著燒。遇到眼、星這種不打人的綛，可以短按放在遠處佈陣，或乾脆用 SP1 帶過。</li>
+<li>長按織布時不要被打到：對手衝過來就先放手（趟數會留著），分幾小段織或改用一越。展開那 1/3 秒也要小心，被打中會撕毀並鎖住 L。</li>
+</ul>
+</details>
+</section>
+
+<!-- ================================================================ tips -->
+<h2 id="newbie">新手建議 <small>TIPS</small></h2>
+<ol>
+<li><b>先到 PRACTICE 練連段。</b>把 DUMMY 設成 GUARD AFTER HIT：連段如果真的連得上，假人就來不及防；中間被擋就代表有空隙。</li>
+<li><b>貼身用 J，稍遠用 K。</b>J 快但短，K 遠但慢；K 的第三段被擋會被反擊，不確定打不打得中就用 J 結尾或只打兩段。</li>
+<li><b>記住 防 &gt; J &gt; I &gt; 防。</b>對手一直防就抓（<kbd>I</kbd>）；對手愛抓就按 J；被壓著時先防，找空隙 Step 或 Hoho。</li>
+<li><b>對手紅血就想 Kikon。</b>最穩的是三段連段打中之後按住 <kbd>O</kbd>（O 收尾）；直接按住 O 突進也行，但要小心被防或閃。</li>
+<li><b>看魂魄的紅色。</b>自己的魂火最後幾顆變紅，代表對手一次 Kikon 能拿走的數量；紅了又在閃，就別亂衝。</li>
+<li><b>瞬步留 70。</b>被連段時用 <kbd>Shift</kbd>+<kbd>J</kbd> 開藍色爆氣脫身；自己打中時可以開橙色爆氣把連段接長；拉開距離、血比對手少時開白色爆氣回血；覺醒量表滿了，被打時按 <kbd>P</kbd> 覺醒也能打斷對手。</li>
+<li><b>別讓防禦量表見底。</b>一直防不會回，量表空了會有很長一段時間不能防；找機會放開 U 走位或反擊。</li>
+<li><b>手機上：</b>拇指放著就是防禦，下半點 J、上半點 K，往上撥向前衝（攻擊中、或對手的攻擊正要打到你時往上撥是 Hoho），按住再往上撥是 Hoho，被打時往下撥是藍色爆氣，自己打中時往下撥是橙色爆氣，RV 圓鈕任何爆氣都能開。</li>
+<li><b>角色入門順序：</b>劍八（耐打、直來直往）→ 山本（遠距離火焰）→ 一護（架勢和分身）→ 露琪亞（冷度管理）→ 千手丸（針和織布，最需要規劃）。</li>
+</ol>
+
+<footer>
+<p>SOUL DUEL：以《BLEACH: Rebirth of Souls》為靈感的非商業同人練習作品。角色名稱依作品原名；所有模型、動作、特效和聲音都由程式產生，未使用原作素材。</p>
+<p><a href="./">← 返回遊戲</a>　<a href="#top" onclick="scrollTo(0,0);return false">↑ 回到頂端</a></p>
+</footer>
+</main>
+<script>
+// Characters: the button opens / closes them all; a link into a closed character opens it first.
+(function () {
+  var ds = document.querySelectorAll('section.char details'), b = document.getElementById('all');
+  function sync() { var open = [].every.call(ds, function (d) { return d.open; }); b.textContent = open ? '角色全部收合' : '角色全部展開'; }
+  b.addEventListener('click', function () { var open = b.textContent === '角色全部展開'; [].forEach.call(ds, function (d) { d.open = open; }); sync(); });
+  [].forEach.call(ds, function (d) { d.addEventListener('toggle', sync); });
+  function reveal() {
+    var t = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    var d = t && (t.querySelector('details') || t.closest('details'));
+    if (d && !d.open) { d.open = true; t.scrollIntoView(); }
+  }
+  window.addEventListener('hashchange', reveal); reveal(); sync();
+})();
+</script>
+</body>
+</html>

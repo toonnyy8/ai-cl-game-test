@@ -110,6 +110,9 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   changes never touch the art; hit-stop holds the pose for free; one cross-fade between clips; CPU `ParticleSystem`
   (GPU particles don't exist on the WebGL2 path); cinematics as shot scripts whose frames sum to the cine's `len`.
 
+- The look spec for M5 B2–B5 (Fable 5.1's review of B1 + the user's answers on Kenpachi's TYBW hair and Yamamoto's
+  Bankai body): [BABYLON_LOOK.md](BABYLON_LOOK.md).
+
 ## Status
 
 - 2026-10-04: plan adopted, scaffold created.
@@ -139,6 +142,16 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   event (Hellfire, an awakening); with the Lisp's awakenings off (39022) and Hellfire removed, YY 16/20 and YK 15/20
   seeds end on the same tick, and the gate gives YY 15/20 K.O. median 337.8 s, YK 250.7 s (TS: 17/20 324.0, 251.3).
   So the M2 medians (YY 324, YK 251, KK 234 s; YK 3-17) are the base kits' own: the reference medians need M3.
+- 2026-10-04: M6a ASSIST + learning CPU (sim only): `src/sim/assist.ts` (assist.lisp; `ASSIST` = the SETTINGS rows the UI
+  sets, run by `assistSystem` between brainSystem and fighterSystem; the kits' CPU hooks see the borrowed brain through
+  `withAiBrain`), `src/sim/learn.ts` (learn.lisp + ai.lisp's learner; f32 tables; its own `learnRnd` stream; tables kept
+  by an injectable `LearnStore`, `setLearnStore` (memory by default; the browser's localStorage keys `soulduel.learn.<i>`
+  / `.a<i>`); `MatchOpts.learn` attaches P2's learner (VS CPU / ENDLESS only)), `src/sim/habits.ts` (debug.lisp's scripted
+  players), `tools/learngate.ts` (the learning gate and ASSIST's gate), `test/learn.test.ts` (the 100 checks of
+  tests/learn-test.lisp), `test/assist.test.ts`. KK vs the native Lisp: the learner's per-step state matches tick for
+  tick until a sim divergence (the BLUE burst / flash-step floats); the masher's assist gate per setting matches the
+  Lisp's within a seed or two (vs HARD: k0 0/20, k2 16/20, k11 13/20; Lisp 0, 16, 14). Kept as the Lisp behaves:
+  AUTO-COMBO's bait never yields :guard-long (its SETF returns NIL).
 - 2026-10-04: merged M3b Kenpachi (KK matches the native Lisp event for event; gate 142.9 s vs Lisp 144.8) and M4 Rukia
   (RK / RR seeds 1-5 identical to the Lisp; cold, flash-step, hidden stun in f32). Paused by the usage limit with work
   left uncommitted in worktrees: M3a Yamamoto (`../ai-cl-game-test-wt-m3yama`), M5-B1 look (`-wt-m5`), Ichigo
@@ -164,3 +177,23 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   upper middle of 20), `gate.ts` averaged the two middle ones; `gate.ts` now takes the Lisp's, and its 15 medians equal
   `simgate.py`'s (YY 130.9, YK 124.4, KK 144.8, RY 145.6, RK 148.0, RR 174.1, IY 161.9, IK 163.3, IR 181.9, II 204.4,
   SY 129.0, SK 147.9, SR 193.2, SS 194.2, SI 179.6 s).
+
+- 2026-10-04: merged M4 Ichigo and Senjumaru (the S meter's state: `senjuMeter(e)`), M3a Yamamoto + the single-float sim
+  (f32 values and op-by-op rounding, f32 pi, musl sinf/cosf in `src/sim/sinf.ts`): YY / YK / KK seeds 1-20 and RY / RK /
+  RR 1-10 match the native Lisp bit for bit, one native match per process (the native simgate.py's back-to-back runs
+  differ slightly: Lisp state carries over between matches). TS gate, 15 pairings x 20 seeds: all K.O., 2.8 s total.
+  M6b platform: DOM menus (`src/ui/`), CONTROLS rebinding (`soulduel.babylon.bind`), VS PLAYER, PRACTICE
+  (`src/sim/practice.ts`), touch recogniser + thumb deck (`src/input/{touch,onehand}.ts`), portrait camera / HUD,
+  PWA. The landscape two-thumb layer is new (the Lisp has none): it needs the user's playtest. Not yet: ENDLESS, the
+  learner / ASSIST in force (M6a), separate P1 / P2 pick phases.
+- 2026-10-04: merged M6a and wired it: SETTINGS' LEARNING CPU / AUTO GUARD / COMBO / BREAK rows are in force
+  (`src/ui/settings.ts`); the learned tables live in localStorage under the Lisp page's keys and format
+  (`soulduel.learn.<i>`, `soulduel.learn.a<i>`, comma-separated integers), so both builds share them. The CPU learns in
+  VS CPU (and ENDLESS once ported), never in CPU VS CPU or PRACTICE. Open: AUTO COMBO's bait branch in assist.lisp never
+  presses :guard-long (the SETF returns NIL; ported as it behaves, likely a Lisp bug).
+- 2026-10-04: M6c ENDLESS: `src/sim/endless-rules.ts` (endless-rules.lisp; `test/endless.test.ts` ports its host tests),
+  `src/sim/endless.ts` (the run; `MatchOpts.setup` = ENDLESS-APPLY!, called before the learner attaches; the record in
+  the page's `soulduel.endless.<k>` slots, shared with the Lisp build), the screens in `src/ui/flow.ts` (SELECT with
+  STAGE 1's opponent and START, STAGE CLEAR, RETIRE, the run's RESULTS), the STAGE tag in `render/hud.ts`,
+  `tools/endless.ts` (the autopilot, endless.lisp 80992's job). The autopilot vs the native Lisp running the same run:
+  every Y / K / R stage identical bit for bit (91 of 91), Ichigo / Senjumaru stages drift with their open f32 parity.

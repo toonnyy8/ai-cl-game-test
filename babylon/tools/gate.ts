@@ -10,9 +10,10 @@ declare const process: { argv: string[]; execPath: string; exit(c: number): neve
 const cp: any = await import('node:child_process' as string);
 
 const CHARS: Record<string, string> = { y: 'yama', k: 'ken', r: 'rukia', i: 'ichigo', s: 'senjumaru' };
-const LISP_MEDIAN: Record<string, number> = {   // docs/DUEL_AI_V2.md "Gates (final)"
-  yy: 139.0, yk: 159.5, kk: 151.6, ry: 163.1, rk: 150.3, rr: 208.2, iy: 178.9, ik: 170.0, ir: 206.2, ii: 213.0,
-  sy: 170.7, sk: 160.1, sr: 194.9, ss: 206.4, si: 182.4 };
+const LISP_MEDIAN: Record<string, number> = {   // the native Lisp's simgate.py, seeds 1-20, at commit 590f099 (2026-10-04;
+  // DUEL_AI_V2.md "Gates (final)" is older). The TS sim is bit-exact with it, so a differing median = the sim changed.
+  yy: 130.9, yk: 124.4, kk: 144.8, ry: 145.6, rk: 148.0, rr: 174.1, iy: 161.9, ik: 163.3, ir: 181.9, ii: 204.4,
+  sy: 129.0, sk: 147.9, sr: 193.2, ss: 194.2, si: 179.6 };
 interface Job { pair: string; seed: number; ai: 'ai' | 'stub' }
 interface Row extends Job { winner: string; ko: boolean; secs: number }
 
