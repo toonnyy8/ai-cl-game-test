@@ -3,6 +3,9 @@
 import { roundHalfEven } from './math';
 
 export const STEP = 1 / 60;
+// The Lisp keeps the slow-motion slots and scale in single floats (f32vec, 1f0 / 60f0): the step-skipping slow motion
+// counts sim frames off them, so they stay f32 here (doubles skip a different step now and then and a CPU match drifts).
+const f32 = Math.fround, STEP32 = f32(1 / 60);
 const SLOWMO_N = 8;
 
 export class TimeState {
@@ -13,7 +16,7 @@ export class TimeState {
   /** Fixed steps since start; advances during hitstop too. */
   tick = 0;
   /** scale, real seconds left, who (0 everyone / 1 the others only), per slot */
-  slowmoSlots = new Float64Array(3 * SLOWMO_N);
+  slowmoSlots = new Float32Array(3 * SLOWMO_N);
   /** Real seconds not yet simulated (runFixedSteps). Set it to 0 while the sim pauses. */
   stepAcc = 0;
 
@@ -41,7 +44,7 @@ export class TimeState {
     for (let i = 0; i < SLOWMO_N; i++) {
       const o = i * 3, left = s[o + 1];
       if (left > 0 && (others || s[o + 2] < 0.5)) {
-        const k = s[o], e = left < 0.1 ? k + (1 - k) * (1 - left * 10) : k;
+        const k = s[o], e = left < f32(0.1) ? f32(k + f32(f32(1 - k) * f32(1 - f32(left * 10)))) : k;
         sc = Math.min(sc, e);
       }
     }
@@ -60,7 +63,7 @@ export class TimeState {
     this.tick++;
     for (let i = 0; i < SLOWMO_N; i++) {
       const o = i * 3 + 1;
-      s[o] = Math.max(0, s[o] - STEP);
+      s[o] = Math.max(0, f32(s[o] - STEP32));
     }
     if (this.hitstop > 0) { this.hitstop--; return false; }
     return true;

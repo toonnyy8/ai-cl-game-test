@@ -123,17 +123,42 @@ export class Pilot {
   constructor(vpad: Vpad = newVpad(), camRelative = true) { this.vpad = vpad; this.camRelative = camRelative; }
 }
 
-/** The CPU player (ai.lisp BRAIN; M1 drives it with stubai.ts, M2 ports ai.lisp onto these fields). */
+/** What the CPU sees of its opponent at one step (ai.lisp SNAP). Ring entries are reused: fields a state doesn't set
+ *  keep their last value, as in the Lisp. */
+export class Snap {
+  x = 0; z = 0;
+  state: FState = 'idle'; kind: string | null = null; phase: string | null = null;
+  sf = 0; s = 0; activeEnd = 0;
+  left = 0;                     // frames left of his move (99 = still charging / dashing) or stun
+  start = 0;                    // tick his current move / guard began (one roll per event)
+  reach = 0; guardT = 0; projectile = false;
+  flags: string[] = [];         // his move's flags (parry bind ...)
+  contact: 'hit' | 'block' | null = null;
+  tell: [number, number] | null = null;
+}
+
+/** The CPU player (ai.lisp BRAIN, components.lisp): delayed perception, the current intent, anti-stall heat, the button
+ *  it is holding. Identity comes from the kit's ai tables. stubai.ts drives it with sx / sy only. */
 export class Brain {
   difficulty: string;
-  delay: number;
+  delay: number;                // perception delay, frames
+  ring: (Snap | null)[] = new Array(32).fill(null);   // SNAPs of the opponent, one per step
+  head = 0;
   heat = 0;
   intent = 'approach'; intentT = 0;
   strafe = 1; strafeT = 0;
   press: string | null = null; pressMod = false; pressLeft = 0;
   decideT = 0;
+  rollKey = -1;                 // the opponent move start the reflex rolls were made for
+  guardRoll = 1; hohoRoll = 1; reactRoll = 1;   // this event's rolls (1 = never)
+  was: FState = 'idle';         // its fighter's state at the previous step (block punish)
+  breakKey = -1;                // the guard episode the Breaker roll was made for
+  burstT = 0; burstRolled = false;
+  dash = 0; dashTo = 0;         // a held dash: +1 toward / -1 away, until this distance
+  bankaiRolled = false;
   act: string | null = null; why: string | null = null;
-  was: FState = 'idle';
+  learn: null = null;           // the learning CPU (learn.lisp, M6): always null, its call sites skipped
+  jkey = -1; jstarts: number[] = [];   // his last perceived J's start; the ticks his J's started (aiMashP)
   sx = 0; sy = 0;               // the stick it writes this step (stub)
   constructor(difficulty = 'normal', delay = 14) { this.difficulty = difficulty; this.delay = delay; }
 }

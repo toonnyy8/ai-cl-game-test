@@ -13,6 +13,7 @@ import { fighterSystem, playClip, refreshLook, spawnFighter, toIdle, viewStep } 
 import { gaugeSystem, hitSystem } from './combat';
 import { clearHazards, hazardSystem } from './hazards';
 import type { Vpad } from './vpad';
+import { brainStep } from './ai';
 
 // ---------------------------------------------------------------- cinematics (length-only)
 /** Each script's length (its DEFCINE :len) and its frame-0 sim beat: FACE-EACH-OTHER, with a GAP for a flash step. */
@@ -134,8 +135,8 @@ export function pilotSystem(): void {
   for (const e of fighters()) if (!e.brain) e.pilot.vpad.beginStep();
 }
 export type BrainStep = (e: Ent, b: Brain) => void;
-let brainStepFn: BrainStep = () => {};
-/** The CPU in use (M1: stubai.ts; M2: ai.ts). */
+let brainStepFn: BrainStep = brainStep;
+/** The CPU in use: ai.ts (default) or stubai.ts (M1's stand-in, headless --ai stub). */
 export function setBrainStep(fn: BrainStep): void { brainStepFn = fn; }
 /** Every CPU fighter decides this step (before fighterSystem reads the vpads). */
 export function brainSystem(): void {
@@ -156,7 +157,7 @@ export function simStep(): void {
   if (W.cine) { pilotRead(); cineStep(); }
   else if (!W.time.timeStep()) pilotRead();                          // hitstop: devices only
   else {
-    W.slowAcc += W.time.slowmoScale(false);
+    W.slowAcc = Math.fround(W.slowAcc + W.time.slowmoScale(false));   // (single floats, as the Lisp's *slow-acc*)
     if (W.slowAcc >= 1.0) { W.slowAcc -= 1.0; pilotSystem(); simSystems(); }
     else pilotRead();
   }
