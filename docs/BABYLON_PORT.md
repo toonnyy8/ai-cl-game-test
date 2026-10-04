@@ -1,0 +1,66 @@
+# SOUL DUEL on Babylon.js + TypeScript (`babylon/`)
+
+The user's request (2026-10-04): build a Babylon.js + TypeScript version of SOUL DUEL from the duel design docs, with
+Fable 5.1 as the discussion advisor. Decisions:
+
+- **Scope:** staged, up to full parity (the user, 2026-10-04): a playable core slice first, then the roster, awakenings,
+  cinematics, VFX, touch, ASSIST, ENDLESS, one committed milestone at a time.
+- **Location:** `babylon/` in this repo, its own Vite + TS package, committed to main; it shares `docs/` with the Lisp
+  build (the user, 2026-10-04).
+
+## Strategy (Fable 5.1's recommendation, adopted)
+
+- **The sim is translated, not redesigned.** `duel/lisp` is the source of truth (the docs lag it). `tuning`, `rules`,
+  `control`, `kit`, `components`, `fighter`, `combat`, `hazards`, `ai`, `learn`, `assist`, the match part of `flow`,
+  `endless-rules`, the character files' data and hooks, and the engine pieces they lean on (`input.lisp` vpad,
+  `hitvol.lisp`, `time.lisp`, `engine/c/rng.c`) become TS modules of the same names and the same function names
+  (kebab → camelCase).
+- **The presentation is rewritten for Babylon:** `*-art`, `body`, `vfx`, `brush`, `glyphs`, `stage`, `hud`, `camera`,
+  `cinema`, `sounds`, `onehand`, `feedback`. Only their contracts are kept: clip names per move, cinematic lengths
+  (cinematics are sim time and count toward the match clock), the sim-owned view the human stick steers by.
+- **Not bit-exact with the Lisp build** (it already needed musl `sinf`/`expf` and SSE flags to agree with itself,
+  DEVLOG §38). Parity means: (1) self-determinism (same seed → same hash lines), (2) the rules tests ported from
+  `tests/duel-rules-test.lisp` pass, (3) a statistical seed gate: CPU vs CPU NORMAL, all K.O., per-pairing median within
+  about ±15 % of `DUEL_AI_V2.md` "Gates (final)" and inside 125–210 s for the cross pairings.
+
+## Layout
+
+```
+babylon/
+  src/sim/     tuning rules rng vpad hitvol time kit types fighter combat hazards ai flow match   (no Babylon imports)
+  src/chars/   yama ken rukia ichigo senjumaru                                                      (no Babylon imports)
+  src/render/  scene bodies anim vfx hud camera cinema audio
+  src/input/   keyboard gamepad touch   (device → vpad)
+  src/main.ts  frame loop: flow → fixed steps (≤ 6 per frame) → camera → draw → HUD
+  tools/       headless.ts (node match runner, prints `duel -> RESULTS ...` and hash lines), gate.ts
+```
+
+- No ECS: two fighters and a hazard array owned by a `Match`.
+- Floats are doubles; integer frame counters stay integers; CL `round` is half-even (`roundHalfEven`), CL `mod` on
+  negatives is `((a % n) + n) % n`.
+- Gameplay randomness only from the sim stream (xorshift32 of `rng.c`) inside fixed steps; cosmetics use another.
+
+## Traps to copy verbatim (from the advisor's read of the Lisp)
+
+Collect-then-apply hits (`pending` with the defender's state at collection); deferred cross-fighter writes
+(`freeze-next`, `lock-next`, `fighter-burst`, `glock`) applied after both fighters stepped, and `ox/oz/dist` snapshotted
+before anyone moves; devices read during hitstop / slow motion / cinematics without advancing the vpad clock, flushed at
+a cinematic's end; the vpad's 10-step buffer, same-step modifier, command priority (a refused command never hides lower
+ones); the string latch; guard-gauge idle frozen while guarding; the Kikon follow-up (button held on the hit step,
+`kikon-n` read at rush start, caps 4 / 5, one cinematic per step); slow motion by step skipping; `start-match` resets
+the seed, `slowAcc`, hitstop and pending; the hidden hit-stun; `fighter-step` counter order.
+
+## Milestones
+
+| M | Ports | Accept |
+|---|---|---|
+| M1 core | tuning, rules (+ tests), rng, vpad, hitvol, time, kit, components, fighter, combat, battle flow; Yamamoto and Kenpachi base kits (no awakening / meter); capsule bodies; Canvas HUD; keyboard | `npm test` green; headless YY / YK / KK deterministic with a stub AI; playable in the browser |
+| M2 CPU | `ai.lisp` with both base kits' `:ai` tables | headless gate: YY / YK / KK all K.O., medians within range |
+| M3 depth | hazards, Inferno / Hellfire, awakenings (Bankai, Nozarashi cups, NOME, Ken Bankai), hidden stun, burst modes, guard lock / cancel; cinematics as length-only | 3 pairings + awaken A/B |
+| M4 roster | Rukia, Ichigo, Senjumaru | 15 pairings pass the gate |
+| M5 look | Babylon rig and clips, VFX, real cinematics, audio | visual review; gate unchanged |
+| M6 platform | screens, touch deck, ASSIST, practice, ENDLESS, learning CPU | phone smoke test, ENDLESS run |
+
+## Status
+
+- 2026-10-04: plan adopted, scaffold created.
