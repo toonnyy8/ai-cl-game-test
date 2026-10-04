@@ -76,3 +76,9 @@ the seed, `slowAcc`, hitstop and pending; the hidden hit-stun; `fighter-step` co
   Bankai refused until their kit is registered), ai.lisp (M2; `stubai.ts` stands in, set with `setBrainStep`), device
   bindings / CONTROLS / SETTINGS (src/input), the Bodies table holds only hurt cylinders. Known divergence: hazards
   iterate in creation order, the Lisp ECS in slot order (only matters when two hazards hit on one step).
+- 2026-10-04: M1-render: `src/main.ts` (WebGPU, WebGL2 fallback; flow title → select → battle → results, Esc pause; fixed
+  steps via `runFixedSteps`, ≤ 6 a frame), `src/render/{scene,camera,hud}.ts` (placeholder look: the stage.lisp plaza,
+  hurt-cylinder capsules with a head, a face marker and a sword timed to the move's hit frames; camera.lisp's pair and
+  behind cameras on the sim's view; hud.lisp's panels in plain type), `src/input/{keyboard,gamepad}.ts` (control.lisp
+  P1 bindings). VS CPU sets `W.viewBehind`; length-only cinematics dim the screen with their name. `window.duel.match`
+  is the harness handle (`tools/run.mjs babylon/dist --script ...`, eval `duel.match.runToEnd()`).
