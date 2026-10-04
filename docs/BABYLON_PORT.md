@@ -68,3 +68,11 @@ the seed, `slowAcc`, hitstop and pending; the hidden hit-stun; `fighter-step` co
 ## Status
 
 - 2026-10-04: plan adopted, scaffold created.
+- 2026-10-04: M1-sim (headless) translated: `src/sim/{tuning (generated from tuning.lisp), math, rng, hitvol, time, vpad,
+  rules, kit, types, fighter, combat, hazards, match, stubai}.ts`, `src/chars/{yama,ken}.ts` (base forms only),
+  `tools/headless.ts`, `test/rules.test.ts`. A `Match` owns a `World` (the Lisp's sim specials) and makes it current for
+  its steps; hooks are looked up by name (a missing one is a no-op); cinematics are length-only (`CINES`: `:len` + the
+  frame-0 `face-each-other` gap). Deferred: Hellfire (the full Inferno meter stays full), every awakened form (Awaken /
+  Bankai refused until their kit is registered), ai.lisp (M2; `stubai.ts` stands in, set with `setBrainStep`), device
+  bindings / CONTROLS / SETTINGS (src/input), the Bodies table holds only hurt cylinders. Known divergence: hazards
+  iterate in creation order, the Lisp ECS in slot order (only matters when two hazards hit on one step).
