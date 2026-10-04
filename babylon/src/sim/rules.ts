@@ -297,7 +297,7 @@ export const awakeningGain = (dealt: number, taken: number, lost: number): numbe
   dealt * T.awakenDealt + taken * T.awakenTaken + lost * T.awakenPerKonpaku;
 /** What dealing / taking damage pays: [Reiatsu, flash-step, Fighting Spirit, siphoned Reiatsu, siphoned flash-step]. */
 export function hitGains(dealt: number, taken: number, siphoned: boolean, mult = 1.0): [number, number, number, number, number] {
-  const r = mult * dealt * T.reiatsuDealt + reiatsuGain(0, taken), fs = taken * T.fsTaken;
+  const r = mult * dealt * T.reiatsuDealt + reiatsuGain(0, taken), fs = f32(taken * f32(T.fsTaken));
   return siphoned ? [0, 0, 0, r, fs] : [r, fs, mult * awakeningGain(dealt, 0, 0) + awakeningGain(0, taken, 0), 0, 0];
 }
 /** Take up to AMOUNT out of gauge FROM into gauge TO (kept at most MAX): [from, to] after. */
@@ -334,7 +334,7 @@ export const frostNext = (cur: number, n: number): number => Math.min(T.frostCap
 export const frostSpeed = (speed: number, frost: number): number => (frost > 0 ? speed * T.frostSlow : speed);
 export const opticP = (ward: boolean, optic: boolean, ranged: boolean): boolean => ward && optic && ranged;
 export const tempNext = (c: number, guarding: boolean, warm: number): number =>
-  Math.max(0, Math.min(T.coldMax, guarding ? c + T.ruCoolRate / 60 : c - warm / 60));
+  Math.max(0, Math.min(T.coldMax, guarding ? f32(c + f32(T.ruCoolRate / 60)) : f32(c - f32(warm / 60))));   // (single floats)
 export function tempBand(c: number, band: string): string {
   switch (band) {
     case 'm18': return c >= T.coldMax ? 'zero' : c >= T.coldBar ? 'm50' : 'm18';
@@ -373,7 +373,7 @@ export function burstMode(state: string, locked: boolean, comboHits: number, cha
   }
 }
 export const burstAllowedP = (mode: BurstMode | null, fs: number, active: unknown): boolean => !!mode && !active && fs >= T.fsBurst;
-export const burstDrain = (fs: number): number => Math.max(0, fs - T.burstDrain / 60);
+export const burstDrain = (fs: number): number => Math.max(0, f32(fs - f32(T.burstDrain / 60)));   // (the fs gauge is single-float)
 export const burstFsGain = (gain: number, mode: unknown): number => (mode ? 0 : gain);
 /** Integer points a per-second RATE pays on frame N (1-based) of a burst. */
 export const burstHeal = (n: number, rate: number): number => floorDiv(n * rate, 60) - floorDiv((n - 1) * rate, 60);
@@ -382,7 +382,7 @@ export const burstGainMult = (mode: unknown): number => (mode === 'orange' ? T.o
 export const chainStartupCut = (s: number, enter: number): number => Math.max(0, Math.min(Math.floor(T.chainCut * (s - enter)), s - enter - 1));
 export const kikonRefund = (fs: number, reiatsu: number): [number, number] =>
   [gaugeAdd(fs, T.kikonFsRefund, T.fsMax), gaugeAdd(reiatsu, T.kikonReiatsuRefund, T.reiatsuMax)];
-export const fsRegen = (fs: number, idle: number): number => (idle >= T.fsDelay ? Math.min(T.fsMax, fs + T.fsRegen / 60) : fs);
+export const fsRegen = (fs: number, idle: number): number => (idle >= T.fsDelay ? Math.min(T.fsMax, f32(fs + f32(T.fsRegen / 60))) : fs);
 
 // ---------------------------------------------------------------- the guard gauge
 /** The guard gauge a blocked hit drains: OVERRIDE, else by the move KIND (null = a hazard), + T.ggEnder for an ender. */
@@ -452,8 +452,8 @@ export function comboStep(react: string, airborne: boolean, hits: number, launch
 // ================================================================ the hidden hit-stun tolerance
 export const stunWeight = (react: string, heavy: boolean): number =>
   Math.max(getf(T.stunWeights, react, 1), heavy ? getf(T.stunWeights, 'heavy', 3) : 0);
-export const stunAdd = (stun: number, react: string, heavy: boolean): number => stun + stunWeight(react, heavy);
-export const stunDecay = (stun: number, idle: number): number => (idle >= T.stunDelay ? Math.max(0, stun - T.stunDecay / 60) : stun);
+export const stunAdd = (stun: number, react: string, heavy: boolean): number => f32(stun + f32(stunWeight(react, heavy)));   // (single floats)
+export const stunDecay = (stun: number, idle: number): number => (idle >= T.stunDelay ? Math.max(0, f32(stun - f32(T.stunDecay / 60))) : stun);
 export const stunOverP = (stun: number, tolerance: number): boolean => stun > tolerance;
 
 // ================================================================ perfect Hoho (§3)

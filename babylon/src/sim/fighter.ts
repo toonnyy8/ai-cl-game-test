@@ -208,7 +208,7 @@ export function startRun(e: Ent, f: Fighter): void {
 }
 
 /** Spend AMOUNT of flash-step (the regen waits T.fsDelay again). */
-export function spendFs(g: Gauges, amount: number): void { g.fs = Math.max(0, g.fs - amount); g.fsIdle = 0; }
+export function spendFs(g: Gauges, amount: number): void { g.fs = Math.max(0, Math.fround(g.fs - amount)); g.fsIdle = 0; }
 
 /** Hoho: spend the flash-step, vanish, reappear behind the opponent (hohoStep). Checks PERFECT now. */
 export function startHoho(e: Ent, f: Fighter): void {
@@ -223,7 +223,7 @@ export function startHoho(e: Ent, f: Fighter): void {
   if (f.perfect) {
     const o = oppOf(e);
     g.perfects++;
-    g.fs = Math.min(T.fsMax, g.fs + burstFsGain(T.fsRefund, g.burst));
+    g.fs = Math.fround(Math.min(T.fsMax, g.fs + burstFsGain(T.fsRefund, g.burst)));
     o.f.lockNext = T.perfectLock;
     respect(o);
     W.time.slowmo(T.perfectSlowmoScale, T.perfectSlowmoSeconds);
@@ -236,7 +236,7 @@ export const coldCost = (kit: Kit, command: string): number => (kit.cold?.[comma
 /** COMMAND starts in KIT: its cold is spent (Rukia's cold gauge, the kit meter; never below 0). */
 export function coldSpend(e: Ent, kit: Kit, command: string): void {
   const c = coldCost(kit, command);
-  if (c > 0) e.g.meter = Math.max(0, e.g.meter - c);
+  if (c > 0) e.g.meter = Math.max(0, Math.fround(e.g.meter - c));
 }
 
 /** Can E start COMMAND's move (of KIT) now: Reiatsu bars, not cooling down, a pip of the arm meter, L's cold, the kit's
