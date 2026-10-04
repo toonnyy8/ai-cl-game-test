@@ -6,7 +6,7 @@
 // -> gauge -> match. Hitstop freezes the sim; slow motion runs it on a fraction of the steps (slowAcc), so a sim frame is
 // always a whole frame and the same seed replays the same match at any frame rate.
 import { T } from './tuning';
-import { deg, roundHalfEven } from './math';
+import { deg, f32, len32, roundHalfEven } from './math';
 import { dirYaw, timeUpWinner } from './rules';
 import { Brain, Ent, W, World, emit, fighters, logMsg, setWorld, type Cine } from './types';
 import { fighterSystem, playClip, refreshLook, spawnFighter, toIdle, viewStep } from './fighter';
@@ -30,11 +30,12 @@ export const CINES: Record<string, { len: number; face?: boolean; gap?: number }
 export function faceEachOther(a: Ent, v: Ent, gap: number | null = null): void {
   const p = a.pos, q = v.pos;
   if (gap != null) {
-    const dx = p[0] - q[0], dz = p[2] - q[2], d = Math.max(0.01, Math.sqrt(dx * dx + dz * dz));
-    p[0] = q[0] + gap * (dx / d); p[2] = q[2] + gap * (dz / d); p[1] = 0;
+    // (singles op by op, as the Lisp: the actors' new places carry on into the fight)
+    const dx = f32(p[0] - q[0]), dz = f32(p[2] - q[2]), d = Math.max(f32(0.01), len32(dx, dz)), g = f32(gap);
+    p[0] = q[0] + f32(g * f32(dx / d)); p[2] = q[2] + f32(g * f32(dz / d)); p[1] = 0;
   }
-  a.yaw = dirYaw(q[0] - p[0], q[2] - p[2]);
-  v.yaw = dirYaw(p[0] - q[0], p[2] - q[2]);
+  a.yaw = dirYaw(f32(q[0] - p[0]), f32(q[2] - p[2]));
+  v.yaw = dirYaw(f32(p[0] - q[0]), f32(p[2] - q[2]));
   q[1] = 0;
 }
 
@@ -111,7 +112,7 @@ export function goResults(): void {
   const g1 = W.p1.g, g2 = W.p2.g;
   setFlow('results');
   logMsg(`duel -> RESULTS winner ${W.winner === 0 ? 'P1' : W.winner === 1 ? 'P2' : 'DRAW'} konpaku ${g1.konpaku}-${g2.konpaku}` +
-         ` ticks ${W.tick} secs ${(W.tick / 60).toFixed(1)}`);
+         ` ticks ${W.tick} secs ${Math.fround(W.tick / 60).toFixed(1)}`);
   for (const e of fighters()) {
     const won = W.winner === e.f.side;
     e.f.state = won ? 'win' : 'lose';
@@ -173,7 +174,7 @@ export function stateHashLine(): string {
   for (const e of fighters()) {
     const p = e.pos, g = e.g, f = e.f;
     const u = f.kit.pips || f.kit.meter?.temp ? ` u${g.meterIdle}` : '';
-    s += ` | ${r(100 * p[0])} ${r(100 * p[1])} ${r(100 * p[2])} ${r(100 * e.yaw)} ${f.state.toUpperCase()} ${f.form.toUpperCase()}` +
+    s += ` | ${r(f32(100 * p[0]))} ${r(f32(100 * p[1]))} ${r(f32(100 * p[2]))} ${r(f32(100 * e.yaw))} ${f.state.toUpperCase()} ${f.form.toUpperCase()}` +
          ` r${g.reishi} k${g.konpaku} a${r(g.reiatsu)} f${r(g.fs)} g${r(g.gg)}${g.guardless ? '!' : ''} w${r(g.awaken)}` +
          ` m${r(g.meter)}${u}${g.armPending ? '*' : ''} n${f.kikonN}${f.frost > 0 ? ` fr${f.frost}` : ''}` +
          `${e.brain ? ` h${Math.floor(e.brain.heat)}` : ''}`;

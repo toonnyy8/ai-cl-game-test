@@ -1,16 +1,16 @@
-// yama.ts <- duel/lisp/yama.lisp, the BASE form (Shikai) only: YAMAMOTO GENRYUSAI SHIGEKUNI's moves (defmove), his base
-// kit (defkit) and the hooks it uses. Hellfire (the full Inferno meter) and the Bankai stances are M3: the meter fills
-// and stays full, Awaken is refused until those kits are registered. Frame data is the §5 table; clip names are the art
-// contract. The kit's ai table is data (M2 ports ai.lisp and the yama-* CPU hooks it names).
+// yama.ts <- duel/lisp/yama.lisp: YAMAMOTO GENRYUSAI SHIGEKUNI's moves (defmove), his four forms (defkit: base = Shikai,
+// hellfire = Gokuen, the full Inferno meter for 10 s; the awakening Bankai as two stances, bankai-east (pierce, x1.5
+// taken) and bankai-west (the ward)), the hooks they name and the yama-* CPU hooks. Frame data is the §5 table; clip
+// names are the art contract. Cinematics are length-only (match.ts CINES).
 import { T } from '../sim/tuning';
-import { trackStep } from '../sim/rules';
-import { getf, lerp, roundHalfEven } from '../sim/math';
+import { burn, castPoint, secondsToFrames, trackStep } from '../sim/rules';
+import { PI, TWO_PI, f32, fwdX, fwdZ, getf, lerp, roundHalfEven } from '../sim/math';
 import { defkit, defmove, defmoveCopy, kitCommandMove, makeHitwin, registerHooks, type Kit } from '../sim/kit';
-import { W, emit, kitOf, simRnd01, type Brain, type Ent, type Snap } from '../sim/types';
-import { ahead, kitCommandOkP, moveParam, rushParam } from '../sim/fighter';
+import { W, emit, kitOf, oppOf, simRnd01, type Brain, type Ent, type Snap } from '../sim/types';
+import { ahead, kitCommandOkP, moveParam, playClip, rushParam } from '../sim/fighter';
 import { addMeter, kikonReadyP } from '../sim/combat';
 import { aiAttack, aiBrain, aiSbFinishP, aiTable, why } from '../sim/ai';
-import { spawnHazard } from '../sim/hazards';
+import { spawnHand, spawnHazard } from '../sim/hazards';
 
 // ================================================================ shikai (base)
 // the J / K strings (docs/DUEL_STRINGS.md §3.1): up to three links, each J or K, switching at most once. J2s / K2s, the
@@ -58,6 +58,62 @@ defmove('ya-kikon', { kind: 'kikon', clip: 'ya-stance', clip2: 'ya-enjo', callou
   onFrame: [[4, 'yama-enjo-line']],
   params: { aura: 6, aim: 120.0, speed: 0.0, dashMax: 0, dashTrack: 0.0, look: 'lane' } });
 
+// ================================================================ Hellfire (Gokuen)
+defmove('ya-nadegiri', { kind: 'sp', clip: 'ya-nadegiri', callout: 'NADEGIRI', cost: 2,
+  startup: 20, active: 4, recovery: 30, dmg: 240, advBlock: -16,
+  vol: ['cap', 0.3, 8.0, 1.0, 0.5], onHit: 'knockdown', kb: 3.0, flags: ['ranged'],   // line 8 m: the blade within 2.4 m
+  params: { meleeRange: 2.4 } });                                    // (Q1's reach until the J cut), ranged beyond
+
+// ================================================================ Bankai: Zanka no Tachi (docs/DUEL_YAMA_REWORK.md)
+// O = North (TENCHI), Shift+L = South (the bind), U = East -> West (guardTo), L = each stance's own technique. In West
+// every command but SP1 / L goes back to East first (dropTo / keep).
+// ---------------------------------------------------------------- East, Kyokujitsujin: fast thin lines, the pierce
+defmove('ya-e-j1', { kind: 'quick', clip: 'ya-q1', clipS: 9, startup: 8, active: 3, recovery: 12, dmg: 34, advBlock: -2,
+  vol: ['cap', 0.2, 1.24, 1.1, 0.25], onHit: 'flinch' });          // HIZASHI
+defmove('ya-e-j2', { kind: 'quick', clip: 'ya-q2', clipS: 8, startup: 7, active: 3, recovery: 13, dmg: 38, advBlock: -2,
+  vol: ['cap', 0.2, 1.24, 1.1, 0.25], onHit: 'flinch' });          // ZANSHO
+defmove('ya-e-j3', { kind: 'quick', clip: 'ya-e-thrust', clipS: 11, startup: 8, active: 3, recovery: 18, dmg: 42, advBlock: -4,
+  vol: ['cap', 0.2, 1.44, 1.1, 0.3], onHit: 'stagger', flags: ['ender'] });   // SENKO
+defmove('ya-e-k1', { kind: 'flash', clip: 'ya-f1', clipS: 18, startup: 16, active: 4, recovery: 20, dmg: 70, advBlock: -3,
+  vol: ['cap', 0.2, 3.4, 1.1, 0.3], onHit: 'stagger' });           // KAGERO
+defmove('ya-e-k2', { kind: 'flash', clip: 'ya-f2', clipS: 22, enter: 5, startup: 19, active: 4, recovery: 24, dmg: 60, advBlock: -3,
+  vol: ['cap', 0.2, 3.4, 1.3, 0.35], onHit: 'stagger' });          // NISSHO
+defmove('ya-e-k3', { kind: 'flash', clip: 'ya-e-drop', enter: 7, startup: 21, active: 5, recovery: 34, dmg: 84, advBlock: -20,
+  vol: ['cap', 0.3, 3.2, 1.2, 0.3], onHit: 'crumple', flags: ['ender'] });    // RAKUJITSU
+defmoveCopy('ya-e-j2s', 'ya-e-j2');
+defmoveCopy('ya-e-k2s', 'ya-e-k2');
+// L in East: KYOKKO, a lunge whose point runs a 4.6 m line; double pierce; ends a landed string (cancel); cooldown 100
+defmove('ya-e-kyokko', { kind: 'sig', clip: 'ya-e-thrust', clipS: 11, callout: 'KYOKKO', startup: 15, active: 3, recovery: 26,
+  dmg: 85, advBlock: -12, slide: 1.6, vol: ['cap', 0.2, 4.6, 1.1, 0.3], onHit: 'knockback', kb: 2.0,
+  cooldown: 100, flags: ['cancel'], onFrame: [[1, 'yama-kyokko-flare'], [15, 'yama-kyokko']], params: { pierceMult: 2.0 } });
+// Shift+K in East: KYOKUJITSUJIN: the blade (f18-19, close) breaks guard; at f20 the heat runs a 25 deg / 9 m cone
+defmove('ya-kyoku', { kind: 'sp', clip: 'ya-kyoku', callout: 'KYOKUJITSUJIN', startup: 18, active: 5, recovery: 26,
+  dmg: 90, advBlock: -16, vol: ['arc', 9.0, 25, 0.0, 1.6],
+  hits: [[18, 20, { vol: ['cap', 0.3, 2.4, 1.0, 0.4], onHit: 'knockback', kb: 0.5, flags: ['guard-crush'] }],   // the blade
+         [20, 23, { dmg: 130, onHit: 'knockback', kb: 4.0, flags: ['ranged'] }]],                            // the cone
+  onFrame: [[18, 'yama-kyoku-cut'], [20, 'yama-kyoku-sheet']] });
+// ---------------------------------------------------------------- West, Zanjitsu Gokui: the ward (passive ward)
+// L in West: SHONETSU JIGOKU: a 16 f tell, then a ring of fire pillars where he stands. Cooldown 150
+defmove('ya-w-shonetsu', { kind: 'sig', clip: 'ya-shonetsu', clipS: 14, callout: 'SHONETSU JIGOKU', startup: 16, active: 0,
+  recovery: 24, cooldown: 150, onFrame: [[0, 'yama-shonetsu-tell'], [16, 'yama-shonetsu']],
+  params: { size: 2.0, life: 48, hits: 2, dmg: 45, kb: 2.0, guard: 12 } });
+// Shift+K in West: GOKUI GAESHI, a parry (f2-25); a melee hit in it staggers the attacker and starts the counter (land)
+defmove('ya-w-parry', { kind: 'sp', clip: 'ya-w-parry', callout: 'GOKUI GAESHI', startup: 2, active: 24, recovery: 20, flags: ['parry'],
+  onFrame: [[2, 'yama-parry-up']] });
+defmove('ya-w-counter', { kind: 'sig', clip: 'ya-w-counter', startup: 6, active: 3, recovery: 24, dmg: 150, advBlock: -12,
+  vol: ['arc', 2.6, 120, 0.0, 2.0], onHit: 'knockback', kb: 3.0 });
+// ---------------------------------------------------------------- both: South (Shift+L) and North (O)
+// MINAMI, the bind: at f20 the point under the opponent (<= 10 m) is marked; a bind hazard grabs the feet 16 f later
+defmove('ya-kaka', { kind: 'sp', clip: 'ya-kaka', callout: 'MINAMI: KAKA JUMANOKUSHI DAISOJIN', cost: 2,
+  startup: 20, active: 1, recovery: 34, flags: ['bind'],
+  onFrame: [[20, 'yama-south']],
+  params: { range: 10.0, radius: 1.2, height: 0.6, delay: 16, dmg: 40, stun: T.bindStun, hands: 4 } });
+// O in Bankai, KITA: TENCHI: 10 f of aim, a flash step (36 m/s, <= 14 f), one diagonal cut. Cooldown 90
+defmove('ya-tenchi', { kind: 'kikon', clip: 'sh-run', clip2: 'ya-q1', clipS: 9, callout: 'TENCHI KAIJIN', cine: 'yama-tenchi-cine',
+  startup: 6, active: 2, recovery: 26, dmg: 70, advBlock: -14, reach: 2.4, arc: 110, onHit: 'knockback', kb: 2.5, cooldown: 90,
+  onFrame: [[5, 'yama-tenchi-slash']],
+  params: { aura: 10, aim: 120.0, speed: 36.0, dashMax: 14, dashTrack: 0.0, look: 'flash-step', sfx: 'hoho-out' } });
+
 // ================================================================ forms
 defkit('yamamoto', 'base', {
   name: 'YAMAMOTO', body: 'yamamoto', weapon: 'ryujin-jakka', stance: 'ya-stance',
@@ -81,13 +137,66 @@ defkit('yamamoto', 'base', {
         spEnder: 'yama-sp-ender', reflex: 'yama-ai-reflex', assistGuard: 'yama-anti-breaker' },
 });
 
+defkit('yamamoto', 'hellfire', {
+  inherit: 'base',
+  callout: 'GOKUEN', mult: T.hellfireMult, duration: T.hellfireSeconds, burn: T.hellfireBurn, blade: ['fire', 1.3],
+  enterClips: ['ya-hellfire'], enterHook: 'yama-ennetsu', aura: 'hellfire',
+  commands: { sp2: 'ya-nadegiri' },
+  ai: { intents: { approach: 1, pressure: 4, zone: 0, defend: 0 },
+        ranges: { approach: [3.0, 5.0], pressure: [1.0, 2.6], zone: [6.0, 8.0], defend: [4.0, 7.0] },
+        moves: [[0.0, 1.3, 'q', 3, 'f', 2, 'sp2', 2, 'breaker', 1],
+                [1.3, 3.0, 'f', 3, 'sp2', 2, 'breaker', 1],
+                [3.0, 8.0, 'f', 1, 'sig', 2, 'step', 2],
+                [8.0, 99.0, 'sp1', 2, 'step', 2]],
+        guard: 0.4, hoho: 0.35, awakenAbove: 0.4, spCancelBars: 1, oEnder: 0.0, dash: 0.5, kikonRange: 9.0,
+        spEnder: 'yama-sp-ender', reflex: 'yama-ai-reflex', assistGuard: 'yama-anti-breaker' },
+});
+
+defkit('yamamoto', 'bankai-east', {
+  inherit: 'base',
+  awakening: true, taken: T.bankaiTaken, startupAdd: -1, reachMult: 1.15, guardTo: 'bankai-west', ggRegen: T.eastGgRegen,
+  endlessForm: 'bankai-east',                 // ENDLESS: West (inheriting it) stays as East
+  blade: ['embers', 1.4], grade: 'spot', passives: ['projectile-cut', 'pierce'], meter: null,
+  weapon: 'zanka', aura: 'heat', enterClips: ['ya-bankai'], enterHook: 'yama-bankai-enter', swingSfx: 'whoosh-heavy',
+  cine: 'yama-bankai-cine',
+  commands: { q: 'ya-e-j1', f: 'ya-e-k1', sig: 'ya-e-kyokko', sp1: 'ya-kyoku', sp2: 'ya-kaka', kikon: 'ya-tenchi' },
+  grid: ['ya-e-j1', 'ya-e-j2', 'ya-e-j3', 'ya-e-k1', 'ya-e-k2', 'ya-e-k3', 'ya-e-j2s', 'ya-e-k2s'],
+  ai: { intents: { approach: 2, pressure: 4, zone: 1, defend: 0 },
+        ranges: { approach: [3.0, 5.0], pressure: [1.0, 3.0], zone: [5.0, 8.0], defend: [4.0, 7.0] },
+        moves: [[0.0, 1.6, 'q', 5, 'f', 2, 'breaker', 1, 'sig', 2, 'sp2', 1, null, 1],
+                [1.6, 3.0, 'f', 4, 'breaker', 1, 'sig', 2, 'sp2', 1, null, 1],
+                [3.0, 6.0, 'f', 1, 'sp1', 2, 'sig', 2, 'step', 1, null, 1],
+                [6.0, 99.0, 'sp1', 3, 'step', 1, null, 1]],
+        guard: 0.45, hoho: 0.35, awakenAbove: 0.4, spCancelBars: 9, dash: 0.6, dashBack: 0.3, kikonRange: 9.0,
+        cancel: { sig: 0.5 }, low: [0.4, { sig: 3 }], ggLow: 0.3, blockString: 0.85, sigGg: 0.6,
+        spEnder: 'yama-sp-ender', reflex: 'yama-ai-reflex', assistGuard: 'yama-anti-breaker' },
+});
+
+defkit('yamamoto', 'bankai-west', {
+  inherit: 'bankai-east',
+  taken: 1.0, guardTo: null, dropTo: 'bankai-east', keep: ['sig', 'sp1'], passives: ['ward', 'scorch'],
+  blade: ['charcoal'], aura: 'garb',
+  enterHook: 'yama-ward-up', exitHook: 'yama-ward-down',
+  commands: { sig: 'ya-w-shonetsu', sp1: 'ya-w-parry' },
+  strings: [['ya-w-parry', 'land', 'ya-w-counter']],
+  ai: { intents: { approach: 2, pressure: 2, zone: 0, defend: 2 },
+        ranges: { approach: [2.5, 4.5], pressure: [1.0, 2.5], zone: [3.5, 5.0], defend: [2.5, 4.5] },
+        moves: [[0.0, 1.6, 'q', 3, 'f', 2, 'sig', 2, 'breaker', 1, 'sp2', 1, null, 3],
+                [1.6, 3.0, 'f', 3, 'sig', 2, 'breaker', 1, 'sp2', 1, null, 3],
+                [3.0, 6.0, 'f', 1, 'sp1', 2, 'step', 1, null, 2],
+                [6.0, 99.0, 'sp1', 2, 'step', 1, null, 2]],
+        guard: 0.3, hoho: 0.3, awakenAbove: 0.4, spCancelBars: 9, dash: 0.4, dashBack: 0.2, kikonRange: 9.0,
+        react: { 'flash-startup': 'sp1' }, wardReversal: 0.35,
+        spEnder: 'yama-sp-ender', reflex: 'yama-ai-reflex', assistGuard: 'yama-anti-breaker' },
+});
+
 // ================================================================ hooks (called through the data's names)
 registerHooks({
   /** Signature f40: the flame wave leaves the blade (a hazard 3.5 m wide, 14 m/s, 12 m). */
   'yama-fire-wave'(e: Ent) {
     const [x, z] = ahead(e, 1.0), speed = moveParam(e, 'speed');
-    spawnHazard('wave', e, { x, z, yaw: e.yaw, speed, size: 0.5 * moveParam(e, 'width'),
-      life: roundHalfEven(60 * (moveParam(e, 'range') / speed)),
+    spawnHazard('wave', e, { x, z, yaw: e.yaw, speed, size: f32(0.5 * moveParam(e, 'width')),
+      life: roundHalfEven(f32(60 * f32(moveParam(e, 'range') / speed))),
       hw: makeHitwin({ dmg: moveParam(e, 'dmg'), react: moveParam(e, 'onHit'), kb: moveParam(e, 'kb'), hs: T.hitstopHeavy,
                        chip: moveParam(e, 'chip'), meter: moveParam(e, 'meter'), guard: moveParam(e, 'guard') }) });
     emit('sfx', 'fire-wave', e);
@@ -99,15 +208,75 @@ registerHooks({
   /** Throw f2: a homing fireball; damage and speed grow with the charge; a full charge fills Inferno. */
   'yama-shiranui-throw'(e: Ent) {
     const f = e.f, [lo, hi] = f.move!.hold!;
-    const k = Math.max(0, Math.min(1, (f.charge - lo) / (hi - lo)));
+    const k = Math.max(0, Math.min(1, f32((f.charge - lo) / (hi - lo))));
     const [x, z] = ahead(e, 0.9), speed = lerp(moveParam(e, 'speedMin'), moveParam(e, 'speedMax'), k);
     spawnHazard('fireball', e, { x, y: 1.2, z, yaw: e.yaw, speed, turn: trackStep(moveParam(e, 'turn')), size: lerp(0.35, 0.6, k),
-      life: roundHalfEven(60 * (moveParam(e, 'range') / speed)),
+      life: roundHalfEven(f32(60 * f32(moveParam(e, 'range') / speed))),
       hw: makeHitwin({ dmg: roundHalfEven(lerp(moveParam(e, 'dmgMin'), moveParam(e, 'dmgMax'), k)), react: moveParam(e, 'onHit'),
                        kb: moveParam(e, 'kb'), hs: T.hitstopHeavy, chip: moveParam(e, 'chip'), meter: moveParam(e, 'meter'),
                        guard: roundHalfEven(lerp(moveParam(e, 'guardMin'), moveParam(e, 'guardMax'), k)) }) });
     if (k >= 1) addMeter(e, moveParam(e, 'fullMeter'));
     emit('sfx', 'fire-roar', e);
+  },
+  /** Hellfire entry: Ennetsu Jigoku, a ring of fire pillars (2 hits max), and it burns Yamamoto too. */
+  'yama-ennetsu'(e: Ent) {
+    const g = e.g;
+    spawnHazard('pillars', e, { x: e.pos[0], z: e.pos[2], size: 3.0, life: secondsToFrames(T.ennetsuSeconds), hits: T.ennetsuHits,
+      hw: makeHitwin({ dmg: T.ennetsuDamage, react: 'stagger', kb: 2.0, hs: T.hitstopHeavy, guard: 10 }) });
+    g.reishi = burn(g.reishi, T.ennetsuSelfBurn);
+    if (e.f.state === 'idle') playClip(e, 'ya-hellfire', { blend: 3 });
+    emit('sfx', 'fire-roar', e);
+  },
+  /** TENCHI: the cut's ring, just before it lands. */
+  'yama-tenchi-slash'(e: Ent) { emit('sfx', 'kikon-slash', e); },
+  /** Bankai: every fire is drawn into the blade for good (Inferno empties; no more Hellfire). */
+  'yama-bankai-enter'(e: Ent) { e.g.meter = 0; },
+  /** West's enterHook (U in East): the garb flares on round him. */
+  'yama-ward-up'(e: Ent) { emit('nishi', e, e.pos[0], e.pos[2]); emit('sfx', 'heat-flare', e); },
+  /** West's exitHook (an attack drops him to East, or a crush / a Guard Break blows the garb off): an ember puff. */
+  'yama-ward-down'(e: Ent) { emit('ember', e, e.pos[0], 1.2, e.pos[2], 0.8); emit('sfx', 'sizzle', e); },
+  /** KYOKKO f1: the ember edge line flares white-hot (the lunge's tell). */
+  'yama-kyokko-flare'(e: Ent) { emit('super', e, 0.2); emit('sfx', 'sizzle', e); },
+  /** KYOKKO f15: the ray along the 4.6 m line (a look: the hit is the move's line window). */
+  'yama-kyokko'(e: Ent) {
+    spawnHazard('line', e, { x: e.pos[0], z: e.pos[2], yaw: e.yaw, size: 4.6, life: 14, look: 'kyokko' });
+    emit('sfx', 'kikon-slash', e);
+  },
+  /** SHONETSU JIGOKU f0: the blade to the ground, the garb flares hard (the tell). */
+  'yama-shonetsu-tell'(e: Ent) { emit('flare', e, 0.45); emit('parry-up', e, e.pos[0], e.pos[2]); emit('sfx', 'heat-flare', e); },
+  /** SHONETSU JIGOKU f16: the garb erupts: a ring of fire pillars where he stands (blockable), the plaza cracks. */
+  'yama-shonetsu'(e: Ent) {
+    const [x, z] = [e.pos[0], e.pos[2]];
+    spawnHazard('pillars', e, { x, z, size: moveParam(e, 'size'), life: moveParam(e, 'life'), hits: moveParam(e, 'hits'),
+      hw: makeHitwin({ dmg: moveParam(e, 'dmg'), react: 'stagger', kb: moveParam(e, 'kb'), hs: T.hitstopHeavy,
+                       guard: moveParam(e, 'guard'), chip: T.chipFire }) });
+    emit('garb-flare', e, x, z); emit('crack', x, z, 1.5);
+    emit('sfx', 'fire-roar', e);
+  },
+  /** GOKUI GAESHI's window opens: the column of charcoal wisps (a look). */
+  'yama-parry-up'(e: Ent) { emit('parry-up', e, e.pos[0], e.pos[2]); },
+  /** KYOKUJITSUJIN f18: the charred blade comes straight down (a look). */
+  'yama-kyoku-cut'(e: Ent) { emit('kyoku-slit', e, e.pos[0], e.pos[2], fwdX(e.yaw), fwdZ(e.yaw)); emit('sfx', 'kikon-slash', e); },
+  /** KYOKUJITSUJIN f20: the sheet of heat runs 9 m ahead (a look: the hit is the move's cone window). */
+  'yama-kyoku-sheet'(e: Ent) {
+    spawnHazard('line', e, { x: e.pos[0], z: e.pos[2], yaw: e.yaw, size: 9.0, life: 40, look: 'kyoku' });
+    emit('sfx', 'heat-flare', e);
+  },
+  /** MINAMI f20: the point under the opponent (<= range m) is marked; a bind hazard grabs the feet delay frames later
+   *  (unguardable, dmg + bound stun frames); hands claw out there. */
+  'yama-south'(e: Ent) {
+    const p = e.pos, q = oppOf(e).pos, r = moveParam(e, 'radius'), delay = moveParam(e, 'delay');
+    const [x, z] = castPoint(p[0], p[2], q[0], q[2], moveParam(e, 'range'));
+    // (a hazard's delay counts down in the step it is spawned in: +1 lands the grab exactly delay frames later)
+    spawnHazard('bind', e, { x, z, size: r, y: moveParam(e, 'height'), delay: delay + 1, life: 2,
+      hw: makeHitwin({ dmg: moveParam(e, 'dmg'), react: 'bind', stun: moveParam(e, 'stun'), hs: T.hitstopHeavy, flags: ['unguardable'] }) });
+    spawnHazard('line', e, { x, z, size: r, life: delay + 40, look: 'south' });
+    const n = moveParam(e, 'hands');
+    for (let i = 0; i < n; i++) {
+      const a = i * (TWO_PI / n);
+      spawnHand(e, x + 0.7 * r * fwdX(a), z + 0.7 * r * fwdZ(a), a + PI, delay - 8);
+    }
+    emit('sfx', 'ground-crack', e);
   },
   /** ENJO f4: the line of fire walls starts rising along the locked lane (a look: the hit is the move's). */
   'yama-enjo-line'(e: Ent) {

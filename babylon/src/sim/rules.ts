@@ -4,19 +4,20 @@
 // Frames are 60 Hz steps; a move frame SF counts the frames since the move began (0 = its first frame), so a move with
 // startup S is active on SF = S .. S+A-1. Reishi is an integer; gauges are floats. No character names in here.
 import { T } from './tuning';
-import { deg, fwdX, fwdZ, getf, roundHalfEven, floorDiv } from './math';
+import { deg, fwdX, fwdZ, getf, len32, roundHalfEven, floorDiv } from './math';
+import { cosf } from './sinf';
 import { volHitP, type Vol } from './hitvol';
 
 // ================================================================ angles and positions
 /** The yaw that faces direction (DX DZ) (CL's double ATAN, as the seeded replays were recorded with). */
-export const dirYaw = (dx: number, dz: number): number => Math.atan2(-dx, -dz);
+export const dirYaw = (dx: number, dz: number): number => Math.fround(Math.atan2(-dx, -dz));   // (CL ATAN on singles)
 /** A :track value (degrees per second) as radians per frame. */
-export const trackStep = (degPerSecond: number): number => deg(degPerSecond / 60);
+export const trackStep = (degPerSecond: number): number => deg(Math.fround(degPerSecond / 60));
 
 /** (X Z) moved inside the circle of radius R around the origin (the arena's invisible wall). */
 export function clampToCircle(x: number, z: number, r: number): [number, number] {
-  const d = Math.sqrt(x * x + z * z);
-  return d <= r ? [x, z] : [x * (r / d), z * (r / d)];
+  const d = len32(x, z), k = f32(r / d);                             // (singles, as the Lisp)
+  return d <= r ? [x, z] : [f32(x * k), f32(z * k)];
 }
 
 /** Opponent-relative movement: stick (SX right, SY up) read through a camera with yaw CAM-YAW, for a fighter at (PX PZ)
@@ -33,45 +34,46 @@ export function stickTowardStrafe(sx: number, sy: number, camYaw: number, px: nu
 
 /** The inverse projection: world direction (dx dz) of moving TOWARD / STRAFE relative to the opponent at (OX OZ). */
 export function towardStrafeDir(toward: number, strafe: number, px: number, pz: number, ox: number, oz: number): [number, number] {
-  const ax = ox - px, az = oz - pz, d = Math.max(1e-4, Math.sqrt(ax * ax + az * az));
-  const ux = ax / d, uz = az / d;
-  return [toward * ux + strafe * -uz, toward * uz + strafe * ux];
+  // (single floats op by op, as the Lisp: it is the walk / run direction)
+  const ax = f32(ox - px), az = f32(oz - pz), d = Math.max(f32(1e-4), len32(ax, az));
+  const ux = f32(ax / d), uz = f32(az / d);
+  return [f32(f32(toward * ux) + f32(strafe * -uz)), f32(f32(toward * uz) + f32(strafe * ux))];
 }
 
 /** Is the point (AX AZ) within the ARC-DEG wide cone in front of a fighter at (PX PZ) facing YAW? */
 export function inFrontP(yaw: number, px: number, pz: number, ax: number, az: number, arcDeg: number): boolean {
-  const dx = ax - px, dz = az - pz, d = Math.sqrt(dx * dx + dz * dz);
-  return d < 1e-4 || (dx * fwdX(yaw) + dz * fwdZ(yaw)) / d >= Math.cos(deg(arcDeg / 2));
+  const dx = f32(ax - px), dz = f32(az - pz), d = len32(dx, dz);    // (singles, as the Lisp: the guard arc's edge)
+  return d < 1e-4 || f32(f32(f32(dx * fwdX(yaw)) + f32(dz * fwdZ(yaw))) / d) >= cosf(deg(f32(arcDeg / 2)));
 }
 
 /** Where a Hoho reappears: T.hohoDistance behind the opponent at (OX OZ) facing OYAW, facing his back, in the arena. */
 export function hohoDestination(ox: number, oz: number, oyaw: number): [number, number, number] {
-  const [x, z] = clampToCircle(ox - T.hohoDistance * fwdX(oyaw), oz - T.hohoDistance * fwdZ(oyaw), T.arenaRadius);
+  const [x, z] = clampToCircle(f32(ox - f32(T.hohoDistance * fwdX(oyaw))), f32(oz - f32(T.hohoDistance * fwdZ(oyaw))), T.arenaRadius);
   return [x, z, oyaw];
 }
 
 /** Post-Kikon reset: A and B placed T.resetDistance apart around the arena centre, on the line they stood on. */
 export function resetPlacement(ax: number, az: number, bx: number, bz: number): [number, number, number, number] {
-  let dx = bx - ax, dz = bz - az;
-  const d = Math.sqrt(dx * dx + dz * dz), h = T.resetDistance / 2;
-  if (d < 1e-3) { dx = 0; dz = 1; } else { dx /= d; dz /= d; }
-  return [dx * -h, dz * -h, dx * h, dz * h];
+  let dx = f32(bx - ax), dz = f32(bz - az);                           // (singles, as the Lisp)
+  const d = len32(dx, dz), h = f32(T.resetDistance / 2);
+  if (d < 1e-3) { dx = 0; dz = 1; } else { dx = f32(dx / d); dz = f32(dz / d); }
+  return [f32(dx * -h), f32(dz * -h), f32(dx * h), f32(dz * h)];
 }
 
 /** Step direction (toward strafe, unit length): the stick's, or straight back when neutral. NEUTRAL 1: at him (the run). */
 export function stepDirection(toward: number, strafe: number, neutral = -1.0): [number, number] {
-  const m = Math.sqrt(toward * toward + strafe * strafe);
-  return m < 0.3 ? [neutral, 0] : [toward / m, strafe / m];
+  const m = len32(toward, strafe);                                   // (singles, as the Lisp)
+  return m < 0.3 ? [neutral, 0] : [f32(toward / m), f32(strafe / m)];
 }
 
 // ---------------------------------------------------------------- the run (Step held)
 /** Does a run at SPEED m/s, CLOSING (-1..1), stop this frame at DIST? It stops before it would come within T.runStop. */
 export const runStopP = (dist: number, closing: number, speed: number): boolean =>
-  closing > 0 && dist - speed * closing * (1 / 60) < T.runStop;
+  closing > 0 && f32(dist - f32(f32(speed * closing) * f32(1 / 60))) < T.runStop;   // (singles)
 /** Momentum of a move started out of a run: T.runCarry metres, never past T.runStop from the opponent at DIST. */
-export const runCarry = (dist: number): number => Math.max(0, Math.min(T.runCarry, dist - T.runStop));
+export const runCarry = (dist: number): number => Math.max(0, Math.min(T.runCarry, f32(dist - T.runStop)));
 /** Speed on brake FRAME (1-based) of T.runBrake after a run at SPEED: linear down to 0. */
-export const brakeSpeed = (speed: number, frame: number): number => speed * Math.max(0, 1 - frame / T.runBrake);
+export const brakeSpeed = (speed: number, frame: number): number => f32(speed * Math.max(0, f32(1 - f32(frame / T.runBrake))));
 
 // ================================================================ the triangle (§3)
 // Defender states: neutral guard breaker stance-in stance armor invuln parry (see DUEL_DESIGN §3).
@@ -133,10 +135,10 @@ export function kikonRushNextPhase(phase: 'aura' | 'dash', frames: number, dist:
 /** Is move frame SF of a parry move inside its WINDOW (lo hi), inclusive, else T.parryWindow? */
 export const parryFrameP = (sf: number, window?: number[] | null): boolean => invulnerableFrameP(sf, window ?? T.parryWindow);
 /** How far a rush module reaches: its dash (SPEED m/s for DASH-MAX frames) + T.kikonTrigger. */
-export const kikonRushReach = (speed: number, dashMax: number): number => T.kikonTrigger + speed * (dashMax / 60);
+export const kikonRushReach = (speed: number, dashMax: number): number => f32(T.kikonTrigger + f32(speed * f32(dashMax / 60)));
 /** Dash speed after FRAMES of dashing: T.breakerSpeedMin rising to T.breakerSpeedMax. */
 export const breakerSpeed = (frames: number): number =>
-  T.breakerSpeedMin + (T.breakerSpeedMax - T.breakerSpeedMin) * Math.min(1, frames / T.breakerDashMax);
+  f32(T.breakerSpeedMin + f32(f32(T.breakerSpeedMax - T.breakerSpeedMin) * Math.min(1, f32(frames / T.breakerDashMax))));   // (singles)
 
 // ================================================================ frame advantage (§3)
 /** Blockstun that gives the move its block advantage ADV: the attacker's frames left after the hit (TOTAL = S+A+R, hit on
@@ -162,14 +164,14 @@ export function chainOpenP(sf: number, s: number, a: number, r: number, contact:
 /** The follow-up link's chase speed (m/s) at distance D with LEFT frames to its hit, arriving T.chaseMargin inside its
  *  REACH (never nearer than T.lungeStop) as the hit window opens; no faster than CAP; never overshoots. */
 export function stringChaseSpeed(d: number, reach: number, left: number, cap = T.chaseMax): number {
-  const goal = Math.max(T.lungeStop, reach - T.chaseMargin);
-  return d > goal && left > 0 ? Math.min(cap, 60 * ((d - goal) / left)) : 0;
+  const goal = Math.max(f32(T.lungeStop), f32(reach - f32(T.chaseMargin)));   // (singles, as the Lisp)
+  return d > goal && left > 0 ? Math.min(cap, f32(60 * f32(f32(d - goal) / left))) : 0;
 }
 
 /** How far a point (X Z) inside the circle of radius R may move along (UX UZ) before it reaches the circle. */
 export function rayRoom(x: number, z: number, ux: number, uz: number, r: number): number {
-  const b = x * ux + z * uz, c = x * x + z * z - r * r, disc = b * b - c;
-  return c >= 0 || disc < 0 ? 0 : Math.max(0, -b + Math.sqrt(disc));
+  const b = f32(f32(x * ux) + f32(z * uz)), c = f32(f32(f32(x * x) + f32(z * z)) - f32(r * r)), disc = f32(f32(b * b) - c);
+  return c >= 0 || disc < 0 ? 0 : Math.max(0, f32(-b + f32(Math.sqrt(disc))));   // (singles, as the Lisp)
 }
 
 /** On-hit cancel window: the move LANDED, from its first hit frame HIT-FRAME until its recovery ends (TOTAL). */
@@ -222,12 +224,13 @@ const comboScale32 = (n: number): number =>
 const corneredMult32 = (per: number, lost: number, cap: number): number => f32(1.0 + Math.min(f32(cap), f32(f32(per) * lost)));
 
 /** Bankai East's pierce k at guard gauge GG, x a move's :pierce-mult. */
-export const pierceRate = (gg: number, mult = 1.0): number => mult * (T.pierceMin + (T.pierceMax - T.pierceMin) * (gg / T.ggMax));
+export const pierceRate = (gg: number, mult = 1.0): number =>
+  f32(f32(mult) * f32(T.pierceMin + f32(f32(T.pierceMax - T.pierceMin) * f32(gg / T.ggMax))));   // (singles)
 
 /** Where a cast aimed from (PX PZ) at (TX TZ) lands: on the target, or RANGE along the line. */
 export function castPoint(px: number, pz: number, tx: number, tz: number, range: number): [number, number] {
-  const dx = tx - px, dz = tz - pz, d = Math.sqrt(dx * dx + dz * dz);
-  return d <= range ? [tx, tz] : [px + dx * (range / d), pz + dz * (range / d)];
+  const dx = f32(tx - px), dz = f32(tz - pz), d = len32(dx, dz), k = f32(range / d);   // (singles)
+  return d <= range ? [tx, tz] : [f32(px + f32(dx * k)), f32(pz + f32(dz * k))];
 }
 
 /** Chip of a blocked hit worth DMG at RATE (null = none) on a defender with REISHI: chip never kills. */
@@ -243,11 +246,11 @@ export function burnAmount(maxReishi: number, fractionPerSecond: number, step: n
 export const burn = (reishi: number, amount: number): number => (reishi <= 1 ? reishi : Math.max(1, reishi - amount));
 
 // ---------------------------------------------------------------- KOSEI, the aggression reward
-export const koseiMult = (gg: number): number => 1.0 + T.koseiBonus * (1.0 - gg / T.ggMax);
+export const koseiMult = (gg: number): number => f32(1.0 + f32(T.koseiBonus * f32(1.0 - f32(gg / T.ggMax))));   // (singles)
 /** What one paying contact of guard value G earns at guard gauge GG: [Reiatsu, flash-step, the multiplier]. */
 export function koseiGain(g: number, gg: number): [number, number, number] {
   const m = koseiMult(gg);
-  return [T.koseiReiatsu * g * m, T.koseiFs * g * m, m];
+  return [f32(f32(T.koseiReiatsu * g) * m), f32(f32(T.koseiFs * g) * m), m];
 }
 
 // ================================================================ Kikon, Konpaku, time-up (§1)
@@ -269,7 +272,7 @@ export const kikonFollowWait = (s: number): number => Math.max(0, T.kikonFollowS
 export const kikonFollowStun = (red: boolean, s: number): number => (red ? kikonFollowWait(s) + s + 2 : T.kikonFollowStun);
 /** The dash-in's speed: arrive at T.kikonTrigger from DIST exactly when FRAMES-LEFT run out, at most CAP. */
 export const kikonFollowSpeed = (dist: number, framesLeft: number, cap: number): number =>
-  dist <= T.kikonTrigger ? 0 : Math.min(cap, 60 * ((dist - T.kikonTrigger) / Math.max(1, framesLeft)));
+  dist <= T.kikonTrigger ? 0 : Math.min(cap, f32(60 * f32(f32(dist - f32(T.kikonTrigger)) / Math.max(1, framesLeft))));   // (singles)
 export const soulBreakP = (reishi: number): boolean => reishi <= 0;
 
 /** Konpaku settled at connect time: [konpaku-left, lost, ko-p]. A Kikon never more than T.kikonMaxEvent, a Soul Break
@@ -290,20 +293,22 @@ export function timeUpWinner(k0: number, r0: number, m0: number, k1: number, r1:
 }
 
 // ================================================================ gauges (§3, §5)
-export const gaugeAdd = (g: number, n: number, max: number): number => Math.max(0, Math.min(max, g + n));
+// (the gauges are single floats in the Lisp and so is every step of their arithmetic: f32 op by op, so a gauge reaches
+// a threshold (EVOLUTION at 100, a Reiatsu bar) on the same step)
+export const gaugeAdd = (g: number, n: number, max: number): number => Math.max(0, Math.min(max, f32(g + n)));
 export const reiatsuGain = (dealt: number, taken: number, frames = 0): number =>
-  dealt * T.reiatsuDealt + taken * T.reiatsuTaken + frames * (T.reiatsuRegen / 60);
+  f32(f32(f32(dealt * T.reiatsuDealt) + f32(taken * T.reiatsuTaken)) + f32(frames * f32(T.reiatsuRegen / 60)));
 export const awakeningGain = (dealt: number, taken: number, lost: number): number =>
-  dealt * T.awakenDealt + taken * T.awakenTaken + lost * T.awakenPerKonpaku;
+  f32(f32(f32(dealt * T.awakenDealt) + f32(taken * T.awakenTaken)) + f32(lost * T.awakenPerKonpaku));
 /** What dealing / taking damage pays: [Reiatsu, flash-step, Fighting Spirit, siphoned Reiatsu, siphoned flash-step]. */
 export function hitGains(dealt: number, taken: number, siphoned: boolean, mult = 1.0): [number, number, number, number, number] {
-  const r = mult * dealt * T.reiatsuDealt + reiatsuGain(0, taken), fs = f32(taken * f32(T.fsTaken));
-  return siphoned ? [0, 0, 0, r, fs] : [r, fs, mult * awakeningGain(dealt, 0, 0) + awakeningGain(0, taken, 0), 0, 0];
+  const r = f32(f32(f32(mult * dealt) * T.reiatsuDealt) + reiatsuGain(0, taken)), fs = f32(taken * f32(T.fsTaken));
+  return siphoned ? [0, 0, 0, r, fs] : [r, fs, f32(f32(mult * awakeningGain(dealt, 0, 0)) + awakeningGain(0, taken, 0)), 0, 0];
 }
 /** Take up to AMOUNT out of gauge FROM into gauge TO (kept at most MAX): [from, to] after. */
 export function gaugeMove(from: number, amount: number, to: number, max: number): [number, number] {
   const took = Math.max(0, Math.min(from, amount));
-  return [from - took, gaugeAdd(to, took, max)];
+  return [f32(from - took), gaugeAdd(to, took, max)];
 }
 /** Spend BARS of Reiatsu: [reiatsu-after, ok]. */
 export function spendBars(reiatsu: number, bars: number): [number, boolean] {
@@ -331,7 +336,7 @@ export function burstDueP(pending: unknown, current: unknown, state: string): bo
 
 // ---------------------------------------------------------------- Rukia: frost, the temperature
 export const frostNext = (cur: number, n: number): number => Math.min(T.frostCap, Math.max(cur, n));
-export const frostSpeed = (speed: number, frost: number): number => (frost > 0 ? speed * T.frostSlow : speed);
+export const frostSpeed = (speed: number, frost: number): number => (frost > 0 ? f32(speed * T.frostSlow) : speed);
 export const opticP = (ward: boolean, optic: boolean, ranged: boolean): boolean => ward && optic && ranged;
 export const tempNext = (c: number, guarding: boolean, warm: number): number =>
   Math.max(0, Math.min(T.coldMax, guarding ? f32(c + f32(T.ruCoolRate / 60)) : f32(c - f32(warm / 60))));   // (single floats)
@@ -347,12 +352,13 @@ export const tempBandAt = (c: number, band: string, state: string): string =>
   state === 'idle' || state === 'guard' || state === 'run' ? tempBand(c, band) : band;
 export const coldOkP = (c: number, cost: number, combo: boolean): boolean => c >= cost || (combo && c > 0);
 export const tempCoolFrames = (c: number): number => Math.ceil(((c < T.coldBar ? T.coldBar : T.coldMax) - c) / (T.ruCoolRate / 60));
-export const fieldK = (away: number, frosted: boolean): number => (frosted ? Math.max(away, T.fieldFloor / T.frostSlow) : away);
+export const fieldK = (away: number, frosted: boolean): number => (frosted ? Math.max(f32(away), f32(T.fieldFloor / T.frostSlow)) : f32(away));
 export function fieldVelocity(vx: number, vz: number, ux: number, uz: number, k: number): [number, number] {
-  const a = (1 - k) * Math.max(0, vx * ux + vz * uz);
-  return [vx - a * ux, vz - a * uz];
+  const a = f32(f32(1 - k) * Math.max(0, f32(f32(vx * ux) + f32(vz * uz))));   // (singles, as the Lisp)
+  return [f32(vx - f32(a * ux)), f32(vz - f32(a * uz))];
 }
-export const fieldStep = (dist: number, toward: number, s: number): number => dist * (1 - (1 - s) * Math.max(0, -toward));
+export const fieldStep = (dist: number, toward: number, s: number): number =>
+  f32(dist * f32(1 - f32(f32(1 - f32(s)) * Math.max(0, -toward))));   // (singles)
 
 /** Hoho needs T.fsHoho flash-step (during a burst any FS > 0), no block/hitstun, the lockout over. */
 export const hohoAllowedP = (stunned: boolean, fs: number, lockoutLeft: number, bursting: unknown = null): boolean =>
@@ -398,10 +404,10 @@ export function ggDrain(gg: number, v: number): [number, boolean] {
 }
 /** The guard gauge one frame later: nothing while GUARDING or before T.ggDelay frames without a drain, then the regen. */
 export function ggRegen(gg: number, idle: number, guardless: boolean, guarding: boolean, blue: unknown = null, mult = 1.0): number {
-  const rate = (guardless ? T.ggRegenGuardless : mult * T.ggRegen) / 60;
-  if (blue) return Math.min(T.ggMax, gg + rate * (guarding ? T.blueGgGuarding : T.blueGgMult));
+  const rate = f32((guardless ? T.ggRegenGuardless : f32(f32(mult) * T.ggRegen)) / 60);   // (singles)
+  if (blue) return Math.min(T.ggMax, f32(gg + f32(rate * (guarding ? T.blueGgGuarding : T.blueGgMult))));
   if (guarding || idle < T.ggDelay) return gg;
-  return Math.min(T.ggMax, gg + rate);
+  return Math.min(T.ggMax, f32(gg + rate));
 }
 /** GUARD HOLD: the refill delay counter one frame later: frozen while GUARDING. */
 export const ggIdleNext = (idle: number, guarding: boolean): number => (guarding ? idle : Math.min(9999, idle + 1));
@@ -480,8 +486,8 @@ export function bandWeights(bands: Band[], d: number): [string | null, number][]
   return null;
 }
 export function heatRange(lo: number, hi: number, heat: number): [number, number] {
-  const cut = heat * T.aiHeatRange;
-  return [Math.max(T.aiMinRange, lo - cut), Math.max(T.aiMinRange, hi - cut)];
+  const cut = f32(heat * T.aiHeatRange);                             // (singles, as the Lisp)
+  return [Math.max(T.aiMinRange, f32(lo - cut)), Math.max(T.aiMinRange, f32(hi - cut))];
 }
 export const heatBreakerMult = (heat: number): number => (heat >= T.aiHeatBreaker ? 2 : 1);
 export const aiBurstWantedP = (reishi: number, reishiMax: number, nextHit: number): boolean =>
@@ -494,4 +500,4 @@ export function aiGuardMult(gg: number, guardless: boolean): number {
 }
 export const aiHohoSpareP = (fs: number, reishi: number, reishiMax: number): boolean =>
   fs >= T.fsHoho + (reishi < T.aiBurstLow * reishiMax ? T.fsBurst : 0);
-export const heatAfter = (heat: number, far: boolean): number => heat + (far ? 2 : 1) * (T.aiHeatRate / 60);
+export const heatAfter = (heat: number, far: boolean): number => f32(heat + f32((far ? 2 : 1) * f32(T.aiHeatRate / 60)));

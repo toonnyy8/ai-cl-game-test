@@ -118,3 +118,13 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   (`-wt-ichigo`), Senjumaru (`-wt-senju`, SK 5/5 identical when paused), M6a assist/learn (`-wt-assist`), M6b touch /
   screens (`-wt-touch`). Next: resume each, merge (expect conflicts in the f32 fixes: Rukia's branch already made
   flash-step and hidden stun f32), then a batch making positions f32 (RR seed 20 / YK seed 3 drift), then ENDLESS.
+- 2026-10-04: M3a Yamamoto: `src/chars/yama.ts` has all four forms (Hellfire with Ennetsu and NADEGIRI; Bankai East /
+  West with KYOKKO, KYOKUJITSUJIN, SHONETSU, the parry and its counter, MINAMI's bind, TENCHI) and their hooks. The sim
+  now computes in single floats wherever the Lisp does: positions, velocities, yaw, the gauges, hazards and the Brain's
+  floats are stored f32 (Float32Array / f32 setters), the tuning knobs are rounded to f32 at load, and the movement,
+  facing, distance, slide, chase, field and gauge arithmetic is f32 op by op; `fwdX` / `fwdZ` run a port of musl's
+  sinf / cosf (`src/sim/sinf.ts`: musl isn't always correctly rounded, the Lisp build runs on it). Checked against the
+  native Lisp (`tools/simgate/run-log.lisp`, one match per process): YY, YK, KK seeds 1-20 and RY, RK, RR seeds 1-10
+  give the same combat log and hash lines bit for bit (90 of 90). The native seed gate (`simgate.py`, matches back to
+  back in one process) differs slightly from single matches (YY 130.9 vs 129.5 s, KK 144.8 vs 142.9 s).
+

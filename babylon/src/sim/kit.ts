@@ -100,10 +100,11 @@ export function findMove(name: string): Move {
 
 /** Volume spec with its lengths x M (reach). */
 export function scaleVolSpec(spec: VolSpec, m: number): VolSpec {
+  const f32 = Math.fround;                                            // (the Lisp's lengths are single floats)
   switch (spec[0]) {
-    case 'arc': return ['arc', m * spec[1], spec[2], spec[3], spec[4]];
-    case 'cap': return ['cap', m * spec[1], m * spec[2], spec[3], spec[4]];
-    case 'sph': return ['sph', m * spec[1], spec[2], m * spec[3]];
+    case 'arc': return ['arc', f32(m * spec[1]), spec[2], spec[3], spec[4]];
+    case 'cap': return ['cap', f32(m * spec[1]), f32(m * spec[2]), spec[3], spec[4]];
+    case 'sph': return ['sph', f32(m * spec[1]), spec[2], f32(m * spec[3])];
     case 'tsph': return spec;
   }
 }
@@ -130,7 +131,7 @@ export function parseMove(name: string, spec: MoveSpec, startupAdd = 0, reachMul
   const dmg0 = def(spec.dmg, 0);
   const dmg = breaker && dmg0 === 0 ? T.breakerDamage : dmg0;
   const rr = spec.reach ?? (spec.vol ? volSpecReach(spec.vol) : null) ?? (breaker ? T.breakerReach : null);
-  const reach = rr != null ? reachMult * rr : null;
+  const reach = rr != null ? Math.fround(Math.fround(reachMult) * Math.fround(rr)) : null;   // (single floats)
   const vol: VolSpec | null = spec.vol ? scaleVolSpec(spec.vol, reachMult)
     : reach != null ? ['arc', reach, arc, height[0], height[1]] : null;
   const react = spec.onHit ?? (breaker ? 'stagger' : 'flinch');     // (a Breaker: knockback until 2026-10-02)
@@ -301,7 +302,7 @@ export const stunToleranceOf = (kit: Kit): number => kit.stunTolerance ?? T.stun
 export const kitDrop = (kit: Kit, cmd: string): string | null => (kit.dropTo && !kit.keep.includes(cmd) ? kit.dropTo : null);
 /** The attacker mods for hitDamage: the form's multiplier (x PIERCE) and Cornered with LOST Konpaku. */
 export const kitAtkMods = (kit: Kit, lost: number, pierce = 1.0) =>
-  ({ mult: kit.mult * pierce, cornered: kit.cornered, corneredMax: kit.corneredMax, lost });
+  ({ mult: Math.fround(kit.mult * pierce), cornered: kit.cornered, corneredMax: kit.corneredMax, lost });
 export const kitDefMods = (kit: Kit) => ({ mult: kit.taken });
 /** Every clip name the form uses (moves, stance, intro / win, entry cinematic, the run). */
 export function kitClips(kit: Kit): string[] {

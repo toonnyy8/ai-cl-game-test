@@ -661,4 +661,13 @@ export const T = {
   /** Scales every fire emitter's rate (0.5 if the perf gate fails). */
   fireDensity: 1.0,
 };
+// the Lisp's knobs are single floats (literals read as SINGLE-FLOAT): round every one to f32 so a comparison against a
+// knob (a distance at *KIKON-TRIGGER*, a gauge at a threshold) decides as the Lisp's does. Integers stay exact.
+(function f32Deep(o: Record<string, unknown>): void {
+  for (const k of Object.keys(o)) {
+    const v = o[k];
+    if (typeof v === 'number') o[k] = Math.fround(v);
+    else if (v && typeof v === 'object') f32Deep(v as Record<string, unknown>);
+  }
+})(T as unknown as Record<string, unknown>);
 export type Tuning = typeof T;

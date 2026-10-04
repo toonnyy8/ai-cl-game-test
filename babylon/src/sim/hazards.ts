@@ -9,7 +9,8 @@
 // hazardSystem moves them (sim steps, sim randomness only), collectHazardHits hands their hits to combat.ts's hitSystem.
 // Hazards never hit their owner. A destroyed hazard is marked dead and swept at the end of the system that killed it.
 import { T } from './tuning';
-import { angleWrap, fwdX, fwdZ, turnToward, TWO_PI } from './math';
+import { angleWrap, f32, fwdX, fwdZ, turnToward, TWO_PI } from './math';
+import { cosf, sinf } from './sinf';
 import { STEP } from './time';
 import { capsuleCylHitP, cylCylHitP, oboxCylHitP, volHitP } from './hitvol';
 import { dirYaw } from './rules';
@@ -60,11 +61,11 @@ export function hazardStep(hz: Hazard): void {
   hz.px = hz.x; hz.pz = hz.z;
   if (hz.kind === 'fireball') {                                      // home on the target
     const tg = hazardTarget(hz);
-    if (tg && tg.alive) hz.yaw = angleWrap(turnToward(hz.yaw, dirYaw(tg.pos[0] - hz.x, tg.pos[2] - hz.z), hz.turn));
+    if (tg && tg.alive) hz.yaw = angleWrap(turnToward(hz.yaw, dirYaw(f32(tg.pos[0] - hz.x), f32(tg.pos[2] - hz.z)), hz.turn));
   }
   if (hz.kind === 'wave' || hz.kind === 'fireball') {
-    const d = hz.speed * STEP;
-    hz.x += d * fwdX(hz.yaw); hz.z += d * fwdZ(hz.yaw);
+    const d = f32(hz.speed * f32(STEP));                              // (singles, as the Lisp)
+    hz.x += f32(d * fwdX(hz.yaw)); hz.z += f32(d * fwdZ(hz.yaw));
     if (hz.x ** 2 + hz.z ** 2 > (T.arenaRadius + 2.0) ** 2) hz.age = hz.life;
   }
   if (hz.age >= hz.life) hz.alive = false;
@@ -88,8 +89,8 @@ export function hazardTouchesP(hz: Hazard, tx: number, ty: number, tz: number, t
     case 'pillars': {
       const [pr, ph] = T.pillarSize;
       for (let i = 0; i < T.ennetsuPillars; i++) {
-        const a = i * (TWO_PI / T.ennetsuPillars) + hz.yaw;
-        if (cylCylHitP(x + s * Math.cos(a), 0, z + s * Math.sin(a), pr, ph, tx, ty, tz, tr, th)) return true;
+        const a = f32(f32(i * f32(TWO_PI / T.ennetsuPillars)) + hz.yaw);   // (singles, musl's cosf / sinf: as the Lisp)
+        if (cylCylHitP(f32(x + f32(s * cosf(a))), 0, f32(z + f32(s * sinf(a))), pr, ph, tx, ty, tz, tr, th)) return true;
       }
       return false;
     }
