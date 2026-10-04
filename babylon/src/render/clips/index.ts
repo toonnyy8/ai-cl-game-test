@@ -1,7 +1,7 @@
 // Per-character move -> clip tables (render/clips/<char>.ts); anim.ts asks the fighter's character first and falls back
 // to its generic mapping (moveClipName).
 import type { Move } from '../../sim/kit';
-import type { Clip, PoseSpec } from '../pose';
+import type { Clip, P, PoseSpec } from '../pose';
 import type { ClipName } from '../anim';
 import type { Fighter } from '../../sim/types';
 import * as yama from './yama';
@@ -15,6 +15,9 @@ export interface CharClips {
   clipFor(clip: string, mv: Move): ClipName | null;
   /** The character's idle stance (default P.idleKen). */
   idle?: PoseSpec;
+  /** Library poses replaced for this character in every form, by name (guard, runA, walkA, hoho, hold, dash, flinch,
+   *  ...): the generic clips and states are built from them; STANCE(form) still overrides per form. */
+  poses?: Partial<Record<keyof typeof P, PoseSpec>>;
   /** A bespoke clip for fighter F's current frame of MV, or null (clipFor / the generic mapping). A bare Clip is
    *  sampled at u (pose.ts phase) in the main phase and at f.hold (frames) in the pre-strike phases (hold / aura / dash /
    *  follow); [clip, x] is sampled at x. */

@@ -2,6 +2,10 @@
 // (pose.ts phase: u = 1 on frame S, 2 at the end of the active frames; multi-hit moves key each window), so the hit
 // pose lands on the hit frames and hit-stop holds it for free (sf does not advance). Locomotion cycles run on real
 // time scaled by the speed. One cross-fade (per-bone slerp from the last shown pose) when the clip changes.
+// Per character (render/clips/<who>.ts, CharClips): POSES override library poses by name for every form (guard, runA,
+// hold, dash, flinch ...); STANCE(form) overrides the stance poses and locomotion per form; MOVE(mv, f) answers a bespoke
+// clip for a move's frame, else clipFor's library name, else the generic mapping. ACTIVE: the move is in its active
+// frames (the scene's blade smear).
 import { Quaternion, Vector3 } from '@babylonjs/core';
 import type { Move } from '../sim/kit';
 import type { Ent } from '../sim/types';
@@ -24,7 +28,7 @@ const ID = Quaternion.Identity();
 
 // ---------------------------------------------------------------- clips (built per stance)
 const k = (at: number, pose: PoseSpec, ease?: 'in' | 'out' | 'io' | 'lin') => ({ at, pose, ease });
-function clips(idle: PoseSpec) {
+function clips(idle: PoseSpec, P: Poses) {
   return {
     slash: [k(0, idle), k(0.85, P.slashWind, 'out'), k(1, P.slashHit, 'in'), k(2, P.slashEnd, 'out'), k(3, idle)],
     backhand: [k(0, idle), k(0.85, P.slashEnd, 'out'), k(1, P.slashHit, 'in'), k(2, P.slashWind, 'out'), k(3, idle)],
@@ -43,15 +47,21 @@ function clips(idle: PoseSpec) {
     multi0: [k(0, idle), k(0.8, P.slashWind, 'out'), k(1, P.slashHit, 'in'), k(2, P.slashEnd, 'out'), k(3, idle)],
     react: (p: PoseSpec): Clip => [k(0, idle), k(0.12, p, 'out'), k(0.6, p), k(1, idle)],
     wakeup: [k(0, P.down), k(0.5, P.kneel), k(1, idle)],
+    walk: [k(0, P.walkA), k(1, P.walkB), k(2, mirror(P.walkA)), k(3, mirror(P.walkB)), k(4, P.walkA)] as Clip,
+    run: [k(0, P.runA), k(1, mirror(P.runA)), k(2, P.runA)] as Clip,
   };
 }
 type Clips = ReturnType<typeof clips>;
 export type ClipName = keyof Clips;
 const idleOf = (who: string, form = 'base') => CLIPS[who]?.stance?.(form)?.idle ?? CLIPS[who]?.idle ?? P.idleKen;
+type Poses = typeof P;
+const POSES = new Map<string, Poses>();
+/** WHO's pose library: P with the character's overrides. */
+const posesOf = (who: string): Poses => { let p = POSES.get(who); if (!p) { p = { ...P, ...CLIPS[who]?.poses } as Poses; POSES.set(who, p); } return p; };
 const CACHE = new Map<string, Clips>();
 const clipsFor = (who: string, form = 'base') => {
   const key = `${who}:${form}`;
-  let c = CACHE.get(key); if (!c) { c = clips(idleOf(who, form)); CACHE.set(key, c); } return c;
+  let c = CACHE.get(key); if (!c) { c = clips(idleOf(who, form), posesOf(who)); CACHE.set(key, c); } return c;
 };
 
 /** The clip for a move's main phase: WHO's table (render/clips/<who>.ts) first, else the generic mapping. */
@@ -82,21 +92,22 @@ export class Animator {
   cycle = 0;              // locomotion phase (0..1 a stride pair)
   face: number = FACE.neutral;
   flash = 0;
+  active = false;
   private tq = new Quaternion();
   constructor(public body: BuiltBody, readonly who: string) {}   // (body: swapped on a form change)
 
   update(e: Ent, rdt: number, t: number): void {
-    const f = e.f, C = clipsFor(this.who, f.form), idle = idleOf(this.who, f.form), st = CLIPS[this.who]?.stance?.(f.form);
+    const f = e.f, C = clipsFor(this.who, f.form), idle = idleOf(this.who, f.form), st = CLIPS[this.who]?.stance?.(f.form), P = posesOf(this.who);
     let key: string = f.state, a: PoseSpec = idle, b: PoseSpec = idle, x = 0, spin = 0;
     const kb = (c: Clip, at: number) => { [a, b, x] = sampleKeys(c, at); };
-    this.face = FACE.neutral; this.flash = 0;
+    this.face = FACE.neutral; this.flash = 0; this.active = false;
     switch (f.state) {
       case 'idle': case 'intro': case 'cine': {
         const clip = e.look.clip ?? '', sp = Math.hypot(e.mo.vel[0], e.mo.vel[2]);
         if (f.state === 'idle' && sp > 0.1 && /walk|strafe/.test(clip)) {
           key = 'walk';
           this.cycle = (this.cycle + (rdt * sp) / (1.3 * this.body.spec.height) * (clip.endsWith('-b') ? -1 : 1) + 1) % 1;
-          kb(st?.walk ?? WALK, this.cycle * 4);
+          kb(st?.walk ?? C.walk, this.cycle * 4);
         } else { const br = Math.sin(t * 2.2) * 2; a = b = merge(idle, { chest: [(idle.chest?.[0] ?? 0) + br, idle.chest?.[1] ?? 0, idle.chest?.[2] ?? 0] }); }
         break;
       }
@@ -108,16 +119,18 @@ export class Animator {
         const sp = Math.hypot(e.mo.vel[0], e.mo.vel[2]);
         if (f.phase === 'brake' || sp < 0.5) { key = 'brake'; a = b = st?.step ?? P.step; break; }
         this.cycle = (this.cycle + (rdt * sp) / (2.4 * this.body.spec.height)) % 1;
-        kb(st?.run ?? RUN, this.cycle * 2);
+        kb(st?.run ?? C.run, this.cycle * 2);
         break;
       }
       case 'hoho': a = b = st?.hoho ?? P.hoho; break;
       case 'move': {
         const mv = f.move!;
         key = `move:${mv.name}:${f.phase}`;
+        const pa = phase(mv, f.sf), main = f.phase === 'main' || !f.phase;
+        this.active = main && (mv.hits.length > 1 ? pa.w >= 0.9 && pa.w <= 2.05 : pa.u >= 0.9 && pa.u <= 2.05);
         const own = CLIPS[this.who]?.move?.(mv, f);
         if (own) {                              // the character's bespoke clip
-          const u = phase(mv, f.sf).u, main = f.phase === 'main' || !f.phase;
+          const u = pa.u;
           if (Array.isArray(own[0])) kb(own[0] as Clip, own[1] as number); else kb(own as Clip, main ? u : f.hold);
           if (!main || u > 0.8 && u < 2.2 || mv.kind === 'sp' || mv.kind === 'kikon') this.face = FACE.shout;
           break;
@@ -138,10 +151,9 @@ export class Animator {
           : react === 'stagger' || react === 'guard-break' ? P.stagger : P.flinch;
         kb(react === 'crumple' ? [k(0, P.flinch), k(0.25, P.crumple, 'out'), k(0.8, P.crumple), k(1, idle)] : C.react(p), f.sf / Math.max(1, f.stun));
         this.face = FACE.hurt;
-        this.flash = f.sf < 4 ? 0.7 * (1 - f.sf / 4) : 0;
         break;
       }
-      case 'air': a = b = P.air; this.face = FACE.hurt; this.flash = f.sf < 4 ? 0.7 * (1 - f.sf / 4) : 0; break;
+      case 'air': a = b = P.air; this.face = FACE.hurt; break;
       case 'down': a = b = P.down; this.face = FACE.hurt; break;
       case 'wakeup': kb(C.wakeup, f.sf / 30); break;
       case 'win': a = b = P.win; break;
@@ -174,5 +186,3 @@ export class Animator {
     bones.pelvis.position = rig.rest.pelvis.add(this.pos);
   }
 }
-const WALK: Clip = [k(0, merge(P.walkA)), k(1, P.walkB), k(2, mirror(P.walkA)), k(3, mirror(P.walkB)), k(4, P.walkA)];
-const RUN: Clip = [k(0, P.runA), k(1, mirror(P.runA)), k(2, P.runA)];

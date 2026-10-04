@@ -6,10 +6,10 @@
 // cleaver; the cups' auras are VFX); bankai (DUEL_KEN_BANKAI §12: crimson skin, two horns at the hairline parting the
 // forelocks, white irisless eyes, the broken cleaver); kataude (the oni with the left arm gone, the right forearm torn).
 import { Vector3, VertexData, type Scene } from '@babylonjs/core';
-import { box, ellipsoid, hex, inkLine, katana, kimono, limb, rigid, T, tube, type Add, type BodySpec, type CharBody, type Part, type Rig } from '../body';
+import { adder, box, ellipsoid, inkLine, katana, kimono, limb, pair, rigid, T, tube, type Add, type BodySpec, type CharBody, type Part, type Rig } from '../body';
 import type { BoneName } from '../pose';
 
-/** Lit / shadow pairs (BABYLON_LOOK B2 palette). Parts carry the lit colour; cel.ts's shadow tint makes the dark side. */
+/** Lit / shadow pairs (BABYLON_LOOK B2 palette); L registers the pair (body.ts pair) so every part gets its shadow half. */
 export const KC = {
   skin: [0xe4b48c, 0xb2724f], oni: [0x9e3a32, 0x5e1e1c], hair: [0x2a2b38, 0x0e0f15], hairHi: [0xd8dce4, 0x8c93a6],
   black: [0x2b2d3a, 0x121319], haori: [0xf6f3ec, 0xa9b2cf], obi: [0xe9e4d6, 0x9a9db5], scar: [0xa65a48, 0x6e3428],
@@ -17,7 +17,7 @@ export const KC = {
   wrap: [0x4a4440, 0x26221f], brass: [0xb8a274, 0x786846], tassel: [0x3f6e52, 0x22402e], broken: [0x1c1c22, 0x0c0c10],
   blood: [0xc8242a, 0x7a1014],
 } as const;
-const L = (c: readonly [number, number]) => c[0];
+const L = (c: readonly [number, number]) => pair(c[0], c[1]);
 
 /** The grip angle of all his weapons (the blade tipped this far forward of the forearm's line, as katana()). */
 export const KEN_GRIP = 20;
@@ -137,22 +137,12 @@ function kenParts(sp: BodySpec, r: Rig, o: KenLook): Part[] {
       add(limb(b, b.add(new Vector3(s * 0.12 * H, 0.45 * H, -0.16 * H)), 0.1 * H, 0.01, 8), sp.skin, ['head']);
     }
   });
-  // his arms (ponytail: matched on the shared kimono()'s parts by colour and bones; if body.ts renames them the sheet
-  // shows the old sleeves): the kosode's hanging sleeve goes, the upper arm is bare under a short torn sleeve
-  const black = hex(sp.black);
-  const is = (p: Part, ...b: string[]) => p.bones.length === b.length && b.every((x, i) => p.bones[i] === x);
-  parts = parts.filter((p) => !(p.color.equals(black) && (is(p, 'armR', 'foreR') || is(p, 'armL', 'foreL'))));
-  for (const p of parts) if (p.color.equals(black) && (is(p, 'shoulderR', 'armR', 'foreR') || is(p, 'shoulderL', 'armL', 'foreL'))) p.color = hex(sp.skin);
+  // his arms: kimono()'s torn sleeves (bare arms under a ragged short kosode sleeve), plus the bulk of his arms below
   if (o.oneArm)                                      // KATAUDE: the left arm gone below the sleeve stubs
     parts = parts.filter((p) => !p.bones.some((b) => b === 'foreL' || b === 'handL'));
-  const add: Add = (vd, c, bones) => parts.push({ vd, color: typeof c === 'number' ? hex(c) : c, bones });
+  const add: Add = adder(sp, parts);
   for (const s of [1, -1] as const) {
     const S = s > 0 ? 'R' : 'L', arm = r.rest[`arm${S}`], el = r.rest[`fore${S}`], ar = 0.25 * H * sp.limb;
-    // the kosode's sleeve, torn off above the elbow (ragged), under the haori's torn stub
-    const sl = tube([[0.1 * H, ar * 1.35, ar * 1.35], [-0.4 * r.bs, ar * 1.42, ar * 1.45], [-0.95 * r.bs, ar * 1.38, ar * 1.42]], 12,
-      { double: true, a0: 0.001, a1: Math.PI * 2 - 0.001, lip: (a, j) => (j === 2 ? 0.08 * H * (Math.sin(a * 4 + s) * 0.6 + Math.sin(a * 9) * 0.4) : 0) });
-    sl.transform(T(arm.x, arm.y, arm.z, 0, 0, s * 0.05));
-    add(sl, sp.black, [`shoulder${S}`, `arm${S}`] as BoneName[]);
     if (o.oneArm && s < 0) continue;
     // the biceps and the forearm's bulk (big arms)
     const mid = arm.add(el.subtract(arm).scale(0.62));
@@ -281,7 +271,7 @@ const oniSpec: Partial<BodySpec> = { skin: L(KC.oni) };
 export const ken: CharBody = {
   spec: { height: 2.0, heads: 8, shoulder: 1.18, chest: [0.88, 0.52], waist: [0.64, 0.44], hip: [0.66, 0.46], limb: 1.2,
     hand: 1.2, skin: L(KC.skin), black: L(KC.black), haori: L(KC.haori), obi: L(KC.obi), hair: L(KC.hair), collar: 1.45,
-    haoriHem: 1.6, haoriSleeves: 'torn', tattered: true },
+    haoriHem: 1.6, haoriSleeves: 'torn', sleeves: 'torn', tattered: true },
   parts: (sp, r) => kenParts(sp, r, BASE),
   drawFace: face(false),
   weapon: kenKatana,

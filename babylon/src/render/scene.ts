@@ -1,27 +1,24 @@
 // scene.ts: the M5 look (docs/BABYLON_PORT.md "M5 look": anime cel objects, ink-brush effects, screen-space outlines,
 // decal faces, skinned bodies). The plaza keeps duel/lisp/stage.lisp's dimensions (stone disc r 15.1 with joint rings at
-// 11.3 / 13.2, the curb to 15.6, broken whitewashed walls at r 19) in a muted daylight palette so the fighters read;
-// fighters are body.ts skeletons posed by anim.ts; hazards stay simple emissive meshes; hit sparks are ink.ts brush
-// sprites. Right-handed like the sim (Y up, yaw 0 faces -Z), so sim positions and yaws go in unchanged.
+// 11.3 / 13.2, the curb to 15.6, broken whitewashed walls at r 19) in BABYLON_LOOK.md's B2 palette: a sky gradient
+// dome with one hard-edged cloud band, a warm two-tone floor, whitewashed walls with cool shadows, the key light fixed in
+// the world (cel.ts); the fighters' contact shadows on the floor; fighters are body.ts skeletons posed by anim.ts with a
+// rim in their reiatsu colour, a smear of the blade over the active frames and a one-frame white flash when hit;
+// hazards, auras, blade arcs, afterimages are vfx/; hit sparks are ink.ts brush sprites. Right-handed like the sim (Y up, yaw 0 faces -Z), so sim positions and yaws go in unchanged.
 import {
-  Color3, Color4, FreeCamera, Mesh, MeshBuilder, Scene, StandardMaterial, TransformNode, Vector3, VertexBuffer,
+  Color3, Color4, FreeCamera, Mesh, MeshBuilder, Scene, TransformNode, Vector3, VertexBuffer, VertexData,
   type AbstractEngine,
 } from '@babylonjs/core';
-import { fwdX, fwdZ } from '../sim/math';
-import type { Ent, Hazard, SimEvent, World } from '../sim/types';
-import { CelMaterial } from './cel';
-import { createOutline, INK_ALT, type Outline } from './outline';
-import { buildBody, type BuiltBody } from './body';
+import type { Ent, SimEvent, World } from '../sim/types';
+import { CelMaterial, celLight } from './cel';
+import { createOutline, type Outline } from './outline';
+import { buildBody, tube, type BuiltBody } from './body';
 import { bodyFor } from './bodies';
 import { Animator } from './anim';
 import { InkSparks, inkMaterials, type InkMats } from './ink';
+import { Vfx } from './vfx';
 
 const hex = (h: number) => new Color3(((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255);
-function emissive(scene: Scene, color: Color3): StandardMaterial {
-  const m = new StandardMaterial('m', scene);
-  m.diffuseColor = color; m.specularColor = Color3.Black(); m.emissiveColor = color; m.disableLighting = true;
-  return m;
-}
 /** Paint every vertex of M one colour (the stage meshes merge into vertex-coloured batches). */
 function paint(m: Mesh, c: number): Mesh {
   const col = hex(c), n = m.getTotalVertices(), a: number[] = [];
@@ -35,17 +32,29 @@ export interface Stage { scene: Scene; cam: FreeCamera; outline: Outline; ink: I
 export function createScene(engine: AbstractEngine): Stage {
   const scene = new Scene(engine);
   scene.useRightHandedSystem = true;
-  scene.clearColor = new Color4(0.8, 0.82, 0.85, 0);             // pale sky; alpha 0 = no fighter ink
+  scene.clearColor = new Color4(0.65, 0.78, 0.93, 0);           // the horizon; alpha 0 = no fighter ink
   const cam = new FreeCamera('cam', new Vector3(0, 3, 12), scene);
-  cam.fov = Math.PI / 3; cam.minZ = 0.1; cam.maxZ = 400;
+  cam.fov = 50 * Math.PI / 180; cam.minZ = 0.1; cam.maxZ = 400;
   const outline = createOutline(scene, cam);
-  const stone = new CelMaterial('stone', scene, { lit: hex(0xb9b2a6), shadow: hex(0x8a8a98), rim: 0 });
-  const vc = new CelMaterial('stage', scene, { shadow: new Color3(0.7, 0.7, 0.8), rim: 0 });
+  const stone = new CelMaterial('stone', scene, { lit: hex(0xc8b38c), shadow: hex(0x8c7858), contact: 0.45 });
+  const wl = hex(0xf3eee3), ws = hex(0x8a90a8);
+  const vc = new CelMaterial('stage', scene, { shadow: new Color3(ws.r / wl.r, ws.g / wl.g, ws.b / wl.b) });
+  // the sky: a gradient dome (top #2E4C8C -> horizon #A6C8EC) and one hard-edged cloud band; flat colour, no ink
+  const flat = new CelMaterial('sky', scene, { shadow: Color3.White() });
+  const sky = MeshBuilder.CreateSphere('sky', { diameter: 600, segments: 24, sideOrientation: Mesh.BACKSIDE }, scene);
+  const sp = sky.getVerticesData('position')!, top = hex(0x2e4c8c), hor = hex(0xa6c8ec), sc: number[] = [];
+  for (let i = 0; i < sp.length; i += 3) { const t = Math.pow(Math.max(0, Math.min(1, sp[i + 1] / 160)), 0.7);
+    const c = Color3.Lerp(hor, top, t); sc.push(c.r, c.g, c.b, 1); }
+  sky.setVerticesData(VertexBuffer.ColorKind, sc); sky.material = flat; sky.infiniteDistance = true;
+  const cloud = new Mesh('cloud', scene);
+  tube([[3, 270, 270], [13, 270, 270]], 240, { a0: 0, a1: Math.PI * 2, double: true,          // just over the walls
+    lip: (a, j) => (j ? 7 * Math.abs(Math.sin(a * 17)) * (0.6 + 0.4 * Math.sin(a * 5)) + 3 * Math.sin(a * 3 + 1) : 0) }).applyToMesh(cloud);
+  paint(cloud, 0xf4f6fa).material = flat; cloud.infiniteDistance = true;
 
   const floor = MeshBuilder.CreateCylinder('floor', { diameter: 30.2, height: 0.04, tessellation: 72 }, scene);
   floor.position.y = -0.02; floor.material = stone;
   const outside = MeshBuilder.CreateGround('out', { width: 320, height: 320 }, scene);
-  outside.position.y = -0.03; outside.material = new CelMaterial('out', scene, { lit: hex(0x8f8a80), shadow: hex(0x70707c), rim: 0 });
+  outside.position.y = -0.03; outside.material = new CelMaterial('out', scene, { lit: hex(0x9e8a66), shadow: hex(0x6e5e44) });
   // joint rings, the curb and the wall ring merge into one vertex-coloured mesh
   const parts: Mesh[] = [];
   // (lathed rings: a torus tessellates its tube as finely as its ring, 18k triangles each)
@@ -54,13 +63,13 @@ export function createScene(engine: AbstractEngine): Stage {
       new Vector3(r + w, 0, 0)], tessellation: 96, closed: true }, scene);
     parts.push(paint(m, c));
   };
-  ring(11.3, 0.03, 0.006, 0x8e877c); ring(13.2, 0.03, 0.006, 0x8e877c);
-  ring(15.35, 0.25, 0.24, 0x9a9387);                                            // the curb
+  ring(11.3, 0.03, 0.006, 0x7a6a50); ring(13.2, 0.03, 0.006, 0x7a6a50);
+  ring(15.35, 0.25, 0.24, 0x7a6a50);                                            // the curb
   for (let i = 0; i < 30; i++) {                                                // the broken wall ring at r 19
     const roll = (Math.sin(i * 12.9898) * 43758.5453) % 1;
     if (Math.abs(roll) < 0.15) continue;                                        // missing panel
     const hgt = Math.abs(roll) < 0.45 ? 1.2 : 2.4, a = (2 * Math.PI * i) / 30;
-    for (const [w, h, d, y, c] of [[3.9, hgt, 0.4, hgt / 2, 0xe6e1d6], [4.1, 0.22, 0.7, hgt + 0.11, 0x3c3f4c], [3.9, 0.3, 0.42, 0.15, 0x8c8478]] as const) {
+    for (const [w, h, d, y, c] of [[3.9, hgt, 0.4, hgt / 2, 0xf3eee3], [4.1, 0.22, 0.7, hgt + 0.11, 0x3c3f4c], [3.9, 0.3, 0.42, 0.15, 0x7a6a50]] as const) {
       const b = MeshBuilder.CreateBox('wall', { width: w, height: h, depth: d }, scene);
       b.position.set(19 * Math.cos(a), y, 19 * Math.sin(a)); b.rotation.y = -a + Math.PI / 2;
       b.bakeCurrentTransformIntoVertices(); parts.push(paint(b, c));
@@ -74,16 +83,37 @@ export function createScene(engine: AbstractEngine): Stage {
 
 // ---------------------------------------------------------------- fighters
 const NO_TINT = new Color4(0, 0, 0, 0);
+/** Each character's reiatsu: the rim colour (BABYLON_LOOK.md: Yamamoto #FF7A2A, Kenpachi #F5D54A). */
+export const REIATSU: Record<string, number> = { yamamoto: 0xff7a2a, kenpachi: 0xf5d54a, rukia: 0xbfe2ff, ichigo: 0x8ec8ff, senjumaru: 0xf2c84a };
+const SMEAR_N = 4;                                // blade positions kept for the smear (render frames)
 export class FighterView {
   root: TransformNode; body!: BuiltBody; anim: Animator; mat: CelMaterial; wmat: CelMaterial;
   bodies = new Map<string, BuiltBody>();         // one body per (character, variant): a form change swaps, never rebuilds
   bodyKey = '';
+  /** Render frames of white flash left (BattleView sets 1 on a hit). */
+  flashN = 0;
+  smear: Mesh; smearPts: Vector3[] = []; private smearPos = new Float32Array(SMEAR_N * 2 * 3);
   constructor(readonly scene: Scene, e: Ent, readonly outline: Outline) {
     this.root = new TransformNode('fighter', scene);
-    this.mat = new CelMaterial('fighter', scene, { ink: 1, threshold: 0.0 });
-    this.wmat = new CelMaterial('weapon', scene, { ink: 0.5, shadow: new Color3(0.55, 0.58, 0.72) });
+    this.mat = new CelMaterial('fighter', scene, { ink: 1, threshold: 0.18, pairs: true, rim: outline.depth });
+    this.wmat = new CelMaterial('weapon', scene, { ink: 0.95, threshold: 0.18, pairs: true, rim: outline.depth });
     this.useBody(e);
     this.anim = new Animator(this.body, e.f.character);
+    // the smear: a ribbon between the blade's last few positions (world space), shown over the active frames
+    this.smear = new Mesh('smear', scene);
+    const idx: number[] = [];
+    for (let i = 0; i + 1 < SMEAR_N; i++) idx.push(2 * i, 2 * i + 1, 2 * i + 2, 2 * i + 1, 2 * i + 3, 2 * i + 2);
+    const vd = new VertexData();
+    Object.assign(vd, { positions: Array.from(this.smearPos), indices: idx, normals: new Array(SMEAR_N * 6).fill(0).map((_, i) => (i % 3 === 1 ? 1 : 0)),
+      colors: new Array(SMEAR_N * 2).fill(0).flatMap((_, i) => { const t = Math.floor(i / 2) / (SMEAR_N - 1); return [0.86 + 0.14 * t, 0.9 + 0.1 * t, 1, 1]; }) });
+    vd.applyToMesh(this.smear, true);
+    this.smear.material = this.smearMat(scene); this.smear.alwaysSelectAsActiveMesh = true; this.smear.isVisible = false;
+    outline.add(this.smear);                     // in the G-buffer: what it covers loses its ink lines (no lines through it)
+  }
+  private smearMat(scene: Scene): CelMaterial {
+    const m = new CelMaterial('smear', scene, { shadow: Color3.White() });
+    m.backFaceCulling = false;
+    return m;
   }
 
   /** Show the body of E's current form (fighter.form picks the CharBody variant). */
@@ -91,8 +121,8 @@ export class FighterView {
     const { key, body: cb } = bodyFor(e.f.character, e.f.form);
     if (key === this.bodyKey) return;
     if (this.body) {
-      this.outline.remove(this.body.mesh); this.outline.remove(this.body.weapon);
-      for (const m of [this.body.mesh, this.body.weapon, this.body.face]) m.setEnabled(false);
+      for (const m of [this.body.mesh, this.body.weapon, ...this.body.extra?.meshes ?? []]) this.outline.remove(m);
+      for (const m of [this.body.mesh, this.body.weapon, this.body.face, ...this.body.extra?.meshes ?? []]) m.setEnabled(false);
     }
     let b = this.bodies.get(key);
     if (!b) {
@@ -102,12 +132,11 @@ export class FighterView {
       b.weapon.alwaysSelectAsActiveMesh = true;
       this.bodies.set(key, b);
     }
-    for (const m of [b.mesh, b.weapon, b.face]) m.setEnabled(true);
-    this.outline.add(b.mesh); this.outline.add(b.weapon);
+    for (const m of [b.mesh, b.weapon, b.face, ...b.extra?.meshes ?? []]) m.setEnabled(true);
+    for (const m of [b.mesh, b.weapon, ...b.extra?.meshes ?? []]) this.outline.add(m, cb.ink !== undefined);   // (alt: the body's own ink)
     this.body = b; this.bodyKey = key;
     if (this.anim) this.anim.body = b;
-    if (cb.ink !== undefined) this.outline.alt.copyFrom(hex(cb.ink));           // the body's own outline colour (INK_ALT)
-    this.mat.setFloat('ink', cb.ink !== undefined ? INK_ALT.body : 1); this.wmat.setFloat('ink', cb.ink !== undefined ? INK_ALT.weapon : 0.5);
+    if (cb.ink !== undefined) this.outline.alt.copyFrom(hex(cb.ink));
   }
 
   update(e: Ent, rdt: number, t: number): void {
@@ -115,40 +144,70 @@ export class FighterView {
     this.root.position.set(e.pos[0], e.pos[1], e.pos[2]);
     this.root.rotation.y = e.yaw;
     this.anim.update(e, rdt, t);
+    this.body.extra?.update(e, rdt);
     this.body.faceTex.uOffset = this.anim.face / 3;
-    this.mat.look(NO_TINT, this.anim.flash); this.wmat.look(NO_TINT, this.anim.flash);
+    const flash = Math.max(this.anim.flash, this.flashN > 0 ? 1 : 0);
+    if (rdt > 0 && this.flashN > 0) this.flashN--;
+    this.mat.look(NO_TINT, flash); this.wmat.look(NO_TINT, flash);
+    // the reiatsu rim: wider while awakened or gathering (an aura / hold phase), widest in a flare
+    const f = e.f, aura = (f.form !== 'base' ? 1.3 : 1) * (f.state === 'move' && (f.phase === 'aura' || f.phase === 'hold') ? 1.4 : 1)
+      + 0.5 * Math.min(1, e.look.flare);
+    const rc = hex(this.body.spec.reiatsu ?? REIATSU[f.character] ?? 0xffffff), px = Math.max(3, this.scene.getEngine().getRenderHeight() / 160);
+    this.mat.rimLook(rc, 0.9, Math.round(px * aura)); this.wmat.rimLook(rc, 0.9, Math.round(px));
     const show = e.look.alpha > 0.35;                                           // Hoho: gone while faded
     this.body.mesh.isVisible = this.body.weapon.isVisible = this.body.face.isVisible = show;
+    for (const m of this.body.extra?.meshes ?? []) m.isVisible = show;
+    this.updateSmear(show && this.anim.active, rdt);
+  }
+  /** Keep the blade's base / tip of the last SMEAR_N render frames; fill the ribbon while the move is active. */
+  updateSmear(on: boolean, rdt: number): void {
+    if (!on) { this.smearPts.length = 0; this.smear.isVisible = false; return; }
+    if (rdt <= 0 && this.smearPts.length) return;                               // paused / hit-stop render: hold
+    const w = this.body.weapon; w.computeWorldMatrix(true);
+    const m = w.getWorldMatrix();
+    this.smearPts.unshift(Vector3.TransformCoordinates(this.body.base, m), Vector3.TransformCoordinates(this.body.tip, m));
+    this.smearPts.length = Math.min(this.smearPts.length, SMEAR_N * 2);
+    const n = this.smearPts.length / 2;
+    if (n < 2) { this.smear.isVisible = false; return; }
+    for (let i = 0; i < SMEAR_N; i++) {
+      const k = Math.min(i, n - 1), b = this.smearPts[2 * k], tp = this.smearPts[2 * k + 1];
+      const q = b.add(tp.subtract(b).scale(0.25 + 0.15 * (k / (SMEAR_N - 1))));  // older slices narrow toward the tip
+      this.smearPos.set([q.x, q.y, q.z, tp.x, tp.y, tp.z], i * 6);
+    }
+    this.smear.updateVerticesData(VertexBuffer.PositionKind, this.smearPos);
+    this.smear.refreshBoundingInfo();
+    this.smear.isVisible = true;
   }
   dispose(): void {
-    this.outline.remove(this.body.mesh); this.outline.remove(this.body.weapon);
+    for (const m of [this.body.mesh, this.body.weapon, ...this.body.extra?.meshes ?? []]) this.outline.remove(m);
     for (const b of this.bodies.values()) {
-      b.weapon.dispose(); b.face.dispose(); b.faceTex.dispose(); b.faceMat.dispose(); b.mesh.dispose(); b.skeleton.dispose();
+      b.extra?.dispose(); b.weapon.dispose(); b.face.dispose(); b.faceTex.dispose(); b.faceMat.dispose(); b.mesh.dispose(); b.skeleton.dispose();
     }
+    this.outline.remove(this.smear); this.smear.material?.dispose(); this.smear.dispose();
     this.mat.dispose(); this.wmat.dispose(); this.root.dispose();
   }
 }
 
-// ---------------------------------------------------------------- the battle view: fighters, hazards, sparks
-const HAZ_COLOR: Record<string, number> = { wave: 0xff6a1a, fireball: 0xffa040, enjo: 0xff5a10, crack: 0x262a36 };
-
+// ---------------------------------------------------------------- the battle view: fighters, ink VFX (vfx/), sparks
 export class BattleView {
   fighters: FighterView[];
-  hazards = new Map<Hazard, Mesh>();
+  vfx: Vfx;
   sparks: InkSparks;
   t = 0;
   constructor(readonly scene: Scene, w: World, stage: Stage) {
     this.fighters = [new FighterView(scene, w.p1, stage.outline), new FighterView(scene, w.p2, stage.outline)];
     this.sparks = new InkSparks(scene, stage.ink);
+    this.vfx = new Vfx(scene, this.fighters);
   }
 
   events(ev: SimEvent[], w: World): void {
     const S = this.sparks;
+    this.vfx.events(ev, w);
     for (const e of ev) {
       const a = e.args as number[], xyz = (i: number): [number, number, number] => [a[i], a[i + 1], a[i + 2]];
       const at = (side: number): [number, number, number] => { const p = (side === 0 ? w.p1 : w.p2).pos; return [p[0], p[1] + 1.1, p[2]]; };
       switch (e.kind) {
-        case 'hit': S.add('hit', ...xyz(2), a[6] ? 1.6 : 1.1); break;
+        case 'hit': S.add('hit', ...xyz(2), a[6] ? 1.6 : 1.1); this.fighters[a[1]].flashN = 1; break;
         case 'blocked': S.add('block', ...xyz(2), 0.9, 0.25); break;
         case 'guard-crush': case 'guard-break': case 'stance-break': S.add('hit', ...xyz(2), 2.0, 0.45); break;
         case 'parried': case 'absorbed': case 'armored': S.add('block', ...xyz(1), 1.2); break;
@@ -164,35 +223,14 @@ export class BattleView {
   update(w: World, rdt: number): void {
     this.t += rdt;
     this.fighters[0].update(w.p1, rdt, this.t); this.fighters[1].update(w.p2, rdt, this.t);
-    // hazards: one mesh per live hazard
-    for (const [hz, m] of this.hazards) if (!hz.alive || !w.hazards.includes(hz)) { m.dispose(false, true); this.hazards.delete(hz); }
-    for (const hz of w.hazards) {
-      if (!hz.alive) continue;
-      let m = this.hazards.get(hz);
-      if (!m) { m = this.hazardMesh(hz); this.hazards.set(hz, m); }
-      const len = hz.kind === 'line' ? hz.size : 0;
-      m.position.set(hz.x + 0.5 * len * fwdX(hz.yaw), hz.kind === 'fireball' ? hz.y : hz.kind === 'line' ? 0.02 : hz.kind === 'wave' ? 0.8 : 0.3,
-                     hz.z + 0.5 * len * fwdZ(hz.yaw));
-      m.rotation.y = hz.yaw;
-      m.isVisible = hz.delay <= 0;
-      m.visibility = hz.life > 0 ? Math.max(0.15, 1 - hz.age / hz.life) : 1;
-    }
+    celLight.shadows.set(w.p1.pos[0], w.p1.pos[2], w.p2.pos[0], w.p2.pos[2]);       // contact shadows on the floor
+    this.vfx.update(w, rdt);
     this.sparks.step(rdt);
-  }
-
-  hazardMesh(hz: Hazard): Mesh {
-    const s = this.scene;
-    const m = hz.kind === 'wave' ? MeshBuilder.CreateBox('wave', { width: 2 * hz.size, height: 1.6, depth: 0.35 }, s)
-      : hz.kind === 'fireball' ? MeshBuilder.CreateSphere('fireball', { diameter: 2 * hz.size, segments: 12 }, s)
-      : hz.kind === 'line' ? MeshBuilder.CreateBox('line', { width: 0.3, height: 0.02, depth: hz.size }, s)
-      : MeshBuilder.CreateSphere(hz.kind, { diameter: 0.6, segments: 8 }, s);
-    m.material = emissive(s, hex(HAZ_COLOR[hz.look ?? hz.kind] ?? 0xffc080));
-    return m;
   }
 
   dispose(): void {
     for (const f of this.fighters) f.dispose();
-    for (const m of this.hazards.values()) m.dispose(false, true);
+    this.vfx.dispose();
     this.sparks.dispose();
   }
 }

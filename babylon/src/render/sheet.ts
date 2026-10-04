@@ -1,7 +1,7 @@
 // sheet.ts: debug hooks for the look review (headless screenshots): window.duelRender.sheet(cols, cam) takes over the
 // render loop and shows every roster character in a row of posed states at a fixed camera; .stats() reads draw calls
 // (this frame, G-buffer pass included), active meshes and triangles.
-import { SceneInstrumentation, Vector3, type AbstractEngine } from '@babylonjs/core';
+import { Matrix, SceneInstrumentation, Vector3, type AbstractEngine } from '@babylonjs/core';
 import { Match } from '../sim/match';
 import { ROSTER, findMove } from '../sim/kit';
 import type { Ent, FState } from '../sim/types';
@@ -60,5 +60,16 @@ export function installSheet(engine: AbstractEngine, stage: Stage): void {
       tris: act.reduce((n, m) => n + m.getTotalIndices() / 3, 0), webgpu: engine.isWebGPU };
   };
   const dbg = () => ({ r: cam.getDirection(Vector3.Right()).asArray(), f: cam.getDirection(Vector3.Forward()).asArray() });
-  Object.assign(window, { duelRender: { sheet, stats, dbg } });
+  /** The live match's fighters on screen: [top, bottom] as fractions of the frame height, and the height fraction. */
+  const frac = () => {
+    const w = (window as unknown as { duel: { match: { w: { p1: Ent; p2: Ent } } | null } }).duel.match?.w;
+    if (!w) return null;
+    const vp = cam.viewport.toGlobal(engine.getRenderWidth(), engine.getRenderHeight()), m = scene.getTransformMatrix();
+    return [w.p1, w.p2].map((e) => {
+      const lo = Vector3.Project(new Vector3(e.pos[0], 0, e.pos[2]), Matrix.IdentityReadOnly, m, vp);
+      const hi = Vector3.Project(new Vector3(e.pos[0], e.body.hurtH, e.pos[2]), Matrix.IdentityReadOnly, m, vp);
+      return { top: +(hi.y / vp.height).toFixed(3), bottom: +(lo.y / vp.height).toFixed(3), h: +((lo.y - hi.y) / vp.height).toFixed(3) };
+    });
+  };
+  Object.assign(window, { duelRender: { sheet, stats, dbg, frac } });
 }

@@ -5,6 +5,8 @@ import '../src/chars';
 import { KITS, ROSTER, type Move } from '../src/sim/kit';
 import { BODIES, bodyFor } from '../src/render/bodies';
 import { clipNameFor } from '../src/render/anim';
+import { CLIPS } from '../src/render/clips';
+import type { Fighter } from '../src/sim/types';
 
 function before(mv: Move): string {
   const c = (mv.clip2 && mv.kind !== 'sp' ? mv.clip2 : mv.clip) ?? '', ken = c.startsWith('ke');
@@ -22,10 +24,13 @@ function before(mv: Move): string {
   return mv.kind === 'flash' ? 'heavy' : 'slash';
 }
 
-it('every kit move maps to the same clip as before the split', () => {
+it('every kit move without a bespoke clip maps to the same library clip as before the split', () => {
   let n = 0;
-  for (const [who, forms] of KITS) for (const kit of forms.values()) for (const mv of kit.moves.values()) {
-    expect(`${who} ${mv.name} ${clipNameFor(who, mv)}`).toBe(`${who} ${mv.name} ${before(mv)}`); n++;
+  for (const [who, forms] of KITS) for (const [form, kit] of forms) for (const mv of kit.moves.values()) {
+    const own = CLIPS[who]?.move?.(mv, { phase: 'main', form, sf: mv.s, hold: 0 } as unknown as Fighter);
+    n++;
+    if (own) { expect(own.length, `${who} ${mv.name}`).toBeGreaterThan(1); continue; }   // bespoke (B2+; every move today)
+    expect(`${who} ${mv.name} ${clipNameFor(who, mv)}`).toBe(`${who} ${mv.name} ${before(mv)}`);
   }
   expect(n).toBeGreaterThan(100);
 });

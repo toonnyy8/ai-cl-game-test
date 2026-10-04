@@ -197,3 +197,19 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   STAGE 1's opponent and START, STAGE CLEAR, RETIRE, the run's RESULTS), the STAGE tag in `render/hud.ts`,
   `tools/endless.ts` (the autopilot, endless.lisp 80992's job). The autopilot vs the native Lisp running the same run:
   every Y / K / R stage identical bit for bit (91 of 91), Ichigo / Senjumaru stages drift with their open f32 parity.
+- 2026-10-05: M5 look merged (B2-look, B2-ken, B3 Rukia / Ichigo / Senjumaru, B4 ink VFX + HUD) with one render API.
+  Bodies (`body.ts`): colours are `Col` = lit hex or `[lit, shadow]` (`pair()` registers a shadow; every character
+  palette is registered, so cel.ts's per-vertex `shade` gives each part its own shadow half); `kimono()` options
+  `haori: false` (Rukia, Ichigo), `sleeves: 'torn'` (Kenpachi), `'flared'` + `lining` (Ichigo), `emptyL` / `bareR`
+  (Yamamoto); `CharBody.extra(scene, built)` adds posed meshes (Senjumaru's six gold arms and needle thread, `senjuPoints`);
+  `BuiltBody.tip / base` for the smear. Clips (`clips/index.ts` CharClips): `idle`, `poses` (library poses replaced by
+  name in every form; the generic clips and walk / run are built from them), `stance(form)` (per-form idle / guard /
+  guardHit / walk / run / step / hoho), `move(mv, f)` (a bespoke Clip sampled at u in the main phase, at f.hold in the
+  pre-strike phases, or `[clip, x]` at x: Senjumaru's 20 f weave loop), `clipFor` (a library clip name). Every move of
+  every character now has a bespoke clip. Outline: the ink-id target's green channel marks the alternate ink
+  (`outline.add(m, alt)`; Rukia's zero: ice blue); the blade smear sits in the G-buffer (no ink lines drawn through it).
+  VFX hooks: Ichigo's clones / echoes / ZANZO are pooled KESSA `IchigoGhost`s posed by their own move and frame;
+  Senjumaru's KASA umbrella (a thread ring through the six hands and ribs to an apex) and the TSUJI loom warp are
+  camera-facing red threads between `senjuPoints`; her gold arms join the Hoho afterimages; Rukia's ribbon is a verlet
+  strip hung from her blade's `pommel` node (`vfx/strands.ts`). Gate unchanged (YY 130.9, YK 124.4, KK 144.8, RR 174.1,
+  II 204.4, SS 194.2 s).

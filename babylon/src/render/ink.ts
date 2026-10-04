@@ -7,10 +7,10 @@ import { Color3, DynamicTexture, Mesh, MeshBuilder, StandardMaterial, type Scene
 
 type Pt = [number, number];
 let seed = 7;
-const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+export const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 
 /** One brush stroke through PTS (canvas px) of max width W, colour COL; DRY (0..1) = how early the bristles break. */
-function stroke(g: CanvasRenderingContext2D, pts: Pt[], w: number, col: string, dry = 0.5): void {
+export function stroke(g: CanvasRenderingContext2D, pts: Pt[], w: number, col: string, dry = 0.5): void {
   const n = Math.max(6, Math.round(w / 1.6)), seg = 40;
   const at = (t: number): [number, number, number, number] => {      // position and tangent along the polyline
     const f = t * (pts.length - 1), i = Math.min(pts.length - 2, Math.floor(f)), u = f - i;

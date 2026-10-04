@@ -4,10 +4,10 @@
 // guard (the long ribbon is B4's fx along the weapon's `pommel` node). The cold bands frost her progressively: -18 the
 // hems, -50 ice rims on the sleeve / hakama hems, collar and hair tips and the rimed blade; -273.15 (zero) white hair
 // and irises, cold skin, an ice half-crown behind the head, shoulder crystals, the ice blade and an ice-blue outline.
-// Colours are lit / shadow pairs ([0] is the vertex colour today; [1] the shadow for a per-colour shadow channel).
+// Colours are lit / shadow pairs ([0] lit; each registered with body.ts pair(), so every part gets its shadow half).
 import { Matrix, Mesh, TransformNode, Vector3, VertexData, type Scene } from '@babylonjs/core';
 import {
-  ellipsoid, hex, inkLine, kimono, limb, rigid, T, tube, type Add, type BodySpec, type CharBody, type Part, type Rig,
+  adder, ellipsoid, hex, inkLine, kimono, pair, limb, rigid, T, tube, type Add, type BodySpec, type Col, type CharBody, type Part, type Rig,
   type Ring,
 } from '../body';
 import type { BoneName } from '../pose';
@@ -18,8 +18,7 @@ const C = {
   frost: [0xe6eef6, 0x9aa8be], ice: [0xd2e6f6, 0x86a2c4], iceDeep: [0xa9c8e6, 0x6584ad],
   zSkin: [0xd6ccca, 0x9c94a6], zHair: [0xf4f6fa, 0xa9b4cc],
 } as const;
-const HAORI_NONE = 0x010203;     // ponytail: kimono() always adds the haori; parts in this sentinel colour are dropped.
-                                 // Switch to B2-look's no-haori option (Yamamoto's Bankai needs one too) when it lands.
+for (const [l, sh] of Object.values(C)) pair(l, sh);
 const ICE_INK = 0x7f97b4;        // the zero outline (DUEL_RUKIA §2 keyline)
 const isHex = (p: Part, h: number) => { const c = hex(h); return Math.abs(p.color.r - c.r) + Math.abs(p.color.g - c.g) + Math.abs(p.color.b - c.b) < 1e-3; };
 
@@ -29,8 +28,8 @@ type Band = 'base' | 'm18' | 'm50' | 'zero';
 function parts(band: Band) {
   return (sp: BodySpec, r: Rig): Part[] => {
     const { H } = r, zero = band === 'zero';
-    const ps = kimono(sp, r, (add, hc) => hair(add, hc, H, sp.hair, zero)).filter((p) => !isHex(p, HAORI_NONE));
-    const add: Add = (vd, color, bones) => ps.push({ vd, color: typeof color === 'number' ? hex(color) : color, bones });
+    const ps = kimono(sp, r, (add, hc) => hair(add, hc, H, sp.hair, zero));
+    const add: Add = adder(sp, ps);
     armband(add, r, sp);
     if (band === 'm18' || band === 'm50') hems(ps, add, band === 'm50' ? C.ice[0] : C.frost[0], (band === 'm50' ? 0.3 : 0.16) * H);
     if (band === 'm50') iceTrim(add, r, sp);
@@ -41,7 +40,7 @@ function parts(band: Band) {
 
 /** The short bob (chin length, open at the face), side-swept bangs, the strand down between the eyes, three highlight
  *  strokes (black hair only). hc = the skull centre. */
-function hair(add: Add, hc: [number, number, number], H: number, col: number, white: boolean): void {
+function hair(add: Add, hc: [number, number, number], H: number, col: Col, white: boolean): void {
   const [x0, y0, z0] = hc, B: BoneName[] = ['head'];
   add(ellipsoid([0, y0 + 0.07 * H, z0 + 0.04 * H], [0.4 * H, 0.47 * H, 0.45 * H], 16, 10), col, B);       // the crown
   const fr = 0.98;                                          // the face opening, radians either side of the front
@@ -228,7 +227,7 @@ function sword(kind: Blade) {
 
 // ---------------------------------------------------------------- the CharBody
 const SPEC: BodySpec = { height: 1.5, heads: 7, shoulder: 0.82, chest: [0.6, 0.4], waist: [0.46, 0.35], hip: [0.56, 0.4],
-  limb: 0.84, hand: 1.05, skin: C.skin[0], black: C.black[0], haori: HAORI_NONE, obi: C.black[0], hair: C.hair[0],
+  limb: 0.84, hand: 1.05, skin: C.skin[0], black: C.black[0], haori: false, obi: C.black[0], hair: C.hair[0],
   collar: 0.6, haoriHem: 1.6, haoriSleeves: 'long', tattered: false };
 
 export const rukia: CharBody = {
