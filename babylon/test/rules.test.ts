@@ -437,7 +437,7 @@ describe('gauges', () => {
        && weightedPick(0.1, [['a', 0], ['b', 1]]) === 'b' && weightedPick(0.5, [['a', 0]]) === null);
     const bands = kit('yamamoto', 'base').ai!.moves as R.Band[];
     ck(weightedPick(0, R.bandWeights(bands, 6)!) === 'sig' && weightedPick(0, R.bandWeights(bands, 9)!) === 'sp1');
-    expect(R.heatRange(6, 8, 10)).toEqual([3, 5]);
+    expect(R.heatRange(6, 8, 10).map((x) => +x.toFixed(5))).toEqual([3, 5]);   // (single floats: 2.9999998 like the Lisp)
     expect(R.heatRange(6, 8, 30)).toEqual([1, 1]);
     ck(R.heatBreakerMult(7.9) === 1 && R.heatBreakerMult(8) === 2);
     ck(near(R.heatAfter(1, false), 1 + T.aiHeatRate / 60) && near(R.heatAfter(1, true), 1 + T.aiHeatRate / 30));

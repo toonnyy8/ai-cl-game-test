@@ -4,7 +4,7 @@
 // States: idle (stand / walk / strafe) guard guard-hit step run hoho move (phase hold aura dash follow main) stun (phase =
 // the reaction) air down wakeup cine intro win lose. Hits are not here: combat.ts resolves them after every fighter moved.
 import { T } from './tuning';
-import { angleWrap, deg, fwdX, fwdZ, turnToward } from './math';
+import { angleWrap, deg, f32, fwdX, fwdZ, len32, turnToward } from './math';
 import { STEP } from './time';
 import { COMMANDS, type Action, type Command, type Vpad } from './vpad';
 import {
@@ -69,15 +69,16 @@ export function playClip(e: Ent, clip: string | null,
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const moveParam = (e: Ent, key: string): any => e.f.move!.params[key];
 /** [x z] of the point D metres in front of fighter E. */
-export const ahead = (e: Ent, d: number): [number, number] => [e.pos[0] + d * fwdX(e.yaw), e.pos[2] + d * fwdZ(e.yaw)];
-export const faceYawTo = (e: Ent, x: number, z: number): number => dirYaw(x - e.pos[0], z - e.pos[2]);
+export const ahead = (e: Ent, d: number): [number, number] => [f32(e.pos[0] + f32(d * fwdX(e.yaw))), f32(e.pos[2] + f32(d * fwdZ(e.yaw)))];
+export const faceYawTo = (e: Ent, x: number, z: number): number => dirYaw(f32(x - e.pos[0]), f32(z - e.pos[2]));
 /** Turn E toward his opponent by at most MAX-STEP radians. */
 export function turnToOpp(e: Ent, f: Fighter, maxStep: number): void {
   if (f.dist > 0.01) e.yaw = angleWrap(turnToward(e.yaw, faceYawTo(e, f.ox, f.oz), maxStep));
 }
 /** Slide E DIST metres over FRAMES along (DX DZ) (knockback, pushback, Step, clash). */
 export function setSlide(e: Ent, dist: number, frames: number, dx: number, dz: number): void {
-  const kb = e.mo.kb, l = Math.max(1e-4, Math.sqrt(dx * dx + dz * dz)), k = dist / Math.max(1, frames) / l;
+  dx = f32(dx); dz = f32(dz);                                         // (single floats op by op, as the Lisp)
+  const kb = e.mo.kb, l = Math.max(f32(1e-4), len32(dx, dz)), k = f32(f32(f32(dist) / Math.max(1, frames)) / l);
   kb[0] = dx * k; kb[2] = dz * k; e.mo.kbLeft = frames;
 }
 
@@ -176,7 +177,7 @@ export function startStep(e: Ent, f: Fighter): void {
   const [to, st] = stepDirection(to0, st0);
   const [dx, dz] = towardStrafeDir(to, st, e.pos[0], e.pos[2], f.ox, f.oz);
   const fld = oppField(e, f);                                        // her cold field shortens a Step away from her
-  setSlide(e, fld ? fieldStep(T.stepDistance, -(dx * fld[1] + dz * fld[2]) / Math.max(1e-4, Math.sqrt(dx * dx + dz * dz)), fld[0].step)
+  setSlide(e, fld ? fieldStep(T.stepDistance, f32(-f32(f32(dx * fld[1]) + f32(dz * fld[2])) / Math.max(f32(1e-4), len32(dx, dz))), fld[0].step)
                   : T.stepDistance, 12, dx, dz);
   f.state = 'step'; f.sf = 0; f.move = null; f.queued = null;        // (the J latch)
   e.mo.vel.fill(0);
@@ -208,7 +209,7 @@ export function startRun(e: Ent, f: Fighter): void {
 }
 
 /** Spend AMOUNT of flash-step (the regen waits T.fsDelay again). */
-export function spendFs(g: Gauges, amount: number): void { g.fs = Math.max(0, g.fs - amount); g.fsIdle = 0; }
+export function spendFs(g: Gauges, amount: number): void { g.fs = Math.max(0, Math.fround(g.fs - amount)); g.fsIdle = 0; }
 
 /** Hoho: spend the flash-step, vanish, reappear behind the opponent (hohoStep). Checks PERFECT now. */
 export function startHoho(e: Ent, f: Fighter): void {
@@ -223,7 +224,7 @@ export function startHoho(e: Ent, f: Fighter): void {
   if (f.perfect) {
     const o = oppOf(e);
     g.perfects++;
-    g.fs = Math.min(T.fsMax, g.fs + burstFsGain(T.fsRefund, g.burst));
+    g.fs = Math.fround(Math.min(T.fsMax, g.fs + burstFsGain(T.fsRefund, g.burst)));
     o.f.lockNext = T.perfectLock;
     respect(o);
     W.time.slowmo(T.perfectSlowmoScale, T.perfectSlowmoSeconds);
@@ -236,7 +237,7 @@ export const coldCost = (kit: Kit, command: string): number => (kit.cold?.[comma
 /** COMMAND starts in KIT: its cold is spent (Rukia's cold gauge, the kit meter; never below 0). */
 export function coldSpend(e: Ent, kit: Kit, command: string): void {
   const c = coldCost(kit, command);
-  if (c > 0) e.g.meter = Math.max(0, e.g.meter - c);
+  if (c > 0) e.g.meter = Math.max(0, Math.fround(e.g.meter - c));
 }
 
 /** Can E start COMMAND's move (of KIT) now: Reiatsu bars, not cooling down, a pip of the arm meter, L's cold, the kit's
@@ -346,12 +347,12 @@ export function oppField(e: Ent, f: Fighter): [Record<string, number>, number, n
   const o = f.opp, fo = o && o.alive ? o.f : null, k = fo?.kit.field as Record<string, number> | null | undefined;
   if (fo && k && f.dist <= k.r && !['stun', 'air', 'down', 'wakeup', 'cine'].includes(fo.state)) {
     const d = Math.max(1e-3, f.dist);
-    return [k, (e.pos[0] - f.ox) / d, (e.pos[2] - f.oz) / d];
+    return [k, f32(f32(e.pos[0] - f.ox) / d), f32(f32(e.pos[2] - f.oz) / d)];
   }
   return null;
 }
 /** E's walk / run velocity V inside the opponent's cold field: its part away from her x the field's away. */
-export function fieldSlow(e: Ent, f: Fighter, v: number[]): void {
+export function fieldSlow(e: Ent, f: Fighter, v: Float32Array): void {
   const fld = oppField(e, f);
   if (fld) {
     const [vx, vz] = fieldVelocity(v[0], v[2], fld[1], fld[2], fieldK(fld[0].away, f.frost > 0));
@@ -391,13 +392,13 @@ export function neutralStep(e: Ent, f: Fighter, vp: Vpad): void {
     const [to, st] = f.lock === 0 ? stickRelative(e, f) : [0, 0];
     if (f.state === 'guard') toIdle(e, 4);
     f.guardT = passiveP(e, 'ward') ? Math.min(9999, f.guardT + 1) : 0;
-    const m = Math.sqrt(to * to + st * st), kit = f.kit;
+    const m = len32(to, st), kit = f.kit;
     if (m < 0.2 || kit.walk <= 0) {                                  // (absolute zero: rooted where she stands)
       v.fill(0);
       playClip(e, kit.stance, { blend: 6, restart: false });
     } else {
       const [dx, dz] = towardStrafeDir(to, st, e.pos[0], e.pos[2], f.ox, f.oz);
-      const s = frostSpeed(kit.walk, f.frost) * Math.min(1, m) * (1 / m);
+      const s = f32(f32(frostSpeed(kit.walk, f.frost) * Math.min(1, m)) * f32(1 / m));
       v[0] = s * dx; v[2] = s * dz;
       fieldSlow(e, f, v);
       playClip(e, Math.abs(st) > Math.abs(to) ? (st > 0 ? 'sh-strafe-r' : 'sh-strafe-l') : to > 0 ? 'sh-walk-f' : 'sh-walk-b',
@@ -477,7 +478,7 @@ export function mainPhaseStep(e: Ent, f: Fighter, vp: Vpad, mv: Move): void {
     const chained = f.chained, rooted = f.kit.rooted;                // (rooted: her reach is the ice's)
     const chase = !rooted && (f.endChase || (chained && !(mv.kind === 'quick' || mv.kind === 'flash')))   // J / K links: no chase
       ? stringChaseSpeed(f.dist, mv.reach, s - sf, f.endChase ? T.enderChaseMax : T.chaseMax) : 0;
-    const slide = mv.slide > 0 && f.dist > T.lungeStop && !rooted ? 60 * (mv.slide / s) : 0;
+    const slide = mv.slide > 0 && f.dist > T.lungeStop && !rooted ? f32(60 * f32(mv.slide / s)) : 0;
     const sp = Math.max(chase, slide);                               // a lunge stopping at the opponent; a link's chase
     turnToOpp(e, f, trackStep(chained ? Math.max(mv.track, T.chaseTrack) : mv.track));
     if (sp > 0) { v[0] = sp * fwdX(e.yaw); v[2] = sp * fwdZ(e.yaw); }
@@ -499,10 +500,10 @@ export function mainPhaseStep(e: Ent, f: Fighter, vp: Vpad, mv: Move): void {
 /** Push fighter B DIST metres away from A over FRAMES; what the arena's edge leaves no room for pushes A back instead.
  *  [B's share, A's share]. */
 export function pushApart(a: Ent, b: Ent, dist: number, frames: number): [number, number] {
-  const p = a.pos, q = b.pos, dx = q[0] - p[0], dz = q[2] - p[2];
-  const l = Math.max(1e-4, Math.sqrt(dx * dx + dz * dz)), ux = dx / l, uz = dz / l;
-  const room = rayRoom(q[0], q[2], ux, uz, T.arenaRadius - b.body.hurtR);
-  const mb = Math.min(dist, room), ma = dist - mb;
+  const p = a.pos, q = b.pos, dx = f32(q[0] - p[0]), dz = f32(q[2] - p[2]);   // (singles, as the Lisp)
+  const l = Math.max(f32(1e-4), len32(dx, dz)), ux = f32(dx / l), uz = f32(dz / l);
+  const room = rayRoom(q[0], q[2], ux, uz, f32(f32(T.arenaRadius) - f32(b.body.hurtR)));
+  const mb = Math.min(dist, room), ma = f32(dist - mb);
   if (mb > 0.01) setSlide(b, mb, frames, ux, uz);
   if (ma > 0.01) setSlide(a, ma, frames, -ux, -uz);
   return [mb, ma];
@@ -511,7 +512,7 @@ export function pushApart(a: Ent, b: Ent, dist: number, frames: number): [number
 /** E's J / K string ender MV (J3 / K3) just hit O: O is pushed out of the reach of E's J1 (after J3) or K1 (after K3). */
 export function enderPush(e: Ent, o: Ent, mv: Move): void {
   const f = e.f, opener = kitCommandMove(f.kit, mv.kind === 'quick' ? 'q' : 'f');
-  const push = opener ? opener.reach + opener.slide + o.body.hurtR + T.enderPush - f.dist : null;
+  const push = opener ? f32(f32(f32(f32(opener.reach + f32(opener.slide)) + f32(o.body.hurtR)) + f32(T.enderPush)) - f.dist) : null;
   if (push != null && push > 0) {
     const [mb, ma] = pushApart(e, o, push, T.enderPushFrames);
     clog(() => `${sideName(e)} ender push ${mv.name} ${mb.toFixed(1)} m (attacker ${ma.toFixed(1)})`);
@@ -654,7 +655,7 @@ export function runVelocity(e: Ent, speed: number, yaw = e.yaw): void {
 /** The fraction (-1..1) of E's run heading that points at his opponent. */
 export function runClosing(e: Ent, f: Fighter): number {
   const p = e.pos, yaw = f.runYaw, d = f.dist;
-  return d < 0.01 ? 0 : (fwdX(yaw) * (f.ox - p[0]) + fwdZ(yaw) * (f.oz - p[2])) / d;
+  return d < 0.01 ? 0 : f32(f32(f32(fwdX(yaw) * f32(f.ox - p[0])) + f32(fwdZ(yaw) * f32(f.oz - p[2]))) / d);   // (singles)
 }
 
 /** The run: a command cancels it at once (a move keeps runCarry of momentum), Guard stops it, releasing Step brakes
@@ -732,7 +733,7 @@ export function setReaction(e: Ent, react: string, stun: number, fromX: number, 
   if (air || react === 'launch' || react === 'knockdown') {
     f.state = 'air'; mo.grounded = false;
     v[1] = (T.airVy as Record<string, number>)[react === 'launch' || react === 'knockdown' ? react : 'air'];
-    setSlide(e, kb > 0 ? T.airSlide * kb : 1.0, T.airSlideFrames, dx, dz);
+    setSlide(e, kb > 0 ? Math.fround(Math.fround(T.airSlide) * kb) : 1.0, T.airSlideFrames, dx, dz);
     playClip(e, 'sh-launch', { blend: 2 });
     if (react === 'launch') emit('launch', e);
   } else {
@@ -795,26 +796,28 @@ export function breakerPhase(e: Ent): BreakerPhase {
 // ---------------------------------------------------------------- physics
 /** Walk / dash velocity, the slide, gravity and landing, the arena wall. */
 export function fighterPhysics(e: Ent): void {
-  const mo = e.mo, p = e.pos, v = mo.vel, kb = mo.kb, dt = STEP, r = T.arenaRadius - e.body.hurtR;
-  p[0] += dt * v[0]; p[2] += dt * v[2];
+  // (single floats op by op, as the Lisp's declared f32 physics; the stores into the f32vecs round the sums)
+  const mo = e.mo, p = e.pos, v = mo.vel, kb = mo.kb, dt = f32(STEP), r = f32(f32(T.arenaRadius) - f32(e.body.hurtR));
+  p[0] += f32(dt * v[0]); p[2] += f32(dt * v[2]);
   if (mo.kbLeft > 0) { p[0] += kb[0]; p[2] += kb[2]; mo.kbLeft--; }
   if (!mo.grounded) {
-    v[1] -= T.gravity * dt; p[1] += dt * v[1];
+    v[1] -= f32(f32(T.gravity) * dt); p[1] += f32(dt * v[1]);
     if (p[1] <= 0 && v[1] <= 0) { p[1] = 0; v[1] = 0; mo.grounded = true; }
   }
-  const x = p[0], z = p[2], d = Math.sqrt(x * x + z * z);
-  if (d > r) { p[0] = x * (r / d); p[2] = z * (r / d); }
+  const x = p[0], z = p[2], d = len32(x, z);
+  if (d > r) { const k = f32(r / d); p[0] = x * k; p[2] = z * k; }
 }
 
 /** Two grounded, visible fighters never overlap: push both apart equally (symmetric). */
 export function separateFighters(a: Ent, b: Ent): void {
   const no: FState[] = ['hoho', 'cine'];
   if (no.includes(stateOf(a)) || no.includes(stateOf(b))) return;
-  const p = a.pos, q = b.pos, dx = q[0] - p[0], dz = q[2] - p[2], d = Math.sqrt(dx * dx + dz * dz);
-  const minD = a.body.hurtR + b.body.hurtR;
+  // (single floats op by op, as the Lisp: the push lands them exactly hurt-r apart, and d < minD must agree next step)
+  const p = a.pos, q = b.pos, dx = f32(q[0] - p[0]), dz = f32(q[2] - p[2]), d = len32(dx, dz);
+  const minD = f32(f32(a.body.hurtR) + f32(b.body.hurtR));
   if (d < minD && Math.abs(p[1] - q[1]) < 1.2) {
-    const push = 0.5 * (minD - d), ux = d > 1e-3 ? dx / d : 1, uz = d > 1e-3 ? dz / d : 0;
-    p[0] -= push * ux; p[2] -= push * uz; q[0] += push * ux; q[2] += push * uz;
+    const push = f32(0.5 * f32(minD - d)), ux = d > 1e-3 ? f32(dx / d) : 1, uz = d > 1e-3 ? f32(dz / d) : 0;
+    p[0] -= f32(push * ux); p[2] -= f32(push * uz); q[0] += f32(push * ux); q[2] += f32(push * uz);
   }
 }
 
@@ -852,8 +855,8 @@ export function fighterSystem(): void {
   for (const e of both) {
     const f = e.f, o = f.opp;
     if (o && o.alive) {
-      const p = e.pos, q = o.pos, dx = q[0] - p[0], dz = q[2] - p[2];
-      f.ox = q[0]; f.oz = q[2]; f.dist = Math.sqrt(dx * dx + dz * dz);
+      const p = e.pos, q = o.pos, dx = f32(q[0] - p[0]), dz = f32(q[2] - p[2]);
+      f.ox = q[0]; f.oz = q[2]; f.dist = len32(dx, dz);
     }
   }
   viewStep(a, b);

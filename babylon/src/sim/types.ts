@@ -15,7 +15,12 @@ export const BODIES: Record<string, Body> = {
   yamamoto: { name: 'yamamoto', hurtR: 0.36, hurtH: 1.65 },
   kenpachi: { name: 'kenpachi', hurtR: 0.45, hurtH: 2.0 },
   'kenpachi-oni': { name: 'kenpachi-oni', hurtR: 0.45, hurtH: 2.0 },   // body-variant of kenpachi: the same hurt cylinder
+  rukia: { name: 'rukia', hurtR: 0.34, hurtH: 1.5 },
+  'rukia-zero': { name: 'rukia-zero', hurtR: 0.34, hurtH: 1.5 },     // body-variants of rukia: the same hurt cylinder
+  'rukia-bankai': { name: 'rukia-bankai', hurtR: 0.34, hurtH: 1.5 },
   skeleton: { name: 'skeleton', hurtR: 0.3, hurtH: 1.7 },
+  ichigo: { name: 'ichigo', hurtR: 0.38, hurtH: 1.8 },
+  senjumaru: { name: 'senjumaru', hurtR: 0.36, hurtH: 1.7 },
 };
 export const findBody = (name: string | null): Body => (name && BODIES[name]) || { name: name ?? 'default', hurtR: 0.35, hurtH: 1.8 };
 
@@ -24,8 +29,8 @@ export type FState = 'idle' | 'guard' | 'guard-hit' | 'step' | 'run' | 'hoho' | 
 
 /** How a fighter's body moves: walk / dash velocity, a knockback slide, airborne. */
 export class Motion {
-  vel = [0, 0, 0];          // m/s (x z walking or dashing; y while airborne)
-  kb = [0, 0, 0];           // slide, metres per frame (x z): knockback, pushback, Step
+  vel = new Float32Array(3); // m/s (x z walking or dashing; y while airborne)   (f32vecs, as the Lisp's)
+  kb = new Float32Array(3);         // slide, metres per frame (x z): knockback, pushback, Step
   kbLeft = 0;               // slide frames left
   grounded = true;
 }
@@ -86,11 +91,15 @@ export class Fighter {
   burst: string | null = null;  // the burst mode pressed this step (applied after both stepped)
   chain = 0;                    // ORANGE: frames the next move started still has its startup cut
   invuln = 0;
-  ox = 0; oz = 0; dist = 0;     // the opponent at the start of this step, and the distance to him
-  runYaw = 0;
+  private f32s = new Float32Array(4);   // ox oz dist runYaw: single floats in the Lisp
+  get ox(): number { return this.f32s[0]; } set ox(v: number) { this.f32s[0] = v; }
+  get oz(): number { return this.f32s[1]; } set oz(v: number) { this.f32s[1] = v; }
+  get dist(): number { return this.f32s[2]; } set dist(v: number) { this.f32s[2] = v; }
+  get runYaw(): number { return this.f32s[3]; } set runYaw(v: number) { this.f32s[3] = v; }     // the opponent at the start of this step, and the distance to him
   comboHits = 0; comboLaunches = 0; comboAir = 0; comboDmg = 0;   // as a victim: the running combo
   frost = 0;
   callout: string | null = null; calloutT = 0;
+  char: unknown = null;          // a character file's own state (fresh with every fighter: Senjumaru's loom)
   constructor(side: number, character: string, kit: Kit) {
     this.side = side; this.character = character; this.kit = kit;
   }
@@ -100,18 +109,25 @@ export class Fighter {
 export class Gauges {
   reishi: number; reishiMax: number;
   konpaku = T.konpakuMax;
-  reiatsu = 0;
-  fs = T.fsMax; fsIdle = 0;
+  // the single-float gauges of the Lisp (components.lisp): stored as f32 so their threshold crossings fall on the same step
+  private f32s = new Float32Array([0, T.fsMax, T.ggMax, 0, 0, 0]);
+  get reiatsu(): number { return this.f32s[0]; } set reiatsu(v: number) { this.f32s[0] = v; }
+  get fs(): number { return this.f32s[1]; } set fs(v: number) { this.f32s[1] = v; }
+  get gg(): number { return this.f32s[2]; } set gg(v: number) { this.f32s[2] = v; }
+  get awaken(): number { return this.f32s[3]; } set awaken(v: number) { this.f32s[3] = v; }
+  get meter(): number { return this.f32s[4]; } set meter(v: number) { this.f32s[4] = v; }
+  get stun(): number { return this.f32s[5]; } set stun(v: number) { this.f32s[5] = v; }
+  fsIdle = 0;
   burst: 'white' | 'blue' | 'orange' | null = null; burstT = 0;
   awakeRegen = 0; awakeT = 0;
-  gg = T.ggMax; ggIdle = 0; guardless = false;
-  awaken = 0; awakened = false; evolution = false;
-  meter = 0; meterIdle = 0;
+  ggIdle = 0; guardless = false;
+  awakened = false; evolution = false;
+  meterIdle = 0;
   formLeft = 0; formTotal = 0; burnStep = 0;
   armPending: Move | 'none' | null = null; armOwed = false;
   takenMelee = 0; takenRanged = 0;
   froze = false;
-  stun = 0; stunIdle = 0;       // the hidden hit-stun (no HUD)
+  stunIdle = 0;                 // (stun: the hidden hit-stun, no HUD)
   dealt = 0; kikons = 0; perfects = 0; bestCombo = 0; counters = 0; evoT = -1;
   constructor(reishi: number) { this.reishi = reishi; this.reishiMax = reishi; }
 }
@@ -145,9 +161,13 @@ export class Brain {
   delay: number;                // perception delay, frames
   ring: (Snap | null)[] = new Array(32).fill(null);   // SNAPs of the opponent, one per step
   head = 0;
-  heat = 0;
+  private f32s = new Float32Array([0, 1, 0, 0]);   // heat strafe dash dashTo: single floats in the Lisp
+  get heat(): number { return this.f32s[0]; } set heat(v: number) { this.f32s[0] = v; }
+  get strafe(): number { return this.f32s[1]; } set strafe(v: number) { this.f32s[1] = v; }
+  get dash(): number { return this.f32s[2]; } set dash(v: number) { this.f32s[2] = v; }
+  get dashTo(): number { return this.f32s[3]; } set dashTo(v: number) { this.f32s[3] = v; }
   intent = 'approach'; intentT = 0;
-  strafe = 1; strafeT = 0;
+  strafeT = 0;
   press: string | null = null; pressMod = false; pressLeft = 0;
   decideT = 0;
   rollKey = -1;                 // the opponent move start the reflex rolls were made for
@@ -155,7 +175,7 @@ export class Brain {
   was: FState = 'idle';         // its fighter's state at the previous step (block punish)
   breakKey = -1;                // the guard episode the Breaker roll was made for
   burstT = 0; burstRolled = false;
-  dash = 0; dashTo = 0;         // a held dash: +1 toward / -1 away, until this distance
+  // (dash dashTo: a held dash, +1 toward / -1 away, until this distance)
   bankaiRolled = false;
   act: string | null = null; why: string | null = null;
   learn: null = null;           // the learning CPU (learn.lisp, M6): always null, its call sites skipped
@@ -166,8 +186,10 @@ export class Brain {
 
 /** A fighter entity: transform + motion + fighter + gauges + pilot (+ brain when the CPU plays it) + body + look. */
 export class Ent {
-  pos = [0, 0, 0];
-  yaw = 0;
+  pos = new Float32Array(3);  // (the Lisp's transform is an f32vec and a single-float yaw: stores round to f32)
+  private yaw32 = 0;
+  get yaw(): number { return this.yaw32; }
+  set yaw(v: number) { this.yaw32 = Math.fround(v); }
   mo = new Motion();
   f: Fighter;
   g: Gauges;
@@ -183,8 +205,17 @@ export class Ent {
 export class Hazard {
   kind: string;
   owner: Ent;
-  x = 0; y = 0; z = 0; px = 0; pz = 0; yaw = 0;
-  speed = 0; turn = 0; size = 0;
+  // (single floats in the Lisp's hazard component: stored as f32)
+  private f32s = new Float32Array(9);
+  get x(): number { return this.f32s[0]; } set x(v: number) { this.f32s[0] = v; }
+  get y(): number { return this.f32s[1]; } set y(v: number) { this.f32s[1] = v; }
+  get z(): number { return this.f32s[2]; } set z(v: number) { this.f32s[2] = v; }
+  get px(): number { return this.f32s[3]; } set px(v: number) { this.f32s[3] = v; }
+  get pz(): number { return this.f32s[4]; } set pz(v: number) { this.f32s[4] = v; }
+  get yaw(): number { return this.f32s[5]; } set yaw(v: number) { this.f32s[5] = v; }
+  get speed(): number { return this.f32s[6]; } set speed(v: number) { this.f32s[6] = v; }
+  get turn(): number { return this.f32s[7]; } set turn(v: number) { this.f32s[7] = v; }
+  get size(): number { return this.f32s[8]; } set size(v: number) { this.f32s[8] = v; }
   age = 0; life = 0; delay = 0;
   hitsLeft = 1; rehit = 0;
   hw: HitWin | null = null;

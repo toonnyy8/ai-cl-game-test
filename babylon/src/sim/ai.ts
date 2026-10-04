@@ -13,7 +13,7 @@
 // The learning CPU (learn.lisp) is M6: Brain.learn stays null and every learner call site is skipped (no draws either,
 // as in the Lisp with BRAIN-LEARN NIL). The debug habits (BRAIN-HABIT, BRAIN-OFF, DUMB-STEP) aren't ported.
 import { T } from './tuning';
-import { getf, mod, weightedPick } from './math';
+import { f32, getf, len32, mod, weightedPick } from './math';
 import {
   aiBurstWantedP, aiGuardMult, aiHohoSpareP, bandWeights, bankaiAllowedP, guardCancelOpenP, heatAfter, heatBreakerMult,
   heatRange, hohoAllowedP, moveEndFrame, parryFrameP, redP, tempCoolFrames, type Band,
@@ -71,7 +71,7 @@ export function brainPerceive(e: Ent, b: Brain, o: Ent): [Snap, number] {
   const cur = ring[b.head] ?? (ring[b.head] = new Snap());
   snapTake(cur, o);
   const s = ring[mod(b.head - b.delay, n)] ?? cur, p = e.pos;
-  const d = Math.sqrt((s.x - p[0]) ** 2 + (s.z - p[2]) ** 2);
+  const d = len32(f32(s.x - p[0]), f32(s.z - p[2]));   // (single floats, as the Lisp: d is checked against range edges)
   b.head = mod(b.head + 1, n);
   if (s.state === 'move' && s.kind === 'quick' && s.start !== b.jkey) {   // a J of his begins
     b.jkey = s.start;
@@ -270,7 +270,7 @@ function aiBankaiP(e: Ent, b: Brain, bk: object): boolean {
 /** Per side, the CPU's awakening on EVOLUTION: null = the kit's awaken rule, 'always', 'never' (debug A/B). */
 export const aiAwakenMode: (string | null)[] = [null, null];
 /** Awaken now (EVOLUTION)? The kit's awaken plist (minTaken, meleeShare); no key: yes. */
-function aiAwakenP(e: Ent): boolean {
+export function aiAwakenP(e: Ent): boolean {
   const mode = aiAwakenMode[e.f.side];
   if (mode === 'always') return true;
   if (mode === 'never') return false;
