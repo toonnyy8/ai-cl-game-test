@@ -9,6 +9,8 @@ import { stubBrainStep } from './sim/stubai';
 import { ROSTER } from './sim/kit';
 import { readP1, takePresses } from './input/keyboard';
 import { BattleView, createScene } from './render/scene';
+import { updateCel } from './render/cel';
+import { installSheet } from './render/sheet';
 import { DuelCamera } from './render/camera';
 import {
   MODES, drawBattle, drawPause, drawResults, drawSelect, drawTitle, hudEvents, hudSize, resetHud, resizeHud,
@@ -17,8 +19,9 @@ import {
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
 
+const forceGL = new URLSearchParams(location.search).has('gl');      // ?gl=1: the WebGL2 fallback path
 async function makeEngine(): Promise<AbstractEngine> {
-  try {
+  if (!forceGL) try {
     if (await WebGPUEngine.IsSupportedAsync) {
       const e = new WebGPUEngine(canvas, { antialias: true });
       await e.initAsync();
@@ -29,7 +32,8 @@ async function makeEngine(): Promise<AbstractEngine> {
 }
 
 const engine = await makeEngine();
-const { scene, cam } = createScene(engine);
+const stage = createScene(engine), { scene, cam } = stage;
+installSheet(engine, stage);                         // window.duelRender: the still sheet + render stats (debug)
 const duelCam = new DuelCamera();
 resizeHud();
 addEventListener('resize', () => { engine.resize(); resizeHud(); });
@@ -46,7 +50,7 @@ function startMatch(): void {
                       cpu1: !vsCpu, cpu2: true, readers: [vsCpu ? readP1 : null, null] });
   match.w.viewBehind = vsCpu;                        // humans steer by the behind view (flow.lisp: VS CPU)
   match.start();
-  view = new BattleView(scene, match.w);
+  view = new BattleView(scene, match.w, stage);
   duelCam.cut = true; duelCam.punchT = 0;
   paused = false; resultsT = 0;
   resetHud();
@@ -112,6 +116,7 @@ engine.runRenderLoop(() => {
   }
   // draw
   if (match) view!.update(match.w, paused ? 0 : rdt);
+  updateCel(cam);
   scene.render();
   // HUD
   if (screen === 'title') drawTitle();
