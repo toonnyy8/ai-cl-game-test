@@ -101,3 +101,20 @@ reverb tails wrap around without a seam. The loop is mono, 3.8 MB.
 * Sanity log (`*audio-debug*`): every sound has 0 NaN/Inf, a peak equal to its
   target (≤ 0.95), |DC| < 0.0003, and lengths from 80 ms (`ui-move`) to 3.8 s
   (`game-over`).
+
+## SOUL DUEL on Babylon.js (`babylon/src/audio/`)
+
+The Babylon port plays the same bank on WebAudio, still with zero assets: `synth.ts` is this toolkit function by function
+(`au-svf!` → `svf`, …), `sounds.ts` the DEFSOUNDs of `duel/lisp/sounds.lisp`, `ichigo-art.lisp` and `senjumaru-art.lisp`
+(63 sounds, 16 MB of samples, ~1.3 s to render on a desktop), rendered in a Web Worker after load, menu clicks and the
+title loop first. `index.ts` is the mixer: 32 pooled voices (gain + stereo-pan nodes kept; the same steal rule), an sfx
+and a music bus (0.55), a master gain, and a soft-clip limiter (linear to 0.8, a tanh knee to 0.95: WebAudio's
+compressor halved short transients). `feedback.ts` is FEEDBACK-SYSTEM's sound half (event → sound with the Lisp's gains,
+pitches and SFX-AT falloff / pan from the camera); `cues.ts` the PLAY-SFX / SILENCE / CINE-SLASH beats of every DEFCINE
+by cine frame (generated from the scripts), so the beats follow sim time whatever the shots do. Music follows the
+screen as in flow.lisp (title / select: `:music-title`, a match: `:music`, results: stopped). SETTINGS SOUND (master,
+OFF mutes) and MUSIC (`soulduel.sound`, `soulduel.music`). The context is made and resumed inside the first gesture and
+suspended while the page is hidden. Checks: `test/audio.test.ts` (every DEFSOUND, every sounding event kind of
+feedback.lisp, every emitted / kit sfx key, every cinematic's beats; each sound renders NaN-free at its peak),
+`npx tsx tools/audio-stats.ts` (per sound length / peak / RMS / DC), `duelAudio.check()` in the page (an
+OfflineAudioContext render through the limiter).

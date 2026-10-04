@@ -6,6 +6,7 @@ import { setLearnStore } from '../sim/learn';
 import { ASSIST } from '../sim/assist';
 
 export interface SettingRow { key: string; label: string; opts: string[]; def: number; values?: number[]; note: string; store: string }
+const VOL = ['OFF', '1', '2', '3', '4', '5'], VOLV = [0, 0.1, 0.25, 0.45, 0.7, 1];   // the audio rows' gains (src/audio)
 export const SETTINGS: SettingRow[] = [
   { key: 'one-hand', label: 'ONE-HAND', opts: ['AUTO', 'ON', 'OFF'], def: 0, note: 'AUTO: ON FOR A TOUCH PHONE HELD UPRIGHT', store: 'onehand' },
   { key: 'hand', label: 'HAND', opts: ['RIGHT', 'LEFT'], def: 0, note: "THE THUMB DECK'S SIDE", store: 'hand' },
@@ -19,6 +20,8 @@ export const SETTINGS: SettingRow[] = [
   { key: 'auto-guard', label: 'AUTO GUARD', opts: ['OFF', 'HOLD U', 'ALWAYS'], def: 0, note: 'ASSIST: HOHO / GUARD FOR YOU', store: 'autoguard' },
   { key: 'auto-combo', label: 'AUTO COMBO', opts: ['OFF', 'ON'], def: 0, note: 'ASSIST: YOUR J / K PICK THE STRING', store: 'autocombo' },
   { key: 'auto-break', label: 'AUTO BREAK', opts: ['OFF', 'ON'], def: 0, note: 'ASSIST: BREAKER AGAINST A TURTLE', store: 'autobreak' },
+  { key: 'sound', label: 'SOUND', opts: VOL, def: 5, values: VOLV, note: 'THE MASTER VOLUME (OFF: MUTE)', store: 'sound' },
+  { key: 'music', label: 'MUSIC', opts: VOL, def: 5, values: VOLV, note: 'THE MUSIC VOLUME', store: 'music' },
 ];
 
 export function stored(k: string): string | null { try { return localStorage.getItem(k); } catch { return null; } }

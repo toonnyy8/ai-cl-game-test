@@ -13,6 +13,8 @@ export interface Page {
   col?: number;                                   // the selected cell column of the selected row
 }
 
+import { uiSfx } from '../audio';
+
 const root = document.getElementById('ui') as HTMLDivElement;
 let builder: (() => Page) | null = null;
 let page: Page | null = null;
@@ -30,8 +32,8 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text = '
   return e;
 }
 /** Run an action from a pointer: the action, then the page again (unless it switched pages itself). */
-function run(fn: () => void): (ev: Event) => void {
-  return (ev) => { ev.stopPropagation(); const b = builder; fn(); if (builder === b) refresh(); };
+function run(fn: () => void, click: 'confirm' | 'select' = 'confirm'): (ev: Event) => void {
+  return (ev) => { ev.stopPropagation(); uiSfx(click); const b = builder; fn(); if (builder === b) refresh(); };
 }
 
 /** Rebuild the page from its builder (after any state change). */
@@ -63,8 +65,8 @@ export function refresh(): void {
       const v = el('span', 'value');
       if (r.dir) {
         const l = el('span', 'arrow', '‹'), rr = el('span', 'arrow', '›');
-        l.addEventListener('click', run(() => { sel = i; r.dir!(-1); }));
-        rr.addEventListener('click', run(() => { sel = i; r.dir!(1); }));
+        l.addEventListener('click', run(() => { sel = i; r.dir!(-1); }, 'select'));
+        rr.addEventListener('click', run(() => { sel = i; r.dir!(1); }, 'select'));
         v.append(l, el('span', 'opt', r.value), rr);
       } else v.append(el('span', 'opt', r.value));
       row.append(v);
@@ -85,6 +87,8 @@ export type Nav = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back';
 export function nav(a: Nav): void {
   if (!page) return;
   const p = page, b = builder, n = p.rows.length, r = p.rows[sel];
+  if (a === 'back' ? p.back : a === 'confirm' ? p.tap || r : a === 'up' || a === 'down' ? n > 1 : r?.dir || r?.cells)   // flow.lisp's clicks
+    uiSfx(a === 'back' ? 'back' : a === 'confirm' ? 'confirm' : 'select');
   if (a === 'up' || a === 'down') sel = n ? (((sel + (a === 'up' ? -1 : 1)) % n) + n) % n : 0;
   else if (a === 'back') p.back?.();
   else if (a === 'confirm') {
