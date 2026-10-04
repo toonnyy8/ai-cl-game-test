@@ -32,8 +32,10 @@ export interface CharBody {
   drawFace(g: CanvasRenderingContext2D, expr: number): void;
   weapon(scene: Scene, sp: BodySpec, r: Rig): Mesh;
   variant(form: string): BodyVariant | null;
+  /** The outline colour (hex) when not the ink (outline.ts INK_ALT; Rukia's zero: ice blue). */
+  ink?: number;
 }
-export type BodyVariant = Partial<Pick<CharBody, 'parts' | 'drawFace' | 'weapon'>> & { spec?: Partial<BodySpec> };
+export type BodyVariant = Partial<Pick<CharBody, 'parts' | 'drawFace' | 'weapon' | 'ink'>> & { spec?: Partial<BodySpec> };
 
 const PARENT: Record<BoneName, BoneName | null> = {
   pelvis: null, spine: 'pelvis', chest: 'spine', neck: 'chest', head: 'neck',

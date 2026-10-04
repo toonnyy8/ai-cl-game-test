@@ -10,7 +10,7 @@ import {
 import { fwdX, fwdZ } from '../sim/math';
 import type { Ent, Hazard, SimEvent, World } from '../sim/types';
 import { CelMaterial } from './cel';
-import { createOutline, type Outline } from './outline';
+import { createOutline, INK_ALT, type Outline } from './outline';
 import { buildBody, type BuiltBody } from './body';
 import { bodyFor } from './bodies';
 import { Animator } from './anim';
@@ -106,6 +106,8 @@ export class FighterView {
     this.outline.add(b.mesh); this.outline.add(b.weapon);
     this.body = b; this.bodyKey = key;
     if (this.anim) this.anim.body = b;
+    if (cb.ink !== undefined) this.outline.alt.copyFrom(hex(cb.ink));           // the body's own outline colour (INK_ALT)
+    this.mat.setFloat('ink', cb.ink !== undefined ? INK_ALT.body : 1); this.wmat.setFloat('ink', cb.ink !== undefined ? INK_ALT.weapon : 0.5);
   }
 
   update(e: Ent, rdt: number, t: number): void {
