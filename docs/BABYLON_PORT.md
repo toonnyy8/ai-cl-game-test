@@ -76,3 +76,10 @@ the seed, `slowAcc`, hitstop and pending; the hidden hit-stun; `fighter-step` co
   Bankai refused until their kit is registered), ai.lisp (M2; `stubai.ts` stands in, set with `setBrainStep`), device
   bindings / CONTROLS / SETTINGS (src/input), the Bodies table holds only hurt cylinders. Known divergence: hazards
   iterate in creation order, the Lisp ECS in slot order (only matters when two hazards hit on one step).
+- 2026-10-04: M2 CPU: `src/sim/ai.ts` (ai.lisp function by function; the learner and the debug habits not ported), the
+  CPU hooks of both base kits in `src/chars/{yama,ken}.ts`, `tools/gate.ts` (`--pairs yy,yk,kk --seeds 20`), headless
+  `--ai stub` keeps M1's stand-in. Slow motion now counts in single floats as the Lisp does (`time.ts`, `slowAcc`).
+  Checked against the native Lisp build (`tools/simgate/run.lisp`): combat logs agree event for event until the first M3
+  event (Hellfire, an awakening); with the Lisp's awakenings off (39022) and Hellfire removed, YY 16/20 and YK 15/20
+  seeds end on the same tick, and the gate gives YY 15/20 K.O. median 337.8 s, YK 250.7 s (TS: 17/20 324.0, 251.3).
+  So the M2 medians (YY 324, YK 251, KK 234 s; YK 3-17) are the base kits' own: the reference medians need M3.

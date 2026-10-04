@@ -3,12 +3,13 @@
 // and stays full, Awaken is refused until those kits are registered. Frame data is the §5 table; clip names are the art
 // contract. The kit's ai table is data (M2 ports ai.lisp and the yama-* CPU hooks it names).
 import { T } from '../sim/tuning';
-import { lerp, roundHalfEven } from '../sim/math';
 import { trackStep } from '../sim/rules';
-import { defkit, defmove, defmoveCopy, makeHitwin, registerHooks } from '../sim/kit';
-import { emit, type Ent } from '../sim/types';
-import { ahead, moveParam } from '../sim/fighter';
-import { addMeter } from '../sim/combat';
+import { getf, lerp, roundHalfEven } from '../sim/math';
+import { defkit, defmove, defmoveCopy, kitCommandMove, makeHitwin, registerHooks, type Kit } from '../sim/kit';
+import { W, emit, kitOf, simRnd01, type Brain, type Ent, type Snap } from '../sim/types';
+import { ahead, kitCommandOkP, moveParam, rushParam } from '../sim/fighter';
+import { addMeter, kikonReadyP } from '../sim/combat';
+import { aiAttack, aiBrain, aiSbFinishP, aiTable, why } from '../sim/ai';
 import { spawnHazard } from '../sim/hazards';
 
 // ================================================================ shikai (base)
@@ -112,5 +113,92 @@ registerHooks({
   'yama-enjo-line'(e: Ent) {
     spawnHazard('line', e, { x: e.pos[0], z: e.pos[2], yaw: e.yaw, size: 9.0, life: 34, look: 'enjo' });
     emit('sfx', 'fire-roar', e);
+  },
+});
+
+// ================================================================ the CPU (the kit's ai hooks; ai.ts; docs/DUEL_AI_V2.md)
+/** E's CPU's chance from P, a table by difficulty: its brain's; no brain: NORMAL's. */
+function yamaDif(e: Ent, p: Record<string, number>): number {
+  const b = aiBrain(e);
+  return p[b ? b.difficulty : 'normal'] ?? p.normal;
+}
+/** A Breaker's dash per frame (9.6 m/s): what the delay hides. */
+const YAMA_BREAKER_STEP = 0.16;
+/** TENCHI from farther out than this is on a red opponent before he sees it within T.aiAntiBreakerRange. */
+const YAMA_RUSH_FAR = 5.0;
+
+/** Frames from the O press to his rush's strike at distance D: the aura, the dash (TENCHI 36 m/s; ENJO none), the startup. */
+function yamaRushFrames(e: Ent, d: number): number {
+  const mv = kitCommandMove(kitOf(e), 'kikon')!, sp = rushParam(mv, 'speed') / 60.0;
+  return rushParam(mv, 'aura') + mv.s
+    + (rushParam(mv, 'dashMax') > 0 ? Math.min(rushParam(mv, 'dashMax'), Math.ceil(Math.max(0.0, d - mv.reach) / sp)) : 0);
+}
+/** Does the rush on a red opponent land: TENCHI from beyond YAMA_RUSH_FAR, ENJO beyond its lane's 1 m start, or either
+ *  before he is free (a stun or a move's recovery)? */
+function yamaRushOkP(e: Ent, b: Brain, s: Snap, d: number): boolean {
+  const dash = rushParam(kitCommandMove(kitOf(e), 'kikon')!, 'dashMax') > 0;
+  return d >= (dash ? YAMA_RUSH_FAR : 1.5)
+    || ((s.state === 'stun' || (s.state === 'move' && s.phase === 'main' && s.sf >= s.activeEnd))
+        && s.left - b.delay >= yamaRushFrames(e, d));
+}
+/** The rush on a red opponent only where it lands. On his stun: J1's follow-up if it is in reach and time, else wait; at
+ *  a neutral decision: that decision's attack pick instead. Chance by difficulty; a command or null. */
+function yamaRushVeto(e: Ent, b: Brain, s: Snap, d: number): string | null {
+  if (kikonReadyP(e) && d < aiTable(e, 'kikonRange', 7.0) && kitCommandOkP(e, 'kikon') && !aiSbFinishP(e) && !yamaRushOkP(e, b, s, d)) {
+    const p = yamaDif(e, { easy: 0.0, normal: 0.0, hard: 0.9 }), q = kitCommandMove(kitOf(e), 'q')!;
+    if (s.state === 'stun') {
+      if (b.reactRoll < p) return d < q.reach + 0.6 && s.left - b.delay >= q.s ? why(b, 'follow-up', 'q') : 'wait';
+    } else if (b.decideT <= 1 && (e.f.state === 'idle' || e.f.state === 'run')
+               && !['down', 'wakeup', 'hoho', 'air'].includes(s.state) && p > 0 && simRnd01() < p) {
+      b.decideT = getf(T.aiThink, b.difficulty, 24) + Math.floor(40 * simRnd01());
+      aiAttack(e, b, kitOf(e), s, d, b.heat, false);
+    }
+  }
+  return null;
+}
+/** J beats I on his own short J: J1 goes when its active frames meet the Breaker (his real distance now: seen, minus what
+ *  the dash ran unseen), its strike not out before J1's. */
+function yamaAntiBreaker(e: Ent, b: Brain, s: Snap, d: number): string | null {
+  const q = kitCommandMove(kitOf(e), 'q');
+  if (q && s.kind === 'breaker' && (s.phase === 'aura' || s.phase === 'dash') && kitCommandOkP(e, 'q')) {
+    const el = W.tick - s.start, dash = s.phase === 'dash';            // real frames since the phase we see began
+    const aura = dash ? 0 : Math.max(0, T.breakerAura - el);           // its aura left
+    const ran = dash ? Math.min(el, b.delay) : Math.max(0, el - T.breakerAura);   // his dash since what we see
+    const x = d - ran * YAMA_BREAKER_STEP;                              // his real distance now
+    const inn = aura + Math.max(0.0, x - q.reach - 0.3) / YAMA_BREAKER_STEP;   // frames till J1 reaches him
+    const strike = aura + Math.max(0.0, x - T.breakerTrigger) / YAMA_BREAKER_STEP + T.breakerStartup;
+    if (inn <= q.s + q.a - 2 && q.s + 1 < strike && b.reactRoll < yamaDif(e, { easy: 0.0, normal: 0.0, hard: 0.85 }))
+      return why(b, 'anti-breaker', 'q');
+  }
+  return null;
+}
+/** A stunned opponent beyond J1's follow-up reach but in the fire's: the form's paid SP if it lands before he is free. */
+function yamaStunSp(e: Ent, b: Brain, s: Snap, d: number): string | null {
+  const kit = kitOf(e), q = kitCommandMove(kit, 'q');
+  const sp = kit.form === 'bankai-east' ? 'sp1' : kit.form === 'base' || kit.form === 'hellfire' ? 'sp2' : null;
+  const mv = sp ? kitCommandMove(kit, sp) : null;
+  if (sp && mv && q && s.state === 'stun'
+      && (d > q.reach + 0.6 || (sp === 'sp1' && Math.floor(e.g.reiatsu / T.reiatsuBar) >= 2)) && d < (sp === 'sp1' ? 6.0 : 3.8)
+      && kitCommandOkP(e, sp) && s.left - b.delay >= mv.s + (sp === 'sp1' ? 8 : 2)
+      && b.reactRoll < yamaDif(e, { easy: 0.0, normal: 0.0, hard: 0.7 }))
+    return why(b, 'stun-sp', sp);
+  return null;
+}
+
+registerHooks({
+  /** Every form's reflex (ai.ts aiReflex, free states, before the generic answers). */
+  'yama-ai-reflex'(e: Ent, b: Brain, s: Snap, d: number): string | null {
+    return yamaAntiBreaker(e, b, s, d) ?? yamaStunSp(e, b, s, d) ?? yamaRushVeto(e, b, s, d);
+  },
+  /** Every form's spEnder: confirm the pushed victim with the paid SP when its bars are there, else the O ender (never
+   *  ENJO off a J3: no dash, he guards it). Chance by difficulty; a command or null. */
+  'yama-sp-ender'(e: Ent, kit: Kit): string | null {
+    const sp = kit.form === 'base' || kit.form === 'hellfire' ? 'sp2' : kit.form === 'bankai-east' ? 'sp1' : null;
+    const mv = e.f.move!, o = kitCommandMove(kit, 'kikon');
+    if (sp && kitCommandOkP(e, sp, kit) && simRnd01() < yamaDif(e, { easy: 0.1, normal: 0.3, hard: 0.95 })) return sp;
+    if (o && kitCommandOkP(e, 'kikon', kit, true) && !aiSbFinishP(e)
+        && !(mv.kind === 'quick' && rushParam(o, 'dashMax') === 0)          // (ENJO off J3)
+        && simRnd01() < yamaDif(e, { easy: 0.05, normal: 0.15, hard: 0.85 })) return 'kikon';
+    return null;
   },
 });
