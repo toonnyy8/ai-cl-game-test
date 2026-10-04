@@ -93,6 +93,7 @@ export function beginBattle(): void {
 
 /** A Kikon / Soul Break took the last Konpaku: FINISH (K.O.), then RESULTS. WINNER null = a draw. */
 export function matchOver(winner: Ent | null): void {
+  if (practice) { practice.ko(); logMsg('duel practice K.O. -> reset'); return; }   // PRACTICE: no match end
   const w = winner === null ? 'draw' : winner === W.p1 ? 0 : 1;
   const we = w === 1 ? W.p2 : W.p1, le = w === 1 ? W.p1 : W.p2;
   W.winner = w;
@@ -121,8 +122,11 @@ export function goResults(): void {
 }
 /** The match timer (sim frames) and time-up. */
 export function matchSystem(): void {
-  if (W.flow === 'battle' && --W.timer <= 0) timeUp();
+  if (W.flow === 'battle') { if (practice) practice.step(); else if (--W.timer <= 0) timeUp(); }
 }
+/** PRACTICE (practice.ts, flow.lisp): its start (after the spawn), per-frame step (in place of the timer) and K.O. reset. */
+export interface PracticeHooks { start(): void; step(): void; ko(): void }
+let practice: PracticeHooks | null = null;
 
 // ---------------------------------------------------------------- the fixed step
 /** A step without a sim frame (hitstop, slow motion, cinematic): the humans' devices are read into their vpads without
@@ -185,6 +189,7 @@ export interface MatchOpts {
   p1: string; p2: string; seed: number; cpu1?: boolean; cpu2?: boolean; difficulty?: string;
   readers?: [((vp: Vpad) => void) | null, ((vp: Vpad) => void) | null];
   konpakuStart?: number;
+  practice?: PracticeHooks;
 }
 export class Match {
   readonly w = new World();
@@ -201,13 +206,15 @@ export class Match {
     W.rng.seed(o.seed);
     spawnPair(o.p1, o.p2, { cpu1: o.cpu1, cpu2: o.cpu2, difficulty: o.difficulty, readers: o.readers });
     for (const e of fighters()) { e.g.konpaku = o.konpakuStart ?? T.konpakuMax; e.f.state = 'intro'; }
+    practice = o.practice ?? null;
+    practice?.start();
     logMsg(`duel match seed ${o.seed} ${o.p1} vs ${o.p2} ${o.difficulty ?? 'normal'}`);
     setFlow('intro');
     startCine('intro-cine', W.p1, W.p2, beginBattle);
     return this;
   }
   /** One fixed step (makes this match's World current first). */
-  step(): void { setWorld(this.w); simStep(); }
+  step(): void { setWorld(this.w); practice = this.opts.practice ?? null; simStep(); }
   /** The battle runs (intro, battle, finish); false once the results are up. */
   running(): boolean { return this.w.flow !== 'results'; }
   /** The events since the last call (the renderer's / feedback's queue). */
