@@ -43,7 +43,7 @@ export function siphonOf(e: Ent): Ent | null {
 export function payGauges(e: Ent, r: number, fs: number): void {
   const g = e.g;
   g.reiatsu = gaugeAdd(g.reiatsu, r, T.reiatsuMax);
-  g.fs = gaugeAdd(g.fs, burstFsGain(fs, g.burst), T.fsMax);
+  g.fs = Math.fround(gaugeAdd(g.fs, burstFsGain(fs, g.burst), T.fsMax));
 }
 /** Reiatsu, flash-step and Fighting Spirit for dealing DEALT / taking TAKEN damage. */
 export function gainGauges(e: Ent, dealt: number, taken: number): void {
@@ -115,7 +115,7 @@ export function wardDrop(e: Ent): void {
 }
 /** E's cold gauge (a temp kit meter) changes by N, clamped to 0 .. T.coldMax. */
 export function coldAdd(e: Ent, n: number): void {
-  if (kitOf(e).meter?.temp && (n <= 0 || !siphonOf(e))) e.g.meter = Math.max(0, Math.min(T.coldMax, e.g.meter + n));
+  if (kitOf(e).meter?.temp && (n <= 0 || !siphonOf(e))) e.g.meter = Math.max(0, Math.min(T.coldMax, Math.fround(e.g.meter + n)));
 }
 /** DEF's scorch (Bankai West): a melee hit his parry caught burns ATT N (never kills). */
 export function scorch(att: Ent, def: Ent, n = T.scorch): void {
@@ -204,7 +204,7 @@ export function applyHit(att: Ent, def: Ent, hw: HitWin, sx: number, sz: number,
       gd.stun = blow ? 0 : st; gd.stunIdle = 0;
       if (frost > 0) fd.frost = frostNext(fd.frost, frost);          // Rukia's ice
       if (ranged) def.g.takenRanged += dmg; else def.g.takenMelee += dmg;
-      coldAdd(def, -(T.ruHitWarm * dmg));                            // Rukia: a real hit warms her
+      coldAdd(def, -Math.fround(Math.fround(T.ruHitWarm) * dmg));                            // Rukia: a real hit warms her
       att.g.bestCombo = Math.max(hits, att.g.bestCombo);
       addMeter(att, hw.meter);
       hitstop(hw.hs);
@@ -602,7 +602,7 @@ export function settleSouls(): void {
   for (const e of fighters()) burstEnd(e);                           // the reset ends every burst, before the refund
   for (const att of new Set([...kk.map((k) => k[0]), ...sb.map((s) => s[0])])) {   // a flash-step bar and a Reiatsu bar back
     const g = att.g;
-    [g.fs, g.reiatsu] = kikonRefund(g.fs, g.reiatsu);
+    [g.fs, g.reiatsu] = kikonRefund(g.fs, g.reiatsu); g.fs = Math.fround(g.fs);
   }
   const kos: Ent[] = [];
   for (const [att, def] of kk) if (settleKonpaku(att, def, false)) kos.push(def);

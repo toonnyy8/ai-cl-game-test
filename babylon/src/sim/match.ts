@@ -23,6 +23,7 @@ export const CINES: Record<string, { len: number; face?: boolean; gap?: number; 
   'yama-kikon-cine': { len: 186, gap: 3.2 }, 'yama-tenchi-cine': { len: 168, gap: 2.4 }, 'yama-bankai-cine': { len: 138 },
   'ken-kikon-cine': { len: 192, gap: 2.0 }, 'ken-sky-split-cine': { len: 162, gap: 2.6 }, 'ken-nozarashi-cine': { len: 108 },
   'ken-bankai-cine': { len: 186, face: true }, 'ken-oni-kikon-cine': { len: 162, gap: 2.6 },
+  'ru-kikon-cine': { len: 186, gap: 2.4 }, 'ru-hakka-cine': { len: 198, gap: 3.0 }, 'ru-awaken-cine': { len: 132 },
   // (AT: later FACE-EACH-OTHER beats, [cine frame, gap]: they move the actors too)
   'ic-kikon-cine': { len: 186, gap: 2.6, at: [[70, 7.0]] }, 'ic-kessa-kikon-cine': { len: 192, gap: 2.6, at: [[120, 3.2]] },
   'ic-kessa-getsuga-cine': { len: 180, gap: 6.0 }, 'ic-kessa-cine': { len: 168 },
