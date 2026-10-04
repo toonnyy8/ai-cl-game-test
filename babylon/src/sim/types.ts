@@ -2,7 +2,7 @@
 // a hazard array owned by the World), plus the World itself (the Lisp's sim specials: *match-tick*, *pending*, *cine*,
 // the view, the sim rng ...). A Match (match.ts) owns one World and makes it current (W) for the steps it runs.
 // The cosmetic MODEL / BLADE components are reduced to a `look` bag the renderer reads (clip, move frame, flash timers).
-import { T } from './tuning';
+import { T, f32Deep } from './tuning';
 import { newVpad, type Vpad } from './vpad';
 import { TimeState } from './time';
 import { newSimRng, type Rng } from './rng';
@@ -12,7 +12,7 @@ import type { Lrn } from './learn';
 
 // ---------------------------------------------------------------- bodies (body.lisp / *-art.lisp: the hurt cylinder only)
 export interface Body { name: string; hurtR: number; hurtH: number }
-export const BODIES: Record<string, Body> = {
+export const BODIES: Record<string, Body> = f32Deep({   // (single floats, as body.lisp's)
   yamamoto: { name: 'yamamoto', hurtR: 0.36, hurtH: 1.65 },
   kenpachi: { name: 'kenpachi', hurtR: 0.45, hurtH: 2.0 },
   'kenpachi-oni': { name: 'kenpachi-oni', hurtR: 0.45, hurtH: 2.0 },   // body-variant of kenpachi: the same hurt cylinder
@@ -22,8 +22,8 @@ export const BODIES: Record<string, Body> = {
   skeleton: { name: 'skeleton', hurtR: 0.3, hurtH: 1.7 },
   ichigo: { name: 'ichigo', hurtR: 0.38, hurtH: 1.8 },
   senjumaru: { name: 'senjumaru', hurtR: 0.36, hurtH: 1.7 },
-};
-export const findBody = (name: string | null): Body => (name && BODIES[name]) || { name: name ?? 'default', hurtR: 0.35, hurtH: 1.8 };
+});
+export const findBody = (name: string | null): Body => (name && BODIES[name]) || { name: name ?? 'default', hurtR: Math.fround(0.35), hurtH: Math.fround(1.8) };
 
 export type FState = 'idle' | 'guard' | 'guard-hit' | 'step' | 'run' | 'hoho' | 'move' | 'stun' | 'air' | 'down' | 'wakeup'
   | 'cine' | 'intro' | 'win' | 'lose';

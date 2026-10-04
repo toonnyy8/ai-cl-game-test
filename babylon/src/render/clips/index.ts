@@ -2,8 +2,8 @@
 // to its generic mapping (moveClipName).
 import type { Move } from '../../sim/kit';
 import type { Clip, PoseSpec } from '../pose';
-import type { Fighter } from '../../sim/types';
 import type { ClipName } from '../anim';
+import type { Fighter } from '../../sim/types';
 import * as yama from './yama';
 import * as ken from './ken';
 import * as rukia from './rukia';
@@ -15,12 +15,12 @@ export interface CharClips {
   clipFor(clip: string, mv: Move): ClipName | null;
   /** The character's idle stance (default P.idleKen). */
   idle?: PoseSpec;
-  /** The idle stance of FORM (overrides idle; undefined: idle). */
-  idleFor?(form: string): PoseSpec | undefined;
-  /** Guard, its recoil and the run cycle (keys 0..2), defaults P.guard / P.guardHit / the generic run. */
-  guard?: PoseSpec; guardHit?: PoseSpec; run?: Clip;
-  /** A bespoke clip for the current frame of move MV in any phase (hold / aura / dash / follow / main): [clip, x], the
-   *  clip sampled at x (main: phase(mv, f.sf).u); null: clipFor / the generic mapping. IDLE: the form's stance. */
-  move?(mv: Move, f: Fighter, idle: PoseSpec): [Clip, number] | null;
+  /** A bespoke clip for fighter F's current frame of MV, or null (clipFor / the generic mapping). A bare Clip is
+   *  sampled at u (pose.ts phase) in the main phase and at f.hold (frames) in the pre-strike phases (hold / aura / dash /
+   *  follow); [clip, x] is sampled at x. */
+  move?(mv: Move, f: Fighter): Clip | [Clip, number] | null;
+  /** FORM's own stance poses and locomotion (walk keyed 0..4 = a stride pair, run 0..2), or null: the defaults. */
+  stance?(form: string): Stance | null;
 }
+export interface Stance { idle?: PoseSpec; guard?: PoseSpec; guardHit?: PoseSpec; walk?: Clip; run?: Clip; step?: PoseSpec; hoho?: PoseSpec }
 export const CLIPS: Record<string, CharClips> = { yamamoto: yama, kenpachi: ken, rukia, ichigo, senjumaru: senju };

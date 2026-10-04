@@ -4,8 +4,8 @@
 import { SceneInstrumentation, Vector3, type AbstractEngine } from '@babylonjs/core';
 import { Match } from '../sim/match';
 import { ROSTER, findMove } from '../sim/kit';
-import { setForm } from '../sim/combat';
 import type { Ent, FState } from '../sim/types';
+import { setForm } from '../sim/combat';
 import { FighterView, type Stage } from './scene';
 import { InkSparks } from './ink';
 import { updateCel } from './cel';
@@ -14,7 +14,7 @@ export function installSheet(engine: AbstractEngine, stage: Stage): void {
   const { scene, cam } = stage;
   new SceneInstrumentation(scene);                   // resets the engine's draw-call counter every frame
   let views: { v: FighterView; e: Ent }[] = [], ink: InkSparks | null = null;
-  /** COLS: state names, 'slash[:move[:sf]]', 'stun[:react]', each optionally '@form'. CAM: [eye x y z, target x y z]. ONLY: one character.
+  /** COLS: state names, 'slash[:move[:sf]]', 'stun[:react]', 'walk', 'run', each optionally 'form/...'. CAM: [eye x y z, target x y z]. ONLY: one character.
    *  FX: the three ink sparks in front. */
   const sheet = (cols: string[] = ['idle', 'guard', 'slash', 'stun'], c?: number[], only?: string, fx = false) => {
     engine.stopRenderLoop();
@@ -26,16 +26,17 @@ export function installSheet(engine: AbstractEngine, stage: Stage): void {
     roster.forEach((who, r) => cols.forEach((col, i) => {
       const e = new Match({ p1: who, p2: who, seed: 1, cpu1: true, cpu2: true }).start().w.p1, f = e.f;
       e.pos.set([(i - (cols.length - 1) / 2) * 1.7, 0, roster.length > 1 ? (r - 0.5) * -2.0 : 0]); e.yaw = Math.PI + 0.5; e.look.alpha = 1;
-      const [spec, form] = col.split('@');
-      if (form) setForm(e, form);
-      const [st, a, b, ph] = spec.split(':');     // ph: a pre-strike phase (hold / aura / dash), b its f.hold
-      f.state = (st === 'slash' ? 'move' : st) as FState; f.sf = 0; f.phase = null;
+      const fm = col.includes('/') ? col.split('/')[0] : null;
+      if (fm) setForm(e, fm);
+      const [st, a, b] = col.slice(fm ? fm.length + 1 : 0).split(':');
+      f.state = (st === 'slash' ? 'move' : st === 'walk' ? 'idle' : st) as FState; f.sf = 0; f.phase = null;
+      if (st === 'walk' || st === 'run') { e.mo.vel.set([0, 0, st === 'run' ? -8 : -3]); e.look.clip = 'walk'; f.phase = st === 'run' ? 'run' : null; }
       if (st === 'slash' || st === 'move') {
         f.move = findMove(a ?? f.kit.commands.q!); f.phase = 'main';
         f.sf = b !== undefined ? +b : f.move.s + 1;
-        if (ph) { f.phase = ph; f.hold = f.sf; f.sf = 0; }
+        const ph = b?.match(/^(h|a|d)(\d+)$/);        // 'move:ke-stance:h20': held 20 f; a / d: the rush's aura / dash
+        if (ph) { f.phase = ({ h: 'hold', a: 'aura', d: 'dash' } as const)[ph[1] as 'h']; f.sf = 0; f.hold = +ph[2]; }
       }
-      if (st === 'run') e.mo.vel[0] = 8;
       if (st === 'stun') { f.phase = a ?? 'stagger'; f.stun = 26; f.sf = 8; }
       const v = new FighterView(scene, e, stage.outline);
       for (let k = 0; k < 30; k++) v.update(e, 1 / 30, k / 30);

@@ -4,8 +4,8 @@
 // state (the loom, the soldier, the umbrella: a fresh one per fighter, on Fighter.char), her hazards' hook, her kit hooks
 // and her CPU. Her HUD meter is drawing code in the Lisp: here senjuMeter(e) gives the renderer what it draws. The pacing
 // log, debug tests / knobs and the cinematics' shots aren't ported (the cinematics are length-only: match.ts CINES).
-import { angleWrap, fwdX, fwdZ, getf, PI, roundHalfEven, turnToward, weightedPick } from '../sim/math';
-import { T } from '../sim/tuning';
+import { angleWrap, fwdX, fwdZ, getf, len32, PI, roundHalfEven, turnToward, weightedPick } from '../sim/math';
+import { T, f32Deep } from '../sim/tuning';
 import { STEP } from '../sim/time';
 import { bandWeights, burn, castPoint, clampToCircle, contactOf, dirYaw, gaugeMove, hohoAllowedP, trackStep, type Band, type Contact } from '../sim/rules';
 import {
@@ -20,9 +20,11 @@ import { aiAwakenMode, aiAwakenP, aiBrain, aiDash, aiMashP, aiSbFinishP, aiTable
 import { hazardActiveP, hazardTarget, hazardTouchesP, spawnHazard, type HazardOpts } from '../sim/hazards';
 
 const f32 = Math.fround;
+/** X^2 + Z^2 in single floats (the Lisp's (+ (expt x 2) (expt z 2)) on singles). */
+const sq32 = (x: number, z: number): number => f32(f32(x * x) + f32(z * z));
 
 // ================================================================ knobs (docs/DUEL_SENJUMARU.md §11; senjumaru.lisp's own)
-export const SJ = {
+export const SJ = f32Deep({
   walkSenju: 3.6, runSenju: 8.5, walkTsuji: 3.3, runTsuji: 8.0,
   senjuMult: 1.6, senjuTaken: 0.95, tsujiMult: 1.55, tsujiTaken: 1.0,
   hariMax: 6, hariIdle: 180, hariFall: 30, hariSewHit: 2, hariSewBlock: 1,
@@ -31,31 +33,31 @@ export const SJ = {
   kasaBase: 40, kasaCap: 120,
   weavePass: 20, weaveTap: 10, weaveSeg: 30, unfold: 20, unfoldCombo: 10, tornLock: 90, hankRange: 9.0, hankLifeMult: 1.0,
   mirrorK: 0.3, aiSenjuHari: 0.1, aiSenjuTachi: 0.5, aiSenjuPair: 0.04, tachiSecond: 6,
-};
+});
 /** The soldier's one string: per hit [wind-up, clip, clip startup, volume, damage, reaction, flinch]. */
-const SHINPEI_COMBO: [number, string, number, VolSpec, number, string, number | null][] = [
+const SHINPEI_COMBO: [number, string, number, VolSpec, number, string, number | null][] = f32Deep([
   [18, 'ru-q1', 7, ['cap', 0.3, 2.6, 1.2, 0.35], 20, 'flinch', 22],
   [14, 'ru-ring', 21, ['arc', 2.8, 160, 0.0, 1.8], 20, 'flinch', 24],
   [16, 'ru-thrust', 17, ['cap', 0.3, 3.0, 1.2, 0.35], 34, 'stagger', null],
-];
+]);
 
 // the six hanks, their values at 3 passes (§4.2)
 interface HankDef { name: string; short: string; kanji: string; r?: number; life?: number; rise?: number; dmg?: number;
   guard?: number; after?: number; away?: number; period?: number; swirl?: number; freeze?: number; frost?: number;
   width?: number; max?: number; hits?: number; chip?: number; reiatsu?: number; fs?: number }
-export const HANKS: Record<number, HankDef> = {
+export const HANKS: Record<number, HankDef> = f32Deep({
   1: { name: 'BANRA NO ME', short: 'ME', kanji: '万朶の眼', r: 3.0, life: 240 },
   2: { name: 'HAGANE NO YOROI', short: 'HAGANE', kanji: '刃金のよろい', r: 2.0, rise: 16, dmg: 90, guard: 24, after: 20 },
   3: { name: 'KOKUSA NO HARAWATA', short: 'KOKUSA', kanji: '黒砂の腸', r: 2.0, life: 240, away: 0.4, period: 60, swirl: 12, dmg: 40 },
   4: { name: 'ITETSUKU SHITONE', short: 'SHITONE', kanji: '凍てつく褥', r: 2.0, life: 240, dmg: 70, freeze: 40, frost: 60 },
   5: { name: 'YAKENOHARA', short: 'YAKENOHARA', kanji: '焼野原', width: 2.0, max: 10.0, hits: 2, dmg: 45, life: 150, chip: 0.12 },
   6: { name: 'YAMIYO NO HOSHIYO', short: 'HOSHI', kanji: '闇夜の星よ', r: 3.5, life: 240, reiatsu: 30.0, fs: 15.0 },
-};
+});
 /** The loom's queue: 黒砂 刃金 | 褥 焼野原 | 眼 星, then back to 黒砂 (three SP1 pairs). */
 export const HANK_ORDER = [3, 2, 4, 5, 1, 6];
 const TSUJI = ['tsuji1', 'tsuji2', 'tsuji3', 'tsuji4', 'tsuji5', 'tsuji6'];
 /** The weave's scaling by passes 1 / 2 / 3, rows radius, life, damage, effect. */
-const PASS_SCALE = [[0.7, 0.85, 1.0], [0.5, 0.8, 1.2], [0.7, 1.0, 1.4], [0.6, 1.0, 1.5]];
+const PASS_SCALE = f32Deep([[0.7, 0.85, 1.0], [0.5, 0.8, 1.2], [0.7, 1.0, 1.4], [0.6, 1.0, 1.5]]);
 
 // ================================================================ rules (pure)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,7 +118,7 @@ export const hankDamage = (n: number, passes: number): number => roundHalfEven(f
 export const hankRadius = (n: number, passes: number): number => f32(f32(hankScale(passes)[0]) * f32(hank(n, 'r')));
 export const hankLife = (n: number, passes: number): number =>
   roundHalfEven(f32(f32(f32(hankScale(passes)[1]) * f32(SJ.hankLifeMult)) * hank(n, 'life')));
-const hankRadiusOr = (n: number, passes: number): number => (hank(n, 'r') != null ? hankRadius(n, passes) : 0.5 * hank(n, 'width'));
+const hankRadiusOr = (n: number, passes: number): number => (hank(n, 'r') != null ? hankRadius(n, passes) : f32(0.5 * hank(n, 'width')));
 
 // ================================================================ Shikai 刺絡 SHIGARAMI (base)
 defmove('sj-j1', { kind: 'quick', clip: 'sj-q1', startup: 7, active: 3, recovery: 12, dmg: 25, advBlock: -2,
@@ -278,8 +280,8 @@ const setHari = (e: Ent, n: number): void => { e.g.meter = n; };
 const hariFormP = (e: Ent): boolean => e.f.form === 'base';
 
 function senjuPull(e: Ent, tx: number, tz: number, d: number, frames: number): void {
-  const p = e.pos, dx = tx - p[0], dz = tz - p[2], l = Math.sqrt(dx * dx + dz * dz);
-  if (l > d + 0.05) setSlide(e, l - d, frames, dx, dz);
+  const p = e.pos, dx = f32(tx - p[0]), dz = f32(tz - p[2]), l = len32(dx, dz);
+  if (l > f32(d + f32(0.05))) setSlide(e, f32(l - d), frames, dx, dz);
 }
 
 // ================================================================ the loom
@@ -328,10 +330,11 @@ function senjuZone(e: Ent, n: number, passes: number, unfold: number, cx: number
                          frost: roundHalfEven(hankFx(4, 'frost', passes)), flags: ['ice'] }) });
     case 5: {
       const q = oppOf(e).pos, yaw = faceYawTo(e, q[0], q[2]);
-      const dist = Math.sqrt((q[0] - p[0]) ** 2 + (q[2] - p[2]) ** 2);
-      const len = Math.min(hank(5, 'max'), 0.5 + dist), mid = 1.0 + 0.5 * len;   // from 1 m ahead of her, past him
-      d.len = len; d.x0 = p[0] + fwdX(yaw); d.z0 = p[2] + fwdZ(yaw);
-      return senjuSpawn('sj-lane', e, d, { x: p[0] + mid * fwdX(yaw), z: p[2] + mid * fwdZ(yaw), yaw, size: 0.5 * hank(5, 'width'),
+      const dist = len32(f32(q[0] - p[0]), f32(q[2] - p[2]));
+      const len = Math.min(hank(5, 'max'), f32(0.5 + dist)), mid = f32(1.0 + f32(0.5 * len));   // from 1 m ahead of her, past him
+      d.len = len; d.x0 = f32(p[0] + fwdX(yaw)); d.z0 = f32(p[2] + fwdZ(yaw));
+      return senjuSpawn('sj-lane', e, d, { x: f32(p[0] + f32(mid * fwdX(yaw))), z: f32(p[2] + f32(mid * fwdZ(yaw))), yaw,
+        size: f32(0.5 * hank(5, 'width')),
         delay: unfold, life, hits: hank(5, 'hits'), src: true, fragile: true, look: 'senju-zone-look',
         hw: makeHitwin({ dmg, react: 'stagger', hs: T.hitstopHeavy, guard: 12, chip: hankFx(5, 'chip', passes) }) });
     }
@@ -377,7 +380,7 @@ function senjuSoldierStep(hz: Hazard, d: Sjh): boolean {
     hz.alive = false;
     return true;
   }
-  const q = o.pos, dx = q[0] - hz.x, dz = q[2] - hz.z, dist = Math.sqrt(dx * dx + dz * dz);
+  const q = o.pos, dx = f32(q[0] - hz.x), dz = f32(q[2] - hz.z), dist = len32(dx, dz);
   d.clock++;
   switch (d.phase) {
     case 'rise':
@@ -387,8 +390,8 @@ function senjuSoldierStep(hz: Hazard, d: Sjh): boolean {
       hz.yaw = angleWrap(turnToward(hz.yaw, dirYaw(dx, dz), trackStep(SJ.shinpeiTurn)));
       if (dist <= SJ.shinpeiNear) { d.phase = 'tell'; d.clock = 0; d.n = 0; senjuShinpeiStrike(e, hz, d, dx, dz); }
       else {
-        const s = SJ.shinpeiSpeed * STEP, yaw = hz.yaw;
-        [hz.x, hz.z] = clampToCircle(hz.x + s * fwdX(yaw), hz.z + s * fwdZ(yaw), T.arenaRadius - 0.4);
+        const s = f32(SJ.shinpeiSpeed * f32(STEP)), yaw = hz.yaw;
+        [hz.x, hz.z] = clampToCircle(f32(hz.x + f32(s * fwdX(yaw))), f32(hz.z + f32(s * fwdZ(yaw))), f32(T.arenaRadius - f32(0.4)));
       }
       break;
     case 'tell':
@@ -420,12 +423,12 @@ function senjuBoltStep(hz: Hazard): boolean {
 function senjuZoneStep(hz: Hazard, d: Sjh): boolean {
   const e = hz.owner, o = hazardTarget(hz), n = d.hank, age = hz.age;
   if (hz.delay > 0 || !o || !o.alive) return false;
-  const q = o.pos, dx = q[0] - hz.x, dz = q[2] - hz.z, dist = Math.sqrt(dx * dx + dz * dz), inside = dist <= d.r;
+  const q = o.pos, dx = f32(q[0] - hz.x), dz = f32(q[2] - hz.z), dist = len32(dx, dz), inside = dist <= d.r;
   switch (n) {
     case 1:                                                          // the mirror-eyes: his waves / fireballs turn back
       for (const wz of W.hazards)
         if (wz.alive && wz.owner === o && (wz.kind === 'wave' || wz.kind === 'fireball') && wz.hitsLeft > 0
-            && (wz.x - hz.x) ** 2 + (wz.z - hz.z) ** 2 <= (d.r + wz.size) ** 2) {
+            && sq32(f32(wz.x - hz.x), f32(wz.z - hz.z)) <= sq32(f32(d.r + wz.size), 0)) {
           wz.owner = e; wz.yaw = angleWrap(wz.yaw + PI); wz.src = false;
           emit('sfx', 'shears', e);
           clog(() => `${sideName(e)} ME reflects a ${wz.kind}`);
@@ -443,10 +446,10 @@ function senjuZoneStep(hz: Hazard, d: Sjh): boolean {
     case 3: {
       const st = o.f.state;
       if (inside && (st === 'idle' || st === 'run')) {               // the drag: walking / running away
-        const v = o.mo.vel, ux = dx / Math.max(dist, 1e-3), uz = dz / Math.max(dist, 1e-3), along = v[0] * ux + v[2] * uz;
+        const v = o.mo.vel, l = Math.max(dist, f32(1e-3)), ux = f32(dx / l), uz = f32(dz / l), along = f32(f32(v[0] * ux) + f32(v[2] * uz));
         if (along > 0) {
-          const k = Math.min(1.0, hankScale(d.passes)[3] * (1.0 - hank(3, 'away'))) * along * STEP;
-          q[0] -= k * ux; q[2] -= k * uz;
+          const k = f32(f32(Math.min(1.0, f32(hankScale(d.passes)[3] * f32(1.0 - hank(3, 'away')))) * along) * f32(STEP));
+          q[0] = f32(q[0] - f32(k * ux)); q[2] = f32(q[2] - f32(k * uz));
         }
       }
       const period = hank(3, 'period');                              // the gulps: 1 / 2 / 3 by passes, a swirl before each
@@ -501,7 +504,7 @@ registerHooks({
       }
       case 'touches':
         if (hz.kind === 'sj-hit') return volHitP(d.vol!, hz.x, 0, hz.z, fwdX(hz.yaw), fwdZ(hz.yaw), tx, ty, tz, tr, th, 0);
-        if (hz.kind === 'sj-lane') return oboxCylHitP(hz.x, 1, hz.z, hz.yaw, hz.size, 1.2, 0.5 * d.len, tx, ty, tz, tr, th);
+        if (hz.kind === 'sj-lane') return oboxCylHitP(hz.x, 1, hz.z, hz.yaw, hz.size, 1.2, f32(0.5 * d.len), tx, ty, tz, tr, th);
         return false;
     }
     return false;
@@ -540,8 +543,8 @@ registerHooks({
   'senju-struck'(def: Ent, att: Ent, res: Contact, hw: HitWin, mv: Move | null, hazard: Hazard | null, ranged: boolean) {
     const z = senjuLiveZone(def, 1), c = contactOf(res);
     if (mv && !hazard && !ranged && (c === 'hit' || c === 'block') && z && z.delay <= 0) {
-      const q = att.pos, dx = q[0] - z.x, dz = q[2] - z.z;
-      if (dx * dx + dz * dz <= z.size ** 2) {
+      const q = att.pos;
+      if (sq32(f32(q[0] - z.x), f32(q[2] - z.z)) <= sq32(z.size, 0)) {
         const n = roundHalfEven(f32(f32(f32(SJ.mirrorK) * f32(hankScale((z.data as Sjh).passes)[3])) * hw.dmg));
         if (n > 0) {
           att.g.reishi = burn(att.g.reishi, n);
@@ -554,7 +557,7 @@ registerHooks({
   /** O stands in her live 星, unfolded: he gains nothing, his Reiatsu / flash-step gains are hers. */
   'senju-siphon'(e: Ent, o: Ent): boolean {
     const z = senjuLiveZone(e, 6);
-    return !!z && (o.pos[0] - z.x) ** 2 + (o.pos[2] - z.z) ** 2 <= (z.data as Sjh).r ** 2;
+    return !!z && sq32(f32(o.pos[0] - z.x), f32(o.pos[2] - z.z)) <= sq32((z.data as Sjh).r, 0);
   },
 
   // ---------------------------------------------------------------- 悪い癖 WARUI KUSE
@@ -603,8 +606,8 @@ registerHooks({
   /** SP2 f28: the tendrils always fire: a wave at him, kasaBase + half the largest caught hit. */
   'senju-kasa-fire'(e: Ent) {
     const q = oppOf(e).pos, yaw = faceYawTo(e, q[0], q[2]), speed = moveParam(e, 'speed'), dmg = kasaDamage(sj(e).caught), p = e.pos;
-    spawnHazard('wave', e, { x: p[0] + fwdX(yaw), z: p[2] + fwdZ(yaw), yaw, speed, size: 0.5 * moveParam(e, 'width'),
-      life: roundHalfEven(60 * (moveParam(e, 'range') / speed)), look: 'senju-tendril-look',
+    spawnHazard('wave', e, { x: f32(p[0] + fwdX(yaw)), z: f32(p[2] + fwdZ(yaw)), yaw, speed, size: f32(0.5 * moveParam(e, 'width')),
+      life: roundHalfEven(f32(60 * f32(moveParam(e, 'range') / speed))), look: 'senju-tendril-look',
       hw: makeHitwin({ dmg, react: 'stagger', hs: T.hitstopHeavy, guard: moveParam(e, 'guard'), flags: ['ranged', 'thread'] }) });
     emit('sfx', 'thread-zip', e);
     clog(() => `${sideName(e)} KASA fires ${dmg}`);
@@ -681,9 +684,9 @@ registerHooks({
 });
 
 function shinpeiPoint(e: Ent): [number, number, number] {
-  const p = e.pos, q = oppOf(e).pos, dx = q[0] - p[0], dz = q[2] - p[2];
-  const d = Math.max(0.01, Math.sqrt(dx * dx + dz * dz)), k = Math.min(1.5, 0.5 * d);
-  return [p[0] + k * (dx / d), p[2] + k * (dz / d), dirYaw(dx, dz)];
+  const p = e.pos, q = oppOf(e).pos, dx = f32(q[0] - p[0]), dz = f32(q[2] - p[2]);
+  const d = Math.max(f32(0.01), len32(dx, dz)), k = Math.min(1.5, f32(0.5 * d));
+  return [f32(p[0] + f32(k * f32(dx / d))), f32(p[2] + f32(k * f32(dz / d))), dirYaw(dx, dz)];
 }
 
 // ================================================================ the renderer's view of her HUD meter (hud.lisp's :draw)
@@ -702,7 +705,7 @@ export function senjuMeter(e: Ent) {
 
 // ================================================================ AI (the kit's reflex / oppReflex / sigHold / spEnder)
 // Her CPU's policy chances by difficulty (senjumaru.lisp *SENJU-DP*: EASY <= NORMAL <= HARD).
-const SENJU_DP: Record<string, Record<string, number>> = {
+const SENJU_DP: Record<string, Record<string, number>> = f32Deep({
   oEnderP: { easy: 0.0, normal: 0.05, hard: 0.85 }, lEnderP: { easy: 0.0, normal: 0.05, hard: 0.7 },
   punishP: { easy: 0.0, normal: 0.1, hard: 0.8 }, hariP: { easy: 0.0, normal: 0.1, hard: 0.85 },
   breakP: { easy: 0.3, normal: 0.4, hard: 0.7 }, antiBreakerP: { easy: 0.0, normal: 0.1, hard: 0.85 },
@@ -710,16 +713,16 @@ const SENJU_DP: Record<string, Record<string, number>> = {
   escortP: { easy: 0.0, normal: 0.1, hard: 0.8 }, okiP: { easy: 0.0, normal: 0.2, hard: 0.9 },
   tachiP: { easy: 0.3, normal: 0.5, hard: 0.9 }, awakenBelow: { easy: 1.0, normal: 1.0, hard: 0.28 },
   loomAntiBreakerP: { easy: 0.0, normal: 0.1, hard: 0.85 }, redRushP: { easy: 0.0, normal: 0.0, hard: 0.8 },
-};
+});
 /** The Shikai's neutral bands of the policy (neutralP of the decisions). */
-const SENJU_NEUTRAL: Band[] = [[0.0, 1.7, 'q', 6, 'breaker', 2], [1.7, 2.6, 'breaker', 2, 'f', 1, null, 2], [2.6, 7.5, 'kikon', 1, 'sp1', 1, null, 3]];
+const SENJU_NEUTRAL: Band[] = f32Deep([[0.0, 1.7, 'q', 6, 'breaker', 2], [1.7, 2.6, 'breaker', 2, 'f', 1, null, 2], [2.6, 7.5, 'kikon', 1, 'sp1', 1, null, 3]]);
 const senjuDp = (b: Brain, key: string): number => { const p = SENJU_DP[key]; return p[b.difficulty] ?? p.normal ?? 0.0; };
 const snapDownP = (s: Snap): boolean => s.state === 'down' || s.state === 'wakeup' || s.state === 'hoho';
 
 /** Frames her O rush MV takes to strike from D m: its aura, the dash to its strike reach, its startup. */
 function senjuOArrive(mv: Move, d: number): number {
   return rushParam(mv, 'aura') + mv.s
-    + (rushParam(mv, 'speed') > 0 ? Math.ceil((60 * Math.max(0.0, d - mv.reach)) / rushParam(mv, 'speed')) : 0);
+    + (rushParam(mv, 'speed') > 0 ? Math.ceil(f32(f32(60 * Math.max(0.0, f32(d - mv.reach))) / rushParam(mv, 'speed'))) : 0);
 }
 /** The loom: his Breaker's dash within 6 m: Hoho through it, else Step aside. */
 function senjuLoomAntiBreaker(e: Ent, b: Brain, s: Snap, d: number): string | null {
@@ -745,7 +748,7 @@ function senjuPolicyReflex(e: Ent, b: Brain, s: Snap, d: number): string | null 
       && !snapDownP(s) && bandWeights(SENJU_NEUTRAL, d) && simRnd01() < senjuDp(b, 'neutralP')) {
     decideAgain(b);
     const c = weightedPick(simRnd01(), bandWeights(SENJU_NEUTRAL, d)!);
-    return c && kitCommandOkP(e, c) && (!(c === 'q' || c === 'f') || d <= 0.2 + kitCommandMove(kit, c)!.reach)
+    return c && kitCommandOkP(e, c) && (!(c === 'q' || c === 'f') || d <= f32(f32(0.2) + kitCommandMove(kit, c)!.reach))
       && !(c === 'kikon' && aiSbFinishP(e)) ? why(b, 'neutral-v2', c) : null;
   }
   // a neutral decision due, the loom, he is red within the lane's range: the lane's Kikon at redRushP
@@ -755,9 +758,9 @@ function senjuPolicyReflex(e: Ent, b: Brain, s: Snap, d: number): string | null 
     return why(b, 'red-rush', 'kikon');
   }
   // a recovery out of J1's reach: K1, else the O
-  if (s.state === 'move' && s.phase === 'main' && s.sf >= s.activeEnd && s.left < 99 && d >= q.reach + 0.4
+  if (s.state === 'move' && s.phase === 'main' && s.sf >= s.activeEnd && s.left < 99 && d >= f32(q.reach + f32(0.4))
       && b.reactRoll < senjuDp(b, 'punishP')) {
-    if (k && d < k.reach + 0.2 && left >= k.s + 1 && kitCommandOkP(e, 'f')) return why(b, 'far-punish', 'f');
+    if (k && d < f32(k.reach + f32(0.2)) && left >= k.s + 1 && kitCommandOkP(e, 'f')) return why(b, 'far-punish', 'f');
     if (o && d < aiTable(e, 'kikonRange', 7.0) && left >= senjuOArrive(o, d) + 1 && kitCommandOkP(e, 'kikon') && !aiSbFinishP(e))
       return why(b, 'far-punish', 'kikon');
     return null;
@@ -788,8 +791,8 @@ function senjuSoldierLiveP(e: Ent): boolean {
 function senjuSetplayReflex(e: Ent, b: Brain, s: Snap, d: number): string | null {
   const kit = kitOf(e), q = kitCommandMove(kit, 'q')!, k = kitCommandMove(kit, 'f'), o = kitCommandMove(kit, 'kikon');
   const left = s.left - b.delay;
-  if (s.state === 'stun' && s.left < 99 && d >= q.reach + 0.6 && !aiMashP(b) && b.reactRoll < senjuDp(b, 'followP')) {
-    if (k && d <= k.reach + 0.1 && left >= k.s + 1 && kitCommandOkP(e, 'f')) return why(b, 'set-follow', 'f');
+  if (s.state === 'stun' && s.left < 99 && d >= f32(q.reach + f32(0.6)) && !aiMashP(b) && b.reactRoll < senjuDp(b, 'followP')) {
+    if (k && d <= f32(k.reach + f32(0.1)) && left >= k.s + 1 && kitCommandOkP(e, 'f')) return why(b, 'set-follow', 'f');
     if (o && d <= aiTable(e, 'kikonRange', 7.0) && left >= senjuOArrive(o, d) + 1 && kitCommandOkP(e, 'kikon') && !aiSbFinishP(e))
       return why(b, 'set-follow', 'kikon');
     if (hariFormP(e) && hari(e) >= 2 && left >= 11 && kitCommandOkP(e, 'sig')) return why(b, 'set-follow', 'sig');
@@ -799,7 +802,7 @@ function senjuSetplayReflex(e: Ent, b: Brain, s: Snap, d: number): string | null
   }
   if ((s.state === 'down' || s.state === 'wakeup') && d >= 2.5 && d <= SJ.hankRange && b.reactRoll < senjuDp(b, 'okiP'))
     return senjuOki(e, b, s, kit);
-  if (d > 2.4 && senjuSoldierLiveP(e) && b.hohoRoll < senjuDp(b, 'escortP')) {
+  if (d > f32(2.4) && senjuSoldierLiveP(e) && b.hohoRoll < senjuDp(b, 'escortP')) {
     b.intent = 'pressure'; b.intentT = Math.max(b.intentT, 20);
   }
   return null;
@@ -821,7 +824,7 @@ function senjuOki(e: Ent, b: Brain, s: Snap, kit: Kit): string | null {
 function senjuAwaken(e: Ent, b: Brain): string | null {
   const g = e.g;
   return g.evolution && hariFormP(e) && awakenStateP(e, e.f) && aiAwakenP(e)
-    && (aiAwakenMode[e.f.side] === 'always' || g.reishi / g.reishiMax <= senjuDp(b, 'awakenBelow')) ? why(b, 'awaken-late', 'awaken') : null;
+    && (aiAwakenMode[e.f.side] === 'always' || f32(g.reishi / g.reishiMax) <= senjuDp(b, 'awakenBelow')) ? why(b, 'awaken-late', 'awaken') : null;
 }
 
 /** Does the designed pair SP1 releases from next hank N suit now (a cross pair never does)? */
@@ -831,7 +834,7 @@ function senjuPairP(e: Ent, b: Brain, d: number, n: number): boolean {
   switch (n) {
     case 3: return d < 3.0;
     case 4: return d >= 3.0 && d <= 7.0;
-    case 1: return d > 7.0 || b.intent === 'defend' || g.takenRanged > 0.3 * (g.takenRanged + g.takenMelee);
+    case 1: return d > 7.0 || b.intent === 'defend' || g.takenRanged > f32(f32(0.3) * f32(g.takenRanged + g.takenMelee));
     default: return false;
   }
 }

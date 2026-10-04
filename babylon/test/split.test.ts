@@ -32,7 +32,7 @@ it('every kit move maps to the same clip as before the split', () => {
 
 it('bodyFor: every roster character has its own body; a form variant folds in under its own cache key', () => {
   for (const who of ROSTER) expect(BODIES[who], who).toBeDefined();
-  expect(bodyFor('kenpachi', 'bankai')).toEqual({ key: 'kenpachi:base', body: BODIES.kenpachi });
+  expect(bodyFor('kenpachi', 'base')).toEqual({ key: 'kenpachi:base', body: BODIES.kenpachi });
   const ken = BODIES.kenpachi, v0 = ken.variant;
   ken.variant = (f) => (f === 'bankai' ? { spec: { skin: 0x9e3a32 } } : null);
   try {

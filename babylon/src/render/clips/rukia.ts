@@ -3,6 +3,7 @@
 // for every move she has, keyed in phase coordinates (pose.ts: u 0 start, 1 frame S, 2 end of active, 3 end; the
 // pre-strike phases: HAKUREN's held stabs on f.hold, the Kikon's aura / flash-step dash). Pirouettes key the pelvis yaw
 // in < 180 deg steps so the slerp turns the right way.
+import type { Stance } from './index';
 import type { Move } from '../../sim/kit';
 import type { Fighter } from '../../sim/types';
 import type { ClipName } from '../anim';
@@ -20,7 +21,7 @@ const turn = (p: PoseSpec, yaw: number): PoseSpec => {
 const feet: PoseSpec = { thighR: [22, -6, 4], shinR: [-22, 0, 0], footR: [2, 0, 0], thighL: [-10, 14, -6], shinL: [-24, 0, 0],
   footL: [22, 0, 0], pos: [0, -0.04, 0] };
 /** Shikai: side-on, the white blade held out low toward him in one hand, the left hand loose. */
-export const stance = merge(feet, { pelvis: [0, 28, 0], spine: [-2, 0, 0], chest: [0, -12, 0], neck: [4, 0, 0], head: [4, -16, 0],
+const shikai = merge(feet, { pelvis: [0, 28, 0], spine: [-2, 0, 0], chest: [0, -12, 0], neck: [4, 0, 0], head: [4, -16, 0],
   armR: [48, -8, 6], foreR: [22, 0, 0], handR: [-24, 0, 0], armL: [12, 0, -16], foreL: [38, 0, 0], handL: [0, 0, 0] });
 /** -18 / -50: the cold stance: the blade raised upright before her face, the left palm open beside it. */
 export const coldStance = merge(feet, { pelvis: [0, 18, 0], spine: [-2, 0, 0], chest: [0, -10, 0], head: [2, -8, 0],
@@ -30,7 +31,9 @@ export const zeroStance = { pelvis: [0, 6, 0], spine: [2, 0, 0], chest: [2, -4, 
   armR: [4, 0, 10], foreR: [6, 0, 0], handR: [-24, 0, 0], armL: [8, 0, -22], foreL: [18, 0, 0], handL: [10, 0, 0],
   thighR: [2, 0, 3], shinR: [-3, 0, 0], thighL: [2, 0, -3], shinL: [-3, 0, 0], pos: [0, -0.005, 0] } as PoseSpec;
 
-export const idle = stance;
+export const idle = shikai;
+/** FORM's stance (clips/index.ts CharClips.stance). */
+export const stance = (form: string): Stance => ({ idle: idleFor(form) ?? shikai, guard, guardHit, run });
 export const idleFor = (form: string): PoseSpec | undefined =>
   form === 'zero' ? zeroStance : form === 'm18' || form === 'm50' ? coldStance : undefined;
 
@@ -153,7 +156,8 @@ const TABLE: Record<string, keyof Clips> = {
 };
 const CACHE = new Map<PoseSpec, Clips>();
 
-export function move(mv: Move, f: Fighter, idle: PoseSpec): [Clip, number] | null {
+export const move = (mv: Move, f: Fighter): [Clip, number] | null => moveAt(mv, f, idleFor(f.form) ?? shikai);
+function moveAt(mv: Move, f: Fighter, idle: PoseSpec): [Clip, number] | null {
   let c = CACHE.get(idle);
   if (!c) { c = build(idle); CACHE.set(idle, c); }
   switch (f.phase) {

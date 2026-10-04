@@ -510,7 +510,7 @@ function aiNeutral(e: Ent, b: Brain, s: Snap, d: number): void {
       const oi = getf<object | null>(kitOf(oppOf(e)).ai, 'oppIntent', null);     // facing a form a CPU waits out
       b.intent = weightedPick(r, [
         ['approach', getf(w, 'approach', 1)],
-        ['pressure', getf(w, 'pressure', 1) + hot + (oppGuardlessP(e) || oppGgLowP(e) ? 3 : 0)],
+        ['pressure', Math.fround(Math.fround(getf(w, 'pressure', 1) + hot) + (oppGuardlessP(e) || oppGgLowP(e) ? 3 : 0))],
         ['zone', getf(w, 'zone', 1) + getf(oi, 'zone', 0)],
         ['defend', getf(w, 'defend', 1) + getf(oi, 'defend', 0)]]) ?? 'approach';
     }

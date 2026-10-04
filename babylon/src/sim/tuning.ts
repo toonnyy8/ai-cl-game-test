@@ -663,11 +663,15 @@ export const T = {
 };
 // the Lisp's knobs are single floats (literals read as SINGLE-FLOAT): round every one to f32 so a comparison against a
 // knob (a distance at *KIKON-TRIGGER*, a gauge at a threshold) decides as the Lisp's does. Integers stay exact.
-(function f32Deep(o: Record<string, unknown>): void {
-  for (const k of Object.keys(o)) {
-    const v = o[k];
-    if (typeof v === 'number') o[k] = Math.fround(v);
-    else if (v && typeof v === 'object') f32Deep(v as Record<string, unknown>);
+// (the character files' own knob tables go through f32Deep too)
+export function f32Deep<O>(o: O): O {
+  const r = o as Record<string, unknown>;
+  for (const k of Object.keys(r)) {
+    const v = r[k];
+    if (typeof v === 'number') r[k] = Math.fround(v);
+    else if (v && typeof v === 'object') f32Deep(v);
   }
-})(T as unknown as Record<string, unknown>);
+  return o;
+}
+f32Deep(T);
 export type Tuning = typeof T;

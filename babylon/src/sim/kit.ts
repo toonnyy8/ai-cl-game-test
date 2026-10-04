@@ -4,7 +4,7 @@
 // up in the hook registry at call time, so a character not ported yet (or a missing hook) is a no-op.
 // Numbers that name a tuning knob are read from T when the character file runs (the Lisp's RESOLVE-TUNING).
 // Frames: a move's frame SF counts from 0; startup S, active A, recovery R; hit windows [from, to) in move frames.
-import { T } from './tuning';
+import { T, f32Deep } from './tuning';
 import { makeVol, type Vol, type VolSpec } from './hitvol';
 import { guardValue } from './rules';
 
@@ -122,6 +122,7 @@ const def = <V>(v: V | undefined, d: V): V => (v === undefined ? d : v);
 /** SPEC -> Move. STARTUP-ADD / REACH-MULT derive a form's version (Nozarashi): every frame from the startup on shifts,
  *  every reach scales. (CL OR treats 0 as true: `??` here, never `||`, on numbers.) */
 export function parseMove(name: string, spec: MoveSpec, startupAdd = 0, reachMult = 1.0): Move {
+  f32Deep(spec);                                                     // (the Lisp's literals are single floats)
   const { kind } = spec;
   const breaker = kind === 'breaker';
   const arc = def(spec.arc, 90), height = def(spec.height, [0.2, 2.0] as [number, number]);
@@ -319,6 +320,7 @@ const DEFAULT_RUN_CLIPS = ['sh-run', 'sh-skate-b', 'sh-slide-r', 'sh-slide-l'];
  *  the parent form doesn't have it; an inherited one gets the form's startupAdd / reachMult, and a form with no
  *  derivation takes the parent's version of it. */
 export function defkit(character: string, form: string, spec: KitSpec): Kit {
+  f32Deep(spec);                                                     // (the Lisp's literals are single floats)
   const parent = spec.inherit ? findKit(character, spec.inherit) : null;
   const pspec: KitSpec = { ...(parent?.spec ?? {}) };
   for (const k of ['inherit', 'startupAdd', 'reachMult', 'grid'] as const) delete pspec[k];

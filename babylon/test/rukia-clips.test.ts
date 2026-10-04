@@ -14,7 +14,7 @@ describe('Rukia clips', () => {
       const f = fighter();
       for (const [n, mv] of kit.moves) {
         f.phase = 'main'; f.sf = mv.s;
-        const got = move(mv, f, idleFor(form) ?? idle);
+        f.form = form; const got = move(mv, f);
         expect(got, n).not.toBeNull();
         expect(got![1], n).toBe(1);
       }
@@ -24,7 +24,7 @@ describe('Rukia clips', () => {
     for (const n of ['ru-j3', 'ru-k2', 'ru-tsukishiro', 'ru-kikon']) {
       const mv = KITS.get('rukia')!.get('base')!.moves.get(n)!;
       const f = fighter(); f.phase = 'main'; f.sf = 0;
-      const [clip] = move(mv, f, idle)!;
+      const [clip] = move(mv, f)!;
       for (let i = 1; i < clip.length; i++) {
         const a = clip[i - 1].pose.pelvis?.[1] ?? 0, b = clip[i].pose.pelvis?.[1] ?? 0;
         const d = Math.abs((((b - a) % 360) + 540) % 360 - 180);

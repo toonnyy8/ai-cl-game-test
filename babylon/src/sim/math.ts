@@ -44,12 +44,12 @@ export function turnToward(cur: number, target: number, step: number): number {
 
 /** KV = key weight ...; the key whose share of the total weight contains R (0 <= R < 1); null if all weights are 0. */
 export function weightedPick<K>(r: number, kv: [K, number][]): K | null {
-  let sum = 0;
-  for (const [, w] of kv) sum += w;
+  let sum = 0;                                                       // (single floats, as the Lisp's (let ((sum 0.0)))
+  for (const [, w] of kv) sum = f32(sum + f32(w));
   if (sum > 0) {
-    let x = sum * r;
+    let x = f32(sum * r);
     for (const [k, w] of kv) {
-      x -= w;
+      x = f32(x - f32(w));
       if (x < 0 && w > 0) return k;
     }
   }

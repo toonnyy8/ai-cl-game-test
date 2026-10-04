@@ -10,9 +10,10 @@ declare const process: { argv: string[]; execPath: string; exit(c: number): neve
 const cp: any = await import('node:child_process' as string);
 
 const CHARS: Record<string, string> = { y: 'yama', k: 'ken', r: 'rukia', i: 'ichigo', s: 'senjumaru' };
-const LISP_MEDIAN: Record<string, number> = {   // docs/DUEL_AI_V2.md "Gates (final)"
-  yy: 139.0, yk: 159.5, kk: 151.6, ry: 163.1, rk: 150.3, rr: 208.2, iy: 178.9, ik: 170.0, ir: 206.2, ii: 213.0,
-  sy: 170.7, sk: 160.1, sr: 194.9, ss: 206.4, si: 182.4 };
+const LISP_MEDIAN: Record<string, number> = {   // the native Lisp's simgate.py, seeds 1-20, at commit 590f099 (2026-10-04;
+  // DUEL_AI_V2.md "Gates (final)" is older). The TS sim is bit-exact with it, so a differing median = the sim changed.
+  yy: 130.9, yk: 124.4, kk: 144.8, ry: 145.6, rk: 148.0, rr: 174.1, iy: 161.9, ik: 163.3, ir: 181.9, ii: 204.4,
+  sy: 129.0, sk: 147.9, sr: 193.2, ss: 194.2, si: 179.6 };
 interface Job { pair: string; seed: number; ai: 'ai' | 'stub' }
 interface Row extends Job { winner: string; ko: boolean; secs: number }
 
@@ -39,7 +40,8 @@ if (ci >= 0) {                                                       // a child:
     cp.execFile(process.execPath, ['--import', 'tsx', process.argv[1], '--child', JSON.stringify(share)],
       { maxBuffer: 1 << 26 }, (err: unknown, out: string) => (err ? fail(err) : ok(out.trim().split('\n').map((l) => JSON.parse(l)))));
   })))).flat();
-  const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b), h = s.length >> 1; return s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2; };
+  // the Lisp gate's median: (nth (floor n 2) sorted), the upper middle of an even count (debug.lisp GATE-UPDATE)
+  const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[xs.length >> 1];
   console.log(`seeds ${start}-${start + n - 1}, CPU vs CPU ${ai === 'stub' ? 'stub' : 'NORMAL'}`);
   console.log('pair  K.O.   P1  P2  draw  median s  lisp s');
   for (const pair of pairs) {

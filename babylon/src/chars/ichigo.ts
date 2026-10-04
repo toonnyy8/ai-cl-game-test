@@ -5,8 +5,8 @@
 // the afterimages. Clip names are the art contract; cinematics are length-only (match.ts CINES).
 // ponytail: the pacing log (ic-acc-*), the HUD's clone row / deck, the parry's rim and the practice EARLY / LATE judge,
 // and the debug commands (ICHIGO-DEBUG) are presentation / debug: not ported.
-import { T } from '../sim/tuning';
-import { angleWrap, fwdX, fwdZ, getf, mod, roundHalfEven, turnToward } from '../sim/math';
+import { T, f32Deep } from '../sim/tuning';
+import { angleWrap, fwdX, fwdZ, getf, len32, mod, roundHalfEven, turnToward } from '../sim/math';
 import { STEP } from '../sim/time';
 import { volHitP } from '../sim/hitvol';
 import {
@@ -26,7 +26,7 @@ import { hazardTarget, hazardTouchesP, spawnHazard } from '../sim/hazards';
 import type { Action, Vpad } from '../sim/vpad';
 
 // ================================================================ knobs (ichigo.lisp's own defparameters)
-export const IC = {
+export const IC = f32Deep({
   walkIchigo: 4.2, runIchigo: 10.0, walkKessa: 3.6, runKessa: 9.0,
   ichigoMult: 1.0, ichigoTaken: 0.8, kessaMult: 0.95, kessaTaken: 1.0,
   tsukiUp: 6, tsukiTap: 30, tsukiMax: 60, tsukiDashFs: 10.0,           // the Shikai's stance
@@ -35,7 +35,7 @@ export const IC = {
   cloneKonpaku: [2, 2, 3, 4],
   zanzoLife: 360, zanzoLag: 10, zanzoMult: 0.5,                        // SP2 ZANZO
   aiIcLAfterK: 0.3, aiIcParryP: 0.35, aiIcParryBsP: 0.3, aiKessaOP: 0.04, aiKessaBankAt: 0.45, aiKessaCloneJP: 0.08,
-};
+});
 const f32 = Math.fround;
 
 // ================================================================ 二刀の斬月 (base)
@@ -252,9 +252,9 @@ function ichigoLook(e: Ent, look: string, x: number, z: number, o: { yaw?: numbe
 
 /** The chain drags ATT's opponent toward him to D metres over FRAMES (after the hit's own reaction: its slide replaced). */
 function ichigoPullTo(att: Ent, d: number, frames: number): void {
-  const v = oppOf(att), p = att.pos, q = v.pos, dx = p[0] - q[0], dz = p[2] - q[2], dist = Math.sqrt(dx * dx + dz * dz);
+  const v = oppOf(att), p = att.pos, q = v.pos, dx = f32(p[0] - q[0]), dz = f32(p[2] - q[2]), dist = len32(dx, dz);
   if (dist > d) {
-    setSlide(v, dist - d, frames, dx, dz);
+    setSlide(v, f32(dist - d), frames, dx, dz);
     emit('sfx', 'chain-snap', att);
   }
 }
@@ -262,7 +262,7 @@ function ichigoPullTo(att: Ent, d: number, frames: number): void {
 /** A crescent wave from the move's params (width speed range dmg react kb guard), AHEAD m in front of E. */
 function ichigoWave(e: Ent, look: string, aheadM = 1.0, yaw = e.yaw): void {
   const speed = moveParam(e, 'speed') as number, [x, z] = ahead(e, aheadM);
-  spawnHazard('wave', e, { x, z, yaw, speed, size: 0.5 * moveParam(e, 'width'), life: roundHalfEven(60 * (moveParam(e, 'range') / speed)),
+  spawnHazard('wave', e, { x, z, yaw, speed, size: f32(0.5 * moveParam(e, 'width')), life: roundHalfEven(f32(60 * f32(moveParam(e, 'range') / speed))),
     look, hw: makeHitwin({ dmg: moveParam(e, 'dmg'), react: moveParam(e, 'react'), kb: moveParam(e, 'kb'), hs: T.hitstopHeavy,
                            guard: moveParam(e, 'guard'), flags: ['blade'] }) });
 }
@@ -315,10 +315,10 @@ function tsukiStep(e: Ent, f: Fighter, st: Ics, mv: Move): void {
 function ichigoAiStance(e: Ent, f: Fighter, st: Ics): string | null {
   const o = oppOf(e), fo = o.f, d = f.dist, r = simRnd01();
   const getsuga = true, dash = !st.dashed && e.g.fs >= IC.tsukiDashFs;
-  if (fo.state === 'stun' || fo.state === 'air') return r < 0.5 ? 'tsuki-j' : r < 0.8 ? 'tsuki-k' : 'tsuki-l';
+  if (fo.state === 'stun' || fo.state === 'air') return r < 0.5 ? 'tsuki-j' : r < f32(0.8) ? 'tsuki-k' : 'tsuki-l';
   if (d <= 4.2) {
-    return fo.state === 'guard' || fo.state === 'guard-hit' || o.g.gg < 50 ? (r < 0.6 ? 'tsuki-k' : 'tsuki-j')
-      : r < 0.7 ? 'tsuki-j' : 'tsuki-k';
+    return fo.state === 'guard' || fo.state === 'guard-hit' || o.g.gg < 50 ? (r < f32(0.6) ? 'tsuki-k' : 'tsuki-j')
+      : r < f32(0.7) ? 'tsuki-j' : 'tsuki-k';
   }
   if (d <= 6.4) return dash && r < 0.5 ? 'tsuki-step' : 'tsuki-k';
   if (dash && d <= 7.5 && r < 0.6) return 'tsuki-step';
@@ -359,8 +359,9 @@ function clonePay(e: Ent): boolean {
 /** A Hoho's reappearance leaves a clone 1.6 m in front of the opponent (the line from Ichigo through him), paid. */
 function hohoClone(e: Ent): void {
   if (!clonePay(e)) return;
-  const q = oppOf(e).pos, p = e.pos, dx = q[0] - p[0], dz = q[2] - p[2], l = Math.max(1e-3, Math.sqrt(dx * dx + dz * dz));
-  const [x, z] = clampToCircle(q[0] + 1.6 * (dx / l), q[2] + 1.6 * (dz / l), T.arenaRadius - 0.4);
+  const q = oppOf(e).pos, p = e.pos, dx = f32(q[0] - p[0]), dz = f32(q[2] - p[2]), l = Math.max(f32(1e-3), len32(dx, dz));
+  const [x, z] = clampToCircle(f32(q[0] + f32(f32(1.6) * f32(dx / l))), f32(q[2] + f32(f32(1.6) * f32(dz / l))),
+                               f32(T.arenaRadius - f32(0.4)));
   ichigoCloneSpawn(e, x, z, 'hoho');
 }
 
@@ -418,14 +419,14 @@ function ichigoCloneStep(hz: Hazard, c: Icc): void {
   if (!(e.alive && o && o.alive)) { hz.alive = false; return; }
   hz.age++;
   c.life--;
-  const q = o.pos, dx = q[0] - hz.x, dz = q[2] - hz.z, d = Math.sqrt(dx * dx + dz * dz);
+  const q = o.pos, dx = f32(q[0] - hz.x), dz = f32(q[2] - hz.z), d = len32(dx, dz);
   if (c.state !== 'fade') hz.yaw = angleWrap(turnToward(hz.yaw, dirYaw(dx, dz), trackStep(720.0)));
   switch (c.state) {
     case 'idle': if (c.life <= 0) cloneFade(c); break;
     case 'answer': cloneAnswerStep(e, hz, c); break;
     case 'charge': {
-      const s = Math.min(40.0 * STEP, Math.max(0.0, d - 1.0)), f = e.f;
-      if (d > 0.01) { hz.x += s * (dx / d); hz.z += s * (dz / d); }
+      const s = Math.min(f32(40.0 * f32(STEP)), Math.max(0.0, f32(d - 1.0))), f = e.f;
+      if (d > 0.01) { hz.x = f32(hz.x + f32(s * f32(dx / d))); hz.z = f32(hz.z + f32(s * f32(dz / d))); }
       const mv = f.move;
       if (!(f.state === 'move' && mv && mv.kind === 'kikon'
             && (f.phase === 'aura' || f.phase === 'dash' || (f.phase === 'main' && f.sf < mv.s)))) {
@@ -494,7 +495,7 @@ function parryFromBlockstun(e: Ent, f: Fighter, st: Ics, vp: Vpad): void {
     if (st.bsKey < 0 || sf < st.bsKey) {                               // a new blockstun (a block restarts it at 0)
       st.bsAt = -1;
       const om = oppOf(e).f.move;
-      if (om && ((om.kind === 'flash' && simRnd01() < icP(b, 0.6 * IC.aiIcParryBsP, IC.aiIcParryBsP, 0.8))
+      if (om && ((om.kind === 'flash' && simRnd01() < icP(b, f32(f32(0.6) * IC.aiIcParryBsP), IC.aiIcParryBsP, 0.8))
                  || (om.kind === 'quick' && aiMashP(b) && simRnd01() < icP(b, 0.0, 0.0, 0.6))))   // (no habits: M6)
         st.bsAt = Math.max(1, f.stun - 6);
     }
@@ -651,7 +652,7 @@ function incomingHazardIn(e: Ent, lo: number, hi: number): boolean {
   return W.hazards.some((hz) => {
     if (!(hz.alive && hz.owner === o && (hz.kind === 'wave' || hz.kind === 'fireball') && hz.hitsLeft > 0 && hz.delay <= 0
           && hz.speed > 0.1)) return false;
-    const dx = q[0] - hz.x, dz = q[2] - hz.z, fr = (60 * Math.max(0.0, Math.sqrt(dx * dx + dz * dz) - 1.0)) / hz.speed;
+    const dx = f32(q[0] - hz.x), dz = f32(q[2] - hz.z), fr = f32(f32(60 * Math.max(0.0, f32(len32(dx, dz) - 1.0))) / hz.speed);
     return lo <= fr && fr <= hi;
   });
 }
@@ -662,7 +663,7 @@ function cloneIdleInReach(e: Ent): 'light' | 'heavy' | null {
   let best: 'light' | 'heavy' | null = null;
   const q = oppOf(e).pos;
   for (const hz of ichigoClones(e)) {
-    const dd = Math.sqrt((q[0] - hz.x) ** 2 + (q[2] - hz.z) ** 2);
+    const dd = len32(f32(q[0] - hz.x), f32(q[2] - hz.z));
     if (icc(hz)!.state === 'idle') {
       if (dd <= 2.4) best = 'light';
       else if (dd <= 3.0 && best === null) best = 'heavy';
@@ -681,29 +682,29 @@ function ichigoAiKessa(e: Ent, b: Brain, s: Snap, d: number): string | null {
   if ((c = ichigoAiPerfectHoho(e, b, s, d))) return c;
   if ((c = ichigoAiRed(e, b, s, d))) return c;                         // (the Konpaku economy: HARD only)
   if ((c = ichigoAiConvert(e, b, s, d))) return c;
-  if (gg >= IC.kessaParryCost && !g.guardless && b.reactRoll < icP(b, 0.6 * IC.aiIcParryP, IC.aiIcParryP, 1.0)) {
+  if (gg >= IC.kessaParryCost && !g.guardless && b.reactRoll < icP(b, f32(f32(0.6) * IC.aiIcParryP), IC.aiIcParryP, 1.0)) {
     const lead = s.s - s.sf - b.delay;
     if ((s.state === 'move' && s.phase === 'main' && ['quick', 'flash', 'sig', 'sp', 'kikon'].includes(s.kind!)
-         && lead >= 4 && lead <= 22 && d < s.reach + 0.6) || incomingHazardIn(e, 4, 22))
+         && lead >= 4 && lead <= 22 && d < f32(s.reach + f32(0.6))) || incomingHazardIn(e, 4, 22))
       return why(b, 'parry', 'sig');
   }
   if ((c = ichigoAiLongPunish(e, b, s, d))) return c;
   // ZANZO at 2.6-7 m or while he is down / launched, he not attacking; HARD 0.15 a step, EASY / NORMAL never
-  if (((d >= 2.6 && d <= 7.0) || s.state === 'down' || s.state === 'air') && s.state !== 'move'
+  if (((d >= f32(2.6) && d <= 7.0) || s.state === 'down' || s.state === 'air') && s.state !== 'move'
       && kitCommandOkP(e, 'sp2') && simRnd01() < icP(b, 0.0, 0.0, 0.15))
     return why(b, 'zanzo', 'sp2');
   {
     const go = oppOf(e).g;
-    if (go.reishi < IC.aiKessaBankAt * go.reishiMax && kitCommandOkP(e, 'kikon')
+    if (go.reishi < f32(IC.aiKessaBankAt * go.reishiMax) && kitCommandOkP(e, 'kikon')
         && !['stun', 'air', 'down', 'wakeup', 'hoho'].includes(s.state))
       return pay && n < (gg >= IC.cloneCost + 25.0 ? 3 : 2) && d >= 3.0
-        && !(s.state === 'move' && s.sf < s.activeEnd && d < s.reach + 1.0) ? why(b, 'bank', 'side-step') : null;
+        && !(s.state === 'move' && s.sf < s.activeEnd && d < f32(s.reach + 1.0)) ? why(b, 'bank', 'side-step') : null;
   }
   if (!s.flags.includes('parry') && !['down', 'wakeup', 'hoho'].includes(s.state) && simRnd01() < IC.aiKessaCloneJP) {
     const r = cloneIdleInReach(e);
-    return r === null ? null : r === 'light' && d >= 1.6 && d <= 3.0 ? why(b, 'clone-reach', 'f') : why(b, 'clone-reach', 'q');
+    return r === null ? null : r === 'light' && d >= f32(1.6) && d <= 3.0 ? why(b, 'clone-reach', 'f') : why(b, 'clone-reach', 'q');
   }
-  if (n >= 2 && d <= 8.6 && kitCommandOkP(e, 'kikon') && simRnd01() < (n >= 3 ? 2 : 1) * IC.aiKessaOP)
+  if (n >= 2 && d <= f32(8.6) && kitCommandOkP(e, 'kikon') && simRnd01() < (n >= 3 ? 2 : 1) * IC.aiKessaOP)
     return why(b, 'clones', 'kikon');
   return null;
 }
@@ -713,10 +714,10 @@ function ichigoAiKessa(e: Ent, b: Brain, s: Snap, d: number): string | null {
 function ichigoAiLongPunish(e: Ent, b: Brain, s: Snap, d: number): string | null {
   const kit = kitOf(e), left = s.left - b.delay;
   if (((s.state === 'move' && s.phase === 'main' && s.sf >= s.activeEnd) || s.state === 'stun')
-      && s.left < 99 && d > kitCommandMove(kit, 'q')!.reach + 0.4 && b.reactRoll < icP(b, 0.0, 0.15, 0.8)) {
+      && s.left < 99 && d > f32(kitCommandMove(kit, 'q')!.reach + f32(0.4)) && b.reactRoll < icP(b, 0.0, 0.15, 0.8)) {
     for (const c of ['f', 'sp2', 'sp1']) {
       const mv = kitCommandMove(kit, c);
-      if (icHitsP(mv) && kitCommandOkP(e, c) && left > mv!.s && d <= mv!.reach + mv!.slide + 0.1) return why(b, 'long-punish', c);
+      if (icHitsP(mv) && kitCommandOkP(e, c) && left > mv!.s && d <= f32(f32(mv!.reach + mv!.slide) + f32(0.1))) return why(b, 'long-punish', c);
     }
   }
   return null;
@@ -730,7 +731,7 @@ function ichigoAiMash(e: Ent, b: Brain, s: Snap, d: number): string | null {
   if (kessa && d <= 2.0 && !g.guardless && g.gg >= IC.kessaParryCost + 10.0 && kitCommandOkP(e, 'sig')
       && simRnd01() < icP(b, 0.0, 0.03, 0.25))
     return why(b, 'mash-parry', 'sig');
-  if (d >= 1.7 && d <= 2.8 && s.state !== 'move' && kitCommandOkP(e, 'f') && simRnd01() < icP(b, 0.0, 0.03, 0.25))
+  if (d >= f32(1.7) && d <= f32(2.8) && s.state !== 'move' && kitCommandOkP(e, 'f') && simRnd01() < icP(b, 0.0, 0.03, 0.25))
     return why(b, 'mash-poke', 'f');
   return null;
 }
@@ -740,7 +741,7 @@ function ichigoAiMash(e: Ent, b: Brain, s: Snap, d: number): string | null {
 function ichigoAiPerfectHoho(e: Ent, b: Brain, s: Snap, d: number): string | null {
   const g = e.g, f = e.f, lead = s.s - s.sf - b.delay;
   return s.state === 'move' && s.phase === 'main' && ['quick', 'flash', 'sig', 'sp', 'breaker', 'kikon'].includes(s.kind!)
-    && s.activeEnd > s.s && lead >= 0 && lead <= 11 && d < s.reach + 1.5
+    && s.activeEnd > s.s && lead >= 0 && lead <= 11 && d < f32(s.reach + 1.5)
     && !kitOf(e).rooted && hohoAllowedP(false, g.fs, f.hohoLock, g.burst) && !g.burst
     && b.hohoRoll < icP(b, 0.0, 0.0, 1.0) ? why(b, 'perfect-hoho', 'hoho') : null;
 }
@@ -764,13 +765,13 @@ function ichigoAiRed(e: Ent, b: Brain, s: Snap, d: number): string | null {
   if (!(redP(g.reishi, g.reishiMax) && icP(b, 0.0, 0.0, 1.0) > 0)) return null;
   const c = ichigoAiRedGuard(e, b, s, d);
   if (c) return c;
-  if (burstOkP(e) === 'white' && !(s.state === 'move' && s.sf < s.activeEnd && d < s.reach + 1.5) && simRnd01() < 0.25)
+  if (burstOkP(e) === 'white' && !(s.state === 'move' && s.sf < s.activeEnd && d < f32(s.reach + 1.5)) && simRnd01() < 0.25)
     return why(b, 'red-white', 'burst');
   return null;
 }
 
 /** Frames from an O press at D m to its strike landing (aura 6, 30 m/s to 1.6 m, S 7, + 2). */
-const ichigoRushFrames = (d: number): number => 6 + Math.max(0, Math.ceil((d - 1.6) / 0.5)) + 7 + 2;
+const ichigoRushFrames = (d: number): number => 6 + Math.max(0, Math.ceil(f32(d - f32(1.6)) / 0.5)) + 7 + 2;
 
 /** He is red (our Kikon ready; HARD only): turn it into the most Konpaku. KESSA banks its clones first; the rush only
  *  where his answer can't come (he is busy, or 7-8.4 m out); KESSA with its bank chains him; closer, J / K strings. */
@@ -780,11 +781,11 @@ function ichigoAiConvert(e: Ent, b: Brain, s: Snap, d: number): string | null {
   const kessa = kitOf(e).form === 'kessa', g = e.g;
   const short = kessa && cloneCount(e) < ichigoBankTarget(e, b) && !g.guardless && g.gg >= IC.cloneCost;
   const left = s.left - b.delay, attacking = s.state === 'move' && s.sf < s.activeEnd;
-  if (!short && d < 8.4 && s.state === 'move' && s.phase === 'main' && s.sf >= s.activeEnd && s.left < 99
+  if (!short && d < f32(8.4) && s.state === 'move' && s.phase === 'main' && s.sf >= s.activeEnd && s.left < 99
       && left >= ichigoRushFrames(d) && b.reactRoll < 0.9)
     return why(b, 'rush-busy', 'kikon');
-  if (!short && d >= 7.0 && d <= 8.4 && !attacking && simRnd01() < 0.3) return why(b, 'rush-far', 'kikon');
-  if (kessa && !short && cloneCount(e) >= 2 && d >= 3.8 && d <= 7.0 && !attacking && kitCommandOkP(e, 'sp1') && simRnd01() < 0.15)
+  if (!short && d >= 7.0 && d <= f32(8.4) && !attacking && simRnd01() < 0.3) return why(b, 'rush-far', 'kikon');
+  if (kessa && !short && cloneCount(e) >= 2 && d >= f32(3.8) && d <= 7.0 && !attacking && kitCommandOkP(e, 'sp1') && simRnd01() < 0.15)
     return why(b, 'chain', 'sp1');
   if (d < 7.0 && b.decideT <= 1) {
     b.decideT = getf(T.aiThink, b.difficulty, 24) + Math.floor(40 * simRnd01());

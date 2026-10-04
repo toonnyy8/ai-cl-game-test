@@ -40,8 +40,10 @@ babylon/
 ```
 
 - No ECS: two fighters and a hazard array owned by a `Match`.
-- Floats are doubles; integer frame counters stay integers; CL `round` is half-even (`roundHalfEven`), CL `mod` on
-  negatives is `((a % n) + n) % n`.
+- Floats are single floats wherever the Lisp's are (all of the sim): stored values live in `Float32Array`s / f32
+  setters, every literal and data table is rounded at load (`f32Deep`: tuning, the character knobs, `BODIES`, every
+  `defmove` / `defkit` spec), arithmetic is `Math.fround` op by op, `sinf` / `cosf` are musl's (`sinf.ts`). Integer frame
+  counters stay integers; CL `round` is half-even (`roundHalfEven`), CL `mod` on negatives is `((a % n) + n) % n`.
 - Gameplay randomness only from the sim stream (xorshift32 of `rng.c`) inside fixed steps; cosmetics use another.
 
 ## Traps to copy verbatim (from the advisor's read of the Lisp)
@@ -64,6 +66,31 @@ the seed, `slowAcc`, hitstop and pending; the hidden hit-stun; `fighter-step` co
 | M4 roster | Rukia, Ichigo, Senjumaru | 15 pairings pass the gate |
 | M5 look | new Babylon models and motions (redrawn, timed to the frame data), VFX, real cinematics, audio | visual review; gate unchanged |
 | M6 platform | screens, touch deck, ASSIST, practice, ENDLESS, learning CPU | phone smoke test, ENDLESS run |
+
+## Parity check (`babylon/tools/parity/`)
+
+```
+python3 babylon/tools/parity/parity.py --pairs ik,ss --seeds 1-10        # per seed: identical, or the first differing line
+python3 babylon/tools/parity/parity.py --pairs all --seeds 1-20 --summary
+  --lisp-root ../ai-cl-game-test   from a worktree: use the main checkout's build/simgate/duel.fas (no 2-min rebuild)
+  --out DIR -v                     keep both logs (DIR/{lisp,ts}-<pair>-<seed>.txt), 3 lines of context
+  --bits LO-HI                     per-step bit dumps instead: the first step in LO..HI that differs, and its fields
+```
+
+Each seed is one native match per ECL process (`tools/simgate/run-log.lisp` with `30000+seed-1 31101 2125+k`: a
+one-seed gate of pairing k, combat log on) next to the same match in the TS sim (`tools/parity/log.ts`), `-j 12`
+processes at a time (300 matches in ~45 s). Compared: every combat-log event, every `duel hash` line and the RESULTS
+line (symbols lower-cased, `cine` lines and the hash's `| cd` tail dropped). The native build is rebuilt by
+`tools/simgate.py`'s own `build()` when a Lisp source is newer.
+
+When a seed differs, find the first step where the state does (the hash lines are 600 steps apart): `--bits LO-HI`
+runs `tools/parity/bits.lisp` / `bits.ts` instead (per step: the sim stream's state, both fighters' state, sf and every
+float as an `integer-decode-float` pair) and prints the first differing step and fields (`1:yaw`, `2:z`; `0:rng` = a
+different number of random draws: a branch taken differently, a condition rather than a value). Narrow LO-HI to that step
+and instrument it (the Lisp side: a script loaded after `duel.fas` that prints from the frame loop, as bits.lisp does;
+ECL calls compiled functions directly, so wrapping one with `fdefinition` doesn't see the sim's calls). Root causes found so far were all single-float details: a literal or data value left a
+double, a double op between two f32s, `Math.sin` for musl's `sinf`, a comparison against a literal the Lisp reads as
+single (`d >= 2.6` with d exactly `f32(2.6)`), a weighted pick summed in doubles.
 
 ## M5 look: the user's decisions (2026-10-04)
 
@@ -140,6 +167,16 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   native Lisp (`tools/simgate/run-log.lisp`, one match per process): YY, YK, KK seeds 1-20 and RY, RK, RR seeds 1-10
   give the same combat log and hash lines bit for bit (90 of 90). The native seed gate (`simgate.py`, matches back to
   back in one process) differs slightly from single matches (YY 130.9 vs 129.5 s, KK 144.8 vs 142.9 s).
+- 2026-10-04: parity batch: Ichigo, Senjumaru and what they call made single-float like the Lisp (their knob tables,
+  `BODIES`, every move / kit spec through `f32Deep`; `hitvol.ts` in f32 op by op like hitvol.lisp; `ahead`, `dirYaw`,
+  `weightedPick` round their inputs; Kenpachi's charge dash on musl `sinf` / `cosf`; the chars' own positions, pulls,
+  clones, soldier, zones, waves and AI thresholds in f32). All 15 pairings, seeds 1-60, match the native Lisp bit for bit
+  (900 of 900; `tools/parity/parity.py`, above). The native gate (`simgate.py`, matches back to back in one process)
+  gives the same per-seed rows as one match per process: nothing carries over between matches. The earlier median gap
+  (YY 130.9 vs 129.5 s) was the median's definition: the Lisp gate takes `(nth (floor n 2))` of the sorted seconds (the
+  upper middle of 20), `gate.ts` averaged the two middle ones; `gate.ts` now takes the Lisp's, and its 15 medians equal
+  `simgate.py`'s (YY 130.9, YK 124.4, KK 144.8, RY 145.6, RK 148.0, RR 174.1, IY 161.9, IK 163.3, IR 181.9, II 204.4,
+  SY 129.0, SK 147.9, SR 193.2, SS 194.2, SI 179.6 s).
 
 - 2026-10-04: merged M4 Ichigo and Senjumaru (the S meter's state: `senjuMeter(e)`), M3a Yamamoto + the single-float sim
   (f32 values and op-by-op rounding, f32 pi, musl sinf/cosf in `src/sim/sinf.ts`): YY / YK / KK seeds 1-20 and RY / RK /

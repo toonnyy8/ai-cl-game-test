@@ -69,7 +69,8 @@ export function playClip(e: Ent, clip: string | null,
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const moveParam = (e: Ent, key: string): any => e.f.move!.params[key];
 /** [x z] of the point D metres in front of fighter E. */
-export const ahead = (e: Ent, d: number): [number, number] => [f32(e.pos[0] + f32(d * fwdX(e.yaw))), f32(e.pos[2] + f32(d * fwdZ(e.yaw)))];
+export const ahead = (e: Ent, d: number): [number, number] =>   // (D a single, as the Lisp's literal)
+  [f32(e.pos[0] + f32(f32(d) * fwdX(e.yaw))), f32(e.pos[2] + f32(f32(d) * fwdZ(e.yaw)))];
 export const faceYawTo = (e: Ent, x: number, z: number): number => dirYaw(f32(x - e.pos[0]), f32(z - e.pos[2]));
 /** Turn E toward his opponent by at most MAX-STEP radians. */
 export function turnToOpp(e: Ent, f: Fighter, maxStep: number): void {
