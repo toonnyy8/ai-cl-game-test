@@ -76,7 +76,7 @@ void main(void) {
 #endif
   if (shadowR > 0.0) {
     float d = min(distance(vW.xz, shadows.xy), distance(vW.xz, shadows.zw));
-    c = mix(c, vec3(0.078, 0.078, 0.125), 0.5 * (1.0 - smoothstep(shadowR - 0.02, shadowR, d)));
+    c = mix(c, vec3(0.078, 0.078, 0.125), 0.3 * (1.0 - smoothstep(shadowR - 0.02, shadowR, d)));
   }
   c = mix(c, tint.rgb, tint.a);
   c = mix(c, vec3(1.0), flash);
@@ -147,7 +147,7 @@ fn main(input : FragmentInputs) -> FragmentOutputs {
 #endif
   if (uniforms.shadowR > 0.0) {
     let d = min(distance(fragmentInputs.vW.xz, uniforms.shadows.xy), distance(fragmentInputs.vW.xz, uniforms.shadows.zw));
-    c = mix(c, vec3f(0.078, 0.078, 0.125), 0.5 * (1.0 - smoothstep(uniforms.shadowR - 0.02, uniforms.shadowR, d)));
+    c = mix(c, vec3f(0.078, 0.078, 0.125), 0.3 * (1.0 - smoothstep(uniforms.shadowR - 0.02, uniforms.shadowR, d)));
   }
   c = mix(c, uniforms.tint.rgb, uniforms.tint.a);
   c = mix(c, vec3f(1.0), uniforms.flash);

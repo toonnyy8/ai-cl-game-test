@@ -6,7 +6,7 @@
 // rim in their reiatsu colour, a smear of the blade over the active frames and a one-frame white flash when hit;
 // hazards, auras, blade arcs, afterimages are vfx/; hit sparks are ink.ts brush sprites. Right-handed like the sim (Y up, yaw 0 faces -Z), so sim positions and yaws go in unchanged.
 import {
-  Color3, Color4, FreeCamera, Mesh, MeshBuilder, Scene, TransformNode, Vector3, VertexBuffer, VertexData,
+  Color3, Color4, FreeCamera, Mesh, MeshBuilder, Scene, StandardMaterial, TransformNode, Vector3, VertexBuffer, VertexData,
   type AbstractEngine,
 } from '@babylonjs/core';
 import type { Ent, SimEvent, World } from '../sim/types';
@@ -34,9 +34,9 @@ export function createScene(engine: AbstractEngine): Stage {
   scene.useRightHandedSystem = true;
   scene.clearColor = new Color4(0.65, 0.78, 0.93, 0);           // the horizon; alpha 0 = no fighter ink
   const cam = new FreeCamera('cam', new Vector3(0, 3, 12), scene);
-  cam.fov = 50 * Math.PI / 180; cam.minZ = 0.1; cam.maxZ = 400;
+  cam.fov = 50 * Math.PI / 180; cam.minZ = 0.35; cam.maxZ = 400;
   const outline = createOutline(scene, cam);
-  const stone = new CelMaterial('stone', scene, { lit: hex(0xc8b38c), shadow: hex(0x8c7858), contact: 0.45 });
+  const stone = new CelMaterial('stone', scene, { lit: hex(0xc8b38c), shadow: hex(0x8c7858), contact: 0.35 });
   const wl = hex(0xf3eee3), ws = hex(0x8a90a8);
   const vc = new CelMaterial('stage', scene, { shadow: new Color3(ws.r / wl.r, ws.g / wl.g, ws.b / wl.b) });
   // the sky: a gradient dome (top #2E4C8C -> horizon #A6C8EC) and one hard-edged cloud band; flat colour, no ink
@@ -105,14 +105,15 @@ export class FighterView {
     for (let i = 0; i + 1 < SMEAR_N; i++) idx.push(2 * i, 2 * i + 1, 2 * i + 2, 2 * i + 1, 2 * i + 3, 2 * i + 2);
     const vd = new VertexData();
     Object.assign(vd, { positions: Array.from(this.smearPos), indices: idx, normals: new Array(SMEAR_N * 6).fill(0).map((_, i) => (i % 3 === 1 ? 1 : 0)),
-      colors: new Array(SMEAR_N * 2).fill(0).flatMap((_, i) => { const t = Math.floor(i / 2) / (SMEAR_N - 1); return [0.86 + 0.14 * t, 0.9 + 0.1 * t, 1, 1]; }) });
+      colors: new Array(SMEAR_N * 2).fill(0).flatMap((_, i) => { const t = Math.floor(i / 2) / (SMEAR_N - 1); return [0.86 + 0.14 * t, 0.9 + 0.1 * t, 1, 0.55 - 0.4 * t]; }) });
     vd.applyToMesh(this.smear, true);
+    this.smear.hasVertexAlpha = true;            // alpha 0.55 newest -> 0.15 oldest; not in the G-buffer (ink shows through)
     this.smear.material = this.smearMat(scene); this.smear.alwaysSelectAsActiveMesh = true; this.smear.isVisible = false;
-    outline.add(this.smear);                     // in the G-buffer: what it covers loses its ink lines (no lines through it)
   }
-  private smearMat(scene: Scene): CelMaterial {
-    const m = new CelMaterial('smear', scene, { shadow: Color3.White() });
-    m.backFaceCulling = false;
+  private smearMat(scene: Scene): StandardMaterial {
+    const m = new StandardMaterial('smear', scene);
+    m.disableLighting = true; m.diffuseColor = Color3.White(); m.specularColor = Color3.Black();
+    m.backFaceCulling = false; m.disableDepthWrite = true;
     return m;
   }
 
@@ -168,10 +169,16 @@ export class FighterView {
     this.smearPts.unshift(Vector3.TransformCoordinates(this.body.base, m), Vector3.TransformCoordinates(this.body.tip, m));
     this.smearPts.length = Math.min(this.smearPts.length, SMEAR_N * 2);
     const n = this.smearPts.length / 2;
-    if (n < 2) { this.smear.isVisible = false; return; }
+    // skipped: a tip jump > 1.5 m since the last frame (a cut / a snap), or a slice within 1 m of the lens
+    if (n >= 2 && Vector3.Distance(this.smearPts[1], this.smearPts[3]) > 1.5) this.smearPts.length = 2;   // (restart after it)
+    if (this.smearPts.length < 4) { this.smear.isVisible = false; return; }
+    const eye = this.scene.activeCamera?.globalPosition;
     for (let i = 0; i < SMEAR_N; i++) {
       const k = Math.min(i, n - 1), b = this.smearPts[2 * k], tp = this.smearPts[2 * k + 1];
-      const q = b.add(tp.subtract(b).scale(0.25 + 0.15 * (k / (SMEAR_N - 1))));  // older slices narrow toward the tip
+      const q = b.add(tp.subtract(b).scale(0.45 + 0.15 * (k / (SMEAR_N - 1))));  // from 45 % up; older slices narrow toward the tip
+      const l = Vector3.Distance(q, tp);
+      if (l > 1.3) q.subtractInPlace(tp).scaleInPlace(1.3 / l).addInPlace(tp);  // <= 1.3 m (the cleavers)
+      if (eye && Math.min(Vector3.Distance(q, eye), Vector3.Distance(tp, eye)) < 1.0) { this.smear.isVisible = false; return; }
       this.smearPos.set([q.x, q.y, q.z, tp.x, tp.y, tp.z], i * 6);
     }
     this.smear.updateVerticesData(VertexBuffer.PositionKind, this.smearPos);
@@ -183,7 +190,7 @@ export class FighterView {
     for (const b of this.bodies.values()) {
       b.extra?.dispose(); b.weapon.dispose(); b.face.dispose(); b.faceTex.dispose(); b.faceMat.dispose(); b.mesh.dispose(); b.skeleton.dispose();
     }
-    this.outline.remove(this.smear); this.smear.material?.dispose(); this.smear.dispose();
+    this.smear.material?.dispose(); this.smear.dispose();
     this.mat.dispose(); this.wmat.dispose(); this.root.dispose();
   }
 }

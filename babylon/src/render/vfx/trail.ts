@@ -56,6 +56,7 @@ class Ribbon {
     if (strikeLive(e) && w.isVisible) {
       const [b, t] = bladeLocal(w), M = w.computeWorldMatrix(true);
       this.pts.unshift(Vector3.TransformCoordinates(b, M), Vector3.TransformCoordinates(t, M));
+      if (this.pts.length >= 4 && Vector3.Distance(this.pts[1], this.pts[3]) > 1.5) this.pts.length = 2;   // a jump (Hoho): restart
       if (this.pts.length > 2 * TRAIL) this.pts.length = 2 * TRAIL;
       const f = e.f;
       this.mat.emissiveColor = f.contact === 'block' ? TINT.slate : f.move!.kind === 'kikon' || f.kit.awakening ? TINT.red : TINT.ink;
@@ -83,7 +84,7 @@ export class Trails {
     });
     this.ribbons = [new Ribbon(scene, tex), new Ribbon(scene, tex)];
     this.ghostMat = new StandardMaterial('ghost', scene);
-    this.ghostMat.disableLighting = true; this.ghostMat.emissiveColor = hex3(0x1c1a24); this.ghostMat.diffuseColor = Color3.Black();
+    this.ghostMat.disableLighting = true; this.ghostMat.emissiveColor = hex3(0x3a3848); this.ghostMat.diffuseColor = Color3.Black();
     this.ghostMat.specularColor = Color3.Black(); this.ghostMat.backFaceCulling = false;
   }
 
@@ -131,7 +132,7 @@ export class Trails {
         g.node.dispose(); return false;
       }
       const k = Number.isFinite(g.life) ? Math.floor((g.age / g.life) * FPS * g.life) / (FPS * g.life) : 0;   // stepped fade
-      for (const m of g.meshes) m.visibility = 0.75 * (1 - k);
+      for (const m of g.meshes) m.visibility = 0.45 * (1 - k);
       g.node.scaling.y = 1 + 0.05 * k;
       return true;
     });

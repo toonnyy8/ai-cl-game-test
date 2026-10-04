@@ -3,8 +3,8 @@
 // shihakusho showing at the collar, empty white sleeves hanging from the shoulders, long straight black hair with side
 // locks and a blunt fringe, a gold crescent with rays standing off the back of her head. The rig's two arms are the upper
 // pair of her six gold bone arms (rooted a little behind the shoulders); the other four are "echo arms" (EXTRA below:
-// gold bone chains from her upper back to the rig hands' positions 2 / 4 frames ago, turned about her spine by +-28 /
-// +-52 deg; at rest a half-fan behind her framing the crescent). The needle 刺絡 (0.9 m, white-gold) is the weapon; its
+// gold bone chains from her upper back to the rig hands' positions 2 / 4 frames ago, turned about her spine by +-18 /
+// +-34 deg; at rest a fan of thin lines behind her, elbows bent down 30 deg, palms toward her, fingers curled). The needle 刺絡 (0.9 m, white-gold) is the weapon; its
 // red thread trails the hand (base form only). The Bankai forms keep this body (the domain is stage / VFX work).
 import { Bone, Matrix, Mesh, Quaternion, Skeleton, Vector3, VertexData, type Scene } from '@babylonjs/core';
 import { T, adder, box, ellipsoid, inkLine, limb, litOf, pair, rigid, shadeOf, tube, type Add, type BodyExtra, type BodySpec, type BuiltBody,
@@ -15,8 +15,8 @@ import type { BoneName } from '../pose';
  *  (DUEL_SENJUMARU §2: not spot hues). */
 export const SJ_PAL = {
   robe: [0xeeece6, 0xa4adc8], haori: [0xf8f6f0, 0xaab3cf], lining: [0xc9ccd6, 0x8a90a8], black: [0x2b2d3a, 0x121319],
-  skin: [0xf2dccc, 0xc4988a], hair: [0x2a2b38, 0x0e0f15], shine: [0xd8dce4, 0x9aa0b4], gold: [0xc9a85c, 0x8a6a34],
-  goldL: [0xe2c784, 0xa08048], lacquer: [0x2a1e22, 0x120c0e], madder: [0xa8434a, 0x6a2228], tabi: [0xf3f3ee, 0xb4b8c8],
+  skin: [0xf2dccc, 0xc4988a], hair: [0x2a2b38, 0x0e0f15], shine: [0xd8dce4, 0x9aa0b4], gold: [0xe8c96a, 0xa37e2e],
+  goldL: [0xf4e2a0, 0xc0a050], lacquer: [0x2a1e22, 0x120c0e], madder: [0xa8434a, 0x6a2228], tabi: [0xf3f3ee, 0xb4b8c8],
   needle: [0xf4eedc, 0xb8ae90], thread: [0xd0283c, 0x801420],
 } as const;
 const L = (k: keyof typeof SJ_PAL) => pair(SJ_PAL[k][0], SJ_PAL[k][1]);
@@ -98,17 +98,17 @@ function rigGold(sp: BodySpec, r: Rig): { vd: VertexData; c: number; bn: BoneNam
     const S = s > 0 ? 'R' : 'L', sh = R[`arm${S}`].add(back), el = R[`fore${S}`], wr = R[`hand${S}`];
     const ab = `arm${S}` as BoneName, fb = `fore${S}` as BoneName, hb = `hand${S}` as BoneName, hs = sp.hand * H;
     const add = (vd: VertexData, c: number, bn: BoneName) => out.push({ vd, c, bn });
-    add(ellipsoid([sh.x, sh.y, sh.z], [0.17 * H, 0.17 * H, 0.17 * H], 8, 6), L('goldL'), ab);
-    add(bar(sh, el, 0.26 * H, 0.18 * H), L('gold'), ab);
-    add(ellipsoid([el.x, el.y, el.z], [0.15 * H, 0.15 * H, 0.15 * H], 8, 6), L('goldL'), fb);
-    for (const k of [1, -1]) add(bar(el.add(V(0, 0, k * 0.07 * H)), wr.add(V(0, 0, k * 0.06 * H)), 0.14 * H, 0.1 * H), L('gold'), fb);
+    add(ellipsoid([sh.x, sh.y, sh.z], [0.1 * H, 0.1 * H, 0.1 * H], 8, 6), L('goldL'), ab);
+    add(bar(sh, el, 0.18 * H, 0.12 * H), L('gold'), ab);
+    add(ellipsoid([el.x, el.y, el.z], [0.1 * H, 0.1 * H, 0.1 * H], 8, 6), L('goldL'), fb);
+    for (const k of [1, -1]) add(bar(el.add(V(0, 0, k * 0.05 * H)), wr.add(V(0, 0, k * 0.045 * H)), 0.1 * H, 0.07 * H), L('gold'), fb);
     add(ellipsoid([wr.x, wr.y - 0.2 * hs, wr.z], [0.09 * hs, 0.24 * hs, 0.24 * hs], 8, 6), L('goldL'), hb);
     for (let f = 0; f < 4; f++) {
       const dz = (f - 1.5) * 0.11 * hs, b0 = V(wr.x, wr.y - 0.38 * hs, wr.z + dz), len = [0.5, 0.56, 0.52, 0.42][f] * hs;
-      add(bar(b0, b0.add(V(-s * 0.06 * hs, -len, dz * 0.4 - 0.08 * hs)), 0.08 * hs, 0.09 * hs, 0.7), L('gold'), hb);
+      add(bar(b0, b0.add(V(-s * CURL_S * len, -CURL_C * len, dz * 0.4 - 0.08 * hs)), 0.045 * hs, 0.05 * hs, 0.7), L('gold'), hb);   // curled 40 % to the palm
     }
     add(bar(V(wr.x - s * 0.02 * hs, wr.y - 0.14 * hs, wr.z - 0.18 * hs), V(wr.x - s * 0.12 * hs, wr.y - 0.44 * hs, wr.z - 0.36 * hs),
-      0.09 * hs, 0.08 * hs, 0.7), L('gold'), hb);
+      0.05 * hs, 0.045 * hs, 0.7), L('gold'), hb);
   }
   return out;
 }
@@ -202,7 +202,9 @@ function parts(sp: BodySpec, r: Rig): Part[] {
 
 // ---------------------------------------------------------------- the four echo arms and the needle's thread
 // per arm: side (+1 her right), spread about the spine (deg), lag (frames), the anchor's height on her back (chest frame)
-const ARMS: [number, number, number, number][] = [[1, 28, 2, 0.08], [-1, 28, 2, 0.08], [1, 52, 4, -0.16], [-1, 52, 4, -0.16]];
+const ARMS: [number, number, number, number][] = [[1, 18, 2, 0.08], [-1, 18, 2, 0.08], [1, 34, 4, -0.16], [-1, 34, 4, -0.16]];
+/** Finger curl toward the palm: 40 % of 90 deg. */
+const CURL_C = Math.cos(0.4 * Math.PI / 2), CURL_S = Math.sin(0.4 * Math.PI / 2);
 const PER = 4, THREAD = 5, TH0 = ARMS.length * PER;            // bones: upper (stretched), elbow, lower (stretched), hand
 const RIG: BoneName[] = ['armR', 'foreR', 'handR', 'armL', 'foreL', 'handL', 'head'], RIG0 = TH0 + THREAD;   // copies of the rig's arm bones
 const UP = V(0, 1, 0);
@@ -231,13 +233,14 @@ function echoArms(scene: Scene, b: BuiltBody): EchoArms {
   };
   const O = Vector3.Zero(), Y1 = V(0, 1, 0);
   for (let a = 0; a < ARMS.length; a++) {
-    put(bar(O, Y1, 0.22 * H, 0.16 * H), L('gold'), PER * a);
-    put(ellipsoid([0, 0, 0], [0.14 * H, 0.14 * H, 0.14 * H], 7, 5), L('goldL'), PER * a + 1);
-    put(bar(O, Y1, 0.15 * H, 0.11 * H), L('gold'), PER * a + 2);
+    put(bar(O, Y1, 0.15 * H, 0.11 * H), L('gold'), PER * a);
+    put(ellipsoid([0, 0, 0], [0.1 * H, 0.1 * H, 0.1 * H], 7, 5), L('goldL'), PER * a + 1);
+    put(bar(O, Y1, 0.1 * H, 0.075 * H), L('gold'), PER * a + 2);
     put(ellipsoid([0, 0.18 * hs, 0], [0.24 * hs, 0.22 * hs, 0.09 * hs], 7, 5), L('goldL'), PER * a + 3);
     for (let f = 0; f < 4; f++) {
       const dx = (f - 1.5) * 0.11 * hs;
-      put(bar(V(dx, 0.34 * hs, 0), V(dx * 1.4, (0.34 + [0.46, 0.52, 0.48, 0.38][f]) * hs, 0.06 * hs), 0.09 * hs, 0.07 * hs, 0.7),
+      const len = [0.46, 0.52, 0.48, 0.38][f] * hs;                  // curled 40 % toward the palm (+z)
+      put(bar(V(dx, 0.34 * hs, 0), V(dx * 1.4, 0.34 * hs + CURL_C * len, CURL_S * len), 0.045 * hs, 0.04 * hs, 0.7),
         L('gold'), PER * a + 3);
     }
   }
@@ -292,16 +295,29 @@ function echoArms(scene: Scene, b: BuiltBody): EchoArms {
       const want = f.state === 'move' || f.state === 'hoho' || f.state === 'cine' ? 1 : 0;
       act += (want - act) * Math.min(1, 10 * rdt);
       ARMS.forEach(([s, spread, lag, up], i) => {
-        const anc = at('chest', s * 0.08, up, 0.13), rest = at('chest', s * (up < 0 ? 0.5 : 0.46), up < 0 ? 0.1 : 0.34, 0.34);
+        // at rest a fan behind her: 0.55 m out of the upper back at +spread (upper pair) / -spread (lower pair) deg
+        const e = ((up < 0 ? -spread : spread) * Math.PI) / 180;
+        const anc = at('chest', s * 0.08, up, 0.13), rest = at('chest', s * (0.08 + 0.55 * Math.cos(e)), up + 0.55 * Math.sin(e), 0.33);
         const h = hist[lag][s > 0 ? 0 : 1], ang = (s * spread * Math.PI) / 180, c = Math.cos(ang), sn = Math.sin(ang);
         const t = pts[3 + i].set(c * h.x - sn * h.z, h.y + (up < 0 ? -0.12 : 0.02), sn * h.x + c * h.z);
         t.set(rest.x + (t.x - rest.x) * act, rest.y + (t.y - rest.y) * act, rest.z + (t.z - rest.z) * act);
-        const mid = anc.add(t).scaleInPlace(0.5), out = V(mid.x, 0, mid.z), ol = Math.max(1e-3, out.length());
-        const el = mid.add(out.scaleInPlace(0.16 / ol)); el.y += 0.06;
+        // the elbow: bowed up off the shoulder-hand line so the forearm bends down 30 deg (out a little while striking)
+        const d = t.subtract(anc), L = Math.max(1e-3, d.length()), dn = d.scale(1 / L), mid = anc.add(t).scaleInPlace(0.5);
+        const upP = UP.subtract(dn.scale(dn.y)), ul = upP.length();
+        const out = V(mid.x, 0, mid.z), ol = Math.max(1e-3, out.length());
+        const el = mid.add(upP.scaleInPlace(ul > 1e-3 ? (1 - act) * 0.5 * L * Math.tan(Math.PI / 12) / ul : 0))
+          .addInPlace(out.scaleInPlace(act * 0.12 / ol));
         between(PER * i, anc, el);
         seg(PER * i + 1, el, UP, 1, false);
         between(PER * i + 2, el, t);
-        seg(PER * i + 3, t, t.subtract(el).normalize(), 1, false);
+        // the hand along the forearm, its palm (+z, the fingers' curl) turned toward her chest
+        const fd = t.subtract(el).normalize(), pv = anc.subtract(t), pz = pv.subtract(fd.scale(Vector3.Dot(pv, fd)));
+        if (pz.lengthSquared() > 1e-8) {
+          pz.normalize();
+          Quaternion.RotationQuaternionFromAxisToRef(Vector3.Cross(fd, pz), fd, pz, q);
+          const bn = bones[PER * i + 3]; sc.set(1, 1, 1);
+          bn.position = t; bn.rotationQuaternion = q; bn.scaling = sc;
+        } else seg(PER * i + 3, t, fd, 1, false);
       });
       // the red thread from the needle's eye, trailing where the hand has been (the Shikai only)
       const mt = (20 * Math.PI) / 180;

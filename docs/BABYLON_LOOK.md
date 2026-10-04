@@ -123,3 +123,35 @@ meter from `senjuMeter`).
 
 Shot scripts per `CINES` entry summing to its `len`; camera rails; letterbox; white / black caption cards; body and
 weapon swaps on a frame; the awakening sequences; then WebAudio: per-event sfx, callouts, music (docs/AUDIO.md).
+
+## Polish (after the M5 merge)
+
+Fable 5.1's review of the merged M5 look (2026-10-05), condensed, with what was done:
+
+- **Camera** (`camera.ts`, `scene.ts`). Root cause: the 60 % ceiling on 2.0 m Kenpachi put the eye ~3.5 m from the
+  midpoint at AT y 1.0, so a swung blade sat 1–1.5 m from the lens and his head left the top. Done: frame fractions
+  0.30 floor / 0.48 ceiling; AT y = 0.55 × the taller fighter's height (Kenpachi 1.10, Rukia alone 0.8); eye height
+  1.85 + 0.1 · sep kept; a hard 3.2 m (horizontal) minimum from either fighter on the pair and behind cameras (was
+  0.5 + hurtR); behind camera 0.55 × (3.0 m back); `cam.minZ` 0.35; FOV 50. Head tops land at 24–40 % of the frame
+  (the HUD band is ~22 % at 720p).
+- **Blade smear** (`scene.ts`): alpha-blended (a StandardMaterial on vertex colours, alpha 0.55 newest → 0.15
+  oldest), out of the outline G-buffer; from 45 % up the blade, each slice ≤ 1.3 m from the tip; restarted when the
+  tip jumps > 1.5 m in a frame, hidden on a frame where a slice point is within 1 m of the eye. The ink arc ribbon
+  (`vfx/trail.ts`) restarts on the same 1.5 m jump (a Hoho dragged it into a screen-wide triangle).
+- **Auras** (`vfx/aura.ts`): none in the base form, except while gathering (hold / aura phases: the kit's aura or
+  `gather`); bursts, awakened forms, Kikon, Breaker, EVOLUTION keep theirs. No ×1.3 size, stretch 1.6; alpha 0.75 /
+  0.6; only Kikon / oni / Breaker / Nomihose dry to ink, the rest fade out in their own colour; life −0.1 s; rates:
+  awakened 40–70 /s (reiatsu 40, nozarashi 60, hellfire / garb / KESSA 70, zero 60, TSUJI 45), pillars (Nomihose, oni,
+  Kikon) 110, Breaker 100, bursts 55; radius 0.4–0.45; Rukia's cold / frost shards 0.12–0.22, white → ice blue,
+  alpha 0.6, 20 /s.
+- **HUD** (`hud.ts`, `vfx/brush.ts`, `input/onehand.ts`): name 11s, labels 8s, combo 14s, callouts 12s, HOHO! 13s (timer
+  and big words unchanged); Reishi bar 0.034 h, guard 0.35 of it; a 0.45 ink swash behind each side's label column;
+  the portrait floor 13 CSS px (s = ceil(13 d / 7)); the brush type's under-stroke offset px / 10.
+- **Senjumaru's gold arms** (`bodies/senju.ts`): finger bones 0.045 hs, joints 0.10 H, humerus 0.18 × 0.12 H,
+  forearms 0.10 × 0.07 H, echo arms 0.15 / 0.10 H; the echo spread 18 / 34°; at rest a fan of thin lines out of the
+  upper back (upper pair +18°, lower pair −34°, 0.55 m), elbows bowed so the forearm bends down 30°, fingers curled
+  40 % toward the palm, palms turned toward her; gold `#E8C96A / #A37E2E`, light gold `#F4E2A0 / #C0A050`.
+- **Afterimages and shadows**: Hoho ghosts start at 0.45 visibility in `#3A3848`; contact shadows alpha 0.30, radius
+  0.35 m; Kenpachi's haori shadow `#C3C9DD` (his own lit key `#F6F3ED`, so Yamamoto's haori keeps `#A9B2CF`).
+- Left as is: cel pairs / crease band, outlines, sky / floor palette, grain + vignette, hazard VFX, Kikon cards, hit
+  slashes, faces, stage.

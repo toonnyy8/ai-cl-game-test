@@ -23,8 +23,8 @@ let w = 0, h = 0, s = 1;
 export function resizeHud(): void {
   const d = devicePixelRatio || 1;
   w = cv.width = Math.round(innerWidth * d); h = cv.height = Math.round(innerHeight * d);
-  s = Math.max(1, Math.min(h / 360, w / 480));                    // engine ui.lisp UI-SCALE; portrait: the 11 CSS px floor
-  if (h > w) s = Math.max(s, Math.ceil((11 * d) / 7));
+  s = Math.max(1, Math.min(h / 360, w / 480));                    // engine ui.lisp UI-SCALE; portrait: the 13 CSS px floor
+  if (h > w) s = Math.max(s, Math.ceil((13 * d) / 7));
 }
 export const hudSize = (): [number, number] => [w, h];
 export const hudCtx = (): CanvasRenderingContext2D => g;
@@ -136,14 +136,14 @@ function kitMeter(e: Ent, x: number, y: number, bw: number, bh: number, right: b
 function side(e: Ent, human: boolean, inBattle: boolean, prompt: string): void {
   const f = e.f, gg = e.g, kit = f.kit, sd = f.side, right = sd === 1;
   const m = 0.03 * w, bw = 0.36 * w, x = right ? w - m - bw : m, edge = right ? x + bw : x;
-  const al: CanvasTextAlign = right ? 'right' : 'left', y = 0.05 * h, bh = Math.max(7 * s, 0.028 * h);
+  const al: CanvasTextAlign = right ? 'right' : 'left', y = 0.05 * h, bh = Math.max(7 * s, 0.034 * h);
   const frac = gg.reishi / gg.reishiMax, red = redP(gg.reishi, gg.reishiMax);
-  text(`${kit.name ?? f.character.toUpperCase()}${f.form !== 'base' ? '  ' + kit.formName : ''}`, edge, y - 9 * s, 7 * s, P_COL[sd], al);
+  text(`${kit.name ?? f.character.toUpperCase()}${f.form !== 'base' ? '  ' + kit.formName : ''}`, edge, y - 13 * s, 11 * s, P_COL[sd], al);
   trail[sd] = trail[sd] > frac ? Math.max(frac, trail[sd] - 0.35 / 60) : frac;
   bar(x, y, bw, bh, trail[sd], right, PAPER);
   brushBar(g, x, y, bw, bh, frac, right, red ? VERMILION : '#e8b94a', false, red ? 0.75 + 0.25 * pulse(3) : 1);
   // the guard gauge (grey while guardless, darker while he holds guard)
-  const gf = gg.gg / T.ggMax, gy = y + bh + 2 * s, gh = Math.max(3 * s, 0.3 * bh);
+  const gf = gg.gg / T.ggMax, gy = y + bh + 2 * s, gh = Math.max(3 * s, 0.35 * bh);
   bar(x, gy, bw, gh, gf, right, gg.guardless ? '#806060' : f.state === 'guard' || f.state === 'guard-hit' ? '#6d8fb8' : '#a8c4e8');
   // Konpaku pips
   const py = y + bh + 16 * s, pr = Math.max(4.5 * s, 0.013 * h) * 0.7;
@@ -157,8 +157,12 @@ function side(e: Ent, human: boolean, inBattle: boolean, prompt: string): void {
     const bx = right ? edge - (i + 1) * (sw + gap) + gap : edge + i * (sw + gap);
     bar(bx, sy, sw, sh, (gg.reiatsu - i * T.reiatsuBar) / T.reiatsuBar, right, '#70c8ff');
   }
+  {                                                                // a 0.45 ink swash behind the label column
+    const cw = brushWidth(g, 'FLASH STEP', 8 * s * 1.12) + 10 * s, cx = right ? edge - 3 * (sw + gap) - 4 * s - cw / 2 + 5 * s : edge + 3 * (sw + gap) + 4 * s + cw / 2 - 5 * s;
+    swash(g, cx, sy + 17 * s, cw, 28 * s, '#14110f', 0.45);
+  }
   const lab = (str: string, yy: number, color: string, lx = right ? edge - 3 * (sw + gap) - 4 * s : edge + 3 * (sw + gap) + 4 * s) =>
-    text(str, lx, yy - 2.5 * s, 6 * s, color, al);
+    text(str, lx, yy - 3.5 * s, 8 * s, color, al);
   lab('REIATSU', sy, '#73ccff');
   // flash step, awakening, the kit meter
   const aw = 3 * sw + 6 * s, ah = Math.max(3 * s, 0.009 * h), ax = right ? edge - aw : x, lx = right ? edge - aw - 6 * s : edge + aw + 6 * s;
@@ -173,7 +177,7 @@ function side(e: Ent, human: boolean, inBattle: boolean, prompt: string): void {
   // the combo counter under this side's bar (this side is the victim)
   const c = combo[sd];
   if (f.comboHits > 1 && f.comboDmg > 0) { c.str = `${f.comboHits} HITS  ${f.comboDmg}`; c.t0 = now(); }
-  if (now() - c.t0 < 1.2) text(c.str, edge, y + bh + 62 * s, 10 * s, '#ffe699', al);
+  if (now() - c.t0 < 1.2) text(c.str, edge, y + bh + 66 * s, 14 * s, '#ffe699', al);
   // the Kikon prompt for a human whose opponent is red
   const o = f.opp!;
   if (human && inBattle && redP(o.g.reishi, o.g.reishiMax) && kitCommandOkP(e, 'kikon'))
@@ -240,12 +244,12 @@ export function drawBattle(wd: World, project: Project, o: BattleHud): void {
   } else for (const e of [wd.p1, wd.p2]) side(e, !e.brain, wd.flow === 'battle', o.prompt(e.f.side));
   if (o.hint) {                                                                   // PERFECT HINT over P1
     const p = project(wd.p1.pos[0], wd.p1.pos[1] + wd.p1.body.hurtH + 0.8, wd.p1.pos[2]);
-    if (p) text('HOHO!', p[0], p[1], 11 * s, '#9ff0ff', 'center');
+    if (p) text('HOHO!', p[0], p[1], 13 * s, '#9ff0ff', 'center');
   }
   for (const e of [wd.p1, wd.p2]) {                                              // callouts over the user's head
     if (e.f.calloutT <= 0 || !e.f.callout) continue;
     const p = project(e.pos[0], e.pos[1] + e.body.hurtH + 0.45, e.pos[2]);
-    if (p) text(e.f.callout, p[0], p[1], 9 * s, '#ffd98c', 'center', Math.min(1, e.f.calloutT / 15));
+    if (p) text(e.f.callout, p[0], p[1], 12 * s, '#ffd98c', 'center', Math.min(1, e.f.calloutT / 15));
   }
   if (!o.portrait) {
     if (!o.practice) inkDot(g, w / 2, 0.035 * h + 13 * s, 17 * s, '#14110f', 0.8);
