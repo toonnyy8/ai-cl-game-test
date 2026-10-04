@@ -270,7 +270,7 @@ function aiBankaiP(e: Ent, b: Brain, bk: object): boolean {
 /** Per side, the CPU's awakening on EVOLUTION: null = the kit's awaken rule, 'always', 'never' (debug A/B). */
 export const aiAwakenMode: (string | null)[] = [null, null];
 /** Awaken now (EVOLUTION)? The kit's awaken plist (minTaken, meleeShare); no key: yes. */
-function aiAwakenP(e: Ent): boolean {
+export function aiAwakenP(e: Ent): boolean {
   const mode = aiAwakenMode[e.f.side];
   if (mode === 'always') return true;
   if (mode === 'never') return false;

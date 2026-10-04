@@ -2,3 +2,5 @@
 import './yama';
 import './ken';
 import './rukia';
+import './ichigo';
+import './senjumaru';

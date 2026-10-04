@@ -17,13 +17,17 @@ import { brainStep } from './ai';
 
 // ---------------------------------------------------------------- cinematics (length-only)
 /** Each script's length (its DEFCINE :len) and its frame-0 sim beat: FACE-EACH-OTHER, with a GAP for a flash step. */
-export const CINES: Record<string, { len: number; face?: boolean; gap?: number }> = {
+export const CINES: Record<string, { len: number; face?: boolean; gap?: number; at?: [number, number][] }> = {
   'intro-cine': { len: 300, face: true }, 'ko-cine': { len: 150, face: true }, 'time-cine': { len: 120 },
   'soul-break-cine': { len: 96, face: true },
   'yama-kikon-cine': { len: 186, gap: 3.2 }, 'yama-tenchi-cine': { len: 168, gap: 2.4 }, 'yama-bankai-cine': { len: 138 },
   'ken-kikon-cine': { len: 192, gap: 2.0 }, 'ken-sky-split-cine': { len: 162, gap: 2.6 }, 'ken-nozarashi-cine': { len: 108 },
   'ken-bankai-cine': { len: 186, face: true }, 'ken-oni-kikon-cine': { len: 162, gap: 2.6 },
   'ru-kikon-cine': { len: 186, gap: 2.4 }, 'ru-hakka-cine': { len: 198, gap: 3.0 }, 'ru-awaken-cine': { len: 132 },
+  // (AT: later FACE-EACH-OTHER beats, [cine frame, gap]: they move the actors too)
+  'ic-kikon-cine': { len: 186, gap: 2.6, at: [[70, 7.0]] }, 'ic-kessa-kikon-cine': { len: 192, gap: 2.6, at: [[120, 3.2]] },
+  'ic-kessa-getsuga-cine': { len: 180, gap: 6.0 }, 'ic-kessa-cine': { len: 168 },
+  'sj-kikon-cine': { len: 186, gap: 2.4 }, 'sj-hata-cine': { len: 198, gap: 3.5 }, 'sj-tsuji-cine': { len: 180 },
 };
 
 /** Turn A and V to face each other; with GAP, first put A GAP metres in front of V (a flash step). */
@@ -65,6 +69,7 @@ export function cineStep(): void {
   const c = W.cine!;
   if (c.skip) { endCine(); return; }
   c.cf++;
+  for (const [fr, gap] of CINES[c.name]?.at ?? []) if (fr === c.cf) faceEachOther(c.a, c.v, gap);
   for (const e of [c.a, c.v]) e.look.clipTime += e.look.clipSpeed / 60;
   if (c.cf >= c.len) endCine();
 }

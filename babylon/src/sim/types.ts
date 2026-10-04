@@ -19,6 +19,8 @@ export const BODIES: Record<string, Body> = {
   'rukia-zero': { name: 'rukia-zero', hurtR: 0.34, hurtH: 1.5 },     // body-variants of rukia: the same hurt cylinder
   'rukia-bankai': { name: 'rukia-bankai', hurtR: 0.34, hurtH: 1.5 },
   skeleton: { name: 'skeleton', hurtR: 0.3, hurtH: 1.7 },
+  ichigo: { name: 'ichigo', hurtR: 0.38, hurtH: 1.8 },
+  senjumaru: { name: 'senjumaru', hurtR: 0.36, hurtH: 1.7 },
 };
 export const findBody = (name: string | null): Body => (name && BODIES[name]) || { name: name ?? 'default', hurtR: 0.35, hurtH: 1.8 };
 
@@ -97,6 +99,7 @@ export class Fighter {
   comboHits = 0; comboLaunches = 0; comboAir = 0; comboDmg = 0;   // as a victim: the running combo
   frost = 0;
   callout: string | null = null; calloutT = 0;
+  char: unknown = null;          // a character file's own state (fresh with every fighter: Senjumaru's loom)
   constructor(side: number, character: string, kit: Kit) {
     this.side = side; this.character = character; this.kit = kit;
   }
