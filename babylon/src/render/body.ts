@@ -11,6 +11,7 @@ import {
   Vector3, VertexData, type Material,
 } from '@babylonjs/core';
 import type { BoneName } from './pose';
+import type { Ent } from '../sim/types';
 
 export interface BodySpec {
   height: number; heads: number;
@@ -32,8 +33,12 @@ export interface CharBody {
   drawFace(g: CanvasRenderingContext2D, expr: number): void;
   weapon(scene: Scene, sp: BodySpec, r: Rig): Mesh;
   variant(form: string): BodyVariant | null;
+  /** Optional extra meshes posed every frame after the skeleton (Senjumaru's echo arms); shown / hidden, outlined and
+   *  disposed with the body. */
+  extra?(scene: Scene, b: BuiltBody): BodyExtra;
 }
-export type BodyVariant = Partial<Pick<CharBody, 'parts' | 'drawFace' | 'weapon'>> & { spec?: Partial<BodySpec> };
+export type BodyVariant = Partial<Pick<CharBody, 'parts' | 'drawFace' | 'weapon' | 'extra'>> & { spec?: Partial<BodySpec> };
+export interface BodyExtra { meshes: Mesh[]; update(e: Ent, rdt: number): void; dispose(): void }
 
 const PARENT: Record<BoneName, BoneName | null> = {
   pelvis: null, spine: 'pelvis', chest: 'spine', neck: 'chest', head: 'neck',
@@ -248,7 +253,7 @@ export function kimono(sp: BodySpec, r: Rig, head?: (add: Add, hc: [number, numb
 // ---------------------------------------------------------------- assembly
 export interface BuiltBody {
   mesh: Mesh; skeleton: Skeleton; bones: Record<BoneName, Bone>; rig: Rig; spec: BodySpec;
-  weapon: Mesh; face: Mesh; faceTex: DynamicTexture; faceMat: StandardMaterial;
+  weapon: Mesh; face: Mesh; faceTex: DynamicTexture; faceMat: StandardMaterial; extra?: BodyExtra;
 }
 
 /** Build CB's skinned mesh, weapon and face decal (KEY names the Babylon objects). */
@@ -299,7 +304,9 @@ export function buildBody(scene: Scene, key: string, cb: CharBody, mat: Material
   face.attachToBone(bones.head, mesh);
   face.position.set(0, 0.42 * H, -0.02 * H - 0.425 * H);
   face.scaling.x = -1;                  // the plane's front faces +z in this right-handed scene: mirror it to face -z
-  return { mesh, skeleton, bones, rig: r, spec: sp, weapon, face, faceTex, faceMat };
+  const b: BuiltBody = { mesh, skeleton, bones, rig: r, spec: sp, weapon, face, faceTex, faceMat };
+  b.extra = cb.extra?.(scene, b);
+  return b;
 }
 
 /** Merge rigid vertex-coloured pieces into one mesh (weapons). */

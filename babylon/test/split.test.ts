@@ -25,6 +25,7 @@ function before(mv: Move): string {
 it('every kit move maps to the same clip as before the split', () => {
   let n = 0;
   for (const [who, forms] of KITS) for (const kit of forms.values()) for (const mv of kit.moves.values()) {
+    if (who === 'senjumaru') continue;                     // (B3: her own clips, test/senju-look.test.ts)
     expect(`${who} ${mv.name} ${clipNameFor(who, mv)}`).toBe(`${who} ${mv.name} ${before(mv)}`); n++;
   }
   expect(n).toBeGreaterThan(100);

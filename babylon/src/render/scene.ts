@@ -91,8 +91,8 @@ export class FighterView {
     const { key, body: cb } = bodyFor(e.f.character, e.f.form);
     if (key === this.bodyKey) return;
     if (this.body) {
-      this.outline.remove(this.body.mesh); this.outline.remove(this.body.weapon);
-      for (const m of [this.body.mesh, this.body.weapon, this.body.face]) m.setEnabled(false);
+      for (const m of [this.body.mesh, this.body.weapon, ...this.body.extra?.meshes ?? []]) this.outline.remove(m);
+      for (const m of [this.body.mesh, this.body.weapon, this.body.face, ...this.body.extra?.meshes ?? []]) m.setEnabled(false);
     }
     let b = this.bodies.get(key);
     if (!b) {
@@ -102,8 +102,8 @@ export class FighterView {
       b.weapon.alwaysSelectAsActiveMesh = true;
       this.bodies.set(key, b);
     }
-    for (const m of [b.mesh, b.weapon, b.face]) m.setEnabled(true);
-    this.outline.add(b.mesh); this.outline.add(b.weapon);
+    for (const m of [b.mesh, b.weapon, b.face, ...b.extra?.meshes ?? []]) m.setEnabled(true);
+    for (const m of [b.mesh, b.weapon, ...b.extra?.meshes ?? []]) this.outline.add(m);
     this.body = b; this.bodyKey = key;
     if (this.anim) this.anim.body = b;
   }
@@ -113,15 +113,17 @@ export class FighterView {
     this.root.position.set(e.pos[0], e.pos[1], e.pos[2]);
     this.root.rotation.y = e.yaw;
     this.anim.update(e, rdt, t);
+    this.body.extra?.update(e, rdt);
     this.body.faceTex.uOffset = this.anim.face / 3;
     this.mat.look(NO_TINT, this.anim.flash); this.wmat.look(NO_TINT, this.anim.flash);
     const show = e.look.alpha > 0.35;                                           // Hoho: gone while faded
     this.body.mesh.isVisible = this.body.weapon.isVisible = this.body.face.isVisible = show;
+    for (const m of this.body.extra?.meshes ?? []) m.isVisible = show;
   }
   dispose(): void {
-    this.outline.remove(this.body.mesh); this.outline.remove(this.body.weapon);
+    for (const m of [this.body.mesh, this.body.weapon, ...this.body.extra?.meshes ?? []]) this.outline.remove(m);
     for (const b of this.bodies.values()) {
-      b.weapon.dispose(); b.face.dispose(); b.faceTex.dispose(); b.faceMat.dispose(); b.mesh.dispose(); b.skeleton.dispose();
+      b.extra?.dispose(); b.weapon.dispose(); b.face.dispose(); b.faceTex.dispose(); b.faceMat.dispose(); b.mesh.dispose(); b.skeleton.dispose();
     }
     this.mat.dispose(); this.wmat.dispose(); this.root.dispose();
   }
