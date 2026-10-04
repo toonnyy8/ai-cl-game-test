@@ -9,6 +9,7 @@ import { updateCel } from './render/cel';
 import { installSheet } from './render/sheet';
 import { installVfxDebug } from './render/vfx/debug';
 import { DuelCamera } from './render/camera';
+import { Cinema, installCineDebug } from './render/cinema';
 import { PortraitCamera, applyLens, clearLens } from './render/portrait';
 import { clearHud, drawBattle, hudCtx, hudEvents, hudSize, resetHud, resizeHud } from './render/hud';
 import { drawTouch, onehandFrame, perfectHintP, portraitMetrics, portraitP } from './input/onehand';
@@ -34,6 +35,8 @@ const engine = await makeEngine();
 const stage = createScene(engine), { scene, cam } = stage;
 installSheet(engine, stage);                         // window.duelRender: the still sheet + render stats (debug)
 installVfxDebug(engine, stage);                      // window.duelVfx: the ink VFX / HUD still scenes (debug)
+const cinema = new Cinema(stage, engine);            // the cinematics' shots, looks and grade (render/cinema.ts)
+installCineDebug(engine, stage, cinema);             // window.duelCine: cinematic stills (debug)
 const duelCam = new DuelCamera(), ptCam = new PortraitCamera();
 resizeHud();
 addEventListener('resize', () => { engine.resize(); resizeHud(); });
@@ -43,6 +46,7 @@ F.onMatch = (m: Match | null) => {
   view?.dispose();
   view = m ? new BattleView(scene, m.w, stage) : null;
   duelCam.cut = true; duelCam.punchT = 0; ptCam.cut = true;
+  cinema.reset();
   resetHud();
 };
 
@@ -74,6 +78,7 @@ engine.runRenderLoop(() => {
     for (const e of ev) if (e.kind === 'cine-end') { duelCam.cut = true; ptCam.cut = true; }
     duelCam.events(ev);                                    // hit shake, Kikon zoom punch
     view?.events(ev, m.w);
+    cinema.events(ev, m.w, view);
     hudEvents(ev);
     for (const l of m.takeLog()) if (l.startsWith('duel -> RESULTS') || l.startsWith('duel match')) console.log(l);
   }
@@ -97,8 +102,9 @@ engine.runRenderLoop(() => {
       cam.position.set(14 * Math.cos(menuT * 0.1), 4, 14 * Math.sin(menuT * 0.1)); cam.setTarget(new Vector3(0, 1, 0));
     }
   }
+  cinema.camera(m && battle ? m.w : null, cam, engine.getAspectRatio(cam));   // a cinematic's shot over the camera
   // draw
-  if (m && view) view.update(m.w, live);
+  if (m && view) cinema.update(m.w, view, live);
   updateCel(cam);
   scene.render();
   // HUD

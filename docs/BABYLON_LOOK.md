@@ -123,3 +123,18 @@ meter from `senjuMeter`).
 
 Shot scripts per `CINES` entry summing to its `len`; camera rails; letterbox; white / black caption cards; body and
 weapon swaps on a frame; the awakening sequences; then WebAudio: per-event sfx, callouts, music (docs/AUDIO.md).
+
+Done (B5a cinematics): `render/cine-scripts.ts` holds a shot script per `CINES` entry, translated from the DEFCINEs
+(test/cinema.test.ts: shots sum to each len, every beat inside it); `render/cinema.ts` plays it from `w.cine` (name, cf)
+each rendered frame: camera rails relative to the actors (SHOT-ON / SHOT-PAIR, lerped dollies, Ichigo's orbit and C
+cameras), lens + dutch roll, shake; actor poses (a move sampled at a script sf, a library pose, a reaction) and form /
+weapon swaps lent to `BattleView.update` for one call; aura presets; script-posed hazard looks (fire walls, ice rings and
+pillars, the sky split, Ichigo's clones, Senjumaru's threads / carpet / bolts) and ink sparks; black / white / tinted
+cards (the stage hidden), black silhouettes and back-rims (the toon threshold past 1 + a wide rim); the impact frames and
+base grades as a post pass after the paper (negative, two-tone, manga page with the spot colours kept, Yamamoto's spot
+grey, Senjumaru's desaturation); in `drawCineOverlay` (hud.ts) the letterbox, the caption cards on the script's frames and
+side, focus lines, the ink splash, white flashes, Kenpachi's Kusajishi forest and the intro's VS. Kenpachi's cup entries
+(RYOTE's ring, NOMIHOSE's rings + a negative frame and a manga page) play in battle. Sound is B5b's (`src/audio/cues.ts`).
+Simplified: no rain on K.O., no Cero orb / chain lines / skull / candles (their beats use auras and sparks), Rukia's
+Bankai body is her zero body tinted white, the intro has no cane / katana prop. Debug: `duelCine.play(name, attacker,
+victim, { aForm, vForm, at })`, `duelCine.at(frame)`.

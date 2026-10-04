@@ -93,6 +93,8 @@ export class Animator {
   face: number = FACE.neutral;
   flash = 0;
   active = false;
+  /** A cinematic's pose for the 'cine' state (render/cinema.ts: a library pose and its face), or null: the idle. */
+  cine: { key: string; pose: PoseSpec; face: number } | null = null;
   private tq = new Quaternion();
   constructor(public body: BuiltBody, readonly who: string) {}   // (body: swapped on a form change)
 
@@ -103,6 +105,7 @@ export class Animator {
     this.face = FACE.neutral; this.flash = 0; this.active = false;
     switch (f.state) {
       case 'idle': case 'intro': case 'cine': {
+        if (f.state === 'cine' && this.cine) { key = this.cine.key; a = b = this.cine.pose; this.face = this.cine.face; break; }
         const clip = e.look.clip ?? '', sp = Math.hypot(e.mo.vel[0], e.mo.vel[2]);
         if (f.state === 'idle' && sp > 0.1 && /walk|strafe/.test(clip)) {
           key = 'walk';

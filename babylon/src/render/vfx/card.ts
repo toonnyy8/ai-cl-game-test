@@ -39,9 +39,10 @@ function vwash(g: G, x: number, y0: number, y1: number, t: number, alpha: number
   g.drawImage(washShape(), 0, 0, y1 - y0, t); g.restore(); g.globalAlpha = 1;
 }
 
-/** CAP drawn on G (W x H) at sim frame CF of a cine of LEN frames; SIDE 0: the column on the right, 1: on the left. */
-export function drawCard(g: G, cap: Cap, cf: number, len: number, w: number, h: number, side: number): void {
-  const f0 = Math.round(0.06 * len), f1 = Math.round(0.82 * len);
+/** CAP drawn on G (W x H) at sim frame CF of a cine of LEN frames; SIDE 0: the column on the right, 1: on the left; WIN:
+ *  the frames [in, out] it is up (default 6 % .. 82 % of LEN; render/cinema.ts passes the script's). */
+export function drawCard(g: G, cap: Cap, cf: number, len: number, w: number, h: number, side: number, win?: [number, number]): void {
+  const [f0, f1] = win ?? [Math.round(0.06 * len), Math.round(0.82 * len)];
   if (cf < f0 || cf > f1) return;
   const step = Math.floor((cf - f0) / 5), scale = step === 0 ? 1.8 : step === 1 ? 1.15 : 1;   // on twos at 12 fps
   const alpha = Math.min(1, (f1 - cf) / 12);
@@ -72,11 +73,15 @@ export function drawCard(g: G, cap: Cap, cf: number, len: number, w: number, h: 
     line(cap.reading, below + px * 0.15, px * 0.42, GOLD);
     if (cap.sub) line(cap.sub, below + px * 0.62, px * 0.22, PAPER);
   } else {                                                               // the reading alone, big, on a red swash
-    const px = Math.min(0.11 * h, (1.6 * w) / Math.max(6, cap.reading.length)), y = (portrait ? 0.24 : 0.36) * h;
-    g.translate(w / 2, y); g.scale(scale, scale); g.translate(-w / 2, -y);
-    swash(g, w / 2, y + px * 0.5, Math.min(0.96 * w, px * cap.reading.length * 0.85 + 2 * px), px * 2, '#b0161c', 0.9 * alpha);
-    inkText(g, cap.reading, w / 2, y, px, PAPER, 'center', alpha);
-    if (cap.sub) inkText(g, cap.sub, w / 2, y + px * 1.3, Math.min(px * 0.36, (0.9 * w) / (cap.sub.length * 0.62)), GOLD, 'center', alpha);
+    // (fitted to the caption's half of the frame, on its SIDE: a long name never runs off the screen or over the subject)
+    const cx = portrait ? w / 2 : (side === 0 ? 0.7 : 0.3) * w, room = (portrait ? 0.9 : 0.5) * w;
+    let px = Math.min(0.11 * h, (1.6 * w) / Math.max(6, cap.reading.length));
+    px = Math.min(px, (px * room) / Math.max(1, brushWidth(g, cap.reading, px)));
+    const y = (portrait ? 0.24 : 0.36) * h;
+    g.translate(cx, y); g.scale(scale, scale); g.translate(-cx, -y);
+    swash(g, cx, y + px * 0.5, Math.min(room + 2 * px, brushWidth(g, cap.reading, px) + 2 * px), px * 2, '#b0161c', 0.9 * alpha);
+    inkText(g, cap.reading, cx, y, px, PAPER, 'center', alpha);
+    if (cap.sub) inkText(g, cap.sub, cx, y + px * 1.3, Math.min(px * 0.5, (0.9 * room) / (cap.sub.length * 0.62)), GOLD, 'center', alpha);
   }
   g.restore();
 }

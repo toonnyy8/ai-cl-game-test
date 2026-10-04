@@ -16,6 +16,7 @@ import { HANKS, senjuMeter } from '../chars/senjumaru';
 import { brushWidth, inkText } from './vfx/brush';
 import { brushBar, inkDot, slashPip, swash } from './vfx/inkhud';
 import { CAPS, drawCard } from './vfx/card';
+import { drawCineOverlay } from './cinema';
 
 const cv = document.getElementById('hud') as HTMLCanvasElement;
 const g = cv.getContext('2d')!;
@@ -231,7 +232,7 @@ export interface BattleHud { portrait: boolean; practice: boolean; hint: boolean
 
 export function drawBattle(wd: World, project: Project, o: BattleHud): void {
   g.clearRect(0, 0, w, h);
-  if (wd.cine) { drawCine(wd); drawWords(); return; }
+  if (wd.cine) { if (!drawCineOverlay(g, w, h, wd, project)) drawCine(wd); drawWords(); return; }   // (render/cinema.ts)
   const secs = Math.min(999, Math.ceil(Math.max(0, wd.timer) / 60)), timer = o.practice ? 'PRACTICE' : String(secs);
   if (o.portrait) {
     const pm = portraitMetrics();
