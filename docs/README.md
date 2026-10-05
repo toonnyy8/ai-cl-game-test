@@ -5,6 +5,7 @@
 | 文件 | 內容 |
 |---|---|
 | [TUTORIAL.zh-TW.md](TUTORIAL.zh-TW.md) | 學習路徑：建置與執行、專案地圖、逐行讀 `examples/hello`、幀迴圈與 GC、ECS、純函式規則、事件、算圖、RAVEN EDGE 的組成、SOUL DUEL 的組成（虛擬手把、角色即資料、同時結算、過場導演、決定性）、練習題（中文） |
+| [PLAYBOOK.zh-TW.md](PLAYBOOK.zh-TW.md) | 遊戲開發經驗手冊：引擎與工具鏈、模擬與平衡測試、美術與演出風格、開發流程與協作、新遊戲啟動清單；對應 repo 裡 `skills/` 的四個 Claude skill（中文） |
 | [DEVLOG.zh-TW.md](DEVLOG.zh-TW.md) | 開發紀錄與技術思辨：從 GLES3 到 SDL_GPU（WebGPU）、建置管線、GC 問題、ECL 效能、算圖、音訊、玩法設計、團隊分工、已知限制、引擎／遊戲拆分與 ECS 重構、用第二款遊戲驗證引擎（中文） |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 建置管線、執行模型、GC 規則、ECS／規則／事件、模組分工表，以及一長串 ECL／Emscripten／WebGPU 踩過的坑 |
 | [ENGINE_API.md](ENGINE_API.md) | 引擎 API 參考（依原始檔分組）：座標慣例、輸入與虛擬手把、數學、命中判定、算圖、模型產生、UI、音訊、動畫、剛體角色、時間、過場導演、特效、ECS、`RUN-GAME` |
