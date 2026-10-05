@@ -807,6 +807,6 @@ Babylon port's TS sim is not mirrored yet).
 - **Tests**: the art check (every J within 0.15 m of its volume); 片腕 is exempt from "K ≥ J + 0.5 at every link" (its
   K2 1.75 / K3 1.89 against the floor); the perfect-Hoho test's far point 2.6 → 3.0 m.
 - **Gate** (20 seeds, all 15 pairings K.O.): cross medians YK 120.9 (60 seeds **119.5**, before 131.3; Yamamoto 19 / 41
-  as before 20 / 40: the same split, faster), RY 142.3, RK 139.7, IY 143.6, IK 156.7, IR 168.3, SY 141.6, SK 138.9,
+  as before 20 / 40: the same split, faster; **accepted** by the user 2026-10-06: 「我接受這個節奏」), RY 142.3, RK 139.7, IY 143.6, IK 156.7, IR 168.3, SY 141.6, SK 138.9,
   SR 185.1, SI 195.5; mirrors YY 117.2, KK 131.4, RR 158.1, II 187.8, SS 181.1. Awaken A/B: RR 37 / 36 / 28 vs
   23 / 24 / 32, SS 36 / 37 / 30 vs 24 / 23 / 30, every row ≥ 20. Host tests all pass. G2: yy P1 5-0 134.1 s, yk P2 0-6 103.7 s, kk P1 1-0 140.8 s.
