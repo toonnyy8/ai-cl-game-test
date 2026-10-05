@@ -1,5 +1,8 @@
 # SOUL DUEL on Babylon.js + TypeScript (`babylon/`)
 
+> **Status 2026-10-06: no longer developed** (the user: 「Babylon 版已不再開發」). Frozen at the 2026-10-05 Lisp; the Lisp
+> game in `duel/` is the only live build, and Lisp changes are not mirrored here. See the last Status entry.
+
 The user's request (2026-10-04): build a Babylon.js + TypeScript version of SOUL DUEL from the duel design docs, with
 Fable 5.1 as the discussion advisor. Decisions:
 
@@ -220,6 +223,6 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   native ones. Known gaps: some caption kanji are not in the baked glyph set (the reading shows), a few cinematic beats
   simplified (K.O. rain, Cero orb, candles; SEN'EI with 6 clones), Rukia's Bankai body is her zero body in white, the
   ink arc ribbon reads as a slab on wide swings, the landscape touch layer awaits the user's playtest.
-- 2026-10-06: **The Lisp moved ahead of the TS sim** (the user: 「只要先改 Lisp 這裡的」): the J floor and the Breaker's
-  new reach / trigger (DUEL_STRINGS §20: `*j-reach-min*` 1.4 in `parse-move`, the Breaker unscaled 1.35 m / trigger 1.6 m,
-  Kenpachi's J1 / J2 written 1.4) and the J clips' step-in are not mirrored; parity fails until they are.
+- 2026-10-06: **The port is no longer developed** (the user: 「Babylon 版已不再開發」). The Lisp game (duel/) is the
+  only live build; the TS sim is frozen at the 2026-10-05 Lisp and is not kept in parity (the first change it misses:
+  the J floor and the Breaker's new reach / trigger, DUEL_STRINGS §20).
