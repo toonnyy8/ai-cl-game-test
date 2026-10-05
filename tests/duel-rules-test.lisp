@@ -558,7 +558,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
          (not over)))
 
 ;;; ================================================================ perfect Hoho
-;; Yama's Q1 (window [9,12), 0.96 m arc) from the origin facing -Z; our cylinder r 0.4 h 1.8
+;; Yama's Q1 (window [9,12), 1.4 m arc: the J floor) from the origin facing -Z; our cylinder r 0.4 h 1.8
 (let* ((q1 (mv :yamamoto :base :ya-j1)) (w (svref (mv-hits q1) 0)))
   (flet ((perfect (sf z) (perfect-hoho-p sf (hw-from w) (hw-to w) (hw-vols w)
                                          0f0 0f0 0f0 0f0 -1f0 0f0 0f0 (float z 1f0) 0.4f0 1.8f0)))
@@ -569,7 +569,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     (check (perfect 10 -2.0))                 ; active now
     (check (not (perfect 12 -2.0)))           ; over
     (check (perfect 3 -2.2))                  ; out of reach, but inside the 1 m inflation
-    (check (not (perfect 3 -2.6)))))
+    (check (perfect 3 -2.6))
+    (check (not (perfect 3 -3.0)))))
 
 ;;; ================================================================ facing, movement, arena
 (check (~= (turn-toward 0.0 (deg 90) (deg 18)) (deg 18)))
@@ -753,8 +754,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 ;; Nozarashi: derived by the kit, not copied (startup +3, reach x1.4), own moves as written
 (let ((base (mv :kenpachi :base :ke-j1)) (noz (mv :kenpachi :nozarashi :ke-j1)))
   (check (and (= (mv-s base) 7) (= (mv-s noz) 9) (= (mv-r noz) 12) (= (mv-dmg noz) 35)
-              (~= (mv-reach noz) (* 1.04 1.3)) (= (hw-from (svref (mv-hits noz) 0)) 9)
-              (~= (aref (first (hw-vols (svref (mv-hits noz) 0))) 1) (* 1.04 1.3)))))
+              (~= (mv-reach noz) (* 1.4 1.3)) (= (hw-from (svref (mv-hits noz) 0)) 9)
+              (~= (aref (first (hw-vols (svref (mv-hits noz) 0))) 1) (* 1.4 1.3)))))
 (check (= (mv-s (mv :kenpachi :nozarashi :ke-stance)) 10))
 (check (= (mv-s (mv :kenpachi :nozarashi :ke-breaker)) 10))
 (check (~= (aref (first (hw-vols (svref (mv-hits (mv :kenpachi :nozarashi :ke-charge)) 0))) 2) (* 1.4 1.3)))
@@ -830,8 +831,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (notany (lambda (c) (kit-drop east c)) *kit-commands*)
               (eq (kit-command-move (find-kit :yamamoto (kit-drop west :q)) :q) (kit-command-move east :q))))
   (check (and (= (hit-damage 100 nil (kit-def-mods east) 1 nil) 150) (= (hit-damage 100 nil (kit-def-mods west) 1 nil) 100)))
-  ;; the derivation rule: East's inherited moves derived (-1 f, reach x1.15: the Breaker); West takes East's versions
-  (check (and (= (mv-s (kit-command-move east :breaker)) 7) (~= (mv-reach (kit-command-move east :breaker)) (* 1.15 *breaker-reach*) 0.01)
+  ;; the derivation rule: East's inherited moves derived (-1 f; reach x1.15, but a Breaker's stays unscaled); West takes East's versions
+  (check (and (= (mv-s (kit-command-move east :breaker)) 7) (~= (mv-reach (kit-command-move east :breaker)) *breaker-reach* 0.01)
               (eq (kit-move west :ya-e-j2) (kit-move east :ya-e-j2)) (eq (kit-command-move west :q) (kit-command-move east :q))))
   (check (and (= (mv-s (kit-move east :ya-e-j1)) 8) (= (mv-s (kit-move east :ya-e-j3)) 8) (= (mv-s (kit-move west :ya-w-counter)) 6)))
   (dolist (name '(:ya-kaka :ya-tenchi))
@@ -1089,10 +1090,10 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
            (loop for n in (route b first presses) for i from 1
                  sum (hit-damage (mv-dmg (kit-move b n)) (kit-atk-mods b 0) nil i nil))))
     (check (and (= 444 (route-dmg :f '((:f) (:f)))) (= 272 (route-dmg :q '((:q) (:f)))))))
-  ;; 6. 片腕: the sword moves at reach x0.7 (J1 0.73, K1 1.96, K3 1.89), the kick, the Breaker and O as written; B2:
+  ;; 6. 片腕: the sword moves at reach x0.7 (J1 0.73 -> the J floor 1.4, K1 1.96, K3 1.89), the kick, the Breaker and O as written; B2:
   ;; every form's Breaker strike out-reaches its trigger, every Kikon strike *KIKON-TRIGGER* + 0.3
-  (check (and (~= 0.728 (mv-reach (kit-move a :ke-j1))) (~= 1.96 (mv-reach (kit-move a :ke-k1))) (~= 1.89 (mv-reach (kit-move a :ke-k3)))
-              (~= 0.88 (mv-reach (kit-next a :ke-j2 :q))) (~= *breaker-reach* (mv-reach (kit-command-move a :breaker)))
+  (check (and (~= *j-reach-min* (mv-reach (kit-move a :ke-j1))) (~= 1.96 (mv-reach (kit-move a :ke-k1))) (~= 1.89 (mv-reach (kit-move a :ke-k3)))
+              (~= *j-reach-min* (mv-reach (kit-next a :ke-j2 :q))) (~= *breaker-reach* (mv-reach (kit-command-move a :breaker)))
               (~= 2.4 (mv-reach (kit-command-move a :kikon))) (= 7 (mv-s (kit-move a :ke-j1)))))
   (dolist (cf *forms*)
     (let ((k (apply #'kit cf)))
@@ -1696,8 +1697,8 @@ along the left forearm, so the fist leads).")
                        (format t "~a ~a: the volume ends ~,2f m, the art ~,2f m~%" (second cf) (mv-name mv) edge art)))))))))
 
 ;; J is short, K long (the user, 2026-09-29, docs/DUEL_STRINGS.md §13): in every form every K link reaches at least 0.5 m further
-;; than any J link at the same position of the string
-(dolist (cf *forms*)
+;; than any J link at the same position of the string; 片腕's short K against the J floor (2026-10-06) excepted
+(dolist (cf (remove '(:kenpachi :kataude) *forms* :test #'equal))
   (let ((lm (link-moves (apply #'kit cf))))
     (loop for n from 1 to 3
           do (let ((j (loop for (m k) in lm when (and (= k n) (eq (mv-kind m) :quick)) maximize (mv-reach m)))

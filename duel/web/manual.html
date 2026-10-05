@@ -312,7 +312,7 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 
 <h3 id="strings">J／K 連段</h3>
 <ul>
-<li><b>J 是輕攻擊</b>：短、快、傷害低，貼身用。<b>K 是重攻擊</b>：長、慢、傷害高，出手時沒有霸體。兩人同時出手時 J 會先打到。</li>
+<li><b>J 是輕攻擊</b>：短、快、傷害低，貼身用（每個角色、每個型態的 J 至少都有 1.4 公尺）。<b>K 是重攻擊</b>：長、慢、傷害高，出手時沒有霸體。兩人同時出手時 J 會先打到。</li>
 <li>連段<b>最多三段</b>，每一段是 J 或 K，<b>J／K 之間最多只能換一次</b>，所以完整路線只有 <b>JJJ、JJK、JKK、KKK、KKJ、KJJ</b>。換過鍵之後再按原來的鍵會被吃掉（例如 J K J 只會出到第二段）。</li>
 <li><b>貼身與推開</b>：連段的第一段（J1 或 K1）<b>打中</b>時，攻擊方會衝到對手面前，讓後面幾段打得到；被擋或揮空就不會靠近，後面幾段也不會往前追，可能打不到。J3／K3 一打中，對手就被推到你 J1（J3）或 K1（K3）的攻擊範圍外一點點，重開連段得先走過去；從 J3／K3 接出去的 O 收尾、L、SP2、橙色爆氣重開會自動追上去。對手卡在場邊推不動時，改把攻擊方推開。</li>
 <li>下一段可以在前一段的<b>任何時候先按</b>（以最後一次按的為準），招式碰到對手的那一刻才接出來。</li>
@@ -330,10 +330,10 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <p>遊戲的基本剋制循環：</p>
 <ul>
 <li><b>防禦擋住 J</b>（和所有一般攻擊）。</li>
-<li><b>J 打抓技</b>：抓技 <kbd>I</kbd>（Breaker）衝過來時身上沒有霸體，被任何攻擊打到都是 COUNTER；而抓技只抓得到 0.7 公尺，比每個角色的 J 都短，所以看到對方衝過來就按 J。</li>
+<li><b>J 打抓技</b>：抓技 <kbd>I</kbd>（Breaker）衝過來時身上沒有霸體，被任何攻擊打到都是 COUNTER；而抓技只抓得到 1.35 公尺，每個角色的 J 都至少有 1.4 公尺，所以看到對方衝過來就按 J。</li>
 <li><b>抓技破防</b>：抓到防禦中的對手是 <b>GUARD BREAK</b>，對手硬直很久、防禦量表扣 35，你可以接連段。抓到沒在防禦的對手是 150 傷害，對手原地踉蹌。<b>抓技是連段的起手式</b>：抓中或破防之後馬上按 <kbd>J</kbd> 或 <kbd>K</kbd>，會取消成 J1／K1 並追上去，接著照常打完整套連段、再用 O 收尾。</li>
 </ul>
-<p>抓技的用法：按住 <kbd>I</kbd>，身上先亮粉紅光（約 0.2 秒），接著朝對手衝，按越久衝越遠，貼近到約 1 公尺才出手。衝刺轉身很慢，所以側步可以閃過。兩人的抓技撞在一起是 CLASH：兩邊彈開、沒有傷害。劍八始解的 L 架勢被抓技打到也會被破。</p>
+<p>抓技的用法：按住 <kbd>I</kbd>，身上先亮粉紅光（約 0.2 秒），接著朝對手衝，按越久衝越遠，貼近到約 1.6 公尺才出手。衝刺轉身很慢，所以側步可以閃過。兩人的抓技撞在一起是 CLASH：兩邊彈開、沒有傷害。劍八始解的 L 架勢被抓技打到也會被破。</p>
 
 <h3 id="guard">防禦與防禦量表</h3>
 <ul>
@@ -424,12 +424,12 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <table class="moves">
 <thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
 <tbody>
-<tr><td><kbd>J</kbd></td><td>火閃 <i>HISEN</i> → 返し火 <i>KAESHIBI</i> → 袖火 <i>SODEBI</i></td><td>拔刀橫斬、反手回斬，第三段用燃燒的空袖甩過去，打中會讓對手踉蹌。</td><td>距離很短，只有貼身才打得到。袖火打中後可以按 <kbd>O</kbd> 收尾。</td></tr>
+<tr><td><kbd>J</kbd></td><td>火閃 <i>HISEN</i> → 返し火 <i>KAESHIBI</i> → 袖火 <i>SODEBI</i></td><td>拔刀橫斬、反手回斬，第三段用燃燒的空袖甩過去，打中會讓對手踉蹌。</td><td>距離約 1.4 公尺（所有角色 J 的最短距離），要靠近才打得到。袖火打中後可以按 <kbd>O</kbd> 收尾。</td></tr>
 <tr><td><kbd>K</kbd></td><td>焔薙 <i>HOMURA-NAGI</i> → 昇焔 <i>SHŌEN</i> → 焔爆 <i>ENBAKU</i></td><td>腰高的橫掃、往上竄的火柱，最後在腳邊炸開火焰圓頂讓對手跪倒。</td><td>火焰讓 K 打得比 J 遠。每打中一下 INFERNO +20。焔爆被擋的破綻很大。</td></tr>
 <tr><td><kbd>L</kbd></td><td>流刃若火 <i>RYUJIN JAKKA</i></td><td>先砍兩刀，接著從刀上放出一道寬 3.5 公尺、飛 12 公尺的火焰波，打中會擊退。</td><td>整招很長，適合在遠處放。每一下打中 INFERNO +15，火焰波被擋也 +5。</td></tr>
 <tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>不知火 <i>SHIRANUI</i>（SP1）</td><td>按住蓄力（最長約 1 秒），放開丟出會追蹤對手的火球，飛 20 公尺。</td><td>蓄越久越快、越痛（90～170）。蓄滿丟出時 INFERNO 直接填滿。</td></tr>
 <tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>松明 <i>TAIMATSU</i>（SP2）</td><td>往前噴出 4 公尺、90° 的火焰扇面，120 傷害並大幅擊退。</td><td>範圍寬，拿來趕走貼身的對手。被擋的破綻不小。</td></tr>
-<tr><td><kbd>I</kbd></td><td>一骨 <i>IKKOTSU</i>（Breaker）</td><td>把刀插在地上，一拳打出去，破壞對手的防禦。</td><td>150 傷害。抓取範圍只有 0.7 公尺，比 J 還短，要貼得很近。</td></tr>
+<tr><td><kbd>I</kbd></td><td>一骨 <i>IKKOTSU</i>（Breaker）</td><td>把刀插在地上，一拳打出去，破壞對手的防禦。</td><td>150 傷害。抓取範圍 1.35 公尺，比 J 還短，要貼得很近。</td></tr>
 <tr><td><kbd>O</kbd></td><td>Kikon 模組「炎上」<i>ENJO</i> → 鬼魂技 城郭炎上 <i>JOKAKU ENJO</i></td><td>不衝刺，瞄準一下後沿著一條直線升起火牆，在 1～9 公尺處爆開。按住 O 打中紅血對手就是城郭炎上：火牆合成圓頂引爆，打碎魂魄 2 顆。</td><td>站在原地就能打到 9 公尺外。當 O 收尾時跳過瞄準直接爆開。被擋會被反擊，冷卻 1.5 秒。</td></tr>
 </tbody></table>
 <p class="note">INFERNO 量表：K 打中 +20、L 打中每下 +15、火焰波或火球被擋 +5、蓄滿的不知火一次填滿。J 不會加量表。量表一滿就自動進入獄炎。</p>
@@ -500,13 +500,13 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <section class="char" id="ch-ken">
 <details>
 <summary><h3>更木劍八 <small>ZARAKI KENPACHI（KENPACHI）</small></h3><span class="tagline">吃招換招、越打越強的血戰狂人</span></summary>
-<p>劍八靠又長又重的 K 和 L 架式「斬ってみろよ」硬吃對手的攻擊，再用更大的一刀還回去。J 很短（約 1 公尺），K 慢但砍得遠。覺醒後的「野晒」會把流的血喝進 NOME 量表，一杯一杯變強，最後還能在三杯開卍解。缺點是強的型態都撐不久：杯數會往下掉，卍解會吃掉自己的魂魄和手臂。他是全角色裡<b>最耐打</b>的，連段要打很久才會把他打飛。越被逼越強：每少一顆魂魄，傷害 +5 %（最多 +25 %）；每次重置靈壓 +10。</p>
+<p>劍八靠又長又重的 K 和 L 架式「斬ってみろよ」硬吃對手的攻擊，再用更大的一刀還回去。J 很短（約 1.4 公尺），K 慢但砍得遠。覺醒後的「野晒」會把流的血喝進 NOME 量表，一杯一杯變強，最後還能在三杯開卍解。缺點是強的型態都撐不久：杯數會往下掉，卍解會吃掉自己的魂魄和手臂。他是全角色裡<b>最耐打</b>的，連段要打很久才會把他打飛。越被逼越強：每少一顆魂魄，傷害 +5 %（最多 +25 %）；每次重置靈壓 +10。</p>
 
 <h4>基本型態 <small>KENPACHI</small></h4>
 <table class="moves">
 <thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
 <tbody>
-<tr><td><kbd>J</kbd></td><td>荒斬 <i>ARAGIRI</i> → 返斬 <i>KAESHIGIRI</i> → 喧嘩蹴り <i>KENKA-GERI</i></td><td>隨手一砍（往前衝 0.8 公尺）、反手一刀，最後一腳正踢踢到踉蹌。</td><td>距離只有約 1 公尺，要貼身才打得到。</td></tr>
+<tr><td><kbd>J</kbd></td><td>荒斬 <i>ARAGIRI</i> → 返斬 <i>KAESHIGIRI</i> → 喧嘩蹴り <i>KENKA-GERI</i></td><td>隨手一砍（往前衝 0.8 公尺）、反手一刀，最後一腳正踢踢到踉蹌。</td><td>距離約 1.4 公尺，要靠近才打得到。</td></tr>
 <tr><td><kbd>K</kbd></td><td>大振り <i>ŌBURI</i> → 斬り上げ <i>KIRIAGE</i> → ぶん回し <i>BUNMAWASHI</i></td><td>雙手大揮、從地上往上撩，最後轉一圈 360° 把人砍到跪倒。</td><td>約 2.5～2.8 公尺，是他的主力距離；第三段被擋很虧。</td></tr>
 <tr><td><kbd>L</kbd>（按住）</td><td>架式 <i>KITTE MIRO YO</i>（斬ってみろよ）</td><td>擺架式最多 1 秒：這段期間有霸體，被打照樣扣血但不會硬直，吃下的傷害存起來（最多 200）。放開（或 1 秒到）出一刀：100 + 存下的傷害；存到 150 以上這刀會破防。</td><td>剛擺出的一瞬間被打算反擊（Counter）。怕 <kbd>I</kbd>：Breaker 會直接打破架式。</td></tr>
 <tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td><i>BUTTAGIRU</i>（SP1）</td><td>跳起 5 公尺當頭劈下，180 傷害、擊倒，地上裂開一道 3 公尺的裂痕。</td><td>刀身近處算近戰，前方的裂痕算遠程。</td></tr>
@@ -714,7 +714,7 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <table class="moves">
 <thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
 <tbody>
-<tr><td><kbd>J</kbd></td><td>小牙 <i>KOKIBA</i> → 返し <i>KAESHI</i> → 双旋 <i>SŌSEN-GIRI</i></td><td>反手短刀的快砍，第三段雙刀轉一圈，打中會讓對手踉蹌。</td><td>全遊戲最快一級的 J，但距離只有約 1.1 公尺，要貼身。</td></tr>
+<tr><td><kbd>J</kbd></td><td>小牙 <i>KOKIBA</i> → 返し <i>KAESHI</i> → 双旋 <i>SŌSEN-GIRI</i></td><td>反手短刀的快砍，第三段雙刀轉一圈，打中會讓對手踉蹌。</td><td>全遊戲最快一級的 J，但距離只有約 1.4 公尺，要靠近。</td></tr>
 <tr><td><kbd>K</kbd></td><td>大牙 <i>ŌKIBA</i> → 昇牙 <i>SHŌGA</i> → 落牙 <i>RAKUGA</i></td><td>大刀橫掃、上撩、雙手下劈（約 2.7～3 公尺）。</td><td>每一下都削很多防禦量表，是他磨防禦的主力。</td></tr>
 <tr><td>換鍵的第二段</td><td>交牙 <i>KŌGA</i>（J 之後按 K）／返牙 <i>KAESHI-KIBA</i>（K 之後按 J）</td><td>「十字」：兩把刀同時砍。</td><td>時間和傷害同一般第二段，但削防禦量表更多；J → 交牙 → K 被擋下時削得和 KKK 一樣多。</td></tr>
 <tr><td><kbd>L</kbd></td><td>架勢 月待 <i>TSUKIMACHI</i></td><td>短刀指向對手擺出架勢，按住 <kbd>L</kbd> 最多撐 1 秒（點一下約 0.5 秒）；架勢一成形就能接下面四種派生。</td><td>架勢中沒有防禦，被打就是直接吃招。K 打中後馬上按 <kbd>L</kbd> 會更快進入架勢，四種派生都接得成連段。</td></tr>

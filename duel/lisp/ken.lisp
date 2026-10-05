@@ -9,13 +9,13 @@
 
 ;;; ================================================================ base
 ;;; the J / K strings (docs/DUEL_STRINGS.md §3.3): no school, a street fighter with a sword who kicks. The grid as
-;;; Yamamoto's (yama.lisp): up to three links, switching J / K at most once (the reach since the J cut, DUEL_STRINGS §13: J 0.4x,
+;;; Yamamoto's (yama.lisp): up to three links, switching J / K at most once (the reach since the J cut, DUEL_STRINGS §13: J 0.4x; J1 / J2 1.4 since §20,
 ;;; K nearly as long as before: his long swings); every K at link 2 / 3 at S_eff 14, at 80 % of
 ;;; the design's damage (the seed gate: 75 -> 60, 100 -> 80; RYOTE 85 -> 68, 115 -> 92)
 (defmove :ke-j1 :kind :quick :clip :ke-q1 :startup 7 :active 3 :recovery 12 :dmg 35 :adv-block -2
-  :reach 1.04 :arc 100 :on-hit :flinch :slide 0.8)                   ; ARAGIRI: a lazy slash, lunge 0.8 m
+  :reach 1.4 :arc 100 :on-hit :flinch :slide 0.8)                    ; ARAGIRI: a lazy slash, lunge 0.8 m
 (defmove :ke-j2 :kind :quick :clip :ke-q2 :startup 7 :active 3 :recovery 13 :dmg 35 :adv-block -2
-  :reach 1.04 :arc 100 :on-hit :flinch)                              ; KAESHIGIRI: the backhand
+  :reach 1.4 :arc 100 :on-hit :flinch)                               ; KAESHIGIRI: the backhand
 (defmove :ke-j3 :kind :quick :clip :ke-kick :startup 8 :active 3 :recovery 18 :dmg 42 :adv-block -4
   :reach 0.88 :arc 60 :on-hit :stagger :flags (:ender))              ; KENKA-GERI: a front kick to the gut
 (defmove :ke-k1 :kind :flash :clip :ke-f1 :startup 16 :active 4 :recovery 20 :dmg 70 :adv-block -3

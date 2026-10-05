@@ -271,7 +271,7 @@
 
 ;;; ---------------------------------------------------------------- the Shikai grid (§3.2)
 (defpose :ic-q1-hit (:base :ic-stance)                 ; J1 KOKIBA: the short blade flicked across, stepping in
-  (:root :f 0.5 :u -0.13 :yaw -4) (:pelvis :twist 18) (:spine :flex 10) (:chest :twist -14) (:neck :twist 6) (:head :twist 4)
+  (:root :f 0.78 :u -0.13 :yaw -4) (:pelvis :twist 18) (:spine :flex 10) (:chest :twist -14) (:neck :twist 6) (:head :twist 4)
   (:arm-l :side 88 :flex 104) (:elbow-l :flex 6) (:hand-l :flex -86)
   (:arm-r :flex -30 :side 30) (:elbow-r :flex 16) (:hand-r :flex -40)
   (:thigh-l :flex 46 :side 4) (:knee-l :flex 46) (:thigh-r :flex -24) (:knee-r :flex 22))
@@ -280,13 +280,13 @@
   (3 (:root :u -0.08 :yaw 10) (:chest :twist 30) (:neck :twist -10) (:arm-l :side 88 :flex -6) (:elbow-l :flex 18)
      (:hand-l :flex -84) (:arm-r :flex -20 :side 26))
   (:s :snap :ic-q1-hit)
-  (8 (:chest :twist -18) (:arm-l :flex 110) (:root :f 0.5))
-  (:a (:chest :twist -17) (:arm-l :flex 108) (:root :f 0.5))
-  (16 (:chest :twist -10) (:arm-l :side 50 :flex 70) (:elbow-l :flex 30) (:hand-l :flex -70) (:root :f 0.12 :u -0.1))
+  (8 (:chest :twist -18) (:arm-l :flex 110) (:root :f 0.78))
+  (:a (:chest :twist -17) (:arm-l :flex 108) (:root :f 0.78))
+  (16 (:chest :twist -10) (:arm-l :side 50 :flex 70) (:elbow-l :flex 30) (:hand-l :flex -70) (:root :f 0.26 :u -0.1))
   (:end :ic-stance))
 
 (defpose :ic-q2-hit (:base :ic-stance)                 ; J2 KAESHI: the wrist turned, the short blade back across
-  (:root :f 0.5 :u -0.11 :yaw 6) (:pelvis :twist 26) (:spine :flex 8) (:chest :twist 16) (:neck :twist -8)
+  (:root :f 0.88 :u -0.11 :yaw 6) (:pelvis :twist 26) (:spine :flex 8) (:chest :twist 16) (:neck :twist -8)
   (:arm-l :side 40 :flex 90) (:elbow-l :flex 6 :twist -160) (:hand-l :flex -86)
   (:arm-r :flex -24 :side 34) (:elbow-r :flex 20) (:hand-r :flex -40)
   (:thigh-l :flex 38) (:knee-l :flex 40) (:thigh-r :flex -20) (:knee-r :flex 22))
@@ -294,9 +294,9 @@
   (0)
   (3 (:root :u -0.09 :yaw -8) (:chest :twist -26) (:arm-l :side 88 :flex 126) (:elbow-l :flex 20 :twist -160) (:hand-l :flex -80))
   (:s :snap :ic-q2-hit)
-  (8 (:chest :twist 18) (:root :f 0.5))
-  (:a (:chest :twist 17) (:root :f 0.5))
-  (17 (:chest :twist 6) (:arm-l :side 40 :flex 44) (:elbow-l :flex 30 :twist -40) (:hand-l :flex -64) (:root :f 0.08 :u -0.08))
+  (8 (:chest :twist 18) (:root :f 0.88))
+  (:a (:chest :twist 17) (:root :f 0.88))
+  (17 (:chest :twist 6) (:arm-l :side 40 :flex 44) (:elbow-l :flex 30 :twist -40) (:hand-l :flex -64) (:root :f 0.27 :u -0.08))
   (:end :ic-stance))
 
 (defstrike :ic-spin (8 3 18 :base :ic-stance)          ; J3 SOSEN-GIRI: a full turn, the cleaver high and the short blade low
@@ -379,7 +379,7 @@
 
 ;; J2s KAESHI-KIBA alone (the J cut, docs/DUEL_STRINGS.md §13): the X closed in at his chest, under the cleaver's return
 (defpose :ic-cross-j-hit (:base :ic-cross-hit)
-  (:root :f 0.02 :u -0.12) (:spine :flex 14)
+  (:root :f 0.3 :u -0.12) (:spine :flex 14)
   (:arm-r :side 15 :flex 80) (:elbow-r :flex 80) (:hand-r :twist -40 :flex -60)
   (:arm-l :side 30 :flex 80) (:elbow-l :flex 60) (:hand-l :twist -40 :flex -80))
 (defstrike :ic-cross-j (7 3 24 :base :ic-stance)
@@ -387,8 +387,8 @@
   (3 (:root :u -0.04 :f 0.02) (:spine :flex -8) (:arm-r :side 70 :flex 160) (:elbow-r :flex 20) (:hand-r :flex -60)
      (:arm-l :side 70 :flex 160) (:elbow-l :flex 20) (:hand-l :flex -60) (:head :flex -16))
   (:s :snap :ic-cross-j-hit)
-  (:a (:root :f 0.04))
-  (26 (:root :f 0.02 :u -0.1) (:arm-r :side 40 :flex 30) (:elbow-r :flex 20) (:arm-l :side 40 :flex 40) (:elbow-l :flex 40))
+  (:a (:root :f 0.32))
+  (26 (:root :f 0.16 :u -0.1) (:arm-r :side 40 :flex 30) (:elbow-r :flex 20) (:arm-l :side 40 :flex 40) (:elbow-l :flex 40))
   (:end :ic-stance))
 
 ;;; ---------------------------------------------------------------- the stance 月待 TSUKIMACHI (v2 §2)

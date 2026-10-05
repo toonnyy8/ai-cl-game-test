@@ -318,7 +318,7 @@ run fresh gives the same combat log as after a gate.
 Reference (YK, seed 7, `duel-cvc-yk.json`):
 
 ```
-duel -> RESULTS winner P2 konpaku 0-3 ticks 6432 secs 107.2
+duel -> RESULTS winner P2 konpaku 0-6 ticks 6220 secs 103.7
 ```
 
 (The CPU learns Step -> J, 2026-10-02 (DUEL_STRINGS.md §19): all three changed; before it `winner P2 konpaku 0-1 ticks 7168

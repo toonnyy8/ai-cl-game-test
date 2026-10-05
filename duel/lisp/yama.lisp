@@ -12,7 +12,8 @@
 ;;; KKJ KJJ). One move per (link, button); J2s / K2s, the switched link 2, are copies (DEFMOVE-COPY) whose string allows
 ;;; only the new button. Every K at link 2 / 3 enters at S_eff 14 (:enter), so it combos after a J and a K link alike;
 ;;; the enders (:ender) stagger / crumple, and their hit opens the O ender. Hellfire plays these at x1.3. The reach since the J
-;;; cut (docs/DUEL_STRINGS.md §13): J 0.4x (close, the art pulled in), K a little shorter (the fire carries it). K2 / K3 deal
+;;; cut (docs/DUEL_STRINGS.md §13): J 0.4x (close, the art pulled in), K a little shorter (the fire carries it); every J at
+;;; least *J-REACH-MIN* 1.4 m since §20 (the J clips step in to match). K2 / K3 deal
 ;;; 80 % of the design's numbers (the seed gate's first lever, docs/DUEL_STRINGS.md §9: 80 -> 64, 110 -> 88; East 75 -> 60,
 ;;; 105 -> 84).
 (defmove :ya-j1 :kind :quick :clip :ya-q1 :startup 9 :active 3 :recovery 12 :dmg 38 :adv-block -2

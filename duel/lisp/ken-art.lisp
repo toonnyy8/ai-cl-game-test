@@ -246,9 +246,9 @@
      (:root :u -0.03) (:head :twist 8))                                            ; anticipation, held
   (5 (:chest :twist -37) (:arm-r :flex 164 :side 38) (:spine :flex -5) (:root :u -0.04))
   (:s :snap (:arm-r :flex 40 :side -10) (:elbow-r :flex 10) (:hand-r :twist -15 :flex -84) (:chest :twist 40) (:spine :flex 24)
-      (:root :f 0.04 :u -0.1) (:thigh-l :flex 50) (:knee-l :flex 45) (:head :twist -6))
-  (:a (:chest :twist 50) (:arm-r :flex 26 :side -20) (:spine :flex 28) (:root :f 0.07 :u -0.12))   ; overshoot
-  (15 (:chest :twist 46) (:arm-r :flex 30 :side -16) (:spine :flex 25) (:root :f 0.06 :u -0.1))
+      (:root :f 0.36 :u -0.1) (:thigh-l :flex 50) (:knee-l :flex 45) (:head :twist -6))
+  (:a (:chest :twist 50) (:arm-r :flex 26 :side -20) (:spine :flex 28) (:root :f 0.39 :u -0.12))   ; overshoot
+  (15 (:chest :twist 46) (:arm-r :flex 30 :side -16) (:spine :flex 25) (:root :f 0.22 :u -0.1))
   (:end :ke-stance))
 (defstrike :ke-q2 (7 3 13 :base :ke-stance)            ; backhand
   (0)
@@ -256,9 +256,9 @@
      (:root :u -0.03) (:head :twist -10))
   (5 (:chest :twist 67) (:spine :side 13) (:arm-r :side -20 :flex 78) (:root :u -0.05))
   (:s :snap (:chest :twist -60) (:arm-r :side 60 :flex 30) (:elbow-r :flex 95) (:hand-r :twist 5 :flex -26) (:spine :side 0)
-      (:root :f 0.04 :u -0.06) (:thigh-l :flex 38) (:knee-l :flex 38) (:head :twist 8))
-  (:a (:chest :twist -72) (:arm-r :side 68 :flex 22) (:root :f 0.07 :u -0.08))
-  (15 (:chest :twist -67) (:arm-r :side 64 :flex 25) (:root :f 0.06 :u -0.06))
+      (:root :f 0.46 :u -0.06) (:thigh-l :flex 38) (:knee-l :flex 38) (:head :twist 8))
+  (:a (:chest :twist -72) (:arm-r :side 68 :flex 22) (:root :f 0.49 :u -0.08))
+  (15 (:chest :twist -67) (:arm-r :side 64 :flex 25) (:root :f 0.27 :u -0.06))
   (:end :ke-stance))
 (defstrike :ke-q3 (11 4 22 :base :ke-stance)           ; spinning cut
   (0)
@@ -277,12 +277,12 @@
      (:thigh-l :flex 12) (:knee-l :flex 20) (:arm-r :flex 38 :side 58) (:elbow-r :flex 22) (:hand-r :flex -40)
      (:arm-l :flex 30 :side 12) (:elbow-l :flex 60) (:head :flex -4))                                ; chambered, held
   (6 (:thigh-r :flex 64) (:knee-r :flex 102) (:spine :flex -9) (:root :f -0.07))
-  (:s :snap (:root :f 0.02 :u 0.0) (:spine :flex -18) (:chest :twist 12) (:thigh-r :flex 92 :side 0) (:knee-r :flex 45)
+  (:s :snap (:root :f 0.44 :u 0.0) (:spine :flex -18) (:chest :twist 12) (:thigh-r :flex 92 :side 0) (:knee-r :flex 45)
       (:thigh-l :flex -6) (:knee-l :flex 14) (:arm-r :flex 30 :side 95) (:elbow-r :flex 5) (:hand-r :flex -20)
       (:arm-l :flex 40 :side 30) (:elbow-l :flex 40) (:head :flex 6 :twist 6))
-  (:a (:root :f 0.05) (:spine :flex -21) (:thigh-r :flex 96) (:knee-r :flex 44))                       ; overshoot
-  (18 (:root :f 0.04) (:thigh-r :flex 72) (:knee-r :flex 60) (:spine :flex -13))
-  (24 (:root :f 0.02 :u -0.05) (:thigh-r :flex 8) (:knee-r :flex 30) (:spine :flex 4) (:arm-r :flex 32 :side 40) (:elbow-r :flex 40))
+  (:a (:root :f 0.47) (:spine :flex -21) (:thigh-r :flex 96) (:knee-r :flex 44))                       ; overshoot
+  (18 (:root :f 0.25) (:thigh-r :flex 72) (:knee-r :flex 60) (:spine :flex -13))
+  (24 (:root :f 0.23 :u -0.05) (:thigh-r :flex 8) (:knee-r :flex 30) (:spine :flex 4) (:arm-r :flex 32 :side 40) (:elbow-r :flex 40))
   (:end :ke-stance))
 (defstrike :ke-f1 (16 4 20 :base :ke-stance)           ; two-handed kendo cut
   (0)

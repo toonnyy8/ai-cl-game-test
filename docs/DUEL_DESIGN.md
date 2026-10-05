@@ -221,7 +221,7 @@ no knockback) so the O ender (§2) connects; the knockback is the O strike's.
 
 **Breaker** (hold): pink aura for 12 f, then a dash toward the opponent while held (at least 12 f,
 at most 45 f, 9 → 10 m/s), then the strike (S8 A4 R18; 30 f recovery on a whiff) as soon as he is
-within **0.95 m** (centre to centre; its reach **0.7 m**). Against a guard → **Guard Break** (50 f stun). Against a non-guarding fighter → 150
+within **1.6 m** (centre to centre; its reach **1.35 m**, the same in every form; 0.95 / 0.7 m until 2026-10-06). Against a guard → **Guard Break** (50 f stun). Against a non-guarding fighter → 150
 damage and a stagger in place (26 f, 0.3 m; a 3 m knockback until 2026-10-02). **The Breaker opens a combo** (the user,
 2026-10-02: 「幫我把 break 改成可以作為 combo 的起手式」): from its hit or Guard Break to the end of its recovery, J / K
 cancels it into J1 / K1, which chases him in its startup like a move off an ender; the full string and the O ender
@@ -231,11 +231,12 @@ hitstun). Breaker vs Breaker (both dashing or striking within 3 m) → **CLASH**
 4 m, 24 f stun, no damage.
 
 **防 > J > I > 防** (the user, 2026-09-29: 「抓技範圍必須比輕攻擊更短，這樣才能達到 防 > J > I > 防 這樣的循環克制」;
-docs/DUEL_STRINGS.md §14). Guard blocks J; J beats the grab (I): the Breaker's strike reaches **0.7 m**, shorter than
-every form's J1 (0.73 m in 片腕 … 1.94 m at −273 °C), so a J1 pressed as the dash comes in counter-hits it (its aura, dash
-and strike startup have no armour); I breaks the guard. The trigger, 0.95 m, sits just outside the widest pair of hurt
-radii (0.9 m, two Kenpachis), so every pair can reach it, and 0.7 m + the thinnest hurt radius (0.34 m) > 0.95 m, so a
-triggered strike connects. Before the rule: trigger 2.2 m, reach 2.6 m. Host-tested per form (`duel-rules-test`): the
+docs/DUEL_STRINGS.md §14). Guard blocks J; J beats the grab (I): the Breaker's strike reaches **1.35 m** in every form,
+shorter than every form's J1 (every J link reaches at least **1.4 m**, `*j-reach-min*`, the user 2026-10-06: 「幫我將 J 的攻擊距離延長到至少 1.4」
+… 1.94 m at −273 °C), so a J1 pressed as the dash comes in counter-hits it (its aura, dash
+and strike startup have no armour); I breaks the guard. The trigger, 1.6 m, keeps the grab's margin: 1.35 m + the
+thinnest hurt radius (0.34 m) > 1.6 m, so a triggered strike connects (DUEL_STRINGS §20). Before the rule: trigger 2.2 m,
+reach 2.6 m; 2026-09-29 to 2026-10-06: 0.95 / 0.7 m (the shortest J then 0.73 m). Host-tested per form (`duel-rules-test`): the
 grab is shorter than J1, and J1 has a press window against the dash at its fastest (e.g. Yamamoto's J1, S 9, from
 1.1 m to 3.1 m away from him; every J1 with S ≤ 8 even after the trigger).
 
@@ -534,7 +535,7 @@ with no derivation (cup 3) takes its parent's version of a move (`register-kit`)
 | Stance cut | 10/4/24 | 3.64 | hold unchanged (6 f in, ≤ 60 f) |
 | SP1 **Split the Meteor** `:ke-meteor` | 26/4/30 | 12 m line | 240, knockdown, splits the ground; the cleaver within **3.4 m** (KATATE's Q reach) is melee, the line beyond it **ranged** (a Bankai West armours it at ×0.6, §6.1); the cash-out splits at 3.9 m (cup 3's MEN), Buttagiru's at 2.6 m (its crack beyond) |
 | SP2 charge / flurry | 16/26/24; flurry S12 | 1.82 / 2.86 | 2 bars |
-| Breaker | strike 10/4/18 | **0.91** (3.38) | triggers at **0.95 m** (2.2 before the grab rule, DUEL_STRINGS §14) |
+| Breaker | strike 10/4/18 | **1.35** (every form, DUEL_STRINGS §20) | triggers at **1.6 m** (2.2 before the grab rule, DUEL_STRINGS §14; 0.95 until §20) |
 | Kikon module **LEAP CLEAVE** `:ke-kikon-n` | crouch 8 f, leap 18 m/s ≤ 30 f (locked), strike 11/3/24 | 3.08, 160° | its own move in every cup (§6.3) |
 
 | Move (cup 2, RYOTE; ×1.15) | S / A / R | Dmg | Block | Volume | Guard (the cut) | Notes |

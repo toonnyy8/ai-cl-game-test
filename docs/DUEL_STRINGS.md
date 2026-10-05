@@ -782,3 +782,31 @@ The user: 「幫我教 CPU 跟更新的兩個機制」 (the Breaker as a combo s
   mirrors YY 130.9, KK 144.8, RR 174.1, II 204.4, SS 194.2. Awaken A/B: RR 37 / 33 / 30 vs 23 / 27 / 30, SS 29 / 34 /
   33 vs 31 / 26 / 27, every row ≥ 20. The masher (no assist) vs HARD 3 % (was 4 %), with AUTO GUARD ALWAYS 41 % (41);
   vs NORMAL 54 %. Host tests all pass. G2: yy P2 0-3 145.8 s, yk P2 0-3 107.2 s, kk P2 0-5 147.7 s.
+
+## 20. Every J reaches at least 1.4 m; the Breaker moves out with it (the user, 2026-10-06)
+
+The user: 「幫我將 J 的攻擊距離延長到至少 1.4」, then 「然後 break 也進行對應的延伸」 (and: the Lisp only for now, the
+Babylon port's TS sim is not mirrored yet).
+
+- **The floor** (`*j-reach-min*` 1.4, tuning.lisp; `parse-move`, kit.lisp): a `:quick` move's reach is at least 1.4 m,
+  after its form's `:reach-mult` (片腕's x0.7 too). Raised: Yamamoto J1–J3 0.96 / 0.96 / 0.88, East / West J1 / J2 1.24,
+  Kenpachi J3 0.88 (base, Nozarashi 1.14, 片腕), 片腕 J1 / J2 0.73, the Bankai's J1 / J2 1.28 and J3 0.80, Rukia's J2 1.32
+  (base, −18 °C), Ichigo's J1 / J2 1.10 — all now 1.40. Unchanged where already longer: RYOTE / NOMIHOSE, Rukia's −50 /
+  −273 °C, KESSA, Senjumaru (1.44).
+- **Kenpachi's J1 / J2 are written 1.4** (1.04 before) rather than floored, so Nozarashi derives 1.82 (x1.3): its longer
+  sword's art reaches 1.62 / 1.88 m through the same clips, and a floored 1.4 would leave the blade half a metre past
+  the hit volume. Measured: a floored Nozarashi (1.4) paces YK the same (118.3 s vs 119.5 s at 60 seeds).
+- **The Breaker** moves out with the shortest J (0.73 → 1.4): reach `*breaker-reach*` 0.7 → **1.35 m**, trigger
+  `*breaker-trigger*` 0.95 → **1.6 m**, keeping both relations of §14: under every J (1.35 < 1.4, J beats I) and a
+  triggered strike connects (1.35 + the thinnest hurt radius 0.34 = 1.69 > 1.6). A Breaker's reach no longer scales with
+  its form's `:reach-mult` (Nozarashi's x1.3 would put it at 1.76, past its J): 1.35 in every form.
+- **The art**: the J clips that fell short of 1.4 step in during their active frames (`:root :f` + 0.28–0.5 m on the hit
+  pose and the active keys, half of it held into the recovery): Yamamoto's HISEN / KAESHIBI / SODEBI, Kenpachi's ARAGIRI /
+  KAESHIGIRI / KENKA-GERI, Ichigo's KOKIBA / KAESHI / KAESHI-KIBA. The Breakers' strike art (IKKOTSU's punch etc.) still
+  lands about 0.7–0.8 m out; the art check exempts Breakers (one-sided).
+- **Tests**: the art check (every J within 0.15 m of its volume); 片腕 is exempt from "K ≥ J + 0.5 at every link" (its
+  K2 1.75 / K3 1.89 against the floor); the perfect-Hoho test's far point 2.6 → 3.0 m.
+- **Gate** (20 seeds, all 15 pairings K.O.): cross medians YK 120.9 (60 seeds **119.5**, before 131.3; Yamamoto 19 / 41
+  as before 20 / 40: the same split, faster), RY 142.3, RK 139.7, IY 143.6, IK 156.7, IR 168.3, SY 141.6, SK 138.9,
+  SR 185.1, SI 195.5; mirrors YY 117.2, KK 131.4, RR 158.1, II 187.8, SS 181.1. Awaken A/B: RR 37 / 36 / 28 vs
+  23 / 24 / 32, SS 36 / 37 / 30 vs 24 / 23 / 30, every row ≥ 20. Host tests all pass. G2: yy P1 5-0 134.1 s, yk P2 0-6 103.7 s, kk P1 1-0 140.8 s.

@@ -121,17 +121,20 @@ lock still holds him through a string's links (GUARD-LOCKED-P): it counts once t
 (defparameter *breaker-dash-max* 45 "Longest dash while the button is held.")
 (defparameter *breaker-speed-min* 9.0 "Dash speed at the start of the dash (m/s)...")
 (defparameter *breaker-speed-max* 10.0 "... rising to this at *breaker-dash-max*.")
-(defparameter *breaker-trigger* 0.95
+(defparameter *breaker-trigger* 1.6
   "The strike starts when the opponent is within this range (centre to centre; 2.2 until the user's 2026-09-29 rule 防 > J >
-I > 防, docs/DUEL_STRINGS.md §14: the grab only from up close, just outside the widest pair of hurt radii, 0.9).")
+I > 防, docs/DUEL_STRINGS.md §14: the grab only from up close; 0.95 until the J floor, 2026-10-06, moved out with the reach).")
 (defparameter *breaker-startup* 8 "Strike startup (the aura brightens over it: the 'hit it now' tell).")
 (defparameter *breaker-active* 4 "Strike active frames.")
 (defparameter *breaker-recovery* 18 "Strike recovery.")
 (defparameter *breaker-whiff* 30 "Strike recovery after a whiff.")
 (defparameter *breaker-damage* 150 "Strike damage on a non-guarding opponent.")
-(defparameter *breaker-reach* 0.7
-  "Strike hit reach (2.6 until 2026-09-29): under every form's J1 reach (J beats I, 防 > J > I > 防), and with the thinnest
-hurt radius (0.34) past the trigger range, so a triggered strike connects.")
+(defparameter *breaker-reach* 1.35
+  "Strike hit reach (2.6 until 2026-09-29, 0.7 until the J floor 2026-10-06): under every form's J1 reach (*J-REACH-MIN*;
+J beats I, 防 > J > I > 防), and with the thinnest hurt radius (0.34) past the trigger range, so a triggered strike connects.")
+(defparameter *j-reach-min* 1.4
+  "Every J link's (:quick move's) reach is at least this, after its form's :reach-mult (the user 2026-10-06: J reached
+0.73-1.32 m in some forms; the Breaker moved out with it, still under it: J beats I).")
 (defparameter *breaker-knockback* 0.3
   "Strike slide: a stagger in place (3.0 m knockback until 2026-10-02: the Breaker opens a combo, J1 / K1 cancel off it).")
 (defparameter *guard-break-stun* 50 "Stun of a Guard Break.")

@@ -220,3 +220,6 @@ Fable 5.1 proposed keeping the Lisp build's v4 notan look on rigid parts; the us
   native ones. Known gaps: some caption kanji are not in the baked glyph set (the reading shows), a few cinematic beats
   simplified (K.O. rain, Cero orb, candles; SEN'EI with 6 clones), Rukia's Bankai body is her zero body in white, the
   ink arc ribbon reads as a slab on wide swings, the landscape touch layer awaits the user's playtest.
+- 2026-10-06: **The Lisp moved ahead of the TS sim** (the user: 「只要先改 Lisp 這裡的」): the J floor and the Breaker's
+  new reach / trigger (DUEL_STRINGS §20: `*j-reach-min*` 1.4 in `parse-move`, the Breaker unscaled 1.35 m / trigger 1.6 m,
+  Kenpachi's J1 / J2 written 1.4) and the J clips' step-in are not mirrored; parity fails until they are.
