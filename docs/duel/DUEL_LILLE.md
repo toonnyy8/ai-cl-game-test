@@ -768,3 +768,116 @@ The pacing log per side and match (70 sides): every side awakened, 60 of 70 ende
 at 1 Konpaku then loses), the eye opened 1.8 times, the stance ~1230 frames a match (~20 s) with ~5 passes, ~2.3 aimed
 shots fired and ~2.7 volleys. He loses most of his pairings: the tuning (§13 "too little") and his own reflexes are batches
 3–4.
+
+## 19. Built: art, HUD, cinematics (batch 3b, 2026-10-06)
+
+The look of §3, §9 and §10, built from the model sheet and the reference pictures (looked at one by one; third-party art, never
+committed). Everything here is cosmetic: the sim never reads it (inertness below).
+
+**Bodies** (`lille-art.lisp`):
+- **Base**: the green fur bicorne worn crosswise (a fur rim low on the brow, a dome, two fur ridges left and right rising to
+  their points at the front, the white crown between them as a stripe from the brow over the top, a steel emblem disc on
+  each side, jagged fur on the rim); the long fur stole from the neck over the right shoulder down the right chest
+  (three grey buttons on its inner edge, jagged fur on its outer one, ringing the back of the collar); the green front
+  panel's notched point; the left eye shut under **the ring of four arcs with four inward ticks** (12 strokes, no hull).
+- **Jilliel**: the holed cream column (four holes near the top, six near the bottom, flush ink discs), its face in a round
+  window (the mouth covered, both eyes open), two horn points, two prongs. The front wing pair stays on the arm chains
+  (batch 1's strikers; the FK reach test is unchanged): a flat blade, narrow at the root, widest at the elbow, a pointed
+  tip at the hand, three oval holes (dark, a light core), a torn trailing edge.
+- **The owl**: the hind stilts moved behind the rig's legs and splayed back (batch 1's read in front); a shaggy fur ruff;
+  the **segmented S-neck** (five segments rising back then forward over, belly plates in front, a fur crest behind); a
+  tiny barn-owl face (a pale round facial disc in a dark rim, two big ink eyes with glints, a small hooked beak, the hair
+  swept back); long thin arms with long fingers.
+
+**Props and the draw hook** (`LILLE-DRAW`; its draws 0 B: f32vec arguments, frames filled by macros, the alphas pre-boxed; see Consing):
+- **The wing blade** (one prop, unit length): a convex leaf, four teeth on the trailing edge, three oval holes. Jilliel's
+  other six are fanned round the column at +40 / +10 / −42° a side (the arms at −12° between: the sheet's fan), muted jade;
+  **MUJITTAI folds them** down round the column (5 / s), see-through (0.7), and **a pass-through ripples them** (the guard
+  gauge dropping in the stance: ±14°, 0.5 s). NIJŪSHI-KŌ's 40 f tell lights the 24 holes. The owl draws the same blade eight
+  times in gold, half open.
+- **Halos**: Jilliel's wide thin flat jade ring (⌀ 0.96 m, 0.52 m over the column, breathing); the owl's small ring with six
+  spikes (⌀ 0.26 m), **broken once Trompete is sealed** (a piece out, an arc dropped and tilted, a spike lying; gold
+  shards when it cracks).
+- **The aim line**: on the floor from under the muzzle to the wall, grey (3.5 cm) while it tracks, jade (6 cm) from the
+  lock; **the reticle** (the eye mark, the motif) lies on it where the opponent stands: 1.1 m and turning while it tracks,
+  snapped to 0.65 m at the lock (the lane's half-width: what a Step must clear), closing to 0.47 m between the release and
+  the shot. The volley: its five lines fanned, the same colours. His `:charge` hook replaces the generic fire charge at the
+  muzzle (FIRE is Yamamoto's) with a jade glint once locked.
+- **The eye opening**: a ghosted afterimage where the hit lands (the Hoho afterimage, `START-GHOST`), the left eye open over
+  the lid for 0.7 s (a face overlay prop in the head's frame: the white, a jade iris), the mark flaring jade along its X
+  for 0.35 s.
+- **Trompete**: the golden horn (no valves, the bell's outer ring on four struts, five plume feathers) grows over his head
+  from f10 to f60, its bell before him gathering a gold star; the beam leaves the bell. **The reflect**: a white mirror
+  hexagon flashes at the reflector, a gold band runs back onto him, the halo cracks.
+- **Hazard looks** (`LB-LOOK`, toon fx; see Consing): the shots are toon ribbons at the volume's height (jade when aimed, ink
+  for a snap shot) with a white core and the muzzle's cross flash on their first frames; NIJŪSHI-KŌ / Trompete a wide toon
+  band (jade / gold, a white core) as wide as the volume; the Kikon lanes a floor line; SABAKI's ground line gold tongues
+  erupting along its burning span over a thin gold sheet.
+- Two **toon fx palettes** were added for these (engine, `fx-toon-pal.wgsl`): 13 JADE (#9CC4AC body, #6E9A80 shade) and 14
+  GOLD (#D8C080, #B89A5A): ink tones of the existing scheme (decision 11), not spot hues.
+
+**HUD** (§9; hud.lisp's existing kit-meter `:draw` / `:label`, `:hud-guard` and `:deck` hooks):
+- base: three **eye pips** (the reticle glyph; unspent: the shut eye ― in a white ring, the last one pulsing; spent: the
+  open eye in jade) and the brush **眼 + ME n**; the third opening's line 「三度も眼を開かされるとは」 as a brush column at his
+  side (batch 1's romaji callout is replaced by it on screen);
+- Jilliel: no meter (U's tag says `U: MUJITTAI`); in the stance the guard bar is **outlined jade**;
+- the owl: the **halo icon**, whole or cracked, and HALO / SEALED;
+- 「**P  REVIVE**」 in gold while BEHEADED allows it (Kenpachi's BANKAI prompt path, the words and colour from his meter);
+- the **distance tag** (a human Lille only): the damage the shot would deal now (40–120 × his damage ×) next to the
+  reticle, grey while tracking, jade once locked;
+- portrait: the same pips / halo in the meter slot; the label ME n / MUJITTAI / HALO (SEALED).
+
+**One hand**: the L chip held is already the aim (its down state is `:sig`); his `:deck` ring shows three eye ticks over the
+thumb ring in the base form (white unspent, jade spent).
+
+**Cinematics** (§10; lille.lisp's last section; 60 Hz, unskippable, every shot `shot-on` its subject, review-3 pacing):
+| Script | Frames | Shots |
+|---|---|---|
+| `lb-jilliel-cine` | 186 | the base face close (his body shown as the base form for the beat), silence 30; the left eye opens, the mark flares, 1 f negative; the black card, jade back-rim, 「三度も眼を開かされるとは / 異端に等しい」 then 神の裁き / JILLIEL as he becomes the column (f92); the cocoon: the wings unfold a pair per 8 f, the halo draws itself; from below, the winged column, the opponent small |
+| `lb-kikon-cine` | 168 | the aim held; over his shoulder (a portrait screen: from straight behind and above, his head low, the line rising), the reticle closing round him, silence 50; the shot, the jade line; his silhouette on the white card with a cross of light through it, held 44 f in silence; the Konpaku shatter; the last card 万物貫通 / THE X-AXIS |
+| `lb-revive-cine` | 180 | the headless column (the face tagged `:jl-head`, hidden) still, silence 30; it rises, the jade wings turning gold f30–f60, a ball of light where the head grows (the owl's body from f66); the card 「武器では死なず / 霊圧で首を落としても尚死なない」 SHIN NO SUGATA; the wide shot: the stilts, the spiked halo, one long arm raised |
+| `lb-jilliel-kikon-cine` | 162 | the card 神の裁き / KAMI NO SABAKI, the holes lit; from the side, 24 jade lines out of the wings crossing on him; on him, held in silence; the shatter; the winged column |
+| `lb-trompete-cine` | 186 | the fist at the beak, the note; the trumpet forming over him; the sound card 神の喇叭 / TROMPETE, silence 50; the beam erasing the horizon, a gold flash; the shatter; 46 f of silence, the world draining grey |
+
+Stills: debug 79100 + 19 i + k (cinematic i at frame 10 k), 79195 the consing probe, 79196 an eye opening's look
+(DUEL_GAMEPLAY "Debug commands").
+
+**Sounds** (`defsound`): `:lb-crack` (the shot: a dry crack, a low thump, a tail), `:lb-lock` (the lock: a dial click and a
+glint), `:lb-trumpet` (a brass note swelling a fourth: Trompete's tell). The emits in lille.lisp's mechanics now name them
+(the lock, the aimed shot, Trompete's tell; sound only).
+
+**Glyphs** baked (tools/glyph-bake.py's `GLYPH()`, the Yuji Syuku subset, appended in lille-art.lisp): か さ ず で と な を 器 圧
+姿 尚 武 異 端 等 落 開 霊 首 (19).
+
+**Generic hooks** (each inert for the other characters: nothing else uses them):
+- `duel/lisp/main.lisp` DRAW-FIGHTER: a kit `:body-alpha` hook (the body's draw alpha; default 1) and a `:charge` hook (drawn
+  instead of the fire charge of a held move);
+- `duel/lisp/hud.lisp` HUD-SIDE / HUD-SIDE-PORTRAIT: the BANKAI prompt's words and colour may come from the kit meter's
+  `:bankai-prompt` (default the old strings and BLOOD);
+- `engine/shaders/fx-toon-pal.wgsl`, `fx-toon.frag.wgsl`, `engine/lisp/fx.lisp`: toon palettes 13 JADE and 14 GOLD (the
+  shader clamps to 14 instead of 12; no existing call passes more than 12);
+- `duel/lisp/kit.lisp`: the defkit docstring lists them.
+
+**Deviations** (the smallest, each kept to the design):
+1. **The reticle sits where the opponent stands on the line**, not at the wall: at 20–30 m the wall end is off screen or a
+   speck, and the ring's radius at the lock is the lane's half-width, which is what the opponent has to read.
+2. **The line is drawn on the floor** (§9 says so), not at the muzzle's height as batch 1 drew it.
+3. **MUJITTAI's see-through is the engine's translucent draw** (the dark phantom of Ichigo's clones), the column at 0.72, the
+   wings and halo at 0.7: a light ghost is not available without a shader change. Needs the user's eyes.
+4. **The owl's wings are #CDB47A with #B89A5A teeth**: the decision's #B89A5A alone reads brown in the toon shade at play
+   distance; the halo stays #B89A5A.
+5. **The cinematics' length is sim time** (`*MATCH-TICK*` runs during a cinematic): the placeholders were 120 f, the five are
+   186 / 168 / 180 / 162 / 186, so his six pairings' match times move (below).
+
+**Inertness** (2026-10-06): host tests ALL PASS (duel-rules 5714, control 86, learn 100, input 33, touch 64, cine 18);
+`tools/pkgcheck.sh duel` 0 / 0 / 0; the name-leak grep empty. `simgate.py --seeds 10`: **byte-identical** to the run before
+the change (602 lines) with the cinematics at the placeholders' 120 f; at the designed lengths the fifteen old pairings
+and their companion lines are identical and his six pairings keep every winner, form and pacing count, only their
+seconds and tick stamps move by the longer cinematics (LILLE YAMAMOTO seed 1: 145.6 → 149.1 s). `--cvc` PASS.
+Their medians (seeds 1–10) before → after: LY 152.5 → 155.3, LK 158.0 → 161.9, LR 154.9 → 158.1, LI 178.5 → 182.8,
+LS 170.2 → 173.4, LL 241.8 → 250.3 s (all K.O.). The balance pass re-gates these.
+
+**Consing** (debug 79195, logged as `lille consing`): the props, wings, halos, reticle, trumpet and HUD draw 0 B; what is
+left is the floor of this build's ECS lookups, **8 B per component lookup** (`fighter`, `model`, `transform` each box their
+result; measured 80 B per 10 calls): the draw hook 16 B a frame (fighter + model), 24 B while aiming, during Trompete or
+in MUJITTAI (+ transform); each Lille hazard's look 8 B. Removing that floor is an engine change (out of this batch).

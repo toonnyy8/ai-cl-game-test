@@ -250,7 +250,9 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
         (draw-body b (model-joints m) x y z yaw :weapon weapon :hide (face-hide-list m face) :face face
                                               :tint (model-tint m)
                                               :rim (if (> (model-super m) 0) *super-rim* (model-rim m))
-                                              :flash (if (> (model-flash m) 0) 0.45 0.0))))
+                                              :flash (if (> (model-flash m) 0) 0.45 0.0)
+                                              :alpha (let ((ba (kit-hook kit :body-alpha)))   ; a form drawn see-through
+                                                       (if ba (funcall ba e) 1f0)))))
     (let ((h (kit-hook kit :draw))) (when h (funcall h e rdt)))   ; a character's own looks on the posed body (KIT-HOOK)
     (when (and mv (eq (mv-clip mv) :ya-sleeve) (eq (fighter-phase f) :main)   ; SODEBI: the empty left sleeve burns
                (< (- (mv-s mv) 4) (fighter-sf f) (+ (mv-s mv) (mv-a mv) 10)))
@@ -268,8 +270,11 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
                                  rdt :power (second look)))
           (:embers (vfx-blade-embers (aref *base* 0) (aref *base* 1) (aref *base* 2) (aref *tip* 0) (aref *tip* 1) (aref *tip* 2) rdt))))
       (when (and mv (eq (fighter-phase f) :hold) (not (member :stance (mv-flags mv))))
-        (vfx-charge (aref *tip* 0) (aref *tip* 1) (aref *tip* 2)
-                    (min 1.0 (/ (fighter-hold f) (float (second (mv-hold mv))))) rdt))
+        (let ((ch (kit-hook kit :charge)))                 ; a form's own charge look replaces the fire one
+          (if ch
+              (funcall ch e rdt)
+              (vfx-charge (aref *tip* 0) (aref *tip* 1) (aref *tip* 2)
+                          (min 1.0 (/ (fighter-hold f) (float (second (mv-hold mv))))) rdt))))
       (let* ((tr (blade-points (blade e))))
         (declare (type f32vec tr))
         (if (and mv (eq (fighter-phase f) :main) (>= (fighter-sf f) (- (mv-s mv) 4)) (< (fighter-sf f) (+ (mv-s mv) (mv-a mv) 3)))

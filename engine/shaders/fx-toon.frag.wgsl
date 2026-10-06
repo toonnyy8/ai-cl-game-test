@@ -26,7 +26,7 @@ fn vnoise(p: vec2f) -> f32 {          // value noise on the integer lattice, smo
   let pk0 = i.pk - 32.0 * glass;
   let fan = pk0 >= 16.0;
   let pk = select(pk0, pk0 - 16.0, fan);
-  let p = min(u32(pk), 12u);
+  let p = min(u32(pk), 14u);
   let k = clamp(fract(pk), 0.01, 0.98);
   let core = PAL[4u * p]; let body = PAL[4u * p + 1u]; let shade = PAL[4u * p + 2u]; let edge = PAL[4u * p + 3u];
   let along = i.col.y < 0.0;

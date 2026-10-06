@@ -31,7 +31,7 @@
 
 ;;; ---------------------------------------------------------------- toon effects: clock, palettes, envelope
 ;;; The toon fx batch (WITH-FX-VERTS :toon, fx-toon.frag.wgsl; docs/style/STYLE_STORM_DESIGN.md §3) draws hard,
-;;; inked shapes in one of 13 palettes. A toon vertex's colour lanes are HEAT (0..1: ribbons run base 1 to
+;;; inked shapes in one of 15 palettes. A toon vertex's colour lanes are HEAT (0..1: ribbons run base 1 to
 ;;; tip 0.2; fan shapes: 0 centre .. 1 outline), SEED (a shape's noise, 0..999; < 0 = "along" shape, +1000 =
 ;;; the charcoal style), WOBBLE (0..0.5 silhouette boil) and TOON-A (palette + presence K 0.01..0.98, + 16 for a
 ;;; fan shape). Presence erodes the shape: 0.98 whole, toward 0 gone (matter perforates, ribbons lose
@@ -41,6 +41,8 @@
 (defconstant +pal-steel+ 4f0) (defconstant +pal-hit+ 5f0) (defconstant +pal-smoke+ 6f0) (defconstant +pal-dust+ 7f0)
 (defconstant +pal-ash+ 8f0) (defconstant +pal-soul+ 9f0) (defconstant +pal-blood+ 10f0) (defconstant +pal-black-smoke+ 11f0)
 (defconstant +pal-blue+ 12f0 "SOUL DUEL's BLUE burst (energy, a coloured edge).")
+(defconstant +pal-jade+ 13f0 "SOUL DUEL's muted jade (an ink tone, not a spot hue: energy with a coloured edge).")
+(defconstant +pal-gold+ 14f0 "SOUL DUEL's muted gold #B89A5A (energy with a coloured edge).")
 
 (defmacro fx-clock () "The fx clock in seconds (*FX-CLOCK*, render.lisp)." `(aref (the f32vec *fx-clock*) 0))
 (defun-fast fx-clock-advance (dt)
@@ -54,7 +56,7 @@ AGE - mod(clock, RATE/24), at least 0. Every effect sampled with it changes on t
 toon shader's noise. AGE and RATE: single-float forms."
   `(f-max 0f0 (- ,age (f-mod (fx-clock) (/ ,rate 24f0)))))
 (defmacro toon-a (p k &optional fan)
-  "The toon vertex's alpha lane: palette P (0..12, a +PAL-...+ constant or a float form) + presence K
+  "The toon vertex's alpha lane: palette P (0..14, a +PAL-...+ constant or a float form) + presence K
 clamped to 0.01..0.98; FAN T adds 16 (the fan-shape flag of FX-STAR / FX-SHARD)."
   `(+ ,(if (numberp p) (float (+ p (if fan 16 0)) 1f0) (if fan `(+ 16f0 ,p) p)) (f-clamp ,k 0.01f0 0.98f0)))
 (defmacro %h01 (i seed)
