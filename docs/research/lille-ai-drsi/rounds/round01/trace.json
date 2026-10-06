@@ -1,0 +1,14 @@
+{
+  "baseline_score": 0.4769,
+  "beta": 0.6,
+  "branch_count": 4,
+  "cells": {},
+  "directions": {},
+  "higher_is_better": true,
+  "max_parallelism": 2,
+  "notes": "",
+  "policy_file": "policy/current.py",
+  "refine_count": 2,
+  "round_index": 1,
+  "task": "SOUL DUEL Lille CPU AI (duel/lisp/lille.lisp :ai tables and CPU reflexes), scored by tools/aieval.py --char 5 --seeds 40 at the freeze commit (opponents: the five other CPUs as they read there; DUEL_LILLE \u00a724.2)"
+}
