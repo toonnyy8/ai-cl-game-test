@@ -106,6 +106,8 @@ free (decision 34, 2026-10-06: 「從『遠』變『近』不消耗閃步量表�
   "EN's J / K: the flash step each trace line laid costs (a J 3, a K's fan of three 9); a line is laid only while this
 much is left, checked line by line (the swing still plays); SP1 / SP2's traces are free (decision 34, 2026-10-06, the
 user: 「遠程 J/K 每條軌跡消耗 3 點閃步量表」; free before).")
+(defparameter *lb-trace-refund-block* 2.0
+  "... and a guarded one this much (the user, 2026-10-06: 「擋下回收 2」; it was nothing).")
 (defparameter *lb-trace-refund* 4.0
   "A materialised trace that hits a fighter gives him this much flash step back (a K fan's hit group hits once: once;
 a guarded one nothing; kept at the max, none during a burst: PAY-GAUGES) (decision 34, 2026-10-06, the user: 「每打中一條
@@ -222,9 +224,9 @@ how many are laid and the flash step left (decision 34: a K fan with 7 lays two,
     (dotimes (i n) (when (>= fs c) (setf fs (- fs c)) (incf laid)))
     (values laid fs)))
 (defun lb-trace-refund (contact)
-  "The flash step a materialised trace's CONTACT gives him back: *LB-TRACE-REFUND* on a hit, nothing guarded (decision
-34; a K fan is one hit group, so it is asked once)."
-  (if (eq contact :hit) *lb-trace-refund* 0.0))
+  "The flash step a materialised trace's CONTACT gives him back: *LB-TRACE-REFUND* on a hit, *LB-TRACE-REFUND-BLOCK* when
+guarded (decision 34; a K fan is one hit group, so it is asked once)."
+  (case contact (:hit *lb-trace-refund*) (:block *lb-trace-refund-block*) (t 0.0)))
 (defun lb-trace-pick (fans laid)
   "The yaw offsets (FANS, LB-TRACE-FANS order) of the LAID lines when not all are paid: the middle one first, then the
 fan's sides in order; laid in FANS' order."
@@ -1079,8 +1081,8 @@ by band, damage by band, Trompete)."
       (when (and mv (eq (mv-name mv) :lb-trompete))
         (lb-count att (if (eq (contact-of res) :hit) :trompete-hit :trompete-guarded))))
     (when (and hazard (lbh-p (hazard-data hazard)) (eq (lbh-kind (hazard-data hazard)) :trace))   ; a materialised trace
-      (when (eq (contact-of res) :hit)                      ; its flash step back (decision 34; a fan's group: once)
-        (setf (lbs-trace-hit-t (lb att)) *match-tick*)
+      (when (eq (contact-of res) :hit) (setf (lbs-trace-hit-t (lb att)) *match-tick*))
+      (when (plusp (lb-trace-refund (contact-of res)))       ; its flash step back (decision 34; a fan's group: once)
         (pay-gauges (or (siphon-of att) att) 0.0 (lb-trace-refund (contact-of res)))
         (lb-count att :trace-refund))
       (lb-count att (if (eq (contact-of res) :hit) :trace-hit :trace-guarded)))

@@ -1661,7 +1661,7 @@ whenever he moved (KIN's legs shrank to their floor). Fix:
 | TENSHIN EN → KIN flash step | 10 | **0** |
 | TENSHIN KIN → EN flash step | 10 | 10 (unchanged; refused without it) |
 | EN J / K: each trace line laid | free | **3 flash step a line** (a J 3, a K's fan of three 9); a line is laid only while 3 remain (the swing still plays) |
-| A materialised trace that hits | — | **+4 flash step back** per trace (+2 at first; the user, the same day: 「我希望能將軌跡命中回收量上調到 4」; a K fan's hit group hits once: +4); a guarded one gives nothing |
+| A materialised trace that hits | — | **+4 flash step back** per trace (+2 at first; the user, the same day: 「我希望能將軌跡命中回收量上調到 4」; a K fan's hit group hits once: +4); **a guarded one +2** (the user: 「擋下回收 2，且所有軌跡都具備『萬物貫通』的穿透效果」; asked, the user chose 「維持現狀」 for the second half: every trace already is the X-Axis, decision 2: through guard as chip 15 % and the guard drain, never stopped by summons or hazards) |
 
 SP1 / SP2 traces cost nothing (the user named J / K). The CPU must budget it (the flash step also pays Step, Hoho and
 KIN → EN).
