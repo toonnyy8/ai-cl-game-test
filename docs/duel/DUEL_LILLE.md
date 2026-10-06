@@ -1395,8 +1395,8 @@ theirs); the active frames stay (a trace is laid on the first). Lead's numbers (
 - **Translucent wings** (every Jilliel form and the owl): drawn see-through so the fight stays visible; they must stay
   readable as jade / gold blades with their holes.
 - **The owl = KIN's model** (the column, the ㄇ legs, the eight wings in gold #B89A5A, decision 11) with **the long
-  S-neck owl head** in place of Jilliel's top, and an **extra pair of long arms** (the claws stay the rig's hands: the
-  strike points).
+  S-neck owl head** in place of Jilliel's top, and an **extra pair of long arms** relative to KIN (one pair in all: the rig's, the claws the
+  strike points; §23.7).
 
 
 ### 23.4 Built: rules, CPU, touch (round 2)
@@ -1608,4 +1608,11 @@ HŌSHA now threatens up to ~8 m (the leap closes, the bullets reach 3 m: the fir
 f14 at its end). TAISHA after its 3 m back-slide reaches an opponent who stood within ~3 m. So the CPU's guard case at
 3–6 m moved off TAISHA (it would now whiff) to the quick shot (through guard); its bands are otherwise unchanged
 (`lb-ai-kamae-plan`, host test updated).
+
+Measured (seeds 1–20, every match K.O.): LY 167.7 s / 8 wins, LK 169.4 / 11, LR 194.0 / 5, LI 206.8 / 8, LS 193.5 / 6,
+LL 244.6 (mirror); every cross median inside 125–210 s; `--cvc` PASS; pkgcheck 0.
+
+**The owl's arms (the user, 2026-10-06: 「然後梟頭狀態多了一組手臂喔www 萊醬」)**: decision 27's "extra arms" were
+relative to KIN, which draws none, so the owl has **one** pair: the rig's long arms (the claws, the strike points).
+The second, cosmetic pair §23.5 added (`%LB-ARMS2`, the `:lb-limb` / `:lb-claw` weapons) is cut.
 

@@ -201,8 +201,9 @@
 ;; trailing from the hips, the ㄇ legs (the thighs here, the shanks and the strut drawn by LILLE-DRAW as KIN's), a shaggy fur
 ;; ruff on the column's top and, in place of Jilliel's face, the segmented S-neck (belly plates in front, a fur crest behind)
 ;; to a tiny barn-owl face (a pale round facial disc, two big dark eyes, a small hooked beak, the hair swept back into the
-;; neck fur). Its long thin arms (x2.2) are the rig's: the claws are the hands (the strike points); LILLE-DRAW adds the
-;; extra pair (cosmetic, %LB-ARMS2) and the eight gold wings and the small spiked halo (it cracks when Trompete is sealed).
+;; neck fur). Its long thin arms (x2.2) are the rig's: the claws are the hands (the strike points). They are decision 27's
+;; "extra arms" (KIN has none drawn; a second cosmetic pair was cut, the user 2026-10-06: 「梟頭狀態多了一組手臂」); LILLE-DRAW
+;; adds the eight gold wings and the small spiked halo (it cracks when Trompete is sealed).
 (defbody :lille-shin (:scale 1.0 :width 1.0 :hunch 0 :hurt-r 0.38 :hurt-h 1.8 :props (:arms 2.2 :legs 1.5)
                       :palette ((:white #xECECE8) (:shade #xBCC1CC) (:fur #xD8DCE4) (:face #xF0ECE4) (:gold #xB89A5A)
                                 (:gold-l #xC2A866) (:ink #x16161E) (:hole #x2A2A30) (:beak #x8C8E96))
@@ -417,16 +418,6 @@ round each hole; HOLE-FILL (a colour, NIJUSHI-KO's tell) fills the holes with li
 (defweapon :lb-shank-white (:length 1.0) (:solid (lb-shank mb #xECECE8)))
 (defweapon :lb-strut-cream (:length 1.0) (:solid (lb-strut mb #xEDE6CC #xD9D0B2)))
 (defweapon :lb-strut-white (:length 1.0) (:solid (lb-strut mb #xECECE8 #xBCC1CC)))
-;; the owl's extra pair of long arms (decision 27; cosmetic: the rig's arms strike): a limb (unit along +Y, an elbow knob at
-;; its end; drawn at the rig arm's bone length) and the claw (metres: a long narrow hand, three long fingers)
-(defweapon :lb-limb (:length 1.0)
-  (:solid (mbc mb #xECECE8) (with-xform (mb (xform :y 0.5)) (mb-cylinder mb 0.047 1.0 :segments 8 :top-radius 0.04 :smooth t))
-          (with-xform (mb (xform :y 1.0)) (mb-sphere mb 0.055 :segments 8 :rings 5 :smooth t))))
-(defweapon :lb-claw (:length 0.3)
-  (:solid (mbc mb #xECECE8) (with-xform (mb (xform :y 0.06)) (mb-box mb 0.05 0.12 0.02))
-          (mbc mb #xBCC1CC) (with-xform (mb (xform :y 0.17 :x 0.016)) (mb-box mb 0.008 0.12 0.008))
-          (with-xform (mb (xform :y 0.175 :x 0.0)) (mb-box mb 0.008 0.13 0.008))
-          (with-xform (mb (xform :y 0.165 :x -0.016)) (mb-box mb 0.008 0.11 0.008))))
 ;; the halos, unit radius: Jilliel's wide thin flat ring; the owl's small ring with six spikes; the owl's broken one
 (defweapon :lb-halo (:length 1.0) (:solid (mbc mb #x9CC4AC) (lb-ring mb 0.9 1.0 0.03 :n 32)))
 (defun lb-spikes (mb n &key (skip nil))
@@ -1063,50 +1054,6 @@ height in *LB-V* [3], the alpha in [4] (MUJITTAI's body alpha)."
                 (draw-weapon :lb-shank-cream *lb-m* :alpha al :flash fla)))))))
   nil)
 
-;; Decision 27: the owl has an extra pair of long arms. The rig's arms strike (their claws are the hands, the host FK test's
-;; points); the extra pair is cosmetic: rooted a little lower and behind the rig's shoulders, each segment half the rig
-;; arm's direction and half hanging down (and a little out), so it follows the strikes at a smaller swing, swaying on its
-;; own phase (the fx clock, *LB-V* [13]).
-(defun-fast %lb-arms2 (jm fl)
-  "The owl's extra pair of arms from the rig arms of JM (FL 1 the hit flash)."
-  (declare (type f32vec jm) (fixnum fl))
-  (let* ((c (* 16 (ji :chest))) (fla (svref *lb-alphas* (if (= fl 1) 9 0))) (tm (aref *lb-v* 13))
-         (xx (aref jm c)) (xy (aref jm (+ c 1))) (xz (aref jm (+ c 2)))
-         (yx (aref jm (+ c 4))) (yy (aref jm (+ c 5))) (yz (aref jm (+ c 6)))
-         (zx (aref jm (+ c 8))) (zy (aref jm (+ c 9))) (zz (aref jm (+ c 10))))
-    (declare (fixnum c) (single-float tm xx xy xz yx yy yz zx zy zz))
-    (dotimes (side 2)
-      (let* ((u (if (= side 0) (* 16 (ji :upper-arm-r)) (* 16 (ji :upper-arm-l))))
-             (l (if (= side 0) (* 16 (ji :lower-arm-r)) (* 16 (ji :lower-arm-l))))
-             (h (if (= side 0) (* 16 (ji :hand-r)) (* 16 (ji :hand-l))))
-             (s (if (= side 0) 1f0 -1f0)) (sw (* 0.07f0 (f-sin (+ (* 1.7f0 tm) (* 2.1f0 (i->f side))))))
-             (ax (+ (aref jm (+ u 12)) (* -0.13f0 yx) (* 0.05f0 zx) (* -0.02f0 s xx)))
-             (ay (+ (aref jm (+ u 13)) (* -0.13f0 yy) (* 0.05f0 zy) (* -0.02f0 s xy)))
-             (az (+ (aref jm (+ u 14)) (* -0.13f0 yz) (* 0.05f0 zz) (* -0.02f0 s xz)))
-             (ux (- (aref jm (+ l 12)) (aref jm (+ u 12)))) (uy (- (aref jm (+ l 13)) (aref jm (+ u 13))))
-             (uz (- (aref jm (+ l 14)) (aref jm (+ u 14))))
-             (lu (f-max 0.05f0 (f-sqrt (+ (* ux ux) (* uy uy) (* uz uz)))))
-             (vx (- (aref jm (+ h 12)) (aref jm (+ l 12)))) (vy (- (aref jm (+ h 13)) (aref jm (+ l 13))))
-             (vz (- (aref jm (+ h 14)) (aref jm (+ l 14))))
-             (ll (f-max 0.05f0 (f-sqrt (+ (* vx vx) (* vy vy) (* vz vz))))))
-        (declare (fixnum u l h) (single-float s sw ax ay az ux uy uz lu vx vy vz ll))
-        (setf ux (+ (* 0.55f0 (/ ux lu)) (* -0.45f0 yx) (* 0.2f0 s xx) (* (- sw) zx))
-              uy (+ (* 0.55f0 (/ uy lu)) (* -0.45f0 yy) (* 0.2f0 s xy) (* (- sw) zy))
-              uz (+ (* 0.55f0 (/ uz lu)) (* -0.45f0 yz) (* 0.2f0 s xz) (* (- sw) zz))
-              vx (+ (* 0.55f0 (/ vx ll)) (* -0.45f0 yx) (* 0.06f0 s xx) (* (- sw) zx))
-              vy (+ (* 0.55f0 (/ vy ll)) (* -0.45f0 yy) (* 0.06f0 s xy) (* (- sw) zy))
-              vz (+ (* 0.55f0 (/ vz ll)) (* -0.45f0 yz) (* 0.06f0 s xz) (* (- sw) zz)))
-        (%lb-unit! ux uy uz) (%lb-unit! vx vy vz)
-        (%lb-frame! *lb-m* ax ay az ux uy uz xx xy xz lu)
-        (draw-weapon :lb-limb *lb-m* :flash fla)
-        (let ((ex (+ ax (* lu ux))) (ey (+ ay (* lu uy))) (ez (+ az (* lu uz))))
-          (declare (single-float ex ey ez))
-          (%lb-frame! *lb-m* ex ey ez vx vy vz xx xy xz ll)
-          (draw-weapon :lb-limb *lb-m* :flash fla)
-          (%lb-frame! *lb-m* (+ ex (* ll vx)) (+ ey (* ll vy)) (+ ez (* ll vz)) vx vy vz zx zy zz 1f0)
-          (draw-weapon :lb-claw *lb-m* :flash fla)))))
-  nil)
-
 ;;; ---------------------------------------------------------------- the looks keyed on his state
 (defmacro lb-fxs (side i) `(aref *lb-fx* (+ (* 24 ,side) ,i)))
 
@@ -1269,10 +1216,10 @@ or a gold look plays; a fourth in MUJITTAI)."
           (aref v 3) (aref *toon-body* 1))               ; his body's feet height (DRAW-BODY's): the ㄇ legs' floor
     (when (>= (model-alpha m) 0.999f0)
       (let ((bn (body-name (model-body m))) (fl (if (> (model-flash m) 0f0) 1 0)))
-        (when (or (eq bn :lille-jilliel-kin) (eq bn :lille-shin))   ; the ㄇ legs (decision 26), the owl's extra arms (27)
+        (when (or (eq bn :lille-jilliel-kin) (eq bn :lille-shin))   ; the ㄇ legs (decision 26)
           (setf (aref v 4) (if (lb-mujittai-p form) 0.72f0 1f0))
           (%lb-legs jm (if (eq bn :lille-shin) 1 0) fl)
-          (when (eq bn :lille-shin) (setf (aref v 13) tm) (%lb-arms2 jm fl))))
+          nil))
       (case look
         (:base (%lb-eye-look e m st side) (%lb-aim-look e f side))
         ((:jilliel :revive)
