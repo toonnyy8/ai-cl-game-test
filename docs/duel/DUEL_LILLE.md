@@ -2006,3 +2006,12 @@ hazard: owl and Jilliel identical, measured side by side); the first owl draw of
 gold traces, the wind-up, the 裁きの光明 materialise at its f1 / f5 / f10 / f19, KIN after it, KIN idle / side / K1, both MUJITTAI,
 EN SP1 (chops, lines, burst), EN SP2 (tell, the thick trace, its burst), KIN SP1, KIN Trompete's tell and beam, the reflect
 (SEALED, the broken halo), decision 37's Hoho from owl EN / Jilliel EN / owl MUJITTAI.
+
+### 23.17 Merged: the owl on Jilliel's system (the lead, 2026-10-06)
+
+§23.15 merged. Host tests ALL PASS (duel-rules 6367, control 89, learn 100, input 33, touch 64, cine 18); pkgcheck 0 /
+0 / 0; `--seeds 10`: the fifteen old pairings identical; `--cvc` PASS; `./build.sh duel` 0 warnings. Stills checked: the
+owl's laid traces (faint gold floor lines) and their materialise (the gold explosion line along the ground). Seeds 1–20
+(§23.15): every match K.O.; LY 174.0 s / 14 wins, LK 168.5 / 6, LR 218.2 / 6 (60 seeds 207.6: inside), LI 200.2 / 5,
+LS 187.1 / 6, LL 232.9. Revival gamble LY +9 (the ±9 edge), LK 0.
+
