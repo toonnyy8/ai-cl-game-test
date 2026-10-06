@@ -2155,3 +2155,39 @@ pairings are recorded as accepted exceptions (AGENTS.md "Tests and gates"); the 
 The mirror (LL) had one time-out in 20 seeds (§23.21; the gate wants every match K.O.); asked, the user added it:
 「也算進例外」 (2026-10-06): the Lille mirror's time-outs are an accepted exception too.
 
+---
+
+## 24. The adaptive, in-character CPU (dream-rsi; the user, 2026-10-06)
+
+The user: 「然後幫我依據 @docs/guides/DREAM_RSI.zh-TW.md 的 AI 開發經驗設計並強化更具有角色風格的利捷巴羅自適應 AI，記得要能與玩家輔助 AI
+系統結合，以幫助玩家打出更具風格的漂亮連段。」 Asked (DREAM_RSI §7's pre-run questions), the user chose: 「完整 dream-rsi」,
+「風格偏重 0.4/0.2/0.4」, 「完整招牌路線」, 「學習玩家習慣」.
+
+### 24.1 The plan (DREAM_RSI's checklist applied)
+
+1. **Freeze the evaluator first** (`tools/aieval.py --char 5`, one commit, checked on the baseline and one or two
+   hand-made variants before any cell runs):
+   - **score = 0.4 strength + 0.2 masher + 0.4 signature** for Lille (the other characters keep 0.6 / 0.2 / 0.2);
+   - **signature = a whitelist** (DREAM_RSI §5.9), the share of Lille's dealt damage from: materialised traces
+     (`LB-TRACE`, Jilliel's and the owl's), any J / K hit in a combo a trace hit started (trace → TENSHIN → J / K),
+     HŌSHA's bullets and the J1 / K1 they link into, the charged X-Axis shot, TAISHA, the SPs (SANREN, NIJŪSHI-KŌ,
+     審判光明, Trompete) and his Kikon; never the Breaker, never a plain J / K string;
+   - **a NORMAL drift gate**: Lille NORMAL vs each other NORMAL CPU, both seats; its win share more than 0.05 away from
+     the frozen baseline's → score 0 (DREAM_RSI §5.5);
+   - **pacing** as before (every NORMAL match a K.O., median ≤ 220 s at 20 seeds) except the accepted exceptions: LR /
+     LI ≤ 240 s (§23.22);
+   - fixed seeds; cells compare at 40 seeds, the final pick at 80.
+2. **Opponents fixed** at the freeze commit (the other five CPUs as shipped); every cell's worktree starts there.
+3. **Cells** change only `duel/lisp/lille.lisp`'s `:ai` tables and CPU functions (and its CPU knobs), keep every
+   shared hook working (`AI-AWAKEN-P`, the revival's `:bankai` reflex, debug modes, the learning CPU's read clock, the
+   ASSIST's borrowed brain: `AI-BRAIN`), every chance per event and difficulty-scaled; pass the host tests; run the awaken
+   A/B before handing back if they touch the awakening; write deliverables inside their own worktree (the lead copies).
+4. **dream-rsi**: W = 2 (two cells at a time), ≥ 3 rounds × 8 cells, `plan --beta 0.6`, between rounds 3–5 written
+   policy revisions compared on the replay pool; `set-direction` only structural. The lead re-scores every cell with
+   the frozen evaluator before `record`.
+5. **Integration** (after the search, one agent): the learning CPU (`learn.lisp`, DUEL_LEARNING) gains Lille's own
+   situations (e.g. which way the player steps off a trace, whether he guards or Hohos a materialise, his answer to
+   HŌSHA), and the ASSIST's AUTO COMBO gets **his full signature routes** on the player's J (HŌSHA hit → J1 / K1; enough
+   traces with the opponent on a line → TENSHIN → J; a KIN string done → TENSHIN out), assisted presses ×0.8 as always;
+   then the full gate (simgate, A/B, assistgate, the learning gate, host tests, G2, build).
+
