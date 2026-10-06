@@ -12,9 +12,9 @@ the assist answer J mashing?). Run tools/simgate.py once first when a source cha
 """
 import argparse, concurrent.futures as cf, os, subprocess, sys
 sys.dont_write_bytecode = True   # (no tools/__pycache__ from the import below)
-from simgate import ROOT, ECL, FAS, MUSLM
+from simgate import ROOT, ECL, FAS, MUSLM, ROSTER
 
-NAMES = ['YA', 'KE', 'RU', 'IC', 'SE']
+NAMES = [n[:2] for n in ROSTER]   # YA KE RU IC SE (simgate.ROSTER: the roster in order)
 
 
 def job(a):
@@ -36,7 +36,7 @@ def main():
     ap.add_argument('--p2-dumb', type=int, default=0, help='P2 a button-masher too, never assisted (81040+i)')
     ap.add_argument('--rows', action='store_true', help='a line per pairing too')
     a = ap.parse_args()
-    jobs = [(int(k), c1, c2, a.seeds, a.diff, a.mult, a.learn, a.p2_dumb) for k in a.ks.split(',') for c1 in range(5) for c2 in range(5)]
+    jobs = [(int(k), c1, c2, a.seeds, a.diff, a.mult, a.learn, a.p2_dumb) for k in a.ks.split(',') for c1 in range(len(ROSTER)) for c2 in range(len(ROSTER))]
     tot = {}
     with cf.ProcessPoolExecutor(min(16, os.cpu_count() or 1)) as ex:
         for k, c1, c2, w, n, rc in ex.map(job, jobs):

@@ -85,7 +85,8 @@
 ;;;;            Bankai chance :p = k / 100, 38000+k its :own-konpaku = k
 ;;;;   Rukia (docs/duel/DUEL_RUKIA.md): 6000+s / 7000+s / 8000+s seeded CPU vs CPU RY / RK / RR (P1 Rukia); 2118 the seed gate of
 ;;;;            her three pairings (RY RK RR; 2113 now plays all six), 2119 RY and RK only, 2125+k pairing k alone (0 YY 1 YK
-;;;;            2 KK 3 RY 4 RK 5 RR: the gate in parallel), 2124 2118 with the combat log
+;;;;            2 KK 3 RY 4 RK 5 RR: the gate in parallel; k 0-14, then 2135+k for k 15-64 in 2150-2199; *PAIRS* =
+;;;;            ROSTER-PAIRS), 2136+i roster character i's pairings (i 4-13: 2140 Senjumaru's five), 2124 2118 with the combat log
 ;;;;            (the pacing log); 2410+k her tests (RUKIA-TEST: human P1 Rukia, P2's CPU
 ;;;;            off): 0 Shikai 5 m from Kenpachi, 1 -18 C 2.2 m, 2 -50 C 2.2 m, 3 zero 1.8 m, Kenpachi's J1 into the ward (the
 ;;;;            freeze-touch), 4 zero, Yamamoto's full Shiranui from 7 m (optic: it hits), 5 zero, Kenpachi's Breaker from 5 m
@@ -869,19 +870,43 @@ move-beat choices of DRAW-FIGHTER."
 
 (defvar *gate* nil "Seed gate: (seed pair) matches still to run.")
 (defvar *gate-results* nil "(pair secs ko-p) of the finished gate matches.")
-(defparameter *pairs* '((:yamamoto :yamamoto) (:yamamoto :kenpachi) (:kenpachi :kenpachi)
-                        (:rukia :yamamoto) (:rukia :kenpachi) (:rukia :rukia)
-                        (:ichigo :yamamoto) (:ichigo :kenpachi) (:ichigo :rukia) (:ichigo :ichigo)
-                        (:senjumaru :yamamoto) (:senjumaru :kenpachi) (:senjumaru :rukia) (:senjumaru :senjumaru)
-                        (:senjumaru :ichigo)))
+(defparameter *pairs-0* '((:yamamoto :yamamoto) (:yamamoto :kenpachi) (:kenpachi :kenpachi)
+                          (:rukia :yamamoto) (:rukia :kenpachi) (:rukia :rukia)
+                          (:ichigo :yamamoto) (:ichigo :kenpachi) (:ichigo :rukia) (:ichigo :ichigo)
+                          (:senjumaru :yamamoto) (:senjumaru :kenpachi) (:senjumaru :rukia) (:senjumaru :senjumaru)
+                          (:senjumaru :ichigo))
+  "The first five characters' fifteen pairings in their historical order (pairing k 0-14; YK has P1 Yamamoto, and SS comes
+before SI: Senjumaru's pairings were gated before Ichigo joined).")
+
+(defun roster-pairs ()
+  "Every seed-gate pairing: *PAIRS-0*, then for each later roster character i (index 5 on) its pairings with every earlier
+character (P1 i), then its mirror, in roster order (pairing k = the position here: tools/simgate.py builds the same list)."
+  (append *pairs-0*
+          (loop for i from 5 below (length *roster*) for c = (nth i *roster*)
+                append (loop for j from 0 to i collect (list c (nth j *roster*))))))
+
+(defparameter *pairs* (roster-pairs) "ROSTER-PAIRS (refreshed by START-GATE, whatever the kit files' load order).")
+
+(defun char-pairs (i)
+  "Roster character I's pairings, in *PAIRS* order: those with I and no later character (Rukia's RY RK RR, Senjumaru's SY SK
+SR SS SI; a new character's: its pairings with every earlier character and its mirror)."
+  (remove-if-not (lambda (pair) (= i (max (position (first pair) *roster*) (position (second pair) *roster*)))) *pairs*))
 
 (defvar *gate-seed0* 0 "Debug 30000+k: the seed gate plays seeds k+1 .. k+N (the 60-seed A/B in three runs).")
 (defvar *gate-seeds* 20 "Debug 31100+n: seeds per pairing N (the quick pass plays 10; the user 2026-09-29: two-stage gates).")
 (defun start-gate (p)
-  (setf *turbo* t *skip-cines* nil *combat-log* nil *gate-log* nil *gate-results* nil
-        *gate* (loop for pair in (case p (3 *pairs*) (4 (subseq *pairs* 3 6)) (5 (subseq *pairs* 3 5)) (6 (subseq *pairs* 10))
-                                   (t (list (nth (if (< p 10) p (- p 10)) *pairs*))))   ; (10+k: pairing k alone)
-                     append (loop for seed from (1+ *gate-seed0*) to (+ *gate-seed0* *gate-seeds*) collect (list seed pair))))
+  "The seed gate of P: 0-2 pairing p, 3 every pairing, 4 Rukia's three (= 102), 5 RY and RK, 10+k pairing k alone,
+100+i roster character i's pairings (CHAR-PAIRS: 104 Senjumaru's five). A pairing that doesn't exist: a log line, no gate."
+  (setf *pairs* (roster-pairs))
+  (let ((pairs (cond ((= p 3) *pairs*) ((= p 4) (char-pairs 2)) ((= p 5) (subseq *pairs* 3 5))
+                     ((>= p 100) (and (< (- p 100) (length *roster*)) (char-pairs (- p 100))))
+                     (t (let ((k (if (< p 10) p (- p 10))))   ; (10+k: pairing k alone)
+                          (and (< k (length *pairs*)) (list (nth k *pairs*))))))))
+    (unless pairs
+      (return-from start-gate (log-msg "duel gate: no pairing for ~d (~d pairings)" p (length *pairs*))))
+    (setf *turbo* t *skip-cines* nil *combat-log* nil *gate-log* nil *gate-results* nil
+          *gate* (loop for pair in pairs
+                       append (loop for seed from (1+ *gate-seed0*) to (+ *gate-seed0* *gate-seeds*) collect (list seed pair)))))
   (gate-update))
 
 (defvar *gate-busy* nil "A gate match is running.")
@@ -1001,7 +1026,8 @@ Never a Step, Hoho, L, SP, Breaker, O, Burst or awakening of its own: those come
   (unless (or (<= 2200 c 2299) (<= 10000 c 19999) (<= 35000 c 36999) (<= 40000 c 42999) (<= 69000 c 70999))
     (setf *cine-hold* nil))
   (cond ((<= 2000 c 2099) (start-cvc (- c 2000) nil))
-        ((<= 200000 c 206443) (start-learn-gate (floor (- c 200000) 1000) (mod (floor c 100) 10) (mod (floor c 10) 10) (mod c 10)))
+        ((<= 200000 c 206999) (start-learn-gate (floor (- c 200000) 1000) (mod (floor c 100) 10) (mod (floor c 10) 10) (mod c 10)))
+                                                            ; (habit h 0-6, roster c1 / c2 0-9)
         ((<= 3000 c 3999) (start-cvc (- c 3000) '(:yamamoto :yamamoto)))
         ((<= 4000 c 4999) (start-cvc (- c 4000) '(:yamamoto :kenpachi)))
         ((<= 5000 c 5999) (start-cvc (- c 5000) '(:kenpachi :kenpachi)))
@@ -1012,7 +1038,9 @@ Never a Step, Hoho, L, SP, Breaker, O, Burst or awakening of its own: those come
         ((= c 2119) (start-gate 5))
         ((<= 2125 c 2139) (start-gate (+ 10 (- c 2125))))   ; one pairing alone: 0 YY 1 YK 2 KK 3 RY 4 RK 5 RR 6 IY 7 IK 8 IR
                                                             ; 9 II 10 SY 11 SK 12 SR 13 SS 14 SI
-        ((= c 2140) (start-gate 6))                         ; Senjumaru's five pairings (SY SK SR SS SI)
+        ((<= 2140 c 2149) (start-gate (+ 100 (- c 2136))))  ; 2136+i: roster character i's pairings (i 4-13; 2140 Senjumaru's
+                                                            ; five SY SK SR SS SI, 2141 the 6th character's six)
+        ((<= 2150 c 2199) (start-gate (+ 10 (- c 2135))))   ; 2135+k: pairing k alone, k 15-64 (ROSTER-PAIRS; ten characters)
         ((loop for (lo hi fn) in *char-debug* thereis (and (<= lo c hi) (progn (funcall fn c) t))))   ; a character's own
         ((= c 2124) (start-gate 4) (setf *combat-log* t *gate-log* t))   ; her three pairings with the combat log (pacing)
         ((= c 2100) (setf *skip-cines* (not *skip-cines*)) (when *skip-cines* (skip-cine)))
