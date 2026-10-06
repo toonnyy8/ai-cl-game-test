@@ -478,8 +478,8 @@ child's keys win, :commands merge per command, :strings add. Keys:
                                      :tick (e f g: every sim step), :hit / :struck (e other res hw mv hazard ranged: after
                                      a hit it dealt / took), :parried (e att: a catch by its parry), :draw (e rdt: looks
                                      on the posed body), :hud-guard (drawn over its guard bar), :deck (e x y d: the
-                                     one-hand thumb ring), :bankai-ok (e: may P enter its :bankai-form now, beside
-                                     BANKAI-ALLOWED-P), :settled (e lost left: a Kikon / Soul Break settled on it)
+                                     one-hand thumb ring), :settled (e lost left: a Kikon / Soul Break settled
+                                     on it, SETTLE-KONPAKU)
   :endless-form FORM                 ENDLESS: staying awakened starts the next stage in FORM, its meter at FORM's :start
                                      (docs/duel/DUEL_ENDLESS.md §4)
   :u-tag STRING                      the HUD's tag for U   :meter (:name :max :temp t)  Rukia's cold gauge (combat.lisp

@@ -49,7 +49,7 @@ is the target point. All floats are single-floats (hot path: compiled with safet
                     (<= (acos (if (> c 1f0) 1f0 (if (< c -1f0) -1f0 c)))
                         (+ half (asin (if (> s 1f0) 1f0 s)))))))))
       ((< type 1.5f0)                                   ; CAP: closest point on the segment
-       (let ((yo (aref v 5)))                           ; a yawed cap (a fan of lines): its own axis
+       (let ((yo (if (> (length v) 5) (aref v 5) 0f0))) ; a yawed cap (a fan of lines): its own axis (a 5-float vol: none)
          (declare (single-float yo))
          (unless (= yo 0f0)
            (let ((c (cos yo)) (sn (sin yo)))

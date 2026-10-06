@@ -612,9 +612,9 @@ last pip went, the pending burst fires when BURST-DUE-P says."
 
 ;;; ---------------------------------------------------------------- Kikon, Soul Break, reset
 (defun bankai-ok-p (e)
-  "The form's own condition on its :bankai-form (its kit's :bankai-ok hook (e): e.g. a beheading and a free state), T
-without one (Kenpachi's cup 3)."
-  (let ((h (kit-hook (kit-of e) :bankai-ok))) (or (null h) (and (funcall h e) t))))
+  "The form's own condition on its :bankai-form (its kit's :bankai-ok, a function of E: e.g. a beheading and a free state;
+the CPU's Bankai reflex reads the same), T without one (Kenpachi's cup 3)."
+  (let ((h (kit-bankai-ok (kit-of e)))) (or (null h) (and (funcall h e) t))))
 
 (defun bankai-ready-p (e)
   "May E enter his form's :bankai-form now (P: rules BANKAI-ALLOWED-P, free with <= *BANKAI-KONPAKU* Konpaku, and the

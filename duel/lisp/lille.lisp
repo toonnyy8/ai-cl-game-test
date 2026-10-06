@@ -77,14 +77,19 @@ at <= *LB-X-NEAR*, rising linearly to *LB-X-MAX* at >= *LB-X-FAR* (decision 10).
   (let ((k (max 0.0 (min 1.0 (/ (- d *lb-x-near*) (- *lb-x-far* *lb-x-near*))))))
     (round (+ *lb-x-min* (* k (- *lb-x-max* *lb-x-min*))))))
 (defun lb-x-bonus (d) "What the shot's hit window (*LB-X-MIN*) gets added at D metres (FIGHTER-DMG-BONUS)." (- (lb-x-damage d) *lb-x-min*))
+(defun lb-auto-fire (lock)
+  "The frame an aimed move locking on LOCK fires by itself: *LB-AIM-MAX* for the shot (lock f34: f64), as much earlier as
+its lock is (the volley, lock f24: f54)."
+  (- *lb-aim-max* (- *lb-lock* lock)))
 (defun lb-fire-frame (release &optional (lock *lb-lock*))
   "The move frame the aimed shot fires on when L was released on move frame RELEASE (NIL: held): max(release +
-*LB-X-DELAY*, lock + *LB-LOCK-MIN*), at most *LB-AIM-MAX* (the auto-fire)."
-  (min *lb-aim-max* (max (+ (or release *lb-aim-max*) *lb-x-delay*) (+ lock *lb-lock-min*))))
+*LB-X-DELAY*, lock + *LB-LOCK-MIN*), at most the auto-fire (LB-AUTO-FIRE)."
+  (let ((auto (lb-auto-fire lock)))
+    (min auto (max (+ (or release auto) *lb-x-delay*) (+ lock *lb-lock-min*)))))
 (defun lb-aim-hold (lock)
   "The :hold (lo hi) of an aimed move locking on LOCK whose main phase fires *LB-X-DELAY* after it starts: the hold ends at
 max(release, lo) or hi, so it fires on LB-FIRE-FRAME."
-  (list (- (+ lock *lb-lock-min*) *lb-x-delay*) (- *lb-aim-max* *lb-x-delay* (- *lb-lock* lock))))
+  (list (- (+ lock *lb-lock-min*) *lb-x-delay*) (- (lb-auto-fire lock) *lb-x-delay*)))
 (defun lb-tracking-p (hold lock) "Does the aim still turn on hold frame HOLD (until the lock)?" (< hold lock))
 (defun lb-aim-cancel-p (hold lock) "May Step / Hoho / U cancel the aim on hold frame HOLD (from *LB-AIM-CANCEL* until the lock)?"
   (and (>= hold *lb-aim-cancel*) (< hold lock)))
@@ -162,7 +167,7 @@ AWAKENED already; decision 7)."
 (defmove :lb-hiren :kind :sp :clip :lb-hiren :callout "HIRENKYAKU" :startup 20 :active 2 :recovery 22 :dmg 40 :adv-block -14
   :track 0 :vol (:cap 0.6 31.0 1.2 0.25) :on-hit :stagger :kb 1.0 :chip *lb-x-chip* :guard *lb-x-guard*
   :flags (:ranged :x-axis :uncatchable) :tick lb-hiren-tick :on-frame ((0 lb-hiren-slide) (20 lb-x-fire))
-  :params (:bonus t :slide 6.0 :slide-f 14))
+  :params (:bonus t :slide 6.0 :slide-f 14 :lock 14))
 (defmove :lb-breaker :kind :breaker :clip :lb-breaker :clip-2 :lb-butt :callout "SHOBI-UCHI")
 ;; O 照準 SHOJUN, the Kikon module: the lane (Rukia's / Senjumaru's shape): aura 8, a 12 m lane, guardable (no :x-axis)
 (defmove :lb-kikon :kind :kikon :clip :lb-aim :clip-2 :lb-fire :clip-s 4 :callout "BANBUTSU KANTSU" :cine lb-kikon-cine
@@ -198,7 +203,7 @@ AWAKENED already; decision 7)."
 (defmove :lb-nijushi :kind :sp :clip :lb-w-nijushi :callout "NIJUSHI-KO" :startup 40 :active 6 :recovery 30 :dmg 180
   :adv-block -14 :track 0 :vol (:cap 0.6 31.0 1.2 1.2) :on-hit :knockback :kb 2.0 :chip *lb-x-chip* :guard 45
   :flags (:ranged :x-axis :uncatchable) :tick lb-nijushi-tick :on-frame ((0 lb-nijushi-tell) (40 lb-beam-shot))
-  :params (:track-to 20 :track 60.0 :width 1.2))
+  :params (:lock 20 :track 60.0 :width 1.2))
 (defmove :lb-w-breaker :kind :breaker :clip :lb-w-breaker :clip-2 :lb-w-ram :callout "JILLIEL")
 (defmove :lb-w-kikon :kind :kikon :clip :lb-w-aim :clip-2 :lb-w-fire :clip-s 4 :callout "KAMI NO SABAKI"
   :cine lb-jilliel-kikon-cine :startup 20 :active 3 :recovery 30 :whiff 30 :dmg 70 :adv-block -14 :track 0
@@ -231,8 +236,8 @@ AWAKENED already; decision 7)."
 ;; f40, then locked), a 2.4 m-wide beam 30 f; reflected by a perfect Hoho f48-f59 / guard f50-f58 (LB-REFLECT-CHECK)
 (defmove :lb-trompete :kind :sp :clip :lb-o-trompete :callout "TROMPETE" :startup 60 :active 30 :recovery 40 :dmg 240
   :adv-block -14 :track 0 :vol (:cap 0.6 31.0 1.4 1.2) :on-hit :knockback :kb 3.0 :chip *lb-x-chip* :guard 60
-  :flags (:ranged :x-axis :uncatchable) :tick lb-trompete-tick :on-frame ((0 lb-trompete-tell) (60 lb-beam-shot))
-  :params (:track-to 40 :track 30.0 :width 1.2))
+  :flags (:ranged :x-axis :uncatchable :reflectable) :tick lb-trompete-tick :on-frame ((0 lb-trompete-tell) (60 lb-beam-shot))
+  :params (:lock 40 :blast 60 :track 30.0 :width 1.2))
 (defmove :lb-o-breaker :kind :breaker :clip :lb-o-breaker :clip-2 :lb-o-stamp :callout "KAGIZUME")
 (defmove :lb-o-kikon :kind :kikon :clip :lb-o-trompete :clip-2 :lb-o-chop :clip-s 4 :callout "TROMPETE"
   :cine lb-trompete-cine :startup 20 :active 3 :recovery 30 :whiff 30 :dmg 80 :adv-block -14 :track 0
@@ -241,14 +246,14 @@ AWAKENED already; decision 7)."
 
 ;;; ================================================================ forms
 (defparameter *lille-hooks* '(:tick lille-tick :ok lille-ok :hit lille-hit :struck lille-struck :settled lille-settled
-                              :bankai-ok lille-bankai-ok :draw lille-draw)
+                              :draw lille-draw)
   "His mechanics (kit.lisp KIT-HOOK): the eye, the lock's bookkeeping, the reflect, the stance's own perfect-Hoho drop
-(:tick); the sealed Trompete (:ok); the pacing log (:hit :struck); BEHEADED (:settled); the revive's condition
-(:bankai-ok); the aim line (:draw).")
+(:tick); the sealed Trompete (:ok); the pacing log (:hit :struck); BEHEADED (:settled); the aim line (:draw). (The revive's
+condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
 
-;; the CPU, batch 1 (DUEL_LILLE §11.1): bands, intents, the aim's hold and the generic Bankai key. TODO batch 2: the eye
-;; reflex (:eye, :reflex), the stance reflex (:stance (:p 0.6 :max 180)), :opp-aim / :opp-reflect (read off his kits by
-;; ai.lisp :opp-reflex), :trompete (:when-recovering t :far 8), and the :bankai-ok predicate in ai.lisp's Bankai check
+;; the CPU, batch 1 (DUEL_LILLE §11.1): bands, intents, the aim's hold, the generic Bankai key, and the keys a CPU facing
+;; him reads off his kits (:opp-aim, :opp-reflect: the AI batch, ai.lisp AI-OPP-AIM / AI-OPP-REFLECT). TODO batch 3: his own
+;; reflexes: the eye (:eye, :reflex), the stance (:stance (:p 0.6 :max 180)), :trompete (:when-recovering t :far 8)
 (defkit :lille :base
   :name "LILLE" :body :lille :weapon :diagramm :stance :lb-stance :calm t
   :intro :lb-intro :win :lb-win :intro-callout "THE X-AXIS"
@@ -262,11 +267,12 @@ AWAKENED already; decision 7)."
                (2.2 6.0 :sp2 2 :step 2 :sp1 1 nil 1)
                (6.0 99.0 :sig 6 :sp1 1 nil 1))
        :guard 0.5 :hoho 0.3 :dash 0.3 :dash-back 0.7 :block-string 0.3 :o-ender 0.3 :l-after-k 0.4 :kikon-range 7.7
-       :awaken (:min-taken 150) :sig-hold lb-aim-hold-ai))
+       :awaken (:min-taken 150) :sig-hold lb-aim-hold-ai :opp-aim (:step 0.6 :hoho 0.25 :rush 12)))
 
 (defkit :lille :jilliel :inherit :base
   :awakening t :form-name "JILLIEL" :walk *walk-jilliel* :run *run-jilliel* :mult *jilliel-mult* :taken *jilliel-taken*
-  :kikon-konpaku 3 :guard-to :jilliel-mujittai :gg-regen *jilliel-gg-regen* :bankai-form :shin :l-after-k nil
+  :kikon-konpaku 3 :guard-to :jilliel-mujittai :gg-regen *jilliel-gg-regen* :bankai-form :shin :bankai-ok lille-bankai-ok
+  :l-after-k nil
   :endless-form :jilliel                        ; ENDLESS: the stance and the owl stay as JILLIEL (never the owl)
   :body :lille-jilliel :weapon nil :stance :lb-w-stance :cine lb-jilliel-cine :u-tag "U: MUJITTAI" :swing-sfx :whoosh-heavy
   :commands (:q :lb-w-j1 :f :lb-w-k1 :sig :lb-volley :sp2 :lb-nijushi :breaker :lb-w-breaker :kikon :lb-w-kikon)
@@ -278,7 +284,7 @@ AWAKENED already; decision 7)."
                (8.0 16.0 :sig 5 :sp2 1 nil 1)
                (16.0 99.0 :sig 2 :step 1 nil 2))
        :guard 0.4 :hoho 0.3 :dash 0.4 :dash-back 0.5 :kikon-range 8.5 :sig-hold lb-aim-hold-ai
-       :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1)))
+       :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1) :opp-aim (:step 0.6 :hoho 0.25 :rush 12)))
 
 ;; U in Jilliel: 無実体 MUJITTAI, West's ward with the :intangible flag (§5.2): every attack drops it (no :keep)
 (defkit :lille :jilliel-mujittai :inherit :jilliel
@@ -288,6 +294,7 @@ AWAKENED already; decision 7)."
 (defkit :lille :shin :inherit :base
   :awakening t :form-name "SHIN" :walk *walk-shin* :run *run-shin* :mult *shin-mult* :taken *shin-taken* :kikon-konpaku 4
   :body :lille-shin :weapon nil :stance :lb-o-stance :cine lb-revive-cine :l-after-k nil :swing-sfx :whoosh-heavy
+  :bankai-form nil :bankai-ok nil
   :endless-form :jilliel
   :commands (:q :lb-o-j1 :f :lb-o-k1 :sig :lb-sabaki :sp1 :lb-misuji :sp2 :lb-trompete :breaker :lb-o-breaker :kikon :lb-o-kikon)
   :grid (:lb-o-j1 :lb-o-j2 :lb-o-j3 :lb-o-k1 :lb-o-k2 :lb-o-k3 :lb-o-j2s :lb-o-k2s)
@@ -296,7 +303,7 @@ AWAKENED already; decision 7)."
        :moves ((0.0 2.6 :q 4 :f 4 :breaker 1)
                (2.6 8.0 :sig 3 :sp1 2 :step 1)
                (8.0 99.0 :sp2 3 :sig 2 nil 1))
-       :guard 0.4 :hoho 0.3 :dash 0.8 :o-ender 0.6 :kikon-range 9.0))
+       :guard 0.4 :hoho 0.3 :dash 0.8 :o-ender 0.6 :kikon-range 9.0 :opp-reflect (:p 0.3)))
 
 ;; his names in the brush tables (brush.lisp): the intro's column and the technique columns at his side (not on the host)
 (when (boundp '*brush-names*)
@@ -514,12 +521,12 @@ LB-LOOK, lille-art.lisp)."
 (defun lb-hiren-tick (e)
   "HIRENKYAKU: he keeps turning to the opponent while he slides, then the line is fixed (track 0 after f14)."
   (let ((f (fighter e)))
-    (when (and (eq (fighter-phase f) :main) (< (fighter-sf f) 14)) (turn-to-opp e f (track-step 90.0)))))
+    (when (and (eq (fighter-phase f) :main) (< (fighter-sf f) (move-param e :lock))) (turn-to-opp e f (track-step 90.0)))))
 
 (defun lb-planted-tick (e)
-  "A planted wind-up (NIJUSHI-KO, Trompete): turning at the move's :track until its :track-to frame, then locked."
+  "A planted wind-up (NIJUSHI-KO, Trompete): turning at the move's :track until its :lock frame, then locked."
   (let ((f (fighter e)))
-    (when (and (eq (fighter-phase f) :main) (< (fighter-sf f) (move-param e :track-to)))
+    (when (and (eq (fighter-phase f) :main) (< (fighter-sf f) (move-param e :lock)))
       (turn-to-opp e f (track-step (move-param e :track))))))
 (defun lb-nijushi-tick (e) "NIJUSHI-KO's wind-up (LB-PLANTED-TICK)." (lb-planted-tick e))
 (defun lb-trompete-tick (e) "Trompete's wind-up (LB-PLANTED-TICK)." (lb-planted-tick e))
@@ -569,13 +576,13 @@ gap G12); each erupts outward from 1 m to 18 m (LB-SABAKI-SPAN), through guard (
 (defun lb-reflect-check (e f st mv)
   "Trompete at the end of its f59 (the beam comes next step): the opponent in a perfect Hoho started f48-f59, or in a guard
 pressed f50-f58 (FIGHTER-GUARD-T 2-10, facing him, not a ward: West, KESSA and zero Rukia can't) reflects it."
+  (declare (ignore f))
   (let* ((o (opp-of e)) (fo (fighter o)) (go (gauges o)) (p (pos-of e)) (q (pos-of o))
          (src (cond ((and (eq (fighter-state fo) :hoho) (fighter-perfect fo) (lb-reflect-hoho-p (- 59 (fighter-sf fo)))) :hoho)
                     ((and (eq (fighter-state fo) :guard) (not (passive-p o :ward)) (lb-reflect-guard-p (fighter-guard-t fo))
                           (can-guard-p (gauges-gg go) (gauges-guardless go))
                           (in-front-p (yaw-of o) (aref q 0) (aref q 2) (aref p 0) (aref p 2) *guard-arc*))
                      :guard))))
-    (declare (ignore f))
     (when src (lb-reflect! e o st mv src))))
 
 (defun lb-reflect! (e o st mv src)
