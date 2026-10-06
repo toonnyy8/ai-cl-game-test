@@ -478,3 +478,5 @@ Still open:
    - **The owl form's gold.** Only the wings, halo and glow are gold (the body is white), amber H 35–52 with highlights at
      46–52°, on top of Kenpachi's REIATSU yellow (48–52°). Proposed: Senjumaru's muted gold #B89A5A / #C2A866 for wings and
      halo; note that #B89A5A measures S 0.51, so it already counts as a spot pixel under §A.2's budget.
+
+**The user's decision (2026-10-06), see DUEL_LILLE.md decision 11:** Jilliel's green = a muted jade (an ink tone, no fourth spot hue); the owl form's gold = Senjumaru's #B89A5A on the wings, halo and glow only.

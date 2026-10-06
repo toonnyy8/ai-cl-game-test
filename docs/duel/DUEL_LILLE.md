@@ -149,4 +149,7 @@ The user (2026-10-06): 「請順便整理利傑巴羅各型態的參考圖作為
   arcs with four inward ticks) is also the reticle and the trumpet bell's ring; Jilliel is a holed column with a face
   window and eight flat blade wings with three oval holes each; the owl form is white with gold only on the wings, halo
   and glow, on four stilt legs.
-- Open for the user (the sheet's §9): Jilliel's green and the owl form's gold against the style's three spot hues.
+- **Decision 11 (2026-10-06), the colours** (the sheet's §9): Jilliel's green is a **muted jade** (「低彩度玉色」; not a
+  fourth spot hue, not the manga's pale gold-white): an ink tone, so the style keeps its three spot hues FIRE, REIATSU,
+  BLOOD. The owl form's gold is **Senjumaru's muted gold #B89A5A** (「千手丸的低彩度金」; not REIATSU yellow, which is
+  Kenpachi's, and not a near-colourless white-gold), on the wings, halo and glow only; the body stays white.
