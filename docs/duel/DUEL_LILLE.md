@@ -165,6 +165,8 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
 - **26. The legs are ㄇ-shaped**: from the fork a strut runs back, and at its end the leg bends down. §23.3.
 - **27. The wings are translucent** (so they don't hide the fight), and **the owl's model is KIN's** with the head swapped
   for the long-necked owl head and an extra pair of arms. §23.3.
+- **28. EN's J / K / SP1 / SP2 start and recover much faster** (the user, 2026-10-06, the same evening: 「再補一個：覺醒的遠程模式
+  J/K/SP1/SP2 的前後搖都大幅縮短。」). §23.2.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -1359,6 +1361,16 @@ Numbers are proposals until the gate; the lead picked them where the user gave n
 | Dash out (KIN → EN) | **7.0 m** away over 14 f (`*lb-switch-out*`) |
 | Cancel | from the dash's end (f14) his **J or K cancels the recovery** (either mode; EN's J / K lay traces, KIN's hit) |
 | A materialised trace | stagger with **hitstun long enough for the dash plus a J1** (≥ 14 + 8 + 4 f), **no knockback** (the SP2 thick trace keeps its knockback), so a trace hit → TENSHIN in → J / K is a combo (host test) |
+
+**EN's tempo (decision 28)**: startup and recovery about **halved** in the ranged mode only (KIN and the base form keep
+theirs); the active frames stay (a trace is laid on the first). Lead's numbers (S / A / R):
+
+| EN move | Before | After |
+|---|---|---|
+| J1 / J2 / J3 | 8/3/12, 7/3/13, 9/3/18 | **4/3/6, 4/3/6, 5/3/9** |
+| K1 / K2 / K3 | 17/4/21, 20/4/24, 21/5/34 | **9/4/10, 10/4/12, 11/5/17** |
+| SP1 SANREN | 12 / lines at f12, f22, f32 / 24 | **6 / lines at f6, f12, f18 / 12** |
+| SP2 NIJŪSHI-KŌ | 40 f tell / 6 / 30 | **20 f tell / 6 / 15** (the thick trace at f20) |
 
 ### 23.3 The rig (decisions 26, 27)
 
