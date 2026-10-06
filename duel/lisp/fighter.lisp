@@ -321,7 +321,7 @@ something started."
                (start-hoho e f) t))
       (:awaken (let ((free (awaken-state-p e f)))
                  (cond ((awaken-allowed-p free (gauges-awaken g) (gauges-awakened g)) (awaken! e) t)
-                       ((and (kit-bankai-form kit) (bankai-allowed-p free (gauges-konpaku g)))
+                       ((and (kit-bankai-form kit) (bankai-allowed-p free (gauges-konpaku g)) (bankai-ok-p e))
                         (bankai! e) t))))
       (:burst (let ((m (burst-ok-p e))) (when m (setf (fighter-burst f) m) t)))   ; applied after both stepped
       (t (let* ((to (kit-drop kit cmd))

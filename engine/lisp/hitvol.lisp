@@ -9,7 +9,8 @@
 ;;;;   * attacker-relative (melee swings): a 5-float vector #(type p1 p2 p3 p4) in the attacker's
 ;;;;     frame, made once by MAKE-VOL and tested with VOL-HIT-P given his feet and facing:
 ;;;;       0 ARC   r half-angle(rad) y0 y1   a pie slice around him, from height y0 to y1
-;;;;       1 CAP   a b h r                   a capsule along his facing from a to b metres, height h
+;;;;       1 CAP   a b h r [yaw]             a capsule along his facing from a to b metres, height h (YAW, radians in
+;;;;                                         slot 5: the capsule's axis turned that far off the facing; 0 = along it)
 ;;;;       2 SPH   fwd up r                  a sphere fwd metres ahead, up metres high
 ;;;;       3 TSPH  r                         a sphere at the attacker's target point (chest height)
 ;;;;   * world-space (projectiles, walls, pillars): CAPSULE-CYL-HIT-P, OBOX-CYL-HIT-P, CYL-CYL-HIT-P.
@@ -18,11 +19,12 @@
 
 (defun make-vol (kind args)
   "Volume KIND from ARGS: (:arc r deg y0 y1) (the ARC takes its full angle in degrees),
-(:cap a b h r), (:sph fwd up r) or (:tsph r). Setup code (DEFMOVE / kit parsing)."
-  (flet ((v (&rest xs) (let ((a (make-f32 5))) (loop for x in xs for i from 0 do (setf (aref a i) (f32 x))) a)))
+(:cap a b h r [yaw-deg]) (YAW-DEG: the capsule turned that many degrees off the facing, + = toward his left, default 0),
+(:sph fwd up r) or (:tsph r). Setup code (DEFMOVE / kit parsing). Six floats (slot 5: the cap's yaw in radians)."
+  (flet ((v (&rest xs) (let ((a (make-f32 6))) (loop for x in xs for i from 0 do (setf (aref a i) (f32 x))) a)))
     (ecase kind
       (:arc (destructuring-bind (r deg y0 y1) args (v 0 r (deg (/ deg 2)) y0 y1)))
-      (:cap (destructuring-bind (a b h r) args (v 1 a b h r)))
+      (:cap (destructuring-bind (a b h r &optional (yaw 0)) args (v 1 a b h r (deg yaw))))
       (:sph (destructuring-bind (f u r) args (v 2 f u r)))
       (:tsph (destructuring-bind (r) args (v 3 r))))))
 
@@ -47,6 +49,12 @@ is the target point. All floats are single-floats (hot path: compiled with safet
                     (<= (acos (if (> c 1f0) 1f0 (if (< c -1f0) -1f0 c)))
                         (+ half (asin (if (> s 1f0) 1f0 s)))))))))
       ((< type 1.5f0)                                   ; CAP: closest point on the segment
+       (let ((yo (aref v 5)))                           ; a yawed cap (a fan of lines): its own axis
+         (declare (single-float yo))
+         (unless (= yo 0f0)
+           (let ((c (cos yo)) (sn (sin yo)))
+             (declare (single-float c sn))
+             (psetf fx (+ (* fx c) (* fz sn)) fz (- (* fz c) (* fx sn))))))
        (let* ((a (aref v 1)) (b (aref v 2)) (h (+ ay (aref v 3))) (r (aref v 4))
               (dx (- tx ax)) (dz (- tz az)) (along (+ (* dx fx) (* dz fz)))
               (s (if (< along a) a (if (> along b) b along)))

@@ -309,6 +309,10 @@ median fell to 123.6 s).")
   "Bankai West's ward (passive :ward): a hit it blocks drains this x its guard value (after Kenpachi's cut). The main YK
 balance knob of the rework (replaces the x1.3 Bankai drain, deleted: the user's decision 2026-09-27); 1.0 -> 1.1 at
 the seed gate (see *PIERCE-MAX*).")
+(defparameter *mujittai-mult* 1.0
+  "An intangible ward (passive :ward with :intangible, Lille's MUJITTAI, docs/duel/DUEL_LILLE.md §5.2): a hit that passes
+through him drains this x its guard value (instead of *WARD-MULT*), with no push and no chip of any kind (design
+2026-10-06; decisions 3-5, 14).")
 (defparameter *cornered-per-konpaku* 0.05 "Cornered: + this damage fraction per Konpaku lost ...")
 (defparameter *cornered-max* 0.25 "... up to this.")
 

@@ -276,15 +276,19 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                                                         ; the ward (Bankai West): x*WARD-MULT* of the gauge, no blockstun;
                                                         ; East's pierce: k x the hit goes through (chip)
            (let* ((drink (passive-p def :drink))
-                  (catch (and ranged (fighter-move fd) (getf (mv-params (fighter-move fd)) :catch)))   ; a :shield move's catch
+                  (catch (and ranged (not (member :uncatchable flags))      ; a :shield move's catch (an :uncatchable
+                              (fighter-move fd) (getf (mv-params (fighter-move fd)) :catch)))   ; window goes through it)
                   (adv (let ((a (if (and mv (integerp (mv-adv-block mv))) (mv-adv-block mv) 0)))
                          (- (if (and drink mv) (drink-adv a) a)          ; (the attacker's advantage: a blocked J's
                             (if (and mv (eq (mv-kind mv) :quick)) *quick-block-adv* 0))))   ; defender is free sooner)
                   (stun (if mv (blockstun (mv-total mv) (fighter-sf fa) adv) *hazard-blockstun*))
                   (v (let* ((v0 (or (hw-guard hw) *gg-hazard*)) (v1 (if (and mv (passive-p att :cut)) (cut-value v0 (mv-kind mv)) v0)))
-                       (if (and ward (passive-p def :ward)) (* *ward-mult* v1) v1)))
+                       (if (and ward (passive-p def :ward))
+                           (* (if (passive-p def :intangible) *mujittai-mult* *ward-mult*) v1)   ; (an intangible ward's own)
+                           v1)))
                   (pierce (and (plusp k) k))
-                  (chip (if (or catch (passive-p def :chipless))   ; Rukia awakened: no chip on her
+                  (intangible (and ward (passive-p def :ward) (passive-p def :intangible)))   ; it passes through him
+                  (chip (if (or catch (passive-p def :chipless) intangible)   ; Rukia awakened, an intangible ward: no chip
                             0
                             (chip-damage base (if drink pierce (or (hw-chip hw) (and mv (kit-blade-chip (kit-of att))) pierce))
                                          (gauges-reishi (gauges def))))))
@@ -296,7 +300,7 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                     (emit :guard-crush att def x y z)
                     (clog "~a GUARD CRUSH~:[~; (drinking)~]" (side-name def) drink))
                    (ward                                ; super armour: no blockstun, what he does goes on
-                    (set-slide def *block-pushback* 6 (- (aref p 0) sx) (- (aref p 2) sz))
+                    (unless intangible (set-slide def *block-pushback* 6 (- (aref p 0) sx) (- (aref p 2) sz)))   ; (no push)
                     (setf (fighter-warded fd) *match-tick*)
                     (when (and (passive-p def :freeze-touch) (not ranged) (not (gauges-froze (gauges def))))
                       (freeze-touch! def att))           ; Rukia's absolute zero: whatever touches her freezes
@@ -547,9 +551,10 @@ they are; then the form's :cine (both fighters idle after it)."
     (repel! e)                                          ; the second awakening breaks his attack too
     (start-awake-regen! g)
     (set-form e (kit-bankai-form (kit-of e)))
-    (setf (gauges-meter g) (f32 (getf (kit-pips (kit-of e)) :n)) (gauges-meter-idle g) 0 (gauges-arm-pending g) nil
-          (gauges-arm-owed g) nil
-          (gauges-konpaku g) 1 (gauges-reishi g) (gauges-reishi-max g))
+    (when (kit-pips (kit-of e))                         ; the arm meter, full (a form without :pips has none)
+      (setf (gauges-meter g) (f32 (getf (kit-pips (kit-of e)) :n)) (gauges-meter-idle g) 0 (gauges-arm-pending g) nil
+            (gauges-arm-owed g) nil))
+    (setf (gauges-konpaku g) 1 (gauges-reishi g) (gauges-reishi-max g))
     (refresh-look e)
     (when (plusp lost) (emit :konpaku e lost))
     (emit :bankai e)
@@ -606,12 +611,18 @@ last pip went, the pending burst fires when BURST-DUE-P says."
             (clog "~a UDE cracked, ~d left" (side-name e) n))))))
 
 ;;; ---------------------------------------------------------------- Kikon, Soul Break, reset
+(defun bankai-ok-p (e)
+  "The form's own condition on its :bankai-form (its kit's :bankai-ok hook (e): e.g. a beheading and a free state), T
+without one (Kenpachi's cup 3)."
+  (let ((h (kit-hook (kit-of e) :bankai-ok))) (or (null h) (and (funcall h e) t))))
+
 (defun bankai-ready-p (e)
-  "May E enter his form's :bankai-form now (P: rules BANKAI-ALLOWED-P, free with <= *BANKAI-KONPAKU* Konpaku)? (The
-HUD's P BANKAI prompt, the phone's AWAKEN chip.)"
+  "May E enter his form's :bankai-form now (P: rules BANKAI-ALLOWED-P, free with <= *BANKAI-KONPAKU* Konpaku, and the
+kit's :bankai-ok: BANKAI-OK-P)? (The HUD's P BANKAI prompt, the phone's AWAKEN chip.)"
   (let ((f (fighter e)))
     (and (kit-bankai-form (fighter-kit f))
-         (bankai-allowed-p (awaken-state-p e f) (gauges-konpaku (gauges e))))))
+         (bankai-allowed-p (awaken-state-p e f) (gauges-konpaku (gauges e)))
+         (bankai-ok-p e))))
 
 (defun kikon-worth (e)
   "Konpaku E's Kikon would take now: a running rush's worth (fixed at its start), else the kit's :kikon-worth hook (E) (a
@@ -630,12 +641,14 @@ worth that follows the fighter's state), else the kit's :kikon-konpaku. (The red
   "Konpaku at connect time (KIKON-RESULT): DEF loses the Kikon's count (ATT's rush's, read when it started:
 FIGHTER-KIKON-N), or on a Soul Break ATT's KIKON-WORTH now + 1 (at most *SOUL-BREAK-MAX-EVENT*: KESSA's follows his
 clones, 3 clones 4 + 1 = 5, the user 2026-09-30); his Reishi refills.
+Then DEF's kit's :settled hook (def lost left): what his form does with the souls he has left (a beheading).
 Returns T when DEF is out of Konpaku."
   (let ((gd (gauges def)))
     (multiple-value-bind (left lost ko) (kikon-result (gauges-konpaku gd)
                                                       (if soul-break (kikon-worth att) (fighter-kikon-n (fighter att)))
                                                       soul-break)
       (setf (gauges-konpaku gd) left (gauges-reishi gd) (gauges-reishi-max gd))
+      (let ((h (kit-hook (kit-of def) :settled))) (when h (funcall h def lost left)))
       (unless (or (gauges-awakened gd) (siphon-of def))
         (setf (gauges-awaken gd) (f32 (gauge-add (gauges-awaken gd) (awakening-gain 0 0 lost) *awaken-max*))))
       (incf (gauges-kikons (gauges att)))

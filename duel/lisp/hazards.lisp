@@ -15,15 +15,21 @@
 (in-package :duel)
 
 (defun spawn-hazard (kind owner &key (x 0.0) (y 0.0) (z 0.0) (yaw 0.0) (speed 0.0) (turn 0.0) (size 0.5)
-                                  (life 60) (delay 0) (hits 1) hw look src fragile hook data)
+                                  (life 60) (delay 0) (hits 1) hw look src fragile hook data group)
   "A new hazard of KIND for fighter OWNER. LIFE / DELAY in frames; HW = the HITWIN it deals (NIL = look only). SRC: its
 hit comes from the owner's position; FRAGILE: it closes while it waits if the owner is hit (CLOSE-RIFTS). HOOK: a
 character's function (h hz event &rest args) called with :step (each step, first: T skips the generic step), :close
-(CLOSE-RIFTS closed it) and :touches (the volume test of a kind this file doesn't know); DATA: what it keeps."
+(CLOSE-RIFTS closed it) and :touches (the volume test of a kind this file doesn't know); DATA: what it keeps. GROUP: a
+hit group (MAKE-HIT-GROUP) shared with other hazards: together they deal its hits, at most one of them per step."
   (spawn-entity (make-hazard :kind kind :owner owner :x (f32 x) :y (f32 y) :z (f32 z) :px (f32 x) :pz (f32 z)
                              :yaw (f32 yaw) :speed (f32 speed) :turn (f32 turn) :size (f32 size)
                              :life life :delay delay :hits-left (if hw hits 0) :hw hw :look look :src src :fragile fragile
-                             :hook hook :data data)))
+                             :hook hook :data data :group group)))
+
+(defun make-hit-group (&optional (hits 1))
+  "A hit group several hazards share (SPAWN-HAZARD :group): (hits-left . tick of the last pending hit). Three overlapping
+lines of one move hit a fighter once (docs/duel/DUEL_LILLE.md gap G12)."
+  (cons hits -1))
 
 (defun clear-hazards ()
   (do-entities (h hazard) (destroy-entity h)))
@@ -83,6 +89,7 @@ frames, grabs at the ankles, holds and crumbles (:sk-grab): South's look; the :b
 ;;; ---------------------------------------------------------------- volumes
 (defun hazard-active-p (hz)
   (and (hazard-hw hz) (> (hazard-hits-left hz) 0) (<= (hazard-rehit hz) 0) (<= (hazard-delay hz) 0)
+       (let ((g (hazard-group hz))) (or (null g) (plusp (car g))))   ; (a spent hit group: none of its hazards hits)
        (case (hazard-kind hz)
          (:pillars (< (first *pillar-window*) (hazard-age hz) (- (hazard-life hz) (second *pillar-window*))))
          (t t))))
@@ -118,11 +125,12 @@ parried or traded blade leaves none)."
 (defun collect-hazard-hits ()
   "Hand every active hazard's contact with its target to the HIT-SYSTEM's pending list."
   (do-entities (h (hz hazard))
-    (when (hazard-active-p hz)
-      (let ((tg (hazard-target hz)))
+    (when (and (hazard-active-p hz) (let ((g (hazard-group hz))) (or (null g) (/= (cdr g) *match-tick*))))   ; (one of a
+      (let ((tg (hazard-target hz)))                                                                        ; group a step)
         (when (entity-alive-p tg)
           (let ((q (pos-of tg)) (b (model-body (model tg))))
             (when (hazard-touches-p hz (aref q 0) (aref q 1) (aref q 2) (body-hurt-r b) (body-hurt-h b))
+              (let ((g (hazard-group hz))) (when g (setf (cdr g) *match-tick*)))
               (push (make-pending :att (hazard-owner hz) :def tg :hw (hazard-hw hz)
                                   :sx (if (hazard-src hz) (aref (pos-of (hazard-owner hz)) 0) (hazard-x hz))
                                   :sz (if (hazard-src hz) (aref (pos-of (hazard-owner hz)) 2) (hazard-z hz))
@@ -132,6 +140,7 @@ parried or traded blade leaves none)."
 (defun hazard-connected (hz)
   "HZ's hit took effect: one hit fewer (projectiles are spent), pillars wait before hitting again."
   (decf (hazard-hits-left hz))
+  (let ((g (hazard-group hz))) (when g (decf (car g))))   ; its hit group's too
   (setf (hazard-rehit hz) *hazard-rehit*)
   (when (and (<= (hazard-hits-left hz) 0) (member (hazard-kind hz) '(:wave :fireball)))
     (setf (hazard-life hz) (hazard-age hz))))            ; gone at the next step (its look fades)
