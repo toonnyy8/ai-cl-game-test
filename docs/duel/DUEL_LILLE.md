@@ -1832,3 +1832,6 @@ draw hook's steady cost is 16 B a frame in every Jilliel form and the owl (the l
 second lookup had made it 24); the first draw of the owl after the revival builds its gold segment meshes once (~13 KB,
 not per frame). Decision 34 at 20 seeds (§23.12): all K.O., medians 158.8–194.9 s, wins 7 / 7 / 4 / 7 / 6.
 
+Measured with the refunds 4 (hit) / 2 (guarded) (seeds 1–20, every match K.O.): LY 175.5 s / 7 wins, LK 161.1 / 9,
+LR 204.7 / 6, LI 181.5 / 6, LS 182.0 / 7, LL 227.2 (mirror); every cross median inside 125–210 s.
+
