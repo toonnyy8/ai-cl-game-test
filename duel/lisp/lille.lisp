@@ -12,7 +12,9 @@
 ;;; ================================================================ knobs (docs/duel/DUEL_LILLE.md §4-§6, §13)
 (defparameter *walk-lille* 3.4 "Walk m/s, the base form (design 2026-10-06).")
 (defparameter *run-lille* 8.5 "Run m/s, the base form (design 2026-10-06).")
-(defparameter *lille-mult* 1.0 "Damage dealt x, the base form (design 2026-10-06; §13: 1.0 -> 1.3 if he wins too little).")
+(defparameter *lille-mult* 1.3
+  "Damage dealt x, the base form: 1.0 -> 1.3 (gate 2026-10-06, batch 4: §13's first \"too little\" knob; Lille won 16 / 100 of
+his cross pairings at seeds 1-20, 24 / 100 after; DUEL_LILLE \"Measured: batch 4\").")
 (defparameter *lille-taken* 1.0 "Damage taken x, the base form (design 2026-10-06).")
 (defparameter *walk-jilliel* 3.0 "Walk m/s, JILLIEL (design 2026-10-06, §5.1).")
 (defparameter *run-jilliel* 8.0 "Run m/s, JILLIEL (design 2026-10-06).")
@@ -132,8 +134,8 @@ AWAKENED already; decision 7)."
 ;;; the J / K strings (docs/duel/DUEL_STRINGS.md §2.1 budget; the lightest in the roster): the plank (the butt) swung at
 ;;; close range for J1 / J2, the muzzle cross for J3 and every K. Every reach is where the art strikes (lille-art.lisp; the
 ;;; host FK test: the plank at a negative weapon-length point, the muzzle at the weapon tip)
-(defmove :lb-j1 :kind :quick :clip :lb-q1 :startup 8 :active 3 :recovery 12 :dmg 22 :adv-block -2
-  :reach 1.45 :arc 100 :on-hit :flinch)                              ; 床尾打 SHOBI-UCHI: the plank swung up from the hip
+(defmove :lb-j1 :kind :quick :clip :lb-q1 :startup 8 :active 3 :recovery 12 :dmg 26 :adv-block -2
+  :reach 1.45 :arc 100 :on-hit :flinch)  ; 床尾打 SHOBI-UCHI: the plank swung up from the hip (dmg 22 -> 26: gate 2026-10-06, batch 4, §13 "too little")
 (defmove :lb-j2 :kind :quick :clip :lb-q2 :startup 7 :active 3 :recovery 13 :dmg 22 :adv-block -2
   :reach 1.45 :arc 110 :on-hit :flinch)                              ; 返し KAESHI: the plank's backhand
 (defmove :lb-j3 :kind :quick :clip :lb-jab :startup 9 :active 3 :recovery 18 :dmg 28 :adv-block -4

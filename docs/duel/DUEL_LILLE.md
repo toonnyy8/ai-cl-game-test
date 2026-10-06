@@ -843,3 +843,123 @@ Pacing per Lille side and match, before → after (the five cross pairings; the 
 - **Trompete**: fired 0.1–0.2 a match before and after; reflected by a guard 0.1–0.2. The punish reflex almost never
   finds a 30 f opening beyond J's reach. The owl lives briefly at 1 Konpaku, and its two bars are rarely there.
 - **Aims (shots + volleys)**: 2.5–4.7 → 6.3–12.4 (12.4 → 24.1). The stance's exits fire volleys.
+
+## 20. Measured: batch 4 (2026-10-06)
+
+Batch 4 tuned his own knobs in §13's order (native `simgate.py`, NORMAL; Lille is P1 in LY LK LR LI LS, k 15–19; LL is
+k 20). **Verdict: the pacing passes, the win target and the awaken A/B fail; stopped and reported** (AGENTS.md "Edge
+rerun": no other knobs turned). The user's call is needed (below).
+
+### 20.1 Knobs (one at a time, each measured at seeds 1–20 and on the never-awaken stream 100)
+
+| Knob | Old → new | Kept | Lille's wins LY / LK / LR / LI / LS (of 20) | "Never awaken" wins, stream 100 (of 60) |
+|---|---|---|---|---|
+| (start, eef44e0) | | | 4 / 2 / 1 / 5 / 4 | — |
+| `*lille-mult*` | 1.0 → **1.3** | **yes** (§13 "too little" #1) | 9 / 4 / 2 / 4 / 5 | 5 / 2 / 1 / 0 / 0 |
+| `*lb-eye-lead*` (the eye window) | 8 → 10 | **no**: decision 13 fixes "≤ 8 f before a hit"; measured inert (one row changed) | 10 / 4 / 2 / 4 / 5 | 4 / 2 / 1 / 0 / 0 |
+| J1 `:lb-j1 :dmg` | 22 → **26** | **yes** (§13 "too little" #3) | 8 / 3 / 3 / 5 / 5 (with the eye window 10) | 4 / 1 / 1 / 0 / 4 |
+| `*lb-lock-min*` (+ the holds (38 60) / (28 50)) | 10 → 8 | **no**: decision 12 fixes "≥ 10 f after the lock"; noise | 5 / 3 / 2 / 7 / 8 | 2 / 1 / 1 / 2 / 3 |
+
+The two kept changes, with their docstring / comment in `lille.lisp`: `*lille-mult*` 1.3 and J1 26. §13's other "too
+little" knobs (the eye window, `*lb-lock-min*`) are the user's decisions 12–13, so they were measured and put back.
+
+**Probes, not kept** (to size the gap for the user; each from the kept state, seeds 1–20 / stream 100):
+
+| Probe | Wins LY / LK / LR / LI / LS (of 20) | Never awaken, stream 100 (of 60) |
+|---|---|---|
+| base CPU kites more (intents A 0 / P 1 / Z 6 / D 3, `:dash-back` 1.0) | 3 / 2 / 1 / 5 / 5 | 4 / 1 / 0 / 1 / 1 |
+| `*lille-mult*` 1.6 | 8 / 7 / 3 / 4 / 4 | 10 / 5 / 7 / 3 / 11 |
+| `*lille-taken*` 0.7 | 8 / 5 / 4 / 4 / 6 | 7 / 0 / 3 / 8 / 7 |
+| `*jilliel-mult*` 1.3, `*jilliel-taken*` 1.0 | 14 / 5 / 2 / 9 / 6 | (no effect by construction: the never side never awakens) |
+
+Where the base form's time goes (a per-frame distance count, a probe removed afterwards; seeds 1–20, the five cross
+pairings, the kept state): **83–93 % of it under 6 m** (35–54 % under 2.2 m), 2–5 % beyond 8 m. He fires 0.9–1.6
+X-axis shots a match (aimed or HIRENKYAKU's), none from ≥ 14 m. The opponents close in (`:opp-aim :rush` 12 m, the
+heat's shrinking range), and his CPU fights them with the roster's lightest strings. In the never-awaken matches (seeds
+1–20) the base form deals 200–400 X-axis damage (before ×1.3) in about 3.5 minutes.
+
+### 20.2 The seed gate (kept state)
+
+Seeds 1–20 (`simgate.py --pairs 15,16,17,18,19,20`), before (eef44e0) → after:
+
+| Pairing | Median | Range | K.O. | Wins Lille / opponent | Blow-aways |
+|---|---|---|---|---|---|
+| Lille vs Yamamoto | 162.3 → **163.7 s** | 120.4–201.9 | 20/20 | 4 → **7** / 13 | 1 |
+| Lille vs Kenpachi | 166.5 → **144.5 s** | 123.3–201.9 | 20/20 | 2 → **3** / 17 | 35 |
+| Lille vs Rukia | 161.9 → **167.0 s** | 120.7–210.1 | 20/20 | 1 → **3** / 17 | 1 |
+| Lille vs Ichigo | 180.1 → **173.1 s** | 135.7–233.7 | 20/20 | 5 → **5** / 15 | 10 |
+| Lille vs Senjumaru | 166.0 → **157.1 s** | 101.9–214.5 | 20/20 | 4 → **5** / 15 | 4 |
+| Lille vs Lille | 237.3 → **212.1 s** | 144.9–259.2 | 20/20 | P1 11 → 6 / 14 (a mirror) | 0 |
+
+Every match a K.O.; every cross median inside 125–210 s (the mirror may exceed 210). **Wins are outside 10 ± 3 in four
+of five pairings** (LY 7 is the edge). The 60-seed rerun (seeds 1–60):
+
+| Pairing | Median | Range | K.O. | Lille's wins of 60 | Blow-aways |
+|---|---|---|---|---|---|
+| LY | 155.8 s | 120.4–201.9 | 60/60 | **21** (35 %) | 1 |
+| LK | 155.2 s | 99.5–229.8 | 60/60 | **7** (12 %) | 103 |
+| LR | 159.8 s | 95.3–232.6 | 60/60 | **8** (13 %) | 8 |
+| LI | 176.5 s | 110.3–233.7 | 60/60 | **13** (22 %) | 38 |
+| LS | 166.4 s | 101.9–257.8 | 60/60 | **15** (25 %) | 14 |
+| LL | 215.7 s | 144.9–302.0 | 60/60 | P1 22 / 38 (a mirror) | 2 |
+
+Still outside 10 ± 3 of 20 (30–65 %) in every cross pairing but LY: **reported, not tuned further**.
+
+Pacing (seeds 1–20, per Lille side): 15–19 of 20 sides end as the owl (35 / 40 in the mirror); eye openings 2.0–2.7;
+stance 300–550 frames a match; 5–14 aims (shots + volleys).
+
+### 20.3 The awaken A/B (Lille P1 "never awaken", 39020; the opponent on its own rule; wins of 60)
+
+| Stream | vs Y | vs K | vs R | vs I | vs S |
+|---|---|---|---|---|---|
+| 100 | 4 | 0 | 1 | 0 | 4 |
+| 300 | 3 | 3 | 0 | 0 | 3 |
+| 500 | 3 | 3 | 0 | 2 | 2 |
+
+**Fails every cell** (≥ 20 needed). Only the base form plays in it, so Jilliel's and the owl's knobs can't move it; the
+§13 "awakening an upgrade" knobs would only lower his gate wins further.
+
+### 20.4 The revival gamble test (LY / LK, seeds 1–60, Lille P1 `:bankai` always 31010 / never 31020)
+
+| Pairing | Always | Never | Always − never | Median always / never |
+|---|---|---|---|---|
+| LY | 18 | 16 | **+2** | 152.6 / 155.5 s |
+| LK | 8 | 6 | **+2** | 149.5 / 158.1 s |
+
+Within ±9 / 60: the revival is a gamble, not an upgrade or a trap (passes). The CPU's revive filter is unchanged.
+
+### 20.5 The CPU and ASSIST
+
+- `aieval.py --char 5`: score **0.285**: strength (HARD, both seats) **0.025**, masher **0.979**, signature **0.371**;
+  pacing OK (medians 144–172 s, 100 / 100 K.O.).
+- `assistgate.py` (NORMAL, seeds 1–20, the masher P1 vs the CPU P2): the masher's win % over all 36 pairings per
+  setting k (AUTO GUARD + 3 × COMBO + 6 × BREAK): k0 59, k1 71, k2 98, k3 60, k6 68, k10 80, k11 98.
+  Lille's rows (wins of 100 over the five cross pairings; the mirror of 20):
+
+  | k | 0 | 1 | 2 | 3 | 6 | 10 | 11 |
+  |---|---|---|---|---|---|---|---|
+  | the masher playing Lille vs a CPU | 47 | 64 | 96 | 26 | 65 | 60 | 100 |
+  | the masher vs Lille's CPU | 22 | 36 | 96 | 65 | 17 | 83 | 99 |
+  | the mirror (masher Lille vs CPU Lille) | 0 / 20 | 0 | 18 | 2 | 0 | 9 | 18 |
+
+  A mashing Lille at k0 beats the CPUs 47 % of the time (vs S 18 / 20, R 14, K 10, Y 4, I 1), more than his own CPU
+  wins at NORMAL (64 / 300 = 21 % at seeds 1–60). This suggests his CPU's play, not only his numbers, is the weak part.
+
+### 20.6 Inertness and the rest
+
+- `simgate.py --seeds 10`: the fifteen old pairings' 420 lines (rows, companion lines, summaries) byte-identical to eef44e0.
+- `--cvc` PASS (yy / yk / kk).
+- Host tests duel-rules (5722), duel-control (86), learn (100): ALL PASS (no test pins the changed values).
+- `tools/pkgcheck.sh duel` 0 / 0 / 0; `./build.sh duel` succeeds.
+
+### 20.7 For the user (the decision)
+
+The numbers say the base form, as his CPU plays it, can't win a third of its matches alone: even ×1.6 damage or ×0.7
+taken leaves the never-awaken side at 0–11 of 60. Options:
+1. **Accept the A/B as a known exception** for him (the awakening is the plan of the character: three eye openings
+   force it), and tune the gate wins with Jilliel's numbers (the probe `*jilliel-mult*` 1.3 / `*jilliel-taken*` 1.0 gave
+   14 / 5 / 2 / 9 / 6 of 20), the order then being Jilliel's knobs.
+2. **Rework the base CPU's zoning** (a batch of its own): his CPU fights 85–90 % of the base form under 6 m. A sniper
+   needs a way back to range (e.g. HIRENKYAKU without a bar, a faster walk back, or his CPU's own anti-rush reflex).
+3. **Raise the base form's numbers past §13's list** (`*lille-mult*` 1.6+, `*lille-taken*` ≤ 0.8), knowing the probes
+   show these alone don't reach the A/B.
