@@ -178,6 +178,9 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
   folds and the strikes curl and whip instead of swinging as rigid planks. §23.8.
 - **33. Jilliel no longer sinks when he moves** (the user, 2026-10-06: 「還有覺醒狀態移動的時候整個角色很明顯下沉，請修改回正常
   高度」). §23.10.
+- **34. TENSHIN's tempo and the flash-step economy** (the user, 2026-10-06: 「# 覺醒改動 1. 遠程模式從中立按 L 的前搖的前搖增加到 16 f。
+  2. L 切換戰型取消冷卻限制，並且從『遠』變『近』不消耗閃步量表，但遠程 J/K 每條軌跡消耗 3 點閃步量表，相對的每打中一條鬼機會額外回收 2 點閃步量表。」;
+  「鬼機會」 read as 「軌跡會」): §23.11.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -1647,4 +1650,22 @@ whenever he moved (KIN's legs shrank to their floor). Fix:
   before and the shared ones float too.
 - The revival cinematic runs in the owl form (no lift): its first 30 f (the beheaded column, `:lb-w-fold`) sit 0.5 m
   lower than before, then `:lb-rise` lifts it as before.
+
+### 23.11 Decision 34: TENSHIN's tempo, the flash-step economy (2026-10-06); and the legs' floor
+
+| Knob | Before | After |
+|---|---|---|
+| TENSHIN in from EN's neutral, wind-up (`*lb-switch-windup*`) | 8 f | **16 f** (the cancel out of an EN attack stays 2 f: the move entered at its f14) |
+| TENSHIN cooldown (`*lb-switch-cd*`) | 30 f | **none** |
+| TENSHIN EN → KIN flash step | 10 | **0** |
+| TENSHIN KIN → EN flash step | 10 | 10 (unchanged; refused without it) |
+| EN J / K: each trace line laid | free | **3 flash step a line** (a J 3, a K's fan of three 9); a line is laid only while 3 remain (the swing still plays) |
+| A materialised trace that hits | — | **+2 flash step back** per trace (a K fan's hit group hits once: +2); a guarded one gives nothing |
+
+SP1 / SP2 traces cost nothing (the user named J / K). The CPU must budget it (the flash step also pays Step, Hoho and
+KIN → EN).
+
+**The legs' floor (the user: 「萊醬你是不是不小心把覺醒的腿改短了？」)**: yes, decision 33's lift. The ㄇ legs reach the floor
+from DRAW-BODY's feet height (`*toon-body*` [1]), which is the y the body is drawn at, so with the lift it sat 0.5 m up and
+the shanks shrank to it. LILLE-DRAW now takes the form's lift off it (`BODY-LIFT`): the legs reach the ground again.
 

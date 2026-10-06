@@ -1213,7 +1213,8 @@ or a gold look plays; a fourth in MUJITTAI)."
               (f-min 1f0 (+ (lb-fxs side 16) (* 8f0 rdt)))
               (f-max 0f0 (- (lb-fxs side 16) (* 8f0 rdt)))))
     (setf (aref v 28) (lb-fxs side 16)
-          (aref v 3) (aref *toon-body* 1))               ; his body's feet height (DRAW-BODY's): the ㄇ legs' floor
+          (aref v 3) (- (aref *toon-body* 1)             ; his body's feet height (DRAW-BODY's) less the form's drawn
+                        (the single-float (f32 (body-lift (fighter-kit (fighter e)) (model-body m))))))   ; lift: the floor
     (when (>= (model-alpha m) 0.999f0)
       (let ((bn (body-name (model-body m))) (fl (if (> (model-flash m) 0f0) 1 0)))
         (when (or (eq bn :lille-jilliel-kin) (eq bn :lille-shin))   ; the ㄇ legs (decision 26)
