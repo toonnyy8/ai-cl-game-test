@@ -167,6 +167,9 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
   for the long-necked owl head and an extra pair of arms. §23.3.
 - **28. EN's J / K / SP1 / SP2 start and recover much faster** (the user, 2026-10-06, the same evening: 「再補一個：覺醒的遠程模式
   J/K/SP1/SP2 的前後搖都大幅縮短。」). §23.2.
+- **29. Traces: at most 16** (was 8; the user: 「然後將射擊軌道的留存上限改成 16。」). §23.2.
+- **30. TENSHIN's startup depends on where it starts** (the user: 「如果是中立遠程狀態按 L 的話，增加約 0.1~0.15 的型態變換與衝刺前搖動作，如果是遠程攻擊狀態按 L 的話則大幅減少前搖動作。」):
+  from EN's neutral it gets a wind-up; as a cancel out of an EN attack almost none. §23.2.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -1361,6 +1364,16 @@ Numbers are proposals until the gate; the lead picked them where the user gave n
 | Dash out (KIN → EN) | **7.0 m** away over 14 f (`*lb-switch-out*`) |
 | Cancel | from the dash's end (f14) his **J or K cancels the recovery** (either mode; EN's J / K lay traces, KIN's hit) |
 | A materialised trace | stagger with **hitstun long enough for the dash plus a J1** (≥ 14 + 8 + 4 f), **no knockback** (the SP2 thick trace keeps its knockback), so a trace hit → TENSHIN in → J / K is a combo (host test) |
+
+**Traces (decision 29)**: `*lb-trace-max*` 8 → **16** (a 17th drops the oldest).
+
+**TENSHIN's startup (decision 30)**, EN → KIN only (KIN → EN as built): the traces materialise and the dash starts at the
+end of the startup (iframes from there).
+
+| Pressed from | Startup | Note |
+|---|---|---|
+| EN neutral (idle / walk / run / MUJITTAI) | **8 f** (0.13 s; the user's 0.1–0.15 s) | the form-change / dash wind-up, visible (the wings snap back); hittable |
+| an EN attack (J / K / SP1 / SP2 cancel) | **2 f** | "大幅減少": the cancel almost at once |
 
 **EN's tempo (decision 28)**: startup and recovery about **halved** in the ranged mode only (KIN and the base form keep
 theirs); the active frames stay (a trace is laid on the first). Lead's numbers (S / A / R):
