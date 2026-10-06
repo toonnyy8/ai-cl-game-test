@@ -765,6 +765,35 @@ LO <= D < HI, or NIL."
 Burst would be worth it (below *AI-BURST-LOW* of its Reishi) it keeps *FS-BURST* on top."
   (>= fs (+ *fs-hoho* (if (< reishi (* *ai-burst-low* reishi-max)) *fs-burst* 0.0))))
 
+;;; ---------------------------------------------------------------- :x-axis lines (DUEL_LILLE §11.3, gap G1 / G8)
+(defun line-dist (ax az yaw a b tx tz)
+  "Distance on the ground from (TX TZ) to the segment A .. B metres along facing YAW from (AX AZ): a :cap volume's axis
+(hitvol.lisp CAP without its height), so how far a fighter's feet are from a line hit."
+  (let* ((fx (fwd-x (float yaw 1f0))) (fz (fwd-z (float yaw 1f0))) (dx (- tx ax)) (dz (- tz az))
+         (along (+ (* dx fx) (* dz fz))) (s (max a (min b along)))
+         (ex (- tx (+ ax (* fx s)))) (ez (- tz (+ az (* fz s)))))
+    (sqrt (+ (* ex ex) (* ez ez)))))
+
+(defun line-off-strafe (ax az yaw px pz ox oz)
+  "The strafe (+1.0 / -1.0: the CPU stick's x, relative to the opponent at (OX OZ), TOWARD-STRAFE-DIR) that takes a fighter
+at (PX PZ) off the line through (AX AZ) along facing YAW, away from it: to the side he is on already (exactly on it: +1)."
+  (let* ((fx (fwd-x (float yaw 1f0))) (fz (fwd-z (float yaw 1f0))) (dx (- px ax)) (dz (- pz az))
+         (along (+ (* dx fx) (* dz fz))) (lx (- dx (* along fx))) (lz (- dz (* along fz))))
+    (if (>= (+ (* lx (- pz oz)) (* lz (- ox px))) 0) 1.0 -1.0)))   ; (lateral . strafe direction (-uz, ux), u to him)
+
+(defun opp-chance (p difficulty)
+  "A chance P read off the opponent's kit (:opp-aim, :opp-reflect) at DIFFICULTY: x *AI-OPP-DIFF*, at most 1."
+  (min 1.0 (* p (getf *ai-opp-diff* difficulty 1.0))))
+
+(defun reflect-action (now blast guard)
+  "The planned reflect (:opp-reflect) at his move frame NOW (as perceived) of a blast at frame BLAST: :guard (GUARD: a guard
+is up to it) pressed *AI-REFLECT-GUARD-LEAD* before the blast, else :hoho *AI-REFLECT-HOHO-LEAD* before; :wait in the
+*AI-REFLECT-QUIET* frames before that press; :late past the blast; else NIL (not yet)."
+  (let ((at (- blast (if guard *ai-reflect-guard-lead* *ai-reflect-hoho-lead*))))
+    (cond ((> now blast) :late)
+          ((>= now at) (if guard :guard :hoho))
+          ((>= now (- at *ai-reflect-quiet*)) :wait))))
+
 (defun heat-after (heat far)
   "Heat one frame later: +*AI-HEAT-RATE* per second, twice that when FAR (beyond *AI-HEAT-FAR*).
 Dealing damage resets it to 0 (combat.lisp DEAL-DAMAGE)."

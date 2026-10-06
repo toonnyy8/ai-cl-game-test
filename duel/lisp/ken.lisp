@@ -494,8 +494,8 @@ K1 if it is within K1's reach before the strike, else J1, else a Hoho close to t
 move), with flash-step to spare; a K whose startup the stance can still beat is left to the stance (the kit's :react)."
   (let* ((f (fighter e)) (g (gauges e)) (left (- (snap-s s) (snap-sf s) (brain-delay b))))
     (when (and (eq (snap-state s) :move) (member (snap-kind s) '(:flash :sig :sp)) (eq (snap-phase s) :main)
-               (< (snap-sf s) (snap-active-end s)) (<= 1 left *perfect-lead*) (< d (+ (snap-reach s) 1.0))
-               (not (member :grab (snap-flags s)))
+               (snap-live-p s) (<= 1 left *perfect-lead*) (snap-near-p s e d 1.0)   ; (an :x-axis line: on it, ai.lisp)
+               (not (member :grab (snap-flags s))) (not (snap-reflect-p s))   ; (a reflect is :opp-reflect's)
                (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))
                (ai-hoho-spare-p (gauges-fs g) (gauges-reishi g) (gauges-reishi-max g))
                (not (and (eq (snap-kind s) :flash) (getf (ai-table e :react) :flash-startup) (< d 4.0)

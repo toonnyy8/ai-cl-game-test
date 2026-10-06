@@ -178,6 +178,9 @@ is holding. Identity comes from the kit's :AI tables."
   (burst-t 0 :type fixnum) (burst-rolled nil)   ; frames in a combo past its 2nd hit; the Burst roll made
   (dash 0f0 :type single-float) (dash-to 0f0 :type single-float)   ; a held dash: +1 toward / -1 away, until this distance
   (bankai-rolled nil)                   ; the Bankai entry roll of this cup-3 stay is made (ai.lisp AI-BANKAI-P)
+  (aim-key -1 :type fixnum) (aim-plan nil) (aim-t -1 :type fixnum)   ; :opp-aim: the aim rolled for (his move's start tick),
+                                        ; its answer (:hoho :rush :step NIL) and a pre-Step's tick (-1: on the perceived lock)
+  (reflect-key -1 :type fixnum) (reflect-go nil)   ; :opp-reflect: the move rolled for (its start tick), the roll said yes
   (act nil) (why nil)                   ; the last thing it decided and why (debug overlay, log)
   (learn nil)                           ; the learning CPU (ai.lisp LRN; NIL = off: nothing of it runs)
   (habit nil)                           ; debug: a scripted player's habit (debug.lisp HABIT-FIRE)

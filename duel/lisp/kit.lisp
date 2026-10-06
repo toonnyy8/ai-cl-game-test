@@ -57,6 +57,43 @@
 (defun mv-first-hit (mv) "Frame of the first hit window (or S)."
   (if (plusp (length (mv-hits mv))) (hw-from (svref (mv-hits mv) 0)) (mv-s mv)))
 
+;;; ---------------------------------------------------------------- :x-axis lines: what the CPU perceives of one
+;;; (ai.lisp SNAP-LIVE-P / SNAP-NEAR-P; docs/duel/DUEL_LILLE.md §11.3, gap G1). A move flagged :x-axis is a long line hit
+;;; window (a :cap volume, 31 m): a distance test against its reach is true everywhere, so the CPU tests the line instead,
+;;; and only in the move's real threat window. Moves without the flag never come here.
+(defun move-lock (mv)
+  "An :x-axis move's lock frame (its line stops turning): its :params :lock, else a :hold move's minimum hold, else NIL. A
+:hold move's lock counts in its hold phase (move frame 0 = the press), any other move's in its move proper."
+  (or (getf (mv-params mv) :lock) (and (mv-hold mv) (first (mv-hold mv)))))
+
+(defun move-active-end (mv)
+  "The end of MV's real active window: its last hit window's TO (several lines in a row: all of them), else S + A."
+  (let ((hits (mv-hits mv)))
+    (if (plusp (length hits)) (loop for w across hits maximize (hw-to w)) (+ (mv-s mv) (mv-a mv)))))
+
+(defun x-live-p (mv phase hold sf)
+  "Is :x-axis move MV, seen in PHASE at hold frame HOLD / move frame SF, a threat now? A :hold aim only from its lock (before
+it the shot can't come: the fire is after the release, and the line still turns: no guard through the aim); the move
+proper until its active window ends (a move with a :params :lock: from that frame, its wind-up before it)."
+  (let ((lock (move-lock mv)))
+    (case phase
+      (:hold (and lock (>= hold lock)))
+      (:main (and (< sf (move-active-end mv)) (or (mv-hold mv) (null lock) (>= sf lock))))
+      (t nil))))
+
+(defun x-line-gap (mv ax az yaw tx tz)
+  "How far (TX TZ) is from :x-axis move MV's line(s), its own radius taken off, the attacker at (AX AZ) facing YAW: every
+:cap volume of its hit windows (from a to b along the facing; a 6th element, when a volume has one, turns that line by it,
+radians: a fan); no :cap volume: its reach along the facing, radius 0."
+  (let ((best nil))
+    (loop for w across (mv-hits mv)
+          do (loop for v in (hw-vols w)
+                   when (= (aref v 0) 1f0)
+                     do (let ((g (- (line-dist ax az (+ yaw (if (> (length v) 5) (aref v 5) 0f0)) (aref v 1) (aref v 2) tx tz)
+                                    (aref v 4))))
+                          (when (or (null best) (< g best)) (setf best g)))))
+    (or best (line-dist ax az yaw 0.0 (mv-reach mv) tx tz))))
+
 (defvar *moves* (make-hash-table :test 'eq) "Move name -> MOVE, as written in the kit files.")
 (defun find-move (name) (or (gethash name *moves*) (error "unknown move ~s" name)))
 
@@ -201,6 +238,7 @@ new button."
   (drink-clip nil)                      ; the clip of a drunk hit (DRINK)
   (respect-callout nil)                 ; said when the opponent outplays him (a counter-hit, a perfect Hoho, a parry, a Burst)
   (bankai-form nil)                     ; P (red, free) in this form enters that form (Kenpachi's cup 3 -> :bankai)
+  (bankai-ok nil)                       ; NIL, or a function of the fighter entity: T when its :bankai-form entry may go now
   (pips nil)                            ; the arm meter UDE (:n :cmds :to): a form whose heavy commands spend pips
   (crush-hook nil)                      ; called instead of the :drop-to switch when the ward breaks (Rukia's CRACK)
   (rooted nil)                          ; no Step, Hoho, run, move slide or string chase in this form (Rukia's zero)
@@ -326,7 +364,7 @@ Cornered with LOST Konpaku."
                            (run-clips '(:sh-run :sh-skate-b :sh-slide-r :sh-slide-l)) (reishi *reishi-max*)
                            body weapon stance hide aura intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
                            enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
-                           kikon-konpaku meter-gain form-name drink-clip respect-callout bankai-form pips
+                           kikon-konpaku meter-gain form-name drink-clip respect-callout bankai-form bankai-ok pips
                            crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k l-after-j calm hooks endless-form
                            stun-tolerance (gg-regen 1.0) (startup-add 0) (reach-mult 1.0) commands strings grid)
         merged
@@ -342,7 +380,7 @@ Cornered with LOST Konpaku."
                            :meter meter :reset-reiatsu reset-reiatsu :ai ai :cine cine :blade blade :grade grade
                            :kikon-konpaku (or kikon-konpaku (if awakening *kikon-konpaku-awakened* *kikon-konpaku*))
                            :meter-gain meter-gain :form-name (or form-name (symbol-name form)) :drink-clip drink-clip
-                           :respect-callout respect-callout :bankai-form bankai-form :pips pips
+                           :respect-callout respect-callout :bankai-form bankai-form :bankai-ok bankai-ok :pips pips
                            :crush-hook crush-hook :rooted rooted :field field :warm warm :cold cold
                            :frost-touch frost-touch :reset-form reset-form :u-tag u-tag :l-after-k l-after-k :l-after-j l-after-j :calm calm :endless-form endless-form
                            :stun-tolerance stun-tolerance :gg-regen gg-regen
@@ -409,6 +447,8 @@ child's keys win, :commands merge per command, :strings add. Keys:
   :form-name :drink-clip :respect-callout  the HUD's form name; the clip of a drunk hit; the callout when the
                                      opponent outplays him
   :bankai-form FORM                  P, red and free, enters FORM (Kenpachi's cup 3: the Bankai, docs/duel/DUEL_KEN_BANKAI.md)
+  :bankai-ok SYMBOL                  a function of the fighter entity: may the :bankai-form entry go now (NIL key: yes;
+                                     the CPU's Bankai reflex, ai.lisp, consults it too)
   :pips (:n :cmds (cmd ...) :to FORM)  the arm meter (the kit meter holds the pips): each command in :cmds (and every
                                      latched K link) spends one on its frame 0 (refused at 0); at 0 the arm bursts to
                                      FORM (combat.lisp ARM-STEP)
