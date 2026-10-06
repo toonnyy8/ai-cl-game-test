@@ -1,0 +1,22 @@
+{
+  "baseline_score": 0.6348,
+  "beta1": 0.0,
+  "beta2": 0.0,
+  "beta_grid": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "eval_command": "python3 tools/aieval.py --char 0 -j 4",
+  "fallback_branch_count": 2,
+  "fallback_refine_count": 2,
+  "hard_max_branch_count": 32,
+  "hard_max_refine_count": 32,
+  "higher_is_better": true,
+  "lambda": 0.25,
+  "task": "SOUL DUEL yamamoto CPU AI (duel/lisp/yamamoto.lisp :ai tables and reflexes), scored by tools/aieval.py --char 0",
+  "workers": 1
+}

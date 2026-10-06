@@ -1,0 +1,51 @@
+{
+  "baseline_score": 0.4765,
+  "beta": 0.6,
+  "branch_count": 2,
+  "cells": {
+    "b0a0": {
+      "error": null,
+      "evaluated": true,
+      "fail_class": "ok",
+      "n_total": null,
+      "n_valid": null,
+      "note": "rescored with the fixed evaluator",
+      "score": 0.7871,
+      "seq": 1,
+      "tags": [],
+      "valid": true
+    },
+    "b0a1": {
+      "error": null,
+      "evaluated": true,
+      "fail_class": "ok",
+      "n_total": null,
+      "n_valid": null,
+      "note": "rescored with the fixed evaluator",
+      "score": 0.8158,
+      "seq": 3,
+      "tags": [],
+      "valid": true
+    },
+    "b1a0": {
+      "error": null,
+      "evaluated": true,
+      "fail_class": "ok",
+      "n_total": null,
+      "n_valid": null,
+      "note": "rescored with the fixed evaluator",
+      "score": 0.6598,
+      "seq": 2,
+      "tags": [],
+      "valid": true
+    }
+  },
+  "directions": {},
+  "higher_is_better": true,
+  "max_parallelism": 1,
+  "notes": "",
+  "policy_file": "policy/current.py",
+  "refine_count": 2,
+  "round_index": 1,
+  "task": "SOUL DUEL ichigo CPU AI (duel/lisp/ichigo.lisp :ai tables and reflexes), scored by tools/aieval.py --char 3"
+}

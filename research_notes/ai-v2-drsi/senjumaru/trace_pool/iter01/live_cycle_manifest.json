@@ -1,0 +1,13 @@
+{
+  "baseline_score": 0.5714,
+  "best": 0.7857,
+  "best_attempt_depth": 2,
+  "best_cell": "b0a2",
+  "beta": 0.6,
+  "branch_count": 2,
+  "policy_file": "policy/current.py",
+  "probes": 4,
+  "refine_count": 2,
+  "round_index": 1,
+  "task": "SOUL DUEL senjumaru CPU AI (duel/lisp/senjumaru.lisp :ai tables and reflexes), scored by tools/aieval.py --char 4"
+}

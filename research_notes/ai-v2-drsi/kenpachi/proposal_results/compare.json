@@ -1,0 +1,26 @@
+{
+  "ranking": [
+    {
+      "policy": "<dream-rsi>/scripts/policies/adaptive_template.py",
+      "pareto": {
+        "auc": 0.945154095701541,
+        "frontier_auc": 0.0,
+        "parallel_penalty": 1.0,
+        "reward": 0.695154095701541,
+        "lambda": 0.25
+      },
+      "non_degenerate": true
+    },
+    {
+      "policy": "<dream-rsi>/scripts/policies/baseline_parallel_refine.py",
+      "pareto": {
+        "auc": 0.9321776155717761,
+        "frontier_auc": 0.2433090024330901,
+        "parallel_penalty": 1.0,
+        "reward": 0.6821776155717761,
+        "lambda": 0.25
+      },
+      "non_degenerate": true
+    }
+  ]
+}
