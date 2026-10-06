@@ -1656,6 +1656,7 @@ whenever he moved (KIN's legs shrank to their floor). Fix:
 | Knob | Before | After |
 |---|---|---|
 | TENSHIN in from EN's neutral, wind-up (`*lb-switch-windup*`) | 8 f | **16 f** (the cancel out of an EN attack stays 2 f: the move entered at its f14) |
+| The order (the user: 「按 L 觸發軌跡的順序是：前搖 → 軌跡觸發 → 衝刺 → J」) | | **wind-up → the traces materialise → the dash → J**: the trace's stun counts from the materialise, so trace → dash → J is a combo on both paths (16 f and 2 f) |
 | TENSHIN cooldown (`*lb-switch-cd*`) | 30 f | **none** |
 | TENSHIN EN → KIN flash step | 10 | **0** |
 | TENSHIN KIN → EN flash step | 10 | 10 (unchanged; refused without it) |
