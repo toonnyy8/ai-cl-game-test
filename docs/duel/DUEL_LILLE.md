@@ -2050,3 +2050,87 @@ fan's once. **LR and LI past 210 s**, so the edge rerun at 60 seeds: **LR 229.6 
 60): still outside the window. By the gate policy this goes to the user; no other knob was retuned (the 10 f flinch
 interrupts and lengthens the matches).
 
+
+### 23.19 Built: decision 38 (2026-10-06)
+
+The user's words: 「1. 梟頭模式幫我設計更明顯的遠程和近戰視覺差異，目前看不出『遠程模式翼張開、站直，近戰模式翼往後收、身體前傾』這樣的設計。
+2. SP2 神之喇叭在遠程模式的前後搖再縮短。」 In `duel/lisp/lille.lisp` (the owl kits' `:lift`, EN Trompete, the EN MUJITTAI
+stance, two cinematic stance clips, debug 79198), `duel/lisp/lille-art.lisp` (poses, clips, the legs, the wings) and the host
+tests. **No shared file changed** (DUEL_GAMEPLAY's 79198 line updated).
+
+**1. The two modes at a glance** (cosmetic: the sim never reads it)
+
+| | 遠 EN (`:shin`, `:shin-mujittai`) | 近 KIN (`:shin-kin`, `:shin-kin-mujittai`) |
+|---|---|---|
+| Height | **floats**: kit `:lift` `*lb-owl-lift*` **0.35 m** (was 0 in all four) | stands, lift 0 |
+| ㄇ legs (`%LB-LEGS`) | **folded up**: the tuck (`*LB-V*` [8], 0..1) turns the front shank back and the rear one forward by `*lb-tuck-turn*` 1.4 rad, each `*lb-tuck-len*` 0.48 m: a short bar under the column, ~0.8 m above the floor | down to the floor, as built (decision 26) |
+| Column / neck (`:lb-oe-stance` / `:lb-o-stance`) | bolt upright (spine 0, was −4), the S-neck raised (neck −6, head −4), the long arms hanging open (flex 10, side 30), thighs 12 | **pitched forward**: spine 22 (was 4), the neck lowered and thrust forward (neck 26, head 8), the claws raised forward (arms flex 58 side 14, elbows 70; were 8 / 12) |
+| The eight gold wings (`%LB-WINGS`) | **spread wide and forward**: `*lb-owl-en-spread*` **0.9** of the SP spread (was 0.6) | **swept back** (`*LB-V*` [29] the sweep, 0..1): the fan closed into a narrow sheaf (elevations × 0.35 − 48°, out × 0.3), trailing back (+1.3) and down (−0.9) along the pitched back, 0.8 × long, the blade faces turned to the side (edge-on from behind) |
+| MUJITTAI | `:lb-oe-fold` (new; EN's upright pose, arms crossed, afloat, legs tucked), ghosted | `:lb-o-fold` (now on the pitched KIN pose), on its legs, ghosted |
+
+- **One ramp** carries the change: `*LB-FX*` [18] runs toward EN at **5 / s** (was 3 / s, the wings only) and drives the
+  tuck ([8] = it) and the sweep ([29] = 1 − it) for the owl only (Jilliel's are 0: unchanged). It now runs before the legs are
+  drawn (moved out of the owl's wing branch).
+- **TENSHIN plays the change**: the form (and with it the lift) flips inside the dash (KIN → EN at f6 of 14, EN → KIN at
+  f22 of 30); the ramp folds / unfolds the legs and sweeps / fans the wings over the next 12 f. The clips hide the lift's
+  step: `:lb-o-tenshin` rises 0.4 m to f6 then keys u 0.05 at f6.5 (the draw sees f6 before the form and f7 after), and
+  `:lb-o-tenshin-in` dives to u −0.25 at f22 then 0.1 at f22.5 (both steps are the 0.35 lift; the clips say so).
+  `:lb-o-tenshin-in`'s fold key is EN's (`:lb-oe-fold-pose`).
+- **The strike points did not move**: the KIN hit poses set the spine, the striking arm and (new: `:lb-o-q3-hit`,
+  `:lb-o-f3-hit`) both elbows (12, the old stance's) themselves, so the new stance changes no hand position on an active frame;
+  the host FK reach test passes unchanged on all four owl forms (±0.15 m). EN's J / K still play the claw clips (no hit
+  volumes).
+- The revival cinematic (enters EN) and Trompete's Kikon cinematic now end in **the form's own stance**
+  (`(kit-stance (kit-of a))`, was `:lb-o-stance`); `:lb-o-point` / `:lb-o-reveal` are posed on EN's stance. In the revival the
+  lift appears at f66 (the body change, under its negative impact frame).
+- Debug 79198 cycles four looks: JILLIEL / KIN / the owl EN / **the owl KIN** (the front view of both owl modes).
+
+**2. EN Trompete** (`:lb-oe-trompete`): S 20 → **12**, R 14 → **8**, A 6 and the thick trace unchanged (laid at f12, was f20);
+the planted turn's lock f10 → **f6** at 60 → **100** deg/s (the same 10° at most); the clip (Trompete's 60 f wind-up) plays at
+**5×** (was 3×: `:clip-s` 60 / S 12) and the trumpet look follows the clip's speed (LILLE-DRAW: sf × 60 / S). The KIN
+(direct) Trompete is unchanged. The test that pinned EN SP2 = Jilliel EN's SP2 − 1 now pins 12 / 6 / 8, the on-frames,
+the lock, the turn, the clip speed and no hit volume.
+
+**Deviations from §23.18** (the lead's design):
+- **The lift is 0.35 m, not Jilliel's 0.5**: the owl is about a metre taller than Jilliel (x1.5 legs, the S-neck), and at 0.5
+  its head went under the HUD in the behind and side cameras; with the legs tucked its lowest point still clears the floor by
+  ~0.8 m (the shadow far below it), so the float reads at 0.35. A one-number change (`*lb-owl-lift*`, plus the two TENSHIN
+  steps).
+- KIN's wings are swept back **and down** (a folded bird's along the pitched back), not straight back: straight back (or up)
+  they pointed at the behind camera and loomed larger than EN's fan (first two passes).
+- EN MUJITTAI got its own pose / clip `:lb-oe-fold` (upright) so MUJITTAI keeps each mode's silhouette.
+
+**Tests** (host): duel-rules **6367** ALL PASS (the owl's lifts: EN / EN MUJITTAI 0.35, KIN / KIN MUJITTAI 0; EN Trompete
+12 / 6 / 8 and its keys; EN MUJITTAI's stance; the FK reach test on all four owl forms), duel-control 89, learn 100, cine 18
+ALL PASS; `tools/pkgcheck.sh duel` 0 / 0 / 0.
+
+**Gates** (native, NORMAL): `--seeds 10 --summary` taken first at 0186b8b; after, the fifteen old pairings' 30 summary lines
+**byte-identical**; `--cvc` PASS (yy / yk / kk). His six pairings, seeds 1–20, every match K.O. (before: §23.15's run of the
+same sim code):
+
+| Pairing | Median (before) | Lille wins / 20 (before) | Blow-aways |
+|---|---|---|---|
+| LY | **174.3 s** (174.0) | **15** (14) | 2 |
+| LK | **165.1 s** (168.5) | **6** (6) | 36 |
+| LR | **218.2 s** (218.2) | **7** (6) | 12 |
+| LI | **200.2 s** (200.2) | **4** (5) | 13 |
+| LS | **200.9 s** (187.1) | **4** (6) | 10 |
+| LL | 226.7 s (232.9; mirror) | P1 6 / P2 14 | 9 |
+
+LR's 20-seed median is past 210 s (as before): the edge rerun at 60 seeds gives **207.6 s** (§23.15: 207.6 s), inside the
+window, every match K.O., Lille 25 / 60 (23).
+
+The art moves no sim line (the lift, the legs and the wings are draw-only; the old fifteen are identical); the shifts above
+are the EN Trompete's (it is rare: §23.15's pacing had it 0.05–0.4 a match).
+
+**Consing** (79195, 10 draws): the draw hook **160 B** in EN and KIN, **240 B** in both MUJITTAI (16 / 24 B a frame, the ECS
+floor, unchanged): the tuck, the sweep and the ramp draw 0 B. (The probe's first call of a session reports ~131 KB: the
+probe's own queue growing once; its second call in the same form reads 160.) `./build.sh duel`: 0 warnings.
+
+**Stills** (`/tmp/claude-0/lb-owl2/`, never committed; 79004 / 79016 / 79017 / 79018 / 79198, the side camera 2109, keys L,
+J, Shift+L): `contact-owl-modes.png` (EN | KIN from behind, the side and the front, both MUJITTAI behind and side),
+`contact-owl-motion.png` (TENSHIN in at f14 / f22 / f25 and from behind at f22, TENSHIN out at f15 and after, EN Trompete's
+tell at f2 / f10 and the thick trace at f14, KIN J1, EN J1), `contact-before-after.png` (the build before and after, behind and
+side). Read: EN is a tall, floating, upright figure under a wide gold fan with its legs folded up; KIN a pitched stalker
+on its ㄇ stilts, claws forward, the wings a narrow sheaf behind; from the front KIN's wings all but vanish. The feel needs the
+user's eyes.

@@ -78,6 +78,13 @@ before, the quick shot (*LB-X-MIN* flat) (rework R, 2026-10-06; decision 17).")
   "Jilliel (EN, KIN and their stances) is drawn this many metres up in every clip (kit :lift; a look). His own clips
 were posed at root :u 0.5 and the shared walk / run / step / reaction clips at 0, so he sank 0.5 m whenever he moved (the
 user, 2026-10-06: 「覺醒狀態移動的時候整個角色很明顯下沉，請修改回正常高度」); the float moved out of his clips to here.")
+(defparameter *lb-owl-lift* 0.35
+  "The owl's 遠 EN (:shin and its MUJITTAI) is drawn this many metres up (kit :lift; a look), its ㄇ legs folded up under the
+column; KIN (:shin-kin and its MUJITTAI) stands on them (lift 0). Decision 38 (the user, 2026-10-06: 「梟頭模式幫我設計更明顯的
+遠程和近戰視覺差異，目前看不出『遠程模式翼張開、站直，近戰模式翼往後收、身體前傾』這樣的設計。」): 0 (every owl form on its legs) -> 0.35
+(the design said Jilliel EN's 0.5; the owl is a metre taller, so 0.5 put its head under the HUD in the behind and side
+cameras; with the legs tucked its lowest point still clears the floor by ~0.8 m). The owl's own clips stand at root :u ~0,
+so nothing double-lifts; TENSHIN's clips (lille-art.lisp) step their root by this at the form's frame.")
 (defparameter *lb-hosha-leap* 5.0
   "J 跳射 HOSHA: the forward leap, metres over its frames 0-14 (*LB-HOSHA-LEAP-F*); it stops *LUNGE-STOP* short of him
 (round 2, 2026-10-06: 3.0; the user's third playtest 2026-10-06 「L > J 前跳距離加長&射程縮短」: 3.0 -> 5.0; REIKYORI's 2.0 m
@@ -503,10 +510,12 @@ place (round 2: TENSHIN in then J combos), SP2's a knockback."
 ;; EN's SP1 裁きの光明 (SANREN's frames: lines at f6 / f12 / f18, R 11): three chops, each laying a trace (the ground line)
 (defmove :lb-oe-sabaki :kind :sp :clip :lb-oe-sabaki :callout "SABAKI NO KOMYO" :startup 6 :active 14 :recovery 11 :reach 2.3
   :tick lb-en-tick :on-frame ((6 lb-en-lay) (12 lb-en-lay) (18 lb-en-lay)) :params (:trace :sp1))
-;; EN's SP2 神の喇叭 (2 bars; NIJUSHI-KO EN's frames): Trompete's wind-up as a 20 f tell (planted, turning 60 deg/s until
-;; f10, the trumpet forming at 3x), then one thick trace; R 14. Not the blast: nothing to reflect (sealed: refused)
-(defmove :lb-oe-trompete :kind :sp :clip :lb-o-trompete :clip-s 60 :callout "TROMPETE" :startup 20 :active 6 :recovery 14
-  :track 0 :tick lb-trompete-tick :on-frame ((0 lb-trompete-tell) (20 lb-en-lay)) :params (:lock 10 :track 60.0 :trace :sp2))
+;; EN's SP2 神の喇叭 (2 bars): Trompete's wind-up as a 12 f tell (planted, turning 100 deg/s until f6, the trumpet forming
+;; at 5x), then one thick trace (A 6); R 8. Not the blast: nothing to reflect (sealed: refused). Decision 38 (the user,
+;; 2026-10-06: 「SP2 神之喇叭在遠程模式的前後搖再縮短」): S 20 -> 12, R 14 -> 8 (NIJUSHI-KO EN's 20 / 6 / 15 before, R - 1);
+;; the lock f10 -> f6 and the turn 60 -> 100 deg/s (the same 10 deg at most), the clip 3x -> 5x (its 60 f wind-up in 12)
+(defmove :lb-oe-trompete :kind :sp :clip :lb-o-trompete :clip-s 60 :callout "TROMPETE" :startup 12 :active 6 :recovery 8
+  :track 0 :tick lb-trompete-tick :on-frame ((0 lb-trompete-tell) (12 lb-en-lay)) :params (:lock 6 :track 100.0 :trace :sp2))
 ;; L 転身 TENSHIN for the owl's body (Jilliel's three moves, the owl's clips; decision 36)
 (defmove-copy :lb-o-switch :lb-switch :clip :lb-o-tenshin)
 (defmove-copy :lb-o-switch-in :lb-switch-in :clip :lb-o-tenshin-in)
@@ -597,7 +606,7 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
 ;; 神の喇叭 (EN a thick trace after its wind-up, KIN the blast: reflect and seal kept, 「保留反射與封印」). x1.1 dealt, x1.1
 ;; taken, refunds 5 / 2, +1 on every attack; Kikon 4; no revival from here (no :bankai-form)
 (defkit :lille :shin :inherit :jilliel
-  :lift 0.0 :form-name "SHIN" :mult *shin-mult* :taken *shin-taken* :kikon-konpaku 4
+  :lift *lb-owl-lift* :form-name "SHIN" :mult *shin-mult* :taken *shin-taken* :kikon-konpaku 4
   :guard-to :shin-mujittai :bankai-form nil :bankai-ok nil
   :body :lille-shin :stance :lb-oe-stance :cine lb-revive-cine :swing-sfx :whoosh-heavy
   :commands (:q :lb-oe-j1 :f :lb-oe-k1 :sig :lb-o-switch-in :sp1 :lb-oe-sabaki :sp2 :lb-oe-trompete :breaker :lb-o-breaker
@@ -612,10 +621,10 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
        :switch (:traces 3 :near 0.6 :whiff 1.5) :opp-trace (:p 0.5) :opp-reflex lb-opp-trace :reflex lb-ai-reflex))
 
 (defkit :lille :shin-mujittai :inherit :shin
-  :guard-to nil :drop-to :shin :passives (:ward :intangible) :stance :lb-o-fold :u-tag "U: MUJITTAI")
+  :guard-to nil :drop-to :shin :passives (:ward :intangible) :stance :lb-oe-fold :u-tag "U: MUJITTAI")   ; (EN's: upright, afloat)
 
 (defkit :lille :shin-kin :inherit :shin
-  :form-name "SHIN KIN" :walk *walk-kin* :run *run-kin* :guard-to :shin-kin-mujittai :l-after-k t :stance :lb-o-stance
+  :lift 0.0 :form-name "SHIN KIN" :walk *walk-kin* :run *run-kin* :guard-to :shin-kin-mujittai :l-after-k t :stance :lb-o-stance
   :commands (:q :lb-o-j1 :f :lb-o-k1 :sig :lb-o-switch :sp1 :lb-misuji :sp2 :lb-trompete)
   :grid (:lb-o-j1 :lb-o-j2 :lb-o-j3 :lb-o-k1 :lb-o-k2 :lb-o-k3 :lb-o-j2s :lb-o-k2s)
   :ai (:intents (:approach 3 :pressure 4 :zone 0 :defend 1)                 ; (Jilliel KIN's, no revival; + Trompete)
@@ -1782,7 +1791,7 @@ turning to gold over 30 f, and the owl head grows on the S-neck from light; the 
   (during (52 94) (multiple-value-bind (x y z) (actor-point a 2.95)
                     (vfx-lb-light x y z (* 0.28 (min 1.0 (/ (- cf 52) 12.0))) (if (< cf 82) 0.9 (* 0.9 (/ (- 94 cf) 12.0))))))
   (at 66 (setf (model-body (model a)) (find-body :lille-shin) (model-hide (model a)) nil)
-      (cine-clip a :lb-o-stance :blend 10) (impact-frame :negative 1) (play-sfx :awaken-boom))
+      (cine-clip a (kit-stance (kit-of a)) :blend 10) (impact-frame :negative 1) (play-sfx :awaken-boom))   ; (EN's: decision 38)
   (at 96 (card :black a) (back-rim 54 0.72 0.6 0.35) (shot-on a 20 5.4 1.3 :look 2.0 :off 0.9) (lens 42)
       (caption "武器では死なず" :kanji2 "霊圧で首を落としても尚死なない" :reading "BUKI DEWA SHINAZU" :sub "SHIN NO SUGATA" :side 0))
   (at 150 (card nil) (caption-exit) (shot-on a 28 7.5 0.6 :look 1.9) (lens 55) (cine-clip a :lb-o-reveal :blend 8)))
@@ -1817,7 +1826,7 @@ Konpaku shatter; the winged column."
   (during (110 150) (vfx-lb-horizon a (min 0.98 (- 1.6 (/ (- cf 110) 25.0)))))
   (at 116 (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 4)) (play-sfx :konpaku-shatter)
       (impact-frame :manga 10))
-  (at 140 (silence 46) (shot-on a 30 8.5 1.0 :look 1.8) (lens 50) (cine-clip a :lb-o-stance :blend 10))
+  (at 140 (silence 46) (shot-on a 30 8.5 1.0 :look 1.8) (lens 50) (cine-clip a (kit-stance (kit-of a)) :blend 10))
   (during (140 186) (setf *grade-desat* (min 0.5 (* 0.02 (- cf 140))))))
 
 ;;; stills and the consing probe (debug 79100-79199, DUEL_GAMEPLAY "Debug commands")
@@ -1863,12 +1872,12 @@ the KIN body (:lille-jilliel-kin, until the next form change)."
       (force-form e :jilliel-kin)
       (progn (force-form e :jilliel) (setf (model-body (model e)) (find-body :lille-jilliel-kin)))))
 
-(defvar *lb-front-k* 0 "Debug 79198's next look: 0 JILLIEL, 1 KIN, 2 the owl.")
+(defvar *lb-front-k* 0 "Debug 79198's next look: 0 JILLIEL, 1 KIN, 2 the owl EN, 3 the owl KIN.")
 (defun lille-art-debug (c)
   "79100 + 19 i + k (k 0-18): cinematic i (*LB-CINES*) held at frame 10 k; 79195 his looks' consing (LILLE-CONS-PROBE);
 79196 P1's eye opens now (its look: a pip spent, nothing dodged); 79197 P1 Lille as JILLIEL KIN 5 m from Kenpachi (the
 rework's rig, DUEL_LILLE §22.5); 79198 Lille as P2 facing the behind camera 4 m from Kenpachi, each call the next of JILLIEL
-/ KIN / the owl (the front view)."
+/ KIN / the owl EN / the owl KIN (the front view)."
   (let ((n (- c 79100)))
     (cond ((< n 95) (lille-cine-at (floor n 19) (* 10 (mod n 19))))
           ((= n 95) (lille-cons-probe))
@@ -1877,8 +1886,8 @@ rework's rig, DUEL_LILLE §22.5); 79198 Lille as P2 facing the behind camera 4 m
           ((= n 97) (ensure-battle :lille :kenpachi) (lille-kin-look *p1*) (place *p1* *p2* 5.0))
           ((= n 98) (ensure-battle :kenpachi :lille)
            (let ((k *lb-front-k*))
-             (setf *lb-front-k* (mod (1+ k) 3))
-             (case k (0 (force-form *p2* :jilliel)) (1 (lille-kin-look *p2*)) (t (force-form *p2* :shin))))
+             (setf *lb-front-k* (mod (1+ k) 4))
+             (case k (0 (force-form *p2* :jilliel)) (1 (lille-kin-look *p2*)) (2 (force-form *p2* :shin)) (t (force-form *p2* :shin-kin))))
            (place *p1* *p2* 4.0))
           (t (log-msg "duel lille: no debug command ~d" c)))))
 (pushnew '(79100 79199 lille-art-debug) *char-debug* :test #'equal)

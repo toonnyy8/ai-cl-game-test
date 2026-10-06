@@ -803,7 +803,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :lb-w-nijushi :lb-w-breaker :lb-w-ram :lb-o-stance :lb-o-q1 :lb-o-q2 :lb-o-q3 :lb-o-f1 :lb-o-f2 :lb-o-f3 :lb-o-chop
     :lb-o-trompete :lb-o-breaker :lb-o-stamp      ; Lille (DUEL_LILLE §12 Art)
     :lb-kamae :lb-k-shot :lb-k-hosha :lb-k-taisha :lb-k-dash :lb-w-tenshin :lb-w-tenshin-in   ; his rework (DUEL_LILLE §22, §23)
-    :lb-oe-stance :lb-o-fold :lb-oe-sabaki :lb-o-tenshin :lb-o-tenshin-in))   ; the owl on Jilliel's system (decision 36, §23.14)
+    :lb-oe-stance :lb-o-fold :lb-oe-fold :lb-oe-sabaki :lb-o-tenshin :lb-o-tenshin-in))   ; the owl on Jilliel's system (decision 36, §23.14)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
 ;; DEFCINEs, which the host stubs; KESSA's clones play :ic-k-cut / :ic-k-wrap, ICHIGO-CLONE-STEP)
 (let ((used (remove-duplicates (loop for cf in *forms* append (kit-clips (apply #'kit cf))))))
@@ -2232,9 +2232,12 @@ defender's next step. Values: the attacker's and the defender's first actionable
 (let* ((j (kit :lille :jilliel)) (mu (kit :lille :jilliel-mujittai)) (kn (kit :lille :jilliel-kin)) (kmu (kit :lille :jilliel-kin-mujittai))
        (o (kit :lille :shin)) (omu (kit :lille :shin-mujittai)) (ok (kit :lille :shin-kin)) (okmu (kit :lille :shin-kin-mujittai))
        (owls (list o omu ok okmu)))
-  ;; four forms: EN :shin (the revival's), KIN :shin-kin, U MUJITTAI in both (「也是無實體」); the owl's body, lift 0, in all
-  ;; four; x1.1 dealt (1.2 before), x1.1 taken (Jilliel's), Jilliel's guard refill; Kikon 4; no revival from any
-  (check (and (every (lambda (k) (and (eq (kit-body k) :lille-shin) (zerop (kit-lift k)) (kit-awakening k)
+  ;; four forms: EN :shin (the revival's), KIN :shin-kin, U MUJITTAI in both (「也是無實體」); the owl's body in all four,
+  ;; EN floating (lift *LB-OWL-LIFT* 0.35, its legs tucked: decision 38), KIN on its legs (lift 0); x1.1 dealt (1.2 before),
+  ;; x1.1 taken (Jilliel's), Jilliel's guard refill; Kikon 4; no revival from any
+  (check (and (~= *lb-owl-lift* 0.35) (~= (kit-lift o) *lb-owl-lift*) (~= (kit-lift omu) *lb-owl-lift*)
+              (zerop (kit-lift ok)) (zerop (kit-lift okmu))))
+  (check (and (every (lambda (k) (and (eq (kit-body k) :lille-shin) (kit-awakening k)
                                       (~= (kit-mult k) 1.1) (~= (kit-taken k) 1.1) (= 4 (kit-kikon-konpaku k))
                                       (~= (kit-gg-regen k) (kit-gg-regen j)) (null (kit-bankai-form k)) (null (kit-bankai-ok k))
                                       (null (getf (kit-ai k) :bankai)) (eq (kit-endless-form k) :jilliel) (null (kit-weapon k))
@@ -2249,7 +2252,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (null (kit-passives o)) (null (kit-passives ok))
               (~= (kit-walk o) (kit-walk j)) (~= (kit-run o) (kit-run j)) (~= (kit-walk ok) (kit-walk kn)) (~= (kit-run ok) (kit-run kn))
               (null (kit-l-after-k o)) (eq (kit-l-after-k ok) t)
-              (eq (kit-stance o) :lb-oe-stance) (eq (kit-stance ok) :lb-o-stance) (eq (kit-stance omu) :lb-o-fold)
+              (eq (kit-stance o) :lb-oe-stance) (eq (kit-stance ok) :lb-o-stance) (eq (kit-stance omu) :lb-oe-fold)
               (eq (kit-stance okmu) :lb-o-fold)))
   ;; the revival enters :shin (every Jilliel form's :bankai-form) and is never offered from the owl's four
   (check (and (every (lambda (k) (eq (kit-bankai-form k) :shin)) (list j mu kn kmu))
@@ -2286,8 +2289,8 @@ defender's next step. Values: the attacker's and the defender's first actionable
                             collect (list m (first (find seq (link-moves b) :key #'third :test #'equal))))))
     (check (equal (mapcar #'third (link-moves o)) (mapcar #'third (link-moves j))))
     (check (equal (mapcar #'third (link-moves ok)) (mapcar #'third (link-moves kn))))
-    (loop for (om jm) in (append (pairs o j) (list (list (kit-command-move o :sp1) (kit-command-move j :sp1))
-                                                   (list (kit-command-move o :sp2) (kit-command-move j :sp2))))
+    ;; (EN's SP2 Trompete is its own since decision 38: below)
+    (loop for (om jm) in (append (pairs o j) (list (list (kit-command-move o :sp1) (kit-command-move j :sp1))))
           do (check (and jm (= (mv-s om) (mv-s jm)) (= (mv-a om) (mv-a jm)) (= (mv-r om) (- (mv-r jm) *shin-adv*))
                          (= (mv-enter om) (mv-enter jm)) (eq (mv-kind om) (mv-kind jm)) (zerop (length (mv-hits om)))
                          (equal (getf (mv-params om) :trace) (getf (mv-params jm) :trace))
@@ -2302,12 +2305,16 @@ defender's next step. Values: the attacker's and the defender's first actionable
         do (check (and (chain-open-p (- (mv-total em) 1) (mv-s em) (mv-a em) (mv-r em) t) (> (mv-r em) *chain-lead*)
                        (eq (mv-tick em) 'lb-en-tick) (equal (mv-on-frame em) (list (list (mv-s em) 'lb-en-lay))))))
   ;; SP1 裁きの光明 (EN lays its three lines as traces; KIN bursts three ground lines, one group, R 25); SP2 神の喇叭 (EN its
-  ;; wind-up as a 20 f tell, then a thick trace: nothing to reflect; KIN Trompete as built, R 39 -13, reflectable). Sealed:
-  ;; SP2 refused in both modes, nothing else
+  ;; wind-up as a 12 f tell, then a thick trace at f12, A 6, R 8: nothing to reflect (decision 38, 「SP2 神之喇叭在遠程模式的前後搖
+  ;; 再縮短」: S 20 -> 12, R 14 -> 8, its lock f10 -> f6 at 100 deg/s, the clip at 5x); KIN Trompete as built, R 39 -13,
+  ;; reflectable). Sealed: SP2 refused in both modes, nothing else
   (let ((es1 (kit-command-move o :sp1)) (es2 (kit-command-move o :sp2)) (ks1 (kit-command-move ok :sp1)) (ks2 (kit-command-move ok :sp2)))
     (check (and (eq :lb-oe-sabaki (mv-name es1)) (eq :sp1 (getf (mv-params es1) :trace)) (equal (mapcar #'first (mv-on-frame es1)) '(6 12 18))
                 (eq :lb-oe-trompete (mv-name es2)) (eq :sp2 (getf (mv-params es2) :trace)) (eq (mv-clip es2) :lb-o-trompete)
-                (not (member :reflectable (mv-flags es2))) (= 20 (mv-s es2)) (= 2 (kit-command-cost o :sp2))
+                (not (member :reflectable (mv-flags es2))) (= 12 (mv-s es2)) (= 6 (mv-a es2)) (= 8 (mv-r es2))
+                (equal (mv-on-frame es2) '((0 lb-trompete-tell) (12 lb-en-lay))) (= 6 (getf (mv-params es2) :lock))
+                (~= 100.0 (getf (mv-params es2) :track)) (~= 5.0 (mv-clip-speed es2)) (zerop (length (mv-hits es2)))
+                (eq (mv-kind es2) :sp) (= 2 (kit-command-cost o :sp2))
                 (eq :lb-misuji (mv-name ks1)) (= 25 (mv-r ks1)) (= 3 (length (getf (mv-params ks1) :fan)))
                 (equal (mv-callout ks1) "SABAKI NO KOMYO") (equal (mv-callout es1) "SABAKI NO KOMYO")
                 (eq :lb-trompete (mv-name ks2)) (= 39 (mv-r ks2)) (= -13 (mv-adv-block ks2)) (= 60 (mv-s ks2)) (= 30 (mv-a ks2))
