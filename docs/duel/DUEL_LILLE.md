@@ -1661,7 +1661,7 @@ whenever he moved (KIN's legs shrank to their floor). Fix:
 | TENSHIN EN → KIN flash step | 10 | **0** |
 | TENSHIN KIN → EN flash step | 10 | 10 (unchanged; refused without it) |
 | EN J / K: each trace line laid | free | **3 flash step a line** (a J 3, a K's fan of three 9); a line is laid only while 3 remain (the swing still plays) |
-| A materialised trace that hits | — | **+2 flash step back** per trace (a K fan's hit group hits once: +2); a guarded one gives nothing |
+| A materialised trace that hits | — | **+4 flash step back** per trace (+2 at first; the user, the same day: 「我希望能將軌跡命中回收量上調到 4」; a K fan's hit group hits once: +4); a guarded one gives nothing |
 
 SP1 / SP2 traces cost nothing (the user named J / K). The CPU must budget it (the flash step also pays Step, Hoho and
 KIN → EN).

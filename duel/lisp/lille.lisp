@@ -106,10 +106,10 @@ free (decision 34, 2026-10-06: 「從『遠』變『近』不消耗閃步量表�
   "EN's J / K: the flash step each trace line laid costs (a J 3, a K's fan of three 9); a line is laid only while this
 much is left, checked line by line (the swing still plays); SP1 / SP2's traces are free (decision 34, 2026-10-06, the
 user: 「遠程 J/K 每條軌跡消耗 3 點閃步量表」; free before).")
-(defparameter *lb-trace-refund* 2.0
+(defparameter *lb-trace-refund* 4.0
   "A materialised trace that hits a fighter gives him this much flash step back (a K fan's hit group hits once: once;
 a guarded one nothing; kept at the max, none during a burst: PAY-GAUGES) (decision 34, 2026-10-06, the user: 「每打中一條
-軌跡會額外回收 2 點閃步量表」).")
+軌跡會額外回收 2 點閃步量表」; 2 -> 4 the same day: 「我希望能將軌跡命中回收量上調到 4」).")
 (defparameter *lb-dash-iframes* 9
   "Both flash-step dashes (HIRENKYAKU in the stance, TENSHIN) are invulnerable on their frames 0-8 (rework R, 2026-10-06;
 TSUKIWATARI's).")
