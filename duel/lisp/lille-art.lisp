@@ -1431,8 +1431,8 @@ his halo cracking (gold shards); the broken halo stays (LILLE-DRAW draws it). Lo
 wing blades (both modes: two fans of four behind the column, the front pair reaching to the rig's hands, each swaying on
 its own phase; folded round the column in MUJITTAI, rippling on each pass-through, their holes lit in NIJUSHI-KO's tell,
 fanned out in the SPs; translucent, fainter in MUJITTAI; each three jointed segments that wave, lag and whip in the
-strikes, curl in MUJITTAI and unfurl in the SPs) and the wide jade halo; on the KIN and owl bodies the ㄇ legs (and
-the owl's extra pair of arms); the owl's eight gold wings, its spiked halo (broken once sealed), the trumpet
+strikes, curl in MUJITTAI and unfurl in the SPs) and the wide jade halo; on the KIN and owl bodies the ㄇ legs; the
+owl's eight gold wings, its spiked halo (broken once sealed), the trumpet
 forming over Trompete's wind-up, the reflect. The awakening's and the revival's cinematics drive the wings and halos
 (the unfolding, the jade turning gold). Its only allocation is the entity lookups (two a frame; a third while he aims
 or a gold look plays; a fourth in MUJITTAI)."
@@ -1455,7 +1455,7 @@ or a gold look plays; a fourth in MUJITTAI)."
     (%lb-drive! f mv rdt (eq form :shin))                ; the joints' strike drive (cosmetic: the move's frame)
     (setf (aref v 28) (lb-fxs side 16)
           (aref v 3) (- (aref *toon-body* 1)             ; his body's feet height (DRAW-BODY's) less the form's drawn
-                        (the single-float (f32 (body-lift (fighter-kit (fighter e)) (model-body m))))))   ; lift: the floor
+                        (the single-float (f32 (body-lift (fighter-kit f) (model-body m))))))   ; lift: the floor
     (when (>= (model-alpha m) 0.999f0)
       (let ((bn (body-name (model-body m))) (fl (if (> (model-flash m) 0f0) 1 0)))
         (when (or (eq bn :lille-jilliel-kin) (eq bn :lille-shin))   ; the ㄇ legs (decision 26)

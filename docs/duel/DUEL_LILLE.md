@@ -1821,3 +1821,14 @@ raised to the numbers above. Needs the user's eyes for feel.
 warnings. **Consing** (79195, 10 draws): the draw hook 160 B in JILLIEL, KIN and the owl, 240 B in MUJITTAI (16 / 24 B a
 frame, the ECS lookup floor of §21, unchanged): the jointed wings, the springs and the drive draw 0 B. Draw calls: 48 wing
 draws a form (8 blades x 3 segments x glass + rim; were 16).
+
+### 23.13 Merged: decisions 32–34 together (the lead, 2026-10-06)
+
+The jointed translucent wings (§23.9) and decision 34 (§23.12) merged onto decision 33's lift. Host tests ALL PASS
+(duel-rules 5942, control 89, cine 18); pkgcheck 0 / 0 / 0; `--seeds 10`: the fifteen old pairings identical, and his
+six pairings' lines identical with and without the wing art (the art moves no sim line); `--cvc` PASS; `./build.sh duel`
+0 warnings. Stills: KIN idle and mid-K (jointed jade wings see-through, the ㄇ legs on the floor), the owl (gold). The
+draw hook's steady cost is 16 B a frame in every Jilliel form and the owl (the leg floor reuses the bound fighter: a
+second lookup had made it 24); the first draw of the owl after the revival builds its gold segment meshes once (~13 KB,
+not per frame). Decision 34 at 20 seeds (§23.12): all K.O., medians 158.8–194.9 s, wins 7 / 7 / 4 / 7 / 6.
+
