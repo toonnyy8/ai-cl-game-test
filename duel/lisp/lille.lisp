@@ -1,12 +1,15 @@
-;;;; lille.lisp — LILLE BARRO (Schutzstaffel, TYBW), docs/duel/DUEL_LILLE.md: his moves (DEFMOVE) and his four forms
-;;;; (DEFKIT): :base 万物貫通 THE X-AXIS (a sniper: L held aims Diagramm along a line that locks, then fires the whole arena
-;;;; long through guard; the left eye's three openings on U), the awakening 神の裁き JILLIEL (:jilliel, U switches to the
-;;;; intangible stance :jilliel-mujittai, Yamamoto's West with the :intangible flag) and the second awakening, the owl
-;;;; 真の姿 (:shin, P after a beheading in Jilliel: Kenpachi's Bankai path with the kit's :bankai-ok). Everything of his is
-;;;; here (the user's code layout, 2026-09-28): the knobs, the pure rules (host-tested), the kits, his per-side state (reset
-;;;; with every match), the kit hooks (kit.lisp KIT-HOOK: :tick :ok :hit :struck :settled :bankai-ok :draw), his hazards'
-;;;; hook, the CPU tables (basic: batch 1), the debug range 79000-79999, the pacing log and placeholder cinematics (batch
-;;;; 3). The looks, bodies, clips and props are lille-art.lisp's. Plain CL above the hooks: the host rules test loads it.
+;;;; lille.lisp — LILLE BARRO (Schutzstaffel, TYBW), docs/duel/DUEL_LILLE.md: his moves (DEFMOVE) and his six forms
+;;;; (DEFKIT): :base 万物貫通 THE X-AXIS (a sniper: L is the shooting stance 狙撃構え SOGEKI-GAMAE, after Ichigo's
+;;;; TSUKIMACHI: a quick or a charged X-axis shot through guard, REIKYORI, NAGIHARAI, the HIRENKYAKU dash; the left eye's
+;;;; three openings on U), the awakening 神の裁き JILLIEL in two modes L switches between with the flash-step dash 転身
+;;;; TENSHIN: 遠 EN (:jilliel, ranged: J / K / SP1 walk and lay X-axis traces, materialised by the switch) and 近 KIN
+;;;; (:jilliel-kin, melee: the wing-blade strings), U in either the intangible stance (:jilliel-mujittai /
+;;;; :jilliel-kin-mujittai, Yamamoto's West with the :intangible flag), and the second awakening, the owl 真の姿 (:shin,
+;;;; P with <= 4 Konpaku in any Jilliel form: Kenpachi's Bankai path with the kit's :bankai-ok; decision 16). Everything of
+;;;; his is here (the user's code layout, 2026-09-28): the knobs, the pure rules (host-tested), the kits, his per-side state
+;;;; (reset with every match), the kit hooks (kit.lisp KIT-HOOK: :tick :ok :hit :struck :bankai-ok :draw), his hazards'
+;;;; hook, the CPU, the debug range 79000-79999, the pacing log and the cinematics. The looks, bodies, clips and props are
+;;;; lille-art.lisp's (the traces' floor look is here: LB-TRACE-LOOK). Plain CL above the hooks: the host rules test loads it.
 (in-package :duel)
 
 ;;; ================================================================ knobs (docs/duel/DUEL_LILLE.md §4-§6, §13)
@@ -37,26 +40,54 @@ his cross pairings at seeds 1-20, 24 / 100 after; DUEL_LILLE \"Measured: batch 4
 a shorter look-ahead; design 2026-10-06, decision 13).")
 (defparameter *lb-eye-phase* 16 "Frames he is intangible after the eye opens (FIGHTER-INVULN; design 2026-10-06).")
 
-;; the X-axis shot and the lock (§4.3; decisions 10, 12)
-(defparameter *lb-aim-track* 60.0 "Degrees / s he turns while he aims, until the lock (design 2026-10-06; the Signature rate).")
-(defparameter *lb-lock* 34 "The aim's lock frame (move frame): the line stops turning (design 2026-10-06; decision 12).")
-(defparameter *lb-lock-min* 10 "The shot fires at least this many frames after the lock (design 2026-10-06; decision 12).")
-(defparameter *lb-x-delay* 4 "... and this many after L is released (design 2026-10-06).")
-(defparameter *lb-aim-max* 64 "The shot fires by itself on this move frame (design 2026-10-06).")
-(defparameter *lb-aim-cancel* 10 "From this move frame until the lock, Step / Hoho / U cancel the aim (design 2026-10-06).")
+;; the X-axis shot (§4.3; decisions 10, 12): since the rework (decision 17, §22.1) the stance's L, locked on the press
+(defparameter *lb-aim-track* 60.0 "Degrees / s he turns in the shooting stance (design 2026-10-06; the Signature rate).")
+(defparameter *lb-lock-min* 10
+  "The shot fires this many frames after its lock (design 2026-10-06; decision 12: the visible lock; the rework's stance L
+locks on the press and fires 10 f later, §22.1).")
 (defparameter *lb-x-near* 4.0 "Distance damage: the minimum at or under this many metres (design 2026-10-06; decision 10)...")
 (defparameter *lb-x-far* 20.0 "... the maximum at or beyond this many (design 2026-10-06).")
-(defparameter *lb-x-min* 40 "The shot's damage at *LB-X-NEAR* (design 2026-10-06).")
+(defparameter *lb-x-min* 40 "The shot's damage at *LB-X-NEAR* (design 2026-10-06; the stance's quick shot: flat, §22.1).")
 (defparameter *lb-x-max* 120 "The shot's damage at *LB-X-FAR* (design 2026-10-06; §13: 120 -> 100 if he wins too much).")
 (defparameter *lb-x-chip* 0.15 "Through guard: the fraction of a blocked X-axis hit that goes through as chip (design 2026-10-06; decision 2).")
 (defparameter *lb-x-guard* 30 "Through guard: the guard gauge a blocked shot drains (4 crush a full gauge; design 2026-10-06; decision 2).")
 (defparameter *lb-far-kb* 12.0 "A shot that hits from this many metres knocks back 2.0 m, not 1.0 (design 2026-10-06).")
-(defparameter *lb-volley-lock* 24 "The wing volley's lock frame (design 2026-10-06, §5.4).")
-(defparameter *volley-spread* 6.0 "Degrees between the volley's five lines (design 2026-10-06; §13: 6 -> 5 if awakening is a trap).")
+(defparameter *volley-spread* 6.0
+  "Degrees between the old wing volley's five lines (design 2026-10-06). The volley is gone (rework R, decision 18); kept
+for lille-art.lisp's :volley look until the art drops it.")
+
+;; L 狙撃構え SOGEKI-GAMAE, the shooting stance (§22.1, decision 17; Ichigo's TSUKIMACHI pattern)
+(defparameter *lb-kamae-up* 6 "The stance's frame where it is up: the follow-ups fire from here (rework R, 2026-10-06).")
+(defparameter *lb-kamae-tap* 30 "Frames the stance holds past its f6 on a tap of L (rework R, 2026-10-06) ...")
+(defparameter *lb-kamae-max* 90 "... and at most while L is held; then R 14 (rework R, 2026-10-06).")
+(defparameter *lb-charge-f* 24
+  "The stance's L is the charged shot (the distance curve) after this many frames in the stance, the dash's included;
+before, the quick shot (*LB-X-MIN* flat) (rework R, 2026-10-06; decision 17).")
+(defparameter *lb-kamae-dash* 3.5 "HIRENKYAKU (the stance's Step): metres over its 12 f (rework R, 2026-10-06).")
+(defparameter *lb-kamae-dash-fs* 10.0 "... its flash-step price, once per stance (rework R, 2026-10-06).")
+
+;; JILLIEL: 遠 EN and 近 KIN, L 転身 TENSHIN switches (§22.2, decision 18)
+(defparameter *walk-kin* 3.8 "Walk m/s, JILLIEL KIN (the owl's legs; rework R, 2026-10-06).")
+(defparameter *run-kin* 8.5 "Run m/s, JILLIEL KIN (rework R, 2026-10-06).")
+(defparameter *lb-en-walk* 3.0 "EN: m/s the stick walks him through J / K / SP1 (facing kept on the opponent; rework R, 2026-10-06).")
+(defparameter *lb-switch-cd* 30 "TENSHIN: at most one every this many frames (its :cooldown; rework R, 2026-10-06).")
+(defparameter *lb-switch-dash* 3.5 "TENSHIN's flash-step dash, metres over 12 f: at him (EN -> KIN) or away (rework R, 2026-10-06).")
+(defparameter *lb-switch-fs* 10.0 "... its flash-step price; refused without it (rework R, 2026-10-06).")
+(defparameter *lb-dash-iframes* 9
+  "Both flash-step dashes (HIRENKYAKU in the stance, TENSHIN) are invulnerable on their frames 0-8 (rework R, 2026-10-06;
+TSUKIWATARI's).")
+(defparameter *lb-trace-max* 8 "EN's traces: at most this many live; a 9th drops the oldest (rework R, 2026-10-06; 「最多 8 條」).")
+(defparameter *lb-trace-fan* 6.0 "EN K's fan: three traces at -this, 0, +this degrees (rework R, 2026-10-06).")
+(defparameter *lb-trace-len* 31.0 "A trace's length, metres from 0.6 m ahead of where it was laid (the arena is 30 m across).")
+(defparameter *lb-trace-r* 0.6 "A trace's radius, metres (rework R, 2026-10-06) ...")
+(defparameter *lb-trace-r-thick* 1.2 "... EN SP2's thick trace (rework R, 2026-10-06; 「遠程模式留粗軌道」).")
+(defparameter *lb-trace-dmg* '(:j 30 :k 24 :sp1 30 :sp2 180)
+  "A materialised trace's damage by what laid it, before *JILLIEL-MULT* (rework R, 2026-10-06, §22.2).")
+(defparameter *lb-trace-guard* '(:j 18 :k 18 :sp1 18 :sp2 45)
+  "... and the guard gauge it drains when blocked (the X-axis rule: chip *LB-X-CHIP*; rework R, 2026-10-06).")
+(defparameter *lb-trace-life* 1000000 "Frames a trace lasts unmaterialised: kept until his next switch (a reset clears it).")
 
 ;; the owl (§6)
-(defparameter *lb-revive-konpaku* 4
-  "BEHEADED: a Kikon or Soul Break that leaves him in Jilliel with 1 to this many Konpaku (design 2026-10-06; decision 8).")
 (defparameter *lb-sabaki-from* 1.0 "SABAKI NO KOMYO's ground line starts this many metres ahead (design 2026-10-06)...")
 (defparameter *lb-sabaki-to* 18.0 "... and runs to this many (design 2026-10-06).")
 (defparameter *lb-sabaki-speed* 40.0 "... erupting outward at this many m/s (design 2026-10-06).")
@@ -79,22 +110,6 @@ at <= *LB-X-NEAR*, rising linearly to *LB-X-MAX* at >= *LB-X-FAR* (decision 10).
   (let ((k (max 0.0 (min 1.0 (/ (- d *lb-x-near*) (- *lb-x-far* *lb-x-near*))))))
     (round (+ *lb-x-min* (* k (- *lb-x-max* *lb-x-min*))))))
 (defun lb-x-bonus (d) "What the shot's hit window (*LB-X-MIN*) gets added at D metres (FIGHTER-DMG-BONUS)." (- (lb-x-damage d) *lb-x-min*))
-(defun lb-auto-fire (lock)
-  "The frame an aimed move locking on LOCK fires by itself: *LB-AIM-MAX* for the shot (lock f34: f64), as much earlier as
-its lock is (the volley, lock f24: f54)."
-  (- *lb-aim-max* (- *lb-lock* lock)))
-(defun lb-fire-frame (release &optional (lock *lb-lock*))
-  "The move frame the aimed shot fires on when L was released on move frame RELEASE (NIL: held): max(release +
-*LB-X-DELAY*, lock + *LB-LOCK-MIN*), at most the auto-fire (LB-AUTO-FIRE)."
-  (let ((auto (lb-auto-fire lock)))
-    (min auto (max (+ (or release auto) *lb-x-delay*) (+ lock *lb-lock-min*)))))
-(defun lb-aim-hold (lock)
-  "The :hold (lo hi) of an aimed move locking on LOCK whose main phase fires *LB-X-DELAY* after it starts: the hold ends at
-max(release, lo) or hi, so it fires on LB-FIRE-FRAME."
-  (list (- (+ lock *lb-lock-min*) *lb-x-delay*) (- (lb-auto-fire lock) *lb-x-delay*)))
-(defun lb-tracking-p (hold lock) "Does the aim still turn on hold frame HOLD (until the lock)?" (< hold lock))
-(defun lb-aim-cancel-p (hold lock) "May Step / Hoho / U cancel the aim on hold frame HOLD (from *LB-AIM-CANCEL* until the lock)?"
-  (and (>= hold *lb-aim-cancel*) (< hold lock)))
 (defun lb-eye-window-p (sf from to)
   "An opponent hit window [FROM, TO) of his move at frame SF is active, or becomes active within *LB-EYE-LEAD* frames
 (THREAT-WINDOW-P's eye version)."
@@ -111,9 +126,6 @@ or blockstun."
   "One opening of PIPS: values the pips left and whether it fills the awakening gauge (the third opening, unless
 AWAKENED already; decision 7)."
   (let ((n (max 0 (1- pips)))) (values n (and (zerop n) (plusp pips) (not awakened)))))
-(defun lb-beheaded-p (form left)
-  "Is he BEHEADED by a Kikon / Soul Break that left him in FORM with LEFT Konpaku (Jilliel, 1-*LB-REVIVE-KONPAKU*)?"
-  (and (member form '(:jilliel :jilliel-mujittai)) (<= 1 left *lb-revive-konpaku*) t))
 (defun lb-reflect-hoho-p (start)
   "Is a perfect Hoho started on Trompete frame START a reflect (*LB-REFLECT-HOHO*)?"
   (<= (first *lb-reflect-hoho*) start (second *lb-reflect-hoho*)))
@@ -129,6 +141,46 @@ AWAKENED already; decision 7)."
 (defun lb-sabaki-frames ()
   "A SABAKI line's life: its eruption to *LB-SABAKI-TO* and the last point's burn."
   (+ (ceiling (* 60 (- *lb-sabaki-to* *lb-sabaki-from*)) *lb-sabaki-speed*) *lb-sabaki-life*))
+;; the rework (decisions 16-18, §22)
+(defun lb-kamae-charged-p (charge)
+  "Is the stance's L the charged shot after CHARGE frames in the stance (the dash's included): >= *LB-CHARGE-F*?"
+  (>= charge *lb-charge-f*))
+(defun lb-k-shot-damage (charge d)
+  "The stance's L at D metres after CHARGE frames, before the form's multiplier: the quick shot *LB-X-MIN* flat, the
+charged one the distance curve (LB-X-DAMAGE; decision 17)."
+  (if (lb-kamae-charged-p charge) (lb-x-damage d) *lb-x-min*))
+(defun lb-kamae-hold-over-p (sf held)
+  "Does the stance (move frame SF, L HELD) end its hold now: past its tap (*LB-KAMAE-TAP* after f6) with L up, before
+the held maximum? (Then it jumps to its recovery, R 14: TSUKIMACHI's rule.)"
+  (and (<= (+ *lb-kamae-up* *lb-kamae-tap*) sf) (< sf (+ *lb-kamae-up* *lb-kamae-max*)) (not held)))
+(defun lb-jilliel-form-p (form) "Is FORM one of Jilliel's four (EN, KIN and their stances)?"
+  (and (member form '(:jilliel :jilliel-mujittai :jilliel-kin :jilliel-kin-mujittai)) t))
+(defun lb-kin-form-p (form) "Is FORM KIN (or its stance)?" (and (member form '(:jilliel-kin :jilliel-kin-mujittai)) t))
+(defun lb-revive-ok-p (form state konpaku)
+  "May P revive him into the owl (decision 16): any Jilliel FORM, free (STATE idle / guard: the stance included), with at
+most *BANKAI-KONPAKU* of his own KONPAKU (Kenpachi's rule exactly; no beheading needed)."
+  (and (lb-jilliel-form-p form) (member state '(:idle :guard)) (<= konpaku *bankai-konpaku*) t))
+(defun lb-switch-target (form)
+  "The form TENSHIN switches FORM to: EN (or its stance) -> KIN, KIN (or its stance) -> EN."
+  (if (lb-kin-form-p form) :jilliel :jilliel-kin))
+(defun lb-switch-ok-p (fs) "Has he the flash-step TENSHIN costs (*LB-SWITCH-FS*)?" (>= fs *lb-switch-fs*))
+(defun lb-trace-fans (kind)
+  "The yaw offsets (degrees) of the traces one EN line of KIND lays: a K a fan of three, else one."
+  (if (eq kind :k) (list (- *lb-trace-fan*) 0.0 *lb-trace-fan*) (list 0.0)))
+(defun lb-trace-drop-p (live) "Must a new trace drop the oldest first: LIVE traces already at *LB-TRACE-MAX*?" (>= live *lb-trace-max*))
+(defun lb-trace-oldest (ids) "The oldest of live trace IDS (the smallest: they count up per side), or NIL." (and ids (reduce #'min ids)))
+(defun lb-trace-lay (ids id)
+  "The FIFO of live trace IDS (oldest first) after trace ID is laid: values the new list and the id dropped (the oldest,
+when *LB-TRACE-MAX* were live) or NIL. (The sim keeps its traces as hazards: LB-LAY-TRACE drops by LB-TRACE-OLDEST.)"
+  (let ((drop (and (lb-trace-drop-p (length ids)) (lb-trace-oldest ids))))
+    (values (append (remove drop ids) (list id)) drop)))
+(defun lb-trace-hitwin (kind mult)
+  "The hit a materialised trace of KIND deals (one 2-frame window, once): *LB-TRACE-DMG* x MULT, through guard (the
+X-axis rule: chip *LB-X-CHIP*, drain *LB-TRACE-GUARD*), :ranged :x-axis :uncatchable; SP2's knocks back."
+  (let ((sp2 (eq kind :sp2)))
+    (make-hitwin :dmg (round (* (getf *lb-trace-dmg* kind 30) mult)) :react (if sp2 :knockback :stagger) :kb (if sp2 2.0 1.0)
+                 :hs (if sp2 *hitstop-heavy* *hitstop-light*) :chip *lb-x-chip* :guard (getf *lb-trace-guard* kind 18)
+                 :flags (list :ranged :x-axis :uncatchable))))
 
 ;;; ================================================================ base 万物貫通 THE X-AXIS (§4)
 ;;; the J / K strings (docs/duel/DUEL_STRINGS.md §2.1 budget; the lightest in the roster): the plank (the butt) swung at
@@ -148,18 +200,32 @@ AWAKENED already; decision 7)."
   :reach 2.15 :arc 60 :on-hit :crumple :flags (:ender))             ; 零距離 REI-KYORI: the muzzle pressed in, fired (melee)
 (defmove-copy :lb-j2s :lb-j2)
 (defmove-copy :lb-k2s :lb-k2)
-;; L 万物貫通 X-AXIS SHOT (§4.3): held, it aims (turning *LB-AIM-TRACK* until the lock at f34, LB-AIM-TICK), the line
-;; locks (jade), the shot fires at max(release + 4, lock + 10), by itself at f64: the hold (40 60) ends at max(release,
-;; 40) or 60, the main phase fires 4 f later (LB-AIM-HOLD). A line 31 m long through guard (chip 15 %, drain 30), through
-;; KASA (:uncatchable); 40 + the distance bonus (LB-X-FIRE)
-(defmove :lb-x-axis :kind :sig :clip :lb-aim :clip-2 :lb-fire :callout "X-AXIS" :hold (40 60) :startup 4 :active 2
-  :recovery 26 :dmg 40 :adv-block -14 :track 0 :vol (:cap 0.6 31.0 1.2 0.25) :on-hit :stagger :kb 1.0
-  :chip *lb-x-chip* :guard *lb-x-guard* :flags (:ranged :x-axis :uncatchable)
-  :tick lb-aim-tick :on-frame ((4 lb-x-fire)) :params (:lock 34 :bonus t))
-;; K -> L (the kit's :l-after-k): the snap shot, no aim: 40 flat, a 12 m line, a string's only cash-out
-(defmove :lb-x-quick :kind :sig :clip :lb-snap :callout "X-AXIS" :startup 6 :active 2 :recovery 20 :dmg 40 :adv-block -14
-  :track 0 :vol (:cap 0.6 12.0 1.2 0.25) :on-hit :stagger :kb 1.0 :chip *lb-x-chip* :guard *lb-x-guard*
-  :flags (:ranged :x-axis :uncatchable) :on-frame ((6 lb-x-snap)))
+;; L 狙撃構え SOGEKI-GAMAE, the shooting stance (§22.1, decision 17; Ichigo's TSUKIMACHI): Diagramm levelled, the grey aim
+;; line drawn; up at f6, then held 30 f (90 while L is held), R 14; no defence (hit as neutral); turning 60 deg/s; planted.
+;; From f6 the first L / J / K / Step (LB-KAMAE-TICK) fires the X-axis shot (quick, or charged after 24 f in the stance),
+;; REIKYORI, NAGIHARAI or the HIRENKYAKU dash; the follow-ups are its non-button :strings (:kamae-l ...). L after a K link
+;; opens it at f4 (the K-link copy), every branch combos. The dash comes back into the stance at f6 (the re-entry copy:
+;; a fresh window, the charge kept), once per stance
+(defmove :lb-kamae :kind :sig :clip :lb-kamae :startup 6 :active 0 :recovery 104 :track 60.0 :tick lb-kamae-tick
+  :on-frame ((0 lb-kamae-enter)))
+(defmove-copy :lb-kamae-k :lb-kamae :enter 4 :on-frame ((4 lb-kamae-enter)))
+(defmove-copy :lb-kamae-re :lb-kamae :enter 6 :on-frame nil)
+;; L 万物貫通 (the stance's L): locked on the press (jade, track 0), fires 10 f later (*LB-LOCK-MIN*: the visible lock), a
+;; line 31 m long through guard (chip 15 %, drain 30), through KASA (:uncatchable); quick 40 flat, charged 40 + the
+;; distance bonus (LB-K-FIRE)
+(defmove :lb-k-shot :kind :sig :clip :lb-k-shot :callout "X-AXIS" :startup 10 :active 2 :recovery 26 :dmg 40 :adv-block -14
+  :track 0 :vol (:cap 0.6 31.0 1.2 0.25) :on-hit :stagger :kb 1.0 :chip *lb-x-chip* :guard *lb-x-guard*
+  :flags (:ranged :x-axis :uncatchable) :on-frame ((0 lb-k-lock) (10 lb-k-fire)) :params (:lock 0 :bonus t))
+;; J 零距離 REIKYORI: a 2 m lunge, the muzzle jammed in and fired (a melee hit, guardable, not :x-axis)
+(defmove :lb-k-j :kind :sig :clip :lb-k-reikyori :callout "REIKYORI" :startup 8 :active 3 :recovery 18 :dmg 40 :adv-block -6
+  :guard 8 :reach 1.8 :arc 70 :slide 2.0 :on-hit :stagger)
+;; K 薙払 NAGIHARAI: Diagramm swept flat round him, 2.6 m 180 deg
+(defmove :lb-k-k :kind :sig :clip :lb-k-nagi :callout "NAGIHARAI" :startup 16 :active 4 :recovery 28 :dmg 80 :adv-block -10
+  :guard 30 :reach 2.6 :arc 180 :on-hit :crumple)
+;; Step 飛廉脚 HIRENKYAKU: 3.5 m in the stick direction (neutral: away from him) over 12 f, iframes f0-8, back in the stance
+;; at f6 with the charge kept (LB-KAMAE-DASH, LB-KAMAE-BACK)
+(defmove :lb-k-dash :kind :sig :clip :lb-k-dash :startup 12 :active 0 :recovery 0 :tick lb-k-dash-tick
+  :on-frame ((0 lb-kamae-dash) (11 lb-kamae-back)))
 ;; Shift+K SP1 三連 SANREN: three unaimed lines f12 / f22 / f32 (each 20 m, hits once), turning 90 deg/s between them
 (defmove :lb-sanren :kind :sp :clip :lb-sanren :callout "SANREN" :startup 12 :active 22 :recovery 24 :dmg 30 :adv-block -14
   :track 90 :vol (:cap 0.6 20.0 1.2 0.25) :on-hit :flinch :kb 0.5 :chip *lb-x-chip* :guard 12
@@ -193,13 +259,6 @@ AWAKENED already; decision 7)."
   :reach 2.3 :arc 90 :on-hit :crumple :flags (:ender))              ; 双翼 SOYOKU 3
 (defmove-copy :lb-w-j2s :lb-w-j2)
 (defmove-copy :lb-w-k2s :lb-w-k2)
-;; L 翼の斉射 WING VOLLEY: aimed and locked as the shot (lock f24, the hold (30 50): fire max(release + 4, 34), by itself
-;; at f54); five lines fanned 6 deg apart in ONE window (one line at most hits him), 55 flat, drain 18
-(defmove :lb-volley :kind :sig :clip :lb-w-aim :clip-2 :lb-w-fire :callout "WING VOLLEY" :hold (30 50) :startup 4 :active 2
-  :recovery 24 :dmg 55 :adv-block -14 :track 0 :on-hit :stagger :kb 1.0 :chip *lb-x-chip* :guard 18
-  :vols ((:cap 0.6 31.0 1.2 0.2 -12) (:cap 0.6 31.0 1.2 0.2 -6) (:cap 0.6 31.0 1.2 0.2 0) (:cap 0.6 31.0 1.2 0.2 6)
-         (:cap 0.6 31.0 1.2 0.2 12))
-  :flags (:ranged :x-axis :uncatchable) :tick lb-aim-tick :on-frame ((4 lb-volley-fire)) :params (:lock 24))
 ;; Shift+L SP2 二十四孔 NIJUSHI-KO (2 bars): all 24 holes glow 40 f (turning 60 deg/s until f20, then planted), one 1.2 m
 ;; radius beam to the wall
 (defmove :lb-nijushi :kind :sp :clip :lb-w-nijushi :callout "NIJUSHI-KO" :startup 40 :active 6 :recovery 30 :dmg 180
@@ -211,6 +270,34 @@ AWAKENED already; decision 7)."
   :cine lb-jilliel-kikon-cine :startup 20 :active 3 :recovery 30 :whiff 30 :dmg 70 :adv-block -14 :track 0
   :vol (:cap 0.5 12.0 1.2 1.2) :on-hit :knockback :kb 2.0 :cooldown 90 :on-frame ((20 lb-lane-shot))
   :params (:aura 8 :aim 120.0 :speed 0.0 :dash-max 0 :dash-track 0.0 :look :lane :follow-speed 14.0 :len 12.0))
+
+;;; ---------------------------------------------------------------- 遠 EN and 転身 TENSHIN (§22.2, decision 18)
+;; EN's J / K / SP1: the wing strings' frames, no hit window; on its first active frame each lays an X-axis trace (J one
+;; line, K a fan of three, SP1 SANREN's three at f12 / f22 / f32), and the stick walks him at *LB-EN-WALK* through the
+;; whole move, facing kept on the opponent (LB-EN-TICK); from the active end L cancels it into TENSHIN
+(defmove :lb-e-j1 :kind :quick :clip :lb-w-q1 :startup 8 :active 3 :recovery 12 :reach 1.6 :tick lb-en-tick
+  :on-frame ((8 lb-en-lay)) :params (:trace :j))
+(defmove :lb-e-j2 :kind :quick :clip :lb-w-q2 :startup 7 :active 3 :recovery 13 :reach 1.6 :tick lb-en-tick
+  :on-frame ((7 lb-en-lay)) :params (:trace :j))
+(defmove :lb-e-j3 :kind :quick :clip :lb-w-q3 :startup 9 :active 3 :recovery 18 :reach 1.7 :flags (:ender) :tick lb-en-tick
+  :on-frame ((9 lb-en-lay)) :params (:trace :j))
+(defmove :lb-e-k1 :kind :flash :clip :lb-w-f1 :startup 17 :active 4 :recovery 21 :reach 2.2 :tick lb-en-tick
+  :on-frame ((17 lb-en-lay)) :params (:trace :k))
+(defmove :lb-e-k2 :kind :flash :clip :lb-w-f2 :enter 6 :startup 20 :active 4 :recovery 24 :reach 2.2 :tick lb-en-tick
+  :on-frame ((20 lb-en-lay)) :params (:trace :k))
+(defmove :lb-e-k3 :kind :flash :clip :lb-w-f3 :enter 7 :startup 21 :active 5 :recovery 34 :reach 2.3 :flags (:ender)
+  :tick lb-en-tick :on-frame ((21 lb-en-lay)) :params (:trace :k))
+(defmove-copy :lb-e-j2s :lb-e-j2)
+(defmove-copy :lb-e-k2s :lb-e-k2)
+(defmove :lb-e-sanren :kind :sp :clip :lb-w-aim :callout "SANREN" :startup 12 :active 22 :recovery 24 :reach 2.2
+  :tick lb-en-tick :on-frame ((12 lb-en-lay) (22 lb-en-lay) (32 lb-en-lay)) :params (:trace :sp1))
+;; EN's SP2 NIJUSHI-KO (2 bars): the 40 f tell (planted, turning 60 deg/s until f20), then one thick trace
+(defmove :lb-e-nijushi :kind :sp :clip :lb-w-nijushi :callout "NIJUSHI-KO" :startup 40 :active 6 :recovery 30 :track 0
+  :tick lb-nijushi-tick :on-frame ((0 lb-nijushi-tell) (40 lb-en-lay)) :params (:lock 20 :track 60.0 :trace :sp2))
+;; L 転身 TENSHIN (both modes): frame 0 materialises every live trace; a flash-step dash 3.5 m at him (EN -> KIN) or away
+;; (KIN -> EN) over 12 f, iframes f0-8, 10 flash step; the form changes at f6; R 8; at most one every 30 f (:cooldown)
+(defmove :lb-switch :kind :sig :clip :lb-w-tenshin :callout "TENSHIN" :startup 12 :active 0 :recovery 8
+  :cooldown *lb-switch-cd* :on-frame ((0 lb-switch-go) (6 lb-switch-form)))
 
 ;;; ================================================================ the owl 真の姿 (§6)
 (defmove :lb-o-j1 :kind :quick :clip :lb-o-q1 :startup 8 :active 3 :recovery 12 :dmg 26 :adv-block -2
@@ -247,55 +334,84 @@ AWAKENED already; decision 7)."
   :params (:aura 10 :aim 120.0 :speed 0.0 :dash-max 0 :dash-track 0.0 :look :lane :follow-speed 14.0 :len 12.0))
 
 ;;; ================================================================ forms
-(defparameter *lille-hooks* '(:tick lille-tick :ok lille-ok :hit lille-hit :struck lille-struck :settled lille-settled
-                              :draw lille-draw)
-  "His mechanics (kit.lisp KIT-HOOK): the eye, the lock's bookkeeping, the reflect, the stance's own perfect-Hoho drop
-(:tick); the sealed Trompete (:ok); the pacing log (:hit :struck); BEHEADED (:settled); the aim line (:draw). (The revive's
-condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
+(defparameter *lille-hooks* '(:tick lille-tick :ok lille-ok :hit lille-hit :struck lille-struck :draw lille-draw)
+  "His mechanics (kit.lisp KIT-HOOK): the eye, the reflect, the stance's own perfect-Hoho drop, the traces' end on the
+revival (:tick); the sealed Trompete, TENSHIN's flash-step (:ok); the pacing log (:hit :struck); the aim line (:draw). (The
+revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
 
-;; the CPU (DUEL_LILLE §11): bands, intents, the aim's hold, the generic Bankai key, and the keys a CPU facing him reads off
-;; his kits (:opp-aim, :opp-reflect: ai.lisp AI-OPP-AIM / AI-OPP-REFLECT); his own reflexes (batch 3a, the AI section below:
-;; LB-AI-REFLEX): the eye (:eye (:p)), the stance (:stance (:p :max :gg)), Trompete's punish (:trompete (:p :left))
+(defparameter *lb-kamae-strings*
+  (append (loop for s in '(:lb-kamae :lb-kamae-k :lb-kamae-re)
+                append `((,s :kamae-l :lb-k-shot) (,s :kamae-j :lb-k-j) (,s :kamae-k :lb-k-k) (,s :kamae-step :lb-k-dash)))
+          '((:lb-k-dash :kamae-back :lb-kamae-re)))
+  "The shooting stance's follow-ups: non-button strings (KIT-NEXT) its :tick starts (LB-KAMAE-TICK; rework R).")
+
+;; the CPU (DUEL_LILLE §11, §22): bands, intents, the generic Bankai key, the key a CPU facing him reads off his kits
+;; (:opp-reflect: ai.lisp AI-OPP-REFLECT; :opp-reflex LB-OPP-TRACE, the traces); his own reflexes (the AI section below:
+;; LB-AI-REFLEX): the eye (:eye (:p)), the stance (:stance (:p :max :gg)), Trompete's punish (:trompete (:p :left)), the
+;; switch (:switch (:traces :near :whiff :gg)); the shooting stance's branch and EN's walk are picked in the sim's ticks
+;; (LB-AI-KAMAE, LB-AI-EN-STICK: Ichigo's TSUKIMACHI pattern)
 (defkit :lille :base
   :name "LILLE" :body :lille :weapon :diagramm :stance :lb-stance :calm t
   :intro :lb-intro :win :lb-win :intro-callout "THE X-AXIS"
   :walk *walk-lille* :run *run-lille* :reishi *reishi-max* :swing-sfx :whoosh-light :mult *lille-mult* :taken *lille-taken*
-  :commands (:q :lb-j1 :f :lb-k1 :sig :lb-x-axis :sp1 :lb-sanren :sp2 :lb-hiren :breaker :lb-breaker :kikon :lb-kikon)
+  :commands (:q :lb-j1 :f :lb-k1 :sig :lb-kamae :sp1 :lb-sanren :sp2 :lb-hiren :breaker :lb-breaker :kikon :lb-kikon)
   :grid (:lb-j1 :lb-j2 :lb-j3 :lb-k1 :lb-k2 :lb-k3 :lb-j2s :lb-k2s)
-  :l-after-k :lb-x-quick :awaken-form :jilliel :kikon-konpaku 2 :hooks *lille-hooks*
+  :strings *lb-kamae-strings*
+  :l-after-k :lb-kamae-k                        ; L after K1 / K2 / K3: the stance at f4 (§22.1)
+  :awaken-form :jilliel :kikon-konpaku 2 :hooks *lille-hooks*
   :ai (:intents (:approach 1 :pressure 1 :zone 5 :defend 2)
        :ranges (:approach (2.2 8.0) :pressure (1.3 2.2) :zone (8.0 20.0) :defend (5.0 9.0))
-       :moves ((0.0 2.2 :q 4 :f 2 :breaker 1 :step 2)
-               (2.2 6.0 :sp2 2 :step 2 :sp1 1 nil 1)
+       :moves ((0.0 2.2 :q 4 :f 2 :breaker 1 :step 2 :sig 1)       ; (the stance in every band, §22.1)
+               (2.2 6.0 :sp2 2 :step 2 :sp1 1 :sig 2 nil 1)
                (6.0 99.0 :sig 6 :sp1 1 nil 1))
        :guard 0.5 :hoho 0.3 :dash 0.3 :dash-back 0.7 :block-string 0.3 :o-ender 0.3 :l-after-k 0.4 :kikon-range 7.7
-       :awaken (:min-taken 150) :sig-hold lb-aim-hold-ai :opp-aim (:step 0.6 :hoho 0.25 :rush 12)
-       :eye (:p 0.5) :reflex lb-ai-reflex))
+       :awaken (:min-taken 150) :eye (:p 0.5) :reflex lb-ai-reflex))
 
+;; 神の裁き JILLIEL, 遠 EN (the awakening enters it; floating, as built): J / K / SP1 walk and lay traces, SP2 a thick one,
+;; L TENSHIN (to KIN), U MUJITTAI, P the revival (decision 16)
 (defkit :lille :jilliel :inherit :base
   :awakening t :form-name "JILLIEL" :walk *walk-jilliel* :run *run-jilliel* :mult *jilliel-mult* :taken *jilliel-taken*
   :kikon-konpaku 3 :guard-to :jilliel-mujittai :gg-regen *jilliel-gg-regen* :bankai-form :shin :bankai-ok lille-bankai-ok
   :l-after-k nil
-  :endless-form :jilliel                        ; ENDLESS: the stance and the owl stay as JILLIEL (never the owl)
+  :endless-form :jilliel                        ; ENDLESS: the stances, KIN and the owl stay as JILLIEL (never the owl)
   :body :lille-jilliel :weapon nil :stance :lb-w-stance :cine lb-jilliel-cine :u-tag "U: MUJITTAI" :swing-sfx :whoosh-heavy
-  :commands (:q :lb-w-j1 :f :lb-w-k1 :sig :lb-volley :sp2 :lb-nijushi :breaker :lb-w-breaker :kikon :lb-w-kikon)
-  :grid (:lb-w-j1 :lb-w-j2 :lb-w-j3 :lb-w-k1 :lb-w-k2 :lb-w-k3 :lb-w-j2s :lb-w-k2s)
+  :commands (:q :lb-e-j1 :f :lb-e-k1 :sig :lb-switch :sp1 :lb-e-sanren :sp2 :lb-e-nijushi :breaker :lb-w-breaker
+             :kikon :lb-w-kikon)
+  :grid (:lb-e-j1 :lb-e-j2 :lb-e-j3 :lb-e-k1 :lb-e-k2 :lb-e-k3 :lb-e-j2s :lb-e-k2s)
   ;; (:neutral-guard 0: U is the stance, entered only as a reaction, LB-AI-STANCE-IN; batch 3a)
-  :ai (:intents (:approach 1 :pressure 1 :zone 4 :defend 2)
-       :ranges (:approach (2.4 8.0) :pressure (1.4 2.4) :zone (8.0 14.0) :defend (5.0 9.0))
-       :moves ((0.0 2.4 :q 3 :f 3 :breaker 1 :step 1)
-               (2.4 8.0 :sig 3 :step 2 nil 1)
-               (8.0 16.0 :sig 5 :sp2 1 nil 1)
-               (16.0 99.0 :sig 2 :step 1 nil 2))
-       :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.4 :dash-back 0.5 :kikon-range 8.5 :sig-hold lb-aim-hold-ai
-       :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1) :opp-aim (:step 0.6 :hoho 0.25 :rush 12)
-       :stance (:p 0.6 :max 180 :gg 30) :reflex lb-ai-reflex))
+  :ai (:intents (:approach 1 :pressure 0 :zone 5 :defend 2)
+       :ranges (:approach (6.0 12.0) :pressure (6.0 9.0) :zone (6.0 12.0) :defend (8.0 12.0))
+       :moves ((0.0 3.0 :step 2 :q 1 :f 1 nil 1)
+               (3.0 14.0 :f 4 :q 3 :sp1 1 :sp2 1 nil 1)
+               (14.0 99.0 :f 2 :q 2 :step 1 nil 2))
+       :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.4 :dash-back 0.6 :kikon-range 8.5
+       :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1) :stance (:p 0.6 :max 180 :gg 30)
+       :switch (:traces 3 :near 0.6 :whiff 1.5) :opp-trace (:p 0.5) :opp-reflex lb-opp-trace :reflex lb-ai-reflex))
 
 ;; U in Jilliel: 無実体 MUJITTAI, West's ward with the :intangible flag (§5.2): every attack drops it (no :keep)
 (defkit :lille :jilliel-mujittai :inherit :jilliel
   :guard-to nil :drop-to :jilliel :passives (:ward :intangible) :stance :lb-w-fold :u-tag "U: MUJITTAI")
 
-;; the owl (P after BEHEADED, Kenpachi's Bankai path: Konpaku -> 1, Reishi full; decisions 8, 15: no burn)
+;; 近 KIN (§22.2): the owl's forked legs (body: the art batch's :lille-jilliel-kin; :lille-jilliel until it lands), the
+;; wing-blade strings (normal hits), SP1 SANREN and SP2 NIJUSHI-KO direct as built, L TENSHIN (to EN) also after a K link
+(defkit :lille :jilliel-kin :inherit :jilliel
+  :form-name "JILLIEL KIN" :walk *walk-kin* :run *run-kin* :guard-to :jilliel-kin-mujittai :l-after-k t
+  :body :lille-jilliel
+  :commands (:q :lb-w-j1 :f :lb-w-k1 :sig :lb-switch :sp1 :lb-sanren :sp2 :lb-nijushi)
+  :grid (:lb-w-j1 :lb-w-j2 :lb-w-j3 :lb-w-k1 :lb-w-k2 :lb-w-k3 :lb-w-j2s :lb-w-k2s)
+  :ai (:intents (:approach 3 :pressure 4 :zone 0 :defend 1)
+       :ranges (:approach (2.4 6.0) :pressure (1.4 2.4) :zone (3.0 6.0) :defend (3.0 6.0))
+       :moves ((0.0 2.4 :q 4 :f 4 :breaker 1)
+               (2.4 8.0 :step 1 :sp1 1 nil 1)
+               (8.0 99.0 :step 1 nil 2))
+       :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.8 :block-string 0.3 :o-ender 0.5 :kikon-range 8.5
+       :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1) :stance (:p 0.6 :max 180 :gg 30)
+       :switch (:gg 40) :reflex lb-ai-reflex))
+
+(defkit :lille :jilliel-kin-mujittai :inherit :jilliel-kin
+  :guard-to nil :drop-to :jilliel-kin :passives (:ward :intangible) :stance :lb-w-fold :u-tag "U: MUJITTAI")
+
+;; the owl (P with <= 4 Konpaku in any Jilliel form, Kenpachi's Bankai path: Konpaku -> 1, Reishi full; decisions 15, 16)
 (defkit :lille :shin :inherit :base
   :awakening t :form-name "SHIN" :walk *walk-shin* :run *run-shin* :mult *shin-mult* :taken *shin-taken* :kikon-konpaku 4
   :body :lille-shin :weapon nil :stance :lb-o-stance :cine lb-revive-cine :l-after-k nil :swing-sfx :whoosh-heavy
@@ -315,13 +431,13 @@ condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
 (when (boundp '*brush-names*)
   (setf *brush-names* (append (remove :lille *brush-names* :key #'first) '((:lille "リジェ・バロ" "LILLE BARRO")))
         *brush-callouts*
-        (append (remove-if (lambda (c) (member (first c) '(:lb-x-axis :lb-sanren :lb-hiren :lb-volley :lb-nijushi :lb-sabaki
-                                                            :lb-misuji :lb-trompete)))
+        (append (remove-if (lambda (c) (member (first c) '(:lb-k-shot :lb-k-dash :lb-sanren :lb-e-sanren :lb-hiren :lb-nijushi
+                                                            :lb-e-nijushi :lb-sabaki :lb-misuji :lb-trompete)))
                            *brush-callouts*)
-                '((:lb-x-axis "万物貫通" "THE X-AXIS" nil) (:lb-sanren "三連" "SANREN" nil) (:lb-hiren "飛廉脚" "HIRENKYAKU" nil)
-                  (:lb-volley "翼の斉射" "WING VOLLEY" nil) (:lb-nijushi "二十四孔" "NIJUSHI-KO" nil)
-                  (:lb-sabaki "裁きの光明" "SABAKI NO KOMYO" nil) (:lb-misuji "三筋" "MISUJI" nil)
-                  (:lb-trompete "神の喇叭" "TROMPETE" nil)))))
+                '((:lb-k-shot "万物貫通" "THE X-AXIS" nil) (:lb-k-dash "飛廉脚" "HIRENKYAKU" nil) (:lb-sanren "三連" "SANREN" nil)
+                  (:lb-e-sanren "三連" "SANREN" nil) (:lb-hiren "飛廉脚" "HIRENKYAKU" nil) (:lb-nijushi "二十四孔" "NIJUSHI-KO" nil)
+                  (:lb-e-nijushi "二十四孔" "NIJUSHI-KO" nil) (:lb-sabaki "裁きの光明" "SABAKI NO KOMYO" nil)
+                  (:lb-misuji "三筋" "MISUJI" nil) (:lb-trompete "神の喇叭" "TROMPETE" nil)))))
 
 ;;; ================================================================ per-side state (the sim's; reset with every match)
 (defstruct (lbs (:conc-name lbs-))
@@ -329,12 +445,17 @@ condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
   (eyes *lb-eyes* :type fixnum)           ; the eye's pips left (never refilled)
   (u-up 0 :type fixnum)                   ; frames U has been up (the eye's rest rule)
   (eye-t -1 :type fixnum)                 ; *MATCH-TICK* of the last opening (the look)
-  (beheaded nil)                          ; BEHEADED: a Kikon / Soul Break left him in Jilliel with 1-4 Konpaku (P revives)
   (sealed nil)                            ; the halo broke: Trompete is sealed for the match
   (stance 0 :type fixnum)                 ; frames of the current stance (MUJITTAI)
+  ;; the shooting stance (§22.1): up yet, the step last counted, the charge (frames in it, the dash's included), the dash
+  ;; spent, the CPU's plan (LB-AI-KAMAE); the shot's charge read at its press
+  (k-up nil) (k-tick -1 :type fixnum) (charge 0 :type fixnum) (dashed nil) (k-plan nil) (k-charged nil)
+  ;; Jilliel's modes (§22.2): TENSHIN's target form; the traces laid (their ids count up); the newest trace the opponent's
+  ;; CPU rolled for (LB-OPP-TRACE); KIN's last string (its last link, its contact) for his CPU's switch out
+  (switch-to nil) (trace-n 0 :type fixnum) (opp-roll 0 :type fixnum) (kin-last nil) (kin-contact nil)
   (awake-t -1 :type fixnum) (revive-t -1 :type fixnum)   ; ticks of the awakening and the revival (the pacing log)
   (acc nil))                              ; the pacing log's counters (debug)
-(defvar *lb* (vector (make-lbs) (make-lbs)) "Per side: his eye, his beheading, the seal.")
+(defvar *lb* (vector (make-lbs) (make-lbs)) "Per side: his eye, the seal, the shooting stance, the traces.")
 (defvar *lb-reflect-test* nil "Debug 79007 / 79008: P2 reflects P1's Trompete by a guard (:guard) / a perfect Hoho (:hoho).")
 (defun lb (e)
   "E's state; a new fighter entity (a new match) gets a fresh one, keeping only the pacing log's counters (Senjumaru's
@@ -347,50 +468,50 @@ carry-over bug, DEVLOG §38-§39)."
 
 ;;; hazard data: his hazards (the SABAKI lines, the shots' looks) carry one of these and LB-HZ as their hook
 (defstruct (lbh (:conc-name lbh-))
-  (kind nil)                              ; :sabaki (a hit) :shot :volley :beam :lane (looks)
+  (kind nil)                              ; :sabaki (a hit) :shot :volley :beam :lane (looks) :trace (EN's, §22.2)
   (len 0f0 :type single-float) (width 0f0 :type single-float)
-  (lock nil))                             ; a look's colour: T jade (a locked shot), NIL ink
+  (lock nil)                              ; a look's colour: T jade (a locked shot), NIL ink
+  ;; a trace: what laid it (:j :k :sp1 :sp2: its damage and drain, LB-TRACE-HITWIN), its id (they count up per side),
+  ;; live (laid, not yet materialised), its line (a :cap volume in its own frame)
+  (src nil) (id 0 :type fixnum) (live nil) (vol nil))
 
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun lille-ok (e command combo)
-  "His kit's refusals: Trompete once the halo broke (sealed for the match, decision 9)."
+  "His kit's refusals: Trompete once the halo broke (sealed for the match, decision 9); TENSHIN without its flash-step
+(*LB-SWITCH-FS*; the cue)."
   (declare (ignore combo))
-  (not (and (eq command :sp2) (eq (fighter-form (fighter e)) :shin) (lbs-sealed (lb e)))))
+  (let ((form (fighter-form (fighter e))))
+    (not (or (and (eq command :sp2) (eq form :shin) (lbs-sealed (lb e)))
+             (and (eq command :sig) (lb-jilliel-form-p form) (not (lb-switch-ok-p (gauges-fs (gauges e)))))))))
 
 (defun lille-bankai-ok (e)
-  "His kit's :bankai-ok (combat.lisp BANKAI-OK-P): P revives him into the owl only once BEHEADED, and only free: idle,
-guard or the stance (the generic AWAKEN-STATE-P would also allow blockstun and a combo reaction; §6.1)."
-  (and (lbs-beheaded (lb e)) (member (fighter-state (fighter e)) '(:idle :guard)) t))
-
-(defun lille-settled (def lost left)
-  "His kit's :settled (combat.lisp SETTLE-KONPAKU): a Kikon or Soul Break that leaves him in Jilliel with 1-4 Konpaku
-beheads him (BEHEADED, kept for the match: P may wait)."
-  (declare (ignore lost))
-  (let ((st (lb def)))
-    (when (and (not (lbs-beheaded st)) (lb-beheaded-p (fighter-form (fighter def)) left))
-      (setf (lbs-beheaded st) t)
-      (lb-count def :beheaded-tick *match-tick*)
-      (callout def "BEHEADED")
-      (clog "~a BEHEADED (~d konpaku)" (side-name def) left))))
+  "His kit's :bankai-ok (combat.lisp BANKAI-OK-P): P revives him into the owl from any Jilliel form, free: idle, guard or
+the stance (the generic AWAKEN-STATE-P would also allow blockstun and a combo reaction), with <= *BANKAI-KONPAKU* Konpaku
+(decision 16: no beheading needed; LB-REVIVE-OK-P)."
+  (let ((f (fighter e))) (lb-revive-ok-p (fighter-form f) (fighter-state f) (gauges-konpaku (gauges e)))))
 
 (defun lille-tick (e f g)
-  "Per step (his kit's :tick): the eye (base), the stance's own perfect-Hoho drop (MUJITTAI), Trompete's reflect check on
-its f59, the pacing log's clocks."
+  "Per step (his kit's :tick): the eye (base), the stances' own perfect-Hoho drop (MUJITTAI), Trompete's reflect check on
+its f59, the traces' end on the revival, KIN's last string (his CPU's switch out), the pacing log's clocks."
   (declare (ignore g))
   (let ((st (lb e)) (form (fighter-form f)))
     (when (and (not (eq form :base)) (minusp (lbs-awake-t st)))
       (setf (lbs-awake-t st) *match-tick*) (lb-count e :awaken-tick *match-tick*))
     (when (and (eq form :shin) (minusp (lbs-revive-t st)))
-      (setf (lbs-revive-t st) *match-tick* (lbs-beheaded st) nil) (lb-count e :revive-tick *match-tick*))
+      (setf (lbs-revive-t st) *match-tick*) (lb-count e :revive-tick *match-tick*)
+      (lb-clear-traces e))                                  ; (gone on the revival, §22.2)
     (if (eq form :base) (lb-eye-step e f st) (setf (lbs-u-up st) 0))
-    (cond ((eq form :jilliel-mujittai)
+    (cond ((member form '(:jilliel-mujittai :jilliel-kin-mujittai))
            (when (and (eq (fighter-state f) :hoho) (fighter-perfect f))   ; his own counter strike is an attack: solid
-             (set-form e :jilliel)
+             (set-form e (kit-drop-to (fighter-kit f)))
              (clog "~a MUJITTAI dropped: the perfect Hoho's counter" (side-name e)))
            (incf (lbs-stance st))
            (lb-count e :stance-frames)
            (setf (getf (lbs-acc st) :stance-max) (max (getf (lbs-acc st) :stance-max 0) (lbs-stance st))))
           (t (setf (lbs-stance st) 0)))
+    (let ((mv (and (eq (fighter-state f) :move) (fighter-move f))))   ; KIN's string (LB-AI-KIN): its last link, contact
+      (when (and mv (eq form :jilliel-kin) (member (mv-kind mv) '(:quick :flash)))
+        (setf (lbs-kin-last st) (mv-name mv) (lbs-kin-contact st) (fighter-contact f))))
     (let ((mv (fighter-move f)))
       (when (and (eq (fighter-state f) :move) mv (eq (mv-name mv) :lb-trompete) (eq (fighter-phase f) :main))
         (when *lb-reflect-test* (lille-reflect-test-step e f))   ; (debug 79007 / 79008: a scripted reflector)
@@ -445,26 +566,197 @@ spent; the third opening sets the awakening gauge to EVOLUTION unless he is awak
         (callout e "SANDO MO ME WO..."))           ; 「三度も眼を開かされるとは…」 (the brush line: batch 3)
       (clog "~a EYE opens, ~d left~:[~; (EVOLUTION)~]" (side-name e) left evo))))
 
-;;; ---------------------------------------------------------------- the aim, the lock, the shot (§4.3, §5.4)
-(defun lb-aim-tick (e)
-  "An aimed move's tick (the X-axis shot, the volley): in the hold he turns toward the opponent at *LB-AIM-TRACK* until the
-lock (its :lock), then the line is committed; from *LB-AIM-CANCEL* until the lock, a Step / Hoho / U cancels the aim."
-  (let* ((f (fighter e)) (lock (move-param e :lock)) (h (fighter-hold f)))
-    (when (eq (fighter-phase f) :hold)
-      (when (= h 1) (lb-count e :aimed))
-      (when (= h lock) (lb-count e :locked) (emit :sfx :lb-lock e))
-      (if (lb-tracking-p h lock)
-          (turn-to-opp e f (track-step *lb-aim-track*)))
-      (when (and (lb-aim-cancel-p h lock) (zerop (fighter-lock f)))
-        (let ((vp (pilot-vpad (pilot e))))
-          (cond ((vpad-command-pressed-p vp :step t)
-                 (vpad-consume! vp :step) (to-idle e 0) (lb-count e :aim-cancel)
-                 (or (try-command e f :hoho) (try-command e f :step)))
-                ((vpad-command-pressed-p vp :step nil)
-                 (vpad-consume! vp :step) (to-idle e 0) (lb-count e :aim-cancel) (try-command e f :step))
-                ((vpad-command-pressed-p vp :guard :any)
-                 (vpad-consume! vp :guard) (to-idle e 0) (lb-count e :aim-cancel))))))))
+;;; ---------------------------------------------------------------- the shooting stance 狙撃構え (§22.1, decision 17)
+(defun lb-kamae-clock (st sf now)
+  "One step of the stance's charge (ST his state; SF the stance's move frame, NIL in the dash; NOW the step's tick): up at
+*LB-KAMAE-UP* (charge 0), then +1 a step, counted once a step (the dash's last frame ticks twice) and through the dash.
+Values the charge."
+  (unless (= (lbs-k-tick st) now)
+    (setf (lbs-k-tick st) now)
+    (cond ((lbs-k-up st) (incf (lbs-charge st)))
+          ((and sf (>= sf *lb-kamae-up*)) (setf (lbs-k-up st) t (lbs-charge st) 0))))
+  (lbs-charge st))
 
+(defun lb-kamae-enter (e)
+  "A fresh stance (L from neutral at f0, or after a K link at f4): not up, no charge, its dash unspent, no CPU plan."
+  (let ((st (lb e)))
+    (setf (lbs-k-up st) nil (lbs-k-tick st) -1 (lbs-charge st) 0 (lbs-dashed st) nil (lbs-k-plan st) nil)
+    (lb-count e :kamae)))
+
+(defun lb-kamae-pressed (vp)
+  "The stance's follow-up a human pressed (buffered, unmodified): :kamae-j / -k / -l / -step, or NIL."
+  (cond ((vpad-command-pressed-p vp :quick nil) :kamae-j) ((vpad-command-pressed-p vp :flash nil) :kamae-k)
+        ((vpad-command-pressed-p vp :sig nil) :kamae-l) ((vpad-command-pressed-p vp :step nil) :kamae-step)))
+
+(defun lb-kamae-tick (e)
+  "One step of the stance (TSUKIMACHI's TSUKI-STEP): it turns at *LB-AIM-TRACK* and counts the charge; from f6 the first
+L / J / K / Step fires its branch (his CPU's: LB-AI-KAMAE's plan); the shot reads the charge at its press (quick or
+charged); a Step without its flash-step or after the stance's one dash waits; past the hold (30 f, 90 while L is held)
+the stance recovers (R 14)."
+  (let* ((f (fighter e)) (mv (fighter-move f)))
+    (when (and (eq (fighter-state f) :move) mv (member (mv-name mv) '(:lb-kamae :lb-kamae-k :lb-kamae-re)))
+      (let* ((st (lb e)) (sf (fighter-sf f)) (vp (pilot-vpad (pilot e))) (b (brain e)))
+        (turn-to-opp e f (track-step *lb-aim-track*))
+        (lb-kamae-clock st sf *match-tick*)
+        (when (>= sf *lb-kamae-up*)
+          (let* ((cmd (if b (lb-ai-kamae e f st) (lb-kamae-pressed vp)))
+                 (ok (case cmd
+                       (:kamae-step (and (not (lbs-dashed st)) (>= (gauges-fs (gauges e)) *lb-kamae-dash-fs*)))
+                       ((nil) nil)
+                       (t t))))
+            (when ok
+              (unless b (vpad-consume! vp (getf '(:kamae-j :quick :kamae-k :flash :kamae-l :sig :kamae-step :step) cmd)))
+              (case cmd
+                (:kamae-step (spend-fs (gauges e) *lb-kamae-dash-fs*) (setf (lbs-dashed st) t))
+                (:kamae-l (setf (lbs-k-charged st) (lb-kamae-charged-p (lbs-charge st)))))
+              (start-move e (kit-next (fighter-kit f) (mv-name mv) cmd))
+              (return-from lb-kamae-tick nil))))
+        (when (lb-kamae-hold-over-p sf (vpad-down vp :sig))
+          (setf (fighter-sf f) (+ *lb-kamae-up* *lb-kamae-max*)))))))
+
+(defun lb-kamae-dash (e)
+  "HIRENKYAKU (the stance's Step) f0: *LB-KAMAE-DASH* m in the stick direction (neutral: away from him; his CPU: straight
+back) over its 12 f, iframes f0-8, the flash step's vanish (TSUKIWATARI's, the other way)."
+  (let* ((f (fighter e)) (p (pos-of e)))
+    (multiple-value-bind (to st) (if (brain e) (values -1.0 0.0) (stick-relative e f))
+      (multiple-value-bind (to st) (step-direction to st -1.0)
+        (multiple-value-bind (dx dz) (toward-strafe-dir to st (aref p 0) (aref p 2) (fighter-ox f) (fighter-oz f))
+          (set-slide e *lb-kamae-dash* 12 dx dz))))
+    (setf (fighter-invuln f) (max (fighter-invuln f) *lb-dash-iframes*))
+    (lb-count e :k-dash)
+    (emit :hoho-out e (aref p 0) (aref p 2))
+    (emit :sfx :whoosh-light e)))
+(defun lb-kamae-back (e) "HIRENKYAKU f11: back in the stance at f6, the charge kept." (start-move e (kit-next (kit-of e) :lb-k-dash :kamae-back)))
+(defun lb-k-dash-tick (e) "HIRENKYAKU: its frames count in the charge (LB-KAMAE-CLOCK)." (lb-kamae-clock (lb e) nil *match-tick*))
+
+(defun lb-k-lock (e)
+  "The stance's L, f0: locked on the press (track 0): the jade lane drawn along it (the 10 f before it fires: the visible
+lock), the pacing log (quick / charged)."
+  (lb-count e (if (lbs-k-charged (lb e)) :shot-charged :shot-quick))
+  (lb-spawn-look e :lane *lb-trace-len* 0.5 t)
+  (emit :sfx :lb-lock e))
+
+(defun lb-k-fire (e)
+  "The stance's L fires (f10): the charged shot adds the distance bonus (FIGHTER-DMG-BONUS: the window's 40 + LB-X-BONUS),
+the quick one is flat; the line's look (jade charged, ink quick)."
+  (let* ((f (fighter e)) (d (fighter-dist f)) (charged (lbs-k-charged (lb e))))
+    (setf (fighter-dmg-bonus f) (if charged (lb-x-bonus d) 0))
+    (lb-count e (lb-band-key "FIRED" d))
+    (lb-spawn-look e :shot 31.0 0.05 charged)
+    (emit :sfx :lb-crack e)))
+
+;;; ---------------------------------------------------------------- 遠 EN: the mobile lines and their traces (§22.2)
+(defun lb-en-tick (e)
+  "EN's J / K / SP1, each step: the stick walks him at *LB-EN-WALK* (frost and a cold field slow it as a walk; his CPU's
+stick: LB-AI-EN-STICK), facing kept on the opponent; from the move's active end L cancels it into TENSHIN (a human's
+press; his CPU's switch rule, LB-AI-SWITCH-IN-P)."
+  (let* ((f (fighter e)) (mv (fighter-move f)))
+    (when (and (eq (fighter-state f) :move) mv (eq (mv-tick mv) 'lb-en-tick) (eq (fighter-phase f) :main))
+      (let ((v (motion-vel (motion e))) (p (pos-of e)) (b (brain e)))
+        (multiple-value-bind (to st) (if b (lb-ai-en-stick e f) (stick-relative e f))
+          (let ((m (sqrt (+ (* to to) (* st st)))))
+            (when (>= m 0.2)
+              (multiple-value-bind (dx dz) (toward-strafe-dir to st (aref p 0) (aref p 2) (fighter-ox f) (fighter-oz f))
+                (let ((sp (* (frost-speed *lb-en-walk* (fighter-frost f)) (min 1.0 m) (/ 1.0 m))))
+                  (setf (aref v 0) (f32 (* sp dx)) (aref v 2) (f32 (* sp dz)))
+                  (field-slow! e f v))))))
+        (turn-to-opp e f (deg *face-rate*))
+        (when (and (>= (fighter-sf f) (+ (mv-s mv) (mv-a mv))) (zerop (fighter-lock f)))
+          (let ((vp (pilot-vpad (pilot e))))
+            (cond (b (when (lb-ai-switch-in-p e b (lb-ai-seen b))
+                       (lb-count e :ai-switch-trace)
+                       (try-command e f :sig)))
+                  ((vpad-command-pressed-p vp :sig nil)
+                   (if (try-command e f :sig) (vpad-consume! vp :sig) (refused-cue e f :sig vp :sig))))))))))
+
+(defun lb-en-lay (e)
+  "EN's line frame: the move's traces (J one, K a fan of three, SP1 one a shot, SP2 one thick: LB-LAY-TRACE). A J / K link
+then chains on as if it had touched him (the lines never hit: FIGHTER-CHAINED opens the string gate), and his CPU latches
+the same button's next link (LB-AI-EN-NEXT)."
+  (let* ((f (fighter e)) (mv (fighter-move f)) (src (getf (mv-params mv) :trace)))
+    (dolist (a (lb-trace-fans src)) (lb-lay-trace e src a))
+    (emit :sfx :rift-cut e)
+    (when (member (mv-kind mv) '(:quick :flash))
+      (setf (fighter-chained f) t)
+      (when (brain e) (lb-ai-en-next f mv)))))
+
+(defun lb-live-traces (e)
+  "His live traces: values how many and the oldest one's entity (the smallest id), or NIL."
+  (let ((n 0) (old nil) (oid 0))
+    (do-entities (h (hz hazard))
+      (let ((d (hazard-data hz)))
+        (when (and (eql (hazard-owner hz) e) (lbh-p d) (lbh-live d))
+          (incf n)
+          (when (or (null old) (< (lbh-id d) oid)) (setf old h oid (lbh-id d))))))
+    (values n old)))
+
+(defun lb-lay-trace (e src yaw-off)
+  "One trace of SRC (:j :k :sp1 :sp2) from where he stands, at his facing + YAW-OFF degrees, *LB-TRACE-LEN* long: a hazard
+with no hit (drawn by LB-TRACE-LOOK, faint jade on the floor) until his switch materialises it; at most *LB-TRACE-MAX*
+live (the oldest dropped first: LB-TRACE-DROP-P)."
+  (let ((st (lb e)) (p (pos-of e)) (r (if (eq src :sp2) *lb-trace-r-thick* *lb-trace-r*)))
+    (multiple-value-bind (n old) (lb-live-traces e)
+      (when (lb-trace-drop-p n) (destroy-entity old) (lb-count e :traces-dropped)))
+    (spawn-hazard :lb-trace e :x (aref p 0) :z (aref p 2) :yaw (+ (yaw-of e) (deg yaw-off)) :size *lb-trace-len*
+                              :life *lb-trace-life* :hook 'lb-hz :look 'lb-trace-look
+                              :data (make-lbh :kind :trace :src src :id (incf (lbs-trace-n st)) :live t
+                                              :len (f32 *lb-trace-len*) :width (f32 r)
+                                              :vol (make-vol :cap (list 0.6 *lb-trace-len* 1.2 r))))
+    (lb-count e :traces)))
+
+(defun lb-trace-materialise! (d mult)
+  "Trace data D at a switch: a live one stops being live and gives the hit it deals now (LB-TRACE-HITWIN x MULT); a
+materialised one, NIL (each materialises once)."
+  (when (lbh-live d)
+    (setf (lbh-live d) nil)
+    (lb-trace-hitwin (lbh-src d) mult)))
+
+(defun lb-materialise (e)
+  "TENSHIN's frame 0: every live trace of his becomes a 2-frame hit (once; the hits of one switch count as one combo), the
+X-axis line's look flashes along it, and it is gone after."
+  (let ((mult (kit-mult (kit-of e))) (looks nil))
+    (do-entities (h (hz hazard))
+      (let ((d (hazard-data hz)))
+        (when (and (eql (hazard-owner hz) e) (lbh-p d))
+          (let ((hw (lb-trace-materialise! d mult)))
+            (when hw
+              (setf (hazard-hw hz) hw (hazard-hits-left hz) 1 (hazard-life hz) (+ (hazard-age hz) 3))
+              (push (list (if (eq (lbh-src d) :sp2) :beam :shot) (hazard-x hz) (hazard-z hz) (hazard-yaw hz)) looks))))))
+    (dolist (l looks) (destructuring-bind (kind x z yaw) l (lb-spawn-look-at e kind x z yaw 31.0 0.05 t)))
+    (when looks (lb-count e :materialised (length looks)))))
+
+(defun lb-clear-traces (e)
+  "His traces vanish (the revival, §22.2; a reset's CLEAR-HAZARDS takes them too)."
+  (let ((gone nil))
+    (do-entities (h (hz hazard)) (when (and (eql (hazard-owner hz) e) (lbh-p (hazard-data hz)) (eq (hazard-kind hz) :lb-trace)) (push h gone)))
+    (dolist (h gone) (destroy-entity h))))
+
+;;; ---------------------------------------------------------------- 転身 TENSHIN (§22.2)
+(defun lb-switch-ready-p (e)
+  "Could E's TENSHIN start now: a Jilliel form, L not cooling down, the flash-step for it?"
+  (let ((f (fighter e)))
+    (and (lb-jilliel-form-p (fighter-form f)) (zerop (aref (fighter-cd f) (position :sig *kit-commands*)))
+         (lb-switch-ok-p (gauges-fs (gauges e))))))
+
+(defun lb-switch-go (e)
+  "TENSHIN f0: every live trace materialises (LB-MATERIALISE); the flash-step dash *LB-SWITCH-DASH* m at him (EN -> KIN) or
+away (KIN -> EN) over 12 f, iframes f0-8, *LB-SWITCH-FS* flash step; the target form fixed now (LB-SWITCH-FORM at f6)."
+  (let* ((f (fighter e)) (st (lb e)) (p (pos-of e)) (to (lb-switch-target (fighter-form f)))
+         (k (if (eq to :jilliel-kin) 1.0 -1.0)))
+    (setf (lbs-switch-to st) to)
+    (lb-materialise e)
+    (set-slide e *lb-switch-dash* 12 (* k (- (fighter-ox f) (aref p 0))) (* k (- (fighter-oz f) (aref p 2))))
+    (setf (fighter-invuln f) (max (fighter-invuln f) *lb-dash-iframes*))
+    (spend-fs (gauges e) *lb-switch-fs*)
+    (lb-count e (if (eq to :jilliel-kin) :switch-in :switch-out))
+    (emit :hoho-out e (aref p 0) (aref p 2))
+    (emit :sfx :whoosh-light e)))
+
+(defun lb-switch-form (e)
+  "TENSHIN f6: the form changes (EN <-> KIN)."
+  (let ((to (lbs-switch-to (lb e)))) (when to (setf (lbs-switch-to (lb e)) nil) (set-form e to))))
+
+;;; ---------------------------------------------------------------- the other shots
 (defun lb-x-fire (e)
   "The X-axis shot's fire frame (the aimed shot, HIRENKYAKU's): its distance bonus on the hit (FIGHTER-DMG-BONUS: the
 window's 40 + LB-X-BONUS), the line's look, the pacing log."
@@ -473,12 +765,6 @@ window's 40 + LB-X-BONUS), the line's look, the pacing log."
     (lb-count e (lb-band-key "FIRED" d))
     (lb-spawn-look e :shot 31.0 0.05 t)
     (emit :sfx :lb-crack e)))
-
-(defun lb-x-snap (e)
-  "K -> L's snap shot (no aim): its look."
-  (lb-count e :snap-shots)
-  (lb-spawn-look e :shot 12.0 0.04 nil)
-  (emit :sfx :rift-cut e))
 
 (defun lb-line-shot (e)
   "SANREN's shots (f12, f22, f32): the line's look."
@@ -491,12 +777,6 @@ window's 40 + LB-X-BONUS), the line's look, the pacing log."
   (lb-spawn-look e :lane (move-param e :len) 0.5 t)
   (emit :sfx :kikon-slash e))
 
-(defun lb-volley-fire (e)
-  "The volley's fire frame: five lines (one hit window, five volumes), the look."
-  (lb-count e :volleys)
-  (lb-spawn-look e :volley 31.0 0.04 t)
-  (emit :sfx :rift-cut e))
-
 (defun lb-beam-shot (e)
   "NIJUSHI-KO's / Trompete's first active frame: the beam's look."
   (lb-count e (if (eq (mv-name (fighter-move (fighter e))) :lb-trompete) :trompete-fired :nijushi-fired))
@@ -504,12 +784,14 @@ window's 40 + LB-X-BONUS), the line's look, the pacing log."
   (emit :sfx :explode e))
 
 (defun lb-spawn-look (e kind len width lock)
-  "A look-only hazard of his (kind :lb-fx, no hit) along his facing: a shot, the volley's fan, a beam or a lane (drawn by
-LB-LOOK, lille-art.lisp)."
-  (let ((p (pos-of e)))
-    (spawn-hazard :lb-fx e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size len :life (if (eq kind :beam) 30 16)
-                           :hook 'lb-hz :data (make-lbh :kind kind :len (f32 len) :width (f32 width) :lock lock)
-                           :look 'lb-look)))
+  "A look-only hazard of his (kind :lb-fx, no hit) along his facing: a shot, a beam or a lane (drawn by LB-LOOK,
+lille-art.lisp)."
+  (let ((p (pos-of e))) (lb-spawn-look-at e kind (aref p 0) (aref p 2) (yaw-of e) len width lock)))
+(defun lb-spawn-look-at (e kind x z yaw len width lock)
+  "LB-SPAWN-LOOK from (X Z) along YAW (a materialised trace's flash)."
+  (spawn-hazard :lb-fx e :x x :z z :yaw yaw :size len :life (if (eq kind :beam) 30 16)
+                         :hook 'lb-hz :data (make-lbh :kind kind :len (f32 len) :width (f32 width) :lock lock)
+                         :look 'lb-look))
 
 (defun lb-sanren-tick (e)
   "SANREN: he turns 90 deg/s between the shots (the 2nd and 3rd follow a Step)."
@@ -565,17 +847,22 @@ gap G12); each erupts outward from 1 m to 18 m (LB-SABAKI-SPAN), through guard (
 
 (defun lb-hz (h hz ev &optional a b c dd ee)
   "His hazards' hook (HAZARD-HOOK): a SABAKI line's volume (:touches): the burning span of the line (LB-SABAKI-SPAN), a box
-*LB-SABAKI-WIDTH* wide; the looks touch nothing."
+*LB-SABAKI-WIDTH* wide; a trace's line (only a materialised one has a hit); the looks touch nothing."
   (declare (ignore h))
   (let ((d (hazard-data hz)))
     (case ev
-      (:touches (and (eq (lbh-kind d) :sabaki)
-                     (multiple-value-bind (from to) (lb-sabaki-span (hazard-age hz))
-                       (and (> to from)
-                            (let* ((yaw (hazard-yaw hz)) (mid (* 0.5 (+ from to))))
-                              (obox-cyl-hit-p (f32 (+ (hazard-x hz) (* mid (fwd-x yaw)))) 1f0 (f32 (+ (hazard-z hz) (* mid (fwd-z yaw))))
-                                              yaw (f32 (* 0.5 (lbh-width d))) 1.2f0 (f32 (* 0.5 (- to from)))
-                                              a b c dd ee))))))
+      (:touches (case (lbh-kind d)
+                  (:sabaki
+                   (multiple-value-bind (from to) (lb-sabaki-span (hazard-age hz))
+                     (and (> to from)
+                          (let* ((yaw (hazard-yaw hz)) (mid (* 0.5 (+ from to))))
+                            (obox-cyl-hit-p (f32 (+ (hazard-x hz) (* mid (fwd-x yaw)))) 1f0 (f32 (+ (hazard-z hz) (* mid (fwd-z yaw))))
+                                            yaw (f32 (* 0.5 (lbh-width d))) 1.2f0 (f32 (* 0.5 (- to from)))
+                                            a b c dd ee)))))
+                  (:trace                               ; a trace's line (its :cap from where it was laid)
+                   (let ((yaw (hazard-yaw hz)))
+                     (vol-hit-p (lbh-vol d) (hazard-x hz) 0f0 (hazard-z hz) (f32 (fwd-x yaw)) (f32 (fwd-z yaw))
+                                (f32 a) (f32 b) (f32 c) (f32 dd) (f32 ee) 0f0)))))
       (t nil))))
 
 ;;; ---------------------------------------------------------------- Trompete's reflect (§6.3, decision 9)
@@ -620,41 +907,44 @@ by band, damage by band, Trompete)."
              (let ((p (pos-of att)) (q (pos-of def))) (set-slide def 2.0 12 (- (aref q 0) (aref p 0)) (- (aref q 2) (aref p 2)))))))
         (:block (lb-count att (lb-band-key "GUARDED" d))))
       (when (and mv (eq (mv-name mv) :lb-trompete))
-        (lb-count att (if (eq (contact-of res) :hit) :trompete-hit :trompete-guarded))))))
+        (lb-count att (if (eq (contact-of res) :hit) :trompete-hit :trompete-guarded))))
+    (when (and hazard (lbh-p (hazard-data hazard)) (eq (lbh-kind (hazard-data hazard)) :trace))   ; a materialised trace
+      (lb-count att (if (eq (contact-of res) :hit) :trace-hit :trace-guarded)))
+    (when (and mv (member (mv-name mv) '(:lb-k-shot :lb-k-j :lb-k-k)))   ; the stance's branches
+      (lb-count att (intern (format nil "~a-~a" (mv-name mv) (if (eq (contact-of res) :hit) "HIT" "BLK")) :keyword)))))
 
 (defun lille-struck (def att res hw mv hazard ranged)
   "After a hit he took (his kit's :struck): the stance's pacing (passes, Breaker breaks, crushes)."
   (declare (ignore att hw mv hazard ranged))
-  (when (eq (fighter-form (fighter def)) :jilliel-mujittai)
+  (when (member (fighter-form (fighter def)) '(:jilliel-mujittai :jilliel-kin-mujittai))
     (case res
       (:blocked (lb-count def :passes)))
     (when (gauges-guardless (gauges def)) (lb-count def :stance-crushed)))
-  (when (and (eq res :guard-break) (eq (fighter-form (fighter def)) :jilliel)) (lb-count def :stance-broken)))
+  (when (and (eq res :guard-break) (member (fighter-form (fighter def)) '(:jilliel :jilliel-kin))) (lb-count def :stance-broken)))
 
-;;; ================================================================ AI: his own CPU (DUEL_LILLE §11.2; batch 3a)
-;;; The kits' :reflex (LB-AI-REFLEX, ai.lisp AI-REFLEX: free states, before the generic answers) and :sig-hold
-;;; (LB-AIM-HOLD-AI). Every lead is the perceived one (his move frame as seen, SNAP-SF, + the perception delay), every
-;;; chance x *LB-AI-DIFF* (EASY <= NORMAL <= HARD), and every roll is made once per event: per threatening window (his
-;;; move's start tick, or a hazard's spawn tick: LBAI-KEY) or per opponent action (the generic BRAIN-REACT-ROLL).
+;;; ================================================================ AI: his own CPU (DUEL_LILLE §11.2, §22; batch 3a, rework R)
+;;; The kits' :reflex (LB-AI-REFLEX, ai.lisp AI-REFLEX: free states, before the generic answers). Every lead is the
+;;; perceived one (his move frame as seen, SNAP-SF, + the perception delay), every chance x *LB-AI-DIFF* (EASY <= NORMAL
+;;; <= HARD), and every roll is made once per event: per threatening window (his move's start tick, or a hazard's spawn
+;;; tick: LBAI-KEY), per opponent action (the generic BRAIN-REACT-ROLL), per stance (the plan at its f6).
 ;;;   base      the eye takes over from the generic guard reflex: a threat's roll taps U (the eye) where the sim's eye test
-;;;             will see it, else a guard held from now, or a sideways Step off a lane (LB-AI-EYE)
-;;;   jilliel   the stance as a reaction only: a threat within reach + 1 m or a hazard within 12 f rolls :stance -> U
-;;;             (LB-AI-STANCE-IN); in it he leaves by attacking: his whiff / recovery, :max frames, the gauge under :gg,
-;;;             or he out of reach and idle (LB-AI-STANCE-OUT)
+;;;             will see it, else a guard held from now, or a sideways Step off a lane (LB-AI-EYE); the shooting stance's
+;;;             branch is planned once at its f6 in the sim's tick (LB-AI-KAMAE: TSUKIMACHI's pattern)
+;;;   jilliel   EN: TENSHIN in when >= 3 traces are live and he stands on one, or reels / recovers near one (LB-AI-EN; in
+;;;             EN's moves the tick checks the same rule); the walk through the lines (LB-AI-EN-STICK) and the string's
+;;;             next link (LB-AI-EN-NEXT) are the tick's. KIN: TENSHIN out after a string or with the gauge low
+;;;             (LB-AI-KIN). Both: the stance as a reaction only: a threat within reach + 1 m or a hazard within 12 f
+;;;             rolls :stance -> U (LB-AI-STANCE-IN); in it he leaves by attacking: his whiff / recovery, :max frames, the
+;;;             gauge under :gg, or he out of reach and idle (LB-AI-STANCE-OUT)
 ;;;   shin      Trompete (SP2) as a punish from beyond J's reach (LB-AI-TROMPETE); the neutral bands give it >= 8 m only
 ;;;   revive    the generic :bankai reflex (ai.lisp) with the Jilliel kits' :bankai-ok
+;;;   opponents a CPU facing EN steps off a trace while his TENSHIN is ready, one roll per new trace (LB-OPP-TRACE)
 (defparameter *lb-ai-diff* '(:easy 0.5 :normal 1.0 :hard 1.5)
   "His CPU's chances (:eye :p, :stance :p, :trompete :p) x this by difficulty, at most 1: :eye 0.5 -> 0.25 / 0.5 / 0.75
 (DUEL_LILLE §11.2; design 2026-10-06).")
 (defparameter *lb-ai-eye-tap* 4
   "His CPU taps the eye when the threat's perceived lead is 1..this frames (inside the sim's *LB-EYE-LEAD* 8, with room
 for a lead seen a frame off; batch 3a, 2026-10-06).")
-(defparameter *lb-ai-strafe* 3.0
-  "LB-AIM-EXTRA: a lateral speed of this many m/s (about a walk) or more counts as a full strafer (batch 3a, 2026-10-06).")
-(defparameter *lb-ai-aim-spread* '(:easy 1.0 :normal 0.6 :hard 0.25)
-  "LB-AIM-EXTRA: how much of the roll's +-10 f spreads the fire frame around its centre, by difficulty (HARD near the
-centre: lock + 10 against a still opponent; batch 3a, 2026-10-06).")
-(defparameter *lb-ai-lat-span* 6 "LB-AI-LATERAL: the two perceived snaps this many steps apart (batch 3a).")
 
 ;; pure: host-tested (tests/duel-rules-test.lisp)
 (defun lb-ai-chance (p difficulty) "A chance P of his kit's :ai at DIFFICULTY: x *LB-AI-DIFF*, at most 1." (min 1.0 (* p (getf *lb-ai-diff* difficulty 1.0))))
@@ -679,13 +969,22 @@ Hoho on the generic roll, or nothing: he has no other guard)."
   "Why his CPU leaves MUJITTAI now (by attacking), or NIL: :WHIFF (he is BUSY: recovering or reeling), :MAX (FRAMES in
 it >= MAX), :GAUGE (the guard gauge GG under GG-MIN), :IDLE (he is out of reach and idle: IDLE-FAR)."
   (cond (busy :whiff) ((>= frames max) :max) ((< gg gg-min) :gauge) (idle-far :idle)))
-(defun lb-aim-extra (lat r difficulty)
-  "Frames after the lock his CPU fires an aimed move (10..30, *LB-LOCK-MIN*..+20), from the opponent's lateral speed LAT
-(m/s, read once at the press) and a roll R: centred at 10 for a still opponent, 30 for a strafer (*LB-AI-STRAFE*), the
-roll spreading it by *LB-AI-AIM-SPREAD* x +-10."
-  (let* ((x (max 0.0 (min 1.0 (/ lat *lb-ai-strafe*))))
-         (c (+ *lb-lock-min* (* 20.0 x) (* (getf *lb-ai-aim-spread* difficulty 0.6) (- (* 20.0 r) 10.0)))))
-    (max *lb-lock-min* (min (+ *lb-lock-min* 20) (round c)))))
+(defun lb-ai-kamae-plan (r d reeling guarding gg-low whiffed dash-ok)
+  "His CPU's branch in the shooting stance, picked once at its f6 from one roll R (DUEL_LILLE §22.1): the opponent REELING
+(after a K link's hit) L 0.6 (:L, the quick shot) / J 0.4; from 8 m the charged shot (:CHARGE); 3-8 m the quick shot on
+a WHIFFED recovery, else the dash back then the charged shot (:DASH, when DASH-OK), else :CHARGE; within 3 m K on a
+GUARDING opponent or one whose gauge is low (GG-LOW, < 50), else J."
+  (cond (reeling (if (< r 0.6) :l :j))
+        ((>= d 8.0) :charge)
+        ((> d 3.0) (cond (whiffed :l) (dash-ok :dash) (t :charge)))
+        ((or guarding gg-low) :k)
+        (t :j)))
+(defun lb-switch-in-rule (n gap busy k)
+  "EN's switch in (DUEL_LILLE §22.2): N live traces, the opponent GAP m from the nearest (its line, a thick one's extra
+width off), BUSY (perceived reeling or recovering): >= :traces traces with GAP <= :near, or BUSY with GAP <= :whiff."
+  (and (plusp n) (or (and (>= n (getf k :traces 3)) (<= gap (getf k :near 0.6)))
+                     (and busy (<= gap (getf k :whiff 1.5))))
+       t))
 
 ;; the shell (the sim's state, the perceived SNAPs)
 (defstruct (lbai (:conc-name lbai-))
@@ -700,12 +999,14 @@ roll spreading it by *LB-AI-AIM-SPREAD* x +-10."
     (if (and (eql (lbai-e st) e) (eq (lbai-b st) b)) st (setf (svref *lb-ai* i) (make-lbai :e e :b b)))))
 
 (defun lb-ai-reflex (e b s d)
-  "Every form's :reflex (ai.lisp AI-REFLEX, free states): the eye (base), the stance in / out (Jilliel, MUJITTAI),
-Trompete's punish (the owl). A command, :NONE (hands off: the generic guard must not answer), or NIL."
+  "Every form's :reflex (ai.lisp AI-REFLEX, free states): the eye (base), TENSHIN in (EN) / out (KIN) and the stance in /
+out (Jilliel, MUJITTAI), Trompete's punish (the owl). A command, :NONE (hands off: the generic guard must not answer), or
+NIL."
   (case (kit-form (kit-of e))
     (:base (lb-ai-eye e b s d))
-    (:jilliel (lb-ai-stance-in e b s d))
-    (:jilliel-mujittai (lb-ai-stance-out e b s d))
+    (:jilliel (lb-ai-en e b s d))
+    (:jilliel-kin (lb-ai-kin e b s d))
+    ((:jilliel-mujittai :jilliel-kin-mujittai) (lb-ai-stance-out e b s d))
     (:shin (lb-ai-trompete e b s d))))
 
 (defun lb-ai-threat-p (e s d margin)
@@ -822,7 +1123,8 @@ DELAY? (FRAMES 0: just busy.)"
        (>= (- (snap-left s) delay) frames)))
 
 (defun lb-ai-exit-cmd (e b s d)
-  "The attack that ends MUJITTAI: K1 when he stays busy for its startup within its reach, J1 within its, else the volley."
+  "The attack that ends MUJITTAI: K1 when he stays busy for its startup within its reach, J1 within its, else L (TENSHIN;
+EN's J / K lay traces)."
   (let* ((kit (kit-of e)) (q (kit-command-move kit :q)) (fm (kit-command-move kit :f)))
     (cond ((and fm (<= d (+ (mv-reach fm) 0.2)) (lb-ai-busy-p s (brain-delay b) (mv-s fm)) (kit-command-ok-p e :f)) :f)
           ((and q (<= d (+ (mv-reach q) 0.2)) (kit-command-ok-p e :q)) :q)
@@ -857,28 +1159,108 @@ the difficulty. The neutral bands give SP2 only from 8 m: never into an idle opp
          (< (brain-react-roll b) (lb-ai-chance (getf k :p 0.0) (brain-difficulty b)))
          (progn (lb-count e :ai-trompete) (why b :trompete :sp2)))))
 
-(defun lb-ai-lateral (e b)
-  "The opponent's speed across E's line to him (m/s), as E's CPU perceives him: two SNAPs *LB-AI-LAT-SPAN* steps apart
-(BRAIN-PERCEIVE's ring; 0 before it holds them)."
-  (let* ((ring (brain-ring b)) (n (length ring)) (h (brain-head b)) (k *lb-ai-lat-span*)
-         (s1 (svref ring (mod (- h 1 (brain-delay b)) n))) (s0 (svref ring (mod (- h 1 (brain-delay b) k) n))))
-    (if (and s1 s0 (< (+ 1 (brain-delay b) k) n))
-        (let* ((p (pos-of e)) (ux (- (snap-x s1) (aref p 0))) (uz (- (snap-z s1) (aref p 2)))
-               (len (sqrt (+ (* ux ux) (* uz uz)))) (vx (- (snap-x s1) (snap-x s0))) (vz (- (snap-z s1) (snap-z s0))))
-          (if (< len 0.01) 0.0 (* (/ 60.0 k) (/ (abs (- (* ux vz) (* uz vx))) len))))
-        0.0)))
+(defun lb-ai-seen (b)
+  "The SNAP brain B perceives this step (BRAIN-PERCEIVE's: its ring at the delay; NIL before it holds one): for his ticks,
+which run inside moves where the reflexes don't."
+  (let* ((ring (brain-ring b)) (n (length ring)))
+    (and (plusp n) (svref ring (mod (- (brain-head b) 1 (brain-delay b)) n)))))
 
-(defun lb-aim-hold-ai (kit d &optional e)
-  "His kit's :sig-hold (ai.lisp AI-COMMAND): frames his CPU holds L (an aimed move: the shot, the volley) so it fires
-LB-AIM-EXTRA (10..30) frames after the lock (LB-FIRE-FRAME: the hold's lo is lock + 10): the opponent's lateral speed read
-once, here at the press (LB-AI-LATERAL), one roll (DUEL_LILLE §11.2: 34 + 10..30 for the shot; HARD near lock + 10
-against a still opponent, near 30 against a strafer)."
-  (declare (ignore d))
-  (let* ((mv (kit-command-move kit :sig)) (lock (or (getf (mv-params mv) :lock) *lb-lock*))
-         (b (and e (ai-brain e))) (r (sim-rnd01)) (lat (if b (lb-ai-lateral e b) 0.0)))
-    (when e (lb-count e (if (>= lat (* 0.5 *lb-ai-strafe*)) :ai-aim-strafer :ai-aim-still)))   ; (the pacing log)
-    (+ (- (+ lock *lb-lock-min*) *lb-x-delay*)
-       (- (lb-aim-extra lat r (if b (brain-difficulty b) :normal)) *lb-lock-min*))))
+(defun lb-ai-kamae (e f st)
+  "His CPU's follow-up in the shooting stance (LB-KAMAE-TICK, from f6): the plan picked once, on the first step it is up
+(one roll, LB-AI-KAMAE-PLAN; TSUKIMACHI's pattern: the sim's state at its f6), then carried out: the shot now (:L), J, K,
+the dash back (then the charged shot), or the charged shot once the charge reaches *LB-CHARGE-F*."
+  (unless (lbs-k-plan st)
+    (let* ((o (opp-of e)) (fo (fighter o)) (mo (and (eq (fighter-state fo) :move) (fighter-move fo)))
+           (plan (lb-ai-kamae-plan (sim-rnd01) (fighter-dist f) (member (fighter-state fo) '(:stun :air))
+                                   (member (fighter-state fo) '(:guard :guard-hit)) (< (gauges-gg (gauges o)) 50)
+                                   (and mo (eq (fighter-phase fo) :main) (>= (fighter-sf fo) (+ (mv-s mo) (mv-a mo)))
+                                        (null (fighter-contact fo)))
+                                   (and (not (lbs-dashed st)) (>= (gauges-fs (gauges e)) *lb-kamae-dash-fs*)))))
+      (setf (lbs-k-plan st) plan)
+      (lb-count e (intern (format nil "AI-KAMAE-~a" plan) :keyword))))
+  (case (lbs-k-plan st)
+    (:l :kamae-l) (:j :kamae-j) (:k :kamae-k)
+    (:dash (setf (lbs-k-plan st) :charge) :kamae-step)
+    (:charge (and (lb-kamae-charged-p (lbs-charge st)) :kamae-l))))
+
+(defun lb-ai-trace-gap (e x z)
+  "His live traces seen from (X Z): values how many and the distance to the nearest one's line (a thick trace's extra width
+off: LB-SWITCH-IN-RULE's gap)."
+  (let ((n 0) (gap 99.0))
+    (do-entities (h (hz hazard))
+      (let ((d (hazard-data hz)))
+        (when (and (eql (hazard-owner hz) e) (lbh-p d) (lbh-live d))
+          (incf n)
+          (setf gap (min gap (- (line-dist (hazard-x hz) (hazard-z hz) (hazard-yaw hz) 0.6 *lb-trace-len* x z)
+                                (- (lbh-width d) *lb-trace-r*)))))))
+    (values n gap)))
+
+(defun lb-ai-switch-in-p (e b s)
+  "EN's switch in (his CPU; DUEL_LILLE §22.2): TENSHIN ready (LB-SWITCH-READY-P), and the opponent as perceived (S) on one
+of >= 3 live traces, or reeling / recovering near one (LB-SWITCH-IN-RULE, the kit's :switch). Deterministic: no roll."
+  (let ((k (ai-table e :switch)))
+    (and k s (lb-switch-ready-p e)
+         (multiple-value-bind (n gap) (lb-ai-trace-gap e (snap-x s) (snap-z s))
+           (lb-switch-in-rule n gap (lb-ai-busy-p s (brain-delay b) 0) k)))))
+
+(defun lb-ai-en (e b s d)
+  "EN (free): TENSHIN in by the switch rule (LB-AI-SWITCH-IN-P), else the stance reflex (LB-AI-STANCE-IN)."
+  (if (lb-ai-switch-in-p e b s)
+      (progn (lb-count e :ai-switch-trace) (why b :switch-in :sig))
+      (lb-ai-stance-in e b s d)))
+
+(defun lb-ai-kin (e b s d)
+  "KIN (free; DUEL_LILLE §22.2): TENSHIN out (to EN) after a string (its last link run out, LILLE-TICK's record; a blocked
+one counted apart) or with the guard gauge under :gg (40), when it can start; else the stance reflex."
+  (let* ((st (lb e)) (k (ai-table e :switch))
+         (why (cond ((lbs-kin-last st) (if (eq (lbs-kin-contact st) :block) :block :string))
+                    ((< (gauges-gg (gauges e)) (getf k :gg 40)) :gauge))))
+    (if (and why (kit-command-ok-p e :sig))
+        (progn (setf (lbs-kin-last st) nil)
+               (lb-count e (case why (:block :ai-switch-block) (:string :ai-switch-string) (t :ai-switch-gauge)))
+               (why b :switch-out :sig))
+        (lb-ai-stance-in e b s d))))
+
+(defun lb-ai-en-stick (e f)
+  "His CPU's stick through EN's mobile lines (values toward strafe): out past its :zone range's far end in (12 m), under its
+near end back (6 m), and always across the opponent's line on its current strafe (BRAIN-STRAFE). No roll."
+  (let* ((b (brain e)) (d (fighter-dist f)) (z (getf (ai-table e :ranges) :zone '(6.0 12.0))))
+    (values (cond ((< d (first z)) -1.0) ((> d (second z)) 1.0) (t 0.0)) (if b (brain-strafe b) 1.0))))
+
+(defun lb-ai-en-next (f mv)
+  "His CPU in an EN string, on a line frame: the same button's next link is latched (J lines, K fans: to the third), unless
+one is already. No roll: the string is finished while he walks (DUEL_LILLE §22.2)."
+  (let ((c (if (eq (mv-kind mv) :quick) :q :f)))
+    (when (and (null (fighter-queued f)) (kit-next (fighter-kit f) (mv-name mv) c))
+      (setf (fighter-queued f) c))))
+
+(defun lb-opp-trace (e b s d)
+  "A CPU facing EN (his kit's :opp-reflex, :opp-trace (:p)): while his TENSHIN is ready (it would materialise every
+trace), standing on one of his traces it has seen (laid at least its perception delay ago) newer than the ones it rolled
+for: one roll for the new ones, :p x the difficulty (OPP-CHANCE): a sideways Step off that line (LINE-OFF-STRAFE). Rooted
+forms can't."
+  (declare (ignore s d))
+  (let* ((o (opp-of e)) (k (getf (kit-ai (kit-of o)) :opp-trace)))
+    (when (and k (not (kit-rooted (kit-of e))) (lb-switch-ready-p o))
+      (let* ((st (lb o)) (p (pos-of e)) (hr (+ (body-hurt-r (model-body (model e))) *ai-line-margin*)) (on nil) (newest 0))
+        (do-entities (h (hz hazard))
+          (let ((dd (hazard-data hz)))
+            (when (and (eql (hazard-owner hz) o) (lbh-p dd) (lbh-live dd) (>= (hazard-age hz) (brain-delay b)))
+              (setf newest (max newest (lbh-id dd)))
+              (when (and (> (lbh-id dd) (lbs-opp-roll st))
+                         (<= (line-dist (hazard-x hz) (hazard-z hz) (hazard-yaw hz) 0.6 *lb-trace-len* (aref p 0) (aref p 2))
+                             (+ (lbh-width dd) hr))
+                         (or (null on) (> (lbh-id dd) (lbh-id (hazard-data on)))))
+                (setf on hz)))))
+        (when on
+          (setf (lbs-opp-roll st) newest)
+          (lb-count o :opp-trace-roll)
+          (when (< (sim-rnd01) (opp-chance (getf k :p 0.0) (brain-difficulty b)))
+            (lb-count o :opp-trace-step)
+            (let ((q (pos-of o)))
+              (setf (brain-strafe b) (f32 (line-off-strafe (hazard-x on) (hazard-z on) (hazard-yaw on) (aref p 0) (aref p 2)
+                                                           (aref q 0) (aref q 2)))))
+            (why b :trace-step :side-step)))))))
 
 ;;; ================================================================ debug: tests, the pacing log (debug.lisp dispatches)
 (defun lille-acc-reset () (dolist (st (coerce *lb* 'list)) (setf (lbs-acc st) nil)))
@@ -893,17 +1275,18 @@ against a still opponent, near 30 against a strafer)."
 
 (defun lille-probe-line (tag)
   (let ((g1 (gauges *p1*)) (g2 (gauges *p2*)) (st (lb *p1*)))
-    (log-msg "duel probe lille ~a t ~d p1 ~a ~a r~d k~d eyes ~d beheaded ~a sealed ~a gg ~d | p2 ~a r~d gg ~d"
+    (log-msg "duel probe lille ~a t ~d p1 ~a ~a r~d k~d eyes ~d revive ~a sealed ~a gg ~d | p2 ~a r~d gg ~d"
              tag *match-tick* (fighter-form (fighter *p1*)) (state-of *p1*) (gauges-reishi g1) (gauges-konpaku g1)
-             (lbs-eyes st) (lbs-beheaded st) (lbs-sealed st) (round (gauges-gg g1))
+             (lbs-eyes st) (bankai-ready-p *p1*) (lbs-sealed st) (round (gauges-gg g1))
              (state-of *p2*) (gauges-reishi g2) (round (gauges-gg g2)))))
 
 (defun lille-test (k)
   "79000+k (human P1 Lille, P2's CPU off unless noted; a \"duel probe lille\" line): 0 the base form 2.2 m from Kenpachi;
-1 the base form 14 m from Kenpachi (aim with L); 2 / 3 / 4 forced JILLIEL / MUJITTAI / the owl 5 m from Kenpachi; 5 JILLIEL
-BEHEADED with 3 Konpaku (P revives); 6 the base form 12 m from a Kenpachi CPU; 7 / 8 the owl 6 m from Kenpachi, Trompete
-started, P2 reflecting it by a guard pressed on f54 / a Hoho on f52 (*LB-REFLECT-TEST*); 9 the base form 10 m from a
-Yamamoto CPU (the eye); 10-13 eye pips 0-3 (in the running match); 20 P1 and P2 both Lille CPUs (the mirror) 12 m apart."
+1 the base form 14 m from Kenpachi (the stance with L); 2 / 3 / 4 forced JILLIEL EN / its MUJITTAI / the owl 5 m from
+Kenpachi; 5 JILLIEL EN with 3 Konpaku (P revives: decision 16); 6 the base form 12 m from a Kenpachi CPU; 7 / 8 the owl 6 m
+from Kenpachi, Trompete started, P2 reflecting it by a guard pressed on f54 / a Hoho on f52 (*LB-REFLECT-TEST*); 9 the base
+form 10 m from a Yamamoto CPU (the eye); 10-13 eye pips 0-3 (in the running match); 14 / 15 forced JILLIEL KIN / its
+MUJITTAI 5 m from Kenpachi (rework R); 20 P1 and P2 both Lille CPUs (the mirror) 12 m apart."
   (flet ((setup (c2 form dist &key cpu)
            (ensure-battle :lille c2 :cpu cpu)
            (when (brain *p1*) (setf (brain-off (brain *p1*)) (not cpu)))
@@ -917,12 +1300,14 @@ Yamamoto CPU (the eye); 10-13 eye pips 0-3 (in the running match); 20 P1 and P2 
       (2 (setup :kenpachi :jilliel 5.0))
       (3 (setup :kenpachi :jilliel-mujittai 5.0))
       (4 (setup :kenpachi :shin 5.0))
-      (5 (setup :kenpachi :jilliel 5.0) (setf (gauges-konpaku (gauges *p1*)) 3 (lbs-beheaded (lb *p1*)) t))
+      (5 (setup :kenpachi :jilliel 5.0) (setf (gauges-konpaku (gauges *p1*)) 3))   ; (decision 16: <= 4 Konpaku is enough)
       (6 (setup :kenpachi :base 12.0) (setf (brain-off (brain *p2*)) nil))
       ((7 8) (setup :kenpachi :shin 6.0) (setf *lb-reflect-test* (if (= k 7) :guard :hoho))
        (force-cmd *p1* :sp2))
       (9 (setup :yamamoto :base 10.0) (setf (brain-off (brain *p2*)) nil))
       ((10 11 12 13) (setf (lbs-eyes (lb *p1*)) (- k 10)))
+      (14 (setup :kenpachi :jilliel-kin 5.0))
+      (15 (setup :kenpachi :jilliel-kin-mujittai 5.0))
       (20 (setup :lille :base 12.0 :cpu t)))
     (lille-probe-line (format nil "test ~d" k))))
 
@@ -951,7 +1336,7 @@ on Trompete's f54 and holds it, or Hoho on f52 (pressed at the end of the step b
   (let ((meter (list :name "ME" :max 3 :draw 'lille-hud-meter :label 'lille-hud-label
                      :bankai-prompt (list :key "P  REVIVE" :right "KP+  REVIVE" :pad "BACK  REVIVE" :one-hand "AWAKEN  REVIVE"
                                           :rgb (symbol-value '*c-lb-revive*)))))
-    (dolist (form '(:base :jilliel :jilliel-mujittai :shin))
+    (dolist (form '(:base :jilliel :jilliel-mujittai :jilliel-kin :jilliel-kin-mujittai :shin))
       (let ((k (find-kit :lille form)))
         (setf (kit-meter k) meter
               (kit-hooks k) (list* :hud-guard 'lille-hud-guard :deck 'lille-ring :body-alpha 'lille-body-alpha
@@ -1074,13 +1459,17 @@ continues to F."
     (when *cine* (setf *cine-hold* t (cine-hold *cine*) f))))
 
 (defun lille-cons-probe ()
-  "79195: bytes consed by 10 draws of his :draw hook, of each of his live hazards' looks and of his HUD meter, guard outline
-and ring, in the running scene (a \"lille consing\" line; the scripts call it in each form and look)."
+  "79195: bytes consed by 10 draws of his :draw hook, of each of his live hazards' looks (the traces' LB-TRACE-LOOK
+included) and of his HUD meter, guard outline and ring, in the running scene (a \"lille consing\" line; the scripts call it
+in each form and look)."
   (let* ((e *p1*) (kit (kit-of e)) (hz-n 0))
     (macrolet ((per (form) `(let ((c0 (cons-bytes))) (dotimes (i 10) ,form) (- (cons-bytes) c0))))
       (let ((draw (per (lille-draw e 0.016f0)))
             (looks (let ((c0 (cons-bytes)))
-                     (dotimes (i 10) (do-entities (h (hz hazard)) (when (eql (hazard-owner hz) e) (incf hz-n) (lb-look hz 0.016f0))))
+                     (dotimes (i 10) (do-entities (h (hz hazard))
+                                       (when (eql (hazard-owner hz) e)
+                                         (incf hz-n)
+                                         (if (eq (hazard-look hz) 'lb-trace-look) (lb-trace-look hz 0.016f0) (lb-look hz 0.016f0)))))
                      (- (cons-bytes) c0)))
             (meter (per (lille-hud-meter e kit 10.0 10.0 100.0 4.0 nil 1.0 nil nil nil)))
             (guard (per (lille-hud-guard e 10.0 10.0 100.0 4.0 nil 2 1.0)))
@@ -1101,3 +1490,20 @@ and ring, in the running scene (a \"lille consing\" line; the scripts call it in
                       (setf (lbs-eye-t st) *match-tick* (lbs-eyes st) (max 0 (1- (lbs-eyes st))))))
           (t (log-msg "duel lille: no debug command ~d" c)))))
 (pushnew '(79100 79199 lille-art-debug) *char-debug* :test #'equal)
+
+;;; ================================================================ rework R (2026-10-06): the traces' look (cosmetic, 0 B a frame)
+(defun-fast lb-trace-look (hz rdt)
+  "A live trace's look (HAZARD-DRAW; DUEL_LILLE §22.2): a faint jade line on the floor from 0.6 m ahead of where it was
+laid to the wall, its width pulsing (SP2's thick one wider); nothing once materialised (the X-axis line's flash, LB-LOOK,
+takes over). Its numbers go through *LB-V* (lille-art.lisp's %LB-FLOOR-LINE): 0 B."
+  (declare (single-float rdt))
+  (setf rdt 0f0)                                        ; (unused: HAZARD-DRAW's signature)
+  (let ((d (hazard-data hz)))
+    (when (and (lbh-p d) (lbh-live d))
+      (let* ((x (hazard-x hz)) (z (hazard-z hz)) (yaw (hazard-yaw hz)) (ux (- (f-sin yaw))) (uz (- (f-cos yaw)))
+             (x0 (+ x (* 0.6f0 ux))) (z0 (+ z (* 0.6f0 uz)))
+             (pulse (+ 0.8f0 (* 0.2f0 (f-sin (+ (* 5f0 (fx-clock)) (* 0.7f0 (i->f (mod (lbh-id d) 9))))))))
+             (w (* pulse (if (eq (lbh-src d) :sp2) 0.14f0 0.04f0))))
+        (declare (single-float x z yaw ux uz x0 z0 pulse w))
+        (%lb-floor-line 1 x0 z0 ux uz (%lb-wall x0 z0 ux uz) w))))
+  nil)

@@ -26,7 +26,12 @@
                         (:rukia :base) (:rukia :m18) (:rukia :m50) (:rukia :zero) (:ichigo :base) (:ichigo :kessa)
                         (:senjumaru :base) (:senjumaru :tsuji1) (:senjumaru :tsuji2) (:senjumaru :tsuji3) (:senjumaru :tsuji4)
                         (:senjumaru :tsuji5) (:senjumaru :tsuji6)
-                        (:lille :base) (:lille :jilliel) (:lille :jilliel-mujittai) (:lille :shin)))
+                        (:lille :base) (:lille :jilliel) (:lille :jilliel-mujittai) (:lille :jilliel-kin)
+                        (:lille :jilliel-kin-mujittai) (:lille :shin)))
+(defun trace-form-p (cf)
+  "Is CF a form whose J / K strings lay traces instead of hitting (Lille's JILLIEL EN, DUEL_LILLE §22.2): its J1 has no hit
+window? The hit-based string checks skip it (its own block below checks its frames)."
+  (zerop (length (mv-hits (kit-command-move (apply #'kit cf) :q)))))
 
 ;;; ================================================================ the triangle / clash matrix
 (check (eq (resolve-contact :neutral) :hit))
@@ -187,7 +192,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
         (push (mv-name m) out)))))
 (defun on-hit-adv (m)
   (let ((w (svref (mv-hits m) 0))) (- (or (hw-stun w) (hitstun (hw-react w))) (- (mv-total m) (hw-from w)))))
-(dolist (cf *forms*)
+(dolist (cf (remove-if #'trace-form-p *forms*))
   (let* ((k (apply #'kit cf)) (links (link-moves k)) (j1 (kit-command-move k :q)) (k1 (kit-command-move k :f))
          (cup3 (equal cf '(:kenpachi :nomihose))) (fails0 *fails*))
     ;; the shape: exactly the six full routes JJJ JJK JKK KKK KKJ KJJ (J / K switch at most once), every link 3 an ender
@@ -787,10 +792,11 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :ic-tsuki :ic-rangetsu :ic-tsuki-otoshi
     :sj-stance :sj-q1 :sj-q2 :sj-spin :sj-f1 :sj-f2 :sj-drop :sj-yank :sj-summon :sj-kasa :sj-breaker :sj-saidan :sj-intro
     :sj-win :sj-loom-stance :sj-weave :sj-unravel :sj-tanmono :sj-makitori :sj-snip   ; Senjumaru (:sj-awaken is the cine's)
-    :lb-stance :lb-intro :lb-win :lb-q1 :lb-q2 :lb-jab :lb-f1 :lb-f2 :lb-f3 :lb-aim :lb-fire :lb-snap :lb-sanren :lb-hiren
+    :lb-stance :lb-intro :lb-win :lb-q1 :lb-q2 :lb-jab :lb-f1 :lb-f2 :lb-f3 :lb-aim :lb-fire :lb-sanren :lb-hiren
     :lb-breaker :lb-butt :lb-w-stance :lb-w-fold :lb-w-q1 :lb-w-q2 :lb-w-q3 :lb-w-f1 :lb-w-f2 :lb-w-f3 :lb-w-aim :lb-w-fire
     :lb-w-nijushi :lb-w-breaker :lb-w-ram :lb-o-stance :lb-o-q1 :lb-o-q2 :lb-o-q3 :lb-o-f1 :lb-o-f2 :lb-o-f3 :lb-o-chop
-    :lb-o-trompete :lb-o-breaker :lb-o-stamp))   ; Lille (DUEL_LILLE §12 Art)
+    :lb-o-trompete :lb-o-breaker :lb-o-stamp      ; Lille (DUEL_LILLE §12 Art)
+    :lb-kamae :lb-k-shot :lb-k-reikyori :lb-k-nagi :lb-k-dash :lb-w-tenshin))   ; his rework (DUEL_LILLE §22)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
 ;; DEFCINEs, which the host stubs; KESSA's clones play :ic-k-cut / :ic-k-wrap, ICHIGO-CLONE-STEP)
 (let ((used (remove-duplicates (loop for cf in *forms* append (kit-clips (apply #'kit cf))))))
@@ -802,7 +808,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               '(:ryujin-jakka :ryujin-jakka :zanka :zanka :ken-katana :nozarashi :nozarashi :nozarashi :ke-broken :ke-broken
                 :sode-no-shirayuki :sode-no-shirayuki :ru-rime :ru-ice :zangetsu-long :tensa
                 :shigarami :shigarami :shigarami :shigarami :shigarami :shigarami :shigarami
-                :diagramm nil nil nil)))
+                :diagramm nil nil nil nil nil)))
 (check (equal *roster* '(:yamamoto :kenpachi :rukia :ichigo :senjumaru :lille)))   ; Lille appended last (DUEL_LILLE §0)
 (check (equal (kit-intro-weapon (kit :yamamoto :base)) '(:ya-cane 81)))              ; cane until 1.35 s
 (check (and (eq (kit-cine (kit :yamamoto :bankai-east)) 'yama-bankai-cine) (eq (kit-cine (kit :kenpachi :nozarashi)) 'ken-nozarashi-cine)
@@ -1020,7 +1026,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
   (check (and (= *bankai-konpaku* 4) (bankai-allowed-p t 4) (bankai-allowed-p t 1) (not (bankai-allowed-p nil 4))
               (not (bankai-allowed-p t 5)) (not (bankai-allowed-p t 9))))
   (check (equal (loop for cf in *forms* when (kit-bankai-form (apply #'kit cf)) collect cf)
-              '((:kenpachi :nomihose) (:lille :jilliel) (:lille :jilliel-mujittai))))   ; (+ Lille's revive, DUEL_LILLE §6.1)
+              '((:kenpachi :nomihose) (:lille :jilliel) (:lille :jilliel-mujittai) (:lille :jilliel-kin)
+                (:lille :jilliel-kin-mujittai))))   ; (+ Lille's revive from every Jilliel form, DUEL_LILLE §6.1, decision 16)
   (check (and (eq (kit-bankai-form t3) :bankai) (eq (kit-cine b) 'ken-bankai-cine) (kit-awakening b) (kit-awakening a)))
   ;; 2. the arm: 4 pips; spend 4 -> 3, 0 refused; the crack at 300 f, idle back to 0; locked frames don't count;
   ;; 4 cracks = 1200 f of play
@@ -1681,7 +1688,10 @@ along the left forearm, so the fist leads).")
              (b (or b (cdr (assoc (first cf) bodies))))                  ; (a body variant: the rig of its character)
              (props (if (eq (first cf) :senjumaru) (sj-okobo-props) (and (getf b :props) (apply #'make-rig-proportions (getf b :props)))))
              (wlen (cdr (assoc (kit-weapon k) weapons))))
-        (dolist (lm (append (link-moves k) (let ((br (kit-command-move k :breaker))) (and br (list (list br :breaker))))))
+        (dolist (lm (append (remove-if (lambda (l) (zerop (length (mv-hits (first l))))) (link-moves k))   ; (EN's traces)
+                            (let ((br (kit-command-move k :breaker))) (and br (list (list br :breaker))))
+                            (and (equal cf '(:lille :base))    ; the shooting stance's REIKYORI and NAGIHARAI (§22.1)
+                                 (list (list (find-move :lb-k-j) 1) (list (find-move :lb-k-k) 1)))))
           (let* ((mv (first lm)) (hw (svref (mv-hits mv) 0)) (vol (first (hw-vols hw))) (cap (> (aref vol 0) 0.5))
                  (edge (if cap (+ (aref vol 2) (aref vol 4)) (aref vol 1)))
                  (clip (if (eq (second lm) :breaker) (mv-clip-2 mv) (mv-clip mv)))   ; (the Breaker's strike: its clip 2)
@@ -1836,9 +1846,10 @@ defender's next step. Values: the attacker's and the defender's first actionable
     (loop for m being the hash-values of (kit-moves k)
           do (check (not (intersection '(:x-axis :reflectable) (mv-flags m)))))))
 
-;;; ================================================================ Lille Barro (docs/duel/DUEL_LILLE.md §12 G10; batch 1)
+;;; ================================================================ Lille Barro (docs/duel/DUEL_LILLE.md §12 G10; batch 1; rework R §22)
 (let* ((b (kit :lille :base)) (j (kit :lille :jilliel)) (mu (kit :lille :jilliel-mujittai)) (o (kit :lille :shin))
-       (x (kit-command-move b :sig)) (xw (svref (mv-hits x) 0)) (vo (kit-command-move j :sig)))
+       (kn (kit :lille :jilliel-kin)) (kmu (kit :lille :jilliel-kin-mujittai))
+       (x (find-move :lb-k-shot)) (xw (svref (mv-hits x) 0)))
   ;; the distance damage (decision 10): 40 at <= 4 m, 80 at 12, 120 at >= 20; the window deals 40, the bonus the rest
   (check (and (= 40 (lb-x-damage 0.0)) (= 40 (lb-x-damage 4.0)) (= 80 (lb-x-damage 12.0)) (= 120 (lb-x-damage 20.0))
               (= 120 (lb-x-damage 31.0)) (= 40 (hw-dmg xw)) (= 80 (lb-x-bonus 20.0)) (zerop (lb-x-bonus 2.0))
@@ -1849,32 +1860,76 @@ defender's next step. Values: the attacker's and the defender's first actionable
                 (= n 3))                                                       ; three leave 10, the 4th crushes
               (= 18 (chip-damage 120 (hw-chip xw) 1000)) (< (chip-damage 120 (hw-chip xw) 5) 5)))
   ;; stance, armour, DRINK and a parry take it as any hit: the line carries no :unguardable / :rend / :breaker / :guard-crush;
-  ;; only :ranged :x-axis :uncatchable, on every line move, and on no Kikon lane or J / K
-  (let ((lines '(:lb-x-axis :lb-x-quick :lb-sanren :lb-hiren :lb-volley :lb-nijushi :lb-trompete)))
+  ;; only :ranged :x-axis :uncatchable, on every line move, and on no Kikon lane or J / K (nor REIKYORI / NAGIHARAI)
+  (let ((lines '(:lb-k-shot :lb-sanren :lb-hiren :lb-nijushi :lb-trompete)))
     (check (every (lambda (n) (let ((m (find-move n)))
                                 (and (subsetp '(:ranged :x-axis :uncatchable) (mv-flags m))
                                      (notany (lambda (fl) (member fl (mv-flags m))) '(:unguardable :rend :breaker :guard-crush))
                                      (loop for w across (mv-hits m) always (and (~= (hw-chip w) 0.15) (subsetp '(:x-axis :uncatchable) (hw-flags w)))))))
                   lines))
-    (check (every (lambda (k) (let ((km (kit-command-move k :kikon))) (not (member :x-axis (mv-flags km))))) (list b j o)))
-    (check (every (lambda (k) (every (lambda (l) (not (member :x-axis (mv-flags (first l))))) (link-moves k))) (list b j o))))
+    (check (every (lambda (k) (let ((km (kit-command-move k :kikon))) (not (member :x-axis (mv-flags km))))) (list b j kn o)))
+    (check (every (lambda (k) (every (lambda (l) (not (member :x-axis (mv-flags (first l))))) (link-moves k))) (list b j kn o)))
+    (check (notany (lambda (n) (intersection '(:x-axis :ranged) (mv-flags (find-move n)))) '(:lb-k-j :lb-k-k))))
   (check (and (eq (resolve-contact :stance) :absorbed) (eq (resolve-contact :armor) :armored) (eq (resolve-contact :guard) :blocked)
               (eq (resolve-contact :parry :hazard t) :hit) (null (resolve-contact :invuln))))
-  ;; the lock (decision 12): the aim turns until f34 (the volley f24), the shot fires at max(release + 4, lock + 10), by itself
-  ;; at f64: the hold's exit (max(release, lo), at most hi) + the main phase's 4 f startup is exactly that, for any release
-  (check (and (lb-tracking-p 33 34) (not (lb-tracking-p 34 34)) (lb-aim-cancel-p 10 34) (not (lb-aim-cancel-p 9 34))
-              (not (lb-aim-cancel-p 34 34))))
-  (check (and (= 44 (lb-fire-frame 1)) (= 44 (lb-fire-frame 34)) (= 44 (lb-fire-frame 40)) (= 45 (lb-fire-frame 41))
-              (= 64 (lb-fire-frame 60)) (= 64 (lb-fire-frame nil)) (= 64 (lb-fire-frame 90)) (= 34 (lb-fire-frame 1 24))))
-  (dolist (m (list x vo))
-    (let ((lock (getf (mv-params m) :lock)))
-      (check (equal (mv-hold m) (lb-aim-hold lock)))
-      (check (= *lb-x-delay* (mv-s m) (hw-from (svref (mv-hits m) 0))))
-      (check (loop for rel from 1 to 80
-                   always (let ((exit (min (second (mv-hold m)) (max rel (first (mv-hold m))))))
-                            (and (= (+ exit (mv-s m)) (lb-fire-frame (if (< rel (second (mv-hold m))) rel nil) lock))
-                                 (>= (+ exit (mv-s m)) (+ lock *lb-lock-min*))))))))
-  (check (and (= 34 (getf (mv-params x) :lock)) (= 24 (getf (mv-params vo) :lock)) (zerop (mv-track x))))
+  ;; L 狙撃構え SOGEKI-GAMAE (decision 17, §22.1): the stance up at f6, held 30 f (90 with L held) then R 14, no hits; its
+  ;; branches are non-button strings; L after a K link opens it at f4; the dash comes back at f6 (the charge kept); the
+  ;; old hold shot and the K -> L snap shot are gone
+  (let ((k0 (kit-command-move b :sig)) (kk (kit-l-link b :lb-k1)))
+    (check (and (eq :lb-kamae (mv-name k0)) (= 6 (mv-s k0) *lb-kamae-up*) (= 110 (mv-total k0) (+ *lb-kamae-up* *lb-kamae-max* 14))
+                (zerop (length (mv-hits k0))) (eq :lb-kamae-k (mv-name kk)) (= 4 (mv-enter kk))
+                (= 6 (mv-enter (find-move :lb-kamae-re))) (null (mv-on-frame (find-move :lb-kamae-re)))
+                (equal (mv-on-frame kk) '((4 lb-kamae-enter))) (= 30 *lb-kamae-tap*)
+                (eq (kit-next b :lb-kamae :kamae-l) x) (eq (kit-next b :lb-kamae-k :kamae-j) (find-move :lb-k-j))
+                (eq (kit-next b :lb-kamae-re :kamae-k) (find-move :lb-k-k))
+                (eq (kit-next b :lb-kamae :kamae-step) (find-move :lb-k-dash))
+                (eq (kit-next b :lb-k-dash :kamae-back) (find-move :lb-kamae-re))
+                (null (kit-l-link b :lb-j1)) (not (string-link-p b :lb-kamae))
+                (notany (lambda (n) (gethash n *moves*)) '(:lb-x-axis :lb-x-quick :lb-volley)))))
+  ;; the hold: past the tap with L up it recovers (R 14), not with L held, not past the held maximum
+  (check (and (not (lb-kamae-hold-over-p 35 nil)) (lb-kamae-hold-over-p 36 nil) (not (lb-kamae-hold-over-p 36 t))
+              (lb-kamae-hold-over-p 95 nil) (not (lb-kamae-hold-over-p 96 nil))))
+  ;; its L: locked on the press (track 0, a threat from frame 0), fires 10 f later, A2 R26: f6 + 24 + 10 + 2 + 26 = 68 f
+  (check (and (= 10 (mv-s x) *lb-lock-min*) (= 2 (mv-a x)) (= 26 (mv-r x)) (zerop (mv-track x)) (= 0 (move-lock x))
+              (x-live-p x :main 0 0) (x-live-p x :main 0 11) (not (x-live-p x :main 0 12))
+              (= 68 (+ *lb-kamae-up* *lb-charge-f* (mv-s x) (mv-a x) (mv-r x)))))
+  ;; quick (charge < 24) 40 flat, charged (>= 24) the distance curve: charge 23 vs 24
+  (check (and (not (lb-kamae-charged-p 23)) (lb-kamae-charged-p 24) (= 40 (lb-k-shot-damage 23 20.0))
+              (= 120 (lb-k-shot-damage 24 20.0)) (= 40 (lb-k-shot-damage 24 3.0)) (= 80 (lb-k-shot-damage 30 12.0))))
+  ;; the charge clock: up at f6 (0), +1 a step, once a step (a second call on the same tick counts nothing), through the
+  ;; dash (its frames count): an L pressed at f30 is charged, at f29 not; after a 12 f dash from f6 the re-entry is charged
+  ;; 12 steps later
+  (let ((st (make-lbs)))
+    (loop for sf from 0 to 29 do (lb-kamae-clock st sf sf))
+    (check (and (lbs-k-up st) (= 23 (lbs-charge st)) (not (lb-kamae-charged-p (lbs-charge st)))))
+    (lb-kamae-clock st 29 29)
+    (check (= 23 (lbs-charge st)))
+    (lb-kamae-clock st 30 30)
+    (check (lb-kamae-charged-p (lbs-charge st))))
+  (let ((st (make-lbs)) (now 0))
+    (loop for sf from 0 to 6 do (lb-kamae-clock st sf (incf now)))          ; up at f6, the dash pressed there
+    (loop repeat 11 do (lb-kamae-clock st nil (incf now)))                  ; the dash's f1-f11
+    (lb-kamae-clock st 6 now)                                               ; (the re-entry on the dash's f11: once)
+    (check (= 11 (lbs-charge st)))
+    (loop for sf from 7 to 19 do (lb-kamae-clock st sf (incf now)))
+    (check (= 24 (lbs-charge st))))
+  ;; REIKYORI (J): S8 A3 R18, a 2 m lunge, 40 stagger, reach 1.8, -6, guard 8 (melee); NAGIHARAI (K): S16 A4 R28, 2.6 m
+  ;; 180 deg, 80 crumple, guard 30, -10; the dash (Step): 12 f hitless, back in the stance at its f11, 10 flash step
+  (let* ((rj (find-move :lb-k-j)) (rk (find-move :lb-k-k)) (dash (find-move :lb-k-dash)) (wj (svref (mv-hits rj) 0)) (wk (svref (mv-hits rk) 0)))
+    (check (and (= 8 (mv-s rj)) (= 3 (mv-a rj)) (= 18 (mv-r rj)) (= 40 (hw-dmg wj)) (eq :stagger (hw-react wj)) (~= 1.8 (mv-reach rj))
+                (= -6 (mv-adv-block rj)) (= 8 (hw-guard wj)) (~= 2.0 (mv-slide rj))
+                (= 16 (mv-s rk)) (= 4 (mv-a rk)) (= 28 (mv-r rk)) (= 80 (hw-dmg wk)) (eq :crumple (hw-react wk)) (~= 2.6 (mv-reach rk))
+                (= 30 (hw-guard wk)) (= -10 (mv-adv-block rk))
+                (= 12 (mv-total dash)) (zerop (length (mv-hits dash))) (equal (mv-on-frame dash) '((0 lb-kamae-dash) (11 lb-kamae-back)))
+                (~= 3.5 *lb-kamae-dash*) (~= 10.0 *lb-kamae-dash-fs*) (= 9 *lb-dash-iframes*))))
+  ;; every branch combos off a K link's hit: its A + 2 (the stance's f4 -> f6) + the branch's first hit (the shot's S) < the
+  ;; K link's hitstun
+  (dolist (kl '(:lb-k1 :lb-k2 :lb-k3))
+    (let* ((m (kit-move b kl)) (st (hitstun (hw-react (svref (mv-hits m) 0)))) (kk (mv-name (kit-l-link b kl))))
+      (check (and (eq kk :lb-kamae-k)
+                  (< (+ (mv-a m) 2 (mv-first-hit (kit-next b kk :kamae-j))) st)
+                  (< (+ (mv-a m) 2 (mv-first-hit (kit-next b kk :kamae-k))) st)
+                  (< (+ (mv-a m) 2 (mv-first-hit (kit-next b kk :kamae-l))) st)))))
   ;; the eye (decisions 7, 13): a tap after U rested >= 10 f, a pip left, from a free state; a threat within 8 f; the third
   ;; opening fills the awakening gauge unless awakened; the phase makes every hit a whiff (:invuln -> NIL)
   (check (and (lb-eye-tap-p 10 3 :idle 0) (not (lb-eye-tap-p 9 3 :idle 0)) (not (lb-eye-tap-p 10 0 :guard 0))
@@ -1885,25 +1940,36 @@ defender's next step. Values: the attacker's and the defender's first actionable
   (check (and (equal (multiple-value-list (lb-eye-open 3 nil)) '(2 nil)) (equal (multiple-value-list (lb-eye-open 2 nil)) '(1 nil))
               (equal (multiple-value-list (lb-eye-open 1 nil)) '(0 t)) (equal (multiple-value-list (lb-eye-open 1 t)) '(0 nil))
               (equal (multiple-value-list (lb-eye-open 0 nil)) '(0 nil))))
-  ;; MUJITTAI (decisions 3-5, 14): Jilliel's U enters it; it is a ward with :intangible; every attack drops it (no :keep), on
-  ;; its frame 0; a Breaker breaks it; it never refills (the ward counts as guarding); Jilliel refills at 2.0 / s outside it
+  ;; MUJITTAI (decisions 3-5, 14) in both modes: U enters it; a ward with :intangible; every attack drops it to its mode (no
+  ;; :keep), on its frame 0; a Breaker breaks it; it never refills; Jilliel refills at 2.0 / s outside it
   (check (and (eq (kit-guard-to j) :jilliel-mujittai) (null (kit-guard-to mu)) (eq (kit-drop-to mu) :jilliel) (null (kit-keep mu))
               (equal (kit-passives mu) '(:ward :intangible)) (null (kit-passives j)) (equal (kit-u-tag mu) "U: MUJITTAI")
-              (every (lambda (c) (eq :jilliel (kit-drop mu c))) '(:q :f :sig :sp1 :sp2 :breaker :kikon))))
+              (every (lambda (c) (eq :jilliel (kit-drop mu c))) '(:q :f :sig :sp1 :sp2 :breaker :kikon))
+              (eq (kit-guard-to kn) :jilliel-kin-mujittai) (null (kit-guard-to kmu)) (eq (kit-drop-to kmu) :jilliel-kin)
+              (null (kit-keep kmu)) (equal (kit-passives kmu) '(:ward :intangible)) (null (kit-passives kn))
+              (equal (kit-u-tag kmu) "U: MUJITTAI") (equal (kit-u-tag kn) "U: MUJITTAI")
+              (every (lambda (c) (eq :jilliel-kin (kit-drop kmu c))) '(:q :f :sig :sp1 :sp2 :breaker :kikon))))
   (check (and (eq (resolve-contact :guard :in-front nil :ward t) :blocked) (eq (resolve-contact :guard :breaker t :ward t) :guard-break)
               (eq (resolve-contact :guard :unguardable t :ward t) :hit) (~= *mujittai-mult* 1.0)))
   (check (and (~= (gg-regen 40.0 999 nil t nil (kit-gg-regen mu)) 40.0)                         ; in the stance: GUARD HOLD
               (~= (* 60 (- (gg-regen 40.0 999 nil nil nil (kit-gg-regen j)) 40.0)) 1.98 0.01)    ; Jilliel: 0.36 x 5.5 / s
+              (~= (kit-gg-regen kn) (kit-gg-regen j)) (~= (kit-gg-regen kmu) (kit-gg-regen j))     ; both modes (§22.2)
               (~= (* 60 (- (gg-regen 40.0 999 nil nil nil (kit-gg-regen b)) 40.0)) *gg-regen* 0.01)   ; the base: universal
-              (~= (kit-gg-regen o) 1.0) (~= (kit-taken j) 1.1) (= 3 (kit-kikon-konpaku j)) (= 2 (kit-kikon-konpaku b))))
-  ;; BEHEADED and the revive (decisions 6, 8, 15): Jilliel (or the stance) left with 1-4 Konpaku; P enters the owl through
-  ;; the Bankai path (:bankai-form + the kit's :bankai-ok); the owl: Konpaku 4 a Kikon, x1.2, no burn, no way back
-  (check (and (lb-beheaded-p :jilliel 4) (lb-beheaded-p :jilliel-mujittai 1) (not (lb-beheaded-p :jilliel 5))
-              (not (lb-beheaded-p :jilliel 0)) (not (lb-beheaded-p :base 3)) (not (lb-beheaded-p :shin 1))))
-  (check (and (eq (kit-bankai-form j) :shin) (eq (kit-bankai-form mu) :shin) (eq (kit-bankai-ok j) 'lille-bankai-ok)
+              (~= (kit-gg-regen o) 1.0) (~= (kit-taken j) 1.1) (~= (kit-taken kn) 1.1) (= 3 (kit-kikon-konpaku j))
+              (= 3 (kit-kikon-konpaku kn)) (= 2 (kit-kikon-konpaku b))
+              (~= (kit-walk kn) 3.8) (~= (kit-run kn) 8.5) (~= (kit-walk j) 3.0) (kit-awakening kn)
+              (eq (kit-endless-form kn) :jilliel) (eq (kit-endless-form kmu) :jilliel)))
+  ;; the revival (decision 16): P from any Jilliel form, free (idle / guard: the stance too), with <= 4 Konpaku (Kenpachi's
+  ;; rule); no beheading. The owl: Konpaku 4 a Kikon, x1.2, no burn, no way back
+  (check (and (lb-revive-ok-p :jilliel :idle 4) (lb-revive-ok-p :jilliel-kin :idle 4) (lb-revive-ok-p :jilliel-mujittai :guard 1)
+              (lb-revive-ok-p :jilliel-kin-mujittai :guard 4) (not (lb-revive-ok-p :jilliel :idle 5))
+              (not (lb-revive-ok-p :jilliel-kin :idle 5)) (not (lb-revive-ok-p :base :idle 3)) (not (lb-revive-ok-p :shin :idle 1))
+              (not (lb-revive-ok-p :jilliel :move 3)) (not (lb-revive-ok-p :jilliel-kin :guard-hit 3))
+              (not (lb-revive-ok-p :jilliel :stun 2)) (= *bankai-konpaku* 4)))
+  (check (and (every (lambda (k) (and (eq (kit-bankai-form k) :shin) (eq (kit-bankai-ok k) 'lille-bankai-ok))) (list j mu kn kmu))
               (null (kit-bankai-form o)) (null (kit-bankai-ok o)) (null (kit-pips o)) (zerop (kit-burn o)) (null (kit-duration o))
               (= 4 (kit-kikon-konpaku o)) (~= (kit-mult o) 1.2) (kit-awakening o) (eq (kit-cine o) 'lb-revive-cine)
-              (eq (kit-hook j :settled) 'lille-settled)))
+              (every (lambda (k) (null (kit-hook k :settled))) (list b j mu kn kmu o))))
   ;; Trompete's reflect (decision 9): a perfect Hoho started f48-f59, a guard pressed f50-f58 (its FIGHTER-GUARD-T at the end
   ;; of f59 is 60 - the press frame); he takes 50 % x1.2 = 144; 2 bars, 60 f wind-up, the blast at f60 (:params :blast)
   (flet ((guard-at (press) (lb-reflect-guard-p (- 60 press))))
@@ -1912,35 +1978,93 @@ defender's next step. Values: the attacker's and the defender's first actionable
                 (= 144 (lb-reflect-damage 240 (kit-mult o)))
                 (let ((tr (kit-command-move o :sp2))) (and (= 60 (mv-s tr)) (= 60 (getf (mv-params tr) :blast)) (= 2 (kit-command-cost o :sp2))
                                                            (member :reflectable (mv-flags tr)))))))
-  ;; the volley: ONE window, five lines 6 deg apart (one line at most hits: the window hits once); at 10 m a target on the
-  ;; +6 deg line is hit and only by it; at 20 m one standing in the gap (3 deg) is missed
-  (let* ((w (svref (mv-hits vo) 0)) (vs (hw-vols w)))
-    (flet ((at (deg d) (let ((a (* deg (/ pi 180))))
-                         (loop for v in vs count (vol-hit-p v 0f0 0f0 0f0 0f0 -1f0 (float (* -1 d (sin a)) 1f0) 0f0 (float (* -1 d (cos a)) 1f0)
-                                                             0.38f0 1.8f0 0f0)))))
-      (check (and (= 1 (length (mv-hits vo))) (= 5 (length vs)) (= 1 (at 6.0 10.0)) (= 1 (at -12.0 10.0)) (= 0 (at 3.0 20.0))
-                  (= 0 (at 20.0 10.0)) (>= (at 0.0 4.0) 1) (= 55 (hw-dmg w))))))
   ;; SABAKI: the ground line erupts 1 -> 18 m at 40 m/s, each point burns 24 f; MISUJI three lines, one hit group (G12)
   (check (and (equal (multiple-value-list (lb-sabaki-span 0)) '(1.0 1.0)) (~= (nth-value 1 (lb-sabaki-span 12)) 9.0)
               (~= (lb-sabaki-span 12) 1.0) (~= (lb-sabaki-span 36) 9.0) (multiple-value-bind (f2 t2) (lb-sabaki-span 90) (~= f2 t2))
               (= 50 (lb-sabaki-frames)) (= 3 (length (getf (mv-params (kit-command-move o :sp1)) :fan)))
               (= 1 (length (getf (mv-params (kit-command-move o :sig)) :fan)))))
-  ;; the forms' commands, Kikon modules and the K -> L snap shot
-  (check (and (eq (mv-name (kit-l-link b :lb-k1)) :lb-x-quick) (null (kit-l-link b :lb-j1)) (null (kit-l-after-k j)) (null (kit-l-after-k o))
+  ;; the forms' commands and Kikon modules
+  (check (and (null (kit-l-after-k j)) (null (kit-l-after-k o)) (eq (kit-l-after-k kn) t)
               (eq (kit-awaken-form b) :jilliel) (equal (getf (getf (kit-ai j) :bankai) :own-konpaku) 1)
-              (every (lambda (k) (eq :kikon (mv-kind (kit-command-move k :kikon)))) (list b j o)))))
+              (equal (getf (getf (kit-ai kn) :bankai) :own-konpaku) 1)
+              (every (lambda (k) (eq :kikon (mv-kind (kit-command-move k :kikon)))) (list b j kn o)))))
 
-;;; ---------------------------------------------------------------- Lille's own CPU (DUEL_LILLE §11.2; batch 3a)
-(let ((b (kit :lille :base)) (j (kit :lille :jilliel)) (mu (kit :lille :jilliel-mujittai)) (o (kit :lille :shin)))
+;;; ---------------------------------------------------------------- JILLIEL EN / KIN and TENSHIN (DUEL_LILLE §22.2, decision 18)
+(let* ((j (kit :lille :jilliel)) (kn (kit :lille :jilliel-kin)) (sw (find-move :lb-switch)))
+  ;; L is TENSHIN in both modes: 12 f hitless dash, R 8, cooldown 30, frame 0 materialises, the form at f6; 10 flash step;
+  ;; EN -> KIN, KIN -> EN; KIN's K links chain into it (a K link's L), EN's lines cancel into it from their active end (the
+  ;; tick): no L link there
+  (check (and (eq sw (kit-command-move j :sig)) (eq sw (kit-command-move kn :sig)) (= 12 (mv-s sw)) (zerop (mv-a sw)) (= 8 (mv-r sw))
+              (zerop (length (mv-hits sw))) (= 30 (mv-cooldown sw) *lb-switch-cd*)
+              (equal (mv-on-frame sw) '((0 lb-switch-go) (6 lb-switch-form)))
+              (eq (lb-switch-target :jilliel) :jilliel-kin) (eq (lb-switch-target :jilliel-mujittai) :jilliel-kin)
+              (eq (lb-switch-target :jilliel-kin) :jilliel) (eq (lb-switch-target :jilliel-kin-mujittai) :jilliel)
+              (not (lb-switch-ok-p 9.9)) (lb-switch-ok-p 10.0) (~= 3.5 *lb-switch-dash*)
+              (eq sw (kit-l-link kn :lb-w-k1)) (eq sw (kit-l-link kn :lb-w-k3)) (null (kit-l-link kn :lb-w-j1))
+              (null (kit-l-link j :lb-e-k1))
+              (lb-jilliel-form-p :jilliel-kin-mujittai) (not (lb-jilliel-form-p :shin)) (lb-kin-form-p :jilliel-kin)
+              (not (lb-kin-form-p :jilliel))))
+  ;; EN's J / K: the wing strings' frames (S / A / R / enter, J1 J2 J3 K1 K2 K3), no hit window, a trace laid on the first
+  ;; active frame, the stick walking him (LB-EN-TICK); SP1 three traces; SP2 the 40 f tell then one thick trace (2 bars)
+  (check (equal (mapcar #'second (link-moves j)) (mapcar #'second (link-moves kn))))
+  (loop for (em nil seq) in (link-moves j)
+        for km = (first (find seq (link-moves kn) :key #'third :test #'equal))
+        do (check (and km
+                       (= (mv-s em) (mv-s km)) (= (mv-a em) (mv-a km)) (= (mv-r em) (mv-r km)) (= (mv-enter em) (mv-enter km))
+                       (eq (mv-kind em) (mv-kind km)) (zerop (length (mv-hits em))) (eq (mv-tick em) 'lb-en-tick)
+                       (equal (mv-on-frame em) (list (list (mv-s em) 'lb-en-lay)))
+                       (member (getf (mv-params em) :trace) '(:j :k))
+                       (eq (and (member :ender (mv-flags em)) t) (and (member :ender (mv-flags km)) t))
+                       (= (move-end-frame (mv-s em) (mv-a em) (mv-r em) (mv-whiff em) nil t) (mv-total em)))))   ; (hitless: R)
+  (let ((s1 (kit-command-move j :sp1)) (s2 (kit-command-move j :sp2)))
+    (check (and (eq :lb-e-sanren (mv-name s1)) (equal (mapcar #'first (mv-on-frame s1)) '(12 22 32)) (eq :sp1 (getf (mv-params s1) :trace))
+                (zerop (length (mv-hits s1))) (eq (mv-tick s1) 'lb-en-tick)
+                (eq :lb-e-nijushi (mv-name s2)) (= 40 (mv-s s2)) (eq :sp2 (getf (mv-params s2) :trace)) (zerop (length (mv-hits s2)))
+                (eq (mv-tick s2) 'lb-nijushi-tick) (= 2 (kit-command-cost j :sp2))
+                (eq :lb-sanren (mv-name (kit-command-move kn :sp1))) (eq :lb-nijushi (mv-name (kit-command-move kn :sp2)))
+                (plusp (length (mv-hits (kit-command-move kn :sp2)))) (eq :lb-w-j1 (mv-name (kit-command-move kn :q)))
+                (~= 3.0 *lb-en-walk*))))
+  ;; the traces: J one line, K a fan of three (-6 0 +6), SP1 one a shot; at most 8 live, a 9th drops the oldest (FIFO)
+  (check (and (equal (lb-trace-fans :j) '(0.0)) (equal (lb-trace-fans :sp1) '(0.0)) (= 3 (length (lb-trace-fans :k)))
+              (~= 6.0 (third (lb-trace-fans :k))) (~= -6.0 (first (lb-trace-fans :k)))
+              (= 8 *lb-trace-max*) (not (lb-trace-drop-p 7)) (lb-trace-drop-p 8) (= 3 (lb-trace-oldest '(5 3 9))) (null (lb-trace-oldest nil))))
+  (let ((ids nil) (dropped nil))
+    (loop for id from 1 to 11 do (multiple-value-bind (l d) (lb-trace-lay ids id) (setf ids l) (when d (push d dropped))))
+    (check (and (equal ids '(4 5 6 7 8 9 10 11)) (equal (reverse dropped) '(1 2 3)))))
+  ;; materialising: each trace once, a 2-frame hit (the shell: life = age + 3), :ranged :x-axis :uncatchable; J 30, K 24,
+  ;; SP1 30, SP2 180 x his damage; blocked: chip 15 %, drain 18 a line (45 SP2); kept until his switch
+  (let ((d (make-lbh :kind :trace :src :k :live t)))
+    (let ((hw (lb-trace-materialise! d 1.0)))
+      (check (and hw (= 24 (hw-dmg hw)) (not (lbh-live d)) (null (lb-trace-materialise! d 1.0))))))
+  (check (and (= 30 (hw-dmg (lb-trace-hitwin :j 1.0))) (= 24 (hw-dmg (lb-trace-hitwin :k 1.0))) (= 30 (hw-dmg (lb-trace-hitwin :sp1 1.0)))
+              (= 180 (hw-dmg (lb-trace-hitwin :sp2 1.0))) (= 33 (hw-dmg (lb-trace-hitwin :j 1.1)))
+              (every (lambda (k) (let ((w (lb-trace-hitwin k 1.0)))
+                                   (and (subsetp '(:ranged :x-axis :uncatchable) (hw-flags w)) (~= 0.15 (hw-chip w))
+                                        (= (hw-guard w) (if (eq k :sp2) 45 18))
+                                        (notany (lambda (fl) (member fl (hw-flags w))) '(:unguardable :breaker :guard-crush)))))
+                     '(:j :k :sp1 :sp2))
+              (eq :knockback (hw-react (lb-trace-hitwin :sp2 1.0))) (eq :stagger (hw-react (lb-trace-hitwin :k 1.0)))
+              (~= (gg-drain *gg-max* (hw-guard (lb-trace-hitwin :k 1.0))) (- *gg-max* 18))   ; blocked = a drain
+              (> *lb-trace-life* (* 60 60 10)) (~= *lb-trace-r* 0.6) (~= *lb-trace-r-thick* 1.2))))
+
+;;; ---------------------------------------------------------------- Lille's own CPU (DUEL_LILLE §11.2, §22; batch 3a, rework R)
+(let ((b (kit :lille :base)) (j (kit :lille :jilliel)) (mu (kit :lille :jilliel-mujittai)) (o (kit :lille :shin))
+      (kn (kit :lille :jilliel-kin)) (kmu (kit :lille :jilliel-kin-mujittai)))
   ;; every chance x difficulty, EASY <= NORMAL <= HARD, at most 1: the eye 0.25 / 0.5 / 0.75
   (check (and (~= (lb-ai-chance 0.5 :easy) 0.25) (~= (lb-ai-chance 0.5 :normal) 0.5) (~= (lb-ai-chance 0.5 :hard) 0.75)
               (~= (lb-ai-chance 0.8 :hard) 1.0)
               (every (lambda (p) (<= (lb-ai-chance p :easy) (lb-ai-chance p :normal) (lb-ai-chance p :hard))) '(0.0 0.3 0.6 0.9))))
-  ;; the kits' keys: the eye (base), the stance (Jilliel and the stance itself), Trompete (the owl); one :reflex
-  (check (and (every (lambda (k) (eq (getf (kit-ai k) :reflex) 'lb-ai-reflex)) (list b j mu o))
+  ;; the kits' keys: the eye (base), the stance (Jilliel's four), the switch (EN in, KIN out), Trompete (the owl); one
+  ;; :reflex; the traces' key for a CPU facing EN (:opp-reflex LB-OPP-TRACE, :opp-trace); no aim keys left
+  (check (and (every (lambda (k) (eq (getf (kit-ai k) :reflex) 'lb-ai-reflex)) (list b j mu kn kmu o))
               (~= (getf (getf (kit-ai b) :eye) :p) 0.5) (equal (getf (kit-ai j) :stance) '(:p 0.6 :max 180 :gg 30))
-              (equal (getf (kit-ai mu) :stance) (getf (kit-ai j) :stance)) (getf (kit-ai o) :trompete)
-              (null (getf (kit-ai b) :stance)) (null (getf (kit-ai j) :eye))))
+              (equal (getf (kit-ai mu) :stance) (getf (kit-ai j) :stance)) (equal (getf (kit-ai kmu) :stance) (getf (kit-ai j) :stance))
+              (getf (kit-ai o) :trompete) (null (getf (kit-ai b) :stance)) (null (getf (kit-ai j) :eye))
+              (equal (getf (kit-ai j) :switch) '(:traces 3 :near 0.6 :whiff 1.5)) (equal (getf (kit-ai kn) :switch) '(:gg 40))
+              (eq (getf (kit-ai j) :opp-reflex) 'lb-opp-trace) (eq (getf (kit-ai mu) :opp-reflex) 'lb-opp-trace)
+              (~= 0.5 (getf (getf (kit-ai j) :opp-trace) :p)) (null (getf (kit-ai kn) :opp-reflex)) (null (getf (kit-ai b) :opp-reflex))
+              (every (lambda (k) (not (or (getf (kit-ai k) :sig-hold) (getf (kit-ai k) :opp-aim)))) (list b j mu kn kmu o))
+              (every (lambda (band) (member :sig band)) (getf (kit-ai b) :moves))))   ; (the stance in every band)
   ;; the eye's plan: a pip, the threat not on him yet, U rested *LB-EYE-REST* by the tap (let go until lead 4)
   (check (and (lb-ai-eye-ready-p 4 10 1) (not (lb-ai-eye-ready-p 4 9 1)) (lb-ai-eye-ready-p 14 0 1) (not (lb-ai-eye-ready-p 13 0 1))
               (not (lb-ai-eye-ready-p 20 30 0)) (not (lb-ai-eye-ready-p 0 30 3)) (lb-ai-eye-ready-p 1 30 3)))
@@ -1958,13 +2082,19 @@ defender's next step. Values: the attacker's and the defender's first actionable
   (check (and (eq :whiff (lb-stance-exit t 0 180 100.0 30 t)) (eq :max (lb-stance-exit nil 180 180 100.0 30 t))
               (null (lb-stance-exit nil 179 180 30.0 30 nil)) (eq :gauge (lb-stance-exit nil 0 180 29.0 30 nil))
               (eq :idle (lb-stance-exit nil 0 180 100.0 30 t))))
-  ;; the aim's fire frame after the lock: 10..30; a still opponent near 10 (HARD 10..12), a strafer near 30; wider at EASY
-  (check (and (loop for r in '(0.0 0.25 0.5 0.75 0.999) always
-                (and (loop for lat in '(0.0 1.0 2.0 3.0 9.0) always
-                       (loop for dif in '(:easy :normal :hard) always (<= 10 (lb-aim-extra lat r dif) 30)))
-                     (<= (lb-aim-extra 0.0 r :hard) 13) (>= (lb-aim-extra 3.0 r :hard) 27)))
-              (= 10 (lb-aim-extra 0.0 0.0 :easy)) (= 30 (lb-aim-extra 3.0 0.999 :easy)) (= 20 (lb-aim-extra 1.5 0.5 :normal))
-              (< (lb-aim-extra 0.5 0.5 :hard) (lb-aim-extra 2.5 0.5 :hard)))))
+  ;; the shooting stance's branch (one roll at its f6, §22.1): after a K link's hit L 0.6 / J 0.4; from 8 m the charged
+  ;; shot; 3-8 m the quick shot on a whiff, else the dash back (then charged), else charged; within 3 m K on a guard or a
+  ;; low gauge, else J
+  (check (and (eq :l (lb-ai-kamae-plan 0.59 2.0 t nil nil nil t)) (eq :j (lb-ai-kamae-plan 0.6 2.0 t nil nil nil t))
+              (eq :charge (lb-ai-kamae-plan 0.1 8.0 nil nil nil nil t)) (eq :charge (lb-ai-kamae-plan 0.9 20.0 nil t t t t))
+              (eq :l (lb-ai-kamae-plan 0.5 5.0 nil nil nil t t)) (eq :dash (lb-ai-kamae-plan 0.5 5.0 nil nil nil nil t))
+              (eq :charge (lb-ai-kamae-plan 0.5 5.0 nil nil nil nil nil)) (eq :k (lb-ai-kamae-plan 0.5 2.0 nil t nil nil t))
+              (eq :k (lb-ai-kamae-plan 0.5 3.0 nil nil t nil t)) (eq :j (lb-ai-kamae-plan 0.5 2.5 nil nil nil t t))))
+  ;; EN's switch in (§22.2): >= 3 live traces and him on one (0.6 m), or him reeling / recovering within 1.5 m of one
+  (let ((k (getf (kit-ai j) :switch)))
+    (check (and (lb-switch-in-rule 3 0.6 nil k) (not (lb-switch-in-rule 2 0.0 nil k)) (not (lb-switch-in-rule 3 0.7 nil k))
+                (lb-switch-in-rule 1 1.5 t k) (not (lb-switch-in-rule 1 1.6 t k)) (not (lb-switch-in-rule 0 0.0 t k))
+                (lb-switch-in-rule 8 0.0 t k)))))
 
 ;; no character names in the generic files (design-v1 §12)
 (dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow" "endless-rules" "endless"))

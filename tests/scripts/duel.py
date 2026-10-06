@@ -536,9 +536,10 @@ write("ichigo", ichigo_script("", False))
 write("ichigo-portrait", ichigo_script("-p", True))
 # Lille Barro (docs/duel/DUEL_LILLE.md, batch 1: the functional art; run with --fixed-dt 16.666667 --secs 80). The select
 # screen (the roster cycled to him: 5 ArrowRight), then human P1 Lille vs an idle Kenpachi (debug 79000+k, LILLE-TEST): the
-# base form (stance, J1, K1, J3, K3, the aim held to the lock and the shot from 14 m, SANREN, HIRENKYAKU), JILLIEL (79002:
-# stance, J1, K1, the volley held, NIJUSHI-KO), MUJITTAI (79003), the owl (79004: stance, J1, SABAKI, MISUJI, Trompete),
-# the revive (79005: P) and the two reflects (79007 guard, 79008 Hoho). Shots tests/shots/duel-lille-*.png (review stills).
+# base form (stance, J1, K1, J3, K3; the shooting stance from 14 m and its charged shot, REIKYORI, NAGIHARAI, the
+# HIRENKYAKU dash; SANREN, HIRENKYAKU), JILLIEL EN (79002: stance, J1 and K1 laying traces, TENSHIN into KIN, NIJUSHI-KO),
+# MUJITTAI (79003), KIN (79014), the owl (79004: stance, J1, SABAKI, MISUJI, Trompete), the revive (79005: P, 3 Konpaku)
+# and the two reflects (79007 guard, 79008 Hoho). Shots tests/shots/duel-lille-*.png (review stills; rework R, DUEL_LILLE §22).
 def lille_script():
     def rs(t, n): return {"at": round(t, 2), "shot": f"{SHOTS}lille-{n}.png"}
     def stap(t, k): return [key(t, "ShiftLeft"), key(t + 0.02, k), key(t + 0.08, k, False), key(t + 0.1, "ShiftLeft", False)]
@@ -554,7 +555,10 @@ def lille_script():
         for i, k in enumerate(keys): ev += tap(t + [0, 0.12, 0.3][i], k, 0.06)
         ev.append(rs(t + dt, n)); t += 1.5
     ev += [cmd(t, 79001)]; t += 0.5
-    ev += [key(t, "KeyL"), rs(t + 0.3, "aim-grey"), rs(t + 0.75, "aim-locked"), key(t + 0.85, "KeyL", False), rs(t + 0.95, "shot")]; t += 2.0
+    ev += tap(t, "KeyL", 0.06) + [rs(t + 0.3, "kamae")] + tap(t + 0.55, "KeyL", 0.06) + [rs(t + 0.62, "shot-lock"), rs(t + 0.75, "shot")]; t += 2.0
+    for k2, n, dt in (("KeyJ", "reikyori", 0.3), ("KeyK", "nagiharai", 0.45), ("Space", "kamae-dash", 0.3)):
+        ev += [cmd(t, 79000)]; t += 0.4
+        ev += tap(t, "KeyL", 0.06) + tap(t + 0.15, k2, 0.06) + [rs(t + dt, n)]; t += 1.4
     ev += [cmd(t, 79001), cmd(t + 0.05, 2108)]; t += 0.4
     ev += stap(t, "KeyK"); ev += [rs(t + 0.4, "sanren")]; t += 1.6
     ev += [cmd(t, 79000), cmd(t + 0.05, 2108)]; t += 0.4
@@ -566,11 +570,14 @@ def lille_script():
     ev += [cmd(t, 2393)]; t += 0.3
     ev += tap(t, "KeyK", 0.06); ev.append(rs(t + 0.3, "w-k1")); t += 1.2
     ev += [cmd(t, 79002)]; t += 0.5
-    ev += [key(t, "KeyL"), rs(t + 0.6, "volley-locked"), key(t + 0.6, "KeyL", False), rs(t + 0.7, "volley")]; t += 1.6
+    ev += tap(t, "KeyK", 0.06) + tap(t + 0.4, "KeyK", 0.06) + [rs(t + 0.9, "en-traces")]
+    ev += tap(t + 1.4, "KeyL", 0.06) + [rs(t + 1.45, "tenshin"), rs(t + 1.8, "kin")]; t += 2.6
     ev += [cmd(t, 79002), cmd(t + 0.05, 2108)]; t += 0.4
     ev += stap(t, "KeyL"); ev += [rs(t + 0.5, "nijushi-tell"), rs(t + 0.72, "nijushi")]; t += 1.8
     ev += [cmd(t, 79003)]; t += 1.0
     ev.append(rs(t, "mujittai")); t += 0.4
+    ev += [cmd(t, 79014)]; t += 1.0
+    ev.append(rs(t, "kin-stance")); t += 0.4
     ev += [cmd(t, 79004)]; t += 1.0
     ev.append(rs(t, "owl-stance")); t += 0.3
     ev += [cmd(t, 2393)]; t += 0.3

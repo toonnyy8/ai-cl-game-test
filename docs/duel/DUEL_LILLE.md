@@ -1163,3 +1163,105 @@ MUJITTAI (§5.2, unchanged), I the Breaker, O the Kikon module (direct, Kikon 3)
   wing, K the two front ones, the SPs spread all eight; idle, each wing sways on its own phase; MUJITTAI folds them.
 - **The legs** (the owl and KIN): two long thin legs, each **forking at the knee into two shanks** (fore and aft), so it
   reads as four. The owl keeps its long arms (its claws are the hands) and gets the same eight-wing fans in gold.
+
+### 22.4 Built: rules and CPU (rework R, 2026-10-06)
+
+The rules + CPU half of decisions 16–18 (§22.1, §22.2), in `duel/lisp/lille.lisp`; its functional clips in one new
+section of `duel/lisp/lille-art.lisp` (";;; ---- rework R"). **No shared file changed**: the mobile EN moves, the traces and
+TENSHIN are his own hooks (the moves' `:tick`, `:on-frame`, his hazards' hook), so nothing generic was needed.
+
+**What is built**
+- **The revival** (decision 16): `lille-bankai-ok` = `lb-revive-ok-p`: any of Jilliel's four forms, idle / guard (the
+  stances included), Konpaku ≤ `*bankai-konpaku*` (4). The BEHEADED flag, its `:settled` hook (`lille-settled`), its
+  callout, `lb-beheaded-p` and `*lb-revive-konpaku*` are gone; the revive cinematic is kept. Debug 79005 is now "EN with 3
+  Konpaku". (The generic `:settled` hook point in combat.lisp `settle-konpaku` stays, now unused by any kit.)
+- **The shooting stance** `:lb-kamae` (+ `:lb-kamae-k` entered at f4 as `:l-after-k`, `:lb-kamae-re` the dash's re-entry
+  at f6): S6, held 30 f / 90 f with L held, R 14 (110 f), turning 60°/s, planted, hitless. `lb-kamae-tick` (TSUKIMACHI's
+  pattern) fires the first L / J / K / Step from f6: `:lb-k-shot` (S10 A2 R26, `:params :lock 0`: locked on the press, a
+  jade lane drawn for its 10 f; quick 40 flat, charged = `lb-x-damage`), `:lb-k-j` REIKYORI, `:lb-k-k` NAGIHARAI,
+  `:lb-k-dash` HIRENKYAKU (3.5 m, neutral = away, iframes f0–8, 10 flash step, once per stance). The charge
+  (`lb-kamae-clock`) counts each step from f6, the dash's included, once a step. `:lb-x-axis` and the K → L snap shot
+  `:lb-x-quick` are removed (L after a K link is the stance).
+- **Jilliel EN** (`:jilliel`, `:jilliel-mujittai`): J / K = `:lb-e-j1…k3` (the wing strings' S / A / R / enter, no hit
+  window), SP1 `:lb-e-sanren` (3 lines), SP2 `:lb-e-nijushi` (the 40 f tell, then one thick trace). `lb-en-tick` walks him
+  at 3.0 m/s on the stick (frost / cold field as a walk), facing the opponent; `lb-en-lay` lays the traces on the first
+  active frame and sets `fighter-chained` so the string's next link opens without contact (the lines never hit). L from
+  the active end cancels into TENSHIN.
+- **Jilliel KIN** (`:jilliel-kin`, `:jilliel-kin-mujittai`): the wing-blade strings, SP1 `:lb-sanren` and SP2
+  `:lb-nijushi` as built, walk 3.8 / run 8.5, `:l-after-k t` (TENSHIN after a K link), body `:lille-jilliel` until the art
+  batch's `:lille-jilliel-kin` lands. Both modes: ×1.1 taken, `:gg-regen` 0.36, U = MUJITTAI, P the revival.
+- **Traces**: a hazard `:lb-trace` each (no hit while live; a `:cap 0.6 31 1.2 r` line, r 0.6 / SP2 1.2), ids counting up
+  per side; at most 8 live (the 9th destroys the smallest id); kept until his next switch, cleared on the revival (and by
+  any reset's `clear-hazards`). `lb-trace-look` draws a faint jade floor line with a width pulse (lille.lisp's last
+  section, `defun-fast` through lille-art's `%lb-floor-line`: no allocation; the 79195 probe now calls it).
+- **TENSHIN** `:lb-switch` (S12 A0 R8, `:cooldown 30`): f0 `lb-materialise` turns every live trace into a 2-frame hit
+  (`lb-trace-hitwin`: J 30 / K 24 / SP1 30 / SP2 180 × his damage, `:ranged :x-axis :uncatchable`, chip 15 %, drain 18 /
+  45; a stagger, SP2 a knockback) with the X-axis line's flash, then dashes 3.5 m at him (EN → KIN) or away, iframes f0–8,
+  10 flash step; the form changes at f6. Refused (the cue) under 10 flash step (`lille-ok`).
+- **The CPU**: the stance's branch is planned once at its first up step (`lb-ai-kamae-plan`, one roll; the §22.1 table);
+  EN switches in when ≥ 3 traces are live and the perceived opponent is on one (axis ≤ 0.6 m; a thick trace counts 0.6 m
+  wider), or reels / recovers within 1.5 m of one (`lb-switch-in-rule`, deterministic; in a move the tick checks it from
+  the active end); EN walks 6–12 m and across the opponent's line on its strafe, and latches the same button's next link
+  (no roll); KIN switches out after any string (blocked or not) or with the gauge under 40 (`lb-ai-kin`). A CPU facing EN
+  (`:opp-reflex lb-opp-trace`, `:opp-trace (:p 0.5)` × `opp-chance`) Steps off a trace it stands on, seen (age ≥ its
+  delay), newer than the ones it rolled for, while his TENSHIN is ready: one roll for each new set. The base `:moves` have
+  `:sig` (the stance) in every band (0–2.2 m weight 1, 2.2–6 m weight 2, the far band's 6 as before); `:sig-hold`,
+  `lb-aim-hold-ai` and `:opp-aim` are gone from his kits (the generic `ai-opp-aim` stays, unused).
+
+**Deviations from §22 (the smallest, each with its reason)**
+1. **EN's J / K keep their active frames** (A 3 / 4 / 5) with no hit window: the lines are laid on S and TENSHIN cancels
+   from S + A, as "from their active end" says. An opponent CPU may read them as a close threat within reach + margin
+   (1.6–2.3 m): harmless (nothing hits).
+2. **KIN's TENSHIN cancel is the K-link L latch only** (`:l-after-k t`); "as a K link's L" read literally, so a KIN J link
+   or SANREN does not cancel into it.
+3. **The stance's grey aim line is not drawn yet**: lille-art.lisp's `%lb-aim-look` keys on `:lb-x-axis` / `:lb-volley`
+   (the art batch owns that hook). The lock is shown by a jade lane look-hazard for the shot's 10 f. The art batch should
+   key the aim look on `:lb-kamae*` (grey, tracking) and `:lb-k-shot` (jade, locked), and add `:jilliel-kin*` to
+   `lille-draw`'s Jilliel look and `lille-body-alpha`'s MUJITTAI (today KIN falls back to the base look).
+4. **Unspecified numbers chosen**: the trace hit reactions (stagger, kb 1.0; SP2 knockback 2.0, heavy hitstop); KIN's
+   `:form-name` "JILLIEL KIN"; the EN and KIN `:ai` tables (EN zone 6–12 m, bands `:f 4 :q 3 :sp1 1 :sp2 1` at 3–14 m;
+   KIN an approach / pressure melee table); `:opp-trace :p` 0.5; TENSHIN refused without its 10 flash step (TSUKIWATARI
+   waits instead).
+5. **Debug** 79014 / 79015: forced KIN / its MUJITTAI 5 m from Kenpachi.
+
+**Tests** (host): duel-rules 5914 checks ALL PASS (the stance's frames, branches and hold, charge 23 vs 24 and the
+clock through the dash, the K-link → stance f4 combos off K1 / K2 / K3, REIKYORI / NAGIHARAI data, the revival at
+Konpaku 4 from EN and KIN and refused at 5, TENSHIN's data / targets / cooldown, EN's frames = the wing strings', the
+traces' fans, cap 8 / FIFO, materialise once, the hits and drains, the CPU's plan and switch rule, the kits' keys);
+duel-control 86, learn 100, input 33, touch 64, cine 18 ALL PASS. FK reach (±0.15 m): REIKYORI 1.85 / 1.80 m, NAGIHARAI
+2.59 / 2.60 m. `tools/pkgcheck.sh duel` 0 / 0 / 0. `tests/scripts/duel-lille.json` regenerated (the stance, its
+branches, EN's traces, TENSHIN, KIN).
+
+**Gates** (native, NORMAL, seeds 1–10): the fifteen old pairings' 420 lines (rows, companion lines, summaries)
+**byte-identical** to the run before the change; `--cvc` PASS (yy / yk / kk). His six pairings (untuned; no knob turned):
+
+| Pairing | Before: median, Lille wins / 10 | After: median, K.O., Lille wins / 10 | Blow-aways |
+|---|---|---|---|
+| LY | 172.3 s, 3 | **182.0 s**, 10/10, **4** | 1 |
+| LK | 146.6 s, 1 | **170.1 s**, 10/10, **1** | 28 |
+| LR | 177.5 s, 2 | **169.7 s**, 10/10, **1** | 1 |
+| LI | 176.3 s, 2 | **214.8 s**, 10/10, **2** | 7 |
+| LS | 174.7 s, 1 | **205.3 s**, 10/10, **4** | 3 |
+| LL | 226.8 s, P1 2 / 8 | **298.9 s**, **8/10** (seeds 1 and 6 time out at 343 s), P1 5 / 5 | 0 |
+
+LI's median is past 210 s and the mirror has two time-outs: reported, not tuned (the 20-seed verdict and the tuning are
+the next batch's). Per Lille side and match (means of 10; the mirror's two sides in brackets):
+
+| | LY | LK | LR | LI | LS | (LL) |
+|---|---|---|---|---|---|---|
+| stance entries | 5.4 | 2.3 | 2.8 | 3.5 | 2.0 | (8.3 / 7.5) |
+| shots quick / charged | 0.7 / 3.6 | 0.6 / 0.5 | 0.5 / 1.5 | 1.1 / 0.9 | 0.3 / 0.9 | (0.2 / 6.3, 0.4 / 5.6) |
+| shot hits / REIKYORI hits | 4.0 / 0.9 | 1.0 / 1.0 | 2.0 / 0.6 | 1.9 / 1.4 | 1.1 / 0.6 | (5.8 / 0.5) |
+| HIRENKYAKU dashes | 3.4 | 0.4 | 1.5 | 0.9 | 0.8 | (5.6 / 4.3) |
+| TENSHIN in / out | 6.1 / 6.0 | 5.9 / 5.4 | 7.5 / 7.4 | 7.5 / 7.6 | 9.1 / 8.7 | (13.2, 15.6) |
+| traces laid / materialised | 13.2 / 12.2 | 13.2 / 12.5 | 16.4 / 15.8 | 17.1 / 16.9 | 14.0 / 13.6 | (27.7 / 27.0, 33.1 / 32.7) |
+| trace hits / guarded | 5.1 / 2.6 | 7.6 / 2.3 | 7.8 / 2.6 | 7.4 / 1.7 | 7.7 / 1.2 | (10.4 / 4.5, 15.2 / 4.2) |
+| opponent's trace rolls / Steps | 2.2 / 1.2 | 2.1 / 1.0 | 3.0 / 1.9 | 3.6 / 1.9 | 2.7 / 1.4 | (7.7 / 4.5) |
+
+A browser smoke run (`tools/run.mjs`, a probe script: EN K, K, J then L; the base stance's charged shot from 14 m; 79005
+then P) logs no error: seven traces materialise as seven hits (6 × 24 + 30), the stance's L 27 f in hits for 90 at
+14 m, P revives at 3 Konpaku. The 79195 consing line costs 8 B per live hazard and draw, the same as LB-LOOK's (the
+probe's component lookup; the looks themselves allocate nothing). `./build.sh duel`: 0 warnings.
+
+KIN's switches out: mostly after a string (4.7–7.0 a match), after a block 0.2–1.2, on the gauge 0–1.5. The revival
+fires in 8–10 of 10 sides.
