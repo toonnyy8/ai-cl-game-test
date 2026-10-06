@@ -16,3 +16,4 @@
 # user-supplied reference images (third-party art: never commit)
 /.refs/
 *.pyc
+/.claude/
