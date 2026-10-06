@@ -2152,6 +2152,6 @@ open question, with the user) and the mirror lost a K.O.: reported, not retuned.
 
 Asked about decision 39's pacing (LR 229.6 s, LI 216.2 s at 60 seeds; §23.20), the user chose: 「接受這兩組例外」. Both
 pairings are recorded as accepted exceptions (AGENTS.md "Tests and gates"); the 10 f flinch of the laying shot stays.
-Still open: the mirror (LL) had one time-out in 20 seeds (§23.21; the gate wants every match K.O.), not covered by
-the user's words.
+The mirror (LL) had one time-out in 20 seeds (§23.21; the gate wants every match K.O.); asked, the user added it:
+「也算進例外」 (2026-10-06): the Lille mirror's time-outs are an accepted exception too.
 
