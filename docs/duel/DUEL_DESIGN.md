@@ -1240,6 +1240,10 @@ both files register with (her ranges were hard-coded, and her knobs moved 80000+
 | kit `:meter` | `:draw`, `:label` | the kit-meter row / portrait slot, the portrait label | Senjumaru |
 | kit `:ai` | `:reflex (e b s d)` | among the CPU's reflexes | Ichigo, Senjumaru |
 | kit `:ai` | `:opp-reflex (e b s d)` | read off the **opponent's** kit: what a CPU facing this form does | Senjumaru |
+| kit `:ai` | `:opp-aim (:step :hoho :rush)` | read off the **opponent's** kit (a plist, generic code in ai.lisp `ai-opp-aim`): a CPU facing his `:hold` move flagged `:x-axis` rolls once per aim: a Hoho before his lock, the rush within `:rush` m, else a sideways Step off the line on the perceived lock (HARD) or pre-Stepped at a rolled lock .. lock + 10 (NORMAL / EASY); chances × `*ai-opp-diff*` (DUEL_AI_V2 ":x-axis lines") | Lille Barro (in build) |
+| kit `:ai` | `:opp-reflect (:p)` | read off the **opponent's** kit (`ai-opp-reflect`): once per `:reflectable` move, :p × difficulty, a guard pressed 8 f before its `:params :blast` (else a Hoho 10 f before) | Lille Barro (in build) |
+| kit | `:bankai-ok` (a function of the fighter entity) | may the `:bankai-form` entry go now (NIL key: yes); also read by the CPU's Bankai reflex (ai.lisp) | Lille Barro (in build) |
+| move flags | `:x-axis` (a line hit window across the arena), `:reflectable` (+ `:params (:lock f :blast f)`) | every CPU threat reader (`snap-live-p` / `snap-near-p`, ai.lisp; Kenpachi's / Ichigo's / Rukia's timed reflexes): the point-to-line distance and the real threat window instead of reach + margin; the timed Hohos leave a `:reflectable` move to `:opp-reflect` | Lille Barro (in build) |
 | kit `:ai` | `:sig-hold (kit d e)` | how long the CPU holds L (E: the fighter, for state such as her stored weave) | Senjumaru |
 | kit `:ai` | `:sp-ender (e kit)` | a landed string's last link: the kit's own SP ender (a command or NIL), before the generic SP2 cancel (`string-reflex`) | Senjumaru (SP1's two hanks) |
 | hazard | `hook (h hz event …)`, `data` | `:step` first (T skips the generic step), `:touches` for a kind hazards.lisp doesn't know, `:close` from `close-rifts` | Senjumaru |

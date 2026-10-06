@@ -490,6 +490,26 @@ off it (Kenpachi's flurry): a seed-gate pacing knob (docs/duel/DUEL_STRINGS.md �
 in J1's startup, so J1's active frames meet it inside J1's reach).")
 (defparameter *ai-react-p* 0.7 "Chance of a kit :react answer (Kenpachi's stance) to what triggers it.")
 (defparameter *ai-threat-margin* 1.5 "A committed opponent move is a threat within its reach + this.")
+;; :x-axis lines (docs/duel/DUEL_LILLE.md §11.3, gap G1; docs/duel/DUEL_AI_V2.md ":x-axis lines"; new 2026-10-06, the Lille
+;; Barro build the user asked for): inert for every move without :x-axis
+(defparameter *ai-line-margin* 0.3
+  "An :x-axis line is a threat to a CPU whose feet are within its radius + his hurt radius + this of the line (the
+perceived muzzle along the perceived yaw), at any distance (its 31 m reach would make a distance test true everywhere).")
+(defparameter *ai-opp-diff* '(:easy 0.3333 :normal 1.0 :hard 1.6667)
+  "A chance read off the opponent's kit (:opp-aim, :opp-reflect) x this by difficulty, at most 1 (OPP-CHANCE: :opp-reflect
+0.3 -> EASY 0.1 / NORMAL 0.3 / HARD 0.5, DUEL_LILLE §11.3).")
+(defparameter *ai-aim-react* 8
+  ":opp-aim: a CPU whose perception delay is at most this (HARD's 8) Steps on the lock it perceives; a slower one pre-Steps
+at a rolled frame lock .. lock + *AI-AIM-PRE-STEP* (it would see the lock too late: the shot comes >= 10 f after it).")
+(defparameter *ai-aim-pre-step* 10 "... the pre-Step's latest frame after the lock (rolled 0 .. this, once per aim).")
+(defparameter *ai-reflect-guard-lead* 8
+  ":opp-reflect: the guard is pressed this many frames before the blast (his move frame as perceived: SNAP-SF + the delay),
+so FIGHTER-GUARD-T is 2-10 there (DUEL_LILLE §6.3: a guard started f50-f58 against the f60 blast).")
+(defparameter *ai-reflect-hoho-lead* 10
+  "... or, guard unavailable (a ward, a form whose U is a move, guardless), the Hoho this many before (f50: f48-f60 reflect).")
+(defparameter *ai-reflect-quiet* 6
+  "... and in this many frames before the press it presses nothing (a guard held from before is let go: the new press
+must count FIGHTER-GUARD-T from 0).")
 (defparameter *ai-projectile-range* 7.0 "An incoming projectile is 'seen' within this range.")
 (defparameter *ai-heat-rate* 1.5 "Heat per second without dealing damage (reset by dealing any).")
 (defparameter *ai-heat-far* 6.0 "Beyond this distance heat rises twice as fast (two zoners staring).")

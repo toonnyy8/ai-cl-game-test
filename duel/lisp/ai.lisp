@@ -53,14 +53,17 @@
   (reach 0f0 :type single-float) (guard-t 0 :type fixnum) (projectile nil)
   (flags nil)                           ; his move's :flags (:parry :bind ...)
   (contact nil)                         ; what his move touched so far (NIL = nothing yet: a whiff when it ends)
-  (tell nil))                           ; a :bind move's tell frames (its :params :tell; NIL = South's 21-30)
+  (tell nil)                            ; a :bind move's tell frames (its :params :tell; NIL = South's 21-30)
+  (yaw 0f0 :type single-float)          ; his facing
+  (hold 0 :type fixnum)                 ; frames his :hold move has been held (its hold phase: the move frame)
+  (move nil))                           ; his move (NIL: none): an :x-axis line's volumes, lock, params (SNAP-NEAR-P ...)
 
 (defun snap-take! (s o)
   "Fill SNAP S with fighter O as he is now."
   (let* ((f (fighter o)) (p (pos-of o)) (mv (fighter-move f))
          (st (let ((st (fighter-state f)))                ; Bankai West's ward is a held guard (its time in West)
                (if (and (passive-p o :ward) (member st '(:idle :run))) :guard st))))
-    (setf (snap-x s) (aref p 0) (snap-z s) (aref p 2) (snap-state s) st (snap-sf s) (fighter-sf f)
+    (setf (snap-x s) (aref p 0) (snap-z s) (aref p 2) (snap-state s) st (snap-sf s) (fighter-sf f) (snap-yaw s) (yaw-of o)
           (snap-guard-t s) (fighter-guard-t f) (snap-projectile s) (incoming-projectile-p o))
     (if (and (eq st :move) mv)
         (let ((total (move-end-frame (mv-s mv) (mv-a mv) (mv-r mv) (mv-whiff mv) (fighter-contact f)
@@ -70,8 +73,11 @@
                 (snap-tell s) (getf (mv-params mv) :tell)
                 (snap-active-end s) (+ (mv-s mv) (mv-a mv)) (snap-reach s) (f32 (mv-reach mv))
                 (snap-left s) (if (eq (fighter-phase f) :main) (max 0 (- total (fighter-sf f))) 99)
-                (snap-start s) (- *match-tick* (fighter-sf f) (fighter-hold f))))
-        (setf (snap-kind s) nil (snap-phase s) nil (snap-reach s) 0f0 (snap-flags s) nil (snap-contact s) nil
+                (snap-start s) (- *match-tick* (fighter-sf f) (fighter-hold f))
+                (snap-hold s) (fighter-hold f) (snap-move s) mv)
+          (when (member :x-axis (mv-flags mv))           ; an :x-axis line: its real active window (every line of it)
+            (setf (snap-active-end s) (move-active-end mv))))
+        (setf (snap-kind s) nil (snap-phase s) nil (snap-reach s) 0f0 (snap-flags s) nil (snap-contact s) nil (snap-move s) nil
               (snap-left s) (if (eq st :stun) (max 0 (- (fighter-stun f) (fighter-sf f))) 0)
               (snap-start s) (if (eq st :guard) (- *match-tick* (fighter-guard-t f)) -1)))
     s))
@@ -86,6 +92,101 @@
                      (< (+ (expt (- (hazard-x hz) (aref q 0)) 2) (expt (- (hazard-z hz) (aref q 2)) 2)) r2))
             (setf hit t)))))
     hit))
+
+;;; ---------------------------------------------------------------- :x-axis lines (docs/duel/DUEL_LILLE.md §11.3, gap G1)
+;;; A move flagged :x-axis is a line hit window across the arena. Every threat reader (here, and the kits' reflexes) asks
+;;; SNAP-LIVE-P / SNAP-NEAR-P: a move without the flag takes the old test, unchanged (its active window, its reach + the
+;;; reader's margin); a line takes its real threat window (KIT.LISP X-LIVE-P: an aim only from its lock) and E's feet
+;;; against the line from his perceived feet along his perceived facing (X-LINE-GAP), at any distance.
+(defun snap-x-axis-p (s) "Is his perceived move an :x-axis line?" (and (member :x-axis (snap-flags s)) t))
+(defun snap-reflect-p (s)
+  "Is his perceived move :reflectable (a perfect guard / Hoho at its :params :blast turns it back)? Only :OPP-REFLECT
+answers it at its timing (AI-OPP-REFLECT): the kits' timed Hohos and the generic threat Hoho leave it alone."
+  (and (member :reflectable (snap-flags s)) t))
+
+(defun snap-live-p (s)
+  "Is his perceived move S still to hit: before the end of its active frames (an :x-axis line: in its threat window)?"
+  (if (snap-x-axis-p s)
+      (x-live-p (snap-move s) (snap-phase s) (snap-hold s) (snap-sf s))
+      (< (snap-sf s) (snap-active-end s))))
+
+(defun x-on-line-p (s e)
+  "Are E's feet on his perceived :x-axis line: within its radius + E's hurt radius + *AI-LINE-MARGIN*?"
+  (let ((p (pos-of e)))
+    (<= (x-line-gap (snap-move s) (snap-x s) (snap-z s) (snap-yaw s) (aref p 0) (aref p 2))
+        (+ (body-hurt-r (model-body (model e))) *ai-line-margin*))))
+
+(defun snap-near-p (s e d margin)
+  "Is E, at the perceived distance D, in reach of his perceived move S: D < its reach + MARGIN (an :x-axis line: E on the
+line, X-ON-LINE-P, MARGIN aside)?"
+  (if (snap-x-axis-p s) (x-on-line-p s e) (< d (+ (snap-reach s) margin))))
+
+(defun ai-opp-aim (e b s d)
+  "A CPU facing an aim (his kit's :opp-aim (:step :hoho :rush), read off his kit: other pairings never come here): his
+:hold move flagged :x-axis, one roll per aim (BRAIN-AIM-KEY, its start tick), each chance x the difficulty (OPP-CHANCE):
+  - perceived before his lock (MOVE-LOCK), :hoho of the time with flash-step for one: a Hoho (he reappears behind);
+  - else :step of the time: within :rush m of him the rush at once (O within the kikon range, else the dash in), farther a
+    sideways Step off his line, away from its side (LINE-OFF-STRAFE), once he is locked: on the lock it perceives when
+    its delay is at most *AI-AIM-REACT* (HARD), else pre-Stepped at a rolled tick lock .. lock + *AI-AIM-PRE-STEP* from
+    his perceived start (it would see the lock too late). Only while it stands on the line.
+A command, :PRESSED (the dash), or NIL."
+  (let* ((k (getf (kit-ai (kit-of (opp-of e))) :opp-aim)) (mv (snap-move s)))
+    (when (and k mv (eq (snap-state s) :move) (mv-hold mv) (snap-x-axis-p s) (not (kit-rooted (kit-of e))))
+      (let* ((lock (move-lock mv)) (g (gauges e)) (f (fighter e))
+             (pre (and (eq (snap-phase s) :hold) (< (snap-hold s) lock)))   ; before his lock, as perceived
+             (hoho-ok (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))))
+        (when (/= (snap-start s) (brain-aim-key b))         ; a new aim: its one roll
+          (let ((r (sim-rnd01))
+                (ph (opp-chance (getf k :hoho 0.0) (brain-difficulty b))) (ps (opp-chance (getf k :step 0.0) (brain-difficulty b))))
+            (setf (brain-aim-key b) (snap-start s)
+                  (brain-aim-plan b) (cond ((and (< r ph) pre hoho-ok) :hoho)
+                                           ((>= r (+ ph ps)) nil)
+                                           ((< d (getf k :rush 0.0)) :rush)
+                                           (t :step))
+                  (brain-aim-t b) (if (or (not (eq (brain-aim-plan b) :step)) (<= (brain-delay b) *ai-aim-react*)) -1
+                                      (+ (snap-start s) lock (floor (* (sim-rnd01) (1+ *ai-aim-pre-step*))))))))
+        (case (brain-aim-plan b)
+          (:hoho (setf (brain-aim-plan b) nil)
+                 (and pre hoho-ok (why b :aim-hoho :hoho)))
+          (:rush (setf (brain-aim-plan b) nil)
+                 (cond ((and (< d (ai-table e :kikon-range 7.0)) (kit-command-ok-p e :kikon)) (why b :aim-rush :kikon))
+                       (t (ai-dash b 1.0 1.8) (why b :aim-rush :pressed))))
+          (:step (when (and (if (minusp (brain-aim-t b))
+                                (not pre)                              ; the lock perceived (or his release)
+                                (>= *match-tick* (brain-aim-t b)))     ; the pre-Step's rolled tick
+                            (or (eq (snap-phase s) :hold) (< (snap-sf s) (snap-active-end s)))   ; (not after his shot)
+                            (x-on-line-p s e))
+                   (setf (brain-aim-plan b) nil
+                         (brain-strafe b) (f32 (let ((p (pos-of e)))
+                                                 (line-off-strafe (snap-x s) (snap-z s) (snap-yaw s) (aref p 0) (aref p 2)
+                                                                  (snap-x s) (snap-z s)))))
+                   (why b :aim-step :side-step))))))))
+
+(defun ai-opp-reflect (e b s d)
+  "A CPU facing a :reflectable move (his kit's :opp-reflect (:p), read off his kit: other pairings never come here): one
+roll per move (BRAIN-REFLECT-KEY, its start tick) at :p x the difficulty (OPP-CHANCE); a yes times the reflect at its
+:params :blast frame (else its S), his move frame counted as perceived (SNAP-SF + the delay: REFLECT-ACTION): a guard
+pressed *AI-REFLECT-GUARD-LEAD* before it (FIGHTER-GUARD-T 2-10 there), or where the guard can't (a ward, a form whose U
+is a move, guardless: AI-GUARD-K 0) a Hoho *AI-REFLECT-HOHO-LEAD* before it; hands off (:WAIT, a held guard let go) just
+before the press. Rooted forms can't (they must not stand in it). A command, :PRESSED / :WAIT, or NIL."
+  (declare (ignore d))
+  (let* ((k (getf (kit-ai (kit-of (opp-of e))) :opp-reflect)) (mv (snap-move s)))
+    (when (and k mv (eq (snap-state s) :move) (eq (snap-phase s) :main) (snap-reflect-p s) (not (kit-rooted (kit-of e))))
+      (when (/= (snap-start s) (brain-reflect-key b))
+        (setf (brain-reflect-key b) (snap-start s)
+              (brain-reflect-go b) (< (sim-rnd01) (opp-chance (getf k :p 0.0) (brain-difficulty b)))))
+      (when (brain-reflect-go b)
+        (let* ((g (gauges e)) (f (fighter e))
+               (guard (and (plusp (ai-guard-k e)) (not (passive-p e :ward))))
+               (act (reflect-action (+ (snap-sf s) (brain-delay b)) (getf (mv-params mv) :blast (mv-s mv)) guard)))
+          (case act
+            (:wait (setf (brain-press-left b) 0) (why b :reflect-wait :wait))
+            (:guard (setf (brain-reflect-go b) nil)
+                    (ai-press b :guard (+ *ai-reflect-guard-lead* 12) :act :hold)   ; (held through the blast)
+                    (why b :reflect :pressed))
+            (:hoho (setf (brain-reflect-go b) nil)
+                   (and (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)) (why b :reflect :hoho)))
+            (:late (setf (brain-reflect-go b) nil) nil)))))))
 
 ;;; ---------------------------------------------------------------- pressing buttons
 (defun ai-press (b button frames &key modded (act button))
@@ -378,6 +479,10 @@ D = the perceived distance."
       ;; weave), then the ones its opponent's kit asks of a CPU facing it (:opp-reflex)
       ((let ((h (ai-table e :reflex))) (and h (funcall h e b s d))))
       ((let ((h (getf (kit-ai (kit-of (opp-of e))) :opp-reflex))) (and h (funcall h e b s d))))
+      ;; ... and the generic keys its kit sets for a CPU facing it: an :x-axis aim (:opp-aim), a :reflectable move
+      ;; (:opp-reflect) (docs/duel/DUEL_LILLE.md §11.3; no other kit has them)
+      ((ai-opp-aim e b s d))
+      ((ai-opp-reflect e b s d))
       ;; Bankai West's reversal: the ward just blocked a hit up close (no blockstun): SHONETSU JIGOKU (L) now and then
       ((let ((p (ai-table e :ward-reversal)))
          (and p (passive-p e :ward) (<= (- *match-tick* (fighter-warded f)) 1) (< (fighter-dist f) 3.0)
@@ -392,7 +497,9 @@ D = the perceived distance."
        (why b :kikon :kikon))
       ;; the Bankai (cup 3, red, free: the kit's :bankai), before the cash-out
       ((let ((bk (ai-table e :bankai)))
-         (and bk (kit-bankai-form kit) (member st '(:idle :guard)) (bankai-allowed-p t (gauges-konpaku g)) (ai-bankai-p e b bk)))
+         (and bk (kit-bankai-form kit) (member st '(:idle :guard)) (bankai-allowed-p t (gauges-konpaku g))
+              (let ((ok (kit-bankai-ok kit))) (or (null ok) (funcall ok e)))   ; (the kit's own rule, if any: :bankai-ok)
+              (ai-bankai-p e b bk)))
        (why b :bankai :awaken))
       ;; NOMIHOSE's cash-out (the kit's :cashout): Shift+K only as a punish (he has >= :punish frames of recovery
       ;; or stun left, in the 12 m lane) or within :near m while NOME is below :below (it would drain away anyway)
@@ -483,10 +590,10 @@ D = the perceived distance."
       ;; a committed move coming: Hoho it (flash-step to spare) or guard it; a low guard gauge guards
       ;; less and steps aside instead (AI-GUARD-MULT); a Kikon rush on us red: Hoho or Step
       ((and (eq (snap-state s) :move) (member (snap-kind s) '(:quick :flash :sig :sp :breaker :kikon))
-            (< (snap-sf s) (snap-active-end s)) (< d (+ (snap-reach s) *ai-threat-margin*)))
+            (snap-live-p s) (snap-near-p s e d *ai-threat-margin*))   ; (an :x-axis line: on it, in its real window)
        (let ((chance (+ (ai-table e :guard 0.3) (if (eq (brain-intent b) :defend) 0.25 0.0))))
          (cond ((and hoho-ok (ai-hoho-spare-p (gauges-fs g) (gauges-reishi g) (gauges-reishi-max g))
-                     (>= (- (snap-s s) (snap-sf s)) 6)
+                     (>= (- (snap-s s) (snap-sf s)) 6) (not (snap-reflect-p s))   ; (a reflect is :opp-reflect's)
                      (< (brain-hoho-roll b) (if (and (eq (snap-kind s) :quick) (ai-mash-p b))   ; a masher's J: Hoho it more
                                                 (max *ai-anti-mash-hoho* (* 2 (ai-table e :hoho 0.2)))
                                                 (ai-table e :hoho 0.2))))

@@ -248,3 +248,43 @@ fell from 28% (DEVLOG §76) to 4% against the v2 HARD CPUs.
 | A `:decide` hook instead of re-timing `brain-decide-t` from `:reflex` | Rukia, Yamamoto, Ichigo | no; the learner no longer depends on the decision tick (its own clock), and `AI-DECIDE-TIME` is shared for kits that want it |
 | A string-link hook in `STRING-REFLEX` | Yamamoto, Kenpachi | no |
 | Gate on 60-80 seeds | Kenpachi, Senjumaru | this integration used 40-80 |
+
+## :x-axis lines and the keys a sniper's kit sets (2026-10-06, the Lille Barro build; DUEL_LILLE §11.3, gaps G1 / G8)
+
+The user asked for Lille Barro (DUEL_LILLE.md), whose shots are 31 m line hit windows. Every key below is inert for a move
+or a kit without it: today's five characters keep their pairings byte for byte (`simgate.py --seeds 10` and G2 identical).
+
+- **Threat perception (G1).** A move flagged **`:x-axis`** would be "in reach" everywhere (reach 31 m + 1.5 m), and an aim
+  (a `:hold` move) would be a threat from its first frame, so every CPU would guard through each aim and block the shot.
+  Every threat reader now asks `snap-live-p` / `snap-near-p` (ai.lisp). A move without the flag takes the old test, the
+  same expression (`sf < active-end`, `d < reach + margin`). A line uses:
+  - **its real threat window** (`x-live-p`, kit.lisp): a `:hold` aim only from its **lock** (`:params :lock`, else its
+    minimum hold), the move proper until its last hit window ends (`move-active-end`: SANREN's three lines), a wind-up
+    with a `:params :lock` (Trompete's f40) only from the lock;
+  - **the point-to-line distance** (`x-line-gap`): the CPU's feet against every `:cap` volume of the move, from his
+    perceived feet along his perceived yaw (a 6th volume element, when there is one, turns that line: the volley's fan).
+    On the line = within its radius + the CPU's hurt radius + `*ai-line-margin*` 0.3 m.
+  - Readers: the generic guard / Hoho test (ai.lisp), `ken-hoho-commit`, Ichigo's perfect Hoho, KESSA's bank and WHITE
+    tests, Rukia's perfect Hoho. KESSA's parry skips a line (`:ranged`: no parry catches it). `incoming-projectile-p` is
+    unchanged: it counts the `:wave` / `:fireball` hazards only, and a line is a hit window.
+- **`:reflectable`** (a move flag, with `:params (:blast f)`): the kits' timed Hohos and the generic threat Hoho leave it
+  alone, so the reflect rate is `:opp-reflect`'s alone (Ichigo's HARD perfect Hoho would otherwise reflect every one).
+- **`:opp-aim (:step 0.6 :hoho 0.25 :rush 12)`**, read off the opponent's kit (`ai-opp-aim`, after `:opp-reflex`). While he
+  holds a `:hold` move flagged `:x-axis`, one `sim-rnd01` per aim (keyed on its start tick, `brain-aim-key`), each chance
+  × `*ai-opp-diff*` (EASY 0.33 / NORMAL 1 / HARD 1.67, capped at 1; `opp-chance`):
+  - r < `:hoho`, perceived before the lock, flash-step for one: a Hoho at once;
+  - else r < `:hoho` + `:step`:
+    - within `:rush` m, the rush at once (O within `:kikon-range`, else the dash in);
+    - farther, a sideways Step off the line, away from its side (`line-off-strafe`), while it stands on it.
+    - Timing: a delay ≤ `*ai-aim-react*` 8 (HARD) Steps on the lock it perceives. NORMAL / EASY pre-Step at a second
+      roll's tick, lock + 0..`*ai-aim-pre-step*` 10, from his perceived start: they would see the lock too late.
+  - Rooted forms (zero Rukia) never answer.
+- **`:opp-reflect (:p 0.3)`**, read off the opponent's kit (`ai-opp-reflect`): one roll per `:reflectable` move at :p ×
+  difficulty (0.1 / 0.3 / 0.5). A yes counts his move frame as perceived (`snap-sf` + the delay, `reflect-action`):
+  - nothing pressed in the 6 f before the press (`*ai-reflect-quiet*`; a held guard is let go, so `fighter-guard-t`
+    restarts);
+  - a guard pressed `*ai-reflect-guard-lead*` 8 f before the blast (`fighter-guard-t` 8 at f60: the 2–10 window);
+  - where it can't guard (a ward, a form whose U is a move, guardless): a Hoho `*ai-reflect-hoho-lead*` 10 f before (f50).
+- **`:bankai-ok`** (a kit key, a function of the fighter entity): the Bankai entry reflex also asks it (NIL key: yes).
+- Host tests (duel-rules-test): `line-dist`, `x-line-gap`, `x-live-p` (no threat before the lock), `line-off-strafe`
+  (away from the line), `opp-chance`, `reflect-action`'s frames, and no form of the five has the flags or the keys.
