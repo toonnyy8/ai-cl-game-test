@@ -496,6 +496,7 @@ tell) fills the hole with light."
 (defweapon :lb-line (:length 1.0) (:solid :ink 0 (mbc mb #x3A3E48) (with-xform (mb (xform :y 0.5)) (mb-box mb 1.0 1.0 1.0))))
 (defweapon :lb-line-jade (:length 1.0) (:solid :ink 0 (mbc mb #x7FAE92) (with-xform (mb (xform :y 0.5)) (mb-box mb 1.0 1.0 1.0))))
 (defweapon :lb-line-grey (:length 1.0) (:solid :ink 0 (mbc mb #xB4B8C0) (with-xform (mb (xform :y 0.5)) (mb-box mb 1.0 1.0 1.0))))
+(defweapon :lb-line-gold (:length 1.0) (:solid :ink 0 (mbc mb #xCDB070) (with-xform (mb (xform :y 0.5)) (mb-box mb 1.0 1.0 1.0))))   ; the owl's traces
 ;; 神の喇叭 the trumpet, unit length along +Y from the mouthpiece to the bell: a long plain gold horn (no valves) flaring to
 ;; a wide bell whose ring is joined to an outer ring by four struts (the reticle again), a plume of five curved feather
 ;; blades rising (+X) near the mouthpiece
@@ -775,6 +776,37 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
 (defstrike :lb-o-stamp (8 4 18 :base :lb-o-stance)
   (0 (:arm-r :flex 160 :side 20)) (:s :snap :lb-o-stamp-hit) (:a :lb-o-stamp-hit) (:end :lb-o-stance))
 
+;;; ---- the owl on Jilliel's system (decision 36, DUEL_LILLE §23.14): functional clips. 遠 EN stands upright, the head
+;;; raised, the long arms held out low (the judge; the draw hook fans the wings out); 近 KIN is the hunched claw stance
+;;; above (the wings swept back). MUJITTAI: the arms crossed low before the column, the head bowed (the wings curl round
+;;; it). EN's SP1 裁きの光明: three chops, right, left, both, one a line (f6, f12, f18). TENSHIN: the owl crouched, the
+;;; arms swept back, the flash step (in: the wind-up first, the arms raised, 16 f; the cancel enters it at f14).
+(defpose :lb-oe-stance (:base :lb-o-stance)
+  (:root :u 0.02) (:spine :flex -4) (:head :flex -2) (:arm-r :flex 18 :side 32) (:elbow-r :flex 10)
+  (:arm-l :flex 18 :side 32) (:elbow-l :flex 10))
+(defclip :lb-oe-stance (2.6 :loop t :base :lb-oe-stance)
+  (0) (1.3 (:root :u 0.05) (:head :flex 4 :twist -8) (:arm-r :side 37) (:arm-l :side 28)))
+(defpose :lb-o-fold-pose (:base :lb-o-stance)
+  (:root :u -0.03) (:spine :flex 10) (:head :flex 24) (:arm-r :flex 34 :side 18 :twist 45) (:elbow-r :flex 118)
+  (:arm-l :flex 34 :side 18 :twist -45) (:elbow-l :flex 118))
+(defclip :lb-o-fold (2.0 :loop t :base :lb-o-fold-pose) (0) (1.0 (:root :u -0.06)))
+(defstrike :lb-oe-sabaki (6 14 11 :base :lb-oe-stance)
+  (0) (4 (:arm-r :flex 170 :side 6) (:elbow-r :flex 4) (:head :flex -10))
+  (:s :snap (:arm-r :flex 60 :side 4) (:spine :flex 16) (:root :f 0.06))
+  (10 (:arm-r :flex 40 :side 10) (:arm-l :flex 170 :side 6) (:elbow-l :flex 4) (:head :flex -10))
+  (12 :snap (:arm-r :flex 40 :side 10) (:arm-l :flex 60 :side 4) (:spine :flex 16) (:root :f 0.06))
+  (16 (:arm-r :flex 172 :side 8) (:arm-l :flex 172 :side 8) (:elbow-r :flex 4) (:elbow-l :flex 4) (:head :flex -12))
+  (18 :snap (:arm-r :flex 62 :side 6) (:arm-l :flex 62 :side 6) (:spine :flex 22) (:root :f 0.12))
+  (:a (:arm-r :flex 44) (:arm-l :flex 44) (:spine :flex 14))
+  (:end :lb-oe-stance))
+(defstrike :lb-o-tenshin (14 0 8 :base :lb-o-stance)  ; KIN -> EN: the fold, the flash step back, EN's stance
+  (0 :lb-o-fold-pose) (6 (:root :u -0.12 :pitch 10) (:spine :flex 24) (:arm-r :flex -40 :side 30) (:arm-l :flex -40 :side 30))
+  (14 :lb-oe-stance) (:end :lb-oe-stance))
+(defstrike :lb-o-tenshin-in (30 0 8 :base :lb-oe-stance)   ; EN -> KIN: the arms raised (the wind-up), the fold, the dash
+  (0) (14 (:root :u 0.06 :pitch -6) (:head :flex -10) (:arm-r :flex -24 :side 64) (:arm-l :flex -24 :side 64))
+  (16 :snap :lb-o-fold-pose) (22 (:root :u -0.12 :pitch 12) (:spine :flex 26) (:arm-r :flex -40 :side 30) (:arm-l :flex -40 :side 30))
+  (30 :lb-o-stance) (:end :lb-o-stance))
+
 ;;; ---------------------------------------------------------------- the cinematics' clips (§10)
 (defclip :lb-rise (1.0 :base :lb-w-fold-pose)          ; the revival: the headless column rising into the air
   (0 (:root :u 0.5)) (1.0 (:root :u 1.5) (:arm-r :side 50) (:arm-l :side 50)))
@@ -859,7 +891,8 @@ the line / reticle / halo / trumpet macros' numbers; [23] the first pair drawn; 
 last pass-through (fx clock), [4] the fold 0..1, [5] sealed seen (1), [6] the seal's fx clock, [7..9] the reticle's point,
 [10] the reticle shown (1 tracking, 2 locked), [11] the distance there, [12 13] the reflector's x z, [14] the eye's tick
 whose third-opening line was shown, [15] 1 while he is the owl (his hazards' gold), [16] the wings' spread 0..1 (an SP
-fans them out), [17] its joints' unfurl 0..1 (slower: they furl, then open from the root).")
+fans them out), [17] its joints' unfurl 0..1 (slower: they furl, then open from the root), [18] the owl's EN spread 0..1
+(decision 36: EN fans the wings out, KIN sweeps them back).")
 (dotimes (s 2) (setf (aref *lb-fx* (* 24 s)) -1f0 (aref *lb-fx* (+ (* 24 s) 14)) -1f0))
 (defvar *lb-hud* (make-f32 8) "The HUD pip's arguments: cx cy r, [3] the fx clock.")
 (defvar *lb-alphas* (let ((v (make-array 21))) (dotimes (i 21 v) (setf (svref v i) (f32 (/ i 20.0)))))
@@ -900,7 +933,8 @@ Y x Z, +Y scaled by S, +X and +Z by SW (default S). Single-float forms; a macro:
      (if (< %q 0f0) 0f0 (f-max 0f0 (+ (- %b) (f-sqrt %q))))))
 
 (defmacro %lb-floor-line (kind x0 z0 ux uz len w)
-  "A flat line on the floor from (X0 Z0) along the unit (UX UZ), LEN long, W wide: KIND 0 grey, 1 jade, 2 ink (its numbers
+  "A flat line on the floor from (X0 Z0) along the unit (UX UZ), LEN long, W wide: KIND 0 grey, 1 jade, 2 ink, 3 the owl's
+gold (its numbers
 go through *LB-V* [17..22]: a DEFUN-FAST call would box them)."
   `(let ((%v *lb-v*))
      (declare (type f32vec %v))
@@ -915,7 +949,8 @@ go through *LB-V* [17..22]: a DEFUN-FAST call would box them)."
           (aref m 8) 0f0 (aref m 9) 0.006f0 (aref m 10) 0f0 (aref m 11) 0f0
           (aref m 12) x0 (aref m 13) 0.022f0 (aref m 14) z0 (aref m 15) 1f0)
     (setf (aref *toon-body* 1) 0f0)
-    (case kind (0 (draw-weapon :lb-line-grey m)) (1 (draw-weapon :lb-line-jade m)) (t (draw-weapon :lb-line m)))
+    (case kind (0 (draw-weapon :lb-line-grey m)) (1 (draw-weapon :lb-line-jade m)) (3 (draw-weapon :lb-line-gold m))
+          (t (draw-weapon :lb-line m)))
     nil))
 
 (defmacro %lb-reticle (jade x z r spin)
@@ -1237,8 +1272,9 @@ gold one, 2 the owl's broken one. The alpha: *LB-V* [14]; LIFT and R go through 
   (let ((al (lb-alpha (aref *lb-v* 14))))
     (case kind
       (0 (draw-weapon :lb-halo *lb-m* :alpha al :emissive (if (< (aref *lb-v* 14) 0.99f0) *lb-glass-glow* (svref *lb-alphas* 0))))
-      (1 (draw-weapon :lb-halo-gold *lb-m* :alpha al))
-      (t (draw-weapon :lb-halo-broken *lb-m* :alpha al))))
+      (1 (draw-weapon :lb-halo-gold *lb-m* :alpha al :emissive (if (< (aref *lb-v* 14) 0.99f0) *lb-glass-glow* (svref *lb-alphas* 0))))
+      (t (draw-weapon :lb-halo-broken *lb-m* :alpha al
+                                      :emissive (if (< (aref *lb-v* 14) 0.99f0) *lb-glass-glow* (svref *lb-alphas* 0))))))
   nil)
 
 ;;; ---------------------------------------------------------------- the ㄇ legs (KIN and the owl) and the owl's extra arms
@@ -1424,7 +1460,19 @@ his halo cracking (gold shards); the broken halo stays (LILLE-DRAW draws it). Lo
 (defparameter *lb-spread-clips* '(:lb-w-aim :lb-w-fire :lb-w-nijushi :lb-o-trompete)
   "The clips (besides every :sp and :kikon move) that fan the wings out (the volley, the beam, Trompete).")
 (defmacro lb-jilliel-form-p (form) `(member ,form '(:jilliel :jilliel-mujittai :jilliel-kin :jilliel-kin-mujittai)))
-(defmacro lb-mujittai-p (form) `(member ,form '(:jilliel-mujittai :jilliel-kin-mujittai)))
+(defmacro %lb-owl-p (form) "The owl's four forms (decision 36)." `(member ,form '(:shin :shin-mujittai :shin-kin :shin-kin-mujittai)))
+(defmacro lb-mujittai-p (form) `(member ,form '(:jilliel-mujittai :jilliel-kin-mujittai :shin-mujittai :shin-kin-mujittai)))
+(defmacro %lb-stance-fx! (e side stance tm rdt)
+  "MUJITTAI's look memory for SIDE (Jilliel's and the owl's): a hit passed through (the guard gauge dropped in the
+stance: [3] the ripple's start), [2] the gauge seen, [4] the fold 0..1 (5 / s). The gauge lookup only in the stance."
+  `(progn
+     (if ,stance
+         (let ((%gg (gauges-gg (gauges ,e))))
+           (declare (single-float %gg))
+           (when (< %gg (- (lb-fxs ,side 2) 0.5f0)) (setf (lb-fxs ,side 3) ,tm))
+           (setf (lb-fxs ,side 2) %gg))
+         (setf (lb-fxs ,side 2) 100f0))
+     (setf (lb-fxs ,side 4) (if ,stance (f-min 1f0 (+ (lb-fxs ,side 4) (* 5f0 ,rdt))) (f-max 0f0 (- (lb-fxs ,side 4) (* 5f0 ,rdt)))))))
 
 (defun-fast lille-draw (e rdt)
   "His kit's :draw hook (after his body; cosmetic): the base form's eye opening and its aim line / reticle; Jilliel's eight
@@ -1443,16 +1491,16 @@ or a gold look plays; a fourth in MUJITTAI)."
          (cj (lb-cine-frame e 'lb-jilliel-cine)) (cr (lb-cine-frame e 'lb-revive-cine))
          (ct (lb-cine-frame e 'lb-trompete-cine)) (ck (lb-cine-frame e 'lb-jilliel-kikon-cine))
          (look (cond ((and cj (< (the fixnum cj) 92)) :base) ((and cr (< (the fixnum cr) 66)) :revive)
-                     ((lb-jilliel-form-p form) :jilliel) ((eq form :shin) :shin) (t :base))))
+                     ((lb-jilliel-form-p form) :jilliel) ((%lb-owl-p form) :shin) (t :base))))
     (declare (fixnum side) (type f32vec jm v) (single-float tm))
-    (setf (lb-fxs side 15) (if (eq form :shin) 1f0 0f0))   ; (his hazards' looks read it: gold or jade)
+    (setf (lb-fxs side 15) (if (%lb-owl-p form) 1f0 0f0))   ; (his hazards' looks read it: gold or jade)
     (let ((spread (and mv (or (member (mv-kind mv) '(:sp :kikon)) (member (mv-clip mv) *lb-spread-clips*)))))
       (setf (lb-fxs side 16)                             ; the SPs fan the wings out (0.12 s either way) ...
             (if spread (f-min 1f0 (+ (lb-fxs side 16) (* 8f0 rdt))) (f-max 0f0 (- (lb-fxs side 16) (* 8f0 rdt))))
             (lb-fxs side 17)                             ; ... and their joints furl then unfurl from the root (decision 32)
             (if spread (f-min 1f0 (+ (lb-fxs side 17) (* 2.2f0 rdt))) (f-max 0f0 (- (lb-fxs side 17) (* 3f0 rdt))))))
     (setf (aref *lb-wf* 42) (lb-fxs side 17))
-    (%lb-drive! f mv rdt (eq form :shin))                ; the joints' strike drive (cosmetic: the move's frame)
+    (%lb-drive! f mv rdt (%lb-owl-p form))               ; the joints' strike drive (cosmetic: the move's frame)
     (setf (aref v 28) (lb-fxs side 16)
           (aref v 3) (- (aref *toon-body* 1)             ; his body's feet height (DRAW-BODY's) less the form's drawn
                         (the single-float (f32 (body-lift (fighter-kit f) (model-body m))))))   ; lift: the floor
@@ -1466,13 +1514,7 @@ or a gold look plays; a fourth in MUJITTAI)."
         (:base (%lb-eye-look e m st side) (%lb-aim-look e f side))
         ((:jilliel :revive)
          (let ((stance (lb-mujittai-p form)))
-           (when stance                                  ; a hit passed through: the guard gauge dropped in the stance
-             (let ((gg (gauges-gg (gauges e))))
-               (declare (single-float gg))
-               (when (< gg (- (lb-fxs side 2) 0.5f0)) (setf (lb-fxs side 3) tm))
-               (setf (lb-fxs side 2) gg)))
-           (unless stance (setf (lb-fxs side 2) 100f0))
-           (setf (lb-fxs side 4) (if stance (f-min 1f0 (+ (lb-fxs side 4) (* 5f0 rdt))) (f-max 0f0 (- (lb-fxs side 4) (* 5f0 rdt)))))
+           (%lb-stance-fx! e side stance tm rdt)        ; (a hit passed through, the fold)
            (let* ((rip (- tm (lb-fxs side 3))) (k (if (and cr (< (the fixnum cr) 30)) 0.8f0 (lb-fxs side 4)))
                   (gold (if cr (f-clamp (/ (- (i->f cr) 30f0) 30f0) 0f0 1f0) 0f0))
                   (lit (or (and mv (eq (mv-name mv) :lb-nijushi) (eq (fighter-phase f) :main) (< (fighter-sf f) (mv-s mv)))
@@ -1497,15 +1539,25 @@ or a gold look plays; a fourth in MUJITTAI)."
                      (declare (single-float u))
                      (when (> u 0f0) (%lb-halo jm (* 16 (ji :head)) 0 0.52f0 (* 0.48f0 u))))
                    (%lb-halo jm (* 16 (ji :head)) 0 (+ 0.52f0 (* 0.02f0 (f-sin (* 2f0 tm)))) 0.48f0))))))
-        (:shin
-         (let ((grow (if cr (f-clamp (/ (- (i->f cr) 66f0) 30f0) 0.05f0 1f0) 1f0)))
+        (:shin                                           ; the owl (decision 36: Jilliel's four forms, the owl's look)
+         (let* ((grow (if cr (f-clamp (/ (- (i->f cr) 66f0) 30f0) 0.05f0 1f0) 1f0))
+                (stance (lb-mujittai-p form)) (en (member form '(:shin :shin-mujittai))))
            (declare (single-float grow))
-           (setf (aref v 0) 0f0 (aref v 1) 0.3f0 (aref v 2) 0.13f0 (aref v 11) 0f0 (aref v 12) 0f0 (aref v 13) tm
-                 (aref v 14) 1f0 (aref v 15) 9f0 (aref v 23) 0f0 (aref v 16) (+ 0.3f0 (* 0.7f0 grow)))
+           (%lb-stance-fx! e side stance tm rdt)          ; MUJITTAI: the wings curl round the column, ghostly
+           ;; EN vs KIN: EN fans its eight wings out (a standing spread, [18] 0..1 at 3 / s), KIN sweeps them back
+           (setf (lb-fxs side 18) (if en (f-min 1f0 (+ (lb-fxs side 18) (* 3f0 rdt))) (f-max 0f0 (- (lb-fxs side 18) (* 3f0 rdt)))))
+           (let ((rip (- tm (lb-fxs side 3))))
+             (declare (single-float rip))
+             (setf (aref v 0) 0f0 (aref v 1) 0.3f0 (aref v 2) 0.13f0 (aref v 11) (lb-fxs side 4)
+                   (aref v 12) (if (< rip 0.5f0) (* 14f0 (- 1f0 (* 2f0 rip))) 0f0) (aref v 13) tm
+                   (aref v 14) (if stance 0.7f0 1f0) (aref v 15) 9f0 (aref v 23) 0f0 (aref v 16) (+ 0.3f0 (* 0.7f0 grow))
+                   (aref v 28) (f-max (aref v 28) (* 0.6f0 (lb-fxs side 18)))))
            (%lb-wings jm (* 16 (ji :chest)) *lb-wings-owl* 8 2 side)
            (%lb-halo jm (* 16 (ji :head)) (if (and st (lbs-sealed st)) 2 1) 0.76f0 (* 0.13f0 grow))
            (let ((tsf (cond (ct (if (< 8 (the fixnum ct) 120) (- (the fixnum ct) 8) -1))
                             ((and mv (eq (mv-name mv) :lb-trompete) (eq (fighter-phase f) :main)) (fighter-sf f))
+                            ((and mv (eq (mv-name mv) :lb-oe-trompete) (eq (fighter-phase f) :main))   ; (EN's: 3 x)
+                             (* 3 (the fixnum (fighter-sf f))))
                             (t -1))))
              (declare (fixnum tsf))
              (when (<= 10 tsf 89)
@@ -1534,6 +1586,9 @@ muzzle cross once the line is locked, nothing while it tracks (the line is the t
   nil)
 
 ;;; ---------------------------------------------------------------- his hazards' look (kind :lb-fx, :lb-sabaki)
+(defmacro %lb-judge-speed () "The owl's materialised trace (裁きの光明, decision 36): its gold blasts erupt along the line at
+this many m/s (31 m in 8 f: the hit is the whole line at once, the look follows it fast; a literal: 0 B) ..." 240f0)
+(defmacro %lb-judge-burn () "... each point burning this many seconds." 0.3f0)
 (defun-fast lb-look (hz rdt)
   "His hazards' draw function (HAZARD-DRAW): a shot's line at the volume's height (jade for an aimed one, ink for a snap
 shot; a white core and the muzzle's cross flash on its first frames), the volley's five, a beam (a wide toon band, jade or
@@ -1547,7 +1602,8 @@ thin gold sheet under them). Fading over the hazard's life. 0 B."
              (age (hazard-age hz)) (fade (f-max 0f0 (- 1f0 (/ (i->f age) (i->f (max 1 (hazard-life hz)))))))
              (owl (> (lb-fxs (if (eql (hazard-owner hz) *p1*) 0 1) 15) 0.5f0))   ; (no lookup: LILLE-DRAW's flag)
              (kind (lbh-kind d)) (len (hazard-size hz))   ; (the struct's float slots would box through an accessor
-             (w (case kind (:beam 1.2f0) (:lane 0.5f0) (:sabaki (the single-float (f32 *lb-sabaki-width*))) (t 0.05f0)))   ; call)
+             (w (case kind (:beam 1.2f0) (:lane 0.5f0) (:sabaki (the single-float (f32 *lb-sabaki-width*)))   ; call)
+                      (:judge (if (eq (lbh-lock d) :thick) 1.2f0 0.6f0)) (t 0.05f0)))
              (wall (%lb-wall x z ux uz)) (l (f-min len wall)) (sd (i->f (mod age 97))))
         (declare (single-float x z yaw ux uz fade len w wall l sd) (fixnum age))
         (case kind
@@ -1578,6 +1634,25 @@ thin gold sheet under them). Fading over the hazard's life. 0 B."
                         1f0 (- -32f0 sd) 0.05f0 (toon-a +pal-hit+ (* 0.95f0 fade)) 1f0 (- -32f0 sd) 0.05f0 (toon-a +pal-hit+ (* 0.9f0 fade))
                         0f0 0f0 :segs 3 :mode :toon)))
           (:lane (%lb-floor-line 1 (+ x (* 0.6f0 ux)) (+ z (* 0.6f0 uz)) ux uz (- l 0.6f0) (* w fade)))
+          (:judge                                      ; the owl's trace materialised (decision 36): 裁きの光明, gold blasts
+           (let* ((a2 (/ (i->f age) 60f0)) (sp (%lb-judge-speed))   ; erupting along the ground to the wall
+                  (from (f-max 0.6f0 (* sp (- a2 (%lb-judge-burn))))) (to (f-min l (+ 0.6f0 (* sp a2)))))
+             (declare (single-float a2 sp from to))
+             (when (> to from)
+               (fx-ribbon (+ x (* from ux)) 0.2f0 (+ z (* from uz)) (* (- to from) ux) 0f0 (* (- to from) uz) (* 0.2f0 w) (* 0.12f0 w)
+                          1f0 (- -43f0 sd) 0.05f0 (toon-a +pal-gold+ 0.95f0) 0.6f0 (- -43f0 sd) 0.05f0 (toon-a +pal-gold+ 0.8f0) 0f0 0f0
+                          :segs 4 :mode :toon)
+               (do ((r (+ 1f0 (* 1.5f0 (i->f (f->i (/ from 1.5f0))))) (+ r 1.5f0))) ((> r to))
+                 (declare (single-float r))
+                 (let* ((h (* (+ 1.2f0 (* 0.9f0 w)) (f-min 1f0 (/ (- to r) 2.5f0)) (f-min 1f0 (* 0.4f0 (- r from -0.6f0)))))
+                        (bx (+ x (* r ux))) (bz (+ z (* r uz))))
+                   (declare (single-float h bx bz))
+                   (when (> h 0.05f0)
+                     (%tongue bx 0f0 bz 0f0 h 0f0 (* 0.4f0 w) +pal-gold+ 0.95f0 (+ r (* 7f0 sd)) (* 3f0 r) 0.1f0))))
+               (when (< age 3)                          ; the first frames: a white core along the line
+                 (fx-ribbon (+ x (* 0.6f0 ux)) 0.25f0 (+ z (* 0.6f0 uz)) (* (- l 0.6f0) ux) 0f0 (* (- l 0.6f0) uz) (* 0.08f0 w) (* 0.08f0 w)
+                            1f0 (- -44f0 sd) 0f0 (toon-a +pal-hit+ 0.9f0) 1f0 (- -44f0 sd) 0f0 (toon-a +pal-hit+ 0.8f0) 0f0 0f0
+                            :segs 2 :mode :toon)))))
           (:sabaki
            (let* ((a2 (/ (i->f age) 60f0)) (r0 (the single-float (f32 *lb-sabaki-from*))) (sp (the single-float (f32 *lb-sabaki-speed*)))
                   (from (f-max r0 (* sp (- a2 (/ (i->f (the fixnum *lb-sabaki-life*)) 60f0))))) (to (f-min len (+ r0 (* sp a2)))))
@@ -1664,7 +1739,7 @@ sealed): a piece out, an arc dropped, dull."
   (let ((e (lb-side-of g)))
     (case (kit-form kit)
       (:base (svref *lb-me-strings* (max 0 (min 3 (lbs-eyes (lb e))))))
-      (:shin (if (lbs-sealed (lb e)) "SEALED" "HALO"))
+      ((:shin :shin-mujittai :shin-kin :shin-kin-mujittai) (if (lbs-sealed (lb e)) "SEALED" "HALO"))
       (t "MUJITTAI"))))
 
 (defun-fast %lb-eye-row (n right)
@@ -1703,7 +1778,7 @@ opening's line as a brush column at his side, and a human's distance tag on the 
            (setf (lb-fxs side 14) (f32 (lbs-eye-t st))
                  (svref *side-caps* side) (make-bcap "三度も眼を開かされるとは" :reading "SANDO MO ME WO HIRAKASARERU TO WA"
                                                      :layout :callout :side side :secs 2.4)))))
-      (:shin
+      ((:shin :shin-mujittai :shin-kin :shin-kin-mujittai)
        (%lb-halo-slot right (lbs-sealed st))
        (when lx
          (hud-text (if (lbs-sealed st) "SEALED" "HALO") lx ly ls (if (lbs-sealed st) *c-lb-dull* *c-lb-gold*)

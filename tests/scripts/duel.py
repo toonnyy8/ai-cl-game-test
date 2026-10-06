@@ -538,7 +538,8 @@ write("ichigo-portrait", ichigo_script("-p", True))
 # screen (the roster cycled to him: 5 ArrowRight), then human P1 Lille vs an idle Kenpachi (debug 79000+k, LILLE-TEST): the
 # base form (stance, J1, K1, J3, K3; the shooting stance from 14 m and its charged shot, HOSHA, TAISHA (round 2, §23.1), the
 # HIRENKYAKU dash; SANREN, HIRENKYAKU), JILLIEL EN (79002: stance, J1 and K1 laying traces, TENSHIN into KIN, NIJUSHI-KO),
-# MUJITTAI (79003), KIN (79014), the owl (79004: stance, J1, SABAKI, MISUJI, Trompete), the revive (79005: P, 3 Konpaku)
+# MUJITTAI (79003), KIN (79014), the owl (decision 36: 79004 EN: stance, K + J laying gold traces, L materialising them as
+# 裁きの光明 into KIN, SP1 / SP2 in EN; 79017 its MUJITTAI; 79016 KIN: stance, J1, SP1 裁きの光明, Trompete), the revive (79005: P, 3 Konpaku)
 # and the two reflects (79007 guard, 79008 Hoho). Shots tests/shots/duel-lille-*.png (review stills; rework R, DUEL_LILLE §22).
 def lille_script():
     def rs(t, n): return {"at": round(t, 2), "shot": f"{SHOTS}lille-{n}.png"}
@@ -578,18 +579,26 @@ def lille_script():
     ev.append(rs(t, "mujittai")); t += 0.4
     ev += [cmd(t, 79014)]; t += 1.0
     ev.append(rs(t, "kin-stance")); t += 0.4
-    ev += [cmd(t, 79004)]; t += 1.0
-    ev.append(rs(t, "owl-stance")); t += 0.3
+    ev += [cmd(t, 79004)]; t += 1.0                     # the owl on Jilliel's system (decision 36, §23.14): EN
+    ev.append(rs(t, "owl-en-stance")); t += 0.3
+    ev += tap(t, "KeyK", 0.06) + tap(t + 0.35, "KeyJ", 0.06) + [rs(t + 0.8, "owl-en-traces")]
+    ev += tap(t + 1.2, "KeyL", 0.06) + [rs(t + 1.25, "owl-judge"), rs(t + 1.32, "owl-judge-b"), rs(t + 1.6, "owl-kin")]; t += 2.6
+    ev += [cmd(t, 79004), cmd(t + 0.05, 2108)]; t += 0.4
+    ev += stap(t, "KeyK"); ev += [rs(t + 0.35, "owl-en-sabaki")]; t += 1.2
+    ev += [cmd(t, 79004), cmd(t + 0.05, 2108)]; t += 0.4
+    ev += stap(t, "KeyL"); ev += [rs(t + 0.25, "owl-en-trompete")]; t += 1.2
+    ev += [cmd(t, 79017)]; t += 1.0
+    ev.append(rs(t, "owl-mujittai")); t += 0.4
+    ev += [cmd(t, 79016)]; t += 1.0
+    ev.append(rs(t, "owl-kin-stance")); t += 0.3
     ev += [cmd(t, 2393)]; t += 0.3
     ev += tap(t, "KeyJ", 0.06); ev.append(rs(t + 0.14, "o-j1")); t += 1.2
-    ev += [cmd(t, 79004)]; t += 0.4
-    ev += tap(t, "KeyL", 0.06); ev += [rs(t + 0.35, "sabaki"), rs(t + 0.55, "sabaki-b")]; t += 1.6
-    ev += [cmd(t, 79004), cmd(t + 0.05, 2108)]; t += 0.4
-    ev += stap(t, "KeyK"); ev += [rs(t + 0.5, "misuji")]; t += 1.6
-    ev += [cmd(t, 79004), cmd(t + 0.05, 2108)]; t += 0.4
+    ev += [cmd(t, 79016), cmd(t + 0.05, 2108)]; t += 0.4
+    ev += stap(t, "KeyK"); ev += [rs(t + 0.5, "sabaki")]; t += 1.6
+    ev += [cmd(t, 79016), cmd(t + 0.05, 2108)]; t += 0.4
     ev += stap(t, "KeyL"); ev += [rs(t + 0.8, "trompete-tell"), rs(t + 1.1, "trompete")]; t += 2.6
     ev += [cmd(t, 79005)]; t += 0.6
-    ev += tap(t, "KeyP", 0.06); ev += [rs(t + 1.0, "revive-cine")]; t += 3.0
+    ev += tap(t, "KeyP", 0.06); ev += [rs(t + 1.0, "revive-cine")]; t += 3.4   # (the cinematic's 180 f end before 79007)
     ev += [cmd(t, 79007)]; t += 1.2; ev.append(rs(t, "reflect-guard")); t += 1.0
     ev += [cmd(t, 79008)]; t += 1.2; ev.append(rs(t, "reflect-hoho")); t += 1.0
     ev.append(cmd(t, 2107))
