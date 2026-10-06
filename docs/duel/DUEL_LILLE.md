@@ -2191,3 +2191,73 @@ The user: 「然後幫我依據 @docs/guides/DREAM_RSI.zh-TW.md 的 AI 開發經
    traces with the opponent on a line → TENSHIN → J; a KIN string done → TENSHIN out), assisted presses ×0.8 as always;
    then the full gate (simgate, A/B, assistgate, the learning gate, host tests, G2, build).
 
+### 24.2 The frozen evaluator (phase 0, 2026-10-06)
+
+`tools/aieval.py --char 5` (the other characters' scoring unchanged: `--char 0..4` at 4 seeds give the same JSON as
+before, part for part), the workspace `docs/research/lille-ai-drsi/` (README there). **The freeze commit is the commit
+that adds this subsection** (the scripts find it as the last commit touching `tools/aieval.py` and the workspace's
+`baseline/drift-ref.json`; `FREEZE=<hash>` overrides).
+
+**Score** = 0.4 strength + 0.2 masher + 0.4 signature for Lille (the user: 「風格偏重 0.4/0.2/0.4」); the others keep
+0.6 / 0.2 / 0.2. 0 when a gate fails.
+- **strength**: HARD Lille vs each of the five other HARD CPUs, both seats; his win share. **The mirror is not played**
+  (as for every character: Lille vs Lille is 0.5 by symmetry and tells nothing).
+- **masher**: HARD Lille as P2 vs the button-masher bot as P1, each of the six characters (his own included: the masher
+  plays none of his CPU), N × 4 / 5 seeds each; his win share (his seat is always P2: the 2026-10-02 seat fix).
+- **signature**: the share of his dealt damage (the written damage of his hit lines, strength runs) on the whitelist:
+  - by name: the materialised traces (`LB-TRACE`, Jilliel's and the owl's), HOSHA's bullets (`LB-K-J`), TAISHA
+    (`LB-K-K`), the SPs: SANREN (`LB-SANREN`), the base SP2 HIRENKYAKU (`LB-HIREN`: an SP and an X-Axis shot; the plan's
+    list didn't name it, the lead's call), NIJŪSHI-KŌ (`LB-NIJUSHI`), 審判光明 / 裁きの光明 (the owl KIN's ground lines,
+    hazard `LB-SABAKI`), Trompete (`LB-TROMPETE`; EN's SP1 / SP2 lay traces, their damage is `LB-TRACE`'s), the Kikons
+    (`LB-KIKON`, `LB-W-KIKON`, `LB-O-KIKON`);
+  - by a log tag the sim writes after the hit (`Px lb-sig TAG`, `LB-SIG-LOG` in lille.lisp, only while `*COMBAT-LOG*` is
+    on): `charged` (the stance's X-Axis shot fired charged; the quick shot is not his signature), `hosha-link` (the
+    J1 / K1 a HOSHA hit linked into; only that link, not the string after it), `trace-combo` (any J / K hit in a combo a
+    materialised trace opened; a combo's opener is its first hit that isn't a laying shot, so the via-J switch's nick
+    → traces → TENSHIN → J counts);
+  - never: the Breakers, a plain J / K string, the quick shot, the Hoho's counter strike; the laying shot `LB-NICK`
+    (1 damage) counts on neither side. The JSON's `sig_by` breaks his damage down by these categories.
+  - The tag is log-only: no sim state reads `lbs-sig-origin`; `simgate.py --seeds 10 --summary` (all 21 pairings, 42
+    lines) is byte-identical before and after it.
+- **pacing**: NORMAL Lille (P1) vs each other character: every match a K.O., median ≤ 220 s, vs Rukia and vs Ichigo
+  ≤ 240 s (the accepted exceptions, §23.22). A K.O. is read off the RESULTS line's Konpaku for him: the old rule ("a
+  match under 299.5 s") counts his K.O.s past 300 s of match ticks (the cinematics run in them) as time-ups; the other
+  characters keep the old rule (frozen 2026-10-02; the same latent bug, a follow-up for their next search).
+- **drift**: NORMAL Lille vs each other NORMAL CPU, both seats (the pacing runs are the P1 half); his win share more
+  than 0.05 from the frozen baseline's at the same seed count (`baseline/drift-ref.json`: 40 seeds 0.4275, 80 seeds
+  0.4188) → 0; no reference for the seed count → 0.
+- **Seeds**: fixed, 1..N; `--seeds` default 20; the cells compare at 40, the final pick at 80. `--pace-seeds` /
+  `--drift-seeds` (a cheaper split) exist but aren't needed (below). `--write-drift-ref` wrote the references.
+
+**Timings** (this machine, 4 cores): one `--char 5 --seeds 40` eval **318 s at -j 2, 163 s at -j 4** (the same JSON);
+two cells' evals at once, -j 2 each, with their native builds (~3 min): **503 / 530 s**; 80 seeds at -j 4: 315 s. So
+no split: every part at 40 seeds.
+
+**The baseline** (the freeze, 40 seeds; `baseline/score.json`): **score 0.4769** = strength **0.140**, masher
+**1.000**, signature **0.552**; pacing LY 175.0 / LK 176.0 / LR 223.5 (cap 240) / LI 217.1 (cap 240) / LS 205.3 s, all
+K.O.; drift 0.4275 (Y 42, K 29, R 29, I 37, S 34 of 80). His damage: plain J / K 37 %, trace combos 19 %, traces 14 %,
+the Kikons 12 %, Breaker 4 %, counters 3 %, HOSHA 2.5 % + its links 1.8 %, NIJŪSHI-KŌ 2 %, HIRENKYAKU 1.6 %, the charged
+shot 1.2 %, the quick shot 1 %, SANREN 0.7 %, TAISHA 0.4 %, Trompete 0.3 %. At 80 seeds (`score80.json`): 0.4836 =
+0.154 / 1.000 / 0.555, drift 0.4188.
+
+**Hand-made variants** (40 seeds, the parts move as they should):
+
+| Variant | Score | Strength | Masher | Signature | Drift | What moved |
+|---|---|---|---|---|---|---|
+| baseline | 0.4769 | 0.140 | 1.000 | 0.552 | 0.4275 | |
+| never switches modes (EN never TENSHINs in, KIN never out) | **0** | 0.072 | 0.922 | 0.316 | **0.2925 (fail)** | traces 14 → 2.5 %, trace combos 19 → 2.7 % (MUJITTAI's exit still TENSHINs), plain J / K 37 → 58 % |
+| never uses the shooting stance (base `:sig` out of the bands, `:l-after-k` 0) | 0.4729 | 0.133 | 1.000 | 0.550 | 0.4075 | charged shot, HOSHA, its links, TAISHA, the quick shot → 0; the rest's shares up |
+
+Read: the base stance is a small share of his damage as shipped (~6 %); the signature lives in Jilliel's traces and
+their combos. The masher part is saturated (1.000): it adds a constant 0.2 unless a cell breaks it. The strength part
+is the room (0.14 at HARD, while his NORMAL drift share is 0.43). LS's NORMAL median (205 s) is within 15 s of its cap:
+a pacing risk for any cell that slows him down.
+
+**The loop, dry-run** (on a throwaway copy of the workspace): `plan --beta 0.6` → `step.sh next` wrote b0a0 / b1a0's
+briefs; `step.sh done` with the baseline file as b0a0 re-measured it in the rescore worktree at the freeze (host test,
+then the eval: 492 s) as **0.4769, the same JSON**, recorded `ok`; the never-switch variant as b1a0 was recorded score 0,
+`--fail-class correctness`, "gate failed: drift"; the no-stance variant failed the frozen host test (a check pins the
+stance in every base band) and was recorded `correctness`. The frozen host test pins his CPU's shipped keys and values
+(the eye, the stance, the switch tables, the flash-step reserve 10, the stance's branch table): the brief lists them;
+cells keep them and route new behaviour through new keys and functions.
+

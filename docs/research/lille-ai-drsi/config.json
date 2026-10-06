@@ -1,0 +1,22 @@
+{
+  "baseline_score": 0.4769,
+  "beta1": 0.0,
+  "beta2": 0.0,
+  "beta_grid": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "eval_command": "python3 tools/aieval.py --char 5 --seeds 40 -j 2",
+  "fallback_branch_count": 4,
+  "fallback_refine_count": 2,
+  "hard_max_branch_count": 32,
+  "hard_max_refine_count": 32,
+  "higher_is_better": true,
+  "lambda": 0.25,
+  "task": "SOUL DUEL Lille CPU AI (duel/lisp/lille.lisp :ai tables and CPU reflexes), scored by tools/aieval.py --char 5 --seeds 40 at the freeze commit (opponents: the five other CPUs as they read there; DUEL_LILLE \u00a724.2)",
+  "workers": 2
+}

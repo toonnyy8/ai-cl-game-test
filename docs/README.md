@@ -71,3 +71,4 @@ Claude skill 在 repo 根目錄的 `skills/`（連結到 `~/.claude/skills/`）�
 | [ng4-notes.md](research/ng4-notes.md) | 《忍者外傳 4》玩法研究筆記，附來源和可信度標記 |
 | [tybw-characters/report.zh-TW.md](research/tybw-characters/report.zh-TW.md) | 血戰篇四角色（劍八卍解、二刀一護、露琪亞、千手丸）的格鬥設計研究報告，附來源；`notes/` 是各角色的研究筆記（英文；`lille_barro.md` 是利傑巴羅，2026-10-06） |
 | [ai-v2-drsi/](research/ai-v2-drsi/) | AI v2 的 dream-rsi 工作區：五個角色的 baseline、兩輪 cell（brief、proposal、lisp、分數）、policy 與 trace，加上 coordinator 腳本（`brief.py`、`step.sh`、`rescore.sh`） |
+| [lille-ai-drsi/](research/lille-ai-drsi/) | 利傑巴羅自適應 AI 的 dream-rsi 工作區（DUEL_LILLE §24）：凍結的 baseline（lille.lisp、proposal、40／80 場分數、NORMAL 漂移參考值）、drsi 設定與 policy，加上 coordinator 腳本（`brief.py`、`step.sh`、`rescore.sh`）；見其 README |
