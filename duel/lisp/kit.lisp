@@ -479,10 +479,14 @@ child's keys win, :commands merge per command, :strings add. Keys:
                                      a hit it dealt / took), :parried (e att: a catch by its parry), :draw (e rdt: looks
                                      on the posed body), :hud-guard (drawn over its guard bar), :deck (e x y d: the
                                      one-hand thumb ring), :settled (e lost left: a Kikon / Soul Break settled
-                                     on it, SETTLE-KONPAKU)
+                                     on it, SETTLE-KONPAKU), :body-alpha (e: the body's draw alpha, a constant
+                                     float: a see-through form), :charge (e rdt: drawn instead of the fire charge
+                                     look of a held move)
   :endless-form FORM                 ENDLESS: staying awakened starts the next stage in FORM, its meter at FORM's :start
                                      (docs/duel/DUEL_ENDLESS.md §4)
-  :u-tag STRING                      the HUD's tag for U   :meter (:name :max :temp t)  Rukia's cold gauge (combat.lisp
+  :u-tag STRING                      the HUD's tag for U   :meter (... :draw fn :label fn :bankai-prompt (:key :right
+                                     :pad :one-hand strings :rgb colour))  a character's own meter row / portrait label /
+                                     BANKAI prompt words   :meter (:name :max :temp t)  Rukia's cold gauge (combat.lisp
                                      TEMP-STEP: the kit meter holds the cold C, the band is the form, rules TEMP-BAND)
   :warm n  :cold (cmd n ...)         a :temp form's warming per second; the cold each command spends (L refused without)
   :field (:r :away :step)            the cold field: the opponent within :r m moves away from her x :away, Steps away x :step

@@ -452,7 +452,7 @@ lock (its :lock), then the line is committed; from *LB-AIM-CANCEL* until the loc
   (let* ((f (fighter e)) (lock (move-param e :lock)) (h (fighter-hold f)))
     (when (eq (fighter-phase f) :hold)
       (when (= h 1) (lb-count e :aimed))
-      (when (= h lock) (lb-count e :locked) (emit :sfx :clang e))
+      (when (= h lock) (lb-count e :locked) (emit :sfx :lb-lock e))
       (if (lb-tracking-p h lock)
           (turn-to-opp e f (track-step *lb-aim-track*)))
       (when (and (lb-aim-cancel-p h lock) (zerop (fighter-lock f)))
@@ -472,7 +472,7 @@ window's 40 + LB-X-BONUS), the line's look, the pacing log."
     (setf (fighter-dmg-bonus f) (lb-x-bonus d))
     (lb-count e (lb-band-key "FIRED" d))
     (lb-spawn-look e :shot 31.0 0.05 t)
-    (emit :sfx :rift-cut e)))
+    (emit :sfx :lb-crack e)))
 
 (defun lb-x-snap (e)
   "K -> L's snap shot (no aim): its look."
@@ -545,7 +545,7 @@ LB-LOOK, lille-art.lisp)."
 (defun lb-trompete-tell (e)
   "Trompete f0: the fist at the beak, the trumpet forming overhead, the rising pitch (the tell)."
   (setf (model-super (model e)) 1.0)
-  (emit :sfx :awaken-rise e))
+  (emit :sfx :lb-trumpet e))
 
 ;;; ---------------------------------------------------------------- SABAKI NO KOMYO / MISUJI (§6.2)
 (defun lb-sabaki (e)
@@ -940,55 +940,164 @@ on Trompete's f54 and holds it, or Hoho on f52 (pressed at the end of the step b
         (t (log-msg "duel lille: no debug command ~d" c))))
 (pushnew '(79000 79999 lille-debug) *char-debug* :test #'equal)
 
-;;; ================================================================ cinematics: placeholders (batch 3: DUEL_LILLE §10)
-;;; Every shot SHOT-ON its subject; the black card and a white back-rim (he wears white).
-(defcine lb-jilliel-cine (a v :len 120 :hold 60)
-  "The awakening 神の裁き JILLIEL (§10.1; placeholder): the eye, the card, the winged column."
-  (at 0 (cine-clip a (kit-stance (kit-of a)) :blend 3) (cine-clip v (kit-stance (kit-of v)) :blend 6)
-      (hold-both a v 10) (impact-frame :negative 2) (silence 10))
-  (at 10 (shot-on a 15 1.6 1.6 :look 1.7) (lens 70) (play-sfx :awaken-rise :pitch 0.8))
-  (at 40 (card :black a) (back-rim 50) (shot-on a 20 4.4 0.9 :look 1.4 :off 0.9) (lens 42)
-      (caption "神の裁き" :reading "JILLIEL" :sub "VOLLSTANDIG" :side 0) (play-sfx :awaken-boom))
-  (at 90 (card nil) (caption-exit) (shot-on a 170 6.0 0.4 :look 2.0) (lens 55)))
+;;; ================================================================ batch 3b (2026-10-06): the HUD hooks, the cinematics, stills
+;;; (DUEL_LILLE §9, §10, "Built: art, HUD, cinematics"). Cosmetic only: the art, the HUD and the cinematics' looks live in
+;;; lille-art.lisp; this section hangs them on his kits (after DEFKIT) and holds the five scripts.
 
-(defcine lb-kikon-cine (a v :len 120 :hold 60)
-  "The base Kikon 万物貫通 (§10.2; placeholder): the reticle, the shot, the souls."
-  (at 0 (face-each-other a v) (cine-clip a :lb-fire :blend 2) (cine-clip v :sh-bound :blend 4)
-      (hold-both a v 10) (impact-frame :negative 2) (play-sfx :rift-cut))
-  (at 10 (card :black a) (back-rim 40) (shot-on a 20 4.2 0.9 :look 1.25 :off 0.9) (lens 42)
-      (caption "万物貫通" :reading "THE X-AXIS" :sub "KIKON" :side 0))
-  (at 60 (card nil) (caption-exit) (shot-on v 35 3.2 1.3 :look 1.15) (lens 55) (cine-clip v :sh-kikon-victim :blend 4))
-  (at 80 (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))
-      (impact-frame :negative 2) (play-sfx :konpaku-shatter) (shake 0.2 0.3))
-  (at 96 (shot-pair a v 1 7.0 2.2) (lens 50)))
+;; his kit meter (hud.lisp: the :draw row, the portrait :label, the BANKAI prompt renamed 「P  REVIVE」 in gold) and the HUD /
+;; look hooks (:hud-guard MUJITTAI's jade outline, :deck the one-hand ring's eye ticks, :body-alpha MUJITTAI's see-through
+;; column, :charge his muzzle glint instead of the fire charge), on every form. Not on the host (no lille-art there).
+(when (fboundp 'lille-hud-meter)
+  (let ((meter (list :name "ME" :max 3 :draw 'lille-hud-meter :label 'lille-hud-label
+                     :bankai-prompt (list :key "P  REVIVE" :right "KP+  REVIVE" :pad "BACK  REVIVE" :one-hand "AWAKEN  REVIVE"
+                                          :rgb (symbol-value '*c-lb-revive*)))))
+    (dolist (form '(:base :jilliel :jilliel-mujittai :shin))
+      (let ((k (find-kit :lille form)))
+        (setf (kit-meter k) meter
+              (kit-hooks k) (list* :hud-guard 'lille-hud-guard :deck 'lille-ring :body-alpha 'lille-body-alpha
+                                   :charge 'lille-charge (kit-hooks k)))))))
 
-(defcine lb-jilliel-kikon-cine (a v :len 120 :hold 60)
-  "The Jilliel Kikon 神の裁き (§10.4; placeholder)."
-  (at 0 (face-each-other a v) (cine-clip a (kit-stance (kit-of a)) :blend 2) (cine-clip v :sh-bound :blend 4)
-      (hold-both a v 10) (impact-frame :negative 2) (play-sfx :rift-cut))
-  (at 10 (card :black a) (back-rim 40) (shot-on a 20 4.4 1.0 :look 1.6 :off 0.9) (lens 42)
-      (caption "神の裁き" :reading "KAMI NO SABAKI" :sub "KIKON" :side 0))
-  (at 60 (card nil) (caption-exit) (shot-on v 35 3.2 1.3 :look 1.15) (lens 55) (cine-clip v :sh-kikon-victim :blend 4))
-  (at 80 (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))
-      (impact-frame :negative 2) (play-sfx :konpaku-shatter) (shake 0.2 0.3))
-  (at 96 (shot-pair a v 1 7.0 2.2) (lens 50)))
+;;; The cinematics (60 Hz, review-3 pacing: fewer, longer shots; unskippable; every shot SHOT-ON its subject). He wears
+;;; white: the black card, the back-rim in his form's colour (jade, the owl's gold). Each script's looks are driven from
+;;; its frame by LILLE-DRAW (lille-art.lisp: the wings unfolding, the jade turning gold, the trumpet forming), so a
+;;; skipped or aborted script leaves nothing behind (CINE-END's REFRESH-LOOK restores his body).
+(defcine lb-jilliel-cine (a v :len 186 :hold 90)
+  "The awakening 神の裁き JILLIEL (§10.1, ch. 646): close on the face, the left eye shut under the mark, silence; the eye
+opens (the third time), the mark flares jade, a 1 f negative; the black card, jade back-rim: 「三度も眼を開かされるとは 異端に
+等しい」, then the brush 神の裁き / JILLIEL as he becomes the column; the cocoon: eight wings unfold one pair per 8 f, the
+halo draws itself; from below, the winged column hovering, the opponent small."
+  (at 0 (setf (model-body (model a)) (find-body :lille) (model-weapon (model a)) :diagramm)   ; the base face first
+      (cine-clip a :lb-stance :blend 0) (cine-clip v (kit-stance (kit-of v)) :blend 6)   ; (no held pose: the
+      (hold-pose v 12) (freeze 12) (impact-frame :negative 2) (silence 30)                  ; gameplay one is Jilliel's)
+      (shot-on a 14 0.95 1.74 :look 1.72) (lens 36))
+  (during (0 30) (shot-on a 14 (- 0.95 (* 0.12 u)) 1.74 :look 1.72))
+  (at 30 (impact-frame :negative 1) (play-sfx :lb-lock) (play-sfx :hoho-out))
+  (during (30 60) (shot-on a 14 (- 0.83 (* 0.13 u)) 1.74 :look 1.73))
+  (at 60 (card :black a) (back-rim 60 0.61 0.77 0.67) (shot-on a 20 4.4 0.9 :look 1.3 :off 0.9) (lens 42)
+      (caption "三度も眼を開かされるとは" :kanji2 "異端に等しい" :reading "SANDO MO ME WO HIRAKASARERU TO WA" :sub "ITAN NI HITOSHII"
+               :side 0)
+      (play-sfx :awaken-rise :pitch 0.8))
+  (at 92 (setf (model-body (model a)) (find-body :lille-jilliel) (model-weapon (model a)) nil)
+      (cine-clip a :lb-w-fold :blend 4) (impact-frame :negative 1) (play-sfx :awaken-boom)
+      (caption "神の裁き" :reading "JILLIEL" :sub "VOLLSTANDIG" :side 0))
+  (at 120 (card nil) (caption-exit) (shot-on a 32 3.6 1.4 :look 1.9) (lens 55) (cine-clip a :lb-w-stance :blend 12)
+      (play-sfx :hoho-out))
+  (at 128 (play-sfx :hoho-out)) (at 136 (play-sfx :hoho-out))
+  (during (120 160) (shot-on a 32 (+ 3.6 (* 0.8 u)) 1.4 :look 1.9))
+  (at 160 (shot-on a 165 6.5 0.25 :look 2.2) (lens 62)))
 
-(defcine lb-revive-cine (a v :len 120 :hold 60)
-  "The revival 真の姿 (§10.3; placeholder): silence, the owl rises."
-  (at 0 (cine-clip a (kit-stance (kit-of a)) :blend 3) (cine-clip v (kit-stance (kit-of v)) :blend 6)
-      (hold-both a v 30) (silence 30))
-  (at 30 (shot-on a 25 5.0 0.6 :look 2.0) (lens 55) (play-sfx :awaken-rise :pitch 0.6))
-  (at 60 (card :black a) (back-rim 40) (shot-on a 20 4.8 1.0 :look 1.8 :off 0.9) (lens 42)
-      (caption "真" :reading "SHIN NO SUGATA" :sub "LILLE BARRO" :side 0) (play-sfx :awaken-boom))
-  (at 100 (card nil) (caption-exit) (shot-on a 170 7.0 0.4 :look 2.2) (lens 55)))
+(defcine lb-kikon-cine (a v :len 168 :hold 90)
+  "The base Kikon 万物貫通 (§10.2, ch. 601-602): beat 0, the aim held; over his shoulder down the barrel, the reticle (the
+eye mark) closing round him, silence; the shot: the jade line through everything; on him: his silhouette on the white
+card, a cross-shaped hole of light through it, held; the Konpaku shatter; the last card 万物貫通 / THE X-AXIS."
+  (at 0 (face-each-other a v) (cine-clip a :lb-aim :blend 2) (cine-clip v :sh-bound :blend 4)
+      (hold-both a v 10) (impact-frame :negative 2) (play-sfx :lb-lock))
+  (at 10 (if (portrait-p)                       ; over his shoulder, the barrel (portrait: from straight behind and above,
+             (shot-on a 162 5.4 2.6 :look 1.2 :ahead 2.5)  ; his back low in the tall frame, the line rising to the reticle)
+             (shot-on a 152 2.7 1.9 :look 1.4 :ahead 2.2))
+      (lens 40) (silence 50))
+  (during (10 60) (vfx-lb-reticle-view v (- 1.0 (/ (- cf 10) 50.0))))
+  (at 60 (cine-clip a :lb-fire :blend 1) (impact-frame :negative 2) (play-sfx :lb-crack) (shake 0.25 0.3))
+  (during (60 76) (vfx-lb-shot-line a (- 1.0 (/ (- cf 60) 16.0))))
+  (at 66 (shot-on v 20 3.2 1.25 :look 1.2) (lens 50) (cine-clip v :sh-kikon-victim :blend 3) (card :white v) (silhouette-black v))
+  (during (66 120) (vfx-lb-cross-hole v (min 0.95 (/ (- cf 64) 6.0))))
+  (at 72 (hold-both a v 44) (silence 44))
+  (at 118 (impact-frame :negative 2) (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 2))
+      (play-sfx :konpaku-shatter) (shake 0.2 0.3))
+  (at 122 (unsilhouette) (card nil) (impact-frame :manga 10))
+  (at 130 (card :black a) (back-rim 38 0.61 0.77 0.67) (shot-on a 20 4.2 0.9 :look 1.25 :off 0.9) (lens 42)
+      (cine-clip a :lb-stance :blend 8)
+      (caption "万物貫通" :reading "THE X-AXIS" :sub "BANBUTSU KANTSU  KIKON" :side 0)))
 
-(defcine lb-trompete-cine (a v :len 120 :hold 60)
-  "The owl Kikon 神の喇叭 (§10.4; placeholder)."
-  (at 0 (face-each-other a v) (cine-clip a :lb-o-trompete :blend 2) (cine-clip v :sh-bound :blend 4)
+(defcine lb-revive-cine (a v :len 180 :hold 120)
+  "The revival 真の姿 (§10.3, ch. 649-650): the headless column falls still, silence 30 f; it rises into the air, the jade
+turning to gold over 30 f, and the owl head grows on the S-neck from light; the caption 「武器では死なず 霊圧で首を落としても
+尚死なない」; the wide shot: four stilt legs, the small spiked halo, one long arm raised."
+  (at 0 (setf (model-body (model a)) (find-body :lille-jilliel) (model-weapon (model a)) nil
+              (model-hide (model a)) (hide-set '(:jl-head)))   ; beheaded
+      (cine-clip a :lb-w-fold :blend 3) (cine-clip v (kit-stance (kit-of v)) :blend 6)
+      (hold-both a v 30) (silence 30) (shot-on a 35 4.2 1.1 :look 1.3) (lens 50))
+  (at 30 (cine-clip a :lb-rise :blend 6) (play-sfx :awaken-rise :pitch 0.6) (shot-on a 25 5.4 0.6 :look 2.1) (lens 55))
+  (during (52 94) (multiple-value-bind (x y z) (actor-point a 2.95)
+                    (vfx-lb-light x y z (* 0.28 (min 1.0 (/ (- cf 52) 12.0))) (if (< cf 82) 0.9 (* 0.9 (/ (- 94 cf) 12.0))))))
+  (at 66 (setf (model-body (model a)) (find-body :lille-shin) (model-hide (model a)) nil)
+      (cine-clip a :lb-o-stance :blend 10) (impact-frame :negative 1) (play-sfx :awaken-boom))
+  (at 96 (card :black a) (back-rim 54 0.72 0.6 0.35) (shot-on a 20 5.4 1.3 :look 2.0 :off 0.9) (lens 42)
+      (caption "武器では死なず" :kanji2 "霊圧で首を落としても尚死なない" :reading "BUKI DEWA SHINAZU" :sub "SHIN NO SUGATA" :side 0))
+  (at 150 (card nil) (caption-exit) (shot-on a 28 7.5 0.6 :look 1.9) (lens 55) (cine-clip a :lb-o-reveal :blend 8)))
+
+(defcine lb-jilliel-kikon-cine (a v :len 162 :hold 80)
+  "The Jilliel Kikon 神の裁き (§10.4): beat 0, the wings aimed; the black card, 神の裁き / KAMI NO SABAKI, the 24 holes lit;
+from the side, 24 jade lines out of the wings, the opponent pinned at their crossing; on him, held in silence; the
+Konpaku shatter; the winged column."
+  (at 0 (face-each-other a v) (cine-clip a :lb-w-aim :blend 2) (cine-clip v :sh-bound :blend 4)
       (hold-both a v 10) (impact-frame :negative 2) (play-sfx :awaken-rise))
-  (at 10 (card :black a) (back-rim 40) (shot-on a 20 5.0 1.2 :look 2.0 :off 0.9) (lens 42)
-      (caption "神の喇叭" :reading "TROMPETE" :sub "KIKON" :side 0))
-  (at 60 (card nil) (caption-exit) (shot-on v 35 3.2 1.3 :look 1.15) (lens 55) (cine-clip v :sh-kikon-victim :blend 4))
-  (at 80 (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 4))
-      (impact-frame :negative 2) (play-sfx :konpaku-shatter) (shake 0.3 0.4))
-  (at 96 (silence 24) (shot-pair a v 1 8.0 2.4) (lens 50)))
+  (at 10 (card :black a) (back-rim 50 0.61 0.77 0.67) (shot-on a 20 4.6 1.2 :look 1.8 :off 0.9) (lens 42)
+      (caption "神の裁き" :reading "KAMI NO SABAKI" :sub "KIKON" :side 0))
+  (at 60 (card nil) (caption-exit) (shot-on a 100 7.0 2.2 :look 1.6 :ahead 3.0) (lens 50) (play-sfx :lb-crack))
+  (during (60 128) (vfx-lb-converge a v (min 0.95 (/ (- cf 58) 8.0))))
+  (at 64 (cine-clip v :sh-kikon-victim :blend 3))
+  (at 96 (shot-on v 25 3.4 1.4 :look 1.2) (lens 52) (hold-both a v 24) (silence 24))
+  (at 120 (impact-frame :negative 2) (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))
+      (play-sfx :konpaku-shatter) (shake 0.25 0.35))
+  (at 124 (impact-frame :manga 10))
+  (at 132 (shot-on a 30 5.6 1.3 :look 1.7) (lens 50) (cine-clip a :lb-w-stance :blend 8)))
+
+(defcine lb-trompete-cine (a v :len 186 :hold 90)
+  "The owl Kikon 神の喇叭 (§10.4): beat 0, the fist at the beak, the note; the trumpet forming over him; the sound card,
+神の喇叭 / TROMPETE, silence; the beam erases the horizon; the Konpaku shatter; and then there is silence."
+  (at 0 (face-each-other a v) (cine-clip a :lb-o-trompete :blend 2) (cine-clip v :sh-bound :blend 4)
+      (hold-both a v 10) (impact-frame :negative 2) (play-sfx :lb-trumpet))
+  (at 10 (shot-on a 30 3.6 2.6 :look 2.4) (lens 50))
+  (at 60 (card :black a) (back-rim 50 0.72 0.6 0.35) (shot-on a 62 6.0 1.6 :look 2.2 :off 0.9) (lens 42)
+      (caption "神の喇叭" :reading "TROMPETE" :sub "KAMI NO RAPPA  KIKON" :side 0) (silence 50))
+  (at 110 (card nil) (caption-exit) (shot-on a 118 9.0 3.0 :look 2.0 :ahead 8.0) (lens 60) (impact-frame :negative 2)
+      (play-sfx :explode) (shake 0.4 0.5) (ui-flash 1.0 0.95 0.8 0.8 2.5))
+  (during (110 150) (vfx-lb-horizon a (min 0.98 (- 1.6 (/ (- cf 110) 25.0)))))
+  (at 116 (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 4)) (play-sfx :konpaku-shatter)
+      (impact-frame :manga 10))
+  (at 140 (silence 46) (shot-on a 30 8.5 1.0 :look 1.8) (lens 50) (cine-clip a :lb-o-stance :blend 10))
+  (during (140 186) (setf *grade-desat* (min 0.5 (* 0.02 (- cf 140))))))
+
+;;; stills and the consing probe (debug 79100-79199, DUEL_GAMEPLAY "Debug commands")
+(defparameter *lb-cines* '(lb-jilliel-cine lb-kikon-cine lb-revive-cine lb-jilliel-kikon-cine lb-trompete-cine))
+(defun lille-cine-at (i f)
+  "Stills: cinematic I (*LB-CINES*) with P1 Lille 6 m from Kenpachi, in its form, held at frame F; when it already runs it
+continues to F."
+  (let ((name (nth i *lb-cines*)))
+    (unless (and *cine* (eq (cine-name *cine*) name))
+      (abort-cine)
+      (setf *cine-hold* nil)
+      (ensure-battle :lille :kenpachi) (place *p1* *p2* 6.0)
+      (force-form *p1* (nth i '(:jilliel :base :shin :jilliel :shin)))
+      (start-cine name *p1* *p2*))
+    (when *cine* (setf *cine-hold* t (cine-hold *cine*) f))))
+
+(defun lille-cons-probe ()
+  "79195: bytes consed by 10 draws of his :draw hook, of each of his live hazards' looks and of his HUD meter, guard outline
+and ring, in the running scene (a \"lille consing\" line; the scripts call it in each form and look)."
+  (let* ((e *p1*) (kit (kit-of e)) (hz-n 0))
+    (macrolet ((per (form) `(let ((c0 (cons-bytes))) (dotimes (i 10) ,form) (- (cons-bytes) c0))))
+      (let ((draw (per (lille-draw e 0.016f0)))
+            (looks (let ((c0 (cons-bytes)))
+                     (dotimes (i 10) (do-entities (h (hz hazard)) (when (eql (hazard-owner hz) e) (incf hz-n) (lb-look hz 0.016f0))))
+                     (- (cons-bytes) c0)))
+            (meter (per (lille-hud-meter e kit 10.0 10.0 100.0 4.0 nil 1.0 nil nil nil)))
+            (guard (per (lille-hud-guard e 10.0 10.0 100.0 4.0 nil 2 1.0)))
+            (ring (per (lille-ring e 100.0 100.0 2.0))))
+        (log-msg "lille consing (10 draws, B): form ~a draw ~d looks ~d (~d hazards) meter ~d guard ~d ring ~d"
+                 (fighter-form (fighter e)) draw looks (floor hz-n 10) meter guard ring)
+        (log-msg "lille consing reads (10 calls, B): fighter ~d pos ~d yaw ~d lb ~d alpha ~d eye-t ~d"   ; (an entity
+                 (per (%lbt-fighter e)) (per (%lbt-pos e)) (per (%lbt-yaw e)) (per (%lbt-lb e)) (per (%lbt-alpha e)) ; lookup's cost)
+                 (per (%lbt-eyet e)))))))
+
+(defun lille-art-debug (c)
+  "79100 + 19 i + k (k 0-18): cinematic i (*LB-CINES*) held at frame 10 k; 79195 his looks' consing (LILLE-CONS-PROBE);
+79196 P1's eye opens now (its look: a pip spent, nothing dodged)."
+  (let ((n (- c 79100)))
+    (cond ((< n 95) (lille-cine-at (floor n 19) (* 10 (mod n 19))))
+          ((= n 95) (lille-cons-probe))
+          ((= n 96) (let ((st (lb *p1*)))                   ; a still of the eye opening (its look; nothing dodged)
+                      (setf (lbs-eye-t st) *match-tick* (lbs-eyes st) (max 0 (1- (lbs-eyes st))))))
+          (t (log-msg "duel lille: no debug command ~d" c)))))
+(pushnew '(79100 79199 lille-art-debug) *char-debug* :test #'equal)
