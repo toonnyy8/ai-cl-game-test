@@ -1,7 +1,7 @@
 # SOUL DUEL: Lille Barro (リジェ・バロ, zh-TW 利傑巴羅), 万物貫通 THE X-AXIS and 神の裁き JILLIEL
 
 Status: **full design pass written 2026-10-06 and revised after an adversarial review the same day (22 findings; the
-lock, the eye's rest rule, MUJITTAI as a ward, the owl's burn), awaiting the user's review** (§2–§16); nothing is built yet; the roster
+lock, the eye's rest rule, MUJITTAI as a ward); the user's review answered 2026-10-06 (decisions 12–15)** (§2–§16); nothing is built yet; the roster
 plumbing for a sixth character is in (DEVLOG §84). §1 holds the user's decisions; §16 the questions on the design pass. Canon facts: `docs/research/tybw-characters/notes/lille_barro.md`
 (web-search summaries only, each claim with a confidence flag; check chapter numbers before quoting them in the manual).
 
@@ -110,6 +110,22 @@ The user chose 「全場，越遠傷害越高」 (rejecting: the whole arena at 
   wants to close in. The aim line gives the opponent time to step off it. The CPU's perception and `:moves` bands must
   cover 8–30 m (nothing today is longer than 12 m).
 
+### Decisions 12–15 (2026-10-06): the user's review of the design pass
+
+The user answered the four questions that changed the design (the other two of §16, the volley's and Trompete's
+numbers, stand at their defaults):
+- **12. The lock** 「照設計」: the line locks after 24 f of tracking, the shot fires ≥ 10 f after the lock (auto at 30),
+  the aim can be cancelled before the lock (§4.3).
+- **13. The eye** 「U 放開 ≥ 10 f 後的點按」: a deliberate tap after U rested ≥ 10 f, ≤ 8 f before a hit; no cost on a
+  miss (§4.1).
+- **14. MUJITTAI's clock**: 「向山本一樣無實體不恢復防禦槽，正常狀態防禦槽恢復量大減。使整體設計更容易被破防」 (rejecting a
+  3 / s or 6 / s self-drain, or a run that drops the stance). Read as: the stance never refills (as West, no self-drain),
+  and **Jilliel's refill outside the stance is cut hard**, 5.5 → **2.0 / s** (`:gg-regen`), so the design breaks
+  more easily. The base form keeps the universal refill (the eye and the guard are its defence); if 「正常狀態」 meant
+  every form, the base form's `:gg-regen` is one knob.
+- **15. The owl's cost** 「不加代價」: no burn, no partial refill. The revival costs what decision 8 says (Konpaku → 1) and
+  nothing more; at 1 Konpaku it is free, accepted.
+
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
 - **Three forms, three temperaments** (research note §6): the base form is a still, patient sniper; Jilliel is an untouchable
@@ -133,7 +149,7 @@ The user chose 「全場，越遠傷害越高」 (rejecting: the whole arena at 
   - What he gives up: the normal guard, the eye, the long precision shot's distance bonus, the back-slide.
 - **Second awakening, the owl** (`:shin`, 真の姿 the "true form"; decision 8). In Jilliel, once a Kikon or Soul Break has left him
   with **1–4 Konpaku**, **P** revives him: his Konpaku go to **1** and his Reishi is refilled; the stance is gone and U is a
-  plain guard again. The form **burns 10 Reishi a second** (never below 1), so the last stand has a clock.
+  plain guard again. No running cost (decision 15).
   - Damage ×1.2 and Kikon 4.
   - L is **裁きの光明 SABAKI NO KŌMYŌ**, the arm chop that runs a line of golden blasts along the ground.
   - SP2 is **神の喇叭 TROMPETE**: a 60 f wind-up, then a 2.4 m-wide beam to the wall. **Reflecting it** with a perfect Hoho
@@ -279,7 +295,7 @@ Two kit forms, as Yamamoto's East / West: `:jilliel` (`:guard-to :jilliel-mujitt
 |---|---|
 | Enter | U held from idle / walk / run (not in a move, a reaction, blockstun or guardless); up 2 f later (`*guard-raise*`) |
 | A hit on him | **passes through**: no damage, no stun, no blockstun, **no chip** (hitwin chip, blade chip and East's pierce all skipped), **no push**. Its **guard value** is drained × `*mujittai-mult*` **1.0** (West's `*ward-mult*` is 1.1); for the attacker it is **contact** (a block for the string gate and KŌSEI), so a string continues and keeps draining. A hazard drains its 12 and passes. An X-axis shot in the mirror drains its 30 |
-| The gauge | **never refills** in the stance (GUARD HOLD, as West), and **drains 3 / s on its own** (`*mujittai-drain*`; a full gauge lasts ≤ 33 s: the timer can't be run out in the stance); outside it the universal refill |
+| The gauge | **never refills** in the stance (GUARD HOLD, as West); no self-drain (decision 14). **Outside the stance, Jilliel's refill is cut hard**: `:gg-regen` **2.0 / s** (`*jilliel-gg-regen*`; the universal 5.5 / s, the user's 「大減」), so a stance that ran the gauge down stays down: 0 → 100 takes 50 s + the delay |
 | Empty | the stance drops to `:jilliel` and **GUARD CRUSH** (40 f, guardless: U can't enter the stance until the gauge is full again, as for any guard) |
 | What lands anyway | a **Breaker** (Guard Break 50 f, drops the stance, drains 35: West's `ward-drop`) and **unguardables** (South's bind, a red victim's Kikon follow-up, Senjumaru's spikes, Rukia's freeze touch) as normal hits. An opponent's perfect-Hoho counter strike is not unguardable: it **passes** like any hit (West's ward blocks it too) |
 | Kept | walk, run, Step, Hoho (decision 5); the stance survives a Step's iframes and a Hoho |
@@ -347,7 +363,6 @@ pips), **the precision shot** (the 120 at 20 m; the volley is flat 55), **HIRENK
 | BEHEADED | set when a **Kikon or a Soul Break settles on him in Jilliel** and leaves him with **1–4 Konpaku** (`*lb-revive-konpaku*` 4), through a new generic `:settled (def lost left)` kit hook called by `settle-konpaku` (gap G7; a Kikon reaches `:struck` before it is settled, and a Soul Break's count exists only there). It stays set for the rest of the match (P may wait) |
 | Command | **P** (the phone's AWAKEN chip) |
 | On entry | form `:shin`; **Konpaku := 1**, **Reishi := full** (`bankai!`'s generic part, decision 8; it also breaks the attack like a Burst: `repel!`, 20 f invulnerable); guard gauge, Reiatsu, flash-step and cooldowns kept; the stance gone; the cinematic `lb-revive-cine` (§10.3). `bankai!`'s arm-meter line is skipped for a form without `:pips` (gap G7) |
-| Running cost | **`:burn` 10 Reishi / s** (`*shin-burn*`; never below 1, as Kenpachi's burn): from full he is red after ~91 s and at 1 Reishi after ~130 s. The owl has to win the race, not wait it out |
 | Once | structural: `:shin` has no `:bankai-form`, and there is no way back to Jilliel |
 | Prompt | the awakening row blinks 「P  REVIVE」 in gold while it is allowed (Kenpachi's 「P BANKAI」 path, `bankai-allowed-p` + a kit predicate, gap G7) |
 
@@ -356,7 +371,7 @@ one generic kit predicate added for BEHEADED (gap G7). The Konpaku := 1 and the 
 
 ### 6.2 The owl kit
 
-`:awakening t :form-name "SHIN" :walk 4.0 :run 9.0 :mult *shin-mult* 1.2 :taken 1.0 :kikon-konpaku 4 :burn *shin-burn*`;
+`:awakening t :form-name "SHIN" :walk 4.0 :run 9.0 :mult *shin-mult* 1.2 :taken 1.0 :kikon-konpaku 4`;
 U is a plain guard (200°, the universal gauge).
 
 | Input | Move | S / A / R | Dmg | Rule |
@@ -410,7 +425,7 @@ Most of it is existing code (the review of 2026-10-06 checked each against the s
 | **The flags per move** | `:ranged :x-axis :uncatchable`: the X-axis shot, the K → L snap shot, SANREN, HIRENKYAKU's shot, the volley, NIJŪSHI-KŌ, Sabaki, MISUJI, Trompete. **None** of them on the Kikon lanes (a Kikon strike stays guardable) or on any J / K (K3's point-blank shot is melee) |
 | **Distance damage** | **existing**: an `:on-frame` hook on the fire frame sets `fighter-dmg-bonus` (the hit carries it as `pending-bonus`: damage = the hitwin's 40 + bonus) |
 | **The eye** | **existing slot**: his `:tick` hook sets `fighter-invuln` 16 on a qualifying tap (§4.1); every hit then resolves to nothing, a whiff for the attacker |
-| **MUJITTAI** | **existing ward** + the `:intangible` passive: one test in the ward branch (drain × `*mujittai-mult*`, no push, no chip) and the 3 / s drain in his `:tick` (gap G4) |
+| **MUJITTAI** | **existing ward** + the `:intangible` passive: one test in the ward branch (drain × `*mujittai-mult*`, no push, no chip); Jilliel's `:gg-regen` 2.0 is an existing kit key (gap G4) |
 | **The lock** | his `:tick` sets the move's tracking to 0 from the lock frame; the fire frame from `fighter-hold` (no shared change) |
 | **Reflect** | Trompete's own `:hit` hook reads the defender's `fighter-guard-t` (2–10 at f60) and the Hoho start frame (lille.lisp only) |
 | **BEHEADED** | a new generic `:settled (def lost left)` kit hook in `settle-konpaku` (gap G7) |
@@ -537,7 +552,7 @@ the beam erases the horizon, and then there is silence. The 神の喇叭 card ca
 | G7 | combat.lisp, fighter.lisp | a kit predicate `:bankai-ok` beside `bankai-allowed-p` (BEHEADED + idle / guard / stance); `bankai!` skips the arm-meter line when the form has no `:pips`; a generic `:settled (def lost left)` kit hook in `settle-konpaku` |
 | G8 | ai.lisp | `:opp-aim`, `:opp-reflect` (read off his kits) |
 | G9 | debug.lisp, DUEL_GAMEPLAY | `roster-pairs` already makes LY LK LR LI LS LL (k 15–20; group 2141); claim the character range **79000–79999** |
-| G10 | tests | `duel-rules-test`: the load list, `*forms*` (four: `:base :jilliel :jilliel-mujittai :shin`), clips, weapons, `*roster*` (six), the FK reach list. Host tests: distance damage; four blocked shots crush; stance / armour / DRINK unchanged by `:x-axis`; the lock (no turn after f34, fire ≥ lock + 10); the eye's rest rule, whiff and third-eye EVOLUTION; MUJITTAI pass / no chip / Breaker / drop on attack / 3 / s drain; BEHEADED + the revive cost + the burn; the reflect edges (Hoho f47 / f48 / f60 / f61; guard f49 / f50 / f58 / f59); one hit per volley and per MISUJI |
+| G10 | tests | `duel-rules-test`: the load list, `*forms*` (four: `:base :jilliel :jilliel-mujittai :shin`), clips, weapons, `*roster*` (six), the FK reach list. Host tests: distance damage; four blocked shots crush; stance / armour / DRINK unchanged by `:x-axis`; the lock (no turn after f34, fire ≥ lock + 10); the eye's rest rule, whiff and third-eye EVOLUTION; MUJITTAI pass / no chip / Breaker / drop on attack / no refill, Jilliel's 2.0 / s refill outside it; BEHEADED + the revive cost; the reflect edges (Hoho f47 / f48 / f60 / f61; guard f49 / f50 / f58 / f59); one hit per volley and per MISUJI |
 | G11 | kit.lisp, engine hitvol | a `:vols` key in `parse-move` (several volumes in one hit window) and a **yaw offset on `:cap`** (today a cap runs along the facing only, engine/lisp/hitvol.lisp:19–27, 46–54): the volley's five lines |
 | G12 | hazards.lisp | a hit group shared by several hazards (MISUJI's three lines overlap near him: 0.34 m apart at 1 m) |
 
@@ -600,14 +615,14 @@ behind his kit, his hit flags or keys read off his kit.
   - volleys;
   - BEHEADED / revive ticks;
   - Trompete fired / hit / guarded / reflected, and the reflect's source (Hoho / guard) by pairing;
-  - the owl's burn total and time to red.
+  - stance time per match and the longest stance (the stall watch, decision 14).
 
 **Knobs, in order**:
 - **Medians over 210 s**: the base Z intent 5 → 4, `:opp-aim :rush` 12 → 15, the shot's recovery 26 → 30, the stance
-  `:max` 180 → 120, `*mujittai-drain*` 3 → 5.
+  `:max` 180 → 120 (the CPU's own cap; a self-drain was offered and declined, decision 14).
 - **Under 125 s**: `*lb-x-guard*` 30 → 22, the far damage 120 → 100.
 - **Lille wins too much**: `*lb-lock-min*` 10 → 14, the far damage 120 → 100, the stance's `*mujittai-mult*` 1.0 → 1.2,
-  `*shin-burn*` 10 → 14.
+  `*jilliel-gg-regen*` 2.0 → 1.5.
 - **Too little**: `*lille-mult*` 1.0 → 1.3 (Rukia / Senjumaru precedent), the eye window 8 → 10, J1 22 → 26,
   `*lb-lock-min*` 10 → 8.
 - **The A/B, awakening an upgrade**: `*jilliel-taken*` 1.1 → 1.2, the volley 55 → 48, `*mujittai-mult*` → 1.2.
@@ -638,11 +653,12 @@ behind his kit, his hit flags or keys read off his kit.
    would be the user's (a Rukia knob or a Lille knob); noted, not pre-tuned.
 7. **Hit-window lines of 31 m**: the AI's threat test, `snap-reach` and two characters' reflexes were written for ≤ 12 m
    (G1). Restricting the fix to `:x-axis` moves keeps the old pairings byte-identical; it is still the riskiest change.
-9. **MUJITTAI and the timer**: the stance needs no held button and running keeps it, so a leading Lille could run out the
-   clock; only a Breaker or an unguardable reaches him. The 3 / s self-drain bounds it to ≤ 33 s a stance, and the
-   gauge then needs 1 + 15 s to come back (guardless). (Found by the review.)
-10. **A free revival**: at 1 Konpaku the revive cost nothing, healed fully and broke the attack like a Burst (a strict
-    upgrade). The burn (10 / s) is its price. (Found by the review.)
+9. **MUJITTAI and the timer** (found by the review): the stance needs no held button and running keeps it, so a leading
+   Lille could run out the clock; only a Breaker or an unguardable reaches him. The user declined a self-drain and chose
+   West's rule plus a much slower refill outside the stance (decision 14): the stance is still unbounded in time, but
+   every hit it takes is gone for ~50 s. **Open risk**, watched by the pacing log; the CPU's own cap is 180 f.
+10. **A free revival** (found by the review): at 1 Konpaku the revive costs nothing, heals fully and breaks the attack
+    like a Burst. The user kept it without a cost (decision 15); the gamble test (§13) shows whether it is an upgrade.
 11. **Through guard vs stance, armour, DRINK**: the first draft would have turned those full / half hits into 15 % chip,
     and drained gauges that DUEL_DESIGN §4 says they never pay. Now only blocks are X-axis'd. (Found by the review.)
 8. **Trompete's reflect is a human's read**: a guard started on f50–f58 (a 9 f window) after a 60 f wind-up with a rising
@@ -665,15 +681,10 @@ behind his kit, his hit flags or keys read off his kit.
 | Every frame number, damage and distance | [G] |
 | Move names 床尾打, 銃身薙, 零距離, 三連, 翼刃, 双翼, 鉤爪, 三筋, 照準 | [G] invented |
 
-## 16. Questions for the user (each with the recommended default)
+## 16. Questions for the user
 
-1. **X 軸狙擊：瞄準 24 f 後瞄準線「鎖定」（變玉色、不再轉向），鎖定後至少 10 f 才擊發、最晚 30 f 自動擊發；鎖定前可以用 Step 或 U 取消；擋下扣 15 % 血、削 30 防禦槽（四發破防）？** 建議：是。
-   *The lock: 24 f of tracking, then the line stops turning; the shot ≥ 10 f after the lock, auto at 30; the aim can be cancelled before the lock; blocked 15 % chip + 30 drain (four crush)?*
-2. **左眼：U 放開至少 10 f 後的「點按」，在攻擊命中前 8 f 內才會睜眼（16 f 無實體），一般的防禦不會誤用；按錯不扣格？** 建議：是。
-3. **Jilliel 的無實體架式每秒自己扣 3 防禦槽（最多約 33 秒），避免跑著拖時間？** 建議：是。
-4. **梟頭形態每秒燒 10 Reishi（不會燒到 0），當作復活的代價？** 建議：是。
-5. **翼斉射：五條線、間隔 6°、每次最多中一條、固定 55，中距離最強？** 建議：是。
-6. **Trompete：預備 60 f、寬 2.4 m、2 bars、240；反射窗口是 f48–f60 的 Hoho 或 f50–f58 按下的防禦？** 建議：是。
+Answered 2026-10-06: decisions 12–15 (§1). The volley (five lines, 6°, one hit, 55 flat) and Trompete (60 f, 2.4 m wide,
+2 bars, 240; the reflect on a Hoho f48–f60 or a guard f50–f58) stand at the proposed defaults.
 
 ## 17. Modelling references
 
