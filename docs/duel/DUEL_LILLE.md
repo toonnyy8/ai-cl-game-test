@@ -1292,3 +1292,29 @@ The user's words (decisions 19, 20): 「Jilliel 是揮舞八片刀刃狀的翼�
 
 **Consing** (debug 79195, 10 draws): the draw hook 160 B in the base form, Jilliel (idle and mid-K), KIN and the owl, 240 B in MUJITTAI: 16 / 24 B a frame, the ECS lookup floor of §21, unchanged; the new wing paths (the hand-driven front pair, the sway, the spread) draw 0 B.
 
+### 22.6 Measured after the merge (the lead, 2026-10-06)
+
+The lead's merge (rules R + rig A) plus two fixes: a K fan's three traces are **one hit group** (in the browser at 5 m a
+J + K then TENSHIN hit 30 + 24 + 24 + 24 before, 30 + 24 after), and the stance's damage tag shows the quick 40 until the
+charge (it showed the curve from the first frame), its sum in float math. The tag still costs one `hud-text` call
+(~200 B a frame by hud.lisp's design, as every HUD text). Host tests ALL PASS (duel-rules 5914, control 86, learn 100,
+input 33, touch 64, cine 18, RAVEN rules-test); pkgcheck 0 / 0 / 0; `--seeds 10`: the fifteen old pairings' 180 gate
+lines identical to the baseline before the rework; `--cvc` PASS; `./build.sh duel` 0 warnings.
+
+**Seeds 1–20** (every match K.O., the mirror's two time-outs at 10 seeds gone at 20):
+
+| Pairing | Median | Lille wins / 20 |
+|---|---|---|
+| LY | 171.4 s | 6 |
+| LK | 163.1 s | 2 |
+| LR | 198.3 s | 2 |
+| LI | 198.1 s | 3 |
+| LS | 204.0 s | 4 |
+| LL | 290.8 s (mirror) | P1 9 / P2 11 |
+
+Pacing passes (125–210 s); his wins are under the 10 ± 3 target in every pairing (batch 4: 7 / 3 / 3 / 5 / 5).
+
+**Awaken A/B** (39020, Lille P1 never awakens; wins of 60, streams 100 / 300 / 500; pass ≥ 20): LY 13 / 19 / 12, LK 1 / 3
+/ 3, LR 3 / 4 / 5, LI 3 / 4 / 2, LS 5 / 6 / 11. Fails everywhere, as in §20.3 (0–4), a little closer against Yamamoto
+and Senjumaru. Not tuned: the balance direction waits for the user's playtest (「先試玩再決定」).
+
