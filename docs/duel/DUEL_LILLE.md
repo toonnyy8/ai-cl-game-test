@@ -1881,3 +1881,128 @@ the pair (EN → KIN, EN MUJITTAI → KIN MUJITTAI) at its frame 0, for no extra
 as always). **The traces are not materialised** (only L does that: decision 18); they stay live and the next
 L (KIN → EN) materialises them. The CPU counts it: an EN CPU that Hohos lands in KIN.
 
+
+### 23.15 Built: the owl on Jilliel's system (decision 36; and decision 37's Hoho, 2026-10-06)
+
+The user's words (decision 36): 「請讓梟頭型態的系統設計完全與 Jilliel 對齊，只是萬物貫通的射擊特效改成審判光明（沿地面的金色爆炸線）、SP1
+特效與動作用審判光明、SP2 特效與動作用神之喇叭。與 Jilliel 的主要差異是具有更高的攻擊力、更高的軌跡命中回收比例與更優異的優勢幀。」, then
+「也是無實體」, 「保留反射與封印」, 「小」. Decision 37 came through the lead the same day (§23.16 on main): 「覺醒後在遠攻狀態使用閃步就會自動切換成近戰
+狀態」, corrected to 「只有 Hoho 會切換」. In `duel/lisp/lille.lisp`, `duel/lisp/lille-art.lisp` (one new section of clips, the
+draw hook, the looks, the HUD rows) and the host tests. **No shared file changed.**
+
+**What is built**
+- **Four owl forms** (kits): 遠 EN `:shin` (the revival enters it, as before), its MUJITTAI `:shin-mujittai`, 近 KIN `:shin-kin`, its
+  MUJITTAI `:shin-kin-mujittai`; `:shin` inherits Jilliel EN, `:shin-kin` inherits `:shin` (as KIN inherits EN). All four: body
+  `:lille-shin` (the ㄇ legs, lift 0), ×1.1 dealt (`*shin-mult*` 1.2 → **1.1**), ×1.1 taken (`*shin-taken*` 1.0 → **1.1**,
+  Jilliel's: §23.14's "taken ×1.1"), Jilliel's `:gg-regen` 0.36, Kikon worth 4 (the owl's O module and its cinematic as built),
+  form names **SHIN** / **SHIN KIN**, U tag 「U: MUJITTAI」, no `:bankai-form` / `:bankai-ok` (no revival from any owl form; the
+  host test asks all four), `:endless-form :jilliel`. EN walks / runs as Jilliel EN (3.0 / 8.0), KIN as Jilliel KIN (3.8 / 8.5);
+  the owl's own 4.0 / 9.0 (`*walk-shin*`, `*run-shin*`) are gone with "完全對齊".
+- **The predicates** (pure, host-tested): `lb-owl-form-p`, `lb-mode-form-p` (the eight forms on the system), `lb-en-form-p`,
+  `lb-kin-form-p` (now both pairs), `lb-stance-form-p`; `lb-jilliel-form-p` stays Jilliel's four (the revival's test).
+  `lb-switch-target` keeps each pair (`:shin` ↔ `:shin-kin`, a MUJITTAI to the other mode); `lb-switch-price` / `-ok-p`
+  (KIN → EN 10, EN → KIN free) read `lb-kin-form-p`, so they hold for the owl unchanged. LILLE-OK: TENSHIN's price and EN's dry
+  refusal (decision 35) on both pairs; **a sealed halo refuses SP2 in all four owl forms** (`lb-sp2-sealed-p`).
+- **Moves** (every owl J / K / SP: **R −1 f and `:adv-block` +1**, `*shin-adv*` 1, so +1 on hit and on block):
+
+| | Owl | Jilliel (for comparison) |
+|---|---|---|
+| EN J1 / J2 / J3 `:lb-oe-j1…` (claw clips at `:clip-s`) | 4/3/**5**, 4/3/**5**, 5/3/**8** | 4/3/6, 4/3/6, 5/3/9 |
+| EN K1 / K2 / K3 `:lb-oe-k1…` | 9/4/**9**, 10/4/**11** (enter 3), 11/5/**16** (enter 4) | 9/4/10, 10/4/12, 11/5/17 |
+| EN SP1 裁きの光明 `:lb-oe-sabaki` (three chops; a trace each at f6 / f12 / f18) | S6 A14 **R11** | SANREN S6 A14 R12 |
+| EN SP2 神の喇叭 `:lb-oe-trompete` (Trompete's wind-up at 3×, the trumpet forming; a thick trace at f20) | 20 / 6 / **14**, lock f10 | NIJŪSHI-KŌ 20 / 6 / 15 |
+| KIN J1 / J2 / J3 (the owl's claws, 26 / 26 / 32) | 8/3/**11** −1, 7/3/**12** −1, 9/3/**17** −3 | wing strings 8/3/12 −2, 7/3/13 −2, 9/3/18 −4 |
+| KIN K1 / K2 / K3 (54 / 54 / 78) | 17/4/**20** −2, 20/4/**23** −2, 21/5/**33** −19 | 17/4/21 −3, 20/4/24 −3, 21/5/34 −20 |
+| KIN SP1 裁きの光明 `:lb-misuji` (three ground lines at once, one hit group; callout SABAKI NO KOMYO, was MISUJI) | 18 / – / **25** | SANREN 12/22/24 |
+| KIN SP2 神の喇叭 `:lb-trompete` (240, beam, reflect + seal) | 60 / 30 / **39**, **−13** | NIJŪSHI-KŌ 40/6/30 |
+
+  The old owl L 裁きの光明 (`:lb-sabaki`, the single line) is gone (L is TENSHIN); its hazard code serves KIN's SP1. TENSHIN for
+  the owl's body: `:lb-o-switch` / `:lb-o-switch-in` / `:lb-o-switch-in-c` are Jilliel's three moves (frames, wind-ups 16 / 2 f,
+  link, frame hooks) on the owl's clips; LB-EN-TICK's 2 f cancel picks the form's (`lb-switch-cancel-move`). Breaker and the
+  O module unchanged. Trompete's damage, wind-up, active, reflect windows and seal unchanged; its reflect now costs him 50 % ×
+  1.1 = **132** (×1.2 = 144 before).
+- **Traces**: as Jilliel's (3 flash step a J / K line, refused under 3, at most 16, kept until L; materialised ×1.1: J 33, K
+  26, SP1 33, SP2 198); **refund 5 on a hit, 2 guarded** (`*shin-trace-refund*`, `*shin-trace-refund-block*`; Jilliel 4 / 2),
+  `lb-trace-refund` with the attacker in an owl form.
+- **Decision 37 (Hoho only)**: a **Hoho started in an EN form of either pair** (Jilliel `:jilliel` / `:jilliel-mujittai`, the owl
+  `:shin` / `:shin-mujittai`) switches him to that pair's KIN (`lb-hoho-target`: EN → KIN, EN MUJITTAI → KIN MUJITTAI) in LILLE-TICK
+  on the Hoho's frame 0 (the tick runs after the fighter system started it). No price (the Hoho paid its flash step), **no
+  materialise** (the traces stay live for the next L, KIN → EN); a Step (a tap, a run, a back-step) doesn't switch. A perfect
+  Hoho out of EN MUJITTAI lands in KIN MUJITTAI and the stance's own counter-strike drop takes it to KIN, as before. The CPU
+  needs no new rule: its Hoho (the generic Hoho roll, the stance's `:pass`) lands in KIN behind the opponent, where KIN's CPU runs a
+  string and switches out (TENSHIN out materialises the traces); its spacing never Hohos on purpose. Pacing keys `hoho-kin`,
+  `owl-hoho-kin`.
+- **The CPU**: the owl EN runs Jilliel EN's reflex (LB-AI-EN: the trace switch, the 2 f cancel through a J, the starved switch, the
+  stance) and table (no `:bankai`, `:kikon-range` 9.0); KIN runs Trompete's punish (LB-AI-TROMPETE, as built) then Jilliel KIN's
+  (LB-AI-KIN: out after a string / on the gauge, with the flash step for EN's lines), its far band `:sp2 2` (as built: SP2 from
+  8 m), `:opp-reflect (:p 0.3)` kept; both MUJITTAI the stance-out rule. KIN's string record and TENSHIN's J link read the owl's KIN.
+- **The look** (cosmetic, 0 B a frame): a live owl trace is a **faint gold floor line** (`%lb-floor-line` kind 3, `:lb-line-gold`
+  #CDB070; LB-TRACE-LOOK reads the draw hook's owl flag, no lookup); a materialised one is **裁きの光明's gold explosion line along
+  the ground** (`:judge`, LB-LOOK: the SABAKI blasts every 1.5 m from 0.6 m to the wall, erupting at 240 m/s, each burning 0.3 s,
+  a gold sheet under them and a white core on the first frames; SP2's wide). EN vs KIN read by the wings and the pose: **EN** stands
+  upright, head raised, the long arms held out low (`:lb-oe-stance`), the eight gold wings fanned out (a standing spread, `*LB-FX*`
+  [18], ramping 3 / s); **KIN** the hunched claw stance (`:lb-o-stance`), the wings swept back. **MUJITTAI**: the arms crossed low,
+  the head bowed (`:lb-o-fold`), the wings curled round the column and ghostly (glass 0.18 / rim 0.3), the column the 0.72 phantom,
+  the halo with the glow. Functional clips (lille-art.lisp ";;; ---- the owl on Jilliel's system"): `:lb-oe-stance`, `:lb-o-fold`,
+  `:lb-oe-sabaki` (three chops, right / left / both), `:lb-o-tenshin` (14 f), `:lb-o-tenshin-in` (30 f; the arms raised in the
+  wind-up); EN's J / K play the claw clips at `:clip-s`, EN's SP2 Trompete's clip at 3× (the trumpet look follows its frame × 3).
+  The HUD: the halo row (HALO / SEALED) in all four owl forms.
+- **Debug**: 79004 sets up the owl EN (`:shin`), 79007 / 79008 (the reflects) the owl KIN; new **79016 / 79017 / 79018**: forced owl
+  KIN / owl EN MUJITTAI / owl KIN MUJITTAI 5 m from Kenpachi (DUEL_GAMEPLAY). `tests/scripts/duel.py`'s Lille script: the owl EN's
+  traces, the materialise, its SP1 / SP2, MUJITTAI, KIN, Trompete.
+
+**Choices (unspecified)**: the owl's walk / run as Jilliel's modes; taken ×1.1 (§23.14's table); KIN keeps the owl's claw
+strings (their 26 / 54 base damage, over Jilliel KIN's 24 / 50) rather than the wing strings' numbers; KIN SP1 is the three-line
+burst (MISUJI's) renamed 裁きの光明; the refund decided by his form when the trace hits (traces are cleared on the revival, so a
+trace that hits an owl's opponent is the owl's); the `:judge` look's speed and burn; the EN spread (0.6 of the SP spread).
+
+**Tests** (host): duel-rules **6367** ALL PASS (the four forms' keys, no revival from them, the predicates, TENSHIN's pairs /
+prices / moves = Jilliel's on the owl's clips, every owl J / K / SP's R = Jilliel's − 1 and adv + 1, EN's string chains, the SPs'
+data, the seal in both modes, the refunds 5 / 2 vs 4 / 2, ×1.1 traces, decision 37's targets; DUEL_STRINGS's budget + `owl-adv`
+for the owl KIN forms, the FK reach test now on all four owl forms ±0.15 m), duel-control 89, learn 100, input 33, touch 64, cine
+18 ALL PASS; `tools/pkgcheck.sh duel` 0 / 0 / 0.
+
+**Gates** (native, NORMAL): `--seeds 10 --summary` taken first at 580f037; after, the fifteen old pairings' 30 summary lines
+**byte-identical**; `--cvc` PASS (yy / yk / kk). His six pairings, seeds 1–20 (before = 580f037, the same run), every match K.O.:
+
+| Pairing | Median (before) | Lille wins / 20 (before) | Blow-aways |
+|---|---|---|---|
+| LY | **174.0 s** (175.5) | **14** (7) | 2 |
+| LK | **168.5 s** (161.1) | **6** (9) | 36 |
+| LR | **218.2 s** (204.7) | **6** (6) | 12 |
+| LI | **200.2 s** (181.5) | **5** (6) | 13 |
+| LS | **187.1 s** (182.0) | **6** (7) | 10 |
+| LL | 232.9 s (227.2; mirror) | P1 5 / P2 15 | 9 |
+
+LR's 20-seed median is past 210 s: the edge rerun at 60 seeds gives **207.6 s** (580f037: 199.8 s), inside the window, Lille 23
+/ 60 (18). Per Lille side and match (means; the mirror's sides):
+
+| | LY | LK | LR | LI | LS | (LL) |
+|---|---|---|---|---|---|---|
+| revived (sides) (before) | 14 / 19 (16) | 17 / 20 (18) | 15 / 20 (19) | 17 / 20 (16) | 15 / 20 (17) | (32 / 39 (30)) |
+| owl TENSHIN in / out | 2.16 / 1.74 | 2.0 / 2.1 | 3.8 / 3.65 | 2.8 / 2.7 | 3.4 / 3.9 | (3.26 / 3.44) |
+| owl traces laid / hit / guarded | 4.74 / 2.53 / 0.26 | 3.95 / 1.95 / 0.3 | 7.15 / 2.65 / 1.45 | 5.7 / 2.65 / 0.45 | 5.15 / 2.95 / 0.4 | (6.72 / 3.15 / 0.49) |
+| owl flash step refunded | 13.2 | 10.35 | 16.15 | 14.15 | 15.55 | (16.74) |
+| Hoho → KIN, Jilliel / owl (decision 37) | 1.05 / 0.21 | 1.2 / 0.65 | 1.5 / 0.2 | 1.1 / 0.4 | 1.75 / 1.05 | (0.72 / 0.49) |
+| Trompete fired / reflected (sealed sides) | 0.05 / 0 (0) | 0.2 / 0.05 (1) | 0.05 / 0.35 (7) | 0.05 / 0.15 (3) | 0.05 / 0.3 (6) | (0.38 / 0.03 (1)) |
+| all TENSHIN in / out (Jilliel + owl) | 8.58 / 8.68 | 7.75 / 8.8 | 15.15 / 16.45 | 12.0 / 12.8 | 10.8 / 12.8 | (13.33 / 13.85) |
+
+**The revival gamble** (§20.4's test: LY / LK, seeds 1–60, Lille P1 always 31010 / never 31020; wins of 60):
+
+| Pairing | Always | Never | Always − never | Before (580f037): always / never |
+|---|---|---|---|---|
+| LY | 33 | 24 | **+9** | 31 / 18 (+13) |
+| LK | 15 | 15 | **0** | 20 / 20 (0) |
+
+(The "never" side changed too: decision 37 moves Jilliel.) Medians always / never: LY 169.1 / 168.9 s, LK 171.4 / 177.3 s.
+Read: the revival is still a gamble (LY at the ±9 edge, LK even), the owl now lays a handful of gold traces a match and
+refunds about 5 a hit; Trompete stays rare (its KIN band and punish fire little, as built) and Rukia's / Senjumaru's guards
+reflect it most. Not tuned beyond the spec.
+
+**Consing** (79195, 10 draws): the draw hook 160 B in EN and KIN, 240 B in both MUJITTAI (16 / 24 B a frame, the ECS floor);
+the gold floor lines and the `:judge` blasts cost what Jilliel's traces and line flashes cost (the probe's 8 B lookup per
+hazard: owl and Jilliel identical, measured side by side); the first owl draw of a session builds its meshes once (~131 KB).
+`./build.sh duel`: 0 warnings. Stills (`/tmp/claude-0/lb-owl/stills/`, never committed): the EN idle behind / side, EN K1, the
+gold traces, the wind-up, the 裁きの光明 materialise at its f1 / f5 / f10 / f19, KIN after it, KIN idle / side / K1, both MUJITTAI,
+EN SP1 (chops, lines, burst), EN SP2 (tell, the thick trace, its burst), KIN SP1, KIN Trompete's tell and beam, the reflect
+(SEALED, the broken halo), decision 37's Hoho from owl EN / Jilliel EN / owl MUJITTAI.
