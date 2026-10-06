@@ -2134,3 +2134,13 @@ tell at f2 / f10 and the thick trace at f14, KIN J1, EN J1), `contact-before-aft
 side). Read: EN is a tall, floating, upright figure under a wide gold fan with its legs folded up; KIN a pitched stalker
 on its ㄇ stilts, claws forward, the wings a narrow sheaf behind; from the front KIN's wings all but vanish. The feel needs the
 user's eyes.
+
+### 23.21 Merged: decisions 38 and 39 together (the lead, 2026-10-06)
+
+§23.19 (the owl's two silhouettes, EN Trompete S 12 / R 8) merged onto decision 39 (the laying shot). Host tests ALL PASS
+(duel-rules 6367, control 89, cine 18); pkgcheck 0 / 0 / 0; `--seeds 10`: the fifteen old pairings identical; `--cvc`
+PASS; `./build.sh duel` 0 warnings. The contact sheet shows the owl EN floating (legs tucked, the fan spread) and KIN
+standing pitched forward (the wings swept back). Seeds 1–20: LY 173.1 s / 13 wins, LK 182.2 / 6, LR **223.8** / 6, LI
+**219.9** / 8, LS 206.3 / 6, LL 239.5 with **one time-out** (19 of 20 K.O.). LR and LI stay past 210 s (decision 39's
+open question, with the user) and the mirror lost a K.O.: reported, not retuned.
+
