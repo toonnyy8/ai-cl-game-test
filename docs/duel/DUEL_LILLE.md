@@ -1,7 +1,12 @@
 # SOUL DUEL: Lille Barro (リジェ・バロ, zh-TW 利傑巴羅), 万物貫通 THE X-AXIS and 神の裁き JILLIEL
 
 Status: **full design pass written 2026-10-06 and revised after an adversarial review the same day (22 findings; the
-lock, the eye's rest rule, MUJITTAI as a ward); the user's review answered 2026-10-06 (decisions 12–15)** (§2–§16); nothing is built yet; the roster
+lock, the eye's rest rule, MUJITTAI as a ward); the user's review answered 2026-10-06 (decisions 12–15)** (§2–§16). **Build started 2026-10-06** (the user:
+「就麻煩萊醬開始下一步啦」), in batches:
+1. the sim, the kits, the functional art and the tests;
+2. the AI perception (G1, `:opp-aim`, `:opp-reflect`), alongside batch 1;
+3. his own reflexes, the HUD, the cinematics and the VFX;
+4. the gates, the tuning and the player docs. nothing is built yet; the roster
 plumbing for a sixth character is in (DEVLOG §84). §1 holds the user's decisions; §16 the questions on the design pass. Canon facts: `docs/research/tybw-characters/notes/lille_barro.md`
 (web-search summaries only, each claim with a confidence flag; check chapter numbers before quoting them in the manual).
 
@@ -121,8 +126,8 @@ numbers, stand at their defaults):
 - **14. MUJITTAI's clock**: 「向山本一樣無實體不恢復防禦槽，正常狀態防禦槽恢復量大減。使整體設計更容易被破防」 (rejecting a
   3 / s or 6 / s self-drain, or a run that drops the stance). Read as: the stance never refills (as West, no self-drain),
   and **Jilliel's refill outside the stance is cut hard**, 5.5 → **2.0 / s** (`:gg-regen`), so the design breaks
-  more easily. The base form keeps the universal refill (the eye and the guard are its defence); if 「正常狀態」 meant
-  every form, the base form's `:gg-regen` is one knob.
+  more easily. The base form keeps the universal refill; the user confirmed it (「只套用在 Jilliel 的架式外沒錯」,
+  2026-10-06).
 - **15. The owl's cost** 「不加代價」: no burn, no partial refill. The revival costs what decision 8 says (Konpaku → 1) and
   nothing more; at 1 Konpaku it is free, accepted.
 
