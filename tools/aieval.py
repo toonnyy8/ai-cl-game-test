@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """aieval.py — one character's CPU, scored (the per-character AI redesign, the user 2026-10-02; docs/duel/DUEL_AI_V2.md).
 
-Native sim (tools/simgate.py's build of THIS checkout): character C's CPU, as its <name>.lisp now reads, against the other
-four characters' CPUs as they read in the same checkout.
+Native sim (tools/simgate.py's build of THIS checkout): character C's CPU, as its <name>.lisp now reads, against every other
+character's CPU as it reads in the same checkout.
 
   python3 tools/aieval.py --char 3                 Ichigo: JSON with the parts and the score
   python3 tools/aieval.py --char 3 --seeds 6       a quicker, noisier pass
@@ -15,13 +15,13 @@ The parts:
             the real gate, 210 s at 60 seeds, runs once at the end), else the score is 0
 score = 0.6 strength + 0.2 masher + 0.2 signature   (the user's choice 2026-10-02: win rate + character colour)
 
-Roster index C: 0 Yamamoto 1 Kenpachi 2 Rukia 3 Ichigo 4 Senjumaru. Rebuilds the native sim first when a source changed.
+Roster index C: 0 Yamamoto 1 Kenpachi 2 Rukia 3 Ichigo 4 Senjumaru (simgate.ROSTER). Rebuilds the native sim first when a source changed.
 """
 import argparse, concurrent.futures as cf, json, os, re, statistics, subprocess, sys
 sys.dont_write_bytecode = True
-from simgate import ROOT, ECL, FAS, MUSLM, build
+from simgate import ROOT, ECL, FAS, MUSLM, ROSTER, build
 
-NAMES = ['YAMAMOTO', 'KENPACHI', 'RUKIA', 'ICHIGO', 'SENJUMARU']
+NAMES = ROSTER                                    # (simgate.ROSTER: the roster in order)
 PACE_MAX = 220.0   # a 20-seed median's ceiling here (the gate's 210 s at 60 seeds: 20-seed medians run ~10 s noisy)
 LINK = re.compile(r'-[JK]\d')                    # a J / K string link's move name (YA-J1, KE-R-K2S, RU-A-K3-50 ...)
 
@@ -56,9 +56,9 @@ def main():
     ap.add_argument('-j', type=int, default=8)
     a = ap.parse_args()
     build()                                       # (a no-op unless a source is newer than the build)
-    c, n, others = a.char, a.seeds, [o for o in range(5) if o != a.char]
+    c, n, others = a.char, a.seeds, [o for o in range(len(NAMES)) if o != a.char]
     jobs = ([('str', (c, o, 0, n, 2)) for o in others] + [('str', (o, c, 0, n, 2)) for o in others] +
-            [('mash', (m, c, 6, max(4, n * 4 // 5), 2)) for m in range(5)] +
+            [('mash', (m, c, 6, max(4, n * 4 // 5), 2)) for m in range(len(NAMES))] +
             [('pace', (c, o, 0, n, 1)) for o in others])
     won = {'str': [0, 0], 'mash': [0, 0]}
     sig = [0, 0]

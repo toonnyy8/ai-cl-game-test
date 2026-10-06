@@ -6,7 +6,7 @@ The duel's Lisp (engine + duel MANIFESTs, unchanged) is compiled natively by the
 core each. Pairings x seed chunks fan out over -j processes; the rows are merged and every pairing gets the browser
 gate's summary line, plus a wins / blow-aways line.
 
-  python3 tools/simgate.py                         all 15 pairings, seeds 1-20 (= 2125+k for k 0..14 on the browser)
+  python3 tools/simgate.py                         every pairing (15 for 5 characters), seeds 1-20 (= GATE_CMD(k) on the browser)
   python3 tools/simgate.py --pairs 0,1,2 --seeds 10         YY YK KK, seeds 1-10 (the quick pass)
   python3 tools/simgate.py --pairs 9 --seed0 100 --seeds 60 --cmd 39020   an awaken A/B stream (seeds 101-160)
   python3 tools/simgate.py --summary               summary lines only (rows omitted)
@@ -15,7 +15,8 @@ gate's summary line, plus a wins / blow-aways line.
 
 --cmd N (repeatable) queues debug command N before each process's gate command, as a run.mjs script would (knobs:
 39000+10a+b, 74385, ...). Pairing k is debug.lisp *PAIRS*' index (0 YY 1 YK 2 KK 3 RY 4 RK 5 RR 6 IY 7 IK 8 IR 9 II
-10 SY 11 SK 12 SR 13 SS 14 SI). The build (build/simgate/duel.fas, ~2 min) is redone when a source is newer.
+10 SY 11 SK 12 SR 13 SS 14 SI; then, per later character in ROSTER order, its pairings with every earlier one and its
+mirror: PAIRS, ROSTER-PAIRS in debug.lisp). A new character = its name appended to ROSTER, nothing else. The build (build/simgate/duel.fas, ~2 min) is redone when a source is newer.
 One process plays a pairing's seeds back to back, as the page does. --chunk N splits them over processes (faster for
 one long stream); rows are the same either way (Senjumaru's per-side state carried over between matches until
 2026-09-29, DEVLOG §38-§39: SJ now makes a fresh one per fighter).
@@ -31,9 +32,20 @@ MUSL_MATH = ('sinf cosf tanf __sindf __cosdf __tandf __rem_pio2f __rem_pio2_larg
              'expf exp2f_data powf powf_data logf logf_data log2f_data sin cos tan __sin __cos __tan __rem_pio2 atan2 atan '
              'exp exp_data pow pow_data log log_data __math_oflowf __math_uflowf __math_xflowf __math_invalidf '
              '__math_divzerof __math_oflow __math_uflow __math_xflow __math_invalid __math_divzero')
-PAIRS = ['YAMAMOTO YAMAMOTO', 'YAMAMOTO KENPACHI', 'KENPACHI KENPACHI', 'RUKIA YAMAMOTO', 'RUKIA KENPACHI', 'RUKIA RUKIA',
-         'ICHIGO YAMAMOTO', 'ICHIGO KENPACHI', 'ICHIGO RUKIA', 'ICHIGO ICHIGO', 'SENJUMARU YAMAMOTO',
-         'SENJUMARU KENPACHI', 'SENJUMARU RUKIA', 'SENJUMARU SENJUMARU', 'SENJUMARU ICHIGO']
+ROSTER = ['YAMAMOTO', 'KENPACHI', 'RUKIA', 'ICHIGO', 'SENJUMARU']   # kit.lisp *ROSTER*, in order (the tools' one roster list)
+# debug.lisp ROSTER-PAIRS: the first five characters' fifteen in their historical order (YK has P1 Yamamoto; SS before SI),
+# then per later character i its pairings (i, j) with every earlier j, then its mirror (i, i)
+PAIRS = [f'{ROSTER[a]} {ROSTER[b]}' for a, b in ((0, 0), (0, 1), (1, 1), (2, 0), (2, 1), (2, 2), (3, 0), (3, 1), (3, 2), (3, 3),
+                                                 (4, 0), (4, 1), (4, 2), (4, 4), (4, 3))]
+PAIRS += [f'{ROSTER[i]} {ROSTER[j]}' for i in range(5, len(ROSTER)) for j in range(i + 1)]
+COMPANION = re.compile(r'duel (?!(?:gate|evo|match|hash|learn|learning|probe|endless|practice|frame|bind|setting|page|manual|'
+                       r'camera)\b)[a-z]+ ')   # a character's per-match pacing line after a gate row (band cups senju ichigo ...)
+
+
+def gate_cmd(k):
+    """debug.lisp's one-pairing seed gate: 2125+k for k 0-14, 2135+k for k 15-64 (2150-2199)."""
+    assert 0 <= k <= 64, k
+    return 2125 + k if k < 15 else 2135 + k
 
 
 def sources():
@@ -76,7 +88,7 @@ def lisp(cmds):
 
 def run(job):
     k, s0, n, extra = job
-    r = lisp([30000 + s0, 31100 + n] + extra + [2125 + k])
+    r = lisp([30000 + s0, 31100 + n] + extra + [gate_cmd(k)])
     if r.returncode:
         sys.exit(f'[simgate] pairing {k} seeds {s0 + 1}-{s0 + n} exited {r.returncode}\n' + (r.stdout + r.stderr)[-2000:])
     rows, ticks = [], None           # (seed, ticks, ko, row line, companion lines)
@@ -86,7 +98,7 @@ def run(job):
             ticks, ko = int(m[3]), m[1] == '0' or m[2] == '0'
         elif line.startswith('duel gate row '):
             rows.append([int(line.split()[4]), ticks, ko, line, []])
-        elif rows and re.match(r'duel (band|cups|senju|ichigo) ', line):
+        elif rows and COMPANION.match(line):
             rows[-1][4].append(line)
     if len(rows) != n:
         sys.exit(f'[simgate] pairing {k} seeds {s0 + 1}-{s0 + n}: {len(rows)} rows\n' + r.stdout[-2000:])
@@ -119,7 +131,7 @@ def summary(k, rows):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--pairs', default='all', help='comma-separated pairing indices (default all 15)')
+    ap.add_argument('--pairs', default='all', help='comma-separated pairing indices (default all: 15 for 5 characters)')
     ap.add_argument('--seed0', type=int, default=0, help='seeds seed0+1 .. seed0+seeds (debug 30000+k)')
     ap.add_argument('--seeds', type=int, default=20)
     ap.add_argument('-j', type=int, default=min(16, os.cpu_count() or 1), help='processes (default 16)')
