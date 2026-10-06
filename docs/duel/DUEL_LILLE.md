@@ -963,3 +963,12 @@ taken leaves the never-awaken side at 0–11 of 60. Options:
    needs a way back to range (e.g. HIRENKYAKU without a bar, a faster walk back, or his CPU's own anti-rush reflex).
 3. **Raise the base form's numbers past §13's list** (`*lille-mult*` 1.6+, `*lille-taken*` ≤ 0.8), knowing the probes
    show these alone don't reach the A/B.
+
+### The user's decision on the failed gates (2026-10-06)
+
+「先試玩再決定」: play it first, then decide. The options offered and not chosen:
+- a way back to range for the base form (a kiting CPU reflex, HIRENKYAKU on a cooldown instead of a bar);
+- accept the A/B as an exception and tune the win rate with Jilliel's numbers;
+- both.
+
+The balance stays at batch 4's state until the user's playtest of the build with batch 3b's art and cinematics.
