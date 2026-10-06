@@ -1,0 +1,558 @@
+[
+{
+"at": 9.0,
+"key": "Enter",
+"down": true
+},
+{
+"at": 9.08,
+"key": "Enter",
+"down": false
+},
+{
+"at": 10.0,
+"key": "Enter",
+"down": true
+},
+{
+"at": 10.08,
+"key": "Enter",
+"down": false
+},
+{
+"at": 11.0,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 11.08,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 11.4,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 11.48,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 11.8,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 11.88,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 12.2,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 12.28,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 12.6,
+"key": "ArrowRight",
+"down": true
+},
+{
+"at": 12.68,
+"key": "ArrowRight",
+"down": false
+},
+{
+"at": 13.3,
+"shot": "tests/shots/duel-lille-select.png"
+},
+{
+"at": 14.0,
+"eval": "Module._debug_cmd(79000)"
+},
+{
+"at": 14.1,
+"eval": "Module._debug_cmd(2109)"
+},
+{
+"at": 15.2,
+"shot": "tests/shots/duel-lille-base-stance.png"
+},
+{
+"at": 15.5,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 15.8,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 15.86,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 15.94,
+"shot": "tests/shots/duel-lille-j1.png"
+},
+{
+"at": 17.3,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 17.6,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 17.66,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 17.9,
+"shot": "tests/shots/duel-lille-k1.png"
+},
+{
+"at": 19.1,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 19.4,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.46,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.52,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.58,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.7,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 19.76,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 19.92,
+"shot": "tests/shots/duel-lille-j3-jab.png"
+},
+{
+"at": 20.9,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 21.2,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 21.26,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 21.32,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 21.38,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 21.5,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 21.56,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 22.17,
+"shot": "tests/shots/duel-lille-k3-point-blank.png"
+},
+{
+"at": 22.7,
+"eval": "Module._debug_cmd(79001)"
+},
+{
+"at": 23.2,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 23.5,
+"shot": "tests/shots/duel-lille-aim-grey.png"
+},
+{
+"at": 23.95,
+"shot": "tests/shots/duel-lille-aim-locked.png"
+},
+{
+"at": 24.05,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 24.15,
+"shot": "tests/shots/duel-lille-shot.png"
+},
+{
+"at": 25.2,
+"eval": "Module._debug_cmd(79001)"
+},
+{
+"at": 25.25,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 25.6,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 25.62,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 25.68,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 25.7,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 26.0,
+"shot": "tests/shots/duel-lille-sanren.png"
+},
+{
+"at": 27.2,
+"eval": "Module._debug_cmd(79000)"
+},
+{
+"at": 27.25,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 27.6,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 27.62,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 27.68,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 27.7,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 27.8,
+"shot": "tests/shots/duel-lille-hiren-slide.png"
+},
+{
+"at": 27.96,
+"shot": "tests/shots/duel-lille-hiren-shot.png"
+},
+{
+"at": 29.0,
+"eval": "Module._debug_cmd(79002)"
+},
+{
+"at": 30.0,
+"shot": "tests/shots/duel-lille-jilliel-stance.png"
+},
+{
+"at": 30.3,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 30.6,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 30.66,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 30.74,
+"shot": "tests/shots/duel-lille-w-j1.png"
+},
+{
+"at": 31.8,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 32.1,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 32.16,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 32.4,
+"shot": "tests/shots/duel-lille-w-k1.png"
+},
+{
+"at": 33.3,
+"eval": "Module._debug_cmd(79002)"
+},
+{
+"at": 33.8,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 34.4,
+"shot": "tests/shots/duel-lille-volley-locked.png"
+},
+{
+"at": 34.4,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 34.5,
+"shot": "tests/shots/duel-lille-volley.png"
+},
+{
+"at": 35.4,
+"eval": "Module._debug_cmd(79002)"
+},
+{
+"at": 35.45,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 35.8,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 35.82,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 35.88,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 35.9,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 36.3,
+"shot": "tests/shots/duel-lille-nijushi-tell.png"
+},
+{
+"at": 36.52,
+"shot": "tests/shots/duel-lille-nijushi.png"
+},
+{
+"at": 37.6,
+"eval": "Module._debug_cmd(79003)"
+},
+{
+"at": 38.6,
+"shot": "tests/shots/duel-lille-mujittai.png"
+},
+{
+"at": 39.0,
+"eval": "Module._debug_cmd(79004)"
+},
+{
+"at": 40.0,
+"shot": "tests/shots/duel-lille-owl-stance.png"
+},
+{
+"at": 40.3,
+"eval": "Module._debug_cmd(2393)"
+},
+{
+"at": 40.6,
+"key": "KeyJ",
+"down": true
+},
+{
+"at": 40.66,
+"key": "KeyJ",
+"down": false
+},
+{
+"at": 40.74,
+"shot": "tests/shots/duel-lille-o-j1.png"
+},
+{
+"at": 41.8,
+"eval": "Module._debug_cmd(79004)"
+},
+{
+"at": 42.2,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 42.26,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 42.55,
+"shot": "tests/shots/duel-lille-sabaki.png"
+},
+{
+"at": 42.75,
+"shot": "tests/shots/duel-lille-sabaki-b.png"
+},
+{
+"at": 43.8,
+"eval": "Module._debug_cmd(79004)"
+},
+{
+"at": 43.85,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 44.2,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 44.22,
+"key": "KeyK",
+"down": true
+},
+{
+"at": 44.28,
+"key": "KeyK",
+"down": false
+},
+{
+"at": 44.3,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 44.7,
+"shot": "tests/shots/duel-lille-misuji.png"
+},
+{
+"at": 45.8,
+"eval": "Module._debug_cmd(79004)"
+},
+{
+"at": 45.85,
+"eval": "Module._debug_cmd(2108)"
+},
+{
+"at": 46.2,
+"key": "ShiftLeft",
+"down": true
+},
+{
+"at": 46.22,
+"key": "KeyL",
+"down": true
+},
+{
+"at": 46.28,
+"key": "KeyL",
+"down": false
+},
+{
+"at": 46.3,
+"key": "ShiftLeft",
+"down": false
+},
+{
+"at": 47.0,
+"shot": "tests/shots/duel-lille-trompete-tell.png"
+},
+{
+"at": 47.3,
+"shot": "tests/shots/duel-lille-trompete.png"
+},
+{
+"at": 48.8,
+"eval": "Module._debug_cmd(79005)"
+},
+{
+"at": 49.4,
+"key": "KeyP",
+"down": true
+},
+{
+"at": 49.46,
+"key": "KeyP",
+"down": false
+},
+{
+"at": 50.4,
+"shot": "tests/shots/duel-lille-revive-cine.png"
+},
+{
+"at": 52.4,
+"eval": "Module._debug_cmd(79007)"
+},
+{
+"at": 53.6,
+"shot": "tests/shots/duel-lille-reflect-guard.png"
+},
+{
+"at": 54.6,
+"eval": "Module._debug_cmd(79008)"
+},
+{
+"at": 55.8,
+"shot": "tests/shots/duel-lille-reflect-hoho.png"
+},
+{
+"at": 56.8,
+"eval": "Module._debug_cmd(2107)"
+}
+]

@@ -710,3 +710,61 @@ The user (2026-10-06): 「請順便整理利傑巴羅各型態的參考圖作為
   fourth spot hue, not the manga's pale gold-white): an ink tone, so the style keeps its three spot hues FIRE, REIATSU,
   BLOOD. The owl form's gold is **Senjumaru's muted gold #B89A5A** (「千手丸的低彩度金」; not REIATSU yellow, which is
   Kenpachi's, and not a near-colourless white-gold), on the wings, halo and glow only; the body stays white.
+
+## 18. Built: deviations (batch 1, 2026-10-06)
+
+Batch 1 (the sim, the kits, the functional art, the host tests, the registration, a basic CPU table) is in
+`duel/lisp/lille.lisp` + `duel/lisp/lille-art.lisp`. The smallest faithful deviations from §1–§13, each kept to the
+decisions:
+
+1. **The aim's hold is `(40 60)`, the volley's `(30 50)`, each with a 4 f main-phase startup** (the spec wrote `(34 64)` /
+   `(24 54)`). The generic hold ends at max(release, lo) or hi, so the shot fires on max(release + 4, lock + 10), by itself
+   on f64 (the volley f54): exactly decision 12's rule (`lb-fire-frame`, host-tested for every release frame). The lock
+   (the line stops turning) stays at f34 / f24, the `:params :lock` the AI batch reads.
+2. **Trompete's reflect is decided at the end of its f59** (the step before the beam), so the beam never fires on a
+   reflect and the reflector takes nothing. The guard window is the spec's (a press f50–f58 = `fighter-guard-t` 2–10 there).
+   The **Hoho window is f48–f59**: a Hoho started on f60 is on its frame 0, not yet invulnerable, so the beam's first frame
+   hits it (it could never dodge, so it can't reflect).
+3. **The eye is tested in the kit's `:tick`**, after the step's hits: a tap protects from the next step on (the same one-frame
+   latency as a guard's raise). The third opening's line 「三度も眼を開かされるとは…」 is a romaji pixel callout for now (the
+   brush line is batch 3). The pips live in his per-side state (the HUD meter is batch 3), not the kit meter.
+4. **`:bankai-ok` is the kit slot** the AI batch added (a function of the fighter), not a `:hooks` entry; P, the HUD prompt
+   and the CPU's Bankai reflex all read it.
+5. **`*mujittai-mult*` lives in `tuning.lisp`** (combat.lisp reads it in the ward branch); the knob name is the spec's.
+6. **The arms are the strikers**: Jilliel's front wing pair *is* the rig's arm chain (×2.6 long, the tips at the hands),
+   and the owl's arms are ×2.2 (1.25 m, not the sheet's 0.9 m) so the hands reach J 1.7 / K 2.3 m. Jilliel floats 0.5 m.
+7. **Unspecified numbers chosen**: the base form's damage taken ×1.0; SANREN's lines flinch (kb 0.5), drain 12;
+   NIJŪSHI-KŌ / Trompete knock back (2.0 / 3.0 m), −14 on block; SABAKI / MISUJI staggers (kb 1.0); the shot's 2.0 m
+   knockback at ≥ 12 m is the `:hit` hook's slide; HIRENKYAKU turns at 90°/s until f14; an aim may also be cancelled by a
+   Hoho (the reason §4.3 gives for the cancel).
+8. **MISUJI's one-hit group** is tested structurally on the host (three `:fan` lines, one `make-hit-group`); the group's
+   own behaviour runs in the native sim (hazards.lisp is not loaded by the host test).
+
+Generic hook points (each inert for the five existing characters: no existing data uses them):
+- `engine/lisp/hitvol.lisp` MAKE-VOL / VOL-HIT-P: a `:cap` yaw offset in slot 5 (radians; 0, and a hand-made 5-float vol,
+  take the old path unchanged; RAVEN EDGE's rules test passes);
+- `duel/lisp/kit.lisp` PARSE-MOVE: `:vols` (several volumes in one window; the window still hits once);
+- `duel/lisp/combat.lisp`: `:uncatchable` (KASA's `:catch` skips it), the ward's `:intangible` (drain × `*mujittai-mult*`,
+  no push, no chip), BANKAI-OK-P beside BANKAI-ALLOWED-P (P and the HUD), BANKAI! without `:pips` skips the arm meter, the
+  `:settled (def lost left)` hook in SETTLE-KONPAKU;
+- `duel/lisp/hazards.lisp`: MAKE-HIT-GROUP / the hazard's `group` (one hit for several hazards, one of them a step).
+
+Batch 1's gates (2026-10-06; the AI batch merged underneath): host tests ALL PASS (duel-rules 5714 checks, control, learn,
+input, touch, cine; RAVEN EDGE's rules test after the hitvol change); `tools/pkgcheck.sh duel` 0 / 0 / 0; the name-leak grep
+empty. **Inert**: `simgate.py --seeds 10`, the fifteen old pairings' 150 rows and their companion lines byte-identical to
+the run before the change, every summary line too; `--cvc` PASS (yy / yk / kk). **His six pairings** (seeds 1–10, NORMAL,
+every match a K.O.; untuned, batch 4):
+
+| Pairing | Median | Lille wins | Note |
+|---|---|---|---|
+| LY | 152.5 s | 1 / 10 | |
+| LK | 158.0 s | 1 / 10 | 22 blow-aways in 10 matches |
+| LR | 154.9 s | 0 / 10 | |
+| LI | 178.5 s | 3 / 10 | |
+| LS | 170.2 s | 0 / 10 | |
+| LL | 241.8 s | 6 / 4 | a mirror (allowed past 210) |
+
+The pacing log per side and match (70 sides): every side awakened, 60 of 70 ended in the owl (the revive fires; the owl
+at 1 Konpaku then loses), the eye opened 1.8 times, the stance ~1230 frames a match (~20 s) with ~5 passes, ~2.3 aimed
+shots fired and ~2.7 volleys. He loses most of his pairings: the tuning (§13 "too little") and his own reflexes are batches
+3–4.

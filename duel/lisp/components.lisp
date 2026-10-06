@@ -204,6 +204,7 @@ its volume test and its look (hazards.lisp)."
   (src nil)                             ; T: a hit comes from the owner's position (a guard facing him blocks it)
   (fragile nil)                         ; T: it closes while it waits if its owner is hit (CLOSE-RIFTS)
   (hook nil) (data nil)                 ; a character's own hazard: HOOK (h hz event ...) and the DATA it keeps (hazards.lisp)
+  (group nil)                           ; NIL, or a hit group shared by several hazards (MAKE-HIT-GROUP): they hit once together
   (look nil))                           ; a look keyword, or a draw function symbol (HAZARD-DRAW)                           ; look keyword for the draw (:kyoku :meteor :crack :south ...)
 
 ;;; ---------------------------------------------------------------- small helpers every file uses

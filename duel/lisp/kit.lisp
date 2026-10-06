@@ -114,7 +114,7 @@ radians: a fan); no :cap volume: its reach along the facing, radius 0."
   "SPEC (a resolved DEFMOVE plist) -> MOVE. STARTUP-ADD / REACH-MULT derive a form's version
 (Nozarashi): every frame from the startup on shifts, every reach scales."
   (destructuring-bind (&key kind clip clip-2 callout startup active recovery whiff (dmg 0) adv-block
-                         track reach (arc 90) (height '(0.2 2.0)) vol on-hit (kb 0.0) hs chip (meter 0.0)
+                         track reach (arc 90) (height '(0.2 2.0)) vol vols on-hit (kb 0.0) hs chip (meter 0.0)
                          cost hold (slide 0.0) flags hits on-frame tick release on-land cine params
                          (enter 0) (blend 0.0) planted clip-s guard (armor-hits 0) (cooldown 0) (frost 0))
       spec
@@ -123,7 +123,8 @@ radians: a fan); no :cap volume: its reach along the facing, radius 0."
            (a (or active (if breaker *breaker-active* 0)))
            (r (or recovery (if breaker *breaker-recovery* 0)))
            (dmg (if (and breaker (zerop dmg)) *breaker-damage* dmg))
-           (reach (let ((rr (or reach (and vol (vol-spec-reach vol)) (and breaker *breaker-reach*))))
+           (reach (let ((rr (or reach (and vol (vol-spec-reach vol)) (and vols (vol-spec-reach (first vols)))
+                                (and breaker *breaker-reach*))))
                     (and rr (cond ((eq kind :quick) (max (* reach-mult rr) *j-reach-min*))   ; (a J: at least this)
                                   (breaker rr)                          ; (a Breaker: unscaled, under every J)
                                   (t (* reach-mult rr))))))
@@ -134,15 +135,20 @@ radians: a fan); no :cap volume: its reach along the facing, radius 0."
            (hs (or hs (case kind (:quick *hitstop-light*) (:breaker *hitstop-breaker*) (t *hitstop-heavy*))))
            (flags (if breaker (adjoin :breaker flags) flags))
            (guard (guard-value kind adv-block guard)))
-      (flet ((window (from to &key (dmg dmg) (on-hit react) (kb kb) ((:vol hit-vol)) ((:reach hit-reach))
+      (flet ((window (from to &key (dmg dmg) (on-hit react) (kb kb) ((:vol hit-vol)) ((:reach hit-reach)) ((:vols hit-vols) vols)
                                    (chip chip) (meter meter) (flags flags) (hs hs) stun (guard guard) (frost frost))
-               ;; a window's own :reach / :vol (scaled like the move's), else the move's volume
+               ;; a window's own :reach / :vol (scaled like the move's), else the move's volume; :vols (a window's, else
+               ;; the move's): several volumes in one window, which still hits once (a fan of lines)
                (let ((v (cond (hit-reach (list* :arc (* reach-mult hit-reach) arc height))
                               (hit-vol (scale-vol-spec hit-vol reach-mult))
+                              (hit-vols nil)
                               (t vol))))
                  (make-hitwin :from (+ from startup-add) :to (+ to startup-add) :dmg dmg :react on-hit
                               :kb kb :hs hs :chip chip :meter meter :flags flags :stun stun :guard guard :frost frost
-                              :vols (and v (list (make-vol (first v) (rest v))))))))
+                              :vols (if v
+                                        (list (make-vol (first v) (rest v)))
+                                        (loop for spec in hit-vols
+                                              collect (let ((sv (scale-vol-spec spec reach-mult))) (make-vol (first sv) (rest sv)))))))))
         (make-move
          :name name :kind kind :clip clip :clip-2 clip-2 :callout callout
          :s s :a a :r r :whiff (or whiff (if breaker *breaker-whiff* (+ r (case kind (:quick *whiff-extra-j*) (:flash *whiff-extra-k*) (t *whiff-extra*)))))
@@ -150,7 +156,7 @@ radians: a fan); no :cap volume: its reach along the facing, radius 0."
          :track (or track (case kind (:quick *track-quick*) (:breaker *track-breaker*) (:kikon *kikon-track*) (t *track-heavy*)))
          :reach (or reach 0.0)
          :hits (coerce (cond (hits (loop for h in hits collect (apply #'window h)))
-                             ((and (plusp dmg) vol) (list (window (- s startup-add) (+ (- s startup-add) a)))))
+                             ((and (plusp dmg) (or vol vols)) (list (window (- s startup-add) (+ (- s startup-add) a)))))
                        'simple-vector)
          :cost cost :hold hold :slide slide :flags flags :armor-hits armor-hits :cooldown cooldown
          :on-frame (loop for (f hook) in on-frame collect (list (+ f startup-add) hook))
@@ -191,7 +197,8 @@ new button."
             *WHIFF-EXTRA-J*, a K link, :flash, R + *WHIFF-EXTRA-K*)
   :dmg :adv-block  damage and block advantage (§5 table; NIL = no melee block data)
   :track    deg/s turn during startup; :reach metres; :arc degrees; :height (y0 y1) of the arc;
-  :vol      explicit volume (:arc r deg y0 y1 | :cap a b h r | :sph fwd up r) instead of reach/arc
+  :vol      explicit volume (:arc r deg y0 y1 | :cap a b h r [yaw-deg] | :sph fwd up r) instead of reach/arc
+  :vols     several volumes in one hit window (it still hits once: a fan of lines), (spec ...); the reach is the first's
   :on-hit   reaction; :kb knockback m; :hs hitstop f; :chip block chip fraction; :meter kit meter gain
   :guard    guard gauge a block drains (default by kind, GUARD-VALUE)
   :armor-hits  hits the move's armour takes (move frames *ARMOR-FROM* .. S-1; a Kikon rush: its dash)
@@ -205,7 +212,7 @@ new button."
             with :params (:melee-range r) only beyond r of the attacker: nearer it is the blade, a melee hit;
             one window, so it still hits once)
   :frost    frames of frost a real hit sets (the victim walks and runs x*FROST-SLOW*: Rukia's ice)
-  :hits     ((from to &key dmg on-hit kb vol reach chip meter flags hs guard frost) ...) multi-hit windows;
+  :hits     ((from to &key dmg on-hit kb vol vols reach chip meter flags hs guard frost) ...) multi-hit windows;
             default: one window [S, S+A) when the move has damage and a volume
   :on-frame ((frame hook) ...), :tick hook (every frame), :release hook (button released during
             :hold), :on-land hook (first hit connects), :cine hook (Kikon cinematic)
@@ -215,7 +222,9 @@ new button."
   :blend    crossfade frames into the clip (default 0, attacks snap); :planted  weapon planted
             in the ground during the strike (drawn with DRAW-PLANTED-WEAPON)
   hits: :stun  hitstun override (frames)
-  flags also: :rend (armour and a stance don't stop it: RESOLVE-CONTACT) :grab (a grab: the CPU never guards it)"
+  flags also: :rend (armour and a stance don't stop it: RESOLVE-CONTACT) :grab (a grab: the CPU never guards it)
+            :uncatchable (a :shield move's :catch doesn't take it: blocked as by a guard) :x-axis (a line through guard,
+            docs/duel/DUEL_LILLE.md §8: the CPU's perception reads it)"
   `(register-move ,name ',spec))
 
 ;;; ================================================================ kits
@@ -420,12 +429,13 @@ child's keys win, :commands merge per command, :strings add. Keys:
                                      button: J / K switch at most once); a non-button command (:land) names a
                                      follow-up a hook starts (KIT-NEXT), so derived forms derive it too
   :mult :cornered :cornered-max      §4 damage dealt (KIT-ATK-MODS)   :taken  damage x taken (KIT-DEF-MODS)
-  :passives (:ward :pierce :projectile-cut :scorch :cut :drink)   :blade-chip fraction
+  :passives (:ward :pierce :projectile-cut :scorch :cut :drink :intangible)   :blade-chip fraction
                                      (:ward: Bankai West blocks 360 deg in his free states and own moves, with
                                      no blockstun, drains x*WARD-MULT*, never refills; :pierce: Bankai East's
                                      hits x(1 + k), k of a blocked hit goes through (PIERCE-RATE); :scorch: his
-                                     parry burns; :cut: his heavy hits drain guard x*CUT-MULT*; :drink: U drinks:
-                                     combat.lisp)
+                                     parry burns; :cut: his heavy hits drain guard x*CUT-MULT*; :drink: U drinks;
+                                     :intangible with :ward: a blocked hit passes through, x*MUJITTAI-MULT* of the
+                                     gauge, no push, no chip: combat.lisp)
   :guard-to FORM                     U (held, from idle / walk / run) switches to FORM instead of guarding
                                      (Bankai East -> West)
   :drop-to FORM :keep (cmd ...)      any kit command not in :keep switches to FORM on its frame 0 and starts
@@ -468,7 +478,8 @@ child's keys win, :commands merge per command, :strings add. Keys:
                                      :tick (e f g: every sim step), :hit / :struck (e other res hw mv hazard ranged: after
                                      a hit it dealt / took), :parried (e att: a catch by its parry), :draw (e rdt: looks
                                      on the posed body), :hud-guard (drawn over its guard bar), :deck (e x y d: the
-                                     one-hand thumb ring)
+                                     one-hand thumb ring), :settled (e lost left: a Kikon / Soul Break settled
+                                     on it, SETTLE-KONPAKU)
   :endless-form FORM                 ENDLESS: staying awakened starts the next stage in FORM, its meter at FORM's :start
                                      (docs/duel/DUEL_ENDLESS.md §4)
   :u-tag STRING                      the HUD's tag for U   :meter (:name :max :temp t)  Rukia's cold gauge (combat.lisp

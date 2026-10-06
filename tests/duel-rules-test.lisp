@@ -9,7 +9,7 @@
 ;; the character files also hold their hook functions and cinematics: those need the engine, so the
 ;; host skips the cinematics (a no-op DEFCINE) and never calls a hook
 (defmacro duel::defcine (&rest r) (declare (ignore r)) nil)
-(dolist (f '("tuning" "rules" "kit" "yama" "ken" "rukia" "ichigo" "endless-rules" "senjumaru"))
+(dolist (f '("tuning" "rules" "kit" "yama" "ken" "rukia" "ichigo" "endless-rules" "senjumaru" "lille"))
   (load (merge-pathnames (format nil "../duel/lisp/~a.lisp" f) *load-truename*)))
 (in-package :duel)
 
@@ -25,7 +25,8 @@
                         (:kenpachi :bankai) (:kenpachi :kataude)
                         (:rukia :base) (:rukia :m18) (:rukia :m50) (:rukia :zero) (:ichigo :base) (:ichigo :kessa)
                         (:senjumaru :base) (:senjumaru :tsuji1) (:senjumaru :tsuji2) (:senjumaru :tsuji3) (:senjumaru :tsuji4)
-                        (:senjumaru :tsuji5) (:senjumaru :tsuji6)))
+                        (:senjumaru :tsuji5) (:senjumaru :tsuji6)
+                        (:lille :base) (:lille :jilliel) (:lille :jilliel-mujittai) (:lille :shin)))
 
 ;;; ================================================================ the triangle / clash matrix
 (check (eq (resolve-contact :neutral) :hit))
@@ -785,7 +786,11 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :ic-mine :ic-k-stance :ic-k-back :ic-k-parry :ic-k-yank :ic-k-zanzo   ; Ichigo (DUEL_ICHIGO §10, v2)
     :ic-tsuki :ic-rangetsu :ic-tsuki-otoshi
     :sj-stance :sj-q1 :sj-q2 :sj-spin :sj-f1 :sj-f2 :sj-drop :sj-yank :sj-summon :sj-kasa :sj-breaker :sj-saidan :sj-intro
-    :sj-win :sj-loom-stance :sj-weave :sj-unravel :sj-tanmono :sj-makitori :sj-snip))   ; Senjumaru (:sj-awaken is the cine's)
+    :sj-win :sj-loom-stance :sj-weave :sj-unravel :sj-tanmono :sj-makitori :sj-snip   ; Senjumaru (:sj-awaken is the cine's)
+    :lb-stance :lb-intro :lb-win :lb-q1 :lb-q2 :lb-jab :lb-f1 :lb-f2 :lb-f3 :lb-aim :lb-fire :lb-snap :lb-sanren :lb-hiren
+    :lb-breaker :lb-butt :lb-w-stance :lb-w-fold :lb-w-q1 :lb-w-q2 :lb-w-q3 :lb-w-f1 :lb-w-f2 :lb-w-f3 :lb-w-aim :lb-w-fire
+    :lb-w-nijushi :lb-w-breaker :lb-w-ram :lb-o-stance :lb-o-q1 :lb-o-q2 :lb-o-q3 :lb-o-f1 :lb-o-f2 :lb-o-f3 :lb-o-chop
+    :lb-o-trompete :lb-o-breaker :lb-o-stamp))   ; Lille (DUEL_LILLE §12 Art)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
 ;; DEFCINEs, which the host stubs; KESSA's clones play :ic-k-cut / :ic-k-wrap, ICHIGO-CLONE-STEP)
 (let ((used (remove-duplicates (loop for cf in *forms* append (kit-clips (apply #'kit cf))))))
@@ -796,8 +801,9 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 (check (equal (mapcar #'kit-weapon (mapcar (lambda (cf) (apply #'kit cf)) *forms*))
               '(:ryujin-jakka :ryujin-jakka :zanka :zanka :ken-katana :nozarashi :nozarashi :nozarashi :ke-broken :ke-broken
                 :sode-no-shirayuki :sode-no-shirayuki :ru-rime :ru-ice :zangetsu-long :tensa
-                :shigarami :shigarami :shigarami :shigarami :shigarami :shigarami :shigarami)))
-(check (equal *roster* '(:yamamoto :kenpachi :rukia :ichigo :senjumaru)))
+                :shigarami :shigarami :shigarami :shigarami :shigarami :shigarami :shigarami
+                :diagramm nil nil nil)))
+(check (equal *roster* '(:yamamoto :kenpachi :rukia :ichigo :senjumaru :lille)))   ; Lille appended last (DUEL_LILLE §0)
 (check (equal (kit-intro-weapon (kit :yamamoto :base)) '(:ya-cane 81)))              ; cane until 1.35 s
 (check (and (eq (kit-cine (kit :yamamoto :bankai-east)) 'yama-bankai-cine) (eq (kit-cine (kit :kenpachi :nozarashi)) 'ken-nozarashi-cine)
             (null (kit-cine (kit :yamamoto :hellfire)))))
@@ -1013,7 +1019,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
   ;; the entry (2026-09-28): free with <= 4 of his own Konpaku (no longer red)
   (check (and (= *bankai-konpaku* 4) (bankai-allowed-p t 4) (bankai-allowed-p t 1) (not (bankai-allowed-p nil 4))
               (not (bankai-allowed-p t 5)) (not (bankai-allowed-p t 9))))
-  (check (equal (loop for cf in *forms* when (kit-bankai-form (apply #'kit cf)) collect cf) '((:kenpachi :nomihose))))
+  (check (equal (loop for cf in *forms* when (kit-bankai-form (apply #'kit cf)) collect cf)
+              '((:kenpachi :nomihose) (:lille :jilliel) (:lille :jilliel-mujittai))))   ; (+ Lille's revive, DUEL_LILLE §6.1)
   (check (and (eq (kit-bankai-form t3) :bankai) (eq (kit-cine b) 'ken-bankai-cine) (kit-awakening b) (kit-awakening a)))
   ;; 2. the arm: 4 pips; spend 4 -> 3, 0 refused; the crack at 300 f, idle back to 0; locked frames don't count;
   ;; 4 cracks = 1200 f of play
@@ -1260,7 +1267,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
                 (>= (mv-reach lk) (getf (mv-params lk) :range))           ; no chase: the ring is cast at him
                 (equal (mv-callout ts) (mv-callout lk)) (member :bind (mv-flags lk))))
     (check (every (lambda (f) (eq (kit-l-link (kit :rukia f) :ru-k2) (kit-command-move (kit :rukia f) :sig))) '(:m18 :m50 :zero)))
-    (check (every (lambda (cf) (null (kit-l-after-k (apply #'kit cf)))) (remove-if (lambda (c) (member c '(:rukia :ichigo :senjumaru))) *forms* :key #'first)))
+    (check (every (lambda (cf) (null (kit-l-after-k (apply #'kit cf)))) (remove-if (lambda (c) (member c '(:rukia :ichigo :senjumaru :lille))) *forms* :key #'first)))
     (check (every (lambda (f) (numberp (getf (kit-ai (kit :rukia f)) :l-after-k))) '(:base :m18 :m50 :zero)))))
 
 ;; the combo band lock with overdraft (the user's decision 2026-09-28): inside a combo the band holds whatever C does; L is
@@ -1649,8 +1656,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 along the left forearm, so the fist leads).")
 (defparameter *reach-one-sided* '((:yamamoto :bankai-east) (:yamamoto :bankai-west) (:kenpachi :nozarashi)
                                   (:kenpachi :bankai) (:rukia :zero)))
-(let ((bodies nil) (weapons nil) (strike nil))
-  (dolist (art '("yama" "ken" "rukia" "ichigo" "senjumaru"))
+(let ((bodies nil) (weapons nil) (strike nil) (points nil) (butt 0.0))
+  (dolist (art '("yama" "ken" "rukia" "ichigo" "senjumaru" "lille"))
     (with-open-file (in (merge-pathnames (format nil "../duel/lisp/~a-art.lisp" art) *load-truename*))
       (let ((*package* (find-package :duel)))
         (loop for form = (read in nil in) until (eq form in)
@@ -1658,7 +1665,10 @@ along the left forearm, so the fist leads).")
                 do (case (first form)
                      ((defpose defclip defstrike) (eval form))
                      (defun (when (eq (second form) 'sj-okobo-props) (eval form)))
-                     (defparameter (when (eq (second form) '*sj-strike-reach*) (setf strike (eval (third form)))))
+                     (defparameter (case (second form)
+                                     (*sj-strike-reach* (setf strike (eval (third form))))
+                                     (*lb-strike-points* (setf points (eval (third form))))   ; Lille: the plank, the
+                                     (*lb-butt* (setf butt (eval (third form))))))           ; wing / arm tips
                      (defbody (push (cons (second form) (third form)) bodies))
                      (defweapon (push (cons (second form) (getf (third form) :length)) weapons)))))))
   (let ((jm (make-f32 (* 16 +nj+))) (pose (make-f32 +pose-n+)) (v (make-f32 3))
@@ -1675,7 +1685,8 @@ along the left forearm, so the fist leads).")
           (let* ((mv (first lm)) (hw (svref (mv-hits mv) 0)) (vol (first (hw-vols hw))) (cap (> (aref vol 0) 0.5))
                  (edge (if cap (+ (aref vol 2) (aref vol 4)) (aref vol 1)))
                  (clip (if (eq (second lm) :breaker) (mv-clip-2 mv) (mv-clip mv)))   ; (the Breaker's strike: its clip 2)
-                 (striker (cdr (assoc clip *strikers*)))
+                 (point (second (assoc clip points)))                ; Lille's: :weapon (the plank) or a joint
+                 (striker (or (cdr (assoc clip *strikers*)) (and point (not (eq point :weapon)) point)))
                  (art (or (third (assoc clip strike))
                           (loop for sf from (hw-from hw) below (hw-to hw)
                                 maximize (progn
@@ -1683,7 +1694,7 @@ along the left forearm, so the fist leads).")
                                            (pose-fk! jm pose 0f0 0f0 0f0 0f0 (f32 (getf b :scale)) (f32 (deg (getf b :hunch 0))) props)
                                            (if striker                            ; (yaw 0 faces -Z)
                                                (joint-point! v jm (joint-index striker) 0f0 0f0 0f0)
-                                               (joint-point! v jm (ji :weapon-r) 0f0 0f0 (f32 (- wlen))))
+                                               (joint-point! v jm (ji :weapon-r) 0f0 0f0 (f32 (if (eq point :weapon) butt (- wlen)))))
                                            (if cap (- (aref v 2)) (sqrt (+ (expt (aref v 0) 2) (expt (aref v 2) 2))))))))
                  (d (- art edge)))
             (when (eq (mv-kind mv) :quick)
@@ -1816,20 +1827,115 @@ defender's next step. Values: the attacker's and the defender's first actionable
 (check (eq (reflect-action 50 60 nil) :hoho))
 (check (<= 48 (- 60 *ai-reflect-hoho-lead*) 60))
 (check (<= (- 60 *ai-reflect-hoho-lead*) (+ 60 0) (+ (- 60 *ai-reflect-hoho-lead*) *perfect-lead*)))   ; (it is perfect)
-;; inert for today's roster: no move has :x-axis / :reflectable, no form the keys :opp-aim / :opp-reflect / :bankai-ok
-(dolist (cf *forms*)
+;; inert for the first five characters: no move has :x-axis / :reflectable, no form the keys :opp-aim / :opp-reflect /
+;; :bankai-ok (Lille's forms have them: DUEL_LILLE §8, §11.3)
+(dolist (cf (remove :lille *forms* :key #'first))
   (let ((k (apply #'kit cf)))
     (check (null (kit-bankai-ok k)))
     (check (not (or (getf (kit-ai k) :opp-aim) (getf (kit-ai k) :opp-reflect))))
     (loop for m being the hash-values of (kit-moves k)
           do (check (not (intersection '(:x-axis :reflectable) (mv-flags m)))))))
 
+;;; ================================================================ Lille Barro (docs/duel/DUEL_LILLE.md §12 G10; batch 1)
+(let* ((b (kit :lille :base)) (j (kit :lille :jilliel)) (mu (kit :lille :jilliel-mujittai)) (o (kit :lille :shin))
+       (x (kit-command-move b :sig)) (xw (svref (mv-hits x) 0)) (vo (kit-command-move j :sig)))
+  ;; the distance damage (decision 10): 40 at <= 4 m, 80 at 12, 120 at >= 20; the window deals 40, the bonus the rest
+  (check (and (= 40 (lb-x-damage 0.0)) (= 40 (lb-x-damage 4.0)) (= 80 (lb-x-damage 12.0)) (= 120 (lb-x-damage 20.0))
+              (= 120 (lb-x-damage 31.0)) (= 40 (hw-dmg xw)) (= 80 (lb-x-bonus 20.0)) (zerop (lb-x-bonus 2.0))
+              (< (lb-x-damage 8.0) (lb-x-damage 9.0))))
+  ;; through guard (decision 2): a blocked shot chips 15 % (never kills) and drains 30: four blocked shots crush a full gauge
+  (check (and (~= (hw-chip xw) 0.15) (= 30 (hw-guard xw)) (= -14 (mv-adv-block x))
+              (let ((gg *gg-max*) (n 0)) (loop until (nth-value 1 (gg-drain gg (hw-guard xw))) do (setf gg (gg-drain gg (hw-guard xw))) (incf n))
+                (= n 3))                                                       ; three leave 10, the 4th crushes
+              (= 18 (chip-damage 120 (hw-chip xw) 1000)) (< (chip-damage 120 (hw-chip xw) 5) 5)))
+  ;; stance, armour, DRINK and a parry take it as any hit: the line carries no :unguardable / :rend / :breaker / :guard-crush;
+  ;; only :ranged :x-axis :uncatchable, on every line move, and on no Kikon lane or J / K
+  (let ((lines '(:lb-x-axis :lb-x-quick :lb-sanren :lb-hiren :lb-volley :lb-nijushi :lb-trompete)))
+    (check (every (lambda (n) (let ((m (find-move n)))
+                                (and (subsetp '(:ranged :x-axis :uncatchable) (mv-flags m))
+                                     (notany (lambda (fl) (member fl (mv-flags m))) '(:unguardable :rend :breaker :guard-crush))
+                                     (loop for w across (mv-hits m) always (and (~= (hw-chip w) 0.15) (subsetp '(:x-axis :uncatchable) (hw-flags w)))))))
+                  lines))
+    (check (every (lambda (k) (let ((km (kit-command-move k :kikon))) (not (member :x-axis (mv-flags km))))) (list b j o)))
+    (check (every (lambda (k) (every (lambda (l) (not (member :x-axis (mv-flags (first l))))) (link-moves k))) (list b j o))))
+  (check (and (eq (resolve-contact :stance) :absorbed) (eq (resolve-contact :armor) :armored) (eq (resolve-contact :guard) :blocked)
+              (eq (resolve-contact :parry :hazard t) :hit) (null (resolve-contact :invuln))))
+  ;; the lock (decision 12): the aim turns until f34 (the volley f24), the shot fires at max(release + 4, lock + 10), by itself
+  ;; at f64: the hold's exit (max(release, lo), at most hi) + the main phase's 4 f startup is exactly that, for any release
+  (check (and (lb-tracking-p 33 34) (not (lb-tracking-p 34 34)) (lb-aim-cancel-p 10 34) (not (lb-aim-cancel-p 9 34))
+              (not (lb-aim-cancel-p 34 34))))
+  (check (and (= 44 (lb-fire-frame 1)) (= 44 (lb-fire-frame 34)) (= 44 (lb-fire-frame 40)) (= 45 (lb-fire-frame 41))
+              (= 64 (lb-fire-frame 60)) (= 64 (lb-fire-frame nil)) (= 64 (lb-fire-frame 90)) (= 34 (lb-fire-frame 1 24))))
+  (dolist (m (list x vo))
+    (let ((lock (getf (mv-params m) :lock)))
+      (check (equal (mv-hold m) (lb-aim-hold lock)))
+      (check (= *lb-x-delay* (mv-s m) (hw-from (svref (mv-hits m) 0))))
+      (check (loop for rel from 1 to 80
+                   always (let ((exit (min (second (mv-hold m)) (max rel (first (mv-hold m))))))
+                            (and (= (+ exit (mv-s m)) (lb-fire-frame (if (< rel (second (mv-hold m))) rel nil) lock))
+                                 (>= (+ exit (mv-s m)) (+ lock *lb-lock-min*))))))))
+  (check (and (= 34 (getf (mv-params x) :lock)) (= 24 (getf (mv-params vo) :lock)) (zerop (mv-track x))))
+  ;; the eye (decisions 7, 13): a tap after U rested >= 10 f, a pip left, from a free state; a threat within 8 f; the third
+  ;; opening fills the awakening gauge unless awakened; the phase makes every hit a whiff (:invuln -> NIL)
+  (check (and (lb-eye-tap-p 10 3 :idle 0) (not (lb-eye-tap-p 9 3 :idle 0)) (not (lb-eye-tap-p 10 0 :guard 0))
+              (lb-eye-tap-p 12 1 :guard 1) (lb-eye-tap-p 12 1 :run 5) (lb-eye-tap-p 12 1 :step 10) (not (lb-eye-tap-p 12 1 :step 5))
+              (not (lb-eye-tap-p 30 3 :move 0)) (not (lb-eye-tap-p 30 3 :stun 0)) (not (lb-eye-tap-p 30 3 :guard-hit 0))))
+  (check (and (lb-eye-window-p 0 8 11) (not (lb-eye-window-p 0 9 12)) (lb-eye-window-p 10 8 11) (not (lb-eye-window-p 11 8 11))
+              (= *lb-eye-lead* 8) (= *lb-eye-phase* 16) (= *lb-eyes* 3)))
+  (check (and (equal (multiple-value-list (lb-eye-open 3 nil)) '(2 nil)) (equal (multiple-value-list (lb-eye-open 2 nil)) '(1 nil))
+              (equal (multiple-value-list (lb-eye-open 1 nil)) '(0 t)) (equal (multiple-value-list (lb-eye-open 1 t)) '(0 nil))
+              (equal (multiple-value-list (lb-eye-open 0 nil)) '(0 nil))))
+  ;; MUJITTAI (decisions 3-5, 14): Jilliel's U enters it; it is a ward with :intangible; every attack drops it (no :keep), on
+  ;; its frame 0; a Breaker breaks it; it never refills (the ward counts as guarding); Jilliel refills at 2.0 / s outside it
+  (check (and (eq (kit-guard-to j) :jilliel-mujittai) (null (kit-guard-to mu)) (eq (kit-drop-to mu) :jilliel) (null (kit-keep mu))
+              (equal (kit-passives mu) '(:ward :intangible)) (null (kit-passives j)) (equal (kit-u-tag mu) "U: MUJITTAI")
+              (every (lambda (c) (eq :jilliel (kit-drop mu c))) '(:q :f :sig :sp1 :sp2 :breaker :kikon))))
+  (check (and (eq (resolve-contact :guard :in-front nil :ward t) :blocked) (eq (resolve-contact :guard :breaker t :ward t) :guard-break)
+              (eq (resolve-contact :guard :unguardable t :ward t) :hit) (~= *mujittai-mult* 1.0)))
+  (check (and (~= (gg-regen 40.0 999 nil t nil (kit-gg-regen mu)) 40.0)                         ; in the stance: GUARD HOLD
+              (~= (* 60 (- (gg-regen 40.0 999 nil nil nil (kit-gg-regen j)) 40.0)) 1.98 0.01)    ; Jilliel: 0.36 x 5.5 / s
+              (~= (* 60 (- (gg-regen 40.0 999 nil nil nil (kit-gg-regen b)) 40.0)) *gg-regen* 0.01)   ; the base: universal
+              (~= (kit-gg-regen o) 1.0) (~= (kit-taken j) 1.1) (= 3 (kit-kikon-konpaku j)) (= 2 (kit-kikon-konpaku b))))
+  ;; BEHEADED and the revive (decisions 6, 8, 15): Jilliel (or the stance) left with 1-4 Konpaku; P enters the owl through
+  ;; the Bankai path (:bankai-form + the kit's :bankai-ok); the owl: Konpaku 4 a Kikon, x1.2, no burn, no way back
+  (check (and (lb-beheaded-p :jilliel 4) (lb-beheaded-p :jilliel-mujittai 1) (not (lb-beheaded-p :jilliel 5))
+              (not (lb-beheaded-p :jilliel 0)) (not (lb-beheaded-p :base 3)) (not (lb-beheaded-p :shin 1))))
+  (check (and (eq (kit-bankai-form j) :shin) (eq (kit-bankai-form mu) :shin) (eq (kit-bankai-ok j) 'lille-bankai-ok)
+              (null (kit-bankai-form o)) (null (kit-bankai-ok o)) (null (kit-pips o)) (zerop (kit-burn o)) (null (kit-duration o))
+              (= 4 (kit-kikon-konpaku o)) (~= (kit-mult o) 1.2) (kit-awakening o) (eq (kit-cine o) 'lb-revive-cine)
+              (eq (kit-hook j :settled) 'lille-settled)))
+  ;; Trompete's reflect (decision 9): a perfect Hoho started f48-f59, a guard pressed f50-f58 (its FIGHTER-GUARD-T at the end
+  ;; of f59 is 60 - the press frame); he takes 50 % x1.2 = 144; 2 bars, 60 f wind-up, the blast at f60 (:params :blast)
+  (flet ((guard-at (press) (lb-reflect-guard-p (- 60 press))))
+    (check (and (not (lb-reflect-hoho-p 47)) (lb-reflect-hoho-p 48) (lb-reflect-hoho-p 59) (not (lb-reflect-hoho-p 60))
+                (not (guard-at 49)) (guard-at 50) (guard-at 58) (not (guard-at 59))
+                (= 144 (lb-reflect-damage 240 (kit-mult o)))
+                (let ((tr (kit-command-move o :sp2))) (and (= 60 (mv-s tr)) (= 60 (getf (mv-params tr) :blast)) (= 2 (kit-command-cost o :sp2))
+                                                           (member :reflectable (mv-flags tr)))))))
+  ;; the volley: ONE window, five lines 6 deg apart (one line at most hits: the window hits once); at 10 m a target on the
+  ;; +6 deg line is hit and only by it; at 20 m one standing in the gap (3 deg) is missed
+  (let* ((w (svref (mv-hits vo) 0)) (vs (hw-vols w)))
+    (flet ((at (deg d) (let ((a (* deg (/ pi 180))))
+                         (loop for v in vs count (vol-hit-p v 0f0 0f0 0f0 0f0 -1f0 (float (* -1 d (sin a)) 1f0) 0f0 (float (* -1 d (cos a)) 1f0)
+                                                             0.38f0 1.8f0 0f0)))))
+      (check (and (= 1 (length (mv-hits vo))) (= 5 (length vs)) (= 1 (at 6.0 10.0)) (= 1 (at -12.0 10.0)) (= 0 (at 3.0 20.0))
+                  (= 0 (at 20.0 10.0)) (>= (at 0.0 4.0) 1) (= 55 (hw-dmg w))))))
+  ;; SABAKI: the ground line erupts 1 -> 18 m at 40 m/s, each point burns 24 f; MISUJI three lines, one hit group (G12)
+  (check (and (equal (multiple-value-list (lb-sabaki-span 0)) '(1.0 1.0)) (~= (nth-value 1 (lb-sabaki-span 12)) 9.0)
+              (~= (lb-sabaki-span 12) 1.0) (~= (lb-sabaki-span 36) 9.0) (multiple-value-bind (f2 t2) (lb-sabaki-span 90) (~= f2 t2))
+              (= 50 (lb-sabaki-frames)) (= 3 (length (getf (mv-params (kit-command-move o :sp1)) :fan)))
+              (= 1 (length (getf (mv-params (kit-command-move o :sig)) :fan)))))
+  ;; the forms' commands, Kikon modules and the K -> L snap shot
+  (check (and (eq (mv-name (kit-l-link b :lb-k1)) :lb-x-quick) (null (kit-l-link b :lb-j1)) (null (kit-l-after-k j)) (null (kit-l-after-k o))
+              (eq (kit-awaken-form b) :jilliel) (equal (getf (getf (kit-ai j) :bankai) :own-konpaku) 1)
+              (every (lambda (k) (eq :kikon (mv-kind (kit-command-move k :kikon)))) (list b j o)))))
+
 ;; no character names in the generic files (design-v1 §12)
 (dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow" "endless-rules" "endless"))
   (with-open-file (in (merge-pathnames (format nil "../duel/lisp/~a.lisp" f) *load-truename*))
     (check (loop for line = (read-line in nil) while line
                  never (some (lambda (w) (search w line)) '(":ya-" ":ke-" ":ru-" ":ic-" ":sj-" "yama" "kenpachi" "rukia" "ichigo"
-                                                             "senju"))))))
+                                                             "senju" ":lb-" "lille"))))))
 
 (format t "duel-rules-test: ~d checks, ~a~%" *checks*
         (if (zerop *fails*) "ALL PASS" (format nil "~d FAILED" *fails*)))

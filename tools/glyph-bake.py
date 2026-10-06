@@ -23,6 +23,7 @@ CHARS = ("卍解残火の太刀野晒呑め、鬼魂城郭炎上天地灰尽旭�
          "腕片盾殴飛噛千切真二草鹿"
          "朽ルキア月白初舞霞罸絶対零度漣這縄霜閃氷震凍結次参縛柱"
          "ぶったるてみろよにれねえもんは"
+         "リジェ・バロ物貫通三連廉脚翼斉射四孔裁き筋神喇叭"   # Lille Barro (docs/duel/DUEL_LILLE.md)
          "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,!-:'")
 OUT = "duel/lisp/glyphs.lisp"
 FLAT, SIMPLIFY = 1.0, 2.5         # font units (1000 per em): ~0.5 px on a 200 px glyph

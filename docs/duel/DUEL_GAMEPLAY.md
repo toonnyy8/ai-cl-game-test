@@ -110,7 +110,7 @@ generic systems; only `debug.lisp` names characters, to set up scenes). The modu
 name-leak check (it must print nothing):
 
 ```sh
-grep -nE ':ya-|:ke-|:ru-|:ic-|:sj-|yama|kenpachi|rukia|ichigo|senju' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow,endless-rules,endless,learn}.lisp
+grep -nE ':ya-|:ke-|:ru-|:ic-|:sj-|:lb-|yama|kenpachi|rukia|ichigo|senju|lille' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow,endless-rules,endless,learn}.lisp
 ```
 
 Engine modules the duel was the first user of (moved into the engine by the harvest):
@@ -225,6 +225,7 @@ encoded in the integer.
 | 2450+k | Senjumaru's tests (`senju-test`, her range through `*char-debug*`, human P1, P2's CPU off unless noted; a `duel probe senju …` line): 0 the Shikai 2.2 m from Kenpachi, 1 six stitches and L at 5 m on a 50-Reishi Kenpachi (1 Reishi left), 2 the soldier vs an active Kenpachi, 3 the umbrella vs a full Shiranui, 4 `:tsuji1` at 3 m (hold L, then 2479: P2's J1 tears the weave), 5–10 each hank's form at 6 m, 11 the combo cut on `:tsuji4`, 12 zero Rukia before `:tsuji2`, 13 `:tsuji1` vs a Yamamoto CPU, 14 `:tsuji1` 5 m from Kenpachi; review stills: 20–25 hank k−19 unfolded under him, 26 six stitches on him, 27 the umbrella open, 28 a weave, 29 P2's J1 now, 30 the 星 siphon probe, 31–34 the awakened Senjumaru at the arena's edge (the drapes' fade: the pair on a tangent at z ±14.8, P1 at the rim with P2 3 m inward, swapped); 99500+k sets the drapes' fade floor to k / 100 (99600: off, the before still) |
 | 76000+f / 77000+f / 78000+f | stills of her Kikon 仕立て直し / 死出六色浮文機 / the awakening held at frame f |
 | 90000+ | her knobs without a rebuild (DUEL_SENJUMARU.md "Knobs"; senjumaru.lisp SENJU-KNOB; 80000+ on her branch, moved off ENDLESS's range) |
+| 79000–79999 | claimed 2026-10-06 for Lille Barro (roster index 5, DUEL_LILLE.md; lille.lisp LILLE-DEBUG through `*char-debug*`). 79000+k his tests (`lille-test`, human P1, P2's CPU off unless noted; a `duel probe lille …` line): 0 the base form 2.2 m from Kenpachi, 1 the base form 14 m out (aim with L), 2 / 3 / 4 forced JILLIEL / MUJITTAI / the owl 5 m out, 5 JILLIEL BEHEADED with 3 Konpaku (P revives), 6 the base form 12 m from a Kenpachi CPU, 7 / 8 the owl's Trompete reflected by a guard pressed on f54 / a Hoho on f52 (a scripted reflector), 9 the base form 10 m from a Yamamoto CPU, 10–13 the eye's pips set to 0–3, 20 the mirror (both CPUs) 12 m apart; 79100–79999 free (batch 3: cinematic stills, batch 4: knobs). Every gate row with him is followed by a `duel lille` line per side (the pacing log, DUEL_LILLE §13: shots aimed / locked / fired / hit / guarded and damage by band, eyes, the awakening / beheading / revive ticks, stance frames and passes, volleys, Trompete fired / hit / guarded / reflected) |
 | 32000+k … 38000+k | the Bankai's knobs without a rebuild: `*arm-self*` (32000), `*arm-burst-self*` (33000), `*arm-crack*` (34000) = k; the entry rule's `:p` = k / 100 (37000), `:own-konpaku` = k (38000) |
 
 Most scenario commands (2200–2319) first make sure the right battle runs (`ensure-battle`: a new
