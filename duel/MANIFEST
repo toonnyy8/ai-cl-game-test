@@ -4,6 +4,7 @@
 # users. tuning / rules / control / learn / kit are plain CL (host-tested); yama / ken / rukia / ichigo are the characters
 # (data + hooks + cinematics); fighter ... main are the generic systems (no character names, except debug.lisp's test scenarios).
 # senjumaru.lisp loads after hud / onehand: its own HUD meter uses their drawing macros (docs/duel/DUEL_SENJUMARU.md).
+# lille-art.lisp / lille.lisp (roster index 5, docs/duel/DUEL_LILLE.md) load after senjumaru.lisp: the roster is append-only.
 lisp/package.lisp
 lisp/tuning.lisp
 lisp/rules.lisp
@@ -39,6 +40,8 @@ lisp/flow.lisp
 lisp/hud.lisp
 lisp/onehand.lisp
 lisp/senjumaru.lisp
+lisp/lille-art.lisp
+lisp/lille.lisp
 lisp/debug.lisp
 lisp/endless.lisp
 lisp/main.lisp

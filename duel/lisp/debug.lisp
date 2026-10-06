@@ -862,7 +862,7 @@ move-beat choices of DRAW-FIGHTER."
   "Seeded CPU vs CPU (*GATE-DIFFICULTY*, NORMAL): PAIR = (c1 c2), or NIL to draw both from SEED."
   (setf *match-seed* seed *mode* :cpu-cpu *difficulty* *gate-difficulty* *blow-aways* 0)
   (band-acc-reset) (cup-acc-reset)
-  (senju-acc-reset) (ichigo-acc-reset)
+  (senju-acc-reset) (ichigo-acc-reset) (lille-acc-reset)
   (sim-rnd-seed seed)
   (setf *picks* (or pair (list (nth (floor (* (length *roster*) (sim-rnd01))) *roster*)
                                (nth (floor (* (length *roster*) (sim-rnd01))) *roster*))))
@@ -924,7 +924,7 @@ SR SS SI; a new character's: its pairings with every earlier character and its m
     (log-msg "duel evo seed ~d P1 ~,1f P2 ~,1f secs ~,1f" *match-seed*   ; the first EVOLUTION per side (-1: none)
              (/ (gauges-evo-t (gauges *p1*)) 60.0) (/ (gauges-evo-t (gauges *p2*)) 60.0) (/ *match-tick* 60.0))
     (band-acc-line) (cup-acc-line)
-    (senju-acc-line) (ichigo-acc-line)
+    (senju-acc-line) (ichigo-acc-line) (lille-acc-line)
     (when *learn-gate* (learn-gate-line))
     (setf *gate-busy* nil))
   (unless *gate-busy*

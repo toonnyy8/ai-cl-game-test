@@ -9,7 +9,7 @@
 ;; the character files also hold their hook functions and cinematics: those need the engine, so the
 ;; host skips the cinematics (a no-op DEFCINE) and never calls a hook
 (defmacro duel::defcine (&rest r) (declare (ignore r)) nil)
-(dolist (f '("tuning" "rules" "kit" "yama" "ken" "rukia" "ichigo" "endless-rules" "senjumaru"))
+(dolist (f '("tuning" "rules" "kit" "yama" "ken" "rukia" "ichigo" "endless-rules" "senjumaru" "lille"))
   (load (merge-pathnames (format nil "../duel/lisp/~a.lisp" f) *load-truename*)))
 (in-package :duel)
 
@@ -25,7 +25,8 @@
                         (:kenpachi :bankai) (:kenpachi :kataude)
                         (:rukia :base) (:rukia :m18) (:rukia :m50) (:rukia :zero) (:ichigo :base) (:ichigo :kessa)
                         (:senjumaru :base) (:senjumaru :tsuji1) (:senjumaru :tsuji2) (:senjumaru :tsuji3) (:senjumaru :tsuji4)
-                        (:senjumaru :tsuji5) (:senjumaru :tsuji6)))
+                        (:senjumaru :tsuji5) (:senjumaru :tsuji6)
+                        (:lille :base) (:lille :jilliel) (:lille :jilliel-mujittai) (:lille :shin)))
 
 ;;; ================================================================ the triangle / clash matrix
 (check (eq (resolve-contact :neutral) :hit))
@@ -785,7 +786,11 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :ic-mine :ic-k-stance :ic-k-back :ic-k-parry :ic-k-yank :ic-k-zanzo   ; Ichigo (DUEL_ICHIGO §10, v2)
     :ic-tsuki :ic-rangetsu :ic-tsuki-otoshi
     :sj-stance :sj-q1 :sj-q2 :sj-spin :sj-f1 :sj-f2 :sj-drop :sj-yank :sj-summon :sj-kasa :sj-breaker :sj-saidan :sj-intro
-    :sj-win :sj-loom-stance :sj-weave :sj-unravel :sj-tanmono :sj-makitori :sj-snip))   ; Senjumaru (:sj-awaken is the cine's)
+    :sj-win :sj-loom-stance :sj-weave :sj-unravel :sj-tanmono :sj-makitori :sj-snip   ; Senjumaru (:sj-awaken is the cine's)
+    :lb-stance :lb-intro :lb-win :lb-q1 :lb-q2 :lb-jab :lb-f1 :lb-f2 :lb-f3 :lb-aim :lb-fire :lb-snap :lb-sanren :lb-hiren
+    :lb-breaker :lb-butt :lb-w-stance :lb-w-fold :lb-w-q1 :lb-w-q2 :lb-w-q3 :lb-w-f1 :lb-w-f2 :lb-w-f3 :lb-w-aim :lb-w-fire
+    :lb-w-nijushi :lb-w-breaker :lb-w-ram :lb-o-stance :lb-o-q1 :lb-o-q2 :lb-o-q3 :lb-o-f1 :lb-o-f2 :lb-o-f3 :lb-o-chop
+    :lb-o-trompete :lb-o-breaker :lb-o-stamp))   ; Lille (DUEL_LILLE §12 Art)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
 ;; DEFCINEs, which the host stubs; KESSA's clones play :ic-k-cut / :ic-k-wrap, ICHIGO-CLONE-STEP)
 (let ((used (remove-duplicates (loop for cf in *forms* append (kit-clips (apply #'kit cf))))))
@@ -796,8 +801,9 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 (check (equal (mapcar #'kit-weapon (mapcar (lambda (cf) (apply #'kit cf)) *forms*))
               '(:ryujin-jakka :ryujin-jakka :zanka :zanka :ken-katana :nozarashi :nozarashi :nozarashi :ke-broken :ke-broken
                 :sode-no-shirayuki :sode-no-shirayuki :ru-rime :ru-ice :zangetsu-long :tensa
-                :shigarami :shigarami :shigarami :shigarami :shigarami :shigarami :shigarami)))
-(check (equal *roster* '(:yamamoto :kenpachi :rukia :ichigo :senjumaru)))
+                :shigarami :shigarami :shigarami :shigarami :shigarami :shigarami :shigarami
+                :diagramm nil nil nil)))
+(check (equal *roster* '(:yamamoto :kenpachi :rukia :ichigo :senjumaru :lille)))   ; Lille appended last (DUEL_LILLE §0)
 (check (equal (kit-intro-weapon (kit :yamamoto :base)) '(:ya-cane 81)))              ; cane until 1.35 s
 (check (and (eq (kit-cine (kit :yamamoto :bankai-east)) 'yama-bankai-cine) (eq (kit-cine (kit :kenpachi :nozarashi)) 'ken-nozarashi-cine)
             (null (kit-cine (kit :yamamoto :hellfire)))))
@@ -1013,7 +1019,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
   ;; the entry (2026-09-28): free with <= 4 of his own Konpaku (no longer red)
   (check (and (= *bankai-konpaku* 4) (bankai-allowed-p t 4) (bankai-allowed-p t 1) (not (bankai-allowed-p nil 4))
               (not (bankai-allowed-p t 5)) (not (bankai-allowed-p t 9))))
-  (check (equal (loop for cf in *forms* when (kit-bankai-form (apply #'kit cf)) collect cf) '((:kenpachi :nomihose))))
+  (check (equal (loop for cf in *forms* when (kit-bankai-form (apply #'kit cf)) collect cf)
+              '((:kenpachi :nomihose) (:lille :jilliel) (:lille :jilliel-mujittai))))   ; (+ Lille's revive, DUEL_LILLE §6.1)
   (check (and (eq (kit-bankai-form t3) :bankai) (eq (kit-cine b) 'ken-bankai-cine) (kit-awakening b) (kit-awakening a)))
   ;; 2. the arm: 4 pips; spend 4 -> 3, 0 refused; the crack at 300 f, idle back to 0; locked frames don't count;
   ;; 4 cracks = 1200 f of play
@@ -1260,7 +1267,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
                 (>= (mv-reach lk) (getf (mv-params lk) :range))           ; no chase: the ring is cast at him
                 (equal (mv-callout ts) (mv-callout lk)) (member :bind (mv-flags lk))))
     (check (every (lambda (f) (eq (kit-l-link (kit :rukia f) :ru-k2) (kit-command-move (kit :rukia f) :sig))) '(:m18 :m50 :zero)))
-    (check (every (lambda (cf) (null (kit-l-after-k (apply #'kit cf)))) (remove-if (lambda (c) (member c '(:rukia :ichigo :senjumaru))) *forms* :key #'first)))
+    (check (every (lambda (cf) (null (kit-l-after-k (apply #'kit cf)))) (remove-if (lambda (c) (member c '(:rukia :ichigo :senjumaru :lille))) *forms* :key #'first)))
     (check (every (lambda (f) (numberp (getf (kit-ai (kit :rukia f)) :l-after-k))) '(:base :m18 :m50 :zero)))))
 
 ;; the combo band lock with overdraft (the user's decision 2026-09-28): inside a combo the band holds whatever C does; L is
@@ -1649,8 +1656,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 along the left forearm, so the fist leads).")
 (defparameter *reach-one-sided* '((:yamamoto :bankai-east) (:yamamoto :bankai-west) (:kenpachi :nozarashi)
                                   (:kenpachi :bankai) (:rukia :zero)))
-(let ((bodies nil) (weapons nil) (strike nil))
-  (dolist (art '("yama" "ken" "rukia" "ichigo" "senjumaru"))
+(let ((bodies nil) (weapons nil) (strike nil) (points nil) (butt 0.0))
+  (dolist (art '("yama" "ken" "rukia" "ichigo" "senjumaru" "lille"))
     (with-open-file (in (merge-pathnames (format nil "../duel/lisp/~a-art.lisp" art) *load-truename*))
       (let ((*package* (find-package :duel)))
         (loop for form = (read in nil in) until (eq form in)
@@ -1658,7 +1665,10 @@ along the left forearm, so the fist leads).")
                 do (case (first form)
                      ((defpose defclip defstrike) (eval form))
                      (defun (when (eq (second form) 'sj-okobo-props) (eval form)))
-                     (defparameter (when (eq (second form) '*sj-strike-reach*) (setf strike (eval (third form)))))
+                     (defparameter (case (second form)
+                                     (*sj-strike-reach* (setf strike (eval (third form))))
+                                     (*lb-strike-points* (setf points (eval (third form))))   ; Lille: the plank, the
+                                     (*lb-butt* (setf butt (eval (third form))))))           ; wing / arm tips
                      (defbody (push (cons (second form) (third form)) bodies))
                      (defweapon (push (cons (second form) (getf (third form) :length)) weapons)))))))
   (let ((jm (make-f32 (* 16 +nj+))) (pose (make-f32 +pose-n+)) (v (make-f32 3))
@@ -1675,7 +1685,8 @@ along the left forearm, so the fist leads).")
           (let* ((mv (first lm)) (hw (svref (mv-hits mv) 0)) (vol (first (hw-vols hw))) (cap (> (aref vol 0) 0.5))
                  (edge (if cap (+ (aref vol 2) (aref vol 4)) (aref vol 1)))
                  (clip (if (eq (second lm) :breaker) (mv-clip-2 mv) (mv-clip mv)))   ; (the Breaker's strike: its clip 2)
-                 (striker (cdr (assoc clip *strikers*)))
+                 (point (second (assoc clip points)))                ; Lille's: :weapon (the plank) or a joint
+                 (striker (or (cdr (assoc clip *strikers*)) (and point (not (eq point :weapon)) point)))
                  (art (or (third (assoc clip strike))
                           (loop for sf from (hw-from hw) below (hw-to hw)
                                 maximize (progn
@@ -1683,7 +1694,7 @@ along the left forearm, so the fist leads).")
                                            (pose-fk! jm pose 0f0 0f0 0f0 0f0 (f32 (getf b :scale)) (f32 (deg (getf b :hunch 0))) props)
                                            (if striker                            ; (yaw 0 faces -Z)
                                                (joint-point! v jm (joint-index striker) 0f0 0f0 0f0)
-                                               (joint-point! v jm (ji :weapon-r) 0f0 0f0 (f32 (- wlen))))
+                                               (joint-point! v jm (ji :weapon-r) 0f0 0f0 (f32 (if (eq point :weapon) butt (- wlen)))))
                                            (if cap (- (aref v 2)) (sqrt (+ (expt (aref v 0) 2) (expt (aref v 2) 2))))))))
                  (d (- art edge)))
             (when (eq (mv-kind mv) :quick)
