@@ -224,7 +224,8 @@ new button."
   hits: :stun  hitstun override (frames)
   flags also: :rend (armour and a stance don't stop it: RESOLVE-CONTACT) :grab (a grab: the CPU never guards it)
             :uncatchable (a :shield move's :catch doesn't take it: blocked as by a guard) :x-axis (a line through guard,
-            docs/duel/DUEL_LILLE.md §8: the CPU's perception reads it)"
+            docs/duel/DUEL_LILLE.md §8: the CPU's perception reads it) :step-branch (a stance whose :tick takes Step as a
+            follow-up: the one-hand up-flick stays a Step in it, never a Hoho: control.lisp UP-FLICK-HOHO-P)"
   `(register-move ,name ',spec))
 
 ;;; ================================================================ kits

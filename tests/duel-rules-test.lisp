@@ -796,7 +796,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :lb-breaker :lb-butt :lb-w-stance :lb-w-fold :lb-w-q1 :lb-w-q2 :lb-w-q3 :lb-w-f1 :lb-w-f2 :lb-w-f3 :lb-w-aim :lb-w-fire
     :lb-w-nijushi :lb-w-breaker :lb-w-ram :lb-o-stance :lb-o-q1 :lb-o-q2 :lb-o-q3 :lb-o-f1 :lb-o-f2 :lb-o-f3 :lb-o-chop
     :lb-o-trompete :lb-o-breaker :lb-o-stamp      ; Lille (DUEL_LILLE §12 Art)
-    :lb-kamae :lb-k-shot :lb-k-reikyori :lb-k-nagi :lb-k-dash :lb-w-tenshin))   ; his rework (DUEL_LILLE §22)
+    :lb-kamae :lb-k-shot :lb-k-hosha :lb-k-taisha :lb-k-dash :lb-w-tenshin :lb-w-tenshin-in))   ; his rework (DUEL_LILLE §22, §23)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
 ;; DEFCINEs, which the host stubs; KESSA's clones play :ic-k-cut / :ic-k-wrap, ICHIGO-CLONE-STEP)
 (let ((used (remove-duplicates (loop for cf in *forms* append (kit-clips (apply #'kit cf))))))
@@ -1689,9 +1689,8 @@ along the left forearm, so the fist leads).")
              (props (if (eq (first cf) :senjumaru) (sj-okobo-props) (and (getf b :props) (apply #'make-rig-proportions (getf b :props)))))
              (wlen (cdr (assoc (kit-weapon k) weapons))))
         (dolist (lm (append (remove-if (lambda (l) (zerop (length (mv-hits (first l))))) (link-moves k))   ; (EN's traces)
-                            (let ((br (kit-command-move k :breaker))) (and br (list (list br :breaker))))
-                            (and (equal cf '(:lille :base))    ; the shooting stance's REIKYORI and NAGIHARAI (§22.1)
-                                 (list (list (find-move :lb-k-j) 1) (list (find-move :lb-k-k) 1)))))
+                            (let ((br (kit-command-move k :breaker))) (and br (list (list br :breaker))))))
+                                                               ; (the stance's HOSHA / TAISHA: line hits from the muzzle, §23.1)
           (let* ((mv (first lm)) (hw (svref (mv-hits mv) 0)) (vol (first (hw-vols hw))) (cap (> (aref vol 0) 0.5))
                  (edge (if cap (+ (aref vol 2) (aref vol 4)) (aref vol 1)))
                  (clip (if (eq (second lm) :breaker) (mv-clip-2 mv) (mv-clip mv)))   ; (the Breaker's strike: its clip 2)
@@ -1860,8 +1859,9 @@ defender's next step. Values: the attacker's and the defender's first actionable
                 (= n 3))                                                       ; three leave 10, the 4th crushes
               (= 18 (chip-damage 120 (hw-chip xw) 1000)) (< (chip-damage 120 (hw-chip xw) 5) 5)))
   ;; stance, armour, DRINK and a parry take it as any hit: the line carries no :unguardable / :rend / :breaker / :guard-crush;
-  ;; only :ranged :x-axis :uncatchable, on every line move, and on no Kikon lane or J / K (nor REIKYORI / NAGIHARAI)
-  (let ((lines '(:lb-k-shot :lb-sanren :lb-hiren :lb-nijushi :lb-trompete)))
+  ;; only :ranged :x-axis :uncatchable, on every line move (TAISHA's bullet too, §23.1), and on no Kikon lane or J / K (nor
+  ;; HOSHA's bullets: :ranged, guardable, not the X-axis)
+  (let ((lines '(:lb-k-shot :lb-k-k :lb-sanren :lb-hiren :lb-nijushi :lb-trompete)))
     (check (every (lambda (n) (let ((m (find-move n)))
                                 (and (subsetp '(:ranged :x-axis :uncatchable) (mv-flags m))
                                      (notany (lambda (fl) (member fl (mv-flags m))) '(:unguardable :rend :breaker :guard-crush))
@@ -1869,7 +1869,8 @@ defender's next step. Values: the attacker's and the defender's first actionable
                   lines))
     (check (every (lambda (k) (let ((km (kit-command-move k :kikon))) (not (member :x-axis (mv-flags km))))) (list b j kn o)))
     (check (every (lambda (k) (every (lambda (l) (not (member :x-axis (mv-flags (first l))))) (link-moves k))) (list b j kn o)))
-    (check (notany (lambda (n) (intersection '(:x-axis :ranged) (mv-flags (find-move n)))) '(:lb-k-j :lb-k-k))))
+    (check (and (member :ranged (mv-flags (find-move :lb-k-j))) (not (member :x-axis (mv-flags (find-move :lb-k-j))))
+                (loop for w across (mv-hits (find-move :lb-k-j)) never (or (hw-chip w) (member :x-axis (hw-flags w)))))))
   (check (and (eq (resolve-contact :stance) :absorbed) (eq (resolve-contact :armor) :armored) (eq (resolve-contact :guard) :blocked)
               (eq (resolve-contact :parry :hazard t) :hit) (null (resolve-contact :invuln))))
   ;; L 狙撃構え SOGEKI-GAMAE (decision 17, §22.1): the stance up at f6, held 30 f (90 with L held) then R 14, no hits; its
@@ -1913,15 +1914,44 @@ defender's next step. Values: the attacker's and the defender's first actionable
     (check (= 11 (lbs-charge st)))
     (loop for sf from 7 to 19 do (lb-kamae-clock st sf (incf now)))
     (check (= 24 (lbs-charge st))))
-  ;; REIKYORI (J): S8 A3 R18, a 2 m lunge, 40 stagger, reach 1.8, -6, guard 8 (melee); NAGIHARAI (K): S16 A4 R28, 2.6 m
-  ;; 180 deg, 80 crumple, guard 30, -10; the dash (Step): 12 f hitless, back in the stance at its f11, 10 flash step
-  (let* ((rj (find-move :lb-k-j)) (rk (find-move :lb-k-k)) (dash (find-move :lb-k-dash)) (wj (svref (mv-hits rj) 0)) (wk (svref (mv-hits rk) 0)))
-    (check (and (= 8 (mv-s rj)) (= 3 (mv-a rj)) (= 18 (mv-r rj)) (= 40 (hw-dmg wj)) (eq :stagger (hw-react wj)) (~= 1.8 (mv-reach rj))
-                (= -6 (mv-adv-block rj)) (= 8 (hw-guard wj)) (~= 2.0 (mv-slide rj))
-                (= 16 (mv-s rk)) (= 4 (mv-a rk)) (= 28 (mv-r rk)) (= 80 (hw-dmg wk)) (eq :crumple (hw-react wk)) (~= 2.6 (mv-reach rk))
-                (= 30 (hw-guard wk)) (= -10 (mv-adv-block rk))
+  ;; HOSHA (J, §23.1, decision 21): S6, three bullets f6 / f10 / f14 (2-frame windows, each its own hit), 16 each, a short
+  ;; line to 6.6 m, flinch held *LB-HOSHA-STUN* (30) then a stagger, guard 6, -8, :ranged (no chip); the leap 3 m over
+  ;; f0-14; R16 after the last window (total 32); its J / K link from f16. TAISHA (K, decision 22): S16 A2 R24, a 12 m
+  ;; line, 60 flat (no :bonus), stagger kb 1.0, through guard as the shot (chip 15 %, drain 30), the back-slide 3 m over
+  ;; f0-12 then locked. The dash (Step): 12 f hitless, back in the stance at its f11, 10 flash step
+  (let* ((rj (find-move :lb-k-j)) (rk (find-move :lb-k-k)) (dash (find-move :lb-k-dash)) (wj (mv-hits rj)) (wk (svref (mv-hits rk) 0)))
+    (check (and (= 6 (mv-s rj)) (= 10 (mv-a rj)) (= 16 (mv-r rj)) (= 3 (length wj))
+                (equal (map 'list #'hw-from wj) '(6 10 14)) (equal (map 'list #'hw-to wj) '(8 12 16))
+                (every (lambda (w) (and (= 16 (hw-dmg w)) (= 6 (hw-guard w)))) wj)
+                (equal (map 'list #'hw-react wj) '(:flinch :flinch :stagger))
+                (equal (map 'list #'hw-stun wj) (list *lb-hosha-stun* *lb-hosha-stun* nil))
+                (= -8 (mv-adv-block rj)) (~= 6.0 (mv-reach rj)) (zerop (mv-slide rj)) (= 16 (getf (mv-params rj) :link))
+                (~= 3.0 *lb-hosha-leap*) (= 14 *lb-hosha-leap-f*) (eq (mv-tick rj) 'lb-hosha-tick)
+                (equal (mv-on-frame rj) '((0 lb-hosha-leap) (6 lb-bullet) (10 lb-bullet) (14 lb-bullet)))
+                (= 16 (mv-s rk)) (= 2 (mv-a rk)) (= 24 (mv-r rk)) (= 60 (hw-dmg wk)) (eq :stagger (hw-react wk)) (~= 1.0 (hw-kb wk))
+                (~= 12.0 (mv-reach rk)) (= 30 (hw-guard wk)) (not (getf (mv-params rk) :bonus))
+                (~= 3.0 (getf (mv-params rk) :slide)) (= 12 (getf (mv-params rk) :slide-f) (move-lock rk))
+                (equal (mv-on-frame rk) '((0 lb-hiren-slide) (16 lb-taisha-fire)))
                 (= 12 (mv-total dash)) (zerop (length (mv-hits dash))) (equal (mv-on-frame dash) '((0 lb-kamae-dash) (11 lb-kamae-back)))
                 (~= 3.5 *lb-kamae-dash*) (~= 10.0 *lb-kamae-dash-fs*) (= 9 *lb-dash-iframes*))))
+  ;; HOSHA's link is a combo, with the real frame numbers: a bullet landing on frame h (the first frame of its window)
+  ;; stuns the victim from h on; the link starts on HOSHA's f16 (its :link) and hits on its own first hit frame later, so
+  ;; h + the stun must pass f16 + J1's / K1's first hit for every bullet (the victim is free on the step his stun runs out)
+  (let* ((rj (find-move :lb-k-j)) (link (getf (mv-params rj) :link)))
+    (check (= link (+ (mv-s rj) (mv-a rj))))                             ; (the recovery: the bullets all fire first)
+    (dolist (c '(:q :f))
+      (let ((opener (mv-first-hit (kit-command-move b c))))
+        (loop for w across (mv-hits rj)
+              do (check (> (+ (hw-from w) (or (hw-stun w) (hitstun (hw-react w)))) (+ link opener)))))))
+  ;; the link plan (his CPU, once a move): after HOSHA's hit J1 under 0.5, else K1; after TENSHIN J1 only when it switched in
+  ;; and a trace hit (the combo)
+  (check (and (eq :q (lb-ai-link-plan t 0.49 nil nil)) (eq :f (lb-ai-link-plan t 0.5 nil nil))
+              (eq :q (lb-ai-link-plan nil 0.0 t t)) (eq :none (lb-ai-link-plan nil 0.0 t nil)) (eq :none (lb-ai-link-plan nil 0.0 nil t))))
+  ;; the touch fix (decision 24): the stances whose :tick takes Step (his, Ichigo's TSUKIMACHI) carry :step-branch, and no
+  ;; other move does (control.lisp UP-FLICK-HOHO-P keeps their up-flick a Step)
+  (check (equal (sort (loop for m being the hash-values of *moves* when (member :step-branch (mv-flags m)) collect (mv-name m))
+                      #'string<)
+                '(:ic-tsuki :ic-tsuki-k2 :ic-tsuki-re :lb-kamae :lb-kamae-k :lb-kamae-re)))
   ;; every branch combos off a K link's hit: its A + 2 (the stance's f4 -> f6) + the branch's first hit (the shot's S) < the
   ;; K link's hitstun
   (dolist (kl '(:lb-k1 :lb-k2 :lb-k3))
@@ -1991,46 +2021,78 @@ defender's next step. Values: the attacker's and the defender's first actionable
 
 ;;; ---------------------------------------------------------------- JILLIEL EN / KIN and TENSHIN (DUEL_LILLE §22.2, decision 18)
 (let* ((j (kit :lille :jilliel)) (kn (kit :lille :jilliel-kin)) (sw (find-move :lb-switch)))
-  ;; L is TENSHIN in both modes: 12 f hitless dash, R 8, cooldown 30, frame 0 materialises, the form at f6; 10 flash step;
+  ;; L is TENSHIN in both modes: 14 f hitless dash (round 2: in up to 8 m stopping 1.5 m short, out 7 m), R 8, cooldown 30,
+  ;; frame 0 materialises, the form at f6; J / K cancel it from f14 (its :link); 10 flash step;
   ;; EN -> KIN, KIN -> EN; KIN's K links chain into it (a K link's L), EN's lines cancel into it from their active end (the
   ;; tick): no L link there
-  (check (and (eq sw (kit-command-move j :sig)) (eq sw (kit-command-move kn :sig)) (= 12 (mv-s sw)) (zerop (mv-a sw)) (= 8 (mv-r sw))
+  (check (and (eq sw (kit-command-move kn :sig)) (= 14 (mv-s sw) *lb-switch-f*) (zerop (mv-a sw)) (= 8 (mv-r sw))
+              (= 14 (getf (mv-params sw) :link)) (eq (mv-tick sw) 'lb-link-tick)
+              (~= 6.5 (lb-switch-dist t 8.0)) (~= 8.0 (lb-switch-dist t 12.0)) (~= 0.0 (lb-switch-dist t 1.2))
+              (~= 7.0 (lb-switch-dist nil 3.0)) (~= 7.0 (lb-switch-dist nil 20.0))
               (zerop (length (mv-hits sw))) (= 30 (mv-cooldown sw) *lb-switch-cd*)
               (equal (mv-on-frame sw) '((0 lb-switch-go) (6 lb-switch-form)))
               (eq (lb-switch-target :jilliel) :jilliel-kin) (eq (lb-switch-target :jilliel-mujittai) :jilliel-kin)
               (eq (lb-switch-target :jilliel-kin) :jilliel) (eq (lb-switch-target :jilliel-kin-mujittai) :jilliel)
-              (not (lb-switch-ok-p 9.9)) (lb-switch-ok-p 10.0) (~= 3.5 *lb-switch-dash*)
+              (not (lb-switch-ok-p 9.9)) (lb-switch-ok-p 10.0)
               (eq sw (kit-l-link kn :lb-w-k1)) (eq sw (kit-l-link kn :lb-w-k3)) (null (kit-l-link kn :lb-w-j1))
               (null (kit-l-link j :lb-e-k1))
               (lb-jilliel-form-p :jilliel-kin-mujittai) (not (lb-jilliel-form-p :shin)) (lb-kin-form-p :jilliel-kin)
               (not (lb-kin-form-p :jilliel))))
-  ;; EN's J / K: the wing strings' frames (S / A / R / enter, J1 J2 J3 K1 K2 K3), no hit window, a trace laid on the first
-  ;; active frame, the stick walking him (LB-EN-TICK); SP1 three traces; SP2 the 40 f tell then one thick trace (2 bars)
+  ;; TENSHIN in (EN -> KIN, decision 30): EN's L from neutral (idle / walk / run; MUJITTAI drops to EN and takes it) is
+  ;; :lb-switch-in, an 8 f wind-up (hittable: no iframes before the dash) then the dash at f8 (traces materialise, iframes
+  ;; from there), the form 6 f into the dash, its link at the dash's end; as a cancel out of an EN attack the same move
+  ;; entered at f6 (:lb-switch-in-c): 2 f. Both paths: a trace hit at the materialise -> the dash -> KIN's J1 at the link is
+  ;; a combo (the stun counts from the materialise)
+  (let ((in (kit-command-move j :sig)) (inc (find-move :lb-switch-in-c)) (kj1 (kit-command-move kn :q)))
+    (check (and (eq :lb-switch-in (mv-name in)) (eq in (kit-command-move (kit :lille :jilliel-mujittai) :sig))
+                (equal (mv-on-frame in) '((8 lb-switch-go) (14 lb-switch-form))) (equal (mv-on-frame inc) (mv-on-frame in))
+                (= 22 (mv-s in) (getf (mv-params in) :link)) (= 8 (getf (mv-params in) :go)) (= 30 (mv-cooldown inc) (mv-cooldown in))
+                (= 6 (mv-enter inc)) (zerop (mv-enter in)) (eq (mv-tick in) 'lb-link-tick) (zerop (length (mv-hits in)))
+                (= *lb-switch-windup* (- 8 (mv-enter in))) (= *lb-switch-windup-c* (- 8 (mv-enter inc)))
+                (= 8 *lb-switch-windup*) (= 2 *lb-switch-windup-c*)
+                (= (- (getf (mv-params in) :link) 8) *lb-switch-f*)))
+    (dolist (m (list in inc))
+      (let ((go (getf (mv-params in) :go)) (link (getf (mv-params m) :link)))
+        (check (> *lb-trace-stun* (+ (- link go) (mv-first-hit kj1)))))))
+  ;; EN's J / K (round 2, decision 28: the start-ups and recoveries cut, the active frames kept): the strings as KIN's (the
+  ;; same links), S / A / R J 4/3/6 4/3/6 5/3/9, K 9/4/10 10/4/12 (enter 3) 11/5/17 (enter 4); no hit window, a trace laid
+  ;; on the first active frame, the stick walking him (LB-EN-TICK); the wing clips at :clip-s / S speed (the hit pose on S)
   (check (equal (mapcar #'second (link-moves j)) (mapcar #'second (link-moves kn))))
   (loop for (em nil seq) in (link-moves j)
         for km = (first (find seq (link-moves kn) :key #'third :test #'equal))
-        do (check (and km
-                       (= (mv-s em) (mv-s km)) (= (mv-a em) (mv-a km)) (= (mv-r em) (mv-r km)) (= (mv-enter em) (mv-enter km))
+        for want = (cdr (assoc (mv-name em) '((:lb-e-j1 4 3 6 0) (:lb-e-j2 4 3 6 0) (:lb-e-j2s 4 3 6 0) (:lb-e-j3 5 3 9 0)
+                                              (:lb-e-k1 9 4 10 0) (:lb-e-k2 10 4 12 3) (:lb-e-k2s 10 4 12 3) (:lb-e-k3 11 5 17 4))))
+        do (check (and km want (equal (list (mv-s em) (mv-a em) (mv-r em) (mv-enter em)) want)
                        (eq (mv-kind em) (mv-kind km)) (zerop (length (mv-hits em))) (eq (mv-tick em) 'lb-en-tick)
+                       (eq (mv-clip em) (mv-clip km)) (~= (mv-clip-speed em) (/ (mv-s km) (float (mv-s em))))
                        (equal (mv-on-frame em) (list (list (mv-s em) 'lb-en-lay)))
+                       (< (mv-enter em) (mv-s em))
                        (member (getf (mv-params em) :trace) '(:j :k))
                        (eq (and (member :ender (mv-flags em)) t) (and (member :ender (mv-flags km)) t))
                        (= (move-end-frame (mv-s em) (mv-a em) (mv-r em) (mv-whiff em) nil t) (mv-total em)))))   ; (hitless: R)
+  ;; the string goes on without contact: a laid line sets FIGHTER-CHAINED (LB-EN-LAY), which opens the next link in the
+  ;; last *CHAIN-LEAD* frames of the recovery (CHAIN-OPEN-P with contact T): every EN link has room for it
+  (loop for (em) in (link-moves j)
+        do (check (and (chain-open-p (- (mv-total em) 1) (mv-s em) (mv-a em) (mv-r em) t)
+                       (not (chain-open-p (- (mv-total em) *chain-lead* 1) (mv-s em) (mv-a em) (mv-r em) t))
+                       (> (mv-r em) *chain-lead*))))
   (let ((s1 (kit-command-move j :sp1)) (s2 (kit-command-move j :sp2)))
-    (check (and (eq :lb-e-sanren (mv-name s1)) (equal (mapcar #'first (mv-on-frame s1)) '(12 22 32)) (eq :sp1 (getf (mv-params s1) :trace))
+    (check (and (eq :lb-e-sanren (mv-name s1)) (equal (mapcar #'first (mv-on-frame s1)) '(6 12 18)) (eq :sp1 (getf (mv-params s1) :trace))
+                (= 6 (mv-s s1)) (= 14 (mv-a s1)) (= 12 (mv-r s1)) (= 6 (mv-a s2)) (= 15 (mv-r s2)) (= 10 (move-lock s2))
+                (equal (mapcar #'first (mv-on-frame s2)) '(0 20)) (~= 2.0 (mv-clip-speed s2))
                 (zerop (length (mv-hits s1))) (eq (mv-tick s1) 'lb-en-tick)
-                (eq :lb-e-nijushi (mv-name s2)) (= 40 (mv-s s2)) (eq :sp2 (getf (mv-params s2) :trace)) (zerop (length (mv-hits s2)))
+                (eq :lb-e-nijushi (mv-name s2)) (= 20 (mv-s s2)) (eq :sp2 (getf (mv-params s2) :trace)) (zerop (length (mv-hits s2)))
                 (eq (mv-tick s2) 'lb-nijushi-tick) (= 2 (kit-command-cost j :sp2))
                 (eq :lb-sanren (mv-name (kit-command-move kn :sp1))) (eq :lb-nijushi (mv-name (kit-command-move kn :sp2)))
                 (plusp (length (mv-hits (kit-command-move kn :sp2)))) (eq :lb-w-j1 (mv-name (kit-command-move kn :q)))
                 (~= 3.0 *lb-en-walk*))))
-  ;; the traces: J one line, K a fan of three (-6 0 +6), SP1 one a shot; at most 8 live, a 9th drops the oldest (FIFO)
+  ;; the traces: J one line, K a fan of three (-6 0 +6), SP1 one a shot; at most 16 live, a 17th drops the oldest (FIFO; decision 29, 8 before)
   (check (and (equal (lb-trace-fans :j) '(0.0)) (equal (lb-trace-fans :sp1) '(0.0)) (= 3 (length (lb-trace-fans :k)))
               (~= 6.0 (third (lb-trace-fans :k))) (~= -6.0 (first (lb-trace-fans :k)))
-              (= 8 *lb-trace-max*) (not (lb-trace-drop-p 7)) (lb-trace-drop-p 8) (= 3 (lb-trace-oldest '(5 3 9))) (null (lb-trace-oldest nil))))
+              (= 16 *lb-trace-max*) (not (lb-trace-drop-p 15)) (lb-trace-drop-p 16) (= 3 (lb-trace-oldest '(5 3 9))) (null (lb-trace-oldest nil))))
   (let ((ids nil) (dropped nil))
-    (loop for id from 1 to 11 do (multiple-value-bind (l d) (lb-trace-lay ids id) (setf ids l) (when d (push d dropped))))
-    (check (and (equal ids '(4 5 6 7 8 9 10 11)) (equal (reverse dropped) '(1 2 3)))))
+    (loop for id from 1 to 19 do (multiple-value-bind (l d) (lb-trace-lay ids id) (setf ids l) (when d (push d dropped))))
+    (check (and (equal ids (loop for i from 4 to 19 collect i)) (equal (reverse dropped) '(1 2 3)))))   ; (16 live: decision 29)
   ;; materialising: each trace once, a 2-frame hit (the shell: life = age + 3), :ranged :x-axis :uncatchable; J 30, K 24,
   ;; SP1 30, SP2 180 x his damage; blocked: chip 15 %, drain 18 a line (45 SP2); kept until his switch
   (let ((d (make-lbh :kind :trace :src :k :live t)))
@@ -2044,6 +2106,13 @@ defender's next step. Values: the attacker's and the defender's first actionable
                                         (notany (lambda (fl) (member fl (hw-flags w))) '(:unguardable :breaker :guard-crush)))))
                      '(:j :k :sp1 :sp2))
               (eq :knockback (hw-react (lb-trace-hitwin :sp2 1.0))) (eq :stagger (hw-react (lb-trace-hitwin :k 1.0)))
+              ;; round 2 (decision 25): a trace staggers in place (no knockback) *LB-TRACE-STUN* frames, >= TENSHIN's dash + a
+              ;; J1's first hit + 4, in either form after the switch: a trace hit -> TENSHIN in -> J1 is a combo; SP2's knocks back
+              (every (lambda (k) (let ((w (lb-trace-hitwin k 1.0))) (and (zerop (hw-kb w)) (= 26 (hw-stun w) *lb-trace-stun*))))
+                     '(:j :k :sp1))
+              (~= 2.0 (hw-kb (lb-trace-hitwin :sp2 1.0))) (null (hw-stun (lb-trace-hitwin :sp2 1.0)))
+              (every (lambda (kit) (>= *lb-trace-stun* (+ (mv-s (find-move :lb-switch)) (mv-first-hit (kit-command-move kit :q)) 4)))
+                     (list j kn))
               (~= (gg-drain *gg-max* (hw-guard (lb-trace-hitwin :k 1.0))) (- *gg-max* 18))   ; blocked = a drain
               (> *lb-trace-life* (* 60 60 10)) (~= *lb-trace-r* 0.6) (~= *lb-trace-r-thick* 1.2))))
 
@@ -2082,19 +2151,23 @@ defender's next step. Values: the attacker's and the defender's first actionable
   (check (and (eq :whiff (lb-stance-exit t 0 180 100.0 30 t)) (eq :max (lb-stance-exit nil 180 180 100.0 30 t))
               (null (lb-stance-exit nil 179 180 30.0 30 nil)) (eq :gauge (lb-stance-exit nil 0 180 29.0 30 nil))
               (eq :idle (lb-stance-exit nil 0 180 100.0 30 t))))
-  ;; the shooting stance's branch (one roll at its f6, §22.1): after a K link's hit L 0.6 / J 0.4; from 8 m the charged
-  ;; shot; 3-8 m the quick shot on a whiff, else the dash back (then charged), else charged; within 3 m K on a guard or a
-  ;; low gauge, else J
+  ;; the shooting stance's branch (one roll at its f6, §22.1, §23.1): after a K link's hit L 0.6 / J (HOSHA) 0.4; from 8 m
+  ;; the charged shot; 6-8 m the quick shot on a whiff, else the dash back (then charged), else charged; 3-6 m K (TAISHA) on
+  ;; a guard, the quick shot on a whiff, else J (HOSHA); within 3 m K (TAISHA: room)
   (check (and (eq :l (lb-ai-kamae-plan 0.59 2.0 t nil nil nil t)) (eq :j (lb-ai-kamae-plan 0.6 2.0 t nil nil nil t))
               (eq :charge (lb-ai-kamae-plan 0.1 8.0 nil nil nil nil t)) (eq :charge (lb-ai-kamae-plan 0.9 20.0 nil t t t t))
-              (eq :l (lb-ai-kamae-plan 0.5 5.0 nil nil nil t t)) (eq :dash (lb-ai-kamae-plan 0.5 5.0 nil nil nil nil t))
-              (eq :charge (lb-ai-kamae-plan 0.5 5.0 nil nil nil nil nil)) (eq :k (lb-ai-kamae-plan 0.5 2.0 nil t nil nil t))
-              (eq :k (lb-ai-kamae-plan 0.5 3.0 nil nil t nil t)) (eq :j (lb-ai-kamae-plan 0.5 2.5 nil nil nil t t))))
+              (eq :l (lb-ai-kamae-plan 0.5 7.0 nil nil nil t t)) (eq :dash (lb-ai-kamae-plan 0.5 7.0 nil nil nil nil t))
+              (eq :charge (lb-ai-kamae-plan 0.5 7.0 nil nil nil nil nil))
+              (eq :j (lb-ai-kamae-plan 0.5 5.0 nil nil nil nil t)) (eq :j (lb-ai-kamae-plan 0.5 6.0 nil nil t nil t))
+              (eq :k (lb-ai-kamae-plan 0.5 4.0 nil t nil nil t)) (eq :l (lb-ai-kamae-plan 0.5 4.0 nil nil nil t t))
+              (eq :k (lb-ai-kamae-plan 0.5 2.0 nil nil nil nil t)) (eq :k (lb-ai-kamae-plan 0.5 3.0 nil nil nil t t))))
   ;; EN's switch in (§22.2): >= 3 live traces and him on one (0.6 m), or him reeling / recovering within 1.5 m of one
   (let ((k (getf (kit-ai j) :switch)))
     (check (and (lb-switch-in-rule 3 0.6 nil k) (not (lb-switch-in-rule 2 0.0 nil k)) (not (lb-switch-in-rule 3 0.7 nil k))
                 (lb-switch-in-rule 1 1.5 t k) (not (lb-switch-in-rule 1 1.6 t k)) (not (lb-switch-in-rule 0 0.0 t k))
-                (lb-switch-in-rule 8 0.0 t k)))))
+                (lb-switch-in-rule 8 0.0 t k)
+                ;; decision 30: from neutral (an 8 f wind-up) not onto a running / stepping opponent unless he is busy
+                (not (lb-switch-in-rule 3 0.6 nil k t)) (lb-switch-in-rule 3 0.6 t k t)))))
 
 ;; no character names in the generic files (design-v1 §12)
 (dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow" "endless-rules" "endless"))

@@ -3,7 +3,7 @@
 ;;;; combos, opponent-relative directions, and that a device read through the binding tables equals
 ;;;; direct injection (VPAD-SET!). The vpad itself is also checked by tests/input-test.lisp.
 ;;;;   $ECL_HOST --norc --load tests/duel-control-test.lisp
-(dolist (f '("package" "math" "hitvol" "input"))
+(dolist (f '("package" "math" "hitvol" "input" "touch"))
   (load (merge-pathnames (format nil "../engine/lisp/~a.lisp" f) *load-truename*)))
 (defpackage :duel (:use :cl :engine))
 (dolist (f '("tuning" "rules" "control"))
@@ -196,6 +196,39 @@
   (setf (svref *setting-ix* (setting-pos :flick)) 4 (svref *setting-ix* (setting-pos :hand)) 1)
   (check (and (= (setting-value :flick) 18) (= (setting :hand) 1) (equal (setting-value :hand) "LEFT")))
   (setf *setting-ix* old))
+
+;;; ---------------------------------------------------------------- ONE-HAND: what an up-flick is (UP-FLICK-HOHO-P)
+;; a Hoho while attacking (no dash there, the user 2026-09-30), or when it would be perfect (2026-10-01); a Step from
+;; neutral; and a Step in a stance whose Step is a follow-up (:step-branch: Lille's SOGEKI-GAMAE, Ichigo's TSUKIMACHI; the
+;; bug of 2026-10-06, docs/duel/DUEL_LILLE.md decision 24: the flick read as a Hoho the stance never took)
+(check (and (up-flick-hoho-p :move nil nil) (not (up-flick-hoho-p :move t nil)) (not (up-flick-hoho-p :idle nil nil))
+            (up-flick-hoho-p :idle nil t) (up-flick-hoho-p :guard nil t) (not (up-flick-hoho-p :stun nil nil))
+            (eq t (up-flick-hoho-p :move nil nil))))
+;; the whole path on the recogniser and the vpad: in the stance (UP-HOHO from the rule, a rested thumb, REST-UP-OK off in a
+;; move) an up-flick pulses the dash flick, straight ahead, not a Hoho; read as onehand.lisp TOUCH-BUTTON does (:step on a
+;; flick, :mod on a Hoho), the command is the unmodified :step the stance reads, never :hoho
+(flet ((up-flick (state branch)
+         (let ((tr (touch-layout! (make-touch) 1 '(16 600 276 794) nil)) (vp (new-vpad)))
+           (setf (engine::touch-up-hoho tr) (up-flick-hoho-p state branch nil) (engine::touch-rest-up-ok tr) nil)
+           (flet ((feed (now &rest events)
+                    (let ((q (engine::touch-q tr)))
+                      (loop for e in events for i from 0
+                            do (loop for v in e for j from 0 do (setf (aref q (+ (* 5 i) j)) (float v 1f0))))
+                      (setf (engine::touch-now tr) (float now 1f0))
+                      (touch-feed! tr (length events)))))
+             (feed 16 '(0 0 100 700 0))
+             (feed 150)                                                         ; rested
+             (feed 166 '(1 0 100 688 155) '(1 0 100 668 165)))
+           (touch-take! tr)
+           (let ((hoho (touch-pulse-p tr engine::+tp-hoho+)) (flick (touch-pulse-p tr engine::+tp-flick+)))
+             (vpad-begin-step! vp)
+             (vpad-set! vp :step (or flick hoho))
+             (vpad-set! vp :mod hoho)
+             (values (vpad-command vp *commands*) flick (touch-sy tr) (touch-sx tr) vp)))))
+  (multiple-value-bind (cmd flick sy sx vp) (up-flick :move t)                  ; the stance: the Step, forward
+    (check (and (eq cmd :step) flick (> sy 0.9) (zerop sx) (vpad-command-pressed-p vp :step nil)
+                (not (vpad-command-pressed-p vp :step t)))))
+  (check (eq :hoho (up-flick :move nil))))                                      ; any other move: the Hoho (unchanged)
 
 ;;; ---------------------------------------------------------------- the PRACTICE dummy's guard
 (check (every (lambda (st) (= 999 (dummy-guard-left :guard-all st 0))) '(:idle :stun :guard-hit)))

@@ -147,8 +147,9 @@ frame's finger events."
   (deck-update)
   (let ((st (and *one-hand* *p1* (entity-alive-p *p1*) (state-of *p1*))))
     (setf (touch-rest-up-ok *touch*) (and (member st '(:idle :guard)) t)   ; a rested up-flick is a Hoho from neutral / guard,
-          (touch-up-hoho *touch*) (or (eq st :move)          ; any up-flick while attacking (the user 2026-09-30: no dash there),
-                                      (perfect-up-p *p1* st))))   ; or when it would be a perfect Hoho (the user 2026-10-01)
+          (touch-up-hoho *touch*)                            ; any up-flick while attacking (but a stance's Step: 2026-10-06)
+          (up-flick-hoho-p st (and (eq st :move) (member :step-branch (mv-flags (fighter-move (fighter *p1*)))) t)
+                           (perfect-up-p *p1* st))))   ; or when it would be a perfect Hoho (the user 2026-10-01)
   (touch-poll *touch*)
   (unless (sim-running-p) (touch-take! *touch*))            ; menus / pause: no gesture pulse waits for the match
   (let ((g (touch-glyph-t *touch*)))                        ; the combat log names each recognised gesture

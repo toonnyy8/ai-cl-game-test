@@ -187,6 +187,14 @@ device (COARSE) and a PORTRAIT window? Only where one-hand is offered (coarse or
 AUTO: a touch-first device held in portrait (the old ONE-HAND VS CPU preselection)."
   (and (or coarse portrait) (case choice (0 (and coarse portrait)) (1 t)) t))
 
+;;; ---------------------------------------------------------------- ONE-HAND: what an up-flick is (onehand.lisp ONEHAND-FRAME)
+(defun up-flick-hoho-p (state step-branch perfect)
+  "Is any one-hand up-flick a Hoho now, no rest needed (the recogniser's UP-HOHO; else it is a Step, the dash)? While P1
+attacks (his STATE :move; the user 2026-09-30: no dash there), unless his move takes Step itself (STEP-BRANCH: its
+:flags has :step-branch, a stance whose Step is a follow-up: there the flick read as a Hoho that never came, the user
+2026-10-06, decision 24 of docs/duel/DUEL_LILLE.md), or whenever a Hoho now would be PERFECT (the user 2026-10-01)."
+  (and (or (and (eq state :move) (not step-branch)) perfect) t))
+
 ;;; ---------------------------------------------------------------- the PRACTICE dummy (flow.lisp PRACTICE-STEP)
 (defparameter *dummy-guard-hold* 60 "PRACTICE, GUARD AFTER HIT: frames the dummy keeps its guard once it is free again.")
 
