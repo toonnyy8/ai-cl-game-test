@@ -802,12 +802,13 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
 (defstrike :lb-w-tenshin (14 0 8 :base :lb-w-stance)
   (0 :lb-w-fold-pose) (6 (:root :u 0.12) (:arm-r :flex 30 :side 30) (:arm-l :flex 30 :side 30))
   (14 :lb-w-stance) (:end :lb-w-stance))
-;; TENSHIN in (EN -> KIN, round 2, decision 30): the wind-up first, 8 f (2 f as a cancel: the same clip entered at its f6),
-;; the front wings drawn back and the column rising, then the fold and the flash step as above (its frames + 8)
-(defstrike :lb-w-tenshin-in (22 0 8 :base :lb-w-stance)
-  (0) (6 (:root :u 0.2 :pitch -6) (:arm-r :flex -20 :side 50) (:arm-l :flex -20 :side 50))
-  (8 :snap :lb-w-fold-pose) (14 (:root :u 0.12) (:arm-r :flex 30 :side 30) (:arm-l :flex 30 :side 30))
-  (22 :lb-w-stance) (:end :lb-w-stance))
+;; TENSHIN in (EN -> KIN, round 2, decision 30; decision 34: 8 -> 16 f): the wind-up first, 16 f (2 f as a cancel: the
+;; same clip entered at its f14), the front wings drawn back and the column rising, then the fold and the flash step as
+;; above (its frames + 16)
+(defstrike :lb-w-tenshin-in (30 0 8 :base :lb-w-stance)
+  (0) (14 (:root :u 0.2 :pitch -6) (:arm-r :flex -20 :side 50) (:arm-l :flex -20 :side 50))
+  (16 :snap :lb-w-fold-pose) (22 (:root :u 0.12) (:arm-r :flex 30 :side 30) (:arm-l :flex 30 :side 30))
+  (30 :lb-w-stance) (:end :lb-w-stance))
 
 ;;; ================================================================ drawing (cosmetic; 0 B a frame: f32vecs, macros, DEFUN-FAST)
 ;;; A DEFUN-FAST call boxes its float arguments (engine/lisp/package.lisp), so these helpers take their numbers in the

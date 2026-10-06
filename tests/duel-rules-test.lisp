@@ -2021,39 +2021,52 @@ defender's next step. Values: the attacker's and the defender's first actionable
 
 ;;; ---------------------------------------------------------------- JILLIEL EN / KIN and TENSHIN (DUEL_LILLE §22.2, decision 18)
 (let* ((j (kit :lille :jilliel)) (kn (kit :lille :jilliel-kin)) (sw (find-move :lb-switch)))
-  ;; L is TENSHIN in both modes: 14 f hitless dash (round 2: in up to 8 m stopping 1.5 m short, out 7 m), R 8, cooldown 30,
-  ;; frame 0 materialises, the form at f6; J / K cancel it from f14 (its :link); 10 flash step;
+  ;; L is TENSHIN in both modes: 14 f hitless dash (round 2: in up to 8 m stopping 1.5 m short, out 7 m), R 8, no cooldown
+  ;; (decision 34; 30 before), frame 0 materialises, the form at f6; J / K cancel it from f14 (its :link); KIN -> EN 10
+  ;; flash step (refused at 9.9), EN -> KIN free (allowed at 0; decision 34);
   ;; EN -> KIN, KIN -> EN; KIN's K links chain into it (a K link's L), EN's lines cancel into it from their active end (the
   ;; tick): no L link there
   (check (and (eq sw (kit-command-move kn :sig)) (= 14 (mv-s sw) *lb-switch-f*) (zerop (mv-a sw)) (= 8 (mv-r sw))
               (= 14 (getf (mv-params sw) :link)) (eq (mv-tick sw) 'lb-link-tick)
               (~= 6.5 (lb-switch-dist t 8.0)) (~= 8.0 (lb-switch-dist t 12.0)) (~= 0.0 (lb-switch-dist t 1.2))
               (~= 7.0 (lb-switch-dist nil 3.0)) (~= 7.0 (lb-switch-dist nil 20.0))
-              (zerop (length (mv-hits sw))) (= 30 (mv-cooldown sw) *lb-switch-cd*)
+              (zerop (length (mv-hits sw))) (zerop (mv-cooldown sw)) (not (boundp '*lb-switch-cd*))
               (equal (mv-on-frame sw) '((0 lb-switch-go) (6 lb-switch-form)))
               (eq (lb-switch-target :jilliel) :jilliel-kin) (eq (lb-switch-target :jilliel-mujittai) :jilliel-kin)
               (eq (lb-switch-target :jilliel-kin) :jilliel) (eq (lb-switch-target :jilliel-kin-mujittai) :jilliel)
-              (not (lb-switch-ok-p 9.9)) (lb-switch-ok-p 10.0)
+              (= 10 *lb-switch-fs*) (~= 10.0 (lb-switch-price :jilliel-kin)) (~= 10.0 (lb-switch-price :jilliel-kin-mujittai))
+              (zerop (lb-switch-price :jilliel)) (zerop (lb-switch-price :jilliel-mujittai))
+              (not (lb-switch-ok-p :jilliel-kin 9.9)) (not (lb-switch-ok-p :jilliel-kin 9.0)) (lb-switch-ok-p :jilliel-kin 10.0)
+              (not (lb-switch-ok-p :jilliel-kin-mujittai 9.0))
+              (lb-switch-ok-p :jilliel 0.0) (lb-switch-ok-p :jilliel-mujittai 0.0) (lb-switch-ok-p :jilliel 9.0)
               (eq sw (kit-l-link kn :lb-w-k1)) (eq sw (kit-l-link kn :lb-w-k3)) (null (kit-l-link kn :lb-w-j1))
               (null (kit-l-link j :lb-e-k1))
               (lb-jilliel-form-p :jilliel-kin-mujittai) (not (lb-jilliel-form-p :shin)) (lb-kin-form-p :jilliel-kin)
               (not (lb-kin-form-p :jilliel))))
-  ;; TENSHIN in (EN -> KIN, decision 30): EN's L from neutral (idle / walk / run; MUJITTAI drops to EN and takes it) is
-  ;; :lb-switch-in, an 8 f wind-up (hittable: no iframes before the dash) then the dash at f8 (traces materialise, iframes
-  ;; from there), the form 6 f into the dash, its link at the dash's end; as a cancel out of an EN attack the same move
-  ;; entered at f6 (:lb-switch-in-c): 2 f. Both paths: a trace hit at the materialise -> the dash -> KIN's J1 at the link is
-  ;; a combo (the stun counts from the materialise)
+  ;; TENSHIN in (EN -> KIN, decisions 30, 34): EN's L from neutral (idle / walk / run; MUJITTAI drops to EN and takes it)
+  ;; is :lb-switch-in, a 16 f wind-up (8 before decision 34; hittable: no iframes before the dash) then the dash at f16
+  ;; (traces materialise, iframes from there), the form 6 f into the dash, its link at the dash's end; as a cancel out of
+  ;; an EN attack the same move entered at f14 (:lb-switch-in-c): 2 f. Both paths: a trace hit at the materialise -> the
+  ;; dash -> KIN's J1 at the link is a combo (the stun counts from the materialise, so the longer wind-up changes nothing)
   (let ((in (kit-command-move j :sig)) (inc (find-move :lb-switch-in-c)) (kj1 (kit-command-move kn :q)))
     (check (and (eq :lb-switch-in (mv-name in)) (eq in (kit-command-move (kit :lille :jilliel-mujittai) :sig))
-                (equal (mv-on-frame in) '((8 lb-switch-go) (14 lb-switch-form))) (equal (mv-on-frame inc) (mv-on-frame in))
-                (= 22 (mv-s in) (getf (mv-params in) :link)) (= 8 (getf (mv-params in) :go)) (= 30 (mv-cooldown inc) (mv-cooldown in))
-                (= 6 (mv-enter inc)) (zerop (mv-enter in)) (eq (mv-tick in) 'lb-link-tick) (zerop (length (mv-hits in)))
-                (= *lb-switch-windup* (- 8 (mv-enter in))) (= *lb-switch-windup-c* (- 8 (mv-enter inc)))
-                (= 8 *lb-switch-windup*) (= 2 *lb-switch-windup-c*)
-                (= (- (getf (mv-params in) :link) 8) *lb-switch-f*)))
-    (dolist (m (list in inc))
-      (let ((go (getf (mv-params in) :go)) (link (getf (mv-params m) :link)))
-        (check (> *lb-trace-stun* (+ (- link go) (mv-first-hit kj1)))))))
+                (equal (mv-on-frame in) '((16 lb-switch-go) (22 lb-switch-form))) (equal (mv-on-frame inc) (mv-on-frame in))
+                (= 30 (mv-s in) (getf (mv-params in) :link)) (= 16 (getf (mv-params in) :go)) (zerop (mv-cooldown inc))
+                (zerop (mv-cooldown in))
+                (= 14 (mv-enter inc)) (zerop (mv-enter in)) (eq (mv-tick in) 'lb-link-tick) (zerop (length (mv-hits in)))
+                (= *lb-switch-windup* (- 16 (mv-enter in))) (= *lb-switch-windup-c* (- 16 (mv-enter inc)))
+                (= 16 *lb-switch-windup*) (= 2 *lb-switch-windup-c*)
+                (= (getf (mv-params in) :go) *lb-switch-windup*) (= (mv-s in) (+ *lb-switch-windup* *lb-switch-f*))
+                (= (- (getf (mv-params in) :link) 16) *lb-switch-f*)))
+    ;; the order (the user, 2026-10-06): wind-up -> the traces materialise (LB-SWITCH-GO's first act, the wind-up's end)
+    ;; -> the dash -> J / K: on both paths the materialise is at the end of that path's wind-up (16 f from neutral, 2 f
+    ;; from the cancel's f14 entry), the link at the dash's end, and the trace's stun (counted from the materialise)
+    ;; outlasts the dash + KIN's J1 first hit
+    (loop for m in (list in inc) for windup in (list *lb-switch-windup* *lb-switch-windup-c*)
+          do (let ((go (getf (mv-params m) :go)) (link (getf (mv-params m) :link)))
+               (check (and (= go (first (first (mv-on-frame m)))) (eq 'lb-switch-go (second (first (mv-on-frame m))))
+                           (= windup (- go (mv-enter m))) (= link (+ go *lb-switch-f*))
+                           (> *lb-trace-stun* (+ (- link go) (mv-first-hit kj1))))))))
   ;; EN's J / K (round 2, decision 28: the start-ups and recoveries cut, the active frames kept): the strings as KIN's (the
   ;; same links), S / A / R J 4/3/6 4/3/6 5/3/9, K 9/4/10 10/4/12 (enter 3) 11/5/17 (enter 4); no hit window, a trace laid
   ;; on the first active frame, the stick walking him (LB-EN-TICK); the wing clips at :clip-s / S speed (the hit pose on S)
@@ -2114,7 +2127,29 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (every (lambda (kit) (>= *lb-trace-stun* (+ (mv-s (find-move :lb-switch)) (mv-first-hit (kit-command-move kit :q)) 4)))
                      (list j kn))
               (~= (gg-drain *gg-max* (hw-guard (lb-trace-hitwin :k 1.0))) (- *gg-max* 18))   ; blocked = a drain
-              (> *lb-trace-life* (* 60 60 10)) (~= *lb-trace-r* 0.6) (~= *lb-trace-r-thick* 1.2))))
+              (> *lb-trace-life* (* 60 60 10)) (~= *lb-trace-r* 0.6) (~= *lb-trace-r-thick* 1.2)))
+  ;; the flash-step economy (decision 34): an EN J / K line costs 3 (J 3, a K fan 9), laid only while 3 are left, line by
+  ;; line (a short K fan lays its middle line first); SP1 / SP2 free; a materialised trace's hit gives 2 back, a guarded
+  ;; one nothing (a K fan is one hit group: asked once)
+  (check (and (~= 3.0 *lb-trace-fs*) (~= 3.0 (lb-trace-cost :j)) (~= 3.0 (lb-trace-cost :k))
+              (zerop (lb-trace-cost :sp1)) (zerop (lb-trace-cost :sp2))
+              (multiple-value-bind (n left) (lb-trace-pay 3.0 :j 1) (and (= n 1) (~= left 0.0)))
+              (multiple-value-bind (n left) (lb-trace-pay 2.9 :j 1) (and (= n 0) (~= left 2.9)))
+              (multiple-value-bind (n left) (lb-trace-pay 9.0 :k 3) (and (= n 3) (~= left 0.0)))
+              (multiple-value-bind (n left) (lb-trace-pay 8.0 :k 3) (and (= n 2) (~= left 2.0)))
+              (multiple-value-bind (n left) (lb-trace-pay 5.0 :k 3) (and (= n 1) (~= left 2.0)))
+              (multiple-value-bind (n left) (lb-trace-pay 2.0 :k 3) (and (= n 0) (~= left 2.0)))
+              (multiple-value-bind (n left) (lb-trace-pay 100.0 :k 3) (and (= n 3) (~= left 91.0)))
+              (multiple-value-bind (n left) (lb-trace-pay 0.0 :sp1 1) (and (= n 1) (~= left 0.0)))
+              (multiple-value-bind (n left) (lb-trace-pay 0.0 :sp2 1) (and (= n 1) (~= left 0.0)))
+              (equal (lb-trace-pick (lb-trace-fans :k) 3) (lb-trace-fans :k))
+              (equal (lb-trace-pick (lb-trace-fans :k) 2) (list (- *lb-trace-fan*) 0.0))
+              (equal (lb-trace-pick (lb-trace-fans :k) 1) '(0.0)) (null (lb-trace-pick (lb-trace-fans :k) 0))
+              (equal (lb-trace-pick (lb-trace-fans :j) 1) '(0.0)) (null (lb-trace-pick (lb-trace-fans :j) 0))
+              (~= 2.0 *lb-trace-refund*) (~= 2.0 (lb-trace-refund :hit)) (zerop (lb-trace-refund :block))
+              (zerop (lb-trace-refund nil))))
+  ;; a K fan is one hit group (LB-EN-LAY's MAKE-HIT-GROUP 1 when the fan has more than one line): its refund once
+  (check (and (rest (lb-trace-fans :k)) (null (rest (lb-trace-fans :j))) (null (rest (lb-trace-fans :sp1))))))
 
 ;;; ---------------------------------------------------------------- Lille's own CPU (DUEL_LILLE §11.2, §22; batch 3a, rework R)
 (let ((b (kit :lille :base)) (j (kit :lille :jilliel)) (mu (kit :lille :jilliel-mujittai)) (o (kit :lille :shin))
@@ -2166,8 +2201,24 @@ defender's next step. Values: the attacker's and the defender's first actionable
     (check (and (lb-switch-in-rule 3 0.6 nil k) (not (lb-switch-in-rule 2 0.0 nil k)) (not (lb-switch-in-rule 3 0.7 nil k))
                 (lb-switch-in-rule 1 1.5 t k) (not (lb-switch-in-rule 1 1.6 t k)) (not (lb-switch-in-rule 0 0.0 t k))
                 (lb-switch-in-rule 8 0.0 t k)
-                ;; decision 30: from neutral (an 8 f wind-up) not onto a running / stepping opponent unless he is busy
-                (not (lb-switch-in-rule 3 0.6 nil k t)) (lb-switch-in-rule 3 0.6 t k t)))))
+                ;; decision 30: from neutral (a 16 f wind-up since decision 34) not onto a running / stepping opponent
+                ;; unless he is busy
+                (not (lb-switch-in-rule 3 0.6 nil k t)) (lb-switch-in-rule 3 0.6 t k t)
+                ;; decision 34: starved of flash step (no J line above the reserve) he switches in (free) with no
+                ;; trace, unless the opponent is moving
+                (lb-switch-in-rule 0 99.0 nil k nil t) (not (lb-switch-in-rule 0 99.0 nil k t t))
+                (not (lb-switch-in-rule 0 99.0 nil k nil nil))))
+    ;; the flash-step budget (decision 34): a J / K starts (its next link latched) only while its lines leave the reserve
+    ;; (10 = KIN -> EN's price); KIN switches out only with the price + the reserve + a K fan (29: EN never starved)
+    (check (and (~= 10.0 *lb-ai-fs-reserve*) (lb-ai-lay-ok-p 13.0 :j) (not (lb-ai-lay-ok-p 12.9 :j))
+                (lb-ai-lay-ok-p 19.0 :k) (not (lb-ai-lay-ok-p 18.9 :k)) (lb-ai-lay-ok-p 100.0 :k)
+                (lb-ai-out-ok-p 29.0) (not (lb-ai-out-ok-p 28.9))
+                (>= (- 29.0 *lb-switch-fs*) (+ *lb-ai-fs-reserve* (* 3 *lb-trace-fs*))))))
+  ;; the 16 f wind-up (decision 34) through the AI: a J1 then its 2 f cancel reaches the materialise sooner than the
+  ;; neutral wind-up (LB-AI-EN prefers it)
+  (let ((j1 (kit-command-move j :q)))
+    (check (< (+ (mv-s j1) (mv-a j1) *lb-switch-windup-c*) *lb-switch-windup*))))
+
 
 ;; no character names in the generic files (design-v1 §12)
 (dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow" "endless-rules" "endless"))

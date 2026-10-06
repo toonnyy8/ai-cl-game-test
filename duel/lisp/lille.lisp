@@ -85,7 +85,6 @@ recovery's cancel (f16) + K1's startup (17) still lands inside it, a combo (roun
 (defparameter *walk-kin* 3.8 "Walk m/s, JILLIEL KIN (the owl's legs; rework R, 2026-10-06).")
 (defparameter *run-kin* 8.5 "Run m/s, JILLIEL KIN (rework R, 2026-10-06).")
 (defparameter *lb-en-walk* 3.0 "EN: m/s the stick walks him through J / K / SP1 (facing kept on the opponent; rework R, 2026-10-06).")
-(defparameter *lb-switch-cd* 30 "TENSHIN: at most one every this many frames (its :cooldown; rework R, 2026-10-06).")
 (defparameter *lb-switch-in* 8.0
   "TENSHIN in (EN -> KIN): the dash at him, at most this many metres over *LB-SWITCH-F*, stopping *LB-SWITCH-STOP* short
 (round 2, 2026-10-06, decision 25 「大幅提升變換戰型後的衝刺距離」: 3.5 before, both ways).")
@@ -93,12 +92,24 @@ recovery's cancel (f16) + K1's startup (17) still lands inside it, a combo (roun
 (defparameter *lb-switch-out* 7.0 "TENSHIN out (KIN -> EN): the dash away, metres over *LB-SWITCH-F* (round 2, 2026-10-06; 3.5 before).")
 (defparameter *lb-switch-f* 14
   "TENSHIN's dash frames (12 before): from its end his J / K cancel the recovery (round 2, 2026-10-06).")
-(defparameter *lb-switch-windup* 8
+(defparameter *lb-switch-windup* 16
   "TENSHIN in (EN -> KIN) from EN's neutral (idle, walk, run, MUJITTAI): this many frames of a visible, hittable wind-up
-before the traces materialise and the dash starts (round 2, 2026-10-06, decision 30: 「0.1-0.15 s」) ...")
+before the traces materialise and the dash starts (round 2, 2026-10-06, decision 30: 「0.1-0.15 s」, 8; decision 34,
+2026-10-06, the user: 「遠程模式從中立按 L 的前搖的前搖增加到 16 f」: 8 -> 16) ...")
 (defparameter *lb-switch-windup-c* 2
-  "... and this many as a cancel out of an EN attack (J / K / SP1 / SP2); KIN -> EN has none (round 2, decision 30).")
-(defparameter *lb-switch-fs* 10.0 "... its flash-step price; refused without it (rework R, 2026-10-06).")
+  "... and this many as a cancel out of an EN attack (J / K / SP1 / SP2: the move entered at its f14); KIN -> EN has none
+(round 2, decision 30; kept by decision 34). TENSHIN has no cooldown (decision 34: 「L 切換戰型取消冷卻限制」; 30 f before).")
+(defparameter *lb-switch-fs* 10.0
+  "TENSHIN out (KIN -> EN): its flash-step price; refused without it (rework R, 2026-10-06). TENSHIN in (EN -> KIN) is
+free (decision 34, 2026-10-06: 「從『遠』變『近』不消耗閃步量表」; 10 before, both ways).")
+(defparameter *lb-trace-fs* 3.0
+  "EN's J / K: the flash step each trace line laid costs (a J 3, a K's fan of three 9); a line is laid only while this
+much is left, checked line by line (the swing still plays); SP1 / SP2's traces are free (decision 34, 2026-10-06, the
+user: 「遠程 J/K 每條軌跡消耗 3 點閃步量表」; free before).")
+(defparameter *lb-trace-refund* 2.0
+  "A materialised trace that hits a fighter gives him this much flash step back (a K fan's hit group hits once: once;
+a guarded one nothing; kept at the max, none during a burst: PAY-GAUGES) (decision 34, 2026-10-06, the user: 「每打中一條
+軌跡會額外回收 2 點閃步量表」).")
 (defparameter *lb-dash-iframes* 9
   "Both flash-step dashes (HIRENKYAKU in the stance, TENSHIN) are invulnerable on their frames 0-8 (rework R, 2026-10-06;
 TSUKIWATARI's).")
@@ -195,7 +206,32 @@ most *BANKAI-KONPAKU* of his own KONPAKU (Kenpachi's rule exactly; no beheading 
 (defun lb-switch-target (form)
   "The form TENSHIN switches FORM to: EN (or its stance) -> KIN, KIN (or its stance) -> EN."
   (if (lb-kin-form-p form) :jilliel :jilliel-kin))
-(defun lb-switch-ok-p (fs) "Has he the flash-step TENSHIN costs (*LB-SWITCH-FS*)?" (>= fs *lb-switch-fs*))
+(defun lb-switch-price (form)
+  "The flash step TENSHIN costs from FORM: out of KIN (or its stance) *LB-SWITCH-FS*; in from EN (or its stance) none
+(decision 34)."
+  (if (lb-kin-form-p form) *lb-switch-fs* 0.0))
+(defun lb-switch-ok-p (form fs)
+  "Has he, in FORM with FS flash step, what TENSHIN costs (LB-SWITCH-PRICE)? EN -> KIN always (decision 34)."
+  (>= fs (lb-switch-price form)))
+(defun lb-trace-cost (src) "The flash step one trace line laid by SRC costs: EN's J / K *LB-TRACE-FS*, SP1 / SP2 none (decision 34)."
+  (if (member src '(:j :k)) *lb-trace-fs* 0.0))
+(defun lb-trace-pay (fs src n)
+  "N trace lines of SRC with FS flash step, paid line by line (one is laid only while its LB-TRACE-COST is left): values
+how many are laid and the flash step left (decision 34: a K fan with 7 lays two, with 2 none)."
+  (let ((c (lb-trace-cost src)) (laid 0))
+    (dotimes (i n) (when (>= fs c) (setf fs (- fs c)) (incf laid)))
+    (values laid fs)))
+(defun lb-trace-refund (contact)
+  "The flash step a materialised trace's CONTACT gives him back: *LB-TRACE-REFUND* on a hit, nothing guarded (decision
+34; a K fan is one hit group, so it is asked once)."
+  (if (eq contact :hit) *lb-trace-refund* 0.0))
+(defun lb-trace-pick (fans laid)
+  "The yaw offsets (FANS, LB-TRACE-FANS order) of the LAID lines when not all are paid: the middle one first, then the
+fan's sides in order; laid in FANS' order."
+  (if (>= laid (length fans))
+      fans
+      (let ((want (subseq (stable-sort (copy-list fans) #'< :key #'abs) 0 laid)))
+        (remove-if-not (lambda (a) (member a want)) fans))))
 (defun lb-trace-fans (kind)
   "The yaw offsets (degrees) of the traces one EN line of KIND lays: a K a fan of three, else one."
   (if (eq kind :k) (list (- *lb-trace-fan*) 0.0 *lb-trace-fan*) (list 0.0)))
@@ -343,18 +379,19 @@ place (round 2: TENSHIN in then J combos), SP2's a knockback."
 (defmove :lb-e-nijushi :kind :sp :clip :lb-w-nijushi :clip-s 40 :callout "NIJUSHI-KO" :startup 20 :active 6 :recovery 15
   :track 0 :tick lb-nijushi-tick :on-frame ((0 lb-nijushi-tell) (20 lb-en-lay)) :params (:lock 10 :track 60.0 :trace :sp2))
 ;; L 転身 TENSHIN (both modes): the dash's frame 0 materialises every live trace; a flash-step dash over 14 f, up to 8 m at
-;; him stopping 1.5 m short (EN -> KIN) or 7 m away (KIN -> EN), iframes for its frames 0-8, 10 flash step; the form changes
-;; 6 f into the dash; R 8; at most one every 30 f (:cooldown). From the dash's end his J / K cancel the recovery
-;; (LB-LINK-TICK; a press before is latched): a trace hit -> TENSHIN in -> J is a combo (round 2, decision 25). EN -> KIN
-;; starts with a wind-up (decision 30): 8 f from EN's neutral (:lb-switch-in, EN's L), 2 f as a cancel out of an EN attack
-;; (:lb-switch-in-c, the same move entered at its f6: LB-EN-TICK); KIN -> EN (:lb-switch, KIN's L) has none
+;; him stopping 1.5 m short (EN -> KIN, free) or 7 m away (KIN -> EN, 10 flash step), iframes for its frames 0-8; the form
+;; changes 6 f into the dash; R 8; no cooldown (decision 34; 30 f before). From the dash's end his J / K cancel the
+;; recovery (LB-LINK-TICK; a press before is latched): a trace hit -> TENSHIN in -> J is a combo (round 2, decision 25).
+;; EN -> KIN starts with a wind-up (decision 30; decision 34: 8 -> 16 f from neutral): 16 f from EN's neutral
+;; (:lb-switch-in, EN's L), 2 f as a cancel out of an EN attack (:lb-switch-in-c, the same move entered at its f14:
+;; LB-EN-TICK); KIN -> EN (:lb-switch, KIN's L) has none
 (defmove :lb-switch :kind :sig :clip :lb-w-tenshin :callout "TENSHIN" :startup *lb-switch-f* :active 0 :recovery 8
-  :cooldown *lb-switch-cd* :tick lb-link-tick :on-frame ((0 lb-switch-go) (6 lb-switch-form))
+  :tick lb-link-tick :on-frame ((0 lb-switch-go) (6 lb-switch-form))
   :params (:link *lb-switch-f*))
-(defmove :lb-switch-in :kind :sig :clip :lb-w-tenshin-in :callout "TENSHIN" :startup 22 :active 0 :recovery 8
-  :cooldown *lb-switch-cd* :tick lb-link-tick :on-frame ((8 lb-switch-go) (14 lb-switch-form))
-  :params (:link 22 :go 8))
-(defmove-copy :lb-switch-in-c :lb-switch-in :enter 6)
+(defmove :lb-switch-in :kind :sig :clip :lb-w-tenshin-in :callout "TENSHIN" :startup 30 :active 0 :recovery 8
+  :tick lb-link-tick :on-frame ((16 lb-switch-go) (22 lb-switch-form))
+  :params (:link 30 :go 16))
+(defmove-copy :lb-switch-in-c :lb-switch-in :enter 14)
 
 ;;; ================================================================ the owl 真の姿 (§6)
 (defmove :lb-o-j1 :kind :quick :clip :lb-o-q1 :startup 8 :active 3 :recovery 12 :dmg 26 :adv-block -2
@@ -539,12 +576,15 @@ carry-over bug, DEVLOG §38-§39)."
 
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun lille-ok (e command combo)
-  "His kit's refusals: Trompete once the halo broke (sealed for the match, decision 9); TENSHIN without its flash-step
-(*LB-SWITCH-FS*; the cue)."
+  "His kit's refusals: Trompete once the halo broke (sealed for the match, decision 9); TENSHIN out of KIN without its
+flash-step (*LB-SWITCH-FS*; the cue; EN -> KIN is free: decision 34). His CPU only (a brain): EN's J / K while their
+lines would eat into its reserve (LB-AI-LAY-OK-P; a human's press always swings, laying what it can pay)."
   (declare (ignore combo))
-  (let ((form (fighter-form (fighter e))))
+  (let ((form (fighter-form (fighter e))) (fs (gauges-fs (gauges e))))
     (not (or (and (eq command :sp2) (eq form :shin) (lbs-sealed (lb e)))
-             (and (eq command :sig) (lb-jilliel-form-p form) (not (lb-switch-ok-p (gauges-fs (gauges e)))))))))
+             (and (eq command :sig) (lb-jilliel-form-p form) (not (lb-switch-ok-p form fs)))
+             (and (member command '(:q :f)) (member form '(:jilliel :jilliel-mujittai)) (brain e)
+                  (not (lb-ai-lay-ok-p fs (if (eq command :q) :j :k))))))))
 
 (defun lille-bankai-ok (e)
   "His kit's :bankai-ok (combat.lisp BANKAI-OK-P): P revives him into the owl from any Jilliel form, free: idle, guard or
@@ -738,16 +778,22 @@ wind-up (:lb-switch-in-c, decision 30; a human's press; his CPU's switch rule, L
                        (refused-cue e f :sig vp :sig))))))))))
 
 (defun lb-en-lay (e)
-  "EN's line frame: the move's traces (J one, K a fan of three, SP1 one a shot, SP2 one thick: LB-LAY-TRACE). A J / K link
-then chains on as if it had touched him (the lines never hit: FIGHTER-CHAINED opens the string gate), and his CPU latches
-the same button's next link (LB-AI-EN-NEXT)."
-  (let* ((f (fighter e)) (mv (fighter-move f)) (src (getf (mv-params mv) :trace)))
-    (let* ((fans (lb-trace-fans src)) (group (and (rest fans) (make-hit-group 1))))   ; a K's fan hits a fighter once
-      (dolist (a fans) (lb-lay-trace e src a group)))
+  "EN's line frame: the move's traces (J one, K a fan of three, SP1 one a shot, SP2 one thick: LB-LAY-TRACE); a J / K line
+costs *LB-TRACE-FS* flash step and is laid only while that is left, line by line (LB-TRACE-PAY; a K fan short of it lays
+its middle line first: LB-TRACE-PICK; the swing plays either way; decision 34). A J / K link then chains on as if it had
+touched him (the lines never hit: FIGHTER-CHAINED opens the string gate), and his CPU latches the same button's next link
+while its reserve allows (LB-AI-EN-NEXT)."
+  (let* ((f (fighter e)) (mv (fighter-move f)) (src (getf (mv-params mv) :trace)) (g (gauges e)))
+    (let* ((fans (lb-trace-fans src)) (group (and (rest fans) (make-hit-group 1)))   ; a K's fan hits a fighter once
+           (laid (lb-trace-pay (gauges-fs g) src (length fans))) (cost (lb-trace-cost src)))
+      (dolist (a (lb-trace-pick fans laid))
+        (when (plusp cost) (spend-fs g cost))
+        (lb-lay-trace e src a group))
+      (when (< laid (length fans)) (lb-count e :traces-unpaid (- (length fans) laid))))
     (emit :sfx :rift-cut e)
     (when (member (mv-kind mv) '(:quick :flash))
       (setf (fighter-chained f) t)
-      (when (brain e) (lb-ai-en-next f mv)))))
+      (when (brain e) (lb-ai-en-next e f mv)))))
 
 (defun lb-live-traces (e)
   "His live traces: values how many and the oldest one's entity (the smallest id), or NIL."
@@ -802,10 +848,9 @@ X-axis line's look flashes along it, and it is gone after."
 
 ;;; ---------------------------------------------------------------- 転身 TENSHIN (§22.2)
 (defun lb-switch-ready-p (e)
-  "Could E's TENSHIN start now: a Jilliel form, L not cooling down, the flash-step for it?"
-  (let ((f (fighter e)))
-    (and (lb-jilliel-form-p (fighter-form f)) (zerop (aref (fighter-cd f) (position :sig *kit-commands*)))
-         (lb-switch-ok-p (gauges-fs (gauges e))))))
+  "Could E's TENSHIN start now: a Jilliel form, the flash-step for it (none from EN; no cooldown: decision 34)?"
+  (let ((form (fighter-form (fighter e))))
+    (and (lb-jilliel-form-p form) (lb-switch-ok-p form (gauges-fs (gauges e))))))
 
 (defun lb-switch-dist (in d)
   "TENSHIN's dash, metres: IN (EN -> KIN) at him D metres away, at most *LB-SWITCH-IN*, stopping *LB-SWITCH-STOP* short
@@ -814,8 +859,8 @@ X-axis line's look flashes along it, and it is gone after."
 
 (defun lb-switch-go (e)
   "TENSHIN f0: every live trace materialises (LB-MATERIALISE); the flash-step dash over *LB-SWITCH-F* at him (EN -> KIN,
-LB-SWITCH-DIST) or away (KIN -> EN), iframes f0-8, *LB-SWITCH-FS* flash step; the target form fixed now (LB-SWITCH-FORM
-at f6); the J / K latch cleared (LB-LINK-TICK)."
+LB-SWITCH-DIST, free) or away (KIN -> EN, *LB-SWITCH-FS* flash step: LB-SWITCH-PRICE), iframes f0-8; the target form
+fixed now (LB-SWITCH-FORM at f6); the J / K latch cleared (LB-LINK-TICK)."
   (let* ((f (fighter e)) (st (lb e)) (p (pos-of e)) (to (lb-switch-target (fighter-form f)))
          (in (eq to :jilliel-kin)) (k (if in 1.0 -1.0)) (dist (lb-switch-dist in (fighter-dist f))))
     (setf (lbs-switch-to st) to (lbs-switch-t st) *match-tick* (lbs-latch st) nil)
@@ -823,7 +868,7 @@ at f6); the J / K latch cleared (LB-LINK-TICK)."
     (when (> dist 0.01)
       (set-slide e dist *lb-switch-f* (* k (- (fighter-ox f) (aref p 0))) (* k (- (fighter-oz f) (aref p 2)))))
     (setf (fighter-invuln f) (max (fighter-invuln f) *lb-dash-iframes*))
-    (spend-fs (gauges e) *lb-switch-fs*)
+    (let ((price (lb-switch-price (fighter-form f)))) (when (plusp price) (spend-fs (gauges e) price)))
     (lb-count e (if (eq to :jilliel-kin) :switch-in :switch-out))
     (emit :hoho-out e (aref p 0) (aref p 2))
     (emit :sfx :whoosh-light e)))
@@ -1034,7 +1079,10 @@ by band, damage by band, Trompete)."
       (when (and mv (eq (mv-name mv) :lb-trompete))
         (lb-count att (if (eq (contact-of res) :hit) :trompete-hit :trompete-guarded))))
     (when (and hazard (lbh-p (hazard-data hazard)) (eq (lbh-kind (hazard-data hazard)) :trace))   ; a materialised trace
-      (when (eq (contact-of res) :hit) (setf (lbs-trace-hit-t (lb att)) *match-tick*))
+      (when (eq (contact-of res) :hit)                      ; its flash step back (decision 34; a fan's group: once)
+        (setf (lbs-trace-hit-t (lb att)) *match-tick*)
+        (pay-gauges (or (siphon-of att) att) 0.0 (lb-trace-refund (contact-of res)))
+        (lb-count att :trace-refund))
       (lb-count att (if (eq (contact-of res) :hit) :trace-hit :trace-guarded)))
     (when (and mv (member (mv-name mv) '(:lb-k-shot :lb-k-j :lb-k-k)))   ; the stance's branches
       (lb-count att (intern (format nil "~a-~a" (mv-name mv) (if (eq (contact-of res) :hit) "HIT" "BLK")) :keyword)))
@@ -1064,9 +1112,11 @@ by band, damage by band, Trompete)."
 ;;;             will see it, else a guard held from now, or a sideways Step off a lane (LB-AI-EYE); the shooting stance's
 ;;;             branch is planned once at its f6 in the sim's tick (LB-AI-KAMAE: TSUKIMACHI's pattern)
 ;;;   jilliel   EN: TENSHIN in when >= 3 traces are live and he stands on one, or reels / recovers near one (LB-AI-EN; in
-;;;             EN's moves the tick checks the same rule); the walk through the lines (LB-AI-EN-STICK) and the string's
-;;;             next link (LB-AI-EN-NEXT) are the tick's. KIN: TENSHIN out after a string or with the gauge low
-;;;             (LB-AI-KIN). Both: the stance as a reaction only: a threat within reach + 1 m or a hazard within 12 f
+;;;             EN's moves the tick checks the same rule; from neutral through a J1's 2 f cancel when its line is paid,
+;;;             else the 16 f wind-up), or when starved of flash step; the walk through the lines (LB-AI-EN-STICK) and the
+;;;             string's next link (LB-AI-EN-NEXT) are the tick's; a J / K only above the flash-step reserve
+;;;             (*LB-AI-FS-RESERVE*, LILLE-OK). KIN: TENSHIN out after a string or with the gauge low, with the flash step
+;;;             for EN's lines (LB-AI-KIN). Both: the stance as a reaction only: a threat within reach + 1 m or a hazard within 12 f
 ;;;             rolls :stance -> U (LB-AI-STANCE-IN); in it he leaves by attacking: his whiff / recovery, :max frames, the
 ;;;             gauge under :gg, or he out of reach and idle (LB-AI-STANCE-OUT)
 ;;;   shin      Trompete (SP2) as a punish from beyond J's reach (LB-AI-TROMPETE); the neutral bands give it >= 8 m only
@@ -1078,6 +1128,12 @@ by band, damage by band, Trompete)."
 (defparameter *lb-ai-eye-tap* 4
   "His CPU taps the eye when the threat's perceived lead is 1..this frames (inside the sim's *LB-EYE-LEAD* 8, with room
 for a lead seen a frame off; batch 3a, 2026-10-06).")
+(defparameter *lb-ai-fs-reserve* 10.0
+  "His CPU's flash-step budget in EN (decision 34, 2026-10-06; the lines cost *LB-TRACE-FS* each): a J / K starts (and
+its next link is latched) only while the flash step left after its lines stays >= this: TENSHIN out's price
+(*LB-SWITCH-FS*), so the KIN string after a switch in can always switch back out. Below a J's worth (starved) EN switches
+in from neutral (free; LB-SWITCH-IN-RULE's STARVED), and KIN switches out after a string only with the price + this + a
+K fan (LB-AI-OUT-OK-P), so EN never arrives starved.")
 
 ;; pure: host-tested (tests/duel-rules-test.lisp)
 (defun lb-ai-chance (p difficulty) "A chance P of his kit's :ai at DIFFICULTY: x *LB-AI-DIFF*, at most 1." (min 1.0 (* p (getf *lb-ai-diff* difficulty 1.0))))
@@ -1121,14 +1177,24 @@ TENSHIN, J1 when it switched IN (to KIN) and a materialised trace hit (TRACE-HIT
   (cond (hosha (if (< r 0.5) :q :f))
         ((and in trace-hit) :q)
         (t :none)))
-(defun lb-switch-in-rule (n gap busy k &optional moving)
+(defun lb-switch-in-rule (n gap busy k &optional moving starved)
   "EN's switch in (DUEL_LILLE §22.2): N live traces, the opponent GAP m from the nearest (its line, a thick one's extra
 width off), BUSY (perceived reeling or recovering, long enough to outlast the switch's wind-up): >= :traces traces with
-GAP <= :near unless he is MOVING (running, stepping, a Hoho: the 8 f wind-up from neutral would let him off it, decision
-30), or BUSY with GAP <= :whiff."
-  (and (plusp n) (or (and (>= n (getf k :traces 3)) (<= gap (getf k :near 0.6)) (not moving))
-                     (and busy (<= gap (getf k :whiff 1.5))))
+GAP <= :near unless he is MOVING (running, stepping, a Hoho: the 16 f wind-up from neutral would let him off it,
+decisions 30, 34), or BUSY with GAP <= :whiff; or STARVED (his CPU can't pay a J line above its reserve: KIN, free,
+regains it; decision 34) unless he is MOVING."
+  (and (or (and (plusp n) (or (and (>= n (getf k :traces 3)) (<= gap (getf k :near 0.6)) (not moving))
+                              (and busy (<= gap (getf k :whiff 1.5)))))
+           (and starved (not moving)))
        t))
+(defun lb-ai-lay-ok-p (fs src &optional (reserve *lb-ai-fs-reserve*))
+  "May his CPU start an EN J (SRC :j) / K (:k) link with FS flash step: what its lines cost (LB-TRACE-COST x LB-TRACE-FANS)
+leaves >= RESERVE (decision 34)?"
+  (>= (- fs (* (lb-trace-cost src) (length (lb-trace-fans src)))) reserve))
+(defun lb-ai-out-ok-p (fs)
+  "May his CPU's KIN switch out after a string with FS flash step: TENSHIN out's price, then EN's reserve and a K fan's
+lines left (decision 34; LB-AI-LAY-OK-P once back)?"
+  (lb-ai-lay-ok-p (- fs *lb-switch-fs*) :k))
 
 ;; the shell (the sim's state, the perceived SNAPs)
 (defstruct (lbai (:conc-name lbai-))
@@ -1346,29 +1412,41 @@ off: LB-SWITCH-IN-RULE's gap)."
                                 (- (lbh-width d) *lb-trace-r*)))))))
     (values n gap)))
 
-(defun lb-ai-switch-in-p (e b s windup)
+(defun lb-ai-switch-in-p (e b s windup &optional starved)
   "EN's switch in (his CPU; DUEL_LILLE §22.2): TENSHIN ready (LB-SWITCH-READY-P), and the opponent as perceived (S) on one
 of >= 3 live traces (not running / stepping when the wind-up is the neutral one), or reeling / recovering near one for at
-least the WINDUP frames still to come (LB-SWITCH-IN-RULE, the kit's :switch; decision 30: 8 f from neutral, 2 f as a
-cancel). Deterministic: no roll."
+least the WINDUP frames still to come (LB-SWITCH-IN-RULE, the kit's :switch; decisions 30, 34: 16 f from neutral, 2 f as a
+cancel, J1's 7 + 2 through a J), or STARVED (not running / stepping). Deterministic: no roll."
   (let ((k (ai-table e :switch)))
     (and k s (lb-switch-ready-p e)
          (multiple-value-bind (n gap) (lb-ai-trace-gap e (snap-x s) (snap-z s))
            (lb-switch-in-rule n gap (lb-ai-busy-p s (brain-delay b) windup) k
-                              (and (> windup *lb-switch-windup-c*) (member (snap-state s) '(:run :step :hoho)) t))))))
+                              (and (> windup *lb-switch-windup-c*) (member (snap-state s) '(:run :step :hoho)) t)
+                              starved)))))
 
 (defun lb-ai-en (e b s d)
-  "EN (free): TENSHIN in by the switch rule (LB-AI-SWITCH-IN-P), else the stance reflex (LB-AI-STANCE-IN)."
-  (if (lb-ai-switch-in-p e b s *lb-switch-windup*)
-      (progn (lb-count e :ai-switch-trace) (why b :switch-in :sig))
-      (lb-ai-stance-in e b s d)))
+  "EN (free): the switch rule (LB-AI-SWITCH-IN-P) through the 2 f cancel when it can (decision 34: a J1, its line paid
+above the reserve, then TENSHIN from its active end: 7 + 2 f to the materialise, not the neutral 16), else TENSHIN in from
+neutral; else the stance reflex (LB-AI-STANCE-IN); else, STARVED (no J line above the reserve), TENSHIN in (free: KIN
+regains the flash step). No roll."
+  (let ((j1 (kit-command-move (kit-of e) :q)) (fs (gauges-fs (gauges e))))
+    (cond ((and j1 (lb-ai-lay-ok-p fs :j) (kit-command-ok-p e :q)
+                (lb-ai-switch-in-p e b s (+ (mv-s j1) (mv-a j1) *lb-switch-windup-c*)))
+           (lb-count e :ai-switch-via-j) (why b :switch-via-j :q))
+          ((lb-ai-switch-in-p e b s *lb-switch-windup*)
+           (lb-count e :ai-switch-trace) (why b :switch-in :sig))
+          ((lb-ai-stance-in e b s d))
+          ((lb-ai-switch-in-p e b s *lb-switch-windup* (not (lb-ai-lay-ok-p fs :j)))
+           (lb-count e :ai-switch-starved) (why b :switch-starved :sig)))))
 
 (defun lb-ai-kin (e b s d)
   "KIN (free; DUEL_LILLE §22.2): TENSHIN out (to EN) after a string (its last link run out, LILLE-TICK's record; a blocked
-one counted apart) or with the guard gauge under :gg (40), when it can start; else the stance reflex."
+one counted apart) or with the guard gauge under :gg (40), when it can start and (decision 34) with the flash step for
+EN's lines after it (LB-AI-OUT-OK-P: EN never arrives starved); else the stance reflex."
   (let* ((st (lb e)) (k (ai-table e :switch))
-         (why (cond ((lbs-kin-last st) (if (eq (lbs-kin-contact st) :block) :block :string))
-                    ((< (gauges-gg (gauges e)) (getf k :gg 40)) :gauge))))
+         (why (and (lb-ai-out-ok-p (gauges-fs (gauges e)))
+                   (cond ((lbs-kin-last st) (if (eq (lbs-kin-contact st) :block) :block :string))
+                         ((< (gauges-gg (gauges e)) (getf k :gg 40)) :gauge)))))
     (if (and why (kit-command-ok-p e :sig))
         (progn (setf (lbs-kin-last st) nil)
                (lb-count e (case why (:block :ai-switch-block) (:string :ai-switch-string) (t :ai-switch-gauge)))
@@ -1381,11 +1459,13 @@ near end back (6 m), and always across the opponent's line on its current strafe
   (let* ((b (brain e)) (d (fighter-dist f)) (z (getf (ai-table e :ranges) :zone '(6.0 12.0))))
     (values (cond ((< d (first z)) -1.0) ((> d (second z)) 1.0) (t 0.0)) (if b (brain-strafe b) 1.0))))
 
-(defun lb-ai-en-next (f mv)
+(defun lb-ai-en-next (e f mv)
   "His CPU in an EN string, on a line frame: the same button's next link is latched (J lines, K fans: to the third), unless
-one is already. No roll: the string is finished while he walks (DUEL_LILLE §22.2)."
+one is already or its lines would eat into the reserve (LB-AI-LAY-OK-P, decision 34). No roll: the string is finished
+while he walks (DUEL_LILLE §22.2)."
   (let ((c (if (eq (mv-kind mv) :quick) :q :f)))
-    (when (and (null (fighter-queued f)) (kit-next (fighter-kit f) (mv-name mv) c))
+    (when (and (null (fighter-queued f)) (kit-next (fighter-kit f) (mv-name mv) c)
+               (lb-ai-lay-ok-p (gauges-fs (gauges e)) (if (eq c :q) :j :k)))
       (setf (fighter-queued f) c))))
 
 (defun lb-opp-trace (e b s d)
