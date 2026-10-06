@@ -1576,3 +1576,19 @@ fight and mid-J1 (`r2-jl-behind`, `r3-jl-j1-behind`), MUJITTAI (`r2-mujittai-beh
 `tools/pkgcheck.sh duel` 0 / 0 / 0; `simgate.py --seeds 10 --summary` **byte-identical** to the run before the change; `--cvc`
 PASS; `./build.sh duel` 0 warnings. **Consing** (79195, 10 draws): the draw hook 160 B in KIN and the owl, 240 B in KIN MUJITTAI and
 MUJITTAI (16 / 24 B a frame: the ECS lookup floor of §21, unchanged); the legs, the extra arms and the glass / rim draws 0 B.
+
+### 23.6 Measured after the round-2 merge (the lead, 2026-10-06)
+
+Rules (§23.4) and rig (§23.5) merged. Host tests ALL PASS (duel-rules 5938, control 89, learn 100, input 33, touch 64,
+cine 18, RAVEN rules-test); pkgcheck 0 / 0 / 0; `--seeds 10`: the fifteen old pairings identical to the baseline before
+the first rework (the touch fix and Ichigo's `:step-branch` flag move no sim line); `--cvc` PASS; `./build.sh duel` 0
+warnings. Stills of the merged build: HŌSHA's three bullets hit (16 × 3), KIN on the ㄇ legs, the owl on KIN's model
+with the translucent gold wings.
+
+Seeds 1–20 (§23.4's run, every match K.O.): LY 159.5 s / 8 wins, LK 168.0 / 9, LR 194.0 / 5, LI 206.8 / 8, LS 196.1 / 8,
+LL 246.1 (mirror): every cross median inside 125–210 s; wins up from 6 / 2 / 2 / 3 / 4 (§22.6), LR still under 10 ± 3.
+
+**Awaken A/B** (39020, wins of 60, streams 100 / 300 / 500; pass ≥ 20): LY 18 / 20 / 18, LK 2 / 6 / 7, LR 8 / 10 / 10,
+LI 5 / 10 / 8, LS 17 / 13 / 14. Closer than §22.6 (1–19) but failing every row except LY's stream 300: awakening is
+still a large upgrade. Not tuned (the user's playtest decides the direction).
+
