@@ -97,6 +97,7 @@ The user chose 「被斬首後復活」 (rejecting: exactly Kenpachi's Bankai ru
   his Konpaku and he has **≤ 4 of his own Konpaku** left, **P** revives him into the owl form.
 - The cost as Kenpachi's Bankai: his Konpaku go to **1**, his Reishi is refilled; the halo shrinks and the intangible
   stance is gone (the owl form trades the defence for the attack). Once a match by construction.
+- **Superseded by decision 16** (2026-10-06): no beheading needed, ≤ 4 Konpaku in any Jilliel form is enough.
 
 ### Decision 9 (2026-10-06): Trompete can be reflected, and a reflection breaks his form (Q7)
 
@@ -130,6 +131,25 @@ numbers, stand at their defaults):
   2026-10-06).
 - **15. The owl's cost** 「不加代價」: no burn, no partial refill. The revival costs what decision 8 says (Konpaku → 1) and
   nothing more; at 1 Konpaku it is free, accepted.
+
+### Decisions 16–20 (2026-10-06): the user's rework after the first playtest build
+
+The user's request, verbatim: 「1. 只要魂魄數小於等於 4 就能透過 P 復活，否則在練習模式無法進入梟頭型態。 2. 把非覺醒的 L 改成擺出射擊架式，並參照一護的架式玩法進行設計。利用架式賦予其機動性，使利捷·巴羅能再近戰遠攻之間靈活切換。 3. 把覺醒的 L 會在近戰（長出與梟頭型態一樣的腿）與遠程模式（與目前 Jilliel 一樣的狀態）切換，遠程模式的特點是可以一邊行動一邊把連招動作打完，而且攻擊並不會有傷害只會留下萬物貫通的射擊軌道，只有在通過 L 切換模式時會將軌道上的攻擊實體化。每次通過 L 切換模式時，都會發動向一護始解架式時的墊步閃身來拉近（變成近戰）或拉遠（變成遠攻）。 4. Jilliel 是揮舞八片刀刃狀的翼發動攻擊，而手臂則是背影藏在柱身內部，但現在的建模看起來就像是手臂變成一對翅膀，剩下三對則死板的掛在身後。 5. 梟頭型態原作不是四根高蹺般的腿，而是兩隻細長腿，只是在腿部中間又出現分岔看起來像四條腿。」
+Then, to the four questions that changed the design: 「快射＋蓄力」, 「兩模式都無實體」, 「留到切換、最多 8 條」,
+「遠程模式留粗軌道，近戰模式直接打出」.
+
+- **16. The revival** (replaces decision 8's beheading condition): in any Jilliel form, free (idle / guard, MUJITTAI
+  included), with **≤ 4 of his own Konpaku** (`*bankai-konpaku*`, Kenpachi's rule exactly), **P** revives him into the
+  owl. No beheading flag; so PRACTICE's KONPAKU row reaches the owl. The revival cinematic keeps the canon beheading.
+- **17. Base L is a shooting stance** after Ichigo's TSUKIMACHI, with a dash for mobility; the stance's L is a quick
+  shot (flat) or, after ≥ 24 f in the stance, the charged shot (the distance curve). §22.1.
+- **18. Jilliel's L switches between two modes**: ranged (as Jilliel was: floating; attacks while moving; they deal no
+  damage and leave X-Axis traces, at most 8, kept until the switch) and melee (the owl's legs, the wing-blade strings,
+  normal hits). Every switch is a flash-step dash (in → melee, out → ranged) and materialises every trace. U is MUJITTAI
+  in both modes. SP2 leaves a thick trace in the ranged mode and fires directly in the melee mode. §22.2.
+- **19. Jilliel's wings are the weapons**, eight separate blades in two fans of four, swung one or two at a time; the
+  arms are hidden in the column. §22.3.
+- **20. The owl has two long thin legs, each forking halfway** into two (it reads as four). §22.3.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -1086,3 +1106,60 @@ LS 170.2 → 173.4, LL 241.8 → 250.3 s (all K.O.). The balance pass re-gates t
 left is the floor of this build's ECS lookups, **8 B per component lookup** (`fighter`, `model`, `transform` each box their
 result; measured 80 B per 10 calls): the draw hook 16 B a frame (fighter + model), 24 B while aiming, during Trompete or
 in MUJITTAI (+ transform); each Lille hazard's look 8 B. Removing that floor is an engine change (out of this batch).
+
+---
+
+## 22. Rework (decisions 16–20, 2026-10-06): the stance, the two modes, the rig
+
+Every number is a proposal until the gate (the §13 targets stand). Names: [G] ours.
+
+### 22.1 Base L: 狙撃構え SOGEKI-GAMAE, the shooting stance `:lb-kamae` (decision 17) [G]
+
+| | Value |
+|---|---|
+| Stance | up at **f6**, held **30 f** (a tap) or up to **90 f** while L is held, R 14; no defence (hit as neutral); **tracks at 60°/s** (`*lb-aim-track*`) with the grey aim line drawn; walk off (planted) |
+| Charge | frames spent in the stance (the dash's frames included; `*lb-charge-f*` **24**): the line glows brighter at 24 |
+| L 万物貫通 `:lb-k-shot` | **locks on the press** (jade, track 0), fires **10 f later** (`*lb-lock-min*`: the visible-lock rule stays), active 2, R 26. **Quick** (charge < 24): **40 flat**. **Charged** (≥ 24): **40 + 80 × clamp((d − 4) / 16)** (40–120). × `*lille-mult*`. Blocked: chip 15 %, drain 30, −14 (§4.3) |
+| J 零距離 REIKYORI `:lb-k-j` | S8 A3 R18, a 2.0 m lunge, the muzzle jammed in and fired: **40**, stagger, reach 1.8 m, −6 on block, guard 8 (a melee hit, guardable, not `:x-axis`) |
+| K 薙払 NAGIHARAI `:lb-k-k` | S16 A4 R28, Diagramm swept flat, 2.6 m 180°: **80**, crumple, **guard 30**, −10 |
+| Step 飛廉脚 HIRENKYAKU `:lb-k-dash` | **3.5 m in the stick direction (neutral: away from him)** over 12 f, iframes f0–8, afterimages; back in the stance at f6 with the charge kept (dash back, then the charged shot: the kite); **once per stance**, 10 flash step |
+| L after a K link | the stance entered at f4 (2 f to its f6): every branch combos off K1 / K2 / K3 (host test) |
+
+- The old hold shot `:lb-x-axis` goes (the stance replaces it). Cycle: f6 + 24 + 10 + 2 + 26 = 68 f (the old 72).
+- SP1 SANREN and SP2 HIRENKYAKU stay (SP2 overlaps the stance's dash; reviewed after the playtest). U (guard + the eye),
+  I and O unchanged.
+- **CPU** (Ichigo's `tsuki-step` pattern, at the stance's f6, rolled once): ≥ 8 m hold to the charge then L; 3–8 m the
+  dash back then the charged L (or the quick L on a whiffed recovery); ≤ 3 m K on a guard (or a gauge < 50), else J;
+  after a K link's hit L 0.6 / J 0.4. Bands: the stance `:sig` in every band (the old `:sig` slots).
+
+### 22.2 Jilliel: 遠 EN (ranged) and 近 KIN (melee), L switches (decision 18) [G]
+
+Forms: `:jilliel` (EN, floating, as built) and its stance `:jilliel-mujittai`; `:jilliel-kin` (KIN, the owl's forked
+legs) and its stance `:jilliel-kin-mujittai`. The awakening enters EN. Both modes: taken ×1.1, `:gg-regen` 0.36, U =
+MUJITTAI (§5.2, unchanged), I the Breaker, O the Kikon module (direct, Kikon 3), P the revival (decision 16).
+
+| | Value |
+|---|---|
+| L 転身 TENSHIN `:lb-switch` (both modes) | **frame 0: every live trace materialises** (below); a flash-step dash **3.5 m at him (EN → KIN) or away (KIN → EN)** over 12 f, iframes f0–8, 10 flash step; the form changes at f6; R 8. At most one every **30 f** (`*lb-switch-cd*`). Also cancels his own J / K / SP1 from their active end (EN: always, the lines never hit; KIN: as a K link's L) |
+| EN: J / K / SP1 | **mobile**: the stick walks him at 3.0 m/s through the whole move (facing kept toward the opponent); **no hit window**: each line is laid as a **trace**: J1–J3 one line, K1–K3 a fan of three (−6°, 0°, +6°), SP1 SANREN its three (1 bar) |
+| EN: SP2 NIJŪSHI-KŌ | 2 bars, the 40 f tell (planted, not mobile), then a **thick trace** (radius 1.2 m) |
+| Trace | a static line in the world (from where the wing was, at its yaw, 31 m, radius 0.6; SP2 1.2), drawn faint jade on the floor with a pulse; **at most 8** (a 9th drops the oldest), **kept until his next switch** (gone on a revival or at the round's end) |
+| Materialising | at the switch's frame 0, every trace is a 2-frame hit `:ranged :x-axis :uncatchable` (each hits a fighter once; several in one window count as one combo): J line **30**, K line **24**, SP1 line **30**, SP2 **180**; × `*jilliel-mult*`. Blocked: the X-Axis rule (chip 15 %, drain 18 a line, 45 SP2) |
+| KIN: J / K | the wing-blade strings (§5.3: 24 / 24 / 30, 50 / 50 / 72), normal hits; walk **3.8**, run 8.5 |
+| KIN: SP1 / SP2 | SANREN as built (direct lines); NIJŪSHI-KŌ as built (the direct beam) |
+
+- The volley `:lb-volley` goes (L is the switch).
+- **CPU**: EN at 6–12 m lays K fans and J lines while walking off his line; switches (dash in) when ≥ 3 traces are live
+  and the opponent (perceived) stands within 0.6 m of one, or on a whiffed recovery near a trace; KIN runs a string, then
+  switches out on a block, a gauge < 40 or after the string. The opponents step off a trace (the batch-2 point-to-line
+  perception, one roll per new trace) when his switch is ready.
+
+### 22.3 The rig (decisions 19, 20)
+
+- **Jilliel's wings** are eight separate blades drawn by his draw hook, rooted behind the column's top, **two fans of
+  four** (the refs: the upper pair high and out, the lowest pair down and out), curved leaf blades with three oval
+  holes. The rig's arms are **not drawn** (hidden in the column); a **striking wing is drawn from its root to the rig's
+  hand**, so the wing tip is the hand and the host FK reach test keeps reading the hand (±0.15 m). J swings one front
+  wing, K the two front ones, the SPs spread all eight; idle, each wing sways on its own phase; MUJITTAI folds them.
+- **The legs** (the owl and KIN): two long thin legs, each **forking at the knee into two shanks** (fore and aft), so it
+  reads as four. The owl keeps its long arms (its claws are the hands) and gets the same eight-wing fans in gold.
