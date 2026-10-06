@@ -194,6 +194,10 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
   §23.18.
 - **39. Laying a trace fires a 1-damage shot along it** (the user, 2026-10-06: 「請萊醬你再幫我多加一個設定，覺醒後在遠程狀態產生軌道時，
   軌道上會對敵人造成傷害為 1 的射擊傷害。」, then 「輕微硬直但可防禦」). §23.20.
+- **40. The owl's EN Trompete trace materialises as KIN Trompete's blast** (the user, 2026-10-06: 「神之喇叭的遠程軌跡在透過 L 實體化之後的
+  特效（現在是使用跟審判光明一樣的『沿地面的金色爆炸線』）請改成跟近戰版本一樣」): `lb-materialise` spawns the `:beam` look at
+  `:lb-trompete`'s width (1.2) with its explosion sound for an owl SP2 trace; the other owl traces keep 審判光明's ground
+  blasts. A look only (the hit is the trace's). Checked in a still against KIN Trompete's.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 

@@ -967,7 +967,8 @@ materialised one, NIL (each materialises once)."
 
 (defun lb-materialise (e)
   "TENSHIN's frame 0: every live trace of his becomes a 2-frame hit (once; the hits of one switch count as one combo), the
-X-axis line's look flashes along it (the owl's: 裁きの光明's gold ground blasts, :judge; decision 36), and it is gone after."
+X-axis line's look flashes along it (the owl's: 裁きの光明's gold ground blasts, :judge; decision 36; its Trompete trace:
+KIN Trompete's blast, :beam at the move's width, decision 40), and it is gone after."
   (let ((mult (kit-mult (kit-of e))) (looks nil))
     (do-entities (h (hz hazard))
       (let ((d (hazard-data hz)))
@@ -977,7 +978,13 @@ X-axis line's look flashes along it (the owl's: 裁きの光明's gold ground bl
               (setf (hazard-hw hz) hw (hazard-hits-left hz) 1 (hazard-life hz) (+ (hazard-age hz) 3))
               (push (list (if (eq (lbh-src d) :sp2) :beam :shot) (hazard-x hz) (hazard-z hz) (hazard-yaw hz) (lbh-width d)) looks))))))
     (if (lb-owl-form-p (fighter-form (fighter e)))              ; the owl's: 裁きの光明, gold blasts along the ground (decision 36)
-        (dolist (l looks) (destructuring-bind (kind x z yaw w) l (declare (ignore kind)) (lb-spawn-look-at e :judge x z yaw 31.0 w (if (> w 0.9) :thick t))))
+        (dolist (l looks)
+          (destructuring-bind (kind x z yaw w) l
+            (if (eq kind :beam)                                   ; EN Trompete's thick trace: KIN Trompete's blast (the user,
+                (progn (lb-spawn-look-at e :beam x z yaw 31.0     ; 2026-10-06: 「請改成跟近戰版本一樣」)
+                                         (getf (mv-params (find-move :lb-trompete)) :width) t)
+                       (emit :sfx :explode e))
+                (lb-spawn-look-at e :judge x z yaw 31.0 w (if (> w 0.9) :thick t)))))
         (dolist (l looks) (destructuring-bind (kind x z yaw w) l (declare (ignore w)) (lb-spawn-look-at e kind x z yaw 31.0 0.05 t))))
     (when looks (lb-count e :materialised (length looks)))))
 
