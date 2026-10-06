@@ -1144,7 +1144,7 @@ MUJITTAI (§5.2, unchanged), I the Breaker, O the Kikon module (direct, Kikon 3)
 | EN: J / K / SP1 | **mobile**: the stick walks him at 3.0 m/s through the whole move (facing kept toward the opponent); **no hit window**: each line is laid as a **trace**: J1–J3 one line, K1–K3 a fan of three (−6°, 0°, +6°), SP1 SANREN its three (1 bar) |
 | EN: SP2 NIJŪSHI-KŌ | 2 bars, the 40 f tell (planted, not mobile), then a **thick trace** (radius 1.2 m) |
 | Trace | a static line in the world (from where the wing was, at its yaw, 31 m, radius 0.6; SP2 1.2), drawn faint jade on the floor with a pulse; **at most 8** (a 9th drops the oldest), **kept until his next switch** (gone on a revival or at the round's end) |
-| Materialising | at the switch's frame 0, every trace is a 2-frame hit `:ranged :x-axis :uncatchable` (each hits a fighter once; several in one window count as one combo): J line **30**, K line **24**, SP1 line **30**, SP2 **180**; × `*jilliel-mult*`. Blocked: the X-Axis rule (chip 15 %, drain 18 a line, 45 SP2) |
+| Materialising | at the switch's frame 0, every trace is a 2-frame hit `:ranged :x-axis :uncatchable` (each hits a fighter once; **a K's fan of three is one hit group**: at most one of its lines hits a fighter (`make-hit-group`; the lead's merge fix, 2026-10-06: at 5 m all three overlapped him, 72 for one K); several in one window count as one combo): J line **30**, K line **24**, SP1 line **30**, SP2 **180**; × `*jilliel-mult*`. Blocked: the X-Axis rule (chip 15 %, drain 18 a line, 45 SP2) |
 | KIN: J / K | the wing-blade strings (§5.3: 24 / 24 / 30, 50 / 50 / 72), normal hits; walk **3.8**, run 8.5 |
 | KIN: SP1 / SP2 | SANREN as built (direct lines); NIJŪSHI-KŌ as built (the direct beam) |
 

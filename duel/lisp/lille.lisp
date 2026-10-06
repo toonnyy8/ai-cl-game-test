@@ -671,7 +671,8 @@ press; his CPU's switch rule, LB-AI-SWITCH-IN-P)."
 then chains on as if it had touched him (the lines never hit: FIGHTER-CHAINED opens the string gate), and his CPU latches
 the same button's next link (LB-AI-EN-NEXT)."
   (let* ((f (fighter e)) (mv (fighter-move f)) (src (getf (mv-params mv) :trace)))
-    (dolist (a (lb-trace-fans src)) (lb-lay-trace e src a))
+    (let* ((fans (lb-trace-fans src)) (group (and (rest fans) (make-hit-group 1))))   ; a K's fan hits a fighter once
+      (dolist (a fans) (lb-lay-trace e src a group)))
     (emit :sfx :rift-cut e)
     (when (member (mv-kind mv) '(:quick :flash))
       (setf (fighter-chained f) t)
@@ -687,7 +688,7 @@ the same button's next link (LB-AI-EN-NEXT)."
           (when (or (null old) (< (lbh-id d) oid)) (setf old h oid (lbh-id d))))))
     (values n old)))
 
-(defun lb-lay-trace (e src yaw-off)
+(defun lb-lay-trace (e src yaw-off &optional group)
   "One trace of SRC (:j :k :sp1 :sp2) from where he stands, at his facing + YAW-OFF degrees, *LB-TRACE-LEN* long: a hazard
 with no hit (drawn by LB-TRACE-LOOK, faint jade on the floor) until his switch materialises it; at most *LB-TRACE-MAX*
 live (the oldest dropped first: LB-TRACE-DROP-P)."
@@ -695,7 +696,7 @@ live (the oldest dropped first: LB-TRACE-DROP-P)."
     (multiple-value-bind (n old) (lb-live-traces e)
       (when (lb-trace-drop-p n) (destroy-entity old) (lb-count e :traces-dropped)))
     (spawn-hazard :lb-trace e :x (aref p 0) :z (aref p 2) :yaw (+ (yaw-of e) (deg yaw-off)) :size *lb-trace-len*
-                              :life *lb-trace-life* :hook 'lb-hz :look 'lb-trace-look
+                              :life *lb-trace-life* :hook 'lb-hz :look 'lb-trace-look :group group
                               :data (make-lbh :kind :trace :src src :id (incf (lbs-trace-n st)) :live t
                                               :len (f32 *lb-trace-len*) :width (f32 r)
                                               :vol (make-vol :cap (list 0.6 *lb-trace-len* 1.2 r))))

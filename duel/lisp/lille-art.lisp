@@ -1335,14 +1335,26 @@ opening's line as a brush column at his side, and a human's distance tag on the 
     (%lb-halo-icon cracked)
     nil))
 
+(defun-fast %lb-tag-dmg (side charged mult)
+  "The distance tag's number: the stance's shot at the reticle's distance *LB-FX* [11] (SIDE), CHARGED the curve
+(40-120, LB-X-DAMAGE's) else the quick shot's *LB-X-MIN*, x MULT (his kit's damage x). In float math (0 B a frame)."
+  (declare (fixnum side))
+  (let* ((d (lb-fxs side 11)) (near (the single-float (f32 *lb-x-near*))) (far (the single-float (f32 *lb-x-far*)))
+         (lo (the single-float (f32 *lb-x-min*))) (hi (the single-float (f32 *lb-x-max*)))
+         (m (the single-float (f32 mult)))
+         (k (if charged (f-max 0f0 (f-min 1f0 (/ (- d near) (- far near)))) 0f0)))
+    (declare (single-float d near far lo hi m k))
+    (the fixnum (truncate (+ 0.5f0 (* m (+ lo (* k (- hi lo)))))))))
+
 (defun lb-hud-tag (e side)
-  "The distance tag (§9, base form, a human Lille only): the damage the shot would deal now (40-120 x his damage x) next
+  "The distance tag (§9, base form, a human Lille only): the damage the stance's shot would deal now (quick 40, charged 40-120; x his damage x) next
 to the reticle on the aim line (LILLE-DRAW keeps its point), grey while it tracks, jade once locked."
   (when (and (> (lb-fxs side 10) 0.5) (not (brain e)) (eq (fighter-form (fighter e)) :base))
     (let ((v *lb-p*))
       (when (world-to-screen v (lb-fxs side 7) (lb-fxs side 8) (lb-fxs side 9))
-        (let* ((d (lb-fxs side 11)) (k (max 0.0 (min 1.0 (/ (- d *lb-x-near*) (- *lb-x-far* *lb-x-near*)))))
-               (dmg (round (* (+ *lb-x-min* (* k (- *lb-x-max* *lb-x-min*))) (kit-mult (kit-of e)))))
+        (let* ((st (lb e))
+               (charged (if (> (lb-fxs side 10) 1.5) (lbs-k-charged st) (lb-kamae-charged-p (lbs-charge st))))
+               (dmg (%lb-tag-dmg side charged (kit-mult (kit-of e))))
                (s (max 2 (round (ui-scale)))))
           (hud-text (svref *lb-dmg-strings* (max 0 (min 399 dmg))) (+ (aref v 0) (* 26 s)) (- (aref v 1) (* 30 s)) (* 2 s)
                     (if (> (lb-fxs side 10) 1.5) *c-lb-jade* *c-lb-grey*)))))))
