@@ -2044,3 +2044,9 @@ as a plain ranged hit** (no chip, 2 guard gauge drained; not the X-Axis), `:rang
 group (one shot hits a fighter once). It is not the trace: it gives no flash-step refund and the trace still waits for
 L to materialise. The lead picked 10 f and 2 (the user may move them).
 
+Measured (seeds 1–20, every match K.O.; the fifteen old pairings identical at 10 seeds): LY 177.3 s / 12 wins, LK 182.2
+/ 5, LR **223.2** / 6, LI **220.4** / 8, LS 206.3 / 6, LL 248.4. The browser shows the shot: EN J1's line hit for 1, a K
+fan's once. **LR and LI past 210 s**, so the edge rerun at 60 seeds: **LR 229.6 s** (22 wins of 60), **LI 216.2 s** (24 of
+60): still outside the window. By the gate policy this goes to the user; no other knob was retuned (the 10 f flinch
+interrupts and lengthens the matches).
+
