@@ -1,0 +1,24 @@
+--- frozen LILLE-CPU-TESTS
++++ cell LILLE-CPU-TESTS
+@@ -64,7 +64,20 @@
+   ;; the 16 f wind-up (decision 34) through the AI: a J1 then its 2 f cancel reaches the materialise sooner than the
+   ;; neutral wind-up (LB-AI-EN prefers it)
+   (let ((j1 (kit-command-move j :q)))
+-    (check (< (+ (mv-s j1) (mv-a j1) *lb-switch-windup-c*) *lb-switch-windup*))))
++    (check (< (+ (mv-s j1) (mv-a j1) *lb-switch-windup-c*) *lb-switch-windup*))
++    ;; the HARD layer (dream-rsi b1a0): per-difficulty levels, 0 at EASY / NORMAL (the shipped CPU, no new roll), 1 at HARD;
++    ;; no brain reads 0
++    (check (and (every (lambda (k) (and (<= (getf k :easy) (getf k :normal) (getf k :hard)) (zerop (getf k :normal))
++                                        (= 1.0 (getf k :hard))))
++                       (list *lb-ai-run* *lb-ai-snap* *lb-ai-hosha* *lb-ai-eye-p*))
++                (zerop (lb-ai-level *lb-ai-snap* nil))
++                (equal *lb-ai-snap-range* '(2.0 9.0)) (equal *lb-ai-hosha-range* '(3.0 7.0)) (= *lb-ai-snap-wary* 2)))
++    ;; the snap shot: its far end inside TENSHIN in's reach (the dash + its stop: the J link still lands), and the laying
++    ;; shot's flinch (from J1's first active frame) outlasts J1's active frames + the 2 f cancel: the line materialises on a
++    ;; flinched opponent; HOSHA's band inside its leap + its bullets' 3 m
++    (check (and (<= (second *lb-ai-snap-range*) (+ *lb-switch-in* *lb-switch-stop*))
++                (> *lb-nick-stun* (+ (mv-a j1) *lb-switch-windup-c*))
++                (<= (second *lb-ai-hosha-range*) (+ *lb-hosha-leap* 3.0)) (< (first *lb-ai-hosha-range*) (second *lb-ai-hosha-range*))))))
+ ;; the owl's own CPU values (Jilliel's EN / KIN tables, Trompete's punish on KIN)
+ (let ((j (kit :lille :jilliel)) (o (kit :lille :shin)) (ok (kit :lille :shin-kin)))
+   (check (and (equal (getf (kit-ai o) :switch) '(:traces 3 :near 0.6 :whiff 1.5)) (equal (getf (kit-ai ok) :switch) '(:gg 40))
