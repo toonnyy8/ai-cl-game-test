@@ -223,6 +223,9 @@ how many are laid and the flash step left (decision 34: a K fan with 7 lays two,
   (let ((c (lb-trace-cost src)) (laid 0))
     (dotimes (i n) (when (>= fs c) (setf fs (- fs c)) (incf laid)))
     (values laid fs)))
+(defun lb-en-dry-p (fs)
+  "Is EN's J / K refused at FS flash step: under *LB-TRACE-FS* (decision 35: no line to pay, no swing)?"
+  (< fs *lb-trace-fs*))
 (defun lb-trace-refund (contact)
   "The flash step a materialised trace's CONTACT gives him back: *LB-TRACE-REFUND* on a hit, *LB-TRACE-REFUND-BLOCK* when
 guarded (decision 34; a K fan is one hit group, so it is asked once)."
@@ -579,14 +582,15 @@ carry-over bug, DEVLOG §38-§39)."
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun lille-ok (e command combo)
   "His kit's refusals: Trompete once the halo broke (sealed for the match, decision 9); TENSHIN out of KIN without its
-flash-step (*LB-SWITCH-FS*; the cue; EN -> KIN is free: decision 34). His CPU only (a brain): EN's J / K while their
-lines would eat into its reserve (LB-AI-LAY-OK-P; a human's press always swings, laying what it can pay)."
+flash-step (*LB-SWITCH-FS*; the cue; EN -> KIN is free: decision 34). EN's J / K under *LB-TRACE-FS* flash step (no
+swing: an empty J / K can't buy TENSHIN's 2 f cancel; the user 2026-10-06, decision 35); his CPU's also while their lines
+would eat into its reserve (LB-AI-LAY-OK-P)."
   (declare (ignore combo))
   (let ((form (fighter-form (fighter e))) (fs (gauges-fs (gauges e))))
     (not (or (and (eq command :sp2) (eq form :shin) (lbs-sealed (lb e)))
              (and (eq command :sig) (lb-jilliel-form-p form) (not (lb-switch-ok-p form fs)))
-             (and (member command '(:q :f)) (member form '(:jilliel :jilliel-mujittai)) (brain e)
-                  (not (lb-ai-lay-ok-p fs (if (eq command :q) :j :k))))))))
+             (and (member command '(:q :f)) (member form '(:jilliel :jilliel-mujittai))
+                  (or (lb-en-dry-p fs) (and (brain e) (not (lb-ai-lay-ok-p fs (if (eq command :q) :j :k))))))))))
 
 (defun lille-bankai-ok (e)
   "His kit's :bankai-ok (combat.lisp BANKAI-OK-P): P revives him into the owl from any Jilliel form, free: idle, guard or

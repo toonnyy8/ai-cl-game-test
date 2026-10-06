@@ -181,6 +181,12 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
 - **34. TENSHIN's tempo and the flash-step economy** (the user, 2026-10-06: 「# 覺醒改動 1. 遠程模式從中立按 L 的前搖的前搖增加到 16 f。
   2. L 切換戰型取消冷卻限制，並且從『遠』變『近』不消耗閃步量表，但遠程 J/K 每條軌跡消耗 3 點閃步量表，相對的每打中一條鬼機會額外回收 2 點閃步量表。」;
   「鬼機會」 read as 「軌跡會」): §23.11.
+- **35. EN's J / K need 3 flash step to swing** (the user, 2026-10-06: 「如果閃步剩不到 3 點時，就讓 J／K 不揮出，藉由這樣設計限制 L
+  在沒有閃步時量表時就不能靠空揮 J ／K 達成沒有前搖的衝刺。」): under `*lb-trace-fs*` (3) the press is refused (`lb-en-dry-p`),
+  so an empty swing can't buy TENSHIN's 2 f cancel. §23.14.
+- **36. The owl's system is Jilliel's** (the user, 2026-10-06: 「請讓梟頭型態的系統設計完全與 Jilliel 對齊，只是萬物貫通的射擊特效改成審判光明
+  （沿地面的金色爆炸線）、SP1 特效與動作用審判光明、SP2 特效與動作用神之喇叭。與 Jilliel 的主要差異是具有更高的攻擊力、更高的軌跡命中回收比例
+  與更優異的優勢幀。」; then 「也是無實體」, 「保留反射與封印」, 「小」): §23.14.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -1834,4 +1840,34 @@ not per frame). Decision 34 at 20 seeds (§23.12): all K.O., medians 158.8–194
 
 Measured with the refunds 4 (hit) / 2 (guarded) (seeds 1–20, every match K.O.): LY 175.5 s / 7 wins, LK 161.1 / 9,
 LR 204.7 / 6, LI 181.5 / 6, LS 182.0 / 7, LL 227.2 (mirror); every cross median inside 125–210 s.
+
+### 23.14 Decisions 35–36: the dry swing; the owl on Jilliel's system (2026-10-06)
+
+**35** is built (lille.lisp LILLE-OK, `lb-en-dry-p`; host test): EN's J / K are refused under 3 flash step, a human's
+press too (the CPU's reserve rule stands). A K with 3–8 flash step still swings and lays what it can pay (the middle line
+first).
+
+**36: the owl (`:shin`) runs Jilliel's whole system**, so everything in §22.2, §23.2, §23.11 and decision 35 holds for it:
+- **Forms**: 遠 EN `:shin` (the revival enters it), its MUJITTAI `:shin-mujittai`, 近 KIN `:shin-kin`, its MUJITTAI
+  `:shin-kin-mujittai`. The owl body (`:lille-shin`, the ㄇ legs, lift 0) in all four; the modes read by the wings
+  and the pose.
+- **L** TENSHIN (wind-up 16 f / 2 f as a cancel; wind-up → materialise → dash → J; no cooldown; EN → KIN free, KIN →
+  EN 10). **U** MUJITTAI in both modes (the user: 「也是無實體」; decisions 8 / 15's "the owl trades the defence" is
+  superseded), `:gg-regen` as Jilliel. **EN J / K** lay traces at 3 flash step a line (refused under 3), **SP1 / SP2**
+  traces free; at most 16 traces; KIN J / K / SP direct.
+- **The look**: the owl's traces (laid: a faint gold line on the floor) **materialise as 裁きの光明 審判光明, a gold
+  explosion line along the ground** (the existing `:sabaki` look), not the X-Axis's jade line. **SP1** is 審判光明 (its
+  motion and look: in EN it lays its lines, in KIN they burst at once); **SP2** is 神の喇叭 Trompete (its motion and
+  look: in EN the wind-up then a thick trace, in KIN the direct blast). **Trompete's reflect and seal stay** (decision 9;
+  the user: 「保留反射與封印」) on the direct (KIN) blast; a sealed halo seals SP2 in both modes.
+- **The differences from Jilliel** (the user picked 「小」):
+
+| | Jilliel | Owl |
+|---|---|---|
+| Damage multiplier (`*shin-mult*`) | 1.0 | **1.1** (was 1.2) |
+| A trace's refund, hit / guarded | 4 / 2 | **5 / 2** |
+| Frame advantage | as built | **+1 on every attack** (each J / K / SP recovery −1 f, so block and hit advantage +1; strings and combos re-checked) |
+
+- Unchanged: the revival (P in any Jilliel form at ≤ 4 Konpaku: Konpaku → 1, Reishi full), taken ×1.1, the owl's Kikon
+  (worth 4) and its cinematic, Trompete's numbers.
 
