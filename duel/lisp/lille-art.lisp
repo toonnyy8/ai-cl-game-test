@@ -698,8 +698,8 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
 ;;; ---- rework R (decisions 17, 18): base stance + TENSHIN clips
 ;;; (Functional clips of the rules batch, DUEL_LILLE §22.1 / §22.2; the art batch owns everything above.) The shooting
 ;;; stance 狙撃構え: Diagramm levelled at the hip, knees bent, the right eye along the barrel; its L fires from there.
-;;; REIKYORI and NAGIHARAI strike with the muzzle cross (the weapon tip: the host FK test, +-0.15 m); the HIRENKYAKU dash
-;;; crouches low; TENSHIN (Jilliel) folds into the flash step and opens in the new mode.
+;;; HOSHA leaps and fires three bullets, TAISHA slides back and fires one (round 2: line hits from the muzzle, no melee
+;;; volume); the HIRENKYAKU dash crouches low; TENSHIN (Jilliel) folds into the flash step and opens in the new mode.
 (defpose :lb-kamae-pose (:base :lb-aim-pose)          ; low, the rifle levelled from the hip-shoulder, aimed
   (:root :u -0.12) (:pelvis :twist 24) (:chest :twist -16) (:spine :flex 6) (:head :flex 8 :twist 20)
   (:thigh-r :flex -14 :side 10) (:thigh-l :flex 30 :side 8) (:knee-l :flex 34) (:knee-r :flex 22))
@@ -709,25 +709,32 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
   (:a (:root :f -0.12) (:arm-r :flex 70 :side 32) (:chest :flex -6))
   (24 (:root :f -0.05) (:arm-r :flex 50) (:elbow-r :flex 90) (:hand-r :flex -140))
   (:end :lb-stance))
-;; J 零距離 REIKYORI: the lunge (the sim slides him 2 m), the muzzle jammed in level and fired
-(defpose :lb-k-reikyori-hit (:base :lb-stance)
-  (:root :f -0.26 :u -0.12) (:spine :flex 12) (:arm-r :flex 16 :side 8) (:elbow-r :flex 92) (:hand-r :flex -104)
-  (:arm-l :flex 70) (:elbow-l :flex 20) (:thigh-r :flex 24) (:knee-r :flex 20) (:thigh-l :flex -10))
-(defstrike :lb-k-reikyori (8 3 18 :base :lb-kamae-pose)
-  (0) (4 (:root :u -0.16) (:spine :flex 16) (:arm-r :flex 20) (:elbow-r :flex 80) (:hand-r :flex -100))
-  (:s :snap :lb-k-reikyori-hit)
-  (:a :lb-k-reikyori-hit)
-  (22 (:arm-r :flex 20) (:elbow-r :flex 60))
+;; J 跳射 HOSHA (round 2, §23.1): the crouch, the leap (the sim carries him 3 m over f0-14; the clip only lifts him: the hurt
+;; cylinder stays on the floor), Diagramm levelled from the hip in the air, a recoil on each bullet (f6, f10, f14), the
+;; landing at f16, then back in the stance. The bullets are line hits from the muzzle (no melee volume: no FK reach test)
+(defpose :lb-k-hosha-air (:base :lb-kamae-pose)
+  (:root :u 0.55 :pitch -4) (:spine :flex 2) (:thigh-r :flex 46 :side 10) (:knee-r :flex 84) (:thigh-l :flex 18 :side 8)
+  (:knee-l :flex 62))
+(defstrike :lb-k-hosha (6 10 16 :base :lb-kamae-pose)
+  (0) (2 (:root :u -0.2 :pitch 6) (:knees :flex 44) (:thighs :flex 30))
+  (:s :snap :lb-k-hosha-air (:root :u 0.62) (:arm-r :flex 66))
+  (8 :lb-k-hosha-air (:root :u 0.66))
+  (10 :snap :lb-k-hosha-air (:root :u 0.6) (:arm-r :flex 68))
+  (12 :lb-k-hosha-air (:root :u 0.48))
+  (14 :snap :lb-k-hosha-air (:root :u 0.3) (:arm-r :flex 68))
+  (:a (:root :u -0.16 :pitch 4) (:knees :flex 40) (:thighs :flex 26))
+  (26 (:root :u -0.1) (:knees :flex 20))
   (:end :lb-stance))
-;; K 薙払 NAGIHARAI: Diagramm swept flat round him at arm's length, a step into it
-(defpose :lb-k-nagi-hit (:base :lb-stance)
-  (:root :f 0.6 :u -0.12) (:pelvis :twist -10) (:chest :twist -24) (:spine :flex 10) (:arm-r :flex 70 :side 16)
-  (:elbow-r :flex 2) (:hand-r :flex -30) (:arm-l :flex 40 :side 20) (:elbow-l :flex 30) (:thigh-l :flex 24) (:knees :flex 16))
-(defstrike :lb-k-nagi (16 4 28 :base :lb-kamae-pose)
-  (0) (10 (:root :u -0.12) (:chest :twist 50) (:arm-r :flex 50 :side 70) (:elbow-r :flex 10) (:hand-r :flex -50))
-  (:s :snap :lb-k-nagi-hit)
-  (:a :lb-k-nagi-hit)
-  (34 (:chest :twist -10) (:arm-r :flex 30 :side 20) (:elbow-r :flex 40))
+;; K 退射 TAISHA (round 2, §23.1): the back-slide crouched low (the sim slides him 3 m over f0-12), the rifle shouldered on
+;; the line from f12, the crack at f16, the recoil, back in the stance
+(defpose :lb-k-taisha-slide (:base :lb-kamae-pose)
+  (:root :u -0.26 :pitch -8) (:spine :flex 10) (:knees :flex 46) (:thighs :flex 36))
+(defstrike :lb-k-taisha (16 2 24 :base :lb-kamae-pose)
+  (0) (3 :lb-k-taisha-slide) (11 :lb-k-taisha-slide (:root :u -0.2))
+  (14 :lb-aim-pose (:root :u -0.14))
+  (:s :snap :lb-aim-pose (:root :f -0.06 :u -0.14) (:head :flex 2))
+  (:a :lb-aim-pose (:root :f -0.14 :u -0.12) (:arm-r :flex 72 :side 32) (:chest :flex -6))
+  (32 (:root :f -0.05) (:arm-r :flex 50) (:elbow-r :flex 90) (:hand-r :flex -140))
   (:end :lb-stance))
 ;; Step 飛廉脚 HIRENKYAKU: the flash-step dash, crouched low, the rifle kept on the line
 (defstrike :lb-k-dash (12 0 0 :base :lb-kamae-pose)
@@ -735,9 +742,15 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
   (6 (:root :u -0.26 :pitch 6) (:knees :flex 40))
   (12 :lb-kamae-pose))
 ;; L 転身 TENSHIN (Jilliel, both modes): the wings fold, the flash step, the wings open in the new mode
-(defstrike :lb-w-tenshin (12 0 8 :base :lb-w-stance)
+(defstrike :lb-w-tenshin (14 0 8 :base :lb-w-stance)
   (0 :lb-w-fold-pose) (6 (:root :u 0.62) (:arm-r :flex 30 :side 30) (:arm-l :flex 30 :side 30))
-  (12 :lb-w-stance) (:end :lb-w-stance))
+  (14 :lb-w-stance) (:end :lb-w-stance))
+;; TENSHIN in (EN -> KIN, round 2, decision 30): the wind-up first, 8 f (2 f as a cancel: the same clip entered at its f6),
+;; the front wings drawn back and the column rising, then the fold and the flash step as above (its frames + 8)
+(defstrike :lb-w-tenshin-in (22 0 8 :base :lb-w-stance)
+  (0) (6 (:root :u 0.7 :pitch -6) (:arm-r :flex -20 :side 50) (:arm-l :flex -20 :side 50))
+  (8 :snap :lb-w-fold-pose) (14 (:root :u 0.62) (:arm-r :flex 30 :side 30) (:arm-l :flex 30 :side 30))
+  (22 :lb-w-stance) (:end :lb-w-stance))
 
 ;;; ================================================================ drawing (cosmetic; 0 B a frame: f32vecs, macros, DEFUN-FAST)
 ;;; A DEFUN-FAST call boxes its float arguments (engine/lisp/package.lisp), so these helpers take their numbers in the

@@ -536,7 +536,7 @@ write("ichigo", ichigo_script("", False))
 write("ichigo-portrait", ichigo_script("-p", True))
 # Lille Barro (docs/duel/DUEL_LILLE.md, batch 1: the functional art; run with --fixed-dt 16.666667 --secs 80). The select
 # screen (the roster cycled to him: 5 ArrowRight), then human P1 Lille vs an idle Kenpachi (debug 79000+k, LILLE-TEST): the
-# base form (stance, J1, K1, J3, K3; the shooting stance from 14 m and its charged shot, REIKYORI, NAGIHARAI, the
+# base form (stance, J1, K1, J3, K3; the shooting stance from 14 m and its charged shot, HOSHA, TAISHA (round 2, §23.1), the
 # HIRENKYAKU dash; SANREN, HIRENKYAKU), JILLIEL EN (79002: stance, J1 and K1 laying traces, TENSHIN into KIN, NIJUSHI-KO),
 # MUJITTAI (79003), KIN (79014), the owl (79004: stance, J1, SABAKI, MISUJI, Trompete), the revive (79005: P, 3 Konpaku)
 # and the two reflects (79007 guard, 79008 Hoho). Shots tests/shots/duel-lille-*.png (review stills; rework R, DUEL_LILLE §22).
@@ -556,7 +556,7 @@ def lille_script():
         ev.append(rs(t + dt, n)); t += 1.5
     ev += [cmd(t, 79001)]; t += 0.5
     ev += tap(t, "KeyL", 0.06) + [rs(t + 0.3, "kamae")] + tap(t + 0.55, "KeyL", 0.06) + [rs(t + 0.62, "shot-lock"), rs(t + 0.75, "shot")]; t += 2.0
-    for k2, n, dt in (("KeyJ", "reikyori", 0.3), ("KeyK", "nagiharai", 0.45), ("Space", "kamae-dash", 0.3)):
+    for k2, n, dt in (("KeyJ", "hosha", 0.3), ("KeyK", "taisha", 0.45), ("Space", "kamae-dash", 0.3)):
         ev += [cmd(t, 79000)]; t += 0.4
         ev += tap(t, "KeyL", 0.06) + tap(t + 0.15, k2, 0.06) + [rs(t + dt, n)]; t += 1.4
     ev += [cmd(t, 79001), cmd(t + 0.05, 2108)]; t += 0.4

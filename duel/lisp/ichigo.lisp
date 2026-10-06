@@ -84,7 +84,8 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
 ;; RANGETSU / TSUKI-OTOSHI / GETSUGA / TSUKIWATARI; the follow-ups are its non-button :strings (:tsuki-j ...). L after a
 ;; K link opens it at f4 (the S2 copy), every branch combos. The Step branch dashes 3.5 m and comes back into the stance
 ;; (the re-entry copy, at f6: a fresh window), once per stance
-(defmove :ic-tsuki :kind :sig :clip :ic-tsuki :startup 6 :active 0 :recovery 74 :track 360.0)
+(defmove :ic-tsuki :kind :sig :clip :ic-tsuki :startup 6 :active 0 :recovery 74 :track 360.0
+  :flags (:step-branch))                    ; (its Step is TSUKIWATARI: a one-hand up-flick stays a Step, 2026-10-06)
 (defmove-copy :ic-tsuki-k2 :ic-tsuki :enter 4)
 (defmove-copy :ic-tsuki-re :ic-tsuki :enter 6)
 (defmove :ic-tsuki-j :kind :sig :clip :ic-rangetsu :callout "RANGETSU" :startup 8 :active 12 :recovery 18 :dmg 18

@@ -1371,3 +1371,122 @@ Numbers are proposals until the gate; the lead picked them where the user gave n
   S-neck owl head** in place of Jilliel's top, and an **extra pair of long arms** (the claws stay the rig's hands: the
   strike points).
 
+
+### 23.4 Built: rules, CPU, touch (round 2)
+
+The rules + CPU half of decisions 21–25 and 28–30 (§23.1, §23.2; decisions 28–30 came through the lead the same day: 28
+「覺醒的遠程模式 J/K/SP1/SP2 的前後搖都大幅縮短。」, 29 traces 8 → 16, 30 TENSHIN in's wind-up), in `duel/lisp/lille.lisp`, its two clips in lille-art.lisp's ";;; ---- rework R"
+section, and the touch fix in `control.lisp` / `onehand.lisp` (+ one flag on Ichigo's TSUKIMACHI). §23.3 is the art batch's.
+
+**What is built**
+- **J 跳射 HŌSHA** `:lb-k-j` (REIKYORI's slot; clip `:lb-k-hosha`): S6 A10 R16 (32 f). f0 `lb-hosha-leap`: a 3.0 m leap along
+  his facing over f0–14 (`*lb-hosha-leap*`, `*lb-hosha-leap-f*`), stopping `*lunge-stop*` short of him; the clip lifts him
+  (root up to 0.66 m) while the hurt cylinder stays on the floor; no iframes; he turns 90°/s at him through f14. Three
+  bullets, each its own 2-frame window, (6 8) (10 12) (14 16): the line `(:cap 0.6 6.0 1.2 0.25)`, 16 each, guard 6,
+  `:ranged` (no parry catches it; guardable, no chip, not the X-axis), light hitstop; the first two flinch held
+  **`*lb-hosha-stun*` 30** frames, the third staggers (26); −8 on block. **The link**: J / K pressed during HŌSHA is
+  latched (`lb-link-tick`, the last press wins) and, once a bullet hit, from f16 (its recovery) starts J1 / K1 through
+  `try-command`, chasing him in its startup (`fighter-end-chase`, the Breaker's J1 / K1 rule). Host test with the real
+  frames: every bullet's frame + its stun > 16 + J1's (8) / K1's (17) first hit (bullet 1: 6 + 30 = 36 > 33).
+- **K 退射 TAISHA** `:lb-k-k` (NAGIHARAI's slot; clip `:lb-k-taisha`): S16 A2 R24. f0 the back-slide 3.0 m over 12 f
+  (`*lb-taisha-slide*`, `-f*`; SP2 HIRENKYAKU's slide hook, which now counts `:taisha` / `:hiren` by move), turning 90°/s
+  until f12, then locked (`:lock 12`: the CPU's line perception starts there); f16 one bullet `(:cap 0.6 12.0 1.2 0.3)`, 60
+  flat × `*lille-mult*` (no distance bonus), stagger kb 1.0, `:ranged :x-axis :uncatchable` (chip 15 %, drain 30), −14.
+- **HIRENKYAKU's aim snap**: `lb-kamae-back` (the dash's f11) re-enters the stance and turns him straight at the opponent;
+  the 60°/s tracking goes on from there.
+- **TENSHIN**: the dash is 14 f (`*lb-switch-f*`); in is `min(8.0, d − 1.5)` m at him (`*lb-switch-in*`,
+  `*lb-switch-stop*`; none when nearer than 1.5 m), out 7.0 m (`*lb-switch-out*`) (`lb-switch-dist`); iframes for the
+  dash's f0–8, the form 6 f into the dash. **Three moves** (decision 30): KIN → EN `:lb-switch` (KIN's L and its K-link
+  L): no wind-up, the dash at f0, S14 A0 R8. EN → KIN from EN's neutral (idle / walk / run; MUJITTAI drops to EN and
+  takes it) `:lb-switch-in` (EN's L): **an 8 f wind-up** (`*lb-switch-windup*`; hittable, no iframes), then the traces
+  materialise and the dash starts at f8, the form at f14, S22 A0 R8 (clip `:lb-w-tenshin-in`: the front wings drawn back,
+  then the fold and the flash step); as a cancel out of an EN attack (J / K / SP1 / SP2, `lb-en-tick`) the same move
+  entered at its f6, `:lb-switch-in-c` (**2 f**, `*lb-switch-windup-c*`; started with `try-command`'s WITH, under L's
+  checks, cooldown and price). `:lb-switch`'s clip is retimed to its 14 f. **From f14 his J / K cancel the recovery** in either mode
+  (`lb-link-tick`, `:params :link`: 14, or 22 after the wind-up; a press before is latched): EN's J1 / K1 lay traces, KIN's hit (a KIN link
+  after a switch in chases like HŌSHA's). **A materialised trace** (J / K / SP1) is now a stagger of **`*lb-trace-stun*`
+  26** frames with **no knockback** (1.0 m before); SP2's thick trace keeps its knockback 2.0. Host test: 26 ≥ 14 + KIN J1's
+  8 + 4, and for both wind-up paths (the stun counts from the materialise, the dash's f0): 26 > 14 + 8.
+- **EN's frames** (decision 28; EN only, KIN and the base form keep theirs; active frames and the trace on the first active
+  frame kept; **at most 16 live traces**, a 17th drops the oldest: decision 29, `*lb-trace-max*` 8 → 16): J1 4/3/6, J2 4/3/6, J3 5/3/9; K1 9/4/10, K2 10/4/12 (enter 3), K3 11/5/17 (enter 4); SP1 SANREN S6, lines at
+  f6 / f12 / f18, A14 (to f20, two past the last line as before), R12; SP2 NIJŪSHI-KŌ the tell 20 f (the thick trace at
+  f20), turning 60°/s until f10 (`:lock 10`, 20 before), A6, R15. The wing clips play at `:clip-s` / S (J1 ×2, K1 ×1.89 …
+  SP2 ×2), so each hit pose lands on the new first active frame. The EN strings still run without contact: a laid line sets
+  `fighter-chained`, which opens the next link in the last `*chain-lead*` (3) frames of the recovery; host-tested for every
+  link (each R > 3).
+- **The CPU** (one roll per event, as before): the stance's plan (`lb-ai-kamae-plan`, at its f6) is now: after a K link's
+  hit L 0.6 / J (HŌSHA) 0.4; ≥ 8 m the charged shot; 6–8 m the quick shot on a whiff, else the dash back then the charged
+  shot; **3–6 m TAISHA on a guard, the quick shot on a whiff, else HŌSHA; ≤ 3 m TAISHA** (the gauge-low input is no longer
+  read). Its link (`lb-ai-link-plan`, once a move): after HŌSHA's hit one roll, J1 under 0.5 else K1; after TENSHIN, J1
+  only when it switched **in** and a materialised trace hit (the combo), no roll. EN's switch-in rule now knows the
+  wind-up (decision 30): its "busy near a trace" branch needs him busy for the wind-up still to come (8 f from neutral,
+  2 f as a cancel), and from neutral its "on a trace, ≥ 3 live" branch skips a running / stepping / Hoho-ing opponent
+  (`lb-switch-in-rule`'s MOVING).
+- **Pacing log** (`duel lille` lines): `hosha`, `hosha-shots`, `lb-k-j-hit/-blk` (per bullet), `hosha-link`,
+  `hosha-combo` / `-drop` (the link's first hit with the victim's combo counter > 1, or not), `taisha`, `lb-k-k-hit/-blk`,
+  `tenshin-link`, `tenshin-combo` / `-drop`.
+- Brush callouts 跳射 HOSHA, 退射 TAISHA (`tools/glyph-bake.py` gained 跳 退; `glyphs.lisp` re-baked: 177 glyphs, the old
+  175 byte-identical).
+
+**The touch bug (decision 24)**: reproduced on the host. Root cause: onehand.lisp set the recogniser's `up-hoho` ("any
+up-flick is a Hoho, no rest needed") whenever P1's state was `:move` (the user's 2026-09-30 rule: no dash while attacking).
+The shooting stance is a move, so an up-flick pulsed a Hoho (the HOHO glyph): `:mod` + `:step`, the `:hoho` command; the
+stance only reads an unmodified Step, and a `:sig` move takes no Hoho cancel, so nothing happened. **Ichigo's TSUKIMACHI
+had the same bug** (its Step TSUKIWATARI, same pattern). Fix: a move flag **`:step-branch`** (a stance whose `:tick` takes
+Step as a follow-up) on `:lb-kamae` and `:ic-tsuki` (their copies inherit it), and `control.lisp UP-FLICK-HOHO-P` (state,
+step-branch, perfect): a Hoho while attacking unless the move has `:step-branch`, or when perfect; onehand.lisp calls it.
+The recogniser (engine/lisp/touch.lisp) is unchanged; keys and pads never went through this path. Tests:
+duel-control-test (the rule, and the whole path: a rested up-flick in the stance → the flick pulse straight ahead → the
+unmodified `:step` command; in any other move still `:hoho`); duel-rules-test (exactly the six stance moves carry the
+flag).
+
+**Deviations and choices (the smallest, each with its reason)**
+1. HŌSHA's first two bullets flinch for 30 f, not the flinch's 18: with 18, K1 off the first bullet (f6 + 18 = 24 < 33)
+   and J1 off it (24 = 24: the victim is free on that step) were not combos. "On any bullet's hit … a combo" needs ≥ 28.
+2. The leap stops `*lunge-stop*` short of him (a lunge's rule), so it is under 3.0 m inside 3.95 m; the bullets'
+   hitstop is the light one; HŌSHA links chase (`fighter-end-chase`) so a link from a 6 m start (3 m after the leap) reaches.
+3. A J / K pressed any time during HŌSHA / TENSHIN is latched (the string latch's feel) rather than only buffered
+   (`*input-buffer*` 10 f would drop a press made before f6 / f4).
+4. TAISHA −14 on block (the shot's), unspecified; it tracks 90°/s until f12 (HIRENKYAKU's tick) then locks.
+5. EN K2 / K3 keep an `:enter` scaled by the same ratio (3, 4; the wing strings' 6, 7): the lines never hit, so the
+   enter only keeps the links' rhythm.
+6. The `:step-branch` flag touches Ichigo's file (one flag on `:ic-tsuki`): his TSUKIMACHI had the bug too.
+7. TENSHIN in's 2 f cancel is the 8 f move entered at its f6 (one move, one clip; its first 6 f of wind-up skipped), and
+   it is not in the EN kit's move table (started by name through `try-command`'s WITH; nothing looks it up by name).
+
+**Tests** (host): duel-rules **5938** ALL PASS (HŌSHA / TAISHA data, the link combo arithmetic, the link plan, the stance
+plan, TENSHIN's distances / link frames / both wind-up paths, the trace stun, the 16-trace FIFO, EN's new frames and string links, the `:step-branch` set; the FK
+reach test no longer lists the stance's J / K: line hits), duel-control **89**, learn 100, input 33, touch 64, cine 18 ALL
+PASS; `tools/pkgcheck.sh duel` 0 / 0 / 0. `tests/scripts/duel.py` (shots `hosha`, `taisha`) → `duel-lille.json`.
+
+**Gates** (native, NORMAL): `--seeds 10`, the fifteen old pairings' **420 lines byte-identical** to the baseline taken in
+this worktree first (checked after decisions 21–28 and again after 29–30); `--cvc` PASS (yy / yk / kk). His six pairings,
+seeds 1–20, everything in (decisions 21–30; no knob turned beyond the spec):
+
+| Pairing | Median (§22.6 before) | K.O. | Lille wins / 20 (before) | Blow-aways |
+|---|---|---|---|---|
+| LY | **159.5 s** (171.4) | 20/20 | **8** (6) | 3 |
+| LK | **168.0 s** (163.1) | 20/20 | **9** (2) | 32 |
+| LR | **194.0 s** (198.3) | 20/20 | **5** (2) | 17 |
+| LI | **206.8 s** (198.1) | 20/20 | **8** (3) | 8 |
+| LS | **196.1 s** (204.0) | 20/20 | **8** (4) | 12 |
+| LL | 246.1 s (290.8; mirror) | 20/20 | P1 10 / P2 10 | 13 |
+
+Pacing passes in every cross pairing (125–210 s; LI the nearest edge). (Before decisions 29–30, with 21–28 only: LY 175.8 s
+11 wins, LK 162.2 / 6, LR 193.4 / 5, LI 197.6 / 5, LS 201.1 / 5, LL 225.0.) Per Lille side and match (means of 20; the
+mirror's 40 sides):
+
+| | LY | LK | LR | LI | LS | (LL) |
+|---|---|---|---|---|---|---|
+| stance entries | 6.0 | 3.2 | 2.95 | 2.95 | 2.7 | (7.9) |
+| HŌSHA uses / bullets hit / blocked | 2.95 / 8.1 / 0.45 | 0.9 / 2.3 / 0 | 1.15 / 3.05 / 0 | 1.1 / 3.0 / 0 | 1.0 / 2.5 / 0 | (2.6 / 7.2 / 0) |
+| HŌSHA links / combos | 2.65 / 2.55 | 0.7 / 0.7 | 1.0 / 1.0 | 0.95 / 0.9 | 0.85 / 0.75 | (2.45 / 2.3) |
+| TAISHA uses / hits / blocked | 0.75 / 0.35 / 0.25 | 0.9 / 0.45 / 0.25 | 0.3 / 0.25 / 0.05 | 0.4 / 0.25 / 0.1 | 0.45 / 0.35 / 0.1 | (0.35 / 0.28 / 0) |
+| HIRENKYAKU dashes | 0.7 | 0.5 | 0.5 | 0.55 | 0.45 | (2.25) |
+| TENSHIN in / out | 6.55 / 6.4 | 7.8 / 7.75 | 9.2 / 9.15 | 10.6 / 10.6 | 9.35 / 9.3 | (11.6 / 11.6) |
+| traces laid / trace hits / dropped (> 16) | 15.1 / 6.0 / 0 | 19.5 / 8.85 / 0 | 22.9 / 8.5 / 0.35 | 29.1 / 11.0 / 0 | 17.5 / 7.7 / 0 | (26.5 / 10.75 / 0.12) |
+| TENSHIN links / combos (trace hit → J hit) | 3.0 / 2.7 | 5.05 / 4.85 | 4.8 / 4.55 | 6.0 / 5.7 | 4.2 / 3.85 | (5.9 / 5.67) |
+
+Read: HŌSHA lands almost every bullet (blocked 0–0.45 a match): at 3–6 m its S6 is under the opponents' perception +
+guard raise, and the stance shows no hit window to read beforehand. Every HŌSHA link and nearly every TENSHIN link is a
+combo (the rest: the link whiffed). Not tuned (the user's playtest decides). `./build.sh duel`: 0 warnings.
