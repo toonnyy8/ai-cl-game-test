@@ -1515,3 +1515,64 @@ mirror's 40 sides):
 Read: HŌSHA lands almost every bullet (blocked 0–0.45 a match): at 3–6 m its S6 is under the opponents' perception +
 guard raise, and the stance shows no hit window to read beforehand. Every HŌSHA link and nearly every TENSHIN link is a
 combo (the rest: the link whiffed). Not tuned (the user's playtest decides). `./build.sh duel`: 0 warnings.
+
+### 23.5 Built: the rig (round 2) (rework A2, 2026-10-06)
+
+The user's words (decisions 26, 27): 「近戰與梟頭的腿部是從分岔點向後延伸出垂直支架，在末端才以折角往下延伸，呈現出 ㄇ 字型。」
+「把翅膀調整成半透明以免遮擋視線。」「梟頭型態的建模在原作中會呈現以目前的近戰型態為基礎，並將頭部換成長頸梟頭與增加額外的手臂。」
+All of it is cosmetic (`lille-art.lisp`: bodies, props, the draw hook, the owl's stance legs); no move, frame, reach, damage,
+kit, AI or tuning changed. Looked at against `owl_fullbody_three-quarter-back_anime_ep37`, `owl_fullbody_three-quarter_manga-colour_ch650`,
+`owl_fullbody_front_arms_manga-colour_ch650` and the Jilliel contact sheet.
+
+**The ㄇ legs** (KIN `:lille-jilliel-kin` and the owl `:lille-shin`; `%LB-LEGS`):
+- The body keeps the thighs (0.44 m) and a knob at their end: **the fork**. The rest is drawn by LILLE-DRAW in the thigh's
+  frame: the **front shank** straight down from the fork (tilted 0.1 forward, 0.07 out), the **strut** running **back** from
+  the fork (0.52 m, `*lb-leg-strut*`; horizontal in the thigh's frame) to **the corner's knob**, and the **rear shank** down
+  from it (0.12 back, 0.07 out). From the side: two shanks and the top bar, ㄇ.
+- **The feet stay on the floor**: each shank's length is where its line meets the floor of his body's draw (the feet height
+  DRAW-BODY leaves in `*TOON-BODY*` [1]: 0 B, no lookup), clamped to 0.45–1.35 of its 1 m rest; a leg pitched far from
+  upright (a knockdown) keeps the rest length and goes with the body. So KIN's float (Jilliel's clips, root `:u` 0.5 with its
+  bob 0.5–0.56, K3's 0.7, the Breaker's 0.3) and the owl's own clips (`:u` −0.02) all stand. The owl's stance legs were
+  squared (thighs flex 0 / side 5, knees 0; were flex 6 / −4, knees 6) so the strut stays level.
+- The old fixed fore / aft shanks (KIN 1.06 m, the owl 0.75 m, 20–21°) are gone; both bodies now share the same legs (the
+  owl's rig is still x1.5 legs, so its fork sits at 0.91 m against KIN's 0.99 m; the shanks take it up).
+- Shanks: unit-length tapered rods (r 0.048 → 0.006, ink hull); strut: r 0.04 m with the corner knob; cream for KIN, white for the
+  owl; MUJITTAI draws them at its body alpha (0.72), the hit flash flashes them.
+
+**Translucent wings** (every Jilliel form and the owl; `%LB-WINGS`):
+- **The engine path**: `DRAW-MESH`'s ALPHA < 1 (its transparent pass: the lit shader after the opaque scene, no depth write,
+  depth-tested; the toon pass is opaque only). Drawn plain it reads as the dark phantom of §21 deviation 3 (the duel's light is
+  the toon one), so the glass carries an **emissive glow x its own colour** (`*lb-glass-glow*` 1.0) that brings it back to its
+  jade / gold. No shader change.
+- **Each blade is two meshes**: the **glass** (`:lb-wing`, `:lb-wing-gold`): the leaf's two faces only, row by row, with the
+  **three holes cut through** (a row inside a hole splits in two: through a hole the fight shows clear), drawn at
+  **alpha 0.35** (`*lb-glass-alpha*`); and the **rim** (`:lb-wing-rim`, `:lb-wing-gold-rim`, `:lb-wing-lit`): an **opaque** band
+  inside the outline (0.016 of the length), the four teeth and a ring round each hole, in a dark step of the same hue (jade
+  #2F4A3C, gold #8A7038), toon-drawn: what keeps it reading as a holed blade. NIJŪSHI-KŌ's tell fills the 24 holes with light
+  (the lit rim). The owl's glass is **#B89A5A** (decision 11 kept; the glow makes it read gold, not brown).
+- **MUJITTAI is more ghostly**: the glass at 0.18 (`*lb-glass-ghost*`) and the rim see-through too (0.4, `*lb-rim-ghost*`, with
+  the glow), its halo drawn with the glow (it read dark blue). The column itself is still the engine's 0.72 phantom (§21
+  deviation 3): a lighter body needs a glow on the body's draw, a shared-file hook (main.lisp) left to the lead.
+- In the behind camera the opponent now shows through Jilliel's / KIN's fan (stills below); the halos stay opaque.
+
+**The owl on KIN's model** (`:lille-shin`):
+- KIN's column (the rounded hip mass, the spine, the column widening to its top) in the owl's **white #ECECE8** (the model
+  sheet §5.4: white, gold only on the wings, the halo and the glow), its holes kept but quiet in the **cold shade #BCC1CC**
+  (KIN's model, the white owl of the refs); the ribbon tendrils from the hips; the shaggy fur ruff (#D8DCE4) on the column's top;
+  the **long segmented S-neck to the barn-owl face** (unchanged) in place of Jilliel's face; the ㄇ legs; the eight gold wings
+  rooted as KIN's (chest (0, 0.30, 0.13 back); was 0.26 / 0.14).
+- **The extra pair of arms** (`%LB-ARMS2`, cosmetic): rooted 0.13 m below and 0.05 m behind the rig's shoulders, each segment
+  the rig arm's bone length, its direction half the rig arm's and half hanging down (and out 0.2 / 0.06), swaying ±0.07 on its
+  own phase (the fx clock): it follows every strike at a smaller swing, so the four long arms read in the idle, the claws, SABAKI's
+  raised arm and Trompete. The rig's arms (x2.2) and their claws are still the strike points (the host FK reach test unchanged).
+
+**Stills** (`/tmp/claude-0/lb-art2/`, never committed; 79197 / 79198 / 79002–79004 / 79014 / cinematics 79100 + 19 i + k, the
+side camera 2109): KIN side (`r2-kin-side`, `r3-kin-k1-side`), KIN behind in the fight (`r2-kin-behind`), Jilliel behind in a
+fight and mid-J1 (`r2-jl-behind`, `r3-jl-j1-behind`), MUJITTAI (`r2-mujittai-behind`), the owl front / side (`r3-owl-front`,
+`r2-owl-side`), the owl from the cinematic cameras (the revival f100 / f130 / f170 `r3-revive-*`, Trompete's card `r3-trompete-f90`), before
+(`b0-*`).
+
+**Gates**: host tests ALL PASS (duel-rules 5914 with the FK reach test, control 86, learn 100, input 33, touch 64, cine 18);
+`tools/pkgcheck.sh duel` 0 / 0 / 0; `simgate.py --seeds 10 --summary` **byte-identical** to the run before the change; `--cvc`
+PASS; `./build.sh duel` 0 warnings. **Consing** (79195, 10 draws): the draw hook 160 B in KIN and the owl, 240 B in KIN MUJITTAI and
+MUJITTAI (16 / 24 B a frame: the ECS lookup floor of §21, unchanged); the legs, the extra arms and the glass / rim draws 0 B.
