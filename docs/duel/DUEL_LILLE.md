@@ -295,7 +295,7 @@ Two kit forms, as Yamamoto's East / West: `:jilliel` (`:guard-to :jilliel-mujitt
 |---|---|
 | Enter | U held from idle / walk / run (not in a move, a reaction, blockstun or guardless); up 2 f later (`*guard-raise*`) |
 | A hit on him | **passes through**: no damage, no stun, no blockstun, **no chip** (hitwin chip, blade chip and East's pierce all skipped), **no push**. Its **guard value** is drained × `*mujittai-mult*` **1.0** (West's `*ward-mult*` is 1.1); for the attacker it is **contact** (a block for the string gate and KŌSEI), so a string continues and keeps draining. A hazard drains its 12 and passes. An X-axis shot in the mirror drains its 30 |
-| The gauge | **never refills** in the stance (GUARD HOLD, as West); no self-drain (decision 14). **Outside the stance, Jilliel's refill is cut hard**: `:gg-regen` **2.0 / s** (`*jilliel-gg-regen*`; the universal 5.5 / s, the user's 「大減」), so a stance that ran the gauge down stays down: 0 → 100 takes 50 s + the delay |
+| The gauge | **never refills** in the stance (GUARD HOLD, as West); no self-drain (decision 14). **Outside the stance, Jilliel's refill is cut hard**: `:gg-regen` **0.36** (× the universal 5.5 / s = **2.0 / s**; `*jilliel-gg-regen*`, the user's 「大減」), so a stance that ran the gauge down stays down: 0 → 100 takes 50 s + the delay |
 | Empty | the stance drops to `:jilliel` and **GUARD CRUSH** (40 f, guardless: U can't enter the stance until the gauge is full again, as for any guard) |
 | What lands anyway | a **Breaker** (Guard Break 50 f, drops the stance, drains 35: West's `ward-drop`) and **unguardables** (South's bind, a red victim's Kikon follow-up, Senjumaru's spikes, Rukia's freeze touch) as normal hits. An opponent's perfect-Hoho counter strike is not unguardable: it **passes** like any hit (West's ward blocks it too) |
 | Kept | walk, run, Step, Hoho (decision 5); the stance survives a Step's iframes and a Hoho |
@@ -425,7 +425,7 @@ Most of it is existing code (the review of 2026-10-06 checked each against the s
 | **The flags per move** | `:ranged :x-axis :uncatchable`: the X-axis shot, the K → L snap shot, SANREN, HIRENKYAKU's shot, the volley, NIJŪSHI-KŌ, Sabaki, MISUJI, Trompete. **None** of them on the Kikon lanes (a Kikon strike stays guardable) or on any J / K (K3's point-blank shot is melee) |
 | **Distance damage** | **existing**: an `:on-frame` hook on the fire frame sets `fighter-dmg-bonus` (the hit carries it as `pending-bonus`: damage = the hitwin's 40 + bonus) |
 | **The eye** | **existing slot**: his `:tick` hook sets `fighter-invuln` 16 on a qualifying tap (§4.1); every hit then resolves to nothing, a whiff for the attacker |
-| **MUJITTAI** | **existing ward** + the `:intangible` passive: one test in the ward branch (drain × `*mujittai-mult*`, no push, no chip); Jilliel's `:gg-regen` 2.0 is an existing kit key (gap G4) |
+| **MUJITTAI** | **existing ward** + the `:intangible` passive: one test in the ward branch (drain × `*mujittai-mult*`, no push, no chip); Jilliel's `:gg-regen` 0.36 (a multiplier) is an existing kit key (gap G4) |
 | **The lock** | his `:tick` sets the move's tracking to 0 from the lock frame; the fire frame from `fighter-hold` (no shared change) |
 | **Reflect** | Trompete's own `:hit` hook reads the defender's `fighter-guard-t` (2–10 at f60) and the Hoho start frame (lille.lisp only) |
 | **BEHEADED** | a new generic `:settled (def lost left)` kit hook in `settle-konpaku` (gap G7) |
@@ -622,7 +622,7 @@ behind his kit, his hit flags or keys read off his kit.
   `:max` 180 → 120 (the CPU's own cap; a self-drain was offered and declined, decision 14).
 - **Under 125 s**: `*lb-x-guard*` 30 → 22, the far damage 120 → 100.
 - **Lille wins too much**: `*lb-lock-min*` 10 → 14, the far damage 120 → 100, the stance's `*mujittai-mult*` 1.0 → 1.2,
-  `*jilliel-gg-regen*` 2.0 → 1.5.
+  `*jilliel-gg-regen*` 0.36 → 0.27 (2.0 → 1.5 / s).
 - **Too little**: `*lille-mult*` 1.0 → 1.3 (Rukia / Senjumaru precedent), the eye window 8 → 10, J1 22 → 26,
   `*lb-lock-min*` 10 → 8.
 - **The A/B, awakening an upgrade**: `*jilliel-taken*` 1.1 → 1.2, the volley 55 → 48, `*mujittai-mult*` → 1.2.
