@@ -1669,3 +1669,85 @@ KIN → EN).
 from DRAW-BODY's feet height (`*toon-body*` [1]), which is the y the body is drawn at, so with the lift it sat 0.5 m up and
 the shanks shrank to it. LILLE-DRAW now takes the form's lift off it (`BODY-LIFT`): the legs reach the ground again.
 
+
+### 23.12 Built: decision 34
+
+The rules + CPU half of §23.11 (decision 34), in `duel/lisp/lille.lisp`, one clip in lille-art.lisp's ";;; ---- rework R"
+section, and the host tests. **No shared file changed.**
+
+**What is built**
+- **TENSHIN in's wind-up 8 → 16 f** (`*lb-switch-windup*` 16): `:lb-switch-in` S 22 → **30** (A0 R8), `:on-frame` the
+  materialise + dash at **f16**, the form at **f22**, `:params (:link 30 :go 16)`; the cancel copy `:lb-switch-in-c` is
+  entered at **f14** (still 2 f, `*lb-switch-windup-c*`). The order stays wind-up → the traces materialise (LB-SWITCH-GO's
+  first act) → the dash → the J / K link at the dash's end (the user confirmed it, 2026-10-06). The clip `:lb-w-tenshin-in`
+  is retimed +8 f (keys 6 / 8 / 14 / 22 → 14 / 16 / 22 / 30, `(30 0 8)`; decision 33's −0.5 root heights kept), so the cancel
+  still enters at the drawn-back pose and the fold snaps at the materialise.
+- **The combo on both paths**: the trace stun (26) counts from the materialise, which is the end of either wind-up, so
+  the dash (14) + KIN's J1 (8) = 22 < 26 holds from neutral as from the cancel (host test per path: the materialise at
+  the path's wind-up end, the link at the dash's end, the stun outlasting both). The longer neutral wind-up only delays
+  the materialise; it does not break the combo.
+- **No cooldown**: `*lb-switch-cd*` deleted, `:cooldown` gone from all three TENSHIN moves; `lb-switch-ready-p` no longer
+  reads the cooldown (nothing else of his read it).
+- **The flash-step price by direction**: `lb-switch-price` (form) is `*lb-switch-fs*` 10 out of KIN (or its stance), 0
+  from EN; `lb-switch-ok-p` (form fs) and `lille-ok` refuse only KIN → EN under 10 (the cue); LB-SWITCH-GO spends the price
+  only when it is positive.
+- **Trace lines cost flash step**: `*lb-trace-fs*` 3 for each EN J / K line (`lb-trace-cost`: SP1 / SP2 free).
+  LB-EN-LAY pays line by line (`lb-trace-pay`: one is laid only while 3 are left); the swing always plays. A K fan that
+  can pay only one or two lays **its middle line first** (`lb-trace-pick`: one → 0°, two → −6° and 0°), in the fan's
+  order, under the fan's one hit group. Each unpaid line counts `traces-unpaid` in the pacing log.
+- **The refund**: `*lb-trace-refund*` 2 (`lb-trace-refund`: 2 on `:hit`, 0 guarded). LILLE-HIT, on a materialised trace's
+  hit, pays it through the generic PAY-GAUGES (clamped at `*fs-max*`; nothing during a burst, the generic rule) to him, or
+  to a siphoning opponent (SIPHON-OF, the generic gain rule). A K fan is one hit group, so it hits a fighter once and
+  refunds once. Pacing log `trace-refund`.
+- **The CPU's budget** (no new roll; deterministic):
+  - `*lb-ai-fs-reserve*` **10** (the KIN → EN price): his CPU in EN (or its stance) starts a J / K only while its lines
+    leave ≥ 10 (`lb-ai-lay-ok-p`: J needs 13, K 19), through LILLE-OK for a brain only (a human's press always swings);
+    LB-AI-EN-NEXT latches the string's next link under the same rule (a chained link bypasses the `:ok` hook).
+  - KIN switches out (after a string, a blocked one, or the gauge under 40) only with the price + the reserve + a K
+    fan's lines (`lb-ai-out-ok-p`: ≥ 29), so EN never arrives starved.
+  - EN's switch in prefers the 2 f cancel: when the switch rule holds for a J1's 7 f + 2 f (9 f) and a J line is
+    affordable, it presses J1 (its line laid) and the tick cancels into TENSHIN from J1's active end; else the neutral
+    16 f rule (the MOVING exclusion kept); else the stance reflex; else, **starved** (no J line above the reserve), it
+    switches in from neutral (free; KIN regains the flash step), unless the opponent runs / steps / Hohos
+    (`lb-switch-in-rule`'s new STARVED argument).
+  - The opponents' `lb-opp-trace` still keys on "his TENSHIN is ready", which from EN is now always.
+- Pacing log keys added: `traces-unpaid`, `trace-refund`, `ai-switch-via-j`, `ai-switch-starved`.
+
+**Choices (unspecified by the user)**: the middle-line-first order of a short K fan; the refund for any materialised
+trace that hits, SP1 / SP2's included (the user named the refund per trace, the cost for J / K); the refund under the
+generic gain rules (burst, siphon); the CPU's reserve 10 and the out rule's 29.
+
+**Tests** (host): duel-rules **5942** ALL PASS (windup 16 / cancel 2 and the move frames; no cooldown and
+`*lb-switch-cd*` unbound; EN → KIN free and allowed at 0 flash step, KIN → EN 10 and refused at 9 / 9.9; the line cost
+and the ≥ 3 rule per line (J at 3 / 2.9, a K fan at 9 / 8 / 5 / 2), SP1 / SP2 free; the short fan's pick; the refund 2 on
+a hit, 0 guarded, the K fan a single group; the combo on both wind-up paths; the CPU's reserve, out rule and STARVED
+switch), duel-control 89, learn 100, input 33, touch 64, cine 18 ALL PASS. `tools/pkgcheck.sh duel` 0 / 0 / 0.
+
+**Gates** (native, NORMAL): `--seeds 10 --summary` taken first in a clean worktree at the parent commit; after the
+change the fifteen old pairings' 30 summary lines are **byte-identical**; `--cvc` PASS (yy / yk / kk). His six pairings,
+seeds 1–20, every match K.O.:
+
+| Pairing | Median (before) | Lille wins / 20 (before) | Blow-aways |
+|---|---|---|---|
+| LY | **169.3 s** (167.7) | **7** (8) | 1 |
+| LK | **158.8 s** (169.4) | **7** (11) | 38 |
+| LR | **194.9 s** (194.0) | **4** (5) | 12 |
+| LI | **194.1 s** (206.8) | **7** (8) | 10 |
+| LS | **170.7 s** (193.5) | **6** (6) | 13 |
+| LL | 222.4 s (244.6; mirror) | P1 9 / P2 11 | 10 |
+
+Every cross median is inside 125–210 s. Per Lille side and match (means of 20; the mirror's sides in brackets; before
+in parentheses):
+
+| | LY | LK | LR | LI | LS | (LL) |
+|---|---|---|---|---|---|---|
+| TENSHIN in / out | 7.35 / 6.95 (6.5 / 6.5) | 7.0 / 6.75 (7.65 / 7.7) | 10.3 / 10.4 (8.7 / 8.7) | 10.65 / 10.25 (10.6 / 10.6) | 6.2 / 5.9 (8.8 / 8.7) | (10.7 / 10.8, 10.5 / 10.1) |
+| traces laid (before) | 12.35 (16.5) | 12.95 (19.15) | 17.2 (20.15) | 22.65 (29.1) | 8.5 (16.95) | (19.5, 18.85; 28.2, 26.65) |
+| lines unpaid | 0 | 0 | 0 | 0 | 0 | (0) |
+| trace hits = refunds / guarded | 5.45 / 1.95 | 6.4 / 1.45 | 8.1 / 1.75 | 10.7 / 1.05 | 5.4 / 0.05 | (9.0 / 1.95, 8.3 / 1.9) |
+| TENSHIN links / combos | 3.35 / 3.1 | 3.95 / 3.6 | 4.45 / 4.35 | 6.25 / 6.05 | 2.95 / 2.65 | (5.35 / 5.25, 4.6 / 4.35) |
+| CPU switch in: trace rule / via J / starved | 4.75 / 0.15 / 0.75 | 4.7 / 0.05 / 1.2 | 6.0 / 0.1 / 1.5 | 7.95 / 0.05 / 0.95 | 3.2 / 0.3 / 1.1 | (6.75 / 0.1 / 1.7, 6.25 / 0.05 / 1.3) |
+
+Read: his CPU lays a fifth to a half fewer lines (it keeps its reserve, so it never swings an unpaid line:
+`traces-unpaid` 0, the human-only case), and every hit trace refunds (refunds = trace hits). Wins move within the
+20-seed noise except LK (11 → 7). Not tuned (the user's playtest decides). `./build.sh duel`: 0 warnings.
