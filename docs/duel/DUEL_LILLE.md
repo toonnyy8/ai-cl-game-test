@@ -189,6 +189,9 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
   與更優異的優勢幀。」; then 「也是無實體」, 「保留反射與封印」, 「小」): §23.14.
 - **37. A Hoho in EN switches to KIN** (the user, 2026-10-06: 「另外添加一個新設計，覺醒後在遠攻狀態使用閃步就會自動切換成近戰狀態」, then
   「只有 Hoho 會切換」): §23.16.
+- **38. The owl's EN and KIN must read apart, and EN Trompete is faster** (the user, 2026-10-06: 「1. 梟頭模式幫我設計更明顯的遠程和
+  近戰視覺差異，目前看不出『遠程模式翼張開、站直，近戰模式翼往後收、身體前傾』這樣的設計。 2. SP2 神之喇叭在遠程模式的前後搖再縮短。」).
+  §23.18.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -2014,4 +2017,19 @@ EN SP1 (chops, lines, burst), EN SP2 (tell, the thick trace, its burst), KIN SP1
 owl's laid traces (faint gold floor lines) and their materialise (the gold explosion line along the ground). Seeds 1–20
 (§23.15): every match K.O.; LY 174.0 s / 14 wins, LK 168.5 / 6, LR 218.2 / 6 (60 seeds 207.6: inside), LI 200.2 / 5,
 LS 187.1 / 6, LL 232.9. Revival gamble LY +9 (the ±9 edge), LK 0.
+
+### 23.18 Decision 38: the owl's two modes at a glance; EN Trompete faster (2026-10-06)
+
+**The look** (the lead's design; cosmetic): mirror Jilliel's own split (EN floats legless, KIN stands on legs), so the
+silhouette alone tells the mode:
+- **Owl EN**: **floats** (the form's `:lift`, as Jilliel EN's 0.5 m) with the **ㄇ legs folded up** under the column
+  (tucked, not on the floor); upright, the S-neck raised tall; the eight gold wings **spread wide and forward** in a
+  full fan (the holes facing the opponent), the long arms hanging open at the sides.
+- **Owl KIN**: **stands on the ㄇ legs** (lift 0), the column **pitched forward** (~20°), the neck lowered and thrust
+  forward like a stalking bird, the wings **swept back and narrowed** behind (blades trailing), the claws raised forward.
+- MUJITTAI keeps each mode's silhouette (EN floating tucked, KIN on its legs), ghosted.
+- TENSHIN plays the change (legs unfold / tuck, wings sweep) inside its dash.
+
+**EN Trompete** (`:lb-oe-trompete`): S 20 → **12** (the tell; its track / lock scaled), R 14 → **8**; A 6 and the
+thick trace unchanged. The KIN (direct) Trompete is unchanged.
 
