@@ -1632,3 +1632,71 @@ The second, cosmetic pair §23.5 added (`%LB-ARMS2`, the `:lb-limb` / `:lb-claw`
     test keeps passing, ±0.15 m);
   - folds (MUJITTAI) curl round the column; SP spreads unfurl from the root.
 
+### 23.9 Built: jointed translucent wings (decision 32, 2026-10-06)
+
+The user's words: 「萊醬你能幫我將覺醒後翅膀的不透明邊界也都換成半透明嗎？然後每片翅膀改成中間加 2 節可以彎折的連接觸，讓整體動作與攻擊動畫不會太死板。」
+All of it is cosmetic (`lille-art.lisp` only); no move, frame, reach, damage, kit, AI, tuning or other character changed, and no
+pose or clip key (the `:u` floats untouched).
+
+**Translucent rims** (every Jilliel form and the owl):
+- The rim (outline band, teeth, hole rings, and the new joint bands and pins) is drawn see-through with the glass's glow:
+  `*lb-rim-alpha*` **0.6** (was opaque, 1.0), the glass still 0.35, so the outline reads a step stronger than the leaf; both
+  carry the emissive glow x their colour (`*lb-glass-glow*` 1.0), so neither goes to the dark phantom. The owl's colours are
+  unchanged (glass #B89A5A, rim #8A7038; decision 11). NIJŪSHI-KŌ's lit holes fill at the rim's alpha.
+- MUJITTAI fainter still: the glass 0.18 (unchanged), the rim `*lb-rim-ghost*` 0.4 → **0.3**.
+
+**Three segments, two joints** (every blade, all eight wings of every form):
+- The blade is cut at **1/3 and 2/3** of its length into three meshes (root, middle, tip) per look: `:lb-wing-0..2`,
+  `:lb-wing-rim-0..2`, `:lb-wing-lit-0..2`, `:lb-wing-gold-0..2`, `:lb-wing-gold-rim-0..2` (15 weapons, replacing the 5 whole-
+  blade ones). Segment I is the leaf from I/3 to (I+1)/3 moved down by I/3: its **pivot** (on the root–tip chord) is its frame's
+  origin. Each rim segment has a cross band inside each cut and a pin at its pivot (the joint reads as a joint).
+- **Holes and teeth redistributed**, one hole per segment (y 0.2 / 0.5 / 0.79, radii 0.045×0.065 / 0.05×0.075 / 0.038×0.052;
+  were 0.36 / 0.55 / 0.73, the first straddled the joint) and the four teeth of the torn trailing edge each inside one segment
+  (0.19 / 0.40 / 0.53 / 0.71; were 0.3 / 0.47 / 0.63 / 0.77).
+- **Drawing** (`%LB-WINGS`, 0 B: f32vec scratch `*lb-wf*`, DEFUN-FAST helpers taking fixnums only): the straight blade's unit
+  frame as before (`%LB-BASIS!`), then each joint **tilts** the next segment's frame (`%LB-TILT!`: toward the blade's width
+  axis = a bend in its plane, toward its normal = a curl out of it; the frame stays orthonormal), each segment drawn from the
+  previous one's end. Straight, the three segments are exactly the old blade.
+
+**What bends them** (the fx clock, his pose and the move's frame, read only for the look; never sim state or `sim-rnd01`):
+- **Idle wave**: each joint ±`*lb-wave-amp*` 0.22 rad in the plane and ±`*lb-wave-curl*` 0.1 rad out of it at
+  `*lb-wave-speed*` 2.3 rad/s on the wing's own phase (the table's sway phase; the front pair offset by side), the tip's joint
+  `*lb-wave-lag*` 1.1 rad behind the root's: a wave travelling root → tip. The front pair at 0.6 x, a folded wing at 0.4 x.
+- **Lag and whip**: per wing a damped spring (ω 16 rad/s, ζ 0.45; memory `*lb-wm*`, per side and wing) toward a bend of
+  `*lb-lag-gain*` 0.045 rad per m/s of its drive point's speed (a front wing's hand, another wing's straight tip; at most
+  `*lb-lag-max*` 0.75 rad; the tip's joint 1.4 x; a jump over 1 m in a frame (a cut, a reset) counts as still). In a strike (a
+  move's main phase with active frames, not an SP / Kikon; `%LB-DRIVE!`) a virtual speed along his facing and up (up share
+  `*lb-strike-up*` 0.7, so the fan bends in its own plane and reads from behind) is added: the **wind-up** rises to
+  `*lb-strike-in*` 14 m/s (smoothstep over the startup: the joints cock back and down, trailing), the **active frames** zero the
+  spring (**snapped straight**), the **recovery** starts at −`*lb-strike-out*` 12 m/s easing out ((1−u)²: thrown forward, the
+  overshoot, then the spring settles). A free wing's tip trails the motion; a front wing is pinned at both ends, so its middle
+  bows behind the motion. The striking front wing takes all of it (J1 / K1's clip the right, J2 / K2's the left, the rest
+  both), the other front wing 0.3, Jilliel's six table wings 0.35, the owl's eight 0.7.
+- **MUJITTAI** curls each joint `*lb-fold-curl*` 0.38 rad toward the column (the tip's 1.2 x; the pinned front pair 0.5 x):
+  the folded fan wraps round it.
+- **SP / Kikon spread**: a slower per-side ramp (`*LB-FX*` [17]: up 2.2 / s while the spread clips play, down 3 / s) furls the
+  joints `*lb-furl*` 0.55 rad toward his facing over its first 0.12, then unfurls them **from the root** (the root's joint
+  over 0.12–0.52, the tip's over 0.3–0.8).
+
+**The strike tip stays the hand**: after the joints bend, a front wing's chain (end T = (Y0 + Y1 + Y2) / 3 in blade lengths) is
+turned about its root (Rodrigues, `%LB-TURN-CHAIN!`) so T points at the rig's hand, and its length set to |root → hand| / |T|:
+the drawn end is the hand at every frame, bent or not (only the interior joints show the bend). Measured with a temporary
+probe in the browser (KIN K1, Jilliel EN SANREN; 480 front-wing draws, joint tilts up to 0.48 rad): the chain's end missed the
+hand by **0.00000 m**; on the active frames the tilts are 0 (straight). The host FK reach test reads the hand (unchanged):
+ALL PASS.
+
+**Stills** (`/tmp/claude-0/lb-art3/`, never committed; 79002 / 79014 / 79003 / 79004 / 79198, keys J / K / Shift+K, the side
+camera 2109): idle behind at two moments (`b-jl-idle-a`, `-b`), the front view at two moments (`b-front-jl-a`, `-b`, the wave),
+KIN K1 from behind (`b-kin-idle-behind`, `b-kin-k-windup-behind`, `-active-`, `-rec1-`, `-rec2-`) and from the side
+(`b-kin-k-*-side`), Jilliel EN K and J (`b-jl-en-k-*-side`, `b-jl-j-*`), MUJITTAI behind and side (`b-mujittai-*`), the owl
+behind, front, side and J (`b-owl-*`, `b-front-owl`), SANREN's furl / unfurl (`c-sp-1..4`); contact sheets `sheet-*.png`. Looked
+at: the blades read as three jointed plates (the cross bands and pins at the joints, the kinks in the wave and the wind-up),
+the rims see-through (Kenpachi shows through the fan's outlines from the behind camera), MUJITTAI a curled cage round the
+column, the owl's wings gold. First pass (wave 0.13, strike 9 / 8 m/s along the facing only) read as planks from behind;
+raised to the numbers above. Needs the user's eyes for feel.
+
+**Gates**: host tests ALL PASS (duel-rules 5938 with the FK reach test, cine 18); `tools/pkgcheck.sh duel` 0 / 0 / 0;
+`simgate.py --seeds 10 --summary` **byte-identical** to the run before the change; `--cvc` PASS; `./build.sh duel` 0
+warnings. **Consing** (79195, 10 draws): the draw hook 160 B in JILLIEL, KIN and the owl, 240 B in MUJITTAI (16 / 24 B a
+frame, the ECS lookup floor of §21, unchanged): the jointed wings, the springs and the drive draw 0 B. Draw calls: 48 wing
+draws a form (8 blades x 3 segments x glass + rim; were 16).
