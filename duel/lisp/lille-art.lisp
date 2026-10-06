@@ -7,7 +7,7 @@
 ;;;; Diagramm (2.4 m: the barrel through a fur sleeve, the plank across the rear, the muzzle cross), the props of his looks
 ;;;; (the wing blades with their three oval holes, the halos, the open eye, the reticle, the trumpet), every :lb-* pose and
 ;;;; clip, his draw hook (Jilliel's eight wing blades in two fans / folded in MUJITTAI, the owl's eight gold wings, all of
-;;;; them translucent glass in an opaque rim; the ㄇ legs' shanks and struts; the owl's extra arms; the halos, the aim line
+;;;; them translucent glass in a translucent rim, each blade three jointed segments; the ㄇ legs' shanks and struts; the owl's extra arms; the halos, the aim line
 ;;;; and its reticle, the eye opening, the trumpet, the reflect), his hazards' look, his HUD meter
 ;;;; (the eye pips, the halo icon), his one-hand ring, his sounds and brush glyphs, and the cinematics' looks.
 ;;;; Batch 1 built the functional art (the strikes put the plank (J1 / J2 / the Breaker), the muzzle (J3, K) or the wing /
@@ -322,15 +322,24 @@
 ;; at the root, widest at the middle, a long point; its centreline bows toward +X (the trailing edge, torn into four teeth,
 ;; and the tip comes back onto the root-tip chord: a drawn tip is exactly where the frame puts it); three oval holes along it
 ;; (the 24 muzzles). Translucent since decision 27 (2026-10-06: 「把翅膀調整成半透明以免遮擋視線」): two meshes per look, the
-;; GLASS (the leaf's two faces with the three holes cut through, drawn see-through) and the RIM (an opaque dark band round
-;; the outline, the teeth and a ring round each hole: what keeps it reading as a holed blade). Load time only.
+;; GLASS (the leaf's two faces with the holes cut through, drawn see-through) and the RIM (a dark band round the outline, the
+;; teeth and a ring round each hole: what keeps it reading as a holed blade; see-through as well since decision 32).
+;; Jointed since decision 32 (2026-10-06: 「每片翅膀改成中間加 2 節可以彎折的連接觸」): the blade is cut at 1/3 and 2/3 of its
+;; length into three SEGMENTS (root, middle, tip), each its own mesh in its own frame: segment I is the leaf's part from
+;; I/3 to (I+1)/3, moved down by I/3 so its joint (the pivot, on the root-tip chord: x 0) is its origin; LILLE-DRAW chains
+;; the three frames (each bends at its pivot). One hole and one or two teeth per segment; a cross band at each cut and a
+;; pin at each pivot (the joint). Load time only.
 (defparameter *lb-wing-bow* 0.07 "The blade's centreline bow at its middle (unit length).")
 (defparameter *lb-wing-stations* '((0.0 0.03 0.03) (0.08 0.06 0.07) (0.2 0.1 0.12) (0.35 0.125 0.15) (0.5 0.13 0.155)
                                    (0.65 0.115 0.14) (0.8 0.08 0.1) (0.91 0.042 0.05) (1.0 0.0 0.0))
   "The blade's outline: y, the leading (-x) and the trailing (+x) half-widths off the bowed centreline.")
-(defparameter *lb-wing-teeth* '(0.3 0.47 0.63 0.77) "Where the trailing edge's teeth start (unit length).")
-(defparameter *lb-wing-holes* '((0.36 0.055 0.085) (0.55 0.05 0.075) (0.73 0.04 0.055)) "y rx ry (unit length), on the centreline.")
+(defparameter *lb-wing-teeth* '(0.19 0.40 0.53 0.71)
+  "Where the trailing edge's teeth start (unit length; each spans y-0.03..y+0.11, inside one segment; were 0.3 / 0.47 / 0.63
+/ 0.77 before the joints, decision 32).")
+(defparameter *lb-wing-holes* '((0.2 0.045 0.065) (0.5 0.05 0.075) (0.79 0.038 0.052))
+  "y rx ry (unit length), on the centreline: one per segment (were 0.36 / 0.55 / 0.73 before the joints, decision 32).")
 (defparameter *lb-wing-band* 0.016 "The rim's band round the outline and the holes (unit length).")
+(defparameter *lb-wing-cuts* '(0.0 0.33333334 0.6666667 1.0) "The segments' ends (unit length): the joints at 1/3 and 2/3.")
 (defun lb-wing-c (y) (* *lb-wing-bow* 4 y (- 1 y)))
 (defun lb-wing-half (y col)
   "The half-width at Y off the centreline: COL 1 the leading side, 2 the trailing side (the stations interpolated)."
@@ -341,72 +350,94 @@
 (defun lb-wing-edge (y) "The trailing edge's x at Y." (+ (lb-wing-c y) (lb-wing-half y 2)))
 (defun lb-wing-lead (y) "The leading edge's x at Y." (- (lb-wing-c y) (lb-wing-half y 1)))
 (defun lb-wing-hole-x (y) "A hole's centre x at Y." (+ 0.01 (lb-wing-c y)))
-(defun lb-wing-ys ()
-  "The glass's rows: every 0.025, the stations, and finer through each hole (its ends exact, so a row is in or out)."
+(defun lb-wing-ys (ya yb)
+  "The glass's rows from YA to YB: every 0.025, the stations, finer through each hole (its ends exact, so a row is in or
+out), and the segment's ends."
   (sort (remove-duplicates
-         (append (loop for i to 40 collect (/ i 40.0)) (mapcar #'first *lb-wing-stations*)
-                 (loop for (y nil ry) in *lb-wing-holes* append (loop for i to 12 collect (+ (- y ry) (* (/ i 12.0) 2 ry)))))
+         (remove-if-not (lambda (y) (<= (- ya 1e-5) y (+ yb 1e-5)))
+                        (append (list ya yb) (loop for i to 40 collect (/ i 40.0)) (mapcar #'first *lb-wing-stations*)
+                                (loop for (y nil ry) in *lb-wing-holes* append (loop for i to 12 collect (+ (- y ry) (* (/ i 12.0) 2 ry))))))
          :test (lambda (a b) (< (abs (- a b)) 1e-4)))
         #'<))
+(defun lb-wing-seg (seg) "Segment SEG's ends (values ya yb)." (values (nth seg *lb-wing-cuts*) (nth (1+ seg) *lb-wing-cuts*)))
+(defun lb-shift (pts y0) "PTS ((x y) ...) moved down by Y0 (into a segment's frame)." (mapcar (lambda (p) (list (first p) (- (second p) y0))) pts))
 (defun lb-face (mb pts z up)
   "One face of the glass: the convex polygon PTS ((x y) ...) at Z, facing +Z when UP else -Z (no rim: a single layer)."
   (let ((pts (remove-duplicates pts :test (lambda (a b) (< (+ (abs (- (first a) (first b))) (abs (- (second a) (second b)))) 1e-5)))))
     (when (>= (length pts) 3)
       (let ((cx (/ (reduce #'+ pts :key #'first) (length pts))) (cy (/ (reduce #'+ pts :key #'second) (length pts))))
         (mb-poly-out mb (mapcar (lambda (p) (v3 (first p) (second p) z)) pts) :center (list cx cy (if up (- z 1) (+ z 1))))))))
-(defun lb-wing-glass (mb body)
-  "The see-through leaf: both faces, row by row, the three holes cut through (a row inside a hole splits in two)."
+(defun lb-wing-glass (mb body seg)
+  "Segment SEG of the see-through leaf: both faces, row by row, its hole cut through (a row inside a hole splits in two)."
   (mbc mb body)
-  (let ((h 0.008))
-    (loop for (y0 y1) on (lb-wing-ys) while y1
-          do (let* ((ym (* 0.5 (+ y0 y1)))
-                    (hole (find-if (lambda (hh) (< (abs (- ym (first hh))) (third hh))) *lb-wing-holes*))
-                    (spans
-                      (if hole
-                          (destructuring-bind (hy rx ry) hole
-                            (flet ((hw (y) (* rx (sqrt (max 0.0 (- 1 (expt (/ (- y hy) ry) 2)))))))
-                              (list (list (list (lb-wing-lead y0) y0) (list (- (lb-wing-hole-x y0) (hw y0)) y0)
-                                          (list (- (lb-wing-hole-x y1) (hw y1)) y1) (list (lb-wing-lead y1) y1))
-                                    (list (list (+ (lb-wing-hole-x y0) (hw y0)) y0) (list (lb-wing-edge y0) y0)
-                                          (list (lb-wing-edge y1) y1) (list (+ (lb-wing-hole-x y1) (hw y1)) y1)))))
-                          (list (list (list (lb-wing-lead y0) y0) (list (lb-wing-edge y0) y0)
-                                      (list (lb-wing-edge y1) y1) (list (lb-wing-lead y1) y1))))))
-               (dolist (q spans) (lb-face mb q h t) (lb-face mb q (- h) nil))))))
-(defun lb-wing-rim (mb dark hole-fill)
-  "The opaque rim: a band inside the outline (leading and trailing edges), the four teeth on the trailing edge, and a ring
-round each hole; HOLE-FILL (a colour, NIJUSHI-KO's tell) fills the holes with light."
+  (multiple-value-bind (ya yb) (lb-wing-seg seg)
+    (let ((h 0.008))
+      (loop for (y0 y1) on (lb-wing-ys ya yb) while y1
+            do (let* ((ym (* 0.5 (+ y0 y1)))
+                      (hole (find-if (lambda (hh) (< (abs (- ym (first hh))) (third hh))) *lb-wing-holes*))
+                      (spans
+                        (if hole
+                            (destructuring-bind (hy rx ry) hole
+                              (flet ((hw (y) (* rx (sqrt (max 0.0 (- 1 (expt (/ (- y hy) ry) 2)))))))
+                                (list (list (list (lb-wing-lead y0) y0) (list (- (lb-wing-hole-x y0) (hw y0)) y0)
+                                            (list (- (lb-wing-hole-x y1) (hw y1)) y1) (list (lb-wing-lead y1) y1))
+                                      (list (list (+ (lb-wing-hole-x y0) (hw y0)) y0) (list (lb-wing-edge y0) y0)
+                                            (list (lb-wing-edge y1) y1) (list (+ (lb-wing-hole-x y1) (hw y1)) y1)))))
+                            (list (list (list (lb-wing-lead y0) y0) (list (lb-wing-edge y0) y0)
+                                        (list (lb-wing-edge y1) y1) (list (lb-wing-lead y1) y1))))))
+                 (dolist (q spans) (let ((q (lb-shift q ya))) (lb-face mb q h t) (lb-face mb q (- h) nil))))))))
+(defun lb-wing-rim (mb dark hole-fill seg)
+  "Segment SEG's rim: a band inside the outline (leading and trailing edges), its teeth on the trailing edge, a ring round
+its hole, a cross band at each cut and a pin at the pivot it hangs from (the joints); HOLE-FILL (a colour, NIJUSHI-KO's
+tell) fills the hole with light."
   (mbc mb dark)
-  (let ((bw *lb-wing-band*) (th 0.024))
-    (loop for (y0 y1) on (lb-wing-ys) while y1
-          do (flet ((w (y) (min bw (* 0.5 (+ (lb-wing-half y 1) (lb-wing-half y 2)))))
-                    (band (x0 x1 d0 d1)
-                      (let ((q (remove-duplicates (list (list x0 y0) (list (+ x0 d0) y0) (list (+ x1 d1) y1) (list x1 y1))
-                                                  :test (lambda (a b) (< (+ (abs (- (first a) (first b))) (abs (- (second a) (second b)))) 1e-5)))))
-                        (when (>= (length q) 3) (lb-plate mb q th)))))
-               (band (lb-wing-lead y0) (lb-wing-lead y1) (w y0) (w y1))
-               (band (lb-wing-edge y0) (lb-wing-edge y1) (- (w y0)) (- (w y1)))))
-    (dolist (y *lb-wing-teeth*)
-      (let ((e0 (lb-wing-edge y)) (e1 (lb-wing-edge (+ y 0.11))))
-        (lb-plate mb (list (list (- e0 0.02) y) (list (- e1 0.02) (+ y 0.11)) (list (+ e0 0.07) (- y 0.03))) th)))
-    (dolist (hh *lb-wing-holes*)
-      (destructuring-bind (y rx ry) hh
-        (let ((x (lb-wing-hole-x y)) (n 16))
-          (dotimes (i n)
-            (let ((a0 (* 2 pi (/ i n))) (a1 (* 2 pi (/ (1+ i) n))))
-              (flet ((pt (a r) (list (+ x (* (+ rx r) (cos a))) (+ y (* (+ ry r) (sin a))))))
-                (lb-plate mb (list (pt a0 0) (pt a0 (* 0.8 bw)) (pt a1 (* 0.8 bw)) (pt a1 0)) th))))
-          (when hole-fill
-            (mbc mb hole-fill) (lb-oval mb x y rx ry 0.02 16) (mbc mb dark)))))))
-(defweapon :lb-wing (:length 1.0)                     ; Jilliel's glass (muted jade, drawn see-through)
-  (:solid :ink 0 (lb-wing-glass mb #x6E9A80)))
-(defweapon :lb-wing-rim (:length 1.0)                 ; ... its rim (opaque: the blade's outline, teeth and hole rings)
-  (:solid :ink 0 (lb-wing-rim mb #x2F4A3C nil)))
-(defweapon :lb-wing-lit (:length 1.0)                 ; NIJUSHI-KO's tell: the rim with the 24 holes lit
-  (:solid :ink 0 (lb-wing-rim mb #x2F4A3C #xEAF4EE)))
-(defweapon :lb-wing-gold (:length 1.0)                ; the owl's glass (#B89A5A, decision 11)
-  (:solid :ink 0 (lb-wing-glass mb #xB89A5A)))
-(defweapon :lb-wing-gold-rim (:length 1.0)            ; ... its rim (a darker step of the same hue)
-  (:solid :ink 0 (lb-wing-rim mb #x8A7038 nil)))
+  (multiple-value-bind (ya yb) (lb-wing-seg seg)
+    (let ((bw *lb-wing-band*) (th 0.024))
+      (flet ((plate (pts &optional (th th)) (lb-plate mb (lb-shift pts ya) th)))
+        (loop for (y0 y1) on (lb-wing-ys ya yb) while y1
+              do (flet ((w (y) (min bw (* 0.5 (+ (lb-wing-half y 1) (lb-wing-half y 2)))))
+                        (band (x0 x1 d0 d1)
+                          (let ((q (remove-duplicates (list (list x0 y0) (list (+ x0 d0) y0) (list (+ x1 d1) y1) (list x1 y1))
+                                                      :test (lambda (a b) (< (+ (abs (- (first a) (first b))) (abs (- (second a) (second b)))) 1e-5)))))
+                            (when (>= (length q) 3) (plate q)))))
+                   (band (lb-wing-lead y0) (lb-wing-lead y1) (w y0) (w y1))
+                   (band (lb-wing-edge y0) (lb-wing-edge y1) (- (w y0)) (- (w y1)))))
+        (dolist (y *lb-wing-teeth*)
+          (when (<= ya y yb)
+            (let ((e0 (lb-wing-edge y)) (e1 (lb-wing-edge (+ y 0.11))))
+              (plate (list (list (- e0 0.02) y) (list (- e1 0.02) (+ y 0.11)) (list (+ e0 0.07) (- y 0.03)))))))
+        (dolist (yc (list ya yb))                         ; the joints: a cross band inside each cut (not the root, not the point)
+          (when (< 0.01 yc 0.99)
+            (let ((y1 (if (= yc ya) (+ yc (* 1.4 bw)) (- yc (* 1.4 bw)))))
+              (plate (list (list (lb-wing-lead yc) yc) (list (lb-wing-edge yc) yc) (list (lb-wing-edge y1) y1) (list (lb-wing-lead y1) y1))))))
+        (when (> ya 0.01)                                 ; ... and the pin at the pivot this segment hangs from
+          (lb-oval mb 0.0 0.0 0.024 0.024 0.04 12))
+        (dolist (hh *lb-wing-holes*)
+          (destructuring-bind (y rx ry) hh
+            (when (< ya y yb)
+              (let ((x (lb-wing-hole-x y)) (n 16))
+                (dotimes (i n)
+                  (let ((a0 (* 2 pi (/ i n))) (a1 (* 2 pi (/ (1+ i) n))))
+                    (flet ((pt (a r) (list (+ x (* (+ rx r) (cos a))) (+ y (* (+ ry r) (sin a))))))
+                      (plate (list (pt a0 0) (pt a0 (* 0.8 bw)) (pt a1 (* 0.8 bw)) (pt a1 0))))))
+                (when hole-fill
+                  (mbc mb hole-fill) (lb-oval mb x (- y ya) rx ry 0.02 16) (mbc mb dark))))))))))
+;; per look, three glass segments and three rim segments (I = 0 root, 1 middle, 2 tip)
+(defweapon :lb-wing-0 (:length 1.0) (:solid :ink 0 (lb-wing-glass mb #x6E9A80 0)))   ; Jilliel's glass (muted jade)
+(defweapon :lb-wing-1 (:length 1.0) (:solid :ink 0 (lb-wing-glass mb #x6E9A80 1)))
+(defweapon :lb-wing-2 (:length 1.0) (:solid :ink 0 (lb-wing-glass mb #x6E9A80 2)))
+(defweapon :lb-wing-rim-0 (:length 1.0) (:solid :ink 0 (lb-wing-rim mb #x2F4A3C nil 0)))   ; ... its rim (the outline, teeth,
+(defweapon :lb-wing-rim-1 (:length 1.0) (:solid :ink 0 (lb-wing-rim mb #x2F4A3C nil 1)))   ;  hole rings and joints)
+(defweapon :lb-wing-rim-2 (:length 1.0) (:solid :ink 0 (lb-wing-rim mb #x2F4A3C nil 2)))
+(defweapon :lb-wing-lit-0 (:length 1.0) (:solid :ink 0 (lb-wing-rim mb #x2F4A3C #xEAF4EE 0)))   ; NIJUSHI-KO's tell: the
+(defweapon :lb-wing-lit-1 (:length 1.0) (:solid :ink 0 (lb-wing-rim mb #x2F4A3C #xEAF4EE 1)))   ;  rim with the holes lit
+(defweapon :lb-wing-lit-2 (:length 1.0) (:solid :ink 0 (lb-wing-rim mb #x2F4A3C #xEAF4EE 2)))
+(defweapon :lb-wing-gold-0 (:length 1.0) (:solid :ink 0 (lb-wing-glass mb #xB89A5A 0)))   ; the owl's glass (#B89A5A,
+(defweapon :lb-wing-gold-1 (:length 1.0) (:solid :ink 0 (lb-wing-glass mb #xB89A5A 1)))   ;  decision 11)
+(defweapon :lb-wing-gold-2 (:length 1.0) (:solid :ink 0 (lb-wing-glass mb #xB89A5A 2)))
+(defweapon :lb-wing-gold-rim-0 (:length 1.0) (:solid :ink 0 (lb-wing-rim mb #x8A7038 nil 0)))   ; ... its rim (a darker
+(defweapon :lb-wing-gold-rim-1 (:length 1.0) (:solid :ink 0 (lb-wing-rim mb #x8A7038 nil 1)))   ;  step of the same hue)
+(defweapon :lb-wing-gold-rim-2 (:length 1.0) (:solid :ink 0 (lb-wing-rim mb #x8A7038 nil 2)))
 ;; the ㄇ legs' props (decision 26), drawn by LILLE-DRAW from the fork at the thigh's end: a shank (unit length along +Y, its
 ;; root at the origin, tapering to a point; drawn at its length so its tip meets the floor) and the strut (unit along +Y, the
 ;; corner's knob at its end; drawn at 0.52 m), cream (KIN) or white (the owl)
@@ -828,7 +859,7 @@ the line / reticle / halo / trumpet macros' numbers; [23] the first pair drawn; 
 last pass-through (fx clock), [4] the fold 0..1, [5] sealed seen (1), [6] the seal's fx clock, [7..9] the reticle's point,
 [10] the reticle shown (1 tracking, 2 locked), [11] the distance there, [12 13] the reflector's x z, [14] the eye's tick
 whose third-opening line was shown, [15] 1 while he is the owl (his hazards' gold), [16] the wings' spread 0..1 (an SP
-fans them out).")
+fans them out), [17] its joints' unfurl 0..1 (slower: they furl, then open from the root).")
 (dotimes (s 2) (setf (aref *lb-fx* (* 24 s)) -1f0 (aref *lb-fx* (+ (* 24 s) 14)) -1f0))
 (defvar *lb-hud* (make-f32 8) "The HUD pip's arguments: cx cy r, [3] the fx clock.")
 (defvar *lb-alphas* (let ((v (make-array 21))) (dotimes (i 21 v) (setf (svref v i) (f32 (/ i 20.0)))))
@@ -908,11 +939,42 @@ go through *LB-V* [17..22]: a DEFUN-FAST call would box them)."
 ;; Translucent (decision 27, 2026-10-06: 「把翅膀調整成半透明以免遮擋視線」): the engine draws an alpha < 1 in its transparent
 ;; pass (the lit shader, after the opaque scene, no depth write: what is behind shows through; the toon pass is opaque only),
 ;; where a plain colour reads dark (the duel's toon light is not the lit shader's), so the glass carries a glow (emissive x
-;; its colour) that brings it back to its jade / gold; its opaque rim keeps the toon look and the blade's shape.
+;; its colour) that brings it back to its jade / gold. Decision 32 (2026-10-06: 「萊醬你能幫我將覺醒後翅膀的不透明邊界也都換成
+;; 半透明嗎？」): the rim (outline band, teeth, hole rings, joints) is see-through too, a little stronger than the glass and
+;; with the same glow, so the outline still reads and it is not the dark phantom.
 (defparameter *lb-glass-alpha* 0.35 "The wings' glass alpha (decision 27): the fight shows through a blade.")
-(defparameter *lb-glass-glow* 1.0 "The glass's emissive (x its colour): the translucent path's colour back to the jade / gold.")
+(defparameter *lb-glass-glow* 1.0 "The glass's (and since decision 32 the rim's) emissive (x its colour): the translucent
+path's colour back to the jade / gold.")
+(defparameter *lb-rim-alpha* 0.6
+  "The rim's alpha (decision 32, the user 2026-10-06: the rims see-through too; was opaque, 1.0): a little stronger than the
+glass (0.35) so the blade's outline, teeth and holes still read.")
 (defparameter *lb-glass-ghost* 0.18 "MUJITTAI's glass alpha (more ghostly than the normal wings) ...")
-(defparameter *lb-rim-ghost* 0.4 "... and its rim's (see-through too).")
+(defparameter *lb-rim-ghost* 0.3 "... and its rim's (fainter still: 0.4 -> 0.3 with decision 32, the normal rim being 0.6).")
+;; Jointed (decision 32, 2026-10-06: 「每片翅膀改成中間加 2 節可以彎折的連接觸，讓整體動作與攻擊動畫不會太死板」): each blade is
+;; three segments chained at two joints (1/3, 2/3); each joint TILTS the next segment's frame (toward the blade's width
+;; axis: a bend in its plane; toward its normal: a curl out of it). What bends them, all cosmetic (the fx clock, his pose
+;; and the move's frame; never sim state or the sim's RNG):
+;; - the idle WAVE: each joint on the wing's own phase, the tip's joint lagging the root's (travelling root -> tip);
+;; - the LAG: a damped spring per wing (*LB-WM*) toward a bend set by the speed of its drive point (a front wing's hand,
+;;   another wing's straight tip), plus, in a strike, a virtual speed along his facing: the wind-up cocks the joints back
+;;   (trailing), the active frames snap them straight (the spring zeroed), the recovery throws them forward (the overshoot)
+;;   and the spring settles them. A free wing's tip trails its motion; a front wing is pinned at both ends (root and hand),
+;;   so its middle bows behind the motion;
+;; - MUJITTAI curls them round the column (toward it), an SP / Kikon spread furls them then unfurls them from the root.
+;; A FRONT wing's chain is then turned about its root so its end is exactly the rig's hand and its length set to reach it:
+;; the drawn tip is the hand at every frame (the strike point the host FK test reads), bent or not.
+(defparameter *lb-wave-amp* 0.22 "The idle wave: each joint's bend in the blade's plane (radians, at its peak).")
+(defparameter *lb-wave-curl* 0.1 "... and its curl out of the plane (radians).")
+(defparameter *lb-wave-speed* 2.3 "The wave's angular speed (rad/s of the fx clock).")
+(defparameter *lb-wave-lag* 1.1 "The wave's phase lag from the root's joint to the tip's (radians): it travels root -> tip.")
+(defparameter *lb-lag-gain* 0.045 "The lag spring's target bend per m/s of the drive point (radians).")
+(defparameter *lb-lag-max* 0.75 "... at most (radians a joint; the tip's joint bends 1.4 x).")
+(defparameter *lb-strike-in* 14.0 "A strike's wind-up: the virtual speed (m/s) along his facing and up (*LB-STRIKE-UP*) that
+cocks the joints back and down.")
+(defparameter *lb-strike-up* 0.7 "... the up share of that direction (so the fan's joints bend in its plane too: it reads from behind).")
+(defparameter *lb-strike-out* 12.0 "A strike's recovery: the virtual speed back (m/s, easing out) that throws them forward.")
+(defparameter *lb-fold-curl* 0.38 "MUJITTAI: each joint's curl toward the column (radians; the tip's 1.2 x).")
+(defparameter *lb-furl* 0.55 "An SP / Kikon spread: the joints' furl before they unfurl from the root (radians).")
 ;; Two fans of four (decision 19; the refs: the upper pair high and out, the lowest pair down and out), rooted behind the
 ;; column's top (the owl: behind the ruff). Per wing, a row of 10 in an f32vec (read in DEFUN-FAST code without consing):
 ;; side, elevation (degrees above the horizontal), length (m), sweep back, where it folds to (MUJITTAI: down round the
@@ -933,44 +995,142 @@ go through *LB-V* [17..22]: a DEFUN-FAST call would box them)."
           'f32vec)
   "The owl's eight gold wing blades, two fans of four (+34 / +11 / -11 / -34 degrees a side, long: the refs' wide spread);
 its claws are its hands.")
-(declaim (type f32vec *lb-wings-jl* *lb-wings-owl*))
+(declaim (type f32vec *lb-wings-jl* *lb-wings-owl* *lb-wf* *lb-wm*))
+(defvar *lb-wf* (make-f32 48)
+  "The jointed wings' scratch: [0..26] the three segments' unit frames (9 each: X Y Z), [30 31] a tilt's numbers (toward X,
+toward Z), [32..35] the chain's turn (axis, angle); per call (LILLE-DRAW's %LB-DRIVE!): [39] the strike's virtual speed
+(m/s along his facing), [40] the striking front wings (bit 0 right, bit 1 left), [41] 1 on the active frames (straight),
+[42] the spread's unfurl 0..1, [43] the step (s; 0 = no spring step), [44] the strike's share for the other wings.")
+(defvar *lb-wm* (make-f32 (* 2 8 9))
+  "Per side and wing (9 each): [0..2] its drive point last frame, [3..5] the lag spring's bend (a world vector, radians),
+[6..8] its rate. Cosmetic memory (never sim state).")
+(defmacro %lb-ss (x) "Smoothstep of X clamped to 0..1 (single-float; 0 B)." `(let ((%x (f-clamp ,x 0f0 1f0))) (declare (single-float %x)) (* %x %x (- 3f0 (* 2f0 %x)))))
 
-(defun-fast %lb-wings (jm o tbl n kind)
-  "N wings of table TBL (rows of 10) from joint frame O of JM, KIND 0 jade, 1 jade with the holes lit, 2 gold: their root
-(the joint's local point, each side 0.07 m out) in *LB-V* [0..2], the fold [11], the ripple [12] at the fx clock [13],
-their alpha [14], the pairs shown [15] from the pair [23], the length x [16], the spread [28] (the SPs: the fan wider and
-swept forward). Idle, each sways on its own phase (the fx clock: cosmetic). A front wing runs from its root to the rig's
-hand: the drawn tip is the hand, the strike point the host FK test reads (*LB-STRIKE-POINTS*). Each blade is its glass drawn
-see-through (*LB-GLASS-ALPHA*, a glow so the engine's translucent path keeps its colour) and its opaque rim; an alpha [14]
-under 1 (MUJITTAI) is the ghost: the glass fainter (*LB-GLASS-GHOST*) and the rim see-through too (*LB-RIM-GHOST*)."
-  (declare (type f32vec jm tbl) (fixnum o n kind))
-  (let* ((v *lb-v*) (k (aref v 11)) (j (- 1f0 k)) (rip (aref v 12)) (tm (aref v 13)) (a (aref v 14))
+(defmacro %lb-basis! (w o dx dy dz nx ny nz)
+  "Fill W [O..O+8] with a unit frame X Y Z: Y the unit (DX DY DZ), Z the normal (NX NY NZ) made square to it, X = Y x Z
+(%LB-FRAME!'s axes, unscaled). Single-float forms; 0 B."
+  `(let* ((%w ,w) (%o ,o) (%dx ,dx) (%dy ,dy) (%dz ,dz) (%nx ,nx) (%ny ,ny) (%nz ,nz)
+          (%d (+ (* %nx %dx) (* %ny %dy) (* %nz %dz)))
+          (%ax (- %nx (* %d %dx))) (%ay (- %ny (* %d %dy))) (%az (- %nz (* %d %dz)))
+          (%al (f-max 1f-5 (f-sqrt (+ (* %ax %ax) (* %ay %ay) (* %az %az)))))
+          (%zx (/ %ax %al)) (%zy (/ %ay %al)) (%zz (/ %az %al)))
+     (declare (type f32vec %w) (fixnum %o) (single-float %dx %dy %dz %nx %ny %nz %d %ax %ay %az %al %zx %zy %zz))
+     (setf (aref %w %o) (- (* %dy %zz) (* %dz %zy)) (aref %w (+ %o 1)) (- (* %dz %zx) (* %dx %zz))
+           (aref %w (+ %o 2)) (- (* %dx %zy) (* %dy %zx))
+           (aref %w (+ %o 3)) %dx (aref %w (+ %o 4)) %dy (aref %w (+ %o 5)) %dz
+           (aref %w (+ %o 6)) %zx (aref %w (+ %o 7)) %zy (aref %w (+ %o 8)) %zz)))
+
+(defun-fast %lb-tilt! (a b)
+  "*LB-WF*'s frame at B = its frame at A tilted at the joint: its Y turned toward X by [30] and toward Z by [31] (radians;
+the turn's axis is square to Y, so the frame stays orthonormal). 0 B."
+  (declare (fixnum a b))
+  (let* ((w *lb-wf*) (tx (aref w 30)) (tz (aref w 31)) (an (f-sqrt (+ (* tx tx) (* tz tz)))))
+    (declare (type f32vec w) (single-float tx tz an))
+    (if (< an 1f-5)
+        (dotimes (q 9) (setf (aref w (+ b q)) (aref w (+ a q))))
+        (let ((c (f-cos an)) (s (f-sin an)) (p (/ tx an)) (r (/ tz an)))
+          (declare (single-float c s p r))
+          (dotimes (q 3)                                 ; d = the tilt's direction (p X + r Z), e = Y x d (the axis)
+            (let* ((x (aref w (+ a q))) (y (aref w (+ a 3 q))) (z (aref w (+ a 6 q)))
+                   (d (+ (* p x) (* r z))) (e (- (* r x) (* p z))) (d2 (- (* c d) (* s y))))
+              (declare (single-float x y z d e d2))
+              (setf (aref w (+ b 3 q)) (+ (* c y) (* s d))
+                    (aref w (+ b q)) (+ (* p d2) (* r e))
+                    (aref w (+ b 6 q)) (- (* r d2) (* p e)))))))
+    nil))
+
+(defun-fast %lb-turn-chain! ()
+  "Turn the three frames of *LB-WF* [0..26] about the unit axis [32..34] by the angle [35] (Rodrigues). 0 B."
+  (let* ((w *lb-wf*) (kx (aref w 32)) (ky (aref w 33)) (kz (aref w 34)) (an (aref w 35))
+         (c (f-cos an)) (s (f-sin an)) (c1 (- 1f0 c)))
+    (declare (type f32vec w) (single-float kx ky kz an c s c1))
+    (dotimes (i 9)
+      (let* ((o (* 3 i)) (x (aref w o)) (y (aref w (+ o 1))) (z (aref w (+ o 2)))
+             (kv (* c1 (+ (* kx x) (* ky y) (* kz z)))))
+        (declare (fixnum o) (single-float x y z kv))
+        (setf (aref w o) (+ (* c x) (* s (- (* ky z) (* kz y))) (* kx kv))
+              (aref w (+ o 1)) (+ (* c y) (* s (- (* kz x) (* kx z))) (* ky kv))
+              (aref w (+ o 2)) (+ (* c z) (* s (- (* kx y) (* ky x))) (* kz kv)))))
+    nil))
+
+(defmacro %lb-seg-m! (m w b ox oy oz len wd)
+  "Fill M with *LB-WF*'s segment frame at B (unit X Y Z), at (OX OY OZ), +Y scaled by LEN (the blade's length), +X and +Z
+by WD (its width scale). 0 B."
+  `(let ((%m ,m) (%w ,w) (%b ,b) (%l ,len) (%d ,wd))
+     (declare (type f32vec %m %w) (fixnum %b) (single-float %l %d))
+     (dotimes (%q 3)
+       (setf (aref %m %q) (* %d (aref %w (+ %b %q))) (aref %m (+ 4 %q)) (* %l (aref %w (+ %b 3 %q)))
+             (aref %m (+ 8 %q)) (* %d (aref %w (+ %b 6 %q)))))
+     (setf (aref %m 3) 0f0 (aref %m 7) 0f0 (aref %m 11) 0f0 (aref %m 12) ,ox (aref %m 13) ,oy (aref %m 14) ,oz (aref %m 15) 1f0)))
+
+(defmacro %lb-wing-draw (kind g ga ra)
+  "Draw segment G (0 root, 1 middle, 2 tip) of a blade at *LB-M*: its glass at GA, then its rim at RA (both see-through
+with the glow), KIND 0 jade, 1 jade with the holes lit, 2 gold."
+  (flet ((pair (glass rim) `((draw-weapon ,glass *lb-m* :alpha ,ga :emissive *lb-glass-glow*)
+                             (draw-weapon ,rim *lb-m* :alpha ,ra :emissive *lb-glass-glow*))))
+    `(case ,kind
+       (0 (case ,g (0 ,@(pair :lb-wing-0 :lb-wing-rim-0)) (1 ,@(pair :lb-wing-1 :lb-wing-rim-1)) (t ,@(pair :lb-wing-2 :lb-wing-rim-2))))
+       (1 (case ,g (0 ,@(pair :lb-wing-0 :lb-wing-lit-0)) (1 ,@(pair :lb-wing-1 :lb-wing-lit-1)) (t ,@(pair :lb-wing-2 :lb-wing-lit-2))))
+       (t (case ,g (0 ,@(pair :lb-wing-gold-0 :lb-wing-gold-rim-0)) (1 ,@(pair :lb-wing-gold-1 :lb-wing-gold-rim-1))
+            (t ,@(pair :lb-wing-gold-2 :lb-wing-gold-rim-2)))))))
+
+(defun-fast %lb-wings (jm o tbl n kind side)
+  "N wings of table TBL (rows of 10) from joint frame O of JM, KIND 0 jade, 1 jade with the holes lit, 2 gold, for SIDE's
+fighter: their root (the joint's local point, each side 0.07 m out) in *LB-V* [0..2], the fold [11], the ripple [12] at the
+fx clock [13], their alpha [14], the pairs shown [15] from the pair [23], the length x [16], the spread [28] (the SPs: the
+fan wider and swept forward); the joints' drive in *LB-WF* [39..44] (%LB-DRIVE!). Idle, each sways on its own phase (the fx
+clock: cosmetic). A front wing runs from its root to the rig's hand: the drawn tip is the hand, the strike point the host FK
+test reads (*LB-STRIKE-POINTS*), its jointed chain turned and stretched to end there. Each blade is three segments (decision
+32), each its glass (*LB-GLASS-ALPHA*) and its rim (*LB-RIM-ALPHA*), both see-through with a glow; an alpha [14] under 1
+(MUJITTAI) is the ghost: fainter (*LB-GLASS-GHOST*, *LB-RIM-GHOST*)."
+  (declare (type f32vec jm tbl) (fixnum o n kind side))
+  (let* ((v *lb-v*) (w *lb-wf*) (mm *lb-wm*) (k (aref v 11)) (j (- 1f0 k)) (rip (aref v 12)) (tm (aref v 13)) (a (aref v 14))
          (ghost (< a 0.99f0))
          (ga (lb-alpha (if ghost (the single-float *lb-glass-ghost*) (* a (the single-float *lb-glass-alpha*)))))
-         (ra (lb-alpha (if ghost (the single-float *lb-rim-ghost*) a))) (re (if ghost *lb-glass-glow* (svref *lb-alphas* 0)))
+         (ra (lb-alpha (if ghost (the single-float *lb-rim-ghost*) (* a (the single-float *lb-rim-alpha*)))))
          (pairs (f->i (aref v 15))) (lk (aref v 16)) (from (f->i (aref v 23))) (sp (aref v 28))
          (rx (aref v 0)) (ry (aref v 1)) (rz (aref v 2))
          (xx (aref jm o)) (xy (aref jm (+ o 1))) (xz (aref jm (+ o 2)))
          (yx (aref jm (+ o 4))) (yy (aref jm (+ o 5))) (yz (aref jm (+ o 6)))
-         (zx (aref jm (+ o 8))) (zy (aref jm (+ o 9))) (zz (aref jm (+ o 10))))
-    (declare (type f32vec v) (single-float k j rip tm a lk sp rx ry rz xx xy xz yx yy yz zx zy zz) (fixnum pairs from))
+         (zx (aref jm (+ o 8))) (zy (aref jm (+ o 9))) (zz (aref jm (+ o 10)))
+         (xl (f-max 1f-5 (f-sqrt (+ (* xx xx) (* xy xy) (* xz xz))))) (zl (f-max 1f-5 (f-sqrt (+ (* zx zx) (* zy zy) (* zz zz)))))
+         (fx (- (/ zx zl))) (fy (- (/ zy zl))) (fz (- (/ zz zl)))   ; his facing (the joint's -Z) and side (X), unit
+         (sx (/ xx xl)) (sy (/ xy xl)) (sz (/ xz xl))
+         (yl (f-max 1f-5 (f-sqrt (+ (* yx yx) (* yy yy) (* yz yz))))) (su (the single-float *lb-strike-up*))
+         (vx0 (+ fx (* su (/ yx yl)))) (vy0 (+ fy (* su (/ yy yl)))) (vz0 (+ fz (* su (/ yz yl))))
+         (vl (f-max 1f-5 (f-sqrt (+ (* vx0 vx0) (* vy0 vy0) (* vz0 vz0)))))
+         (dvx (/ vx0 vl)) (dvy (/ vy0 vl)) (dvz (/ vz0 vl))           ; a strike's drive direction: forward and up
+         (vb (aref w 39)) (mask (f->i (aref w 40))) (act (> (aref w 41) 0.5f0)) (u (aref w 42)) (dt (aref w 43)) (tsc (aref w 44))
+         (rise (f-min 1f0 (/ u 0.12f0)))                  ; the spread: furl (u 0 -> 0.12), then unfurl from the root
+         (c1 (* rise (- 1f0 (%lb-ss (/ (- u 0.12f0) 0.4f0)))))
+         (c2 (* rise (- 1f0 (%lb-ss (/ (- u 0.3f0) 0.5f0)))))
+         (gl (the single-float *lb-lag-gain*)) (lm (the single-float *lb-lag-max*))
+         (wa (the single-float *lb-wave-amp*)) (wc (the single-float *lb-wave-curl*)) (ws (the single-float *lb-wave-speed*))
+         (wl (the single-float *lb-wave-lag*)) (fc (the single-float *lb-fold-curl*)) (fu (the single-float *lb-furl*)))
+    (declare (type f32vec v w mm) (fixnum pairs from mask)
+             (single-float k j rip tm a lk sp rx ry rz xx xy xz yx yy yz zx zy zz xl zl fx fy fz sx sy sz yl su vx0 vy0 vz0 vl dvx dvy dvz vb u dt tsc rise c1 c2
+                           gl lm wa wc ws wl fc fu))
     (dotimes (i n)
       (when (<= from (floor i 2) (1- pairs))
         (let* ((r (* 10 i)) (s (aref tbl r)) (lx (+ rx (* 0.07f0 s)))
                (ox (+ (* xx lx) (* yx ry) (* zx rz) (aref jm (+ o 12))))
                (oy (+ (* xy lx) (* yy ry) (* zy rz) (aref jm (+ o 13))))
-               (oz (+ (* xz lx) (* yz ry) (* zz rz) (aref jm (+ o 14)))))
-          (declare (fixnum r) (single-float s lx ox oy oz))
-          (if (> (aref tbl (+ r 7)) 0.5f0)
+               (oz (+ (* xz lx) (* yz ry) (* zz rz) (aref jm (+ o 14))))
+               (front (> (aref tbl (+ r 7)) 0.5f0)) (mo (* 9 (+ i (* 8 side))))
+               (len 0f0) (wd 0f0) (px 0f0) (py 0f0) (pz 0f0))
+          (declare (fixnum r mo) (single-float s lx ox oy oz len wd px py pz))
+          ;; 1. the straight blade's frame (segment 0's) and its drive point
+          (if front
               ;; a front wing, root to hand; its torn edge down and out: the normal D x U, D = the joint's -Y + 0.5 s X
               (let* ((h (if (> s 0f0) (* 16 (ji :hand-r)) (* 16 (ji :hand-l))))
-                     (dx (- (aref jm (+ h 12)) ox)) (dy (- (aref jm (+ h 13)) oy)) (dz (- (aref jm (+ h 14)) oz))
+                     (hx (aref jm (+ h 12))) (hy (aref jm (+ h 13))) (hz (aref jm (+ h 14)))
+                     (dx (- hx ox)) (dy (- hy oy)) (dz (- hz oz))
                      (dl (f-max 0.05f0 (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
                      (ux (/ dx dl)) (uy (/ dy dl)) (uz (/ dz dl))
                      (ddx (- (* 0.5f0 s xx) yx)) (ddy (- (* 0.5f0 s xy) yy)) (ddz (- (* 0.5f0 s xz) yz)))
-                (declare (fixnum h) (single-float dx dy dz dl ux uy uz ddx ddy ddz))
-                (%lb-frame! *lb-m* ox oy oz ux uy uz (- (* ddy uz) (* ddz uy)) (- (* ddz ux) (* ddx uz)) (- (* ddx uy) (* ddy ux))
-                            dl (* lk (aref tbl (+ r 2)))))
+                (declare (fixnum h) (single-float hx hy hz dx dy dz dl ux uy uz ddx ddy ddz))
+                (%lb-basis! w 0 ux uy uz (- (* ddy uz) (* ddz uy)) (- (* ddz ux) (* ddx uz)) (- (* ddx uy) (* ddy ux)))
+                (setf len dl wd (* lk (aref tbl (+ r 2))) px hx py hy pz hz))
               (let* ((e (* 0.017453292f0 (+ (* (aref tbl (+ r 1)) (+ 1f0 (* 0.22f0 sp)))
                                               (* 3f0 j (f-sin (+ (* 1.9f0 tm) (aref tbl (+ r 9)))))
                                               (* rip (f-sin (+ (* 31f0 tm) (* 1.7f0 (i->f i))))))))
@@ -980,16 +1140,92 @@ under 1 (MUJITTAI) is the ghost: the glass fainter (*LB-GLASS-GHOST*) and the ri
                      (fl (if (> (aref tbl (+ r 8)) 0.5f0) (- s) s)) (nlx (* k fl)) (nlz (* j fl))
                      (dx (+ (* xx lx2) (* yx ly2) (* zx lz2))) (dy (+ (* xy lx2) (* yy ly2) (* zy lz2)))
                      (dz (+ (* xz lx2) (* yz ly2) (* zz lz2))) (dl (f-max 1f-5 (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
-                     (len (* lk (aref tbl (+ r 2)) (- 1f0 (* 0.15f0 k)))))
-                (declare (single-float e ax ay az lx2 ly2 lz2 fl nlx nlz dx dy dz dl len))
-                (%lb-frame! *lb-m* ox oy oz (/ dx dl) (/ dy dl) (/ dz dl)
-                            (+ (* xx nlx) (* zx nlz)) (+ (* xy nlx) (* zy nlz)) (+ (* xz nlx) (* zz nlz)) len)))
-          (case kind                                     ; the glass see-through, then its rim (decision 27)
-            (0 (draw-weapon :lb-wing *lb-m* :alpha ga :emissive *lb-glass-glow*) (draw-weapon :lb-wing-rim *lb-m* :alpha ra :emissive re))
-            (1 (draw-weapon :lb-wing *lb-m* :alpha ga :emissive *lb-glass-glow*) (draw-weapon :lb-wing-lit *lb-m* :alpha ra :emissive re))
-            (t (draw-weapon :lb-wing-gold *lb-m* :alpha ga :emissive *lb-glass-glow*)
-               (draw-weapon :lb-wing-gold-rim *lb-m* :alpha ra :emissive re))))))
+                     (ln (* lk (aref tbl (+ r 2)) (- 1f0 (* 0.15f0 k)))))
+                (declare (single-float e ax ay az lx2 ly2 lz2 fl nlx nlz dx dy dz dl ln))
+                (%lb-basis! w 0 (/ dx dl) (/ dy dl) (/ dz dl)
+                            (+ (* xx nlx) (* zx nlz)) (+ (* xy nlx) (* zy nlz)) (+ (* xz nlx) (* zz nlz)))
+                (setf len ln wd ln px (+ ox (* ln (aref w 3))) py (+ oy (* ln (aref w 4))) pz (+ oz (* ln (aref w 5))))))
+          ;; 2. the lag spring: its target from the drive point's speed and the strike's virtual speed (a free wing's tip
+          ;; trails: bend against the motion; a pinned front wing bends with it, so its middle bows behind)
+          (when (> dt 0f0)
+            (let* ((qx (- px (aref mm mo))) (qy (- py (aref mm (+ mo 1)))) (qz (- pz (aref mm (+ mo 2))))
+                   (iv (if (> (+ (* qx qx) (* qy qy) (* qz qz)) 1f0) 0f0 (/ 1f0 dt)))   ; (a jump: a cut, a reset)
+                   (sw (if front (if (/= 0 (logand mask (if (> s 0f0) 1 2))) 1f0 0.3f0) tsc))
+                   (sg (if front gl (- gl)))
+                   (tx (* sg (+ (* qx iv) (* vb sw dvx)))) (ty (* sg (+ (* qy iv) (* vb sw dvy)))) (tz (* sg (+ (* qz iv) (* vb sw dvz))))
+                   (tl (f-sqrt (+ (* tx tx) (* ty ty) (* tz tz)))) (tc (if (> tl lm) (/ lm tl) 1f0))
+                   (om 16f0) (o2 (* om om)) (dmp (* 2f0 0.45f0 om)))
+              (declare (single-float qx qy qz iv sw sg tx ty tz tl tc om o2 dmp))
+              (setf (aref mm mo) px (aref mm (+ mo 1)) py (aref mm (+ mo 2)) pz)
+              (if act                                    ; the active frames: snapped straight
+                  (dotimes (q 6) (setf (aref mm (+ mo 3 q)) 0f0))
+                  (macrolet ((spring (q tq)
+                               `(let ((%b (aref mm (+ mo 3 ,q))) (%r (aref mm (+ mo 6 ,q))))
+                                  (declare (single-float %b %r))
+                                  (setf %r (+ %r (* dt (- (* o2 (- (* tc ,tq) %b)) (* dmp %r))))
+                                        (aref mm (+ mo 6 ,q)) %r (aref mm (+ mo 3 ,q)) (+ %b (* dt %r))))))
+                    (spring 0 tx) (spring 1 ty) (spring 2 tz)))))
+          ;; 3. the joints: the spring's bend (the tip's joint 1.4 x), MUJITTAI's curl toward the column, the spread's furl,
+          ;; and the wave (in the blade's frame, the tip's joint lagging)
+          (let* ((bx (aref mm (+ mo 3))) (by (aref mm (+ mo 4))) (bz (aref mm (+ mo 5)))
+                 (ff (if front 0.5f0 1f0)) (kc (* k fc ff (- s))) (u1 (* c1 fu ff)) (u2 (* c2 fu ff))
+                 (b1x (+ bx (* kc sx) (* u1 fx))) (b1y (+ by (* kc sy) (* u1 fy))) (b1z (+ bz (* kc sz) (* u1 fz)))
+                 (b2x (+ (* 1.4f0 bx) (* 1.2f0 kc sx) (* u2 fx))) (b2y (+ (* 1.4f0 by) (* 1.2f0 kc sy) (* u2 fy)))
+                 (b2z (+ (* 1.4f0 bz) (* 1.2f0 kc sz) (* u2 fz)))
+                 (wv (* (if act (if front 0f0 0.3f0) 1f0) (if front 0.6f0 1f0) (- 1f0 (* 0.6f0 k))))
+                 (ph (+ (* ws tm) (aref tbl (+ r 9)) (if front (* 1.7f0 s) 0f0))))
+            (declare (single-float bx by bz ff kc u1 u2 b1x b1y b1z b2x b2y b2z wv ph))
+            (setf (aref w 30) (+ (* b1x (aref w 0)) (* b1y (aref w 1)) (* b1z (aref w 2)) (* wv wa (f-sin ph)))
+                  (aref w 31) (+ (* b1x (aref w 6)) (* b1y (aref w 7)) (* b1z (aref w 8)) (* wv wc (f-sin (+ ph 0.8f0)))))
+            (%lb-tilt! 0 9)
+            (setf (aref w 30) (+ (* b2x (aref w 9)) (* b2y (aref w 10)) (* b2z (aref w 11)) (* wv wa (f-sin (- ph wl))))
+                  (aref w 31) (+ (* b2x (aref w 15)) (* b2y (aref w 16)) (* b2z (aref w 17)) (* wv wc (f-sin (- (+ ph 0.8f0) wl)))))
+            (%lb-tilt! 9 18))
+          ;; 4. a front wing: turn the chain about its root so its end is on the hand, and stretch it to reach it
+          (when front
+            (let* ((tx (* 0.33333334f0 (+ (aref w 3) (aref w 12) (aref w 21))))
+                   (ty (* 0.33333334f0 (+ (aref w 4) (aref w 13) (aref w 22))))
+                   (tz (* 0.33333334f0 (+ (aref w 5) (aref w 14) (aref w 23))))
+                   (tl (f-max 1f-4 (f-sqrt (+ (* tx tx) (* ty ty) (* tz tz)))))
+                   (ex (/ tx tl)) (ey (/ ty tl)) (ez (/ tz tl))
+                   (hx (/ (- px ox) len)) (hy (/ (- py oy) len)) (hz (/ (- pz oz) len))
+                   (kx (- (* ey hz) (* ez hy))) (ky (- (* ez hx) (* ex hz))) (kz (- (* ex hy) (* ey hx)))
+                   (kl (f-sqrt (+ (* kx kx) (* ky ky) (* kz kz)))) (cs (+ (* ex hx) (* ey hy) (* ez hz))))
+              (declare (single-float tx ty tz tl ex ey ez hx hy hz kx ky kz kl cs))
+              (when (> kl 1f-6)
+                (setf (aref w 32) (/ kx kl) (aref w 33) (/ ky kl) (aref w 34) (/ kz kl) (aref w 35) (f-atan2 kl cs))
+                (%lb-turn-chain!))
+              (setf len (/ len tl))))
+          ;; 5. the three segments, each from the last one's end
+          (let ((qx ox) (qy oy) (qz oz) (l3 (* len 0.33333334f0)))
+            (declare (single-float qx qy qz l3))
+            (dotimes (g 3)
+              (let ((b (* 9 g)))
+                (declare (fixnum b))
+                (%lb-seg-m! *lb-m* w b qx qy qz len wd)
+                (%lb-wing-draw kind g ga ra)
+                (setf qx (+ qx (* l3 (aref w (+ b 3)))) qy (+ qy (* l3 (aref w (+ b 4)))) qz (+ qz (* l3 (aref w (+ b 5)))))))))))
     nil))
+
+(defmacro %lb-drive! (f mv rdt owl)
+  "Set *LB-WF* [39..44], the jointed wings' drive for F's draw (MV his move or nil, RDT the step, OWL the owl's wings): in a
+strike (a move's main phase with active frames, not an SP or Kikon) the wind-up's virtual speed rising to *LB-STRIKE-IN*,
+the active frames' straight flag, the recovery's virtual speed back (*LB-STRIKE-OUT*, easing out); which front wings strike
+(J1 / K1's clip the right, J2 / K2's the left, the rest both); the other wings' share (Jilliel's 0.35, the owl's 0.7).
+Reads the move's frame only for the look. 0 B."
+  `(let ((%w *lb-wf*) (%f ,f) (%mv ,mv) (%vb 0f0) (%act 0f0) (%mask 3))
+     (declare (type f32vec %w) (single-float %vb %act) (fixnum %mask))
+     (when (and %mv (eq (fighter-phase %f) :main) (> (the fixnum (mv-a %mv)) 0) (not (member (mv-kind %mv) '(:sp :kikon))))
+       (let ((%sf (fighter-sf %f)) (%s (mv-s %mv)) (%a (mv-a %mv)) (%r (mv-r %mv)))
+         (declare (fixnum %sf %s %a %r))
+         (cond ((< %sf %s) (setf %vb (* (the single-float *lb-strike-in*) (%lb-ss (/ (i->f (1+ %sf)) (i->f (max 1 %s)))))))
+               ((< %sf (+ %s %a)) (setf %act 1f0))
+               (t (let ((%u (f-min 1f0 (/ (i->f (- %sf %s %a)) (i->f (max 1 %r))))))
+                    (declare (single-float %u))
+                    (setf %vb (- (* (the single-float *lb-strike-out*) (- 1f0 %u) (- 1f0 %u)))))))
+         (setf %mask (case (mv-clip %mv) ((:lb-w-q1 :lb-w-f1) 1) ((:lb-w-q2 :lb-w-f2) 2) (t 3)))))
+     (setf (aref %w 39) %vb (aref %w 40) (i->f %mask) (aref %w 41) %act
+           (aref %w 43) (f-min ,rdt 0.034f0) (aref %w 44) (if ,owl 0.7f0 0.35f0))))
 
 (defmacro %lb-halo (jm o kind lift r)
   "A halo LIFT m above joint frame O of JM (its local up), radius R: KIND 0 Jilliel's wide jade ring, 1 the owl's spiked
@@ -1194,7 +1430,8 @@ his halo cracking (gold shards); the broken halo stays (LILLE-DRAW draws it). Lo
   "His kit's :draw hook (after his body; cosmetic): the base form's eye opening and its aim line / reticle; Jilliel's eight
 wing blades (both modes: two fans of four behind the column, the front pair reaching to the rig's hands, each swaying on
 its own phase; folded round the column in MUJITTAI, rippling on each pass-through, their holes lit in NIJUSHI-KO's tell,
-fanned out in the SPs; translucent, fainter in MUJITTAI) and the wide jade halo; on the KIN and owl bodies the ㄇ legs (and
+fanned out in the SPs; translucent, fainter in MUJITTAI; each three jointed segments that wave, lag and whip in the
+strikes, curl in MUJITTAI and unfurl in the SPs) and the wide jade halo; on the KIN and owl bodies the ㄇ legs (and
 the owl's extra pair of arms); the owl's eight gold wings, its spiked halo (broken once sealed), the trumpet
 forming over Trompete's wind-up, the reflect. The awakening's and the revival's cinematics drive the wings and halos
 (the unfolding, the jade turning gold). Its only allocation is the entity lookups (two a frame; a third while he aims
@@ -1209,10 +1446,13 @@ or a gold look plays; a fourth in MUJITTAI)."
                      ((lb-jilliel-form-p form) :jilliel) ((eq form :shin) :shin) (t :base))))
     (declare (fixnum side) (type f32vec jm v) (single-float tm))
     (setf (lb-fxs side 15) (if (eq form :shin) 1f0 0f0))   ; (his hazards' looks read it: gold or jade)
-    (setf (lb-fxs side 16)                               ; the SPs fan the wings out (0.12 s either way)
-          (if (and mv (or (member (mv-kind mv) '(:sp :kikon)) (member (mv-clip mv) *lb-spread-clips*)))
-              (f-min 1f0 (+ (lb-fxs side 16) (* 8f0 rdt)))
-              (f-max 0f0 (- (lb-fxs side 16) (* 8f0 rdt)))))
+    (let ((spread (and mv (or (member (mv-kind mv) '(:sp :kikon)) (member (mv-clip mv) *lb-spread-clips*)))))
+      (setf (lb-fxs side 16)                             ; the SPs fan the wings out (0.12 s either way) ...
+            (if spread (f-min 1f0 (+ (lb-fxs side 16) (* 8f0 rdt))) (f-max 0f0 (- (lb-fxs side 16) (* 8f0 rdt))))
+            (lb-fxs side 17)                             ; ... and their joints furl then unfurl from the root (decision 32)
+            (if spread (f-min 1f0 (+ (lb-fxs side 17) (* 2.2f0 rdt))) (f-max 0f0 (- (lb-fxs side 17) (* 3f0 rdt))))))
+    (setf (aref *lb-wf* 42) (lb-fxs side 17))
+    (%lb-drive! f mv rdt (eq form :shin))                ; the joints' strike drive (cosmetic: the move's frame)
     (setf (aref v 28) (lb-fxs side 16)
           (aref v 3) (- (aref *toon-body* 1)             ; his body's feet height (DRAW-BODY's) less the form's drawn
                         (the single-float (f32 (body-lift (fighter-kit (fighter e)) (model-body m))))))   ; lift: the floor
@@ -1246,10 +1486,10 @@ or a gold look plays; a fourth in MUJITTAI)."
              (if (> gold 0f0)                            ; the revival: the jade turning gold over 30 f, a pair at a time
                  (let ((pg (i->f (min 4 (f->i (* 4.2f0 gold))))))
                    (declare (single-float pg))
-                   (setf (aref v 15) pg) (%lb-wings jm o *lb-wings-jl* 8 2)
-                   (setf (aref v 15) 9f0 (aref v 23) pg) (%lb-wings jm o *lb-wings-jl* 8 0)
+                   (setf (aref v 15) pg) (%lb-wings jm o *lb-wings-jl* 8 2 side)
+                   (setf (aref v 15) 9f0 (aref v 23) pg) (%lb-wings jm o *lb-wings-jl* 8 0 side)
                    (setf (aref v 23) 0f0))
-                 (%lb-wings jm o *lb-wings-jl* 8 (if lit 1 0)))
+                 (%lb-wings jm o *lb-wings-jl* 8 (if lit 1 0) side))
              (unless cr                                  ; the wide thin halo (the headless column has none)
                (setf (aref v 14) (if stance 0.7f0 1f0))
                (if (and cj (< (the fixnum cj) 160))
@@ -1262,7 +1502,7 @@ or a gold look plays; a fourth in MUJITTAI)."
            (declare (single-float grow))
            (setf (aref v 0) 0f0 (aref v 1) 0.3f0 (aref v 2) 0.13f0 (aref v 11) 0f0 (aref v 12) 0f0 (aref v 13) tm
                  (aref v 14) 1f0 (aref v 15) 9f0 (aref v 23) 0f0 (aref v 16) (+ 0.3f0 (* 0.7f0 grow)))
-           (%lb-wings jm (* 16 (ji :chest)) *lb-wings-owl* 8 2)
+           (%lb-wings jm (* 16 (ji :chest)) *lb-wings-owl* 8 2 side)
            (%lb-halo jm (* 16 (ji :head)) (if (and st (lbs-sealed st)) 2 1) 0.76f0 (* 0.13f0 grow))
            (let ((tsf (cond (ct (if (< 8 (the fixnum ct) 120) (- (the fixnum ct) 8) -1))
                             ((and mv (eq (mv-name mv) :lb-trompete) (eq (fighter-phase f) :main)) (fighter-sf f))
