@@ -1390,3 +1390,28 @@ J／K 縮短、受擊值、分身消耗三批合併後，照新的測試規則�
   - dream-rsi 筆記逐條對照資料與對話紀錄，修正 9 處（例如 b1a0 比 b0a0 低的說法不含露琪亞、最短的 cell 是 10 分鐘）。
   - host 測試 rules 4431、control 86、learn 100、input 33 全過；`./build.sh duel` 0 警告；pkgcheck 0；G2 三場和參考一個位元都沒變。
 
+
+## 84. 新角色利傑巴羅：討論開始、雲端環境與原作考據（2026-10-06）
+
+使用者：「萊醬，我想要請你依據之前 duel 的開發經驗幫我製作新角色『利傑巴羅』，先與我討論整體設計構想，並在討論期間指派 agent 建制環境。」
+
+- **設計文件**：[duel/DUEL_LILLE.md](duel/DUEL_LILLE.md)，目前還在討論，沒有實作。他排在名單最後（index 5，`:lille`），只能附加在最後，不能插隊。
+- **使用者的決定**：
+  - **定位**：純遠距狙擊。近身是全名單最弱的。
+  - **X 軸萬物貫通**：穿過防禦。防禦中只扣很少的 Reishi，但大量削防禦槽。主要的應對是側步離開預告線。
+  - **覺醒 Jilliel 的無實體**：「設計成跟山本卍解相同，按下防禦開啟無實體狀態、攻擊就解除」。細節還沒決定。
+  - **第二階段（梟頭的真正型態）**：「等考據結果再決定」。
+- **原作考據**：[research/tybw-characters/notes/lille_barro.md](research/tybw-characters/notes/lille_barro.md)。這個環境擋掉了網頁擷取，所以只能用搜尋結果的摘要，每條都標了可信度。重點：
+  - 原作沒有「攻擊時才碰得到」的規則。Jilliel 一直都是無實體，京樂靠卍解的「規則」傷到他，七緒靠八鏡劍把他自己的 Trompete 反射回去。
+  - 基礎形態的左眼規則：危機時睜眼得到短暫無實體，被逼睜眼三次才解放 Vollständig。
+- **雲端環境**：新增 `tools/setup-cloud-env.sh`，一鍵重建工具鏈，約 15 分鐘：
+  - host ECL 24.5.10（32 位元），原始碼從 GitLab 下載，因為 ecl.common-lisp.dev 被 proxy 擋掉。
+  - emsdk 4.0.12，裝在原本寫死的 `/media/8tsp/projects` 路徑。
+  - 用 Playwright 的 Chromium 包成 `google-chrome`。容器裡沒有 Vulkan ICD，所以指定 Chromium 內建的 SwiftShader ICD。
+- **驗證**：
+  - `./build.sh duel` 成功，106 秒。
+  - host 測試全過：rules 4431、control 86、learn 100、input 33、touch 64、cine 18。
+  - simgate 2 局×15 組全部 K.O.。
+  - G2 三場和參考完全相同（原生和瀏覽器兩種都跑）。
+  - `run.mjs` 截圖正常。
+  - pkgcheck 0。

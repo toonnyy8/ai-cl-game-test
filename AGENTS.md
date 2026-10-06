@@ -129,7 +129,7 @@ tools/pkgcheck.sh duel                   # ECL never warns about undefined / une
 | `docs/guides/` | `TUTORIAL.zh-TW.md` (learning path), `PLAYBOOK.zh-TW.md` (reusable experience), `DREAM_RSI.zh-TW.md` (the AI search experience) |
 | `docs/engine/` | `ARCHITECTURE.md`, `ENGINE_API.md`, `AUDIO.md`, `WORLD.md` (+ `world-shots/`) |
 | `docs/raven-edge/` | `GAME_DESIGN.md`, `GAMEPLAY.md` |
-| `docs/duel/` | `DUEL_DESIGN.md` (rules + move tables, the source of truth), `DUEL_GAMEPLAY.md` (build, debug commands, gates), `DUEL_STRINGS.md`, per character (`DUEL_YAMA_REWORK`, `DUEL_NOZARASHI_V2`, `DUEL_KEN_BANKAI`, `DUEL_RUKIA`, `DUEL_ICHIGO`, `DUEL_SENJUMARU`), systems (`DUEL_AI_V2`, `DUEL_LEARNING`, `DUEL_ASSIST`, `DUEL_ENDLESS`, `DUEL_MOBILE_DESIGN`) |
+| `docs/duel/` | `DUEL_DESIGN.md` (rules + move tables, the source of truth), `DUEL_GAMEPLAY.md` (build, debug commands, gates), `DUEL_STRINGS.md`, per character (`DUEL_YAMA_REWORK`, `DUEL_NOZARASHI_V2`, `DUEL_KEN_BANKAI`, `DUEL_RUKIA`, `DUEL_ICHIGO`, `DUEL_SENJUMARU`, `DUEL_LILLE` (in design)), systems (`DUEL_AI_V2`, `DUEL_LEARNING`, `DUEL_ASSIST`, `DUEL_ENDLESS`, `DUEL_MOBILE_DESIGN`) |
 | `docs/style/` | `STYLE_STORM_RESEARCH.md`, `STYLE_STORM_DESIGN.md` (the ink look, its numbers and gates) |
 | `docs/babylon/` | the discontinued port's records |
 | `docs/research/` | `ng4-notes.md`; `tybw-characters/` (report + notes on the four TYBW characters); `ai-v2-drsi/` (the AI v2 dream-rsi workspace and its coordinator scripts) |
@@ -160,6 +160,7 @@ Skills (in `skills/`, symlinked into `~/.claude/skills/`; each `SKILL.md` is sho
 | `tools/glyph-bake.py`, `tools/pwa-icons.py`, `tools/pose-solve.py` | offline generators (glyph polygons, app icons, arm pose solving) |
 | `tools/deploy-pages.sh` | publish `dist/duel` to `gh-pages` (only on request) |
 | `tools/vendor-*.sh` | rebuild `vendor/` |
+| `tools/setup-cloud-env.sh` | recreate the whole toolchain in a fresh cloud container (~15 min) at the hard-coded paths |
 | `tests/scripts/duel.py` | generates the browser scripts (`duel-*.json`) |
 | `tests/style-gates.py`, `tests/style-*-shots.py` / `-checks.py` | G2 and the style review stills / checks |
 
