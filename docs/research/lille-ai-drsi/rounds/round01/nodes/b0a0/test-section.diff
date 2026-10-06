@@ -1,0 +1,46 @@
+--- frozen LILLE-CPU-TESTS
++++ cell LILLE-CPU-TESTS
+@@ -69,3 +69,43 @@
+ (let ((j (kit :lille :jilliel)) (o (kit :lille :shin)) (ok (kit :lille :shin-kin)))
+   (check (and (equal (getf (kit-ai o) :switch) '(:traces 3 :near 0.6 :whiff 1.5)) (equal (getf (kit-ai ok) :switch) '(:gg 40))
+               (getf (kit-ai ok) :trompete) (equal (getf (kit-ai o) :stance) (getf (kit-ai j) :stance)))))
++;; the X-Axis hunter (dream-rsi b0a0, DUEL_LILLE §24): HARD only. Every new key's :by is EASY 0 / NORMAL 0 / HARD 1 (NORMAL
++;; and EASY play exactly the shipped CPU, no extra roll); the eye's :by keeps EASY / NORMAL at the shipped x *LB-AI-DIFF*
++(let* ((b (kit :lille :base)) (j (kit :lille :jilliel)) (kn (kit :lille :jilliel-kin)) (o (kit :lille :shin)) (ok (kit :lille :shin-kin))
++       (new '(:easy 0.0 :normal 0.0 :hard 1.0)) (eye (getf (kit-ai b) :eye)) (snipe (getf (kit-ai j) :snipe))
++       (hunt (getf (kit-ai b) :hunt)))
++  ;; the keys, pinned
++  (check (and (equal (getf eye :by) '(:easy 0.25 :normal 0.5 :hard 1.0))
++              (equal snipe '(:by (:easy 0.0 :normal 0.0 :hard 1.0) :near 2.5 :far 13.0 :every 6 :on 0.6 :hold 40))
++              (equal (getf (kit-ai o) :snipe) snipe)
++              (equal (getf (kit-ai kn) :back) '(:by (:easy 0.0 :normal 0.0 :hard 1.0) :d 2.5 :every 12))
++              (equal (getf (kit-ai ok) :back) (getf (kit-ai kn) :back))
++              (equal hunt '(:by (:easy 0.0 :normal 0.0 :hard 1.0) :near 0.0 :far 7.5 :every 8))
++              (equal (getf (kit-ai b) :link-k) '(:by (:easy 0.5 :normal 0.5 :hard 1.0)))
++              (equal (getf (kit-ai b) :ender) (list :by new)) (equal (getf (kit-ai kn) :ender) (list :by new))
++              (eq (getf (kit-ai b) :sp-ender) 'lb-ai-sp-ender) (eq (getf (kit-ai kn) :sp-ender) 'lb-ai-sp-ender)
++              (null (getf (kit-ai ok) :sp-ender)) (null (getf (kit-ai ok) :ender))     ; (not the owl's Trompete: its reflect)
++              (null (getf (kit-ai kn) :snipe)) (null (getf (kit-ai b) :snipe)) (null (getf (kit-ai j) :hunt))))
++  ;; the layering: EASY <= NORMAL <= HARD for every key; NORMAL / EASY of the new ones 0 (the shipped CPU); the eye's and
++  ;; HOSHA's link's NORMAL / EASY = the shipped values
++  (check (and (every (lambda (k) (<= (lb-ai-kp k :easy) (lb-ai-kp k :normal) (lb-ai-kp k :hard)))
++                     (list eye snipe hunt (getf (kit-ai kn) :back) (getf (kit-ai b) :link-k) (getf (kit-ai b) :ender)))
++              (every (lambda (k) (and (zerop (lb-ai-kp k :normal)) (zerop (lb-ai-kp k :easy)) (~= 1.0 (lb-ai-kp k :hard))))
++                     (list snipe hunt (getf (kit-ai kn) :back) (getf (kit-ai b) :ender)))
++              (~= (lb-ai-kp eye :normal) (lb-ai-chance 0.5 :normal)) (~= (lb-ai-kp eye :easy) (lb-ai-chance 0.5 :easy))
++              (~= 1.0 (lb-ai-kp eye :hard)) (~= 0.75 (lb-ai-kp '(:p 0.5) :hard))))
++  ;; the snipe: from :near to :far (TENSHIN in's 8 m dash stops 1.5 m short, KIN's J1 chases the rest in its startup),
++  ;; one roll; its switch: a live line within :on of him, no trace count
++  (check (and (lb-ai-snipe-plan 0.5 1.0 5.0 snipe) (lb-ai-snipe-plan 0.99 1.0 13.0 snipe) (lb-ai-snipe-plan 0.0 1.0 2.5 snipe)
++              (not (lb-ai-snipe-plan 0.5 1.0 13.1 snipe)) (not (lb-ai-snipe-plan 0.5 1.0 2.4 snipe))
++              (not (lb-ai-snipe-plan 0.0 0.0 5.0 snipe)) (not (lb-ai-snipe-plan 0.5 0.5 5.0 snipe))
++              (lb-snipe-switch-rule 1 0.6 snipe) (lb-snipe-switch-rule 3 0.0 snipe)
++              (not (lb-snipe-switch-rule 1 0.61 snipe)) (not (lb-snipe-switch-rule 0 0.0 snipe))))
++  ;; the hunt: the stance's plan turns into HOSHA within :far, not into a guard, not when it is HOSHA already
++  (check (and (lb-ai-hunt-plan-p :k 2.0 :idle hunt) (lb-ai-hunt-plan-p :l 7.5 :move hunt) (lb-ai-hunt-plan-p :charge 7.0 nil hunt)
++              (not (lb-ai-hunt-plan-p :j 2.0 :idle hunt)) (not (lb-ai-hunt-plan-p :k 7.6 :idle hunt))
++              (not (lb-ai-hunt-plan-p :k 2.0 :guard hunt)) (not (lb-ai-hunt-plan-p :l 4.0 :guard-hit hunt))))
++  ;; HOSHA's link: K1 KK of the time; 0.5 is the shipped LB-AI-LINK-PLAN roll for roll (J1 under 0.5); HARD 1.0: K1
++  (check (and (eq :q (lb-ai-hosha-link 0.49 0.5)) (eq :f (lb-ai-hosha-link 0.5 0.5))
++              (every (lambda (r) (eq (lb-ai-hosha-link r 0.5) (lb-ai-link-plan t r nil nil))) '(0.0 0.25 0.4999 0.5 0.75 0.99))
++              (eq :f (lb-ai-hosha-link 0.0 1.0)) (eq :f (lb-ai-hosha-link 0.99 1.0)))))

@@ -2277,3 +2277,11 @@ Dry run again (a throwaway copy of the workspace): the baseline as b0a0 re-score
 outside the markers, a frozen check deliberately broken: the splice took only the section (the diff shows that one line),
 the outside edit was ignored, the host test passed (6369), recorded `ok` at **0.4729** (488 s), the same as its run above.
 
+### 24.3 The snap opener is accepted (the user, 2026-10-06)
+
+Round 1's cell b1a0 (rescored 0.9027 at 40 seeds: strength 0.140 → 0.932, signature 0.552 → 0.824, NORMAL drift and
+pacing unchanged) found a HARD-only opener: EN J1 laid straight at the opponent, its laying shot's 10 f flinch, J1's 2 f
+TENSHIN cancel, the materialise → KIN J string. It is nearly unreactable for a human too. Asked, the user chose
+「接受，繼續搜尋」: the rules and the frozen evaluator stay; the search goes on; a rule change after a playtest would mean a
+re-measure of the search's results.
+
