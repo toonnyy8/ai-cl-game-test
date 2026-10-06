@@ -151,6 +151,21 @@ Then, to the four questions that changed the design: 「快射＋蓄力」, 「�
   arms are hidden in the column. §22.3.
 - **20. The owl has two long thin legs, each forking halfway** into two (it reads as four). §22.3.
 
+### Decisions 21–27 (2026-10-06): the user's second playtest of the rework
+
+The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向前跳飛並在空中射出連射三發短程子彈（擊中後可與 j/k 串成 combo）；接 K 則會向後拉開距離打出一發中程子彈；在 step 飛廉腳完之後會直接將準心重新對準對手。 2. 這應該算是 bug，在手機觸控模式下 L 射擊架勢時，向上滑動被判定成 hoho（但不會觸發 hoho 瞬移）而不是 step。 # 覺醒改動 1. 近戰與梟頭的腿部是從分岔點向後延伸出垂直支架，在末端才以折角往下延伸，呈現出 ㄇ 字型。 2. 請大幅提升變換戰型後的衝刺距離。並讓衝刺後可以直接銜接 J K 攻擊取消後搖，使預留的貫通軌道能串連 J/K 形成 combo。 3. 把翅膀調整成半透明以免遮擋視線。 4. 梟頭型態的建模在原作中會呈現以目前的近戰型態為基礎，並將頭部換成長頸梟頭與增加額外的手臂。」
+
+- **21. Stance J is a leaping triple shot**: a forward leap, three short-range bullets fired in the air; on a hit he may
+  link J or K after it (a combo). §23.1.
+- **22. Stance K is a backstep shot**: he slides back and fires one mid-range bullet. §23.1.
+- **23. After the stance's HIRENKYAKU the aim snaps onto the opponent** (no 60°/s turn back). §23.1.
+- **24. Bug (touch)**: in the stance, an upward flick reads as a Hoho (with no Hoho) instead of a Step. Fixed. §23.1.
+- **25. TENSHIN's dash is much longer, and J / K cancel its recovery** so a materialised trace links into J / K (a combo).
+  §23.2.
+- **26. The legs are ㄇ-shaped**: from the fork a strut runs back, and at its end the leg bends down. §23.3.
+- **27. The wings are translucent** (so they don't hide the fight), and **the owl's model is KIN's** with the head swapped
+  for the long-necked owl head and an extra pair of arms. §23.3.
+
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
 - **Three forms, three temperaments** (research note §6): the base form is a still, patient sniper; Jilliel is an untouchable
@@ -1317,4 +1332,42 @@ Pacing passes (125–210 s); his wins are under the 10 ± 3 target in every pair
 **Awaken A/B** (39020, Lille P1 never awakens; wins of 60, streams 100 / 300 / 500; pass ≥ 20): LY 13 / 19 / 12, LK 1 / 3
 / 3, LR 3 / 4 / 5, LI 3 / 4 / 2, LS 5 / 6 / 11. Fails everywhere, as in §20.3 (0–4), a little closer against Yamamoto
 and Senjumaru. Not tuned: the balance direction waits for the user's playtest (「先試玩再決定」).
+
+---
+
+## 23. Second rework (decisions 21–27, 2026-10-06)
+
+Numbers are proposals until the gate; the lead picked them where the user gave none (the user may move any of them).
+
+### 23.1 The base stance (decisions 21–24)
+
+| Follow-up | Value |
+|---|---|
+| J 跳射 HŌSHA `:lb-k-j` (replaces REIKYORI) | a **forward leap 3.0 m** over f0–14 (airborne look, hurtbox as normal; no iframes), three bullets at **f6, f10, f14**: each a short line `(:cap 0.6 6.0 1.2 0.25)` from the muzzle, **16** damage, flinch (the 3rd a stagger), **guardable** (a bullet, not the X-Axis: chip as a normal ranged hit, guard 6 each), each its own window (3 hits); R 16 after landing. **On any bullet's hit, his recovery cancels into J1 or K1** (the link: a combo). Blocked: −8 |
+| K 退射 TAISHA `:lb-k-k` (replaces NAGIHARAI) | a **back-slide 3.0 m** over f0–12, then at **f16** one bullet: a line `(:cap 0.6 12.0 1.2 0.3)`, **60** flat × `*lille-mult*`, stagger, knockback 1.0 m, **`:ranged :x-axis :uncatchable`** (through guard: chip 15 %, drain **30**, as the shot); R 24 |
+| Step HIRENKYAKU `:lb-k-dash` | as built (3.5 m, once per stance, the charge kept); **at its end the stance's yaw snaps to the opponent** (track resumes from there) |
+| Touch (bug) | in the stance an upward flick must give the Step, as on the keys (the control / touch path is fixed, not the stance; a host test pins it) |
+
+- The CPU: J (HŌSHA) at 3–6 m and after a K link's hit; K (TAISHA) at ≤ 3 m to make room, or on a guard; the rest as
+  §22.1.
+
+### 23.2 TENSHIN (decision 25)
+
+| | Value |
+|---|---|
+| Dash in (EN → KIN) | **up to 8.0 m at him over 14 f, stopping 1.5 m short** (`*lb-switch-in*` 8.0, `*lb-switch-stop*` 1.5); iframes f0–8 |
+| Dash out (KIN → EN) | **7.0 m** away over 14 f (`*lb-switch-out*`) |
+| Cancel | from the dash's end (f14) his **J or K cancels the recovery** (either mode; EN's J / K lay traces, KIN's hit) |
+| A materialised trace | stagger with **hitstun long enough for the dash plus a J1** (≥ 14 + 8 + 4 f), **no knockback** (the SP2 thick trace keeps its knockback), so a trace hit → TENSHIN in → J / K is a combo (host test) |
+
+### 23.3 The rig (decisions 26, 27)
+
+- **ㄇ legs** (KIN and the owl): thigh down to the fork; from the fork a **strut runs back** (horizontal), and at its end
+  the leg **bends down** to the floor; the front shank goes down from the fork: the two shanks and the strut read as ㄇ
+  from the side.
+- **Translucent wings** (every Jilliel form and the owl): drawn see-through so the fight stays visible; they must stay
+  readable as jade / gold blades with their holes.
+- **The owl = KIN's model** (the column, the ㄇ legs, the eight wings in gold #B89A5A, decision 11) with **the long
+  S-neck owl head** in place of Jilliel's top, and an **extra pair of long arms** (the claws stay the rig's hands: the
+  strike points).
 
