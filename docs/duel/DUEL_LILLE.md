@@ -187,8 +187,8 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
 - **36. The owl's system is Jilliel's** (the user, 2026-10-06: 「請讓梟頭型態的系統設計完全與 Jilliel 對齊，只是萬物貫通的射擊特效改成審判光明
   （沿地面的金色爆炸線）、SP1 特效與動作用審判光明、SP2 特效與動作用神之喇叭。與 Jilliel 的主要差異是具有更高的攻擊力、更高的軌跡命中回收比例
   與更優異的優勢幀。」; then 「也是無實體」, 「保留反射與封印」, 「小」): §23.14.
-- **37. A Step in EN switches to KIN** (the user, 2026-10-06: 「另外添加一個新設計，覺醒後在遠攻狀態使用閃步就會自動切換成近戰狀態」):
-  §23.16.
+- **37. A Hoho in EN switches to KIN** (the user, 2026-10-06: 「另外添加一個新設計，覺醒後在遠攻狀態使用閃步就會自動切換成近戰狀態」, then
+  「只有 Hoho 會切換」): §23.16.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -1873,11 +1873,11 @@ first).
 - Unchanged: the revival (P in any Jilliel form at ≤ 4 Konpaku: Konpaku → 1, Reishi full), taken ×1.1, the owl's Kikon
   (worth 4) and its cinematic, Trompete's numbers.
 
-### 23.16 Decision 37: a Step in EN goes KIN (2026-10-06)
+### 23.16 Decision 37: a Hoho in EN goes KIN (2026-10-06)
 
-The lead's reading (the user may move any of it): in **either EN form** (Jilliel `:jilliel` / `:jilliel-mujittai` and
-the owl's `:shin` / `:shin-mujittai`), **a Step (a tap, a run's hop, a back-step) or a Hoho** switches him to the KIN
-form of the pair (EN → KIN, EN MUJITTAI → KIN MUJITTAI) at its frame 0, for no extra cost (the Step / Hoho pays its own
-flash step as always). **The traces are not materialised** (only L does that: decision 18); they stay live and the next
-L (KIN → EN) materialises them. The CPU counts it: an EN CPU that steps lands in KIN.
+In **either EN form** (Jilliel `:jilliel` / `:jilliel-mujittai` and the owl's `:shin` / `:shin-mujittai`), **a Hoho**
+(only: the user corrected the lead's first reading, 「只有 Hoho 會切換」; a Step does not) switches him to the KIN form of
+the pair (EN → KIN, EN MUJITTAI → KIN MUJITTAI) at its frame 0, for no extra cost (the Hoho pays its own flash step
+as always). **The traces are not materialised** (only L does that: decision 18); they stay live and the next
+L (KIN → EN) materialises them. The CPU counts it: an EN CPU that Hohos lands in KIN.
 
