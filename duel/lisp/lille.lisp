@@ -251,9 +251,9 @@ AWAKENED already; decision 7)."
 (:tick); the sealed Trompete (:ok); the pacing log (:hit :struck); BEHEADED (:settled); the aim line (:draw). (The revive's
 condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
 
-;; the CPU, batch 1 (DUEL_LILLE §11.1): bands, intents, the aim's hold, the generic Bankai key, and the keys a CPU facing
-;; him reads off his kits (:opp-aim, :opp-reflect: the AI batch, ai.lisp AI-OPP-AIM / AI-OPP-REFLECT). TODO batch 3: his own
-;; reflexes: the eye (:eye, :reflex), the stance (:stance (:p 0.6 :max 180)), :trompete (:when-recovering t :far 8)
+;; the CPU (DUEL_LILLE §11): bands, intents, the aim's hold, the generic Bankai key, and the keys a CPU facing him reads off
+;; his kits (:opp-aim, :opp-reflect: ai.lisp AI-OPP-AIM / AI-OPP-REFLECT); his own reflexes (batch 3a, the AI section below:
+;; LB-AI-REFLEX): the eye (:eye (:p)), the stance (:stance (:p :max :gg)), Trompete's punish (:trompete (:p :left))
 (defkit :lille :base
   :name "LILLE" :body :lille :weapon :diagramm :stance :lb-stance :calm t
   :intro :lb-intro :win :lb-win :intro-callout "THE X-AXIS"
@@ -267,7 +267,8 @@ condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
                (2.2 6.0 :sp2 2 :step 2 :sp1 1 nil 1)
                (6.0 99.0 :sig 6 :sp1 1 nil 1))
        :guard 0.5 :hoho 0.3 :dash 0.3 :dash-back 0.7 :block-string 0.3 :o-ender 0.3 :l-after-k 0.4 :kikon-range 7.7
-       :awaken (:min-taken 150) :sig-hold lb-aim-hold-ai :opp-aim (:step 0.6 :hoho 0.25 :rush 12)))
+       :awaken (:min-taken 150) :sig-hold lb-aim-hold-ai :opp-aim (:step 0.6 :hoho 0.25 :rush 12)
+       :eye (:p 0.5) :reflex lb-ai-reflex))
 
 (defkit :lille :jilliel :inherit :base
   :awakening t :form-name "JILLIEL" :walk *walk-jilliel* :run *run-jilliel* :mult *jilliel-mult* :taken *jilliel-taken*
@@ -277,14 +278,16 @@ condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
   :body :lille-jilliel :weapon nil :stance :lb-w-stance :cine lb-jilliel-cine :u-tag "U: MUJITTAI" :swing-sfx :whoosh-heavy
   :commands (:q :lb-w-j1 :f :lb-w-k1 :sig :lb-volley :sp2 :lb-nijushi :breaker :lb-w-breaker :kikon :lb-w-kikon)
   :grid (:lb-w-j1 :lb-w-j2 :lb-w-j3 :lb-w-k1 :lb-w-k2 :lb-w-k3 :lb-w-j2s :lb-w-k2s)
+  ;; (:neutral-guard 0: U is the stance, entered only as a reaction, LB-AI-STANCE-IN; batch 3a)
   :ai (:intents (:approach 1 :pressure 1 :zone 4 :defend 2)
        :ranges (:approach (2.4 8.0) :pressure (1.4 2.4) :zone (8.0 14.0) :defend (5.0 9.0))
        :moves ((0.0 2.4 :q 3 :f 3 :breaker 1 :step 1)
                (2.4 8.0 :sig 3 :step 2 nil 1)
                (8.0 16.0 :sig 5 :sp2 1 nil 1)
                (16.0 99.0 :sig 2 :step 1 nil 2))
-       :guard 0.4 :hoho 0.3 :dash 0.4 :dash-back 0.5 :kikon-range 8.5 :sig-hold lb-aim-hold-ai
-       :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1) :opp-aim (:step 0.6 :hoho 0.25 :rush 12)))
+       :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.4 :dash-back 0.5 :kikon-range 8.5 :sig-hold lb-aim-hold-ai
+       :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1) :opp-aim (:step 0.6 :hoho 0.25 :rush 12)
+       :stance (:p 0.6 :max 180 :gg 30) :reflex lb-ai-reflex))
 
 ;; U in Jilliel: 無実体 MUJITTAI, West's ward with the :intangible flag (§5.2): every attack drops it (no :keep)
 (defkit :lille :jilliel-mujittai :inherit :jilliel
@@ -303,7 +306,8 @@ condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
        :moves ((0.0 2.6 :q 4 :f 4 :breaker 1)
                (2.6 8.0 :sig 3 :sp1 2 :step 1)
                (8.0 99.0 :sp2 3 :sig 2 nil 1))
-       :guard 0.4 :hoho 0.3 :dash 0.8 :o-ender 0.6 :kikon-range 9.0 :opp-reflect (:p 0.3)))
+       :guard 0.4 :hoho 0.3 :dash 0.8 :o-ender 0.6 :kikon-range 9.0 :opp-reflect (:p 0.3)
+       :trompete (:p 0.5 :left 30) :reflex lb-ai-reflex))
 
 ;; his names in the brush tables (brush.lisp): the intro's column and the technique columns at his side (not on the host)
 (when (boundp '*brush-names*)
@@ -625,14 +629,254 @@ by band, damage by band, Trompete)."
     (when (gauges-guardless (gauges def)) (lb-count def :stance-crushed)))
   (when (and (eq res :guard-break) (eq (fighter-form (fighter def)) :jilliel)) (lb-count def :stance-broken)))
 
-;;; ================================================================ AI (the kit's :sig-hold; the rest: batch 2)
+;;; ================================================================ AI: his own CPU (DUEL_LILLE §11.2; batch 3a)
+;;; The kits' :reflex (LB-AI-REFLEX, ai.lisp AI-REFLEX: free states, before the generic answers) and :sig-hold
+;;; (LB-AIM-HOLD-AI). Every lead is the perceived one (his move frame as seen, SNAP-SF, + the perception delay), every
+;;; chance x *LB-AI-DIFF* (EASY <= NORMAL <= HARD), and every roll is made once per event: per threatening window (his
+;;; move's start tick, or a hazard's spawn tick: LBAI-KEY) or per opponent action (the generic BRAIN-REACT-ROLL).
+;;;   base      the eye takes over from the generic guard reflex: a threat's roll taps U (the eye) where the sim's eye test
+;;;             will see it, else a guard held from now, or a sideways Step off a lane (LB-AI-EYE)
+;;;   jilliel   the stance as a reaction only: a threat within reach + 1 m or a hazard within 12 f rolls :stance -> U
+;;;             (LB-AI-STANCE-IN); in it he leaves by attacking: his whiff / recovery, :max frames, the gauge under :gg,
+;;;             or he out of reach and idle (LB-AI-STANCE-OUT)
+;;;   shin      Trompete (SP2) as a punish from beyond J's reach (LB-AI-TROMPETE); the neutral bands give it >= 8 m only
+;;;   revive    the generic :bankai reflex (ai.lisp) with the Jilliel kits' :bankai-ok
+(defparameter *lb-ai-diff* '(:easy 0.5 :normal 1.0 :hard 1.5)
+  "His CPU's chances (:eye :p, :stance :p, :trompete :p) x this by difficulty, at most 1: :eye 0.5 -> 0.25 / 0.5 / 0.75
+(DUEL_LILLE §11.2; design 2026-10-06).")
+(defparameter *lb-ai-eye-tap* 4
+  "His CPU taps the eye when the threat's perceived lead is 1..this frames (inside the sim's *LB-EYE-LEAD* 8, with room
+for a lead seen a frame off; batch 3a, 2026-10-06).")
+(defparameter *lb-ai-strafe* 3.0
+  "LB-AIM-EXTRA: a lateral speed of this many m/s (about a walk) or more counts as a full strafer (batch 3a, 2026-10-06).")
+(defparameter *lb-ai-aim-spread* '(:easy 1.0 :normal 0.6 :hard 0.25)
+  "LB-AIM-EXTRA: how much of the roll's +-10 f spreads the fire frame around its centre, by difficulty (HARD near the
+centre: lock + 10 against a still opponent; batch 3a, 2026-10-06).")
+(defparameter *lb-ai-lat-span* 6 "LB-AI-LATERAL: the two perceived snaps this many steps apart (batch 3a).")
+
+;; pure: host-tested (tests/duel-rules-test.lisp)
+(defun lb-ai-chance (p difficulty) "A chance P of his kit's :ai at DIFFICULTY: x *LB-AI-DIFF*, at most 1." (min 1.0 (* p (getf *lb-ai-diff* difficulty 1.0))))
+(defun lb-ai-eye-ready-p (lead u-up pips)
+  "Can his CPU still make the eye on a threat LEAD frames away (perceived), U up U-UP frames, PIPS left: a pip, the threat
+not already on him, and U rested *LB-EYE-REST* by the tap (at lead *LB-AI-EYE-TAP*: U is let go until then)?"
+  (and (plusp pips) (>= lead 1) (>= (+ u-up (max 0 (- lead *lb-ai-eye-tap*))) *lb-eye-rest*)))
+(defun lb-ai-eye-tap-p (lead) "Tap now: the perceived lead is 1..*LB-AI-EYE-TAP*." (<= 1 lead *lb-ai-eye-tap*))
+(defun lb-ai-eye-plan (r p ready dodge guard-k)
+  "The base form's answer to one threatening window, from its one roll R: :EYE (R < P, READY: LB-AI-EYE-READY-P), else
+:STEP when DODGE (a lane, a Breaker / grab, a Kikon on him red: nothing guards it), else :GUARD with GUARD-K's share of R's
+remainder (AI-GUARD-K: a low gauge guards less), :STEP the rest."
+  (cond ((and ready (< r p)) :eye)
+        (dodge :step)
+        (t (let ((r2 (if (< r p) (/ r (max p 1e-6)) (/ (- r p) (max (- 1.0 p) 1e-6)))))
+             (if (< r2 guard-k) :guard :step)))))
+(defun lb-ai-stance-plan (r p line)
+  "Jilliel's answer to one threatening window, from its one roll R: :STANCE (R < P), else :STEP off a LINE, else :PASS (a
+Hoho on the generic roll, or nothing: he has no other guard)."
+  (cond ((< r p) :stance) (line :step) (t :pass)))
+(defun lb-stance-exit (busy frames max gg gg-min idle-far)
+  "Why his CPU leaves MUJITTAI now (by attacking), or NIL: :WHIFF (he is BUSY: recovering or reeling), :MAX (FRAMES in
+it >= MAX), :GAUGE (the guard gauge GG under GG-MIN), :IDLE (he is out of reach and idle: IDLE-FAR)."
+  (cond (busy :whiff) ((>= frames max) :max) ((< gg gg-min) :gauge) (idle-far :idle)))
+(defun lb-aim-extra (lat r difficulty)
+  "Frames after the lock his CPU fires an aimed move (10..30, *LB-LOCK-MIN*..+20), from the opponent's lateral speed LAT
+(m/s, read once at the press) and a roll R: centred at 10 for a still opponent, 30 for a strafer (*LB-AI-STRAFE*), the
+roll spreading it by *LB-AI-AIM-SPREAD* x +-10."
+  (let* ((x (max 0.0 (min 1.0 (/ lat *lb-ai-strafe*))))
+         (c (+ *lb-lock-min* (* 20.0 x) (* (getf *lb-ai-aim-spread* difficulty 0.6) (- (* 20.0 r) 10.0)))))
+    (max *lb-lock-min* (min (+ *lb-lock-min* 20) (round c)))))
+
+;; the shell (the sim's state, the perceived SNAPs)
+(defstruct (lbai (:conc-name lbai-))
+  (e nil) (b nil)                         ; the fighter and the brain it belongs to (a new match: a fresh one)
+  (key -1 :type fixnum)                   ; the threatening window rolled for (his move's start tick; a hazard's: -2 - spawn)
+  (plan nil)                              ; its answer: :eye :tapped :guard :step :stepped / :stance :step :pass :done
+  (tap -1 :type fixnum)                   ; *MATCH-TICK* of the eye's tap
+  (exit -1 :type fixnum))                 ; the stance whose exit was counted (its start tick)
+(defvar *lb-ai* (vector (make-lbai) (make-lbai)) "Per side: his CPU's plan for the current threat.")
+(defun lb-ai-state (e b)
+  (let* ((i (fighter-side (fighter e))) (st (svref *lb-ai* i)))
+    (if (and (eql (lbai-e st) e) (eq (lbai-b st) b)) st (setf (svref *lb-ai* i) (make-lbai :e e :b b)))))
+
+(defun lb-ai-reflex (e b s d)
+  "Every form's :reflex (ai.lisp AI-REFLEX, free states): the eye (base), the stance in / out (Jilliel, MUJITTAI),
+Trompete's punish (the owl). A command, :NONE (hands off: the generic guard must not answer), or NIL."
+  (case (kit-form (kit-of e))
+    (:base (lb-ai-eye e b s d))
+    (:jilliel (lb-ai-stance-in e b s d))
+    (:jilliel-mujittai (lb-ai-stance-out e b s d))
+    (:shin (lb-ai-trompete e b s d))))
+
+(defun lb-ai-threat-p (e s d margin)
+  "Is his perceived move S a threat the generic guard reflex would answer: an attack in its main phase with hit frames,
+still to hit and within its reach + MARGIN (an :x-axis line: E on it, in its real window: SNAP-LIVE-P / SNAP-NEAR-P), not
+a parry, a bind's tell or a :reflectable blast (:opp-reflect's)? An aim (the hold) is :opp-aim's."
+  (and (eq (snap-state s) :move) (eq (snap-phase s) :main)
+       (member (snap-kind s) '(:quick :flash :sig :sp :breaker :kikon))
+       (> (snap-active-end s) (snap-s s))
+       (snap-live-p s) (snap-near-p s e d margin)
+       (not (intersection '(:parry :bind :reflectable) (snap-flags s)))))
+
+(defun lb-ai-line-p (s)
+  "Is his perceived move a lane: an :x-axis line or a Kikon module's lane (:params :look :lane)? A Step clears it."
+  (or (snap-x-axis-p s) (and (snap-move s) (eq (getf (mv-params (snap-move s)) :look) :lane))))
+
+(defun lb-ai-side-step (e b s)
+  "A sideways Step off his perceived line (LINE-OFF-STRAFE; anything else: the current strafe)."
+  (when (lb-ai-line-p s)
+    (let ((p (pos-of e)))
+      (setf (brain-strafe b) (f32 (line-off-strafe (snap-x s) (snap-z s) (snap-yaw s) (aref p 0) (aref p 2) (snap-x s) (snap-z s))))))
+  :side-step)
+
+(defun lb-ai-eye (e b s d)
+  "The base form (DUEL_LILLE §11.2, the eye): on a threat (LB-AI-THREAT-P), one roll per window: :eye :p x the difficulty
+with a pip and U rested by the tap (LB-AI-EYE-READY-P): U is let go, then tapped at a perceived lead 1..*LB-AI-EYE-TAP*
+(the sim opens the eye: LB-EYE-STEP); a tap the sim didn't take (the lead seen wrong) turns into a guard. Else a guard
+held from now (its share by AI-GUARD-K), or a sideways Step off a lane / from a Breaker or a Kikon on him red."
+  (when (lb-ai-threat-p e s d *ai-threat-margin*)
+    (let* ((ai (lb-ai-state e b)) (st (lb e)) (g (gauges e)) (lead (- (snap-s s) (snap-sf s) (brain-delay b))))
+      (when (/= (snap-start s) (lbai-key ai))           ; a new window: its one roll
+        (let* ((r (sim-rnd01))
+               (dodge (or (lb-ai-line-p s) (eq (snap-kind s) :breaker) (member :grab (snap-flags s))
+                          (and (eq (snap-kind s) :kikon) (red-p (gauges-reishi g) (gauges-reishi-max g)))))
+               (plan (lb-ai-eye-plan r (lb-ai-chance (getf (ai-table e :eye) :p 0.0) (brain-difficulty b))
+                                     (lb-ai-eye-ready-p lead (lbs-u-up st) (lbs-eyes st)) dodge (ai-guard-k e))))
+          (setf (lbai-key ai) (snap-start s) (lbai-plan ai) plan)
+          (lb-count e (case plan (:eye :ai-eye-plan) (:guard :ai-guard) (t :ai-step)))))
+      (case (lbai-plan ai)
+        (:eye (cond ((and (lb-ai-eye-tap-p lead) (>= (lbs-u-up st) *lb-eye-rest*) (plusp (lbs-eyes st)))
+                     (setf (lbai-plan ai) :tapped (lbai-tap ai) *match-tick*)
+                     (lb-count e :ai-eye-tap)
+                     (ai-press b :guard 2 :act :hold)    ; the tap (LB-EYE-STEP opens it on this step's tick)
+                     (why b :eye :none))
+                    ((> lead *lb-ai-eye-tap*)            ; not yet: hands off U (it must rest)
+                     (when (eq (brain-press b) :guard) (setf (brain-press-left b) 0))
+                     (why b :eye-wait :none))
+                    (t (setf (lbai-plan ai) :guard) (why b :eye-late :guard))))
+        (:tapped (if (>= (lbs-eye-t st) (lbai-tap ai))
+                     (why b :eye-open :none)              ; intangible: nothing to do till it passes
+                     (progn (setf (lbai-plan ai) :guard) (lb-count e :ai-eye-miss) (why b :eye-miss :guard))))
+        (:guard (why b :eye-guard :guard))
+        (:step (setf (lbai-plan ai) :stepped) (why b :eye-step (lb-ai-side-step e b s)))
+        (t (why b :eye-stepped :none))))))
+
+(defun lb-ai-hazard-key (e lead)
+  "One of his opponent's hazards about to hit E within LEAD frames: a wave / fireball flying at him (INCOMING-HAZARD-IN's
+test), or a delayed one under him (a pillar, a line) whose delay is at most LEAD; its key (-2 - its spawn tick), or NIL."
+  (let* ((o (opp-of e)) (q (pos-of e)) (b (model-body (model e))) (key nil))
+    (do-entities (h (hz hazard))
+      (when (and (null key) (eql (hazard-owner hz) o) (hazard-hw hz) (> (hazard-hits-left hz) 0)
+                 (if (and (member (hazard-kind hz) '(:wave :fireball)) (<= (hazard-delay hz) 0) (> (hazard-speed hz) 0.1))
+                     (let ((dist (sqrt (+ (expt (- (aref q 0) (hazard-x hz)) 2) (expt (- (aref q 2) (hazard-z hz)) 2)))))
+                       (<= (/ (* 60 (max 0.0 (- dist 1.0))) (hazard-speed hz)) lead))
+                     (and (< 0 (hazard-delay hz) (1+ lead))
+                          (hazard-touches-p hz (aref q 0) (aref q 1) (aref q 2) (body-hurt-r b) (body-hurt-h b)))))
+        (setf key (- -2 (- *match-tick* (hazard-age hz))))))
+    key))
+
+(defun lb-ai-stance-in (e b s d)
+  "Jilliel (DUEL_LILLE §11.2, the stance): a move of his starting within its reach + 1 m (an :x-axis line: E on it), not a
+Breaker / grab (it lands on the stance: the generic answers it), or a hazard of his within 12 f: one roll per window,
+:stance :p x the difficulty (0 with the guard gauge under :gg: the stance would be left at once): U (MUJITTAI, the kit's
+:guard-to). Else a sideways Step off a lane, or a Hoho on the generic Hoho roll (the generic chance, his move >= 6 f
+out), or nothing: the generic guard would enter the stance, so the window is his (:NONE), as is a move only within the
+generic guard's wider margin. (It can't catch a J1: the perception delay + the 2 f raise exceed J1's startup, §5.5.)"
+  (let* ((solid (not (or (eq (snap-kind s) :breaker) (member :grab (snap-flags s)))))
+         (mv-threat (and solid (lb-ai-threat-p e s d 1.0)))
+         (key (if mv-threat (snap-start s) (lb-ai-hazard-key e 12))))
+    (if (null key)
+        (and solid (lb-ai-threat-p e s d *ai-threat-margin*) (why b :stance-out-of-reach :none))   ; (the generic guard's
+                                                                                                     ; wider margin: no)
+      (let ((ai (lb-ai-state e b)) (k (ai-table e :stance)) (g (gauges e)) (f (fighter e)))
+        (when (/= key (lbai-key ai))
+          (setf (lbai-key ai) key
+                (lbai-plan ai) (lb-ai-stance-plan (sim-rnd01)
+                                                  (if (or (gauges-guardless g) (< (gauges-gg g) (getf k :gg 30))) 0.0   ; (it
+                                                      (lb-ai-chance (getf k :p 0.0) (brain-difficulty b)))   ; would drop at once)
+                                                  (and mv-threat (lb-ai-line-p s))))
+          (lb-count e (case (lbai-plan ai) (:stance :ai-stance) (:step :ai-step) (t :ai-pass))))
+        (case (lbai-plan ai)
+          (:stance (setf (lbai-plan ai) :done) (ai-press b :guard 4 :act :hold) (why b :stance :none))
+          (:step (setf (lbai-plan ai) :done) (why b :stance-step (lb-ai-side-step e b s)))
+          (:pass (setf (lbai-plan ai) :done)
+                 (if (and mv-threat (>= (- (snap-s s) (snap-sf s)) 6)
+                          (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))
+                          (ai-hoho-spare-p (gauges-fs g) (gauges-reishi g) (gauges-reishi-max g))
+                          (< (brain-hoho-roll b) (ai-table e :hoho 0.2)))
+                     (why b :stance-hoho :hoho)
+                     (why b :stance-pass :none)))
+          (t (why b :stance-pass :none)))))))
+
+(defun lb-ai-opp-reach (e)
+  "His longest J / K reach (his current kit): what 'in reach' means for the stance's idle rule."
+  (let ((kit (kit-of (opp-of e))))
+    (loop for c in '(:q :f) for mv = (kit-command-move kit c) maximize (if mv (mv-reach mv) 0.0))))
+
+(defun lb-ai-busy-p (s delay frames)
+  "Is he, as perceived, recovering (his move past its active frames) or reeling, with at least FRAMES of it left after
+DELAY? (FRAMES 0: just busy.)"
+  (and (< (snap-left s) 99)
+       (or (eq (snap-state s) :stun)
+           (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s))))
+       (>= (- (snap-left s) delay) frames)))
+
+(defun lb-ai-exit-cmd (e b s d)
+  "The attack that ends MUJITTAI: K1 when he stays busy for its startup within its reach, J1 within its, else the volley."
+  (let* ((kit (kit-of e)) (q (kit-command-move kit :q)) (fm (kit-command-move kit :f)))
+    (cond ((and fm (<= d (+ (mv-reach fm) 0.2)) (lb-ai-busy-p s (brain-delay b) (mv-s fm)) (kit-command-ok-p e :f)) :f)
+          ((and q (<= d (+ (mv-reach q) 0.2)) (kit-command-ok-p e :q)) :q)
+          ((and fm (<= d (+ (mv-reach fm) 0.2)) (kit-command-ok-p e :f)) :f)
+          ((kit-command-ok-p e :sig) :sig)
+          ((kit-command-ok-p e :q) :q))))
+
+(defun lb-ai-stance-out (e b s d)
+  "MUJITTAI (DUEL_LILLE §11.2): he leaves the stance only by attacking (every attack drops it): on his whiff or recovery
+(as perceived), after :max frames in it, with the guard gauge under :gg, or with him out of reach (+ 1 m) and idle (no
+turtling); the whiff and the idle rule wait while a hazard of his is still coming (LB-AI-HAZARD-KEY). Deterministic rules
+on what it sees, no roll."
+  (let* ((k (ai-table e :stance)) (st (lb e)) (calm (not (lb-ai-hazard-key e 12)))   ; (none of his hazards coming)
+         (why (lb-stance-exit (and calm (lb-ai-busy-p s (brain-delay b) 0)) (lbs-stance st) (getf k :max 180)
+                              (gauges-gg (gauges e)) (getf k :gg 30)
+                              (and calm (member (snap-state s) '(:idle :guard)) (> d (+ (lb-ai-opp-reach e) 1.0))))))
+    (when why
+      (let ((cmd (lb-ai-exit-cmd e b s d)) (ai (lb-ai-state e b)) (t0 (- *match-tick* (lbs-stance st))))
+        (when cmd
+          (when (/= (lbai-exit ai) t0)
+            (setf (lbai-exit ai) t0)
+            (lb-count e (case why (:whiff :ai-exit-whiff) (:max :ai-exit-max) (:gauge :ai-exit-gauge) (t :ai-exit-idle))))
+          (why b :stance-exit cmd))))))
+
+(defun lb-ai-trompete (e b s d)
+  "The owl (DUEL_LILLE §11.2, Trompete): SP2 as a punish, beyond J's reach (the generic punish has it) and within the beam's
+30 m, on him recovering or reeling for :left more frames (as perceived), one roll per his action (the react roll) at :p x
+the difficulty. The neutral bands give SP2 only from 8 m: never into an idle opponent closer."
+  (let ((k (ai-table e :trompete)) (q (kit-command-move (kit-of e) :q)))
+    (and k q (> d (+ (mv-reach q) 0.4)) (<= d 30.0) (kit-command-ok-p e :sp2)
+         (lb-ai-busy-p s (brain-delay b) (getf k :left 30))
+         (< (brain-react-roll b) (lb-ai-chance (getf k :p 0.0) (brain-difficulty b)))
+         (progn (lb-count e :ai-trompete) (why b :trompete :sp2)))))
+
+(defun lb-ai-lateral (e b)
+  "The opponent's speed across E's line to him (m/s), as E's CPU perceives him: two SNAPs *LB-AI-LAT-SPAN* steps apart
+(BRAIN-PERCEIVE's ring; 0 before it holds them)."
+  (let* ((ring (brain-ring b)) (n (length ring)) (h (brain-head b)) (k *lb-ai-lat-span*)
+         (s1 (svref ring (mod (- h 1 (brain-delay b)) n))) (s0 (svref ring (mod (- h 1 (brain-delay b) k) n))))
+    (if (and s1 s0 (< (+ 1 (brain-delay b) k) n))
+        (let* ((p (pos-of e)) (ux (- (snap-x s1) (aref p 0))) (uz (- (snap-z s1) (aref p 2)))
+               (len (sqrt (+ (* ux ux) (* uz uz)))) (vx (- (snap-x s1) (snap-x s0))) (vz (- (snap-z s1) (snap-z s0))))
+          (if (< len 0.01) 0.0 (* (/ 60.0 k) (/ (abs (- (* ux vz) (* uz vx))) len))))
+        0.0)))
+
 (defun lb-aim-hold-ai (kit d &optional e)
-  "Frames his CPU holds L (an aimed move): to a fire frame lock + 10 .. lock + 30 (the release, LB-FIRE-FRAME), rolled
-once at the press (DUEL_LILLE §11.2: 34 + 10..30 for the shot). TODO batch 2: nearer 10 against a still opponent, nearer
-30 against a strafer (his lateral speed read at the press)."
-  (declare (ignore d e))
-  (let* ((mv (kit-command-move kit :sig)) (lock (or (getf (mv-params mv) :lock) *lb-lock*)))
-    (+ (- (+ lock *lb-lock-min*) *lb-x-delay*) (floor (* 21 (sim-rnd01))))))
+  "His kit's :sig-hold (ai.lisp AI-COMMAND): frames his CPU holds L (an aimed move: the shot, the volley) so it fires
+LB-AIM-EXTRA (10..30) frames after the lock (LB-FIRE-FRAME: the hold's lo is lock + 10): the opponent's lateral speed read
+once, here at the press (LB-AI-LATERAL), one roll (DUEL_LILLE §11.2: 34 + 10..30 for the shot; HARD near lock + 10
+against a still opponent, near 30 against a strafer)."
+  (declare (ignore d))
+  (let* ((mv (kit-command-move kit :sig)) (lock (or (getf (mv-params mv) :lock) *lb-lock*))
+         (b (and e (ai-brain e))) (r (sim-rnd01)) (lat (if b (lb-ai-lateral e b) 0.0)))
+    (when e (lb-count e (if (>= lat (* 0.5 *lb-ai-strafe*)) :ai-aim-strafer :ai-aim-still)))   ; (the pacing log)
+    (+ (- (+ lock *lb-lock-min*) *lb-x-delay*)
+       (- (lb-aim-extra lat r (if b (brain-difficulty b) :normal)) *lb-lock-min*))))
 
 ;;; ================================================================ debug: tests, the pacing log (debug.lisp dispatches)
 (defun lille-acc-reset () (dolist (st (coerce *lb* 'list)) (setf (lbs-acc st) nil)))

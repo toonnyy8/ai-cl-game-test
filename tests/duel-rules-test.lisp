@@ -1930,6 +1930,42 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (eq (kit-awaken-form b) :jilliel) (equal (getf (getf (kit-ai j) :bankai) :own-konpaku) 1)
               (every (lambda (k) (eq :kikon (mv-kind (kit-command-move k :kikon)))) (list b j o)))))
 
+;;; ---------------------------------------------------------------- Lille's own CPU (DUEL_LILLE §11.2; batch 3a)
+(let ((b (kit :lille :base)) (j (kit :lille :jilliel)) (mu (kit :lille :jilliel-mujittai)) (o (kit :lille :shin)))
+  ;; every chance x difficulty, EASY <= NORMAL <= HARD, at most 1: the eye 0.25 / 0.5 / 0.75
+  (check (and (~= (lb-ai-chance 0.5 :easy) 0.25) (~= (lb-ai-chance 0.5 :normal) 0.5) (~= (lb-ai-chance 0.5 :hard) 0.75)
+              (~= (lb-ai-chance 0.8 :hard) 1.0)
+              (every (lambda (p) (<= (lb-ai-chance p :easy) (lb-ai-chance p :normal) (lb-ai-chance p :hard))) '(0.0 0.3 0.6 0.9))))
+  ;; the kits' keys: the eye (base), the stance (Jilliel and the stance itself), Trompete (the owl); one :reflex
+  (check (and (every (lambda (k) (eq (getf (kit-ai k) :reflex) 'lb-ai-reflex)) (list b j mu o))
+              (~= (getf (getf (kit-ai b) :eye) :p) 0.5) (equal (getf (kit-ai j) :stance) '(:p 0.6 :max 180 :gg 30))
+              (equal (getf (kit-ai mu) :stance) (getf (kit-ai j) :stance)) (getf (kit-ai o) :trompete)
+              (null (getf (kit-ai b) :stance)) (null (getf (kit-ai j) :eye))))
+  ;; the eye's plan: a pip, the threat not on him yet, U rested *LB-EYE-REST* by the tap (let go until lead 4)
+  (check (and (lb-ai-eye-ready-p 4 10 1) (not (lb-ai-eye-ready-p 4 9 1)) (lb-ai-eye-ready-p 14 0 1) (not (lb-ai-eye-ready-p 13 0 1))
+              (not (lb-ai-eye-ready-p 20 30 0)) (not (lb-ai-eye-ready-p 0 30 3)) (lb-ai-eye-ready-p 1 30 3)))
+  (check (and (lb-ai-eye-tap-p 1) (lb-ai-eye-tap-p 4) (not (lb-ai-eye-tap-p 5)) (not (lb-ai-eye-tap-p 0))
+              (<= *lb-ai-eye-tap* *lb-eye-lead*)))
+  ;; one roll R per window: the eye under P (ready), else a Step off a lane / from a Breaker, else a guard by the gauge
+  (check (and (eq :eye (lb-ai-eye-plan 0.1 0.5 t nil 1.0)) (eq :guard (lb-ai-eye-plan 0.1 0.5 nil nil 1.0))
+              (eq :guard (lb-ai-eye-plan 0.7 0.5 t nil 1.0)) (eq :step (lb-ai-eye-plan 0.7 0.5 t t 1.0))
+              (eq :eye (lb-ai-eye-plan 0.1 0.5 t t 1.0)) (eq :step (lb-ai-eye-plan 0.9 0.5 t nil 0.5))
+              (eq :guard (lb-ai-eye-plan 0.6 0.5 t nil 0.5)) (eq :step (lb-ai-eye-plan 0.3 0.5 nil nil 0.0))
+              (eq :guard (lb-ai-eye-plan 0.99 1.0 nil nil 1.0))))
+  (check (and (eq :stance (lb-ai-stance-plan 0.5 0.6 nil)) (eq :step (lb-ai-stance-plan 0.7 0.6 t))
+              (eq :pass (lb-ai-stance-plan 0.7 0.6 nil))))
+  ;; the stance is left by attacking: his whiff first, then :max, the gauge, him idle out of reach; else stay
+  (check (and (eq :whiff (lb-stance-exit t 0 180 100.0 30 t)) (eq :max (lb-stance-exit nil 180 180 100.0 30 t))
+              (null (lb-stance-exit nil 179 180 30.0 30 nil)) (eq :gauge (lb-stance-exit nil 0 180 29.0 30 nil))
+              (eq :idle (lb-stance-exit nil 0 180 100.0 30 t))))
+  ;; the aim's fire frame after the lock: 10..30; a still opponent near 10 (HARD 10..12), a strafer near 30; wider at EASY
+  (check (and (loop for r in '(0.0 0.25 0.5 0.75 0.999) always
+                (and (loop for lat in '(0.0 1.0 2.0 3.0 9.0) always
+                       (loop for dif in '(:easy :normal :hard) always (<= 10 (lb-aim-extra lat r dif) 30)))
+                     (<= (lb-aim-extra 0.0 r :hard) 13) (>= (lb-aim-extra 3.0 r :hard) 27)))
+              (= 10 (lb-aim-extra 0.0 0.0 :easy)) (= 30 (lb-aim-extra 3.0 0.999 :easy)) (= 20 (lb-aim-extra 1.5 0.5 :normal))
+              (< (lb-aim-extra 0.5 0.5 :hard) (lb-aim-extra 2.5 0.5 :hard)))))
+
 ;; no character names in the generic files (design-v1 §12)
 (dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow" "endless-rules" "endless"))
   (with-open-file (in (merge-pathnames (format nil "../duel/lisp/~a.lisp" f) *load-truename*))

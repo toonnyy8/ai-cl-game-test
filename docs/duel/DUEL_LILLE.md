@@ -768,3 +768,78 @@ The pacing log per side and match (70 sides): every side awakened, 60 of 70 ende
 at 1 Konpaku then loses), the eye opened 1.8 times, the stance ~1230 frames a match (~20 s) with ~5 passes, ~2.3 aimed
 shots fired and ~2.7 volleys. He loses most of his pairings: the tuning (§13 "too little") and his own reflexes are batches
 3–4.
+
+## 19. Built: the CPU (batch 3a, 2026-10-06)
+
+His own reflexes (§11.2) are in `duel/lisp/lille.lisp`'s AI section: one kit `:reflex`, `lb-ai-reflex`, on all four forms,
+dispatching on the form, plus the `:sig-hold` `lb-aim-hold-ai`. No shared file changed. Every chance is the kit's `:p` ×
+`*lb-ai-diff*` (EASY 0.5 / NORMAL 1.0 / HARD 1.5, capped at 1), so EASY ≤ NORMAL ≤ HARD. Every roll is made once per
+event: per threatening window (`lbai-key`: his move's start tick, or a hazard's spawn tick) or per opponent action (the
+generic react roll). Every lead is the perceived one, `snap-s − snap-sf − delay`.
+
+- **The eye** (base, `lb-ai-eye`; `:eye (:p 0.5)`). It takes over from the generic guard reflex. On a threat the generic
+  test would answer (`lb-ai-threat-p`: an attack in its main phase, live, within reach + 1.5 m, or on an `:x-axis` line;
+  not a parry, a bind or a `:reflectable` blast; an aim stays `:opp-aim`'s), it makes one roll (`lb-ai-eye-plan`):
+  - **the eye**, if r < p and it can still be made (`lb-ai-eye-ready-p`: a pip, lead ≥ 1, and U rested 10 f by the
+    tap). U is let go, then **tapped** (a 2 f press) at a perceived lead of 1–4 f (`*lb-ai-eye-tap*`, inside the sim's
+    8). A tap the sim did not take turns into a guard.
+  - otherwise, a **Step** off a lane (an `:x-axis` line or a `:look :lane` Kikon module), from a Breaker / grab, or from
+    a Kikon while he is red;
+  - otherwise, a **guard** held while the threat lives, with `ai-guard-k`'s share of the roll. A low gauge Steps instead,
+    as the generic does.
+  The third opening gives EVOLUTION; P then follows the generic `:awaken` rule.
+- **The stance** (Jilliel, `lb-ai-stance-in`; `:stance (:p 0.6 :max 180 :gg 30)`). It triggers on a move starting within
+  reach + 1 m (not a Breaker or a grab, which land on it; those stay generic), or on one of his hazards within 12 f (a
+  wave or fireball by its flight time, a delayed one under him). One roll: U (p 0 when the gauge is under `:gg`);
+  otherwise a Step off a lane, a Hoho on the generic Hoho roll, or nothing. It never falls through to the generic guard,
+  which would enter the stance. `:neutral-guard 0.0` on Jilliel's table keeps the neutral decision from entering it too
+  (§2: "only as a reaction"; the `:defend` intent's +0.2 remains).
+- **Leaving MUJITTAI** (`lb-ai-stance-out`; deterministic, `lb-stance-exit`). It leaves by attacking (K1 if he stays
+  busy for its startup, else J1 in reach, else the volley) when any of these holds:
+  - he whiffs or recovers, or is reeling;
+  - after `:max` 180 f;
+  - the gauge is under 30;
+  - he is out of his J / K reach + 1 m and idle.
+  The whiff and idle rules wait while one of his hazards is still coming.
+- **Trompete** (the owl, `lb-ai-trompete`; `:trompete (:p 0.5 :left 30)`): SP2 as a punish from beyond J's reach, when he
+  stays recovering or reeling ≥ 30 more frames (perceived), on the react roll. The neutral bands give SP2 only from 8 m.
+- **The aim** (`lb-aim-hold-ai`, `lb-aim-extra`): it fires 10–30 f after the lock. The opponent's lateral speed is read
+  once at the press, from two perceived snaps 6 steps apart (`lb-ai-lateral`). The fire frame is centred at lock + 10
+  for a still opponent and lock + 30 for one strafing ≥ 3 m/s; the roll spreads it by ±10 × (EASY 1.0 / NORMAL 0.6 /
+  HARD 0.25). In 10 seeds of his six pairings, 225 presses read a strafer and 870 a still opponent.
+- **Revive**: the generic `:bankai` reflex fires, needing no change (below).
+- Host tests: `lb-ai-chance`, `lb-ai-eye-ready-p`, `lb-ai-eye-tap-p`, `lb-ai-eye-plan`, `lb-ai-stance-plan`,
+  `lb-stance-exit`, `lb-aim-extra`, and the kits' keys (duel-rules 5722 checks ALL PASS). New pacing counters on the
+  `duel lille` line: `ai-eye-plan`, `ai-eye-tap`, `ai-eye-miss`, `ai-guard`, `ai-step`, `ai-stance`, `ai-pass`,
+  `ai-exit-{whiff,max,gauge,idle}`, `ai-trompete`, `ai-aim-{strafer,still}`.
+
+**Gates** (NORMAL, untuned: balance is batch 4):
+- **Inert**: `simgate.py --seeds 10`'s fifteen old pairings (390 rows and companion lines, 30 summary lines) are
+  byte-identical to f7be712.
+- `--cvc` PASS (yy / yk / kk).
+- pkgcheck 0 / 0 / 0.
+- Host tests duel-rules, duel-control and learn ALL PASS.
+- `./build.sh duel` succeeds.
+
+His six pairings, seeds 1–20 (every match a K.O.):
+
+| Pairing | Before (f7be712): median, Lille wins | After |
+|---|---|---|
+| LY | 148.6 s, 4 / 20 | 162.3 s, 4 / 20 |
+| LK | 158.0 s, 2 / 20 | 166.5 s, 2 / 20 |
+| LR | 154.9 s, 2 / 20 | 161.9 s, 1 / 20 |
+| LI | 182.6 s, 4 / 20 | 180.1 s, 5 / 20 |
+| LS | 170.2 s, 1 / 20 | 166.0 s, 4 / 20 |
+| LL | 241.8 s, P1 12 / 8 | 237.3 s, P1 11 / 9 (a mirror) |
+
+Pacing per Lille side and match, before → after (the five cross pairings; the mirror in brackets):
+- **Eye openings**: 1.9–2.2 → 2.2–2.7 (2.2). Of these, 0.4–0.9 are the planned taps; a tap the sim missed is 0.1 at
+  most. The third opening's EVOLUTION came in 3–13 of 20 matches before, 10–17 of 20 after.
+- **The stance**: 667–1383 → 328–564 frames a match (1766 → 400); the longest stance 233–339 → 93–140 f (327 → 61).
+  - Exits per match: whiff 8–11 (17), idle 0.8–1.4, gauge 0.1–0.9, max 0.1–0.3 (0.0).
+  - Entries by the reflex: 2.3–3.7. The other stances mostly follow his own hits: the generic guard cancel holds U
+    through his recovery, and the whiff rule ends them on the victim's stun.
+- **Revive**: 15–20 / 20 → 17–19 / 20 sides (36 / 40); all but 0–3 BEHEADED sides per pairing revive.
+- **Trompete**: fired 0.1–0.2 a match before and after; reflected by a guard 0.1–0.2. The punish reflex almost never
+  finds a 30 f opening beyond J's reach. The owl lives briefly at 1 Konpaku, and its two bars are rarely there.
+- **Aims (shots + volleys)**: 2.5–4.7 → 6.3–12.4 (12.4 → 24.1). The stance's exits fire volleys.
