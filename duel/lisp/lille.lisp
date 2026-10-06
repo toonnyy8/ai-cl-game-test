@@ -65,6 +65,10 @@ before, the quick shot (*LB-X-MIN* flat) (rework R, 2026-10-06; decision 17).")
 (defparameter *lb-kamae-dash-fs* 10.0 "... its flash-step price, once per stance (rework R, 2026-10-06).")
 ;; the stance's J / K after the second playtest (§23.1, decisions 21, 22; 「L 射擊架勢接 J 改成向前跳飛並在空中射出連射三發短程子彈
 ;; （擊中後可與 j/k 串成 combo）；接 K 則會向後拉開距離打出一發中程子彈」)
+(defparameter *lb-jilliel-lift* 0.5
+  "Jilliel (EN, KIN and their stances) is drawn this many metres up in every clip (kit :lift; a look). His own clips
+were posed at root :u 0.5 and the shared walk / run / step / reaction clips at 0, so he sank 0.5 m whenever he moved (the
+user, 2026-10-06: 「覺醒狀態移動的時候整個角色很明顯下沉，請修改回正常高度」); the float moved out of his clips to here.")
 (defparameter *lb-hosha-leap* 5.0
   "J 跳射 HOSHA: the forward leap, metres over its frames 0-14 (*LB-HOSHA-LEAP-F*); it stops *LUNGE-STOP* short of him
 (round 2, 2026-10-06: 3.0; the user's third playtest 2026-10-06 「L > J 前跳距離加長&射程縮短」: 3.0 -> 5.0; REIKYORI's 2.0 m
@@ -423,7 +427,7 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
 ;; 神の裁き JILLIEL, 遠 EN (the awakening enters it; floating, as built): J / K / SP1 walk and lay traces, SP2 a thick one,
 ;; L TENSHIN (to KIN), U MUJITTAI, P the revival (decision 16)
 (defkit :lille :jilliel :inherit :base
-  :awakening t :form-name "JILLIEL" :walk *walk-jilliel* :run *run-jilliel* :mult *jilliel-mult* :taken *jilliel-taken*
+  :lift *lb-jilliel-lift* :awakening t :form-name "JILLIEL" :walk *walk-jilliel* :run *run-jilliel* :mult *jilliel-mult* :taken *jilliel-taken*
   :kikon-konpaku 3 :guard-to :jilliel-mujittai :gg-regen *jilliel-gg-regen* :bankai-form :shin :bankai-ok lille-bankai-ok
   :l-after-k nil
   :endless-form :jilliel                        ; ENDLESS: the stances, KIN and the owl stay as JILLIEL (never the owl)
@@ -466,7 +470,7 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
 
 ;; the owl (P with <= 4 Konpaku in any Jilliel form, Kenpachi's Bankai path: Konpaku -> 1, Reishi full; decisions 15, 16)
 (defkit :lille :shin :inherit :base
-  :awakening t :form-name "SHIN" :walk *walk-shin* :run *run-shin* :mult *shin-mult* :taken *shin-taken* :kikon-konpaku 4
+  :lift 0.0 :awakening t :form-name "SHIN" :walk *walk-shin* :run *run-shin* :mult *shin-mult* :taken *shin-taken* :kikon-konpaku 4
   :body :lille-shin :weapon nil :stance :lb-o-stance :cine lb-revive-cine :l-after-k nil :swing-sfx :whoosh-heavy
   :bankai-form nil :bankai-ok nil
   :endless-form :jilliel

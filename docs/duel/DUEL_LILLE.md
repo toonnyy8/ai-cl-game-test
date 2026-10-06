@@ -176,6 +176,8 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
   都換成半透明嗎？然後每片翅膀改成中間加 2 節可以彎折的連接觸，讓整體動作與攻擊動畫不會太死板。」): the opaque rim, teeth and
   hole rings go see-through as well; each blade becomes three segments joined at two bending joints, so the idle, the
   folds and the strikes curl and whip instead of swinging as rigid planks. §23.8.
+- **33. Jilliel no longer sinks when he moves** (the user, 2026-10-06: 「還有覺醒狀態移動的時候整個角色很明顯下沉，請修改回正常
+  高度」). §23.10.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -1631,4 +1633,18 @@ The second, cosmetic pair §23.5 added (`%LB-ARMS2`, the `:lb-limb` / `:lb-claw`
     overshoot in recovery); **at the active frames the striking wing's tip is still the rig's hand** (the host FK reach
     test keeps passing, ±0.15 m);
   - folds (MUJITTAI) curl round the column; SP spreads unfurl from the root.
+
+### 23.10 Decision 33: the float is the form's, not the clip's (2026-10-06)
+
+Cause: Jilliel's float (0.5 m) lived in his own clips (`:lb-w-stance` root `:u 0.5` and every `:lb-w-*` key), but walking,
+strafing, running, steps, the Hoho and the hit reactions play the shared `:sh-*` clips at root 0, so he dropped 0.5 m
+whenever he moved (KIN's legs shrank to their floor). Fix:
+- a generic kit key **`:lift`** (metres; kit.lisp, default 0): main.lisp `BODY-LIFT` draws the body that much higher in
+  every clip **while it wears the form's own `:body`** (an awakening cinematic still showing the base body stays on the
+  ground). A look only: the sim, the hurt cylinder and the hit volumes never read it.
+- Jilliel's kit `:lift *lb-jilliel-lift*` **0.5** (KIN and both MUJITTAI inherit it), the owl `:lift 0.0`; every
+  `:lb-w-*` pose / key and the TENSHIN clips rebased by −0.5 (`:u 0.5` → 0, 0.53 → 0.03 …), so his own clips look as
+  before and the shared ones float too.
+- The revival cinematic runs in the owl form (no lift): its first 30 f (the beheaded column, `:lb-w-fold`) sit 0.5 m
+  lower than before, then `:lb-rise` lifts it as before.
 

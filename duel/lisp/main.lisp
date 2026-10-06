@@ -218,6 +218,11 @@ once, on the draw that first sees the frame (MODEL-LAST-SF)."
                                (zerop (mod (- now (mv-s mv)) 10)))
                       (start-ghost e)))))))
 
+(defun body-lift (kit b)
+  "The drawn height of KIT's :lift for body B: the lift while B is the form's own body (a cinematic that still shows the
+form before, e.g. an awakening's first beats, stands on the ground)."
+  (let ((h (kit-lift kit))) (if (and (/= h 0) (kit-body kit) (eq b (find-body (kit-body kit)))) h 0.0)))
+
 (defun draw-fighter (e rdt)
   "Pose and queue fighter E: body, weapon (or the planted one), blade look, aura, trail. RDT = this
 frame's effect seconds (0 while paused). A Kikon rush module's look (its :look): :flash-step shows only
@@ -227,7 +232,7 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
          (look (and mv (eq (mv-kind mv) :kikon) (getf (mv-params mv) :look)))
          (flashing (and (eq look :flash-step) (rush-dashing-p f)))   ; the flash step: afterimages only
          (planted (and mv (mv-planted mv) (eq (fighter-phase f) :main)))
-         (weapon (if (or planted flashing) nil (model-weapon m))) (x (aref p 0)) (y (+ (aref p 1) (rush-lift f mv))) (z (aref p 2)))
+         (weapon (if (or planted flashing) nil (model-weapon m))) (x (aref p 0)) (y (+ (aref p 1) (rush-lift f mv) (body-lift kit b))) (z (aref p 2)))
     (setf (model-flash m) (f32 (max 0.0 (- (model-flash m) rdt))) (model-super m) (f32 (max 0.0 (- (model-super m) rdt))))
     (let ((pose (if (> (model-hold m) 0) (anim-pose (model-anim m)) (anim-eval (model-anim m)))))
       (pose-fk! (model-joints m) (if (> (model-beat m) 0f0) (beat-pose! pose (model-beat m)) pose)

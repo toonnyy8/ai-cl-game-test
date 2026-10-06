@@ -238,6 +238,7 @@ new button."
   (awakening nil) (awaken-form nil) (duration nil) (burn 0.0)
   (mult 1.0) (taken 1.0) (guard-to nil) (drop-to nil) (keep nil) (cornered 0.0) (cornered-max 0.0) (passives nil) (blade-chip nil)
   (walk 3.0) (run 8.0) (run-clips '(:sh-run :sh-skate-b :sh-slide-r :sh-slide-l)) (reishi *reishi-max*) (body nil) (weapon nil) (stance nil) (hide nil) (aura nil)
+  (lift 0.0)
   (intro nil) (win nil) (intro-callout nil) (intro-weapon nil) (callout nil)
   (swing-sfx nil) (absorb-sfx nil)
   (enter-clips nil) (enter-hook nil) (exit-hook nil)
@@ -372,7 +373,7 @@ Cornered with LOST Konpaku."
     (destructuring-bind (&key inherit name awakening awaken-form duration (burn 0.0) (mult 1.0) (taken 1.0) guard-to drop-to keep
                            (cornered 0.0) (cornered-max 0.0) passives blade-chip (walk 3.0) (run 8.0)
                            (run-clips '(:sh-run :sh-skate-b :sh-slide-r :sh-slide-l)) (reishi *reishi-max*)
-                           body weapon stance hide aura intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
+                           body weapon stance hide aura (lift 0.0) intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
                            enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
                            kikon-konpaku meter-gain form-name drink-clip respect-callout bankai-form bankai-ok pips
                            crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k l-after-j calm hooks endless-form
@@ -382,7 +383,7 @@ Cornered with LOST Konpaku."
       (let ((kit (make-kit :character character :form form :inherit inherit :name name
                            :awakening awakening :awaken-form awaken-form :duration duration :burn burn
                            :mult mult :taken taken :guard-to guard-to :drop-to drop-to :keep keep :cornered cornered :cornered-max cornered-max
-                           :passives passives :blade-chip blade-chip :walk walk :run run :run-clips run-clips :reishi reishi :body body
+                           :passives passives :blade-chip blade-chip :walk walk :run run :run-clips run-clips :reishi reishi :body body :lift lift
                            :weapon weapon :stance stance :hide hide :aura aura :intro intro :win win
                            :intro-callout intro-callout :intro-weapon intro-weapon :callout callout
                            :swing-sfx swing-sfx :absorb-sfx absorb-sfx
@@ -421,6 +422,8 @@ Cornered with LOST Konpaku."
 child's keys win, :commands merge per command, :strings add. Keys:
   :name :body :weapon :stance :hide (body part tags hidden) :aura  look (art agent's names)
   :walk :run :reishi                 stats (walk / run speed m/s)
+  :lift M                           the body drawn M metres up in every clip while it wears the form's :body (a floating
+                                     form: main.lisp BODY-LIFT; a look only, the sim stays on the ground), default 0
   :run-clips (fwd back right left)  the run's clips (he faces the opponent: forward run, back-skate, side
                                      slides; body.lisp DEFRUN), default the shared :sh-* set
   :commands (:q m :f m :sig m :sp1 m :sp2 m :breaker m :kikon m)   see *KIT-COMMANDS*
