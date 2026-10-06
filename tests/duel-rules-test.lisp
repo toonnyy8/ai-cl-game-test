@@ -2160,6 +2160,22 @@ defender's next step. Values: the attacker's and the defender's first actionable
   (check (and (rest (lb-trace-fans :k)) (null (rest (lb-trace-fans :j))) (null (rest (lb-trace-fans :sp1))))))
 
 ;;; ---------------------------------------------------------------- Lille's own CPU (DUEL_LILLE §11.2, §22; batch 3a, rework R)
+;; frozen (the shared hooks and what a CPU facing him reads; DUEL_LILLE §24.2): one :reflex, LB-AI-REFLEX, on every form;
+;; the traces' key for a CPU facing EN (:opp-reflex LB-OPP-TRACE, :opp-trace :p 0.5), none on KIN or the base form; no aim
+;; keys (:opp-aim)
+(let ((forms (mapcar (lambda (f) (kit :lille f)) '(:base :jilliel :jilliel-mujittai :jilliel-kin :jilliel-kin-mujittai
+                                                   :shin :shin-mujittai :shin-kin :shin-kin-mujittai))))
+  (check (and (every (lambda (k) (eq (getf (kit-ai k) :reflex) 'lb-ai-reflex)) forms)
+              (every (lambda (k) (null (getf (kit-ai k) :opp-aim))) forms)
+              (eq (getf (kit-ai (kit :lille :jilliel)) :opp-reflex) 'lb-opp-trace)
+              (eq (getf (kit-ai (kit :lille :jilliel-mujittai)) :opp-reflex) 'lb-opp-trace)
+              (~= 0.5 (getf (getf (kit-ai (kit :lille :jilliel)) :opp-trace) :p))
+              (null (getf (kit-ai (kit :lille :jilliel-kin)) :opp-reflex)) (null (getf (kit-ai (kit :lille :base)) :opp-reflex)))))
+
+;;; >>> BEGIN LILLE-CPU-TESTS: the checks of his own CPU's shipped values and pure LB-AI-* functions. A dream-rsi cell
+;;; (docs/research/lille-ai-drsi, DUEL_LILLE §24.2) may deliver this file and rescore.sh splices ONLY the lines between
+;;; these two markers into the frozen test: they must still pin the cell's own shipped values; everything outside them
+;;; (shared behaviour, rules, hooks, the other characters) stays frozen.
 (let ((b (kit :lille :base)) (j (kit :lille :jilliel)) (mu (kit :lille :jilliel-mujittai)) (o (kit :lille :shin-kin))
       (kn (kit :lille :jilliel-kin)) (kmu (kit :lille :jilliel-kin-mujittai)))
   ;; every chance x difficulty, EASY <= NORMAL <= HARD, at most 1: the eye 0.25 / 0.5 / 0.75
@@ -2167,7 +2183,8 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (~= (lb-ai-chance 0.8 :hard) 1.0)
               (every (lambda (p) (<= (lb-ai-chance p :easy) (lb-ai-chance p :normal) (lb-ai-chance p :hard))) '(0.0 0.3 0.6 0.9))))
   ;; the kits' keys: the eye (base), the stance (Jilliel's four), the switch (EN in, KIN out), Trompete (the owl); one
-  ;; :reflex; the traces' key for a CPU facing EN (:opp-reflex LB-OPP-TRACE, :opp-trace); no aim keys left
+  ;; :reflex; the traces' key for a CPU facing EN (:opp-reflex LB-OPP-TRACE, :opp-trace); no aim keys left (the hook and
+  ;; the opponents' keys are pinned again, frozen, above the markers)
   (check (and (every (lambda (k) (eq (getf (kit-ai k) :reflex) 'lb-ai-reflex)) (list b j mu kn kmu o))
               (~= (getf (getf (kit-ai b) :eye) :p) 0.5) (equal (getf (kit-ai j) :stance) '(:p 0.6 :max 180 :gg 30))
               (equal (getf (kit-ai mu) :stance) (getf (kit-ai j) :stance)) (equal (getf (kit-ai kmu) :stance) (getf (kit-ai j) :stance))
@@ -2226,6 +2243,11 @@ defender's next step. Values: the attacker's and the defender's first actionable
   ;; neutral wind-up (LB-AI-EN prefers it)
   (let ((j1 (kit-command-move j :q)))
     (check (< (+ (mv-s j1) (mv-a j1) *lb-switch-windup-c*) *lb-switch-windup*))))
+;; the owl's own CPU values (Jilliel's EN / KIN tables, Trompete's punish on KIN)
+(let ((j (kit :lille :jilliel)) (o (kit :lille :shin)) (ok (kit :lille :shin-kin)))
+  (check (and (equal (getf (kit-ai o) :switch) '(:traces 3 :near 0.6 :whiff 1.5)) (equal (getf (kit-ai ok) :switch) '(:gg 40))
+              (getf (kit-ai ok) :trompete) (equal (getf (kit-ai o) :stance) (getf (kit-ai j) :stance)))))
+;;; <<< END LILLE-CPU-TESTS
 
 
 ;;; ---------------------------------------------------------------- the owl on Jilliel's system (DUEL_LILLE §23.14, decision 36)
@@ -2337,11 +2359,11 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (~= 2.0 (lb-trace-refund :block nil)) (lb-en-dry-p 2.9) (not (lb-en-dry-p 3.0))
               (= 33 (hw-dmg (lb-trace-hitwin :j (kit-mult o)))) (= 198 (hw-dmg (lb-trace-hitwin :sp2 (kit-mult o))))
               (= 26 (hw-dmg (lb-trace-hitwin :k (kit-mult o))))))
-  ;; KIN's strings link on hit (the trace stun covers TENSHIN in + KIN J1 for the owl too) and the CPU's keys
+  ;; KIN's strings link on hit (the trace stun covers TENSHIN in + KIN J1 for the owl too) and the keys a CPU facing the owl
+  ;; reads, his :reflex hook (the owl's own CPU values: the LILLE-CPU-TESTS section above)
   (check (and (>= *lb-trace-stun* (+ (mv-s (find-move :lb-o-switch)) (mv-first-hit (kit-command-move ok :q)) 4))
-              (equal (getf (kit-ai o) :switch) '(:traces 3 :near 0.6 :whiff 1.5)) (eq (getf (kit-ai o) :opp-reflex) 'lb-opp-trace)
-              (eq (getf (kit-ai omu) :opp-reflex) 'lb-opp-trace) (equal (getf (kit-ai ok) :switch) '(:gg 40))
-              (getf (kit-ai ok) :trompete) (getf (kit-ai ok) :opp-reflect) (equal (getf (kit-ai o) :stance) (getf (kit-ai j) :stance))
+              (eq (getf (kit-ai o) :opp-reflex) 'lb-opp-trace)
+              (eq (getf (kit-ai omu) :opp-reflex) 'lb-opp-trace) (getf (kit-ai ok) :opp-reflect)
               (every (lambda (k) (eq (getf (kit-ai k) :reflex) 'lb-ai-reflex)) owls))))
 
 ;; no character names in the generic files (design-v1 §12)

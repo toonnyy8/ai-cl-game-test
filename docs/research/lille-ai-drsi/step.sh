@@ -3,8 +3,9 @@
 #   step.sh next [round]                         ask the policy for the next batch; write a brief for every cell not yet
 #                                                briefed (a cell whose brief exists is in flight: W = 2 run at once)
 #   step.sh done <cell> <round> [cell-worktree]  a cell reported: copy its deliverables from its worktree (the fixed
-#                                                relative path), rescore with the frozen evaluator, record the RESCORED
-#                                                score with a truthful --fail-class, then `next`
+#                                                relative path; a delivered duel-rules-test.lisp gives only its
+#                                                LILLE-CPU-TESTS section), rescore with the frozen evaluator, record the
+#                                                RESCORED score with a truthful --fail-class, then `next`
 #   step.sh fail <cell> <round> <class> <error>  a cell delivered nothing scorable: record the failure, then `next`
 #   (FORCE=1 re-records a cell already recorded: a coordinator's mistake, never to retry a cell for a better score)
 # Dispatch each brief (rounds/roundNN/nodes/<cell>.brief.md) to a fresh agent in its own worktree at the freeze commit.
@@ -14,7 +15,7 @@ REPO=$(cd "$WS/../../.." && pwd)
 REL=${WS#$REPO/}
 DREAM_RSI=${DREAM_RSI:-$(ls -d "$HOME/.claude/skills/dream-rsi" "$HOME"/.claude/skills/synced/*/dream-rsi 2>/dev/null | head -1)}
 DRSI="python3 $DREAM_RSI/scripts/drsi.py -w $WS"
-export FREEZE=${FREEZE:-$(git -C "$REPO" log -1 --format=%H -- tools/aieval.py "$REL/baseline/drift-ref.json")}
+export FREEZE=${FREEZE:-$(git -C "$REPO" log -1 --format=%H -- tools/aieval.py tests/duel-rules-test.lisp "$REL/baseline/drift-ref.json")}
 RESCORE_WT=${RESCORE_WT:-$REPO/.claude/worktrees/rescore-lille}
 export RESCORE_WT
 
@@ -55,7 +56,7 @@ case "${1:-}" in
         C=$2; R=$3; RR=$(printf %02d "$R"); N=$WS/rounds/round$RR/nodes/$C
         mkdir -p "$N"
         if [ ! -f "$N/lille.lisp" ] && [ -n "${4:-}" ]; then
-          cp "$4/$REL/rounds/round$RR/nodes/$C/"{lille.lisp,proposal.md,score.json} "$N/" 2>/dev/null
+          cp "$4/$REL/rounds/round$RR/nodes/$C/"{lille.lisp,proposal.md,score.json,duel-rules-test.lisp} "$N/" 2>/dev/null
         fi
         exec 9>"$RESCORE_WT.lock"; flock 9                       # (one rescore at a time; records in order)
         if [ ! -f "$N/lille.lisp" ]; then record "$C" "$R" 0 runtime "no lille.lisp delivered" "nothing to rescore"; next "$R"; exit 0; fi

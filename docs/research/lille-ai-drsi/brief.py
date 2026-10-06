@@ -35,8 +35,9 @@ You must read every historical proposal before proposing or implementing a new s
 
 You work in your own git worktree of the repo, checked out at the freeze commit {FREEZE} (the evaluator, the opponents'
 CPUs and every rule are fixed there). HISTORY_DIR and BASELINE_DIR are in the coordinator's checkout: read them there.
-If PARENT_DIR is a directory, first copy PARENT_DIR/lille.lisp over duel/lisp/lille.lisp in your worktree, then refine it;
-else start from the worktree's duel/lisp/lille.lisp (= BASELINE_DIR/lille.lisp).
+If PARENT_DIR is a directory, first copy PARENT_DIR/lille.lisp over duel/lisp/lille.lisp in your worktree (and
+PARENT_DIR/duel-rules-test.lisp over tests/duel-rules-test.lisp when it exists), then refine it; else start from the
+worktree's files (= BASELINE_DIR/lille.lisp and the frozen test).
 
 # Step 1. Read the complete history first
 Read every proposal.md under HISTORY_DIR (all rounds, all cells except your own) and BASELINE_DIR, in full, with its
@@ -84,7 +85,8 @@ Implement it ONLY in duel/lisp/lille.lisp, ONLY in his own CPU's code:
   existing hook keys); the `(brain e)` / CPU branches of the sim ticks named above (never the human branch).
 - forbidden: any move's frame data, damage, volumes, costs, form rules, the sim's rules and hooks for a human, LB-OPP-TRACE
   and anything an opponent's CPU reads (that would weaken the opponents: not his CPU), any other file (ai.lisp, tuning.lisp,
-  the tests, other characters ...). A shared change you believe is needed goes in proposal.md as a recommendation.
+  the other characters ...; of the tests only the LILLE-CPU-TESTS section, Step 4). A shared
+  change you believe is needed goes in proposal.md as a recommendation.
 - keep working (the gates and shared systems depend on them):
   - AI-AWAKEN-P decides his base -> JILLIEL awakening (the awaken A/B's debug modes 39000+10a+b force it on / off); the
     revival into the owl stays the generic :bankai reflex (the kits' :bankai key; debug 31000+10a+b forces it);
@@ -106,14 +108,15 @@ Implement it ONLY in duel/lisp/lille.lisp, ONLY in his own CPU's code:
 
 # Step 4. Evaluate honestly
 In your worktree:
-1. {ECL} --norc --load tests/duel-rules-test.lisp  must print ALL PASS; you can't edit the test (the coordinator re-runs
-   the frozen one). Its "Lille's own CPU" checks pin the shipped values: :eye :p 0.5; :stance (:p 0.6 :max 180 :gg 30) on
-   Jilliel's and the owl's forms; :switch (:traces 3 :near 0.6 :whiff 1.5) on EN and the owl EN, (:gg 40) on KIN and the
-   owl KIN; :trompete and :opp-reflect on the owl KIN; :reflex LB-AI-REFLEX on every form; the opponents' keys (:opp-reflex
-   LB-OPP-TRACE, :opp-trace :p 0.5); no :sig-hold / :opp-aim; :sig in every band of the base :moves; *LB-AI-FS-RESERVE*
-   10; LB-AI-CHANCE, LB-AI-KAMAE-PLAN, LB-SWITCH-IN-RULE, LB-AI-LAY-OK-P / LB-AI-OUT-OK-P, the eye / stance plans as
-   functions. Keep those keys, values and contracts; new behaviour goes in new keys, knobs and functions (say which pinned
-   rule you route around in proposal.md: the integration re-pins the winner).
+1. {ECL} --norc --load tests/duel-rules-test.lisp  must print ALL PASS. The file's section between the markers
+   ";;; >>> BEGIN LILLE-CPU-TESTS" and ";;; <<< END LILLE-CPU-TESTS" checks HIS OWN CPU (the shipped values of his kits'
+   :ai keys: :eye, :stance, :switch, :trompete, :sig in the base bands; *LB-AI-FS-RESERVE*; LB-AI-CHANCE,
+   LB-AI-KAMAE-PLAN, LB-SWITCH-IN-RULE, LB-AI-LAY-OK-P / LB-AI-OUT-OK-P, the eye / stance plans and exits). You may edit
+   THAT SECTION ONLY, to match what your CPU now does, and deliver the whole file (below): the coordinator splices only the
+   lines between the markers into the frozen test; everything outside them stays frozen (shared behaviour, the rules, the
+   hooks such as :reflex LB-AI-REFLEX, the keys a CPU facing him reads, the other characters). The section's checks must
+   still pin your own shipped values and contracts (update a pinned value to yours, don't delete the pin), and may not
+   weaken a test of shared behaviour, a rule, a hook or another character; the coordinator reviews the section's diff.
 2. touch duel/lisp/lille.lisp (the native build goes by mtime), then run the EVAL_COMMAND (the first run builds the native
    sim, ~3 min). It prints one JSON line. Another cell runs on this machine at the same time: keep -j as given.
 3. If you changed the awakening (base -> JILLIEL) or the revival: the awaken A/B, Lille P1 "never awaken" vs each other
@@ -128,6 +131,7 @@ coordinator re-measures it with the frozen evaluator anyway). Never edit tools/a
   not a repeat, the measurement (each part, sig_by, drift and pacing vs the baseline), the expected benefit, the risks
   (a pacing median within 15 s of its cap is a risk), shared-code recommendations if any.
 - NODE_DIR/score.json: the exact JSON line the EVAL_COMMAND printed for that final file.
+- NODE_DIR/duel-rules-test.lisp (only if you edited its LILLE-CPU-TESTS section): your whole tests/duel-rules-test.lisp.
 Keep scratch files under a directory named after your cell (e.g. scratchpad/lille-{cell}/), never in NODE_DIR. Do not
 commit, push, merge or open PRs. Never run pkill / kill / killall; no self-matching pgrep loops; bounded waits only (wait
 on a PID or with a timeout).

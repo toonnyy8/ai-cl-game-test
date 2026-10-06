@@ -2194,9 +2194,10 @@ The user: 「然後幫我依據 @docs/guides/DREAM_RSI.zh-TW.md 的 AI 開發經
 ### 24.2 The frozen evaluator (phase 0, 2026-10-06)
 
 `tools/aieval.py --char 5` (the other characters' scoring unchanged: `--char 0..4` at 4 seeds give the same JSON as
-before, part for part), the workspace `docs/research/lille-ai-drsi/` (README there). **The freeze commit is the commit
-that adds this subsection** (the scripts find it as the last commit touching `tools/aieval.py` and the workspace's
-`baseline/drift-ref.json`; `FREEZE=<hash>` overrides).
+before, part for part), the workspace `docs/research/lille-ai-drsi/` (README there). **The freeze commit is the last
+commit touching `tools/aieval.py`, `tests/duel-rules-test.lisp` or the workspace's `baseline/drift-ref.json`** (the one
+that adds the LILLE-CPU-TESTS markers below; the scripts find it with `git log -1 --` those paths; `FREEZE=<hash>`
+overrides).
 
 **Score** = 0.4 strength + 0.2 masher + 0.4 signature for Lille (the user: 「風格偏重 0.4/0.2/0.4」); the others keep
 0.6 / 0.2 / 0.2. 0 when a gate fails.
@@ -2257,7 +2258,22 @@ a pacing risk for any cell that slows him down.
 briefs; `step.sh done` with the baseline file as b0a0 re-measured it in the rescore worktree at the freeze (host test,
 then the eval: 492 s) as **0.4769, the same JSON**, recorded `ok`; the never-switch variant as b1a0 was recorded score 0,
 `--fail-class correctness`, "gate failed: drift"; the no-stance variant failed the frozen host test (a check pins the
-stance in every base band) and was recorded `correctness`. The frozen host test pins his CPU's shipped keys and values
-(the eye, the stance, the switch tables, the flash-step reserve 10, the stance's branch table): the brief lists them;
-cells keep them and route new behaviour through new keys and functions.
+stance in every base band) and was recorded `correctness`.
+
+**The host test's CPU section** (the lead, 2026-10-06: decision 1 of the phase-0 report). The host test pins his CPU's
+shipped keys and values (the eye, the stance, the switch tables, the flash-step reserve 10, the stance's branch table),
+so a cell could only route around them. Now `tests/duel-rules-test.lisp` marks his own CPU's checks with
+`;;; >>> BEGIN LILLE-CPU-TESTS` … `;;; <<< END LILLE-CPU-TESTS`; a cell may edit that section and deliver the file, and
+`rescore.sh` splices only those lines into the frozen test (`splice-tests.py`), writing the section's diff to
+`NODE_DIR/test-section.diff` for the coordinator's review. The section's checks must still pin the cell's own shipped
+values (a pin is updated, not deleted) and may not weaken a test of shared behaviour, a rule, a hook or another character.
+Those stay outside the markers, frozen: a new check before the markers pins `:reflex LB-AI-REFLEX` on all ten forms, no
+`:opp-aim`, and the keys a CPU facing him reads (`:opp-reflex LB-OPP-TRACE` on EN, `:opp-trace :p 0.5`, none on KIN or
+the base form); the owl section keeps its rule (the trace stun) with `:opp-reflex` / `:opp-reflect` / `:reflex`, and the
+owl's own CPU values (`:switch`, `:trompete`, `:stance`) moved into the marked section. duel-rules **6369** checks ALL PASS
+(6367 + those two); pkgcheck 0 / 0 / 0; `simgate.py --seeds 10 --summary` identical (no sim change).
+Dry run again (a throwaway copy of the workspace): the baseline as b0a0 re-scored at the freeze reproduces **0.4769**
+(498 s); the no-stance variant as b1a0 with its section edited (the base-band pin turned into "no `:sig` in any band") and,
+outside the markers, a frozen check deliberately broken: the splice took only the section (the diff shows that one line),
+the outside edit was ignored, the host test passed (6369), recorded `ok` at **0.4729** (488 s), the same as its run above.
 
