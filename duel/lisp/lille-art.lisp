@@ -732,20 +732,24 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
   (0 (:arm-r :flex 10 :side 120) (:arm-l :flex 10 :side 120)) (:s :snap :lb-w-ram-hit) (:a :lb-w-ram-hit) (:end :lb-w-stance))
 
 ;;; ---------------------------------------------------------------- the owl
-;;; Upright on the stilts, the long arms hanging, the neck in an S; the claws (the hands) strike at the moves' reach.
+;;; 近 KIN (decision 38, 2026-10-06: 「近戰模式翼往後收、身體前傾」): on the ㄇ stilts, the column pitched forward (the spine,
+;;; so the hips and the legs stay square), the S-neck lowered and thrust forward like a stalking bird, the long arms raised
+;;; forward with the claws up (the wings swept back: LILLE-DRAW). The claws (the hands) strike at the moves' reach: the
+;;; hit poses set the spine, the striking arm and both elbows themselves, so the stance moves no strike point (FK test).
 (defpose :lb-o-stance ()
-  (:root :u -0.02) (:spine :flex 4) (:head :flex 10)
-  (:arm-r :flex 8 :side 10) (:elbow-r :flex 12) (:arm-l :flex 8 :side 10) (:elbow-l :flex 12)
+  (:root :u -0.02) (:spine :flex 22) (:neck :flex 26) (:head :flex 8)
+  (:arm-r :flex 58 :side 14) (:elbow-r :flex 70) (:arm-l :flex 58 :side 14) (:elbow-l :flex 70)
   (:thigh-r :flex 0 :side 5) (:thigh-l :flex 0 :side 5) (:knees :flex 0))   ; (the ㄇ legs stand square: decision 26)
 (defclip :lb-o-stance (2.4 :loop t :base :lb-o-stance)
-  (0) (1.2 (:root :u -0.04) (:head :flex 18 :twist 10) (:arm-r :flex 14) (:arm-l :flex 4)))
+  (0) (1.2 (:root :u -0.04) (:spine :flex 24) (:head :flex 14 :twist 10) (:arm-r :flex 64) (:arm-l :flex 52)))
 (defpose :lb-o-q1-hit (:base :lb-o-stance) (:root :f 0.42) (:spine :flex 16) (:arm-r :flex 80 :side 6) (:elbow-r :flex 6))
 (defstrike :lb-o-q1 (8 3 12 :base :lb-o-stance)
   (0) (4 (:arm-r :flex 120 :side 30) (:elbow-r :flex 60)) (:s :snap :lb-o-q1-hit) (:a :lb-o-q1-hit) (:end :lb-o-stance))
 (defpose :lb-o-q2-hit (:base :lb-o-stance) (:root :f 0.42) (:spine :flex 16) (:arm-l :flex 80 :side 6) (:elbow-l :flex 6))
 (defstrike :lb-o-q2 (7 3 13 :base :lb-o-stance)
   (0) (4 (:arm-l :flex 120 :side 30) (:elbow-l :flex 60)) (:s :snap :lb-o-q2-hit) (:a :lb-o-q2-hit) (:end :lb-o-stance))
-(defpose :lb-o-q3-hit (:base :lb-o-stance) (:root :f 0.42) (:spine :flex 16) (:arm-r :flex 82 :side 10) (:arm-l :flex 82 :side 10))
+(defpose :lb-o-q3-hit (:base :lb-o-stance) (:root :f 0.42) (:spine :flex 16) (:arm-r :flex 82 :side 10) (:arm-l :flex 82 :side 10)
+  (:elbows :flex 12))
 (defstrike :lb-o-q3 (9 3 18 :base :lb-o-stance)
   (0) (5 (:arm-r :flex 140 :side 30) (:arm-l :flex 140 :side 30)) (:s :snap :lb-o-q3-hit) (:a :lb-o-q3-hit) (:end :lb-o-stance))
 (defpose :lb-o-f1-hit (:base :lb-o-stance) (:root :f 1.05) (:spine :flex 28) (:arm-r :flex 78 :side 6) (:elbow-r :flex 4))
@@ -754,7 +758,8 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
 (defpose :lb-o-f2-hit (:base :lb-o-stance) (:root :f 1.05) (:spine :flex 28) (:arm-l :flex 78 :side 6) (:elbow-l :flex 4))
 (defstrike :lb-o-f2 (20 4 24 :base :lb-o-stance)
   (0) (12 (:root :f -0.1) (:arm-l :flex 150 :side 40)) (:s :snap :lb-o-f2-hit) (:a :lb-o-f2-hit) (:end :lb-o-stance))
-(defpose :lb-o-f3-hit (:base :lb-o-stance) (:root :f 1.05) (:spine :flex 28) (:arm-r :flex 78 :side 8) (:arm-l :flex 78 :side 8))
+(defpose :lb-o-f3-hit (:base :lb-o-stance) (:root :f 1.05) (:spine :flex 28) (:arm-r :flex 78 :side 8) (:arm-l :flex 78 :side 8)
+  (:elbows :flex 12))
 (defstrike :lb-o-f3 (21 5 34 :base :lb-o-stance)
   (0) (12 (:root :f -0.1) (:arm-r :flex 170 :side 20) (:arm-l :flex 170 :side 20)) (:s :snap :lb-o-f3-hit) (:a :lb-o-f3-hit)
   (:end :lb-o-stance))
@@ -776,20 +781,27 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
 (defstrike :lb-o-stamp (8 4 18 :base :lb-o-stance)
   (0 (:arm-r :flex 160 :side 20)) (:s :snap :lb-o-stamp-hit) (:a :lb-o-stamp-hit) (:end :lb-o-stance))
 
-;;; ---- the owl on Jilliel's system (decision 36, DUEL_LILLE §23.14): functional clips. 遠 EN stands upright, the head
-;;; raised, the long arms held out low (the judge; the draw hook fans the wings out); 近 KIN is the hunched claw stance
-;;; above (the wings swept back). MUJITTAI: the arms crossed low before the column, the head bowed (the wings curl round
-;;; it). EN's SP1 裁きの光明: three chops, right, left, both, one a line (f6, f12, f18). TENSHIN: the owl crouched, the
-;;; arms swept back, the flash step (in: the wind-up first, the arms raised, 16 f; the cancel enters it at f14).
+;;; ---- the owl on Jilliel's system (decision 36, DUEL_LILLE §23.14): functional clips. 遠 EN (decision 38: 「遠程模式翼張開、
+;;; 站直」) floats (the kit's :lift, *LB-OWL-LIFT*) bolt upright, the S-neck raised tall, the long arms hanging open at the
+;;; sides, the thighs a little forward and the ㄇ legs folded up under the column (LILLE-DRAW tucks them), the eight wings fanned wide
+;;; and forward; 近 KIN is the pitched claw stance above (the wings swept back). MUJITTAI keeps each mode's silhouette: EN's
+;;; upright, floating (:lb-oe-fold), KIN's pitched on its legs (:lb-o-fold); the arms crossed low before the column (the
+;;; wings curl round it). EN's SP1 裁きの光明: three chops, right, left, both, one a line (f6, f12, f18). TENSHIN: the owl
+;;; crouched, the arms swept back, the flash step (in: the wind-up first, the arms raised, 16 f; the cancel enters it at
+;;; f14); the form (and its lift) changes inside the dash, so the clip's root height steps by the lift there to hide it.
 (defpose :lb-oe-stance (:base :lb-o-stance)
-  (:root :u 0.02) (:spine :flex -4) (:head :flex -2) (:arm-r :flex 18 :side 32) (:elbow-r :flex 10)
-  (:arm-l :flex 18 :side 32) (:elbow-l :flex 10))
+  (:root :u 0.0) (:spine :flex 0) (:neck :flex -6) (:head :flex -4) (:arm-r :flex 10 :side 30) (:elbow-r :flex 8)
+  (:arm-l :flex 10 :side 30) (:elbow-l :flex 8) (:thigh-r :flex 12 :side 8) (:thigh-l :flex 12 :side 8))
 (defclip :lb-oe-stance (2.6 :loop t :base :lb-oe-stance)
-  (0) (1.3 (:root :u 0.05) (:head :flex 4 :twist -8) (:arm-r :side 37) (:arm-l :side 28)))
+  (0) (1.3 (:root :u 0.06) (:head :flex 0 :twist -8) (:arm-r :side 35) (:arm-l :side 26) (:thighs :flex 8)))
 (defpose :lb-o-fold-pose (:base :lb-o-stance)
-  (:root :u -0.03) (:spine :flex 10) (:head :flex 24) (:arm-r :flex 34 :side 18 :twist 45) (:elbow-r :flex 118)
+  (:root :u -0.03) (:spine :flex 26) (:head :flex 14) (:arm-r :flex 34 :side 18 :twist 45) (:elbow-r :flex 118)
   (:arm-l :flex 34 :side 18 :twist -45) (:elbow-l :flex 118))
 (defclip :lb-o-fold (2.0 :loop t :base :lb-o-fold-pose) (0) (1.0 (:root :u -0.06)))
+(defpose :lb-oe-fold-pose (:base :lb-oe-stance)
+  (:root :u 0.0) (:head :flex 6) (:arm-r :flex 34 :side 18 :twist 45) (:elbow-r :flex 118)
+  (:arm-l :flex 34 :side 18 :twist -45) (:elbow-l :flex 118))
+(defclip :lb-oe-fold (2.0 :loop t :base :lb-oe-fold-pose) (0) (1.0 (:root :u 0.05)))
 (defstrike :lb-oe-sabaki (6 14 11 :base :lb-oe-stance)
   (0) (4 (:arm-r :flex 170 :side 6) (:elbow-r :flex 4) (:head :flex -10))
   (:s :snap (:arm-r :flex 60 :side 4) (:spine :flex 16) (:root :f 0.06))
@@ -799,20 +811,29 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
   (18 :snap (:arm-r :flex 62 :side 6) (:arm-l :flex 62 :side 6) (:spine :flex 22) (:root :f 0.12))
   (:a (:arm-r :flex 44) (:arm-l :flex 44) (:spine :flex 14))
   (:end :lb-oe-stance))
-(defstrike :lb-o-tenshin (14 0 8 :base :lb-o-stance)  ; KIN -> EN: the fold, the flash step back, EN's stance
-  (0 :lb-o-fold-pose) (6 (:root :u -0.12 :pitch 10) (:spine :flex 24) (:arm-r :flex -40 :side 30) (:arm-l :flex -40 :side 30))
+;; KIN -> EN (the form, lift 0 -> *LB-OWL-LIFT* 0.35, at f6: LB-SWITCH-FORM): the fold, the leap up and back (the root
+;; rising 0.4 m to f6, then the same height in EN's lift: u 0.4 -> 0.05 across f6-6.5, a step the draw never sees: it draws
+;; f6 before the form and f7 after), the legs folding up and the wings fanning out (LILLE-DRAW's ramps), EN's stance. (The
+;; 0.35 steps here and in TENSHIN in are *LB-OWL-LIFT*: change them with it.)
+(defstrike :lb-o-tenshin (14 0 8 :base :lb-o-stance)
+  (0 :lb-o-fold-pose) (6 (:root :u 0.4 :pitch -6) (:spine :flex 6) (:arm-r :flex -40 :side 40) (:arm-l :flex -40 :side 40))
+  (6.5 :snap (:root :u 0.05 :pitch -6) (:spine :flex 6) (:arm-r :flex -40 :side 40) (:arm-l :flex -40 :side 40))
   (14 :lb-oe-stance) (:end :lb-oe-stance))
-(defstrike :lb-o-tenshin-in (30 0 8 :base :lb-oe-stance)   ; EN -> KIN: the arms raised (the wind-up), the fold, the dash
+;; EN -> KIN (the form at f22, lift *LB-OWL-LIFT* 0.35 -> 0): the arms raised (the wind-up), the fold, the dash diving down
+;; to the floor (u -0.25 in EN's lift at f22 = 0.1 in KIN's at f22.5), the legs unfolding and the wings sweeping back, KIN
+(defstrike :lb-o-tenshin-in (30 0 8 :base :lb-oe-stance)
   (0) (14 (:root :u 0.06 :pitch -6) (:head :flex -10) (:arm-r :flex -24 :side 64) (:arm-l :flex -24 :side 64))
-  (16 :snap :lb-o-fold-pose) (22 (:root :u -0.12 :pitch 12) (:spine :flex 26) (:arm-r :flex -40 :side 30) (:arm-l :flex -40 :side 30))
+  (16 :snap :lb-oe-fold-pose)
+  (22 (:root :u -0.25 :pitch 12) (:spine :flex 26) (:arm-r :flex -40 :side 30) (:arm-l :flex -40 :side 30))
+  (22.5 :snap (:root :u 0.1 :pitch 12) (:spine :flex 26) (:arm-r :flex -40 :side 30) (:arm-l :flex -40 :side 30))
   (30 :lb-o-stance) (:end :lb-o-stance))
 
 ;;; ---------------------------------------------------------------- the cinematics' clips (§10)
 (defclip :lb-rise (1.0 :base :lb-w-fold-pose)          ; the revival: the headless column rising into the air
   (0 (:root :u 0.5)) (1.0 (:root :u 1.5) (:arm-r :side 50) (:arm-l :side 50)))
-(defpose :lb-o-point (:base :lb-o-stance)              ; the owl, one long arm raised high, the finger up (ch. 652)
-  (:arm-r :flex 172 :side 8) (:elbow-r :flex 4) (:head :flex -6) (:spine :flex -4))
-(defclip :lb-o-reveal (2.0 :base :lb-o-stance)
+(defpose :lb-o-point (:base :lb-oe-stance)             ; the owl (EN, the revival's form), one long arm raised high, the
+  (:arm-r :flex 172 :side 8) (:elbow-r :flex 4) (:head :flex -6) (:spine :flex -4))   ; finger up (ch. 652)
+(defclip :lb-o-reveal (2.0 :base :lb-oe-stance)
   (0) (0.6 :lb-o-point) (2.0 :lb-o-point))
 
 ;;; ---- rework R (decisions 17, 18): base stance + TENSHIN clips
@@ -885,14 +906,15 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
   "The draw helpers' arguments: [0..2] the wings' root (the joint's frame); [11] the fold 0..1, [12] the ripple (degrees),
 [13] the fx clock, [14] the wings' alpha, [15] the pairs shown (a cinematic's unfolding), [16] the wings' length x; [17..22]
 the line / reticle / halo / trumpet macros' numbers; [23] the first pair drawn; [24..27] his x y z and yaw
-(%LB-LOAD-PLACE!); [28] the wings' spread 0..1.")
+(%LB-LOAD-PLACE!); [28] the wings' spread 0..1; [8] the owl EN's leg tuck 0..1 and [29] the owl KIN's wing sweep 0..1
+(decision 38).")
 (defvar *lb-fx* (make-f32 (* 2 24))
   "Per side (24 each), the looks' memory: [0] the eye's tick seen, [1] its fx clock, [2] the guard gauge seen, [3] the
 last pass-through (fx clock), [4] the fold 0..1, [5] sealed seen (1), [6] the seal's fx clock, [7..9] the reticle's point,
 [10] the reticle shown (1 tracking, 2 locked), [11] the distance there, [12 13] the reflector's x z, [14] the eye's tick
 whose third-opening line was shown, [15] 1 while he is the owl (his hazards' gold), [16] the wings' spread 0..1 (an SP
 fans them out), [17] its joints' unfurl 0..1 (slower: they furl, then open from the root), [18] the owl's EN spread 0..1
-(decision 36: EN fans the wings out, KIN sweeps them back).")
+(decision 36: EN fans the wings out, KIN sweeps them back; decision 38: also EN's legs folded up, 5 / s).")
 (dotimes (s 2) (setf (aref *lb-fx* (* 24 s)) -1f0 (aref *lb-fx* (+ (* 24 s) 14)) -1f0))
 (defvar *lb-hud* (make-f32 8) "The HUD pip's arguments: cx cy r, [3] the fx clock.")
 (defvar *lb-alphas* (let ((v (make-array 21))) (dotimes (i 21 v) (setf (svref v i) (f32 (/ i 20.0)))))
@@ -1123,7 +1145,7 @@ test reads (*LB-STRIKE-POINTS*), its jointed chain turned and stretched to end t
          (ghost (< a 0.99f0))
          (ga (lb-alpha (if ghost (the single-float *lb-glass-ghost*) (* a (the single-float *lb-glass-alpha*)))))
          (ra (lb-alpha (if ghost (the single-float *lb-rim-ghost*) (* a (the single-float *lb-rim-alpha*)))))
-         (pairs (f->i (aref v 15))) (lk (aref v 16)) (from (f->i (aref v 23))) (sp (aref v 28))
+         (pairs (f->i (aref v 15))) (lk (aref v 16)) (from (f->i (aref v 23))) (sp (aref v 28)) (sb (aref v 29))
          (rx (aref v 0)) (ry (aref v 1)) (rz (aref v 2))
          (xx (aref jm o)) (xy (aref jm (+ o 1))) (xz (aref jm (+ o 2)))
          (yx (aref jm (+ o 4))) (yy (aref jm (+ o 5))) (yz (aref jm (+ o 6)))
@@ -1143,7 +1165,7 @@ test reads (*LB-STRIKE-POINTS*), its jointed chain turned and stretched to end t
          (wa (the single-float *lb-wave-amp*)) (wc (the single-float *lb-wave-curl*)) (ws (the single-float *lb-wave-speed*))
          (wl (the single-float *lb-wave-lag*)) (fc (the single-float *lb-fold-curl*)) (fu (the single-float *lb-furl*)))
     (declare (type f32vec v w mm) (fixnum pairs from mask)
-             (single-float k j rip tm a lk sp rx ry rz xx xy xz yx yy yz zx zy zz xl zl fx fy fz sx sy sz yl su vx0 vy0 vz0 vl dvx dvy dvz vb u dt tsc rise c1 c2
+             (single-float k j rip tm a lk sp sb rx ry rz xx xy xz yx yy yz zx zy zz xl zl fx fy fz sx sy sz yl su vx0 vy0 vz0 vl dvx dvy dvz vb u dt tsc rise c1 c2
                            gl lm wa wc ws wl fc fu))
     (dotimes (i n)
       (when (<= from (floor i 2) (1- pairs))
@@ -1166,16 +1188,20 @@ test reads (*LB-STRIKE-POINTS*), its jointed chain turned and stretched to end t
                 (declare (fixnum h) (single-float hx hy hz dx dy dz dl ux uy uz ddx ddy ddz))
                 (%lb-basis! w 0 ux uy uz (- (* ddy uz) (* ddz uy)) (- (* ddz ux) (* ddx uz)) (- (* ddx uy) (* ddy ux)))
                 (setf len dl wd (* lk (aref tbl (+ r 2))) px hx py hy pz hz))
-              (let* ((e (* 0.017453292f0 (+ (* (aref tbl (+ r 1)) (+ 1f0 (* 0.22f0 sp)))
+              ;; (the sweep SB, the owl's KIN, decision 38: the fan closed up into a narrow sheaf lowered along his back,
+              ;; the blades trailing back and down close to his midline (a folded bird's), shorter, their faces turned to
+              ;; the side: a narrow sheaf from behind, the long swept blades from the side)
+              (let* ((e (* 0.017453292f0 (+ (* (aref tbl (+ r 1)) (+ 1f0 (* 0.22f0 sp)) (- 1f0 (* 0.65f0 sb))) (* -48f0 sb)
                                               (* 3f0 j (f-sin (+ (* 1.9f0 tm) (aref tbl (+ r 9)))))
                                               (* rip (f-sin (+ (* 31f0 tm) (* 1.7f0 (i->f i))))))))
-                     (ax (* s (f-cos e))) (ay (f-sin e)) (az (- (aref tbl (+ r 3)) (* 0.7f0 sp)))
+                     (ax (* s (f-cos e) (- 1f0 (* 0.7f0 sb)))) (ay (- (f-sin e) (* 0.9f0 sb)))
+                     (az (+ (- (aref tbl (+ r 3)) (* 0.7f0 sp)) (* 1.3f0 sb)))
                      (lx2 (+ (* j ax) (* k s (aref tbl (+ r 4))))) (ly2 (+ (* j ay) (* k (aref tbl (+ r 5)))))
                      (lz2 (+ (* j az) (* k (aref tbl (+ r 6)))))
-                     (fl (if (> (aref tbl (+ r 8)) 0.5f0) (- s) s)) (nlx (* k fl)) (nlz (* j fl))
+                     (fl (if (> (aref tbl (+ r 8)) 0.5f0) (- s) s)) (nlx (+ (* k fl) (* j fl 0.85f0 sb))) (nlz (* j fl (- 1f0 (* 0.85f0 sb))))
                      (dx (+ (* xx lx2) (* yx ly2) (* zx lz2))) (dy (+ (* xy lx2) (* yy ly2) (* zy lz2)))
                      (dz (+ (* xz lx2) (* yz ly2) (* zz lz2))) (dl (f-max 1f-5 (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
-                     (ln (* lk (aref tbl (+ r 2)) (- 1f0 (* 0.15f0 k)))))
+                     (ln (* lk (aref tbl (+ r 2)) (- 1f0 (* 0.15f0 k)) (- 1f0 (* 0.2f0 sb)))))
                 (declare (single-float e ax ay az lx2 ly2 lz2 fl nlx nlz dx dy dz dl ln))
                 (%lb-basis! w 0 (/ dx dl) (/ dy dl) (/ dz dl)
                             (+ (* xx nlx) (* zx nlz)) (+ (* xy nlx) (* zy nlz)) (+ (* xz nlx) (* zz nlz)))
@@ -1294,11 +1320,21 @@ gold one, 2 the owl's broken one. The alpha: *LB-V* [14]; LIFT and R go through 
   "Normalise the single-float places X Y Z in place (0 B)."
   `(let ((%l (f-max 1f-5 (f-sqrt (+ (* ,x ,x) (* ,y ,y) (* ,z ,z)))))) (declare (single-float %l))
      (setf ,x (/ ,x %l) ,y (/ ,y %l) ,z (/ ,z %l))))
+(defparameter *lb-tuck-turn* 1.4
+  "The owl's EN folds its ㄇ legs up (decision 38): at full tuck each shank turns this many radians about the thigh's side
+axis, the front one back and the rear one forward, so both fold under the strut (a short bar under the floating column).")
+(defparameter *lb-tuck-len* 0.48 "... and is this long (m; standing, a shank runs to the floor).")
 (defun-fast %lb-legs (jm white fl)
   "Both ㄇ legs (decision 26) from the thighs of JM: WHITE 1 the owl's, else KIN's cream; FL 1 the hit flash. The floor's
-height in *LB-V* [3], the alpha in [4] (MUJITTAI's body alpha)."
+height in *LB-V* [3], the alpha in [4] (MUJITTAI's body alpha), the tuck 0..1 in [8] (the owl's EN folds them up, decision
+38: the front shank turned back, the rear one forward, both *LB-TUCK-LEN* long)."
   (declare (type f32vec jm) (fixnum white fl))
-  (let ((al (lb-alpha (aref *lb-v* 4))) (fla (svref *lb-alphas* (if (= fl 1) 9 0))))   ; (boxed: 0 B)
+  (let* ((al (lb-alpha (aref *lb-v* 4))) (fla (svref *lb-alphas* (if (= fl 1) 9 0)))   ; (boxed: 0 B)
+         (tk (aref *lb-v* 8)) (tt (* tk (the single-float *lb-tuck-turn*))) (ct (f-cos tt)) (st (f-sin tt))
+         (tl (the single-float *lb-tuck-len*))
+         (fyc (- (* -0.1f0 st) ct)) (fbc (- st (* 0.1f0 ct)))          ; the front shank's up / back shares, turned back
+         (ryc (- (* -0.12f0 st) ct)) (rbc (+ (- st) (* 0.12f0 ct))))   ; the rear's, turned forward
+    (declare (single-float tk tt ct st tl fyc fbc ryc rbc))
     (dotimes (side 2)
       (let* ((o (if (= side 0) (* 16 (ji :thigh-r)) (* 16 (ji :thigh-l)))) (s (if (= side 0) 1f0 -1f0))
              (ox (* s (aref jm o))) (oy (* s (aref jm (+ o 1)))) (oz (* s (aref jm (+ o 2))))            ; out
@@ -1306,21 +1342,22 @@ height in *LB-V* [3], the alpha in [4] (MUJITTAI's body alpha)."
              (bx (aref jm (+ o 8))) (by (aref jm (+ o 9))) (bz (aref jm (+ o 10)))                     ; back
              (fk (the single-float *lb-leg-fork*)) (ls (the single-float *lb-leg-strut*))
              (px (- (aref jm (+ o 12)) (* fk yx))) (py (- (aref jm (+ o 13)) (* fk yy))) (pz (- (aref jm (+ o 14)) (* fk yz)))
-             ;; the front shank: down, a little forward and out
-             (fx (- (* 0.07f0 ox) yx (* 0.1f0 bx))) (fy (- (* 0.07f0 oy) yy (* 0.1f0 by))) (fz (- (* 0.07f0 oz) yz (* 0.1f0 bz)))
-             ;; the strut: back, a little out; the rear shank: down, a little back and out
+             ;; the front shank: down, a little forward and out (tucked: turned back under the strut)
+             (fx (+ (* 0.07f0 ox) (* fyc yx) (* fbc bx))) (fy (+ (* 0.07f0 oy) (* fyc yy) (* fbc by)))
+             (fz (+ (* 0.07f0 oz) (* fyc yz) (* fbc bz)))
+             ;; the strut: back, a little out; the rear shank: down, a little back and out (tucked: turned forward)
              (sx (+ bx (* 0.04f0 ox))) (sy (+ by (* 0.04f0 oy))) (sz (+ bz (* 0.04f0 oz)))
-             (rx (+ (- yx) (* 0.12f0 bx) (* 0.07f0 ox))) (ry (+ (- yy) (* 0.12f0 by) (* 0.07f0 oy)))
-             (rz (+ (- yz) (* 0.12f0 bz) (* 0.07f0 oz))))
+             (rx (+ (* ryc yx) (* rbc bx) (* 0.07f0 ox))) (ry (+ (* ryc yy) (* rbc by) (* 0.07f0 oy)))
+             (rz (+ (* ryc yz) (* rbc bz) (* 0.07f0 oz))))
         (declare (fixnum o) (single-float s ox oy oz yx yy yz bx by bz fk ls px py pz fx fy fz sx sy sz rx ry rz))
         (%lb-unit! fx fy fz) (%lb-unit! sx sy sz) (%lb-unit! rx ry rz)
-        (let ((lf (%lb-shank-len py fy)) (cx (+ px (* ls sx))) (cy (+ py (* ls sy))) (cz (+ pz (* ls sz))))
+        (let ((lf (+ (* (- 1f0 tk) (%lb-shank-len py fy)) (* tk tl))) (cx (+ px (* ls sx))) (cy (+ py (* ls sy))) (cz (+ pz (* ls sz))))
           (declare (single-float lf cx cy cz))
           (%lb-frame! *lb-m* px py pz fx fy fz ox oy oz lf 1f0)
           (if (= white 1) (draw-weapon :lb-shank-white *lb-m* :alpha al :flash fla) (draw-weapon :lb-shank-cream *lb-m* :alpha al :flash fla))
           (%lb-frame! *lb-m* px py pz sx sy sz ox oy oz ls)
           (if (= white 1) (draw-weapon :lb-strut-white *lb-m* :alpha al :flash fla) (draw-weapon :lb-strut-cream *lb-m* :alpha al :flash fla))
-          (let ((lr (%lb-shank-len cy ry)))
+          (let ((lr (+ (* (- 1f0 tk) (%lb-shank-len cy ry)) (* tk tl))))
             (declare (single-float lr))
             (%lb-frame! *lb-m* cx cy cz rx ry rz ox oy oz lr 1f0)
             (if (= white 1) (draw-weapon :lb-shank-white *lb-m* :alpha al :flash fla)
@@ -1457,6 +1494,9 @@ his halo cracking (gold shards); the broken halo stays (LILLE-DRAW draws it). Lo
                           0.8f0 0.12f0 7f0 +pal-gold+)))))))
     nil))
 
+(defparameter *lb-owl-en-spread* 0.9
+  "The owl's EN fans its wings out this far of an SP's spread (decision 36: 0.6; decision 38, the user 2026-10-06:
+「遠程模式翼張開」: 0.6 -> 0.9, wide and forward, the holes to the opponent).")
 (defparameter *lb-spread-clips* '(:lb-w-aim :lb-w-fire :lb-w-nijushi :lb-o-trompete)
   "The clips (besides every :sp and :kikon move) that fan the wings out (the volley, the beam, Trompete).")
 (defmacro lb-jilliel-form-p (form) `(member ,form '(:jilliel :jilliel-mujittai :jilliel-kin :jilliel-kin-mujittai)))
@@ -1500,6 +1540,12 @@ or a gold look plays; a fourth in MUJITTAI)."
             (lb-fxs side 17)                             ; ... and their joints furl then unfurl from the root (decision 32)
             (if spread (f-min 1f0 (+ (lb-fxs side 17) (* 2.2f0 rdt))) (f-max 0f0 (- (lb-fxs side 17) (* 3f0 rdt))))))
     (setf (aref *lb-wf* 42) (lb-fxs side 17))
+    ;; the owl's two modes (decision 38): [18] 0..1 toward EN (5 / s: inside TENSHIN's dash): EN's legs folded up ([8] the
+    ;; tuck) and its wings fanned wide and forward ([28] the spread); KIN's legs down and its wings swept back ([29])
+    (let ((en (and (%lb-owl-p form) (member form '(:shin :shin-mujittai)))))
+      (setf (lb-fxs side 18) (if en (f-min 1f0 (+ (lb-fxs side 18) (* 5f0 rdt))) (f-max 0f0 (- (lb-fxs side 18) (* 5f0 rdt))))
+            (aref v 8) (if (%lb-owl-p form) (lb-fxs side 18) 0f0)
+            (aref v 29) (if (%lb-owl-p form) (- 1f0 (lb-fxs side 18)) 0f0)))
     (%lb-drive! f mv rdt (%lb-owl-p form))               ; the joints' strike drive (cosmetic: the move's frame)
     (setf (aref v 28) (lb-fxs side 16)
           (aref v 3) (- (aref *toon-body* 1)             ; his body's feet height (DRAW-BODY's) less the form's drawn
@@ -1541,23 +1587,23 @@ or a gold look plays; a fourth in MUJITTAI)."
                    (%lb-halo jm (* 16 (ji :head)) 0 (+ 0.52f0 (* 0.02f0 (f-sin (* 2f0 tm)))) 0.48f0))))))
         (:shin                                           ; the owl (decision 36: Jilliel's four forms, the owl's look)
          (let* ((grow (if cr (f-clamp (/ (- (i->f cr) 66f0) 30f0) 0.05f0 1f0) 1f0))
-                (stance (lb-mujittai-p form)) (en (member form '(:shin :shin-mujittai))))
+                (stance (lb-mujittai-p form)))
            (declare (single-float grow))
            (%lb-stance-fx! e side stance tm rdt)          ; MUJITTAI: the wings curl round the column, ghostly
-           ;; EN vs KIN: EN fans its eight wings out (a standing spread, [18] 0..1 at 3 / s), KIN sweeps them back
-           (setf (lb-fxs side 18) (if en (f-min 1f0 (+ (lb-fxs side 18) (* 3f0 rdt))) (f-max 0f0 (- (lb-fxs side 18) (* 3f0 rdt)))))
+           ;; EN vs KIN (decision 38): EN fans its eight wings out wide and forward (a standing spread, [18]), KIN sweeps
+           ;; them back ([29], set above)
            (let ((rip (- tm (lb-fxs side 3))))
              (declare (single-float rip))
              (setf (aref v 0) 0f0 (aref v 1) 0.3f0 (aref v 2) 0.13f0 (aref v 11) (lb-fxs side 4)
                    (aref v 12) (if (< rip 0.5f0) (* 14f0 (- 1f0 (* 2f0 rip))) 0f0) (aref v 13) tm
                    (aref v 14) (if stance 0.7f0 1f0) (aref v 15) 9f0 (aref v 23) 0f0 (aref v 16) (+ 0.3f0 (* 0.7f0 grow))
-                   (aref v 28) (f-max (aref v 28) (* 0.6f0 (lb-fxs side 18)))))
+                   (aref v 28) (f-max (aref v 28) (* (the single-float *lb-owl-en-spread*) (lb-fxs side 18)))))
            (%lb-wings jm (* 16 (ji :chest)) *lb-wings-owl* 8 2 side)
            (%lb-halo jm (* 16 (ji :head)) (if (and st (lbs-sealed st)) 2 1) 0.76f0 (* 0.13f0 grow))
            (let ((tsf (cond (ct (if (< 8 (the fixnum ct) 120) (- (the fixnum ct) 8) -1))
                             ((and mv (eq (mv-name mv) :lb-trompete) (eq (fighter-phase f) :main)) (fighter-sf f))
-                            ((and mv (eq (mv-name mv) :lb-oe-trompete) (eq (fighter-phase f) :main))   ; (EN's: 3 x)
-                             (* 3 (the fixnum (fighter-sf f))))
+                            ((and mv (eq (mv-name mv) :lb-oe-trompete) (eq (fighter-phase f) :main))   ; (EN's: its clip's
+                             (truncate (* 60 (the fixnum (fighter-sf f))) (max 1 (the fixnum (mv-s mv)))))   ;  speed, 5 x)
                             (t -1))))
              (declare (fixnum tsf))
              (when (<= 10 tsf 89)
