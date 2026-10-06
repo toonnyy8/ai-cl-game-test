@@ -1091,13 +1091,29 @@ and ring, in the running scene (a \"lille consing\" line; the scripts call it in
                  (per (%lbt-fighter e)) (per (%lbt-pos e)) (per (%lbt-yaw e)) (per (%lbt-lb e)) (per (%lbt-alpha e)) ; lookup's cost)
                  (per (%lbt-eyet e)))))))
 
+(defun lille-kin-look (e)
+  "E (a Lille) as JILLIEL KIN for a still: the :jilliel-kin form once its kit exists (the rules batch), else JILLIEL wearing
+the KIN body (:lille-jilliel-kin, until the next form change)."
+  (if (assoc :jilliel-kin (gethash :lille *kits*))
+      (force-form e :jilliel-kin)
+      (progn (force-form e :jilliel) (setf (model-body (model e)) (find-body :lille-jilliel-kin)))))
+
+(defvar *lb-front-k* 0 "Debug 79198's next look: 0 JILLIEL, 1 KIN, 2 the owl.")
 (defun lille-art-debug (c)
   "79100 + 19 i + k (k 0-18): cinematic i (*LB-CINES*) held at frame 10 k; 79195 his looks' consing (LILLE-CONS-PROBE);
-79196 P1's eye opens now (its look: a pip spent, nothing dodged)."
+79196 P1's eye opens now (its look: a pip spent, nothing dodged); 79197 P1 Lille as JILLIEL KIN 5 m from Kenpachi (the
+rework's rig, DUEL_LILLE §22.5); 79198 Lille as P2 facing the behind camera 4 m from Kenpachi, each call the next of JILLIEL
+/ KIN / the owl (the front view)."
   (let ((n (- c 79100)))
     (cond ((< n 95) (lille-cine-at (floor n 19) (* 10 (mod n 19))))
           ((= n 95) (lille-cons-probe))
           ((= n 96) (let ((st (lb *p1*)))                   ; a still of the eye opening (its look; nothing dodged)
                       (setf (lbs-eye-t st) *match-tick* (lbs-eyes st) (max 0 (1- (lbs-eyes st))))))
+          ((= n 97) (ensure-battle :lille :kenpachi) (lille-kin-look *p1*) (place *p1* *p2* 5.0))
+          ((= n 98) (ensure-battle :kenpachi :lille)
+           (let ((k *lb-front-k*))
+             (setf *lb-front-k* (mod (1+ k) 3))
+             (case k (0 (force-form *p2* :jilliel)) (1 (lille-kin-look *p2*)) (t (force-form *p2* :shin))))
+           (place *p1* *p2* 4.0))
           (t (log-msg "duel lille: no debug command ~d" c)))))
 (pushnew '(79100 79199 lille-art-debug) *char-debug* :test #'equal)

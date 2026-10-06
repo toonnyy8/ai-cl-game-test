@@ -205,7 +205,7 @@ Then, to the four questions that changed the design: 「快射＋蓄力」, 「�
   hurt cylinder stays on the ground, so flight is visual only). Eight flat blade wings, each with three oval holes, are
   fanned round him in **muted jade** (decision 11), with a wide thin halo. **No arms**: the J / K strikes are wing blades.
   The 24 holes are the muzzles.
-- **The owl**: a white body on **four stilt legs**, long thin arms, a segmented S-neck and a tiny barn-owl face. A small
+- **The owl**: a white body on **two long thin legs, each forking at the knee into two shanks** (it reads as four; decision 20), long thin arms, a segmented S-neck and a tiny barn-owl face. A small
   spiked halo and gold (#B89A5A) only on the wings, the halo and the glow.
 - **The eye mark is the motif**: the scope reticle on the aim line's far end, the HUD's eye pips and the trumpet bell's
   ring are the same glyph (`:lb-reticle`, baked once).
@@ -1163,3 +1163,30 @@ MUJITTAI (§5.2, unchanged), I the Breaker, O the Kikon module (direct, Kikon 3)
   wing, K the two front ones, the SPs spread all eight; idle, each wing sways on its own phase; MUJITTAI folds them.
 - **The legs** (the owl and KIN): two long thin legs, each **forking at the knee into two shanks** (fore and aft), so it
   reads as four. The owl keeps its long arms (its claws are the hands) and gets the same eight-wing fans in gold.
+
+### 22.5 Built: the rig (rework A, 2026-10-06)
+
+The user's words (decisions 19, 20): 「Jilliel 是揮舞八片刀刃狀的翼發動攻擊，而手臂則是背影藏在柱身內部，但現在的建模看起來就像是手臂變成一對翅膀，剩下三對則死板的掛在身後。」 and 「梟頭型態原作不是四根高蹺般的腿，而是兩隻細長腿，只是在腿部中間又出現分岔看起來像四條腿。」 All of it is cosmetic (`lille-art.lisp`; two debug stills in `lille.lisp`); no move, frame, reach, damage, kit or AI changed.
+
+**Jilliel's wings** (`:jilliel`, `:jilliel-mujittai`, and the KIN forms `:jilliel-kin`, `:jilliel-kin-mujittai`):
+- The rig's arms are **not drawn** (the body has no arm, shoulder or hand parts: hidden in the column). The rig keeps its x2.6 arms: the hands are the strike points.
+- **Eight separate blades** drawn by LILLE-DRAW (`*LB-WINGS-JL*`, rows of 10: side, elevation, length, sweep, fold target, front, flip, sway phase), rooted 0.07 m either side of a point behind the column's top (the chest frame (0, 0.30, 0.13 back)), **two fans of four**: +40° (1.6 m), +13° (1.75 m), the **front pair** (about −16° idle), −40° (1.5 m, its torn edge turned up).
+- **The front pair runs from its root to the rig's hand**: the drawn tip is the hand, which is what the host FK reach test reads (unchanged, ALL PASS; the hit poses were not touched). Its blade keeps a fixed 1.75 m width scale whatever its length, its torn edge down and out (normal = (−Y + 0.5 s X) × the wing). So J1 / J2 swing one front wing, J3 and the K links both (the existing clips), and the idle hands sit in the fan.
+- **Idle sway**: each of the six table wings sways ±3° on its own phase (the fx clock: cosmetic, never sim state); the front pair sways out of step through `:lb-w-stance`'s clip (keys 0.8 / 1.5 / 2.3 s, the right and left arm extremes offset). The pass-through ripple (±14°, 0.5 s) stays.
+- **The SPs fan them out**: during any `:sp` / `:kikon` move or the clips `:lb-w-aim`, `:lb-w-fire`, `:lb-w-nijushi`, `:lb-o-trompete` the six table wings open 22 % wider and sweep 0.7 forward (the holes facing him), easing in and out over 0.12 s (`*LB-FX*` [16]; the per-side memory grew from 16 to 24 slots).
+- **MUJITTAI** folds the six round the column (as before, 5 / s, 0.7 see-through) and the front pair crosses low before it (`:lb-w-fold-pose`: arms flex 0 side 30 twist ±45, elbows 110).
+- **The blade** (`lb-wing-blade`): a bowed leaf (its centreline bows 0.07 toward the torn edge and comes back onto the root-tip chord, so the tip is exact), narrow root, widest at the middle (0.285 of its length), a long point, four teeth on the trailing edge, three oval holes on the centreline; built of quads (the bowed leaf is not convex). The `%LB-FRAME!` macro takes a separate width scale.
+- The cinematics follow: the awakening unfolds four pairs (f112–144), the revival turns them gold a pair at a time (four pairs), the Kikon's 24 lines leave the new fan (`*LB-HOLE-FAN*`).
+
+**The legs** (decision 20):
+- `:lille-shin` (the owl): the fixed hind stilts are gone. Two long thin legs (the rig's, x1.5): a 0.66 m thigh to the knee, then **two shanks of 0.75 m, 21° fore and aft and 4° out**, tapering to points on the floor; a knee knob. The rig's feet carry nothing. The owl keeps its long arms (the claws are the hands) and gets the same eight blades in gold #B89A5A (decision 11 kept; `*LB-WINGS-OWL*`: +34 / +11 / −11 / −34°, 1.9 / 2.05 / 1.95 / 1.7 m, the lowest pair flipped).
+- **New body `:lille-jilliel-kin`** (KIN): Jilliel's column from the hips up (the long lower column and prongs become a short rounded hip mass), the same no-arms rule and wings, on the owl's legs at Jilliel's rig: a 0.44 m thigh, then two shanks of 1.06 m, 20° fore and aft. **It is built for the Jilliel clips' float (root `:u` 0.5)**: the rig's feet hang 0.5 m up, so the shanks run on past them to the floor; a KIN clip should keep `:u` near 0.5 (a clip at `:u` 0 sinks the shanks 0.5 m).
+
+**The base form's aim line** (after the rules batch's §22.1): the grey tracking line and turning reticle now show during the stance (every move named `LB-KAMAE*`, wider from its f30), the jade locked line and the closing reticle (0.65 → 0.47 m) during `:lb-k-shot` until it fires; the volley's fan went (L in Jilliel is the switch). The `:charge` hook's jade glint also shows on `:lb-k-shot`.
+
+**Stills** (debug, DUEL_GAMEPLAY "Debug commands"): **79197** P1 Lille as JILLIEL KIN 5 m from Kenpachi (the `:jilliel-kin` form once its kit exists, else JILLIEL wearing the KIN body); **79198** Lille as P2 facing the behind camera 4 m out, each call the next of JILLIEL / KIN / the owl (the front view). Looked at against the reference contact sheets: Jilliel idle from the front, behind and the side, J1, K1 (wind-up and hit), K3, MUJITTAI (side, behind), KIN (front, side), the owl (front, side), the awakening at f120 / f150 / f170, the revival at f50 (gold turning pair by pair), the Jilliel Kikon card: two fans of four, no arms, the swinging front wing reads as a blade; the owl and KIN legs read as two forking into four from the side.
+
+**Gates**: host tests ALL PASS (duel-rules 5722 with the FK reach test, cine 18, control 86, learn 100, input 33, touch 64); `tools/pkgcheck.sh duel` 0 / 0 / 0; `simgate.py --seeds 10 --summary` **byte-identical** to the run before the change (the art moves nothing); `--cvc` PASS (yy, yk, kk); `./build.sh duel` 0 warnings.
+
+**Consing** (debug 79195, 10 draws): the draw hook 160 B in the base form, Jilliel (idle and mid-K), KIN and the owl, 240 B in MUJITTAI: 16 / 24 B a frame, the ECS lookup floor of §21, unchanged; the new wing paths (the hand-driven front pair, the sway, the spread) draw 0 B.
+
