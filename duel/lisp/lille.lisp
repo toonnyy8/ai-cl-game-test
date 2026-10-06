@@ -65,9 +65,10 @@ before, the quick shot (*LB-X-MIN* flat) (rework R, 2026-10-06; decision 17).")
 (defparameter *lb-kamae-dash-fs* 10.0 "... its flash-step price, once per stance (rework R, 2026-10-06).")
 ;; the stance's J / K after the second playtest (§23.1, decisions 21, 22; 「L 射擊架勢接 J 改成向前跳飛並在空中射出連射三發短程子彈
 ;; （擊中後可與 j/k 串成 combo）；接 K 則會向後拉開距離打出一發中程子彈」)
-(defparameter *lb-hosha-leap* 3.0
+(defparameter *lb-hosha-leap* 5.0
   "J 跳射 HOSHA: the forward leap, metres over its frames 0-14 (*LB-HOSHA-LEAP-F*); it stops *LUNGE-STOP* short of him
-(round 2, 2026-10-06; REIKYORI's 2.0 m lunge before).")
+(round 2, 2026-10-06: 3.0; the user's third playtest 2026-10-06 「L > J 前跳距離加長&射程縮短」: 3.0 -> 5.0; REIKYORI's 2.0 m
+lunge before).")
 (defparameter *lb-hosha-leap-f* 14 "... over this many frames (round 2, 2026-10-06).")
 (defparameter *lb-hosha-stun* 30
   "HOSHA's first two bullets flinch this many frames (the :stun override; a flinch is 18): from the 1st bullet (f6) his
@@ -247,20 +248,20 @@ place (round 2: TENSHIN in then J combos), SP2's a knockback."
   :flags (:ranged :x-axis :uncatchable) :on-frame ((0 lb-k-lock) (10 lb-k-fire)) :params (:lock 0 :bonus t))
 ;; J 跳射 HOSHA (round 2, §23.1, decision 21; REIKYORI's lunge before): a forward leap of 3 m over f0-14 (airborne look, the
 ;; hurt cylinder as ever, no iframes), turning 90 deg/s at him, three short bullets from the muzzle at f6 / f10 / f14: each
-;; a line to 6.6 m, 16, guardable (:ranged: no parry catches it; not the X-axis), its own window (three hits): flinches
+;; a line to 3.6 m (6.6 before the third playtest), 16, guardable (:ranged: no parry catches it; not the X-axis), its own window (three hits): flinches
 ;; held *LB-HOSHA-STUN*, the third a stagger; R 16 after he lands. On any bullet's hit his recovery (from f16) cancels into
 ;; J1 or K1, a combo (LB-LINK-TICK); a J / K pressed earlier is latched for it
 (defmove :lb-k-j :kind :sig :clip :lb-k-hosha :callout "HOSHA" :startup 6 :active 10 :recovery 16 :dmg 16 :adv-block -8
-  :guard 6 :track 90 :vol (:cap 0.6 6.0 1.2 0.25) :on-hit :flinch :hs *hitstop-light* :flags (:ranged)
+  :guard 6 :track 90 :vol (:cap 0.6 3.0 1.2 0.25) :on-hit :flinch :hs *hitstop-light* :flags (:ranged)
   :hits ((6 8 :stun *lb-hosha-stun*) (10 12 :stun *lb-hosha-stun*) (14 16 :on-hit :stagger))
-  :tick lb-hosha-tick :on-frame ((0 lb-hosha-leap) (6 lb-bullet) (10 lb-bullet) (14 lb-bullet)) :params (:link 16 :len 6.6))
+  :tick lb-hosha-tick :on-frame ((0 lb-hosha-leap) (6 lb-bullet) (10 lb-bullet) (14 lb-bullet)) :params (:link 16 :len 3.6))
 ;; K 退射 TAISHA (round 2, §23.1, decision 22; NAGIHARAI's sweep before): a back-slide of 3 m over f0-12 (turning 90 deg/s
-;; at him, then the line locks), one bullet at f16: a 12 m line, 60 flat x his damage, through guard as the shot (:x-axis:
+;; at him, then the line locks), one bullet at f16: a 6 m line (12 before the third playtest, 「L > K 射程縮短」), 60 flat x his damage, through guard as the shot (:x-axis:
 ;; chip 15 %, drain 30), a stagger knocking back 1 m; R 24
 (defmove :lb-k-k :kind :sig :clip :lb-k-taisha :callout "TAISHA" :startup 16 :active 2 :recovery 24 :dmg 60 :adv-block -14
-  :track 0 :vol (:cap 0.6 12.0 1.2 0.3) :on-hit :stagger :kb 1.0 :chip *lb-x-chip* :guard *lb-x-guard*
+  :track 0 :vol (:cap 0.6 6.0 1.2 0.3) :on-hit :stagger :kb 1.0 :chip *lb-x-chip* :guard *lb-x-guard*
   :flags (:ranged :x-axis :uncatchable) :tick lb-hiren-tick :on-frame ((0 lb-hiren-slide) (16 lb-taisha-fire))
-  :params (:slide *lb-taisha-slide* :slide-f *lb-taisha-slide-f* :lock *lb-taisha-slide-f* :len 12.6))
+  :params (:slide *lb-taisha-slide* :slide-f *lb-taisha-slide-f* :lock *lb-taisha-slide-f* :len 6.6))
 ;; Step 飛廉脚 HIRENKYAKU: 3.5 m in the stick direction (neutral: away from him) over 12 f, iframes f0-8, back in the stance
 ;; at f6 with the charge kept, its aim snapped onto him (LB-KAMAE-DASH, LB-KAMAE-BACK; round 2, decision 23)
 (defmove :lb-k-dash :kind :sig :clip :lb-k-dash :startup 12 :active 0 :recovery 0 :tick lb-k-dash-tick
@@ -1100,14 +1101,15 @@ it >= MAX), :GAUGE (the guard gauge GG under GG-MIN), :IDLE (he is out of reach 
 (defun lb-ai-kamae-plan (r d reeling guarding gg-low whiffed dash-ok)
   "His CPU's branch in the shooting stance, picked once at its f6 from one roll R (DUEL_LILLE §22.1, §23.1): the opponent
 REELING (after a K link's hit) L 0.6 (:L, the quick shot) / J 0.4 (HOSHA); from 8 m the charged shot (:CHARGE); 6-8 m the
-quick shot on a WHIFFED recovery, else the dash back then the charged shot (:DASH, when DASH-OK), else :CHARGE; 3-6 m K
-(TAISHA) on a GUARDING opponent, the quick shot on a whiff, else J (HOSHA); within 3 m K (TAISHA: room). (GG-LOW is no
-longer read: round 2.)"
+quick shot on a WHIFFED recovery, else the dash back then the charged shot (:DASH, when DASH-OK), else :CHARGE; 3-6 m the
+quick shot (through guard) on a GUARDING opponent or a whiff, else J (HOSHA: the 5 m leap, the 3 m bullets); within 3 m K
+(TAISHA: room; its 6 m bullet after the 3 m back-slide reaches only from there; the third playtest moved the guard case
+off TAISHA). (GG-LOW is no longer read: round 2.)"
   (declare (ignore gg-low))
   (cond (reeling (if (< r 0.6) :l :j))
         ((>= d 8.0) :charge)
         ((> d 6.0) (cond (whiffed :l) (dash-ok :dash) (t :charge)))
-        ((> d 3.0) (cond (guarding :k) (whiffed :l) (t :j)))
+        ((> d 3.0) (cond ((or guarding whiffed) :l) (t :j)))
         (t :k)))
 (defun lb-ai-link-plan (hosha r in trace-hit)
   "His CPU's J / K link (LB-LINK-TICK), once a move: after HOSHA's hit (HOSHA) J1 (:Q) under R < 0.5, else K1 (:F); after

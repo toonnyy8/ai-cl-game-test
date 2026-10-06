@@ -170,6 +170,8 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
 - **29. Traces: at most 16** (was 8; the user: 「然後將射擊軌道的留存上限改成 16。」). §23.2.
 - **30. TENSHIN's startup depends on where it starts** (the user: 「如果是中立遠程狀態按 L 的話，增加約 0.1~0.15 的型態變換與衝刺前搖動作，如果是遠程攻擊狀態按 L 的話則大幅減少前搖動作。」):
   from EN's neutral it gets a wind-up; as a cancel out of an EN attack almost none. §23.2.
+- **31. HŌSHA leaps farther and shoots shorter; TAISHA shoots shorter** (the user's third playtest, 2026-10-06: 「# 常態修改
+  1. L > J 前跳距離加長&射程縮短。 2. L > K 射程縮短>」). §23.1.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -1348,8 +1350,8 @@ Numbers are proposals until the gate; the lead picked them where the user gave n
 
 | Follow-up | Value |
 |---|---|
-| J 跳射 HŌSHA `:lb-k-j` (replaces REIKYORI) | a **forward leap 3.0 m** over f0–14 (airborne look, hurtbox as normal; no iframes), three bullets at **f6, f10, f14**: each a short line `(:cap 0.6 6.0 1.2 0.25)` from the muzzle, **16** damage, flinch (the 3rd a stagger), **guardable** (a bullet, not the X-Axis: chip as a normal ranged hit, guard 6 each), each its own window (3 hits); R 16 after landing. **On any bullet's hit, his recovery cancels into J1 or K1** (the link: a combo). Blocked: −8 |
-| K 退射 TAISHA `:lb-k-k` (replaces NAGIHARAI) | a **back-slide 3.0 m** over f0–12, then at **f16** one bullet: a line `(:cap 0.6 12.0 1.2 0.3)`, **60** flat × `*lille-mult*`, stagger, knockback 1.0 m, **`:ranged :x-axis :uncatchable`** (through guard: chip 15 %, drain **30**, as the shot); R 24 |
+| J 跳射 HŌSHA `:lb-k-j` (replaces REIKYORI) | a **forward leap 5.0 m** (3.0 before decision 31) over f0–14 (airborne look, hurtbox as normal; no iframes), three bullets at **f6, f10, f14**: each a short line `(:cap 0.6 3.0 1.2 0.25)` (6.0 before decision 31) from the muzzle, **16** damage, flinch (the 3rd a stagger), **guardable** (a bullet, not the X-Axis: chip as a normal ranged hit, guard 6 each), each its own window (3 hits); R 16 after landing. **On any bullet's hit, his recovery cancels into J1 or K1** (the link: a combo). Blocked: −8 |
+| K 退射 TAISHA `:lb-k-k` (replaces NAGIHARAI) | a **back-slide 3.0 m** over f0–12, then at **f16** one bullet: a line `(:cap 0.6 6.0 1.2 0.3)` (12.0 before decision 31), **60** flat × `*lille-mult*`, stagger, knockback 1.0 m, **`:ranged :x-axis :uncatchable`** (through guard: chip 15 %, drain **30**, as the shot); R 24 |
 | Step HIRENKYAKU `:lb-k-dash` | as built (3.5 m, once per stance, the charge kept); **at its end the stance's yaw snaps to the opponent** (track resumes from there) |
 | Touch (bug) | in the stance an upward flick must give the Step, as on the keys (the control / touch path is fixed, not the stance; a host test pins it) |
 
@@ -1591,4 +1593,19 @@ LL 246.1 (mirror): every cross median inside 125–210 s; wins up from 6 / 2 / 2
 **Awaken A/B** (39020, wins of 60, streams 100 / 300 / 500; pass ≥ 20): LY 18 / 20 / 18, LK 2 / 6 / 7, LR 8 / 10 / 10,
 LI 5 / 10 / 8, LS 17 / 13 / 14. Closer than §22.6 (1–19) but failing every row except LY's stream 300: awakening is
 still a large upgrade. Not tuned (the user's playtest decides the direction).
+
+### 23.7 Decision 31 (the third playtest, 2026-10-06)
+
+「# 常態修改 1. L > J 前跳距離加長&射程縮短。 2. L > K 射程縮短>」. The lead's numbers:
+
+| Knob | Before | After |
+|---|---|---|
+| `*lb-hosha-leap*` (over 14 f, stopping `*lunge-stop*` short) | 3.0 m | **5.0 m** |
+| HŌSHA bullet line (`:vol`, look `:len`) | 6.0 m (6.6) | **3.0 m** (3.6) |
+| TAISHA bullet line | 12.0 m (12.6) | **6.0 m** (6.6) |
+
+HŌSHA now threatens up to ~8 m (the leap closes, the bullets reach 3 m: the first at f6 after 2.1 m of leap, the third at
+f14 at its end). TAISHA after its 3 m back-slide reaches an opponent who stood within ~3 m. So the CPU's guard case at
+3–6 m moved off TAISHA (it would now whiff) to the quick shot (through guard); its bands are otherwise unchanged
+(`lb-ai-kamae-plan`, host test updated).
 

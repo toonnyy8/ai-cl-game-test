@@ -1915,8 +1915,8 @@ defender's next step. Values: the attacker's and the defender's first actionable
     (loop for sf from 7 to 19 do (lb-kamae-clock st sf (incf now)))
     (check (= 24 (lbs-charge st))))
   ;; HOSHA (J, §23.1, decision 21): S6, three bullets f6 / f10 / f14 (2-frame windows, each its own hit), 16 each, a short
-  ;; line to 6.6 m, flinch held *LB-HOSHA-STUN* (30) then a stagger, guard 6, -8, :ranged (no chip); the leap 3 m over
-  ;; f0-14; R16 after the last window (total 32); its J / K link from f16. TAISHA (K, decision 22): S16 A2 R24, a 12 m
+  ;; line to 3.6 m (third playtest; 6.6 before), flinch held *LB-HOSHA-STUN* (30) then a stagger, guard 6, -8, :ranged (no chip); the leap 5 m (3 before) over
+  ;; f0-14; R16 after the last window (total 32); its J / K link from f16. TAISHA (K, decision 22): S16 A2 R24, a 6 m (12 before)
   ;; line, 60 flat (no :bonus), stagger kb 1.0, through guard as the shot (chip 15 %, drain 30), the back-slide 3 m over
   ;; f0-12 then locked. The dash (Step): 12 f hitless, back in the stance at its f11, 10 flash step
   (let* ((rj (find-move :lb-k-j)) (rk (find-move :lb-k-k)) (dash (find-move :lb-k-dash)) (wj (mv-hits rj)) (wk (svref (mv-hits rk) 0)))
@@ -1925,11 +1925,11 @@ defender's next step. Values: the attacker's and the defender's first actionable
                 (every (lambda (w) (and (= 16 (hw-dmg w)) (= 6 (hw-guard w)))) wj)
                 (equal (map 'list #'hw-react wj) '(:flinch :flinch :stagger))
                 (equal (map 'list #'hw-stun wj) (list *lb-hosha-stun* *lb-hosha-stun* nil))
-                (= -8 (mv-adv-block rj)) (~= 6.0 (mv-reach rj)) (zerop (mv-slide rj)) (= 16 (getf (mv-params rj) :link))
-                (~= 3.0 *lb-hosha-leap*) (= 14 *lb-hosha-leap-f*) (eq (mv-tick rj) 'lb-hosha-tick)
+                (= -8 (mv-adv-block rj)) (~= 3.0 (mv-reach rj)) (zerop (mv-slide rj)) (= 16 (getf (mv-params rj) :link))
+                (~= 5.0 *lb-hosha-leap*) (= 14 *lb-hosha-leap-f*) (eq (mv-tick rj) 'lb-hosha-tick)
                 (equal (mv-on-frame rj) '((0 lb-hosha-leap) (6 lb-bullet) (10 lb-bullet) (14 lb-bullet)))
                 (= 16 (mv-s rk)) (= 2 (mv-a rk)) (= 24 (mv-r rk)) (= 60 (hw-dmg wk)) (eq :stagger (hw-react wk)) (~= 1.0 (hw-kb wk))
-                (~= 12.0 (mv-reach rk)) (= 30 (hw-guard wk)) (not (getf (mv-params rk) :bonus))
+                (~= 6.0 (mv-reach rk)) (= 30 (hw-guard wk)) (not (getf (mv-params rk) :bonus))
                 (~= 3.0 (getf (mv-params rk) :slide)) (= 12 (getf (mv-params rk) :slide-f) (move-lock rk))
                 (equal (mv-on-frame rk) '((0 lb-hiren-slide) (16 lb-taisha-fire)))
                 (= 12 (mv-total dash)) (zerop (length (mv-hits dash))) (equal (mv-on-frame dash) '((0 lb-kamae-dash) (11 lb-kamae-back)))
@@ -2159,7 +2159,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (eq :l (lb-ai-kamae-plan 0.5 7.0 nil nil nil t t)) (eq :dash (lb-ai-kamae-plan 0.5 7.0 nil nil nil nil t))
               (eq :charge (lb-ai-kamae-plan 0.5 7.0 nil nil nil nil nil))
               (eq :j (lb-ai-kamae-plan 0.5 5.0 nil nil nil nil t)) (eq :j (lb-ai-kamae-plan 0.5 6.0 nil nil t nil t))
-              (eq :k (lb-ai-kamae-plan 0.5 4.0 nil t nil nil t)) (eq :l (lb-ai-kamae-plan 0.5 4.0 nil nil nil t t))
+              (eq :l (lb-ai-kamae-plan 0.5 4.0 nil t nil nil t)) (eq :l (lb-ai-kamae-plan 0.5 4.0 nil nil nil t t))
               (eq :k (lb-ai-kamae-plan 0.5 2.0 nil nil nil nil t)) (eq :k (lb-ai-kamae-plan 0.5 3.0 nil nil nil t t))))
   ;; EN's switch in (§22.2): >= 3 live traces and him on one (0.6 m), or him reeling / recovering within 1.5 m of one
   (let ((k (getf (kit-ai j) :switch)))
