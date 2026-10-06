@@ -192,6 +192,8 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
 - **38. The owl's EN and KIN must read apart, and EN Trompete is faster** (the user, 2026-10-06: 「1. 梟頭模式幫我設計更明顯的遠程和
   近戰視覺差異，目前看不出『遠程模式翼張開、站直，近戰模式翼往後收、身體前傾』這樣的設計。 2. SP2 神之喇叭在遠程模式的前後搖再縮短。」).
   §23.18.
+- **39. Laying a trace fires a 1-damage shot along it** (the user, 2026-10-06: 「請萊醬你再幫我多加一個設定，覺醒後在遠程狀態產生軌道時，
+  軌道上會對敵人造成傷害為 1 的射擊傷害。」, then 「輕微硬直但可防禦」). §23.20.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -2032,4 +2034,13 @@ silhouette alone tells the mode:
 
 **EN Trompete** (`:lb-oe-trompete`): S 20 → **12** (the tell; its track / lock scaled), R 14 → **8**; A 6 and the
 thick trace unchanged. The KIN (direct) Trompete is unchanged.
+
+### 23.20 Decision 39: the laying shot (2026-10-06)
+
+Every trace laid in EN (Jilliel and the owl; J, K, SP1 and SP2) fires a shot along its line at the laying frame: a
+2-frame hazard of its own (`:lb-nick`, the trace's `:cap`), **1 damage** (× the form's multiplier, rounded: 1), a
+**flinch held 10 f** (`*lb-nick-stun*`; it interrupts a move like any hit and counts in a combo), no hitstop, **guardable
+as a plain ranged hit** (no chip, 2 guard gauge drained; not the X-Axis), `:ranged`. A K fan's three lines share one hit
+group (one shot hits a fighter once). It is not the trace: it gives no flash-step refund and the trace still waits for
+L to materialise. The lead picked 10 f and 2 (the user may move them).
 

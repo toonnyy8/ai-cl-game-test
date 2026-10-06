@@ -115,6 +115,9 @@ free (decision 34, 2026-10-06: 「從『遠』變『近』不消耗閃步量表�
   "EN's J / K: the flash step each trace line laid costs (a J 3, a K's fan of three 9); a line is laid only while this
 much is left, checked line by line (the swing still plays); SP1 / SP2's traces are free (decision 34, 2026-10-06, the
 user: 「遠程 J/K 每條軌跡消耗 3 點閃步量表」; free before).")
+(defparameter *lb-nick-dmg* 1 "A trace's laying shot: its damage (decision 39, 2026-10-06; the user's 1).")
+(defparameter *lb-nick-stun* 10 "... the light flinch it holds, frames (decision 39: 「輕微硬直」; the lead's number).")
+(defparameter *lb-nick-guard* 2 "... the guard gauge a blocked one drains (decision 39: guardable; the lead's number).")
 (defparameter *lb-trace-refund-block* 2.0
   "... and a guarded one this much (the user, 2026-10-06: 「擋下回收 2」; it was nothing).")
 (defparameter *lb-trace-refund* 4.0
@@ -290,6 +293,11 @@ fan's sides in order; laid in FANS' order."
 when *LB-TRACE-MAX* were live) or NIL. (The sim keeps its traces as hazards: LB-LAY-TRACE drops by LB-TRACE-OLDEST.)"
   (let ((drop (and (lb-trace-drop-p (length ids)) (lb-trace-oldest ids))))
     (values (append (remove drop ids) (list id)) drop)))
+(defun lb-nick-hitwin ()
+  "The shot a trace's laying fires along it (decision 39, the user 2026-10-06: 「覺醒後在遠程狀態產生軌道時，軌道上會對敵人造成傷害為
+1 的射擊傷害」, then 「輕微硬直但可防禦」): *LB-NICK-DMG* (1), a flinch held *LB-NICK-STUN*, no hitstop, guardable as a
+plain ranged hit (no chip, *LB-NICK-GUARD* drained; not the X-Axis), :ranged (no parry catches it)."
+  (make-hitwin :dmg *lb-nick-dmg* :react :flinch :stun *lb-nick-stun* :hs 0 :guard *lb-nick-guard* :flags (list :ranged)))
 (defun lb-trace-hitwin (kind mult)
   "The hit a materialised trace of KIND deals (one 2-frame window, once): *LB-TRACE-DMG* x MULT, through guard (the
 X-axis rule: chip *LB-X-CHIP*, drain *LB-TRACE-GUARD*), :ranged :x-axis :uncatchable; a stagger of *LB-TRACE-STUN* in
@@ -900,10 +908,11 @@ touched him (the lines never hit: FIGHTER-CHAINED opens the string gate), and hi
 while its reserve allows (LB-AI-EN-NEXT)."
   (let* ((f (fighter e)) (mv (fighter-move f)) (src (getf (mv-params mv) :trace)) (g (gauges e)))
     (let* ((fans (lb-trace-fans src)) (group (and (rest fans) (make-hit-group 1)))   ; a K's fan hits a fighter once
+           (nick (and (rest fans) (make-hit-group 1)))                                ; (its laying shot too: decision 39)
            (laid (lb-trace-pay (gauges-fs g) src (length fans))) (cost (lb-trace-cost src)))
       (dolist (a (lb-trace-pick fans laid))
         (when (plusp cost) (spend-fs g cost))
-        (lb-lay-trace e src a group))
+        (lb-lay-trace e src a group nick))
       (when (< laid (length fans)) (lb-count e :traces-unpaid (- (length fans) laid)))
       (when (and (plusp laid) (lb-owl-form-p (fighter-form f))) (lb-count e :owl-traces laid)))
     (emit :sfx :rift-cut e)
@@ -921,11 +930,16 @@ while its reserve allows (LB-AI-EN-NEXT)."
           (when (or (null old) (< (lbh-id d) oid)) (setf old h oid (lbh-id d))))))
     (values n old)))
 
-(defun lb-lay-trace (e src yaw-off &optional group)
+(defun lb-lay-trace (e src yaw-off &optional group nick)
   "One trace of SRC (:j :k :sp1 :sp2) from where he stands, at his facing + YAW-OFF degrees, *LB-TRACE-LEN* long: a hazard
 with no hit (drawn by LB-TRACE-LOOK, faint jade on the floor) until his switch materialises it; at most *LB-TRACE-MAX*
-live (the oldest dropped first: LB-TRACE-DROP-P)."
+live (the oldest dropped first: LB-TRACE-DROP-P). Laying it fires the line's shot along it (LB-NICK-HITWIN, a 2-frame
+hazard of its own: decision 39; NICK a K fan's hit group, so the fan's shot hits a fighter once)."
   (let ((st (lb e)) (p (pos-of e)) (r (if (eq src :sp2) *lb-trace-r-thick* *lb-trace-r*)))
+    (spawn-hazard :lb-nick e :x (aref p 0) :z (aref p 2) :yaw (+ (yaw-of e) (deg yaw-off)) :size *lb-trace-len*
+                             :life 2 :hits 1 :hw (lb-nick-hitwin) :hook 'lb-hz :group nick
+                             :data (make-lbh :kind :nick :src src :len (f32 *lb-trace-len*) :width (f32 r)
+                                             :vol (make-vol :cap (list 0.6 *lb-trace-len* 1.2 r))))
     (multiple-value-bind (n old) (lb-live-traces e)
       (when (lb-trace-drop-p n) (destroy-entity old) (lb-count e :traces-dropped)))
     (spawn-hazard :lb-trace e :x (aref p 0) :z (aref p 2) :yaw (+ (yaw-of e) (deg yaw-off)) :size *lb-trace-len*
@@ -1148,7 +1162,7 @@ gap G12); each erupts outward from 1 m to 18 m (LB-SABAKI-SPAN), through guard (
                             (obox-cyl-hit-p (f32 (+ (hazard-x hz) (* mid (fwd-x yaw)))) 1f0 (f32 (+ (hazard-z hz) (* mid (fwd-z yaw))))
                                             yaw (f32 (* 0.5 (lbh-width d))) 1.2f0 (f32 (* 0.5 (- to from)))
                                             a b c dd ee)))))
-                  (:trace                               ; a trace's line (its :cap from where it was laid)
+                  ((:trace :nick)                       ; a trace's line (its :cap from where it was laid), its laying shot
                    (let ((yaw (hazard-yaw hz)))
                      (vol-hit-p (lbh-vol d) (hazard-x hz) 0f0 (hazard-z hz) (f32 (fwd-x yaw)) (f32 (fwd-z yaw))
                                 (f32 a) (f32 b) (f32 c) (f32 dd) (f32 ee) 0f0)))))

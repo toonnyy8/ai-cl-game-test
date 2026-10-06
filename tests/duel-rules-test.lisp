@@ -2154,7 +2154,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (equal (lb-trace-pick (lb-trace-fans :k) 2) (list (- *lb-trace-fan*) 0.0))
               (equal (lb-trace-pick (lb-trace-fans :k) 1) '(0.0)) (null (lb-trace-pick (lb-trace-fans :k) 0))
               (equal (lb-trace-pick (lb-trace-fans :j) 1) '(0.0)) (null (lb-trace-pick (lb-trace-fans :j) 0))
-              (lb-en-dry-p 2.9) (not (lb-en-dry-p 3.0)) (~= 4.0 *lb-trace-refund*) (~= 4.0 (lb-trace-refund :hit)) (~= 2.0 (lb-trace-refund :block)) (~= 2.0 *lb-trace-refund-block*)
+              (lb-en-dry-p 2.9) (not (lb-en-dry-p 3.0)) (let ((nw (lb-nick-hitwin))) (and (= 1 (hw-dmg nw)) (eq :flinch (hw-react nw)) (= 10 (hw-stun nw)) (zerop (hw-hs nw)) (null (hw-chip nw)) (= 2 (hw-guard nw)) (member :ranged (hw-flags nw)) (not (member :x-axis (hw-flags nw))))) (~= 4.0 *lb-trace-refund*) (~= 4.0 (lb-trace-refund :hit)) (~= 2.0 (lb-trace-refund :block)) (~= 2.0 *lb-trace-refund-block*)
               (zerop (lb-trace-refund nil))))
   ;; a K fan is one hit group (LB-EN-LAY's MAKE-HIT-GROUP 1 when the fan has more than one line): its refund once
   (check (and (rest (lb-trace-fans :k)) (null (rest (lb-trace-fans :j))) (null (rest (lb-trace-fans :sp1))))))
