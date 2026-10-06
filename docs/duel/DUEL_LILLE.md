@@ -172,6 +172,10 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
   from EN's neutral it gets a wind-up; as a cancel out of an EN attack almost none. §23.2.
 - **31. HŌSHA leaps farther and shoots shorter; TAISHA shoots shorter** (the user's third playtest, 2026-10-06: 「# 常態修改
   1. L > J 前跳距離加長&射程縮短。 2. L > K 射程縮短>」). §23.1.
+- **32. The wings' rims translucent too, and every wing jointed** (the user, 2026-10-06: 「萊醬你能幫我將覺醒後翅膀的不透明邊界也
+  都換成半透明嗎？然後每片翅膀改成中間加 2 節可以彎折的連接觸，讓整體動作與攻擊動畫不會太死板。」): the opaque rim, teeth and
+  hole rings go see-through as well; each blade becomes three segments joined at two bending joints, so the idle, the
+  folds and the strikes curl and whip instead of swinging as rigid planks. §23.8.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -1615,4 +1619,16 @@ LL 244.6 (mirror); every cross median inside 125–210 s; `--cvc` PASS; pkgcheck
 **The owl's arms (the user, 2026-10-06: 「然後梟頭狀態多了一組手臂喔www 萊醬」)**: decision 27's "extra arms" were
 relative to KIN, which draws none, so the owl has **one** pair: the rig's long arms (the claws, the strike points).
 The second, cosmetic pair §23.5 added (`%LB-ARMS2`, the `:lb-limb` / `:lb-claw` weapons) is cut.
+
+### 23.8 Decision 32: translucent rims, three-segment wings (2026-10-06)
+
+- **Rims**: the rim band, the teeth and the hole rings drawn translucent as well (a little stronger than the glass, so the
+  outline still reads), every Jilliel form and the owl; MUJITTAI fainter still.
+- **Joints**: every wing blade is three segments (root, middle, tip) joined at **two joints** at about 1/3 and 2/3 of its
+  length; each joint bends about the blade's own fold axis. Cosmetic only (the sim never reads it):
+  - idle: a travelling wave root → tip on each wing's own phase;
+  - strikes: the front wing(s) lag then whip (the joints trail the root on the swing, snap straight at the active frames,
+    overshoot in recovery); **at the active frames the striking wing's tip is still the rig's hand** (the host FK reach
+    test keeps passing, ±0.15 m);
+  - folds (MUJITTAI) curl round the column; SP spreads unfurl from the root.
 
