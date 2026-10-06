@@ -127,7 +127,7 @@
 
 (defmacro defmove-copy (name of &rest overrides)
   "Move NAME: a copy of move OF (its plist, :enter and all) under another name: a switched string link (J2s, K2s),
-whose kit string allows only the new button (docs/DUEL_STRINGS.md §2.1; no new clip). OVERRIDES: keys that replace
+whose kit string allows only the new button (docs/duel/DUEL_STRINGS.md §2.1; no new clip). OVERRIDES: keys that replace
 OF's (they go first in the plist, so DEFMOVE's &key takes them: the Bankai's MAPPUTATSU is LEAP CLEAVE with its own
 callout and cinematic)."
   `(register-move ,name (append ',overrides (mv-spec (find-move ,of)))))
@@ -161,7 +161,7 @@ new button."
   :cooldown frames before its command may start again (from the move start; kept through resets)
   :cost     Reiatsu bars (default by command, KIT-COMMAND-COST); :hold (min max) frames the button
             is held before the move proper (charge / stance); :slide metres moved during the move
-  :flags    :ender (a string's link 3, J3 / K3: a hit on it opens the O ender, docs/DUEL_STRINGS.md §2.4)
+  :flags    :ender (a string's link 3, J3 / K3: a hit on it opens the O ender, docs/duel/DUEL_STRINGS.md §2.4)
             :breaker :guard-crush :stance :parry (a parry move: *PARRY-WINDOW*) :cancel (a Signature
             that may cancel a landed Quick / Flash, like an SP) :bind (South: the CPU's trap reflex)
             :ranged (a hit delivered by fire / a ground line, not the blade: like a hazard, no parry catches it;
@@ -213,9 +213,9 @@ new button."
   (calm nil)                            ; the face never shouts in this form (a look: MAIN.LISP FACE-OF)
   (stun-tolerance nil)                  ; the hidden stun it takes (NIL: *STUN-TOLERANCE*; STUN-TOLERANCE-OF)
   (gg-regen 1.0)                        ; x the guard gauge's refill rate in this form, not guardless (rules GG-REGEN)
-  (l-after-k nil)                       ; L chained after a K link (docs/DUEL_STRINGS.md §12): T its L, or a move (a combo copy)
+  (l-after-k nil)                       ; L chained after a K link (docs/duel/DUEL_STRINGS.md §12): T its L, or a move (a combo copy)
   (l-after-j nil)                       ; ... after a J link (J1 / J2 / J2s / J3): T its L, or a move
-  (hooks nil)                           ; plist hook point -> the character file's function (KIT-HOOK; docs/DUEL_DESIGN.md
+  (hooks nil)                           ; plist hook point -> the character file's function (KIT-HOOK; docs/duel/DUEL_DESIGN.md
                                         ; "Character code layout")
   (endless-form nil)                    ; ENDLESS: the form a stay-awakened carry starts the next stage in (endless-rules.lisp)
   (commands nil)                ; plist command -> move name
@@ -257,12 +257,12 @@ latch (STRING-LATCH); link 3 has none, so presses there are plain buffered press
   (or (eq move-name (getf (kit-commands kit) :q))
       (loop for (nil cmd to) in (kit-strings kit) thereis (and (eq cmd :q) (eq to move-name)))))
 (defun kit-l-link (kit move-name)
-  "The L link after string link MOVE-NAME (docs/DUEL_STRINGS.md §12): after a K link the kit's :l-after-k, after a J
+  "The L link after string link MOVE-NAME (docs/duel/DUEL_STRINGS.md §12): after a K link the kit's :l-after-k, after a J
 link its :l-after-j; the form's L (T) or the named copy of it, a MOVE; NIL when the form has none for that link."
   (let ((l (cond ((kit-k-link-p kit move-name) (kit-l-after-k kit)) ((kit-j-link-p kit move-name) (kit-l-after-j kit)))))
     (and l (if (eq l t) (kit-command-move kit :sig) (kit-move kit l)))))
 (defun string-latch (kit move-name command queued)
-  "The latch (docs/DUEL_STRINGS.md §2.1, §2.3): a J / K press (COMMAND :q / :f) during string link MOVE-NAME, with
+  "The latch (docs/duel/DUEL_STRINGS.md §2.1, §2.3): a J / K press (COMMAND :q / :f) during string link MOVE-NAME, with
 QUEUED latched so far. The new latched command: COMMAND when the string may go on with it (the last press wins),
 else QUEUED: the press is eaten (after a switch the original button is ignored and overwrites nothing)."
   (if (kit-next kit move-name command) command queued))
@@ -277,7 +277,7 @@ else QUEUED: the press is eaten (after a switch the original button is ignored a
           (t 0)))))
 (defun kit-hook (kit point)
   "The character file's function for hook POINT in KIT (its :hooks plist), or NIL: the generic code calls it where the
-point is (docs/DUEL_DESIGN.md \"Character code layout\")."
+point is (docs/duel/DUEL_DESIGN.md \"Character code layout\")."
   (getf (kit-hooks kit) point))
 (defvar *char-debug* nil "(lo hi fn): debug commands LO..HI a character file handles (debug.lisp calls FN with the command).")
 (defun kit-pip-cmd-p (kit command)
@@ -377,7 +377,7 @@ child's keys win, :commands merge per command, :strings add. Keys:
                                      slides; body.lisp DEFRUN), default the shared :sh-* set
   :commands (:q m :f m :sig m :sp1 m :sp2 m :breaker m :kikon m)   see *KIT-COMMANDS*
   :grid (J1 J2 J3 K1 K2 K3 J2s K2s)  the J / K strings as one grid (STRING-GRID), added to :strings
-  :strings ((from-move command to-move) ...)   the J / K grid (docs/DUEL_STRINGS.md §1): J1 -q-> J2 -q-> J3,
+  :strings ((from-move command to-move) ...)   the J / K grid (docs/duel/DUEL_STRINGS.md §1): J1 -q-> J2 -q-> J3,
                                      J1 -f-> K2s -f-> K3 ... (a switched link-2 alias allows only the new
                                      button: J / K switch at most once); a non-button command (:land) names a
                                      follow-up a hook starts (KIT-NEXT), so derived forms derive it too
@@ -408,7 +408,7 @@ child's keys win, :commands merge per command, :strings add. Keys:
   :meter-gain (:dealt :taken :drunk) the meter per point dealt / lost / drunk (DRINK, the stance's absorb)
   :form-name :drink-clip :respect-callout  the HUD's form name; the clip of a drunk hit; the callout when the
                                      opponent outplays him
-  :bankai-form FORM                  P, red and free, enters FORM (Kenpachi's cup 3: the Bankai, docs/DUEL_KEN_BANKAI.md)
+  :bankai-form FORM                  P, red and free, enters FORM (Kenpachi's cup 3: the Bankai, docs/duel/DUEL_KEN_BANKAI.md)
   :pips (:n :cmds (cmd ...) :to FORM)  the arm meter (the kit meter holds the pips): each command in :cmds (and every
                                      latched K link) spends one on its frame 0 (refused at 0); at 0 the arm bursts to
                                      FORM (combat.lisp ARM-STEP)
@@ -416,7 +416,7 @@ child's keys win, :commands merge per command, :strings add. Keys:
   :rooted T                          no Step / Hoho / run, no move slide or string chase   :reset-form FORM  the form
                                      after a Kikon reset
   :l-after-k T | MOVE                L latched during a K link (K1 / K2 / K2s / K3) starts when that link's chain opens
-                                     (its own contact, docs/DUEL_STRINGS.md §12): T the form's L, else MOVE, a combo copy
+                                     (its own contact, docs/duel/DUEL_STRINGS.md §12): T the form's L, else MOVE, a combo copy
   :l-after-j T | MOVE                the same after a J link (J1 / J2 / J2s / J3)
   :calm T                            the face stays calm (no shout: a look, FACE-OF)
   :gg-regen x                        x the guard gauge's refill rate in this form (default 1.0)
@@ -430,7 +430,7 @@ child's keys win, :commands merge per command, :strings add. Keys:
                                      on the posed body), :hud-guard (drawn over its guard bar), :deck (e x y d: the
                                      one-hand thumb ring)
   :endless-form FORM                 ENDLESS: staying awakened starts the next stage in FORM, its meter at FORM's :start
-                                     (docs/DUEL_ENDLESS.md §4)
+                                     (docs/duel/DUEL_ENDLESS.md §4)
   :u-tag STRING                      the HUD's tag for U   :meter (:name :max :temp t)  Rukia's cold gauge (combat.lisp
                                      TEMP-STEP: the kit meter holds the cold C, the band is the form, rules TEMP-BAND)
   :warm n  :cold (cmd n ...)         a :temp form's warming per second; the cold each command spends (L refused without)

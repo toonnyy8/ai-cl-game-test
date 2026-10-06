@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""style-6-shots.py — the phase-6 still set of the Storm x Kubo restyle (docs/STYLE_STORM_DESIGN.md §9 row 6, user
+"""style-6-shots.py — the phase-6 still set of the Storm x Kubo restyle (docs/style/STYLE_STORM_DESIGN.md §9 row 6, user
 review 4): the destruction marks and resting chips, the pillars and the fire wave beside the lens, the face accents, the
 left fist held on the cleaver's handle (the art viewer's grip strips), the caption slice exit, the skull in the Nozarashi
 pillar, the K.O. rain, the soft shapes redrawn; a before / after sheet against the previous build; and the final review

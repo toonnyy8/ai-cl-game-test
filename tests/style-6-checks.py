@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""style-6-checks.py — the phase-6 checks of the Storm x Kubo restyle (docs/STYLE_STORM_DESIGN.md §14 Phase 6) on a
+"""style-6-checks.py — the phase-6 checks of the Storm x Kubo restyle (docs/style/STYLE_STORM_DESIGN.md §14 Phase 6) on a
 played script:
 
   cons   0 B for 10 draws of every Phase 6 per-frame look (debug 2391: "vfx6 consing")

@@ -1,4 +1,4 @@
-// Kurosaki Ichigo (TYBW, docs/DUEL_ICHIGO.md §2, v2 "the look"; docs/BABYLON_LOOK.md B3): 1.8 m and lean, the black
+// Kurosaki Ichigo (TYBW, docs/duel/DUEL_ICHIGO.md §2, v2 "the look"; docs/babylon/BABYLON_LOOK.md B3): 1.8 m and lean, the black
 // shihakusho with no haori, short spiky orange hair with two lighter locks, the scowl; the dual Zangetsu: the long
 // cleaver with a hole (right hand, the weapon mesh) and the hiltless stone-knife blade held reversed along the left
 // forearm (a body part riding the weaponL bone). KESSA (form 'kessa'): barefoot, the hair and face black on his left,

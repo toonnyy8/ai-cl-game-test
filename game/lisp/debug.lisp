@@ -1,5 +1,5 @@
 ;;;; debug.lisp — developer tools: the Module._debug_cmd(n) commands (the test scripts drive the
-;;;; game with them; list in docs/GAMEPLAY.md), the F3 / T keys, the autoplay bot (runs at the
+;;;; game with them; list in docs/raven-edge/GAMEPLAY.md), the F3 / T keys, the autoplay bot (runs at the
 ;;;; nearest enemy and mashes; end-to-end tests) and soak mode (bot runs forever, heap log).
 (in-package :raven)
 
@@ -92,7 +92,7 @@ K on an Obliterate prompt, roll away from red windups."
     (t (game-debug-command c))))
 
 (defun game-debug-command (c)
-  "Commands 10+ of Module._debug_cmd; the list is in docs/GAMEPLAY.md (Debug commands)."
+  "Commands 10+ of Module._debug_cmd; the list is in docs/raven-edge/GAMEPLAY.md (Debug commands)."
   (case c
     (10 (start-run))
     ((11 12 13 14) (ensure-run) (begin-wave (- c 10)))

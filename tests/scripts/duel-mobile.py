@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""duel-mobile.py — the portrait presentation review (docs/DUEL_MOBILE_DESIGN.md P2): ONE-HAND reached by taps, then the
+"""duel-mobile.py — the portrait presentation review (docs/duel/DUEL_MOBILE_DESIGN.md P2): ONE-HAND reached by taps, then the
 stills of every portrait screen (mode, gesture card, select, intro, neutral, close, far, a string + the O ender, pause,
 the Kikon / Bankai / Nozarashi / Soul Break cinematics, results) and the framing / text probe lines (debug 2700).
   python3 tests/scripts/duel-mobile.py [OUTDIR [base|insets]]   writes tests/scripts/duel-mobile.json (OUTDIR default

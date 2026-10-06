@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""assistgate.py — ASSIST's gate (docs/DUEL_ASSIST.md): the button-masher (debug habit :dumb, P1) against a CPU (P2) on the
+"""assistgate.py — ASSIST's gate (docs/duel/DUEL_ASSIST.md): the button-masher (debug habit :dumb, P1) against a CPU (P2) on the
 native sim (tools/simgate.py's build), every roster pairing, per assist setting; P1's wins per setting.
 
   python3 tools/assistgate.py                        settings 0 (none) 1 2 3 6 10 11, NORMAL, seeds 1-20

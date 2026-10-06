@@ -1,4 +1,4 @@
-// endless-rules.ts <- duel/lisp/endless-rules.lisp: ENDLESS 無限連戰 as pure rules (docs/DUEL_ENDLESS.md): the ramp, the
+// endless-rules.ts <- duel/lisp/endless-rules.lisp: ENDLESS 無限連戰 as pure rules (docs/duel/DUEL_ENDLESS.md): the ramp, the
 // opponent bag, the stage seed, P1's carry-over between stages and the record comparison. Plain data over kit.ts (findKit
 // and the kit slots); the mode itself (the run, its screens, the record on the page) is endless.ts / src/ui/flow.ts.
 // No character names in here: what a form carries over is kit data (endlessForm, resetForm, duration, meter).

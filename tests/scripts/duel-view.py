@@ -50,7 +50,7 @@ def stage(cmd, shot, t):
 def sounds(cmd, shot, t):
     for i in range(44): cmd(5000 + i, 0.8)
 
-NEW = ("ya-sleeve", "ya-e-drop", "ke-kick", "ke-r-kote", "ke-r-tsuki")   # the strings' new clips (docs/DUEL_STRINGS.md §3)
+NEW = ("ya-sleeve", "ya-e-drop", "ke-kick", "ke-r-kote", "ke-r-tsuki")   # the strings' new clips (docs/duel/DUEL_STRINGS.md §3)
 
 def strings(cmd, shot, t):
     # their strips (0, S, S+A, end) as tests/shots/duel-string-*.png

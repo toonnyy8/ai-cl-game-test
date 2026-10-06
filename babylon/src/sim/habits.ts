@@ -32,7 +32,7 @@ export function habitFire(e: Ent, b: Brain, s: Snap, d: number): boolean {
   return false;
 }
 
-/** The button-masher (ASSIST's gate, docs/DUEL_ASSIST.md): hold U while a move of his comes (seen late, DUMB_DELAY, and
+/** The button-masher (ASSIST's gate, docs/duel/DUEL_ASSIST.md): hold U while a move of his comes (seen late, DUMB_DELAY, and
  *  only DUMB_GUARD_P of his moves), mash J (a press every 8 f) within J1's reach, else walk at him. Never a Step, Hoho, L,
  *  SP, Breaker, O, Burst or awakening of its own: those come from the assist. */
 export function dumbStep(e: Ent, b: Brain, s: Snap, d: number): true {

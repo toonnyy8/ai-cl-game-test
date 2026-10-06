@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""mobile-sheet.py — the portrait review contact sheet (docs/DUEL_MOBILE_DESIGN.md P2): each still of
+"""mobile-sheet.py — the portrait review contact sheet (docs/duel/DUEL_MOBILE_DESIGN.md P2): each still of
 tests/scripts/duel-mobile.py side by side, AFTER (and BEFORE when given) under a label.
   python3 tests/mobile-sheet.py OUT.png AFTER_DIR [BEFORE_DIR] [--names a,b,c] [--w 260]"""
 import os, sys

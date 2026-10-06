@@ -15,7 +15,7 @@ import { aiBrain, aiMashP, aiSbFinishP, aiTable, why } from '../sim/ai';
 import { spawnHazard } from '../sim/hazards';
 
 // ================================================================ Shikai (base)
-// the J / K strings (docs/DUEL_STRINGS.md §2.1 budget): J1 7 f beats every K1 in the game; the K links frost. The reach
+// the J / K strings (docs/duel/DUEL_STRINGS.md §2.1 budget): J1 7 f beats every K1 in the game; the K links frost. The reach
 // since the J cut (§13): J 0.6x, close; K -10 %
 defmove('ru-j1', { kind: 'quick', clip: 'ru-q1', startup: 7, active: 3, recovery: 12, dmg: 34, advBlock: -2,
   reach: 1.44, arc: 100, onHit: 'flinch', slide: 0.6 });            // HATSUSHIMO: a one-handed flat cut
@@ -58,7 +58,7 @@ defmove('ru-kikon', { kind: 'kikon', clip: 'sh-run', clip2: 'ru-spin', callout: 
   startup: 8, active: 3, recovery: 24, dmg: 70, advBlock: -14, reach: 2.4, arc: 360, onHit: 'knockback', kb: 2.5, cooldown: 90,
   params: { aura: 6, aim: 120.0, speed: 24.0, dashMax: 16, dashTrack: 0.0, look: 'flash-step', sfx: 'hoho-out' } });
 
-// ================================================================ ZETTAI REIDO (the awakened bands, docs/DUEL_RUKIA.md §4)
+// ================================================================ ZETTAI REIDO (the awakened bands, docs/duel/DUEL_RUKIA.md §4)
 // -18: the Shikai grid (reach x1.0) with K1 TOSHU (the palm) and K3 HYOKA (the ice flower). -50 derives it (x1.1), zero
 // (x1.35, rooted) swaps J2 / K1 / K3. The frames never change with the band: colder is longer reach and harder hits.
 defmove('ru-a-k1', { kind: 'flash', clip: 'ru-palm', startup: 17, active: 4, recovery: 20, dmg: 66, advBlock: -3,
@@ -333,7 +333,7 @@ registerHooks({
   },
 });
 
-// ================================================================ her CPU (AI v2, docs/DUEL_AI_V2.md)
+// ================================================================ her CPU (AI v2, docs/duel/DUEL_AI_V2.md)
 // Every chance is per difficulty (EASY <= NORMAL <= HARD).
 type Dif = Record<string, number>;
 const AI_RU_HOHO_IN = 0.05;                    // -50: chance per free step to Hoho in when that Hoho reaches -273

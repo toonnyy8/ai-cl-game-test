@@ -168,7 +168,7 @@ both fighters' Konpaku and Reishi at their practice rows (PRACTICE-SET!)."
     (start-cine 'time-cine (if (eql w 1) *p2* *p1*) (if (eql w 1) *p1* *p2*) :after #'go-results)))
 
 (defun learn-match-start ()
-  "The learning CPU (docs/DUEL_LEARNING.md): VS CPU and ENDLESS with LEARNING CPU on, P2 (the CPU facing the human)
+  "The learning CPU (docs/duel/DUEL_LEARNING.md): VS CPU and ENDLESS with LEARNING CPU on, P2 (the CPU facing the human)
 learns; never CPU VS CPU, PRACTICE or after a debug command (every gate stays exactly as it was)."
   (when (and (member *mode* '(:vs-cpu :endless)) (zerop (setting :learn)) (not *learn-debug-off*) (brain *p2*))
     (learn-attach! *p2*)))

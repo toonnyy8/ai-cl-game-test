@@ -1,7 +1,7 @@
 /* render.c — the SDL_GPU renderer (WebGPU backend): pipelines, meshes, offscreen targets and the
    whole frame (r_frame). Lisp side: engine/lisp/render.lisp (+ ui.lisp for the UI pipeline).
    Never call a blocking SDL_GPU function (WaitAndAcquire..., WaitForGPUFences/Idle): they spin and
-   need ASYNCIFY/JSPI, which ECL's setjmp/longjmp rule out. See docs/ARCHITECTURE.md. */
+   need ASYNCIFY/JSPI, which ECL's setjmp/longjmp rule out. See docs/engine/ARCHITECTURE.md. */
 #include "engine/c/engine.h"
 #include <stdio.h>
 static SDL_GPUDevice *r_dev;

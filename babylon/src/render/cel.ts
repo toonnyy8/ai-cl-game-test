@@ -1,5 +1,5 @@
 // cel.ts: the anime cel material (the user, 2026-10-04: objects in full-colour cel shading close to TYBW / Rebirth of
-// Souls, hard two-tone lit / shadow, bold outlines, reiatsu glow; docs/BABYLON_LOOK.md "B2" palette). One ShaderMaterial,
+// Souls, hard two-tone lit / shadow, bold outlines, reiatsu glow; docs/babylon/BABYLON_LOOK.md "B2" palette). One ShaderMaterial,
 // GLSL on WebGL2 and WGSL on WebGPU (no transpiler download), with Babylon's skinning includes.
 //   Tone: N.L against THRESHOLD (fighters 0.18: about 60 / 40 lit) with a hard 0.01 band. A PAIRS material (fighters,
 //   weapons) reads the lit colour from the vertex colour and the shadow colour from the `shade` attribute (body.ts
@@ -178,7 +178,7 @@ export interface CelOpts {
   inkId?: boolean; inkAlt?: boolean;
 }
 
-/** The light and eye every cel material shares. The key light is fixed in the world (docs/BABYLON_LOOK.md: top-left-front,
+/** The light and eye every cel material shares. The key light is fixed in the world (docs/babylon/BABYLON_LOOK.md: top-left-front,
  *  35 deg up, seen from the pair camera's opening view, which looks at the plaza from +z); SHADOWS are the fighters'
  *  ground positions (x1, z1, x2, z2), set by the battle view. */
 const KEY_EL = 35 * Math.PI / 180;

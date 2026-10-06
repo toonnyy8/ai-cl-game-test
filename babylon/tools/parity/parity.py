@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""parity.py: the Babylon sim against the native Lisp, bit for bit (docs/BABYLON_PORT.md "Parity check").
+"""parity.py: the Babylon sim against the native Lisp, bit for bit (docs/babylon/BABYLON_PORT.md "Parity check").
 
 Per pairing and seed it plays ONE CPU vs CPU match natively (tools/simgate/run-log.lisp, one match per ECL process: the
 debug commands 30000+seed-1 31101 2125+k, a one-seed gate) and the same match in the TS sim (tools/parity/log.ts), then

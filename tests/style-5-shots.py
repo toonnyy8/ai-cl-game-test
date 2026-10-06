@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""style-5-shots.py — the phase-5 still set of the Storm x Kubo restyle (docs/STYLE_STORM_DESIGN.md §9 row 5): every
+"""style-5-shots.py — the phase-5 still set of the Storm x Kubo restyle (docs/style/STYLE_STORM_DESIGN.md §9 row 5): every
 effect redone in Phase 5 (the fire looks, the fire wave's erosion, the Hellfire / Evolution / Breaker auras, Tenchi's
 ash, the rift and its ink gash, West's garb block / flare / burnout, Nadegiri, the SP2 dash, cup 3's entry beat) in
 gameplay framing, the RYOTE kendo clips and the re-authored attack clips (the art viewer), the three expressions of

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""style-2-checks.py — the phase-2 acceptance checks that need pixels (docs/STYLE_STORM_DESIGN.md §9 row 2):
+"""style-2-checks.py — the phase-2 acceptance checks that need pixels (docs/style/STYLE_STORM_DESIGN.md §9 row 2):
 
   python3 tests/style-2-checks.py ticks [VFX_DIST]   stepping: the Kikon rush aura (dist/duelvfx scene 28, fighters,
                                                      text and ash off) shot on 36 consecutive 60 Hz frames under

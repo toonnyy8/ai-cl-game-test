@@ -1,4 +1,4 @@
-;;;; stage.lisp — "Seireitei ruins at night" (docs/STYLE_STORM_DESIGN.md §6): a round plaza of
+;;;; stage.lisp — "Seireitei ruins at night" (docs/style/STYLE_STORM_DESIGN.md §6): a round plaza of
 ;;;; moonlit stone (r 15 m), a near-blank mid-grey page with a few ink cracks and faint joints in its
 ;;;; outer ring; a low curb; a ring of broken walls and the ruined town around it as cold-grey paper
 ;;;; cut-outs whose moon-facing caps catch a thin edge light; a cold dark sky with a huge flat moon
@@ -234,7 +234,7 @@ the newest +CRACK-MAX+ (the oldest is replaced)."
     nil))
 
 (defmacro toon-ground-seg (x0 z0 x1 z1 y w h0 h1 seed wob pk)
-  "Queue a flat toon strip on the ground (the toon fx batch, docs/STYLE_STORM_DESIGN.md §3.2) from (x0 z0) to
+  "Queue a flat toon strip on the ground (the toon fx batch, docs/style/STYLE_STORM_DESIGN.md §3.2) from (x0 z0) to
 (x1 z1) at height Y, half-width W: an along shape (SEED is made negative) whose field runs across it, heat H0
 at the start .. H1 at the end (the low-heat end erodes first as the presence in PK fades). A macro: 0 B."
   `(let* ((x0 ,x0) (z0 ,z0) (x1 ,x1) (z1 ,z1) (gy ,y) (w ,w) (h0 ,h0) (h1 ,h1) (sd (- -1f0 (f-abs ,seed))) (wb ,wob) (pk ,pk)
@@ -252,7 +252,7 @@ at the start .. H1 at the end (the low-heat end erodes first as the presence in 
            (vtx (- x1 nx) gy (- z1 nz) -1f0 0f0 h1 sd wb pk))))))
 
 (defun-fast st-draw-cracks ()
-  "Bankai's cracks (docs/STYLE_STORM_DESIGN.md §4.1): each ray an ink gash (BLACK SMOKE, a white hairline on the
+  "Bankai's cracks (docs/style/STYLE_STORM_DESIGN.md §4.1): each ray an ink gash (BLACK SMOKE, a white hairline on the
 mid-grey page) narrowing and eroding toward the ray's end, with a thin drawn EMBER core (EMBER has no edge since user
 review 2, so a thin toon strip reads; Phase 6: it was a soft additive line) whose presence breathes on threes."
   (let* ((tm (fx-clock)) (c *st-cracks*) (n (min *st-ncracks* +crack-max+)) (d3 (i->f (logand (f->i (* 8f0 tm)) 63))))

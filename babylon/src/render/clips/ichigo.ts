@@ -1,4 +1,4 @@
-// Ichigo's clips (docs/DUEL_ICHIGO.md §3-4, v2; the Lisp's ichigo-art.lisp poses as the intent): the Shikai's dual
+// Ichigo's clips (docs/duel/DUEL_ICHIGO.md §3-4, v2; the Lisp's ichigo-art.lisp poses as the intent): the Shikai's dual
 // stance (the cleaver low and back in the right hand, the short blade reversed along the left forearm), KESSA's upright
 // stance with the Tensa low; bespoke clips in phase u (0 start, 1 frame S, 2 end of active, 3 end) for every move of
 // both forms: the dual-blade J / K strings, the cross, Getsuga, JUJISHO's two cuts, the stance TSUKIMACHI and its four

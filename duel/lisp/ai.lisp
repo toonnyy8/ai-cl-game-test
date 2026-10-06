@@ -37,10 +37,10 @@
 ;;;;               chance), or away from a too-close opponent (:dash-back), released once the range is reached
 ;;;;   tempo       kit keys: :tempo (x the neutral decision interval), :attack (+ the neutral attack chance),
 ;;;;               :neutral-guard (a neutral guard's chance, else :guard), :respect (frames in DEFEND after taking it,
-;;;;               else *AI-RESPECT*): Kenpachi's cups keep NOME fed (docs/DUEL_NOZARASHI_V2.md, "The CPU after the faster drain")
+;;;;               else *AI-RESPECT*): Kenpachi's cups keep NOME fed (docs/duel/DUEL_NOZARASHI_V2.md, "The CPU after the faster drain")
 ;;;;   learning    a CPU facing a human (VS CPU / ENDLESS, the LEARNING CPU setting) carries a learner (BRAIN-LEARN, the end
 ;;;;               of this file; learn.lisp): it predicts his next action per situation and answers it, and weighs the
-;;;;               kit's :moves by a bandit; NIL (every CPU vs CPU, every gate): nothing of it runs (docs/DUEL_LEARNING.md)
+;;;;               kit's :moves by a bandit; NIL (every CPU vs CPU, every gate): nothing of it runs (docs/duel/DUEL_LEARNING.md)
 (in-package :duel)
 
 (defstruct snap
@@ -259,7 +259,7 @@ on Reishi by *AI-WHITE-BEHIND* of the max (fractions), *AI-WHITE-P* of the time.
 
 (defvar *ai-bankai-mode* (vector nil nil)
   "Per side, the CPU's Bankai entry: NIL = the kit's :bankai rule (AI-BANKAI-P), :SURE = the rule with its chance 1,
-:ALWAYS = whenever allowed, :NEVER (debug 31000 + 10 a + b: the gamble A/B, docs/DUEL_KEN_BANKAI.md).")
+:ALWAYS = whenever allowed, :NEVER (debug 31000 + 10 a + b: the gamble A/B, docs/duel/DUEL_KEN_BANKAI.md).")
 
 (defun ai-bankai-p (e b bk)
   "Enter the Bankai now (the kit's :bankai (:p :opp-below :opp-konpaku :own-konpaku); BANKAI-ALLOWED-P holds: he has
@@ -281,7 +281,7 @@ his Reishi or <= :opp-konpaku Konpaku) with <= :own-konpaku left."
 
 (defvar *ai-awaken-mode* (vector nil nil)
   "Per side, the CPU's awakening on EVOLUTION: NIL = the kit's :awaken rule (AI-AWAKEN-P), :ALWAYS, :NEVER (debug 39000 + 10 a
-+ b: Rukia's awaken A/B, docs/DUEL_RUKIA.md §9).")
++ b: Rukia's awaken A/B, docs/duel/DUEL_RUKIA.md §9).")
 
 (defun ai-awaken-p (e)
   "Awaken now (EVOLUTION)? The debug mode, else the kit's :awaken (:melee-share :min-taken): only once E has taken
@@ -446,7 +446,7 @@ D = the perceived distance."
        (why b :punish :q))
       ;; an incoming Breaker, a Kikon rush, or a rush's follow-up strike coming (it hit us, not red): guard
       ;; a rush when not red (the chance by difficulty); else Hoho through its dash (flash-step); a Breaker: J1 as its dash
-      ;; runs into J1's reach (J beats I, docs/DUEL_STRINGS.md §14: waiting till then); a rush: Q1 it while it has the room,
+      ;; runs into J1's reach (J beats I, docs/duel/DUEL_STRINGS.md §14: waiting till then); a rush: Q1 it while it has the room,
       ;; else Step sideways (a Hoho in the aura only reappears in front of the dash)
       ((and (member (snap-kind s) '(:breaker :kikon)) (member (snap-phase s) '(:aura :dash :follow))
             (< d (if (eq (snap-phase s) :follow) (+ (snap-reach s) *ai-threat-margin*) *ai-anti-breaker-range*))
@@ -497,7 +497,7 @@ D = the perceived distance."
                ((< (brain-guard-roll b) chance) (why b :low-guard :side-step))))))))
 
 (defun j-beats-k-p (e b)
-  "J beats K (docs/DUEL_STRINGS.md §4): on the first free step after our blockstun, the string's next link is a K link
+  "J beats K (docs/duel/DUEL_STRINGS.md §4): on the first free step after our blockstun, the string's next link is a K link
 (no armour) still at least S(J1) + 2 frames from its hit, inside our J1's reach: J1 gets there first. Felt at once,
 like the block punish (the gap of a blocked string, not a read through the perception delay: a K link's startup is
 shorter than NORMAL's delay); one roll (*AI-J-BEATS-K-P* by difficulty), also out of a guard held through the string.
@@ -760,7 +760,7 @@ recovers, too far for our J1 (J-BEATS-OPEN-P's window but its reach), against a 
   (do-entities (e (pl pilot) (f fighter))
     (unless (brain e) (vpad-begin-step! (pilot-vpad pl)))))
 
-;;; ---------------------------------------------------------------- the learning CPU (learn.lisp; docs/DUEL_LEARNING.md)
+;;; ---------------------------------------------------------------- the learning CPU (learn.lisp; docs/duel/DUEL_LEARNING.md)
 ;;; Only a CPU facing a human carries one (flow.lisp LEARN-MATCH-START: VS CPU, ENDLESS, the SETTINGS toggle; never CPU VS
 ;;; CPU or a debug command). Without it (BRAIN-LEARN NIL) none of this runs: the CPU draws and decides exactly as before.
 ;;; It sees what the CPU sees (the delayed SNAP; its own state at once), never an input, and it only chooses among the

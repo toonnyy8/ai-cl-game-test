@@ -12,7 +12,7 @@
 ;;;;   :ink k (hull width multiplier, see BUILD-PARTS).
 ;;;; API:  (build-parts spec palette width &key ink) -> parts extras hulls   at load time (needs the GPU device)
 ;;;;       (draw-parts parts extras joints &key hidden hide recolor tint rim emissive flash alpha toon
-;;;;                   hulls ink-tint ink-px ink-push)   HULLS = ink outlines (toon only, docs/STYLE_STORM_DESIGN.md §2.4)
+;;;;                   hulls ink-tint ink-px ink-push)   HULLS = ink outlines (toon only, docs/style/STYLE_STORM_DESIGN.md §2.4)
 ;;;;       *part-jitter* (per-face brightness noise, 0.06) and *part-smooth* (NIL: flat; T: round normals
 ;;;;       on :sphere / :cyl) are read at build time: a toon game sets 0 and T (RAVEN keeps the defaults).
 ;;;;       (pal-rgb c palette)   a palette key / #xRRGGBB / list -> (r g b)

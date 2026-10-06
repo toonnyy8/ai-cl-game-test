@@ -34,7 +34,7 @@
     (when (>= (svref *hums* i) 0) (stop-loop (svref *hums* i) 0.1) (setf (svref *hums* i) -1))))
 
 (defun show-hit (att def x y z hs counter dmg kind)
-  "A hit (docs/STYLE_STORM_DESIGN.md §4.3): the drawn spark; a heavy hit also holds the attacker's pose 3 f
+  "A hit (docs/style/STYLE_STORM_DESIGN.md §4.3): the drawn spark; a heavy hit also holds the attacker's pose 3 f
 and smears the victim along the hit; a counter turns the frame to a manga page for 2 f (red stays)."
   (multiple-value-bind (dx dz) (hit-dir att def)
     (let* ((blade (first (kit-blade (kit-of att))))

@@ -78,7 +78,7 @@ drain delay."
       (setf (gauges-meter g) (f32 (gauge-add (gauges-meter g) amount (getf m :max)))))))
 
 (defun kosei! (att g x y z)
-  "KOSEI (docs/DUEL_STRINGS.md §5): a contact of ATT's own melee hit window worth guard value G pays him Reiatsu and
+  "KOSEI (docs/duel/DUEL_STRINGS.md §5): a contact of ATT's own melee hit window worth guard value G pays him Reiatsu and
 flash-step, x KOSEI-MULT of his guard gauge (x1 full .. x3 empty); the :kosei event (the HUD's mote from X Y Z). Siphoned
 (SIPHON-OF), it pays the siphoning side."
   (let ((to (or (siphon-of att) att)))
@@ -464,7 +464,7 @@ combo over; the opponent's move / Hoho / step / run ends and he slides *BURST-PU
     (respect o)))
 
 (defun burst! (e mode)
-  "A burst of MODE starts (FIGHTER-SYSTEM applies it once both fighters have stepped; docs/DUEL_DESIGN.md \"Burst
+  "A burst of MODE starts (FIGHTER-SYSTEM applies it once both fighters have stepped; docs/duel/DUEL_DESIGN.md \"Burst
 modes\"): nothing spent, the flash-step drains from now (GAUGE-SYSTEM). BLUE breaks free (REPEL!); ORANGE cancels his
 move's recovery, the next move started within *CHAIN-WINDOW* f has its startup cut (START-MOVE). A short global hitstop."
   (let ((o (opp-of e)) (g (gauges e)) (f (fighter e)))
@@ -537,7 +537,7 @@ form's :cine if it has one (both fighters idle after it). The guard gauge is lef
         (start-cine (kit-cine (kit-of e)) e o :after (lambda () (to-idle e 0) (to-idle o 0)))
         (to-idle e 0))))
 
-;;; ---------------------------------------------------------------- Kenpachi's Bankai: the arm meter (docs/DUEL_KEN_BANKAI.md)
+;;; ---------------------------------------------------------------- Kenpachi's Bankai: the arm meter (docs/duel/DUEL_KEN_BANKAI.md)
 (defun bankai! (e)
   "The Bankai (P in cup 3, red, free: rules BANKAI-ALLOWED-P): the kit's :bankai-form, its arm meter full (the kit meter
 holds the pips, the crack clock at 0), his OWN Konpaku set to 1 and his Reishi refilled (the user's decisions
@@ -697,7 +697,7 @@ everyone, the hidden stun cleared, the forms kept, flash-step and Reiatsu kept, 
       (to-idle e 0)))
   (emit :reset))
 
-;;; ---------------------------------------------------------------- Rukia's cold gauge (docs/DUEL_RUKIA.md §4)
+;;; ---------------------------------------------------------------- Rukia's cold gauge (docs/duel/DUEL_RUKIA.md §4)
 (defun temp-step (e f g kit)
   "A :temp kit meter per step: the cold C (rules TEMP-NEXT) cools while she guards (:guard / :guard-hit; at absolute zero,
 where the ward is always up, bracing: U held while free, which drains the guard gauge *ZERO-BRACE-DRAIN* per second and

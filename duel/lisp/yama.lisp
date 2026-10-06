@@ -2,19 +2,19 @@
 ;;;; four forms (DEFKIT): :base (shikai), :hellfire (Gokuen: the Inferno meter full, 10 s), and his
 ;;;; awakening Bankai (Zanka no Tachi, kept to the end of the match) as two stances: :bankai-east (Kyokujitsujin,
 ;;;; the edge: pierce, x1.5 taken) and :bankai-west (Zanjitsu Gokui, the ward); U switches East -> West, any attack but
-;;;; SP1 / L drops West back to East (docs/DUEL_YAMA_REWORK.md). Frame data here is the §5 table; clip names are
+;;;; SP1 / L drops West back to East (docs/duel/DUEL_YAMA_REWORK.md). Frame data here is the §5 table; clip names are
 ;;;; the art contract (yama-art.lisp authors them). Below the data: his hook functions (called by
 ;;;; the generic fighter code through the symbols in the data) and his cinematics (DEFCINE).
 (in-package :duel)
 
 ;;; ================================================================ shikai (base)
-;;; the J / K strings (docs/DUEL_STRINGS.md §3.1): up to three links, each J or K, switching at most once (JJJ JJK JKK KKK
+;;; the J / K strings (docs/duel/DUEL_STRINGS.md §3.1): up to three links, each J or K, switching at most once (JJJ JJK JKK KKK
 ;;; KKJ KJJ). One move per (link, button); J2s / K2s, the switched link 2, are copies (DEFMOVE-COPY) whose string allows
 ;;; only the new button. Every K at link 2 / 3 enters at S_eff 14 (:enter), so it combos after a J and a K link alike;
 ;;; the enders (:ender) stagger / crumple, and their hit opens the O ender. Hellfire plays these at x1.3. The reach since the J
-;;; cut (docs/DUEL_STRINGS.md §13): J 0.4x (close, the art pulled in), K a little shorter (the fire carries it); every J at
+;;; cut (docs/duel/DUEL_STRINGS.md §13): J 0.4x (close, the art pulled in), K a little shorter (the fire carries it); every J at
 ;;; least *J-REACH-MIN* 1.4 m since §20 (the J clips step in to match). K2 / K3 deal
-;;; 80 % of the design's numbers (the seed gate's first lever, docs/DUEL_STRINGS.md §9: 80 -> 64, 110 -> 88; East 75 -> 60,
+;;; 80 % of the design's numbers (the seed gate's first lever, docs/duel/DUEL_STRINGS.md §9: 80 -> 64, 110 -> 88; East 75 -> 60,
 ;;; 105 -> 84).
 (defmove :ya-j1 :kind :quick :clip :ya-q1 :startup 9 :active 3 :recovery 12 :dmg 38 :adv-block -2
   :reach 0.96 :arc 100 :on-hit :flinch)                              ; HISEN: the flat cut from the draw
@@ -65,13 +65,13 @@
   :vol (:cap 0.3 8.0 1.0 0.5) :on-hit :knockdown :kb 3.0 :flags (:ranged)   ; line 8 m: the blade within 2.4 m
   :params (:melee-range 2.4))                                        ; (Q1's reach until the J cut), ranged beyond
 
-;;; ================================================================ Bankai: Zanka no Tachi (docs/DUEL_YAMA_REWORK.md)
+;;; ================================================================ Bankai: Zanka no Tachi (docs/duel/DUEL_YAMA_REWORK.md)
 ;;; The compass: O = North (KITA: TENCHI), Shift+L = South (the bind), U = East -> West (the kit's :guard-to), L = each
 ;;; stance's own technique (East KYOKKO, West SHONETSU JIGOKU). J / K are East's own strings; the Breaker is derived
 ;;; from the Shikai one (-1 f, reach x1.15). In West every command but SP1 / L goes back to East first (:drop-to / :keep):
 ;;; West's J / K switch him to East and start East's string.
 ;;; ---------------------------------------------------------------- East, Kyokujitsujin: fast thin lines, the pierce
-;; the East strings (docs/DUEL_STRINGS.md §3.2): thin ember lines, the sun's path
+;; the East strings (docs/duel/DUEL_STRINGS.md §3.2): thin ember lines, the sun's path
 (defmove :ya-e-j1 :kind :quick :clip :ya-q1 :clip-s 9 :startup 8 :active 3 :recovery 12 :dmg 34 :adv-block -2
   :vol (:cap 0.2 1.24 1.1 0.25) :on-hit :flinch)                     ; HIZASHI: a flat edge line 1.24 m
 (defmove :ya-e-j2 :kind :quick :clip :ya-q2 :clip-s 8 :startup 7 :active 3 :recovery 13 :dmg 38 :adv-block -2
@@ -347,7 +347,7 @@ the ground there cracks (a look) and :hands skeleton hands claw out; a :bind haz
           (spawn-hand e (+ x (* 0.7 r (fwd-x a))) (+ z (* 0.7 r (fwd-z a))) (+ a +pi+) (- delay 8)))))
     (emit :sfx :ground-crack e)))
 
-;;; ================================================================ the CPU (the kit's :ai hooks; ai.lisp; docs/DUEL_AI_V2.md)
+;;; ================================================================ the CPU (the kit's :ai hooks; ai.lisp; docs/duel/DUEL_AI_V2.md)
 (defun yama-dif (e p)
   "E's CPU's chance from P, a plist by difficulty (:easy :normal :hard): its brain's (AI-BRAIN: an assisted human's is the
 assist's HARD one); no brain: NORMAL's."
@@ -449,7 +449,7 @@ stagger he guards it (97 of 113 blocked, -14). Chance by difficulty; a command o
            :kikon))))
 
 ;;; ================================================================ cinematics
-;;; The grammar of every cinematic is in cinema.lisp (docs/STYLE_STORM_DESIGN.md §5); Yamamoto (white haori) goes on
+;;; The grammar of every cinematic is in cinema.lisp (docs/style/STYLE_STORM_DESIGN.md §5); Yamamoto (white haori) goes on
 ;;; the black card.
 (defcine yama-kikon-cine (a v :len 186 :hold 112)
   "Jokaku Enjo (§5's worked example, paced by user review 3: few long shots, long holds, sharp hits): beat 0 (the

@@ -13,7 +13,7 @@ import { aiAttack, aiBrain, aiSbFinishP, aiTable, why } from '../sim/ai';
 import { spawnHand, spawnHazard } from '../sim/hazards';
 
 // ================================================================ shikai (base)
-// the J / K strings (docs/DUEL_STRINGS.md §3.1): up to three links, each J or K, switching at most once. J2s / K2s, the
+// the J / K strings (docs/duel/DUEL_STRINGS.md §3.1): up to three links, each J or K, switching at most once. J2s / K2s, the
 // switched link 2, are copies. Every K at link 2 / 3 enters at S_eff 14 (enter), so it combos after a J and a K link
 // alike; the enders stagger / crumple, and their hit opens the O ender. K2 / K3 deal 80 % of the design's numbers.
 defmove('ya-j1', { kind: 'quick', clip: 'ya-q1', startup: 9, active: 3, recovery: 12, dmg: 38, advBlock: -2,
@@ -64,7 +64,7 @@ defmove('ya-nadegiri', { kind: 'sp', clip: 'ya-nadegiri', callout: 'NADEGIRI', c
   vol: ['cap', 0.3, 8.0, 1.0, 0.5], onHit: 'knockdown', kb: 3.0, flags: ['ranged'],   // line 8 m: the blade within 2.4 m
   params: { meleeRange: 2.4 } });                                    // (Q1's reach until the J cut), ranged beyond
 
-// ================================================================ Bankai: Zanka no Tachi (docs/DUEL_YAMA_REWORK.md)
+// ================================================================ Bankai: Zanka no Tachi (docs/duel/DUEL_YAMA_REWORK.md)
 // O = North (TENCHI), Shift+L = South (the bind), U = East -> West (guardTo), L = each stance's own technique. In West
 // every command but SP1 / L goes back to East first (dropTo / keep).
 // ---------------------------------------------------------------- East, Kyokujitsujin: fast thin lines, the pierce
@@ -285,7 +285,7 @@ registerHooks({
   },
 });
 
-// ================================================================ the CPU (the kit's ai hooks; ai.ts; docs/DUEL_AI_V2.md)
+// ================================================================ the CPU (the kit's ai hooks; ai.ts; docs/duel/DUEL_AI_V2.md)
 /** E's CPU's chance from P, a table by difficulty: its brain's; no brain: NORMAL's. */
 function yamaDif(e: Ent, p: Record<string, number>): number {
   const b = aiBrain(e);

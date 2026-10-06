@@ -1,8 +1,8 @@
 # C. Art, presentation and audio style: lessons from ai-cl-game-test
 
 Source repo: `/media/8tsp/projects/ai-cl-game-test` (CL → ECL → wasm, SDL3 GPU / WebGPU; no asset files).
-Main evidence: `docs/STYLE_STORM_DESIGN.md` (SD), `docs/STYLE_STORM_RESEARCH.md` (SR), `docs/AUDIO.md`,
-`docs/BABYLON_LOOK.md` (BL), `docs/DUEL_MOBILE_DESIGN.md` (MD), `docs/DEVLOG.zh-TW.md` (DL), `duel/lisp/*`, `engine/lisp/*`,
+Main evidence: `docs/style/STYLE_STORM_DESIGN.md` (SD), `docs/style/STYLE_STORM_RESEARCH.md` (SR), `docs/engine/AUDIO.md`,
+`docs/babylon/BABYLON_LOOK.md` (BL), `docs/duel/DUEL_MOBILE_DESIGN.md` (MD), `docs/DEVLOG.zh-TW.md` (DL), `duel/lisp/*`, `engine/lisp/*`,
 `tools/*`, `tests/style-*`. "G" = generalizable lesson, "P" = project-specific fact or number.
 
 ## 1. Style pillars and how the style was decided

@@ -65,7 +65,7 @@ match leaves the running state), or 120 steps in turbo (debug fast-forward)."
 
 (defun-fast smear-joints! (joints cx cy cz dx dz)
   "The squash / stretch smear drawing: premultiply every joint matrix by T(c) S T(-c), S = x1.5 along the
-ground direction (DX DZ) (unit) and x0.7 across it, about the body centre C (docs/STYLE_STORM_DESIGN.md §2.6).
+ground direction (DX DZ) (unit) and x0.7 across it, about the body centre C (docs/style/STYLE_STORM_DESIGN.md §2.6).
 The hulls follow (they are drawn from the same joints)."
   (declare (type f32vec joints) (single-float cx cy cz dx dz))
   (let* ((a 0.7f0) (b 0.8f0))                          ; S = a I + b d d^T
@@ -134,7 +134,7 @@ ground): up over the first 8 f of the dash (or the dash-in), down over the strik
 TIME's and the K.O.'s winner).")
 
 (defun face-of (e f m mv)
-  "Fighter E's expression this frame (docs/STYLE_STORM_DESIGN.md §2.5, Phase 5; a look, read from the state): a held
+  "Fighter E's expression this frame (docs/style/STYLE_STORM_DESIGN.md §2.5, Phase 5; a look, read from the state): a held
 face (MODEL-FACE-T) first; in a cinematic the attacker shouts and a Kikon's / Soul Break's / K.O.'s victim is hurt; hurt
 while stunned, airborne, down or lost; shouting through a non-Quick move from 10 f before its hit to 12 f after it (and
 through its charge, aura or dash phases). A :calm form (the white Rukia) never shouts."
@@ -290,7 +290,7 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
           (when (and (eq (fighter-state f) :stun) (eq (fighter-phase f) :bind))   ; bound by South: ash drifting at the feet
             (vfx-aura x y z (body-hurt-h b) :bound age rdt)))
       (when (gauges-evolution (gauges e)) (vfx-aura x y z (body-hurt-h b) :evolution age rdt :rgb *evolution-rgb* :k 0.5))
-      (let ((bm (gauges-burst (gauges e))))              ; a running burst: its colour (docs/DUEL_DESIGN.md "Burst modes")
+      (let ((bm (gauges-burst (gauges e))))              ; a running burst: its colour (docs/duel/DUEL_DESIGN.md "Burst modes")
         (when (and bm (> (model-alpha m) 0f0) (not (eq (fighter-state f) :cine)))
           (vfx-aura x y z (body-hurt-h b) (case bm (:white :burst-white) (:blue :burst-blue) (t :burst-orange)) age rdt))
         (when (and (not bm) (plusp (gauges-awake-regen (gauges e))) (> (model-alpha m) 0f0) (not (eq (fighter-state f) :cine)))
@@ -332,7 +332,7 @@ the caller's reading of it); once settled it passes H and K through as they came
 
 (defun form-grade ()
   "A form's world grade (kit :GRADE): Bankai's :SPOT keeps the whole world grey except the ember hue (the composite's
-spot-keep mode 4, docs/STYLE_STORM_DESIGN.md §3.6) while the form is on. An impact frame takes the composite over for its frames
+spot-keep mode 4, docs/style/STYLE_STORM_DESIGN.md §3.6) while the form is on. An impact frame takes the composite over for its frames
 (IMPACT-FRAME); the form's grade comes back when it ends. Changes the mode only when needed."
   (flet ((spot-p (e) (and (entity-alive-p e) (eq (kit-grade (kit-of e)) :spot))))
     (let* ((want (and (or (spot-p *p1*) (spot-p *p2*)) :spot))

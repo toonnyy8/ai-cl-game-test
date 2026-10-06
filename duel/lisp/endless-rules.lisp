@@ -1,4 +1,4 @@
-;;;; endless-rules.lisp — ENDLESS 無限連戰 as pure rules (docs/DUEL_ENDLESS.md): the ramp, the opponent bag, the stage
+;;;; endless-rules.lisp — ENDLESS 無限連戰 as pure rules (docs/duel/DUEL_ENDLESS.md): the ramp, the opponent bag, the stage
 ;;;; seed, P1's carry-over between stages and the record comparison. Plain CL over kit.lisp's data (FIND-KIT and the kit
 ;;;; slots), so tests/duel-rules-test.lisp loads it on the host; the mode itself (state, screens, the page) is endless.lisp.
 ;;;; No character names in here: what a form carries over is kit data (:endless-form, :reset-form, :duration, :meter).

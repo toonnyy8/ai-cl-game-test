@@ -2,7 +2,7 @@
 ;;;; You are a glowing cube; walk into the spinning gems to collect them.
 ;;;; Keys: W A S D or arrows = move, SPACE = ping.
 ;;;; Build: ./build.sh examples/hello      Run: node tools/run.mjs dist/hello --secs 10 --shot hello.png
-;;;; Walkthrough: docs/TUTORIAL.zh-TW.md, step 2.
+;;;; Walkthrough: docs/guides/TUTORIAL.zh-TW.md, step 2.
 (defpackage :hello (:use :cl :engine))   ; our own package, seeing the engine's exported API
 (in-package :hello)
 

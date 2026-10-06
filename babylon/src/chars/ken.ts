@@ -14,7 +14,7 @@ import { spawnHazard } from '../sim/hazards';
 import type { Action } from '../sim/vpad';
 
 // ================================================================ base
-// the J / K strings (docs/DUEL_STRINGS.md §3.3): no school, a street fighter with a sword who kicks. Every K at link 2 / 3
+// the J / K strings (docs/duel/DUEL_STRINGS.md §3.3): no school, a street fighter with a sword who kicks. Every K at link 2 / 3
 // at S_eff 14, at 80 % of the design's damage.
 defmove('ke-j1', { kind: 'quick', clip: 'ke-q1', startup: 7, active: 3, recovery: 12, dmg: 35, advBlock: -2,
   reach: 1.04, arc: 100, onHit: 'flinch', slide: 0.8 });            // ARAGIRI: a lazy slash, lunge 0.8 m
@@ -100,7 +100,7 @@ defmove('ke-meteor-n', { kind: 'sp', clip: 'ke-meteor', callout: 'NOMIHOSE', sta
   advBlock: -16, vol: ['cap', 0.3, 12.0, 0.5, 0.5], onHit: 'knockdown', kb: 3.0, flags: ['ranged'],
   onFrame: [[0, 'ken-drink-dry'], [26, 'ken-meteor-cut']], params: { crushRange: 6.0, meleeRange: 3.9 } });
 
-// ================================================================ Bankai and KATAUDE (docs/DUEL_KEN_BANKAI.md)
+// ================================================================ Bankai and KATAUDE (docs/duel/DUEL_KEN_BANKAI.md)
 // Every K link, L, SP1, SP2, I and O spends a pip of the arm (UDE); the K links and the specials rend.
 defmove('ke-b-j1', { kind: 'quick', clip: 'ke-q1', clipS: 7, startup: 8, active: 3, recovery: 12, dmg: 38, advBlock: -2,
   reach: 1.28, arc: 100, onHit: 'flinch', slide: 1.0 });            // TATAKI-GIRI: hacked down, lunging like a beast
@@ -343,7 +343,7 @@ registerHooks({
   },
 });
 
-// ================================================================ the CPU (the kit's ai hooks; ai.ts; docs/DUEL_AI_V2.md)
+// ================================================================ the CPU (the kit's ai hooks; ai.ts; docs/duel/DUEL_AI_V2.md)
 // Chances by difficulty (ken.lisp *KEN-AI-...*).
 type Dif = Record<string, number>;
 const KEN_AI_ANTI_BREAKER: Dif = { easy: 0.0, normal: 0.2, hard: 0.9 };   // answer a Breaker by the reach model

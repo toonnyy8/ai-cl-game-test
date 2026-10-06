@@ -1,4 +1,4 @@
-// synth.ts <- engine/lisp/audio.lisp's synthesis toolkit (docs/AUDIO.md): mono Float32Array buffers at 48 kHz, every sound
+// synth.ts <- engine/lisp/audio.lisp's synthesis toolkit (docs/engine/AUDIO.md): mono Float32Array buffers at 48 kHz, every sound
 // built from noise, sines, saws, a state-variable filter, drive, delay and a Schroeder reverb. Pure (no WebAudio), so the
 // bank renders the same in node (tests, tools/audio-stats.ts) and in the page. Names: au-foo! -> foo (in place, returns BUF).
 export const RATE = 48000;

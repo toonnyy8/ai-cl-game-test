@@ -30,7 +30,7 @@
       (setf (aref out 0) (* a (aref s 4)) (aref out 1) (* a (aref s 5)) (aref out 2) (* a (aref s 6))))))
 
 ;;; ---------------------------------------------------------------- toon effects: clock, palettes, envelope
-;;; The toon fx batch (WITH-FX-VERTS :toon, fx-toon.frag.wgsl; docs/STYLE_STORM_DESIGN.md §3) draws hard,
+;;; The toon fx batch (WITH-FX-VERTS :toon, fx-toon.frag.wgsl; docs/style/STYLE_STORM_DESIGN.md §3) draws hard,
 ;;; inked shapes in one of 13 palettes. A toon vertex's colour lanes are HEAT (0..1: ribbons run base 1 to
 ;;; tip 0.2; fan shapes: 0 centre .. 1 outline), SEED (a shape's noise, 0..999; < 0 = "along" shape, +1000 =
 ;;; the charcoal style), WOBBLE (0..0.5 silhouette boil) and TOON-A (palette + presence K 0.01..0.98, + 16 for a
@@ -64,7 +64,7 @@ clamped to 0.01..0.98; FAN T adds 16 (the fan-shape flag of FX-STAR / FX-SHARD).
 (defmacro fx-envelope ((scale k flash phase) (age flash-f grow hold out &key (anticipate 0)) &body body)
   "Bind SCALE, K (presence), FLASH (1 on the flash frame) and PHASE (0 anticipation, 1 flash, 2 grow,
 3 hold, 4 out, 5 done) for AGE seconds into a one-shot drawn effect, then run BODY. The counts are 60 Hz
-frames (docs/STYLE_STORM_DESIGN.md §3.4): ANTICIPATE (scale 1 -> 0.8; the caller adds converging
+frames (docs/style/STYLE_STORM_DESIGN.md §3.4): ANTICIPATE (scale 1 -> 0.8; the caller adds converging
 shards), FLASH (a white disc), GROW (scale 0.6 -> 1.1, ease-out), HOLD (1.0), OUT (K 0.98 -> 0 erodes
 the shape, scale 1.0 -> 1.05). Pass a SAGE'd age so the envelope steps with the drawings. All numbers
 single-float forms or literals; zero consing."
@@ -107,7 +107,7 @@ bodies or the floor with a straight depth line."
        (setf ,@(loop for x in args for i from 0 append `((aref ,a ,i) ,x)))
        (,fn ,@fixargs))))
 (defmacro fx-star (x y z r0 r1 n rot dirx diry wobble seed pal k &key (push 0.3f0))
-  "An irregular toon star (hit spark; docs/STYLE_STORM_DESIGN.md §3.4) facing the camera at (X Y Z): N spikes
+  "An irregular toon star (hit spark; docs/style/STYLE_STORM_DESIGN.md §3.4) facing the camera at (X Y Z): N spikes
 of length R1 x 0.5..1.4 (hashed from SEED), valleys at R0, angles jittered +-12 degrees, ROT turning it;
 the spike nearest the screen direction (DIRX DIRY) (camera right / up; 0 0 = none) is 1.7x long, a second
 one opposite on odd seeds 1.25x. R0 >= R1 = a regular N-gon (the guard hexagon). One outline (a fan shape:
@@ -158,7 +158,7 @@ N and SCALLOPS fixnums."
 ;;;                ALPHA scales that (additive: brightness), e.g. 0.3-0.5 so flames do not saturate
 ;;;                to white over a bright sky.
 ;;; Every kind's alpha is multiplied by the particle's ALPHA (default 1 = unchanged).
-;;; Toon kinds (the toon batch, docs/STYLE_STORM_DESIGN.md §3.4): R = wobble, ALPHA = the palette (0..11);
+;;; Toon kinds (the toon batch, docs/style/STYLE_STORM_DESIGN.md §3.4): R = wobble, ALPHA = the palette (0..11);
 ;;; presence K = the life left, seed = the slot. Drawn stepped on the fx clock (at pos - vel x the time
 ;;; since the drawing began: twos, threes for the matter palettes), so a burst of scraps moves in drawings.
 ;;;   t-blob       a pushed billboard puff or flame (the palette's style decides): matter grows, the rest shrinks

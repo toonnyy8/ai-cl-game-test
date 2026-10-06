@@ -1,4 +1,4 @@
-// SOUL DUEL page services (docs/DUEL_MOBILE_DESIGN.md G5, G10), loaded from the page head before the game.
+// SOUL DUEL page services (docs/duel/DUEL_MOBILE_DESIGN.md G5, G10), loaded from the page head before the game.
 // The engine asks through globalThis.gamePage (engine/c/platform.c pf_page_get / pf_page_set):
 //   get 0 = touch-first device ((pointer: coarse)), 1 = back gestures since the last ask,
 //       3 / 4 = the safe-area inset at the top / bottom, CSS px (env(safe-area-inset-*); tests set gamePage.testInsets = [top, bottom])
@@ -6,7 +6,7 @@
 //       20000 + 100 side + i (+ 50: the pad) = CONTROLS binding of row i (duel/lisp/control.lisp BIND-CODE; 0 = default)
 //       30 + k = ENDLESS best record slot k (roster index i: 30 + 2i stages, 31 + 2i seconds; 0 = none / no storage)
 //       100 + 1000 i = the learning CPU's saved table of roster index i: its entry count; 100 + 1000 i + 1 + j = entry j
-//       (docs/DUEL_LEARNING.md; localStorage soulduel.learn.<i>, the integers comma-separated)
+//       (docs/duel/DUEL_LEARNING.md; localStorage soulduel.learn.<i>, the integers comma-separated)
 //   set 0 = battle on / off (the screen wake lock), 1 = open the manual (manual.html, this window), 10 + i = save SETTINGS row i, 30 + k = save ENDLESS slot k, 10100 + 1000 i (+ 1 + j) = the assist's learned table of CPU i (soulduel.learn.a<i>), 20000 + .. = save a CONTROLS binding (soulduel.bind.<k - 20000>),
 //       100 + 1000 i + 1 + j = table entry j (kept here), then 100 + 1000 i = n commits the first n entries (0: forget it)
 // SETTINGS rows (duel/lisp/control.lisp *SETTINGS*, same order) live in localStorage as soulduel.<name>; every access is

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""style-3-shots.py — the phase-3 still set of the Storm x Kubo restyle (docs/STYLE_STORM_DESIGN.md §9 row 3, user
+"""style-3-shots.py — the phase-3 still set of the Storm x Kubo restyle (docs/style/STYLE_STORM_DESIGN.md §9 row 3, user
 review 2): every signature effect at 3 moments in gameplay framing (dist/duel, the current *CAM-CLOSE*, the VS CPU
 behind camera and the side camera), the awakened forms idle and attacking, a before / after sheet against the
 pre-restyle stills (the Phase-0 tree's tests/shots/duel-*.png) and a gallery sheet.

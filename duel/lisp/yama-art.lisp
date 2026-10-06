@@ -16,7 +16,7 @@
                     :girth ((:chest 0.86 1.0 0.92) (:spine 0.86 1.0 0.92) (:pelvis 0.9 1.0 0.95)
                             (:upper-arm-r 0.9 1.12 0.9) (:upper-arm-l 0.9 1.12 0.9) (:lower-arm-r 0.9 1.12 0.9)
                             (:hand-r 1.2 1.3 1.2))
-                    ;; v4 notan palette (docs/STYLE_STORM_DESIGN.md §2.5): a solid black robe, a V4 white
+                    ;; v4 notan palette (docs/style/STYLE_STORM_DESIGN.md §2.5): a solid black robe, a V4 white
                     ;; haori whose shadow turns cold grey-blue, muted skin (the only warm non-spot colour)
                     :palette ((:skin #xD8B4A0) (:black #x16161E) (:white #xF0F0EC) (:beard #xECECEA)
                               (:cord #x4A3A6A) (:scar #x7A4A3C) (:obi #xC8CCD6) (:tabi #xE8E8E4)
@@ -266,7 +266,7 @@
   (40 (:root :u 0.0) (:arm-r :flex 105 :side 15) (:elbow-r :flex 25) (:hand-r :twist -70 :flex -15) (:spine :flex 0)
       (:knees :flex 18) (:head :flex -22))
   (:end :ya-stance))
-;; J3 SODEBI (docs/DUEL_STRINGS.md §3.1; pulled in close, §13): the one-armed silhouette: the blade kept low behind him, he whips the empty left
+;; J3 SODEBI (docs/duel/DUEL_STRINGS.md §3.1; pulled in close, §13): the one-armed silhouette: the blade kept low behind him, he whips the empty left
 ;; sleeve (burning: main.lisp SLEEVE-FIRE) across the face, left to right, the body turning into it
 (defpose :ya-sleeve-hit (:base :ya-stance)
   (:root :f 0.54 :u -0.06) (:pelvis :twist -18) (:chest :twist -48) (:spine :flex 14 :side -6) (:head :flex -18 :twist 12)
@@ -500,7 +500,7 @@
   (:a (:root :f 0.24) (:chest :twist 21) (:arm-r :flex 90) (:spine :flex 9))
   (26 (:chest :twist 18) (:root :f 0.2 :u -0.1))
   (:end :ya-stance))
-;; East K3 RAKUJITSU (docs/DUEL_STRINGS.md §3.2): the setting sun: the blade straight up in the one hand, held, then it
+;; East K3 RAKUJITSU (docs/duel/DUEL_STRINGS.md §3.2): the setting sun: the blade straight up in the one hand, held, then it
 ;; falls in a vertical arc to the plaza in front of him (ember sparks there: main.lisp MOVE-BEATS)
 (defpose :ya-e-drop-hit (:base :ya-stance)
   (:root :u -0.2 :f 0.34) (:spine :flex 36) (:chest :twist 4) (:head :flex -26)

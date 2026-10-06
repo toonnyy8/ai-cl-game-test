@@ -1,7 +1,7 @@
 # A. Engine & toolchain lessons (ai-cl-game-test: CL -> ECL -> C -> emcc -> wasm, SDL3 SDL_GPU on WebGPU)
 
-Repo root = /media/8tsp/projects/ai-cl-game-test. Evidence tags: [ARCH] docs/ARCHITECTURE.md, [API] docs/ENGINE_API.md,
-[DL §n] docs/DEVLOG.zh-TW.md section n, [TUT n] docs/TUTORIAL.zh-TW.md step n, [README], [MEM] auto-memory notes,
+Repo root = /media/8tsp/projects/ai-cl-game-test. Evidence tags: [ARCH] docs/engine/ARCHITECTURE.md, [API] docs/engine/ENGINE_API.md,
+[DL §n] docs/DEVLOG.zh-TW.md section n, [TUT n] docs/guides/TUTORIAL.zh-TW.md step n, [README], [MEM] auto-memory notes,
 file paths otherwise. G = generalizable lesson, D = SOUL DUEL / RAVEN-specific detail.
 
 ---------------------------------------------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ file paths otherwise. G = generalizable lesson, D = SOUL DUEL / RAVEN-specific d
 - G: Audio: `(defsound :key (:peak .9 :loop t) body)` returns a 48 kHz mono f32vec; synthesized one sound per startup
   step (RAVEN: 26 sounds, 770-810 ms, 9.1 MB samples in C memory). Toolkit `au-*` (osc, noise, env, svf, delay, reverb,
   taiko/gong/shaku instruments). Loops rendered 2.5 s long then folded so tails wrap seamlessly. Max 128 DEFSOUNDs
-  (129th errors at load). [API "Audio", DL §7, docs/AUDIO.md]
+  (129th errors at load). [API "Audio", DL §7, docs/engine/AUDIO.md]
 - G: Mixer is pure C on `SDL_OpenAudioDeviceStream` callback (F32 stereo 48 kHz, 32 voices, peak limiter), never touches
   Lisp objects -> compatible with the GC rule, no starvation during GC/stutter. [DL §7]
 - G: Text: embedded bitmap font in ui.lisp (ASCII). Non-ASCII (DUEL's kanji brush titles) = build-time bake:
@@ -137,7 +137,7 @@ file paths otherwise. G = generalizable lesson, D = SOUL DUEL / RAVEN-specific d
   game's :debug fn). Games use integer RANGES as a namespace: scenario setups, runtime tuning knobs "without a rebuild"
   (e.g. 32000+k sets `*arm-self*` = k), still frames of cinematics, seeded gates (2000+s CvC). Keep a registry table
   in the gameplay doc and let each module register its own range (`*char-debug*`) — hard-coded ranges collided
-  (80000+ vs ENDLESS). [main.c debug_cmd, docs/DUEL_GAMEPLAY.md debug table, DL §30]
+  (80000+ vs ENDLESS). [main.c debug_cmd, docs/duel/DUEL_GAMEPLAY.md debug table, DL §30]
 - G: Dev log channels: `*combat-log*`/CLOG prints state changes/hits/damage to console; tests assert on those lines;
   F3 overlay (dev mode only after a `_debug_cmd`) shows FPS, cons/frame, hitboxes. [DL §9, README controls]
 - G: Engine self-test: `tests/engine-check.sh` builds `echeck` from tests/engine-check.lisp, runs it headless, greps
@@ -248,7 +248,7 @@ file paths otherwise. G = generalizable lesson, D = SOUL DUEL / RAVEN-specific d
   implicit function declarations are errors (`-Werror=implicit-function-declaration`). [DL §13.4, tools/build.lisp]
 - G: ECL calls compiled functions DIRECTLY: redefining/wrapping a function (`fdefinition`) after loading a .fas does
   not affect calls from other compiled code. Instrument by loading a script after the .fas that prints from the frame
-  loop, or rebuild. [docs/BABYLON_PORT.md parity section]
+  loop, or rebuild. [docs/babylon/BABYLON_PORT.md parity section]
 - G: `pi` is a long-float (double) in ECL: `(+ yaw pi)` into a single-float-declared fn crashed (rare branch, found
   only when a new pairing hit it). Use a single-float constant (`+pi+`). Same class: double literals/data, double ops
   between f32s, comparisons against literals read as single — all caused native/TS parity drifts. [DL §30, BABYLON_PORT]

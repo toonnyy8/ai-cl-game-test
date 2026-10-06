@@ -1,5 +1,5 @@
 ;;;; touch-test.lisp — checks the one-thumb gesture recogniser (engine/lisp/touch.lisp) on the host:
-;;;; the main rows of docs/DUEL_MOBILE_DESIGN.md §3.2 as remapped on 2026-09-28 (§15: a tap in the pad's low half =
+;;;; the main rows of docs/duel/DUEL_MOBILE_DESIGN.md §3.2 as remapped on 2026-09-28 (§15: a tap in the pad's low half =
 ;;;; Q / J, in its high half = F / K, the split line itself low; up-flick = a forward Step, the dash; rest then up = Hoho;
 ;;;; the six J / K string routes by taps; drag and drag far, back to rest), CANCELED (never a tap, idempotent), the
 ;;;; focus-loss clear, the latest-contact rule, chips (held until lift, the hold chip) and the pulse latch.

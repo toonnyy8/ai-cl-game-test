@@ -35,7 +35,7 @@
   ;; No source-location / lambda-list annotations and no docstrings in the compiled module: each
   ;; definition's EXT:ANNOTATE / SET-DOCUMENTATION at load time consed ~35 KB of garbage (a
   ;; documentation hash table rebuilt as it grows) while ECL-INIT-MODULE runs with the collector off,
-  ;; e.g. 27 of the engine alone's 43 MB of load garbage (docs/ARCHITECTURE.md, "Runtime model").
+  ;; e.g. 27 of the engine alone's 43 MB of load garbage (docs/engine/ARCHITECTURE.md, "Runtime model").
   (setf ext:*register-with-pde-hook* nil si::*keep-documentation* nil)
   (unless (compile-file unit :output-file obj :system-p t)
     (ext:quit 1))

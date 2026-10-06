@@ -116,7 +116,7 @@ bind; the Kikon rush's strike is guardable, KIKON-OUTCOME), HAZARD (a projectile
 doesn't catch it; a :ranged hit window counts as one).
 The defender: DEF-STATE (above), IN-FRONT (the attacker is inside his guard arc; armour covers every
 side), WARD (Bankai West's ward: his guard covers 360 deg, and a hazard in his parry's window is blocked, not a hit).
-REND (Kenpachi's Bankai, docs/DUEL_KEN_BANKAI.md): armour and a stance don't stop it (armour -> a hit, a stance -> a
+REND (Kenpachi's Bankai, docs/duel/DUEL_KEN_BANKAI.md): armour and a stance don't stop it (armour -> a hit, a stance -> a
 stance break, like a Breaker); a guard, the ward and a parry still do. Returns
   NIL           no effect (invulnerable)
   :hit          damage + the move's reaction
@@ -220,7 +220,7 @@ recovery, e.g. the Breaker's 30) or R + *WHIFF-EXTRA*."
   (if contact r (or whiff (+ r *whiff-extra*))))
 
 (defun chain-open-p (sf s a r contact)
-  "May the next link of a string start at move frame SF? Only after CONTACT (the string gate, docs/DUEL_STRINGS.md
+  "May the next link of a string start at move frame SF? Only after CONTACT (the string gate, docs/duel/DUEL_STRINGS.md
 §2.2): this link's own :hit / :block, or T when it is a follow-up link (an earlier link of the string touched him, so
 the string carries on even if this one whiffed); NIL (link 1 whiffed) never chains. On :hit from the end of the active
 frames (the string combos); otherwise (:block, or T) only in the last *CHAIN-LEAD* frames of recovery, so a -2 link
@@ -230,7 +230,7 @@ leaves a gap (Step / Hoho yes, J1 no)."
          (if (eq contact :hit) (>= sf (+ s a)) (>= sf (- total *chain-lead*))))))
 
 (defun string-chase-speed (d reach left &optional (cap *chase-max*))
-  "The follow-up link's chase (docs/DUEL_STRINGS.md §2.2): the speed (m/s, toward him) in its startup at distance D
+  "The follow-up link's chase (docs/duel/DUEL_STRINGS.md §2.2): the speed (m/s, toward him) in its startup at distance D
 with LEFT frames to its hit, so it arrives *CHASE-MARGIN* inside its REACH (never nearer than *LUNGE-STOP*) exactly as
 the hit window opens: no faster than CAP (*CHASE-MAX*; *ENDER-CHASE-MAX* off a pushing ender), 0 once he is that close. Each frame covers at most the gap left, so it
 never passes or overshoots him."
@@ -260,7 +260,7 @@ QUICK (J) move, the user 2026-10-02: J and guard trade places fast) end in a gua
 
 ;; ---------------------------------------------------------------- the guard lock (the user 2026-09-30)
 (defun guard-locked-p (def-state was chain-left state phase sf s a r touched more)
-  "The guard lock (docs/DUEL_DESIGN.md \"Guard lock\"): does a defender in blockstun (DEF-STATE :guard-hit) stay there,
+  "The guard lock (docs/duel/DUEL_DESIGN.md \"Guard lock\"): does a defender in blockstun (DEF-STATE :guard-hit) stay there,
 guarding and unable to act, once his blockstun would end, because his attacker may still chain? Judged after both
 stepped, for the defender's next step. The attacker: ORANGE's window open (CHAIN-LEFT > 0) while he is free (STATE
 :idle / :guard: the next move he starts is the chain); or in a :move (PHASE, move frame SF of S / A / R) that TOUCHED him
@@ -307,7 +307,7 @@ DEF-MODS: :mult on the defender's side (1 in v1). COMBO-INDEX: this hit's number
                        (combo-scale combo-index)
                        (if counter-hit *counter-mult* 1.0))))))
 
-;;; ---------------------------------------------------------------- Bankai East's pierce (docs/DUEL_YAMA_REWORK.md)
+;;; ---------------------------------------------------------------- Bankai East's pierce (docs/duel/DUEL_YAMA_REWORK.md)
 (defun pierce-rate (gg &optional (mult 1.0))
   "East's pierce k at guard gauge GG: *PIERCE-MIN* (empty) .. *PIERCE-MAX* (full), x a move's :pierce-mult MULT
 (KYOKKO 2.0). A hit deals x(1 + k); a blocked hit lets k x its damage through as chip (CHIP-DAMAGE: never kills)."
@@ -336,7 +336,7 @@ spread over 60 steps in whole points, so a whole second burns exactly the rate (
   "REISHI after a self-burn of AMOUNT (Hellfire, Ennetsu): never below 1."
   (if (<= reishi 1) reishi (max 1 (- reishi amount))))
 
-;;; ---------------------------------------------------------------- KOSEI (攻勢), the aggression reward (docs/DUEL_STRINGS.md §5)
+;;; ---------------------------------------------------------------- KOSEI (攻勢), the aggression reward (docs/duel/DUEL_STRINGS.md §5)
 (defun kosei-mult (gg)
   "KOSEI's multiplier at the attacker's guard gauge GG: 1 + *KOSEI-BONUS* x (1 - GG / *GG-MAX*), x1 full .. x3 empty."
   (+ 1.0 (* *kosei-bonus* (- 1.0 (/ gg *gg-max*)))))
@@ -447,7 +447,7 @@ what was really taken, not AMOUNT."
   (if (<= total-frames 0) 0.0 (* max (/ (float frames-left) total-frames))))
 
 (defun bankai-allowed-p (free konpaku)
-  "Kenpachi's Bankai (docs/DUEL_KEN_BANKAI.md §1.1): P in a form with :bankai-form (cup 3), FREE (idle / guard: DRINK
+  "Kenpachi's Bankai (docs/duel/DUEL_KEN_BANKAI.md §1.1): P in a form with :bankai-form (cup 3), FREE (idle / guard: DRINK
 included) with at most *BANKAI-KONPAKU* of his own KONPAKU left (the user's decision 2026-09-28; it was: red). No
 gauge; once a match by construction (no later form has :bankai-form)."
   (and free (<= konpaku *bankai-konpaku*) t))
@@ -480,7 +480,7 @@ any later move is interrupted by it (a masher can't dodge it)."
        (not (and (eq state :move) (eq current pending)))
        t))
 
-;;; ---------------------------------------------------------------- Rukia (docs/DUEL_RUKIA.md): frost, the temperature
+;;; ---------------------------------------------------------------- Rukia (docs/duel/DUEL_RUKIA.md): frost, the temperature
 (defun frost-next (cur n)
   "The frost timer after a real hit that frosts N frames: max(CUR, N), capped at *FROST-CAP* (it never stacks)."
   (min *frost-cap* (max cur n)))
@@ -553,7 +553,7 @@ S, a diagonal one part of it, a side Step (TOWARD 0) or one toward her untouched
   (and free (not used) (>= gauge *awaken-max*)))
 
 (defun burst-mode (state locked combo-hits chain-open)
-  "The burst a press would start from fighter STATE (docs/DUEL_DESIGN.md \"Burst modes\"), or NIL: never while LOCKED;
+  "The burst a press would start from fighter STATE (docs/duel/DUEL_DESIGN.md \"Burst modes\"), or NIL: never while LOCKED;
 :BLUE in a reaction / airborne past the combo's *BURST-MIN-HITS*th hit (COMBO-HITS) or in blockstun; :ORANGE in a move
 whose own hit landed, while its cancel window is open (CHAIN-OPEN: the shell's CANCEL-OPEN-P); :WHITE free (idle / walk,
 guard, run)."

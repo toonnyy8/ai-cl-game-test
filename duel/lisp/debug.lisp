@@ -63,27 +63,27 @@
 ;;;;            *WARD-MULT* / *PIERCE-MAX* = k / 100, *GG-REGEN* / *GG-REGEN-GUARDLESS* = k / 10
 ;;;;   2393     the string test: the fighters of the running match 2.2 m apart, facing, idle, nothing held (scripts: a
 ;;;;            string + the O ender, e.g. duel-touch.json)
-;;;;   2394+k   the string test (docs/DUEL_STRINGS.md): human P1 in form k (0 Yamamoto Shikai, 1 Bankai East, 2 Kenpachi
+;;;;   2394+k   the string test (docs/duel/DUEL_STRINGS.md): human P1 in form k (0 Yamamoto Shikai, 1 Bankai East, 2 Kenpachi
 ;;;;            base, 3 RYOTE) 2.2 m from an idle Kenpachi (CPU off; East with his guard gauge at 30: KOSEI x2.4); the
 ;;;;            script presses J / K / O (duel-strings.json)
 ;;;;   24000+k / 25000+k / 26000+k   the strings' gate knobs without a rebuild: *AI-O-ENDER* = k / 100, NORMAL's
 ;;;;            *AI-FOLLOW-GUARD-P* = k / 100, every K2 / K3 (and copy) deals k % of its written damage;
 ;;;;            27000+k *KOSEI-REIATSU* = k / 100 (and *KOSEI-FS* half that), 28000+k *AI-STRING-FLASH-P* = k / 100,
 ;;;;            29000+k *AI-SP-CANCEL-P* = k / 100
-;;;;   2700+k   portrait presentation (docs/DUEL_MOBILE_DESIGN.md P2): 0 the framing / text probe on (every 30th battle
+;;;;   2700+k   portrait presentation (docs/duel/DUEL_MOBILE_DESIGN.md P2): 0 the framing / text probe on (every 30th battle
 ;;;;            frame off a cinematic: both fighters' upper halves clear of the two HUD blocks, >= 70 % of each one's width on
 ;;;;            the screen; the smallest pixel-font
 ;;;;            glyph drawn) and its "duel frame ..." line now; 1 the fighters 24 m apart; 2 P2 flashed to P1's side
 ;;;;            (90 deg, 4 m: the camera's catch-up); 3 1 m apart; 4 consing of the portrait camera, dolly and HUD column
 ;;;;            (100 calls each) -> "portrait consing" line
 ;;;;   35000+f / 36000+f   stills of the Bankai cinematic / MAPPUTATSU held at frame f (as 10000+1000k+f, k 9 / 10)
-;;;;   2386+k   Kenpachi's Bankai tests (docs/DUEL_KEN_BANKAI.md; BANKAI-TEST): 0 cup 3 + red 3 m from an idle Yamamoto (P
+;;;;   2386+k   Kenpachi's Bankai tests (docs/duel/DUEL_KEN_BANKAI.md; BANKAI-TEST): 0 cup 3 + red 3 m from an idle Yamamoto (P
 ;;;;            enters), 1 in the Bankai at once 2.2 m, 2 the Bankai with 1 pip left, 3 片腕
 ;;;;   30000+k  the seed gate plays seeds k+1 .. k+N (31100+n: N = n, default 20);  31000+10a+b the CPUs' Bankai entry, P1 a / P2 b: 0 the kit's rule,
 ;;;;            1 always (whenever allowed), 2 never, 3 the rule with its chance 1 (the gamble A/B);
 ;;;;            32000+k *ARM-SELF* = k, 33000+k *ARM-BURST-SELF* = k, 34000+k *ARM-CRACK* = k; 37000+k the cup-3 CPU's
 ;;;;            Bankai chance :p = k / 100, 38000+k its :own-konpaku = k
-;;;;   Rukia (docs/DUEL_RUKIA.md): 6000+s / 7000+s / 8000+s seeded CPU vs CPU RY / RK / RR (P1 Rukia); 2118 the seed gate of
+;;;;   Rukia (docs/duel/DUEL_RUKIA.md): 6000+s / 7000+s / 8000+s seeded CPU vs CPU RY / RK / RR (P1 Rukia); 2118 the seed gate of
 ;;;;            her three pairings (RY RK RR; 2113 now plays all six), 2119 RY and RK only, 2125+k pairing k alone (0 YY 1 YK
 ;;;;            2 KK 3 RY 4 RK 5 RR: the gate in parallel), 2124 2118 with the combat log
 ;;;;            (the pacing log); 2410+k her tests (RUKIA-TEST: human P1 Rukia, P2's CPU
@@ -111,12 +111,12 @@
 ;;;;            reiatsu opaque <-> see-through (*REIATSU-GLASS*, before / after stills), 71001+k human P1 Kenpachi in cup
 ;;;;            k+1 (4: the Bankai) 3 m from an idle Yamamoto. Every gate row is followed by a "duel band" line per awakened Rukia side
 ;;;;            (BAND-ACC: frames, damage dealt / taken per band, zero visits and their exits, bracing frames, freeze-touches)
-;;;;   200000 + 1000 h + 100 c1 + 10 c2 + m   the learning gate (docs/DUEL_LEARNING.md): seeds as the seed gate, P1 (roster
+;;;;   200000 + 1000 h + 100 c1 + 10 c2 + m   the learning gate (docs/duel/DUEL_LEARNING.md): seeds as the seed gate, P1 (roster
 ;;;;            c1) a CPU with habit h (*HABITS*: 0 plain, 1 J on wake-up, 2 guard after a block, 3 grab-happy, 4 Hoho-happy,
 ;;;;            5 burst-happy, 6 the button-masher of ASSIST's gate: 81000 + g + 3 c + 6 b its assist, g AUTO GUARD 0-2, c / b
 ;;;;            AUTO COMBO / BREAK on; 81020+i the gates' CPU difficulty (0 EASY 1 NORMAL 2 HARD), 81100+k *ASSIST-MULT* = k / 100;
 ;;;;            81030+i the assist's learner off / on, 81040+i P2 a button-masher too (unassisted: the anti-mash check);
-;;;;            tools/assistgate.py; docs/DUEL_ASSIST.md),
+;;;;            tools/assistgate.py; docs/duel/DUEL_ASSIST.md),
 ;;;;            P2 (roster c2) learning by m (0 off, 1 all, 2 model only, 3 bandit only), fresh at the start, kept across
 ;;;;            the matches; a "duel learn row" per match. Every other debug command switches learning off (*LEARN-DEBUG-OFF*)
 ;;;;   2400 god (both fighters' Reishi is topped back up to 400 every frame; Kikon still lands)   2500+k human P1 vs an
@@ -370,7 +370,7 @@ probe (the ladder), 1 the :drink probe (P2 mashes Quick), 2 / 4 hold P2's guard,
       (5 (setf *probe* (list :cut :flash *match-tick* nil nil nil))))))
 
 (defun bankai-test (k)
-  "Kenpachi's Bankai tests 2386+K (docs/DUEL_KEN_BANKAI.md; human P1 Kenpachi, P2 an idle Yamamoto CPU; the script presses
+  "Kenpachi's Bankai tests 2386+K (docs/duel/DUEL_KEN_BANKAI.md; human P1 Kenpachi, P2 an idle Yamamoto CPU; the script presses
 the keys; his Konpaku at most *BANKAI-KONPAKU*, the entry's condition): 0 cup 3 (NOME 100), red (300), 3 m: P enters
 the Bankai (its cinematic); 1 in the Bankai at once (no cinematic), 2.2 m: KKK, a whiffed K, JJJ ...; 2 in the Bankai
 with 1 pip, 2.2 m: the 4th strike, then the burst; 3 片腕 at 2.2 m."
@@ -699,7 +699,7 @@ deals PCT % of its written damage (the seed gate's first lever, DUEL_STRINGS §6
     ((9 10) (ensure-battle :kenpachi :yamamoto) (place *p1* *p2* (if (= k 9) 5.0 3.0)) (force-form *p1* :bankai)
      (setf (gauges-meter (gauges *p1*)) (f32 *arm-pips*)) (refresh-look *p1*)
      (start-cine (if (= k 9) 'ken-bankai-cine 'ken-oni-kikon-cine) *p1* *p2*))
-    ((11 12 13) (ensure-battle :rukia :kenpachi) (place *p1* *p2* (if (= k 13) 5.0 3.0))   ; Rukia's (docs/DUEL_RUKIA.md §5, §6)
+    ((11 12 13) (ensure-battle :rukia :kenpachi) (place *p1* *p2* (if (= k 13) 5.0 3.0))   ; Rukia's (docs/duel/DUEL_RUKIA.md §5, §6)
      (force-form *p1* (if (= k 11) :base :m18))
      (start-cine (nth (- k 11) '(ru-kikon-cine ru-hakka-cine ru-awaken-cine)) *p1* *p2*))
     ((14 15) (ensure-battle :rukia :kenpachi) (place *p1* *p2* 3.0) (force-form *p1* :zero)   ; the white Rukia's face
@@ -802,7 +802,7 @@ when K already runs, it continues to F."
     (log-msg "grip drift: raw max ~,0f mm (~a), IK max ~,0f mm (~a)" (* 1000 raw) worst (* 1000 ik) iw)))
 
 (defun vfx6-cons-check ()
-  "2391: bytes consed by 10 draws of each Phase 6 per-frame look (docs/STYLE_STORM_DESIGN.md §14 Phase 6): the marks and
+  "2391: bytes consed by 10 draws of each Phase 6 per-frame look (docs/style/STYLE_STORM_DESIGN.md §14 Phase 6): the marks and
 chips (both pools full), a pillar beside the lens, the fire wave passing it, the skull, the rain, both face accents, the
 left-hand grip (its step and the IK), and a caption slicing out."
   (let* ((e *p1*) (m (model e)) (cap (make-bcap "卍解" :kanji2 "残火の太刀" :reading "BANKAI" :layout :cine))
@@ -828,7 +828,7 @@ left-hand grip (its step and the IK), and a caption slicing out."
     (stage-clear-marks) (setf (aref (model-looks m) 0) 0f0)))
 
 (defun vfx5-cons-check ()
-  "2390: bytes consed by 10 draws of each Phase 5 per-frame look (docs/STYLE_STORM_DESIGN.md §14 Phase 5): the fire looks,
+  "2390: bytes consed by 10 draws of each Phase 5 per-frame look (docs/style/STYLE_STORM_DESIGN.md §14 Phase 5): the fire looks,
 the auras redrawn in toon, the rift, a spent wave's erosion, the new stamps (all live at once), and the face / beat /
 move-beat choices of DRAW-FIGHTER."
   (let* ((e *p1*) (f (fighter e)) (m (model e)) (mv (fighter-move f)))
@@ -915,7 +915,7 @@ move-beat choices of DRAW-FIGHTER."
                           (nth (floor (length secs) 2) secs) (first secs) (car (last secs)) secs))))
            (setf *gate-results* nil *turbo* nil *learn-gate* nil)))))
 
-;;; ---------------------------------------------------------------- the learning CPU's gate (docs/DUEL_LEARNING.md)
+;;; ---------------------------------------------------------------- the learning CPU's gate (docs/duel/DUEL_LEARNING.md)
 (defparameter *dumb-delay* 24 "The button-masher sees as late as an EASY CPU (frames).")
 (defparameter *dumb-guard-p* 0.5 "... and guards this share of the moves he sees coming.")
 
@@ -969,7 +969,7 @@ matches); a \"duel learn row\" per match."
                  (ai-press b :step 1 :modded t :act :hoho) (setf (brain-why b) :habit)))))))
 
 (defun dumb-step (e b s d)
-  "The button-masher (habit :dumb, ASSIST's gate, docs/DUEL_ASSIST.md): nothing of the CPU's play, only what a new player
+  "The button-masher (habit :dumb, ASSIST's gate, docs/duel/DUEL_ASSIST.md): nothing of the CPU's play, only what a new player
 does: hold U while a move of his comes, seen late (*DUMB-DELAY*) and only *DUMB-GUARD-P* of his moves, mash J (a press
 every 8 f) within J1's reach, else walk at him.
 Never a Step, Hoho, L, SP, Breaker, O, Burst or awakening of its own: those come from the assist (*ASSIST-DEBUG*). T."

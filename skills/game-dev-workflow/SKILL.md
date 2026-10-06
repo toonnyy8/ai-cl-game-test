@@ -24,8 +24,8 @@ is "done" until it is measured, committed and pushed — but never deployed unle
    is quoted.
 6. **Rebuild what the user runs** (`./build.sh <game>`) — the last build before reporting is the shipping build.
 7. **Commit + push main at the milestone** without asking; subject = the change, "(the user, YYYY-MM-DD)", key numbers,
-   doc § refs; scope caveats in parentheses; the session's attribution trailers. Never commit `.claude/`, scratch or
-   research notes.
+   doc § refs; scope caveats in parentheses; the session's attribution trailers. Never commit `.claude/` or scratch;
+   research is committed only once moved under `docs/research/<topic>/`.
 8. **Deploy (`tools/deploy-pages.sh`) only when the user says so.** Then confirm the Pages build status and URL.
 9. **Reply in zh-TW, concise**: what changed, key numbers, what is pushed, what is pending, any decision the user must
    make. Report failing gates and your own mistakes plainly; label anything not checked by eye.

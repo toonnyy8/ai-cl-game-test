@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""style-shots.py — the user-review still set of the Storm x Kubo restyle (docs/STYLE_STORM_DESIGN.md §9),
+"""style-shots.py — the user-review still set of the Storm x Kubo restyle (docs/style/STYLE_STORM_DESIGN.md §9),
 taken under run.mjs --fixed-dt, so a still is the same frame on every run.
 
   python3 tests/style-shots.py PHASE DUEL DUELVIEW [BEFORE_DUEL BEFORE_DUELVIEW]

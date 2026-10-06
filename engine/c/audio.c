@@ -1,5 +1,5 @@
 /* audio.c — the mixer: up to 32 voices over 128 sample slots, fed to an SDL3 audio stream.
-   Lisp side (synthesis toolkit, sound bank, play API): engine/lisp/audio.lisp. See docs/AUDIO.md.
+   Lisp side (synthesis toolkit, sound bank, play API): engine/lisp/audio.lisp. See docs/engine/AUDIO.md.
    ponytail: the SDL stream *get callback* mixes in pure C. On the web SDL3 calls it from a
    ScriptProcessorNode `onaudioprocess` event, i.e. between frames, never while Lisp runs, and it
    never touches Lisp objects (GC rule). Frame hitches therefore don't starve audio. */

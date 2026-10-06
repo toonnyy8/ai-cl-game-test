@@ -6,7 +6,7 @@
 
 ;;; C side: engine/c/render.c (r_init, r_make_pipe, r_mesh_new, r_frame, r_timing). Never call a
 ;;; blocking SDL_GPU function (WaitAndAcquire..., WaitForGPUFences/Idle): they spin and need
-;;; ASYNCIFY/JSPI, which ECL's setjmp/longjmp rule out. See docs/ARCHITECTURE.md.
+;;; ASYNCIFY/JSPI, which ECL's setjmp/longjmp rule out. See docs/engine/ARCHITECTURE.md.
 
 ;;; ---------------------------------------------------------------- shaders (WGSL)
 ;;; Every shader program is a file in engine/shaders/ (*.vert.wgsl, *.frag.wgsl; plain *.wgsl files
@@ -148,7 +148,7 @@ Returns T if the point is in front of the camera."
   (bloom-threshold 0.62f0 :type single-float)       ; on tonemapped color, 0..1
   (bloom-strength 0.9f0 :type single-float)
   (vignette 0.35f0 :type single-float)
-  ;; toon look (SOUL DUEL, docs/STYLE_STORM_DESIGN.md §2): T fills the Frame's toon lanes, draws the toon
+  ;; toon look (SOUL DUEL, docs/style/STYLE_STORM_DESIGN.md §2): T fills the Frame's toon lanes, draws the toon
   ;; sky (fs_sky_toon) and shades 2 point lights per pixel (the stage's flat pools; DRAW-MESH :TOON draws
   ;; only). NIL (default, RAVEN) leaves every lane 0 and the frame exactly as before.
   (toon nil)
@@ -172,7 +172,7 @@ Returns T if the point is in front of the camera."
 down to *RENDER-SCALE-MIN*, then *PIXEL-LIGHTS* to 3 and 1; raise it back when there is headroom
 (hysteresis + backoff, see r_timing). Off by default (keeps screenshots deterministic).")
 (defvar *scene-scale-cap* 1f0
-  "Upper bound on the scene resolution factor (docs/DUEL_MOBILE_DESIGN.md G7): a phone at DPR 3 sets it so the
+  "Upper bound on the scene resolution factor (docs/duel/DUEL_MOBILE_DESIGN.md G7): a phone at DPR 3 sets it so the
 scene stays near 1.6 MP (the UI stays native). 1 = no cap.")
 (defvar *auto-level* 0)
 (defvar *render-scale-min* 0.7f0)
@@ -204,7 +204,7 @@ quality ladder's two light steps do nothing there).")
   "Composite split, window pixels: the left half of the frame is shifted up and the right half down by
 this much along the vertical centre line (the uncovered strips are black). 0 = off.")
 (defvar *grade-impact* 0
-  "Screen punctuation mode of the composite (docs/STYLE_STORM_DESIGN.md §3.6): 0 off (the plain composite,
+  "Screen punctuation mode of the composite (docs/style/STYLE_STORM_DESIGN.md §3.6): 0 off (the plain composite,
 RAVEN's), 1 negative, 2 two-tone (ink / paper by luma), 3 manga page (two-tone keeping saturated spot
 colour), 4 spot-keep (greyscale but the saturated pixels near one or two hues). Parameters: *IMPACT-PARAMS*
 (GRADE-IMPACT sets both). The game owns the duration (set it back to 0).")

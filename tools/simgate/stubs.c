@@ -1,4 +1,4 @@
-/* stubs.c — the engine's C layer for the host-native sim gate (tools/simgate.py, docs/DUEL_GAMEPLAY.md "Pacing gate").
+/* stubs.c — the engine's C layer for the host-native sim gate (tools/simgate.py, docs/duel/DUEL_GAMEPLAY.md "Pacing gate").
    Included into the natively compiled Lisp unit by tools/simgate/build.lisp. Every function engine/c/engine.h
    declares is here: the random streams are the real ones (engine/c/rng.c), the rest are headless leaves: no window,
    no GPU, no audio device (AUDIO-INIT-BEGIN fails, so no sound is synthesized), no page. Time is virtual: each

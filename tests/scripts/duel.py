@@ -21,11 +21,11 @@
 #     PRACTICE by keyboard (--fixed-dt: on a loaded host real-time key timing drops string links)
 # Determinism: run a cvc script twice (or once with turbo and once without: drop the 2102 step) and
 #   diff <(grep '^duel' run1.log) <(grep '^duel' run2.log)   -> empty.
-# Reference (the hidden hit-stun tolerance and the J/K cut, 2026-09-29, docs/DUEL_DESIGN.md "Hidden hit-stun tolerance",
-# docs/DUEL_STRINGS.md): duel-cvc-yk.json (seed 7) ends
+# Reference (the hidden hit-stun tolerance and the J/K cut, 2026-09-29, docs/duel/DUEL_DESIGN.md "Hidden hit-stun tolerance",
+# docs/duel/DUEL_STRINGS.md): duel-cvc-yk.json (seed 7) ends
 #   duel -> RESULTS winner P2 konpaku 0-6 ticks 6220 secs 103.7    (turbo and real time alike; also after a gate)
 #   (before the perfect Hoho's 12-frame lead, 2026-10-01: winner P1 konpaku 7-0 ticks 9328 secs 155.5)
-#   (before Kenpachi's more aggressive cup 2 / 3 CPU, 2026-09-29, docs/DUEL_NOZARASHI_V2.md: winner P1 konpaku 2-0 ticks 9636 secs 160.6)
+#   (before Kenpachi's more aggressive cup 2 / 3 CPU, 2026-09-29, docs/duel/DUEL_NOZARASHI_V2.md: winner P1 konpaku 2-0 ticks 9636 secs 160.6)
 #   (before them, the J / K strings + the Soul Break rule + the Bankai: winner P2 konpaku 0-3 ticks 7123 secs 118.7;
 #   before the strings, the Bankai rework + the slower guard refill: winner P1 konpaku 2-0 ticks 7688 secs 128.1;
 #   before the rework, guard v3: winner P2 konpaku 0-4 ticks 9305 secs 155.1; before guard v3, the Kenpachi batch: winner P1 konpaku 7-0 ticks 7351 secs 122.5; before the batch: winner P2 konpaku 0-3 ticks 8594 secs 143.2; before user review 3's slower cinematics: the same match with shorter cinematics, ticks 8384 secs 139.7 and ticks 8054 secs 134.2; P1 1-0 ticks 9438 secs 157.3 with the gauges and the O modules; P1 2-0 ticks 9780 secs 163.0 with the Kikon rush; P2 0-1 ticks 7298 secs 121.6 with the instant Kikon; 0-4 ticks 5857 secs 97.6 with a timed Bankai;
@@ -151,7 +151,7 @@ for i in range(16): ev += tap(t + 0.3 + 0.12 * i, "KeyJ", 0.05)
 ev += [key(t + 2.4, "ShiftLeft", False), shot(t + 2.6, "gauges-burst"), cmd(t + 2.8, 2107)]
 write("gauges", ev)
 
-# The Bankai stances by keyboard (debug 2370+k: human P1, P2's CPU off; the side camera; docs/DUEL_YAMA_REWORK.md).
+# The Bankai stances by keyboard (debug 2370+k: human P1, P2's CPU off; the side camera; docs/duel/DUEL_YAMA_REWORK.md).
 # Expected log lines:
 #   0 East vs an idle Kenpachi 3 m: L "P1 move YA-E-KYOKKO", "P1 YA-E-KYOKKO -> P2 HIT 85" (the log shows the base: 162 dealt at a full gauge, x(1 + 0.9));
 #     U held: "P1 form BANKAI-WEST"; L: "P1 move YA-W-SHONETSU" (he stays West), the pillars; J: "P1 form BANKAI-EAST",
@@ -237,7 +237,7 @@ t += 10.0
 ev += [cmd(t, 2385), cmd(t + 15.5, 2107)]
 write("nome", ev)
 
-# The J / K strings and the O ender (docs/DUEL_STRINGS.md; debug 2394+k: human P1 2.2 m from an idle Kenpachi, k 0 Shikai,
+# The J / K strings and the O ender (docs/duel/DUEL_STRINGS.md; debug 2394+k: human P1 2.2 m from an idle Kenpachi, k 0 Shikai,
 # 1 Bankai East, 2 Kenpachi, 3 RYOTE). Expected log lines: P1 move YA-J1 YA-J2 YA-J3, then YA-KIKON (O-ENDER) -> P2 HIT
 # (no aura: the strike at once); YA-E-K1 YA-E-K2 YA-E-K3; KE-J1 KE-K2S KE-K3 + KE-KIKON; KE-R-J1 KE-R-J2 KE-R-J3;
 # KE-R-K1 KE-R-K2 KE-R-J3; and J K J: KE-J1 KE-K2S, the third press eaten (the string ends: no KE-J3).
@@ -366,7 +366,7 @@ t += 10
 ev += [cmd(t, 2101), cmd(t + 0.1, 4005), {"at": t + 5, "size": "800x450"}, shot(t + 7, "hud-800x450")]
 write("shots", ev)
 
-# Kenpachi's Bankai (docs/DUEL_KEN_BANKAI.md; run with --fixed-dt 16.666667 --secs 60). Expected log lines, in order:
+# Kenpachi's Bankai (docs/duel/DUEL_KEN_BANKAI.md; run with --fixed-dt 16.666667 --secs 60). Expected log lines, in order:
 # "P1 BANKAI (konpaku -> 1, -8)" and the dump "... BANKAI r1300 k1 ... m4 u0" (P from cup 3 + red: Konpaku 1, Reishi
 # full, 4 pips); "UDE -KE-B-K1 3 left", "-KE-B-K2 2 left", "-KE-B-K3 1 left" (KKK, a pip each); the bite
 # "KE-B-BITE -> P2 HIT"; with 1 pip "UDE -KE-B-K1 0 left" then "ARM BURST" only after K1's recovery; 片腕 J "KE-J1".
@@ -395,7 +395,7 @@ for k, frames in ((35000, (6, 26, 64, 92, 130, 176)), (36000, (8, 40, 74, 110, 1
 ev.append(cmd(t, 2107))
 write("bankai", ev)
 
-# Kuchiki Rukia (docs/DUEL_RUKIA.md; run with --fixed-dt 16.666667 --secs 80, landscape, and duel-rukia-portrait.json with
+# Kuchiki Rukia (docs/duel/DUEL_RUKIA.md; run with --fixed-dt 16.666667 --secs 80, landscape, and duel-rukia-portrait.json with
 # --size 390x844). The select screen (the roster cycled to her by keyboard; in portrait by a tap on the right third),
 # then human P1 Rukia vs an idle Kenpachi (debug 2410+k): the Shikai (stance, TSUKISHIRO's ring and pillar, J1, K1, the
 # pirouette J3, K3, HAKUREN's stabs and wave, SHIRAFUNE), -18 C (TOSHU, HYOKA, HAKKA's pillar and lane), -50 C (HYOSHIN's
@@ -451,7 +451,7 @@ def rukia_script(tag, portrait):
         t += 0.5
     ev.append(cmd(t, 2107))
     return ev
-# K -> L (docs/DUEL_STRINGS.md §12; run with --fixed-dt 16.666667 --secs 60): human P1 Rukia 2.2 m from an idle Kenpachi
+# K -> L (docs/duel/DUEL_STRINGS.md §12; run with --fixed-dt 16.666667 --secs 60): human P1 Rukia 2.2 m from an idle Kenpachi
 # (debug 2420+k, *KL-TESTS*): per form K L, K K L, K K K L. Expected "duel probe kl" lines: each L hit with P2 still in
 # stun (left-before > 0, the combo count up); k 4 (-18, 10 cold): no RU-SHIMOBASHIRA; k 5 / 6 (a held guard): the L
 # blocked too. Shots tests/shots/duel-kl-<form>-<n>.png (the K hit, the L's ring / disc).
@@ -472,7 +472,7 @@ write("rukia-kl", kl_script())
 write("rukia", rukia_script("", False))
 write("rukia-portrait", rukia_script("-p", True))
 
-# Kurosaki Ichigo (docs/DUEL_ICHIGO.md; run with --fixed-dt 16.666667 --secs 100, landscape, and duel-ichigo-portrait.json
+# Kurosaki Ichigo (docs/duel/DUEL_ICHIGO.md; run with --fixed-dt 16.666667 --secs 100, landscape, and duel-ichigo-portrait.json
 # with --size 390x844). The select screen (the roster cycled to him), then human P1 Ichigo vs an idle Kenpachi (debug
 # 74000+k, ICHIGO-TEST): the Shikai (stance, J1, K1, J3, K3, the cross KOGA, GETSUGA, JUJISHO, SOGA), KESSA (stance, J1's
 # chain, K1's sweep, the giant GETSUGA and its residue, KUSARI-BIKI, KUSARI-GAKI, the parry's flare, a Step's clone and its
@@ -534,7 +534,7 @@ def ichigo_script(tag, portrait):
     return ev
 write("ichigo", ichigo_script("", False))
 write("ichigo-portrait", ichigo_script("-p", True))
-# ENDLESS (docs/DUEL_ENDLESS.md; run with --fixed-dt 16.666667 --secs 110): a menu run, so it writes the record.
+# ENDLESS (docs/duel/DUEL_ENDLESS.md; run with --fixed-dt 16.666667 --secs 110): a menu run, so it writes the record.
 # Landscape by keyboard: MODE row 1 (ENDLESS) -> P1 Kenpachi -> START NORMAL; stage 1 cleared by debug 80980 (STAGE
 # CLEAR not awakened: CONTINUE / QUIT) -> CONTINUE; stage 2: 80987 (his 5th form, KATAUDE) + the clear -> STAGE CLEAR
 # awakened -> REVERT; stage 3's line "P1 form base konpaku 9 awaken 100"; 80981 (the Bankai: Konpaku 1) + the clear ->

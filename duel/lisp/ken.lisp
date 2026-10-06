@@ -1,5 +1,5 @@
 ;;;; ken.lisp — ZARAKI KENPACHI (TYBW), design-v1 §5.2: his moves (DEFMOVE) and his forms (DEFKIT): :base and
-;;;; his permanent awakening Nozarashi, three cups of the NOME ladder (docs/DUEL_NOZARASHI_V2.md): :nozarashi
+;;;; his permanent awakening Nozarashi, three cups of the NOME ladder (docs/duel/DUEL_NOZARASHI_V2.md): :nozarashi
 ;;;; (KATATE, one hand), :ryote (two hands) and :nomihose (drink it dry). Inherited moves are DERIVED by the kit
 ;;;; (KATATE startup +2 / reach x1.3, RYOTE +3 / x1.4; damage via :mult), never copied here; NOMIHOSE derives
 ;;;; nothing: it plays RYOTE's. He wears no eyepatch in any form (TYBW).
@@ -8,7 +8,7 @@
 (in-package :duel)
 
 ;;; ================================================================ base
-;;; the J / K strings (docs/DUEL_STRINGS.md §3.3): no school, a street fighter with a sword who kicks. The grid as
+;;; the J / K strings (docs/duel/DUEL_STRINGS.md §3.3): no school, a street fighter with a sword who kicks. The grid as
 ;;; Yamamoto's (yama.lisp): up to three links, switching J / K at most once (the reach since the J cut, DUEL_STRINGS §13: J 0.4x; J1 / J2 1.4 since §20,
 ;;; K nearly as long as before: his long swings); every K at link 2 / 3 at S_eff 14, at 80 % of
 ;;; the design's damage (the seed gate: 75 -> 60, 100 -> 80; RYOTE 85 -> 68, 115 -> 92)
@@ -102,7 +102,7 @@
   :adv-block -16 :vol (:cap 0.3 12.0 0.5 0.5) :on-hit :knockdown :kb 3.0 :flags (:ranged)
   :on-frame ((0 ken-drink-dry) (26 ken-meteor-cut)) :params (:crush-range 6.0 :melee-range 3.9))   ; blade <= cup 3's MEN 3.9 m
 
-;;; ================================================================ Bankai (卍解) and 片腕 KATAUDE (docs/DUEL_KEN_BANKAI.md)
+;;; ================================================================ Bankai (卍解) and 片腕 KATAUDE (docs/duel/DUEL_KEN_BANKAI.md)
 ;;; The oni: the broken cleaver hacks, a fist, one gouge, one drop, the teeth, the shield-and-all cut, the punch and the
 ;;; split. Every K link, L, SP1, SP2, I and O spends a pip of the arm (UDE); the K links and the specials :rend (armour
 ;;; and his mirror's stance don't stop them). Frame data: the DUEL_STRINGS §2.1 budget (J 8 / 8 / 9, K1 17, K2 / K3 S_eff 14).
@@ -173,7 +173,7 @@
   :meter-gain (:dealt *nome-dealt* :taken *nome-taken* :drunk *nome-drunk*)
   :commands (:sp1 :ke-meteor :kikon :ke-kikon-n)
   ;; toys with his opponent (a Kikon only 0.25 per decision until the last minute: it is worth 2 here; the O ender on
-  ;; one who isn't red per cup, :o-ender, docs/DUEL_STRINGS.md §4)
+  ;; one who isn't red per cup, :o-ender, docs/duel/DUEL_STRINGS.md §4)
   :ai (:intents (:approach 2 :pressure 4 :zone 0 :defend 1)
        :ranges (:approach (2.0 4.0) :pressure (1.2 3.0) :zone (4.0 6.0) :defend (3.0 5.0))
        :moves ((0.0 1.6 :q 5 :f 2 :sig 3 :breaker 1 :sp2 1 nil 3)
@@ -191,7 +191,7 @@
   :passives (:projectile-cut :cut) :stance :ke-r-stance :aura :nozarashi :enter-hook ken-ryote-enter
   :commands (:q :ke-r-j1 :f :ke-r-k1 :sp1 :ke-meteor :kikon :ke-kikon-n)   ; (the cup-1 moves as written: not re-derived)
   :grid (:ke-r-j1 :ke-r-j2 :ke-r-j3 :ke-r-k1 :ke-r-k2 :ke-r-k3 :ke-r-j2s :ke-r-k2s)
-  ;; after the 2x NOME drain (docs/DUEL_NOZARASHI_V2.md, "The CPU after the faster drain"): no DEFEND intent, no idle
+  ;; after the 2x NOME drain (docs/duel/DUEL_NOZARASHI_V2.md, "The CPU after the faster drain"): no DEFEND intent, no idle
   ;; option at range, a neutral guard 0.1 (a guard against a committed move stays 0.35), a dash from 0.5 m outside his
   ;; range, 30 f of respect after a hit instead of 120, and a blocked string goes on 0.95 of the time
   :ai (:intents (:approach 2 :pressure 6 :zone 0 :defend 0)
@@ -365,7 +365,7 @@ dash starts = guard-crushing (the Breaker property)."
   (emit :sfx :ground-crack e))
 
 ;;; ================================================================ the CPU (his forms' :ai :reflex / :sp-ender / :sig-hold)
-;;; AI v2 (docs/DUEL_AI_V2.md; research_notes/ai-v2-drsi/kenpachi): the generic CPU (ai.lisp) plus his own answers, each
+;;; AI v2 (docs/duel/DUEL_AI_V2.md; docs/research/ai-v2-drsi/kenpachi): the generic CPU (ai.lisp) plus his own answers, each
 ;;; a chance by difficulty (EASY <= NORMAL <= HARD; NORMAL near the shipped CPU, HARD the full version). He sees the
 ;;; opponent only through the perceived SNAP (and the HUD gauges, as ai.lisp does); dice from SIM-RND01.
 ;;;   J1 lunge      J1 slides 0.8 m (the Bankai's 1.0): punish and open from reach + slide (ai.lisp stops at reach +
@@ -623,7 +623,7 @@ damage, before the O ender (63) or the charge (two bars, ~185); not NOMIHOSE's c
           (t (+ 12 (floor (* (sim-rnd01) 40)))))))
 
 ;;; ================================================================ cinematics
-;;; The grammar of every cinematic is in cinema.lisp (docs/STYLE_STORM_DESIGN.md §5); Kenpachi (black robe, black
+;;; The grammar of every cinematic is in cinema.lisp (docs/style/STYLE_STORM_DESIGN.md §5); Kenpachi (black robe, black
 ;;; hair) goes on the white card.
 (defcine ken-kikon-cine (a v :len 192 :hold 112)
   "Base Kikon (paced by user review 3): beat 0; Kenpachi on a white card, low and dutch under the 呑め、野晒 stamp in
@@ -702,7 +702,7 @@ the 野晒 / 呑め、 stamp in black on a white card."
       (play-sfx :whoosh-cleaver))
   (at 80 (impact-frame :manga 10)))
 
-;;; ---------------------------------------------------------------- the Bankai (docs/DUEL_KEN_BANKAI.md §1.2, §3.1)
+;;; ---------------------------------------------------------------- the Bankai (docs/duel/DUEL_KEN_BANKAI.md §1.2, §3.1)
 (defparameter *forest-trunks* '((0.03 0.05) (0.1 0.022) (0.62 0.04) (0.71 0.018) (0.8 0.06) (0.93 0.03))
   "The forest card's ink trunks: (x-fraction width-fraction) of the screen; Kenpachi kneels in the gap at the left third.")
 

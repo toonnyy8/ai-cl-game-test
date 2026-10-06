@@ -55,7 +55,7 @@
   (setf *ui-batch* (make-stream-buffer 8 32768)))
 
 (defvar *ui-min-css* 0
-  "Text floor (docs/DUEL_MOBILE_DESIGN.md G4): UI-SCALE is at least enough for a 7-px glyph to be this many CSS
+  "Text floor (docs/duel/DUEL_MOBILE_DESIGN.md G4): UI-SCALE is at least enough for a 7-px glyph to be this many CSS
 px tall (0 = no floor, the desktop default; a phone in portrait wants about 11).")
 (defvar *ui-text-min* 1000
   "Text probe: the smallest glyph pixel size (UI-TEXT scale / UI-BLOCK-TEXT px) drawn since a caller last reset it.")

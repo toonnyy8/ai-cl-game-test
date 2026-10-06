@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""style-5-checks.py — the phase-5 acceptance of the Storm x Kubo restyle (docs/STYLE_STORM_DESIGN.md §9 row 5), on the
+"""style-5-checks.py — the phase-5 acceptance of the Storm x Kubo restyle (docs/style/STYLE_STORM_DESIGN.md §9 row 5), on the
 stills of tests/style-5-shots.py and, with --run, on a played script:
 
   faces   each fighter shows 3 expression states: the face close-ups style-5-face-{yama,ken}-{neutral,shout,hurt}.png

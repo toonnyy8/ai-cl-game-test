@@ -54,7 +54,7 @@
             (null (resolve-contact :invuln :ward t))))
 ;; the melee / ranged split (the user's decision 2026-09-26): the Meteor's cleaver within 3.4 m, the cash-out's within
 ;; 3.9 m, Buttagiru's within 2.6 m, Nadegiri's within 2.4 m are melee; beyond, the line. (They were the J1 reaches of their
-;; forms until the J cut of 2026-09-29, docs/DUEL_STRINGS.md §13: an SP's own blade, so they stay)
+;; forms until the J cut of 2026-09-29, docs/duel/DUEL_STRINGS.md §13: an SP's own blade, so they stay)
 (check (and (ranged-hit-p t nil nil 0.0) (not (ranged-hit-p nil nil nil 100.0)) (ranged-hit-p nil '(:ranged) nil 1.0)
             (not (ranged-hit-p nil '(:ranged) 3.4 (* 3.4 3.4))) (ranged-hit-p nil '(:ranged) 3.4 (* 3.5 3.5))))
 (flet ((mr (name) (getf (mv-params (find-move name)) :melee-range)))
@@ -83,7 +83,7 @@
               (~= (mv-track b) *track-breaker*) (= (hw-hs (svref (mv-hits b) 0)) 10))))
 ;; a Q1 thrown on seeing the aura beats the fastest Breaker (aura 12 + strike startup 8)
 (check (< (mv-s (mv :yamamoto :base :ya-j1)) (+ *breaker-aura* *breaker-startup*)))
-;; 防 > J > I > 防 (the user, 2026-09-29; docs/DUEL_STRINGS.md §14): guard blocks J (above), a Breaker breaks the guard
+;; 防 > J > I > 防 (the user, 2026-09-29; docs/duel/DUEL_STRINGS.md §14): guard blocks J (above), a Breaker breaks the guard
 ;; (above), and J beats the grab: in every form with a Breaker its strike reaches less far than J1, and J1 has a press
 ;; window against the dash: the Breaker's aura, dash and strike startup are :breaker (any hit counters it), so J1 connects
 ;; when its last active frame meets the dash inside J1's reach + the thinnest hurt radius (0.34, Rukia's) and its first
@@ -108,7 +108,7 @@
 (check (= (recovery-frames 12 nil) 18))                                 ; whiff = R + 6
 (check (= (recovery-frames 18 nil 30) 30))                              ; Breaker whiff 30
 (check (and (chain-open-p 12 9 3 12 :hit) (not (chain-open-p 11 9 3 12 :hit))))
-;; the contact gate (docs/DUEL_STRINGS.md §2.2): a whiff never chains, at any frame
+;; the contact gate (docs/duel/DUEL_STRINGS.md §2.2): a whiff never chains, at any frame
 (check (loop for sf from 0 to 30 never (chain-open-p sf 9 3 12 nil)))
 (check (and (chain-open-p 21 9 3 12 :block) (not (chain-open-p 20 9 3 12 :block))
             (not (chain-open-p 24 9 3 12 :block))))
@@ -161,7 +161,7 @@ string goes on at the earliest chain frame (B starts on that step, frame 0)."
          "Frames between the victim leaving hitstun and B's first active frame (< 0 = a combo)."
          (let ((h (mv-first-hit a)))
            (- (+ (mv-s a) (mv-a a) (- (mv-s b) (mv-enter b))) (+ h 1 (hitstun (hw-react (svref (mv-hits a) 0)))))))
-;;; ---------------------------------------------------------------- the J / K strings (docs/DUEL_STRINGS.md §2, §3)
+;;; ---------------------------------------------------------------- the J / K strings (docs/duel/DUEL_STRINGS.md §2, §3)
 (defun link-moves (k)
   "Every string link of kit K reachable from J1 / K1: a list of (move link-number button-sequence)."
   (let ((out nil))
@@ -393,7 +393,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
             (not (hoho-allowed-p nil 100.0 10)) (not (hoho-allowed-p nil 29.0 0))))
 (check (and (awaken-allowed-p t 100.0 nil) (not (awaken-allowed-p t 100.0 t)) (not (awaken-allowed-p nil 100.0 nil))
             (not (awaken-allowed-p t 99.0 nil))))
-;; the burst modes (docs/DUEL_DESIGN.md "Burst modes", the user 2026-09-30): the state picks the mode
+;; the burst modes (docs/duel/DUEL_DESIGN.md "Burst modes", the user 2026-09-30): the state picks the mode
 (check (and (eq (burst-mode :stun nil 2 nil) :blue) (eq (burst-mode :air nil 3 nil) :blue) (null (burst-mode :stun nil 1 nil))
             (eq (burst-mode :guard-hit nil 0 nil) :blue)                        ; blockstun: from any blocked hit
             (eq (burst-mode :move nil 0 t) :orange) (null (burst-mode :move nil 0 nil))   ; a hit's window / a whiff or block
@@ -521,7 +521,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 (check (equal (multiple-value-list (combo-step :flinch t 3 1 1)) '(:flinch 4 1 2)))
 (check (equal (multiple-value-list (combo-step :flinch t 4 1 2)) '(:knockdown 5 1 3)))     ; 3 air hits
 (check (equal (multiple-value-list (combo-step :flinch nil 9 0 0)) '(:flinch 10 0 0)))  ; no hit cap (the user 2026-09-30)
-;; the hidden hit-stun tolerance (docs/DUEL_DESIGN.md, the user 2026-09-29)
+;; the hidden hit-stun tolerance (docs/duel/DUEL_DESIGN.md, the user 2026-09-29)
 (check (= (stun-weight :flinch nil) 1))
 (check (= (stun-weight :stagger nil) 2))
 (check (every (lambda (r) (= (stun-weight r nil) 3)) '(:crumple :knockback :launch :knockdown)))
@@ -775,7 +775,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :sh-skate-b :sh-slide-r :sh-slide-l :ke-run :ke-skate-b :ke-slide-r :ke-slide-l   ; the runs (facing the opponent)
     :ke-r-stance :ke-drink     ; the cups
     :ke-r-q1 :ke-r-q3 :ke-r-f1 :ke-r-f2 :ke-n-f1     ; RYOTE's kendo set and KUKAN-GIRI (their own clips since Phase 5)
-    :ke-b-stance :ke-b-fist :ke-b-bite                ; the Bankai (docs/DUEL_KEN_BANKAI.md §12)
+    :ke-b-stance :ke-b-fist :ke-b-bite                ; the Bankai (docs/duel/DUEL_KEN_BANKAI.md §12)
     :ke-b-hook :ic-cross-j :ic-k-jab :ic-k-wrap-j     ; the J cut's close J links (DUEL_STRINGS §13)
     :ke-b-leap :ke-b-run :ke-b-skate-b :ke-b-slide-r :ke-b-slide-l   ; its feral pass (2026-09-28; also 片腕)
     :ru-stance :ru-intro :ru-win :ru-q1 :ru-q2 :ru-spin :ru-thrust :ru-ring :ru-drop :ru-tsukishiro :ru-stab :ru-hakuren
@@ -809,7 +809,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (= (+ 25 (* 4 25) 60) (+ (mv-dmg (find-move :ke-charge)) (loop for w across (mv-hits fl) sum (hw-dmg w)))))))
 (check (and (null (hw-stun (make-hitwin))) (= 40 (hw-stun (make-hitwin :stun 40)))))
 
-;;; ================================================================ Bankai stances (docs/DUEL_YAMA_REWORK.md, the user's decisions 2026-09-27)
+;;; ================================================================ Bankai stances (docs/duel/DUEL_YAMA_REWORK.md, the user's decisions 2026-09-27)
 (let ((east (kit :yamamoto :bankai-east)) (west (kit :yamamoto :bankai-west)))
   ;; the forms: East x1.0 dealt + the pierce, x*BANKAI-TAKEN* 1.5 taken, projectile-cut; U goes West (:guard-to). West
   ;; x1.0 / x1.0, the ward + the parry's scorch; every command but L / SP1 drops to East (:drop-to / :keep); both
@@ -1007,7 +1007,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
   (check (and (~= 0.25 (getf (kit-ai t1) :kikon-p)) (~= 0.5 (getf (kit-ai t2) :kikon-p)) (~= 0.9 (getf (kit-ai t3) :kikon-p))
               (equal (getf (kit-ai t3) :cashout) '(:punish 30 :near 6.0 :below 55.0)) (null (getf (kit-ai t2) :cashout)))))
 
-;;; ================================================================ Kenpachi's Bankai and 片腕 (docs/DUEL_KEN_BANKAI.md, the user's decisions 2026-09-28)
+;;; ================================================================ Kenpachi's Bankai and 片腕 (docs/duel/DUEL_KEN_BANKAI.md, the user's decisions 2026-09-28)
 (let ((b (kit :kenpachi :bankai)) (a (kit :kenpachi :kataude)) (t3 (kit :kenpachi :nomihose)))
   ;; 1. entry: P, free and red; only cup 3 has it (once a match: nothing after it does)
   ;; the entry (2026-09-28): free with <= 4 of his own Konpaku (no longer red)
@@ -1109,7 +1109,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (~= 0.6 (getf (kit-ai b) :string-k)) (= 90 (getf (kit-ai b) :pip-hurry))
               (equal (getf (kit-ai b) :opp-intent) '(:zone 2 :defend 2)) (null (getf (kit-ai b) :cashout)))))
 
-;;; ================================================================ Kuchiki Rukia (docs/DUEL_RUKIA.md)
+;;; ================================================================ Kuchiki Rukia (docs/duel/DUEL_RUKIA.md)
 (let ((b (kit :rukia :base)) (m18 (kit :rukia :m18)) (m50 (kit :rukia :m50)) (z (kit :rukia :zero)))
   ;; frost: max, not a sum; capped; x0.7 on walk / run only while it lasts
   (check (and (= 90 (frost-next 60 90)) (= 90 (frost-next 90 60)) (= *frost-cap* (frost-next 140 400)) (= 150 *frost-cap*)
@@ -1240,7 +1240,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (null (getf (kit-ai z) :cool)) (getf (kit-ai z) :brace) (null (getf (kit-ai z) :zero-exit))
               (equal (getf (kit-ai z) :opp-intent) '(:zone 2 :defend 2)) (null (getf (kit-ai b) :opp-intent)))))
 
-;; L after a K link (the kit's :l-after-k, docs/DUEL_STRINGS.md §12, the user's decision 2026-09-28): every K link of
+;; L after a K link (the kit's :l-after-k, docs/duel/DUEL_STRINGS.md §12, the user's decision 2026-09-28): every K link of
 ;; every Rukia form (K1 K2 K2s K3) has one, no J link and no other character; the Shikai's is the combo copy of TSUKISHIRO,
 ;; the bands' their own L. On hit it combos: from the K link's hit its A + the L's hit frame (the last :on-frame hook + a
 ;; hazard's :delay) < the K link's hitstun; the Shikai's plain TSUKISHIRO wouldn't (its 24 f tell)
@@ -1276,7 +1276,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
               (eq :m50 (temp-band-at 150.0 :m50 :guard)) (eq :m18 (temp-band-at 0.0 :m50 :run))
               (eq :m18 (temp-band-at 10.0 :m18 :move)) (eq :zero (temp-band-at 200.0 :m18 :idle)))))
 
-;; Ichigo v2 (docs/DUEL_ICHIGO.md "v2: built"): the cross copies, the stance and its branches (every one combos after a K
+;; Ichigo v2 (docs/duel/DUEL_ICHIGO.md "v2: built"): the cross copies, the stance and its branches (every one combos after a K
 ;; link), KESSA's cuts, the clones (their timing, the Konpaku table, their fate), the parry's own window (GOKUI GAESHI's
 ;; unchanged), the counter, the afterimages, the pull, the Kikon counts and cinematics, the removed tools
 (let* ((b (kit :ichigo :base)) (ks (kit :ichigo :kessa)) (parry (kit-move ks :ic-k-parry)) (gaeshi (kit-move ks :ic-k-gaeshi))
@@ -1367,7 +1367,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
   ;; the CPU: the awakening after 150 taken; KESSA guards (0.4) and parries / sends the clones by its :reflex
   (check (and (equal (getf (kit-ai b) :awaken) '(:min-taken 150)) (eq 'ichigo-ai-kessa (getf (kit-ai ks) :reflex))
               (~= 0.4 (getf (kit-ai ks) :guard)) (equal (kit-form-name ks) "KESSA") (member :kessa (kit-hide b)) (member :shikai (kit-hide ks)))))
-;; ================================================================ ENDLESS (docs/DUEL_ENDLESS.md, endless-rules.lisp)
+;; ================================================================ ENDLESS (docs/duel/DUEL_ENDLESS.md, endless-rules.lisp)
 (defun snap (c f &rest kv)
   (append kv (list :character c :form f :konpaku 5 :reiatsu 123.5 :fs 42.25 :awaken 37.0 :awakened (kit-awakening (kit c f))
                    :meter 55.0)))
@@ -1438,7 +1438,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
             (not (endless-better-p 3 500 3 500)) (not (endless-better-p 3 600 3 500)) (endless-better-p 1 999 0 0)
             (not (endless-better-p 0 10 0 0))))
 
-;;; ================================================================ Senjumaru (docs/DUEL_SENJUMARU.md §10's host tests)
+;;; ================================================================ Senjumaru (docs/duel/DUEL_SENJUMARU.md §10's host tests)
 (let ((b (kit :senjumaru :base)) (t1 (kit :senjumaru :tsuji1)) (t6 (kit :senjumaru :tsuji6)))
   ;; the stitches: a hit sews 2, any other contact 1, a parry nothing, capped at 6; 179 idle frames keep them, the 180th
   ;; drops one, then one per 30; a lock pauses the clock
@@ -1626,7 +1626,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 (check (every (lambda (cf) (or (eq (first cf) :senjumaru) (null (kit-hook (apply #'kit cf) :siphon)))) *forms*))
 
 ;; The reach matches the art (the user's playtests, 2026-09-29: first Senjumaru's, DUEL_SENJUMARU.md "Playtest: reach
-;; matches the art"; then every character's J / K, docs/DUEL_STRINGS.md §13): at a J / K link's hit frames what it strikes
+;; matches the art"; then every character's J / K, docs/duel/DUEL_STRINGS.md §13): at a J / K link's hit frames what it strikes
 ;; with reaches the volume's far edge, where his hurt cylinder's near side may stand (an arc's r, a capsule's b + r): the
 ;; held weapon's tip (the rig's FK over the art files' own poses and bodies; radial for an arc, ahead for a capsule), the
 ;; fist / foot / sleeve of a strike that isn't the blade (*STRIKERS*), or Senjumaru's K prop's far end (*SJ-STRIKE-REACH*).
@@ -1696,7 +1696,7 @@ along the left forearm, so the fist leads).")
                                          (or (member cf *reach-one-sided* :test #'equal) (member (mv-kind mv) '(:flash :breaker)))))))
                        (format t "~a ~a: the volume ends ~,2f m, the art ~,2f m~%" (second cf) (mv-name mv) edge art)))))))))
 
-;; J is short, K long (the user, 2026-09-29, docs/DUEL_STRINGS.md §13): in every form every K link reaches at least 0.5 m further
+;; J is short, K long (the user, 2026-09-29, docs/duel/DUEL_STRINGS.md §13): in every form every K link reaches at least 0.5 m further
 ;; than any J link at the same position of the string; 片腕's short K against the J floor (2026-10-06) excepted
 (dolist (cf (remove '(:kenpachi :kataude) *forms* :test #'equal))
   (let ((lm (link-moves (apply #'kit cf))))

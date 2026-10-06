@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""style-4-shots.py — the phase-4 still set of the Storm x Kubo restyle (docs/STYLE_STORM_DESIGN.md §9 row 4, user
+"""style-4-shots.py — the phase-4 still set of the Storm x Kubo restyle (docs/style/STYLE_STORM_DESIGN.md §9 row 4, user
 review 3): every cinematic at its key beats (debug 10000 + 1000 k + f: cinematic k held at frame f, the effects frozen
 there), the brush captions close up, the gameplay brush callouts (SP names, the Bankai compass), the results screen,
 and a before / after sheet against the previous build's held cinematics (debug 2200 + k at each script's old :hold).

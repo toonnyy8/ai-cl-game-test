@@ -20,7 +20,7 @@
 (defparameter *cam-orbit-rate* 10.0 "Orbit angle and midpoint follow at this rate (1/s) ...")
 (defparameter *cam-dist-rate* 5.0 "... the distance at this one.")
 (defparameter *cam-max-r* 18.0 "The eye stays this close to the arena centre (the wall ring stands at 19 m).")
-(defparameter *cam-close* 0.6 "Both cameras' distances x this (0.6 = 40 % closer than the original framing; user request, docs/STYLE_STORM_DESIGN.md §6).")
+(defparameter *cam-close* 0.6 "Both cameras' distances x this (0.6 = 40 % closer than the original framing; user request, docs/style/STYLE_STORM_DESIGN.md §6).")
 (declaim (type f32vec *cam-anchor*))
 (defvar *cam-anchor* (fv 0 0 0) "Behind camera: P1's position, followed on a spring.")
 (defparameter *behind-back* 5.5 "Behind camera: metres behind P1 ...")
@@ -33,7 +33,7 @@
 2 m, none from 6 m). Only the look; steering keeps the sim's *BEHIND-YAW*.")
 (defparameter *behind-rate* 8.0 "The anchor follows P1 at this rate (1/s): a spring, so a Step or a Hoho glides.")
 
-;;; The PORTRAIT camera (ONE-HAND on a phone; docs/DUEL_MOBILE_DESIGN.md §4.1, P2, the user's request 2026-09-27):
+;;; The PORTRAIT camera (ONE-HAND on a phone; docs/duel/DUEL_MOBILE_DESIGN.md §4.1, P2, the user's request 2026-09-27):
 ;;; the behind camera's framing re-solved for a tall screen whose arena is only the band between the HUD's top block
 ;;; and the thumb deck (*BAND*, brush.lisp; onehand.lisp DECK-UPDATE sets it). Render-side only: *BEHIND-YAW* (sim state, it steers the
 ;;; stick) is read, never written. The eye orbits at the sim yaw plus a lead of at most *PT-LEAD* toward the true
@@ -147,7 +147,7 @@ eye: the frame's height matches the landscape one and the body may be cropped (t
 
 (defparameter *cine-keep* 0.55
   "A cinematic SHOT-ON's subject (his pelvis) stays within this fraction of the frame's half-width of its centre
-(%KEEP-SUBJECT; docs/DUEL_KEN_BANKAI.md §1.3). 1 = only keep him from leaving the frame.")
+(%KEEP-SUBJECT; docs/duel/DUEL_KEN_BANKAI.md §1.3). 1 = only keep him from leaving the frame.")
 (defparameter *pt-cine-keep* 0.3 "... on a portrait screen (a close-up there keeps its narrow lens: nearer the middle).")
 
 (defun-fast %keep-subject (aspect)

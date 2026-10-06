@@ -1,5 +1,5 @@
 ;;;; sounds.lisp — SOUL DUEL's sound bank (design §11): every SFX and the two music loops, described
-;;;; with the engine's synthesis toolkit (engine/lisp/audio.lisp, docs/AUDIO.md) and rendered once at
+;;;; with the engine's synthesis toolkit (engine/lisp/audio.lisp, docs/engine/AUDIO.md) and rendered once at
 ;;;; startup, one sound per loading step, in this order. No samples, no voices. SFX ≤ 1.5 s.
 ;;;;
 ;;;; Keys (play with PLAY-SFX / PLAY-SFX-AT; loops with START-LOOP; music with MUSIC-PLAY):
@@ -325,7 +325,7 @@
           do (au-ping! b at f 0.18 0.5 :attack 0.02))
     (au-reverb! b 0.45 :size 1.4)))
 
-;;; ---------------------------------------------------------------- Rukia's ice (docs/DUEL_RUKIA.md §10)
+;;; ---------------------------------------------------------------- Rukia's ice (docs/duel/DUEL_RUKIA.md §10)
 (defsound :frost-tick (:peak 0.6)
   (let ((b (au-buf 0.5)))
     (au-ping! b 0.0 3520 0.08 0.7 :attack 0.001)

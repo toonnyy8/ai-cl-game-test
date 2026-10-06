@@ -1,4 +1,4 @@
-// touch.ts <- engine/lisp/touch.lisp: the one-thumb gesture recogniser (docs/DUEL_MOBILE_DESIGN.md §3.2, §15.1). Pure
+// touch.ts <- engine/lisp/touch.lisp: the one-thumb gesture recogniser (docs/duel/DUEL_MOBILE_DESIGN.md §3.2, §15.1). Pure
 // (no DOM): onehand.ts feeds it the frame's pointer events (feed), then the vpad reader takes this read's pulses (take).
 // A contact that starts in the flow pad is the gesture contact (the latest one wins); one that starts on a chip holds that
 // chip until it lifts; anything else only counts as a menu tap. Coordinates are window px; the knobs are CSS px and ms,

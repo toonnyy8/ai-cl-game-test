@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """glyph-bake.py — bake the brush glyphs SOUL DUEL needs from the Yuji Syuku font (SIL OFL 1.1) into
-duel/lisp/glyphs.lisp (docs/STYLE_STORM_DESIGN.md §4.4). Build-time only: the game loads no font file; the
+duel/lisp/glyphs.lisp (docs/style/STYLE_STORM_DESIGN.md §4.4). Build-time only: the game loads no font file; the
 output is committed. Needs fontTools and skia-pathops (a venv, e.g. `uv venv v && uv pip install --python v/bin/python
 fonttools skia-pathops`).
 

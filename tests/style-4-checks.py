@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""style-4-checks.py — the phase-4 acceptance of the Storm x Kubo restyle (docs/STYLE_STORM_DESIGN.md §9 row 4), on
+"""style-4-checks.py — the phase-4 acceptance of the Storm x Kubo restyle (docs/style/STYLE_STORM_DESIGN.md §9 row 4), on
 the scripts and on the stills of tests/style-4-shots.py:
 
   script  every Kikon cinematic (yama-kikon, yama-tenchi, ken-kikon, ken-sky-split) has beat 0 (hold-both + a negative

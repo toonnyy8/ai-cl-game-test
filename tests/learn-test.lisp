@@ -1,4 +1,4 @@
-;;;; learn-test.lisp — checks the learning CPU's pure part (duel/lisp/learn.lisp, docs/DUEL_LEARNING.md) on the host:
+;;;; learn-test.lisp — checks the learning CPU's pure part (duel/lisp/learn.lisp, docs/duel/DUEL_LEARNING.md) on the host:
 ;;;;   $ECL_HOST --norc --load tests/learn-test.lisp
 ;;;; n-gram counting and backoff, decay, prediction and its counter, the situations and action classes, the EXP3
 ;;;; update, p_exploit's clamp, the form, the own random stream and the storage round-trip.

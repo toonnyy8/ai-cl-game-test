@@ -1,4 +1,4 @@
-// assist.ts <- duel/lisp/assist.lisp: ASSIST (the user, 2026-10-01; docs/DUEL_ASSIST.md), the SETTINGS rows AUTO GUARD /
+// assist.ts <- duel/lisp/assist.lisp: ASSIST (the user, 2026-10-01; docs/duel/DUEL_ASSIST.md), the SETTINGS rows AUTO GUARD /
 // AUTO COMBO / AUTO BREAK. A layer on a human's vpad, after the devices and the CPUs (brainSystem), before fighterSystem
 // reads it: the player gives the intent (U held, J pressed), the CPU's own rules pick the move and press its buttons
 // (aiCommand on a borrowed brain). A move it pressed is assisted (Fighter.assistNext, taken by startMove / startHoho):

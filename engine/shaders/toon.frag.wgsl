@@ -1,4 +1,4 @@
-// toon.frag.wgsl — fs_toon: two-tone cel shading of the toon draws (docs/STYLE_STORM_DESIGN.md §2.2).
+// toon.frag.wgsl — fs_toon: two-tone cel shading of the toon draws (docs/style/STYLE_STORM_DESIGN.md §2.2).
 // The lit tone is the palette colour exactly (no exposure, no ACES); the shadow tone is designed per
 // colour (SHADE_OF in toon.vert.wgsl: faces are flat-coloured, so it is computed per vertex).
 // Characters (Draw.toon.x 2) use the camera-space key light F.key and a CC2-style vertical gradient

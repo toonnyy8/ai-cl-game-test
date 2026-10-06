@@ -1,6 +1,6 @@
 // gate.ts: the seed gate (tools/simgate.py's job for the Babylon sim): CPU vs CPU NORMAL per pairing over N seeds, run in
 // parallel child processes; per pairing: K.O. count, P1 / P2 wins, median seconds, and the Lisp reference median
-// (docs/DUEL_AI_V2.md "Gates (final)").
+// (docs/duel/DUEL_AI_V2.md "Gates (final)").
 // usage: npx tsx tools/gate.ts --pairs yy,yk,kk --seeds 20 [--start 1] [--workers 12] [--ai stub]
 import { runSeed } from './headless';
 

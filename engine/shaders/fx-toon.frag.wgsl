@@ -1,4 +1,4 @@
-// fx-toon.frag.wgsl — fs_fx_toon: drawn effect shapes, one hard layer each (docs/STYLE_STORM_DESIGN.md §3.2-§3.5).
+// fx-toon.frag.wgsl — fs_fx_toon: drawn effect shapes, one hard layer each (docs/style/STYLE_STORM_DESIGN.md §3.2-§3.5).
 // A vertex carries uv (shape-local: |uv| 0 at the centre / spine .. 1 at the edge), heat, seed, wobble
 // and pk = palette + presence k (0.01..0.98; the silhouette is the field's level set d = k, so k < 1
 // erodes the shape). Flags: seed < 0 = an "along" shape (ribbon: the along coordinate is the heat, the

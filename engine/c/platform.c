@@ -13,7 +13,7 @@ static unsigned char pf_pb[PF_NPAD][PF_NBTN], pf_pprev[PF_NPAD][PF_NBTN];
 static float pf_axes[PF_NPAD][6];   /* lx ly rx ry lt rt; pad 0's are also copied into f[3..8] */
 static int pf_w = 1, pf_h = 1, pf_flost = 0;
 static Uint64 pf_tprev, pf_t0;
-/* Touch (docs/DUEL_MOBILE_DESIGN.md G1): this frame's finger events, in order, for the Lisp recogniser
+/* Touch (docs/duel/DUEL_MOBILE_DESIGN.md G1): this frame's finger events, in order, for the Lisp recogniser
    (engine/lisp/touch.lisp). SDL finger ids map to small slots 0..PF_NFING-1 while the finger is down;
    an UP or CANCELED frees the slot, so a later CANCELED for the same id (SDL sends one on the
    pointerleave after every touch pointerup) finds no slot and is dropped: CANCELED is idempotent.

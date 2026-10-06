@@ -93,7 +93,7 @@
    #:fx-clear-orbs #:fx-clear #:fx-ring #:fx-rings-update #:*debris-life* #:fx-debris #:fx-debris-update #:fx-clear-debris
    #:+trail-n+ #:make-trail #:trail-count #:trail-push #:trail-decay #:edge-vignette
    #:draw-circle #:draw-vol #:fx-ribbon #:fx-sector
-   ;; fx.lisp, toon effects (docs/STYLE_STORM_DESIGN.md §3): fx clock, palettes, envelope, shapes, toon
+   ;; fx.lisp, toon effects (docs/style/STYLE_STORM_DESIGN.md §3): fx clock, palettes, envelope, shapes, toon
    ;; particle kinds, screen punctuation
    #:fx-clock #:fx-clock-advance #:sage #:toon-a #:fx-envelope #:fx-disc #:fx-star #:fx-shard #:fx-crescent #:fx-wall
    #:+pal-fire+ #:+pal-ember+ #:+pal-reiatsu+ #:+pal-ink+ #:+pal-steel+ #:+pal-hit+ #:+pal-smoke+ #:+pal-dust+

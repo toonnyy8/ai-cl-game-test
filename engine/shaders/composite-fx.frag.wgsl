@@ -1,5 +1,5 @@
 // composite-fx.frag.wgsl — RP_COMP_FX: composite.frag.wgsl's image (scene + bloom + vignette + desaturate +
-// split, P[0] = its lane) followed by a screen punctuation mode (docs/STYLE_STORM_DESIGN.md §3.6), chosen by
+// split, P[0] = its lane) followed by a screen punctuation mode (docs/style/STYLE_STORM_DESIGN.md §3.6), chosen by
 // r_frame only while *GRADE-IMPACT* is not 0 (RP_COMP stays untouched for every other frame):
 //   P[1] = mode, luma threshold, keep-saturation, keep-hue (degrees); P[2].rgb = ink, P[2].w = keep-hue-2;
 //   P[3].rgb = paper

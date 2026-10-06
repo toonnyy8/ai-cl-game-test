@@ -249,7 +249,7 @@ evidence (§18: cross pairings and G2 bit-identical, only mirrors moved).
 - **A counter the opponent can see is not a counter.** Predicted-guard → Breaker read lost (404 Breakers, J'd/Hoho'd
   on sight) → removed from the assist read (DUEL_ASSIST).
 
-### Learning CPU (docs/DUEL_LEARNING.md, duel/lisp/learn.lisp)
+### Learning CPU (docs/duel/DUEL_LEARNING.md, duel/lisp/learn.lisp)
 - Player model: per situation (9: wake, knock, blocked..., close/mid/far) order-1 n-gram backed off to order 0
   (K = 2), decay 0.97/observation, act only when n0 ≥ 1.5 and p ≥ 0.4. Counters from the RPS loop (guard→I, J→guard,
   K/I→J, Hoho→wait+punish).
@@ -264,7 +264,7 @@ evidence (§18: cross pairings and G2 bit-identical, only mirrors moved).
 - Persistence: compact integer table per CPU character in page storage, format-versioned, decoder clamps garbage
   (round trip host-tested).
 
-### Per-character AI search (docs/DUEL_AI_V2.md, tools/aieval.py, research_notes/ai-v2-drsi/)
+### Per-character AI search (docs/duel/DUEL_AI_V2.md, tools/aieval.py, docs/research/ai-v2-drsi/)
 - **Score = 0.6 strength + 0.2 masher + 0.2 signature, 0 if pacing fails** (user's choice: win rate + character colour).
   strength = HARD win share vs the other 4 CPUs both seats; masher = HARD vs `:dumb` all 5; signature = share of damage
   from non-J/K-link moves (regex `-[JK]\d` on move names); pacing = NORMAL, all K.O., 20-seed median ≤ 220 s.

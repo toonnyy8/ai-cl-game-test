@@ -1,4 +1,4 @@
-// learn.ts <- duel/lisp/learn.lisp (the learning CPU's pure part, docs/DUEL_LEARNING.md) + ai.lisp's learning-CPU section
+// learn.ts <- duel/lisp/learn.lisp (the learning CPU's pure part, docs/duel/DUEL_LEARNING.md) + ai.lisp's learning-CPU section
 // (LRN, LEARN-STEP / -PLAN / -FIRE / -PRESS / -NEUTRAL, the bandit's window, the burst bandits, the tables' storage).
 // Character-free: the tables are keyed by situations, action classes, distance bins and command keywords.
 //   player model  per SITUATION (9), counts of the human's next ACTION CLASS (10): order 0, and order 1 keyed by his

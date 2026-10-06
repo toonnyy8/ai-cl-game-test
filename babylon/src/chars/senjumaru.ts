@@ -1,4 +1,4 @@
-// senjumaru.ts <- duel/lisp/senjumaru.lisp: SHUTARA SENJUMARU (docs/DUEL_SENJUMARU.md). Her moves, her seven forms (base:
+// senjumaru.ts <- duel/lisp/senjumaru.lisp: SHUTARA SENJUMARU (docs/duel/DUEL_SENJUMARU.md). Her moves, her seven forms (base:
 // the Shikai SHIGARAMI, whose J / K / O contacts sew stitches into him and whose L pulls them out as unguardable spikes;
 // tsuji1 .. tsuji6: the Bankai's loom, L held weaves the next hank, released it unravels a zone under him), her per-fighter
 // state (the loom, the soldier, the umbrella: a fresh one per fighter, on Fighter.char), her hazards' hook, her kit hooks
@@ -23,7 +23,7 @@ const f32 = Math.fround;
 /** X^2 + Z^2 in single floats (the Lisp's (+ (expt x 2) (expt z 2)) on singles). */
 const sq32 = (x: number, z: number): number => f32(f32(x * x) + f32(z * z));
 
-// ================================================================ knobs (docs/DUEL_SENJUMARU.md §11; senjumaru.lisp's own)
+// ================================================================ knobs (docs/duel/DUEL_SENJUMARU.md §11; senjumaru.lisp's own)
 export const SJ = f32Deep({
   walkSenju: 3.6, runSenju: 8.5, walkTsuji: 3.3, runTsuji: 8.0,
   senjuMult: 1.6, senjuTaken: 0.95, tsujiMult: 1.55, tsujiTaken: 1.0,

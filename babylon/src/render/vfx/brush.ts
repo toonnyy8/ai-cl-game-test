@@ -1,4 +1,4 @@
-// brush.ts: the shared brush kit of the ink VFX and the ink HUD (docs/BABYLON_LOOK.md B4). Textures are painted on canvases
+// brush.ts: the shared brush kit of the ink VFX and the ink HUD (docs/babylon/BABYLON_LOOK.md B4). Textures are painted on canvases
 // (no image assets) as BLACK INK + a WHITE "colour channel": a material or a particle multiplies the white by its tint,
 // the ink stays ink. Sheets hold N cells side by side; animation is stepped (a drawn look): every sheet shows cell
 // floor(t * 12) mod N, one global clock. Brush type is the Lisp's: glyphs.ts (Yuji Syuku outlines) filled on a canvas.

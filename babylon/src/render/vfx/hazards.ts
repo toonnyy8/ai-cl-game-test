@@ -1,4 +1,4 @@
-// hazards.ts: every hazard's look in ink (docs/BABYLON_PORT.md "M5 look": effects in ink brush, few colours). A hazard
+// hazards.ts: every hazard's look in ink (docs/babylon/BABYLON_PORT.md "M5 look": effects in ink brush, few colours). A hazard
 // maps (by kind / look name, LOOKS below) to an archetype: a painted 4-cell sheet (ink + a white channel tinted per
 // character) on a small batch of quads built for that hazard (one mesh, one draw each), stepped at 12 fps. Spent
 // hazards linger a few frames (their sim life is often 2 steps: binds, the maiden, rifts). Look-only: never reads back.

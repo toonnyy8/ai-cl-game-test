@@ -15,7 +15,7 @@
                             (:lower-arm-r 0.95 1.1 0.95) (:lower-arm-l 0.95 1.1 0.95)
                             (:hand-r 1.2 1.25 1.2) (:hand-l 1.2 1.25 1.2)
                             (:thigh-r 0.95 1.1 0.95) (:thigh-l 0.95 1.1 0.95) (:shin-r 0.95 1.1 0.95) (:shin-l 0.95 1.1 0.95))
-                    ;; v4 notan palette (docs/STYLE_STORM_DESIGN.md §2.5): black robe and solid black hair,
+                    ;; v4 notan palette (docs/style/STYLE_STORM_DESIGN.md §2.5): black robe and solid black hair,
                     ;; the tattered haori V4 white, muted skin
                     :palette ((:skin #xCFA48C) (:skin-d #xB08C78) (:black #x16161E) (:white #xE8E8E4)
                               (:hair #x0C0C12) (:scar #x5A3430) (:teeth #xECECE8)
@@ -147,7 +147,7 @@
   (:foot-r (:bevel 0.09 0.06 0.23 0.02 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.25 :at (0 -0.055 0.06) :c :sole))
   (:foot-l (:bevel 0.09 0.06 0.23 0.02 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.25 :at (0 -0.055 0.06) :c :sole)))
 
-;; the Bankai's oni (docs/DUEL_KEN_BANKAI.md §12, the user's decisions 2026-09-28: 片腕 stays the oni): the same body, the
+;; the Bankai's oni (docs/duel/DUEL_KEN_BANKAI.md §12, the user's decisions 2026-09-28: 片腕 stays the oni): the same body, the
 ;; skin a MUTED crimson (S <= 0.45: not a spot colour), two short horns at the hairline, the pupils white (irisless), four
 ;; thin BLOOD cracks on the right forearm (:crack-1 .. :crack-4, one shown per spent pip) and the torn forearm of 片腕
 ;; (:arm-wreck: skin shards, raw strips, ink splits)
@@ -269,7 +269,7 @@
   (:a (:root :yaw 386 :u -0.12 :f 0.38) (:chest :twist 36))                         ; overshoot
   (22 (:root :yaw 374 :u -0.1 :f 0.36) (:chest :twist 32))
   (:end :ke-stance (:root :yaw 360)))
-;; J3 KENKA-GERI (docs/DUEL_STRINGS.md §3.3): no school: the rear knee chambered and held, a flat front kick to the gut,
+;; J3 KENKA-GERI (docs/duel/DUEL_STRINGS.md §3.3): no school: the rear knee chambered and held, a flat front kick to the gut,
 ;; leaning back, the sword thrown out wide the other way
 (defstrike :ke-kick (8 3 18 :base :ke-stance)          ; J3 KENKA-GERI: the street fighter's front kick
   (0)
@@ -512,7 +512,7 @@
   (46 (:root :u -0.08 :f 0.2) (:spine :flex 10) (:head :flex -8) (:thigh-l :flex 35) (:knee-l :flex 35) (:thigh-r :flex -12)
       (:knee-r :flex 25) (:arm-r :flex 55 :side -10 :twist -3) (:elbow-r :flex 95) (:hand-r :flex -67 :twist 10) (:arm-l :flex 32 :side -52 :twist 55) (:elbow-l :flex 39))
   (:end :ke-r-stance))
-;; J2 KOTE (docs/DUEL_STRINGS.md §3.4): the only small motion in the set: a short lift from jodan, the wrists snap the
+;; J2 KOTE (docs/duel/DUEL_STRINGS.md §3.4): the only small motion in the set: a short lift from jodan, the wrists snap the
 ;; cleaver down to forearm height, a half step in
 (defstrike :ke-r-kote (9 3 13 :base :ke-r-stance)      ; J2 KOTE: the small wrist snap
   (0)
@@ -583,7 +583,7 @@
   (1.0 (:chest :twist 88))
   (1.5 :ke-n-stance))
 
-;;; ---------------------------------------------------------------- the Bankai (docs/DUEL_KEN_BANKAI.md §12): the oni
+;;; ---------------------------------------------------------------- the Bankai (docs/duel/DUEL_KEN_BANKAI.md §12): the oni
 ;; The feral pass (the user's request 2026-09-28, 「更野性」): a beast, not a swordsman. A deep forward-leaning crouch on
 ;; bent, splayed legs, the back rounded and the shoulders hunched over it, the head low and thrust forward, the eyes up;
 ;; the arms hang loose and wide, the left hand a claw, the broken cleaver dragged low behind him in the right. His strikes
@@ -658,7 +658,7 @@ flex and the spine / head flex shifted by these."
   (:a (:chest :twist -60) (:root :f 0.56))                                                           ; overshoot, held
   (20 (:chest :twist -52) (:root :f 0.5 :u -0.24) (:arm-l :flex 80) (:elbow-l :flex 34) (:spine :flex 36))
   (:end :ke-b-stance))
-;; J3 GENKOTSU alone (the J cut, docs/DUEL_STRINGS.md §13): the same hook thrown from where he stands, close (SP2's punch
+;; J3 GENKOTSU alone (the J cut, docs/duel/DUEL_STRINGS.md §13): the same hook thrown from where he stands, close (SP2's punch
 ;; keeps the long spring above)
 (defstrike :ke-b-hook (9 3 18 :base :ke-b-stance)
   (0)

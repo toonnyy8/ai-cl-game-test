@@ -84,7 +84,7 @@ export const T = {
   blockPushback: 0.6,
   /** A move that touched nothing recovers R + this (a J / K link: the two below). */
   whiffExtra: 6,
-  /** A J link (a :quick move) that touched nothing recovers R + this, a single swing with no string after it (docs/DUEL_STRINGS.md §2.2, the user ... */
+  /** A J link (a :quick move) that touched nothing recovers R + this, a single swing with no string after it (docs/duel/DUEL_STRINGS.md §2.2, the user ... */
   whiffExtraJ: 8,
   /** ... and a K link (a :flash move) R + this. */
   whiffExtraK: 12,
@@ -94,7 +94,7 @@ export const T = {
   chainLead: 3,
   /** The guard cancel (the user, 2026-10-01): a move whose own hit landed may end in a guard (Guard held) once only this share of its recovery is ... */
   guardCancel: 0.5,
-  /** ASSIST (the user, 2026-10-01; docs/DUEL_ASSIST.md): a move the assist pressed deals this x its damage (its Hoho is never perfect): playing i ... */
+  /** ASSIST (the user, 2026-10-01; docs/duel/DUEL_ASSIST.md): a move the assist pressed deals this x its damage (its Hoho is never perfect): playing i ... */
   assistMult: 0.8,
   /** Frames the AUTO tag shows over a fighter after the assist pressed for him. */
   assistTagFrames: 45,
@@ -128,7 +128,7 @@ export const T = {
   breakerSpeedMin: 9.0,
   /** ... rising to this at *breaker-dash-max*. */
   breakerSpeedMax: 10.0,
-  /** The strike starts when the opponent is within this range (centre to centre; 2.2 until the user's 2026-09-29 rule 防 > J > I > 防, docs/DUEL_ST ... */
+  /** The strike starts when the opponent is within this range (centre to centre; 2.2 until the user's 2026-09-29 rule 防 > J > I > 防, docs/duel/DUEL_ST ... */
   breakerTrigger: 0.95,
   /** Strike startup (the aura brightens over it: the 'hit it now' tell). */
   breakerStartup: 8,
@@ -264,7 +264,7 @@ export const T = {
   airSlideFrames: 20,
   /** Airborne fighters fall at this (m/s^2). */
   gravity: 22.0,
-  /** A lunging move (:slide) stops moving this close to the opponent (1.3 until the J cut of 2026-09-29, docs/DUEL_STRINGS.md §13: a J reaches ~1 ... */
+  /** A lunging move (:slide) stops moving this close to the opponent (1.3 until the J cut of 2026-09-29, docs/duel/DUEL_STRINGS.md §13: a J reaches ~1 ... */
   lungeStop: 0.95,
   /** A follow-up link closes in at most this fast (m/s; the Kikon dash's speed) ... */
   chaseMax: 18.0,
@@ -348,7 +348,7 @@ export const T = {
   ryoteMult: 1.15,
   /** Damage x in the third cup, NOMIHOSE. */
   nomihoseMult: 1.2,
-  /** Damage x Bankai East takes (the defender's :taken): the extreme stance. The Bankai rework (the user's spec 2026-09-27, docs/DUEL_YAMA_REWORK ... */
+  /** Damage x Bankai East takes (the defender's :taken): the extreme stance. The Bankai rework (the user's spec 2026-09-27, docs/duel/DUEL_YAMA_REWORK ... */
   bankaiTaken: 1.5,
   /** Bankai East's guard gauge refills at this x of everyone's rate (the user 2026-09-30, 「大幅降低山本『東 旭日刃』時的 防禦量表恢復速度」: x0.5, then 「破防後恢復速度不變，但東的恢復 ... */
   eastGgRegen: 0.25,
@@ -570,7 +570,7 @@ export const T = {
   aiStringFlashP: 0.3,
   /** The O ender (a completed string: a link-3 hit) on an opponent who isn't red, per string: a kit's :o-ender, else this (on a red one always).  ... */
   aiOEnder: 0.15,
-  /** The CPU's L after a K link that hit, per hit (a kit's :ai :l-after-k; Rukia's Shikai, docs/DUEL_STRINGS.md §12). A pacing knob of the seed g ... */
+  /** The CPU's L after a K link that hit, per hit (a kit's :ai :l-after-k; Rukia's Shikai, docs/duel/DUEL_STRINGS.md §12). A pacing knob of the seed g ... */
   aiRuLAfterK: 0.05,
   /** The same in her awakened bands (the awaken A/B's knob: debug 73000+k sets it to k / 100). */
   aiRuLAfterKAwake: 0.1,
@@ -604,7 +604,7 @@ export const T = {
   aiAntiBreakerRange: 5.0,
   /** ... this range, else a sideways Step (a Kikon rush). */
   aiAntiBreakerQ: 1.8,
-  /** A Breaker's dash: J1 once it is within J1's reach + this (J beats I, docs/DUEL_STRINGS.md §14: the dash covers ~1.2-1.5 m in J1's startup, s ... */
+  /** A Breaker's dash: J1 once it is within J1's reach + this (J beats I, docs/duel/DUEL_STRINGS.md §14: the dash covers ~1.2-1.5 m in J1's startup, s ... */
   aiAntiBreakerJ: 1.4,
   /** Chance of a kit :react answer (Kenpachi's stance) to what triggers it. */
   aiReactP: 0.7,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""endless-sheet.py — the ENDLESS contact sheet (docs/DUEL_ENDLESS.md): the stills of duel-endless.json (landscape, top
+"""endless-sheet.py — the ENDLESS contact sheet (docs/duel/DUEL_ENDLESS.md): the stills of duel-endless.json (landscape, top
 row) and duel-endless-portrait.json (portrait, bottom row) under their names.
   python3 tests/endless-sheet.py [OUT.png]      (default tests/shots/duel-endless-sheet.png)"""
 import os, sys

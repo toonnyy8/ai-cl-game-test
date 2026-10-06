@@ -1,4 +1,4 @@
-;;;; endless.lisp — ENDLESS 無限連戰 (docs/DUEL_ENDLESS.md): one human P1 against a gauntlet of CPU stages, the carry-over
+;;;; endless.lisp — ENDLESS 無限連戰 (docs/duel/DUEL_ENDLESS.md): one human P1 against a gauntlet of CPU stages, the carry-over
 ;;;; between them, the record per character. The rules (the ramp, the opponent bag, the carry, the record comparison) are
 ;;;; endless-rules.lisp; this file is the run, its screens (STAGE CLEAR, the run's RESULTS, the STAGE tag), the record on
 ;;;; the page (duel/web/pwa.js, page get / set 30 + 2i = stages, 31 + 2i = seconds of roster index i) and the debug

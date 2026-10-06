@@ -1,4 +1,4 @@
-;;;; onehand.lisp — 片手 ONE-HAND, the portrait one-thumb mode (docs/DUEL_MOBILE_DESIGN.md, P0 + the PWA shell).
+;;;; onehand.lisp — 片手 ONE-HAND, the portrait one-thumb mode (docs/duel/DUEL_MOBILE_DESIGN.md, P0 + the PWA shell).
 ;;;; The engine's recogniser (engine/lisp/touch.lisp) turns the thumb into gestures; this file lays out the
 ;;;; flow pad and the chips, maps gestures to P1's vpad buttons (TOUCH-BUTTON, read through the (:touch ...)
 ;;;; bindings of control.lisp: fighters, rules and the AI never see touch), draws the deck, and talks to the

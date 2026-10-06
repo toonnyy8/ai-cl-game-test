@@ -33,13 +33,13 @@
   (flash 0f0 :type single-float)        ; real seconds of hit flash left
   (super 0f0 :type single-float)        ; real seconds of the SP rim-light "super flash" left
   (alpha 1f0 :type single-float)        ; < 1 = vanishing (Hoho): the body is not drawn (its afterimage is)
-  ;; drawn motion (docs/STYLE_STORM_DESIGN.md §2.6; effect seconds, cosmetic: the sim never reads them)
+  ;; drawn motion (docs/style/STYLE_STORM_DESIGN.md §2.6; effect seconds, cosmetic: the sim never reads them)
   (hold 0f0 :type single-float)         ; > 0: the pose is held (ANIM-EVAL skipped), e.g. an attacker on a heavy hit
   (smear 0f0 :type single-float)        ; > 0: the squash / stretch smear drawing (1 frame)
   (smear-dir (make-f32 2) :type f32vec) ; its direction on the ground (x z, unit)
   (ghost (make-f32 (* +nj+ 16)) :type f32vec)   ; the Hoho afterimage: the joints at the vanish
   (ghost-age -1f0 :type single-float)   ; effect seconds since the vanish (< 0 = none)
-  ;; Phase 5 looks (docs/STYLE_STORM_DESIGN.md §2.5 faces, §4; cosmetic)
+  ;; Phase 5 looks (docs/style/STYLE_STORM_DESIGN.md §2.5 faces, §4; cosmetic)
   (face :neutral)                       ; a held expression (:neutral :shout :hurt) while FACE-T > 0 (else chosen by state)
   (face-t 0f0 :type single-float)       ; effect seconds the held FACE lasts
   (beat 0f0 :type single-float)         ; effect seconds left of the head-thrown-back overlay (cup 3's entry: the grin)

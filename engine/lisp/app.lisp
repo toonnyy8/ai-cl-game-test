@@ -13,7 +13,7 @@
 ;;;; so meshgen / synthesis temporaries never pile up, and the page's loading bar advances.
 ;;;; A frame: PLATFORM-POLL → BEGIN-FRAME → queued debug commands → :FRAME → END-FRAME.
 ;;;; Errors are caught here and shown on the page; the main loop then stops. (Keep HANDLER-CASE rare:
-;;;; each one is a setjmp, see docs/ARCHITECTURE.md. The others guard audio startup in audio.lisp.)
+;;;; each one is a setjmp, see docs/engine/ARCHITECTURE.md. The others guard audio startup in audio.lisp.)
 (in-package :engine)
 
 (defstruct app

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""simgate.py — SOUL DUEL's seed gate on the host, no browser (docs/DUEL_GAMEPLAY.md "Pacing gate").
+"""simgate.py — SOUL DUEL's seed gate on the host, no browser (docs/duel/DUEL_GAMEPLAY.md "Pacing gate").
 
 The duel's Lisp (engine + duel MANIFESTs, unchanged) is compiled natively by the 32-bit host ECL with a headless C layer
 (tools/simgate/build.lisp, stubs.c); each process runs the page's real frame loop with the gate's debug commands, one

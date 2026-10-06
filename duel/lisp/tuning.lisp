@@ -76,7 +76,7 @@ again, so he can guard it (not red), Step or Hoho out (KIKON-FOLLOW-WAIT).")
 (defparameter *whiff-extra* 6 "A move that touched nothing recovers R + this (a J / K link: the two below).")
 (defparameter *whiff-extra-j* 8
   "A J link (a :quick move) that touched nothing recovers R + this, a single swing with no string after it
-(docs/DUEL_STRINGS.md §2.2, the user's decision 2026-09-27) ...")
+(docs/duel/DUEL_STRINGS.md §2.2, the user's decision 2026-09-27) ...")
 (defparameter *whiff-extra-k* 12 "... and a K link (a :flash move) R + this.")
 (defparameter *hazard-blockstun* 14
   "Blockstun of a blocked hazard hit (fire wave, Shiranui, pillars): a projectile has no
@@ -84,13 +84,13 @@ attacker recovery to measure advantage against, so it is a fixed stun.")
 (defparameter *chain-lead* 3
   "On block a string's next link starts this many frames before the current link's recovery ends. With a -2 link
 this leaves S_eff(next) - 2 frames of gap (J2 after J1: 5-7 f): Step / Hoho fit, J1 doesn't; a K link leaves >= 11 f,
-so any J1 interrupts it (docs/DUEL_STRINGS.md §2.1). On hit the chain opens at the end of the active frames
+so any J1 interrupts it (docs/duel/DUEL_STRINGS.md §2.1). On hit the chain opens at the end of the active frames
 instead (true combos); on a whiff never (the contact gate, §2.2).")
 (defparameter *guard-cancel* 0.5
   "The guard cancel (the user, 2026-10-01): a move whose own hit landed may end in a guard (Guard held) once only this
 share of its recovery is left, so a hit doesn't leave its owner open (GUARD-CANCEL-OPEN-P).")
 (defparameter *assist-mult* 0.8
-  "ASSIST (the user, 2026-10-01; docs/DUEL_ASSIST.md): a move the assist pressed deals this x its damage (its Hoho is never
+  "ASSIST (the user, 2026-10-01; docs/duel/DUEL_ASSIST.md): a move the assist pressed deals this x its damage (its Hoho is never
 perfect): playing it by hand still pays.")
 (defparameter *assist-tag-frames* 45 "Frames the AUTO tag shows over a fighter after the assist pressed for him.")
 (defparameter *ender-push* 0.05
@@ -123,7 +123,7 @@ lock still holds him through a string's links (GUARD-LOCKED-P): it counts once t
 (defparameter *breaker-speed-max* 10.0 "... rising to this at *breaker-dash-max*.")
 (defparameter *breaker-trigger* 1.6
   "The strike starts when the opponent is within this range (centre to centre; 2.2 until the user's 2026-09-29 rule 防 > J >
-I > 防, docs/DUEL_STRINGS.md §14: the grab only from up close; 0.95 until the J floor, 2026-10-06, moved out with the reach).")
+I > 防, docs/duel/DUEL_STRINGS.md §14: the grab only from up close; 0.95 until the J floor, 2026-10-06, moved out with the reach).")
 (defparameter *breaker-startup* 8 "Strike startup (the aura brightens over it: the 'hit it now' tell).")
 (defparameter *breaker-active* 4 "Strike active frames.")
 (defparameter *breaker-recovery* 18 "Strike recovery.")
@@ -155,7 +155,7 @@ J beats I, 防 > J > I > 防), and with the thinnest hurt radius (0.34) past the
 (defparameter *cost-sp* 1 "Bars an SP1 / SP2 costs.")
 (defparameter *cost-sp-awakened* 2 "Bars an SP2 costs in an awakened form.")
 
-;;; ---------------------------------------------------------------- KOSEI (攻勢), the aggression reward (docs/DUEL_STRINGS.md §5)
+;;; ---------------------------------------------------------------- KOSEI (攻勢), the aggression reward (docs/duel/DUEL_STRINGS.md §5)
 ;;; Every contact of the attacker's own melee hit window (hit, block, ward, DRINK, armour, absorb; not a parry, a
 ;;; hazard, a :ranged window or a Kikon) pays Reiatsu and flash-step, g x rate x m, g = the hit's guard value and
 ;;; m = 1 + *KOSEI-BONUS* x (1 - his own guard gauge / max): x1 at a full gauge ... x3 at an empty one.
@@ -233,9 +233,9 @@ then :down + :wakeup (iframes in both).")
 (defparameter *air-slide-frames* 20 "... over this many frames.")
 (defparameter *gravity* 22.0 "Airborne fighters fall at this (m/s^2).")
 (defparameter *lunge-stop* 0.95
-  "A lunging move (:slide) stops moving this close to the opponent (1.3 until the J cut of 2026-09-29, docs/DUEL_STRINGS.md
+  "A lunging move (:slide) stops moving this close to the opponent (1.3 until the J cut of 2026-09-29, docs/duel/DUEL_STRINGS.md
 §13: a J reaches ~1 m + his hurt radius, so the lunge and the chase stop inside that; above the widest pair of hurt radii, 0.9).")
-;; the string follow-up's chase (docs/DUEL_STRINGS.md §2.2, the user's decision 2026-09-28): once a link of the string
+;; the string follow-up's chase (docs/duel/DUEL_STRINGS.md §2.2, the user's decision 2026-09-28): once a link of the string
 ;; touched him, every later link closes in during its startup so its hit window reaches him (motion only: guard, Step /
 ;; Hoho / down iframes still work)
 (defparameter *chase-max* 18.0 "A follow-up link closes in at most this fast (m/s; the Kikon dash's speed) ...")
@@ -247,7 +247,7 @@ then :down + :wakeup (iframes in both).")
 (defparameter *combo-full-hits* 3 "Hits 1..this deal full damage...")
 (defparameter *combo-decay* 0.10 "... then each hit deals this much less ...")
 (defparameter *combo-floor* 0.40 "... down to this fraction.")
-;; the hidden hit-stun tolerance (docs/DUEL_DESIGN.md "Hidden hit-stun tolerance", the user 2026-09-29): every connected
+;; the hidden hit-stun tolerance (docs/duel/DUEL_DESIGN.md "Hidden hit-stun tolerance", the user 2026-09-29): every connected
 ;; hit fills the victim's hidden stun gauge; the hit that takes it past his kit's :stun-tolerance blows him away
 (defparameter *stun-weights* '(:flinch 1 :bind 1 :stagger 2 :crumple 3 :knockback 3 :launch 3 :knockdown 3 :heavy 3)
   "Stun points a connected hit adds by its written reaction (any other: 1); :heavy is the floor of an SP / Kikon-rush strike.")
@@ -271,7 +271,7 @@ a combo (critique-design 1.7: not from hit 1).")
 (defparameter *burst-push* 5.0 "Burst pushes the attacker this far (no stun; his move ends) ...")
 (defparameter *burst-push-frames* 20 "... over this many frames.")
 (defparameter *burst-hitstop* 8 "Global hitstop of a Burst.")
-;; the three burst modes (docs/DUEL_DESIGN.md "Burst modes", the user 2026-09-30): the state at the press picks WHITE /
+;; the three burst modes (docs/duel/DUEL_DESIGN.md "Burst modes", the user 2026-09-30): the state at the press picks WHITE /
 ;; BLUE / ORANGE; every one needs *FS-BURST*, spends nothing up front and drains the flash-step gauge to 0
 (defparameter *burst-drain* 18.0 "Flash-step per second a running burst drains (100 -> 0 in 5.6 s, 70 in 3.9 s).")
 (defparameter *white-reishi* 70.0 "WHITE (and the awakening's regen): Reishi regenerated per second (integer points; 12 -> 24 -> 70, the user
@@ -293,7 +293,7 @@ a combo (critique-design 1.7: not from hit 1).")
 (defparameter *nomihose-mult* 1.20 "Damage x in the third cup, NOMIHOSE.")
 (defparameter *bankai-taken* 1.5
   "Damage x Bankai East takes (the defender's :taken): the extreme stance. The Bankai rework (the user's spec
-2026-09-27, docs/DUEL_YAMA_REWORK.md): 1.2 -> 1.5, East only (West takes x1.0). Not a tuning knob: the spec's value.")
+2026-09-27, docs/duel/DUEL_YAMA_REWORK.md): 1.2 -> 1.5, East only (West takes x1.0). Not a tuning knob: the spec's value.")
 (defparameter *east-gg-regen* 0.25
   "Bankai East's guard gauge refills at this x of everyone's rate (the user 2026-09-30, 「大幅降低山本『東 旭日刃』時的
 防禦量表恢復速度」: x0.5, then 「破防後恢復速度不變，但東的恢復速度改成原本的 1/4」: 5.5 -> 1.375 / s; guardless
@@ -324,7 +324,7 @@ the seed gate (see *PIERCE-MAX*).")
 (defparameter *ennetsu-self-burn* 30 "... and it burns the caster for this (floor 1).")
 (defparameter *ennetsu-pillars* 7 "Pillars in the Ennetsu ring.")
 (defparameter *ennetsu-seconds* 0.8 "Ennetsu duration.")
-;;; Bankai stances (docs/DUEL_YAMA_REWORK.md): East / West are kit forms; U switches East -> West, an attack other
+;;; Bankai stances (docs/duel/DUEL_YAMA_REWORK.md): East / West are kit forms; U switches East -> West, an attack other
 ;;; than SP1 / L drops West back to East
 (defparameter *scorch* 15 "West (:scorch): a melee hit his parry catches burns the attacker this much (never kills; the parry also refills his
 guard gauge: the rework).")
@@ -337,7 +337,7 @@ window: the user 2026-10-01; was f4-15) ...")
 (defparameter *nozarashi-startup* 2 "Nozarashi KATATE (cup 1): extra startup frames of the inherited moves (3 before: F1->F2 was a 0 gap).")
 (defparameter *ryote-reach* 1.4 "RYOTE (cup 2): reach x of the base moves it doesn't list.")
 (defparameter *ryote-startup* 3 "RYOTE (cup 2): extra startup frames of the base moves it doesn't list.")
-;;; Nozarashi v2, NOME (呑め): the three-cup ladder (docs/DUEL_NOZARASHI_V2.md). The meter is the kit meter
+;;; Nozarashi v2, NOME (呑め): the three-cup ladder (docs/duel/DUEL_NOZARASHI_V2.md). The meter is the kit meter
 ;;; (GAUGES-METER); a rung is a kit form, changed only while he is free (combat.lisp NOME-STEP)
 (defparameter *nome-max* 100.0 "The NOME gauge.")
 (defparameter *nome-awaken* 10.0 "NOME at the awakening (cup 1).")
@@ -363,7 +363,7 @@ window: the user 2026-10-01; was f4-15) ...")
 (defparameter *stance-store-cap* 200 "... up to this.")
 (defparameter *stance-base-damage* 100 "Stance cut damage before the stored bonus.")
 (defparameter *stance-crush-at* 150 "Stored >= this: the cut crushes guard.")
-;;; Kenpachi's Bankai and 片腕 KATAUDE (docs/DUEL_KEN_BANKAI.md; the user's decisions 2026-09-28): a second awakening from
+;;; Kenpachi's Bankai and 片腕 KATAUDE (docs/duel/DUEL_KEN_BANKAI.md; the user's decisions 2026-09-28): a second awakening from
 ;;; cup 3, red, P; his own Konpaku -> 1 and his Reishi -> full on entry; the arm meter UDE (the kit meter, GAUGES-METER)
 ;;; spends a pip per heavy command; at 0 the arm bursts (then 片腕 for the rest of the match)
 (defparameter *bankai-ken-mult* 1.2 "Damage x in Kenpachi's Bankai.")
@@ -378,12 +378,12 @@ him to full (the user's decision 2026-09-28): the gate's knob.")
 (defparameter *arm-burst-self* 120 "Reishi the burst burns (the design's 60, x2 with the full refill).")
 (defparameter *arm-burst-stun* 40 "The burst's self-inflicted crumple, frames.")
 (defparameter *kataude-reach* 0.7 "片腕 KATAUDE: reach x of his sword moves (the kick, the Breaker and O as written).")
-;;; Kuchiki Rukia (docs/DUEL_RUKIA.md): frost, the one new status, and the cold gauge of 絶対零度 (the awakened bands
+;;; Kuchiki Rukia (docs/duel/DUEL_RUKIA.md): frost, the one new status, and the cold gauge of 絶対零度 (the awakened bands
 ;;; :m18 :m50 :zero; the kit meter holds the cold C, 0 .. *COLD-MAX*, two stacked bars: combat.lisp TEMP-STEP)
 (defparameter *walk-rukia* 3.8 "Rukia's walk (Shikai).")
 (defparameter *rukia-mult* 1.5
   "Damage x of the Shikai (the base kit's :mult; 58000+k at run time). The seed gate's lever: the CPU's Shikai fights the
-opponents' awakened forms for most of a match (docs/DUEL_RUKIA.md, Measurements) ...")
+opponents' awakened forms for most of a match (docs/duel/DUEL_RUKIA.md, Measurements) ...")
 (defparameter *rukia-taken* 0.8 "... and the damage it takes x this (60000+k).")
 (defparameter *rukia-awake-mult* 1.15 "Damage x at -18 C (48000+k sets zero's, the colder-never-weaker lever) ...")
 (defparameter *rukia-m50-mult* 1.5 "... at -50 C ...")
@@ -457,9 +457,9 @@ feels its own blockstun (no perception delay), so this is the only thing that de
 are the heavy ones).")
 (defparameter *ai-o-ender* 0.15
   "The O ender (a completed string: a link-3 hit) on an opponent who isn't red, per string: a kit's :o-ender, else
-this (on a red one always). A pacing knob of the seed gate (docs/DUEL_STRINGS.md §4, §6, §9: the design's 0.35 -> 0.15).")
+this (on a red one always). A pacing knob of the seed gate (docs/duel/DUEL_STRINGS.md §4, §6, §9: the design's 0.35 -> 0.15).")
 (defparameter *ai-ru-l-after-k* 0.05
-  "The CPU's L after a K link that hit, per hit (a kit's :ai :l-after-k; Rukia's Shikai, docs/DUEL_STRINGS.md §12). A
+  "The CPU's L after a K link that hit, per hit (a kit's :ai :l-after-k; Rukia's Shikai, docs/duel/DUEL_STRINGS.md §12). A
 pacing knob of the seed gate (debug 72000+k sets it to k / 100).")
 (defparameter *ai-ru-l-after-k-awake* 0.1
   "The same in her awakened bands (the awaken A/B's knob: debug 73000+k sets it to k / 100).")
@@ -474,7 +474,7 @@ pacing knob of the seed gate (debug 72000+k sets it to k / 100).")
 (defparameter *ai-sp-cancel-p* 0.3
   "A string that ends on a hit with no link left (link 3, or a link the CPU doesn't go on from) is cancelled into SP2
 with this chance, one roll (the kit's :sp-cancel-bars permitting). Link 3 staggers / crumples, so SP2 always combos
-off it (Kenpachi's flurry): a seed-gate pacing knob (docs/DUEL_STRINGS.md §9).")
+off it (Kenpachi's flurry): a seed-gate pacing knob (docs/duel/DUEL_STRINGS.md §9).")
 (defparameter *ai-block-k-p* 0.15
   "On block a string goes on with a K link only this x the kit's :block-string (a J link otherwise; never a K ender).")
 (defparameter *ai-kosei-aggression* 0.2
@@ -486,7 +486,7 @@ off it (Kenpachi's flurry): a seed-gate pacing knob (docs/DUEL_STRINGS.md §9)."
 (defparameter *ai-anti-breaker-range* 5.0 "... seen within this range: Hoho (a bar), Q1 beyond ...")
 (defparameter *ai-anti-breaker-q* 1.8 "... this range, else a sideways Step (a Kikon rush).")
 (defparameter *ai-anti-breaker-j* 1.4
-  "A Breaker's dash: J1 once it is within J1's reach + this (J beats I, docs/DUEL_STRINGS.md §14: the dash covers ~1.2-1.5 m
+  "A Breaker's dash: J1 once it is within J1's reach + this (J beats I, docs/duel/DUEL_STRINGS.md §14: the dash covers ~1.2-1.5 m
 in J1's startup, so J1's active frames meet it inside J1's reach).")
 (defparameter *ai-react-p* 0.7 "Chance of a kit :react answer (Kenpachi's stance) to what triggers it.")
 (defparameter *ai-threat-margin* 1.5 "A committed opponent move is a threat within its reach + this.")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""style-3-checks.py — the spot-colour budget of docs/STYLE_STORM_DESIGN.md §9 row 3 on the phase-3 stills
+"""style-3-checks.py — the spot-colour budget of docs/style/STYLE_STORM_DESIGN.md §9 row 3 on the phase-3 stills
 (tests/style-3-shots.py): the share of the frame (HUD rows 0-165 left out) that is spot colour (HSV S > 0.45,
 chroma > 0.25, as tools/toon_check.py), split by hue into FIRE (red-orange, 0-40 deg), REIATSU (yellow, 40-70)
 and BLOOD (330-360). Neutral stills (idle, base forms: Yamamoto's blade fire and Kenpachi's base aura) must stay

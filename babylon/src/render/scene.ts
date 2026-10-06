@@ -1,4 +1,4 @@
-// scene.ts: the M5 look (docs/BABYLON_PORT.md "M5 look": anime cel objects, ink-brush effects, screen-space outlines,
+// scene.ts: the M5 look (docs/babylon/BABYLON_PORT.md "M5 look": anime cel objects, ink-brush effects, screen-space outlines,
 // decal faces, skinned bodies). The plaza keeps duel/lisp/stage.lisp's dimensions (stone disc r 15.1 with joint rings at
 // 11.3 / 13.2, the curb to 15.6, broken whitewashed walls at r 19) in BABYLON_LOOK.md's B2 palette: a sky gradient
 // dome with one hard-edged cloud band, a warm two-tone floor, whitewashed walls with cool shadows, the key light fixed in

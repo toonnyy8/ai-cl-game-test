@@ -6,7 +6,7 @@
 ;;;; ALPHA (flame intensity), *GRADE-SPLIT*, ENV-SUN-SIZE / -GLOW, DRAW-MESH :ENV-RIM, light
 ;;;; PRIORITY, DEFCLIP :FPS / :MARKS, LIST-CLIPS / LIST-SOUNDS / FIND-CLIP NIL / ANIM-BLEND,
 ;;;; MB-XFORM, MAKE-RIG-PROPORTIONS with POSE-FK!.
-;;;; Restyle phase 1a (docs/STYLE_STORM_DESIGN.md §2): DRAW-MESH :TOON lanes (and 0 without), zero-cons
+;;;; Restyle phase 1a (docs/style/STYLE_STORM_DESIGN.md §2): DRAW-MESH :TOON lanes (and 0 without), zero-cons
 ;;;; toon draws and toon frame lanes, the camera-space key light, analytic smooth normals, the RAVEN
 ;;;; defaults of *PART-JITTER* / *PART-SMOOTH*; debug 12 = the toon look (ec-toon.png: fs_toon stage +
 ;;;; character draws, one mirrored = RP_TOON_CW, and fs_sky_toon's moon) for the WGSL smoke test.

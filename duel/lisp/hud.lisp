@@ -246,7 +246,7 @@ inside the frame, RUNG + 1 of them lit."
     nil))
 
 (defun-fast %hud-arm (x y w h pips idle right tm)
-  "Kenpachi's Bankai arm meter UDE (docs/DUEL_KEN_BANKAI.md §7) in the W x H slot at (X Y): four BLOOD claw-slash pips from
+  "Kenpachi's Bankai arm meter UDE (docs/duel/DUEL_KEN_BANKAI.md §7) in the W x H slot at (X Y): four BLOOD claw-slash pips from
 the slot's inner end (RIGHT: mirrored), PIPS of them intact; a spent pip INK with a white crack line; under the next
 pip to crack a thin line draining over the *ARM-CRACK* clock (IDLE frames of it gone), the pip flickering in its last
 60 f."
@@ -269,7 +269,7 @@ pip to crack a thin line draining over the *ARM-CRACK* clock (IDLE frames of it 
     nil))
 
 (defun-fast %hud-temp (x y w h c band cost lock crack refused right tm)
-  "Rukia's cold gauge (docs/DUEL_RUKIA.md §8) in the W x H slot at (X Y): two stacked bars overlaid in one strip (the user's
+  "Rukia's cold gauge (docs/duel/DUEL_RUKIA.md §8) in the W x H slot at (X Y): two stacked bars overlaid in one strip (the user's
 decision 2026-09-28), bar 1 (cold C 0..100) steel-ice, bar 2 (100..200) white over it. BAND 0 / 1 / 2 (-18 / -50 /
 zero): as many ice pips lit at the strip's inner end; at zero bar 2 pulses, flickering in its last tenth. COST: L's
 cold, the part of the top bar it would spend dimmed (a hollow notch at the cost when C is short of it; REFUSED 0..1
@@ -428,7 +428,7 @@ at HZ when HZ > 0."
     (%hrect x y w h 0.05f0 0.04f0 0.07f0 0.75f0)
     (%hbar x y w h fill right r g b a)))
 
-;;; ---------------------------------------------------------------- KOSEI (攻勢): the tag and the motes (docs/DUEL_STRINGS.md §5)
+;;; ---------------------------------------------------------------- KOSEI (攻勢): the tag and the motes (docs/duel/DUEL_STRINGS.md §5)
 (declaim (type f32vec *kosei-v*))
 (defvar *kosei-v* (make-f32 10) "Per side: FX-CLOCK of the last paying contact, its multiplier and its screen x y (the mote).")
 (defparameter *kosei-kanji* "攻")
@@ -633,7 +633,7 @@ bindings, CONTROLS-KEY-PROMPT)."
                        (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 2 s) (alpha! (burst-color (burst-ok-p e)) (+ 0.5 (* 0.5 (hud-pulse 4.0))))
                        :align :center))))))
 
-;;; ---------------------------------------------------------------- portrait blocks (P2, docs/DUEL_MOBILE_DESIGN.md §4.2)
+;;; ---------------------------------------------------------------- portrait blocks (P2, docs/duel/DUEL_MOBILE_DESIGN.md §4.2)
 ;;; A tall screen splits the HUD by fighter (the user's decision 2026-09-27): the opponent's (P2's) block across the top
 ;;; under the safe-area inset, the player's (P1's, the fighter near the camera) across the bottom over the home
 ;;; indicator, each full width so its bars and flames can be large. A block, in S units from its top edge: row 1 the name

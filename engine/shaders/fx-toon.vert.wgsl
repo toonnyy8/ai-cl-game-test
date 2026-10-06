@@ -1,4 +1,4 @@
-// fx-toon.vert.wgsl — the toon fx batch (docs/STYLE_STORM_DESIGN.md §3.2): vertex = position, uv,
+// fx-toon.vert.wgsl — the toon fx batch (docs/style/STYLE_STORM_DESIGN.md §3.2): vertex = position, uv,
 // (heat, seed, wobble, palette + presence). Fog is passed on: it tints the colour, never the coverage
 // (alpha-to-coverage would punch holes).
 // #include "frame.wgsl"

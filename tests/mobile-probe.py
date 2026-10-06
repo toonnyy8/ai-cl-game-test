@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""mobile-probe.py — the portrait framing / text probes (docs/DUEL_MOBILE_DESIGN.md §4.1, §7.4; P2) at the four phone
+"""mobile-probe.py — the portrait framing / text probes (docs/duel/DUEL_MOBILE_DESIGN.md §4.1, §7.4; P2) at the four phone
 sizes. Each size: a seeded CPU vs CPU (YK) watched in portrait for 45 s with the probe on (debug 2700: every 30th battle
 frame, both fighters' upper halves (heads, torsos) clear of the two HUD blocks and >= 70 % of each one's width on the screen, P2's at the top and
 P1's at the bottom; the thumb may cover their feet: the user's decision 2026-09-27), then the set shots, each checked on its own: 1 m, 2.2 m, 24 m apart (the eye pulled in by the wall), P2 flashed to P1's side (90 deg,

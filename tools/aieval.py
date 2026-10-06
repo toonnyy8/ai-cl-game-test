@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""aieval.py — one character's CPU, scored (the per-character AI redesign, the user 2026-10-02; docs/DUEL_AI_V2.md).
+"""aieval.py — one character's CPU, scored (the per-character AI redesign, the user 2026-10-02; docs/duel/DUEL_AI_V2.md).
 
 Native sim (tools/simgate.py's build of THIS checkout): character C's CPU, as its <name>.lisp now reads, against the other
 four characters' CPUs as they read in the same checkout.

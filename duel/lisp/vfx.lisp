@@ -11,14 +11,14 @@
 ;;;;                    written with WITH-FX-VERTS (0 bytes consed); a few particles top them up.
 ;;;;   one-shots        VFX-FIRE-CONE, VFX-AWAKEN-BURST, VFX-ASH-BURST, VFX-SKELETON-DUST, VFX-GARB-BLOCK, VFX-SCORCH,
 ;;;;                    VFX-GARB-FLARE, VFX-BURNOUT, VFX-NADEGIRI, VFX-RIFT-GASH: stamps and toon particles once.
-;;;;   Every look is a drawn toon shape since Phase 5 of the restyle (docs/STYLE_STORM_DESIGN.md §14): the last soft
+;;;;   Every look is a drawn toon shape since Phase 5 of the restyle (docs/style/STYLE_STORM_DESIGN.md §14): the last soft
 ;;;;   additive ones (Shiranui, the charge, Taimatsu, the Ennetsu pillars, the Jokaku dome, the Hellfire / Evolution /
 ;;;;   Breaker auras, Tenchi's ash, the rift) were redrawn; since Phase 6 the only additive shapes left are the thin T光
 ;;;;   core lines (1-2 px: the blade fire's, the embers', the fire wave's base), a layer of §3.4 by design.
 ;;;;   toon universal   VFX-HIT, VFX-HOHO, VFX-BURST, VFX-KONPAKU-SHATTER, VFX-KIKON-RUSH, VFX-STEP-DUST,
 ;;;;                    VFX-SHOCKWAVE start STAMPS (drawn one-shots, STAMPS-DRAW every frame) + toon
 ;;;;                    particles; VFX-SOUL-FLAME and the :KIKON aura are per-frame toon shapes
-;;;;                    (docs/STYLE_STORM_DESIGN.md §4.3: mono + the BLOOD spot, stepped on the fx clock).
+;;;;                    (docs/style/STYLE_STORM_DESIGN.md §4.3: mono + the BLOOD spot, stepped on the fx clock).
 ;;;;   lights           effects call ADD-POINT-LIGHT with a priority; LIGHTS-FLUSH once per
 ;;;;                    frame adds the hit flash.
 ;;;;   UI               UI-BITMAP, UI-KANJI, VFX-TENCHI-SLASH, VFX-SKY-SPLIT (screen space).
@@ -135,7 +135,7 @@ FWD-Z of it), +-HALF radians: FX-SECTOR's shape in the toon batch (uv across the
           (aref fl 3) (f32 r) (aref fl 4) (f32 g) (aref fl 5) (f32 b) (aref fl 6) (fx-clock))))
 
 ;;; ---------------------------------------------------------------- Yamamoto: blade fire / embers
-;;; Signature looks (docs/STYLE_STORM_DESIGN.md §4.1 / §4.2, Phase 3): drawn toon shapes in the layer order of §3.4 —
+;;; Signature looks (docs/style/STYLE_STORM_DESIGN.md §4.1 / §4.2, Phase 3): drawn toon shapes in the layer order of §3.4 —
 ;;; a darker backing (ember, charcoal), the drawn mass (FIRE / REIATSU / EMBER), a thin additive T光 line, and
 ;;; scraps (toon particles) flying off. Shapes are re-drawn on the fx clock's drawings (DRAWING: twos, 12 a second),
 ;;; so they hold still between drawings like the universal effects; positions the game depends on never step.
@@ -203,7 +203,7 @@ charcoal wisps. Under the Bankai grade (spot-keep, hue 10) this line is the only
                    (rnd-range -0.15f0 0.15f0) (rnd-range 0.8f0 1.4f0) (rnd-range 0.015f0 0.028f0) -0.3f0 0.1f0 pal))))))
 
 (defun-fast vfx-smear (tr sm look)
-  "The sword smear (docs/STYLE_STORM_DESIGN.md §2.6, §4.1 blade fire, §4.2 cleaves): a comet crescent through the
+  "The sword smear (docs/style/STYLE_STORM_DESIGN.md §2.6, §4.1 blade fire, §4.2 cleaves): a comet crescent through the
 blade's 0.7 point over the trail samples of the last drawing (at most 5), fat at the blade, its tail thinning and
 eroding. It is captured into SM when a new drawing (twos) starts and held for that drawing. LOOK 0 = FIRE
 (Ryujin Jakka), 1 = REIATSU (Kenpachi: a white-cored yellow comet, every form), 2 = charcoal ink wash (Zanka no
@@ -508,7 +508,7 @@ An EMBER scorch ring under the walls."
 
 ;;; ---------------------------------------------------------------- auras
 (defmacro %brush-aura (x y z h k pal n rad w white)
-  "A brush-flame aura (docs/STYLE_STORM_DESIGN.md §4.2 reiatsu, §4.3 Kikon rush): N tongues of palette PAL around
+  "A brush-flame aura (docs/style/STYLE_STORM_DESIGN.md §4.2 reiatsu, §4.3 Kikon rush): N tongues of palette PAL around
 the body at radius RAD (half-width W at the base), drawn only behind and at the sides (the ones between the camera and the body are left
 out, so the fighter stays readable inside), H tall x 0.8..1.25 with a lean, both re-drawn every drawing (twos),
 the palette's dark hairline, and when WHITE is 1 a white core line in the back ones. K = presence. PAL may carry a glass
@@ -564,7 +564,7 @@ GLASS (0..3): the tongues, cores and ring see-through, GLASS / 4 of them drawn (
 pillar 2 (the user's request 2026-09-28: it hid the view); the Bankai's red-and-black pillar (:oni, the same day): its
 BLOOD tongues 2, its taller INK tongues 3 (at 2 the black read as a grey smear). Render only.")
 
-;;; the burst modes' colours and names (docs/DUEL_DESIGN.md "Burst modes"): the HUD bar, the word, the aura
+;;; the burst modes' colours and names (docs/duel/DUEL_DESIGN.md "Burst modes"): the HUD bar, the word, the aura
 (defvar *c-burst-white* (list 0.95 0.96 1.0 1.0))
 (defvar *c-burst-blue* (list 0.4 0.66 1.0 1.0))
 (defvar *c-burst-orange* (list 1.0 0.58 0.18 1.0))
@@ -643,7 +643,7 @@ K is the presence (0..1). :heat also fades by *AURA-CAP* and when the camera is 
                    (fx-ribbon (+ x (* 0.42f0 c)) (+ y (* 0.25f0 h)) (+ z (* 0.42f0 sn)) (* lean c) hh (* lean sn) 0.15f0 0.01f0
                               1f0 sd 0.35f0 (toon-a +pal-black-smoke+ (* 0.9f0 ka)) 0.2f0 sd 0.35f0
                               (toon-a +pal-black-smoke+ (* 0.9f0 ka)) (+ f d3) 0.3f0 :segs 7 :mode :toon)))))))
-        ((:burst-white :burst-blue :burst-orange)        ; a running burst (docs/DUEL_DESIGN.md "Burst modes"): 8 brush
+        ((:burst-white :burst-blue :burst-orange)        ; a running burst (docs/duel/DUEL_DESIGN.md "Burst modes"): 8 brush
                                                          ; tongues in its colour (white HIT / BLUE / orange FIRE) with white
                                                          ; cores, a ring at the feet, flecks rising
          (let* ((kc (f-clamp k 0f0 1f0)) (dr (drawing-no))
@@ -671,7 +671,7 @@ K is the presence (0..1). :heat also fades by *AURA-CAP* and when the camera is 
            (%t-blob (+ x (rnd-range -0.35f0 0.35f0)) 0.1f0 (+ z (rnd-range -0.35f0 0.35f0)) (rnd-range -0.2f0 0.2f0)
                     (rnd-range 0.4f0 0.9f0) (rnd-range -0.2f0 0.2f0) (rnd-range 0.8f0 1.2f0) (rnd-range 0.04f0 0.07f0)
                     -0.1f0 0.2f0 +pal-ash+)))
-        (:oni                                            ; Kenpachi's Bankai (docs/DUEL_KEN_BANKAI.md §12): a vertical pillar
+        (:oni                                            ; Kenpachi's Bankai (docs/duel/DUEL_KEN_BANKAI.md §12): a vertical pillar
                                                          ; (x1.4 tall) of BLOOD tongues over taller INK tongues, BLOOD flecks
                                                          ; rising; K < 1 during his Kikon rush: a smoulder (the rush's own
                                                          ; horizontal BLOOD trail stays the tell)
@@ -955,7 +955,7 @@ One-shot."
       nil)))
 
 (defun-fast vfx-awaken-burst (x y z kind)
-  "Awakening one-shots at the feet (x y z), drawn toon (docs/STYLE_STORM_DESIGN.md §4.1 / §4.2). KIND :bankai (every
+  "Awakening one-shots at the feet (x y z), drawn toon (docs/style/STYLE_STORM_DESIGN.md §4.1 / §4.2). KIND :bankai (every
 flame within 6 m pulled into the blade: FIRE flames and EMBER shards rushing in to the hands, ~0.45 s), :bankai-burst
 (the reveal: a charcoal double ring with an ember line, charcoal puffs, ash shards: no fire), :nozarashi (the
 yellow reiatsu pillar: REIATSU flames shooting up, a flat ring), :nozarashi-half (a later cup 3's: half as tall)."
@@ -1287,7 +1287,7 @@ charcoal double ring with an ember line) and :ring (a shockwave in the palette N
                      (%tring x (+ y 0.01f0) z (* sc (+ 0.25f0 (* 4.2f0 a))) 0.025f0 +pal-ember+ k (+ seed 2f0))))
         (= ph 5)))))
 
-;;; Phase 5 stamps (docs/STYLE_STORM_DESIGN.md §4.1 / §4.2 rows done in Phase 5): Taimatsu's cone, Jokaku Enjo's
+;;; Phase 5 stamps (docs/style/STYLE_STORM_DESIGN.md §4.1 / §4.2 rows done in Phase 5): Taimatsu's cone, Jokaku Enjo's
 ;;; detonation, KUKAN-GIRI's ink gash, West's garb guard / scorch / flare / burnout, Nadegiri's cut
 (defun-fast %st-cone (o)
   "Taimatsu (:cone): X Y Z the feet, DX DZ the facing, SC the reach, N the half angle (rad). Envelope 1 3 4 30: a white

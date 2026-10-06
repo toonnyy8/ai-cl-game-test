@@ -1,4 +1,4 @@
-;;;; learn.lisp — the learning CPU's pure part (docs/DUEL_LEARNING.md; the user, 2026-09-29). Plain CL, host-tested
+;;;; learn.lisp — the learning CPU's pure part (docs/duel/DUEL_LEARNING.md; the user, 2026-09-29). Plain CL, host-tested
 ;;;; (tests/learn-test.lisp); ai.lisp feeds it what the CPU perceives and asks it what to do. Character-free: the tables
 ;;;; are keyed by situations, action classes, distance bins and command keywords, never by a name.
 ;;;;   player model  per SITUATION (9), counts of the human's next ACTION CLASS (10): order 0, and order 1 keyed by his
@@ -65,7 +65,7 @@ string ends after its second hit, then a guard: his BLUE breaks nothing), taking
 (defconstant +learn-rows+ (* +learn-ctx+ +learn-nbins+) "Bandit rows: context x distance bin.")
 
 (defstruct (ltab (:constructor make-ltab ()))
-  "One CPU character's learned tables (docs/DUEL_LEARNING.md)."
+  "One CPU character's learned tables (docs/duel/DUEL_LEARNING.md)."
   (c0 (make-array (* +learn-s+ +learn-a+) :element-type 'single-float :initial-element 0f0))
   (c1 (make-array (* +learn-s+ +learn-a+ +learn-a+) :element-type 'single-float :initial-element 0f0))
   (prev (make-array +learn-s+ :element-type 'fixnum :initial-element -1))   ; his last class per situation

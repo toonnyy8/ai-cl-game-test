@@ -6,7 +6,7 @@
 ;;;; gauges and the match timer are frozen). This file holds the duel's side of it: the director's
 ;;;; hooks (actors enter / leave the :cine state, their animations advance, the look is restored:
 ;;;; STAGE-ENV, caption, UI flash), the shot helpers on fighters (SHOT-ON, SHOT-PAIR), script helpers
-;;;; (captions, flashes, clips), the cinematic language of docs/STYLE_STORM_DESIGN.md §5 (black / white cards,
+;;;; (captions, flashes, clips), the cinematic language of docs/style/STYLE_STORM_DESIGN.md §5 (black / white cards,
 ;;;; lenses, dutch angles, silhouettes, pose holds with the effects frozen, impact frames, silence, ink splashes)
 ;;;; and the generic scripts (soul break, intro, K.O., time); the characters' scripts live in yama.lisp / ken.lisp.
 ;;;; Every look here is cosmetic: only AT events that move the actors (FACE-EACH-OTHER) touch the sim state.
@@ -25,7 +25,7 @@
 lens, no dolly-back (camera.lisp %PORTRAIT-DOLLY; the user's decision 2026-09-28).")
 (defparameter *pt-close-shot* 5.0 "Portrait: a SHOT-ON at most this many metres from its fighter is a close-up.")
 (defvar *cine-subject* nil "The fighter the current SHOT-ON frames (NIL: a SHOT-PAIR): camera.lisp %KEEP-SUBJECT keeps his
-body in the frame whatever the script's aim offsets and the clip's root motion do (docs/DUEL_KEN_BANKAI.md §1.3).")
+body in the frame whatever the script's aim offsets and the clip's root motion do (docs/duel/DUEL_KEN_BANKAI.md §1.3).")
 (defvar *caption* nil "The running cinematic's brush title (a BCAP, brush.lisp), shown until it ends (hud.lisp).")
 (defvar *caption-out* nil "The title of a cinematic that just ended, slicing out over what follows (hud.lisp; Phase 6).")
 (defvar *aura-off* nil "An actor whose form aura is not drawn (a cinematic's shots before it bursts on), or NIL (CINE-END).")
@@ -134,7 +134,7 @@ px; < 0 = the screen centre); [6] effects frozen (FREEZE); [7] the impact splash
     (:manga 3 :threshold 0.4 :keep-sat 0.45)                                ; two-tone, the spot colour kept
     (:spot 4 :keep-sat 0.45 :keep-hue 10.0 :keep-hue-2 48.0))               ; grey but the ember hue (Bankai) and
                                                                             ; Kenpachi's REIATSU yellow (user review 2)
-  "IMPACT-FRAME kinds -> GRADE-IMPACT mode and parameters (docs/STYLE_STORM_DESIGN.md §3.6 presets).")
+  "IMPACT-FRAME kinds -> GRADE-IMPACT mode and parameters (docs/style/STYLE_STORM_DESIGN.md §3.6 presets).")
 
 (defvar *impact-next* nil "(kind . frames): an impact frame to start when the running one ends (main.lisp; feedback :rung).")
 
@@ -242,7 +242,7 @@ the Burst, a cinematic's silhouette shot (§5: white in the mono world, the owne
                         (f->i (* 12f0 (fx-clock))))))))
 
 ;;; ---------------------------------------------------------------- generic scripts
-;;; The grammar of every script (docs/STYLE_STORM_DESIGN.md §5): beat 0 (the gameplay shot frozen: poses held, effects
+;;; The grammar of every script (docs/style/STYLE_STORM_DESIGN.md §5): beat 0 (the gameplay shot frozen: poses held, effects
 ;;; frozen, a 2 f negative), a wind-up (a card, a low dutch shot, the brush stamp, silence), cuts on the action (no
 ;;; orbits but one), a held beat before the impact (silence), the impact (a negative, then a manga page), the aftermath.
 (defun cine-dt () "This frame's effect seconds for a cinematic's DURING effects: 0 while the effects are frozen." (if (fx-frozen-p) 0.0 (frame-dt)))

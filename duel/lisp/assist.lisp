@@ -1,4 +1,4 @@
-;;;; assist.lisp — ASSIST (the user, 2026-10-01; docs/DUEL_ASSIST.md): the SETTINGS rows AUTO GUARD / AUTO COMBO / AUTO
+;;;; assist.lisp — ASSIST (the user, 2026-10-01; docs/duel/DUEL_ASSIST.md): the SETTINGS rows AUTO GUARD / AUTO COMBO / AUTO
 ;;;; BREAK. A layer on a human's vpad, after the devices (PILOT-SYSTEM) and the CPUs (BRAIN-SYSTEM), before FIGHTER-SYSTEM
 ;;;; reads it: the player gives the intent (U held, J pressed), the CPU's own rules pick the move and press its buttons
 ;;;; (AI-COMMAND on a borrowed brain). A move it pressed is ASSISTED (FIGHTER-ASSIST-NEXT, taken by START-MOVE / START-HOHO):

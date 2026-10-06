@@ -591,7 +591,7 @@ him away (FIGHTER-END-CHASE; the user 2026-10-02: K3 -> O whiffed), so it reache
   (if (fighter-end-chase f) (max *ender-o-speed* (rush-param mv :speed)) (rush-param mv :speed)))
 
 (defun skip-aura (e f)
-  "The O ender (docs/DUEL_STRINGS.md §2.4): the Kikon rush just started off a link-3 hit skips its aura: its strike
+  "The O ender (docs/duel/DUEL_STRINGS.md §2.4): the Kikon rush just started off a link-3 hit skips its aura: its strike
 at once within *KIKON-TRIGGER* (or a module with no dash), else its dash."
   (let ((mv (fighter-move f)))
     (if (and (not (fighter-end-chase f))                    ; (off a pushing ender: always the dash, he is sliding away)
@@ -603,11 +603,11 @@ at once within *KIKON-TRIGGER* (or a module with no dash), else its dash."
   "Chains (string follow-ups) and cancels during a move, walked in *COMMANDS* priority order (a
 refused one doesn't hide the next). A J / K press during a string link is latched (STRING-LATCH: the last allowed
 press wins, a press of the button the string switched away from is eaten) and consumed at once; the latched link
-starts when the chain opens (CHAIN-OPEN-P: once any link of the string touched him, docs/DUEL_STRINGS.md §2.2) and
+starts when the chain opens (CHAIN-OPEN-P: once any link of the string touched him, docs/duel/DUEL_STRINGS.md §2.2) and
 chases him in its startup (STRING-CHASE-SPEED). A Breaker that landed (a hit or a Guard Break) cancels into J1 / K1 (the
-string's opener, chasing him; docs/DUEL_STRINGS.md §17). O is the ender: only off a link-3 (:ender) hit, the
+string's opener, chasing him; docs/duel/DUEL_STRINGS.md §17). O is the ender: only off a link-3 (:ender) hit, the
 rush's aura skipped. L during a K link of a form with :l-after-k (a J link: :l-after-j) is latched too (KIT-L-LINK,
-docs/DUEL_STRINGS.md §12): it starts when that link's own contact opens the chain, as a follow-up (the chase), under
+docs/duel/DUEL_STRINGS.md §12): it starts when that link's own contact opens the chain, as a follow-up (the chase), under
 L's own checks (cooldown, cold, the kit's :ok with the link as COMBO; a refused one gets the cue). T when a new move /
 action started."
   (let ((kit (fighter-kit f)) (landed (fighter-contact f)) (name (mv-name mv)))

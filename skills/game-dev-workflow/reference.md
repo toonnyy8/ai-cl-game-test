@@ -16,7 +16,7 @@ unless they start with `~/.claude` (auto-memory). "G" = generalizable, "P" = pro
    - Small features: 2–3 options, then the user's pick goes in the log: DEVLOG §71 "在三個方案裡選了「J 被擋也能轉防禦」和
      「擋下 J 後更快能出招」，沒有選「J 被擋少扣量表」"; §75 "使用者的選擇" bullets; §70 asks a yes/no scope question first
      ("目前我方 AI 的行為會將 sp1 sp2 都也涵蓋進去嗎？" → answered what exists → "加！").
-   - The research report fixes the user's wrong premises before designing (reports/血戰篇… "先更正四個前提": two names,
+   - The research report fixes the user's wrong premises before designing (docs/research/tybw-characters/report.zh-TW.md "先更正四個前提": two names,
      one source, one plot detail), politely, in a table: claim / verified fact / design impact.
 3. **Implement** in the smallest place (character files first; shared files get only generic hook points, §4.6).
 4. **Tests + gates** (§1.3): host unit tests, build with 0 warnings, determinism refs, seed gate, A/B, scripted browser.
@@ -42,7 +42,7 @@ unless they start with `~/.claude` (auto-memory). "G" = generalizable, "P" = pro
   "BABYLON_PORT: …", "DUEL_STRINGS §20 / DEVLOG §81: YK 119.5 s accepted (the user, 2026-10-06)".
 - Scope caveats in the subject: "(Lisp only, the TS sim not mirrored yet)".
 - "Fix:" prefix for bugs, with the user's report named ("(the user's report)").
-- Parallel batches: "Babylon port M5 b3rukia (look batch; see docs/BABYLON_PORT.md Status)" and "Merge main into
+- Parallel batches: "Babylon port M5 b3rukia (look batch; see docs/babylon/BABYLON_PORT.md Status)" and "Merge main into
   babylon-<batch>" commits, each merge message stating what was reconciled and the post-merge gate.
 - Trailers: `Co-Authored-By: …` + `Claude-Session: …` on every commit (also put in subagent briefs).
 - Recommendation: keep "who decided + date + gate numbers + doc § refs" in commits; move long prose to the body.
@@ -95,7 +95,7 @@ unless they start with `~/.claude` (auto-memory). "G" = generalizable, "P" = pro
 | DUEL_DESIGN.md | the game "as built"; "when this file and the code disagree, the code wins"; §11.1 "Decided, not yet built"; §12 what changed and why; appended dated decision sections | EN |
 | DUEL_GAMEPLAY.md | build/run, debug commands, test scripts, gate policy, measured gate tables | EN |
 | Feature/character docs (DUEL_STRINGS, DUEL_RUKIA, DUEL_ICHIGO, DUEL_SENJUMARU, DUEL_KEN_BANKAI, DUEL_YAMA_REWORK, DUEL_NOZARASHI_V2, DUEL_ASSIST, DUEL_AI_V2, DUEL_MOBILE_DESIGN, BABYLON_PORT) | one per feature: request → decisions → design → self-critique → as-built deviations → measurements → later dated revisions | EN, user-facing summary/questions in zh-TW |
-| research/, research_notes/, reports/ | source research with confidence tags | EN notes, zh-TW report |
+| docs/research/<topic>/ (tools first write research_notes/, reports/; moved here before commit) | source research with confidence tags | EN notes, zh-TW report |
 | duel/web/manual.html | in-game player manual | zh-TW |
 
 - Rule from the user (feedback-docs-sync.md, 2026-09-26: 「這些設計要求記得要同步更新到文檔中」): **every user decision goes
@@ -145,8 +145,8 @@ unless they start with `~/.claude` (auto-memory). "G" = generalizable, "P" = pro
 ---------------------------------------------------------------------------------------------------------------------
 ## 3. Research on source material (G method)
 
-- Before a character: a deep-research pass producing `research_notes/<topic>/<char>.md` fact files (EN) and one
-  synthesized zh-TW report `reports/血戰篇四角色格鬥設計研究.md` with inline citations.
+- Before a character: a deep-research pass producing `research_notes/<topic>/<char>.md` fact files (moved to `docs/research/<topic>/notes/`) (EN) and one
+  synthesized zh-TW report `docs/research/tybw-characters/report.zh-TW.md` with inline citations.
 - Fact files: scope line, legend **[MANGA] / [ANIME-ORIG] / [UNVERIFIED]**, sections Takeaway / Cited Findings /
   Inferences / **Gaps** (e.g. "Bleach Wiki returned HTTP 402 … I found no reliable source for …"). Weak sources flagged
   ("Low-reliability source"); conflicting dates resolved with reasoning.
@@ -182,17 +182,17 @@ unless they start with `~/.claude` (auto-memory). "G" = generalizable, "P" = pro
   screenshots), merges, resolves conflicts, updates the doc's Status, commits, pushes.
 - Search problems fan out too: AI v2 = 5 subagents (one per character, own worktree) × 2 dream-rsi rounds × 4 variants,
   scored by `tools/aieval.py` (0.6 strength + 0.2 masher + 0.2 signature, 0 if pacing fails), then one integration
-  agent (DUEL_AI_V2.md, research_notes/ai-v2-drsi/).
+  agent (DUEL_AI_V2.md, docs/research/ai-v2-drsi/).
 
 ### 4.2 Briefs (G)
 - **Fresh agent per batch with a compact brief**; don't resume a big one (feedback-fresh-subagents.md: a style agent
   hit ~650k tokens; every resume reloads the transcript). Small follow-ups in the same batch may resume.
-- Brief skeleton (research_notes/ai-v2-drsi/integration.brief.md): reply language; worktree + "you MAY commit on your
+- Brief skeleton (docs/research/ai-v2-drsi/integration.brief.md): reply language; worktree + "you MAY commit on your
   branch, do NOT push, do NOT touch main"; the attribution trailers; Context (the user's request and decisions);
   numbered Steps with exact commands; acceptance numbers per gate; exact list of files/quotes to update; Docs step
   (which doc, which §, DEVLOG entry "in Traditional Chinese, same style as §76"); Rules (bounded waits, no pkill, do not
   deploy, do not edit the scorer); Report format (tables, gate results, branch, commit ids).
-- Search-cell briefs are generated by a script (research_notes/ai-v2-drsi/brief.py) with hard rules: "edit only this
+- Search-cell briefs are generated by a script (docs/research/ai-v2-drsi/brief.py) with hard rules: "edit only this
   file", "do NOT change frame data … write shared changes as a recommendation in proposal.md", "trust score.json over
   any proposal's claims", "prefer a structurally different mechanism".
 - Code-layout rule enables parallel character branches (DUEL_DESIGN "Character code layout", the user 2026-09-28:
@@ -223,7 +223,7 @@ unless they start with `~/.claude` (auto-memory). "G" = generalizable, "P" = pro
   NORMAL had to be pulled back within +0.05 of the old level.
 
 ### 4.5 The discontinued port (G lesson)
-- Babylon.js + TS port (docs/BABYLON_PORT.md): milestone table with acceptance per milestone (M1 core … M6 platform),
+- Babylon.js + TS port (docs/babylon/BABYLON_PORT.md): milestone table with acceptance per milestone (M1 core … M6 platform),
   "traps to copy verbatim", a parity tool (first differing line / bit dumps), ~25 commits in 2 days, ended **bit-exact**
   with the native Lisp (15 pairings × 60 seeds, 900/900) - beyond its own plan, which had said "not bit-exact".
 - Discontinued the day after M1–M6 finished (「Babylon 版已不再開發」); the next Lisp change (J floor) was already "not

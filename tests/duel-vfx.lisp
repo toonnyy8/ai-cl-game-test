@@ -13,10 +13,10 @@
 ;;;   3003 label + stats text off/on (measured stills)    3004 stage fx (ash) off/on
 ;;;   3006 the fighters' ink shadow discs off/on (the outline measure: the mask's edge is then the figure's)
 ;;;   3010+m *GRADE-IMPACT* mode m (0 off, 1 negative, 2 two-tone, 3 manga page, 4 spot-keep hue 10)
-;;;   Scenes 18-31: the phase-2 toon universal effects (docs/STYLE_STORM_DESIGN.md §4.3), each fired at the scene's
+;;;   Scenes 18-31: the phase-2 toon universal effects (docs/style/STYLE_STORM_DESIGN.md §4.3), each fired at the scene's
 ;;;   start (and again every 2.4 s), for frozen stills at chosen ages (tests/style-2-shots.py)
 ;;;   3007 scene 17 with the phase-3 signature looks on/off: Yamamoto's blade fire and Kenpachi's base yellow aura (the
-;;;        neutral still of docs/STYLE_STORM_DESIGN.md §9 row 3: spot share <= 15 %)
+;;;        neutral still of docs/style/STYLE_STORM_DESIGN.md §9 row 3: spot share <= 15 %)
 ;;;   3020 consing of the phase-2 per-frame paths; 3021 the phase-3 ones (blade fire / embers, smears, fire wave, auras,
 ;;;        line cuts, Bankai cracks), 100 calls each
 ;;;   3005 flat measuring mode on/off: no character gradient, character / shadow fog or vignette, so every lit or shadow pixel

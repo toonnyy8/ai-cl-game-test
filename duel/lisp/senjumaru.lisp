@@ -1,4 +1,4 @@
-;;;; senjumaru.lisp — SHUTARA SENJUMARU (Zero Division, TYBW), docs/DUEL_SENJUMARU.md: her moves (DEFMOVE) and her seven
+;;;; senjumaru.lisp — SHUTARA SENJUMARU (Zero Division, TYBW), docs/duel/DUEL_SENJUMARU.md: her moves (DEFMOVE) and her seven
 ;;;; forms (DEFKIT): :base, the Shikai 刺絡 SHIGARAMI (a close-range tailor: every J / K / O contact sews stitches into his
 ;;;; clothes, L 悪い癖 pulls them all out as unguardable spikes; the Divine Soldier, the umbrella), and the Bankai
 ;;;; 娑闥迦羅骸刺絡辻 SHIGARAMI NO TSUJI as six hank forms :tsuji1 .. :tsuji6 (the loom: L held weaves the next hank, released
@@ -11,7 +11,7 @@
 ;;;; their macros. Plain CL above the hooks: the host rules test loads it.
 (in-package :duel)
 
-;;; ================================================================ knobs (docs/DUEL_SENJUMARU.md §11)
+;;; ================================================================ knobs (docs/duel/DUEL_SENJUMARU.md §11)
 (defparameter *walk-senju* 3.6 "Walk m/s, the Shikai.")
 (defparameter *run-senju* 8.5 "Run m/s, the Shikai.")
 (defparameter *walk-tsuji* 3.3 "Walk m/s, the Bankai (the loom holds her to her ground).")
@@ -151,10 +151,10 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
 (defun hank-life (n passes) "Hank N's life after PASSES (x *HANK-LIFE-MULT*)." (multiple-value-bind (r l) (hank-scale passes) (declare (ignore r)) (round (* l *hank-life-mult* (hank n :life)))))
 
 ;;; ================================================================ Shikai 刺絡 SHIGARAMI (base)
-;;; the J / K strings (docs/DUEL_STRINGS.md §2.1 budget): the lightest in the game (the user, 2026-10-01: every form's J
+;;; the J / K strings (docs/duel/DUEL_STRINGS.md §2.1 budget): the lightest in the game (the user, 2026-10-01: every form's J
 ;;; x0.9, K x0.8); every contact sews (SENJU-HIT). Every
 ;;; reach is where the art strikes (the user's playtest, 2026-09-29): the J links to the tip of the needle (1.44 m since the
-;;; J cut, docs/DUEL_STRINGS.md §13: J light, short and fast, 0.6x; the needle 1.2 m), the K links to their props' far ends
+;;; J cut, docs/duel/DUEL_STRINGS.md §13: J light, short and fast, 0.6x; the needle 1.2 m), the K links to their props' far ends
 ;;; (senjumaru-art.lisp *SJ-STRIKE-REACH*; the host test checks)
 (defmove :sj-j1 :kind :quick :clip :sj-q1 :startup 7 :active 3 :recovery 12 :dmg 25 :adv-block -2
   :reach 1.44 :arc 90 :on-hit :flinch :slide 0.5)                    ; HITOHARI: the upper right hand jabs the needle
@@ -825,7 +825,7 @@ nothing from a hit, a block or his blade, and his Reiatsu / flash-step gains are
 
 ;;; ================================================================ AI (the kit's :reflex / :opp-reflex / :sig-hold)
 
-;;; The action policy v2 (docs/DUEL_AI_V2.md; research_notes/ai-v2-drsi/senjumaru): every chance below by difficulty
+;;; The action policy v2 (docs/duel/DUEL_AI_V2.md; docs/research/ai-v2-drsi/senjumaru): every chance below by difficulty
 ;;; (SENJU-DP: EASY <= NORMAL <= HARD, NORMAL near the shipped CPU, HARD the full version).
 ;;;   enders    a J3 / K3 that hit pushes him out: the O ender (it always dashes after him) at :o-ender-p; else, after K3,
 ;;;             the stitches' L (WARUI KUSE, its K copy chases) with >= 3 stitches. The loom: SP1 first (SENJU-SP-ENDER).
@@ -1172,7 +1172,7 @@ pass ticks filling in the next hank's dye."
 (defun senju-acc-reset () (dolist (st (coerce *sj* 'list)) (setf (sjs-acc st) nil)))
 
 (defun senju-acc-line ()
-  "After a gate row: a \"duel senju\" line per side that played her (the pacing log, docs/DUEL_SENJUMARU.md §9)."
+  "After a gate row: a \"duel senju\" line per side that played her (the pacing log, docs/duel/DUEL_SENJUMARU.md §9)."
   (dolist (e (list *p1* *p2*))
     (when (and (entity-alive-p e) (eq (fighter-character (fighter e)) :senjumaru))
       (log-msg "duel senju ~a seed ~d awakened ~a ~{~(~a~) ~a~^ ~}" (side-name e) *match-seed* (gauges-awakened (gauges e))
@@ -1241,7 +1241,7 @@ awakened Senjumaru near the rim (the drapes' fade stills): the pair on a tangent
     (senju-probe-line (format nil "test ~d" k))))
 
 (defun senju-knob (c)
-  "90000+ (docs/DUEL_SENJUMARU.md, Knobs): the pacing and A/B knobs without a rebuild."
+  "90000+ (docs/duel/DUEL_SENJUMARU.md, Knobs): the pacing and A/B knobs without a rebuild."
   (flet ((kits (forms fn) (dolist (f forms) (funcall fn (find-kit :senjumaru f))))
          (tsuji () '(:tsuji1 :tsuji2 :tsuji3 :tsuji4 :tsuji5 :tsuji6)))
     (cond ((<= 90000 c 90999) (setf (kit-mult (find-kit :senjumaru :base)) (/ (- c 90000) 100.0)))

@@ -1,4 +1,4 @@
-// ichigo.ts <- duel/lisp/ichigo.lisp: KUROSAKI ICHIGO (TYBW, docs/DUEL_ICHIGO.md v2): his moves (defmove), his two forms
+// ichigo.ts <- duel/lisp/ichigo.lisp: KUROSAKI ICHIGO (TYBW, docs/duel/DUEL_ICHIGO.md v2): his moves (defmove), his two forms
 // (defkit: base, the dual-blade Shikai with the stance TSUKIMACHI; kessa, KESSA NO ICHIGO with the parry, the clones, the
 // O charge and ZANZO) and their hooks. Most of his mechanics run in his tick hook (after the hits of the step): the
 // stance's follow-ups, the parry from blockstun, the clones' answers (a J / K press edge), the Hoho clone, the O charge,
@@ -641,7 +641,7 @@ registerHooks({
   },
 });
 
-// ================================================================ the CPU (docs/DUEL_AI_V2.md; every chance by difficulty)
+// ================================================================ the CPU (docs/duel/DUEL_AI_V2.md; every chance by difficulty)
 /** A chance by brain B's difficulty: EASY <= NORMAL <= HARD. */
 const icP = (b: Brain, easy: number, normal: number, hard: number): number => getf({ easy, normal, hard }, b.difficulty, normal);
 const icHitsP = (mv: Move | null): boolean => !!mv && mv.hits.length > 0;

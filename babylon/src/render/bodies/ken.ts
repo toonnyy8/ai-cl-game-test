@@ -1,4 +1,4 @@
-// Zaraki Kenpachi, TYBW (docs/BABYLON_LOOK.md; the user, 2026-10-04): 2.0 m, ~8 heads, broad; long straight black hair
+// Zaraki Kenpachi, TYBW (docs/babylon/BABYLON_LOOK.md; the user, 2026-10-04): 2.0 m, ~8 heads, broad; long straight black hair
 // worn down past the shoulders with heavy forelocks (no bells, no spikes, no eyepatch in any form); the open collar and
 // the chest scar; the haori's sleeves torn off, the kosode's torn short, bare arms; the scar down the left side of his
 // face; a grin as the neutral face. Weapons: the chipped long katana (base), NOZARASHI, the 2 m cleaver (the three NOME

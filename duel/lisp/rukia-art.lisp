@@ -1,10 +1,10 @@
 ;;;; rukia-art.lisp — KUCHIKI RUKIA (TYBW) as art data: her body (the 13th Division lieutenant: black shihakusho, the
 ;;;; lieutenant's armband, no haori) and its two variants (:rukia-zero, absolute zero: white hair and irises, the ice
 ;;;; half-crown; :rukia-bankai, 白霞罸 in the cinematic only: the white kimono; both with ice-blue keylines and brows),
-;;;; her four blades (the sealed :ru-katana, the white Sode no Shirayuki, -50's rimed :ru-rime, the ice :ru-ice), every :ru-* pose and clip (docs/DUEL_RUKIA.md §10), and her ice
+;;;; her four blades (the sealed :ru-katana, the white Sode no Shirayuki, -50's rimed :ru-rime, the ice :ru-ice), every :ru-* pose and clip (docs/duel/DUEL_RUKIA.md §10), and her ice
 ;;;; looks (the hazards' draw functions, the auras, frost on a victim, the cinematics' frost discs, pillar and dust).
 ;;;; Attack clips use DEFSTRIKE (the hit pose at frame S, back in the stance at S+A+R). Ice is mono: white cores and the
-;;;; SOUL glass palette, never STEEL (the guard's) and no spot hue of her own (docs/STYLE_STORM_DESIGN.md §A.2).
+;;;; SOUL glass palette, never STEEL (the guard's) and no spot hue of her own (docs/style/STYLE_STORM_DESIGN.md §A.2).
 (in-package :duel)
 
 ;;; ---------------------------------------------------------------- body
@@ -165,7 +165,7 @@
 ;; the half-crown of ice behind the head, crystals on the shoulders
 (defparameter *ru-ice-ink* '((t . #x7F97B4))
   "The white Rukia's keyline (absolute zero, the Bankai; the user's decision 2026-09-28): ice blue on every shape instead of
-the ink (the style's ICE keyline, docs/STYLE_STORM_DESIGN.md §2.4).")
+the ink (the style's ICE keyline, docs/style/STYLE_STORM_DESIGN.md §2.4).")
 
 (body-variant :rukia-zero :rukia :ink *ru-ice-ink* :clips '(:ru-q1 :ru-q1-z :ru-thrust :ru-thrust-z)
   :palette '((:hair #xE4E8EE) (:pupil #xDDE4EE) (:core #x9AA8BE) (:skin #xD6CCCA) (:fold #x9AA8BE) (:brow #xCFE3F2)

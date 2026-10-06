@@ -1,5 +1,5 @@
 ;;;; world.lisp — the rooftop arena: environment look, static scenery, skyline, rain, collision.
-;;;; GAME_DESIGN §6.2 (props), §7.6 (rain), §9 (palette/lighting). Docs: docs/WORLD.md.
+;;;; GAME_DESIGN §6.2 (props), §7.6 (rain), §9 (palette/lighting). Docs: docs/engine/WORLD.md.
 ;;;; Public API: WORLD-INIT, WORLD-UPDATE, WORLD-DRAW, ARENA-RESOLVE, ARENA-RAYCAST,
 ;;;;             ARENA-GROUND-HEIGHT, *ARENA-HALF*, *RAIN-COUNT*, *RAIN-COLOR*.
 ;;;; Static scenery = a handful of merged meshes; per-frame fx (rain, splashes, neon reflections,

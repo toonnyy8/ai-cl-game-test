@@ -9,7 +9,7 @@ description: Use when changing game rules, frame data, damage, reach, tuning kno
 A balance change is done when **measured** gates pass, not when it compiles. The exemplar (SOUL DUEL in
 `toonnyy8/ai-cl-game-test`, local `/media/8tsp/projects/ai-cl-game-test`) runs a fixed-step sim with a split RNG, so a
 seed replays the same match bit for bit; every gate below relies on that. Details, numbers and evidence:
-`reference.md`; the project's current policy text: `docs/DUEL_GAMEPLAY.md` "Gate policy".
+`reference.md`; the project's current policy text: `docs/duel/DUEL_GAMEPLAY.md` "Gate policy".
 
 ## Implement so it can be audited
 - One knob in `tuning.lisp` (`defparameter` + docstring: old → new value, date, who decided, doc §). Never bury a

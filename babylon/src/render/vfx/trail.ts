@@ -1,4 +1,4 @@
-// trail.ts: the blade's ink arc and the ink afterimages (docs/BABYLON_LOOK.md B2 "Readability" / B4). The arc is a
+// trail.ts: the blade's ink arc and the ink afterimages (docs/babylon/BABYLON_LOOK.md B2 "Readability" / B4). The arc is a
 // ribbon over the last TRAIL samples of the blade (a point 35 % up the blade to its tip) while the move's strike is
 // live (the Lisp's window: S - 4 to S + A + 3), painted as one dry-brush stroke (thick at the newest sample, bristles
 // breaking toward the tail): ink normally, red for a Kikon / an awakened form, slate when it was blocked. The blade is

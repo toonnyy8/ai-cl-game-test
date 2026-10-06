@@ -1,5 +1,5 @@
 // toon.vert.wgsl — vertex stage of the toon draws (RP_TOON*, chosen by r_draw_queue when Draw.toon.x is
-// 1 stage or 2 character; docs/STYLE_STORM_DESIGN.md §2). Same transform as vs_main (lit.vert.wgsl).
+// 1 stage or 2 character; docs/style/STYLE_STORM_DESIGN.md §2). Same transform as vs_main (lit.vert.wgsl).
 // Stage draws get the point lights past the per-pixel ones per vertex (diffuse only); character draws
 // get none: instead the strongest fx light within 4 m of the part's origin tints their shadow side.
 // The designed shadow tone (SHADE_OF) is computed here: faces are flat-coloured, so per vertex = per pixel.
@@ -60,7 +60,7 @@ fn shade_of(alb: vec3f) -> vec3f {
   return o;
 }
 
-// vs_hull — the ink hull (RP_HULL*, Draw.toon.x 3; docs/STYLE_STORM_DESIGN.md §2.4). The vertex's normal slot
+// vs_hull — the ink hull (RP_HULL*, Draw.toon.x 3; docs/style/STYLE_STORM_DESIGN.md §2.4). The vertex's normal slot
 // holds its extrusion E (MB-HULL: width multiplier baked in); the shell is pushed out by E x the ink width
 // (Draw.toon.w px at 720 lines, as metres at this depth, thinner where E faces the camera) and then
 // Draw.toon.y metres away from the camera along the view ray (the screen position stays): a line shows

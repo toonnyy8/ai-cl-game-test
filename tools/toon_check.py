@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""toon_check.py — measures a SOUL DUEL still against the v4 notan rules (docs/STYLE_STORM_DESIGN.md
+"""toon_check.py — measures a SOUL DUEL still against the v4 notan rules (docs/style/STYLE_STORM_DESIGN.md
 §A.1 value system, §A.2 spot colour, §2.5 palettes, §9 row 1a acceptance).
 
   python3 tools/toon_check.py STILL.png [--bg NOFIGHTERS.png] [--horizon ROW] [--palette HEX,HEX,...]

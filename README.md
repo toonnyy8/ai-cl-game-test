@@ -32,9 +32,9 @@ python3 -m http.server -d dist/duel 8000     # 用 Chrome 開 http://localhost:8
 - **規則**：雙方各有 1300 點靈子（Reishi，血條）和 9 個魂魄（Konpaku，命）。按 O 是 Kikon（鬼魂）突進：角色衝上去砍一刀，站著、走路、跑步時都能用；連段的第三段打中之後按 O 是「O 收尾」，跳過瞄準直接出刀、一定連得上（其他招式都不能再取消成 O）。對手沒變紅時，這一刀跟一般攻擊一樣能被擋（被擋住 −14，會被反擊）；對手的靈子掉到 30% 以下變紅後就擋不住（閃步和 Hoho 的無敵幀還是躲得掉），而且砍中那一刻 O 還按著，才會真正發動 Kikon，一次打掉 2 個魂魄（覺醒後 3 個）；先放開的話只是一般的一刀。靈子歸零自動多打掉 1 個（Soul Break）。魂魄打光就輸，時限 300 秒。
 - **猜拳**：防禦擋攻擊、攻擊打斷 Breaker、Breaker 破防；兩邊同時 Breaker 會互彈（CLASH）。步法（Hoho）瞬移到對手背後，時機抓準會觸發慢動作反擊（PERFECT）。
 - **角色**：山本用火焰壓制距離，Inferno 量表滿了進入獄焱（Hellfire）；覺醒是卍解（持續到比賽結束，此後不再有 Inferno 和獄焱），分成東（旭日刃：線狀快攻，攻擊帶「穿透」、防禦量表越滿越痛，被擋也有一部分穿過防禦，但受傷 ×1.5）與西（殘日獄衣：全身包著紅焰，全方位防禦而且沒有防禦硬直，量表不會回，Shift+K 是招架）兩個架式：在東按 U 切到西，在西出 L、SP1 以外的招式就回到東；L 各有新招（東「旭光」突刺、西「焦熱地獄」火柱環）。劍八近身猛攻，越被逼到絕境越強；覺醒是野晒，同樣持續到比賽結束。
-- **操作**（完整對照表在 [docs/DUEL_GAMEPLAY.md](docs/DUEL_GAMEPLAY.md)）：P1 用 W A S D 移動，J 輕攻擊、K 重攻擊（J／K 組成最多三段的連段，J／K 最多換一次；每一段要碰到對手才接得下去，揮空就停在那一刀，見 [docs/DUEL_STRINGS.md](docs/DUEL_STRINGS.md)；自己的防禦量表越少，打中或被擋時拿到的靈壓和瞬步越多），L 招牌技、U 防禦、I Breaker、O Kikon 突進（砍中時仍按住：對手被擊退，自己衝上去補一刀＝Kikon；對手沒變紅時可以在衝刺中防禦擋下）、Space 閃步（Step，按住不放就接著衝刺），P 覺醒，按住左 Shift 再按 K／L／Space 是 SP1／SP2／Hoho；被連段打中第 2 下之後按 Shift+J 是 Burst Reverse（花 70 閃步量表，藍色衝擊波把對手推開）；卍解時 Shift+L 是南・定身技。P2 用方向鍵加數字鍵盤（KP1～KP6、KP0、KP Enter、KP +），也可以各接一支手把。Esc 暫停。對電腦時鏡頭預設在 P1 背後（W 就是衝向對手），暫停選單和選難度的畫面可以切回側面鏡頭。
+- **操作**（完整對照表在 [docs/duel/DUEL_GAMEPLAY.md](docs/duel/DUEL_GAMEPLAY.md)）：P1 用 W A S D 移動，J 輕攻擊、K 重攻擊（J／K 組成最多三段的連段，J／K 最多換一次；每一段要碰到對手才接得下去，揮空就停在那一刀，見 [docs/duel/DUEL_STRINGS.md](docs/duel/DUEL_STRINGS.md)；自己的防禦量表越少，打中或被擋時拿到的靈壓和瞬步越多），L 招牌技、U 防禦、I Breaker、O Kikon 突進（砍中時仍按住：對手被擊退，自己衝上去補一刀＝Kikon；對手沒變紅時可以在衝刺中防禦擋下）、Space 閃步（Step，按住不放就接著衝刺），P 覺醒，按住左 Shift 再按 K／L／Space 是 SP1／SP2／Hoho；被連段打中第 2 下之後按 Shift+J 是 Burst Reverse（花 70 閃步量表，藍色衝擊波把對手推開）；卍解時 Shift+L 是南・定身技。P2 用方向鍵加數字鍵盤（KP1～KP6、KP0、KP Enter、KP +），也可以各接一支手把。Esc 暫停。對電腦時鏡頭預設在 P1 背後（W 就是衝向對手），暫停選單和選難度的畫面可以切回側面鏡頭。
 
-這是**非商業的同人練習作品**（fan study）：角色與招式名稱是應使用者要求使用的，所有模型、動作、特效、音效與配樂都由程式產生，沒有使用原作動畫或遊戲的任何素材。設計與數值見 [docs/DUEL_DESIGN.md](docs/DUEL_DESIGN.md)。
+這是**非商業的同人練習作品**（fan study）：角色與招式名稱是應使用者要求使用的，所有模型、動作、特效、音效與配樂都由程式產生，沒有使用原作動畫或遊戲的任何素材。設計與數值見 [docs/duel/DUEL_DESIGN.md](docs/duel/DUEL_DESIGN.md)。
 
 ## 快速開始
 
@@ -78,9 +78,9 @@ $E --norc --load tests/duel-control-test.lisp      # SOUL DUEL 的操作與指�
 
 `tools/run.mjs` 不需要安裝任何套件。它起一個小 HTTP 伺服器，用 DevTools 協定開無頭 Chrome（WebGPU 走 SwiftShader 的 Vulkan 軟體實作，預設參數寫在腳本裡，`CHROME_FLAGS` 可覆寫），把 console 輸出轉到終端機，照腳本在指定時間送出按鍵、滑鼠、`eval`，並拍截圖。頁面丟出 JS 例外時結束碼是 1。
 
-測試腳本由 `tests/scripts/` 的 `gen.py`（玩家招式）、`e2.py`（敵人與遊戲流程）、`p3.py`（各畫面與長時間浸泡測試）和 `gpu.py`（SDL_GPU 版的截圖組）產生。腳本透過 `Module._debug_cmd(n)` 跳到指定波次、強制敵人出某一招、開無敵，或讓自動遊玩的 bot 從頭打到尾。指令清單在 [docs/GAMEPLAY.md](docs/GAMEPLAY.md)。
+測試腳本由 `tests/scripts/` 的 `gen.py`（玩家招式）、`e2.py`（敵人與遊戲流程）、`p3.py`（各畫面與長時間浸泡測試）和 `gpu.py`（SDL_GPU 版的截圖組）產生。腳本透過 `Module._debug_cmd(n)` 跳到指定波次、強制敵人出某一招、開無敵，或讓自動遊玩的 bot 從頭打到尾。指令清單在 [docs/raven-edge/GAMEPLAY.md](docs/raven-edge/GAMEPLAY.md)。
 
-SOUL DUEL 的腳本由 `python3 tests/scripts/duel.py` 產生：固定種子的電腦對戰（`duel-cvc-*.json`，同一個種子每次跑出一模一樣的比賽）、60 場的節奏測試（`duel-gate.json`）、幀數探針（`duel-probe.json`）、鍵盤、選單流程、效能與截圖組。說明與除錯指令在 [docs/DUEL_GAMEPLAY.md](docs/DUEL_GAMEPLAY.md)。
+SOUL DUEL 的腳本由 `python3 tests/scripts/duel.py` 產生：固定種子的電腦對戰（`duel-cvc-*.json`，同一個種子每次跑出一模一樣的比賽）、60 場的節奏測試（`duel-gate.json`）、幀數探針（`duel-probe.json`）、鍵盤、選單流程、效能與截圖組。說明與除錯指令在 [docs/duel/DUEL_GAMEPLAY.md](docs/duel/DUEL_GAMEPLAY.md)。
 
 ## 資料夾
 
@@ -105,28 +105,17 @@ examples/
   engine-demo/ 只用引擎的展示：頂樓、環繞鏡頭、特效、UI
 ```
 
-其餘目錄：`tools/`（`build.lisp` 編譯腳本、`run.mjs` 無頭測試器、`pkgcheck.sh`、vendor 腳本、`pose-solve.py`）、`tests/`（主機測試、wasm demo、腳本產生器、截圖）、`vendor/`（wasm 版 ECL、帶 WebGPU 後端的 SDL3、Dawn 的 emdawnwebgpu）、`docs/`、`build/` 與 `dist/`（建置產物）。
+其餘目錄：`tools/`（`build.lisp` 編譯腳本、`run.mjs` 無頭測試器、`pkgcheck.sh`、原生模擬的 `simgate.py`、`aieval.py`、`assistgate.py`、`deploy-pages.sh`、vendor 腳本、`pose-solve.py`，用途表見 AGENTS.md）、`tests/`（主機測試、wasm demo、腳本產生器、截圖）、`vendor/`（wasm 版 ECL、帶 WebGPU 後端的 SDL3、Dawn 的 emdawnwebgpu）、`docs/`（文件，依主題分資料夾）、`skills/`（四個 Claude skill）、`babylon/`（已停止的 TypeScript 移植版）、`build/` 與 `dist/`（建置產物）。
 
 每個建置目標是一個有 `MANIFEST` 的目錄：一行一個原始檔，依序編譯；`.lisp` 檔（引擎在前）串成一個編譯單元交給 ECL，`.c` 檔在連結時交給 emcc。為什麼這樣做，見教材第 1 步。
 
 ## 學習路徑
 
-想知道這一切怎麼運作，從 **[docs/TUTORIAL.zh-TW.md](docs/TUTORIAL.zh-TW.md)** 開始。它帶你建置並從頭讀完 `examples/hello`，再依序看幀迴圈與 GC、ECS、純函式規則、事件、算圖，讀懂 RAVEN EDGE 的一下攻擊怎麼從招式資料一路變成畫面上的血霧和音效，接著用 SOUL DUEL 學虛擬手把、角色即資料、同時結算的命中、過場導演和決定性重播。最後有練習題。
+想知道這一切怎麼運作，從 **[docs/guides/TUTORIAL.zh-TW.md](docs/guides/TUTORIAL.zh-TW.md)** 開始。它帶你建置並從頭讀完 `examples/hello`，再依序看幀迴圈與 GC、ECS、純函式規則、事件、算圖，讀懂 RAVEN EDGE 的一下攻擊怎麼從招式資料一路變成畫面上的血霧和音效，接著用 SOUL DUEL 學虛擬手把、角色即資料、同時結算的命中、過場導演和決定性重播。最後有練習題。
 
 ## 文件索引
 
-- [docs/TUTORIAL.zh-TW.md](docs/TUTORIAL.zh-TW.md)：學習路徑（中文）
-- [docs/DEVLOG.zh-TW.md](docs/DEVLOG.zh-TW.md)：開發紀錄與技術決策（中文）
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)：建置管線、執行模型、GC 規則、ECS、模組分工、ECL 效能陷阱
-- [docs/ENGINE_API.md](docs/ENGINE_API.md)：引擎 API 參考
-- [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md)：遊戲設計規格與全部數值
-- [docs/GAMEPLAY.md](docs/GAMEPLAY.md)：遊戲系統的實作說明與除錯指令
-- [docs/DUEL_DESIGN.md](docs/DUEL_DESIGN.md)：SOUL DUEL 的設計與全部招式表（英文）
-- [docs/DUEL_GAMEPLAY.md](docs/DUEL_GAMEPLAY.md)：SOUL DUEL 的建置、操作、除錯指令、測試與決定性檢查（英文）
-- [docs/WORLD.md](docs/WORLD.md)：場景、雨、碰撞
-- [docs/AUDIO.md](docs/AUDIO.md)：混音器與程式合成音效
-- [docs/research/ng4-notes.md](docs/research/ng4-notes.md)：《忍者外傳 4》玩法研究筆記
-- [docs/README.md](docs/README.md)：以上文件的簡介
+全部文件依主題分在 `docs/` 的子資料夾（`guides/`、`engine/`、`raven-edge/`、`duel/`、`style/`、`babylon/`、`research/`），一行一份的索引在 [docs/README.md](docs/README.md)。給 AI agent 的專案總覽與工作規則在 [AGENTS.md](AGENTS.md)，可重複使用的開發經驗在 [docs/guides/PLAYBOOK.zh-TW.md](docs/guides/PLAYBOOK.zh-TW.md) 與 `skills/`。
 
 ## 遊戲內容（RAVEN EDGE）
 
@@ -148,7 +137,7 @@ examples/
 - 紅色攻擊。敵人全身發紅、地上出現紅圈，表示這招擋不住也不能格擋。對策只有閃掉、趁蓄力時用 Raven 型態打斷（Raven Break），或是在 Raven 型態下花 15 量表硬擋（Raven Guard）。
 - 打殘與 Obliterate。重攻擊把敵人打到 30% 血以下（OXHEAD 是 25%）會斷手，頭上跳出 `OBLITERATE [K]`。這時按重攻擊就是一刀兩斷的處決技：全程無敵，量表 +25，還會噴出光球（3 顆藍的共回 12 點血，2 顆金的補量表）。放著不管的話，殘兵會爬過來發動紅色的 Death Grip。頭目不會被打殘，血量歸零時跪地，只能用 Obliterate 收尾。
 
-每一下命中都有停頓（hitstop）、血霧、鏡頭震動和音效。完整的數值和幀數表在 [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md)。
+每一下命中都有停頓（hitstop）、血霧、鏡頭震動和音效。完整的數值和幀數表在 [docs/raven-edge/GAME_DESIGN.md](docs/raven-edge/GAME_DESIGN.md)。
 
 ## 操作說明（RAVEN EDGE）
 

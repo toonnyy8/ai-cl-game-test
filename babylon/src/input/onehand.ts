@@ -1,4 +1,4 @@
-// onehand.ts <- duel/lisp/onehand.lisp (片手 ONE-HAND, docs/DUEL_MOBILE_DESIGN.md) + the page services of duel/web/pwa.js.
+// onehand.ts <- duel/lisp/onehand.lisp (片手 ONE-HAND, docs/duel/DUEL_MOBILE_DESIGN.md) + the page services of duel/web/pwa.js.
 // The recogniser (touch.ts) turns the thumb into gestures; this lays out the flow pad and the chips (DECK-LAYOUT), maps
 // gestures to P1's vpad buttons (TOUCH-BUTTON; read by bindings.ts readP1: fighters, rules and the AI never see touch) and
 // draws the deck. Plus, new in this build, the two-thumb LANDSCAPE touch controls (a floating stick on the left, the

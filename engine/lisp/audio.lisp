@@ -1,7 +1,7 @@
 ;;;; audio.lisp — zero-asset audio: a C mixer fed by an SDL3 audio-stream callback
 ;;;; (engine/c/audio.c), plus a Lisp synthesis toolkit. A game describes its sounds with DEFSOUND;
 ;;;; the engine renders each one once at startup (one startup step per sound, see app.lisp) and
-;;;; plays them with PLAY-SFX / START-LOOP / MUSIC-PLAY. See docs/AUDIO.md.
+;;;; plays them with PLAY-SFX / START-LOOP / MUSIC-PLAY. See docs/engine/AUDIO.md.
 (in-package :engine)
 
 ;;; ------------------------------------------------------------------ mixer (C)

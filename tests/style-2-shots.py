@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""style-2-shots.py — the phase-2 still set of the Storm x Kubo restyle (docs/STYLE_STORM_DESIGN.md §9 row 2):
+"""style-2-shots.py — the phase-2 still set of the Storm x Kubo restyle (docs/style/STYLE_STORM_DESIGN.md §9 row 2):
 every universal toon effect (§4.3) at 3 moments on the stage (dist/duelvfx scenes 18-31, frozen at chosen ages
 under run.mjs --fixed-dt), the impact-frame modes, a gallery sheet, and in-game stills from dist/duel (Hoho
 afterimage, Kikon rush aura, clash, burst, guard break, the neutral behind / side cameras).

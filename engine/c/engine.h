@@ -3,7 +3,7 @@
    (ffi:clines "#include \"engine/c/engine.h\"")) and calls these through thin FFI:C-INLINE forms.
    Paths are relative to the project root (the build passes -I<root>).
 
-   GC rule (docs/ARCHITECTURE.md): C code never keeps a pointer to a Lisp object. Lisp passes
+   GC rule (docs/engine/ARCHITECTURE.md): C code never keeps a pointer to a Lisp object. Lisp passes
    arrays in (->vector.self.sf / .b8) for the duration of one call only. */
 #ifndef ENGINE_H
 #define ENGINE_H

@@ -1,4 +1,4 @@
-;;;; ichigo-art.lisp — KUROSAKI ICHIGO (TYBW) as art data (docs/DUEL_ICHIGO.md §2, §10, v2 "built"): his body (a
+;;;; ichigo-art.lisp — KUROSAKI ICHIGO (TYBW) as art data (docs/duel/DUEL_ICHIGO.md §2, §10, v2 "built"): his body (a
 ;;;; substitute Shinigami's black shihakusho, the sleeves ending just past the elbow, the orange spiky head, the
 ;;;; half-Hollow's flat white horn on the left; the KESSA parts tagged :kessa per the figures: the hair split black on his
 ;;;; left, the left half-face black, the second horn, the robe open on a dark red disc, blood coils, bare feet, torn hems;
@@ -7,7 +7,7 @@
 ;;;; crescents, the clones and afterimages, the parry's flare), his sounds, glyphs and names, and his cinematics: the Cero
 ;;;; Getsuga (the Shikai Kikon; the one place gold and pink-violet are allowed), 千影 (KESSA's Kikon), 漆黒の月牙天衝 (his
 ;;;; Soul Break) and the awakening. In play the Getsuga is mono (an ink crescent, a white rim); BLOOD in KESSA's coils and
-;;;; rims (docs/STYLE_STORM_DESIGN.md §A.2).
+;;;; rims (docs/style/STYLE_STORM_DESIGN.md §A.2).
 (in-package :duel)
 (declaim (special *p1* *p2* *ic-pose-ang*))           ; (flow.lisp's: the auras find their fighter; ichigo.lisp's)
 
@@ -377,7 +377,7 @@
   (26 (:root :f 0.2 :u -0.1) (:arm-r :side 40 :flex 30) (:elbow-r :flex 20) (:arm-l :side 40 :flex 40) (:elbow-l :flex 40))
   (:end :ic-stance))
 
-;; J2s KAESHI-KIBA alone (the J cut, docs/DUEL_STRINGS.md §13): the X closed in at his chest, under the cleaver's return
+;; J2s KAESHI-KIBA alone (the J cut, docs/duel/DUEL_STRINGS.md §13): the X closed in at his chest, under the cleaver's return
 (defpose :ic-cross-j-hit (:base :ic-cross-hit)
   (:root :f 0.3 :u -0.12) (:spine :flex 14)
   (:arm-r :side 15 :flex 80) (:elbow-r :flex 80) (:hand-r :twist -40 :flex -60)
@@ -539,7 +539,7 @@
   (18 (:root :f 0.12 :u -0.06) (:chest :twist 8) (:arm-r :side 44 :flex 50) (:elbow-r :flex 18) (:hand-r :flex -64))
   (:end :ic-k-stance))
 
-;; KESSA's J1 alone (the J cut, docs/DUEL_STRINGS.md §13): ITA-NAGI swept up from close, the slab ending raised across in
+;; KESSA's J1 alone (the J cut, docs/duel/DUEL_STRINGS.md §13): ITA-NAGI swept up from close, the slab ending raised across in
 ;; front of him (the clones keep the long sweep above)
 (defpose :ic-k-jab-hit (:base :ic-k-cut-hit)
   (:root :f 0.02) (:arm-r :side 50 :flex 40) (:elbow-r :flex 60) (:hand-r :twist 0 :flex -40))
@@ -553,7 +553,7 @@
   (:end :ic-k-stance))
 
 ;; J2 返板 KAESHI-ITA: the backhand, the flat turned, the slab's weight carrying the wrist round (shorter since the J cut,
-;; docs/DUEL_STRINGS.md §13: the elbow bent, the slab ends across in front of him)
+;; docs/duel/DUEL_STRINGS.md §13: the elbow bent, the slab ends across in front of him)
 (defpose :ic-k-back-hit (:base :ic-k-stance)
   (:root :f 0.02 :u -0.1 :yaw 8) (:pelvis :twist 26) (:spine :flex 8) (:chest :twist -22) (:neck :twist 14)
   (:arm-r :side 50 :flex 20) (:elbow-r :flex 100 :twist -150) (:hand-r :flex -120)
@@ -831,7 +831,7 @@ a trace in his own Kikon rush)."
               (%t-blob (aref v 0) (aref v 1) (aref v 2) (rnd-range -0.2f0 0.2f0) (rnd-range 0.3f0 0.7f0) (rnd-range -0.2f0 0.2f0)
                        (rnd-range 0.3f0 0.5f0) (rnd-range 0.02f0 0.035f0) -0.1f0 0.05f0 +pal-blood+))))))))
 
-;;; ---------------------------------------------------------------- sounds (docs/DUEL_ICHIGO.md §10)
+;;; ---------------------------------------------------------------- sounds (docs/duel/DUEL_ICHIGO.md §10)
 (defsound :chain-rattle (:peak 0.7)                    ; link clatter: the parry, the wall, a chain shot
   (let ((b (au-buf 0.6)))
     (dotimes (i 18)

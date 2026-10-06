@@ -13,14 +13,14 @@
 ;;;;       kept for the call shape). WEAPON = weapon key or NIL (drawn in the :weapon-r joint).
 ;;;;       HIDDEN = joint bitmask (JOINT-MASK ...): parts, glows and the weapon of those joints are
 ;;;;       skipped. HIDE = a tag or list of tags of tagged parts to skip.
-;;;;       FACE :neutral / :shout / :hurt = the expression (docs/STYLE_STORM_DESIGN.md §2.5): the face shapes are
+;;;;       FACE :neutral / :shout / :hurt = the expression (docs/style/STYLE_STORM_DESIGN.md §2.5): the face shapes are
 ;;;;       tagged :face-neutral / :face-shout / :face-hurt and the two not shown are hidden (FACE-HIDE; a
 ;;;;       non-NIL HIDE replaces that list, so a caller that hides parts names the faces too).
 ;;;;       TINT (r g b) multiplies the solid parts' colours; RIM (f32vec, RIM-VEC) replaces the body's
 ;;;;       silhouette rim; EMISSIVE adds glow to solid parts; FLASH 0..1 = hit flash to white;
 ;;;;       ALPHA < 1 = transparent (Hoho vanish). Mirror match: P2 passes :tint *MIRROR-TINT*
 ;;;;       :rim *MIRROR-RIM*. Conses a few boxed floats per call (keyword floats), nothing else.
-;;;;       Look (docs/STYLE_STORM_DESIGN.md §2): every part is a toon character draw (fs_toon: two
+;;;;       Look (docs/style/STYLE_STORM_DESIGN.md §2): every part is a toon character draw (fs_toon: two
 ;;;;       tones, cold designed shadows, darker toward the feet), so RIM is ignored; built without
 ;;;;       per-face jitter and with round normals on spheres / cylinders. The shadow is a hard ink disc.
 ;;;;       Ink (§2.4): every solid shape and weapon section gets an ink hull (*BODY-INK* colours, a
@@ -53,7 +53,7 @@
 
 (defparameter *body-ink* '((:skin . #x3A1E1A) (:skin-d . #x3A1E1A) (:black . #x4A5062) (:hair . #x4A5062) (:brow . #x4A5062)
                            (t . #x101018))
-  "Ink of the body hulls by shape colour (docs/STYLE_STORM_DESIGN.md §2.4, §2.5): red-brown on skin, a cold
+  "Ink of the body hulls by shape colour (docs/style/STYLE_STORM_DESIGN.md §2.4, §2.5): red-brown on skin, a cold
 grey keyline on black cloth and hair (dark on the ground, a separating line on the dark sky), near-black
 on everything else.")
 

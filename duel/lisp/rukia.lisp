@@ -1,4 +1,4 @@
-;;;; rukia.lisp — KUCHIKI RUKIA (TYBW), docs/DUEL_RUKIA.md: her moves (DEFMOVE) and her four forms (DEFKIT): :base (the
+;;;; rukia.lisp — KUCHIKI RUKIA (TYBW), docs/duel/DUEL_RUKIA.md: her moves (DEFMOVE) and her four forms (DEFKIT): :base (the
 ;;;; Shikai 舞え、袖白雪, a mid-range placer of ice) and the awakening 絶対零度 ZETTAI REIDO, a cold gauge of two stacked
 ;;;; bars (the kit meter, C 0-200: combat.lisp TEMP-STEP, rules TEMP-BAND) whose band is the form: :m18 (-18 C), :m50
 ;;;; (-50 C, bar 1 full) and :zero (-273.15 C, both full: rooted, the ward with freeze-touch, ranged hits guarded too). Guarding cools her,
@@ -9,7 +9,7 @@
 (in-package :duel)
 
 ;;; ================================================================ Shikai (base)
-;;; the J / K strings (docs/DUEL_STRINGS.md §2.1 budget): J1 7 f beats every K1 in the game; the K links frost. The reach
+;;; the J / K strings (docs/duel/DUEL_STRINGS.md §2.1 budget): J1 7 f beats every K1 in the game; the K links frost. The reach
 ;;; since the J cut (§13): J 0.6x, close; K -10 %
 (defmove :ru-j1 :kind :quick :clip :ru-q1 :startup 7 :active 3 :recovery 12 :dmg 34 :adv-block -2
   :reach 1.44 :arc 100 :on-hit :flinch :slide 0.6)                              ; HATSUSHIMO: a one-handed flat cut
@@ -53,7 +53,7 @@
   :startup 8 :active 3 :recovery 24 :dmg 70 :adv-block -14 :reach 2.4 :arc 360 :on-hit :knockback :kb 2.5 :cooldown 90
   :params (:aura 6 :aim 120.0 :speed 24.0 :dash-max 16 :dash-track 0.0 :look :flash-step :sfx :hoho-out))
 
-;;; ================================================================ 絶対零度 (the awakened bands, docs/DUEL_RUKIA.md §4)
+;;; ================================================================ 絶対零度 (the awakened bands, docs/duel/DUEL_RUKIA.md §4)
 ;; -18: the Shikai grid (reach x1.0) with two bare-hand / ice links of its own (the user's decision 2026-09-28): K1 TOSHU,
 ;; the left palm catching and freezing (a short lunge); K3 HYOKA, the palm driven into the plaza, an ice flower bursting
 ;; at his feet. -50 derives it (reach x1.1) with key-edited clips; zero (x1.35, rooted) swaps J2 / K1 / K3. The frames
@@ -111,7 +111,7 @@
   :stun-tolerance 13.0                          ; the hidden stun (DUEL_DESIGN.md): light, blown away sooner
   :commands (:q :ru-j1 :f :ru-k1 :sig :ru-tsukishiro :sp1 :ru-hakuren :sp2 :ru-shirafune :breaker :ru-breaker :kikon :ru-kikon)
   :grid (:ru-j1 :ru-j2 :ru-j3 :ru-k1 :ru-k2 :ru-k3 :ru-j2s :ru-k2s)
-  :l-after-k :ru-tsukishiro-k                   ; L after K1 / K2 / K3 (docs/DUEL_STRINGS.md §12): the combo ring
+  :l-after-k :ru-tsukishiro-k                   ; L after K1 / K2 / K3 (docs/duel/DUEL_STRINGS.md §12): the combo ring
   :awaken-form :m18
   ;; a mid-range zoner: the ring and the waves at 5-8 m, J1 up close, Shirafune on a frozen / staggered victim
   ;; (:stun-follow); she awakens only against a melee opponent (:awaken: >= 60 % of >= 150 taken from blades)
@@ -331,7 +331,7 @@ now and then (*AI-RU-HOHO-IN* per free step). A command or NIL."
          (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)) (< (sim-rnd01) *ai-ru-hoho-in*)
          (why b :hoho-in :hoho))))
 
-;;; ---------------------------------------------------------------- her CPU's action policy (AI v2, docs/DUEL_AI_V2.md)
+;;; ---------------------------------------------------------------- her CPU's action policy (AI v2, docs/duel/DUEL_AI_V2.md)
 ;;; Every chance is per difficulty (EASY <= NORMAL <= HARD; NORMAL near the shipped CPU, HARD the full version).
 (defparameter *ai-ru-k-ender-l* '(:easy 0.0 :normal 0.02 :hard 0.9)
   "Her K3 (the K ender, crumple) hit: the band's L chained after it (the K -> L latch: TSUKISHIRO-K, SHIMOBASHIRA, HYOSHIN,
@@ -467,7 +467,7 @@ steps out of: about one in six lands, the wave about two in three), per decision
 ;;; Rooted, no Hoho: the shipped CPU at zero only answered with J / K (the ward's freeze-touch was followed up by a J1
 ;;; string 20 f late, a Breaker met with J1). At zero what touches the ward is answered at once with REIDO TOKETSU (her
 ;;; own ward's block is felt, no perception delay: the frozen attacker is still frozen at its f10), and a Breaker's dash
-;;; is met by the disc (a counter-hit on the dash, docs/DUEL_RUKIA.md 4.4) instead of J1. REIDO cashes the top bar (back
+;;; is met by the disc (a counter-hit on the dash, docs/duel/DUEL_RUKIA.md 4.4) instead of J1. REIDO cashes the top bar (back
 ;;; to -50), which a CRACK would empty entirely anyway.
 (defparameter *ai-ru-z-ward-reido* '(:easy 0.0 :normal 0.02 :hard 0.9)
   "Absolute zero: the ward just blocked a hit within REIDO's radius - 0.5 (the first melee one froze him): REIDO, per block.")
@@ -553,7 +553,7 @@ and the THAW lock (*RU-THAW-LOCK* frames in which guarding doesn't cool: the kit
 (defvar *ru-v* (make-f32 3) "A world point (the hand in 白霞罸's last shot).")
 
 (defcine ru-kikon-cine (a v :len 186 :hold 112)
-  "SOME NO MAI: TSUKISHIRO (the base Kikon; docs/DUEL_RUKIA.md §5.1): beat 0, the pirouette held; a white card, Rukia
+  "SOME NO MAI: TSUKISHIRO (the base Kikon; docs/duel/DUEL_RUKIA.md §5.1): beat 0, the pirouette held; a white card, Rukia
 black, the blade and ribbon the only white, under the 初の舞 / 月白 stamp, silence; high and wide: the circle drawn round
 the victim; low, wide-angle from outside it: the pillar of ice rises; a held push-in, poses and effects frozen, in
 silence; the shatter: a negative, a manga page, the ice and the figure in shards, the Konpaku; a wide, ice dust falling."

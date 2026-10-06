@@ -1,4 +1,4 @@
-// fx-toon-pal.wgsl — the toon effects' 13 palettes (docs/STYLE_STORM_DESIGN.md §3.3), sRGB, as a WGSL
+// fx-toon-pal.wgsl — the toon effects' 13 palettes (docs/style/STYLE_STORM_DESIGN.md §3.3), sRGB, as a WGSL
 // constant: palette p = PAL[4p .. 4p+3] = core (w = style: 0 energy, 1 matter puff, 2 fire hybrid),
 // body, shade, edge (w = edge width in px at 720 lines). No dark ink edge (user review 2, §13 round 6): fire,
 // ember, blood and matter have none (w 0), light energy keeps a coloured edge (its own shade tone), and the dark

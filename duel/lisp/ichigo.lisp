@@ -1,4 +1,4 @@
-;;;; ichigo.lisp — KUROSAKI ICHIGO (TYBW), docs/DUEL_ICHIGO.md (v2, the playtest redesign of 2026-09-29): his moves
+;;;; ichigo.lisp — KUROSAKI ICHIGO (TYBW), docs/duel/DUEL_ICHIGO.md (v2, the playtest redesign of 2026-09-29): his moves
 ;;;; (DEFMOVE), his two forms (DEFKIT) and his mechanics. :base is the dual-blade Shikai 二刀の斬月 (the long cleaver in the
 ;;;; right hand, the hiltless short blade in the left, the half-Hollow's single horn: close-to-mid rushdown, the cross
 ;;;; links that grind a guard; L is the stance 月待 TSUKIMACHI with a J / K / L / Step follow-up). The awakening 血鎖の一護
@@ -6,7 +6,7 @@
 ;;;; clones 分身 (a Step or a Hoho leaves one, up to three; every clone answers each J / K press, reversed: J a heavy, K a
 ;;;; light), O the clones' self-destructing charge 影討 (its Kikon 千影 worth 2 / 2 / 3 / 4 Konpaku by the clones at the
 ;;;; press), SP2 the afterimage state 残像. Everything of his lives here and in ichigo-art.lisp (the user's code layout,
-;;;; docs/DUEL_DESIGN.md "Character code layout"): the shared files only call his :hooks. Clip names are the art contract.
+;;;; docs/duel/DUEL_DESIGN.md "Character code layout"): the shared files only call his :hooks. Clip names are the art contract.
 ;;;; Most of his mechanics run in his :tick hook (after the hits of the step): the stance's follow-ups, the parry from
 ;;;; blockstun, the clones' answers (a J / K press edge), the Hoho clone, the O charge, the afterimages.
 (in-package :duel)
@@ -37,7 +37,7 @@
 2026-09-29: the v2 rework had made them free).")
 (defparameter *clone-lag* 6 "A clone's answer starts this long after the press.")
 (defparameter *clone-scale* 0.7 "A clone hit's damage x (its guard value too): every clone answers every press (the user's
-choice), so the per-hit share is the knob (the worst case, a J string with three clones, docs/DUEL_ICHIGO.md v2).")
+choice), so the per-hit share is the knob (the worst case, a J string with three clones, docs/duel/DUEL_ICHIGO.md v2).")
 (defparameter *clone-burst-dmg* 30 "O's strike gains this per charging clone (74800+k).")
 (defparameter *clone-konpaku* '(2 2 3 4) "The Kikon's Konpaku by the clones at the O press, 0 / 1 / 2 / 3 (the user's table).")
 ;; SP2 残像 ZANZO
@@ -58,7 +58,7 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
 ;;; ================================================================ 二刀の斬月 (base)
 ;;; J is the short blade (fast, short), K the long cleaver (slow, long, heavy on the gauge); a switched link 2 is the
 ;;; CROSS: both blades at once, the same frames, a heavier guard value (KAESHI-KIBA 12, KOGA 24). The reach since the J cut
-;;; (docs/DUEL_STRINGS.md §13): J1 / J2 0.5x (the short blade, a step in; KAESHI-KIBA's X closed at his chest: :ic-cross-j),
+;;; (docs/duel/DUEL_STRINGS.md §13): J1 / J2 0.5x (the short blade, a step in; KAESHI-KIBA's X closed at his chest: :ic-cross-j),
 ;;; J3 0.6x (the cleaver held up in the turn), K -10 %
 (defmove :ic-j1 :kind :quick :clip :ic-q1 :startup 7 :active 3 :recovery 12 :dmg 32 :adv-block -2 :guard 8
   :reach 1.1 :arc 100 :on-hit :flinch :slide 0.6)                        ; KOKIBA: the short blade flicked, reversed
@@ -182,7 +182,7 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
   :commands (:q :ic-j1 :f :ic-k1 :sig :ic-tsuki :sp1 :ic-juji :sp2 :ic-soga :breaker :ic-breaker :kikon :ic-kikon)
   :grid (:ic-j1 :ic-j2 :ic-j3 :ic-k1 :ic-k2 :ic-k3 :ic-j2s :ic-k2s)
   :strings *tsuki-strings*
-  :l-after-k :ic-tsuki-k2                       ; L after K1 / K2 / K3 (docs/DUEL_STRINGS.md §12): the stance at f4
+  :l-after-k :ic-tsuki-k2                       ; L after K1 / K2 / K3 (docs/duel/DUEL_STRINGS.md §12): the stance at f4
   :awaken-form :kessa :aura ichigo-aura-base
   :hooks *ichigo-hooks*
   ;; rushdown: J pressure at 1.4-2.4 m, the cleaver's K links into a guard (:block-string), the stance and SOGA in the
@@ -665,7 +665,7 @@ kept for the practice judge (ICHIGO-STRUCK)."
           (setf (model-rim m) (parry-rim (- 1.0 (/ (- sf (first w)) (float (max 1 (- (second w) (first w)))))))))
         (when (ics-rim-saved st) (setf (model-rim m) (ics-rim st) (ics-rim-saved st) nil)))))
 
-;;; ================================================================ the pacing log (debug; docs/DUEL_ICHIGO.md "The CPU with the stance and the clones")
+;;; ================================================================ the pacing log (debug; docs/duel/DUEL_ICHIGO.md "The CPU with the stance and the clones")
 (defun ic-acc-watch (e f st)
   "Each move instance of his, by name, and at its end its contact (NAME-HIT / -BLK / -WHF); the stance's entries by
 distance; the ticks in KESSA; each Kikon he lands, by form and worth."
@@ -762,7 +762,7 @@ edges they answer, the Hoho clone, the O charge), the parry from blockstun and i
     hit))
 
 (defun clone-idle-in-reach (e)
-  "The reach bucket of E's best idle clone to the opponent (docs/DUEL_ICHIGO.md \"The CPU with the stance and the
+  "The reach bucket of E's best idle clone to the opponent (docs/duel/DUEL_ICHIGO.md \"The CPU with the stance and the
 clones\"): :light (<= 2.4 m: both answers land), :heavy (<= 3.0 m: J's heavy lands), or NIL."
   (let ((best nil) (q (pos-of (opp-of e))))
     (dolist (h (ichigo-clones e) best)
@@ -811,7 +811,7 @@ into a coming hit (2, 3 with the gauge for them); the O itself stays the generic
           ((and (>= n 2) (<= d 8.6) (kit-command-ok-p e :kikon) (< (sim-rnd01) (* (if (>= n 3) 2 1) *ai-kessa-o-p*)))
            (why b :clones :kikon)))))
 
-;;; ================================================================ the CPU v2 (docs/DUEL_AI_V2.md; every chance by difficulty)
+;;; ================================================================ the CPU v2 (docs/duel/DUEL_AI_V2.md; every chance by difficulty)
 (defun ic-p (b easy normal hard)
   "A chance by brain B's difficulty: EASY <= NORMAL <= HARD (the user's layering, 2026-10-02)."
   (getf (list :easy easy :normal normal :hard hard) (brain-difficulty b) normal))
@@ -945,7 +945,7 @@ long punish."
 
 (defun ichigo-ai-ender (e kit)
   "Both forms' :sp-ender (ai.lisp STRING-REFLEX: our J3 / K3 hit, the victim pushed just out of reach, no O ender rolled):
-what chases him (a move started off a pushing ender chases, docs/DUEL_STRINGS.md §16). The Shikai: SOGA (SP2, 130) with a
+what chases him (a move started off a pushing ender chases, docs/duel/DUEL_STRINGS.md §16). The Shikai: SOGA (SP2, 130) with a
 bar, else the O poke (70); KESSA: KUSARI-BIKI (SP1: the chain pulls him back to 1.6 m and binds him 40 f, then the J
 follow-up). HARD: the SP 0.95, the Shikai's O poke all of the rest; NORMAL / EASY none (the generic SP cancel stays, the
 shipped behaviour). AI-BRAIN: for a human the ASSIST's borrowed (HARD) brain (its AUTO COMBO calls STRING-REFLEX)."
@@ -1000,7 +1000,7 @@ the Kikon's worth)."
       (let* ((a (+ (* -0.5 pi) (* (1- i) 0.45))) (x (+ cx (* r (cos a)))) (y (+ cy (* r (sin a)))))
         (ui-rect (- x (* 3 d)) (- y (* 3 d)) (* 6 d) (* 6 d) (if (< i n) '(0.82 0.06 0.11 1.0) '(0.3 0.3 0.32 0.6)))))))
 
-;;; ================================================================ debug (74000-75599, docs/DUEL_ICHIGO.md "Knobs")
+;;; ================================================================ debug (74000-75599, docs/duel/DUEL_ICHIGO.md "Knobs")
 (pushnew '(74000 75599 ichigo-debug) *char-debug* :test #'equal)
 
 (defparameter *ichigo-tests*

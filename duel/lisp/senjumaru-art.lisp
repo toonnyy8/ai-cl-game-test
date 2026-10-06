@@ -1,4 +1,4 @@
-;;;; senjumaru-art.lisp — SHUTARA SENJUMARU as art data (docs/DUEL_SENJUMARU.md §2, §10): her body (158 cm on tall okobo,
+;;;; senjumaru-art.lisp — SHUTARA SENJUMARU as art data (docs/duel/DUEL_SENJUMARU.md §2, §10): her body (158 cm on tall okobo,
 ;;;; the anime head x1.3, a white haori over a white over-robe, long black hair, the gold crescent with rays; the rig's two
 ;;;; arms are the upper pair of her six gold bone arms, the sleeves hang empty from the shoulders), the Divine Soldier's
 ;;;; body (:shinpei), the needle 刺絡 (:shigarami) and the soldier's spear, the props (the echo arms' bones, the loom and
@@ -634,7 +634,7 @@ framing the crescent (eased over ~0.1 s either way)."
                    (sj-thread x0 y0 z0 x1 y1 z1 (- 0.9 (* 0.12 lag)) 0.004 (float lag))
                    (setf x0 x1 y0 y1 z0 z1)))))))
 
-;; the K links' props (the user's playtest, 2026-09-29: the reach matches the art; docs/DUEL_SENJUMARU.md "Playtest"):
+;; the K links' props (the user's playtest, 2026-09-29: the reach matches the art; docs/duel/DUEL_SENJUMARU.md "Playtest"):
 ;; each is out to its move's hit-volume far edge at the hit frames. The host test (duel-rules-test) checks these against
 ;; the volumes, and the J links' needle tip against theirs
 (defparameter *sj-strike-reach*

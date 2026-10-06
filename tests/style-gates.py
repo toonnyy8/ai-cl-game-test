@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""style-gates.py — the Storm x Kubo restyle's harness (docs/STYLE_STORM_DESIGN.md §9: Phase 0 and the
+"""style-gates.py — the Storm x Kubo restyle's harness (docs/style/STYLE_STORM_DESIGN.md §9: Phase 0 and the
 standing gates G1 RAVEN identity, G2 duel determinism, G3 budgets). Run from the repository root; the
 dists are built with ./build.sh (a BASE dist is a copy of dist/NAME built before the change).
 

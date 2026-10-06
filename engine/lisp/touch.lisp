@@ -1,4 +1,4 @@
-;;;; touch.lisp — one-thumb gesture recogniser (docs/DUEL_MOBILE_DESIGN.md §3.2, G2). Plain CL, host-tested
+;;;; touch.lisp — one-thumb gesture recogniser (docs/duel/DUEL_MOBILE_DESIGN.md §3.2, G2). Plain CL, host-tested
 ;;;; (tests/touch-test.lisp); platform.lisp's TOUCH-POLL feeds it the frame's finger events (engine/c/platform.c).
 ;;;;   (make-touch)                       a recogniser; (touch-layout! tr ...) sets its flow pad and chips
 ;;;;   (touch-feed! tr n)                 process N queued events (TOUCH-Q, 5 floats each), then the clock (TOUCH-NOW)
