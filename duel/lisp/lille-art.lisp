@@ -2,12 +2,13 @@
 ;;;; docs/research/tybw-characters/notes/lille_barro_model_sheet.md): his four bodies (:lille 182 cm, dark skin #7A6155, all
 ;;;; in white with the green fur bicorne / stole / panel, the left eye shut under the ring-of-four-arcs mark; :lille-jilliel,
 ;;;; the holed cream column floating, its face in a round window, its arms hidden in it (the rig's hands are the front wing
-;;;; pair's tips); :lille-jilliel-kin, that column on the owl's legs; and :lille-shin, the owl: white, two long legs each
-;;;; forking at the knee into two shanks, long arms, a segmented S-neck, a tiny barn-owl face),
+;;;; pair's tips); :lille-jilliel-kin, that column on two ㄇ-shaped legs; and :lille-shin, the owl on KIN's model: the column
+;;;; in white, the ㄇ legs, long arms and an extra cosmetic pair, a segmented S-neck to a tiny barn-owl face),
 ;;;; Diagramm (2.4 m: the barrel through a fur sleeve, the plank across the rear, the muzzle cross), the props of his looks
 ;;;; (the wing blades with their three oval holes, the halos, the open eye, the reticle, the trumpet), every :lb-* pose and
-;;;; clip, his draw hook (Jilliel's eight wing blades in two fans / folded in MUJITTAI, the owl's eight gold wings, the
-;;;; halos, the aim line and its reticle, the eye opening, the trumpet, the reflect), his hazards' look, his HUD meter
+;;;; clip, his draw hook (Jilliel's eight wing blades in two fans / folded in MUJITTAI, the owl's eight gold wings, all of
+;;;; them translucent glass in an opaque rim; the ㄇ legs' shanks and struts; the owl's extra arms; the halos, the aim line
+;;;; and its reticle, the eye opening, the trumpet, the reflect), his hazards' look, his HUD meter
 ;;;; (the eye pips, the halo icon), his one-hand ring, his sounds and brush glyphs, and the cinematics' looks.
 ;;;; Batch 1 built the functional art (the strikes put the plank (J1 / J2 / the Breaker), the muzzle (J3, K) or the wing /
 ;;;; arm tips (Jilliel, the owl) where the moves' volumes end: *LB-STRIKE-POINTS*; the host FK test checks them); batch 3b
@@ -152,10 +153,12 @@
          (:cone 0.038 0.15 :at (-0.11 0.28 0) :rot (0 0 20) :seg 5 :c :cream :tag :jl-head)
          (:cyl 0.026 0.012 :at (0.08 0.2 0.12) :rot (0 90 0) :seg 10 :c :hole :tag :jl-head)))
 
-;; JILLIEL 近 KIN (decision 18, §22.2): the same column from the hips up on the owl's legs (decision 20): the column's lower
-;; half becomes a short rounded hip mass, two long thin cream legs fork at the knee into a fore and an aft shank (it reads
-;; as four). Built for the Jilliel clips' float (root :u 0.5): the rig's feet hang 0.5 m up, so the shanks run on 0.5 m past
-;; them to the floor (a KIN clip keeps :u near 0.5). Arms hidden and wings drawn as :lille-jilliel.
+;; JILLIEL 近 KIN (decision 18, §22.2): the same column from the hips up on two long thin cream legs: the column's lower half
+;; becomes a short rounded hip mass. The legs are ㄇ-shaped (decision 26, 2026-10-06: 「近戰與梟頭的腿部是從分岔點向後延伸出垂直
+;; 支架，在末端才以折角往下延伸，呈現出 ㄇ 字型」): a thigh down to the fork (here: the thigh and the fork's knob), then the
+;; front shank straight down from the fork, a strut running back from it and, at its end, the corner and the rear shank
+;; down; LILLE-DRAW draws the shanks and the strut in the thigh's frame, each shank's tip on the floor (they stretch or
+;; shrink a little with the clips' float, so the feet stay down). Arms hidden and wings drawn as :lille-jilliel.
 (defbody :lille-jilliel-kin (:scale 1.0 :width 1.0 :hunch 0 :hurt-r 0.38 :hurt-h 1.8 :props (:arms 2.6)
                              :palette ((:cream #xEDE6CC) (:cream-d #xD9D0B2) (:hole #x2A2A30) (:skin #x7A6155) (:eye #xF2F0EC)
                                        (:pupil #x2A3124))
@@ -188,40 +191,44 @@
          (:cone 0.038 0.15 :at (0.11 0.28 0) :rot (0 0 -20) :seg 5 :c :cream :tag :jl-head)
          (:cone 0.038 0.15 :at (-0.11 0.28 0) :rot (0 0 20) :seg 5 :c :cream :tag :jl-head)
          (:cyl 0.026 0.012 :at (0.08 0.2 0.12) :rot (0 90 0) :seg 10 :c :hole :tag :jl-head))
-  ;; the legs: a thigh to the knee (0.44 m), then two shanks 1.06 m (to the floor from the knee's 0.99 m at :u 0.5), 20
-  ;; degrees fore and aft, 4 out, tapering to points
-  (:thigh-r (:cyl 0.042 0.46 :top 0.055 :seg 8 :at (0 -0.22 0) :c :cream))
-  (:thigh-l (:cyl 0.042 0.46 :top 0.055 :seg 8 :at (0 -0.22 0) :c :cream))
-  (:shin-r (:sphere 0.052 :seg 8 :c :cream-d)
-           (:cyl 0.008 1.06 :top 0.036 :seg 6 :at (0.037 -0.498 0.181) :rot (0 20 4) :c :cream)
-           (:cyl 0.008 1.06 :top 0.036 :seg 6 :at (0.037 -0.498 -0.181) :rot (0 -20 4) :c :cream))
-  (:shin-l (:sphere 0.052 :seg 8 :c :cream-d)
-           (:cyl 0.008 1.06 :top 0.036 :seg 6 :at (-0.037 -0.498 0.181) :rot (0 20 -4) :c :cream)
-           (:cyl 0.008 1.06 :top 0.036 :seg 6 :at (-0.037 -0.498 -0.181) :rot (0 -20 -4) :c :cream)))
+  ;; the thighs (0.44 m) to the fork's knob; the ㄇ below it is LILLE-DRAW's (%LB-LEGS)
+  (:thigh-r (:cyl 0.042 0.46 :top 0.055 :seg 8 :at (0 -0.22 0) :c :cream) (:sphere 0.05 :seg 8 :at (0 -0.44 0) :c :cream-d))
+  (:thigh-l (:cyl 0.042 0.46 :top 0.055 :seg 8 :at (0 -0.22 0) :c :cream) (:sphere 0.05 :seg 8 :at (0 -0.44 0) :c :cream-d)))
 
-;; 真の姿 the owl: a white body, a narrow torso on a horizontal hip mass carried by two long thin legs (the rig's legs x1.5)
-;; that fork at the knee into a fore and an aft shank, so they read as four (decision 20, 2026-10-06: not four stilts),
-;; long thin arms (x2.2: the claws are the hands), a shaggy fur ruff, the segmented S-neck (belly plates on its front, a fur
-;; crest behind) to a tiny barn-owl face (a pale round facial disc, two big dark eyes, a small hooked beak, the hair swept
-;; back into the neck fur). The eight gold wings (two fans of four, as Jilliel's) and the small spiked halo are drawn by his
-;; :draw hook (LILLE-DRAW: the halo cracks when Trompete is sealed). Gold #B89A5A on the wings, the halo and the glow only.
+;; 真の姿 the owl, built on KIN's model (decision 27, 2026-10-06: 「梟頭型態的建模在原作中會呈現以目前的近戰型態為基礎，並將頭部換成
+;; 長頸梟頭與增加額外的手臂」): KIN's column (the rounded hip mass, the column widening to its top, its holes quiet in a cold
+;; shade) in the owl's white (the sheet's §5.4: white, gold only on the wings, the halo and the glow), the ribbon tendrils
+;; trailing from the hips, the ㄇ legs (the thighs here, the shanks and the strut drawn by LILLE-DRAW as KIN's), a shaggy fur
+;; ruff on the column's top and, in place of Jilliel's face, the segmented S-neck (belly plates in front, a fur crest behind)
+;; to a tiny barn-owl face (a pale round facial disc, two big dark eyes, a small hooked beak, the hair swept back into the
+;; neck fur). Its long thin arms (x2.2) are the rig's: the claws are the hands (the strike points); LILLE-DRAW adds the
+;; extra pair (cosmetic, %LB-ARMS2) and the eight gold wings and the small spiked halo (it cracks when Trompete is sealed).
 (defbody :lille-shin (:scale 1.0 :width 1.0 :hunch 0 :hurt-r 0.38 :hurt-h 1.8 :props (:arms 2.2 :legs 1.5)
                       :palette ((:white #xECECE8) (:shade #xBCC1CC) (:fur #xD8DCE4) (:face #xF0ECE4) (:gold #xB89A5A)
                                 (:gold-l #xC2A866) (:ink #x16161E) (:hole #x2A2A30) (:beak #x8C8E96))
                       :rim (#xFFE8C8 0.14))
-  (:pelvis (:bevel 0.34 0.18 0.66 0.05 :at (0 0 -0.16) :c :white)                          ; the horizontal hip mass
-           (:box 0.02 0.55 0.004 :at (0.1 -0.28 -0.46) :rot (0 20 0) :c :fur)                 ; ribbon tendrils
-           (:box 0.02 0.55 0.004 :at (-0.1 -0.28 -0.46) :rot (0 20 0) :c :fur)
-           (:box 0.02 0.45 0.004 :at (0 -0.24 -0.48) :rot (0 26 0) :c :fur))
-  (:spine (:cyl 0.1 0.26 :top 0.12 :seg 10 :at (0 0.1 0) :c :white)
-          (:box 0.1 0.012 0.012 :at (0 0.06 0.1) :c :shade) (:box 0.1 0.012 0.012 :at (0 0.14 0.11) :c :shade))
-  (:chest (:bevel 0.28 0.26 0.2 0.04 :at (0 0.11 0) :c :white)
-          (:sphere 0.17 :stretch -0.04 :at (0 0.27 -0.02) :seg 10 :c :fur)                ; the fur ruff, shaggy
-          (:cone 0.05 0.12 :at (0.17 0.28 0) :rot (0 0 -80) :seg 4 :c :fur) (:cone 0.05 0.12 :at (-0.17 0.28 0) :rot (0 0 80) :seg 4 :c :fur)
-          (:cone 0.05 0.12 :at (0.12 0.3 0.12) :rot (0 -40 -50) :seg 4 :c :fur) (:cone 0.05 0.12 :at (-0.12 0.3 0.12) :rot (0 -40 50) :seg 4 :c :fur)
-          (:cone 0.05 0.12 :at (0.1 0.3 -0.14) :rot (0 40 -50) :seg 4 :c :fur) (:cone 0.05 0.12 :at (-0.1 0.3 -0.14) :rot (0 40 50) :seg 4 :c :fur)
-          (:cone 0.05 0.12 :at (0 0.3 0.16) :rot (0 -70 0) :seg 4 :c :fur)
-          (:sphere 0.06 :at (0 0.28 0.1) :c :fur))                                 ; the wings' root behind the ruff
+  (:pelvis (:cyl 0.15 0.26 :top 0.13 :seg 12 :at (0 -0.08 0) :c :white)
+           (:sphere 0.15 :stretch -0.03 :at (0 -0.2 0) :seg 12 :c :white)                ; the rounded hip mass
+           (:cyl 0.03 0.012 :at (0.05 -0.1 0.138) :rot (0 90 0) :seg 10 :c :shade)
+           (:cyl 0.028 0.012 :at (-0.06 -0.2 0.135) :rot (0 90 0) :seg 10 :c :shade)
+           (:cyl 0.03 0.012 :at (0.142 -0.12 0) :rot (0 0 90) :seg 10 :c :shade)
+           (:cyl 0.03 0.012 :at (-0.143 -0.16 0) :rot (0 0 90) :seg 10 :c :shade)
+           (:box 0.02 0.55 0.004 :at (0.1 -0.3 -0.3) :rot (0 30 0) :c :fur)                  ; ribbon tendrils
+           (:box 0.02 0.55 0.004 :at (-0.1 -0.3 -0.3) :rot (0 30 0) :c :fur)
+           (:box 0.02 0.45 0.004 :at (0 -0.26 -0.32) :rot (0 36 0) :c :fur))
+  (:spine (:cyl 0.13 0.3 :top 0.15 :seg 12 :at (0 0.1 0) :c :white)
+          (:cyl 0.026 0.012 :at (-0.05 0.12 0.138) :rot (0 90 0) :seg 10 :c :shade))
+  (:chest (:cyl 0.16 0.42 :top 0.19 :seg 12 :at (0 0.14 0) :c :white)
+          (:cyl 0.032 0.012 :at (0.07 0.2 0.172) :rot (0 90 0) :seg 10 :c :shade)
+          (:cyl 0.032 0.012 :at (-0.075 0.16 0.17) :rot (0 90 0) :seg 10 :c :shade)
+          (:cyl 0.03 0.012 :at (0.0 0.04 0.168) :rot (0 90 0) :seg 10 :c :shade)
+          (:cyl 0.03 0.012 :at (0.05 0.2 -0.18) :rot (0 90 0) :seg 10 :c :shade)
+          (:sphere 0.2 :stretch -0.06 :at (0 0.36 -0.01) :seg 10 :c :fur)                 ; the fur ruff, shaggy, on the top
+          (:cone 0.06 0.14 :at (0.2 0.37 0) :rot (0 0 -80) :seg 4 :c :fur) (:cone 0.06 0.14 :at (-0.2 0.37 0) :rot (0 0 80) :seg 4 :c :fur)
+          (:cone 0.06 0.14 :at (0.14 0.39 0.14) :rot (0 -40 -50) :seg 4 :c :fur) (:cone 0.06 0.14 :at (-0.14 0.39 0.14) :rot (0 -40 50) :seg 4 :c :fur)
+          (:cone 0.06 0.14 :at (0.12 0.39 -0.16) :rot (0 40 -50) :seg 4 :c :fur) (:cone 0.06 0.14 :at (-0.12 0.39 -0.16) :rot (0 40 50) :seg 4 :c :fur)
+          (:cone 0.06 0.14 :at (0 0.39 0.19) :rot (0 -70 0) :seg 4 :c :fur) (:cone 0.06 0.14 :at (0 0.39 -0.2) :rot (0 70 0) :seg 4 :c :fur)
+          (:sphere 0.09 :stretch 0.04 :at (0 0.3 -0.13) :rot (0 0 90) :seg 10 :c :fur))   ; the wings' root, behind the top
   (:neck (:cyl 0.05 0.16 :at (0 0.06 0) :seg 8 :c :white))
   ;; the S-neck (five segments rising back, then forward and over), then the face
   (:head (:cyl 0.046 0.186 :top 0.041 :at (0 0.075 -0.035) :rot (0 25.0 0) :seg 8 :c :white)
@@ -258,16 +265,9 @@
            (:box 0.008 0.09 0.008 :at (-0.012 -0.15 0) :c :shade))
   (:hand-l (:box 0.05 0.12 0.02 :at (0 -0.06 0) :c :white) (:box 0.008 0.1 0.008 :at (-0.015 -0.16 0) :c :shade)
            (:box 0.008 0.09 0.008 :at (0.012 -0.15 0) :c :shade))
-  ;; the two legs: a thigh to the knee (0.66 m), then two shanks 0.75 m to the floor, 21 degrees fore and aft, 4 out,
-  ;; tapering to points (the rig's feet carry nothing)
-  (:thigh-r (:cyl 0.035 0.66 :top 0.05 :seg 8 :at (0 -0.33 0) :c :white))
-  (:thigh-l (:cyl 0.035 0.66 :top 0.05 :seg 8 :at (0 -0.33 0) :c :white))
-  (:shin-r (:sphere 0.045 :seg 8 :c :shade)
-           (:cyl 0.008 0.75 :top 0.032 :seg 6 :at (0.026 -0.35 0.134) :rot (0 21 4) :c :white)
-           (:cyl 0.008 0.75 :top 0.032 :seg 6 :at (0.026 -0.35 -0.134) :rot (0 -21 4) :c :white))
-  (:shin-l (:sphere 0.045 :seg 8 :c :shade)
-           (:cyl 0.008 0.75 :top 0.032 :seg 6 :at (-0.026 -0.35 0.134) :rot (0 21 -4) :c :white)
-           (:cyl 0.008 0.75 :top 0.032 :seg 6 :at (-0.026 -0.35 -0.134) :rot (0 -21 -4) :c :white)))
+  ;; the thighs (0.44 m, KIN's) to the fork's knob; the ㄇ below it is LILLE-DRAW's (%LB-LEGS)
+  (:thigh-r (:cyl 0.04 0.46 :top 0.05 :seg 8 :at (0 -0.22 0) :c :white) (:sphere 0.048 :seg 8 :at (0 -0.44 0) :c :shade))
+  (:thigh-l (:cyl 0.04 0.46 :top 0.05 :seg 8 :at (0 -0.22 0) :c :white) (:sphere 0.048 :seg 8 :at (0 -0.44 0) :c :shade)))
 
 ;;; ---------------------------------------------------------------- Diagramm and the props
 ;; ディアグラム DIAGRAMM: 2.4 m. The grip at the sleeve's rear: the barrel runs 1.75 m to the muzzle cross (the weapon's
@@ -320,47 +320,113 @@
 ;; a wing blade (decision 19: the refs' leaf), unit length along +Y from its root to its point, the flat face along Z: narrow
 ;; at the root, widest at the middle, a long point; its centreline bows toward +X (the trailing edge, torn into four teeth,
 ;; and the tip comes back onto the root-tip chord: a drawn tip is exactly where the frame puts it); three oval holes along it
-;; (the 24 muzzles). Built of quads (the bowed leaf is not convex): load time only.
+;; (the 24 muzzles). Translucent since decision 27 (2026-10-06: 「把翅膀調整成半透明以免遮擋視線」): two meshes per look, the
+;; GLASS (the leaf's two faces with the three holes cut through, drawn see-through) and the RIM (an opaque dark band round
+;; the outline, the teeth and a ring round each hole: what keeps it reading as a holed blade). Load time only.
 (defparameter *lb-wing-bow* 0.07 "The blade's centreline bow at its middle (unit length).")
 (defparameter *lb-wing-stations* '((0.0 0.03 0.03) (0.08 0.06 0.07) (0.2 0.1 0.12) (0.35 0.125 0.15) (0.5 0.13 0.155)
                                    (0.65 0.115 0.14) (0.8 0.08 0.1) (0.91 0.042 0.05) (1.0 0.0 0.0))
   "The blade's outline: y, the leading (-x) and the trailing (+x) half-widths off the bowed centreline.")
 (defparameter *lb-wing-teeth* '(0.3 0.47 0.63 0.77) "Where the trailing edge's teeth start (unit length).")
 (defparameter *lb-wing-holes* '((0.36 0.055 0.085) (0.55 0.05 0.075) (0.73 0.04 0.055)) "y rx ry (unit length), on the centreline.")
+(defparameter *lb-wing-band* 0.016 "The rim's band round the outline and the holes (unit length).")
 (defun lb-wing-c (y) (* *lb-wing-bow* 4 y (- 1 y)))
-(defun lb-wing-edge (y) "The trailing edge's x at Y." 
+(defun lb-wing-half (y col)
+  "The half-width at Y off the centreline: COL 1 the leading side, 2 the trailing side (the stations interpolated)."
   (let ((lo (find-if (lambda (r) (>= (first r) y)) *lb-wing-stations*))
         (hi (find-if (lambda (r) (<= (first r) y)) *lb-wing-stations* :from-end t)))
-    (+ (lb-wing-c y) (if (or (eq lo hi) (= (first lo) (first hi))) (third lo)
-                         (+ (third hi) (* (- y (first hi)) (/ (- (third lo) (third hi)) (- (first lo) (first hi)))))))))
-(defun lb-wing-blade (mb body dark)
+    (if (or (eq lo hi) (= (first lo) (first hi))) (nth col lo)
+        (+ (nth col hi) (* (- y (first hi)) (/ (- (nth col lo) (nth col hi)) (- (first lo) (first hi))))))))
+(defun lb-wing-edge (y) "The trailing edge's x at Y." (+ (lb-wing-c y) (lb-wing-half y 2)))
+(defun lb-wing-lead (y) "The leading edge's x at Y." (- (lb-wing-c y) (lb-wing-half y 1)))
+(defun lb-wing-hole-x (y) "A hole's centre x at Y." (+ 0.01 (lb-wing-c y)))
+(defun lb-wing-ys ()
+  "The glass's rows: every 0.025, the stations, and finer through each hole (its ends exact, so a row is in or out)."
+  (sort (remove-duplicates
+         (append (loop for i to 40 collect (/ i 40.0)) (mapcar #'first *lb-wing-stations*)
+                 (loop for (y nil ry) in *lb-wing-holes* append (loop for i to 12 collect (+ (- y ry) (* (/ i 12.0) 2 ry)))))
+         :test (lambda (a b) (< (abs (- a b)) 1e-4)))
+        #'<))
+(defun lb-face (mb pts z up)
+  "One face of the glass: the convex polygon PTS ((x y) ...) at Z, facing +Z when UP else -Z (no rim: a single layer)."
+  (let ((pts (remove-duplicates pts :test (lambda (a b) (< (+ (abs (- (first a) (first b))) (abs (- (second a) (second b)))) 1e-5)))))
+    (when (>= (length pts) 3)
+      (let ((cx (/ (reduce #'+ pts :key #'first) (length pts))) (cy (/ (reduce #'+ pts :key #'second) (length pts))))
+        (mb-poly-out mb (mapcar (lambda (p) (v3 (first p) (second p) z)) pts) :center (list cx cy (if up (- z 1) (+ z 1))))))))
+(defun lb-wing-glass (mb body)
+  "The see-through leaf: both faces, row by row, the three holes cut through (a row inside a hole splits in two)."
   (mbc mb body)
-  (loop for (a b) on *lb-wing-stations* while b
-        do (destructuring-bind ((y0 l0 t0) (y1 l1 t1)) (list a b)
-             (let ((c0 (lb-wing-c y0)) (c1 (lb-wing-c y1)))
-               (lb-plate mb (if (< (+ l1 t1) 1e-4)
-                                (list (list (- c0 l0) y0) (list (+ c0 t0) y0) (list c1 y1))
-                                (list (list (- c0 l0) y0) (list (+ c0 t0) y0) (list (+ c1 t1) y1) (list (- c1 l1) y1)))
-                         0.018))))
+  (let ((h 0.008))
+    (loop for (y0 y1) on (lb-wing-ys) while y1
+          do (let* ((ym (* 0.5 (+ y0 y1)))
+                    (hole (find-if (lambda (hh) (< (abs (- ym (first hh))) (third hh))) *lb-wing-holes*))
+                    (spans
+                      (if hole
+                          (destructuring-bind (hy rx ry) hole
+                            (flet ((hw (y) (* rx (sqrt (max 0.0 (- 1 (expt (/ (- y hy) ry) 2)))))))
+                              (list (list (list (lb-wing-lead y0) y0) (list (- (lb-wing-hole-x y0) (hw y0)) y0)
+                                          (list (- (lb-wing-hole-x y1) (hw y1)) y1) (list (lb-wing-lead y1) y1))
+                                    (list (list (+ (lb-wing-hole-x y0) (hw y0)) y0) (list (lb-wing-edge y0) y0)
+                                          (list (lb-wing-edge y1) y1) (list (+ (lb-wing-hole-x y1) (hw y1)) y1)))))
+                          (list (list (list (lb-wing-lead y0) y0) (list (lb-wing-edge y0) y0)
+                                      (list (lb-wing-edge y1) y1) (list (lb-wing-lead y1) y1))))))
+               (dolist (q spans) (lb-face mb q h t) (lb-face mb q (- h) nil))))))
+(defun lb-wing-rim (mb dark hole-fill)
+  "The opaque rim: a band inside the outline (leading and trailing edges), the four teeth on the trailing edge, and a ring
+round each hole; HOLE-FILL (a colour, NIJUSHI-KO's tell) fills the holes with light."
   (mbc mb dark)
-  (dolist (y *lb-wing-teeth*)
-    (let ((e0 (lb-wing-edge y)) (e1 (lb-wing-edge (+ y 0.11))))
-      (lb-plate mb (list (list (- e0 0.02) y) (list (- e1 0.02) (+ y 0.11)) (list (+ e0 0.07) (- y 0.03))) 0.016))))
-(defun lb-wing-holes (mb hole core)
-  (dolist (h *lb-wing-holes*)
-    (destructuring-bind (y rx ry) h
-      (let ((x (+ 0.01 (lb-wing-c y))))
-        (mbc mb hole) (lb-oval mb x y rx ry 0.026)
-        (mbc mb core) (lb-oval mb x y (* 0.5 rx) (* 0.5 ry) 0.032 8)))))
-(defweapon :lb-wing (:length 1.0)                     ; Jilliel's (muted jade)
-  (:solid (lb-wing-blade mb #x6E9A80 #x4E6E5C))
-  (:solid :ink 0 (lb-wing-holes mb #x2A2A30 #x9CC4AC)))
-(defweapon :lb-wing-lit (:length 1.0)                 ; NIJUSHI-KO's tell: the 24 holes lit
-  (:solid (lb-wing-blade mb #x6E9A80 #x4E6E5C))
-  (:solid :ink 0 (lb-wing-holes mb #xEAF4EE #xFFFFFF)))
-(defweapon :lb-wing-gold (:length 1.0)                ; the owl's (#B89A5A)
-  (:solid (lb-wing-blade mb #xB89A5A #x9A8048))   ; decision 11: #B89A5A (the lead restored it; 3b had #CDB47A)
-  (:solid :ink 0 (lb-wing-holes mb #x3A3020 #xF2E6C0)))
+  (let ((bw *lb-wing-band*) (th 0.024))
+    (loop for (y0 y1) on (lb-wing-ys) while y1
+          do (flet ((w (y) (min bw (* 0.5 (+ (lb-wing-half y 1) (lb-wing-half y 2)))))
+                    (band (x0 x1 d0 d1)
+                      (let ((q (remove-duplicates (list (list x0 y0) (list (+ x0 d0) y0) (list (+ x1 d1) y1) (list x1 y1))
+                                                  :test (lambda (a b) (< (+ (abs (- (first a) (first b))) (abs (- (second a) (second b)))) 1e-5)))))
+                        (when (>= (length q) 3) (lb-plate mb q th)))))
+               (band (lb-wing-lead y0) (lb-wing-lead y1) (w y0) (w y1))
+               (band (lb-wing-edge y0) (lb-wing-edge y1) (- (w y0)) (- (w y1)))))
+    (dolist (y *lb-wing-teeth*)
+      (let ((e0 (lb-wing-edge y)) (e1 (lb-wing-edge (+ y 0.11))))
+        (lb-plate mb (list (list (- e0 0.02) y) (list (- e1 0.02) (+ y 0.11)) (list (+ e0 0.07) (- y 0.03))) th)))
+    (dolist (hh *lb-wing-holes*)
+      (destructuring-bind (y rx ry) hh
+        (let ((x (lb-wing-hole-x y)) (n 16))
+          (dotimes (i n)
+            (let ((a0 (* 2 pi (/ i n))) (a1 (* 2 pi (/ (1+ i) n))))
+              (flet ((pt (a r) (list (+ x (* (+ rx r) (cos a))) (+ y (* (+ ry r) (sin a))))))
+                (lb-plate mb (list (pt a0 0) (pt a0 (* 0.8 bw)) (pt a1 (* 0.8 bw)) (pt a1 0)) th))))
+          (when hole-fill
+            (mbc mb hole-fill) (lb-oval mb x y rx ry 0.02 16) (mbc mb dark)))))))
+(defweapon :lb-wing (:length 1.0)                     ; Jilliel's glass (muted jade, drawn see-through)
+  (:solid :ink 0 (lb-wing-glass mb #x6E9A80)))
+(defweapon :lb-wing-rim (:length 1.0)                 ; ... its rim (opaque: the blade's outline, teeth and hole rings)
+  (:solid :ink 0 (lb-wing-rim mb #x2F4A3C nil)))
+(defweapon :lb-wing-lit (:length 1.0)                 ; NIJUSHI-KO's tell: the rim with the 24 holes lit
+  (:solid :ink 0 (lb-wing-rim mb #x2F4A3C #xEAF4EE)))
+(defweapon :lb-wing-gold (:length 1.0)                ; the owl's glass (#B89A5A, decision 11)
+  (:solid :ink 0 (lb-wing-glass mb #xB89A5A)))
+(defweapon :lb-wing-gold-rim (:length 1.0)            ; ... its rim (a darker step of the same hue)
+  (:solid :ink 0 (lb-wing-rim mb #x8A7038 nil)))
+;; the ㄇ legs' props (decision 26), drawn by LILLE-DRAW from the fork at the thigh's end: a shank (unit length along +Y, its
+;; root at the origin, tapering to a point; drawn at its length so its tip meets the floor) and the strut (unit along +Y, the
+;; corner's knob at its end; drawn at 0.52 m), cream (KIN) or white (the owl)
+(defun lb-shank (mb c) (mbc mb c) (with-xform (mb (xform :y 0.5)) (mb-cylinder mb 0.048 1.0 :segments 8 :top-radius 0.006 :smooth t)))
+(defun lb-strut (mb c d)
+  (mbc mb c) (with-xform (mb (xform :y 0.5)) (mb-cylinder mb 0.08 1.0 :segments 8 :top-radius 0.074 :smooth t))
+  (mbc mb d) (with-xform (mb (xform :y 1.0)) (mb-sphere mb 0.11 :segments 8 :rings 5 :smooth t)))
+(defweapon :lb-shank-cream (:length 1.0) (:solid (lb-shank mb #xEDE6CC)))
+(defweapon :lb-shank-white (:length 1.0) (:solid (lb-shank mb #xECECE8)))
+(defweapon :lb-strut-cream (:length 1.0) (:solid (lb-strut mb #xEDE6CC #xD9D0B2)))
+(defweapon :lb-strut-white (:length 1.0) (:solid (lb-strut mb #xECECE8 #xBCC1CC)))
+;; the owl's extra pair of long arms (decision 27; cosmetic: the rig's arms strike): a limb (unit along +Y, an elbow knob at
+;; its end; drawn at the rig arm's bone length) and the claw (metres: a long narrow hand, three long fingers)
+(defweapon :lb-limb (:length 1.0)
+  (:solid (mbc mb #xECECE8) (with-xform (mb (xform :y 0.5)) (mb-cylinder mb 0.047 1.0 :segments 8 :top-radius 0.04 :smooth t))
+          (with-xform (mb (xform :y 1.0)) (mb-sphere mb 0.055 :segments 8 :rings 5 :smooth t))))
+(defweapon :lb-claw (:length 0.3)
+  (:solid (mbc mb #xECECE8) (with-xform (mb (xform :y 0.06)) (mb-box mb 0.05 0.12 0.02))
+          (mbc mb #xBCC1CC) (with-xform (mb (xform :y 0.17 :x 0.016)) (mb-box mb 0.008 0.12 0.008))
+          (with-xform (mb (xform :y 0.175 :x 0.0)) (mb-box mb 0.008 0.13 0.008))
+          (with-xform (mb (xform :y 0.165 :x -0.016)) (mb-box mb 0.008 0.11 0.008))))
 ;; the halos, unit radius: Jilliel's wide thin flat ring; the owl's small ring with six spikes; the owl's broken one
 (defweapon :lb-halo (:length 1.0) (:solid (mbc mb #x9CC4AC) (lb-ring mb 0.9 1.0 0.03 :n 32)))
 (defun lb-spikes (mb n &key (skip nil))
@@ -647,7 +713,7 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
 (defpose :lb-o-stance ()
   (:root :u -0.02) (:spine :flex 4) (:head :flex 10)
   (:arm-r :flex 8 :side 10) (:elbow-r :flex 12) (:arm-l :flex 8 :side 10) (:elbow-l :flex 12)
-  (:thigh-r :flex 6 :side 6) (:thigh-l :flex -4 :side 6) (:knees :flex 6))
+  (:thigh-r :flex 0 :side 5) (:thigh-l :flex 0 :side 5) (:knees :flex 0))   ; (the ㄇ legs stand square: decision 26)
 (defclip :lb-o-stance (2.4 :loop t :base :lb-o-stance)
   (0) (1.2 (:root :u -0.04) (:head :flex 18 :twist 10) (:arm-r :flex 14) (:arm-l :flex 4)))
 (defpose :lb-o-q1-hit (:base :lb-o-stance) (:root :f 0.42) (:spine :flex 16) (:arm-r :flex 80 :side 6) (:elbow-r :flex 6))
@@ -834,6 +900,14 @@ go through *LB-V* [17..22]: a DEFUN-FAST call would box them)."
     nil))
 
 ;;; ---------------------------------------------------------------- the wings (Jilliel's eight, the owl's eight)
+;; Translucent (decision 27, 2026-10-06: 「把翅膀調整成半透明以免遮擋視線」): the engine draws an alpha < 1 in its transparent
+;; pass (the lit shader, after the opaque scene, no depth write: what is behind shows through; the toon pass is opaque only),
+;; where a plain colour reads dark (the duel's toon light is not the lit shader's), so the glass carries a glow (emissive x
+;; its colour) that brings it back to its jade / gold; its opaque rim keeps the toon look and the blade's shape.
+(defparameter *lb-glass-alpha* 0.35 "The wings' glass alpha (decision 27): the fight shows through a blade.")
+(defparameter *lb-glass-glow* 1.0 "The glass's emissive (x its colour): the translucent path's colour back to the jade / gold.")
+(defparameter *lb-glass-ghost* 0.18 "MUJITTAI's glass alpha (more ghostly than the normal wings) ...")
+(defparameter *lb-rim-ghost* 0.4 "... and its rim's (see-through too).")
 ;; Two fans of four (decision 19; the refs: the upper pair high and out, the lowest pair down and out), rooted behind the
 ;; column's top (the owl: behind the ruff). Per wing, a row of 10 in an f32vec (read in DEFUN-FAST code without consing):
 ;; side, elevation (degrees above the horizontal), length (m), sweep back, where it folds to (MUJITTAI: down round the
@@ -861,15 +935,20 @@ its claws are its hands.")
 (the joint's local point, each side 0.07 m out) in *LB-V* [0..2], the fold [11], the ripple [12] at the fx clock [13],
 their alpha [14], the pairs shown [15] from the pair [23], the length x [16], the spread [28] (the SPs: the fan wider and
 swept forward). Idle, each sways on its own phase (the fx clock: cosmetic). A front wing runs from its root to the rig's
-hand: the drawn tip is the hand, the strike point the host FK test reads (*LB-STRIKE-POINTS*)."
+hand: the drawn tip is the hand, the strike point the host FK test reads (*LB-STRIKE-POINTS*). Each blade is its glass drawn
+see-through (*LB-GLASS-ALPHA*, a glow so the engine's translucent path keeps its colour) and its opaque rim; an alpha [14]
+under 1 (MUJITTAI) is the ghost: the glass fainter (*LB-GLASS-GHOST*) and the rim see-through too (*LB-RIM-GHOST*)."
   (declare (type f32vec jm tbl) (fixnum o n kind))
-  (let* ((v *lb-v*) (k (aref v 11)) (j (- 1f0 k)) (rip (aref v 12)) (tm (aref v 13)) (al (lb-alpha (aref v 14)))
+  (let* ((v *lb-v*) (k (aref v 11)) (j (- 1f0 k)) (rip (aref v 12)) (tm (aref v 13)) (a (aref v 14))
+         (ghost (< a 0.99f0))
+         (ga (lb-alpha (if ghost (the single-float *lb-glass-ghost*) (* a (the single-float *lb-glass-alpha*)))))
+         (ra (lb-alpha (if ghost (the single-float *lb-rim-ghost*) a))) (re (if ghost *lb-glass-glow* (svref *lb-alphas* 0)))
          (pairs (f->i (aref v 15))) (lk (aref v 16)) (from (f->i (aref v 23))) (sp (aref v 28))
          (rx (aref v 0)) (ry (aref v 1)) (rz (aref v 2))
          (xx (aref jm o)) (xy (aref jm (+ o 1))) (xz (aref jm (+ o 2)))
          (yx (aref jm (+ o 4))) (yy (aref jm (+ o 5))) (yz (aref jm (+ o 6)))
          (zx (aref jm (+ o 8))) (zy (aref jm (+ o 9))) (zz (aref jm (+ o 10))))
-    (declare (type f32vec v) (single-float k j rip tm lk sp rx ry rz xx xy xz yx yy yz zx zy zz) (fixnum pairs from))
+    (declare (type f32vec v) (single-float k j rip tm a lk sp rx ry rz xx xy xz yx yy yz zx zy zz) (fixnum pairs from))
     (dotimes (i n)
       (when (<= from (floor i 2) (1- pairs))
         (let* ((r (* 10 i)) (s (aref tbl r)) (lx (+ rx (* 0.07f0 s)))
@@ -900,10 +979,11 @@ hand: the drawn tip is the hand, the strike point the host FK test reads (*LB-ST
                 (declare (single-float e ax ay az lx2 ly2 lz2 fl nlx nlz dx dy dz dl len))
                 (%lb-frame! *lb-m* ox oy oz (/ dx dl) (/ dy dl) (/ dz dl)
                             (+ (* xx nlx) (* zx nlz)) (+ (* xy nlx) (* zy nlz)) (+ (* xz nlx) (* zz nlz)) len)))
-          (case kind
-            (0 (draw-weapon :lb-wing *lb-m* :alpha al))
-            (1 (draw-weapon :lb-wing-lit *lb-m* :alpha al))
-            (t (draw-weapon :lb-wing-gold *lb-m* :alpha al))))))
+          (case kind                                     ; the glass see-through, then its rim (decision 27)
+            (0 (draw-weapon :lb-wing *lb-m* :alpha ga :emissive *lb-glass-glow*) (draw-weapon :lb-wing-rim *lb-m* :alpha ra :emissive re))
+            (1 (draw-weapon :lb-wing *lb-m* :alpha ga :emissive *lb-glass-glow*) (draw-weapon :lb-wing-lit *lb-m* :alpha ra :emissive re))
+            (t (draw-weapon :lb-wing-gold *lb-m* :alpha ga :emissive *lb-glass-glow*)
+               (draw-weapon :lb-wing-gold-rim *lb-m* :alpha ra :emissive re))))))
     nil))
 
 (defmacro %lb-halo (jm o kind lift r)
@@ -915,9 +995,103 @@ gold one, 2 the owl's broken one. The alpha: *LB-V* [14]; LIFT and R go through 
   (%lb-joint-frame! *lb-m* jm o 0f0 (aref *lb-v* 17) (if (= kind 0) 0f0 -0.2f0) (aref *lb-v* 18))
   (let ((al (lb-alpha (aref *lb-v* 14))))
     (case kind
-      (0 (draw-weapon :lb-halo *lb-m* :alpha al))
+      (0 (draw-weapon :lb-halo *lb-m* :alpha al :emissive (if (< (aref *lb-v* 14) 0.99f0) *lb-glass-glow* (svref *lb-alphas* 0))))
       (1 (draw-weapon :lb-halo-gold *lb-m* :alpha al))
       (t (draw-weapon :lb-halo-broken *lb-m* :alpha al))))
+  nil)
+
+;;; ---------------------------------------------------------------- the ㄇ legs (KIN and the owl) and the owl's extra arms
+;; Decision 26: from the fork (the thigh's end, 0.44 m below the hip: the body's knob) the front shank runs down, the strut
+;; runs back (horizontal in the thigh's frame) and from its end (the corner's knob) the rear shank runs down: from the side
+;; the two shanks and the strut read as ㄇ. Drawn in the thigh's frame (so a hit reaction or a knockdown carries the whole
+;; leg); each shank's length is where its line meets the floor (the feet height of his body's draw, *TOON-BODY* [1]), within
+;; 0.45-1.35 of its 1 m rest (the clips' float moves the fork; a leg pitched far from upright keeps the rest length).
+(defparameter *lb-leg-fork* 0.44 "The fork's distance down the thigh (m; the body's knob).")
+(defparameter *lb-leg-strut* 0.52 "The strut's length back from the fork (m): the ㄇ's top bar.")
+(defmacro %lb-shank-len (py dy)
+  "The shank from height PY along the unit direction's DY: where it meets the floor (*LB-V* [3]), clamped; else 1 m."
+  `(let ((%py ,py) (%dy ,dy))
+     (declare (single-float %py %dy))
+     (if (< %dy -0.35f0) (f-clamp (/ (- %py (aref *lb-v* 3)) (- %dy)) 0.45f0 1.35f0) 1f0)))
+(defmacro %lb-unit! (x y z)
+  "Normalise the single-float places X Y Z in place (0 B)."
+  `(let ((%l (f-max 1f-5 (f-sqrt (+ (* ,x ,x) (* ,y ,y) (* ,z ,z)))))) (declare (single-float %l))
+     (setf ,x (/ ,x %l) ,y (/ ,y %l) ,z (/ ,z %l))))
+(defun-fast %lb-legs (jm white fl)
+  "Both ㄇ legs (decision 26) from the thighs of JM: WHITE 1 the owl's, else KIN's cream; FL 1 the hit flash. The floor's
+height in *LB-V* [3], the alpha in [4] (MUJITTAI's body alpha)."
+  (declare (type f32vec jm) (fixnum white fl))
+  (let ((al (lb-alpha (aref *lb-v* 4))) (fla (svref *lb-alphas* (if (= fl 1) 9 0))))   ; (boxed: 0 B)
+    (dotimes (side 2)
+      (let* ((o (if (= side 0) (* 16 (ji :thigh-r)) (* 16 (ji :thigh-l)))) (s (if (= side 0) 1f0 -1f0))
+             (ox (* s (aref jm o))) (oy (* s (aref jm (+ o 1)))) (oz (* s (aref jm (+ o 2))))            ; out
+             (yx (aref jm (+ o 4))) (yy (aref jm (+ o 5))) (yz (aref jm (+ o 6)))                      ; up the thigh
+             (bx (aref jm (+ o 8))) (by (aref jm (+ o 9))) (bz (aref jm (+ o 10)))                     ; back
+             (fk (the single-float *lb-leg-fork*)) (ls (the single-float *lb-leg-strut*))
+             (px (- (aref jm (+ o 12)) (* fk yx))) (py (- (aref jm (+ o 13)) (* fk yy))) (pz (- (aref jm (+ o 14)) (* fk yz)))
+             ;; the front shank: down, a little forward and out
+             (fx (- (* 0.07f0 ox) yx (* 0.1f0 bx))) (fy (- (* 0.07f0 oy) yy (* 0.1f0 by))) (fz (- (* 0.07f0 oz) yz (* 0.1f0 bz)))
+             ;; the strut: back, a little out; the rear shank: down, a little back and out
+             (sx (+ bx (* 0.04f0 ox))) (sy (+ by (* 0.04f0 oy))) (sz (+ bz (* 0.04f0 oz)))
+             (rx (+ (- yx) (* 0.12f0 bx) (* 0.07f0 ox))) (ry (+ (- yy) (* 0.12f0 by) (* 0.07f0 oy)))
+             (rz (+ (- yz) (* 0.12f0 bz) (* 0.07f0 oz))))
+        (declare (fixnum o) (single-float s ox oy oz yx yy yz bx by bz fk ls px py pz fx fy fz sx sy sz rx ry rz))
+        (%lb-unit! fx fy fz) (%lb-unit! sx sy sz) (%lb-unit! rx ry rz)
+        (let ((lf (%lb-shank-len py fy)) (cx (+ px (* ls sx))) (cy (+ py (* ls sy))) (cz (+ pz (* ls sz))))
+          (declare (single-float lf cx cy cz))
+          (%lb-frame! *lb-m* px py pz fx fy fz ox oy oz lf 1f0)
+          (if (= white 1) (draw-weapon :lb-shank-white *lb-m* :alpha al :flash fla) (draw-weapon :lb-shank-cream *lb-m* :alpha al :flash fla))
+          (%lb-frame! *lb-m* px py pz sx sy sz ox oy oz ls)
+          (if (= white 1) (draw-weapon :lb-strut-white *lb-m* :alpha al :flash fla) (draw-weapon :lb-strut-cream *lb-m* :alpha al :flash fla))
+          (let ((lr (%lb-shank-len cy ry)))
+            (declare (single-float lr))
+            (%lb-frame! *lb-m* cx cy cz rx ry rz ox oy oz lr 1f0)
+            (if (= white 1) (draw-weapon :lb-shank-white *lb-m* :alpha al :flash fla)
+                (draw-weapon :lb-shank-cream *lb-m* :alpha al :flash fla)))))))
+  nil)
+
+;; Decision 27: the owl has an extra pair of long arms. The rig's arms strike (their claws are the hands, the host FK test's
+;; points); the extra pair is cosmetic: rooted a little lower and behind the rig's shoulders, each segment half the rig
+;; arm's direction and half hanging down (and a little out), so it follows the strikes at a smaller swing, swaying on its
+;; own phase (the fx clock, *LB-V* [13]).
+(defun-fast %lb-arms2 (jm fl)
+  "The owl's extra pair of arms from the rig arms of JM (FL 1 the hit flash)."
+  (declare (type f32vec jm) (fixnum fl))
+  (let* ((c (* 16 (ji :chest))) (fla (svref *lb-alphas* (if (= fl 1) 9 0))) (tm (aref *lb-v* 13))
+         (xx (aref jm c)) (xy (aref jm (+ c 1))) (xz (aref jm (+ c 2)))
+         (yx (aref jm (+ c 4))) (yy (aref jm (+ c 5))) (yz (aref jm (+ c 6)))
+         (zx (aref jm (+ c 8))) (zy (aref jm (+ c 9))) (zz (aref jm (+ c 10))))
+    (declare (fixnum c) (single-float tm xx xy xz yx yy yz zx zy zz))
+    (dotimes (side 2)
+      (let* ((u (if (= side 0) (* 16 (ji :upper-arm-r)) (* 16 (ji :upper-arm-l))))
+             (l (if (= side 0) (* 16 (ji :lower-arm-r)) (* 16 (ji :lower-arm-l))))
+             (h (if (= side 0) (* 16 (ji :hand-r)) (* 16 (ji :hand-l))))
+             (s (if (= side 0) 1f0 -1f0)) (sw (* 0.07f0 (f-sin (+ (* 1.7f0 tm) (* 2.1f0 (i->f side))))))
+             (ax (+ (aref jm (+ u 12)) (* -0.13f0 yx) (* 0.05f0 zx) (* -0.02f0 s xx)))
+             (ay (+ (aref jm (+ u 13)) (* -0.13f0 yy) (* 0.05f0 zy) (* -0.02f0 s xy)))
+             (az (+ (aref jm (+ u 14)) (* -0.13f0 yz) (* 0.05f0 zz) (* -0.02f0 s xz)))
+             (ux (- (aref jm (+ l 12)) (aref jm (+ u 12)))) (uy (- (aref jm (+ l 13)) (aref jm (+ u 13))))
+             (uz (- (aref jm (+ l 14)) (aref jm (+ u 14))))
+             (lu (f-max 0.05f0 (f-sqrt (+ (* ux ux) (* uy uy) (* uz uz)))))
+             (vx (- (aref jm (+ h 12)) (aref jm (+ l 12)))) (vy (- (aref jm (+ h 13)) (aref jm (+ l 13))))
+             (vz (- (aref jm (+ h 14)) (aref jm (+ l 14))))
+             (ll (f-max 0.05f0 (f-sqrt (+ (* vx vx) (* vy vy) (* vz vz))))))
+        (declare (fixnum u l h) (single-float s sw ax ay az ux uy uz lu vx vy vz ll))
+        (setf ux (+ (* 0.55f0 (/ ux lu)) (* -0.45f0 yx) (* 0.2f0 s xx) (* (- sw) zx))
+              uy (+ (* 0.55f0 (/ uy lu)) (* -0.45f0 yy) (* 0.2f0 s xy) (* (- sw) zy))
+              uz (+ (* 0.55f0 (/ uz lu)) (* -0.45f0 yz) (* 0.2f0 s xz) (* (- sw) zz))
+              vx (+ (* 0.55f0 (/ vx ll)) (* -0.45f0 yx) (* 0.06f0 s xx) (* (- sw) zx))
+              vy (+ (* 0.55f0 (/ vy ll)) (* -0.45f0 yy) (* 0.06f0 s xy) (* (- sw) zy))
+              vz (+ (* 0.55f0 (/ vz ll)) (* -0.45f0 yz) (* 0.06f0 s xz) (* (- sw) zz)))
+        (%lb-unit! ux uy uz) (%lb-unit! vx vy vz)
+        (%lb-frame! *lb-m* ax ay az ux uy uz xx xy xz lu)
+        (draw-weapon :lb-limb *lb-m* :flash fla)
+        (let ((ex (+ ax (* lu ux))) (ey (+ ay (* lu uy))) (ez (+ az (* lu uz))))
+          (declare (single-float ex ey ez))
+          (%lb-frame! *lb-m* ex ey ez vx vy vz xx xy xz ll)
+          (draw-weapon :lb-limb *lb-m* :flash fla)
+          (%lb-frame! *lb-m* (+ ex (* ll vx)) (+ ey (* ll vy)) (+ ez (* ll vz)) vx vy vz zx zy zz 1f0)
+          (draw-weapon :lb-claw *lb-m* :flash fla)))))
   nil)
 
 ;;; ---------------------------------------------------------------- the looks keyed on his state
@@ -1059,7 +1233,8 @@ his halo cracking (gold shards); the broken halo stays (LILLE-DRAW draws it). Lo
   "His kit's :draw hook (after his body; cosmetic): the base form's eye opening and its aim line / reticle; Jilliel's eight
 wing blades (both modes: two fans of four behind the column, the front pair reaching to the rig's hands, each swaying on
 its own phase; folded round the column in MUJITTAI, rippling on each pass-through, their holes lit in NIJUSHI-KO's tell,
-fanned out in the SPs) and the wide jade halo; the owl's eight gold wings, its spiked halo (broken once sealed), the trumpet
+fanned out in the SPs; translucent, fainter in MUJITTAI) and the wide jade halo; on the KIN and owl bodies the ㄇ legs (and
+the owl's extra pair of arms); the owl's eight gold wings, its spiked halo (broken once sealed), the trumpet
 forming over Trompete's wind-up, the reflect. The awakening's and the revival's cinematics drive the wings and halos
 (the unfolding, the jade turning gold). Its only allocation is the entity lookups (two a frame; a third while he aims
 or a gold look plays; a fourth in MUJITTAI)."
@@ -1077,8 +1252,14 @@ or a gold look plays; a fourth in MUJITTAI)."
           (if (and mv (or (member (mv-kind mv) '(:sp :kikon)) (member (mv-clip mv) *lb-spread-clips*)))
               (f-min 1f0 (+ (lb-fxs side 16) (* 8f0 rdt)))
               (f-max 0f0 (- (lb-fxs side 16) (* 8f0 rdt)))))
-    (setf (aref v 28) (lb-fxs side 16))
+    (setf (aref v 28) (lb-fxs side 16)
+          (aref v 3) (aref *toon-body* 1))               ; his body's feet height (DRAW-BODY's): the ㄇ legs' floor
     (when (>= (model-alpha m) 0.999f0)
+      (let ((bn (body-name (model-body m))) (fl (if (> (model-flash m) 0f0) 1 0)))
+        (when (or (eq bn :lille-jilliel-kin) (eq bn :lille-shin))   ; the ㄇ legs (decision 26), the owl's extra arms (27)
+          (setf (aref v 4) (if (lb-mujittai-p form) 0.72f0 1f0))
+          (%lb-legs jm (if (eq bn :lille-shin) 1 0) fl)
+          (when (eq bn :lille-shin) (setf (aref v 13) tm) (%lb-arms2 jm fl))))
       (case look
         (:base (%lb-eye-look e m st side) (%lb-aim-look e f side))
         ((:jilliel :revive)
@@ -1117,7 +1298,7 @@ or a gold look plays; a fourth in MUJITTAI)."
         (:shin
          (let ((grow (if cr (f-clamp (/ (- (i->f cr) 66f0) 30f0) 0.05f0 1f0) 1f0)))
            (declare (single-float grow))
-           (setf (aref v 0) 0f0 (aref v 1) 0.26f0 (aref v 2) 0.14f0 (aref v 11) 0f0 (aref v 12) 0f0 (aref v 13) tm
+           (setf (aref v 0) 0f0 (aref v 1) 0.3f0 (aref v 2) 0.13f0 (aref v 11) 0f0 (aref v 12) 0f0 (aref v 13) tm
                  (aref v 14) 1f0 (aref v 15) 9f0 (aref v 23) 0f0 (aref v 16) (+ 0.3f0 (* 0.7f0 grow)))
            (%lb-wings jm (* 16 (ji :chest)) *lb-wings-owl* 8 2)
            (%lb-halo jm (* 16 (ji :head)) (if (and st (lbs-sealed st)) 2 1) 0.76f0 (* 0.13f0 grow))
