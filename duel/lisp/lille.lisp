@@ -52,9 +52,6 @@ locks on the press and fires 10 f later, §22.1).")
 (defparameter *lb-x-chip* 0.15 "Through guard: the fraction of a blocked X-axis hit that goes through as chip (design 2026-10-06; decision 2).")
 (defparameter *lb-x-guard* 30 "Through guard: the guard gauge a blocked shot drains (4 crush a full gauge; design 2026-10-06; decision 2).")
 (defparameter *lb-far-kb* 12.0 "A shot that hits from this many metres knocks back 2.0 m, not 1.0 (design 2026-10-06).")
-(defparameter *volley-spread* 6.0
-  "Degrees between the old wing volley's five lines (design 2026-10-06). The volley is gone (rework R, decision 18); kept
-for lille-art.lisp's :volley look until the art drops it.")
 
 ;; L 狙撃構え SOGEKI-GAMAE, the shooting stance (§22.1, decision 17; Ichigo's TSUKIMACHI pattern)
 (defparameter *lb-kamae-up* 6 "The stance's frame where it is up: the follow-ups fire from here (rework R, 2026-10-06).")
@@ -392,11 +389,11 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
 (defkit :lille :jilliel-mujittai :inherit :jilliel
   :guard-to nil :drop-to :jilliel :passives (:ward :intangible) :stance :lb-w-fold :u-tag "U: MUJITTAI")
 
-;; 近 KIN (§22.2): the owl's forked legs (body: the art batch's :lille-jilliel-kin; :lille-jilliel until it lands), the
+;; 近 KIN (§22.2): the owl's forked legs (body :lille-jilliel-kin, rework A), the
 ;; wing-blade strings (normal hits), SP1 SANREN and SP2 NIJUSHI-KO direct as built, L TENSHIN (to EN) also after a K link
 (defkit :lille :jilliel-kin :inherit :jilliel
   :form-name "JILLIEL KIN" :walk *walk-kin* :run *run-kin* :guard-to :jilliel-kin-mujittai :l-after-k t
-  :body :lille-jilliel
+  :body :lille-jilliel-kin
   :commands (:q :lb-w-j1 :f :lb-w-k1 :sig :lb-switch :sp1 :lb-sanren :sp2 :lb-nijushi)
   :grid (:lb-w-j1 :lb-w-j2 :lb-w-j3 :lb-w-k1 :lb-w-k2 :lb-w-k3 :lb-w-j2s :lb-w-k2s)
   :ai (:intents (:approach 3 :pressure 4 :zone 0 :defend 1)
@@ -468,7 +465,7 @@ carry-over bug, DEVLOG §38-§39)."
 
 ;;; hazard data: his hazards (the SABAKI lines, the shots' looks) carry one of these and LB-HZ as their hook
 (defstruct (lbh (:conc-name lbh-))
-  (kind nil)                              ; :sabaki (a hit) :shot :volley :beam :lane (looks) :trace (EN's, §22.2)
+  (kind nil)                              ; :sabaki (a hit) :shot :beam :lane (looks) :trace (EN's, §22.2)
   (len 0f0 :type single-float) (width 0f0 :type single-float)
   (lock nil)                              ; a look's colour: T jade (a locked shot), NIL ink
   ;; a trace: what laid it (:j :k :sp1 :sp2: its damage and drain, LB-TRACE-HITWIN), its id (they count up per side),
@@ -1480,14 +1477,30 @@ in each form and look)."
                  (per (%lbt-fighter e)) (per (%lbt-pos e)) (per (%lbt-yaw e)) (per (%lbt-lb e)) (per (%lbt-alpha e)) ; lookup's cost)
                  (per (%lbt-eyet e)))))))
 
+(defun lille-kin-look (e)
+  "E (a Lille) as JILLIEL KIN for a still: the :jilliel-kin form once its kit exists (the rules batch), else JILLIEL wearing
+the KIN body (:lille-jilliel-kin, until the next form change)."
+  (if (assoc :jilliel-kin (gethash :lille *kits*))
+      (force-form e :jilliel-kin)
+      (progn (force-form e :jilliel) (setf (model-body (model e)) (find-body :lille-jilliel-kin)))))
+
+(defvar *lb-front-k* 0 "Debug 79198's next look: 0 JILLIEL, 1 KIN, 2 the owl.")
 (defun lille-art-debug (c)
   "79100 + 19 i + k (k 0-18): cinematic i (*LB-CINES*) held at frame 10 k; 79195 his looks' consing (LILLE-CONS-PROBE);
-79196 P1's eye opens now (its look: a pip spent, nothing dodged)."
+79196 P1's eye opens now (its look: a pip spent, nothing dodged); 79197 P1 Lille as JILLIEL KIN 5 m from Kenpachi (the
+rework's rig, DUEL_LILLE §22.5); 79198 Lille as P2 facing the behind camera 4 m from Kenpachi, each call the next of JILLIEL
+/ KIN / the owl (the front view)."
   (let ((n (- c 79100)))
     (cond ((< n 95) (lille-cine-at (floor n 19) (* 10 (mod n 19))))
           ((= n 95) (lille-cons-probe))
           ((= n 96) (let ((st (lb *p1*)))                   ; a still of the eye opening (its look; nothing dodged)
                       (setf (lbs-eye-t st) *match-tick* (lbs-eyes st) (max 0 (1- (lbs-eyes st))))))
+          ((= n 97) (ensure-battle :lille :kenpachi) (lille-kin-look *p1*) (place *p1* *p2* 5.0))
+          ((= n 98) (ensure-battle :kenpachi :lille)
+           (let ((k *lb-front-k*))
+             (setf *lb-front-k* (mod (1+ k) 3))
+             (case k (0 (force-form *p2* :jilliel)) (1 (lille-kin-look *p2*)) (t (force-form *p2* :shin))))
+           (place *p1* *p2* 4.0))
           (t (log-msg "duel lille: no debug command ~d" c)))))
 (pushnew '(79100 79199 lille-art-debug) *char-debug* :test #'equal)
 

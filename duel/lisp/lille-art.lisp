@@ -1,11 +1,12 @@
 ;;;; lille-art.lisp — LILLE BARRO as art data (docs/duel/DUEL_LILLE.md §3, §9, §10, §12 Art; the model sheet
-;;;; docs/research/tybw-characters/notes/lille_barro_model_sheet.md): his three bodies (:lille 182 cm, dark skin #7A6155, all
+;;;; docs/research/tybw-characters/notes/lille_barro_model_sheet.md): his four bodies (:lille 182 cm, dark skin #7A6155, all
 ;;;; in white with the green fur bicorne / stole / panel, the left eye shut under the ring-of-four-arcs mark; :lille-jilliel,
-;;;; the holed cream column floating, its face in a round window, armless to the eye: the rig's arms are the front pair of
-;;;; wing blades; and :lille-shin, the owl: white, four stilt legs, long arms, a segmented S-neck, a tiny barn-owl face),
+;;;; the holed cream column floating, its face in a round window, its arms hidden in it (the rig's hands are the front wing
+;;;; pair's tips); :lille-jilliel-kin, that column on the owl's legs; and :lille-shin, the owl: white, two long legs each
+;;;; forking at the knee into two shanks, long arms, a segmented S-neck, a tiny barn-owl face),
 ;;;; Diagramm (2.4 m: the barrel through a fur sleeve, the plank across the rear, the muzzle cross), the props of his looks
 ;;;; (the wing blades with their three oval holes, the halos, the open eye, the reticle, the trumpet), every :lb-* pose and
-;;;; clip, his draw hook (the six other wings fanned round Jilliel / folded in MUJITTAI, the owl's eight gold wings, the
+;;;; clip, his draw hook (Jilliel's eight wing blades in two fans / folded in MUJITTAI, the owl's eight gold wings, the
 ;;;; halos, the aim line and its reticle, the eye opening, the trumpet, the reflect), his hazards' look, his HUD meter
 ;;;; (the eye pips, the halo icon), his one-hand ring, his sounds and brush glyphs, and the cinematics' looks.
 ;;;; Batch 1 built the functional art (the strikes put the plank (J1 / J2 / the Breaker), the muzzle (J3, K) or the wing /
@@ -108,10 +109,10 @@
 
 ;; 神の裁き JILLIEL: the slender holed cream column (no legs drawn: the rig's legs carry nothing), widest at the top, ending in
 ;; two prongs; round holes pierce it (four near the top, six near the bottom); its face shows in a round window near the
-;; top (the mouth covered), two horn points at the top corners. The rig's arms (x2.6 long) are the front pair of the eight
-;; wing blades (the J / K strike at the hands): a flat blade, narrow at the root, widest at the elbow, pointed at the
-;; hand, three oval holes, the trailing edge torn. The other six wings and the wide halo are drawn by his :draw hook
-;; (LILLE-DRAW: fanned round him, folded in MUJITTAI). Muted jade (decision 11).
+;; top (the mouth covered), two horn points at the top corners. No arms (decision 19, 2026-10-06): the rig's arms (x2.6
+;; long) are hidden in the column and drawn as nothing; his eight wing blades are drawn by his :draw hook (LILLE-DRAW: two
+;; fans of four rooted behind the column's top; the front pair runs from its root to the rig's hands, so a J / K strikes
+;; with a wing tip at the hand; folded in MUJITTAI) with the wide halo. Muted jade (decision 11).
 (defbody :lille-jilliel (:scale 1.0 :width 1.0 :hunch 0 :hurt-r 0.38 :hurt-h 1.8 :props (:arms 2.6)
                          :palette ((:cream #xEDE6CC) (:cream-d #xD9D0B2) (:jade #x6E9A80) (:jade-d #x4E6E5C) (:hole #x2A2A30)
                                    (:core #x9CC4AC) (:skin #x7A6155) (:eye #xF2F0EC) (:pupil #x2A3124))
@@ -136,7 +137,7 @@
           (:cyl 0.03 0.012 :at (0.168 0.16 0.0) :rot (0 0 90) :seg 10 :c :hole)
           (:cyl 0.03 0.012 :at (-0.17 0.12 0.0) :rot (0 0 90) :seg 10 :c :hole)
           (:cyl 0.03 0.012 :at (0.05 0.2 -0.18) :rot (0 90 0) :seg 10 :c :hole)
-          (:sphere 0.07 :at (0 0.34 0.1) :c :cream-d))                            ; the wings' root behind the top
+          (:sphere 0.09 :stretch 0.04 :at (0 0.3 -0.13) :rot (0 0 90) :seg 10 :c :cream-d))   ; the wings' root, behind the top
   (:neck (:cyl 0.13 0.15 :seg 12 :at (0 0.06 0) :c :cream :tag :jl-head))
   ;; the top of the column: the face in a round window (tagged: the revival's headless column hides it), two horn points
   (:head (:sphere 0.15 :stretch 0.03 :at (0 0.12 0) :seg 12 :c :cream :tag :jl-head)
@@ -149,59 +150,66 @@
          (:box 0.13 0.06 0.02 :at (0 0.085 0.15) :c :cream :tag :jl-head)                     ; the mouth covered
          (:cone 0.038 0.15 :at (0.11 0.28 0) :rot (0 0 -20) :seg 5 :c :cream :tag :jl-head)    ; the two horn points
          (:cone 0.038 0.15 :at (-0.11 0.28 0) :rot (0 0 20) :seg 5 :c :cream :tag :jl-head)
-         (:cyl 0.026 0.012 :at (0.08 0.2 0.12) :rot (0 90 0) :seg 10 :c :hole :tag :jl-head))
-  (:shoulder-r (:sphere 0.08 :c :cream))
-  (:shoulder-l (:sphere 0.08 :c :cream))
-  ;; the front wing pair on the arm chains (upper 0.78 m, fore 0.70 m at x2.6): the root narrow, widest at the elbow, the
-  ;; point at the hand; three oval holes (dark, a lighter core); the trailing edge (+x, under the raised wing) torn
-  (:upper-arm-r (:box 0.08 0.2 0.02 :at (0 -0.1 0) :c :jade)
-                (:bevel 0.18 0.34 0.022 0.006 :at (0 -0.34 0) :c :jade)
-                (:bevel 0.24 0.3 0.022 0.006 :at (0 -0.62 0) :c :jade)
-                (:box 0.07 0.07 0.02 :at (0.11 -0.42 0) :rot (0 0 30) :c :jade-d)
-                (:box 0.07 0.07 0.02 :at (0.135 -0.62 0) :rot (0 0 30) :c :jade-d)
-                (:sphere 0.042 :stretch 0.03 :at (0 -0.6 0) :seg 8 :c :hole :ink 0)
-                (:sphere 0.022 :stretch 0.018 :at (0 -0.6 0.004) :seg 8 :c :core :ink 0))
-  (:upper-arm-l (:box 0.08 0.2 0.02 :at (0 -0.1 0) :c :jade)
-                (:bevel 0.18 0.34 0.022 0.006 :at (0 -0.34 0) :c :jade)
-                (:bevel 0.24 0.3 0.022 0.006 :at (0 -0.62 0) :c :jade)
-                (:box 0.07 0.07 0.02 :at (-0.11 -0.42 0) :rot (0 0 30) :c :jade-d)
-                (:box 0.07 0.07 0.02 :at (-0.135 -0.62 0) :rot (0 0 30) :c :jade-d)
-                (:sphere 0.042 :stretch 0.03 :at (0 -0.6 0) :seg 8 :c :hole :ink 0)
-                (:sphere 0.022 :stretch 0.018 :at (0 -0.6 0.004) :seg 8 :c :core :ink 0))
-  (:lower-arm-r (:bevel 0.24 0.28 0.022 0.006 :at (0 -0.12 0) :c :jade)
-                (:bevel 0.17 0.26 0.022 0.006 :at (0 -0.38 0) :c :jade)
-                (:box 0.13 0.13 0.022 :at (0 -0.5 0) :rot (0 0 45) :c :jade)               ; the point
-                (:box 0.06 0.06 0.02 :at (0.12 -0.16 0) :rot (0 0 30) :c :jade-d)
-                (:box 0.05 0.05 0.02 :at (0.09 -0.38 0) :rot (0 0 30) :c :jade-d)
-                (:sphere 0.038 :stretch 0.028 :at (0 -0.12 0) :seg 8 :c :hole :ink 0)
-                (:sphere 0.02 :stretch 0.016 :at (0 -0.12 0.004) :seg 8 :c :core :ink 0)
-                (:sphere 0.032 :stretch 0.022 :at (0 -0.38 0) :seg 8 :c :hole :ink 0)
-                (:sphere 0.017 :stretch 0.012 :at (0 -0.38 0.004) :seg 8 :c :core :ink 0))
-  (:lower-arm-l (:bevel 0.24 0.28 0.022 0.006 :at (0 -0.12 0) :c :jade)
-                (:bevel 0.17 0.26 0.022 0.006 :at (0 -0.38 0) :c :jade)
-                (:box 0.13 0.13 0.022 :at (0 -0.5 0) :rot (0 0 45) :c :jade)
-                (:box 0.06 0.06 0.02 :at (-0.12 -0.16 0) :rot (0 0 30) :c :jade-d)
-                (:box 0.05 0.05 0.02 :at (-0.09 -0.38 0) :rot (0 0 30) :c :jade-d)
-                (:sphere 0.038 :stretch 0.028 :at (0 -0.12 0) :seg 8 :c :hole :ink 0)
-                (:sphere 0.02 :stretch 0.016 :at (0 -0.12 0.004) :seg 8 :c :core :ink 0)
-                (:sphere 0.032 :stretch 0.022 :at (0 -0.38 0) :seg 8 :c :hole :ink 0)
-                (:sphere 0.017 :stretch 0.012 :at (0 -0.38 0.004) :seg 8 :c :core :ink 0))
-  (:hand-r (:box 0.08 0.08 0.02 :at (0 -0.02 0) :rot (0 0 45) :c :jade))
-  (:hand-l (:box 0.08 0.08 0.02 :at (0 -0.02 0) :rot (0 0 45) :c :jade)))
+         (:cyl 0.026 0.012 :at (0.08 0.2 0.12) :rot (0 90 0) :seg 10 :c :hole :tag :jl-head)))
 
-;; 真の姿 the owl: a white body, a narrow torso on a horizontal lower body carried by four stilt legs (the rig's legs x1.5
-;; in front, two more static at the back of the hip mass, splayed back), long thin arms (x2.2), a shaggy fur ruff, the
-;; segmented S-neck (belly plates on its front, a fur crest behind) to a tiny barn-owl face (a pale round facial disc, two
-;; big dark eyes, a small hooked beak, the hair swept back into the neck fur). The eight gold wings and the small spiked
-;; halo are drawn by his :draw hook (LILLE-DRAW: the halo cracks when Trompete is sealed). Gold #B89A5A on the wings, the
-;; halo and the glow only.
+;; JILLIEL 近 KIN (decision 18, §22.2): the same column from the hips up on the owl's legs (decision 20): the column's lower
+;; half becomes a short rounded hip mass, two long thin cream legs fork at the knee into a fore and an aft shank (it reads
+;; as four). Built for the Jilliel clips' float (root :u 0.5): the rig's feet hang 0.5 m up, so the shanks run on 0.5 m past
+;; them to the floor (a KIN clip keeps :u near 0.5). Arms hidden and wings drawn as :lille-jilliel.
+(defbody :lille-jilliel-kin (:scale 1.0 :width 1.0 :hunch 0 :hurt-r 0.38 :hurt-h 1.8 :props (:arms 2.6)
+                             :palette ((:cream #xEDE6CC) (:cream-d #xD9D0B2) (:hole #x2A2A30) (:skin #x7A6155) (:eye #xF2F0EC)
+                                       (:pupil #x2A3124))
+                             :rim (#xFFE8C8 0.14))
+  (:pelvis (:cyl 0.15 0.26 :top 0.13 :seg 12 :at (0 -0.08 0) :c :cream)
+           (:sphere 0.15 :stretch -0.03 :at (0 -0.2 0) :seg 12 :c :cream)                ; the rounded hip mass
+           (:cyl 0.03 0.012 :at (0.05 -0.1 0.138) :rot (0 90 0) :seg 10 :c :hole)
+           (:cyl 0.028 0.012 :at (-0.06 -0.2 0.135) :rot (0 90 0) :seg 10 :c :hole)
+           (:cyl 0.03 0.012 :at (0.142 -0.12 0) :rot (0 0 90) :seg 10 :c :hole)
+           (:cyl 0.03 0.012 :at (-0.143 -0.16 0) :rot (0 0 90) :seg 10 :c :hole))
+  (:spine (:cyl 0.13 0.3 :top 0.15 :seg 12 :at (0 0.1 0) :c :cream)
+          (:cyl 0.026 0.012 :at (-0.05 0.12 0.138) :rot (0 90 0) :seg 10 :c :hole))
+  (:chest (:cyl 0.16 0.42 :top 0.19 :seg 12 :at (0 0.14 0) :c :cream)
+          (:cyl 0.032 0.012 :at (0.07 0.24 0.178) :rot (0 90 0) :seg 10 :c :hole)
+          (:cyl 0.032 0.012 :at (-0.075 0.2 0.176) :rot (0 90 0) :seg 10 :c :hole)
+          (:cyl 0.03 0.012 :at (0.0 0.06 0.17) :rot (0 90 0) :seg 10 :c :hole)
+          (:cyl 0.03 0.012 :at (0.168 0.16 0.0) :rot (0 0 90) :seg 10 :c :hole)
+          (:cyl 0.03 0.012 :at (-0.17 0.12 0.0) :rot (0 0 90) :seg 10 :c :hole)
+          (:cyl 0.03 0.012 :at (0.05 0.2 -0.18) :rot (0 90 0) :seg 10 :c :hole)
+          (:sphere 0.09 :stretch 0.04 :at (0 0.3 -0.13) :rot (0 0 90) :seg 10 :c :cream-d))
+  (:neck (:cyl 0.13 0.15 :seg 12 :at (0 0.06 0) :c :cream :tag :jl-head))
+  (:head (:sphere 0.15 :stretch 0.03 :at (0 0.12 0) :seg 12 :c :cream :tag :jl-head)
+         (:cyl 0.078 0.024 :at (0 0.12 0.138) :rot (0 90 0) :seg 14 :c :hole :tag :jl-head)
+         (:sphere 0.058 :at (0 0.12 0.1) :seg 10 :c :skin :tag :jl-head)
+         (:box 0.02 0.008 0.003 :at (0.022 0.135 0.157) :c :eye :tag :jl-head)
+         (:box 0.02 0.008 0.003 :at (-0.022 0.135 0.157) :c :eye :tag :jl-head)
+         (:box 0.008 0.008 0.003 :at (0.022 0.135 0.159) :c :pupil :tag :jl-head)
+         (:box 0.008 0.008 0.003 :at (-0.022 0.135 0.159) :c :pupil :tag :jl-head)
+         (:box 0.13 0.06 0.02 :at (0 0.085 0.15) :c :cream :tag :jl-head)
+         (:cone 0.038 0.15 :at (0.11 0.28 0) :rot (0 0 -20) :seg 5 :c :cream :tag :jl-head)
+         (:cone 0.038 0.15 :at (-0.11 0.28 0) :rot (0 0 20) :seg 5 :c :cream :tag :jl-head)
+         (:cyl 0.026 0.012 :at (0.08 0.2 0.12) :rot (0 90 0) :seg 10 :c :hole :tag :jl-head))
+  ;; the legs: a thigh to the knee (0.44 m), then two shanks 1.06 m (to the floor from the knee's 0.99 m at :u 0.5), 20
+  ;; degrees fore and aft, 4 out, tapering to points
+  (:thigh-r (:cyl 0.042 0.46 :top 0.055 :seg 8 :at (0 -0.22 0) :c :cream))
+  (:thigh-l (:cyl 0.042 0.46 :top 0.055 :seg 8 :at (0 -0.22 0) :c :cream))
+  (:shin-r (:sphere 0.052 :seg 8 :c :cream-d)
+           (:cyl 0.008 1.06 :top 0.036 :seg 6 :at (0.037 -0.498 0.181) :rot (0 20 4) :c :cream)
+           (:cyl 0.008 1.06 :top 0.036 :seg 6 :at (0.037 -0.498 -0.181) :rot (0 -20 4) :c :cream))
+  (:shin-l (:sphere 0.052 :seg 8 :c :cream-d)
+           (:cyl 0.008 1.06 :top 0.036 :seg 6 :at (-0.037 -0.498 0.181) :rot (0 20 -4) :c :cream)
+           (:cyl 0.008 1.06 :top 0.036 :seg 6 :at (-0.037 -0.498 -0.181) :rot (0 -20 -4) :c :cream)))
+
+;; 真の姿 the owl: a white body, a narrow torso on a horizontal hip mass carried by two long thin legs (the rig's legs x1.5)
+;; that fork at the knee into a fore and an aft shank, so they read as four (decision 20, 2026-10-06: not four stilts),
+;; long thin arms (x2.2: the claws are the hands), a shaggy fur ruff, the segmented S-neck (belly plates on its front, a fur
+;; crest behind) to a tiny barn-owl face (a pale round facial disc, two big dark eyes, a small hooked beak, the hair swept
+;; back into the neck fur). The eight gold wings (two fans of four, as Jilliel's) and the small spiked halo are drawn by his
+;; :draw hook (LILLE-DRAW: the halo cracks when Trompete is sealed). Gold #B89A5A on the wings, the halo and the glow only.
 (defbody :lille-shin (:scale 1.0 :width 1.0 :hunch 0 :hurt-r 0.38 :hurt-h 1.8 :props (:arms 2.2 :legs 1.5)
                       :palette ((:white #xECECE8) (:shade #xBCC1CC) (:fur #xD8DCE4) (:face #xF0ECE4) (:gold #xB89A5A)
                                 (:gold-l #xC2A866) (:ink #x16161E) (:hole #x2A2A30) (:beak #x8C8E96))
                       :rim (#xFFE8C8 0.14))
   (:pelvis (:bevel 0.34 0.18 0.66 0.05 :at (0 0 -0.16) :c :white)                          ; the horizontal hip mass
-           (:cyl 0.04 1.46 :top 0.012 :at (0.14 -0.66 -0.4) :rot (0 -12 3) :seg 6 :c :white)   ; the hind stilts, splayed
-           (:cyl 0.04 1.46 :top 0.012 :at (-0.14 -0.66 -0.4) :rot (0 -12 -3) :seg 6 :c :white) ; back behind the rig's legs
            (:box 0.02 0.55 0.004 :at (0.1 -0.28 -0.46) :rot (0 20 0) :c :fur)                 ; ribbon tendrils
            (:box 0.02 0.55 0.004 :at (-0.1 -0.28 -0.46) :rot (0 20 0) :c :fur)
            (:box 0.02 0.45 0.004 :at (0 -0.24 -0.48) :rot (0 26 0) :c :fur))
@@ -250,12 +258,16 @@
            (:box 0.008 0.09 0.008 :at (-0.012 -0.15 0) :c :shade))
   (:hand-l (:box 0.05 0.12 0.02 :at (0 -0.06 0) :c :white) (:box 0.008 0.1 0.008 :at (-0.015 -0.16 0) :c :shade)
            (:box 0.008 0.09 0.008 :at (0.012 -0.15 0) :c :shade))
-  (:thigh-r (:cyl 0.05 0.66 :top 0.035 :seg 8 :at (0 -0.33 0) :c :white))
-  (:thigh-l (:cyl 0.05 0.66 :top 0.035 :seg 8 :at (0 -0.33 0) :c :white))
-  (:shin-r (:cyl 0.035 0.64 :top 0.012 :seg 6 :at (0 -0.32 0) :c :white))
-  (:shin-l (:cyl 0.035 0.64 :top 0.012 :seg 6 :at (0 -0.32 0) :c :white))
-  (:foot-r (:cone 0.02 0.06 :at (0 -0.03 0) :rot (0 0 180) :seg 4 :c :shade))
-  (:foot-l (:cone 0.02 0.06 :at (0 -0.03 0) :rot (0 0 180) :seg 4 :c :shade)))
+  ;; the two legs: a thigh to the knee (0.66 m), then two shanks 0.75 m to the floor, 21 degrees fore and aft, 4 out,
+  ;; tapering to points (the rig's feet carry nothing)
+  (:thigh-r (:cyl 0.035 0.66 :top 0.05 :seg 8 :at (0 -0.33 0) :c :white))
+  (:thigh-l (:cyl 0.035 0.66 :top 0.05 :seg 8 :at (0 -0.33 0) :c :white))
+  (:shin-r (:sphere 0.045 :seg 8 :c :shade)
+           (:cyl 0.008 0.75 :top 0.032 :seg 6 :at (0.026 -0.35 0.134) :rot (0 21 4) :c :white)
+           (:cyl 0.008 0.75 :top 0.032 :seg 6 :at (0.026 -0.35 -0.134) :rot (0 -21 4) :c :white))
+  (:shin-l (:sphere 0.045 :seg 8 :c :shade)
+           (:cyl 0.008 0.75 :top 0.032 :seg 6 :at (-0.026 -0.35 0.134) :rot (0 21 -4) :c :white)
+           (:cyl 0.008 0.75 :top 0.032 :seg 6 :at (-0.026 -0.35 -0.134) :rot (0 -21 -4) :c :white)))
 
 ;;; ---------------------------------------------------------------- Diagramm and the props
 ;; ディアグラム DIAGRAMM: 2.4 m. The grip at the sleeve's rear: the barrel runs 1.75 m to the muzzle cross (the weapon's
@@ -305,23 +317,41 @@
                (mb-poly-out mb (list (funcall p r0 a0 (- y h)) (funcall p r1 a0 (- y h)) (funcall p r1 a1 (- y h))
                                      (funcall p r0 a1 (- y h))) :center c)))))
 
-;; a wing blade, unit length along +Y from its root, the flat face along Z: the leading edge (-x) smooth, the trailing
-;; edge (+x) torn into four teeth; three oval holes along it (the 24 muzzles)
-(defparameter *lb-wing-outline*
-  '((-0.035 0.0) (0.035 0.0) (0.12 0.22) (0.15 0.45) (0.13 0.66) (0.07 0.86) (0.0 1.0) (-0.06 0.88) (-0.11 0.68)
-    (-0.13 0.45) (-0.1 0.2)))
-(defparameter *lb-wing-teeth*
-  '(((0.125 0.26) (0.145 0.38) (0.2 0.24)) ((0.15 0.47) (0.145 0.58) (0.205 0.44)) ((0.13 0.66) (0.105 0.76) (0.175 0.63))
-    ((0.085 0.82) (0.055 0.9) (0.125 0.8))))
-(defparameter *lb-wing-holes* '((0.005 0.4 0.05 0.075) (0.005 0.6 0.045 0.065) (0.0 0.78 0.035 0.05)) "x y rx ry (unit length).")
+;; a wing blade (decision 19: the refs' leaf), unit length along +Y from its root to its point, the flat face along Z: narrow
+;; at the root, widest at the middle, a long point; its centreline bows toward +X (the trailing edge, torn into four teeth,
+;; and the tip comes back onto the root-tip chord: a drawn tip is exactly where the frame puts it); three oval holes along it
+;; (the 24 muzzles). Built of quads (the bowed leaf is not convex): load time only.
+(defparameter *lb-wing-bow* 0.07 "The blade's centreline bow at its middle (unit length).")
+(defparameter *lb-wing-stations* '((0.0 0.03 0.03) (0.08 0.06 0.07) (0.2 0.1 0.12) (0.35 0.125 0.15) (0.5 0.13 0.155)
+                                   (0.65 0.115 0.14) (0.8 0.08 0.1) (0.91 0.042 0.05) (1.0 0.0 0.0))
+  "The blade's outline: y, the leading (-x) and the trailing (+x) half-widths off the bowed centreline.")
+(defparameter *lb-wing-teeth* '(0.3 0.47 0.63 0.77) "Where the trailing edge's teeth start (unit length).")
+(defparameter *lb-wing-holes* '((0.36 0.055 0.085) (0.55 0.05 0.075) (0.73 0.04 0.055)) "y rx ry (unit length), on the centreline.")
+(defun lb-wing-c (y) (* *lb-wing-bow* 4 y (- 1 y)))
+(defun lb-wing-edge (y) "The trailing edge's x at Y." 
+  (let ((lo (find-if (lambda (r) (>= (first r) y)) *lb-wing-stations*))
+        (hi (find-if (lambda (r) (<= (first r) y)) *lb-wing-stations* :from-end t)))
+    (+ (lb-wing-c y) (if (or (eq lo hi) (= (first lo) (first hi))) (third lo)
+                         (+ (third hi) (* (- y (first hi)) (/ (- (third lo) (third hi)) (- (first lo) (first hi)))))))))
 (defun lb-wing-blade (mb body dark)
-  (mbc mb body) (lb-plate mb *lb-wing-outline* 0.018)
-  (mbc mb dark) (dolist (tt *lb-wing-teeth*) (lb-plate mb tt 0.016)))
+  (mbc mb body)
+  (loop for (a b) on *lb-wing-stations* while b
+        do (destructuring-bind ((y0 l0 t0) (y1 l1 t1)) (list a b)
+             (let ((c0 (lb-wing-c y0)) (c1 (lb-wing-c y1)))
+               (lb-plate mb (if (< (+ l1 t1) 1e-4)
+                                (list (list (- c0 l0) y0) (list (+ c0 t0) y0) (list c1 y1))
+                                (list (list (- c0 l0) y0) (list (+ c0 t0) y0) (list (+ c1 t1) y1) (list (- c1 l1) y1)))
+                         0.018))))
+  (mbc mb dark)
+  (dolist (y *lb-wing-teeth*)
+    (let ((e0 (lb-wing-edge y)) (e1 (lb-wing-edge (+ y 0.11))))
+      (lb-plate mb (list (list (- e0 0.02) y) (list (- e1 0.02) (+ y 0.11)) (list (+ e0 0.07) (- y 0.03))) 0.016))))
 (defun lb-wing-holes (mb hole core)
   (dolist (h *lb-wing-holes*)
-    (destructuring-bind (x y rx ry) h
-      (mbc mb hole) (lb-oval mb x y rx ry 0.026)
-      (mbc mb core) (lb-oval mb x y (* 0.5 rx) (* 0.5 ry) 0.032 8))))
+    (destructuring-bind (y rx ry) h
+      (let ((x (+ 0.01 (lb-wing-c y))))
+        (mbc mb hole) (lb-oval mb x y rx ry 0.026)
+        (mbc mb core) (lb-oval mb x y (* 0.5 rx) (* 0.5 ry) 0.032 8)))))
 (defweapon :lb-wing (:length 1.0)                     ; Jilliel's (muted jade)
   (:solid (lb-wing-blade mb #x6E9A80 #x4E6E5C))
   (:solid :ink 0 (lb-wing-holes mb #x2A2A30 #x9CC4AC)))
@@ -556,17 +586,20 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
   (2.0 (:arm-r :flex 10 :side 14) (:elbow-r :flex 70) (:hand-r :flex 20) (:head :flex 8 :twist 10)))
 
 ;;; ---------------------------------------------------------------- JILLIEL
-;;; Floating 0.5 m up (the hurt cylinder stays on the ground), the front wings (the arms) raised into the fan; the strikes
-;;; are the wings snapping forward, their tips at the moves' reach.
+;;; Floating 0.5 m up (the hurt cylinder stays on the ground). The arms are hidden in the column (decision 19): the rig's
+;;; hands are the tips of the front wing pair (LILLE-DRAW draws each from its root behind the column's top to the hand), so
+;;; the strikes are the front wings swung forward, their tips at the moves' reach. Idle, the hands sit in the fan (about
+;;; -16 degrees, the third pair) and sway out of step (the other six sway on their own phases in the draw hook).
 (defpose :lb-w-stance ()
   (:root :u 0.5) (:spine :flex 0) (:head :flex 4)
-  (:arm-r :flex 10 :side 78) (:elbow-r :flex 8) (:arm-l :flex 10 :side 78) (:elbow-l :flex 8)
+  (:arm-r :flex 2 :side 78) (:elbow-r :flex 8) (:arm-l :flex 2 :side 78) (:elbow-l :flex 8)
   (:thighs :flex 0) (:knees :flex 0))
 (defclip :lb-w-stance (3.0 :loop t :base :lb-w-stance)
-  (0) (1.5 (:root :u 0.56) (:arm-r :side 72) (:arm-l :side 72)))
-(defpose :lb-w-fold-pose (:base :lb-w-stance)        ; 無実体 MUJITTAI: the wings folded round the column
-  (:root :u 0.55) (:arm-r :flex 40 :side 24 :twist 30) (:elbow-r :flex 30) (:arm-l :flex 40 :side 24 :twist -30) (:elbow-l :flex 30)
-  (:head :flex 10))
+  (0) (0.8 (:root :u 0.53) (:arm-r :side 74) (:arm-l :side 81)) (1.5 (:root :u 0.56) (:arm-r :side 72) (:arm-l :side 77))
+  (2.3 (:root :u 0.53) (:arm-r :side 80) (:arm-l :side 73)))
+(defpose :lb-w-fold-pose (:base :lb-w-stance)        ; 無実体 MUJITTAI: the wings folded round the column, the front pair
+  (:root :u 0.55) (:arm-r :flex 0 :side 30 :twist 45) (:elbow-r :flex 110)   ; crossed low before it
+  (:arm-l :flex 0 :side 30 :twist -45) (:elbow-l :flex 110) (:head :flex 10))
 (defclip :lb-w-fold (2.0 :loop t :base :lb-w-fold-pose) (0) (1.0 (:root :u 0.6)))
 (defpose :lb-w-q1-hit (:base :lb-w-stance)
   (:root :f 0.08 :u 0.5) (:chest :twist 14) (:arm-r :flex 88 :side 8) (:elbow-r :flex 6))
@@ -709,41 +742,42 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
 ;;; ================================================================ drawing (cosmetic; 0 B a frame: f32vecs, macros, DEFUN-FAST)
 ;;; A DEFUN-FAST call boxes its float arguments (engine/lisp/package.lisp), so these helpers take their numbers in the
 ;;; scratch vectors below, the frames are filled by macros, and a draw's alpha is one of the boxed *LB-ALPHAS*.
-(declaim (special *volley-spread* *lb-sabaki-from* *lb-sabaki-speed* *lb-sabaki-life* *lb-sabaki-width*   ; (lille.lisp's knobs,
+(declaim (special *lb-sabaki-from* *lb-sabaki-speed* *lb-sabaki-life* *lb-sabaki-width*   ; (lille.lisp's knobs,
                    *lb-x-near* *lb-x-far* *lb-x-min* *lb-x-max*))                                ;  loaded after this file)
 (declaim (type f32vec *lb-m* *lb-p* *lb-v* *lb-fx* *lb-hud*))
 (defvar *lb-m* (m4) "A prop's world matrix.")
 (defvar *lb-p* (make-f32 3))
 (defvar *lb-v* (make-f32 32)
-  "The draw helpers' arguments: [0..2] a wing's root, [3..5] its direction, [6..8] its normal (the joint's frame), [9] its
-length, [10] its alpha; [11] the fold 0..1, [12] the ripple (degrees), [13] the fx clock, [14] the wings' alpha, [15] the
-pairs shown (a cinematic's unfolding), [16] the wings' length x; [17..22] the line / reticle / halo / trumpet macros'
-numbers; [23] the first pair drawn; [24..27] his x y z and yaw (%LB-LOAD-PLACE!).")
-(defvar *lb-fx* (make-f32 (* 2 16))
-  "Per side (16 each), the looks' memory: [0] the eye's tick seen, [1] its fx clock, [2] the guard gauge seen, [3] the
+  "The draw helpers' arguments: [0..2] the wings' root (the joint's frame); [11] the fold 0..1, [12] the ripple (degrees),
+[13] the fx clock, [14] the wings' alpha, [15] the pairs shown (a cinematic's unfolding), [16] the wings' length x; [17..22]
+the line / reticle / halo / trumpet macros' numbers; [23] the first pair drawn; [24..27] his x y z and yaw
+(%LB-LOAD-PLACE!); [28] the wings' spread 0..1.")
+(defvar *lb-fx* (make-f32 (* 2 24))
+  "Per side (24 each), the looks' memory: [0] the eye's tick seen, [1] its fx clock, [2] the guard gauge seen, [3] the
 last pass-through (fx clock), [4] the fold 0..1, [5] sealed seen (1), [6] the seal's fx clock, [7..9] the reticle's point,
 [10] the reticle shown (1 tracking, 2 locked), [11] the distance there, [12 13] the reflector's x z, [14] the eye's tick
-whose third-opening line was shown, [15] 1 while he is the owl (his hazards' gold).")
-(dotimes (s 2) (setf (aref *lb-fx* (* 16 s)) -1f0 (aref *lb-fx* (+ (* 16 s) 14)) -1f0))
+whose third-opening line was shown, [15] 1 while he is the owl (his hazards' gold), [16] the wings' spread 0..1 (an SP
+fans them out).")
+(dotimes (s 2) (setf (aref *lb-fx* (* 24 s)) -1f0 (aref *lb-fx* (+ (* 24 s) 14)) -1f0))
 (defvar *lb-hud* (make-f32 8) "The HUD pip's arguments: cx cy r, [3] the fx clock.")
 (defvar *lb-alphas* (let ((v (make-array 21))) (dotimes (i 21 v) (setf (svref v i) (f32 (/ i 20.0)))))
   "Boxed alphas 0, 0.05 .. 1: a draw's :ALPHA without consing.")
 (defmacro lb-alpha (a) `(svref *lb-alphas* (f->i (+ 0.5f0 (* 20f0 (f-clamp ,a 0f0 1f0))))))
 
-(defmacro %lb-frame! (m ox oy oz dx dy dz nx ny nz s)
+(defmacro %lb-frame! (m ox oy oz dx dy dz nx ny nz s &optional sw)
   "Fill M with the frame at (OX OY OZ): +Y along the unit (DX DY DZ), +Z the normal (NX NY NZ) made square to it, +X =
-Y x Z, all scaled by S. Single-float forms; a macro: 0 B."
-  `(let* ((%dx ,dx) (%dy ,dy) (%dz ,dz) (%nx ,nx) (%ny ,ny) (%nz ,nz) (%s ,s)
+Y x Z, +Y scaled by S, +X and +Z by SW (default S). Single-float forms; a macro: 0 B."
+  `(let* ((%dx ,dx) (%dy ,dy) (%dz ,dz) (%nx ,nx) (%ny ,ny) (%nz ,nz) (%s ,s) (%w ,(or sw '%s))
           (%d (+ (* %nx %dx) (* %ny %dy) (* %nz %dz)))
           (%ax (- %nx (* %d %dx))) (%ay (- %ny (* %d %dy))) (%az (- %nz (* %d %dz)))
           (%al (f-max 1f-5 (f-sqrt (+ (* %ax %ax) (* %ay %ay) (* %az %az)))))
           (%zx (/ %ax %al)) (%zy (/ %ay %al)) (%zz (/ %az %al))
           (%xx (- (* %dy %zz) (* %dz %zy))) (%xy (- (* %dz %zx) (* %dx %zz))) (%xz (- (* %dx %zy) (* %dy %zx)))
           (%m ,m))
-     (declare (single-float %dx %dy %dz %nx %ny %nz %s %d %ax %ay %az %al %zx %zy %zz %xx %xy %xz) (type f32vec %m))
-     (setf (aref %m 0) (* %s %xx) (aref %m 1) (* %s %xy) (aref %m 2) (* %s %xz) (aref %m 3) 0f0
+     (declare (single-float %dx %dy %dz %nx %ny %nz %s %w %d %ax %ay %az %al %zx %zy %zz %xx %xy %xz) (type f32vec %m))
+     (setf (aref %m 0) (* %w %xx) (aref %m 1) (* %w %xy) (aref %m 2) (* %w %xz) (aref %m 3) 0f0
            (aref %m 4) (* %s %dx) (aref %m 5) (* %s %dy) (aref %m 6) (* %s %dz) (aref %m 7) 0f0
-           (aref %m 8) (* %s %zx) (aref %m 9) (* %s %zy) (aref %m 10) (* %s %zz) (aref %m 11) 0f0
+           (aref %m 8) (* %w %zx) (aref %m 9) (* %w %zy) (aref %m 10) (* %w %zz) (aref %m 11) 0f0
            (aref %m 12) ,ox (aref %m 13) ,oy (aref %m 14) ,oz (aref %m 15) 1f0)))
 
 (defmacro %lb-joint-frame! (m jm o lx ly lz s)
@@ -799,68 +833,77 @@ go through *LB-V* [17..22]: a DEFUN-FAST call would box them)."
     (if jade (draw-weapon :lb-reticle-jade m) (draw-weapon :lb-reticle-grey m))
     nil))
 
-;;; ---------------------------------------------------------------- the wings (Jilliel's six, the owl's eight)
-;; per wing: side, elevation (degrees above the horizontal), length (m), sweep back, then where it folds to (MUJITTAI: down
-;; round the column, wrapping forward); rows of 7 in an f32vec (read in DEFUN-FAST code without consing)
+;;; ---------------------------------------------------------------- the wings (Jilliel's eight, the owl's eight)
+;; Two fans of four (decision 19; the refs: the upper pair high and out, the lowest pair down and out), rooted behind the
+;; column's top (the owl: behind the ruff). Per wing, a row of 10 in an f32vec (read in DEFUN-FAST code without consing):
+;; side, elevation (degrees above the horizontal), length (m), sweep back, where it folds to (MUJITTAI: down round the
+;; column, wrapping forward; x y z), front (1: its tip is the rig's hand, the strike point), flip (1: the torn edge up, the
+;; lowest pair), the idle sway's phase. Rows in pairs, top pair first (a cinematic unfolds them a pair at a time).
 (defparameter *lb-wings-jl*
-  (coerce (mapcar #'f32 '( 1 40 1.25 0.3  0.45 -0.75 -0.55   -1 40 1.25 0.3  0.45 -0.75 -0.55
-                           1 10 1.35 0.35 0.62 -0.75 -0.2    -1 10 1.35 0.35 0.62 -0.75 -0.2
-                           1 -42 1.15 0.3 0.5 -0.86 0.15     -1 -42 1.15 0.3 0.5 -0.86 0.15))
+  (coerce (mapcar #'f32 '( 1  40 1.6  0.18 0.45 -0.75 -0.55 0 0 0.0    -1  40 1.6  0.18 0.45 -0.75 -0.55 0 0 2.1
+                           1  13 1.75 0.22 0.62 -0.75 -0.2  0 0 1.1    -1  13 1.75 0.22 0.62 -0.75 -0.2  0 0 3.4
+                           1 -16 1.75 0.0  0.5  -0.8  -0.5  1 0 0.0    -1 -16 1.75 0.0  0.5  -0.8  -0.5  1 0 0.0
+                           1 -40 1.5  0.18 0.5  -0.86 0.15  0 1 2.6    -1 -40 1.5  0.18 0.5  -0.86 0.15  0 1 0.5))
           'f32vec)
-  "Jilliel's six static wings round the column (the front pair is the rig's arms): +40 / +10 / -42 degrees a side, the
-arms at -12 between the last two (the model sheet §4.2's fan).")
+  "Jilliel's eight wing blades: +40 / +13 / the front pair (the rig's hands: about -16 idle) / -40 degrees a side.")
 (defparameter *lb-wings-owl*
-  (coerce (mapcar #'f32 '( 1 42 1.25 0.5 0.4 -0.8 -0.4   -1 42 1.25 0.5 0.4 -0.8 -0.4
-                           1 14 1.4 0.5 0.5 -0.8 -0.2    -1 14 1.4 0.5 0.5 -0.8 -0.2
-                           1 -14 1.3 0.5 0.5 -0.85 0.0   -1 -14 1.3 0.5 0.5 -0.85 0.0
-                           1 -42 1.1 0.45 0.45 -0.9 0.2  -1 -42 1.1 0.45 0.45 -0.9 0.2))
+  (coerce (mapcar #'f32 '( 1  34 1.9  0.25 0.4 -0.8 -0.4   0 0 0.7    -1  34 1.9  0.25 0.4 -0.8 -0.4   0 0 2.9
+                           1  11 2.05 0.3  0.5 -0.8 -0.2   0 0 1.8    -1  11 2.05 0.3  0.5 -0.8 -0.2   0 0 0.2
+                           1 -11 1.95 0.3  0.5 -0.85 0.0   0 0 3.1    -1 -11 1.95 0.3  0.5 -0.85 0.0   0 0 1.3
+                           1 -34 1.7  0.25 0.45 -0.9 0.2   0 1 2.2    -1 -34 1.7  0.25 0.45 -0.9 0.2   0 1 4.0))
           'f32vec)
-  "The owl's eight gold wings, half open (four a side, +42 .. -42 degrees).")
+  "The owl's eight gold wing blades, two fans of four (+34 / +11 / -11 / -34 degrees a side, long: the refs' wide spread);
+its claws are its hands.")
 (declaim (type f32vec *lb-wings-jl* *lb-wings-owl*))
 
-(defun-fast %lb-wing (jm o kind)
-  "One wing from joint frame O of JM: *LB-V* [0..2] its root, [3..5] its direction, [6..8] its normal (the joint's frame),
-[9] its length, [10] its alpha; KIND 0 jade, 1 jade with the holes lit, 2 gold."
-  (declare (type f32vec jm) (fixnum o kind))
-  (let* ((v *lb-v*) (lx (aref v 0)) (ly (aref v 1)) (lz (aref v 2)) (a (aref v 3)) (b (aref v 4)) (c (aref v 5))
-         (p (aref v 6)) (q (aref v 7)) (r (aref v 8))
-         (ox (+ (* (aref jm o) lx) (* (aref jm (+ o 4)) ly) (* (aref jm (+ o 8)) lz) (aref jm (+ o 12))))
-         (oy (+ (* (aref jm (+ o 1)) lx) (* (aref jm (+ o 5)) ly) (* (aref jm (+ o 9)) lz) (aref jm (+ o 13))))
-         (oz (+ (* (aref jm (+ o 2)) lx) (* (aref jm (+ o 6)) ly) (* (aref jm (+ o 10)) lz) (aref jm (+ o 14))))
-         (dx (+ (* (aref jm o) a) (* (aref jm (+ o 4)) b) (* (aref jm (+ o 8)) c)))
-         (dy (+ (* (aref jm (+ o 1)) a) (* (aref jm (+ o 5)) b) (* (aref jm (+ o 9)) c)))
-         (dz (+ (* (aref jm (+ o 2)) a) (* (aref jm (+ o 6)) b) (* (aref jm (+ o 10)) c)))
-         (dl (f-max 1f-5 (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
-         (nx (+ (* (aref jm o) p) (* (aref jm (+ o 4)) q) (* (aref jm (+ o 8)) r)))
-         (ny (+ (* (aref jm (+ o 1)) p) (* (aref jm (+ o 5)) q) (* (aref jm (+ o 9)) r)))
-         (nz (+ (* (aref jm (+ o 2)) p) (* (aref jm (+ o 6)) q) (* (aref jm (+ o 10)) r))))
-    (declare (type f32vec v) (single-float lx ly lz a b c p q r ox oy oz dx dy dz dl nx ny nz))
-    (%lb-frame! *lb-m* ox oy oz (/ dx dl) (/ dy dl) (/ dz dl) nx ny nz (aref v 9))
-    (let ((al (lb-alpha (aref v 10))))
-      (case kind
-        (0 (draw-weapon :lb-wing *lb-m* :alpha al))
-        (1 (draw-weapon :lb-wing-lit *lb-m* :alpha al))
-        (t (draw-weapon :lb-wing-gold *lb-m* :alpha al))))
-    nil))
-
 (defun-fast %lb-wings (jm o tbl n kind)
-  "N wings of table TBL (rows of 7) from joint frame O of JM, KIND as %LB-WING: their root in *LB-V* [0..2], the fold
-[11], the ripple [12] at the fx clock [13], their alpha [14], the pairs shown [15] from the pair [23], the length x [16]."
+  "N wings of table TBL (rows of 10) from joint frame O of JM, KIND 0 jade, 1 jade with the holes lit, 2 gold: their root
+(the joint's local point, each side 0.07 m out) in *LB-V* [0..2], the fold [11], the ripple [12] at the fx clock [13],
+their alpha [14], the pairs shown [15] from the pair [23], the length x [16], the spread [28] (the SPs: the fan wider and
+swept forward). Idle, each sways on its own phase (the fx clock: cosmetic). A front wing runs from its root to the rig's
+hand: the drawn tip is the hand, the strike point the host FK test reads (*LB-STRIKE-POINTS*)."
   (declare (type f32vec jm tbl) (fixnum o n kind))
-  (let* ((v *lb-v*) (k (aref v 11)) (rip (aref v 12)) (tm (aref v 13)) (al (aref v 14)) (pairs (f->i (aref v 15)))
-         (lk (aref v 16)) (from (f->i (aref v 23))))
-    (declare (type f32vec v) (single-float k rip tm al lk) (fixnum pairs from))
+  (let* ((v *lb-v*) (k (aref v 11)) (j (- 1f0 k)) (rip (aref v 12)) (tm (aref v 13)) (al (lb-alpha (aref v 14)))
+         (pairs (f->i (aref v 15))) (lk (aref v 16)) (from (f->i (aref v 23))) (sp (aref v 28))
+         (rx (aref v 0)) (ry (aref v 1)) (rz (aref v 2))
+         (xx (aref jm o)) (xy (aref jm (+ o 1))) (xz (aref jm (+ o 2)))
+         (yx (aref jm (+ o 4))) (yy (aref jm (+ o 5))) (yz (aref jm (+ o 6)))
+         (zx (aref jm (+ o 8))) (zy (aref jm (+ o 9))) (zz (aref jm (+ o 10))))
+    (declare (type f32vec v) (single-float k j rip tm lk sp rx ry rz xx xy xz yx yy yz zx zy zz) (fixnum pairs from))
     (dotimes (i n)
       (when (<= from (floor i 2) (1- pairs))
-        (let* ((r (* 7 i)) (s (aref tbl r))
-               (e (* 0.017453292f0 (+ (aref tbl (+ r 1)) (* rip (f-sin (+ (* 31f0 tm) (* 1.7f0 (i->f i))))))))
-               (ox (* s (f-cos e))) (oy (f-sin e)) (oz (aref tbl (+ r 3)))
-               (fx (* s (aref tbl (+ r 4)))) (fy (aref tbl (+ r 5))) (fz (aref tbl (+ r 6))) (j (- 1f0 k)))
-          (declare (fixnum r) (single-float s e ox oy oz fx fy fz j))
-          (setf (aref v 3) (+ (* j ox) (* k fx)) (aref v 4) (+ (* j oy) (* k fy)) (aref v 5) (+ (* j oz) (* k fz))
-                (aref v 6) (* k s) (aref v 7) 0f0 (aref v 8) (* j s)
-                (aref v 9) (* lk (aref tbl (+ r 2)) (- 1f0 (* 0.15f0 k))) (aref v 10) al)
-          (%lb-wing jm o kind))))
+        (let* ((r (* 10 i)) (s (aref tbl r)) (lx (+ rx (* 0.07f0 s)))
+               (ox (+ (* xx lx) (* yx ry) (* zx rz) (aref jm (+ o 12))))
+               (oy (+ (* xy lx) (* yy ry) (* zy rz) (aref jm (+ o 13))))
+               (oz (+ (* xz lx) (* yz ry) (* zz rz) (aref jm (+ o 14)))))
+          (declare (fixnum r) (single-float s lx ox oy oz))
+          (if (> (aref tbl (+ r 7)) 0.5f0)
+              ;; a front wing, root to hand; its torn edge down and out: the normal D x U, D = the joint's -Y + 0.5 s X
+              (let* ((h (if (> s 0f0) (* 16 (ji :hand-r)) (* 16 (ji :hand-l))))
+                     (dx (- (aref jm (+ h 12)) ox)) (dy (- (aref jm (+ h 13)) oy)) (dz (- (aref jm (+ h 14)) oz))
+                     (dl (f-max 0.05f0 (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
+                     (ux (/ dx dl)) (uy (/ dy dl)) (uz (/ dz dl))
+                     (ddx (- (* 0.5f0 s xx) yx)) (ddy (- (* 0.5f0 s xy) yy)) (ddz (- (* 0.5f0 s xz) yz)))
+                (declare (fixnum h) (single-float dx dy dz dl ux uy uz ddx ddy ddz))
+                (%lb-frame! *lb-m* ox oy oz ux uy uz (- (* ddy uz) (* ddz uy)) (- (* ddz ux) (* ddx uz)) (- (* ddx uy) (* ddy ux))
+                            dl (* lk (aref tbl (+ r 2)))))
+              (let* ((e (* 0.017453292f0 (+ (* (aref tbl (+ r 1)) (+ 1f0 (* 0.22f0 sp)))
+                                              (* 3f0 j (f-sin (+ (* 1.9f0 tm) (aref tbl (+ r 9)))))
+                                              (* rip (f-sin (+ (* 31f0 tm) (* 1.7f0 (i->f i))))))))
+                     (ax (* s (f-cos e))) (ay (f-sin e)) (az (- (aref tbl (+ r 3)) (* 0.7f0 sp)))
+                     (lx2 (+ (* j ax) (* k s (aref tbl (+ r 4))))) (ly2 (+ (* j ay) (* k (aref tbl (+ r 5)))))
+                     (lz2 (+ (* j az) (* k (aref tbl (+ r 6)))))
+                     (fl (if (> (aref tbl (+ r 8)) 0.5f0) (- s) s)) (nlx (* k fl)) (nlz (* j fl))
+                     (dx (+ (* xx lx2) (* yx ly2) (* zx lz2))) (dy (+ (* xy lx2) (* yy ly2) (* zy lz2)))
+                     (dz (+ (* xz lx2) (* yz ly2) (* zz lz2))) (dl (f-max 1f-5 (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
+                     (len (* lk (aref tbl (+ r 2)) (- 1f0 (* 0.15f0 k)))))
+                (declare (single-float e ax ay az lx2 ly2 lz2 fl nlx nlz dx dy dz dl len))
+                (%lb-frame! *lb-m* ox oy oz (/ dx dl) (/ dy dl) (/ dz dl)
+                            (+ (* xx nlx) (* zx nlz)) (+ (* xy nlx) (* zy nlz)) (+ (* xz nlx) (* zz nlz)) len)))
+          (case kind
+            (0 (draw-weapon :lb-wing *lb-m* :alpha al))
+            (1 (draw-weapon :lb-wing-lit *lb-m* :alpha al))
+            (t (draw-weapon :lb-wing-gold *lb-m* :alpha al))))))
     nil))
 
 (defmacro %lb-halo (jm o kind lift r)
@@ -878,7 +921,7 @@ gold one, 2 the owl's broken one. The alpha: *LB-V* [14]; LIFT and R go through 
   nil)
 
 ;;; ---------------------------------------------------------------- the looks keyed on his state
-(defmacro lb-fxs (side i) `(aref *lb-fx* (+ (* 16 ,side) ,i)))
+(defmacro lb-fxs (side i) `(aref *lb-fx* (+ (* 24 ,side) ,i)))
 
 (defun lb-cine-frame (e name)
   "The running cinematic's frame when it is NAME with E as its subject, else NIL (a look the script drives)."
@@ -928,39 +971,32 @@ gold one, 2 the owl's broken one. The alpha: *LB-V* [14]; LIFT and R go through 
     nil))
 
 (defun-fast %lb-aim-look (e f side)
-  "The aim line (§9; both players see it): a thin line on the floor from under the muzzle to the wall, grey while it
-tracks, jade (and wider) once locked; the reticle (the eye mark) on it at the opponent's distance, turning while it
-tracks, snapped to the lane's width at the lock (0.65 m: a Step clears it) and closing after the release. The volley:
-five lines fanned, the same colours. The reticle's point is kept for the HUD's distance tag (*LB-FX*)."
+  "The aim line (§9, §22.1; both players see it): a thin line on the floor from under the muzzle to the wall, grey while
+the shooting stance (:lb-kamae and its entries, every move named LB-KAMAE*) tracks (wider once charged, from its f30: up at
+f6 + 24), jade (and wider) once the shot :lb-k-shot locks (its frame 0) until it fires; the reticle (the eye mark) on it at
+the opponent's distance, turning while it tracks, snapped to the lane's width at the lock (0.65 m: a Step clears it) and
+closing until the shot. The reticle's point is kept for the HUD's distance tag (*LB-FX*). (The volley went with the
+rework: L in Jilliel is the mode switch.)"
   (declare (fixnum side))
   (setf (lb-fxs side 10) 0f0)
-  (let ((mv (fighter-move f)))
-    (when (and mv (eq (fighter-state f) :move) (member (mv-name mv) '(:lb-x-axis :lb-volley)))
-      (let* ((holding (eq (fighter-phase f) :hold)) (pre (and (eq (fighter-phase f) :main) (< (fighter-sf f) (mv-s mv)))))
-        (when (or holding pre)
-          (%lb-load-place! e)
-          (let* ((v *lb-v*) (yaw (aref v 27)) (ux (- (f-sin yaw))) (uz (- (f-cos yaw)))
-                 (lock (the fixnum (or (getf (mv-params mv) :lock) 34)))
-                 (locked (or pre (>= (the fixnum (fighter-hold f)) lock)))
-                 (x0 (+ (aref v 24) (* 0.5f0 ux))) (z0 (+ (aref v 26) (* 0.5f0 uz)))
-                 (wall (%lb-wall x0 z0 ux uz)) (dist (the single-float (fighter-dist f)))
-                 (dq (f-clamp (- dist 0.5f0) 1f0 (f-max 1f0 wall)))
-                 (tm (fx-clock)))
-            (declare (type f32vec v) (single-float yaw ux uz x0 z0 wall dist dq tm) (fixnum lock))
-            (if (eq (mv-name mv) :lb-volley)
-                (let ((sp (* 0.017453292f0 (the single-float (f32 *volley-spread*)))))
-                  (declare (single-float sp))
-                  (dotimes (i 5)
-                    (let* ((a (+ yaw (* sp (i->f (- i 2))))) (vx (- (f-sin a))) (vz (- (f-cos a))))
-                      (declare (single-float a vx vz))
-                      (%lb-floor-line (if locked 1 0) x0 z0 vx vz (%lb-wall x0 z0 vx vz) (if locked 0.05f0 0.03f0)))))
-                (let* ((rx (+ x0 (* dq ux))) (rz (+ z0 (* dq uz)))
-                       (r (cond (pre (- 0.65f0 (* 0.06f0 (i->f (fighter-sf f))))) (locked 0.65f0) (t 1.1f0))))
-                  (declare (single-float rx rz r))
-                  (%lb-floor-line (if locked 1 0) x0 z0 ux uz wall (if locked 0.06f0 0.035f0))
-                  (%lb-reticle locked rx rz r (if locked 0.785398f0 (* 1.4f0 tm)))
-                  (setf (lb-fxs side 7) rx (lb-fxs side 8) 0.05f0 (lb-fxs side 9) rz (lb-fxs side 10) (if locked 2f0 1f0)
-                        (lb-fxs side 11) dist)))))))
+  (let* ((mv (fighter-move f)) (nm (and mv (eq (fighter-state f) :move) (mv-name mv)))
+         (stance (and nm (search "LB-KAMAE" (symbol-name nm)) t))
+         (locked (and (eq nm :lb-k-shot) (eq (fighter-phase f) :main) (< (fighter-sf f) (mv-s mv)))))
+    (when (or stance locked)
+      (%lb-load-place! e)
+      (let* ((v *lb-v*) (yaw (aref v 27)) (ux (- (f-sin yaw))) (uz (- (f-cos yaw)))
+             (x0 (+ (aref v 24) (* 0.5f0 ux))) (z0 (+ (aref v 26) (* 0.5f0 uz)))
+             (wall (%lb-wall x0 z0 ux uz)) (dist (the single-float (fighter-dist f)))
+             (dq (f-clamp (- dist 0.5f0) 1f0 (f-max 1f0 wall)))
+             (rx (+ x0 (* dq ux))) (rz (+ z0 (* dq uz)))
+             (r (if locked (- 0.65f0 (* 0.018f0 (i->f (fighter-sf f)))) 1.1f0))
+             (tm (fx-clock)))
+        (declare (type f32vec v) (single-float yaw ux uz x0 z0 wall dist dq rx rz r tm))
+        (%lb-floor-line (if locked 1 0) x0 z0 ux uz wall
+                        (cond (locked 0.06f0) ((>= (the fixnum (fighter-sf f)) 30) 0.05f0) (t 0.035f0)))
+        (%lb-reticle locked rx rz r (if locked 0.785398f0 (* 1.4f0 tm)))
+        (setf (lb-fxs side 7) rx (lb-fxs side 8) 0.05f0 (lb-fxs side 9) rz (lb-fxs side 10) (if locked 2f0 1f0)
+              (lb-fxs side 11) dist)))
     nil))
 
 (defmacro %lb-trumpet (k)
@@ -1014,10 +1050,16 @@ his halo cracking (gold shards); the broken halo stays (LILLE-DRAW draws it). Lo
                           0.8f0 0.12f0 7f0 +pal-gold+)))))))
     nil))
 
+(defparameter *lb-spread-clips* '(:lb-w-aim :lb-w-fire :lb-w-nijushi :lb-o-trompete)
+  "The clips (besides every :sp and :kikon move) that fan the wings out (the volley, the beam, Trompete).")
+(defmacro lb-jilliel-form-p (form) `(member ,form '(:jilliel :jilliel-mujittai :jilliel-kin :jilliel-kin-mujittai)))
+(defmacro lb-mujittai-p (form) `(member ,form '(:jilliel-mujittai :jilliel-kin-mujittai)))
+
 (defun-fast lille-draw (e rdt)
-  "His kit's :draw hook (after his body; cosmetic): the base form's eye opening and its aim line / reticle; Jilliel's six
-other wings fanned round the column (folded round it in MUJITTAI, rippling on each pass-through, their holes lit in
-NIJUSHI-KO's tell) and the wide jade halo; the owl's eight gold wings, its spiked halo (broken once sealed), the trumpet
+  "His kit's :draw hook (after his body; cosmetic): the base form's eye opening and its aim line / reticle; Jilliel's eight
+wing blades (both modes: two fans of four behind the column, the front pair reaching to the rig's hands, each swaying on
+its own phase; folded round the column in MUJITTAI, rippling on each pass-through, their holes lit in NIJUSHI-KO's tell,
+fanned out in the SPs) and the wide jade halo; the owl's eight gold wings, its spiked halo (broken once sealed), the trumpet
 forming over Trompete's wind-up, the reflect. The awakening's and the revival's cinematics drive the wings and halos
 (the unfolding, the jade turning gold). Its only allocation is the entity lookups (two a frame; a third while he aims
 or a gold look plays; a fourth in MUJITTAI)."
@@ -1028,14 +1070,19 @@ or a gold look plays; a fourth in MUJITTAI)."
          (cj (lb-cine-frame e 'lb-jilliel-cine)) (cr (lb-cine-frame e 'lb-revive-cine))
          (ct (lb-cine-frame e 'lb-trompete-cine)) (ck (lb-cine-frame e 'lb-jilliel-kikon-cine))
          (look (cond ((and cj (< (the fixnum cj) 92)) :base) ((and cr (< (the fixnum cr) 66)) :revive)
-                     ((member form '(:jilliel :jilliel-mujittai)) :jilliel) ((eq form :shin) :shin) (t :base))))
+                     ((lb-jilliel-form-p form) :jilliel) ((eq form :shin) :shin) (t :base))))
     (declare (fixnum side) (type f32vec jm v) (single-float tm))
     (setf (lb-fxs side 15) (if (eq form :shin) 1f0 0f0))   ; (his hazards' looks read it: gold or jade)
+    (setf (lb-fxs side 16)                               ; the SPs fan the wings out (0.12 s either way)
+          (if (and mv (or (member (mv-kind mv) '(:sp :kikon)) (member (mv-clip mv) *lb-spread-clips*)))
+              (f-min 1f0 (+ (lb-fxs side 16) (* 8f0 rdt)))
+              (f-max 0f0 (- (lb-fxs side 16) (* 8f0 rdt)))))
+    (setf (aref v 28) (lb-fxs side 16))
     (when (>= (model-alpha m) 0.999f0)
       (case look
         (:base (%lb-eye-look e m st side) (%lb-aim-look e f side))
         ((:jilliel :revive)
-         (let ((stance (eq form :jilliel-mujittai)))
+         (let ((stance (lb-mujittai-p form)))
            (when stance                                  ; a hit passed through: the guard gauge dropped in the stance
              (let ((gg (gauges-gg (gauges e))))
                (declare (single-float gg))
@@ -1046,19 +1093,20 @@ or a gold look plays; a fourth in MUJITTAI)."
            (let* ((rip (- tm (lb-fxs side 3))) (k (if (and cr (< (the fixnum cr) 30)) 0.8f0 (lb-fxs side 4)))
                   (gold (if cr (f-clamp (/ (- (i->f cr) 30f0) 30f0) 0f0 1f0) 0f0))
                   (lit (or (and mv (eq (mv-name mv) :lb-nijushi) (eq (fighter-phase f) :main) (< (fighter-sf f) (mv-s mv)))
-                           (and ck (< 8 (the fixnum ck) 110)))))
-             (declare (single-float rip k gold))
-             (setf (aref v 0) 0f0 (aref v 1) 0.32f0 (aref v 2) 0.12f0 (aref v 11) k
+                           (and ck (< 8 (the fixnum ck) 110))))
+                  (o (* 16 (ji :chest))))
+             (declare (single-float rip k gold) (fixnum o))
+             (setf (aref v 0) 0f0 (aref v 1) 0.3f0 (aref v 2) 0.13f0 (aref v 11) k
                    (aref v 12) (if (< rip 0.5f0) (* 14f0 (- 1f0 (* 2f0 rip))) 0f0) (aref v 13) tm
                    (aref v 14) (if stance 0.7f0 1f0) (aref v 16) 1f0 (aref v 23) 0f0
                    (aref v 15) (if (and cj (< (the fixnum cj) 160)) (f-max 0f0 (/ (- (i->f cj) 112f0) 8f0)) 9f0))
              (if (> gold 0f0)                            ; the revival: the jade turning gold over 30 f, a pair at a time
-                 (let ((pg (i->f (min 3 (f->i (* 3.2f0 gold))))))
+                 (let ((pg (i->f (min 4 (f->i (* 4.2f0 gold))))))
                    (declare (single-float pg))
-                   (setf (aref v 15) pg) (%lb-wings jm (* 16 (ji :chest)) *lb-wings-jl* 6 2)
-                   (setf (aref v 15) 9f0 (aref v 23) pg) (%lb-wings jm (* 16 (ji :chest)) *lb-wings-jl* 6 0)
+                   (setf (aref v 15) pg) (%lb-wings jm o *lb-wings-jl* 8 2)
+                   (setf (aref v 15) 9f0 (aref v 23) pg) (%lb-wings jm o *lb-wings-jl* 8 0)
                    (setf (aref v 23) 0f0))
-                 (%lb-wings jm (* 16 (ji :chest)) *lb-wings-jl* 6 (if lit 1 0)))
+                 (%lb-wings jm o *lb-wings-jl* 8 (if lit 1 0)))
              (unless cr                                  ; the wide thin halo (the headless column has none)
                (setf (aref v 14) (if stance 0.7f0 1f0))
                (if (and cj (< (the fixnum cj) 160))
@@ -1085,7 +1133,7 @@ or a gold look plays; a fourth in MUJITTAI)."
 
 (defun lille-body-alpha (e)
   "His kit's :body-alpha hook: MUJITTAI's column is half see-through (§5.2 Look); a constant (no boxing)."
-  (if (eq (fighter-form (fighter e)) :jilliel-mujittai) 0.72 1f0))
+  (if (lb-mujittai-p (fighter-form (fighter e))) 0.72 1f0))
 
 (defun-fast lille-charge (e rdt)
   "His kit's :charge hook (instead of the fire charge at the weapon tip while a move is held): a small jade glint at the
@@ -1093,8 +1141,9 @@ muzzle cross once the line is locked, nothing while it tracks (the line is the t
   (declare (single-float rdt))
   (setf rdt 0f0)                                        ; (unused: the hook's signature)
   (let* ((f (fighter e)) (mv (fighter-move f)))
-    (when (and mv (eq (fighter-form f) :base)
-               (>= (the fixnum (fighter-hold f)) (the fixnum (or (getf (mv-params mv) :lock) 34))))
+    (when (and mv (eq (fighter-form f) :base)                ; (the rework's shot locks on its frame 0)
+               (or (eq (mv-name mv) :lb-k-shot)
+                   (>= (the fixnum (fighter-hold f)) (the fixnum (or (getf (mv-params mv) :lock) 34)))))
       (let ((m (model e)))
         (joint-point! *lb-p* (model-joints m) (ji :weapon-r) 0f0 0f0 -1.75f0)
         (fx-star (aref *lb-p* 0) (aref *lb-p* 1) (aref *lb-p* 2) 0.04f0 0.12f0 4 0.785f0 0f0 0f0 0.05f0 5f0 +pal-jade+ 0.85f0
@@ -1119,9 +1168,8 @@ thin gold sheet under them). Fading over the hazard's life. 0 B."
              (wall (%lb-wall x z ux uz)) (l (f-min len wall)) (sd (i->f (mod age 97))))
         (declare (single-float x z yaw ux uz fade len w wall l sd) (fixnum age))
         (case kind
-          ((:shot :volley)
-           (let ((n (if (eq kind :volley) 5 1)) (sp (* 0.017453292f0 (the single-float (f32 *volley-spread*))))
-                 (y (if (eq kind :volley) 1.6f0 1.2f0)))
+          (:shot                                       ; (the volley's five-line fan went with rework R)
+           (let ((n 1) (sp 0f0) (y 1.2f0))
              (declare (fixnum n) (single-float sp y))
              (dotimes (i n)
                (let* ((a (if (= n 1) yaw (+ yaw (* sp (i->f (- i 2)))))) (vx (- (f-sin a))) (vz (- (f-cos a)))
@@ -1310,9 +1358,9 @@ to the reticle on the aim line (LILLE-DRAW keeps its point), grey while it track
     nil))
 
 (defun lille-hud-guard (e x y bw h right s tm)
-  "His :hud-guard hook (over the guard bar): in MUJITTAI the bar outlined jade (the stance: GUARD HOLD, never refilling)."
+  "His :hud-guard hook (over the guard bar): in MUJITTAI (EN or KIN) the bar outlined jade (the stance: GUARD HOLD, never refilling)."
   (declare (ignore right))
-  (when (eq (fighter-form (fighter e)) :jilliel-mujittai)
+  (when (lb-mujittai-p (fighter-form (fighter e)))
     (let ((v *lb-hud*)) (setf (aref v 4) (f32 x) (aref v 5) (f32 y) (aref v 6) (f32 bw) (aref v 7) (f32 h)))
     (%lb-guard-outline (round s) (f32 tm))))
 
@@ -1397,7 +1445,7 @@ cross flash; K its presence."
                       0.8f0 0.09f0 0.02f0 (+ 31f0 (i->f i)) +pal-hit+ k :push 0.6f0)))
         (fx-star x y z 0.08f0 0.2f0 4 0.785f0 0f0 0f0 0.03f0 35f0 +pal-hit+ k :push 0.6f0)))))
 
-(defparameter *lb-hole-fan* '((1 40) (-1 40) (1 10) (-1 10) (1 -12) (-1 -12) (1 -42) (-1 -42))
+(defparameter *lb-hole-fan* '((1 40) (-1 40) (1 13) (-1 13) (1 -16) (-1 -16) (1 -40) (-1 -40))
   "神の裁き's 24 muzzles: the eight wings (side, elevation), three holes each.")
 (defun vfx-lb-converge (a v k)
   "神の裁き's Kikon: 24 jade lines out of the wings' holes, crossing on V (K their presence, 0..1)."
