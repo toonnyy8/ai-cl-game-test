@@ -136,9 +136,17 @@ then the user's review before the build.
 
 ## 4. Modelling references
 
-The user (2026-10-06): 「請順便整理利傑巴羅各型態的參考圖作為建模依據」. The sheet is
-`docs/research/tybw-characters/notes/lille_barro_model_sheet.md` (per form: silhouette, parts, proportions, colours,
-poses, what the ink style may simplify; the image pages to save). Image hosts are blocked in the cloud environment, so the
-pictures themselves go only into the git-ignored `.refs/Lille-Barro/` (`base/ diagramm/ jilliel/ owl/ trompete/`),
-never into git. Two colour questions for the user are in the sheet: Jilliel's green (proposed: a muted jade, since the
-style has only three spot hues) and the owl form's gold (proposed: Senjumaru's muted gold #B89A5A).
+The user (2026-10-06): 「請順便整理利傑巴羅各型態的參考圖作為建模依據」, and after opening the network policy: 「我以變更網路政策，請再次嘗試整理利傑巴羅各型態的參考圖作為建模依據」.
+
+- The sheet: `docs/research/tybw-characters/notes/lille_barro_model_sheet.md` (per form: silhouette, parts, proportions
+  re-measured from the official full-body visual, colours sampled from the stills, poses, what the ink style may simplify,
+  the source list with page and file URLs).
+- The pictures: 49 images (anime stills, the official digital colour manga, the official site's visual) in the
+  git-ignored `.refs/Lille-Barro/` (`base/ diagramm/ jilliel/ owl/ trompete/`, `INDEX.md`, one contact sheet per form);
+  third-party art, never committed.
+- What the images corrected (the sheet has the full list): he fights without the cloak; Diagramm is about 2.4 m, a thin
+  barrel through a fur sleeve crossed at the rear by a tall black plank, no telescopic scope; the eye mark (a ring of four
+  arcs with four inward ticks) is also the reticle and the trumpet bell's ring; Jilliel is a holed column with a face
+  window and eight flat blade wings with three oval holes each; the owl form is white with gold only on the wings, halo
+  and glow, on four stilt legs.
+- Open for the user (the sheet's §9): Jilliel's green and the owl form's gold against the style's three spot hues.

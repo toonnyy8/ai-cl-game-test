@@ -1,7 +1,7 @@
 # Lille Barro (リジェ・バロ, 利傑巴羅): modelling reference sheet
 
 The request (the user, 2026-10-06): 「請順便整理利傑巴羅各型態的參考圖作為建模依據」 (collect reference images of each of his forms
-as the basis for modelling).
+as the basis for modelling), asked again after the network policy changed: 「請再次嘗試整理利傑巴羅各型態的參考圖作為建模依據」.
 
 Companion files: the canon fact file `lille_barro.md` (same folder; §1 appearance, §3 Jilliel, §4 the owl form) and the
 design doc `docs/duel/DUEL_LILLE.md` (base form, awakening = Jilliel, second awakening = the owl form). This sheet speaks
@@ -11,132 +11,153 @@ in the terms the art code uses: `defbody` (`:scale`, `:width`, `:girth`, `:props
 
 ## 0. How this was made, and how far to trust it
 
-- **No image was opened or downloaded.** The network policy blocks every page and image host this needs
-  (`bleach.fandom.com`, `static.wikia.nocookie.net`, `upload.wikimedia.org`, `animeoshi.com` and others answered
-  CONNECT 403 / EGRESS_BLOCKED on 2026-10-06). Everything here comes from **web-search result summaries** (the search
-  engine's quotes and paraphrases of the Bleach Wiki, fan wikis, reviews) plus the fact file, which was built the same way.
-- So the **image list (§7) is a list of pages that carry the images**, not direct image files. Every URL in it appeared in
-  a search result (this session, or the fact file's session). None could be opened, so none is verified to show what
-  its note says; the note says what the search summary said the page covers.
-- **Nothing in this sheet replaces looking.** Each form ends with a "check by eye" list; open the pages in §7 in a
-  browser, save the frames into `.refs/Lille-Barro/` (§8), and correct this sheet where the pictures disagree.
+- **Second pass (2026-10-06), with images.** 49 images were downloaded and **looked at one by one** into the git-ignored
+  `.refs/Lille-Barro/` (§8): 47 stills (anime screenshots, the wiki's colour-edition manga panels, the official anime
+  character visual and head turnaround, one Brave Souls key art) and two 2×2 frame sheets cut from the wiki's GIFs. Hex
+  values marked *sampled* were measured with Pillow/numpy on those files (5×5 means or percentile picks inside a hue mask).
+- **Hosts.** Worked: the Bleach Wiki through its MediaWiki API (`bleach.fandom.com/api.php`, browser User-Agent;
+  `prop=images` per page, then `prop=imageinfo` for the file URLs), the files on `static.wikia.nocookie.net` (fetched as the
+  original PNGs with `&format=original`; without it the CDN serves lossy WebP), the official anime site `bleach-anime.com`
+  (character page, Lille = entry 84), the Brave Souls wiki API. The wiki article pages themselves (`/wiki/...`) answer 403 to
+  a plain client, so every page link below was resolved through the API, not opened as HTML. The first pass's
+  third-party explainer pages (Sportskeeda, animecorner, Game Rant, daddyjim, …) were **not needed and not opened**; they
+  are dropped from §7.
+- **What the pictures are.** The wiki's manga panels are the **digital colour edition** (Shueisha's coloured release),
+  not the black-and-white tankōbon; no B&W scan was collected. The colours in them are the colourist's, not Kubo's.
+  The anime stills of TYBW 35 are lit purple (the Shikai games) or gold (the Bankai), and TYBW 37 purple, so colours are
+  sampled from the official visual and TYBW 24 where possible.
+- **Episode numbers.** TYBW episode N = the wiki's overall episode 366 + N (TYBW 24 = ep 390, 35 = 401, 37 = 403, 40 = 406).
 
-**Marks** (as DUEL_SENJUMARU.md / DUEL_LILLE.md): **[V]** manga, **[A]** anime-only (TYBW Part 3, 2024), **[G]** our game
-interpretation or a proposal, **[I]** an inference from the sources. Confidence: **high** (two or more independent
-summaries agree), **med** (one summary), **low** (one weak or contradicted summary), **recall** (from memory of the
-material, found in no source this session; treat as a guess to check). The manga is black and white, so **every colour
-is [A] or game art** unless stated; where the manga only gives tone (white / screentone / black) the sheet says so.
+**Marks** (as DUEL_SENJUMARU.md / DUEL_LILLE.md): **[V]** manga, **[A]** anime-only, **[G]** our game interpretation or a
+proposal, **[I]** an inference. New in this pass: **[seen: `file`]** = confirmed by eye on that file in `.refs/Lille-Barro/`
+(folder implied by the prefix: `base_*` in `base/`, `diagramm_*` in `diagramm/`, and so on). Claims left from the first pass
+without a [seen] mark are still text-only.
 
-**Numbers.** Canon gives no measurements beyond his height. Every metre or ratio below that is not his height is **[G]**:
-a starting value for the body file, to be corrected against the references.
+**Numbers.** Canon gives no measurements beyond his height. Ratios marked *measured* were read off the stills (pixels,
+corrected by eye for perspective); everything else in metres is **[G]**.
+
+**Corrections this pass forced (summary).** He fights **without the cloak** (it is a debut-only hooded robe); his **trousers
+are white** with a green front panel, not dark green; the **right arm is sleeved** in white, only the left is bare; the
+"pauldron" is a **long fur stole** with buttons; his **eyes are green**, not black; **Diagramm is a cross-shaped weapon**
+(thin barrel, fur sleeve, a tall black upright plank), about **2.4 m** long, with no visible telescopic scope; Jilliel's
+body is a **slender holed column ending in two prongs**, not a teardrop, and its **wings are green** in the anime (gold only
+in the owl form); the owl form's **body is white, not gold**, stands on **four stilt legs**, and has **long thin arms**; the
+trumpet has **no valves**.
 
 ## 1. Body and rig baseline (all forms)
 
 | Item | Value | Mark |
 |---|---|---|
-| Height | **182 cm** (wiki infobox; JP profiles via anime.eiga / anibase summaries also give 182 cm) | [V] high |
-| Height conflict | one wiki summary gives "five feet nine inches" (175 cm); use 182 cm | low, ignore |
-| Build | youthful-looking adult, **muscular**, broad but not Kenpachi-heavy | [V] med–high |
-| Rig scale | Ichigo is `:scale 1.0` at 181 cm, so Lille **`:scale 1.0`, `:width 1.04`** (muscular, sleeveless arms show) | [G] |
+| Height | **182 cm**: confirmed by the official anime site's profile (身長 182cm, birthday 4月11日, 聖文字 "X", CV 日野聡) | [A] official |
+| Height conflict | the "five feet nine" summary is wrong; ignore | resolved |
+| Build | **muscular**, long-limbed; in the official visual about **8.5 heads** tall without the hat (a slim anime head), shoulders ≈ 0.26 H | [seen: `base_fullbody_front_official-anime.png`] measured |
+| Rig scale | Ichigo is `:scale 1.0` at 181 cm, so Lille **`:scale 1.0`, `:width 1.04`** | [G] |
 | Head | the anime-head rule: `(:head 1.2 1.2 1.2)` in `:girth`, as Ichigo | [G] |
 | Hurt cylinder | **r 0.38 / h 1.80** (Ichigo's), in every form; hats, wings, halos, necks add **no** hurt volume (fairness floor, as Senjumaru's crescent) | [G] |
-| Rig limits | 21 fixed joints; `:props` stretches `:shoulders`, `:arms`, `:legs` (shin + foot; the pelvis rises with them) and `:spine` (spine + chest + neck together). Bones lengthen, meshes do not stretch. Anything else (wings, a serpentine neck) is an **art-only chain** drawn from an anchor joint, as Senjumaru's echo arms | engine fact |
+| Rig limits | 21 fixed joints; `:props` stretches `:shoulders`, `:arms`, `:legs` and `:spine`. Anything else (wings, a serpentine neck, stilts) is an **art-only chain** from an anchor joint, as Senjumaru's echo arms | engine fact |
 
-Silhouette across the roster (the existing reads, DUEL_SENJUMARU §2): Yamamoto = hunched white haori + FIRE; Kenpachi =
-2 m, white sleeveless haori + yellow; Rukia = small, all black; Ichigo = tall black, orange head, two blades; Senjumaru =
-small white figure, gold halo, gold fan of arms. **Lille's base form must read as "the dark-skinned man in a white
-cloak with a green fur hat and a rifle longer than a sword"**: the only fighter with a long straight horizontal line.
-Watch two collisions: Kenpachi is also white and sleeveless (separate them by the hat, the rifle and the green), and
-Senjumaru also owns a gold halo and a gold fan (Jilliel's wing fan and the owl form's gold must differ in shape:
-blades with holes, not arms; a thin ring, not a crescent).
+Silhouette across the roster (DUEL_SENJUMARU §2): Yamamoto = hunched white haori + FIRE; Kenpachi = 2 m, white
+sleeveless haori + yellow; Rukia = small, all black; Ichigo = tall black, orange head, two blades; Senjumaru = small white
+figure, gold halo, gold fan of arms. **Lille's base form reads as "a dark-skinned man all in white, a green fur cap with a
+white stripe, one green fur stole on the right, and a black rifle that makes a cross"** [seen]. Collisions to watch:
+Kenpachi is also white with a bare arm (separate them by the green hat and stole and the rifle's cross); Senjumaru owns a
+gold halo and a gold fan (Jilliel's halo and wings are **green** in the anime, which helps; the owl form's gold wings are
+holed blades, its halo a small spiked ring, not a crescent).
+
+**The X / + motif rhymes through every form** [seen]: the eye mark, the scope reticle (`diagramm_dial-muzzle-reticle_frames_anime_ep35.png`),
+the muzzle brake, the rifle's side silhouette (barrel × upright plank), the glove's winged X, the trumpet bell's ring with
+four struts (`trompete_bell-end-on_manga-colour_ch653.png`). Keep one shared "ring + four ticks" glyph for all of them.
 
 ## 2. Base form (万物貫通 THE X-AXIS, Diagramm, the left eye shut)
 
 ### 2.1 Silhouette: three readable elements
-1. **The rifle line**: a long, thin, dead-straight black line ending in a **cross (+) muzzle brake**.
-2. **The green fur bicorne**: a wide, two-pointed fur hat on a small crew-cut head.
-3. **The asymmetric white cloak**: a long white cloak over dark skin, with **one dark-green fur pauldron on the right
-   shoulder** only.
+1. **The rifle cross**: a long, thin, dead-straight black barrel through a green fur sleeve, crossed at the rear by a tall
+   black plank; a **+ muzzle brake** at the tip.
+2. **The green fur cap with the white stripe**: a tall fur cap whose white crown shows as a vertical stripe from the front.
+3. **The asymmetric top**: a long green fur stole over the **right** shoulder and chest, the right arm in a white sleeve,
+   the **left arm bare** and muscular; everything else white.
 
-The fourth, close-range element (portraits, cinematics, the eye meter's state): **the left eye shut under an
-X-in-a-circle crosshair tattoo**.
+The fourth, close-range element: **the left eye shut under the reticle mark** (a ring of four arcs with four short ticks
+pointing in, an X with the centre left open for the eye).
 
 ### 2.2 Parts list, front / side / back
 
 | Part | Description | Mark |
 |---|---|---|
-| Skin | **dark skin** | [V][A] high |
-| Hair | **white**, cut almost to a **crew cut**, with **short trimmed sideburns** | [V] high (crew cut), med (sideburns) |
-| Eyes | black eyes; the **left eye kept shut**; the right eye open | [V] high |
-| Crosshair mark | a black tattoo over the **left** eye: **an X inside a circle** ("reads like a tilted crosshair"); JP summaries call it an "X-shaped scar/mark on the left eye" (左目に入ったX型の傷跡) | [V] high (left eye, X), med (the circle) |
-| Eye-open variant | the left eye opens in a crisis (three times, ch. 645); the tattoo stays. In the eye-open frames the attack passes through him | [V] high |
-| Hat | a **dark-green furred bicorne** with a **small Wandenreich emblem on each side** | [V][A] high (wiki text) |
-| Hat orientation | which way the two points face (side to side, Napoleonic, or fore and aft) | **unknown, check by eye** |
-| Cloak | a **long white cloak** over everything; in ch. 599 he **casts off the cloak** to bare Diagramm | [V] high (white cloak), med (cast off) |
-| Shirt | a **light-coloured sleeveless shirt** (arms bare from the shoulder) | [V] med–high; colour vague |
-| Pauldron | a **dark-green furred pauldron on the right shoulder** | [V][A] high |
-| Gloves | **white gloves embroidered with a winged X** (on the back of the hand) | [V] high; embroidery colour unknown |
-| Trousers | **dark-green trousers** | [A] high (wiki text) |
-| Leggings | **white leggings with cut-outs near the calves**, which **attach to the shirt** (straps or a one-piece line running up under the trousers: check) | [V] med |
-| Shoes | **light-coloured shoes** | [V] med |
-| Weapon at rest | Diagramm **slung across his back under the cloak** | [V] med–high |
+| Skin | **dark brown** | [seen: `base_fullbody_front_official-anime.png`] |
+| Hair | **pale cream**, cut to an **undercut / crew cut**; only the temples, sideburns and nape show under the cap | [seen: `base_head_3view_official-anime.png`] (colour sampled #CBC1A6, not pure white) |
+| Eyes | **green** irises (anime: dark green; colour manga: bright green); the left eye kept shut. The wiki's "black eyes" is wrong for both colour sources | [seen: `base_head_3view_official-anime.png`, `base_face_eye-open_manga-colour_ch646.png`] |
+| Eye mark | over the **left** eye: a **ring broken into four arcs, with four short ticks pointing inward** (an X whose centre is left open); about 1.5× the eye's width, centred on the shut eye; black | [seen: `base_face_eye-mark_manga-colour_ch599.png`, `base_head_3view_official-anime.png`] |
+| Eye-open variant | anime: the opened left eye and the whole mark **glow green** and the mark's X flares into four long light strokes; manga: an ordinary open green eye inside the mark | [seen: `base_face_eye-open_anime_ep35.png`, `base_face_eye-open_manga-colour_ch646.png`] |
+| Cap | **resolved.** A tall dark-green **fur cap**: a thick fur rim forms **two ridges running front to back**, left and right of a long **white crown** (the white shows as a vertical stripe from the brow up over the top when seen from the front, and as a long white oval from above). The two ridges are the bicorne's "points", so the points sit **left and right** (worn crosswise). From the side it reads as a round fur dome, a bit longer than wide. A small **metal emblem disc** (a wheel/cross) on each side. It sits low on the brow and covers the head to above the ears | [seen: `base_head_3view_official-anime.png`, `base_face_eye-shut_hat-front_anime_ep24.png`, `base_hat-top_back_anime_ep35.png`] |
+| Cloak | **resolved: debut only.** A hooded, floor-length white cloak over everything (cap included), three buttons down the right chest, a big **red Schutzstaffel mark** (an asterisk-like X with a bar) on the front. He throws it off at once (ch. 600 / TYBW 24) and **never fights in it** | [seen: `base_hooded-cloak_anime_ep24.png`, `base_face_eye-mark_manga-colour_ch599.png`] |
+| Shirt | **resolved: white** (the same white as the trousers), V-neck, **sleeveless on the left only**; the **right arm wears a long white sleeve** to the glove cuff. A wide **waist band** (≈ 0.09 H tall) closes the shirt, with three buttons on his right | [seen: `base_fullbody_front_official-anime.png`, `diagramm_three-quarter_fur-sleeve_anime_ep24.png`] |
+| Fur stole (was "pauldron") | a long **dark-green fur stole** from the right side of the neck (it also rings the back of the collar) over the **right** shoulder and down the right chest to the waist band, fastened by **three grey buttons** along its inner edge | [seen: `base_fullbody_front_official-anime.png`, `diagramm_fur-sleeve-ports_anime_ep35.png`] |
+| Gloves | white, with **flared cuffs**; the **winged X** (two crossed rods, a feathered wing on each side, a disc at the centre) is embroidered on the cuff, drawn in dark line | [seen: `base_glove_winged-x_design.png`, `diagramm_aim-window_anime_ep34.png`] |
+| Trousers | **corrected: white**, straight, slightly flared at the hem. A **dark-green front panel** hangs from the waist band to the crotch (≈ 0.2 H long, ≈ 0.09 H wide) with **three grey buttons on each edge** and a **notched point** at the bottom; buttoned green strips also show on the back/outer thigh. This fits the wiki text if the white is the "leggings" and the green is the trousers showing through the openings | [seen: `base_fullbody_front_official-anime.png`, `base_hat-top_back_anime_ep35.png`] |
+| Leggings cut-outs at the calves | **not visible in any still collected**; the official front shows plain white legs | open, low priority |
+| Shoes | **white**, low, slightly pointed | [seen: `base_fullbody_front_official-anime.png`] |
+| Weapon at rest | in the fights he **carries Diagramm in his hands** (upright, or levelled); the "slung under the cloak" carry exists only at the debut | [seen: `diagramm_vertical_carry_manga-colour_ch600.png`, `diagramm_full-length-vertical_anime_ep24.png`] |
 
-Front: dark face with the white crew cut, the closed left eye and its mark, the bicorne's brim, the sleeveless light
-shirt, the right fur pauldron, the white gloves, green legs with white calves showing through the cut-outs.
-Side: the hat's points and depth; the rifle's line diagonal across the back under the cloak (stock low, barrel up, or
-the reverse: check). Back: a plain white cloak mass; the rifle's ends may show past its hem and above the shoulder.
+Front: dark face, cream sideburns, the cap's white stripe, the shut left eye in its ring, the green stole down the right
+side, the white sleeve on the right arm and the bare left arm, the white waist band, the green buttoned front panel, white
+legs and shoes. Side: the cap as a dome with its emblem disc; the stole's fur mass on the right shoulder. Back: the cap's
+long white crown inside the fur rim; the white shirt back; buttoned green strips on the legs (`base_hat-top_back_anime_ep35.png`).
+No true back view of the whole body was found.
 
-### 2.3 Proportions [G] (ratios to his 182 cm height H)
+### 2.3 Proportions (ratios to his 182 cm height H; *measured* on `base_fullbody_front_official-anime.png`)
 
 | Measure | Ratio | Metres | Note |
 |---|---|---|---|
-| Crown | 1.00 H | 1.82 | `:scale 1.0` |
-| Hat top | ≈ 1.08 H | ≈ 1.97 | fur bicorne ≈ 0.15 m tall, ≈ 0.40 m tip to tip [G] |
-| Shoulder width | ≈ 0.26 H | ≈ 0.48 | `:width 1.04`; the pauldron adds ≈ 0.06 on the right |
-| Cloak hem | ≈ 0.12 H above the floor | ≈ 0.22 | mid-shin; check the length (ankle or calf) |
-| Head (anime ×1.2) | ≈ 0.14 H | ≈ 0.25 incl. hair | as Ichigo |
+| Crown (under the cap) | 1.00 H | 1.82 | `:scale 1.0` |
+| Cap top | ≈ 1.05 H | ≈ 1.92 | measured; the cap sits low (brim at the brow), ≈ 0.20 m from brow to top, ≈ 0.24 m wide, ≈ 0.30 m long |
+| Brow / cap brim | ≈ 0.96 H | ≈ 1.75 | measured |
+| Shoulder width | ≈ 0.26 H | ≈ 0.48 | the stole adds ≈ 0.06 on the right |
+| Waist band | ≈ 0.67–0.76 H | 1.22–1.38 | measured; a wide white band |
+| Green panel bottom (crotch) | ≈ 0.46 H | ≈ 0.84 | measured |
+| Head (anime ×1.2) | ≈ 0.12 H in the visual | ≈ 0.22 | keep the game's ×1.2 rule |
+| Cloak hem | — | — | no cloak in play (see 2.2) |
 
-### 2.4 Colours (all [A] or game art; the manga gives white cloak / tone hat and trousers / black rifle and tattoo)
+### 2.4 Colours (*sampled* on the official visual, flat cel colours; the style values follow STYLE_STORM §A.1)
 
-Hex values are **approximations** chosen for the v4 notan palette (STYLE_STORM §A.1: V0 black, V4 white, colours
-muted to S ≤ 0.45 unless they are one of the three spot hues). None is sampled from a frame.
+| Palette key | Sampled (anime) | Game value [G] | What |
+|---|---|---|---|
+| `:skin` | lit **#885F4A** (H20 S0.46 V0.53), shade #5B392F | **#7A6155** / shade #54433B (S 0.30) | §A.1 caps skin at S ≤ 0.3; the first pass's #6E4A3A (S 0.47) broke the cap |
+| `:hair` | **#CBC1A6** (pale cream, H44 S0.18) | #D8D2C0 | cream, not white; mostly hidden by the cap |
+| `:white` | **#ECF1F3** (cool white, H197 S0.03) | #ECECE8 (the roster white) | shirt, sleeve, waist band, gloves, trousers, shoes, the cap's crown: **one white for all** (the first pass's separate `:shirt` #D8D6CC is dropped) |
+| `:green` | fur **#434D3B** (H93 S0.23 V0.30), lighter fur #505E47, darkest #2A3124 | #434D3B lit / #2A3124 shade | cap, stole, front panel, rifle sleeve: muted, **not a spot hue**; the first pass's #2F3B2E was one value too dark |
+| `:button` | **#AAB3B7** | #BCC1CC (V3 steel) | buttons, the cap's emblem discs |
+| `:black` | — | #16161E | Diagramm, the eye mark; keyline #4A5062 on black parts |
+| `:emblem` | grey metal on the cap; the glove's winged X is dark line on white | V3 steel / ink | resolved: no gold anywhere on the base form |
+| eye | dark green iris | ink dot | at play distance the open right eye is an ink dot |
+| eye-open accent | anime glow **green** (H ≈ 135–150, e.g. #3FC563 → #78F5BF) | white + cold steel, or the green of §4.4 (user decision) | the anime makes green his power colour (eye, re-formed rifle, Jilliel); see §9 |
 
-| Palette key | Lit hex | What |
-|---|---|---|
-| `:skin` | **#6E4A3A** (shade #4A3028) | dark brown, muted warm (skin is "the only warm non-spot colour"); the white cloak and hair against it carry the notan contrast |
-| `:hair` | #E8E8E4 | white crew cut; ink keyline #101018 |
-| `:white` | #ECECE8 | the cloak, gloves, leggings, shoes |
-| `:shirt` | #D8D6CC | the light sleeveless shirt (one value below the cloak so the two read apart) |
-| `:green` | **#2F3B2E** (fur light #46563F) | hat, pauldron, trousers: a dark muted green, S ≈ 0.25, **not a spot hue** |
-| `:black` | #16161E | Diagramm, the tattoo, the muzzle brake; keyline #4A5062 on it (black-part rule) |
-| `:emblem` | #B89A5A muted gold or #D8DCE4 white | the hat emblems and the gloves' winged X: colour **unknown**, check |
-| eye-open accent | white + the cold steel tint | the phase flash when the left eye opens (no new hue) |
+The anime line colour on skin is a dark brown (#2A1D19), not black; the style's ink keyline replaces it.
 
 ### 2.5 Signature poses
 
 | Pose | Description | Mark |
 |---|---|---|
-| Idle | upright, still, the deadpan sniper; rifle **slung under the cloak** in canon. For play, rifle **carried at port arms** or **butt grounded, barrel up** beside him, so its line is always on screen | [V] stillness high; carry [G] |
-| Aim | rifle **shouldered on the right**, cheek to the stock, **the right eye at the scope** (the left is shut by his rule); left hand forward under the forestock | [I] high for the right eye (the left is shut), med for right-shouldered |
-| Aim, adjusting | he **adjusts the dial and looks through the scope** before firing (ch. 644 / TYBW 34) | [V][A] med |
-| Fire | a single recoil-less snap: the shot is effectively instant along the line, so the pose barely moves; the effect is the line and a **perfectly round hole** in the target | [V] med (round holes, instant) |
-| Dodge | the **Kageoni leap**: he jumps clear on the first try | [V] high |
-| Hit (eye open) | the left eye snaps open, the crosshair flares, the blade passes **through** him | [V] high |
+| Idle | upright and still; rifle held **upright beside him, barrel up** (the debut stance) or levelled across the body | [seen: `diagramm_vertical_carry_manga-colour_ch600.png`, `diagramm_full-length-vertical_anime_ep24.png`] |
+| Aim | the fur sleeve on the **right** side of the face, **cheek on the sleeve**, the **left (bare) hand under the sleeve's front**, the right arm round its rear; the black plank stands up behind the sleeve. Kneeling aim in the manga (one knee up) | [seen: `diagramm_aim-window_anime_ep34.png`, `diagramm_side_aim-pose_manga-colour_ch644.png`, `diagramm_muzzle-cross_end-on_bravesouls-art.png`] |
+| Aim, adjusting | fingers turning a small **dial knob on the black plank**; then the POV **reticle** (ring + four ticks) | [seen: `diagramm_dial-muzzle-reticle_frames_anime_ep35.png`] (low-res frames) |
+| Fire | a single snap along the line; the anime draws the X-Axis as a **green** beam in TYBW 35 | [A] (green beam: triage view of the wiki's DarumaSanGaKoronda still, not saved) |
+| Dodge | the **Kageoni leap**: a high side-on jump, legs trailing, rifle held | [seen: `base_fullbody_leap-side_manga-colour_ch645.png`] |
+| Hit (eye open) | the left eye snaps open, the mark flares green (anime), the blade passes through him | [seen: `base_face_eye-open_anime_ep35.png`] |
 | Hit (normal) | a stiff, upright flinch; he never brawls | [I] |
 
 ### 2.6 Simplify for the ink style / never lose
 
-- **Simplify:** the fur becomes **one bevelled mass with 3–5 jagged ink strokes** on its edge (no fur cards); the hat's
-  emblems become a small pale disc each side; the gloves' winged X becomes a 2-stroke mark or vanishes at play distance;
-  the leggings' cut-outs become **one dark window per calf**; the cloak is a rigid `:cyl` / plate mass on `:chest` and
-  `:pelvis` (no cloth sim), split at the front so the shirt shows.
-- **Never lose:** the rifle's **length and straightness** and its **+ muzzle**; the **green fur hat**; **one** pauldron on
-  the **right**; the **shut left eye with the X-in-circle**, and an unmistakable eye-open frame (it is a game state);
-  dark skin against white cloth.
+- **Simplify:** the fur becomes **one bevelled mass with 3–5 jagged ink strokes** on its edge (cap rim, stole, rifle
+  sleeve, the same treatment); the cap's crown is a white plate between two fur ridges; the emblems become small steel
+  discs; buttons become steel dots (3 on the stole, 3 on the band, 3 + 3 on the panel); the glove's winged X vanishes at
+  play distance.
+- **Never lose:** the rifle's **length, straightness and cross**; the **green cap with the white stripe**; the stole on the
+  **right** and the **bare left arm**; the **green front panel** on white legs; the **shut left eye in its ring**, and an
+  unmistakable eye-open frame (it is a game state); dark skin against white cloth.
 
-### 2.7 Check by eye
-Hat orientation and size; cloak length and whether it has a hood/collar; shirt colour; how the leggings attach to the
-shirt; the emblem and embroidery colours; whether the eye-open frame shows an iris or a glowing eye in the anime.
+### 2.7 Still to check by eye
+A full back view of the body; the calf cut-outs; which glove carries the embroidery (both cuffs in the stills seen).
 
 ## 3. Diagramm (ディアグラム), the spirit weapon
 
@@ -144,196 +165,177 @@ shirt; the emblem and embroidery colours; whether the eye-open frame shows an ir
 
 | Part | Description | Mark |
 |---|---|---|
-| Overall | a **large sniper rifle of black metal** | [V] high |
-| Barrel | **long and slender**, "extraordinarily long and thin" | [V] high |
-| Muzzle brake | **black, cross-shaped** (a "+" of four fins seen end-on) at the tip | [V] high |
-| Scope | a telescopic scope on top | [V] med (ch. 644) |
-| Dial | an adjustment **dial** he turns before shooting (likely on the scope or the receiver: check) | [V] med |
-| Fur wrapping | the receiver and forestock (one version says "body and barrel", another "receiver and stock") **wrapped in dark-green fur**, matching the hat | low–med (one AI-written database, three paraphrases; not in the wiki text the fact file quotes) |
-| Stock | a **bulky stock** that "sprouts **wing-shaped supports**" bracing it against his shoulder | low–med (same source) |
-| Carry | slung **across his back under the cloak** | [V] med–high |
-| Severed state | ch. 645 / TYBW 35: Kyōraku **cuts most of the barrel off** (Daruma-san ga Koronda); the rest of the fight uses the stump or the Vollständig | [V][A] high |
+| Overall | **not a conventional sniper rifle.** In side view it is a **cross**: a long thin horizontal barrel, a green fur sleeve over its rear part, and a **tall flat black upright plank** set crosswise at the rear | [seen: `diagramm_side_aim-pose_manga-colour_ch644.png`, `diagramm_three-quarter_fur-sleeve_anime_ep24.png`] |
+| Barrel | **thin and dead straight**, black (≈ 0.05 m thick), runs out of the front of the fur sleeve | [seen] |
+| Muzzle brake | a **+ of four rectangular fins**, each arm ≈ 3–4× the barrel's thickness; end-on it is a heavy black cross with the bore at the centre | [seen: `diagramm_muzzle-cross_end-on_bravesouls-art.png`, `diagramm_dial-muzzle-reticle_frames_anime_ep35.png`] |
+| Fur sleeve | **confirmed**: a big cylinder (≈ 0.6 m long, ⌀ ≈ 0.2 m) wrapped in the same green fur as the cap, with **round ports** on its side (seen when cut) | [seen: `diagramm_fur-sleeve-ports_anime_ep35.png`, `diagramm_aim-window_anime_ep34.png`] |
+| Upright plank (the "wing-shaped supports") | a flat black plank ≈ 1.0–1.3 m tall and ≈ 0.1 m wide crossing the sleeve's rear; it reaches above his head and below his waist; in the manga a lower part splits into two plates. The "wing-shaped supports" of the first pass are these plates (no feathers) | [seen: `diagramm_vertical_carry_manga-colour_ch600.png`, `diagramm_muzzle-cross_end-on_bravesouls-art.png`] |
+| Scope | **no telescopic scope is drawn on the weapon in any still**; the anime shows the "scope" only as a POV reticle (ring + four ticks, the eye-mark glyph) | [seen: `diagramm_dial-muzzle-reticle_frames_anime_ep35.png`] |
+| Dial | a **small round knob on the black plank**, turned between finger and thumb | [seen: same file] (low-res) |
+| Stock | none in the usual sense: the plank braces against his shoulder/body | [seen] |
+| Severed state | ch. 646: the barrel cut short, the plank with holes; anime: the rifle re-forms from **green Reishi** | [seen: `diagramm_severed_manga-colour_ch646.png`, `diagramm_reforming-green-reishi_anime_ep35.png`] |
 
-### 3.2 Proportions [G]
+### 3.2 Proportions (*measured* where marked, else [G])
 
-No canon length. Proposal, to check against the ch. 599 and TYBW 34–35 frames:
+| Measure | Ratio to H | Metres | Note |
+|---|---|---|---|
+| Overall length | **≈ 1.3 H** | **≈ 2.4** | measured on `diagramm_full-length-vertical_anime_ep24.png` (barrel ≈ 6 head lengths past the sleeve; a low camera, so ±0.3 m) |
+| Barrel past the sleeve | ≈ 0.8 H | ≈ 1.5 | measured, same file |
+| Barrel thickness | ≈ 0.03 H | ≈ 0.05 | it must read as a line |
+| Fur sleeve | ≈ 0.33 H long, ⌀ ≈ 0.11 H | ≈ 0.6 × ⌀ 0.2 | measured on `diagramm_side_aim-pose_manga-colour_ch644.png` |
+| Upright plank | ≈ 0.6–0.7 H tall, ≈ 0.05 H wide | ≈ 1.1–1.3 × 0.1 × 0.05 | measured, same files |
+| Muzzle brake | ≈ 0.12 H across | ≈ 0.2 × 0.2, ≈ 0.08 long | [G] from the Brave Souls art |
+| Severed barrel | ≈ 0.15 H past the sleeve | ≈ 0.27 | [G] |
 
-| Measure | Ratio to H | Metres |
-|---|---|---|
-| Overall length | **≈ 1.1 H** | **≈ 2.0** |
-| Barrel (receiver to muzzle) | ≈ 0.6 H | ≈ 1.1 |
-| Barrel diameter | ≈ 0.02 H | ≈ 0.04 (thin: it must read as a line) |
-| Muzzle brake | ≈ 0.08 H across the cross | ≈ 0.14 × 0.14, ≈ 0.10 long |
-| Scope | ≈ 0.2 H long | ≈ 0.35, ⌀ 0.05 |
-| Stock | ≈ 0.25 H long, ≈ 0.08 H deep | ≈ 0.45 × 0.15 |
-| Severed barrel | the barrel cut to ≈ 0.15 H past the receiver | ≈ 0.27 |
-
-`defweapon :diagramm (:length 2.0)` on `:weapon-r`, the **grip at ≈ 0.55 of the length from the muzzle end**, the left
-hand on the forestock. The design doc's J / K are "rifle butt and bayonet" strings: **there is no bayonet in canon** [G];
-if one is added it must be a short blade under the muzzle, and the drawn tip must match the hit volume (±0.15 m FK test).
-A `:diagramm-cut` variant (the severed barrel) is a cosmetic option for damage states.
+`defweapon :diagramm (:length 2.4)` on `:weapon-r`, the grip at the sleeve's rear (≈ 0.35 of the length from the plank
+end), the left hand under the sleeve's front. The plank is a separate flat box crossing at the rear (its top above the
+head when aimed, so keep it thin and dark against the sky). **There is no bayonet in canon** [G]; the J / K "butt and
+bayonet" strings can use the **plank as the butt**. The drawn tip must match the hit volume (±0.15 m FK test).
 
 ### 3.3 Simplify / never lose
-- **Simplify:** the scope to a cylinder + two rings; the dial to a disc; fur to a jagged ink band round the forestock; the
-  wing supports (if confirmed) to two flat wedges.
-- **Never lose:** the length (longer than any sword in the roster), the **thin straight barrel**, the **+ muzzle** (it is
-  his X: the crosshair, the muzzle and the letter all rhyme), black metal.
+- **Simplify:** the sleeve to a fur cylinder with jagged ink edges and two dark port dots; the plank to one flat black box
+  (two plates below the barrel line); the dial to a tiny disc on the plank; the muzzle to a + of four boxes.
+- **Never lose:** the length, the **thin straight barrel**, the **cross** of barrel and plank, the **+ muzzle**, the green
+  fur sleeve, black metal.
 
-### 3.4 Check by eye
-Overall length against his body; where the dial is; whether the fur wrapping and the stock's wing supports are real;
-whether the anime adds colour (green fur, any gold).
-
-## 4. Vollständig 神の裁き JILLIEL (ch. 646; TYBW 35–36)
+## 4. Vollständig 神の裁き JILLIEL (ch. 646; TYBW 35)
 
 ### 4.1 Silhouette: three readable elements
-1. **The eight-wing fan**: four pairs of long wings spread round him, **each pierced by three round holes** (24 muzzles).
-2. **The armless cocoon**: a cream-white carapace robe from **the mouth down**, tapering like a teardrop; no arms; he
-   **floats**.
-3. **The wide, thin halo** (Heiligenschein), large and gold in the anime.
+1. **The eight-wing fan**: four long flat wings each side, **each pierced by three oval holes** (24 muzzles), radiating from
+   one point behind the head.
+2. **The holed white column**: an armless, slender upright column (no visible legs), **perforated by round holes**,
+   ending at the bottom in **two pointed prongs**; he floats.
+3. **The thin flat halo** floating just above the top of the column.
 
 ### 4.2 Parts
 
 | Part | Description | Mark |
 |---|---|---|
-| Wings | **eight wings, three holes each**; JP: 「4対の羽を持つ天使」 (four pairs) | [V] high |
-| Hole count | 3 per wing, 24 total (one blog says "4 per wing" while also saying 24: a slip) | [V] high for 3 |
-| Wing shape | long, blade-like feathered wings fanning out from behind the shoulders, four per side, in a near-radial fan (fans call the form "the winged chair") | recall / low; **check** |
-| Wing colour | **conflict**: "eight expansive **green** wings" (Filibuster), green Reiatsu glow shifting to gold in the second form (Anime Explained ep 37: "the transformation of his wings' colours from green to a golden palette"); but "eight **golden** wings" (Sportskeeda ep 35, Brave Souls). Best reading: **green in the anime's Jilliel, gold from the revival on**; Brave Souls may use gold throughout | [A] med; **check** |
-| Robe | a **large carapace-like robe covering his body below the mouth**; "priestly cream-white"; "white cocoon-like" | [V][A] high |
-| Arms | **none visible**: the arms are replaced by (or hidden under) the wings; the owl form "regrows the arms he had lost" | [V] med–high |
-| Legs | hidden in the robe; one summary says **long "giraffe-like" legs show when the robe opens** | [A] low; **check** |
-| Halo | a **wide and thin** Heiligenschein; anime: "a **huge golden** Heiligenschein **above his head**" | [V] high (wide, thin); [A] med (gold, above) |
-| Face | **a more elaborate tattoo** than the base X; the robe hides the mouth; one blog says "the absence of hair and a mouth" (is the crew cut hidden by a hood?) | [V] high (tattoo), low (hair); **check** |
-| Eyes | both open by now (the third opening released the form) | [I] high |
-| Posture | upright, **floating**, serene; flies over Wahrwelt's rooftops | [V] high |
+| Wings | **8, three oval holes each** (in a row along the wing) | [seen: `jilliel_fullbody_front_anime_ep35.png`, `jilliel_fullbody_front_manga-colour_ch646.png`] |
+| Wing shape | **resolved: flat leaf/blade shapes** with torn, serrated trailing edges and pointed tips; **no separate feathers**. They radiate from **one root just behind the top of the column**: upper pair ≈ 35–40° above horizontal, second ≈ 10° up, third ≈ 15° down, fourth ≈ 40° down (anime front) | [seen: same files] |
+| Wing colour | **resolved for the anime: green.** TYBW 35 wings are a glowing **green** (sampled mid #356E32, light #83C17C, glow #ADFBA1; H ≈ 112–120) with a sparkle texture; the partial wings in TYBW 26 are green too. The colour manga paints them **pale gold-white** (#FCFCDD). Gold in the anime arrives only with the owl form (§5) | [seen: `jilliel_fullbody_front_anime_ep35.png`, `jilliel_partial-wings_base-body_anime_ep26.png`, `jilliel_fullbody_front_manga-colour_ch646.png`] |
+| Body | **corrected: a slender upright column**, widest at the top (≈ 0.19 of its height), slightly narrower at the waist, **ending in two pointed prongs** at the bottom (not a teardrop point); cream-white; **round holes** pierce it (about four near the top, six near the bottom) | [seen: `jilliel_fullbody_front_anime_ep35.png`, `jilliel_face-window_robe-holes_anime_ep35.png`] |
+| Top of the column | two small **horn-like points** at the top corners; the **face shows through a round window** just below the top; the mouth is covered | [seen: `jilliel_face-window_manga-colour_ch647.png`, `jilliel_face-window_robe-holes_anime_ep35.png`] |
+| Hair | **not visible** (hidden by the column's top) | [seen] |
+| Face tattoo | too small to read in any still; the anime profile shows a light vertical band across the brow and eye (the cap's white stripe again?) | low; still open |
+| Arms | **none** in the closed column | [seen] |
+| Altered form (the "giraffe legs") | **resolved**: later in the fight (ch. 648; TYBW 35) the column's lower half **splits into long curved limbs**, about four reaching outward like arms and four to six reaching the ground like legs, with ribbon strips | [seen: `jilliel_altered_legs_manga-colour_ch648.png`, `jilliel_altered_legs-halo_anime_ep35.png`, `jilliel_silhouette_underwater_anime_ep35.png`] |
+| Halo | **resolved: a thin flat ring, horizontal, just above the top of the column** (not behind the head); anime **green** like the wings, colour manga pale yellow. In the altered form it is drawn wider and tilted | [seen: `jilliel_fullbody_front_anime_ep35.png`, `jilliel_altered_legs-halo_anime_ep35.png`] |
+| Eyes | open (both) | [seen: `jilliel_face-window_robe-holes_anime_ep35.png`] |
+| Posture | upright, floating a little off the ground, serene | [seen] |
 
-### 4.3 Proportions [G]
+### 4.3 Proportions (*measured* on `jilliel_fullbody_front_anime_ep35.png`, as ratios to the column's height C; then [G] metres)
 
-| Measure | Ratio to H | Metres |
-|---|---|---|
-| Body (head + cocoon) | ≈ 1.0 H tall, hovering **0.3 m** off the floor (cosmetic root lift; the hurt cylinder stays grounded, as the design doc says) | ≈ 1.82 + 0.3 |
-| Cocoon width | ≈ 0.3 H at the shoulders, tapering to ≈ 0.1 H at the bottom point | 0.55 → 0.18 |
-| Each wing | ≈ 0.9 H long, ≈ 0.12 H wide | ≈ 1.6 × 0.22 |
-| Wing span (tip to tip, top pair) | ≈ 2.2 H | ≈ 4.0 (the widest silhouette in the roster: keep it inside the camera's framing) |
-| Holes | ⌀ ≈ 0.05 H, evenly spaced along the outer two-thirds of each wing | ⌀ ≈ 0.09 |
-| Halo | outer ⌀ ≈ 0.8 H, band ≈ 0.02 H, ≈ 0.15 H above (or behind) the head | ⌀ ≈ 1.45 |
+| Measure | Measured | Game [G] | Note |
+|---|---|---|---|
+| Column height C | 1.0 C | ≈ 2.0 m, floating 0.3 m (cosmetic root lift; the hurt cylinder stays grounded) | |
+| Column width | ≈ 0.19 C at the top, ≈ 0.13 C at the waist, ≈ 0.19 C at the prongs | 0.38 / 0.26 / 0.38 m | |
+| Each wing | **≈ 1.5 C long**, ≈ 0.35 C wide | **scale down to ≈ 1.0 C (2.0 m)** | full size gives a span over 3 C (> 6 m): too wide for the camera |
+| Wing holes | ≈ 0.15 × 0.10 C ovals, three per wing, along the outer two-thirds | ≈ 0.2 × 0.13 m | 24 muzzle anchors |
+| Halo | outer ⌀ ≈ 0.42–0.47 C, floating ≈ 0.08 C above the column top | ⌀ ≈ 0.9 m, 0.15 m above | thin band ≈ 0.01 C |
 
-Rig mapping [G]: the `:jilliel` body skins no shapes on the arm joints (armless); the cocoon is a tapered `:cyl` from
-`:chest` to below the feet (the legs' joints draw nothing); the wings are **eight art-only rigid plates** anchored on
-`:chest` (the echo-arm precedent, N12), each with a small idle flap from a shared fx clock; the halo is a thin ring
-on `:head` (or the chest, so it does not bob with nods). The wing **holes** are cut-outs or black discs with a light
-core; each hole is a muzzle anchor for the WING VOLLEY lines (24 named points).
+Rig mapping [G]: the `:jilliel` body skins no shapes on the arm or leg joints; the column is a tapered `:cyl` from the
+pelvis up past the head, with two prong wedges at the bottom; the wings are **eight art-only flat plates** from one anchor
+at the top of the column (the echo-arm precedent, N12), each with a small idle flap from a shared fx clock; the halo is a
+thin ring on the column's top (not the head bone). The holes are cut-outs or dark ovals with a light core. The altered
+form, if wanted, is a second skin: the column's lower half replaced by 8 curved tendril chains.
 
 ### 4.4 Colours
 
-| Key | Lit hex | Note |
-|---|---|---|
-| `:robe` | #E6E0CC | cream-white, warmer than the base cloak's #ECECE8 |
-| `:wing` | **decision needed**: muted jade **#6E9A80** (S ≤ 0.45, not a spot) with white cores, **or** the same muted gold as the halo | the anime's green is a fourth hue; STYLE_STORM §A.2 allows exactly three spot hues (FIRE, REIATSU yellow, BLOOD) |
-| `:halo` | #B89A5A muted gold (lit #C2A866) | Senjumaru's gold key: no new spot hue |
-| `:skin`, `:hair` | as base | only the face shows |
-| tattoo | #16161E | the larger pattern: check its shape |
-| shots | white core + cold steel tint, 1–2 px lines | the X-Axis is a line, not a coloured beam |
+| Key | Sampled | Game value [G] | Note |
+|---|---|---|---|
+| `:robe` | #F9FDE8 lit (gold-lit frames #EBE0B8), colour manga #FCFCDD | #EDE6CC | cream-white, warmer than the base white |
+| `:wing` | anime green #356E32 / #83C17C / glow #ADFBA1 (S 0.36–0.55) | **user decision** (§9): muted jade #6E9A80 (S ≤ 0.3), or adopt the anime green as Lille's spot hue | the anime green is the dominant colour of the form, not a detail |
+| `:halo` | green (anime) / pale yellow (manga) | follows `:wing` | the first pass's "huge golden halo" in the anime was wrong for TYBW 35 |
+| face | skin in the window | `:skin` | only the face shows |
+| shots | green beam (anime) | white core + the `:wing` hue, 1–2 px lines | |
 
 ### 4.5 Wing shots (the look of the WING VOLLEY)
-- [V] high: shots fire **from the holes of the wings**, "instantaneous"; gathering energy in **all 24 holes** gives one
-  blast that severs part of a city. [V] med: the light that carries the X-Axis is called **裁きの光明 Sabaki no Kōmyō**
-  in one summary (the wiki places that name in the second form; see §5).
+- [V] high: shots fire **from the holes of the wings**, "instantaneous"; all 24 holes gathered give one city-severing blast.
 - [G]: each firing hole flashes (a white disc), a **thin straight line** runs to the target, and a **round hole** opens
   where it lands. The charged 24-hole blast is every hole lighting in sequence, then 24 converging lines.
 
 ### 4.6 Signature poses
-- **Idle:** floating, upright, the wings slowly breathing open and shut, the halo still. [V] serene high.
-- **Fire:** no arms, so the "gesture" is the **wings snapping forward** to aim their holes, the head level. [G]
-- **Hit:** passes through (the intangible stance, decisions 3–5); a real hit = the cocoon jolts, wings flare. [G]
-- **Bankai beats (cinematic material):** wounds appear on him (Act 1), black spots (Act 2), drowning in the dark ocean
-  while flapping uselessly (Act 3), the **golden glowing cut across the throat** that expands upward (Act 4). [V] high.
+- **Idle:** floating, upright, the wings slowly breathing open and shut, the halo still. [seen]
+- **Fire:** no arms, so the "gesture" is the **wings snapping forward** to aim their holes. [G]
+- **Hit:** passes through (the intangible stance); a real hit = the column jolts, wings flare. [G]
+- **Bankai beats (cinematic material):** wounds on the column (Act 1), black spots (Act 2), drowning in the dark ocean
+  (Act 3), the **golden glowing cut across the throat** (Act 4). [V] high; Acts 1–3 [seen] at triage on the wiki's
+  episode stills (not saved).
 
 ### 4.7 Simplify / never lose
-- **Simplify:** feathers to 3–4 ink notches per wing edge; the robe to one smooth tapered mass with 2–3 white fold
-  strokes; the tattoo to a few bold strokes.
-- **Never lose:** **8 wings × 3 holes** (count them in the still), **no arms**, the **covered mouth**, the **thin wide halo**,
-  the float.
-
-### 4.8 Check by eye
-Wing shape (feathered or plate-like) and where they root; wing colour in TYBW 35–36; halo position (above, behind,
-tilted) and inner pattern; the tattoo's new shape; hair under a hood or not; the "giraffe legs" moment.
+- **Simplify:** wings to flat plates with 3–4 ink notches on the trailing edge; the column to one smooth mass with the hole
+  dots; the face window to a dark disc with two eye glints.
+- **Never lose:** **8 wings × 3 holes**, **no arms**, the **holed column with two prongs**, the **face in a window**, the
+  **thin flat halo above**, the float.
 
 ## 5. The second form, the owl ("true form" of Jilliel; ch. 650–654; TYBW 37)
 
 ### 5.1 Silhouette: three readable elements
-1. **The serpentine neck with an owl's face**: a long, curving, snake-like neck, furred on its back, ending in a
-   **barn-owl head** (the heart-shaped facial disc, owl eyes, beak) with slicked-back hair.
-2. **Stilt legs and big arms**: a thin, lanky, curved body on **greatly lengthened legs/shoes** (the "centaur" read) with
-   **regrown arms, much larger** than before.
-3. **Gold everywhere**, the wings kept, and a **small spiked halo** (the Jilliel halo shrunk and given spikes).
+1. **The S-neck with a tiny owl head**: a long, curving, segmented neck rising from a fur ruff, ending in a **small round
+   owl face** with a **small spiked halo** above it.
+2. **The four-stilt "centaur" body with long arms**: a narrow human torso on a horizontal lower body carried by **four long
+   tapering stilt legs**; **long thin arms** hanging past the hips.
+3. **Eight gold holed wings** (the Jilliel wings, now gold); the body itself stays white.
 
 ### 5.2 Parts
 
 | Part | Description | Mark |
 |---|---|---|
-| Overall | "an angelic, bird-like being with a very curved but thin, lanky build"; JP: a monster combining a barn owl and a man (メンフクロウと人) | [V] high |
-| Head | a **new, fair-skinned head** with **slicked-back hair**, with **the eyes, nose and beak of an owl** | [V] high |
-| Hair (anime) | the anime "altered the design … with his **white hair fused to the long neck** rather than wispy" | [A] low–med (one summary) |
-| Neck | **elongated, like the body of a snake, with fur on its back** | [V] high |
-| Halo | **drastically reduced in size and gains spikes** | [V] high |
-| Arms | **regrown, much larger**; "after forming a pair of long arms on either side of his torso, Lille raises the right one and fires" | [V] high (larger), med (right arm raised) |
-| Legs | "**his shoes greatly extend**, making him look like a **centaur**"; "elongated limbs"; "giraffe-like legs" | [V] high (centaur read); the exact construction (two stilt legs, or a horse-like lower body) **check** |
-| Wings | kept, now **golden**; Trompete's reflection later **severs his left arm and a set of wings** | [V][A] high |
-| Colour | the Reiatsu and wings shift **from green to gold** as the headless body rises and the face re-forms "from energy" | [A] high |
-| Voice / eyes | the anime processes his voice digitally and adds a first-person shot from inside his eyes (anime-original) | [A] med |
-| Clothes | "devoid of the restraints of his clothes" (the cocoon robe is gone) | med; **check** |
+| Body colour | **corrected: white/pale** (TYBW 37's purple light makes it lavender: sampled lit #DCCBDD, shade #9489AE; colour manga pale grey). **Gold = the wings, the halo and the glow only**, plus golden energy where the body is cut | [seen: `owl_fullbody_three-quarter-back_anime_ep37.png`, `owl_fullbody_three-quarter_manga-colour_ch650.png`, `owl_neck-head-halo_anime_ep37.png`] |
+| Head | **small** (≈ 0.4 of a human head): a **round pale facial disc**, two **big round eyes** (anime: pink-violet iris, dark pupil; manga: dark dots), a **small hooked beak**; the hair is **swept back and merges into the neck fur** | [seen: `owl_head-close_fur-ruff_anime_ep37.png`, `owl_front_wings-spread_anime_ep37.png`, `owl_head-halo-arm_manga-colour_ch652.png`] |
+| Neck | long, an **S / hook curve**, with **segmented plates on the front** (like a snake's belly) and a **fur crest along the back**; it rises from a shaggy **fur ruff** at the shoulders | [seen: `owl_neck-head-halo_anime_ep37.png`, `owl_fullbody_three-quarter-back_anime_ep37.png`] |
+| Halo | **a small ring with about six short spikes** (crown-like), horizontal above the head; gold | [seen: `owl_neck-head-halo_anime_ep37.png`, `owl_head-halo-arm_manga-colour_ch652.png`] |
+| Torso | narrow, human, upright; no clothes | [seen] |
+| Arms | **corrected: long and thin** (not bulky), hanging to below the hips, long fingers; "much larger" in the text means longer. One arm raised high with a pointing finger in ch. 652 | [seen: `owl_front_wings-spread_anime_ep37.png`, `owl_fullbody_front_arms_manga-colour_ch650.png`, `owl_head-halo-arm_manga-colour_ch652.png`] |
+| Lower body / legs | **resolved: the "centaur"** is a horizontal lower body (a table-like hip mass) on **four long, thin, tapering stilt legs**, plus ribbon-like tendrils trailing from the hips | [seen: `owl_fullbody_three-quarter-back_anime_ep37.png`, `owl_fullbody_three-quarter_manga-colour_ch650.png`, `owl_front_arms-stilts_anime_ep37.png`] |
+| Wings | **eight kept, gold, three holes each**; amber with sparkle (sampled mid #755424, light #C8B267, glow #F9EB95, H ≈ 35–52) | [seen: `owl_front_wings-spread_anime_ep37.png`] |
+| Clothes | **none**; no robe remains | [seen] |
+| Damage | the reflected Trompete erases a strip of the body and neck, showing **gold energy** inside | [seen: `owl_neck-head-halo_anime_ep37.png`] |
 
-### 5.3 Proportions [G]
+### 5.3 Proportions (*measured* on the TYBW 37 stills as ratios to the torso T, shoulder ruff to hips; then [G])
 
-This form is a different skeleton in all but name. Proposal with the fixed 21-joint rig:
+| Measure | Measured | Canon-size estimate | Game [G] | Rig mapping |
+|---|---|---|---|---|
+| Torso T | 1.0 T | ≈ 0.55 m (human) | 0.55 m | `:spine` |
+| Stilt legs (hip to floor) | **≈ 3.5 T** | ≈ 1.9 m | **≈ 1.3 m** (`:props :legs 1.5`, extra stilts as art) | 2 rig legs + 2 art-only stilts behind |
+| Neck (rise above the ruff) | ≈ 2.5–2.7 T | ≈ 1.4 m | ≈ 0.9 m | art-only chain of 6 tapering segments from `:chest`; the rig `:head` draws nothing |
+| Owl head | ≈ 0.2 T | ≈ 0.11 m | 0.18 m (enlarged for reading) | at the chain's end |
+| Arms | ≈ 1.6 T | ≈ 0.9 m | ≈ 0.9 m | `:props :arms 1.4`, thin `:girth` |
+| Halo | ≈ 0.35 T across | ≈ 0.2 m | 0.25 m, 6 spikes | on the neck chain's last segment |
+| Wings | as Jilliel | | ≈ 1.6 m each | the same eight plates, re-coloured |
+| Overall height to the neck top | **≈ 7 T** | **≈ 3.7–4 m** | ≈ 2.8 m | the first pass's 3.1 m was close; scaled down for the camera |
 
-| Measure | Ratio to base H | Metres | Rig mapping |
-|---|---|---|---|
-| Overall to the head | ≈ 1.7 H | ≈ 3.1 | `:legs 1.6` (pelvis rises), plus the neck chain |
-| Legs (hip to floor) | ≈ 0.85 H | ≈ 1.55 | `:props :legs 1.6`; thin shins, long pointed shoes |
-| Torso | ≈ 0.3 H, narrow (`:width 0.85`), arched | ≈ 0.55 | `:spine` flexed forward in every pose (the "very curved" build) |
-| Neck | ≈ 0.5 H, an S-curve | ≈ 0.9 | **art-only chain** of 5–6 tapering segments from `:chest`, the head drawn at its end (the rig `:head` draws nothing); segments lag the chest by 1–3 f (the echo-arm history) so it sways |
-| Owl head | ≈ 0.16 H tall, disc ≈ 0.14 H wide | ≈ 0.29 × 0.25 | heart-shaped facial disc, two round dark eyes, a small hooked beak |
-| Arms | ≈ 0.6 H each | ≈ 1.1 | `:props :arms 1.5`, `:girth` upper/lower arm 1.3 |
-| Halo | ⌀ ≈ 0.2 H, 6–8 spikes | ⌀ ≈ 0.36 | on the neck chain's last segment, behind the head |
-| Wings | as Jilliel but gold, ≈ 1.0 H long | ≈ 1.8 | the same eight plates, re-coloured |
-
-Hurt cylinder stays **r 0.38 / h 1.80** (fairness floor); the head and neck sit above it and take no hits. The camera
-framing must allow ≈ 3.1 m plus wings: check against Kenpachi's Bankai framing.
+Hurt cylinder stays **r 0.38 / h 1.80** (fairness floor); the neck, head and stilts above/below it take no hits.
 
 ### 5.4 Colours
 
-| Key | Lit hex | Note |
-|---|---|---|
-| `:gold` | **#B89A5A** muted (lit #C2A866) | body and wings; the S ≤ 0.45 muted gold Senjumaru already uses. A saturated gold would collide with Kenpachi's REIATSU spot yellow (48–52°): **user decision** if a spot exception is wanted during his big moves |
-| `:glow` | #FFE8A8 core, #FFFFFF | light from his eyes and body (Hakkyōken "diffuses the light which Lille is emitting") |
-| `:face` | #E2CCBC | the "fair-skinned" owl face (pale, not his dark base skin) |
-| `:hair` | #E8E8E4 | slicked back, fused into the neck in the anime |
-| `:fur` | #8A7A5A | the neck's back fur, a muted darker gold-brown |
-| eyes / beak | #16161E | two black discs and the beak |
+| Key | Sampled | Game value [G] | Note |
+|---|---|---|---|
+| `:body` | lit #DCCBDD (purple-lit), shade #9489AE | #ECECE8 / cold shade #BCC1CC | **white, not gold** (corrected) |
+| `:fur` | lavender-white in the same light | #D8DCE4 with ink strokes | ruff and neck crest |
+| `:face` | pale | #E8E4DC | the owl disc |
+| eyes / beak | violet iris, dark pupil / pale beak | #16161E dots, beak a small dark wedge | |
+| `:gold` (wings, halo) | amber #755424 / #C8B267 / glow #F9EB95 (S 0.40–0.69, H 35–52) | **user decision** (§9): muted gold #B89A5A (Senjumaru's key; note it measures S 0.51, so it already counts as a spot pixel by §A.2's S > 0.45 budget) | the anime's highlight hue (46–52°) sits on Kenpachi's REIATSU yellow (48–52°) |
+| `:glow` | #FFF3A5 core | #FFE8A8 / #FFFFFF | eyes and body light |
 
 ### 5.5 Signature poses
-- **Idle:** hunched forward, the neck in an S, the head cocked like an owl's, the big arms hanging, the wings half
-  open. [I] (owl head-cock: [G])
-- **Sabaki no Kōmyō (裁きの光明):** a **chopping gesture with his arm** that fires **thin waves of golden light**; lines of
-  explosions across the city behind them. [V] med (the wiki technique page; the conflict with §4.5 is recorded in the fact
-  file §3). [G]: the right arm raised high, then a straight downward chop; the wave is a thin vertical gold sheet edge-on.
-- **Trompete pose:** see §6.
-- **Light from the eyes:** a glare; Nanao's mirrors throw it back so bright he cannot see her sword. [V] med
-- **Hit / defeat:** the reflected Trompete **erases a thin strip of his body**, severs the **left arm and a set of wings**,
-  exposes **golden energy** inside, and **breaks the halo**; he falls, notes he has lost his halo, and **scatters "like
-  rain"** into golden, crane- or flamingo-like birds (ch. 654; TYBW 40). [V] high (order), med (chapters)
+- **Idle:** the torso upright on the stilts, arms hanging, the neck in an S with the head cocked forward, wings half open.
+  [seen: `owl_front_wings-spread_anime_ep37.png`]
+- **Sabaki no Kōmyō (裁きの光明):** the manga draws thin gold light waves with explosions along the city; the anime a wide
+  gold beam. [seen: `sabaki-no-komyo_manga-colour_ch650.png`, `sabaki-no-komyo_anime_ep37.png`] [G]: the right arm raised
+  high, then a straight downward chop; the wave a thin vertical gold sheet edge-on.
+- **Trompete pose:** the **right fist held at the beak**, the head bent to it. [seen: `trompete_fist-at-beak_frames_anime_ep37.png`]
+- **Pointing up:** one long arm raised, index finger up, a sun-like light overhead. [seen: `owl_head-halo-arm_manga-colour_ch652.png`]
+- **Hit / defeat:** the reflected Trompete erases a strip of his body (gold energy inside), takes the left arm and a set of
+  wings and breaks the halo; he scatters into gold, flamingo-like birds with owl heads. [seen: `trompete_reflected_anime_ep37.png`,
+  `remnants_flamingo_anime_ep40.png`, `remnants_bird-clones_manga-colour_ch654.png`]
 
 ### 5.6 Simplify / never lose
-- **Simplify:** the neck to a tapered segment chain with an ink fur crest along its back; the owl disc to one flat
-  heart-shaped plate with two black eyes and a wedge beak; the body to thin rods; feathers as notches.
-- **Never lose:** the **S-neck**, the **owl disc face**, the **small spiked halo** (it must contrast with Jilliel's wide thin
-  one: a broken halo is his defeat beat), the **too-long legs**, the **big arms**, gold.
-
-### 5.7 Check by eye
-How the "centaur" legs are built; the neck's length and curve; the face's colour and the hair in the anime; whether any
-robe remains; the halo's spike count; how many wings remain and their colour.
+- **Simplify:** the neck to a tapered segment chain with ink plate lines on the front and a fur crest on the back; the owl
+  head to a round disc with two dark eyes and a wedge beak; the stilts to thin tapered rods; the wings as Jilliel's plates.
+- **Never lose:** the **S-neck**, the **tiny owl face**, the **small spiked halo** (it must contrast with Jilliel's wide flat
+  one: a broken halo is his defeat beat), the **four stilts**, the **long hanging arms**, **white body + gold wings**.
 
 ## 6. Props and effects of the second form
 
@@ -341,176 +343,138 @@ robe remains; the halo's spike count; how many wings remain and their colour.
 
 | Item | Description | Mark |
 |---|---|---|
-| Gesture | **a closed fist held in front of his beak** as though grasping a trumpet; he **blows into the fist** | [V] high |
-| The trumpet | absorbs Reishi from the surroundings to form an **enormous golden trumpet** ("horn") **with a wing-like appendage** ("crowned with a wing above it"), **in the air above him** | [V] high |
-| The blast | a **massive X-Axis blast**, erasing everything on its line of fire **while the trumpet sounds** (音を鳴らしながら); one summary calls it "a wide spherical blast"; it erases a large part of a Wahrwelt city | [V] high (erase), med (spherical) |
-| The reflection | Nanao's **Shinken Hakkyōken** (a bladeless ritual sword with mirrors along its length) protects the ground and **reflects the blast into him** | [V] high |
+| Gesture | **a closed fist held in front of his beak**; he blows into the fist | [seen: `trompete_fist-at-beak_frames_anime_ep37.png`] (low-res frames) |
+| The trumpet | anime: a **long plain horn, no valves**, a straight cone flaring to a wide bell, with a **plume of four or five curved, flame-like feathers** rising from its top near the mouthpiece; hot gold-orange edges (#8C4118) and pale gold cores (#F1CE7D → #FFF3A5). Manga: the bell seen **end-on as a glowing disc inside an outer ring joined by four struts** (the reticle again) | [seen: `trompete_horn-wing_anime_ep37.png`, `trompete_bell-end-on_manga-colour_ch653.png`] |
+| Charge | a sun-like gold sphere with rays above him first | [seen: `trompete_gathering-reishi_anime_ep37.png`] |
+| The blast | a city-erasing blast along its line | [seen: `trompete_blast_manga-colour_ch653.png`] |
+| The reflection | Nanao's Hakkyōken throws it back into him | [seen: `trompete_reflected_anime_ep37.png`] |
 
-Proportions [G]: the trumpet ≈ 3.0 H long (≈ 5.5 m), the bell ⌀ ≈ 1.0 H (≈ 1.8 m), hovering ≈ 1.0 H above his head, its
-bell pointing along his line of fire; one golden wing (≈ 1.5 H) rising from its top. Muted gold body, a white-hot bell
-interior when it sounds. Simplify the valves to three discs; **never lose** the bell, the wing and the fist-at-beak pose.
+Proportions: the horn is ≈ 3× the owl form's height in the anime still and the bell ring ≈ 2.5× his height in the manga
+(both perspective-affected) [measured, rough]. Game [G]: horn ≈ 5 m, bell ⌀ ≈ 1.8 m, hovering above him, its bell pointing
+along his line of fire. **Simplify:** a cone + a flared bell + a ring with four struts at the bell, the feather plume as 4–5
+curved blades. **Never lose:** the bell, the plume, the fist-at-beak pose.
 
 ### 6.2 Sabaki no Kōmyō (裁きの光明)
-Thin golden light waves from an arm chop (§5.5); in Jilliel, possibly light from the wings (§4.5). [V] med. Look [G]: a
-thin vertical sheet of gold with a white core, edge-on to the camera when possible, leaving a row of explosions (ink
-SMOKE / DUST fx) along its path.
+Manga: thin gold waves and a row of explosions across the city; anime: a broad gold beam [seen]. Look [G]: a thin vertical
+sheet of gold with a white core, edge-on when possible, leaving a row of explosions (ink SMOKE / DUST fx) along its path.
 
 ### 6.3 The remnants (optional)
-Golden crane- or flamingo-like birds that fire beams (ch. 654, TYBW 40). Useful only for a K.O. cinematic: the body
-breaks into these and they fly off. [V] med.
+Long-legged, flamingo-like birds with **round owl faces** (manga: white, the face like the owl form's; anime: glowing
+gold) [seen: `remnants_bird-clones_manga-colour_ch654.png`, `remnants_flamingo_anime_ep40.png`]. Useful only for a K.O.
+cinematic.
 
-## 7. Image list (pages that carry the images)
+## 7. Verified sources
 
-Every URL below appeared in a web-search result (**S** = this session's searches, **F** = the fact file's searches). **None
-could be opened** from this environment, so every entry is **unverified**; the note is what the search summary said the
-page covers. No direct image-file URL (static.wikia / nocookie) appeared in any search result, so there are none here;
-from a wiki page, open the image and use "Open image in new tab" to get the file.
+Every file below was downloaded and opened. "page" is the file's description page (resolved through the wiki API), "file"
+the image file itself (append `?format=original` on the wiki CDN to get the original PNG rather than WebP). Article pages
+the files were found on: [Lille Barro](https://bleach.fandom.com/wiki/Lille_Barro), [Lille Barro/Image Gallery](https://bleach.fandom.com/wiki/Lille_Barro/Image_Gallery),
+[DON'T CHASE A SHADOW](https://bleach.fandom.com/wiki/DON%E2%80%99T_CHASE_A_SHADOW_(episode)), [SHADOWS GONE](https://bleach.fandom.com/wiki/SHADOWS_GONE),
+[Shunsui Kyōraku vs. Lille Barro](https://bleach.fandom.com/wiki/Shunsui_Ky%C5%8Draku_vs._Lille_Barro), [Nanao Ise vs. Lille Barro](https://bleach.fandom.com/wiki/Nanao_Ise_vs._Lille_Barro),
+[Trompete](https://bleach.fandom.com/wiki/Trompete), [Sabaki no Kōmyō](https://bleach.fandom.com/wiki/Sabaki_no_K%C5%8Dmy%C5%8D),
+[Quincy: Vollständig](https://bleach.fandom.com/wiki/Quincy:_Vollst%C3%A4ndig) ("Diagramm", "Jilliel" and "The X-Axis"
+redirect to the main article; the chapter pages 645–654 redirect to volume pages that carry only chapter covers), the
+official [character page](https://bleach-anime.com/character/) (entry リジェ・バロ), and the Brave Souls
+[Lille Barro](https://bleach-bravesouls.fandom.com/wiki/Lille_Barro) page.
 
-### 7.0 All forms
-| URL | Shows (per search) | Src |
-|---|---|---|
-| https://bleach.fandom.com/wiki/Lille_Barro/Image_Gallery | the wiki's gallery: manga and anime images of every form (incl. Lille with Gerard and Askin in the Soul King Palace) | S, F |
-| https://bleach.fandom.com/wiki/Lille_Barro | the main article: infobox portrait, appearance text, form images | S, F |
-| https://www.pinterest.com/pin/lille-barroimage-gallery--944489353090629302/ | a pin of the wiki gallery | S |
-| https://www.pinterest.com/pin/517351075963619446/ | "Google Image Result for static.wikia.nocookie.net …": **content unknown** | S |
-| https://myanimelist.net/character/114967 | MAL character page with anime pictures | S, F |
-| https://anime.jepang.org/karakter/114967/Lille_Barro | "Gambar Karakter Anime" (character images) mirror of MAL | S |
-| https://anibase.net/en/character/4k2OV/Lille-Barro | character database page (anime images) | S |
-| https://renote.net/tags/21261 | JP tag page "リジェ・バロ / Lille Barro" (articles with screenshots) | S |
-| https://renote.net/articles/251985 | JP article on Lille (screenshots) | S |
-| https://ciatr.jp/topics/338893 | JP explainer of his abilities and forms (screenshots) | S, F |
-| https://villains.fandom.com/wiki/Lille_Barro | Villains Wiki: infobox + gallery | S, F |
-| https://vsbattles.fandom.com/wiki/Lille_Barro | VS Battles profile: usually one image per form | S |
-| https://daddyjim.ai/bleach/character/Lille-Barro | a database page paraphrasing the wiki (images unknown) | S |
+| Local file | Episode / chapter | Page | File |
+|---|---|---|---|
+| **base/** | | | |
+| `base_fullbody_front_official-anime.png` | character page | [page](https://bleach-anime.com/character/) | [file](https://bleach-anime.com/assets/img/character/chara_84.png) |
+| `base_head_3view_official-anime.png` | character page | [page](https://bleach-anime.com/character/) | [file](https://bleach-anime.com/assets/img/character/face_84.png) |
+| `base_face_eye-shut_hat-front_anime_ep24.png` | TYBW 24 (wiki ep 390) | [page](https://bleach.fandom.com/wiki/File:Ep390LilleProfile.png) | [file](https://static.wikia.nocookie.net/bleach/images/5/58/Ep390LilleProfile.png/revision/latest) |
+| `base_face_eye-mark_manga-colour_ch599.png` | ch. 599 | [page](https://bleach.fandom.com/wiki/File:599Lille_profile.png) | [file](https://static.wikia.nocookie.net/bleach/images/5/55/599Lille_profile.png/revision/latest) |
+| `base_hooded-cloak_anime_ep24.png` | TYBW 24 (wiki ep 390) | [page](https://bleach.fandom.com/wiki/File:Ep390SchutzstaffelAppears.png) | [file](https://static.wikia.nocookie.net/bleach/images/2/23/Ep390SchutzstaffelAppears.png/revision/latest) |
+| `base_face_eye-open_anime_ep35.png` | TYBW 35 (wiki ep 401) | [page](https://bleach.fandom.com/wiki/File:Ep401LilleEyeOpen.png) | [file](https://static.wikia.nocookie.net/bleach/images/0/08/Ep401LilleEyeOpen.png/revision/latest) |
+| `base_face_eye-open_manga-colour_ch646.png` | ch. 646 | [page](https://bleach.fandom.com/wiki/File:646Lille_opens.png) | [file](https://static.wikia.nocookie.net/bleach/images/c/cc/646Lille_opens.png/revision/latest) |
+| `base_hat-top_back_anime_ep35.png` | TYBW 35 (wiki ep 401) | [page](https://bleach.fandom.com/wiki/File:Ep401LilleDodgesStab.png) | [file](https://static.wikia.nocookie.net/bleach/images/a/a1/Ep401LilleDodgesStab.png/revision/latest) |
+| `base_fullbody_leap-side_manga-colour_ch645.png` | ch. 645 | [page](https://bleach.fandom.com/wiki/File:645Lille_dodges.png) | [file](https://static.wikia.nocookie.net/bleach/images/b/be/645Lille_dodges.png/revision/latest) |
+| `base_glove_winged-x_design.png` | n/a | [page](https://bleach.fandom.com/wiki/File:Lille%27s_Glove_Design.png) | [file](https://static.wikia.nocookie.net/bleach/images/a/a7/Lille%27s_Glove_Design.png/revision/latest) |
+| **diagramm/** | | | |
+| `diagramm_muzzle-cross_end-on_bravesouls-art.png` | n/a | [page](https://bleach-bravesouls.fandom.com/wiki/File:Gacha-5s-Lille-TYBW-Power.png) | [file](https://static.wikia.nocookie.net/bleach-bravesouls/images/e/e4/Gacha-5s-Lille-TYBW-Power.png/revision/latest) |
+| `diagramm_side_aim-pose_manga-colour_ch644.png` | ch. 644 | [page](https://bleach.fandom.com/wiki/File:644Lille%27s_Spirit_Weapon%2C_Diagramm.png) | [file](https://static.wikia.nocookie.net/bleach/images/f/fb/644Lille%27s_Spirit_Weapon%2C_Diagramm.png/revision/latest) |
+| `diagramm_three-quarter_fur-sleeve_anime_ep24.png` | TYBW 24 (wiki ep 390) | [page](https://bleach.fandom.com/wiki/File:Ep390LilleSpiritWeaponDiagramm.png) | [file](https://static.wikia.nocookie.net/bleach/images/c/ca/Ep390LilleSpiritWeaponDiagramm.png/revision/latest) |
+| `diagramm_vertical_carry_manga-colour_ch600.png` | ch. 600 | [page](https://bleach.fandom.com/wiki/File:600Lille%27s_Spirit_Weapon%2C_Diagramm.png) | [file](https://static.wikia.nocookie.net/bleach/images/5/5a/600Lille%27s_Spirit_Weapon%2C_Diagramm.png/revision/latest) |
+| `diagramm_full-length-vertical_anime_ep24.png` | TYBW 24 (wiki ep 390) | [page](https://bleach.fandom.com/wiki/File:Ep390LilleDestroysCities.png) | [file](https://static.wikia.nocookie.net/bleach/images/d/d9/Ep390LilleDestroysCities.png/revision/latest) |
+| `diagramm_aim-window_anime_ep34.png` | TYBW 34 (wiki ep 400) | [page](https://bleach.fandom.com/wiki/File:Ep400LilleWatchesFight.png) | [file](https://static.wikia.nocookie.net/bleach/images/d/d5/Ep400LilleWatchesFight.png/revision/latest) |
+| `diagramm_fur-sleeve-ports_anime_ep35.png` | TYBW 35 (wiki ep 401) | [page](https://bleach.fandom.com/wiki/File:Ep401LilleAlmostCut.png) | [file](https://static.wikia.nocookie.net/bleach/images/e/ee/Ep401LilleAlmostCut.png/revision/latest) |
+| `diagramm_reforming-green-reishi_anime_ep35.png` | TYBW 35 (wiki ep 401) | [page](https://bleach.fandom.com/wiki/File:Ep401LilleReformsDiagramm.png) | [file](https://static.wikia.nocookie.net/bleach/images/8/80/Ep401LilleReformsDiagramm.png/revision/latest) |
+| `diagramm_dial-muzzle-reticle_frames_anime_ep35.png` | TYBW 35 (wiki ep 401) | [page](https://bleach.fandom.com/wiki/File:Diagramm.gif) | [file](https://static.wikia.nocookie.net/bleach/images/2/22/Diagramm.gif/revision/latest) |
+| `diagramm_severed_manga-colour_ch646.png` | ch. 646 | [page](https://bleach.fandom.com/wiki/File:646Lille_reforms.png) | [file](https://static.wikia.nocookie.net/bleach/images/1/1e/646Lille_reforms.png/revision/latest) |
+| **jilliel/** | | | |
+| `jilliel_fullbody_front_anime_ep35.png` | TYBW 35 (wiki ep 401) | [page](https://bleach.fandom.com/wiki/File:Ep401LilleVollstandigJilliel.png) | [file](https://static.wikia.nocookie.net/bleach/images/d/d0/Ep401LilleVollstandigJilliel.png/revision/latest) |
+| `jilliel_fullbody_front_manga-colour_ch646.png` | ch. 646 | [page](https://bleach.fandom.com/wiki/File:646Lille%27s_Vollstandig%2C_Jilliel.png) | [file](https://static.wikia.nocookie.net/bleach/images/9/9f/646Lille%27s_Vollstandig%2C_Jilliel.png/revision/latest) |
+| `jilliel_altered_legs-halo_anime_ep35.png` | TYBW 35 (wiki ep 401) | [page](https://bleach.fandom.com/wiki/File:Ep401ShunsuiConfrontsLille.png) | [file](https://static.wikia.nocookie.net/bleach/images/2/2f/Ep401ShunsuiConfrontsLille.png/revision/latest) |
+| `jilliel_altered_legs_manga-colour_ch648.png` | ch. 648 | [page](https://bleach.fandom.com/wiki/File:648Altered_Jilliel.png) | [file](https://static.wikia.nocookie.net/bleach/images/5/55/648Altered_Jilliel.png/revision/latest) |
+| `jilliel_face-window_manga-colour_ch647.png` | ch. 647 | [page](https://bleach.fandom.com/wiki/File:647Lille_teleports.png) | [file](https://static.wikia.nocookie.net/bleach/images/c/cc/647Lille_teleports.png/revision/latest) |
+| `jilliel_face-window_robe-holes_anime_ep35.png` | TYBW 35 (wiki ep 401) | [page](https://bleach.fandom.com/wiki/File:Ep401IchidanmeTameraikizuNoWakachiai.png) | [file](https://static.wikia.nocookie.net/bleach/images/d/d6/Ep401IchidanmeTameraikizuNoWakachiai.png/revision/latest) |
+| `jilliel_partial-wings_base-body_anime_ep26.png` | TYBW 26 (wiki ep 392) | [page](https://bleach.fandom.com/wiki/File:Ep392PartialJilliel.png) | [file](https://static.wikia.nocookie.net/bleach/images/1/15/Ep392PartialJilliel.png/revision/latest) |
+| `jilliel_silhouette_underwater_anime_ep35.png` | TYBW 35 (wiki ep 401) | [page](https://bleach.fandom.com/wiki/File:Ep401SandanmeDangyoNoFuchi.png) | [file](https://static.wikia.nocookie.net/bleach/images/c/c8/Ep401SandanmeDangyoNoFuchi.png/revision/latest) |
+| `jilliel_wings-side_manga-colour_ch649.png` | ch. 649 | [page](https://bleach.fandom.com/wiki/File:649Shime_no_Dan_-_Itokiribasami_Chizome_no_Nodobue.png) | [file](https://static.wikia.nocookie.net/bleach/images/2/2e/649Shime_no_Dan_-_Itokiribasami_Chizome_no_Nodobue.png/revision/latest) |
+| **owl/** | | | |
+| `owl_fullbody_three-quarter-back_anime_ep37.png` | TYBW 37 (wiki ep 403) | [page](https://bleach.fandom.com/wiki/File:Ep403LilleVollstandigJillielSecondFormFull.png) | [file](https://static.wikia.nocookie.net/bleach/images/0/06/Ep403LilleVollstandigJillielSecondFormFull.png/revision/latest) |
+| `owl_fullbody_three-quarter_manga-colour_ch650.png` | ch. 650 | [page](https://bleach.fandom.com/wiki/File:650Jilliel%27s_second_form.png) | [file](https://static.wikia.nocookie.net/bleach/images/f/f6/650Jilliel%27s_second_form.png/revision/latest) |
+| `owl_fullbody_front_arms_manga-colour_ch650.png` | ch. 650 | [page](https://bleach.fandom.com/wiki/File:650Lille_appears.png) | [file](https://static.wikia.nocookie.net/bleach/images/0/0e/650Lille_appears.png/revision/latest) |
+| `owl_front_arms-stilts_anime_ep37.png` | TYBW 37 (wiki ep 403) | [page](https://bleach.fandom.com/wiki/File:Ep403LilleAppearsNanao.png) | [file](https://static.wikia.nocookie.net/bleach/images/0/0c/Ep403LilleAppearsNanao.png/revision/latest) |
+| `owl_front_wings-spread_anime_ep37.png` | TYBW 37 (wiki ep 403) | [page](https://bleach.fandom.com/wiki/File:Ep403JillielSecondForm.png) | [file](https://static.wikia.nocookie.net/bleach/images/e/eb/Ep403JillielSecondForm.png/revision/latest) |
+| `owl_neck-head-halo_anime_ep37.png` | TYBW 37 (wiki ep 403) | [page](https://bleach.fandom.com/wiki/File:Ep403LilleErased.png) | [file](https://static.wikia.nocookie.net/bleach/images/5/58/Ep403LilleErased.png/revision/latest) |
+| `owl_head-close_fur-ruff_anime_ep37.png` | TYBW 37 (wiki ep 403) | [page](https://bleach.fandom.com/wiki/File:Ep403LilleTransforms.png) | [file](https://static.wikia.nocookie.net/bleach/images/5/5a/Ep403LilleTransforms.png/revision/latest) |
+| `owl_head-halo-arm_manga-colour_ch652.png` | ch. 652 | [page](https://bleach.fandom.com/wiki/File:652Lille_generates.png) | [file](https://static.wikia.nocookie.net/bleach/images/8/8d/652Lille_generates.png/revision/latest) |
+| `owl_head-close_manga-colour_ch650cover.png` | ch. 650 | [page](https://bleach.fandom.com/wiki/File:650Cover.png) | [file](https://static.wikia.nocookie.net/bleach/images/d/dc/650Cover.png/revision/latest) |
+| `owl_head-body_manga-colour_ch652.png` | ch. 652 | [page](https://bleach.fandom.com/wiki/File:652Nanao_severs.png) | [file](https://static.wikia.nocookie.net/bleach/images/b/b4/652Nanao_severs.png/revision/latest) |
+| **trompete/** | | | |
+| `trompete_horn-wing_anime_ep37.png` | TYBW 37 (wiki ep 403) | [page](https://bleach.fandom.com/wiki/File:Ep403Trompete.png) | [file](https://static.wikia.nocookie.net/bleach/images/e/e3/Ep403Trompete.png/revision/latest) |
+| `trompete_bell-end-on_manga-colour_ch653.png` | ch. 653 | [page](https://bleach.fandom.com/wiki/File:653Trompete.png) | [file](https://static.wikia.nocookie.net/bleach/images/d/d4/653Trompete.png/revision/latest) |
+| `trompete_blast_manga-colour_ch653.png` | ch. 653 | [page](https://bleach.fandom.com/wiki/File:653Trompete_fires.png) | [file](https://static.wikia.nocookie.net/bleach/images/3/35/653Trompete_fires.png/revision/latest) |
+| `trompete_fist-at-beak_frames_anime_ep37.png` | TYBW 37 (wiki ep 403) | [page](https://bleach.fandom.com/wiki/File:Trompete.gif) | [file](https://static.wikia.nocookie.net/bleach/images/c/c9/Trompete.gif/revision/latest) |
+| `trompete_gathering-reishi_anime_ep37.png` | TYBW 37 (wiki ep 403) | [page](https://bleach.fandom.com/wiki/File:Ep403LilleGathersReishi.png) | [file](https://static.wikia.nocookie.net/bleach/images/a/a7/Ep403LilleGathersReishi.png/revision/latest) |
+| `trompete_reflected_anime_ep37.png` | TYBW 37 (wiki ep 403) | [page](https://bleach.fandom.com/wiki/File:Ep403NanaoDestroysLille.png) | [file](https://static.wikia.nocookie.net/bleach/images/d/d7/Ep403NanaoDestroysLille.png/revision/latest) |
+| `sabaki-no-komyo_anime_ep37.png` | TYBW 37 (wiki ep 403) | [page](https://bleach.fandom.com/wiki/File:Ep403SabakiNoKomyo.png) | [file](https://static.wikia.nocookie.net/bleach/images/1/19/Ep403SabakiNoKomyo.png/revision/latest) |
+| `sabaki-no-komyo_manga-colour_ch650.png` | ch. 650 | [page](https://bleach.fandom.com/wiki/File:650Sabaki_no_Komyo.png) | [file](https://static.wikia.nocookie.net/bleach/images/9/95/650Sabaki_no_Komyo.png/revision/latest) |
+| `remnants_bird-clones_manga-colour_ch654.png` | ch. 654 | [page](https://bleach.fandom.com/wiki/File:654Lille%27s_clones.png) | [file](https://static.wikia.nocookie.net/bleach/images/f/fa/654Lille%27s_clones.png/revision/latest) |
+| `remnants_flamingo_anime_ep40.png` | TYBW 40 (wiki ep 406) | [page](https://bleach.fandom.com/wiki/File:Ep406LilleFlamingoForms.png) | [file](https://static.wikia.nocookie.net/bleach/images/c/c7/Ep406LilleFlamingoForms.png/revision/latest) |
 
-### 7.1 Base form (4–10)
-| URL | Shows (per search) | Src |
-|---|---|---|
-| https://daddyjim.ai/bleach/manga-chapter/599-Too-Early-To-Win-Too-Late-To-Know | ch. 599: the Schutzstaffel debut; he casts off the cloak and fires Diagramm | S |
-| https://bleach.fandom.com/wiki/The_Royal_Guard_vs._The_Wandenreich | ch. 601–602: shooting Nimaiya through two shields | F |
-| https://bleach.fandom.com/wiki/User_blog:Xilinoc/Ch._645_-_Don't_Chase_a_Shadow | ch. 645 review: the eye-opening frames | F |
-| https://bleach.fandom.com/wiki/Shunsui_Ky%C5%8Draku_vs._Lille_Barro | the fight page: base form, eye opens, Jilliel | F |
-| https://bleach.fandom.com/wiki/BABY,HOLD_YOUR_HAND | TYBW 34 episode page: Lille at his scope | F |
-| https://animecorner.me/shunsui-kyoraku-takes-on-lille-barro-in-bleach-thousand-year-blood-war-episode-35-preview/ | official TYBW 35 preview stills (anime colours of the base form) | S |
-| https://www.sportskeeda.com/anime/bleach-tybw-episode-35-preview-teases-shunsui-kyoraku-vs-lille-barro | TYBW 35 preview stills | S |
-| https://sportskeeda.com/anime/bleach-cosplayer-s-lille-barro-makeover-fans-wowed | a cosplay (by @Haitiansenpai) with a detailed Diagramm replica: a real-world 3D read of the outfit | S |
-| https://animeexplained.com/explained/bleach-thousand-year-blood-war-episode-35-review | TYBW 35 review with screenshots | S |
+The wiki holds more Lille stills than these 49 (113 files on the gallery page, all fetched and triaged); the ones not
+kept are crowd shots, other characters' moments, or low-resolution GIFs (190×108).
 
-### 7.2 Diagramm (4–10)
-| URL | Shows (per search) | Src |
-|---|---|---|
-| https://daddyjim.ai/bleach/item/Diagramm | the weapon entry (fur wrapping, + muzzle, wing-shaped stock supports) | S |
-| https://daddyjim.ai/bleach/manga-chapter/599-Too-Early-To-Win-Too-Late-To-Know | ch. 599: the rifle bared and fired | S |
-| https://www.sportskeeda.com/anime/how-daruma-san-ga-koronda-work-shunsui-kyoraku-s-new-technique-bleach-tybw-explored | Daruma-san ga Koronda: the scene where the barrel is cut | S |
-| https://bleach.fandom.com/wiki/DON%E2%80%99T_CHASE_A_SHADOW_(episode) | TYBW 35 episode page: aiming, the severed barrel | F |
-| https://sportskeeda.com/anime/bleach-thousand-year-blood-war-how-powerful-lille-barro-everything-know-x-axis | X-Axis explainer with screenshots of the rifle shots | S, F |
-| https://sportskeeda.com/anime/bleach-cosplayer-s-lille-barro-makeover-fans-wowed | the cosplay replica of the rifle | S |
+## 8. Local folder (`.refs/Lille-Barro/`, git-ignored, never committed)
 
-### 7.3 Jilliel (4–10)
-| URL | Shows (per search) | Src |
-|---|---|---|
-| https://www.tumblr.com/dailyanimeart/130679038350/bleach-646-sees-lille-barro-vs-shunsui-as-their | ch. 646 review: the Vollständig reveal | F |
-| https://daddyjim.ai/bleach/manga-chapter/647-THE-THEATRE-SUICIDE | ch. 647: Jilliel vs the Bankai | S |
-| https://animecorner.me/mayuris-fight-against-pernida-continues-in-bleach-thousand-year-blood-war-episode-36-preview/ | TYBW 36 preview stills: Lille transforming (Jilliel) | S |
-| https://www.sportskeeda.com/anime/bleach-tybw-part-3-episode-9-pierrot-films-justice-shunsui-s-bankai | TYBW 35 review: Jilliel in colour ("eight golden wings … huge golden Heiligenschein") | S |
-| https://sportskeeda.com/anime/bleach-tybw-episode-35-shunsui-kyoraku-reveals-bankai-battle-lille-barro-begins | TYBW 35 recap with stills | S, F |
-| https://thefilibusterblog.com/understanding-lille-barros-vollstandig-in-bleach-tybw/ | Jilliel explainer ("eight expansive green wings") with images | S |
-| https://gamerant.com/bleach-tybw-lille-barro-vollstandig-explained/ | Jilliel explainer with images | F |
-| https://bleach-bravesouls.fandom.com/wiki/6%E2%98%85_Lille_Barro_(TYBW_Version) | Brave Souls 6★ card art (Vollständig, wing beam special) | F |
-| https://bleach-bravesouls.fandom.com/wiki/5%E2%98%85_Lille_Barro_(TYBW_Version) | Brave Souls 5★ card art | F |
-
-### 7.4 The owl form (4–10)
-| URL | Shows (per search) | Src |
-|---|---|---|
-| https://bleach.fandom.com/wiki/SHADOWS_GONE | TYBW 37 episode page: the owl form, Nanao, Trompete | S, F |
-| https://www.sportskeeda.com/anime/why-lille-barro-turn-owl-like-angel-bleach-tybw-his-second-form-s-design-explored | the owl design explained, with stills | S, F |
-| https://dailyanimeart.com/2015/11/05/nanaos-zanpakuto-kyokotsu-lilles-evolution-bleach-650/ | ch. 650 review: the revival into the owl form | F |
-| https://animecorner.me/nanao-learns-the-truth-in-bleach-thousand-year-blood-war-episode-37-preview/ | official TYBW 37 preview stills | S |
-| https://www.animeexplained.com/explained/bleach-thousand-year-blood-war-episode-37-review/ | TYBW 37 review (green → gold) with stills | F |
-| https://sportskeeda.com/anime/bleach-tybw-part-3-episode-11-anime-vs-manga-comparison | TYBW 37 anime vs manga panels side by side: the best manga/anime design comparison | S |
-| https://www.cbr.com/bleach-thousand-year-blood-war-part-3-episode-11-review/ | TYBW 37 review with stills | F |
-| https://gamerant.com/bleach-tybw-lille-barros-final-form-explained/ | the "Cherubim form" explainer with images | F |
-| https://bleach-bravesouls.fandom.com/wiki/6%E2%98%85_Lille_Barro_(TYBW_Version)_(Resurrection) | Brave Souls "Resurrection" card (form unconfirmed: check whether it is the owl) | F |
-| https://bleach.fandom.com/wiki/Nanao_Ise_vs._Lille_Barro | the fight page: owl form, Hakkyōken, the defeat | S, F |
-
-### 7.5 Trompete and Sabaki no Kōmyō (4–10)
-| URL | Shows (per search) | Src |
-|---|---|---|
-| https://bleach.fandom.com/wiki/Trompete | the technique page: the fist-at-beak pose, the golden trumpet with its wing | F |
-| https://daddyjim.ai/bleach/character/Trompete | a paraphrase of the technique page | S |
-| https://bleach.fandom.com/wiki/User_blog:Xilinoc/Ch._653_-_The_Theatre_Suicide_SCENE_7 | ch. 653 review: Trompete and its reflection | S |
-| https://www.fandompost.com/2015/12/01/bleach-chapter-653-manga-review/ | ch. 653 review | S |
-| https://www.fandompost.com/2015/11/24/bleach-chapter-652-manga-review/ | ch. 652 review: Hakkyōken, the arm dispersed | F |
-| https://bleach.fandom.com/wiki/Sabaki_no_K%C5%8Dmy%C5%8D | the chopping-gesture light waves | F |
-| https://daddyjim.ai/bleach/manga-chapter/654-Deadman-Standing | ch. 654: the broken halo, the scattering, the bird remnants | S |
-| https://dailyanimeart.com/2015/12/04/dead-man-kira-vs-lille-gerards-miracle-bleach-654/ | ch. 654 review: Kira vs the remnants | F |
-| https://bleach.fandom.com/wiki/MY_LAST_WORDS_(episode) | TYBW 40: the remnants cut down | F |
-
-**Counts:** all forms 13, base 9, Diagramm 6, Jilliel 9, owl 10, Trompete 9 (some pages repeat across forms).
-
-**Fastest route to good references:** the wiki Image Gallery (7.0) for the manga panels; the TYBW 35 / 36 / 37 preview
-pages on animecorner (official stills, 7.1 / 7.3 / 7.4) for anime colour; the Sportskeeda "episode 11 anime vs manga"
-page (7.4) for the owl form in both media.
-
-## 8. Local folder layout (`.refs/`, git-ignored, never committed)
-
-Third-party art lives only in `.refs/` (`.gitignore`: `/.refs/`), as `.refs/Ichigo/` does. Suggested names: `NN-source-what`.
+Third-party art lives only in `.refs/` (`.gitignore`: `/.refs/`). Contents as collected on 2026-10-06 (≈ 52 MB):
 
 ```
 .refs/Lille-Barro/
-  base/
-    01-wiki-infobox-portrait.png        the main portrait
-    02-ch599-cloak-off.png               cloak cast off, rifle bared
-    03-ep35-front-full.png               anime full body, front (colours)
-    04-ep35-side.png                     side view: hat points, rifle on the back
-    05-ep35-back.png                     the cloak from behind
-    06-ep35-face-eye-shut.png            close-up: the X-in-circle, left eye shut
-    07-ep35-face-eye-open.png            the eye-open variant
-    08-ep35-gloves-winged-x.png          the glove embroidery
-    09-ep35-legs-cutouts.png             trousers, leggings, shoes
-    10-cosplay-full.jpg                  the cosplay, for 3D volumes
-  diagramm/
-    01-ch599-firing.png
-    02-ep34-scope-dial.png               the dial and scope close-up
-    03-ep35-aim-pose.png                 stance and the eye at the scope
-    04-ep35-muzzle-cross.png             the + muzzle brake
-    05-ep35-barrel-severed.png           Daruma-san ga Koronda aftermath
-    06-cosplay-rifle.jpg
-  jilliel/
-    01-ch646-reveal.png
-    02-ep35-full-front.png               wings, cocoon, halo (colours)
-    03-ep35-wings-holes-close.png        count the holes
-    04-ep36-side.png                     wing roots, float height
-    05-ep36-face-tattoo.png              the new tattoo, covered mouth
-    06-ep36-wing-volley.png              the shots from the holes
-    07-bbs-6star-card.png                Brave Souls card
-  owl/
-    01-ch650-revival.png
-    02-ep37-full.png                     neck, legs, arms, wings, halo
-    03-ep37-head-close.png               owl disc, beak, slicked hair
-    04-ep37-halo-spikes.png
-    05-ep37-legs-centaur.png             how the "centaur" legs are built
-    06-ep37-sabaki-chop.png              the chopping gesture
-    07-anime-vs-manga-compare.png
-    08-ch654-broken-halo.png             the defeat state
-  trompete/
-    01-ch653-fist-at-beak.png
-    02-ep37-trumpet-overhead.png         the trumpet and its wing, scale against him
-    03-ep37-blast.png
-    04-ep37-reflected.png                Hakkyōken throws it back
-    05-ch654-remnant-birds.png           optional: the bird remnants
+  INDEX.md                 every file: what it shows, kind, episode/chapter, size, page and file URLs
+  contact_base.png  contact_diagramm.png  contact_jilliel.png  contact_owl.png  contact_trompete.png
+                           one captioned grid per folder for a quick review
+  base/      10  official full body + head turnaround, face eye-shut / eye-mark / eye-open (anime + manga),
+                 hooded debut cloak, cap from above, Kageoni leap, glove embroidery
+  diagramm/  10  muzzle end-on (Brave Souls), side aim (ch. 644), 3/4 sleeve + plank, upright carry (ch. 600),
+                 full length (TYBW 24), window aim (TYBW 34), cut sleeve ports, green re-forming, dial/muzzle/reticle
+                 frames, severed rifle (ch. 646)
+  jilliel/    9  full front anime + manga, altered form anime + manga, face window x2, partial wings (TYBW 26),
+                 underwater silhouette, wings in ch. 649
+  owl/       10  full body 3/4 anime + manga, front with arms x3, neck/head/halo, head close x2, ch. 650 cover
+                 head, ch. 652 head + body
+  trompete/  10  horn + plume (anime), bell end-on (ch. 653), blast, fist-at-beak frames, Reishi gathering,
+                 reflection, Sabaki no Kōmyō anime + manga, remnant birds manga + anime
 ```
 
-## 9. What could not be determined (needs the pictures)
+## 9. Resolved and still open
 
-1. The **bicorne's orientation** and size; the **cloak's length** and collar; the shirt's colour; how the leggings attach.
-2. **Diagramm's length** relative to him (the 2.0 m in §3.2 is a guess), where the dial sits, and whether the **fur
-   wrapping** and the **winged stock** are real (one AI-written source only).
-3. **Jilliel's wing shape** and **colour** in the anime (green vs gold: the sources conflict), the halo's position and
-   pattern, the new tattoo's shape, whether his hair shows.
-4. The owl form's **leg construction** ("centaur" from lengthened shoes), the neck's proportions, the anime's hair, and
-   whether any clothing remains.
-5. Whether the Brave Souls "Resurrection" card is the owl form.
-6. **Palette decisions for the user** (not research questions): Jilliel's green would be a fourth hue (STYLE_STORM §A.2
-   allows FIRE, REIATSU, BLOOD only), and a saturated owl-form gold would collide with Kenpachi's REIATSU yellow. The
-   sheet proposes muted values (S ≤ 0.45) for both, as Senjumaru's gold and Ichigo's hair were handled.
+Resolved by the images (first-pass §9 items): **1** cap shape and orientation, cloak (debut only, hooded, floor length),
+shirt colour (white; right sleeve, bare left arm), the green panel / white legs; **2** Diagramm's length (≈ 2.4 m), the dial
+(a knob on the plank), the fur sleeve (real) and the "winged stock" (the black plank, no feathers), no telescopic scope;
+**3** Jilliel's wing shape (flat blades, three holes, one root behind the head), colour (anime green, manga pale gold),
+halo (thin, flat, just above), hair (hidden); **4** the owl form's legs (four stilts), neck (segmented S, fur crest, ≈ 2.5 T),
+no clothes, white body; **5** the Brave Souls "Resurrection" card icon shows the **base form**, not the owl.
+
+Still open:
+1. Jilliel's face tattoo (too small in every still found) and a whole-body back view of the base form; the calf cut-outs.
+2. **Palette decisions for the user** (not research questions), updated with what the stills show:
+   - **Jilliel's green.** The anime makes green Lille's power colour throughout: the eye-open glow, the re-formed rifle, the
+     partial wings (TYBW 26) and every Jilliel wing and halo (TYBW 35), saturated (S 0.36–0.55, H 112–150). STYLE_STORM §A.2
+     allows exactly three spot hues (FIRE, REIATSU yellow, BLOOD). Options: (a) a muted jade #6E9A80 (S ≤ 0.3, no new spot;
+     proposed), (b) green as a fourth spot hue owned by Lille, inside the ≤ 15 % budget except during his big moves, (c) the
+     colour manga's pale gold-white wings (#FCFCDD), which keeps the frame monochrome.
+   - **The owl form's gold.** Only the wings, halo and glow are gold (the body is white), amber H 35–52 with highlights at
+     46–52°, on top of Kenpachi's REIATSU yellow (48–52°). Proposed: Senjumaru's muted gold #B89A5A / #C2A866 for wings and
+     halo; note that #B89A5A measures S 0.51, so it already counts as a spot pixel under §A.2's budget.
