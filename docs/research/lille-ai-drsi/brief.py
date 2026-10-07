@@ -35,9 +35,11 @@ You must read every historical proposal before proposing or implementing a new s
 
 You work in your own git worktree of the repo, checked out at the freeze commit {FREEZE} (the evaluator, the opponents'
 CPUs and every rule are fixed there). HISTORY_DIR and BASELINE_DIR are in the coordinator's checkout: read them there.
-If PARENT_DIR is a directory, first copy PARENT_DIR/lille.lisp over duel/lisp/lille.lisp in your worktree (and
-PARENT_DIR/duel-rules-test.lisp over tests/duel-rules-test.lisp when it exists), then refine it; else start from the
-worktree's files (= BASELINE_DIR/lille.lisp and the frozen test).
+If PARENT_DIR is a directory, first copy PARENT_DIR/lille.lisp over duel/lisp/lille.lisp in your worktree and, when
+PARENT_DIR/duel-rules-test.lisp exists, splice ONLY its LILLE-CPU-TESTS section into your frozen test (the parent's file
+may predate a re-freeze outside the markers): python3 docs/research/lille-ai-drsi/splice-tests.py
+PARENT_DIR/duel-rules-test.lisp tests/duel-rules-test.lisp /dev/null ; then refine it; else start from the worktree's
+files (= BASELINE_DIR/lille.lisp and the frozen test).
 
 # Step 1. Read the complete history first
 Read every proposal.md under HISTORY_DIR (all rounds, all cells except your own) and BASELINE_DIR, in full, with its
