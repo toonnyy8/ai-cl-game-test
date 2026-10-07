@@ -2160,8 +2160,8 @@ defender's next step. Values: the attacker's and the defender's first actionable
   (check (and (rest (lb-trace-fans :k)) (null (rest (lb-trace-fans :j))) (null (rest (lb-trace-fans :sp1))))))
 
 ;; decision 41 (the user 2026-10-07): no laying shot; a trace materialising turns toward him by at most 10 degrees; his
-;; crossing onto a live trace slows the match (decision 44: onto them after 10 sim frames off all of them; decision 45: a trace laid onto him 0.1 for 0.3 s whatever else, old traces 0.3 for 1 s)
-(check (and (~= 10.0 *lb-snap-max*) (~= 0.1 *lb-fresh-scale*) (~= 0.3 *lb-fresh-secs*) (~= 0.3 *lb-cross-scale*) (~= 1.0 *lb-cross-secs*) (= 10 *lb-cross-off*)
+;; crossing onto a live trace slows the match (decision 44: onto them after 10 sim frames off all of them; decision 45: a trace laid onto him fires whatever else; decision 46: fresh 0.1 for 0.1 s, old 0.3 for 0.3 s)
+(check (and (~= 10.0 *lb-snap-max*) (~= 0.1 *lb-fresh-scale*) (~= 0.1 *lb-fresh-secs*) (~= 0.3 *lb-cross-scale*) (~= 0.3 *lb-cross-secs*) (= 10 *lb-cross-off*)
             ;; facing -z (yaw 0): him 10 m ahead, 1 m to the side (5.7 deg) -> the line turns onto him; 3 m to the side
             ;; (16.7 deg) -> 10 deg only; behind his back -> 10 deg; on the pivot -> unchanged
             (let ((y (lb-snap-yaw 0.0 0.0 0.0 1.0 -10.0))) (~= y (dir-yaw 1.0 -10.0)))
@@ -2173,7 +2173,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
             ;; decision 44 (plan A): onto the traces after >= 10 sim frames off all of them; on -> off counts up, on resets
             (lb-cross-p t 10) (lb-cross-p t 9999) (not (lb-cross-p t 9)) (not (lb-cross-p t 0)) (not (lb-cross-p nil 50))
             (= 0 (lb-cross-off-next t 50)) (= 6 (lb-cross-off-next nil 5)) (= 9999 (lb-cross-off-next nil 9999))
-            ;; decision 45: a trace laid onto him fires whatever else (:fresh, 0.1 for 0.3 s); old traces :cross (0.3 for 1 s)
+            ;; decision 45: a trace laid onto him fires whatever else (:fresh); old traces :cross (decision 46: 0.1 / 0.1 s, 0.3 / 0.3 s)
             (eq :fresh (lb-cross-kind t t 0)) (eq :fresh (lb-cross-kind t t 50)) (eq :cross (lb-cross-kind nil t 10))
             (null (lb-cross-kind nil t 9)) (null (lb-cross-kind nil nil 50))))
 

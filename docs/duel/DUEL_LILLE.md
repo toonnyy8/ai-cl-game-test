@@ -212,6 +212,8 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
 - **45. A fresh trace on him always slows; old traces slow longer** (the user, 2026-10-07: 「如果是才剛新生成的軌道就算重疊也一樣
   觸發時緩，而經過舊軌道的時緩參數改成 0.3 倍速持續 1 秒。」): a trace laid onto him fires 0.1 for 0.3 s whatever else; stepping
   onto old traces (decision 44's rule) fires 0.3 for 1 s. §23.27.
+- **46. The slow motions retimed** (the user, 2026-10-07: 「再稍微換一下時緩參數 新軌：0.1 倍速 0.1 秒 舊軌：0.3 倍速 0.3 秒」):
+  a fresh trace 0.1 for 0.1 s, old traces 0.3 for 0.3 s. §23.28.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -2365,6 +2367,30 @@ match K.O.:
 - **LI 215.9 s**, Lille 18 / 60; the accepted LI was 216.2 s (§23.22).
 
 Both are outside the window and reported to the user, not retuned. `./build.sh duel` 0 warnings.
+
+### 23.28 Decision 46: the slow motions retimed (2026-10-07)
+
+The user's words: 「再稍微換一下時緩參數 新軌：0.1 倍速 0.1 秒 舊軌：0.3 倍速 0.3 秒」. The fresh trace: `*lb-fresh-scale*` 0.1
+(as before), `*lb-fresh-secs*` 0.3 → **0.1**; the old traces: `*lb-cross-scale*` 0.3 (as before), `*lb-cross-secs*` 1.0 →
+**0.3**. The rules (decisions 44, 45) are unchanged. Each fresh slow now costs ~0.09 s of real time and each old one ~0.21 s
+(they were ~0.27 s and ~0.7 s).
+
+Tests: duel-rules 6370 ALL PASS (the four numbers).
+
+Gates (native, NORMAL; his pairings), seeds 1–20, every match K.O. (before: §23.27):
+
+| Pairing | Median (before) | Lille wins / 20 (before) | Blow-aways |
+|---|---|---|---|
+| LY | 165.7 s (184.4) | 13 (8) | 2 |
+| LK | 168.4 s (174.5) | 6 (11) | 43 |
+| LR | **222.6 s** (236.2) | 6 (7) | 15 |
+| LI | 199.1 s (214.3) | 7 (7) | 12 |
+| LS | 196.9 s (198.2) | 11 (12) | 12 |
+| LL | 225.5 s (242.9; mirror) | P1 5 / P2 14 | 12 |
+
+LI is back inside the window. LR's edge rerun at 60 seeds gives **217.8 s**, every match K.O., Lille 23 / 60. That is
+about the 217.5 s the user accepted (§23.25), but still outside 210, so it is reported to the user. `./build.sh duel`
+0 warnings.
 
 ---
 
