@@ -9,6 +9,11 @@
 ;;;;   AUTO COMBO   J pressed during a J / K link that hit: the CPU's choice, made on the hit's land frame (STRING-REFLEX: a
 ;;;;                link, L, SP2, ORANGE; the O ender off a link-3 hit on a red opponent: the Kikon); J itself is left as his own press
 ;;;;   AUTO BREAK   J pressed, free, while he has guarded >= *AI-GUARD-BREAK-HOLD* f within *AI-GUARD-BREAK-RANGE*: the Breaker
+;;;;   ROUTES       (the user, 2026-10-07; DUEL_LILLE §24.10) AUTO COMBO first asks the form's own combo route, the function
+;;;;                its kit's :ai names :assist-combo (Lille's signature routes: HOSHA's loop, EN's TENSHIN through the
+;;;;                traces, KIN's crossfire), every step it is on, free or in a move: a command, :NONE (the route holds the
+;;;;                step: no generic AUTO COMBO / SP / read) or NIL (the generic AUTO COMBO as before). A kit without the
+;;;;                key (every other character): NIL, nothing read or rolled, its assisted play bit for bit as before
 ;;;;   LEARNING     (the user, 2026-10-02: no row of its own) while any of the three is on, the assist learns HIS habits as the
 ;;;;                learning CPU learns a human's (learn.lisp's model, LEARN-STEP on what it perceives at HARD's delay), one
 ;;;;                table per opponent character (*ASSIST-LEARN-TABLES*, saved apart). AUTO COMBO then also answers a J
@@ -134,6 +139,14 @@ and J's it (the gate, 2026-10-02: 404 of them in 40 matches, the masher's wins 5
           (:q (let ((mv (kit-command-move kit :f)))      ; J beats K / I: his J; a K reaching further than J, ours
                 (and mv (kit-command-ok-p e :f) (<= (mv-reach (kit-command-move kit :q)) d (+ (mv-reach mv) 0.4)) :f))))))))
 
+(defun auto-route (e f b s d vp)
+  "AUTO COMBO's first ask (the user, 2026-10-07; DUEL_LILLE §24.10): the form's own combo route, the function its kit's :ai
+names :assist-combo, on brain B as the CPU sees him (S, D), with E's vpad VP (it reads his J, may consume it or hold a
+button for him): a command (pressed and marked as every assisted press), :NONE (the route holds this step) or NIL (the
+generic AUTO COMBO). NIL for a kit without it, nothing read."
+  (let ((h (ai-table e :assist-combo)))
+    (and h (funcall h e f b s d vp))))
+
 (defun auto-break (e f vp)
   "AUTO BREAK: J pressed while free and he holds a long guard close by: the Breaker, or NIL."
   (let ((o (opp-of e)))
@@ -155,13 +168,15 @@ BREAK may press one."
           (progn (decf (brain-press-left b))                 ; a held press (the Breaker's dash, O through the strike, a
                  (vpad-hold! vp (brain-press b))             ; charge, the bait's guard: his J mashing doesn't restart the string)
                  (when (eq (brain-press b) :guard) (vpad-consume! vp :quick) (setf (fighter-queued f) nil)))
-          (let ((cmd (or (and free (plusp (first cfg)) (or (= 2 (first cfg)) (vpad-down vp :guard))
-                              (or (auto-guard-kit e b s d) (auto-guard e f)
-                                  (and (j-beats-open-p e b) (why b :j-back :q))))   ; guard -> J out of his blocked string
-                         (and (second cfg) (eq st :move) (auto-combo e f b side vp))
-                         (and (third cfg) free (auto-break e f vp))
-                         (and (second cfg) free (vpad-command-pressed-p vp :quick nil)
-                              (or (auto-sp e b s d) (auto-read e f b d))))))
+          (let* ((route nil)                                ; (the form's own route: AUTO-ROUTE, NIL for every kit
+                 (cmd (or (and free (plusp (first cfg)) (or (= 2 (first cfg)) (vpad-down vp :guard))   ; but Lille's)
+                               (or (auto-guard-kit e b s d) (auto-guard e f)
+                                   (and (j-beats-open-p e b) (why b :j-back :q))))   ; guard -> J out of his blocked string
+                          (and (second cfg) (setf route (auto-route e f b s d vp)) (not (eq route :none)) route)
+                          (and (second cfg) (not route) (eq st :move) (auto-combo e f b side vp))
+                          (and (third cfg) free (auto-break e f vp))
+                          (and (second cfg) (not route) free (vpad-command-pressed-p vp :quick nil)
+                               (or (auto-sp e b s d) (auto-read e f b d))))))
             (when cmd
               (vpad-consume! vp :quick)                     ; the J it answered (a guard's press: none)
               (ai-command b (fighter-kit f) cmd (fighter-dist f) e)

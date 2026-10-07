@@ -50,6 +50,11 @@ gives the buttons and how long to hold them.
 
   The plan is pressed once J was pressed in that move, whether latched or buffered. A plan of J is left alone: his own
   press, unassisted. A cancel, burst or ender drops the latched J link.
+- **A form's own routes** (2026-10-07, "Lille's signature routes" below): before the generic AUTO COMBO, on every step
+  it is on (free or in a move), `AUTO-ROUTE` asks the function the form's kit `:ai` names `:assist-combo`. It returns a
+  command (pressed and marked like every assisted press), `:none` (the route holds this step: no generic AUTO COMBO, SP
+  or read) or NIL (the generic AUTO COMBO as before). Only Lille's kits have the key, so every other character's
+  assisted play is unchanged, bit for bit.
 - **AUTO BREAK**: J pressed while free, with the opponent holding a guard (or Bankai West's ward) for at least
   `*ai-guard-break-hold*` (24 f) within `*ai-guard-break-range*` (3 m), not guardless, and the Breaker allowed. The J
   becomes the Breaker, held as the CPU holds it.
@@ -62,7 +67,7 @@ Debug habit `:dumb` (`DUMB-STEP`) models a new player. It sees like an EASY CPU 
 half of the moves it sees coming (`*dumb-guard-p*`). It mashes J (a press every 8 f) inside J1's reach and otherwise
 walks in. It never Steps, Hohos, presses L / SP / I / O, Bursts or awakens on its own: those come only from the assist.
 
-The gate runs it as P1 against a CPU on all 25 roster pairings, 20 seeds each, through the learning gate's runner with
+The gate runs it as P1 against a CPU on every roster pairing (36 since Lille joined), 20 seeds each, through the learning gate's runner with
 learning off. Its debug knobs:
 
 | Debug | Sets |
@@ -214,3 +219,40 @@ Since then the masher alone loses to HARD, and the assist matters as designed:
 | GUARD HOLD U (1) | — | 31% |
 | GUARD ALWAYS (2) | 79% | 54% |
 | ALWAYS + COMBO + BREAK (11) | 79% | 51% |
+
+## Lille's signature routes (the user, 2026-10-07)
+
+The user (DUEL_LILLE §24): 「記得要能與玩家輔助 AI 系統結合，以幫助玩家打出更具風格的漂亮連段」; the plan (DUEL_LILLE §24.1 step 5):
+AUTO COMBO plays his full signature routes on the player's J. Built in DUEL_LILLE §24.10 (the full record).
+
+**What it does.** Lille's kits name `LB-ASSIST-COMBO` as `:assist-combo` (the hook above, `AUTO-ROUTE`). On his J, his
+CPU's own choices (b3a2's functions on the assist's HARD brain, `AI-BRAIN`) are pressed as buttons his ticks read:
+
+- **HOSHA**: a bullet hit → K1 at the link frame (none into a blown-away opponent, whose wake-up gets the charged shot)
+  → L at once → the stance → its branch (HOSHA again, TAISHA by the spacing rule, the dash back, the charged shot).
+- **EN**: an EN attack → TENSHIN's 2 f cancel where his CPU's would fire (the traces with him on a line, the web's
+  count, the crossfire) → TENSHIN in's J1 on a trace hit → K2s → K3.
+- **KIN**: a J3 / K3 hit → the crossfire (L → TENSHIN out → EN's J1 at him → the cancel → TENSHIN in → J1 …) or the SP
+  ender (SANREN / NIJŪSHI-KŌ); a red opponent's Kikon as before. The base form's K3: L into the stance; its J3:
+  HIRENKYAKU.
+
+A route started by his J carries on through the moves it pressed (no J needed for its own next step); his J stays his
+where it is the choice; his J after a route latched a link is eaten (the latch takes the last press). Every press it
+makes is x0.8 and marked; the traces an assisted TENSHIN materialises deal x0.8 too.
+
+**The gate's masher as Lille.** Before, his ticks gave the masher (a brain of its own) his CPU's tick rules: the
+stance's branch and HOSHA's loop, unassisted at x1.0. His ticks now read the masher's vpad as a human's
+(`LB-TICK-BRAIN`), so the gate measures the routes.
+
+**The gate** (36 pairings × 20 seeds; P1's wins): every row without Lille as P1 is identical before and after, and so
+are Lille's rows with AUTO COMBO off.
+
+| assist (k) | vs NORMAL before → after | vs HARD before → after | Lille P1 alone, NORMAL / HARD (of 120) |
+|---|---|---|---|
+| COMBO (3) | 57% → 56% | 9% → 9% | 31 → 24 / 0 → 0 |
+| HOLD U + COMBO + BREAK (10) | 74% → 74% | 17% → 17% | 59 → 60 / 1 → 0 |
+| ALWAYS + COMBO + BREAK (11) | 96% → 97% | 54% → 55% | 114 → 120 / 53 → 60 |
+
+The masher never awakens, so only the HOSHA route and the base enders come up here. At HARD with k11 (120 matches) the
+routes fired: HOSHA → K1 924, the stance's HOSHA 715, the wake-up shot 276, the enders' L 808 and SP 923.
+DUEL_LILLE §24.10 has every count, and the EN / KIN routes shown firing in the native sim.

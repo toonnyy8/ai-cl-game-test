@@ -2758,3 +2758,83 @@ Asked what next with the score saturated, the user chose 「直接進入整合�
 - Next, the integration of §24.1 step 5: the learning CPU's Lille situations, ASSIST AUTO COMBO's signature routes
   (b3a2's `:sp-ender` already acts for an assisted human), then the full gate.
 
+
+### 24.10 ASSIST AUTO COMBO's Lille routes (§24.1 step 5, 2026-10-07)
+
+The user's wish (§24): 「記得要能與玩家輔助 AI 系統結合，以幫助玩家打出更具風格的漂亮連段」; the plan (「完整招牌路線」, §24.1 step 5):
+AUTO COMBO plays his full signature routes on the player's J, assisted presses ×0.8 as always.
+
+**The hook (shared code, `assist.lisp`).** `AUTO-ROUTE` asks the function a form's kit `:ai` names `:assist-combo`, on
+every step AUTO COMBO is on, free or in a move, before the generic AUTO COMBO. It answers a command (pressed by
+`AI-COMMAND` and stamped on the vpad, marked `FIGHTER-ASSIST-NEXT`, the AUTO tag shown, like every assisted press),
+`:none` (the route holds the step: no generic AUTO COMBO, SP or read) or NIL (the generic AUTO COMBO as before). Only his
+nine kits name it (`LB-ASSIST-COMBO`, set after DEFKIT in his AI part), so every other character's assisted play is the
+generic one, bit for bit; a human with AUTO COMBO OFF and every CPU never reach it.
+
+**"You press, the CPU chooses."** The choices are his CPU's (b3a2's functions, on the assist's borrowed HARD brain through
+`AI-BRAIN`), pressed as the buttons his ticks read from a human (the stance's J / K / L / Step, HOSHA's and TENSHIN's
+latched link, EN's L cancel). Where his own J is the choice (HOSHA out of the stance, a J1 link he latched), it stays his,
+unassisted. A route starts on his J and carries on through the moves it (or the assist) pressed until he is free again:
+the CPU's route needs no J for its own next step (its K latch, its L link, its TENSHIN's link). His J pressed after a
+route latched a link is eaten (a string's latch takes the last press: his mashed J would replace the route's K / L).
+
+| Route | On his J | His CPU's choice (the function reused) |
+|---|---|---|
+| 1 HOSHA | a bullet hit, J latched in HOSHA (or the route's HOSHA), decided at the link frame (f16) as the CPU | K1 (`LB-AI-LINK`); none into a blown-away opponent (his J emptied), whose wake-up then gets the charged shot / HIRENKYAKU (`LB-AI-OKI-SHOT`, from neutral) |
+| | the base K1 out of HOSHA | L latched at once (b1a0's loop, `*LB-AI-HOSHA-LOOP*`) |
+| | the shooting stance (the route's or the assist's L, or J pressed in it) | from its f6, its branch (`LB-AI-KAMAE`: HOSHA again on the reeling opponent, TAISHA by the spacing rule, the dash back, the charged shot, the blow-away aim held for his first hittable frame); the stance held (L down) while it waits |
+| 2 EN | an EN attack (his J, or J pressed in it) | from its active end, TENSHIN's 2 f cancel where his EN tick would cancel: ≥ 3 traces with him on a line as it would materialise (`LB-AI-SWITCH-IN-P`), the crossfire's line, the web's count (`LB-AI-WEB-CANCEL-P`) |
+| | TENSHIN in (the route's) | its link J1 on a trace hit (`LB-AI-LINK`), then K latched on it (b3a1's route, `*LB-AI-ROUTE*`: J1 K2s K3) and K3 at K2s's hit |
+| 3 KIN | a J3 / K3 that hit (KIN's, and the base form's) | a red opponent's Kikon (the generic rule); else `LB-AI-SP-ENDER`: KIN K3's crossfire (L → TENSHIN out → EN's J1 laid at him → route 2's cancel → TENSHIN in → J1 …), else SANREN / NIJŪSHI-KŌ; the base K3's L into the stance, the base J3's HIRENKYAKU; no generic SP cancel or ORANGE off his ender (his CPU's) |
+
+**Lille code outside the routes' section** (one line each, identity for his CPU: `AI-BRAIN` is his own brain outside the
+assist): `LB-AI-KAMAE`'s plan, `LB-AI-LINK`, `LB-AI-XFIRE-OK-P` / `LB-AI-XFIRE-P` and `LB-AI-BLOW-STEP` read `AI-BRAIN`
+(the crossfire was "his own CPU only" while the assist could not carry it on); `LB-AI-SP-ENDER` no longer turns the base
+K3's L into SP2 for the assist (its route plays the stance now); `LB-MATERIALISE` deals ×`*ASSIST-MULT*` when the assist
+pressed that TENSHIN (`LB-AS-TRACE-MULT`: a hazard's hit has no move for `APPLY-HIT`'s ×0.8, and the traces are that
+press's hits); his five ticks (the stance, HIRENKYAKU's direction, EN's walk / cancel / next link, HOSHA's and TENSHIN's
+link) decide on `LB-TICK-BRAIN`: his own CPU's brain, NIL for a human **and for the ASSIST gate's button-masher** (habit
+`:dumb`). Before, the masher playing Lille took his CPU's tick rules on its own brain (the stance's branch, HOSHA's K1
+and the loop), unassisted at ×1.0; it now reads its vpad as a human's, so the gate measures these routes.
+
+**Knobs:** none new. The routes read his CPU's levels on the assist's HARD brain (`*lb-ai-link-k*`, `*lb-ai-hosha-loop*`,
+`*lb-ai-oki*`, `*lb-ai-blow*`, `*lb-ai-space*`, `*lb-ai-route*`, `*lb-ai-xfire*`, `*lb-ai-web*`, `*lb-ai-sp-end*` …);
+`*assist-mult*` 0.8 now covers the traces an assisted TENSHIN materialises too.
+
+**Tests:** `tests/duel-rules-test.lisp` 6388 → **6394** ALL PASS (every Lille kit names `LB-ASSIST-COMBO`, no other kit
+has `:assist-combo`; the move data the routes read; the pure choices `LB-AS-KIND` (which route step a move is),
+`LB-AS-STANCE-CMD` (the stance's branch as a press, HOSHA left to his own buffered J) and `LB-AS-LINK-CMD` (HOSHA's /
+TENSHIN's link against his latch: the CPU's K1 over his J, his J where J1 is the plan, none empties his J, his K stays
+his)); control 89, learn 100, cine 18 ALL PASS; `tools/pkgcheck.sh duel` 0 / 0 / 0; `./build.sh duel` 0 warnings.
+
+**Gates** (the parent `8544c23` vs this change, same machine):
+- `simgate.py --seeds 10 --summary` (all 21 pairings, 42 lines): **byte-identical**; `simgate.py --cvc` PASS (no CPU
+  plays the assist).
+- `tools/assistgate.py --rows` (36 pairings × 20 seeds, the masher P1): every row without Lille as P1 is **identical**,
+  and so are Lille's rows with AUTO COMBO off (k 0 1 2 6); the totals:
+
+| assist (k) | vs NORMAL before → after | vs HARD before → after |
+|---|---|---|
+| none (0) | 57% → 57% | 4% → 4% |
+| GUARD HOLD U (1) | 68% → 68% | 8% → 8% |
+| GUARD ALWAYS (2) | 96% → 96% | 38% → 38% |
+| COMBO (3) | 57% (407) → 56% (400) | 9% → 9% |
+| BREAK (6) | 66% → 66% | 4% → 4% |
+| HOLD U + COMBO + BREAK (10) | 74% (532) → 74% (533) | 17% (120) → 17% (119) |
+| ALWAYS + COMBO + BREAK (11) | 96% (694) → 97% (700) | 54% (390) → 55% (397) |
+
+  Lille as P1 alone (6 opponents × 20 seeds): NORMAL k3 31 → 24, k10 59 → 60, k11 114 → 120 of 120; HARD k3 0 → 0,
+  k10 1 → 0, k11 53 → 60 of 120. The masher stands at J1's reach: AUTO COMBO alone (k3) mostly ends his strings in the base
+  K3's L → the stance → TAISHA (the spacing rule's 3 m back-slide), after which it walks back in; with the guard on (k11)
+  the routes pay.
+- **The routes fired** (their pacing-log counts, Lille P1, 120 matches each; the masher never awakens, so routes 2 / 3
+  never come up in this gate): HARD k11: HOSHA → K1 924, the loop's L 923, HOSHA's link refused on a blow-away 226, the
+  wake-up charged shot 276, the stance's HOSHA 715 / TAISHA 535 / the shot 419 / the dash back 143, the enders' L 808 /
+  SP 923 / red Kikon 422; NORMAL k11: 435 / 435 / 95 / 113, the stance 329 / 1309 / 190 / 77, the enders 1151 / 1229 / 590.
+  Before, the masher's Lille ran his CPU's tick rules on its own brain (HOSHA 518 a run at HARD k11), unassisted.
+- **Each route in the native sim** (a human P1 with AUTO COMBO on, J every 8 f, a CPU-off Kenpachi; the combat log):
+  route 1 (79000 at 4 m, L once): the stance → his J's HOSHA → three bullets → `assist F` (K1) → `assist SIG` (L) →
+  the stance at f4 → `assist F` (TAISHA, the spacing rule); route 2 (79002, JILLIEL EN 5 m): EN J1 → `assist SIG` (the
+  2 f cancel) → the trace hits → his J1 → `assist F` (K2s) → `assist F` (K3) → route 3: `assist SIG` (the crossfire) →
+  TENSHIN out → EN J1 → `assist SIG` → TENSHIN in …, three swings until the stun tolerance blew him away (as-en-trace 3,
+  as-xfire 3, as-kin-route 4); the same in KIN (79014), the owl's KIN (79016) and the owl's EN (79004).
