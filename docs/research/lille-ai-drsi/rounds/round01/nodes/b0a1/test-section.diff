@@ -1,0 +1,70 @@
+--- frozen LILLE-CPU-TESTS
++++ cell LILLE-CPU-TESTS
+@@ -69,3 +69,67 @@
+ (let ((j (kit :lille :jilliel)) (o (kit :lille :shin)) (ok (kit :lille :shin-kin)))
+   (check (and (equal (getf (kit-ai o) :switch) '(:traces 3 :near 0.6 :whiff 1.5)) (equal (getf (kit-ai ok) :switch) '(:gg 40))
+               (getf (kit-ai ok) :trompete) (equal (getf (kit-ai o) :stance) (getf (kit-ai j) :stance)))))
++;; the HARD layer (dream-rsi round 1, cell b0a0): mark -> spring -> trace combo -> vanish; the base form's hunt and its
++;; HOSHA loop. Each layer is a kit key whose :by level is 0 at EASY and NORMAL (the shipped CPU) and 1 at HARD
++(let ((b (kit :lille :base)) (j (kit :lille :jilliel)) (mu (kit :lille :jilliel-mujittai)) (kn (kit :lille :jilliel-kin))
++      (kmu (kit :lille :jilliel-kin-mujittai)) (o (kit :lille :shin)) (ok (kit :lille :shin-kin)))
++  (check (and (equal (getf (kit-ai b) :hunt) '(:by (:easy 0.0 :normal 0.0 :hard 1.0) :near 0.0 :far 7.5 :oki 8.0))
++              (equal (getf (kit-ai j) :mark) '(:by (:easy 0.0 :normal 0.0 :hard 1.0) :near 1.5 :far 13.5 :gap 0.6))
++              (equal (getf (kit-ai o) :mark) (getf (kit-ai j) :mark)) (equal (getf (kit-ai mu) :mark) (getf (kit-ai j) :mark))
++              (equal (getf (kit-ai kn) :vanish) '(:by (:easy 0.0 :normal 0.0 :hard 1.0) :fs 13.0))
++              (equal (getf (kit-ai ok) :vanish) (getf (kit-ai kn) :vanish)) (equal (getf (kit-ai kmu) :vanish) (getf (kit-ai kn) :vanish))
++              (null (getf (kit-ai b) :mark)) (null (getf (kit-ai j) :vanish)) (null (getf (kit-ai kn) :hunt))
++              ;; EASY <= NORMAL <= HARD, NORMAL the shipped CPU (level 0); an absent key is level 0
++              (every (lambda (k) (and (<= (lb-ai-by k :easy) (lb-ai-by k :normal) (lb-ai-by k :hard))
++                                      (zerop (lb-ai-by k :normal)) (= 1.0 (lb-ai-by k :hard))))
++                     (list (getf (kit-ai b) :hunt) (getf (kit-ai j) :mark) (getf (kit-ai kn) :vanish)))
++              (zerop (lb-ai-by nil :hard))))
++  ;; the mark: an open opponent (not stepping / Hoho-ing / guarding / down / launched) within 1.5-13.5 m, no threat, a J
++  ;; line paid above the reserve; 13.5 m is inside TENSHIN in's reach + its stop (KIN's J1 follows the dash)
++  (let ((k (getf (kit-ai j) :mark)))
++    (check (and (lb-ai-mark-p 1.0 5.0 k :idle nil t) (lb-ai-mark-p 1.0 13.5 k :run nil t) (lb-ai-mark-p 1.0 1.5 k :move nil t)
++                (not (lb-ai-mark-p 0.0 5.0 k :idle nil t)) (not (lb-ai-mark-p 1.0 13.6 k :idle nil t))
++                (not (lb-ai-mark-p 1.0 1.4 k :idle nil t)) (not (lb-ai-mark-p 1.0 5.0 k :idle t t))
++                (not (lb-ai-mark-p 1.0 5.0 k :idle nil nil))
++                (notany (lambda (st) (lb-ai-mark-p 1.0 5.0 k st nil t)) '(:step :hoho :guard :guard-hit :down :wakeup :air))
++                (<= (getf k :far) (+ *lb-switch-in* *lb-switch-stop*))))
++    ;; the spring: him (perceived) within :gap of a line as it would materialise, open
++    (check (and (lb-ai-spring-p 1.0 0.6 k :walk) (lb-ai-spring-p 1.0 0.0 k :stun) (not (lb-ai-spring-p 1.0 0.61 k :idle))
++                (not (lb-ai-spring-p 0.0 0.0 k :idle)) (not (lb-ai-spring-p 1.0 0.0 k :guard)) (not (lb-ai-spring-p 1.0 0.0 k :step))))
++    ;; J1 then the 2 f cancel: the materialise 9 f after the press (inside a HARD CPU's 8 f perception + a reaction)
++    (let ((j1 (kit-command-move j :q)))
++      (check (= 9 (+ (mv-s j1) (mv-a j1) *lb-switch-windup-c*)))))
++  ;; the vanish: TENSHIN out's price + a J line (13), nothing to cash
++  (let ((k (getf (kit-ai kn) :vanish)))
++    (check (and (lb-ai-vanish-p 1.0 13.0 k nil) (not (lb-ai-vanish-p 1.0 12.9 k nil)) (not (lb-ai-vanish-p 1.0 100.0 k t))
++                (not (lb-ai-vanish-p 0.0 100.0 k nil))
++                (>= (getf k :fs) (+ *lb-switch-fs* *lb-trace-fs*)))))
++  ;; the hunt's stance branch: HOSHA onto an open opponent within :far + 0.5 or reeling within 8 m, never into a guard;
++  ;; NIL (the shipped plan) at level 0 or beyond
++  (let ((k (getf (kit-ai b) :hunt)))
++    (check (and (eq :j (lb-ai-hunt-plan 1.0 5.0 nil nil k)) (eq :j (lb-ai-hunt-plan 1.0 8.0 nil nil k))
++                (eq :j (lb-ai-hunt-plan 1.0 1.0 nil nil k)) (eq :j (lb-ai-hunt-plan 1.0 8.0 t nil k))
++                (null (lb-ai-hunt-plan 1.0 8.1 nil nil k)) (null (lb-ai-hunt-plan 1.0 8.1 t nil k))
++                (null (lb-ai-hunt-plan 1.0 5.0 nil t k)) (null (lb-ai-hunt-plan 0.0 5.0 nil nil k))
++                ;; cell b0a1: never HOSHA into his attack / rush: the HIRENKYAKU dash (:evade) when it is there, else the
++                ;; shipped plan; beyond HOSHA's reach, and at level 0, as before
++                (eq :evade (lb-ai-hunt-plan 1.0 5.0 nil nil k t t)) (null (lb-ai-hunt-plan 1.0 5.0 nil nil k t nil))
++                (eq :j (lb-ai-hunt-plan 1.0 5.0 nil nil k nil t)) (null (lb-ai-hunt-plan 1.0 5.0 nil t k t t))
++                (null (lb-ai-hunt-plan 1.0 8.1 nil nil k t t)) (null (lb-ai-hunt-plan 0.0 5.0 nil nil k t t))))
++    ;; cell b0a1, the okizeme: his wake-up's frames left as perceived (down 30 + wake-up 30, less his frame and the delay);
++    ;; within :oki m HOSHA pressed 12..9 frames before (the stance up at f6 + HOSHA's first bullet at f6 = 12); hands off
++    ;; (:wait) before that; nothing beyond :oki m, nothing once the window passed
++    (check (and (= 52 (lb-wake-left :down 0 8)) (= 12 (lb-wake-left :wakeup 10 8)) (null (lb-wake-left :idle 0 8))
++                (null (lb-wake-left :stun 0 8))
++                (= *lb-ai-oki-hosha* (+ *lb-kamae-up* (hw-from (aref (mv-hits (find-move :lb-k-j)) 0))))
++                (eq :hosha (lb-ai-oki-plan 12 5.0 k)) (eq :hosha (lb-ai-oki-plan 9 8.0 k)) (eq :wait (lb-ai-oki-plan 13 5.0 k))
++                (null (lb-ai-oki-plan 8 5.0 k)) (eq :wait (lb-ai-oki-plan 52 8.0 k)) (null (lb-ai-oki-plan 12 8.1 k))
++                (null (lb-ai-oki-plan 40 12.0 k)) (null (lb-ai-oki-plan nil 5.0 k))))
++    ;; the composure (b2a0's ORANGE fix, borrowed): J held through HOSHA's last bullet and its link frame
++    (check (>= *lb-ai-composure* (getf (mv-params (find-move :lb-k-j)) :link)))))
++;; cell b0a1: his HARD layer is one reading of the forms' keys (none for a human: no brain); every form has one key
++(let ((forms (mapcar (lambda (f) (kit :lille f)) '(:base :jilliel :jilliel-mujittai :jilliel-kin :jilliel-kin-mujittai :shin
++                                                     :shin-mujittai :shin-kin :shin-kin-mujittai))))
++  (check (every (lambda (k) (let ((kk (or (getf (kit-ai k) :hunt) (getf (kit-ai k) :mark) (getf (kit-ai k) :vanish))))
++                              (and kk (zerop (lb-ai-by kk :normal)) (zerop (lb-ai-by kk :easy)) (= 1.0 (lb-ai-by kk :hard)))))
++                forms)))
