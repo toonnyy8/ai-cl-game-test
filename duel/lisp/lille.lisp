@@ -869,7 +869,7 @@ charged); a Step without its flash-step or after the stance's one dash waits; pa
 the stance recovers (R 14)."
   (let* ((f (fighter e)) (mv (fighter-move f)))
     (when (and (eq (fighter-state f) :move) mv (member (mv-name mv) '(:lb-kamae :lb-kamae-k :lb-kamae-re)))
-      (let* ((st (lb e)) (sf (fighter-sf f)) (vp (pilot-vpad (pilot e))) (b (brain e)))
+      (let* ((st (lb e)) (sf (fighter-sf f)) (vp (pilot-vpad (pilot e))) (b (lb-tick-brain e)))
         (turn-to-opp e f (track-step *lb-aim-track*))
         (lb-kamae-clock st sf *match-tick*)
         (when (>= sf *lb-kamae-up*)
@@ -892,7 +892,7 @@ the stance recovers (R 14)."
   "HIRENKYAKU (the stance's Step) f0: *LB-KAMAE-DASH* m in the stick direction (neutral: away from him; his CPU: straight
 back) over its 12 f, iframes f0-8, the flash step's vanish (TSUKIWATARI's, the other way)."
   (let* ((f (fighter e)) (p (pos-of e)))
-    (multiple-value-bind (to st) (if (brain e) (values -1.0 0.0) (stick-relative e f))
+    (multiple-value-bind (to st) (if (lb-tick-brain e) (values -1.0 0.0) (stick-relative e f))
       (multiple-value-bind (to st) (step-direction to st -1.0)
         (multiple-value-bind (dx dz) (toward-strafe-dir to st (aref p 0) (aref p 2) (fighter-ox f) (fighter-oz f))
           (set-slide e *lb-kamae-dash* 12 dx dz))))
@@ -930,7 +930,7 @@ stick: LB-AI-EN-STICK), facing kept on the opponent; from the move's active end 
 wind-up (:lb-switch-in-c, decision 30; a human's press; his CPU's switch rule, LB-AI-SWITCH-IN-P)."
   (let* ((f (fighter e)) (mv (fighter-move f)))
     (when (and (eq (fighter-state f) :move) mv (eq (mv-tick mv) 'lb-en-tick) (eq (fighter-phase f) :main))
-      (let ((v (motion-vel (motion e))) (p (pos-of e)) (b (brain e)))
+      (let ((v (motion-vel (motion e))) (p (pos-of e)) (b (lb-tick-brain e)))
         (multiple-value-bind (to st) (if b (lb-ai-en-stick e f) (stick-relative e f))
           (let ((m (sqrt (+ (* to to) (* st st)))))
             (when (>= m 0.2)
@@ -972,7 +972,7 @@ while its reserve allows (LB-AI-EN-NEXT)."
     (emit :sfx :rift-cut e)
     (when (member (mv-kind mv) '(:quick :flash))
       (setf (fighter-chained f) t)
-      (when (brain e) (lb-ai-en-next e f mv)))))
+      (when (lb-tick-brain e) (lb-ai-en-next e f mv)))))
 
 (defun lb-live-traces (e)
   "His live traces: values how many and the oldest one's entity (the smallest id), or NIL."
@@ -1011,7 +1011,7 @@ materialised one, NIL (each materialises once)."
 and becomes a 2-frame hit along the turned line (once; the hits of one switch count as one combo), the X-axis line's look
 flashes along it (the owl's: 裁きの光明's gold ground blasts, :judge; decision 36; its Trompete trace:
 KIN Trompete's blast, :beam at the move's width, decision 40), and it is gone after."
-  (let ((mult (kit-mult (kit-of e))) (looks nil) (q (pos-of (opp-of e))))
+  (let ((mult (lb-as-trace-mult e (kit-mult (kit-of e)))) (looks nil) (q (pos-of (opp-of e))))
     (do-entities (h (hz hazard))
       (let ((d (hazard-data hz)))
         (when (and (eql (hazard-owner hz) e) (lbh-p d))
@@ -1154,7 +1154,7 @@ press wins) and, from the move's :link frame (HOSHA: its recovery, f16, once a b
 f14, always), cancels the rest into his form's J1 / K1 (TRY-COMMAND: EN's lay traces, KIN's and the base form's hit).
 A HOSHA link and a KIN one after TENSHIN in chase him in their startup (FIGHTER-END-CHASE, the Breaker's J1 / K1 rule).
 His CPU's link (LB-AI-LINK) is picked once."
-  (let* ((f (fighter e)) (mv (fighter-move f)) (st (lb e)) (b (brain e)))
+  (let* ((f (fighter e)) (mv (fighter-move f)) (st (lb e)) (b (lb-tick-brain e)))
     (when (and (eq (fighter-state f) :move) mv (eq (fighter-phase f) :main) (zerop (fighter-lock f)))
       (let ((hosha (eq (mv-name mv) :lb-k-j)) (vp (pilot-vpad (pilot e))))
         (unless b
@@ -1748,7 +1748,7 @@ the dash back (then the charged shot), or the charged shot once the charge reach
                                    (member (fighter-state fo) '(:guard :guard-hit)) (< (gauges-gg (gauges o)) 50)
                                    whiffed
                                    (and (not (lbs-dashed st)) (>= (gauges-fs (gauges e)) *lb-kamae-dash-fs*))))
-           (b (brain e))
+           (b (ai-brain e))                                                            ; (his CPU's; the ASSIST's: §24.10)
            (close (>= (lb-ai-level *lb-ai-close* b) 1.0)))                               ; (b3a2: the sniper's step)
       (when (and (>= (lb-ai-level *lb-ai-hunt* b) 1.0)                                ; (the hunt, HARD: HOSHA)
                  (< (if (or close (member (fighter-state fo) '(:stun :air))) 0.0 2.0) (fighter-dist f) 8.0)
@@ -1790,14 +1790,14 @@ the dash back (then the charged shot), or the charged shot once the charge reach
 (defun lb-ai-link (e f st hosha)
   "His CPU's link out of HOSHA (after a bullet's hit: one roll) or TENSHIN (J after a switch in whose traces hit; no roll):
 LB-AI-LINK-PLAN; called once a move (the latch holds the answer). HARD: HOSHA's K1 (b1a0), and TENSHIN out's link in a
-crossfire EN's J1, laid at him (b3a0)."
+crossfire EN's J1, laid at him (b3a0). AI-BRAIN: his CPU's, or the ASSIST's for a human (LB-ASSIST-COMBO, §24.10)."
   (let ((plan (lb-ai-link-plan hosha (if hosha (sim-rnd01) 0.0) (and (member (fighter-form f) '(:jilliel-kin :shin-kin)) t)
                                (>= (lbs-trace-hit-t st) (lbs-switch-t st) 0))))
-    (cond ((and hosha (>= (lb-ai-level *lb-ai-link-k* (brain e)) 1.0)   ; (b1a1: no K1 into a blown-away opponent)
-                (>= (lb-ai-level *lb-ai-oki* (brain e)) 1.0) (member (state-of (opp-of e)) '(:air :down)))
+    (cond ((and hosha (>= (lb-ai-level *lb-ai-link-k* (ai-brain e)) 1.0)   ; (b1a1: no K1 into a blown-away opponent)
+                (>= (lb-ai-level *lb-ai-oki* (ai-brain e)) 1.0) (member (state-of (opp-of e)) '(:air :down)))
            :none)
-          ((and hosha (>= (lb-ai-level *lb-ai-link-k* (brain e)) 1.0)) :f)   ; (K1: L after it reopens the stance)
-          ((and (not hosha) (lb-en-form-p (fighter-form f)) (brain e) (lb-ai-xfire-live-p e (brain e))   ; (the crossfire)
+          ((and hosha (>= (lb-ai-level *lb-ai-link-k* (ai-brain e)) 1.0)) :f)   ; (K1: L after it reopens the stance)
+          ((and (not hosha) (lb-en-form-p (fighter-form f)) (ai-brain e) (lb-ai-xfire-live-p e (ai-brain e))   ; (the crossfire)
                 (lb-ai-lay-ok-p (gauges-fs (gauges e)) :j))
            (lb-count e :ai-xfire-link) :q)
           (t plan))))
@@ -2043,13 +2043,13 @@ reeling opponent): bullets -> K1 -> the stance -> HOSHA ... No roll."
   "The base form's and KIN's :sp-ender (ai.lisp STRING-REFLEX: a landed string's last link, no O ender rolled, the victim on
 the ground), at *LB-AI-SP-END*'s level (HARD 1: no roll; EASY / NORMAL 0: the generic SP cancel as shipped): first his own
 CPU's crossfire off KIN's K3 (LB-AI-XFIRE-P, b3a0), else the SP that still combos off that link (LB-AI-ENDER-SP, b3a0:
-KIN's K3 NIJUSHI-KO, its J3 SANREN; the base form's K3 L into the stance (his CPU; the ASSIST HIRENKYAKU), else
+KIN's K3 NIJUSHI-KO, its J3 SANREN; the base form's K3 L into the stance (the ASSIST's too: its route plays the stance), else
 HIRENKYAKU; b1a0 cashed out with SP2 alone, whose 40 f beam KIN's J3 stagger doesn't hold: 56 hits and 559 guarded of 690
 at 40 seeds once the crossfire took the K3s), else (his own CPU in KIN) :NONE: no generic SP cancel or ORANGE off it,
-KIN's hit-and-run takes him out. AI-BRAIN: the ASSIST's borrowed brain for a human (never the crossfire or :NONE)."
+KIN's hit-and-run takes him out. AI-BRAIN: the ASSIST's borrowed brain for a human (the crossfire too, its routes carry it
+on, DUEL_LILLE §24.10; never :NONE)."
   (let* ((b (ai-brain e)) (mv (fighter-move (fighter e))) (on (and b (>= (lb-ai-level *lb-ai-sp-end* b) 1.0)))
-         (sp (lb-ai-ender-move-sp e kit))
-         (sp (if (and (eq sp :sig) (not (eq b (brain e)))) :sp2 sp)))   ; (the stance's branch is his CPU's: the ASSIST SP2)
+         (sp (lb-ai-ender-move-sp e kit)))   ; (the stance's branch: his CPU's, or the ASSIST route's, §24.10)
     (or (lb-ai-xfire-p e kit)
         (and on sp
              (if (eq sp :sig)
@@ -2074,17 +2074,18 @@ form's crumple L (:SIG: the stance at f4, HOSHA / TAISHA by the spacing rule), e
 (defun lb-ai-xfire-ok-p (e kit)
   "Can his own CPU's crossfire start now (no side effect): his level, KIN's K3 (Jilliel's or the owl's) hit, its L link
 allowed, the flash step for TENSHIN out's price and then a J line above the reserve?"
-  (let* ((b (brain e)) (f (fighter e)) (mv (fighter-move f)) (l (and mv (kit-l-link kit (mv-name mv)))))
+  (let* ((b (ai-brain e)) (f (fighter e)) (mv (fighter-move f)) (l (and mv (kit-l-link kit (mv-name mv)))))
     (and b (>= (lb-ai-level *lb-ai-xfire* b) 1.0) mv (member (mv-name mv) '(:lb-w-k3 :lb-o-k3)) l
          (eq (fighter-contact f) :hit)
          (lb-ai-lay-ok-p (- (gauges-fs (gauges e)) *lb-switch-fs*) :j) (kit-command-ok-p e :sig kit nil l))))
 
 (defun lb-ai-xfire-p (e kit)
-  "The crossfire 十字砲火 (b3a0; his own CPU only, (BRAIN E), never the ASSIST's borrowed brain): KIN's K3 just crumpled him:
+  "The crossfire 十字砲火 (b3a0; AI-BRAIN: his CPU's, or the ASSIST's for a human since its routes carry it on, §24.10):
+KIN's K3 just crumpled him:
 L, latched on the K link (KIT-L-LINK), TENSHIN out at the chain's opening; its link is EN's J1 laid at him (LB-AI-LINK), its
 line materialised at once through the 2 f cancel (LB-AI-XFIRE-CANCEL-P), then TENSHIN in's J (the shipped trace-hit link)."
   (when (lb-ai-xfire-ok-p e kit)
-    (setf (lbai-xfire (lb-ai-state e (brain e))) *match-tick*)
+    (setf (lbai-xfire (lb-ai-state e (ai-brain e))) *match-tick*)
     (lb-count e :ai-xfire)
     :sig))
 
@@ -2420,7 +2421,7 @@ the shot's startup, or him UP (no longer down), or the stance's hold at its end 
 (defun lb-ai-blow-step (e f st)
   "The stance held on a blown-away opponent (its plan :OKI, *LB-AI-BLOW*): L held (the stance's hold, up to *LB-KAMAE-MAX*),
 the charged shot when LB-AI-BLOW-FIRE-P (his wake-up read off the perceived SNAP: LB-WAKE-LEFT). No roll."
-  (let* ((b (brain e)) (sn (and b (lb-ai-seen b)))
+  (let* ((b (ai-brain e)) (sn (and b (lb-ai-seen b)))           ; (his CPU's; the ASSIST's: §24.10)
          (left (and sn (lb-wake-left (snap-state sn) (snap-sf sn) (brain-delay b)))))
     (if (lb-ai-blow-fire-p (lb-kamae-charged-p (lbs-charge st)) left
                            (and sn (not (member (snap-state sn) '(:air :down :wakeup))))
@@ -2455,6 +2456,283 @@ forms can't."
               (setf (brain-strafe b) (f32 (line-off-strafe (hazard-x on) (hazard-z on) (hazard-yaw on) (aref p 0) (aref p 2)
                                                            (aref q 0) (aref q 2)))))
             (why b :trace-step :side-step)))))))
+
+;;; ---------------------------------------------------------------- ASSIST AUTO COMBO's Lille routes (DUEL_LILLE §24.10)
+;;; The user (2026-10-06): 「記得要能與玩家輔助 AI 系統結合，以幫助玩家打出更具風格的漂亮連段」 (§24.1 step 5: AUTO COMBO gets his
+;;; full signature routes on the player's J). His kits' :ai name LB-ASSIST-COMBO as :assist-combo (assist.lisp AUTO-ROUTE:
+;;; asked every step AUTO COMBO is on, before the generic AUTO COMBO; no other character has the key). "You press, the CPU
+;;; chooses": the choices are his CPU's (b3a2's own functions, on the assist's borrowed brain through AI-BRAIN: HARD's
+;;; levels), pressed as buttons on his vpad that his ticks read as a human's presses: x*ASSIST-MULT*, FIGHTER-ASSIST-NEXT,
+;;; the AUTO tag; his own J is left his where it is the choice (HOSHA out of the stance, a link he latched). A route starts
+;;; on his J and carries through the moves it or the assist pressed (LBAS-ROUTE, FIGHTER-ASSISTED) until he is free again.
+;;;   1 HOSHA   a bullet hit, J latched: the link K1 (LB-AI-LINK; none into a blown-away opponent, whose wake-up gets the
+;;;             charged shot: LB-AI-OKI-SHOT) -> L at once (b1a0's loop) -> the stance -> its branch (LB-AI-KAMAE: HOSHA again on
+;;;             the reeling opponent, TAISHA, the dash back, the charged shot held for his first hittable frame) -> ...
+;;;   2 EN      an EN attack (his J, or J pressed in it), from its active end: TENSHIN's 2 f cancel where his CPU's would fire
+;;;             (LB-AI-SWITCH-IN-P: >= 3 traces with him on a line as it would materialise; the web's count; the crossfire)
+;;;             -> TENSHIN in's link J1 on a trace hit -> K latched on it (b3a1's route: J1 K2s K3)
+;;;   3 KIN     a J3 / K3 that hit: the CPU's ender (LB-AI-SP-ENDER: the crossfire's L -> TENSHIN out -> EN's J1 laid at
+;;;             him -> route 2's cancel -> TENSHIN in -> J1 ...; else SANREN / NIJUSHI-KO); a red opponent's Kikon as the
+;;;             generic AUTO COMBO's. The base form's enders likewise (K3's crumple: L into the stance; J3: HIRENKYAKU)
+;;; The ASSIST gate's button-masher (habit :dumb) has a brain but is a human's stand-in: his ticks read its vpad
+;;; (LB-TICK-BRAIN), so the gate measures these routes, not his CPU's tick rules pressed for free.
+(defun lb-tick-brain (e)
+  "The brain his ticks decide on (the stance's branch, HOSHA's / TENSHIN's link, EN's walk and cancel, HIRENKYAKU's
+direction): his own CPU's; NIL for a human and for the ASSIST gate's button-masher (habit :dumb), read as a human."
+  (let ((b (brain e))) (and b (not (eq (brain-habit b) :dumb)) b)))
+
+(defun lb-as-trace-mult (e mult)
+  "His traces' damage multiplier MULT at a TENSHIN (LB-MATERIALISE): x*ASSIST-MULT* when the assist pressed that TENSHIN
+(FIGHTER-ASSISTED; a hazard's hit has no move for APPLY-HIT's x0.8, and the traces it materialises are that press's hits)."
+  (if (fighter-assisted (fighter e)) (* mult *assist-mult*) mult))
+
+(defun lb-as-kind (name kind flags en-tick form link)
+  "Pure: which route step a move is (LB-ASSIST-COMBO): NAME its name, KIND / FLAGS its kind and flags, EN-TICK an EN attack
+(LB-EN-TICK), FORM his form, LINK what linked it (:hosha / :tenshin, just now) or NIL. :EN :TENSHIN :HOSHA :STANCE, :LOOP
+(the base K1 out of HOSHA), :KIN-J1 (KIN's J1 out of TENSHIN in), :ENDER (a J3 / K3 of the base form or KIN), :KIN-K (a KIN
+K link), or NIL (not a route's)."
+  (cond (en-tick :en)
+        ((member name '(:lb-switch :lb-switch-in :lb-switch-in-c :lb-o-switch :lb-o-switch-in :lb-o-switch-in-c)) :tenshin)
+        ((eq name :lb-k-j) :hosha)
+        ((member name '(:lb-kamae :lb-kamae-k :lb-kamae-re)) :stance)
+        ((not (member kind '(:quick :flash))) nil)
+        ((and (eq form :base) (eq name :lb-k1) (eq link :hosha)) :loop)
+        ((and (lb-kin-form-p form) (member name '(:lb-w-j1 :lb-o-j1)) (eq link :tenshin)) :kin-j1)
+        ((and (member :ender flags) (or (eq form :base) (lb-kin-form-p form))) :ender)
+        ((and (lb-kin-form-p form) (eq kind :flash)) :kin-k)))
+
+(defun lb-as-stance-cmd (kamae his)
+  "Pure: the press for the stance's follow-up KAMAE (LB-AI-KAMAE's: :kamae-j / -k / -l / -step, NIL to wait), HIS J
+buffered or not: HOSHA is J (NIL: his own press fires it), TAISHA K, the shot L, HIRENKYAKU Step; :HOLD (wait, his J eaten)."
+  (case kamae (:kamae-j (if his nil :q)) (:kamae-k :f) (:kamae-l :sig) (:kamae-step :step) (t :hold)))
+
+(defun lb-as-link-cmd (plan latch his)
+  "Pure: HOSHA's / TENSHIN's link by his CPU's PLAN (LB-AI-LINK: :q :f :none) against what he LATCHED (:q :f NIL) or HIS J
+pressed now: the plan's button, NIL where his own J / K already is the plan (or he latched K: his), :CLEAR where the plan is
+none and his J would link (the latch emptied, his J eaten)."
+  (cond ((eq latch :f) nil)
+        ((eq plan :f) :f)
+        ((eq plan :q) (if (or (eq latch :q) his) nil :q))
+        ((or (eq latch :q) his) :clear)))
+
+(defstruct (lbas (:conc-name lbas-))
+  (b nil)                                 ; the assist brain it belongs to (a new match: a fresh one)
+  (mv nil) (sf -1 :type fixnum) (t0 -1 :type fixnum)   ; the move instance seen (its move, frame, the tick first seen)
+  (link nil)                              ; what linked it (LB-AS-LINKED at its first step: :hosha / :tenshin)
+  (j nil)                                 ; his J seen during it (pressed, buffered or latched)
+  (done nil) (plan nil)                   ; its decision made, its plan (a pending ender's press; a link's :none)
+  (route nil)                             ; a route runs: from its first press until he is free again
+  (oki nil))                              ; HOSHA's link refused on a blown-away opponent: the wake-up shot is due
+(defvar *lb-as* (vector (make-lbas) (make-lbas)) "Per side: the ASSIST routes' state (LB-ASSIST-COMBO).")
+
+(defun lb-as-his-j (vp) "Is his J buffered (pressed, not yet consumed, unmodified)?" (vpad-command-pressed-p vp :quick nil))
+
+(defun lb-as-track (e f b vp)
+  "The route state of E's side for brain B, its move instance brought up to date (a new move, or the same one restarted:
+a fresh instance), his J this step noted; free (or hit), the route ends."
+  (let* ((side (fighter-side f)) (a (svref *lb-as* side)) (mv (and (eq (fighter-state f) :move) (fighter-move f))))
+    (unless (eq (lbas-b a) b) (setf a (make-lbas :b b) (svref *lb-as* side) a))
+    (cond ((null mv) (setf (lbas-mv a) nil (lbas-j a) nil (lbas-done a) nil (lbas-plan a) nil (lbas-route a) nil))
+          ((or (not (eq mv (lbas-mv a))) (< (fighter-sf f) (lbas-sf a)))
+           (setf (lbas-mv a) mv (lbas-t0 a) *match-tick* (lbas-j a) nil (lbas-done a) nil (lbas-plan a) nil)
+           (setf (lbas-link a) (lb-as-linked (lb e) a))))
+    (when mv
+      (setf (lbas-sf a) (fighter-sf f))
+      (when (or (lb-as-his-j vp) (eq (fighter-queued f) :q)
+                (and (member (mv-name mv) '(:lb-k-j :lb-switch :lb-switch-in :lb-switch-in-c :lb-o-switch :lb-o-switch-in
+                                            :lb-o-switch-in-c))
+                     (eq (lbs-latch (lb e)) :q)))     ; (HOSHA / TENSHIN latch his J: LB-LINK-TICK)
+        (setf (lbas-j a) t)))
+    a))
+
+(defun lb-as-hold-latch (vp a)
+  "After a route's link press in this move (its plan): :NONE, his J eaten (the string's latch takes the last press: his J
+would replace the route's K / L); else NIL."
+  (when (lbas-plan a) (vpad-consume! vp :quick) :none))
+
+(defun lb-as-press (e a key cmd)
+  "A route press: the route runs on; KEY counted in his pacing log (the gates' route counts). CMD."
+  (setf (lbas-route a) t)
+  (lb-count e key)
+  cmd)
+
+(defun lb-as-unhold (e b vp)
+  "After LB-AI-KAMAE ran on the assist's brain B: a hold it asked for is played here, this step (the blow-away aim's L:
+VPAD-HOLD!; the composure's J is not needed: no generic ORANGE off a :sig move), so the route decides every step; the
+gate masher's own brain lets go of the composure LB-AI-KAMAE gives (BRAIN E)."
+  (when (plusp (brain-press-left b))
+    (when (eq (brain-press b) :sig) (vpad-hold! vp :sig))
+    (setf (brain-press-left b) 0))
+  (let ((own (brain e)))
+    (when (and own (eq (brain-act own) :hold) (eq (brain-press own) :quick)) (setf (brain-press-left own) 0))))
+
+(defun lb-as-linked (st a)
+  "What linked the current move just now (HOSHA's / TENSHIN's link, LB-LINK-TICK: its tick within 2 of the instance's
+first step): :hosha / :tenshin, or NIL. (Read once, at its first step: the pacing log clears it on the combo's hit.)"
+  (and (<= 0 (- (lbas-t0 a) (lbs-link-t st)) 2) (lbs-link-from st)))
+
+(defun lb-as-hosha (e f vp a st)
+  "Route 1, HOSHA: a bullet hit and his J latched (or the route's HOSHA): at the link frame (as his CPU, LB-LINK-TICK), his
+CPU's link (LB-AI-LINK at HARD: K1; none into a blown-away opponent: the latch emptied, his J eaten, the wake-up shot due)."
+  (let ((own (or (lbas-j a) (lbas-route a) (fighter-assisted f))))
+    (cond ((lbas-done a)                                  ; (decided: his later J would latch over it, the last press wins)
+           (case (lbas-plan a)
+             (:none (setf (lbs-latch st) nil) (vpad-consume! vp :quick) :none)
+             (:f (vpad-consume! vp :quick) :none)))
+          ((and own (eq (fighter-contact f) :hit) (zerop (fighter-lock f))
+                (>= (1+ (fighter-sf f)) (getf (mv-params (fighter-move f)) :link 99)))
+           (let* ((plan (lb-ai-link e f st t)) (c (lb-as-link-cmd plan (lbs-latch st) (lb-as-his-j vp))))
+             (setf (lbas-done a) t (lbas-plan a) (if (eq c :f) :f (and (eq plan :none) :none)) (lbas-route a) t)
+             (case c
+               (:f (lb-as-press e a :as-hosha-k1 :f))
+               (:clear (setf (lbs-latch st) nil (lbas-oki a) t) (vpad-consume! vp :quick) (lb-count e :as-hosha-none) :none)
+               (t (when (eq plan :none) (setf (lbas-oki a) t)) nil)))))))
+
+(defun lb-as-loop (e f b vp a)
+  "Route 1, the base K1 out of HOSHA (his J in it, or the route's): L latched at once (b1a0's loop, *LB-AI-HOSHA-LOOP*: the
+stance at f4 once K1 touches him); his J eaten after it (a J would latch J2s over it: the last press wins)."
+  (when (and (or (lbas-j a) (lbas-route a) (fighter-assisted f)) (not (lbas-done a)))
+    (setf (lbas-done a) t)
+    (let* ((kit (fighter-kit f)) (l (kit-l-link kit (mv-name (fighter-move f)))))
+      (when (and (>= (lb-ai-level *lb-ai-hosha-loop* b) 1.0) l (not (eq (fighter-queued f) :sig))
+                 (kit-command-ok-p e :sig kit nil l))
+        (setf (lbas-plan a) :sig)
+        (return-from lb-as-loop (lb-as-press e a :as-hosha-loop :sig)))))
+  (lb-as-hold-latch vp a))                               ; (pressed: K1 is the route's, no generic plan off its hit)
+
+(defun lb-as-stance (e f b vp a st)
+  "Route 1, the shooting stance, the route's (its L the assist's, a plan running) or his J pressed in it: from the frame it
+is up, his CPU's branch (LB-AI-KAMAE on the assist's brain: picked once, then carried out) pressed for him; till then and
+while it waits (a charge, his wake-up) the stance is held (his J eaten)."
+  (when (or (lbas-j a) (lbas-route a) (fighter-assisted f) (lbs-k-plan st))
+    (setf (lbas-route a) t)
+    (if (< (1+ (fighter-sf f)) *lb-kamae-up*)
+        :none                                             ; (not up: his J stays buffered for f6)
+        (let* ((kamae (lb-ai-kamae e f st)) (c (lb-as-stance-cmd kamae (lb-as-his-j vp))))
+          (lb-as-unhold e b vp)
+          (case c
+            ((nil) :none)                                ; (HOSHA on his own J)
+            (:hold (vpad-consume! vp :quick) :none)
+            (:step (vpad-stick! vp 0f0 0f0) (lb-as-press e a :as-stance-step :step))   ; (straight back, his CPU's dash)
+            (t (lb-as-press e a (case c (:q :as-stance-j) (:f :as-stance-k) (t :as-stance-l)) c)))))))
+
+(defun lb-as-en (e f b a mv)
+  "Route 2, an EN attack (his J, his J pressed in it, or the route's): from its active end, TENSHIN's 2 f cancel where his
+CPU's EN tick would cancel: >= 3 traces with him on a line (LB-AI-SWITCH-IN-P), the web's count (LB-AI-WEB-CANCEL-P), the
+crossfire's line (LB-AI-XFIRE-CANCEL-P); once a move."
+  (when (and (or (lbas-j a) (lbas-route a) (eq (mv-kind mv) :quick)) (not (lbas-done a))
+             (>= (1+ (fighter-sf f)) (+ (mv-s mv) (mv-a mv))) (zerop (fighter-lock f)))
+    (let ((seen (lb-ai-seen b)))
+      (cond ((lb-ai-switch-in-p e b seen *lb-switch-windup-c*) (setf (lbas-done a) t) (lb-as-press e a :as-en-trace :sig))
+            ((lb-ai-xfire-cancel-p e b seen) (setf (lbas-done a) t) (lb-as-press e a :as-en-xfire :sig))
+            ((lb-ai-web-cancel-p e b f seen) (setf (lbas-done a) t) (lb-ai-web-fired e b) (lb-as-press e a :as-en-web :sig))))))
+
+(defun lb-as-tenshin (e f vp a st mv)
+  "Routes 2 / 3, a TENSHIN of the route's (or the assist's): at its link frame his CPU's link (LB-AI-LINK: TENSHIN in's J1 on
+a trace hit; TENSHIN out's EN J1 in a crossfire), pressed unless his own J already latched it; none: his J emptied."
+  (when (or (lbas-route a) (fighter-assisted f))
+    (setf (lbas-route a) t)
+    (cond ((lbas-done a)
+           (when (eq (lbas-plan a) :none) (setf (lbs-latch st) nil) (vpad-consume! vp :quick))
+           :none)
+          ((and (>= (1+ (fighter-sf f)) (getf (mv-params mv) :link 99)) (zerop (fighter-lock f)))
+           (let* ((plan (lb-ai-link e f st nil)) (c (lb-as-link-cmd plan (lbs-latch st) (lb-as-his-j vp))))
+             (setf (lbas-done a) t (lbas-plan a) plan)
+             (case c
+               (:q (lb-as-press e a (if (lb-kin-form-p (fighter-form f)) :as-tenshin-in-j :as-tenshin-out-j) :q))
+               (:clear (setf (lbs-latch st) nil) (vpad-consume! vp :quick) (lb-count e :as-tenshin-none) :none)
+               (t :none))))
+          (t :none))))
+
+(defun lb-as-k-link-p (e f)
+  "Can his current link go on into its K link: one after it (KIT-NEXT), and its pip there (a K link with none ends the
+string: MOVE-COMMANDS; STRING-REFLEX's rule)?"
+  (let ((kit (fighter-kit f)))
+    (and (kit-next kit (mv-name (fighter-move f)) :f)
+         (not (and (kit-pip-cmd-p kit :f) (< (gauges-meter (gauges e)) 1f0))))))
+
+(defun lb-as-kin-j1 (e f b vp a)
+  "Route 2, KIN's J1 out of TENSHIN in (his J in it, or the route's): K latched at once (b3a1's route, *LB-AI-ROUTE*: J1
+K2s K3, K3's crumple for the crossfire; with the K link's pip where the form has pips: LB-AS-K-LINK-P); his J eaten after
+it (J2 over it: the last press wins)."
+  (when (and (or (lbas-j a) (lbas-route a) (fighter-assisted f)) (not (lbas-done a)))
+    (setf (lbas-done a) t)
+    (when (and (>= (lb-ai-level *lb-ai-route* b) 1.0) (not (eq (fighter-queued f) :f))
+               (lb-as-k-link-p e f))
+      (setf (lbas-plan a) :f)
+      (return-from lb-as-kin-j1 (lb-as-press e a :as-kin-route :f))))
+  (lb-as-hold-latch vp a))
+
+(defun lb-as-kin-k (e f vp a)
+  "Route 2, a KIN K link of the route's with a K after it (K2s): K at its hit's land frame (the string to K3, as the
+CPU's STRING-REFLEX: K2s has only K3); no generic plan off it."
+  (when (lbas-route a)
+    (cond ((lbas-done a) (lb-as-hold-latch vp a))
+          ((and (eq (fighter-contact f) :hit) (>= (fighter-land-sf f) 0) (>= (fighter-sf f) (fighter-land-sf f)))
+           (setf (lbas-done a) t)
+           (if (and (lb-as-k-link-p e f) (not (eq (fighter-queued f) :f)))
+               (progn (setf (lbas-plan a) :f) (lb-as-press e a :as-kin-k :f))
+               :none)))))
+
+(defun lb-as-ender (e f a kit)
+  "Route 3, a J3 / K3 that hit (the base form's or KIN's): his CPU's choice, made when his J is seen in it (or at once in
+the route's): a red opponent's Kikon (the generic AUTO COMBO's rule), else LB-AI-SP-ENDER (KIN's K3 the crossfire's L;
+SANREN / NIJUSHI-KO; the base form's K3 L into the stance, its J3 HIRENKYAKU); nothing else (no generic SP cancel or
+ORANGE off his ender: his CPU's). The ender is the route's from its hit: no generic plan off it."
+  (when (and (eq (fighter-contact f) :hit) (>= (fighter-land-sf f) 0) (>= (fighter-sf f) (fighter-land-sf f)))
+    (cond ((lbas-done a) :none)
+          ((or (lbas-j a) (lbas-route a) (fighter-assisted f))
+           (setf (lbas-done a) t)
+           (let ((c (cond ((and (kikon-ready-p e) (not (ai-sb-finish-p e)) (kit-command-ok-p e :kikon kit t)) :kikon)
+                          ((not (eq (state-of (opp-of e)) :air)) (lb-ai-sp-ender e kit)))))
+             (if (and c (not (eq c :none)))
+                 (lb-as-press e a (case c (:kikon :as-ender-kikon) (:sig (if (lb-kin-form-p (kit-form kit)) :as-xfire :as-ender-l))
+                                    (t :as-ender-sp))
+                              c)
+                 :none)))
+          (t :none))))
+
+(defun lb-as-free (e f b s d vp a)
+  "Route 1, the base form free with him perceived down (LB-WAKE-LEFT): HOSHA's refused link due, or his J pressed: his
+CPU's wake-up shot (LB-AI-OKI-SHOT: the stance whose charged shot lands on his first hittable frame, else HIRENKYAKU),
+waiting (his J eaten: it would whiff) till its frame; while HOSHA's blow-away still flies, his J eaten too; him up again:
+forgotten."
+  (when (eq (fighter-form f) :base)
+    (let ((state (and s (snap-state s))))
+      (cond ((not (member state '(:air :down :wakeup))) (setf (lbas-oki a) nil) nil)
+            ((eq state :air) (and (lbas-oki a) (progn (vpad-consume! vp :quick) :none)))   ; (HOSHA's blow-away: his landing)
+            ((not (or (lbas-oki a) (lb-as-his-j vp))) nil)
+            (t (setf (lbas-oki a) t)
+               (let ((c (lb-ai-oki-shot e b s d)))
+                 (case c
+                   ((:sig :sp2) (setf (lbas-oki a) nil) (lb-as-press e a (if (eq c :sig) :as-oki-shot :as-oki-hiren) c))
+                   ((nil) (setf (lbas-oki a) nil) nil)
+                   (t (vpad-consume! vp :quick) :none))))))))
+
+(defun lb-assist-combo (e f b s d vp)
+  "His kits' :assist-combo (assist.lisp AUTO-ROUTE; DUEL_LILLE §24.10): the ASSIST's AUTO COMBO along his signature routes,
+on the assist's brain B (S, D as it perceives him), his vpad VP: a command, :NONE (the route holds the step) or NIL (the
+generic AUTO COMBO)."
+  (let* ((a (lb-as-track e f b vp)) (mv (lbas-mv a)))
+    (if mv
+        (let* ((st (lb e)) (kit (fighter-kit f)) (form (fighter-form f)))
+          (case (lb-as-kind (mv-name mv) (mv-kind mv) (mv-flags mv) (eq (mv-tick mv) 'lb-en-tick) form (lbas-link a))
+            (:en (lb-as-en e f b a mv))
+            (:tenshin (lb-as-tenshin e f vp a st mv))
+            (:hosha (lb-as-hosha e f vp a st))
+            (:stance (lb-as-stance e f b vp a st))
+            (:loop (lb-as-loop e f b vp a))
+            (:kin-j1 (lb-as-kin-j1 e f b vp a))
+            (:ender (lb-as-ender e f a kit))
+            (:kin-k (lb-as-kin-k e f vp a))))
+        (and (member (fighter-state f) '(:idle :guard :run)) (zerop (fighter-lock f)) (lb-as-free e f b s d vp a)))))
+
+;; every form of his names it (assist.lisp AUTO-ROUTE reads the key off the form's kit)
+(dolist (form '(:base :jilliel :jilliel-mujittai :jilliel-kin :jilliel-kin-mujittai :shin :shin-mujittai :shin-kin
+                :shin-kin-mujittai))
+  (let ((k (find-kit :lille form)))
+    (unless (getf (kit-ai k) :assist-combo)
+      (setf (kit-ai k) (list* :assist-combo 'lb-assist-combo (kit-ai k))))))
 
 ;;; ================================================================ debug: tests, the pacing log (debug.lisp dispatches)
 (defun lille-acc-reset () (dolist (st (coerce *lb* 'list)) (setf (lbs-acc st) nil)))
