@@ -2160,8 +2160,8 @@ defender's next step. Values: the attacker's and the defender's first actionable
   (check (and (rest (lb-trace-fans :k)) (null (rest (lb-trace-fans :j))) (null (rest (lb-trace-fans :sp1))))))
 
 ;; decision 41 (the user 2026-10-07): no laying shot; a trace materialising turns toward him by at most 10 degrees; his
-;; crossing onto a live trace slows the match (0.1 for 0.3 s, every crossing; decision 43)
-(check (and (~= 10.0 *lb-snap-max*) (~= 0.1 *lb-cross-scale*) (~= 0.3 *lb-cross-secs*) (= 0 *lb-cross-rearm*)
+;; crossing onto a live trace slows the match (0.1 for 0.3 s; decision 44: onto them after 10 sim frames off all of them)
+(check (and (~= 10.0 *lb-snap-max*) (~= 0.1 *lb-cross-scale*) (~= 0.3 *lb-cross-secs*) (= 10 *lb-cross-off*)
             ;; facing -z (yaw 0): him 10 m ahead, 1 m to the side (5.7 deg) -> the line turns onto him; 3 m to the side
             ;; (16.7 deg) -> 10 deg only; behind his back -> 10 deg; on the pivot -> unchanged
             (let ((y (lb-snap-yaw 0.0 0.0 0.0 1.0 -10.0))) (~= y (dir-yaw 1.0 -10.0)))
@@ -2170,8 +2170,9 @@ defender's next step. Values: the attacker's and the defender's first actionable
             (~= 0.3 (lb-snap-yaw 0.3 2.0 2.0 2.0 2.0))
             ;; snapped, a line 1 m off at 10 m passes through him
             (< (line-dist 0.0 0.0 (lb-snap-yaw 0.0 0.0 0.0 1.0 -10.0) 0.6 *lb-trace-len* 1.0 -10.0) 0.01)
-            (lb-cross-p nil t -1 5) (not (lb-cross-p t t -1 5)) (not (lb-cross-p nil nil -1 5))
-            (lb-cross-p nil t 100 100) (lb-cross-p nil t 100 101)))   ; no re-arm (decision 43: 「可重複觸發」)
+            ;; decision 44 (plan A): onto the traces after >= 10 sim frames off all of them; on -> off counts up, on resets
+            (lb-cross-p t 10) (lb-cross-p t 9999) (not (lb-cross-p t 9)) (not (lb-cross-p t 0)) (not (lb-cross-p nil 50))
+            (= 0 (lb-cross-off-next t 50)) (= 6 (lb-cross-off-next nil 5)) (= 9999 (lb-cross-off-next nil 9999))))
 
 ;;; ---------------------------------------------------------------- Lille's own CPU (DUEL_LILLE §11.2, §22; batch 3a, rework R)
 ;; frozen (the shared hooks and what a CPU facing him reads; DUEL_LILLE §24.2): one :reflex, LB-AI-REFLEX, on every form;

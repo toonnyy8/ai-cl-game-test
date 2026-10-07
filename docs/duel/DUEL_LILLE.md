@@ -206,6 +206,9 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
 - **43. TENSHIN out 10 m, in 13 m; an L after a KIN K string no longer stops short; the crossing slow motion at half speed**
   (the user, 2026-10-07: 「1. 後撤距離提升到 10m，接近距離也提升到 13m。 2. 現在近戰 K 打完連擊後接到 L 後撤的距離會被限制住，這應該是 bug？
   3. 時緩改成放慢 1 倍。」). §23.25.
+- **44. Close traces slow the match once** (the user, 2026-10-07: 「［討論］如果我希望非常相近的軌道不要連續觸發時緩效果應該要怎麼做呢？」,
+  then 「用 A，N 先用 10 f，等這輪跑完再改」): the slow motion fires when he steps onto his live traces from off all of them,
+  after ≥ 10 sim frames off. §23.26.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -2288,6 +2291,43 @@ LR's edge rerun at 60 seeds: **217.5 s**, every match K.O., Lille 20 / 60: outsi
 
 **Accepted** (the user, 2026-10-07): asked whether LR 217.5 s (60 seeds) stays an exception, the user answered
 「可以接受」. It is recorded in AGENTS.md "Tests and gates" with the earlier LR / LI exceptions.
+
+### 23.26 Decision 44: the traces' slow motion counts them as one region (2026-10-07)
+
+The user asked: 「［討論］如果我希望非常相近的軌道不要連續觸發時緩效果應該要怎麼做呢？」. The lead proposed four ways: (A) every live
+trace as one region plus a time off, (B) one state per move's lines, (C) skip a crossing near the last one, and (D) merge
+lines at laying. The lead also noted that the re-arm counted fixed steps, which the slow motion itself runs through
+~18 at a time at 0.1. The user chose: 「用 A，N 先用 10 f，等這輪跑完再改」 (made after round 1's first two cells, §24.4).
+
+- **The rule** (`lb-trace-cross`, now per sim frame from `lille-tick` in any non-base form; `lb-cross-p`, `lb-cross-off-next`):
+  the opponent is "on the traces" when his hurt cylinder touches any of Lille's live trace lines (the hit's own test).
+  The slow motion (0.1 for 0.3 s, unchanged) fires when he is on them after **≥ 10 sim frames** (`*lb-cross-off*`)
+  on none. Any frame on any line resets the count.
+  - A K fan, lines laid side by side, and a gap crossed in under 10 frames (≈ 0.6 m at a 3.8 m/s walk) slow it once.
+  - Well-spaced lines still fire one each.
+  - A trace laid on him counts as stepping on.
+  - The lines he is on when it fires flare.
+- Decision 43's per-trace edge (`lbh-on`, its own hazard `:step`) and the step-counted re-arm (`*lb-cross-rearm*`,
+  `lbs-cross-t`) are gone. The count is in sim frames (the kit's `:tick` runs once a sim frame), so the slow motion
+  can't shorten it.
+
+Tests: duel-rules 6370 ALL PASS (`*lb-cross-off*` 10; `lb-cross-p`: on after 10 and 9999 frames off fires, after 9 or 0
+doesn't, off never; the count resets on, counts up off, caps at 9999). pkgcheck 0 / 0 / 0.
+
+Gates (native, NORMAL; his pairings), seeds 1–20, every match K.O. (before: §23.25's 0.1 run):
+
+| Pairing | Median (before) | Lille wins / 20 (before) | Blow-aways |
+|---|---|---|---|
+| LY | 173.5 s (178.6) | 8 (8) | 1 |
+| LK | 166.5 s (172.5) | 9 (8) | 34 |
+| LR | **204.4 s** (235.4) | 10 (8) | 16 |
+| LI | 211.1 s (203.5) | 9 (6) | 17 |
+| LS | 205.4 s (197.7) | 6 (10) | 10 |
+| LL | 236.0 s (253.5; mirror) | P1 8 / P2 12 | 10 |
+
+LR is back inside the window: fewer slow motions, so fewer seconds added (the gate times real time, §23.25). LI's 211.1 s
+is just past 210, and its edge rerun at 60 seeds gives **207.5 s**, every match K.O., Lille 29 / 60. Every cross pairing
+is inside 125–210 s. `./build.sh duel` 0 warnings.
 
 ---
 
