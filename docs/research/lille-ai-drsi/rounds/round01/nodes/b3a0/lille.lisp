@@ -130,11 +130,20 @@ user: 「遠程 J/K 每條軌跡消耗 3 點閃步量表」; free before).")
   "A trace materialising turns about where it was laid toward the opponent by at most this many degrees, then hits along
 the turned line (decision 41, the user 2026-10-07: 「C」, the materialise snap; the lead's 10: 1.7 m sideways at 10 m).
 Decision 39's laying shot (1 damage, a 10 f flinch) is gone: 「我希望去除掉軌道設置時造成的 1 點傷害」.")
-(defparameter *lb-cross-scale* 0.1
-  "The opponent crossing one of his live traces slows the whole match to this time scale (SLOWMO, everyone: decision 41,
-the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」, 「全場慢動作」; the lead's 0.35, then decision 43: 0.5, corrected by the
-user: 「抱歉，應該是倍率改 0.1 然後可重複觸發」: 0.1; a perfect Hoho's is 0.25) ...")
-(defparameter *lb-cross-secs* 0.3 "... for this many real seconds (the lead's number; a perfect Hoho's 0.45) ...")
+(defparameter *lb-fresh-scale* 0.1
+  "A trace laid onto the opponent (its first frame touches him) slows the whole match to this time scale (SLOWMO,
+everyone), whatever other traces he is on (decision 45, the user 2026-10-07: 「如果是才剛新生成的軌道就算重疊也一樣觸發時緩」; the
+0.1 of decision 43: 「抱歉，應該是倍率改 0.1 然後可重複觸發」; a perfect Hoho's is 0.25) ...")
+(defparameter *lb-fresh-secs* 0.2
+  "... for this many real seconds (decision 47, the user 2026-10-07: 「新軌：0.1 倍速 0.2 秒」; decision 46's 0.1, 0.3 before,
+decision 41's; a perfect Hoho's 0.45).")
+(defparameter *lb-cross-scale* 0.2
+  "The opponent stepping onto his old (already laid) live traces slows the whole match to this time scale (decision 41,
+the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」, 「全場慢動作」; 0.35 -> 0.5 -> 0.1 (decision 43); decision 45: 「而經過舊軌道
+的時緩參數改成 0.3 倍速持續 1 秒」: 0.3; decision 47, the user 2026-10-07: 「舊軌：0.2 倍速 0.5 秒」: 0.2) ...")
+(defparameter *lb-cross-secs* 0.5
+  "... for this many real seconds (decision 47, the user 2026-10-07: 「舊軌：0.2 倍速 0.5 秒」; decision 46's 0.3, decision
+45's 1.0 before) ...")
 (defparameter *lb-cross-off* 10
   "... when he steps onto his live traces from off all of them, after at least this many sim frames off every one (the
 traces count as one region: a K fan, lines laid side by side or a gap he crosses in under this many frames slow it once;
@@ -322,6 +331,11 @@ when *LB-TRACE-MAX* were live) or NIL. (The sim keeps its traces as hazards: LB-
     (if (< (+ (* dx dx) (* dz dz)) 1e-4)
         yaw
         (f32 (angle-wrap (turn-toward yaw (dir-yaw dx dz) (deg *lb-snap-max*)))))))
+(defun lb-cross-kind (fresh now off)
+  "Which slow motion his traces start this frame (decisions 44, 45): :FRESH when a trace laid this frame touches him (FRESH;
+*LB-FRESH-SCALE*), else :CROSS when he stepped onto the live traces after OFF frames off all of them (LB-CROSS-P;
+*LB-CROSS-SCALE*), else NIL."
+  (cond (fresh :fresh) ((lb-cross-p now off) :cross)))
 (defun lb-cross-p (now off)
   "Does his crossing slow the match (decisions 41, 44): he is on one of the live traces NOW, after OFF sim frames on none
 (0 when he was on one last frame) >= *LB-CROSS-OFF*?"
@@ -719,7 +733,8 @@ carry-over bug, DEVLOG §38-§39)."
   ;; a trace: what laid it (:j :k :sp1 :sp2: its damage and drain, LB-TRACE-HITWIN), its id (they count up per side),
   ;; live (laid, not yet materialised), its line (a :cap volume in its own frame)
   (src nil) (id 0 :type fixnum) (live nil) (vol nil)
-  (cross -1 :type fixnum))                ; the tick his crossing onto it slowed the match (the look's flare)
+  (cross -1 :type fixnum)                 ; the tick his crossing onto it slowed the match (the look's flare)
+  (fresh nil))                            ; a trace not yet tested against him (laid this frame: decision 45)
 
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun lille-ok (e command combo)
@@ -979,7 +994,7 @@ out); the opponent crossing it slows the match (LB-HZ's :step, LB-CROSS-P)."
       (when (lb-trace-drop-p n) (destroy-entity old) (lb-count e :traces-dropped)))
     (spawn-hazard :lb-trace e :x (aref p 0) :z (aref p 2) :yaw (+ (yaw-of e) (deg yaw-off)) :size *lb-trace-len*
                               :life *lb-trace-life* :hook 'lb-hz :look 'lb-trace-look :group group
-                              :data (make-lbh :kind :trace :src src :id (incf (lbs-trace-n st)) :live t
+                              :data (make-lbh :kind :trace :src src :id (incf (lbs-trace-n st)) :live t :fresh t
                                               :len (f32 *lb-trace-len*) :width (f32 r)
                                               :vol (make-vol :cap (list 0.6 *lb-trace-len* 1.2 r))))
     (lb-count e :traces)))
@@ -1204,12 +1219,13 @@ gap G12); each erupts outward from 1 m to 18 m (LB-SABAKI-SPAN), through guard (
 
 (defun lb-trace-cross (e)
   "Per sim frame (LILLE-TICK): is the opponent on any of his live traces (each line's :cap against his hurt cylinder, as a
-hit would test it)? Stepping onto them after *LB-CROSS-OFF* frames off all of them slows the whole match
-(*LB-CROSS-SCALE* for *LB-CROSS-SECS*: LB-CROSS-P; the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」, 「全場慢動作」, then
-plan A, decision 44); the lines he is on flare (LBH-CROSS)."
-  (let* ((o (opp-of e)) (st (lb e)) (now nil))
+hit would test it)? A trace laid this frame onto him slows the whole match at *LB-FRESH-SCALE* for *LB-FRESH-SECS*,
+whatever else he stands on (decision 45); else stepping onto them after *LB-CROSS-OFF* frames off all of them slows it at
+*LB-CROSS-SCALE* for *LB-CROSS-SECS* (decisions 41, 44, 45: LB-CROSS-KIND; the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」,
+「全場慢動作」); the lines that started it flare (LBH-CROSS)."
+  (let* ((o (opp-of e)) (st (lb e)) (now nil) (fresh nil) (on-old nil))
     (when (entity-alive-p o)
-      (let ((q (pos-of o)) (b (model-body (model o))) (fire (lb-cross-p t (lbs-cross-off st))))
+      (let ((q (pos-of o)) (b (model-body (model o))))
         (do-entities (h (hz hazard))
           (let ((d (hazard-data hz)))
             (when (and (eql (hazard-owner hz) e) (lbh-p d) (lbh-live d))
@@ -1217,11 +1233,16 @@ plan A, decision 44); the lines he is on flare (LBH-CROSS)."
                 (when (vol-hit-p (lbh-vol d) (hazard-x hz) 0f0 (hazard-z hz) (f32 (fwd-x yaw)) (f32 (fwd-z yaw))
                                  (aref q 0) (aref q 1) (aref q 2) (body-hurt-r b) (body-hurt-h b) 0f0)
                   (setf now t)
-                  (when fire (setf (lbh-cross d) *match-tick*)))))))
-        (when (lb-cross-p now (lbs-cross-off st))
-          (slowmo *lb-cross-scale* *lb-cross-secs*)
-          (lb-count e :trace-cross)
-          (emit :sfx :rift-open e))))
+                  (if (lbh-fresh d) (progn (setf fresh t) (setf (lbh-cross d) *match-tick*)) (push d on-old))))
+              (setf (lbh-fresh d) nil))))
+        (case (lb-cross-kind fresh now (lbs-cross-off st))
+          (:fresh (slowmo *lb-fresh-scale* *lb-fresh-secs*)
+                  (lb-count e :trace-fresh)
+                  (emit :sfx :rift-open e))
+          (:cross (dolist (d on-old) (setf (lbh-cross d) *match-tick*))
+                  (slowmo *lb-cross-scale* *lb-cross-secs*)
+                  (lb-count e :trace-cross)
+                  (emit :sfx :rift-open e)))))
     (setf (lbs-cross-off st) (lb-cross-off-next now (lbs-cross-off st)))))
 
 (defun lb-hz (h hz ev &optional a b c dd ee)

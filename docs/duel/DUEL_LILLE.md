@@ -2649,3 +2649,10 @@ new freeze's `lille.lisp` by a 3-way merge (base: `6081a39`'s file; all four cle
 `lille.cell-6081a39.lisp`). They are re-measured (`FORCE`, the rule changed under them), and round 1's refine cells then
 start from the new freeze.
 
+| Cell | At `6081a39` | At `1a7f135` (decision 47) |
+|---|---|---|
+| b0a0 | 0.9518 | **0.9548** |
+| b1a0 | 0.9563 | **0.9586** |
+| b2a0 | 0.9941 | **0.9945** |
+| b3a0 | 0.9869 | **0.9883** |
+

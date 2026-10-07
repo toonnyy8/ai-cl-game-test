@@ -130,20 +130,11 @@ user: 「遠程 J/K 每條軌跡消耗 3 點閃步量表」; free before).")
   "A trace materialising turns about where it was laid toward the opponent by at most this many degrees, then hits along
 the turned line (decision 41, the user 2026-10-07: 「C」, the materialise snap; the lead's 10: 1.7 m sideways at 10 m).
 Decision 39's laying shot (1 damage, a 10 f flinch) is gone: 「我希望去除掉軌道設置時造成的 1 點傷害」.")
-(defparameter *lb-fresh-scale* 0.1
-  "A trace laid onto the opponent (its first frame touches him) slows the whole match to this time scale (SLOWMO,
-everyone), whatever other traces he is on (decision 45, the user 2026-10-07: 「如果是才剛新生成的軌道就算重疊也一樣觸發時緩」; the
-0.1 of decision 43: 「抱歉，應該是倍率改 0.1 然後可重複觸發」; a perfect Hoho's is 0.25) ...")
-(defparameter *lb-fresh-secs* 0.2
-  "... for this many real seconds (decision 47, the user 2026-10-07: 「新軌：0.1 倍速 0.2 秒」; decision 46's 0.1, 0.3 before,
-decision 41's; a perfect Hoho's 0.45).")
-(defparameter *lb-cross-scale* 0.2
-  "The opponent stepping onto his old (already laid) live traces slows the whole match to this time scale (decision 41,
-the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」, 「全場慢動作」; 0.35 -> 0.5 -> 0.1 (decision 43); decision 45: 「而經過舊軌道
-的時緩參數改成 0.3 倍速持續 1 秒」: 0.3; decision 47, the user 2026-10-07: 「舊軌：0.2 倍速 0.5 秒」: 0.2) ...")
-(defparameter *lb-cross-secs* 0.5
-  "... for this many real seconds (decision 47, the user 2026-10-07: 「舊軌：0.2 倍速 0.5 秒」; decision 46's 0.3, decision
-45's 1.0 before) ...")
+(defparameter *lb-cross-scale* 0.1
+  "The opponent crossing one of his live traces slows the whole match to this time scale (SLOWMO, everyone: decision 41,
+the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」, 「全場慢動作」; the lead's 0.35, then decision 43: 0.5, corrected by the
+user: 「抱歉，應該是倍率改 0.1 然後可重複觸發」: 0.1; a perfect Hoho's is 0.25) ...")
+(defparameter *lb-cross-secs* 0.3 "... for this many real seconds (the lead's number; a perfect Hoho's 0.45) ...")
 (defparameter *lb-cross-off* 10
   "... when he steps onto his live traces from off all of them, after at least this many sim frames off every one (the
 traces count as one region: a K fan, lines laid side by side or a gap he crosses in under this many frames slow it once;
@@ -331,11 +322,6 @@ when *LB-TRACE-MAX* were live) or NIL. (The sim keeps its traces as hazards: LB-
     (if (< (+ (* dx dx) (* dz dz)) 1e-4)
         yaw
         (f32 (angle-wrap (turn-toward yaw (dir-yaw dx dz) (deg *lb-snap-max*)))))))
-(defun lb-cross-kind (fresh now off)
-  "Which slow motion his traces start this frame (decisions 44, 45): :FRESH when a trace laid this frame touches him (FRESH;
-*LB-FRESH-SCALE*), else :CROSS when he stepped onto the live traces after OFF frames off all of them (LB-CROSS-P;
-*LB-CROSS-SCALE*), else NIL."
-  (cond (fresh :fresh) ((lb-cross-p now off) :cross)))
 (defun lb-cross-p (now off)
   "Does his crossing slow the match (decisions 41, 44): he is on one of the live traces NOW, after OFF sim frames on none
 (0 when he was on one last frame) >= *LB-CROSS-OFF*?"
@@ -592,7 +578,7 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
                (6.0 99.0 :sig 6 :sp1 1 nil 1))
        :guard 0.5 :hoho 0.3 :dash 0.3 :dash-back 0.7 :block-string 0.3 :o-ender 0.3 :l-after-k 0.4 :kikon-range 7.7
        :awaken (:min-taken 150) :eye (:p 0.5) :reflex lb-ai-reflex
-       :hunt (:by (:easy 0.0 :normal 0.0 :hard 1.0) :near 0.0 :far 7.5)))   ; (HARD: the HOSHA hunter, LB-AI-HUNT)
+       :sniper (:by (:easy 0.0 :normal 0.0 :hard 1.0) :far 7.5 :oki 8.4)))   ; (HARD: the hunt, the composure, oki; LB-AI-HUNT)
 
 ;; 神の裁き JILLIEL, 遠 EN (the awakening enters it; floating, as built): J / K / SP1 walk and lay traces, SP2 a thick one,
 ;; L TENSHIN (to KIN), U MUJITTAI, P the revival (decision 16)
@@ -614,7 +600,7 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
        :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.4 :dash-back 0.6 :kikon-range 8.5
        :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1) :stance (:p 0.6 :max 180 :gg 30)
        :switch (:traces 3 :near 0.6 :whiff 1.5) :opp-trace (:p 0.5) :opp-reflex lb-opp-trace :reflex lb-ai-reflex
-       :mark (:by (:easy 0.0 :normal 0.0 :hard 1.0) :near 1.5 :far 13.5 :gap 0.6)))   ; (HARD: the mark, LB-AI-MARK)
+       :sniper (:by (:easy 0.0 :normal 0.0 :hard 1.0) :near 1.5 :far 13.5 :gap 0.6)))   ; (HARD: the mark, oki; LB-AI-MARK)
 
 ;; U in Jilliel: 無実体 MUJITTAI, West's ward with the :intangible flag (§5.2): every attack drops it (no :keep)
 (defkit :lille :jilliel-mujittai :inherit :jilliel
@@ -634,8 +620,8 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
                (8.0 99.0 :step 1 nil 2))
        :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.8 :block-string 0.3 :o-ender 0.5 :kikon-range 8.5
        :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1) :stance (:p 0.6 :max 180 :gg 30)
-       :switch (:gg 40) :reflex lb-ai-reflex
-       :vanish (:by (:easy 0.0 :normal 0.0 :hard 1.0) :fs 13.0)))   ; (HARD: out as soon as nothing is to cash, LB-AI-VANISH)
+       :switch (:gg 40) :reflex lb-ai-reflex :sp-ender lb-ai-sp-ender
+       :sniper (:by (:easy 0.0 :normal 0.0 :hard 1.0) :fs 13.0 :pendulum t)))   ; (HARD: the JKK route, K3's exits)
 
 (defkit :lille :jilliel-kin-mujittai :inherit :jilliel-kin
   :guard-to nil :drop-to :jilliel-kin :passives (:ward :intangible) :stance :lb-w-fold :u-tag "U: MUJITTAI")
@@ -660,7 +646,7 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
                (14.0 99.0 :f 2 :q 2 :step 1 nil 2))
        :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.4 :dash-back 0.6 :kikon-range 9.0 :stance (:p 0.6 :max 180 :gg 30)
        :switch (:traces 3 :near 0.6 :whiff 1.5) :opp-trace (:p 0.5) :opp-reflex lb-opp-trace :reflex lb-ai-reflex
-       :mark (:by (:easy 0.0 :normal 0.0 :hard 1.0) :near 1.5 :far 13.5 :gap 0.6)))   ; (HARD: the mark, LB-AI-MARK)
+       :sniper (:by (:easy 0.0 :normal 0.0 :hard 1.0) :near 1.5 :far 13.5 :gap 0.6)))   ; (HARD: the mark, oki; LB-AI-MARK)
 
 (defkit :lille :shin-mujittai :inherit :shin
   :guard-to nil :drop-to :shin :passives (:ward :intangible) :stance :lb-oe-fold :u-tag "U: MUJITTAI")   ; (EN's: upright, afloat)
@@ -676,8 +662,8 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
                (8.0 99.0 :sp2 2 :step 1 nil 2))
        :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.8 :block-string 0.3 :o-ender 0.6 :kikon-range 9.0
        :stance (:p 0.6 :max 180 :gg 30) :switch (:gg 40) :opp-reflect (:p 0.3) :trompete (:p 0.5 :left 30)
-       :reflex lb-ai-reflex
-       :vanish (:by (:easy 0.0 :normal 0.0 :hard 1.0) :fs 13.0)))
+       :reflex lb-ai-reflex :sp-ender lb-ai-sp-ender
+       :sniper (:by (:easy 0.0 :normal 0.0 :hard 1.0) :fs 13.0 :pendulum t)))
 
 (defkit :lille :shin-kin-mujittai :inherit :shin-kin
   :guard-to nil :drop-to :shin-kin :passives (:ward :intangible) :stance :lb-o-fold :u-tag "U: MUJITTAI")
@@ -738,8 +724,7 @@ carry-over bug, DEVLOG §38-§39)."
   ;; a trace: what laid it (:j :k :sp1 :sp2: its damage and drain, LB-TRACE-HITWIN), its id (they count up per side),
   ;; live (laid, not yet materialised), its line (a :cap volume in its own frame)
   (src nil) (id 0 :type fixnum) (live nil) (vol nil)
-  (cross -1 :type fixnum)                 ; the tick his crossing onto it slowed the match (the look's flare)
-  (fresh nil))                            ; a trace not yet tested against him (laid this frame: decision 45)
+  (cross -1 :type fixnum))                ; the tick his crossing onto it slowed the match (the look's flare)
 
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun lille-ok (e command combo)
@@ -947,7 +932,7 @@ wind-up (:lb-switch-in-c, decision 30; a human's press; his CPU's switch rule, L
           (let ((vp (pilot-vpad (pilot e))))
             (cond (b (let ((seen (lb-ai-seen b)))
                        (when (cond ((lb-ai-switch-in-p e b seen *lb-switch-windup-c*) (lb-count e :ai-switch-trace) t)
-                                   ((lb-ai-spring e b seen) (lb-count e :ai-spring) t))   ; (HARD: the mark's spring)
+                                   ((lb-ai-spring-p e b seen) (lb-count e :ai-spring) t))   ; (HARD: the mark's spring)
                          (try-command e f :sig nil nil (lb-switch-cancel-move f)))))   ; (the 2 f cancel, decision 30)
                   ((vpad-command-pressed-p vp :sig nil)
                    (if (try-command e f :sig nil nil (lb-switch-cancel-move f))
@@ -997,7 +982,7 @@ out); the opponent crossing it slows the match (LB-HZ's :step, LB-CROSS-P)."
       (when (lb-trace-drop-p n) (destroy-entity old) (lb-count e :traces-dropped)))
     (spawn-hazard :lb-trace e :x (aref p 0) :z (aref p 2) :yaw (+ (yaw-of e) (deg yaw-off)) :size *lb-trace-len*
                               :life *lb-trace-life* :hook 'lb-hz :look 'lb-trace-look :group group
-                              :data (make-lbh :kind :trace :src src :id (incf (lbs-trace-n st)) :live t :fresh t
+                              :data (make-lbh :kind :trace :src src :id (incf (lbs-trace-n st)) :live t
                                               :len (f32 *lb-trace-len*) :width (f32 r)
                                               :vol (make-vol :cap (list 0.6 *lb-trace-len* 1.2 r))))
     (lb-count e :traces)))
@@ -1169,9 +1154,7 @@ His CPU's link (LB-AI-LINK) is picked once."
             (when (and (member c '(:q :f)) (try-command e f c))
               (setf (lbs-latch st) nil (lbs-link-t st) *match-tick* (lbs-link-from st) (if hosha :hosha :tenshin))
               (when (or hosha in) (setf (fighter-end-chase (fighter e)) t))
-              (when (and b hosha (eq c :f) (lb-ai-loop-p e))       ; (HARD: L latched on the K1 link: the stance again)
-                (let ((l (kit-l-link (fighter-kit f) (mv-name (fighter-move f)))))
-                  (when (and l (kit-command-ok-p e :sig (fighter-kit f) nil l)) (setf (fighter-queued f) :sig))))
+              (when b (lb-ai-link-latch e f b hosha in c))   ; (HARD: the loop's L, the JKK route's K)
               (lb-count e (if hosha :hosha-link :tenshin-link)))))))))
 
 (defun lb-switch-tick (e)
@@ -1222,13 +1205,12 @@ gap G12); each erupts outward from 1 m to 18 m (LB-SABAKI-SPAN), through guard (
 
 (defun lb-trace-cross (e)
   "Per sim frame (LILLE-TICK): is the opponent on any of his live traces (each line's :cap against his hurt cylinder, as a
-hit would test it)? A trace laid this frame onto him slows the whole match at *LB-FRESH-SCALE* for *LB-FRESH-SECS*,
-whatever else he stands on (decision 45); else stepping onto them after *LB-CROSS-OFF* frames off all of them slows it at
-*LB-CROSS-SCALE* for *LB-CROSS-SECS* (decisions 41, 44, 45: LB-CROSS-KIND; the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」,
-「全場慢動作」); the lines that started it flare (LBH-CROSS)."
-  (let* ((o (opp-of e)) (st (lb e)) (now nil) (fresh nil) (on-old nil))
+hit would test it)? Stepping onto them after *LB-CROSS-OFF* frames off all of them slows the whole match
+(*LB-CROSS-SCALE* for *LB-CROSS-SECS*: LB-CROSS-P; the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」, 「全場慢動作」, then
+plan A, decision 44); the lines he is on flare (LBH-CROSS)."
+  (let* ((o (opp-of e)) (st (lb e)) (now nil))
     (when (entity-alive-p o)
-      (let ((q (pos-of o)) (b (model-body (model o))))
+      (let ((q (pos-of o)) (b (model-body (model o))) (fire (lb-cross-p t (lbs-cross-off st))))
         (do-entities (h (hz hazard))
           (let ((d (hazard-data hz)))
             (when (and (eql (hazard-owner hz) e) (lbh-p d) (lbh-live d))
@@ -1236,16 +1218,11 @@ whatever else he stands on (decision 45); else stepping onto them after *LB-CROS
                 (when (vol-hit-p (lbh-vol d) (hazard-x hz) 0f0 (hazard-z hz) (f32 (fwd-x yaw)) (f32 (fwd-z yaw))
                                  (aref q 0) (aref q 1) (aref q 2) (body-hurt-r b) (body-hurt-h b) 0f0)
                   (setf now t)
-                  (if (lbh-fresh d) (progn (setf fresh t) (setf (lbh-cross d) *match-tick*)) (push d on-old))))
-              (setf (lbh-fresh d) nil))))
-        (case (lb-cross-kind fresh now (lbs-cross-off st))
-          (:fresh (slowmo *lb-fresh-scale* *lb-fresh-secs*)
-                  (lb-count e :trace-fresh)
-                  (emit :sfx :rift-open e))
-          (:cross (dolist (d on-old) (setf (lbh-cross d) *match-tick*))
-                  (slowmo *lb-cross-scale* *lb-cross-secs*)
-                  (lb-count e :trace-cross)
-                  (emit :sfx :rift-open e)))))
+                  (when fire (setf (lbh-cross d) *match-tick*)))))))
+        (when (lb-cross-p now (lbs-cross-off st))
+          (slowmo *lb-cross-scale* *lb-cross-secs*)
+          (lb-count e :trace-cross)
+          (emit :sfx :rift-open e))))
     (setf (lbs-cross-off st) (lb-cross-off-next now (lbs-cross-off st)))))
 
 (defun lb-hz (h hz ev &optional a b c dd ee)
@@ -1470,7 +1447,7 @@ lines left (decision 34; LB-AI-LAY-OK-P once back)?"
 out (Jilliel, MUJITTAI), Trompete's punish (the owl). A command, :NONE (hands off: the generic guard must not answer), or
 NIL."
   (case (kit-form (kit-of e))
-    (:base (or (lb-ai-eye e b s d) (lb-ai-hunt e b s d)))       ; (the hunt: HARD only, after the eye)
+    (:base (or (lb-ai-eye e b s d) (lb-ai-hunt e b s d)))       ; (HARD: the hunt after the eye)
     ((:jilliel :shin) (lb-ai-en e b s d))                     ; (the owl runs Jilliel's EN / KIN CPU: decision 36)
     (:jilliel-kin (lb-ai-kin e b s d))
     (:shin-kin (or (lb-ai-trompete e b s d) (lb-ai-kin e b s d)))   ; (+ Trompete's punish, as built)
@@ -1638,16 +1615,14 @@ which run inside moves where the reflexes don't."
 the dash back (then the charged shot), or the charged shot once the charge reaches *LB-CHARGE-F*."
   (unless (lbs-k-plan st)
     (let* ((o (opp-of e)) (fo (fighter o)) (mo (and (eq (fighter-state fo) :move) (fighter-move fo)))
-           (b (brain e)) (k (ai-table e :hunt)) (seen (and b (lb-ai-seen b)))
-           (plan (or (and seen (lb-ai-hunt-plan (lb-ai-by k (brain-difficulty b)) (fighter-dist f)   ; (HARD: the hunt's
-                                                (member (snap-state seen) '(:stun :air))            ; HOSHA, perceived;
-                                                (member (snap-state seen) '(:guard :guard-hit)) k))  ; else as shipped)
+           (plan (or (lb-ai-hunt-plan e (fighter-dist f))                    ; (HARD: HOSHA, perceived)
                      (lb-ai-kamae-plan (sim-rnd01) (fighter-dist f) (member (fighter-state fo) '(:stun :air))
                                    (member (fighter-state fo) '(:guard :guard-hit)) (< (gauges-gg (gauges o)) 50)
                                    (and mo (eq (fighter-phase fo) :main) (>= (fighter-sf fo) (+ (mv-s mo) (mv-a mo)))
                                         (null (fighter-contact fo)))
                                    (and (not (lbs-dashed st)) (>= (gauges-fs (gauges e)) *lb-kamae-dash-fs*))))))
       (setf (lbs-k-plan st) plan)
+      (when (eq plan :j) (lb-ai-composure e))
       (lb-count e (intern (format nil "AI-KAMAE-~a" plan) :keyword))))
   (case (lbs-k-plan st)
     (:l :kamae-l) (:j :kamae-j) (:k :kamae-k)
@@ -1657,10 +1632,9 @@ the dash back (then the charged shot), or the charged shot once the charge reach
 (defun lb-ai-link (e f st hosha)
   "His CPU's link out of HOSHA (after a bullet's hit: one roll) or TENSHIN (J after a switch in whose traces hit; no roll):
 LB-AI-LINK-PLAN; called once a move (the latch holds the answer)."
-  (if (and hosha (lb-ai-loop-p e))                          ; (HARD: the hunt's loop, K1 then L: LB-AI-LOOP-P)
-      :f
-  (lb-ai-link-plan hosha (if hosha (sim-rnd01) 0.0) (and (member (fighter-form f) '(:jilliel-kin :shin-kin)) t)
-                   (>= (lbs-trace-hit-t st) (lbs-switch-t st) 0))))
+  (or (lb-ai-link-hard e f hosha)                           ; (HARD: K1 for the loop; the pendulum's J)
+      (lb-ai-link-plan hosha (if hosha (sim-rnd01) 0.0) (and (member (fighter-form f) '(:jilliel-kin :shin-kin)) t)
+                       (>= (lbs-trace-hit-t st) (lbs-switch-t st) 0))))
 
 (defun lb-ai-trace-gap (e x z)
   "His live traces seen from (X Z): values how many and the distance to the nearest one's line as it would materialise (turned
@@ -1699,26 +1673,25 @@ regains the flash step). No roll."
           ((lb-ai-switch-in-p e b s *lb-switch-windup*)
            (lb-count e :ai-switch-trace) (why b :switch-in :sig))
           ((lb-ai-stance-in e b s d))
-          ((lb-ai-mark e b s d))                                  ; (HARD: the mark, LB-AI-MARK)
-          ((and (not (plusp (lb-ai-by (ai-table e :mark) (brain-difficulty b))))   ; (HARD never lands in KIN with nothing:
-                (lb-ai-switch-in-p e b s *lb-switch-windup* (not (lb-ai-lay-ok-p fs :j))))   ; the starved switch is NORMAL's)
+          ((lb-ai-mark e b s d))                                  ; (HARD: the mark and the oki mark)
+          ((and (not (lb-ai-on-p e b))                            ; (HARD never lands in KIN with nothing)
+                (lb-ai-switch-in-p e b s *lb-switch-windup* (not (lb-ai-lay-ok-p fs :j))))
            (lb-count e :ai-switch-starved) (why b :switch-starved :sig)))))
 
 (defun lb-ai-kin (e b s d)
-  "KIN (free; DUEL_LILLE §22.2): at HARD the vanish first (LB-AI-VANISH); then TENSHIN out (to EN) after a string (its
-last link run out, LILLE-TICK's record; a blocked one counted apart) or with the guard gauge under :gg (40), when it can
-start and (decision 34) with the flash step for EN's lines after it (LB-AI-OUT-OK-P: EN never arrives starved); else the
-stance reflex."
-  (or (lb-ai-vanish e b s d)
-      (let* ((st (lb e)) (k (ai-table e :switch))
-             (why (and (lb-ai-out-ok-p (gauges-fs (gauges e)))
-                       (cond ((lbs-kin-last st) (if (eq (lbs-kin-contact st) :block) :block :string))
-                             ((< (gauges-gg (gauges e)) (getf k :gg 40)) :gauge)))))
-        (if (and why (kit-command-ok-p e :sig))
-            (progn (setf (lbs-kin-last st) nil)
-                   (lb-count e (case why (:block :ai-switch-block) (:string :ai-switch-string) (t :ai-switch-gauge)))
-                   (why b :switch-out :sig))
-            (lb-ai-stance-in e b s d)))))
+  "KIN (free; DUEL_LILLE §22.2): TENSHIN out (to EN) after a string (its last link run out, LILLE-TICK's record; a blocked
+one counted apart) or with the guard gauge under :gg (40), when it can start and (decision 34) with the flash step for
+EN's lines after it (LB-AI-OUT-OK-P: EN never arrives starved); else the stance reflex."
+  (or (lb-ai-vanish e b s d)                                 ; (HARD: out as soon as it can pay)
+  (let* ((st (lb e)) (k (ai-table e :switch))
+         (why (and (lb-ai-out-ok-p (gauges-fs (gauges e)))
+                   (cond ((lbs-kin-last st) (if (eq (lbs-kin-contact st) :block) :block :string))
+                         ((< (gauges-gg (gauges e)) (getf k :gg 40)) :gauge)))))
+    (if (and why (kit-command-ok-p e :sig))
+        (progn (setf (lbs-kin-last st) nil)
+               (lb-count e (case why (:block :ai-switch-block) (:string :ai-switch-string) (t :ai-switch-gauge)))
+               (why b :switch-out :sig))
+        (lb-ai-stance-in e b s d)))))
 
 (defun lb-ai-en-stick (e f)
   "His CPU's stick through EN's mobile lines (values toward strafe): out past its :zone range's far end in (12 m), under its
@@ -1734,6 +1707,177 @@ while he walks (DUEL_LILLE §22.2)."
     (when (and (null (fighter-queued f)) (kit-next (fighter-kit f) (mv-name mv) c)
                (lb-ai-lay-ok-p (gauges-fs (gauges e)) (if (eq c :q) :j :k)))
       (setf (fighter-queued f) c))))
+
+;;; ---------------------------------------------------------------- the HARD layer: the executioner (dream-rsi r1 b2a0)
+;;; (DUEL_LILLE §24; the cell's proposal). A sniper takes few shots and makes each one count. Every opening is followed
+;;; by the most damaging route his kit owns, his own (signature) all the way, and a downed opponent is met on the frame he
+;;; can be hit again (起き攻め, OKIZEME), not after he has his feet back:
+;;;   base   the hunt (the shooting stance onto an open opponent in HOSHA's reach, its plan HOSHA) and its loop (HOSHA's
+;;;          link K1 with L latched: bullets -> K1 -> the stance -> bullets); THE COMPOSURE: J held through HOSHA's bullets
+;;;          (an inert press: HOSHA has no J), so the generic ORANGE (and its plain-string restart) never takes his combo
+;;;          away; THE OKI HOSHA: on a downed opponent the stance is entered *LB-AI-OKI-HOSHA* frames before he can be hit
+;;;          (his wake-up as perceived, + the perception delay), the first bullet on his first vulnerable frame
+;;;   EN     the mark (J1 laid straight at an open opponent, TENSHIN's 2 f cancel springs it while he stands on a line as it
+;;;          would materialise); THE OKI MARK: J1 pressed *LB-AI-OKI-MARK* frames before he can be hit, the materialise on
+;;;          his first vulnerable frame; no starved switch into KIN with nothing
+;;;   KIN    THE ROUTE: the trace combo's J1 (TENSHIN in's link) latches K: J1 -> K2s -> K3 (24 50 72), not J1 J2 J3
+;;;          (24 24 30); K3'S EXITS (:sp-ender, the string's end): NIJUSHI-KO with two bars (180, his), else L latched on
+;;;          K3, TENSHIN out (10 m, iframes) chained off the hit; THE PENDULUM: TENSHIN out's link (its f14) is EN's J1 on
+;;;          him still crumpled, its line sprung while he reels (trace -> TENSHIN -> J1 K2s K3 -> out -> trace ...)
+;;; Each layer is the form's :sniper key, its level by difficulty (:by): 0 at EASY and NORMAL = the shipped CPU, bit for bit
+;;; (no extra roll is drawn there), 1 at HARD. Every rule is deterministic on what the CPU perceives: no roll per step.
+(defparameter *lb-ai-oki-hosha* 12
+  "The oki HOSHA (HARD): the stance pressed when his perceived wake-up has this many frames left (+ the delay): its f6
+plan, HOSHA's f6 bullet = 12 frames after the press (dream-rsi r1 b2a0, 2026-10-07).")
+(defparameter *lb-ai-oki-mark* 9
+  "The oki mark (HARD): EN's J1 pressed when his wake-up has this many frames left: its line on f4, the 2 f cancel from
+its f7, the materialise 9 frames after the press (dream-rsi r1 b2a0, 2026-10-07).")
+(defparameter *lb-ai-composure* 18
+  "The composure (HARD): frames J is held from HOSHA's start (through its last bullet's hit, f14-16, and its link at f16;
+J does nothing in HOSHA): the generic ORANGE reflex never runs on a bullet's hit (dream-rsi r1 b2a0, 2026-10-07).")
+(defparameter *lb-ai-pendulum* 9
+  "The pendulum (HARD): TENSHIN out's link is EN's J1 when he is perceived reeling for at least this many more frames
+(J1's 7 + the 2 f cancel: the materialise lands in his stun; dream-rsi r1 b2a0, 2026-10-07).")
+
+(defun lb-ai-by (k difficulty)
+  "A layered key K's level at DIFFICULTY (its :by plist; 0 when K is absent): 0 = the shipped CPU."
+  (if k (getf (getf k :by) difficulty 0.0) 0.0))
+
+(defun lb-ai-on-p (e b)
+  "Does brain B play E's form's HARD layer (the form's :sniper level > 0 at its difficulty)?"
+  (and b (plusp (lb-ai-by (ai-table e :sniper) (brain-difficulty b)))))
+
+(defun lb-ai-open-p (state)
+  "Can a mark / a hunt catch a perceived STATE: not a Step / Hoho (iframes), not a guard (a trace would chip only; HOSHA's
+bullets are guardable), not down / waking / airborne (the oki rules take those)."
+  (not (member state '(:step :hoho :guard :guard-hit :down :wakeup :air))))
+
+(defun lb-wake-left (state sf delay)
+  "Frames until a fighter perceived in STATE at frame SF, DELAY frames ago, can be hit again: down (*REACTION-FRAMES*
+:down) then the wake-up (:wakeup), both invulnerable; NIL in any other state."
+  (case state
+    (:down (- (+ (getf *reaction-frames* :down 30) (getf *reaction-frames* :wakeup 30)) sf delay))
+    (:wakeup (- (getf *reaction-frames* :wakeup 30) sf delay))))
+
+(defun lb-ai-oki-p (left lead)
+  "The oki rule (pure): his perceived wake-up has LEFT frames to go, the press lands its hit LEAD frames later: press now
+(LEFT in LEAD - 3 .. LEAD; the first step inside fires)."
+  (and left (<= (- lead 3) left lead) t))
+
+(defun lb-ai-wake-left (b s) "LB-WAKE-LEFT of B's perceived opponent S." (lb-wake-left (snap-state s) (snap-sf s) (brain-delay b)))
+
+(defun lb-ai-hunt (e b s d)
+  "The base form (free, after the eye; HARD): the oki HOSHA on a downed opponent within :oki m, the stance pressed
+*LB-AI-OKI-HOSHA* frames before he can be hit; else the hunt: the stance onto a perceived open opponent within :far m with
+no threat of his near. Its branch is HOSHA (LB-AI-HUNT-PLAN at the stance's f6)."
+  (let ((k (ai-table e :sniper)))
+    (when (and (lb-ai-on-p e b) (kit-command-ok-p e :sig))
+      (let ((left (lb-ai-wake-left b s)))
+        (cond (left (when (and (<= d (getf k :oki 8.4)) (lb-ai-oki-p left *lb-ai-oki-hosha*))
+                      (lb-count e :ai-oki-hosha)
+                      (why b :oki-hosha :sig)))
+              ((and (<= d (getf k :far 7.5)) (lb-ai-open-p (snap-state s)) (not (lb-ai-threat-p e s d 1.0)))
+               (lb-count e :ai-hunt)
+               (why b :hunt :sig))
+              ((and (<= d (getf k :siege 3.2)) (eq (snap-state s) :guard) (not (lb-ai-threat-p e s d 1.0)))
+               (lb-count e :ai-siege)                   ; (a guard up close: TAISHA through it, LB-AI-HUNT-PLAN)
+               (why b :siege :sig)))))))
+
+(defun lb-ai-hunt-plan (e d)
+  "The shooting stance's branch at HARD (NIL: the shipped plan, its roll drawn as shipped): HOSHA (:J) on him perceived
+reeling within 8 m (the loop), waking within :oki m (the oki HOSHA), or open within :far + 0.5 m (the leap's 5 m and its
+bullets' 3 m); never into a perceived guard."
+  (let* ((b (brain e)) (k (ai-table e :sniper)) (s (and b (lb-ai-seen b))))
+    (when (and s (lb-ai-on-p e b) (member (snap-state s) '(:guard :guard-hit)) (<= d (getf k :siege 3.2)))
+      (return-from lb-ai-hunt-plan :k))
+    (when (and s (lb-ai-on-p e b) (not (member (snap-state s) '(:guard :guard-hit))))
+      (and (or (and (member (snap-state s) '(:stun :air)) (<= d 8.0))
+               (and (lb-ai-wake-left b s) (<= d (getf k :oki 8.4)))
+               (and (lb-ai-open-p (snap-state s)) (<= d (+ (getf k :far 7.5) 0.5))))
+           :j))))
+
+(defun lb-ai-composure (e)
+  "HOSHA starts (HARD): J held *LB-AI-COMPOSURE* frames (inert in HOSHA), so no generic reflex runs on its bullets' hits:
+no ORANGE, no plain-string restart; the link (K1, L latched) stays his."
+  (let ((b (brain e)))
+    (when (lb-ai-on-p e b)
+      (ai-press b :quick *lb-ai-composure* :act :hold)
+      (lb-count e :ai-composure))))
+
+(defun lb-ai-link-hard (e f hosha)
+  "His CPU's link at HARD (NIL: the shipped plan): after HOSHA's hit K1 (the loop: L is latched on it, LB-AI-LINK-LATCH);
+after TENSHIN out (the pendulum), EN's J1 while he is perceived reeling *LB-AI-PENDULUM* frames more."
+  (let ((b (brain e)) (mv (fighter-move f)))
+    (when (lb-ai-on-p e b)
+      (cond (hosha :f)
+            ((and mv (member (mv-name mv) '(:lb-switch :lb-o-switch)) (lb-en-form-p (fighter-form f))
+                  (let ((s (lb-ai-seen b))) (and s (eq (snap-state s) :stun) (lb-ai-busy-p s (brain-delay b) *lb-ai-pendulum*))))
+           (lb-count e :ai-pendulum)
+           :q)))))
+
+(defun lb-ai-link-latch (e f b hosha in c)
+  "Right after his CPU's link C started (HARD): HOSHA's K1 latches L (the stance at its f4: the loop); KIN's J1 after
+TENSHIN in latches K (J1 -> K2s -> K3: the route)."
+  (when (lb-ai-on-p e b)
+    (let* ((kit (fighter-kit f)) (name (mv-name (fighter-move f))))
+      (cond ((and hosha (eq c :f))
+             (let ((l (kit-l-link kit name)))
+               (when (and l (kit-command-ok-p e :sig kit nil l))
+                 (setf (fighter-queued f) :sig)
+                 (lb-count e :ai-loop))))
+            ((and in (eq c :q) (kit-next kit name :f))
+             (setf (fighter-queued f) :f)
+             (lb-count e :ai-route))))))
+
+(defun lb-ai-mark (e b s d)
+  "EN (free; HARD): the oki mark (J1 *LB-AI-OKI-MARK* frames before a downed opponent can be hit), else the mark: J1 onto
+a perceived open opponent within :near..:far m with no threat near; its line laid straight at him, a J line affordable
+above the reserve. The tick springs it (LB-AI-SPRING-P)."
+  (let ((k (ai-table e :sniper)))
+    (when (and (lb-ai-on-p e b) (<= (getf k :near 1.5) d (getf k :far 13.5))
+               (lb-ai-lay-ok-p (gauges-fs (gauges e)) :j) (kit-command-ok-p e :q))
+      (let ((left (lb-ai-wake-left b s)))
+        (cond (left (when (lb-ai-oki-p left *lb-ai-oki-mark*)
+                      (lb-count e :ai-oki-mark)
+                      (why b :oki-mark :q)))
+              ((and (lb-ai-open-p (snap-state s)) (not (lb-ai-threat-p e s d 1.0)))
+               (lb-count e :ai-mark)
+               (why b :mark :q)))))))
+
+(defun lb-ai-spring-p (e b s)
+  "EN's tick, from a J / K / SP's active end (HARD): spring (TENSHIN's 2 f cancel) while the perceived opponent S stands
+within :gap m of a live line as it would materialise (LB-AI-TRACE-GAP) and is open, or waking with at most 2 frames
+left (the materialise comes 2 f later)."
+  (let ((k (ai-table e :sniper)))
+    (and s (lb-ai-on-p e b) (lb-switch-ready-p e)
+         (or (lb-ai-open-p (snap-state s)) (let ((left (lb-ai-wake-left b s))) (and left (<= left 2))))
+         (multiple-value-bind (n gap) (lb-ai-trace-gap e (snap-x s) (snap-z s))
+           (and (plusp n) (<= gap (getf k :gap 0.6)))))))
+
+(defun lb-ai-vanish (e b s d)
+  "KIN (free; HARD): TENSHIN out (10 m, iframes) as soon as it can pay :fs (its price + EN's next mark), unless a red rush
+is there to take (the Kikon, his): KIN is the trace combo's stage, never a place to fight."
+  (declare (ignore s d))
+  (let ((k (ai-table e :sniper)) (go (gauges (opp-of e))))
+    (when (and (lb-ai-on-p e b) (>= (gauges-fs (gauges e)) (getf k :fs 13.0)) (kit-command-ok-p e :sig)
+               (not (and (kikon-ready-p e) (member (state-of (opp-of e)) '(:stun :air)) go)))
+      (setf (lbs-kin-last (lb e)) nil)
+      (lb-count e :ai-vanish)
+      (why b :vanish :sig))))
+
+(defun lb-ai-sp-ender (e kit)
+  "KIN's string end (ai.lisp STRING-REFLEX's :sp-ender, after the O ender's roll; reads AI-BRAIN: the ASSIST's HARD brain
+uses it too): at HARD NIJUSHI-KO with its two bars (Jilliel's KIN; the owl's SP2 is Trompete, kept for its punish), else L
+latched on a K link, TENSHIN out chained off the hit (iframes, 10 m) with :fs flash step (its price + EN's next mark)."
+  (let ((b (ai-brain e)) (k (getf (kit-ai kit) :sniper)) (f (fighter e)))
+    (when (and b k (plusp (lb-ai-by k (brain-difficulty b))) (lb-kin-form-p (kit-form kit)) (fighter-move f))
+      (cond ((and (not (lb-owl-form-p (kit-form kit))) (kit-command-ok-p e :sp2))
+             (lb-count e :ai-k3-sp2)
+             :sp2)
+            ((and (>= (gauges-fs (gauges e)) (getf k :fs 13.0))
+                  (let ((l (kit-l-link kit (mv-name (fighter-move f))))) (and l (kit-command-ok-p e :sig kit nil l))))
+             (lb-count e :ai-k3-exit)
+             :sig)))))
 
 (defun lb-opp-trace (e b s d)
   "A CPU facing EN (his kit's :opp-reflex, :opp-trace (:p)): while his TENSHIN is ready (it would materialise every
@@ -1762,97 +1906,6 @@ forms can't."
               (setf (brain-strafe b) (f32 (line-off-strafe (hazard-x on) (hazard-z on) (hazard-yaw on) (aref p 0) (aref p 2)
                                                            (aref q 0) (aref q 2)))))
             (why b :trace-step :side-step)))))))
-
-;;; ---------------------------------------------------------------- the HARD layer: mark, materialise, strike, vanish
-;;; (dream-rsi round 1, cell b0a0; DUEL_LILLE §24). A sniper never fights where the opponent can: in EN he MARKS (one J
-;;; line laid straight at a perceived open opponent, then TENSHIN's 2 f cancel SPRINGS it while the perceived opponent
-;;; stands on a line: the materialise lands 9 f after the press, inside every CPU's perception + Step); the trace's 26 f
-;;; stagger carries the dash in and KIN's J string (the trace combo, LB-AI-LINK as shipped); KIN VANISHES (TENSHIN out,
-;;; 10 m, iframes) as soon as nothing is left to cash (no punish, no red rush); the base form HUNTS with the shooting
-;;; stance's HOSHA (the leap and its bullets, then the link) on an open opponent at 2.5-7.5 m. Each layer is a kit key
-;;; (:hunt / :mark / :vanish) whose :by gives its level by difficulty: 0 at EASY and NORMAL (the shipped CPU, bit for bit:
-;;; no extra roll is drawn there), 1 at HARD. Every rule is deterministic on what the CPU perceives (no roll per step).
-(defun lb-ai-by (k difficulty)
-  "A layered key K's level at DIFFICULTY (its :by plist; 0 when K is absent): 0 = the shipped CPU."
-  (if k (getf (getf k :by) difficulty 0.0) 0.0))
-
-(defun lb-ai-open-p (state)
-  "Can a mark catch a perceived STATE: not a Step / Hoho (iframes: the line misses), not a guard (the trace would chip only,
-and TENSHIN would land him beside a guard: the line waits for a later spring), not down / waking / launched."
-  (not (member state '(:step :hoho :guard :guard-hit :down :wakeup :air))))
-
-(defun lb-ai-mark-p (lv d k state threat fs-ok)
-  "EN's mark (pure): level LV > 0, the perceived opponent D m away within K's :near..:far (TENSHIN in's 13 m + its 1.5 m
-stop: KIN's J1 still reaches him), open (LB-AI-OPEN-P), no THREAT of his near (the stance reflex answers those), and a J
-line affordable above the reserve (FS-OK)."
-  (and (plusp lv) fs-ok (not threat) (lb-ai-open-p state) (<= (getf k :near 1.5) d (getf k :far 13.5)) t))
-
-(defun lb-ai-spring-p (lv gap k state)
-  "EN's spring (pure): level LV > 0 and the perceived opponent GAP m from a live line as it would materialise (LB-AI-TRACE-GAP)
-within K's :gap, open (LB-AI-OPEN-P: a stagger, not a chip)."
-  (and (plusp lv) (<= gap (getf k :gap 0.6)) (lb-ai-open-p state) t))
-
-(defun lb-ai-vanish-p (lv fs k cash)
-  "KIN's vanish (pure): level LV > 0, the flash step for TENSHIN out and EN's next mark (K's :fs: 10 + 3), and nothing to
-CASH (a punish or a red rush the generic reflexes take)."
-  (and (plusp lv) (>= fs (getf k :fs 13.0)) (not cash) t))
-
-(defun lb-ai-hunt-plan (lv d reeling guarding k)
-  "The shooting stance's branch at HARD (pure; NIL: the shipped plan): HOSHA (:J) onto a perceived open opponent within
-K's :far + 0.5 m (the leap's 5 m and its bullets' 3 m), or reeling within 8 m (after a K link: the bullets and their link
-are his, the quick shot is not); never into a GUARDING one."
-  (and (plusp lv) (not guarding) (or (<= d (+ (getf k :far 7.5) 0.5)) (and reeling (<= d 8.0))) :j))
-
-(defun lb-ai-loop-p (e)
-  "The hunt's loop (HARD, the base form's CPU): HOSHA's link is K1 with L latched on it, so the K link's hit reopens the
-shooting stance (:l-after-k, at its f4) whose branch is HOSHA again (LB-AI-HUNT-PLAN, him reeling): bullets -> K1 -> L ->
-bullets, every hit his signature, until the combo drops or he bursts. (No roll: the :hunt level.)"
-  (let ((b (brain e))) (and b (plusp (lb-ai-by (ai-table e :hunt) (brain-difficulty b))))))
-
-(defun lb-ai-mark (e b s d)
-  "EN (free): the mark (LB-AI-MARK-P): J1, its one line laid straight at him; the tick springs it (LB-AI-SPRING)."
-  (let ((k (ai-table e :mark)))
-    (when (and k (lb-ai-mark-p (lb-ai-by k (brain-difficulty b)) d k (snap-state s) (lb-ai-threat-p e s d 1.0)
-                               (lb-ai-lay-ok-p (gauges-fs (gauges e)) :j))
-               (kit-command-ok-p e :q))
-      (lb-count e :ai-mark)
-      (why b :mark :q))))
-
-(defun lb-ai-spring (e b s)
-  "EN's tick, from a J / K / SP's active end: spring the lines (TENSHIN's 2 f cancel) while the perceived opponent S
-stands on one (LB-AI-SPRING-P) and TENSHIN may start."
-  (let ((k (ai-table e :mark)))
-    (and k s (lb-switch-ready-p e)
-         (multiple-value-bind (n gap) (lb-ai-trace-gap e (snap-x s) (snap-z s))
-           (and (plusp n) (lb-ai-spring-p (lb-ai-by k (brain-difficulty b)) gap k (snap-state s)))))))
-
-(defun lb-ai-cash-p (e b s d)
-  "Is there something in KIN the generic reflexes cash: him (perceived) reeling or recovering within J1's reach + 0.6 m for
-its startup (the punish / follow-up), or reeling in the Kikon range while the Kikon is ready (the red rush)?"
-  (let ((q (kit-command-move (kit-of e) :q)))
-    (or (and q (<= d (+ (mv-reach q) 0.6)) (lb-ai-busy-p s (brain-delay b) (mv-s q)))
-        (and (kikon-ready-p e) (member (snap-state s) '(:stun :air)) (< d (ai-table e :kikon-range 7.0))))))
-
-(defun lb-ai-vanish (e b s d)
-  "KIN (free): the vanish (LB-AI-VANISH-P): TENSHIN out now (its 10 m dash, iframes f0-8), back to EN's marks."
-  (let ((k (ai-table e :vanish)))
-    (when (and k (plusp (lb-ai-by k (brain-difficulty b))) (< (gauges-fs (gauges e)) (getf k :fs 13.0)))
-      (lb-count e :ai-vanish-poor))                           ; (the pacing log: KIN frames short of the vanish)
-    (when (and k (lb-ai-vanish-p (lb-ai-by k (brain-difficulty b)) (gauges-fs (gauges e)) k (lb-ai-cash-p e b s d))
-               (kit-command-ok-p e :sig))
-      (setf (lbs-kin-last (lb e)) nil)
-      (lb-count e :ai-vanish)
-      (why b :vanish :sig))))
-
-(defun lb-ai-hunt (e b s d)
-  "The base form (free, after the eye): the hunt: the shooting stance (L) onto a perceived open opponent within :hunt's
-:near..:far with no threat of his near; its branch is HOSHA (LB-AI-HUNT-PLAN at the stance's f6)."
-  (let ((k (ai-table e :hunt)))
-    (when (and k (plusp (lb-ai-by k (brain-difficulty b)))
-               (<= (getf k :near 0.0) d (getf k :far 7.5)) (lb-ai-open-p (snap-state s)) (not (lb-ai-threat-p e s d 1.0))
-               (kit-command-ok-p e :sig))
-      (lb-count e :ai-hunt)
-      (why b :hunt :sig))))
 
 ;;; ================================================================ debug: tests, the pacing log (debug.lisp dispatches)
 (defun lille-acc-reset () (dolist (st (coerce *lb* 'list)) (setf (lbs-acc st) nil)))
