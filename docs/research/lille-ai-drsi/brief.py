@@ -52,8 +52,9 @@ combination of pieces that worked, or a targeted fix of a located bug. Never a r
   flash-step economy, the owl), §23.23-§23.25 (decisions 41-43, the rules this search runs on: NO laying shot, a trace
   turns <= 10 deg toward him when it materialises, his crossing onto a live trace slows the match, TENSHIN in up to 13 m,
   out 10 m, the K -> L chase fix; §23.26 decision 44: the slow motion once per stepping onto the traces after 10 frames
-  off all of them), §24 (this search: the user's request, the plan, §24.2 the evaluator, §24.4 the restart, §24.5 the
-  re-freeze on decision 44).
+  off all of them; §23.27-§23.29 decisions 45-47: a trace laid onto him slows 0.1 for 0.2 s whatever else, old traces
+  0.2 for 0.5 s), §24 (this search: the user's request, the plan, §24.2 the evaluator, §24.4 the restart, §24.5 / §24.6
+  the re-freezes on decisions 44 and 47).
 - {WS}/archive/v1: the first round run on the OLD rules (decision 39's 1-damage laying shot with a 10 f flinch, since
   removed). Its two scored cells (b0a0 0.9124: EN's `:moves` never fired at range, fixed by an "X-axis hunter"; b1a0
   0.9027: a HARD-only opener that rode the laying shot's flinch, which no longer exists) are ideas to re-test on today's

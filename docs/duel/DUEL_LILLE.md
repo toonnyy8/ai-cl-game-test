@@ -2617,3 +2617,35 @@ under them; it was not a retry for a better score.
 Drift 0.4675 and pacing are identical to the new baseline in both. The round goes on with b2a0 / b3a0 from the new freeze;
 their first briefs, written at the old freeze, were withdrawn undispatched.
 
+### 24.6 Round 1's branches, and the re-freeze on decision 47 (2026-10-07)
+
+Round 1's four branch cells, all rescored at `6081a39` (decision 44; 40 seeds; NORMAL drift 0.4675 and pacing identical
+to that baseline in every one):
+
+| Cell | Score | Strength | Signature | What it added |
+|---|---|---|---|---|
+| b0a0 | 0.9518 | 0.948 | 0.932 | EN mark and spring, KIN vanish, the base hunt and the HOSHA → K1 → stance loop |
+| b1a0 | 0.9563 | 0.968 | 0.923 | EN web (a J line every 6 f, the snap volley, a wary read), KIN hit-and-run, the loop, an SP2 cash-out |
+| b2a0 | **0.9941** | 1.000 | 0.985 | both openers + composure (a held J keeps the generic ORANGE from breaking the loop), okizeme (stance / J1 timed to his wake-up), KIN's J1 → K2s → K3 route and its exits |
+| b3a0 | 0.9869 | 0.993 | 0.975 | b1a0's engines + a spacing rule (HOSHA only beyond J1's reach + 0.2 m: ORANGE off HOSHA 1.98 → 0.15 a match), the KIN → EN → KIN crossfire off K3's crumple, enders by frames left, refusals (no Breaker, no non-red O over a combo) |
+
+Read: the strength part is saturated at HARD (0.95–1.0); signature is the room left, and both of the best cells closed
+the same leak (the generic ORANGE off a HOSHA bullet) in two different ways. All four test diffs only add checks.
+Shared-code recommendations collected for the integration: an ORANGE kit key (so composure's held-J trick can go), an
+AI-ATTACK reach-filter flag for EN's ranged J / K at NORMAL, a wake-up field in the snap, and `tools/assistgate.py`
+re-run for the `:sp-ender` hooks (they act for an assisted human).
+
+Then decisions 45–47 changed the slow motions (a gate-timed rule, §23.27–§23.29). Round 1's refine cells (b0a1 …) had
+not started; their briefs, written at the old freeze, were withdrawn. **The re-freeze** is the commit that writes the new
+`drift-ref.json`. The new baseline (the shipped CPU on decision 47):
+
+| Seeds | Score | Strength | Masher | Signature | Drift (the new reference) |
+|---|---|---|---|---|---|
+| 40 | **0.4449** | 0.095 | 1.000 | 0.517 | **0.4400** (Y 44, K 28, R 31, I 35, S 38 of 80) |
+| 80 | 0.4529 | 0.113 | 1.000 | 0.520 | **0.4650** |
+
+Pacing at 40 seeds: LY 174.2, LK 169.2, LR 198.1, LI 209.0, LS 194.7 s, all K.O. The four branch cells are ported onto the
+new freeze's `lille.lisp` by a 3-way merge (base: `6081a39`'s file; all four clean, the originals kept as
+`lille.cell-6081a39.lisp`). They are re-measured (`FORCE`, the rule changed under them), and round 1's refine cells then
+start from the new freeze.
+
