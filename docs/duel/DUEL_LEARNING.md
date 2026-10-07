@@ -7,7 +7,8 @@ format and the measurements.
 **Files:** `duel/lisp/learn.lisp` (the pure part: tables, counting, prediction, EXP3, p_exploit, storage; host-tested by
 `tests/learn-test.lisp`); the end of `duel/lisp/ai.lisp` (the hooks: `learn-step`, `learn-fire`, `learn-neutral`,
 `learn-weights` / `learn-window`); `flow.lisp` (`learn-match-start` / `learn-match-end`, the SETTINGS rows);
-`duel/web/pwa.js` (storage); `debug.lisp` (the scripted players and the learning gate). All of it is character-free.
+`duel/web/pwa.js` (storage); `debug.lisp` (the scripted players and the learning gate). All of it is character-free. A
+character may add situations of its own in its own file (§11; Lille's, DUEL_LILLE §24.9).
 
 ## 1. What it is
 
@@ -126,7 +127,7 @@ already seen, and even the Hoho punish fires on the delayed snap.
 
 - **SETTINGS** gains **LEARNING CPU ON / OFF** (a `*settings*` row, default ON, saved as `soulduel.learn`), then
   **RESET LEARNING** (every table forgotten, in memory and in storage; its note says DONE for 2 s), then BACK.
-- **Per CPU character** (roster index i), one table: `soulduel.learn.<i>` holds comma-separated integers. A table is
+- **Per CPU character** (roster index i), one table (the index table below is format 1's; format 2 in §10, format 3 in §11): `soulduel.learn.<i>` holds comma-separated integers. A table is
   loaded from the page the first time it is used, kept in memory, and saved at every match end (`learn-match-end`).
   Blocked storage reads as empty: the table then lives in memory only.
 - **Page protocol** (`pwa.js`):
@@ -256,3 +257,65 @@ BLUE at every chance):
 
 Against the burst-happy player the model predicts `:c-hit` = burst at 0.73 (a plain CPU player: guard, 0.86), and its
 guard reads (the bait's guard among them) pay 92-93 %.
+
+## 11. A character's own situations (format 3; the user's plan for Lille, 2026-10-07)
+
+The user's plan for Lille's adaptive CPU (DUEL_LILLE §24.1 step 5): 「學習玩家習慣」, the learning CPU gains his own
+situations, so a Lille CPU learns the human's habits against his signature and answers them in character. The generic
+part below lets any character do that; Lille is the first (DUEL_LILLE §24.9 has his situations, counters, knobs and
+numbers).
+
+**The kit model** (`learn.lisp`):
+
+- `learn-def-kit` (called from the character's file): up to **4** situations (`+learn-ks+`) and up to **8** action classes
+  (`+learn-ka+`) by name, and a `:step` function. The registry is `*learn-kits*`; `learn-kit-spec`, `learn-kit-sit`,
+  `learn-kit-act` look names up.
+- The same n-gram model as §4 (decay 0.97, order 1 backed off into order 0 with K = 2, confident at n0 ≥ 1.5 and p ≥ 0.4)
+  on its own tables: `ltab-k0` (4 × 8), `ltab-k1` (4 × 8 × 8), `ltab-kprev` (4). `%learn-observe!` / `%learn-dist` /
+  `%learn-best` are shared by both models; `learn-observe!` / `learn-dist` / `learn-predict` call them on the generic tables
+  exactly as before, `learn-kit-observe!` / `learn-kit-predict` on the kit's.
+- The generic 9 situations and 10 classes are unchanged. Their tables are separate, so nothing about another character
+  moves.
+
+**The learner** (`ai.lisp`):
+
+- `lrn-kit`: the spec of the CPU's character, set by `learn-attach!` (NIL for every character without one, and for the
+  ASSIST's learner). Only with it does `learn-step` call the kit's `:step` each step (after the generic work, before the
+  human's last-step state moves on).
+- `lrn-ksit` / `lrn-kep-t`: the kit episode and its frames; `lrn-kdata`: the kit's own per-match state.
+- Helpers for the kit's code:
+  - `learn-kit-open`: opens only a situation its spec names (any other key: nothing);
+  - `learn-kit-close`: counts the answer (NIL closes it uncounted);
+  - `learn-kit-open-p`;
+  - `learn-kit-read`: one roll per event, from the learner's own stream (`learn-rnd`, never `sim-rnd01`), against
+    p_exploit × the kit's difficulty scale; the predicted class when confident and the roll says read him, else NIL;
+  - `learn-count-read` (split out of `learn-press`, the same bookkeeping): the read counted per counter and watched 60 f
+    for its pay-off.
+
+**Storage format 3** (`learn-encode`): format 2 plus the kit model, the version entry 2999 = 3:
+
+| Index | Holds | Scale |
+|---|---|---|
+| 3000–3031 | kit order 0 | × 10 |
+| 3100–3355 | kit order 1 | × 10; only the 120 largest (`*learn-kit-cap*`) |
+| 3400–3403 | kit last class per situation | + 1 |
+
+- A format 2 table (no kit entries) is read as it is: an empty kit model. A format 1 table still migrates as in §10.
+- A format 3 table read by a format 2 build loses only the kit model: unknown indices are skipped.
+- The page keeps < 1000 entries per character: everything full is 90 + 400 + 300 + 9 + 6 + 2 + 32 + 120 + 4 = 963
+  (host-tested).
+- A character without a spec saves exactly what it did, but with version 3.
+
+**The learning gate** (§9): `m` 4 is the learner without its character's own situations (the A/B of a kit's part).
+Habits 7–9 are Lille's scripted players (DUEL_LILLE §24.9). The command range grows to 209999. A learn row of a
+character with situations ends in `kit` and the model's prediction per kit situation, as `model` does for the generic
+ones.
+
+**Every other character is unchanged** (verified at the integration):
+- the native seed gate, all 21 pairings × seeds 1–10, is byte-identical before and after;
+- `simgate.py --cvc` passes;
+- the learning gate's YK and KR cells (habits 0 / 3 / 4 / 5, plain and learner, 4 runs × 30) are row-identical before and
+  after.
+
+Tests: learn **131** (the registry, the kit model's own tables, its numbers equal to the generic model's, format 3's
+round trip, a format 2 table read back, the size caps), duel-rules 6405 (Lille's part, DUEL_LILLE §24.9).

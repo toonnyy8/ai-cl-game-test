@@ -9,7 +9,7 @@
 ;; the character files also hold their hook functions and cinematics: those need the engine, so the
 ;; host skips the cinematics (a no-op DEFCINE) and never calls a hook
 (defmacro duel::defcine (&rest r) (declare (ignore r)) nil)
-(dolist (f '("tuning" "rules" "kit" "yama" "ken" "rukia" "ichigo" "endless-rules" "senjumaru" "lille"))
+(dolist (f '("tuning" "rules" "learn" "kit" "yama" "ken" "rukia" "ichigo" "endless-rules" "senjumaru" "lille"))
   (load (merge-pathnames (format nil "../duel/lisp/~a.lisp" f) *load-truename*)))
 (in-package :duel)
 
@@ -2395,6 +2395,59 @@ defender's next step. Values: the attacker's and the defender's first actionable
 ;;; <<< END LILLE-CPU-TESTS
 
 
+;;; ---------------------------------------------------------------- the learning CPU's Lille situations (DUEL_LILLE §24.9)
+;; his spec: three situations, eight answers, within the kit model's tables; no other character names any (theirs stay
+;; exactly as before: nothing opens, nothing rolls)
+(let ((sp (learn-kit-spec :lille)))
+  (check (and sp (equalp (getf sp :situations) #(:trace :tenshin :hosha))
+              (equalp (getf sp :actions) #(:left :right :back :guard :hoho :step :attack :take))
+              (<= (length (getf sp :situations)) +learn-ks+) (<= (length (getf sp :actions)) +learn-ka+)
+              (eq (getf sp :step) 'lb-learn-step)))
+  (check (every (lambda (c) (null (learn-kit-spec c))) (remove :lille *roster*))))
+(check (and (= *lb-learn-hold* 60) (= *lb-learn-step-off* 0.6)
+            (equal *lb-learn-episode* '(:trace 45 :tenshin 20 :hosha 18))
+            (<= (getf *lb-learn-diff* :easy) (getf *lb-learn-diff* :normal) (getf *lb-learn-diff* :hard))
+            (~= (getf *lb-learn-diff* :normal) 1.0)))
+;; the side of a line (as Lille laid it, facing along it): its right is (-fz fx), TOWARD-STRAFE-DIR's +1
+(let* ((yaw 0.7) (rx (- (fwd-z yaw))) (rz (fwd-x yaw)))
+  (check (eq :right (lb-learn-side 1.0 2.0 yaw (+ 1.0 (* 5 (fwd-x yaw)) (* 0.8 rx)) (+ 2.0 (* 5 (fwd-z yaw)) (* 0.8 rz)))))
+  (check (eq :left (lb-learn-side 1.0 2.0 yaw (- 1.0 (* 0.8 rx)) (- 2.0 (* 0.8 rz)))))
+  (check (~= (lb-learn-lateral yaw :right 0.0 0.0 (* 1.5 rx) (* 1.5 rz)) 1.5))
+  (check (~= (lb-learn-lateral yaw :left 0.0 0.0 (* 1.5 rx) (* 1.5 rz)) -1.5))
+  (check (~= (lb-learn-lateral yaw :right 0.0 0.0 (* 4 (fwd-x yaw)) (* 4 (fwd-z yaw))) 0.0))   ; along the line: no side
+  (multiple-value-bind (x z) (lb-learn-landing yaw :right 3.0 -1.0)
+    (check (and (~= x (+ 3.0 (* *step-distance* rx))) (~= z (+ -1.0 (* *step-distance* rz))))))
+  (multiple-value-bind (x z) (lb-learn-landing yaw :left 3.0 -1.0)
+    (check (and (~= (lb-learn-lateral yaw :left 3.0 -1.0 x z) *step-distance*) (eq :left (lb-learn-side 3.0 -1.0 yaw x z))))))
+;; his answers: to HOSHA / TENSHIN in (a new one this step, or one under way at the onset), and off a trace
+(check (and (eq :hoho (lb-learn-answer :idle :hoho nil 0.0)) (eq :step (lb-learn-answer :run :step nil 0.0))
+            (eq :attack (lb-learn-answer :idle :move t 0.0)) (eq :attack (lb-learn-answer :move :move t 0.0))
+            (null (lb-learn-answer :move :move nil 0.0))                       ; the same move: no new answer
+            (eq :guard (lb-learn-answer :idle :guard nil 0.0)) (null (lb-learn-answer :guard :guard nil 0.0))
+            (eq :back (lb-learn-answer :run :run nil 1.3)) (null (lb-learn-answer :idle :idle nil 1.0))))
+(check (and (eq :guard (lb-learn-onset-answer :guard)) (eq :guard (lb-learn-onset-answer :guard-hit))
+            (eq :hoho (lb-learn-onset-answer :hoho)) (eq :step (lb-learn-onset-answer :step))
+            (null (lb-learn-onset-answer :move)) (null (lb-learn-onset-answer :idle)) (null (lb-learn-onset-answer :run))))
+(check (and (eq :hoho (lb-learn-trace-answer :idle :hoho nil :right 0.0)) (eq :guard (lb-learn-trace-answer :idle :guard nil :left 0.0))
+            (eq :right (lb-learn-trace-answer :step :step t :right 0.0)) (eq :left (lb-learn-trace-answer :run :run t :left 2.0))
+            (eq :back (lb-learn-trace-answer :run :run nil :left 1.3)) (null (lb-learn-trace-answer :run :run nil :left 1.1))
+            (null (lb-learn-trace-answer :idle :move nil :right 0.0))))        ; an attack is no way off the line
+;; the stance's branch for a predicted answer to HOSHA (the dash back and the charged shot through a guard or around a
+;; Hoho; the charged shot after a Step; the dash back and HOSHA past an attack; HOSHA otherwise)
+(check (and (eq :dash (lb-learn-kamae-plan :guard 2.5 t t)) (eq :dash (lb-learn-kamae-plan :guard 4.5 t t))
+            (eq :j (lb-learn-kamae-plan :guard 4.5 t nil)) (eq :j (lb-learn-kamae-plan :guard 4.5 nil t))   ; (a mover; no dash)
+            (eq :dash (lb-learn-kamae-plan :hoho 4.0 t t)) (eq :charge (lb-learn-kamae-plan :hoho 4.0 nil t))
+            (eq :charge (lb-learn-kamae-plan :step 4.0 t nil)) (eq :charge (lb-learn-kamae-plan :back 4.0 t t))
+            (eq :dash-j (lb-learn-kamae-plan :attack 4.0 t t)) (eq :k (lb-learn-kamae-plan :attack 4.0 nil t))
+            (eq :j (lb-learn-kamae-plan :take 4.0 t t)) (eq :j (lb-learn-kamae-plan nil 4.0 t t))))
+;; TENSHIN's hold: a guard / Hoho read holds the neutral switch unless he is busy, a Hoho read until his Hoho is spent
+(check (and (lb-learn-hoho-spent-p nil 14 20.0) (not (lb-learn-hoho-spent-p nil 14 40.0))   ; no flash step for a Hoho
+            (lb-learn-hoho-spent-p 10 14 40.0) (lb-learn-hoho-spent-p 29 14 40.0)        ; 60 - 16 - 14 = 30 frames
+            (not (lb-learn-hoho-spent-p 30 14 40.0)) (not (lb-learn-hoho-spent-p 9999 8 40.0))))
+(check (and (lb-learn-hold :guard nil nil) (lb-learn-hold :hoho nil nil) (not (lb-learn-hold :hoho nil t))
+            (lb-learn-hold :guard nil t) (not (lb-learn-hold :guard t nil)) (not (lb-learn-hold :hoho t nil))
+            (not (lb-learn-hold nil nil nil)) (not (lb-learn-hold :step nil nil)) (not (lb-learn-hold :take nil nil))))
+
 ;;; ---------------------------------------------------------------- the owl on Jilliel's system (DUEL_LILLE §23.14, decision 36)
 (let* ((j (kit :lille :jilliel)) (mu (kit :lille :jilliel-mujittai)) (kn (kit :lille :jilliel-kin)) (kmu (kit :lille :jilliel-kin-mujittai))
        (o (kit :lille :shin)) (omu (kit :lille :shin-mujittai)) (ok (kit :lille :shin-kin)) (okmu (kit :lille :shin-kin-mujittai))
@@ -2561,7 +2614,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
             (null (lb-as-link-cmd :none nil nil))))
 
 ;; no character names in the generic files (design-v1 §12)
-(dolist (f '("rules" "control" "fighter" "combat" "hazards" "ai" "camera" "flow" "endless-rules" "endless"))
+(dolist (f '("rules" "control" "learn" "fighter" "combat" "hazards" "ai" "camera" "flow" "endless-rules" "endless"))
   (with-open-file (in (merge-pathnames (format nil "../duel/lisp/~a.lisp" f) *load-truename*))
     (check (loop for line = (read-line in nil) while line
                  never (some (lambda (w) (search w line)) '(":ya-" ":ke-" ":ru-" ":ic-" ":sj-" "yama" "kenpachi" "rukia" "ichigo"
