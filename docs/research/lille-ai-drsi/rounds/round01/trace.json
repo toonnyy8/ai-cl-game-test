@@ -110,6 +110,18 @@
       "seq": 15,
       "tags": [],
       "valid": true
+    },
+    "b3a1": {
+      "error": null,
+      "evaluated": true,
+      "fail_class": "ok",
+      "n_total": null,
+      "n_valid": null,
+      "note": "rescored at the freeze: str 1.0 mash 1.0 sig 0.999 drift 0.44 (ref 0.44) pacing ok",
+      "score": 0.9995,
+      "seq": 21,
+      "tags": [],
+      "valid": true
     }
   },
   "directions": {},
