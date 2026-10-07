@@ -2604,7 +2604,8 @@ old 7 m / 14 f), the chase removed from **TENSHIN's link only** (HOSHA's keeps i
 - New `*lb-switch-speed*` **30** m/s: the dash takes `lb-switch-dash-f` = ⌈60 d / 30⌉ frames (at most `*lb-switch-f*` 14):
   5.5 m 11 f, 5.0 m 10 f, 2 m 4 f. The move follows the dash: its end (`lbs-dash-end`) is the link frame
   (`lb-link-frame`, also ASSIST's `lb-as-tenshin`), and with nothing linked `lb-switch-tick` skips the rest of the startup
-  into the 8 f recovery (the form changes there if the dash ended before its f6). Before, every dash took 14 f.
+  into the 8 f recovery (the form changes there if the dash ended before its f6; before its link since §23.36). Before,
+  every dash took 14 f.
 - `lb-link-tick`: only HOSHA's link sets `fighter-end-chase`; TENSHIN's J1 / K1 start where the dash left him.
 - His CPU's EN web band follows TENSHIN in's reach: `*lb-ai-web-band*` (2.5 4.5) → **(2.5 5.5)**.
 
@@ -2664,6 +2665,42 @@ the HARD CPU's drift share 0.3425 vs the frozen 0.44 ± 0.05), the user, having 
   reference (`docs/research/lille-ai-drsi/baseline/drift-ref.json`, 0.44 at 40 seeds) predates decisions 53–54; a later
   search round re-freezes on the new rules and takes a new reference then.
 - AGENTS.md's accepted exceptions list it.
+
+### 23.36 Fix: the ASSIST's TENSHIN in -> J1 link (the user, 2026-10-07)
+
+The user: 「為什麼覺醒後的 L 軌跡實體化+前衝接不上 J combo 了？」, then 「好像是輔助連段的問題？我自己操作是能連的」. Reproduced in the
+browser (`tools/run.mjs`, AUTO COMBO on through `localStorage soulduel.autocombo`, `79004` the owl EN, `2393` 2.2 m): by
+hand J, L, J links; with the ASSIST, from 2.2 m J1 came only after TENSHIN's recovery (no link, so no J1 K2s K3 route),
+and after a TENSHIN out the next TENSHIN in had no J1 at all. Not the awakening's: Jilliel's TENSHIN does the same. Two
+regressions of decision 53 (§23.33), whose link frame is the dash's end (`lbs-dash-end`):
+
+1. **A stale dash end.** TENSHIN in's 2 f cancel (`:lb-switch-in-c`, `:lb-o-switch-in-c`) enters at f14; until its own
+   dash starts (f16) `lbs-dash-end` still holds the last switch's, a TENSHIN out's 10. `lb-switch-tick` reset it, but the
+   ASSIST (`lb-as-tenshin`) reads the link frame before the step: it decided in the wind-up (EN form, no trace hit yet:
+   plan none, his J eaten for the rest of the move). Fix: `lb-link-frame-at` (pure) reads the dash end only after the
+   dash began (frame > `:go`), 99 before.
+2. **A dash shorter than 6 f** (him within ≈ 3.5 m): its end came before the f6 form change, and the link was decided
+   for EN (the ASSIST a step early, his CPU at the link frame: none; a latched J by hand fired EN's J1 and the form
+   change was lost). Fix: `lb-switch-tick` changes the form at the dash's end *before* `lb-link-tick`; `lb-ai-link`
+   and the ASSIST's count decide for `lb-link-form` (the switch's target while its change is still to come).
+
+After: the ASSIST from 2.2 m and 5 m runs TENSHIN in -> J1 -> K2s -> K3 -> TENSHIN out, again on every loop; by hand
+unchanged. Tests: duel-rules 6435 ALL PASS (`lb-link-frame-at`: HOSHA 16; the cancel's f14 / f16 with a stale 10 -> 99;
+f17 -> its own 19; TENSHIN out f0 -> 99, f1 -> 10; `lb-link-form`), duel-control 89, learn 131; pkgcheck 0 / 0 / 0;
+`./build.sh duel` 0 warnings. Gates, seeds 1–20 (NORMAL), every match K.O. (his CPU's short-dash link is fixed too):
+
+| Pairing | Median (decision 54, §23.34) | Lille wins / 20 (before) |
+|---|---|---|
+| LY | 167.6 s (162.9) | 10 (9) |
+| LK | 157.3 s (169.0) | 5 (7) |
+| LR | 200.6 s (200.7) | 9 (8) |
+| LI | 192.1 s (184.2) | 4 (2) |
+| LS | 184.1 s (195.5) | 7 (6) |
+| LL | 226.8 s (245.9; mirror) | P1 3 / P2 17 |
+
+HARD CPU (`aieval --char 5`): strength 1.000, masher 1.000, signature 0.999 (trace combos 22.7 %), the drift check 0.335
+(decision 55's accepted exception). ASSIST gate, P1 wins of 720: k0 406, k1 479, k2 685, k3 404, k6 471, k10 550, k11 702
+(§24.11: 411, 478, 686, 402, 477, 541, 692).
 
 ---
 
