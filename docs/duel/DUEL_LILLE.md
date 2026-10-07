@@ -219,6 +219,9 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
 - **49. TENSHIN 3 m shorter both ways** (the user, 2026-10-07: 「覺醒後 L 的近遠切換移動距離減少 3m」): in up to 10 m, out 7 m. §23.30.
 - **50. Jilliel's strikes redone, EN and KIN** (the user, 2026-10-07: 「Jilliel 近戰的動作不太明顯，能跟我討論要如何修改動作模組嗎？」,
   then 「全身出招」「每招獨立造型」「翼尖斬痕」「八翼一起斬」, 「近戰＋遠程都換」). §23.31.
+- **51. Two open items kept as they are** (the user, 2026-10-07: 「HOSHA read at HARD 跟 Awaken A/B, still failing 兩個問題都維持現狀就行」):
+  the learning CPU's HOSHA-guard answer stays at HARD (Lille takes 646 a match instead of 605 against that habit, still
+  winning every match), and the awaken A/B stays failing as an accepted exception (§24.11's rows). §24.12.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -2973,3 +2976,12 @@ On the merged tree (`2da0477`: decision 49 + §24.10's ASSIST routes + §24.9's 
   k6 473 → 477, k10 533 → 541, k11 700 → 692 of 720.
 - Host tests duel-rules 6411, learn 131, control 89, cine 18, input 33, touch 64 ALL PASS; `tools/pkgcheck.sh duel`
   0 / 0 / 0.
+
+### 24.12 Decision 51: the HOSHA read at HARD and the awaken A/B kept as they are (the user, 2026-10-07)
+
+The user, on the two open items of §24.9 / §24.11: 「HOSHA read at HARD 跟 Awaken A/B, still failing 兩個問題都維持現狀就行」.
+- **The HOSHA-guard read at HARD stays** (`*lb-learn-diff*` :hard 1.5, `lb-learn-kamae-plan` unchanged): against a human
+  who guards HOSHA, a HARD learner Lille takes 646 a match instead of 605 (plain CPU) and still wins every match (§24.9).
+- **The awaken A/B is an accepted exception** for Lille (open since §20.3, 「先試玩再決定」): LY 16 / 18 / 18, LK 3 / 5 / 6,
+  LR 6 / 6 / 9, LI 3 / 8 / 10, LS 10 / 15 / 10 of 60 (pass ≥ 20; §24.11). The gate keeps reporting it; it is not tuned.
+- No code changed; AGENTS.md's accepted exceptions list it.
