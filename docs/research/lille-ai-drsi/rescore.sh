@@ -19,7 +19,7 @@ EVAL_TIMEOUT=${EVAL_TIMEOUT:-7200}                               # seconds (one 
 N=$(cd "$1" && pwd)
 [ -f "$N/lille.lisp" ] || { echo "{\"error\": \"no lille.lisp\"}" > "$N/score.rescored.json"; exit 5; }
 if [ ! -d "$RESCORE_WT" ]; then git -C "$REPO" worktree add -q --detach "$RESCORE_WT" "$FREEZE" || exit 5; fi
-git -C "$RESCORE_WT" checkout -q --detach "$FREEZE" || exit 5
+git -C "$RESCORE_WT" checkout -q -f --detach "$FREEZE" || exit 5   # (-f: a previous rescore leaves its cell's files modified)
 git -C "$RESCORE_WT" checkout -q "$FREEZE" -- duel tools tests docs || exit 5   # (the frozen tree, again)
 cp "$N/lille.lisp" "$RESCORE_WT/duel/lisp/lille.lisp" && touch "$RESCORE_WT/duel/lisp/lille.lisp"
 cd "$RESCORE_WT" || exit 5
