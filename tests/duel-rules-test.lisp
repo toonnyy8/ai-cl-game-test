@@ -2036,8 +2036,8 @@ defender's next step. Values: the attacker's and the defender's first actionable
   ;; tick): no L link there
   (check (and (eq sw (kit-command-move kn :sig)) (= 14 (mv-s sw) *lb-switch-f*) (zerop (mv-a sw)) (= 8 (mv-r sw))
               (= 14 (getf (mv-params sw) :link)) (eq (mv-tick sw) 'lb-switch-tick)
-              (~= 6.5 (lb-switch-dist t 8.0)) (~= 10.5 (lb-switch-dist t 12.0)) (~= 13.0 (lb-switch-dist t 20.0)) (~= 13.0 (lb-switch-dist t 14.5)) (~= 0.0 (lb-switch-dist t 1.2))
-              (~= 10.0 (lb-switch-dist nil 3.0)) (~= 10.0 (lb-switch-dist nil 20.0))
+              (~= 6.5 (lb-switch-dist t 8.0)) (~= 10.0 (lb-switch-dist t 12.0)) (~= 10.0 (lb-switch-dist t 20.0)) (~= 9.5 (lb-switch-dist t 11.0)) (~= 0.0 (lb-switch-dist t 1.2))
+              (~= 7.0 (lb-switch-dist nil 3.0)) (~= 7.0 (lb-switch-dist nil 20.0))
               (zerop (length (mv-hits sw))) (zerop (mv-cooldown sw)) (not (boundp '*lb-switch-cd*))
               (equal (mv-on-frame sw) '((0 lb-switch-go) (6 lb-switch-form)))
               (eq (lb-switch-target :jilliel) :jilliel-kin) (eq (lb-switch-target :jilliel-mujittai) :jilliel-kin)
@@ -2270,7 +2270,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
 (check (and (every (lambda (k) (and (~= 0.0 (getf k :easy)) (~= 0.0 (getf k :normal)) (~= 1.0 (getf k :hard))))
                    (list *lb-ai-web* *lb-ai-kin-run* *lb-ai-starve* *lb-ai-hunt* *lb-ai-link-k* *lb-ai-hosha-loop* *lb-ai-sp-end*))
             (~= 0.0 (lb-ai-level *lb-ai-web* nil))
-            (equal *lb-ai-web-band* '(2.5 13.0)) (= *lb-ai-web-every* 6) (= *lb-ai-web-k* 1) (equal *lb-ai-web-volley* '(14 28))
+            (equal *lb-ai-web-band* '(2.5 10.0)) (= *lb-ai-web-every* 6) (= *lb-ai-web-k* 1) (equal *lb-ai-web-volley* '(14 28))
             (= *lb-ai-web-wary* 2) (~= *lb-ai-web-margin* 0.15) (~= *lb-ai-kin-run-fs* 9.0) (equal *lb-ai-hunt-band* '(0.0 7.5))
             ;; the web's band ends where TENSHIN in still brings KIN's J1 to him
             (<= (second *lb-ai-web-band*) (+ *lb-switch-in* *lb-switch-stop*))

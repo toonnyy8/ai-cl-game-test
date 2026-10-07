@@ -216,6 +216,9 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
   a fresh trace 0.1 for 0.1 s, old traces 0.3 for 0.3 s. §23.28.
 - **47. The slow motions retimed again** (the user, 2026-10-07: 「再稍微換一下時緩參數 新軌：0.1 倍速 0.2 秒 舊軌：0.2 倍速 0.5 秒」):
   a fresh trace 0.1 for 0.2 s, old traces 0.2 for 0.5 s. §23.29.
+- **49. TENSHIN 3 m shorter both ways** (the user, 2026-10-07: 「覺醒後 L 的近遠切換移動距離減少 3m」): in up to 10 m, out 7 m. §23.30.
+- **50. Jilliel's strikes redone, EN and KIN** (the user, 2026-10-07: 「Jilliel 近戰的動作不太明顯，能跟我討論要如何修改動作模組嗎？」,
+  then 「全身出招」「每招獨立造型」「翼尖斬痕」「八翼一起斬」, 「近戰＋遠程都換」). §23.31.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -2417,6 +2420,49 @@ Gates (native, NORMAL; his pairings), seeds 1–20, every match K.O. (before: §
 
 Every cross pairing is inside 125–210 s at 20 seeds, so no edge rerun. LR is back inside: the slow motions shift how
 sim frames fall on steps, so the 20-seed medians move by more than the seconds they add. `./build.sh duel` 0 warnings.
+
+### 23.30 Decision 49: TENSHIN 3 m shorter (2026-10-07)
+
+The user's words: 「覺醒後 L 的近遠切換移動距離減少 3m」.
+- `*lb-switch-in*` 13.0 → **10.0** m (still stopping 1.5 m short), `*lb-switch-out*` 10.0 → **7.0** m; both still over 14 f.
+- His CPU's EN web band follows TENSHIN in's reach (`*lb-ai-web-band*` (2.5 13.0) → **(2.5 10.0)**, so the dash still brings
+  KIN's J1 to him; the host test pins the band within in + stop).
+
+Tests: duel-rules 6388 ALL PASS (`lb-switch-dist`: in 10.0 at 12 and 20 m, 9.5 at 11 m; out 7.0). Gates, seeds 1–20,
+every match K.O.:
+
+| Pairing | Median (before, §24.8) | Lille wins / 20 |
+|---|---|---|
+| LY | 176.6 s (177.9) | 14 |
+| LK | 173.2 s (169.3) | 6 |
+| LR | 196.4 s (193.5) | 10 |
+| LI | 206.8 s (203.9) | 9 |
+| LS | 192.4 s (195.6) | 5 |
+| LL | 235.7 s (259.4; mirror) | P1 10 / P2 10 |
+
+Every cross pairing is inside the window. His HARD CPU (`aieval --char 5 --seeds 40`): **0.9992** (strength 1.000,
+signature 0.998), drift 0.44 (the reference), pacing all K.O.
+
+### 23.31 Decision 50: Jilliel's strikes redone (2026-10-07, in progress)
+
+The user: 「Jilliel 近戰的動作不太明顯，能跟我討論要如何修改動作模組嗎？」. As built, EN and KIN share one set of clips
+(`:lb-w-q1`…`:lb-w-f3`):
+- only the front wing pair swings, and the column slides 0.08–0.72 m;
+- KIN's ㄇ legs don't move;
+- the other six wings follow at 35 %.
+
+The lead proposed four directions. The user chose all four and both modes: 「全身出招」「每招獨立造型」「翼尖斬痕」「八翼一起斬」,
+「近戰＋遠程都換」.
+1. **Whole body**: KIN's legs step or lunge, the column leans and twists, the wings swing in wide arcs, each strike a
+   clear wind-up → swing → recovery.
+2. **Each strike its own shape**: J1 / J2 left / right cuts, J3 a two-wing cross, K1 a spin, K2 the counter-spin, K3 a
+   rising two-wing cleave with a landing.
+3. **Wing-tip slash trails**: a jade arc behind the striking tips (a look only).
+4. **All eight wings strike**: the other six converge on the target in the active frames (in turn), not 35 % sway.
+
+EN (laying traces) gets its own reworked clips too. Presentation only: the sim never reads art, the hit volumes and
+frame data are unchanged, and the drawn reach must still equal the hit reach (the host FK test, ±0.15 m). The owl's
+forms are not in scope.
 
 ---
 
