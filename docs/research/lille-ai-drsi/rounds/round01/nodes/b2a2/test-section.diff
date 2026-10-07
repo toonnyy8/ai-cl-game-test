@@ -1,0 +1,65 @@
+--- frozen LILLE-CPU-TESTS
++++ cell LILLE-CPU-TESTS
+@@ -65,6 +65,62 @@
+   ;; neutral wind-up (LB-AI-EN prefers it)
+   (let ((j1 (kit-command-move j :q)))
+     (check (< (+ (mv-s j1) (mv-a j1) *lb-switch-windup-c*) *lb-switch-windup*))))
++;; the HARD layer (dream-rsi r1 b2a0, the executioner): each form's :sniper level by difficulty, 0 at EASY / NORMAL (the
++;; shipped CPU), 1 at HARD; :sp-ender on the two KIN forms only (K3's exits); the knobs; the pure rules
++(let ((b (kit :lille :base)) (j (kit :lille :jilliel)) (mu (kit :lille :jilliel-mujittai)) (kn (kit :lille :jilliel-kin))
++      (kmu (kit :lille :jilliel-kin-mujittai)) (o (kit :lille :shin)) (ok (kit :lille :shin-kin)))
++  (check (and (every (lambda (k) (let ((sn (getf (kit-ai k) :sniper)))
++                                   (and sn (~= 0.0 (lb-ai-by sn :easy)) (~= 0.0 (lb-ai-by sn :normal)) (~= 1.0 (lb-ai-by sn :hard)))))
++                     (list b j mu kn kmu o ok))
++              (~= 0.0 (lb-ai-by nil :hard))
++              (equal (getf (kit-ai b) :sniper) '(:by (:easy 0.0 :normal 0.0 :hard 1.0) :far 7.5 :oki 8.4))
++              (equal (getf (kit-ai j) :sniper) '(:by (:easy 0.0 :normal 0.0 :hard 1.0) :near 1.5 :far 13.5 :gap 0.6))
++              (equal (getf (kit-ai o) :sniper) (getf (kit-ai j) :sniper))
++              (equal (getf (kit-ai kn) :sniper) '(:by (:easy 0.0 :normal 0.0 :hard 1.0) :fs 13.0 :pendulum t))
++              (equal (getf (kit-ai ok) :sniper) (getf (kit-ai kn) :sniper))
++              (eq (getf (kit-ai kn) :sp-ender) 'lb-ai-sp-ender) (eq (getf (kit-ai ok) :sp-ender) 'lb-ai-sp-ender)
++              (every (lambda (k) (null (getf (kit-ai k) :sp-ender))) (list b j mu o))
++              ;; the mark's far end is inside TENSHIN in's dash + its stop (KIN's J1 still reaches him)
++              (<= (getf (getf (kit-ai j) :sniper) :far) (+ *lb-switch-in* *lb-switch-stop*))
++              ;; K3's exit keeps TENSHIN out's price and EN's next J line
++              (>= (getf (getf (kit-ai kn) :sniper) :fs) (+ *lb-switch-fs* *lb-trace-fs*))))
++  ;; the knobs, from the frames: the oki HOSHA = the stance up (f6) + HOSHA's first bullet (f6); the oki mark and the
++  ;; pendulum = EN J1's S + A + the 2 f cancel; the composure holds J through HOSHA's last bullet and its link frame
++  (let ((h (find-move :lb-k-j)) (j1 (kit-command-move j :q)))
++    (check (and (= 12 *lb-ai-oki-hosha* (+ *lb-kamae-up* (first (find 'lb-bullet (mv-on-frame h) :key #'second))))
++                (= 9 *lb-ai-oki-mark* *lb-ai-pendulum* (+ (mv-s j1) (mv-a j1) *lb-switch-windup-c*))
++                (= 18 *lb-ai-composure*) (> *lb-ai-composure* (getf (mv-params h) :link))))))
++;; the HARD layer's pure rules: the frames left of a perceived wake-up (down 30 + wake-up 30, less what passed and the
++;; delay), the oki press window (LEAD - 3 .. LEAD), the open states
++(check (and (= 52 (lb-wake-left :down 0 8)) (= 22 (lb-wake-left :wakeup 0 8)) (= 0 (lb-wake-left :wakeup 22 8))
++            (null (lb-wake-left :stun 0 8)) (null (lb-wake-left :idle 5 8))
++            (lb-ai-oki-p 12 12) (lb-ai-oki-p 9 12) (not (lb-ai-oki-p 13 12)) (not (lb-ai-oki-p 8 12)) (not (lb-ai-oki-p nil 12))
++            (lb-ai-open-p :idle) (lb-ai-open-p :run) (lb-ai-open-p :move) (lb-ai-open-p :stun)
++            (notany #'lb-ai-open-p '(:step :hoho :guard :guard-hit :down :wakeup :air))))
++;; the refine (dream-rsi r1 b2a1): THE SIGHT spends his idle Reiatsu (2 bars or more; b2a2: 1) on SP2 HIRENKYAKU timed onto a downed
++;; man's first hittable frame (pressed LEAD - 4 .. LEAD - 2 frames before it, LEAD = HIRENKYAKU's shot frame, 20), hands off
++;; before; nothing below 2 bars or when too late (the oki HOSHA); the burst read waits out his BLUE's invulnerability + the
++;; perception delay. SANREN's first line fits inside J3's stagger and
++;; NIJUSHI-KO's beam inside K3's crumple (KIN's enders); the HARD level refuses his Breaker only for his own CPU
++(let ((h (find-move :lb-hiren)))
++  (check (and (= 1 *lb-ai-sight-bars*) (= 20 (mv-s h)) (= 30 *lb-ai-burst-wait*) (> *lb-ai-burst-wait* *burst-invuln*)
++              (eq :wait (lb-ai-sight-p 300.0 40 (mv-s h))) (eq :wait (lb-ai-sight-p 200.0 19 (mv-s h)))
++              (eq :fire (lb-ai-sight-p 200.0 18 (mv-s h))) (eq :fire (lb-ai-sight-p 300.0 16 (mv-s h)))
++              (eq :fire (lb-ai-sight-p 100.0 17 (mv-s h)))   ; (b2a2: one bar is enough)
++              (null (lb-ai-sight-p 300.0 15 (mv-s h))) (null (lb-ai-sight-p 99.0 17 (mv-s h)))
++              (null (lb-ai-sight-p 300.0 nil (mv-s h)))
++              (< (mv-first-hit (find-move :lb-sanren)) (getf *reaction-frames* :stagger 26))
++              (<= (mv-s (find-move :lb-nijushi)) (getf *reaction-frames* :crumple 40)))))
++;; the refine (dream-rsi r1 b2a2): the burst read as perceived: a break-out is a reel cut short (more than a frame of stun
++;; left, or airborne) followed by a free step; a stun running out, a blow-away's fall, a block, a cinematic are not; his own
++;; push (the repel's slide) covers the steps before his perception can see it. THE CROSSFIRE: K3's crumple outlasts K3's
++;; active frames + TENSHIN out's link frame + the pendulum's J1 and cancel (the materialise lands in the crumple)
++(check (and (lb-break-out-p :stun 12 :idle) (lb-break-out-p :air 0 :move) (lb-break-out-p :stun 2 :run)
++            (not (lb-break-out-p :stun 1 :idle)) (not (lb-break-out-p :stun 0 :idle)) (not (lb-break-out-p :stun 12 :stun))
++            (not (lb-break-out-p :stun 12 :down)) (not (lb-break-out-p :air 0 :down)) (not (lb-break-out-p :stun 12 :cine))
++            (not (lb-break-out-p :idle 0 :move)) (not (lb-break-out-p :guard-hit 5 :idle))
++            (>= *burst-push-frames* (getf *ai-delay* :hard))
++            (<= (+ (mv-a (find-move :lb-w-k3)) *lb-switch-f* *lb-ai-pendulum*) (getf *reaction-frames* :crumple 40))))
+ ;; the owl's own CPU values (Jilliel's EN / KIN tables, Trompete's punish on KIN)
+ (let ((j (kit :lille :jilliel)) (o (kit :lille :shin)) (ok (kit :lille :shin-kin)))
+   (check (and (equal (getf (kit-ai o) :switch) '(:traces 3 :near 0.6 :whiff 1.5)) (equal (getf (kit-ai ok) :switch) '(:gg 40))
