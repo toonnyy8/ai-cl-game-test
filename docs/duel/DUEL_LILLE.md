@@ -224,6 +224,10 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
   winning every match), and the awaken A/B stays failing as an accepted exception (§24.11's rows). §24.12.
 - **52. TENSHIN in 4.5 m, a trial** (the user, 2026-10-07: 「幫我試試看把覺醒後 L 的前衝距離改成 4.5m」): in up to 4.5 m
   (out stays 7 m). §23.32.
+- **53. TENSHIN at a fixed speed, no chase on its link** (the user, 2026-10-07, asked why KIN's J1 after TENSHIN in also
+  dashes forward: 「完全拿掉追擊，L 前衝停在對手前 1m，移動改成固定速度而不是固定時間，後徹距離改成兩個 step 的長度、前衝距離改成兩個 step +
+  0.5m 的長度」; then 30 m/s, the chase removed from TENSHIN's link only): in up to 5.5 m stopping 1 m short, out 5.0 m, both
+  at 30 m/s; HOSHA's link keeps its chase. §23.33.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -2490,6 +2494,48 @@ every match K.O.:
 Every cross pairing is inside the window. His HARD CPU (`aieval --char 5 --seeds 40`): **0.9983** (strength 1.000, masher
 1.000, signature 0.996, drift share 0.4475 vs 0.44: ok; 0.9992 before): trace combos 21.7 %, HOSHA link 18.5 %, charged
 shot 8.6 %, about as before. `./build.sh duel` 0 warnings.
+
+### 23.33 Decision 53: TENSHIN at a fixed speed; its link no longer chases (2026-10-07)
+
+The user asked (discuss first, then change): 「為什麼 L 前衝後的 J1 也會往前衝呢？」. The answer: since round 2 (decision
+25) a J / K latched during TENSHIN in fires at the dash's end with `fighter-end-chase` set (`lb-link-tick`), the Breaker's
+J1 / K1 rule: its startup chases him at up to `*ender-chase-max*` 40 m/s until he is in reach. With decision 52's 4.5 m
+dash that undid the cut: J1 still landed from ≈ 11 m, K1 from ≈ 17 m. Offered: chase only the 1.5 m gap, no chase,
+the plain link's 18 m/s cap, or keep it. The user's answer: 「完全拿掉追擊，L 前衝停在對手前 1m，移動改成固定速度而不是固定時間，
+後徹距離改成兩個 step 的長度、前衝距離改成兩個 step + 0.5m 的長度」; asked the speed and the scope: **30 m/s** (TENSHIN out's
+old 7 m / 14 f), the chase removed from **TENSHIN's link only** (HOSHA's keeps it: its loop needs it).
+
+- `*lb-switch-in*` 4.5 → **5.5** m (`(+ (* 2 *step-distance*) 0.5)`), `*lb-switch-stop*` 1.5 → **1.0** m,
+  `*lb-switch-out*` 7.0 → **5.0** m (`(* 2 *step-distance*)`): both follow the Step's length.
+- New `*lb-switch-speed*` **30** m/s: the dash takes `lb-switch-dash-f` = ⌈60 d / 30⌉ frames (at most `*lb-switch-f*` 14):
+  5.5 m 11 f, 5.0 m 10 f, 2 m 4 f. The move follows the dash: its end (`lbs-dash-end`) is the link frame
+  (`lb-link-frame`, also ASSIST's `lb-as-tenshin`), and with nothing linked `lb-switch-tick` skips the rest of the startup
+  into the 8 f recovery (the form changes there if the dash ended before its f6). Before, every dash took 14 f.
+- `lb-link-tick`: only HOSHA's link sets `fighter-end-chase`; TENSHIN's J1 / K1 start where the dash left him.
+- His CPU's EN web band follows TENSHIN in's reach: `*lb-ai-web-band*` (2.5 4.5) → **(2.5 5.5)**.
+
+Measured in the browser (`tools/run.mjs`, `2107` hash lines): KIN K K K then L from 2.2 m: the back dash **4.99 m**
+(x 0.33 → −4.66), done within 10 f; EN 9.1 m out, L then J: the dash **5.5 m** (x −8.00 → −2.50) over 11 f, then KIN's J1
+**in place** (x −2.50 through its frames: a whiff 3.6 m short); from 2.2 m the dash is 1.2 m and stops 1.0 m short.
+
+Tests: duel-rules 6411 ALL PASS (the knobs; `lb-switch-dist` in 4.0 at 5 m, 5.0 at 6, 5.5 at 12 / 20, 0 at 0.9; out 5.0;
+`lb-switch-dash-f` 11 / 10 / 4 / 1 / 0 / 14), learn 131; pkgcheck 0 / 0 / 0; `./build.sh duel` 0 warnings.
+
+Gates, seeds 1–20 (NORMAL):
+
+| Pairing | Median (decision 52, §23.32) | Lille wins / 20 (before) |
+|---|---|---|
+| LY | 161.4 s (177.6) | 10 (11) |
+| LK | 169.0 s (179.5) | 7 (5) |
+| LR | 205.9 s (204.1) | 4 (9) |
+| LI | 190.2 s (203.5) | 1 (10) |
+| LS | 195.5 s (205.1) | 4 (8) |
+| LL | 235.0 s, 19 K.O. (238.4; mirror, its time-outs an accepted exception) | P1 9 / P2 11 |
+
+Every cross median is inside 125–210 s, but **Lille's NORMAL wins fall** (LR 4, LI 1, LS 4 of 20). His HARD CPU
+(`aieval --char 5 --seeds 40`): strength 0.995, masher 1.000, signature 0.993, but the **drift check fails** (share 0.3325
+vs the frozen 0.44 ± 0.05: the score reads 0): trace combos 21.7 → 13.9 %, the SANREN cash-out 0.8 → 5.3 %. His CPU was
+tuned (dream-rsi b3a2) on a dash that brought J1 to him from 11.5 m. Not retuned: reported to the user (AGENTS.md).
 
 ---
 
