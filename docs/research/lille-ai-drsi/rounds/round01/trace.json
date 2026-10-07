@@ -9,9 +9,9 @@
       "fail_class": "ok",
       "n_total": null,
       "n_valid": null,
-      "note": "rescored at the freeze: str 0.97 mash 1.0 sig 0.933 drift 0.4125 (ref 0.4125) pacing ok",
-      "score": 0.9612,
-      "seq": 2,
+      "note": "rescored at the freeze: str 0.948 mash 1.0 sig 0.932 drift 0.4675 (ref 0.4675) pacing ok",
+      "score": 0.9518,
+      "seq": 8,
       "tags": [],
       "valid": true
     },
@@ -21,9 +21,9 @@
       "fail_class": "ok",
       "n_total": null,
       "n_valid": null,
-      "note": "rescored at the freeze: str 0.975 mash 1.0 sig 0.925 drift 0.4125 (ref 0.4125) pacing ok",
-      "score": 0.96,
-      "seq": 3,
+      "note": "rescored at the freeze: str 0.968 mash 1.0 sig 0.923 drift 0.4675 (ref 0.4675) pacing ok",
+      "score": 0.9563,
+      "seq": 9,
       "tags": [],
       "valid": true
     }

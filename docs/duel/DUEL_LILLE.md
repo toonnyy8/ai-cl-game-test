@@ -2511,7 +2511,20 @@ is the commit that writes the new `drift-ref.json`. The new baseline (the shippe
 | 40 | **0.4480** | 0.098 | 0.995 | 0.525 | **0.4675** (Y 38, K 36, R 34, I 43, S 36 of 80) |
 | 80 | 0.4495 | 0.099 | 0.997 | 0.526 | **0.4550** |
 
-Pacing at 40 seeds: LY 177.2, LK 165.8, LR 210.3 (cap 240), LI 208.9 (cap 240), LS 200.2 s (cap 220): all K.O. The two
-recorded cells are re-measured at the new freeze (`FORCE`, the rule changed under them: not a retry for a better score)
-and the round goes on with b2a0 / b3a0 from there (their briefs, written at the old freeze, were withdrawn undispatched).
+Pacing at 40 seeds: LY 177.2, LK 165.8, LR 210.3 (cap 240), LI 208.9 (cap 240), LS 200.2 s (cap 220): all K.O.
+
+The two recorded cells are re-measured at the new freeze `6081a39`. This was done with `FORCE`, because the rule changed
+under them; it was not a retry for a better score.
+- Their files carried the old freeze's rules code, so the frozen host test failed on decision 44's `*LB-CROSS-OFF*`.
+- Each cell's change is therefore ported onto the new freeze's `lille.lisp` by a 3-way merge (base: the old freeze's file).
+  Both merged cleanly, and their diffs against their base are the same lines.
+- The cells' originals stay in their nodes as `lille.cell-03fb042.lisp`.
+
+| Cell | Score at `03fb042` | Score at `6081a39` | Strength | Signature |
+|---|---|---|---|---|
+| b0a0 | 0.9612 | **0.9518** | 0.948 | 0.932 |
+| b1a0 | 0.9600 | **0.9563** | 0.968 | 0.923 |
+
+Drift 0.4675 and pacing are identical to the new baseline in both. The round goes on with b2a0 / b3a0 from the new freeze;
+their first briefs, written at the old freeze, were withdrawn undispatched.
 
