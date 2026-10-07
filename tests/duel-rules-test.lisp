@@ -2035,9 +2035,9 @@ defender's next step. Values: the attacker's and the defender's first actionable
   ;; EN -> KIN, KIN -> EN; KIN's K links chain into it (a K link's L), EN's lines cancel into it from their active end (the
   ;; tick): no L link there
   (check (and (eq sw (kit-command-move kn :sig)) (= 14 (mv-s sw) *lb-switch-f*) (zerop (mv-a sw)) (= 8 (mv-r sw))
-              (= 14 (getf (mv-params sw) :link)) (eq (mv-tick sw) 'lb-link-tick)
-              (~= 6.5 (lb-switch-dist t 8.0)) (~= 10.4 (lb-switch-dist t 12.0)) (~= 10.4 (lb-switch-dist t 20.0)) (~= 9.5 (lb-switch-dist t 11.0)) (~= 0.0 (lb-switch-dist t 1.2))
-              (~= 7.0 (lb-switch-dist nil 3.0)) (~= 7.0 (lb-switch-dist nil 20.0))
+              (= 14 (getf (mv-params sw) :link)) (eq (mv-tick sw) 'lb-switch-tick)
+              (~= 6.5 (lb-switch-dist t 8.0)) (~= 10.5 (lb-switch-dist t 12.0)) (~= 13.0 (lb-switch-dist t 20.0)) (~= 13.0 (lb-switch-dist t 14.5)) (~= 0.0 (lb-switch-dist t 1.2))
+              (~= 10.0 (lb-switch-dist nil 3.0)) (~= 10.0 (lb-switch-dist nil 20.0))
               (zerop (length (mv-hits sw))) (zerop (mv-cooldown sw)) (not (boundp '*lb-switch-cd*))
               (equal (mv-on-frame sw) '((0 lb-switch-go) (6 lb-switch-form)))
               (eq (lb-switch-target :jilliel) :jilliel-kin) (eq (lb-switch-target :jilliel-mujittai) :jilliel-kin)
@@ -2061,7 +2061,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
                 (equal (mv-on-frame in) '((16 lb-switch-go) (22 lb-switch-form))) (equal (mv-on-frame inc) (mv-on-frame in))
                 (= 30 (mv-s in) (getf (mv-params in) :link)) (= 16 (getf (mv-params in) :go)) (zerop (mv-cooldown inc))
                 (zerop (mv-cooldown in))
-                (= 14 (mv-enter inc)) (zerop (mv-enter in)) (eq (mv-tick in) 'lb-link-tick) (zerop (length (mv-hits in)))
+                (= 14 (mv-enter inc)) (zerop (mv-enter in)) (eq (mv-tick in) 'lb-switch-tick) (zerop (length (mv-hits in)))
                 (= *lb-switch-windup* (- 16 (mv-enter in))) (= *lb-switch-windup-c* (- 16 (mv-enter inc)))
                 (= 16 *lb-switch-windup*) (= 2 *lb-switch-windup-c*)
                 (= (getf (mv-params in) :go) *lb-switch-windup*) (= (mv-s in) (+ *lb-switch-windup* *lb-switch-f*))
@@ -2160,8 +2160,8 @@ defender's next step. Values: the attacker's and the defender's first actionable
   (check (and (rest (lb-trace-fans :k)) (null (rest (lb-trace-fans :j))) (null (rest (lb-trace-fans :sp1))))))
 
 ;; decision 41 (the user 2026-10-07): no laying shot; a trace materialising turns toward him by at most 10 degrees; his
-;; crossing onto a live trace slows the match (0.35 for 0.3 s, re-armed after 30 steps)
-(check (and (~= 10.0 *lb-snap-max*) (~= 0.35 *lb-cross-scale*) (~= 0.3 *lb-cross-secs*) (= 30 *lb-cross-rearm*)
+;; crossing onto a live trace slows the match (0.5 for 0.3 s; 0.35 before decision 43, re-armed after 30 steps)
+(check (and (~= 10.0 *lb-snap-max*) (~= 0.5 *lb-cross-scale*) (~= 0.3 *lb-cross-secs*) (= 30 *lb-cross-rearm*)
             ;; facing -z (yaw 0): him 10 m ahead, 1 m to the side (5.7 deg) -> the line turns onto him; 3 m to the side
             ;; (16.7 deg) -> 10 deg only; behind his back -> 10 deg; on the pivot -> unchanged
             (let ((y (lb-snap-yaw 0.0 0.0 0.0 1.0 -10.0))) (~= y (dir-yaw 1.0 -10.0)))

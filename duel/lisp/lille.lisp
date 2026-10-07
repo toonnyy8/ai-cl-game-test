@@ -101,12 +101,15 @@ recovery's cancel (f16) + K1's startup (17) still lands inside it, a combo (roun
 (defparameter *walk-kin* 3.8 "Walk m/s, JILLIEL KIN (the owl's legs; rework R, 2026-10-06).")
 (defparameter *run-kin* 8.5 "Run m/s, JILLIEL KIN (rework R, 2026-10-06).")
 (defparameter *lb-en-walk* 3.0 "EN: m/s the stick walks him through J / K / SP1 (facing kept on the opponent; rework R, 2026-10-06).")
-(defparameter *lb-switch-in* 10.4
+(defparameter *lb-switch-in* 13.0
   "TENSHIN in (EN -> KIN): the dash at him, at most this many metres over *LB-SWITCH-F*, stopping *LB-SWITCH-STOP* short
 (round 2, 2026-10-06, decision 25 「大幅提升變換戰型後的衝刺距離」: 3.5 before, both ways; decision 42, the user 2026-10-07:
-「另外 L 轉成近戰時能跳躍的範圍要提升 1.3 倍」: 8.0 -> 10.4, the same 14 f).")
+「另外 L 轉成近戰時能跳躍的範圍要提升 1.3 倍」: 8.0 -> 10.4, the same 14 f; decision 43, the user 2026-10-07:
+「接近距離也提升到 13m」: 10.4 -> 13.0).")
 (defparameter *lb-switch-stop* 1.5 "... this many metres short of him (KIN's J1 reaches 1.6; round 2, 2026-10-06).")
-(defparameter *lb-switch-out* 7.0 "TENSHIN out (KIN -> EN): the dash away, metres over *LB-SWITCH-F* (round 2, 2026-10-06; 3.5 before).")
+(defparameter *lb-switch-out* 10.0
+  "TENSHIN out (KIN -> EN): the dash away, metres over *LB-SWITCH-F* (round 2, 2026-10-06; 3.5 before; decision 43, the
+user 2026-10-07: 「後撤距離提升到 10m」: 7.0 -> 10.0).")
 (defparameter *lb-switch-f* 14
   "TENSHIN's dash frames (12 before): from its end his J / K cancel the recovery (round 2, 2026-10-06).")
 (defparameter *lb-switch-windup* 16
@@ -127,9 +130,10 @@ user: 「遠程 J/K 每條軌跡消耗 3 點閃步量表」; free before).")
   "A trace materialising turns about where it was laid toward the opponent by at most this many degrees, then hits along
 the turned line (decision 41, the user 2026-10-07: 「C」, the materialise snap; the lead's 10: 1.7 m sideways at 10 m).
 Decision 39's laying shot (1 damage, a 10 f flinch) is gone: 「我希望去除掉軌道設置時造成的 1 點傷害」.")
-(defparameter *lb-cross-scale* 0.35
+(defparameter *lb-cross-scale* 0.5
   "The opponent crossing one of his live traces slows the whole match to this time scale (SLOWMO, everyone: decision 41,
-the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」, 「全場慢動作」; the lead's number: a perfect Hoho's is 0.25) ...")
+the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」, 「全場慢動作」; the lead's 0.35, then decision 43: 「時緩改成放慢 1 倍」:
+half speed, 0.5; a perfect Hoho's is 0.25) ...")
 (defparameter *lb-cross-secs* 0.3 "... for this many real seconds (the lead's number; a perfect Hoho's 0.45) ...")
 (defparameter *lb-cross-rearm* 30
   "... and not again for this many fixed steps (*MATCH-TICK*: 0.5 s of real time) after it fired (the lead's number: a K fan's three lines or a walk along
@@ -464,10 +468,10 @@ place (round 2: TENSHIN in then J combos), SP2's a knockback."
 ;; (:lb-switch-in, EN's L), 2 f as a cancel out of an EN attack (:lb-switch-in-c, the same move entered at its f14:
 ;; LB-EN-TICK); KIN -> EN (:lb-switch, KIN's L) has none
 (defmove :lb-switch :kind :sig :clip :lb-w-tenshin :callout "TENSHIN" :startup *lb-switch-f* :active 0 :recovery 8
-  :tick lb-link-tick :on-frame ((0 lb-switch-go) (6 lb-switch-form))
+  :tick lb-switch-tick :on-frame ((0 lb-switch-go) (6 lb-switch-form))
   :params (:link *lb-switch-f*))
 (defmove :lb-switch-in :kind :sig :clip :lb-w-tenshin-in :callout "TENSHIN" :startup 30 :active 0 :recovery 8
-  :tick lb-link-tick :on-frame ((16 lb-switch-go) (22 lb-switch-form))
+  :tick lb-switch-tick :on-frame ((16 lb-switch-go) (22 lb-switch-form))
   :params (:link 30 :go 16))
 (defmove-copy :lb-switch-in-c :lb-switch-in :enter 14)
 
@@ -1139,6 +1143,13 @@ His CPU's link (LB-AI-LINK) is picked once."
               (setf (lbs-latch st) nil (lbs-link-t st) *match-tick* (lbs-link-from st) (if hosha :hosha :tenshin))
               (when (or hosha in) (setf (fighter-end-chase (fighter e)) t))
               (lb-count e (if hosha :hosha-link :tenshin-link)))))))))
+
+(defun lb-switch-tick (e)
+  "TENSHIN's frames: no string chase (an L latched after a KIN K link starts as a chained follow-up, and MAIN-PHASE-STEP's
+chase ran him at the opponent through the whole 14 f dash, eating the dash away: the bug the user found 2026-10-07,
+「現在近戰 K 打完連擊後接到 L 後撤的距離會被限制住」; the dash's slide is the switch's only movement), then LB-LINK-TICK."
+  (fill (motion-vel (motion e)) 0f0)
+  (lb-link-tick e))
 
 (defun lb-hiren-tick (e)
   "HIRENKYAKU / TAISHA: he keeps turning to the opponent while he slides, then the line is fixed (track 0 from :lock)."

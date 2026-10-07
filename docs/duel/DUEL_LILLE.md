@@ -203,6 +203,9 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
   and 「全場慢動作」). Decision 39 is undone. §23.23.
 - **42. TENSHIN in reaches 1.3× as far** (the user, 2026-10-07: 「另外 L 轉成近戰時能跳躍的範圍要提升 1.3 倍」): `*lb-switch-in*`
   8.0 → 10.4 m, the same 14 f. §23.24.
+- **43. TENSHIN out 10 m, in 13 m; an L after a KIN K string no longer stops short; the crossing slow motion at half speed**
+  (the user, 2026-10-07: 「1. 後撤距離提升到 10m，接近距離也提升到 13m。 2. 現在近戰 K 打完連擊後接到 L 後撤的距離會被限制住，這應該是 bug？
+  3. 時緩改成放慢 1 倍。」). §23.25.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -1393,8 +1396,8 @@ Numbers are proposals until the gate; the lead picked them where the user gave n
 
 | | Value |
 |---|---|
-| Dash in (EN → KIN) | **up to 10.4 m at him over 14 f, stopping 1.5 m short** (`*lb-switch-in*` 10.4 since decision 42, 8.0 before; `*lb-switch-stop*` 1.5); iframes f0–8 |
-| Dash out (KIN → EN) | **7.0 m** away over 14 f (`*lb-switch-out*`) |
+| Dash in (EN → KIN) | **up to 13.0 m at him over 14 f, stopping 1.5 m short** (`*lb-switch-in*` 13.0 since decision 43; 10.4 by decision 42, 8.0 before; `*lb-switch-stop*` 1.5); iframes f0–8 |
+| Dash out (KIN → EN) | **10.0 m** away over 14 f (`*lb-switch-out*`; 7.0 before decision 43) |
 | Cancel | from the dash's end (f14) his **J or K cancels the recovery** (either mode; EN's J / K lay traces, KIN's hit) |
 | A materialised trace | stagger with **hitstun long enough for the dash plus a J1** (≥ 14 + 8 + 4 f), **no knockback** (the SP2 thick trace keeps its knockback), so a trace hit → TENSHIN in → J / K is a combo (host test) |
 
@@ -1452,8 +1455,8 @@ section, and the touch fix in `control.lisp` / `onehand.lisp` (+ one flag on Ich
   flat × `*lille-mult*` (no distance bonus), stagger kb 1.0, `:ranged :x-axis :uncatchable` (chip 15 %, drain 30), −14.
 - **HIRENKYAKU's aim snap**: `lb-kamae-back` (the dash's f11) re-enters the stance and turns him straight at the opponent;
   the 60°/s tracking goes on from there.
-- **TENSHIN**: the dash is 14 f (`*lb-switch-f*`); in is `min(10.4, d − 1.5)` m at him (8.0 before decision 42) (`*lb-switch-in*`,
-  `*lb-switch-stop*`; none when nearer than 1.5 m), out 7.0 m (`*lb-switch-out*`) (`lb-switch-dist`); iframes for the
+- **TENSHIN**: the dash is 14 f (`*lb-switch-f*`); in is `min(13.0, d − 1.5)` m at him (8.0 before decision 42, 10.4 before decision 43) (`*lb-switch-in*`,
+  `*lb-switch-stop*`; none when nearer than 1.5 m), out 10.0 m (`*lb-switch-out*`; 7.0 before decision 43) (`lb-switch-dist`); iframes for the
   dash's f0–8, the form 6 f into the dash. **Three moves** (decision 30): KIN → EN `:lb-switch` (KIN's L and its K-link
   L): no wind-up, the dash at f0, S14 A0 R8. EN → KIN from EN's neutral (idle / walk / run; MUJITTAI drops to EN and
   takes it) `:lb-switch-in` (EN's L): **an 8 f wind-up** (`*lb-switch-windup*`; hittable, no iframes), then the traces
@@ -2227,6 +2230,42 @@ Gates (native, NORMAL; his pairings), seeds 1–20, every match K.O. (before: §
 Every cross pairing is inside 125–210 s at 20 seeds (LI too, so no edge rerun). His CPU switches in from the gap to a
 trace, not from the distance, so the longer reach changes little in CPU play; the feel is the user's playtest.
 `./build.sh duel` 0 warnings.
+
+### 23.25 Decision 43: longer TENSHIN, the K → L bug, half-speed slow motion (2026-10-07)
+
+The user's words: 「1. 後撤距離提升到 10m，接近距離也提升到 13m。 2. 現在近戰 K 打完連擊後接到 L 後撤的距離會被限制住，這應該是 bug？
+3. 時緩改成放慢 1 倍。」
+
+1. **TENSHIN** (Jilliel's and the owl's): out (KIN → EN) **10.0 m** (`*lb-switch-out*` 7.0 → 10.0), in (EN → KIN) up to
+   **13.0 m** at him (`*lb-switch-in*` 10.4 → 13.0, still stopping 1.5 m short); both still over 14 f.
+2. **The bug, confirmed and fixed.** An L pressed during a KIN K link is latched (KIT-L-LINK) and starts TENSHIN out as a
+   chained follow-up. `main-phase-step` gives a chained non-J / K move the string chase in its startup, and TENSHIN's whole
+   14 f dash is its startup. So the chase ran him at the opponent while the slide carried him away. It was worst after
+   K3, whose push sends the opponent off and makes the chase fast. A browser script (`79014` KIN, `2393` 2.2 m apart,
+   K K K then L, `2107` hash lines) measured the old build's dash after K3 at **0.88 m** (x 0.33 → −0.55, of 7.0). The fix
+   is the switch moves' new tick `lb-switch-tick`, which zeroes his walk / chase velocity each frame before
+   `lb-link-tick`, so the dash's slide is the switch's only movement (in and out alike; Lille's file only). The same
+   script on the fixed build: **10.0 m** (x 0.33 → −9.67).
+3. **The crossing slow motion** runs at **half speed** (`*lb-cross-scale*` 0.35 → **0.5**; read as 「放慢 1 倍」 = time
+   takes twice as long), still 0.3 s, re-armed after 30 steps.
+
+Tests: duel-rules 6370 ALL PASS (`lb-switch-dist`: in 10.5 m at 12 m, 13.0 at 20 and 14.5 m; out 10.0; the switch moves'
+tick `lb-switch-tick`; the slow at 0.5).
+
+Gates (native, NORMAL; his pairings), seeds 1–20, every match K.O. (before: §23.24, decision 42):
+
+| Pairing | Median (before) | Lille wins / 20 (before) | Blow-aways |
+|---|---|---|---|
+| LY | **177.3 s** (164.7) | **14** (11) | 1 |
+| LK | **162.9 s** (166.4) | **7** (10) | 37 |
+| LR | **222.1 s** (200.0) | **8** (7) | 16 |
+| LI | **203.5 s** (208.7) | 6 (6) | 11 |
+| LS | **182.3 s** (196.6) | **10** (11) | 12 |
+| LL | 222.9 s (203.9; mirror) | P1 12 / P2 8 | 9 |
+
+LR is past 210 s again. The edge rerun at 60 seeds gives **222.8 s**, every match K.O., Lille 22 / 60. That is still outside
+the window but under the 229.6 s the user accepted for LR (§23.22), so it is reported to the user, not retuned. A longer
+back dash (10 m) keeps Rukia's matches at range longer. pkgcheck 0 / 0 / 0; `./build.sh duel` 0 warnings.
 
 ---
 
