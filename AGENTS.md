@@ -101,7 +101,9 @@ tools/pkgcheck.sh duel                   # ECL never warns about undefined / une
   LR 200.0 s at 20 seeds, LI 212.1 s at 60, §23.23 / DEVLOG §112); Lille's LR 217.5 s (60 seeds) after the 10 m back dash
   and the 0.1 crossing slow motion (「可以接受」, 2026-10-07, DUEL_LILLE §23.25 / DEVLOG §115), and the Lille mirror's time-outs (「也算進例外」,
   2026-10-06, DEVLOG §109); Lille's awaken A/B rows (the never-awaken side 3–18 of 60, pass ≥ 20) and his HARD learner's
-  HOSHA-guard read (「兩個問題都維持現狀就行」, 2026-10-07, DUEL_LILLE §24.12 / DEVLOG §124). Open: Ichigo's awaken A/B rows have failed since the user cut his
+  HOSHA-guard read (「兩個問題都維持現狀就行」, 2026-10-07, DUEL_LILLE §24.12 / DEVLOG §124); Lille's NORMAL wins after TENSHIN's
+  fixed-speed 7 m dash (LI 2 of 20) and his CPU score's drift check (0.34 vs 0.44) (「不用調整，玩起來夠強了」, 2026-10-07,
+  DUEL_LILLE §23.35 / DEVLOG §129). Open: Ichigo's awaken A/B rows have failed since the user cut his
   damage (2026-09-29, DEVLOG §39–§40; last measured §77: IY 7–15, IR 4–7); his damage is the user's call, don't retune it.
 - Full policy and history: `docs/duel/DUEL_GAMEPLAY.md` "Gate policy"; how to gate in general: skill `sim-balance-gates`.
 

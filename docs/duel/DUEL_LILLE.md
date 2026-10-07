@@ -230,6 +230,8 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
   at 30 m/s; HOSHA's link keeps its chase. §23.33.
 - **54. TENSHIN in up to 7 m** (the user, 2026-10-07: 「將前衝距離改成最多 7m」): 5.5 → 7.0 m, still 1 m short, 14 f at
   30 m/s. §23.34.
+- **55. No retune after decisions 53–54** (the user, 2026-10-07: 「不用調整，玩起來夠強了」): his NORMAL wins (LI 2 of 20)
+  and the CPU score's failed drift check stand. §23.35.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -2652,6 +2654,16 @@ Every cross median is inside 125–210 s. Lille's wins come back against Rukia a
 His HARD CPU (`aieval --char 5 --seeds 40`): strength 1.000, masher 1.000, signature 0.998 (trace combos back to 21.4 %,
 13.9 % at decision 53), but the drift check still fails (share 0.3425 vs the frozen 0.44 ± 0.05; the score reads 0): not
 retuned, reported. `./build.sh duel` 0 warnings.
+
+### 23.35 Decision 55: no retune after the TENSHIN changes (2026-10-07)
+
+Asked whether to tune his numbers or rerun the CPU search after §23.34 (Lille wins LY 9, LK 7, LR 8, LI 2, LS 6 of 20;
+the HARD CPU's drift share 0.3425 vs the frozen 0.44 ± 0.05), the user, having played it: 「不用調整，玩起來夠強了」.
+- Nothing changes. His NORMAL win rate against the gate's CPUs (LI 2 of 20 the lowest) is accepted as it plays.
+- `aieval --char 5` reads 0 on the drift check alone (strength 1.000, masher 1.000, signature 0.998). The frozen
+  reference (`docs/research/lille-ai-drsi/baseline/drift-ref.json`, 0.44 at 40 seeds) predates decisions 53–54; a later
+  search round re-freezes on the new rules and takes a new reference then.
+- AGENTS.md's accepted exceptions list it.
 
 ---
 
