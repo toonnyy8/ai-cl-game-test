@@ -2419,3 +2419,31 @@ TENSHIN cancel, the materialise → KIN J string. It is nearly unreactable for a
 「接受，繼續搜尋」: the rules and the frozen evaluator stay; the search goes on; a rule change after a playtest would mean a
 re-measure of the search's results.
 
+### 24.4 The search restarts on decisions 41–43 (the user, 2026-10-07)
+
+The user paused the search (「先暫停」, 2026-10-06) during round 1. The rules then changed: the laying shot is gone, traces
+snap at materialise, crossing a trace slows the match, and TENSHIN reaches 13 m in / 10 m out (decisions 41–43, §23.23–§23.25).
+Then the user asked: 「可以接受，請幫我 commit&push 並推送到 gh page，之後重新開始風格化自適應 AI 的研究。」
+
+- **The old run is archived** under the workspace's `archive/v1/`: its config, policy, round 1 (b0a0 0.9124, b1a0 0.9027
+  rescored; b2a0 / b3a0 stopped unfinished, their partial worktrees removed) and its baseline. Those numbers were measured on
+  decision 39's rules; b1a0's opener rode the laying shot's 10 f flinch, which no longer exists (§24.3 is moot). The
+  briefs point the new cells at it as ideas to re-test, not results.
+- **The new freeze** is the commit that writes the new `baseline/drift-ref.json` (the scripts find it as before). The
+  evaluator is unchanged apart from a comment (`PACE_CAP` still 240 s vs Rukia and Ichigo, now covering the accepted
+  217.5 s LR of §23.25). The laying shot `LB-NICK` no longer exists, so its "counts nowhere" rule in §24.2 is moot.
+- **The new baseline** (`duel/lisp/lille.lisp` at the freeze, `baseline/lille.lisp`):
+
+| Seeds | Score | Strength | Masher | Signature | Drift (the new reference) |
+|---|---|---|---|---|---|
+| 40 | **0.4496** | 0.105 | 1.000 | 0.519 | **0.4125** (Y 39, K 32, R 27, I 28, S 39 of 80) |
+| 80 | 0.4513 | 0.109 | 0.995 | 0.522 | **0.4400** |
+
+  Pacing at 40 seeds (NORMAL, all K.O.): LY 176.8, LK 170.2, LR 216.2 (cap 240), LI 203.9 (cap 240), LS 196.8 s (cap
+  220). His damage: plain J / K 39.8 %, trace combos 17.7 %, traces 10.3 %, the Kikons 12 %, Breaker 3.7 %, counters
+  3.4 %, HOSHA 2.9 % + its links 2 %, NIJŪSHI-KŌ 2.2 %, HIRENKYAKU 1.8 %, the charged shot 1.4 %, the quick shot 1.1 %.
+  Against the old baseline (0.4769, strength 0.140, signature 0.552), he is weaker at HARD without the flinch.
+- **`drsi.py init` again**: W 2, branches 4 × refines 2, λ 0.25, the baseline 0.4496, the default policy (the same file
+  as before), `eval_command` unchanged. The plan of §24.1 holds: at least 3 rounds, dreaming between them, then the
+  integration (the learning CPU's Lille situations, ASSIST's signature routes) and the full gate.
+

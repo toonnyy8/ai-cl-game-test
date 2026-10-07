@@ -6,6 +6,9 @@ The plan is DUEL_LILLE §24 (the user's request, 2026-10-06), the evaluator §24
 
 ## The setup (frozen)
 
+Restarted 2026-10-07 on decisions 41–43 (DUEL_LILLE §24.4): a new freeze, baseline 0.4496 at 40 seeds, drift references
+40 → 0.4125, 80 → 0.44; the first run is in `archive/v1/`.
+
 - **Task**: SOUL DUEL Lille CPU AI (`duel/lisp/lille.lisp` `:ai` tables and CPU reflexes), scored by
   `tools/aieval.py --char 5 --seeds 40` at the freeze commit.
 - **Freeze commit**: the last commit touching `tools/aieval.py`, `tests/duel-rules-test.lisp` or
@@ -30,6 +33,7 @@ The plan is DUEL_LILLE §24 (the user's request, 2026-10-06), the evaluator §24
 | Path | What |
 |---|---|
 | `config.json`, `policy/`, `rounds/`, `trace_pool/`, `proposal_results/` | `drsi.py`'s (init, plan, record, close-round, compare, promote) |
+| `archive/v1/` | the first run (round 1 on decision 39's rules, paused 2026-10-06; DUEL_LILLE §24.4): its config, policy, rounds, baseline |
 | `baseline/lille.lisp` | the frozen `duel/lisp/lille.lisp` |
 | `baseline/proposal.md` | the shipped CPU, described (DUEL_LILLE §19, §22.4, §23.4, §23.11, §23.15) |
 | `baseline/score.json` | the frozen evaluator's JSON for the baseline at 40 seeds (the init's `--baseline-score`) |

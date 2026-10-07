@@ -42,7 +42,7 @@ from simgate import ROOT, ECL, FAS, MUSLM, ROSTER, build
 NAMES = ROSTER                                    # (simgate.ROSTER: the roster in order)
 LILLE = NAMES.index('LILLE')
 PACE_MAX = 220.0   # a 20-seed median's ceiling here (the gate's 210 s at 60 seeds: 20-seed medians run ~10 s noisy)
-PACE_CAP = {LILLE: {'RUKIA': 240.0, 'ICHIGO': 240.0}}   # accepted exceptions (the user 2026-10-06: LR / LI, DUEL_LILLE §23.22)
+PACE_CAP = {LILLE: {'RUKIA': 240.0, 'ICHIGO': 240.0}}   # accepted exceptions (the user 2026-10-06: LR / LI, DUEL_LILLE §23.22; LR again 2026-10-07, §23.25)
 WEIGHTS = {LILLE: (0.4, 0.2, 0.4)}                # strength, masher, signature; everyone else DEFAULT_W
 DEFAULT_W = (0.6, 0.2, 0.2)
 LINK = re.compile(r'-[JK]\d')                    # a J / K string link's move name (YA-J1, KE-R-K2S, RU-A-K3-50 ...)

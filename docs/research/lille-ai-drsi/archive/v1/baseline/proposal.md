@@ -2,7 +2,7 @@
 
 The CPU the search starts from: `baseline/lille.lisp` (= `duel/lisp/lille.lisp` at the freeze commit). Sources:
 DUEL_LILLE §19 (batch 3a), §22.4 (rework R), §23.4 (round 2), §23.11–§23.12 (the flash-step economy), §23.15 (the owl on
-Jilliel's system), §23.23–§23.25 (decisions 41–43: the rules this freeze runs on). Its measured parts are `score.json` (the frozen evaluator, 40 seeds); the NORMAL drift reference is
+Jilliel's system). Its measured parts are `score.json` (the frozen evaluator, 40 seeds); the NORMAL drift reference is
 `drift-ref.json`.
 
 ## Shape
@@ -39,11 +39,6 @@ opponent's line); J / K lay traces (bands 3–14 m K 4, J 3, SP1 1, SP2 1).
   running / stepping / Hoho-ing for the 16 f wind-up), or reeling / recovering within 1.5 m of one long enough; through a
   J1's 2 f cancel when its line is paid (via-J), else from neutral (16 f); starved (no J line above the reserve) it
   switches in from neutral (free).
-- The gap to a trace is read as the trace would materialise: turned toward him by up to 10° (`LB-AI-TRACE-GAP` with
-  `LB-SNAP-YAW`, decision 41). There is no laying shot any more (decision 39's 10 f flinch is gone): a trace hits only
-  when TENSHIN materialises it. His crossing onto a live trace slows the match (0.1 for 0.3 s of real time; the sim's
-  frames are the same).
-- TENSHIN in dashes up to 13 m at him, out 10 m away (decision 43), the dash his only movement (the K → L chase fixed).
 - After TENSHIN in, J1 when a materialised trace hit (the combo; no roll).
 - The stance MUJITTAI only as a reaction (`LB-AI-STANCE-IN`, `:stance (:p 0.6 :max 180 :gg 30)`): a move starting
   within reach + 1 m or a hazard within 12 f: one roll: U; else a Step off a lane, a Hoho on the generic roll, or nothing

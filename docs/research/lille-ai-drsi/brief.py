@@ -49,7 +49,13 @@ combination of pieces that worked, or a targeted fix of a located bug. Never a r
 
 # Step 2. Understand the game as it is NOW (read, don't skim)
 - docs/duel/DUEL_LILLE.md: §4-§6 (his kit), §19 (the CPU as built), §22.4, §23.4, §23.11-§23.15 (the modes, TENSHIN, the
-  flash-step economy, the owl), §24 (this search: the user's request, the plan, §24.2 the evaluator).
+  flash-step economy, the owl), §23.23-§23.25 (decisions 41-43, the rules this search runs on: NO laying shot, a trace
+  turns <= 10 deg toward him when it materialises, his crossing onto a live trace slows the match, TENSHIN in up to 13 m,
+  out 10 m, the K -> L chase fix), §24 (this search: the user's request, the plan, §24.2 the evaluator, §24.4 the restart).
+- {WS}/archive/v1: the first round run on the OLD rules (decision 39's 1-damage laying shot with a 10 f flinch, since
+  removed). Its two scored cells (b0a0 0.9124: EN's `:moves` never fired at range, fixed by an "X-axis hunter"; b1a0
+  0.9027: a HARD-only opener that rode the laying shot's flinch, which no longer exists) are ideas to re-test on today's
+  rules, not results: their numbers don't carry over.
 - duel/lisp/lille.lisp: the kits' `:ai` plists (six forms + the four MUJITTAI), the AI section (LB-AI-REFLEX and every
   LB-AI-* function, the *LB-AI-...* knobs), and the CPU branches inside the sim's ticks: LB-KAMAE-TICK (LB-AI-KAMAE: the
   shooting stance's branch), LB-EN-TICK (LB-AI-EN-STICK, the switch rule's 2 f cancel), LB-EN-LAY (LB-AI-EN-NEXT),
@@ -67,7 +73,7 @@ score = 0.4 strength + 0.2 masher + 0.4 signature, else 0 when a gate fails:
 - signature: the share of his dealt damage (strength runs) on the WHITELIST: materialised traces; any J / K hit in a combo a
   trace hit opened (trace -> TENSHIN -> J / K ...); HOSHA's bullets and the J1 / K1 a HOSHA hit links into; the CHARGED
   X-Axis shot; TAISHA; the SPs (SANREN, base SP2 HIRENKYAKU, NIJUSHI-KO, the owl's 裁きの光明 lines, Trompete) and his
-  Kikons. Never the Breaker, never a plain J / K string, never the quick shot; the laying shot (1 damage) counts nowhere.
+  Kikons. Never the Breaker, never a plain J / K string, never the quick shot.
   The JSON's "sig_by" breaks his damage down by category.
 - gates (score 0): pacing — NORMAL Lille (P1) vs each other character: every match a K.O., median <= 220 s (vs Rukia and vs
   Ichigo <= 240 s, accepted exceptions); drift — NORMAL Lille vs each other NORMAL CPU, both seats: his win share within
