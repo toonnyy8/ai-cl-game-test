@@ -135,9 +135,11 @@ Decision 39's laying shot (1 damage, a 10 f flinch) is gone: 「我希望去除�
 the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」, 「全場慢動作」; the lead's 0.35, then decision 43: 0.5, corrected by the
 user: 「抱歉，應該是倍率改 0.1 然後可重複觸發」: 0.1; a perfect Hoho's is 0.25) ...")
 (defparameter *lb-cross-secs* 0.3 "... for this many real seconds (the lead's number; a perfect Hoho's 0.45) ...")
-(defparameter *lb-cross-rearm* 0
-  "... and not again for this many fixed steps (*MATCH-TICK*) after it fired: 0, every crossing fires (the user
-2026-10-07: 「可重複觸發」; the lead's 30 before).")
+(defparameter *lb-cross-off* 10
+  "... when he steps onto his live traces from off all of them, after at least this many sim frames off every one (the
+traces count as one region: a K fan, lines laid side by side or a gap he crosses in under this many frames slow it once;
+decision 44, the user 2026-10-07: plan A, 「用 A，N 先用 10 f」. Decision 43's 「可重複觸發」 had each trace fire on its own
+edge, no re-arm; the lead's 30 steps before that).")
 (defparameter *lb-trace-refund-block* 2.0
   "... and a guarded one this much (the user, 2026-10-06: 「擋下回收 2」; it was nothing).")
 (defparameter *lb-trace-refund* 4.0
@@ -320,10 +322,13 @@ when *LB-TRACE-MAX* were live) or NIL. (The sim keeps its traces as hazards: LB-
     (if (< (+ (* dx dx) (* dz dz)) 1e-4)
         yaw
         (f32 (angle-wrap (turn-toward yaw (dir-yaw dx dz) (deg *lb-snap-max*)))))))
-(defun lb-cross-p (was now last tick)
-  "Does a trace's crossing slow the match (decision 41): the opponent is on its line NOW and was not (WAS) last step, and
-the last crossing that slowed it (tick LAST, -1 never) is >= *LB-CROSS-REARM* frames before TICK?"
-  (and now (not was) (or (< last 0) (>= (- tick last) *lb-cross-rearm*))))
+(defun lb-cross-p (now off)
+  "Does his crossing slow the match (decisions 41, 44): he is on one of the live traces NOW, after OFF sim frames on none
+(0 when he was on one last frame) >= *LB-CROSS-OFF*?"
+  (and now (>= off *lb-cross-off*)))
+(defun lb-cross-off-next (now off)
+  "The frames off every live trace after this frame: 0 when he is on one (NOW), else OFF + 1 (capped at 9999)."
+  (if now 0 (min 9999 (1+ off))))
 (defun lb-trace-hitwin (kind mult)
   "The hit a materialised trace of KIND deals (one 2-frame window, once): *LB-TRACE-DMG* x MULT, through guard (the
 X-axis rule: chip *LB-X-CHIP*, drain *LB-TRACE-GUARD*), :ranged :x-axis :uncatchable; a stagger of *LB-TRACE-STUN* in
@@ -693,7 +698,7 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
   (latch nil) (switch-t -1 :type fixnum) (trace-hit-t -1 :type fixnum) (link-t -1 :type fixnum) (link-from nil)
   (awake-t -1 :type fixnum) (revive-t -1 :type fixnum)   ; ticks of the awakening and the revival (the pacing log)
   (sig-origin nil)                        ; the combat log only: what opened his current combo (LB-SIG-LOG)
-  (cross-t -1 :type fixnum)               ; *MATCH-TICK* of the last trace crossing that slowed the match (decision 41)
+  (cross-off 9999 :type fixnum)           ; sim frames the opponent has been off all his live traces (decision 44)
   (acc nil))                              ; the pacing log's counters (debug)
 (defvar *lb* (vector (make-lbs) (make-lbs)) "Per side: his eye, the seal, the shooting stance, the traces.")
 (defvar *lb-reflect-test* nil "Debug 79007 / 79008: P2 reflects P1's Trompete by a guard (:guard) / a perfect Hoho (:hoho).")
@@ -714,7 +719,7 @@ carry-over bug, DEVLOG §38-§39)."
   ;; a trace: what laid it (:j :k :sp1 :sp2: its damage and drain, LB-TRACE-HITWIN), its id (they count up per side),
   ;; live (laid, not yet materialised), its line (a :cap volume in its own frame)
   (src nil) (id 0 :type fixnum) (live nil) (vol nil)
-  (on nil) (cross -1 :type fixnum))       ; the opponent on its line last step; the tick he last crossed onto it (the look)
+  (cross -1 :type fixnum))                ; the tick his crossing onto it slowed the match (the look's flare)
 
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun lille-ok (e command combo)
@@ -753,6 +758,7 @@ check on its f59, the traces' end on the revival, KIN's last string (his CPU's s
       (setf (lbs-revive-t st) *match-tick*) (lb-count e :revive-tick *match-tick*)
       (lb-clear-traces e))                                  ; (gone on the revival, §22.2)
     (if (eq form :base) (lb-eye-step e f st) (setf (lbs-u-up st) 0))
+    (unless (eq form :base) (lb-trace-cross e))            ; his live traces vs the opponent (decision 44)
     (cond ((lb-stance-form-p form)
            (when (and (eq (fighter-state f) :hoho) (fighter-perfect f))   ; his own counter strike is an attack: solid
              (set-form e (kit-drop-to (fighter-kit f)))
@@ -1190,30 +1196,34 @@ gap G12); each erupts outward from 1 m to 18 m (LB-SABAKI-SPAN), through guard (
     (lb-count e (if group :misuji :sabaki))
     (emit :sfx :ground-crack e)))
 
-(defun lb-trace-cross (hz d)
-  "A live trace's step: is the opponent (its hazard's target) on its line (its :cap against his hurt cylinder, as a hit
-would test it)? Crossing onto it slows the whole match (*LB-CROSS-SCALE* for *LB-CROSS-SECS*, LB-CROSS-P's re-arm; the
-user 2026-10-07: 「對手經過軌道的瞬間會有時緩」 / 「全場慢動作」); the look brightens the line (LBH-CROSS)."
-  (let* ((o (hazard-target hz)) (e (hazard-owner hz)))
-    (when (and (entity-alive-p o) (entity-alive-p e))
-      (let* ((q (pos-of o)) (b (model-body (model o))) (yaw (hazard-yaw hz)) (st (lb e))
-             (now (vol-hit-p (lbh-vol d) (hazard-x hz) 0f0 (hazard-z hz) (f32 (fwd-x yaw)) (f32 (fwd-z yaw))
-                             (aref q 0) (aref q 1) (aref q 2) (body-hurt-r b) (body-hurt-h b) 0f0)))
-        (when (lb-cross-p (lbh-on d) now (lbs-cross-t st) *match-tick*)
-          (setf (lbs-cross-t st) *match-tick* (lbh-cross d) *match-tick*)
+(defun lb-trace-cross (e)
+  "Per sim frame (LILLE-TICK): is the opponent on any of his live traces (each line's :cap against his hurt cylinder, as a
+hit would test it)? Stepping onto them after *LB-CROSS-OFF* frames off all of them slows the whole match
+(*LB-CROSS-SCALE* for *LB-CROSS-SECS*: LB-CROSS-P; the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」, 「全場慢動作」, then
+plan A, decision 44); the lines he is on flare (LBH-CROSS)."
+  (let* ((o (opp-of e)) (st (lb e)) (now nil))
+    (when (entity-alive-p o)
+      (let ((q (pos-of o)) (b (model-body (model o))) (fire (lb-cross-p t (lbs-cross-off st))))
+        (do-entities (h (hz hazard))
+          (let ((d (hazard-data hz)))
+            (when (and (eql (hazard-owner hz) e) (lbh-p d) (lbh-live d))
+              (let ((yaw (hazard-yaw hz)))
+                (when (vol-hit-p (lbh-vol d) (hazard-x hz) 0f0 (hazard-z hz) (f32 (fwd-x yaw)) (f32 (fwd-z yaw))
+                                 (aref q 0) (aref q 1) (aref q 2) (body-hurt-r b) (body-hurt-h b) 0f0)
+                  (setf now t)
+                  (when fire (setf (lbh-cross d) *match-tick*)))))))
+        (when (lb-cross-p now (lbs-cross-off st))
           (slowmo *lb-cross-scale* *lb-cross-secs*)
           (lb-count e :trace-cross)
-          (emit :sfx :rift-open e))
-        (setf (lbh-on d) now)))))
+          (emit :sfx :rift-open e))))
+    (setf (lbs-cross-off st) (lb-cross-off-next now (lbs-cross-off st)))))
 
 (defun lb-hz (h hz ev &optional a b c dd ee)
   "His hazards' hook (HAZARD-HOOK): a SABAKI line's volume (:touches): the burning span of the line (LB-SABAKI-SPAN), a box
-*LB-SABAKI-WIDTH* wide; a trace's line (only a materialised one has a hit); the looks touch nothing. A live trace's
-:step: the opponent crossing onto its line slows the match (LB-TRACE-CROSS, decision 41)."
+*LB-SABAKI-WIDTH* wide; a trace's line (only a materialised one has a hit); the looks touch nothing."
   (declare (ignore h))
   (let ((d (hazard-data hz)))
     (case ev
-      (:step (when (and (eq (lbh-kind d) :trace) (lbh-live d)) (lb-trace-cross hz d)) nil)
       (:touches (case (lbh-kind d)
                   (:sabaki
                    (multiple-value-bind (from to) (lb-sabaki-span (hazard-age hz))

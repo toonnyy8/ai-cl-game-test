@@ -2487,3 +2487,31 @@ Then the user asked: 「可以接受，請幫我 commit&push 並推送到 gh pag
   as before), `eval_command` unchanged. The plan of §24.1 holds: at least 3 rounds, dreaming between them, then the
   integration (the learning CPU's Lille situations, ASSIST's signature routes) and the full gate.
 
+### 24.5 Round 1's first batch, and the re-freeze on decision 44 (2026-10-07)
+
+Round 1's first two cells, rescored at the freeze `03fb042` (40 seeds; NORMAL drift and pacing identical to the
+baseline in both; every new behaviour is a HARD-only layer):
+
+| Cell | Score | Strength | Signature | The mechanism |
+|---|---|---|---|---|
+| b0a0 | **0.9612** | 0.970 | 0.933 | EN "mark and spring": J1 laid straight at an open opponent, TENSHIN's 2 f cancel when he is on a line (its materialise 9 f after the press, inside a HARD CPU's perception), the KIN J string; KIN "vanish" (out again once it can pay); the base form's "hunt": the stance → HOSHA, its link K1 with L latched (bullets → K1 → stance → bullets) |
+| b1a0 | **0.9600** | 0.975 | 0.925 | EN "web": a J line every 6 f at 2.5–13 m, the switch when enough hit groups would hit where he will be (1 on a free opponent, 2–3 on a committed one), a wary read after 2 misses; KIN hit-and-run; the same HOSHA → K1 → stance loop; an SP2 cash-out on a landed string (`:sp-ender`, also used by the ASSIST) |
+
+Both found the same two engines on their own: the near-instant materialise (decision 39's flinch was never what made
+round 1 v1's opener work) and the HOSHA loop. The cells' recommendations for shared code (the generic ORANGE burst breaks
+the HOSHA loop; AI-ATTACK's no-whiff rule keeps EN's J / K silent at range at NORMAL; re-run `tools/assistgate.py` for
+b1a0's `:sp-ender`) are kept for the integration. The first rescore of b0a0 aborted on the rescore worktree's leftover
+files (recorded 0 by mistake): `rescore.sh` now forces its checkout, and b0a0 was re-recorded (`FORCE`).
+
+Then the user's decision 44 (§23.26: 「用 A，N 先用 10 f，等這輪跑完再改」) changed the rules after that batch. **The re-freeze**
+is the commit that writes the new `drift-ref.json`. The new baseline (the shipped CPU on decision 44):
+
+| Seeds | Score | Strength | Masher | Signature | Drift (the new reference) |
+|---|---|---|---|---|---|
+| 40 | **0.4480** | 0.098 | 0.995 | 0.525 | **0.4675** (Y 38, K 36, R 34, I 43, S 36 of 80) |
+| 80 | 0.4495 | 0.099 | 0.997 | 0.526 | **0.4550** |
+
+Pacing at 40 seeds: LY 177.2, LK 165.8, LR 210.3 (cap 240), LI 208.9 (cap 240), LS 200.2 s (cap 220): all K.O. The two
+recorded cells are re-measured at the new freeze (`FORCE`, the rule changed under them: not a retry for a better score)
+and the round goes on with b2a0 / b3a0 from there (their briefs, written at the old freeze, were withdrawn undispatched).
+
