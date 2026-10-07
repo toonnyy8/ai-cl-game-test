@@ -222,6 +222,8 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
 - **51. Two open items kept as they are** (the user, 2026-10-07: 「HOSHA read at HARD 跟 Awaken A/B, still failing 兩個問題都維持現狀就行」):
   the learning CPU's HOSHA-guard answer stays at HARD (Lille takes 646 a match instead of 605 against that habit, still
   winning every match), and the awaken A/B stays failing as an accepted exception (§24.11's rows). §24.12.
+- **52. TENSHIN in 4.5 m, a trial** (the user, 2026-10-07: 「幫我試試看把覺醒後 L 的前衝距離改成 4.5m」): in up to 4.5 m
+  (out stays 7 m). §23.32.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -2466,6 +2468,28 @@ The lead proposed four directions. The user chose all four and both modes: 「�
 EN (laying traces) gets its own reworked clips too. Presentation only: the sim never reads art, the hit volumes and
 frame data are unchanged, and the drawn reach must still equal the hit reach (the host FK test, ±0.15 m). The owl's
 forms are not in scope.
+
+### 23.32 Decision 52: TENSHIN in 4.5 m, a trial (2026-10-07)
+
+The user's words: 「幫我試試看把覺醒後 L 的前衝距離改成 4.5m」 (a trial: kept while the user plays it).
+- `*lb-switch-in*` 10.0 → **4.5** m (still stopping 1.5 m short, over 14 f); `*lb-switch-out*` stays 7.0 m.
+- His CPU's EN web band follows TENSHIN in's reach as at decision 49 (`*lb-ai-web-band*` (2.5 10.0) → **(2.5 4.5)**).
+
+Tests: duel-rules 6411 ALL PASS (`lb-switch-dist`: in 3.5 at 5 m, 4.5 at 6 / 12 / 20 m; out 7.0). Gates, seeds 1–20,
+every match K.O.:
+
+| Pairing | Median (decision 49, §23.30) | Lille wins / 20 (before) |
+|---|---|---|
+| LY | 177.6 s (176.6) | 11 (14) |
+| LK | 179.5 s (173.2) | 5 (6) |
+| LR | 204.1 s (196.4) | 9 (10) |
+| LI | 203.5 s (206.8) | 10 (9) |
+| LS | 205.1 s (192.4) | 8 (5) |
+| LL | 238.4 s (235.7; mirror) | P1 8 / P2 12 |
+
+Every cross pairing is inside the window. His HARD CPU (`aieval --char 5 --seeds 40`): **0.9983** (strength 1.000, masher
+1.000, signature 0.996, drift share 0.4475 vs 0.44: ok; 0.9992 before): trace combos 21.7 %, HOSHA link 18.5 %, charged
+shot 8.6 %, about as before. `./build.sh duel` 0 warnings.
 
 ---
 
