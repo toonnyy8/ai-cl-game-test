@@ -457,19 +457,19 @@ place (round 2: TENSHIN in then J combos), SP2's a knockback."
 ;; SANREN's three), and the stick walks him at *LB-EN-WALK* through the whole move, facing kept on the opponent (LB-EN-TICK);
 ;; from the active end L cancels it into TENSHIN. Round 2 (decision 28, 2026-10-06, 「覺醒的遠程模式 J/K/SP1/SP2 的前後搖都
 ;; 大幅縮短。」): their startups and recoveries roughly halved, the active frames kept (the wing strings' were J 8/3/12, 7/3/13,
-;; 9/3/18, K 17/4/21, 20/4/24 enter 6, 21/5/34 enter 7; SP1 12/22/24 lines f12/22/32; SP2 40/6/30); the wing clips play at
-;; :clip-s / S speed (their hit poses on the new first active frame); KIN and the base form keep theirs
-(defmove :lb-e-j1 :kind :quick :clip :lb-w-q1 :clip-s 8 :startup 4 :active 3 :recovery 6 :reach 1.6 :tick lb-en-tick
+;; 9/3/18, K 17/4/21, 20/4/24 enter 6, 21/5/34 enter 7; SP1 12/22/24 lines f12/22/32; SP2 40/6/30); their own casts
+;; :lb-e-q1 ... :lb-e-f3 at these frames (decision 50, 2026-10-07; KIN's wing clips at :clip-s / S speed before)
+(defmove :lb-e-j1 :kind :quick :clip :lb-e-q1 :startup 4 :active 3 :recovery 6 :reach 1.6 :tick lb-en-tick
   :on-frame ((4 lb-en-lay)) :params (:trace :j))
-(defmove :lb-e-j2 :kind :quick :clip :lb-w-q2 :clip-s 7 :startup 4 :active 3 :recovery 6 :reach 1.6 :tick lb-en-tick
+(defmove :lb-e-j2 :kind :quick :clip :lb-e-q2 :startup 4 :active 3 :recovery 6 :reach 1.6 :tick lb-en-tick
   :on-frame ((4 lb-en-lay)) :params (:trace :j))
-(defmove :lb-e-j3 :kind :quick :clip :lb-w-q3 :clip-s 9 :startup 5 :active 3 :recovery 9 :reach 1.7 :flags (:ender)
+(defmove :lb-e-j3 :kind :quick :clip :lb-e-q3 :startup 5 :active 3 :recovery 9 :reach 1.7 :flags (:ender)
   :tick lb-en-tick :on-frame ((5 lb-en-lay)) :params (:trace :j))
-(defmove :lb-e-k1 :kind :flash :clip :lb-w-f1 :clip-s 17 :startup 9 :active 4 :recovery 10 :reach 2.2 :tick lb-en-tick
+(defmove :lb-e-k1 :kind :flash :clip :lb-e-f1 :startup 9 :active 4 :recovery 10 :reach 2.2 :tick lb-en-tick
   :on-frame ((9 lb-en-lay)) :params (:trace :k))
-(defmove :lb-e-k2 :kind :flash :clip :lb-w-f2 :clip-s 20 :enter 3 :startup 10 :active 4 :recovery 12 :reach 2.2
+(defmove :lb-e-k2 :kind :flash :clip :lb-e-f2 :enter 3 :startup 10 :active 4 :recovery 12 :reach 2.2
   :tick lb-en-tick :on-frame ((10 lb-en-lay)) :params (:trace :k))
-(defmove :lb-e-k3 :kind :flash :clip :lb-w-f3 :clip-s 21 :enter 4 :startup 11 :active 5 :recovery 17 :reach 2.3
+(defmove :lb-e-k3 :kind :flash :clip :lb-e-f3 :enter 4 :startup 11 :active 5 :recovery 17 :reach 2.3
   :flags (:ender) :tick lb-en-tick :on-frame ((11 lb-en-lay)) :params (:trace :k))
 (defmove-copy :lb-e-j2s :lb-e-j2)
 (defmove-copy :lb-e-k2s :lb-e-k2)

@@ -531,6 +531,7 @@ tell) fills the hole with light."
   '((:lb-q1 :weapon) (:lb-q2 :weapon) (:lb-butt :weapon)                 ; the plank (*LB-BUTT* behind the grip)
     (:lb-w-q1 :hand-r) (:lb-w-q2 :hand-l) (:lb-w-q3 :hand-r) (:lb-w-f1 :hand-r) (:lb-w-f2 :hand-l) (:lb-w-f3 :hand-r)
     (:lb-w-ram :hand-r)                                                  ; the front wings' tips (the rig's hands)
+    (:lb-e-q1 :hand-r) (:lb-e-q2 :hand-l) (:lb-e-q3 :hand-r) (:lb-e-f1 :hand-r) (:lb-e-f2 :hand-l) (:lb-e-f3 :hand-r)   ; EN's casts
     (:lb-o-q1 :hand-r) (:lb-o-q2 :hand-l) (:lb-o-q3 :hand-r) (:lb-o-f1 :hand-r) (:lb-o-f2 :hand-l) (:lb-o-f3 :hand-r)
     (:lb-o-stamp :hand-r))                                               ; the owl's long arms
   "Clip -> what strikes in it when it isn't Diagramm's muzzle (the weapon tip): :weapon = the plank, *LB-BUTT* behind the
@@ -690,30 +691,221 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
   (:root :u 0.05) (:arm-r :flex 0 :side 30 :twist 45) (:elbow-r :flex 110)   ; crossed low before it
   (:arm-l :flex 0 :side 30 :twist -45) (:elbow-l :flex 110) (:head :flex 10))
 (defclip :lb-w-fold (2.0 :loop t :base :lb-w-fold-pose) (0) (1.0 (:root :u 0.1)))
-(defpose :lb-w-q1-hit (:base :lb-w-stance)
-  (:root :f 0.08 :u 0) (:chest :twist 14) (:arm-r :flex 88 :side 8) (:elbow-r :flex 6))
-(defstrike :lb-w-q1 (8 3 12 :base :lb-w-stance)
-  (0) (4 (:arm-r :flex 20 :side 100)) (:s :snap :lb-w-q1-hit) (:a :lb-w-q1-hit) (:end :lb-w-stance))
-(defpose :lb-w-q2-hit (:base :lb-w-stance)
-  (:root :f 0.08 :u 0) (:chest :twist -14) (:arm-l :flex 88 :side 8) (:elbow-l :flex 6))
-(defstrike :lb-w-q2 (7 3 13 :base :lb-w-stance)
-  (0) (4 (:arm-l :flex 20 :side 100)) (:s :snap :lb-w-q2-hit) (:a :lb-w-q2-hit) (:end :lb-w-stance))
-(defpose :lb-w-q3-hit (:base :lb-w-stance)
-  (:root :f 0.18 :u 0) (:arm-r :flex 86 :side 14) (:arm-l :flex 86 :side 14) (:elbow-r :flex 2) (:elbow-l :flex 2))
-(defstrike :lb-w-q3 (9 3 18 :base :lb-w-stance)
-  (0) (5 (:arm-r :flex 30 :side 110) (:arm-l :flex 30 :side 110)) (:s :snap :lb-w-q3-hit) (:a :lb-w-q3-hit) (:end :lb-w-stance))
-(defpose :lb-w-f1-hit (:base :lb-w-stance)
-  (:root :f 0.62 :u -0.05) (:spine :flex 10) (:chest :twist -10) (:arm-r :flex 88 :side 4) (:elbow-r :flex 2) (:arm-l :flex 70 :side 30))
-(defstrike :lb-w-f1 (17 4 21 :base :lb-w-stance)
-  (0) (10 (:root :f -0.1) (:arm-r :flex 0 :side 120) (:chest :twist 20)) (:s :snap :lb-w-f1-hit) (:a :lb-w-f1-hit) (:end :lb-w-stance))
-(defpose :lb-w-f2-hit (:base :lb-w-stance)
-  (:root :f 0.62 :u -0.05) (:spine :flex 10) (:chest :twist 10) (:arm-l :flex 88 :side 4) (:elbow-l :flex 2) (:arm-r :flex 70 :side 30))
-(defstrike :lb-w-f2 (20 4 24 :base :lb-w-stance)
-  (0) (12 (:root :f -0.1) (:arm-l :flex 0 :side 120) (:chest :twist -20)) (:s :snap :lb-w-f2-hit) (:a :lb-w-f2-hit) (:end :lb-w-stance))
-(defpose :lb-w-f3-hit (:base :lb-w-stance)
-  (:root :f 0.72 :u -0.1) (:spine :flex 14) (:arm-r :flex 86 :side 4) (:arm-l :flex 86 :side 4) (:elbow-r :flex 2) (:elbow-l :flex 2))
-(defstrike :lb-w-f3 (21 5 34 :base :lb-w-stance)
-  (0) (12 (:root :f -0.1 :u 0.2) (:arm-r :flex 170 :side 20) (:arm-l :flex 170 :side 20)) (:s :snap :lb-w-f3-hit) (:a :lb-w-f3-hit)
+;; Decision 50 (2026-10-07, DUEL_LILLE §23.31: 「全身出招」「每招獨立造型」): every J / K is its own whole-body strike, KIN's
+;; (melee, on the ㄇ legs) and EN's (laying lines: casts) apart. Each key's comment gives the wings' aims (azimuth / elevation
+;; in degrees, the chest's frame: + = his right / up); the hand is the wing tip, so the hit pose (on S, through S + A) puts
+;; it at the move's reach (the host FK test; EN's casts at :reach on S, the line's frame). The chest twist and the root
+;; turn add to the arm's aim (+ twist / yaw = turned to his left). The spins (K1 / K2, EN's too) turn the root a full turn:
+;; their two keys 0.0001 f apart differ by exactly 360 degrees of root yaw (the same pose: the turn's count is unwound
+;; between two frames, never sampled), so the clip starts and ends at yaw 0 with no unwinding turn and no blend.
+(defstrike :lb-w-q1 (8 3 12 :base :lb-w-stance)   ; J1 左斬: the right wing cocked high behind, a step in, cut right -> left
+  (0)
+  ;; R 128/24, L -86/-6
+  (5 (:root :f -0.12 :u 0.03 :yaw -8) (:spine :flex -5) (:chest :twist -24) (:arm-r :flex -34.2 :side 119.5)
+   (:elbow-r :flex 30) (:arm-l :flex 4 :side 84) (:elbow-l :flex 4) (:thigh-r :flex -14) (:thigh-l :flex 16))
+  ;; R 138/30, L -84/-4
+  (7 (:root :f -0.14 :u 0.03 :yaw -10) (:spine :flex -6) (:chest :twist -28) (:arm-r :flex -40.1 :side 130.8)
+   (:elbow-r :flex 34) (:arm-l :flex 6 :side 86) (:elbow-l :flex 4) (:thigh-r :flex -16) (:thigh-l :flex 18))
+  ;; R 34/3, L -102/-10
+  (:s :snap (:root :f 0.04 :u -0.04 :yaw 6) (:spine :flex 12) (:chest :twist 16) (:arm-r :flex 55.9 :side 95.4)
+   (:elbow-r :flex 22) (:arm-l :flex -11.8 :side 79.8) (:elbow-l :flex 4) (:thigh-r :flex 30) (:thigh-l :flex -18))
+  ;; R 14/-4, L -110/-12
+  (:a (:root :f 0.06 :u -0.04 :yaw 10) (:spine :flex 13) (:chest :twist 26) (:arm-r :flex 75.5 :side 73.9)
+   (:elbow-r :flex 22) (:arm-l :flex -19.5 :side 77.3) (:elbow-l :flex 4) (:thigh-r :flex 30) (:thigh-l :flex -18))
+  ;; R -33/-16, L -114/-10
+  (15 (:root :f 0.2 :u -0.03 :yaw 12) (:spine :flex 12) (:chest :twist 30) (:arm-r :flex 126.3 :side 117.8)
+   (:elbow-r :flex 10) (:arm-l :flex -23.6 :side 79.1) (:elbow-l :flex 4) (:thigh-r :flex 24) (:thigh-l :flex -14))
+  (:end :lb-w-stance))
+(defstrike :lb-w-q2 (7 3 13 :base :lb-w-stance)   ; J2 右斬: the mirror, the left wing, cut left -> right
+  (0)
+  ;; R 86/-6, L -128/24
+  (4 (:root :f -0.12 :u 0.03 :yaw 8) (:spine :flex -5) (:chest :twist 24) (:arm-r :flex 4 :side 84)
+   (:elbow-r :flex 4) (:arm-l :flex -34.2 :side 119.5) (:elbow-l :flex 30) (:thigh-r :flex 16) (:thigh-l :flex -14))
+  ;; R 84/-4, L -138/30
+  (6 (:root :f -0.14 :u 0.03 :yaw 10) (:spine :flex -6) (:chest :twist 28) (:arm-r :flex 6 :side 86)
+   (:elbow-r :flex 4) (:arm-l :flex -40.1 :side 130.8) (:elbow-l :flex 34) (:thigh-r :flex 18) (:thigh-l :flex -16))
+  ;; R 102/-10, L -34/3
+  (:s :snap (:root :f 0.04 :u -0.04 :yaw -6) (:spine :flex 12) (:chest :twist -16) (:arm-r :flex -11.8 :side 79.8)
+   (:elbow-r :flex 4) (:arm-l :flex 55.9 :side 95.4) (:elbow-l :flex 22) (:thigh-r :flex -18) (:thigh-l :flex 30))
+  ;; R 110/-12, L -14/-4
+  (:a (:root :f 0.06 :u -0.04 :yaw -10) (:spine :flex 13) (:chest :twist -26) (:arm-r :flex -19.5 :side 77.3)
+   (:elbow-r :flex 4) (:arm-l :flex 75.5 :side 73.9) (:elbow-l :flex 22) (:thigh-r :flex -18) (:thigh-l :flex 30))
+  ;; R 114/-10, L 33/-16
+  (14 (:root :f 0.2 :u -0.03 :yaw -12) (:spine :flex 12) (:chest :twist -30) (:arm-r :flex -23.6 :side 79.1)
+   (:elbow-r :flex 4) (:arm-l :flex 126.3 :side 117.8) (:elbow-l :flex 10) (:thigh-r :flex -14) (:thigh-l :flex 24))
+  (:end :lb-w-stance))
+(defstrike :lb-w-q3 (9 3 18 :base :lb-w-stance)   ; J3 十字: both wings raised high and wide, crossed down through the front (an X)
+  (0)
+  ;; R 50/62, L -50/62
+  (6 (:root :f -0.1 :u 0.1 :pitch -6) (:spine :flex -10) (:head :flex -4) (:arm-r :flex 17.6 :side 157.8)
+   (:elbow-r :flex 20) (:arm-l :flex 17.6 :side 157.8) (:elbow-l :flex 20) (:thigh-r :flex -10) (:thigh-l :flex 10))
+  ;; R 46/70, L -46/70
+  (8 (:root :f -0.12 :u 0.12 :pitch -7) (:spine :flex -12) (:head :flex -4) (:arm-r :flex 13.7 :side 165.3)
+   (:elbow-r :flex 24) (:arm-l :flex 13.7 :side 165.3) (:elbow-l :flex 24) (:thigh-r :flex -12) (:thigh-l :flex 12))
+  (:s :snap (:root :f 0.32 :u -0.05 :pitch 4) (:spine :flex 16) (:arm-r :flex 106.1 :side 120.2) (:elbow-r :flex 4)
+   (:arm-l :flex 106.1 :side 120.2) (:elbow-l :flex 4) (:thigh-r :flex 26) (:thigh-l :flex -20))   ; R -14/-8, L 14/-8
+  (:a (:root :f 0.26 :u -0.05 :pitch 5) (:spine :flex 18) (:arm-r :flex 129.2 :side 130) (:elbow-r :flex 4)
+   (:arm-l :flex 129.2 :side 130) (:elbow-l :flex 4) (:thigh-r :flex 26) (:thigh-l :flex -20))   ; R -32/-24, L 32/-24
+  ;; R -55/-42, L 55/-42
+  (18 (:root :f 0.2 :u -0.06 :pitch 5) (:spine :flex 20) (:arm-r :flex 154.8 :side 137.7) (:elbow-r :flex 10)
+   (:arm-l :flex 154.8 :side 137.7) (:elbow-l :flex 10) (:thigh-r :flex 22) (:thigh-l :flex -16))
+  (:end :lb-w-stance))
+(defstrike :lb-w-f1 (17 4 21 :base :lb-w-stance)   ; K1 旋: coiled right, one full turn left on the legs, the right wing sweeping through
+  (0)
+  ;; R 105/10, L -55/20
+  (6 (:root :u -0.08 :yaw -50) (:spine :flex 8) (:chest :twist -18) (:arm-r :flex -14.8 :side 100.3)
+   (:elbow-r :flex 20) (:arm-l :flex 32.6 :side 114) (:elbow-l :flex 20) (:thigh-r :flex -16) (:thigh-l :flex 18))
+  ;; R 108/12, L -52/22
+  (8.5 (:root :u -0.08 :yaw -58) (:spine :flex 8) (:chest :twist -22) (:arm-r :flex -17.6 :side 102.6)
+   (:elbow-r :flex 22) (:arm-l :flex 34.8 :side 117.1) (:elbow-l :flex 22) (:thigh-r :flex -16) (:thigh-l :flex 18))
+  ;; R 108/12, L -52/22
+  (8.5001 :snap (:root :u -0.08 :yaw -418) (:spine :flex 8) (:chest :twist -22) (:arm-r :flex -17.6 :side 102.6)
+   (:elbow-r :flex 22) (:arm-l :flex 34.8 :side 117.1) (:elbow-l :flex 22) (:thigh-r :flex -16) (:thigh-l :flex 18))
+  ;; R 92/0, L -92/0
+  (13 :snap (:root :u 0.02 :f 0.2 :yaw -200) (:spine :flex 4) (:chest :twist 0) (:arm-r :flex -2 :side 90)
+   (:elbow-r :flex 6) (:arm-l :flex -2 :side 90) (:elbow-l :flex 6) (:thigh-r :flex 6) (:thigh-l :flex -6))
+  ;; R 14/0, L -118/8
+  (:s :snap (:root :f 0.62 :u -0.04 :yaw -10) (:spine :flex 12) (:chest :twist 10) (:arm-r :flex 76 :side 90)
+   (:elbow-r :flex 4) (:arm-l :flex -27.7 :side 99) (:elbow-l :flex 10) (:thigh-r :flex 28) (:thigh-l :flex -20))
+  ;; R 7/-3, L -122/6
+  (:a (:root :f 0.64 :u -0.04 :yaw 14) (:spine :flex 12) (:chest :twist 18) (:arm-r :flex 82.4 :side 66.7)
+   (:elbow-r :flex 4) (:arm-l :flex -31.8 :side 97.1) (:elbow-l :flex 10) (:thigh-r :flex 28) (:thigh-l :flex -20))
+  ;; R -24/-14, L -118/0
+  (28 (:root :f 0.55 :u -0.03 :yaw 24) (:spine :flex 10) (:chest :twist 22) (:arm-r :flex 117.6 :side 121.5)
+   (:elbow-r :flex 10) (:arm-l :flex -28 :side 90) (:elbow-l :flex 10) (:thigh-r :flex 22) (:thigh-l :flex -14))
+  (:end :lb-w-stance))
+(defstrike :lb-w-f2 (20 4 24 :base :lb-w-stance)   ; K2 逆旋: the counter-spin (entered at f6 in its strings), the left wing
+  (0)
+  (10 (:root :u -0.08 :yaw 50) (:spine :flex 8) (:chest :twist 18) (:arm-r :flex 32.6 :side 114) (:elbow-r :flex 20)
+   (:arm-l :flex -14.8 :side 100.3) (:elbow-l :flex 20) (:thigh-r :flex 18) (:thigh-l :flex -16))   ; R 55/20, L -105/10
+  ;; R 52/22, L -108/12
+  (12.5 (:root :u -0.08 :yaw 58) (:spine :flex 8) (:chest :twist 22) (:arm-r :flex 34.8 :side 117.1)
+   (:elbow-r :flex 22) (:arm-l :flex -17.6 :side 102.6) (:elbow-l :flex 22) (:thigh-r :flex 18) (:thigh-l :flex -16))
+  ;; R 52/22, L -108/12
+  (12.5001 :snap (:root :u -0.08 :yaw 418) (:spine :flex 8) (:chest :twist 22) (:arm-r :flex 34.8 :side 117.1)
+   (:elbow-r :flex 22) (:arm-l :flex -17.6 :side 102.6) (:elbow-l :flex 22) (:thigh-r :flex 18) (:thigh-l :flex -16))
+  ;; R 92/0, L -92/0
+  (17 :snap (:root :u 0.02 :f 0.2 :yaw 200) (:spine :flex 4) (:chest :twist 0) (:arm-r :flex -2 :side 90)
+   (:elbow-r :flex 6) (:arm-l :flex -2 :side 90) (:elbow-l :flex 6) (:thigh-r :flex -6) (:thigh-l :flex 6))
+  ;; R 118/8, L -14/0
+  (:s :snap (:root :f 0.62 :u -0.04 :yaw 10) (:spine :flex 12) (:chest :twist -10) (:arm-r :flex -27.7 :side 99)
+   (:elbow-r :flex 10) (:arm-l :flex 76 :side 90) (:elbow-l :flex 4) (:thigh-r :flex -20) (:thigh-l :flex 28))
+  ;; R 122/6, L -7/-3
+  (:a (:root :f 0.64 :u -0.04 :yaw -14) (:spine :flex 12) (:chest :twist -18) (:arm-r :flex -31.8 :side 97.1)
+   (:elbow-r :flex 10) (:arm-l :flex 82.4 :side 66.7) (:elbow-l :flex 4) (:thigh-r :flex -20) (:thigh-l :flex 28))
+  ;; R 118/0, L 24/-14
+  (31 (:root :f 0.55 :u -0.03 :yaw -24) (:spine :flex 10) (:chest :twist -22) (:arm-r :flex -28 :side 90)
+   (:elbow-r :flex 10) (:arm-l :flex 117.6 :side 121.5) (:elbow-l :flex 10) (:thigh-r :flex -14) (:thigh-l :flex 22))
+  (:end :lb-w-stance))
+(defstrike :lb-w-f3 (21 5 34 :base :lb-w-stance)   ; K3 昇翼: crouched, both wings swept low behind, a rising cleave into the air, the landing
+  (0)
+  ;; R 150/-28, L -150/-28
+  (13 (:root :u -0.2 :pitch 10 :f -0.05) (:spine :flex 22) (:head :flex 6) (:arm-r :flex -49.9 :side 43.2)
+   (:elbow-r :flex 20) (:arm-l :flex -49.9 :side 43.2) (:elbow-l :flex 20) (:thigh-r :flex 28) (:thigh-l :flex 22))
+  ;; R 110/-40, L -110/-40
+  (18 (:root :u -0.16 :pitch 8 :f 0.1) (:spine :flex 18) (:arm-r :flex -15.2 :side 48.2) (:elbow-r :flex 10)
+   (:arm-l :flex -15.2 :side 48.2) (:elbow-l :flex 10) (:thigh-r :flex 26) (:thigh-l :flex 10))
+  (:s :snap (:root :f 0.72 :u 0.12 :pitch -2) (:spine :flex 6) (:arm-r :flex 81.8 :side 104.1) (:elbow-r :flex 4)
+   (:arm-l :flex 81.8 :side 104.1) (:elbow-l :flex 4) (:thigh-r :flex 22) (:thigh-l :flex -14))   ; R 8/2, L -8/2
+  (:a (:root :f 0.7 :u 0.34 :pitch -6) (:spine :flex -4) (:arm-r :flex 47.7 :side 173.4) (:elbow-r :flex 4)
+   (:arm-l :flex 47.7 :side 173.4) (:elbow-l :flex 4) (:thigh-r :flex 30) (:thigh-l :flex 10))   ; R 6/42, L -6/42
+  ;; R 5/78, L -5/78
+  (33 (:root :f 0.55 :u 0.5 :pitch -8) (:spine :flex -10) (:head :flex -6) (:arm-r :flex 12 :side 178.9)
+   (:elbow-r :flex 8) (:arm-l :flex 12 :side 178.9) (:elbow-l :flex 8) (:thigh-r :flex 40) (:thigh-l :flex 30))
+  (41 :snap (:root :f 0.4 :u -0.16 :pitch 10) (:spine :flex 22) (:arm-r :flex 53.4 :side 33) (:elbow-r :flex 8)
+   (:arm-l :flex 53.4 :side 33) (:elbow-l :flex 8) (:thigh-r :flex 26) (:thigh-l :flex -24))   ; R 22/-30, L -22/-30
+  (47 (:root :f 0.36 :u -0.12 :pitch 8) (:spine :flex 18) (:arm-r :flex 43 :side 32.6) (:elbow-r :flex 10)
+   (:arm-l :flex 43 :side 32.6) (:elbow-l :flex 10) (:thigh-r :flex 24) (:thigh-l :flex -20))   ; R 30/-38, L -30/-38
+  (:end :lb-w-stance))
+(defstrike :lb-e-q1 (4 3 6 :base :lb-w-stance)   ; EN J1: the right wing raised high, thrown down along the line (the cast)
+  (0)
+  (2 (:root :u 0.06 :pitch -6) (:spine :flex -8) (:chest :twist -16) (:arm-r :flex -8.5 :side 145.9)
+   (:elbow-r :flex 24) (:arm-l :flex -5 :side 84) (:elbow-l :flex 4))   ; R 105/55, L -95/-6
+  (3 (:root :u 0.07 :pitch -7) (:spine :flex -9) (:chest :twist -18) (:arm-r :flex -9.8 :side 151.5)
+   (:elbow-r :flex 26) (:arm-l :flex -5 :side 84) (:elbow-l :flex 4))   ; R 110/60, L -95/-6
+  (:s :snap (:root :f 0.12 :u -0.03 :pitch 6) (:spine :flex 14) (:chest :twist 12) (:arm-r :flex 69.5 :side 60.3)
+   (:elbow-r :flex 4) (:arm-l :flex -9.7 :side 75.8) (:elbow-l :flex 4))   ; R 18/-10, L -100/-14
+  (:a (:root :f 0.1 :u -0.03 :pitch 6) (:spine :flex 16) (:chest :twist 14) (:arm-r :flex 57.9 :side 3.2)
+   (:elbow-r :flex 4) (:arm-l :flex -13.6 :side 75.6) (:elbow-l :flex 4))   ; R 2/-32, L -104/-14
+  (10 (:root :f 0.08 :u -0.02 :pitch 4) (:spine :flex 12) (:chest :twist 10) (:arm-r :flex 40.8 :side -18.3)
+   (:elbow-r :flex 8) (:arm-l :flex -9.8 :side 77.8) (:elbow-l :flex 4))   ; R -20/-46, L -100/-12
+  (:end :lb-w-stance))
+(defstrike :lb-e-q2 (4 3 6 :base :lb-w-stance)   ; EN J2: the mirror, the left wing
+  (0)
+  (2 (:root :u 0.06 :pitch -6) (:spine :flex -8) (:chest :twist 16) (:arm-r :flex -5 :side 84) (:elbow-r :flex 4)
+   (:arm-l :flex -8.5 :side 145.9) (:elbow-l :flex 24))   ; R 95/-6, L -105/55
+  (3 (:root :u 0.07 :pitch -7) (:spine :flex -9) (:chest :twist 18) (:arm-r :flex -5 :side 84) (:elbow-r :flex 4)
+   (:arm-l :flex -9.8 :side 151.5) (:elbow-l :flex 26))   ; R 95/-6, L -110/60
+  (:s :snap (:root :f 0.12 :u -0.03 :pitch 6) (:spine :flex 14) (:chest :twist -12) (:arm-r :flex -9.7 :side 75.8)
+   (:elbow-r :flex 4) (:arm-l :flex 69.5 :side 60.3) (:elbow-l :flex 4))   ; R 100/-14, L -18/-10
+  (:a (:root :f 0.1 :u -0.03 :pitch 6) (:spine :flex 16) (:chest :twist -14) (:arm-r :flex -13.6 :side 75.6)
+   (:elbow-r :flex 4) (:arm-l :flex 57.9 :side 3.2) (:elbow-l :flex 4))   ; R 104/-14, L -2/-32
+  (10 (:root :f 0.08 :u -0.02 :pitch 4) (:spine :flex 12) (:chest :twist -10) (:arm-r :flex -9.8 :side 77.8)
+   (:elbow-r :flex 4) (:arm-l :flex 40.8 :side -18.3) (:elbow-l :flex 8))   ; R 100/-12, L 20/-46
+  (:end :lb-w-stance))
+(defstrike :lb-e-q3 (5 3 9 :base :lb-w-stance)   ; EN J3: both wings raised, crossed down onto the line
+  (0)
+  (3 (:root :u 0.08 :pitch -8) (:spine :flex -10) (:arm-r :flex 18.1 :side 161) (:elbow-r :flex 20)
+   (:arm-l :flex 18.1 :side 161) (:elbow-l :flex 20))   ; R 45/64, L -45/64
+  (4 (:root :u 0.09 :pitch -9) (:spine :flex -11) (:arm-r :flex 14.7 :side 166.3) (:elbow-r :flex 22)
+   (:arm-l :flex 14.7 :side 166.3) (:elbow-l :flex 22))   ; R 42/70, L -42/70
+  (:s :snap (:root :f 0.4 :u -0.04 :pitch 8) (:spine :flex 16) (:arm-r :flex 104.4 :side 146.8) (:elbow-r :flex 4)
+   (:arm-l :flex 104.4 :side 146.8) (:elbow-l :flex 4))   ; R -8/-12, L 8/-12
+  (:a (:root :f 0.36 :u -0.04 :pitch 8) (:spine :flex 18) (:arm-r :flex 131.8 :side 147) (:elbow-r :flex 4)
+   (:arm-l :flex 131.8 :side 147) (:elbow-l :flex 4))   ; R -26/-34, L 26/-34
+  (12 (:root :f 0.08 :u -0.03 :pitch 6) (:spine :flex 14) (:arm-r :flex 149.2 :side 149.9) (:elbow-r :flex 10)
+   (:arm-l :flex 149.2 :side 149.9) (:elbow-l :flex 10))   ; R -40/-48, L 40/-48
+  (:end :lb-w-stance))
+(defstrike :lb-e-f1 (9 4 10 :base :lb-w-stance)   ; EN K1: a whirl, the right wing fanning low across the front (the three lines)
+  (0)
+  (2 (:root :yaw -50) (:spine :flex 6) (:chest :twist -16) (:arm-r :flex -19.5 :side 102.7) (:elbow-r :flex 20)
+   (:arm-l :flex 33.5 :side 109.3) (:elbow-l :flex 20))   ; R 110/12, L -55/16
+  (2.5 (:root :yaw -52) (:spine :flex 6) (:chest :twist -17) (:arm-r :flex -21.5 :side 102.9) (:elbow-r :flex 20)
+   (:arm-l :flex 34.4 :side 109.5) (:elbow-l :flex 20))   ; R 112/12, L -54/16
+  (2.5001 :snap (:root :yaw -412) (:spine :flex 6) (:chest :twist -17) (:arm-r :flex -21.5 :side 102.9)
+   (:elbow-r :flex 20) (:arm-l :flex 34.4 :side 109.5) (:elbow-l :flex 20))   ; R 112/12, L -54/16
+  (6 :snap (:root :yaw -200) (:spine :flex 4) (:chest :twist 0) (:arm-r :flex -5 :side 86) (:elbow-r :flex 6)
+   (:arm-l :flex -5 :side 86) (:elbow-l :flex 6))   ; R 95/-4, L -95/-4
+  (:s :snap (:root :f 0.72 :pitch 6 :yaw -8) (:spine :flex 12) (:chest :twist 10) (:arm-r :flex 59 :side 74.3)
+   (:elbow-r :flex 4) (:arm-l :flex -29.9 :side 94.6) (:elbow-l :flex 10))   ; R 30/-8, L -120/4
+  (:a (:root :f 0.66 :pitch 6 :yaw 10) (:spine :flex 12) (:chest :twist 18) (:arm-r :flex 73.7 :side 10.3)
+   (:elbow-r :flex 4) (:arm-l :flex -31.9 :side 94.7) (:elbow-l :flex 10))   ; R 3/-16, L -122/4
+  (17 (:root :f 0.4 :pitch 4 :yaw 18) (:spine :flex 10) (:chest :twist 20) (:arm-r :flex 57.9 :side -40.1)
+   (:elbow-r :flex 10) (:arm-l :flex -28 :side 90) (:elbow-l :flex 10))   ; R -22/-24, L -118/0
+  (:end :lb-w-stance))
+(defstrike :lb-e-f2 (10 4 12 :base :lb-w-stance)   ; EN K2: the counter-whirl (entered at f3), the left wing
+  (0)
+  (3 (:root :yaw 30) (:spine :flex 4) (:chest :twist 10) (:arm-r :flex 33.5 :side 109.3) (:elbow-r :flex 16)
+   (:arm-l :flex -9.8 :side 100.2) (:elbow-l :flex 16))   ; R 55/16, L -100/10
+  (4 (:root :yaw 50) (:spine :flex 6) (:chest :twist 16) (:arm-r :flex 33.5 :side 109.3) (:elbow-r :flex 20)
+   (:arm-l :flex -19.5 :side 102.7) (:elbow-l :flex 20))   ; R 55/16, L -110/12
+  (4.5 (:root :yaw 52) (:spine :flex 6) (:chest :twist 17) (:arm-r :flex 34.4 :side 109.5) (:elbow-r :flex 20)
+   (:arm-l :flex -21.5 :side 102.9) (:elbow-l :flex 20))   ; R 54/16, L -112/12
+  (4.5001 :snap (:root :yaw 412) (:spine :flex 6) (:chest :twist 17) (:arm-r :flex 34.4 :side 109.5)
+   (:elbow-r :flex 20) (:arm-l :flex -21.5 :side 102.9) (:elbow-l :flex 20))   ; R 54/16, L -112/12
+  (7 :snap (:root :yaw 200) (:spine :flex 4) (:chest :twist 0) (:arm-r :flex -5 :side 86) (:elbow-r :flex 6)
+   (:arm-l :flex -5 :side 86) (:elbow-l :flex 6))   ; R 95/-4, L -95/-4
+  (:s :snap (:root :f 0.72 :pitch 6 :yaw 8) (:spine :flex 12) (:chest :twist -10) (:arm-r :flex -29.9 :side 94.6)
+   (:elbow-r :flex 10) (:arm-l :flex 59 :side 74.3) (:elbow-l :flex 4))   ; R 120/4, L -30/-8
+  (:a (:root :f 0.66 :pitch 6 :yaw -10) (:spine :flex 12) (:chest :twist -18) (:arm-r :flex -31.9 :side 94.7)
+   (:elbow-r :flex 10) (:arm-l :flex 73.7 :side 10.3) (:elbow-l :flex 4))   ; R 122/4, L -3/-16
+  (18 (:root :f 0.4 :pitch 4 :yaw -18) (:spine :flex 10) (:chest :twist -20) (:arm-r :flex -28 :side 90)
+   (:elbow-r :flex 10) (:arm-l :flex 57.9 :side -40.1) (:elbow-l :flex 10))   ; R 118/0, L 22/-24
+  (:end :lb-w-stance))
+(defstrike :lb-e-f3 (11 5 17 :base :lb-w-stance)   ; EN K3: rising, both wings overhead, slammed down onto the line (the landing)
+  (0)
+  (4 (:root :u 0.08) (:spine :flex -4) (:arm-r :flex 22.5 :side 134.1) (:elbow-r :flex 20)
+   (:arm-l :flex 22.5 :side 134.1) (:elbow-l :flex 20))   ; R 60/40, L -60/40
+  (8 (:root :u 0.3 :pitch -10) (:spine :flex -10) (:head :flex -8) (:arm-r :flex 10.7 :side 170.9)
+   (:elbow-r :flex 20) (:arm-l :flex 10.7 :side 170.9) (:elbow-l :flex 20))   ; R 40/76, L -40/76
+  (10 (:root :u 0.34 :pitch -11) (:spine :flex -11) (:head :flex -8) (:arm-r :flex 6.5 :side 175.3)
+   (:elbow-r :flex 24) (:arm-l :flex 6.5 :side 175.3) (:elbow-l :flex 24))   ; R 36/82, L -36/82
+  (:s :snap (:root :f 0.9 :u -0.1 :pitch 8) (:spine :flex 16) (:arm-r :flex 99.4 :side 211.8) (:elbow-r :flex 4)
+   (:arm-l :flex 99.4 :side 211.8) (:elbow-l :flex 4))   ; R 5/-8, L -5/-8
+  (:a (:root :f 0.7 :u -0.2 :pitch 10) (:spine :flex 20) (:arm-r :flex 130.2 :side 184.8) (:elbow-r :flex 4)
+   (:arm-l :flex 130.2 :side 184.8) (:elbow-l :flex 4))   ; R 4/-40, L -4/-40
+  (22 (:root :f 0.5 :u -0.16 :pitch 8) (:spine :flex 16) (:arm-r :flex 132.3 :side 186.6) (:elbow-r :flex 8)
+   (:arm-l :flex 132.3 :side 186.6) (:elbow-l :flex 8))   ; R 6/-42, L -6/-42
   (:end :lb-w-stance))
 (defpose :lb-w-aim-pose (:base :lb-w-stance)          ; the volley: the wings snapped forward, their holes aimed
   (:arm-r :flex 60 :side 40) (:elbow-r :flex 10) (:arm-l :flex 60 :side 40) (:elbow-l :flex 10) (:head :flex 6))
@@ -1032,6 +1224,28 @@ cocks the joints back and down.")
 (defparameter *lb-strike-out* 12.0 "A strike's recovery: the virtual speed back (m/s, easing out) that throws them forward.")
 (defparameter *lb-fold-curl* 0.38 "MUJITTAI: each joint's curl toward the column (radians; the tip's 1.2 x).")
 (defparameter *lb-furl* 0.55 "An SP / Kikon spread: the joints' furl before they unfurl from the root (radians).")
+;; Decision 50 (2026-10-07, DUEL_LILLE §23.31; the user: 「Jilliel 近戰的動作不太明顯」, then all four directions for both modes,
+;; 「全身出招」「每招獨立造型」「翼尖斬痕」「八翼一起斬」「近戰＋遠程都換」): every J / K of KIN (:lb-w-q1 .. :lb-w-f3) and of EN (its own
+;; casts :lb-e-q1 .. :lb-e-f3) is its own whole-body strike, the striking tips leave a jade smear, and around the hit the six
+;; table wings converge in turn: KIN's round his hit point ahead (a ring at his reach), EN's on the line ahead on the floor (a K's
+;; on its fan of three). All of it a look: the move's frame read for the timing only, never sim state.
+(defparameter *lb-jilliel-strikes* '(:lb-w-q1 :lb-w-q2 :lb-w-q3 :lb-w-f1 :lb-w-f2 :lb-w-f3 :lb-e-q1 :lb-e-q2 :lb-e-q3
+                                     :lb-e-f1 :lb-e-f2 :lb-e-f3)
+  "Jilliel's strike clips (decision 50): KIN's six, EN's six casts. Their moves drive the convergence and the trails.")
+(defparameter *lb-conv-from* -2.0 "The convergence: the first table wing launches this many frames from the strike's S ...")
+(defparameter *lb-conv-step-j* 0.8 "... the next ones in turn this many frames apart (a J; striking side first, top pair down) ...")
+(defparameter *lb-conv-step-k* 1.0 "... (a K) ...")
+(defparameter *lb-conv-ramp* 2.5 "... each reaching its target over this many frames (smoothstep) ...")
+(defparameter *lb-conv-hold* 3.0 "... held this many frames past the active end ...")
+(defparameter *lb-conv-out* 0.5 "... then back to the fan over this share of the recovery.")
+(defparameter *lb-conv-stretch* 1.3 "A converging wing reaches its target, at most this many times its own length.")
+(defparameter *lb-conv-ring* 0.22 "KIN: the six tips meet in a ring this wide (m) round his hit point (his facing x reach - 0.1 m).")
+(defparameter *lb-conv-near* 2.2 "EN: the top pair aims this far ahead on the line (m), each pair below *LB-CONV-GAP* further.")
+(defparameter *lb-conv-gap* 0.9 "EN: (the pairs' spacing along the line, m).")
+(defparameter *lb-jump-jl* 4.0
+  "Jilliel's lag spring jump (m^2; the owl's 1): his spins sweep a tip up to ~1.8 m a frame, still a motion to trail.")
+(defparameter *lb-trail-from* -5 "The tip trails record from this frame of the strike (from S) ...")
+(defparameter *lb-trail-to* 3 "... to its active end + this; else they fade a sample a frame (the smear: %LB-SMEAR).")
 ;; Two fans of four (decision 19; the refs: the upper pair high and out, the lowest pair down and out), rooted behind the
 ;; column's top (the owl: behind the ruff). Per wing, a row of 10 in an f32vec (read in DEFUN-FAST code without consing):
 ;; side, elevation (degrees above the horizontal), length (m), sweep back, where it folds to (MUJITTAI: down round the
@@ -1053,11 +1267,16 @@ cocks the joints back and down.")
   "The owl's eight gold wing blades, two fans of four (+34 / +11 / -11 / -34 degrees a side, long: the refs' wide spread);
 its claws are its hands.")
 (declaim (type f32vec *lb-wings-jl* *lb-wings-owl* *lb-wf* *lb-wm*))
-(defvar *lb-wf* (make-f32 48)
+(defvar *lb-wf* (make-f32 64)
   "The jointed wings' scratch: [0..26] the three segments' unit frames (9 each: X Y Z), [30 31] a tilt's numbers (toward X,
 toward Z), [32..35] the chain's turn (axis, angle); per call (LILLE-DRAW's %LB-DRIVE!): [39] the strike's virtual speed
 (m/s along his facing), [40] the striking front wings (bit 0 right, bit 1 left), [41] 1 on the active frames (straight),
-[42] the spread's unfurl 0..1, [43] the step (s; 0 = no spring step), [44] the strike's share for the other wings.")
+[42] the spread's unfurl 0..1, [43] the step (s; 0 = no spring step), [44] the strike's share for the other wings, [45] the
+lag spring's jump (m^2: a drive point moving further in a frame counts as still; 1 the owl, *LB-JUMP-JL* Jilliel's), and
+for a Jilliel strike (decision 50) [46] its clock (frames since S), [47] 1 = the six table wings converge, [48] 1 = EN (on
+the line ahead) else KIN (round his hit point ahead), [49] 1 = a K (EN: its fan of three lines), [50] A, [51] R, [52] 1 =
+the tip trails record (*LB-TRAIL-FROM* .. A + *LB-TRAIL-TO*), [54] the move's reach; per draw [53] the clip's root turn,
+[59 60] its root f / r (LILLE-DRAW), and %LB-WINGS' [55 56] where he stands, [57 58] his facing (the clip's turn out).")
 (defvar *lb-wm* (make-f32 (* 2 8 9))
   "Per side and wing (9 each): [0..2] its drive point last frame, [3..5] the lag spring's bend (a world vector, radians),
 [6..8] its rate. Cosmetic memory (never sim state).")
@@ -1131,6 +1350,22 @@ with the glow), KIND 0 jade, 1 jade with the holes lit, 2 gold."
        (t (case ,g (0 ,@(pair :lb-wing-gold-0 :lb-wing-gold-rim-0)) (1 ,@(pair :lb-wing-gold-1 :lb-wing-gold-rim-1))
             (t ,@(pair :lb-wing-gold-2 :lb-wing-gold-rim-2)))))))
 
+(defmacro %lb-conv-share (i s mask)
+  "Decision 50: how far table wing I (side S, the strike's front-wing MASK) has converged, 0..1, from *LB-WF* [46 49 50 51]:
+in turn, the striking side first and the top pair down (both sides at once when both front wings strike), each launching
+*LB-CONV-STEP-J* / *-K* frames after the last from *LB-CONV-FROM*, in over *LB-CONV-RAMP*, held to the active end +
+*LB-CONV-HOLD*, out over *LB-CONV-OUT* of the recovery. Single-float forms; 0 B."
+  `(let* ((%w *lb-wf*) (%i ,i) (%s ,s) (%m ,mask) (%q (floor %i 2)) (%p (if (= %q 3) 2 %q))
+          (%rank (+ (* 2 %p) (if (or (= %m 3) (if (= %m 1) (> %s 0f0) (< %s 0f0))) 0 1)))
+          (%t (aref %w 46))
+          (%go (+ (the single-float *lb-conv-from*)
+                  (* (i->f %rank) (if (> (aref %w 49) 0.5f0) (the single-float *lb-conv-step-k*) (the single-float *lb-conv-step-j*)))))
+          (%in (%lb-ss (/ (- %t %go) (the single-float *lb-conv-ramp*))))
+          (%out (%lb-ss (/ (- %t (aref %w 50) (the single-float *lb-conv-hold*))
+                           (f-max 1f0 (* (the single-float *lb-conv-out*) (aref %w 51)))))))
+     (declare (type f32vec %w) (fixnum %i %m %q %p %rank) (single-float %s %t %go %in %out))
+     (* %in (- 1f0 %out))))
+
 (defun-fast %lb-wings (jm o tbl n kind side)
   "N wings of table TBL (rows of 10) from joint frame O of JM, KIND 0 jade, 1 jade with the holes lit, 2 gold, for SIDE's
 fighter: their root (the joint's local point, each side 0.07 m out) in *LB-V* [0..2], the fold [11], the ripple [12] at the
@@ -1167,6 +1402,14 @@ test reads (*LB-STRIKE-POINTS*), its jointed chain turned and stretched to end t
     (declare (type f32vec v w mm) (fixnum pairs from mask)
              (single-float k j rip tm a lk sp sb rx ry rz xx xy xz yx yy yz zx zy zz xl zl fx fy fz sx sy sz yl su vx0 vy0 vz0 vl dvx dvy dvz vb u dt tsc rise c1 c2
                            gl lm wa wc ws wl fc fu))
+    (when (> (aref w 47) 0.5f0)                         ; decision 50: where he stands and faces, the clip's root offset and
+      (let* ((pfx (- (aref jm 8))) (pfz (- (aref jm 10)))   ; turn taken out (its spins): [55 56] x z, [57 58] the facing
+             (pfl (f-max 1f-5 (f-sqrt (+ (* pfx pfx) (* pfz pfz))))) (ux (/ pfx pfl)) (uz (/ pfz pfl))
+             (ry (aref w 53)) (cr (f-cos ry)) (sr (f-sin ry)))
+        (declare (single-float pfx pfz pfl ux uz ry cr sr))
+        (setf (aref w 55) (- (aref jm 12) (* (aref w 59) ux) (* (aref w 60) (- uz)))
+              (aref w 56) (- (aref jm 14) (* (aref w 59) uz) (* (aref w 60) ux))
+              (aref w 57) (- (* ux cr) (* uz sr)) (aref w 58) (+ (* ux sr) (* uz cr)))))
     (dotimes (i n)
       (when (<= from (floor i 2) (1- pairs))
         (let* ((r (* 10 i)) (s (aref tbl r)) (lx (+ rx (* 0.07f0 s)))
@@ -1203,14 +1446,39 @@ test reads (*LB-STRIKE-POINTS*), its jointed chain turned and stretched to end t
                      (dz (+ (* xz lx2) (* yz ly2) (* zz lz2))) (dl (f-max 1f-5 (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
                      (ln (* lk (aref tbl (+ r 2)) (- 1f0 (* 0.15f0 k)) (- 1f0 (* 0.2f0 sb)))))
                 (declare (single-float e ax ay az lx2 ly2 lz2 fl nlx nlz dx dy dz dl ln))
-                (%lb-basis! w 0 (/ dx dl) (/ dy dl) (/ dz dl)
-                            (+ (* xx nlx) (* zx nlz)) (+ (* xy nlx) (* zy nlz)) (+ (* xz nlx) (* zz nlz)))
-                (setf len ln wd ln px (+ ox (* ln (aref w 3))) py (+ oy (* ln (aref w 4))) pz (+ oz (* ln (aref w 5))))))
+                ;; decision 50: converging in turn (C 0..1), round his hit point (KIN) or on the line ahead (EN): the blade
+                ;; turned from its fan place toward its target T, stretched to reach it, its face turned to his side
+                (let* ((c (if (> (aref w 47) 0.5f0) (%lb-conv-share i s mask) 0f0)) (c1 (- 1f0 c))
+                       (pr (let ((q (floor i 2))) (if (= q 3) 2 q))) (en (> (aref w 48) 0.5f0))
+                       (dist (if en (+ (the single-float *lb-conv-near*) (* (the single-float *lb-conv-gap*) (i->f pr)))
+                                 (- (aref w 54) 0.1f0)))                       ; (EN: along the line; KIN: his reach)
+                       (lat (if en (* s (if (and (> (aref w 49) 0.5f0) (> pr 0)) (* 0.105f0 dist) 0.08f0)) 0f0))
+                       (rg (if en 0f0 (the single-float *lb-conv-ring*)))
+                       (qx (* rg s (case pr (0 0.6f0) (1 1f0) (t 0.6f0)))) (qy (* rg (case pr (0 0.8f0) (1 0.1f0) (t -0.8f0))))
+                       (yl1 (/ 1f0 yl))
+                       (tx (+ (aref w 55) (* dist (aref w 57)) (* lat (- (aref w 58))) (* qx sx) (* qy yx yl1)))
+                       (ty (if en (+ (aref v 3) 0.03f0) (+ (- (aref jm (+ (* 16 (ji :chest)) 13)) 0.12f0) (* qx sy) (* qy yy yl1))))
+                       (tz (+ (aref w 56) (* dist (aref w 58)) (* lat (aref w 57)) (* qx sz) (* qy yz yl1)))
+                       (gx (- tx ox)) (gy (- ty oy)) (gz (- tz oz)) (gl (f-max 1f-3 (f-sqrt (+ (* gx gx) (* gy gy) (* gz gz)))))
+                       (bx (+ (* c1 (/ dx dl)) (* c (/ gx gl)))) (by (+ (* c1 (/ dy dl)) (* c (/ gy gl))))
+                       (bz (+ (* c1 (/ dz dl)) (* c (/ gz gl))))
+                       (bl (f-max 1f-5 (f-sqrt (+ (* bx bx) (* by by) (* bz bz)))))
+                       (l2 (+ (* c1 ln) (* c (f-min gl (* (the single-float *lb-conv-stretch*) ln))))))
+                  (declare (single-float c c1 dist lat rg qx qy yl1 tx ty tz gx gy gz gl bx by bz bl l2) (fixnum pr))
+                  (if (> c 0f0)
+                      (%lb-basis! w 0 (/ bx bl) (/ by bl) (/ bz bl)
+                                  (+ (* c1 (+ (* xx nlx) (* zx nlz))) (* c fl sx)) (+ (* c1 (+ (* xy nlx) (* zy nlz))) (* c fl sy))
+                                  (+ (* c1 (+ (* xz nlx) (* zz nlz))) (* c fl sz)))
+                      (%lb-basis! w 0 (/ dx dl) (/ dy dl) (/ dz dl)
+                                  (+ (* xx nlx) (* zx nlz)) (+ (* xy nlx) (* zy nlz)) (+ (* xz nlx) (* zz nlz))))
+                  (let ((lq (if (> c 0f0) l2 ln)))
+                    (declare (single-float lq))
+                    (setf len lq wd ln px (+ ox (* lq (aref w 3))) py (+ oy (* lq (aref w 4))) pz (+ oz (* lq (aref w 5))))))))
           ;; 2. the lag spring: its target from the drive point's speed and the strike's virtual speed (a free wing's tip
           ;; trails: bend against the motion; a pinned front wing bends with it, so its middle bows behind)
           (when (> dt 0f0)
             (let* ((qx (- px (aref mm mo))) (qy (- py (aref mm (+ mo 1)))) (qz (- pz (aref mm (+ mo 2))))
-                   (iv (if (> (+ (* qx qx) (* qy qy) (* qz qz)) 1f0) 0f0 (/ 1f0 dt)))   ; (a jump: a cut, a reset)
+                   (iv (if (> (+ (* qx qx) (* qy qy) (* qz qz)) (aref w 45)) 0f0 (/ 1f0 dt)))   ; (a jump: a cut, a reset)
                    (sw (if front (if (/= 0 (logand mask (if (> s 0f0) 1 2))) 1f0 0.3f0) tsc))
                    (sg (if front gl (- gl)))
                    (tx (* sg (+ (* qx iv) (* vb sw dvx)))) (ty (* sg (+ (* qy iv) (* vb sw dvy)))) (tz (* sg (+ (* qz iv) (* vb sw dvz))))
@@ -1269,13 +1537,14 @@ test reads (*LB-STRIKE-POINTS*), its jointed chain turned and stretched to end t
     nil))
 
 (defmacro %lb-drive! (f mv rdt owl)
-  "Set *LB-WF* [39..44], the jointed wings' drive for F's draw (MV his move or nil, RDT the step, OWL the owl's wings): in a
+  "Set *LB-WF* [39..52], the jointed wings' drive for F's draw (MV his move or nil, RDT the step, OWL the owl's wings): in a
 strike (a move's main phase with active frames, not an SP or Kikon) the wind-up's virtual speed rising to *LB-STRIKE-IN*,
 the active frames' straight flag, the recovery's virtual speed back (*LB-STRIKE-OUT*, easing out); which front wings strike
-(J1 / K1's clip the right, J2 / K2's the left, the rest both); the other wings' share (Jilliel's 0.35, the owl's 0.7).
-Reads the move's frame only for the look. 0 B."
-  `(let ((%w *lb-wf*) (%f ,f) (%mv ,mv) (%vb 0f0) (%act 0f0) (%mask 3))
-     (declare (type f32vec %w) (single-float %vb %act) (fixnum %mask))
+(J1 / K1's clip the right, J2 / K2's the left, the rest both); the other wings' share (Jilliel's 0.35, the owl's 0.7); the lag
+spring's jump (the owl's 1 m^2, Jilliel's *LB-JUMP-JL*); in a Jilliel strike (*LB-JILLIEL-STRIKES*, decision 50) the
+convergence's clock and kind and the trails' window. Reads the move's frame only for the look. 0 B."
+  `(let ((%w *lb-wf*) (%f ,f) (%mv ,mv) (%vb 0f0) (%act 0f0) (%mask 3) (%cv 0f0) (%tr 0f0))
+     (declare (type f32vec %w) (single-float %vb %act %cv %tr) (fixnum %mask))
      (when (and %mv (eq (fighter-phase %f) :main) (> (the fixnum (mv-a %mv)) 0) (not (member (mv-kind %mv) '(:sp :kikon))))
        (let ((%sf (fighter-sf %f)) (%s (mv-s %mv)) (%a (mv-a %mv)) (%r (mv-r %mv)))
          (declare (fixnum %sf %s %a %r))
@@ -1284,9 +1553,92 @@ Reads the move's frame only for the look. 0 B."
                (t (let ((%u (f-min 1f0 (/ (i->f (- %sf %s %a)) (i->f (max 1 %r))))))
                     (declare (single-float %u))
                     (setf %vb (- (* (the single-float *lb-strike-out*) (- 1f0 %u) (- 1f0 %u)))))))
-         (setf %mask (case (mv-clip %mv) ((:lb-w-q1 :lb-w-f1) 1) ((:lb-w-q2 :lb-w-f2) 2) (t 3)))))
+         (setf %mask (case (mv-clip %mv) ((:lb-w-q1 :lb-w-f1 :lb-e-q1 :lb-e-f1) 1) ((:lb-w-q2 :lb-w-f2 :lb-e-q2 :lb-e-f2) 2) (t 3)))
+         (when (and (not ,owl) (member (mv-clip %mv) *lb-jilliel-strikes*))   ; decision 50
+           (setf %cv 1f0
+                 %tr (if (<= (+ %s (the fixnum *lb-trail-from*)) %sf (+ %s %a (the fixnum *lb-trail-to*) -1)) 1f0 0f0)
+                 (aref %w 46) (i->f (- %sf %s))
+                 (aref %w 48) (if (member (mv-clip %mv) '(:lb-e-q1 :lb-e-q2 :lb-e-q3 :lb-e-f1 :lb-e-f2 :lb-e-f3)) 1f0 0f0)
+                 (aref %w 49) (if (eq (mv-kind %mv) :flash) 1f0 0f0) (aref %w 50) (i->f %a) (aref %w 51) (i->f %r)
+                 (aref %w 54) (let ((%rc (mv-reach %mv))) (if (typep %rc 'single-float) %rc 2f0))))))
      (setf (aref %w 39) %vb (aref %w 40) (i->f %mask) (aref %w 41) %act
-           (aref %w 43) (f-min ,rdt 0.034f0) (aref %w 44) (if ,owl 0.7f0 0.35f0))))
+           (aref %w 43) (f-min ,rdt 0.034f0) (aref %w 44) (if ,owl 0.7f0 0.35f0)
+           (aref %w 45) (if ,owl 1f0 (the single-float *lb-jump-jl*)) (aref %w 47) %cv (aref %w 52) %tr)))
+
+;; 翼尖斬痕 the wing-tip slash trails (decision 50): per side and front wing a sword trail (the engine's +TRAIL-N+ samples:
+;; the elbow -> the hand, i.e. the wing's outer stretch) recorded through the strike's window (*LB-WF* [52]) while the tip
+;; moves, faded a sample a frame after (%LB-TRAIL-DROP); drawn as the duel's smear (vfx.lisp's VFX-SMEAR: a comet crescent through the 0.7
+;; points of the last samples, re-captured on the fx clock's drawings) in jade.
+(defparameter *lb-smear-at* 0.85 "The jade smear runs through this point of each sample's elbow -> hand (the wing's tip end) ...")
+(defparameter *lb-smear-w* 0.14 "... its half-width this share of the newest sample's elbow -> hand length ...")
+(defparameter *lb-smear-k* 0.7 "... and its presence (toon alpha).")
+(defvar *lb-trails* (let ((v (make-array 4))) (dotimes (i 4 v) (setf (svref v i) (make-trail))))
+  "The tip trails: side x 2 + wing (0 the right front wing, 1 the left).")
+(defvar *lb-smears* (let ((v (make-array 4))) (dotimes (i 4 v) (setf (svref v i) (make-f32 12))))
+  "Their smears' state (VFX-SMEAR's SM: x0 y0 z0 x1 y1 z1 bx by bz, half-width, drawing, presence).")
+(defmacro %lb-trail-drop (tr n)
+  "Drop trail TR's oldest of its N samples (an explicit forward copy: REPLACE of a vector onto itself allocates). 0 B."
+  `(let ((%tr ,tr) (%n ,n))
+     (declare (type f32vec %tr) (fixnum %n))
+     (dotimes (%i (* 6 (1- %n))) (setf (aref %tr %i) (aref %tr (+ %i 6))))
+     (setf (trail-count %tr) (i->f (1- %n)))))
+(defmacro %lb-trail-push (tr bx by bz tx ty tz)
+  "TRAIL-PUSH as a macro (a DEFUN-FAST call boxes its floats): one sample, the oldest dropped when full. 0 B."
+  `(let* ((%tr ,tr) (%n (f->i (trail-count %tr))))
+     (declare (type f32vec %tr) (fixnum %n))
+     (when (>= %n +trail-n+)
+       (%lb-trail-drop %tr %n)
+       (setf %n (1- +trail-n+)))
+     (let ((%o (* 6 %n)))
+       (declare (fixnum %o))
+       (setf (aref %tr %o) ,bx (aref %tr (+ %o 1)) ,by (aref %tr (+ %o 2)) ,bz
+             (aref %tr (+ %o 3)) ,tx (aref %tr (+ %o 4)) ,ty (aref %tr (+ %o 5)) ,tz
+             (trail-count %tr) (i->f (1+ %n))))))
+(defun-fast %lb-smear (tr sm)
+  "VFX-SMEAR's comet (vfx.lisp) in jade, through *LB-SMEAR-AT*, *LB-SMEAR-W* wide: captured from trail TR into SM on each new drawing. 0 B."
+  (declare (type f32vec tr sm))
+  (let* ((n (f->i (trail-count tr))) (dr (drawing-no)))
+    (declare (fixnum n) (single-float dr))
+    (when (/= (aref sm 10) dr)                          ; a new drawing: re-capture from the trail
+      (setf (aref sm 10) dr (aref sm 11) 0f0)
+      (when (>= n 3)
+        (let* ((i0 (max 0 (- n 5))) (im (floor (+ i0 n -1) 2)) (i1 (1- n)) (o0 (* 6 i0)) (om (* 6 im)) (o1 (* 6 i1)))
+          (declare (fixnum i0 im i1 o0 om o1))
+          (dotimes (c 3)
+            (let* ((u (the single-float *lb-smear-at*))
+                   (p0 (+ (aref tr (+ o0 c)) (* u (- (aref tr (+ o0 c 3)) (aref tr (+ o0 c))))))
+                   (pm (+ (aref tr (+ om c)) (* u (- (aref tr (+ om c 3)) (aref tr (+ om c))))))
+                   (p1 (+ (aref tr (+ o1 c)) (* u (- (aref tr (+ o1 c 3)) (aref tr (+ o1 c)))))))
+              (declare (single-float u p0 pm p1))
+              (setf (aref sm c) p0 (aref sm (+ c 3)) p1 (aref sm (+ c 6)) (- (* 2f0 pm) (* 0.5f0 (+ p0 p1))))))
+          (let* ((lx (- (aref tr (+ o1 3)) (aref tr o1))) (ly (- (aref tr (+ o1 4)) (aref tr (+ o1 1))))
+                 (lz (- (aref tr (+ o1 5)) (aref tr (+ o1 2)))))
+            (declare (single-float lx ly lz))
+            (setf (aref sm 9) (* (the single-float *lb-smear-w*) (f-sqrt (+ (* lx lx) (* ly ly) (* lz lz))))
+                  (aref sm 11) (* (the single-float *lb-smear-k*) (if (>= n 5) 1f0 0.65f0)))))))
+    (when (> (aref sm 11) 0f0)
+      (fx-crescent (aref sm 0) (aref sm 1) (aref sm 2) (aref sm 3) (aref sm 4) (aref sm 5) (aref sm 6) (aref sm 7) (aref sm 8)
+                   (aref sm 9) :comet 0.06f0 (+ 17f0 dr) +pal-jade+ (aref sm 11) :push 0.15f0))
+    nil))
+(defun-fast %lb-trails (jm side)
+  "SIDE's two tip trails from JM (decision 50): each striking front wing ([40]'s bits) records its elbow -> hand while the
+strike's window is open ([52]) and the tip moved (a hitstop holds the arc), else fades; then its smear. 0 B."
+  (declare (type f32vec jm) (fixnum side))
+  (let ((w *lb-wf*))
+    (declare (type f32vec w))
+    (dotimes (g 2)
+      (let* ((tr (svref *lb-trails* (+ (* 2 side) g))) (n (f->i (trail-count tr)))
+             (h (if (= g 0) (* 16 (ji :hand-r)) (* 16 (ji :hand-l)))) (b (if (= g 0) (* 16 (ji :lower-arm-r)) (* 16 (ji :lower-arm-l))))
+             (hx (aref jm (+ h 12))) (hy (aref jm (+ h 13))) (hz (aref jm (+ h 14))))
+        (declare (type f32vec tr) (fixnum n h b) (single-float hx hy hz))
+        (if (and (> (aref w 52) 0.5f0) (/= 0 (logand (f->i (aref w 40)) (if (= g 0) 1 2))))
+            (let* ((o (* 6 (max 0 (1- n)))) (qx (- hx (aref tr (+ o 3)))) (qy (- hy (aref tr (+ o 4)))) (qz (- hz (aref tr (+ o 5)))))
+              (declare (fixnum o) (single-float qx qy qz))
+              (when (or (= n 0) (> (+ (* qx qx) (* qy qy) (* qz qz)) 1f-4))
+                (%lb-trail-push tr (aref jm (+ b 12)) (aref jm (+ b 13)) (aref jm (+ b 14)) hx hy hz)))
+            (when (> n 0) (%lb-trail-drop tr n)))
+        (%lb-smear tr (svref *lb-smears* (+ (* 2 side) g))))))
+  nil)
 
 (defmacro %lb-halo (jm o kind lift r)
   "A halo LIFT m above joint frame O of JM (its local up), radius R: KIND 0 Jilliel's wide jade ring, 1 the owl's spiked
@@ -1547,6 +1899,9 @@ or a gold look plays; a fourth in MUJITTAI)."
             (aref v 8) (if (%lb-owl-p form) (lb-fxs side 18) 0f0)
             (aref v 29) (if (%lb-owl-p form) (- 1f0 (lb-fxs side 18)) 0f0)))
     (%lb-drive! f mv rdt (%lb-owl-p form))               ; the joints' strike drive (cosmetic: the move's frame)
+    (let ((pz (anim-pose (model-anim m))) (w *lb-wf*))   ; (the clip's root turn and offset: decision 50's targets)
+      (declare (type f32vec pz w))
+      (setf (aref w 53) (aref pz 66) (aref w 59) (aref pz 65) (aref w 60) (aref pz 63)))
     (setf (aref v 28) (lb-fxs side 16)
           (aref v 3) (- (aref *toon-body* 1)             ; his body's feet height (DRAW-BODY's) less the form's drawn
                         (the single-float (f32 (body-lift (fighter-kit f) (model-body m))))))   ; lift: the floor
@@ -1578,6 +1933,7 @@ or a gold look plays; a fourth in MUJITTAI)."
                    (setf (aref v 15) 9f0 (aref v 23) pg) (%lb-wings jm o *lb-wings-jl* 8 0 side)
                    (setf (aref v 23) 0f0))
                  (%lb-wings jm o *lb-wings-jl* 8 (if lit 1 0) side))
+             (unless cr (%lb-trails jm side))            ; the tip trails (decision 50)
              (unless cr                                  ; the wide thin halo (the headless column has none)
                (setf (aref v 14) (if stance 0.7f0 1f0))
                (if (and cj (< (the fixnum cj) 160))
