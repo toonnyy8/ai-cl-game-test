@@ -2695,3 +2695,17 @@ Shared-code recommendations kept for the integration:
 
 `drsi.py close-round` wrote `trace_pool/iter01` (best b2a2 0.9996 at depth 2).
 
+### 24.8 Decision 48: b3a2 ships; the integration next (the user, 2026-10-07)
+
+Asked what next with the score saturated, the user chose 「直接進入整合」 and, for his HARD CPU, 「b3a2 風格最多樣」.
+- `duel/lisp/lille.lisp` is now round 1's b3a2 (its CPU code only; the rules are the freeze's), and its LILLE-CPU-TESTS
+  section is spliced into `tests/duel-rules-test.lisp`: duel-rules **6388** ALL PASS, control 89, learn 100, cine 18;
+  pkgcheck 0 / 0 / 0.
+- The final pick at **80 seeds**: **0.9994** (strength 1.000, masher 1.000, signature 0.999), drift 0.465 (the 80-seed
+  reference), pacing all K.O. His damage: trace combos 23.4 %, HOSHA bullets 21.6 % + links 18.4 %, TAISHA 17.6 %,
+  the charged shot 8.7 %, traces 6.7 %, the Kikon 2 %, plain J / K 0.1 %.
+- NORMAL and EASY are the shipped CPU bit for bit (every new rule is a HARD-only level, no new roll), so his six NORMAL
+  pairings are identical to §23.29's gate (LY 177.9, LK 169.3, LR 193.5, LI 203.9, LS 195.6, LL 259.4 s; all K.O.).
+- Next, the integration of §24.1 step 5: the learning CPU's Lille situations, ASSIST AUTO COMBO's signature routes
+  (b3a2's `:sp-ender` already acts for an assisted human), then the full gate.
+
