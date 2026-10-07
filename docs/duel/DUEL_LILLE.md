@@ -214,6 +214,8 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
   onto old traces (decision 44's rule) fires 0.3 for 1 s. §23.27.
 - **46. The slow motions retimed** (the user, 2026-10-07: 「再稍微換一下時緩參數 新軌：0.1 倍速 0.1 秒 舊軌：0.3 倍速 0.3 秒」):
   a fresh trace 0.1 for 0.1 s, old traces 0.3 for 0.3 s. §23.28.
+- **47. The slow motions retimed again** (the user, 2026-10-07: 「再稍微換一下時緩參數 新軌：0.1 倍速 0.2 秒 舊軌：0.2 倍速 0.5 秒」):
+  a fresh trace 0.1 for 0.2 s, old traces 0.2 for 0.5 s. §23.29.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -2391,6 +2393,30 @@ Gates (native, NORMAL; his pairings), seeds 1–20, every match K.O. (before: §
 LI is back inside the window. LR's edge rerun at 60 seeds gives **217.8 s**, every match K.O., Lille 23 / 60. That is
 about the 217.5 s the user accepted (§23.25), but still outside 210, so it is reported to the user. `./build.sh duel`
 0 warnings.
+
+### 23.29 Decision 47: the slow motions retimed again (2026-10-07)
+
+The user's words: 「再稍微換一下時緩參數 新軌：0.1 倍速 0.2 秒 舊軌：0.2 倍速 0.5 秒」.
+- The fresh trace: `*lb-fresh-scale*` stays 0.1, `*lb-fresh-secs*` 0.1 → **0.2**.
+- The old traces: `*lb-cross-scale*` 0.3 → **0.2**, `*lb-cross-secs*` 0.3 → **0.5**.
+- The rules (decisions 44, 45) are unchanged.
+- Real time per slow motion: ~0.18 s for a fresh trace, ~0.4 s for old traces.
+
+Tests: duel-rules 6370 ALL PASS (the four numbers).
+
+Gates (native, NORMAL; his pairings), seeds 1–20, every match K.O. (before: §23.28):
+
+| Pairing | Median (before) | Lille wins / 20 (before) | Blow-aways |
+|---|---|---|---|
+| LY | 177.9 s (165.7) | 9 (13) | 1 |
+| LK | 169.3 s (168.4) | 5 (6) | 43 |
+| LR | **193.5 s** (222.6) | 9 (6) | 12 |
+| LI | 203.9 s (199.1) | 8 (7) | 10 |
+| LS | 195.6 s (196.9) | 8 (11) | 10 |
+| LL | 259.4 s (225.5; mirror, may exceed) | P1 6 / P2 14 | 9 |
+
+Every cross pairing is inside 125–210 s at 20 seeds, so no edge rerun. LR is back inside: the slow motions shift how
+sim frames fall on steps, so the 20-seed medians move by more than the seconds they add. `./build.sh duel` 0 warnings.
 
 ---
 

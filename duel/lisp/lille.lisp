@@ -134,15 +134,16 @@ Decision 39's laying shot (1 damage, a 10 f flinch) is gone: 「我希望去除�
   "A trace laid onto the opponent (its first frame touches him) slows the whole match to this time scale (SLOWMO,
 everyone), whatever other traces he is on (decision 45, the user 2026-10-07: 「如果是才剛新生成的軌道就算重疊也一樣觸發時緩」; the
 0.1 of decision 43: 「抱歉，應該是倍率改 0.1 然後可重複觸發」; a perfect Hoho's is 0.25) ...")
-(defparameter *lb-fresh-secs* 0.1
-  "... for this many real seconds (decision 46, the user 2026-10-07: 「新軌：0.1 倍速 0.1 秒」; 0.3 before, decision 41's; a
-perfect Hoho's 0.45).")
-(defparameter *lb-cross-scale* 0.3
+(defparameter *lb-fresh-secs* 0.2
+  "... for this many real seconds (decision 47, the user 2026-10-07: 「新軌：0.1 倍速 0.2 秒」; decision 46's 0.1, 0.3 before,
+decision 41's; a perfect Hoho's 0.45).")
+(defparameter *lb-cross-scale* 0.2
   "The opponent stepping onto his old (already laid) live traces slows the whole match to this time scale (decision 41,
 the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」, 「全場慢動作」; 0.35 -> 0.5 -> 0.1 (decision 43); decision 45: 「而經過舊軌道
-的時緩參數改成 0.3 倍速持續 1 秒」: 0.3) ...")
-(defparameter *lb-cross-secs* 0.3
-  "... for this many real seconds (decision 46, the user 2026-10-07: 「舊軌：0.3 倍速 0.3 秒」; decision 45's 1.0 before) ...")
+的時緩參數改成 0.3 倍速持續 1 秒」: 0.3; decision 47, the user 2026-10-07: 「舊軌：0.2 倍速 0.5 秒」: 0.2) ...")
+(defparameter *lb-cross-secs* 0.5
+  "... for this many real seconds (decision 47, the user 2026-10-07: 「舊軌：0.2 倍速 0.5 秒」; decision 46's 0.3, decision
+45's 1.0 before) ...")
 (defparameter *lb-cross-off* 10
   "... when he steps onto his live traces from off all of them, after at least this many sim frames off every one (the
 traces count as one region: a K fan, lines laid side by side or a gap he crosses in under this many frames slow it once;
