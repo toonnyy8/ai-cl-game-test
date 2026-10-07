@@ -198,6 +198,9 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
   特效（現在是使用跟審判光明一樣的『沿地面的金色爆炸線』）請改成跟近戰版本一樣」): `lb-materialise` spawns the `:beam` look at
   `:lb-trompete`'s width (1.2) with its explosion sound for an owl SP2 trace; the other owl traces keep 審判光明's ground
   blasts. A look only (the hit is the trace's). Checked in a still against KIN Trompete's.
+- **41. No laying shot; the trace snaps when it materialises; crossing a trace slows the match** (the user, 2026-10-07:
+  「我希望去除掉軌道設置時造成的 1 點傷害，但這樣的話有會很難讓實體化能打中對手，你有什麼好想法嗎？」, then 「C+對手經過軌道的瞬間會有時緩」
+  and 「全場慢動作」). Decision 39 is undone. §23.23.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -2154,6 +2157,50 @@ Asked about decision 39's pacing (LR 229.6 s, LI 216.2 s at 60 seeds; §23.20), 
 pairings are recorded as accepted exceptions (AGENTS.md "Tests and gates"); the 10 f flinch of the laying shot stays.
 The mirror (LL) had one time-out in 20 seeds (§23.21; the gate wants every match K.O.); asked, the user added it:
 「也算進例外」 (2026-10-06): the Lille mirror's time-outs are an accepted exception too.
+
+### 23.23 Decision 41: the snap and the crossing slow motion replace the laying shot (2026-10-07)
+
+The user's words: 「我希望去除掉軌道設置時造成的 1 點傷害，但這樣的話有會很難讓實體化能打中對手，你有什麼好想法嗎？」. The lead
+proposed four ways (A a pierce mark, B a 0-damage flinch, C a snap at materialise, D a slowing zone). The user chose 「C+對手經過軌道的
+瞬間會有時緩」, and for the slow, 「全場慢動作」 (the whole match, like a perfect Hoho's, not only the opponent).
+
+- **The laying shot is gone** (decision 39's `:lb-nick` hazard, `lb-nick-hitwin`, `*lb-nick-dmg*` / `-stun*` / `-guard*`):
+  laying a trace deals nothing and holds nothing.
+- **The snap** (`lb-snap-yaw`, `*lb-snap-max*` **10°**, the lead's number): at TENSHIN's materialise every live trace turns
+  about where it was laid toward the opponent by at most 10°, then hits along the turned line (the look flashes there).
+  At 10 m that is ~1.7 m sideways; a K fan's three lines may all turn onto him, but they are one hit group (hit once).
+- **The crossing slow motion** (`lb-trace-cross` in `lb-hz`'s `:step`, `lb-cross-p`): a live trace tests the opponent's hurt
+  cylinder against its line (the hit's own test) each step; his stepping onto it (on now, off last step; a trace laid
+  on him counts) runs `SLOWMO` for everyone at **0.35** for **0.3 s** of real time (`*lb-cross-scale*`, `*lb-cross-secs*`;
+  a perfect Hoho's is 0.25 for 0.45 s), not again for **30 steps** (`*lb-cross-rearm*`, a K fan or a walk along 16 traces
+  would chain it). The crossed line flares (2.5× width for 24 frames). The sim frames are the same: slow motion only gives
+  a human more real time to press L (a CPU acts in sim frames). All three numbers are the lead's.
+- **His CPU** reads the gap to a trace as it would materialise (`lb-ai-trace-gap` with `lb-snap-yaw`). The combat log's
+  combo opener no longer skips a nick.
+- **The search** (§24): b0a0 / b1a0 were measured on decision 39's rules; b1a0's opener (§24.3) rode the nick's 10 f
+  flinch, which is gone. The paused search restarts from a new freeze on these rules (the evaluator's drift reference
+  and the baseline re-measured).
+
+Tests: duel-rules **6370** ALL PASS (the knobs, the snap's turn and clamp, a snapped line through him, the crossing's edge
+and re-arm; decision 39's hitwin checked gone); control 89, learn 100, cine 18; `tools/pkgcheck.sh duel` 0 / 0 / 0.
+
+Gates (native, NORMAL; only `duel/lisp/lille.lisp` changed, so his pairings): seeds 1–20, every match K.O. (before:
+§23.21, decisions 38 + 39):
+
+| Pairing | Median (before) | Lille wins / 20 (before) | Blow-aways |
+|---|---|---|---|
+| LY | **164.7 s** (173.1) | **10** (13) | 1 |
+| LK | **166.4 s** (182.2) | **10** (6) | 38 |
+| LR | **200.0 s** (223.8) | **7** (6) | 14 |
+| LI | **223.9 s** (219.9) | **6** (8) | 15 |
+| LS | **194.0 s** (206.3) | **12** (6) | 11 |
+| LL | 231.1 s (239.5; mirror, one time-out before) | P1 12 / P2 8 | 11 |
+
+LR is back inside the window (the 10 f flinch had lengthened it, §23.20). LI's edge rerun at 60 seeds: **212.1 s** (§23.20:
+216.2 s), every match K.O., Lille **12 / 60** (24): still just past 210 s, inside the accepted exception (§23.22), so
+reported, not retuned. Without the nick's flinch he wins less against Ichigo. The mirror had no time-out in 20.
+`./build.sh duel` 0 warnings; the page starts with no error (`tools/run.mjs`, 6 s). The awaken A/B was not re-run (as for
+decision 39). Slow motion leaves every sim frame as it was; its feel (0.35 / 0.3 s / 30 steps) needs the user's playtest.
 
 ---
 

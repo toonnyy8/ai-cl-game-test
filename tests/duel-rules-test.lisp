@@ -2154,10 +2154,24 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (equal (lb-trace-pick (lb-trace-fans :k) 2) (list (- *lb-trace-fan*) 0.0))
               (equal (lb-trace-pick (lb-trace-fans :k) 1) '(0.0)) (null (lb-trace-pick (lb-trace-fans :k) 0))
               (equal (lb-trace-pick (lb-trace-fans :j) 1) '(0.0)) (null (lb-trace-pick (lb-trace-fans :j) 0))
-              (lb-en-dry-p 2.9) (not (lb-en-dry-p 3.0)) (let ((nw (lb-nick-hitwin))) (and (= 1 (hw-dmg nw)) (eq :flinch (hw-react nw)) (= 10 (hw-stun nw)) (zerop (hw-hs nw)) (null (hw-chip nw)) (= 2 (hw-guard nw)) (member :ranged (hw-flags nw)) (not (member :x-axis (hw-flags nw))))) (~= 4.0 *lb-trace-refund*) (~= 4.0 (lb-trace-refund :hit)) (~= 2.0 (lb-trace-refund :block)) (~= 2.0 *lb-trace-refund-block*)
+              (lb-en-dry-p 2.9) (not (lb-en-dry-p 3.0)) (not (fboundp 'lb-nick-hitwin)) (~= 4.0 *lb-trace-refund*) (~= 4.0 (lb-trace-refund :hit)) (~= 2.0 (lb-trace-refund :block)) (~= 2.0 *lb-trace-refund-block*)
               (zerop (lb-trace-refund nil))))
   ;; a K fan is one hit group (LB-EN-LAY's MAKE-HIT-GROUP 1 when the fan has more than one line): its refund once
   (check (and (rest (lb-trace-fans :k)) (null (rest (lb-trace-fans :j))) (null (rest (lb-trace-fans :sp1))))))
+
+;; decision 41 (the user 2026-10-07): no laying shot; a trace materialising turns toward him by at most 10 degrees; his
+;; crossing onto a live trace slows the match (0.35 for 0.3 s, re-armed after 30 steps)
+(check (and (~= 10.0 *lb-snap-max*) (~= 0.35 *lb-cross-scale*) (~= 0.3 *lb-cross-secs*) (= 30 *lb-cross-rearm*)
+            ;; facing -z (yaw 0): him 10 m ahead, 1 m to the side (5.7 deg) -> the line turns onto him; 3 m to the side
+            ;; (16.7 deg) -> 10 deg only; behind his back -> 10 deg; on the pivot -> unchanged
+            (let ((y (lb-snap-yaw 0.0 0.0 0.0 1.0 -10.0))) (~= y (dir-yaw 1.0 -10.0)))
+            (let ((y (lb-snap-yaw 0.0 0.0 0.0 3.0 -10.0))) (~= (abs y) (deg 10.0)))
+            (let ((y (lb-snap-yaw 0.0 0.0 0.0 0.5 10.0))) (~= (abs y) (deg 10.0)))
+            (~= 0.3 (lb-snap-yaw 0.3 2.0 2.0 2.0 2.0))
+            ;; snapped, a line 1 m off at 10 m passes through him
+            (< (line-dist 0.0 0.0 (lb-snap-yaw 0.0 0.0 0.0 1.0 -10.0) 0.6 *lb-trace-len* 1.0 -10.0) 0.01)
+            (lb-cross-p nil t -1 5) (not (lb-cross-p t t -1 5)) (not (lb-cross-p nil nil -1 5))
+            (not (lb-cross-p nil t 100 129)) (lb-cross-p nil t 100 130)))
 
 ;;; ---------------------------------------------------------------- Lille's own CPU (DUEL_LILLE §11.2, §22; batch 3a, rework R)
 ;; frozen (the shared hooks and what a CPU facing him reads; DUEL_LILLE §24.2): one :reflex, LB-AI-REFLEX, on every form;

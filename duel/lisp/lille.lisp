@@ -122,9 +122,17 @@ free (decision 34, 2026-10-06: 「從『遠』變『近』不消耗閃步量表�
   "EN's J / K: the flash step each trace line laid costs (a J 3, a K's fan of three 9); a line is laid only while this
 much is left, checked line by line (the swing still plays); SP1 / SP2's traces are free (decision 34, 2026-10-06, the
 user: 「遠程 J/K 每條軌跡消耗 3 點閃步量表」; free before).")
-(defparameter *lb-nick-dmg* 1 "A trace's laying shot: its damage (decision 39, 2026-10-06; the user's 1).")
-(defparameter *lb-nick-stun* 10 "... the light flinch it holds, frames (decision 39: 「輕微硬直」; the lead's number).")
-(defparameter *lb-nick-guard* 2 "... the guard gauge a blocked one drains (decision 39: guardable; the lead's number).")
+(defparameter *lb-snap-max* 10.0
+  "A trace materialising turns about where it was laid toward the opponent by at most this many degrees, then hits along
+the turned line (decision 41, the user 2026-10-07: 「C」, the materialise snap; the lead's 10: 1.7 m sideways at 10 m).
+Decision 39's laying shot (1 damage, a 10 f flinch) is gone: 「我希望去除掉軌道設置時造成的 1 點傷害」.")
+(defparameter *lb-cross-scale* 0.35
+  "The opponent crossing one of his live traces slows the whole match to this time scale (SLOWMO, everyone: decision 41,
+the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」, 「全場慢動作」; the lead's number: a perfect Hoho's is 0.25) ...")
+(defparameter *lb-cross-secs* 0.3 "... for this many real seconds (the lead's number; a perfect Hoho's 0.45) ...")
+(defparameter *lb-cross-rearm* 30
+  "... and not again for this many fixed steps (*MATCH-TICK*: 0.5 s of real time) after it fired (the lead's number: a K fan's three lines or a walk along
+16 traces would chain it).")
 (defparameter *lb-trace-refund-block* 2.0
   "... and a guarded one this much (the user, 2026-10-06: 「擋下回收 2」; it was nothing).")
 (defparameter *lb-trace-refund* 4.0
@@ -300,11 +308,17 @@ fan's sides in order; laid in FANS' order."
 when *LB-TRACE-MAX* were live) or NIL. (The sim keeps its traces as hazards: LB-LAY-TRACE drops by LB-TRACE-OLDEST.)"
   (let ((drop (and (lb-trace-drop-p (length ids)) (lb-trace-oldest ids))))
     (values (append (remove drop ids) (list id)) drop)))
-(defun lb-nick-hitwin ()
-  "The shot a trace's laying fires along it (decision 39, the user 2026-10-06: 「覺醒後在遠程狀態產生軌道時，軌道上會對敵人造成傷害為
-1 的射擊傷害」, then 「輕微硬直但可防禦」): *LB-NICK-DMG* (1), a flinch held *LB-NICK-STUN*, no hitstop, guardable as a
-plain ranged hit (no chip, *LB-NICK-GUARD* drained; not the X-Axis), :ranged (no parry catches it)."
-  (make-hitwin :dmg *lb-nick-dmg* :react :flinch :stun *lb-nick-stun* :hs 0 :guard *lb-nick-guard* :flags (list :ranged)))
+(defun lb-snap-yaw (yaw x z ox oz)
+  "A trace laid at (X Z) along YAW, materialising with the opponent at (OX OZ): its line turned toward him by at most
+*LB-SNAP-MAX* degrees (decision 41)."
+  (let ((dx (- ox x)) (dz (- oz z)))
+    (if (< (+ (* dx dx) (* dz dz)) 1e-4)
+        yaw
+        (f32 (angle-wrap (turn-toward yaw (dir-yaw dx dz) (deg *lb-snap-max*)))))))
+(defun lb-cross-p (was now last tick)
+  "Does a trace's crossing slow the match (decision 41): the opponent is on its line NOW and was not (WAS) last step, and
+the last crossing that slowed it (tick LAST, -1 never) is >= *LB-CROSS-REARM* frames before TICK?"
+  (and now (not was) (or (< last 0) (>= (- tick last) *lb-cross-rearm*))))
 (defun lb-trace-hitwin (kind mult)
   "The hit a materialised trace of KIND deals (one 2-frame window, once): *LB-TRACE-DMG* x MULT, through guard (the
 X-axis rule: chip *LB-X-CHIP*, drain *LB-TRACE-GUARD*), :ranged :x-axis :uncatchable; a stagger of *LB-TRACE-STUN* in
@@ -674,6 +688,7 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
   (latch nil) (switch-t -1 :type fixnum) (trace-hit-t -1 :type fixnum) (link-t -1 :type fixnum) (link-from nil)
   (awake-t -1 :type fixnum) (revive-t -1 :type fixnum)   ; ticks of the awakening and the revival (the pacing log)
   (sig-origin nil)                        ; the combat log only: what opened his current combo (LB-SIG-LOG)
+  (cross-t -1 :type fixnum)               ; *MATCH-TICK* of the last trace crossing that slowed the match (decision 41)
   (acc nil))                              ; the pacing log's counters (debug)
 (defvar *lb* (vector (make-lbs) (make-lbs)) "Per side: his eye, the seal, the shooting stance, the traces.")
 (defvar *lb-reflect-test* nil "Debug 79007 / 79008: P2 reflects P1's Trompete by a guard (:guard) / a perfect Hoho (:hoho).")
@@ -693,7 +708,8 @@ carry-over bug, DEVLOG §38-§39)."
   (lock nil)                              ; a look's colour: T jade (a locked shot), NIL ink
   ;; a trace: what laid it (:j :k :sp1 :sp2: its damage and drain, LB-TRACE-HITWIN), its id (they count up per side),
   ;; live (laid, not yet materialised), its line (a :cap volume in its own frame)
-  (src nil) (id 0 :type fixnum) (live nil) (vol nil))
+  (src nil) (id 0 :type fixnum) (live nil) (vol nil)
+  (on nil) (cross -1 :type fixnum))       ; the opponent on its line last step; the tick he last crossed onto it (the look)
 
 ;;; ================================================================ hooks (called through the data's symbols)
 (defun lille-ok (e command combo)
@@ -918,11 +934,10 @@ touched him (the lines never hit: FIGHTER-CHAINED opens the string gate), and hi
 while its reserve allows (LB-AI-EN-NEXT)."
   (let* ((f (fighter e)) (mv (fighter-move f)) (src (getf (mv-params mv) :trace)) (g (gauges e)))
     (let* ((fans (lb-trace-fans src)) (group (and (rest fans) (make-hit-group 1)))   ; a K's fan hits a fighter once
-           (nick (and (rest fans) (make-hit-group 1)))                                ; (its laying shot too: decision 39)
            (laid (lb-trace-pay (gauges-fs g) src (length fans))) (cost (lb-trace-cost src)))
       (dolist (a (lb-trace-pick fans laid))
         (when (plusp cost) (spend-fs g cost))
-        (lb-lay-trace e src a group nick))
+        (lb-lay-trace e src a group))
       (when (< laid (length fans)) (lb-count e :traces-unpaid (- (length fans) laid)))
       (when (and (plusp laid) (lb-owl-form-p (fighter-form f))) (lb-count e :owl-traces laid)))
     (emit :sfx :rift-cut e)
@@ -940,16 +955,12 @@ while its reserve allows (LB-AI-EN-NEXT)."
           (when (or (null old) (< (lbh-id d) oid)) (setf old h oid (lbh-id d))))))
     (values n old)))
 
-(defun lb-lay-trace (e src yaw-off &optional group nick)
+(defun lb-lay-trace (e src yaw-off &optional group)
   "One trace of SRC (:j :k :sp1 :sp2) from where he stands, at his facing + YAW-OFF degrees, *LB-TRACE-LEN* long: a hazard
 with no hit (drawn by LB-TRACE-LOOK, faint jade on the floor) until his switch materialises it; at most *LB-TRACE-MAX*
-live (the oldest dropped first: LB-TRACE-DROP-P). Laying it fires the line's shot along it (LB-NICK-HITWIN, a 2-frame
-hazard of its own: decision 39; NICK a K fan's hit group, so the fan's shot hits a fighter once)."
+live (the oldest dropped first: LB-TRACE-DROP-P). Laying it deals nothing (decision 41 took decision 39's laying shot
+out); the opponent crossing it slows the match (LB-HZ's :step, LB-CROSS-P)."
   (let ((st (lb e)) (p (pos-of e)) (r (if (eq src :sp2) *lb-trace-r-thick* *lb-trace-r*)))
-    (spawn-hazard :lb-nick e :x (aref p 0) :z (aref p 2) :yaw (+ (yaw-of e) (deg yaw-off)) :size *lb-trace-len*
-                             :life 2 :hits 1 :hw (lb-nick-hitwin) :hook 'lb-hz :group nick
-                             :data (make-lbh :kind :nick :src src :len (f32 *lb-trace-len*) :width (f32 r)
-                                             :vol (make-vol :cap (list 0.6 *lb-trace-len* 1.2 r))))
     (multiple-value-bind (n old) (lb-live-traces e)
       (when (lb-trace-drop-p n) (destroy-entity old) (lb-count e :traces-dropped)))
     (spawn-hazard :lb-trace e :x (aref p 0) :z (aref p 2) :yaw (+ (yaw-of e) (deg yaw-off)) :size *lb-trace-len*
@@ -967,16 +978,18 @@ materialised one, NIL (each materialises once)."
     (lb-trace-hitwin (lbh-src d) mult)))
 
 (defun lb-materialise (e)
-  "TENSHIN's frame 0: every live trace of his becomes a 2-frame hit (once; the hits of one switch count as one combo), the
-X-axis line's look flashes along it (the owl's: 裁きの光明's gold ground blasts, :judge; decision 36; its Trompete trace:
+  "TENSHIN's frame 0: every live trace of his turns toward the opponent (at most *LB-SNAP-MAX*: LB-SNAP-YAW, decision 41)
+and becomes a 2-frame hit along the turned line (once; the hits of one switch count as one combo), the X-axis line's look
+flashes along it (the owl's: 裁きの光明's gold ground blasts, :judge; decision 36; its Trompete trace:
 KIN Trompete's blast, :beam at the move's width, decision 40), and it is gone after."
-  (let ((mult (kit-mult (kit-of e))) (looks nil))
+  (let ((mult (kit-mult (kit-of e))) (looks nil) (q (pos-of (opp-of e))))
     (do-entities (h (hz hazard))
       (let ((d (hazard-data hz)))
         (when (and (eql (hazard-owner hz) e) (lbh-p d))
           (let ((hw (lb-trace-materialise! d mult)))
             (when hw
-              (setf (hazard-hw hz) hw (hazard-hits-left hz) 1 (hazard-life hz) (+ (hazard-age hz) 3))
+              (setf (hazard-yaw hz) (lb-snap-yaw (hazard-yaw hz) (hazard-x hz) (hazard-z hz) (aref q 0) (aref q 2))
+                    (hazard-hw hz) hw (hazard-hits-left hz) 1 (hazard-life hz) (+ (hazard-age hz) 3))
               (push (list (if (eq (lbh-src d) :sp2) :beam :shot) (hazard-x hz) (hazard-z hz) (hazard-yaw hz) (lbh-width d)) looks))))))
     (if (lb-owl-form-p (fighter-form (fighter e)))              ; the owl's: 裁きの光明, gold blasts along the ground (decision 36)
         (dolist (l looks)
@@ -1165,12 +1178,30 @@ gap G12); each erupts outward from 1 m to 18 m (LB-SABAKI-SPAN), through guard (
     (lb-count e (if group :misuji :sabaki))
     (emit :sfx :ground-crack e)))
 
+(defun lb-trace-cross (hz d)
+  "A live trace's step: is the opponent (its hazard's target) on its line (its :cap against his hurt cylinder, as a hit
+would test it)? Crossing onto it slows the whole match (*LB-CROSS-SCALE* for *LB-CROSS-SECS*, LB-CROSS-P's re-arm; the
+user 2026-10-07: 「對手經過軌道的瞬間會有時緩」 / 「全場慢動作」); the look brightens the line (LBH-CROSS)."
+  (let* ((o (hazard-target hz)) (e (hazard-owner hz)))
+    (when (and (entity-alive-p o) (entity-alive-p e))
+      (let* ((q (pos-of o)) (b (model-body (model o))) (yaw (hazard-yaw hz)) (st (lb e))
+             (now (vol-hit-p (lbh-vol d) (hazard-x hz) 0f0 (hazard-z hz) (f32 (fwd-x yaw)) (f32 (fwd-z yaw))
+                             (aref q 0) (aref q 1) (aref q 2) (body-hurt-r b) (body-hurt-h b) 0f0)))
+        (when (lb-cross-p (lbh-on d) now (lbs-cross-t st) *match-tick*)
+          (setf (lbs-cross-t st) *match-tick* (lbh-cross d) *match-tick*)
+          (slowmo *lb-cross-scale* *lb-cross-secs*)
+          (lb-count e :trace-cross)
+          (emit :sfx :rift-open e))
+        (setf (lbh-on d) now)))))
+
 (defun lb-hz (h hz ev &optional a b c dd ee)
   "His hazards' hook (HAZARD-HOOK): a SABAKI line's volume (:touches): the burning span of the line (LB-SABAKI-SPAN), a box
-*LB-SABAKI-WIDTH* wide; a trace's line (only a materialised one has a hit); the looks touch nothing."
+*LB-SABAKI-WIDTH* wide; a trace's line (only a materialised one has a hit); the looks touch nothing. A live trace's
+:step: the opponent crossing onto its line slows the match (LB-TRACE-CROSS, decision 41)."
   (declare (ignore h))
   (let ((d (hazard-data hz)))
     (case ev
+      (:step (when (and (eq (lbh-kind d) :trace) (lbh-live d)) (lb-trace-cross hz d)) nil)
       (:touches (case (lbh-kind d)
                   (:sabaki
                    (multiple-value-bind (from to) (lb-sabaki-span (hazard-age hz))
@@ -1179,7 +1210,7 @@ gap G12); each erupts outward from 1 m to 18 m (LB-SABAKI-SPAN), through guard (
                             (obox-cyl-hit-p (f32 (+ (hazard-x hz) (* mid (fwd-x yaw)))) 1f0 (f32 (+ (hazard-z hz) (* mid (fwd-z yaw))))
                                             yaw (f32 (* 0.5 (lbh-width d))) 1.2f0 (f32 (* 0.5 (- to from)))
                                             a b c dd ee)))))
-                  ((:trace :nick)                       ; a trace's line (its :cap from where it was laid), its laying shot
+                  (:trace                               ; a trace's line (its :cap from where it was laid)
                    (let ((yaw (hazard-yaw hz)))
                      (vol-hit-p (lbh-vol d) (hazard-x hz) 0f0 (hazard-z hz) (f32 (fwd-x yaw)) (f32 (fwd-z yaw))
                                 (f32 a) (f32 b) (f32 c) (f32 dd) (f32 ee) 0f0)))))
@@ -1217,12 +1248,11 @@ match. The reflector takes nothing (a Hoho's counter strike is replaced by the r
   "The combat log only (*COMBAT-LOG*: no sim state reads it): after a hit of his that is his signature by more than its
 name (tools/aieval.py's whitelist, DUEL_LILLE §24.2), a \"Px lb-sig TAG\" line tagging the hit line just logged: charged (the
 stance's charged X-Axis shot), hosha-link (the J1 / K1 a HOSHA hit linked into), trace-combo (a J / K hit in a combo a
-materialised trace opened: trace -> TENSHIN -> J / K). A combo's opener is its first hit that isn't a laying shot (LB-NICK:
-the via-J switch's nick flinches him just before the traces land)."
+materialised trace opened: trace -> TENSHIN -> J / K). A combo's opener is its first hit."
   (when (member res '(:hit :counter))                        ; (the hit lines tools/aieval.py reads)
     (let* ((st (lb att)) (f (fighter att))
            (kind (cond ((and hazard (lbh-p (hazard-data hazard))) (lbh-kind (hazard-data hazard))) (mv (mv-name mv)) (t :other))))
-      (when (or (<= (fighter-combo-hits (fighter def)) 1) (eq (lbs-sig-origin st) :nick))
+      (when (<= (fighter-combo-hits (fighter def)) 1)
         (setf (lbs-sig-origin st) kind))
       (let ((tag (cond ((null mv) nil)
                        ((eq (mv-name mv) :lb-k-shot) (and (lbs-k-charged st) "charged"))
@@ -1576,14 +1606,15 @@ LB-AI-LINK-PLAN; called once a move (the latch holds the answer)."
                    (>= (lbs-trace-hit-t st) (lbs-switch-t st) 0)))
 
 (defun lb-ai-trace-gap (e x z)
-  "His live traces seen from (X Z): values how many and the distance to the nearest one's line (a thick trace's extra width
-off: LB-SWITCH-IN-RULE's gap)."
+  "His live traces seen from (X Z): values how many and the distance to the nearest one's line as it would materialise (turned
+toward (X Z): LB-SNAP-YAW; a thick trace's extra width off: LB-SWITCH-IN-RULE's gap)."
   (let ((n 0) (gap 99.0))
     (do-entities (h (hz hazard))
       (let ((d (hazard-data hz)))
         (when (and (eql (hazard-owner hz) e) (lbh-p d) (lbh-live d))
           (incf n)
-          (setf gap (min gap (- (line-dist (hazard-x hz) (hazard-z hz) (hazard-yaw hz) 0.6 *lb-trace-len* x z)
+          (setf gap (min gap (- (line-dist (hazard-x hz) (hazard-z hz) (lb-snap-yaw (hazard-yaw hz) (hazard-x hz) (hazard-z hz) x z)
+                                           0.6 *lb-trace-len* x z)
                                 (- (lbh-width d) *lb-trace-r*)))))))
     (values n gap)))
 
@@ -1924,7 +1955,8 @@ rework's rig, DUEL_LILLE §22.5); 79198 Lille as P2 facing the behind camera 4 m
 ;;; ================================================================ rework R (2026-10-06): the traces' look (cosmetic, 0 B a frame)
 (defun-fast lb-trace-look (hz rdt)
   "A live trace's look (HAZARD-DRAW; DUEL_LILLE §22.2): a faint jade line (the owl's gold, decision 36) on the floor from 0.6 m ahead of where it was
-laid to the wall, its width pulsing (SP2's thick one wider); nothing once materialised (the X-axis line's flash, LB-LOOK,
+laid to the wall, its width pulsing (SP2's thick one wider; 2.5x for 24 frames after the opponent crossed onto it,
+decision 41); nothing once materialised (the X-axis line's flash, LB-LOOK,
 takes over). Its numbers go through *LB-V* (lille-art.lisp's %LB-FLOOR-LINE): 0 B."
   (declare (single-float rdt))
   (setf rdt 0f0)                                        ; (unused: HAZARD-DRAW's signature)
@@ -1932,7 +1964,8 @@ takes over). Its numbers go through *LB-V* (lille-art.lisp's %LB-FLOOR-LINE): 0 
     (when (and (lbh-p d) (lbh-live d))
       (let* ((x (hazard-x hz)) (z (hazard-z hz)) (yaw (hazard-yaw hz)) (ux (- (f-sin yaw))) (uz (- (f-cos yaw)))
              (x0 (+ x (* 0.6f0 ux))) (z0 (+ z (* 0.6f0 uz)))
-             (pulse (+ 0.8f0 (* 0.2f0 (f-sin (+ (* 5f0 (fx-clock)) (* 0.7f0 (i->f (mod (lbh-id d) 9))))))))
+             (pulse (+ 0.8f0 (* 0.2f0 (f-sin (+ (* 5f0 (fx-clock)) (* 0.7f0 (i->f (mod (lbh-id d) 9))))))
+                       (if (and (>= (lbh-cross d) 0) (< (- *match-tick* (lbh-cross d)) 24)) 1.5f0 0f0)))   ; crossed: flares (decision 41)
              (w (* pulse (if (eq (lbh-src d) :sp2) 0.14f0 0.04f0))))
         (declare (single-float x z yaw ux uz x0 z0 pulse w))
         (%lb-floor-line (if (> (lb-fxs (if (eql (hazard-owner hz) *p1*) 0 1) 15) 0.5f0) 3 1)   ; (the owl's: gold, decision 36;
