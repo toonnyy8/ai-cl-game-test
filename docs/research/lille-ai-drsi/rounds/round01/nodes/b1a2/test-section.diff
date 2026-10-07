@@ -1,0 +1,63 @@
+--- frozen LILLE-CPU-TESTS
++++ cell LILLE-CPU-TESTS
+@@ -69,3 +69,60 @@
+ (let ((j (kit :lille :jilliel)) (o (kit :lille :shin)) (ok (kit :lille :shin-kin)))
+   (check (and (equal (getf (kit-ai o) :switch) '(:traces 3 :near 0.6 :whiff 1.5)) (equal (getf (kit-ai ok) :switch) '(:gg 40))
+               (getf (kit-ai ok) :trompete) (equal (getf (kit-ai o) :stance) (getf (kit-ai j) :stance)))))
++;; the sniper's HARD layer (dream-rsi round 1 cell b1a0, DUEL_LILLE §24): every level 0 at EASY and NORMAL (the shipped CPU,
++;; no new roll there), 1 at HARD; no brain (a human) none
++(check (and (every (lambda (k) (and (~= 0.0 (getf k :easy)) (~= 0.0 (getf k :normal)) (~= 1.0 (getf k :hard))))
++                   (list *lb-ai-web* *lb-ai-kin-run* *lb-ai-starve* *lb-ai-hunt* *lb-ai-link-k* *lb-ai-hosha-loop* *lb-ai-sp-end*))
++            (~= 0.0 (lb-ai-level *lb-ai-web* nil))
++            (equal *lb-ai-web-band* '(2.5 13.0)) (= *lb-ai-web-every* 6) (= *lb-ai-web-k* 1) (equal *lb-ai-web-volley* '(14 28))
++            (= *lb-ai-web-wary* 2) (~= *lb-ai-web-margin* 0.15) (~= *lb-ai-kin-run-fs* 9.0) (equal *lb-ai-hunt-band* '(0.0 7.5))
++            ;; the web's band ends where TENSHIN in still brings KIN's J1 to him
++            (<= (second *lb-ai-web-band*) (+ *lb-switch-in* *lb-switch-stop*))
++            ;; the cash-out (:sp-ender) on the base form and Jilliel KIN only (not EN, whose SP2 lays a trace; not the owl)
++            (eq (getf (kit-ai (kit :lille :base)) :sp-ender) 'lb-ai-sp-ender)
++            (eq (getf (kit-ai (kit :lille :jilliel-kin)) :sp-ender) 'lb-ai-sp-ender)
++            (null (getf (kit-ai (kit :lille :jilliel)) :sp-ender)) (null (getf (kit-ai (kit :lille :shin-kin)) :sp-ender))))
++;; the volley: one hit group on a free opponent, 2 from 14 frames of his commitment, 3 from 28; the wary read: after 2
++;; missed web switches in a row only a committed opponent (running, in a move, reeling)
++(check (and (= 1 (lb-ai-volley-k nil)) (= 1 (lb-ai-volley-k 13)) (= 2 (lb-ai-volley-k 14)) (= 2 (lb-ai-volley-k 27))
++            (= 3 (lb-ai-volley-k 28)) (= 3 (lb-ai-volley-k 99 '(14 28) 3))
++            (lb-ai-web-wary-p 0 :idle) (lb-ai-web-wary-p 1 :guard) (not (lb-ai-web-wary-p 2 :idle))
++            (lb-ai-web-wary-p 2 :run) (lb-ai-web-wary-p 5 :move) (lb-ai-web-wary-p 2 :stun) (not (lb-ai-web-wary-p 3 :step))))
++;; the volley's 2nd group is J2's line: from J1's active end, J2 (chained in J1's last *CHAIN-LEAD* frames), its line, its
++;; active end and the 2 f cancel all fit inside the commitment it waits for
++(let* ((j1 (kit-command-move (kit :lille :jilliel) :q)) (j2 (find-move :lb-e-j2)))
++  (check (<= (+ (- (mv-r j1) *chain-lead*) (mv-s j2) (mv-a j2) *lb-switch-windup-c*) (first *lb-ai-web-volley*))))
++;; the refine (dream-rsi round 1 cell b1a1, DUEL_LILLE §24): the composure, the patient web, the wake-up shot, KIN's
++;; signature exits: every level 0 at EASY and NORMAL, 1 at HARD (the hunt's band from 0 m, pinned above)
++(check (and (every (lambda (k) (and (~= 0.0 (getf k :easy)) (~= 0.0 (getf k :normal)) (~= 1.0 (getf k :hard))))
++                   (list *lb-ai-composure* *lb-ai-siege* *lb-ai-oki* *lb-ai-kin-exit*))
++            (~= 0.0 (lb-ai-level *lb-ai-oki* nil))
++            ;; the composure: J held from HOSHA's f0 through its last bullet and its link frame (no reflex on a bullet's hit)
++            (= *lb-ai-composure-f* 18)
++            (>= *lb-ai-composure-f* (getf (mv-params (find-move :lb-k-j)) :link))
++            (>= *lb-ai-composure-f* (reduce #'max (map 'list #'hw-to (mv-hits (find-move :lb-k-j)))))))
++;; the wake-up shot: frames until a downed / waking fighter can be hit, seen DELAY frames late (pure); the charged shot's
++;; lead (the stance up + the charge + the shot's startup: 40) fits a down + wake-up seen at HARD's delay, and its L press
++;; comes before the stance's tap hold ends (the CPU taps L)
++(check (and (= 52 (lb-wake-left :down 0 8)) (= 22 (lb-wake-left :down 30 8)) (= 12 (lb-wake-left :wakeup 10 8))
++            (null (lb-wake-left :idle 0 8)) (null (lb-wake-left :stun 5 8))
++            (= (lb-ai-oki-lead) (+ *lb-kamae-up* *lb-charge-f* (mv-s (find-move :lb-k-shot)))) (= 40 (lb-ai-oki-lead))
++            (<= (lb-ai-oki-lead) (lb-wake-left :down 0 8))
++            (<= (+ *lb-kamae-up* *lb-charge-f*) (+ *lb-kamae-up* *lb-kamae-tap*))
++            (lb-kamae-charged-p *lb-charge-f*)))
++;; KIN's MUJITTAI exits: SP1 is SANREN (Jilliel KIN) / 裁きの光明 (the owl's KIN), both on the whitelist, and L TENSHIN out
++(check (and (eq :lb-sanren (mv-name (kit-command-move (kit :lille :jilliel-kin-mujittai) :sp1)))
++            (eq :lb-misuji (mv-name (kit-command-move (kit :lille :shin-kin-mujittai) :sp1)))
++            (eq :lb-switch (mv-name (kit-command-move (kit :lille :jilliel-kin-mujittai) :sig)))))
++;; the refine (dream-rsi round 1 cell b1a2, DUEL_LILLE §24): the clean hand, the turtle, the held aim, KIN's cash-in and
++;; hold: every level 0 at EASY and NORMAL (the shipped CPU), 1 at HARD; no brain (a human) never refuses his Breaker
++(check (and (every (lambda (k) (and (~= 0.0 (getf k :easy)) (~= 0.0 (getf k :normal)) (~= 1.0 (getf k :hard))))
++                   (list *lb-ai-clean* *lb-ai-turtle* *lb-ai-held-aim* *lb-ai-kin-cash* *lb-ai-kin-hold*))
++            (not (lb-ai-clean-p nil)) (~= 0.0 (lb-ai-level *lb-ai-turtle* nil))
++            ;; the turtle's / held aim's stance plans TAISHA within 3 m (else the charged shot): the generic guard-break
++            ;; range it takes over lies inside, and TAISHA's line (from 3 m further back) still reaches him from there
++            (<= *ai-guard-break-range* 3.0)
++            (>= (- (mv-reach (find-move :lb-k-k)) *lb-taisha-slide*) *ai-guard-break-range*)
++            ;; KIN's cash-in is SP1 (SANREN / MISUJI: whitelisted X-Axis lines), its startup what the busy test waits for
++            (plusp (mv-s (kit-command-move (kit :lille :jilliel-kin) :sp1)))
++            (plusp (mv-s (kit-command-move (kit :lille :shin-kin) :sp1)))))
