@@ -1,0 +1,60 @@
+--- frozen LILLE-CPU-TESTS
++++ cell LILLE-CPU-TESTS
+@@ -69,3 +69,57 @@
+ (let ((j (kit :lille :jilliel)) (o (kit :lille :shin)) (ok (kit :lille :shin-kin)))
+   (check (and (equal (getf (kit-ai o) :switch) '(:traces 3 :near 0.6 :whiff 1.5)) (equal (getf (kit-ai ok) :switch) '(:gg 40))
+               (getf (kit-ai ok) :trompete) (equal (getf (kit-ai o) :stance) (getf (kit-ai j) :stance)))))
++;; the sniper's HARD layer (dream-rsi round 1 cell b1a0, DUEL_LILLE §24): every level 0 at EASY and NORMAL (the shipped CPU,
++;; no new roll there), 1 at HARD; no brain (a human) none
++(check (and (every (lambda (k) (and (~= 0.0 (getf k :easy)) (~= 0.0 (getf k :normal)) (~= 1.0 (getf k :hard))))
++                   (list *lb-ai-web* *lb-ai-kin-run* *lb-ai-starve* *lb-ai-hunt* *lb-ai-link-k* *lb-ai-hosha-loop* *lb-ai-sp-end*))
++            (~= 0.0 (lb-ai-level *lb-ai-web* nil))
++            (equal *lb-ai-web-band* '(2.5 13.0)) (= *lb-ai-web-every* 6) (= *lb-ai-web-k* 1) (equal *lb-ai-web-volley* '(14 28))
++            (= *lb-ai-web-wary* 2) (~= *lb-ai-web-margin* 0.15) (~= *lb-ai-kin-run-fs* 9.0) (equal *lb-ai-hunt-band* '(2.5 7.5))
++            ;; the web's band ends where TENSHIN in still brings KIN's J1 to him
++            (<= (second *lb-ai-web-band*) (+ *lb-switch-in* *lb-switch-stop*))
++            ;; the cash-out (:sp-ender) on the base form and Jilliel KIN only (not EN, whose SP2 lays a trace; not the owl)
++            (eq (getf (kit-ai (kit :lille :base)) :sp-ender) 'lb-ai-sp-ender)
++            (eq (getf (kit-ai (kit :lille :jilliel-kin)) :sp-ender) 'lb-ai-sp-ender)
++            (null (getf (kit-ai (kit :lille :jilliel)) :sp-ender)) (null (getf (kit-ai (kit :lille :shin-kin)) :sp-ender))))
++;; the volley: one hit group on a free opponent, 2 from 14 frames of his commitment, 3 from 28; the wary read: after 2
++;; missed web switches in a row only a committed opponent (running, in a move, reeling)
++(check (and (= 1 (lb-ai-volley-k nil)) (= 1 (lb-ai-volley-k 13)) (= 2 (lb-ai-volley-k 14)) (= 2 (lb-ai-volley-k 27))
++            (= 3 (lb-ai-volley-k 28)) (= 3 (lb-ai-volley-k 99 '(14 28) 3))
++            (lb-ai-web-wary-p 0 :idle) (lb-ai-web-wary-p 1 :guard) (not (lb-ai-web-wary-p 2 :idle))
++            (lb-ai-web-wary-p 2 :run) (lb-ai-web-wary-p 5 :move) (lb-ai-web-wary-p 2 :stun) (not (lb-ai-web-wary-p 3 :step))))
++;; the volley's 2nd group is J2's line: from J1's active end, J2 (chained in J1's last *CHAIN-LEAD* frames), its line, its
++;; active end and the 2 f cancel all fit inside the commitment it waits for
++(let* ((j1 (kit-command-move (kit :lille :jilliel) :q)) (j2 (find-move :lb-e-j2)))
++  (check (<= (+ (- (mv-r j1) *chain-lead*) (mv-s j2) (mv-a j2) *lb-switch-windup-c*) (first *lb-ai-web-volley*))))
++;; the sniper's discipline (dream-rsi round 1 cell b3a0, DUEL_LILLE §24): its levels 0 / 0 / 1 (EASY / NORMAL the shipped
++;; CPU), its knobs
++(check (and (every (lambda (k) (and (~= 0.0 (getf k :easy)) (~= 0.0 (getf k :normal)) (~= 1.0 (getf k :hard))))
++                   (list *lb-ai-space* *lb-ai-xfire* *lb-ai-clean*))
++            (~= *lb-ai-space-near* 2.4) (~= *lb-ai-space-rush* 5.0) (= *lb-ai-xfire-life* 45) (= *lb-ai-guard-read* 2)))
++;; the spacing rule: a HOSHA from *LB-AI-SPACE-NEAR* lands its first bullet (f6 of the leap, which stops *LUNGE-STOP* short)
++;; outside base J1's reach + 0.2 (the generic ORANGE window); its risk test and the branch instead (TAISHA on a reeling
++;; opponent, the dash back then HOSHA on an open one, TAISHA without the dash)
++(let* ((d *lb-ai-space-near*) (leap (min *lb-hosha-leap* (- d *lunge-stop*))))
++  (check (> (- d (* leap (/ 6.0 *lb-hosha-leap-f*))) (+ (mv-reach (find-move :lb-j1)) 0.2))))
++(check (and (lb-ai-space-risk-p 70.0 nil 2.3 nil) (not (lb-ai-space-risk-p 69.9 nil 2.3 nil))
++            (not (lb-ai-space-risk-p 100.0 :orange 2.3 nil)) (not (lb-ai-space-risk-p 100.0 nil 2.4 nil))
++            (lb-ai-space-risk-p 100.0 nil 7.3 t) (not (lb-ai-space-risk-p 100.0 nil 7.4 t))
++            (eq :k (lb-ai-space-plan t t)) (eq :dash-j (lb-ai-space-plan nil t)) (eq :k (lb-ai-space-plan nil nil))))
++;; the combo enders: KIN's crumple NIJUSHI-KO, a stagger SANREN; the base form's crumple L, else HIRENKYAKU; EN none; each
++;; still combos (SANREN's first line inside J3's stagger, NIJUSHI-KO's beam by the end of K3's crumple, HIRENKYAKU's shot
++;; inside the stagger)
++(let ((rf *reaction-frames*))
++  (check (and (eq :sp2 (lb-ai-ender-sp :jilliel-kin :crumple)) (eq :sp1 (lb-ai-ender-sp :jilliel-kin :stagger))
++              (eq :sp1 (lb-ai-ender-sp :shin-kin :stagger)) (eq :sig (lb-ai-ender-sp :base :crumple))
++              (eq :sp2 (lb-ai-ender-sp :base :stagger)) (null (lb-ai-ender-sp :jilliel :stagger))
++              (< (mv-s (find-move :lb-sanren)) (getf rf :stagger)) (<= (mv-s (find-move :lb-nijushi)) (getf rf :crumple))
++              (< (mv-s (find-move :lb-hiren)) (getf rf :stagger)))))
++;; the crossfire: from KIN K3's hit, its active end (the L link's chain), TENSHIN out's dash to its link, EN J1 to its
++;; active end and the 2 f cancel all fit inside K3's crumple
++(let ((k3 (find-move :lb-w-k3)) (j1 (find-move :lb-e-j1)))
++  (check (< (+ (mv-a k3) *lb-switch-f* (mv-s j1) (mv-a j1) *lb-switch-windup-c*) (getf *reaction-frames* :crumple))))
++;; the refusals: the Breaker; a Kikon only on a non-red opponent with an answer off the same link; nothing else
++(check (and (lb-ai-refuse-p :breaker nil nil) (lb-ai-refuse-p :breaker t t) (lb-ai-refuse-p :kikon nil t)
++            (not (lb-ai-refuse-p :kikon t t)) (not (lb-ai-refuse-p :kikon nil nil)) (not (lb-ai-refuse-p :q nil t))
++            (not (lb-ai-refuse-p :sp1 nil t))))

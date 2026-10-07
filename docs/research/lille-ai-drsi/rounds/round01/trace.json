@@ -38,6 +38,18 @@
       "seq": 10,
       "tags": [],
       "valid": true
+    },
+    "b3a0": {
+      "error": null,
+      "evaluated": true,
+      "fail_class": "ok",
+      "n_total": null,
+      "n_valid": null,
+      "note": "rescored at the freeze: str 0.993 mash 1.0 sig 0.975 drift 0.4675 (ref 0.4675) pacing ok",
+      "score": 0.9869,
+      "seq": 11,
+      "tags": [],
+      "valid": true
     }
   },
   "directions": {},
