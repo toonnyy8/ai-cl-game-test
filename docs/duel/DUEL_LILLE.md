@@ -209,6 +209,9 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
 - **44. Close traces slow the match once** (the user, 2026-10-07: 「［討論］如果我希望非常相近的軌道不要連續觸發時緩效果應該要怎麼做呢？」,
   then 「用 A，N 先用 10 f，等這輪跑完再改」): the slow motion fires when he steps onto his live traces from off all of them,
   after ≥ 10 sim frames off. §23.26.
+- **45. A fresh trace on him always slows; old traces slow longer** (the user, 2026-10-07: 「如果是才剛新生成的軌道就算重疊也一樣
+  觸發時緩，而經過舊軌道的時緩參數改成 0.3 倍速持續 1 秒。」): a trace laid onto him fires 0.1 for 0.3 s whatever else; stepping
+  onto old traces (decision 44's rule) fires 0.3 for 1 s. §23.27.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -2328,6 +2331,40 @@ Gates (native, NORMAL; his pairings), seeds 1–20, every match K.O. (before: §
 LR is back inside the window: fewer slow motions, so fewer seconds added (the gate times real time, §23.25). LI's 211.1 s
 is just past 210, and its edge rerun at 60 seeds gives **207.5 s**, every match K.O., Lille 29 / 60. Every cross pairing
 is inside 125–210 s. `./build.sh duel` 0 warnings.
+
+### 23.27 Decision 45: fresh traces vs old traces (2026-10-07)
+
+The user's words: 「如果是才剛新生成的軌道就算重疊也一樣觸發時緩，而經過舊軌道的時緩參數改成 0.3 倍速持續 1 秒。」
+
+- **A fresh trace** (laid this frame: `lbh-fresh`, set at laying, cleared after its first test in `lb-trace-cross`) that
+  touches him starts the slow motion at **0.1 for 0.3 s** (`*lb-fresh-scale*`, `*lb-fresh-secs*`: decision 43's numbers).
+  It fires whatever other traces he stands on and however long he has been off them.
+- **Old traces** keep decision 44's rule: stepping onto the live traces after ≥ 10 sim frames off all of them. Their slow
+  motion is now **0.3 for 1.0 s** (`*lb-cross-scale*` 0.1 → 0.3, `*lb-cross-secs*` 0.3 → 1.0).
+- Both on the same frame: the fresh one only (`lb-cross-kind`: `:fresh` before `:cross`). Either resets the off count
+  (he is on a trace). The lines that started it flare.
+- Read by the lead: the fresh rule keeps 0.1 / 0.3 s (the request names new numbers only for the old traces).
+
+Tests: duel-rules 6370 ALL PASS (the four numbers; `lb-cross-kind`: fresh fires with 0 or 50 frames off, old after 10,
+not after 9, nothing off the traces). pkgcheck 0 / 0 / 0.
+
+Gates (native, NORMAL; his pairings), seeds 1–20, every match K.O. (before: §23.26):
+
+| Pairing | Median (before) | Lille wins / 20 (before) | Blow-aways |
+|---|---|---|---|
+| LY | 184.4 s (173.5) | 8 (8) | 1 |
+| LK | 174.5 s (166.5) | 11 (9) | 40 |
+| LR | **236.2 s** (204.4) | 7 (10) | 11 |
+| LI | **214.3 s** (211.1) | 7 (9) | 9 |
+| LS | 198.2 s (205.4) | 12 (6) | 12 |
+| LL | 242.9 s (236.0; mirror) | P1 6 / P2 14 | 10 |
+
+The gate times real time, and each old-trace slow motion now adds ~0.7 s (1 s at 0.3). The edge reruns at 60 seeds, every
+match K.O.:
+- **LR 222.5 s**, Lille 15 / 60; the accepted LR was 229.6 s (§23.22), then 217.5 s (§23.25).
+- **LI 215.9 s**, Lille 18 / 60; the accepted LI was 216.2 s (§23.22).
+
+Both are outside the window and reported to the user, not retuned. `./build.sh duel` 0 warnings.
 
 ---
 
