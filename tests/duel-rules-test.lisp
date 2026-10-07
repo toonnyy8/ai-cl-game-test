@@ -2056,6 +2056,13 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (~= 5.0 (lb-switch-dist nil 3.0)) (~= 5.0 (lb-switch-dist nil 20.0))
               (= 14 (lb-switch-dash-f 7.0)) (= 11 (lb-switch-dash-f 5.5)) (= 10 (lb-switch-dash-f 5.0)) (= 4 (lb-switch-dash-f 2.0)) (= 1 (lb-switch-dash-f 0.1))
               (zerop (lb-switch-dash-f 0.0)) (= 14 (lb-switch-dash-f 40.0))
+              ;; the link frame (the user 2026-10-07, the ASSIST's TENSHIN in -> J1): HOSHA's :link; a TENSHIN's dash end only
+              ;; after its dash began (a 2 f cancel enters at f14, past the last TENSHIN out's end 10), 99 before; the link
+              ;; decided for the switch's target form while its change is still to come
+              (= 16 (lb-link-frame-at 16 nil 3 0 99)) (= 99 (lb-link-frame-at nil nil 20 0 10))
+              (= 99 (lb-link-frame-at 30 t 14 16 10)) (= 99 (lb-link-frame-at 30 t 16 16 10)) (= 19 (lb-link-frame-at 30 t 17 16 19))
+              (= 99 (lb-link-frame-at 14 t 0 0 26)) (= 10 (lb-link-frame-at 14 t 1 0 10))
+              (eq :shin-kin (lb-link-form :shin :shin-kin)) (eq :shin (lb-link-form :shin-kin :shin)) (eq :jilliel-kin (lb-link-form :jilliel-kin nil))
               (zerop (length (mv-hits sw))) (zerop (mv-cooldown sw)) (not (boundp '*lb-switch-cd*))
               (equal (mv-on-frame sw) '((0 lb-switch-go) (6 lb-switch-form)))
               (eq (lb-switch-target :jilliel) :jilliel-kin) (eq (lb-switch-target :jilliel-mujittai) :jilliel-kin)

@@ -1167,10 +1167,21 @@ short of him (a lunge's rule); the J / K latch cleared."
       (turn-to-opp e f (track-step (mv-track (fighter-move f)))))
     (lb-link-tick e)))
 
+(defun lb-link-frame-at (link switch sf go dash-end)
+  "Pure: the link frame of a move whose :link is LINK (NIL: none, 99), at its frame SF: HOSHA's LINK; a TENSHIN's (SWITCH)
+its dash's end DASH-END (decision 53: a fixed speed, so the end moves with the dash's length), read only after its dash
+began (SF > GO, its :go): before, DASH-END is still the last switch's (a 2 f cancel enters at f14, past a 10 f TENSHIN
+out's end: the ASSIST read it and decided in the wind-up, the user 2026-10-07: 「好像是輔助連段的問題？」)."
+  (cond ((null link) 99)
+        ((not switch) link)
+        ((> sf go) dash-end)
+        (t 99)))
+
 (defun lb-link-frame (e mv)
-  "The frame of MV (E's move) from which a latched J / K links: HOSHA's :link (f16); a TENSHIN's dash end (LBS-DASH-END,
-decision 53: the dash runs at a fixed speed, so its end moves with its length)."
-  (if (getf (mv-params mv) :link) (if (eq (mv-tick mv) 'lb-switch-tick) (lbs-dash-end (lb e)) (getf (mv-params mv) :link)) 99))
+  "The frame of MV (E's move) from which a latched J / K links (LB-LINK-FRAME-AT)."
+  (let ((p (mv-params mv)))
+    (lb-link-frame-at (getf p :link) (eq (mv-tick mv) 'lb-switch-tick) (fighter-sf (fighter e)) (getf p :go 0)
+                      (lbs-dash-end (lb e)))))
 
 (defun lb-link-tick (e)
   "HOSHA and TENSHIN (round 2, decisions 21, 25): a J / K pressed during the move is latched (a human's consumed; the last
@@ -1201,15 +1212,17 @@ His CPU's link (LB-AI-LINK) is picked once."
   "TENSHIN's frames: no string chase (an L latched after a KIN K link starts as a chained follow-up, and MAIN-PHASE-STEP's
 chase ran him at the opponent through the whole 14 f dash, eating the dash away: the bug the user found 2026-10-07,
 「現在近戰 K 打完連擊後接到 L 後撤的距離會被限制住」; the dash's slide is the switch's only movement), then LB-LINK-TICK;
-then, at the dash's end (LBS-DASH-END) with nothing linked, the rest of the startup is skipped (the form changed now if
-the dash ended before its f6): the 8 f recovery follows the dash (decision 53, a fixed speed: a short dash, a short move)."
+then, at the dash's end (LBS-DASH-END) with nothing linked, the rest of the startup is skipped: the 8 f recovery follows the
+dash (decision 53, a fixed speed: a short dash, a short move). A dash ending before its f6 changes the form at its end,
+before the link (its J / K is the new form's: the user 2026-10-07, the ASSIST's and the CPU's TENSHIN in -> J1 up close)."
   (fill (motion-vel (motion e)) 0f0)
   (let* ((f (fighter e)) (mv (fighter-move f)) (st (lb e)) (go (getf (mv-params mv) :go 0)))
     (when (< (fighter-sf f) go) (setf (lbs-dash-end st) 99))   ; (the wind-up: no link before this switch's own dash)
+    (when (and (eq (fighter-phase f) :main) (> (fighter-sf f) go) (>= (fighter-sf f) (lbs-dash-end st)) (lbs-switch-to st))
+      (lb-switch-form e))                                       ; (a dash shorter than 6 f: the form first, its J / K link)
     (lb-link-tick e)
     (when (and (eq (fighter-state f) :move) (eq (fighter-move f) mv) (eq (fighter-phase f) :main)
                (>= (fighter-sf f) go) (>= (fighter-sf f) (lbs-dash-end st)) (< (fighter-sf f) (1- (mv-s mv))))
-      (when (lbs-switch-to st) (lb-switch-form e))
       (setf (fighter-sf f) (1- (mv-s mv))))))
 
 (defun lb-hiren-tick (e)
@@ -1822,17 +1835,23 @@ the dash back (then the charged shot), or the charged shot once the charge reach
     (:oki (lb-ai-blow-step e f st))
     (:charge (and (lb-kamae-charged-p (lbs-charge st)) (progn (lb-ai-composure e (brain e)) :kamae-l)))))
 
+(defun lb-link-form (form to)
+  "Pure: the form a TENSHIN's J / K link is decided for: TO (the switch's target, while its form change is still to come:
+the ASSIST decides a step before the link, a short dash ends before f6), else FORM."
+  (or to form))
+
 (defun lb-ai-link (e f st hosha)
   "His CPU's link out of HOSHA (after a bullet's hit: one roll) or TENSHIN (J after a switch in whose traces hit; no roll):
 LB-AI-LINK-PLAN; called once a move (the latch holds the answer). HARD: HOSHA's K1 (b1a0), and TENSHIN out's link in a
 crossfire EN's J1, laid at him (b3a0). AI-BRAIN: his CPU's, or the ASSIST's for a human (LB-ASSIST-COMBO, §24.10)."
-  (let ((plan (lb-ai-link-plan hosha (if hosha (sim-rnd01) 0.0) (and (member (fighter-form f) '(:jilliel-kin :shin-kin)) t)
-                               (>= (lbs-trace-hit-t st) (lbs-switch-t st) 0))))
+  (let* ((form (lb-link-form (fighter-form f) (and (not hosha) (lbs-switch-to st))))
+         (plan (lb-ai-link-plan hosha (if hosha (sim-rnd01) 0.0) (and (member form '(:jilliel-kin :shin-kin)) t)
+                                (>= (lbs-trace-hit-t st) (lbs-switch-t st) 0))))
     (cond ((and hosha (>= (lb-ai-level *lb-ai-link-k* (ai-brain e)) 1.0)   ; (b1a1: no K1 into a blown-away opponent)
                 (>= (lb-ai-level *lb-ai-oki* (ai-brain e)) 1.0) (member (state-of (opp-of e)) '(:air :down)))
            :none)
           ((and hosha (>= (lb-ai-level *lb-ai-link-k* (ai-brain e)) 1.0)) :f)   ; (K1: L after it reopens the stance)
-          ((and (not hosha) (lb-en-form-p (fighter-form f)) (ai-brain e) (lb-ai-xfire-live-p e (ai-brain e))   ; (the crossfire)
+          ((and (not hosha) (lb-en-form-p form) (ai-brain e) (lb-ai-xfire-live-p e (ai-brain e))   ; (the crossfire)
                 (lb-ai-lay-ok-p (gauges-fs (gauges e)) :j))
            (lb-count e :ai-xfire-link) :q)
           (t plan))))
@@ -2676,7 +2695,7 @@ a trace hit; TENSHIN out's EN J1 in a crossfire), pressed unless his own J alrea
            (let* ((plan (lb-ai-link e f st nil)) (c (lb-as-link-cmd plan (lbs-latch st) (lb-as-his-j vp))))
              (setf (lbas-done a) t (lbas-plan a) plan)
              (case c
-               (:q (lb-as-press e a (if (lb-kin-form-p (fighter-form f)) :as-tenshin-in-j :as-tenshin-out-j) :q))
+               (:q (lb-as-press e a (if (lb-kin-form-p (lb-link-form (fighter-form f) (lbs-switch-to st))) :as-tenshin-in-j :as-tenshin-out-j) :q))
                (:clear (setf (lbs-latch st) nil) (vpad-consume! vp :quick) (lb-count e :as-tenshin-none) :none)
                (t :none))))
           (t :none))))
