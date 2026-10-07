@@ -14,6 +14,18 @@
       "seq": 2,
       "tags": [],
       "valid": true
+    },
+    "b1a0": {
+      "error": null,
+      "evaluated": true,
+      "fail_class": "ok",
+      "n_total": null,
+      "n_valid": null,
+      "note": "rescored at the freeze: str 0.975 mash 1.0 sig 0.925 drift 0.4125 (ref 0.4125) pacing ok",
+      "score": 0.96,
+      "seq": 3,
+      "tags": [],
+      "valid": true
     }
   },
   "directions": {},

@@ -1,0 +1,29 @@
+--- frozen LILLE-CPU-TESTS
++++ cell LILLE-CPU-TESTS
+@@ -69,3 +69,26 @@
+ (let ((j (kit :lille :jilliel)) (o (kit :lille :shin)) (ok (kit :lille :shin-kin)))
+   (check (and (equal (getf (kit-ai o) :switch) '(:traces 3 :near 0.6 :whiff 1.5)) (equal (getf (kit-ai ok) :switch) '(:gg 40))
+               (getf (kit-ai ok) :trompete) (equal (getf (kit-ai o) :stance) (getf (kit-ai j) :stance)))))
++;; the sniper's HARD layer (dream-rsi round 1 cell b1a0, DUEL_LILLE §24): every level 0 at EASY and NORMAL (the shipped CPU,
++;; no new roll there), 1 at HARD; no brain (a human) none
++(check (and (every (lambda (k) (and (~= 0.0 (getf k :easy)) (~= 0.0 (getf k :normal)) (~= 1.0 (getf k :hard))))
++                   (list *lb-ai-web* *lb-ai-kin-run* *lb-ai-starve* *lb-ai-hunt* *lb-ai-link-k* *lb-ai-hosha-loop* *lb-ai-sp-end*))
++            (~= 0.0 (lb-ai-level *lb-ai-web* nil))
++            (equal *lb-ai-web-band* '(2.5 13.0)) (= *lb-ai-web-every* 6) (= *lb-ai-web-k* 1) (equal *lb-ai-web-volley* '(14 28))
++            (= *lb-ai-web-wary* 2) (~= *lb-ai-web-margin* 0.15) (~= *lb-ai-kin-run-fs* 9.0) (equal *lb-ai-hunt-band* '(2.5 7.5))
++            ;; the web's band ends where TENSHIN in still brings KIN's J1 to him
++            (<= (second *lb-ai-web-band*) (+ *lb-switch-in* *lb-switch-stop*))
++            ;; the cash-out (:sp-ender) on the base form and Jilliel KIN only (not EN, whose SP2 lays a trace; not the owl)
++            (eq (getf (kit-ai (kit :lille :base)) :sp-ender) 'lb-ai-sp-ender)
++            (eq (getf (kit-ai (kit :lille :jilliel-kin)) :sp-ender) 'lb-ai-sp-ender)
++            (null (getf (kit-ai (kit :lille :jilliel)) :sp-ender)) (null (getf (kit-ai (kit :lille :shin-kin)) :sp-ender))))
++;; the volley: one hit group on a free opponent, 2 from 14 frames of his commitment, 3 from 28; the wary read: after 2
++;; missed web switches in a row only a committed opponent (running, in a move, reeling)
++(check (and (= 1 (lb-ai-volley-k nil)) (= 1 (lb-ai-volley-k 13)) (= 2 (lb-ai-volley-k 14)) (= 2 (lb-ai-volley-k 27))
++            (= 3 (lb-ai-volley-k 28)) (= 3 (lb-ai-volley-k 99 '(14 28) 3))
++            (lb-ai-web-wary-p 0 :idle) (lb-ai-web-wary-p 1 :guard) (not (lb-ai-web-wary-p 2 :idle))
++            (lb-ai-web-wary-p 2 :run) (lb-ai-web-wary-p 5 :move) (lb-ai-web-wary-p 2 :stun) (not (lb-ai-web-wary-p 3 :step))))
++;; the volley's 2nd group is J2's line: from J1's active end, J2 (chained in J1's last *CHAIN-LEAD* frames), its line, its
++;; active end and the 2 f cancel all fit inside the commitment it waits for
++(let* ((j1 (kit-command-move (kit :lille :jilliel) :q)) (j2 (find-move :lb-e-j2)))
++  (check (<= (+ (- (mv-r j1) *chain-lead*) (mv-s j2) (mv-a j2) *lb-switch-windup-c*) (first *lb-ai-web-volley*))))
