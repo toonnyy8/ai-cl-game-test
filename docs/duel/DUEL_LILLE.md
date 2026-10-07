@@ -228,6 +228,8 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
   dashes forward: 「完全拿掉追擊，L 前衝停在對手前 1m，移動改成固定速度而不是固定時間，後徹距離改成兩個 step 的長度、前衝距離改成兩個 step +
   0.5m 的長度」; then 30 m/s, the chase removed from TENSHIN's link only): in up to 5.5 m stopping 1 m short, out 5.0 m, both
   at 30 m/s; HOSHA's link keeps its chase. §23.33.
+- **54. TENSHIN in up to 7 m** (the user, 2026-10-07: 「將前衝距離改成最多 7m」): 5.5 → 7.0 m, still 1 m short, 14 f at
+  30 m/s. §23.34.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -2626,6 +2628,30 @@ Every cross median is inside 125–210 s, but **Lille's NORMAL wins fall** (LR 4
 (`aieval --char 5 --seeds 40`): strength 0.995, masher 1.000, signature 0.993, but the **drift check fails** (share 0.3325
 vs the frozen 0.44 ± 0.05: the score reads 0): trace combos 21.7 → 13.9 %, the SANREN cash-out 0.8 → 5.3 %. His CPU was
 tuned (dream-rsi b3a2) on a dash that brought J1 to him from 11.5 m. Not retuned: reported to the user (AGENTS.md).
+
+### 23.34 Decision 54: TENSHIN in up to 7 m (2026-10-07)
+
+The user's words: 「將前衝距離改成最多 7m」.
+- `*lb-switch-in*` 5.5 → **7.0** m (decision 53's rules kept: 1 m short, 30 m/s, no chase on its link): a 7 m dash takes
+  14 f (`lb-switch-dash-f`, the cap). TENSHIN out stays 5.0 m.
+- His CPU's EN web band follows: `*lb-ai-web-band*` (2.5 5.5) → **(2.5 7.0)**.
+
+Tests: duel-rules 6435 ALL PASS (`lb-switch-dist` in 7.0 at 12 / 20 m, 6.5 at 7.5 m; `lb-switch-dash-f` 7 m → 14).
+Gates, seeds 1–20 (NORMAL), every match K.O.:
+
+| Pairing | Median (decision 53, §23.33) | Lille wins / 20 (before) |
+|---|---|---|
+| LY | 162.9 s (161.4) | 9 (10) |
+| LK | 169.0 s (169.0) | 7 (7) |
+| LR | 200.7 s (205.9) | 8 (4) |
+| LI | 184.2 s (190.2) | 2 (1) |
+| LS | 195.5 s (195.5) | 6 (4) |
+| LL | 245.9 s (235.0; mirror) | P1 5 / P2 15 |
+
+Every cross median is inside 125–210 s. Lille's wins come back against Rukia and Senjumaru; Ichigo stays at 2 of 20.
+His HARD CPU (`aieval --char 5 --seeds 40`): strength 1.000, masher 1.000, signature 0.998 (trace combos back to 21.4 %,
+13.9 % at decision 53), but the drift check still fails (share 0.3425 vs the frozen 0.44 ± 0.05; the score reads 0): not
+retuned, reported. `./build.sh duel` 0 warnings.
 
 ---
 
