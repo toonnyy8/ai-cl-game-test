@@ -2036,7 +2036,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
   ;; tick): no L link there
   (check (and (eq sw (kit-command-move kn :sig)) (= 14 (mv-s sw) *lb-switch-f*) (zerop (mv-a sw)) (= 8 (mv-r sw))
               (= 14 (getf (mv-params sw) :link)) (eq (mv-tick sw) 'lb-link-tick)
-              (~= 6.5 (lb-switch-dist t 8.0)) (~= 8.0 (lb-switch-dist t 12.0)) (~= 0.0 (lb-switch-dist t 1.2))
+              (~= 6.5 (lb-switch-dist t 8.0)) (~= 10.4 (lb-switch-dist t 12.0)) (~= 10.4 (lb-switch-dist t 20.0)) (~= 9.5 (lb-switch-dist t 11.0)) (~= 0.0 (lb-switch-dist t 1.2))
               (~= 7.0 (lb-switch-dist nil 3.0)) (~= 7.0 (lb-switch-dist nil 20.0))
               (zerop (length (mv-hits sw))) (zerop (mv-cooldown sw)) (not (boundp '*lb-switch-cd*))
               (equal (mv-on-frame sw) '((0 lb-switch-go) (6 lb-switch-form)))

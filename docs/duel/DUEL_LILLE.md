@@ -201,6 +201,8 @@ The user's request, verbatim: 「# 常態改動 1. L 射擊架勢接 J 改成向
 - **41. No laying shot; the trace snaps when it materialises; crossing a trace slows the match** (the user, 2026-10-07:
   「我希望去除掉軌道設置時造成的 1 點傷害，但這樣的話有會很難讓實體化能打中對手，你有什麼好想法嗎？」, then 「C+對手經過軌道的瞬間會有時緩」
   and 「全場慢動作」). Decision 39 is undone. §23.23.
+- **42. TENSHIN in reaches 1.3× as far** (the user, 2026-10-07: 「另外 L 轉成近戰時能跳躍的範圍要提升 1.3 倍」): `*lb-switch-in*`
+  8.0 → 10.4 m, the same 14 f. §23.24.
 
 ## 2. Summary of the design pass (2026-10-06; every number is a proposal until the gate)
 
@@ -1391,7 +1393,7 @@ Numbers are proposals until the gate; the lead picked them where the user gave n
 
 | | Value |
 |---|---|
-| Dash in (EN → KIN) | **up to 8.0 m at him over 14 f, stopping 1.5 m short** (`*lb-switch-in*` 8.0, `*lb-switch-stop*` 1.5); iframes f0–8 |
+| Dash in (EN → KIN) | **up to 10.4 m at him over 14 f, stopping 1.5 m short** (`*lb-switch-in*` 10.4 since decision 42, 8.0 before; `*lb-switch-stop*` 1.5); iframes f0–8 |
 | Dash out (KIN → EN) | **7.0 m** away over 14 f (`*lb-switch-out*`) |
 | Cancel | from the dash's end (f14) his **J or K cancels the recovery** (either mode; EN's J / K lay traces, KIN's hit) |
 | A materialised trace | stagger with **hitstun long enough for the dash plus a J1** (≥ 14 + 8 + 4 f), **no knockback** (the SP2 thick trace keeps its knockback), so a trace hit → TENSHIN in → J / K is a combo (host test) |
@@ -1450,7 +1452,7 @@ section, and the touch fix in `control.lisp` / `onehand.lisp` (+ one flag on Ich
   flat × `*lille-mult*` (no distance bonus), stagger kb 1.0, `:ranged :x-axis :uncatchable` (chip 15 %, drain 30), −14.
 - **HIRENKYAKU's aim snap**: `lb-kamae-back` (the dash's f11) re-enters the stance and turns him straight at the opponent;
   the 60°/s tracking goes on from there.
-- **TENSHIN**: the dash is 14 f (`*lb-switch-f*`); in is `min(8.0, d − 1.5)` m at him (`*lb-switch-in*`,
+- **TENSHIN**: the dash is 14 f (`*lb-switch-f*`); in is `min(10.4, d − 1.5)` m at him (8.0 before decision 42) (`*lb-switch-in*`,
   `*lb-switch-stop*`; none when nearer than 1.5 m), out 7.0 m (`*lb-switch-out*`) (`lb-switch-dist`); iframes for the
   dash's f0–8, the form 6 f into the dash. **Three moves** (decision 30): KIN → EN `:lb-switch` (KIN's L and its K-link
   L): no wind-up, the dash at f0, S14 A0 R8. EN → KIN from EN's neutral (idle / walk / run; MUJITTAI drops to EN and
@@ -2201,6 +2203,30 @@ LR is back inside the window (the 10 f flinch had lengthened it, §23.20). LI's 
 reported, not retuned. Without the nick's flinch he wins less against Ichigo. The mirror had no time-out in 20.
 `./build.sh duel` 0 warnings; the page starts with no error (`tools/run.mjs`, 6 s). The awaken A/B was not re-run (as for
 decision 39). Slow motion leaves every sim frame as it was; its feel (0.35 / 0.3 s / 30 steps) needs the user's playtest.
+
+### 23.24 Decision 42: TENSHIN in reaches 10.4 m (2026-10-07)
+
+The user's words: 「另外 L 轉成近戰時能跳躍的範圍要提升 1.3 倍」. TENSHIN in's dash (EN → KIN, Jilliel's and the owl's) goes up to
+**10.4 m** at him (`*lb-switch-in*` 8.0 × 1.3), still over 14 f (`*lb-switch-f*`, so 0.74 m a frame instead of 0.57) and
+still stopping 1.5 m short; the out dash (7.0 m) is unchanged. The clips are not stretched: the leap's arc is the same
+frames, it covers more ground.
+
+Tests: duel-rules 6370 ALL PASS (`lb-switch-dist` at 12, 20 and 11 m: 10.4, 10.4, 9.5).
+
+Gates (native, NORMAL; his pairings), seeds 1–20, every match K.O. (before: §23.23, decision 41):
+
+| Pairing | Median (before) | Lille wins / 20 (before) | Blow-aways |
+|---|---|---|---|
+| LY | 164.7 s (164.7) | **11** (10) | 1 |
+| LK | 166.4 s (166.4) | 10 (10) | 38 |
+| LR | 200.0 s (200.0) | 7 (7) | 14 |
+| LI | **208.7 s** (223.9) | 6 (6) | 15 |
+| LS | **196.6 s** (194.0) | **11** (12) | 11 |
+| LL | **203.9 s** (231.1; mirror) | P1 10 / P2 10 | 11 |
+
+Every cross pairing is inside 125–210 s at 20 seeds (LI too, so no edge rerun). His CPU switches in from the gap to a
+trace, not from the distance, so the longer reach changes little in CPU play; the feel is the user's playtest.
+`./build.sh duel` 0 warnings.
 
 ---
 
