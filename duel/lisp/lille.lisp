@@ -101,13 +101,14 @@ recovery's cancel (f16) + K1's startup (17) still lands inside it, a combo (roun
 (defparameter *walk-kin* 3.8 "Walk m/s, JILLIEL KIN (the owl's legs; rework R, 2026-10-06).")
 (defparameter *run-kin* 8.5 "Run m/s, JILLIEL KIN (rework R, 2026-10-06).")
 (defparameter *lb-en-walk* 3.0 "EN: m/s the stick walks him through J / K / SP1 (facing kept on the opponent; rework R, 2026-10-06).")
-(defparameter *lb-switch-in* (+ (* 2 *step-distance*) 0.5)
+(defparameter *lb-switch-in* 7.0
   "TENSHIN in (EN -> KIN): the dash at him, at most this many metres at *LB-SWITCH-SPEED*, stopping *LB-SWITCH-STOP* short
 (round 2, 2026-10-06, decision 25 「大幅提升變換戰型後的衝刺距離」: 3.5 before, both ways; decision 42, the user 2026-10-07:
 「另外 L 轉成近戰時能跳躍的範圍要提升 1.3 倍」: 8.0 -> 10.4, the same 14 f; decision 43, the user 2026-10-07:
 「接近距離也提升到 13m」: 10.4 -> 13.0; decision 49, the user 2026-10-07: 「覺醒後 L 的近遠切換移動距離減少 3m」: 13.0 -> 10.0;
 decision 52, the user 2026-10-07: 「幫我試試看把覺醒後 L 的前衝距離改成 4.5m」: 10.0 -> 4.5; decision 53, the user 2026-10-07:
-「前衝距離改成兩個 step + 0.5m 的長度」: two Steps (*STEP-DISTANCE*) + 0.5 = 5.5).")
+「前衝距離改成兩個 step + 0.5m 的長度」: two Steps (*STEP-DISTANCE*) + 0.5 = 5.5; decision 54, the user 2026-10-07:
+「將前衝距離改成最多 7m」: 5.5 -> 7.0, 14 f at *LB-SWITCH-SPEED*).")
 (defparameter *lb-switch-stop* 1.0
   "... this many metres short of him (KIN's J1 reaches 1.6; round 2, 2026-10-06: 1.5; decision 53, the user 2026-10-07:
 「L 前衝停在對手前 1m」: 1.5 -> 1.0).")
@@ -1956,10 +1957,10 @@ while he walks (DUEL_LILLE §22.2)."
 ;;;                        crossfire or SANREN combos off the same link
 (defparameter *lb-ai-web* '(:easy 0.0 :normal 0.0 :hard 1.0)
   "The web's level by difficulty (dream-rsi b1a0, 2026-10-07): 1 = on (HARD), 0 = the shipped CPU (EASY, NORMAL).")
-(defparameter *lb-ai-web-band* '(2.5 5.5)
-  "The perceived distance band EN lays its lines at him in: TENSHIN in reaches 5.5 m and stops 1 m short, so KIN's J1
+(defparameter *lb-ai-web-band* '(2.5 7.0)
+  "The perceived distance band EN lays its lines at him in: TENSHIN in reaches 7 m and stops 1 m short, so KIN's J1
 then reaches him (dream-rsi b1a0, 2026-10-07: 13 at TENSHIN in's 13 m; decision 49 cut TENSHIN in to 10 m: 10; decision
-52 to 4.5 m: 4.5; decision 53 to two Steps + 0.5 = 5.5 m: 5.5).")
+52 to 4.5 m: 4.5; decision 53 to two Steps + 0.5 = 5.5 m: 5.5; decision 54 to 7 m: 7.0).")
 (defparameter *lb-ai-web-every* 6
   "Frames between two of EN's lay events, one J each (dream-rsi b1a0, 2026-10-07; 3 and 12 measured the same).")
 (defparameter *lb-ai-web-k* 1
