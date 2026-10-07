@@ -2706,6 +2706,9 @@ Asked what next with the score saturated, the user chose 「直接進入整合�
   the charged shot 8.7 %, traces 6.7 %, the Kikon 2 %, plain J / K 0.1 %.
 - NORMAL and EASY are the shipped CPU bit for bit (every new rule is a HARD-only level, no new roll), so his six NORMAL
   pairings are identical to §23.29's gate (LY 177.9, LK 169.3, LR 193.5, LI 203.9, LS 195.6, LL 259.4 s; all K.O.).
+- The cell's eleven HARD-layer knobs (`*lb-ai-close*` … `*lb-ai-rush-wary*`) were defined after the functions that read
+  them (11 ECL style warnings in `./build.sh duel`). They are moved to the head of the AI section; the build is back to
+  0 warnings and the 40-seed eval reproduces the rescore exactly (0.9992).
 - Next, the integration of §24.1 step 5: the learning CPU's Lille situations, ASSIST AUTO COMBO's signature routes
   (b3a2's `:sp-ender` already acts for an assisted human), then the full gate.
 

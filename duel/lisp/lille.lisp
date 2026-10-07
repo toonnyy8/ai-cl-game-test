@@ -1359,6 +1359,45 @@ by band, damage by band, Trompete); the combat log's signature tags (LB-SIG-LOG)
     (lb-count def :stance-broken)))
 
 ;;; ================================================================ AI: his own CPU (DUEL_LILLE §11.2, §22; batch 3a, rework R)
+;; the HARD layers' knobs (dream-rsi round 1, b3a2; DUEL_LILLE §24.8): defined before the functions that read them
+(defparameter *lb-ai-close* '(:easy 0.0 :normal 0.0 :hard 1.0)
+  "The sniper's step (dream-rsi b3a2, 2026-10-07): the hunt's stance on him free within 2 m (the hunt's override began at
+2 m, so the shipped plan's TAISHA fired: 1.0 a match, 158 hits in 400 matches, 69 times hit, 31 perfect-Hohoed, ~35
+damage a match taken after it) plans HOSHA (the spacing rule then: the HIRENKYAKU dash back, iframes f0-8, then HOSHA; or
+TAISHA without the dash), and onto his whiff HOSHA at once (its bullet at f6, the composure holding ORANGE off).")
+(defparameter *lb-ai-hunt* '(:easy 0.0 :normal 0.0 :hard 1.0)
+  "The base form takes the shooting stance for HOSHA at an open opponent in *LB-AI-HUNT-BAND* (dream-rsi b1a0, 2026-10-07;
+HOSHA's S6 lands under a HARD CPU's perception + guard raise).")
+(defparameter *lb-ai-blow* '(:easy 0.0 :normal 0.0 :hard 1.0)
+  "The blow-away aim (dream-rsi b3a2, 2026-10-07): the stance latched on a K link (the HOSHA loop's K1, the base K3) whose
+hit blew him away planned TAISHA at the air (b3a1: 2.1 a match, the whiff's recovery ate the wake-up shot's window: 1.5
+late HIRENKYAKUs, 0.6 hunts into his wake-up); now the stance dashes back (when it can pay) and holds L for the charged
+X-Axis shot timed onto his first hittable frame (LB-AI-BLOW-STEP).")
+(defparameter *lb-ai-held-aim* '(:easy 0.0 :normal 0.0 :hard 1.0)
+  "The held aim (b1a2's; dream-rsi b3a1, 2026-10-07): the base form never steps in on a guard within the hunt's band:
+within the generic guard-break range (or a long guard) the stance (TAISHA within 3 m, else the charged shot), else a
+fresh guard is waited out; the stance never throws the quick shot at HARD (the charged one: his signature).")
+(defparameter *lb-ai-link-k* '(:easy 0.0 :normal 0.0 :hard 1.0)
+  "HOSHA's link is K1 (dream-rsi b1a0, 2026-10-07): L after a K link reopens the stance (NORMAL: the shipped J1 / K1 roll).")
+(defparameter *lb-ai-oki* '(:easy 0.0 :normal 0.0 :hard 1.0)
+  "The wake-up shot 起き照準 (b1a1's; dream-rsi b3a1, 2026-10-07): a downed opponent gets the fully charged X-Axis shot timed
+to land on his first hittable frame, from wherever the base form stands (the stance pressed LB-AI-OKI-LEAD frames before
+he can be hit); while it waits for that frame, nothing else (no step-in into his wake-up).")
+(defparameter *lb-ai-starve* '(:easy 0.0 :normal 0.0 :hard 1.0)
+  "EN starved of flash step switches in (free) only onto an opponent busy for its wind-up, never into KIN's neutral
+(dream-rsi b1a0, 2026-10-07; v1's b1a0 rule).")
+(defparameter *lb-ai-kin-run* '(:easy 0.0 :normal 0.0 :hard 1.0)
+  "KIN as the combo's vehicle (dream-rsi b1a0, 2026-10-07): free, nothing to punish, TENSHIN out as soon as its price +
+*LB-AI-KIN-RUN-FS* is there (HARD wins 0.92 -> 0.96 at 80 seeds with the rest on).")
+(defparameter *lb-ai-kin-run-fs* 9.0
+  "... the flash step kept over TENSHIN out's price: three J lines, EN arrives able to snap (3 / 9 / 19 measured; 9 kept).")
+(defparameter *lb-ai-siege* '(:easy 0.0 :normal 0.0 :hard 1.0)
+  "The patient web (b1a1's; dream-rsi b3a1, 2026-10-07): EN lays its lines at a guarding (or warding) opponent too, and
+waits (the web's switch still refuses a guard), instead of standing idle and leaving EN to the generic Breaker.")
+(defparameter *lb-ai-rush-wary* '(:easy 0.0 :normal 0.0 :hard 1.0)
+  "The hunt never answers his rush (b1a1's located bug of b1a0's hunt, which b3a0's file kept; dream-rsi b3a1, 2026-10-07):
+a Kikon or Breaker in its aura, dash or follow-up is \"a move\" to the hunt, and the hunt (the kit's reflex) ran before the
+generic answers to it (guard, Step a red one's follow-up, J into a Breaker).")
 ;;; The kits' :reflex (LB-AI-REFLEX, ai.lisp AI-REFLEX: free states, before the generic answers). Every lead is the
 ;;; perceived one (his move frame as seen, SNAP-SF, + the perception delay), every chance x *LB-AI-DIFF* (EASY <= NORMAL
 ;;; <= HARD), and every roll is made once per event: per threatening window (his move's start tick, or a hazard's spawn
@@ -1899,21 +1938,8 @@ group (J2's line, 12 f after J1's active end); >= the second, a 3rd (dream-rsi b
 the web lays its lines only at a committed opponent (running, in a move or reeling) until one hits (dream-rsi b1a0).")
 (defparameter *lb-ai-web-margin* 0.15
   "Metres a line must clear inside the hit test (its radius + his hurt radius) to be counted (dream-rsi b1a0, 2026-10-07).")
-(defparameter *lb-ai-kin-run* '(:easy 0.0 :normal 0.0 :hard 1.0)
-  "KIN as the combo's vehicle (dream-rsi b1a0, 2026-10-07): free, nothing to punish, TENSHIN out as soon as its price +
-*LB-AI-KIN-RUN-FS* is there (HARD wins 0.92 -> 0.96 at 80 seeds with the rest on).")
-(defparameter *lb-ai-kin-run-fs* 9.0
-  "... the flash step kept over TENSHIN out's price: three J lines, EN arrives able to snap (3 / 9 / 19 measured; 9 kept).")
-(defparameter *lb-ai-starve* '(:easy 0.0 :normal 0.0 :hard 1.0)
-  "EN starved of flash step switches in (free) only onto an opponent busy for its wind-up, never into KIN's neutral
-(dream-rsi b1a0, 2026-10-07; v1's b1a0 rule).")
-(defparameter *lb-ai-hunt* '(:easy 0.0 :normal 0.0 :hard 1.0)
-  "The base form takes the shooting stance for HOSHA at an open opponent in *LB-AI-HUNT-BAND* (dream-rsi b1a0, 2026-10-07;
-HOSHA's S6 lands under a HARD CPU's perception + guard raise).")
 (defparameter *lb-ai-hunt-band* '(0.0 7.5)
   "... the perceived distance band: HOSHA's 5 m leap + its 3 m bullets ((3 7) / (2 8) / (2.5 6.5) measured; dream-rsi b1a0).")
-(defparameter *lb-ai-link-k* '(:easy 0.0 :normal 0.0 :hard 1.0)
-  "HOSHA's link is K1 (dream-rsi b1a0, 2026-10-07): L after a K link reopens the stance (NORMAL: the shipped J1 / K1 roll).")
 (defparameter *lb-ai-hosha-loop* '(:easy 0.0 :normal 0.0 :hard 1.0)
   "HOSHA's K1 link latches L at once (dream-rsi b1a0, 2026-10-07): its hit opens the stance at f4, whose plan is HOSHA again
 on the reeling opponent (his signature 0.85 -> 0.92 at HARD).")
@@ -2111,10 +2137,6 @@ or not (KIKON-READY-P), the answer the same link has: the crossfire (KIN's K3), 
 ;;;   KIN's snipe          KIN free with nothing to cash or run on: SANREN, not the generic neutral string (LB-AI-KIN-SNIPE)
 ;;;   the late wake-up     too late for the charged shot: HIRENKYAKU's X-Axis shot on his first hittable frames
 ;;;                        (*LB-AI-OKI-HIREN*)
-(defparameter *lb-ai-rush-wary* '(:easy 0.0 :normal 0.0 :hard 1.0)
-  "The hunt never answers his rush (b1a1's located bug of b1a0's hunt, which b3a0's file kept; dream-rsi b3a1, 2026-10-07):
-a Kikon or Breaker in its aura, dash or follow-up is \"a move\" to the hunt, and the hunt (the kit's reflex) ran before the
-generic answers to it (guard, Step a red one's follow-up, J into a Breaker).")
 (defun lb-ai-rush-p (s)
   "Is his perceived move a rush on its way: a Kikon or Breaker in its aura, dash or follow-up phase (pure on the SNAP)?"
   (and (eq (snap-state s) :move) (member (snap-kind s) '(:breaker :kikon)) (member (snap-phase s) '(:aura :dash :follow)) t))
@@ -2187,13 +2209,6 @@ from him (b3a0's file: 0.17 ORANGEs a match, the base form's largest plain sourc
   (when (>= (lb-ai-level *lb-ai-composure* b) 1.0)
     (ai-press b :quick *lb-ai-composure-f* :act :hold)
     (lb-count e :ai-composure)))
-(defparameter *lb-ai-siege* '(:easy 0.0 :normal 0.0 :hard 1.0)
-  "The patient web (b1a1's; dream-rsi b3a1, 2026-10-07): EN lays its lines at a guarding (or warding) opponent too, and
-waits (the web's switch still refuses a guard), instead of standing idle and leaving EN to the generic Breaker.")
-(defparameter *lb-ai-oki* '(:easy 0.0 :normal 0.0 :hard 1.0)
-  "The wake-up shot 起き照準 (b1a1's; dream-rsi b3a1, 2026-10-07): a downed opponent gets the fully charged X-Axis shot timed
-to land on his first hittable frame, from wherever the base form stands (the stance pressed LB-AI-OKI-LEAD frames before
-he can be hit); while it waits for that frame, nothing else (no step-in into his wake-up).")
 (defparameter *lb-ai-oki-hiren* '(16 18)
   "The wake-up shot too late for a charge (dream-rsi b3a1, 2026-10-07; b0a2's timing for its execution shot, here on every
 late wake-up): SP2 HIRENKYAKU (the 6 m back-slide, the X-Axis shot at its f20) pressed with this many frames (perceived) to
@@ -2283,10 +2298,6 @@ back when it can't pay), EN a hop back. No roll."
 within 3 m, else the charged shot."
   (and b (>= (lb-ai-level *lb-ai-turtle* b) 1.0)
        (<= (- *match-tick* (fighter-sf f)) (+ (lbai-turtle (lb-ai-state e b)) 3) (+ (- *match-tick* (fighter-sf f)) 6))))
-(defparameter *lb-ai-held-aim* '(:easy 0.0 :normal 0.0 :hard 1.0)
-  "The held aim (b1a2's; dream-rsi b3a1, 2026-10-07): the base form never steps in on a guard within the hunt's band:
-within the generic guard-break range (or a long guard) the stance (TAISHA within 3 m, else the charged shot), else a
-fresh guard is waited out; the stance never throws the quick shot at HARD (the charged one: his signature).")
 (defun lb-ai-held-aim (e b s d)
   "The base form free (HARD, *LB-AI-HELD-AIM*): him perceived guarding within *LB-AI-HUNT-BAND*'s far end: close or a long
 guard, the stance against it (LB-AI-TURTLE-STANCE-P); else hands off (:NONE). No roll."
@@ -2400,16 +2411,6 @@ else the count clears; then forgotten. Always NIL (a bookkeeping step in LB-AI-R
             (setf (lbai-punished ai) 0))
         (setf (lbai-taisha ai) -9))))
   nil)
-(defparameter *lb-ai-close* '(:easy 0.0 :normal 0.0 :hard 1.0)
-  "The sniper's step (dream-rsi b3a2, 2026-10-07): the hunt's stance on him free within 2 m (the hunt's override began at
-2 m, so the shipped plan's TAISHA fired: 1.0 a match, 158 hits in 400 matches, 69 times hit, 31 perfect-Hohoed, ~35
-damage a match taken after it) plans HOSHA (the spacing rule then: the HIRENKYAKU dash back, iframes f0-8, then HOSHA; or
-TAISHA without the dash), and onto his whiff HOSHA at once (its bullet at f6, the composure holding ORANGE off).")
-(defparameter *lb-ai-blow* '(:easy 0.0 :normal 0.0 :hard 1.0)
-  "The blow-away aim (dream-rsi b3a2, 2026-10-07): the stance latched on a K link (the HOSHA loop's K1, the base K3) whose
-hit blew him away planned TAISHA at the air (b3a1: 2.1 a match, the whiff's recovery ate the wake-up shot's window: 1.5
-late HIRENKYAKUs, 0.6 hunts into his wake-up); now the stance dashes back (when it can pay) and holds L for the charged
-X-Axis shot timed onto his first hittable frame (LB-AI-BLOW-STEP).")
 (defun lb-ai-blow-fire-p (charged left up sf)
   "Pure: does the held stance fire its shot now: CHARGED, and his first hittable frame LEFT (perceived; NIL: unknown) within
 the shot's startup, or him UP (no longer down), or the stance's hold at its end (SF)?"
