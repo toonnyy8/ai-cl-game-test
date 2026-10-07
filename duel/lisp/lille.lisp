@@ -101,18 +101,27 @@ recovery's cancel (f16) + K1's startup (17) still lands inside it, a combo (roun
 (defparameter *walk-kin* 3.8 "Walk m/s, JILLIEL KIN (the owl's legs; rework R, 2026-10-06).")
 (defparameter *run-kin* 8.5 "Run m/s, JILLIEL KIN (rework R, 2026-10-06).")
 (defparameter *lb-en-walk* 3.0 "EN: m/s the stick walks him through J / K / SP1 (facing kept on the opponent; rework R, 2026-10-06).")
-(defparameter *lb-switch-in* 4.5
-  "TENSHIN in (EN -> KIN): the dash at him, at most this many metres over *LB-SWITCH-F*, stopping *LB-SWITCH-STOP* short
+(defparameter *lb-switch-in* (+ (* 2 *step-distance*) 0.5)
+  "TENSHIN in (EN -> KIN): the dash at him, at most this many metres at *LB-SWITCH-SPEED*, stopping *LB-SWITCH-STOP* short
 (round 2, 2026-10-06, decision 25 「大幅提升變換戰型後的衝刺距離」: 3.5 before, both ways; decision 42, the user 2026-10-07:
 「另外 L 轉成近戰時能跳躍的範圍要提升 1.3 倍」: 8.0 -> 10.4, the same 14 f; decision 43, the user 2026-10-07:
-「接近距離也提升到 13m」: 10.4 -> 13.0; decision 49, the user 2026-10-07: 「覺醒後 L 的近遠切換移動距離減少 3m」: 13.0 -> 10.0; decision 52, the user 2026-10-07: 「幫我試試看把覺醒後 L 的前衝距離改成
-4.5m」: 10.0 -> 4.5).")
-(defparameter *lb-switch-stop* 1.5 "... this many metres short of him (KIN's J1 reaches 1.6; round 2, 2026-10-06).")
-(defparameter *lb-switch-out* 7.0
-  "TENSHIN out (KIN -> EN): the dash away, metres over *LB-SWITCH-F* (round 2, 2026-10-06; 3.5 before; decision 43, the
-user 2026-10-07: 「後撤距離提升到 10m」: 7.0 -> 10.0; decision 49: 「減少 3m」: 10.0 -> 7.0).")
+「接近距離也提升到 13m」: 10.4 -> 13.0; decision 49, the user 2026-10-07: 「覺醒後 L 的近遠切換移動距離減少 3m」: 13.0 -> 10.0;
+decision 52, the user 2026-10-07: 「幫我試試看把覺醒後 L 的前衝距離改成 4.5m」: 10.0 -> 4.5; decision 53, the user 2026-10-07:
+「前衝距離改成兩個 step + 0.5m 的長度」: two Steps (*STEP-DISTANCE*) + 0.5 = 5.5).")
+(defparameter *lb-switch-stop* 1.0
+  "... this many metres short of him (KIN's J1 reaches 1.6; round 2, 2026-10-06: 1.5; decision 53, the user 2026-10-07:
+「L 前衝停在對手前 1m」: 1.5 -> 1.0).")
+(defparameter *lb-switch-out* (* 2 *step-distance*)
+  "TENSHIN out (KIN -> EN): the dash away, metres at *LB-SWITCH-SPEED* (round 2, 2026-10-06; 3.5 before; decision 43, the
+user 2026-10-07: 「後撤距離提升到 10m」: 7.0 -> 10.0; decision 49: 「減少 3m」: 10.0 -> 7.0; decision 53: 「後徹距離改成兩個
+step 的長度」: two Steps (*STEP-DISTANCE*) = 5.0).")
+(defparameter *lb-switch-speed* 30.0
+  "TENSHIN's dash speed, m/s: the dash takes its distance / this (rounded up to whole frames, at most *LB-SWITCH-F*), and
+the move goes on to its recovery from the dash's end (decision 53, the user 2026-10-07: 「移動改成固定速度而不是固定時間」,
+30 m/s: TENSHIN out's 7 m over 14 f; before, every dash took *LB-SWITCH-F* frames whatever its length).")
 (defparameter *lb-switch-f* 14
-  "TENSHIN's dash frames (12 before): from its end his J / K cancel the recovery (round 2, 2026-10-06).")
+  "TENSHIN's longest dash, frames (the move's startup after its go frame; 12 before, round 2, 2026-10-06): from the dash's
+end (LB-SWITCH-DASH-F; decision 53) his J / K cancel the rest, else the 8 f recovery follows.")
 (defparameter *lb-switch-windup* 16
   "TENSHIN in (EN -> KIN) from EN's neutral (idle, walk, run, MUJITTAI): this many frames of a visible, hittable wind-up
 before the traces materialise and the dash starts (round 2, 2026-10-06, decision 30: 「0.1-0.15 s」, 8; decision 34,
@@ -707,6 +716,7 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
   ;; Jilliel's modes (§22.2): TENSHIN's target form; the traces laid (their ids count up); the newest trace the opponent's
   ;; CPU rolled for (LB-OPP-TRACE); KIN's last string (its last link, its contact) for his CPU's switch out
   (switch-to nil) (trace-n 0 :type fixnum) (opp-roll 0 :type fixnum) (kin-last nil) (kin-contact nil)
+  (dash-end 99 :type fixnum)             ; TENSHIN's dash ends (the link frame) on this frame of the move (decision 53)
   ;; round 2 (§23): the J / K latched in HOSHA / TENSHIN for their cancel (LB-LINK-TICK); ticks of TENSHIN's start and of
   ;; his last materialised trace's hit (his CPU's J after a switch in, the pacing log); the tick a J1 / K1 started from a
   ;; link and what it came from (:hosha / :tenshin: the pacing log's combos)
@@ -1050,16 +1060,22 @@ KIN Trompete's blast, :beam at the move's width, decision 40), and it is gone af
 (none when he is nearer); out (KIN -> EN) *LB-SWITCH-OUT* away (round 2, decision 25)."
   (if in (max 0.0 (min *lb-switch-in* (- d *lb-switch-stop*))) *lb-switch-out*))
 
+(defun lb-switch-dash-f (dist)
+  "Frames TENSHIN's dash of DIST metres takes at *LB-SWITCH-SPEED* (rounded up; at most *LB-SWITCH-F*; 0 for none):
+decision 53, a fixed speed instead of a fixed time."
+  (if (> dist 0.01) (min *lb-switch-f* (max 1 (ceiling (* 60.0 dist) *lb-switch-speed*))) 0))
+
 (defun lb-switch-go (e)
   "TENSHIN f0: every live trace materialises (LB-MATERIALISE); the flash-step dash over *LB-SWITCH-F* at him (EN -> KIN,
-LB-SWITCH-DIST, free) or away (KIN -> EN, *LB-SWITCH-FS* flash step: LB-SWITCH-PRICE), iframes f0-8; the target form
-fixed now (LB-SWITCH-FORM at f6); the J / K latch cleared (LB-LINK-TICK)."
+LB-SWITCH-DIST, free) or away (KIN -> EN, *LB-SWITCH-FS* flash step: LB-SWITCH-PRICE) at *LB-SWITCH-SPEED*, its end
+(the link frame) kept (LBS-DASH-END; decision 53), iframes f0-8; the target form fixed now (LB-SWITCH-FORM at f6, or at
+the dash's end if sooner: LB-SWITCH-TICK); the J / K latch cleared (LB-LINK-TICK)."
   (let* ((f (fighter e)) (st (lb e)) (p (pos-of e)) (to (lb-switch-target (fighter-form f)))
-         (in (lb-kin-form-p to)) (k (if in 1.0 -1.0)) (dist (lb-switch-dist in (fighter-dist f))))
-    (setf (lbs-switch-to st) to (lbs-switch-t st) *match-tick* (lbs-latch st) nil)
+         (in (lb-kin-form-p to)) (k (if in 1.0 -1.0)) (dist (lb-switch-dist in (fighter-dist f))) (n (lb-switch-dash-f dist)))
+    (setf (lbs-switch-to st) to (lbs-switch-t st) *match-tick* (lbs-latch st) nil (lbs-dash-end st) (+ (fighter-sf f) n))
     (lb-materialise e)
-    (when (> dist 0.01)
-      (set-slide e dist *lb-switch-f* (* k (- (fighter-ox f) (aref p 0))) (* k (- (fighter-oz f) (aref p 2)))))
+    (when (plusp n)
+      (set-slide e dist n (* k (- (fighter-ox f) (aref p 0))) (* k (- (fighter-oz f) (aref p 2)))))
     (setf (fighter-invuln f) (max (fighter-invuln f) *lb-dash-iframes*))
     (let ((price (lb-switch-price (fighter-form f)))) (when (plusp price) (spend-fs (gauges e) price)))
     (lb-count e (if in :switch-in :switch-out))
@@ -1150,11 +1166,17 @@ short of him (a lunge's rule); the J / K latch cleared."
       (turn-to-opp e f (track-step (mv-track (fighter-move f)))))
     (lb-link-tick e)))
 
+(defun lb-link-frame (e mv)
+  "The frame of MV (E's move) from which a latched J / K links: HOSHA's :link (f16); a TENSHIN's dash end (LBS-DASH-END,
+decision 53: the dash runs at a fixed speed, so its end moves with its length)."
+  (if (getf (mv-params mv) :link) (if (eq (mv-tick mv) 'lb-switch-tick) (lbs-dash-end (lb e)) (getf (mv-params mv) :link)) 99))
+
 (defun lb-link-tick (e)
   "HOSHA and TENSHIN (round 2, decisions 21, 25): a J / K pressed during the move is latched (a human's consumed; the last
-press wins) and, from the move's :link frame (HOSHA: its recovery, f16, once a bullet hit; TENSHIN: the dash's end,
-f14, always), cancels the rest into his form's J1 / K1 (TRY-COMMAND: EN's lay traces, KIN's and the base form's hit).
-A HOSHA link and a KIN one after TENSHIN in chase him in their startup (FIGHTER-END-CHASE, the Breaker's J1 / K1 rule).
+press wins) and, from the move's link frame (LB-LINK-FRAME; HOSHA: its recovery, f16, once a bullet hit; TENSHIN: the
+dash's end, always), cancels the rest into his form's J1 / K1 (TRY-COMMAND: EN's lay traces, KIN's and the base form's
+hit). A HOSHA link chases him in its startup (FIGHTER-END-CHASE, the Breaker's J1 / K1 rule); a KIN one after TENSHIN in
+did too until decision 53 (the user 2026-10-07: 「完全拿掉追擊」): it starts where the dash left him, 1 m short.
 His CPU's link (LB-AI-LINK) is picked once."
   (let* ((f (fighter e)) (mv (fighter-move f)) (st (lb e)) (b (lb-tick-brain e)))
     (when (and (eq (fighter-state f) :move) mv (eq (fighter-phase f) :main) (zerop (fighter-lock f)))
@@ -1162,24 +1184,32 @@ His CPU's link (LB-AI-LINK) is picked once."
         (unless b
           (cond ((vpad-command-pressed-p vp :quick nil) (vpad-consume! vp :quick) (setf (lbs-latch st) :q))
                 ((vpad-command-pressed-p vp :flash nil) (vpad-consume! vp :flash) (setf (lbs-latch st) :f))))
-        (when (and b hosha (= (fighter-sf f) (getf (mv-params mv) :link 99)))   ; (his CPU: the guard read)
+        (when (and b hosha (= (fighter-sf f) (lb-link-frame e mv)))   ; (his CPU: the guard read)
           (lb-ai-hosha-read e b (fighter-contact f)))
-        (when (and (>= (fighter-sf f) (getf (mv-params mv) :link 99)) (or (not hosha) (eq (fighter-contact f) :hit)))
+        (when (and (>= (fighter-sf f) (lb-link-frame e mv)) (or (not hosha) (eq (fighter-contact f) :hit)))
           (when (and b (null (lbs-latch st))) (setf (lbs-latch st) (lb-ai-link e f st hosha)))
           (let ((c (lbs-latch st)) (in (and (not hosha) (member (fighter-form f) '(:jilliel-kin :shin-kin)))))
             (when (and (member c '(:q :f)) (try-command e f c))
               (setf (lbs-latch st) nil (lbs-link-t st) *match-tick* (lbs-link-from st) (if hosha :hosha :tenshin))
               (when (and b hosha) (lb-ai-hosha-loop e (fighter e) b))   ; (HARD: L latched on the K1: HOSHA again)
               (when (and b in (eq c :q)) (lb-ai-route e (fighter e) b))  ; (HARD: J1 -> K2s -> K3, the crossfire's K3)
-              (when (or hosha in) (setf (fighter-end-chase (fighter e)) t))
+              (when hosha (setf (fighter-end-chase (fighter e)) t))   ; (TENSHIN's: none, decision 53)
               (lb-count e (if hosha :hosha-link :tenshin-link)))))))))
 
 (defun lb-switch-tick (e)
   "TENSHIN's frames: no string chase (an L latched after a KIN K link starts as a chained follow-up, and MAIN-PHASE-STEP's
 chase ran him at the opponent through the whole 14 f dash, eating the dash away: the bug the user found 2026-10-07,
-「現在近戰 K 打完連擊後接到 L 後撤的距離會被限制住」; the dash's slide is the switch's only movement), then LB-LINK-TICK."
+「現在近戰 K 打完連擊後接到 L 後撤的距離會被限制住」; the dash's slide is the switch's only movement), then LB-LINK-TICK;
+then, at the dash's end (LBS-DASH-END) with nothing linked, the rest of the startup is skipped (the form changed now if
+the dash ended before its f6): the 8 f recovery follows the dash (decision 53, a fixed speed: a short dash, a short move)."
   (fill (motion-vel (motion e)) 0f0)
-  (lb-link-tick e))
+  (let* ((f (fighter e)) (mv (fighter-move f)) (st (lb e)) (go (getf (mv-params mv) :go 0)))
+    (when (< (fighter-sf f) go) (setf (lbs-dash-end st) 99))   ; (the wind-up: no link before this switch's own dash)
+    (lb-link-tick e)
+    (when (and (eq (fighter-state f) :move) (eq (fighter-move f) mv) (eq (fighter-phase f) :main)
+               (>= (fighter-sf f) go) (>= (fighter-sf f) (lbs-dash-end st)) (< (fighter-sf f) (1- (mv-s mv))))
+      (when (lbs-switch-to st) (lb-switch-form e))
+      (setf (fighter-sf f) (1- (mv-s mv))))))
 
 (defun lb-hiren-tick (e)
   "HIRENKYAKU / TAISHA: he keeps turning to the opponent while he slides, then the line is fixed (track 0 from :lock)."
@@ -1926,10 +1956,10 @@ while he walks (DUEL_LILLE §22.2)."
 ;;;                        crossfire or SANREN combos off the same link
 (defparameter *lb-ai-web* '(:easy 0.0 :normal 0.0 :hard 1.0)
   "The web's level by difficulty (dream-rsi b1a0, 2026-10-07): 1 = on (HARD), 0 = the shipped CPU (EASY, NORMAL).")
-(defparameter *lb-ai-web-band* '(2.5 4.5)
-  "The perceived distance band EN lays its lines at him in: TENSHIN in reaches 4.5 m and stops 1.5 m short, so KIN's J1
+(defparameter *lb-ai-web-band* '(2.5 5.5)
+  "The perceived distance band EN lays its lines at him in: TENSHIN in reaches 5.5 m and stops 1 m short, so KIN's J1
 then reaches him (dream-rsi b1a0, 2026-10-07: 13 at TENSHIN in's 13 m; decision 49 cut TENSHIN in to 10 m: 10; decision
-52 to 4.5 m: 4.5).")
+52 to 4.5 m: 4.5; decision 53 to two Steps + 0.5 = 5.5 m: 5.5).")
 (defparameter *lb-ai-web-every* 6
   "Frames between two of EN's lay events, one J each (dream-rsi b1a0, 2026-10-07; 3 and 12 measured the same).")
 (defparameter *lb-ai-web-k* 1
@@ -2641,7 +2671,7 @@ a trace hit; TENSHIN out's EN J1 in a crossfire), pressed unless his own J alrea
     (cond ((lbas-done a)
            (when (eq (lbas-plan a) :none) (setf (lbs-latch st) nil) (vpad-consume! vp :quick))
            :none)
-          ((and (>= (1+ (fighter-sf f)) (getf (mv-params mv) :link 99)) (zerop (fighter-lock f)))
+          ((and (>= (1+ (fighter-sf f)) (lb-link-frame e mv)) (zerop (fighter-lock f)))
            (let* ((plan (lb-ai-link e f st nil)) (c (lb-as-link-cmd plan (lbs-latch st) (lb-as-his-j vp))))
              (setf (lbas-done a) t (lbas-plan a) plan)
              (case c
