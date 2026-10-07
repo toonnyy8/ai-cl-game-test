@@ -2452,7 +2452,7 @@ every match K.O.:
 Every cross pairing is inside the window. His HARD CPU (`aieval --char 5 --seeds 40`): **0.9992** (strength 1.000,
 signature 0.998), drift 0.44 (the reference), pacing all K.O.
 
-### 23.31 Decision 50: Jilliel's strikes redone (2026-10-07, in progress)
+### 23.31 Decision 50: Jilliel's strikes redone (2026-10-07)
 
 The user: 「Jilliel 近戰的動作不太明顯，能跟我討論要如何修改動作模組嗎？」. As built, EN and KIN share one set of clips
 (`:lb-w-q1`…`:lb-w-f3`):
@@ -2472,6 +2472,96 @@ The lead proposed four directions. The user chose all four and both modes: 「�
 EN (laying traces) gets its own reworked clips too. Presentation only: the sim never reads art, the hit volumes and
 frame data are unchanged, and the drawn reach must still equal the hit reach (the host FK test, ±0.15 m). The owl's
 forms are not in scope.
+
+**Built** (art batch, 2026-10-07; `duel/lisp/lille-art.lisp`, the EN defmoves' `:clip` in `lille.lisp`, the host test).
+
+*Two clip sets.* KIN keeps the names `:lb-w-q1 … :lb-w-f3`, redone in place. EN gets its own six casts
+`:lb-e-q1 … :lb-e-f3`, authored at EN's frames: `:lb-e-j1 … :lb-e-k3` point at them, and their `:clip-s` is gone (clip
+speed 1; it was KIN's clips at ×1.75–2). Every key is written as the wings' aim: azimuth and elevation in the chest frame
+(the comment above each key). The column moves with them:
+- the root's turn, forward slide, height and pitch;
+- the spine's lean and the chest's twist;
+- on KIN, the thighs, so the ㄇ legs stride; the shanks keep their feet on the floor.
+
+| Strike | Frames (S / A / R) | What it does |
+|---|---|---|
+| KIN J1 左斬 | 8 / 3 / 12 | The right wing cocked high behind (f5–7: twist −28°, turned 10° right, leaning back, the weight back), then a step in (right thigh +30°, left −18°): the wing cuts right → left, through the front at S, across to the left at f15. |
+| KIN J2 右斬 | 7 / 3 / 13 | J1's mirror: the left wing, left → right. |
+| KIN J3 十字 | 9 / 3 / 18 | Both wings raised high and wide (70° up), the column arched back and 0.12 m up, then both crossed down through the front (an X) with a step and a 0.3 m lunge, on down and through. |
+| KIN K1 旋 | 17 / 4 / 21 | Coiled 58° right and crouched (f6–8.5), then one full turn left on the legs (408° by S): the right wing sweeps through the front at S with a 0.6 m lunge, and the turn's overshoot settles. |
+| KIN K2 逆旋 | 20 / 4 / 24 (enter 6) | The counter-spin, K1's mirror: coiled left from its entry, one full turn right, the left wing. |
+| KIN K3 昇翼 | 21 / 5 / 34 (enter 7) | A crouch (0.2 m down), both wings swept low behind, then a rising two-wing cleave: forward at S with a 0.72 m lunge, up through the active frames. He rises 0.5 m, so the shanks leave the floor and the legs fold. Then the landing: 0.16 m down, the legs splayed, the wings down, and back up. |
+| EN J1 | 4 / 3 / 6 | A cast: the right wing raised high behind, the column leaning back, then thrown forward and down along the line on S (the lay frame), on down to −46°. |
+| EN J2 | 4 / 3 / 6 | J1's mirror (the left wing). |
+| EN J3 | 5 / 3 / 9 | Both wings raised overhead and crossed down onto the line. |
+| EN K1 | 9 / 4 / 10 | A whirl: coiled, one full turn, the right wing fanning low across the front through the active frames (the fan of three). |
+| EN K2 | 10 / 4 / 12 (enter 3) | The counter-whirl, the left wing. |
+| EN K3 | 11 / 5 / 17 (enter 4) | Rising 0.34 m with both wings overhead, then slammed down onto the line on S, the column dropping 0.2 m (the landing). |
+
+*The spins.* A full turn of the root without an unwinding turn at the clip's end:
+- two keys 0.0001 f apart (at a half frame, 8.5 / 8.5001 in K1) are the same pose with the root's yaw 360° apart;
+- the turn runs from there to S;
+- so every clip starts and ends at yaw 0. The sampling window between the two keys is 1.7 µs, never hit by a 60 Hz frame.
+
+*The reach* (the host FK test, the art at the active frames vs the volume's end):
+- KIN J1 / J2 1.65 m against 1.60, J3 1.70 / 1.70, K1 / K2 2.20 / 2.20, K3 2.25 / 2.30, all within ±0.15.
+- EN's casts have no hit window, so a new check (after the FK block) wants the cast's tip at the move's `:reach` on S,
+  the frame its line is laid, ±0.15 m. Measured: J1 / J2 1.62 (1.6), J3 1.71 (1.7), K1 / K2 2.25 (2.2), K3 2.31 (2.3).
+- The EN frame check now wants EN's own clip at speed 1 (it pinned KIN's clip at `:clip-s` / S).
+- The clip list of §5 gains the six casts.
+
+**八翼一起斬, the eight wings converge** (`%LB-WINGS`, `%LB-CONV-SHARE`):
+- In a Jilliel strike (`*LB-JILLIEL-STRIKES*`), the six table wings turn from their fan places toward a target. Each is
+  stretched to reach it (at most ×`*lb-conv-stretch*` 1.3), its face turned to his side.
+- They go in turn: the striking side's wing first, the top pair down, both sides at once when both front wings strike.
+  The first launches `*lb-conv-from*` −2 f from S, the next ones `*lb-conv-step-j*` 0.8 f (K: `-k` 1.0) apart. Each
+  arrives over `*lb-conv-ramp*` 2.5 f, is held to the active end + `*lb-conv-hold*` 3 f, and goes back to its fan place
+  over `*lb-conv-out*` 0.5 of the recovery.
+- **KIN's target** is his hit point: where he stands along his facing at the move's reach − 0.1 m, at chest height. The
+  six tips meet in a ring `*lb-conv-ring*` 0.22 m wide round it, each on its own side, top, middle or below.
+- **EN's target** is the line ahead on the floor: the top pair `*lb-conv-near*` 2.2 m out, each pair below
+  `*lb-conv-gap*` 0.9 m further. A K's top pair aims at its middle line and the pairs below at its outer lines (±6°); a J's at its one line.
+- "Where he stands and faces" takes the clip's root offset and turn out of the pelvis frame, so a spin's or a lunge's
+  pose doesn't move the target.
+- The springs zero on the active frames as before, so the converged blades are straight. The 35 % share of the strike
+  drive stays; it bends the wings on the way in and out.
+- Jilliel's lag springs count a drive point as a jump (no lag) only past 2 m a frame (`*lb-jump-jl*` 4 m²; the owl
+  keeps 1 m²). His spins sweep a tip up to ~1.8 m a frame, and that should still trail.
+
+**翼尖斬痕, the tip trails** (`%LB-TRAILS`, `%LB-SMEAR`):
+- Per side and front wing: a trail of the elbow → hand (the wing's outer stretch), recorded while the strike's window is
+  open (S + `*lb-trail-from*` −5 to the active end + `*lb-trail-to*` 3) and the tip has moved (a hitstop keeps the arc).
+  Outside the window it fades a sample a frame.
+- It is drawn as the duel's sword smear (vfx.lisp `VFX-SMEAR`'s comet crescent, re-captured on the fx clock's drawings),
+  in jade (`+pal-jade+`), through the 0.85 point (`*lb-smear-at*`), half-width 0.14 × the elbow → hand length
+  (`*lb-smear-w*`), presence 0.7 (`*lb-smear-k*`).
+- The striking wings: J1 / K1 and EN's the right, J2 / K2 the left, J3 / K3 both.
+- A first pass at VFX-SMEAR's own numbers (0.7 point, 0.33 width, 0.98 presence) read as a jade plank across the
+  screen; it was cut to the numbers above.
+
+**The owl is untouched**: its clips are not on the list, so its wings take the old path; its jump stays 1 m² and it has
+no trails.
+
+**Gates**
+- Host tests ALL PASS: duel-rules **6412** (6388 + the 24 EN cast checks), control 89, learn 100, cine 18.
+- `tools/pkgcheck.sh duel` 0 / 0 / 0; `./build.sh duel` 0 warnings.
+- `simgate.py --seeds 10 --summary` (all 21 pairings, 42 lines) is **byte-identical** to the same run at `8c93f92`;
+  `--cvc` PASS (yy, yk, kk).
+
+**Consing** (debug 79195, 10 draws of the draw hook, in the running scene; KIN, EN, the owl EN and KIN, each idle, at
+f3 / 9 / 15 / 18 / 22 / 30 of a K and f2 / 5 / 9 / 12 / 18 of a J):
+- Before and after alike: **160 B** for every sample (16 B a frame, the ECS lookup floor of §21). The first sample
+  builds the meshes once (131 256 B), the same before and after.
+- A first build drew 184 B once, in EN 7 f after a K. The trail shifted its samples with REPLACE (the engine's
+  TRAIL-PUSH / TRAIL-DECAY do the same), and REPLACE of a vector onto itself allocated here. The shift is now an explicit
+  forward copy (`%LB-TRAIL-DROP`): 0 B.
+
+**Stills** (`/tmp/…/scratchpad/jilliel-art/`, never committed):
+- Debug 79014 (KIN) / 79002 (EN), then 2393 and six frames of W in, then the J and K strings mashed. Shots every 2
+  frames, behind and side camera (2109); the same script on `8c93f92`'s build.
+- Contact sheets `review/after-*-keys.png`: wind-up, before, the hit, follow-through, recovery.
+- `review/before-after-*.png`; per-strike strips `review/strips/`; GIF sequences `review/seq/`.
+- Checked by numbers (FK, the converge targets logged in a scratch build). The look needs the user's eyes.
 
 ### 23.32 Decision 52: TENSHIN in 4.5 m, a trial (2026-10-07)
 

@@ -800,7 +800,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :sj-win :sj-loom-stance :sj-weave :sj-unravel :sj-tanmono :sj-makitori :sj-snip   ; Senjumaru (:sj-awaken is the cine's)
     :lb-stance :lb-intro :lb-win :lb-q1 :lb-q2 :lb-jab :lb-f1 :lb-f2 :lb-f3 :lb-aim :lb-fire :lb-sanren :lb-hiren
     :lb-breaker :lb-butt :lb-w-stance :lb-w-fold :lb-w-q1 :lb-w-q2 :lb-w-q3 :lb-w-f1 :lb-w-f2 :lb-w-f3 :lb-w-aim :lb-w-fire
-    :lb-w-nijushi :lb-w-breaker :lb-w-ram :lb-o-stance :lb-o-q1 :lb-o-q2 :lb-o-q3 :lb-o-f1 :lb-o-f2 :lb-o-f3 :lb-o-chop
+    :lb-w-nijushi :lb-w-breaker :lb-w-ram :lb-e-q1 :lb-e-q2 :lb-e-q3 :lb-e-f1 :lb-e-f2 :lb-e-f3 :lb-o-stance :lb-o-q1 :lb-o-q2 :lb-o-q3 :lb-o-f1 :lb-o-f2 :lb-o-f3 :lb-o-chop
     :lb-o-trompete :lb-o-breaker :lb-o-stamp      ; Lille (DUEL_LILLE §12 Art)
     :lb-kamae :lb-k-shot :lb-k-hosha :lb-k-taisha :lb-k-dash :lb-w-tenshin :lb-w-tenshin-in   ; his rework (DUEL_LILLE §22, §23)
     :lb-oe-stance :lb-o-fold :lb-oe-fold :lb-oe-sabaki :lb-o-tenshin :lb-o-tenshin-in))   ; the owl on Jilliel's system (decision 36, §23.14)
@@ -1721,7 +1721,20 @@ along the left forearm, so the fist leads).")
                                 (or (>= d -0.15)
                                     (and (not (assoc clip strike))   ; (her K props: both ways)
                                          (or (member cf *reach-one-sided* :test #'equal) (member (mv-kind mv) '(:flash :breaker)))))))
-                       (format t "~a ~a: the volume ends ~,2f m, the art ~,2f m~%" (second cf) (mv-name mv) edge art)))))))))
+                       (format t "~a ~a: the volume ends ~,2f m, the art ~,2f m~%" (second cf) (mv-name mv) edge art)))))))
+    ;; JILLIEL EN's casts (decision 50, DUEL_LILLE §23.31): no hit window, but the striking wing's tip (its clip's strike
+    ;; point) is at the move's :reach on the frame it lays its line (S), +-0.15 m, as KIN's hit poses are at their volumes
+    (let* ((k (kit :lille :jilliel)) (b (cdr (assoc (kit-body k) bodies))) (props (apply #'make-rig-proportions (getf b :props))))
+      (dolist (lm (link-moves k))
+        (let* ((mv (first lm)) (point (second (assoc (mv-clip mv) points))))
+          (check (and (zerop (length (mv-hits mv))) (member point '(:hand-r :hand-l)) (~= 1.0 (mv-clip-speed mv))))
+          (when point
+            (clip-sample! pose (find-clip (mv-clip mv)) (/ (mv-s mv) 60.0))
+            (pose-fk! jm pose 0f0 0f0 0f0 0f0 (f32 (getf b :scale)) 0f0 props)
+            (joint-point! v jm (joint-index point) 0f0 0f0 0f0)
+            (let ((art (sqrt (+ (expt (aref v 0) 2) (expt (aref v 2) 2)))))
+              (check (or (<= (abs (- art (mv-reach mv))) 0.15)
+                         (format t "jilliel ~a: the reach ~,2f m, the cast's tip ~,2f m~%" (mv-name mv) (mv-reach mv) art))))))))))
 
 ;; J is short, K long (the user, 2026-09-29, docs/duel/DUEL_STRINGS.md §13): in every form every K link reaches at least 0.5 m further
 ;; than any J link at the same position of the string; 片腕's short K against the J floor (2026-10-06) excepted
@@ -2082,7 +2095,8 @@ defender's next step. Values: the attacker's and the defender's first actionable
                            (> *lb-trace-stun* (+ (- link go) (mv-first-hit kj1))))))))
   ;; EN's J / K (round 2, decision 28: the start-ups and recoveries cut, the active frames kept): the strings as KIN's (the
   ;; same links), S / A / R J 4/3/6 4/3/6 5/3/9, K 9/4/10 10/4/12 (enter 3) 11/5/17 (enter 4); no hit window, a trace laid
-  ;; on the first active frame, the stick walking him (LB-EN-TICK); the wing clips at :clip-s / S speed (the hit pose on S)
+  ;; on the first active frame, the stick walking him (LB-EN-TICK); their own casts at these frames (decision 50; KIN's
+  ;; wing clips at :clip-s / S speed before)
   (check (equal (mapcar #'second (link-moves j)) (mapcar #'second (link-moves kn))))
   (loop for (em nil seq) in (link-moves j)
         for km = (first (find seq (link-moves kn) :key #'third :test #'equal))
@@ -2090,7 +2104,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
                                               (:lb-e-k1 9 4 10 0) (:lb-e-k2 10 4 12 3) (:lb-e-k2s 10 4 12 3) (:lb-e-k3 11 5 17 4))))
         do (check (and km want (equal (list (mv-s em) (mv-a em) (mv-r em) (mv-enter em)) want)
                        (eq (mv-kind em) (mv-kind km)) (zerop (length (mv-hits em))) (eq (mv-tick em) 'lb-en-tick)
-                       (eq (mv-clip em) (mv-clip km)) (~= (mv-clip-speed em) (/ (mv-s km) (float (mv-s em))))
+                       (not (eq (mv-clip em) (mv-clip km))) (~= (mv-clip-speed em) 1.0)   ; (their own casts, decision 50)
                        (equal (mv-on-frame em) (list (list (mv-s em) 'lb-en-lay)))
                        (< (mv-enter em) (mv-s em))
                        (member (getf (mv-params em) :trace) '(:j :k))
