@@ -130,14 +130,14 @@ user: 「遠程 J/K 每條軌跡消耗 3 點閃步量表」; free before).")
   "A trace materialising turns about where it was laid toward the opponent by at most this many degrees, then hits along
 the turned line (decision 41, the user 2026-10-07: 「C」, the materialise snap; the lead's 10: 1.7 m sideways at 10 m).
 Decision 39's laying shot (1 damage, a 10 f flinch) is gone: 「我希望去除掉軌道設置時造成的 1 點傷害」.")
-(defparameter *lb-cross-scale* 0.5
+(defparameter *lb-cross-scale* 0.1
   "The opponent crossing one of his live traces slows the whole match to this time scale (SLOWMO, everyone: decision 41,
-the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」, 「全場慢動作」; the lead's 0.35, then decision 43: 「時緩改成放慢 1 倍」:
-half speed, 0.5; a perfect Hoho's is 0.25) ...")
+the user 2026-10-07: 「對手經過軌道的瞬間會有時緩」, 「全場慢動作」; the lead's 0.35, then decision 43: 0.5, corrected by the
+user: 「抱歉，應該是倍率改 0.1 然後可重複觸發」: 0.1; a perfect Hoho's is 0.25) ...")
 (defparameter *lb-cross-secs* 0.3 "... for this many real seconds (the lead's number; a perfect Hoho's 0.45) ...")
-(defparameter *lb-cross-rearm* 30
-  "... and not again for this many fixed steps (*MATCH-TICK*: 0.5 s of real time) after it fired (the lead's number: a K fan's three lines or a walk along
-16 traces would chain it).")
+(defparameter *lb-cross-rearm* 0
+  "... and not again for this many fixed steps (*MATCH-TICK*) after it fired: 0, every crossing fires (the user
+2026-10-07: 「可重複觸發」; the lead's 30 before).")
 (defparameter *lb-trace-refund-block* 2.0
   "... and a guarded one this much (the user, 2026-10-06: 「擋下回收 2」; it was nothing).")
 (defparameter *lb-trace-refund* 4.0

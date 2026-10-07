@@ -2246,11 +2246,13 @@ The user's words: 「1. 後撤距離提升到 10m，接近距離也提升到 13m
    is the switch moves' new tick `lb-switch-tick`, which zeroes his walk / chase velocity each frame before
    `lb-link-tick`, so the dash's slide is the switch's only movement (in and out alike; Lille's file only). The same
    script on the fixed build: **10.0 m** (x 0.33 → −9.67).
-3. **The crossing slow motion** runs at **half speed** (`*lb-cross-scale*` 0.35 → **0.5**; read as 「放慢 1 倍」 = time
-   takes twice as long), still 0.3 s, re-armed after 30 steps.
+3. **The crossing slow motion**: first read as half speed (0.35 → 0.5); the user corrected it: 「抱歉，應該是倍率改 0.1
+   然後可重複觸發」. So `*lb-cross-scale*` **0.1** (a tenth of the speed; a perfect Hoho's is 0.25), still 0.3 s of real
+   time (about 2 sim frames), and **every crossing fires** (`*lb-cross-rearm*` 30 → 0; each trace still fires once per
+   crossing onto it, its on / off edge).
 
 Tests: duel-rules 6370 ALL PASS (`lb-switch-dist`: in 10.5 m at 12 m, 13.0 at 20 and 14.5 m; out 10.0; the switch moves'
-tick `lb-switch-tick`; the slow at 0.5).
+tick `lb-switch-tick`; the slow at 0.1, no re-arm).
 
 Gates (native, NORMAL; his pairings), seeds 1–20, every match K.O. (before: §23.24, decision 42):
 
@@ -2266,6 +2268,23 @@ Gates (native, NORMAL; his pairings), seeds 1–20, every match K.O. (before: §
 LR is past 210 s again. The edge rerun at 60 seeds gives **222.8 s**, every match K.O., Lille 22 / 60. That is still outside
 the window but under the 229.6 s the user accepted for LR (§23.22), so it is reported to the user, not retuned. A longer
 back dash (10 m) keeps Rukia's matches at range longer. pkgcheck 0 / 0 / 0; `./build.sh duel` 0 warnings.
+
+With the corrected slow motion (0.1, no re-arm), seeds 1–20, every match K.O.:
+
+| Pairing | Median (with 0.5) | Lille wins / 20 (with 0.5) | Blow-aways |
+|---|---|---|---|
+| LY | 178.6 s (177.3) | **8** (14) | 1 |
+| LK | 172.5 s (162.9) | 8 (7) | 37 |
+| LR | **235.4 s** (222.1) | 8 (8) | 13 |
+| LI | 203.5 s (203.5) | 6 (6) | 7 |
+| LS | 197.7 s (182.3) | 10 (10) | 11 |
+| LL | 253.5 s (222.9; mirror) | P1 6 / P2 14 | 10 |
+
+The gate times a match in fixed steps (`*match-tick*` / 60, real time, as a player feels it), so every crossing's
+0.3 s at 0.1 adds ~0.27 s to the measured length. The win counts move too: the slow motion shifts how sim frames fall
+on steps, and code that reads `*match-tick*` sees that (the same as a perfect Hoho's slow motion; deterministic).
+LR's edge rerun at 60 seeds: **217.5 s**, every match K.O., Lille 20 / 60: outside the window, under the accepted
+229.6 s; reported, not retuned.
 
 ---
 
