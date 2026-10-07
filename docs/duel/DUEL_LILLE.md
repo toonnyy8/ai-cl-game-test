@@ -2712,3 +2712,119 @@ Asked what next with the score saturated, the user chose 「直接進入整合�
 - Next, the integration of §24.1 step 5: the learning CPU's Lille situations, ASSIST AUTO COMBO's signature routes
   (b3a2's `:sp-ender` already acts for an assisted human), then the full gate.
 
+
+### 24.9 The learning CPU's Lille situations (§24.1 step 5; the integration, 2026-10-07)
+
+The user's plan (§24.1 step 5, from the choice 「學習玩家習慣」): the learning CPU (DUEL_LEARNING) gains **Lille's own
+situations**, so a Lille CPU learns the human's habits against his signature and answers them in character. It is built
+on a new generic part of the learner, the kit model (DUEL_LEARNING §11: `learn-def-kit`, separate tables, storage format
+3). His part is the section "AI: the learning CPU's Lille situations" at the end of `lille.lisp`'s AI part.
+
+**When it runs.** Only a learner runs it: a CPU Lille facing a human (VS CPU, ENDLESS) or the learning gate. CPU VS CPU,
+the seed gates, the ASSIST's learner and every other character never get there (`lrn-kit` is NIL), so nothing of theirs
+moves (verified below). The rules are the learner's:
+- the human's state is what Lille's CPU perceives (the delayed snap); his own state is felt at once;
+- a read is one roll of the learner's own stream per event (`learn-kit-read`, never `sim-rnd01`), against p_exploit ×
+  `*lb-learn-diff*` (EASY ≤ NORMAL ≤ HARD), and only on a confident prediction (n0 ≥ 1.5, p ≥ 0.4, as the generic model);
+- every answer is a command of his kit.
+
+**The three situations** (8 answer classes: `:left :right :back :guard :hoho :step :attack :take`):
+
+| Situation | Onset (as his CPU sees it) | The human's answers | The read's answer |
+|---|---|---|---|
+| `:trace` | he stands on one of Lille's live traces he could have seen (laid at least the perception delay before), Lille in EN, no other episode open | `:right` / `:left` off the line as Lille laid it (facing along it); `:back` along it (still on it, > 1.2 m); a `:hoho`; a `:guard` raised on it; `:take` (still on it after 45 f + the delay). An attack is no answer: the question is how he leaves the line | a side: **the snap timed for his step**: TENSHIN in once his step off is seen (a Step, or 0.6 m that way) and the live traces, turned toward his landing (*STEP-DISTANCE* 2.5 m that way), would hit him there; before that, if they wouldn't, **a K fan** at him (its side line + the 10° snap reach his landing from ~9 m). `:back`: TENSHIN in at once (the lines run 31 m) |
+| `:tenshin` | his own TENSHIN in from EN's neutral (the 16 f wind-up the human can see) | `:guard`, `:hoho`, `:step`, `:attack` (a new move), `:back`, `:take` (20 f + the delay); a guard, Hoho or Step under way at the onset counts | read where his CPU would switch from neutral (one read per 60 f window): `:guard` → **the materialise is held** (no neutral switch) until he is busy; `:hoho` → **held until his Hoho is spent** (seen within its lockout, or no flash step for one). The fast cancels (J1's line + 2 f: too fast to answer) still go |
+| `:hosha` | the stance's plan is HOSHA on a free opponent (watched only when HOSHA fires) | as `:tenshin` (18 f + the delay); no reaction beats HOSHA's first bullet, so an answer already under way at the plan counts | read at the plan: `:guard` (him standing) and `:hoho` → **the HIRENKYAKU dash back (iframes), then the charged shot** (through guard); `:step` / `:back` → **the charged shot** (its aim follows him through the charge); `:attack` → **the dash back, then HOSHA** (TAISHA without the dash) |
+
+Hooks in his shipped CPU (one line each): `lb-ai-reflex`'s EN branch asks `lb-learn-en` first; `lb-ai-en`'s two neutral
+switches ask `lb-learn-hold-p`; `lb-en-tick`'s cancel asks `lb-learn-cancel-p`; `lb-ai-kamae` passes its plan through
+`lb-learn-kamae`. Without a learner each returns the shipped answer, with no side effect and no roll.
+
+**Knobs** (all new, the integration agent's, 2026-10-07):
+
+| Knob | Value | What |
+|---|---|---|
+| `*lb-learn-diff*` | EASY 0.5, NORMAL 1.0, HARD 1.5 | × p_exploit (0.15–0.6) for his reads: ≤ 0.9 at HARD |
+| `*lb-learn-episode*` | `:trace` 45, `:tenshin` 20, `:hosha` 18 | frames a situation waits for his answer, + the perception delay |
+| `*lb-learn-hold*` | 60 | frames one `:tenshin` read's window lasts at most |
+| `*lb-learn-holds*` | `(:guard :hoho)` | the `:tenshin` reads that hold the switch |
+| `*lb-learn-step-off*` | 0.6 m | toward the read side: his step off begun |
+
+**The HOSHA guard answer, measured** (habit 9, P1 HARD Yamamoto, Lille HARD; Lille wins all; damage Lille took a match,
+8 runs × 30 unless noted):
+
+| `:guard` → | Lille took (learner) | without his situations (m 4) |
+|---|---|---|
+| TAISHA within 3 m, else the charged shot (4 runs) | 725 | 525 |
+| TAISHA within 3 m, else the quick shot (on him standing) | 658 | 546 |
+| **the dash back, then the charged shot (kept)** | 580 | 546 |
+
+A HARD opponent perfect-Hohos or punishes TAISHA's and the quick shot's startup (b3a2's TAISHA read found the same). The
+dash back (iframes f0–8) then the charged shot is b3a2's own answer to a punisher, and his signature.
+
+**The learning gate** (P1 Yamamoto with a scripted habit, P2 Lille; 4 fresh runs × 30 matches = 120 per cell; m 0 the
+plain CPU, 1 the learner, 4 the learner without Lille's situations; blocks of 10 matches). New habits (debug.lisp
+`*habits*`, functions in his section):
+- **7** steps off any trace it sees under it to the line's right while his TENSHIN is ready (`lb-habit-trace`);
+- **8** Hohos his TENSHIN in's wind-up (`lb-habit-tenshin`);
+- **9** guards HOSHA as its leap begins (`lb-habit-hosha`): no reaction beats the first bullet, so the habit plays a
+  player who expects HOSHA from the stance.
+
+NORMAL (P2's win rate; Lille's reads acted on, paid = damage dealt and none taken within 60 f):
+
+| Human (P1) habit | plain (m 0) | learner (m 1): matches 1–10 / 11–20 / 21–30 | without his situations (m 4) | his reads (paid) a run |
+|---|---|---|---|---|
+| plain CPU | .62 | .65 / .68 / .72 (**.68**) | .79 | K fan 3 (3), snap 1.5 (0.5), TENSHIN held 2 |
+| steps off traces to the right | .53 | .75 / .72 / .78 (**.75**) | .72 | K fan 5 (5), snap 2 (1) |
+| Hohos TENSHIN | .52 | .68 / .78 / .75 (**.73**) | .78 | TENSHIN held 10, K fan 3 (2.5) |
+| guards HOSHA | .51 | .75 / .72 / .65 (**.71**) | .66 | dash + charged shot 11 (10) |
+
+HARD (Lille wins all 120 in every cell; damage he took a match / match length):
+
+| Human (P1) habit | plain | learner | without his situations |
+|---|---|---|---|
+| plain CPU | 525 / 81.4 s | 503 / 80.1 s | 519 / 81.2 s |
+| steps off traces to the right | 480 / 80.4 s | 477 / 80.2 s | 503 / 80.0 s |
+| Hohos TENSHIN | 500 / 80.4 s | 543 / 81.6 s | 546 / 81.7 s |
+| guards HOSHA | 605 / 93.6 s | 646 / 95.1 s | 525 / 92.1 s |
+
+What the model learned (its prediction after the last match of each run):
+- NORMAL: habit 7 `trace=right` 0.47–0.69, habit 8 `tenshin=hoho` 0.51–0.60, habit 9 `hosha=guard` 0.78–0.83; the plain
+  CPU `trace` left / take (0.33–0.58), `tenshin=take`, `hosha=take`.
+- HARD: habit 7 `trace=right` 0.86–0.95. HARD's EN switches through the fast cancels, so neutral TENSHINs are rare
+  (`tenshin` evidence 0–6).
+- HARD also reads little: the scripted human loses every match, so his form sits near −1 and p_exploit at its floor
+  (0.15 × 1.5). His reads acted 1–3 times in 120 matches, except the HOSHA guard answer (103).
+
+Read:
+- **Every habit is learned within the first matches**, and the learner beats the plain CPU by 6–22 points at NORMAL.
+- **His own situations' share is small and noisy.** At NORMAL a match brings ~1 HOSHA, ~11 traces and a few neutral
+  TENSHINs, so his reads act ~5–15 times in a 30-match run. The cells with and without them differ by −0.11 … +0.05, inside the
+  learner's own run-to-run spread: the same configuration with the learner's stream perturbed (one extra draw per kit
+  read, never acted on) moved the plain cell from .80 to .72 (8 runs each); 28 runs each pooled give .71 with and .77
+  without.
+- **The reads that act pay:** the HOSHA guard answer 91 % at NORMAL (40 of 44) and 78 % at HARD (80 of 103), the K fan
+  96 % (48 of 50), the timed snap 42 % (8 of 19). The TENSHIN holds measured neutral: holding nothing, only `:hoho`, or
+  both gave the same win rates to ±0.03 (8 runs, habits 0 / 8 / 9). They are kept: they don't feed his Hoho or guard the trace hits.
+- **At HARD the HOSHA guard answer costs damage.** Against the guarder Lille takes 646 a match instead of 525 without it,
+  and still wins every match. An 8-run measurement of nearly the same rule gave 580 vs 546. The per-run spread is large
+  (469–801 a match).
+
+**Other characters: bit-identical.**
+- `simgate.py --seeds 10`, all 21 pairings, is byte-identical to the same run at `8544c23` (rows and `--summary`). That
+  includes Lille's six CPU pairings: the learner never runs in CPU vs CPU.
+- `simgate.py --cvc`: PASS (yy, yk, kk).
+- The learning gate's YK and KR cells (habits plain, grab-happy, Hoho-happy, burst-happy; plain and learner; 4 runs ×
+  30) are **row-identical** to `8544c23` (64 of 64 files). At `8544c23`, P2's win rate plain / learner: YK .68 / .88,
+  .67 / .66, .53 / .62, .68 / .91; KR .55 / .57, .21 / .33, .54 / .68, .54 / .63. (DUEL_LEARNING §10's table predates the
+  later rules.)
+
+Tests:
+- learn **131**: the registry, the kit model's own tables, its numbers equal to the generic model's, format 3, a format 2
+  table read back, the size caps;
+- duel-rules **6405**: his spec, the knobs, the side of a line, the landing, his answers, the stance's branches, the
+  hold, `learn` in the name-leak check;
+- control 89, cine 18, input 33, touch 64;
+- `tools/pkgcheck.sh duel` 0 / 0 / 0; `./build.sh duel` 0 warnings.
+
+The manual and the tutorial have no Lille section yet, so nothing was added there.

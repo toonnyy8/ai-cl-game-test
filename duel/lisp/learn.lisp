@@ -11,6 +11,9 @@
 ;;;;   bursts        per burst colour (3) a use / don't two-armed EXP3: the base AI's chance re-weighted (LEARN-BURST-P)
 ;;;;   form          the human's recent results in [-1, 1]; LEARN-P-EXPLOIT reads him more when he wins, less when he loses
 ;;;;   storage       LEARN-ENCODE / LEARN-DECODE: a table as a short list of integers (the page keeps them, pwa.js)
+;;;;   kit model     a character may name its own situations (at most +LEARN-KS+) and action classes (+LEARN-KA+):
+;;;;                 LEARN-DEF-KIT (in its own file; DUEL_LEARNING §11); the same n-gram model on separate tables
+;;;;                 (LTAB-K0 / -K1 / -KPREV), opened, counted and read only by that character's learner (ai.lisp)
 (in-package :duel)
 
 (defparameter *learn-situations* #(:wake :knock :h-blocked :c-blocked :whiff :c-hit :close :mid :far)
@@ -63,6 +66,9 @@ string ends after its second hit, then a guard: his BLUE breaks nothing), taking
 (defconstant +learn-meters+ 3 "... x its kit meter in thirds.")
 (defconstant +learn-ctx+ (* +learn-forms+ +learn-meters+))
 (defconstant +learn-rows+ (* +learn-ctx+ +learn-nbins+) "Bandit rows: context x distance bin.")
+(defconstant +learn-ks+ 4 "A kit's own situations (LEARN-DEF-KIT): at most this many ...")
+(defconstant +learn-ka+ 8 "... and its own action classes: at most this many.")
+(defparameter *learn-kit-cap* 120 "At most this many kit order-1 cells are saved (the largest; the page keeps < 1000 entries).")
 
 (defstruct (ltab (:constructor make-ltab ()))
   "One CPU character's learned tables (docs/duel/DUEL_LEARNING.md)."
@@ -71,7 +77,11 @@ string ends after its second hit, then a guard: his BLUE breaks nothing), taking
   (prev (make-array +learn-s+ :element-type 'fixnum :initial-element -1))   ; his last class per situation
   (arms (make-array (* +learn-rows+ +learn-arms+) :element-type 'single-float :initial-element 0f0))
   (bursts (make-array 6 :element-type 'single-float :initial-element 0f0))   ; colour x (use, don't)
-  (form 0f0 :type single-float))
+  (form 0f0 :type single-float)
+  ;; the kit model (format 3): its character's own situations x classes (LEARN-DEF-KIT), zero for every other character
+  (k0 (make-array (* +learn-ks+ +learn-ka+) :element-type 'single-float :initial-element 0f0))
+  (k1 (make-array (* +learn-ks+ +learn-ka+ +learn-ka+) :element-type 'single-float :initial-element 0f0))
+  (kprev (make-array +learn-ks+ :element-type 'fixnum :initial-element -1)))
 
 (defun learn-sit (key) (position key *learn-situations*))
 (defun learn-act (key) (position key *learn-actions*))
@@ -83,37 +93,53 @@ string ends after its second hit, then a guard: his BLUE breaks nothing), taking
 (defun learn-row (ctx bin) "The bandit row of context CTX and distance bin BIN." (+ (* ctx +learn-nbins+) bin))
 
 ;;; ---------------------------------------------------------------- the player model
-(defun learn-observe! (tab sit act)
-  "The human did class ACT (index) in situation SIT (index): decay the rows, count it, remember it as his last there."
-  (let ((c0 (ltab-c0 tab)) (c1 (ltab-c1 tab)) (prev (aref (ltab-prev tab) sit)) (d (float *learn-decay* 1f0)))
-    (flet ((bump (v base) (dotimes (a +learn-a+) (setf (aref v (+ base a)) (* d (aref v (+ base a)))))
+;;; One n-gram model over three tables (order 0 C0, order 1 C1, his last class per situation PREVS) of NA classes: the
+;;; generic one (LTAB-C0 / -C1 / -PREV, +LEARN-A+) and a kit's own (LTAB-K0 / -K1 / -KPREV, +LEARN-KA+: LEARN-KIT-*).
+(defun %learn-observe! (c0 c1 prevs na sit act)
+  "Class ACT (index) seen in situation SIT (index) of the tables C0 / C1 / PREVS (NA classes): decay the rows, count it,
+remember it as his last there."
+  (let ((prev (aref prevs sit)) (d (float *learn-decay* 1f0)))
+    (flet ((bump (v base) (dotimes (a na) (setf (aref v (+ base a)) (* d (aref v (+ base a)))))
              (incf (aref v (+ base act)) 1f0)))
-      (bump c0 (* sit +learn-a+))
-      (when (>= prev 0) (bump c1 (* (+ (* sit +learn-a+) prev) +learn-a+))))
-    (setf (aref (ltab-prev tab) sit) act)
-    tab))
+      (bump c0 (* sit na))
+      (when (>= prev 0) (bump c1 (* (+ (* sit na) prev) na))))
+    (setf (aref prevs sit) act)))
 
-(defun learn-dist (tab sit)
-  "The human's next class in SIT as a probability vector (order 1 given his last class there, backed off to order 0 with
-*LEARN-BACKOFF* pseudo-counts), and the order-0 evidence. Values: vector (or NIL without evidence), n0."
-  (let* ((c0 (ltab-c0 tab)) (c1 (ltab-c1 tab)) (b0 (* sit +learn-a+)) (prev (aref (ltab-prev tab) sit))
-         (b1 (and (>= prev 0) (* (+ b0 prev) +learn-a+)))
-         (n0 (loop for a below +learn-a+ sum (aref c0 (+ b0 a))))
-         (n1 (if b1 (loop for a below +learn-a+ sum (aref c1 (+ b1 a))) 0f0)))
+(defun %learn-dist (c0 c1 prevs na sit)
+  "The next class in SIT of the tables C0 / C1 / PREVS (NA classes) as a probability vector (order 1 given his last class
+there, backed off to order 0 with *LEARN-BACKOFF* pseudo-counts), and the order-0 evidence. Values: vector (or NIL
+without evidence), n0."
+  (let* ((b0 (* sit na)) (prev (aref prevs sit))
+         (b1 (and (>= prev 0) (* (+ b0 prev) na)))
+         (n0 (loop for a below na sum (aref c0 (+ b0 a))))
+         (n1 (if b1 (loop for a below na sum (aref c1 (+ b1 a))) 0f0)))
     (if (<= n0 0f0)
         (values nil 0f0)
-        (let ((p (make-array +learn-a+ :element-type 'single-float)) (k (float *learn-backoff* 1f0)))
-          (dotimes (a +learn-a+ (values p n0))
+        (let ((p (make-array na :element-type 'single-float)) (k (float *learn-backoff* 1f0)))
+          (dotimes (a na (values p n0))
             (let ((q0 (/ (aref c0 (+ b0 a)) n0)))
               (setf (aref p a) (if (plusp n1) (/ (+ (aref c1 (+ b1 a)) (* k q0)) (+ n1 k)) q0))))))))
 
+(defun %learn-best (p n na)
+  "The most likely class of distribution P (evidence N, NA classes): values class index (NIL = no evidence), its
+probability, the evidence."
+  (if (null p)
+      (values nil 0f0 n)
+      (let ((best (loop with b = 0 for a from 1 below na when (> (aref p a) (aref p b)) do (setf b a) finally (return b))))
+        (values best (aref p best) n))))
+
+(defun learn-observe! (tab sit act)
+  "The human did class ACT (index) in situation SIT (index): decay the rows, count it, remember it as his last there."
+  (%learn-observe! (ltab-c0 tab) (ltab-c1 tab) (ltab-prev tab) +learn-a+ sit act)
+  tab)
+
+(defun learn-dist (tab sit)
+  "The human's next class in SIT as a probability vector and the order-0 evidence (%LEARN-DIST on the generic tables)."
+  (%learn-dist (ltab-c0 tab) (ltab-c1 tab) (ltab-prev tab) +learn-a+ sit))
+
 (defun learn-predict (tab sit)
   "The human's most likely next class in SIT: values class index (NIL = no evidence), its probability, the evidence."
-  (multiple-value-bind (p n) (learn-dist tab sit)
-    (if (null p)
-        (values nil 0f0 n)
-        (let ((best (loop with b = 0 for a from 1 below +learn-a+ when (> (aref p a) (aref p b)) do (setf b a) finally (return b))))
-          (values best (aref p best) n)))))
+  (multiple-value-bind (p n) (learn-dist tab sit) (%learn-best p n +learn-a+)))
 
 (defun learn-confident-p (p n) "Act on a prediction of probability P from evidence N?" (and (>= n *learn-min-n*) (>= p *learn-confident*)))
 
@@ -151,6 +177,41 @@ link: NEW-START) by its KIND, a guard raised, a Hoho / Step, or AWAY metres back
     (and k (learn-act k))))
 
 (defun learn-episode (sit) "Frames situation SIT's episode waits." (getf *learn-episode* (if (< sit +learn-events+) :event :neutral)))
+;;; ---------------------------------------------------------------- a kit's own situations (format 3; DUEL_LEARNING §11)
+;;; A character may name situations of its own (its signature moves; DUEL_LEARNING §11, the first: roster index 5's) and the
+;;; human's answers there. They live on their own tables (LTAB-K0 / -K1 / -KPREV), so the generic 9 situations and 10
+;;; classes stay as they are; only that character's learner opens them (ai.lisp LEARN-KIT-OPEN, by the names its spec
+;;; gives), so every other character's tables, rolls and decisions are exactly as before.
+(defvar *learn-kits* nil
+  "Per character, its learning spec: (character :situations #(key ...) :actions #(key ...) :step fn), LEARN-DEF-KIT.")
+
+(defun learn-def-kit (character &key situations actions step)
+  "CHARACTER's own learning situations (a vector of at most +LEARN-KS+ keys) and the human's action classes there (at
+most +LEARN-KA+ keys), and its STEP function (ai.lisp LEARN-STEP calls it each step: E B S D L). Replaces an earlier one."
+  (unless (and (<= 1 (length situations) +learn-ks+) (<= 1 (length actions) +learn-ka+))
+    (error "learn-def-kit ~a: 1-~d situations, 1-~d classes" character +learn-ks+ +learn-ka+))
+  (setf *learn-kits* (cons (list character :situations (coerce situations 'simple-vector) :actions (coerce actions 'simple-vector)
+                                 :step step)
+                           (remove character *learn-kits* :key #'first)))
+  character)
+
+(defun learn-kit-spec (character) "CHARACTER's learning spec (a plist; LEARN-DEF-KIT), or NIL." (rest (assoc character *learn-kits*)))
+(defun learn-kit-sit (spec key) "Index of situation KEY in SPEC, or NIL (a situation it doesn't name)." (and spec (position key (getf spec :situations))))
+(defun learn-kit-act (spec key) "Index of action class KEY in SPEC, or NIL." (and spec (position key (getf spec :actions))))
+
+(defun learn-kit-observe! (tab sit act)
+  "The human answered with kit class ACT (index) in kit situation SIT (index): the kit tables' count (%LEARN-OBSERVE!)."
+  (%learn-observe! (ltab-k0 tab) (ltab-k1 tab) (ltab-kprev tab) +learn-ka+ sit act)
+  tab)
+
+(defun learn-kit-dist (tab sit) "The kit situation SIT's distribution and evidence (%LEARN-DIST on the kit tables)."
+  (%learn-dist (ltab-k0 tab) (ltab-k1 tab) (ltab-kprev tab) +learn-ka+ sit))
+
+(defun learn-kit-predict (tab sit)
+  "The human's most likely answer (class index) in kit situation SIT: values class index (NIL = no evidence), its
+probability, the evidence."
+  (multiple-value-bind (p n) (learn-kit-dist tab sit) (%learn-best p n +learn-ka+)))
+
 
 ;;; ---------------------------------------------------------------- the bandit
 (defun learn-mult (tab row arm) "The weight factor of arm index ARM in bandit ROW (LEARN-ROW)." (exp (aref (ltab-arms tab) (+ (* row +learn-arms+) arm))))
@@ -200,24 +261,32 @@ scores: p e^u / (p e^u + (1 - p) e^n)."
 ;;; 1000-2199 the bandit scores (x1000), 2300-2308 the last class per situation (+1), 2400-2405 the burst scores (x1000),
 ;;; 2950 the form (x1000), 2999 the format version (2). Format 1 (999 = 1; 8 situations, 9 classes, 5 x 10 scores) is
 ;;; read into format 2: the model and the form carried over, the old bandit dropped (it relearns within a match).
+;;; Format 3 (2999 = 3; DUEL_LEARNING §11) is format 2 plus the kit model: 3000-3031 its order 0 (x10), 3100-3355 its
+;;; order 1 (x10; the *LEARN-KIT-CAP* largest), 3400-3403 its last classes (+1). A format 2 table is read as it is (no kit
+;;; entries: an empty kit model), and a format 3 table read by a format 2 build loses only the kit model (unknown indices
+;;; are skipped).
 (defun learn-encode (tab)
-  "TAB as a list of integers: every counted cell (rounded to 0.1; order 1 only its *LEARN-CAP* largest), the bandit's
-*LEARN-ARM-CAP* largest scores, the burst scores, the last classes and the form."
+  "TAB as a list of integers (format 3): every counted cell (rounded to 0.1; order 1 only its *LEARN-CAP* largest), the
+bandit's *LEARN-ARM-CAP* largest scores, the burst scores, the last classes, the form, and the kit model (its order 1 only
+its *LEARN-KIT-CAP* largest)."
   (flet ((code (i v) (+ (* i 65536) (learn-clamp (round v) -32768 32767) 32768))
          (largest (v cap scale min)
            (let ((c nil))
              (loop for x across v for i from 0 when (>= (abs (round (* scale x))) min) do (push (cons i x) c))
              (loop for (i . x) in (sort c #'> :key (lambda (e) (abs (cdr e)))) repeat cap collect (cons i x)))))
-    (let ((out (list (code 2999 2) (code 2950 (* 1000 (ltab-form tab))))))
+    (let ((out (list (code 2999 3) (code 2950 (* 1000 (ltab-form tab))))))
       (dotimes (s +learn-s+) (let ((p (aref (ltab-prev tab) s))) (when (>= p 0) (push (code (+ 2300 s) (1+ p)) out))))
       (loop for v across (ltab-bursts tab) for i from 0 unless (zerop (round (* 1000 v))) do (push (code (+ 2400 i) (* 1000 v)) out))
       (loop for v across (ltab-c0 tab) for i from 0 when (>= (round (* 10 v)) 1) do (push (code i (* 10 v)) out))
       (loop for (i . v) in (largest (ltab-arms tab) *learn-arm-cap* 1000 1) do (push (code (+ 1000 i) (* 1000 v)) out))
+      (dotimes (s +learn-ks+) (let ((p (aref (ltab-kprev tab) s))) (when (>= p 0) (push (code (+ 3400 s) (1+ p)) out))))
+      (loop for v across (ltab-k0 tab) for i from 0 when (>= (round (* 10 v)) 1) do (push (code (+ 3000 i) (* 10 v)) out))
+      (loop for (i . v) in (largest (ltab-k1 tab) *learn-kit-cap* 10 1) do (push (code (+ 3100 i) (* 10 v)) out))
       (nreconc out (loop for (i . v) in (largest (ltab-c1 tab) *learn-cap* 10 1) collect (code (+ 100 i) (* 10 v)))))))
 
 (defun learn-decode (codes)
-  "A table from LEARN-ENCODE's integers (format 1 migrated; unknown or out-of-range entries are skipped: a fresh table for
-garbage)."
+  "A table from LEARN-ENCODE's integers (format 3; format 2 read as it is, format 1 migrated; unknown or out-of-range
+entries are skipped: a fresh table for garbage)."
   (let ((tab (make-ltab))
         (v1 (find-if (lambda (c) (= (floor c 65536) 999)) codes))
         (sit1 (lambda (s) (if (< s 5) s (1+ s)))))           ; format 1's situations: :c-hit came in at 5
@@ -238,4 +307,7 @@ garbage)."
                     ((<= 1000 i 2199) (setf (aref (ltab-arms tab) (- i 1000)) (/ v 1000f0)))
                     ((<= 2300 i 2308) (setf (aref (ltab-prev tab) (- i 2300)) (if (<= 1 v +learn-a+) (1- v) -1)))
                     ((<= 2400 i 2405) (setf (aref (ltab-bursts tab) (- i 2400)) (/ v 1000f0)))
-                    ((= i 2950) (setf (ltab-form tab) (learn-clamp (/ v 1000f0) -1f0 1f0))))))))))
+                    ((= i 2950) (setf (ltab-form tab) (learn-clamp (/ v 1000f0) -1f0 1f0)))
+                    ((<= 3000 i 3031) (setf (aref (ltab-k0 tab) (- i 3000)) (max 0f0 (/ v 10f0))))   ; (format 3: the kit
+                    ((<= 3100 i 3355) (setf (aref (ltab-k1 tab) (- i 3100)) (max 0f0 (/ v 10f0))))   ; model; none in 2)
+                    ((<= 3400 i 3403) (setf (aref (ltab-kprev tab) (- i 3400)) (if (<= 1 v +learn-ka+) (1- v) -1))))))))))

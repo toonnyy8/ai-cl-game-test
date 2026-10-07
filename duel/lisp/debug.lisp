@@ -118,7 +118,9 @@
 ;;;;            AUTO COMBO / BREAK on; 81020+i the gates' CPU difficulty (0 EASY 1 NORMAL 2 HARD), 81100+k *ASSIST-MULT* = k / 100;
 ;;;;            81030+i the assist's learner off / on, 81040+i P2 a button-masher too (unassisted: the anti-mash check);
 ;;;;            tools/assistgate.py; docs/duel/DUEL_ASSIST.md),
-;;;;            P2 (roster c2) learning by m (0 off, 1 all, 2 model only, 3 bandit only), fresh at the start, kept across
+;;;;            7-9 against Lille (DUEL_LILLE §24.9): 7 steps off his traces to their right, 8 Hohos his TENSHIN, 9 guards HOSHA;
+;;;;            P2 (roster c2) learning by m (0 off, 1 all, 2 model only, 3 bandit only, 4 all but its character's own
+;;;;            situations), fresh at the start, kept across
 ;;;;            the matches; a "duel learn row" per match. Every other debug command switches learning off (*LEARN-DEBUG-OFF*)
 ;;;;   2400 god (both fighters' Reishi is topped back up to 400 every frame; Kikon still lands)   2500+k human P1 vs an
 ;;;;            idle CPU (k: 0 Yama vs Ken, 1 Ken vs Yama, 2 Yama vs Yama, 3 Ken vs Ken)
@@ -945,21 +947,24 @@ SR SS SI; a new character's: its pairings with every earlier character and its m
 (defparameter *dumb-guard-p* 0.5 "... and guards this share of the moves he sees coming.")
 
 (defvar *dumb-p2* nil "Debug 81040+i: P2 of the learning gate is a button-masher too (ASSIST's anti-mash check).")
-(defparameter *habits* #(nil :wake-j :block-guard :grab :hoho :burst :dumb)
+(defparameter *habits* #(nil :wake-j :block-guard :grab :hoho :burst :dumb :trace-right :tenshin-hoho :hosha-guard)
   "The scripted players (debug 200000+): 0 a plain CPU, 1 J on every wake-up, 2 guard after every block, 3 grab-happy
 (the Breaker at every close neutral decision), 4 Hoho-happy (Hoho at neutral decisions and into every committed move),
-5 burst-happy (BLUE at every chance: AI-BURST-ROLL's chance 1), 6 the button-masher (DUMB-STEP: ASSIST's gate).")
+5 burst-happy (BLUE at every chance: AI-BURST-ROLL's chance 1), 6 the button-masher (DUMB-STEP: ASSIST's gate); against
+Lille (DUEL_LILLE §24.9, his learning situations): 7 steps off every new trace to its right (LB-HABIT-TRACE), 8 Hohos his
+TENSHIN in's wind-up (LB-HABIT-TENSHIN), 9 guards his HOSHA (LB-HABIT-HOSHA).")
 
 (defun start-learn-gate (h c1 c2 on)
   "200000 + 1000 H + 100 C1 + 10 C2 + ON: seeds *GATE-SEED0* + 1 .. + *GATE-SEEDS* back to back, P1 (roster C1) a CPU with
 habit H (*HABITS*), P2 (roster C2) the CPU, learning when ON (its table fresh at the start, kept in memory across the
-matches); a \"duel learn row\" per match."
+matches; 4: model + bandit without its character's own situations, LRN-KIT, DUEL_LILLE §24.9); a \"duel learn row\" per
+match."
   (fill *learn-tables* nil)
   (let ((pair (list (nth c1 *roster*) (nth c2 *roster*))))
     (setf *turbo* t *skip-cines* nil *combat-log* nil *gate-log* nil *gate-results* nil *gate-busy* nil
           *gate* (loop for seed from (1+ *gate-seed0*) to (+ *gate-seed0* *gate-seeds*) collect (list seed pair))
-          *learn-gate* (list (svref *habits* h) (plusp on))
-          *learn-use* (case on (2 '(:model)) (3 '(:bandit)) (t '(:model :bandit)))))
+          *learn-gate* (list (svref *habits* h) (plusp on) on)
+          *learn-use* (case on (2 '(:model)) (3 '(:bandit)) (t '(:model :bandit)))))   ; (4: no kit situations)
   (gate-update))
 
 (defun learn-gate-setup ()
@@ -967,19 +972,25 @@ matches); a \"duel learn row\" per match."
   (setf (brain-habit (brain *p1*)) (first *learn-gate*))
   (when (eq (first *learn-gate*) :dumb) (setf (brain-delay (brain *p1*)) *dumb-delay*))
   (when *dumb-p2* (setf (brain-habit (brain *p2*)) :dumb (brain-delay (brain *p2*)) *dumb-delay*))
-  (when (second *learn-gate*) (learn-attach! *p2*)))
+  (when (second *learn-gate*)
+    (learn-attach! *p2*)
+    (when (eql (third *learn-gate*) 4) (setf (lrn-kit (brain-learn (brain *p2*))) nil))))   ; (the kit situations' A/B)
 
 (defun learn-gate-line ()
   "The learning gate's row: the result, damage, P2's counter-hits, its reads (and those that paid), p_exploit, the form."
   (let* ((l (brain-learn (brain *p2*))) (tab (and l (lrn-tab l))))
-    (log-msg "duel learn row seed ~d habit ~a ~a ~a learn ~:[off~;on~] winner ~a dealt ~d ~d counters ~d ~d reads ~d paid ~d pexp ~,2f form ~,2f~@[ model~{ ~a~}~]~@[ by~{ ~{~(~a~)~* ~d/~d~}~}~]"
+    (log-msg "duel learn row seed ~d habit ~a ~a ~a learn ~:[off~;on~] winner ~a dealt ~d ~d counters ~d ~d reads ~d paid ~d pexp ~,2f form ~,2f~@[ model~{ ~a~}~]~@[ by~{ ~{~(~a~)~* ~d/~d~}~}~]~@[ kit~{ ~a~}~]"
              *match-seed* (first *learn-gate*) (first *picks*) (second *picks*) l (case *winner* (0 "P1") (1 "P2") (t "DRAW"))
              (gauges-dealt (gauges *p1*)) (gauges-dealt (gauges *p2*)) (gauges-counters (gauges *p1*)) (gauges-counters (gauges *p2*))
              (if l (lrn-reads l) 0) (if l (lrn-paid l) 0) (if tab (learn-p-exploit (ltab-form tab)) 0.0) (if tab (ltab-form tab) 0.0)
              (and tab (loop for k across *learn-situations* for i from 0    ; the model's prediction per situation
                             collect (multiple-value-bind (act p n) (learn-predict tab i)
                                       (format nil "~(~a~)=~:[-~;~:*~(~a~)~]~,2f/~,1f" k (and act (aref *learn-actions* act)) p n))))
-             (and l (mapcar (lambda (x) (list (first x) nil (second x) (third x))) (lrn-stats l))))))
+             (and l (mapcar (lambda (x) (list (first x) nil (second x) (third x))) (lrn-stats l)))
+             (and tab (lrn-kit l)                                  ; its character's own situations' predictions (§24.9)
+                  (loop for k across (getf (lrn-kit l) :situations) for i from 0
+                        collect (multiple-value-bind (act p n) (learn-kit-predict tab i)
+                                  (format nil "~(~a~)=~:[-~;~:*~(~a~)~]~,2f/~,1f" k (and act (aref (getf (lrn-kit l) :actions) act)) p n)))))))
 
 (defun habit-fire (e b s d)
   "A scripted player's habit before its reflexes (BRAIN-STEP): T when it pressed."
@@ -991,7 +1002,10 @@ matches); a \"duel learn row\" per match."
         (:block-guard (when (eq was :guard-hit) (ai-press b :guard 40 :act :hold) (setf (brain-why b) :habit)))
         (:hoho (when (and hoho-ok (eq (snap-state s) :move) (member (snap-kind s) '(:quick :flash :sig :sp :breaker))
                           (< (snap-sf s) (snap-active-end s)) (< d (+ (snap-reach s) *ai-threat-margin*)))
-                 (ai-press b :step 1 :modded t :act :hoho) (setf (brain-why b) :habit)))))))
+                 (ai-press b :step 1 :modded t :act :hoho) (setf (brain-why b) :habit)))
+        (:trace-right (lb-habit-trace e b))                  ; (against Lille: lille.lisp, DUEL_LILLE §24.9)
+        (:tenshin-hoho (lb-habit-tenshin e b s))
+        (:hosha-guard (lb-habit-hosha e b s))))))
 
 (defun dumb-step (e b s d)
   "The button-masher (habit :dumb, ASSIST's gate, docs/duel/DUEL_ASSIST.md): nothing of the CPU's play, only what a new player
@@ -1026,8 +1040,8 @@ Never a Step, Hoho, L, SP, Breaker, O, Burst or awakening of its own: those come
   (unless (or (<= 2200 c 2299) (<= 10000 c 19999) (<= 35000 c 36999) (<= 40000 c 42999) (<= 69000 c 70999))
     (setf *cine-hold* nil))
   (cond ((<= 2000 c 2099) (start-cvc (- c 2000) nil))
-        ((<= 200000 c 206999) (start-learn-gate (floor (- c 200000) 1000) (mod (floor c 100) 10) (mod (floor c 10) 10) (mod c 10)))
-                                                            ; (habit h 0-6, roster c1 / c2 0-9)
+        ((<= 200000 c 209999) (start-learn-gate (floor (- c 200000) 1000) (mod (floor c 100) 10) (mod (floor c 10) 10) (mod c 10)))
+                                                            ; (habit h 0-9, roster c1 / c2 0-9)
         ((<= 3000 c 3999) (start-cvc (- c 3000) '(:yamamoto :yamamoto)))
         ((<= 4000 c 4999) (start-cvc (- c 4000) '(:yamamoto :kenpachi)))
         ((<= 5000 c 5999) (start-cvc (- c 5000) '(:kenpachi :kenpachi)))

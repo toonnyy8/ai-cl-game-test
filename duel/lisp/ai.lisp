@@ -899,7 +899,9 @@ the CPU's), kept apart from the CPUs' tables of the human.")
   (rng 1)
   (stats nil) (last nil)                                                      ; per counter (cmd reads paid); the last
   (reads 0 :type fixnum) (paid 0 :type fixnum) (read-t 0 :type fixnum) (r-dealt 0 :type fixnum) (r-taken 0 :type fixnum)
-  (read-clock 0 :type fixnum))                                                ; frames to its next neutral read (AI-REFLEX)
+  (read-clock 0 :type fixnum)                                                 ; frames to its next neutral read (AI-REFLEX)
+  (kit nil)                                   ; its character's own situations (LEARN-DEF-KIT's spec; NIL: none, nothing runs)
+  (ksit -1 :type fixnum) (kep-t 0 :type fixnum) (kdata nil))   ; ... the kit episode open, its frames, the kit's own state
 
 (defun learn-table (i &optional (tables *learn-tables*) (pg +pg-learn+))
   "Roster index I's table in TABLES (page base PG; the assist's: *ASSIST-LEARN-TABLES*): in memory, else the page's
@@ -926,11 +928,13 @@ the CPU's), kept apart from the CPUs' tables of the human.")
   (log-msg "duel learning reset"))
 
 (defun learn-attach! (e)
-  "Give CPU E a learner over its character's table (its own stream seeded from the sim stream's state: no draw)."
+  "Give CPU E a learner over its character's table (its own stream seeded from the sim stream's state: no draw), and its
+character's own situations when it names some (LEARN-DEF-KIT; the ASSIST's learner never has them)."
   (let ((o (opp-of e)) (i (position (fighter-character (fighter e)) *roster*)))
     (setf (brain-learn (brain e))
           (make-lrn :tab (learn-table i) :hx (aref (pos-of o) 0) :hz (aref (pos-of o) 2)
-                    :rng (1+ (mod (* 7919 (sim-rnd-state)) 2147483647))))))
+                    :rng (1+ (mod (* 7919 (sim-rnd-state)) 2147483647))
+                    :kit (learn-kit-spec (fighter-character (fighter e)))))))   ; (its own situations: DUEL_LEARNING §11)
 
 (defun learn-roll-p (l)
   "Take the model's counter now? Its own stream against p_exploit for the human's form."
@@ -940,7 +944,8 @@ the CPU's), kept apart from the CPUs' tables of the human.")
 
 (defun learn-step (e b s d)
   "Each step (BRAIN-STEP): open / close the episodes and count the human's action (the perceived SNAP S, D), plan an
-event's counter at its onset, and run the clocks: the counter's wait, the bandit's window, a read's outcome, the form."
+event's counter at its onset, and run the clocks: the counter's wait, the bandit's window, a read's outcome, the form;
+then its character's own situations (the kit's :step, LEARN-DEF-KIT), before the human's last-step state moves on."
   (let* ((l (brain-learn b)) (tab (lrn-tab l)) (own (state-of e)) (hs (snap-state s)) (hprev (lrn-hstate l))
          (p (pos-of e)) (dealt (gauges-dealt (gauges e))) (taken (gauges-dealt (gauges (opp-of e))))
          (dx (- (snap-x s) (lrn-hx l))) (dz (- (snap-z s) (lrn-hz l))))
@@ -978,6 +983,7 @@ event's counter at its onset, and run the clocks: the counter's wait, the bandit
       (setf (ltab-form tab) (learn-form-after (ltab-form tab) (learn-reward (- taken (lrn-f-taken l)) (- dealt (lrn-f-dealt l)))
                                               *learn-form-k*)
             (lrn-form-t l) 0 (lrn-f-dealt l) dealt (lrn-f-taken l) taken))
+    (when (lrn-kit l) (funcall (getf (lrn-kit l) :step) e b s d l))   ; its character's own situations (LEARN-DEF-KIT)
     (setf (lrn-hburst l) (and (gauges-burst (gauges (opp-of e))) t) (lrn-hcombo l) (fighter-combo-hits (fighter (opp-of e))))
     (setf (lrn-hx l) (snap-x s) (lrn-hz l) (snap-z s) (lrn-hstate l) hs (lrn-hstart l) (snap-start s)
           (lrn-hcontact l) (snap-contact s) (lrn-own l) own)))
@@ -1015,13 +1021,18 @@ us; an SP's Hoho without flash-step is a guard): T when pressed; the read is cou
             (t (and mv (kit-command-ok-p e cmd))))
       (case cmd (:guard (ai-press b :guard 30)) (:dash-in (ai-dash b 1.0 1.5)) (t (ai-command b kit cmd d e)))
       (clog "~a read ~a d ~,1f" (side-name e) cmd d)
-      (let ((l (brain-learn b)))
-        (incf (lrn-reads l))
-        (let ((st (or (assoc cmd (lrn-stats l)) (car (push (list cmd 0 0) (lrn-stats l))))))
-          (incf (second st)) (setf (lrn-last l) cmd))
-        (setf (brain-why b) :read (lrn-read-t l) *learn-read-t* (lrn-r-dealt l) (gauges-dealt g)
-              (lrn-r-taken l) (gauges-dealt (gauges (opp-of e))))
-        t))))
+      (learn-count-read e (brain-learn b) cmd)
+      (setf (brain-why b) :read)
+      t)))
+
+(defun learn-count-read (e l cmd)
+  "A read acted on with counter CMD (LEARN-PRESS; a kit's own, LEARN-KIT-ACTED): counted per counter, and watched
+*LEARN-READ-T* frames for its pay-off (damage dealt, none taken; a guard pays by taking nothing)."
+  (incf (lrn-reads l))
+  (let ((st (or (assoc cmd (lrn-stats l)) (car (push (list cmd 0 0) (lrn-stats l))))))
+    (incf (second st)) (setf (lrn-last l) cmd))
+  (setf (lrn-read-t l) *learn-read-t* (lrn-r-dealt l) (gauges-dealt (gauges e))
+        (lrn-r-taken l) (gauges-dealt (gauges (opp-of e)))))
 
 (defun learn-neutral-due-p (e b s)
   "A learning CPU's neutral read is due this step: its own clock (LRN-READ-CLOCK, run by LEARN-STEP) is out, both are free
@@ -1106,6 +1117,36 @@ open (the rolls come in bursts: a WHITE one each neutral decision)."
          (healed (if (= (gauges-konpaku g) (lrn-bw-konpaku l)) (max 0 (+ (- (gauges-reishi g) (lrn-bw-reishi l)) tk)) 0)))
     (learn-burst-reward! (lrn-tab l) (lrn-bw l) (lrn-bw-used l) (lrn-bw-prob l) (learn-reward (- dealt (lrn-bw-dealt l)) tk healed))
     (setf (lrn-bw l) -1)))
+
+;;; A character's own situations (learn.lisp LEARN-DEF-KIT; DUEL_LEARNING §11): its :step function opens an episode by a
+;;; situation its spec names (LEARN-KIT-OPEN), closes it with the human's answer (LEARN-KIT-CLOSE), and asks for a read
+;;; once per event (LEARN-KIT-READ: the learner's own stream, as every read). A learner without a spec never gets here.
+(defun learn-kit-open (l key)
+  "Learner L's character opens its situation KEY (one its spec names; any other: nothing, NIL): the kit episode, from 0."
+  (let ((i (learn-kit-sit (lrn-kit l) key)))
+    (when i (setf (lrn-ksit l) i (lrn-kep-t l) 0))
+    i))
+
+(defun learn-kit-open-p (l key) "Is L's kit episode KEY open?" (let ((i (learn-kit-sit (lrn-kit l) key))) (and i (= i (lrn-ksit l)))))
+
+(defun learn-kit-close (l act)
+  "The human answered the open kit episode with class ACT (a key its spec names; NIL: no answer, nothing counted): the
+kit model counts it, the episode closes."
+  (let ((a (and act (learn-kit-act (lrn-kit l) act))))
+    (when (and a (>= (lrn-ksit l) 0)) (learn-kit-observe! (lrn-tab l) (lrn-ksit l) a))
+    (setf (lrn-ksit l) -1)))
+
+(defun learn-kit-read (l key &optional (scale 1.0))
+  "Read the human in L's kit situation KEY (once per event): his predicted answer (a class key) when the model is in use
+and confident and the learner's own roll comes under p_exploit x SCALE (the kit's difficulty layer); else NIL."
+  (let ((i (learn-kit-sit (lrn-kit l) key)))
+    (when (and i (member :model *learn-use*))
+      (multiple-value-bind (act p n) (learn-kit-predict (lrn-tab l) i)
+        (when (and act (learn-confident-p p n))
+          (multiple-value-bind (r st) (learn-rnd (lrn-rng l))
+            (setf (lrn-rng l) st)
+            (when (< r (* scale (learn-p-exploit (ltab-form (lrn-tab l)))))
+              (aref (getf (lrn-kit l) :actions) act))))))))
 
 (defun ai-burst-chance (b color p)
   "The base AI's chance P of a burst of COLOR, re-weighted by a learning CPU's burst bandit (LEARN-BURST-P)."

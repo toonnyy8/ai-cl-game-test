@@ -1,7 +1,8 @@
 ;;;; learn-test.lisp — checks the learning CPU's pure part (duel/lisp/learn.lisp, docs/duel/DUEL_LEARNING.md) on the host:
 ;;;;   $ECL_HOST --norc --load tests/learn-test.lisp
 ;;;; n-gram counting and backoff, decay, prediction and its counter, the situations and action classes, the EXP3
-;;;; update, p_exploit's clamp, the form, the own random stream and the storage round-trip.
+;;;; update, p_exploit's clamp, the form, the own random stream and the storage round-trip; a kit's own situations (the
+;;;; registry, the kit model's tables, storage format 3 and format 2 read back).
 (load (merge-pathnames "../engine/lisp/package.lisp" *load-truename*))
 (defpackage :duel (:use :cl :engine))
 (load (merge-pathnames "../duel/lisp/learn.lisp" *load-truename*))
@@ -170,6 +171,72 @@
     (check (= (aref (ltab-prev back) (s :close)) (a :k)))
     (check (~= (ltab-form back) -0.25))
     (check (every #'zerop (ltab-arms back)))))
+
+;;; ---------------------------------------------------------------- a kit's own situations (format 3; DUEL_LEARNING §11)
+;; the registry: a character names its situations and classes; every other character has none
+(let ((*learn-kits* nil))
+  (check (null (learn-kit-spec :somebody)))
+  (learn-def-kit :somebody :situations #(:x :y) :actions #(:a :b :c) :step 'identity)
+  (let ((sp (learn-kit-spec :somebody)))
+    (check (and (= (learn-kit-sit sp :y) 1) (null (learn-kit-sit sp :wake)) (= (learn-kit-act sp :c) 2) (null (learn-kit-act sp :j))))
+    (check (eq (getf sp :step) 'identity)))
+  (check (null (learn-kit-spec :other)))
+  (check (null (learn-kit-sit nil :x)))                             ; no spec: no situation opens
+  (learn-def-kit :somebody :situations #(:z) :actions #(:a) :step 'identity)   ; a redefinition replaces it
+  (check (and (= (length *learn-kits*) 1) (= (learn-kit-sit (learn-kit-spec :somebody) :z) 0)))
+  (check (handler-case (progn (learn-def-kit :big :situations #(:a :b :c :d :e) :actions #(:a)) nil) (error () t)))
+  (check (handler-case (progn (learn-def-kit :big :situations #(:a) :actions #(1 2 3 4 5 6 7 8 9)) nil) (error () t))))
+;; the kit model counts on its own tables (the generic ones untouched), with the generic decay, backoff and prediction
+(let ((tab (make-ltab)))
+  (check (and (= (length (ltab-k0 tab)) (* +learn-ks+ +learn-ka+)) (= (length (ltab-k1 tab)) (* +learn-ks+ +learn-ka+ +learn-ka+))
+              (every (lambda (p) (= p -1)) (ltab-kprev tab))))
+  (check (null (learn-kit-predict tab 0)))
+  (learn-kit-observe! tab 2 5)
+  (learn-kit-observe! tab 2 5)
+  (check (~= (aref (ltab-k0 tab) (+ (* 2 +learn-ka+) 5)) 1.97))
+  (check (~= (aref (ltab-k1 tab) (+ (* (+ (* 2 +learn-ka+) 5) +learn-ka+) 5)) 1.0))
+  (check (= (aref (ltab-kprev tab) 2) 5))
+  (check (and (every #'zerop (ltab-c0 tab)) (every #'zerop (ltab-c1 tab)) (every (lambda (p) (= p -1)) (ltab-prev tab))))
+  (multiple-value-bind (act p n) (learn-kit-predict tab 2)
+    (check (and (= act 5) (~= p 1.0) (~= n 1.97) (learn-confident-p p n))))
+  (check (null (learn-kit-predict tab 1)))                          ; other kit situations untouched
+  (let ((t2 (make-ltab)))                                           ; the same numbers as the generic model's
+    (dolist (a '(1 3 1 3 1 3 3)) (learn-kit-observe! tab 0 a) (learn-observe! t2 0 a))
+    (multiple-value-bind (a1 p1 n1) (learn-kit-predict tab 0)
+      (multiple-value-bind (a2 p2 n2) (learn-predict t2 0)
+        (check (and (= a1 a2 1) (= p1 p2) (= n1 n2)))))))
+;; storage: format 3 carries the kit model; format 2 (no kit entries) reads as it did; a full table stays under 999
+(let ((tab (make-ltab)))
+  (dotimes (i 12) (learn-observe! tab (s :wake) (a :j)) (learn-kit-observe! tab 1 (mod i 3)) (learn-kit-observe! tab 3 7))
+  (setf (ltab-form tab) 0.25)
+  (let* ((codes (learn-encode tab)) (back (learn-decode codes)))
+    (check (find (+ (* 2999 65536) 3 32768) codes))                 ; the version: 3
+    (check (every (lambda (x y) (~= x y 0.051)) (ltab-k0 tab) (ltab-k0 back)))
+    (check (every (lambda (x y) (~= x y 0.051)) (ltab-k1 tab) (ltab-k1 back)))
+    (check (equalp (ltab-kprev tab) (ltab-kprev back)))
+    (check (eql (learn-kit-predict tab 1) (learn-kit-predict back 1)))
+    (check (equal codes (learn-encode back)))
+    ;; the same table saved by a format-2 build: no kit entries, version 2 -> the generic part as before, an empty kit model
+    (let* ((v2 (mapcar (lambda (c) (if (= (floor c 65536) 2999) (+ (* 2999 65536) 2 32768) c))
+                       (remove-if (lambda (c) (<= 3000 (floor c 65536) 3403)) codes)))
+           (b2 (learn-decode v2)))
+      (check (every (lambda (x y) (~= x y 0.051)) (ltab-c0 tab) (ltab-c0 b2)))
+      (check (every (lambda (x y) (~= x y 0.051)) (ltab-c1 tab) (ltab-c1 b2)))
+      (check (~= (ltab-form b2) 0.25))
+      (check (and (every #'zerop (ltab-k0 b2)) (every #'zerop (ltab-k1 b2)) (every (lambda (p) (= p -1)) (ltab-kprev b2)))))))
+(let ((tab (make-ltab)))                                            ; another character's table: no kit entries at all
+  (dotimes (i 5) (learn-observe! tab (s :mid) (a :k)))
+  (check (notany (lambda (c) (<= 3000 (floor c 65536) 3403)) (learn-encode tab))))
+(let ((tab (make-ltab)))                                            ; everything full: the caps keep it under the page's 999
+  (let ((*learn-decay* 1.0))
+    (dotimes (sit 9) (dotimes (p 10) (dotimes (x 10) (learn-observe! tab sit p) (learn-observe! tab sit x))))
+    (dotimes (sit +learn-ks+) (dotimes (p +learn-ka+) (dotimes (x +learn-ka+) (learn-kit-observe! tab sit p) (learn-kit-observe! tab sit x)))))
+  (dotimes (r +learn-rows+) (learn-reward! tab r (mod r 10) 0.5 0.5))
+  (dotimes (c 3) (learn-burst-reward! tab c t 0.5 0.5))
+  (let ((codes (learn-encode tab)))
+    (check (<= (count-if (lambda (c) (<= 3100 (floor c 65536) 3355)) codes) *learn-kit-cap*))
+    (check (= (count-if (lambda (c) (<= 3000 (floor c 65536) 3031)) codes) (* +learn-ks+ +learn-ka+)))
+    (check (< (length codes) 999))))
 
 (format t "learn-test: ~d checks, ~a~%" *checks* (if (zerop *fails*) "ALL PASS" (format nil "~d FAILED" *fails*)))
 (ext:quit (if (zerop *fails*) 0 1))

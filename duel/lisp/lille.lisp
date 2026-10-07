@@ -944,7 +944,8 @@ wind-up (:lb-switch-in-c, decision 30; a human's press; his CPU's switch rule, L
             (cond (b (let ((seen (lb-ai-seen b)))
                        (when (cond ((lb-ai-switch-in-p e b seen *lb-switch-windup-c*) (lb-count e :ai-switch-trace) t)
                                    ((lb-ai-web-cancel-p e b f seen) (lb-ai-web-fired e b) t)   ; (the web, HARD)
-                                   ((lb-ai-xfire-cancel-p e b seen) (lb-count e :ai-xfire-cancel) t))   ; (the crossfire)
+                                   ((lb-ai-xfire-cancel-p e b seen) (lb-count e :ai-xfire-cancel) t)   ; (the crossfire)
+                                   ((lb-learn-cancel-p e b seen)))                  ; (a learner's trace read, §24.9)
                          (try-command e f :sig nil nil (lb-switch-cancel-move f)))))   ; (the 2 f cancel, decision 30)
                   ((vpad-command-pressed-p vp :sig nil)
                    (if (try-command e f :sig nil nil (lb-switch-cancel-move f))
@@ -1563,7 +1564,8 @@ NIL. (HARD, b3a2: the base form settles the TAISHA read first and waits out his 
   (case (kit-form (kit-of e))
     (:base (or (lb-ai-taisha-settle e b) (lb-ai-eye e b s d) (lb-ai-burst-wait e b s) (lb-ai-turtle e b s d) (lb-ai-oki-shot e b s d)
                (lb-ai-held-aim e b s d) (lb-ai-hunt e b s d)))
-    ((:jilliel :shin) (or (lb-ai-turtle e b s d) (lb-ai-en e b s d)))   ; (the owl runs Jilliel's EN / KIN CPU: decision 36)
+    ((:jilliel :shin) (or (lb-ai-turtle e b s d) (lb-learn-en e b s d) (lb-ai-en e b s d)))   ; (the owl runs Jilliel's EN /
+                                                                ; KIN CPU: decision 36; a learner's trace read first, §24.9)
     (:jilliel-kin (or (lb-ai-turtle e b s d) (lb-ai-kin-cash e b s d) (lb-ai-kin e b s d)))
     (:shin-kin (or (lb-ai-trompete e b s d) (lb-ai-turtle e b s d) (lb-ai-kin-cash e b s d)
                    (lb-ai-kin e b s d)))                       ; (+ Trompete's punish, as built)
@@ -1776,6 +1778,7 @@ the dash back (then the charged shot), or the charged shot once the charge reach
       (when (lb-ai-turtle-stance-p e b f)                                            ; (HARD: the X-Axis through a guard:
         (setf plan (if (<= (fighter-dist f) 3.0) :k :charge))                        ; TAISHA in its reach, else charged)
         (when (eq plan :k) (setf plan (lb-ai-taisha-read e b))))                     ; (b3a2: his answer to it read)
+      (setf plan (lb-learn-kamae e b f plan))                                        ; (a learner's HOSHA read, §24.9)
       (setf (lbs-k-plan st) plan)
       (lb-count e (intern (format nil "AI-KAMAE-~a" plan) :keyword))))
   (case (lbs-k-plan st)
@@ -1836,13 +1839,14 @@ regains the flash step). No roll."
     (cond ((and j1 (lb-ai-lay-ok-p fs :j) (kit-command-ok-p e :q)
                 (lb-ai-switch-in-p e b s (+ (mv-s j1) (mv-a j1) *lb-switch-windup-c*)))
            (lb-count e :ai-switch-via-j) (why b :switch-via-j :q))
-          ((lb-ai-switch-in-p e b s *lb-switch-windup*)
+          ((and (lb-ai-switch-in-p e b s *lb-switch-windup*) (not (lb-learn-hold-p e b s)))   ; (a learner's read, §24.9)
            (lb-count e :ai-switch-trace) (why b :switch-in :sig))
           ((lb-ai-stance-in e b s d))
           ((lb-ai-web-lay e b s d))                                 ; (the web, HARD)
           ((lb-ai-poor-web e b s d))                                ; (b3a1: starved, the bar's three lines)
           ((and (lb-ai-switch-in-p e b s *lb-switch-windup* (not (lb-ai-lay-ok-p fs :j)))
-                (or (< (lb-ai-level *lb-ai-starve* b) 1.0) (lb-ai-busy-p s (brain-delay b) *lb-switch-windup*)))
+                (or (< (lb-ai-level *lb-ai-starve* b) 1.0) (lb-ai-busy-p s (brain-delay b) *lb-switch-windup*))
+                (not (lb-learn-hold-p e b s)))
            (lb-count e :ai-switch-starved) (why b :switch-starved :sig)))))
 
 (defun lb-ai-kin (e b s d)
@@ -2455,6 +2459,293 @@ forms can't."
               (setf (brain-strafe b) (f32 (line-off-strafe (hazard-x on) (hazard-z on) (hazard-yaw on) (aref p 0) (aref p 2)
                                                            (aref q 0) (aref q 2)))))
             (why b :trace-step :side-step)))))))
+
+;;; ================================================================ AI: the learning CPU's Lille situations (DUEL_LILLE §24.9)
+;;; The user's plan (DUEL_LILLE §24.1 step 5): the learning CPU (learn.lisp, ai.lisp; DUEL_LEARNING §11) gains his own
+;;; situations, so a CPU Lille facing a human learns the human's answers to his signature and answers them in character.
+;;; Only a learner runs any of this (a CPU facing a human: VS CPU, ENDLESS, the learning gate; LRN-KIT, ai.lisp
+;;; LEARN-ATTACH!); CPU VS CPU, the gates and every other character never get here. What the human does is what Lille's CPU
+;;; perceives (the delayed SNAP; his own state at once), a read is one roll of the learner's own stream per event
+;;; (LEARN-KIT-READ: p_exploit x *LB-LEARN-DIFF*, EASY <= NORMAL <= HARD), and every answer is a command of his kit.
+;;;   :trace    he (perceived) stands on one of Lille's live traces he could have seen, Lille in EN: how he leaves it,
+;;;             :right / :left of its line as Lille laid it (LB-LEARN-SIDE), :back along it (still on it), a :hoho, a
+;;;             :guard raised on it, or :take (still on it at the episode's end; an attack is no answer here). Read at
+;;;             the onset (one roll): a side -> the snap timed for his step (TENSHIN
+;;;             in once his step off is seen and the live traces, turned toward where he lands, would hit him there:
+;;;             LB-LEARN-COVERED-P), else first a K fan at him (its side line plus the 10 deg snap reach his landing from
+;;;             ~9 m); :back -> TENSHIN in at once (the lines run 31 m: backing off along one stays on it)
+;;;   :tenshin  Lille's TENSHIN in from EN's neutral (the 16 f wind-up he can see): his answer (:guard :hoho :step :attack
+;;;             :back :take). Read when the CPU would switch from neutral: :guard -> the materialise is held (no neutral
+;;;             switch, *LB-LEARN-HOLD* frames) until he is busy; :hoho -> held until his Hoho is spent (seen within its
+;;;             lockout, or no flash step for one: LB-LEARN-HOHO-SPENT-P); the fast cancels (J1's line + 2 f) still go
+;;;   :hosha    Lille's HOSHA on a free opponent: his answer (:guard :hoho :step :attack :back :take; a guard, Hoho or Step
+;;;             already under way at the stance's plan counts: no reaction beats its first bullet). Read at that plan (one
+;;;             roll; LB-LEARN-KAMAE-PLAN, watched only when HOSHA fires): :guard (him standing) and :hoho -> the HIRENKYAKU dash
+;;;             back (iframes) then the charged shot (through guard); :step / :back -> the charged shot (its aim follows
+;;;             him through the charge); :attack -> the dash back then HOSHA
+;;; The debug habits 7-9 (debug.lisp *HABITS*: LB-HABIT-TRACE, -TENSHIN, -HOSHA) are the learning gate's scripted players.
+(defparameter *lb-learn-diff* '(:easy 0.5 :normal 1.0 :hard 1.5)
+  "His learning CPU's read chance x this by difficulty (on the learner's p_exploit, 0.15-0.6; at most 0.9 at HARD): EASY <=
+NORMAL <= HARD (DUEL_LILLE §24.9, the integration agent 2026-10-07).")
+(defparameter *lb-learn-episode* '(:trace 45 :tenshin 20 :hosha 18)
+  "Frames a situation waits for his answer, + the perception delay (the wind-up's 16 f and HOSHA's last bullet at f14
+are what he answers; DUEL_LILLE §24.9).")
+(defparameter *lb-learn-hold* 60
+  "Frames a :tenshin read holds the neutral switch at most (one read per window; DUEL_LILLE §24.9).")
+(defparameter *lb-learn-holds* '(:guard :hoho)
+  "The :tenshin reads that hold the neutral switch (LB-LEARN-HOLD; DUEL_LILLE §24.9).")
+(defparameter *lb-learn-step-off* 0.6
+  "Metres off the onset line toward the read side that count as his step off begun (a walk; a Step is seen as one).")
+
+;; pure: host-tested (tests/duel-rules-test.lisp)
+(defun lb-learn-side (lx lz yaw x z)
+  "Pure: which side of the line laid at (LX LZ) along YAW the point (X Z) is on, as Lille faces along it: :RIGHT (its right,
+(-fz fx), TOWARD-STRAFE-DIR's +1) or :LEFT."
+  (if (>= (+ (* (- x lx) (- (fwd-z yaw))) (* (- z lz) (fwd-x yaw))) 0) :right :left))
+(defun lb-learn-lateral (yaw side ox oz x z)
+  "Pure: metres (X Z) has moved from (OX OZ) toward SIDE (:RIGHT / :LEFT) of a line along YAW."
+  (* (if (eq side :right) 1.0 -1.0) (+ (* (- x ox) (- (fwd-z yaw))) (* (- z oz) (fwd-x yaw)))))
+(defun lb-learn-landing (yaw side ox oz)
+  "Pure: where a Step (*STEP-DISTANCE*) from (OX OZ) off a line along YAW to its SIDE lands: values x z."
+  (let ((k (* *step-distance* (if (eq side :right) 1.0 -1.0))))
+    (values (+ ox (* k (- (fwd-z yaw)))) (+ oz (* k (fwd-x yaw))))))
+(defun lb-learn-answer (hprev hs new away)
+  "Pure: his answer starting this step to HOSHA or TENSHIN (perceived states HPREV -> HS, NEW: a new move of his, AWAY:
+metres he moved away since the onset): :HOHO, :STEP, :ATTACK, :GUARD, :BACK, or NIL."
+  (cond ((and (eq hs :hoho) (not (eq hprev :hoho))) :hoho)
+        ((and (eq hs :step) (not (eq hprev :step))) :step)
+        ((and (eq hs :move) (or (not (eq hprev :move)) new)) :attack)
+        ((and (eq hs :guard) (not (eq hprev :guard))) :guard)
+        ((> away *learn-back*) :back)))
+(defun lb-learn-onset-answer (hs)
+  "Pure: his answer already under way when HOSHA / TENSHIN in begins (perceived state HS): a guard, a Hoho, a Step; NIL (a
+move he is in is no answer: only a new one is, LB-LEARN-ANSWER)."
+  (case hs ((:guard :guard-hit) :guard) (:hoho :hoho) (:step :step)))
+(defun lb-learn-trace-answer (hprev hs off side along)
+  "Pure: how he leaves the trace he stands on, starting this step (perceived HPREV -> HS): a :HOHO, a :GUARD raised on it,
+OFF the line to its SIDE (:RIGHT / :LEFT), or :BACK ALONG it more than *LEARN-BACK* m; or NIL (an attack is no answer
+here: the question is how he leaves the line)."
+  (cond ((and (eq hs :hoho) (not (eq hprev :hoho))) :hoho)
+        ((and (eq hs :guard) (not (eq hprev :guard))) :guard)
+        (off side)
+        ((> along *learn-back*) :back)))
+(defun lb-learn-kamae-plan (read d dash-ok still)
+  "Pure: the stance's branch instead of HOSHA for his predicted answer READ at D m (DASH-OK: the stance's HIRENKYAKU can
+go; STILL: he is perceived standing, not running or stepping): a guard, on him STILL, the HIRENKYAKU dash back (iframes)
+then the charged shot through it (:DASH; measured against TAISHA within 3 m / the quick shot, whose startup a HARD
+opponent punished: §24.9), else HOSHA; a Hoho the dash back then the charged shot (:DASH; :CHARGE without the dash); a
+Step or backing off the charged shot (its aim follows him through the charge); an attack the dash back then HOSHA
+(:DASH-J; TAISHA's back-slide without the dash); else HOSHA (:J)."
+  (declare (ignore d))
+  (case read
+    (:guard (if (and still dash-ok) :dash :j))
+    (:hoho (if dash-ok :dash :charge))
+    ((:step :back) :charge)
+    (:attack (if dash-ok :dash-j :k))
+    (t :j)))
+(defun lb-learn-hoho-spent-p (seen-age delay fs)
+  "Pure: is his Hoho spent for a materialise pressed now (16 f wind-up): his flash step FS under a Hoho's, or his last
+Hoho seen SEEN-AGE frames ago (NIL: none) still locks the next one out past the materialise (*HOHO-LOCKOUT* from its
+real start, DELAY frames before it was seen)?"
+  (or (< fs *fs-hoho*)
+      (and seen-age (< seen-age (- *hoho-lockout* *lb-switch-windup* delay)))
+      nil))
+(defun lb-learn-hold (read busy spent)
+  "Pure: does a :tenshin READ hold the neutral switch now: a :GUARD or :HOHO read unless he is BUSY (recovering / reeling
+through the wind-up: no answer), and a Hoho read unless his Hoho is SPENT?"
+  (and (member read *lb-learn-holds*) (not busy) (not (and (eq read :hoho) spent)) t))
+
+;; the shell
+(defstruct (lbl (:conc-name lbl-))
+  "His learner's own state within a match (LRN-KDATA)."
+  (own-mv nil) (own-sf 0 :type fixnum)                      ; his move last step (the onsets of HOSHA and TENSHIN in)
+  (on-id 0 :type fixnum)                                    ; the trace the human was perceived on last step (id; 0 none)
+  (ox 0f0 :type single-float) (oz 0f0 :type single-float)   ; the open situation's onset: his perceived position,
+  (ux 0f0 :type single-float) (uz 0f0 :type single-float)   ; ... the way from Lille to him (his :back)
+  (lx 0f0 :type single-float) (lz 0f0 :type single-float) (lyaw 0f0 :type single-float) (lw 0f0 :type single-float)   ; :trace's line
+  (len 0 :type fixnum)                                      ; ... its episode's frames
+  (trace-read nil) (trace-until -1 :type fixnum) (fan nil) (snapped nil)   ; the :trace read, its life, its K fan, its snap
+  (ten-read nil) (ten-until -1 :type fixnum)                ; the :tenshin read and its window
+  (hoho -9999 :type fixnum))                                ; tick his last Hoho was seen starting
+(defun lb-learn-state (l) (or (lrn-kdata l) (setf (lrn-kdata l) (make-lbl))))
+(defun lb-learn-l (b) "Brain B's learner when it reads Lille's situations (LRN-KIT), else NIL." (let ((l (and b (brain-learn b)))) (and l (lrn-kit l) l)))
+(defun lb-learn-scale (b) (float (getf *lb-learn-diff* (brain-difficulty b) 1.0) 1.0))
+(defun lb-learn-acted (e l cmd)
+  "A read of his situations acted on with CMD: the learner's count (LEARN-COUNT-READ: the gate's reads, paid), the log."
+  (learn-count-read e l cmd)
+  (lb-count e cmd)
+  (clog "~a read ~a" (side-name e) cmd))
+
+(defun lb-learn-trace-under (e x z hr &optional (age 0))
+  "The newest of E's live traces at least AGE frames old (the perceived position is that old: one he could have seen)
+whose line (as laid) passes within its width + HR of (X Z), or NIL (its hazard)."
+  (let ((on nil))
+    (do-entities (h (hz hazard))
+      (let ((dd (hazard-data hz)))
+        (when (and (eql (hazard-owner hz) e) (lbh-p dd) (lbh-live dd) (>= (hazard-age hz) age)
+                   (<= (line-dist (hazard-x hz) (hazard-z hz) (hazard-yaw hz) 0.6 *lb-trace-len* x z) (+ (lbh-width dd) hr))
+                   (or (null on) (> (lbh-id dd) (lbh-id (hazard-data on)))))
+          (setf on hz))))
+    on))
+
+(defun lb-learn-open (e s l k key)
+  "Open his situation KEY (LEARN-KIT-OPEN) at the perceived SNAP S: the onset's position and the way to him; HOSHA /
+TENSHIN in meeting an answer already under way (LB-LEARN-ONSET-ANSWER) counts it at once."
+  (let* ((dx (- (snap-x s) (aref (pos-of e) 0))) (dz (- (snap-z s) (aref (pos-of e) 2))) (m (max 1e-3 (sqrt (+ (* dx dx) (* dz dz))))))
+    (setf (lbl-ox k) (snap-x s) (lbl-oz k) (snap-z s) (lbl-ux k) (f32 (/ dx m)) (lbl-uz k) (f32 (/ dz m))
+          (lbl-len k) (+ (getf *lb-learn-episode* key 30) (brain-delay (brain e)))))
+  (learn-kit-open l key)
+  (let ((now (and (member key '(:hosha :tenshin)) (lb-learn-onset-answer (snap-state s)))))
+    (when now (learn-kit-close l now))))
+
+(defun lb-learn-step (e b s d l)
+  "His learner's step (LEARN-DEF-KIT's :step; ai.lisp LEARN-STEP, a learner of his only): the onsets (his own HOSHA and
+TENSHIN in at once; the human onto a trace, perceived), the open situation's answer (LB-LEARN-ANSWER /
+LB-LEARN-TRACE-ANSWER; at its end :TAKE, or :GUARD held through), the :trace read at its onset (one roll)."
+  (declare (ignore d))
+  (let* ((k (lb-learn-state l)) (f (fighter e)) (mv (and (eq (fighter-state f) :move) (fighter-move f)))
+         (hs (snap-state s)) (hprev (lrn-hstate l)) (new (/= (snap-start s) (lrn-hstart l)))
+         (hr (body-hurt-r (model-body (model (opp-of e))))) (x (snap-x s)) (z (snap-z s)))
+    (when (and (eq hs :hoho) (not (eq hprev :hoho))) (setf (lbl-hoho k) *match-tick*))
+    (when (and mv (or (not (eq mv (lbl-own-mv k))) (< (fighter-sf f) (lbl-own-sf k))))   ; a move of his begins
+      (case (mv-name mv)                                     ; (:hosha opens at the stance's plan: LB-LEARN-KAMAE)
+        ((:lb-switch-in :lb-o-switch-in) (setf (lbl-ten-until k) -1) (lb-learn-open e s l k :tenshin))
+        ((:lb-switch-in-c :lb-o-switch-in-c)                   ; (a cancel's materialise: no answer to it)
+         (setf (lbl-ten-until k) -1)
+         (when (learn-kit-open-p l :trace) (learn-kit-close l nil)))))
+    (setf (lbl-own-mv k) mv (lbl-own-sf k) (if mv (fighter-sf f) 0))
+    (let* ((tr (and (lb-en-form-p (fighter-form f)) (lb-learn-trace-under e x z hr (brain-delay b))))
+           (id (if tr (lbh-id (hazard-data tr)) 0)))
+      (when (and tr (> id (lbl-on-id k)) (< (lrn-ksit l) 0))  ; onto a trace he could see (or a newer one laid on him)
+        (setf (lbl-lx k) (hazard-x tr) (lbl-lz k) (hazard-z tr) (lbl-lyaw k) (hazard-yaw tr) (lbl-lw k) (lbh-width (hazard-data tr)))
+        (lb-learn-open e s l k :trace)
+        (setf (lbl-trace-read k) (learn-kit-read l :trace (lb-learn-scale b)) (lbl-trace-until k) (+ *match-tick* (lbl-len k))
+              (lbl-fan k) nil (lbl-snapped k) nil))
+      (setf (lbl-on-id k) id))
+    (when (>= (lrn-ksit l) 0)
+      (let ((sit (aref (getf (lrn-kit l) :situations) (lrn-ksit l))) (end (>= (incf (lrn-kep-t l)) (lbl-len k))))
+        (cond ((member hs '(:stun :air :down :wakeup))         ; hit: he took it (on a trace: no answer)
+               (learn-kit-close l (if (eq sit :trace) nil :take)))
+              ((eq sit :trace)
+               (let ((ans (lb-learn-trace-answer hprev hs
+                                                 (> (line-dist (lbl-lx k) (lbl-lz k) (lbl-lyaw k) 0.6 *lb-trace-len* x z) (+ (lbl-lw k) hr))
+                                                 (lb-learn-side (lbl-lx k) (lbl-lz k) (lbl-lyaw k) x z)
+                                                 (+ (* (- x (lbl-ox k)) (fwd-x (lbl-lyaw k))) (* (- z (lbl-oz k)) (fwd-z (lbl-lyaw k)))))))
+                 (cond (ans (learn-kit-close l ans)) (end (learn-kit-close l :take)))))
+              (t (let ((ans (lb-learn-answer hprev hs new (+ (* (- x (lbl-ox k)) (lbl-ux k)) (* (- z (lbl-oz k)) (lbl-uz k))))))
+                   (cond (ans (learn-kit-close l ans))
+                         (end (learn-kit-close l (if (member hs '(:guard :guard-hit)) :guard :take)))))))))))
+
+(defun lb-learn-stepped-p (k s side)
+  "Is his step off the :trace line toward SIDE seen: a Step, or him LB-LEARN-LATERAL *LB-LEARN-STEP-OFF* that way?"
+  (or (eq (snap-state s) :step)
+      (>= (lb-learn-lateral (lbl-lyaw k) side (lbl-ox k) (lbl-oz k) (snap-x s) (snap-z s)) *lb-learn-step-off*)))
+(defun lb-learn-covered-p (e k side)
+  "Would his live traces, turned toward his landing off the :trace line on SIDE (LB-LEARN-LANDING), hit him there?"
+  (multiple-value-bind (x z) (lb-learn-landing (lbl-lyaw k) side (lbl-ox k) (lbl-oz k))
+    (plusp (lb-ai-web-count e x z (body-hurt-r (model-body (model (opp-of e))))))))
+(defun lb-learn-snap-p (e l k s)
+  "The :trace read's TENSHIN in now (once per read, TENSHIN ready): :BACK while he is still on a trace; a side once his
+step off is seen and the traces cover his landing. Counted (LB-LEARN-ACTED)."
+  (let ((r (lbl-trace-read k)))
+    (when (and r s (not (lbl-snapped k)) (<= *match-tick* (lbl-trace-until k)) (lb-switch-ready-p e)
+               (case r
+                 (:back (lb-learn-trace-under e (snap-x s) (snap-z s) (body-hurt-r (model-body (model (opp-of e))))))
+                 ((:left :right) (and (lb-learn-stepped-p k s r) (lb-learn-covered-p e k r)))))
+      (setf (lbl-snapped k) t)
+      (lb-learn-acted e l (if (eq r :back) :lb-snap-back :lb-snap-side))
+      t)))
+
+(defun lb-learn-en (e b s d)
+  "EN free (LB-AI-REFLEX, before LB-AI-EN): the :trace read's answer: TENSHIN in (LB-LEARN-SNAP-P), or, his side read and
+his landing not yet covered, one K fan at him (its lines above the reserve: LB-AI-LAY-OK-P). No roll (the read was made
+at the onset)."
+  (declare (ignore d))
+  (let ((l (lb-learn-l b)))
+    (when l
+      (let* ((k (lb-learn-state l)) (r (lbl-trace-read k)))
+        (cond ((lb-learn-snap-p e l k s) (why b :learn-snap :sig))
+              ((and (member r '(:left :right)) (not (lbl-fan k)) (not (lbl-snapped k)) (<= *match-tick* (lbl-trace-until k))
+                    (not (lb-learn-stepped-p k s r)) (not (lb-learn-covered-p e k r))
+                    (lb-ai-lay-ok-p (gauges-fs (gauges e)) :k) (kit-command-ok-p e :f))
+               (setf (lbl-fan k) t)
+               (lb-learn-acted e l :lb-fan)
+               (why b :learn-fan :f)))))))
+
+(defun lb-learn-cancel-p (e b s)
+  "EN's tick, an EN attack past its active end: the :trace read's TENSHIN in through the 2 f cancel (LB-LEARN-SNAP-P)."
+  (let ((l (lb-learn-l b))) (and l (lb-learn-snap-p e l (lb-learn-state l) s))))
+
+(defun lb-learn-hold-p (e b s)
+  "Where his CPU would TENSHIN in from EN's neutral (LB-AI-EN): the :tenshin read, one per window (made at the first such
+moment, standing *LB-LEARN-HOLD* frames or until a TENSHIN starts): hold the switch now (LB-LEARN-HOLD)? NIL without a
+learner (the shipped switch)."
+  (let ((l (lb-learn-l b)))
+    (when l
+      (let ((k (lb-learn-state l)))
+        (when (> *match-tick* (lbl-ten-until k))
+          (let ((r (learn-kit-read l :tenshin (lb-learn-scale b))))
+            (setf (lbl-ten-until k) (+ *match-tick* *lb-learn-hold*) (lbl-ten-read k) (and (member r *lb-learn-holds*) r))
+            (when (lbl-ten-read k) (lb-learn-acted e l (if (eq r :guard) :lb-hold-guard :lb-hold-hoho)))))
+        (lb-learn-hold (lbl-ten-read k) (lb-ai-busy-p s (brain-delay b) *lb-switch-windup*)
+                       (lb-learn-hoho-spent-p (- *match-tick* (lbl-hoho k)) (brain-delay b) (gauges-fs (gauges (opp-of e)))))))))
+
+(defun lb-learn-kamae (e b f plan)
+  "The stance's PLAN (LB-AI-KAMAE, once a stance, his CPU): HOSHA on a free opponent is read (one roll: LEARN-KIT-READ
+:hosha) and answered (LB-LEARN-KAMAE-PLAN); anything else, or no learner, as planned."
+  (let ((l (lb-learn-l b)))
+    (if (and l (eq plan :j) (not (member (state-of (opp-of e)) '(:stun :air))))   ; (his own hit felt at once: the loop)
+        (let* ((r (learn-kit-read l :hosha (lb-learn-scale b))) (s (lb-ai-seen b))
+               (p (lb-learn-kamae-plan r (fighter-dist f) (and (not (lbs-dashed (lb e))) (>= (gauges-fs (gauges e)) *lb-kamae-dash-fs*))
+                                       (and s (member (snap-state s) '(:idle :guard)) t))))
+          (if (eq p :j)
+              (when s (lb-learn-open e s l (lb-learn-state l) :hosha))   ; (HOSHA fires: his answer to it is watched)
+              (lb-learn-acted e l (case r (:guard :lb-hosha-guard) (:hoho :lb-hosha-hoho) (:attack :lb-hosha-attack) (t :lb-hosha-step))))
+          p)
+        plan)))
+
+;; the learning gate's scripted players (debug.lisp *HABITS* 7-9: HABIT-FIRE, a CPU P1 facing Lille)
+(defun lb-habit-trace (e b)
+  "Habit 7: Step off any trace of Lille's it sees under it (laid at least its perception delay ago) while his TENSHIN is
+ready, always to the line's right as he laid it (LB-LEARN-SIDE's :RIGHT). T when it pressed."
+  (let ((o (opp-of e)))
+    (when (and (eq (fighter-character (fighter o)) :lille) (lb-switch-ready-p o) (not (kit-rooted (kit-of e))))
+      (let* ((p (pos-of e)) (hr (+ (body-hurt-r (model-body (model e))) *ai-line-margin*)) (on nil))
+        (do-entities (h (hz hazard))
+          (let ((dd (hazard-data hz)))
+            (when (and (eql (hazard-owner hz) o) (lbh-p dd) (lbh-live dd) (>= (hazard-age hz) (brain-delay b))
+                       (<= (line-dist (hazard-x hz) (hazard-z hz) (hazard-yaw hz) 0.6 *lb-trace-len* (aref p 0) (aref p 2))
+                           (+ (lbh-width dd) hr))
+                       (or (null on) (> (lbh-id dd) (lbh-id (hazard-data on)))))
+              (setf on hz))))
+        (when on
+          (let* ((yaw (hazard-yaw on)) (q (pos-of o)) (ux (- (aref q 0) (aref p 0))) (uz (- (aref q 2) (aref p 2))))
+            (setf (brain-strafe b) (if (>= (+ (* (- (fwd-z yaw)) (- uz)) (* (fwd-x yaw) ux)) 0) 1f0 -1f0))   ; (strafe +1 is
+            (ai-press b :step 1 :act :side-step)                                                               ; (-uz ux))
+            (setf (brain-why b) :habit)
+            t))))))
+(defun lb-habit-tenshin (e b s)
+  "Habit 8: a Hoho on seeing Lille's TENSHIN in wind-up (from EN's neutral, before its materialise at f16), when it can
+Hoho. T when it pressed."
+  (let ((mv (snap-move s)) (f (fighter e)) (g (gauges e)))
+    (when (and mv (eq (snap-state s) :move) (member (mv-name mv) '(:lb-switch-in :lb-o-switch-in)) (< (snap-sf s) *lb-switch-windup*)
+               (zerop (fighter-hoho-lock f)) (>= (gauges-fs g) *fs-hoho*) (not (kit-rooted (kit-of e))))
+      (ai-press b :step 1 :modded t :act :hoho)
+      (setf (brain-why b) :habit)
+      t)))
+(defun lb-habit-hosha (e b s)
+  "Habit 9: guard HOSHA as its leap begins (Lille's own move, not the perceived one: a player who expects HOSHA from the
+stance; no reaction beats its first bullet at f6, and a guard before the stance's f6 is read by its plan). T when it
+pressed."
+  (declare (ignore s))
+  (let* ((o (opp-of e)) (fo (fighter o)) (mv (fighter-move fo)))
+    (when (and mv (eq (fighter-state fo) :move) (eq (mv-name mv) :lb-k-j) (< (fighter-sf fo) 14))
+      (ai-press b :guard 24 :act :hold)
+      (setf (brain-why b) :habit)
+      t)))
+
+(learn-def-kit :lille :situations #(:trace :tenshin :hosha) :actions #(:left :right :back :guard :hoho :step :attack :take)
+               :step 'lb-learn-step)
 
 ;;; ================================================================ debug: tests, the pacing log (debug.lisp dispatches)
 (defun lille-acc-reset () (dolist (st (coerce *lb* 'list)) (setf (lbs-acc st) nil)))
