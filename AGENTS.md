@@ -98,7 +98,8 @@ tools/pkgcheck.sh duel                   # ECL never warns about undefined / une
 - Accepted exceptions are recorded with the user's words: YK median 119.5 s (60 seeds) after the J reach change
   (2026-10-06, DUEL_STRINGS §20 / DEVLOG §81); Lille's LR 229.6 s and LI 216.2 s (60 seeds) after his trace-laying
   shot (「接受這兩組例外」, 2026-10-06, DUEL_LILLE §23.20–§23.22 / DEVLOG §108; the shot is gone since 2026-10-07, decision 41:
-  LR 200.0 s at 20 seeds, LI 212.1 s at 60, §23.23 / DEVLOG §112), and the Lille mirror's time-outs (「也算進例外」,
+  LR 200.0 s at 20 seeds, LI 212.1 s at 60, §23.23 / DEVLOG §112); Lille's LR 217.5 s (60 seeds) after the 10 m back dash
+  and the 0.1 crossing slow motion (「可以接受」, 2026-10-07, DUEL_LILLE §23.25 / DEVLOG §115), and the Lille mirror's time-outs (「也算進例外」,
   2026-10-06, DEVLOG §109). Open: Ichigo's awaken A/B rows have failed since the user cut his
   damage (2026-09-29, DEVLOG §39–§40; last measured §77: IY 7–15, IR 4–7); his damage is the user's call, don't retune it.
 - Full policy and history: `docs/duel/DUEL_GAMEPLAY.md` "Gate policy"; how to gate in general: skill `sim-balance-gates`.

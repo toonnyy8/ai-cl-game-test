@@ -2286,6 +2286,9 @@ on steps, and code that reads `*match-tick*` sees that (the same as a perfect Ho
 LR's edge rerun at 60 seeds: **217.5 s**, every match K.O., Lille 20 / 60: outside the window, under the accepted
 229.6 s; reported, not retuned.
 
+**Accepted** (the user, 2026-10-07): asked whether LR 217.5 s (60 seeds) stays an exception, the user answered
+「可以接受」. It is recorded in AGENTS.md "Tests and gates" with the earlier LR / LI exceptions.
+
 ---
 
 ## 24. The adaptive, in-character CPU (dream-rsi; the user, 2026-10-06)
