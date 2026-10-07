@@ -2656,3 +2656,42 @@ start from the new freeze.
 | b2a0 | 0.9941 | **0.9945** |
 | b3a0 | 0.9869 | **0.9883** |
 
+### 24.7 Round 1 closed (2026-10-07)
+
+All twelve cells, rescored at `1a7f135` (40 seeds; NORMAL drift 0.44 and pacing identical to the baseline in every one;
+every new behaviour a HARD-only level, no new roll; every test diff only adds checks):
+
+| Branch | a0 | a1 | a2 |
+|---|---|---|---|
+| b0 | 0.9548 | 0.9957 | 0.9991 |
+| b1 | 0.9586 | 0.9937 | 0.9984 |
+| b2 | 0.9945 | 0.9994 | **0.9996** |
+| b3 | 0.9883 | 0.9995 | 0.9992 |
+
+The score is saturated: from a1 on, strength is 1.000 and signature 0.996–0.999, so the 40-seed score no longer tells
+the best cells apart. The refines were judged on held-out seeds (wins, damage and Konpaku taken) and style:
+- **b2a2** (the best score): a loop-led executioner. The HOSHA loop is 73 % of his damage, traces 16 %, HIRENKYAKU 8 %.
+  It won 1200 / 1200 on seeds 1–120, with 254 / 247 damage taken a match on held-out seeds.
+- **b3a1 / b3a2**: the most varied mix, the KIN → EN → KIN pendulum. HOSHA loop 39–40 %, trace combos 23–24 %, X-Axis
+  lines 34 %, the charged shot 8.6 % in b3a2. b3a2 won 800 / 800 held-out, with 374 damage taken and 0.13 Konpaku lost a match.
+
+Located fixes the cells shared (credited in each proposal):
+- no hunt into an attack or a rush;
+- the burst read, through what the CPU perceives (b2a2, b3a2);
+- composure, and its buffered-J bug (b2a2);
+- okizeme answering `:none`;
+- the turtle and no Breaker at HARD;
+- KIN's SP enders and SANREN cash-in;
+- EN never entering KIN empty.
+
+Shared-code recommendations kept for the integration:
+- an ORANGE kit key, so composure's held-J trick can go;
+- an `ai-press` that leaves no buffered press;
+- `:awaken :min-taken` by difficulty;
+- the generic Breaker reflexes asking `:ok`;
+- AI-ATTACK's reach filter for EN at NORMAL;
+- a wake-up field in the snap;
+- `tools/assistgate.py` re-run, because the `:sp-ender` hooks act for an assisted human.
+
+`drsi.py close-round` wrote `trace_pool/iter01` (best b2a2 0.9996 at depth 2).
+
