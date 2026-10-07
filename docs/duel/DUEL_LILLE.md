@@ -2954,3 +2954,22 @@ his)); control 89, learn 100, cine 18 ALL PASS; `tools/pkgcheck.sh duel` 0 / 0 /
   2 f cancel) → the trace hits → his J1 → `assist F` (K2s) → `assist F` (K3) → route 3: `assist SIG` (the crossfire) →
   TENSHIN out → EN J1 → `assist SIG` → TENSHIN in …, three swings until the stun tolerance blew him away (as-en-trace 3,
   as-xfire 3, as-kin-route 4); the same in KIN (79014), the owl's KIN (79016) and the owl's EN (79004).
+
+### 24.11 The full gate after the integration (2026-10-07)
+
+On the merged tree (`2da0477`: decision 49 + §24.10's ASSIST routes + §24.9's learning situations):
+- **Seed gate**: `simgate.py --seeds 10`, all 21 pairings: the 15 without Lille are row-identical to `8544c23`; Lille's 6
+  are row-identical to `8c93f92` (decision 49 alone). The integration moves no CPU-vs-CPU match (neither part runs
+  there); the pacing verdict stays decision 49's (§23.30: LY 176.6, LK 173.2, LR 196.4, LI 206.8, LS 192.4 s at 20 seeds).
+- **G2** `--cvc`: PASS (yy, yk, kk).
+- **CPU score** `aieval.py --char 5`: strength 1.000, masher 1.000, signature 0.998, drift share 0.455 (ref 0.44 ± 0.05):
+  0.9992, as at `8544c23`.
+- **Awaken A/B** (39020, Lille P1 never awakens; wins of 60, streams 100 / 300 / 500; pass ≥ 20): LY 16 / 18 / 18,
+  LK 3 / 5 / 6, LR 6 / 6 / 9, LI 3 / 8 / 10, LS 10 / 15 / 10. Still failing, as since §20.3 (the user: 「先試玩再決定」,
+  open); not tuned.
+- **ASSIST** `assistgate.py --rows` vs §24.10's run at `8544c23`: every row without Lille and every row with Lille as P1
+  (the masher) is identical; only rows with Lille as the CPU P2 move (decision 49's TENSHIN and his learner's
+  situations: the gate's P2 is a learner). Masher P1 wins: k0 408 → 411, k1 487 → 478, k2 688 → 686, k3 400 → 402,
+  k6 473 → 477, k10 533 → 541, k11 700 → 692 of 720.
+- Host tests duel-rules 6411, learn 131, control 89, cine 18, input 33, touch 64 ALL PASS; `tools/pkgcheck.sh duel`
+  0 / 0 / 0.
