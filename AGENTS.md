@@ -82,7 +82,7 @@ tools/pkgcheck.sh duel                   # ECL never warns about undefined / une
 | Layer | Command | Pass |
 |---|---|---|
 | Host tests (~seconds) | `$E --norc --load tests/duel-rules-test.lisp` (also `duel-control-test`, `learn-test`, `input-test`, `touch-test`, `cine-test`) | ALL PASS |
-| Seed / pacing gate | `python3 tools/simgate.py --summary` (native sim of the same sources; `--pairs`, `--seeds`, `--seed0`, `--cmd`) | every match K.O.; cross-pairing medians 125–210 s; mirrors may exceed 210. Quick first pass `--seeds 10`: passes at once only if all K.O. and median 135–200 s, else 20 seeds = verdict |
+| Seed / pacing gate | `python3 tools/simgate.py --summary` (native sim of the same sources; `--pairs`, `--seeds`, `--seed0`, `--cmd`); the match time leaves every cinematic out since 2026-10-08 (DEVLOG §134; earlier quotes include them) | every match K.O.; cross-pairing medians 125–210 s; mirrors may exceed 210. Quick first pass `--seeds 10`: passes at once only if all K.O. and median 135–200 s, else 20 seeds = verdict |
 | Edge rerun | a 20-seed median outside the window → `--pairs k --seeds 60`; still outside → **report to the user**, don't retune other knobs | |
 | Awaken A/B | `--pairs k --seed0 {100,300,500} --seeds 60 --cmd 39020` (39000+10a+b; the character as P2, e.g. Ichigo in SI: `39002`) | the "never awaken" side wins ≥ 20/60 on every stream |
 | ASSIST | `python3 tools/assistgate.py` | report the masher's win % per setting |
