@@ -3237,14 +3237,31 @@ turning to gold over 30 f, and the owl head grows on the S-neck from light; the 
       (caption "武器では死なず" :kanji2 "霊圧で首を落としても尚死なない" :reading "BUKI DEWA SHINAZU" :sub "SHIN NO SUGATA" :side 0))
   (at 150 (card nil) (caption-exit) (shot-on a 28 7.5 0.6 :look 1.9) (lens 55) (cine-clip a :lb-o-reveal :blend 8)))
 
+(defparameter *lb-judge-gap* 6.0
+  "The Jilliel Kikon cinematic stages him this far from the opponent (CINE-PLACE; his place given back at its end): its
+shots are framed for it (the user, 2026-10-08: 「我發現是隨著進入毀魂技時兩個的距離而影響視角ㄟ」).")
+(defparameter *lb-judge-head* 1.65 "LB-SHOT-BEHIND: the opponent's head, metres over his feet ...")
+(defparameter *lb-judge-keep* 0.35
+  "... kept at most this share of the frame's half-height below its centre (the letterbox's bar starts at 0.82), on a
+landscape screen (a portrait one widens the lens and backs off: %PORTRAIT-DOLLY, its framing kept as the user liked it).")
+
 (defun lb-shot-behind (v a back side h look)
   "A shot from behind V toward A (decision 56's acceleration beat): the camera BACK m behind V on the A -> V line, SIDE m to
 its right (+), H high, aimed at A's body LOOK m up; A is the subject (kept in the frame), V a silhouette in a low corner."
   (let* ((p (pos-of a)) (q (pos-of v)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
          (d (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))) (ux (/ dx d)) (uz (/ dz d)))
     (setf *cine-close* nil *cine-subject* a)
-    (cine-cam (+ (aref q 0) (* back ux) (* side (- uz))) h (+ (aref q 2) (* back uz) (* side ux)) (aref p 0) look (aref p 2))))
-
+    ;; V's head kept above the letterbox (its bar covers the frame's bottom 9 %): the aim tilted down, if need be, until
+    ;; his head sits *LB-JUDGE-KEEP* of the half-height below the centre (the user, 2026-10-08: on a desktop he went off
+    ;; the bottom)
+    (let* ((ex (+ (aref q 0) (* back ux) (* side (- uz)))) (ez (+ (aref q 2) (* back uz) (* side ux)))
+           (dl (max 0.5 (sqrt (+ (expt (- (aref p 0) ex) 2) (expt (- (aref p 2) ez) 2)))))
+           (dv (max 0.5 (sqrt (+ (expt (- (aref q 0) ex) 2) (expt (- (aref q 2) ez) 2)))))
+           (ev (atan (- (+ (aref q 1) *lb-judge-head*) h) dv))
+           (ea0 (atan (- look h) dl))
+           (ea (if (> (window-height) (window-width)) ea0
+                   (min ea0 (+ ev (atan (* *lb-judge-keep* (tan (* 0.5 *lens-fov*)))))))))
+      (cine-cam ex h ez (aref p 0) (+ h (* dl (tan ea))) (aref p 2)))))
 (defparameter *lb-judge-giant* 3.0
   "The Jilliel Kikon cinematic draws Lille this many times his size in beats 4-6 (f192-277 since Amendment 2; decision
 56's amendment, the user 2026-10-08: 「Lille 放大約 3 倍」「第 4 到 6 段」): a look, CINE-SCALE.")
@@ -3273,7 +3290,7 @@ beside the opponent, the giant's wings close down and on that frame (268) he sha
 gone, Lille x1 again, a wide shot, the wings settling (277-305). His wings' gathering, ring, lit holes and close are
 LILLE-DRAW's, from the frame (%LB-SP-DRIVE!)."
   ;; 1 open: gathered and shaking, the snap on f24, held
-  (at 0 (face-each-other a v) (cine-clip a :lb-w-judge-open :blend 0) (cine-clip v :sh-bound :blend 4)
+  (at 0 (cine-place a v *lb-judge-gap*) (cine-clip a :lb-w-judge-open :blend 0) (cine-clip v :sh-bound :blend 4)
       (play-sfx :awaken-rise) (shot-on a 20 3.6 0.45 :look 2.0) (lens 56))
   (during (0 40) (shot-on a (+ 20 (* 30 u)) (- 3.6 (* 0.3 u)) 0.45 :look 2.0))   ; (the slow orbit)
   (at 24 (impact-frame :negative 2) (shake 0.2 0.25) (play-sfx :lb-lock))
@@ -3298,7 +3315,7 @@ LILLE-DRAW's, from the frame (%LB-SP-DRIVE!)."
   ;; 4 the acceleration: the white card, his silhouette; Lille drawn x3 (to f277: CINE-SCALE), from low behind the
   ;; opponent looking up past him at the giant (his head and shoulders in a lower corner), pushing in
   (at 192 (cine-slow 1) (card :white) (silhouette-black v) (impact-frame :negative 1) (cine-clip a :lb-w-judge-volley :blend 2)
-      (cine-scale a *lb-judge-giant*) (lb-shot-behind v a 5.0 1.8 0.5 6.2) (lens 46))
+      (cine-scale a *lb-judge-giant*) (lens 46) (lb-shot-behind v a 5.0 1.8 0.5 6.2))
   (during (192 242) (lb-shot-behind v a (- 5.0 (* 0.8 u)) (- 1.8 (* 0.2 u)) 0.5 (+ 6.2 (* 0.4 u))))
   (when (and step-p (<= 192 cf 241))                    ; a crack for the first shots, then every other one
     (let ((n (position cf *lb-judge-shots*))) (when (and n (or (< n 14) (evenp n))) (play-sfx :lb-crack :pitch (+ 1.0 (* 0.01 (- cf 192)))))))
@@ -3306,7 +3323,7 @@ LILLE-DRAW's, from the frame (%LB-SP-DRIVE!)."
   ;; 5 the still
   (at 242 (shot-on v 150 3.6 0.5 :look 2.3) (lens 50) (hold-both a v 20) (silence 20))   ; (his back, the giant beyond)
   ;; 6 the verdict: the wings close down; on that frame he shatters
-  (at 262 (lb-shot-behind v a 4.6 -1.7 0.5 6.0) (lens 46) (cine-clip a :lb-w-judge-close :blend 0))   ; (the giant's wings
+  (at 262 (lens 46) (lb-shot-behind v a 4.6 -1.7 0.5 6.0) (cine-clip a :lb-w-judge-close :blend 0))   ; (the giant's wings
   (at 268 (impact-frame :manga 10) (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))   ;  close
       (play-sfx :konpaku-shatter) (shake 0.3 0.4))                                                                     ;  over him)
   ;; 7 the end: the card goes with the giant (he never stands on the stage x3)

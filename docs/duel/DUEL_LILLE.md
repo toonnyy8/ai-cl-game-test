@@ -3032,6 +3032,20 @@ breakdown): 「毀魂技的第三幕「起射」過的太快，我希望能透�
   byte-identical, Lille's wins and K.O.s unchanged, his medians longer by the cinematic's 95 more frames (1.6 s each it
   plays): LY 194.0 → 197.1 s, LK 160.2 → 163.4, LR 195.9 → 197.4, LI 196.2 → 196.2, LS 182.6 → 184.1, LL 226.0 → 230.7.
 - Stills: `/tmp/…/scratchpad/d56/jilliel/review/cine-slow.png` (beat 1, beat 3 and the joins into 2 and 4).
+
+**Fix: the staging distance and the desktop frame** (the user, 2026-10-08, after playing v30): 「手機版看起來非常好！實乃善哉！
+但桌面版在第四幕的連射時，對手會超出下方畫面的邊界而看不見。」, 「我發現是隨著進入毀魂技時兩個的距離而影響視角ㄟ」, 「應該進入毀魂技過場
+動畫時就要先調整演員的位置才對」. Two causes: the shots were framed at the stills' 6 m but the Kikon lands from any distance
+(nearer, the low camera behind the opponent tilts up further and drops him), and the landscape letterbox's bottom bar
+(9 %) hides what the portrait frame shows.
+- `CINE-PLACE a v gap` (cinema.lisp): FACE-EACH-OTHER's flash step that records A's place and gives it back in CINE-END
+  (played, skipped or aborted). The cinematic opens with `(cine-place a v *lb-judge-gap*)`, 6.0 m. The facings are the
+  same line either way, so the match resumes exactly as before: `simgate --cvc` identical and Lille's six pairings
+  (`--seeds 10 --summary`) byte-identical to the build before the fix.
+- `LB-SHOT-BEHIND` on a landscape screen tilts its aim down, if need be, until the opponent's head (`*lb-judge-head*`
+  1.65 m) sits at most `*lb-judge-keep*` 0.35 of the half-height below the frame's centre (the bar starts at 0.82);
+  portrait keeps its framing. At 1280 × 720 the opponent's upper body and the holes in his back now show above the bar in
+  beats 4 and 6.
 ---
 
 ## 24. The adaptive, in-character CPU (dream-rsi; the user, 2026-10-06)

@@ -54,6 +54,9 @@ camera's easing) run at this rate; the script's frames do not (a look: the sim n
   "One fixed step of a cinematic actor: his animation advances."
   (let ((m (model e))) (when m (anim-advance (model-anim m) (* +step+ *cine-time-scale*)))))   ; (CINE-SLOW)
 
+(declaim (type f32vec *cine-placed*))
+(defvar *cine-placed* (make-f32 4) "CINE-PLACE: A's place before it (x y z) and [3] 1 while it is to be given back.")
+(defvar *cine-placed-e* nil "CINE-PLACE's actor.")
 (defun cine-end (c)
   "A cinematic ended (C, or NIL when none ran): restore the stage look, clear the caption and the
 flash, give the actors back (the presses buffered during it forgotten: mashing through a
@@ -63,6 +66,10 @@ cinematic fires nothing)."
         *aura-off* nil *cine-subject* nil *draw-scale-e* nil *draw-scale* 1f0   ; (played, skipped or aborted)
         *cine-time-scale* 1f0)
   (v3-set! (camera-up *camera*) 0f0 1f0 0f0)
+  (when (and *cine-placed-e* (> (aref *cine-placed* 3) 0f0))   ; CINE-PLACE: A back where he stood
+    (let ((p (pos-of *cine-placed-e*)) (s *cine-placed*))
+      (setf (aref p 0) (aref s 0) (aref p 1) (aref s 1) (aref p 2) (aref s 2) (aref s 3) 0f0)))
+  (setf *cine-placed-e* nil)
   (unsilhouette)
   (fill *ui-flash* 0f0)
   (screen-fx-clear)
@@ -103,6 +110,15 @@ the other third to a caption."
     (setf (transform-yaw (transform a)) (f32 (dir-yaw (- (aref q 0) (aref p 0)) (- (aref q 2) (aref p 2))))
           (transform-yaw (transform v)) (f32 (dir-yaw (- (aref p 0) (aref q 0)) (- (aref p 2) (aref q 2)))))
     (setf (aref q 1) 0f0)))
+
+(defun cine-place (a v gap)
+  "Stage the shot at a set distance: put A GAP metres in front of V (FACE-EACH-OTHER's flash step) for the cinematic's
+camera, and give A its place back when it ends (CINE-END, however it ends): a look only, the match goes on from where
+they stood (the user, 2026-10-08: 「應該進入毀魂技過場動畫時就要先調整演員的位置才對」). Their facings are FACE-EACH-OTHER's
+either way (the same line)."
+  (let ((p (pos-of a)) (s *cine-placed*))
+    (setf (aref s 0) (aref p 0) (aref s 1) (aref p 1) (aref s 2) (aref p 2) (aref s 3) 1f0 *cine-placed-e* a)
+    (face-each-other a v gap)))
 
 (defun cine-clip (e clip &key (blend 3) (speed 1.0) (time 0.0))
   "Play CLIP on actor E (falls back to the stance with a log line if the art lacks it)."
