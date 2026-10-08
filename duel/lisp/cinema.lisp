@@ -32,6 +32,10 @@ body in the frame whatever the script's aim offsets and the clip's root motion d
 (defvar *draw-scale-e* nil "A cinematic actor drawn larger or smaller (CINE-SCALE: a look, the sim never reads it), or NIL.")
 (declaim (single-float *draw-scale*))
 (defvar *draw-scale* 1f0 "... and its scale: his rig, lift and shadow in DRAW-FIGHTER, his kit's own looks (LILLE-DRAW).")
+(declaim (single-float *cine-time-scale*))
+(defvar *cine-time-scale* 1f0
+  "A cinematic's slow motion (CINE-SLOW): its actors' clips and the effect time (the fx clock, particles, shake, the
+camera's easing) run at this rate; the script's frames do not (a look: the sim never reads it). CINE-END resets it.")
 (defmacro draw-scale-of (e)
   "The drawn scale of fighter E: *DRAW-SCALE* while it is the scaled cinematic actor, else 1 (a single-float; 0 B)."
   `(if (eql ,e *draw-scale-e*) *draw-scale* 1f0))
@@ -48,7 +52,7 @@ body in the frame whatever the script's aim offsets and the clip's root motion d
 
 (defun cine-actor-step (e)
   "One fixed step of a cinematic actor: his animation advances."
-  (let ((m (model e))) (when m (anim-advance (model-anim m) +step+))))
+  (let ((m (model e))) (when m (anim-advance (model-anim m) (* +step+ *cine-time-scale*)))))   ; (CINE-SLOW)
 
 (defun cine-end (c)
   "A cinematic ended (C, or NIL when none ran): restore the stage look, clear the caption and the
@@ -56,7 +60,8 @@ flash, give the actors back (the presses buffered during it forgotten: mashing t
 cinematic fires nothing)."
   (setf *caption-out* (and *caption* (bcap-exit *caption*))   ; a title still up slices out over what follows
         *caption* nil *card* nil *card-only* nil *cine-grade* nil *dutch* 0f0 (camera-fov *camera*) (f32 (deg 60))
-        *aura-off* nil *cine-subject* nil *draw-scale-e* nil *draw-scale* 1f0)   ; (played, skipped or aborted)
+        *aura-off* nil *cine-subject* nil *draw-scale-e* nil *draw-scale* 1f0   ; (played, skipped or aborted)
+        *cine-time-scale* 1f0)
   (v3-set! (camera-up *camera*) 0f0 1f0 0f0)
   (unsilhouette)
   (fill *ui-flash* 0f0)
@@ -107,6 +112,11 @@ the other third to a caption."
   "Draw actor E S times his size from now on, about his feet (his place kept), until CINE-SCALE again or the cinematic's
 end (CINE-END clears it, however it ends). A look: the sim never reads it (decision 56, the Jilliel Kikon's giant)."
   (if (= s 1) (setf *draw-scale-e* nil *draw-scale* 1f0) (setf *draw-scale-e* e *draw-scale* (f32 s))))
+
+(defun cine-slow (k)
+  "Slow motion from now on: the actors' clips and the effects at K x speed (1 = back to speed), until CINE-SLOW again or
+the cinematic's end (decision 56's Kikon: its first shots' hits)."
+  (setf *cine-time-scale* (f32 k)))
 
 (defun ui-flash (r g b a &optional (fade 3.0))
   "A full-screen flash of colour (r g b), alpha A, fading at FADE per second."

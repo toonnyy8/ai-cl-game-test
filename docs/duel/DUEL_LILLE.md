@@ -3001,6 +3001,37 @@ breakdown): 「毀魂技的第三幕「起射」過的太快，我希望能透�
   ≈ 15 f; straight on into beat 4.
 - The cinematic grows from 210 f to ≈ 310 f; the native sim counts it in the match seconds, so Lille's medians grow a
   little more (the sim's outcomes unchanged).
+
+**Amendment 2 built** (the slow-motion first shots, the 40 f opening; 2026-10-08: `cinema.lisp`, `main.lisp`,
+`lille-art.lisp`, the cinematic in `lille.lisp`). The cinematic is **305 f** (`:len` 210 → 305, `:hold` 130 → 215):
+
+| Beat | Frames | Shot and action |
+|---|---|---|
+| 1 open | 0–40 | Low and close (`shot-on a`, 3.6 → 3.3 m, 0.45 m up, looking 2.0 m up, lens 56), a slow orbit 20° → 50° round his front; `:lb-w-judge-open`: the wings gathered round the column (f4) and shaking harder (a side jolt every 2 f, ±0.006 → ±0.032 m; the table wings curled in, their ripple 3° → 12°), snapped open into the ring on **f24** (a negative 2 f, a shake, `:lb-lock`), held 16 f to f40 |
+| 2 card | 40–90 | As before, 30 f later: the black card, 神の裁き, behind him (173°, 9.6 → 9.0 m from the aim 6 m on, 2.4 m up, lens 40), the 24 holes lit one by one (f42–88), the charge's jolts (f60–86); the caption slices out on f78 |
+| 3 first shots | 90–192 | f90 the stage from diagonally behind him (148°, 6.8 m from the aim 2.4 m on, 1.7 m up, lens 46). **Shot 1**: fired f96 (`:lb-w-judge-shot`, a crack, a shake), the line flies 3 f, the hit **f99**: slow motion **1/5 for 40 f** (to f139), close on the pierce (`LB-SHOT-PIERCE`: 1.5 → 1.2 m from it, orbiting 40° → 70° round his facing, lens 40), his reaction (`:sh-kikon-victim`) slowed. f139 back to speed, behind Lille's other shoulder (−142°, 7.4 m from the aim 2.6 m on, 1.4 m up, lens 44). **Shot 2**: fired f143, the hit **f146**: **1/3 for 25 f** (to f171), close on its pierce (55° → 80°, 1.6 → 1.4 m). f171 back to speed, low before him (35°, 6.0 m, 0.6 m up, lens 50). **Shot 3**: fired f174, the hit **f177**: **1/2 for 15 f** (to f192), close on its pierce from behind him (120° → 140°, 1.3 → 1.15 m: the line out through his back). |
+| 4 acceleration | 192–242 | As before (the white card, his silhouette, Lille ×3, the low camera behind him, pushing in); pierces 4–48 fired at 192 + 46 √((n − 3)/44), the last on f238 (hit f241) |
+| 5 still | 242–262 | As before (his riddled back, the giant beyond, 20 f held in silence) |
+| 6 verdict | 262–277 | As before; the wings closed and he shatters on **f268** |
+| 7 end | 277–305 | The card, his silhouette and the giant go together on the cut (f277: the giant never stands on the stage; before, the card went at f180 with the giant drawn to f185), Lille ×1, the wide shot |
+
+- *Slow motion* (`CINE-SLOW k`, cinema.lisp; `*CINE-TIME-SCALE*`, reset by CINE-END however the cinematic ends): the
+  actors' clips advance at k (CINE-ACTOR-STEP) and the effect time too (GAME-FRAME's FDT: the fx clock, particles, the
+  wings' wave and lag springs, shake, the camera's easing). The script's frames run on: the slow beats are set on their
+  frames (f99 0.2, f139 1, f146 1/3, f171 1, f177 0.5, f192 1).
+- *The lines on the same clock* (`*LB-JUDGE-TIME*`, the effect time at each cinematic frame, from `*LB-JUDGE-SLOW*`
+  ((99 139 0.2) (146 171 1/3) (177 192 0.5))): `*LB-JUDGE-SHOTS*` are now the fire frames; each line flies
+  `*lb-judge-fly*` 3 f of effect time from its hole to the pierce, goes 3 m on through him over 2 more and fades over 5;
+  the star where it enters grows over 3; the white hole appears on the hit. %LB-SP-DRIVE!'s kicks and muzzle flashes run on
+  the same clock. Slowed ×5, the first hit's line hangs through him ≈ 35 frames.
+- *Debug*: 79200 + f covers frames 0–399 (79200–79599; DUEL_GAMEPLAY), the 79100 + 19·3 + k stills (every 10 f to 180)
+  still work.
+- *Gates*: host tests ALL PASS (duel-rules 6479, control 89, learn 131, cine 18); pkgcheck 0 / 0 / 0; `./build.sh duel`
+  0 warnings. Consing (79195): the draw hook 160 B a 10 draws at every sample, the slowed frames included (f100–190), and
+  `VFX-LB-JUDGE` 160 B (f3–290). Simgate: `--cvc` identical; `--seeds 10 --summary`: the 30 lines of the other pairings
+  byte-identical, Lille's wins and K.O.s unchanged, his medians longer by the cinematic's 95 more frames (1.6 s each it
+  plays): LY 194.0 → 197.1 s, LK 160.2 → 163.4, LR 195.9 → 197.4, LI 196.2 → 196.2, LS 182.6 → 184.1, LL 226.0 → 230.7.
+- Stills: `/tmp/…/scratchpad/d56/jilliel/review/cine-slow.png` (beat 1, beat 3 and the joins into 2 and 4).
 ---
 
 ## 24. The adaptive, in-character CPU (dream-rsi; the user, 2026-10-06)
