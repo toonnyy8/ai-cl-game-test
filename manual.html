@@ -151,7 +151,7 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
   <li><a href="#chars">角色</a>
     <ol><li><a href="#ch-yama">山本元柳齋重國</a></li><li><a href="#ch-ken">更木劍八</a></li>
     <li><a href="#ch-rukia">朽木露琪亞</a></li><li><a href="#ch-ichigo">黑崎一護</a></li>
-    <li><a href="#ch-senju">修多羅千手丸</a></li></ol></li>
+    <li><a href="#ch-senju">修多羅千手丸</a></li><li><a href="#ch-lille">利傑·巴羅</a></li></ol></li>
   <li><a href="#newbie">新手建議</a></li>
 </ol>
 </nav>
@@ -846,6 +846,103 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 </details>
 </section>
 
+<section class="char" id="ch-lille">
+<details>
+<summary><h3>利傑·巴羅 <small>LILLE BARRO（LILLE）</small></h3><span class="tagline">從架勢裡移動射擊的狙擊手；覺醒後在遠程佈軌與近戰翼斬之間切換，第二次覺醒化為梟頭</span></summary>
+<p>利傑的基本型態用長槍 Diagramm 作戰，招牌是按 L 擺出的射擊架勢：從架勢裡可以開槍、往前跳射、往後退射或閃身，邊移動邊找射擊的角度。他的「萬物貫通」直線攻擊會<b>穿過防禦</b>，只削一點血和防禦量表。覺醒後成為「神の裁き」Jilliel，有遠程（遠 EN）和近戰（近 KIN）兩種模式，用 L 的「轉身」在兩者之間切換；剩下 4 顆魂魄以下時還能復活成梟頭（真の姿），用同一套系統，但每一項都更強。三種型態的招式都很多，是全遊戲最需要規劃的角色。</p>
+
+<h4>基本型態 <small>LILLE</small></h4>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>床尾打 <i>SHOBI-UCHI</i> → 返し <i>KAESHI</i> → 銃口突 <i>JUKO-TSUKI</i></td><td>用槍托往上揮、反手揮回，第三段用槍口的十字架突刺。判定約 1.45～1.6 公尺。</td><td>近身的基本連段。他的傷害倍率較高（×1.3），但體型和其他人一樣。</td></tr>
+<tr><td><kbd>K</kbd></td><td>銃身薙 <i>JUSHIN-NAGI</i> → 振り下ろし <i>FURIOROSHI</i> → 零距離 <i>REI-KYORI</i></td><td>槍身橫掃、往下劈，第三段把槍口壓在對手身上開槍。判定約 2.05～2.15 公尺。</td><td>K 段打中後按 <kbd>L</kbd> 會直接進入架勢（連段）。K3 被防會被反擊。</td></tr>
+<tr><td><kbd>L</kbd></td><td>狙撃構え <i>SOGEKI-GAMAE</i>（架勢）</td><td>放平槍身、地上畫出灰色瞄準線。架勢第 6 幀架好，之後維持約半秒（按住 L 最長 1.5 秒）。</td><td><b>架勢中不能防禦。</b>架好之後按 L／J／K／Step 決定要出哪一招（見下）。</td></tr>
+<tr><td>架勢中 <kbd>L</kbd></td><td>万物貫通 <i>THE X-AXIS</i></td><td>按下的瞬間鎖定方向（瞄準線變玉色），10 幀後射出貫穿全場的直線（31 公尺）。</td><td>架勢超過 24 幀才射是蓄力射擊：距離 4 公尺以內 40、20 公尺以上 120（乘上傷害倍率）；快速射擊固定 40。<b>穿過防禦</b>：被防只吃 15% 傷害，但扣 30 防禦量表。看準瞄準線變色就能用 Step 躲。</td></tr>
+<tr><td>架勢中 <kbd>J</kbd></td><td>跳射 <i>HŌSHA</i></td><td>往前跳約 5 公尺，空中連射三發短程子彈（約 3.6 公尺）。</td><td>任何一發打中，落地後可以接 <kbd>J</kbd> 或 <kbd>K</kbd> 成連段。可以防禦。</td></tr>
+<tr><td>架勢中 <kbd>K</kbd></td><td>退射 <i>TAISHA</i></td><td>往後滑 3 公尺，再射出一發 6 公尺的直線（60）。</td><td>和万物貫通一樣穿過防禦。拉開距離的手段。</td></tr>
+<tr><td>架勢中 Step</td><td>飛廉脚 <i>HIRENKYAKU</i></td><td>往搖桿方向閃身 3.5 公尺（不推搖桿就往後），開頭有無敵，回到架勢時準心直接對準對手，蓄力保留。</td><td>每次架勢只能用一次，花 10 點瞬步量表。</td></tr>
+<tr><td><kbd>U</kbd>（點按）</td><td>眼 <i>ME</i></td><td>對手的攻擊正要打到時點一下 U：左眼睜開，16 幀內攻擊全部穿過他。</td><td>要先放開 U 至少 10 幀再點，所以一直按著防禦不會浪費。一場只有 <b>3 次</b>；第 3 次會直接補滿覺醒量表。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>SP1 三連 <i>SANREN</i></td><td>連開三槍不瞄準的直線（各 20 公尺），每槍之間轉身追向對手。</td><td>穿過防禦。靈壓 1 格。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>SP2 飛廉脚 <i>HIRENKYAKU</i></td><td>往後滑 6 公尺，落地時射出貫穿全場的一槍（40）。</td><td>穿過防禦。拉開距離後立刻反擊。靈壓 1 格。</td></tr>
+<tr><td><kbd>I</kbd></td><td>Breaker 床尾打 <i>SHOBI-UCHI</i></td><td>衝過去用槍托往下砸。</td><td>通用抓技。</td></tr>
+<tr><td><kbd>O</kbd></td><td>照準 <i>SHOJUN</i> → Kikon 万物貫通 <i>BANBUTSU KANTSU</i></td><td>原地瞄準後射出 12 公尺的直線。</td><td>可以防禦。Kikon 奪走魂魄 2 顆。</td></tr>
+</tbody></table>
+
+<h4>神の裁き Jilliel：遠 EN <small>JILLIEL</small>（覺醒後一開始的模式）</h4>
+<p>沒有頭的白色柱身浮在空中，背後八片玉色的翼。遠程模式的 J／K／SP 本身<b>不打人</b>，而是在地上留下「軌跡」；出招時可以用搖桿邊走邊出。</p>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>遠程 J 1 → 2 → 3（擲翼）</td><td>把翼往前擲下，沿面向留下一條軌跡。</td><td>每條軌跡花 3 點瞬步量表；不夠時照樣揮，但不留軌跡。</td></tr>
+<tr><td><kbd>K</kbd></td><td>遠程 K 1 → 2 → 3（旋翼）</td><td>轉身把翼低掃過前方，留下扇形的三條軌跡（±6°）。</td><td>三條花 9 點。三條一起打中也只算一下。</td></tr>
+<tr><td><kbd>L</kbd></td><td>転身 <i>TENSHIN</i>（往近戰）</td><td>場上所有軌跡一起<b>實體化</b>（打中會硬直），同時朝對手衝刺（最多 7 公尺、停在對手前 1 公尺），換成近戰模式。</td><td>從中立狀態按有 16 幀前搖（看得見、會被打）；在遠程招式中途按只要 2 幀。不花瞬步。衝刺結束時按 J／K 可以取消硬直：「軌跡打中 → 轉身 → J」就是一套連段。</td></tr>
+<tr><td>Hoho</td><td>（往近戰）</td><td>遠程模式中 Hoho 會直接換成近戰模式。</td><td>軌跡保留，等下一次 L 再實體化。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>SP1 三連 <i>SANREN</i></td><td>右翼、左翼、雙翼三次突刺，各留下一條軌跡。</td><td>不花瞬步。靈壓 1 格。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>SP2 二十四孔 <i>NIJUSHI-KO</i></td><td>八翼張開，蓄力 20 幀後留下一條<b>粗</b>軌跡。</td><td>實體化時 180 傷害。靈壓 2 格。</td></tr>
+<tr><td><kbd>U</kbd></td><td>無実体 <i>MUJITTAI</i></td><td>翼收起包住柱身，攻擊會穿過他（見下）。</td><td>兩種模式都能用。</td></tr>
+<tr><td><kbd>I</kbd></td><td>Breaker <i>JILLIEL</i></td><td>翼往前衝撞。</td><td>通用抓技。</td></tr>
+<tr><td><kbd>O</kbd></td><td>Kikon 神の裁き <i>KAMI NO SABAKI</i></td><td>八翼張成一圈，24 個孔一起射出光線。</td><td>Kikon 奪走魂魄 3 顆，附專屬過場。</td></tr>
+</tbody></table>
+<p class="note"><b>軌跡：</b>留在地上直到下一次轉身，最多 16 條。實體化時每條會朝對手偏轉最多 10°，再沿線打下去：J 線 30、K 線 24、SP1 線 30、SP2 粗線 180，命中會硬直約半秒，可以防禦。每條命中退還 4 點瞬步量表、被防退還 2。<b>時緩：</b>新留下的軌跡剛好壓在對手身上時，全場放慢到 0.1 倍 0.2 秒；對手踩進場上已有的軌跡時，放慢到 0.2 倍 0.5 秒（連續的軌跡算同一區，離開 10 幀以上再踩進來才會再觸發）。對手看得到軌跡，Step 離開就能躲。</p>
+
+<h4>神の裁き Jilliel：近 KIN <small>JILLIEL KIN</small></h4>
+<p>柱身裝上兩隻 ㄇ 字形的長腿落地，翼變成近戰的刀刃。走得比遠程模式快。</p>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td><kbd>J</kbd></td><td>翼刃 <i>YOKUJIN</i> 1 → 2 → 3</td><td>右翼左斬、左翼右斬，第三段雙翼十字斬下。判定約 1.6～1.7 公尺。</td><td>其他六片翼也會依序匯聚到命中點，翼尖拖出玉色斬痕。</td></tr>
+<tr><td><kbd>K</kbd></td><td>双翼 <i>SOYOKU</i> 1 → 2 → 3</td><td>轉一整圈的旋斬、反方向的逆旋，第三段蹲低後雙翼往上撩起並躍起落地。判定約 2.2～2.3 公尺。</td><td>K3 打中讓對手倒地，被防會被大幅反擊。K 段打中後可以接 <kbd>L</kbd>。</td></tr>
+<tr><td><kbd>L</kbd></td><td>転身 <i>TENSHIN</i>（往遠程）</td><td>場上的軌跡實體化，同時往後衝刺 5 公尺，換回遠程模式。</td><td>沒有前搖，但要花 10 點瞬步量表（不夠就出不來）。K 段打中後也能接。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>K</kbd></td><td>SP1 三連 <i>SANREN</i></td><td>右翼、左翼、雙翼依序突刺，每發都射出 20 公尺的直線，發與發之間轉身追向對手。</td><td>穿過防禦。靈壓 1 格。</td></tr>
+<tr><td><kbd>Shift</kbd>+<kbd>L</kbd></td><td>SP2 二十四孔 <i>NIJUSHI-KO</i></td><td>浮起、八翼張成一圈，24 個孔全部亮起蓄力 40 幀（前 20 幀還會轉向），然後射出到牆邊的粗光束（180）。</td><td>穿過防禦，扣 45 防禦量表。蓄力很長，要在對手倒地或硬直時放。靈壓 2 格。</td></tr>
+<tr><td><kbd>U</kbd>／<kbd>I</kbd>／<kbd>O</kbd></td><td>同遠程模式</td><td>無実体、Breaker、神の裁き。</td><td></td></tr>
+</tbody></table>
+<p class="note"><b>無実体 MUJITTAI（U）：</b>翼收起包住柱身，攻擊會直接穿過他，但每次穿過都會扣防禦量表，而且在這個狀態中防禦量表<b>完全不會回復</b>（平常的回復也比別人慢）。走路、Step、Hoho 都能維持，自己出任何攻擊就會解除。Breaker 和不能防的攻擊照樣打得中。</p>
+
+<h4>真の姿 梟頭：遠 EN／近 KIN <small>SHIN</small></h4>
+<p>白色的柱身加上 S 形長脖子和小小的貓頭鷹臉，背後八片金色的翼，有一對長手臂。<b>系統和 Jilliel 完全一樣</b>（遠近兩種模式、轉身、軌跡、無実体），差別是：造成的傷害 ×1.1（受到的傷害也是 ×1.1）、每條軌跡命中退還 5 點瞬步量表、每一招都多 1 幀的優勢。遠程模式站直漂浮、翼往前張開；近戰模式身體前傾、翼往後收。</p>
+<table class="moves">
+<thead><tr><th>按鍵</th><th>招式</th><th>效果</th><th>要點</th></tr></thead>
+<tbody>
+<tr><td>近 <kbd>J</kbd></td><td>鉤爪 <i>KAGIZUME</i> 1 → 2 → 3</td><td>右爪撕、左爪撕（由高往低斜撕），第三段雙爪剪過、脖子往前啄。判定約 1.7 公尺。</td><td>八片金翼在出招前振翅，命中時匯聚，爪尖拖出三道金色爪痕。</td></tr>
+<tr><td>近 <kbd>K</kbd></td><td>近戰 K 1 → 2 → 3（掠爪、回爪、俯衝）</td><td>振翅貼地滑行橫掃、轉半圈反手回掃，第三段躍起後雙爪俯衝撲下。判定約 2.3 公尺。</td><td>K3 打中讓對手倒地。</td></tr>
+<tr><td>遠 <kbd>J</kbd>／<kbd>K</kbd></td><td>擲爪（遠程 J／K）</td><td>漂浮著把爪往地上的線擲下，留下軌跡（J 一條、K 扇形三條）。</td><td>實體化時變成金色的地面爆炸。</td></tr>
+<tr><td>近 <kbd>Shift</kbd>+<kbd>K</kbd></td><td>SP1 裁きの光明 <i>SABAKI NO KOMYO</i></td><td>舉手劈下，地面同時爆出三條扇形光線（-20°、0°、+20°）。</td><td>最多打中一條（70）。靈壓 1 格。</td></tr>
+<tr><td>遠 <kbd>Shift</kbd>+<kbd>K</kbd></td><td>SP1 裁きの光明</td><td>右、左、雙手連劈三下，各留下一條軌跡。</td><td>靈壓 1 格。</td></tr>
+<tr><td>近 <kbd>Shift</kbd>+<kbd>L</kbd></td><td>SP2 神の喇叭 <i>TROMPETE</i></td><td>拳頭放到嘴邊，喇叭在頭上成形，蓄力 1 秒後射出寬 2.4 公尺、貫穿全場的光束 0.5 秒（240）。</td><td>蓄力前 40 幀會轉向，之後鎖定。<b>可以被反射</b>（見下）。靈壓 2 格。</td></tr>
+<tr><td>遠 <kbd>Shift</kbd>+<kbd>L</kbd></td><td>SP2 神の喇叭</td><td>12 幀的前搖後留下一條粗軌跡。</td><td>不是光束，所以不會被反射。靈壓 2 格。</td></tr>
+<tr><td><kbd>I</kbd></td><td>Breaker 鉤爪 <i>KAGIZUME</i></td><td>衝過去用爪往下踩。</td><td>通用抓技。</td></tr>
+<tr><td><kbd>O</kbd></td><td>Kikon 神の喇叭 <i>TROMPETE</i></td><td>喇叭的光束抹去地平線。</td><td>Kikon 奪走魂魄 4 顆，附專屬過場。</td></tr>
+</tbody></table>
+<p class="note"><b>反射喇叭：</b>對手在光束射出的時機做出完美 Hoho（第 48～59 幀）或完美防禦（第 50～58 幀），光束會沿原路射回去：利傑自己吃一半傷害並硬直 1 秒，頭上的光環碎裂，<b>這場剩下的時間都不能再用 SP2</b>（兩種模式都一樣；HUD 的光環變成裂開的）。</p>
+
+<h4>覺醒條件與變化</h4>
+<ul>
+<li><b>第一次覺醒（Jilliel）：</b>覺醒量表滿了按 <kbd>P</kbd>（時機見<a href="#awaken">覺醒</a>），和所有角色一樣先回兩成靈子。第 3 次開眼會直接補滿覺醒量表。覺醒後從遠程模式開始。</li>
+<li><b>第二次覺醒（梟頭）：</b>在 Jilliel 的任何模式中，自己剩下的魂魄 4 顆以下時，在自由狀態（站著、防禦或無実体中）按 <kbd>P</kbd> 復活成梟頭：魂魄變成 1、靈子回滿，從遠程模式開始。整場一次，之後被 Kikon 或 Soul Break 一次就輸。</li>
+<li>Kikon 的奪魂數：基本型態 2、Jilliel 3、梟頭 4。</li>
+<li>Jilliel 受到的傷害 ×1.1，防禦量表回復比別人慢；梟頭造成和受到的傷害都是 ×1.1。</li>
+</ul>
+
+<h4>角色量表</h4>
+<p><b>基本型態：眼 ME。</b>量表列是三個準星形的眼，用過的那顆變成睜開的玉色眼睛，最後一顆會閃；旁邊寫著毛筆字「眼」和「ME n」。第 3 次開眼時會出現「三度も眼を開かされるとは」。人類玩家在架勢中，瞄準線的準星旁會顯示這一槍現在的傷害（灰色＝還在追蹤，玉色＝已鎖定）。<br>
+<b>Jilliel：</b>沒有角色量表；防禦量表上標著「U: MUJITTAI」，無実体中防禦量表會有玉色外框。<br>
+<b>梟頭：</b>量表列是金色的光環，喇叭被反射後變成裂開的光環，標籤「HALO／SEALED」。<br>
+<b>手機直向：</b>同樣的眼、光環顯示在靈子條下方的小格子，標籤 ME n／MUJITTAI／HALO。單手模式時拇指放著是防禦，眼要放開後再點才會開，所以不會浪費（Jilliel 時拇指放著就是無実体）。</p>
+
+<h4>技巧</h4>
+<ul class="tips">
+<li><b>基本型態別站著不動。</b>被貼身時先用 J 或 K 打一套，K 段打中接 L 進架勢，再用跳射往前追、退射往後拉開，或飛廉脚閃身重新瞄準。遠距離才按 L 蓄力等萬物貫通，看到對手 Step 就換跳射。</li>
+<li><b>眼是保命用的。</b>只有 3 次，留到對方 Kikon、大招或被壓制時再點；第 3 次會直接讓你覺醒，等於多一次翻盤的機會。</li>
+<li><b>Jilliel 的基本循環：</b>遠程模式邊走邊用 J／K 在對手身上鋪軌跡（時緩會提醒你壓到了），然後在 J／K 中途按 L：2 幀前搖就實體化並衝過去，衝刺結束立刻按 J 接近戰連段，打完 K3 再按 L 退回遠程。瞬步量表靠軌跡命中回收，見底時先別出 J／K。</li>
+<li><b>被壓制時按 U 進無実体。</b>攻擊會穿過，但防禦量表一直掉、不會回，撐太久會被 Breaker 抓。趁對手揮空用 Hoho 換到近戰模式反擊。</li>
+<li><b>魂魄剩 4 顆以下記得復活。</b>梟頭的系統和 Jilliel 一樣但更強；近戰的喇叭很痛，但對手抓準時機就能反射，而且一被反射整場都不能再用。</li>
+<li>神の裁き要在 Jilliel 時放（奪魂 3 顆）；梟頭的神の喇叭奪魂 4 顆。</li>
+</ul>
+</details>
+</section>
+
 <!-- ================================================================ tips -->
 <h2 id="newbie">新手建議 <small>TIPS</small></h2>
 <ol>
@@ -857,7 +954,7 @@ footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line);
 <li><b>瞬步留 70。</b>被連段時用 <kbd>Shift</kbd>+<kbd>J</kbd> 開藍色爆氣脫身；自己打中時可以開橙色爆氣把連段接長；拉開距離、血比對手少時開白色爆氣回血；覺醒量表滿了，被打時按 <kbd>P</kbd> 覺醒也能打斷對手。</li>
 <li><b>別讓防禦量表見底。</b>一直防不會回，量表空了會有很長一段時間不能防；找機會放開 U 走位或反擊。</li>
 <li><b>手機上：</b>拇指放著就是防禦，下半點 J、上半點 K，往上撥向前衝（攻擊中、或對手的攻擊正要打到你時往上撥是 Hoho），按住再往上撥是 Hoho，被打時往下撥是藍色爆氣，自己打中時往下撥是橙色爆氣，RV 圓鈕任何爆氣都能開。</li>
-<li><b>角色入門順序：</b>劍八（耐打、直來直往）→ 山本（遠距離火焰）→ 一護（架勢和分身）→ 露琪亞（冷度管理）→ 千手丸（針和織布，最需要規劃）。</li>
+<li><b>角色入門順序：</b>劍八（耐打、直來直往）→ 山本（遠距離火焰）→ 一護（架勢和分身）→ 露琪亞（冷度管理）→ 千手丸（針和織布）→ 利傑（架勢、遠近切換和三種型態，最需要規劃）。</li>
 </ol>
 
 <footer>
