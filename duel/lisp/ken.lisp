@@ -2,7 +2,7 @@
 ;;;; his permanent awakening Nozarashi, three cups of the NOME ladder (docs/duel/DUEL_NOZARASHI_V2.md): :nozarashi
 ;;;; (KATATE, one hand), :ryote (two hands) and :nomihose (drink it dry). Inherited moves are DERIVED by the kit
 ;;;; (KATATE startup +2 / reach x1.3, RYOTE +3 / x1.4; damage via :mult), never copied here; NOMIHOSE derives
-;;;; nothing: it plays RYOTE's. He wears no eyepatch in any form (TYBW).
+;;;; nothing: it plays RYOTE's. He wears no eyepatch in any form (the user's decision; canon TYBW keeps a strapless patch).
 ;;;; Clip names are the art contract (ken-art.lisp). Below the data: his hook functions and his
 ;;;; cinematics (DEFCINE).
 (in-package :duel)

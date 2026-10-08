@@ -2,7 +2,7 @@
 ;;;; Shikai NOZARASHI (a giant cleaver), and every :ke-* pose and clip (design §5.2). Attack clips
 ;;;; use DEFSTRIKE, so each reaches its hit pose at frame S and is back in his stance at S+A+R.
 ;;;; Look: 2.02 m, broad, long loose black spiky hair (no bells), both eyes open (no eyepatch in any
-;;;; form: TYBW canon, the user's decision 2026-09-26), scar down the left side of the face, a grin, sleeveless tattered white haori over the black shihakusho, bare muscular arms.
+;;;; form: the user's decision 2026-09-26, kept 2026-10-08; canon TYBW still wears a strapless patch, DUEL_KEN_REWORK §3), scar down the left side of the face, a grin, sleeveless tattered white haori over the black shihakusho, bare muscular arms.
 (in-package :duel)
 
 ;;; ---------------------------------------------------------------- body
@@ -19,7 +19,7 @@
                     ;; the tattered haori V4 white, muted skin
                     :palette ((:skin #xCFA48C) (:skin-d #xB08C78) (:black #x16161E) (:white #xE8E8E4)
                               (:hair #x0C0C12) (:scar #x5A3430) (:teeth #xECECE8)
-                              (:eye #x0C0C12) (:pupil #x0C0C12) (:crease #x7A5448) (:fold #xD8DCE4) (:obi #xC8CCD6) (:tabi #xE8E8E4) (:sole #x262833))
+                              (:eye #x0C0C12) (:pupil #x0C0C12) (:crease #x7A5448) (:fold #xD8DCE4) (:obi #xDEDED8) (:tabi #xE8E8E4) (:sole #x262833))
                     :rim (#xFFE070 0.2)
                     :props (:shoulders 1.08 :arms 1.1 :legs 1.1))  ; the bare arms hang clear of the haori
   (:pelvis (:box 0.34 0.18 0.24 :c :black)
@@ -33,9 +33,43 @@
            (:box 0.02 0.58 0.13 :at (-0.215 -0.24 -0.06) :rot (0 0 -4) :c :white)
            (:box 0.02 0.46 0.12 :at (-0.215 -0.18 0.06) :rot (0 0 -4) :c :white)
            (:box 0.1 0.64 0.02 :at (0.17 -0.27 0.135) :rot (0 4 0) :c :white)
-           (:box 0.1 0.52 0.02 :at (-0.17 -0.21 0.135) :rot (0 4 0) :c :white))
+           (:box 0.1 0.52 0.02 :at (-0.17 -0.21 0.135) :rot (0 4 0) :c :white)
+           ;; the sawtooth hem (DUEL_KEN_REWORK §5.1, 「羽織與腰帶」): a white diamond behind each strip's foot, its lower half a
+           ;; tooth; round holes punched near the hem
+           (:box 0.05 0.05 0.02 :at (-0.178 -0.57 -0.158) :rot (0 -4 45) :c :white)
+           (:box 0.05 0.05 0.02 :at (-0.103 -0.57 -0.158) :rot (0 -4 45) :c :white)
+           (:box 0.047 0.047 0.02 :at (-0.035 -0.709 -0.168) :rot (0 -4 45) :c :white)
+           (:box 0.047 0.047 0.02 :at (0.035 -0.709 -0.168) :rot (0 -4 45) :c :white)
+           (:box 0.05 0.05 0.02 :at (0.103 -0.51 -0.156) :rot (0 -4 45) :c :white)
+           (:box 0.05 0.05 0.02 :at (0.177 -0.51 -0.156) :rot (0 -4 45) :c :white)
+           (:box 0.02 0.044 0.044 :at (0.228 -0.45 -0.092) :rot (0 45 0) :c :white)
+           (:box 0.02 0.044 0.044 :at (0.228 -0.45 -0.027) :rot (0 45 0) :c :white)
+           (:box 0.02 0.081 0.081 :at (0.234 -0.609 0.06) :rot (0 45 0) :c :white)
+           (:box 0.02 0.044 0.044 :at (-0.231 -0.53 -0.092) :rot (0 45 0) :c :white)
+           (:box 0.02 0.044 0.044 :at (-0.231 -0.53 -0.027) :rot (0 45 0) :c :white)
+           (:box 0.02 0.081 0.081 :at (-0.227 -0.41 0.06) :rot (0 45 0) :c :white)
+           (:box 0.067 0.067 0.02 :at (0.17 -0.589 0.153) :rot (0 4 45) :c :white)
+           (:box 0.067 0.067 0.02 :at (-0.17 -0.47 0.149) :rot (0 4 45) :c :white)
+           (:cyl 0.017 0.004 :at (-0.015 -0.539 -0.173) :rot (0 86 0) :seg 8 :c :black :ink 0)
+           (:cyl 0.017 0.004 :at (0.16 -0.409 -0.166) :rot (0 86 0) :seg 8 :c :black :ink 0)
+           (:cyl 0.017 0.004 :at (-0.12 -0.449 -0.166) :rot (0 86 0) :seg 8 :c :black :ink 0)
+           (:cyl 0.015 0.004 :at (0.244 -0.509 0.06) :rot (0 0 94) :seg 8 :c :black :ink 0)
+           ;; the white obi tied in a bow at the front: the knot, two loops, two tails
+           (:box 0.045 0.04 0.03 :at (0 0.06 0.135) :c :obi)
+           (:box 0.075 0.042 0.02 :at (0.055 0.068 0.135) :rot (0 0 -18) :c :obi)
+           (:box 0.075 0.042 0.02 :at (-0.055 0.068 0.135) :rot (0 0 18) :c :obi)
+           (:box 0.032 0.12 0.015 :at (0.022 -0.02 0.14) :rot (0 0 -12) :c :obi)
+           (:box 0.032 0.1 0.015 :at (-0.024 -0.01 0.14) :rot (0 0 14) :c :obi))
   ;; the haori over the torso: one rounded white shell, the black robe and the bare chest at its open front
   (:spine (:bevel 0.44 0.25 0.27 0.04 :at (0 0.11 -0.005) :c :white)
+          ;; the 11th Division's mark on the back: 十一 stacked in a diamond (ink strokes), below the mane
+          (:box 0.1 0.008 0.004 :at (0.035 0.09 -0.163) :rot (0 0 -45) :c :black :ink 0)
+          (:box 0.1 0.008 0.004 :at (-0.035 0.09 -0.163) :rot (0 0 45) :c :black :ink 0)
+          (:box 0.1 0.008 0.004 :at (0.035 0.02 -0.163) :rot (0 0 45) :c :black :ink 0)
+          (:box 0.1 0.008 0.004 :at (-0.035 0.02 -0.163) :rot (0 0 -45) :c :black :ink 0)
+          (:box 0.007 0.04 0.004 :at (0 0.073 -0.163) :c :black :ink 0)
+          (:box 0.042 0.007 0.004 :at (0 0.075 -0.163) :c :black :ink 0)
+          (:box 0.046 0.007 0.004 :at (0 0.035 -0.163) :c :black :ink 0)
           (:box 0.14 0.25 0.02 :at (0 0.11 0.155) :c :black))
   (:chest (:bevel 0.5 0.33 0.29 0.05 :at (0 0.105 -0.005) :c :white)
           (:box 0.15 0.3 0.02 :at (0 0.1 0.156) :c :skin)                                ; the bare chest in the open collar ...
@@ -106,21 +140,29 @@
          (:box 0.018 0.007 0.004 :at (0.041 0.051 0.0748) :rot (0 0 32) :c :eye :tag :face-hurt) ; right corner up
          (:box 0.016 0.007 0.004 :at (-0.04 0.038 0.0748) :rot (0 0 22) :c :eye :tag :face-hurt) ; left corner dragged down
          (:box 0.004 0.03 0.004 :at (0.035 0.08 0.0745) :rot (0 0 36) :c :crease :tag :face-hurt)
-         ;; long loose spiky hair: a cap over the skull, a back sheet, locks and spikes
+         ;; TYBW hair (DUEL_KEN_REWORK §5.1, the user 2026-10-08: 「頭髮：刺狀頭頂＋長鬃髮」): a cap over the skull, an upswept
+         ;; spiky crown (up, back and out), a back sheet and ragged ends hanging to mid-back, strands over the shoulders, the
+         ;; side locks and two fringe strands; no bells
          (:sphere 0.0695 :stretch 0.03 :at (0 0.15 -0.024) :seg 10 :c :hair)
-         (:box 0.182 0.414 0.056 :at (0 0 -0.104) :rot (0 -8 0) :c :hair)
+         (:box 0.2 0.44 0.04 :at (0 -0.03 -0.15) :rot (0 -18 0) :c :hair)
          (:cone 0.0413 0.324 :at (0.0805 0.045 -0.008) :rot (0 172 -14) :seg 4 :c :hair)      ; side locks
          (:cone 0.0413 0.324 :at (-0.0805 0.045 -0.008) :rot (0 172 14) :seg 4 :c :hair)
-         (:cone 0.0338 0.234 :at (0.091 0.108 -0.056) :rot (0 160 -35) :seg 4 :c :hair)
-         (:cone 0.0338 0.234 :at (-0.091 0.108 -0.056) :rot (0 160 35) :seg 4 :c :hair)
-         (:cone 0.0375 0.216 :at (0.105 -0.18 -0.08) :rot (0 160 -20) :seg 4 :c :hair)
-         (:cone 0.0375 0.234 :at (-0.105 -0.198 -0.08) :rot (0 160 20) :seg 4 :c :hair)
-         (:cone 0.0375 0.198 :at (0.042 -0.27 -0.112) :rot (0 170 -8) :seg 4 :c :hair)
-         (:cone 0.0375 0.216 :at (-0.042 -0.288 -0.112) :rot (0 170 8) :seg 4 :c :hair)
-         (:cone 0.0375 0.216 :at (0.112 0.126 -0.064) :rot (0 140 -35) :seg 4 :c :hair)
-         (:cone 0.0375 0.216 :at (-0.112 0.126 -0.064) :rot (0 140 35) :seg 4 :c :hair)
-         (:cone 0.0375 0.234 :at (0.049 0.216 -0.112) :rot (0 115 -15) :seg 4 :c :hair)
-         (:cone 0.0375 0.234 :at (-0.049 0.216 -0.112) :rot (0 115 15) :seg 4 :c :hair)
+         (:cone 0.032 0.17 :at (0.057 0.281 -0.012) :rot (0 19 -18) :seg 4 :c :hair) ; crown, front
+         (:cone 0.036 0.2 :at (0.106 0.264 -0.074) :rot (0 31 -31) :seg 4 :c :hair) ; crown, side
+         (:cone 0.038 0.21 :at (0.052 0.273 -0.133) :rot (0 45 -12) :seg 4 :c :hair) ; crown, back
+         (:cone 0.036 0.19 :at (0.136 0.186 -0.133) :rot (0 58 -44) :seg 4 :c :hair) ; behind the ears
+         (:cone 0.032 0.17 :at (-0.057 0.281 -0.012) :rot (0 19 18) :seg 4 :c :hair)
+         (:cone 0.036 0.2 :at (-0.106 0.264 -0.074) :rot (0 31 31) :seg 4 :c :hair)
+         (:cone 0.038 0.21 :at (-0.052 0.273 -0.133) :rot (0 45 12) :seg 4 :c :hair)
+         (:cone 0.036 0.19 :at (-0.136 0.186 -0.133) :rot (0 58 44) :seg 4 :c :hair)
+         (:cone 0.04 0.22 :at (0.000 0.306 -0.083) :rot (0 29 -0) :seg 4 :c :hair) ; crown, top
+         (:cone 0.05 0.26 :at (-0.091 -0.294 -0.200) :rot (0 162 3) :seg 4 :c :hair)
+         (:cone 0.05 0.32 :at (-0.049 -0.352 -0.209) :rot (0 162 1) :seg 4 :c :hair)
+         (:cone 0.05 0.36 :at (0.000 -0.371 -0.215) :rot (0 162 -0) :seg 4 :c :hair)
+         (:cone 0.05 0.3 :at (0.049 -0.343 -0.206) :rot (0 162 -1) :seg 4 :c :hair)
+         (:cone 0.05 0.24 :at (0.091 -0.284 -0.197) :rot (0 162 -3) :seg 4 :c :hair)
+         (:cone 0.034 0.38 :at (0.141 -0.103 -0.068) :rot (0 174 -14) :seg 4 :c :hair) ; over the shoulders
+         (:cone 0.034 0.38 :at (-0.141 -0.103 -0.068) :rot (0 174 14) :seg 4 :c :hair)
          (:cone 0.0225 0.108 :at (0.028 0.19 0.085) :rot (0 160 -10) :seg 4 :c :hair)         ; fringe
          (:cone 0.0225 0.108 :at (-0.035 0.19 0.085) :rot (0 160 15) :seg 4 :c :hair)
          ;; white highlight strokes on the black hair (Kubo's white-on-black)
@@ -172,7 +214,23 @@
 
 ;;; ---------------------------------------------------------------- weapons
 (defweapon :ken-katana (:length 1.08)                  ; battered, notched, chipped
-  (:solid (mb-blade mb :width 0.036 :guard-color '(0.25 0.24 0.22) :handle-color '(0.1 0.09 0.09) :wrap-color '(0.3 0.28 0.26) :blade nil))
+  ;; the hilt (DUEL_KEN_REWORK §5.1, 「封印刀的刀鍔與柄」): a grey collar, a long spindle tsuba (16 x 5 cm, pointed along the
+  ;; edge and the spine) with teeth round its rim in dark iron, a white bandage-wrapped grip with diagonal seams, a grey cap
+  (:solid (mbc mb #x8A8A90)
+          (with-xform (mb (xform :y 0.025)) (mb-box mb 0.013 0.04 0.041))
+          (mbc mb #x4A4542)
+          (with-xform (mb (xform :y -0.004 :sx 0.31)) (mb-cylinder mb 0.08 0.015 :segments 4))
+          (loop for (x z) in '((0.0063 0.06) (0.0125 0.04) (0.0188 0.02) (0.0063 -0.06) (0.0125 -0.04) (0.0188 -0.02)
+                               (-0.0063 0.06) (-0.0125 0.04) (-0.0188 0.02) (-0.0063 -0.06) (-0.0125 -0.04) (-0.0188 -0.02))
+                do (with-xform (mb (xform :x x :y -0.004 :z z :yaw (atan (* -0.025 (signum z)) (* 0.08 (signum x)))
+                                          :roll (* -0.5 pi)))
+                     (mb-cone mb 0.007 0.03 :segments 4)))
+          (mbc mb #xE6E4DC)
+          (with-xform (mb (xform :y -0.17)) (mb-bevel-box mb 0.03 0.31 0.038 0.006))
+          (mbc mb #x9A988E)
+          (loop for i below 6 do (with-xform (mb (xform :y (- -0.045 (* i 0.05)) :roll 0.35)) (mb-box mb 0.034 0.005 0.04)))
+          (mbc mb #x8A8A90)
+          (with-xform (mb (xform :y -0.33)) (mb-bevel-box mb 0.034 0.018 0.042 0.004)))
   (:solid :ink 0 (mb-blade mb :length 1.02 :width 0.036 :curve 0.018 :blade-color '(0.55 0.57 0.6) :edge-color '(0.78 0.8 0.82)
                               :hilt nil)
           (mbc mb #x2A2A2E)                              ; chips: dark notches bitten out of the edge
