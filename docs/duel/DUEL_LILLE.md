@@ -2962,6 +2962,33 @@ identical, the SP batch's check). The 20-seed gate (seeds 1–20, NORMAL), every
 | LS | 184.9 s (184.1) | 7 |
 | LL | 229.2 s (226.8; mirror) | P1 3 / P2 17 |
 
+**Amendment built** (Lille ×3 in beats 4–6; 2026-10-08: `cinema.lisp`, `main.lisp`, `lille-art.lisp`, the cinematic in
+`lille.lisp`).
+- *The mechanism*: a cinematic actor's draw scale. `CINE-SCALE e s` (cinema.lisp) sets `*DRAW-SCALE-E*` /
+  `*DRAW-SCALE*`; `CINE-END` clears them however the cinematic ends (played, skipped, aborted, a still's restart), and
+  `DRAW-SCALE-OF` (a macro) reads them. `DRAW-FIGHTER` (main.lisp) multiplies `POSE-FK!`'s rig scale and the form's lift
+  by it (about his feet: his place is kept, he floats 3 × 0.5 m) and draws his shadow 3× wide (DRAW-BODY's own shadow is
+  off then). Unscaled fighters take exactly the old path. The sim never reads it.
+- *His own looks* (LILLE-DRAW; `*LB-V*` [31] = his drawn scale): the joint matrices already carry the scale (the wings'
+  roots, the front wings' hands, the halo, the eye), so what scales by hand is what was written in metres: the wings'
+  length and width (`[16]`, the length ×, now the scale), the floor under him (the lift × the scale), the holes' glow
+  and muzzle flashes, and the ㄇ legs (KIN's: the shanks' floor clamps, the strut, the tuck, their widths). The holes'
+  recorded points (`*LB-HOLES*`) are the drawn blade's, so the jade lines leave from the giant's holes and still end on
+  the opponent's pierce points (`*LB-JUDGE-PIERCE*`, his ×1 body).
+- *The scale*: `*lb-judge-giant*` 3.0, a cut on the beat-4 card switch (f100, with the white card and his silhouette) and a
+  cut back to ×1 on the beat-7 wide shot (f185).
+- *The cameras* (`LB-SHOT-BEHIND v a back side h look`: behind the opponent on the line from Lille, aside, aimed at Lille):
+  beat 4 back 5.0 → 4.2 m, aside 1.8 → 1.6 m, 0.5 m up, aimed 6.2 → 6.6 m up the giant, lens 46° (was 26 m back with a
+  6.5° lens): the opponent's head and shoulders in a lower corner, the giant's column and ring filling the frame. Beat 5
+  `shot-on v 150° 3.6 m, 0.5 m up, looking 2.3 m up`, lens 50, the white card with both drawn (it was his front, alone): his
+  riddled back with the giant over him. Beat 6 back 4.6 m, 1.7 m to the other side, 0.5 m up, aimed 6.0 m up, lens 46:
+  the giant's wings close down over him and on f176 he shatters. Beat 7 as before (×1 again).
+- *Gates*: host tests ALL PASS (duel-rules 6479, control 89, learn 131, cine 18); pkgcheck 0 / 0 / 0; `./build.sh duel`
+  0 warnings. `simgate.py --seeds 10 --summary` byte-identical to the merged build's (the 210 f cinematic; the other
+  pairings as the baseline) and `--cvc` identical. Consing (79195): the draw hook 160 B a 10 draws through the cinematic at f3–190, the giant's beats included (16 B a frame,
+  the floor, as before); `VFX-LB-JUDGE` 160 B.
+- Stills: `/tmp/…/scratchpad/d56/jilliel/review/cine-giant.png` (beats 3–7).
+
 ---
 
 ## 24. The adaptive, in-character CPU (dream-rsi; the user, 2026-10-06)

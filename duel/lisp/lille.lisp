@@ -3245,15 +3245,19 @@ its right (+), H high, aimed at A's body LOOK m up; A is the subject (kept in th
     (setf *cine-close* nil *cine-subject* a)
     (cine-cam (+ (aref q 0) (* back ux) (* side (- uz))) h (+ (aref q 2) (* back uz) (* side ux)) (aref p 0) look (aref p 2))))
 
+(defparameter *lb-judge-giant* 3.0
+  "The Jilliel Kikon cinematic draws Lille this many times his size in beats 4-6 (f100-185; decision 56's amendment, the
+user 2026-10-08: 「Lille 放大約 3 倍」「第 4 到 6 段」): a look, CINE-SCALE.")
 (defcine lb-jilliel-kikon-cine (a v :len 210 :hold 130)
   "The Jilliel Kikon 神の裁き (§10.4; decision 56's storyboard, DUEL_LILLE §23.37): 1 open (0-10), low and close, the eight
 wings snapping into a ring, a negative flash; 2 the black card (10-60), 神の裁き, from behind him the opponent framed
 through the ring, the 24 holes lighting one by one; 3 the first shots (60-100) on the stage from diagonally behind him, a
 jade line with a recoil, each hit a new camera (f62 / 78 / 90); 4 the acceleration (100-150): the white card, the
 opponent a black silhouette, the lines faster and faster (48 pierces in all, VFX-LB-JUDGE), each a white hole in him, the
-camera behind him on Lille huge, the eight wings open, pushing in; 5 the riddled silhouette held in silence (150-170);
-6 the verdict (170-185): low on him, the wings close down and on that frame (176) the opponent shatters (合翼即碎), a
-manga frame; 7 a wide shot, the wings settling (185-210). His wings' ring, its lit holes and its close are LILLE-DRAW's,
+camera low behind him looking up at Lille drawn x3 (*LB-JUDGE-GIANT*, beats 4-6), the eight wings open, pushing in;
+5 the riddled silhouette held in silence before the giant (150-170); 6 the verdict (170-185): low beside the opponent,
+the giant's wings close down and on that frame (176) he shatters (合翼即碎), a manga frame; 7 Lille x1 again, a wide shot,
+the wings settling (185-210). His wings' ring, its lit holes and its close are LILLE-DRAW's,
 from the frame (%LB-SP-DRIVE!)."
   ;; 1 open
   (at 0 (face-each-other a v) (cine-clip a :lb-w-judge-open :blend 0) (cine-clip v :sh-bound :blend 4)
@@ -3272,22 +3276,24 @@ from the frame (%LB-SP-DRIVE!)."
   (at 80 (shot-on a -142 7.4 1.4 :look 1.9 :ahead 2.6) (lens 44))
   (at 90 (cine-clip a :lb-w-judge-shot :blend 0) (play-sfx :lb-crack) (shake 0.2 0.25))
   (at 92 (shot-on v -64 3.6 0.8 :look 1.3) (lens 48))
-  ;; 4 the acceleration: the white card, his silhouette, from behind him on Lille
+  ;; 4 the acceleration: the white card, his silhouette; Lille drawn x3 (the amendment, to f185: CINE-SCALE), from low
+  ;; behind the opponent looking up past him at the giant (his head and shoulders in a lower corner), pushing in
   (at 100 (card :white) (silhouette-black v) (impact-frame :negative 1) (cine-clip a :lb-w-judge-volley :blend 2)
-      (lb-shot-behind v a 26.0 12.0 1.2 2.4) (lens 6.5))   ; (his head and shoulders low in a corner, the column filling
-  (during (100 150) (lb-shot-behind v a (- 26.0 (* 4.0 u)) (- 12.0 (* 1.8 u)) 1.2 2.4))   ;  the frame: a long lens, pushing in)
+      (cine-scale a *lb-judge-giant*) (lb-shot-behind v a 5.0 1.8 0.5 6.2) (lens 46))
+  (during (100 150) (lb-shot-behind v a (- 5.0 (* 0.8 u)) (- 1.8 (* 0.2 u)) 0.5 (+ 6.2 (* 0.4 u))))
   (when (and step-p (<= 100 cf 149))                    ; a crack for the first shots, then every other one
     (let ((n (position cf *lb-judge-shots*))) (when (and n (or (< n 14) (evenp n))) (play-sfx :lb-crack :pitch (+ 1.0 (* 0.01 (- cf 100)))))))
   (during (60 176) (vfx-lb-judge a v cf))
   ;; 5 the still
-  (at 150 (shot-on v 12 3.4 1.15 :look 1.1) (lens 42) (card :white v) (hold-both a v 20) (silence 20))
+  (at 150 (shot-on v 150 3.6 0.5 :look 2.3) (lens 50) (hold-both a v 20) (silence 20))   ; (his back, the giant beyond)
   ;; 6 the verdict: the wings close down; on that frame he shatters
-  (at 170 (card :white) (shot-on a 155 6.6 0.5 :look 2.2 :ahead 3.2) (lens 62) (cine-clip a :lb-w-judge-close :blend 0))
+  (at 170 (lb-shot-behind v a 4.6 -1.7 0.5 6.0) (lens 46) (cine-clip a :lb-w-judge-close :blend 0))   ; (the giant's wings
+                                                                                                    ;  close over him)
   (at 176 (impact-frame :manga 10) (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))
       (play-sfx :konpaku-shatter) (shake 0.3 0.4))
   (at 180 (unsilhouette) (card nil))
   ;; 7 the end
-  (at 185 (shot-on a 110 8.5 1.5 :look 1.8) (lens 50) (cine-clip a :lb-w-stance :blend 14)))
+  (at 185 (cine-scale a 1) (shot-on a 110 8.5 1.5 :look 1.8) (lens 50) (cine-clip a :lb-w-stance :blend 14)))
 
 (defcine lb-trompete-cine (a v :len 186 :hold 90)
   "The owl Kikon 神の喇叭 (§10.4): beat 0, the fist at the beak, the note; the trumpet forming over him; the sound card,

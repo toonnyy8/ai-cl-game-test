@@ -29,6 +29,12 @@ body in the frame whatever the script's aim offsets and the clip's root motion d
 (defvar *caption* nil "The running cinematic's brush title (a BCAP, brush.lisp), shown until it ends (hud.lisp).")
 (defvar *caption-out* nil "The title of a cinematic that just ended, slicing out over what follows (hud.lisp; Phase 6).")
 (defvar *aura-off* nil "An actor whose form aura is not drawn (a cinematic's shots before it bursts on), or NIL (CINE-END).")
+(defvar *draw-scale-e* nil "A cinematic actor drawn larger or smaller (CINE-SCALE: a look, the sim never reads it), or NIL.")
+(declaim (single-float *draw-scale*))
+(defvar *draw-scale* 1f0 "... and its scale: his rig, lift and shadow in DRAW-FIGHTER, his kit's own looks (LILLE-DRAW).")
+(defmacro draw-scale-of (e)
+  "The drawn scale of fighter E: *DRAW-SCALE* while it is the scaled cinematic actor, else 1 (a single-float; 0 B)."
+  `(if (eql ,e *draw-scale-e*) *draw-scale* 1f0))
 
 ;;; ---------------------------------------------------------------- the director's hooks
 (defun cine-begin (name a v)
@@ -50,7 +56,7 @@ flash, give the actors back (the presses buffered during it forgotten: mashing t
 cinematic fires nothing)."
   (setf *caption-out* (and *caption* (bcap-exit *caption*))   ; a title still up slices out over what follows
         *caption* nil *card* nil *card-only* nil *cine-grade* nil *dutch* 0f0 (camera-fov *camera*) (f32 (deg 60))
-        *aura-off* nil *cine-subject* nil)
+        *aura-off* nil *cine-subject* nil *draw-scale-e* nil *draw-scale* 1f0)   ; (played, skipped or aborted)
   (v3-set! (camera-up *camera*) 0f0 1f0 0f0)
   (unsilhouette)
   (fill *ui-flash* 0f0)
@@ -96,6 +102,11 @@ the other third to a caption."
 (defun cine-clip (e clip &key (blend 3) (speed 1.0) (time 0.0))
   "Play CLIP on actor E (falls back to the stance with a log line if the art lacks it)."
   (play-clip e clip :blend blend :speed speed :time time))
+
+(defun cine-scale (e s)
+  "Draw actor E S times his size from now on, about his feet (his place kept), until CINE-SCALE again or the cinematic's
+end (CINE-END clears it, however it ends). A look: the sim never reads it (decision 56, the Jilliel Kikon's giant)."
+  (if (= s 1) (setf *draw-scale-e* nil *draw-scale* 1f0) (setf *draw-scale-e* e *draw-scale* (f32 s))))
 
 (defun ui-flash (r g b a &optional (fade 3.0))
   "A full-screen flash of colour (r g b), alpha A, fading at FADE per second."

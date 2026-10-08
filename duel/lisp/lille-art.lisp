@@ -1668,7 +1668,7 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
 [13] the fx clock, [14] the wings' alpha, [15] the pairs shown (a cinematic's unfolding), [16] the wings' length x; [17..22]
 the line / reticle / halo / trumpet macros' numbers; [23] the first pair drawn; [24..27] his x y z and yaw
 (%LB-LOAD-PLACE!); [28] the wings' spread 0..1; [8] the owl EN's leg tuck 0..1 and [29] the owl KIN's wing sweep 0..1
-(decision 38).")
+(decision 38); [31] his drawn scale (a cinematic's giant, CINE-SCALE: decision 56).")
 (defvar *lb-fx* (make-f32 (* 2 24))
   "Per side (24 each), the looks' memory: [0] the eye's tick seen, [1] its fx clock, [2] the guard gauge seen, [3] the
 last pass-through (fx clock), [4] the fold 0..1, [5] sealed seen (1), [6] the seal's fx clock, [7..9] the reticle's point,
@@ -2196,12 +2196,13 @@ test reads (*LB-STRIKE-POINTS*), its jointed chain turned and stretched to end t
                   (declare (single-float ly lx hx hy hz sd) (fixnum hi ho))
                   (when (< i 8) (setf (aref *lb-holes* ho) hx (aref *lb-holes* (+ ho 1)) hy (aref *lb-holes* (+ ho 2)) hz))
                   (when (< hi (f->i (aref w 67)))           ; lit one by one (the Kikon cinematic's card)
-                    (fx-disc hx hy hz 0.06f0 0.04f0 (+ 60f0 sd) +pal-jade+ 0.95f0 :push 0.15f0)
-                    (fx-disc hx hy hz 0.028f0 0.03f0 (+ 160f0 sd) +pal-hit+ 0.95f0 :push 0.18f0))
+                    (fx-disc hx hy hz (* 0.06f0 (aref v 31)) 0.04f0 (+ 60f0 sd) +pal-jade+ 0.95f0 :push 0.15f0)
+                    (fx-disc hx hy hz (* 0.028f0 (aref v 31)) 0.03f0 (+ 160f0 sd) +pal-hit+ 0.95f0 :push 0.18f0))
                   (when (> mf 0f0)                          ; the muzzle flash
-                    (fx-star hx hy hz (* 0.06f0 mf) (* 0.22f0 mf) 6 (* 0.7f0 sd) 0f0 0f0 0.1f0 sd +pal-jade+ mf :push 0.2f0)
-                    (fx-star hx hy hz (* 0.03f0 mf) (* 0.1f0 mf) 4 (* 1.3f0 sd) 0f0 0f0 0.05f0 (+ 40f0 sd) +pal-hit+ mf
-                             :push 0.25f0)))
+                    (fx-star hx hy hz (* 0.06f0 mf (aref v 31)) (* 0.22f0 mf (aref v 31)) 6 (* 0.7f0 sd) 0f0 0f0 0.1f0 sd
+                             +pal-jade+ mf :push 0.2f0)
+                    (fx-star hx hy hz (* 0.03f0 mf (aref v 31)) (* 0.1f0 mf (aref v 31)) 4 (* 1.3f0 sd) 0f0 0f0 0.05f0
+                             (+ 40f0 sd) +pal-hit+ mf :push 0.25f0)))
                 (setf qx (+ qx (* l3 (aref w (+ b 3)))) qy (+ qy (* l3 (aref w (+ b 4)))) qz (+ qz (* l3 (aref w (+ b 5)))))))))))
     nil))
 
@@ -2512,10 +2513,11 @@ gold one, 2 the owl's broken one. The alpha: *LB-V* [14]; LIFT and R go through 
 (defparameter *lb-leg-fork* 0.44 "The fork's distance down the thigh (m; the body's knob).")
 (defparameter *lb-leg-strut* 0.52 "The strut's length back from the fork (m): the ㄇ's top bar.")
 (defmacro %lb-shank-len (py dy)
-  "The shank from height PY along the unit direction's DY: where it meets the floor (*LB-V* [3]), clamped; else 1 m."
-  `(let ((%py ,py) (%dy ,dy))
-     (declare (single-float %py %dy))
-     (if (< %dy -0.35f0) (f-clamp (/ (- %py (aref *lb-v* 3)) (- %dy)) 0.45f0 1.35f0) 1f0)))
+  "The shank from height PY along the unit direction's DY: where it meets the floor (*LB-V* [3]), clamped; else 1 m (x his
+drawn scale [31])."
+  `(let ((%py ,py) (%dy ,dy) (%sc (aref *lb-v* 31)))
+     (declare (single-float %py %dy %sc))
+     (if (< %dy -0.35f0) (f-clamp (/ (- %py (aref *lb-v* 3)) (- %dy)) (* 0.45f0 %sc) (* 1.35f0 %sc)) %sc)))
 (defmacro %lb-unit! (x y z)
   "Normalise the single-float places X Y Z in place (0 B)."
   `(let ((%l (f-max 1f-5 (f-sqrt (+ (* ,x ,x) (* ,y ,y) (* ,z ,z)))))) (declare (single-float %l))
@@ -2531,16 +2533,16 @@ height in *LB-V* [3], the alpha in [4] (MUJITTAI's body alpha), the tuck 0..1 in
   (declare (type f32vec jm) (fixnum white fl))
   (let* ((al (lb-alpha (aref *lb-v* 4))) (fla (svref *lb-alphas* (if (= fl 1) 9 0)))   ; (boxed: 0 B)
          (tk (aref *lb-v* 8)) (tt (* tk (the single-float *lb-tuck-turn*))) (ct (f-cos tt)) (st (f-sin tt))
-         (tl (the single-float *lb-tuck-len*))
+         (sc (aref *lb-v* 31)) (tl (* sc (the single-float *lb-tuck-len*)))   ; (x his drawn scale: a giant's legs)
          (fyc (- (* -0.1f0 st) ct)) (fbc (- st (* 0.1f0 ct)))          ; the front shank's up / back shares, turned back
          (ryc (- (* -0.12f0 st) ct)) (rbc (+ (- st) (* 0.12f0 ct))))   ; the rear's, turned forward
-    (declare (single-float tk tt ct st tl fyc fbc ryc rbc))
+    (declare (single-float tk tt ct st sc tl fyc fbc ryc rbc))
     (dotimes (side 2)
       (let* ((o (if (= side 0) (* 16 (ji :thigh-r)) (* 16 (ji :thigh-l)))) (s (if (= side 0) 1f0 -1f0))
              (ox (* s (aref jm o))) (oy (* s (aref jm (+ o 1)))) (oz (* s (aref jm (+ o 2))))            ; out
              (yx (aref jm (+ o 4))) (yy (aref jm (+ o 5))) (yz (aref jm (+ o 6)))                      ; up the thigh
              (bx (aref jm (+ o 8))) (by (aref jm (+ o 9))) (bz (aref jm (+ o 10)))                     ; back
-             (fk (the single-float *lb-leg-fork*)) (ls (the single-float *lb-leg-strut*))
+             (fk (the single-float *lb-leg-fork*)) (ls (* sc (the single-float *lb-leg-strut*)))
              (px (- (aref jm (+ o 12)) (* fk yx))) (py (- (aref jm (+ o 13)) (* fk yy))) (pz (- (aref jm (+ o 14)) (* fk yz)))
              ;; the front shank: down, a little forward and out (tucked: turned back under the strut)
              (fx (+ (* 0.07f0 ox) (* fyc yx) (* fbc bx))) (fy (+ (* 0.07f0 oy) (* fyc yy) (* fbc by)))
@@ -2553,13 +2555,13 @@ height in *LB-V* [3], the alpha in [4] (MUJITTAI's body alpha), the tuck 0..1 in
         (%lb-unit! fx fy fz) (%lb-unit! sx sy sz) (%lb-unit! rx ry rz)
         (let ((lf (+ (* (- 1f0 tk) (%lb-shank-len py fy)) (* tk tl))) (cx (+ px (* ls sx))) (cy (+ py (* ls sy))) (cz (+ pz (* ls sz))))
           (declare (single-float lf cx cy cz))
-          (%lb-frame! *lb-m* px py pz fx fy fz ox oy oz lf 1f0)
+          (%lb-frame! *lb-m* px py pz fx fy fz ox oy oz lf sc)
           (if (= white 1) (draw-weapon :lb-shank-white *lb-m* :alpha al :flash fla) (draw-weapon :lb-shank-cream *lb-m* :alpha al :flash fla))
           (%lb-frame! *lb-m* px py pz sx sy sz ox oy oz ls)
           (if (= white 1) (draw-weapon :lb-strut-white *lb-m* :alpha al :flash fla) (draw-weapon :lb-strut-cream *lb-m* :alpha al :flash fla))
           (let ((lr (+ (* (- 1f0 tk) (%lb-shank-len cy ry)) (* tk tl))))
             (declare (single-float lr))
-            (%lb-frame! *lb-m* cx cy cz rx ry rz ox oy oz lr 1f0)
+            (%lb-frame! *lb-m* cx cy cz rx ry rz ox oy oz lr sc)
             (if (= white 1) (draw-weapon :lb-shank-white *lb-m* :alpha al :flash fla)
                 (draw-weapon :lb-shank-cream *lb-m* :alpha al :flash fla)))))))
   nil)
@@ -2752,8 +2754,9 @@ or a gold look plays; a fourth in MUJITTAI)."
       (declare (type f32vec pz w))
       (setf (aref w 53) (aref pz 66) (aref w 59) (aref pz 65) (aref w 60) (aref pz 63)))
     (setf (aref v 28) (lb-fxs side 16)
+          (aref v 31) (draw-scale-of e)                  ; (the Jilliel Kikon's giant: his wings, holes, legs and flashes)
           (aref v 3) (- (aref *toon-body* 1)             ; his body's feet height (DRAW-BODY's) less the form's drawn
-                        (the single-float (f32 (body-lift (fighter-kit f) (model-body m))))))   ; lift: the floor
+                        (* (aref v 31) (the single-float (f32 (body-lift (fighter-kit f) (model-body m)))))))   ; lift: the floor
     (when (>= (model-alpha m) 0.999f0)
       (let ((bn (body-name (model-body m))) (fl (if (> (model-flash m) 0f0) 1 0)))
         (when (or (eq bn :lille-jilliel-kin) (eq bn :lille-shin))   ; the ㄇ legs (decision 26)
@@ -2771,7 +2774,7 @@ or a gold look plays; a fourth in MUJITTAI)."
              (declare (single-float rip k gold) (fixnum o))
              (setf (aref v 0) 0f0 (aref v 1) 0.3f0 (aref v 2) 0.13f0 (aref v 11) k
                    (aref v 12) (if (< rip 0.5f0) (* 14f0 (- 1f0 (* 2f0 rip))) 0f0) (aref v 13) tm
-                   (aref v 14) (if stance 0.7f0 1f0) (aref v 16) 1f0 (aref v 23) 0f0
+                   (aref v 14) (if stance 0.7f0 1f0) (aref v 16) (aref v 31) (aref v 23) 0f0
                    (aref v 15) (if (and cj (< (the fixnum cj) 160)) (f-max 0f0 (/ (- (i->f cj) 112f0) 8f0)) 9f0))
              (if (> gold 0f0)                            ; the revival: the jade turning gold over 30 f, a pair at a time
                  (let ((pg (i->f (min 4 (f->i (* 4.2f0 gold))))))
@@ -2799,7 +2802,8 @@ or a gold look plays; a fourth in MUJITTAI)."
              (declare (single-float rip))
              (setf (aref v 0) 0f0 (aref v 1) 0.3f0 (aref v 2) 0.13f0 (aref v 11) (lb-fxs side 4)
                    (aref v 12) (if (< rip 0.5f0) (* 14f0 (- 1f0 (* 2f0 rip))) 0f0) (aref v 13) tm
-                   (aref v 14) (if stance 0.7f0 1f0) (aref v 15) 9f0 (aref v 23) 0f0 (aref v 16) (+ 0.3f0 (* 0.7f0 grow))
+                   (aref v 14) (if stance 0.7f0 1f0) (aref v 15) 9f0 (aref v 23) 0f0
+                   (aref v 16) (* (aref v 31) (+ 0.3f0 (* 0.7f0 grow)))
                    (aref v 28) (f-max (aref v 28) (* (the single-float *lb-owl-en-spread*) (lb-fxs side 18)))))
            (%lb-wings jm (* 16 (ji :chest)) *lb-wings-owl* 8 2 side)
            (unless cr (%lb-claw-trails jm side))         ; the claw trails (decision 56)
