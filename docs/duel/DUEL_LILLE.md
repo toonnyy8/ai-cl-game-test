@@ -2764,6 +2764,11 @@ beat sheet: 「前幾發彩色，加速後切」, the lines 「玉色」, 「更
 | 6 the verdict | 170–185 | Cut low on him: the wings close down, and on that frame the opponent shatters; a manga frame |
 | 7 end | 185–210 | A wide shot, his wings settling |
 
+**Amendment: Lille scaled up** (the user, 2026-10-08, after the first build): 「毀魂技神の裁き如果改成縮放模型大小來達成「對手小、利捷大」的效果呢？」;
+chosen 「Lille 放大約 3 倍」 and 「第 4 到 6 段」. From beat 4 (the white card) through beat 6 (the verdict) he is drawn about
+×3 (body, wings, halo, holes, the lines' muzzles), the opponent at ×1; the camera goes back to a normal lens looking up
+past the opponent at the giant; before beat 7's wide shot he is back to ×1. A cinematic look only (the sim never reads it).
+
 **Built** (owl, the art batch, 2026-10-08; decision 56 items 1–5: `duel/lisp/lille-art.lisp`, the owl EN defmoves' `:clip`
 in `lille.lisp`, the host test).
 
