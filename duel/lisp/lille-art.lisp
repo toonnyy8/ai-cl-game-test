@@ -153,7 +153,7 @@
          (:box 0.008 0.008 0.003 :at (0.019 0.185 0.085) :c :pupil :tag :jl-head)
          (:box 0.008 0.008 0.003 :at (-0.019 0.185 0.085) :c :pupil :tag :jl-head)
          (:sphere 0.032 :at (0 0.082 0.072) :seg 10 :c :cream :tag :jl-head)                   ; the chin knob
-         (:cyl 0.094 0.09 :at (0 0.125 0.004) :seg 18 :squash (0.8 1 1) :c :cream :tag :jl-head)   ; the white cylinder over the face's lower half
+         (:cyl 0.0895 0.06 :at (0 0.14 0) :seg 18 :squash (0.8 1 1) :c :cream :tag :jl-head)   ; the white cylinder over the face's lower half
          (:box 0.05 0.080 0.024 :at (0.0000 0.0000 0.1780) :rot (-0.0 0 0) :c :cream)
          (:box 0.046 0.072 0.01 :at (0.0000 -0.0040 0.1630) :rot (-0.0 0 0) :c :lining)
          (:box 0.05 0.084 0.024 :at (0.0461 0.0021 0.1719) :rot (-15.0 0 0) :c :cream)
@@ -243,7 +243,7 @@
          (:box 0.008 0.008 0.003 :at (0.019 0.185 0.085) :c :pupil :tag :jl-head)
          (:box 0.008 0.008 0.003 :at (-0.019 0.185 0.085) :c :pupil :tag :jl-head)
          (:sphere 0.032 :at (0 0.082 0.072) :seg 10 :c :cream :tag :jl-head)                   ; the chin knob
-         (:cyl 0.094 0.09 :at (0 0.125 0.004) :seg 18 :squash (0.8 1 1) :c :cream :tag :jl-head)   ; the white cylinder over the face's lower half
+         (:cyl 0.0895 0.06 :at (0 0.14 0) :seg 18 :squash (0.8 1 1) :c :cream :tag :jl-head)   ; the white cylinder over the face's lower half
          (:box 0.05 0.080 0.024 :at (0.0000 0.0000 0.1780) :rot (-0.0 0 0) :c :cream)
          (:box 0.046 0.072 0.01 :at (0.0000 -0.0040 0.1630) :rot (-0.0 0 0) :c :lining)
          (:box 0.05 0.084 0.024 :at (0.0461 0.0021 0.1719) :rot (-15.0 0 0) :c :cream)
