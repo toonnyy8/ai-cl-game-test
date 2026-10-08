@@ -116,7 +116,7 @@
 ;; with a wing tip at the hand; folded in MUJITTAI) with the wide halo. Muted jade (decision 11).
 (defbody :lille-jilliel (:scale 1.0 :width 1.0 :hunch 0 :hurt-r 0.38 :hurt-h 1.8 :props (:arms 2.6)
                          :palette ((:cream #xEDE6CC) (:cream-d #xD9D0B2) (:jade #x6E9A80) (:jade-d #x4E6E5C) (:hole #x2A2A30)
-                                   (:core #x9CC4AC) (:skin #x7A6155) (:eye #xF2F0EC) (:pupil #x2A3124))
+                                   (:core #x9CC4AC) (:lining #x3A332B) (:skin #x7A6155) (:eye #xF2F0EC) (:pupil #x2A3124))
                          :rim (#xFFE8C8 0.14))
   (:pelvis (:cyl 0.15 0.7 :top 0.13 :seg 12 :at (0 -0.3 0) :c :cream)
            (:cone 0.075 0.32 :at (0.085 -0.8 0) :rot (0 0 172) :seg 6 :c :cream)        ; the two prongs
@@ -141,17 +141,39 @@
           (:sphere 0.09 :stretch 0.04 :at (0 0.3 -0.13) :rot (0 0 90) :seg 10 :c :cream-d))   ; the wings' root, behind the top
   (:neck (:cyl 0.13 0.15 :seg 12 :at (0 0.06 0) :c :cream :tag :jl-head))
   ;; the top of the column: the face in a round window (tagged: the revival's headless column hides it), two horn points
-  (:head (:sphere 0.15 :stretch 0.03 :at (0 0.12 0) :seg 12 :c :cream :tag :jl-head)
-         (:cyl 0.078 0.024 :at (0 0.12 0.138) :rot (0 90 0) :seg 14 :c :hole :tag :jl-head)    ; the face window
-         (:sphere 0.058 :at (0 0.12 0.1) :seg 10 :c :skin :tag :jl-head)
-         (:box 0.02 0.008 0.003 :at (0.022 0.135 0.157) :c :eye :tag :jl-head)                 ; both eyes open
-         (:box 0.02 0.008 0.003 :at (-0.022 0.135 0.157) :c :eye :tag :jl-head)
-         (:box 0.008 0.008 0.003 :at (0.022 0.135 0.159) :c :pupil :tag :jl-head)
-         (:box 0.008 0.008 0.003 :at (-0.022 0.135 0.159) :c :pupil :tag :jl-head)
-         (:box 0.13 0.06 0.02 :at (0 0.085 0.15) :c :cream :tag :jl-head)                     ; the mouth covered
-         (:cone 0.038 0.15 :at (0.11 0.28 0) :rot (0 0 -20) :seg 5 :c :cream :tag :jl-head)    ; the two horn points
-         (:cone 0.038 0.15 :at (-0.11 0.28 0) :rot (0 0 20) :seg 5 :c :cream :tag :jl-head)
-         (:cyl 0.026 0.012 :at (0.08 0.2 0.12) :rot (0 90 0) :seg 10 :c :hole :tag :jl-head)))
+  (:head (:sphere 0.13 :stretch 0.02 :at (0 0.12 0) :seg 12 :c :cream :tag :jl-head)
+         (:sphere 0.072 :at (0 0.105 0.085) :seg 10 :c :skin :tag :jl-head)
+         (:box 0.026 0.009 0.003 :at (0.027 0.122 0.152) :c :eye :tag :jl-head)                 ; both eyes open
+         (:box 0.026 0.009 0.003 :at (-0.027 0.122 0.152) :c :eye :tag :jl-head)
+         (:box 0.009 0.009 0.003 :at (0.027 0.122 0.154) :c :pupil :tag :jl-head)
+         (:box 0.009 0.009 0.003 :at (-0.027 0.122 0.154) :c :pupil :tag :jl-head)
+         (:box 0.098 0.5 0.026 :at (0.1354 0.215 0.1156) :rot (-49.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (0.1194 0.215 0.1020) :rot (-49.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (0.1744 0.215 0.0355) :rot (-78.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (0.1538 0.215 0.0313) :rot (-78.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (0.1698 0.215 -0.0535) :rot (-107.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (0.1497 0.215 -0.0472) :rot (-107.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (0.1225 0.215 -0.1291) :rot (-136.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (0.1081 0.215 -0.1139) :rot (-136.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (0.0446 0.215 -0.1723) :rot (-165.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (0.0393 0.215 -0.1520) :rot (-165.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (-0.0446 0.215 -0.1723) :rot (-194.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (-0.0393 0.215 -0.1520) :rot (-194.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (-0.1225 0.215 -0.1291) :rot (-223.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (-0.1081 0.215 -0.1139) :rot (-223.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (-0.1698 0.215 -0.0535) :rot (-252.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (-0.1497 0.215 -0.0472) :rot (-252.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (-0.1744 0.215 0.0355) :rot (-281.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (-0.1538 0.215 0.0313) :rot (-281.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (-0.1354 0.215 0.1156) :rot (-310.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (-0.1194 0.215 0.1020) :rot (-310.5 0 0) :c :lining)
+         (:box 0.24 0.07 0.03 :at (0 0.435 0.168) :c :cream)                                  ; the bar over the window
+         (:box 0.14 0.035 0.03 :at (0.055 0.385 0.17) :rot (0 0 24) :c :cream)                 ; its V notch
+         (:box 0.14 0.035 0.03 :at (-0.055 0.385 0.17) :rot (0 0 -24) :c :cream)
+         (:box 0.24 0.38 0.01 :at (0 0.25 -0.13) :c :lining)                                   ; the dark inside
+         (:box 0.24 0.07 0.03 :at (0 0.0 0.172) :c :cream)                                  ; the front under the chin
+         (:box 0.022 0.08 0.02 :at (0 0.2 0.1) :c :lining :tag :jl-head)                      ; the crown's dark stripe
+         (:sphere 0.046 :at (0 0.045 0.16) :seg 10 :c :cream :tag :jl-head)))                 ; the chin knob
 
 ;; JILLIEL 近 KIN (decision 18, §22.2): the same column from the hips up on two long thin cream legs: the column's lower half
 ;; becomes a short rounded hip mass. The legs are ㄇ-shaped (decision 26, 2026-10-06: 「近戰與梟頭的腿部是從分岔點向後延伸出垂直
@@ -160,7 +182,7 @@
 ;; down; LILLE-DRAW draws the shanks and the strut in the thigh's frame, each shank's tip on the floor (they stretch or
 ;; shrink a little with the clips' float, so the feet stay down). Arms hidden and wings drawn as :lille-jilliel.
 (defbody :lille-jilliel-kin (:scale 1.0 :width 1.0 :hunch 0 :hurt-r 0.38 :hurt-h 1.8 :props (:arms 2.6)
-                             :palette ((:cream #xEDE6CC) (:cream-d #xD9D0B2) (:hole #x2A2A30) (:skin #x7A6155) (:eye #xF2F0EC)
+                             :palette ((:cream #xEDE6CC) (:cream-d #xD9D0B2) (:hole #x2A2A30) (:lining #x3A332B) (:skin #x7A6155) (:eye #xF2F0EC)
                                        (:pupil #x2A3124))
                              :rim (#xFFE8C8 0.14))
   (:pelvis (:cyl 0.15 0.26 :top 0.13 :seg 12 :at (0 -0.08 0) :c :cream)
@@ -180,17 +202,39 @@
           (:cyl 0.03 0.012 :at (0.05 0.2 -0.18) :rot (0 90 0) :seg 10 :c :hole)
           (:sphere 0.09 :stretch 0.04 :at (0 0.3 -0.13) :rot (0 0 90) :seg 10 :c :cream-d))
   (:neck (:cyl 0.13 0.15 :seg 12 :at (0 0.06 0) :c :cream :tag :jl-head))
-  (:head (:sphere 0.15 :stretch 0.03 :at (0 0.12 0) :seg 12 :c :cream :tag :jl-head)
-         (:cyl 0.078 0.024 :at (0 0.12 0.138) :rot (0 90 0) :seg 14 :c :hole :tag :jl-head)
-         (:sphere 0.058 :at (0 0.12 0.1) :seg 10 :c :skin :tag :jl-head)
-         (:box 0.02 0.008 0.003 :at (0.022 0.135 0.157) :c :eye :tag :jl-head)
-         (:box 0.02 0.008 0.003 :at (-0.022 0.135 0.157) :c :eye :tag :jl-head)
-         (:box 0.008 0.008 0.003 :at (0.022 0.135 0.159) :c :pupil :tag :jl-head)
-         (:box 0.008 0.008 0.003 :at (-0.022 0.135 0.159) :c :pupil :tag :jl-head)
-         (:box 0.13 0.06 0.02 :at (0 0.085 0.15) :c :cream :tag :jl-head)
-         (:cone 0.038 0.15 :at (0.11 0.28 0) :rot (0 0 -20) :seg 5 :c :cream :tag :jl-head)
-         (:cone 0.038 0.15 :at (-0.11 0.28 0) :rot (0 0 20) :seg 5 :c :cream :tag :jl-head)
-         (:cyl 0.026 0.012 :at (0.08 0.2 0.12) :rot (0 90 0) :seg 10 :c :hole :tag :jl-head))
+  (:head (:sphere 0.13 :stretch 0.02 :at (0 0.12 0) :seg 12 :c :cream :tag :jl-head)
+         (:sphere 0.072 :at (0 0.105 0.085) :seg 10 :c :skin :tag :jl-head)
+         (:box 0.026 0.009 0.003 :at (0.027 0.122 0.152) :c :eye :tag :jl-head)
+         (:box 0.026 0.009 0.003 :at (-0.027 0.122 0.152) :c :eye :tag :jl-head)
+         (:box 0.009 0.009 0.003 :at (0.027 0.122 0.154) :c :pupil :tag :jl-head)
+         (:box 0.009 0.009 0.003 :at (-0.027 0.122 0.154) :c :pupil :tag :jl-head)
+         (:box 0.098 0.5 0.026 :at (0.1354 0.215 0.1156) :rot (-49.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (0.1194 0.215 0.1020) :rot (-49.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (0.1744 0.215 0.0355) :rot (-78.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (0.1538 0.215 0.0313) :rot (-78.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (0.1698 0.215 -0.0535) :rot (-107.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (0.1497 0.215 -0.0472) :rot (-107.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (0.1225 0.215 -0.1291) :rot (-136.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (0.1081 0.215 -0.1139) :rot (-136.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (0.0446 0.215 -0.1723) :rot (-165.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (0.0393 0.215 -0.1520) :rot (-165.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (-0.0446 0.215 -0.1723) :rot (-194.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (-0.0393 0.215 -0.1520) :rot (-194.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (-0.1225 0.215 -0.1291) :rot (-223.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (-0.1081 0.215 -0.1139) :rot (-223.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (-0.1698 0.215 -0.0535) :rot (-252.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (-0.1497 0.215 -0.0472) :rot (-252.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (-0.1744 0.215 0.0355) :rot (-281.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (-0.1538 0.215 0.0313) :rot (-281.5 0 0) :c :lining)
+         (:box 0.098 0.5 0.026 :at (-0.1354 0.215 0.1156) :rot (-310.5 0 0) :c :cream)
+         (:box 0.088 0.5 0.01 :at (-0.1194 0.215 0.1020) :rot (-310.5 0 0) :c :lining)
+         (:box 0.24 0.07 0.03 :at (0 0.435 0.168) :c :cream)                                  ; the bar over the window
+         (:box 0.14 0.035 0.03 :at (0.055 0.385 0.17) :rot (0 0 24) :c :cream)                 ; its V notch
+         (:box 0.14 0.035 0.03 :at (-0.055 0.385 0.17) :rot (0 0 -24) :c :cream)
+         (:box 0.24 0.38 0.01 :at (0 0.25 -0.13) :c :lining)                                   ; the dark inside
+         (:box 0.24 0.07 0.03 :at (0 0.0 0.172) :c :cream)                                  ; the front under the chin
+         (:box 0.022 0.08 0.02 :at (0 0.2 0.1) :c :lining :tag :jl-head)                      ; the crown's dark stripe
+         (:sphere 0.046 :at (0 0.045 0.16) :seg 10 :c :cream :tag :jl-head))                  ; the chin knob
   ;; the thighs (0.44 m) to the fork's knob; the ㄇ below it is LILLE-DRAW's (%LB-LEGS)
   (:thigh-r (:cyl 0.042 0.46 :top 0.055 :seg 8 :at (0 -0.22 0) :c :cream) (:sphere 0.05 :seg 8 :at (0 -0.44 0) :c :cream-d))
   (:thigh-l (:cyl 0.042 0.46 :top 0.055 :seg 8 :at (0 -0.22 0) :c :cream) (:sphere 0.05 :seg 8 :at (0 -0.44 0) :c :cream-d)))

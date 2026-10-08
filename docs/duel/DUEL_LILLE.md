@@ -3046,6 +3046,31 @@ breakdown): 「毀魂技的第三幕「起射」過的太快，我希望能透�
   1.65 m) sits at most `*lb-judge-keep*` 0.35 of the half-height below the frame's centre (the bar starts at 0.82);
   portrait keeps its framing. At 1280 × 720 the opponent's upper body and the holes in his back now show above the bar in
   beats 4 and 6.
+
+### 23.38 Decision 57: Jilliel's head is a tall collar, not a hood (the user, 2026-10-08)
+
+The user, with an anime still of Jilliel's face: 「還有另一個人物模組上的小要求希望你更正，利傑的 Jilliel 型態你目前的建模是像帶著帽 T
+的帽子，但實際長相應該是這種高過頭頂的領子（？）」. As built, the column's top was a cream sphere with the face in a dark round
+window and two horn points: it read as a hoodie's hood. The still shows the column itself rising well above the head as a
+collar: its front opens on a tall dark recess, the bald head (a dark stripe down the crown) and the face sit low inside
+it, the chin on a round knob, and the front's top edge runs straight across with a V notch hanging at its middle.
+
+**Built** (`:lille-jilliel` and `:lille-jilliel-kin`, the `:head` joint; presentation only):
+- the collar: ten cream panels (0.098 m wide, 0.5 m tall, from 0.035 m under the head joint to 0.465 m over it) in a
+  ring of radius 0.178 m round the head, leaving the front ±35° open; a dark lining (`:lining` #3A332B) of ten panels
+  inside it at 0.157 m and a dark back plate, so the opening reads as a recess;
+- the front: a bar across the opening's top (0.435 m) with a V notch of two tilted plates hanging from its middle, and a
+  plate under the chin closing the opening's foot;
+- the head: the cream sphere smaller (0.15 → 0.13 m), the face bigger (0.058 → 0.072 m) and lower, the eyes wider apart,
+  a dark stripe on the crown, a round chin knob (0.046 m) in place of the mouth's cover; the round face window and the
+  two horn points removed;
+- the face, crown stripe and chin keep the `:jl-head` tag (the revival's headless column still hides them); the collar
+  has none, so the headless column keeps its collar.
+- Debug 79199 (claimed): a long-lens close-up of P2's head after 79198, for the model review.
+
+Checks: duel-rules 6481 ALL PASS, pkgcheck 0 / 0 / 0, `./build.sh duel` 0 warnings; `simgate --cvc` identical and
+Lille's six pairings at 10 seeds byte-identical (the sim never reads the body). Stills: the close-up (79199) and the
+front view (79198), before / after, in the scratchpad.
 ---
 
 ## 24. The adaptive, in-character CPU (dream-rsi; the user, 2026-10-06)
