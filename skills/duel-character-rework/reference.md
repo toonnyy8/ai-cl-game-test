@@ -55,3 +55,12 @@ Source repo: `/media/8tsp/projects/ai-cl-game-test`. Evidence: `docs/duel/DUEL_L
 - Scale: CINE-SCALE multiplies the rig; scale every metre-authored size in the draw hook by hand.
 - Stills: debug `79200 + f`, contact sheets per beat, both aspects.
 - Gate time excludes cinematics since 2026-10-08 (DEVLOG §134); the 125–210 s window predates that.
+
+## 7. Model edits by stills (decision 57, the face) (G)
+- The user iterated the head in ten short requests, stills only (「做完後先不要跑對局測試，直接拍影像給我看」): build, debug
+  79198 + 79199 (front, side), a cropped sheet; WIP commits on the dev branch; the gates and docs once the look settled.
+- For a position or size, shoot a candidate sheet (0 / −2 / −4 / −6 cm side by side, front and side): the user picked
+  a value between two (−3 cm) in one reply.
+- Restate shape words against the profile: 「頂部往下降」 meant keep the foot, lower the top. A part placed inside another
+  shows only what sticks out (a trapezoid nose whose block sat inside the skull read as a triangle): check the side still.
+- A squashed (ellipsoid) head needs its features squashed with it: `:squash` scales the placement too.

@@ -3087,6 +3087,32 @@ user: 「善哉，你描述得很對」, and mid-build: 「頭部請縮小到覺
 - debug 79199 now alternates the front (8°) and his left side (75°).
 Checks as above (6481 ALL PASS, pkgcheck 0 / 0 / 0, 0 warnings, `--cvc` and Lille's six pairings identical). The slanted
 rim is stepped (24 flat-topped panels): visible in the close-up, small at play distance.
+
+**The face reworked** (the user, 2026-10-08, by stills only: 「做完後先不要跑對局測試，直接拍影像給我看」). The requests in order, with an
+example model and its front view: 「去掉鼻子跟頭上棕色與白色線段，改成兩個白色圓環來實作 圓環中心與頭部中心座標對齊並斜切頭部，由於比頭大一點就會形成白色紋路的效果，然後眼睛改成用最開始版本的形式」;
+「能把臉做窄一點嗎？」; 「然後在多個白色小圓筒把半張臉罩住」; 「然後圓環改往左右斜 15° 切過頭部」; 「圓筒再矮約 1/3，然後邊界貼齊臉部」 and
+「我不是要底部往上收，是要頂部往下降」; 「幫我加上鼻子，跟皮膚一樣的顏色即可」; 「幫我做成梯形，讓他側面看起來是上窄下寬，然後顏色些微加深」 and
+「不善哉，你那個不是梯形是三角形」; 「最後整個頭部再往下一些，請列出三個候選位置的照片供我選擇」 (stills at 0 / −2 / −4 / −6 cm) →
+「用下移 3 公分的版本」. As built (both bodies, the `:head` joint, every part but the collar tagged `:jl-head`):
+- the head: r 0.086 m, squashed to 0.8 across (`:squash (0.8 1 1)`, a new generic shape option, below), centre 0.14 m
+  over the head joint (0.17 before: 3 cm into the collar); the crown ridge, the pale bands, the long nose and the
+  half-shut lids removed;
+- two pale rings (`:band`, cylinders r 0.0885 m, 0.017 m tall, 24 segments, the same squash) through the head's centre,
+  rolled 90° and yawed ±15°: their rims stand just proud of the skull and read as two bands crossing on the crown;
+- the eyes: the first version's open eyes (white 18 × 8 mm, a dark pupil 8 × 8 mm), 0.019 m either side;
+- the nose (`:nose` #6B5348, a shade darker than the skin #7A6155): a 1.8 cm wide, 4.4 cm tall trapezoid in profile, a
+  flat block standing 1.2 cm proud of the face plus a ramp under it, 2.8 cm proud at its foot (outlined, `:ink 0.6`).
+  The first try had the block inside the skull, so only the ramp showed: a triangle;
+- a cream cylinder (r 0.084 m, 0.06 m tall, the same squash) over the face's lower half, its foot at the chin and its
+  top a third lower than first built, flush with the face; the chin knob (r 0.032 m) unchanged under it;
+- the collar unchanged (its top rim 0.04 m over the joint at the front, 0.29 m behind).
+
+`:squash (sx sy sz)` (engine `body.lisp`, `build-shape`): the placed shape is scaled in the joint frame, `:at` included,
+so parts placed on a squashed head with the same squash stay on it; none = unscaled (every other body byte-identical).
+
+Checks: duel-rules ALL PASS, pkgcheck 0 / 0 / 0, `./build.sh duel` 0 warnings; `simgate --cvc` and Lille's six pairings
+at 10 seeds byte-identical to `main` before the face rework (cc16382). Stills: debug 79198 + 79199, front and side,
+both forms.
 ---
 
 ## 24. The adaptive, in-character CPU (dream-rsi; the user, 2026-10-06)

@@ -439,8 +439,9 @@ weapons) and build / draw through these:
 * The spec: `((joint shape …) …)`, shapes in the joint frame (unscaled rig metres, the bone hangs
   along −up): `(:box w h d)` `(:bevel w h d bevel)` `(:cyl r h)` `(:cone r h)` `(:sphere r)`
   `(:wedge w h d)`; options `:at (right up fwd)` m, `:rot (yaw pitch roll)` deg, `:c` palette key or
-  #xRRGGBB, `:seg n`, `:top r` (cylinder top), `:stretch m` (sphere → capsule), `:tag key` (its own
-  mesh, hideable); `(:glow e shape [tag])` an emissive part drawn in its own colour.
+  #xRRGGBB, `:seg n`, `:top r` (cylinder top), `:stretch m` (sphere → capsule), `:squash (sx sy sz)` (the
+  placed shape scaled in the joint frame, `:at` included: an ellipsoid head, and parts placed on it with the same
+  squash stay on it), `:tag key` (its own mesh, hideable); `(:glow e shape [tag])` an emissive part drawn in its own colour.
 * `(build-parts spec palette width &key ink)` → values PARTS (simple-vector: a mesh or NIL per joint),
   EXTRAS (list of `#(joint mesh tint emissive tag)`: glows, tint = their colour; tagged solid parts,
   tint NIL) and HULLS (list of `#(joint mesh tag)`, the ink outlines; NIL without INK). WIDTH scales

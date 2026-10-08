@@ -49,6 +49,8 @@ byte-identical; if it touches the sim, gate it against a parent baseline.** Evid
 - Feel numbers churn (TENSHIN's distance changed 8 times). Get the unit right once (fixed speed, Step lengths), then
   let the user tune the number by play. Prefer a live knob to another gate cycle.
 - Feel effects that scale time (slow motion) need their trigger rule settled before their numbers.
+- Model tweaks by eye: iterate on stills (front + side), and for a position or size show 3–4 candidates side by side
+  so the user picks one (reference §7).
 
 ## Red flags
 - Changing a distance whose effect another hidden rule cancels. Measure the actual travel first.
