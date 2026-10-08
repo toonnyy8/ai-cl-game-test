@@ -2106,3 +2106,13 @@ J／K 縮短、受擊值、分身消耗三批合併後，照新的測試規則�
   - `sim-balance-gates`：時長不計過場、只改外觀時模擬必須一字不差、規則凍結後才開始 CPU 搜尋。
 - 研究摘要 `docs/research/lille-retrospective/digest.md`：56 個決定的時間線、10 條重工鏈、數字。
 - 索引同步：`AGENTS.md`、`docs/README.md`、`PLAYBOOK.zh-TW.md`、`README.md`（skill 改為六個）。
+
+## 136. 部署決定 56 的版本到 gh-pages（2026-10-08）
+
+使用者：「幫我 commit & push 後更新 gh pages」
+
+- `tools/deploy-pages.sh` 部署了 `main` 的 `1adb4f6`（gh-pages `fa06dc7`）。和 §132 的版本相比，多了：
+  - 決定 56：梟頭近遠程 J/K 改成猛禽爪擊；Jilliel 的 SP1 三連、SP2 二十四孔和毀魂技重做。
+  - 神の裁き過場：七段分鏡、巨像、起射慢動作、開場時把兩人擺到 6 m、桌面版構圖修正。
+  - 閘門時長不計過場（§134）。
+  - 角色設計手冊與兩個新 skill（§135）。
