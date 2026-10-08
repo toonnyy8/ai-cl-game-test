@@ -3142,8 +3142,10 @@ on Trompete's f54 and holds it, or Hoho on f52 (pressed at the end of the step b
             ((and (eq *lb-reflect-test* :hoho) (= sf 51)) (ai-press b :step 1 :modded t :act :hoho))))))
 
 (defun lille-debug (c)
-  "His debug commands (debug.lisp *CHAR-DEBUG*, the range 79000-79999, docs/duel/DUEL_GAMEPLAY.md): 79000+k LILLE-TEST k."
+  "His debug commands (debug.lisp *CHAR-DEBUG*, the range 79000-79999, docs/duel/DUEL_GAMEPLAY.md): 79000+k LILLE-TEST k;
+79200+f (f 0-299) the Jilliel Kikon cinematic held at frame f (its 210 f, past the 10-frame steps of 79100+; decision 56)."
   (cond ((< c 79100) (lille-test (- c 79000)))
+        ((<= 79200 c 79499) (lille-cine-at 3 (- c 79200)))   ; the Jilliel Kikon cinematic held at any frame (decision 56)
         (t (log-msg "duel lille: no debug command ~d" c))))
 (pushnew '(79000 79999 lille-debug) *char-debug* :test #'equal)
 
@@ -3234,22 +3236,57 @@ turning to gold over 30 f, and the owl head grows on the S-neck from light; the 
       (caption "武器では死なず" :kanji2 "霊圧で首を落としても尚死なない" :reading "BUKI DEWA SHINAZU" :sub "SHIN NO SUGATA" :side 0))
   (at 150 (card nil) (caption-exit) (shot-on a 28 7.5 0.6 :look 1.9) (lens 55) (cine-clip a :lb-o-reveal :blend 8)))
 
-(defcine lb-jilliel-kikon-cine (a v :len 162 :hold 80)
-  "The Jilliel Kikon 神の裁き (§10.4): beat 0, the wings aimed; the black card, 神の裁き / KAMI NO SABAKI, the 24 holes lit;
-from the side, 24 jade lines out of the wings, the opponent pinned at their crossing; on him, held in silence; the
-Konpaku shatter; the winged column."
-  (at 0 (face-each-other a v) (cine-clip a :lb-w-aim :blend 2) (cine-clip v :sh-bound :blend 4)
-      (hold-both a v 10) (impact-frame :negative 2) (play-sfx :awaken-rise))
-  (at 10 (card :black a) (back-rim 50 0.61 0.77 0.67) (shot-on a 20 4.6 1.2 :look 1.8 :off 0.9) (lens 42)
-      (caption "神の裁き" :reading "KAMI NO SABAKI" :sub "KIKON" :side 0))
-  (at 60 (card nil) (caption-exit) (shot-on a 100 7.0 2.2 :look 1.6 :ahead 3.0) (lens 50) (play-sfx :lb-crack))
-  (during (60 128) (vfx-lb-converge a v (min 0.95 (/ (- cf 58) 8.0))))
-  (at 64 (cine-clip v :sh-kikon-victim :blend 3))
-  (at 96 (shot-on v 25 3.4 1.4 :look 1.2) (lens 52) (hold-both a v 24) (silence 24))
-  (at 120 (impact-frame :negative 2) (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))
-      (play-sfx :konpaku-shatter) (shake 0.25 0.35))
-  (at 124 (impact-frame :manga 10))
-  (at 132 (shot-on a 30 5.6 1.3 :look 1.7) (lens 50) (cine-clip a :lb-w-stance :blend 8)))
+(defun lb-shot-behind (v a back side h look)
+  "A shot from behind V toward A (decision 56's acceleration beat): the camera BACK m behind V on the A -> V line, SIDE m to
+its right (+), H high, aimed at A's body LOOK m up; A is the subject (kept in the frame), V a silhouette in a low corner."
+  (let* ((p (pos-of a)) (q (pos-of v)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
+         (d (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))) (ux (/ dx d)) (uz (/ dz d)))
+    (setf *cine-close* nil *cine-subject* a)
+    (cine-cam (+ (aref q 0) (* back ux) (* side (- uz))) h (+ (aref q 2) (* back uz) (* side ux)) (aref p 0) look (aref p 2))))
+
+(defcine lb-jilliel-kikon-cine (a v :len 210 :hold 130)
+  "The Jilliel Kikon 神の裁き (§10.4; decision 56's storyboard, DUEL_LILLE §23.37): 1 open (0-10), low and close, the eight
+wings snapping into a ring, a negative flash; 2 the black card (10-60), 神の裁き, from behind him the opponent framed
+through the ring, the 24 holes lighting one by one; 3 the first shots (60-100) on the stage from diagonally behind him, a
+jade line with a recoil, each hit a new camera (f62 / 78 / 90); 4 the acceleration (100-150): the white card, the
+opponent a black silhouette, the lines faster and faster (48 pierces in all, VFX-LB-JUDGE), each a white hole in him, the
+camera behind him on Lille huge, the eight wings open, pushing in; 5 the riddled silhouette held in silence (150-170);
+6 the verdict (170-185): low on him, the wings close down and on that frame (176) the opponent shatters (合翼即碎), a
+manga frame; 7 a wide shot, the wings settling (185-210). His wings' ring, its lit holes and its close are LILLE-DRAW's,
+from the frame (%LB-SP-DRIVE!)."
+  ;; 1 open
+  (at 0 (face-each-other a v) (cine-clip a :lb-w-judge-open :blend 0) (cine-clip v :sh-bound :blend 4)
+      (impact-frame :negative 2) (play-sfx :awaken-rise) (shot-on a 25 3.6 0.45 :look 2.0) (lens 58))
+  (during (0 10) (shot-on a (+ 25 (* 8 u)) (- 3.6 (* 0.25 u)) 0.45 :look 2.0))
+  (at 6 (impact-frame :negative 1) (shake 0.15 0.2))
+  ;; 2 the card
+  (at 10 (card :black) (back-rim 50 0.61 0.77 0.67) (shot-on a 173 9.6 2.4 :look 1.8 :ahead 6.0) (lens 40)
+      (caption "神の裁き" :reading "KAMI NO SABAKI" :sub "KIKON" :side 0) (silence 48))
+  (during (10 60) (shot-on a 173 (- 9.6 (* 0.6 u)) 2.4 :look 1.8 :ahead 6.0))   ; (DIST from the aim, AHEAD on)
+  ;; 3 the first shots: fired from diagonally behind him, each hit a new camera
+  (at 60 (card nil) (caption-exit) (shot-on a 148 6.8 1.7 :look 1.9 :ahead 2.4) (lens 46))
+  (at 62 (cine-clip a :lb-w-judge-shot :blend 0) (play-sfx :lb-crack) (shake 0.2 0.25))
+  (at 64 (shot-on v 72 3.2 1.25 :look 1.2) (lens 50) (cine-clip v :sh-kikon-victim :blend 2))
+  (at 78 (cine-clip a :lb-w-judge-shot :blend 0) (play-sfx :lb-crack) (shake 0.2 0.25))
+  (at 80 (shot-on a -142 7.4 1.4 :look 1.9 :ahead 2.6) (lens 44))
+  (at 90 (cine-clip a :lb-w-judge-shot :blend 0) (play-sfx :lb-crack) (shake 0.2 0.25))
+  (at 92 (shot-on v -64 3.6 0.8 :look 1.3) (lens 48))
+  ;; 4 the acceleration: the white card, his silhouette, from behind him on Lille
+  (at 100 (card :white) (silhouette-black v) (impact-frame :negative 1) (cine-clip a :lb-w-judge-volley :blend 2)
+      (lb-shot-behind v a 26.0 12.0 1.2 2.4) (lens 6.5))   ; (his head and shoulders low in a corner, the column filling
+  (during (100 150) (lb-shot-behind v a (- 26.0 (* 4.0 u)) (- 12.0 (* 1.8 u)) 1.2 2.4))   ;  the frame: a long lens, pushing in)
+  (when (and step-p (<= 100 cf 149))                    ; a crack for the first shots, then every other one
+    (let ((n (position cf *lb-judge-shots*))) (when (and n (or (< n 14) (evenp n))) (play-sfx :lb-crack :pitch (+ 1.0 (* 0.01 (- cf 100)))))))
+  (during (60 176) (vfx-lb-judge a v cf))
+  ;; 5 the still
+  (at 150 (shot-on v 12 3.4 1.15 :look 1.1) (lens 42) (card :white v) (hold-both a v 20) (silence 20))
+  ;; 6 the verdict: the wings close down; on that frame he shatters
+  (at 170 (card :white) (shot-on a 155 6.6 0.5 :look 2.2 :ahead 3.2) (lens 62) (cine-clip a :lb-w-judge-close :blend 0))
+  (at 176 (impact-frame :manga 10) (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))
+      (play-sfx :konpaku-shatter) (shake 0.3 0.4))
+  (at 180 (unsilhouette) (card nil))
+  ;; 7 the end
+  (at 185 (shot-on a 110 8.5 1.5 :look 1.8) (lens 50) (cine-clip a :lb-w-stance :blend 14)))
 
 (defcine lb-trompete-cine (a v :len 186 :hold 90)
   "The owl Kikon 神の喇叭 (§10.4): beat 0, the fist at the beak, the note; the trumpet forming over him; the sound card,
@@ -3284,7 +3321,7 @@ continues to F."
 (defun lille-cons-probe ()
   "79195: bytes consed by 10 draws of his :draw hook, of each of his live hazards' looks (the traces' LB-TRACE-LOOK
 included) and of his HUD meter, guard outline and ring, in the running scene (a \"lille consing\" line; the scripts call it
-in each form and look)."
+in each form and look); while the Jilliel Kikon cinematic runs, 10 of its VFX-LB-JUDGE too (a \"judge\" line, decision 56)."
   (let* ((e *p1*) (kit (kit-of e)) (hz-n 0))
     (macrolet ((per (form) `(let ((c0 (cons-bytes))) (dotimes (i 10) ,form) (- (cons-bytes) c0))))
       (let ((draw (per (lille-draw e 0.016f0)))
@@ -3299,6 +3336,10 @@ in each form and look)."
             (ring (per (lille-ring e 100.0 100.0 2.0))))
         (log-msg "lille consing (10 draws, B): form ~a draw ~d looks ~d (~d hazards) meter ~d guard ~d ring ~d"
                  (fighter-form (fighter e)) draw looks (floor hz-n 10) meter guard ring)
+        (let ((c *cine*))                               ; the Jilliel Kikon cinematic's lines and holes (decision 56)
+          (when (and c (eq (cine-name c) 'lb-jilliel-kikon-cine))
+            (log-msg "lille consing (10 draws, B): judge ~d at frame ~d"
+                     (per (vfx-lb-judge (cine-a c) (cine-v c) (cine-cf c))) (cine-cf c))))
         (log-msg "lille consing reads (10 calls, B): fighter ~d pos ~d yaw ~d lb ~d alpha ~d eye-t ~d"   ; (an entity
                  (per (%lbt-fighter e)) (per (%lbt-pos e)) (per (%lbt-yaw e)) (per (%lbt-lb e)) (per (%lbt-alpha e)) ; lookup's cost)
                  (per (%lbt-eyet e)))))))

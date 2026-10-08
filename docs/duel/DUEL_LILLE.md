@@ -2764,6 +2764,98 @@ beat sheet: 「前幾發彩色，加速後切」, the lines 「玉色」, 「更
 | 6 the verdict | 170–185 | Cut low on him: the wings close down, and on that frame the opponent shatters; a manga frame |
 | 7 end | 185–210 | A wide shot, his wings settling |
 
+**Built** (Jilliel's SPs and Kikon, items 6–8 and the storyboard; art batch, 2026-10-08: `duel/lisp/lille-art.lisp`, the
+moves' `:clip`s and the cinematic in `lille.lisp`, the remap in `kit.lisp` / `fighter.lisp`, the host test).
+
+*The remap (KIN's SANREN).* KIN's SP1 is the base form's move `:lb-sanren` (one move: its name, frames and volumes, what
+the CPU and the tests read). A kit key `:clip-map` (a plist clip → clip, inherited like any key) names the clip a form
+plays for a move's clip; `KIT-MOVE-CLIP` (kit.lisp) reads it, and fighter.lisp plays its answer at its four `PLAY-CLIP`s
+of a move's clip (the move's start, the chain cut's restart, clip 2, the Hoho counter's pose). `:jilliel-kin` (and its
+MUJITTAI, by inheritance) maps `:lb-sanren` → `:lb-w-sanren`; no other form maps anything. `KIT-CLIPS` lists a form's
+clips through its map. A look only: the sim never reads a clip.
+
+*The clips* (each key written as the front wings' aims, azimuth / elevation in the chest frame, in the comment above it):
+
+| Clip | Frames (S / A / R) | What it does |
+|---|---|---|
+| `:lb-w-sanren` (KIN SP1 三連, through the map) | 12 / 22 / 24 | Cocked: the right wing drawn far back and high (148/24), the chest twisted right, the column back. f12 (snap): the right wing thrust straight at him (30/−2 with the chest and root turned 30° left: on his line), a step in (thighs +24 / −16), the column 0.14 m forward; f14–16 kicked 0.26 m back, the tip thrown up (36/16) as he turns back. f19 the left wing cocked, f22 its thrust (the mirror), f24–26 its kick. f29 both wings raised behind (±140/30), the column coiled up; f32 both thrust (±5/−3); f34 the big kick (0.52 m back, pitched −9°, the tips up), settling by f58. |
+| `:lb-e-sanren` (EN SP1, its own; the still loop `:lb-w-aim` before) | 6 / 14 / 12 | The same three thrusts at EN's line frames, floating (no steps): right f6 (cocked f3), left f12 (cocked f10), both f18 (raised f16), each kicked back 0.28 m within 2 f, the last 0.5 m with a −10° pitch. |
+| `:lb-w-nijushi` (SP2 二十四孔, redone in place; EN plays it at `:clip-s 40`, ×2) | 40 / 6 / 30 | Rising 0.3 m by f16, the front wings out into the ring's lower places (±75/−22); f20–38 the bow drawn: leaning back (spine −6 → −15°, root −0.06 → −0.2 m, pitch −7°) and shaking, a side jolt every 2 f growing ±0.008 → ±0.04 m; f40 (snap) the recoil: 0.62 m back, pitched −14°, the front wings blown back (±118/−4, bent); f46 furthest (0.7 m); back by f76. |
+| `:lb-w-kikon` (the Kikon's aura; `:lb-w-aim` at ×0.2 before) | 8 / 0 / 0 | Rising toward the ring (ends on `:lb-w-ring-in`: 0.16 m up, the front wings swung up and out, ±84/8). |
+| `:lb-w-kikon-fire` (its strike; `:lb-w-fire` at `:clip-s 4` before) | 20 / 3 / 30 | From the aura's pose into the ring (f7), the charge shaking (f10–18), the 24 lines on S with a 0.55 m recoil (the front wings blown back), then the verdict: the front wings closed down before him (±28/−62), the column bowed (spine and head 14°), back to the stance by f53. Both Kikon clips play at speed 1 (`:clip-s` dropped). |
+| `:lb-w-judge-open` (the cinematic's) | 6 / 0 / 60 | The ring snapped open on f6 (from the stance through the aura's swing), held 0.3 m up; f32–58 the charge's jolts. |
+| `:lb-w-judge-shot` | 2 / 0 / 14 | One shot's recoil out of the ring (0.42 → 0.48 m back, the front wings blown back), back into it by f16 (played at f62 / 78 / 90). |
+| `:lb-w-judge-volley` (a loop, 0.1 s) | — | The acceleration's recoils: the column jolting 0.16 ↔ 0.27 m back every 3 f. |
+| `:lb-w-judge-close` | 6 / 0 / 40 | The verdict: the front wings closed down before him on f6 (`:lb-w-verdict-pose`: ±26/−66, the column bowed 16°), held. |
+
+New poses: `:lb-w-ring-in`, `:lb-w-ring-pose` (the ring held 0.3 m up), `:lb-w-verdict-pose`. `:lb-w-aim` (and its pose)
+and `:lb-w-fire` are gone: nothing plays them now (`*LB-SPREAD-CLIPS*` keeps `:lb-w-nijushi` and the owl's Trompete).
+
+*The wings in the draw hook* (`%LB-SP-DRIVE!` in LILLE-DRAW; `*LB-WF*` [61–67], 72 floats now; cosmetic: the move's or
+the cinematic's frame only):
+- **SANREN**: each shot (KIN S + 10 i, EN S + 6 i) kicks the firing front wing (the right, the left, both): a virtual
+  speed back of `*lb-sp-whip*` 16 m/s easing out over `*lb-sp-kick*` 8 f, so the jointed blades whip forward (the table
+  wings at 0.6 of it); the firing wing is drawn with its holes lit and its three holes flash (a jade and a white star
+  each) for 6 f.
+- **The ring** (NIJUSHI-KO, the Kikon in play and in its cinematic): the six table wings turn from their fan places into a
+  ring round him in the plane facing his opponent (from his up: the top pair 22.5°, the second 67.5°, the lowest
+  157.5°; the front pair's 112.5° is the clip's), their faces to him, 8 % longer. Its cup (+ forward, − back), its shake
+  (each place swung ± `*lb-ring-shake*` 0.07 rad at 37 rad/s at the charge's height) and its close (every place swung down
+  to 178°, before him: the verdict) are set per frame. NIJUSHI-KO: the ring over the first 35 % of the startup, cupped
+  0.35 → 0.1 forward, shaking from 30 %, the joints cocked back (a growing virtual speed), every hole lit (the old tell,
+  now EN's too); on S cupped 0.85 back within 2.5 f with `*lb-ring-blow*` 30 m/s of virtual speed (over 10 f), the 24
+  muzzles flash for 6 f; the ring out 18–34 f after S (KIN's clip frames). The Kikon in play: the same over its aura and
+  startup (28 f), then the close 4–12 f after S, the ring out 20–32 f after.
+- The flashes and the lit holes sit on each hole's point of the drawn blade (`*LB-WING-HOLES*`' 0.2 / 0.5 / 0.79), which
+  %LB-WINGS also keeps per side in `*LB-HOLES*` (24 × 3) for the cinematic's lines.
+
+*The cinematic* (`LB-JILLIEL-KIKON-CINE`, the storyboard above; `:len` 162 → 210, `:hold` 80 → 130). His wing looks come
+from its frame (the ring snapped open f0–6, the holes lit one by one f12–58, each shot kicking the ring back, the charge's
+shake f30–60 and the volley's, the close f170–176, the ring settling f185–203); the lines and holes from `VFX-LB-JUDGE`, a
+function of the frame (nothing outlives the cinematic, played, skipped or aborted):
+
+| Beat | Old (162 f) | Built (210 f) |
+|---|---|---|
+| 1 open | f0 the aim held 10 f (a negative); `:lb-w-aim` throughout | f0–10 low and close (25°, 3.6 m, 0.45 m up, lens 58, drifting), `:lb-w-judge-open`: the ring snaps open by f6 (a negative on f0, another and a shake on f6) |
+| 2 card | f10–60 the black card on him alone, from the front, 神の裁き | f10–60 the black card with both drawn, a jade back-rim, 神の裁き; the camera 3.6 → 3.0 m behind him (173°, 2.4 m up, aimed at the opponent 6 m on) through the ring, the 24 holes lighting one by one (2 f each, f12–58), the charge shaking |
+| 3 first shots | f60 one side shot, the 24 lines at once (`VFX-LB-CONVERGE`) to f128 | f60 the stage from diagonally behind him (148°); shots f62 / 78 / 90 (`:lb-w-judge-shot`, a crack, a shake), each line from its hole through him and 3 m on (5 f; a jade line, a white core, a star where it enters), each hit a new camera: f64 on him from his left (`:sh-kikon-victim`), f80 behind Lille's other shoulder (−142°), f92 on him, low, from his right |
+| 4 acceleration | — | f100 the white card, both drawn, he a black silhouette (a negative); pierces 4–48 at f100 + 48 √((n − 3)/44) (7 f apart at first, several a frame by f148), each hole firing twice; the camera far behind him (26 → 22 m back, 12 → 10.2 m aside, 1.2 m up, a long lens of 6.5°, aimed at Lille 2.4 m up): his head and shoulders low in a corner, the winged column filling the frame (`LB-SHOT-BEHIND`; a long lens because, from behind him, he is always the nearer); `:lb-w-judge-volley`; a crack for each of the first 14 shots, then every other one, rising in pitch |
+| 5 still | f96–120 on him, held, silence | f150–170 on him from the front on the white card alone, the riddled silhouette held 20 f in silence |
+| 6 verdict | f120 the shatter, f132 on him, `:lb-w-stance` | f170 low behind him (155°, 0.5 m up, lens 62), `:lb-w-judge-close`: the wings close down, and on f176 (the close's last frame) he shatters (the Konpaku shards, the manga frame, a shake); f180 the silhouette and the card go |
+| 7 end | — | f185–210 a wide shot from behind his left (110°, 8.5 m), `:lb-w-stance` blended over 14 f, the ring settling into the fan |
+
+The holes: white discs (`+pal-hit+`, radius 0.045–0.075 m) at 48 fixed points of his body (`*LB-JUDGE-PIERCE*`, hashed once
+at load: across ±0.17 m at the legs, ±0.24 m at the torso, ±0.09 m at the head, 0.3–1.72 m up), facing the camera and
+pushed 0.35 m toward it over the silhouette, from each pierce's frame to f176. `VFX-LB-CONVERGE` and `*LB-HOLE-FAN*` are
+gone. Debug: 79200 + f holds this cinematic at frame f (0–299, DUEL_GAMEPLAY); 79100 + 19·3 + k (every 10 f to 180) still
+works. LILLE-CONS-PROBE (79195) adds a `judge` line while it runs.
+
+*Knobs* (lille-art.lisp): `*lb-sp-whip*` 16.0, `*lb-sp-kick*` 8, `*lb-ring-blow*` 30.0, `*lb-ring-shake*` 0.07; the
+tables `*lb-judge-shots*`, `*lb-judge-pierce*`.
+
+*Tests* (all PASS): duel-rules 6435 → **6455** (+20: the remap's three; the new clips' lengths and `:s` marks against their
+moves; SANREN's firing tips ≥ 1.2 m ahead and within 0.4 m of his line on each shot frame, KIN and EN; NIJUSHI-KO's and
+the Kikon's front tips ≥ 1 m out to their sides on the frame before S; the aura's 8 f), control 89, learn 131, cine 18.
+§5's clip list: `:lb-w-aim` / `:lb-w-fire` out, `:lb-w-sanren`, `:lb-e-sanren`, `:lb-w-kikon`, `:lb-w-kikon-fire` in.
+`tools/pkgcheck.sh duel` 0 / 0 / 0; `./build.sh duel` 0 warnings.
+
+*Consing* (debug 79195, 10 draws of the draw hook in the running scene): KIN and EN idle and through SANREN (f4–40),
+NIJUSHI-KO (f10–70) and the Kikon (f4–50), and the cinematic at f3–174: **160 B** every sample (16 B a frame, the ECS
+lookup floor of §21, as before); the first sample builds the meshes once (131 256 B, as before). The cinematic's
+`VFX-LB-JUDGE` (its `judge` line, f3–174, up to 48 holes and 10 lines): 160 B a 10 draws, its two position reads.
+
+*Simgate*: the SP / Kikon-in-play commit (b5a13a4) is **byte-identical** to the parent's (25e3912): `--seeds 10 --summary`
+(42 lines) and `--cvc` (yy, yk, kk). With the cinematic, `--cvc` is still identical and the 30 other lines of the seed
+gate too; Lille's six pairings keep every winner, K.O. and blow count, but their durations grow by 0.8 s per Jilliel
+Kikon cinematic played (the native sim counts the cinematic's frames in the match's seconds: 210 − 162 = 48 f), e.g. LY's
+median 192.4 → 194.0 s, LL's 223.6 → 226.0 s. Proof: the same build with `:len 162` gives Lille's twelve gate lines
+byte-identical to the parent's. The longer cinematic is the storyboard's (≈ 210 f); the gate's windows are the lead's to
+judge.
+
+*Stills* (`/tmp/…/scratchpad/d56/jilliel/review/`, never committed): contact sheets of SANREN, NIJUSHI-KO and the Kikon in
+play (KIN and EN, the behind and side cameras, before and after) and of the cinematic's beats (before every 10 f, after
+frame by frame at the beats). The look needs the user's eyes.
+
 ---
 
 ## 24. The adaptive, in-character CPU (dream-rsi; the user, 2026-10-06)

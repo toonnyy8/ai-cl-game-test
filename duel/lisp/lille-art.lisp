@@ -907,9 +907,6 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
   (22 (:root :f 0.5 :u -0.16 :pitch 8) (:spine :flex 16) (:arm-r :flex 132.3 :side 186.6) (:elbow-r :flex 8)
    (:arm-l :flex 132.3 :side 186.6) (:elbow-l :flex 8))   ; R 6/-42, L -6/-42
   (:end :lb-w-stance))
-(defpose :lb-w-aim-pose (:base :lb-w-stance)          ; the volley: the wings snapped forward, their holes aimed
-  (:arm-r :flex 60 :side 40) (:elbow-r :flex 10) (:arm-l :flex 60 :side 40) (:elbow-l :flex 10) (:head :flex 6))
-(defclip :lb-w-aim (0.6 :loop t :base :lb-w-aim-pose) (0) (0.3 (:root :u 0.02)))   ; (the Kikon cinematic's hold)
 ;; Decision 56 (2026-10-08, DUEL_LILLE §23.37; the user: 「Jilliel 的 SP1, SP2 跟毀魂技動畫」 redone 「全改」): his SPs and his
 ;; Kikon in play, whole-body moves like decision 50's strikes (each key's comment: the front wings' aims, azimuth / elevation
 ;; in the chest frame, + = his right / up; the chest twist and the root turn add to it, + = turned to his left).
@@ -925,129 +922,277 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
 (defpose :lb-w-ring-in (:base :lb-w-stance)          ; the Kikon's aura end: rising, the front wings swung up and out
   (:root :f -0.02 :u 0.16) (:spine :flex -2) (:head :flex 2) (:arm-r :flex 5.9 :side 98) (:elbow-r :flex 12)   ; R 84/8
   (:arm-l :flex 5.9 :side 98) (:elbow-l :flex 12) (:thigh-r :flex -6) (:thigh-l :flex -6))                     ; L -84/8
-;;; >>> gen sp
-(defstrike :lb-w-sanren (12 22 24 :base :lb-w-stance)   ; KIN SP1 三連: thrusts f12 the right wing, f22 the left, f32 both; each kicks the column back
+;; the Kikon cinematic's (decision 56's storyboard, DUEL_LILLE §23.37): the ring held 0.3 m up, the front wings in its
+;; lower places (R 75/-22, L -75/-22; LILLE-DRAW turns the six table wings into the rest), and the verdict: the wings
+;; closed down before him (R 26/-66, L -26/-66), the column bowed
+(defpose :lb-w-ring-pose (:base :lb-w-stance)
+  (:root :f -0.04 :u 0.3 :pitch -1) (:spine :flex -4) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3) (:elbow-r :flex 4)
+  (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4) (:thigh-r :flex -6) (:thigh-l :flex -6))
+(defpose :lb-w-verdict-pose (:base :lb-w-stance)
+  (:root :f -0.1 :u 0.08 :pitch 7) (:spine :flex 16) (:head :flex 16) (:arm-r :flex 21.4 :side 11) (:elbow-r :flex 12)
+  (:arm-l :flex 21.4 :side 11) (:elbow-l :flex 12) (:thigh-r :flex -4) (:thigh-l :flex -4))
+(defclip :lb-w-judge-volley (0.1 :loop t :base :lb-w-ring-pose)   ; beat 4: the volley's recoils, 6 f a cycle
+  (0 (:root :f -0.16 :u 0.32 :pitch -5) (:spine :flex -8)) (0.05 (:root :f -0.27 :u 0.33 :pitch -8) (:spine :flex -12)))
+(defstrike :lb-w-sanren (12 22 24 :base :lb-w-stance)
+  ;; KIN SP1 三連: thrusts f12 the right wing, f22 the left, f32 both; each kicks the column back
   (0)
   ;; R 135/18, L -95/-8
-  (5 (:root :f -0.08 :u -0.02 :yaw -10) (:spine :flex -4) (:chest :twist -20) (:arm-r :flex -42.3 :side 114.7) (:elbow-r :flex 30) (:arm-l :flex -5 :side 82) (:elbow-l :flex 8) (:thigh-r :flex -12) (:thigh-l :flex 14))
+  (5 (:root :f -0.08 :u -0.02 :yaw -10) (:spine :flex -4) (:chest :twist -20) (:arm-r :flex -42.3 :side 114.7)
+   (:elbow-r :flex 30) (:arm-l :flex -5 :side 82) (:elbow-l :flex 8) (:thigh-r :flex -12) (:thigh-l :flex 14))
   ;; R 148/24, L -98/-10
-  (9 (:root :f -0.12 :u -0.04 :yaw -14) (:spine :flex -6) (:chest :twist -26) (:arm-r :flex -50.8 :side 130) (:elbow-r :flex 36) (:arm-l :flex -7.9 :side 79.9) (:elbow-l :flex 8) (:thigh-r :flex -14) (:thigh-l :flex 16))
+  (9 (:root :f -0.12 :u -0.04 :yaw -14) (:spine :flex -6) (:chest :twist -26) (:arm-r :flex -50.8 :side 130)
+   (:elbow-r :flex 36) (:arm-l :flex -7.9 :side 79.9) (:elbow-l :flex 8) (:thigh-r :flex -14) (:thigh-l :flex 16))
   ;; R 30/-2, L -104/-12
-  (:s :snap (:root :f 0.14 :u -0.06 :yaw 12) (:spine :flex 10) (:chest :twist 18) (:arm-r :flex 59.9 :side 86) (:elbow-r :flex 2) (:arm-l :flex -13.7 :side 77.6) (:elbow-l :flex 6) (:thigh-r :flex 24) (:thigh-l :flex -16))
+  (:s :snap (:root :f 0.14 :u -0.06 :yaw 12) (:spine :flex 10) (:chest :twist 18) (:arm-r :flex 59.9 :side 86)
+   (:elbow-r :flex 2) (:arm-l :flex -13.7 :side 77.6) (:elbow-l :flex 6) (:thigh-r :flex 24) (:thigh-l :flex -16))
   ;; R 36/16, L -104/-12
-  (14 (:root :f -0.12 :u -0.02 :yaw 10) (:spine :flex -4) (:chest :twist 14) (:head :flex -2) (:arm-r :flex 51 :side 116) (:elbow-r :flex 12) (:arm-l :flex -13.7 :side 77.6) (:elbow-l :flex 6) (:thigh-r :flex 16) (:thigh-l :flex -10))
+  (14 (:root :f -0.12 :u -0.02 :yaw 10) (:spine :flex -4) (:chest :twist 14) (:head :flex -2) (:arm-r :flex 51 :side 116)
+   (:elbow-r :flex 12) (:arm-l :flex -13.7 :side 77.6) (:elbow-l :flex 6) (:thigh-r :flex 16) (:thigh-l :flex -10))
   ;; R 56/8, L -104/-12
-  (16 (:root :f -0.14 :u -0.02 :yaw 4) (:spine :flex -4) (:chest :twist 8) (:head :flex 4) (:arm-r :flex 33.6 :side 99.6) (:elbow-r :flex 16) (:arm-l :flex -13.7 :side 77.6) (:elbow-l :flex 6) (:thigh-r :flex 10) (:thigh-l :flex -6))
+  (16 (:root :f -0.14 :u -0.02 :yaw 4) (:spine :flex -4) (:chest :twist 8) (:head :flex 4) (:arm-r :flex 33.6 :side 99.6)
+   (:elbow-r :flex 16) (:arm-l :flex -13.7 :side 77.6) (:elbow-l :flex 6) (:thigh-r :flex 10) (:thigh-l :flex -6))
   ;; R 98/-10, L -148/24
-  (19 (:root :f -0.12 :u -0.04 :yaw 14) (:spine :flex -6) (:chest :twist 26) (:head :flex 4) (:arm-r :flex -7.9 :side 79.9) (:elbow-r :flex 10) (:arm-l :flex -50.8 :side 130) (:elbow-l :flex 36) (:thigh-r :flex -14) (:thigh-l :flex 16))
+  (19 (:root :f -0.12 :u -0.04 :yaw 14) (:spine :flex -6) (:chest :twist 26) (:head :flex 4)
+   (:arm-r :flex -7.9 :side 79.9) (:elbow-r :flex 10) (:arm-l :flex -50.8 :side 130) (:elbow-l :flex 36)
+   (:thigh-r :flex -14) (:thigh-l :flex 16))
   ;; R 104/-12, L -30/-2
-  (22 :snap (:root :f 0.14 :u -0.06 :yaw -12) (:spine :flex 10) (:chest :twist -18) (:head :flex 4) (:arm-r :flex -13.7 :side 77.6) (:elbow-r :flex 6) (:arm-l :flex 59.9 :side 86) (:elbow-l :flex 2) (:thigh-r :flex -16) (:thigh-l :flex 24))
+  (22 :snap (:root :f 0.14 :u -0.06 :yaw -12) (:spine :flex 10) (:chest :twist -18) (:head :flex 4)
+   (:arm-r :flex -13.7 :side 77.6) (:elbow-r :flex 6) (:arm-l :flex 59.9 :side 86) (:elbow-l :flex 2)
+   (:thigh-r :flex -16) (:thigh-l :flex 24))
   ;; R 104/-12, L -36/16
-  (24 (:root :f -0.12 :u -0.02 :yaw -10) (:spine :flex -4) (:chest :twist -14) (:head :flex -2) (:arm-r :flex -13.7 :side 77.6) (:elbow-r :flex 6) (:arm-l :flex 51 :side 116) (:elbow-l :flex 12) (:thigh-r :flex -10) (:thigh-l :flex 16))
+  (24 (:root :f -0.12 :u -0.02 :yaw -10) (:spine :flex -4) (:chest :twist -14) (:head :flex -2)
+   (:arm-r :flex -13.7 :side 77.6) (:elbow-r :flex 6) (:arm-l :flex 51 :side 116) (:elbow-l :flex 12)
+   (:thigh-r :flex -10) (:thigh-l :flex 16))
   ;; R 104/-12, L -56/8
-  (26 (:root :f -0.14 :u -0.02 :yaw -4) (:spine :flex -4) (:chest :twist -8) (:head :flex 4) (:arm-r :flex -13.7 :side 77.6) (:elbow-r :flex 6) (:arm-l :flex 33.6 :side 99.6) (:elbow-l :flex 16) (:thigh-r :flex -6) (:thigh-l :flex 10))
+  (26 (:root :f -0.14 :u -0.02 :yaw -4) (:spine :flex -4) (:chest :twist -8) (:head :flex 4)
+   (:arm-r :flex -13.7 :side 77.6) (:elbow-r :flex 6) (:arm-l :flex 33.6 :side 99.6) (:elbow-l :flex 16)
+   (:thigh-r :flex -6) (:thigh-l :flex 10))
   ;; R 140/30, L -140/30
-  (29 (:root :f -0.18 :u 0.06 :pitch -6 :yaw 0) (:spine :flex -10) (:chest :twist 0) (:head :flex -4) (:arm-r :flex -41.6 :side 131.9) (:elbow-r :flex 34) (:arm-l :flex -41.6 :side 131.9) (:elbow-l :flex 34) (:thigh-r :flex -10) (:thigh-l :flex 10))
+  (29 (:root :f -0.18 :u 0.06 :pitch -6 :yaw 0) (:spine :flex -10) (:chest :twist 0) (:head :flex -4)
+   (:arm-r :flex -41.6 :side 131.9) (:elbow-r :flex 34) (:arm-l :flex -41.6 :side 131.9) (:elbow-l :flex 34)
+   (:thigh-r :flex -10) (:thigh-l :flex 10))
   ;; R 5/-3, L -5/-3
-  (32 :snap (:root :f 0.2 :u -0.08 :pitch 4 :yaw 0) (:spine :flex 14) (:chest :twist 0) (:head :flex 4) (:arm-r :flex 84.2 :side 59) (:elbow-r :flex 2) (:arm-l :flex 84.2 :side 59) (:elbow-l :flex 2) (:thigh-r :flex 22) (:thigh-l :flex -18))
+  (32 :snap (:root :f 0.2 :u -0.08 :pitch 4 :yaw 0) (:spine :flex 14) (:chest :twist 0) (:head :flex 4)
+   (:arm-r :flex 84.2 :side 59) (:elbow-r :flex 2) (:arm-l :flex 84.2 :side 59) (:elbow-l :flex 2) (:thigh-r :flex 22)
+   (:thigh-l :flex -18))
   ;; R 14/20, L -14/20
-  (:a (:root :f -0.32 :u -0.02 :pitch -9 :yaw 0) (:spine :flex -12) (:chest :twist 0) (:head :flex -8) (:arm-r :flex 65.8 :side 146.4) (:elbow-r :flex 12) (:arm-l :flex 65.8 :side 146.4) (:elbow-l :flex 12) (:thigh-r :flex 8) (:thigh-l :flex -6))
+  (:a (:root :f -0.32 :u -0.02 :pitch -9 :yaw 0) (:spine :flex -12) (:chest :twist 0) (:head :flex -8)
+   (:arm-r :flex 65.8 :side 146.4) (:elbow-r :flex 12) (:arm-l :flex 65.8 :side 146.4) (:elbow-l :flex 12)
+   (:thigh-r :flex 8) (:thigh-l :flex -6))
   ;; R 32/10, L -32/10
-  (40 (:root :f -0.38 :u -0.03 :pitch -6 :yaw 0) (:spine :flex -8) (:chest :twist 0) (:head :flex -2) (:arm-r :flex 56.6 :side 108.4) (:elbow-r :flex 16) (:arm-l :flex 56.6 :side 108.4) (:elbow-l :flex 16) (:thigh-r :flex 8) (:thigh-l :flex -6))
+  (40 (:root :f -0.38 :u -0.03 :pitch -6 :yaw 0) (:spine :flex -8) (:chest :twist 0) (:head :flex -2)
+   (:arm-r :flex 56.6 :side 108.4) (:elbow-r :flex 16) (:arm-l :flex 56.6 :side 108.4) (:elbow-l :flex 16)
+   (:thigh-r :flex 8) (:thigh-l :flex -6))
   ;; R 64/-8, L -64/-8
-  (48 (:root :f -0.2 :u -0.02 :pitch -2 :yaw 0) (:spine :flex -2) (:chest :twist 0) (:head :flex 4) (:arm-r :flex 25.7 :side 81.1) (:elbow-r :flex 12) (:arm-l :flex 25.7 :side 81.1) (:elbow-l :flex 12) (:thigh-r :flex 4) (:thigh-l :flex -2))
+  (48 (:root :f -0.2 :u -0.02 :pitch -2 :yaw 0) (:spine :flex -2) (:chest :twist 0) (:head :flex 4)
+   (:arm-r :flex 25.7 :side 81.1) (:elbow-r :flex 12) (:arm-l :flex 25.7 :side 81.1) (:elbow-l :flex 12)
+   (:thigh-r :flex 4) (:thigh-l :flex -2))
   (:end :lb-w-stance))
-(defstrike :lb-e-sanren (6 14 12 :base :lb-w-stance)   ; EN SP1 三連: the lines f6 the right wing, f12 the left, f18 both, each a thrust and a kick back
+(defstrike :lb-e-sanren (6 14 12 :base :lb-w-stance)
+  ;; EN SP1 三連: the lines f6 the right wing, f12 the left, f18 both, each a thrust and a kick back
   (0)
   ;; R 140/22, L -95/-8
-  (3 (:root :f -0.08 :u 0.04 :pitch -4 :yaw -12) (:spine :flex -6) (:chest :twist -22) (:arm-r :flex -45.3 :side 122.2) (:elbow-r :flex 32) (:arm-l :flex -5 :side 82) (:elbow-l :flex 8))
+  (3 (:root :f -0.08 :u 0.04 :pitch -4 :yaw -12) (:spine :flex -6) (:chest :twist -22) (:arm-r :flex -45.3 :side 122.2)
+   (:elbow-r :flex 32) (:arm-l :flex -5 :side 82) (:elbow-l :flex 8))
   ;; R 30/-2, L -104/-12
-  (:s :snap (:root :f 0.14 :u -0.03 :pitch 4 :yaw 12) (:spine :flex 10) (:chest :twist 18) (:arm-r :flex 59.9 :side 86) (:elbow-r :flex 2) (:arm-l :flex -13.7 :side 77.6) (:elbow-l :flex 6))
+  (:s :snap (:root :f 0.14 :u -0.03 :pitch 4 :yaw 12) (:spine :flex 10) (:chest :twist 18) (:arm-r :flex 59.9 :side 86)
+   (:elbow-r :flex 2) (:arm-l :flex -13.7 :side 77.6) (:elbow-l :flex 6))
   ;; R 38/16, L -104/-12
-  (8 (:root :f -0.14 :u 0.02 :pitch -5 :yaw 10) (:spine :flex -5) (:chest :twist 14) (:head :flex -2) (:arm-r :flex 49.2 :side 115) (:elbow-r :flex 12) (:arm-l :flex -13.7 :side 77.6) (:elbow-l :flex 6))
+  (8 (:root :f -0.14 :u 0.02 :pitch -5 :yaw 10) (:spine :flex -5) (:chest :twist 14) (:head :flex -2)
+   (:arm-r :flex 49.2 :side 115) (:elbow-r :flex 12) (:arm-l :flex -13.7 :side 77.6) (:elbow-l :flex 6))
   ;; R 98/-10, L -140/22
-  (10 (:root :f -0.1 :u 0.04 :pitch -4 :yaw 12) (:spine :flex -6) (:chest :twist 22) (:head :flex 4) (:arm-r :flex -7.9 :side 79.9) (:elbow-r :flex 10) (:arm-l :flex -45.3 :side 122.2) (:elbow-l :flex 32))
+  (10 (:root :f -0.1 :u 0.04 :pitch -4 :yaw 12) (:spine :flex -6) (:chest :twist 22) (:head :flex 4)
+   (:arm-r :flex -7.9 :side 79.9) (:elbow-r :flex 10) (:arm-l :flex -45.3 :side 122.2) (:elbow-l :flex 32))
   ;; R 104/-12, L -30/-2
-  (12 :snap (:root :f 0.14 :u -0.03 :pitch 4 :yaw -12) (:spine :flex 10) (:chest :twist -18) (:head :flex 4) (:arm-r :flex -13.7 :side 77.6) (:elbow-r :flex 6) (:arm-l :flex 59.9 :side 86) (:elbow-l :flex 2))
+  (12 :snap (:root :f 0.14 :u -0.03 :pitch 4 :yaw -12) (:spine :flex 10) (:chest :twist -18) (:head :flex 4)
+   (:arm-r :flex -13.7 :side 77.6) (:elbow-r :flex 6) (:arm-l :flex 59.9 :side 86) (:elbow-l :flex 2))
   ;; R 104/-12, L -38/16
-  (14 (:root :f -0.14 :u 0.02 :pitch -5 :yaw -10) (:spine :flex -5) (:chest :twist -14) (:head :flex -2) (:arm-r :flex -13.7 :side 77.6) (:elbow-r :flex 6) (:arm-l :flex 49.2 :side 115) (:elbow-l :flex 12))
+  (14 (:root :f -0.14 :u 0.02 :pitch -5 :yaw -10) (:spine :flex -5) (:chest :twist -14) (:head :flex -2)
+   (:arm-r :flex -13.7 :side 77.6) (:elbow-r :flex 6) (:arm-l :flex 49.2 :side 115) (:elbow-l :flex 12))
   ;; R 138/30, L -138/30
-  (16 (:root :f -0.14 :u 0.08 :pitch -6 :yaw 0) (:spine :flex -10) (:chest :twist 0) (:head :flex -4) (:arm-r :flex -40.1 :side 130.8) (:elbow-r :flex 32) (:arm-l :flex -40.1 :side 130.8) (:elbow-l :flex 32))
+  (16 (:root :f -0.14 :u 0.08 :pitch -6 :yaw 0) (:spine :flex -10) (:chest :twist 0) (:head :flex -4)
+   (:arm-r :flex -40.1 :side 130.8) (:elbow-r :flex 32) (:arm-l :flex -40.1 :side 130.8) (:elbow-l :flex 32))
   ;; R 5/-3, L -5/-3
-  (18 :snap (:root :f 0.18 :u -0.04 :pitch 6 :yaw 0) (:spine :flex 14) (:chest :twist 0) (:head :flex 4) (:arm-r :flex 84.2 :side 59) (:elbow-r :flex 2) (:arm-l :flex 84.2 :side 59) (:elbow-l :flex 2))
+  (18 :snap (:root :f 0.18 :u -0.04 :pitch 6 :yaw 0) (:spine :flex 14) (:chest :twist 0) (:head :flex 4)
+   (:arm-r :flex 84.2 :side 59) (:elbow-r :flex 2) (:arm-l :flex 84.2 :side 59) (:elbow-l :flex 2))
   ;; R 14/20, L -14/20
-  (:a (:root :f -0.32 :u 0.05 :pitch -10 :yaw 0) (:spine :flex -12) (:chest :twist 0) (:head :flex -8) (:arm-r :flex 65.8 :side 146.4) (:elbow-r :flex 12) (:arm-l :flex 65.8 :side 146.4) (:elbow-l :flex 12))
+  (:a (:root :f -0.32 :u 0.05 :pitch -10 :yaw 0) (:spine :flex -12) (:chest :twist 0) (:head :flex -8)
+   (:arm-r :flex 65.8 :side 146.4) (:elbow-r :flex 12) (:arm-l :flex 65.8 :side 146.4) (:elbow-l :flex 12))
   ;; R 42/6, L -42/6
-  (25 (:root :f -0.3 :u 0.03 :pitch -6 :yaw 0) (:spine :flex -6) (:chest :twist 0) (:head :flex 0) (:arm-r :flex 47.7 :side 98.9) (:elbow-r :flex 14) (:arm-l :flex 47.7 :side 98.9) (:elbow-l :flex 14))
+  (25 (:root :f -0.3 :u 0.03 :pitch -6 :yaw 0) (:spine :flex -6) (:chest :twist 0) (:head :flex 0)
+   (:arm-r :flex 47.7 :side 98.9) (:elbow-r :flex 14) (:arm-l :flex 47.7 :side 98.9) (:elbow-l :flex 14))
   (:end :lb-w-stance))
-(defstrike :lb-w-nijushi (40 6 30 :base :lb-w-stance)   ; SP2 二十四孔: rising, the wings opened into a ring, the bow drawn (shaking), the recoil, blown back
+(defstrike :lb-w-nijushi (40 6 30 :base :lb-w-stance)
+  ;; SP2 二十四孔: rising, the wings opened into a ring, the bow drawn (shaking), the recoil, blown back
   (0)
   ;; R 84/8, L -84/8
-  (8 (:root :f -0.02 :u 0.16) (:spine :flex -2) (:head :flex 2) (:arm-r :flex 5.9 :side 98) (:elbow-r :flex 12) (:arm-l :flex 5.9 :side 98) (:elbow-l :flex 12) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (8 (:root :f -0.02 :u 0.16) (:spine :flex -2) (:head :flex 2) (:arm-r :flex 5.9 :side 98) (:elbow-r :flex 12)
+   (:arm-l :flex 5.9 :side 98) (:elbow-l :flex 12) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 75/-22, L -75/-22
-  (16 (:root :f -0.04 :r 0 :u 0.3 :pitch -1) (:spine :flex -4) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3) (:elbow-r :flex 4) (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (16 (:root :f -0.04 :r 0 :u 0.3 :pitch -1) (:spine :flex -4) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3)
+   (:elbow-r :flex 4) (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 75/-22, L -75/-22
-  (20 (:root :f -0.06 :r 0.008 :u 0.3 :pitch -2) (:spine :flex -6) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3) (:elbow-r :flex 4) (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (20 (:root :f -0.06 :r 0.008 :u 0.3 :pitch -2) (:spine :flex -6) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3)
+   (:elbow-r :flex 4) (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 75.8/-22.4, L -75.8/-22.4
-  (22 (:root :f -0.076 :r -0.008 :u 0.3 :pitch -2.556) (:spine :flex -7) (:head :flex 0) (:arm-r :flex 13.1 :side 66.9) (:elbow-r :flex 4.7) (:arm-l :flex 13.1 :side 66.9) (:elbow-l :flex 4.7) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (22 (:root :f -0.076 :r -0.008 :u 0.3 :pitch -2.556) (:spine :flex -7) (:head :flex 0) (:arm-r :flex 13.1 :side 66.9)
+   (:elbow-r :flex 4.7) (:arm-l :flex 13.1 :side 66.9) (:elbow-l :flex 4.7) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 76.6/-22.9, L -76.6/-22.9
-  (24 (:root :f -0.091 :r 0.01 :u 0.3 :pitch -3.111) (:spine :flex -8) (:head :flex 0) (:arm-r :flex 12.4 :side 66.5) (:elbow-r :flex 5.3) (:arm-l :flex 12.4 :side 66.5) (:elbow-l :flex 5.3) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (24 (:root :f -0.091 :r 0.01 :u 0.3 :pitch -3.111) (:spine :flex -8) (:head :flex 0) (:arm-r :flex 12.4 :side 66.5)
+   (:elbow-r :flex 5.3) (:arm-l :flex 12.4 :side 66.5) (:elbow-l :flex 5.3) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 77.3/-23.3, L -77.3/-23.3
-  (26 (:root :f -0.107 :r -0.012 :u 0.3 :pitch -3.667) (:spine :flex -9) (:head :flex 0) (:arm-r :flex 11.6 :side 66.1) (:elbow-r :flex 6) (:arm-l :flex 11.6 :side 66.1) (:elbow-l :flex 6) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (26 (:root :f -0.107 :r -0.012 :u 0.3 :pitch -3.667) (:spine :flex -9) (:head :flex 0) (:arm-r :flex 11.6 :side 66.1)
+   (:elbow-r :flex 6) (:arm-l :flex 11.6 :side 66.1) (:elbow-l :flex 6) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 78.1/-23.8, L -78.1/-23.8
-  (28 (:root :f -0.122 :r 0.014 :u 0.3 :pitch -4.222) (:spine :flex -10) (:head :flex 0) (:arm-r :flex 10.9 :side 65.8) (:elbow-r :flex 6.7) (:arm-l :flex 10.9 :side 65.8) (:elbow-l :flex 6.7) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (28 (:root :f -0.122 :r 0.014 :u 0.3 :pitch -4.222) (:spine :flex -10) (:head :flex 0) (:arm-r :flex 10.9 :side 65.8)
+   (:elbow-r :flex 6.7) (:arm-l :flex 10.9 :side 65.8) (:elbow-l :flex 6.7) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 78.9/-24.2, L -78.9/-24.2
-  (30 (:root :f -0.138 :r -0.018 :u 0.3 :pitch -4.778) (:spine :flex -11) (:head :flex 0) (:arm-r :flex 10.1 :side 65.4) (:elbow-r :flex 7.3) (:arm-l :flex 10.1 :side 65.4) (:elbow-l :flex 7.3) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (30 (:root :f -0.138 :r -0.018 :u 0.3 :pitch -4.778) (:spine :flex -11) (:head :flex 0) (:arm-r :flex 10.1 :side 65.4)
+   (:elbow-r :flex 7.3) (:arm-l :flex 10.1 :side 65.4) (:elbow-l :flex 7.3) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 79.7/-24.7, L -79.7/-24.7
-  (32 (:root :f -0.153 :r 0.022 :u 0.3 :pitch -5.333) (:spine :flex -12) (:head :flex 0) (:arm-r :flex 9.4 :side 65) (:elbow-r :flex 8) (:arm-l :flex 9.4 :side 65) (:elbow-l :flex 8) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (32 (:root :f -0.153 :r 0.022 :u 0.3 :pitch -5.333) (:spine :flex -12) (:head :flex 0) (:arm-r :flex 9.4 :side 65)
+   (:elbow-r :flex 8) (:arm-l :flex 9.4 :side 65) (:elbow-l :flex 8) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 80.4/-25.1, L -80.4/-25.1
-  (34 (:root :f -0.169 :r -0.027 :u 0.3 :pitch -5.889) (:spine :flex -13) (:head :flex 0) (:arm-r :flex 8.6 :side 64.6) (:elbow-r :flex 8.7) (:arm-l :flex 8.6 :side 64.6) (:elbow-l :flex 8.7) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (34 (:root :f -0.169 :r -0.027 :u 0.3 :pitch -5.889) (:spine :flex -13) (:head :flex 0) (:arm-r :flex 8.6 :side 64.6)
+   (:elbow-r :flex 8.7) (:arm-l :flex 8.6 :side 64.6) (:elbow-l :flex 8.7) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 81.2/-25.6, L -81.2/-25.6
-  (36 (:root :f -0.184 :r 0.033 :u 0.3 :pitch -6.444) (:spine :flex -14) (:head :flex 0) (:arm-r :flex 7.9 :side 64.2) (:elbow-r :flex 9.3) (:arm-l :flex 7.9 :side 64.2) (:elbow-l :flex 9.3) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (36 (:root :f -0.184 :r 0.033 :u 0.3 :pitch -6.444) (:spine :flex -14) (:head :flex 0) (:arm-r :flex 7.9 :side 64.2)
+   (:elbow-r :flex 9.3) (:arm-l :flex 7.9 :side 64.2) (:elbow-l :flex 9.3) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 82/-26, L -82/-26
-  (38 (:root :f -0.2 :r -0.04 :u 0.3 :pitch -7) (:spine :flex -15) (:head :flex 0) (:arm-r :flex 7.2 :side 63.8) (:elbow-r :flex 10) (:arm-l :flex 7.2 :side 63.8) (:elbow-l :flex 10) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (38 (:root :f -0.2 :r -0.04 :u 0.3 :pitch -7) (:spine :flex -15) (:head :flex 0) (:arm-r :flex 7.2 :side 63.8)
+   (:elbow-r :flex 10) (:arm-l :flex 7.2 :side 63.8) (:elbow-l :flex 10) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 118/-4, L -118/-4
-  (:s :snap (:root :f -0.62 :r 0 :u 0.38 :pitch -14) (:spine :flex -20) (:head :flex -10) (:arm-r :flex -27.9 :side 85.5) (:elbow-r :flex 22) (:arm-l :flex -27.9 :side 85.5) (:elbow-l :flex 22) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (:s :snap (:root :f -0.62 :r 0 :u 0.38 :pitch -14) (:spine :flex -20) (:head :flex -10) (:arm-r :flex -27.9 :side 85.5)
+   (:elbow-r :flex 22) (:arm-l :flex -27.9 :side 85.5) (:elbow-l :flex 22) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 126/4, L -126/4
-  (:a (:root :f -0.7 :r 0 :u 0.4 :pitch -15) (:spine :flex -22) (:head :flex -10) (:arm-r :flex -35.9 :side 94.9) (:elbow-r :flex 28) (:arm-l :flex -35.9 :side 94.9) (:elbow-l :flex 28) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (:a (:root :f -0.7 :r 0 :u 0.4 :pitch -15) (:spine :flex -22) (:head :flex -10) (:arm-r :flex -35.9 :side 94.9)
+   (:elbow-r :flex 28) (:arm-l :flex -35.9 :side 94.9) (:elbow-l :flex 28) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 106/-12, L -106/-12
-  (56 (:root :f -0.48 :r 0 :u 0.26 :pitch -8) (:spine :flex -10) (:head :flex -4) (:arm-r :flex -15.6 :side 77.5) (:elbow-r :flex 16) (:arm-l :flex -15.6 :side 77.5) (:elbow-l :flex 16) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (56 (:root :f -0.48 :r 0 :u 0.26 :pitch -8) (:spine :flex -10) (:head :flex -4) (:arm-r :flex -15.6 :side 77.5)
+   (:elbow-r :flex 16) (:arm-l :flex -15.6 :side 77.5) (:elbow-l :flex 16) (:thigh-r :flex -6) (:thigh-l :flex -6))
   ;; R 92/-14, L -92/-14
-  (66 (:root :f -0.2 :r 0 :u 0.1 :pitch -3) (:spine :flex -4) (:head :flex 2) (:arm-r :flex -1.9 :side 76) (:elbow-r :flex 10) (:arm-l :flex -1.9 :side 76) (:elbow-l :flex 10) (:thigh-r :flex -2) (:thigh-l :flex -2))
+  (66 (:root :f -0.2 :r 0 :u 0.1 :pitch -3) (:spine :flex -4) (:head :flex 2) (:arm-r :flex -1.9 :side 76)
+   (:elbow-r :flex 10) (:arm-l :flex -1.9 :side 76) (:elbow-l :flex 10) (:thigh-r :flex -2) (:thigh-l :flex -2))
   (:end :lb-w-stance))
-(defstrike :lb-w-kikon (8 0 0 :base :lb-w-stance)   ; Kikon 神の裁き, the aura (8 f): rising, the wings swinging up toward the ring
+(defstrike :lb-w-kikon (8 0 0 :base :lb-w-stance)
+  ;; Kikon 神の裁き, the aura (8 f): rising, the wings swinging up toward the ring
   (0)
   (:end :lb-w-ring-in))
-(defstrike :lb-w-kikon-fire (20 3 30 :base :lb-w-stance)   ; Kikon 神の裁き, the strike: the ring charged (shaking), the 24 lines on S with a recoil, the wings closed down (the verdict)
+(defstrike :lb-w-kikon-fire (20 3 30 :base :lb-w-stance)
+  ;; Kikon 神の裁き, the strike: the ring charged (shaking), the 24 lines on S with a recoil, the wings closed down (the verdict)
   (0 :lb-w-ring-in)
   ;; R 75/-22, L -75/-22
-  (7 (:root :f -0.04 :r 0 :u 0.3 :pitch -1) (:spine :flex -4) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3) (:elbow-r :flex 4) (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4))
+  (7 (:root :f -0.04 :r 0 :u 0.3 :pitch -1) (:spine :flex -4) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3)
+   (:elbow-r :flex 4) (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4))
   ;; R 75/-22, L -75/-22
-  (10 (:root :f -0.07 :r 0.012 :u 0.3 :pitch -3) (:spine :flex -7) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3) (:elbow-r :flex 4) (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4))
+  (10 (:root :f -0.07 :r 0.012 :u 0.3 :pitch -3) (:spine :flex -7) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3)
+   (:elbow-r :flex 4) (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4))
   ;; R 76.2/-22.8, L -76.2/-22.8
-  (12 (:root :f -0.095 :r -0.013 :u 0.3 :pitch -3.75) (:spine :flex -8.5) (:head :flex 0) (:arm-r :flex 12.7 :side 66.6) (:elbow-r :flex 5) (:arm-l :flex 12.7 :side 66.6) (:elbow-l :flex 5))
+  (12 (:root :f -0.095 :r -0.013 :u 0.3 :pitch -3.75) (:spine :flex -8.5) (:head :flex 0) (:arm-r :flex 12.7 :side 66.6)
+   (:elbow-r :flex 5) (:arm-l :flex 12.7 :side 66.6) (:elbow-l :flex 5))
   ;; R 77.5/-23.5, L -77.5/-23.5
-  (14 (:root :f -0.12 :r 0.018 :u 0.3 :pitch -4.5) (:spine :flex -10) (:head :flex 0) (:arm-r :flex 11.4 :side 66) (:elbow-r :flex 6) (:arm-l :flex 11.4 :side 66) (:elbow-l :flex 6))
+  (14 (:root :f -0.12 :r 0.018 :u 0.3 :pitch -4.5) (:spine :flex -10) (:head :flex 0) (:arm-r :flex 11.4 :side 66)
+   (:elbow-r :flex 6) (:arm-l :flex 11.4 :side 66) (:elbow-l :flex 6))
   ;; R 78.8/-24.2, L -78.8/-24.2
-  (16 (:root :f -0.145 :r -0.025 :u 0.3 :pitch -5.25) (:spine :flex -11.5) (:head :flex 0) (:arm-r :flex 10.2 :side 65.3) (:elbow-r :flex 7) (:arm-l :flex 10.2 :side 65.3) (:elbow-l :flex 7))
+  (16 (:root :f -0.145 :r -0.025 :u 0.3 :pitch -5.25) (:spine :flex -11.5) (:head :flex 0) (:arm-r :flex 10.2 :side 65.3)
+   (:elbow-r :flex 7) (:arm-l :flex 10.2 :side 65.3) (:elbow-l :flex 7))
   ;; R 80/-25, L -80/-25
-  (18 (:root :f -0.17 :r 0.036 :u 0.3 :pitch -6) (:spine :flex -13) (:head :flex 0) (:arm-r :flex 9.1 :side 64.7) (:elbow-r :flex 8) (:arm-l :flex 9.1 :side 64.7) (:elbow-l :flex 8))
+  (18 (:root :f -0.17 :r 0.036 :u 0.3 :pitch -6) (:spine :flex -13) (:head :flex 0) (:arm-r :flex 9.1 :side 64.7)
+   (:elbow-r :flex 8) (:arm-l :flex 9.1 :side 64.7) (:elbow-l :flex 8))
   ;; R 118/-4, L -118/-4
-  (:s :snap (:root :f -0.55 :r 0 :u 0.36 :pitch -13) (:spine :flex -18) (:head :flex -8) (:arm-r :flex -27.9 :side 85.5) (:elbow-r :flex 22) (:arm-l :flex -27.9 :side 85.5) (:elbow-l :flex 22))
+  (:s :snap (:root :f -0.55 :r 0 :u 0.36 :pitch -13) (:spine :flex -18) (:head :flex -8) (:arm-r :flex -27.9 :side 85.5)
+   (:elbow-r :flex 22) (:arm-l :flex -27.9 :side 85.5) (:elbow-l :flex 22))
   ;; R 124/2, L -124/2
-  (:a (:root :f -0.62 :r 0 :u 0.38 :pitch -14) (:spine :flex -20) (:head :flex -8) (:arm-r :flex -34 :side 92.4) (:elbow-r :flex 26) (:arm-l :flex -34 :side 92.4) (:elbow-l :flex 26))
+  (:a (:root :f -0.62 :r 0 :u 0.38 :pitch -14) (:spine :flex -20) (:head :flex -8) (:arm-r :flex -34 :side 92.4)
+   (:elbow-r :flex 26) (:arm-l :flex -34 :side 92.4) (:elbow-l :flex 26))
   ;; R 28/-62, L -28/-62
-  (30 (:root :f -0.36 :r 0 :u 0.16 :pitch 6) (:spine :flex 14) (:head :flex 14) (:arm-r :flex 24.5 :side 14) (:elbow-r :flex 12) (:arm-l :flex 24.5 :side 14) (:elbow-l :flex 12))
+  (30 (:root :f -0.36 :r 0 :u 0.16 :pitch 6) (:spine :flex 14) (:head :flex 14) (:arm-r :flex 24.5 :side 14)
+   (:elbow-r :flex 12) (:arm-l :flex 24.5 :side 14) (:elbow-l :flex 12))
   ;; R 24/-66, L -24/-66
-  (40 (:root :f -0.3 :r 0 :u 0.1 :pitch 7) (:spine :flex 16) (:head :flex 16) (:arm-r :flex 21.8 :side 10.3) (:elbow-r :flex 12) (:arm-l :flex 21.8 :side 10.3) (:elbow-l :flex 12))
+  (40 (:root :f -0.3 :r 0 :u 0.1 :pitch 7) (:spine :flex 16) (:head :flex 16) (:arm-r :flex 21.8 :side 10.3)
+   (:elbow-r :flex 12) (:arm-l :flex 21.8 :side 10.3) (:elbow-l :flex 12))
   (:end :lb-w-stance))
-;;; <<< gen sp
+(defstrike :lb-w-judge-open (6 0 60 :base :lb-w-stance)
+  ;; the Kikon cinematic, beats 1-2: the ring snapped open (f6), held, the charge shaking (f32-58)
+  (0)
+  ;; R 84/8, L -84/8
+  (3 (:root :f -0.02 :u 0.16) (:spine :flex -2) (:head :flex 2) (:arm-r :flex 5.9 :side 98) (:elbow-r :flex 12)
+   (:arm-l :flex 5.9 :side 98) (:elbow-l :flex 12) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 75/-22, L -75/-22
+  (6 :snap (:root :f -0.04 :r 0 :u 0.3 :pitch -1) (:spine :flex -4) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3)
+   (:elbow-r :flex 4) (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 75/-22, L -75/-22
+  (30 (:root :f -0.04 :r 0 :u 0.3 :pitch -1) (:spine :flex -4) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3)
+   (:elbow-r :flex 4) (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 75/-22, L -75/-22
+  (32 (:root :f -0.06 :r 0.006 :u 0.3 :pitch -2) (:spine :flex -5) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3)
+   (:elbow-r :flex 4) (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 75.3/-22.2, L -75.3/-22.2
+  (34 (:root :f -0.068 :r -0.006 :u 0.3 :pitch -2.308) (:spine :flex -5.5) (:head :flex 0) (:arm-r :flex 13.6 :side 67.2)
+   (:elbow-r :flex 4.3) (:arm-l :flex 13.6 :side 67.2) (:elbow-l :flex 4.3) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 75.6/-22.3, L -75.6/-22.3
+  (36 (:root :f -0.075 :r 0.007 :u 0.3 :pitch -2.615) (:spine :flex -6.1) (:head :flex 0) (:arm-r :flex 13.3 :side 67)
+   (:elbow-r :flex 4.6) (:arm-l :flex 13.3 :side 67) (:elbow-l :flex 4.6) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 75.9/-22.5, L -75.9/-22.5
+  (38 (:root :f -0.083 :r -0.007 :u 0.3 :pitch -2.923) (:spine :flex -6.6) (:head :flex 0) (:arm-r :flex 13 :side 66.9)
+   (:elbow-r :flex 4.9) (:arm-l :flex 13 :side 66.9) (:elbow-l :flex 4.9) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 76.2/-22.6, L -76.2/-22.6
+  (40 (:root :f -0.091 :r 0.008 :u 0.3 :pitch -3.231) (:spine :flex -7.2) (:head :flex 0) (:arm-r :flex 12.7 :side 66.8)
+   (:elbow-r :flex 5.2) (:arm-l :flex 12.7 :side 66.8) (:elbow-l :flex 5.2) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 76.5/-22.8, L -76.5/-22.8
+  (42 (:root :f -0.098 :r -0.01 :u 0.3 :pitch -3.538) (:spine :flex -7.7) (:head :flex 0) (:arm-r :flex 12.4 :side 66.7)
+   (:elbow-r :flex 5.5) (:arm-l :flex 12.4 :side 66.7) (:elbow-l :flex 5.5) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 76.8/-22.9, L -76.8/-22.9
+  (44 (:root :f -0.106 :r 0.011 :u 0.3 :pitch -3.846) (:spine :flex -8.2) (:head :flex 0) (:arm-r :flex 12.1 :side 66.5)
+   (:elbow-r :flex 5.8) (:arm-l :flex 12.1 :side 66.5) (:elbow-l :flex 5.8) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 77.2/-23.1, L -77.2/-23.1
+  (46 (:root :f -0.114 :r -0.013 :u 0.3 :pitch -4.154) (:spine :flex -8.8) (:head :flex 0) (:arm-r :flex 11.8 :side 66.4)
+   (:elbow-r :flex 6.2) (:arm-l :flex 11.8 :side 66.4) (:elbow-l :flex 6.2) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 77.5/-23.2, L -77.5/-23.2
+  (48 (:root :f -0.122 :r 0.015 :u 0.3 :pitch -4.462) (:spine :flex -9.3) (:head :flex 0) (:arm-r :flex 11.5 :side 66.3)
+   (:elbow-r :flex 6.5) (:arm-l :flex 11.5 :side 66.3) (:elbow-l :flex 6.5) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 77.8/-23.4, L -77.8/-23.4
+  (50 (:root :f -0.129 :r -0.018 :u 0.3 :pitch -4.769) (:spine :flex -9.8) (:head :flex 0) (:arm-r :flex 11.2 :side 66.1)
+   (:elbow-r :flex 6.8) (:arm-l :flex 11.2 :side 66.1) (:elbow-l :flex 6.8) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 78.1/-23.5, L -78.1/-23.5
+  (52 (:root :f -0.137 :r 0.02 :u 0.3 :pitch -5.077) (:spine :flex -10.4) (:head :flex 0) (:arm-r :flex 10.9 :side 66)
+   (:elbow-r :flex 7.1) (:arm-l :flex 10.9 :side 66) (:elbow-l :flex 7.1) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 78.4/-23.7, L -78.4/-23.7
+  (54 (:root :f -0.145 :r -0.023 :u 0.3 :pitch -5.385) (:spine :flex -10.9) (:head :flex 0)
+   (:arm-r :flex 10.6 :side 65.9) (:elbow-r :flex 7.4) (:arm-l :flex 10.6 :side 65.9) (:elbow-l :flex 7.4)
+   (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 78.7/-23.8, L -78.7/-23.8
+  (56 (:root :f -0.152 :r 0.026 :u 0.3 :pitch -5.692) (:spine :flex -11.5) (:head :flex 0) (:arm-r :flex 10.3 :side 65.7)
+   (:elbow-r :flex 7.7) (:arm-l :flex 10.3 :side 65.7) (:elbow-l :flex 7.7) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 79/-24, L -79/-24
+  (58 (:root :f -0.16 :r -0.03 :u 0.3 :pitch -6) (:spine :flex -12) (:head :flex 0) (:arm-r :flex 10 :side 65.6)
+   (:elbow-r :flex 8) (:arm-l :flex 10 :side 65.6) (:elbow-l :flex 8) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (:end :lb-w-ring-pose))
+(defstrike :lb-w-judge-shot (2 0 14 :base :lb-w-ring-pose)
+  ;; the Kikon cinematic, beat 3: a shot's recoil out of the ring, back into it
+  ;; R 112/-6, L -112/-6
+  (0 (:root :f -0.42 :u 0.34 :pitch -10) (:spine :flex -14) (:head :flex -6) (:arm-r :flex -21.9 :side 83.5)
+   (:elbow-r :flex 18) (:arm-l :flex -21.9 :side 83.5) (:elbow-l :flex 18) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  ;; R 118/-2, L -118/-2
+  (2 (:root :f -0.48 :u 0.35 :pitch -11) (:spine :flex -16) (:head :flex -6) (:arm-r :flex -28 :side 87.7)
+   (:elbow-r :flex 22) (:arm-l :flex -28 :side 87.7) (:elbow-l :flex 22) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (:end :lb-w-ring-pose))
+(defstrike :lb-w-judge-close (6 0 40 :base :lb-w-ring-pose)
+  ;; the Kikon cinematic, beat 6: the verdict, the wings closed down before him (on f6)
+  (0)
+  ;; R 26/-66, L -26/-66
+  (6 :snap (:root :f -0.1 :u 0.08 :pitch 7) (:spine :flex 16) (:head :flex 16) (:arm-r :flex 21.4 :side 11)
+   (:elbow-r :flex 12) (:arm-l :flex 21.4 :side 11) (:elbow-l :flex 12) (:thigh-r :flex -4) (:thigh-l :flex -4))
+  (:end :lb-w-verdict-pose))
 (defclip :lb-w-breaker (0.4 :loop t :base :lb-w-stance)
-  (0 (:root :u -0.2 :pitch 14) (:arm-r :flex -30 :side 40) (:arm-l :flex -30 :side 40)) (0.2 (:root :u -0.16 :pitch 14)))
+  (0 (:root :u -0.2 :pitch 14) (:arm-r :flex -30 :side 40) (:arm-l :flex -30 :side 40))
+   (0.2 (:root :u -0.16 :pitch 14)))
 (defpose :lb-w-ram-hit (:base :lb-w-stance)
-  (:root :f 0.0 :u -0.1) (:spine :flex 4) (:arm-r :flex 66 :side 52) (:elbow-r :flex 24) (:arm-l :flex 66 :side 52) (:elbow-l :flex 24))
+  (:root :f 0.0 :u -0.1) (:spine :flex 4) (:arm-r :flex 66 :side 52) (:elbow-r :flex 24) (:arm-l :flex 66 :side 52)
+   (:elbow-l :flex 24))
 (defstrike :lb-w-ram (8 4 18 :base :lb-w-stance)
-  (0 (:arm-r :flex 10 :side 120) (:arm-l :flex 10 :side 120)) (:s :snap :lb-w-ram-hit) (:a :lb-w-ram-hit) (:end :lb-w-stance))
+  (0 (:arm-r :flex 10 :side 120) (:arm-l :flex 10 :side 120)) (:s :snap :lb-w-ram-hit) (:a :lb-w-ram-hit)
+   (:end :lb-w-stance))
 
 ;;; ---------------------------------------------------------------- the owl
 ;;; 近 KIN (decision 38, 2026-10-06: 「近戰模式翼往後收、身體前傾」): on the ㄇ stilts, the column pitched forward (the spine,
@@ -1404,7 +1549,34 @@ the line ahead) else KIN (round his hit point ahead), [49] 1 = a K (EN: its fan 
 the tip trails record (*LB-TRAIL-FROM* .. A + *LB-TRAIL-TO*), [54] the move's reach; per draw [53] the clip's root turn,
 [59 60] its root f / r (LILLE-DRAW), and %LB-WINGS' [55 56] where he stands, [57 58] his facing (the clip's turn out); the
 SP / Kikon looks (decision 56, %LB-SP-DRIVE!): [61] the ring 0..1, [62] its cup, [63] its shake, [64] the close, [65] the
-wings drawn with their holes lit (bits by row), [66] their muzzle flash 0..1.")
+wings drawn with their holes lit (bits by row), [66] their muzzle flash 0..1, [67] the holes glowing (the first N, the
+Kikon cinematic's card).")
+(declaim (type f32vec *lb-holes* *lb-judge-pierce*))
+;; Decision 56's Kikon cinematic (LB-JILLIEL-KIKON-CINE; the storyboard, DUEL_LILLE §23.37): 48 jade lines out of the 24
+;; holes (each twice), the first three spaced, then faster and faster; each pierces the opponent and leaves a white hole in
+;; him (on the white card, his black silhouette) until the verdict shatters him (VFX-LB-JUDGE). All read from the
+;; cinematic's frame, no memory: a skipped or aborted cinematic leaves nothing.
+(defparameter *lb-judge-shots*
+  (let ((v (make-array 48 :element-type 'fixnum)))
+    (dotimes (n 48 v)
+      (setf (aref v n) (case n (0 62) (1 78) (2 90) (t (+ 100 (round (* 48 (sqrt (/ (- n 3) 44.0))))))))))
+  "The cinematic frame of pierce N: 62 / 78 / 90 (beat 3, the gaps shrinking), then 100 + 48 sqrt((n - 3) / 44) to 148
+(beat 4: 7 f apart at first, several a frame at the end).")
+(defparameter *lb-judge-pierce*
+  (let ((v (make-f32 (* 48 3))))
+    (dotimes (n 48 v)
+      (let* ((h1 (let ((x (* 43758.547 (sin (+ (* n 12.9898) 4.1))))) (- x (floor x))))
+             (h2 (let ((x (* 43758.547 (sin (+ (* n 78.233) 1.3))))) (- x (floor x))))
+             (y (+ 0.3 (* 1.42 h2)))                    ; up his body; the half-width by part: legs, torso, head
+             (hw (cond ((< y 0.85) 0.17) ((< y 1.48) 0.24) (t 0.09))))
+        (setf (aref v (* 3 n)) (f32 (* hw (- (* 2 h1) 1))) (aref v (+ 1 (* 3 n))) (f32 y)
+              (aref v (+ 2 (* 3 n))) (f32 (+ 0.045 (* 0.015 (mod (* 7 n) 3))))))))
+  "Pierce N's point on the opponent (3 each: across his body, + = his right (m), up from his feet (m), its hole's radius),
+hashed once (a fixed pattern).")
+(defmacro %lb-judge-hole (n) "The hole pierce N fires from (each hole twice, scattered round the ring)." `(mod (* 7 ,n) 24))
+(defvar *lb-holes* (make-f32 (* 2 24 3))
+  "Per side, the 24 holes' world points as last drawn (%LB-WINGS: wing I's hole G at 3 I + G; decision 56): the Kikon
+cinematic's muzzles (VFX-LB-JUDGE). Cosmetic memory.")
 (defvar *lb-wm* (make-f32 (* 2 8 9))
   "Per side and wing (9 each): [0..2] its drive point last frame, [3..5] the lag spring's bend (a world vector, radians),
 [6..8] its rate. Cosmetic memory (never sim state).")
@@ -1682,14 +1854,18 @@ test reads (*LB-STRIKE-POINTS*), its jointed chain turned and stretched to end t
                 (declare (fixnum b))
                 (%lb-seg-m! *lb-m* w b qx qy qz len wd)
                 (%lb-wing-draw kd g ga ra)
-                (when (> mf 0f0)                         ; the hole on this segment (*LB-WING-HOLES*: 0.2 / 0.5 / 0.79 of
-                  (let* ((ly (* len (case g (0 0.2f0) (1 0.16666667f0) (t 0.12333333f0))))   ;  the blade, its centre
-                         (lx (* wd (case g (0 0.055f0) (1 0.08f0) (t 0.056f0))))            ;  off the chord)
-                         (hx (+ qx (* ly (aref w (+ b 3))) (* lx (aref w b))))
-                         (hy (+ qy (* ly (aref w (+ b 4))) (* lx (aref w (+ b 1)))))
-                         (hz (+ qz (* ly (aref w (+ b 5))) (* lx (aref w (+ b 2)))))
-                         (sd (i->f (+ 90 (* 3 i) g))))
-                    (declare (single-float ly lx hx hy hz sd))
+                (let* ((ly (* len (case g (0 0.2f0) (1 0.16666667f0) (t 0.12333333f0))))   ; the hole on this segment
+                       (lx (* wd (case g (0 0.055f0) (1 0.08f0) (t 0.056f0))))            ;  (*LB-WING-HOLES*: 0.2 / 0.5 /
+                       (hx (+ qx (* ly (aref w (+ b 3))) (* lx (aref w b))))              ;  0.79 of the blade, its centre
+                       (hy (+ qy (* ly (aref w (+ b 4))) (* lx (aref w (+ b 1)))))        ;  off the chord), kept for the
+                       (hz (+ qz (* ly (aref w (+ b 5))) (* lx (aref w (+ b 2)))))        ;  Kikon cinematic's lines
+                       (hi (+ (* 3 i) g)) (ho (* 3 (+ (* 24 side) hi))) (sd (i->f (+ 90 hi))))
+                  (declare (single-float ly lx hx hy hz sd) (fixnum hi ho))
+                  (when (< i 8) (setf (aref *lb-holes* ho) hx (aref *lb-holes* (+ ho 1)) hy (aref *lb-holes* (+ ho 2)) hz))
+                  (when (< hi (f->i (aref w 67)))           ; lit one by one (the Kikon cinematic's card)
+                    (fx-disc hx hy hz 0.06f0 0.04f0 (+ 60f0 sd) +pal-jade+ 0.95f0 :push 0.15f0)
+                    (fx-disc hx hy hz 0.028f0 0.03f0 (+ 160f0 sd) +pal-hit+ 0.95f0 :push 0.18f0))
+                  (when (> mf 0f0)                          ; the muzzle flash
                     (fx-star hx hy hz (* 0.06f0 mf) (* 0.22f0 mf) 6 (* 0.7f0 sd) 0f0 0f0 0.1f0 sd +pal-jade+ mf :push 0.2f0)
                     (fx-star hx hy hz (* 0.03f0 mf) (* 0.1f0 mf) 4 (* 1.3f0 sd) 0f0 0f0 0.05f0 (+ 40f0 sd) +pal-hit+ mf
                              :push 0.25f0)))
@@ -1734,7 +1910,7 @@ convergence's clock and kind and the trails' window. Reads the move's frame only
 (defparameter *lb-sp-kick* 8 "... frames (the firing wing's holes flash for 6).")
 (defparameter *lb-ring-blow* 30.0 "NIJUSHI-KO / the Kikon: the shot's virtual speed (m/s, easing out over 10 f) that blows the wings back.")
 (defparameter *lb-ring-shake* 0.07 "... and the charge's shake at its height (radians on each table wing's place in the ring, at 37 rad/s).")
-(defmacro %lb-sp-drive! (f mv owl)
+(defmacro %lb-sp-drive! (f mv owl ck)
   "Decision 56: Jilliel's SP / Kikon looks for F's draw (MV his move or nil; nothing for the owl, OWL): *LB-WF* [61] the ring
 0..1, [62] its cup (+ forward, - blown back), [63] the shake, [64] the close, [65] the wings lit (bits by row: 16 the right
 front wing, 32 the left, 255 all), [66] their muzzle flash; at a shot also the strike drive [39 40 44] (the kick). The
@@ -1744,6 +1920,25 @@ the move's frame only (cosmetic). 0 B."
   `(let ((%w *lb-wf*) (%f ,f) (%mv ,mv) (%rg 0f0) (%cup 0f0) (%sh 0f0) (%cl 0f0) (%lit 0) (%fl 0f0) (%vb 0f0) (%mask -1)
          (%ts 0.6f0))
      (declare (type f32vec %w) (single-float %rg %cup %sh %cl %fl %vb %ts) (fixnum %lit %mask))
+     (when ,ck                                            ; the Kikon cinematic (decision 56's storyboard): the ring
+       (let* ((%c ,ck) (%sv *lb-judge-shots*) (%last -1))   ; snapped open (f0-6), its holes lit one by one through the
+         (declare (fixnum %c %last) (type (simple-array fixnum (*)) %sv))   ; card (f12-58), the charge shaking, each shot
+         (dotimes (%n 48) (when (<= (aref %sv %n) %c) (setf %last %n)))     ; kicking it back, the verdict closing it
+         (let* ((%age (if (>= %last 0) (- %c (aref %sv %last)) 99))         ; (f170-176), settling after 185
+                (%k (if (< %age 6) (- 1f0 (/ (i->f %age) 6f0)) 0f0)) (%n (if (< %c 176) (min 24 (max 0 (floor (- %c 10) 2))) 0)))
+           (declare (fixnum %age %n) (single-float %k))
+           (setf %rg (* (%lb-ss (/ (i->f %c) 6f0)) (- 1f0 (%lb-ss (/ (- (i->f %c) 185f0) 18f0))))
+                 %cl (%lb-ss (/ (- (i->f %c) 170f0) 6f0))
+                 %cup (- 0.3f0 (* 1.0f0 %k %k))
+                 %sh (cond ((< %c 60) (* (the single-float *lb-ring-shake*) (%lb-ss (/ (- (i->f %c) 30f0) 30f0))))
+                           ((< 100 %c 150) 0.03f0) (t 0f0))
+                 %vb (* 0.6f0 (the single-float *lb-ring-blow*) %k %k) %mask 3 %ts 0.8f0
+                 %fl (if (< %age 3) (- 1f0 (/ (i->f %age) 3f0)) 0f0)
+                 (aref %w 67) (i->f %n))
+           (dotimes (%i 8) (when (>= %n (+ 3 (* 3 %i))) (setf %lit (logior %lit (ash 1 %i)))))
+           (when (and (> %fl 0f0) (< %c 176))               ; the firing wing's muzzles flash
+             (setf %lit (logior %lit (ash 1 (floor (%lb-judge-hole %last) 3))))))))
+     (unless ,ck (setf (aref %w 67) 0f0))
      (when (and %mv (not ,owl))
        (let ((%nm (mv-name %mv)) (%ph (fighter-phase %f)) (%sf (fighter-sf %f)) (%s (mv-s %mv)))
          (declare (fixnum %sf %s))
@@ -2068,8 +2263,8 @@ his halo cracking (gold shards); the broken halo stays (LILLE-DRAW draws it). Lo
 (defparameter *lb-owl-en-spread* 0.9
   "The owl's EN fans its wings out this far of an SP's spread (decision 36: 0.6; decision 38, the user 2026-10-06:
 「遠程模式翼張開」: 0.6 -> 0.9, wide and forward, the holes to the opponent).")
-(defparameter *lb-spread-clips* '(:lb-w-aim :lb-w-nijushi :lb-o-trompete)
-  "The clips (besides every :sp and :kikon move) that fan the wings out (the volley, the beam, Trompete).")
+(defparameter *lb-spread-clips* '(:lb-w-nijushi :lb-o-trompete)
+  "The clips (besides every :sp and :kikon move) that fan the wings out (NIJUSHI-KO's beam, Trompete; the volley's :lb-w-aim went with decision 56).")
 (defmacro lb-jilliel-form-p (form) `(member ,form '(:jilliel :jilliel-mujittai :jilliel-kin :jilliel-kin-mujittai)))
 (defmacro %lb-owl-p (form) "The owl's four forms (decision 36)." `(member ,form '(:shin :shin-mujittai :shin-kin :shin-kin-mujittai)))
 (defmacro lb-mujittai-p (form) `(member ,form '(:jilliel-mujittai :jilliel-kin-mujittai :shin-mujittai :shin-kin-mujittai)))
@@ -2118,7 +2313,7 @@ or a gold look plays; a fourth in MUJITTAI)."
             (aref v 8) (if (%lb-owl-p form) (lb-fxs side 18) 0f0)
             (aref v 29) (if (%lb-owl-p form) (- 1f0 (lb-fxs side 18)) 0f0)))
     (%lb-drive! f mv rdt (%lb-owl-p form))               ; the joints' strike drive (cosmetic: the move's frame)
-    (%lb-sp-drive! f mv (%lb-owl-p form))                ; the SPs' and the Kikon's (decision 56)
+    (%lb-sp-drive! f mv (%lb-owl-p form) ck)             ; the SPs', the Kikon's and its cinematic's (decision 56)
     (let ((pz (anim-pose (model-anim m))) (w *lb-wf*))   ; (the clip's root turn and offset: decision 50's targets)
       (declare (type f32vec pz w))
       (setf (aref w 53) (aref pz 66) (aref w 59) (aref pz 65) (aref w 60) (aref pz 63)))
@@ -2138,7 +2333,6 @@ or a gold look plays; a fourth in MUJITTAI)."
            (%lb-stance-fx! e side stance tm rdt)        ; (a hit passed through, the fold)
            (let* ((rip (- tm (lb-fxs side 3))) (k (if (and cr (< (the fixnum cr) 30)) 0.8f0 (lb-fxs side 4)))
                   (gold (if cr (f-clamp (/ (- (i->f cr) 30f0) 30f0) 0f0 1f0) 0f0))
-                  (lit (and ck (< 8 (the fixnum ck) 110)))   ; (the Kikon cinematic's; NIJUSHI-KO's tell: [65])
                   (o (* 16 (ji :chest))))
              (declare (single-float rip k gold) (fixnum o))
              (setf (aref v 0) 0f0 (aref v 1) 0.3f0 (aref v 2) 0.13f0 (aref v 11) k
@@ -2151,7 +2345,7 @@ or a gold look plays; a fourth in MUJITTAI)."
                    (setf (aref v 15) pg) (%lb-wings jm o *lb-wings-jl* 8 2 side)
                    (setf (aref v 15) 9f0 (aref v 23) pg) (%lb-wings jm o *lb-wings-jl* 8 0 side)
                    (setf (aref v 23) 0f0))
-                 (%lb-wings jm o *lb-wings-jl* 8 (if lit 1 0) side))
+                 (%lb-wings jm o *lb-wings-jl* 8 0 side))   ; (the holes lit: [65], %LB-SP-DRIVE!)
              (unless cr (%lb-trails jm side))            ; the tip trails (decision 50)
              (unless cr                                  ; the wide thin halo (the headless column has none)
                (setf (aref v 14) (if stance 0.7f0 1f0))
@@ -2536,22 +2730,41 @@ cross flash; K its presence."
                       0.8f0 0.09f0 0.02f0 (+ 31f0 (i->f i)) +pal-hit+ k :push 0.6f0)))
         (fx-star x y z 0.08f0 0.2f0 4 0.785f0 0f0 0f0 0.03f0 35f0 +pal-hit+ k :push 0.6f0)))))
 
-(defparameter *lb-hole-fan* '((1 40) (-1 40) (1 13) (-1 13) (1 -16) (-1 -16) (1 -40) (-1 -40))
-  "神の裁き's 24 muzzles: the eight wings (side, elevation), three holes each.")
-(defun vfx-lb-converge (a v k)
-  "神の裁き's Kikon: 24 jade lines out of the wings' holes, crossing on V (K their presence, 0..1)."
-  (let* ((p (pos-of a)) (yaw (yaw-of a)) (ux (fwd-x yaw)) (uz (fwd-z yaw)) (rx (- uz)) (rz ux))
-    (multiple-value-bind (tx ty tz) (actor-point v 1.2)
-      (loop for (s e) in *lb-hole-fan* for w from 0
-            do (dotimes (h 3)
-                 (let* ((d (+ 0.5 (* 0.32 h))) (ea (* e (/ pi 180)))
-                        (x (+ (aref p 0) (* s (cos ea) d rx) (* -0.25 ux))) (y (+ 2.05 (* (sin ea) d))) (z (+ (aref p 2) (* s (cos ea) d rz) (* -0.25 uz))))
-                   (with-floats (x y z tx ty tz k)
-                     (let ((sd (i->f (+ (* 3 w) h))))
-                       (declare (single-float sd))
-                       (fx-ribbon x y z (- tx x) (- ty y) (- tz z) 0.022f0 0.016f0 1f0 (- -51f0 sd) 0.02f0 (toon-a +pal-jade+ k)
-                                  0.8f0 (- -51f0 sd) 0.02f0 (toon-a +pal-jade+ k) 0f0 0f0 :segs 2 :mode :toon)
-                       (fx-disc x y z 0.05f0 0.05f0 sd +pal-jade+ k)))))))))
+(defun-fast vfx-lb-judge (a v cf)
+  "The Kikon cinematic's lines and holes at its frame CF (decision 56's storyboard; A Lille, V the opponent): each pierce's
+jade line (a white core) from its hole (*LB-HOLES*) through V and 3 m on, for 5 f, a star where it enters on its first
+2; every pierce so far a white hole in V (*LB-JUDGE-PIERCE*: facing the camera, pushed over his silhouette), until the
+verdict (frame 176). From the frame alone: nothing outlives the cinematic. 0 B but its two position reads."
+  (declare (fixnum cf))
+  (let* ((p (pos-of a)) (q (pos-of v)) (side (if (eql a *p1*) 0 1)) (hs *lb-holes*) (pp *lb-judge-pierce*)
+         (sv *lb-judge-shots*)
+         (dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2))) (dl (f-max 0.01f0 (f-sqrt (+ (* dx dx) (* dz dz)))))
+         (rx (- (/ dz dl))) (rz (/ dx dl)) (qx (aref q 0)) (qy (aref q 1)) (qz (aref q 2)))   ; (his right, facing A)
+    (declare (type f32vec p q hs pp) (type (simple-array fixnum (*)) sv) (fixnum side)
+             (single-float dx dz dl rx rz qx qy qz))
+    (when (< cf 176)
+      (dotimes (n 48)
+        (let ((sf (aref sv n)))
+          (declare (fixnum sf))
+          (when (<= sf cf)
+            (let* ((o (* 3 n)) (u (aref pp o)) (tx (+ qx (* u rx))) (ty (+ qy (aref pp (+ o 1)))) (tz (+ qz (* u rz)))
+                   (age (- cf sf)) (sd (i->f n)))
+              (declare (fixnum o age) (single-float u tx ty tz sd))
+              (fx-disc tx ty tz (aref pp (+ o 2)) 0.04f0 (+ 600f0 sd) +pal-hit+ 0.98f0 :push 0.35f0)   ; the hole
+              (when (< age 5)
+                (let* ((k (- 1f0 (* 0.2f0 (i->f age)))) (h (* 3 (+ (* 24 side) (%lb-judge-hole n))))
+                       (x0 (aref hs h)) (y0 (aref hs (+ h 1))) (z0 (aref hs (+ h 2)))
+                       (ax (- tx x0)) (ay (- ty y0)) (az (- tz z0)) (al (f-max 0.01f0 (f-sqrt (+ (* ax ax) (* ay ay) (* az az)))))
+                       (e (/ (+ al 3f0) al)) (ex (* ax e)) (ey (* ay e)) (ez (* az e)))
+                  (declare (single-float k x0 y0 z0 ax ay az al e ex ey ez) (fixnum h))
+                  (fx-ribbon x0 y0 z0 ex ey ez (* 0.065f0 k) (* 0.05f0 k) 1f0 (- -151f0 sd) 0.02f0 (toon-a +pal-jade+ k)
+                             0.8f0 (- -151f0 sd) 0.02f0 (toon-a +pal-jade+ k) 0f0 0f0 :segs 2 :mode :toon)
+                  (fx-ribbon x0 y0 z0 ex ey ez (* 0.018f0 k) (* 0.014f0 k) 1f0 (- -251f0 sd) 0f0 (toon-a +pal-hit+ k)
+                             1f0 (- -251f0 sd) 0f0 (toon-a +pal-hit+ k) 0f0 0f0 :segs 2 :mode :toon)
+                  (when (< age 2)
+                    (fx-star tx ty tz 0.06f0 0.3f0 6 (* 0.9f0 sd) 0f0 0f0 0.1f0 (+ 700f0 sd) +pal-jade+ 0.95f0
+                             :push 0.4f0)))))))))
+    nil))
 
 (defun vfx-lb-horizon (a k)
   "神の喇叭's Kikon: the beam out of the bell, erasing the horizon (a wide gold band, a white core), K its presence."
