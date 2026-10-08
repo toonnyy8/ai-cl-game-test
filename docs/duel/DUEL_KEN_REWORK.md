@@ -64,6 +64,22 @@ cup 3 NOMIHOSE → Bankai (red oni, broken cleaver, 4 arm pips) → KATAUDE (the
 - Motion bars (motion-refs §3): sealed 12 archetypes, NOZARASHI 15 by cup, Bankai 9, with one rule: **no two strikes
   share an arc plane and a hand set**.
 
-## 4. Open questions (for the user)
+## 4. The user's choices (2026-10-08)
 
-To be filled with the user's answers.
+Asked with four questions (recommended first); the answers, verbatim option labels:
+
+1. Scope and order: 「逐型態：模型＋動作一起做」. One form at a time, base → NOZARASHI (KATATE / RYOTE / NOMIHOSE) →
+   Bankai / KATAUDE; each form's look first, by stills for the user, then its strike clips. (Rejected: all models then
+   all motions; motions only; models only.)
+2. Nozarashi's size: 「改成原作形狀，大小貼合現有判定」. The canon crescent cleaver (black body, pale edge, brass cap,
+   tassel, long cloth haft) at a length that fits the current hit reach: presentation only, the sim byte-identical.
+   (Rejected: canon 2.4 m with the hit lengthened, a sim change; canon 2.4 m drawn only.)
+3. Eyepatch: 「維持不戴眼罩」. No eyepatch in any form stays; only the code comment that calls it canon is corrected.
+   (Rejected: on in base and off at the awakening; on until the Bankai.)
+4. Look items to follow canon (multi-select, all four chosen): 「頭髮：刺狀頭頂＋長鬃髮」「羽織與腰帶」「卍解的臉與角」
+   「封印刀的刀鍔與柄」. That is a spiky crown with a long mane (no bells); the haori sleeveless with a sawtooth hem,
+   holes and 十一 on the back, a white obi with a front bow; the oni's horns skin-red, a forehead flame mark, tear-streak
+   bands, blank white eyes, a grin of flat teeth; the katana's serrated spindle tsuba and a white-wrapped grip.
+
+Every change is presentation only: frame data, reaches and hit volumes stay, and each round is proved with
+`simgate --seeds 10 --summary` and `--cvc` byte-identical against the branch base (`cc40146`).
