@@ -394,7 +394,10 @@ The harvest was checked this way after each step.
 
 ## Pacing gate
 
-`duel-gate.json` (20 seeds × pairing, NORMAL, turbo, cinematics included in the match time).
+`duel-gate.json` (20 seeds × pairing, NORMAL, turbo). **The match time leaves the cinematics out** since 2026-10-08 (the
+user: 「毀魂技演出不計入對戰時長」, every cinematic: Kikons, awakenings, revivals, the intro; `MATCH-PLAY-TICKS`, the frames the
+match timer ran, which a cinematic stops); every median and accepted exception quoted before that date includes them
+(DEVLOG §134 has the re-measured baseline).
 Target: every match ends by K.O. (before the 300 s timer), **median 125–210 s** per pairing (125–180 s until guard
 v3: Reishi 1100 → 1300 is the user's decision 2026-09-26, because real human matches run much faster than CPU vs
 CPU), win rates near even (YK within ±3 of 10 / 10). The gate runs ~15 min of turbo for six pairings: `--secs 1100`; with

@@ -152,7 +152,7 @@ else ends the run (its RESULTS)."
     (setf *endless-rows* (if (getf snap :awakened) '(:stay :revert :quit) '(:stay :quit))
           *endless-lines*
           (vector (format nil "STAGE ~d CLEAR" n)
-                  (format nil "TIME ~a   RUN ~a" (mm-ss (round *match-tick* 60)) (mm-ss (round *endless-ticks* 60)))
+                  (format nil "TIME ~a   RUN ~a" (mm-ss (round (match-play-ticks) 60)) (mm-ss (round *endless-ticks* 60)))
                   (format nil "KONPAKU  ~d -> ~d" k (min *konpaku-max* (+ k 2)))
                   "REISHI FULL   GUARD FULL"
                   "REIATSU  FLASH STEP  KEPT"

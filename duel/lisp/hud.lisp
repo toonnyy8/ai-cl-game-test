@@ -1017,7 +1017,7 @@ and the tap help (left / right third: choose, the middle: confirm)."
               (cdr c) (vector (case *winner* (0 (format nil "~a  (P1)" (kit-name (kit-of *p1*))))
                                             (1 (format nil "~a  (P2)" (kit-name (kit-of *p2*)))))
                               (values-of *p1*) (values-of *p2*)
-                              (format nil "~d S" (round *match-tick* 60))))))
+                              (format nil "~d S" (round (match-play-ticks) 60))))))
     (cdr c)))
 
 (defun hud-results-portrait (w h s)

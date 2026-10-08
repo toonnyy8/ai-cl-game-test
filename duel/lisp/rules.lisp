@@ -442,6 +442,11 @@ what was really taken, not AMOUNT."
 
 (defun seconds->frames (s) (round (* s 60)))
 
+(defun play-ticks (match-seconds frames-left)
+  "A match's length in frames without its cinematics: the frames its MATCH-SECONDS timer ran down to FRAMES-LEFT (a
+cinematic stops the timer). The user, 2026-10-08: 「毀魂技演出不計入對戰時長」 (every cinematic)."
+  (- (* 60 match-seconds) (max 0 frames-left)))
+
 (defun timer-fill (frames-left total-frames max)
   "Display value of a gauge that drains as a timer (Inferno in Hellfire, Awakening in a timed awakening)."
   (if (<= total-frames 0) 0.0 (* max (/ (float frames-left) total-frames))))

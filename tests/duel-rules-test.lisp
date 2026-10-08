@@ -2705,6 +2705,11 @@ defender's next step. Values: the attacker's and the defender's first actionable
                  never (some (lambda (w) (search w line)) '(":ya-" ":ke-" ":ru-" ":ic-" ":sj-" "yama" "kenpachi" "rukia" "ichigo"
                                                              "senju" ":lb-" "lille"))))))
 
+;; The gate's match length leaves the cinematics out (the user, 2026-10-08: 「毀魂技演出不計入對戰時長」, every cinematic):
+;; PLAY-TICKS (flow's MATCH-PLAY-TICKS) are the frames the timer ran (it stops while a cinematic plays: MAIN's step)
+(check (= 600 (play-ticks 300 (- 18000 600))))
+(check (= 18000 (play-ticks 300 -3)))
+
 (format t "duel-rules-test: ~d checks, ~a~%" *checks*
         (if (zerop *fails*) "ALL PASS" (format nil "~d FAILED" *fails*)))
 (ext:quit (if (zerop *fails*) 0 1))
