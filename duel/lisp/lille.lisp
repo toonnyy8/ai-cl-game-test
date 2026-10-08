@@ -3394,10 +3394,11 @@ the KIN body (:lille-jilliel-kin, until the next form change)."
       (progn (force-form e :jilliel) (setf (model-body (model e)) (find-body :lille-jilliel-kin)))))
 
 (defvar *lb-front-k* 0 "Debug 79198's next look: 0 JILLIEL, 1 KIN, 2 the owl EN, 3 the owl KIN.")
+(defvar *lb-face-ang* 8 "Debug 79199's camera angle round his facing: each call the next of 8 (front) and 75 (his left side).")
 (defcine lb-face-cine (a v :len 900 :hold 900)
-  "Debug 79199's still: a long-lens close-up of A's head from the front (the model review), held."
-  (at 0 (cine-clip a (kit-stance (kit-of a)) :blend 0) (shot-on a 8 2.6 2.3 :look 2.25) (lens 24))
-  (during (0 900) (shot-on a 8 2.6 2.3 :look 2.25)))
+  "Debug 79199's still: a long-lens close-up of A's head (the model review), held."
+  (at 0 (cine-clip a (kit-stance (kit-of a)) :blend 0) (shot-on a *lb-face-ang* 2.6 2.3 :look 2.25) (lens 24))
+  (during (0 900) (shot-on a *lb-face-ang* 2.6 2.3 :look 2.25)))
 (defun lille-art-debug (c)
   "79100 + 19 i + k (k 0-18): cinematic i (*LB-CINES*) held at frame 10 k; 79195 his looks' consing (LILLE-CONS-PROBE);
 79196 P1's eye opens now (its look: a pip spent, nothing dodged); 79197 P1 Lille as JILLIEL KIN 5 m from Kenpachi (the
@@ -3415,7 +3416,7 @@ rework's rig, DUEL_LILLE §22.5); 79198 Lille as P2 facing the behind camera 4 m
              (setf *lb-front-k* (mod (1+ k) 4))
              (case k (0 (force-form *p2* :jilliel)) (1 (lille-kin-look *p2*)) (2 (force-form *p2* :shin)) (t (force-form *p2* :shin-kin))))
            (place *p1* *p2* 4.0))
-          ((= n 99) (start-cine 'lb-face-cine *p2* *p1*))
+          ((= n 99) (abort-cine) (start-cine 'lb-face-cine *p2* *p1*) (setf *lb-face-ang* (if (= *lb-face-ang* 8) 75 8)))
           (t (log-msg "duel lille: no debug command ~d" c)))))
 (pushnew '(79100 79199 lille-art-debug) *char-debug* :test #'equal)
 

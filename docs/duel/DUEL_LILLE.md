@@ -3066,11 +3066,27 @@ it, the chin on a round knob, and the front's top edge runs straight across with
   two horn points removed;
 - the face, crown stripe and chin keep the `:jl-head` tag (the revival's headless column still hides them); the collar
   has none, so the headless column keeps its collar.
-- Debug 79199 (claimed): a long-lens close-up of P2's head after 79198, for the model review.
+- Debug 79199 (claimed): a long-lens close-up of P2's head after 79198, for the model review. (Superseded the same day: "Corrected" below.)
 
 Checks: duel-rules 6481 ALL PASS, pkgcheck 0 / 0 / 0, `./build.sh duel` 0 warnings; `simgate --cvc` identical and
 Lille's six pairings at 10 seeds byte-identical (the sim never reads the body). Stills: the close-up (79199) and the
 front view (79198), before / after, in the scratchpad.
+
+**Corrected** (the user, 2026-10-08, with three manga panels): 「1. 開口上緣沒有橫板跟 V 字缺口，是空出來無遮蔽的。2. 衣領是前低後高成斜切面，且沒有高過頭頂太多
+3. 臉部是咖啡色為主，但你化成白色只留一點咖啡色露出在外。請先描述你的觀察讓我確認後再修改。」 The lead described the panels (an open shell, black
+inside; the rim cut on a slant, low at the chin in front and a little over the crown behind; the head brown, a dark
+ridge from the crown to the nose between two pale bands, half-shut eyes, a long nose, the chin on a round knob); the
+user: 「善哉，你描述得很對」, and mid-build: 「頭部請縮小到覺醒前的正常大小，然後領口對齊身體的圓筒」. As built (both bodies):
+- the collar: 24 cream panels whose outside lies on the column's top radius (0.19 m), each as tall as the slanted rim
+  over its bearing: from 0.04 m over the head joint at the front to 0.29 m behind (`top = front + (back − front)(1 − cos θ)/2`),
+  all from 0.04 m under it; a black lining (`:lining` #15130F) of 24 panels inside; no bar, no notch, no plate;
+- the head: the base form's size (r 0.086 m: his 0.072 under the base body's ×1.2 head girth), brown (`:skin`), at 0.17 m;
+  the crown's dark ridge (`:ridge` #4A3A31) from the crown down to a long nose, two pale bands (`:band` #CFC6B0) beside
+  it (each a run of small plates along the skull); half-shut eyes under heavy lids; the cream chin knob (r 0.032 m) on
+  the front rim;
+- debug 79199 now alternates the front (8°) and his left side (75°).
+Checks as above (6481 ALL PASS, pkgcheck 0 / 0 / 0, 0 warnings, `--cvc` and Lille's six pairings identical). The slanted
+rim is stepped (24 flat-topped panels): visible in the close-up, small at play distance.
 ---
 
 ## 24. The adaptive, in-character CPU (dream-rsi; the user, 2026-10-06)
