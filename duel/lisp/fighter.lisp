@@ -186,8 +186,8 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
           (fighter-follow f) nil (fighter-armor-left f) (mv-armor-hits mv)
           (fighter-phase f) (cond ((member (mv-kind mv) '(:breaker :kikon)) :aura) ((mv-hold mv) :hold) (t :main)))
     (fill (motion-vel (motion e)) 0f0)
-    (play-clip e (mv-clip mv) :blend (mv-blend mv) :speed (mv-clip-speed mv)
-                              :time (/ (* enter (mv-clip-speed mv)) 60.0))
+    (play-clip e (kit-move-clip (fighter-kit f) (mv-clip mv)) :blend (mv-blend mv) :speed (mv-clip-speed mv)   ; (the
+                              :time (/ (* enter (mv-clip-speed mv)) 60.0))                                   ;  form's look)
     (if (eq (mv-kind mv) :kikon)
         (callout e "KIKON")                             ; its own name shows if it becomes the Kikon
         (when (mv-callout mv) (callout e (mv-callout mv))))
@@ -208,7 +208,8 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
                 do (loop for (hf hook) in (mv-on-frame mv) when (= hf fr) do (funcall hook e)))
           (when (eq (fighter-move f) mv)
             (setf (fighter-sf f) (+ enter cut))
-            (play-clip e (mv-clip mv) :blend 0 :speed (mv-clip-speed mv) :time (/ (* (+ enter cut) (mv-clip-speed mv)) 60.0))
+            (play-clip e (kit-move-clip (fighter-kit f) (mv-clip mv)) :blend 0 :speed (mv-clip-speed mv)
+                       :time (/ (* (+ enter cut) (mv-clip-speed mv)) 60.0))
             (clog "~a chain cut ~d f" (side-name e) cut)))))
     mv))
 
@@ -216,7 +217,7 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
   "A hold / Breaker move leaves its pre-strike phase: the move proper starts at frame 0."
   (setf (fighter-phase f) :main (fighter-sf f) 0)
   (fill (motion-vel (motion e)) 0f0)
-  (when (mv-clip-2 mv) (play-clip e (mv-clip-2 mv) :blend 0 :speed (mv-clip-speed mv)))
+  (when (mv-clip-2 mv) (play-clip e (kit-move-clip (fighter-kit f) (mv-clip-2 mv)) :blend 0 :speed (mv-clip-speed mv)))
   (when (eq (mv-kind mv) :breaker) (emit :breaker-end e)))
 
 (defun start-step (e f)
@@ -757,7 +758,7 @@ clip follows the heading: forward run, side slide or back-skate (RUN-CLIP)."
       (let ((p (pos-of e))) (emit :hoho-in e (aref p 0) (aref p 2)))
       (let ((h (kit-hook (fighter-kit f) :hoho))) (when h (funcall h e))))   ; the form's own arrival (Rukia's cold)
     (when (and (= sf *hoho-counter-pose*) (fighter-perfect f))
-      (play-clip e (mv-clip (kit-command-move (fighter-kit f) :q)) :blend 0 :time 0.1))
+      (play-clip e (kit-move-clip (fighter-kit f) (mv-clip (kit-command-move (fighter-kit f) :q))) :blend 0 :time 0.1))
     (when (>= sf *hoho-frames*) (to-idle e 3))))
 
 (defun air-step (e f vp)

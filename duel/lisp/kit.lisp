@@ -267,6 +267,7 @@ new button."
   (hooks nil)                           ; plist hook point -> the character file's function (KIT-HOOK; docs/duel/DUEL_DESIGN.md
                                         ; "Character code layout")
   (endless-form nil)                    ; ENDLESS: the form a stay-awakened carry starts the next stage in (endless-rules.lisp)
+  (clip-map nil)                        ; plist clip -> clip: the form plays its moves' clips as these (a look: KIT-MOVE-CLIP)
   (commands nil)                ; plist command -> move name
   (strings nil)                 ; ((from-move command to-move) ...)
   (moves (make-hash-table :test 'eq))   ; move name -> this form's MOVE
@@ -351,12 +352,17 @@ Cornered with LOST Konpaku."
 (defun kit-def-mods (kit)
   "The defender plist for HIT-DAMAGE: the damage the form takes (:taken)."
   (list :mult (kit-taken kit)))
+(defun kit-move-clip (kit clip)
+  "The clip a fighter in KIT plays for a move's CLIP: the form's :clip-map entry, else CLIP (NIL stays NIL). A look only:
+the move (its name, frames and volumes) is the same in every form that has it (decision 56, DUEL_LILLE §23.37: Jilliel KIN
+plays the base form's SANREN, :lb-sanren, on his wings)."
+  (if clip (or (getf (kit-clip-map kit) clip) clip) clip))
 (defun kit-clips (kit)
-  "Every clip name the form uses (moves, stance, intro/win, entry cinematic, the run)."
+  "Every clip name the form uses (moves, stance, intro/win, entry cinematic, the run), its moves' through its :clip-map."
   (remove-duplicates
    (remove nil (append (list (kit-stance kit) (kit-intro kit) (kit-win kit)) (kit-enter-clips kit) (kit-run-clips kit) (list (kit-drink-clip kit))
                        (loop for mv being the hash-values of (kit-moves kit)
-                             collect (mv-clip mv) collect (mv-clip-2 mv))))))
+                             collect (kit-move-clip kit (mv-clip mv)) collect (kit-move-clip kit (mv-clip-2 mv)))))))
 
 (defun register-kit (character form spec)
   (let* ((spec (resolve-tuning spec))
@@ -376,7 +382,7 @@ Cornered with LOST Konpaku."
                            body weapon stance hide aura (lift 0.0) intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
                            enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
                            kikon-konpaku meter-gain form-name drink-clip respect-callout bankai-form bankai-ok pips
-                           crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k l-after-j calm hooks endless-form
+                           crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k l-after-j calm hooks endless-form clip-map
                            stun-tolerance (gg-regen 1.0) (startup-add 0) (reach-mult 1.0) commands strings grid)
         merged
       (declare (ignore grid))
@@ -393,7 +399,7 @@ Cornered with LOST Konpaku."
                            :meter-gain meter-gain :form-name (or form-name (symbol-name form)) :drink-clip drink-clip
                            :respect-callout respect-callout :bankai-form bankai-form :bankai-ok bankai-ok :pips pips
                            :crush-hook crush-hook :rooted rooted :field field :warm warm :cold cold
-                           :frost-touch frost-touch :reset-form reset-form :u-tag u-tag :l-after-k l-after-k :l-after-j l-after-j :calm calm :endless-form endless-form
+                           :frost-touch frost-touch :reset-form reset-form :u-tag u-tag :l-after-k l-after-k :l-after-j l-after-j :calm calm :endless-form endless-form :clip-map clip-map
                            :stun-tolerance stun-tolerance :gg-regen gg-regen
                            :hooks hooks :commands commands :strings strings :spec merged))
             (own (loop for (nil m) on (getf spec :commands) by #'cddr collect m)))
@@ -486,6 +492,8 @@ child's keys win, :commands merge per command, :strings add. Keys:
                                      on it, SETTLE-KONPAKU), :body-alpha (e: the body's draw alpha, a constant
                                      float: a see-through form), :charge (e rdt: drawn instead of the fire charge
                                      look of a held move)
+  :clip-map (clip clip ...)          a look: the form plays a move's clip (or clip 2) as the mapped one (KIT-MOVE-CLIP:
+                                     Jilliel KIN's SANREN on his wings; the move, shared with the base form, is unchanged)
   :endless-form FORM                 ENDLESS: staying awakened starts the next stage in FORM, its meter at FORM's :start
                                      (docs/duel/DUEL_ENDLESS.md §4)
   :u-tag STRING                      the HUD's tag for U   :meter (... :draw fn :label fn :bankai-prompt (:key :right

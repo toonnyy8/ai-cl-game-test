@@ -458,7 +458,9 @@ place (round 2: TENSHIN in then J combos), SP2's a knockback."
   :flags (:ranged :x-axis :uncatchable) :tick lb-nijushi-tick :on-frame ((0 lb-nijushi-tell) (40 lb-beam-shot))
   :params (:lock 20 :track 60.0 :width 1.2))
 (defmove :lb-w-breaker :kind :breaker :clip :lb-w-breaker :clip-2 :lb-w-ram :callout "JILLIEL")
-(defmove :lb-w-kikon :kind :kikon :clip :lb-w-aim :clip-2 :lb-w-fire :clip-s 4 :callout "KAMI NO SABAKI"
+;; (its clips: decision 56, 2026-10-08, the aura :lb-w-kikon rising into the ring, the strike :lb-w-kikon-fire at speed 1;
+;; :lb-w-aim / :lb-w-fire at :clip-s 4 before)
+(defmove :lb-w-kikon :kind :kikon :clip :lb-w-kikon :clip-2 :lb-w-kikon-fire :callout "KAMI NO SABAKI"
   :cine lb-jilliel-kikon-cine :startup 20 :active 3 :recovery 30 :whiff 30 :dmg 70 :adv-block -14 :track 0
   :vol (:cap 0.5 12.0 1.2 1.2) :on-hit :knockback :kb 2.0 :cooldown 90 :on-frame ((20 lb-lane-shot))
   :params (:aura 8 :aim 120.0 :speed 0.0 :dash-max 0 :dash-track 0.0 :look :lane :follow-speed 14.0 :len 12.0))
@@ -484,7 +486,7 @@ place (round 2: TENSHIN in then J combos), SP2's a knockback."
   :flags (:ender) :tick lb-en-tick :on-frame ((11 lb-en-lay)) :params (:trace :k))
 (defmove-copy :lb-e-j2s :lb-e-j2)
 (defmove-copy :lb-e-k2s :lb-e-k2)
-(defmove :lb-e-sanren :kind :sp :clip :lb-w-aim :callout "SANREN" :startup 6 :active 14 :recovery 12 :reach 2.2
+(defmove :lb-e-sanren :kind :sp :clip :lb-e-sanren :callout "SANREN" :startup 6 :active 14 :recovery 12 :reach 2.2
   :tick lb-en-tick :on-frame ((6 lb-en-lay) (12 lb-en-lay) (18 lb-en-lay)) :params (:trace :sp1))
 ;; EN's SP2 NIJUSHI-KO (2 bars): the 20 f tell (planted, turning 60 deg/s until f10), then one thick trace (round 2: 40 f,
 ;; locked at f20, R 30 before)
@@ -635,6 +637,7 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
   :form-name "JILLIEL KIN" :walk *walk-kin* :run *run-kin* :guard-to :jilliel-kin-mujittai :l-after-k t
   :body :lille-jilliel-kin
   :commands (:q :lb-w-j1 :f :lb-w-k1 :sig :lb-switch :sp1 :lb-sanren :sp2 :lb-nijushi)
+  :clip-map (:lb-sanren :lb-w-sanren)           ; SANREN (the base form's move) on his wings (a look; decision 56)
   :grid (:lb-w-j1 :lb-w-j2 :lb-w-j3 :lb-w-k1 :lb-w-k2 :lb-w-k3 :lb-w-j2s :lb-w-k2s)
   :ai (:intents (:approach 3 :pressure 4 :zone 0 :defend 1)
        :ranges (:approach (2.4 6.0) :pressure (1.4 2.4) :zone (3.0 6.0) :defend (3.0 6.0))

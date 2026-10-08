@@ -799,11 +799,13 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :sj-stance :sj-q1 :sj-q2 :sj-spin :sj-f1 :sj-f2 :sj-drop :sj-yank :sj-summon :sj-kasa :sj-breaker :sj-saidan :sj-intro
     :sj-win :sj-loom-stance :sj-weave :sj-unravel :sj-tanmono :sj-makitori :sj-snip   ; Senjumaru (:sj-awaken is the cine's)
     :lb-stance :lb-intro :lb-win :lb-q1 :lb-q2 :lb-jab :lb-f1 :lb-f2 :lb-f3 :lb-aim :lb-fire :lb-sanren :lb-hiren
-    :lb-breaker :lb-butt :lb-w-stance :lb-w-fold :lb-w-q1 :lb-w-q2 :lb-w-q3 :lb-w-f1 :lb-w-f2 :lb-w-f3 :lb-w-aim :lb-w-fire
-    :lb-w-nijushi :lb-w-breaker :lb-w-ram :lb-e-q1 :lb-e-q2 :lb-e-q3 :lb-e-f1 :lb-e-f2 :lb-e-f3 :lb-o-stance :lb-o-q1 :lb-o-q2 :lb-o-q3 :lb-o-f1 :lb-o-f2 :lb-o-f3 :lb-o-chop
+    :lb-breaker :lb-butt :lb-w-stance :lb-w-fold :lb-w-q1 :lb-w-q2 :lb-w-q3 :lb-w-f1 :lb-w-f2 :lb-w-f3 :lb-w-sanren :lb-e-sanren
+    :lb-w-kikon :lb-w-kikon-fire :lb-w-nijushi :lb-w-breaker :lb-w-ram :lb-e-q1 :lb-e-q2 :lb-e-q3 :lb-e-f1 :lb-e-f2 :lb-e-f3 :lb-o-stance :lb-o-q1 :lb-o-q2 :lb-o-q3 :lb-o-f1 :lb-o-f2 :lb-o-f3 :lb-o-chop
     :lb-o-trompete :lb-o-breaker :lb-o-stamp      ; Lille (DUEL_LILLE §12 Art)
     :lb-kamae :lb-k-shot :lb-k-hosha :lb-k-taisha :lb-k-dash :lb-w-tenshin :lb-w-tenshin-in   ; his rework (DUEL_LILLE §22, §23)
     :lb-oe-stance :lb-o-fold :lb-oe-fold :lb-oe-sabaki :lb-o-tenshin :lb-o-tenshin-in))   ; the owl on Jilliel's system (decision 36, §23.14)
+;; (Jilliel's SPs and Kikon, decision 56, DUEL_LILLE §23.37: :lb-w-sanren is KIN's SANREN through his :clip-map, :lb-e-sanren
+;; EN's own, :lb-w-kikon / :lb-w-kikon-fire the Kikon in play; :lb-w-aim / :lb-w-fire left the list, the cinematic holds :lb-w-aim)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
 ;; DEFCINEs, which the host stubs; KESSA's clones play :ic-k-cut / :ic-k-wrap, ICHIGO-CLONE-STEP)
 (let ((used (remove-duplicates (loop for cf in *forms* append (kit-clips (apply #'kit cf))))))
@@ -1735,6 +1737,36 @@ along the left forearm, so the fist leads).")
             (let ((art (sqrt (+ (expt (aref v 0) 2) (expt (aref v 2) 2)))))
               (check (or (<= (abs (- art (mv-reach mv))) 0.15)
                          (format t "jilliel ~a: the reach ~,2f m, the cast's tip ~,2f m~%" (mv-name mv) (mv-reach mv) art))))))))))
+;; Jilliel's SPs and Kikon (decision 56, DUEL_LILLE §23.37), on his rig (both bodies :props (:arms 2.6), the art evaluated
+;; above): each clip lasts its move (S + A + R, its :s mark on S; EN's NIJUSHI-KO plays KIN's at x2); SANREN's firing wing
+;; points at him on each shot frame (the tip >= 1.2 m ahead, within 0.4 m of his line; the third shot both); NIJUSHI-KO's and
+;; the Kikon's front wings stand out in the ring's lower places on the frame before the shot (each tip >= 1 m to its side)
+(let ((jm (make-f32 (* 16 +nj+))) (pose (make-f32 +pose-n+)) (v (make-f32 3)) (props (make-rig-proportions :arms 2.6)))
+  (flet ((tip (clip frame joint)
+           (clip-sample! pose (find-clip clip) (/ frame 60.0))
+           (pose-fk! jm pose 0f0 0f0 0f0 0f0 1f0 0f0 props)
+           (joint-point! v jm (joint-index joint) 0f0 0f0 0f0)
+           (values (aref v 0) (- (aref v 2)))))           ; (x his right, ahead: yaw 0 faces -Z)
+    (dolist (row '((:lb-w-sanren :lb-sanren (12 22 32)) (:lb-e-sanren :lb-e-sanren (6 12 18)) (:lb-w-nijushi :lb-nijushi nil)
+                   (:lb-w-kikon-fire :lb-w-kikon nil)))
+      (destructuring-bind (clip move shots) row
+        (let ((mv (find-move move)))
+          (check (or (and (= (round (* 60 (clip-dur (find-clip clip)))) (+ (mv-s mv) (mv-a mv) (mv-r mv)))
+                          (= (round (* 60 (clip-mark clip :s))) (mv-s mv)))
+                     (format t "~a: ~,1f f, its move ~a ~d f~%" clip (* 60 (clip-dur (find-clip clip))) move
+                             (+ (mv-s mv) (mv-a mv) (mv-r mv)))))
+          (loop for sh in shots for n from 0
+                do (dolist (j (case n (0 '(:hand-r)) (1 '(:hand-l)) (t '(:hand-r :hand-l))))
+                     (multiple-value-bind (x ahead) (tip clip sh j)
+                       (check (or (and (>= ahead 1.2) (<= (abs x) 0.4))
+                                  (format t "~a f~d ~a: ~,2f m ahead, ~,2f m aside~%" clip sh j ahead x))))))
+          (unless shots
+            (dolist (j '(:hand-r :hand-l))
+              (multiple-value-bind (x ahead) (tip clip (1- (mv-s mv)) j)
+                (declare (ignore ahead))
+                (check (or (>= (* x (if (eq j :hand-r) 1 -1)) 1.0)
+                           (format t "~a f~d ~a: ~,2f m aside~%" clip (1- (mv-s mv)) j x)))))))))))
+    (check (= (round (* 60 (clip-dur (find-clip :lb-w-kikon)))) (getf (mv-params (find-move :lb-w-kikon)) :aura)))   ; (the aura)
 
 ;; J is short, K long (the user, 2026-09-29, docs/duel/DUEL_STRINGS.md §13): in every form every K link reaches at least 0.5 m further
 ;; than any J link at the same position of the string; 片腕's short K against the J floor (2026-10-06) excepted
@@ -2381,6 +2413,25 @@ defender's next step. Values: the attacker's and the defender's first actionable
             (eq :lb-oe-sabaki (mv-name (kit-command-move (kit :lille :shin-mujittai) :sp1)))
             (zerop (lb-trace-cost :sp1))
             (eq :lb-switch (mv-name (kit-command-move (kit :lille :jilliel-kin-mujittai) :sig)))))
+;; decision 56 (DUEL_LILLE §23.37): KIN plays SANREN, the base form's move (one move, its name, frames and volumes), on his
+;; wings through his :clip-map (a look: FIGHTER.LISP plays KIT-MOVE-CLIP); the base form plays the rifle's clip, and no other
+;; form maps a clip; EN's SANREN and the Kikon play their own clips at speed 1
+(let ((san (find-move :lb-sanren)))
+  (check (and (eq (kit-command-move (kit :lille :base) :sp1) san) (eq (kit-command-move (kit :lille :jilliel-kin) :sp1) san)
+              (eq :lb-sanren (mv-clip san)) (eq :lb-sanren (kit-move-clip (kit :lille :base) (mv-clip san)))
+              (eq :lb-w-sanren (kit-move-clip (kit :lille :jilliel-kin) (mv-clip san)))
+              (eq :lb-w-sanren (kit-move-clip (kit :lille :jilliel-kin-mujittai) (mv-clip san)))
+              (eq :lb-sanren (kit-move-clip (kit :lille :jilliel) :lb-sanren))
+              (eq :lb-w-nijushi (kit-move-clip (kit :lille :jilliel-kin) (mv-clip (kit-command-move (kit :lille :jilliel-kin) :sp2))))
+              (null (kit-move-clip (kit :lille :jilliel-kin) nil))
+              (member :lb-w-sanren (kit-clips (kit :lille :jilliel-kin))) (not (member :lb-sanren (kit-clips (kit :lille :jilliel-kin))))
+              (member :lb-sanren (kit-clips (kit :lille :base))))))
+(check (every (lambda (cf) (or (member cf '((:lille :jilliel-kin) (:lille :jilliel-kin-mujittai)) :test #'equal)
+                               (null (kit-clip-map (apply #'kit cf)))))
+              *forms*))
+(check (and (eq :lb-e-sanren (mv-clip (find-move :lb-e-sanren))) (~= 1.0 (mv-clip-speed (find-move :lb-e-sanren)))
+            (eq :lb-w-kikon (mv-clip (find-move :lb-w-kikon))) (eq :lb-w-kikon-fire (mv-clip-2 (find-move :lb-w-kikon)))
+            (~= 1.0 (mv-clip-speed (find-move :lb-w-kikon))) (~= 2.0 (mv-clip-speed (find-move :lb-e-nijushi)))))
 ;; the pendulum's route: KIN's J1 has K2s after it, K2s only K3; K3 crumples (the crossfire's opening)
 (let ((kk (kit :lille :jilliel-kin)))
   (check (and (eq :lb-w-k2s (mv-name (kit-next kk :lb-w-j1 :f))) (eq :lb-w-k3 (mv-name (kit-next kk :lb-w-k2s :f)))
