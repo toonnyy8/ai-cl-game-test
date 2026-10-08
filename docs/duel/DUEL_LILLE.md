@@ -2752,14 +2752,14 @@ EN's Jilliel casts have (the tip at the move's `:reach` on S).
 **The Kikon cinematic's storyboard** (the user, 2026-10-08, mid-build). Asked to stage 神の裁き's camera first, the
 user wrote: 「用光線逐步加速射穿對手，最後將對手以黑色輪廓白色背景為基底，光線每貫穿一次對手就加入一個白色穿孔並隨著加速迅速變多。」;
 「合翼即碎」 (the wings closing and the shatter on the same frame); the length 「按過場動畫的鏡頭數調整」; then on the lead's
-beat sheet: 「前幾發彩色，加速後切」, the lines 「玉色」, 「更多（約 48 次）」. The beat sheet (≈ 210 f, from 162):
+beat sheet: 「前幾發彩色，加速後切」, the lines 「玉色」, 「更多（約 48 次）」. Then: 「初步從斜後方射擊，每打中一次就切換鏡頭位置，進入加速階段後由對手後方往八翼全開利捷拍攝過去，呈現一種對手小、利捷大的差距與絕望感。」 The beat sheet (≈ 210 f, from 162):
 
 | Beat | Frames (≈) | Shot and action |
 |---|---|---|
 | 1 open | 0–10 | Low and close on him, the eight wings snapping open into a ring, a negative flash |
 | 2 card | 10–60 | The black card, 神の裁き; the camera behind him, the distant opponent framed through the ring, the 24 holes lighting one by one |
-| 3 first shots | 60–100 | On the stage, a side tracking shot: the first line fires with a recoil and pierces the opponent; the 2nd and 3rd follow, the gaps shrinking |
-| 4 the acceleration | 100–150 | From the 4th: the white card, the opponent a black silhouette; the jade lines come faster and faster, about 48 pierces in all (each hole fires twice), each one adding a white hole in the silhouette (the first three already there); the camera pushes in slowly |
+| 3 first shots | 60–100 | On the stage, from diagonally behind him: the first line fires with a recoil and pierces the opponent; the 2nd and 3rd follow, the gaps shrinking; **each hit cuts to a new camera position** |
+| 4 the acceleration | 100–150 | From the 4th: the white card, the opponent a black silhouette; the jade lines come faster and faster, about 48 pierces in all (each hole fires twice), each one adding a white hole in the silhouette (the first three already there); **the camera behind the opponent, shooting toward him with all eight wings open: the opponent small, Lille huge, the gap and the despair** |
 | 5 still | 150–170 | The riddled silhouette held, silence |
 | 6 the verdict | 170–185 | Cut low on him: the wings close down, and on that frame the opponent shatters; a manga frame |
 | 7 end | 185–210 | A wide shot, his wings settling |
