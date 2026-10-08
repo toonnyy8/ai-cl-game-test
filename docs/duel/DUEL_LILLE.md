@@ -2702,6 +2702,53 @@ HARD CPU (`aieval --char 5`): strength 1.000, masher 1.000, signature 0.999 (tra
 (decision 55's accepted exception). ASSIST gate, P1 wins of 720: k0 406, k1 479, k2 685, k3 404, k6 471, k10 550, k11 702
 (§24.11: 411, 478, 686, 402, 477, 541, 692).
 
+### 23.37 Decision 56: the owl's strikes and Jilliel's SPs redone (2026-10-08)
+
+The user: 「能幫我把梟頭模式近戰的動作不太明顯，能跟我討論要如何修改動作模組嗎？」, then 「能幫我把下面的動作模組與動畫都修改的有張力一點嗎？
+像 Jilliel 的近遠程 J/K 動作模組一樣帥氣！ 1. 梟頭模式的近遠程 J/K 動作模組 2. Jilliel 的 SP1, SP2 跟毀魂技動畫」.
+
+As built:
+- **The owl's KIN J/K** (`:lb-o-q1 … :lb-o-f3`) were one move six times: an arm raised, then poked forward with a 0.42 m
+  slide (K 1.05 m). The ㄇ legs, the column's twist and the S-neck took no part, the eight gold wings stayed swept back,
+  and the claws left no trail.
+- **The owl's EN J/K** had no clips of their own: KIN's clips sped up (`:clip-s`), the state Jilliel's EN was in before
+  decision 50.
+- **Jilliel's SP1 SANREN**: KIN played the base form's rifle clip `:lb-sanren` on the wing rig (almost nothing moves);
+  EN played the still aim loop `:lb-w-aim`.
+- **Jilliel's SP2 NIJUSHI-KO** (`:lb-w-nijushi`): the wings spread and held, a 0.15 m recoil.
+- **Jilliel's Kikon 神の裁き**: `:lb-w-aim` / `:lb-w-fire` in play, and in its cinematic the still aim loop from start to
+  end.
+
+The lead proposed the directions below; the user chose (2026-10-08): the owl's style 「猛禽爪擊」; its extras
+「全身出招」「金色爪痕」「金翼振翅」「八翼匯聚」 (all four); its EN 「另做一套」; Jilliel's SPs 「全改，含過場運鏡」.
+
+1. **The owl's KIN strikes, a raptor's claws** (each its own shape, the whole body: the ㄇ legs step or lunge, the column
+   leans and twists, the S-neck strikes with them, each a clear wind-up → strike → recovery):
+   - J1 右爪撕 / J2 左爪撕: a diagonal rake, high to low, the claw's side stepping in;
+   - J3 雙爪剪: both claws scissored across, the neck pecking forward;
+   - K1 掠爪: a wing beat, a low glide, the right claw hooked wide across;
+   - K2 回爪: a half turn, the left claw back-handed the other way;
+   - K3 俯衝: a leap, the wings raised high, a stoop down with both claws, the landing crouched, the wings flared.
+2. **金色爪痕**: the claw tips leave gold trails of three parallel streaks (a look only), not Jilliel's single jade
+   crescent.
+3. **金翼振翅**: the eight gold wings beat once into each strike (raised in the wind-up, a down-stroke into S; K3's raised
+   high and pressed down in the stoop).
+4. **八翼匯聚**: then, as Jilliel's (decision 50), the wings converge on the target in the active frames, in turn.
+5. **The owl's EN J/K, their own casts** at EN's frames: upright and floating, the claws thrown down onto the ground line
+   (the J one line, the K the fan of three, the K3 both claws with a wing beat).
+6. **Jilliel's SP1 三連** (KIN and EN): three thrusts, the right wing, the left, both; each shot kicks the column back, whips
+   the wings and flashes the firing wing's holes; he turns between them. KIN's SANREN keeps the move `:lb-sanren` (the
+   base form's too): his look picks the wing clip, the sim is untouched.
+7. **Jilliel's SP2 二十四孔**: he rises, the eight wings open into a ring, the 24 holes facing the opponent; the charge
+   shakes harder, the column drawn back like a bow; the shot a big recoil, the wings blown back.
+8. **Jilliel's Kikon 神の裁き**: its in-play clips and his clips in the cinematic redone (the wings raised into a ring, the
+   24 lines released with a recoil, the wings closing down at the end like a verdict); the cinematic's shots retimed or
+   added where the new motion needs them.
+
+Presentation only: the hit volumes, frame data and the sim are unchanged (the seed gate byte-identical to the parent's);
+the drawn reach must still equal the hit reach (the host FK test, ±0.15 m), and the owl's EN casts get the cast check
+EN's Jilliel casts have (the tip at the move's `:reach` on S).
+
 ---
 
 ## 24. The adaptive, in-character CPU (dream-rsi; the user, 2026-10-06)
