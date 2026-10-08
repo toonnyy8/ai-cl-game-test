@@ -2764,6 +2764,91 @@ beat sheet: 「前幾發彩色，加速後切」, the lines 「玉色」, 「更
 | 6 the verdict | 170–185 | Cut low on him: the wings close down, and on that frame the opponent shatters; a manga frame |
 | 7 end | 185–210 | A wide shot, his wings settling |
 
+**Built** (owl, the art batch, 2026-10-08; decision 56 items 1–5: `duel/lisp/lille-art.lisp`, the owl EN defmoves' `:clip`
+in `lille.lisp`, the host test).
+
+*Two clip sets.* KIN keeps the names `:lb-o-q1 … :lb-o-f3`, redone in place (the six `-hit` poses are gone). EN gets its
+own six casts `:lb-oe-q1 … :lb-oe-f3`, authored at the owl EN's frames: `:lb-oe-j1 … :lb-oe-k3` point at them and their
+`:clip-s` is gone (clip speed 1; it was KIN's claw clips at ×1.75–2). The arms were solved, not hand-tuned: each key
+names where the claw (the rig's hand, the strike point) should be, right / up / forward of where he stands (the comment
+above each key, with `e` the elbow), and the upper arm's flex / side and the elbow come from the owl's FK (arms ×2.2, so a
+claw near the body needs a deeply bent elbow). The whole body moves with them:
+- the root's forward slide, height, turn and pitch; the spine's lean and the chest's twist;
+- the S-neck (`:neck`, `:head`): drawn back in the wind-up, thrust forward on the strike (J3's peck);
+- the hands (`:hand-r` / `-l`, the talons): opened back in the wind-up, hooked in on the strike;
+- on KIN, the thighs, so the ㄇ legs step or lunge (the shanks keep their feet on the floor).
+
+| Strike | Frames (S / A / R) | What it does |
+|---|---|---|
+| KIN J1 右爪撕 | 8 / 3 / 12 | Reared up (f3–6: the root 0.14 m back, turned 12° right, twist −26°, the neck drawn back), the right claw cocked high (2.7 m up, the talons open); then a step in (right thigh +32°, left −20°, a 0.4 m lunge, spine 30°, twist +14°) and the rake: high right through the front at S (1.66 m out, 1.5 m up) to low left at A, on down to the left hip (f16, twist 30°). |
+| KIN J2 左爪撕 | 7 / 3 / 13 | J1's mirror: the left claw, high left → low right. |
+| KIN J3 雙爪剪 | 9 / 3 / 18 | Both claws spread high and wide (±1.05 m, 2.15 m up), the column arched back and 0.07 m up, the S-neck coiled back; then a step and a 0.42 m lunge, both claws scissored across the front at S (crossing 1.7 m out) and on past each other, the neck pecking forward (neck 50–56°, head 26–30°). |
+| KIN K1 掠爪 | 17 / 4 / 21 | The wing beat raises the wings; crouched (0.14 m down) and coiled 22° right, the right claw swept back wide; at f14 the glide (0.35 m out, spine 44°, the legs trailing), the claw wide on his right; at S 0.75 m out, the claw hooked across the front right → left (2.24 m out at S and A), on to his far left (f30). |
+| KIN K2 回爪 | 20 / 4 / 24 (enter 6) | From its entry a half turn to his left (root 95°, twist 30°: his back to the foe, f14), the left claw folded across his chest; then the unwinding, the left claw flung out wide on his left and lashed back the other way, left → right across the front (S to A, 0.75 m out), out to his right (f33). |
+| KIN K3 俯衝 | 21 / 5 / 34 (enter 7) | A crouch (0.18 m down, the claws swept down behind), the leap (f16: 0.42 m up, the thighs drawn up, both claws raised high, the wings raised ×1.6), the stoop (pitched 12–16°, spine 46–50°): both claws down onto him (2.29 m out at S, down to 0.8 m high at A), the landing crouched (f31: 0.2 m down, the thighs splayed 16°, the wings flared), up by f60. |
+| EN J1 | 4 / 3 / 5 | Upright and afloat: rising (0.07 m, leaning back), the right claw raised high (2.75 m), then thrown down onto the line on S (0.28 m lean in, 1.69 m out), on down after it. |
+| EN J2 | 4 / 3 / 5 | J1's mirror (the left claw). |
+| EN J3 | 5 / 3 / 8 | Both claws raised overhead, the neck drawn back, crossed down onto the line on S with a peck, on down. |
+| EN K1 | 9 / 4 / 9 | Rising 0.12 m and coiled 22° right, the right claw high behind; the glide (0.85 m out, pitched 14°) and the claw raked low across the front right → left through the active frames (the fan of three). |
+| EN K2 | 10 / 4 / 11 (enter 3) | K1's mirror: the left claw raked back left → right. |
+| EN K3 | 11 / 5 / 16 (enter 4) | Rising 0.32 m with both claws (and the wings, ×1.6) raised high, then both thrown down onto the line on S (0.85 m out), the column dropping 0.15 m. |
+
+The K2 reading: 「回爪」 is the turn back. K1 hooks right → left; K2 turns away (the half turn) and comes back the other
+way with the other claw, left → right, so the three Ks go across, back and down.
+
+*The reach* (the host FK test, the art at the active frames vs the volume's end, ±0.15 m):
+- KIN J1 / J2 1.69 m against 1.70, J3 1.70 / 1.70, K1 / K2 2.30 / 2.30, K3 2.24 / 2.30 (before: 1.69, 1.69, 1.72, 2.22,
+  2.22, 2.26).
+- EN's casts (the owl EN now in decision 50's cast check: the striking claw at the move's `:reach` on S ±0.15): J1 / J2 /
+  J3 1.70 (1.7), K1 / K2 / K3 2.30 (2.3). The owl EN's frame check now wants its own casts at speed 1 (KIN's clips at
+  `:clip-s` / S before). The clip list of §5 gains the six casts.
+
+**金翼振翅, the wing beat** (`%LB-OWL-BEAT!`, *LB-WF* [68] [69]): in an owl strike (`*LB-OWL-STRIKES*`, KIN's six and EN's
+six) the eight gold wings are raised `*lb-owl-beat-up*` 38° over the wind-up (from the move's entry), struck down to
+`*lb-owl-beat-down*` 30° below their place over the startup's last `*lb-owl-beat-stroke*` 3 frames (a K's 4; at most half
+the startup: EN J's 2) into S, held down through the active frames and back over 0.6 of the recovery. KIN's swept-back sheaf
+opens `*lb-owl-beat-open*` 0.45 meanwhile (a first pass at 0.75 fanned it into a gold wall over the strike). K3 (KIN's and
+EN's) beats `*lb-owl-beat-k3*` 1.6× as far and holds them flared into the landing.
+
+**八翼匯聚, all eight converge** (`%LB-CONV-SHARE`, `%LB-WINGS`, *LB-WF* [70]): the owl's arms are its claws, so no wing is
+a front wing and all eight are free: in an owl strike they converge on Jilliel's targets (KIN his hit point at his reach −
+0.1 m, chest high; EN the line ahead on the floor, a K's top pair on its middle line and the rest on its outer lines), in
+turn, the striking side first and the top pair down, now four pairs: the first launches `*lb-owl-conv-from*` −1 f from S
+(after the beat's down-stroke; Jilliel's −2), the next ones `*lb-owl-conv-step-j*` 0.5 f (K `-k` 0.7) apart (eight wings in
+about the time of Jilliel's six). Ramp, hold, return, stretch, ring (now four places a side for KIN) and EN's line spacing
+are Jilliel's knobs. A converging owl wing turns its face up, not to his side as Jilliel's do: from the default camera
+(beside and behind him) the eight blades then read as a sheaf of edges pointing at the target, and the claw stays in view
+(face-on, a first pass covered the strike and the opponent with gold).
+
+**金色爪痕, the claw trails** (`%LB-CLAW-TRAILS`, `%LB-CLAW-SMEARS`): per side and claw a trail of its talons: each sample
+is the claw's tip (the hand's −Y, `*lb-claw-tip*` 0.2 m out) moved ∓`*lb-claw-spread*` 0.13 m along the forearm, so the
+swing leaves three concentric streaks; recorded from S + `*lb-owl-trail-from*` −1 (the rake, not the wind-up: from −5 the
+streak ran up into the sky from the raised claw) to the active end + `*lb-trail-to*` 3 while it moves, faded a sample a
+frame after. Drawn as three thin gold comets (VFX-SMEAR's crescent through each talon's point of the last samples,
+`*lb-claw-w*` 0.08 m half-width, presence `*lb-claw-k*` 0.95, pushed 0.45 m toward the eye so they read over his white
+body; a first pass at 0.03 m was a hairline). The striking claws: J1 / K1 the right, J2 / K2 the left, J3 / K3 both; EN's
+casts likewise.
+
+*Jilliel is untouched*: his strikes set [68]–[70] (merged with the SP batch, which holds [61]–[67]: the owl's slots moved from [64]–[66]) to 0 (the same blades, faces, sheaf and timing), his tip trails are his.
+
+**Gates**
+- Host tests ALL PASS: duel-rules **6459** (6435 + the owl EN's 24 cast checks), control 89, learn 131, cine 18.
+- `tools/pkgcheck.sh duel` 0 / 0 / 0; `./build.sh duel` 0 warnings.
+- `simgate.py --seeds 10 --summary` (42 lines) is **byte-identical** to the parent's (the lead's baseline); `--cvc` PASS
+  yy, yk, kk, identical lines.
+
+**Consing** (debug 79195, 10 draws of the draw hook, in the running scene; the owl KIN and EN, Jilliel KIN and EN, each
+idle and at f2 / 5 / 9 / 12 / 18 of a J1 and f3 / 9 / 15 / 18 / 22 / 30 of a K1): before and after alike, **160 B** for
+every sample (16 B a frame, the ECS lookup floor); the first sample builds the meshes once (131 256 B), the same before and
+after. The claw trails shift their samples with Jilliel's `%LB-TRAIL-DROP` (0 B) and take their numbers in the scratch
+vectors; the beat is a macro on fixnums and single-floats.
+
+**Stills** (`/tmp/…/scratchpad/d56/owl/`, never committed): debug 79016 (KIN) / 79004 (EN), 2393 (KIN's J: 0.1 s of W
+in), the J and K strings, shots every 2 frames, the behind camera and the side one (2109); the same script on the parent's
+build. Contact sheets `review/keys-{behind,side}-{kin,en}-{j,k}.png`: per strike its wind-up, before, the hit, the
+follow-through and the recovery, after (a) over before (b); the side camera's KIN J has J1 only (the W walk-in heads
+elsewhere there). Checked by numbers too (the FK, the cast tips). The look needs the user's eyes.
+
 **Built** (Jilliel's SPs and Kikon, items 6–8 and the storyboard; art batch, 2026-10-08: `duel/lisp/lille-art.lisp`, the
 moves' `:clip`s and the cinematic in `lille.lisp`, the remap in `kit.lisp` / `fighter.lisp`, the host test).
 

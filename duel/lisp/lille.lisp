@@ -541,20 +541,21 @@ place (round 2: TENSHIN in then J combos), SP2's a knockback."
   :cine lb-trompete-cine :startup 20 :active 3 :recovery 30 :whiff 30 :dmg 80 :adv-block -14 :track 0
   :vol (:cap 0.5 12.0 1.4 1.4) :on-hit :knockback :kb 2.0 :cooldown 90 :on-frame ((20 lb-lane-shot))
   :params (:aura 10 :aim 120.0 :speed 0.0 :dash-max 0 :dash-track 0.0 :look :lane :follow-speed 14.0 :len 12.0))
-;; 遠 EN (decision 36): Jilliel EN's J / K / SP1 / SP2 (decision 28's frames) with R - 1, the claw clips at :clip-s / S;
-;; no hit window: each lays traces (J one line, K a fan of three) on its first active frame while the stick walks him
+;; 遠 EN (decision 36): Jilliel EN's J / K / SP1 / SP2 (decision 28's frames) with R - 1; their own casts :lb-oe-q1 ...
+;; :lb-oe-f3 at these frames (decision 56, 2026-10-08, DUEL_LILLE §23.37; KIN's claw clips at :clip-s / S before); no hit
+;; window: each lays traces (J one line, K a fan of three) on its first active frame while the stick walks him
 ;; (LB-EN-TICK, LB-EN-LAY); the owl's traces materialise as 裁きの光明's gold ground blasts (the look)
-(defmove :lb-oe-j1 :kind :quick :clip :lb-o-q1 :clip-s 8 :startup 4 :active 3 :recovery 5 :reach 1.7 :tick lb-en-tick
+(defmove :lb-oe-j1 :kind :quick :clip :lb-oe-q1 :startup 4 :active 3 :recovery 5 :reach 1.7 :tick lb-en-tick
   :on-frame ((4 lb-en-lay)) :params (:trace :j))
-(defmove :lb-oe-j2 :kind :quick :clip :lb-o-q2 :clip-s 7 :startup 4 :active 3 :recovery 5 :reach 1.7 :tick lb-en-tick
+(defmove :lb-oe-j2 :kind :quick :clip :lb-oe-q2 :startup 4 :active 3 :recovery 5 :reach 1.7 :tick lb-en-tick
   :on-frame ((4 lb-en-lay)) :params (:trace :j))
-(defmove :lb-oe-j3 :kind :quick :clip :lb-o-q3 :clip-s 9 :startup 5 :active 3 :recovery 8 :reach 1.7 :flags (:ender)
+(defmove :lb-oe-j3 :kind :quick :clip :lb-oe-q3 :startup 5 :active 3 :recovery 8 :reach 1.7 :flags (:ender)
   :tick lb-en-tick :on-frame ((5 lb-en-lay)) :params (:trace :j))
-(defmove :lb-oe-k1 :kind :flash :clip :lb-o-f1 :clip-s 17 :startup 9 :active 4 :recovery 9 :reach 2.3 :tick lb-en-tick
+(defmove :lb-oe-k1 :kind :flash :clip :lb-oe-f1 :startup 9 :active 4 :recovery 9 :reach 2.3 :tick lb-en-tick
   :on-frame ((9 lb-en-lay)) :params (:trace :k))
-(defmove :lb-oe-k2 :kind :flash :clip :lb-o-f2 :clip-s 20 :enter 3 :startup 10 :active 4 :recovery 11 :reach 2.3
+(defmove :lb-oe-k2 :kind :flash :clip :lb-oe-f2 :enter 3 :startup 10 :active 4 :recovery 11 :reach 2.3
   :tick lb-en-tick :on-frame ((10 lb-en-lay)) :params (:trace :k))
-(defmove :lb-oe-k3 :kind :flash :clip :lb-o-f3 :clip-s 21 :enter 4 :startup 11 :active 5 :recovery 16 :reach 2.3
+(defmove :lb-oe-k3 :kind :flash :clip :lb-oe-f3 :enter 4 :startup 11 :active 5 :recovery 16 :reach 2.3
   :flags (:ender) :tick lb-en-tick :on-frame ((11 lb-en-lay)) :params (:trace :k))
 (defmove-copy :lb-oe-j2s :lb-oe-j2)
 (defmove-copy :lb-oe-k2s :lb-oe-k2)

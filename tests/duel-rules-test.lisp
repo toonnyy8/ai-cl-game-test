@@ -803,7 +803,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :lb-w-kikon :lb-w-kikon-fire :lb-w-nijushi :lb-w-breaker :lb-w-ram :lb-e-q1 :lb-e-q2 :lb-e-q3 :lb-e-f1 :lb-e-f2 :lb-e-f3 :lb-o-stance :lb-o-q1 :lb-o-q2 :lb-o-q3 :lb-o-f1 :lb-o-f2 :lb-o-f3 :lb-o-chop
     :lb-o-trompete :lb-o-breaker :lb-o-stamp      ; Lille (DUEL_LILLE §12 Art)
     :lb-kamae :lb-k-shot :lb-k-hosha :lb-k-taisha :lb-k-dash :lb-w-tenshin :lb-w-tenshin-in   ; his rework (DUEL_LILLE §22, §23)
-    :lb-oe-stance :lb-o-fold :lb-oe-fold :lb-oe-sabaki :lb-o-tenshin :lb-o-tenshin-in))   ; the owl on Jilliel's system (decision 36, §23.14)
+    :lb-oe-stance :lb-o-fold :lb-oe-fold :lb-oe-sabaki :lb-o-tenshin :lb-o-tenshin-in   ; the owl on Jilliel's system (decision 36, §23.14)
+    :lb-oe-q1 :lb-oe-q2 :lb-oe-q3 :lb-oe-f1 :lb-oe-f2 :lb-oe-f3))   ; its EN casts (decision 56, §23.37)
 ;; (Jilliel's SPs and Kikon, decision 56, DUEL_LILLE §23.37: :lb-w-sanren is KIN's SANREN through his :clip-map, :lb-e-sanren
 ;; EN's own, :lb-w-kikon / :lb-w-kikon-fire the Kikon in play; :lb-w-aim and :lb-w-fire are gone)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
@@ -1725,8 +1726,10 @@ along the left forearm, so the fist leads).")
                                          (or (member cf *reach-one-sided* :test #'equal) (member (mv-kind mv) '(:flash :breaker)))))))
                        (format t "~a ~a: the volume ends ~,2f m, the art ~,2f m~%" (second cf) (mv-name mv) edge art)))))))
     ;; JILLIEL EN's casts (decision 50, DUEL_LILLE §23.31): no hit window, but the striking wing's tip (its clip's strike
-    ;; point) is at the move's :reach on the frame it lays its line (S), +-0.15 m, as KIN's hit poses are at their volumes
-    (let* ((k (kit :lille :jilliel)) (b (cdr (assoc (kit-body k) bodies))) (props (apply #'make-rig-proportions (getf b :props))))
+    ;; point) is at the move's :reach on the frame it lays its line (S), +-0.15 m, as KIN's hit poses are at their volumes;
+    ;; the owl EN's casts likewise, its claws' (decision 56, §23.37)
+    (dolist (form '(:jilliel :shin))
+     (let* ((k (kit :lille form)) (b (cdr (assoc (kit-body k) bodies))) (props (apply #'make-rig-proportions (getf b :props))))
       (dolist (lm (link-moves k))
         (let* ((mv (first lm)) (point (second (assoc (mv-clip mv) points))))
           (check (and (zerop (length (mv-hits mv))) (member point '(:hand-r :hand-l)) (~= 1.0 (mv-clip-speed mv))))
@@ -1736,7 +1739,7 @@ along the left forearm, so the fist leads).")
             (joint-point! v jm (joint-index point) 0f0 0f0 0f0)
             (let ((art (sqrt (+ (expt (aref v 0) 2) (expt (aref v 2) 2)))))
               (check (or (<= (abs (- art (mv-reach mv))) 0.15)
-                         (format t "jilliel ~a: the reach ~,2f m, the cast's tip ~,2f m~%" (mv-name mv) (mv-reach mv) art))))))))))
+                         (format t "~(~a~) ~a: the reach ~,2f m, the cast's tip ~,2f m~%" form (mv-name mv) (mv-reach mv) art)))))))))))
 ;; Jilliel's SPs and Kikon (decision 56, DUEL_LILLE §23.37), on his rig (both bodies :props (:arms 2.6), the art evaluated
 ;; above): each clip lasts its move (S + A + R, its :s mark on S; EN's NIJUSHI-KO plays KIN's at x2); SANREN's firing wing
 ;; points at him on each shot frame (the tip >= 1.2 m ahead, within 0.4 m of his line; the third shot both); NIJUSHI-KO's and
@@ -2590,6 +2593,11 @@ defender's next step. Values: the attacker's and the defender's first actionable
     (loop for (om jm) in (append (pairs o j) (list (list (kit-command-move o :sp1) (kit-command-move j :sp1))))
           do (check (and jm (= (mv-s om) (mv-s jm)) (= (mv-a om) (mv-a jm)) (= (mv-r om) (- (mv-r jm) *shin-adv*))
                          (= (mv-enter om) (mv-enter jm)) (eq (mv-kind om) (mv-kind jm)) (zerop (length (mv-hits om)))
+                         (~= (mv-clip-speed om) 1.0)              ; (its own casts at these frames, decision 56)
+                         (or (eq (mv-kind om) :sp)
+                             (eq (mv-clip om) (getf '(:lb-oe-j1 :lb-oe-q1 :lb-oe-j2 :lb-oe-q2 :lb-oe-j2s :lb-oe-q2 :lb-oe-j3 :lb-oe-q3
+                                                      :lb-oe-k1 :lb-oe-f1 :lb-oe-k2 :lb-oe-f2 :lb-oe-k2s :lb-oe-f2 :lb-oe-k3 :lb-oe-f3)
+                                                    (mv-name om))))
                          (equal (getf (mv-params om) :trace) (getf (mv-params jm) :trace))
                          (equal (mapcar #'first (mv-on-frame om)) (mapcar #'first (mv-on-frame jm)))
                          (eq (and (member :ender (mv-flags om)) t) (and (member :ender (mv-flags jm)) t)))))
