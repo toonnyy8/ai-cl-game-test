@@ -116,7 +116,7 @@
 ;; with a wing tip at the hand; folded in MUJITTAI) with the wide halo. Muted jade (decision 11).
 (defbody :lille-jilliel (:scale 1.0 :width 1.0 :hunch 0 :hurt-r 0.38 :hurt-h 1.8 :props (:arms 2.6)
                          :palette ((:cream #xEDE6CC) (:cream-d #xD9D0B2) (:jade #x6E9A80) (:jade-d #x4E6E5C) (:hole #x2A2A30)
-                                   (:core #x9CC4AC) (:lining #x15130F) (:ridge #x4A3A31) (:band #xCFC6B0) (:skin #x7A6155) (:eye #xF2F0EC) (:pupil #x2A3124))
+                                   (:core #x9CC4AC) (:lining #x15130F) (:nose #x6B5348) (:ridge #x4A3A31) (:band #xCFC6B0) (:skin #x7A6155) (:eye #xF2F0EC) (:pupil #x2A3124))
                          :rim (#xFFE8C8 0.14))
   (:pelvis (:cyl 0.15 0.7 :top 0.13 :seg 12 :at (0 -0.3 0) :c :cream)
            (:cone 0.075 0.32 :at (0.085 -0.8 0) :rot (0 0 172) :seg 6 :c :cream)        ; the two prongs
@@ -152,7 +152,8 @@
          (:box 0.018 0.008 0.003 :at (-0.019 0.185 0.083) :c :eye :tag :jl-head)
          (:box 0.008 0.008 0.003 :at (0.019 0.185 0.085) :c :pupil :tag :jl-head)
          (:box 0.008 0.008 0.003 :at (-0.019 0.185 0.085) :c :pupil :tag :jl-head)
-         (:box 0.018 0.04 0.03 :at (0 0.158 0.09) :c :skin :ink 0.6 :tag :jl-head)                    ; the nose
+         (:wedge 0.018 0.044 0.026 :at (0 0.158 0.098) :rot (180 0 0) :c :nose :ink 0.6 :tag :jl-head)   ; (the slope ...
+         (:box 0.018 0.044 0.012 :at (0 0.158 0.079) :c :nose :ink 0.6 :tag :jl-head)                    ;  on a flat: a trapezoid)                    ; the nose
          (:sphere 0.032 :at (0 0.082 0.072) :seg 10 :c :cream :tag :jl-head)                   ; the chin knob
          (:cyl 0.084 0.06 :at (0 0.11 0) :seg 18 :squash (0.8 1 1) :c :cream :tag :jl-head)   ; the white cylinder over the face's lower half
          (:box 0.05 0.080 0.024 :at (0.0000 0.0000 0.1780) :rot (-0.0 0 0) :c :cream)
@@ -211,7 +212,7 @@
 ;; down; LILLE-DRAW draws the shanks and the strut in the thigh's frame, each shank's tip on the floor (they stretch or
 ;; shrink a little with the clips' float, so the feet stay down). Arms hidden and wings drawn as :lille-jilliel.
 (defbody :lille-jilliel-kin (:scale 1.0 :width 1.0 :hunch 0 :hurt-r 0.38 :hurt-h 1.8 :props (:arms 2.6)
-                             :palette ((:cream #xEDE6CC) (:cream-d #xD9D0B2) (:hole #x2A2A30) (:lining #x15130F) (:ridge #x4A3A31) (:band #xCFC6B0) (:skin #x7A6155) (:eye #xF2F0EC)
+                             :palette ((:cream #xEDE6CC) (:cream-d #xD9D0B2) (:hole #x2A2A30) (:lining #x15130F) (:nose #x6B5348) (:ridge #x4A3A31) (:band #xCFC6B0) (:skin #x7A6155) (:eye #xF2F0EC)
                                        (:pupil #x2A3124))
                              :rim (#xFFE8C8 0.14))
   (:pelvis (:cyl 0.15 0.26 :top 0.13 :seg 12 :at (0 -0.08 0) :c :cream)
@@ -243,7 +244,8 @@
          (:box 0.018 0.008 0.003 :at (-0.019 0.185 0.083) :c :eye :tag :jl-head)
          (:box 0.008 0.008 0.003 :at (0.019 0.185 0.085) :c :pupil :tag :jl-head)
          (:box 0.008 0.008 0.003 :at (-0.019 0.185 0.085) :c :pupil :tag :jl-head)
-         (:box 0.018 0.04 0.03 :at (0 0.158 0.09) :c :skin :ink 0.6 :tag :jl-head)                    ; the nose
+         (:wedge 0.018 0.044 0.026 :at (0 0.158 0.098) :rot (180 0 0) :c :nose :ink 0.6 :tag :jl-head)   ; (the slope ...
+         (:box 0.018 0.044 0.012 :at (0 0.158 0.079) :c :nose :ink 0.6 :tag :jl-head)                    ;  on a flat: a trapezoid)                    ; the nose
          (:sphere 0.032 :at (0 0.082 0.072) :seg 10 :c :cream :tag :jl-head)                   ; the chin knob
          (:cyl 0.084 0.06 :at (0 0.11 0) :seg 18 :squash (0.8 1 1) :c :cream :tag :jl-head)   ; the white cylinder over the face's lower half
          (:box 0.05 0.080 0.024 :at (0.0000 0.0000 0.1780) :rot (-0.0 0 0) :c :cream)
