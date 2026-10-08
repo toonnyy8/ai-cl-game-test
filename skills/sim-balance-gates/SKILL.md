@@ -31,6 +31,11 @@ seed replays the same match bit for bit; every gate below relies on that. Detail
 | G2 reference | `tests/style-gates.py cvc dist/duel` | identical lines; on an intended change rewrite `tests/style-cvc-ref.txt` with a header note "after X (the user, date). Before: …" and update every place the reference line is quoted |
 | Shipping build | `./build.sh duel` last | `dist/*/index.wasm` newer than every edited source |
 
+Match time excludes every cinematic since 2026-10-08 (`MATCH-PLAY-TICKS`, the frames the match timer ran; simgate sorts
+by it and also prints the median with the cinematics). The 125–210 s window was measured with them; medians now read
+30–60 s lower (DEVLOG §134). A presentation-only change must leave `--seeds 10 --summary` and `--cvc` byte-identical
+to a baseline saved before it.
+
 Scope: a change inside one character's files → its pairings + its A/B; shared rules (combat, fighter, rules, ai,
 tuning, kit) → all pairings. Take a baseline on the parent commit (`git worktree add` → run the same gate) whenever
 you need to attribute a shift.
@@ -53,6 +58,8 @@ three disjoint streams. Choose a setting by "every constraint satisfied", not by
 - Use the real distance for the CPU's own movement, the perceived one for the opponent's intent.
 - A held button can suppress the reflex path; add explicit exceptions.
 - Every new mechanic gets a CPU rule (EASY ≤ NORMAL ≤ HARD chances) and a measurement (counts of uses and outcomes).
+- Freeze the rules before a dream-rsi CPU search; each rule change mid-search forced a re-freeze and a 3-way merge of every cell.
+- Feel numbers (dash distances, slow-motion scales) churn in playtests: settle the unit and trigger first, then tune by play, not by gate cycles.
 
 ## Report template (design §, DEVLOG, commit)
 "Gate (native, 20 seeds): all N K.O.; cross medians a–b (list); mirrors (list); [60-seed rerun]; A/B rows (all ≥ 20);

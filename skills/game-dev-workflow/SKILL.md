@@ -14,7 +14,10 @@ is "done" until it is measured, committed and pushed — but never deployed unle
 ## The loop (every request)
 1. **Quote the request verbatim** (keep the zh-TW) — it goes into the docs and the commit.
 2. **Clarify only what changes the design.** Use AskUserQuestion with 2–4 options, the recommended one first. Fix a
-   wrong premise politely, with sources. Small, clear requests: no questions.
+   wrong premise politely, with sources. Small, clear requests: no questions. Ask about **intent and units** (what a
+   mechanic is for, fixed time or fixed speed, what triggers it); leave feel numbers to playtests. Restate relative
+   wording as a number before building (「放慢 1 倍」 meant 0.1×). When the user says 「先跟我討論」, change nothing until
+   it is agreed. A new or reworked fighter: REQUIRED SUB-SKILL `duel-character` / `duel-character-rework`.
 3. **Implement in the smallest place**: a character's own files before shared ones; shared files get generic hooks.
 4. **Gate it** (REQUIRED SUB-SKILL: sim-balance-gates for rules/AI; procedural-ink-style for looks). Every new mechanic
    also gets a CPU rule, in this batch or the next.
@@ -53,3 +56,5 @@ is "done" until it is measured, committed and pushed — but never deployed unle
 - "The gate is a bit off, I'll nudge another knob" → report and ask.
 - "It passed natively" → did you rebuild `dist/`?
 - "They'll want it live" → deploy only on their word.
+- Building while the user is still describing (a storyboard over several messages) → append to the doc, hold the build.
+- A worker's merge silently changed a decided value or reused a shared slot → diff against the decision list.

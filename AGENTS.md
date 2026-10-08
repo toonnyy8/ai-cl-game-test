@@ -50,7 +50,7 @@ duel/          SOUL DUEL (package DUEL): lisp/, web/ (head.html pwa.js sw.js man
 examples/      hello/ (template), engine-demo/
 tools/         build + test + gate tools (table below)
 tests/         host Lisp tests, browser-script generators (tests/scripts/), style shot/check scripts, shots/, style-cvc-ref.txt
-skills/        four Claude skills, symlinked into ~/.claude/skills (below)
+skills/        six Claude skills, symlinked into ~/.claude/skills (below)
 docs/          README.md (index), DEVLOG.zh-TW.md, guides/ engine/ raven-edge/ duel/ style/ babylon/ research/
 vendor/        prebuilt wasm ECL, SDL3 with the WebGPU backend (+ patch), emdawnwebgpu — never edit by hand
 babylon/       the discontinued TS port
@@ -133,13 +133,13 @@ tools/pkgcheck.sh duel                   # ECL never warns about undefined / une
 |---|---|
 | `docs/README.md` | the index of every doc, one line each |
 | `docs/DEVLOG.zh-TW.md` | the decision log (numbered §, newest last), why things are the way they are |
-| `docs/guides/` | `TUTORIAL.zh-TW.md` (learning path), `PLAYBOOK.zh-TW.md` (reusable experience), `DREAM_RSI.zh-TW.md` (the AI search experience) |
+| `docs/guides/` | `TUTORIAL.zh-TW.md` (learning path), `PLAYBOOK.zh-TW.md` (reusable experience), `DREAM_RSI.zh-TW.md` (the AI search experience), `CHARACTER_DESIGN.zh-TW.md` (designing a fighter, from Lille: the ⚠ questions to ask first) |
 | `docs/engine/` | `ARCHITECTURE.md`, `ENGINE_API.md`, `AUDIO.md`, `WORLD.md` (+ `world-shots/`) |
 | `docs/raven-edge/` | `GAME_DESIGN.md`, `GAMEPLAY.md` |
 | `docs/duel/` | `DUEL_DESIGN.md` (rules + move tables, the source of truth), `DUEL_GAMEPLAY.md` (build, debug commands, gates), `DUEL_STRINGS.md`, per character (`DUEL_YAMA_REWORK`, `DUEL_NOZARASHI_V2`, `DUEL_KEN_BANKAI`, `DUEL_RUKIA`, `DUEL_ICHIGO`, `DUEL_SENJUMARU`, `DUEL_LILLE` (in design)), systems (`DUEL_AI_V2`, `DUEL_LEARNING`, `DUEL_ASSIST`, `DUEL_ENDLESS`, `DUEL_MOBILE_DESIGN`) |
 | `docs/style/` | `STYLE_STORM_RESEARCH.md`, `STYLE_STORM_DESIGN.md` (the ink look, its numbers and gates) |
 | `docs/babylon/` | the discontinued port's records |
-| `docs/research/` | `ng4-notes.md`; `tybw-characters/` (report + notes on the four TYBW characters); `ai-v2-drsi/` (the AI v2 dream-rsi workspace and its coordinator scripts) |
+| `docs/research/` | `ng4-notes.md`; `tybw-characters/` (report + notes on the four TYBW characters); `ai-v2-drsi/` (the AI v2 dream-rsi workspace and its coordinator scripts); `lille-ai-drsi/`; `lille-retrospective/digest.md` (Lille's 56 decisions, rework chains, numbers) |
 
 Research that tools write elsewhere (e.g. the deep-research skill's `research_notes/<title>/` + `reports/<title>.md`, a
 dream-rsi workspace) is moved under `docs/research/<topic>/` before it is committed, with home-directory paths removed.
@@ -154,6 +154,8 @@ Skills (in `skills/`, symlinked into `~/.claude/skills/`; each `SKILL.md` is sho
 | `sim-balance-gates` | rules, frame data, knobs or CPU AI changed; gate numbers moved |
 | `procedural-ink-style` | looks, clips, VFX, cinematics, audio; art vs hit volume |
 | `game-dev-workflow` | any feature request: the request → docs → gates → commit loop |
+| `duel-character` | designing a NEW fighter: the ⚠ intent questions to settle before building, build order, rig / clip / system / CPU / cinematic rules (from Lille) |
+| `duel-character-rework` | changing an EXISTING fighter after a playtest: diagnose, options, presentation-only vs sim change, regressions, merges, framing |
 
 | Tool | Purpose |
 |---|---|

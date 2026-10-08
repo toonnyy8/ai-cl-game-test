@@ -9,7 +9,8 @@ Claude skill 在 repo 根目錄的 `skills/`（連結到 `~/.claude/skills/`）�
 | 文件 | 內容 |
 |---|---|
 | [TUTORIAL.zh-TW.md](guides/TUTORIAL.zh-TW.md) | 學習路徑：建置與執行、專案地圖、逐行讀 `examples/hello`、幀迴圈與 GC、ECS、純函式規則、事件、算圖、RAVEN EDGE 的組成、SOUL DUEL 的組成（虛擬手把、角色即資料、同時結算、過場導演、決定性）、練習題（中文） |
-| [PLAYBOOK.zh-TW.md](guides/PLAYBOOK.zh-TW.md) | 遊戲開發經驗手冊：引擎與工具鏈、模擬與平衡測試、美術與演出風格、開發流程與協作、新遊戲啟動清單；對應 repo 裡 `skills/` 的四個 Claude skill（中文） |
+| [PLAYBOOK.zh-TW.md](guides/PLAYBOOK.zh-TW.md) | 遊戲開發經驗手冊：引擎與工具鏈、模擬與平衡測試、美術與演出風格、開發流程與協作、新遊戲啟動清單；對應 repo 裡 `skills/` 的六個 Claude skill（中文） |
+| [CHARACTER_DESIGN.zh-TW.md](guides/CHARACTER_DESIGN.zh-TW.md) | 角色設計與開發手冊（以利傑·巴羅為範本）：開工前必須先確認的設計意圖（⚠ 清單與每項的代價）、流程、建模注意事項、動作模組要點、玩法系統規劃、平衡、演出與過場、多 agent 分工、新角色提問單；對應 skill `duel-character`、`duel-character-rework`（中文） |
 | [DREAM_RSI.zh-TW.md](guides/DREAM_RSI.zh-TW.md) | 用 dream-rsi 搜尋每個角色 CPU AI 的經驗筆記：設定、流程與分數、踩到的問題、下次的檢查清單（中文） |
 | [DEVLOG.zh-TW.md](DEVLOG.zh-TW.md) | 開發紀錄與技術思辨：從 GLES3 到 SDL_GPU（WebGPU）、建置管線、GC 問題、ECL 效能、算圖、音訊、玩法設計、團隊分工、已知限制、引擎／遊戲拆分與 ECS 重構、用第二款遊戲驗證引擎（中文） |
 
@@ -71,4 +72,5 @@ Claude skill 在 repo 根目錄的 `skills/`（連結到 `~/.claude/skills/`）�
 | [ng4-notes.md](research/ng4-notes.md) | 《忍者外傳 4》玩法研究筆記，附來源和可信度標記 |
 | [tybw-characters/report.zh-TW.md](research/tybw-characters/report.zh-TW.md) | 血戰篇四角色（劍八卍解、二刀一護、露琪亞、千手丸）的格鬥設計研究報告，附來源；`notes/` 是各角色的研究筆記（英文；`lille_barro.md` 是利傑巴羅，2026-10-06） |
 | [ai-v2-drsi/](research/ai-v2-drsi/) | AI v2 的 dream-rsi 工作區：五個角色的 baseline、兩輪 cell（brief、proposal、lisp、分數）、policy 與 trace，加上 coordinator 腳本（`brief.py`、`step.sh`、`rescore.sh`） |
+| [lille-retrospective/digest.md](research/lille-retrospective/digest.md) | 利傑巴羅的設計回顧摘要：56 個決定的時間線、10 條重工鏈與各自該先問的問題、做對的流程／設計／技術模式、建模與系統筆記、數字（英文，2026-10-08） |
 | [lille-ai-drsi/](research/lille-ai-drsi/) | 利傑巴羅自適應 AI 的 dream-rsi 工作區（DUEL_LILLE §24）：凍結的 baseline（lille.lisp、proposal、40／80 場分數、NORMAL 漂移參考值）、drsi 設定與 policy，加上 coordinator 腳本（`brief.py`、`step.sh`、`rescore.sh`）；見其 README |

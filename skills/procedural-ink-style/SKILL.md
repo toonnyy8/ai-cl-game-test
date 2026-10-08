@@ -35,7 +35,15 @@ the full design record: `docs/style/STYLE_STORM_DESIGN.md`.
 - Events report, presentation shows: rules emit events, one feedback system turns them into sound/sparks/shake.
   Cosmetics use `rnd01`; hitstop and cinematic length are sim timing.
 - Cinematics: `defcine` on sim frames (`at` = sim events, `during` = looks) with a written shot grammar; pace with fewer,
-  longer shots and keep impact frames sharp.
+  longer shots and keep impact frames sharp. Agree a **text beat table** (frames, angle / distance / height / lens,
+  action) before building. **Place the actors** first (CINE-PLACE, given back at CINE-END) since a Kikon lands from
+  any distance; check **landscape (9 % letterbox) and portrait**. CINE-SLOW slows the actors and effects for a hit;
+  CINE-SCALE draws an actor ×N (scale every metre-authored size in the draw hook by hand).
+- Strikes: each form gets its own clips at its own frames (never a sibling's clip sped up); every strike has its own
+  silhouette and whole-body motion; key comments give the weapon's aim in the chest frame. A visible weapon is drawn to an
+  invisible rig hand (the strike point), never parented to the arm chain (it reads as "arms became wings").
+  `:clip-map` gives one form a different clip for a shared move. Moves with no hit window get a cast check (the tip at
+  `:reach` on S).
 - Every delayed move has a drawn tell that the CPU reads too; counters get a unique colour + screen event.
 - Captions: bake a licensed font offline into committed polygons; test that no caption leaves the screen.
 - Audio: `defsound` bank, normalise, DC-block, fold loops, one sound per load step, a C mixer that never touches Lisp
@@ -55,3 +63,6 @@ the full design record: `docs/style/STYLE_STORM_DESIGN.md`.
 - Adjectives instead of numbers ("moody", "punchy") — nothing to gate.
 - Shrinking a hitbox to match short art and silently breaking balance; or lengthening art without rerunning the gates.
 - Claiming a look is right without a still the user has seen — say "checked by numbers, needs your eyes".
+- Floating forms baked into their own clips (shared clips play at root 0, so they sink): use a kit `:lift`.
+- Big translucent or foreground parts that hide the fight from the behind camera; alpha < 1 bodies draw a dark phantom
+  (use an emissive glow × own colour).

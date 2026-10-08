@@ -105,7 +105,7 @@ examples/
   engine-demo/ 只用引擎的展示：頂樓、環繞鏡頭、特效、UI
 ```
 
-其餘目錄：`tools/`（`build.lisp` 編譯腳本、`run.mjs` 無頭測試器、`pkgcheck.sh`、原生模擬的 `simgate.py`、`aieval.py`、`assistgate.py`、`deploy-pages.sh`、vendor 腳本、`pose-solve.py`，用途表見 AGENTS.md）、`tests/`（主機測試、wasm demo、腳本產生器、截圖）、`vendor/`（wasm 版 ECL、帶 WebGPU 後端的 SDL3、Dawn 的 emdawnwebgpu）、`docs/`（文件，依主題分資料夾）、`skills/`（四個 Claude skill）、`babylon/`（已停止的 TypeScript 移植版）、`build/` 與 `dist/`（建置產物）。
+其餘目錄：`tools/`（`build.lisp` 編譯腳本、`run.mjs` 無頭測試器、`pkgcheck.sh`、原生模擬的 `simgate.py`、`aieval.py`、`assistgate.py`、`deploy-pages.sh`、vendor 腳本、`pose-solve.py`，用途表見 AGENTS.md）、`tests/`（主機測試、wasm demo、腳本產生器、截圖）、`vendor/`（wasm 版 ECL、帶 WebGPU 後端的 SDL3、Dawn 的 emdawnwebgpu）、`docs/`（文件，依主題分資料夾）、`skills/`（六個 Claude skill）、`babylon/`（已停止的 TypeScript 移植版）、`build/` 與 `dist/`（建置產物）。
 
 每個建置目標是一個有 `MANIFEST` 的目錄：一行一個原始檔，依序編譯；`.lisp` 檔（引擎在前）串成一個編譯單元交給 ECL，`.c` 檔在連結時交給 emcc。為什麼這樣做，見教材第 1 步。
 
