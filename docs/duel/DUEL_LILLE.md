@@ -2989,6 +2989,18 @@ identical, the SP batch's check). The 20-seed gate (seeds 1–20, NORMAL), every
   the floor, as before); `VFX-LB-JUDGE` 160 B.
 - Stills: `/tmp/…/scratchpad/d56/jilliel/review/cine-giant.png` (beats 3–7).
 
+
+**Amendment 2: slow motion on the first shots, a longer opening** (the user, 2026-10-08, after the lead's shot-by-shot
+breakdown): 「毀魂技的第三幕「起射」過的太快，我希望能透過時緩鏡頭更強調射中的瞬間，逐漸加速的三幕起射後再接入第四幕的加速穿孔。第一幕也幫我拉長時間，
+讓玩家能看清那段演出。」; chosen 「1/5 → 1/3 → 1/2」 and 「約 40 幀（0.67 秒）」.
+- Beat 1 from 10 f to ≈ 40 f: low and close, a slow orbit; the wings gather and shake ≈ 20 f, snap open into the ring
+  ≈ f24 (the negative flash, the shake), then ≈ 15 f to see the ring and its holes.
+- Beat 3 from 40 f to ≈ 110 f, three shots, each faster: he fires, the line flies, and on the hit the cinematic goes
+  into slow motion (the actors' clips, the line and the effects slowed; the camera close on the pierce point, orbiting
+  slowly), then back to speed for the next shot: the 1st at ≈ 1/5 for ≈ 40 f, the 2nd ≈ 1/3 for ≈ 25 f, the 3rd ≈ 1/2 for
+  ≈ 15 f; straight on into beat 4.
+- The cinematic grows from 210 f to ≈ 310 f; the native sim counts it in the match seconds, so Lille's medians grow a
+  little more (the sim's outcomes unchanged).
 ---
 
 ## 24. The adaptive, in-character CPU (dream-rsi; the user, 2026-10-06)
