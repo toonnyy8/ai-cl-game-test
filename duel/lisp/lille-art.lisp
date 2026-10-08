@@ -1113,61 +1113,36 @@ grip; a joint = that joint (the wing blades and the owl's arms end at the rig's 
   (40 (:root :f -0.3 :r 0 :u 0.1 :pitch 7) (:spine :flex 16) (:head :flex 16) (:arm-r :flex 21.8 :side 10.3)
    (:elbow-r :flex 12) (:arm-l :flex 21.8 :side 10.3) (:elbow-l :flex 12))
   (:end :lb-w-stance))
-(defstrike :lb-w-judge-open (6 0 60 :base :lb-w-stance)
-  ;; the Kikon cinematic, beats 1-2: the ring snapped open (f6), held, the charge shaking (f32-58)
+(defstrike :lb-w-judge-open (24 0 64 :base :lb-w-stance)
+  ;; the Kikon cinematic, beat 1 (decision 56, Amendment 2): the wings gathered round the column and shaking harder
+  ;; (f4-22, a side jolt every 2 f), snapped open into the ring on f24 (S), held; beat 2: the charge's jolts (f60-86)
   (0)
-  ;; R 84/8, L -84/8
-  (3 (:root :f -0.02 :u 0.16) (:spine :flex -2) (:head :flex 2) (:arm-r :flex 5.9 :side 98) (:elbow-r :flex 12)
-   (:arm-l :flex 5.9 :side 98) (:elbow-l :flex 12) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 75/-22, L -75/-22
-  (6 :snap (:root :f -0.04 :r 0 :u 0.3 :pitch -1) (:spine :flex -4) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3)
-   (:elbow-r :flex 4) (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 75/-22, L -75/-22
-  (30 (:root :f -0.04 :r 0 :u 0.3 :pitch -1) (:spine :flex -4) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3)
-   (:elbow-r :flex 4) (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 75/-22, L -75/-22
-  (32 (:root :f -0.06 :r 0.006 :u 0.3 :pitch -2) (:spine :flex -5) (:head :flex 0) (:arm-r :flex 13.9 :side 67.3)
-   (:elbow-r :flex 4) (:arm-l :flex 13.9 :side 67.3) (:elbow-l :flex 4) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 75.3/-22.2, L -75.3/-22.2
-  (34 (:root :f -0.068 :r -0.006 :u 0.3 :pitch -2.308) (:spine :flex -5.5) (:head :flex 0) (:arm-r :flex 13.6 :side 67.2)
-   (:elbow-r :flex 4.3) (:arm-l :flex 13.6 :side 67.2) (:elbow-l :flex 4.3) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 75.6/-22.3, L -75.6/-22.3
-  (36 (:root :f -0.075 :r 0.007 :u 0.3 :pitch -2.615) (:spine :flex -6.1) (:head :flex 0) (:arm-r :flex 13.3 :side 67)
-   (:elbow-r :flex 4.6) (:arm-l :flex 13.3 :side 67) (:elbow-l :flex 4.6) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 75.9/-22.5, L -75.9/-22.5
-  (38 (:root :f -0.083 :r -0.007 :u 0.3 :pitch -2.923) (:spine :flex -6.6) (:head :flex 0) (:arm-r :flex 13 :side 66.9)
-   (:elbow-r :flex 4.9) (:arm-l :flex 13 :side 66.9) (:elbow-l :flex 4.9) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 76.2/-22.6, L -76.2/-22.6
-  (40 (:root :f -0.091 :r 0.008 :u 0.3 :pitch -3.231) (:spine :flex -7.2) (:head :flex 0) (:arm-r :flex 12.7 :side 66.8)
-   (:elbow-r :flex 5.2) (:arm-l :flex 12.7 :side 66.8) (:elbow-l :flex 5.2) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 76.5/-22.8, L -76.5/-22.8
-  (42 (:root :f -0.098 :r -0.01 :u 0.3 :pitch -3.538) (:spine :flex -7.7) (:head :flex 0) (:arm-r :flex 12.4 :side 66.7)
-   (:elbow-r :flex 5.5) (:arm-l :flex 12.4 :side 66.7) (:elbow-l :flex 5.5) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 76.8/-22.9, L -76.8/-22.9
-  (44 (:root :f -0.106 :r 0.011 :u 0.3 :pitch -3.846) (:spine :flex -8.2) (:head :flex 0) (:arm-r :flex 12.1 :side 66.5)
-   (:elbow-r :flex 5.8) (:arm-l :flex 12.1 :side 66.5) (:elbow-l :flex 5.8) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 77.2/-23.1, L -77.2/-23.1
-  (46 (:root :f -0.114 :r -0.013 :u 0.3 :pitch -4.154) (:spine :flex -8.8) (:head :flex 0) (:arm-r :flex 11.8 :side 66.4)
-   (:elbow-r :flex 6.2) (:arm-l :flex 11.8 :side 66.4) (:elbow-l :flex 6.2) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 77.5/-23.2, L -77.5/-23.2
-  (48 (:root :f -0.122 :r 0.015 :u 0.3 :pitch -4.462) (:spine :flex -9.3) (:head :flex 0) (:arm-r :flex 11.5 :side 66.3)
-   (:elbow-r :flex 6.5) (:arm-l :flex 11.5 :side 66.3) (:elbow-l :flex 6.5) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 77.8/-23.4, L -77.8/-23.4
-  (50 (:root :f -0.129 :r -0.018 :u 0.3 :pitch -4.769) (:spine :flex -9.8) (:head :flex 0) (:arm-r :flex 11.2 :side 66.1)
-   (:elbow-r :flex 6.8) (:arm-l :flex 11.2 :side 66.1) (:elbow-l :flex 6.8) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 78.1/-23.5, L -78.1/-23.5
-  (52 (:root :f -0.137 :r 0.02 :u 0.3 :pitch -5.077) (:spine :flex -10.4) (:head :flex 0) (:arm-r :flex 10.9 :side 66)
-   (:elbow-r :flex 7.1) (:arm-l :flex 10.9 :side 66) (:elbow-l :flex 7.1) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 78.4/-23.7, L -78.4/-23.7
-  (54 (:root :f -0.145 :r -0.023 :u 0.3 :pitch -5.385) (:spine :flex -10.9) (:head :flex 0)
-   (:arm-r :flex 10.6 :side 65.9) (:elbow-r :flex 7.4) (:arm-l :flex 10.6 :side 65.9) (:elbow-l :flex 7.4)
-   (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 78.7/-23.8, L -78.7/-23.8
-  (56 (:root :f -0.152 :r 0.026 :u 0.3 :pitch -5.692) (:spine :flex -11.5) (:head :flex 0) (:arm-r :flex 10.3 :side 65.7)
-   (:elbow-r :flex 7.7) (:arm-l :flex 10.3 :side 65.7) (:elbow-l :flex 7.7) (:thigh-r :flex -6) (:thigh-l :flex -6))
-  ;; R 79/-24, L -79/-24
-  (58 (:root :f -0.16 :r -0.03 :u 0.3 :pitch -6) (:spine :flex -12) (:head :flex 0) (:arm-r :flex 10 :side 65.6)
-   (:elbow-r :flex 8) (:arm-l :flex 10 :side 65.6) (:elbow-l :flex 8) (:thigh-r :flex -6) (:thigh-l :flex -6))
+  (4 :lb-w-fold-pose (:root :u 0.06) (:spine :flex 6) (:head :flex 12))
+  (6 :lb-w-fold-pose (:root :u 0.06 :r 0.006) (:spine :flex 6) (:head :flex 12))
+  (8 :lb-w-fold-pose (:root :u 0.065 :r -0.006) (:spine :flex 6.375) (:head :flex 12))
+  (10 :lb-w-fold-pose (:root :u 0.07 :r 0.008) (:spine :flex 6.75) (:head :flex 12))
+  (12 :lb-w-fold-pose (:root :u 0.075 :r -0.01) (:spine :flex 7.125) (:head :flex 12))
+  (14 :lb-w-fold-pose (:root :u 0.08 :r 0.013) (:spine :flex 7.5) (:head :flex 12))
+  (16 :lb-w-fold-pose (:root :u 0.085 :r -0.016) (:spine :flex 7.875) (:head :flex 12))
+  (18 :lb-w-fold-pose (:root :u 0.09 :r 0.021) (:spine :flex 8.25) (:head :flex 12))
+  (20 :lb-w-fold-pose (:root :u 0.095 :r -0.026) (:spine :flex 8.625) (:head :flex 12))
+  (22 :lb-w-fold-pose (:root :u 0.1 :r 0.032) (:spine :flex 9) (:head :flex 12))
+  (:s :snap :lb-w-ring-pose)
+  (58 :lb-w-ring-pose)
+  (60 :lb-w-ring-pose (:root :f -0.04 :r 0.006 :u 0.3 :pitch -1) (:spine :flex -4))
+  (62 :lb-w-ring-pose (:root :f -0.049 :r -0.006 :u 0.3 :pitch -1.385) (:spine :flex -4.615))
+  (64 :lb-w-ring-pose (:root :f -0.058 :r 0.007 :u 0.3 :pitch -1.769) (:spine :flex -5.231))
+  (66 :lb-w-ring-pose (:root :f -0.068 :r -0.007 :u 0.3 :pitch -2.154) (:spine :flex -5.846))
+  (68 :lb-w-ring-pose (:root :f -0.077 :r 0.008 :u 0.3 :pitch -2.538) (:spine :flex -6.462))
+  (70 :lb-w-ring-pose (:root :f -0.086 :r -0.01 :u 0.3 :pitch -2.923) (:spine :flex -7.077))
+  (72 :lb-w-ring-pose (:root :f -0.095 :r 0.011 :u 0.3 :pitch -3.308) (:spine :flex -7.692))
+  (74 :lb-w-ring-pose (:root :f -0.105 :r -0.013 :u 0.3 :pitch -3.692) (:spine :flex -8.308))
+  (76 :lb-w-ring-pose (:root :f -0.114 :r 0.015 :u 0.3 :pitch -4.077) (:spine :flex -8.923))
+  (78 :lb-w-ring-pose (:root :f -0.123 :r -0.018 :u 0.3 :pitch -4.462) (:spine :flex -9.538))
+  (80 :lb-w-ring-pose (:root :f -0.132 :r 0.02 :u 0.3 :pitch -4.846) (:spine :flex -10.154))
+  (82 :lb-w-ring-pose (:root :f -0.142 :r -0.023 :u 0.3 :pitch -5.231) (:spine :flex -10.769))
+  (84 :lb-w-ring-pose (:root :f -0.151 :r 0.026 :u 0.3 :pitch -5.615) (:spine :flex -11.385))
+  (86 :lb-w-ring-pose (:root :f -0.16 :r -0.03 :u 0.3 :pitch -6) (:spine :flex -12))
   (:end :lb-w-ring-pose))
 (defstrike :lb-w-judge-shot (2 0 14 :base :lb-w-ring-pose)
   ;; the Kikon cinematic, beat 3: a shot's recoil out of the ring, back into it
@@ -1882,9 +1857,24 @@ opening of KIN's swept sheaf 0..1, [70] 1 = an owl strike (all eight wings conve
 (defparameter *lb-judge-shots*
   (let ((v (make-array 48 :element-type 'fixnum)))
     (dotimes (n 48 v)
-      (setf (aref v n) (case n (0 62) (1 78) (2 90) (t (+ 100 (round (* 48 (sqrt (/ (- n 3) 44.0))))))))))
-  "The cinematic frame of pierce N: 62 / 78 / 90 (beat 3, the gaps shrinking), then 100 + 48 sqrt((n - 3) / 44) to 148
+      (setf (aref v n) (case n (0 96) (1 143) (2 174) (t (+ 192 (round (* 46 (sqrt (/ (- n 3) 44.0))))))))))
+  "The cinematic frame pierce N is fired on (its line flies *LB-JUDGE-FLY* frames of the cinematic's effect time to the
+hit): 96 / 143 / 174 (beat 3, Amendment 2: each hit slowed, *LB-JUDGE-SLOW*), then 192 + 46 sqrt((n - 3) / 44) to 238
 (beat 4: 7 f apart at first, several a frame at the end).")
+(defparameter *lb-judge-fly* 3.0 "A pierce's line flies this many frames (of the cinematic's effect time) to the hit.")
+(defparameter *lb-judge-slow* '((99 139 0.2) (146 171 0.33333334) (177 192 0.5))
+  "Amendment 2 (the user 2026-10-08: 「1/5 → 1/3 → 1/2」): the first three hits' slow motion, (from to rate) in cinematic
+frames: the actors' clips and the effects at RATE (CINE-SLOW, set by the script on the same frames), and the effect time
+the lines and holes run on (*LB-JUDGE-TIME*).")
+(declaim (type f32vec *lb-judge-time*))
+(defparameter *lb-judge-time*
+  (let ((v (make-f32 401)) (tm 0.0))
+    (dotimes (c 401 v)
+      (setf (aref v c) (f32 tm))
+      (incf tm (or (loop for (a b k) in *lb-judge-slow* when (and (<= a c) (< c b)) return k) 1.0))))
+  "The Kikon cinematic's effect time at each of its frames (frames at speed 1, slower in *LB-JUDGE-SLOW*): the lines'
+flight and fade, the holes' and stars' timing, the ring's kicks. Frames past 400 read 400's.")
+(defmacro %lb-judge-t (c) "The effect time at cinematic frame C (a fixnum form)." `(aref *lb-judge-time* (min 400 (max 0 ,c))))
 (defparameter *lb-judge-pierce*
   (let ((v (make-f32 (* 48 3))))
     (dotimes (n 48 v)
@@ -2290,23 +2280,24 @@ the move's frame only (cosmetic). 0 B."
   `(let ((%w *lb-wf*) (%f ,f) (%mv ,mv) (%rg 0f0) (%cup 0f0) (%sh 0f0) (%cl 0f0) (%lit 0) (%fl 0f0) (%vb 0f0) (%mask -1)
          (%ts 0.6f0))
      (declare (type f32vec %w) (single-float %rg %cup %sh %cl %fl %vb %ts) (fixnum %lit %mask))
-     (when ,ck                                            ; the Kikon cinematic (decision 56's storyboard): the ring
-       (let* ((%c ,ck) (%sv *lb-judge-shots*) (%last -1))   ; snapped open (f0-6), its holes lit one by one through the
-         (declare (fixnum %c %last) (type (simple-array fixnum (*)) %sv))   ; card (f12-58), the charge shaking, each shot
-         (dotimes (%n 48) (when (<= (aref %sv %n) %c) (setf %last %n)))     ; kicking it back, the verdict closing it
-         (let* ((%age (if (>= %last 0) (- %c (aref %sv %last)) 99))         ; (f170-176), settling after 185
-                (%k (if (< %age 6) (- 1f0 (/ (i->f %age) 6f0)) 0f0)) (%n (if (< %c 176) (min 24 (max 0 (floor (- %c 10) 2))) 0)))
-           (declare (fixnum %age %n) (single-float %k))
-           (setf %rg (* (%lb-ss (/ (i->f %c) 6f0)) (- 1f0 (%lb-ss (/ (- (i->f %c) 185f0) 18f0))))
-                 %cl (%lb-ss (/ (- (i->f %c) 170f0) 6f0))
+     (when ,ck                                            ; the Kikon cinematic (decision 56's storyboard, Amendment 2):
+       (let* ((%c ,ck) (%sv *lb-judge-shots*) (%last -1))   ; the ring snapped open on f24 (gathered and shaking before:
+         (declare (fixnum %c %last) (type (simple-array fixnum (*)) %sv))   ; LILLE-DRAW), its holes lit one by one through
+         (dotimes (%n 48) (when (<= (aref %sv %n) %c) (setf %last %n)))     ; the card (f42-88), the charge shaking, each
+         (let* ((%age (if (>= %last 0) (- (%lb-judge-t %c) (%lb-judge-t (aref %sv %last))) 99f0))   ; shot kicking it back
+                (%k (if (< %age 6f0) (- 1f0 (/ %age 6f0)) 0f0))           ; (on the effect time: slowed on the first hits),
+                (%n (if (< %c 268) (min 24 (max 0 (floor (- %c 40) 2))) 0)))   ; the verdict closing it (f262-268),
+           (declare (single-float %age %k) (fixnum %n))                        ; settling after 277
+           (setf %rg (* (%lb-ss (/ (- (i->f %c) 24f0) 3f0)) (- 1f0 (%lb-ss (/ (- (i->f %c) 277f0) 18f0))))
+                 %cl (%lb-ss (/ (- (i->f %c) 262f0) 6f0))
                  %cup (- 0.3f0 (* 1.0f0 %k %k))
-                 %sh (cond ((< %c 60) (* (the single-float *lb-ring-shake*) (%lb-ss (/ (- (i->f %c) 30f0) 30f0))))
-                           ((< 100 %c 150) 0.03f0) (t 0f0))
+                 %sh (cond ((< %c 90) (* (the single-float *lb-ring-shake*) (%lb-ss (/ (- (i->f %c) 60f0) 30f0))))
+                           ((< 192 %c 242) 0.03f0) (t 0f0))
                  %vb (* 0.6f0 (the single-float *lb-ring-blow*) %k %k) %mask 3 %ts 0.8f0
-                 %fl (if (< %age 3) (- 1f0 (/ (i->f %age) 3f0)) 0f0)
+                 %fl (if (< %age 3f0) (- 1f0 (/ %age 3f0)) 0f0)
                  (aref %w 67) (i->f %n))
            (dotimes (%i 8) (when (>= %n (+ 3 (* 3 %i))) (setf %lit (logior %lit (ash 1 %i)))))
-           (when (and (> %fl 0f0) (< %c 176))               ; the firing wing's muzzles flash
+           (when (and (> %fl 0f0) (< %c 268))               ; the firing wing's muzzles flash
              (setf %lit (logior %lit (ash 1 (floor (%lb-judge-hole %last) 3))))))))
      (unless ,ck (setf (aref %w 67) 0f0))
      (when (and %mv (not ,owl))
@@ -2770,10 +2761,14 @@ or a gold look plays; a fourth in MUJITTAI)."
            (%lb-stance-fx! e side stance tm rdt)        ; (a hit passed through, the fold)
            (let* ((rip (- tm (lb-fxs side 3))) (k (if (and cr (< (the fixnum cr) 30)) 0.8f0 (lb-fxs side 4)))
                   (gold (if cr (f-clamp (/ (- (i->f cr) 30f0) 30f0) 0f0 1f0) 0f0))
-                  (o (* 16 (ji :chest))))
-             (declare (single-float rip k gold) (fixnum o))
-             (setf (aref v 0) 0f0 (aref v 1) 0.3f0 (aref v 2) 0.13f0 (aref v 11) k
-                   (aref v 12) (if (< rip 0.5f0) (* 14f0 (- 1f0 (* 2f0 rip))) 0f0) (aref v 13) tm
+                  (gather (if (and ck (< (the fixnum ck) 24)) (i->f ck) -1f0))   ; (the Kikon cinematic's beat 1:
+                  (o (* 16 (ji :chest))))                                         ;  gathered round him, shaking, f0-23)
+             (declare (single-float rip k gold gather) (fixnum o))
+             (setf (aref v 0) 0f0 (aref v 1) 0.3f0 (aref v 2) 0.13f0
+                   (aref v 11) (if (>= gather 0f0) (f-max k (* 0.85f0 (%lb-ss (/ gather 6f0)))) k)
+                   (aref v 12) (cond ((>= gather 0f0) (+ 3f0 (* 0.4f0 gather))) ((< rip 0.5f0) (* 14f0 (- 1f0 (* 2f0 rip))))
+                                     (t 0f0))
+                   (aref v 13) tm
                    (aref v 14) (if stance 0.7f0 1f0) (aref v 16) (aref v 31) (aref v 23) 0f0
                    (aref v 15) (if (and cj (< (the fixnum cj) 160)) (f-max 0f0 (/ (- (i->f cj) 112f0) 8f0)) 9f0))
              (if (> gold 0f0)                            ; the revival: the jade turning gold over 30 f, a pair at a time
@@ -3170,39 +3165,46 @@ cross flash; K its presence."
         (fx-star x y z 0.08f0 0.2f0 4 0.785f0 0f0 0f0 0.03f0 35f0 +pal-hit+ k :push 0.6f0)))))
 
 (defun-fast vfx-lb-judge (a v cf)
-  "The Kikon cinematic's lines and holes at its frame CF (decision 56's storyboard; A Lille, V the opponent): each pierce's
-jade line (a white core) from its hole (*LB-HOLES*) through V and 3 m on, for 5 f, a star where it enters on its first
-2; every pierce so far a white hole in V (*LB-JUDGE-PIERCE*: facing the camera, pushed over his silhouette), until the
-verdict (frame 176). From the frame alone: nothing outlives the cinematic. 0 B but its two position reads."
+  "The Kikon cinematic's lines and holes at its frame CF (decision 56's storyboard and Amendment 2; A Lille, V the
+opponent), on its effect time (*LB-JUDGE-TIME*: slowed on the first three hits): each pierce's jade line (a white core)
+flies from its hole (*LB-HOLES*) to V in *LB-JUDGE-FLY* frames, goes 3 m on through him over 2 more and fades over 5; a
+star where it enters, growing over 3; from the hit a white hole in V (*LB-JUDGE-PIERCE*: facing the camera, pushed over
+his silhouette), until the verdict (frame 268). From the frame alone: nothing outlives the cinematic. 0 B but its two
+position reads."
   (declare (fixnum cf))
   (let* ((p (pos-of a)) (q (pos-of v)) (side (if (eql a *p1*) 0 1)) (hs *lb-holes*) (pp *lb-judge-pierce*)
-         (sv *lb-judge-shots*)
+         (sv *lb-judge-shots*) (tc (%lb-judge-t cf)) (fly (the single-float *lb-judge-fly*))
          (dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2))) (dl (f-max 0.01f0 (f-sqrt (+ (* dx dx) (* dz dz)))))
          (rx (- (/ dz dl))) (rz (/ dx dl)) (qx (aref q 0)) (qy (aref q 1)) (qz (aref q 2)))   ; (his right, facing A)
     (declare (type f32vec p q hs pp) (type (simple-array fixnum (*)) sv) (fixnum side)
-             (single-float dx dz dl rx rz qx qy qz))
-    (when (< cf 176)
+             (single-float tc fly dx dz dl rx rz qx qy qz))
+    (when (< cf 268)
       (dotimes (n 48)
         (let ((sf (aref sv n)))
           (declare (fixnum sf))
           (when (<= sf cf)
             (let* ((o (* 3 n)) (u (aref pp o)) (tx (+ qx (* u rx))) (ty (+ qy (aref pp (+ o 1)))) (tz (+ qz (* u rz)))
-                   (age (- cf sf)) (sd (i->f n)))
-              (declare (fixnum o age) (single-float u tx ty tz sd))
-              (fx-disc tx ty tz (aref pp (+ o 2)) 0.04f0 (+ 600f0 sd) +pal-hit+ 0.98f0 :push 0.35f0)   ; the hole
-              (when (< age 5)
-                (let* ((k (- 1f0 (* 0.2f0 (i->f age)))) (h (* 3 (+ (* 24 side) (%lb-judge-hole n))))
+                   (age (- tc (%lb-judge-t sf))) (sd (i->f n)))
+              (declare (fixnum o) (single-float u tx ty tz age sd))
+              (when (>= age fly)                         ; the hole, from the hit
+                (fx-disc tx ty tz (aref pp (+ o 2)) 0.04f0 (+ 600f0 sd) +pal-hit+ 0.98f0 :push 0.35f0))
+              (when (< age (+ fly 7f0))                  ; the line: flying, through him, fading
+                (let* ((k (if (< age (+ fly 2f0)) 1f0 (- 1f0 (* 0.2f0 (- age fly 2f0)))))
+                       (h (* 3 (+ (* 24 side) (%lb-judge-hole n))))
                        (x0 (aref hs h)) (y0 (aref hs (+ h 1))) (z0 (aref hs (+ h 2)))
                        (ax (- tx x0)) (ay (- ty y0)) (az (- tz z0)) (al (f-max 0.01f0 (f-sqrt (+ (* ax ax) (* ay ay) (* az az)))))
-                       (e (/ (+ al 3f0) al)) (ex (* ax e)) (ey (* ay e)) (ez (* az e)))
+                       (e (if (< age fly) (/ age fly) (/ (+ al (* 3f0 (f-min 1f0 (* 0.5f0 (- age fly))))) al)))
+                       (ex (* ax e)) (ey (* ay e)) (ez (* az e)))
                   (declare (single-float k x0 y0 z0 ax ay az al e ex ey ez) (fixnum h))
                   (fx-ribbon x0 y0 z0 ex ey ez (* 0.065f0 k) (* 0.05f0 k) 1f0 (- -151f0 sd) 0.02f0 (toon-a +pal-jade+ k)
                              0.8f0 (- -151f0 sd) 0.02f0 (toon-a +pal-jade+ k) 0f0 0f0 :segs 2 :mode :toon)
                   (fx-ribbon x0 y0 z0 ex ey ez (* 0.018f0 k) (* 0.014f0 k) 1f0 (- -251f0 sd) 0f0 (toon-a +pal-hit+ k)
                              1f0 (- -251f0 sd) 0f0 (toon-a +pal-hit+ k) 0f0 0f0 :segs 2 :mode :toon)
-                  (when (< age 2)
-                    (fx-star tx ty tz 0.06f0 0.3f0 6 (* 0.9f0 sd) 0f0 0f0 0.1f0 (+ 700f0 sd) +pal-jade+ 0.95f0
-                             :push 0.4f0)))))))))
+                  (when (and (>= age fly) (< age (+ fly 3f0)))   ; the star where it enters, growing
+                    (let ((g (+ 0.5f0 (* 0.25f0 (- age fly)))))
+                      (declare (single-float g))
+                      (fx-star tx ty tz (* 0.06f0 g) (* 0.3f0 g) 6 (* 0.9f0 sd) 0f0 0f0 0.1f0 (+ 700f0 sd) +pal-jade+
+                               0.95f0 :push 0.4f0))))))))))
     nil))
 
 (defun vfx-lb-horizon (a k)

@@ -415,7 +415,7 @@ on FDT: RDT, or 0 while paused (the fx clock, particles, stamps, shake, camera a
       (progn (setf *step-acc* 0.0)
              (unless (or *paused* (not (entity-alive-p *p1*)))       ; menus: fighters idle on real time
                (dolist (e (list *p1* *p2*)) (anim-advance (model-anim (model e)) (f32 rdt))))))
-  (let ((fdt (if (fx-frozen-p) 0.0 rdt)))
+  (let ((fdt (cond ((fx-frozen-p) 0.0) ((= *cine-time-scale* 1f0) rdt) (t (* rdt *cine-time-scale*)))))   ; (CINE-SLOW)
     (fx-clock-advance (f32 fdt))
     (if (member *flow* '(:intro :battle :finish))
         (duel-camera *p1* *p2* fdt)
