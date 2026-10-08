@@ -3,7 +3,7 @@
 // over, and the old caches are deleted. Everything is served cache-first from ONE version, so index.html, index.js
 // and index.wasm always come from the same build (a network-first index.html could pair a new page with an old
 // index.js / index.wasm until the reload).
-var VERSION = 'soulduel-b9d401c15f01';
+var VERSION = 'soulduel-0f8932b8f592';
 var FILES = ['./', 'index.html', 'index.js', 'index.wasm', 'pwa.js', 'manifest.webmanifest', 'manual.html',
              'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
 self.addEventListener('install', function (e) {
