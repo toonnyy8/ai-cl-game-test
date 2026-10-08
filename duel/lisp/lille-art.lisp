@@ -145,14 +145,15 @@
   ;; its centre (their rims the crown's bands, meeting on top), both eyes open, the chin on a round knob (tagged: the revival's headless
   ;; column hides the head, keeps the collar)
   ;; (the collar's outside on the column's top radius, 0.19 m; the head the base form's size: the user, 2026-10-08)
-  (:head (:sphere 0.086 :at (0 0.17 0) :seg 16 :c :skin :tag :jl-head)        ; the base form's head size
-         (:cyl 0.0885 0.017 :at (0 0.17 0) :rot (25 0 90) :seg 24 :c :band :tag :jl-head)        ; two rings through his centre,
-         (:cyl 0.0885 0.017 :at (0 0.17 0) :rot (-25 0 90) :seg 24 :c :band :tag :jl-head)       ;  their rims the crown's pale bands
-         (:box 0.02 0.008 0.003 :at (0.022 0.185 0.083) :c :eye :tag :jl-head)                    ; both eyes open
-         (:box 0.02 0.008 0.003 :at (-0.022 0.185 0.083) :c :eye :tag :jl-head)
-         (:box 0.008 0.008 0.003 :at (0.022 0.185 0.085) :c :pupil :tag :jl-head)
-         (:box 0.008 0.008 0.003 :at (-0.022 0.185 0.085) :c :pupil :tag :jl-head)
+  (:head (:sphere 0.086 :at (0 0.17 0) :seg 16 :squash (0.8 1 1) :c :skin :tag :jl-head)        ; the base form's head size
+         (:cyl 0.0885 0.017 :at (0 0.17 0) :rot (15 0 90) :seg 24 :squash (0.8 1 1) :c :band :tag :jl-head)        ; two rings through his centre,
+         (:cyl 0.0885 0.017 :at (0 0.17 0) :rot (-15 0 90) :seg 24 :squash (0.8 1 1) :c :band :tag :jl-head)       ;  their rims the crown's pale bands
+         (:box 0.018 0.008 0.003 :at (0.019 0.185 0.083) :c :eye :tag :jl-head)                    ; both eyes open
+         (:box 0.018 0.008 0.003 :at (-0.019 0.185 0.083) :c :eye :tag :jl-head)
+         (:box 0.008 0.008 0.003 :at (0.019 0.185 0.085) :c :pupil :tag :jl-head)
+         (:box 0.008 0.008 0.003 :at (-0.019 0.185 0.085) :c :pupil :tag :jl-head)
          (:sphere 0.032 :at (0 0.082 0.072) :seg 10 :c :cream :tag :jl-head)                   ; the chin knob
+         (:cyl 0.094 0.09 :at (0 0.125 0.004) :seg 18 :squash (0.8 1 1) :c :cream :tag :jl-head)   ; the white cylinder over the face's lower half
          (:box 0.05 0.080 0.024 :at (0.0000 0.0000 0.1780) :rot (-0.0 0 0) :c :cream)
          (:box 0.046 0.072 0.01 :at (0.0000 -0.0040 0.1630) :rot (-0.0 0 0) :c :lining)
          (:box 0.05 0.084 0.024 :at (0.0461 0.0021 0.1719) :rot (-15.0 0 0) :c :cream)
@@ -234,14 +235,15 @@
   ;; its centre (their rims the crown's bands, meeting on top), both eyes open, the chin on a round knob (tagged: the revival's headless
   ;; column hides the head, keeps the collar)
   ;; (the collar's outside on the column's top radius, 0.19 m; the head the base form's size: the user, 2026-10-08)
-  (:head (:sphere 0.086 :at (0 0.17 0) :seg 16 :c :skin :tag :jl-head)        ; the base form's head size
-         (:cyl 0.0885 0.017 :at (0 0.17 0) :rot (25 0 90) :seg 24 :c :band :tag :jl-head)        ; two rings through his centre,
-         (:cyl 0.0885 0.017 :at (0 0.17 0) :rot (-25 0 90) :seg 24 :c :band :tag :jl-head)       ;  their rims the crown's pale bands
-         (:box 0.02 0.008 0.003 :at (0.022 0.185 0.083) :c :eye :tag :jl-head)                    ; both eyes open
-         (:box 0.02 0.008 0.003 :at (-0.022 0.185 0.083) :c :eye :tag :jl-head)
-         (:box 0.008 0.008 0.003 :at (0.022 0.185 0.085) :c :pupil :tag :jl-head)
-         (:box 0.008 0.008 0.003 :at (-0.022 0.185 0.085) :c :pupil :tag :jl-head)
+  (:head (:sphere 0.086 :at (0 0.17 0) :seg 16 :squash (0.8 1 1) :c :skin :tag :jl-head)        ; the base form's head size
+         (:cyl 0.0885 0.017 :at (0 0.17 0) :rot (15 0 90) :seg 24 :squash (0.8 1 1) :c :band :tag :jl-head)        ; two rings through his centre,
+         (:cyl 0.0885 0.017 :at (0 0.17 0) :rot (-15 0 90) :seg 24 :squash (0.8 1 1) :c :band :tag :jl-head)       ;  their rims the crown's pale bands
+         (:box 0.018 0.008 0.003 :at (0.019 0.185 0.083) :c :eye :tag :jl-head)                    ; both eyes open
+         (:box 0.018 0.008 0.003 :at (-0.019 0.185 0.083) :c :eye :tag :jl-head)
+         (:box 0.008 0.008 0.003 :at (0.019 0.185 0.085) :c :pupil :tag :jl-head)
+         (:box 0.008 0.008 0.003 :at (-0.019 0.185 0.085) :c :pupil :tag :jl-head)
          (:sphere 0.032 :at (0 0.082 0.072) :seg 10 :c :cream :tag :jl-head)                   ; the chin knob
+         (:cyl 0.094 0.09 :at (0 0.125 0.004) :seg 18 :squash (0.8 1 1) :c :cream :tag :jl-head)   ; the white cylinder over the face's lower half
          (:box 0.05 0.080 0.024 :at (0.0000 0.0000 0.1780) :rot (-0.0 0 0) :c :cream)
          (:box 0.046 0.072 0.01 :at (0.0000 -0.0040 0.1630) :rot (-0.0 0 0) :c :lining)
          (:box 0.05 0.084 0.024 :at (0.0461 0.0021 0.1719) :rot (-15.0 0 0) :c :cream)

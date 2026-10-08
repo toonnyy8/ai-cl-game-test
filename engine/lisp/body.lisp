@@ -7,6 +7,8 @@
 ;;;;   (:box w h d) (:bevel w h d bevel) (:cyl r h) (:cone r h) (:sphere r) (:wedge w h d)
 ;;;;   options :at (right up fwd) m, :rot (yaw pitch roll) deg, :c palette key or #xRRGGBB,
 ;;;;   :seg n (cyl / cone / sphere sides), :top r (cyl top radius), :stretch m (sphere -> capsule),
+;;;;   :squash (sx sy sz) (the placed shape scaled in the joint frame, :at included: an ellipsoid head, and parts placed
+;;;;   on it with the same squash stay on it; none = unscaled),
 ;;;;   :tag key (a solid part built as its own mesh, so a draw can hide it: an eyepatch, a mask).
 ;;;;   (:glow e shape [tag]) = a separate emissive part (strength E), drawn tinted by its colour.
 ;;;;   :ink k (hull width multiplier, see BUILD-PARTS).
@@ -47,7 +49,11 @@ list (NIL stays NIL)."
            (col (pal-rgb (or color (getf opts :c)) palette))
            (seg (getf opts :seg 8)))
       (when col (apply #'mb-color mb col))
-      (with-xform (mb (shape-xform (getf opts :at) (getf opts :rot)))
+      (with-xform (mb (let ((q (getf opts :squash)))   ; (:squash: the joint-frame scale, outside the placement)
+                        (if q
+                            (m4-mul! (make-f32 16) (xform :sx (first q) :sy (second q) :sz (third q))
+                                     (shape-xform (getf opts :at) (getf opts :rot)))
+                            (shape-xform (getf opts :at) (getf opts :rot)))))
         (ecase kind
           (:box (destructuring-bind (x y z) nums (mb-box mb (* w x) y (* w z))))
           (:bevel (destructuring-bind (x y z b) nums (mb-bevel-box mb (* w x) y (* w z) b)))
