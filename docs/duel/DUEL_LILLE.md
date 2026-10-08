@@ -2941,6 +2941,22 @@ judge.
 play (KIN and EN, the behind and side cameras, before and after) and of the cinematic's beats (before every 10 f, after
 frame by frame at the beats). The look needs the user's eyes.
 
+**Merged** (the lead, 2026-10-08). The two batches both claimed `*LB-WF*` [64]–[66]; the owl's beat moved to [68]–[70]
+(the SP batch keeps [61]–[67]; the vector is 72 long). Host tests ALL PASS: duel-rules **6479** (6435 + the owl's 24 + the
+SPs' 20), control 89, learn 131, cine 18; pkgcheck 0 / 0 / 0; `./build.sh duel` 0 warnings. `simgate.py --cvc` PASS and
+identical; `--seeds 10 --summary`: the 30 lines of the other pairings byte-identical, Lille's 12 longer only by the Kikon
+cinematic's 48 more frames (the native sim counts the cinematic in the match's seconds; at `:len 162` they were
+identical, the SP batch's check). The 20-seed gate (seeds 1–20, NORMAL), every match K.O., the wins unchanged:
+
+| Pairing | Median (§23.36) | Lille wins / 20 |
+|---|---|---|
+| LY | 168.4 s (167.6) | 10 |
+| LK | 157.4 s (157.3) | 5 |
+| LR | 202.1 s (200.6) | 9 |
+| LI | 192.1 s (192.1) | 4 |
+| LS | 184.9 s (184.1) | 7 |
+| LL | 229.2 s (226.8; mirror) | P1 3 / P2 17 |
+
 ---
 
 ## 24. The adaptive, in-character CPU (dream-rsi; the user, 2026-10-06)
