@@ -160,7 +160,8 @@ Entities spawned while the loop runs may or may not be visited in this pass."
 (defmacro do-events ((kind) &body clauses)
   "Dispatch every queued event (TAKE-EVENTS, oldest first) on its KIND (a variable bound to it) with one CASE
 clause per kind: (KEY LAMBDA-LIST BODY...) runs BODY with the event's data destructured by LAMBDA-LIST (a symbol
-gets the whole data list); (T BODY...) / (OTHERWISE BODY...) run as they are. Expands to
+gets the whole data list, and may be left unused; () is only for events that carry no data: a () clause on an event
+with data errors at runtime); (T BODY...) / (OTHERWISE BODY...) run as they are. Expands to
 (DOLIST (EV (TAKE-EVENTS)) (DESTRUCTURING-BIND (KIND &REST DATA) EV (CASE KIND ...))):
   (do-events (kind)
     (:hit (att def dmg) (show-hit def dmg))
@@ -174,13 +175,13 @@ gets the whole data list); (T BODY...) / (OTHERWISE BODY...) run as they are. Ex
            ,@(mapcar (lambda (c)
                        (destructuring-bind (key &rest rest) c
                          (cond ((member key '(t otherwise)) c)
-                               ((and (first rest) (symbolp (first rest))) `(,key (let ((,(first rest) ,data)) ,@(rest rest))))
+                               ((and (first rest) (symbolp (first rest))) `(,key (let ((,(first rest) ,data)) (declare (ignorable ,(first rest))) ,@(rest rest))))
                                (t `(,key (destructuring-bind ,(first rest) ,data ,@(rest rest)))))))
                      clauses))))))
 
 ;;; ---------------------------------------------------------------- the one component every game has
 (defcomponent transform
-  "Where an entity is: position (x y z metres, y up; a fighter's feet) and facing (yaw radians; 0 faces -Z)."
+  "Where an entity is: position (x y z metres, y up; a character's feet, its base point) and facing (yaw radians; 0 faces -Z)."
   (pos (make-f32 3) :type f32vec)
   (yaw 0f0 :type single-float))
 

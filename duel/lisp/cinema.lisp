@@ -155,11 +155,12 @@ the cinematic's end (decision 56's Kikon: its first shots' hits)."
   "The Konpaku shatter's look on fighter V (VFX-KONPAKU-SHATTER of N souls at UP metres above his feet, DY higher); the
 beat's sound and shake stay at the call site."
   (multiple-value-bind (x y z) (actor-point v up)
-    (vfx-konpaku-shatter x (if (= dy 0.0) y (+ y dy)) z n)))
+    (vfx-konpaku-shatter x (+ y dy) z n)))
 
 (defmacro push-in-on (a v from d0 dd h0 dh &optional (len 22))
   "The held push-in before a finishing blow, inside DEFCINE: both held LEN frames in silence under a 70 degree lens, while
-the shot on V closes from D0 metres / H0 high by DD / DH (U runs 0..1 across the beat), FROM to FROM + LEN."
+the shot on V closes from D0 metres / H0 high by DD / DH (the body uses DEFCINE's U, 0..1 across the beat), FROM to
+FROM + LEN. FROM and LEN must be literals (they are folded at expansion time)."
   `(progn (at ,from (hold-both ,a ,v ,len) (silence ,len) (lens 70))
           (during (,from ,(+ from len)) (shot-on ,v 150 (- ,d0 (* ,dd u)) (+ ,h0 (* ,dh u)) :look 1.4))))
 
