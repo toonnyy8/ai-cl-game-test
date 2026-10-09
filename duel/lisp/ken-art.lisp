@@ -1007,17 +1007,17 @@ flex and the spine / head flex shifted by these."
                          (0.6 (:root :u -0.04) (:thigh-r :side 8) (:knee-r :flex 45) (:thigh-l :side 10)))))
   "The oni's prowl: the shared walk / strafe legs (body.lisp), each clip (name seconds keys) sunk by ONI-KEYS.")
 ;; the prowl's upper body (DUEL_KEN_REWORK §8.4, the user 2026-10-09: 「做卍解的潛行走路和咆哮後跳」): a stalking beast, not
-;; a man walking crouched: the shoulders roll with the steps (16 degrees: more swings the trailing blade about), the left
+;; a man walking crouched: the shoulders roll with the steps (8 degrees: more swings the trailing blade about), the left
 ;; claw paws forward with the opposite foot and drags back, the head stays low and sways, the broken blade scrapes along
 ;; behind; one list of four keys per clip, laid on the sunk legs key for key (the same times)
 (defparameter *oni-prowl*
   '((:ke-b-walk-f ((:chest :flex 18 :twist -18) (:arm-l :flex 74 :side 28) (:elbow-l :flex 34) (:hand-l :flex 64)
-                   (:arm-r :flex -22 :side 32) (:hand-r :flex -106) (:head :flex -60 :twist 8))
-                  ((:chest :flex 24 :twist -10) (:arm-l :flex 50 :side 40) (:elbow-l :flex 62) (:hand-l :flex 42)
+                   (:arm-r :flex -16 :side 30) (:hand-r :flex -106) (:head :flex -60 :twist 8))
+                  ((:chest :flex 24 :twist -14) (:arm-l :flex 50 :side 40) (:elbow-l :flex 62) (:hand-l :flex 42)
                    (:arm-r :flex -16 :side 30) (:hand-r :flex -98) (:head :flex -66 :twist 0))
-                  ((:chest :flex 18 :twist -2) (:arm-l :flex 20 :side 46) (:elbow-l :flex 82) (:hand-l :flex 30)
-                   (:arm-r :flex -8 :side 28) (:hand-r :flex -106) (:head :flex -60 :twist -8))
-                  ((:chest :flex 24 :twist -10) (:arm-l :flex 44 :side 42) (:elbow-l :flex 66) (:hand-l :flex 52)
+                  ((:chest :flex 18 :twist -10) (:arm-l :flex 20 :side 46) (:elbow-l :flex 82) (:hand-l :flex 30)
+                   (:arm-r :flex -16 :side 30) (:hand-r :flex -106) (:head :flex -60 :twist -8))
+                  ((:chest :flex 24 :twist -14) (:arm-l :flex 44 :side 42) (:elbow-l :flex 66) (:hand-l :flex 52)
                    (:arm-r :flex -16 :side 30) (:hand-r :flex -98) (:head :flex -66 :twist 0)))
     (:ke-b-walk-b ((:chest :flex 14 :twist -18) (:arm-l :flex 66 :side 34) (:elbow-l :flex 44) (:hand-l :flex 60)
                    (:head :flex -54 :twist 4))

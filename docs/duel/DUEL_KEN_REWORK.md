@@ -342,7 +342,7 @@ build 0 warnings. The playtest Artifact carries §8 and the turn (v37; the user:
 - The user (after the v37 playtest): 「做卍解的潛行走路和咆哮後跳」 (the two items of the §8 plan not yet built).
 - The prowl (`*oni-prowl*` over `*oni-walk*`): the shared walk / strafe legs stay sunk into the crouch (`oni-keys`); above
   the hips each of the four keys now carries its own upper body: the shoulders roll with the steps (the chest twist
-  −18° ↔ −2°, a first pass at 30° swung the trailing blade about too much), the left claw paws forward with the
+  −18° ↔ −10°, the blade arm held still: passes at 30° and 16° with the arm swinging flung the trailing blade forward), the left claw paws forward with the
   opposite foot (arm flex 74°, elbow 34°) and drags back (20°, 82°), the head low and swaying (±8°), the blade hand
   scraping; walking back the claw stays up in front; strafing it is held out, the head turned to the opponent.
 - The roaring back leap (`:ke-b-step-b`, the oni's art for the shared Step back `:sh-step-b`, the same 0.4 s): sunk
