@@ -33,6 +33,15 @@ Asked with the ⚠ questions of `skills/duel-character` before any build:
 | The numbers of 萬物貫通 (guard gauge 100; a normal block drains ~30) | drain 40, 30 % through (recommended) / 50, 50 % / 30, 20 % | **「被擋扣 40、穿透 30%」** |
 | The 狙擊 gauge | 3 pips, +1 a hit, −1 a conversion (recommended) / 0–100 / blocks fill too | **「3 格，命中 +1，轉換一次 -1」** |
 
+### Decision V2 (2026-10-09): MUJITTAI stays in the awakening
+
+The user, after the design was written: 「覺醒後的 U 還是保持開了就進入無敵的狀態」.
+
+- In every awakened form (melee, ranged, owl melee, owl ranged) U enters **MUJITTAI** exactly as the old Lille's
+  (DUEL_LILLE §5.2): a ward with `:intangible` (no damage, no chip, no push), every kit command drops it, the guard gauge
+  drains ×1.0 on what it absorbs and does not refill while in it. One `*-mujittai` kit per awakened form.
+- The base form's U stays a plain guard (the eye is still dropped).
+
 Everything below that the user did not decide is marked **[G]** (our reading, a knob; changed on the next playtest).
 
 ## 2. Frame
@@ -48,9 +57,9 @@ Everything below that the user did not decide is marked **[G]** (our reading, a 
 - Files: `duel/lisp/barro-art.lisp`, `duel/lisp/barro.lisp`, after `lille.lisp` in `duel/MANIFEST`.
 - Debug range **82000–82999** (claimed here; DUEL_GAMEPLAY "Debug commands"). Gate command for his pairings: 2156–2162
   (k 21–27), character gate 2142.
-- Dropped from the old kit: MUJITTAI (U is a plain guard in every form), the eye, TENSHIN's dash switch, the crossing
+- Dropped from the old kit: the eye (the base form's U is a plain guard), TENSHIN's dash switch, the crossing
   slow motion, Hoho → KIN, the stance's charge bonus and its HIRENKYAKU step, HOSHA, the Trompete reflect / seal,
-  SABAKI's erupting ground lines. Kept: the owl's revival (decision V1).
+  SABAKI's erupting ground lines. Kept: the owl's revival (decision V1) and MUJITTAI on U in every awakened form (decision V2).
 
 ## 3. 萬物貫通 THE X-AXIS (one rule, every move that carries it)
 
@@ -104,7 +113,7 @@ Two forms of one awakening: **近戰 melee** `:barro :jilliel-kin` (KIN's wing b
 | J3 → L | `:br-backstep` 後撤 | a 5 m back-dash over 14 f (clip `:lb-w-tenshin`, iframes f0–6), lands in ranged mode |
 | K3 → L | `:br-recall` 回收 | takes every live trace off the field, counts n, then plays the derivative string for n (§5.4) |
 | SP1 / SP2 | as ranged SP1 / SP2 | go to ranged and lay (§5.2) [G]: the awakening's damage comes from traces and the recall |
-| U | guard | no MUJITTAI |
+| U | MUJITTAI `:jilliel-kin-mujittai` (decision V2) | any command drops it back to melee |
 | P (≤ 4 Konpaku, free state) | the owl's revival | §6 |
 | Breaker, O | `:br-w-breaker`, `:br-w-kikon` | as the old (Kikon 3) |
 
@@ -116,6 +125,7 @@ Two forms of one awakening: **近戰 melee** `:barro :jilliel-kin` (KIN's wing b
 | SP1 | `:br-e-sanren` | lays 3 lines in a fan (clip `:lb-e-sanren`), 3 each = **9** |
 | SP2 | `:br-e-nijushi` | lays one thick line (radius 1.2, clip `:lb-e-nijushi`), **9** [G] |
 | J / K | `:br-w-j1` / `:br-w-k1` | back to melee at f0 and the attack (「切回近戰並發動攻擊」) |
+| U | MUJITTAI `:jilliel-mujittai` (decision V2) | any command drops it back to ranged |
 | walk | EN's float (`*br-walk-en*` = old `*walk-jilliel*`) | |
 
 Laying never deals damage. A lay is refused when the flash step is short of its cost (user: 「留下軌跡會消耗閃步量表」).
@@ -147,7 +157,7 @@ at the opponent ("主要輸出手段"). Damage is the knob to tune at the gate [
 P in either awakened mode at ≤ 4 Konpaku, from a free state → the owl, as the old (`br-revive-cine`, Konpaku → 1, Reishi
 full, traces cleared). Two modes on the same rules as §5: **owl melee** `:shin-kin` (claws `:lb-o-q1..f3`), **owl ranged**
 `:shin` (EN casts `:lb-oe-q1..`, SP1 `:lb-oe-sabaki` lays 3 lines, SP2 `:lb-oe-trompete` lays the thick line, no reflect,
-no seal). ×1.1 dealt, ×1.1 taken, +1 f on every move, refunds 5 / 2, Kikon 4 (the old owl's numbers). The recall's
+no seal), U MUJITTAI in both (decision V2). ×1.1 dealt, ×1.1 taken, +1 f on every move, refunds 5 / 2, Kikon 4 (the old owl's numbers). The recall's
 derivative strings use the claws' clips (`:lb-o-*`, `:lb-o-chop` for the last hit).
 
 ## 7. Animation: what is reused, what is new
