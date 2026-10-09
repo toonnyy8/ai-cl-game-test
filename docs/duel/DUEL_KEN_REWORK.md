@@ -142,7 +142,7 @@ volumes unchanged:
 - The playtest Artifact (v35, 2026-10-09) carries this round: the user, 「幫我更新 playtest」.
 - Next, the user: 「做野晒」: NOZARASHI (KATATE / RYOTE / NOMIHOSE), its look first, then its strikes (§6).
 
-## 6. NOZARASHI (2026-10-09, in progress)
+## 6. NOZARASHI (2026-10-09)
 
 ### 6.1 The cleaver
 - First pass (canon research, §4 item 2: the canon shape at the old length): a broad near-black head with the point at
@@ -244,7 +244,7 @@ volumes unchanged:
   identical; one match of LI changed (132 → 120 s). `--cvc` 3 PASS (the references unchanged). Host tests ALL PASS (the
   revival test now passes FREE: rules 6481); `pkgcheck` 0 / 0 / 0; `./build.sh duel` 0 warnings.
 
-## 8. The Bankai and KATAUDE (2026-10-09, in progress)
+## 8. The Bankai and KATAUDE (2026-10-09)
 
 - The playtest Artifact carries §6–§7 (v36; the user: 「幫我更新 playtest」), then 「開始設計」 for the Bankai.
 - Diagnosis (stills of every `:ke-b-*` clip and the weapon): the oni still wears the white haori; the broken cleaver is
@@ -357,3 +357,10 @@ build 0 warnings. The playtest Artifact carries §8 and the turn (v37; the user:
   oni at f58. Now f0 also clears the model's hide list (`refresh-look` at f58 restores the Bankai's).- Checks: `simgate.py --seeds 10 --summary` byte-identical to the base, `--cvc` 3 PASS, `duel-rules-test` 6481 ALL PASS,
   `pkgcheck.sh duel` 0 / 0 / 0, `./build.sh duel` 0 warnings, the headless run clean; the cinematic's stills (35005,
   35040, 35070) show the haori torso until the oni.- The playtest Artifact carries §8.4 (v38; the user: 「請幫我上 playtest」).
+
+## 9. Merged (2026-10-09)
+
+The user: 「合併回 main」. `claude/kenpachi-rework` (§5–§8: the base form, Nozarashi, the second awakenings, the Bankai
+and KATAUDE) fast-forwarded into `main` (main had not moved since the branch started at 79cecfa); the gates of §8.4 ran
+on that head. Not deployed (`tools/deploy-pages.sh` only on request).
+

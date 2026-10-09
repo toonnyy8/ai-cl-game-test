@@ -2308,3 +2308,11 @@ J／K 縮短、受擊值、分身消耗三批合併後，照新的測試規則�
 - 使用者：「請幫我上 playtest」→ playtest Artifact 更新到 v38（包含本節的潛行、咆哮後跳與過場修正）。
 - 細節：`DUEL_KEN_REWORK.md` §8.4。
 
+## 151. 劍八重製合併回 main（2026-10-09）
+
+使用者：「合併回 main」
+
+- `claude/kenpachi-rework`（§141–§150：基本型態、野晒、二次覺醒時機、卍解與片腕）快轉合併進 `main`；分支開出後 `main` 沒有新提交，所以沒有衝突，§150 的 gate（10 種子摘要逐字相同、cvc 3 項 PASS、規則測試全過、`./build.sh duel` 0 警告）就是合併後的狀態。
+- 沒有部署 GitHub Pages（只在使用者要求時執行 `tools/deploy-pages.sh`）。
+- 細節：`DUEL_KEN_REWORK.md` §9。
+
