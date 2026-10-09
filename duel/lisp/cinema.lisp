@@ -243,13 +243,19 @@ reveal on a white card. The effects (the ember line) keep their colour."
 the sfx bus muted for FRAMES 60 Hz frames (no engine change: the mixer's bus gains)."
   (setf (aref *screen-fx* 2) (f32 (/ frames 60.0)))
   (set-music-volume 0.055)
-  (ffi:c-inline () () :void "au_set_volume(1,0.0f)" :one-liner t))
+  (set-sfx-volume 0.0))
+(defun silence-end ()
+  "The silence beat is over: the music back to its level, the sfx bus on."
+  (set-music-volume 0.55) (set-sfx-volume 1.0))
 
 (defun back-rim (frames &optional (r 0.91) (g 0.93) (b 0.96))
   "Both fighters silhouetted (all in their shadow tone) with a hard back-rim (R G B, default white) for FRAMES:
 the Burst, a cinematic's silhouette shot (§5: white in the mono world, the owner's spot colour when awakened)."
   (setf (aref *screen-fx* 3) (f32 (/ frames 60.0)) (env-toon-threshold *env*) 1.5)
   (v3-set! (env-cin-rim *env*) (f32 r) (f32 g) (f32 b)))
+(defun back-rim-end ()
+  "The back-rim shot is over: the toon threshold and the cinematic rim back to normal."
+  (setf (env-toon-threshold *env*) 0.5) (v3-set! (env-cin-rim *env*) 0f0 0f0 0f0))
 
 (defun screen-fx-update (dt)
   "Run the screen punctuation down by DT effect seconds (0 while paused); end what ran out."
@@ -257,14 +263,14 @@ the Burst, a cinematic's silhouette shot (§5: white in the mono world, the owne
     (flet ((run (i) (let ((was (aref f i))) (setf (aref f i) (f32 (max 0.0 (- was dt)))) (and (> was 0) (<= (aref f i) 0)))))
       (when (run 0) (if *cine-grade* (impact-frame *cine-grade* 0) (grade-impact 0)))
       (run 1) (run 6) (run 7)
-      (when (run 2) (set-music-volume 0.55) (ffi:c-inline () () :void "au_set_volume(1,1.0f)" :one-liner t))
-      (when (run 3) (setf (env-toon-threshold *env*) 0.5) (v3-set! (env-cin-rim *env*) 0f0 0f0 0f0)))))
+      (when (run 2) (silence-end))
+      (when (run 3) (back-rim-end)))))
 
 (defun screen-fx-clear ()
   "End every screen punctuation now (a new match, the end of a cinematic)."
   (let ((f *screen-fx*))
-    (when (> (aref f 2) 0) (set-music-volume 0.55) (ffi:c-inline () () :void "au_set_volume(1,1.0f)" :one-liner t))
-    (fill f 0f0) (grade-impact 0) (setf (env-toon-threshold *env*) 0.5) (v3-set! (env-cin-rim *env*) 0f0 0f0 0f0)))
+    (when (> (aref f 2) 0) (silence-end))
+    (fill f 0f0) (grade-impact 0) (back-rim-end)))
 
 (defun draw-screen-fx (w h)
   "The UI part of the punctuation: focus lines (ink, reshuffled every drawing on twos), the impact splash."

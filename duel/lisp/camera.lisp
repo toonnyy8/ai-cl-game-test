@@ -58,8 +58,6 @@ smoothed vertical FOV (radians).")
 (defparameter *pt-dolly-max* 2.4f0 "... and its eye backed off the target (at most this factor) so the frame's width holds the landscape frame's
 central square: a shot framed for 16:9 is not cropped (§4.3's lens clamp).")
 
-(defmacro %expf (x) `(ffi:c-inline (,x) (:float) :float "expf(#0)" :one-liner t))
-
 (defun-fast %portrait-camera (p q rdt snap)
   "Place *CAM-EYE* / *CAM-AT* and the lens for the portrait camera behind P1 (at P) toward P2 (at Q); SNAP: no
 smoothing. 0 B (state in *PCAM* / *CAM-ANCHOR*, knobs read as floats)."
@@ -68,7 +66,7 @@ smoothing. 0 B (state in *PCAM* / *CAM-ANCHOR*, knobs read as floats)."
          (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2))) (sep (f-sqrt (+ (* dx dx) (* dz dz))))
          (sim *behind-yaw*) (lim (* 0.017453292f0 (the single-float *pt-lead*)))
          (want (if (> sep 0.01f0) (f-clamp (f-wrap (- (f-atan2 (- dx) (- dz)) sim)) (- lim) lim) 0f0))
-         (k (if snap 1f0 (- 1f0 (%expf (* -8f0 rdt)))))
+         (k (if snap 1f0 (- 1f0 (f-exp (* -8f0 rdt)))))
          (lead (+ (aref pc 0) (* k (- want (aref pc 0)))))
          (yaw (+ sim lead)) (fx (- (f-sin yaw))) (fz (- (f-cos yaw)))
          (wide (* (the single-float *behind-widen*) (f-max 0f0 (- sep 4f0))))
@@ -76,7 +74,7 @@ smoothing. 0 B (state in *PCAM* / *CAM-ANCHOR*, knobs read as floats)."
          (off (* 0.017453292f0 (the single-float *pt-close*) (f-clamp (/ (- 6f0 sep) 4f0) 0f0 1f0)))
          (side (+ (the single-float *pt-shoulder*) (* back (f-sin off))))
          (bk (* back (f-cos off)))
-         (ka (if snap 1f0 (- 1f0 (%expf (* (- (the single-float *behind-rate*)) rdt))))))
+         (ka (if snap 1f0 (- 1f0 (f-exp (* (- (the single-float *behind-rate*)) rdt))))))
     (declare (type f32vec c pc e at bd) (single-float dx dz sep sim lim want k lead yaw fx fz wide back off side bk ka))
     (setf (aref pc 0) lead
           (aref c 0) (+ (aref c 0) (* ka (- (aref p 0) (aref c 0)))) (aref c 2) (+ (aref c 2) (* ka (- (aref p 2) (aref c 2)))))

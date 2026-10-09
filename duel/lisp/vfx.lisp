@@ -32,75 +32,15 @@
 (defconstant +live-cap+ 1150 "No new VFX particles while the pool holds this many (budget 1200).")
 
 ;;; ---------------------------------------------------------------- small hot-path helpers
-(defmacro with-floats (vars &body body)
-  "Rebind VARS as single-floats (callers may pass fixnums or doubles)."
-  `(let* ,(mapcar (lambda (v) `(,v (f32 ,v))) vars)
-     (declare (single-float ,@vars))
-     ,@body))
-
+;;; (The game-agnostic toon kit these looks are written with — WITH-FLOATS, HASH01, WITH-CAM, %T-BLOB, %T-SHARD,
+;;; %TRING, %SECTOR-VERTS, %LIGHT, DRAWING-NO, %AWAY-FROM-EYE, %NEAR-CAM, %TONGUE, TOON-RIBBON — is the engine's:
+;;; engine/lisp/fx.lisp, package.lisp.)
 (defmacro n-of (rate dt)
   "How many particles to emit this frame for RATE per second: floor(RATE·DT·density + U), so the
 average is exact at any frame rate. 0 once the pool is near the budget."
   `(if (< *plive* +live-cap+) (f->i (+ (* ,rate ,dt (the single-float (f32 *fire-density*))) (rnd01))) 0))
 
 (defmacro clock () "The fx clock's seconds (phase for flicker): it stops while the game pauses." `(the single-float (fx-clock)))
-
-(defmacro hash01 (i seed)
-  "Stable pseudo-random 0..1 of (I SEED) — for shapes that must not change every frame."
-  `(f-mod (f-abs (* 43758.547f0 (f-sin (+ (* ,i 12.9898f0) (* ,seed 78.233f0))))) 1f0))
-
-(defmacro with-cam (() &body body)
-  "Bind RX RY RZ UX UY UZ (camera right / up) for camera-facing shapes."
-  `(let* ((%rt (camera-right *camera*)) (%up (camera-upv *camera*)))
-     (declare (type f32vec %rt %up) (ignorable %rt %up))
-     (let* ((rx (aref %rt 0)) (ry (aref %rt 1)) (rz (aref %rt 2))
-            (ux (aref %up 0)) (uy (aref %up 1)) (uz (aref %up 2)))
-       (declare (single-float rx ry rz ux uy uz) (ignorable rx ry rz ux uy uz))
-       ,@body)))
-
-(defmacro %t-blob (x y z vx vy vz life size grav wob pal)
-  "One toon particle puff / flame / droplet (+P-T-BLOB+)."
-  `(fx-emit +p-t-blob+ ,x ,y ,z ,vx ,vy ,vz ,life ,size ,grav ,wob 0f0 0f0 ,pal))
-(defmacro %t-shard (x y z vx vy vz life size grav pal)
-  "One toon shard particle (+P-T-SHARD+): a kite along its velocity."
-  `(fx-emit +p-t-shard+ ,x ,y ,z ,vx ,vy ,vz ,life ,size ,grav 0.05f0 0f0 0f0 ,pal))
-
-(defmacro %tring (x y z r w pal k seed &optional (segs 32))
-  "A flat toon ring on the ground at height Y (+2 cm), radius R, band half-width W, both band edges inked.
-The ring is an along shape whose heat varies around it, so it breaks into arcs as K fades."
-  `(let* ((cx ,x) (cy (+ ,y 0.02f0)) (cz ,z) (ri (f-max 0f0 (- ,r ,w))) (ro (+ ,r ,w)) (pk (toon-a ,pal ,k))
-          (sd (- -1f0 ,seed)) (da (/ 6.2831855f0 ,(float segs 1f0))))
-     (declare (single-float cx cy cz ri ro pk sd da))
-     (with-fx-verts (d o :toon ,(* 6 segs))
-       (dotimes (i ,segs)
-         (let* ((a0 (* da (i->f i))) (a1 (+ a0 da)) (c0 (f-cos a0)) (s0 (f-sin a0)) (c1 (f-cos a1)) (s1 (f-sin a1))
-                (h0 (+ 0.3f0 (* 0.7f0 (f-abs (f-sin (+ (* 2.5f0 a0) sd)))))) (h1 (+ 0.3f0 (* 0.7f0 (f-abs (f-sin (+ (* 2.5f0 a1) sd)))))))
-           (declare (single-float a0 a1 c0 s0 c1 s1 h0 h1))
-           (vtx (+ cx (* ri c0)) cy (+ cz (* ri s0)) -1f0 0f0 h0 sd 0.12f0 pk)
-           (vtx (+ cx (* ro c0)) cy (+ cz (* ro s0)) 1f0 0f0 h0 sd 0.12f0 pk)
-           (vtx (+ cx (* ro c1)) cy (+ cz (* ro s1)) 1f0 0f0 h1 sd 0.12f0 pk)
-           (vtx (+ cx (* ri c0)) cy (+ cz (* ri s0)) -1f0 0f0 h0 sd 0.12f0 pk)
-           (vtx (+ cx (* ro c1)) cy (+ cz (* ro s1)) 1f0 0f0 h1 sd 0.12f0 pk)
-           (vtx (+ cx (* ri c1)) cy (+ cz (* ri s1)) -1f0 0f0 h1 sd 0.12f0 pk))))))
-
-
-(defmacro %tsector (x y z r0 r1 yaw half heat seed wob pk segs)
-  "A flat toon sector on the ground at height Y (+3 cm) between radii R0 and R1, centred on YAW (forward = FWD-X /
-FWD-Z of it), +-HALF radians: FX-SECTOR's shape in the toon batch (uv across the radii). A macro: 0 B."
-  `(let* ((cx ,x) (cy (+ ,y 0.03f0)) (cz ,z) (ri ,r0) (ro ,r1) (a0 (- ,yaw ,half)) (da (/ (* 2f0 ,half) ,(float segs 1f0)))
-          (ht ,heat) (sd ,seed) (wb ,wob) (pk ,pk))
-     (declare (single-float cx cy cz ri ro a0 da ht sd wb pk))
-     (with-fx-verts (d o :toon ,(* 6 segs))
-       (dotimes (k ,segs)
-         (let* ((t0 (+ a0 (* da (i->f k)))) (t1 (+ t0 da))
-                (c0 (- (f-sin t0))) (s0 (- (f-cos t0))) (c1 (- (f-sin t1))) (s1 (- (f-cos t1))))
-           (declare (single-float t0 t1 c0 s0 c1 s1))
-           (vtx (+ cx (* ri c0)) cy (+ cz (* ri s0)) 0f0 -1f0 ht sd wb pk)
-           (vtx (+ cx (* ro c0)) cy (+ cz (* ro s0)) 0f0 1f0 ht sd wb pk)
-           (vtx (+ cx (* ro c1)) cy (+ cz (* ro s1)) 0f0 1f0 ht sd wb pk)
-           (vtx (+ cx (* ri c0)) cy (+ cz (* ri s0)) 0f0 -1f0 ht sd wb pk)
-           (vtx (+ cx (* ro c1)) cy (+ cz (* ro s1)) 0f0 1f0 ht sd wb pk)
-           (vtx (+ cx (* ri c1)) cy (+ cz (* ri s1)) 0f0 -1f0 ht sd wb pk))))))
 
 ;;; ---------------------------------------------------------------- lights (engine priorities)
 ;;; Effects call ADD-POINT-LIGHT with a PRIORITY (its last argument): the engine keeps the 8 highest
@@ -118,16 +58,6 @@ FWD-Z of it), +-HALF radians: FX-SECTOR's shape in the toon batch (uv across the
                        6.0 (* 2.0 (- 1.0 (/ age 0.15))) 6))
     nil))
 
-(declaim (type f32vec *light-v*))
-(defvar *light-v* (make-f32 8) "%LIGHT's record (ADD-POINT-LIGHT-V: no boxed float arguments).")
-(defmacro %light (x y z r g b radius intensity priority)
-  "ADD-POINT-LIGHT for computed single-float positions without boxing them (0 B)."
-  `(let* ((%v *light-v*))
-     (declare (type f32vec %v))
-     (setf (aref %v 0) ,x (aref %v 1) ,y (aref %v 2) ,z (aref %v 3) ,r (aref %v 4) ,g (aref %v 5) ,b
-           (aref %v 6) ,radius (aref %v 7) ,intensity)
-     (add-point-light-v %v 0 ,priority)))
-
 (defun flash-light (x y z r g b)
   "Start the 0.15 s hit-flash light at (x y z)."
   (let ((fl *flash-light*))
@@ -138,27 +68,8 @@ FWD-Z of it), +-HALF radians: FX-SECTOR's shape in the toon batch (uv across the
 ;;; Signature looks (docs/style/STYLE_STORM_DESIGN.md §4.1 / §4.2, Phase 3): drawn toon shapes in the layer order of §3.4 —
 ;;; a darker backing (ember, charcoal), the drawn mass (FIRE / REIATSU / EMBER), a thin additive T光 line, and
 ;;; scraps (toon particles) flying off. Shapes are re-drawn on the fx clock's drawings (DRAWING: twos, 12 a second),
-;;; so they hold still between drawings like the universal effects; positions the game depends on never step.
-(defmacro drawing-no (&optional (per-second 12f0))
-  "The fx clock's drawing number (0..63): 12 a second = twos (fire, energy), 8 = threes (smoke, charcoal)."
-  `(i->f (logand (f->i (* ,per-second (fx-clock))) 63)))
-
-(defmacro %away-from-eye ((x y z) d &body body)
-  "Rebind X Y Z moved D metres along the view ray (away from the camera eye; negative D = toward it): a layer
-that must sit behind (or in front of) another camera-facing layer without fighting it for depth."
-  `(let* ((%e (camera-eye *camera*)) (%dx (- ,x (aref %e 0))) (%dy (- ,y (aref %e 1))) (%dz (- ,z (aref %e 2)))
-          (%l (f-max 1f-3 (f-sqrt (+ (* %dx %dx) (* %dy %dy) (* %dz %dz)))))
-          (,x (+ ,x (* ,d (/ %dx %l)))) (,y (+ ,y (* ,d (/ %dy %l)))) (,z (+ ,z (* ,d (/ %dz %l)))))
-     (declare (type f32vec %e) (single-float %dx %dy %dz %l ,x ,y ,z))
-     ,@body))
-
-(defmacro %near-cam (x z near far)
-  "0 when the camera eye stands within NEAR m (on the ground plane) of the point (X Z), rising to 1 at FAR: tall
-columns thin and shorten close to the lens (Phase 6: an Ennetsu pillar beside the behind camera filled the frame)."
-  `(let* ((%e (camera-eye *camera*)) (%dx (- ,x (aref %e 0))) (%dz (- ,z (aref %e 2))))
-     (declare (type f32vec %e) (single-float %dx %dz))
-     (f-clamp (/ (- (f-sqrt (+ (* %dx %dx) (* %dz %dz))) ,near) (- ,far ,near)) 0f0 1f0)))
-
+;;; so they hold still between drawings like the universal effects; positions the game depends on never step
+;;; (DRAWING-NO, engine fx.lisp).
 (defun-fast vfx-blade-fire (x0 y0 z0 x1 y1 z1 dt &key (power 1.0))
   "Ryujin Jakka (§4.1 blade fire): the blade (base x0 y0 z0 → tip x1 y1 z1) sheathed in drawn FIRE (heat 1 at the
 base .. 0.3 at the tip), three tongues licking upward from behind the sheath whose heights and lean are re-drawn
@@ -211,22 +122,7 @@ Tachi). SM: x0 y0 z0 x1 y1 z1 bx by bz, half-width, drawing, presence."
   (declare (type f32vec tr sm) (fixnum look))
   (let* ((n (f->i (trail-count tr))) (dr (i->f (logand (f->i (* 12f0 (fx-clock))) 63))))
     (declare (fixnum n) (single-float dr))
-    (when (/= (aref sm 10) dr)                          ; a new drawing: re-capture from the trail
-      (setf (aref sm 10) dr (aref sm 11) 0f0)
-      (when (>= n 3)
-        (let* ((i0 (max 0 (- n 5))) (im (floor (+ i0 n -1) 2)) (i1 (1- n)) (o0 (* 6 i0)) (om (* 6 im)) (o1 (* 6 i1)))
-          (declare (fixnum i0 im i1 o0 om o1))
-          (dotimes (c 3)                                ; the 0.7 points: oldest, middle, newest -> control through the middle
-            (let* ((p0 (+ (aref tr (+ o0 c)) (* 0.7f0 (- (aref tr (+ o0 c 3)) (aref tr (+ o0 c))))))
-                   (pm (+ (aref tr (+ om c)) (* 0.7f0 (- (aref tr (+ om c 3)) (aref tr (+ om c))))))
-                   (p1 (+ (aref tr (+ o1 c)) (* 0.7f0 (- (aref tr (+ o1 c 3)) (aref tr (+ o1 c)))))))
-              (declare (single-float p0 pm p1))
-              (setf (aref sm c) p0 (aref sm (+ c 3)) p1 (aref sm (+ c 6)) (- (* 2f0 pm) (* 0.5f0 (+ p0 p1))))))
-          (let* ((lx (- (aref tr (+ o1 3)) (aref tr o1))) (ly (- (aref tr (+ o1 4)) (aref tr (+ o1 1))))
-                 (lz (- (aref tr (+ o1 5)) (aref tr (+ o1 2)))))
-            (declare (single-float lx ly lz))
-            (setf (aref sm 9) (* 0.33f0 (f-sqrt (+ (* lx lx) (* ly ly) (* lz lz))))
-                  (aref sm 11) (if (>= n 5) 0.98f0 0.6f0))))))
+    (fx-smear-capture! tr sm n dr 0.7f0 (len (* 0.33f0 len)) (if (>= n 5) 0.98f0 0.6f0))   ; through the blade's 0.7 points
     (when (> (aref sm 11) 0f0)
       (fx-crescent (aref sm 0) (aref sm 1) (aref sm 2) (aref sm 3) (aref sm 4) (aref sm 5) (aref sm 6) (aref sm 7) (aref sm 8)
                    (aref sm 9) :comet 0.06f0 (if (= look 2) (+ 1000f0 dr) (+ 5f0 dr))
@@ -342,13 +238,7 @@ envelope goes from the hold straight into the 18 f erosion; freed after 0.4 s."
                 (%fire-wave-look))))))
     nil))
 
-(defmacro %tongue (x y z ax ay az w pal k seed ph sway &key (segs 6) (wob 0.3f0))
-  "One toon flame tongue (an along ribbon, w1 = 0: heat 1 at the base .. 0.2 at the tip, so it erodes from the tip
-as K fades) from (X Y Z) along (AX AY AZ), base half-width W, palette PAL, presence K; SEED (made negative: along)
-re-draws it when it changes (pass a per-drawing seed). A macro: 0 B."
-  `(let* ((%sd (- -1f0 (f-abs ,seed))) (%pk (toon-a ,pal ,k)))
-     (declare (single-float %sd %pk))
-     (fx-ribbon ,x ,y ,z ,ax ,ay ,az ,w 0f0 1f0 %sd ,wob %pk 0.2f0 %sd ,wob %pk ,ph ,sway :segs ,segs :mode :toon)))
+>>>NEW
 
 (defun-fast vfx-fireball (x y z size dirx dirz dt)
   "Shiranui (§4.1, Phase 5): a drawn FIRE disc of radius SIZE m (wobble 0.3, re-drawn every drawing), 5 tongues licking
@@ -813,8 +703,8 @@ and erode), :kyoku (KYOKUJITSUJIN's heat sheet), :south (South's ring crack), :k
              (toon-ground-seg (+ x0 (* 0.5f0 px)) (+ z0 (* 0.5f0 pz)) (+ x0 (* 2.4f0 (/ dx l))) (+ z0 (* 2.4f0 (/ dz l)))
                               0.03f0 0.16f0 1f0 0.3f0 (+ seed 2f0) 0.25f0 (toon-a +pal-ink+ k))
              (when (> r1 0.6f0)                          ; (no dark backing: the effects carry no black rim)
-               (%tsector x0 0.01f0 z0 0.5f0 r1 yaw half 0.8f0 (+ 61f0 sd) 0.25f0 (toon-a +pal-ember+ (* 0.9f0 k)) 8)
-               (%tsector x0 0.03f0 z0 0.55f0 (* 0.95f0 r1) yaw (* 0.7f0 half) 1f0 (+ 62f0 sd) 0.1f0 (toon-a +pal-hit+ k) 6)))
+               (%sector-verts :toon 8 x0 0.01f0 z0 0.5f0 r1 yaw half 0.8f0 (+ 61f0 sd) 0.25f0 (toon-a +pal-ember+ (* 0.9f0 k)))
+               (%sector-verts :toon 6 x0 0.03f0 z0 0.55f0 (* 0.95f0 r1) yaw (* 0.7f0 half) 1f0 (+ 62f0 sd) 0.1f0 (toon-a +pal-hit+ k))))
            (when (and (> sa 0.25f0) (> k 0.3f0))
              (dotimes (i (n-of 18f0 dt))
                (let* ((u (rnd-range 0.1f0 1f0)) (w (* 2f0 u (rnd-range -1f0 1f0))))
@@ -1301,7 +1191,7 @@ ground sector for its first 2 drawings; 5 pale SMOKE puffs at the lip from the h
         (cond ((= ph 1) (%flash (+ x (* 0.45f0 sc dx)) 0.9f0 (+ z (* 0.45f0 sc dz)) 0.35f0 seed))
               ((< ph 5)
                (when (< a 0.2f0)
-                 (%tsector x 0f0 z 0.3f0 (* sc es) yaw n 1f0 (+ seed 7f0) 0.2f0 (toon-a +pal-fire+ (* 0.95f0 k)) 12))
+                 (%sector-verts :toon 12 x 0f0 z 0.3f0 (* sc es) yaw n 1f0 (+ seed 7f0) 0.2f0 (toon-a +pal-fire+ (* 0.95f0 k))))
                (dotimes (i 9)
                  (let* ((f (i->f i)) (u (- (* 0.25f0 f) 1f0)) (an (+ yaw (* u n 0.85f0) (* 0.12f0 (- (hash01 f seed) 0.5f0))))
                         (fx (- (f-sin an))) (fz (- (f-cos an))) (d (+ (* sc (+ 0.25f0 (* 0.7f0 (hash01 (+ f 2.3f0) seed)))) (* 1.2f0 a)))

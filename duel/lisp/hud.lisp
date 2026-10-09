@@ -47,44 +47,7 @@ UI-TEXT no longer conses per glyph either; the HUD keeps its block look.)"
     (when shadow (ui-block-text str (+ x0 s) (+ y0 s) s :color shadow))
     (ui-block-text str x0 y0 s :color color)))
 
-;;; ---------------------------------------------------------------- zero-cons quads
-;;; Macros over WITH-UI-VERTS for DEFUN-FAST code: every argument a single-float form.
-(defmacro %hq (x0 y0 x1 y1 x2 y2 x3 y3 r g b a &optional r1 g1 b1 a1)
-  "One quad TL TR BR BL; colour (R G B A) on the top edge, (R1 G1 B1 A1) (default the same) on the bottom."
-  (let ((vs (loop repeat 16 collect (gensym "Q"))))
-    (destructuring-bind (px0 py0 px1 py1 px2 py2 px3 py3 cr cg cb ca dr dg db da) vs
-      `(let* (,@(mapcar #'list (subseq vs 0 12) (list x0 y0 x1 y1 x2 y2 x3 y3 r g b a))
-              (,dr ,(or r1 cr)) (,dg ,(or g1 cg)) (,db ,(or b1 cb)) (,da ,(or a1 ca)))
-         (declare (single-float ,@vs))
-         (with-ui-verts (d o 6)
-           (uvtx ,px0 ,py0 ,cr ,cg ,cb ,ca) (uvtx ,px1 ,py1 ,cr ,cg ,cb ,ca) (uvtx ,px2 ,py2 ,dr ,dg ,db ,da)
-           (uvtx ,px0 ,py0 ,cr ,cg ,cb ,ca) (uvtx ,px2 ,py2 ,dr ,dg ,db ,da) (uvtx ,px3 ,py3 ,dr ,dg ,db ,da))))))
-
-(defmacro %hrect (x y w h r g b a &optional r1 g1 b1 a1)
-  "Axis-aligned rect, top colour (R G B A), bottom colour (R1 G1 B1 A1)."
-  (let ((x0 (gensym)) (y0 (gensym)) (x1 (gensym)) (y1 (gensym)))
-    `(let* ((,x0 ,x) (,y0 ,y) (,x1 (+ ,x0 ,w)) (,y1 (+ ,y0 ,h)))
-       (declare (single-float ,x0 ,y0 ,x1 ,y1))
-       (%hq ,x0 ,y0 ,x1 ,y0 ,x1 ,y1 ,x0 ,y1 ,r ,g ,b ,a ,r1 ,g1 ,b1 ,a1))))
-
-(defmacro %hbar (x y w h frac right r g b a &optional r1 g1 b1 a1)
-  "Fill FRAC (clamped 0..1) of the W x H box at (X Y), from the left, or from the right when RIGHT."
-  (let ((fw (gensym)) (bx (gensym)) (ww (gensym)))
-    `(let* ((,ww ,w) (,fw (* ,ww (f-clamp ,frac 0f0 1f0))) (,bx (if ,right (+ ,x (- ,ww ,fw)) ,x)))
-       (declare (single-float ,ww ,fw ,bx))
-       (when (> ,fw 0f0) (%hrect ,bx ,y ,fw ,h ,r ,g ,b ,a ,r1 ,g1 ,b1 ,a1)))))
-
-(defmacro %houtline (x y w h r g b a)
-  "1 px outline of the W x H box at (X Y)."
-  (let ((x0 (gensym)) (y0 (gensym)) (ww (gensym)) (hh (gensym)))
-    `(let* ((,x0 ,x) (,y0 ,y) (,ww ,w) (,hh ,h))
-       (declare (single-float ,x0 ,y0 ,ww ,hh))
-       (%hrect ,x0 ,y0 ,ww 1f0 ,r ,g ,b ,a) (%hrect ,x0 (+ ,y0 ,hh -1f0) ,ww 1f0 ,r ,g ,b ,a)
-       (%hrect ,x0 (+ ,y0 1f0) 1f0 (- ,hh 2f0) ,r ,g ,b ,a) (%hrect (+ ,x0 ,ww -1f0) (+ ,y0 1f0) 1f0 (- ,hh 2f0) ,r ,g ,b ,a))))
-
-(defmacro %pulse (tm hz)
-  "0..1, HZ times a second at time TM (single-float)."
-  `(+ 0.5f0 (* 0.5f0 (f-sin (* ,(* 2 (float pi 1f0) hz) ,tm)))))
+;;; (The zero-cons quads %HQ %HRECT %HBAR %HOUTLINE %PULSE are the engine's: engine/lisp/ui.lisp.)
 
 ;;; ---------------------------------------------------------------- big words
 (defstruct (word (:constructor make-word (text sub color secs small side)))

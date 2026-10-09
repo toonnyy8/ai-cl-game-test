@@ -168,6 +168,79 @@ bottom/right (VERTICAL chooses the axis). Corners TL TR BR / TL BR BL."
 (eval-when (:compile-toplevel :load-toplevel :execute)   ; ECL: else not seen by the compiler
   (define-compiler-macro %ui-poly4 (&rest args) `(%ui-poly4-inline ,@args)))
 
+;;; ---------------------------------------------------------------- zero-cons quads, rings and discs
+;;; Macros over WITH-UI-VERTS for DEFUN-FAST code: every argument a single-float form (SOUL DUEL's HUD). %RING
+;;; %ARC %DISC are DEFUN-FASTs built on %HQ (24 segments).
+(defmacro %hq (x0 y0 x1 y1 x2 y2 x3 y3 r g b a &optional r1 g1 b1 a1)
+  "One quad TL TR BR BL; colour (R G B A) on the top edge, (R1 G1 B1 A1) (default the same) on the bottom."
+  (let ((vs (loop repeat 16 collect (gensym "Q"))))
+    (destructuring-bind (px0 py0 px1 py1 px2 py2 px3 py3 cr cg cb ca dr dg db da) vs
+      `(let* (,@(mapcar #'list (subseq vs 0 12) (list x0 y0 x1 y1 x2 y2 x3 y3 r g b a))
+              (,dr ,(or r1 cr)) (,dg ,(or g1 cg)) (,db ,(or b1 cb)) (,da ,(or a1 ca)))
+         (declare (single-float ,@vs))
+         (with-ui-verts (d o 6)
+           (uvtx ,px0 ,py0 ,cr ,cg ,cb ,ca) (uvtx ,px1 ,py1 ,cr ,cg ,cb ,ca) (uvtx ,px2 ,py2 ,dr ,dg ,db ,da)
+           (uvtx ,px0 ,py0 ,cr ,cg ,cb ,ca) (uvtx ,px2 ,py2 ,dr ,dg ,db ,da) (uvtx ,px3 ,py3 ,dr ,dg ,db ,da))))))
+
+(defmacro %hrect (x y w h r g b a &optional r1 g1 b1 a1)
+  "Axis-aligned rect, top colour (R G B A), bottom colour (R1 G1 B1 A1)."
+  (let ((x0 (gensym)) (y0 (gensym)) (x1 (gensym)) (y1 (gensym)))
+    `(let* ((,x0 ,x) (,y0 ,y) (,x1 (+ ,x0 ,w)) (,y1 (+ ,y0 ,h)))
+       (declare (single-float ,x0 ,y0 ,x1 ,y1))
+       (%hq ,x0 ,y0 ,x1 ,y0 ,x1 ,y1 ,x0 ,y1 ,r ,g ,b ,a ,r1 ,g1 ,b1 ,a1))))
+
+(defmacro %hbar (x y w h frac right r g b a &optional r1 g1 b1 a1)
+  "Fill FRAC (clamped 0..1) of the W x H box at (X Y), from the left, or from the right when RIGHT."
+  (let ((fw (gensym)) (bx (gensym)) (ww (gensym)))
+    `(let* ((,ww ,w) (,fw (* ,ww (f-clamp ,frac 0f0 1f0))) (,bx (if ,right (+ ,x (- ,ww ,fw)) ,x)))
+       (declare (single-float ,ww ,fw ,bx))
+       (when (> ,fw 0f0) (%hrect ,bx ,y ,fw ,h ,r ,g ,b ,a ,r1 ,g1 ,b1 ,a1)))))
+
+(defmacro %houtline (x y w h r g b a)
+  "1 px outline of the W x H box at (X Y)."
+  (let ((x0 (gensym)) (y0 (gensym)) (ww (gensym)) (hh (gensym)))
+    `(let* ((,x0 ,x) (,y0 ,y) (,ww ,w) (,hh ,h))
+       (declare (single-float ,x0 ,y0 ,ww ,hh))
+       (%hrect ,x0 ,y0 ,ww 1f0 ,r ,g ,b ,a) (%hrect ,x0 (+ ,y0 ,hh -1f0) ,ww 1f0 ,r ,g ,b ,a)
+       (%hrect ,x0 (+ ,y0 1f0) 1f0 (- ,hh 2f0) ,r ,g ,b ,a) (%hrect (+ ,x0 ,ww -1f0) (+ ,y0 1f0) 1f0 (- ,hh 2f0) ,r ,g ,b ,a))))
+
+(defmacro %pulse (tm hz)
+  "0..1, HZ times a second at time TM (single-float)."
+  `(+ 0.5f0 (* 0.5f0 (f-sin (* ,(* 2 (float pi 1f0) hz) ,tm)))))
+
+(defun-fast %ring (cx cy r wd cr cg cb ca)
+  "A ring of radius R, WD px wide, 24 segments."
+  (declare (single-float cx cy r wd cr cg cb ca))
+  (let ((r1 (+ r wd)))
+    (declare (single-float r1))
+    (dotimes (i 24)
+      (let* ((a0 (* (i->f i) 0.2617994f0)) (a1 (+ a0 0.2617994f0))
+             (c0 (f-cos a0)) (s0 (f-sin a0)) (c1 (f-cos a1)) (s1 (f-sin a1)))
+        (declare (single-float a0 a1 c0 s0 c1 s1))
+        (%hq (+ cx (* r c0)) (+ cy (* r s0)) (+ cx (* r1 c0)) (+ cy (* r1 s0)) (+ cx (* r1 c1)) (+ cy (* r1 s1))
+             (+ cx (* r c1)) (+ cy (* r s1)) cr cg cb ca)))))
+
+(defun-fast %arc (cx cy r wd frac cr cg cb ca)
+  "FRAC (0..1) of a ring of radius R, WD px wide, clockwise from the top (Rukia's frost arc under the thumb)."
+  (declare (single-float cx cy r wd frac cr cg cb ca))
+  (let ((r1 (+ r wd)) (n (f->i (* 24f0 (f-clamp frac 0f0 1f0)))))
+    (declare (single-float r1) (fixnum n))
+    (dotimes (i n)
+      (let* ((a0 (- (* (i->f i) 0.2617994f0) 1.5707964f0)) (a1 (+ a0 0.2617994f0))
+             (c0 (f-cos a0)) (s0 (f-sin a0)) (c1 (f-cos a1)) (s1 (f-sin a1)))
+        (declare (single-float a0 a1 c0 s0 c1 s1))
+        (%hq (+ cx (* r c0)) (+ cy (* r s0)) (+ cx (* r1 c0)) (+ cy (* r1 s0)) (+ cx (* r1 c1)) (+ cy (* r1 s1))
+             (+ cx (* r c1)) (+ cy (* r s1)) cr cg cb ca)))))
+
+(defun-fast %disc (cx cy r cr cg cb ca)
+  "A filled disc (a 24-gon)."
+  (declare (single-float cx cy r cr cg cb ca))
+  (dotimes (i 24)
+    (let* ((a0 (* (i->f i) 0.2617994f0)) (a1 (+ a0 0.2617994f0)))
+      (declare (single-float a0 a1))
+      (%hq cx cy (+ cx (* r (f-cos a0))) (+ cy (* r (f-sin a0))) (+ cx (* r (f-cos a1))) (+ cy (* r (f-sin a1))) cx cy
+           cr cg cb ca))))
+
 (declaim (type f32vec *bt-c0* *bt-c1*))
 (defvar *bt-c0* (make-f32 4) "UI-BLOCK-TEXT: rgba of COLOR (top row)")
 (defvar *bt-c1* (make-f32 4) "UI-BLOCK-TEXT: rgba of COLOR2 (bottom row)")

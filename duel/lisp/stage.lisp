@@ -35,11 +35,12 @@
     (-11.5 -1.0  -10.1 -0.2  -9.2 -1.3)
     (4.4 9.6  3.6 10.9  4.1 12.6)))
 
-(declaim (type f32vec *st-acc* *st-m* *st-cracks* *st-toon* *st-toon-far*) (type fixnum *st-ncracks*))
+(declaim (type f32vec *st-acc* *st-m* *st-cracks* *st-toon-far*) (type fixnum *st-ncracks*))
 (defvar *st-acc* (make-f32 1) "emission accumulator of the ash")
 (defvar *st-m* (m4))
-(defvar *st-toon* (fv 1 0 1 0) "DRAW-MESH :toon lanes of the plaza: mode 1 (moonlit), full fog ...")
-(defvar *st-toon-far* (fv 1 0 0.6 0) "... and of the ruins: less fog, so their silhouettes still read against the sky.")
+(defvar *st-toon-far* (fv 1 0 0.6 0)
+  "DRAW-MESH :toon lanes of the ruins: mode 1 (moonlit), less fog than the plaza's (body.lisp *TOON-GROUND*: full fog), so
+their silhouettes still read against the sky.")
 (defvar *st-floor* nil) (defvar *st-walls* nil) (defvar *st-town* nil) (defvar *st-burnt* nil)
 (defvar *stage-fx* t "NIL: no stage particles (frozen test stills, tests/duel-vfx.lisp 3004).")
 
@@ -56,7 +57,6 @@
   (setf *st-rng* (mod (+ (* *st-rng* 1103515245) 12345) 2147483648))
   (/ (float (ldb (byte 24 6) *st-rng*) 1.0) 16777216.0))
 (defun st-r (a b) (+ a (* (- b a) (st-rnd))))
-(defmacro st-at ((mb &rest xf) &body body) `(with-xform (,mb (xform ,@xf)) ,@body))
 
 (defun st-up-quad (mb pts y)
   "Upward-facing polygon through PTS ((x z) ...) at height Y."
@@ -97,7 +97,7 @@ the curb, and the darker ground outside."
     (mbc mb #x262A36)                                    ; ink cracks
     (dolist (c *plaza-cracks*) (st-crack mb c))
     (mbc mb #x5C6272)                                    ; the curb
-    (st-at (mb :y 0.06) (mb-cylinder mb 15.6 0.12 :segments 64 :caps nil))
+    (mb-at (mb :y 0.06) (mb-cylinder mb 15.6 0.12 :segments 64 :caps nil))
     (st-annulus mb 15.1 15.6 0.12 64)
     (mbc mb #x3C4150)                                    ; the ground outside
     (st-annulus mb 15.6 160.0 -0.01 64)))
@@ -105,21 +105,21 @@ the curb, and the darker ground outside."
 (defun st-wall-segment (mb len h broken)
   "One wall panel of LEN x H on a stone footing: a cold-grey silhouette; unless BROKEN, its tiled cap
 catches the moon (the thin edge light of the skyline)."
-  (mbc mb #x30343F) (st-at (mb :y 0.2) (mb-box mb (+ len 0.1) 0.4 0.6))
+  (mbc mb #x30343F) (mb-at (mb :y 0.2) (mb-box mb (+ len 0.1) 0.4 0.6))
   (mbc mb #x464B5C)
   (if broken
       (let ((h1 (st-r 0.8 (* 0.8 h))) (h2 (st-r 0.5 (* 0.6 h))))
-        (st-at (mb :x (* -0.25 len) :y (+ 0.4 (* 0.5 h1))) (mb-box mb (* 0.5 len) h1 0.45))
-        (st-at (mb :x (* 0.25 len) :y (+ 0.4 (* 0.5 h2))) (mb-box mb (* 0.5 len) h2 0.45))
+        (mb-at (mb :x (* -0.25 len) :y (+ 0.4 (* 0.5 h1))) (mb-box mb (* 0.5 len) h1 0.45))
+        (mb-at (mb :x (* 0.25 len) :y (+ 0.4 (* 0.5 h2))) (mb-box mb (* 0.5 len) h2 0.45))
         (mbc mb #x30343F)                                ; rubble
-        (dotimes (i 4) (st-at (mb :x (st-r (- len) len) :y 0.15 :z (st-r 0.4 1.4) :yaw (st-r 0 3)) (mb-box mb (st-r 0.3 0.7) 0.3 (st-r 0.3 0.6)))))
+        (dotimes (i 4) (mb-at (mb :x (st-r (- len) len) :y 0.15 :z (st-r 0.4 1.4) :yaw (st-r 0 3)) (mb-box mb (st-r 0.3 0.7) 0.3 (st-r 0.3 0.6)))))
       (progn
-        (st-at (mb :y (+ 0.4 (* 0.5 h))) (mb-box mb len h 0.45))
+        (mb-at (mb :y (+ 0.4 (* 0.5 h))) (mb-box mb len h 0.45))
         (mbc mb #x50566A)
-        (st-at (mb :y (+ 0.5 h)) (mb-box mb (+ len 0.2) 0.2 0.9))
-        (st-at (mb :y (+ 0.68 h) :pitch 0.785) (mb-box mb (+ len 0.2) 0.22 0.22))
-        (st-at (mb :y (+ 0.62 h) :pitch 0.3 :z 0.25) (mb-box mb (+ len 0.3) 0.06 0.5))
-        (st-at (mb :y (+ 0.62 h) :pitch -0.3 :z -0.25) (mb-box mb (+ len 0.3) 0.06 0.5)))))
+        (mb-at (mb :y (+ 0.5 h)) (mb-box mb (+ len 0.2) 0.2 0.9))
+        (mb-at (mb :y (+ 0.68 h) :pitch 0.785) (mb-box mb (+ len 0.2) 0.22 0.22))
+        (mb-at (mb :y (+ 0.62 h) :pitch 0.3 :z 0.25) (mb-box mb (+ len 0.3) 0.06 0.5))
+        (mb-at (mb :y (+ 0.62 h) :pitch -0.3 :z -0.25) (mb-box mb (+ len 0.3) 0.06 0.5)))))
 
 (defun build-walls ()
   "The ring of broken walls at r 19 (no collision): intact, broken or missing panels."
@@ -128,25 +128,25 @@ catches the moon (the thin edge light of the skyline)."
       (dotimes (k n)
         (let* ((a (* 2 pi (/ (+ k 0.5) n))) (roll (st-rnd)))
           (unless (< roll 0.18)
-            (st-at (mb :x (* r (sin a)) :z (* r (cos a)) :yaw a)
+            (mb-at (mb :x (* r (sin a)) :z (* r (cos a)) :yaw a)
               (st-wall-segment mb 3.9 2.4 (< roll 0.45)))))))))
 
 (defun st-roof (mb y w d h)
   "Hipped roof: a 4-sided pyramid of base W x D and height H centred at height Y."
-  (st-at (mb :y y :sx (* 0.7071 w) :sz (* 0.7071 d))
-    (st-at (mb :yaw (/ pi 4)) (mb-cone mb 1.0 h :segments 4))))
+  (mb-at (mb :y y :sx (* 0.7071 w) :sz (* 0.7071 d))
+    (mb-at (mb :yaw (/ pi 4)) (mb-cone mb 1.0 h :segments 4))))
 
 (defun st-house (mb w d h &key (roof #x363A48) (wall #x484D60) (beam #x2C303C) (storeys 1))
   "A Seireitei house in silhouette: grey walls with darker beams, a dark hipped roof with eaves."
   (dotimes (s storeys)
     (let* ((k (- 1 (* 0.25 s))) (w (* w k)) (d (* d k)) (y0 (* s (+ h 0.9))))
-      (mbc mb wall) (st-at (mb :y (+ y0 (* 0.5 h))) (mb-box mb w h d))
+      (mbc mb wall) (mb-at (mb :y (+ y0 (* 0.5 h))) (mb-box mb w h d))
       (mbc mb beam)
       (dolist (sx '(-0.5 -0.17 0.17 0.5))
-        (st-at (mb :x (* sx (- w 0.1)) :y (+ y0 (* 0.5 h)) :z (* 0.5 d)) (mb-box mb 0.14 h 0.06)))
-      (st-at (mb :y (+ y0 (* 0.8 h)) :z (* 0.5 d)) (mb-box mb w 0.14 0.06))
+        (mb-at (mb :x (* sx (- w 0.1)) :y (+ y0 (* 0.5 h)) :z (* 0.5 d)) (mb-box mb 0.14 h 0.06)))
+      (mb-at (mb :y (+ y0 (* 0.8 h)) :z (* 0.5 d)) (mb-box mb w 0.14 0.06))
       (mbc mb roof)
-      (st-at (mb :y (+ y0 h 0.05)) (mb-box mb (+ w 1.2) 0.1 (+ d 1.2)))                        ; eaves
+      (mb-at (mb :y (+ y0 h 0.05)) (mb-box mb (+ w 1.2) 0.1 (+ d 1.2)))                        ; eaves
       (st-roof mb (+ y0 h 0.75) (+ w 1.2) (+ d 1.2) 1.4))))
 
 (defun build-town ()
@@ -154,29 +154,29 @@ catches the moon (the thin edge light of the skyline)."
   (build-mesh (mb)
     (dotimes (k 16)
       (let* ((a (+ (* 2 pi (/ k 16)) (st-r -0.12 0.12))) (r (st-r 25 34)))
-        (st-at (mb :x (* r (sin a)) :z (* r (cos a)) :yaw (+ a pi (st-r -0.2 0.2)))
+        (mb-at (mb :x (* r (sin a)) :z (* r (cos a)) :yaw (+ a pi (st-r -0.2 0.2)))
           (st-house mb (st-r 6 10) (st-r 5 7) (st-r 2.8 3.6) :storeys (if (< (st-rnd) 0.3) 2 1)))))
     (dotimes (k 12)
       (let* ((a (+ (* 2 pi (/ (+ k 0.5) 12)) (st-r -0.1 0.1))) (r (st-r 40 50)))
-        (st-at (mb :x (* r (sin a)) :z (* r (cos a)) :yaw (+ a pi (st-r -0.3 0.3)))
+        (mb-at (mb :x (* r (sin a)) :z (* r (cos a)) :yaw (+ a pi (st-r -0.3 0.3)))
           (st-house mb (st-r 8 14) (st-r 6 9) (st-r 3.5 5) :storeys (if (< (st-rnd) 0.5) 2 1)
                        :wall #x3E4354))))
     (dotimes (k 40)                                      ; far skyline silhouettes
       (let* ((a (* 2 pi (/ k 40))) (r (st-r 80 110)) (w (st-r 10 22)) (h (st-r 4 12)))
-        (st-at (mb :x (* r (sin a)) :z (* r (cos a)) :yaw a)
-          (mbc mb #x343846) (st-at (mb :y (* 0.5 h)) (mb-box mb w h 8))
+        (mb-at (mb :x (* r (sin a)) :z (* r (cos a)) :yaw a)
+          (mbc mb #x343846) (mb-at (mb :y (* 0.5 h)) (mb-box mb w h 8))
           (mbc mb #x262A34) (st-roof mb (+ h 1.2) (* 1.05 w) 8.5 2.4))))))
 
 (defun build-burnt ()
   "Three burnt-out buildings beyond the town: charred frames and broken roofs."
   (build-mesh (mb)
     (loop for (x z s) in *stage-ruins* do
-      (st-at (mb :x x :z z :yaw (st-r 0 3) :s s)
-        (mbc mb #x2E3240) (st-at (mb :y 2.2) (mb-box mb 10 4.4 7))
+      (mb-at (mb :x x :z z :yaw (st-r 0 3) :s s)
+        (mbc mb #x2E3240) (mb-at (mb :y 2.2) (mb-box mb 10 4.4 7))
         (mbc mb #x262A34)
-        (dotimes (i 6) (st-at (mb :x (st-r -5 5) :y (st-r 4.5 7) :z (st-r -3.5 3.5) :pitch (st-r -0.6 0.6) :roll (st-r -0.6 0.6))
+        (dotimes (i 6) (mb-at (mb :x (st-r -5 5) :y (st-r 4.5 7) :z (st-r -3.5 3.5) :pitch (st-r -0.6 0.6) :roll (st-r -0.6 0.6))
                          (mb-box mb 0.3 (st-r 2 4) 0.3)))                              ; charred beams
-        (mbc mb #x343846) (st-at (mb :x -2 :roll 0.25) (st-roof mb 5.2 7 5.5 1.6))))))
+        (mbc mb #x343846) (mb-at (mb :x -2 :roll 0.25) (st-roof mb 5.2 7 5.5 1.6))))))
 
 (defvar *st-rocks* nil "Debris chips: a vector of (mesh . hull) pairs, 3 shapes (BUILD-ROCKS).")
 (defun build-rocks ()
@@ -184,9 +184,9 @@ catches the moon (the thin edge light of the skyline)."
   (coerce (loop for k below 3 collect
                 (let ((mb (make-mesh-builder)))
                   (mbc mb #x3A3E4A)
-                  (st-at (mb :yaw (* 0.7 k) :roll (* 0.3 k)) (mb-box mb (+ 0.2 (* 0.05 k)) 0.12 (- 0.18 (* 0.03 k))))
+                  (mb-at (mb :yaw (* 0.7 k) :roll (* 0.3 k)) (mb-box mb (+ 0.2 (* 0.05 k)) 0.12 (- 0.18 (* 0.03 k))))
                   (mbc mb #x5C6272)
-                  (st-at (mb :x 0.04 :y 0.05 :yaw 0.6 :pitch 0.5 :roll 0.4) (mb-box mb 0.12 0.08 0.1))
+                  (mb-at (mb :x 0.04 :y 0.05 :yaw 0.6 :pitch 0.5 :roll 0.4) (mb-box mb 0.12 0.08 0.1))
                   (cons (mb-build mb) (mb-build (mb-hull (make-mesh-builder) mb :k 1.0 :c 0.55 :color (hexc #x0C0C12))))))
           'simple-vector))
 
@@ -286,9 +286,6 @@ review 2, so a thin toon strip reads; Phase 6: it was a soft additive line) whos
 (defvar *st-chip-i* 0 "The next chip slot (a ring).")
 (defvar *st-cm* (make-f32 16) "A chip's world matrix.")
 (defvar *st-ink* (fv 3 0.01 1 1.4) "DRAW-MESH :toon lanes of a chip's ink hull (mode 3, full fog, 1.4 px).")
-(defmacro st-h01 (i seed)
-  "Stable pseudo-random 0..1 of the float forms I and SEED (vfx.lisp HASH01's sine hash)."
-  `(f-mod (f-abs (* 43758.547f0 (f-sin (+ (* ,i 12.9898f0) (* ,seed 78.233f0))))) 1f0))
 
 (defun stage-clear-marks ()
   "A reset (the :reset event, a new match): no marks, no chips."
@@ -326,18 +323,18 @@ eroding), a crack = 5 jagged ink rays of 3 segments narrowing outward. Each burn
         (declare (fixnum o) (single-float x z r sd y pk))
         (if (< (aref v (+ o 3)) 0.5f0)
             (dotimes (j 9)                              ; a scorch
-              (let* ((fj (i->f j)) (a (+ (* 0.698f0 fj) (* 0.5f0 (- (st-h01 fj sd) 0.5f0))))
-                     (l (* r (+ 0.55f0 (* 0.75f0 (st-h01 (+ fj 9f0) sd))))) (w (* r (+ 0.16f0 (* 0.1f0 (st-h01 (+ fj 3f0) sd)))))
+              (let* ((fj (i->f j)) (a (+ (* 0.698f0 fj) (* 0.5f0 (- (hash01 fj sd) 0.5f0))))
+                     (l (* r (+ 0.55f0 (* 0.75f0 (hash01 (+ fj 9f0) sd))))) (w (* r (+ 0.16f0 (* 0.1f0 (hash01 (+ fj 3f0) sd)))))
                      (cx (f-cos a)) (sx (f-sin a)) (mx (+ x (* 0.5f0 l cx))) (mz (+ z (* 0.5f0 l sx))))
                 (declare (single-float fj a l w cx sx mx mz))
                 (toon-ground-seg x z mx mz y w 1f0 0.7f0 (+ sd fj) 0.12f0 pk)
                 (toon-ground-seg mx mz (+ x (* l cx)) (+ z (* l sx)) y (* 0.4f0 w) 0.7f0 0.2f0 (+ sd fj 20f0) 0.12f0 pk)))
             (dotimes (j 5)                              ; a crack
-              (let* ((fj (i->f j)) (a (+ (* 1.2566f0 fj) (* 0.6f0 (- (st-h01 fj sd) 0.5f0)))) (px x) (pz z)
-                     (st (* r (/ (+ 0.8f0 (* 0.4f0 (st-h01 (+ fj 7f0) sd))) 3f0))))
+              (let* ((fj (i->f j)) (a (+ (* 1.2566f0 fj) (* 0.6f0 (- (hash01 fj sd) 0.5f0)))) (px x) (pz z)
+                     (st (* r (/ (+ 0.8f0 (* 0.4f0 (hash01 (+ fj 7f0) sd))) 3f0))))
                 (declare (single-float fj a px pz st))
                 (dotimes (k 3)
-                  (let* ((fk (i->f k)) (a2 (+ a (* 0.9f0 (- (st-h01 (+ fj (* 5f0 fk)) (+ sd 1f0)) 0.5f0))))
+                  (let* ((fk (i->f k)) (a2 (+ a (* 0.9f0 (- (hash01 (+ fj (* 5f0 fk)) (+ sd 1f0)) 0.5f0))))
                          (nx (+ px (* st (f-cos a2)))) (nz (+ pz (* st (f-sin a2)))) (h0 (- 1f0 (* 0.3f0 fk))))
                     (declare (single-float fk a2 nx nz h0))
                     (toon-ground-seg px pz nx nz y (* r 0.05f0 (- 1f0 (* 0.3f0 fk))) h0 (- h0 0.3f0) (+ sd fj (* 7f0 fk)) 0.12f0 pk)
@@ -369,10 +366,10 @@ it was thrown. Each is a rubble mesh (stage toon) and its ink hull."
                         (setf (aref c (+ o 4)) (* -0.3f0 (aref c (+ o 4))) (aref c (+ o 3)) (* 0.5f0 (aref c (+ o 3)))
                               (aref c (+ o 5)) (* 0.5f0 (aref c (+ o 5))) (aref c (+ o 7)) (* 0.4f0 (aref c (+ o 7))))
                         (setf (aref c (+ o 3)) 0f0 (aref c (+ o 4)) 0f0 (aref c (+ o 5)) 0f0 (aref c (+ o 7)) 0f0))))
-                (engine::%euler! m 0 (aref c o) (aref c (+ o 1)) (aref c (+ o 2)) (+ (i->f i) (* 0.6f0 (aref c (+ o 6))))
+                (%euler! m 0 (aref c o) (aref c (+ o 1)) (aref c (+ o 2)) (+ (i->f i) (* 0.6f0 (aref c (+ o 6))))
                                  (aref c (+ o 6)) 0f0 s)
                 (let ((rk (svref rocks (mod i 3))))
-                  (draw-mesh (car rk) m :toon *st-toon*)
+                  (draw-mesh (car rk) m :toon *toon-ground*)
                   (draw-mesh (cdr rk) m :toon *st-ink*)))))))
     nil))
 
@@ -399,7 +396,7 @@ it was thrown. Each is a rubble mesh (stage toon) and its ink hull."
 (defun stage-draw (rdt)
   "Queue the stage for this frame (after the camera is set). RDT = real seconds."
   (let ((m (m4-identity! *st-m*)) (far *st-toon-far*))
-    (draw-mesh *st-floor* m :toon *st-toon*)
+    (draw-mesh *st-floor* m :toon *toon-ground*)
     (draw-mesh *st-walls* m :toon far)
     (draw-mesh *st-town* m :toon far)
     (draw-mesh *st-burnt* m :toon far))

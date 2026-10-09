@@ -38,6 +38,15 @@
   (declare (single-float e0 e1 x))
   (let* ((u (max 0f0 (min 1f0 (/ (- x e0) (- e1 e0))))))
     (* u u (- 3f0 (* 2f0 u)))))
+(defmacro hypot (a b &optional c)
+  "Length of (A B [C]) with CL's SQRT: exactly (SQRT (+ (* A A) (* B B) [(* C C)])), the sim's float order (a macro, so
+the native sim and wasm compile the same operations). Symbols and literals are used as they are; any other form is
+bound once, in order. F-HYPOT (package.lisp) is the F-SQRT twin: never swap one for the other at a site."
+  (%hypot-form 'sqrt (if c (list a b c) (list a b)) nil))
+(defmacro countdown! (place dt)
+  "Run the timer PLACE down by DT, stopping at 0: (SETF PLACE (F32 (MAX 0.0 (- PLACE DT)))). PLACE is evaluated twice
+(keep it free of side effects)."
+  `(setf ,place (f32 (max 0.0 (- ,place ,dt)))))
 
 ;;; ---------------------------------------------------------------- facing (yaw on the ground plane)
 ;;; A character's facing is one angle, YAW, about +Y. Yaw 0 faces -Z; the facing direction is

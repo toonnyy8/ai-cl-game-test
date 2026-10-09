@@ -19,10 +19,7 @@
 
 (defvar *player* nil "REN's entity handle.")
 
-(defcomponent transform
-  "Where an entity is: position (x y z metres, y up) and facing (yaw radians; 0 faces -Z)."
-  (pos (make-f32 3) :type f32vec)
-  (yaw 0f0 :type single-float))
+;; TRANSFORM (position + facing; POS-OF / YAW-OF) is the engine's (engine/lisp/ecs.lisp).
 
 (defcomponent motion
   "How a body moves: velocity, knockback push, gravity and ground contact (PHYSICS-STEP, combat.lisp)."
