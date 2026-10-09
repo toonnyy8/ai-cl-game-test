@@ -259,10 +259,11 @@
 
 (defweapon :nozarashi (:length 1.62 :base 0.2)         ; the haft below the grip, the head above it
   (:solid (mbc mb #x1C1C20)                              ; the head: the body, then the point (two convex prisms)
-          (ke-mb-prism mb '((0.234 0.051) (1.62 0.086) (1.62 0.611) (1.426 0.605) (1.069 0.596) (0.771 0.575) (0.532 0.545)
+          (ke-mb-prism mb '((0.25 0.02) (1.62 0.086) (1.62 0.611) (1.426 0.605) (1.069 0.596) (0.771 0.575) (0.532 0.545)
                             (0.323 0.462) (0.174 0.387))
                        -0.021 0.021)
           (ke-mb-prism mb '((0.174 0.387) (-0.034 0.283) (-0.183 0.209) (0.01 0.185) (0.213 0.17)) -0.018 0.018)
+          (ke-mb-prism mb '((0.08 0.0) (0.34 0.0) (0.34 0.04) (0.2 0.03)) -0.02 0.02)          ; the head's foot on the haft
           ;; the edge's pale band, both faces: light and grey stripes, the inner line ragged (each stripe its own depth)
           (loop for ((y0 z0 d0) (y1 z1 d1)) on '((-0.183 0.209 0.03) (-0.034 0.283 0.09) (0.115 0.358 0.16) (0.323 0.462 0.2)
                                                   (0.532 0.545 0.24) (0.771 0.575 0.21) (1.069 0.596 0.25) (1.426 0.605 0.22))
