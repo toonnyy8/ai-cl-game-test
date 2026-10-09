@@ -326,8 +326,15 @@
     (loop for i below n for j = (mod (1+ i) n)
           do (mb-poly-out mb (list (nth i f0) (nth j f0) (nth j f1) (nth i f1)) :center c))))
 
-;; Nozarashi's head up to END along the blade (1.62: whole; the Bankai's broken cleaver cuts it short): the body, the
-;; point, the black bar, the pale band and its chips, each profile clipped at the plane y = END; then the haft and the butt
+(defmacro with-ke-tilt ((mb) &body body)
+  "Run BODY (Nozarashi's head and what rides on it) turned 10 degrees about the black bar's joint with the head, (y z) =
+(0.4 0.08): the far end down toward the haft line, seen with the haft on the left and the edge up (the user 2026-10-09:
+「以黑色斜槓跟刀身的連接點為基準，將刀身順時針轉 10 度」); the bar and the haft stay."
+  `(with-xform (,mb (xform :y 0.4 :z 0.08 :pitch -0.17453292))
+     (with-xform (,mb (xform :y -0.4 :z -0.08)) ,@body)))
+
+;; Nozarashi's head up to END along the blade (1.62: whole; the Bankai's broken cleaver cuts it short): the black bar; the
+;; body, the point, the pale band and its chips (turned: WITH-KE-TILT), each profile clipped at the plane y = END; then the haft and the butt
 (defun ke-mb-noz-head (mb end &optional (haft 1.0))
   "Nozarashi's head cut at END up the blade; the haft HAFT times its length, lengthened downward (the top kept at 0.08)."
   (flet ((prism (profile x0 x1)
@@ -339,12 +346,14 @@
                                  (push (list end (+ z0 (* (- z1 z0) (/ (- end y0) (- y1 y0))))) out))
                             finally (return (nreverse out)))))
              (when (>= (length pts) 3) (ke-mb-prism mb pts x0 x1)))))
-    (mbc mb #x1C1C20)                                    ; the head: the body, then the point (two convex prisms)
+    (mbc mb #x1C1C20)
+    (prism '((0.07 -0.025) (0.4 0.045) (0.4 0.115) (0.07 0.025)) -0.022 0.022)   ; the black slanted bar: haft to head
+    (with-ke-tilt (mb)                                   ; the head, turned about the bar's joint
+    ;; the body, then the point (two convex prisms)
     (prism '((0.3 0.07) (1.62 0.086) (1.62 0.611) (1.426 0.605) (1.069 0.596) (0.771 0.575) (0.532 0.545)
              (0.323 0.462) (0.174 0.387))
            -0.021 0.021)
     (prism '((0.174 0.387) (-0.034 0.283) (-0.183 0.209) (0.01 0.185) (0.26 0.17)) -0.018 0.018)   ; (its back on the body's)
-    (prism '((0.07 -0.025) (0.4 0.045) (0.4 0.115) (0.07 0.025)) -0.022 0.022)   ; the black slanted bar: haft to head
     ;; the edge's pale band, both faces: light and grey stripes, the inner line ragged (each stripe its own depth)
     (loop for ((y0 z0 d0) (y1 z1 d1)) on '((-0.183 0.209 0.02) (-0.034 0.283 0.06) (0.115 0.358 0.107) (0.323 0.462 0.133)
                                             (0.532 0.545 0.16) (0.771 0.575 0.14) (1.069 0.596 0.167) (1.426 0.605 0.147))
@@ -356,7 +365,7 @@
     (mbc mb #x1C1C20)                                    ; chips bitten out of the edge
     (loop for (y z) in '((0.22 0.415) (0.65 0.562) (1.0 0.594) (1.3 0.603))
           when (< y (- end 0.05))
-            do (with-xform (mb (xform :y y :z z :roll 0.6)) (mb-box mb 0.05 0.03 0.03)))
+            do (with-xform (mb (xform :y y :z z :roll 0.6)) (mb-box mb 0.05 0.03 0.03))))
     (let* ((len (* 0.76 haft)) (drop (- len 0.76)))
       (mbc mb #xECECE8)                                  ; the long white-wrapped haft
       (with-xform (mb (xform :y (- 0.08 (* 0.5 len)))) (mb-box mb 0.05 len 0.05))   ; (it stops short of the head: the bar joins them)
@@ -367,6 +376,7 @@
 
 (defweapon :nozarashi (:length 1.62 :base 0.2)         ; the haft below the grip, the head above it
   (:solid (ke-mb-noz-head mb 1.62)
+          (with-ke-tilt (mb)                             ; the cap and the tassel ride on the turned head
           (mbc mb #x9C9478)                              ; the khaki cap over the far end, its stepped foot
           (with-xform (mb (xform :y 1.525 :z 0.348)) (mb-bevel-box mb 0.07 0.2 0.56 0.012))
           (with-xform (mb (xform :y 1.39 :z 0.14)) (mb-bevel-box mb 0.06 0.09 0.13 0.01))
@@ -380,7 +390,7 @@
                 do (let* ((n (sqrt (+ (* ax ax) (* ay ay) 1.0))) (ux (/ (- ax) n)) (uy (/ (- ay) n)) (uz (/ 1.0 n)) (h 0.42))
                      (with-xform (mb (xform :x (* -0.5 h ux) :y (- 1.51 (* 0.5 h uy)) :z (- 0.04 (* 0.5 h uz))
                                             :pitch (atan uz uy) :roll (asin (- ux))))
-                       (mb-cone mb 0.026 h :segments 4))))))
+                       (mb-cone mb 0.026 h :segments 4)))))))
 
 ;; the Bankai's broken cleaver (DUEL_KEN_REWORK §8; the user 2026-10-09: 「卍解刀身直接沿用始解刀身，然後將我打 X 的地方移除
 ;;變成斷刀」): Nozarashi's own head, haft and colours, snapped at 0.9 m up the blade: the cap, the tassel and the far
@@ -388,9 +398,10 @@
 ;; 伸長，使其變成原本的 1.3 倍」)
 (defweapon :ke-broken (:length 0.9 :base 0.2)
   (:solid (ke-mb-noz-head mb 0.9 1.3)                    ; the haft 1.3 times Nozarashi's, longer below (0.76 -> 0.99 m)
-          (mbc mb #x1C1C20)                              ; the square break, chipped
-          (loop for (z r) in '((0.13 0.5) (0.3 -0.4) (0.46 0.7))
-                do (with-xform (mb (xform :y 0.9 :z z :roll r)) (mb-box mb 0.05 0.045 0.05)))))
+          (with-ke-tilt (mb)
+            (mbc mb #x1C1C20)                            ; the square break, chipped
+            (loop for (z r) in '((0.13 0.5) (0.3 -0.4) (0.46 0.7))
+                  do (with-xform (mb (xform :y 0.9 :z z :roll r)) (mb-box mb 0.05 0.045 0.05))))))
 
 ;;; ---------------------------------------------------------------- poses
 (defpose :ke-stance ()

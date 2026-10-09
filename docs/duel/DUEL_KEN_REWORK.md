@@ -174,6 +174,11 @@ volumes unchanged:
     B again, its strands now cones whose points sit in the knot at the cap's spine corner and whose bases fan out away
     from the blade (before, each strand was turned about its middle: they crossed, the spread at the knot and the
     tails gathered, so it read upside down).
+  - The head's angle (2026-10-09, during §8; the user: 「請幫我以黑色協槓跟刀身的連接點為基準，將刀身順時針轉 10 度」;
+    asked whether Nozarashi or the Bankai's blade or both: 「卍解斷刀和始解野晒都轉（推薦）」): the head (body, point,
+    pale band, chips, the cap and the tassel; the Bankai's break) turned 10° about the bar's joint with it, (y z) =
+    (0.4 0.08) in the weapon frame, the far end down toward the haft line (seen with the haft on the left, the edge up);
+    the black bar and the haft stay (`with-ke-tilt`). The weapon's `:length` and every hit volume unchanged.
 
 ### 6.2 The strikes
 - The user, on the plan (KATATE gets its own clips through the kit's `:clip-map`, RYOTE's kendo clips refined, NOMIHOSE
@@ -287,6 +292,8 @@ volumes unchanged:
   「卍解刀身造型直接把始解修改成斷刀，然後把刀柄伸長 1.3 倍」「將刀柄向下伸長，使其變成原本的 1.3 倍」) its haft 1.3 times
   Nozarashi's, lengthened downward: 0.76 → 0.99 m, the top kept, the butt 0.23 m lower, 10 bindings for 8
   (`ke-mb-noz-head`'s HAFT argument; Nozarashi passes 1.0 and draws as before).
+- Then both blades' heads turned 10° about the black bar's joint (§6.1, the user: 「請幫我以黑色協槓跟刀身的連接點為基準，
+  將刀身順時針轉 10 度」, 「卍解斷刀和始解野晒都轉（推薦）」).
 - The fringe (every form; the user on the Bankai's face still: 「我圈起來的那兩個刺刺頭髮畫反了，變成尖角朝下」): the two
   fringe cones hung tips down at the brow (pitch 160); first turned up from the hairline (pitch 25), then on the next
   stills the user: 「那兩根瀏海直接刪除」: both removed.
