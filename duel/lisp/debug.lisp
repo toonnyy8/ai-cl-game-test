@@ -808,7 +808,7 @@ SR SS SI; a new character's: its pairings with every earlier character and its m
     (log-msg "duel evo seed ~d P1 ~,1f P2 ~,1f secs ~,1f" *match-seed*   ; the first EVOLUTION per side (-1: none)
              (/ (gauges-evo-t (gauges *p1*)) 60.0) (/ (gauges-evo-t (gauges *p2*)) 60.0) (/ (match-play-ticks) 60.0))
     (band-acc-line) (cup-acc-line)
-    (senju-acc-line) (ichigo-acc-line) (lille-acc-line)
+    (senju-acc-line) (ichigo-acc-line) (lille-acc-line) (barro-acc-line)
     (when *learn-gate* (learn-gate-line))
     (setf *gate-busy* nil))
   (unless *gate-busy*

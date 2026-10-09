@@ -216,3 +216,134 @@ Drawn reach = hit reach (host FK test) does not apply to lines (hitscan), only t
 3. **Art**: §7's new clips.
 4. **CPU / ASSIST / learning**, then the gates and tuning (§8–§9).
 5. **Player docs**: the manual and tutorial entries.
+
+## 11. Build notes (batch 1, 2026-10-09: batches 1 + 2 of §10 together, branch `barro-b1`)
+
+### What was built
+
+- `duel/lisp/barro.lisp` (sim, kits, hooks, CPU, debug, pacing) and `duel/lisp/barro-art.lisp` (his own looks only), after
+  `lille.lisp` in `duel/MANIFEST`. Kit `:barro`, roster index 6, display name "LILLE II", brush name リジェ・バロ. Every
+  function, knob, struct (`brs` the per-fighter component, accessor `(br e)`; `brh` the trace data), move (`:br-*`) and
+  hazard kind (`:br-trace`, `:br-fx`, `:br-misuji`) is his; no Lille symbol or registry entry is redefined.
+- Shared by reference (art, never sim): Lille's clips, bodies, weapon `:diagramm`, his cinematics (`lb-jilliel-cine`,
+  `lb-kikon-cine`, `lb-revive-cine`, `lb-jilliel-kikon-cine`, `lb-trompete-cine`), his draw hook `LILLE-DRAW` (called from
+  Barro's `BR-DRAW`: it keys on the form names, which Barro shares) and `LB-LOOK` for the look-only hazards (their data is an
+  `LBH`, read by nothing in the sim), the sounds `:lb-crack` / `:lb-lock` / `:lb-trumpet`.
+- Nine forms: `:base`; JILLIEL melee `:jilliel-kin` (the awakening enters it) and ranged `:jilliel`; the owl melee
+  `:shin-kin` and ranged `:shin` (the revival enters the owl's ranged mode, as the old); each awakened mode's MUJITTAI
+  (`:jilliel-kin-mujittai`, `:jilliel-mujittai`, `:shin-kin-mujittai`, `:shin-mujittai`).
+- §3 萬物貫通 through the per-hit `:guard` / `:chip` + `:flags (:ranged :x-axis :uncatchable)`, 31 m `:cap` lines: the stance's
+  L / SP1 / SP2 / snap / TAISHA, the four recall strings, every materialised trace.
+- §4 the stance (`:br-kamae`, `:br-kamae-k` after a K link at f4; BR-KAMAE-TICK through non-button `:strings`), the 狙擊 gauge
+  (`brs-snipe`; +1 on the first hit of a stance L / SP1 / SP2, a block fills nothing; J / K spend 1, at 0 J1 / K1), HUD: three
+  pips (Lille's reticle glyph) + "SN n" in the base form, "TR n" (live traces) awakened; the stance's aim line and reticle
+  (`%BR-AIM-LOOK`). Stance SP1 / SP2 cost their usual Reiatsu bar (TRY-COMMAND's WITH) [G].
+- §5 modes: melee L `:br-to-en` (12 f, ranged at f11); ranged L / SP1 / SP2 lay (3 / 9 / 9 flash step, refused when short,
+  paid line by line; SP1 a three-line fan at f6 / f12 / f18 of −6 / 0 / +6°); ranged (and its MUJITTAI's) J / K start the
+  melee J1 / K1, whose frame 0 (`BR-MELEE-IN`) puts him back in melee; a J that touches him (hit or block) and every K's
+  first active frame materialise the near traces; refunds 4 / 2 (owl 5 / 2); 16 traces at most. J3 → L `:br-backstep`
+  (5 m / 14 f, iframes f0–6, ranged at f13), K3 → L `:br-recall` (f0 takes every trace back and counts n, f7 starts
+  `:br-rc0..3` by n). The L links are the kit's `:l-after-j` / `:l-after-k`, refused off anything but J3 / K3
+  (BR-L-LINK-OK-P in the `:ok` hook).
+- §6 the owl: P at ≤ 4 Konpaku from any JILLIEL form (MUJITTAI included) where the awakening could be taken; Konpaku → 1,
+  Reishi full, traces cleared; x1.1 / x1.1, R − 1 on the J / K strings and the lays, Kikon 4.
+
+### Spec changes during the batch (the user, 2026-10-09, relayed by the lead)
+
+1. 「覺醒後的 U 還是保持開了就進入無敵的狀態」: MUJITTAI kept. Each awakened mode has a `*-mujittai` kit (`:guard-to` /
+   `:drop-to`, `:passives (:ward :intangible)`, the fold stance `:lb-w-fold` / `:lb-oe-fold` / `:lb-o-fold`, no `:keep`:
+   every command drops it), `:gg-regen` `*br-gg-regen*` 0.36 outside it, its perfect-Hoho drop (BARRO-TICK). The base U
+   stays a plain guard. Followed.
+2. 「近戰模式的 SP1／SP2 跟原版一樣會直接放出，只有遠程才會變成軌跡」: melee SP1 / SP2 fire directly with the old numbers:
+   JILLIEL `:br-w-sanren` (3 lines 20 m, 30 each, chip 15 %, guard 12, on `:lb-w-sanren`) and `:br-w-nijushi` (40 f tell,
+   1.2 m beam, 180); the owl `:br-misuji` (three 裁きの光明 ground lines of 70 to 18 m, one hit group) and `:br-trompete`
+   (60 f wind-up, 240; the reflect by a guard f50–58 / a perfect Hoho f48–59: half back, a 60 f stagger, owl SP2 sealed in
+   both owl modes for the match). Only ranged L / SP1 / SP2 lay. Followed (this replaces §5.1's "SP1 / SP2 as ranged").
+3. 「「附近」指對手在軌跡線的 10° 補正範圍以內。」: near = the angle between the trace's direction and the direction from its
+   origin to the opponent ≤ `*br-near-deg*` 10° (the same knob as the snap) and the opponent within the trace's 31 m; the
+   materialised line turns by that angle onto him. Followed (replaces §5.3's 2.5 m rule).
+
+### Deviations from the spec, and why
+
+- Cinematics referenced, not copied (§4 said `br-jilliel-cine`): LILLE-DRAW drives the wings' unfolding, the jade turning
+  gold etc. from the running cinematic's *name*; a renamed copy would draw the awakened wings round the base body. Art, so
+  shared as the rest of the art; the awakening's caption is still Lille's eye line (the art batch may give him his own).
+- The revival enters the owl's ranged mode `:shin` (as the old); §5's [G] "the awakening enters melee" kept for JILLIEL.
+- Owl "+1 f on every move": on the J / K strings and the lays (the old owl's numbers); the shared recall, its strings, the
+  mode turn and the backstep keep JILLIEL's frames.
+- Looks Barro does not have yet (art batch): the owl's trumpet forming and the broken halo after a reflect (LILLE-DRAW keys
+  them on Lille's move name / state), the snap shot / recall callouts in brush (no new glyphs baked: plain callouts).
+- `*br-mult*` 1.3 (base) is the old Lille's gate value, copied.
+
+### Stand-in clips (`*br-stand-ins*`, barro.lisp: the art batch swaps them)
+
+| Move | JILLIEL plays | The owl plays (`*br-owl-clip-map*`) | New clip to come |
+|---|---|---|---|
+| `:br-recall` (8 f) | `:lb-w-fold` | `:lb-o-fold` | `:br-recall` |
+| `:br-rc0` 空收 | `:lb-w-q3` | `:lb-o-q3` | (`:br-recall` then a strike) |
+| `:br-rc1` 二連 | `:lb-w-sanren` | `:lb-o-f2` | `:br-rc1` |
+| `:br-rc2` 四連 | `:lb-e-sanren` | `:lb-o-f3` | `:br-rc2` |
+| `:br-rc3` 裁き | `:lb-w-nijushi` | `:lb-o-chop` | `:br-rc3` |
+| `:br-to-en` | `:lb-w-fold` | `:lb-o-fold` | `:br-to-en` (if needed) |
+| `:br-backstep` | `:lb-w-tenshin` | `:lb-o-tenshin` | — |
+| `:br-k-snap` | `:lb-snap` (Lille's unused hip shot) | — | — |
+
+### Knobs (barro.lisp; every one with a docstring: old → new, 2026-10-09, the user or [G])
+
+| Knob | Value | | Knob | Value |
+|---|---|---|---|---|
+| `*br-x-guard*` / `*br-x-chip*` / `*br-x-len*` | 40 / 0.30 / 31.0 (user) | | `*br-snipe-max*` | 3 (user) |
+| `*br-shot-dmg*` / `*br-snap-dmg*` / `*br-taisha-dmg*` | 50 / 40 / 70 | | `*br-k-sanren-dmg*` / `*br-k-hiren-dmg*` | 30 / 50 |
+| `*br-sanren-dmg*` / `*br-hiren-dmg*` / `*br-plain-len*` | 30 / 40 / 20.0 [G] | | `*br-mult*` / `*br-taken*` | 1.3 / 1.0 |
+| `*br-lay-l*` / `*br-lay-sp1*` / `*br-lay-sp2*` | 3 / 9 / 9 | | `*br-trace-max*` | 16 |
+| `*br-near-deg*` | 10.0 (user) | | `*br-mat-dmg*` / `*br-mat-thick*` / `*br-mat-stun*` | 30 / 90 / 26 [G] |
+| `*br-refund*` / `-block*`, owl | 4 / 2, 5 / 2 | | `*br-backstep*` / `-f*` / `-iframes*` | 5.0 / 14 / 7 [G] |
+| `*br-recall-f*` | 8 [G] | | `*br-rc0-dmg*` | 30 [G] |
+| `*br-rc1-dmg*` | 40 ×2 [G] | | `*br-rc2-dmg*` / `*br-rc2-last*` | 35 ×3 / 45 (launch) [G] |
+| `*br-rc3-dmg*` / `*br-rc3-last*` | 30 ×4 / 90 [G] | | `*br-rc-stun*` / `*br-rc-track*` | 28 / 360 °/s [G] |
+| `*br-jilliel-mult*` / `-taken*` | 1.0 / 1.1 | | `*br-owl-mult*` / `-taken*` / `*br-owl-adv*` | 1.1 / 1.1 / 1 |
+| `*br-gg-regen*` | 0.36 | | `*br-to-en-f*` | 12 [G] |
+| `*br-ai-fire-n*` / `*br-ai-in*` | 4 / 3.5 m [G] | | misuji / reflect knobs | the old values |
+
+### The CPU (batch 1: crude, batch 4 does it properly)
+
+Generic `:ai` plists per form (copied shapes of the old forms), plus: the stance's follow-up planned once at its f6
+(BR-AI-KAMAE-PLAN: reeling → the shot; ≥ 1 pip inside 4 m → TAISHA / snap; a quarter of the time with a bar the stance's
+SP2 / SP1; else the shot); `:l-after-k` 0.9 / `:l-after-j` 0.6 in melee, the `:ok` hook letting the CPU recall only at ≥ 3
+traces (≥ 1 under 35 % Reishi) and backstep only with no trace or ≥ 9 flash step; the reflex (BR-AI-REFLEX): ranged → K at
+≥ 4 traces, J inside 3.5 m; MUJITTAI → out by attacking after 120 f or under 30 guard gauge. No ASSIST route (the generic
+AUTO COMBO plays his strings), no learning situations, no opponent trace reflex: batch 4.
+
+### Debug commands
+
+82000+k: 0 base 2.2 m from Kenpachi, 1 base 14 m, 2 melee 5 m, 3 ranged 8 m, 4 owl melee 5 m, 5 ranged 8 m with 6 traces
+through P2, 6 base 4 m with 3 pips, 7 / 8 the owl's Trompete reflected by a guard / a Hoho, 9 owl ranged 8 m, 10 melee with
+3 Konpaku (P revives), 11 / 12 melee / ranged MUJITTAI, 20 the mirror (DUEL_GAMEPLAY "Debug commands").
+
+### Gates (2026-10-09, branch `barro-b1`)
+
+- Host: duel-rules-test 8351 checks ALL PASS (a Lille II block: 萬物貫通 on every PA window, the gauge, near by angle 9° in /
+  11° out / behind out / past 31 m out, the recall tiers and their windows, the lay prices and refusal, melee SPs never lay
+  and ranged ones always do, the forms and MUJITTAI's guard-to / drop-to for every command, the owl's +1, the CPU's stance
+  plan); duel-control 89, learn 131, input 33, touch 64, cine 18: all pass. `tools/pkgcheck.sh duel`: 0 / 0 / 0.
+  `./build.sh duel`: 0 warnings. Smoke `run.mjs --secs 8`: exit 0; a script through 82020 / 82006 / 82005 (K materialised
+  the six traces: P2 1300 → 1138) / 82004 / 82007 (reflected: P1 1300 → 1168) / 82011: exit 0, no error.
+- The old 21 pairings at 10 seeds: every row, companion line and summary line byte-identical to the parent (c3971c6).
+- `simgate.py --cvc`: PASS, unchanged (G2 plays fixed pairs YY / YK / KK; only debug 2000+ draws from the roster):
+  `tests/style-cvc-ref.txt` needs no regeneration for this batch.
+- His seven pairings, 10 seeds (quick pass), every match K.O.:
+
+| Pairing | Median s | Min–max | Wins P1 (him) / P2 |
+|---|---|---|---|
+| BY | 114.3 | 90.3–130.4 | 1 / 9 |
+| BK | 123.3 | 79.3–157.9 | 4 / 6 |
+| BR | 129.5 | 104.1–172.8 | 4 / 6 |
+| BI | 141.4 | 99.9–152.6 | 5 / 5 |
+| BS | 135.6 | 78.8–154.5 | 4 / 6 |
+| BL | 186.0 | 114.4–225.1 | 3 / 7 |
+| BB | 165.9 | 114.8–185.3 | 6 / 4 (mirror) |
+
+BY and BK are under the 125 s floor: he loses most cross pairings fast (the CPU is batch 1's). Tried: stance shot 50 → 60
+and snap 40 → 50: BY 123.8, BK 122.3, BR 127.2, BI 138.6, BS 133.5, BL 168.9, BB 146.7 (noise-level, not kept: the spec's
+numbers stay); the melee CPU's L into ranged at 2.4–8 m (kept) moved BY 107 → 114, BK 114 → 123. Left to batch 4 (the CPU)
+and the gate batch. `aieval.py --char 6 --seeds 4`: strength 0.06, masher 1.0, signature 0.37, pacing ok.

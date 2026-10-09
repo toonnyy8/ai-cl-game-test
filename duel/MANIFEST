@@ -5,6 +5,7 @@
 # (data + hooks + cinematics); fighter ... main are the generic systems (no character names, except debug.lisp's test scenarios).
 # senjumaru.lisp loads after hud / onehand: its HUD meter calls their functions (hud-text ...); the quad drawing macros are the engine's (ui.lisp), docs/duel/DUEL_SENJUMARU.md.
 # lille-art.lisp / lille.lisp (roster index 5, docs/duel/DUEL_LILLE.md) load after senjumaru.lisp: the roster is append-only.
+# barro-art.lisp / barro.lisp (Lille Barro II, roster index 6, docs/duel/DUEL_LILLE_V2.md) after them: his art is Lille's by reference.
 lisp/package.lisp
 lisp/tuning.lisp
 lisp/rules.lisp
@@ -44,6 +45,8 @@ lisp/onehand.lisp
 lisp/senjumaru.lisp
 lisp/lille-art.lisp
 lisp/lille.lisp
+lisp/barro-art.lisp
+lisp/barro.lisp
 lisp/debug.lisp
 lisp/endless.lisp
 lisp/draw.lisp
