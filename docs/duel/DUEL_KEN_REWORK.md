@@ -322,3 +322,8 @@ J3 kick 1.40 / 1.40, K1 1.59 / 1.96, K2 1.54 / 1.75, K3 1.34 / 1.89.
 
 ### 8.3 Checks
 
+Presentation only, proved on the last commit of the round (the broken cleaver's 1.3× haft, the fringe removed):
+`simgate.py --seeds 10 --summary` byte-identical to the base (cc40146) for all 21 pairings; `--cvc` 3 PASS (yy 134.1 s,
+yk 103.7 s, kk 140.8 s, as before); `duel-rules-test` 6481 checks ALL PASS (the FK reach above, the KATAUDE weapon NIL,
+the clip maps); `pkgcheck.sh duel` 0 / 0 / 0; `./build.sh duel` 0 warnings.
+
