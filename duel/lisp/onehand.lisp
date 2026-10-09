@@ -132,9 +132,9 @@ the defaults)."
   "Would a Hoho by E (in state ST) started now be PERFECT? Then a one-hand up-flick is one, rested or not, where it
 would be a Step (the user 2026-10-01: the perfect timing is too hard to hit from a rest on a phone), and PERFECT HINT
 shows it (hud.lisp HUD-HINT). Free states that take a Hoho, the Hoho affordable (TRY-COMMAND's rule), PERFECT-NOW-P."
-  (let ((f (fighter e)) (g (gauges e)))
+  (let ((f (fighter e)))
     (and (member st '(:idle :guard :run)) (battle-p) (not (kit-rooted (fighter-kit f)))
-         (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))
+         (hoho-ready-p e)
          (perfect-now-p e))))
 
 (defun onehand-frame ()

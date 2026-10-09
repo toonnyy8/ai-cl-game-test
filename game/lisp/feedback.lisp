@@ -20,45 +20,44 @@
 
 (defun feedback-system ()
   "Show every event emitted since the last call, oldest first."
-  (dolist (ev (take-events))
-    (destructuring-bind (kind &rest args) ev
-      (ecase kind
-        (:hit (destructuring-bind (att tgt x y z fx fz heavy hs ender) args
-                (show-hit tgt x y z fx fz heavy hs ender)
-                (when (eql att *player*) (count-combo))))
-        (:blocked (destructuring-bind (x y z gain) args
-                    (fx-sparks x y z 12 1.0 0.88 0.54)
-                    (hitstop 3)
-                    (sfx-at :clang x y z :gain gain)))
-        (:killed (destructuring-bind (by-player oblit x y z ux uz) args
-                   (show-kill oblit x y z ux uz)
-                   (when by-player (count-kill oblit))))
-        (:crippled (destructuring-bind (x y z ux uz) args
-                     (fx-burst +p-mist+ 35 x y z ux 0.6f0 uz 0.8f0 5f0 8f0 0.6f0 0.18f0 0.70f0 0.07f0 0.18f0)))
-        (:expired (destructuring-bind (x z) args
-                    (fx-mist x 0.6 z 0.0 0.5 0.0 20)
-                    (sfx-at :enemy-death x 0.5 z)))
-        (:broken (slowmo 0.3 0.6) (shake 0.2 0.4))
-        (:raven-break (destructuring-bind (x z) args
-                        (play-sfx :parry)
-                        (fx-ring x 1.2 z 0.2 1.6 0.2 1.0 0.12 0.24)))
-        (:parried (destructuring-bind (x y z) args
-                    (hitstop 8) (slowmo 0.5 0.2)
-                    (fx-ring x y z 0.0 1.5 0.15 0.62 0.96 1.0)
-                    (fx-burst +p-spark+ 24 x y z 0f0 0.3f0 0f0 1f0 7f0 11f0 0.25f0 0.04f0 0.62f0 0.96f0 1f0)
-                    (play-sfx :parry)))
-        (:just-dodge (destructuring-bind (x z) args
-                       (slowmo 0.3 0.5 t)
-                       (play-sfx :dodge :pitch 1.3)
-                       (fx-burst +p-glow+ 12 x 1.0f0 z 0f0 0.3f0 0f0 1f0 0.5f0 2f0 0.35f0 0.2f0 0.62f0 0.78f0 1f0)))
-        (:player-hurt (destructuring-bind (x y z fx fz heavy hs) args
-                        (fx-mist x y z fx 0.3f0 fz 12)
-                        (let ((m (model *player*))) (when m (setf (model-flash m) (max 0.05 (/ hs 60.0)))))
-                        (hitstop hs) (shake 0.10 0.20) (screen-hurt)
-                        (play-sfx :player-hurt) (play-sfx (if heavy :hit-heavy :hit-flesh) :gain 0.8)
-                        (let ((s (pl))) (when s (setf (player-combo s) 0)))))
-        (:player-died (slowmo 0.3 1.2))
-        (:sfx (destructuring-bind (key x y z gain) args (sfx-at key x y z :gain gain)))))))
+  (do-events (kind)
+    (:hit (att tgt x y z fx fz heavy hs ender)
+      (show-hit tgt x y z fx fz heavy hs ender)
+      (when (eql att *player*) (count-combo)))
+    (:blocked (x y z gain)
+      (fx-sparks x y z 12 1.0 0.88 0.54)
+      (hitstop 3)
+      (sfx-at :clang x y z :gain gain))
+    (:killed (by-player oblit x y z ux uz)
+      (show-kill oblit x y z ux uz)
+      (when by-player (count-kill oblit)))
+    (:crippled (x y z ux uz)
+      (fx-burst +p-mist+ 35 x y z ux 0.6f0 uz 0.8f0 5f0 8f0 0.6f0 0.18f0 0.70f0 0.07f0 0.18f0))
+    (:expired (x z)
+      (fx-mist x 0.6 z 0.0 0.5 0.0 20)
+      (sfx-at :enemy-death x 0.5 z))
+    (:broken _ (slowmo 0.3 0.6) (shake 0.2 0.4))
+    (:raven-break (x z)
+      (play-sfx :parry)
+      (fx-ring x 1.2 z 0.2 1.6 0.2 1.0 0.12 0.24))
+    (:parried (x y z)
+      (hitstop 8) (slowmo 0.5 0.2)
+      (fx-ring x y z 0.0 1.5 0.15 0.62 0.96 1.0)
+      (fx-burst +p-spark+ 24 x y z 0f0 0.3f0 0f0 1f0 7f0 11f0 0.25f0 0.04f0 0.62f0 0.96f0 1f0)
+      (play-sfx :parry))
+    (:just-dodge (x z)
+      (slowmo 0.3 0.5 t)
+      (play-sfx :dodge :pitch 1.3)
+      (fx-burst +p-glow+ 12 x 1.0f0 z 0f0 0.3f0 0f0 1f0 0.5f0 2f0 0.35f0 0.2f0 0.62f0 0.78f0 1f0))
+    (:player-hurt (x y z fx fz heavy hs)
+      (fx-mist x y z fx 0.3f0 fz 12)
+      (let ((m (model *player*))) (when m (setf (model-flash m) (max 0.05 (/ hs 60.0)))))
+      (hitstop hs) (shake 0.10 0.20) (screen-hurt)
+      (play-sfx :player-hurt) (play-sfx (if heavy :hit-heavy :hit-flesh) :gain 0.8)
+      (let ((s (pl))) (when s (setf (player-combo s) 0))))
+    (:player-died _ (slowmo 0.3 1.2))
+    (:sfx (key x y z gain) (sfx-at key x y z :gain gain))
+    (t (error "unknown event ~s" kind))))
 
 (defun show-hit (tgt x y z fx fz heavy hs ender)
   "Blood mist along the swing, the target's hit flash, hitstop, shake, a red flash of light, the impact sound."

@@ -4,7 +4,7 @@
 ;;;; RESET POSITION / DUMMY / HP REFILL / GAUGES / P1 HP / P1 KONPAKU / DUMMY HP / DUMMY KONPAKU / CHARACTER SELECT /
 ;;;; TITLE / CAMERA) → FINISH (K.O. / TIME) → RESULTS
 ;;;; (REMATCH / SELECT / TITLE). SETTINGS (2026-09-28): ONE-HAND MODE (AUTO / ON / OFF), HAND, TAP SPLIT, SENSITIVITY,
-;;;; CAMERA, LEARNING CPU (control.lisp *SETTINGS*, saved by onehand.lisp), then RESET LEARNING (ai.lisp LEARN-RESET-ALL). VS CPU and PRACTICE are one-handed (the thumb deck,
+;;;; CAMERA, LEARNING CPU (control.lisp *SETTINGS*, saved by onehand.lisp), then RESET LEARNING (ai-learn.lisp LEARN-RESET-ALL). VS CPU and PRACTICE are one-handed (the thumb deck,
 ;;;; onehand.lisp) whenever ONE-HAND MODE is in effect there (ONE-HAND-EFFECTIVE-P); there is no separate one-hand entry.
 ;;;; PRACTICE: P1 against a dummy (P2's brain: switched off and guarding by DUMMY-GUARD-LEFT, or the CPU), no timer and
 ;;;; no match end (PRACTICE-STEP refills the dummy to its HP / KONPAKU rows; a K.O. is a reset to both sides' rows). Menus read the devices directly (either
@@ -103,7 +103,7 @@ always behind when one-handed (the portrait camera; the setting is kept); VS PLA
   (setf *paused* nil)
   (abort-cine)
   (spawn-pair)
-  (dolist (e (list *p1* *p2*)) (setf (fighter-state (fighter e)) :intro))
+  (do-sides (e) (setf (fighter-state (fighter e)) :intro))
   (play-music :music-title)
   (set-flow :title))
 
@@ -112,7 +112,7 @@ always behind when one-handed (the portrait camera; the setting is kept); VS PLA
   (abort-cine)
   (when (eq *mode* :endless) (endless-new-seed))         ; the run's stage-1 opponent stands on the plaza
   (spawn-pair)
-  (dolist (e (list *p1* *p2*)) (setf (fighter-state (fighter e)) :intro))
+  (do-sides (e) (setf (fighter-state (fighter e)) :intro))
   (play-music :music-title)
   (set-flow :select))
 
@@ -130,7 +130,7 @@ always behind when one-handed (the portrait camera; the setting is kept); VS PLA
   (sim-rnd-seed *match-seed*)
   (set-cam-behind *cam-behind*)
   (spawn-pair :cpu1 (eq *mode* :cpu-cpu) :cpu2 (not (eq *mode* :vs-player)))
-  (dolist (e (list *p1* *p2*))
+  (do-sides (e)
     (setf (gauges-konpaku (gauges e)) *konpaku-start*)
     (setf (fighter-state (fighter e)) :intro))
   (when (eq *mode* :practice) (practice-dummy!) (practice-set! *p1*) (practice-set! *p2*))
@@ -144,7 +144,7 @@ always behind when one-handed (the portrait camera; the setting is kept); VS PLA
 (defun begin-battle ()
   "The intro ended: FIGHT (P1 on the left of the view; END-CINE already forgot the presses made
 during the intro, e.g. the menu's confirm)."
-  (dolist (e (list *p1* *p2*)) (refresh-look e) (to-idle e 0))
+  (do-sides (e) (refresh-look e) (to-idle e 0))
   (setf *match-tick* 0)
   (view-step *p1* *p2* t)
   (duel-camera *p1* *p2* 0.0 :snap t)
@@ -267,7 +267,7 @@ end) and, HP REFILL AUTO, its Reishi once it is out of its hit / block reactions
 (defun select-update ()
   "SELECT: P1 picks, then P2 / the CPU, then the CPU difficulty (either player's keys, like every menu)."
   (let ((side (min 1 *select-phase*)))
-    (flet ((respawn () (spawn-pair) (dolist (e (list *p1* *p2*)) (setf (fighter-state (fighter e)) :intro))))
+    (flet ((respawn () (spawn-pair) (do-sides (e) (setf (fighter-state (fighter e)) :intro))))
       (case *select-phase*
         ((0 1)
          (when (or (menu-left-p) (menu-right-p) (member (tap-third) '(-1 1)))   ; a tap: left / right third

@@ -381,6 +381,12 @@ LINE-WIDTH of STR. 0 B."
           (aref v 4) (f32 (second color)) (aref v 5) (f32 (third color))
           (aref v 6) (f32 (* alpha (if (cdddr color) (fourth color) 1.0))))))
 
+(defun brush-text (str x y em color &optional (alpha 1.0))
+  "One line of brush Latin STR: SET-LINE's arguments, its width, then BRUSH-LINE."
+  (set-line x y em color alpha)
+  (setf (aref *bl* 7) (line-width str))
+  (brush-line str))
+
 ;;; ---------------------------------------------------------------- names
 (defparameter *brush-callouts*
   ;; move -> (kanji reading mark): the gameplay SP / technique names shown as a brush column at the user's side

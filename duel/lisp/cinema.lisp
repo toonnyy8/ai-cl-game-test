@@ -47,7 +47,7 @@ camera's easing) run at this rate; the script's frames do not (a look: the sim n
   (dolist (e (list a v))
     (when (fighter e)
       (setf (fighter-state (fighter e)) :cine (fighter-sf (fighter e)) 0 (motion-kb-left (motion e)) 0)
-      (fill (motion-vel (motion e)) 0f0)))
+      (halt! e)))
   (clog "cine ~a" name))
 
 (defun cine-actor-step (e)
