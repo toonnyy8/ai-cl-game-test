@@ -52,6 +52,14 @@ The user: 「近戰模式的 SP1／SP2 跟原版一樣會直接放出，只有�
   seal, as the original).
 - Only the ranged modes' L / SP1 / SP2 lay traces.
 
+### Decision V4 (2026-10-09): "near" is the trace's 10° snap
+
+The user: 「「附近」指對手在軌跡線的 10° 補正範圍以內。」
+
+- A trace is near (materialised by a J touch or a K) when the opponent is inside its 10° snap: the ground-plane angle
+  between the trace's direction and the line from the trace's origin to him is ≤ 10°, and he is within its length.
+  One knob `*br-near-deg*` 10.0 for both the selection and the turn. Replaces the 2.5 m distance of §5.3 ([G], dropped).
+
 Everything below that the user did not decide is marked **[G]** (our reading, a knob; changed on the next playtest).
 
 ## 2. Frame
@@ -142,7 +150,8 @@ At most 16 live traces; the oldest goes first (the old rule). A trace is a 31 m 
 
 ### 5.3 Materialising
 
-- **Near** = the trace's line passes within **2.5 m** of the opponent's centre (point-to-segment, ground plane) [G].
+- **Near** = the opponent is inside the trace's **10° snap** (decision V4): the angle between the trace's direction and
+  its origin → him is ≤ 10°, him within the trace's length.
 - J: on the J's hit **or block** (「碰到敵人」), every near trace materialises. K: at the K's first active frame, every near
   trace materialises, whether the K connects or not.
 - A materialised trace turns up to 10° toward him (the old snap) and becomes a 2-frame hit with **萬物貫通**, then is gone.
