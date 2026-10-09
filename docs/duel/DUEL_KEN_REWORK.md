@@ -169,8 +169,46 @@ volumes unchanged:
   - The white haft now stops 0.08 m short of the head (its top at y 0.08); a black slanted bar (0.07 → 0.40 m up the
     axis, rising 0.07 → 0.115 m toward the edge side) joins it to the head's spine, which now starts at (0.30, 0.07).
   - "The original tassel" read two ways, shown side by side for the user to pick: A, the pre-rework one (dark
-    green-grey, hung from the butt); B, the first pass's (dark green strands at the cap's spine corner).
+    green-grey, hung from the butt); B, the first pass's (dark green strands at the cap's spine corner). The user:
+    「選 A」.
 
-### 6.2 The strikes (plan)
+### 6.2 The strikes
 - The user, on the plan (KATATE gets its own clips through the kit's `:clip-map`, RYOTE's kendo clips refined, NOMIHOSE
-  on RYOTE's with KUKAN-GIRI and the drink refined): 「三杯也改用一套自己的獨立動作」: NOMIHOSE gets its own set too.
+  on RYOTE's with KUKAN-GIRI and the drink refined): 「三杯也改用一套自己的獨立動作」: NOMIHOSE gets its own set too;
+  its plan (drained, overcommitted, bestial) was then accepted: 「可以」.
+- How: the kits' `:clip-map` (a look: FIGHTER.LISP plays KIT-MOVE-CLIP; the move, its frames and volumes unchanged).
+  KATATE maps the base clips and the meteor to `:ke-k-*` (authored at the base clips' S/A/R: the derived moves play them
+  at S/(S+2)); RYOTE and the Bankai set `:clip-map nil` (they inherit otherwise); NOMIHOSE maps RYOTE's clips,
+  KUKAN-GIRI and the meteor to `:ke-x-*`, with its own stance `:ke-x-stance`, drink `:ke-x-drink` (the Bankai keeps
+  `:ke-drink`) and body `:kenpachi-nomi` (a body variant: 8 more hair spikes lifted by the reiatsu; same rig and hurt
+  cylinder). The FK reach test now reads the clip each form plays (`kit-move-clip`).
+
+| Form | Slot | Clip | What it does |
+|---|---|---|---|
+| KATATE | idle | `:ke-n-stance` on `:ke-k-rest` | the haft on the right shoulder, the head up behind him |
+| | J1 | `:ke-k-q1` | the shoulder-roll drop: heaved off the shoulder, rolled over and down in front, dragged a step |
+| | J2 | `:ke-k-q2` | the mowing sweep: low and flat, right to left, the weight dragging him round |
+| | J3 | `:ke-kick` | (unchanged) |
+| | K1 | `:ke-k-f1` | the flat smack: up over the left shoulder, held, a lunging backhand diagonal |
+| | K2 | `:ke-k-f2` | the heave-up: the head dragged on the floor behind him, a one-handed scoop up in front, leaning back |
+| | K3 | `:ke-k-spin` | the spin, the arm locked out, the cleaver carrying him round once and a bit |
+| | SP1 | `:ke-k-meteor` | the meteor, one hand: cocked over the right shoulder in the leap, the top-down split |
+| RYOTE | J1, J2, J3, K1 | `:ke-r-*` | the front foot lifted before the cut and stamped down on it (fumikomi) |
+| NOMIHOSE | stance | `:ke-x-stance` | the cleaver dragged low behind in both hands, hunched, wide |
+| | J1 | `:ke-x-q1` | the ground-shaker: up over the head, one vertical, buried in the floor |
+| | J2 | `:ke-x-kote` | a short brutal hack off the shoulder, elbows bent, a lurch |
+| | J3 | `:ke-x-q3` | the shoulder-to-floor diagonal, overcommitted: turned half round, crouched |
+| | K1 KUKAN-GIRI | `:ke-x-f1` | one huge rising diagonal, low left to high right (its chord the rift) |
+| | K2 | `:ke-x-tsuki` | the battering ram: level at the hip, the capped end first, the body charging behind |
+| | K3 | `:ke-x-f2` | the bisector: a leap with the cleaver overhead, one cut to the floor, crouched |
+| | SP1 | `:ke-x-meteor` | the meteor at full power: higher, arched back, both hands |
+| | U | `:ke-x-drink` | the head thrown back roaring, the arms wide, the cleaver raised high on the right |
+
+- Drawn reach (the tip's radial distance, the MEN / thrust / bisector capsules' distance ahead; edge = the volume's):
+  KATATE J1 1.79 / 1.82, J2 1.80 / 1.82, K1 3.35 / 3.64, K2 2.77 / 3.25, K3 3.02 / 3.51; NOMIHOSE J1 2.06 / 2.06, J2
+  1.48 / 1.44, J3 1.55 / 1.52, K1 2.84 / 3.90, K2 3.39 / 4.50, K3 2.82 / 4.45. (Before, KATATE played the base clips
+  with the cleaver: K1 1.56, K2 0.93.)
+- Not built: cup 3's grin (a body variant can add parts but not swap the face); the left fist's residual drift on the
+  handle.
+- Checks: host tests ALL PASS (rules 6481, control 89, learn 131, cine 18); `pkgcheck` 0 / 0 / 0; `./build.sh duel` 0
+  warnings; `simgate --seeds 10 --summary` (42 gate lines) and `--cvc` byte-identical to the branch base `cc40146`.
