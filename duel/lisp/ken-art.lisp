@@ -210,9 +210,9 @@
   :palette '((:skin #xA23440) (:skin-d #x7E2632) (:pupil #xF4F2EA) (:horn #x8E2C38) (:mark #x121216) (:crease #x4A1018)
             (:tabi #xA23440) (:sole #x5A1822) (:lining #xE4E4E0)
             (:blood #xD0101C) (:wound #x5A1418) (:split #x101018))
-  ;; his own prowl and guard for the shared clips (the feral pass, 2026-09-28): art only
+  ;; his own prowl, guard and back leap for the shared clips (the feral pass, 2026-09-28; the leap §8.4): art only
   :clips '(:sh-guard :ke-b-guard :sh-guard-hit :ke-b-guard-hit :sh-walk-f :ke-b-walk-f :sh-walk-b :ke-b-walk-b
-           :sh-strafe-r :ke-b-strafe-r :sh-strafe-l :ke-b-strafe-l)
+           :sh-strafe-r :ke-b-strafe-r :sh-strafe-l :ke-b-strafe-l :sh-step-b :ke-b-step-b)
   :parts '((:head (:cone 0.016 0.06 :at (0.034 0.222 0.064) :rot (0 -12 -14) :seg 6 :c :horn)   ; the horns (the anime's: small cones)
                  (:cone 0.016 0.06 :at (-0.034 0.222 0.064) :rot (0 -12 14) :seg 6 :c :horn)
                  (:box 0.006 0.045 0.004 :at (0 0.162 0.0768) :c :mark)                          ; the slit between the brows
@@ -1006,7 +1006,60 @@ flex and the spine / head flex shifted by these."
                          (0.4 (:thigh-l :side 4) (:thigh-r :side 22 :flex -5) (:knee-r :flex 20))
                          (0.6 (:root :u -0.04) (:thigh-r :side 8) (:knee-r :flex 45) (:thigh-l :side 10)))))
   "The oni's prowl: the shared walk / strafe legs (body.lisp), each clip (name seconds keys) sunk by ONI-KEYS.")
-(loop for (name dur keys) in *oni-walk* do (build-clip name dur t :ke-b-stance (oni-keys keys)))
+;; the prowl's upper body (DUEL_KEN_REWORK §8.4, the user 2026-10-09: 「做卍解的潛行走路和咆哮後跳」): a stalking beast, not
+;; a man walking crouched: the shoulders roll with the steps (16 degrees: more swings the trailing blade about), the left
+;; claw paws forward with the opposite foot and drags back, the head stays low and sways, the broken blade scrapes along
+;; behind; one list of four keys per clip, laid on the sunk legs key for key (the same times)
+(defparameter *oni-prowl*
+  '((:ke-b-walk-f ((:chest :flex 18 :twist -18) (:arm-l :flex 74 :side 28) (:elbow-l :flex 34) (:hand-l :flex 64)
+                   (:arm-r :flex -22 :side 32) (:hand-r :flex -106) (:head :flex -60 :twist 8))
+                  ((:chest :flex 24 :twist -10) (:arm-l :flex 50 :side 40) (:elbow-l :flex 62) (:hand-l :flex 42)
+                   (:arm-r :flex -16 :side 30) (:hand-r :flex -98) (:head :flex -66 :twist 0))
+                  ((:chest :flex 18 :twist -2) (:arm-l :flex 20 :side 46) (:elbow-l :flex 82) (:hand-l :flex 30)
+                   (:arm-r :flex -8 :side 28) (:hand-r :flex -106) (:head :flex -60 :twist -8))
+                  ((:chest :flex 24 :twist -10) (:arm-l :flex 44 :side 42) (:elbow-l :flex 66) (:hand-l :flex 52)
+                   (:arm-r :flex -16 :side 30) (:hand-r :flex -98) (:head :flex -66 :twist 0)))
+    (:ke-b-walk-b ((:chest :flex 14 :twist -18) (:arm-l :flex 66 :side 34) (:elbow-l :flex 44) (:hand-l :flex 60)
+                   (:head :flex -54 :twist 4))
+                  ((:chest :flex 18 :twist -12) (:arm-l :flex 58 :side 38) (:elbow-l :flex 54) (:hand-l :flex 46)
+                   (:head :flex -58))
+                  ((:chest :flex 14 :twist -6) (:arm-l :flex 52 :side 42) (:elbow-l :flex 60) (:hand-l :flex 60)
+                   (:head :flex -54 :twist -4))
+                  ((:chest :flex 18 :twist -12) (:arm-l :flex 58 :side 38) (:elbow-l :flex 54) (:hand-l :flex 46)
+                   (:head :flex -58)))
+    (:ke-b-strafe-r ((:chest :flex 18 :twist -14) (:arm-l :flex 56 :side 48) (:elbow-l :flex 50) (:hand-l :flex 60)
+                     (:head :flex -60 :twist -10))
+                    ((:chest :flex 22 :twist -8) (:arm-l :flex 48 :side 40) (:elbow-l :flex 62) (:head :flex -64 :twist -10))
+                    ((:chest :flex 18 :twist -14) (:arm-l :flex 56 :side 48) (:elbow-l :flex 50) (:hand-l :flex 60)
+                     (:head :flex -60 :twist -10))
+                    ((:chest :flex 22 :twist -8) (:arm-l :flex 48 :side 40) (:elbow-l :flex 62) (:head :flex -64 :twist -10)))
+    (:ke-b-strafe-l ((:chest :flex 18 :twist -4) (:arm-l :flex 60 :side 30) (:elbow-l :flex 46) (:hand-l :flex 60)
+                     (:head :flex -60 :twist 10))
+                    ((:chest :flex 22 :twist -12) (:arm-l :flex 50 :side 38) (:elbow-l :flex 60) (:head :flex -64 :twist 10))
+                    ((:chest :flex 18 :twist -4) (:arm-l :flex 60 :side 30) (:elbow-l :flex 46) (:hand-l :flex 60)
+                     (:head :flex -60 :twist 10))
+                    ((:chest :flex 22 :twist -12) (:arm-l :flex 50 :side 38) (:elbow-l :flex 60) (:head :flex -64 :twist 10))))
+  "The oni's prowl above the hips: per clip, four key spec lists (absolute values, after ONI-KEYS's shift) for its keys.")
+(loop for (name dur keys) in *oni-walk*
+      do (build-clip name dur t :ke-b-stance
+                     (loop for (tm . specs) in (oni-keys keys)
+                           for upper in (rest (assoc name *oni-prowl*))
+                           collect (list* tm (append specs upper)))))
+;; the roaring back leap (the Step back's art, 0.4 s like :sh-step-b; §8.4): sunk deep, then flung up and back, the back
+;; arched, the head thrown back roaring (the shout face and the roar: feedback.lisp's :step), the arms flung wide, the
+;; legs tucked; down on all fours, the left claw on the floor, and back into the crouch
+(defclip :ke-b-step-b (0.4 :base :ke-b-stance)
+  (0 (:root :u -0.38) (:spine :flex 48) (:head :flex -62) (:knee-r :flex 74) (:knee-l :flex 96))
+  (0.07 :snap (:root :u 0.1 :f -0.08) (:spine :flex 2) (:chest :flex -16 :twist -4) (:neck :flex -6) (:head :flex -22)
+        (:arm-l :flex 30 :side 82) (:elbow-l :flex 30) (:hand-l :flex 70) (:arm-r :flex 6 :side 62) (:elbow-r :flex 18)
+        (:thigh-r :flex 44 :side 20) (:knee-r :flex 86) (:thigh-l :flex 62 :side 20) (:knee-l :flex 104))
+  (0.18 (:root :u 0.06 :f -0.12) (:spine :flex 8) (:chest :flex -10 :twist -4) (:head :flex -26)
+        (:arm-l :flex 36 :side 74) (:elbow-l :flex 36) (:hand-l :flex 66) (:arm-r :flex 2 :side 56) (:elbow-r :flex 20)
+        (:thigh-r :flex 50 :side 20) (:knee-r :flex 92) (:thigh-l :flex 66 :side 20) (:knee-l :flex 108))
+  (0.28 :snap (:root :u -0.42 :f -0.04) (:spine :flex 54) (:chest :flex 22) (:head :flex -64)
+        (:arm-l :flex 80 :side 24) (:elbow-l :flex 10) (:hand-l :flex 20) (:arm-r :flex -20 :side 34)
+        (:thigh-r :flex -10 :side 26) (:knee-r :flex 72) (:thigh-l :flex 72 :side 26) (:knee-l :flex 102))
+  (0.4 :ke-b-stance))
 ;; the run: on the shoulder-rest set the blade rides his shoulder; the oni runs bent double, the blade trailing
 (loop for name in '(:ke-b-run :ke-b-skate-b :ke-b-slide-r :ke-b-slide-l)
       for keys in (list *run-keys* *skate-keys* *slide-r-keys* *slide-l-keys*)

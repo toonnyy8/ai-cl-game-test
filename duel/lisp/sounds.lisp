@@ -35,6 +35,7 @@
 ;;;;   :awaken-rise      rising swell into the awakening
 ;;;;   :evolution        the Awakening gauge is full
 ;;;;   :laugh            Ken's laugh-ish formant bark (no voice)
+;;;;   :oni-roar         Kenpachi's Bankai, the back leap: a low rough growl swelling and falling (no voice)
 ;;;;   :gulp             NOMIHOSE's DRINK: a throat thump and a wet swallow
 ;;;;   :arm-crack        Kenpachi's Bankai: a pip of the arm spent / cracked (a bone creak and a crack)
 ;;;;   :arm-burst        the arm bursting (a wet crack, a thump, spray)
@@ -294,6 +295,17 @@
                  (au-mix! b f1 at 1.0) (au-mix! b f2 at 0.6))))
     (au-drive! b 1.5)
     (au-reverb! b 0.15)))
+
+(defsound :oni-roar (:peak 0.85)
+  ;; a low rough growl: a saw near 80 Hz swelling up a fifth and falling, jittered, through two vowel formants, driven
+  (let ((b (au-buf 0.75)) (g (au-buf 0.75)))
+    (au-render (g) ((ph 0.0))
+      (au-ph+ ph (* (+ 78.0 (* 36.0 (au-sin (* 0.66 tt)))) (+ 1.0 (* 0.04 (au-sin (* 31.0 tt))))))
+      (* (au-ar tt 0.05 0.22) (+ (au-saw ph) (* 0.45 (au-rnd)))))
+    (let ((f1 (au-svf! (copy-seq g) :bp :from 520 :q 4)) (f2 (au-svf! (copy-seq g) :bp :from 950 :q 5)))
+      (au-mix! b f1 0.0 1.0) (au-mix! b f2 0.0 0.7))
+    (au-drive! b 2.4)
+    (au-reverb! b 0.2)))
 
 (defsound :gulp (:peak 0.75)
   (let ((b (au-buf 0.45)))

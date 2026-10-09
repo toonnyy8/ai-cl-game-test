@@ -336,3 +336,25 @@ the clip maps); `pkgcheck.sh duel` 0 / 0 / 0; `./build.sh duel` 0 warnings.
 
 The head turn (§6.1) re-gated the same way: summary byte-identical, cvc 3 PASS, rules test ALL PASS, pkgcheck clean,
 build 0 warnings. The playtest Artifact carries §8 and the turn (v37; the user: 「善哉，請幫我上 playtest」).
+
+### 8.4 The prowl, the roaring back leap, the cinematic's torso (2026-10-09)
+
+- The user (after the v37 playtest): 「做卍解的潛行走路和咆哮後跳」 (the two items of the §8 plan not yet built).
+- The prowl (`*oni-prowl*` over `*oni-walk*`): the shared walk / strafe legs stay sunk into the crouch (`oni-keys`); above
+  the hips each of the four keys now carries its own upper body: the shoulders roll with the steps (the chest twist
+  −18° ↔ −2°, a first pass at 30° swung the trailing blade about too much), the left claw paws forward with the
+  opposite foot (arm flex 74°, elbow 34°) and drags back (20°, 82°), the head low and swaying (±8°), the blade hand
+  scraping; walking back the claw stays up in front; strafing it is held out, the head turned to the opponent.
+- The roaring back leap (`:ke-b-step-b`, the oni's art for the shared Step back `:sh-step-b`, the same 0.4 s): sunk
+  deep, then at 0.07 s flung up 0.4 m and back, the back arched, the head thrown back, the arms flung wide, the legs
+  tucked; down on all fours at 0.28 s, the left claw on the floor; back into the crouch. The roar is the feedback
+  layer's (`feedback.lisp` `:step`, looks and sound only): when the played clip is `:ke-b-step-b`, the shout face for
+  0.4 s and `:oni-roar` (new: a saw near 80 Hz swelling a fifth and falling, jittered, through two vowel formants,
+  driven). KATAUDE shares the oni body and so the prowl and the leap.
+- The cinematic's torso (the user, on a still of the Bankai cinematic: 「卍解過場動畫的時候身體軀幹好像會先消失耶？」):
+  `ken-bankai-cine` puts the base body back at f0 for the kneel, and the Bankai kit's hide list (with `:haori`) stayed
+  on the model: since §8.1 every torso part of the haori is tagged `:haori`, so the base body lost its torso until the
+  oni at f58. Now f0 also clears the model's hide list (`refresh-look` at f58 restores the Bankai's).- Checks: `simgate.py --seeds 10 --summary` byte-identical to the base, `--cvc` 3 PASS, `duel-rules-test` 6481 ALL PASS,
+  `pkgcheck.sh duel` 0 / 0 / 0, `./build.sh duel` 0 warnings, the headless run clean; the cinematic's stills (35005,
+  35040, 35070) show the haori torso until the oni.
+

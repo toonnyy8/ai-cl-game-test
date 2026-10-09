@@ -154,7 +154,10 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
                       (l (sqrt (+ (* vx vx) (* vz vz)))))
                  (multiple-value-bind (dx dz) (if (> l 1e-4) (values (/ vx l) (/ vz l)) (values (fwd-x (yaw-of e)) (fwd-z (yaw-of e))))
                    (vfx-step-dust (aref p 0) (aref p 2) (- dx) (- dz)) (smear e dx dz))
-                 (sfx-on :step e :gain 0.6)))
+                 (sfx-on :step e :gain 0.6)
+                 ;; the oni's back leap roars (DUEL_KEN_REWORK §8.4): the shout face through the leap, a low growl
+                 (when (eq (clip-name (anim-clip (model-anim (model e)))) :ke-b-step-b)
+                   (face-beat e :shout 0.4) (sfx-on :oni-roar e))))
         (:hoho-out (destructuring-bind (e x z) args
                      (vfx-hoho x 1.0 z nil :dx (fwd-x (yaw-of e)) :dz (fwd-z (yaw-of e)))
                      (start-ghost e)

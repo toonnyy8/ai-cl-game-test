@@ -756,7 +756,10 @@ the BLOOD pillar and two rings, a negative then a manga page; close, low, wide-a
 eyes, the roar held in silence; the black card, a BLOOD back-rim, the 卍解 column with the red hanko; a wide from behind,
 the pillar on ones. The rules are already settled (his Konpaku 1, Reishi full): only the looks here."
   (at 0 (face-each-other a v)
-      (setf (model-body (model a)) (find-body :kenpachi) (model-weapon (model a)) :nozarashi *aura-off* a)
+      ;; (the base body without the Bankai kit's hide list: its :haori tag would take his whole torso, DUEL_KEN_REWORK §8.1;
+      ;; REFRESH-LOOK at 58 puts the oni and the list back)
+      (setf (model-body (model a)) (find-body :kenpachi) (model-weapon (model a)) :nozarashi (model-hide (model a)) nil
+            *aura-off* a)
       (cine-clip a :sh-crumple :blend 0 :time 0.95) (cine-clip v (kit-stance (kit-of v)) :blend 6)
       (shot-on a 35 3.0 0.7 :look 0.9 :off -0.7) (lens 50 -6)
       (hold-pose v 12) (freeze 12) (impact-frame :negative 2) (silence 12)   ; (a held pose would keep his standing one)
