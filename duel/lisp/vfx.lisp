@@ -79,7 +79,7 @@ lower edge is the backing: black smoke puffs off a blade read as bubbles). POWER
     (let* ((bx (- x1 x0)) (by (- y1 y0)) (bz (- z1 z0)) (p power) (dr (drawing-no))
            (pk (toon-a +pal-fire+ 0.95f0)) (sd (- -3f0 (i->f (mod (f->i dr) 5)))))
       (declare (single-float bx by bz p dr pk sd))
-      (fx-ribbon x0 y0 z0 bx by bz (* 0.075f0 p) (* 0.045f0 p) 1f0 sd 0.2f0 pk 0.3f0 sd 0.2f0 pk dr 0.01f0 :segs 4 :mode :toon)
+      (toon-ribbon (x0 y0 z0) (bx by bz) ((* 0.075f0 p) (* 0.045f0 p)) :heat (1f0 0.3f0) :seed sd :wob 0.2f0 :k pk :ph dr :sway 0.01f0 :segs 4)
       (dotimes (k 3)
         (let* ((kf (i->f k)) (u (+ 0.25f0 (* 0.27f0 kf)))
                (h (* p (+ 0.26f0 (* 0.26f0 (hash01 (+ kf dr) 3.1f0)))))
@@ -87,8 +87,7 @@ lower edge is the backing: black smoke puffs off a blade read as bubbles). POWER
                (tx (+ x0 (* u bx))) (ty (+ y0 (* u by))) (tz (+ z0 (* u bz))) (tsd (- sd (* 7f0 (+ kf 1f0)))))
           (declare (single-float kf u h lx lz tx ty tz tsd))
           (%away-from-eye (tx ty tz) 0.04f0
-            (fx-ribbon tx ty tz lx h lz (* 0.09f0 p) 0f0 1f0 tsd 0.25f0 pk 0.2f0 tsd 0.25f0 pk (+ dr kf) 0.03f0
-                       :segs 5 :mode :toon))))
+            (toon-ribbon (tx ty tz) (lx h lz) ((* 0.09f0 p) 0f0) :seed tsd :wob 0.25f0 :k pk :ph (+ dr kf) :sway 0.03f0 :segs 5))))
       (fx-ribbon x0 y0 z0 bx by bz 0.01f0 0.006f0 1f0 0.75f0 0.4f0 0.3f0 1f0 0.65f0 0.3f0 0.2f0 0f0 0f0 :segs 1)   ; T光
       (dotimes (i (n-of (* 10f0 p) dt))                 ; scraps: flame bits peeling off the swing
         (let* ((u (rnd-range 0.2f0 1f0)))
@@ -105,7 +104,7 @@ charcoal wisps. Under the Bankai grade (spot-keep, hue 10) this line is the only
            (pk (toon-a pal (+ 0.75f0 (* 0.2f0 (hash01 d3 2.3f0))))) (sd (- -2f0 (i->f (mod (f->i d3) 3)))))
       (declare (single-float bx by bz d3 pal pk sd))
       (%away-from-eye (x0 y0 z0) -0.03f0
-        (fx-ribbon x0 y0 z0 bx by bz 0.026f0 0.016f0 1f0 sd 0.05f0 pk 0.5f0 sd 0.05f0 pk d3 0f0 :segs 3 :mode :toon)
+        (toon-ribbon (x0 y0 z0) (bx by bz) (0.026f0 0.016f0) :heat (1f0 0.5f0) :seed sd :wob 0.05f0 :k pk :ph d3 :segs 3)
         (fx-ribbon x0 y0 z0 bx by bz 0.012f0 0.008f0 1f0 0.3f0 0.08f0 -0.9f0 1f0 0.3f0 0.08f0 -0.7f0 0f0 0f0 :segs 1))
       (dotimes (i (n-of 5f0 dt))
         (let* ((u (rnd01)))
@@ -170,8 +169,8 @@ its eroding ghost, WAVE-GHOSTS-DRAW, share it at 0 B)."
                 (let* ((i (+ 1 (floor (* 6 j) 4))) (f (i->f j)) (tsd (- -60f0 f sd))
                        (th (* hgt (+ 0.55f0 (* 0.35f0 (hash01 (+ f dr) 4.3f0))))) (tl (* 0.3f0 (- (hash01 (+ f dr) 6.7f0) 0.5f0))))
                   (declare (fixnum i) (single-float f tsd th tl))
-                  (fx-ribbon (aref *wave-xs* i) 0.02f0 (aref *wave-zs* i) (* tl fx) th (* tl fz) tw 0f0 1f0 tsd 0.25f0
-                             (toon-a +pal-fire+ k) 0.2f0 tsd 0.25f0 (toon-a +pal-fire+ k) (+ dr f) 0.08f0 :segs 6 :mode :toon)))))
+                  (toon-ribbon ((aref *wave-xs* i) 0.02f0 (aref *wave-zs* i)) ((* tl fx) th (* tl fz)) (tw 0f0) :seed tsd :wob 0.25f0 :pal +pal-fire+
+                               :k k :ph (+ dr f) :sway 0.08f0)))))
           (fx-crescent (aref *wave-xs* 0) 1.2f0 (aref *wave-zs* 0) (aref *wave-xs* 8) 1.2f0 (aref *wave-zs* 8)
                        (+ x (* 0.7f0 fx)) 1.2f0 (+ z (* 0.7f0 fz)) (* 0.16f0 es) :lens 0.05f0 (+ 9f0 dr) +pal-fire+ k :push 0.5f0)
           (toon-ground-seg x z (- x (* 1.4f0 fx)) (- z (* 1.4f0 fz)) 0.03f0 (* 0.3f0 hw) 1f0 0.2f0 (+ 40f0 sd) 0.3f0
@@ -309,15 +308,15 @@ scorch ring at its foot, flame scraps off the crown. No light (the caller adds o
         (let* ((bx x) (by 0f0) (bz z))
           (declare (single-float bx by bz))
           (%away-from-eye (bx by bz) 0.12f0             ; the dark-red backing, 8 % taller and wider
-            (fx-ribbon bx by bz 0f0 (* 1.08f0 h) 0f0 (* 0.4f0 ws) (* 0.26f0 ws) 1f0 (- -20f0 sd) 0.3f0 (toon-a +pal-ember+ k) 0.35f0 (- -20f0 sd) 0.3f0
-                       (toon-a +pal-ember+ k) dr 0.05f0 :segs 7 :mode :toon)))
-        (fx-ribbon x 0f0 z 0f0 h 0f0 (* 0.32f0 ws) (* 0.2f0 ws) 1f0 (- -3f0 sd) 0.25f0 (toon-a +pal-fire+ k) 0.35f0 (- -3f0 sd) 0.25f0
-                   (toon-a +pal-fire+ k) dr 0.04f0 :segs 7 :mode :toon)
+            (toon-ribbon (bx by bz) (0f0 (* 1.08f0 h) 0f0) ((* 0.4f0 ws) (* 0.26f0 ws)) :heat (1f0 0.35f0) :seed (- -20f0 sd) :pal +pal-ember+ :k k
+                         :ph dr :sway 0.05f0 :segs 7)))
+        (toon-ribbon (x 0f0 z) (0f0 h 0f0) ((* 0.32f0 ws) (* 0.2f0 ws)) :heat (1f0 0.35f0) :seed (- -3f0 sd) :wob 0.25f0 :pal +pal-fire+ :k k :ph dr
+                     :sway 0.04f0 :segs 7)
         (let* ((sx x) (sy 0.1f0) (sz z))                ; the spiral stripe, in front of the column
           (declare (single-float sx sy sz))
           (%away-from-eye (sx sy sz) -0.1f0
-            (fx-ribbon sx sy sz 0f0 (* 0.95f0 h) 0f0 (* 0.07f0 ws) (* 0.045f0 ws) 1f0 (- -9f0 sd) 0.1f0 (toon-a +pal-ember+ k) 0.4f0 (- -9f0 sd) 0.1f0
-                       (toon-a +pal-ember+ k) (* 2f0 dr) 0.25f0 :segs 8 :mode :toon)))
+            (toon-ribbon (sx sy sz) (0f0 (* 0.95f0 h) 0f0) ((* 0.07f0 ws) (* 0.045f0 ws)) :heat (1f0 0.4f0) :seed (- -9f0 sd) :wob 0.1f0
+                         :pal +pal-ember+ :k k :ph (* 2f0 dr) :sway 0.25f0 :segs 8)))
         (when (and (>= rise 1f0) (> q 0.5f0))            ; the crown: 6 tongues flaring out of the top
           (dotimes (j 6)
             (let* ((f (i->f j)) (an (+ (* 1.0472f0 f) (* 0.5f0 (hash01 (+ f dr) 5.1f0)))) (hc (* 0.18f0 height (+ 0.7f0 (* 0.5f0 (hash01 (+ f dr) 2.3f0))))))
@@ -416,11 +415,10 @@ frame: 0 B); N and WHITE literal fixnums."
           (let* ((hh (* h (+ 0.8f0 (* 0.45f0 (hash01 (+ f dr) 3.7f0))))) (lean (* 0.25f0 (- (hash01 (+ f dr) 5.9f0) 0.5f0)))
                  (bx (+ x (* rad c))) (bz (+ z (* rad sn))) (sd (- -1f0 (+ f (* 3f0 (i->f (mod (f->i dr) 5)))))))
             (declare (single-float hh lean bx bz sd))
-            (fx-ribbon bx y bz (* lean c) hh (* lean sn) w 0f0 1f0 sd 0.3f0 pk 0.2f0 sd 0.3f0 pk (+ f dr) 0.12f0
-                       :segs 6 :mode :toon)
+            (toon-ribbon (bx y bz) ((* lean c) hh (* lean sn)) (w 0f0) :seed sd :k pk :ph (+ f dr) :sway 0.12f0)
             (when ,(if (eql white 1) '(< front -0.4f0) nil)
-              (fx-ribbon bx (+ y 0.1f0) bz (* 0.7f0 lean c) (* 0.6f0 hh) (* 0.7f0 lean sn) 0.035f0 0f0 1f0 sd 0.1f0
-                         (toon-a wpal (* 0.95f0 k)) 0.2f0 sd 0.1f0 (toon-a wpal (* 0.95f0 k)) 0f0 0f0 :segs 3 :mode :toon))))))
+              (toon-ribbon (bx (+ y 0.1f0) bz) ((* 0.7f0 lean c) (* 0.6f0 hh) (* 0.7f0 lean sn)) (0.035f0 0f0) :seed sd :wob 0.1f0 :pal wpal
+                           :k (* 0.95f0 k) :segs 3))))))
      nil))
 
 (defmacro %kikon-aura (x y z h k)
@@ -530,9 +528,8 @@ K is the presence (0..1). :heat also fades by *AURA-CAP* and when the camera is 
                  (let* ((hh (* h (+ 0.75f0 (* 0.3f0 (hash01 (+ f d3) 2.9f0))))) (lean (* 0.35f0 (- (hash01 (+ f d3) 6.1f0) 0.5f0)))
                         (sd (- -1001f0 f (* 4f0 (i->f (mod (f->i d3) 3))))))
                    (declare (single-float hh lean sd))
-                   (fx-ribbon (+ x (* 0.42f0 c)) (+ y (* 0.25f0 h)) (+ z (* 0.42f0 sn)) (* lean c) hh (* lean sn) 0.15f0 0.01f0
-                              1f0 sd 0.35f0 (toon-a +pal-black-smoke+ (* 0.9f0 ka)) 0.2f0 sd 0.35f0
-                              (toon-a +pal-black-smoke+ (* 0.9f0 ka)) (+ f d3) 0.3f0 :segs 7 :mode :toon)))))))
+                   (toon-ribbon ((+ x (* 0.42f0 c)) (+ y (* 0.25f0 h)) (+ z (* 0.42f0 sn))) ((* lean c) hh (* lean sn)) (0.15f0 0.01f0) :seed sd
+                                :wob 0.35f0 :pal +pal-black-smoke+ :k (* 0.9f0 ka) :ph (+ f d3) :sway 0.3f0 :segs 7)))))))
         ((:burst-white :burst-blue :burst-orange)        ; a running burst (docs/duel/DUEL_DESIGN.md "Burst modes"): 8 brush
                                                          ; tongues in its colour (white HIT / BLUE / orange FIRE) with white
                                                          ; cores, a ring at the feet, flecks rising
@@ -652,8 +649,8 @@ and erode), :kyoku (KYOKUJITSUJIN's heat sheet), :south (South's ring crack), :k
              (dotimes (k 5)
                (let* ((u (* 0.25f0 (i->f k))) (sd (- -2f0 (i->f k) (* 5f0 dr))) (pk (toon-a +pal-hit+ (- 0.98f0 (* 3f0 sa)))))
                  (declare (single-float u sd pk))
-                 (fx-ribbon (+ x0 (* u dx)) 0f0 (+ z0 (* u dz)) 0f0 5f0 0f0 (f-min 0.35f0 (* 0.05f0 l)) 0.03f0
-                            1f0 sd 0.15f0 pk 0.2f0 sd 0.15f0 pk dr 0f0 :segs 2 :mode :toon))))
+                 (toon-ribbon ((+ x0 (* u dx)) 0f0 (+ z0 (* u dz))) (0f0 5f0 0f0) ((f-min 0.35f0 (* 0.05f0 l)) 0.03f0) :seed sd :wob 0.15f0 :k pk
+                              :ph dr :segs 2))))
            (when (< age 0.2f0)                           ; <= 20 particles: 8 inked rocks, 10 dust puffs
              (dotimes (i (n-of 40f0 dt))
                (let* ((u (rnd01)) (sd (if (< (rnd01) 0.5f0) -1f0 1f0)) (sp (rnd-range 3f0 6f0)))
@@ -1394,9 +1391,8 @@ drawings; envelope 0 1 3 6."
             (let* ((f (i->f j)) (ang (+ (* 1.0472f0 f) (* 0.3f0 (hash01 f seed)))) (c (f-cos ang)) (sn (f-sin ang))
                    (hh (* es (+ 1.6f0 (* 0.6f0 (hash01 (+ f dr) seed))))) (sd (- -1201f0 f (* 6f0 (i->f (mod (f->i dr) 3))))))
               (declare (single-float f ang c sn hh sd))
-              (fx-ribbon (+ x (* 0.55f0 c)) y (+ z (* 0.55f0 sn)) (* 0.1f0 c) hh (* 0.1f0 sn) 0.12f0 0.01f0
-                         1f0 sd 0.3f0 (toon-a +pal-black-smoke+ k) 0.2f0 sd 0.3f0 (toon-a +pal-black-smoke+ k) (+ f dr) 0.2f0
-                         :segs 5 :mode :toon))))
+              (toon-ribbon ((+ x (* 0.55f0 c)) y (+ z (* 0.55f0 sn))) ((* 0.1f0 c) hh (* 0.1f0 sn)) (0.12f0 0.01f0) :seed sd :pal +pal-black-smoke+
+                           :k k :ph (+ f dr) :sway 0.2f0 :segs 5))))
         (= ph 5)))))
 
 (defun-fast stamps-draw (dt)
@@ -1709,11 +1705,10 @@ white core. AGE (s) bobs it; no particles."
            (dr (i->f (mod (f->i (* 12f0 (fx-clock))) 3))) (seed (+ 11f0 (* 5f0 dr)))
            (h (+ 0.9f0 (* 0.12f0 (hash01 dr 2.7f0)))) (lean (* 0.08f0 (- (hash01 dr 4.1f0) 0.5f0))))
       (declare (single-float y dr seed h lean))
-      (fx-ribbon x y z lean h 0f0 0.22f0 0f0 1f0 (- seed) 0.3f0 (toon-a +pal-blood+ 0.95f0) 0.2f0 (- seed) 0.3f0
-                 (toon-a +pal-blood+ 0.95f0) (* 2f0 dr) 0.07f0 :segs 6 :mode :toon)
-      (fx-ribbon (+ x 0.1f0) (+ y 0.05f0) z (+ 0.1f0 lean) (* 0.55f0 h) 0f0 0.1f0 0f0 1f0 (- -3f0 seed) 0.3f0
-                 (toon-a +pal-blood+ 0.95f0) 0.2f0 (- -3f0 seed) 0.3f0 (toon-a +pal-blood+ 0.95f0) (+ 1f0 dr) 0.05f0 :segs 4 :mode :toon)
-      (fx-ribbon x (+ y 0.04f0) z (* 0.5f0 lean) (* 0.5f0 h) 0f0 0.035f0 0f0 1f0 (- -5f0 seed) 0.1f0
-                 (toon-a +pal-hit+ 0.95f0) 0.2f0 (- -5f0 seed) 0.1f0 (toon-a +pal-hit+ 0.95f0) (* 2f0 dr) 0.03f0 :segs 3 :mode :toon))))
+      (toon-ribbon (x y z) (lean h 0f0) (0.22f0 0f0) :seed (- seed) :pal +pal-blood+ :k 0.95f0 :ph (* 2f0 dr) :sway 0.07f0)
+      (toon-ribbon ((+ x 0.1f0) (+ y 0.05f0) z) ((+ 0.1f0 lean) (* 0.55f0 h) 0f0) (0.1f0 0f0) :seed (- -3f0 seed) :pal +pal-blood+ :k 0.95f0
+                   :ph (+ 1f0 dr) :sway 0.05f0 :segs 4)
+      (toon-ribbon (x (+ y 0.04f0) z) ((* 0.5f0 lean) (* 0.5f0 h) 0f0) (0.035f0 0f0) :seed (- -5f0 seed) :wob 0.1f0 :pal +pal-hit+ :k 0.95f0
+                   :ph (* 2f0 dr) :sway 0.03f0 :segs 3))))
 
 

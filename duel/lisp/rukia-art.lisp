@@ -668,10 +668,10 @@ cores, rising over its first 0.15 s, shards thrown out, ice motes (TSUKISHIRO, ç
           (let* ((f (i->f i)) (a (+ (* 0.8976f0 f) (* 0.3f0 (hash01 f 2.1f0)))) (rr (* r 0.6f0))
                  (hh (* h (+ 0.75f0 (* 0.35f0 (hash01 (+ f dr) 4.3f0))))) (sd (- -1f0 (+ f (* 3f0 (i->f (mod (f->i dr) 4)))))))
             (declare (single-float f a rr hh sd))
-            (fx-ribbon (+ x (* rr (f-cos a))) 0f0 (+ z (* rr (f-sin a))) 0f0 hh 0f0 (* 0.35f0 r) 0.05f0 1f0 sd 0.15f0
-                       (toon-a +pal-soul+ k) 0.3f0 sd 0.15f0 (toon-a +pal-soul+ k) (+ f dr) 0.05f0 :segs 5 :mode :toon)))
-        (fx-ribbon x 0f0 z 0f0 (* 1.1f0 h) 0f0 (* 0.22f0 r) 0.02f0 1f0 -3f0 0.1f0 (toon-a +pal-hit+ k) 0.5f0 -3f0 0.1f0
-                   (toon-a +pal-hit+ k) dr 0.02f0 :segs 4 :mode :toon)
+            (toon-ribbon ((+ x (* rr (f-cos a))) 0f0 (+ z (* rr (f-sin a)))) (0f0 hh 0f0) ((* 0.35f0 r) 0.05f0) :heat (1f0 0.3f0) :seed sd :wob 0.15f0
+                         :pal +pal-soul+ :k k :ph (+ f dr) :sway 0.05f0 :segs 5)))
+        (toon-ribbon (x 0f0 z) (0f0 (* 1.1f0 h) 0f0) ((* 0.22f0 r) 0.02f0) :heat (1f0 0.5f0) :seed -3f0 :wob 0.1f0 :pal +pal-hit+ :k k :ph dr
+                     :sway 0.02f0 :segs 4)
         (%tring x 0f0 z r 0.08f0 +pal-soul+ k (i->f (mod (f->i dr) 5)) 24))
       (dotimes (i (n-of (* 30f0 k) dt))
         (%t-blob (+ x (rnd-range (- r) r)) (rnd-range 0.2f0 h) (+ z (rnd-range (- r) r)) 0f0 (rnd-range 0.5f0 1.5f0) 0f0
@@ -718,9 +718,8 @@ SOUL-glass edges, eroding over LIFE (HAKKA's lane, the Hakuren-like wave of ç™½é
         (dotimes (i 5)                                   ; ice spikes standing along it
           (let* ((u (* (+ 0.15f0 (* 0.18f0 (i->f i))) e)))
             (declare (single-float u))
-            (fx-ribbon (+ x0 (* u ux)) 0f0 (+ z0 (* u uz)) 0f0 (* 0.9f0 k (+ 0.6f0 (hash01 (i->f i) 3.3f0))) 0f0 0.12f0 0.01f0
-                       1f0 (- -5f0 (i->f i)) 0.1f0 (toon-a +pal-soul+ k) 0.3f0 (- -5f0 (i->f i)) 0.1f0 (toon-a +pal-soul+ k)
-                       (i->f i) 0f0 :segs 3 :mode :toon)))))
+            (toon-ribbon ((+ x0 (* u ux)) 0f0 (+ z0 (* u uz))) (0f0 (* 0.9f0 k (+ 0.6f0 (hash01 (i->f i) 3.3f0))) 0f0) (0.12f0 0.01f0)
+                         :heat (1f0 0.3f0) :seed (- -5f0 (i->f i)) :wob 0.1f0 :pal +pal-soul+ :k k :ph (i->f i) :segs 3)))))
     nil))
 
 (defun-fast vfx-ru-dust (x y z)
@@ -792,10 +791,8 @@ status is read on the model, not the HUD)."
          (h (* (hazard-size hz) (min 1.0 (/ age 0.06)))))
     (with-floats (h k)
       (let ((x (hazard-x hz)) (z (hazard-z hz)))
-        (fx-ribbon x 0f0 z 0.05f0 h 0f0 0.09f0 0.005f0 1f0 -7f0 0.1f0 (toon-a +pal-soul+ k) 0.3f0 -7f0 0.1f0 (toon-a +pal-soul+ k)
-                   0f0 0f0 :segs 3 :mode :toon)
-        (fx-ribbon x 0f0 z 0.02f0 (* 0.7f0 h) 0f0 0.03f0 0.002f0 1f0 -8f0 0.05f0 (toon-a +pal-hit+ k) 0.5f0 -8f0 0.05f0
-                   (toon-a +pal-hit+ k) 0f0 0f0 :segs 2 :mode :toon)))))
+        (toon-ribbon (x 0f0 z) (0.05f0 h 0f0) (0.09f0 0.005f0) :heat (1f0 0.3f0) :seed -7f0 :wob 0.1f0 :pal +pal-soul+ :k k :segs 3)
+        (toon-ribbon (x 0f0 z) (0.02f0 (* 0.7f0 h) 0f0) (0.03f0 0.002f0) :heat (1f0 0.5f0) :seed -8f0 :wob 0.05f0 :pal +pal-hit+ :k k :segs 2)))))
 
 (defun rukia-wave-look (hz rdt)
   "HAKUREN's wave: an avalanche of cold rolling along the ground, as wide as its hit box: a white crest over SOUL glass."
@@ -807,11 +804,10 @@ status is read on the model, not the HUD)."
           (let* ((u (- (* (/ (i->f i) 6f0) 2f0) 1f0)) (bx (+ x (* u hw px))) (bz (+ z (* u hw pz)))
                  (hh (* (+ 0.8f0 (* 0.6f0 (hash01 (+ (i->f i) dr) 1.7f0))) (- 1.2f0 (* 0.5f0 (f-abs u))))))
             (declare (single-float u bx bz hh))
-            (fx-ribbon bx 0f0 bz (* 0.3f0 fx) hh (* 0.3f0 fz) 0.32f0 0.05f0 1f0 (- -11f0 (i->f i)) 0.2f0 (toon-a +pal-soul+ 0.9f0)
-                       0.3f0 (- -11f0 (i->f i)) 0.2f0 (toon-a +pal-soul+ 0.9f0) (+ (i->f i) dr) 0.05f0 :segs 4 :mode :toon)
-            (fx-ribbon bx 0.05f0 bz (* 0.3f0 fx) (* 0.6f0 hh) (* 0.3f0 fz) 0.12f0 0.02f0 1f0 (- -21f0 (i->f i)) 0.1f0
-                       (toon-a +pal-hit+ 0.9f0) 0.5f0 (- -21f0 (i->f i)) 0.1f0 (toon-a +pal-hit+ 0.9f0) (+ (i->f i) dr) 0.03f0
-                       :segs 3 :mode :toon)))
+            (toon-ribbon (bx 0f0 bz) ((* 0.3f0 fx) hh (* 0.3f0 fz)) (0.32f0 0.05f0) :heat (1f0 0.3f0) :seed (- -11f0 (i->f i)) :wob 0.2f0
+                         :pal +pal-soul+ :k 0.9f0 :ph (+ (i->f i) dr) :sway 0.05f0 :segs 4)
+            (toon-ribbon (bx 0.05f0 bz) ((* 0.3f0 fx) (* 0.6f0 hh) (* 0.3f0 fz)) (0.12f0 0.02f0) :heat (1f0 0.5f0) :seed (- -21f0 (i->f i)) :wob 0.1f0
+                         :pal +pal-hit+ :k 0.9f0 :ph (+ (i->f i) dr) :sway 0.03f0 :segs 3)))
         (toon-ground-seg (- x (* 1.2f0 fx)) (- z (* 1.2f0 fz)) x z 0.02f0 hw 0.4f0 1f0 (+ 50f0 dr) 0.2f0 (toon-a +pal-soul+ 0.8f0))
         (dotimes (i (n-of 40f0 (f32 rdt)))
           (%t-blob (+ x (* (rnd-range -1f0 1f0) hw px)) (rnd-range 0.1f0 1f0) (+ z (* (rnd-range -1f0 1f0) hw pz))
@@ -851,11 +847,9 @@ status is read on the model, not the HUD)."
       (dotimes (i 6)
         (let* ((a (* 1.0472f0 (i->f i))) (c (f-cos a)) (s (f-sin a)))
           (declare (single-float a c s))
-          (fx-ribbon (+ x (* 0.15f0 r c)) 0f0 (+ z (* 0.15f0 r s)) (* 0.8f0 r g c) (* 1.3f0 g) (* 0.8f0 r g s) 0.16f0 0.01f0
-                     1f0 (- -31f0 (i->f i)) 0.1f0 (toon-a +pal-soul+ k) 0.3f0 (- -31f0 (i->f i)) 0.1f0 (toon-a +pal-soul+ k)
-                     (i->f i) 0f0 :segs 3 :mode :toon)))
-      (fx-ribbon x 0f0 z 0f0 (* 1.6f0 g) 0f0 0.1f0 0.005f0 1f0 -38f0 0.05f0 (toon-a +pal-hit+ k) 0.5f0 -38f0 0.05f0
-                 (toon-a +pal-hit+ k) 0f0 0f0 :segs 3 :mode :toon)
+          (toon-ribbon ((+ x (* 0.15f0 r c)) 0f0 (+ z (* 0.15f0 r s))) ((* 0.8f0 r g c) (* 1.3f0 g) (* 0.8f0 r g s)) (0.16f0 0.01f0) :heat (1f0 0.3f0)
+                       :seed (- -31f0 (i->f i)) :wob 0.1f0 :pal +pal-soul+ :k k :ph (i->f i) :segs 3)))
+      (toon-ribbon (x 0f0 z) (0f0 (* 1.6f0 g) 0f0) (0.1f0 0.005f0) :heat (1f0 0.5f0) :seed -38f0 :wob 0.05f0 :pal +pal-hit+ :k k :segs 3)
       (%tring x 0f0 z r 0.06f0 +pal-soul+ k 7f0 24))))
 
 (defun rukia-quake-look (hz rdt)

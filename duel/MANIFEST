@@ -15,6 +15,7 @@ lisp/components.lisp
 lisp/body.lisp
 lisp/kit.lisp
 lisp/glyphs.lisp
+lisp/glyphs-extra.lisp
 lisp/brush.lisp
 lisp/cinema.lisp
 lisp/stage.lisp
