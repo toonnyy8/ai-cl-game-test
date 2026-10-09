@@ -212,3 +212,26 @@ volumes unchanged:
   handle.
 - Checks: host tests ALL PASS (rules 6481, control 89, learn 131, cine 18); `pkgcheck` 0 / 0 / 0; `./build.sh duel` 0
   warnings; `simgate --seeds 10 --summary` (42 gate lines) and `--cvc` byte-identical to the branch base `cc40146`.
+
+## 7. The second awakenings free as the first (2026-10-09; a rule change)
+
+> 我發現更木與利傑的二次覺醒只能在站立不動或是防禦時發動，我希望能像一般覺醒一樣只要達成條件就能發動。
+> (the user, 2026-10-09)
+
+- Diagnosis: the first awakening is taken where `awaken-state-p` allows (idle, walk, guard, blockstun, or a combo
+  reaction / airborne past the Burst's hit with inputs not locked; never during one's own move, run or step). For a
+  player, Kenpachi's Bankai already used that rule (`fighter.lisp` `:awaken` passes the same FREE to
+  `bankai-allowed-p`). Lille's revival did not: `lb-revive-ok-p` demanded idle / guard (decision 16). The CPU did not
+  either, for both: `ai.lisp`'s Bankai reflex demanded idle / guard, and its combo break (`ai-awaken-break-p`) knew only
+  the first awakening.
+- Asked: the same as the first awakening / wider (also cancelling his own move) / the player only. The user: 「和一般覺醒完全相同」,
+  on this branch: 「放在目前的劍八分支」.
+- Changes:
+  - `lb-revive-ok-p (form free konpaku)`: FREE is `awaken-state-p` (from `lille-bankai-ok`).
+  - The CPU's Bankai / revival reflex: `(bankai-allowed-p (awaken-state-p e f) …)` instead of idle / guard.
+  - `ai-awaken-break-p (e &optional b)`: also the second awakening when it is ready (`bankai-ready-p`) and the kit's
+    `:bankai` rule says so (`ai-bankai-p`, its one roll per stay), so the CPU breaks a combo with it as with the first.
+  - Docstrings and DUEL_DESIGN §1, DUEL_KEN_BANKAI §1.1 / m2, DUEL_LILLE decision 16 updated.
+- Gates (all 21 pairings, 20 seeds, against the parent `7e7f5b0`): every match K.O.; every median, min, max and win count
+  identical; one match of LI changed (132 → 120 s). `--cvc` 3 PASS (the references unchanged). Host tests ALL PASS (the
+  revival test now passes FREE: rules 6481); `pkgcheck` 0 / 0 / 0; `./build.sh duel` 0 warnings.
