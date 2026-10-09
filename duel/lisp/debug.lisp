@@ -9,7 +9,7 @@
 ;;;;   2300-2399, 2410-2430, 2450+k   scenarios and probes (2300+k specials, 2315+k frame probes, 2370+k / 2380+k stance
 ;;;;               tests, 2386+k Bankai tests, 2410+k Rukia, 2450+k Senjumaru); 2400 god; 2500+k human P1 vs an idle CPU
 ;;;;   20000-29000, 32000-73000   knobs without a rebuild (value = k, k / 10 or k / 100 per range: see the doc)
-;;;;   74000-75599 Ichigo, 79000-79999 Lille, 80000-80999 ENDLESS, 81000+ the ASSIST gate, 90000+ Senjumaru, 200000+ the learning gate
+;;;;   74000-75599 Ichigo, 79000-79999 Lille, 80000-80999 ENDLESS, 81000+ the ASSIST gate, 76000-78999 and 90000+ Senjumaru, 200000+ the learning gate
 ;;;; Log lines: "duel -> STATE" (flow.lisp), "duel hash t=N ..." every 600 battle ticks (h = CPU heat),
 ;;;; "duel -> RESULTS winner ..." (flow.lisp), CLOG combat lines "[tick] ...".
 (in-package :duel)
