@@ -131,3 +131,9 @@ volumes unchanged:
   own rounds (§4, item 1).
 - The art viewer's strips gained 8-frame modes (`1000000+1000i+k`, k 1 side, k 2 33° off the front) so the anticipation
   frames can be reviewed.
+
+### 5.3 Checks
+- Presentation only, proved against the branch base `cc40146`: `simgate --seeds 10 --summary` (all 15 pairings, 42
+  gate lines) and `--cvc` (every line PASS) byte-identical.
+- Host tests ALL PASS (rules 6481, control 89, learn 131, input 33, touch 64, cine 18); `pkgcheck` 0 / 0 / 0;
+  `./build.sh duel` 0 warnings.
