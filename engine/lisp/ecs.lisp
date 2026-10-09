@@ -37,7 +37,9 @@
 (defvar *stores* (make-array +max-component-kinds+ :initial-element nil)
   "Component kind index -> simple-vector of +MAX-ENTITIES+ components (NIL = absent).")
 (defvar *generation* (make-array +max-entities+ :element-type 'fixnum :initial-element 0))
-(defvar *used* (make-array +max-entities+ :element-type 'bit :initial-element 0))
+(defvar *used* (make-array +max-entities+ :element-type 'bit :initial-element 0)
+  "Slot -> 1 while an entity lives there. Read with AREF, not SBIT: ECL compiles SBIT to the varargs cl_sbit, which
+conses 8 B per call (every component getter and DO-ENTITIES pass); AREF on the declared simple-bit-vector is 0 B.")
 (defvar *top* 0 "One past the highest slot in use: DO-ENTITIES scans slots below it.")
 
 ;;; Component kinds get a store index when DEFCOMPONENT is compiled (it is baked into the getter)
@@ -64,7 +66,7 @@
   "T while E is the handle of an existing entity (NIL for NIL, destroyed or reused handles)."
   (and (typep e 'fixnum) (>= e 0)
        (let ((s (handle-slot e)))
-         (and (= 1 (sbit *used* s)) (= (aref *generation* s) (ash e -8))))))
+         (and (= 1 (aref *used* s)) (= (aref *generation* s) (ash e -8))))))
 
 (defun %component (e index)
   (and (entity-alive-p e) (svref (svref *stores* index) (handle-slot e))))
@@ -101,7 +103,7 @@ come first. Slots are DEFSTRUCT slot descriptions: (slot default :type type)."
   "A new entity with COMPONENTS attached; returns its handle."
   (let ((s (position 0 *used*)))
     (unless s (error "ecs: more than ~d entities" +max-entities+))
-    (setf (sbit *used* s) 1 *top* (max *top* (1+ s)))
+    (setf (aref *used* s) 1 *top* (max *top* (1+ s)))
     (let ((e (+ s (* +max-entities+ (aref *generation* s)))))
       (dolist (c components e) (add-component e c)))))
 
@@ -111,15 +113,15 @@ come first. Slots are DEFSTRUCT slot descriptions: (slot default :type type)."
     (let ((s (handle-slot e)))
       (dotimes (i (length *component-kinds*))
         (setf (svref (svref *stores* i) s) nil))
-      (setf (sbit *used* s) 0
+      (setf (aref *used* s) 0
             (aref *generation* s) (logand (1+ (aref *generation* s)) #xFFFFF))
-      (loop while (and (> *top* 0) (= 0 (sbit *used* (1- *top*)))) do (decf *top*))))
+      (loop while (and (> *top* 0) (= 0 (aref *used* (1- *top*)))) do (decf *top*))))
   nil)
 
 (defun clear-entities ()
   "Destroy every entity (new level, restart)."
   (dotimes (s *top*)
-    (when (= 1 (sbit *used* s)) (destroy-entity (+ s (* +max-entities+ (aref *generation* s)))))))
+    (when (= 1 (aref *used* s)) (destroy-entity (+ s (* +max-entities+ (aref *generation* s)))))))
 
 (defmacro do-entities ((e &rest components) &body body)
   "Run BODY once for every entity having all COMPONENTS, in slot order, with E bound to its
@@ -133,7 +135,7 @@ Entities spawned while the loop runs may or may not be visited in this pass."
                                                     (error "do-entities: unknown component ~s" kind)))))
        (declare (type simple-vector ,@stores))
        (dotimes (,s *top*)
-         (when (= 1 (sbit *used* ,s))
+         (when (= 1 (aref *used* ,s))
            (let ,(loop for (var) in specs for st in stores collect `(,var (svref ,st ,s)))
              (when (and ,@(mapcar #'first specs))
                (let ((,e (+ ,s (* +max-entities+ (aref *generation* ,s)))))
