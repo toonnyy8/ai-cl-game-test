@@ -163,6 +163,8 @@ volumes unchanged:
 - The art viewer shows a weapon alone, side on: `4100+k` / `4110+k` (k 0 katana, 1 Nozarashi, 2 the broken cleaver; one
   face / the other).
 - The user on that cleaver (2026-10-09): 「流蘇改成原本的造型」「刀紋寬度減少成 2/3」「白色刀柄跟刀身不要直接連結，中間改用黑色斜槓相連」.
+  - The gap the user circled (「你的刀身這邊出現缺口了」) between the point and the body: the point's back now lies on the
+    body's edge.
   - The pale band: every stripe's depth × 2/3 (0.03–0.25 → 0.02–0.167 m).
   - The white haft now stops 0.08 m short of the head (its top at y 0.08); a black slanted bar (0.07 → 0.40 m up the
     axis, rising 0.07 → 0.115 m toward the edge side) joins it to the head's spine, which now starts at (0.30, 0.07).
