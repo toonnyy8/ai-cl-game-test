@@ -113,13 +113,14 @@ bodies or the floor with a straight depth line."
   "The fx clock's drawing number (0..63): 12 a second = twos (fire, energy), 8 = threes (smoke, charcoal)."
   `(i->f (logand (f->i (* ,per-second (fx-clock))) 63)))
 
-(defmacro with-cam (() &body body)
-  "Bind RX RY RZ UX UY UZ (camera right / up) for camera-facing shapes."
+(defmacro with-cam ((rx ry rz ux uy uz) &body body)
+  "Bind the caller's six names RX RY RZ UX UY UZ to the camera's right / up axes for camera-facing shapes:
+(with-cam (rx ry rz ux uy uz) ...). The names come from the call, so they are the caller's own symbols."
   `(let* ((%rt (camera-right *camera*)) (%up (camera-upv *camera*)))
      (declare (type f32vec %rt %up) (ignorable %rt %up))
-     (let* ((rx (aref %rt 0)) (ry (aref %rt 1)) (rz (aref %rt 2))
-            (ux (aref %up 0)) (uy (aref %up 1)) (uz (aref %up 2)))
-       (declare (single-float rx ry rz ux uy uz) (ignorable rx ry rz ux uy uz))
+     (let* ((,rx (aref %rt 0)) (,ry (aref %rt 1)) (,rz (aref %rt 2))
+            (,ux (aref %up 0)) (,uy (aref %up 1)) (,uz (aref %up 2)))
+       (declare (single-float ,rx ,ry ,rz ,ux ,uy ,uz) (ignorable ,rx ,ry ,rz ,ux ,uy ,uz))
        ,@body)))
 
 (defmacro %away-from-eye ((x y z) d &body body)

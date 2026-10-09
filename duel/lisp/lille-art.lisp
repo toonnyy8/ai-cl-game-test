@@ -3213,7 +3213,7 @@ cross flash; K its presence."
   "万物貫通's hole: a cross of white light through V's silhouette (the muzzle's cross), K its presence."
   (multiple-value-bind (x y z) (actor-point v 1.2)
     (with-floats (x y z k)
-      (with-cam ()
+      (with-cam (rx ry rz ux uy uz)
         (dotimes (i 4)
           (let* ((sx (if (< i 2) rx ux)) (sy (if (< i 2) ry uy)) (sz (if (< i 2) rz uz)) (sg (if (evenp i) 1f0 -1f0)))
             (declare (single-float sx sy sz sg))

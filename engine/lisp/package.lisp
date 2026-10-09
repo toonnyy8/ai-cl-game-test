@@ -100,9 +100,9 @@
    #:+pal-ash+ #:+pal-soul+ #:+pal-blood+ #:+pal-black-smoke+ #:+pal-blue+ #:+pal-jade+ #:+pal-gold+ #:+p-t-blob+ #:+p-t-shard+
    #:ui-focus-lines #:ui-speed-lines #:ui-ink-splash
    ;; fx.lisp, the toon kit (0 B macros over the toon batch): hash, particles, rings, sectors, ribbons, lights, the
-   ;; camera's axes (WITH-CAM binds RX RY RZ UX UY UZ), drawings
+   ;; camera's axes (WITH-CAM binds the six names its caller gives), drawings
    #:hash01 #:%t-blob #:%t-shard #:%tring #:%sector-verts #:toon-ribbon #:%tongue #:%light #:with-cam
-   #:rx #:ry #:rz #:ux #:uy #:uz #:drawing-no #:%away-from-eye #:%near-cam
+   #:drawing-no #:%away-from-eye #:%near-cam
    ;; cine.lisp: the cinematic director (scripted cutscenes inside the fixed step)
    #:defcine #:cine #:*cine* #:cine-name #:cine-cf #:cine-a #:cine-v #:cine-hold #:cine-hold-frame
    #:start-cine #:end-cine #:abort-cine #:skip-cine #:cine-step #:cine-draw #:cine-cam

@@ -601,8 +601,9 @@ gone: matter perforates, energy erodes). Existing calls take `:mode :toon` (`fx-
     same hash folded as `v − floor v`: they differ for negative v, so never alias one to the other (the shapes
     built on each would change);
   - `(drawing-no [per-second 12])` → the fx clock's drawing number 0..63 (12 = twos, 8 = threes);
-  - `(with-cam () body…)` binds `rx ry rz ux uy uz` (the camera's right / up; exported names) for
-    camera-facing shapes; `(%away-from-eye (x y z) d body…)` rebinds X Y Z moved D m along the view ray
+  - `(with-cam (rx ry rz ux uy uz) body…)` binds the six names the caller gives (all six, in this order) to
+    the camera's right / up axes for camera-facing shapes — they are the caller's own symbols, nothing is
+    exported for it; `(%away-from-eye (x y z) d body…)` rebinds X Y Z moved D m along the view ray
     (negative = toward the eye); `(%near-cam x z near far)` → 0 within NEAR m of the eye (ground plane) … 1 at
     FAR (tall columns shrink near the lens);
   - `(%t-blob x y z vx vy vz life size grav wob pal)`, `(%t-shard x y z vx vy vz life size grav pal)` — one

@@ -444,8 +444,10 @@ and grep the function for `ecl_make_single_float`/`ecl_times`/`ecl_divide`.
   `(let* ((x0 ,x0) (x1 ,x1)) …)` binds the game's `x0`, so a call whose X1 form reads `x0` sees the macro's
   binding (capture); the same macro in ENGINE binds `engine::x0` and the call reads its own `x0`. Check the
   call sites before a move (SOUL DUEL's `toon-ground-seg` stayed in stage.lisp for that: four sites read
-  the rebound X0 / Z0). Names a body is meant to see (anaphora) must be exported (`with-cam`'s `rx … uz`) or
-  passed in (`fx-smear-capture!`'s `(len width)`).
+  the rebound X0 / Z0). Names a body is meant to see are passed in by the caller, never
+  anaphoric: `(with-cam (rx ry rz ux uy uz) …)`, `fx-smear-capture!`'s `(len width)` (an anaphoric engine
+  macro would need its names exported, and an exported generic name like `ux` becomes the engine's symbol in
+  every game file).
 * **`define-compiler-macro` needs an explicit `eval-when`.** At top level inside `compile-file`,
   ECL 24.5 does not make a compiler macro visible to later forms of the same file unless it is
   wrapped in `(eval-when (:compile-toplevel :load-toplevel :execute) …)`; without it the calls
