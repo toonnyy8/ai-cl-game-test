@@ -83,3 +83,51 @@ Asked with four questions (recommended first); the answers, verbatim option labe
 
 Every change is presentation only: frame data, reaches and hit volumes stay, and each round is proved with
 `simgate --seeds 10 --summary` and `--cvc` byte-identical against the branch base (`cc40146`).
+
+## 5. The base form (2026-10-08 – 09)
+
+### 5.1 The look
+Built and shown as stills (front, side, back, three-quarters, face; `tests/duel-view.lisp`); the user: 「可以」.
+- Hair (`ken-art.lisp` :head): the skull cap, a back sheet hung 0.15 m behind the head and tilted back 18°, 9 crown spikes
+  up, back and out (0.17–0.22 m), 5 ragged mane ends to mid-back (0.24–0.36 m, angled back so they clear the haori), 2
+  strands over the shoulders, the side locks and two fringe strands. No bells.
+- Haori (:pelvis, :spine): a white diamond behind each hem strip's foot makes the sawtooth hem (14 teeth); 4 round holes
+  near the hem (black, the robe through them); 十一 in a diamond in ink strokes on the back, below the mane.
+- Obi: white (#DEDED8, was #C8CCD6) with a bow at the front (knot, two loops, two tails).
+- Katana (:ken-katana): a grey collar, a dark-iron spindle tsuba 16 × 5 cm pointed along the edge and spine with 12
+  teeth round its rim, a white bandage grip with 6 diagonal seams, a grey cap.
+
+### 5.2 The strikes
+The plan, as proposed and accepted (「可以」, 2026-10-09), from `motion-refs.md` §3.1; frame data, reaches and hit
+volumes unchanged:
+
+| Move | Clip | Before | After |
+|---|---|---|---|
+| idle | `:ke-stance` (the loop only; the pose the strikes start from is unchanged) | blade held forward | the blade hanging from the loose hand, its tip on the floor behind him |
+| J1 ARAGIRI | `:ke-q1` | a short diagonal hack | cocked behind the head, weight back, then down from the right shoulder to the left hip as the right foot lunges; ends low and open |
+| J2 KAESHIGIRI | `:ke-q2` | a flat backhand | coiled low on the left, a rising reverse diagonal out to the right as the hips unwind, the free hand flung out; follows through up |
+| K1 OBURI | `:ke-f1` | a two-handed kendo cut | the blade onto the right shoulder, up on the toes, held, one vertical one-handed chop into bent knees; the blade bites the floor |
+| K2 KIRIAGE | `:ke-f2` | a rising cleave from a crouch | the tip dropped to the floor behind him and dragged as he steps in, the rising cut in front as he stands onto his toes |
+| SP1 BUTTAGIRU | `:ke-buttagiru` | a two-handed leap chop | one-handed: knees tucked, the blade cocked behind the head, the left arm out, the vertical drop |
+| J3, SP2, Breaker | `:ke-kick`, `:ke-charge` / `:ke-flurry`, `:ke-shoulder` | | unchanged |
+
+- **K3 stays the spin.** The plan put the armoured walking thrust on K3, but K3 BUNMAWASHI's hit is a 360° arc
+  (`ken.lisp`, `:arc 360`, crumple): a thrust would draw a front-only strike that hits behind him too. Moving the thrust
+  needs the user's call (a sim change to K3's volume, or another slot).
+- **The flurry** (`:ke-flurry`) was checked: it plays at speed 1, so its cuts at f10 / 16 / 22 / 28 and the launcher at
+  f40 land on the move's hit windows; the cut at f4 is drawn only (the charge's contact was hit 1). No change.
+- Drawn reach (the FK test's measure, the tip's radial distance at the hit frames; edge = the volume's):
+
+| Link | Edge | Before | After |
+|---|---|---|---|
+| J1 (base / KATATE / Bankai) | 1.40 / 1.82 / 1.40 | 1.30 / 1.62 / 1.32 | 1.49 / 1.84 / 1.51 |
+| J2 | 1.40 / 1.82 / 1.40 | 1.42 / 1.88 / 1.44 | 1.33 / 1.70 / 1.35 |
+| K1 | 2.80 / 3.64 / 3.40 | 1.21 / 1.56 / 1.24 | 2.34 / 2.91 / 2.38 |
+| K2 | 2.50 / 3.25 / 3.00 | 0.81 / 0.93 / 0.82 | 2.05 / 2.50 / 2.09 |
+
+  K1 and K2 were drawn 1.6–1.7 m short of their volumes; they now reach within 0.5 m (K may fall short, never pass the
+  edge by more than 0.15 m). KATAUDE plays these clips at ×0.7 reach with the broken cleaver: K1 now passes its edge by
+  0.42 m and K2 by 0.34 m, inside its 0.6 m allowance. The KATATE (cup 1) and Bankai forms borrow these clips until their
+  own rounds (§4, item 1).
+- The art viewer's strips gained 8-frame modes (`1000000+1000i+k`, k 1 side, k 2 33° off the front) so the anticipation
+  frames can be reviewed.

@@ -293,30 +293,40 @@
   (:arm-l :flex 10 :side 22) (:elbow-l :flex 30)
   (:thigh-r :flex -12 :side 12) (:thigh-l :flex 25 :side 8) (:knee-r :flex 25) (:knee-l :flex 30))
 
+;; the idle (DUEL_KEN_REWORK §5.2): the blade hanging from the loose right hand, the tip trailing near the floor behind him,
+;; the free left hand half open; the strikes still start from the pose (the blend takes the blade up)
 (defclip :ke-stance (2.0 :loop t :base :ke-stance)
-  (0) (1.0 (:chest :flex 3) (:root :u -0.07)))
+  (0 (:arm-r :flex -12 :side 14) (:elbow-r :flex 12) (:hand-r :flex -115 :twist 0) (:arm-l :flex 8 :side 26) (:elbow-l :flex 25))
+  (1.0 (:chest :flex 3) (:root :u -0.07) (:arm-r :flex -14 :side 15) (:hand-r :flex -112)))
 
 ;;; ---------------------------------------------------------------- base kit (§5.2 table)
 ;;; One-handed wild swings; the left hand joins the grip only for the two-handed Flash cuts.
-(defstrike :ke-q1 (7 3 12 :base :ke-stance)            ; wild slash: diagonal down, 0.8 m lunge
+;; the base strikes (DUEL_KEN_REWORK §5.2, the user 2026-10-08: each its own arc, the whole body behind it; frame data,
+;; reaches and hit volumes unchanged). J1 ARAGIRI: the lunging hack: cocked behind the head, weight back, then down from
+;; the right shoulder to the left hip as the right foot lunges; ends low and open
+(defstrike :ke-q1 (7 3 12 :base :ke-stance)
   (0)
-  (3 (:chest :twist -32) (:arm-r :flex 158 :side 36) (:elbow-r :flex 30) (:hand-r :twist -15 :flex -15) (:spine :flex -2)
-     (:root :u -0.03) (:head :twist 8))                                            ; anticipation, held
-  (5 (:chest :twist -37) (:arm-r :flex 164 :side 38) (:spine :flex -5) (:root :u -0.04))
-  (:s :snap (:arm-r :flex 40 :side -10) (:elbow-r :flex 10) (:hand-r :twist -15 :flex -84) (:chest :twist 40) (:spine :flex 24)
-      (:root :f 0.36 :u -0.1) (:thigh-l :flex 50) (:knee-l :flex 45) (:head :twist -6))
-  (:a (:chest :twist 50) (:arm-r :flex 26 :side -20) (:spine :flex 28) (:root :f 0.39 :u -0.12))   ; overshoot
-  (15 (:chest :twist 46) (:arm-r :flex 30 :side -16) (:spine :flex 25) (:root :f 0.22 :u -0.1))
+  (3 (:pelvis :twist 30) (:chest :twist -45) (:spine :flex -6) (:arm-r :flex 165 :side 50) (:elbow-r :flex 75)
+     (:hand-r :twist -15 :flex -30) (:arm-l :flex 40 :side 30) (:elbow-l :flex 40) (:root :u -0.02 :f -0.05) (:head :twist 12))
+  (5 (:chest :twist -50) (:arm-r :flex 170 :side 52) (:elbow-r :flex 85) (:root :f -0.07))                   ; held
+  (:s :snap (:pelvis :twist -10) (:chest :twist 40) (:spine :flex 28) (:arm-r :flex 45 :side -15) (:elbow-r :flex 8)
+      (:hand-r :twist -15 :flex -80) (:arm-l :flex -25 :side 35) (:elbow-l :flex 20) (:root :f 0.38 :u -0.12)
+      (:thigh-r :flex 55 :side 6) (:knee-r :flex 50) (:thigh-l :flex -18) (:knee-l :flex 30) (:head :twist -8))
+  (:a (:chest :twist 52) (:arm-r :flex 28 :side -32) (:spine :flex 32) (:root :f 0.41 :u -0.14))              ; overshoot
+  (15 (:chest :twist 48) (:arm-r :flex 30 :side -28) (:spine :flex 28) (:root :f 0.25 :u -0.11))
   (:end :ke-stance))
-(defstrike :ke-q2 (7 3 13 :base :ke-stance)            ; backhand
+;; J2 KAESHIGIRI: the sloppy backhand: coiled low on the left, then a rising reverse diagonal out to the right as the hips
+;; unwind, the free hand flung out for balance; it follows through up and out
+(defstrike :ke-q2 (7 3 13 :base :ke-stance)
   (0)
-  (3 (:chest :twist 60) (:spine :side 10) (:arm-r :side -15 :flex 75) (:elbow-r :flex 15) (:hand-r :twist 55 :flex -80)
-     (:root :u -0.03) (:head :twist -10))
-  (5 (:chest :twist 67) (:spine :side 13) (:arm-r :side -20 :flex 78) (:root :u -0.05))
-  (:s :snap (:chest :twist -60) (:arm-r :side 60 :flex 30) (:elbow-r :flex 95) (:hand-r :twist 5 :flex -26) (:spine :side 0)
-      (:root :f 0.46 :u -0.06) (:thigh-l :flex 38) (:knee-l :flex 38) (:head :twist 8))
-  (:a (:chest :twist -72) (:arm-r :side 68 :flex 22) (:root :f 0.49 :u -0.08))
-  (15 (:chest :twist -67) (:arm-r :side 64 :flex 25) (:root :f 0.27 :u -0.06))
+  (3 (:pelvis :twist -25) (:chest :twist 58) (:spine :flex 18 :side 8) (:arm-r :flex 15 :side -35) (:elbow-r :flex 25)
+     (:hand-r :twist 55 :flex -60) (:arm-l :flex 20 :side 20) (:root :u -0.1) (:knees :flex 45) (:head :twist -12))
+  (5 (:chest :twist 64) (:arm-r :flex 10 :side -40) (:root :u -0.12))                                        ; held
+  (:s :snap (:pelvis :twist 15) (:chest :twist -45) (:spine :flex 4 :side -6) (:arm-r :flex 50 :side 60) (:elbow-r :flex 80)
+      (:hand-r :twist 5 :flex -30) (:arm-l :flex 30 :side 75) (:elbow-l :flex 10) (:root :f 0.45 :u -0.04)
+      (:thigh-l :flex 38) (:knee-l :flex 38) (:knee-r :flex 20) (:head :twist 10))
+  (:a (:chest :twist -58) (:arm-r :flex 105 :side 70) (:spine :flex -4) (:root :f 0.48 :u 0.0))               ; up and out
+  (16 (:chest :twist -52) (:arm-r :flex 98 :side 66) (:root :f 0.3))
   (:end :ke-stance))
 (defstrike :ke-q3 (11 4 22 :base :ke-stance)           ; spinning cut
   (0)
@@ -342,25 +352,34 @@
   (18 (:root :f 0.25) (:thigh-r :flex 72) (:knee-r :flex 60) (:spine :flex -13))
   (24 (:root :f 0.23 :u -0.05) (:thigh-r :flex 8) (:knee-r :flex 30) (:spine :flex 4) (:arm-r :flex 32 :side 40) (:elbow-r :flex 40))
   (:end :ke-stance))
-(defstrike :ke-f1 (16 4 20 :base :ke-stance)           ; two-handed kendo cut
+;; K1 OBURI: the shoulder-launch chop: the blade up onto the right shoulder, up on the toes and held, then one vertical
+;; stroke as he drops into bent knees; the blade bites the floor (one hand: the left thrown back)
+(defstrike :ke-f1 (16 4 20 :base :ke-stance)
   (0)
-  (8 (:root :u 0.05) (:arm-r :flex 175 :side 5) (:arm-l :flex 162 :side 38 :twist 4) (:elbows :flex 25) (:elbow-l :flex 12)
-     (:hand-r :twist 0 :flex -50) (:chest :twist 0) (:spine :flex -10) (:pelvis :twist 0) (:head :flex -10))
-  (13 (:root :u 0.08 :f -0.04) (:spine :flex -14) (:head :flex -13))                ; raised and held
-  (:s :snap (:root :u -0.32 :f 0.4) (:spine :flex 48) (:arm-r :flex 25 :side 0) (:arm-l :flex 6 :side -36 :twist 0)
-      (:elbows :flex 5) (:elbow-l :flex 0) (:hand-r :twist -10 :flex -35) (:knees :flex 72) (:thighs :flex 56))
-  (:a (:spine :flex 53) (:root :u -0.35 :f 0.43))                                   ; overshoot
-  (28 (:spine :flex 49) (:root :u -0.32 :f 0.41))
+  (6 (:arm-r :flex 110 :side 25 :twist 0) (:elbow-r :flex 130) (:hand-r :twist 0 :flex -90) (:chest :twist -10) (:root :u 0.02))
+  (9 (:root :u 0.07 :f -0.05) (:spine :flex -12) (:chest :twist -15) (:arm-r :flex 150 :side 20) (:elbow-r :flex 120)
+     (:hand-r :flex -80) (:arm-l :flex 60 :side 30) (:elbow-l :flex 30) (:head :flex -10) (:thigh-r :flex -5) (:knees :flex 8))
+  (13 (:root :u 0.09 :f -0.06) (:spine :flex -16) (:arm-r :flex 160 :side 15) (:elbow-r :flex 110))           ; held at the top
+  (:s :snap (:root :u -0.3 :f 0.55) (:spine :flex 42) (:chest :twist 10) (:arm-r :flex 75 :side 0) (:elbow-r :flex 0)
+      (:hand-r :twist 0 :flex -40) (:arm-l :flex -30 :side 40) (:elbow-l :flex 10) (:thigh-r :flex 60) (:knee-r :flex 70)
+      (:thigh-l :flex -10) (:knee-l :flex 60) (:head :flex -15))
+  (:a (:spine :flex 50) (:arm-r :flex 40) (:hand-r :flex -55) (:root :u -0.34 :f 0.58))                       ; into the floor
+  (28 (:spine :flex 46) (:arm-r :flex 42) (:root :u -0.32 :f 0.56))
   (:end :ke-stance))
-(defstrike :ke-f2 (20 5 28 :base :ke-stance)           ; rising cleave: launcher
+;; K2 KIRIAGE: the drag-up launcher: turned, the tip dropped to the floor behind him and dragged as he steps in, then the
+;; rising cut in front as the whole body stands up onto the toes
+(defstrike :ke-f2 (20 5 28 :base :ke-stance)
   (0)
-  (10 (:root :u -0.3) (:arm-r :flex -30 :side 20) (:hand-r :twist 155 :flex 15) (:arm-l :flex -10 :side 15) (:elbow-l :flex 60)
-      (:knees :flex 60) (:spine :flex 30) (:chest :twist 20))
-  (16 (:root :u -0.35) (:arm-r :flex -36 :side 22) (:knees :flex 66) (:spine :flex 34) (:chest :twist 26))   ; coiled, held
-  (:s :snap (:root :u 0.14) (:arm-r :flex 172 :side 5) (:hand-r :twist -155 :flex 15) (:arm-l :flex 160 :side 5) (:elbow-l :flex 20)
-      (:spine :flex -24) (:knees :flex 10) (:head :flex -25) (:chest :twist 0))
-  (:a (:arms :flex 178) (:spine :flex -28) (:root :u 0.18) (:head :flex -28))        ; overshoot, up on the toes
-  (34 (:arms :flex 175) (:spine :flex -24) (:root :u 0.12))
+  (8 (:pelvis :twist 0) (:chest :twist -15) (:spine :flex 30) (:root :u -0.25 :f -0.05) (:knees :flex 55)
+     (:arm-r :flex -45 :side 15) (:elbow-r :flex 5) (:hand-r :twist 0 :flex -30) (:arm-l :flex 45 :side 25) (:elbow-l :flex 40)
+     (:head :flex -20))                                                                                        ; the tip on the floor behind
+  (16 (:root :u -0.3 :f 0.2) (:chest :twist -10) (:spine :flex 34) (:arm-r :flex -50 :side 16) (:thigh-r :flex 30)
+      (:thigh-l :flex -20))                                                                                    ; held: stepping in, scraping
+  (:s :snap (:pelvis :twist 0) (:root :u 0.05 :f 0.5) (:arm-r :flex 70 :side 5) (:elbow-r :flex 5) (:hand-r :twist 0 :flex -45)
+      (:arm-l :flex -20 :side 40) (:spine :flex -10) (:knees :flex 15) (:thigh-r :flex 20) (:thigh-l :flex -10) (:head :flex -15)
+      (:chest :twist -10))
+  (:a (:arm-r :flex 165) (:hand-r :flex -30) (:spine :flex -26) (:root :u 0.16 :f 0.52) (:head :flex -28))                        ; up on the toes
+  (36 (:arm-r :flex 160) (:spine :flex -22) (:root :u 0.1 :f 0.5))
   (:end :ke-stance))
 (defclip :ke-stance-hold (1.0 :loop t :base :ke-stance) ; "Kitte miro yo": arms flung wide (blend 6 f in)
   (0 (:root :u -0.02) (:pelvis :twist 0) (:chest :twist 0) (:spine :flex -12) (:head :flex -12 :twist 0)
@@ -377,17 +396,20 @@
   (:a (:chest :twist 90) (:arm-r :flex 72 :side -14) (:spine :flex 25) (:root :f 0.6 :u -0.19))   ; overshoot
   (20 (:chest :twist 84) (:arm-r :flex 75 :side -10) (:spine :flex 22) (:root :f 0.57 :u -0.17))
   (:end :ke-stance))
-(defstrike :ke-buttagiru (22 4 26 :base :ke-stance)    ; "Buttagiru": leap, two-handed overhead chop
+;; SP1 BUTTAGIRU: the leap overhead hack, one hand: knees tucked, the blade cocked behind his head, the left arm out, then
+;; a one-handed vertical drop that cracks the floor
+(defstrike :ke-buttagiru (22 4 26 :base :ke-stance)
   (0)
-  (6 (:root :u -0.3) (:knees :flex 80) (:thighs :flex 60) (:spine :flex 30) (:arms :flex 40) (:elbows :flex 60))
-  (12 (:root :u 0.6) (:thighs :flex 50) (:knees :flex 80) (:arm-r :flex 178 :side 5) (:arm-l :flex 165 :side 37 :twist 3)
-      (:elbows :flex 25) (:elbow-l :flex 12) (:hand-r :twist 0 :flex -50) (:spine :flex -20) (:head :flex -15))
-  (17 (:root :u 0.75) (:spine :flex -25) (:head :flex -18))
-  (19 (:root :u 0.76) (:spine :flex -27))                                             ; hang at the apex
-  (:s :snap (:root :u -0.37 :f 0.42) (:spine :flex 58) (:arm-r :flex 20 :side 0) (:arm-l :flex 2 :side -36 :twist 0)
-      (:elbows :flex 5) (:elbow-l :flex 0) (:hand-r :twist -10 :flex -35) (:knees :flex 92) (:thighs :flex 71) (:head :flex -30))
-  (:a (:spine :flex 63) (:root :u -0.4 :f 0.44))                                      ; overshoot
-  (34 (:spine :flex 58) (:root :u -0.37 :f 0.42))
+  (6 (:root :u -0.3) (:knees :flex 80) (:thighs :flex 60) (:spine :flex 30) (:arm-r :flex 30 :side 30) (:elbow-r :flex 60)
+     (:arm-l :flex 30 :side 30) (:elbow-l :flex 40))
+  (12 (:root :u 0.6) (:thighs :flex 70) (:knees :flex 100) (:arm-r :flex 170 :side 30) (:elbow-r :flex 100) (:hand-r :twist 0 :flex -40)
+      (:arm-l :flex 70 :side 70) (:elbow-l :flex 10) (:spine :flex -22) (:head :flex -15))
+  (17 (:root :u 0.75) (:spine :flex -27) (:elbow-r :flex 115) (:head :flex -18))
+  (19 (:root :u 0.76) (:spine :flex -29))                                                                      ; hang at the apex
+  (:s :snap (:root :u -0.37 :f 0.42) (:spine :flex 55) (:arm-r :flex 25 :side 0) (:elbow-r :flex 0) (:hand-r :twist 0 :flex -40)
+      (:arm-l :flex -35 :side 45) (:elbow-l :flex 10) (:knees :flex 92) (:thighs :flex 71) (:head :flex -30))
+  (:a (:spine :flex 60) (:root :u -0.4 :f 0.44))                                                              ; overshoot
+  (34 (:spine :flex 56) (:root :u -0.37 :f 0.42))
   (:end :ke-stance))
 (defclip :ke-charge (0.4 :loop t :base :ke-stance)     ; SP2 dash: blade low and back, charging
   (0 (:spine :flex 28) (:head :flex -25) (:chest :twist -20) (:arm-r :flex -40 :side 35) (:elbow-r :flex 15) (:hand-r :twist 150 :flex 10)

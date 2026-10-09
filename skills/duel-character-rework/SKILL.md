@@ -58,3 +58,5 @@ byte-identical; if it touches the sim, gate it against a parent baseline.** Evid
 - Starting the build while the user is still describing (a storyboard in several messages).
 - A rule change while a CPU search runs (it forces a re-freeze).
 - Declaring a presentation change done without the byte-identical sim check.
+- Putting a new motion on a move without reading its hit volume: a thrust drawn on K3's 360° spin would hit behind
+  him (Kenpachi, reference §8). Check `:arc` / `:vol` before promising a slot.

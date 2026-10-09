@@ -64,3 +64,14 @@ Source repo: `/media/8tsp/projects/ai-cl-game-test`. Evidence: `docs/duel/DUEL_L
 - Restate shape words against the profile: 「頂部往下降」 meant keep the foot, lower the top. A part placed inside another
   shows only what sticks out (a trapezoid nose whose block sat inside the skull read as a triangle): check the side still.
 - A squashed (ellipsoid) head needs its features squashed with it: `:squash` scales the placement too.
+
+## 8. Strike clips by measurement (Kenpachi's base round, DUEL_KEN_REWORK §5) (G)
+- Research first: canon looks per form and a motion bar per form (6–15 archetypes, no two sharing an arc plane and a
+  hand set), then map them onto the move slots and get a yes.
+- Measure before rendering: a host script that loads the art files and prints the weapon tip (or a striker joint) per
+  frame in the fighter's frame (right, up, forward) and the FK test's radial reach per link. It found the old K1 / K2
+  drawn 1.6 m short of their volumes, and it found the wrist values (a grid over hand flex and twist) that put a
+  dragged tip on the floor behind him: guessing them from 4-frame strips cost two builds.
+- One clip is often played by several forms (KATATE, the Bankai and KATAUDE borrow the base clips at other reaches and
+  blades): read the reach report for every form that plays it, not only the one being reworked.
+- The default 4-frame strip (0, S, S+A, end) hides the anticipation; review 8 frames from the side and from the front.

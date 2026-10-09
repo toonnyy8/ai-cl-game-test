@@ -17,7 +17,8 @@
 ;;;;   4005  log every body's proportions (standing, no hunch): crown, head length, heads, head width,
 ;;;;         shoulder span, fingertips, hips (legs / height), from the joints and the shape extents
 ;;;;   5000+i  play sound i (LIST-SOUNDS order) and log it
-;;;;   1000000+1000*i  strip of clip i (clips sorted by name): the owner posed at 4 frames side by side
+;;;;   1000000+1000*i+k  strip of clip i (clips sorted by name): the owner posed at 4 frames side by side; k 1: 8 frames
+;;;;           (the anticipation too), k 2: the 8 from 33 degrees off the front
 ;;;;           (0, S, S+A, end for DEFSTRIKE clips; 0, 1/3, 2/3, end otherwise; :sh- clips on both)
 ;;;;   900000+i  play clip i live (looping) on the current scene's matching actors
 (in-package :duel)
@@ -105,24 +106,32 @@
            (list (make-actor :yamamoto :ryujin-jakka :ya-stance :x -2.5 :z 0 :yaw (/ pi -2))
                  (make-actor :kenpachi :ken-katana :ke-stance :x 2.5 :z 0 :yaw (/ pi 2)))))))
 
-(defun strip (i)
-  "Clip I posed at 4 frames side by side (8 actors for shared clips: Yama row, Ken row)."
+(defun strip (i &optional (mode 0))
+  "Clip I posed at 4 frames side by side (8 actors for shared clips: Yama row, Ken row). MODE 1: 8 frames (0, the
+anticipation at S/3, 2S/3 and S-2, S, S+A, mid-recovery, end) from the side; MODE 2: the same 8 from 33 degrees off
+the front (the strike reworks' stills, DUEL_KEN_REWORK §5.2)."
   (let* ((names (clip-names)) (i (mod i (length names))) (name (nth i names))
          (clip (find-clip name)) (end (round (* 60 (clip-dur clip))))
          (sar (strike-sar name))
-         (frames (if sar
-                     (destructuring-bind (s a r) sar (list 0 s (+ s a) (+ s a r)))
-                     (list 0 (round end 3) (round (* 2 end) 3) end)))
+         (frames (cond ((and sar (plusp mode))
+                        (destructuring-bind (s a r) sar
+                          (list 0 (round s 3) (round (* 2 s) 3) (max 0 (- s 2)) s (+ s a) (+ s a (round r 2)) (+ s a r))))
+                       ((plusp mode) (loop for k below 8 collect (round (* k end) 7)))
+                       (sar (destructuring-bind (s a r) sar (list 0 s (+ s a) (+ s a r))))
+                       (t (list 0 (round end 3) (round (* 2 end) 3) end))))
+         (n (length frames)) (dx (if (plusp mode) 1.25 1.7))
          (owners (clip-owners name)) (acts nil))
     (setf *v-clip* i *v-yaw* 0.0)
     (loop for (body weapon hide) in owners for row from 0 do
       (loop for f in frames for col from 0 do
-        (push (make-actor body weapon name :hide hide :frame f :x (* 1.7 (- col 1.5))
-                          :z (* -3.4 row) :yaw (- (/ pi -2) 0.45))
+        (push (make-actor body weapon name :hide hide :frame f :x (* dx (- col (/ (1- n) 2.0)))
+                          :z (* -3.4 row) :yaw (- (/ pi -2) (if (= mode 2) 1.0 0.45)))
               acts)))
     (setf *actors* (nreverse acts)
           *v-label* (format nil "~d ~a  ~,2f S  FRAMES ~{~d~^ ~}~@[  S/A/R ~{~d~^/~}~]" i name (clip-dur clip) frames sar))
-    (if (cdr owners) (look-at 0 3.4 6.8 0 0.7 -1.7) (look-at 0 1.3 5.0 0 1.0 0))
+    (cond ((cdr owners) (look-at 0 3.4 6.8 0 0.7 -1.7))
+          ((plusp mode) (look-at 0 1.2 6.6 0 1.0 0))
+          (t (look-at 0 1.3 5.0 0 1.0 0)))
     (log-msg "view: strip ~a" *v-label*)))
 
 (defvar *v-one* (fv 1) "GRIP-LEFT!'s weight 1.")
@@ -200,7 +209,7 @@ fingertips ~,3f m (~,2f of height), hips ~,3f m (legs ~,2f of height), neck gap 
                  (- chin (jy :upper-arm-r)))))))
 
 (defun view-debug (c)
-  (cond ((>= c 1000000) (strip (floor (- c 1000000) 1000)))
+  (cond ((>= c 1000000) (multiple-value-bind (i k) (floor (- c 1000000) 1000) (strip i k)))
         ((>= c 900000) (play-live (- c 900000)))
         ((<= 7000 c 7099) (grip-strip (- c 7000)))
         ((>= c 6300) (let ((f (nth (min 2 (- c 6300)) '(:neutral :shout :hurt)))) (dolist (a *actors*) (setf (actor-face a) f))))
