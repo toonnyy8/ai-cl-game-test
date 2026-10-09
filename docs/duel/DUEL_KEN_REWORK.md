@@ -141,3 +141,24 @@ volumes unchanged:
 ### 5.4 Playtest and next
 - The playtest Artifact (v35, 2026-10-09) carries this round: the user, 「幫我更新 playtest」.
 - Next, the user: 「做野晒」: NOZARASHI (KATATE / RYOTE / NOMIHOSE), its look first, then its strikes (§6).
+
+## 6. NOZARASHI (2026-10-09, in progress)
+
+### 6.1 The cleaver
+- First pass (canon research, §4 item 2: the canon shape at the old length): a broad near-black head with the point at
+  the far end, a brass cap and a green tassel. Shown as stills.
+- The user then gave a model sheet to follow:
+  > 我發現有人做出野晒的模型，雖然要付費才能下載 3D 模型，但你能看他放出來的照片來參照實作
+  > https://www.cgtrader.com/3d-models/military/military-character/nozarashi-from-bleash
+  (an attached front / back elevation of the cleaver; the 3D model itself was not bought or downloaded).
+- Rebuilt by tracing that elevation (`:nozarashi`, `ken-art.lisp`), at the old length (the axis from the grip to the far
+  end stays 1.62 m, so every hit reach and the FK test are unchanged):
+  - 2.31 m from butt to end; the grip 0.69 m up the haft (the left fist's 0.14–0.62 m of handle, GRIP-LEFT!);
+  - the white-wrapped haft (34 % of the length) with a black butt, running on into the head;
+  - the head on the edge side only: its spine just above the haft line, a raked point overhanging back beside the hand
+    over a notch, the cutting edge a long convex curve rising to 0.6 m at the square far end;
+  - near-black, the edge's pale band ~40 % deep in slanted light / grey stripes with a ragged inner line, 4 chips;
+  - a khaki cap (#9C9478) over the whole far end with a stepped foot and a groove; a white tassel from a ring at the
+    cap's spine corner (the sheet's colour; the research's green / red conflict is moot).
+- The art viewer shows a weapon alone, side on: `4100+k` / `4110+k` (k 0 katana, 1 Nozarashi, 2 the broken cleaver; one
+  face / the other).
