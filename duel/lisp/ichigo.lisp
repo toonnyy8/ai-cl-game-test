@@ -256,13 +256,12 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
   (rim nil) (rim-saved nil) (parry-sf -1 :type fixnum)
   (bs-key -1 :type fixnum) (bs-at -1 :type fixnum)    ; the CPU's parry from blockstun: which blockstun, pressed on which frame
   (o-at -9999 :type fixnum) (o-n 0 :type fixnum)      ; the last O press and its clones (the HUD's flash)
-  (acc nil) (acc-mv nil) (acc-sf 0 :type fixnum) (acc-hit nil) (acc-kikons 0 :type fixnum))   ; the pacing log (debug)
+  (acc-mv nil) (acc-sf 0 :type fixnum) (acc-hit nil) (acc-kikons 0 :type fixnum))   ; the pacing log's watch (debug)
 (defvar *ic* (vector (make-ics) (make-ics)) "Per side: Ichigo's state.")
 (defun ic (e)
-  "E's state; a new fighter entity (a new match) gets a fresh one, keeping only the pacing log's counters."
+  "E's state; a new fighter entity (a new match) gets a fresh one."
   (let* ((i (fighter-side (fighter e))) (st (svref *ic* i)))
-    (if (eql (ics-e st) e) st (setf (svref *ic* i) (make-ics :e e :acc (ics-acc st))))))
-(defmacro ic-count (e key &optional (n 1)) `(incf (getf (ics-acc (ic ,e)) ,key 0) ,n))
+    (if (eql (ics-e st) e) st (setf (svref *ic* i) (make-ics :e e)))))
 (defun ic-key (&rest parts) (intern (format nil "~{~a~^-~}" parts) :keyword))
 (defun ic-reach-key (x z e)
   "The pacing log's reach bucket of a point (X Z) to E's opponent: IN (<= 2.4 m, a light's), MID (<= 3.0, a heavy's), OUT."
@@ -399,7 +398,7 @@ Konpaku hint (the user 2026-09-29: it followed the kit's fixed 3) and his Soul B
   (let* ((live (remove-if-not (lambda (h) (clone-live-p (hazard-data (hazard h)))) (ichigo-clones e)))
          (i (clone-evict (mapcar (lambda (h) (icc-born (hazard-data (hazard h)))) live)))
          (q (pos-of (opp-of e))))
-    (when i (clone-fade (hazard-data (hazard (nth i live)))) (ic-count e :clone-evicted))
+    (when i (clone-fade (hazard-data (hazard (nth i live)))) (pace e :clone-evicted))
     (spawn-hazard :fx e :x x :z z :yaw (dir-yaw (- (aref q 0) x) (- (aref q 2) z)) :size 0.5 :life 99999
                         :look 'ichigo-clone-look :hook 'ichigo-clone-hz
                         :data (make-icc :born *match-tick* :life *clone-life* :src src))
@@ -419,19 +418,19 @@ them, the guard gauge is the limit)."
   (let ((why (let ((b (brain e))) (if (and b (eq (brain-act b) :dash)) (if (> (brain-dash b) 0) "DASH" "BACKDASH") "TAP"))))
     (if (clone-pay! e)
         (let ((p (pos-of e)))
-          (ic-count e (ic-key "CLONE-STEP" why (ic-reach-key (aref p 0) (aref p 2) e)))
+          (pace e (ic-key "CLONE-STEP" why (ic-reach-key (aref p 0) (aref p 2) e)))
           (ichigo-clone-spawn e (aref p 0) (aref p 2) :step))
-        (progn (ic-count e (ic-key "REFUSED-STEP" why)) (ic-count e :refused-gg (round (gauges-gg (gauges e))))))))
+        (progn (pace e (ic-key "REFUSED-STEP" why)) (pace e :refused-gg (round (gauges-gg (gauges e))))))))
 
 (defun hoho-clone (e)
   "A Hoho's reappearance leaves a clone 1.6 m in front of the opponent (the line from Ichigo, behind him, through him),
 paid (CLONE-PAY!)."
   (if (not (clone-pay! e))
-   (progn (ic-count e :refused-hoho) (ic-count e :refused-gg (round (gauges-gg (gauges e)))))
+   (progn (pace e :refused-hoho) (pace e :refused-gg (round (gauges-gg (gauges e)))))
    (let* ((q (pos-of (opp-of e))) (p (pos-of e)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
          (l (max 1e-3 (sqrt (+ (* dx dx) (* dz dz))))))
     (multiple-value-bind (x z) (clamp-to-circle (+ (aref q 0) (* 1.6 (/ dx l))) (+ (aref q 2) (* 1.6 (/ dz l))) (- *arena-radius* 0.4))
-      (ic-count e :clone-hoho)
+      (pace e :clone-hoho)
       (ichigo-clone-spawn e x z :hoho)))))
 
 (defun clone-link (c weight link)
@@ -445,18 +444,18 @@ paid (CLONE-PAY!)."
 (the user, 2026-09-29: the clones swing in place); an answering one queues the press for a later link (each press one
 link, in order, 3 links at most: the clone plays his whole string back, *CLONE-LAG* behind)."
   (let ((w (if (eq button :quick) :q :f)) (reach (if (eq button :quick) "3.0" "2.4")))
-    (ic-count e (ic-key "PRESS" w))
+    (pace e (ic-key "PRESS" w))
     (dolist (h (ichigo-clones e))
       (let ((c (hazard-data (hazard h))))
         (when (clone-live-p c)
-          (ic-count e (ic-key "PRESS" w "CLONES"))
+          (pace e (ic-key "PRESS" w "CLONES"))
           (when (or (string= (ic-reach-key (hazard-x (hazard h)) (hazard-z (hazard h)) e) "IN")
                     (and (eq w :q) (string= (ic-reach-key (hazard-x (hazard h)) (hazard-z (hazard h)) e) "MID")))
-            (ic-count e (ic-key "PRESS" w "INREACH" reach))))))
+            (pace e (ic-key "PRESS" w "INREACH" reach))))))
     (dolist (h (ichigo-clones e))
       (let ((c (hazard-data (hazard h))))
         (case (icc-state c)
-          (:idle (ic-count e :clone-answers) (clone-link c w 1))
+          (:idle (pace e :clone-answers) (clone-link c w 1))
           (:answer (when (< (+ (icc-link c) (length (icc-queued c))) 3)   ; each press one link, in order
                      (setf (icc-queued c) (append (icc-queued c) (list w))))))))))
 
@@ -487,7 +486,7 @@ string's end it fades if it touched him, else it idles where it stands."
                          (chain-open-p sf s (mv-a mv) (mv-r mv) (or (icc-hit c) (icc-touched c))))
                     (clone-link c (pop (icc-queued c)) (1+ (icc-link c))))
                    ((>= sf (+ s (mv-a mv) (mv-r mv)))
-                    (unless (icc-touched c) (ic-count e :clone-whiff-strings))
+                    (unless (icc-touched c) (pace e :clone-whiff-strings))
                     (if (eq (clone-after-string (icc-touched c) (icc-life c)) :fade)
                         (clone-fade c)
                         (setf (icc-state c) :idle (icc-queued c) nil))))))))
@@ -508,7 +507,7 @@ string's end it fades if it touched him, else it idles where it stands."
       (unless (eq (icc-state c) :fade)
         (setf (hazard-yaw hz) (f32 (angle-wrap (turn-toward (hazard-yaw hz) (dir-yaw dx dz) (track-step 720.0))))))
       (ecase (icc-state c)
-        (:idle (when (<= (icc-life c) 0) (ic-count e :clone-expired) (clone-fade c)))
+        (:idle (when (<= (icc-life c) 0) (pace e :clone-expired) (clone-fade c)))
         (:answer (clone-answer-step e hz c))
         (:charge
          (let ((s (min (* 40.0 +step+) (max 0.0 (- d 1.0)))) (f (fighter e)))
@@ -534,7 +533,7 @@ string's end it fades if it touched him, else it idles where it stands."
         (when (clone-p hz) (push (cons (hazard-x hz) (hazard-z hz)) at))
         (destroy-entity h)))
     (dolist (p at) (spawn-look e 'ichigo-burst-look :x (car p) :z (cdr p) :size 0.6 :life 12))
-    (when at (ic-count e :clones-vanished (length at)) (clog "~a CLONES GONE ~d" (side-name e) (length at)))))
+    (when at (pace e :clones-vanished (length at)) (clog "~a CLONES GONE ~d" (side-name e) (length at)))))
 
 (defun ichigo-o-press (e f st)
   "O pressed (a neutral rush or the ender): N = the live clones; they all charge; the strike gains *CLONE-BURST-DMG* x N (its
@@ -543,7 +542,7 @@ bonus); the Kikon is worth CLONE-KONPAKU N."
     (dolist (h (ichigo-clones e))
       (let ((c (hazard-data (hazard h))))
         (when (clone-live-p c) (incf n) (setf (icc-state c) :charge))))
-    (ic-count e (ic-key (if (kikon-ready-p e) "O-RED" "O-POKE") n))
+    (pace e (ic-key (if (kikon-ready-p e) "O-RED" "O-POKE") n))
     (setf (fighter-kikon-n f) (clone-konpaku n) (fighter-dmg-bonus f) (* n *clone-burst-dmg*)
           (ics-o-at st) *match-tick* (ics-o-n st) n)
     (clog "~a KAGE-UCHI clones ~d konpaku ~d" (side-name e) n (clone-konpaku n))))
@@ -668,43 +667,42 @@ kept for the practice judge (ICHIGO-STRUCK)."
 distance; the ticks in KESSA; each Kikon he lands, by form and worth."
   (let* ((mv (and (eq (fighter-state f) :move) (fighter-move f))) (sf (fighter-sf f)) (old (ics-acc-mv st)))
     (when (and old (or (not (eq mv old)) (< sf (ics-acc-sf st))))
-      (ic-count e (ic-key (mv-name old) (case (ics-acc-hit st) (:hit "HIT") (:block "BLK") (t "WHF"))))
+      (pace e (ic-key (mv-name old) (case (ics-acc-hit st) (:hit "HIT") (:block "BLK") (t "WHF"))))
       (setf (ics-acc-mv st) nil))
     (when (and mv (not (ics-acc-mv st)))
       (setf (ics-acc-mv st) mv (ics-acc-hit st) nil)
-      (ic-count e (mv-name mv))
+      (pace e (mv-name mv))
       (when (member (mv-name mv) '(:ic-tsuki :ic-tsuki-k2))
-        (let ((d (fighter-dist f))) (ic-count e (ic-key (mv-name mv) (cond ((<= d 3.0) "D3") ((<= d 5.5) "D5") (t "DFAR")))))))
+        (let ((d (fighter-dist f))) (pace e (ic-key (mv-name mv) (cond ((<= d 3.0) "D3") ((<= d 5.5) "D5") (t "DFAR")))))))
     (when mv
       (setf (ics-acc-sf st) sf)
       (let ((c (fighter-contact f)))
         (when c (setf (ics-acc-hit st) (if (or (eq c :hit) (eq (ics-acc-hit st) :hit)) :hit :block)))))
-    (when (eq (fighter-form f) :kessa) (ic-count e :kessa-ticks))
+    (when (eq (fighter-form f) :kessa) (pace e :kessa-ticks))
     (let ((k (gauges-kikons (gauges e))))
       (when (> k (ics-acc-kikons st))
         (setf (ics-acc-kikons st) k)
-        (ic-count e (ic-key "KIKON" (fighter-form f) (fighter-kikon-n f)))))))
+        (pace e (ic-key "KIKON" (fighter-form f) (fighter-kikon-n f)))))))
 
-(defun ichigo-acc-reset () (dotimes (i 2) (setf (ics-acc (svref *ic* i)) nil)))
 (defun ichigo-acc-line ()
   "After a gate row: a \"duel ichigo\" line per side that played him (the pacing log)."
   (dolist (e (list *p1* *p2*))
     (when (and (entity-alive-p e) (eq (fighter-character (fighter e)) :ichigo))
       (log-msg "duel ichigo ~a seed ~d awakened ~a ~{~(~a~) ~a~^ ~}" (side-name e) *match-seed* (gauges-awakened (gauges e))
-               (ics-acc (ic e))))))
+               (svref *pacing* (fighter-side (fighter e)))))))
 
 ;;; ================================================================ his hooks
 (defun ichigo-hit (att def res hw mv hazard ranged)
   "Both forms' :hit hook: a clone's hit tells its clone what it did (its string's gate and its fate)."
   (declare (ignore def hw mv ranged))
   (when (and hazard (eq (hazard-look hazard) 'ichigo-getsuga-look) (contact-of res))
-    (ic-count att (ic-key "GETSUGA-WAVE" (contact-of res))))
+    (pace att (ic-key "GETSUGA-WAVE" (contact-of res))))
   (when (and hazard (eq (hazard-look hazard) 'ichigo-juji-look) (contact-of res))
-    (ic-count att (ic-key "JUJI-WAVE" (contact-of res))))
+    (pace att (ic-key "JUJI-WAVE" (contact-of res))))
   (when hazard
     (let ((c (hazard-data hazard)))
       (when (and (icc-p c) (contact-of res))
-        (ic-count att (ic-key "CLONE" (contact-of res)))
+        (pace att (ic-key "CLONE" (contact-of res)))
         (setf (icc-hit c) (contact-of res) (icc-touched c) t)
         (clog "~a clone ~a" (side-name att) res)))))
 
@@ -724,7 +722,7 @@ missed parry says EARLY (hit in its recovery) or LATE (hit within 3 f of pressin
 edges they answer, the Hoho clone, the O charge), the parry from blockstun and its tell, the afterimages."
   (declare (ignore g))
   (let ((st (ic e)))
-    (ic-acc-watch e f st)
+    (when *pacing-log* (ic-acc-watch e f st))
     (ichigo-cut e)
     (if (eq (fighter-form f) :kessa)
         (let* ((vp (pilot-vpad (pilot e))) (state (fighter-state f)) (mv (and (eq state :move) (fighter-move f))))

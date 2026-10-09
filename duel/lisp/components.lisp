@@ -179,7 +179,7 @@ is holding. Identity comes from the kit's :AI tables."
                                         ; its answer (:hoho :rush :step NIL) and a pre-Step's tick (-1: on the perceived lock)
   (reflect-key -1 :type fixnum) (reflect-go nil)   ; :opp-reflect: the move rolled for (its start tick), the roll said yes
   (act nil) (why nil)                   ; the last thing it decided and why (debug overlay, log)
-  (learn nil)                           ; the learning CPU (ai.lisp LRN; NIL = off: nothing of it runs)
+  (learn nil)                           ; the learning CPU (ai-learn.lisp LRN; NIL = off: nothing of it runs)
   (habit nil)                           ; debug: a scripted player's habit (debug.lisp HABIT-FIRE)
   (jkey -1 :type fixnum) (jstarts nil)  ; his last perceived J's start; the ticks his J's started (AI-MASH-P)
   (off nil))                            ; debug: this CPU does nothing
@@ -226,6 +226,7 @@ out twice: keep it to a call or two."
 (defmacro pace (e key &optional (n 1))
   "Add N to fighter E's pacing count KEY while *PACING-LOG* is on (KEY and N are not evaluated otherwise)."
   `(when *pacing-log* (incf (getf (svref *pacing* (fighter-side (fighter ,e))) ,key 0) ,n)))
+(defun pacing-reset () "A gate match starts (START-CVC): both sides' counts empty." (fill *pacing* nil))
 
 (defvar *combat-log* nil
   "Dev logging: moves, hits, reactions, Kikons (CLOG lines). The first Module._debug_cmd turns it on.")

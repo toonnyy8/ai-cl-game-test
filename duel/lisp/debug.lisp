@@ -117,8 +117,7 @@ KATAUDE (0-4), rung changes 1->2 (5), 2->3 (6), 3->2 (7), 2->1 (8), 3->1 (9: the
                  (aref a 10) (aref a 11) (aref a 12) (aref a 13))))))
 
 (defun hash-log ()
-  (band-acc-step)
-  (cup-acc-step)
+  (when *pacing-log* (band-acc-step) (cup-acc-step))   ; (the gate's lines only: off in play)
   (when (and (eq *flow* :battle) (plusp *match-tick*) (zerop (mod *match-tick* 600)))
     (log-msg "~a" (state-hash-line)))
   (when (and *gate-log* (eq *flow* :battle) (plusp *match-tick*) (zerop (mod *match-tick* 60)))   ; pace.py reads these
@@ -745,8 +744,8 @@ move-beat choices of DRAW-FIGHTER."
 (defun start-cvc (seed pair)
   "Seeded CPU vs CPU (*GATE-DIFFICULTY*, NORMAL): PAIR = (c1 c2), or NIL to draw both from SEED."
   (setf *match-seed* seed *mode* :cpu-cpu *difficulty* *gate-difficulty* *blow-aways* 0)
-  (band-acc-reset) (cup-acc-reset)
-  (senju-acc-reset) (ichigo-acc-reset) (lille-acc-reset)
+  (band-acc-reset) (cup-acc-reset) (pacing-reset)
+  (setf *pacing-log* t)                                 ; (the pacing lines: PACE, BAND- / CUP-ACC-STEP)
   (sim-rnd-seed seed)
   (setf *picks* (or pair (list (nth (floor (* (length *roster*) (sim-rnd01))) *roster*)
                                (nth (floor (* (length *roster*) (sim-rnd01))) *roster*))))
