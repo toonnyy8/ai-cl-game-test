@@ -3181,8 +3181,10 @@ halo draws itself; from below, the winged column hovering, the opponent small."
   (at 30 (impact-frame :negative 1) (play-sfx :lb-lock) (play-sfx :hoho-out))
   (during (30 60) (shot-on a 14 (- 0.83 (* 0.13 u)) 1.74 :look 1.73))
   (at 60 (card :black a) (back-rim 60 0.61 0.77 0.67) (shot-on a 20 4.4 0.9 :look 1.3 :off 0.9) (lens 42)
-      (caption "三度も眼を開かされるとは" :kanji2 "異端に等しい" :reading "SANDO MO ME WO HIRAKASARERU TO WA" :sub "ITAN NI HITOSHII"
-               :side 0)
+      (if (eq (fighter-character (fighter a)) :barro)   ; Lille II has no eye (DUEL_LILLE_V2 §12): his own rule's name
+          (caption "万物貫通" :reading "THE X-AXIS" :sub "BANBUTSU KANTSU" :side 0)
+          (caption "三度も眼を開かされるとは" :kanji2 "異端に等しい" :reading "SANDO MO ME WO HIRAKASARERU TO WA" :sub "ITAN NI HITOSHII"
+                   :side 0))
       (play-sfx :awaken-rise :pitch 0.8))
   (at 92 (setf (model-body (model a)) (find-body :lille-jilliel) (model-weapon (model a)) nil)
       (cine-clip a :lb-w-fold :blend 4) (impact-frame :negative 1) (play-sfx :awaken-boom)

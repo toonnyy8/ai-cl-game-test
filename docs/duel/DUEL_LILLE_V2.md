@@ -347,3 +347,80 @@ BY and BK are under the 125 s floor: he loses most cross pairings fast (the CPU 
 and snap 40 → 50: BY 123.8, BK 122.3, BR 127.2, BI 138.6, BS 133.5, BL 168.9, BB 146.7 (noise-level, not kept: the spec's
 numbers stay); the melee CPU's L into ranged at 2.4–8 m (kept) moved BY 107 → 114, BK 114 → 123. Left to batch 4 (the CPU)
 and the gate batch. `aieval.py --char 6 --seeds 4`: strength 0.06, masher 1.0, signature 0.37, pacing ok.
+
+## 12. Art (batch 3, 2026-10-09, branch `barro-art`)
+
+Presentation only: the sim does not move (every simgate row of all 28 pairings at 10 seeds byte-identical before / after,
+the G2 cvc lines unchanged). The old Lille's looks are unchanged (his code paths keep their keys; the edits in
+`lille-art.lisp` / `lille.lisp` only add Lille II's move names / character to them).
+
+### New clips (`barro-art.lisp`), timed to `barro.lisp`'s frame data
+
+Every clip lasts its move (S + A + R) with its `:s` mark on S, JILLIEL's on the KIN rig (the front wing pair's tips are the
+rig's hands) and the owl's twin (`:br-o-*`, the claws are the hands) through the owl kits' `:clip-map` (`*BR-OWL-CLIP-MAP*`).
+
+| Move (frames) | JILLIEL clip | Owl clip | What it shows |
+|---|---|---|---|
+| `:br-recall` 回収 (8 f; f0 takes the traces back, f7 starts the string) | `:br-recall` | `:br-o-recall` | the wings / claws flung open wide and high, the column arched back and rising (f3–f6), then drawn in round the gathered light (f8 = the string's first frame). The six table wings fan out (`*lb-spread-clips*`). |
+| `:br-rc0` 空收 (6 2 24) | `:br-rc0` | `:br-o-rc0` | one beat, f6: both wings cocked behind (f3), snapped at him, blown up and back |
+| `:br-rc1` 二連 (6 12 24) | `:br-rc1` | `:br-o-rc1` | f6 the right wing, f16 the left (each cocked 3 f, snapped at him, kicked back by the shot) |
+| `:br-rc2` 四連 (6 28 24) | `:br-rc2` | `:br-o-rc2` | f6 R, f14 L, f22 R, f32 the launch: crouched with both wings swept low (f29), then swept up at him (the tips 1.4 m ahead, 2.3 m up) |
+| `:br-rc3` 裁き (6 32 26) | `:br-rc3` | `:br-o-rc3` | f6 R, f12 L, f18 R, f24 L, then risen into NIJUSHI-KO's ring (f26–35, the holes lit, shaking), the beam on f36 blowing him back; the owl raises both claws overhead and throws them at him on f36 |
+| `:br-to-en` (12 f, ranged at f11) | `:br-to-en` | `:br-o-to-en` | folded, rising with the wings thrown open, EN's float; the owl's leaps up and steps its root down by the owl's lift (0.35) on f11, the frame its form turns ranged |
+| `:br-backstep` (14 + 8 f, ranged at f13) | `:lb-w-tenshin` (Lille's TENSHIN reads right: kept) | `:br-o-backstep` | the owl's: as `:lb-o-tenshin` but its lift step on f13 (Lille's TENSHIN steps on his f6: on Barro it popped the owl 0.35 m up at f13) |
+
+`*BR-STAND-INS*` now lists each move's JILLIEL and owl clip and the batch-1 stand-in it replaced. The recall strings play at
+clip speed 1 (their `:clip-s` went). Host test (duel-rules-test, "Lille II's own clips"): each clip's length and S, the
+strings' beats equal their moves' line frames (BR-RC-SHOT / BR-BEAM-SHOT), and on each beat the firing tip points at him
+(>= 1.2 m ahead, within 0.4 m of his line; the owl's claws within 0.5 m); the finisher's ring the frame before (each wing
+>= 1 m aside).
+
+### Looks (cosmetic; `rnd01`-free, driven by the move's frame)
+
+- **The traces fly back** (`%BR-RECALL-LOOK`): BR-TRACE-LOOK notes every live trace it draws (`*BR-SEEN*`), BR-DRAW keeps the
+  last frame's set while he is not recalling (`*BR-FLY*`); through the recall's look clock (the recall's frame, then 7 + the
+  string's) each trace is a jade line (the owl's gold) whose near end rushes along the floor into his chest by f6 and whose
+  far end follows from the wall by f9 (`*BR-FLY-F*`), brightening, a light at its head; then the gathered light flares at his
+  chest over f5–f15 (`*BR-GATHER-F*`; a faint puff for an empty recall). No hazard is spawned (the sim's entities are
+  untouched).
+- **Each string beat** (`*BR-RC-BEATS*`, `%BR-BEAT-LOOK`): for 5 frames a line from each firing wing tip / claw to his chest
+  height with a flash at the tip (the finisher's from both, wider), over LB-LOOK's own 31 m line; and Lille's SP drive on the
+  wings (`%LB-SP-DRIVE!` calls `BR-RC-DRIVE`): SANREN's kick on the firing wing and its holes flashing, the finisher's
+  NIJUSHI-KO ring, lit, shaking, blown back by the beam.
+- **Gaps fixed:** Barro's melee SANREN / NIJUSHI-KO / Jilliel Kikon and ranged SANREN / NIJUSHI-KO now drive the same wing
+  looks as Lille's (`%LB-SP-DRIVE!`'s cases list `:br-w-sanren :br-e-sanren :br-w-nijushi :br-e-nijushi :br-w-kikon`); the
+  owl's trumpet forms over `:br-trompete` / `:br-oe-trompete` (LILLE-DRAW's Trompete cases list them); the broken halo and
+  the reflect flash read his own seal (`BR-DRAW-SEALED-P`, `brs-sealed`) when he has no LBS (`%LB-SEAL-LOOK` now takes the
+  sealed flag). Lille's paths compute the same values as before.
+- **Brush callouts:** 速射 SOKUSHA, 遠 EN, 後退 KOTAI, 回収 KAISHU (the recall and 空收), 二連 NIREN, 四連 YONREN, 裁き SABAKI;
+  the glyphs 速 遠 後 回 収 baked into `glyphs-extra.lisp` (tools/glyph-bake.py's GLYPH(), Yuji Syuku, the same subset rules).
+- **The awakening's caption:** `lb-jilliel-cine` (shared) shows 「万物貫通 / THE X-AXIS / BANBUTSU KANTSU」 at f60 when its
+  subject is Lille II (he has no eye), Lille's eye line otherwise; the f92 神の裁き / JILLIEL caption is shared. (The face
+  close-up's eye opening at f30 is the shared cinematic's and still plays.)
+
+### Debug commands (DUEL_GAMEPLAY "Debug commands", 82000 row)
+
+82100+k a scene (P1 Lille II, k + 20 the front view as P2, 4 m from an idle Kenpachi): 0–3 JILLIEL melee with 0 / 2 / 4 / 6
+traces laid from behind him and the recall started (空收 / 二連 / 四連 / 裁き), 4–7 the same as the owl, 8 / 9 JILLIEL's
+melee → ranged turn / backstep, 10 / 11 the owl's, 12 the owl's Trompete, 13 82007's reflected Trompete, 14 JILLIEL's
+melee SANREN; 82200+f freezes the
+sim once his look clock reaches f (armed for the next scene), 82299 lets go; 82300+k his awakening held at frame 10 k; 82398
+a `barro consing` line. Measured (10 draws): the recall look 0 B, a beat's lines 0 B, BR-RC-DRIVE 0 B, his traces' looks
+0 B; BR-DRAW 24 B a draw (LILLE-DRAW's two entity lookups, 16 B, + his fighter's, + his model's in the recall chain). The
+first draw of the lit wing holes in a page builds their meshes once (~26 KB, Lille's too).
+
+### Stills (not committed; `tests/shots/barro/`)
+
+Rendered with `node tools/run.mjs dist/duel --fixed-dt 16.666667 --script ...` (the scripts generated by the batch's
+scratch generator: per still 82299, 82200+f, 82100+k, a shot). `jl-*` JILLIEL (the game's camera), `owl-*` the owl,
+`front-*` the front view, `cine-awaken-*` the caption (`cine-awaken-f070-caption.png`: 万物貫通 / THE X-AXIS);
+`barro-art-sheet.png` (JILLIEL) / `barro-art-sheet-2.png` (the owl, the reflect, the caption) the contact sheets. 46 stills:
+`jl-rc3-c02-flyback`, `-c05-open`, `-c08-gather`, `-c13-beat1R`, `-c19-beat2L`, `-c31-beat4L`, `-c41-ring`, `-c43-beam`,
+`-c52-blown`; `jl-rc2-c21-beat2L`, `-c36-low`, `-c39-launch`; `jl-rc1-c13-beat1R`, `-c23-beat2L`; `jl-rc0-c04-empty`,
+`-c13-beat`; `jl-to-en-f05`, `-f09`; `owl-rc3-c03-flyback`, `-c08-gather`, `-c13-beat1R`, `-c19-beat2L`, `-c41-raise`,
+`-c43-throw`; `owl-rc2-c39-launch`, `owl-rc0-c13-beat`, `owl-to-en-f06`, `-f12`, `owl-backstep-f06`, `-f16`,
+`owl-trompete-f30`, `-f55`, `owl-reflect`, `owl-sealed-halo`; `front-jl-rc3-c05-open`, `-c13-beat1R`, `-c41-ring`,
+`-c43-beam`, `front-jl-rc2-c39-launch`, `front-jl-to-en-f09`, `front-owl-rc3-c05-open`, `-c13-beat1R`, `-c43-throw`,
+`front-owl-rc2-c39-launch`; `cine-awaken-f070-caption`, `cine-awaken-f100-jilliel` (c = the look clock, f = the move's frame).
+A held still's brush callout may already have given way to the pixel one (the hold freezes the sim's callout timer, not the
+brush column's 1.3 s).

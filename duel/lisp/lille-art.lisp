@@ -2379,6 +2379,11 @@ eight wings converging, and its wing beat (%LB-OWL-BEAT!). Reads the move's fram
 (defparameter *lb-sp-kick* 8 "... frames (the firing wing's holes flash for 6).")
 (defparameter *lb-ring-blow* 30.0 "NIJUSHI-KO / the Kikon: the shot's virtual speed (m/s, easing out over 10 f) that blows the wings back.")
 (defparameter *lb-ring-shake* 0.07 "... and the charge's shake at its height (radians on each table wing's place in the ring, at 37 rad/s).")
+(declaim (type f32vec *lb-sp-ext*))
+(defvar *lb-sp-ext* (make-f32 8)
+  "Another kit's SP looks on these wings (Lille II's recall strings, barro-art.lisp BR-RC-DRIVE; added 2026-10-09, Lille's
+own moves never read it): the ring, its cup, the shake, the virtual speed, the flash, the lit bits, the striking wings'
+mask, the other wings' share, for %LB-SP-DRIVE! to take.")
 (defmacro %lb-sp-drive! (f mv owl ck)
   "Decision 56: Jilliel's SP / Kikon looks for F's draw (MV his move or nil; nothing for the owl, OWL): *LB-WF* [61] the ring
 0..1, [62] its cup (+ forward, - blown back), [63] the shake, [64] the close, [65] the wings lit (bits by row: 16 the right
@@ -2413,17 +2418,17 @@ the move's frame only (cosmetic). 0 B."
        (let ((%nm (mv-name %mv)) (%ph (fighter-phase %f)) (%sf (fighter-sf %f)) (%s (mv-s %mv)))
          (declare (fixnum %sf %s))
          (case %nm
-           ((:lb-sanren :lb-e-sanren)
+           ((:lb-sanren :lb-e-sanren :br-w-sanren :br-e-sanren)   ; (+ Lille II's, the same frames: DUEL_LILLE_V2 §12)
             (when (and (eq %ph :main) (>= %sf %s))
-              (let* ((%st (if (eq %nm :lb-sanren) 10 6)) (%n (min 2 (floor (- %sf %s) %st))) (%age (- %sf %s (* %n %st))))
+              (let* ((%st (if (member %nm '(:lb-sanren :br-w-sanren)) 10 6)) (%n (min 2 (floor (- %sf %s) %st))) (%age (- %sf %s (* %n %st))))
                 (declare (fixnum %st %n %age))
                 (when (< %age (the fixnum *lb-sp-kick*))
                   (let ((%u (- 1f0 (/ (i->f %age) (i->f (the fixnum *lb-sp-kick*))))))
                     (declare (single-float %u))
                     (setf %mask (case %n (0 1) (1 2) (t 3)) %vb (- (* (the single-float *lb-sp-whip*) %u %u))
                           %lit (case %n (0 16) (1 32) (t 48)) %fl (f-max 0f0 (- 1f0 (/ (i->f %age) 6f0)))))))))
-           ((:lb-nijushi :lb-e-nijushi :lb-w-kikon)
-            (let* ((%kk (eq %nm :lb-w-kikon))
+           ((:lb-nijushi :lb-e-nijushi :lb-w-kikon :br-w-nijushi :br-e-nijushi :br-w-kikon)   ; (+ Lille II's)
+            (let* ((%kk (member %nm '(:lb-w-kikon :br-w-kikon)))
                    (%pre (cond ((eq %ph :aura) (/ (i->f (the fixnum (fighter-hold %f))) 28f0))   ; (the charge 0..1)
                                ((not (eq %ph :main)) 0.99f0)                                   ; (the Kikon's follow dash)
                                (%kk (f-min 1f0 (/ (+ 8f0 (i->f %sf)) 28f0)))
@@ -2445,7 +2450,12 @@ the move's frame only (cosmetic). 0 B."
                           %cup (* -0.85f0 (%lb-ss (/ %post 2.5f0)) (- 1f0 (%lb-ss (if %kk (/ (- %post 4f0) 6f0) (/ (- %post 8f0) 18f0)))))
                           %cl (if %kk (%lb-ss (/ (- %post 4f0) 8f0)) 0f0)
                           %vb (* (the single-float *lb-ring-blow*) %b %b)
-                          %lit (if (< %post 6f0) 255 0) %fl (f-max 0f0 (- 1f0 (/ %post 6f0)))))))))))
+                          %lit (if (< %post 6f0) 255 0) %fl (f-max 0f0 (- 1f0 (/ %post 6f0))))))))
+           ((:br-rc0 :br-rc1 :br-rc2 :br-rc3)            ; Lille II's recall strings (barro-art.lisp BR-RC-DRIVE)
+            (when (br-rc-drive %f %mv)
+              (let ((%x *lb-sp-ext*))
+                (setf %rg (aref %x 0) %cup (aref %x 1) %sh (aref %x 2) %vb (aref %x 3) %fl (aref %x 4)
+                      %lit (f->i (aref %x 5)) %mask (f->i (aref %x 6)) %ts (aref %x 7))))))))
      (setf (aref %w 61) %rg (aref %w 62) %cup (aref %w 63) %sh (aref %w 64) %cl (aref %w 65) (i->f %lit) (aref %w 66) %fl)
      (when (>= %mask 0) (setf (aref %w 39) %vb (aref %w 40) (i->f %mask) (aref %w 44) %ts))))
 
@@ -2716,13 +2726,13 @@ him (the beam leaves the bell), its plume rising; K 0..1 how far it has formed (
       (fx-star bx by bz (* 0.2f0 k) (* 0.5f0 k) 10 (* 3f0 (fx-clock)) 0f0 0f0 0.15f0 11f0 +pal-gold+ (* 0.9f0 k) :push 0.3f0))
     nil))
 
-(defun-fast %lb-seal-look (e f m st side)
+(defun-fast %lb-seal-look (e f m sealed side)
   "The reflect (§6.3): when Trompete is sealed, a mirror flash at the reflector, the beam turned back onto him (gold), and
 his halo cracking (gold shards); the broken halo stays (LILLE-DRAW draws it). Lookups only while it plays."
   (declare (fixnum side))
   (let ((now (fx-clock)))
     (declare (single-float now))
-    (if (and st (lbs-sealed st))
+    (if sealed
         (when (< (lb-fxs side 5) 0.5f0)
           (let ((q (pos-of (fighter-opp f))))
             (declare (type f32vec q))
@@ -2849,7 +2859,8 @@ and the owl; one more while he aims or a gold look plays; one more in MUJITTAI).
                    (%lb-halo jm (* 16 (ji :head)) 0 (+ 0.52f0 (* 0.02f0 (f-sin (* 2f0 tm)))) 0.48f0))))))
         (:shin                                           ; the owl (decision 36: Jilliel's four forms, the owl's look)
          (let* ((grow (if cr (f-clamp (/ (- (i->f cr) 66f0) 30f0) 0.05f0 1f0) 1f0))
-                (stance (lb-mujittai-p form)) (st (lbs e)))
+                (stance (lb-mujittai-p form)) (st (lbs e))
+                (sealed (if st (lbs-sealed st) (br-draw-sealed-p e))))   ; (Lille II's seal: his own state, barro-art.lisp)
            (declare (single-float grow))
            (%lb-stance-fx! e side stance tm rdt)          ; MUJITTAI: the wings curl round the column, ghostly
            ;; EN vs KIN (decision 38): EN fans its eight wings out wide and forward (a standing spread, [18]), KIN sweeps
@@ -2863,17 +2874,18 @@ and the owl; one more while he aims or a gold look plays; one more in MUJITTAI).
                    (aref v 28) (f-max (aref v 28) (* (the single-float *lb-owl-en-spread*) (lb-fxs side 18)))))
            (%lb-wings jm (* 16 (ji :chest)) *lb-wings-owl* 8 2 side)
            (unless cr (%lb-claw-trails jm side))         ; the claw trails (decision 56)
-           (%lb-halo jm (* 16 (ji :head)) (if (and st (lbs-sealed st)) 2 1) 0.76f0 (* 0.13f0 grow))
+           (%lb-halo jm (* 16 (ji :head)) (if sealed 2 1) 0.76f0 (* 0.13f0 grow))
            (let ((tsf (cond (ct (if (< 8 (the fixnum ct) 120) (- (the fixnum ct) 8) -1))
-                            ((and mv (eq (mv-name mv) :lb-trompete) (eq (fighter-phase f) :main)) (fighter-sf f))
-                            ((and mv (eq (mv-name mv) :lb-oe-trompete) (eq (fighter-phase f) :main))   ; (EN's: its clip's
+                            ((and mv (member (mv-name mv) '(:lb-trompete :br-trompete)) (eq (fighter-phase f) :main))   ; (+ Lille
+                             (fighter-sf f))                                                                       ;  II's)
+                            ((and mv (member (mv-name mv) '(:lb-oe-trompete :br-oe-trompete)) (eq (fighter-phase f) :main))   ; (EN's: its clip's
                              (truncate (* 60 (the fixnum (fighter-sf f))) (max 1 (the fixnum (mv-s mv)))))   ;  speed, 5 x)
                             (t -1))))
              (declare (fixnum tsf))
              (when (<= 10 tsf 89)
                (%lb-load-place! e)
                (%lb-trumpet (f-clamp (/ (- (i->f tsf) 10f0) 50f0) 0f0 1f0))))
-           (%lb-seal-look e f m st side)))))
+           (%lb-seal-look e f m sealed side)))))
     nil))
 
 (defun lille-body-alpha (e)
