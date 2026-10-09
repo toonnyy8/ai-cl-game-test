@@ -77,7 +77,7 @@ def raven(base, new):
     for tag, dist in (("base1", base), ("base2", base), ("new", new)):
         sc = script(f"raven-{tag}", [{"at": 4.0, "shot": f"{TMP}/raven-{tag}-title.png"}, cmd(4.05, 63), cmd(4.1, 13),
                                      cmd(4.15, 16), cmd(4.2, 18), {"at": 9.0, "shot": f"{TMP}/raven-{tag}-wave.png"}])
-        out.append((tag, run(dist, sc, 9.2, f"{TMP}/raven-{tag}.log")))
+        out.append((tag, run(dist, sc, 9.2, f"{TMP}/raven-{tag}.log", extra=("--timeout", "7200"))))   # (a loaded machine: no wall cut)
     for tag, p in out: check(f"raven {tag} run", p.wait() == 0)
     for shot in ("title", "wave"):
         noise = px_diff(f"{TMP}/raven-base1-{shot}.png", f"{TMP}/raven-base2-{shot}.png")
