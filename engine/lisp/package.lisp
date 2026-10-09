@@ -1,5 +1,5 @@
 ;;;; package.lisp — the ENGINE package and its public API (the export list below, grouped by file),
-;;;; global compiler policy, and the small numeric helpers every other file uses: DEFUN-FAST,
+;;;; global compiler policy, and the small numeric helpers every other file uses: DEFUN-FAST, WITH-FLOATS,
 ;;;; the F-* float macros (plain C math, no boxing) and the random numbers RND01 / RND-RANGE and
 ;;;; SIM-RND01 / SIM-RND-RANGE.
 ;;;; A game is its own package that uses this one: (defpackage :my-game (:use :cl :engine)).
@@ -7,12 +7,12 @@
   (:use :cl)
   (:export
    ;; package.lisp: types, compiler helpers, float math in C, random numbers, logging
-   #:f32 #:f32vec #:f32vec-p #:clamp #:lerp #:log-msg #:defun-fast
-   #:f-min #:f-max #:f-abs #:f-sqrt #:f-sin #:f-cos #:f-atan2 #:f-mod #:f-acos #:f-asin #:f-clamp
+   #:f32 #:f32vec #:f32vec-p #:clamp #:lerp #:log-msg #:defun-fast #:with-floats
+   #:f-min #:f-max #:f-abs #:f-sqrt #:f-hypot #:f-sin #:f-cos #:f-atan2 #:f-mod #:f-exp #:f-clamp
    #:i->f #:f->i #:f-wrap #:rnd01 #:rnd-range #:rnd-seed #:rnd-state
    #:sim-rnd01 #:sim-rnd-range #:sim-rnd-seed #:sim-rnd-state
    ;; math.lisp: vec3 / mat4 on f32vecs (! = writes into its first argument)
-   #:fv #:make-f32 #:deg #:angle-wrap #:angle-lerp #:approach #:smoothstep
+   #:fv #:make-f32 #:deg #:angle-wrap #:angle-lerp #:approach #:smoothstep #:hypot #:countdown!
    #:fwd-x #:fwd-z #:yaw-to #:turn-toward #:weighted-pick
    #:v3 #:v3-set! #:v3-copy! #:v3-copy #:v3-add! #:v3-sub! #:v3-scale! #:v3-madd! #:v3-lerp! #:v3-cross!
    #:v3-normalize! #:v3-normalize #:v3-dot #:v3-len #:v3-len2 #:v3-dist
@@ -62,10 +62,10 @@
    ;; meshgen.lisp: procedural meshes
    #:mesh-builder #:make-mesh-builder #:mb-jitter #:mb-cur-color #:mb-xform #:build-mesh #:mb-build #:with-xform
    #:mb-color #:mbc #:hexc #:mb-quad #:mb-poly-out #:mb-box #:mb-bevel-box #:mb-cylinder #:mb-cone #:mb-prism
-   #:mb-sphere #:mb-capsule #:mb-wedge #:mb-plane #:mb-blade #:mb-hull #:mb-tube #:mb-flat-quad #:rim-vec
+   #:mb-sphere #:mb-capsule #:mb-wedge #:mb-plane #:mb-blade #:mb-hull #:mb-tube #:mb-flat-quad #:rim-vec #:mb-at
    ;; ui.lisp: 2D UI batch and bitmap text
    #:+font-5x7+ #:*ui-min-css* #:*ui-text-min* #:ui-scale #:fit-scale #:ui-rect #:ui-gradient #:ui-rect-outline #:ui-bar #:%ui-poly4
-   #:with-ui-verts #:uvtx
+   #:with-ui-verts #:uvtx #:%hq #:%hrect #:%hbar #:%houtline #:%pulse #:%ring #:%arc #:%disc
    #:ui-block-text #:ui-big-text #:ui-bitmap #:text-width #:ui-text
    ;; audio.lisp: synthesis toolkit, DEFSOUND, playback
    #:+au-rate+ #:+au-dt+ #:tt #:au-rnd #:au-frac #:au-expf #:au-powf #:au-sin #:au-saw #:au-sqr #:au-ph+
@@ -73,14 +73,14 @@
    #:au-normalize! #:au-mix! #:au-svf! #:au-onepole! #:au-drive! #:au-delay! #:au-reverb! #:au-fold
    #:au-noise #:au-fnoise #:au-whoosh #:au-ping! #:au-partials! #:au-thump! #:au-taiko! #:au-gong!
    #:au-shaku! #:au-saws! #:defsound #:*audio-debug*
-   #:play-sfx #:play-sfx-at #:sfx-at #:start-loop #:stop-loop #:set-loop-gain #:set-music-volume
+   #:play-sfx #:play-sfx-at #:sfx-at #:start-loop #:stop-loop #:set-loop-gain #:set-music-volume #:set-sfx-volume
    #:music-playing-p #:music-play #:music-stop #:music-intensify #:audio-stats #:audio-locked-p
    #:list-sounds #:sound-loop-p
    ;; anim.lisp: humanoid rig, pose / clip DSL, playback, forward kinematics
    #:ji #:joint-index #:joint-mask #:+nj+ #:+pose-n+ #:+root+ #:defpose #:find-pose #:defclip #:defstrike #:find-clip
    #:clip #:clip-name #:clip-dur #:clip-loop #:clip-sample! #:clip-mark #:list-clips #:build-clip #:*key-ease*
    #:anim #:make-anim #:anim-clip #:anim-time #:anim-speed #:anim-blend #:anim-pose #:anim-play #:anim-advance #:anim-eval
-   #:pose-fk! #:make-rig-proportions #:joint-point!
+   #:pose-fk! #:make-rig-proportions #:joint-point! #:%euler!
    ;; body.lisp: rigid-part characters (shape spec -> meshes per joint, drawing)
    #:pal-rgb #:build-parts #:draw-parts #:*part-jitter* #:*part-smooth*
    ;; time.lisp: fixed step, hitstop, slow motion
@@ -91,14 +91,18 @@
    #:+p-mist+ #:+p-spark+ #:+p-dust+ #:+p-orb-a+ #:+p-orb-b+ #:+p-feather+ #:+p-glow+ #:+p-flame+
    #:*plive* #:*orb-target* #:*on-orb-absorbed* #:fx-emit #:fx-burst #:fx-update #:fx-draw-particles
    #:fx-clear-orbs #:fx-clear #:fx-ring #:fx-rings-update #:*debris-life* #:fx-debris #:fx-debris-update #:fx-clear-debris
-   #:+trail-n+ #:make-trail #:trail-count #:trail-push #:trail-decay #:edge-vignette
-   #:draw-circle #:draw-vol #:fx-ribbon #:fx-sector
+   #:+trail-n+ #:make-trail #:trail-count #:trail-push #:trail-decay #:%trail-push #:%trail-drop #:fx-smear-capture!
+   #:edge-vignette #:draw-circle #:draw-vol #:fx-ribbon #:fx-sector
    ;; fx.lisp, toon effects (docs/style/STYLE_STORM_DESIGN.md §3): fx clock, palettes, envelope, shapes, toon
    ;; particle kinds, screen punctuation
    #:fx-clock #:fx-clock-advance #:sage #:toon-a #:fx-envelope #:fx-disc #:fx-star #:fx-shard #:fx-crescent #:fx-wall
    #:+pal-fire+ #:+pal-ember+ #:+pal-reiatsu+ #:+pal-ink+ #:+pal-steel+ #:+pal-hit+ #:+pal-smoke+ #:+pal-dust+
    #:+pal-ash+ #:+pal-soul+ #:+pal-blood+ #:+pal-black-smoke+ #:+pal-blue+ #:+pal-jade+ #:+pal-gold+ #:+p-t-blob+ #:+p-t-shard+
    #:ui-focus-lines #:ui-speed-lines #:ui-ink-splash
+   ;; fx.lisp, the toon kit (0 B macros over the toon batch): hash, particles, rings, sectors, ribbons, lights, the
+   ;; camera's axes (WITH-CAM binds RX RY RZ UX UY UZ), drawings
+   #:hash01 #:%t-blob #:%t-shard #:%tring #:%sector-verts #:toon-ribbon #:%tongue #:%light #:with-cam
+   #:rx #:ry #:rz #:ux #:uy #:uz #:drawing-no #:%away-from-eye #:%near-cam
    ;; cine.lisp: the cinematic director (scripted cutscenes inside the fixed step)
    #:defcine #:cine #:*cine* #:cine-name #:cine-cf #:cine-a #:cine-v #:cine-hold #:cine-hold-frame
    #:start-cine #:end-cine #:abort-cine #:skip-cine #:cine-step #:cine-draw #:cine-cam
@@ -106,7 +110,8 @@
    #:*cine-begin-hook* #:*cine-actor-hook* #:*cine-end-hook*
    ;; ecs.lisp: entities, components, systems, events
    #:+max-entities+ #:defcomponent #:spawn-entity #:destroy-entity #:entity-alive-p #:add-component
-   #:remove-component #:clear-entities #:do-entities #:emit #:take-events
+   #:remove-component #:clear-entities #:do-entities #:emit #:take-events #:do-events
+   #:transform #:make-transform #:transform-pos #:transform-yaw #:pos-of #:yaw-of
    ;; app.lisp: game registration and the frame driver
    #:run-game #:perf-mark #:*stats-log* #:cons-per-frame #:cons-bytes #:now-ms))
 (in-package :engine)
@@ -120,6 +125,12 @@
 (defun f32 (x) (coerce x 'single-float))
 (defun clamp (x lo hi) (max lo (min hi x)))
 (defun lerp (a b u) (+ a (* (- b a) u)))
+
+(defmacro with-floats (vars &body body)
+  "Rebind VARS as single-floats (callers may pass fixnums or doubles)."
+  `(let* ,(mapcar (lambda (v) `(,v (f32 ,v))) vars)
+     (declare (single-float ,@vars))
+     ,@body))
 
 (defun log-msg (fmt &rest args)
   "Print a line to the browser console."
@@ -164,11 +175,24 @@ runs there. Declare every float local inside BODY."
 (defmacro f-cos (a) `(ffi:c-inline (,a) (:float) :float "cosf(#0)" :one-liner t))
 (defmacro f-atan2 (y x) `(ffi:c-inline (,y ,x) (:float :float) :float "atan2f(#0,#1)" :one-liner t))
 (defmacro f-mod (x y) `(ffi:c-inline (,x ,y) (:float :float) :float "fmodf(#0,#1)" :one-liner t))
-(defmacro f-acos (x) `(ffi:c-inline (,x) (:float) :float "acosf(fmaxf(-1.0f,fminf(1.0f,#0)))" :one-liner t))
-(defmacro f-asin (x) `(ffi:c-inline (,x) (:float) :float "asinf(fmaxf(-1.0f,fminf(1.0f,#0)))" :one-liner t))
+(defmacro f-exp (a) `(ffi:c-inline (,a) (:float) :float "expf(#0)" :one-liner t))
 (defmacro f-clamp (x lo hi) `(f-min (f-max ,x ,lo) ,hi))
 (defmacro i->f (i) `(ffi:c-inline (,i) (:int) :float "(float)(#0)" :one-liner t))
 (defmacro f->i (x) "floor to int" `(ffi:c-inline (,x) (:float) :int "(int)floorf(#0)" :one-liner t))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun %hypot-form (sqrt args float-p)
+    "HYPOT / F-HYPOT's expansion: (SQRT (+ (* a a) (* b b) ...)) over ARGS; an atom is used as it is, any other
+form is bound once, in argument order (declared single-float when FLOAT-P)."
+    (let* ((vs (mapcar (lambda (f) (if (atom f) f (gensym "H"))) args))
+           (bs (loop for f in args for v in vs unless (atom f) collect (list v f)))
+           (form `(,sqrt (+ ,@(mapcar (lambda (v) `(* ,v ,v)) vs)))))
+      (if bs
+          `(let* ,bs ,@(when float-p `((declare (single-float ,@(mapcar #'first bs))))) ,form)
+          form))))
+(defmacro f-hypot (a b &optional c)
+  "Length of (A B [C]) with F-SQRT: exactly (F-SQRT (+ (* A A) (* B B) [(* C C)])), the sim's float order (a macro: no
+boxing, no reordering). Symbols and literals are used as they are; any other form is bound once, in order."
+  (%hypot-form 'f-sqrt (if c (list a b c) (list a b)) t))
 (defmacro f-wrap (a) "angle into [-pi,pi)" `(ffi:c-inline (,a) (:float) :float
                                               "((#0)-6.2831853f*floorf(((#0)+3.14159265f)*0.15915494f))" :one-liner t))
 

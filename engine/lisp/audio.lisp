@@ -18,7 +18,7 @@
 ;;; Note ECL's MIN/MAX on floats are generic calls (boxing + NaN checks) even
 ;;; with declared types — use AU-FMIN/AU-FMAX in sample loops.
 (defmacro au-c1 (code x) `(ffi:c-inline (,x) (:float) :float ,code :one-liner t))
-(defmacro au-expf (x) `(au-c1 "expf(#0)" ,x))
+(defmacro au-expf (x) `(f-exp ,x))
 (defmacro au-tanf (x) `(au-c1 "tanf(#0)" ,x))
 (defmacro au-tanhf (x) `(au-c1 "tanhf(#0)" ,x))
 (defmacro au-frac (x) `(au-c1 "((#0)-floorf(#0))" ,x))
@@ -420,8 +420,11 @@ right. Gain falls off as 1/(1+d/8); pan follows the listener's right vector."
   (ffi:c-inline ((the fixnum id) (float g 1.0)) (:int :float) :void "au_gain(#0,#1)" :one-liner t))
 
 (defun set-music-volume (v)
-  "Music bus gain, 0..2 (default 0.55). ponytail: master / sfx bus gains stay at 1 (C defaults)."
+  "Music bus gain, 0..2 (default 0.55). ponytail: the master bus gain stays at 1 (C default)."
   (ffi:c-inline ((float (clamp v 0.0 2.0) 1.0)) (:float) :void "au_set_volume(2,#0)" :one-liner t))
+(defun set-sfx-volume (v)
+  "Sfx bus gain, 0..2 (default 1): every sound but the music (SOUL DUEL mutes it for a cinematic's silence beat)."
+  (ffi:c-inline ((float (clamp v 0.0 2.0) 1.0)) (:float) :void "au_set_volume(1,#0)" :one-liner t))
 
 (defun music-playing-p ()
   (ffi:c-inline ((the fixnum *au-music*)) (:int) :bool "au_alive(#0)" :one-liner t))

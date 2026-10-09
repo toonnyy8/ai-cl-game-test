@@ -23,7 +23,8 @@
 ;;;; every component getter returns NIL. Holding handles in other components is therefore safe.
 ;;;;
 ;;;; The world is global state (one per program). This file is plain Common Lisp: it also runs
-;;;; on the host ECL (tests/ecs-test.lisp).
+;;;; on the host ECL (tests/ecs-test.lisp). Events: EMIT / TAKE-EVENTS, DO-EVENTS to dispatch them.
+;;;; The one component every game shares, TRANSFORM (POS-OF / YAW-OF), is defined at the end.
 (in-package :engine)
 
 (defconstant +max-entities+ 256 "Entity slots. A handle = slot + 256 x generation.")
@@ -153,3 +154,34 @@ Entities spawned while the loop runs may or may not be visited in this pass."
 (defun take-events ()
   "All queued events, oldest first; the queue is emptied."
   (prog1 (nreverse *events*) (setf *events* nil)))
+
+(defmacro do-events ((kind) &body clauses)
+  "Dispatch every queued event (TAKE-EVENTS, oldest first) on its KIND (a variable bound to it) with one CASE
+clause per kind: (KEY LAMBDA-LIST BODY...) runs BODY with the event's data destructured by LAMBDA-LIST (a symbol
+gets the whole data list); (T BODY...) / (OTHERWISE BODY...) run as they are. Expands to
+(DOLIST (EV (TAKE-EVENTS)) (DESTRUCTURING-BIND (KIND &REST DATA) EV (CASE KIND ...))):
+  (do-events (kind)
+    (:hit (att def dmg) (show-hit def dmg))
+    (:died (e) (sfx :death e))
+    (t (error \"unknown event ~s\" kind)))"
+  (let ((ev (gensym "EV")) (data (gensym "DATA")))
+    `(dolist (,ev (take-events))
+       (destructuring-bind (,kind &rest ,data) ,ev
+         (declare (ignorable ,data))
+         (case ,kind
+           ,@(mapcar (lambda (c)
+                       (destructuring-bind (key &rest rest) c
+                         (cond ((member key '(t otherwise)) c)
+                               ((and (first rest) (symbolp (first rest))) `(,key (let ((,(first rest) ,data)) ,@(rest rest))))
+                               (t `(,key (destructuring-bind ,(first rest) ,data ,@(rest rest)))))))
+                     clauses))))))
+
+;;; ---------------------------------------------------------------- the one component every game has
+(defcomponent transform
+  "Where an entity is: position (x y z metres, y up; a fighter's feet) and facing (yaw radians; 0 faces -Z)."
+  (pos (make-f32 3) :type f32vec)
+  (yaw 0f0 :type single-float))
+
+(declaim (inline pos-of yaw-of))
+(defun pos-of (e) (transform-pos (transform e)))
+(defun yaw-of (e) (transform-yaw (transform e)))

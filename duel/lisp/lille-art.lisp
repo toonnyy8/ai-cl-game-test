@@ -2451,7 +2451,7 @@ the move's frame only (cosmetic). 0 B."
 
 ;; 翼尖斬痕 the wing-tip slash trails (decision 50): per side and front wing a sword trail (the engine's +TRAIL-N+ samples:
 ;; the elbow -> the hand, i.e. the wing's outer stretch) recorded through the strike's window (*LB-WF* [52]) while the tip
-;; moves, faded a sample a frame after (%LB-TRAIL-DROP); drawn as the duel's smear (vfx.lisp's VFX-SMEAR: a comet crescent through the 0.7
+;; moves, faded a sample a frame after (%TRAIL-DROP); drawn as the duel's smear (vfx.lisp's VFX-SMEAR: a comet crescent through the 0.7
 ;; points of the last samples, re-captured on the fx clock's drawings) in jade.
 (defparameter *lb-smear-at* 0.85 "The jade smear runs through this point of each sample's elbow -> hand (the wing's tip end) ...")
 (defparameter *lb-smear-w* 0.14 "... its half-width this share of the newest sample's elbow -> hand length ...")
@@ -2460,46 +2460,13 @@ the move's frame only (cosmetic). 0 B."
   "The tip trails: side x 2 + wing (0 the right front wing, 1 the left).")
 (defvar *lb-smears* (let ((v (make-array 4))) (dotimes (i 4 v) (setf (svref v i) (make-f32 12))))
   "Their smears' state (VFX-SMEAR's SM: x0 y0 z0 x1 y1 z1 bx by bz, half-width, drawing, presence).")
-(defmacro %lb-trail-drop (tr n)
-  "Drop trail TR's oldest of its N samples (an explicit forward copy: REPLACE of a vector onto itself allocates). 0 B."
-  `(let ((%tr ,tr) (%n ,n))
-     (declare (type f32vec %tr) (fixnum %n))
-     (dotimes (%i (* 6 (1- %n))) (setf (aref %tr %i) (aref %tr (+ %i 6))))
-     (setf (trail-count %tr) (i->f (1- %n)))))
-(defmacro %lb-trail-push (tr bx by bz tx ty tz)
-  "TRAIL-PUSH as a macro (a DEFUN-FAST call boxes its floats): one sample, the oldest dropped when full. 0 B."
-  `(let* ((%tr ,tr) (%n (f->i (trail-count %tr))))
-     (declare (type f32vec %tr) (fixnum %n))
-     (when (>= %n +trail-n+)
-       (%lb-trail-drop %tr %n)
-       (setf %n (1- +trail-n+)))
-     (let ((%o (* 6 %n)))
-       (declare (fixnum %o))
-       (setf (aref %tr %o) ,bx (aref %tr (+ %o 1)) ,by (aref %tr (+ %o 2)) ,bz
-             (aref %tr (+ %o 3)) ,tx (aref %tr (+ %o 4)) ,ty (aref %tr (+ %o 5)) ,tz
-             (trail-count %tr) (i->f (1+ %n))))))
 (defun-fast %lb-smear (tr sm)
   "VFX-SMEAR's comet (vfx.lisp) in jade, through *LB-SMEAR-AT*, *LB-SMEAR-W* wide: captured from trail TR into SM on each new drawing. 0 B."
   (declare (type f32vec tr sm))
   (let* ((n (f->i (trail-count tr))) (dr (drawing-no)))
     (declare (fixnum n) (single-float dr))
-    (when (/= (aref sm 10) dr)                          ; a new drawing: re-capture from the trail
-      (setf (aref sm 10) dr (aref sm 11) 0f0)
-      (when (>= n 3)
-        (let* ((i0 (max 0 (- n 5))) (im (floor (+ i0 n -1) 2)) (i1 (1- n)) (o0 (* 6 i0)) (om (* 6 im)) (o1 (* 6 i1)))
-          (declare (fixnum i0 im i1 o0 om o1))
-          (dotimes (c 3)
-            (let* ((u (the single-float *lb-smear-at*))
-                   (p0 (+ (aref tr (+ o0 c)) (* u (- (aref tr (+ o0 c 3)) (aref tr (+ o0 c))))))
-                   (pm (+ (aref tr (+ om c)) (* u (- (aref tr (+ om c 3)) (aref tr (+ om c))))))
-                   (p1 (+ (aref tr (+ o1 c)) (* u (- (aref tr (+ o1 c 3)) (aref tr (+ o1 c)))))))
-              (declare (single-float u p0 pm p1))
-              (setf (aref sm c) p0 (aref sm (+ c 3)) p1 (aref sm (+ c 6)) (- (* 2f0 pm) (* 0.5f0 (+ p0 p1))))))
-          (let* ((lx (- (aref tr (+ o1 3)) (aref tr o1))) (ly (- (aref tr (+ o1 4)) (aref tr (+ o1 1))))
-                 (lz (- (aref tr (+ o1 5)) (aref tr (+ o1 2)))))
-            (declare (single-float lx ly lz))
-            (setf (aref sm 9) (* (the single-float *lb-smear-w*) (f-sqrt (+ (* lx lx) (* ly ly) (* lz lz))))
-                  (aref sm 11) (* (the single-float *lb-smear-k*) (if (>= n 5) 1f0 0.65f0)))))))
+    (fx-smear-capture! tr sm n dr (the single-float *lb-smear-at*) (len (* (the single-float *lb-smear-w*) len))
+                       (* (the single-float *lb-smear-k*) (if (>= n 5) 1f0 0.65f0)))
     (when (> (aref sm 11) 0f0)
       (fx-crescent (aref sm 0) (aref sm 1) (aref sm 2) (aref sm 3) (aref sm 4) (aref sm 5) (aref sm 6) (aref sm 7) (aref sm 8)
                    (aref sm 9) :comet 0.06f0 (+ 17f0 dr) +pal-jade+ (aref sm 11) :push 0.15f0))
@@ -2519,8 +2486,8 @@ strike's window is open ([52]) and the tip moved (a hitstop holds the arc), else
             (let* ((o (* 6 (max 0 (1- n)))) (qx (- hx (aref tr (+ o 3)))) (qy (- hy (aref tr (+ o 4)))) (qz (- hz (aref tr (+ o 5)))))
               (declare (fixnum o) (single-float qx qy qz))
               (when (or (= n 0) (> (+ (* qx qx) (* qy qy) (* qz qz)) 1f-4))
-                (%lb-trail-push tr (aref jm (+ b 12)) (aref jm (+ b 13)) (aref jm (+ b 14)) hx hy hz)))
-            (when (> n 0) (%lb-trail-drop tr n)))
+                (%trail-push tr (aref jm (+ b 12)) (aref jm (+ b 13)) (aref jm (+ b 14)) hx hy hz)))
+            (when (> n 0) (%trail-drop tr n)))
         (%lb-smear tr (svref *lb-smears* (+ (* 2 side) g))))))
   nil)
 
@@ -2545,19 +2512,8 @@ samples) of the last samples, *LB-CLAW-W* wide, re-captured on each new drawing.
     (dotimes (k 3)
       (let ((sm (svref *lb-claw-smears* (+ (* 6 side) (* 3 g) k))) (u (* 0.5f0 (i->f k))))
         (declare (type f32vec sm) (single-float u))
-        (when (/= (aref sm 10) dr)                      ; a new drawing: re-capture from the trail
-          (setf (aref sm 10) dr (aref sm 11) 0f0)
-          (when (>= n 3)
-            (let* ((i0 (max 0 (- n 5))) (im (floor (+ i0 n -1) 2)) (i1 (1- n)) (o0 (* 6 i0)) (om (* 6 im)) (o1 (* 6 i1)))
-              (declare (fixnum i0 im i1 o0 om o1))
-              (dotimes (c 3)
-                (let* ((p0 (+ (aref tr (+ o0 c)) (* u (- (aref tr (+ o0 c 3)) (aref tr (+ o0 c))))))
-                       (pm (+ (aref tr (+ om c)) (* u (- (aref tr (+ om c 3)) (aref tr (+ om c))))))
-                       (p1 (+ (aref tr (+ o1 c)) (* u (- (aref tr (+ o1 c 3)) (aref tr (+ o1 c)))))))
-                  (declare (single-float p0 pm p1))
-                  (setf (aref sm c) p0 (aref sm (+ c 3)) p1 (aref sm (+ c 6)) (- (* 2f0 pm) (* 0.5f0 (+ p0 p1))))))
-              (setf (aref sm 9) (the single-float *lb-claw-w*)
-                    (aref sm 11) (* (the single-float *lb-claw-k*) (if (>= n 5) 1f0 0.65f0))))))
+        (fx-smear-capture! tr sm n dr u (len (the single-float *lb-claw-w*))
+                           (* (the single-float *lb-claw-k*) (if (>= n 5) 1f0 0.65f0)))
         (when (> (aref sm 11) 0f0)
           (fx-crescent (aref sm 0) (aref sm 1) (aref sm 2) (aref sm 3) (aref sm 4) (aref sm 5) (aref sm 6) (aref sm 7) (aref sm 8)
                        (aref sm 9) :comet 0.04f0 (+ 23f0 (* 3f0 (i->f k)) dr) +pal-gold+ (aref sm 11) :push 0.45f0)))))
@@ -2584,8 +2540,8 @@ K3 both) records its talons' span while the strike's window is open ([52]) and i
                    (qz (- pz (aref tr (+ o 5)) (- uz))))
               (declare (fixnum o) (single-float qx qy qz))
               (when (or (= n 0) (> (+ (* qx qx) (* qy qy) (* qz qz)) 1f-4))
-                (%lb-trail-push tr (- px ux) (- py uy) (- pz uz) (+ px ux) (+ py uy) (+ pz uz))))
-            (when (> n 0) (%lb-trail-drop tr n)))
+                (%trail-push tr (- px ux) (- py uy) (- pz uz) (+ px ux) (+ py uy) (+ pz uz))))
+            (when (> n 0) (%trail-drop tr n)))
         (%lb-claw-smears tr side g))))
   nil)
 

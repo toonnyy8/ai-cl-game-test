@@ -99,6 +99,12 @@ Also `v3-normalize v3-copy` (allocating).
 
 Scalars: `(deg d)`, `(angle-wrap a)` → [−π,π), `(angle-lerp a b u)` (shortest arc),
 `(approach x target step)`, `(smoothstep e0 e1 x)`, plus `clamp`, `lerp`, `f32` from package.lisp.
+`(hypot a b [c])` (macro) → exactly `(sqrt (+ (* a a) (* b b) [(* c c)]))`: symbols and literals are used as they are,
+any other form is bound once in argument order, so the expansion is the hand-written form it replaces and the sim's
+float order is kept (SOUL DUEL's native sim and wasm compile the same operations); `f-hypot` (package.lisp) is the
+`f-sqrt` twin — never swap one flavour for the other at a site, and leave `(expt x 2)` forms as they are.
+`(countdown! place dt)` (macro) → `(setf place (f32 (max 0.0 (- place dt))))`, a timer run down to 0 (PLACE is
+evaluated twice: keep it free of side effects).
 
 Facing (both games): `(fwd-x yaw)` `(fwd-z yaw)` → the forward direction of YAW (inline, single-float
 YAW), `(yaw-to dx dz)` → the yaw facing direction (dx dz) (float `atan2f`, no consing; SOUL DUEL's
@@ -257,8 +263,8 @@ white core (`+p-flame+` uses it after its hot phase).
 | `(fx-line x0 y0 z0 x1 y1 z1 width r g b a &key mode end-width end-alpha)` | camera-facing soft segment (sparks, slashes, rain), `width` = half-width |
 | `(fx-trail samples n r g b a &key mode)` | sword ribbon: `samples` f32vec of n × (base xyz, tip xyz), oldest first; fades out toward the oldest and toward the base |
 | `(fx-decal x y z radius r g b a &key (mode :alpha))` | soft disc lying at height y (+2 cm). Blob shadow: `(fx-decal x 0 z 0.6 0 0 0 0.55)` |
-| `(fx-ribbon x y z ax ay az w0 w1 r0 g0 b0 a0 r1 g1 b1 a1 ph sway &key (segs 6) (mode :add))` | macro: a camera-facing strip from (x y z) along the axis (ax ay az), half-width W0 → W1, colour base → tip, flickering width and sideways SWAY with phase PH. Single-float argument forms, 0 bytes consed. SOUL DUEL builds its flames, pillars and auras from layers of it (`fire-tongue`, duel/lisp/vfx.lisp) |
-| `(fx-sector x y z r0 r1 yaw half r g b a &key (mode :add) (segs 16))` | flat annular sector at height y (+3 cm) between radii R0 and R1, centred on facing YAW, ±HALF radians (≥ π = a full ring), soft toward both radii: telegraph cones, fire-wave fronts (SOUL DUEL) |
+| `(fx-ribbon x y z ax ay az w0 w1 r0 g0 b0 a0 r1 g1 b1 a1 ph sway &key (segs 6) (mode :add))` | macro: a camera-facing strip from (x y z) along the axis (ax ay az), half-width W0 → W1, colour base → tip, flickering width and sideways SWAY with phase PH. Single-float argument forms, 0 bytes consed. SOUL DUEL builds its flames, pillars and auras from layers of it (in the toon batch: `toon-ribbon`, `%tongue`, "Toon kit" under FX) |
+| `(fx-sector x y z r0 r1 yaw half r g b a &key (mode :add) (segs 16))` | flat annular sector at height y (+3 cm) between radii R0 and R1, centred on facing YAW, ±HALF radians (≥ π = a full ring), soft toward both radii: telegraph cones, fire-wave fronts (SOUL DUEL). Its 0 B macro form: `%sector-verts` ("Toon kit") |
 
 Each float argument costs ~16 B of boxing at the call site; a few thousand calls per frame are fine.
 
@@ -275,7 +281,8 @@ builder transform (nests; mirroring flips winding automatically). Flat normals. 
 each face's brightness ±jitter (low-poly look).
 
 `(make-mesh-builder)`, `(mb-color mb r g b)`, `(with-xform (mb matrix) ...)`, `(mb-build mb)`,
-`(setf (mb-jitter mb) 0.1)`.
+`(setf (mb-jitter mb) 0.1)`. `(mb-at (mb xform-args…) body…)` = `(with-xform (mb (xform xform-args…)) body…)`,
+e.g. `(mb-at (mb :y 0.57 :roll 0.4) (mb-cylinder mb 0.05 0.3))` (SOUL DUEL's stage).
 Primitives (sizes are full extents, meters):
 `(mb-box mb w h d &key colors)` — `colors` = 6 colors for faces +X −X +Y −Y +Z −Z (NIL = current);
 `(mb-bevel-box mb w h d bevel &key colors)`;
@@ -341,6 +348,13 @@ them in place; `u v` default to the font atlas's solid white cell (flat color). 
   (uvtx x0 y0 1f0 1f0 1f0 1f0) (uvtx x1 y0 1f0 1f0 1f0 0f0) (uvtx x1 y1 1f0 1f0 1f0 0f0)
   (uvtx x0 y0 1f0 1f0 1f0 1f0) (uvtx x1 y1 1f0 1f0 1f0 0f0) (uvtx x0 y1 1f0 1f0 1f0 1f0))
 ```
+**Zero-cons quads** (macros over `with-ui-verts`; every argument a single-float form; SOUL DUEL's HUD):
+`(%hq x0 y0 x1 y1 x2 y2 x3 y3 r g b a [r1 g1 b1 a1])` one quad TL TR BR BL, colour (R G B A) on the top edge,
+(R1 G1 B1 A1) (default the same) on the bottom; `(%hrect x y w h r g b a [r1 g1 b1 a1])` an axis-aligned rect;
+`(%hbar x y w h frac right r g b a [r1 g1 b1 a1])` FRAC (clamped 0..1) of the box, from the left or (RIGHT) the
+right; `(%houtline x y w h r g b a)` a 1 px outline; `(%pulse tm hz)` → 0..1, HZ times a second at time TM (HZ a
+literal). DEFUN-FASTs on `%hq` (24 segments): `(%ring cx cy r wd cr cg cb ca)`, `(%arc cx cy r wd frac cr cg cb ca)`
+(FRAC of the ring, clockwise from the top), `(%disc cx cy r cr cg cb ca)`.
 
 ## Low-level (render.lisp internals, rarely needed by gameplay)
 
@@ -371,7 +385,9 @@ Details, the mixer design and the autoplay handling: AUDIO.md.
   `(stop-loop id &optional fade)`, `(set-loop-gain id g)`; music (one track at a time, on the
   music bus): `(music-play &optional (key :music))` starts the loop KEY unless music is playing
   (switch tracks with `(music-stop fade)` first), `(music-stop &optional fade)`, `music-playing-p`,
-  `(music-intensify &optional (key :music))` restarts KEY 12 % faster/higher, `(set-music-volume v)`; `(audio-locked-p)` (browser hasn't
+  `(music-intensify &optional (key :music))` restarts KEY 12 % faster/higher, `(set-music-volume v)` (the music bus,
+  0..2, default 0.55), `(set-sfx-volume v)` (the sfx bus: every sound but the music, 0..2, default 1; SOUL DUEL's
+  silence beat mutes it); `(audio-locked-p)` (browser hasn't
   allowed audio yet), `(audio-stats)`. Voice ids are integers, -1 = not played.
 * `RUN-GAME`'s startup steps open the device and synthesize every DEFSOUND, one sound per browser
   frame (`audio-init-begin` / `-sound` / `-end`). `*audio-debug*` T logs per-sound stats (peak,
@@ -382,7 +398,7 @@ Details, the mixer design and the autoplay handling: AUDIO.md.
   DSL, `tt` = local time), `+au-rate+` / `+au-dt+`; oscillators `au-sin au-saw au-sqr au-ph+`; noise
   `au-rnd au-noise au-fnoise`; envelopes `au-ar au-adsr au-env-exp au-sweep`; filters and effects
   `au-svf! au-onepole! au-drive! au-delay! au-reverb!`; utilities `au-mix! au-scale! au-normalize!
-  au-peak au-fold au-frac au-expf au-powf au-rrange au-midi`; instruments `au-ping! au-partials!
+  au-peak au-fold au-frac au-expf (= f-exp) au-powf au-rrange au-midi`; instruments `au-ping! au-partials!
   au-thump! au-taiko! au-gong! au-shaku! au-saws! au-whoosh`.
 
 ## Animation (`anim.lisp`)
@@ -419,6 +435,8 @@ key and settle; SOUL DUEL) instead of smoothstep.
   own pose); with `(setf (anim-speed an) 0.0)` the clip is frozen.
 * FK: `(pose-fk! jm pose px py pz yaw scale hunch &optional props)` writes one world mat4 per joint
   into JM (`+nj+` × 16 floats); `(joint-point! out jm j lx ly lz)` → a point in joint J's frame.
+  `(%euler! m o px py pz yaw pitch roll s)` (macro) writes T(p)·Ry·Rx·Rz·S(s) into M at offset O inline (no
+  calls; SOUL DUEL's stage chips use it).
   PROPS: NIL (the standard rig; same code and cost as before) or
   `(make-rig-proportions &key (shoulders 1) (arms 1) (legs 1) (spine 1))` — per-chain multipliers:
   shoulder width, upper arm + forearm length, thigh + shin length (the pelvis rises or sinks with
@@ -532,7 +550,15 @@ Real-time or sim-time effects that live in flat float pools (no entities, no con
   `(fx-clear-debris)`.
 * **Trails:** `(make-trail)` → buffer of `+trail-n+` base/tip samples; `(trail-push tr bx by bz tx ty
   tz)`, `(trail-decay tr)`; `(trail-count tr)` → samples (a float, SETF-able: 0 drops the trail);
-  draw with `(fx-trail tr (f->i (trail-count tr)) r g b a)`.
+  draw with `(fx-trail tr (f->i (trail-count tr)) r g b a)`. The 0 B macro forms (a DEFUN-FAST call boxes
+  its six floats): `(%trail-push tr bx by bz tx ty tz)`, `(%trail-drop tr n)` (drop the oldest of N samples);
+  samples move with an explicit forward copy (REPLACE of a vector onto itself allocates).
+* **Smear** (the drawn sword smear, SOUL DUEL): `(fx-smear-capture! tr sm n dr u (len width) k)` (macro, 0 B)
+  — when the drawing number DR differs from SM's [10], re-capture SM (12 floats: x0 y0 z0 x1 y1 z1 bx by bz,
+  half-width, drawing, presence) from trail TR's last ≤ 5 of its N samples: a quadratic Bézier through their
+  point U (0 base … 1 tip), half-width WIDTH (which may use the variable LEN, bound to the newest sample's
+  length), presence K (0 with fewer than 3 samples). The caller draws it, e.g.
+  `(when (> (aref sm 11) 0f0) (fx-crescent (aref sm 0) … (aref sm 9) :comet … (aref sm 11)))`.
 * **Ribbons, sectors** (`fx-ribbon`, `fx-sector`) and **debug outlines** (`draw-circle`, `draw-vol`):
   see the FX batch table and "Hit volumes".
 * `(edge-vignette r g b a frac)` — UI-space darkening toward the screen edges.
@@ -570,6 +596,28 @@ gone: matter perforates, energy erodes). Existing calls take `:mode :toon` (`fx-
 * **UI punctuation** (0 B, DRAWING = a drawing number that reshuffles them):
   `(ui-focus-lines cx cy n rmin rmax col drawing)`, `(ui-speed-lines dir n col drawing)`,
   `(ui-ink-splash cx cy r seed col drawing)` (a hashed blob, spikes and droplets, grows over drawing 0).
+* **Toon kit** (macros, single-float forms, 0 B; SOUL DUEL's looks are written with them):
+  - `(hash01 i seed)` → a stable 0..1 sine hash of (I SEED), `|v| mod 1` — the engine's internal `%h01` is the
+    same hash folded as `v − floor v`: they differ for negative v, so never alias one to the other (the shapes
+    built on each would change);
+  - `(drawing-no [per-second 12])` → the fx clock's drawing number 0..63 (12 = twos, 8 = threes);
+  - `(with-cam () body…)` binds `rx ry rz ux uy uz` (the camera's right / up; exported names) for
+    camera-facing shapes; `(%away-from-eye (x y z) d body…)` rebinds X Y Z moved D m along the view ray
+    (negative = toward the eye); `(%near-cam x z near far)` → 0 within NEAR m of the eye (ground plane) … 1 at
+    FAR (tall columns shrink near the lens);
+  - `(%t-blob x y z vx vy vz life size grav wob pal)`, `(%t-shard x y z vx vy vz life size grav pal)` — one
+    toon particle (`fx-emit` of `+p-t-blob+` / `+p-t-shard+`);
+  - `(%tring x y z r w pal k seed [segs 32])` — a flat toon ring at height y (+2 cm), radius R, band half-width
+    W, its heat varying around it (it breaks into arcs as K fades);
+  - `(%sector-verts mode segs x y z r0 r1 yaw half l0 l1 l2 l3)` — `fx-sector`'s shape, unboxed: MODE `:toon`
+    takes heat seed wobble toon-a as L0..L3 (`fx-sector` itself calls it with r g b a);
+  - `(toon-ribbon (x y z) (ax ay az) (w0 w1) &key (heat (1 0.2)) seed (wob 0.3) pal k k1 (ph 0) (sway 0) (segs 6))`
+    — `fx-ribbon … :mode :toon` with its lanes named; with PAL the presence lanes are `(toon-a pal k)` /
+    `(toon-a pal k1)` (K1 defaults to K), without PAL K / K1 are the lane values; the argument forms land in
+    `fx-ribbon`'s positional order (a form repeated there is repeated here, as written by hand);
+    `(%tongue x y z ax ay az w pal k seed ph sway &key (segs 6) (wob 0.3))` — a toon flame tongue (w1 = 0,
+    SEED made negative: along) through it;
+  - `(%light x y z r g b radius intensity priority)` — `add-point-light` without boxing (one shared record).
 
 ## ECS (`ecs.lisp`)
 
@@ -582,7 +630,18 @@ Plain CL (tested by `tests/ecs-test.lisp`). Background: ARCHITECTURE.md "Game st
 * `(do-entities (e comp (var comp2) …) body…)` — BODY for every entity having all the listed
   components, in slot order; each component is bound to a variable of its name, or to VAR.
 * Events: `(emit kind data…)` queues `(kind . data)`; `(take-events)` → all queued events, oldest
-  first, and empties the queue.
+  first, and empties the queue. `(do-events (kind) clause…)` dispatches them, one CASE clause per kind:
+  `(key lambda-list body…)` runs BODY with the event's data destructured by LAMBDA-LIST (a symbol gets the
+  whole data list); `(t body…)` / `(otherwise body…)` run as written. It expands to
+  `(dolist (ev (take-events)) (destructuring-bind (kind &rest data) ev (case kind …)))`:
+  ```lisp
+  (do-events (kind)
+    (:hit (att def dmg) (show-hit def dmg))
+    (:died (e) (sfx :death e))
+    (t (error "unknown event ~s" kind)))      ; RAVEN keeps its ECASE this way
+  ```
+* `transform` — the one component every game shares: `pos` (f32vec3, feet / origin, metres, y up) and
+  `yaw` (single-float, 0 faces −Z); `(pos-of e)` / `(yaw-of e)` (inline) read them. Both games build on it.
 
 ## App (`app.lisp`)
 
@@ -599,11 +658,14 @@ Plain CL (tested by `tests/ecs-test.lisp`). Background: ARCHITECTURE.md "Game st
 ## Package helpers (`package.lisp`)
 
 * Types `f32` (= single-float; `(f32 x)` coerces) and `f32vec`; `(f32vec-p x)`; `clamp`, `lerp`;
-  `(log-msg fmt args…)` prints a console line.
+  `(log-msg fmt args…)` prints a console line. `(with-floats (vars…) body…)` rebinds VARS as declared
+  single-floats (callers may pass fixnums or doubles).
 * `(defun-fast name args …)` — DEFUN for hot numeric code: checks declared argument types on entry,
   runs the body at `(safety 0)` (see ARCHITECTURE.md Gotchas). Declare every float local.
 * Float macros compiled to plain C (no boxing): `f-min f-max f-abs f-sqrt f-sin f-cos f-atan2 f-mod
-  f-acos f-asin f-clamp f-wrap` (angle into [−π, π)), `i->f`, `f->i` (floor).
+  f-exp f-clamp f-wrap` (angle into [−π, π)), `i->f`, `f->i` (floor); `(f-hypot a b [c])` → exactly
+  `(f-sqrt (+ (* a a) (* b b) [(* c c)]))` (forms other than symbols / literals bound once, declared
+  single-float), the `f-sqrt` twin of `hypot` (Math).
 * Random numbers (C xorshift, no consing), two independent streams:
   - cosmetic: `(rnd01)` in [0, 1), `(rnd-range a b)`; `(rnd-seed n)`, `(rnd-state)`;
   - simulation: `(sim-rnd01)`, `(sim-rnd-range a b)`; `(sim-rnd-seed n)`, `(sim-rnd-state)`.

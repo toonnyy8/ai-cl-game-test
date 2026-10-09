@@ -31,9 +31,7 @@ fighter and blade-trail. PLAYER-INIT adds the player component, SPAWN-ENEMY / SP
               (transform-yaw tf) (body-scale b) (body-hunch b))))
 
 ;;; ---------------------------------------------------------------- geometry
-(declaim (inline pos-of yaw-of))
-(defun pos-of (e) (transform-pos (transform e)))
-(defun yaw-of (e) (transform-yaw (transform e)))
+;;; (POS-OF / YAW-OF: engine/lisp/ecs.lisp)
 
 (defun distance (a b)
   "Horizontal distance between entities A and B."

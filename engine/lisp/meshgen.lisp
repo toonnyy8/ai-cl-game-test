@@ -36,6 +36,9 @@
        (multiple-value-prog1 (progn ,@body)
          (m4-copy! (mb-xform ,b) ,old)
          (setf (mb-flip ,b) (minusp (m4-det3 ,old)))))))
+(defmacro mb-at ((mb &rest xf) &body body)
+  "WITH-XFORM over (XFORM . XF): (mb-at (mb :y 0.57 :roll 0.4) (mb-cylinder mb ...))."
+  `(with-xform (,mb (xform ,@xf)) ,@body))
 
 (defun-fast mb-rand (mb)
   "Deterministic 0..1 random (LCG in C: the Lisp version consed bignums on 32-bit fixnums)."

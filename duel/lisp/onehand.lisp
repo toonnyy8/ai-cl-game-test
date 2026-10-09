@@ -214,38 +214,7 @@ low zone = J, high zone = K, an up-flick = a forward Step, the dash)?"
     (let ((u (/ (touch-tap-x *touch*) (max 1 (window-width))))) (cond ((< u 0.33) -1) ((> u 0.67) 1) (t 0)))))
 
 ;;; ---------------------------------------------------------------- drawing
-(defun-fast %ring (cx cy r wd cr cg cb ca)
-  "A ring of radius R, WD px wide, 24 segments."
-  (declare (single-float cx cy r wd cr cg cb ca))
-  (let ((r1 (+ r wd)))
-    (declare (single-float r1))
-    (dotimes (i 24)
-      (let* ((a0 (* (i->f i) 0.2617994f0)) (a1 (+ a0 0.2617994f0))
-             (c0 (f-cos a0)) (s0 (f-sin a0)) (c1 (f-cos a1)) (s1 (f-sin a1)))
-        (declare (single-float a0 a1 c0 s0 c1 s1))
-        (%hq (+ cx (* r c0)) (+ cy (* r s0)) (+ cx (* r1 c0)) (+ cy (* r1 s0)) (+ cx (* r1 c1)) (+ cy (* r1 s1))
-             (+ cx (* r c1)) (+ cy (* r s1)) cr cg cb ca)))))
-
-(defun-fast %arc (cx cy r wd frac cr cg cb ca)
-  "FRAC (0..1) of a ring of radius R, WD px wide, clockwise from the top (Rukia's frost arc under the thumb)."
-  (declare (single-float cx cy r wd frac cr cg cb ca))
-  (let ((r1 (+ r wd)) (n (f->i (* 24f0 (f-clamp frac 0f0 1f0)))))
-    (declare (single-float r1) (fixnum n))
-    (dotimes (i n)
-      (let* ((a0 (- (* (i->f i) 0.2617994f0) 1.5707964f0)) (a1 (+ a0 0.2617994f0))
-             (c0 (f-cos a0)) (s0 (f-sin a0)) (c1 (f-cos a1)) (s1 (f-sin a1)))
-        (declare (single-float a0 a1 c0 s0 c1 s1))
-        (%hq (+ cx (* r c0)) (+ cy (* r s0)) (+ cx (* r1 c0)) (+ cy (* r1 s0)) (+ cx (* r1 c1)) (+ cy (* r1 s1))
-             (+ cx (* r c1)) (+ cy (* r s1)) cr cg cb ca)))))
-
-(defun-fast %disc (cx cy r cr cg cb ca)
-  "A filled disc (a 24-gon)."
-  (declare (single-float cx cy r cr cg cb ca))
-  (dotimes (i 24)
-    (let* ((a0 (* (i->f i) 0.2617994f0)) (a1 (+ a0 0.2617994f0)))
-      (declare (single-float a0 a1))
-      (%hq cx cy (+ cx (* r (f-cos a0))) (+ cy (* r (f-sin a0))) (+ cx (* r (f-cos a1))) (+ cy (* r (f-sin a1))) cx cy
-           cr cg cb ca))))
+;; (%RING %ARC %DISC: engine/lisp/ui.lisp)
 
 (defparameter *c-chip* '(1 1 1 0.9))
 

@@ -10,10 +10,7 @@
 ;;;; (FIGHTER-OPP); hazards hold their owner. Check (ENTITY-ALIVE-P e) before following a handle.
 (in-package :duel)
 
-(defcomponent transform
-  "Where an entity is: feet position (x y z metres, y up) and facing (yaw radians; 0 faces -Z)."
-  (pos (make-f32 3) :type f32vec)
-  (yaw 0f0 :type single-float))
+;; TRANSFORM (feet position + facing; POS-OF / YAW-OF) is the engine's (engine/lisp/ecs.lisp).
 
 (defcomponent motion
   "How a fighter's body moves (FIGHTER-PHYSICS): walk / dash velocity, a knockback slide, airborne."
@@ -205,12 +202,9 @@ its volume test and its look (hazards.lisp)."
   (fragile nil)                         ; T: it closes while it waits if its owner is hit (CLOSE-RIFTS)
   (hook nil) (data nil)                 ; a character's own hazard: HOOK (h hz event ...) and the DATA it keeps (hazards.lisp)
   (group nil)                           ; NIL, or a hit group shared by several hazards (MAKE-HIT-GROUP): they hit once together
-  (look nil))                           ; a look keyword, or a draw function symbol (HAZARD-DRAW)                           ; look keyword for the draw (:kyoku :meteor :crack :south ...)
+  (look nil))                           ; a look keyword, or a draw function symbol (HAZARD-DRAW)
 
 ;;; ---------------------------------------------------------------- small helpers every file uses
-(declaim (inline pos-of yaw-of))
-(defun pos-of (e) (transform-pos (transform e)))
-(defun yaw-of (e) (transform-yaw (transform e)))
 (defun opp-of (e) (fighter-opp (fighter e)))
 (defun kit-of (e) (fighter-kit (fighter e)))
 (defun state-of (e) (fighter-state (fighter e)))
@@ -219,6 +213,19 @@ its volume test and its look (hazards.lisp)."
 (defun passive-p (e p)
   "Does E's current form have passive P (:ward :pierce :projectile-cut :scorch :cut :drink)?"
   (and (member p (kit-passives (kit-of e))) t))
+
+(declaim (special *p1* *p2*))                           ; (flow.lisp's)
+(defmacro do-sides ((e) &body body)
+  "Run BODY with E bound to P1's fighter handle, then to P2's (no alive check: keep that at the site). BODY is written
+out twice: keep it to a call or two."
+  `(progn (let ((,e *p1*)) ,@body) (let ((,e *p2*)) ,@body)))
+
+;;; The gate's pacing counters (debug.lisp's per-match "duel ichigo / senju / lille ..." lines): off in play.
+(defvar *pacing-log* nil "T while the gate runs (START-CVC sets it): PACE counts; else PACE does nothing.")
+(defvar *pacing* (vector nil nil) "Per side (0 P1, 1 P2): a plist of pacing keys -> counts this match.")
+(defmacro pace (e key &optional (n 1))
+  "Add N to fighter E's pacing count KEY while *PACING-LOG* is on (KEY and N are not evaluated otherwise)."
+  `(when *pacing-log* (incf (getf (svref *pacing* (fighter-side (fighter ,e))) ,key 0) ,n)))
 
 (defvar *combat-log* nil
   "Dev logging: moves, hits, reactions, Kikons (CLOG lines). The first Module._debug_cmd turns it on.")

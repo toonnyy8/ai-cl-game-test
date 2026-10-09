@@ -197,7 +197,11 @@ the host by `tests/ecs-test.lisp`):
 * **System** = an ordinary function using `(do-entities (e comp (var comp2) …) body)`, which
   visits every entity that has all the listed components, in slot order. A frame (or fixed step)
   is a list of systems called in a fixed order.
-* **Events**: `(emit kind data…)` queues a list, `(take-events)` returns them oldest first.
+* **Events**: `(emit kind data…)` queues a list, `(take-events)` returns them oldest first;
+  `(do-events (kind) (key lambda-list body…) …)` dispatches them one CASE clause per kind (the event's
+  data destructured by each clause's lambda list).
+* **`transform`** (feet / origin position as an f32vec3, yaw) is the one component both games share: the
+  engine defines it (with the inline readers `pos-of` / `yaw-of`); every other component is the game's.
 
 RAVEN EDGE uses them this way:
 * `game/lisp/components.lisp`: every component; the header lists which components make REN, an
@@ -264,6 +268,13 @@ run to run). Its cinematics run inside the fixed step through the engine's direc
 * Passing arrays to C: `(ffi:c-inline (v) (t) :void "f(#0->vector.self.sf)")`
   for `(simple-array single-float (*))`; `->vector.self.b8` for
   `(unsigned-byte 8)` arrays. Handles (mesh ids) are `:int`.
+* `hypot` / `f-hypot` / `countdown!` are **macros whose expansion is the hand-written form**
+  (`(sqrt (+ (* a a) (* b b)))`, `(setf p (f32 (max 0.0 (- p dt))))`), so a site in SOUL DUEL's sim keeps
+  its float order: the native sim gate and the wasm build compile the same operations. Keep each site's
+  flavour (`sqrt` stays `hypot`, `f-sqrt` stays `f-hypot`) and leave `(expt x 2)` forms alone.
+* SOUL DUEL: iterate the two fighters with `(do-sides (e) …)` (two `let`s, 0 B) rather than
+  `(dolist (e (list *p1* *p2*)) …)` (32 B a call); its pacing counters (the gate's per-match "duel ichigo /
+  senju / lille …" lines) live behind `*pacing-log*` (`pace`, components.lisp), so play builds no keys.
 
 ## Module map (in MANIFEST order)
 
@@ -271,21 +282,21 @@ run to run). Its cinematics run inside the fixed step through the engine's direc
 
 | file              | responsibility                                              |
 |-------------------|-------------------------------------------------------------|
-| lisp/package.lisp | package `ENGINE` + exports, global declaims, DEFUN-FAST, F-* float macros, RND01 / SIM-RND01 (C: c/rng.c) |
-| lisp/math.lisp    | scalars, facing (FWD-X / YAW-TO / TURN-TOWARD), WEIGHTED-PICK, vec3 / mat4 on single-float arrays (plain CL, host-loadable) |
+| lisp/package.lisp | package `ENGINE` + exports, global declaims, DEFUN-FAST, WITH-FLOATS, F-* float macros (F-EXP, F-HYPOT …), RND01 / SIM-RND01 (C: c/rng.c) |
+| lisp/math.lisp    | scalars (HYPOT, COUNTDOWN!), facing (FWD-X / YAW-TO / TURN-TOWARD), WEIGHTED-PICK, vec3 / mat4 on single-float arrays (plain CL, host-loadable) |
 | lisp/hitvol.lisp  | hit volumes vs hurt cylinders: MAKE-VOL / VOL-HIT-P, capsule / box / cylinder tests (plain CL, host-loadable) |
 | lisp/input.lisp   | the virtual controller (vpad): buttons, buffer, modifier, stick, command tables, device bindings (plain CL, host-loadable) |
 | lisp/platform.lisp| SDL3 window, time, events → input state (C: c/platform.c)    |
 | lisp/render.lisp  | SDL_GPU pipelines, WGSL loader, camera, lights, meshes, draw queue, fx batch (C: c/render.c, shaders/*.wgsl) |
-| lisp/meshgen.lisp | procedural mesh builders (box, cylinder, cone, blade, tube…) |
-| lisp/ui.lisp      | embedded bitmap font, 2D UI batch (rects, text, big text, bitmaps, bars, with-ui-verts) |
+| lisp/meshgen.lisp | procedural mesh builders (box, cylinder, cone, blade, tube…), WITH-XFORM / MB-AT |
+| lisp/ui.lisp      | embedded bitmap font, 2D UI batch (rects, text, big text, bitmaps, bars, with-ui-verts), the 0 B quad kit (%HQ %HRECT %HBAR %HOUTLINE %PULSE, %RING %ARC %DISC) |
 | lisp/audio.lisp   | mixer API, synthesis toolkit, DEFSOUND, stepwise loader, SFX-AT (C: c/audio.c) |
 | lisp/anim.lisp    | humanoid rig + proportions, pose / clip DSL (DEFCLIP, DEFSTRIKE), playback, blending, FK |
 | lisp/body.lisp    | rigid-part characters: shape spec → meshes per joint (BUILD-PARTS), DRAW-PARTS |
 | lisp/time.lisp    | fixed step (RUN-FIXED-STEPS), hitstop, slow-mo               |
-| lisp/fx.lisp      | shake, particles, rings, debris, trail buffers, edge vignette, FX-RIBBON / FX-SECTOR, hit-volume debug outlines |
+| lisp/fx.lisp      | shake, particles, rings, debris, trail buffers (%TRAIL-PUSH / %TRAIL-DROP) and the drawn smear (FX-SMEAR-CAPTURE!), edge vignette, FX-RIBBON / FX-SECTOR, hit-volume debug outlines, the toon shapes and the 0 B toon kit (HASH01, %TRING, %SECTOR-VERTS, TOON-RIBBON, %TONGUE, %T-BLOB, %LIGHT, WITH-CAM …) |
 | lisp/cine.lisp    | the cinematic director: DEFCINE (AT / DURING), start / step / draw / skip, shots, game hooks |
-| lisp/ecs.lisp     | entities, components, systems, events                        |
+| lisp/ecs.lisp     | entities, components, systems, events (DO-EVENTS), the shared TRANSFORM component (POS-OF / YAW-OF) |
 | lisp/app.lisp     | `RUN-GAME`, startup steps, frame driver, debug queue, stats line |
 | c/main.c          | boot ECL, GC policy, browser main loop, page hooks            |
 | web/shell.html    | page shell: WebGPU pre-init, loading bar, error veil          |
@@ -327,12 +338,12 @@ run to run). Its cinematics run inside the fixed step through the engine's direc
 | lisp/control.lisp     | the controls as data on the engine's vpad: buttons, command table, P1 / P2 bindings (plain CL, tests/duel-control-test.lisp) |
 | lisp/learn.lisp       | the learning CPU's pure part: player model, bandit, p_exploit, storage format (plain CL, tests/learn-test.lisp; docs/duel/DUEL_LEARNING.md) |
 | lisp/sounds.lisp      | data: the sound bank (DEFSOUND)                             |
-| lisp/components.lisp  | every DEFCOMPONENT (transform, motion, model, fighter, gauges, pilot, brain, hazard …) |
+| lisp/components.lisp  | every DEFCOMPONENT (motion, model, fighter, gauges, pilot, brain, hazard …; transform is the engine's), DO-SIDES, the pacing log (PACE) |
 | lisp/body.lisp        | DEFBODY (engine shape spec + rig proportions), DEFWEAPON, DRAW-BODY, shared poses / reaction clips |
 | lisp/kit.lisp         | characters as data: DEFMOVE, DEFKIT, the roster             |
 | lisp/cinema.lisp      | the director's hooks, shot helpers, the generic cinematics (intro, K.O., soul break, time) |
 | lisp/stage.lisp       | the ruins at night: meshes, the toon env look, ash, cracks  |
-| lisp/vfx.lisp         | fire / aura / hit / UI effects (built from FX-RIBBON, FX-SECTOR, UI-BITMAP) |
+| lisp/vfx.lisp         | fire / aura / hit / UI effects (built from the engine's toon kit, FX-RIBBON, UI-BITMAP) |
 | lisp/yama-art.lisp, ken-art.lisp | the two characters' bodies, weapons and clips (DEFSTRIKE) |
 | lisp/yama.lisp, ken.lisp | their moves, forms, hooks and cinematics                 |
 | lisp/fighter.lisp     | FIGHTER-SYSTEM: vpad → commands → state machine → physics   |
@@ -429,6 +440,12 @@ and grep the function for `ecl_make_single_float`/`ecl_times`/`ecl_divide`.
 * **A game `DEFUN` (or `DEFVAR`, `DEFMACRO` …) of an ENGINE-exported name silently replaces the
   engine's definition** for that build (the game package uses ENGINE, so it is the same symbol).
   `tools/pkgcheck.sh DIR` lists such top-level definitions; rename them.
+* **Moving a macro into the engine changes the package of the names it binds.** A game macro's
+  `(let* ((x0 ,x0) (x1 ,x1)) …)` binds the game's `x0`, so a call whose X1 form reads `x0` sees the macro's
+  binding (capture); the same macro in ENGINE binds `engine::x0` and the call reads its own `x0`. Check the
+  call sites before a move (SOUL DUEL's `toon-ground-seg` stayed in stage.lisp for that: four sites read
+  the rebound X0 / Z0). Names a body is meant to see (anaphora) must be exported (`with-cam`'s `rx … uz`) or
+  passed in (`fx-smear-capture!`'s `(len width)`).
 * **`define-compiler-macro` needs an explicit `eval-when`.** At top level inside `compile-file`,
   ECL 24.5 does not make a compiler macro visible to later forms of the same file unless it is
   wrapped in `(eval-when (:compile-toplevel :load-toplevel :execute) …)`; without it the calls

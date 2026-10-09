@@ -29,6 +29,21 @@
 (check (approach 0.0 1.0 0.25) 0.25)
 (check (smoothstep 0.0 1.0 0.5) 0.5)
 
+;; HYPOT / F-HYPOT / COUNTDOWN! are macros whose expansion must be the hand-written form they replace (the native
+;; sim and wasm compile the same float operations): symbols stay as they are, other forms are bound once.
+(check (equal (macroexpand-1 '(hypot dx dz)) '(sqrt (+ (* dx dx) (* dz dz)))))
+(check (equal (macroexpand-1 '(hypot dx dy dz)) '(sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
+(check (equal (macroexpand-1 '(f-hypot dx dz)) '(f-sqrt (+ (* dx dx) (* dz dz)))))
+(check (equal (macroexpand-1 '(f-hypot ax ay az)) '(f-sqrt (+ (* ax ax) (* ay ay) (* az az)))))
+(check (let ((x (macroexpand-1 '(f-hypot (- a b) dz))))
+         (and (eq (first x) 'let*) (equal (second (first (second x))) '(- a b))
+              (equal (third x) `(declare (single-float ,(first (first (second x))))))
+              (equal (fourth x) `(f-sqrt (+ (* ,(first (first (second x))) ,(first (first (second x)))) (* dz dz)))))))
+(check (let ((a 5.0) (b 2.0) (c 4.0)) (hypot (- a b) c)) 5.0)
+(check (equal (macroexpand-1 '(countdown! (aref v 0) dt)) '(setf (aref v 0) (f32 (max 0.0 (- (aref v 0) dt))))))
+(check (let ((x 1.0)) (countdown! x 0.25) x) 0.75)
+(check (let ((x 0.1)) (countdown! x 0.25) x) 0.0)
+
 ;; m4-euler! axes (right-handed): yaw turns +X to -Z, pitch +Y to +Z, roll +X to +Y;
 ;; R = Ry(yaw) * Rx(pitch) * Rz(roll)
 (let ((o (make-f32 3)) (h (f32 (/ pi 2))))
