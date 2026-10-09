@@ -169,7 +169,7 @@ bottom/right (VERTICAL chooses the axis). Corners TL TR BR / TL BR BL."
   (define-compiler-macro %ui-poly4 (&rest args) `(%ui-poly4-inline ,@args)))
 
 ;;; ---------------------------------------------------------------- zero-cons quads, rings and discs
-;;; Macros over WITH-UI-VERTS for DEFUN-FAST code: every argument a single-float form (SOUL DUEL's HUD). %RING
+;;; Macros over WITH-UI-VERTS for DEFUN-FAST code: every argument a single-float form. %RING
 ;;; %ARC %DISC are DEFUN-FASTs built on %HQ (24 segments).
 (defmacro %hq (x0 y0 x1 y1 x2 y2 x3 y3 r g b a &optional r1 g1 b1 a1)
   "One quad TL TR BR BL; colour (R G B A) on the top edge, (R1 G1 B1 A1) (default the same) on the bottom."
@@ -221,7 +221,7 @@ bottom/right (VERTICAL chooses the axis). Corners TL TR BR / TL BR BL."
              (+ cx (* r c1)) (+ cy (* r s1)) cr cg cb ca)))))
 
 (defun-fast %arc (cx cy r wd frac cr cg cb ca)
-  "FRAC (0..1) of a ring of radius R, WD px wide, clockwise from the top (Rukia's frost arc under the thumb)."
+  "FRAC (0..1) of a ring of radius R, WD px wide, clockwise from the top."
   (declare (single-float cx cy r wd frac cr cg cb ca))
   (let ((r1 (+ r wd)) (n (f->i (* 24f0 (f-clamp frac 0f0 1f0)))))
     (declare (single-float r1) (fixnum n))

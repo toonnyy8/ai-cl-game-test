@@ -119,7 +119,7 @@ eroding. It is captured into SM when a new drawing (twos) starts and held for th
 (Ryujin Jakka), 1 = REIATSU (Kenpachi: a white-cored yellow comet, every form), 2 = charcoal ink wash (Zanka no
 Tachi). SM: x0 y0 z0 x1 y1 z1 bx by bz, half-width, drawing, presence."
   (declare (type f32vec tr sm) (fixnum look))
-  (let* ((n (f->i (trail-count tr))) (dr (i->f (logand (f->i (* 12f0 (fx-clock))) 63))))
+  (let* ((n (f->i (trail-count tr))) (dr (drawing-no)))
     (declare (fixnum n) (single-float dr))
     (fx-smear-capture! tr sm n dr 0.7f0 (len (* 0.33f0 len)) (if (>= n 5) 0.98f0 0.6f0))   ; through the blade's 0.7 points
     (when (> (aref sm 11) 0f0)

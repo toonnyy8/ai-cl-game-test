@@ -104,7 +104,7 @@ bodies or the floor with a straight depth line."
      (declare (type f32vec %e) (single-float %dx %dy %dz %d %p ,x ,y ,z ,sc))
      ,@body))
 
-;;; ---------------------------------------------------------------- the toon kit (0 B macros; SOUL DUEL's looks)
+;;; ---------------------------------------------------------------- the toon kit (0 B macros)
 ;;; Small macros the toon looks are written with: every argument a single-float form, nothing consed. Shapes on
 ;;; the ground (%TRING, %SECTOR-VERTS) and along an axis (TOON-RIBBON, %TONGUE) write the toon batch directly;
 ;;; %T-BLOB / %T-SHARD are toon particles; %LIGHT is ADD-POINT-LIGHT without boxing; the rest place a layer
@@ -134,7 +134,7 @@ that must sit behind (or in front of) another camera-facing layer without fighti
 
 (defmacro %near-cam (x z near far)
   "0 when the camera eye stands within NEAR m (on the ground plane) of the point (X Z), rising to 1 at FAR: tall
-columns thin and shorten close to the lens (SOUL DUEL: an Ennetsu pillar beside the behind camera filled the frame)."
+columns thin and shorten close to the lens (e.g. a pillar beside a behind-the-shoulder camera would fill the frame)."
   `(let* ((%e (camera-eye *camera*)) (%dx (- ,x (aref %e 0))) (%dz (- ,z (aref %e 2))))
      (declare (type f32vec %e) (single-float %dx %dz))
      (f-clamp (/ (- (f-hypot %dx %dz) ,near) (- ,far ,near)) 0f0 1f0)))
@@ -148,7 +148,8 @@ columns thin and shorten close to the lens (SOUL DUEL: an Ennetsu pillar beside 
 
 (defmacro %tring (x y z r w pal k seed &optional (segs 32))
   "A flat toon ring on the ground at height Y (+2 cm), radius R, band half-width W, both band edges inked.
-The ring is an along shape whose heat varies around it, so it breaks into arcs as K fades."
+The ring is an along shape whose heat varies around it, so it breaks into arcs as K fades. SEGS must be a literal
+(it is folded at expansion time)."
   `(let* ((cx ,x) (cy (+ ,y 0.02f0)) (cz ,z) (ri (f-max 0f0 (- ,r ,w))) (ro (+ ,r ,w)) (pk (toon-a ,pal ,k))
           (sd (- -1f0 ,seed)) (da (/ 6.2831855f0 ,(float segs 1f0))))
      (declare (single-float cx cy cz ri ro pk sd da))
@@ -607,7 +608,7 @@ TOON-A): drawn as a toon shape instead (the band's two edges inked, eroding as i
   `(aref ,tr (* 6 +trail-n+)))
 
 (defmacro %trail-drop (tr n)
-  "Drop trail TR's oldest of its N samples (an explicit forward copy: REPLACE of a vector onto itself allocates). 0 B."
+  "Drop trail TR's oldest of its N samples (N >= 1; an explicit forward copy: REPLACE of a vector onto itself allocates). 0 B."
   `(let ((%tr ,tr) (%n ,n))
      (declare (type f32vec %tr) (fixnum %n))
      (dotimes (%i (* 6 (1- %n))) (setf (aref %tr %i) (aref %tr (+ %i 6))))
@@ -639,7 +640,7 @@ TOON-A): drawn as a toon shape instead (the band's two edges inked, eroding as i
       (%trail-drop tr n))))
 
 (defmacro fx-smear-capture! (tr sm n dr u (len width) k)
-  "Capture a drawn sword smear (SOUL DUEL's comet crescent) from trail TR into SM when the drawing number DR is new:
+  "Capture a drawn sword smear (e.g. a comet crescent) from trail TR into SM when the drawing number DR is new:
 SM = x0 y0 z0 x1 y1 z1 bx by bz (a quadratic Bezier through the point U (0 base .. 1 tip) of the oldest, middle and
 newest of the last <= 5 samples), half-width WIDTH, drawing, presence K (0 = none: fewer than 3 samples). WIDTH may
 use the variable LEN, bound to the newest sample's base -> tip length; K may use N (the sample count). TR SM N DR:
@@ -648,19 +649,19 @@ variables; U WIDTH K: single-float forms. The caller draws SM (FX-CRESCENT ... :
   `(when (/= (aref ,sm 10) ,dr)                          ; a new drawing: re-capture from the trail
      (setf (aref ,sm 10) ,dr (aref ,sm 11) 0f0)
      (when (>= ,n 3)
-       (let* ((i0 (max 0 (- ,n 5))) (im (floor (+ i0 ,n -1) 2)) (i1 (1- ,n)) (o0 (* 6 i0)) (om (* 6 im)) (o1 (* 6 i1)))
-         (declare (fixnum i0 im i1 o0 om o1))
-         (dotimes (c 3)                                  ; the U points: oldest, middle, newest -> control through the middle
+       (let* ((%i0 (max 0 (- ,n 5))) (%im (floor (+ %i0 ,n -1) 2)) (%i1 (1- ,n)) (%o0 (* 6 %i0)) (%om (* 6 %im)) (%o1 (* 6 %i1)))
+         (declare (fixnum %i0 %im %i1 %o0 %om %o1))
+         (dotimes (%c 3)                                  ; the U points: oldest, middle, newest -> control through the middle
            (let* ((%u ,u)
-                  (p0 (+ (aref ,tr (+ o0 c)) (* %u (- (aref ,tr (+ o0 c 3)) (aref ,tr (+ o0 c))))))
-                  (pm (+ (aref ,tr (+ om c)) (* %u (- (aref ,tr (+ om c 3)) (aref ,tr (+ om c))))))
-                  (p1 (+ (aref ,tr (+ o1 c)) (* %u (- (aref ,tr (+ o1 c 3)) (aref ,tr (+ o1 c)))))))
-             (declare (single-float %u p0 pm p1))
-             (setf (aref ,sm c) p0 (aref ,sm (+ c 3)) p1 (aref ,sm (+ c 6)) (- (* 2f0 pm) (* 0.5f0 (+ p0 p1))))))
+                  (%p0 (+ (aref ,tr (+ %o0 %c)) (* %u (- (aref ,tr (+ %o0 %c 3)) (aref ,tr (+ %o0 %c))))))
+                  (%pm (+ (aref ,tr (+ %om %c)) (* %u (- (aref ,tr (+ %om %c 3)) (aref ,tr (+ %om %c))))))
+                  (%p1 (+ (aref ,tr (+ %o1 %c)) (* %u (- (aref ,tr (+ %o1 %c 3)) (aref ,tr (+ %o1 %c)))))))
+             (declare (single-float %u %p0 %pm %p1))
+             (setf (aref ,sm %c) %p0 (aref ,sm (+ %c 3)) %p1 (aref ,sm (+ %c 6)) (- (* 2f0 %pm) (* 0.5f0 (+ %p0 %p1))))))
          ,(if (labels ((uses (x) (or (eq x len) (and (consp x) (or (uses (car x)) (uses (cdr x))))))) (uses width))
-              `(let* ((lx (- (aref ,tr (+ o1 3)) (aref ,tr o1))) (ly (- (aref ,tr (+ o1 4)) (aref ,tr (+ o1 1))))
-                      (lz (- (aref ,tr (+ o1 5)) (aref ,tr (+ o1 2)))) (,len (f-hypot lx ly lz)))
-                 (declare (single-float lx ly lz ,len))
+              `(let* ((%lx (- (aref ,tr (+ %o1 3)) (aref ,tr %o1))) (%ly (- (aref ,tr (+ %o1 4)) (aref ,tr (+ %o1 1))))
+                      (%lz (- (aref ,tr (+ %o1 5)) (aref ,tr (+ %o1 2)))) (,len (f-hypot %lx %ly %lz)))
+                 (declare (single-float %lx %ly %lz ,len))
                  (setf (aref ,sm 9) ,width
                        (aref ,sm 11) ,k))
               `(setf (aref ,sm 9) ,width                ; (LEN unused: not computed, an unread float binding boxes)
@@ -786,8 +787,9 @@ re-draws it when it changes (pass a per-drawing seed). A macro: 0 B."
 ;;; ---------------------------------------------------------------- ground sectors
 (defmacro %sector-verts (mode segs x y z r0 r1 yaw half l0 l1 l2 l3)
   "FX-SECTOR's shape as a macro (0 B: no boxed arguments): a flat sector at height Y (+3 cm) between radii R0 and R1,
-centred on YAW (forward = FWD-X / FWD-Z of it), +-HALF radians, SEGS segments (a literal or a fixnum form) into the
-MODE batch (:toon: L0..L3 = heat seed wobble TOON-A; else r g b a); uv across the radii. Single-float forms."
+centred on YAW (forward = FWD-X / FWD-Z of it), +-HALF radians, SEGS segments (a literal or a variable: it is evaluated several
+times) into the MODE batch (:toon: L0..L3 = heat seed wobble TOON-A; else r g b a); uv across the radii.
+Single-float forms."
   `(let* ((cx ,x) (cy (+ ,y 0.03f0)) (cz ,z) (ri ,r0) (ro ,r1) (a0 (- ,yaw ,half))
           (da (/ (* 2f0 ,half) ,(if (integerp segs) (float segs 1f0) `(i->f ,segs))))
           (ht ,l0) (sd ,l1) (wb ,l2) (pk ,l3))

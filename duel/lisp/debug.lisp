@@ -22,7 +22,8 @@
 (defvar *no-draw* (make-array 4 :initial-element nil) "Debug 2120+k: skip drawing part k (perf bisection).")
 
 (defmacro cons-per (name form &optional (n 10))
-  "The consing probes' unit: run FORM N times and give \"NAME bytes\" (the string the *-cons-check lines list)."
+  "The consing probes' unit: run FORM N times and give \"NAME bytes\" (the string the *-cons-check lines list).
+FORM sees the iteration index as I."
   `(let ((c0 (cons-bytes))) (dotimes (i ,n) ,form) (format nil "~a ~d" ,name (- (cons-bytes) c0))))
 
 (defun state-hash-line ()
