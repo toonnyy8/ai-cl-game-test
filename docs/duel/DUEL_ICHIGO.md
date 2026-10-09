@@ -1299,8 +1299,9 @@ stand and swing; they no longer rush at the opponent.
 stance and the clones? Yes, measured. Only his CPU changed (his kit's `:ai` tables and his AI functions in ichigo.lisp);
 no damage number moved (`*ichigo-mult*` 1.0, `*kessa-mult*` 0.95, `*ichigo-taken*` 0.8 stay the user's).
 
-**The pacing log.** Each gate row now has a `duel ichigo` line per side that played him (`ic-count` into the per-side
-state, carried over between matches like Senjumaru's; `tools/simgate.py` keeps it with the row). It counts every move
+**The pacing log.** Each gate row now has a `duel ichigo` line per side that played him (`pace` into the per-side
+pacing plists `*pacing*`, counted while the gate's `*pacing-log*` is on and cleared at each gate match's start since the
+2026-10-09 refactor (until then `ic-count` into his per-side state); `tools/simgate.py` keeps it with the row). It counts every move
 instance of his by name with its contact at its end (`-hit` / `-blk` / `-whf`), the stance's neutral entries by distance
 (`ic-tsuki-d3` / `-d5` / `-dfar`), each clone made (Step: tap, dash or back-dash, and IN ≤ 2.4 m / MID ≤ 3.0 / OUT of
 the opponent; Hoho), refused (and the guard gauge then), answers, clone hits / blocks / whiffed strings, expiries,

@@ -7,8 +7,10 @@
   (load (merge-pathnames (format nil "../engine/lisp/~a.lisp" f) *load-truename*)))
 (defpackage :duel (:use :cl :engine))
 ;; the character files also hold their hook functions and cinematics: those need the engine, so the
-;; host skips the cinematics (a no-op DEFCINE) and never calls a hook
+;; host skips the cinematics (a no-op DEFCINE) and never calls a hook; their state components (DEFCOMPONENT) are
+;; plain structs here (no entities: the tests make them with MAKE-...)
 (defmacro duel::defcine (&rest r) (declare (ignore r)) nil)
+(defmacro engine:defcomponent (name &rest slots) `(defstruct (,name (:copier nil) (:predicate nil)) ,@slots))
 (dolist (f '("tuning" "rules" "learn" "kit" "yama" "ken" "rukia" "ichigo" "endless-rules" "senjumaru" "lille"))
   (load (merge-pathnames (format nil "../duel/lisp/~a.lisp" f) *load-truename*)))
 (in-package :duel)

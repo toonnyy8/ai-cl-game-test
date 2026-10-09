@@ -2630,10 +2630,8 @@ height in *LB-V* [3], the alpha in [4] (MUJITTAI's body alpha), the tuck 0..1 in
   (let ((c *cine*)) (and c (eq (cine-name c) name) (eq (cine-a c) e) (cine-cf c))))
 
 ;;; Every component lookup of an entity conses 8 B in this build (an ECS getter: the reads probe, debug 79195), so the
-;;; draw hook makes the fewest: his fighter and model each frame, his transform only while a look needs his place, his
-;;; per-side state read straight from *LB* (not through LB, which looks his fighter up again).
-(declaim (special *lb*))
-(defmacro lb-state (e side) `(let ((%st (svref *lb* ,side))) (and (eql (lbs-e %st) ,e) %st)))
+;;; draw hook makes the fewest: his fighter, model and state (LBS, read as it is: the draw never makes one) each frame,
+;;; his transform only while a look needs his place.
 (defmacro %lb-load-place! (e)
   "*LB-V* [24..27] = E's x y z and yaw (one transform lookup)."
   `(let* ((%tr (transform ,e)) (%p (transform-pos %tr)) (%v *lb-v*))
@@ -2779,11 +2777,11 @@ fanned out in the SPs; translucent, fainter in MUJITTAI; each three jointed segm
 strikes, curl in MUJITTAI and unfurl in the SPs) and the wide jade halo; on the KIN and owl bodies the ㄇ legs; the
 owl's eight gold wings, its spiked halo (broken once sealed), the trumpet
 forming over Trompete's wind-up, the reflect. The awakening's and the revival's cinematics drive the wings and halos
-(the unfolding, the jade turning gold). Its only allocation is the entity lookups (two a frame; a third while he aims
-or a gold look plays; a fourth in MUJITTAI)."
+(the unfolding, the jade turning gold). Its only allocation is the entity lookups (three a frame; a fourth while he aims
+or a gold look plays; a fifth in MUJITTAI)."
   (declare (single-float rdt))
   (let* ((f (fighter e)) (side (fighter-side f)) (form (fighter-form f)) (m (model e)) (jm (model-joints m))
-         (st (lb-state e side))
+         (st (lbs e))
          (mv (and (eq (fighter-state f) :move) (fighter-move f))) (v *lb-v*) (tm (fx-clock))
          (cj (lb-cine-frame e 'lb-jilliel-cine)) (cr (lb-cine-frame e 'lb-revive-cine))
          (ct (lb-cine-frame e 'lb-trompete-cine)) (ck (lb-cine-frame e 'lb-jilliel-kikon-cine))

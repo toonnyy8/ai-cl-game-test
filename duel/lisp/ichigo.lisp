@@ -247,9 +247,9 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
     w))
 (defun echo-hit-frames (mv) "The frames (from his move's frame 0) an echo of MV hits on." (loop for w across (mv-hits mv) collect (+ *zanzo-lag* (hw-from w))))
 
-;;; ================================================================ per-side state (the sim's; a new fighter entity = a fresh one)
-(defstruct (ics (:conc-name ics-))
-  (e nil)                                     ; the fighter it belongs to
+;;; ================================================================ his state (the sim's): a component on his fighter entity
+(defcomponent ics
+  "Ichigo's state (IC): on his fighter entity, made on its first use, so a new match's fighter starts fresh."
   (hoho-done nil) (dashed nil) (o-live nil)
   (seen nil) (seen-main nil)                  ; the move the afterimage watch last saw start
   (hist (make-array 48 :initial-element 0f0)) (hist-i 0 :type fixnum)   ; his last 16 (x z yaw): the echoes replay them
@@ -257,11 +257,9 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
   (bs-key -1 :type fixnum) (bs-at -1 :type fixnum)    ; the CPU's parry from blockstun: which blockstun, pressed on which frame
   (o-at -9999 :type fixnum) (o-n 0 :type fixnum)      ; the last O press and its clones (the HUD's flash)
   (acc-mv nil) (acc-sf 0 :type fixnum) (acc-hit nil) (acc-kikons 0 :type fixnum))   ; the pacing log's watch (debug)
-(defvar *ic* (vector (make-ics) (make-ics)) "Per side: Ichigo's state.")
 (defun ic (e)
-  "E's state; a new fighter entity (a new match) gets a fresh one."
-  (let* ((i (fighter-side (fighter e))) (st (svref *ic* i)))
-    (if (eql (ics-e st) e) st (setf (svref *ic* i) (make-ics :e e)))))
+  "E's state (his ICS component, attached on the first call: a new fighter entity, a new match, gets a fresh one)."
+  (or (ics e) (let ((st (make-ics))) (add-component e st) st)))
 (defun ic-key (&rest parts) (intern (format nil "~{~a~^-~}" parts) :keyword))
 (defun ic-reach-key (x z e)
   "The pacing log's reach bucket of a point (X Z) to E's opponent: IN (<= 2.4 m, a light's), MID (<= 3.0, a heavy's), OUT."

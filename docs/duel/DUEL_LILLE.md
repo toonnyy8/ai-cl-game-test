@@ -830,7 +830,8 @@ decisions:
    hits it (it could never dodge, so it can't reflect).
 3. **The eye is tested in the kit's `:tick`**, after the step's hits: a tap protects from the next step on (the same one-frame
    latency as a guard's raise). The third opening's line 「三度も眼を開かされるとは…」 is a romaji pixel callout for now (the
-   brush line is batch 3). The pips live in his per-side state (the HUD meter is batch 3), not the kit meter.
+   brush line is batch 3). The pips live in his state (`lbs`, a component on his fighter entity since the 2026-10-09 refactor; the HUD meter is
+   batch 3), not the kit meter.
 4. **`:bankai-ok` is the kit slot** the AI batch added (a function of the fighter), not a `:hooks` entry; P, the HUD prompt
    and the CPU's Bankai reflex all read it.
 5. **`*mujittai-mult*` lives in `tuning.lisp`** (combat.lisp reads it in the ward branch); the knob name is the spec's.

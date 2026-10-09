@@ -324,9 +324,9 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
                     append (list (list (intern (format nil "SJ-KASE-~d" n) :keyword) (hank n :kanji) (hank n :name) mark)
                                  (list (intern (format nil "SJ-KASE-~d-K" n) :keyword) (hank n :kanji) (hank n :name) mark))))))
 
-;;; ================================================================ per-side state (the sim's; reset with every match)
-(defstruct (sjs (:conc-name sjs-))
-  (e nil)                                 ; the fighter it belongs to: a new match's fighter gets a fresh state (SJ)
+;;; ================================================================ her state (the sim's): a component on her fighter entity
+(defcomponent sjs
+  "Senjumaru's state (SJ): on her fighter entity, made on its first use, so a new match's fighter starts fresh."
   (caught 0 :type fixnum)                 ; the umbrella's largest caught hit (this umbrella)
   (soldier -1) (live -1) (bolt -1)        ; handles: her soldier, her live zone, the weave's bolt
   (live-hank 0 :type fixnum) (live-life 1 :type fixnum)   ; the live zone's hank and life (the HUD's drain)
@@ -334,12 +334,10 @@ first falls out, then one every *HARI-FALL*. Values: n idle fell-p."
   (woven 0 :type fixnum)                  ; frames woven on the form's hank (every segment; WEAVE-ADD)
   (tachi 0 :type fixnum)                  ; TACHINAOSHI: the woven frames both its hanks release at
   (torn -9999 :type fixnum) (torn-hank 0 :type fixnum))  ; *MATCH-TICK* of the last torn hank, and which
-(defvar *sj* (vector (make-sjs) (make-sjs)) "Per side: her loom, soldier and umbrella.")
 (defun sj (e)
-  "E's state; a new fighter entity (a new match) gets a fresh one (the native gate found the loom's woven frames, torn
-clock and handles carried over from the match before: DEVLOG §38)."
-  (let* ((i (fighter-side (fighter e))) (st (svref *sj* i)))
-    (if (eql (sjs-e st) e) st (setf (svref *sj* i) (make-sjs :e e)))))
+  "E's state (her SJS component, attached on the first call: a new fighter entity, a new match, gets a fresh one; the
+native gate once found the loom's woven frames, torn clock and handles carried over from the match before: DEVLOG §38)."
+  (or (sjs e) (let ((st (make-sjs))) (add-component e st) st)))
 
 ;;; hazard data: her hazards carry one of these (HAZARD-DATA) and SENJU-HZ as their hook
 (defstruct (sjh (:conc-name sjh-))
