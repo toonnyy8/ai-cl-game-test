@@ -42,6 +42,16 @@ The user, after the design was written: 「覺醒後的 U 還是保持開了就�
   drains ×1.0 on what it absorbs and does not refill while in it. One `*-mujittai` kit per awakened form.
 - The base form's U stays a plain guard (the eye is still dropped).
 
+### Decision V3 (2026-10-09): melee SP1 / SP2 fire directly
+
+The user: 「近戰模式的 SP1／SP2 跟原版一樣會直接放出，只有遠程才會變成軌跡」.
+
+- Melee: SP1 / SP2 are the old KIN moves with their old numbers (not 萬物貫通): Jilliel SP1 SANREN on the wings (3 lines,
+  20 m, 30 each, chip 15 %, drain 12), SP2 NIJUSHI-KO (40 f tell, 1.2 m beam, 180); owl SP1 MISUJI (3 SABAKI ground
+  lines of 70 to 18 m, their eruption kept), SP2 Trompete (60 f wind-up, 240, reflect by a timed guard / Hoho and the
+  seal, as the original).
+- Only the ranged modes' L / SP1 / SP2 lay traces.
+
 Everything below that the user did not decide is marked **[G]** (our reading, a knob; changed on the next playtest).
 
 ## 2. Frame
@@ -58,8 +68,7 @@ Everything below that the user did not decide is marked **[G]** (our reading, a 
 - Debug range **82000–82999** (claimed here; DUEL_GAMEPLAY "Debug commands"). Gate command for his pairings: 2156–2162
   (k 21–27), character gate 2142.
 - Dropped from the old kit: the eye (the base form's U is a plain guard), TENSHIN's dash switch, the crossing
-  slow motion, Hoho → KIN, the stance's charge bonus and its HIRENKYAKU step, HOSHA, the Trompete reflect / seal,
-  SABAKI's erupting ground lines. Kept: the owl's revival (decision V1) and MUJITTAI on U in every awakened form (decision V2).
+  slow motion, Hoho → KIN, the stance's charge bonus and its HIRENKYAKU step, HOSHA. Kept: the owl's revival (decision V1) and MUJITTAI on U in every awakened form (decision V2).
 
 ## 3. 萬物貫通 THE X-AXIS (one rule, every move that carries it)
 
@@ -112,7 +121,7 @@ Two forms of one awakening: **近戰 melee** `:barro :jilliel-kin` (KIN's wing b
 | L | `:br-to-en` | to ranged (a 12 f turn, clip `:lb-w-fold` then EN's stance) [G] |
 | J3 → L | `:br-backstep` 後撤 | a 5 m back-dash over 14 f (clip `:lb-w-tenshin`, iframes f0–6), lands in ranged mode |
 | K3 → L | `:br-recall` 回收 | takes every live trace off the field, counts n, then plays the derivative string for n (§5.4) |
-| SP1 / SP2 | as ranged SP1 / SP2 | go to ranged and lay (§5.2) [G]: the awakening's damage comes from traces and the recall |
+| SP1 / SP2 | `:br-sanren-w` / `:br-nijushi` | fire directly, the old KIN moves (decision V3) |
 | U | MUJITTAI `:jilliel-kin-mujittai` (decision V2) | any command drops it back to melee |
 | P (≤ 4 Konpaku, free state) | the owl's revival | §6 |
 | Breaker, O | `:br-w-breaker`, `:br-w-kikon` | as the old (Kikon 3) |
@@ -156,8 +165,8 @@ at the opponent ("主要輸出手段"). Damage is the knob to tune at the gate [
 
 P in either awakened mode at ≤ 4 Konpaku, from a free state → the owl, as the old (`br-revive-cine`, Konpaku → 1, Reishi
 full, traces cleared). Two modes on the same rules as §5: **owl melee** `:shin-kin` (claws `:lb-o-q1..f3`), **owl ranged**
-`:shin` (EN casts `:lb-oe-q1..`, SP1 `:lb-oe-sabaki` lays 3 lines, SP2 `:lb-oe-trompete` lays the thick line, no reflect,
-no seal), U MUJITTAI in both (decision V2). ×1.1 dealt, ×1.1 taken, +1 f on every move, refunds 5 / 2, Kikon 4 (the old owl's numbers). The recall's
+`:shin` (EN casts `:lb-oe-q1..`, SP1 `:lb-oe-sabaki` lays 3 lines, SP2 `:lb-oe-trompete` lays the thick line); owl
+melee SP1 MISUJI and SP2 Trompete fire directly with the reflect and seal (decision V3), U MUJITTAI in both (decision V2). ×1.1 dealt, ×1.1 taken, +1 f on every move, refunds 5 / 2, Kikon 4 (the old owl's numbers). The recall's
 derivative strings use the claws' clips (`:lb-o-*`, `:lb-o-chop` for the last hit).
 
 ## 7. Animation: what is reused, what is new
