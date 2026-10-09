@@ -72,6 +72,8 @@ all PASS, 108 stills identical; final head: §5).
 
 ## 6. Deferred (next round, with what to measure first)
 
+The actionable backlog with sites, first measurements and done criteria is `REFACTOR_NEXT.md` (N1-N7).
+
 - **`defdebug`** (the user's item 2, 「第 2 項下一輪再做」): one declaration per debug command range carrying its handler
   and its line of the DUEL_GAMEPLAY table, which it generates (B2 found the header and the doc had drifted apart).
 - D11 / C12: Ichigo's and Senjumaru's HUD meters cons per frame (`list`, `sort`, `format`); Lille's equivalents are probe

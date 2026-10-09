@@ -135,7 +135,7 @@ tools/pkgcheck.sh duel                   # ECL never warns about undefined / une
 | `docs/README.md` | the index of every doc, one line each |
 | `docs/DEVLOG.zh-TW.md` | the decision log (numbered §, newest last), why things are the way they are |
 | `docs/guides/` | `TUTORIAL.zh-TW.md` (learning path), `PLAYBOOK.zh-TW.md` (reusable experience), `DREAM_RSI.zh-TW.md` (the AI search experience), `CHARACTER_DESIGN.zh-TW.md` (designing a fighter, from Lille: the ⚠ questions to ask first) |
-| `docs/engine/` | `ARCHITECTURE.md`, `ENGINE_API.md`, `AUDIO.md`, `WORLD.md` (+ `world-shots/`), `REFACTOR_2026-10.md` (the refactor: verdicts, determinism rules for helpers, deferred list) |
+| `docs/engine/` | `ARCHITECTURE.md`, `ENGINE_API.md`, `AUDIO.md`, `WORLD.md` (+ `world-shots/`), `REFACTOR_2026-10.md` (the refactor: verdicts, determinism rules for helpers), `REFACTOR_NEXT.md` (the next round's backlog) |
 | `docs/raven-edge/` | `GAME_DESIGN.md`, `GAMEPLAY.md` |
 | `docs/duel/` | `DUEL_DESIGN.md` (rules + move tables, the source of truth), `DUEL_GAMEPLAY.md` (build, debug commands, gates), `DUEL_STRINGS.md`, per character (`DUEL_YAMA_REWORK`, `DUEL_NOZARASHI_V2`, `DUEL_KEN_BANKAI`, `DUEL_RUKIA`, `DUEL_ICHIGO`, `DUEL_SENJUMARU`, `DUEL_LILLE` (in design)), systems (`DUEL_AI_V2`, `DUEL_LEARNING`, `DUEL_ASSIST`, `DUEL_ENDLESS`, `DUEL_MOBILE_DESIGN`) |
 | `docs/style/` | `STYLE_STORM_RESEARCH.md`, `STYLE_STORM_DESIGN.md` (the ink look, its numbers and gates) |
