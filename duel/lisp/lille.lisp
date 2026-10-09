@@ -728,16 +728,13 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
   (latch nil) (switch-t -1 :type fixnum) (trace-hit-t -1 :type fixnum) (link-t -1 :type fixnum) (link-from nil)
   (awake-t -1 :type fixnum) (revive-t -1 :type fixnum)   ; ticks of the awakening and the revival (the pacing log)
   (sig-origin nil)                        ; the combat log only: what opened his current combo (LB-SIG-LOG)
-  (cross-off 9999 :type fixnum)           ; sim frames the opponent has been off all his live traces (decision 44)
-  (acc nil))                              ; the pacing log's counters (debug)
+  (cross-off 9999 :type fixnum))          ; sim frames the opponent has been off all his live traces (decision 44)
 (defvar *lb* (vector (make-lbs) (make-lbs)) "Per side: his eye, the seal, the shooting stance, the traces.")
 (defvar *lb-reflect-test* nil "Debug 79007 / 79008: P2 reflects P1's Trompete by a guard (:guard) / a perfect Hoho (:hoho).")
 (defun lb (e)
-  "E's state; a new fighter entity (a new match) gets a fresh one, keeping only the pacing log's counters (Senjumaru's
-carry-over bug, DEVLOG §38-§39)."
+  "E's state; a new fighter entity (a new match) gets a fresh one (Senjumaru's carry-over bug, DEVLOG §38-§39)."
   (let* ((i (fighter-side (fighter e))) (st (svref *lb* i)))
-    (if (eql (lbs-e st) e) st (setf (svref *lb* i) (make-lbs :e e :acc (lbs-acc st))))))
-(defmacro lb-count (e key &optional (n 1)) `(incf (getf (lbs-acc (lb ,e)) ,key 0) ,n))
+    (if (eql (lbs-e st) e) st (setf (svref *lb* i) (make-lbs :e e)))))
 (defun lb-band (d) "The pacing log's distance band of D metres: :near (< 8) :mid (8-14) :far (>= 14)." (cond ((< d 8.0) :near) ((< d 14.0) :mid) (t :far)))
 (defun lb-band-key (prefix d) (intern (format nil "~a-~a" prefix (lb-band d)) :keyword))
 
@@ -782,12 +779,12 @@ check on its f59, the traces' end on the revival, KIN's last string (his CPU's s
     (let ((to (and (eq (fighter-state f) :hoho) (lb-hoho-target form))))   ; decision 37: a Hoho in EN lands in KIN (this
       (when to                                              ; step: the Hoho's frame 0, START-HOHO ran in the fighter system;
         (set-form e to)                                     ; the traces stay live for the next L)
-        (lb-count e (if (lb-owl-form-p to) :owl-hoho-kin :hoho-kin))
+        (pace e (if (lb-owl-form-p to) :owl-hoho-kin :hoho-kin))
         (setf form to)))
     (when (and (not (eq form :base)) (minusp (lbs-awake-t st)))
-      (setf (lbs-awake-t st) *match-tick*) (lb-count e :awaken-tick *match-tick*))
+      (setf (lbs-awake-t st) *match-tick*) (pace e :awaken-tick *match-tick*))
     (when (and (lb-owl-form-p form) (minusp (lbs-revive-t st)))
-      (setf (lbs-revive-t st) *match-tick*) (lb-count e :revive-tick *match-tick*)
+      (setf (lbs-revive-t st) *match-tick*) (pace e :revive-tick *match-tick*)
       (lb-clear-traces e))                                  ; (gone on the revival, §22.2)
     (if (eq form :base) (lb-eye-step e f st) (setf (lbs-u-up st) 0))
     (unless (eq form :base) (lb-trace-cross e))            ; his live traces vs the opponent (decision 44)
@@ -796,8 +793,10 @@ check on its f59, the traces' end on the revival, KIN's last string (his CPU's s
              (set-form e (kit-drop-to (fighter-kit f)))
              (clog "~a MUJITTAI dropped: the perfect Hoho's counter" (side-name e)))
            (incf (lbs-stance st))
-           (lb-count e :stance-frames)
-           (setf (getf (lbs-acc st) :stance-max) (max (getf (lbs-acc st) :stance-max 0) (lbs-stance st))))
+           (pace e :stance-frames)
+           (when *pacing-log*
+             (setf (getf (svref *pacing* (fighter-side f)) :stance-max)
+                   (max (getf (svref *pacing* (fighter-side f)) :stance-max 0) (lbs-stance st)))))
           (t (setf (lbs-stance st) 0)))
     (let ((mv (and (eq (fighter-state f) :move) (fighter-move f))))   ; KIN's string (LB-AI-KIN): its last link, contact
       (when (and mv (member form '(:jilliel-kin :shin-kin)) (member (mv-kind mv) '(:quick :flash)))
@@ -848,11 +847,11 @@ spent; the third opening sets the awakening gauge to EVOLUTION unless he is awak
   (let ((g (gauges e)))
     (multiple-value-bind (left evo) (lb-eye-open (lbs-eyes st) (gauges-awakened g))
       (setf (lbs-eyes st) left (lbs-eye-t st) *match-tick* (fighter-invuln f) (max (fighter-invuln f) *lb-eye-phase*))
-      (lb-count e :eyes)
+      (pace e :eyes)
       (emit :sfx :hoho-out e)
       (when evo
         (setf (gauges-awaken g) (f32 *awaken-max*))
-        (lb-count e :eye-evolution *match-tick*)
+        (pace e :eye-evolution *match-tick*)
         (callout e "SANDO MO ME WO..."))           ; 「三度も眼を開かされるとは…」 (the brush line: batch 3)
       (clog "~a EYE opens, ~d left~:[~; (EVOLUTION)~]" (side-name e) left evo))))
 
@@ -871,7 +870,7 @@ Values the charge."
   "A fresh stance (L from neutral at f0, or after a K link at f4): not up, no charge, its dash unspent, no CPU plan."
   (let ((st (lb e)))
     (setf (lbs-k-up st) nil (lbs-k-tick st) -1 (lbs-charge st) 0 (lbs-dashed st) nil (lbs-k-plan st) nil)
-    (lb-count e :kamae)))
+    (pace e :kamae)))
 
 (defun lb-kamae-pressed (vp)
   "The stance's follow-up a human pressed (buffered, unmodified): :kamae-j / -k / -l / -step, or NIL."
@@ -913,7 +912,7 @@ back) over its 12 f, iframes f0-8, the flash step's vanish (TSUKIWATARI's, the o
         (multiple-value-bind (dx dz) (world-dir e f to st)
           (set-slide e *lb-kamae-dash* 12 dx dz))))
     (setf (fighter-invuln f) (max (fighter-invuln f) *lb-dash-iframes*))
-    (lb-count e :k-dash)
+    (pace e :k-dash)
     (emit :hoho-out e (aref p 0) (aref p 2))
     (emit :sfx :whoosh-light e)))
 (defun lb-kamae-back (e)
@@ -926,7 +925,7 @@ there: round 2, decision 23 「在 step 飛廉腳完之後會直接將準心重�
 (defun lb-k-lock (e)
   "The stance's L, f0: locked on the press (track 0): the jade lane drawn along it (the 10 f before it fires: the visible
 lock), the pacing log (quick / charged)."
-  (lb-count e (if (lbs-k-charged (lb e)) :shot-charged :shot-quick))
+  (pace e (if (lbs-k-charged (lb e)) :shot-charged :shot-quick))
   (lb-spawn-look e :lane *lb-trace-len* 0.5 t)
   (emit :sfx :lb-lock e))
 
@@ -935,7 +934,7 @@ lock), the pacing log (quick / charged)."
 the quick one is flat; the line's look (jade charged, ink quick)."
   (let* ((f (fighter e)) (d (fighter-dist f)) (charged (lbs-k-charged (lb e))))
     (setf (fighter-dmg-bonus f) (if charged (lb-x-bonus d) 0))
-    (lb-count e (lb-band-key "FIRED" d))
+    (pace e (lb-band-key "FIRED" d))
     (lb-spawn-look e :shot 31.0 0.05 charged)
     (emit :sfx :lb-crack e)))
 
@@ -958,9 +957,9 @@ wind-up (:lb-switch-in-c, decision 30; a human's press; his CPU's switch rule, L
         (when (and (>= (fighter-sf f) (+ (mv-s mv) (mv-a mv))) (zerop (fighter-lock f)))
           (let ((vp (pilot-vpad (pilot e))))
             (cond (b (let ((seen (lb-ai-seen b)))
-                       (when (cond ((lb-ai-switch-in-p e b seen *lb-switch-windup-c*) (lb-count e :ai-switch-trace) t)
+                       (when (cond ((lb-ai-switch-in-p e b seen *lb-switch-windup-c*) (pace e :ai-switch-trace) t)
                                    ((lb-ai-web-cancel-p e b f seen) (lb-ai-web-fired e b) t)   ; (the web, HARD)
-                                   ((lb-ai-xfire-cancel-p e b seen) (lb-count e :ai-xfire-cancel) t)   ; (the crossfire)
+                                   ((lb-ai-xfire-cancel-p e b seen) (pace e :ai-xfire-cancel) t)   ; (the crossfire)
                                    ((lb-learn-cancel-p e b seen)))                  ; (a learner's trace read, §24.9)
                          (try-command e f :sig nil nil (lb-switch-cancel-move f)))))   ; (the 2 f cancel, decision 30)
                   ((vpad-command-pressed-p vp :sig nil)
@@ -984,8 +983,8 @@ while its reserve allows (LB-AI-EN-NEXT)."
       (dolist (a (lb-trace-pick fans laid))
         (when (plusp cost) (spend-fs g cost))
         (lb-lay-trace e src a group))
-      (when (< laid (length fans)) (lb-count e :traces-unpaid (- (length fans) laid)))
-      (when (and (plusp laid) (lb-owl-form-p (fighter-form f))) (lb-count e :owl-traces laid)))
+      (when (< laid (length fans)) (pace e :traces-unpaid (- (length fans) laid)))
+      (when (and (plusp laid) (lb-owl-form-p (fighter-form f))) (pace e :owl-traces laid)))
     (emit :sfx :rift-cut e)
     (when (member (mv-kind mv) '(:quick :flash))
       (setf (fighter-chained f) t)
@@ -1008,13 +1007,13 @@ live (the oldest dropped first: LB-TRACE-DROP-P). Laying it deals nothing (decis
 out); the opponent crossing it slows the match (LB-HZ's :step, LB-CROSS-P)."
   (let ((st (lb e)) (p (pos-of e)) (r (if (eq src :sp2) *lb-trace-r-thick* *lb-trace-r*)))
     (multiple-value-bind (n old) (lb-live-traces e)
-      (when (lb-trace-drop-p n) (destroy-entity old) (lb-count e :traces-dropped)))
+      (when (lb-trace-drop-p n) (destroy-entity old) (pace e :traces-dropped)))
     (spawn-hazard :lb-trace e :x (aref p 0) :z (aref p 2) :yaw (+ (yaw-of e) (deg yaw-off)) :size *lb-trace-len*
                               :life *lb-trace-life* :hook 'lb-hz :look 'lb-trace-look :group group
                               :data (make-lbh :kind :trace :src src :id (incf (lbs-trace-n st)) :live t :fresh t
                                               :len (f32 *lb-trace-len*) :width (f32 r)
                                               :vol (make-vol :cap (list 0.6 *lb-trace-len* 1.2 r))))
-    (lb-count e :traces)))
+    (pace e :traces)))
 
 (defun lb-trace-materialise! (d mult)
   "Trace data D at a switch: a live one stops being live and gives the hit it deals now (LB-TRACE-HITWIN x MULT); a
@@ -1046,7 +1045,7 @@ KIN Trompete's blast, :beam at the move's width, decision 40), and it is gone af
                        (emit :sfx :explode e))
                 (lb-spawn-look-at e :judge x z yaw 31.0 w (if (> w 0.9) :thick t)))))
         (dolist (l looks) (destructuring-bind (kind x z yaw w) l (declare (ignore w)) (lb-spawn-look-at e kind x z yaw 31.0 0.05 t))))
-    (when looks (lb-count e :materialised (length looks)))))
+    (when looks (pace e :materialised (length looks)))))
 
 (defun lb-clear-traces (e)
   "His traces vanish (the revival, §22.2; a reset's CLEAR-HAZARDS takes them too)."
@@ -1083,8 +1082,8 @@ the dash's end if sooner: LB-SWITCH-TICK); the J / K latch cleared (LB-LINK-TICK
       (set-slide e dist n (* k (- (fighter-ox f) (aref p 0))) (* k (- (fighter-oz f) (aref p 2)))))
     (setf (fighter-invuln f) (max (fighter-invuln f) *lb-dash-iframes*))
     (let ((price (lb-switch-price (fighter-form f)))) (when (plusp price) (spend-fs (gauges e) price)))
-    (lb-count e (if in :switch-in :switch-out))
-    (when (lb-owl-form-p to) (lb-count e (if in :owl-switch-in :owl-switch-out)))
+    (pace e (if in :switch-in :switch-out))
+    (when (lb-owl-form-p to) (pace e (if in :owl-switch-in :owl-switch-out)))
     (emit :hoho-out e (aref p 0) (aref p 2))
     (emit :sfx :whoosh-light e)))
 
@@ -1098,13 +1097,13 @@ the dash's end if sooner: LB-SWITCH-TICK); the J / K latch cleared (LB-LINK-TICK
 window's 40 + LB-X-BONUS), the line's look, the pacing log."
   (let* ((f (fighter e)) (d (fighter-dist f)))
     (setf (fighter-dmg-bonus f) (lb-x-bonus d))
-    (lb-count e (lb-band-key "FIRED" d))
+    (pace e (lb-band-key "FIRED" d))
     (lb-spawn-look e :shot 31.0 0.05 t)
     (emit :sfx :lb-crack e)))
 
 (defun lb-line-shot (e)
   "SANREN's shots (f12, f22, f32): the line's look."
-  (lb-count e :sanren-shots)
+  (pace e :sanren-shots)
   (lb-spawn-look e :shot (move-param e :len) 0.04 nil)
   (emit :sfx :rift-cut e))
 
@@ -1115,7 +1114,7 @@ window's 40 + LB-X-BONUS), the line's look, the pacing log."
 
 (defun lb-beam-shot (e)
   "NIJUSHI-KO's / Trompete's first active frame: the beam's look."
-  (lb-count e (if (eq (mv-name (fighter-move (fighter e))) :lb-trompete) :trompete-fired :nijushi-fired))
+  (pace e (if (eq (mv-name (fighter-move (fighter e))) :lb-trompete) :trompete-fired :nijushi-fired))
   (lb-spawn-look e :beam 31.0 (move-param e :width) t)
   (emit :sfx :explode e))
 
@@ -1140,12 +1139,12 @@ lille-art.lisp)."
 3 m / 12 f), no iframes (decision 1)."
   (let* ((p (pos-of e)) (f (fighter e)))
     (set-slide e (move-param e :slide) (move-param e :slide-f) (- (aref p 0) (fighter-ox f)) (- (aref p 2) (fighter-oz f)))
-    (lb-count e (if (eq (mv-name (fighter-move f)) :lb-k-k) :taisha :hiren))
+    (pace e (if (eq (mv-name (fighter-move f)) :lb-k-k) :taisha :hiren))
     (emit :sfx :hoho-out e)))
 
 (defun lb-taisha-fire (e)
   "TAISHA f16: the mid-range bullet (the move's 12 m line, 60 flat: no distance bonus), the line's look."
-  (lb-count e (lb-band-key "FIRED" (fighter-dist (fighter e))))
+  (pace e (lb-band-key "FIRED" (fighter-dist (fighter e))))
   (lb-spawn-look e :shot (move-param e :len) 0.05 nil)
   (emit :sfx :lb-crack e))
 
@@ -1155,12 +1154,12 @@ short of him (a lunge's rule); the J / K latch cleared."
   (let* ((f (fighter e)) (yaw (yaw-of e)) (dist (min *lb-hosha-leap* (max 0.0 (- (fighter-dist f) *lunge-stop*)))))
     (when (> dist 0.01) (set-slide e dist *lb-hosha-leap-f* (fwd-x yaw) (fwd-z yaw)))
     (setf (lbs-latch (lb e)) nil)
-    (lb-count e :hosha)
+    (pace e :hosha)
     (emit :sfx :whoosh-light e)))
 
 (defun lb-bullet (e)
   "HOSHA's bullets (f6, f10, f14): the short line's look from the muzzle (the hit is the move's window)."
-  (lb-count e :hosha-shots)
+  (pace e :hosha-shots)
   (lb-spawn-look e :shot (move-param e :len) 0.04 nil)
   (emit :sfx :rift-cut e))
 
@@ -1210,7 +1209,7 @@ His CPU's link (LB-AI-LINK) is picked once."
               (when (and b hosha) (lb-ai-hosha-loop e (fighter e) b))   ; (HARD: L latched on the K1: HOSHA again)
               (when (and b in (eq c :q)) (lb-ai-route e (fighter e) b))  ; (HARD: J1 -> K2s -> K3, the crossfire's K3)
               (when hosha (setf (fighter-end-chase (fighter e)) t))   ; (TENSHIN's: none, decision 53)
-              (lb-count e (if hosha :hosha-link :tenshin-link)))))))))
+              (pace e (if hosha :hosha-link :tenshin-link)))))))))
 
 (defun lb-switch-tick (e)
   "TENSHIN's frames: no string chase (an L latched after a KIN K link starts as a chained follow-up, and MAIN-PHASE-STEP's
@@ -1265,7 +1264,7 @@ gap G12); each erupts outward from 1 m to 18 m (LB-SABAKI-SPAN), through guard (
                                  :hw (make-hitwin :dmg (move-param e :dmg) :react :stagger :kb 1.0 :hs *hitstop-heavy*
                                                   :chip *lb-x-chip* :guard (move-param e :guard)
                                                   :flags '(:ranged :x-axis :uncatchable))))
-    (lb-count e (if group :misuji :sabaki))
+    (pace e (if group :misuji :sabaki))
     (emit :sfx :ground-crack e)))
 
 (defun lb-trace-cross (e)
@@ -1288,11 +1287,11 @@ whatever else he stands on (decision 45); else stepping onto them after *LB-CROS
               (setf (lbh-fresh d) nil))))
         (case (lb-cross-kind fresh now (lbs-cross-off st))
           (:fresh (slowmo *lb-fresh-scale* *lb-fresh-secs*)
-                  (lb-count e :trace-fresh)
+                  (pace e :trace-fresh)
                   (emit :sfx :rift-open e))
           (:cross (dolist (d on-old) (setf (lbh-cross d) *match-tick*))
                   (slowmo *lb-cross-scale* *lb-cross-secs*)
-                  (lb-count e :trace-cross)
+                  (pace e :trace-cross)
                   (emit :sfx :rift-open e)))))
     (setf (lbs-cross-off st) (lb-cross-off-next now (lbs-cross-off st)))))
 
@@ -1336,7 +1335,7 @@ match. The reflector takes nothing (a Hoho's counter strike is replaced by the r
   (let* ((dmg (lb-reflect-damage (hw-dmg (svref (mv-hits mv) 0)) (kit-mult (kit-of e)))) (q (pos-of o)) (p (pos-of e)))
     (setf (lbs-sealed st) t (fighter-perfect (fighter o)) nil)
     (callout o "REFLECT")
-    (lb-count e (if (eq src :hoho) :reflect-hoho :reflect-guard))
+    (pace e (if (eq src :hoho) :reflect-hoho :reflect-guard))
     (hitstop *hitstop-breaker*)
     (emit :hit o e (aref p 0) (+ (aref p 1) 1.1) (aref p 2) *hitstop-breaker* nil dmg :sp)
     (unless (deal-damage o e dmg)
@@ -1371,29 +1370,29 @@ by band, damage by band, Trompete); the combat log's signature tags (LB-SIG-LOG)
   (let ((x (member :x-axis (hw-flags hw))) (d (fighter-dist (fighter att))))
     (when x
       (case (contact-of res)
-        (:hit (lb-count att (lb-band-key "HIT" d))
+        (:hit (pace att (lb-band-key "HIT" d))
          (when (and mv (not hazard) (getf (mv-params mv) :bonus))
-           (lb-count att (lb-band-key "DMG" d) (+ (hw-dmg hw) (fighter-dmg-bonus (fighter att))))
+           (pace att (lb-band-key "DMG" d) (+ (hw-dmg hw) (fighter-dmg-bonus (fighter att))))
            (when (>= d *lb-far-kb*)
              (let ((p (pos-of att)) (q (pos-of def))) (set-slide def 2.0 12 (- (aref q 0) (aref p 0)) (- (aref q 2) (aref p 2)))))))
-        (:block (lb-count att (lb-band-key "GUARDED" d))))
+        (:block (pace att (lb-band-key "GUARDED" d))))
       (when (and mv (eq (mv-name mv) :lb-trompete))
-        (lb-count att (if (eq (contact-of res) :hit) :trompete-hit :trompete-guarded))))
+        (pace att (if (eq (contact-of res) :hit) :trompete-hit :trompete-guarded))))
     (when (and hazard (lbh-p (hazard-data hazard)) (eq (lbh-kind (hazard-data hazard)) :trace))   ; a materialised trace
       (when (eq (contact-of res) :hit) (setf (lbs-trace-hit-t (lb att)) *match-tick*))
       (let* ((owl (lb-owl-form-p (fighter-form (fighter att)))) (fs (lb-trace-refund (contact-of res) owl)))
         (when (plusp fs)                                    ; its flash step back (decision 34; a fan's group: once;
           (pay-gauges (or (siphon-of att) att) 0.0 fs)      ; the owl's 5 / 2, decision 36)
-          (lb-count att :trace-refund)
-          (when owl (lb-count att :owl-trace-refund fs)))
-        (when owl (lb-count att (if (eq (contact-of res) :hit) :owl-trace-hit :owl-trace-guarded))))
-      (lb-count att (if (eq (contact-of res) :hit) :trace-hit :trace-guarded)))
+          (pace att :trace-refund)
+          (when owl (pace att :owl-trace-refund fs)))
+        (when owl (pace att (if (eq (contact-of res) :hit) :owl-trace-hit :owl-trace-guarded))))
+      (pace att (if (eq (contact-of res) :hit) :trace-hit :trace-guarded)))
     (when (and mv (member (mv-name mv) '(:lb-k-shot :lb-k-j :lb-k-k)))   ; the stance's branches
-      (lb-count att (intern (format nil "~a-~a" (mv-name mv) (if (eq (contact-of res) :hit) "HIT" "BLK")) :keyword)))
+      (pace att (intern (format nil "~a-~a" (mv-name mv) (if (eq (contact-of res) :hit) "HIT" "BLK")) :keyword)))
     (let ((st (lb att)) (f (fighter att)))                  ; a J1 / K1 started from a link (round 2): its hit in the combo
       (when (and mv (not hazard) (lbs-link-from st) (eq (fighter-move f) mv) (eq (contact-of res) :hit)
                  (>= (lbs-link-t st) (- *match-tick* (fighter-sf f) 1)))
-        (lb-count att (if (> (fighter-combo-hits (fighter def)) 1)
+        (pace att (if (> (fighter-combo-hits (fighter def)) 1)
                           (if (eq (lbs-link-from st) :hosha) :hosha-combo :tenshin-combo)
                           (if (eq (lbs-link-from st) :hosha) :hosha-drop :tenshin-drop)))
         (setf (lbs-link-from st) nil)))))
@@ -1403,10 +1402,10 @@ by band, damage by band, Trompete); the combat log's signature tags (LB-SIG-LOG)
   (declare (ignore att hw mv hazard ranged))
   (when (lb-stance-form-p (fighter-form (fighter def)))
     (case res
-      (:blocked (lb-count def :passes)))
-    (when (gauges-guardless (gauges def)) (lb-count def :stance-crushed)))
+      (:blocked (pace def :passes)))
+    (when (gauges-guardless (gauges def)) (pace def :stance-crushed)))
   (when (and (eq res :guard-break) (member (fighter-form (fighter def)) '(:jilliel :jilliel-kin :shin :shin-kin)))
-    (lb-count def :stance-broken)))
+    (pace def :stance-broken)))
 
 ;;; ================================================================ AI: his own CPU (DUEL_LILLE §11.2, §22; batch 3a, rework R)
 ;; the HARD layers' knobs (dream-rsi round 1, b3a2; DUEL_LILLE §24.8): defined before the functions that read them
@@ -1656,11 +1655,11 @@ held from now (its share by AI-GUARD-K), or a sideways Step off a lane / from a 
                (plan (lb-ai-eye-plan r (lb-ai-chance (getf (ai-table e :eye) :p 0.0) (brain-difficulty b))
                                      (lb-ai-eye-ready-p lead (lbs-u-up st) (lbs-eyes st)) dodge (ai-guard-k e))))
           (setf (lbai-key ai) (snap-start s) (lbai-plan ai) plan)
-          (lb-count e (case plan (:eye :ai-eye-plan) (:guard :ai-guard) (t :ai-step)))))
+          (pace e (case plan (:eye :ai-eye-plan) (:guard :ai-guard) (t :ai-step)))))
       (case (lbai-plan ai)
         (:eye (cond ((and (lb-ai-eye-tap-p lead) (>= (lbs-u-up st) *lb-eye-rest*) (plusp (lbs-eyes st)))
                      (setf (lbai-plan ai) :tapped (lbai-tap ai) *match-tick*)
-                     (lb-count e :ai-eye-tap)
+                     (pace e :ai-eye-tap)
                      (ai-press b :guard 2 :act :hold)    ; the tap (LB-EYE-STEP opens it on this step's tick)
                      (why b :eye :none))
                     ((> lead *lb-ai-eye-tap*)            ; not yet: hands off U (it must rest)
@@ -1669,7 +1668,7 @@ held from now (its share by AI-GUARD-K), or a sideways Step off a lane / from a 
                     (t (setf (lbai-plan ai) :guard) (why b :eye-late :guard))))
         (:tapped (if (>= (lbs-eye-t st) (lbai-tap ai))
                      (why b :eye-open :none)              ; intangible: nothing to do till it passes
-                     (progn (setf (lbai-plan ai) :guard) (lb-count e :ai-eye-miss) (why b :eye-miss :guard))))
+                     (progn (setf (lbai-plan ai) :guard) (pace e :ai-eye-miss) (why b :eye-miss :guard))))
         (:guard (why b :eye-guard :guard))
         (:step (setf (lbai-plan ai) :stepped) (why b :eye-step (lb-ai-side-step e b s)))
         (t (why b :eye-stepped :none))))))
@@ -1708,7 +1707,7 @@ generic guard's wider margin. (It can't catch a J1: the perception delay + the 2
                                                   (if (or (gauges-guardless g) (< (gauges-gg g) (getf k :gg 30))) 0.0   ; (it
                                                       (lb-ai-chance (getf k :p 0.0) (brain-difficulty b)))   ; would drop at once)
                                                   (and mv-threat (lb-ai-line-p s))))
-          (lb-count e (case (lbai-plan ai) (:stance :ai-stance) (:step :ai-step) (t :ai-pass))))
+          (pace e (case (lbai-plan ai) (:stance :ai-stance) (:step :ai-step) (t :ai-pass))))
         (case (lbai-plan ai)
           (:stance (setf (lbai-plan ai) :done) (ai-press b :guard 4 :act :hold) (why b :stance :none))
           (:step (setf (lbai-plan ai) :done) (why b :stance-step (lb-ai-side-step e b s)))
@@ -1759,7 +1758,7 @@ on what it sees, no roll."
         (when cmd
           (when (and (/= (lbai-exit ai) t0) (not (eq cmd :none)))   ; (:NONE: KIN's stance holds, b1a2)
             (setf (lbai-exit ai) t0)
-            (lb-count e (case why (:whiff :ai-exit-whiff) (:max :ai-exit-max) (:gauge :ai-exit-gauge) (t :ai-exit-idle))))
+            (pace e (case why (:whiff :ai-exit-whiff) (:max :ai-exit-max) (:gauge :ai-exit-gauge) (t :ai-exit-idle))))
           (why b :stance-exit cmd))))))
 
 (defun lb-ai-trompete (e b s d)
@@ -1770,7 +1769,7 @@ the difficulty. The neutral bands give SP2 only from 8 m: never into an idle opp
     (and k q (> d (+ (mv-reach q) 0.4)) (<= d 30.0) (kit-command-ok-p e :sp2)
          (lb-ai-busy-p s (brain-delay b) (getf k :left 30))
          (< (brain-react-roll b) (lb-ai-chance (getf k :p 0.0) (brain-difficulty b)))
-         (progn (lb-count e :ai-trompete) (why b :trompete :sp2)))))
+         (progn (pace e :ai-trompete) (why b :trompete :sp2)))))
 
 (defun lb-ai-seen (b)
   "The SNAP brain B perceives this step (BRAIN-PERCEIVE's: its ring at the delay; NIL before it holds one): for his ticks,
@@ -1784,7 +1783,7 @@ a hit clears the count (*LB-AI-GUARD-READ*)."
   (let ((ai (lb-ai-state e b)))
     (case contact
       (:hit (setf (lbai-guarded ai) 0))
-      (:block (incf (lbai-guarded ai)) (lb-count e :ai-hosha-guarded)))))
+      (:block (incf (lbai-guarded ai)) (pace e :ai-hosha-guarded)))))
 
 (defun lb-ai-kamae (e f st)
   "His CPU's follow-up in the shooting stance (LB-KAMAE-TICK, from f6): the plan picked once, on the first step it is up
@@ -1813,11 +1812,11 @@ the dash back (then the charged shot), or the charged shot once the charge reach
                                          (and (eq (fighter-state fo) :move) (eq (fighter-phase fo) :dash)))))
         (setf plan (lb-ai-space-plan (member (fighter-state fo) '(:stun :air))
                                      (and (not (lbs-dashed st)) (>= (gauges-fs (gauges e)) *lb-kamae-dash-fs*))))
-        (lb-count e :ai-space))
+        (pace e :ai-space))
       (when (and (eq plan :j) (>= (lb-ai-level *lb-ai-hunt* b) 1.0) (not (member (fighter-state fo) '(:stun :air)))
                  (>= (lbai-guarded (lb-ai-state e b)) *lb-ai-guard-read*))   ; (the guard read: b3a0)
         (decf (lbai-guarded (lb-ai-state e b)))           ; (one pierce, then HOSHA is tried again)
-        (lb-count e :ai-guard-read)
+        (pace e :ai-guard-read)
         (setf plan :k))
       (when (and (>= (lb-ai-level *lb-ai-blow* b) 1.0) (member (fighter-state fo) '(:air :down :wakeup)))
         (setf plan (if (and (not (lbs-dashed st)) (>= (gauges-fs (gauges e)) *lb-kamae-dash-fs*)) :dash-oki :oki)))
@@ -1828,7 +1827,7 @@ the dash back (then the charged shot), or the charged shot once the charge reach
         (when (eq plan :k) (setf plan (lb-ai-taisha-read e b))))                     ; (b3a2: his answer to it read)
       (setf plan (lb-learn-kamae e b f plan))                                        ; (a learner's HOSHA read, §24.9)
       (setf (lbs-k-plan st) plan)
-      (lb-count e (intern (format nil "AI-KAMAE-~a" plan) :keyword))))
+      (pace e (intern (format nil "AI-KAMAE-~a" plan) :keyword))))
   (case (lbs-k-plan st)
     (:l (lb-ai-composure e (brain e)) :kamae-l) (:j (lb-ai-composure e (brain e)) :kamae-j)
     (:k (lb-ai-composure e (brain e)) :kamae-k)
@@ -1856,7 +1855,7 @@ crossfire EN's J1, laid at him (b3a0). AI-BRAIN: his CPU's, or the ASSIST's for 
           ((and hosha (>= (lb-ai-level *lb-ai-link-k* (ai-brain e)) 1.0)) :f)   ; (K1: L after it reopens the stance)
           ((and (not hosha) (lb-en-form-p form) (ai-brain e) (lb-ai-xfire-live-p e (ai-brain e))   ; (the crossfire)
                 (lb-ai-lay-ok-p (gauges-fs (gauges e)) :j))
-           (lb-count e :ai-xfire-link) :q)
+           (pace e :ai-xfire-link) :q)
           (t plan))))
 
 (defun lb-ai-trace-gap (e x z)
@@ -1892,16 +1891,16 @@ regains the flash step). No roll."
   (let ((j1 (kit-command-move (kit-of e) :q)) (fs (gauges-fs (gauges e))))
     (cond ((and j1 (lb-ai-lay-ok-p fs :j) (kit-command-ok-p e :q)
                 (lb-ai-switch-in-p e b s (+ (mv-s j1) (mv-a j1) *lb-switch-windup-c*)))
-           (lb-count e :ai-switch-via-j) (why b :switch-via-j :q))
+           (pace e :ai-switch-via-j) (why b :switch-via-j :q))
           ((and (lb-ai-switch-in-p e b s *lb-switch-windup*) (not (lb-learn-hold-p e b s)))   ; (a learner's read, §24.9)
-           (lb-count e :ai-switch-trace) (why b :switch-in :sig))
+           (pace e :ai-switch-trace) (why b :switch-in :sig))
           ((lb-ai-stance-in e b s d))
           ((lb-ai-web-lay e b s d))                                 ; (the web, HARD)
           ((lb-ai-poor-web e b s d))                                ; (b3a1: starved, the bar's three lines)
           ((and (lb-ai-switch-in-p e b s *lb-switch-windup* (not (lb-ai-lay-ok-p fs :j)))
                 (or (< (lb-ai-level *lb-ai-starve* b) 1.0) (lb-ai-busy-p s (brain-delay b) *lb-switch-windup*))
                 (not (lb-learn-hold-p e b s)))
-           (lb-count e :ai-switch-starved) (why b :switch-starved :sig)))))
+           (pace e :ai-switch-starved) (why b :switch-starved :sig)))))
 
 (defun lb-ai-kin (e b s d)
   "KIN (free; DUEL_LILLE §22.2): TENSHIN out (to EN) after a string (its last link run out, LILLE-TICK's record; a blocked
@@ -1913,7 +1912,7 @@ EN's lines after it (LB-AI-OUT-OK-P: EN never arrives starved); else the stance 
                          ((< (gauges-gg (gauges e)) (getf k :gg 40)) :gauge)))))
     (if (and why (kit-command-ok-p e :sig))
         (progn (setf (lbs-kin-last st) nil)
-               (lb-count e (case why (:block :ai-switch-block) (:string :ai-switch-string) (t :ai-switch-gauge)))
+               (pace e (case why (:block :ai-switch-block) (:string :ai-switch-string) (t :ai-switch-gauge)))
                (why b :switch-out :sig))
         (or (lb-ai-stance-in e b s d) (lb-ai-kin-run e b s d) (lb-ai-kin-snipe e b s d)))))
 
@@ -1930,7 +1929,7 @@ within the Kikon range (the rush)."
   (when (and (>= (lb-ai-level *lb-ai-kin-run* b) 1.0) (>= (gauges-fs (gauges e)) (+ *lb-switch-fs* *lb-ai-kin-run-fs*))
              (kit-command-ok-p e :sig) (not (lb-ai-punish-p e b s d)))
     (setf (lbs-kin-last (lb e)) nil)
-    (lb-count e :ai-switch-run)
+    (pace e :ai-switch-run)
     (why b :switch-run :sig)))
 
 (defun lb-ai-en-stick (e f)
@@ -2049,14 +2048,14 @@ first number of frames, 3 from its second (*LB-AI-WEB-VOLLEY*)."
 (defun lb-ai-web-fired (e b)
   "EN's tick just cancelled into TENSHIN for the web: its tick, for the wary read (LB-AI-WEB-SETTLE)."
   (setf (lbai-web-sw (lb-ai-state e b)) *match-tick*)
-  (lb-count e :ai-switch-web))
+  (pace e :ai-switch-web))
 (defun lb-ai-web-settle (e ai)
   "The wary read's count, once per web switch: its traces hit him (LBS-TRACE-HIT-T at or after it) or missed."
   (when (> (lbai-web-sw ai) (lbai-web-seen ai))
     (setf (lbai-web-seen ai) (lbai-web-sw ai))
     (if (>= (lbs-trace-hit-t (lb e)) (lbai-web-sw ai))
         (setf (lbai-web-miss ai) 0)
-        (progn (incf (lbai-web-miss ai)) (lb-count e :ai-web-miss)))))
+        (progn (incf (lbai-web-miss ai)) (pace e :ai-web-miss)))))
 
 (defun lb-ai-web-cancel-p (e b f s)
   "EN's tick, an EN attack past its active end (the web, HARD): TENSHIN ready, him not guarding (a guarded line is chip,
@@ -2085,7 +2084,7 @@ next links follow (LB-AI-EN-NEXT) until the tick materialises the web (LB-AI-WEB
       (lb-ai-web-settle e ai)
       (when (and (>= *match-tick* (lbai-web-t ai)) (lb-ai-web-wary-p (lbai-web-miss ai) (snap-state s)))
         (setf (lbai-web-t ai) (+ *match-tick* *lb-ai-web-every*))
-        (lb-count e :ai-web-lay)
+        (pace e :ai-web-lay)
         (why b :web-lay :q)))))
 
 (defun lb-ai-hosha-loop (e f b)
@@ -2096,7 +2095,7 @@ reeling opponent): bullets -> K1 -> the stance -> HOSHA ... No roll."
     (when (and (>= (lb-ai-level *lb-ai-hosha-loop* b) 1.0) mv (null (fighter-queued f))
                (kit-l-link kit (mv-name mv)) (kit-command-ok-p e :sig kit nil (kit-l-link kit (mv-name mv))))
       (setf (fighter-queued f) :sig)
-      (lb-count e :ai-hosha-loop))))
+      (pace e :ai-hosha-loop))))
 
 (defun lb-ai-sp-ender (e kit)
   "The base form's and KIN's :sp-ender (ai.lisp STRING-REFLEX: a landed string's last link, no O ender rolled, the victim on
@@ -2114,9 +2113,9 @@ on, DUEL_LILLE §24.10; never :NONE)."
              (if (eq sp :sig)
                  (let ((l (kit-l-link kit (mv-name mv)))) (and l (kit-command-ok-p e :sig kit nil l)))
                  (kit-command-ok-p e sp kit))
-             (progn (lb-count e (case sp (:sp1 :ai-sp-ender-1) (:sig :ai-sp-ender-l) (t :ai-sp-ender))) sp))
+             (progn (pace e (case sp (:sp1 :ai-sp-ender-1) (:sig :ai-sp-ender-l) (t :ai-sp-ender))) sp))
         (and on (eq b (brain e)) (lb-kin-form-p (kit-form kit))
-             (progn (lb-count e :ai-sp-ender-none) :none)))))
+             (progn (pace e :ai-sp-ender-none) :none)))))
 
 (defun lb-ai-ender-sp (form react)
   "The follow-up that still combos off a string's last link whose hit is a REACT in FORM (pure; b3a0): KIN's crumple (K3,
@@ -2145,7 +2144,7 @@ L, latched on the K link (KIT-L-LINK), TENSHIN out at the chain's opening; its l
 line materialised at once through the 2 f cancel (LB-AI-XFIRE-CANCEL-P), then TENSHIN in's J (the shipped trace-hit link)."
   (when (lb-ai-xfire-ok-p e kit)
     (setf (lbai-xfire (lb-ai-state e (ai-brain e))) *match-tick*)
-    (lb-count e :ai-xfire)
+    (pace e :ai-xfire)
     :sig))
 
 (defun lb-ai-xfire-live-p (e b)
@@ -2170,7 +2169,7 @@ or not (KIKON-READY-P), the answer the same link has: the crossfire (KIN's K3), 
              (member (snap-state s) '(:idle :run :move :stun)) (kit-command-ok-p e :sig)
              (not (and (>= (lb-ai-level *lb-ai-rush-wary* b) 1.0) (lb-ai-rush-p s))))   ; (b1a1: not into his rush)
     (setf (lbai-hunt (lb-ai-state e b)) *match-tick*)
-    (lb-count e :ai-hunt)
+    (pace e :ai-hunt)
     (why b :hunt :sig)))
 
 ;;; ---------------------------------------------------------------- the refine (dream-rsi round 1, cell b3a1, from b3a0)
@@ -2223,7 +2222,7 @@ Hoho-ing / guarding: SP1's three lines at him (the web's cancel materialises the
   (when (and (>= (lb-ai-level *lb-ai-en-exit* b) 1.0) (<= (first *lb-ai-web-band*) d (second *lb-ai-web-band*))
              (not (lb-ai-lay-ok-p (gauges-fs (gauges e)) :j))
              (not (member (snap-state s) '(:step :hoho :guard :guard-hit))) (lb-ai-en-sp1-p e))
-    (lb-count e :ai-poor-web)
+    (pace e :ai-poor-web)
     (why b :poor-web :sp1)))
 ;; the pendulum's route (b3a1; b2a0's latch, for b3a0's crossfire)
 (defparameter *lb-ai-route* '(:easy 0.0 :normal 0.0 :hard 1.0)
@@ -2238,7 +2237,7 @@ K3). No roll."
   (let ((mv (fighter-move f)))
     (when (and (>= (lb-ai-level *lb-ai-route* b) 1.0) mv (null (fighter-queued f)) (kit-next (fighter-kit f) (mv-name mv) :f))
       (setf (fighter-queued f) :f)
-      (lb-count e :ai-route))))
+      (pace e :ai-route))))
 ;; KIN's snipe (b3a1)
 (defparameter *lb-ai-kin-snipe* '(:easy 0.0 :normal 0.0 :hard 1.0)
   "KIN's snipe (dream-rsi b3a1, 2026-10-07): KIN free with nothing to cash and no flash step to run (LB-AI-KIN-RUN), him
@@ -2253,7 +2252,7 @@ within reach + 1 m, no rush, not stepping / Hoho-ing / down): SP1. No roll."
       (when (and sp (eq (mv-name sp) :lb-sanren) (<= d 18.0)
                  (member (snap-state s) '(:idle :run :guard :guard-hit))
                  (not (lb-ai-threat-p e s d 1.0)) (not (lb-ai-rush-p s)) (kit-command-ok-p e :sp1))
-        (lb-count e :ai-kin-snipe)
+        (pace e :ai-kin-snipe)
         (why b :kin-snipe :sp1)))))
 ;; the composure (b2a0's mechanism; b3a1): see *LB-AI-COMPOSURE*
 (defparameter *lb-ai-composure* '(:easy 0.0 :normal 0.0 :hard 1.0)
@@ -2268,7 +2267,7 @@ from him (b3a0's file: 0.17 ORANGEs a match, the base form's largest plain sourc
   "The stance's plan fires HOSHA (his CPU, *LB-AI-COMPOSURE*'s level): J held *LB-AI-COMPOSURE-F* frames. No roll."
   (when (>= (lb-ai-level *lb-ai-composure* b) 1.0)
     (ai-press b :quick *lb-ai-composure-f* :act :hold)
-    (lb-count e :ai-composure)))
+    (pace e :ai-composure)))
 (defparameter *lb-ai-oki-hiren* '(16 18)
   "The wake-up shot too late for a charge (dream-rsi b3a1, 2026-10-07; b0a2's timing for its execution shot, here on every
 late wake-up): SP2 HIRENKYAKU (the 6 m back-slide, the X-Axis shot at its f20) pressed with this many frames (perceived) to
@@ -2295,11 +2294,11 @@ LEFT in *LB-AI-OKI-HIREN* (b3a1); before, between and after, hands off till he s
             ((> left lead) (why b :oki-wait :none))
             ((and (>= left (- lead 2)) (kit-command-ok-p e :sig))
              (setf (lbai-oki (lb-ai-state e b)) *match-tick*)
-             (lb-count e :ai-oki-shot)
+             (pace e :ai-oki-shot)
              (why b :oki-shot :sig))
             ((and (<= (first *lb-ai-oki-hiren*) left (second *lb-ai-oki-hiren*)) (let ((sp (kit-command-move (kit-of e) :sp2))) (and sp (eq (mv-name sp) :lb-hiren)))
                   (kit-command-ok-p e :sp2))                     ; (too late for a charge: HIRENKYAKU's back-slide, its
-             (lb-count e :ai-oki-hiren)                          ; X-Axis shot at f20 on his first hittable frames; b0a2's
+             (pace e :ai-oki-hiren)                          ; X-Axis shot at f20 on his first hittable frames; b0a2's
              (why b :oki-hiren :sp2))                            ; timing)
             (t (why b :oki-late :none))))))
 (defun lb-ai-oki-stance-p (e b f)
@@ -2330,7 +2329,7 @@ stance holds, *LB-AI-KIN-HOLD*). No roll."
   (when (and (>= (lb-ai-level *lb-ai-kin-hold* b) 1.0) (member (kit-form (kit-of e)) '(:jilliel-kin-mujittai :shin-kin-mujittai))
              (not (lb-ai-rush-p s)))
     (if (and (>= (gauges-fs (gauges e)) (+ *lb-switch-fs* *lb-ai-kin-run-fs*)) (kit-command-ok-p e :sig))
-        (progn (lb-count e :ai-kin-hold-out) (why b :kin-hold-out :sig))
+        (progn (pace e :ai-kin-hold-out) (why b :kin-hold-out :sig))
         (why b :kin-hold :none))))
 
 (defparameter *lb-ai-turtle* '(:easy 0.0 :normal 0.0 :hard 1.0)
@@ -2346,7 +2345,7 @@ back when it can't pay), EN a hop back. No roll."
           ((and (eq (snap-state s) :guard) (>= (snap-guard-t s) *ai-guard-break-hold*) (< d *ai-guard-break-range*)
                 (/= (brain-break-key b) (snap-start s)))
            (setf (brain-break-key b) (snap-start s))
-           (lb-count e :ai-turtle)
+           (pace e :ai-turtle)
            (case (kit-form (kit-of e))
              (:base (when (kit-command-ok-p e :sig)
                       (setf (lbai-turtle (lb-ai-state e b)) *match-tick*)
@@ -2366,7 +2365,7 @@ guard, the stance against it (LB-AI-TURTLE-STANCE-P); else hands off (:NONE). No
     (if (and (or (<= d *ai-guard-break-range*) (and (eq (snap-state s) :guard) (>= (snap-guard-t s) *ai-guard-break-hold*)))
              (kit-command-ok-p e :sig))
         (progn (setf (lbai-turtle (lb-ai-state e b)) *match-tick*)
-               (lb-count e :ai-held-aim-shot)
+               (pace e :ai-held-aim-shot)
                (why b :held-aim-shot :sig))
         (why b :held-aim :none))))
 (defparameter *lb-ai-kin-cash* '(:easy 0.0 :normal 0.0 :hard 1.0)
@@ -2379,7 +2378,7 @@ within the Kikon's range (the generic rush takes his Konpaku): SP1. No roll."
     (let ((sp (kit-command-move (kit-of e) :sp1)))
       (when (and sp (<= d 18.0) (lb-ai-busy-p s (brain-delay b) (mv-s sp)) (kit-command-ok-p e :sp1)
                  (not (and (kikon-ready-p e) (member (snap-state s) '(:stun :air)) (< d (ai-table e :kikon-range 7.0)))))
-        (lb-count e :ai-kin-cash)
+        (pace e :ai-kin-cash)
         (why b :kin-cash :sp1)))))
 
 ;;; ---------------------------------------------------------------- the refine (dream-rsi round 1, cell b3a2, from b3a1)
@@ -2431,7 +2430,7 @@ anti-rush answers it). Counted once per break. No roll."
         (let ((ai (lb-ai-state e b)) (t0 (- *match-tick* age)))
           (when (> (abs (- t0 (lbai-burst ai))) 2)
             (setf (lbai-burst ai) t0)
-            (lb-count e :ai-burst-wait)))
+            (pace e :ai-burst-wait)))
         (why b :burst-wait :none)))))
 ;; the TAISHA read (adaptive, one read per TAISHA)
 (defparameter *lb-ai-taisha-read* '(:easy 0.0 :normal 0.0 :hard 1.0)
@@ -2457,7 +2456,7 @@ remembered (its tick, his Reishi) for LB-AI-TAISHA-SETTLE. No roll."
         (if (eq plan :k)
             (setf (lbai-taisha ai) *match-tick* (lbai-taisha-hp ai) (gauges-reishi (gauges e))
                   (lbai-taisha-kon ai) (gauges-konpaku (gauges e)))
-            (lb-count e :ai-taisha-read))
+            (pace e :ai-taisha-read))
         plan)))
 (defun lb-ai-taisha-settle (e b)
   "His first free step after a TAISHA at a guard (*LB-AI-TAISHA-READ*): punished (his own Reishi or Konpaku fell since)
@@ -2467,7 +2466,7 @@ else the count clears; then forgotten. Always NIL (a bookkeeping step in LB-AI-R
     (let ((ai (lb-ai-state e b)))
       (when (and (>= (lbai-taisha ai) 0) (> *match-tick* (+ (lbai-taisha ai) 2)))
         (if (or (< (gauges-reishi (gauges e)) (lbai-taisha-hp ai)) (< (gauges-konpaku (gauges e)) (lbai-taisha-kon ai)))
-            (progn (incf (lbai-punished ai)) (lb-count e :ai-taisha-punished))
+            (progn (incf (lbai-punished ai)) (pace e :ai-taisha-punished))
             (setf (lbai-punished ai) 0))
         (setf (lbai-taisha ai) -9))))
   nil)
@@ -2485,7 +2484,7 @@ the charged shot when LB-AI-BLOW-FIRE-P (his wake-up read off the perceived SNAP
     (if (lb-ai-blow-fire-p (lb-kamae-charged-p (lbs-charge st)) left
                            (and sn (not (member (snap-state sn) '(:air :down :wakeup))))
                            (fighter-sf f))
-        (progn (setf (lbs-k-plan st) :charge) (lb-count e :ai-blow-shot) (lb-ai-composure e b) :kamae-l)
+        (progn (setf (lbs-k-plan st) :charge) (pace e :ai-blow-shot) (lb-ai-composure e b) :kamae-l)
         (progn (when b (ai-press b :sig 3 :act :hold)) nil))))
 
 (defun lb-opp-trace (e b s d)
@@ -2508,9 +2507,9 @@ forms can't."
                 (setf on hz)))))
         (when on
           (setf (lbs-opp-roll st) newest)
-          (lb-count o :opp-trace-roll)
+          (pace o :opp-trace-roll)
           (when (< (sim-rnd01) (opp-chance (getf k :p 0.0) (brain-difficulty b)))
-            (lb-count o :opp-trace-step)
+            (pace o :opp-trace-step)
             (let ((q (pos-of o)))
               (setf (brain-strafe b) (f32 (line-off-strafe (hazard-x on) (hazard-z on) (hazard-yaw on) (aref p 0) (aref p 2)
                                                            (aref q 0) (aref q 2)))))
@@ -2612,7 +2611,7 @@ would replace the route's K / L); else NIL."
 (defun lb-as-press (e a key cmd)
   "A route press: the route runs on; KEY counted in his pacing log (the gates' route counts). CMD."
   (setf (lbas-route a) t)
-  (lb-count e key)
+  (pace e key)
   cmd)
 
 (defun lb-as-unhold (e b vp)
@@ -2644,7 +2643,7 @@ CPU's link (LB-AI-LINK at HARD: K1; none into a blown-away opponent: the latch e
              (setf (lbas-done a) t (lbas-plan a) (if (eq c :f) :f (and (eq plan :none) :none)) (lbas-route a) t)
              (case c
                (:f (lb-as-press e a :as-hosha-k1 :f))
-               (:clear (setf (lbs-latch st) nil (lbas-oki a) t) (vpad-consume! vp :quick) (lb-count e :as-hosha-none) :none)
+               (:clear (setf (lbs-latch st) nil (lbas-oki a) t) (vpad-consume! vp :quick) (pace e :as-hosha-none) :none)
                (t (when (eq plan :none) (setf (lbas-oki a) t)) nil)))))))
 
 (defun lb-as-loop (e f b vp a)
@@ -2699,7 +2698,7 @@ a trace hit; TENSHIN out's EN J1 in a crossfire), pressed unless his own J alrea
              (setf (lbas-done a) t (lbas-plan a) plan)
              (case c
                (:q (lb-as-press e a (if (lb-kin-form-p (lb-link-form (fighter-form f) (lbs-switch-to st))) :as-tenshin-in-j :as-tenshin-out-j) :q))
-               (:clear (setf (lbs-latch st) nil) (vpad-consume! vp :quick) (lb-count e :as-tenshin-none) :none)
+               (:clear (setf (lbs-latch st) nil) (vpad-consume! vp :quick) (pace e :as-tenshin-none) :none)
                (t :none))))
           (t :none))))
 
@@ -2906,7 +2905,7 @@ through the wind-up: no answer), and a Hoho read unless his Hoho is SPENT?"
 (defun lb-learn-acted (e l cmd)
   "A read of his situations acted on with CMD: the learner's count (LEARN-COUNT-READ: the gate's reads, paid), the log."
   (learn-count-read e l cmd)
-  (lb-count e cmd)
+  (pace e cmd)
   (clog "~a read ~a" (side-name e) cmd))
 
 (defun lb-learn-trace-under (e x z hr &optional (age 0))
@@ -3081,15 +3080,14 @@ pressed."
                :step 'lb-learn-step)
 
 ;;; ================================================================ debug: tests, the pacing log (debug.lisp dispatches)
-(defun lille-acc-reset () (dolist (st (coerce *lb* 'list)) (setf (lbs-acc st) nil)))
-
 (defun lille-acc-line ()
   "After a gate row: a \"duel lille\" line per side that played him (the pacing log, docs/duel/DUEL_LILLE.md §13)."
   (dolist (e (list *p1* *p2*))
     (when (and (entity-alive-p e) (eq (fighter-character (fighter e)) :lille))
       (let ((st (lb e)))
         (log-msg "duel lille ~a seed ~d awakened ~a form ~a eyes ~d sealed ~a ~{~(~a~) ~a~^ ~}" (side-name e) *match-seed*
-                 (gauges-awakened (gauges e)) (fighter-form (fighter e)) (lbs-eyes st) (lbs-sealed st) (lbs-acc st))))))
+                 (gauges-awakened (gauges e)) (fighter-form (fighter e)) (lbs-eyes st) (lbs-sealed st)
+                 (svref *pacing* (fighter-side (fighter e))))))))
 
 (defun lille-probe-line (tag)
   (let ((g1 (gauges *p1*)) (g2 (gauges *p2*)) (st (lb *p1*)))

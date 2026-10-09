@@ -458,7 +458,11 @@ python3 tools/simgate.py --cvc                    # self-check: G2's three match
 ```
 
 It prints every `duel gate row` (with its `duel band` / `cups` / `senju` lines) and the page's summary line per pairing,
-plus `duel gate A B wins P1 n P2 m DRAW d blow b`. `--cmd N` (repeatable) queues any debug knob before the gate command;
+plus `duel gate A B wins P1 n P2 m DRAW d blow b`. The per-match `duel band` / `cups` / `senju` / `ichigo` / `lille`
+lines are the pacing log, counted only while `*pacing-log*` is on (`PACE` into the per-side plists `*pacing*`,
+components.lisp; `BAND-ACC-STEP` / `CUP-ACC-STEP` in `HASH-LOG`): `START-CVC` sets it (and clears the counts) before
+`START-MATCH`, so every gate and every 2000+s / 3000+s CPU-vs-CPU match counts while play builds no keys (refactor,
+2026-10-09). A new pacing counter goes through `pace` (or under `*pacing-log*`). `--cmd N` (repeatable) queues any debug knob before the gate command;
 `-j` sets the processes (default 16). One process plays a pairing's seeds back to back, as the page does: Senjumaru's
 per-side state (`*sj*`, senjumaru.lisp) is not reset between matches, so her SR / SS rows depend on the matches played
 before them; `--chunk N` (seeds per process) is faster for one long stream but then differs from the page on her
