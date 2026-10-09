@@ -5,7 +5,7 @@ with 「好，幫我開分支實作！」. This document covers the design as bu
 format and the measurements.
 
 **Files:** `duel/lisp/learn.lisp` (the pure part: tables, counting, prediction, EXP3, p_exploit, storage; host-tested by
-`tests/learn-test.lisp`); the end of `duel/lisp/ai.lisp` (the hooks: `learn-step`, `learn-fire`, `learn-neutral`,
+`tests/learn-test.lisp`); `duel/lisp/ai-learn.lisp` (the hooks: `learn-step`, `learn-fire`, `learn-neutral`,
 `learn-weights` / `learn-window`); `flow.lisp` (`learn-match-start` / `learn-match-end`, the SETTINGS rows);
 `duel/web/pwa.js` (storage); `debug.lisp` (the scripted players and the learning gate). All of it is character-free. A
 character may add situations of its own in its own file (§11; Lille's, DUEL_LILLE §24.9).
@@ -277,7 +277,7 @@ numbers).
 - The generic 9 situations and 10 classes are unchanged. Their tables are separate, so nothing about another character
   moves.
 
-**The learner** (`ai.lisp`):
+**The learner** (`ai-learn.lisp`):
 
 - `lrn-kit`: the spec of the CPU's character, set by `learn-attach!` (NIL for every character without one, and for the
   ASSIST's learner). Only with it does `learn-step` call the kit's `:step` each step (after the generic work, before the

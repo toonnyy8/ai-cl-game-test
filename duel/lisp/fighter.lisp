@@ -27,6 +27,10 @@
   (touch-read-begin)                                     ; this read's gesture pulses (onehand.lisp)
   (vpad-read! vp *p1-bindings* #'p1-down-p (+ (pad-lx 0) (touch-sx *touch*)) (+ (pad-ly 0) (touch-sy *touch*))))
 (defun p2-reader (vp) (vpad-read! vp *p2-bindings* #'p2-down-p (pad-lx 1) (pad-ly 1)))
+(defun pilot-system ()
+  "Every human fighter's vpad reads its devices this step (inside the step: determinism)."
+  (do-entities (e (pl pilot) (f fighter))
+    (unless (brain e) (vpad-begin-step! (pilot-vpad pl)))))
 
 (defun spawn-fighter (side character x z yaw &key cpu (difficulty :normal) mirror)
   "A fighter entity for SIDE (0 / 1) playing CHARACTER's :base kit at (X 0 Z) facing YAW. CPU:

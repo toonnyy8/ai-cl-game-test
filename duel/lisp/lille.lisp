@@ -2796,9 +2796,9 @@ generic AUTO COMBO)."
       (setf (kit-ai k) (list* :assist-combo 'lb-assist-combo (kit-ai k))))))
 
 ;;; ================================================================ AI: the learning CPU's Lille situations (DUEL_LILLE §24.9)
-;;; The user's plan (DUEL_LILLE §24.1 step 5): the learning CPU (learn.lisp, ai.lisp; DUEL_LEARNING §11) gains his own
+;;; The user's plan (DUEL_LILLE §24.1 step 5): the learning CPU (learn.lisp, ai-learn.lisp; DUEL_LEARNING §11) gains his own
 ;;; situations, so a CPU Lille facing a human learns the human's answers to his signature and answers them in character.
-;;; Only a learner runs any of this (a CPU facing a human: VS CPU, ENDLESS, the learning gate; LRN-KIT, ai.lisp
+;;; Only a learner runs any of this (a CPU facing a human: VS CPU, ENDLESS, the learning gate; LRN-KIT, ai-learn.lisp
 ;;; LEARN-ATTACH!); CPU VS CPU, the gates and every other character never get here. What the human does is what Lille's CPU
 ;;; perceives (the delayed SNAP; his own state at once), a read is one roll of the learner's own stream per event
 ;;; (LEARN-KIT-READ: p_exploit x *LB-LEARN-DIFF*, EASY <= NORMAL <= HARD), and every answer is a command of his kit.
@@ -2934,7 +2934,7 @@ TENSHIN in meeting an answer already under way (LB-LEARN-ONSET-ANSWER) counts it
     (when now (learn-kit-close l now))))
 
 (defun lb-learn-step (e b s d l)
-  "His learner's step (LEARN-DEF-KIT's :step; ai.lisp LEARN-STEP, a learner of his only): the onsets (his own HOSHA and
+  "His learner's step (LEARN-DEF-KIT's :step; ai-learn.lisp LEARN-STEP, a learner of his only): the onsets (his own HOSHA and
 TENSHIN in at once; the human onto a trace, perceived), the open situation's answer (LB-LEARN-ANSWER /
 LB-LEARN-TRACE-ANSWER; at its end :TAKE, or :GUARD held through), the :trace read at its onset (one roll)."
   (declare (ignore d))

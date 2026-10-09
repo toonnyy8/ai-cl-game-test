@@ -1,5 +1,5 @@
 ;;;; learn.lisp — the learning CPU's pure part (docs/duel/DUEL_LEARNING.md; the user, 2026-09-29). Plain CL, host-tested
-;;;; (tests/learn-test.lisp); ai.lisp feeds it what the CPU perceives and asks it what to do. Character-free: the tables
+;;;; (tests/learn-test.lisp); ai-learn.lisp feeds it what the CPU perceives and asks it what to do. Character-free: the tables
 ;;;; are keyed by situations, action classes, distance bins and command keywords, never by a name.
 ;;;;   player model  per SITUATION (9), counts of the human's next ACTION CLASS (10): order 0, and order 1 keyed by his
 ;;;;                 previous class in that situation; decayed x*LEARN-DECAY* per observation (habits change);
@@ -13,7 +13,7 @@
 ;;;;   storage       LEARN-ENCODE / LEARN-DECODE: a table as a short list of integers (the page keeps them, pwa.js)
 ;;;;   kit model     a character may name its own situations (at most +LEARN-KS+) and action classes (+LEARN-KA+):
 ;;;;                 LEARN-DEF-KIT (in its own file; DUEL_LEARNING §11); the same n-gram model on separate tables
-;;;;                 (LTAB-K0 / -K1 / -KPREV), opened, counted and read only by that character's learner (ai.lisp)
+;;;;                 (LTAB-K0 / -K1 / -KPREV), opened, counted and read only by that character's learner (ai-learn.lisp)
 (in-package :duel)
 
 (defparameter *learn-situations* #(:wake :knock :h-blocked :c-blocked :whiff :c-hit :close :mid :far)
@@ -180,14 +180,14 @@ link: NEW-START) by its KIND, a guard raised, a Hoho / Step, or AWAY metres back
 ;;; ---------------------------------------------------------------- a kit's own situations (format 3; DUEL_LEARNING §11)
 ;;; A character may name situations of its own (its signature moves; DUEL_LEARNING §11, the first: roster index 5's) and the
 ;;; human's answers there. They live on their own tables (LTAB-K0 / -K1 / -KPREV), so the generic 9 situations and 10
-;;; classes stay as they are; only that character's learner opens them (ai.lisp LEARN-KIT-OPEN, by the names its spec
+;;; classes stay as they are; only that character's learner opens them (ai-learn.lisp LEARN-KIT-OPEN, by the names its spec
 ;;; gives), so every other character's tables, rolls and decisions are exactly as before.
 (defvar *learn-kits* nil
   "Per character, its learning spec: (character :situations #(key ...) :actions #(key ...) :step fn), LEARN-DEF-KIT.")
 
 (defun learn-def-kit (character &key situations actions step)
   "CHARACTER's own learning situations (a vector of at most +LEARN-KS+ keys) and the human's action classes there (at
-most +LEARN-KA+ keys), and its STEP function (ai.lisp LEARN-STEP calls it each step: E B S D L). Replaces an earlier one."
+most +LEARN-KA+ keys), and its STEP function (ai-learn.lisp LEARN-STEP calls it each step: E B S D L). Replaces an earlier one."
   (unless (and (<= 1 (length situations) +learn-ks+) (<= 1 (length actions) +learn-ka+))
     (error "learn-def-kit ~a: 1-~d situations, 1-~d classes" character +learn-ks+ +learn-ka+))
   (setf *learn-kits* (cons (list character :situations (coerce situations 'simple-vector) :actions (coerce actions 'simple-vector)
