@@ -85,9 +85,9 @@ rush, the loom's Hoho through a Breaker ...; never a neutral decision or an offe
 (defun auto-guard (e f)
   "AUTO GUARD: a hit about to land (PERFECT-NOW-P): the parry against his melee move, else a Hoho when allowed; or NIL."
   (when (perfect-now-p e)
-    (let ((kit (fighter-kit f)) (g (gauges e)) (fo (fighter (opp-of e))))
+    (let ((kit (fighter-kit f)) (fo (fighter (opp-of e))))
       (or (and (eq (fighter-state fo) :move) (eq (fighter-phase fo) :main) (parry-command e kit))
-          (and (not (kit-rooted kit)) (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)) :hoho)))))
+          (and (not (kit-rooted kit)) (hoho-ready-p e) :hoho)))))
 
 (defun auto-combo (e f b side vp)
   "AUTO COMBO: on a J / K link's land frame, the CPU's next step (the O ender off a link-3 hit on a red opponent, else
@@ -117,10 +117,10 @@ every J it turned ~1 in 6 into an SP2 into his guard (129 of 435 blocked, the Re
   (let* ((kit (kit-of e)) (g (gauges e)) (sf (ai-table e :stun-follow)) (c (first sf)))
     (cond ((and (member (snap-state s) '(:air :down)) (eq (ai-table e :oki) :sp1-full) (mv-hold (kit-command-move kit :sp1))
                 (kit-command-ok-p e :sp1) (> d 3.0)
-                (>= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (ai-table e :oki-above 0.0)))
+                (>= (reishi-frac g) (ai-table e :oki-above 0.0)))
            :sp1-full)
           ((and sf (eq (snap-state s) :stun) (<= (second sf) d (third sf)) (kit-command-ok-p e c)
-                (>= (- (snap-left s) (brain-delay b)) (mv-s (kit-command-move kit c))))
+                (>= (snap-left-seen s b) (mv-s (kit-command-move kit c))))
            c))))
 
 (defun auto-read (e f b d)
@@ -133,9 +133,9 @@ and J's it (the gate, 2026-10-02: 404 of them in 40 matches, the masher's wins 5
       (let ((c (or (and (lrn-cmd l) (<= (lrn-delay l) 0) (prog1 (lrn-cmd l) (setf (lrn-cmd l) nil)))
                    (multiple-value-bind (act p n) (learn-predict (lrn-tab l) (learn-band d))
                      (and act (learn-confident-p p n) (learn-roll-p l) (learn-counter act)))))
-            (g (gauges e)) (kit (fighter-kit f)))
+            (kit (fighter-kit f)))
         (case c
-          (:hoho (and (not (kit-rooted kit)) (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)) :hoho))
+          (:hoho (and (not (kit-rooted kit)) (hoho-ready-p e) :hoho))
           (:q (let ((mv (kit-command-move kit :f)))      ; J beats K / I: his J; a K reaching further than J, ours
                 (and mv (kit-command-ok-p e :f) (<= (mv-reach (kit-command-move kit :q)) d (+ (mv-reach mv) 0.4)) :f))))))))
 

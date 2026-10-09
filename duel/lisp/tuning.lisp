@@ -218,7 +218,6 @@ user 2026-10-01: a wider timing; still inside the Hoho's iframes f1-14)...")
 (defparameter *awaken-per-konpaku* 10.5 "Awakening per Konpaku lost (15 until 2026-09-30).")
 (defparameter *awaken-heal* 0.20 "Every awakening heals this fraction of max Reishi at once (the user 2026-09-30; before it only
 Nozarashi healed, 150).")
-(defparameter *awaken-cine-seconds* 1.8 "Awakening cinematic (sim frozen; documentation only: the scripts own their :len).")
 
 ;;; ---------------------------------------------------------------- hit reactions, combos, hitstop
 (defparameter *reaction-frames*

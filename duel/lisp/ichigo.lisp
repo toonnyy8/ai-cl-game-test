@@ -282,10 +282,6 @@ opponent's Reishi is under this fraction (red is 0.30), so the O that comes (the
   "E spends N of the guard gauge (the regen waits *GG-DELAY* again; never guardless by it)."
   (let ((g (gauges e))) (setf (gauges-gg g) (f32 (max 0.0 (- (gauges-gg g) n))) (gauges-gg-idle g) 0)))
 
-(defun ichigo-look (e look x z &key (yaw 0.0) (size 1.0) (life 30) (delay 0) fragile data)
-  "A look-only hazard (kind :fx) drawn by the function LOOK (ichigo-art.lisp): no hit, no sim effect but its entity."
-  (spawn-hazard :fx e :x x :z z :yaw yaw :size size :life life :delay delay :look look :fragile fragile :data data))
-
 (defun ichigo-pull-to (att d frames)
   "The chain drags ATT's opponent toward him to D metres over FRAMES (after the hit's own reaction: its slide replaced)."
   (let* ((v (opp-of att)) (p (pos-of att)) (q (pos-of v)) (dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2)))
@@ -309,7 +305,7 @@ LOOK; a blade's hit (:blade)."
 (defun ichigo-getsuga (e) "GETSUGA TENSHO's crescent leaves the long blade." (ichigo-wave e (move-param e :look)) (emit :sfx :getsuga e))
 (defun ichigo-juji-first (e)
   "JUJISHO f12: the long blade's crescent forms on the edge (a look; the wave is f20's)."
-  (multiple-value-bind (x z) (ahead e 1.0) (ichigo-look e 'ichigo-form-look x z :yaw (yaw-of e) :size 1.8 :life 10))
+  (multiple-value-bind (x z) (ahead e 1.0) (spawn-look e 'ichigo-form-look :x x :z z :yaw (yaw-of e) :size 1.8 :life 10))
   (emit :sfx :getsuga e))
 (defun ichigo-juji (e) "JUJISHO f20: the two crescents fused into one cross wave." (ichigo-wave e (move-param e :look)) (emit :sfx :getsuga e))
 (defun ichigo-soga-vanish (e) "SOGA f0: the flash step's vanish." (let ((p (pos-of e))) (emit :hoho-out e (aref p 0) (aref p 2))))
@@ -359,7 +355,7 @@ dash waits (a plain Step after the stance); past the hold (30 f, 60 while L is h
   (let* ((f (fighter e)) (p (pos-of e)))
     (multiple-value-bind (to st) (if (brain e) (values 1.0 0.0) (stick-relative e f))
       (multiple-value-bind (to st) (step-direction to st 1.0)
-        (multiple-value-bind (dx dz) (toward-strafe-dir to st (aref p 0) (aref p 2) (fighter-ox f) (fighter-oz f))
+        (multiple-value-bind (dx dz) (world-dir e f to st)
           (set-slide e 3.5 12 dx dz))))
     (setf (fighter-invuln f) 9)
     (emit :hoho-out e (aref p 0) (aref p 2))
@@ -498,7 +494,7 @@ string's end it fades if it touched him, else it idles where it stands."
 
 (defun clone-burst (e hz)
   "A charging clone bursts (ink and white, BLOOD sparks) on O's strike frame."
-  (ichigo-look e 'ichigo-burst-look (hazard-x hz) (hazard-z hz) :size 1.0 :life 16)
+  (spawn-look e 'ichigo-burst-look :x (hazard-x hz) :z (hazard-z hz) :size 1.0 :life 16)
   (emit :sfx :clone e))
 
 (defun ichigo-clone-step (h hz c)
@@ -537,7 +533,7 @@ string's end it fades if it touched him, else it idles where it stands."
       (when (and (eql (hazard-owner hz) e) (or (clone-p hz) (ice-p (hazard-data hz)) (eq (hazard-kind hz) :ic-hit)))
         (when (clone-p hz) (push (cons (hazard-x hz) (hazard-z hz)) at))
         (destroy-entity h)))
-    (dolist (p at) (ichigo-look e 'ichigo-burst-look (car p) (cdr p) :size 0.6 :life 12))
+    (dolist (p at) (spawn-look e 'ichigo-burst-look :x (car p) :z (cdr p) :size 0.6 :life 12))
     (when at (ic-count e :clones-vanished (length at)) (clog "~a CLONES GONE ~d" (side-name e) (length at)))))
 
 (defun ichigo-o-press (e f st)
@@ -560,7 +556,7 @@ bonus); the Kikon is worth CLONE-KONPAKU N."
   nil)
 (defun ichigo-zanzo-on (e)
   "ZANZO f12: the state for *ZANZO-LIFE* frames."
-  (let ((p (pos-of e))) (ichigo-look e 'ichigo-zanzo-look (aref p 0) (aref p 2) :life *zanzo-life*))
+  (spawn-look e 'ichigo-zanzo-look :life *zanzo-life*)
   (emit :sfx :clone e)
   (clog "~a ZANZO" (side-name e)))
 
@@ -612,7 +608,7 @@ ZANZO runs."
 (defun ichigo-parry-open (e)
   "KUSARI-TATE f0: its price, the chains flaring (the tell), the soft rising shimmer."
   (gg-spend! e *kessa-parry-cost*)
-  (let ((p (pos-of e))) (ichigo-look e 'ichigo-flare-look (aref p 0) (aref p 2) :yaw (yaw-of e) :life 18))
+  (spawn-look e 'ichigo-flare-look :yaw (yaw-of e) :life 18)
   (emit :sfx :chain-rattle e)
   (emit :sfx :parry-open e))
 
@@ -816,7 +812,7 @@ into a coming hit (2, 3 with the gauge for them); the O itself stays the generic
 ;;; ================================================================ the CPU v2 (docs/duel/DUEL_AI_V2.md; every chance by difficulty)
 (defun ic-p (b easy normal hard)
   "A chance by brain B's difficulty: EASY <= NORMAL <= HARD (the user's layering, 2026-10-02)."
-  (getf (list :easy easy :normal normal :hard hard) (brain-difficulty b) normal))
+  (case (brain-difficulty b) (:easy easy) (:hard hard) (t normal)))
 
 (defun ic-hits-p (mv) (and mv (plusp (length (mv-hits mv)))))
 
@@ -824,9 +820,8 @@ into a coming hit (2, 3 with the gauge for them); the O itself stays the generic
   "Out of J's reach, an opponent still recovering (his move past its active frames, as perceived) or reeling: the
 longest tool of the form that lands before he is free (K1; else the SP that hits: SOGA's 5 m lunge, KUSARI-BIKI's 7 m
 chain), one roll per his action (the react roll) at (EASY 0 / NORMAL 0.15 / HARD 0.8). The generic punish keeps J's reach."
-  (let* ((kit (kit-of e)) (left (- (snap-left s) (brain-delay b))))
-    (when (and (or (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s)))
-                   (eq (snap-state s) :stun))
+  (let* ((kit (kit-of e)) (left (snap-left-seen s b)))
+    (when (and (snap-punishable-p s)
                (< (snap-left s) 99)
                (> d (+ (mv-reach (kit-command-move kit :q)) 0.4))
                (< (brain-react-roll b) (ic-p b 0.0 0.15 0.8)))
@@ -855,12 +850,12 @@ Breaker's strike, an O strike) lands 0-11 frames from now (its startup left minu
 + 1.5 m: Hoho now, inside the perfect window (*PERFECT-LEAD* 12: the automatic counter strike, his inputs locked 40 f,
 15 flash-step back; KESSA's Hoho also posts a clone in front of him). One roll per his action (the Hoho roll) at (EASY 0 /
 NORMAL 0 / HARD 1.0); only the Hoho's own price, no Burst reserve (the perfect refund pays most of it back), not in a burst."
-  (let ((g (gauges e)) (f (fighter e)) (lead (- (snap-s s) (snap-sf s) (brain-delay b))))
+  (let ((g (gauges e)) (lead (- (snap-s s) (snap-sf s) (brain-delay b))))
     (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (member (snap-kind s) '(:quick :flash :sig :sp :breaker :kikon))
          (> (snap-active-end s) (snap-s s)) (<= 0 lead 11) (snap-near-p s e d 1.5)   ; (an :x-axis line: on it, ai.lisp)
          (not (snap-reflect-p s))                     ; (a reflect is :opp-reflect's, ai.lisp)
          (not (kit-rooted (kit-of e)))
-         (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))
+         (hoho-ready-p e)
          (not (gauges-burst g))
          (< (brain-hoho-roll b) (ic-p b 0.0 0.0 1.0))
          (why b :perfect-hoho :hoho))))
@@ -875,7 +870,7 @@ with the guard gauge for them (*CLONE-COST* + 25); HARD 3 down to *CLONE-COST* +
 (defun ichigo-ai-red-guard (e b s d)
   "ICHIGO-AI-RED's guard: red (HARD), his rush coming within 11 m: hold guard through its strike, one roll per his action."
   (let ((g (gauges e)))
-    (and (red-p (gauges-reishi g) (gauges-reishi-max g)) (plusp (ic-p b 0.0 0.0 1.0))
+    (and (gauges-red-p g) (plusp (ic-p b 0.0 0.0 1.0))
          (eq (snap-state s) :move) (eq (snap-kind s) :kikon)
          (or (member (snap-phase s) '(:aura :dash)) (and (eq (snap-phase s) :main) (< (snap-sf s) (snap-active-end s))))
          (< d 11.0) (plusp (ai-guard-k e)) (>= (gauges-gg g) 21.0)
@@ -894,7 +889,7 @@ J1s it when red; blocked he is -14), one roll per his action, the gauge able to 
 +70 Reishi a second) to climb out of red while he isn't swinging at us, a roll a step: guarding alone only turned his
 Kikons into Soul Breaks (worth one more). EASY / NORMAL 0 (the generic play), HARD 0.95 / 0.25."
   (let ((g (gauges e)))
-    (when (and (red-p (gauges-reishi g) (gauges-reishi-max g)) (plusp (ic-p b 0.0 0.0 1.0)))
+    (when (and (gauges-red-p g) (plusp (ic-p b 0.0 0.0 1.0)))
       (cond ((ichigo-ai-red-guard e b s d))
             ((and (eq (burst-ok-p e) :white)
                   (not (and (eq (snap-state s) :move) (snap-live-p s) (snap-near-p s e d 1.5)))   ; (a line: ai.lisp)
@@ -921,10 +916,9 @@ Kikons into Soul Breaks (worth one more). EASY / NORMAL 0 (the generic play), HA
     (let* ((kessa (eq (kit-form (kit-of e)) :kessa)) (g (gauges e))
            (short (and kessa (< (clone-count e) (ichigo-bank-target e b))
                        (not (gauges-guardless g)) (>= (gauges-gg g) *clone-cost*)))
-           (left (- (snap-left s) (brain-delay b)))
+           (left (snap-left-seen s b))
            (attacking (and (eq (snap-state s) :move) (< (snap-sf s) (snap-active-end s)))))
-      (cond ((and (not short) (< d 8.4) (eq (snap-state s) :move) (eq (snap-phase s) :main)
-                  (>= (snap-sf s) (snap-active-end s)) (< (snap-left s) 99) (>= left (ichigo-rush-frames d))
+      (cond ((and (not short) (< d 8.4) (snap-recovering-p s) (< (snap-left s) 99) (>= left (ichigo-rush-frames d))
                   (< (brain-react-roll b) 0.9))
              (why b :rush-busy :kikon))
             ((and (not short) (<= 7.0 d 8.4) (not attacking) (< (sim-rnd01) 0.3))
@@ -933,7 +927,7 @@ Kikons into Soul Breaks (worth one more). EASY / NORMAL 0 (the generic play), HA
                   (< (sim-rnd01) 0.15))
              (why b :chain :sp1))
             ((and (< d 7.0) (<= (brain-decide-t b) 1))
-             (setf (brain-decide-t b) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
+             (setf (brain-decide-t b) (ai-decide-time e b))
              (cond ((and short (< d 3.0) (not attacking)) (why b :bank :step))   ; (a back hop: a clone where it took off)
                    (short nil)                                                    ; (ICHIGO-AI-KESSA side-Steps it)
                    ;; (AI-ATTACK presses itself; :none keeps that press: no band below 5 m holds :kikon)
@@ -954,7 +948,7 @@ follow-up). HARD: the SP 0.95, the Shikai's O poke all of the rest; NORMAL / EAS
 shipped behaviour). AI-BRAIN: for a human the ASSIST's borrowed (HARD) brain (its AUTO COMBO calls STRING-REFLEX)."
   (let ((b (ai-brain e)))
     (when b
-      (let ((bars (floor (gauges-reiatsu (gauges e)) *reiatsu-bar*)) (r (sim-rnd01)))
+      (let ((bars (reiatsu-bars e)) (r (sim-rnd01)))
         (if (eq (kit-form kit) :kessa)
             (and (>= bars 1) (kit-command-ok-p e :sp1) (< r (ic-p b 0.0 0.0 0.95)) :sp1)
             (cond ((and (>= bars 1) (kit-command-ok-p e :sp2) (< r (ic-p b 0.0 0.0 0.95))) :sp2)

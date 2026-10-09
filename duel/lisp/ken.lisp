@@ -331,7 +331,7 @@ look), 2 rings, a 1 f negative frame and a 12 f manga page (feedback :rung)."
 (defun ken-ground-crack (e)
   "Buttagiru lands: a 3 m crack in the ground (a look)."
   (let ((p (pos-of e)))
-    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 3.5 :life 50 :look :crack)
+    (spawn-ground-line e 3.5 50 :crack)
     (ground-scar p (yaw-of e) '(1.2 2.8) 0.9))
   (emit :sfx :ground-crack e))
 
@@ -361,21 +361,20 @@ dash starts = guard-crushing (the Breaker property)."
 
 (defun ken-leap-cleave (e)
   "LEAP CLEAVE lands: a short gash split into the ground ahead (a look)."
-  (let ((p (pos-of e)))
-    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 3.0 :life 45 :look :meteor))
+  (spawn-ground-line e 3.0 45 :meteor)
   (emit :sfx :ground-crack e))
 
 (defun ken-meteor-cut (e)
   "Split the Meteor: the cleave splits the ground 12 m ahead (a look)."
   (let ((p (pos-of e)))
-    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 12.0 :life 60 :look :meteor)
+    (spawn-ground-line e 12.0 60 :meteor)
     (ground-scar p (yaw-of e) '(2.0 5.0 8.0 11.0) 1.2))
   (emit :sfx :ground-crack e))
 
 (defun ken-tate-goto (e)
   "TATE-GOTO: the cut goes through guard and arm and splits the ground 6 m ahead (a look)."
   (let ((p (pos-of e)))
-    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 6.0 :life 50 :look :meteor)
+    (spawn-ground-line e 6.0 50 :meteor)
     (ground-scar p (yaw-of e) '(1.5 3.5 5.5) 1.0))
   (emit :sfx :ground-crack e))
 
@@ -472,10 +471,9 @@ lunge); :WAIT (the stick is set here)."
   "J1 from its lunge's reach (beyond ai.lisp's reach + 0.2): punish his recovery or a reeling opponent when J1 lands before
 he is free (one roll per move: *KEN-AI-LUNGE-PUNISH*), or open on him there in neutral when no move of his is coming
 (*KEN-AI-LUNGE* a step)."
-  (let* ((q (kit-command-move (kit-of e) :q)) (lr (ken-lunge-reach e)) (left (- (snap-left s) (brain-delay b))))
+  (let* ((q (kit-command-move (kit-of e) :q)) (lr (ken-lunge-reach e)) (left (snap-left-seen s b)))
     (when (and q (> d (+ (mv-reach q) 0.2)) (<= d (+ lr 0.1)) (kit-command-ok-p e :q))
-      (cond ((and (or (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s)))
-                      (eq (snap-state s) :stun))
+      (cond ((and (snap-punishable-p s)
                   (< (snap-left s) 99) (>= left (+ (mv-s q) 2))
                   (< (brain-react-roll b) (ken-p b *ken-ai-lunge-punish*)))
              (why b :lunge-punish :q))
@@ -500,18 +498,18 @@ K1 if it is within K1's reach before the strike, else J1, else a Hoho close to t
                       (<= (max trig (- de (* v (max 0 (- (mv-s mv) wait))))) (+ (mv-reach mv) 0.3))))))
         (cond ((fits :f) (why b :anti-breaker :f))
               ((fits :q) (why b :anti-breaker :q))
-              ((and (<= strike 13) (hoho-allowed-p nil (gauges-fs (gauges e)) (fighter-hoho-lock (fighter e)) (gauges-burst (gauges e))))
+              ((and (<= strike 13) (hoho-ready-p e))
                (why b :anti-breaker :hoho))
               ((> strike 13) :wait))))))                                     ; (not yet: the generic J1 would come early)
 
 (defun ken-hoho-commit (e b s d)
   "His K / L / SP coming at us whose hit, as we see it, falls 1-12 f from now (the perfect-Hoho lead): Hoho it (one roll per
 move), with flash-step to spare; a K whose startup the stance can still beat is left to the stance (the kit's :react)."
-  (let* ((f (fighter e)) (g (gauges e)) (left (- (snap-s s) (snap-sf s) (brain-delay b))))
+  (let* ((g (gauges e)) (left (- (snap-s s) (snap-sf s) (brain-delay b))))
     (when (and (eq (snap-state s) :move) (member (snap-kind s) '(:flash :sig :sp)) (eq (snap-phase s) :main)
                (snap-live-p s) (<= 1 left *perfect-lead*) (snap-near-p s e d 1.0)   ; (an :x-axis line: on it, ai.lisp)
                (not (member :grab (snap-flags s))) (not (snap-reflect-p s))   ; (a reflect is :opp-reflect's)
-               (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))
+               (hoho-ready-p e)
                (ai-hoho-spare-p (gauges-fs g) (gauges-reishi g) (gauges-reishi-max g))
                (not (and (eq (snap-kind s) :flash) (getf (ai-table e :react) :flash-startup) (< d 4.0)
                          (>= left (+ *stance-in* 2)) (< (brain-react-roll b) *ai-react-p*)))
@@ -538,17 +536,17 @@ move), with flash-step to spare; a K whose startup the stance can still beat is 
               ((> sl 2.0) (and (<= (- sl 1.0) d (+ sl r -0.5)) st))  ; the leap (Buttagiru): it lands sl ahead
               (t (and (<= d (+ r (min sl 0.8) 0.05)) st)))))))
 
-(defun ken-sig-punish (e b s d)
-  "He recovers or reels within J1's lunge (KEN-LUNGE's range and closer) and the charge (SP2: 5 cuts + a launcher, ~185,
-all his own) lands before he is free: the charge instead of a J1 string, on the per-move roll below *KEN-AI-SIG-PUNISH*
-(the rest goes on to J1)."
-  (let ((left (- (snap-left s) (brain-delay b))))
-    (when (and (or (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s)))
-                   (eq (snap-state s) :stun))
-               (< (snap-left s) 99) (> left 4) (<= d (+ (ken-lunge-reach e) 0.1))
-               (< (brain-react-roll b) (ken-p b *ken-ai-sig-punish*)))
+(defun ken-punish (e b s d tag table near)
+  "KEN-SIG-PUNISH (NEAR: within J1's lunge) and KEN-FAR-PUNISH (beyond it, under 9 m): he recovers or reels with more than
+4 frames left as perceived, on the per-move roll below TABLE's chance: the first of KEN-SP-ORDER that gets there before he
+is free, as why TAG."
+  (let ((left (snap-left-seen s b)))
+    (when (and (snap-punishable-p s)
+               (< (snap-left s) 99) (> left 4)
+               (if near (<= d (+ (ken-lunge-reach e) 0.1)) (and (> d (+ (ken-lunge-reach e) 0.1)) (< d 9.0)))
+               (< (brain-react-roll b) (ken-p b table)))
       (let ((c (find-if (lambda (c) (let ((t0 (ken-arrive e c d))) (and t0 (< t0 (1- left))))) (ken-sp-order e))))
-        (and c (why b :sig-punish c))))))
+        (and c (why b tag c))))))
 
 (defun ken-sp-order (e)
   "The punish SPs to try, best first: the line cut (SP1, one bar, 240 / 260) when the form's SP1 is one (not the leap, not
@@ -558,16 +556,16 @@ NOMIHOSE's cash-out), then the charge (SP2, two bars, ~185); else the charge, th
         '(:sp1 :sp2)
         '(:sp2 :sp1))))
 
+(defun ken-sig-punish (e b s d)
+  "He recovers or reels within J1's lunge (KEN-LUNGE's range and closer) and the charge (SP2: 5 cuts + a launcher, ~185,
+all his own) lands before he is free: the charge instead of a J1 string, on the per-move roll below *KEN-AI-SIG-PUNISH*
+(the rest goes on to J1)."
+  (ken-punish e b s d :sig-punish *ken-ai-sig-punish* t))
+
 (defun ken-far-punish (e b s d)
   "He recovers or reels beyond J1's lunge (KEN-LUNGE's range): the signature command that gets there before he is free
 (SP2's charge, SP1's leap / cut), else K1; one roll per move (*KEN-AI-FAR-PUNISH*)."
-  (let ((left (- (snap-left s) (brain-delay b))))
-    (when (and (or (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s)))
-                   (eq (snap-state s) :stun))
-               (< (snap-left s) 99) (> left 4) (> d (+ (ken-lunge-reach e) 0.1)) (< d 9.0)
-               (< (brain-react-roll b) (ken-p b *ken-ai-far-punish*)))
-      (let ((c (find-if (lambda (c) (let ((t0 (ken-arrive e c d))) (and t0 (< t0 (1- left))))) (ken-sp-order e))))
-        (and c (why b :far-punish c))))))
+  (ken-punish e b s d :far-punish *ken-ai-far-punish* nil))
 
 (defun ken-first-strike (e b s d)
   "Neutral first strike timed to his perceived closing speed: J1 when he will be inside its lunge's reach as it lands,

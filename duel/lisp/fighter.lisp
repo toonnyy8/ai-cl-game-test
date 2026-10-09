@@ -19,6 +19,18 @@
   (make-hitwin :dmg *perfect-counter-damage* :react :stagger :stun *perfect-counter-stun* :hs *hitstop-heavy*)
   "The perfect Hoho's automatic counter strike.")
 
+;;; ---------------------------------------------------------------- small helpers (pure reads; the kits, ai and assist use them)
+(defun hoho-ready-p (e)
+  "May E Hoho now (rules HOHO-ALLOWED-P over his flash-step, Hoho lockout and burst)?"
+  (let ((f (fighter e)) (g (gauges e))) (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))))
+(defun reishi-frac (g) "Gauges G's Reishi as a fraction of its maximum." (/ (gauges-reishi g) (float (gauges-reishi-max g))))
+(defun gauges-red-p (g) "Is gauges G's Reishi in the red (rules RED-P)?" (red-p (gauges-reishi g) (gauges-reishi-max g)))
+(defun reiatsu-bars (e) "E's full Reiatsu bars." (floor (gauges-reiatsu (gauges e)) *reiatsu-bar*))
+(defun halt! (e) "Stop E's motion (velocity zeroed)." (fill (motion-vel (motion e)) 0f0))
+(defun world-dir (e f to st)
+  "The world XZ direction (two values) of stick TO / ST relative to E's opponent (fighter F's OX OZ): TOWARD-STRAFE-DIR."
+  (let ((p (pos-of e))) (toward-strafe-dir to st (aref p 0) (aref p 2) (fighter-ox f) (fighter-oz f))))
+
 ;;; ---------------------------------------------------------------- creation
 (defun p1-down-p (device name)
   (case device (:key (key-down name)) (:touch (touch-button name)) (t (pad-down name 0))))
@@ -27,6 +39,10 @@
   (touch-read-begin)                                     ; this read's gesture pulses (onehand.lisp)
   (vpad-read! vp *p1-bindings* #'p1-down-p (+ (pad-lx 0) (touch-sx *touch*)) (+ (pad-ly 0) (touch-sy *touch*))))
 (defun p2-reader (vp) (vpad-read! vp *p2-bindings* #'p2-down-p (pad-lx 1) (pad-ly 1)))
+(defun pilot-system ()
+  "Every human fighter's vpad reads its devices this step (inside the step: determinism)."
+  (do-entities (e (pl pilot) (f fighter))
+    (unless (brain e) (vpad-begin-step! (pilot-vpad pl)))))
 
 (defun spawn-fighter (side character x z yaw &key cpu (difficulty :normal) mirror)
   "A fighter entity for SIDE (0 / 1) playing CHARACTER's :base kit at (X 0 Z) facing YAW. CPU:
@@ -163,7 +179,7 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
     (setf (fighter-state f) :idle (fighter-sf f) 0 (fighter-phase f) nil (fighter-move f) nil
           (fighter-crush f) nil (fighter-dmg-bonus f) 0 (fighter-assist-next f) nil
           (fighter-combo-hits f) 0 (fighter-combo-launches f) 0 (fighter-combo-air f) 0)
-    (fill (motion-vel (motion e)) 0f0)
+    (halt! e)
     (play-clip e (kit-stance (fighter-kit f)) :blend blend)))
 
 (defun callout (e text)
@@ -185,7 +201,7 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
           (fighter-assisted f) (fighter-assist-next f) (fighter-assist-next f) nil   ; ASSIST: pressed for him
           (fighter-follow f) nil (fighter-armor-left f) (mv-armor-hits mv)
           (fighter-phase f) (cond ((member (mv-kind mv) '(:breaker :kikon)) :aura) ((mv-hold mv) :hold) (t :main)))
-    (fill (motion-vel (motion e)) 0f0)
+    (halt! e)
     (play-clip e (kit-move-clip (fighter-kit f) (mv-clip mv)) :blend (mv-blend mv) :speed (mv-clip-speed mv)   ; (the
                               :time (/ (* enter (mv-clip-speed mv)) 60.0))                                   ;  form's look)
     (if (eq (mv-kind mv) :kikon)
@@ -216,7 +232,7 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
 (defun enter-main (e f mv)
   "A hold / Breaker move leaves its pre-strike phase: the move proper starts at frame 0."
   (setf (fighter-phase f) :main (fighter-sf f) 0)
-  (fill (motion-vel (motion e)) 0f0)
+  (halt! e)
   (when (mv-clip-2 mv) (play-clip e (kit-move-clip (fighter-kit f) (mv-clip-2 mv)) :blend 0 :speed (mv-clip-speed mv)))
   (when (eq (mv-kind mv) :breaker) (emit :breaker-end e)))
 
@@ -224,16 +240,15 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
   "Step: a 2.5 m hop in the stick direction (neutral = back), iframes f3-f9, 24 f."
   (multiple-value-bind (to st) (stick-relative e f)
     (multiple-value-bind (to st) (step-direction to st)
-      (let ((p (pos-of e)))
-        (multiple-value-bind (dx dz) (toward-strafe-dir to st (aref p 0) (aref p 2) (fighter-ox f) (fighter-oz f))
-          (set-slide e (multiple-value-bind (k ux uz) (opp-field e f)   ; her cold field shortens a Step away from her
-                         (if k
-                             (field-step *step-distance* (/ (- (+ (* dx ux) (* dz uz))) (max 1e-4 (sqrt (+ (* dx dx) (* dz dz)))))
-                                         (getf k :step))
-                             *step-distance*))
-                     12 dx dz)))
+      (multiple-value-bind (dx dz) (world-dir e f to st)
+        (set-slide e (multiple-value-bind (k ux uz) (opp-field e f)   ; her cold field shortens a Step away from her
+                       (if k
+                           (field-step *step-distance* (/ (- (+ (* dx ux) (* dz uz))) (max 1e-4 (sqrt (+ (* dx dx) (* dz dz)))))
+                                       (getf k :step))
+                           *step-distance*))
+                   12 dx dz))
       (setf (fighter-state f) :step (fighter-sf f) 0 (fighter-move f) nil (fighter-queued f) nil)   ; (the J latch)
-      (fill (motion-vel (motion e)) 0f0)
+      (halt! e)
       (let ((h (kit-hook (fighter-kit f) :step))) (when h (funcall h e)))   ; the form's own take-off (a clone)
       (play-clip e (cond ((> (abs st) (abs to)) (if (> st 0) :sh-step-r :sh-step-l)) ((> to 0) :sh-step-f) (t :sh-step-b))
                  :blend 2)
@@ -244,9 +259,8 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
   "The yaw a runner wants: the stick direction relative to the opponent (neutral = at him)."
   (multiple-value-bind (to st) (stick-relative e f)
     (multiple-value-bind (to st) (step-direction to st 1.0)
-      (let ((p (pos-of e)))
-        (multiple-value-bind (dx dz) (toward-strafe-dir to st (aref p 0) (aref p 2) (fighter-ox f) (fighter-oz f))
-          (dir-yaw dx dz))))))
+      (multiple-value-bind (dx dz) (world-dir e f to st)
+        (dir-yaw dx dz)))))
 
 (defun run-clip (e f)
   "The run clip of E's kit for the way he goes relative to where he faces (the opponent): forward run,
@@ -276,7 +290,7 @@ is never perfect)."
           (fighter-assist-next f) nil                                                ; Hoho; an assisted one: never)
           (fighter-state f) :hoho (fighter-sf f) 0 (fighter-move f) nil
           (fighter-hoho-lock f) (+ *hoho-frames* *hoho-lockout*))
-    (fill (motion-vel (motion e)) 0f0)
+    (halt! e)
     (let ((p (pos-of e))) (emit :hoho-out e (aref p 0) (aref p 2)))
     (clog "~a hoho" (side-name e))
     (when (fighter-perfect f)
@@ -318,7 +332,7 @@ something started."
   (let ((g (gauges e)) (kit (fighter-kit f)))
     (case cmd
       (:step (unless (kit-rooted kit) (cold-spend! e kit :step) (start-step e f) t))   ; a rooted form (Rukia's zero) refuses
-      (:hoho (when (and (not (kit-rooted kit)) (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)))   ; Step and Hoho
+      (:hoho (when (and (not (kit-rooted kit)) (hoho-ready-p e))   ; Step and Hoho
                (start-hoho e f) t))
       (:awaken (let ((free (awaken-state-p e f)))
                  (cond ((awaken-allowed-p free (gauges-awaken g) (gauges-awakened g)) (awaken! e) t)
@@ -442,10 +456,10 @@ ward is up after *GUARD-RAISE* frames (FIGHTER-GUARD-T counts them, and keeps co
           (multiple-value-bind (to st) (if (zerop (fighter-lock f)) (stick-relative e f) (values 0.0 0.0))
             (when (eq (fighter-state f) :guard) (to-idle e 4))
             (setf (fighter-guard-t f) (if (passive-p e :ward) (min 9999 (1+ (fighter-guard-t f))) 0))
-            (let ((m (sqrt (+ (* to to) (* st st)))) (p (pos-of e)) (kit (fighter-kit f)))
+            (let ((m (sqrt (+ (* to to) (* st st)))) (kit (fighter-kit f)))
               (if (or (< m 0.2) (<= (kit-walk kit) 0))   ; (absolute zero: rooted where she stands)
                   (progn (fill v 0f0) (play-clip e (kit-stance kit) :blend 6 :restart nil))
-                  (multiple-value-bind (dx dz) (toward-strafe-dir to st (aref p 0) (aref p 2) (fighter-ox f) (fighter-oz f))
+                  (multiple-value-bind (dx dz) (world-dir e f to st)
                     (let ((s (* (frost-speed (kit-walk kit) (fighter-frost f)) (min 1.0 m) (/ 1.0 m))))
                       (setf (aref v 0) (f32 (* s dx)) (aref v 2) (f32 (* s dz)))
                       (field-slow! e f v))
@@ -802,7 +816,7 @@ clip (a drunk hit's), else the guard's."
   (let* ((f (fighter e)) (p (pos-of e)))
     (setf (fighter-state f) :guard-hit (fighter-sf f) 0 (fighter-stun f) stun (fighter-move f) nil
           (fighter-block-adv f) adv)
-    (fill (motion-vel (motion e)) 0f0)
+    (halt! e)
     (set-slide e *block-pushback* 6 (- (aref p 0) from-x) (- (aref p 2) from-z))
     (play-clip e (or clip :sh-guard-hit) :blend 0)))
 

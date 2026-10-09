@@ -881,17 +881,16 @@ and the O where J1 can't reach; beyond 7.5 m the kit's own bands.")
   "The loom (round 2): his Breaker's dash within 6 m: Hoho through it, else Step aside (the generic J1 answer, her short
 needle pressed through the perception delay, lost the trade: Rukia's Breaker -104 a use). Also the loom's :assist-guard
 (assist.lisp AUTO GUARD; the Shikai has none: its answer is the O). A command or NIL."
-  (let ((f (fighter e)) (g (gauges e)))
-    (and (not (hari-form-p e)) (eq (snap-kind s) :breaker) (eq (snap-phase s) :dash) (< d 6.0)
-         (< (brain-react-roll b) (senju-dp b :loom-anti-breaker-p))
-         (why b :loom-anti-breaker
-              (if (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)) :hoho :side-step)))))
+  (and (not (hari-form-p e)) (eq (snap-kind s) :breaker) (eq (snap-phase s) :dash) (< d 6.0)
+       (< (brain-react-roll b) (senju-dp b :loom-anti-breaker-p))
+       (why b :loom-anti-breaker
+            (if (hoho-ready-p e) :hoho :side-step))))
 
 (defun senju-policy-reflex (e b s d)
   "The policy's free-state reflexes (above): the far punish, the stitches on a hit he can't leave, the long guard's
 Breaker. A command or NIL."
   (let* ((f (fighter e)) (kit (fighter-kit f)) (q (kit-command-move kit :q)) (k (kit-command-move kit :f))
-         (o (kit-command-move kit :kikon)) (left (- (snap-left s) (brain-delay b))))
+         (o (kit-command-move kit :kikon)) (left (snap-left-seen s b)))
     (cond
       ;; his Breaker's aura / dash coming (it strikes from 0.95 m, under her J1's reach only by frames): the Shikai's O
       ;; meets it from up to 6 m (aura 6 + the flash step + S 8); the loom's lane (aura 8 + S 20) only from 3 m out
@@ -909,7 +908,7 @@ Breaker. A command or NIL."
             (not (member (snap-state s) '(:down :wakeup :hoho)))
             (band-weights *senju-neutral* d)
             (< (sim-rnd01) (senju-dp b :neutral-p)))
-       (setf (brain-decide-t b) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
+       (setf (brain-decide-t b) (ai-decide-time e b))
        (let ((c (apply #'weighted-pick (sim-rnd01) (band-weights *senju-neutral* d))))
          (and c (kit-command-ok-p e c)
               (or (not (member c '(:q :f))) (<= d (+ 0.2 (mv-reach (kit-command-move kit c)))))
@@ -921,11 +920,11 @@ Breaker. A command or NIL."
             (kikon-ready-p e) (not (ai-sb-finish-p e)) (< d (ai-table e :kikon-range 7.0))
             (not (member (snap-state s) '(:down :wakeup :hoho))) (kit-command-ok-p e :kikon)
             (< (sim-rnd01) (senju-dp b :red-rush-p)))
-       (setf (brain-decide-t b) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
+       (setf (brain-decide-t b) (ai-decide-time e b))
        (why b :red-rush :kikon))
       ;; a recovery out of J1's reach: K1, else the O
-      ((and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s)) (< (snap-left s) 99)
-            (>= d (+ (mv-reach q) 0.4)) (< (brain-react-roll b) (senju-dp b :punish-p)))
+      ((and (snap-recovering-p s) (< (snap-left s) 99) (>= d (+ (mv-reach q) 0.4))
+            (< (brain-react-roll b) (senju-dp b :punish-p)))
        (cond ((and k (< d (+ (mv-reach k) 0.2)) (>= left (+ (mv-s k) 1)) (kit-command-ok-p e :f)) (why b :far-punish :f))
              ((and o (< d (ai-table e :kikon-range 7.0)) (>= left (+ (senju-o-arrive o d) 1)) (kit-command-ok-p e :kikon)
                    (not (ai-sb-finish-p e)))
@@ -952,7 +951,7 @@ Breaker. A command or NIL."
 (defun senju-setplay-reflex (e b s d)
   "The set-play policy's reflexes (above): FOLLOW returns a command; ESCORT only moves the intent (NIL)."
   (let* ((kit (kit-of e)) (q (kit-command-move kit :q)) (k (kit-command-move kit :f)) (o (kit-command-move kit :kikon))
-         (left (- (snap-left s) (brain-delay b))))
+         (left (snap-left-seen s b)))
     (cond
       ((and (eq (snap-state s) :stun) (< (snap-left s) 99) (>= d (+ (mv-reach q) 0.6))   ; (closer: the generic Q follow-up)
             (not (ai-mash-p b)) (< (brain-react-roll b) (senju-dp b :follow-p)))
@@ -1004,7 +1003,7 @@ gates' debug mode (never / always: the awaken A/B) through AI-AWAKEN-P. :awaken 
     (and (gauges-evolution g) (hari-form-p e) (awaken-state-p e (fighter e))
          (ai-awaken-p e)
          (or (eq (svref *ai-awaken-mode* (fighter-side (fighter e))) :always)
-             (<= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (senju-dp b :awaken-below)))
+             (<= (reishi-frac g) (senju-dp b :awaken-below)))
          (why b :awaken-late :awaken))))
 
 (defun senju-ai-reflex (e b s d)
@@ -1065,7 +1064,7 @@ level). On a cross slot with a bar for SP1 it wants one pass: the quick single r
              (far (if hoshi 5.0 (getf w :far 6.5))) (near (if hoshi 2.5 (getf w :near 4.0)))
              (want (cond ((> d far) 3) ((> d near) 2) (t 0))) (woven (if e (sjs-woven (sj e)) 0))
              (fix (and e (not (tachi-aligned-p (form-hank (kit-form kit))))    ; (a cross slot, a bar: realign)
-                       (>= (floor (gauges-reiatsu (gauges e)) *reiatsu-bar*) (kit-command-cost kit :sp1))))
+                       (>= (reiatsu-bars e) (kit-command-cost kit :sp1))))
              (want (cond ((and e (senju-live-zones e)) 3)   ; (a zone lives: weave the next one up meanwhile;
                          (fix 1)                            ; nothing stored: one pass, never a refused tap)
                          (t (max 1 want)))))

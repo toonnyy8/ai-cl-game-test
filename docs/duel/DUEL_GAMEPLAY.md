@@ -110,7 +110,7 @@ generic systems; only `debug.lisp` names characters, to set up scenes). The modu
 name-leak check (it must print nothing):
 
 ```sh
-grep -nE ':ya-|:ke-|:ru-|:ic-|:sj-|:lb-|yama|kenpachi|rukia|ichigo|senju|lille' duel/lisp/{rules,control,fighter,combat,hazards,ai,camera,flow,endless-rules,endless,learn}.lisp
+grep -nE ':ya-|:ke-|:ru-|:ic-|:sj-|:lb-|yama|kenpachi|rukia|ichigo|senju|lille' duel/lisp/{rules,control,fighter,combat,hazards,ai,ai-learn,camera,flow,endless-rules,endless,learn}.lisp
 ```
 
 Engine modules the duel was the first user of (moved into the engine by the harvest):
