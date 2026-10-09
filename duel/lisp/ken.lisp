@@ -242,10 +242,13 @@
 (defkit :kenpachi :bankai :inherit :nomihose
   :awakening t :mult *bankai-ken-mult* :form-name "BANKAI" :kikon-konpaku 4 :blade-chip *nomihose-chip*
   :bankai-form nil :passives (:projectile-cut :drink)
-  :clip-map nil :drink-clip :ke-drink                ; (not cup 3's set: the Bankai keeps its clips)
+  :drink-clip :ke-drink                              ; (not cup 3's drink)
+  ;; its own strikes for the moves it borrows (a look, DUEL_KEN_REWORK §8)
+  :clip-map (:ke-q1 :ke-b-q1 :ke-q2 :ke-b-q2 :ke-f1 :ke-b-f1 :ke-f2 :ke-b-f2 :ke-r-f2 :ke-b-f3 :ke-meteor :ke-b-split
+             :ke-stance-cut :ke-b-cut)
   :meter (:name "UDE" :max *arm-pips* :start *arm-pips*) :meter-gain nil
   :pips (:n *arm-pips* :to :kataude :cmds (:f :sig :sp1 :sp2 :breaker :kikon))
-  :body :kenpachi-oni :weapon :ke-broken :stance :ke-b-stance :aura :oni :hide (:arm-wreck :crack-1 :crack-2 :crack-3 :crack-4)
+  :body :kenpachi-oni :weapon :ke-broken :stance :ke-b-stance :aura :oni :hide (:haori :arm-wreck :crack-1 :crack-2 :crack-3 :crack-4)
   :run-clips (:ke-b-run :ke-b-skate-b :ke-b-slide-r :ke-b-slide-l)
   :cine ken-bankai-cine :enter-hook nil :swing-sfx :whoosh-cleaver
   :commands (:q :ke-b-j1 :f :ke-b-k1 :sig :ke-b-bite :sp1 :ke-b-split :sp2 :ke-charge :breaker :ke-breaker :kikon :ke-b-kikon)
@@ -267,8 +270,12 @@
 ;;; kick, the Breaker and O (CHARGE) as written; x1.0; U is a guard again; Kikon 3 (the universal awakened count)
 (defkit :kenpachi :kataude :inherit :base
   :awakening t :form-name "KATAUDE" :kikon-konpaku 3 :mult 1.0 :reach-mult *kataude-reach* :endless-form :nozarashi
-  :body :kenpachi-oni :weapon :ke-broken :aura nil :hide (:crack-1 :crack-2 :crack-3 :crack-4) :swing-sfx :whoosh-cleaver
-  :stance :ke-b-stance :run-clips (:ke-b-run :ke-b-skate-b :ke-b-slide-r :ke-b-slide-l)   ; still the oni (the feral pass)
+  :body :kenpachi-oni :weapon nil :aura nil :hide (:haori :crack-1 :crack-2 :crack-3 :crack-4) :swing-sfx :whoosh-cleaver
+  :stance :ke-a-stance :run-clips (:ke-b-run :ke-b-skate-b :ke-b-slide-r :ke-b-slide-l)   ; still the oni (the feral pass)
+  ;; bare-handed, as canon (the user 2026-10-09: 「改成空手（照原作）」, DUEL_KEN_REWORK §8): no blade (:weapon nil), the left
+  ;; fist, a grab and the legs on the base moves (a look: their frames and volumes as before)
+  :clip-map (:ke-q1 :ke-a-q1 :ke-q2 :ke-a-q2 :ke-f1 :ke-a-f1 :ke-f2 :ke-a-f2 :ke-q3 :ke-a-spin :ke-stance-cut :ke-a-haymaker
+             :ke-buttagiru :ke-a-stomp :ke-flurry :ke-a-flurry)
   :commands (:breaker :ke-breaker :kikon :ke-kikon)
   :grid (:ke-j1 :ke-j2 :ke-a-j3 :ke-k1 :ke-k2 :ke-k3 :ke-j2s :ke-k2s)
   :ai (:intents (:approach 2 :pressure 4 :zone 0 :defend 1)

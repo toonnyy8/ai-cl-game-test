@@ -25,35 +25,35 @@
   (:pelvis (:box 0.34 0.18 0.24 :c :black)
            (:box 0.35 0.07 0.25 :at (0 0.06 0) :c :obi)
            ;; the tattered haori hem: strips of different lengths
-           (:box 0.15 0.62 0.02 :at (-0.14 -0.26 -0.14) :rot (0 -4 0) :c :white)
-           (:box 0.14 0.76 0.02 :at (0.0 -0.33 -0.145) :rot (0 -4 0) :c :white)
-           (:box 0.15 0.56 0.02 :at (0.14 -0.23 -0.14) :rot (0 -4 0) :c :white)
-           (:box 0.02 0.5 0.13 :at (0.215 -0.2 -0.06) :rot (0 0 4) :c :white)
-           (:box 0.02 0.66 0.12 :at (0.215 -0.28 0.06) :rot (0 0 4) :c :white)
-           (:box 0.02 0.58 0.13 :at (-0.215 -0.24 -0.06) :rot (0 0 -4) :c :white)
-           (:box 0.02 0.46 0.12 :at (-0.215 -0.18 0.06) :rot (0 0 -4) :c :white)
-           (:box 0.1 0.64 0.02 :at (0.17 -0.27 0.135) :rot (0 4 0) :c :white)
-           (:box 0.1 0.52 0.02 :at (-0.17 -0.21 0.135) :rot (0 4 0) :c :white)
+           (:box 0.15 0.62 0.02 :at (-0.14 -0.26 -0.14) :rot (0 -4 0) :c :white :tag :haori)
+           (:box 0.14 0.76 0.02 :at (0.0 -0.33 -0.145) :rot (0 -4 0) :c :white :tag :haori)
+           (:box 0.15 0.56 0.02 :at (0.14 -0.23 -0.14) :rot (0 -4 0) :c :white :tag :haori)
+           (:box 0.02 0.5 0.13 :at (0.215 -0.2 -0.06) :rot (0 0 4) :c :white :tag :haori)
+           (:box 0.02 0.66 0.12 :at (0.215 -0.28 0.06) :rot (0 0 4) :c :white :tag :haori)
+           (:box 0.02 0.58 0.13 :at (-0.215 -0.24 -0.06) :rot (0 0 -4) :c :white :tag :haori)
+           (:box 0.02 0.46 0.12 :at (-0.215 -0.18 0.06) :rot (0 0 -4) :c :white :tag :haori)
+           (:box 0.1 0.64 0.02 :at (0.17 -0.27 0.135) :rot (0 4 0) :c :white :tag :haori)
+           (:box 0.1 0.52 0.02 :at (-0.17 -0.21 0.135) :rot (0 4 0) :c :white :tag :haori)
            ;; the sawtooth hem (DUEL_KEN_REWORK §5.1, 「羽織與腰帶」): a white diamond behind each strip's foot, its lower half a
            ;; tooth; round holes punched near the hem
-           (:box 0.05 0.05 0.02 :at (-0.178 -0.57 -0.158) :rot (0 -4 45) :c :white)
-           (:box 0.05 0.05 0.02 :at (-0.103 -0.57 -0.158) :rot (0 -4 45) :c :white)
-           (:box 0.047 0.047 0.02 :at (-0.035 -0.709 -0.168) :rot (0 -4 45) :c :white)
-           (:box 0.047 0.047 0.02 :at (0.035 -0.709 -0.168) :rot (0 -4 45) :c :white)
-           (:box 0.05 0.05 0.02 :at (0.103 -0.51 -0.156) :rot (0 -4 45) :c :white)
-           (:box 0.05 0.05 0.02 :at (0.177 -0.51 -0.156) :rot (0 -4 45) :c :white)
-           (:box 0.02 0.044 0.044 :at (0.228 -0.45 -0.092) :rot (0 45 0) :c :white)
-           (:box 0.02 0.044 0.044 :at (0.228 -0.45 -0.027) :rot (0 45 0) :c :white)
-           (:box 0.02 0.081 0.081 :at (0.234 -0.609 0.06) :rot (0 45 0) :c :white)
-           (:box 0.02 0.044 0.044 :at (-0.231 -0.53 -0.092) :rot (0 45 0) :c :white)
-           (:box 0.02 0.044 0.044 :at (-0.231 -0.53 -0.027) :rot (0 45 0) :c :white)
-           (:box 0.02 0.081 0.081 :at (-0.227 -0.41 0.06) :rot (0 45 0) :c :white)
-           (:box 0.067 0.067 0.02 :at (0.17 -0.589 0.153) :rot (0 4 45) :c :white)
-           (:box 0.067 0.067 0.02 :at (-0.17 -0.47 0.149) :rot (0 4 45) :c :white)
-           (:cyl 0.017 0.004 :at (-0.015 -0.539 -0.173) :rot (0 86 0) :seg 8 :c :black :ink 0)
-           (:cyl 0.017 0.004 :at (0.16 -0.409 -0.166) :rot (0 86 0) :seg 8 :c :black :ink 0)
-           (:cyl 0.017 0.004 :at (-0.12 -0.449 -0.166) :rot (0 86 0) :seg 8 :c :black :ink 0)
-           (:cyl 0.015 0.004 :at (0.244 -0.509 0.06) :rot (0 0 94) :seg 8 :c :black :ink 0)
+           (:box 0.05 0.05 0.02 :at (-0.178 -0.57 -0.158) :rot (0 -4 45) :c :white :tag :haori)
+           (:box 0.05 0.05 0.02 :at (-0.103 -0.57 -0.158) :rot (0 -4 45) :c :white :tag :haori)
+           (:box 0.047 0.047 0.02 :at (-0.035 -0.709 -0.168) :rot (0 -4 45) :c :white :tag :haori)
+           (:box 0.047 0.047 0.02 :at (0.035 -0.709 -0.168) :rot (0 -4 45) :c :white :tag :haori)
+           (:box 0.05 0.05 0.02 :at (0.103 -0.51 -0.156) :rot (0 -4 45) :c :white :tag :haori)
+           (:box 0.05 0.05 0.02 :at (0.177 -0.51 -0.156) :rot (0 -4 45) :c :white :tag :haori)
+           (:box 0.02 0.044 0.044 :at (0.228 -0.45 -0.092) :rot (0 45 0) :c :white :tag :haori)
+           (:box 0.02 0.044 0.044 :at (0.228 -0.45 -0.027) :rot (0 45 0) :c :white :tag :haori)
+           (:box 0.02 0.081 0.081 :at (0.234 -0.609 0.06) :rot (0 45 0) :c :white :tag :haori)
+           (:box 0.02 0.044 0.044 :at (-0.231 -0.53 -0.092) :rot (0 45 0) :c :white :tag :haori)
+           (:box 0.02 0.044 0.044 :at (-0.231 -0.53 -0.027) :rot (0 45 0) :c :white :tag :haori)
+           (:box 0.02 0.081 0.081 :at (-0.227 -0.41 0.06) :rot (0 45 0) :c :white :tag :haori)
+           (:box 0.067 0.067 0.02 :at (0.17 -0.589 0.153) :rot (0 4 45) :c :white :tag :haori)
+           (:box 0.067 0.067 0.02 :at (-0.17 -0.47 0.149) :rot (0 4 45) :c :white :tag :haori)
+           (:cyl 0.017 0.004 :at (-0.015 -0.539 -0.173) :rot (0 86 0) :seg 8 :c :black :ink 0 :tag :haori)
+           (:cyl 0.017 0.004 :at (0.16 -0.409 -0.166) :rot (0 86 0) :seg 8 :c :black :ink 0 :tag :haori)
+           (:cyl 0.017 0.004 :at (-0.12 -0.449 -0.166) :rot (0 86 0) :seg 8 :c :black :ink 0 :tag :haori)
+           (:cyl 0.015 0.004 :at (0.244 -0.509 0.06) :rot (0 0 94) :seg 8 :c :black :ink 0 :tag :haori)
            ;; the white obi tied in a bow at the front: the knot, two loops, two tails
            (:box 0.045 0.04 0.03 :at (0 0.06 0.135) :c :obi)
            (:box 0.075 0.042 0.02 :at (0.055 0.068 0.135) :rot (0 0 -18) :c :obi)
@@ -61,20 +61,20 @@
            (:box 0.032 0.12 0.015 :at (0.022 -0.02 0.14) :rot (0 0 -12) :c :obi)
            (:box 0.032 0.1 0.015 :at (-0.024 -0.01 0.14) :rot (0 0 14) :c :obi))
   ;; the haori over the torso: one rounded white shell, the black robe and the bare chest at its open front
-  (:spine (:bevel 0.44 0.25 0.27 0.04 :at (0 0.11 -0.005) :c :white)
+  (:spine (:bevel 0.44 0.25 0.27 0.04 :at (0 0.11 -0.005) :c :white :tag :haori)
           ;; the 11th Division's mark on the back: 十一 stacked in a diamond (ink strokes), below the mane
-          (:box 0.1 0.008 0.004 :at (0.035 0.09 -0.163) :rot (0 0 -45) :c :black :ink 0)
-          (:box 0.1 0.008 0.004 :at (-0.035 0.09 -0.163) :rot (0 0 45) :c :black :ink 0)
-          (:box 0.1 0.008 0.004 :at (0.035 0.02 -0.163) :rot (0 0 45) :c :black :ink 0)
-          (:box 0.1 0.008 0.004 :at (-0.035 0.02 -0.163) :rot (0 0 -45) :c :black :ink 0)
-          (:box 0.007 0.04 0.004 :at (0 0.073 -0.163) :c :black :ink 0)
-          (:box 0.042 0.007 0.004 :at (0 0.075 -0.163) :c :black :ink 0)
-          (:box 0.046 0.007 0.004 :at (0 0.035 -0.163) :c :black :ink 0)
-          (:box 0.14 0.25 0.02 :at (0 0.11 0.155) :c :black))
-  (:chest (:bevel 0.5 0.33 0.29 0.05 :at (0 0.105 -0.005) :c :white)
-          (:box 0.15 0.3 0.02 :at (0 0.1 0.156) :c :skin)                                ; the bare chest in the open collar ...
-          (:box 0.05 0.33 0.02 :at (0.045 0.1 0.163) :rot (0 0 -14) :c :black)          ; ... between the robe's lapels
-          (:box 0.05 0.33 0.02 :at (-0.045 0.1 0.163) :rot (0 0 14) :c :black))
+          (:box 0.1 0.008 0.004 :at (0.035 0.09 -0.163) :rot (0 0 -45) :c :black :ink 0 :tag :haori)
+          (:box 0.1 0.008 0.004 :at (-0.035 0.09 -0.163) :rot (0 0 45) :c :black :ink 0 :tag :haori)
+          (:box 0.1 0.008 0.004 :at (0.035 0.02 -0.163) :rot (0 0 45) :c :black :ink 0 :tag :haori)
+          (:box 0.1 0.008 0.004 :at (-0.035 0.02 -0.163) :rot (0 0 -45) :c :black :ink 0 :tag :haori)
+          (:box 0.007 0.04 0.004 :at (0 0.073 -0.163) :c :black :ink 0 :tag :haori)
+          (:box 0.042 0.007 0.004 :at (0 0.075 -0.163) :c :black :ink 0 :tag :haori)
+          (:box 0.046 0.007 0.004 :at (0 0.035 -0.163) :c :black :ink 0 :tag :haori)
+          (:box 0.14 0.25 0.02 :at (0 0.11 0.155) :c :black :tag :haori))
+  (:chest (:bevel 0.5 0.33 0.29 0.05 :at (0 0.105 -0.005) :c :white :tag :haori)
+          (:box 0.15 0.3 0.02 :at (0 0.1 0.156) :c :skin :tag :haori)                                ; the bare chest in the open collar ...
+          (:box 0.05 0.33 0.02 :at (0.045 0.1 0.163) :rot (0 0 -14) :c :black :tag :haori)          ; ... between the robe's lapels
+          (:box 0.05 0.33 0.02 :at (-0.045 0.1 0.163) :rot (0 0 14) :c :black :tag :haori))
   (:neck (:cyl 0.075 0.1 :at (0 0.04 0) :c :skin))
   ;; head in metres (not girth-scaled; x and z sizes x the body :width 1.18): a skull sphere under the hair,
   ;; a flat-fronted face (front at z 0.073) carrying the flat face shapes, one set per expression (tags :face-neutral,
@@ -171,9 +171,9 @@
          (:box 0.006 0.14 0.004 :at (0.035 -0.02 -0.136) :rot (0 -8 3) :c :fold)
          (:box 0.006 0.11 0.004 :at (-0.045 -0.05 -0.136) :rot (0 -8 -4) :c :fold))
   (:shoulder-r (:sphere 0.09 :at (0.06 -0.03 0) :c :skin)
-               (:box 0.1 0.04 0.27 :at (-0.01 0.05 0) :rot (0 0 -10) :c :white))
+               (:box 0.1 0.04 0.27 :at (-0.01 0.05 0) :rot (0 0 -10) :c :white :tag :haori))
   (:shoulder-l (:sphere 0.09 :at (-0.06 -0.03 0) :c :skin)
-               (:box 0.1 0.04 0.27 :at (0.01 0.05 0) :rot (0 0 10) :c :white))
+               (:box 0.1 0.04 0.27 :at (0.01 0.05 0) :rot (0 0 10) :c :white :tag :haori))
   (:upper-arm-r (:cyl 0.05 0.3 :top 0.056 :seg 8 :at (0 -0.15 0) :c :skin) (:sphere 0.05 :at (0 -0.13 0.028) :c :skin-d))
   (:upper-arm-l (:cyl 0.05 0.3 :top 0.056 :seg 8 :at (0 -0.15 0) :c :skin) (:sphere 0.05 :at (0 -0.13 0.028) :c :skin-d))
   (:lower-arm-r (:cyl 0.036 0.27 :top 0.048 :seg 8 :at (0 -0.125 0) :c :skin) (:sphere 0.045 :at (0 0 0) :c :skin))
@@ -201,18 +201,76 @@
                  (:cone 0.035 0.24 :at (0.000 0.319 0.032) :rot (0 -6 -0) :seg 4 :c :hair)
                  (:cone 0.05 0.34 :at (0.000 0.137 -0.296) :rot (0 59 -0) :seg 4 :c :hair))))
 
-;; the Bankai's oni (docs/duel/DUEL_KEN_BANKAI.md §12, the user's decisions 2026-09-28: 片腕 stays the oni): the same body, the
-;; skin a MUTED crimson (S <= 0.45: not a spot colour), two short horns at the hairline, the pupils white (irisless), four
-;; thin BLOOD cracks on the right forearm (:crack-1 .. :crack-4, one shown per spent pip) and the torn forearm of 片腕
-;; (:arm-wreck: skin shards, raw strips, ink splits)
+;; the Bankai's oni (docs/duel/DUEL_KEN_BANKAI.md §12; DUEL_KEN_REWORK §8: the anime's look, the user's figure references,
+;; 2026-10-09): crimson all over; the anime's small skin-red horns over the eyes, the brow slit, a comma over each eye, the
+;; eye masks, tear streaks and tiger stripes (cheeks, jaw, neck); blank white eyes; the hair wilder (cup 3's lifted spikes);
+;; the haori gone (its parts carry :tag :haori, the kits hide it): the bare torso under a black sleeveless vest with white
+;; lining at the armholes and the open front and a ragged hem, the white obi, the baggy black hakama with ragged cuffs,
+;; bare feet; four BLOOD cracks on the right forearm (:crack-1 .. :crack-4, one per spent pip) and its wreck (:arm-wreck)
 (body-variant :kenpachi-oni :kenpachi
-  :palette '((:skin #x9A4A42) (:skin-d #x7A3630) (:pupil #xF4F2EA) (:horn #x6E302C) (:blood #xD0101C) (:wound #x5A1418)
-            (:split #x101018))
+  :palette '((:skin #xA23440) (:skin-d #x7E2632) (:pupil #xF4F2EA) (:horn #x8E2C38) (:mark #x121216) (:crease #x4A1018)
+            (:tabi #xA23440) (:sole #x5A1822) (:lining #xE4E4E0)
+            (:blood #xD0101C) (:wound #x5A1418) (:split #x101018))
   ;; his own prowl and guard for the shared clips (the feral pass, 2026-09-28): art only
   :clips '(:sh-guard :ke-b-guard :sh-guard-hit :ke-b-guard-hit :sh-walk-f :ke-b-walk-f :sh-walk-b :ke-b-walk-b
            :sh-strafe-r :ke-b-strafe-r :sh-strafe-l :ke-b-strafe-l)
-  :parts '((:head (:cone 0.02 0.11 :at (0.042 0.245 0.07) :rot (0 -20 -18) :seg 6 :c :horn)
-                 (:cone 0.02 0.11 :at (-0.042 0.245 0.07) :rot (0 -20 18) :seg 6 :c :horn))
+  :parts '((:head (:cone 0.016 0.06 :at (0.034 0.222 0.064) :rot (0 -12 -14) :seg 6 :c :horn)   ; the horns (the anime's: small cones)
+                 (:cone 0.016 0.06 :at (-0.034 0.222 0.064) :rot (0 -12 14) :seg 6 :c :horn)
+                 (:box 0.006 0.045 0.004 :at (0 0.162 0.0768) :c :mark)                          ; the slit between the brows
+                 (:box 0.016 0.006 0.004 :at (0.03 0.153 0.0768) :rot (0 0 -30) :c :mark)       ; a comma over each eye
+                 (:box 0.016 0.006 0.004 :at (-0.03 0.153 0.0768) :rot (0 0 30) :c :mark)
+                 (:box 0.042 0.016 0.003 :at (0.028 0.118 0.0745) :c :mark)                       ; the eye masks
+                 (:box 0.042 0.016 0.003 :at (-0.028 0.118 0.0745) :c :mark)
+                 (:box 0.006 0.034 0.004 :at (0.034 0.094 0.0768) :rot (0 0 10) :c :mark)        ; the tear streaks
+                 (:box 0.006 0.034 0.004 :at (-0.034 0.094 0.0768) :rot (0 0 -10) :c :mark)
+                 (:box 0.03 0.005 0.004 :at (0.05 0.078 0.0745) :rot (0 0 28) :c :mark)          ; tiger stripes on the cheeks
+                 (:box 0.03 0.005 0.004 :at (-0.05 0.078 0.0745) :rot (0 0 -28) :c :mark)
+                 (:box 0.026 0.005 0.004 :at (0.052 0.06 0.0745) :rot (0 0 18) :c :mark)
+                 (:box 0.026 0.005 0.004 :at (-0.052 0.06 0.0745) :rot (0 0 -18) :c :mark)
+                 (:box 0.004 0.03 0.03 :at (0.074 0.09 0.03) :rot (25 0 0) :c :mark)              ; ... and on the jaw's sides
+                 (:box 0.004 0.03 0.03 :at (-0.074 0.09 0.03) :rot (-25 0 0) :c :mark)
+                 (:cone 0.036 0.24 :at (0.113 0.276 -0.036) :rot (0 9 -26) :seg 4 :c :hair)
+                 (:cone 0.04 0.26 :at (0.177 0.198 -0.109) :rot (0 27 -48) :seg 4 :c :hair)
+                 (:cone 0.045 0.3 :at (0.169 0.055 -0.219) :rot (0 61 -41) :seg 4 :c :hair)
+                 (:cone 0.036 0.24 :at (-0.113 0.276 -0.036) :rot (0 9 26) :seg 4 :c :hair)
+                 (:cone 0.04 0.26 :at (-0.177 0.198 -0.109) :rot (0 27 48) :seg 4 :c :hair)
+                 (:cone 0.045 0.3 :at (-0.169 0.055 -0.219) :rot (0 61 41) :seg 4 :c :hair)
+                 (:cone 0.035 0.24 :at (0.000 0.319 0.032) :rot (0 -6 -0) :seg 4 :c :hair)
+                 (:cone 0.05 0.34 :at (0.000 0.137 -0.296) :rot (0 59 -0) :seg 4 :c :hair))
+          (:neck (:box 0.004 0.03 0.03 :at (0.07 0.05 0.03) :rot (30 0 0) :c :mark) (:box 0.004 0.03 0.03 :at (-0.07 0.05 0.03) :rot (-30 0 0) :c :mark))
+          ;; the bare torso and the vest
+          (:chest (:bevel 0.46 0.31 0.27 0.05 :at (0 0.105 0.0) :c :skin)
+                  (:box 0.004 0.13 0.004 :at (0 0.07 0.137) :c :crease)
+                  (:box 0.09 0.004 0.004 :at (0.05 0.135 0.137) :rot (0 0 -8) :c :crease)
+                  (:box 0.09 0.004 0.004 :at (-0.05 0.135 0.137) :rot (0 0 8) :c :crease)
+                  (:bevel 0.5 0.34 0.13 0.03 :at (0 0.105 -0.085) :c :black)                 ; the vest's back
+                  (:box 0.1 0.34 0.2 :at (0.2 0.105 0.02) :c :black)                          ; its sides
+                  (:box 0.1 0.34 0.2 :at (-0.2 0.105 0.02) :c :black)
+                  (:box 0.022 0.34 0.022 :at (0.158 0.105 0.12) :c :lining)                   ; the lining at the open front
+                  (:box 0.022 0.34 0.022 :at (-0.158 0.105 0.12) :c :lining))
+          (:spine (:bevel 0.42 0.24 0.25 0.04 :at (0 0.11 0.0) :c :skin)
+                  (:box 0.11 0.004 0.004 :at (0 0.15 0.127) :c :crease)                       ; the abs
+                  (:box 0.11 0.004 0.004 :at (0 0.09 0.127) :c :crease)
+                  (:box 0.004 0.14 0.004 :at (0 0.11 0.127) :c :crease)
+                  (:bevel 0.46 0.25 0.12 0.03 :at (0 0.11 -0.08) :c :black)
+                  (:box 0.1 0.25 0.19 :at (0.19 0.11 0.02) :c :black)
+                  (:box 0.1 0.25 0.19 :at (-0.19 0.11 0.02) :c :black)
+                  (:box 0.022 0.25 0.022 :at (0.148 0.11 0.115) :c :lining)
+                  (:box 0.022 0.25 0.022 :at (-0.148 0.11 0.115) :c :lining))
+          ;; the vest's ragged hem over the hips
+          (:pelvis (:box 0.16 0.22 0.02 :at (-0.12 -0.06 -0.14) :c :black) (:box 0.15 0.3 0.02 :at (0.02 -0.1 -0.145) :c :black)
+                   (:box 0.15 0.18 0.02 :at (0.15 -0.04 -0.14) :c :black)
+                   (:box 0.02 0.2 0.18 :at (0.215 -0.05 0.0) :c :black) (:box 0.02 0.26 0.16 :at (-0.215 -0.08 0.0) :c :black)
+                   (:box 0.075 0.075 0.02 :at (-0.12 -0.17 -0.138) :rot (0 0 45) :c :black)
+                   (:box 0.07 0.07 0.02 :at (0.02 -0.25 -0.143) :rot (0 0 45) :c :black)
+                   (:box 0.075 0.075 0.02 :at (0.15 -0.13 -0.138) :rot (0 0 45) :c :black))
+          (:shoulder-r (:box 0.13 0.05 0.29 :at (-0.01 0.05 0) :rot (0 0 -10) :c :black) (:box 0.02 0.06 0.29 :at (0.06 0.03 0) :rot (0 0 -10) :c :lining))
+          (:shoulder-l (:box 0.13 0.05 0.29 :at (0.01 0.05 0) :rot (0 0 10) :c :black) (:box 0.02 0.06 0.29 :at (-0.06 0.03 0) :rot (0 0 10) :c :lining))
+          ;; the hakama's ragged cuffs, flared
+          (:shin-r (:cyl 0.15 0.12 :top 0.115 :seg 10 :at (0 -0.27 0) :c :black)
+                   (:box 0.07 0.07 0.02 :at (0.06 -0.33 0.12) :rot (0 0 45) :c :black) (:box 0.07 0.07 0.02 :at (-0.06 -0.34 -0.1) :rot (0 0 45) :c :black))
+          (:shin-l (:cyl 0.15 0.12 :top 0.115 :seg 10 :at (0 -0.27 0) :c :black)
+                   (:box 0.07 0.07 0.02 :at (-0.06 -0.33 0.12) :rot (0 0 45) :c :black) (:box 0.07 0.07 0.02 :at (0.06 -0.34 -0.1) :rot (0 0 45) :c :black))
           (:lower-arm-r (:glow 1.6 (:box 0.006 0.075 0.004 :at (0.0 -0.06 0.052) :rot (0 0 25) :c :blood) :crack-1)
                         (:glow 1.6 (:box 0.004 0.075 0.006 :at (0.052 -0.1 0.012) :rot (0 0 -20) :c :blood) :crack-2)
                         (:glow 1.6 (:box 0.006 0.075 0.004 :at (-0.01 -0.15 0.05) :rot (0 0 -30) :c :blood) :crack-3)
@@ -308,25 +366,27 @@
                                             :pitch (atan uz uy) :roll (asin (- ux))))
                        (mb-cone mb 0.026 h :segments 4))))))
 
-;; the Bankai's broken cleaver (anime ep. 44): Nozarashi's slab snapped off on a diagonal at ~1 m, ink-black with a white
-;; edge line, no guard, no cap, a long cloth-wrapped tang like the first Zangetsu's hilt; no fire, no glow
+;; the Bankai's broken cleaver (DUEL_KEN_REWORK §8; the user 2026-10-09: 「漫畫版：黑色、方形斷口」, the outline after the user's
+;; figure references): Nozarashi's head snapped short, an axe head now: the haft runs on under its straight spine, the
+;; blade hangs on the edge side (+Z) from a hooked spur by the haft, its edge a low convex curve, its far end cut square
+;; and chipped; black with a thin white edge line; no cap, no tassel; the beige-wrapped haft, a black butt
 (defweapon :ke-broken (:length 1.12 :base 0.18)
-  (:solid (mbc mb #x1C1C22)                              ; the slab, snapped
-          (with-xform (mb (xform :y 0.47 :z 0.07)) (mb-bevel-box mb 0.04 0.84 0.3 0.008))
-          (with-xform (mb (xform :y 0.95 :z 0.0 :pitch 0.55)) (mb-bevel-box mb 0.04 0.3 0.16 0.006))   ; the diagonal break
-          (mbc mb #x3A3A42)                              ; a dark fuller along the spine side
-          (with-xform (mb (xform :y 0.5 :z -0.03)) (mb-box mb 0.044 0.72 0.022))
+  (:solid (mbc mb #x18181C)                              ; the head (one convex prism)
+          (ke-mb-prism mb '((0.32 0.0) (0.36 0.36) (0.6 0.5) (0.85 0.58) (1.12 0.62) (1.12 0.0)) -0.022 0.022)
+          (ke-mb-prism mb '((0.33 0.16) (0.17 0.48) (0.36 0.36)) -0.02 0.02)                   ; the hooked spur by the haft
           (mbc mb #xE8E8E4)                              ; the white edge line
-          (with-xform (mb (xform :y 0.45 :z 0.22)) (mb-box mb 0.012 0.8 0.018))
-          (mbc mb #x0C0C10)                              ; the jagged break: bitten shards
-          (loop for (y z r) in '((0.88 0.2 0.5) (0.98 0.12 -0.4) (1.06 0.03 0.7))
-                do (with-xform (mb (xform :y y :z z :roll r)) (mb-box mb 0.046 0.04 0.05)))
-          (mbc mb #xD8D6CC)                              ; the long cloth-wrapped tang
-          (with-xform (mb (xform :y -0.4)) (mb-box mb 0.048 0.86 0.048))
-          (mbc mb #x3A3634)
-          (loop for i below 9 do (with-xform (mb (xform :y (- -0.02 (* i 0.095)) :roll 0.785)) (mb-box mb 0.034 0.034 0.056)))
-          (mbc mb #xD8D6CC)                              ; the loose end of the cloth, hanging
-          (with-xform (mb (xform :y -0.92 :z -0.03 :pitch 0.3)) (mb-box mb 0.04 0.24 0.012))))
+          (loop for ((y0 z0) (y1 z1)) on '((0.17 0.48) (0.36 0.36) (0.6 0.5) (0.85 0.58) (1.12 0.62))
+                while y1
+                do (ke-mb-prism mb (list (list y0 z0) (list y1 z1) (list y1 (- z1 0.03)) (list y0 (- z0 0.03))) -0.024 0.024))
+          (mbc mb #x18181C)                              ; the square break, chipped
+          (loop for (z r) in '((0.14 0.5) (0.34 -0.4) (0.52 0.7))
+                do (with-xform (mb (xform :y 1.12 :z z :roll r)) (mb-box mb 0.05 0.045 0.05)))
+          (mbc mb #xC8B48A)                              ; the beige-wrapped haft, on under the spine
+          (with-xform (mb (xform :y 0.18)) (mb-box mb 0.048 1.6 0.048))
+          (mbc mb #x5A4E3A)
+          (loop for i below 7 do (with-xform (mb (xform :y (- 0.4 (* i 0.15)) :roll 0.6)) (mb-box mb 0.052 0.006 0.052)))
+          (mbc mb #x16161A)                              ; the black butt
+          (with-xform (mb (xform :y -0.64)) (mb-bevel-box mb 0.056 0.06 0.056 0.008))))
 
 ;;; ---------------------------------------------------------------- poses
 (defpose :ke-stance ()
@@ -936,18 +996,16 @@ flex and the spine / head flex shifted by these."
 (loop for name in '(:ke-b-run :ke-b-skate-b :ke-b-slide-r :ke-b-slide-l)
       for keys in (list *run-keys* *skate-keys* *slide-r-keys* *slide-l-keys*)
       do (build-clip name 0.5 t :ke-b-stance (oni-keys keys :du -0.2 :dthigh 22 :dknee 40 :dspine 22 :dhead -22)))
-;; J3 GENKOTSU / SP2's NAGURI-TOBASHI: from the crouch he springs, the left hook thrown with the whole body, the cleaver
-;; flung out wide behind, held 3 f on contact
-(defstrike :ke-b-fist (9 3 18 :base :ke-b-stance)
-  (0)
-  (4 (:chest :twist 40 :flex 20) (:spine :flex 46) (:arm-l :flex 30 :side 70) (:elbow-l :flex 115) (:hand-l :flex 0)
-     (:root :u -0.36 :f -0.1) (:head :twist 14 :flex -60) (:knee-l :flex 92) (:thigh-l :flex 66))    ; coiled lower
-  (7 (:chest :twist 46) (:root :u -0.37 :f -0.12))                                                  ; held
-  (:s :snap (:chest :twist -52 :flex 8) (:spine :flex 30) (:arm-l :flex 94 :side 6) (:elbow-l :flex 18) (:hand-l :flex 0)
-      (:root :f 0.5 :u -0.2) (:thigh-l :flex 58) (:knee-l :flex 52) (:thigh-r :flex -34) (:knee-r :flex 24)
-      (:arm-r :flex -40 :side 75) (:hand-r :flex -90) (:head :twist -10 :flex -40))
-  (:a (:chest :twist -60) (:root :f 0.56))                                                           ; overshoot, held
-  (20 (:chest :twist -52) (:root :f 0.5 :u -0.24) (:arm-l :flex 80) (:elbow-l :flex 34) (:spine :flex 36))
+(defstrike :ke-b-fist (9 3 18 :base :ke-b-stance)      ; SP2's NAGURI-TOBASHI: the left uppercut to the chin (the punch
+  (0)                                                   ; that sent Gerard flying, DUEL_KEN_REWORK §8), rising with it
+  (4 (:chest :twist 30 :flex 24) (:spine :flex 54) (:arm-l :flex -10 :side 30) (:elbow-l :flex 100) (:hand-l :flex 0)
+     (:root :u -0.46 :f -0.08) (:head :twist 10 :flex -66) (:knees :flex 100) (:thighs :flex 74))   ; sunk, the fist low
+  (7 (:root :u -0.48 :f -0.1) (:spine :flex 56))                                               ; held
+  (:s :snap (:chest :twist -30 :flex -6) (:spine :flex 4) (:arm-l :flex 150 :side 10) (:elbow-l :flex 40) (:hand-l :flex 0)
+      (:root :f 0.5 :u 0.0) (:head :flex -20 :twist -6) (:thigh-l :flex 40) (:knee-l :flex 30) (:thigh-r :flex -20) (:knee-r :flex 15)
+      (:arm-r :flex -40 :side 60) (:hand-r :flex -90))
+  (:a (:arm-l :flex 165) (:root :f 0.54 :u 0.06) (:spine :flex 0))                             ; up on the toes
+  (20 (:arm-l :flex 140) (:root :f 0.5 :u -0.1) (:spine :flex 20))
   (:end :ke-b-stance))
 ;; J3 GENKOTSU alone (the J cut, docs/duel/DUEL_STRINGS.md §13): the same hook thrown from where he stands, close (SP2's punch
 ;; keeps the long spring above)
@@ -971,7 +1029,8 @@ flex and the spine / head flex shifted by these."
   (:s :snap (:root :f 0.78 :u -0.26) (:spine :flex 50) (:chest :flex 10) (:head :flex -10) (:arm-l :flex 100 :side 8)
       (:elbow-l :flex 20) (:hand-l :flex 55) (:thigh-l :flex 66) (:knee-l :flex 62) (:thigh-r :flex -34) (:knee-r :flex 22))
   (:a (:root :f 0.82) (:head :flex 4))                                                               ; the teeth in
-  (18 (:root :f 0.6 :u -0.2) (:spine :flex 18) (:head :flex -48) (:arm-l :flex 70 :side 30) (:elbow-l :flex 62))  ; torn off
+  (18 (:root :f 0.6 :u -0.2) (:spine :flex 18) (:chest :twist 45) (:head :flex -48 :twist 35) (:arm-l :flex 70 :side 30)
+      (:elbow-l :flex 62))                                                                      ; wrenched sideways and back: torn off
   (27 (:root :f 0.5 :u -0.26) (:head :flex -52) (:spine :flex 30))
   (:end :ke-b-stance))
 ;; O MAPPUTATSU's rush (the aura / dash; the strike is :ke-stance-cut): he drops almost to all fours, the claw on the
@@ -999,6 +1058,177 @@ flex and the spine / head flex shifted by these."
         (:thigh-l :flex 78) (:knee-l :flex 84) (:thigh-r :flex -28) (:knee-r :flex 40))
   (1.0 (:root :u -0.4 :f 0.8) (:spine :flex 62))
   (1.5 :ke-b-stance (:root :f 0.8)))
+;;; ---------------------------------------------------------------- the Bankai's own strikes (DUEL_KEN_REWORK §8)
+;;; The moves it borrowed (J1 / J2 the base Q1 / Q2, K1 / K2 the base F1 / F2, K3 RYOTE's KABUTO-WARI, TATE-GOTO the meteor,
+;;; MAPPUTATSU the stance's cut) play these through the kit's :clip-map, at those clips' S/A/R: low, from the crouch,
+;;; the head down, the cleaver in the right hand, the left a claw.
+(defstrike :ke-b-q1 (7 3 12 :base :ke-b-stance)        ; J1: a beast's hack, forehand, short off the right shoulder
+  (0)
+  (3 (:arm-r :flex 140 :side 40) (:elbow-r :flex 80) (:hand-r :flex -40 :twist 0) (:chest :twist -30 :flex 10)
+     (:root :u -0.34 :f -0.04) (:head :flex -60 :twist 10))
+  (5 (:arm-r :flex 148) (:chest :twist -34))                                                   ; held
+  (:s :snap (:arm-r :flex 50 :side 10) (:elbow-r :flex 20) (:hand-r :flex -40) (:chest :twist 30 :flex 20) (:spine :flex 46)
+      (:root :f 0.3 :u -0.36) (:head :flex -62 :twist -8) (:arm-l :flex 20 :side 60) (:elbow-l :flex 50))
+  (:a (:arm-r :flex 36 :side 0) (:chest :twist 38) (:root :f 0.33 :u -0.38))
+  (15 (:chest :twist 32) (:root :f 0.26 :u -0.35))
+  (:end :ke-b-stance))
+(defstrike :ke-b-q2 (7 3 13 :base :ke-b-stance)        ; J2: the backhand hack, low, out to the right
+  (0)
+  (3 (:arm-r :flex 70 :side -30) (:elbow-r :flex 80) (:hand-r :flex -60 :twist 0) (:chest :twist 40 :flex 18)
+     (:root :u -0.36) (:head :flex -60 :twist -14) (:arm-l :flex 10 :side 50))
+  (5 (:chest :twist 46) (:arm-r :side -36))                                                    ; held
+  (:s :snap (:arm-r :flex 50 :side 55) (:elbow-r :flex 50) (:hand-r :flex 0) (:chest :twist -36 :flex 14) (:spine :flex 42)
+      (:root :f 0.32 :u -0.34) (:head :flex -58 :twist 10) (:arm-l :flex 40 :side 30) (:elbow-l :flex 70))
+  (:a (:arm-r :side 66) (:chest :twist -44) (:root :f 0.35))
+  (16 (:chest :twist -38) (:root :f 0.28))
+  (:end :ke-b-stance))
+(defstrike :ke-b-f1 (16 4 20 :base :ke-b-stance)       ; K1 ONATA: sprung out of the crouch, a hatchet chop from overhead
+  (0)
+  (6 (:root :u -0.5) (:knees :flex 104) (:thighs :flex 80) (:spine :flex 60) (:head :flex -70) (:arm-r :flex -40 :side 40)
+     (:hand-r :flex -95) (:arm-l :flex 60 :side 30) (:elbow-l :flex 30))                        ; sunk to the floor
+  (12 (:root :u 0.1 :f 0.1) (:spine :flex -12) (:chest :flex -8) (:head :flex -30) (:knees :flex 50) (:thighs :flex 40)
+      (:arm-r :flex 185 :side 15) (:elbow-r :flex 60) (:hand-r :flex -50 :twist 0) (:arm-l :flex 100 :side 40) (:elbow-l :flex 20))
+  (14 (:root :u 0.14 :f 0.12) (:spine :flex -16))                                              ; up, held
+  (:s :snap (:root :u -0.4 :f 0.8) (:spine :flex 58) (:chest :flex 16) (:head :flex -55) (:arm-r :flex 60 :side 5)
+      (:elbow-r :flex 5) (:hand-r :flex 0) (:arm-l :flex 40 :side 60) (:elbow-l :flex 30)
+      (:thigh-l :flex 76) (:knee-l :flex 84) (:thigh-r :flex -24) (:knee-r :flex 40))
+  (:a (:root :u -0.44 :f 0.84) (:spine :flex 62) (:arm-r :flex 44) (:hand-r :flex -30))
+  (28 (:root :u -0.42 :f 0.8) (:spine :flex 58))
+  (:end :ke-b-stance))
+(defstrike :ke-b-f2 (20 5 28 :base :ke-b-stance)       ; K2 EGURI-AGE: the blade laid on the floor ahead, then gouged up
+  (0)
+  (8 (:root :u -0.5 :f 0.05) (:spine :flex 62) (:head :flex -66) (:knees :flex 100) (:thighs :flex 76)
+     (:arm-r :flex 40 :side 20) (:elbow-r :flex 10) (:hand-r :flex -150 :twist 0) (:arm-l :flex 60 :side 30) (:elbow-l :flex 40))
+  (16 (:root :u -0.52 :f 0.2) (:spine :flex 64))                                               ; scraping, held
+  (:s :snap (:root :u -0.15 :f 0.5) (:spine :flex 20) (:chest :flex -6) (:head :flex -30) (:knees :flex 50) (:thighs :flex 40)
+      (:arm-r :flex 85 :side 5) (:elbow-r :flex 5) (:hand-r :flex -80) (:arm-l :flex 20 :side 60))
+  (:a (:arm-r :flex 150) (:hand-r :flex -40) (:root :u -0.08 :f 0.52) (:spine :flex 8))
+  (36 (:arm-r :flex 140) (:root :u -0.12 :f 0.5) (:spine :flex 12))
+  (:end :ke-b-stance))
+(defstrike :ke-b-f3 (21 5 28 :base :ke-b-stance)       ; K3: a leap, the cleaver cocked over the left shoulder, the cleave
+  (0)                                                   ; down through the guard and shield both, to the right
+  (6 (:root :u -0.48) (:knees :flex 100) (:thighs :flex 76) (:spine :flex 60) (:head :flex -68) (:arm-r :flex 60 :side -40)
+     (:elbow-r :flex 90) (:hand-r :flex -40))
+  (13 (:root :u 0.45 :f 0.2) (:spine :flex -10) (:chest :twist 40) (:head :flex -30 :twist -20) (:knees :flex 70) (:thighs :flex 50)
+      (:arm-r :flex 160 :side -30) (:elbow-r :flex 70) (:hand-r :flex -40 :twist 0) (:arm-l :flex 70 :side 60) (:elbow-l :flex 20))
+  (17 (:root :u 0.52 :f 0.25) (:chest :twist 46))                                              ; high, held
+  (:s :snap (:root :u -0.36 :f 0.6) (:chest :twist -35 :flex 18) (:spine :flex 52) (:head :flex -55 :twist 10)
+      (:arm-r :flex 60 :side 45) (:elbow-r :flex 5) (:hand-r :flex 0) (:arm-l :flex 20 :side 40)
+      (:thigh-l :flex 70) (:knee-l :flex 80) (:thigh-r :flex -22) (:knee-r :flex 40))
+  (:a (:root :u -0.4 :f 0.62) (:chest :twist -45) (:arm-r :side 60))
+  (40 (:root :u -0.38 :f 0.6) (:chest :twist -40))
+  (:end :ke-b-stance))
+(defstrike :ke-b-split (26 4 30 :base :ke-b-stance)    ; SP1 TATE-GOTO: higher, both hands over the right shoulder, the
+  (0)                                                   ; diagonal down through the guard
+  (8 (:root :u -0.5) (:knees :flex 104) (:thighs :flex 80) (:spine :flex 62) (:head :flex -70))
+  (16 (:root :u 0.75 :f 0.15) (:spine :flex -24) (:chest :twist -30) (:head :flex -30) (:knees :flex 80) (:thighs :flex 60)
+      (:arm-r :flex 175 :side 35) (:elbow-r :flex 70) (:hand-r :flex -40 :twist 0) (:arm-l :flex 160 :side 0 :twist 40) (:elbow-l :flex 70))
+  (22 (:root :u 0.85 :f 0.2) (:spine :flex -28) (:chest :twist -36))                           ; arched, held
+  (:s :snap (:root :u -0.42 :f 0.5) (:chest :twist 30 :flex 18) (:spine :flex 60) (:head :flex -58) (:arm-r :flex 40 :side -20)
+      (:elbow-r :flex 5) (:hand-r :flex -50) (:arm-l :flex 30 :side -40 :twist 60) (:elbow-l :flex 30)
+      (:thigh-l :flex 76) (:knee-l :flex 86) (:thigh-r :flex -24) (:knee-r :flex 44))
+  (:a (:root :u -0.46 :f 0.52) (:spine :flex 64) (:chest :twist 36))
+  (44 (:root :u -0.42 :f 0.5) (:spine :flex 60))
+  (:end :ke-b-stance))
+(defstrike :ke-b-cut (8 4 24 :base :ke-b-stance)       ; O MAPPUTATSU's strike: from the leap's raised cleaver, one
+  (0 (:root :u 0.05) (:arm-r :flex 188 :side 18) (:elbow-r :flex 30) (:hand-r :twist 0 :flex -60) (:spine :flex 4)   ; vertical
+     (:knees :flex 90) (:thighs :flex 55) (:arm-l :flex 110 :side 30) (:elbow-l :flex 30))     ; through him, to the floor
+  (5 (:root :u 0.1) (:spine :flex -10) (:arm-r :flex 195))                                     ; held at the top
+  (:s :snap (:root :u -0.44 :f 0.6) (:spine :flex 64) (:chest :flex 16) (:head :flex -58) (:arm-r :flex 30 :side 5) (:elbow-r :flex 5)
+      (:hand-r :flex -80) (:arm-l :flex 40 :side 60) (:elbow-l :flex 30) (:thigh-l :flex 78) (:knee-l :flex 86) (:thigh-r :flex -26) (:knee-r :flex 42))
+  (:a (:root :u -0.48 :f 0.62) (:spine :flex 68) (:hand-r :flex -95))
+  (24 (:root :u -0.45 :f 0.6) (:spine :flex 64))
+  (:end :ke-b-stance))
+(setf *grip-clips* (append *grip-clips* '(:ke-b-split)))
+;;; ---------------------------------------------------------------- KATAUDE, bare-handed (DUEL_KEN_REWORK §8)
+;;; After the burst (the user 2026-10-09: 「改成空手（照原作）」): no blade; the burst right arm hangs; the left fist, a grab
+;;; and the legs. The base moves (at x0.7 reach) play these through the kit's :clip-map, at the base clips' S/A/R.
+(defpose :ke-a-stance (:base :ke-b-stance)              ; the oni's crouch, the ruined right arm hanging, the left claw up
+  (:arm-r :flex -4 :side 12 :twist 0) (:elbow-r :flex 14) (:hand-r :flex 10 :twist 0)
+  (:arm-l :flex 50 :side 34) (:elbow-l :flex 72) (:hand-l :flex 40))
+(defclip :ke-a-stance (0.8 :loop t :base :ke-a-stance)
+  (0) (0.4 (:chest :flex 24) (:spine :flex 38) (:root :u -0.33) (:head :flex -62) (:hand-l :flex 55) (:elbow-l :flex 80)))
+(defstrike :ke-a-q1 (7 3 12 :base :ke-a-stance)        ; J1: a lunging left hook
+  (0)
+  (3 (:chest :twist 36 :flex 20) (:arm-l :flex 40 :side 70) (:elbow-l :flex 110) (:root :u -0.36 :f -0.06) (:head :flex -60))
+  (5 (:chest :twist 42))
+  (:s :snap (:chest :twist -40 :flex 10) (:spine :flex 34) (:arm-l :flex 90 :side 10) (:elbow-l :flex 40) (:hand-l :flex 0)
+      (:root :f 0.45 :u -0.24) (:thigh-l :flex 58) (:knee-l :flex 52) (:thigh-r :flex -30) (:knee-r :flex 24))
+  (:a (:chest :twist -48) (:root :f 0.48))
+  (15 (:chest :twist -40) (:root :f 0.4 :u -0.28))
+  (:end :ke-a-stance))
+(defstrike :ke-a-q2 (7 3 13 :base :ke-a-stance)        ; J2: the backfist, swung out across
+  (0)
+  (3 (:chest :twist -30 :flex 18) (:arm-l :flex 60 :side -20) (:elbow-l :flex 120) (:root :u -0.34) (:head :flex -58))
+  (5 (:chest :twist -36))
+  (:s :snap (:chest :twist 30 :flex 12) (:spine :flex 36) (:arm-l :flex 80 :side 60) (:elbow-l :flex 20) (:hand-l :flex 0)
+      (:root :f 0.6 :u -0.26) (:thigh-l :flex 50) (:knee-l :flex 50))
+  (:a (:chest :twist 38) (:arm-l :side 70) (:root :f 0.63))
+  (16 (:chest :twist 32) (:root :f 0.55))
+  (:end :ke-a-stance))
+(defstrike :ke-a-f1 (16 4 20 :base :ke-a-stance)       ; K1: the overhand haymaker, the whole body thrown after it
+  (0)
+  (8 (:root :u -0.46 :f -0.1) (:spine :flex 56) (:chest :twist 40) (:arm-l :flex 150 :side 50) (:elbow-l :flex 90) (:head :flex -64)
+     (:knees :flex 96) (:thighs :flex 72))
+  (13 (:root :u -0.48 :f -0.12) (:chest :twist 46))                                            ; coiled, held
+  (:s :snap (:root :f 0.9 :u -0.3) (:chest :twist -40 :flex 20) (:spine :flex 50) (:arm-l :flex 85 :side 0) (:elbow-l :flex 10)
+      (:hand-l :flex 0) (:head :flex -50) (:thigh-l :flex 70) (:knee-l :flex 70) (:thigh-r :flex -30) (:knee-r :flex 30))
+  (:a (:root :f 0.96 :u -0.34) (:chest :twist -48) (:spine :flex 56))
+  (28 (:root :f 0.9 :u -0.32) (:chest :twist -42))
+  (:end :ke-a-stance))
+(defstrike :ke-a-f2 (20 5 28 :base :ke-a-stance)       ; K2: the foot catch: dropped to the floor, the left hand shoots
+  (0)                                                   ; out low and grabs, then heaves up and over
+  (8 (:root :u -0.55 :f 0.0) (:spine :flex 66) (:head :flex -68) (:knees :flex 106) (:thighs :flex 82) (:arm-l :flex 20 :side 30)
+     (:elbow-l :flex 60))
+  (16 (:root :u -0.57 :f 0.1) (:spine :flex 68))                                               ; down, held
+  (:s :snap (:root :u -0.45 :f 0.7) (:spine :flex 62) (:arm-l :flex 60 :side 5) (:elbow-l :flex 5) (:hand-l :flex 60)
+      (:head :flex -40) (:thigh-l :flex 80) (:knee-l :flex 96) (:thigh-r :flex -20) (:knee-r :flex 70))
+  (:a (:root :u -0.2 :f 0.6) (:spine :flex 10) (:arm-l :flex 160 :side 20) (:elbow-l :flex 30) (:head :flex -20))   ; heaved over
+  (36 (:root :u -0.25 :f 0.5) (:spine :flex 20) (:arm-l :flex 150))
+  (:end :ke-a-stance))
+(defstrike :ke-a-spin (11 4 22 :base :ke-a-stance)     ; K3 BUNMAWASHI: a spinning sweep, the right leg out low
+  (0)
+  (5 (:root :u -0.44) (:knees :flex 96) (:thighs :flex 70) (:chest :twist -30) (:arm-l :flex 40 :side 60))
+  (8 (:root :u -0.46 :yaw -15))                                                                ; coiled, held
+  (:s :snap (:root :yaw 360 :u -0.5 :f 0.3) (:spine :flex 40) (:thigh-r :flex 70 :side 30) (:knee-r :flex 5) (:thigh-l :flex 80)
+      (:knee-l :flex 110) (:arm-l :flex 10 :side 40))
+  (:a (:root :yaw 400 :u -0.5 :f 0.34))
+  (22 (:root :yaw 385 :u -0.46 :f 0.32) (:thigh-r :flex 40 :side 20) (:knee-r :flex 40))
+  (:end :ke-a-stance (:root :yaw 360)))
+(defstrike :ke-a-haymaker (8 4 24 :base :ke-a-stance)  ; the stance's release and O's strike: the left haymaker from wide
+  (0 (:chest :twist 40) (:arm-l :flex 40 :side 90) (:elbow-l :flex 30) (:root :u -0.3))
+  (4 (:chest :twist 48) (:arm-l :side 96))
+  (:s :snap (:chest :twist -50 :flex 16) (:spine :flex 40) (:arm-l :flex 90 :side 0) (:elbow-l :flex 20) (:hand-l :flex 0)
+      (:root :f 0.6 :u -0.24) (:thigh-l :flex 60) (:knee-l :flex 60) (:thigh-r :flex -30))
+  (:a (:chest :twist -60) (:root :f 0.66))
+  (20 (:chest :twist -54) (:root :f 0.6))
+  (:end :ke-a-stance))
+(defstrike :ke-a-stomp (22 4 26 :base :ke-a-stance)    ; SP1's leap: up, the knees tucked, down onto the right heel
+  (0)
+  (6 (:root :u -0.5) (:knees :flex 104) (:thighs :flex 80) (:spine :flex 60))
+  (12 (:root :u 0.6) (:thighs :flex 80) (:knees :flex 110) (:spine :flex 10) (:arm-l :flex 120 :side 60) (:head :flex -30))
+  (19 (:root :u 0.76) (:thigh-r :flex 90) (:knee-r :flex 40))                                  ; the heel raised, held
+  (:s :snap (:root :u -0.2 :f 0.42) (:thigh-r :flex 30) (:knee-r :flex 5) (:thigh-l :flex 70) (:knee-l :flex 100) (:spine :flex 30)
+      (:arm-l :flex 40 :side 70) (:head :flex -50))
+  (:a (:root :u -0.26 :f 0.44))
+  (34 (:root :u -0.3 :f 0.42) (:spine :flex 34))
+  (:end :ke-a-stance))
+(defstrike :ke-a-flurry (4 36 24 :base :ke-a-stance)   ; SP2's flurry: left fists at f4 10 16 22 28, the uppercut at f40
+  (0 (:chest :twist 30) (:arm-l :flex 40 :side 60) (:elbow-l :flex 110))
+  (4 :snap (:chest :twist -30) (:arm-l :flex 90 :side 10) (:elbow-l :flex 20) (:root :f 0.2))
+  (7 (:chest :twist 20) (:arm-l :flex 60 :side 50) (:elbow-l :flex 100))
+  (10 :snap (:chest :twist -36) (:arm-l :flex 95 :side 0) (:elbow-l :flex 15) (:root :f 0.3))
+  (13 (:chest :twist 24) (:arm-l :flex 60 :side 50) (:elbow-l :flex 100))
+  (16 :snap (:chest :twist -30) (:arm-l :flex 85 :side 15) (:elbow-l :flex 25) (:root :f 0.4))
+  (19 (:chest :twist 20) (:arm-l :flex 60 :side 50) (:elbow-l :flex 100))
+  (22 :snap (:chest :twist -36) (:arm-l :flex 95 :side 0) (:elbow-l :flex 15) (:root :f 0.5))
+  (25 (:chest :twist 24) (:arm-l :flex 60 :side 50) (:elbow-l :flex 100))
+  (28 :snap (:chest :twist -32) (:arm-l :flex 90 :side 10) (:elbow-l :flex 20) (:root :f 0.6))
+  (34 (:root :u -0.46 :f 0.6) (:spine :flex 56) (:arm-l :flex -10 :side 30) (:elbow-l :flex 100) (:knees :flex 100))
+  (40 :snap (:root :u 0.0 :f 0.8) (:spine :flex 4) (:arm-l :flex 160 :side 10) (:elbow-l :flex 30))
+  (46 (:arm-l :flex 168) (:root :u 0.05 :f 0.82))
+  (:end :ke-a-stance))
+
 ;; the Bankai's burst (ken-bankai-cine f58): he rises out of the crouch, head thrown back, arms flung wide and low, claws
 ;; open, the knees still bent; then the roar comes forward at the opponent (the close-up on the face at f78)
 (defclip :ke-b-roar (1.0 :base :ke-b-stance)

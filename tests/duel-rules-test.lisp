@@ -806,7 +806,9 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :lb-oe-stance :lb-o-fold :lb-oe-fold :lb-oe-sabaki :lb-o-tenshin :lb-o-tenshin-in   ; the owl on Jilliel's system (decision 36, §23.14)
     :lb-oe-q1 :lb-oe-q2 :lb-oe-q3 :lb-oe-f1 :lb-oe-f2 :lb-oe-f3   ; its EN casts (decision 56, §23.37)
     :ke-k-q1 :ke-k-q2 :ke-k-f1 :ke-k-f2 :ke-k-spin :ke-k-meteor   ; Kenpachi's cup 1 and cup 3 sets (DUEL_KEN_REWORK §6.2)
-    :ke-x-stance :ke-x-q1 :ke-x-kote :ke-x-q3 :ke-x-f1 :ke-x-tsuki :ke-x-f2 :ke-x-meteor :ke-x-drink))
+    :ke-x-stance :ke-x-q1 :ke-x-kote :ke-x-q3 :ke-x-f1 :ke-x-tsuki :ke-x-f2 :ke-x-meteor :ke-x-drink
+    :ke-b-q1 :ke-b-q2 :ke-b-f1 :ke-b-f2 :ke-b-f3 :ke-b-split :ke-b-cut   ; the Bankai's own (§8)
+    :ke-a-stance :ke-a-q1 :ke-a-q2 :ke-a-f1 :ke-a-f2 :ke-a-spin :ke-a-haymaker :ke-a-stomp :ke-a-flurry))   ; KATAUDE's (§8)
 ;; (Jilliel's SPs and Kikon, decision 56, DUEL_LILLE §23.37: :lb-w-sanren is KIN's SANREN through his :clip-map, :lb-e-sanren
 ;; EN's own, :lb-w-kikon / :lb-w-kikon-fire the Kikon in play; :lb-w-aim and :lb-w-fire are gone)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
@@ -817,7 +819,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     (check (and (null extra) (null unused)))))
 ;; phase 2: art names, roster, form looks, the flurry, hazard hits
 (check (equal (mapcar #'kit-weapon (mapcar (lambda (cf) (apply #'kit cf)) *forms*))
-              '(:ryujin-jakka :ryujin-jakka :zanka :zanka :ken-katana :nozarashi :nozarashi :nozarashi :ke-broken :ke-broken
+              '(:ryujin-jakka :ryujin-jakka :zanka :zanka :ken-katana :nozarashi :nozarashi :nozarashi :ke-broken nil
                 :sode-no-shirayuki :sode-no-shirayuki :ru-rime :ru-ice :zangetsu-long :tensa
                 :shigarami :shigarami :shigarami :shigarami :shigarami :shigarami :shigarami
                 :diagramm nil nil nil nil nil nil nil nil)))
@@ -1672,7 +1674,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 (load (merge-pathnames "../engine/lisp/anim.lisp" *load-truename*))
 (defparameter *strikers* '((:ya-sleeve . :hand-l) (:ke-kick . :foot-r) (:ke-b-hook . :hand-l) (:ic-q1 . :hand-l)
                            (:ic-q2 . :hand-l) (:ru-palm . :hand-l)
-                           (:ya-ikkotsu . :hand-r) (:ke-shoulder . :shoulder-l) (:ru-hainawa . :hand-l) (:sj-saidan . :hand-r))
+                           (:ya-ikkotsu . :hand-r) (:ke-shoulder . :shoulder-l) (:ru-hainawa . :hand-l) (:sj-saidan . :hand-r)
+                           (:ke-a-q1 . :hand-l) (:ke-a-q2 . :hand-l) (:ke-a-f1 . :hand-l) (:ke-a-f2 . :hand-l) (:ke-a-spin . :foot-r))
   "Clip -> the joint that strikes when it isn't the held weapon's tip (Ichigo's Shikai J: the short blade held reversed
 along the left forearm, so the fist leads).")
 (defparameter *reach-one-sided* '((:yamamoto :bankai-east) (:yamamoto :bankai-west) (:kenpachi :nozarashi)
@@ -2435,7 +2438,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (member :lb-w-sanren (kit-clips (kit :lille :jilliel-kin))) (not (member :lb-sanren (kit-clips (kit :lille :jilliel-kin))))
               (member :lb-sanren (kit-clips (kit :lille :base))))))
 (check (every (lambda (cf) (or (member cf '((:lille :jilliel-kin) (:lille :jilliel-kin-mujittai) (:kenpachi :nozarashi)
-                                           (:kenpachi :nomihose)) :test #'equal)
+                                           (:kenpachi :nomihose) (:kenpachi :bankai) (:kenpachi :kataude)) :test #'equal)
                                (null (kit-clip-map (apply #'kit cf)))))
               *forms*))
 (check (and (eq :lb-e-sanren (mv-clip (find-move :lb-e-sanren))) (~= 1.0 (mv-clip-speed (find-move :lb-e-sanren)))

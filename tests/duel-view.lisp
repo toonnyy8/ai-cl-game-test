@@ -7,6 +7,7 @@
 ;;;; Keys: 1-5 scenes, LEFT/RIGHT turn, SPACE spin, N/P next/previous clip strip, G stage on/off.
 ;;;; Debug commands (Module._debug_cmd):
 ;;;;   2000+k  scene k: 0 base forms, 1 awakened forms, 2 cane + skeletons, 3 mirror match, 4 duel on the stage,
+;;;;           6 Kenpachi's Bankai alone, 7 his KATAUDE alone (DUEL_KEN_REWORK §8),
 ;;;;           5 the expressions: actors 0-2 Yamamoto neutral / shout / hurt, 3-5 Kenpachi (6200+i: each face)
 ;;;;   6000+i / 6100+i / 6200+i  camera on actor i: full body / head and chest / face (0.7 m, eye level);
 ;;;;   6210+i  the face from 35 degrees to its left
@@ -72,7 +73,8 @@ or the other (the weapon reviews, DUEL_KEN_REWORK §6.1); NIL: none")
           ((prefix-p name "KE-X-") '((:kenpachi-nomi :nozarashi nil)))   ; (cup 3's set and lifted hair, DUEL_KEN_REWORK §6.2)
           ((or (member name awake-ke) (prefix-p name "KE-K-") (member name '(:ke-r-kote :ke-r-tsuki)))
            '((:kenpachi :nozarashi nil)))     ; (cup 1's own clips, DUEL_KEN_REWORK §6.2)
-          ((prefix-p name "KE-B-") '((:kenpachi-oni :ke-broken (:arm-wreck :crack-1 :crack-2 :crack-3 :crack-4))))
+          ((prefix-p name "KE-B-") '((:kenpachi-oni :ke-broken (:haori :arm-wreck :crack-1 :crack-2 :crack-3 :crack-4))))
+          ((prefix-p name "KE-A-") '((:kenpachi-oni nil (:haori :crack-1 :crack-2 :crack-3 :crack-4))))   ; KATAUDE: bare-handed
           ((prefix-p name "KE-") '((:kenpachi :ken-katana nil)))
           ((prefix-p name "SK-") '((:skeleton nil nil)))
           (t '((:yamamoto :ryujin-jakka nil) (:kenpachi :ken-katana nil))))))
@@ -107,6 +109,12 @@ or the other (the weapon reviews, DUEL_KEN_REWORK §6.1); NIL: none")
                  nconc (loop for face in '(:neutral :shout :hurt) for col from 0
                              collect (let ((a (make-actor body weapon clip :x (+ (* 1.3 col) (* 4.2 row) -3.4) :yaw pi)))
                                        (setf (actor-face a) face) a))))
+          (6 (setf *v-label* "KENPACHI BANKAI (THE ONI)")
+           (list (make-actor :kenpachi-oni :ke-broken :ke-b-stance :x 0.0 :yaw pi
+                             :hide '(:haori :arm-wreck :crack-1 :crack-2 :crack-3 :crack-4))))
+          (7 (setf *v-label* "KENPACHI KATAUDE (BARE-HANDED)")
+           (list (make-actor :kenpachi-oni nil (if (find-clip :ke-a-stance nil) :ke-a-stance :ke-b-stance) :x 0.0 :yaw pi
+                             :hide '(:haori :crack-1 :crack-2 :crack-3 :crack-4))))
           (4 (setf *v-label* "SEIREITEI RUINS AT NIGHT")
            (look-at 7.5 2.6 7.0 0 1.1 -0.5)
            (list (make-actor :yamamoto :ryujin-jakka :ya-stance :x -2.5 :z 0 :yaw (/ pi -2))
