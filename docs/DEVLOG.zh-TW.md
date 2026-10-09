@@ -2322,3 +2322,18 @@ J／K 縮短、受擊值、分身消耗三批合併後，照新的測試規則�
 
 - `tools/deploy-pages.sh` 部署了 `main` 的 `1827686`（gh-pages `ebcc58e`）：包含 §141–§151 的劍八重製（基本型態、野晒、卍解與片腕的外觀和動作，以及二次覺醒時機的規則改動）。
 
+
+## 153. 重構：精簡、抽象化與引擎整併（2026-10-09）
+
+使用者：「目前的程式經過多次開發後產生了許多新的程式碼。請你重新識別每項實作是否可精簡、抽象化，將冗於與影響效能部份優化並將可被復用的元件整合回到遊戲引擎中。確保整體不會有過度設計的同時並保證可讀性，以及維持函數式編程與 Entity-Component-System 的設計初衷。」「由於此次將會經歷重大改動，因此要請你開啟新的 branch 並指揮 subagents 進行協作開發，並配合 Fable 5.1 作為指導顧問。另一方面，一些簡單的處理工作也可以指派 sonnet 5.5 實作。」
+
+- 分支 `claude/loving-euler-qhsjxo`（從 `main` 的 `09c6102` 開出）。做法：四份唯讀稽核（引擎與 RAVEN EDGE、對戰系統、外觀層、角色招式）共 66 個候選項 → Fable 顧問逐項抽查判定（採用／修改後採用 31、否決 27、延後 8），以「至少約 6 處重複或真實的每幀成本、讀起來更清楚、展開後與原本逐字相同」為防過度設計的門檻 → 分三波、檔案互不重疊的批次，每批一個 worktree 與子代理（模擬／引擎用 Opus，機械性工作用 Sonnet），由主導者重跑閘門後合併。
+- 中途討論「是否還能用 Lisp macro 進一步抽象化」後，使用者：「第 1 和第 3 項加進第三波，第 2 項下一輪再做」：一護／千手丸／莉爾的每側狀態改成 ECS 元件（B8）；`with-cam` 改成由呼叫端給綁定名稱，引擎撤回 `rx ry rz ux uy uz` 六個匯出（B9）；`defdebug`（由除錯指令宣告產生 DUEL_GAMEPLAY 指令表）留待下一輪。
+- 搬進引擎：`hypot`／`f-hypot`、`countdown!`、`f-exp`、`with-floats`、`transform`＋`pos-of`／`yaw-of`、`do-events`、水墨特效巨集組（`hash01`、`%t-blob`、`%tring`、`%sector-verts`、`with-cam`、`toon-ribbon` 等）、拖尾巨集與 `fx-smear-capture!`、零配置 UI 四邊形、`mb-at`、`set-sfx-volume`；刪除 `f-acos`／`f-asin`。
+- 遊戲端：約 300 處呼叫改用具名小工具（`hoho-ready-p`、`snap-left-seen`、`spawn-look`、`do-sides`、`brush-text`、`cine-shatter` 等）；`register-kit` 的鍵清單從三份變一份；學習 CPU 拆成 `ai-learn.lisp`、繪圖拆成 `draw.lisp`（`main.lisp` 450 → 124 行）、字形資料集中到 `glyphs-extra.lisp`；三套節奏紀錄合成一個 `pace`，只在 `*pacing-log*`（`start-cvc` 打開）時求值；`debug.lisp` 說明 128 → 14 行（缺的指令先補進 DUEL_GAMEPLAY）；兩款遊戲的 `feedback-system` 改用 `do-events`。
+- 效能：千手丸每幀的 `intern`／`format`、節奏紀錄在瀏覽器裡每次事件的 `format`／`intern`、繪圖路徑每幀的 `(list *p1* *p2*)` 都拿掉；B8 的探針找出 ECS 讀 `*used*` 用 `sbit` 會被 ECL 編成可變參數呼叫、每次 8 B，改成 `aref` 後莉爾繪圖 240 → 0 B／10 次、量表 560 → 400、光環 400 → 240，RAVEN 每幀 17369 → 13613 B。
+- 新閘門：`tests/style-gates.py looks`（108 張固定畫面、基準跑兩次量雜訊、要求逐位元組相同；`--keep-base` 重用基準）。AGENTS.md 閘門表加一列。
+- 數字（只算 Lisp）：引擎 4791 → 5079（+288，搬入的元件）、SOUL DUEL 30995 → 30618（−377）、RAVEN EDGE 5739 → 5733。
+- 最終閘門（`d2f7282`）：主機測試 8 組全過（規則 6481 項）；pkgcheck duel／game 0 項；原生模擬 15 組 × 10 種子的逐列輸出（601 行，含 349 行節奏紀錄）與 `09c6102` 逐位元組相同；cvc 3 項 PASS；兩款遊戲建置 0 警告；冒煙測試通過；RAVEN G1 兩張畫面逐位元組相同；108 張畫面逐位元組相同（雜訊 0）。沒有任何模擬或畫面上的改變。
+- 延後項目（各附先量什麼）：`defdebug`、一護／千手丸 HUD 量表的每幀配置、`hud-text` 快取、千手丸繪圖的 `defun-fast`、`gate.lisp` 拆檔、`toon-ground-seg` 搬進引擎前要先改寫的 4 處。
+- 細節：`docs/engine/REFACTOR_2026-10.md`。

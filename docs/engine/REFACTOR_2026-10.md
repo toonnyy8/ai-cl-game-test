@@ -65,7 +65,9 @@ all PASS, 108 stills identical; final head: §5).
 - Allocation: Senjumaru's per-draw `intern` + `format` gone; the pacing log's per-event `format` + `intern` gone from the
   browser; the per-frame `(list *p1* *p2*)` conses on the draw path gone; every ECS component read and `do-entities`
   slot 8 B -> 0 B (RAVEN 17369 -> 13613 B per frame in G1).
-- Final head (the lead's gate): see DEVLOG §153.
+- Final head d2f7282 (the lead's gate): 8 host suites PASS (duel-rules 6481); pkgcheck duel / game 0; simgate 15x10 rows
+  (601 lines, 349 of them pacing lines) byte-identical to 09c6102; cvc 3/3; both builds 0 warnings; smokes; RAVEN G1
+  stills byte-identical (cons/frame 17369 -> 13613 B); looks 108/108 byte-identical (noise floor 0).
 
 ## 6. Deferred (next round, with what to measure first)
 
