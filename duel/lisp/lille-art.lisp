@@ -2630,8 +2630,8 @@ height in *LB-V* [3], the alpha in [4] (MUJITTAI's body alpha), the tuck 0..1 in
   (let ((c *cine*)) (and c (eq (cine-name c) name) (eq (cine-a c) e) (cine-cf c))))
 
 ;;; Every component lookup of an entity conses 8 B in this build (an ECS getter: the reads probe, debug 79195), so the
-;;; draw hook makes the fewest: his fighter, model and state (LBS, read as it is: the draw never makes one) each frame,
-;;; his transform only while a look needs his place.
+;;; draw hook makes the fewest: his fighter and model each frame, his state (LBS, read as it is: the draw never makes one)
+;;; only in the looks that read it (the base form's eye, the owl's seal), his transform only while a look needs his place.
 (defmacro %lb-load-place! (e)
   "*LB-V* [24..27] = E's x y z and yaw (one transform lookup)."
   `(let* ((%tr (transform ,e)) (%p (transform-pos %tr)) (%v *lb-v*))
@@ -2777,11 +2777,10 @@ fanned out in the SPs; translucent, fainter in MUJITTAI; each three jointed segm
 strikes, curl in MUJITTAI and unfurl in the SPs) and the wide jade halo; on the KIN and owl bodies the ㄇ legs; the
 owl's eight gold wings, its spiked halo (broken once sealed), the trumpet
 forming over Trompete's wind-up, the reflect. The awakening's and the revival's cinematics drive the wings and halos
-(the unfolding, the jade turning gold). Its only allocation is the entity lookups (three a frame; a fourth while he aims
-or a gold look plays; a fifth in MUJITTAI)."
+(the unfolding, the jade turning gold). Its only allocation is the entity lookups (two a frame, three in the base form
+and the owl; one more while he aims or a gold look plays; one more in MUJITTAI)."
   (declare (single-float rdt))
   (let* ((f (fighter e)) (side (fighter-side f)) (form (fighter-form f)) (m (model e)) (jm (model-joints m))
-         (st (lbs e))
          (mv (and (eq (fighter-state f) :move) (fighter-move f))) (v *lb-v*) (tm (fx-clock))
          (cj (lb-cine-frame e 'lb-jilliel-cine)) (cr (lb-cine-frame e 'lb-revive-cine))
          (ct (lb-cine-frame e 'lb-trompete-cine)) (ck (lb-cine-frame e 'lb-jilliel-kikon-cine))
@@ -2817,7 +2816,7 @@ or a gold look plays; a fifth in MUJITTAI)."
           (%lb-legs jm (if (eq bn :lille-shin) 1 0) fl)
           nil))
       (case look
-        (:base (%lb-eye-look e m st side) (%lb-aim-look e f side))
+        (:base (%lb-eye-look e m (lbs e) side) (%lb-aim-look e f side))
         ((:jilliel :revive)
          (let ((stance (lb-mujittai-p form)))
            (%lb-stance-fx! e side stance tm rdt)        ; (a hit passed through, the fold)
@@ -2850,7 +2849,7 @@ or a gold look plays; a fifth in MUJITTAI)."
                    (%lb-halo jm (* 16 (ji :head)) 0 (+ 0.52f0 (* 0.02f0 (f-sin (* 2f0 tm)))) 0.48f0))))))
         (:shin                                           ; the owl (decision 36: Jilliel's four forms, the owl's look)
          (let* ((grow (if cr (f-clamp (/ (- (i->f cr) 66f0) 30f0) 0.05f0 1f0) 1f0))
-                (stance (lb-mujittai-p form)))
+                (stance (lb-mujittai-p form)) (st (lbs e)))
            (declare (single-float grow))
            (%lb-stance-fx! e side stance tm rdt)          ; MUJITTAI: the wings curl round the column, ghostly
            ;; EN vs KIN (decision 38): EN fans its eight wings out wide and forward (a standing spread, [18]), KIN sweeps
