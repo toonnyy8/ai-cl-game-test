@@ -1447,8 +1447,10 @@ answered (BR-LEARN-KAMAE-PLAN); anything else, or no learner, as planned."
 ;;; His kits' :ai name BR-ASSIST-COMBO as :assist-combo (assist.lisp AUTO-ROUTE: asked every step AUTO COMBO is on, before
 ;;; the generic AUTO COMBO; the old Lille's LB-ASSIST-COMBO's shape). "You press J, the CPU chooses": the routes press his
 ;;; buttons as a human's (his ticks read his vpad: BR-TICK-BRAIN is NIL for a human), x*ASSIST-MULT*, the AUTO tag.
-;;;   base    J J J -> L -> L: his J string's J3 that hit -> the stance on his first free step -> its plan (BR-AI-KAMAE-PLAN:
-;;;           the 萬物貫通 shot; TAISHA / the snap with a pip close) pressed once it is up; his J eaten meanwhile
+;;;   base    J -> K -> L -> L: his J in a link that hit -> its K link (J1 -> K2s) -> L latched on the K link (the stance at
+;;;           f4, KIT-L-LINK: a combo) -> its plan (BR-AI-KAMAE-PLAN: the 萬物貫通 shot on the reeling opponent; TAISHA /
+;;;           the snap with a pip close) pressed once it is up; his J eaten meanwhile. (J J J -> L measured first: the
+;;;           stance off J3 comes from neutral, after his stagger: the masher's wins 36 % -> 24 %, §13)
 ;;;   melee   K K K -> L: his J in a melee link that hit -> its K link (to K3) on the land frame -> K3 -> L the recall with a
 ;;;           trace to take back (n >= 1); J3 -> L the backstep with no trace and 9 flash step; his J eaten after a press
 ;;;   ranged  L: his J pressed while free in ranged mode -> a lay at him (L) from 4 m while the flash step allows, K in once
@@ -1459,7 +1461,7 @@ answered (BR-LEARN-KAMAE-PLAN); anything else, or no learner, as planned."
   (j nil)                                 ; his J seen during it (pressed, buffered or latched)
   (done nil)                              ; the route pressed in it (his J eaten after)
   (route nil)                             ; a route runs (the stance's)
-  (stance nil) (plan nil))                ; the base route: the stance due on his first free step, its plan
+  (plan nil))                             ; the base route: the stance's plan
 (defvar *br-as* (vector (make-bras) (make-bras)) "Per side: the ASSIST routes' state (BR-ASSIST-COMBO).")
 
 (defun br-as-track (f b vp)
@@ -1492,6 +1494,17 @@ answered (BR-LEARN-KAMAE-PLAN); anything else, or no learner, as planned."
            (br-as-press e a :as-stance-plan
                         (case (bras-plan a) (:kamae-j :q) (:kamae-k :f) (:kamae-sp1 :sp1) (:kamae-sp2 :sp2) (t :sig))))))
 
+(defun br-as-base (e f vp a mv)
+  "Route base, a J / K link that hit with his J in it: on its land frame a K link's L (the stance at f4: KIT-L-LINK), else
+its K link (J1 -> K2s); his J eaten after a press. A command, :NONE, or NIL (the generic AUTO COMBO)."
+  (let* ((kit (fighter-kit f)) (name (mv-name mv)) (l (kit-l-link kit name)))
+    (cond ((bras-done a) (vpad-consume! vp :quick) (when (eq (fighter-queued f) :q) (setf (fighter-queued f) nil)) :none)
+          ((not (and (bras-j a) (eq (fighter-contact f) :hit) (= (fighter-sf f) (fighter-land-sf f)))) nil)
+          ((and l (kit-k-link-p kit name) (kit-command-ok-p e :sig kit nil l))
+           (setf (bras-route a) t)
+           (br-as-press e a :as-stance :sig))
+          ((kit-next kit name :f) (br-as-press e a :as-k-link :f)))))
+
 (defun br-as-melee (e f vp a mv)
   "Route melee, a link that hit with his J in it: on its land frame its K link (to K3), K3 -> L the recall (n >= 1), J3 -> L
 the backstep (no trace, 9 flash step); his J eaten after a press. A command, :NONE, or NIL (the generic AUTO COMBO)."
@@ -1519,12 +1532,8 @@ vpad VP: a command, :NONE (the route holds the step) or NIL (the generic AUTO CO
   (declare (ignore d))
   (let* ((a (br-as-track f b vp)) (mv (bras-mv a)) (form (fighter-form f))
          (free (and (member (fighter-state f) '(:idle :guard :run)) (zerop (fighter-lock f)))))
-    (cond ((and free (eq form :base) (bras-stance a))       ; (route base: the stance on the first free step)
-           (setf (bras-stance a) nil)
-           (if (kit-command-ok-p e :sig) (progn (setf (bras-route a) t) (pace e :as-stance) :sig) nil))
-          ((and mv (member (mv-name mv) '(:br-kamae :br-kamae-k)) (bras-route a)) (br-as-kamae e f vp a))
-          ((and mv (eq form :base) (eq (mv-name mv) :br-j3) (eq (fighter-contact f) :hit) (bras-j a))
-           (setf (bras-stance a) t) (vpad-consume! vp :quick) :none)
+    (cond ((and mv (member (mv-name mv) '(:br-kamae :br-kamae-k)) (bras-route a)) (br-as-kamae e f vp a))
+          ((and mv (eq form :base) (member (mv-kind mv) '(:quick :flash))) (br-as-base e f vp a mv))
           ((and mv (br-melee-form-p form) (member (mv-kind mv) '(:quick :flash))) (br-as-melee e f vp a mv))
           ((and free (br-ranged-form-p form)) (br-as-ranged e f s vp)))))
 

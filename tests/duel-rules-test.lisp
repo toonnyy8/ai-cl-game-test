@@ -2670,11 +2670,11 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (every (lambda (k) (eq (getf (kit-ai k) :reflex) 'lb-ai-reflex)) owls))))
 
 ;;; ---------------------------------------------------------------- ASSIST AUTO COMBO's Lille routes (DUEL_LILLE §24.10)
-;; every form of his names his routes as :assist-combo (assist.lisp AUTO-ROUTE reads it off the form's kit), no other kit
-;; has the key (their assisted play stays the generic AUTO COMBO's, bit for bit)
+;; every form of his names his routes as :assist-combo (assist.lisp AUTO-ROUTE reads it off the form's kit), Lille II's
+;; his own (BR-ASSIST-COMBO, DUEL_LILLE_V2 §13), no other kit has the key (their assisted play stays the generic AUTO COMBO's, bit for bit)
 (check (loop for c being the hash-keys of *kits* using (hash-value forms)
              always (loop for (nil . k) in forms
-                          always (eq (getf (kit-ai k) :assist-combo) (and (eq c :lille) 'lb-assist-combo)))))
+                          always (eq (getf (kit-ai k) :assist-combo) (case c (:lille 'lb-assist-combo) (:barro 'br-assist-combo))))))
 (check (= 9 (length (gethash :lille *kits*))))
 ;; which route step a move is (LB-AS-KIND), on the move data it reads
 (check (and (eq (mv-tick (find-move :lb-e-j1)) 'lb-en-tick) (eq (mv-tick (find-move :lb-oe-k3)) 'lb-en-tick)
