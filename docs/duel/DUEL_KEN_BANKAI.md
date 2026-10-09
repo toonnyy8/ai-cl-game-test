@@ -29,7 +29,7 @@ measurements.
 | Rule | Value |
 |---|---|
 | Command | **P** (Awaken; KP+ / Back / LS+RS; the phone's AWAKEN chip, held 300 ms) |
-| Condition | form `:nomihose` (cup 3) **and** ~~red (`red-p`, Reishi < 30 %)~~ **at most 4 of his own Konpaku left** (`*bankai-konpaku*` 4; the user's decision 2026-09-28, 「劍八的卍解條件從紅血改成在剩餘四魂以下」) **and** free (`:idle` or `:guard`, DRINK included; not `:guard-hit`, not a move, not a run). No gauge. Pure rule `bankai-allowed-p (free konpaku)`; the kit key `:bankai-form :bankai` exists only on `:nomihose` |
+| Condition | form `:nomihose` (cup 3) **and** ~~red (`red-p`, Reishi < 30 %)~~ **at most 4 of his own Konpaku left** (`*bankai-konpaku*` 4; the user's decision 2026-09-28, 「劍八的卍解條件從紅血改成在剩餘四魂以下」) **and** free ~~(`:idle` or `:guard`, DRINK included; not `:guard-hit`, not a move, not a run)~~ **as for the first awakening (`awaken-state-p`: idle, walk, guard, blockstun, or a combo reaction past the Burst's hit; not a move, not a run), the CPU too** (the user 2026-10-09, 「我希望能像一般覺醒一樣只要達成條件就能發動」, DUEL_KEN_REWORK §7). No gauge. Pure rule `bankai-allowed-p (free konpaku)`; the kit key `:bankai-form :bankai` exists only on `:nomihose` |
 | Once | structural: `:bankai` and `:kataude` have no `:bankai-form`, and there is no way back to cup 3 |
 | On entry | form `:bankai`; the kit meter becomes the arm: **4 pips** (`gauges-meter` 4, `gauges-meter-idle` 0 = the crack clock); ~~no heal~~ **his own Konpaku set to 1 and his Reishi refilled to full** (the user's decisions 2026-09-28, below); guard gauge, Reiatsu, flash-step, cooldowns untouched; NOME is gone (the meter slot now holds pips) |
 | Then | the cinematic (sim frozen), both fighters idle after it (as every awakening) |
@@ -302,7 +302,7 @@ filter 0.6 → 0.8 (more Bankais earlier). Guard ×2 → ×1.75 if West's ward c
 | M8 | MAJOR | `refresh-look` never swaps the body; the oni variant must keep the hurt cylinder | `refresh-look` sets `model-body` from the kit `:body`; `:kenpachi-oni` is a palette / parts variant of `:kenpachi` with the same scale and hurt numbers |
 | M9 | MAJOR | the opponent CPU would keep pressing into a 20 s form it could wait out | `:opp-intent` (zone / defend +2) |
 | m1 | MINOR | "4th attack" is a snippet-level source | the count is the user's decision; the note stays |
-| m2 | MINOR | P from a DRINK held between an opponent's string links freezes the sim and resets both to idle: an escape | the same as every awakening (from `:guard`); not from `:guard-hit`. Accepted |
+| m2 | MINOR | P from a DRINK held between an opponent's string links freezes the sim and resets both to idle: an escape | the same as every awakening; since 2026-10-09 also from `:guard-hit` and a combo reaction, as the first awakening (DUEL_KEN_REWORK §7). Accepted |
 | m3 | MINOR | pink (Yachiru, petals) is a 4th hue | the forest is mono; the call is a sound |
 | m4 | MINOR | the last pip on a Kikon hides the burst in the reset lock | intended: the jackpot |
 | m5 | MINOR | rend matters only in KK (the stance, CHARGE's armour) | ~5 lines + one test; it is the "nothing I can't cut" identity. Kept |

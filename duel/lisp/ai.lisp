@@ -199,13 +199,17 @@ until the distance passes TO (BRAIN-STEP lets go)."
   (ai-press b :step *ai-dash-frames* :act :dash)
   (setf (brain-dash b) (f32 dir) (brain-dash-to b) (f32 to)))
 
-(defun ai-awaken-break-p (e)
+(defun ai-awaken-break-p (e &optional b)
   "Could E's CPU awaken out of this combo (the awakening breaks it as a Burst does)? Ready (EVOLUTION), in a state that
-allows it (AWAKEN-STATE-P) and its kit's rule says awaken (:awaken-above, AI-AWAKEN-P)."
+allows it (AWAKEN-STATE-P) and its kit's rule says awaken (:awaken-above, AI-AWAKEN-P); or, with its brain B, the second
+awakening (Kenpachi's Bankai, Lille's revival: BANKAI-READY-P, the kit's :bankai rule AI-BANKAI-P, its one roll per
+stay), which breaks a combo the same way since the user 2026-10-09 (DUEL_KEN_REWORK §7)."
   (let ((g (gauges e)))
-    (and (gauges-evolution g) (awaken-state-p e (fighter e))
-         (>= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (ai-table e :awaken-above 0.0))
-         (ai-awaken-p e))))
+    (or (and (gauges-evolution g) (awaken-state-p e (fighter e))
+             (>= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (ai-table e :awaken-above 0.0))
+             (ai-awaken-p e))
+        (let ((bk (ai-table e :bankai)))
+          (and b bk (bankai-ready-p e) (ai-bankai-p e b bk) t)))))
 
 (defun ai-sb-finish-p (e)
   "E's opponent is nearly out of Reishi (under *AI-SB-FINISH* of his max): finish him with hits, the Soul Break (the
@@ -218,7 +222,7 @@ delay after the combo's 2nd hit (BRAIN-BURST-T), allowed (BURST-OK-P) and worth 
 estimated as the combo's average so far): one roll per combo at the difficulty's *AI-BURST-P*. In blockstun: a
 string the guard lock holds him in while his guard gauge is low (AI-GG-LOW-P), one roll per locked string."
   (let ((f (fighter e)) (g (gauges e)))
-    (when (and (not (brain-burst-rolled b)) (>= (brain-burst-t b) (brain-delay b)) (or (burst-ok-p e) (ai-awaken-break-p e))
+    (when (and (not (brain-burst-rolled b)) (>= (brain-burst-t b) (brain-delay b)) (or (burst-ok-p e) (ai-awaken-break-p e b))
                (or (eq (fighter-state f) :guard-hit)      ; (the clock runs there only for a guard-locked string on a low guard)
                    (eq (brain-habit b) :burst)           ; (debug: the burst-happy scripted player, whenever it may)
                    (ai-burst-wanted-p (gauges-reishi g) (gauges-reishi-max g)
@@ -495,9 +499,10 @@ D = the perceived distance."
       ((and (kikon-ready-p e) (member (snap-state s) '(:stun :air)) (< d (ai-table e :kikon-range 7.0))
             (kit-command-ok-p e :kikon) (not (ai-sb-finish-p e)))
        (why b :kikon :kikon))
-      ;; the Bankai (cup 3, red, free: the kit's :bankai), before the cash-out
+      ;; the Bankai (cup 3, red, free: the kit's :bankai), before the cash-out; free as for the first awakening
+      ;; (AWAKEN-STATE-P, the user 2026-10-09; it was idle / guard only)
       ((let ((bk (ai-table e :bankai)))
-         (and bk (kit-bankai-form kit) (member st '(:idle :guard)) (bankai-allowed-p t (gauges-konpaku g))
+         (and bk (kit-bankai-form kit) (bankai-allowed-p (awaken-state-p e f) (gauges-konpaku g))
               (let ((ok (kit-bankai-ok kit))) (or (null ok) (funcall ok e)))   ; (the kit's own rule, if any: :bankai-ok)
               (ai-bankai-p e b bk)))
        (why b :bankai :awaken))

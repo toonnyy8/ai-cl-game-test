@@ -2049,13 +2049,13 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (= 3 (kit-kikon-konpaku kn)) (= 2 (kit-kikon-konpaku b))
               (~= (kit-walk kn) 3.8) (~= (kit-run kn) 8.5) (~= (kit-walk j) 3.0) (kit-awakening kn)
               (eq (kit-endless-form kn) :jilliel) (eq (kit-endless-form kmu) :jilliel)))
-  ;; the revival (decision 16): P from any Jilliel form, free (idle / guard: the stance too), with <= 4 Konpaku (Kenpachi's
-  ;; rule); no beheading. The owl: Konpaku 4 a Kikon, x1.1 (decision 36; 1.2 before), no burn, no way back
-  (check (and (lb-revive-ok-p :jilliel :idle 4) (lb-revive-ok-p :jilliel-kin :idle 4) (lb-revive-ok-p :jilliel-mujittai :guard 1)
-              (lb-revive-ok-p :jilliel-kin-mujittai :guard 4) (not (lb-revive-ok-p :jilliel :idle 5))
-              (not (lb-revive-ok-p :jilliel-kin :idle 5)) (not (lb-revive-ok-p :base :idle 3)) (not (lb-revive-ok-p :shin :idle 1))
-              (not (lb-revive-ok-p :jilliel :move 3)) (not (lb-revive-ok-p :jilliel-kin :guard-hit 3))
-              (not (lb-revive-ok-p :jilliel :stun 2)) (= *bankai-konpaku* 4)))
+  ;; the revival (decision 16): P from any Jilliel form, free as for the first awakening (AWAKEN-STATE-P; the user
+  ;; 2026-10-09, DUEL_KEN_REWORK §7: it was idle / guard only), with <= 4 Konpaku (Kenpachi's rule); no beheading. The owl:
+  ;; Konpaku 4 a Kikon, x1.1 (decision 36; 1.2 before), no burn, no way back
+  (check (and (lb-revive-ok-p :jilliel t 4) (lb-revive-ok-p :jilliel-kin t 4) (lb-revive-ok-p :jilliel-mujittai t 1)
+              (lb-revive-ok-p :jilliel-kin-mujittai t 4) (not (lb-revive-ok-p :jilliel t 5))
+              (not (lb-revive-ok-p :jilliel-kin t 5)) (not (lb-revive-ok-p :base t 3)) (not (lb-revive-ok-p :shin t 1))
+              (not (lb-revive-ok-p :jilliel nil 3)) (not (lb-revive-ok-p :jilliel-kin nil 3)) (= *bankai-konpaku* 4)))
   (check (and (every (lambda (k) (and (eq (kit-bankai-form k) :shin) (eq (kit-bankai-ok k) 'lille-bankai-ok))) (list j mu kn kmu))
               (null (kit-bankai-form o)) (null (kit-bankai-ok o)) (null (kit-pips o)) (zerop (kit-burn o)) (null (kit-duration o))
               (= 4 (kit-kikon-konpaku o)) (~= (kit-mult o) 1.1) (kit-awakening o) (eq (kit-cine o) 'lb-revive-cine)
@@ -2562,8 +2562,8 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (eq (kit-stance okmu) :lb-o-fold)))
   ;; the revival enters :shin (every Jilliel form's :bankai-form) and is never offered from the owl's four
   (check (and (every (lambda (k) (eq (kit-bankai-form k) :shin)) (list j mu kn kmu))
-              (notany (lambda (f) (lb-revive-ok-p f :idle 1)) '(:shin :shin-mujittai :shin-kin :shin-kin-mujittai))
-              (lb-revive-ok-p :jilliel :idle 1)))
+              (notany (lambda (f) (lb-revive-ok-p f t 1)) '(:shin :shin-mujittai :shin-kin :shin-kin-mujittai))
+              (lb-revive-ok-p :jilliel t 1)))
   ;; the predicates: the owl's EN / KIN pairs run Jilliel's system; the revival's Jilliel test stays Jilliel's four
   (check (and (every #'lb-owl-form-p '(:shin :shin-mujittai :shin-kin :shin-kin-mujittai)) (not (lb-owl-form-p :jilliel))
               (notany #'lb-jilliel-form-p '(:shin :shin-mujittai :shin-kin :shin-kin-mujittai))

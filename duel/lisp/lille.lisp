@@ -270,10 +270,11 @@ owl's (decision 36)?"
   (and (member form '(:jilliel :jilliel-mujittai :shin :shin-mujittai)) t))
 (defun lb-stance-form-p (form) "Is FORM a MUJITTAI (the four stances: Jilliel's and the owl's EN / KIN)?"
   (and (member form '(:jilliel-mujittai :jilliel-kin-mujittai :shin-mujittai :shin-kin-mujittai)) t))
-(defun lb-revive-ok-p (form state konpaku)
-  "May P revive him into the owl (decision 16): any Jilliel FORM, free (STATE idle / guard: the stance included), with at
-most *BANKAI-KONPAKU* of his own KONPAKU (Kenpachi's rule exactly; no beheading needed)."
-  (and (lb-jilliel-form-p form) (member state '(:idle :guard)) (<= konpaku *bankai-konpaku*) t))
+(defun lb-revive-ok-p (form free konpaku)
+  "May P revive him into the owl (decision 16): any Jilliel FORM, FREE as for the first awakening (AWAKEN-STATE-P: idle,
+guard, blockstun or a combo reaction past the Burst's hit; the user 2026-10-09, DUEL_KEN_REWORK §7; it was idle / guard),
+with at most *BANKAI-KONPAKU* of his own KONPAKU (Kenpachi's rule exactly; no beheading needed)."
+  (and (lb-jilliel-form-p form) free (<= konpaku *bankai-konpaku*) t))
 (defun lb-switch-target (form)
   "The form TENSHIN switches FORM to: EN (or its stance) -> KIN, KIN (or its stance) -> EN; Jilliel's pair or the owl's
 (decision 36)."
@@ -768,10 +769,10 @@ would eat into its reserve (LB-AI-LAY-OK-P)."
              (and (brain e) (member command '(:breaker :kikon)) (lb-ai-veto-p e (brain e) command))))))
 
 (defun lille-bankai-ok (e)
-  "His kit's :bankai-ok (combat.lisp BANKAI-OK-P): P revives him into the owl from any Jilliel form, free: idle, guard or
-the stance (the generic AWAKEN-STATE-P would also allow blockstun and a combo reaction), with <= *BANKAI-KONPAKU* Konpaku
-(decision 16: no beheading needed; LB-REVIVE-OK-P)."
-  (let ((f (fighter e))) (lb-revive-ok-p (fighter-form f) (fighter-state f) (gauges-konpaku (gauges e)))))
+  "His kit's :bankai-ok (combat.lisp BANKAI-OK-P): P revives him into the owl from any Jilliel form where the first
+awakening could be taken (AWAKEN-STATE-P; the user 2026-10-09: 「希望能像一般覺醒一樣只要達成條件就能發動」), with
+<= *BANKAI-KONPAKU* Konpaku (decision 16: no beheading needed; LB-REVIVE-OK-P)."
+  (let ((f (fighter e))) (lb-revive-ok-p (fighter-form f) (awaken-state-p e f) (gauges-konpaku (gauges e)))))
 
 (defun lille-tick (e f g)
   "Per step (his kit's :tick, after the fighters stepped): EN's Hoho into KIN (decision 37: a Hoho started in an EN form,

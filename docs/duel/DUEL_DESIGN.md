@@ -309,7 +309,8 @@ guard or blockstun, or wherever a Burst could be pressed (a reaction or airborne
 hit, inputs not locked; no flash-step needed) → it breaks his attack exactly as a Burst does
 (`repel!`: his move ends, he slides 5 m away, she is invulnerable 20 f), then the form's cinematic
 (the sim is frozen). **Once per match** for each fighter; the gauge stops filling after it.
-Kenpachi's Bankai (the second awakening) follows the same state rule and breaks the attack too.
+Kenpachi's Bankai and Lille's revival (the second awakenings) follow the same state rule and break the attack too, for
+the player and the CPU (Lille's revival and the CPU's Bankai were idle / guard only until 2026-10-09, DUEL_KEN_REWORK §7).
 
 **Hit reactions**: flinch 18 f, stagger 26 f, knockback 30 f with a slide (≤ 18 f), launch
 (airborne, up 7.5 m/s, gravity 22 m/s²), knockdown (airborne 3.5 m/s), then down 30 f and wake-up

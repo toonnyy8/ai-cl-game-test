@@ -452,9 +452,10 @@ cinematic stops the timer). The user, 2026-10-08: 「毀魂技演出不計入對
   (if (<= total-frames 0) 0.0 (* max (/ (float frames-left) total-frames))))
 
 (defun bankai-allowed-p (free konpaku)
-  "Kenpachi's Bankai (docs/duel/DUEL_KEN_BANKAI.md §1.1): P in a form with :bankai-form (cup 3), FREE (idle / guard: DRINK
-included) with at most *BANKAI-KONPAKU* of his own KONPAKU left (the user's decision 2026-09-28; it was: red). No
-gauge; once a match by construction (no later form has :bankai-form)."
+  "Kenpachi's Bankai (docs/duel/DUEL_KEN_BANKAI.md §1.1): P in a form with :bankai-form (cup 3), FREE as for the first
+awakening (fighter.lisp AWAKEN-STATE-P: idle, guard, blockstun, a combo reaction past the Burst's hit; DRINK included;
+the user 2026-10-09, DUEL_KEN_REWORK §7) with at most *BANKAI-KONPAKU* of his own KONPAKU left (the user's decision
+2026-09-28; it was: red). No gauge; once a match by construction (no later form has :bankai-form)."
   (and free (<= konpaku *bankai-konpaku*) t))
 
 ;;; ---------------------------------------------------------------- the arm meter UDE (Kenpachi's Bankai)

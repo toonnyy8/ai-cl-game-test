@@ -139,7 +139,8 @@ Then, to the four questions that changed the design: 「快射＋蓄力」, 「�
 「遠程模式留粗軌道，近戰模式直接打出」.
 
 - **16. The revival** (replaces decision 8's beheading condition): in any Jilliel form, free (idle / guard, MUJITTAI
-  included), with **≤ 4 of his own Konpaku** (`*bankai-konpaku*`, Kenpachi's rule exactly), **P** revives him into the
+  included; since 2026-10-09 every state the first awakening allows, blockstun and a combo reaction too, the CPU as well:
+  「我希望能像一般覺醒一樣只要達成條件就能發動」, DUEL_KEN_REWORK §7), with **≤ 4 of his own Konpaku** (`*bankai-konpaku*`, Kenpachi's rule exactly), **P** revives him into the
   owl. No beheading flag; so PRACTICE's KONPAKU row reaches the owl. The revival cinematic keeps the canon beheading.
 - **17. Base L is a shooting stance** after Ichigo's TSUKIMACHI, with a dash for mobility; the stance's L is a quick
   shot (flat) or, after ≥ 24 f in the stance, the charged shot (the distance curve). §22.1.
