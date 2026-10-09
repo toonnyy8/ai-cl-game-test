@@ -138,24 +138,19 @@ glow / per (joint, tag)."
   (name nil)
   (len 1f0 :type single-float)          ; grip → tip (weapon frame, before the body's scale)
   (base 0.25f0 :type single-float)      ; grip → start of the trail / fire (blade base)
-  (left nil)                            ; held in the left hand (the :weapon-l joint): Kenpachi's KATAUDE, DUEL_KEN_REWORK §8
   (sections nil)                        ; ((:solid ink fn) (:glow e color fn) ...), fn = (lambda (mb))
   (meshes nil))                         ; built: list of #(mesh tint emissive hull-or-NIL)
 
 (defvar *weapons* (make-hash-table :test 'eq))
 (defun find-weapon (name) (or (gethash name *weapons*) (error "unknown weapon ~s" name)))
-(defun weapon-joint (weapon)
-  "The joint index that holds WEAPON (a key, or NIL): :weapon-l for a :left weapon, else :weapon-r."
-  (if (and weapon (weapon-left (find-weapon weapon))) (ji :weapon-l) (ji :weapon-r)))
 
-
-(defmacro defweapon (name (&key (length 1.0) (base 0.25) left) &body sections)
-  "Register a weapon (LEFT: held in the left hand, drawn on the :weapon-l joint; a look). SECTIONS: (:solid [:ink k] meshgen-forms...) drawn toon like the body, with an
+(defmacro defweapon (name (&key (length 1.0) (base 0.25)) &body sections)
+  "Register a weapon. SECTIONS: (:solid [:ink k] meshgen-forms...) drawn toon like the body, with an
 ink hull K widths wide (default 1; 0 = none, e.g. a katana blade: build it as its own section with
 MB-BLADE :hilt nil), or (:glow emissive #xRRGGBB meshgen-forms...) drawn as a glowing part. The forms use MB (the builder)
 in the weapon frame: grip at the origin, blade along +Y, edge toward +Z."
   `(setf (gethash ,name *weapons*)
-         (%make-weapon :name ,name :len (f32 ,length) :base (f32 ,base) :left ,left
+         (%make-weapon :name ,name :len (f32 ,length) :base (f32 ,base)
                        :sections (list ,@(loop for s in sections collect
                                                (if (eq (first s) :solid)
                                                    (let ((ink (if (eq (second s) :ink) (third s) 1))
@@ -247,7 +242,7 @@ feet height of the last DRAW-BODY (0 for a planted weapon)."
     (draw-parts (body-parts body) (body-extras body) joints :hidden hidden :hide hide
                 :tint tint :flash flash :emissive emissive :alpha alpha :rim rim :toon *toon-body*
                 :hulls (body-hulls body) :ink-tint tint)
-    (let ((w (weapon-joint weapon)))
+    (let ((w (ji :weapon-r)))
       (when (and weapon (not (logbitp w hidden)))
         (replace dm joints :start2 (* w 16) :end2 (+ 16 (* w 16)))
         (m4-mul! *dm2* dm *weapon-m*)
@@ -255,7 +250,8 @@ feet height of the last DRAW-BODY (0 for a planted weapon)."
     (when shadow (draw-shadow x y z (* 1.2 alpha (body-hurt-r body))))))
 
 (defun body-weapon-point (weapon joints out along)
-  (joint-point! out joints (weapon-joint weapon) 0f0 0f0 (- (f32 along))))
+  (declare (ignore weapon))
+  (joint-point! out joints (ji :weapon-r) 0f0 0f0 (- (f32 along))))
 
 (defun body-weapon-tip (body weapon joints out)
   "World position of the held WEAPON's tip into OUT (the joint matrices carry the body's scale)."
