@@ -32,7 +32,8 @@ character colour); Lille 0.4 / 0.2 / 0.4 (the user 2026-10-06: 「風格偏重 0
 
 --pace-seeds / --drift-seeds (default --seeds) run the NORMAL parts at another seed count (the cheaper split, §24.2).
 --write-drift-ref stores this run's drift share as the reference for its drift seed count (the frozen baseline only).
-Roster index C: 0 Yamamoto 1 Kenpachi 2 Rukia 3 Ichigo 4 Senjumaru 5 Lille (simgate.ROSTER). Rebuilds the native sim first
+Roster index C: 0 Yamamoto 1 Kenpachi 2 Rukia 3 Ichigo 4 Senjumaru 5 Lille 6 Lille II (simgate.ROSTER; Lille II scored as
+the first five, his K.O.s by the RESULTS line as Lille's). Rebuilds the native sim first
 when a source changed.
 """
 import argparse, concurrent.futures as cf, json, os, re, statistics, subprocess, sys
@@ -41,6 +42,8 @@ from simgate import ROOT, ECL, FAS, MUSLM, ROSTER, build
 
 NAMES = ROSTER                                    # (simgate.ROSTER: the roster in order)
 LILLE = NAMES.index('LILLE')
+BARRO = NAMES.index('BARRO')                      # Lille Barro II (DUEL_LILLE_V2): the generic signature (his J / K links
+                                                  # are -J1 / -W-K2 ...), Lille's K.O. rule (his cinematics are Lille's)
 PACE_MAX = 220.0   # a 20-seed median's ceiling here (the gate's 210 s at 60 seeds: 20-seed medians run ~10 s noisy)
 PACE_CAP = {LILLE: {'RUKIA': 240.0, 'ICHIGO': 240.0}}   # accepted exceptions (the user 2026-10-06: LR / LI, DUEL_LILLE §23.22; LR again 2026-10-07, §23.25)
 WEIGHTS = {LILLE: (0.4, 0.2, 0.4)}                # strength, masher, signature; everyone else DEFAULT_W
@@ -146,7 +149,7 @@ def main():
             (c1, c2, h, nn, d), res, ko = fu.result()
             # a K.O.: Lille's by the RESULTS line's Konpaku (his cinematics put K.O.s past 300 s of match ticks); the others'
             # as frozen on 2026-10-02: a match under 299.5 s (a time-up runs the 300 s clock out)
-            nm, kos = len(res), sum(1 for (_, s, _), k in zip(res, ko) if (k if lille else s < 299.5))
+            nm, kos = len(res), sum(1 for (_, s, _), k in zip(res, ko) if (k if c in (LILLE, BARRO) else s < 299.5))
             side = 1 if kind == 'mash' else (0 if c1 == c else 1)   # C's seat (the masher is always P1, C's mirror too)
             opp = NAMES[c2 if side == 0 else c1]
             if lille and (kind == 'drift' or (kind == 'pace' and pn == dn)):

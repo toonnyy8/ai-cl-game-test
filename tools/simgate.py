@@ -32,7 +32,7 @@ MUSL_MATH = ('sinf cosf tanf __sindf __cosdf __tandf __rem_pio2f __rem_pio2_larg
              'expf exp2f_data powf powf_data logf logf_data log2f_data sin cos tan __sin __cos __tan __rem_pio2 atan2 atan '
              'exp exp_data pow pow_data log log_data __math_oflowf __math_uflowf __math_xflowf __math_invalidf '
              '__math_divzerof __math_oflow __math_uflow __math_xflow __math_invalid __math_divzero')
-ROSTER = ['YAMAMOTO', 'KENPACHI', 'RUKIA', 'ICHIGO', 'SENJUMARU', 'LILLE']   # kit.lisp *ROSTER*, in order (the tools' one roster list)
+ROSTER = ['YAMAMOTO', 'KENPACHI', 'RUKIA', 'ICHIGO', 'SENJUMARU', 'LILLE', 'BARRO']   # kit.lisp *ROSTER*, in order (the tools' one roster list)
 # debug.lisp ROSTER-PAIRS: the first five characters' fifteen in their historical order (YK has P1 Yamamoto; SS before SI),
 # then per later character i its pairings (i, j) with every earlier j, then its mirror (i, i)
 PAIRS = [f'{ROSTER[a]} {ROSTER[b]}' for a, b in ((0, 0), (0, 1), (1, 1), (2, 0), (2, 1), (2, 2), (3, 0), (3, 1), (3, 2), (3, 3),
