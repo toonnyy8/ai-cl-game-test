@@ -654,22 +654,6 @@ Rey Cero); presence K."
           (when (evenp i) (fx-shard px py pz ux uy uz 0.08f0 0.012f0 0.05f0 (+ (i->f i) 460f0) +pal-blood+ k :push 0.14f0)))))
     nil))
 
-(defun-fast vfx-ic-cero (x y z r k dt)
-  "The Gran Rey Cero gathered on the blade (the base Kikon): a BLOOD core in an ink ring, sparks sucked in."
-  (with-floats (x y z r k dt)
-    (let ((dr (drawing-no)))
-      (declare (single-float dr))
-      (fx-disc x y z (* 1.2f0 r) 0.12f0 (+ 500f0 dr) +pal-ink+ k)
-      (fx-disc x y z r 0.15f0 (+ 510f0 dr) +pal-blood+ k :push 0.05f0)
-      (fx-disc x y z (* 0.35f0 r) 0.05f0 520f0 +pal-hit+ k :push 0.1f0)
-      (dotimes (i (n-of (* 40f0 k) dt))
-        (let ((a (rnd-range 0f0 6.2832f0)) (b (rnd-range -1f0 1f0)))
-          (declare (single-float a b))
-          (%t-shard (+ x (* 3f0 r (f-cos a))) (+ y (* 2f0 r b)) (+ z (* 3f0 r (f-sin a))) (* -6f0 r (f-cos a)) (* -4f0 r b)
-                    (* -6f0 r (f-sin a)) 0.3f0 (rnd-range 0.03f0 0.06f0) 0f0 +pal-blood+)))
-      (%light x y z 0.9f0 0.08f0 0.1f0 4f0 (* 1.5f0 k) 7))
-    nil))
-
 (defun ichigo-at (x z)
   "The fighter standing at (X Z) (an aura's own: DRAW-FIGHTER passes his feet), or NIL."
   (dolist (e (list *p1* *p2*))
