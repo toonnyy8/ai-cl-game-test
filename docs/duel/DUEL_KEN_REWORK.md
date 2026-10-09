@@ -162,3 +162,13 @@ volumes unchanged:
     cap's spine corner (the sheet's colour; the research's green / red conflict is moot).
 - The art viewer shows a weapon alone, side on: `4100+k` / `4110+k` (k 0 katana, 1 Nozarashi, 2 the broken cleaver; one
   face / the other).
+- The user on that cleaver (2026-10-09): 「流蘇改成原本的造型」「刀紋寬度減少成 2/3」「白色刀柄跟刀身不要直接連結，中間改用黑色斜槓相連」.
+  - The pale band: every stripe's depth × 2/3 (0.03–0.25 → 0.02–0.167 m).
+  - The white haft now stops 0.08 m short of the head (its top at y 0.08); a black slanted bar (0.07 → 0.40 m up the
+    axis, rising 0.07 → 0.115 m toward the edge side) joins it to the head's spine, which now starts at (0.30, 0.07).
+  - "The original tassel" read two ways, shown side by side for the user to pick: A, the pre-rework one (dark
+    green-grey, hung from the butt); B, the first pass's (dark green strands at the cap's spine corner).
+
+### 6.2 The strikes (plan)
+- The user, on the plan (KATATE gets its own clips through the kit's `:clip-map`, RYOTE's kendo clips refined, NOMIHOSE
+  on RYOTE's with KUKAN-GIRI and the drink refined): 「三杯也改用一套自己的獨立動作」: NOMIHOSE gets its own set too.
