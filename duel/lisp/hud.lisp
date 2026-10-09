@@ -1067,7 +1067,7 @@ WINNER + name, the stats table (P1 / P2 columns), the match time, the menu."
       (let ((c *c-flash*))
         (setf (first c) (aref f 0) (second c) (aref f 1) (third c) (aref f 2) (fourth c) (aref f 3))
         (ui-rect 0 0 w h c))
-      (setf (aref f 3) (f32 (max 0.0 (- (aref f 3) (* (aref f 4) (hud-dt)))))))
+      (countdown! (aref f 3) (* (aref f 4) (hud-dt))))
     (draw-screen-fx w h)                                 ; focus lines (under the HUD)
     (when *cine*                                         ; letterbox + the cinematic's brush title
       (ui-rect 0 0 w (* 0.09 h) '(0 0 0 1)) (ui-rect 0 (* 0.91 h) w (* 0.09 h) '(0 0 0 1))

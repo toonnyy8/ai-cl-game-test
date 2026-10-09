@@ -85,7 +85,7 @@ ignoring H's frame window. Each target is hit at most once per slot until START-
 (defun-fast hit-point! (att tgt)
   "Contact point: target chest, pulled toward the attacker by the hurt radius."
   (let* ((p (pos-of att)) (q (pos-of tgt)) (out *hitp*) (b (body-of tgt))
-         (dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2))) (d (f-max 0.01f0 (f-sqrt (+ (* dx dx) (* dz dz)))))
+         (dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2))) (d (f-max 0.01f0 (f-hypot dx dz)))
          (r (body-hurt-r b)))
     (declare (type f32vec p q out) (single-float dx dz d r))
     (setf (aref out 0) (+ (aref q 0) (* r (/ dx d)))
@@ -109,7 +109,7 @@ ignoring H's frame window. Each target is hit at most once per slot until START-
 ;;; ---------------------------------------------------------------- enemy reactions
 (defun set-kb (e dx dz dist)
   "Push E by DIST metres along (dx dz) over 6 frames."
-  (let* ((l (max 0.001 (sqrt (+ (* dx dx) (* dz dz))))) (k (/ (f32 dist) 6.0)) (mo (motion e)) (kb (motion-kb mo)))
+  (let* ((l (max 0.001 (hypot dx dz))) (k (/ (f32 dist) 6.0)) (mo (motion e)) (kb (motion-kb mo)))
     (setf (aref kb 0) (f32 (* k (/ dx l))) (aref kb 2) (f32 (* k (/ dz l))) (motion-kb-left mo) 6f0)))
 
 (defun enemy-react (e kind &key (stun 0.0) (vy 0.0))
@@ -154,7 +154,7 @@ ignoring H's frame window. Each target is hit at most once per slot until START-
 orbs and sound are the :KILLED event's."
   (let* ((p (pos-of e)) (x (aref p 0)) (y (+ (aref p 1) 1.1)) (z (aref p 2)) (q (pos-of att))
          (dx (- x (aref q 0))) (dz (- z (aref q 2)))
-         (l (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))) (ux (/ dx l)) (uz (/ dz l)))
+         (l (max 0.01 (hypot dx dz))) (ux (/ dx l)) (uz (/ dz l)))
     (die e)
     (setf (trail-count (blade-trail-points (blade-trail e))) 0f0)   ; no ribbon left behind
     (if obliterate
@@ -169,7 +169,7 @@ orbs and sound are the :KILLED event's."
 (defun enemy-cripple (e att)
   "Weapon arm flies off (a mist burst: the :CRIPPLED event); crumple 60 f, then crippled (§4.4)."
   (let* ((p (pos-of e)) (q (pos-of att)) (dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2)))
-         (l (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))))
+         (l (max 0.01 (hypot dx dz))))
     (setf (fighter-crippled (fighter e)) t)
     (detach-parts e (body-arm-mask (body-of e)) (* 3 (/ dx l)) 3.5 (* 3 (/ dz l)) :spin 9.0 :spread 1.0)
     (let ((jp (joint-point! (make-f32 3) (model-joints (model e)) (ji :shoulder-r) 0f0 0f0 0f0)))
@@ -336,7 +336,7 @@ after the last hit), current move (token released at its end), hit reactions, ph
 animation, FK and trail. THINK (fn e k) runs only when E is free (not in a move/reaction):
 that is the AI. Dead enemies are the caller's business (removal / respawn)."
   (let ((h (health e)))
-    (when (> (health-invuln h) 0) (setf (health-invuln h) (f32 (max 0.0 (- (health-invuln h) k)))))
+    (when (> (health-invuln h) 0) (countdown! (health-invuln h) k))
     (setf (health-poise-t h) (+ (health-poise-t h) k))
     (when (> (health-poise-t h) 90) (setf (health-poise h) (body-poise (body-of e))))
     (case (state-of e)
@@ -363,7 +363,7 @@ that is the AI. Dead enemies are the caller's business (removal / respawn)."
             (when (and (alive-p a) (alive-p b) (not (fighter-grabbed (fighter a))) (not (fighter-grabbed (fighter b))))
               (let* ((p (pos-of a)) (q (pos-of b))
                      (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
-                     (d (sqrt (+ (* dx dx) (* dz dz))))
+                     (d (hypot dx dz))
                      (rr (+ (body-hurt-r (body-of a)) (body-hurt-r (body-of b))))
                      (ov (- rr d)))
                 (when (and (> ov 0) (< (abs (- (aref p 1) (aref q 1))) 1.5))
@@ -383,12 +383,12 @@ that is the AI. Dead enemies are the caller's business (removal / respawn)."
   (let* ((range (or range (if has-input *softlock-range* 4.5)))
          (half (or half (if has-input *softlock-angle* 90.0)))
          (team (fighter-team (fighter a)))
-         (p (pos-of a)) (dl (max 1e-4 (sqrt (+ (* dx dx) (* dz dz))))) (best nil) (bs 1e9))
+         (p (pos-of a)) (dl (max 1e-4 (hypot dx dz))) (best nil) (bs 1e9))
     (do-entities (e (f fighter) (h health))
       (when (and (not (eq (fighter-team f) team)) (health-alive h) (not (eq (fighter-state f) :spawn))
                  (or (null pred) (funcall pred e)))
         (let* ((q (pos-of e)) (ex (- (aref q 0) (aref p 0))) (ez (- (aref q 2) (aref p 2)))
-               (d (sqrt (+ (* ex ex) (* ez ez))))
+               (d (hypot ex ez))
                (ang (if (< d 0.01) 0.0 (/ (* 180 (acos (clamp (/ (+ (* ex dx) (* ez dz)) (* d dl)) -1.0 1.0))) pi)))
                (score (+ d (* 0.05 ang))))
           (when (and (<= d range) (<= ang half) (< score bs)) (setf best e bs score)))))

@@ -946,7 +946,7 @@ wind-up (:lb-switch-in-c, decision 30; a human's press; his CPU's switch rule, L
     (when (and (eq (fighter-state f) :move) mv (eq (mv-tick mv) 'lb-en-tick) (eq (fighter-phase f) :main))
       (let ((v (motion-vel (motion e))) (b (lb-tick-brain e)))
         (multiple-value-bind (to st) (if b (lb-ai-en-stick e f) (stick-relative e f))
-          (let ((m (sqrt (+ (* to to) (* st st)))))
+          (let ((m (hypot to st)))
             (when (>= m 0.2)
               (multiple-value-bind (dx dz) (world-dir e f to st)
                 (let ((sp (* (frost-speed *lb-en-walk* (fighter-frost f)) (min 1.0 m) (/ 1.0 m))))
@@ -2922,7 +2922,7 @@ whose line (as laid) passes within its width + HR of (X Z), or NIL (its hazard).
 (defun lb-learn-open (e s l k key)
   "Open his situation KEY (LEARN-KIT-OPEN) at the perceived SNAP S: the onset's position and the way to him; HOSHA /
 TENSHIN in meeting an answer already under way (LB-LEARN-ONSET-ANSWER) counts it at once."
-  (let* ((dx (- (snap-x s) (aref (pos-of e) 0))) (dz (- (snap-z s) (aref (pos-of e) 2))) (m (max 1e-3 (sqrt (+ (* dx dx) (* dz dz))))))
+  (let* ((dx (- (snap-x s) (aref (pos-of e) 0))) (dz (- (snap-z s) (aref (pos-of e) 2))) (m (max 1e-3 (hypot dx dz))))
     (setf (lbl-ox k) (snap-x s) (lbl-oz k) (snap-z s) (lbl-ux k) (f32 (/ dx m)) (lbl-uz k) (f32 (/ dz m))
           (lbl-len k) (+ (getf *lb-learn-episode* key 30) (brain-delay (brain e)))))
   (learn-kit-open l key)
@@ -3209,7 +3209,7 @@ card, a cross-shaped hole of light through it, held; the Konpaku shatter; the la
   (at 66 (shot-on v 20 3.2 1.25 :look 1.2) (lens 50) (cine-clip v :sh-kikon-victim :blend 3) (card :white v) (silhouette-black v))
   (during (66 120) (vfx-lb-cross-hole v (min 0.95 (/ (- cf 64) 6.0))))
   (at 72 (hold-both a v 44) (silence 44))
-  (at 118 (impact-frame :negative 2) (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 2))
+  (at 118 (impact-frame :negative 2) (cine-shatter v 2)
       (play-sfx :konpaku-shatter) (shake 0.2 0.3))
   (at 122 (unsilhouette) (card nil) (impact-frame :manga 10))
   (at 130 (card :black a) (back-rim 38 0.61 0.77 0.67) (shot-on a 20 4.2 0.9 :look 1.25 :off 0.9) (lens 42)
@@ -3245,7 +3245,7 @@ landscape screen (a portrait one widens the lens and backs off: %PORTRAIT-DOLLY,
   "A shot from behind V toward A (decision 56's acceleration beat): the camera BACK m behind V on the A -> V line, SIDE m to
 its right (+), H high, aimed at A's body LOOK m up; A is the subject (kept in the frame), V a silhouette in a low corner."
   (let* ((p (pos-of a)) (q (pos-of v)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
-         (d (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))) (ux (/ dx d)) (uz (/ dz d)))
+         (d (max 0.01 (hypot dx dz))) (ux (/ dx d)) (uz (/ dz d)))
     (setf *cine-close* nil *cine-subject* a)
     ;; V's head kept above the letterbox (its bar covers the frame's bottom 9 %): the aim tilted down, if need be, until
     ;; his head sits *LB-JUDGE-KEEP* of the half-height below the centre (the user, 2026-10-08: on a desktop he went off
@@ -3265,7 +3265,7 @@ its right (+), H high, aimed at A's body LOOK m up; A is the subject (kept in th
   "Close on pierce N's point in V (*LB-JUDGE-PIERCE*, the Kikon cinematic's slowed hits, Amendment 2): the camera DIST m
 from it at ANG degrees round V's facing (0 = on the side of A, whom he faces), a little above, looking at it."
   (let* ((p (pos-of a)) (q (pos-of v)) (dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2)))
-         (d (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))) (fx (/ dx d)) (fz (/ dz d)) (rx (- fz)) (rz fx)
+         (d (max 0.01 (hypot dx dz))) (fx (/ dx d)) (fz (/ dz d)) (rx (- fz)) (rz fx)
          (pp *lb-judge-pierce*) (u (aref pp (* 3 n))) (y (+ (aref q 1) (aref pp (1+ (* 3 n)))))
          (tx (+ (aref q 0) (* u rx))) (tz (+ (aref q 2) (* u rz)))
          (c (cos (deg ang))) (sn (sin (deg ang))) (ex (- (* c fx) (* sn rx))) (ez (- (* c fz) (* sn rz))))
@@ -3320,7 +3320,7 @@ LILLE-DRAW's, from the frame (%LB-SP-DRIVE!)."
   (at 242 (shot-on v 150 3.6 0.5 :look 2.3) (lens 50) (hold-both a v 20) (silence 20))   ; (his back, the giant beyond)
   ;; 6 the verdict: the wings close down; on that frame he shatters
   (at 262 (lens 46) (lb-shot-behind v a 4.6 -1.7 0.5 6.0) (cine-clip a :lb-w-judge-close :blend 0))   ; (the giant's wings
-  (at 268 (impact-frame :manga 10) (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))   ;  close
+  (at 268 (impact-frame :manga 10) (cine-shatter v 3)   ;  close
       (play-sfx :konpaku-shatter) (shake 0.3 0.4))                                                                     ;  over him)
   ;; 7 the end: the card goes with the giant (he never stands on the stage x3)
   (at 277 (unsilhouette) (card nil) (cine-scale a 1) (shot-on a 110 8.5 1.5 :look 1.8) (lens 50)
@@ -3337,7 +3337,7 @@ LILLE-DRAW's, from the frame (%LB-SP-DRIVE!)."
   (at 110 (card nil) (caption-exit) (shot-on a 118 9.0 3.0 :look 2.0 :ahead 8.0) (lens 60) (impact-frame :negative 2)
       (play-sfx :explode) (shake 0.4 0.5) (ui-flash 1.0 0.95 0.8 0.8 2.5))
   (during (110 150) (vfx-lb-horizon a (min 0.98 (- 1.6 (/ (- cf 110) 25.0)))))
-  (at 116 (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 4)) (play-sfx :konpaku-shatter)
+  (at 116 (cine-shatter v 4) (play-sfx :konpaku-shatter)
       (impact-frame :manga 10))
   (at 140 (silence 46) (shot-on a 30 8.5 1.0 :look 1.8) (lens 50) (cine-clip a (kit-stance (kit-of a)) :blend 10))
   (during (140 186) (setf *grade-desat* (min 0.5 (* 0.02 (- cf 140))))))

@@ -17,7 +17,7 @@
 
 (defun e-vel (e dx dz speed)
   "Horizontal velocity along (DX DZ) at SPEED m/s."
-  (let ((l (sqrt (+ (* dx dx) (* dz dz)))) (v (motion-vel (motion e))))
+  (let ((l (hypot dx dz)) (v (motion-vel (motion e))))
     (if (< l 1e-4)
         (setf (aref v 0) 0f0 (aref v 2) 0f0)
         (setf (aref v 0) (f32 (* speed (/ dx l))) (aref v 2) (f32 (* speed (/ dz l)))))))
@@ -130,7 +130,7 @@ the brute's charge run, stopping after it."
 (defun enemy-post (e st0 mv0 sf0)
   "Move events (crossing the strike frame), move ends, reaction exits, crumple entry, boss phase."
   (let* ((f (fighter e)) (st (fighter-state f)) (b (brain e)) (last (brain-last-state b)))
-    (when (> (brain-chevron-t b) 0) (setf (brain-chevron-t b) (f32 (max 0.0 (- (brain-chevron-t b) +step+)))))
+    (when (> (brain-chevron-t b) 0) (countdown! (brain-chevron-t b) +step+))
     (cond ((and (eq st :move) (eq st0 :move) (eq mv0 (fighter-move f)))
            (let ((s (mv-s mv0)) (sf (fighter-sf f)))
              (when (and (< sf0 s) (>= sf s)) (move-event e mv0))
@@ -336,9 +336,9 @@ cooldown is ready (punish token if the player is recovering close by); 20 % fein
 (defun needler-spot (e)
   "A point 10 m from the player on the needler's side, biased into the camera view."
   (let* ((p (pos-of e)) (q (pos-of *player*)) (f (camera-forward *camera*))
-         (dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2))) (l (max 0.01 (sqrt (+ (* dx dx) (* dz dz)))))
-         (cx (aref f 0)) (cz (aref f 2)) (cl (max 0.01 (sqrt (+ (* cx cx) (* cz cz)))))
-         (ux (+ (/ dx l) (* 0.8 (/ cx cl)))) (uz (+ (/ dz l) (* 0.8 (/ cz cl)))) (ul (max 0.01 (sqrt (+ (* ux ux) (* uz uz)))))
+         (dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2))) (l (max 0.01 (hypot dx dz)))
+         (cx (aref f 0)) (cz (aref f 2)) (cl (max 0.01 (hypot cx cz)))
+         (ux (+ (/ dx l) (* 0.8 (/ cx cl)))) (uz (+ (/ dz l) (* 0.8 (/ cz cl)))) (ul (max 0.01 (hypot ux uz)))
          (lim *arena-inner*))
     (values (f32 (clamp (+ (aref q 0) (* 10 (/ ux ul))) (- lim) lim))
             (f32 (clamp (+ (aref q 2) (* 10 (/ uz ul))) (- lim) lim)))))

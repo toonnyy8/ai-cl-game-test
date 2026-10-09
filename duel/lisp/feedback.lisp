@@ -22,7 +22,7 @@
 (defun hit-dir (att def)
   "Values dx dz: unit direction from ATT to DEF."
   (let* ((p (pos-of att)) (q (pos-of def)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
-         (d (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))))
+         (d (max 0.01 (hypot dx dz))))
     (values (/ dx d) (/ dz d))))
 
 (defvar *hums* (make-array 2 :initial-element -1) "Breaker hum loop voice per side.")
@@ -149,7 +149,7 @@ and smears the victim along the hit; a counter turns the frame to a manga page f
       (announce "CLASH" :color '(1 1 1 1) :secs 0.9))
     (:hazard-cut (x y z) (vfx-hit x y z :heavy) (sfx-at :cut-heavy x y z))
     (:step args (let* ((e (first args)) (p (pos-of e)) (v (motion-kb (motion e))) (vx (aref v 0)) (vz (aref v 2))
-                       (l (sqrt (+ (* vx vx) (* vz vz)))))
+                       (l (hypot vx vz)))
                   (multiple-value-bind (dx dz) (if (> l 1e-4) (values (/ vx l) (/ vz l)) (values (fwd-x (yaw-of e)) (fwd-z (yaw-of e))))
                     (vfx-step-dust (aref p 0) (aref p 2) (- dx) (- dz)) (smear e dx dz))
                   (sfx-on :step e :gain 0.6)

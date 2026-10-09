@@ -644,7 +644,7 @@ Rey Cero); presence K."
 (defun-fast vfx-ic-chain (x0 y0 z0 x1 y1 z1 k)
   "A blood chain from (x0 y0 z0) to (x1 y1 z1): an ink line of links (shards turned alternately), a BLOOD core, presence K."
   (with-floats (x0 y0 z0 x1 y1 z1 k)
-    (let* ((dx (- x1 x0)) (dy (- y1 y0)) (dz (- z1 z0)) (l (f-max 0.01f0 (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
+    (let* ((dx (- x1 x0)) (dy (- y1 y0)) (dz (- z1 z0)) (l (f-max 0.01f0 (f-hypot dx dy dz)))
            (ux (/ dx l)) (uy (/ dy l)) (uz (/ dz l)) (n (min 40 (max 2 (f->i (/ l 0.14f0))))) (dr (drawing-no)))
       (declare (single-float dx dy dz l ux uy uz dr) (fixnum n))
       (dotimes (i n)
@@ -701,7 +701,7 @@ Rey Cero); presence K."
       (let ((k (max 0.02 (- 0.95 (* 0.045 (hazard-age hz))))) (g (min 1.0 (/ (1+ (hazard-age hz)) 3.0))) (p (pos-of e)))
         (loop for j in '(:neck :hand-r :hand-l :foot-r :foot-l)
               do (let* ((v (ic-joint e (joint-index j))) (x (aref v 0)) (y (aref v 1)) (z (aref v 2))
-                        (dx (- x (aref p 0))) (dz (- z (aref p 2))) (l (max 0.05 (sqrt (+ (* dx dx) (* dz dz)))))
+                        (dx (- x (aref p 0))) (dz (- z (aref p 2))) (l (max 0.05 (hypot dx dz)))
                         (r (* 0.9 g)))
                    (vfx-ic-chain x y z (+ x (* r (/ dx l))) (+ y (* 0.3 g)) (+ z (* r (/ dz l))) k)))))))
 
@@ -999,7 +999,7 @@ the plaza back, violet ash drifting."
   (at 138 (card :white) (shot-on a 200 5.2 0.5 :look 2.6 :off 0.8) (lens 36) (play-sfx :explode :pitch 0.6)
       (let ((e *env*)) (v3-set! (env-sky-top e) 0.94f0 0.85f0 0.86f0) (v3-set! (env-fog-color e) 0.94f0 0.85f0 0.86f0)))
   (during (138 162) (let* ((p (pos-of a)) (q (pos-of v)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
-                           (d (max 0.1 (sqrt (+ (* dx dx) (* dz dz))))) (uu (min 1.0 (/ (- cf 136) 22.0))))
+                           (d (max 0.1 (hypot dx dz))) (uu (min 1.0 (/ (- cf 136) 22.0))))
                       (vfx-ic-cero-ring (+ (aref p 0) (* dx (+ 0.3 (* 0.7 uu)))) 2.4 (+ (aref p 2) (* dz (+ 0.3 (* 0.7 uu))))
                                         (/ dx d) (/ dz d) (* 0.14 (/ cf 60.0)) 0.95)))
   (at 160 (card nil) (shot-on v 150 5.0 1.2 :look 1.3) (lens 58) (impact-frame :negative 2)
@@ -1072,7 +1072,7 @@ counter's small C), FLARE its halo brightened (the impact)."
 (defun ic-line-from (a v)
   "Values px pz ux uz d: A's feet, the unit vector to V, the distance."
   (let* ((p (pos-of a)) (q (pos-of v)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
-         (d (max 0.5 (sqrt (+ (* dx dx) (* dz dz))))))
+         (d (max 0.5 (hypot dx dz))))
     (values (aref p 0) (aref p 2) (/ dx d) (/ dz d) d)))
 
 (defparameter *cine-clone-waves* '(4 3) "千影: waves x clones per wave before the last all-round charge (12).")
@@ -1118,7 +1118,7 @@ three, then twelve at once; one white frame; behind Ichigo, low, facing away, th
       (cine-clip a :ic-k-stance :blend 0) (cine-clip v :sh-crumple :blend 0)
       (caption "千影" :reading "SEN'EI" :sub "KESSA NO ICHIGO  KIKON" :side 1 :hanko t))
   (at 124 (impact-frame :negative 2)
-      (multiple-value-bind (x y z) (actor-point v 1.0) (vfx-konpaku-shatter x (+ y 0.1) z (fighter-kikon-n (fighter a))))
+      (cine-shatter v (fighter-kikon-n (fighter a)) :up 1.0 :dy 0.1)
       (play-sfx :konpaku-shatter) (play-sfx :explode :pitch 0.6 :gain 0.6) (shake 0.3 0.4))
   (at 126 (impact-frame :manga 12))
   (at 176 (card nil) (caption-exit) (shot-on a 150 7.0 2.0 :look 1.4) (lens 50)))
@@ -1191,7 +1191,7 @@ drifting."
   (during (70 168) (let ((g (min 1.0 (/ (- cf 70) 10.0))) (p (pos-of a)))   ; the chains bursting, then drifting
                      (loop for j in '(:neck :hand-r :hand-l :shin-r :shin-l) for i from 0
                            do (let* ((v (ic-joint a (joint-index j))) (x (aref v 0)) (y (aref v 1)) (z (aref v 2))
-                                     (dx (- x (aref p 0))) (dz (- z (aref p 2))) (l (max 0.05 (sqrt (+ (* dx dx) (* dz dz)))))
+                                     (dx (- x (aref p 0))) (dz (- z (aref p 2))) (l (max 0.05 (hypot dx dz)))
                                      (r (* g (+ 0.8 (* 0.3 (sin (+ (* 0.1 cf) i)))))))
                                 (vfx-ic-chain x y z (+ x (* r (/ dx l))) (+ y (* 0.4 g) (* 0.2 (sin (+ (* 0.13 cf) i))))
                                               (+ z (* r (/ dz l))) 0.9)))))

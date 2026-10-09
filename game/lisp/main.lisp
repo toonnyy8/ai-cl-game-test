@@ -32,7 +32,7 @@ slow-mo scales each side: KP for REN, KE for everyone else."
   (do-entities (e (m model) (h health) (tr blade-trail))
     (let ((fl (model-flash m)))
       (when (> fl 0) (setf (model-flash m) (f32 (max 0.0 (- fl rdt))))))
-    (when (> (health-bar-t h) 0) (setf (health-bar-t h) (f32 (max 0.0 (- (health-bar-t h) rdt)))))
+    (when (> (health-bar-t h) 0) (countdown! (health-bar-t h) rdt))
     (when (health-alive h)
       (if (eql e *player*)
           (draw-fighter e :tint (and (< (player-guard-meter (pl)) 35) (member (state-of e) '(:guard :parry)) '(1.0 0.6 0.24)))

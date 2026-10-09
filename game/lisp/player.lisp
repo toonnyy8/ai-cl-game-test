@@ -47,7 +47,7 @@ sim step (SIM-STEP) and stops during hitstop, so buffered presses survive slow-m
            (ky (+ (if (key-down :w) 1.0 0.0) (if (key-down :s) -1.0 0.0)))
            (keys (or (/= kx 0) (/= ky 0)))
            (mx (+ kx (pad-lx))) (my (+ ky (pad-ly)))
-           (m (sqrt (+ (* mx mx) (* my my))))
+           (m (hypot mx my))
            (cy (cam-yaw *cam*)))
       (if (< m 0.05)
           (clear-stick s)
@@ -141,7 +141,7 @@ inflated by *JUST-DODGE-REACH* so rolling away from a swing still counts as a ne
 
 (defun vel-toward (v tx tz rate)
   "Accelerate the horizontal velocity V toward (TX TZ) by at most RATE m/s."
-  (let* ((ddx (- tx (aref v 0))) (ddz (- tz (aref v 2))) (dl (sqrt (+ (* ddx ddx) (* ddz ddz)))))
+  (let* ((ddx (- tx (aref v 0))) (ddz (- tz (aref v 2))) (dl (hypot ddx ddz)))
     (if (<= dl rate)
         (setf (aref v 0) (f32 tx) (aref v 2) (f32 tz))
         (setf (aref v 0) (f32 (+ (aref v 0) (* rate (/ ddx dl)))) (aref v 2) (f32 (+ (aref v 2) (* rate (/ ddz dl))))))))
@@ -398,7 +398,7 @@ inflated by *JUST-DODGE-REACH* so rolling away from a swing still counts as a ne
 (defun pl-warp-front (e tg dist sf)
   "Frames 0-6 of Mirage / Obliterate: close in to DIST m in front of TG (on E's side), facing it."
   (let* ((p (pos-of e)) (q (pos-of tg)) (u (min 1.0 (/ sf 6.0)))
-         (dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2))) (d (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))))
+         (dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2))) (d (max 0.01 (hypot dx dz))))
     (setf (aref p 0) (f32 (lerp (aref p 0) (+ (aref q 0) (* dist (/ dx d))) u))
           (aref p 2) (f32 (lerp (aref p 2) (+ (aref q 2) (* dist (/ dz d))) u)))
     (face-toward e tg)))
@@ -481,7 +481,7 @@ inflated by *JUST-DODGE-REACH* so rolling away from a swing still counts as a ne
                       (if (alive-p tg)
                           (let* ((q (pos-of tg)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
                                  (dy (- (aref q 1) (aref p 1)))
-                                 (d (sqrt (+ (* dx dx) (* dz dz)))) (rem (- d 1.2)))
+                                 (d (hypot dx dz)) (rem (- d 1.2)))
                             (face-toward e tg)
                             (if (<= rem (* 0.4 k))
                                 t
@@ -614,7 +614,7 @@ inflated by *JUST-DODGE-REACH* so rolling away from a swing still counts as a ne
        (shake 0.12 0.25) (play-sfx :clang :gain 2.0))
       (:knockdown
        (pl-set-state e :knockdown :kd-air 2f0)
-       (let ((l (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))))
+       (let ((l (max 0.01 (hypot dx dz))))
          (setf (motion-grounded mo) nil (aref v 1) 4.9f0
                (aref v 0) (f32 (* 8.57 (/ dx l))) (aref v 2) (f32 (* 8.57 (/ dz l)))))
        (face-toward e att)))))
@@ -707,15 +707,15 @@ Returns :dodged :blocked :parried :hit or NIL."
 
 (defun player-tick (e k)
   (let* ((s (pl)) (f (fighter e)) (h (health e)) (mo (motion e)) (dt (* k +step+)))
-    (when (> (health-invuln h) 0) (setf (health-invuln h) (f32 (max 0.0 (- (health-invuln h) k)))))
-    (setf (player-jd-cd s) (f32 (max 0.0 (- (player-jd-cd s) dt))))
+    (when (> (health-invuln h) 0) (countdown! (health-invuln h) k))
+    (countdown! (player-jd-cd s) dt)
     ;; guard meter regen after 0.8 s without blocking
     (incf (player-guard-idle s) dt)
     (when (and (> (player-guard-idle s) 0.8) (< (player-guard-meter s) 100) (not (eq (fighter-state f) :guard-break)))
       (setf (player-guard-meter s) (f32 (min 100.0 (+ (player-guard-meter s) (* *guard-regen* dt))))))
     ;; raven gauge
     (cond ((player-raven-form s)
-           (setf (player-raven s) (f32 (max 0.0 (- (player-raven s) (* *raven-drain* dt)))))
+           (countdown! (player-raven s) (* *raven-drain* dt))
            (when (<= (player-raven s) 0) (raven-form-end)))
           ((health-alive h) (raven-gain dt)))
     (case (fighter-state f)
@@ -767,10 +767,10 @@ Returns :dodged :blocked :parried :hit or NIL."
 (defun player-frame-update (dt)
   "Real-time bits: combo timer, HP damage trail, feathers, FOV punch, orb target."
   (let* ((e *player*) (s (pl)) (p (pos-of e)) (hp (health-hp (health e))))
-    (when (> (player-combo-t s) 0) (setf (player-combo-t s) (f32 (max 0.0 (- (player-combo-t s) dt))))
+    (when (> (player-combo-t s) 0) (countdown! (player-combo-t s) dt)
       (when (<= (player-combo-t s) 0) (setf (player-combo s) 0)))
-    (setf (player-combo-punch s) (f32 (max 0.0 (- (player-combo-punch s) dt)))
-          (player-fov-punch s) (f32 (max 0.0 (- (player-fov-punch s) dt))))
+    (progn (countdown! (player-combo-punch s) dt)
+           (countdown! (player-fov-punch s) dt))
     (if (> (player-hp-trail s) hp)
         (if (> (player-hp-hold s) 0)
             (setf (player-hp-hold s) (f32 (- (player-hp-hold s) dt)))

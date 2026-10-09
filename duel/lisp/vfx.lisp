@@ -148,7 +148,7 @@ its eroding ghost, WAVE-GHOSTS-DRAW, share it at 0 B)."
   `(progn
     (let* ((fx (- (f-sin yaw))) (fz (- (f-cos yaw))) (sx (- fz)) (sz fx) (dr (drawing-no)) (a (sage age 2f0))
            (hold (f-max 0f0 (- (* 60f0 life) 22f0))) (e (camera-eye *camera*))
-           (vx (- x (aref e 0))) (vz (- z (aref e 2))) (vl (f-max 0.01f0 (f-sqrt (+ (* vx vx) (* vz vz)))))
+           (vx (- x (aref e 0))) (vz (- z (aref e 2))) (vl (f-max 0.01f0 (f-hypot vx vz)))
            (ox (* 0.35f0 (/ vx vl))) (oz (* 0.35f0 (/ vz vl))) (sd (i->f (mod (f->i dr) 7))))
       (declare (type f32vec e) (single-float fx fz sx sz dr a hold vx vz vl ox oz sd))
       (fx-envelope (es k fl ph) (a 1 3 hold 18)
@@ -285,7 +285,7 @@ the charge each) with a white HIT core disc. (The caller adds the focus lines wh
       (fx-disc x y z (+ 0.03f0 (* 0.08f0 kq)) 0.2f0 (+ 55f0 (i->f (mod (f->i dr) 5))) +pal-hit+ 0.98f0 :push 0.25f0)   ; the core
       (dotimes (i (n-of (+ 20f0 (* 40f0 k)) dt))
         (let* ((dx (rnd-range -1f0 1f0)) (dy (rnd-range -1f0 1f0)) (dz (rnd-range -1f0 1f0))
-               (l (f-max 0.05f0 (f-sqrt (+ (* dx dx) (* dy dy) (* dz dz))))) (r (+ 0.6f0 (* 0.5f0 k))) (sp (/ r (* l 0.3f0))))
+               (l (f-max 0.05f0 (f-hypot dx dy dz))) (r (+ 0.6f0 (* 0.5f0 k))) (sp (/ r (* l 0.3f0))))
           (declare (single-float dx dy dz l r sp))
           (%t-blob (+ x (* r (/ dx l))) (+ y (* r (/ dy l))) (+ z (* r (/ dz l))) (- (* sp dx)) (- (* sp dy)) (- (* sp dz))
                    0.3f0 (+ 0.03f0 (* 0.04f0 k)) 0f0 0.2f0 +pal-fire+)))
@@ -403,7 +403,7 @@ out, so the fighter stays readable inside), H tall x 0.8..1.25 with a lean, both
 the palette's dark hairline, and when WHITE is 1 a white core line in the back ones. K = presence. PAL may carry a glass
 level (+ 32 x g, fx-toon.frag.wgsl: see-through); the white cores take the same level. A macro (the auras run every
 frame: 0 B); N and WHITE literal fixnums."
-  `(let* ((x ,x) (y ,y) (z ,z) (h ,h) (k ,k) (pal ,pal) (rad ,rad) (w ,w) (e (camera-eye *camera*)) (ex (- (aref e 0) x)) (ez (- (aref e 2) z)) (el (f-max 0.01f0 (f-sqrt (+ (* ex ex) (* ez ez)))))
+  `(let* ((x ,x) (y ,y) (z ,z) (h ,h) (k ,k) (pal ,pal) (rad ,rad) (w ,w) (e (camera-eye *camera*)) (ex (- (aref e 0) x)) (ez (- (aref e 2) z)) (el (f-max 0.01f0 (f-hypot ex ez)))
          (dr (drawing-no)) (pk (toon-a pal (* 0.95f0 k))) (step (/ 6.2831855f0 ,(float n 1f0)))
          (wpal (+ +pal-hit+ (* 32f0 (i->f (f->i (/ pal 32f0)))))))   ; the white cores' palette, the same glass level
     (declare (single-float x y z h k pal rad w) (type f32vec e) (single-float ex ez el dr pk step wpal) (ignorable wpal))
@@ -482,7 +482,7 @@ K is the presence (0..1). :heat also fades by *AURA-CAP* and when the camera is 
   (with-floats (x y z height dt k)
     (let* ((h height) (eye (camera-eye *camera*))
            (ex (- (aref eye 0) x)) (ey (- (aref eye 1) (+ y (* 0.6f0 h)))) (ez (- (aref eye 2) z))
-           (near (f-clamp (/ (- (f-sqrt (+ (* ex ex) (* ey ey) (* ez ez))) 1.5f0) 2.5f0) 0.35f0 1f0))
+           (near (f-clamp (/ (- (f-hypot ex ey ez) 1.5f0) 2.5f0) 0.35f0 1f0))
            (ka (* near (the single-float (f32 *aura-cap*)) (f-clamp k 0f0 1f0))))
       (declare (type f32vec eye) (single-float h ex ey ez near ka))
       (case kind
@@ -517,7 +517,7 @@ K is the presence (0..1). :heat also fades by *AURA-CAP* and when the camera is 
                       (rnd-range 0.06f0 0.11f0) -1f0 0.3f0 +pal-fire+))
            (%light x (+ y 1.0f0) z 1f0 0.45f0 0.12f0 5f0 (* 1.2f0 kc fl) 8)))
         (:heat                                           ; Bankai East: the heat as 4 slow charcoal ink-wash wisps (threes)
-         (let* ((e (camera-eye *camera*)) (ex (- (aref e 0) x)) (ez (- (aref e 2) z)) (el (f-max 0.01f0 (f-sqrt (+ (* ex ex) (* ez ez)))))
+         (let* ((e (camera-eye *camera*)) (ex (- (aref e 0) x)) (ez (- (aref e 2) z)) (el (f-max 0.01f0 (f-hypot ex ez)))
                 (d3 (drawing-no 8f0)))
            (declare (type f32vec e) (single-float ex ez el d3))
            (dotimes (j 4)
@@ -607,7 +607,7 @@ ring (the Breaker's red edge) and an INK ripple running out every 0.4 s (on twos
   "A jagged ground cut (x0 z0)→(x1 z1) of drawn toon strips (§4.2 Split the Meteor / Buttagiru): a DUST gash of
 half-width W (narrow at both ends, a heavy dark edge) with a REIATSU core line; KG / KC their presences (0..1: the
 far end erodes first). A macro: 0 B."
-  `(let* ((x0 ,x0) (z0 ,z0) (x1 ,x1) (z1 ,z1) (w ,w) (kg ,kg) (kc ,kc) (seed ,seed) (dx (- x1 x0)) (dz (- z1 z0)) (l (f-sqrt (+ (* dx dx) (* dz dz)))) (n (max 2 (f->i (* 1.5f0 l))))
+  `(let* ((x0 ,x0) (z0 ,z0) (x1 ,x1) (z1 ,z1) (w ,w) (kg ,kg) (kc ,kc) (seed ,seed) (dx (- x1 x0)) (dz (- z1 z0)) (l (f-hypot dx dz)) (n (max 2 (f->i (* 1.5f0 l))))
          (px (/ (- dz) (f-max l 1f-4))) (pz (/ dx (f-max l 1f-4))) (ox x0) (oz z0) (oh 1f0)
          (pg (toon-a +pal-dust+ kg)) (pc (toon-a +pal-reiatsu+ kc)))
     (declare (single-float x0 z0 x1 z1 w kg kc seed dx dz l px pz ox oz oh pg pc) (fixnum n))
@@ -628,7 +628,7 @@ ground crack with dust), :enjo (the Kikon module ENJO: a FIRE line runs along th
 four FIRE walls rise along it one after another over 16 frames, each over an EMBER backing, hold,
 and erode), :kyoku (KYOKUJITSUJIN's heat sheet), :south (South's ring crack), :kyokko (KYOKKO's ray). DT (optional) feeds the particles; 0 = none."
   (with-floats (x0 z0 x1 z1 age life dt)
-    (let* ((dx (- x1 x0)) (dz (- z1 z0)) (l (f-max 1f-3 (f-sqrt (+ (* dx dx) (* dz dz)))))
+    (let* ((dx (- x1 x0)) (dz (- z1 z0)) (l (f-max 1f-3 (f-hypot dx dz)))
            (px (/ (- dz) l)) (pz (/ dx l)) (v (f-clamp (/ age (f-max life 0.01f0)) 0f0 1f0))
            (fade (- 1f0 (* v v))) (seed (+ x0 (* 3f0 z0))))
       (declare (single-float dx dz l px pz v fade seed))
@@ -666,7 +666,7 @@ and erode), :kyoku (KYOKUJITSUJIN's heat sheet), :south (South's ring crack), :k
          (let* ((sa (sage age 2f0)) (dr (drawing-no)) (sd (i->f (mod (f->i dr) 7))) (ux (/ dx l)) (uz (/ dz l))
                 (k (if (< sa (- life 0.25f0)) 0.98f0 (f-max 0f0 (* 0.98f0 (/ (- life sa) 0.25f0)))))
                 (e (camera-eye *camera*)) (vx (- (* 0.5f0 (+ x0 x1)) (aref e 0))) (vz (- (* 0.5f0 (+ z0 z1)) (aref e 2)))
-                (vl (f-max 0.01f0 (f-sqrt (+ (* vx vx) (* vz vz))))) (ox (* 0.3f0 (/ vx vl))) (oz (* 0.3f0 (/ vz vl))))
+                (vl (f-max 0.01f0 (f-hypot vx vz))) (ox (* 0.3f0 (/ vx vl))) (oz (* 0.3f0 (/ vz vl))))
            (declare (single-float sa dr sd ux uz k vx vz vl ox oz) (type f32vec e))
            (toon-ground-seg (+ x0 ux) (+ z0 uz) x1 z1 0.03f0 0.12f0 1f0 0.3f0 (+ 40f0 sd) 0.3f0
                             (toon-a +pal-fire+ (* k (f-clamp (* 8f0 sa) 0f0 0.98f0))))
@@ -1420,7 +1420,7 @@ drawings; envelope 0 1 3 6."
 :counter :guard :guard-crush :guard-break :clash (:breaker = :guard-break). Heavy hits throw 3 DUST puffs and 5-8
 ink-blood droplets, fire hits 4 flame scraps. Also starts the 0.15 s hit light (white: no warm pixels)."
   (with-floats (x y z dx dz)
-    (let* ((l (f-max 0.01f0 (f-sqrt (+ (* dx dx) (* dz dz))))) (dx (/ dx l)) (dz (/ dz l))
+    (let* ((l (f-max 0.01f0 (f-hypot dx dz))) (dx (/ dx l)) (dz (/ dz l))
            (kind (if (eq kind :breaker) :guard-break kind)))
       (declare (single-float l dx dz))
       (stamp kind x y z :dx dx :dy 0.0 :dz dz)
@@ -1688,7 +1688,7 @@ HIT drops flung off the head, falling, gone at 400 ms. 0 B."
               (dotimes (i 3)
                 (let* ((f (i->f i)) (side (if (= i 1) -1f0 1f0)) (vx (* side (+ 1.2f0 (* 0.5f0 f)))) (vy (- 1.6f0 (* 0.3f0 f)))
                        (px (* vx a)) (py (- (* vy a) (* 4.9f0 a a))) (ty (- vy (* 9.8f0 a)))
-                       (tl (f-max 1f-3 (f-sqrt (+ (* vx vx) (* ty ty))))) (k (* 0.98f0 (f-clamp (/ (- 0.4f0 a) 0.1f0) 0f0 1f0))))
+                       (tl (f-max 1f-3 (f-hypot vx ty))) (k (* 0.98f0 (f-clamp (/ (- 0.4f0 a) 0.1f0) 0f0 1f0))))
                   (declare (single-float f side vx vy px py ty tl k))
                   (fx-shard (+ hx (* (+ (* side 0.1f0) px) rx) (* py ux)) (+ hy (* (+ (* side 0.1f0) px) ry) (* py uy))
                             (+ hz (* (+ (* side 0.1f0) px) rz) (* py uz))

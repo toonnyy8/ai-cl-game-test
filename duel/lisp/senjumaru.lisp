@@ -406,7 +406,7 @@ neutral always starts: it may weave, and its tap is refused at release, SENJU-WE
 (defun senju-pull (e to d frames)
   "Slide E toward the point TO (a vector x _ z) until D metres from it, over FRAMES (a hit's pull: her hook sets it
 after the reaction, whose own slide it replaces)."
-  (let* ((p (pos-of e)) (dx (- (aref to 0) (aref p 0))) (dz (- (aref to 2) (aref p 2))) (l (sqrt (+ (* dx dx) (* dz dz)))))
+  (let* ((p (pos-of e)) (dx (- (aref to 0) (aref p 0))) (dz (- (aref to 2) (aref p 2))) (l (hypot dx dz)))
     (when (> l (+ d 0.05))
       (set-slide e (- l d) frames dx dz))))
 
@@ -448,7 +448,7 @@ is perfect (they are hazard threats from the start)."
 ;;; ---------------------------------------------------------------- 神兵 SHINPEI: the Divine Soldier
 (defun senju-shinpei-point (e)
   (let* ((p (pos-of e)) (q (pos-of (opp-of e))) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
-         (d (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))) (k (min 1.5 (* 0.5 d))))
+         (d (max 0.01 (hypot dx dz))) (k (min 1.5 (* 0.5 d))))
     (values (+ (aref p 0) (* k (/ dx d))) (+ (aref p 2) (* k (/ dz d))) (dir-yaw dx dz))))
 
 (defun senju-tapestry (e)
@@ -503,7 +503,7 @@ him); walks the line to him (*SHINPEI-SPEED*, turning *SHINPEI-TURN*), stops wit
       (clog "~a SHINPEI destroyed" (side-name e))
       (destroy-entity h)
       (return-from senju-soldier-step t))
-    (let* ((q (pos-of o)) (dx (- (aref q 0) (hazard-x hz))) (dz (- (aref q 2) (hazard-z hz))) (dist (sqrt (+ (* dx dx) (* dz dz)))))
+    (let* ((q (pos-of o)) (dx (- (aref q 0) (hazard-x hz))) (dz (- (aref q 2) (hazard-z hz))) (dist (hypot dx dz)))
       (incf (sjh-clock d))
       (case (sjh-phase d)
         (:rise (when (>= (sjh-clock d) *shinpei-rise*)
@@ -733,7 +733,7 @@ really takes, each of hers kept at its max; the user, 2026-09-29: SENJU-SIPHON t
   (let* ((e (hazard-owner hz)) (o (hazard-target hz)) (n (sjh-hank d)) (age (hazard-age hz)))
     (when (or (plusp (hazard-delay hz)) (not (entity-alive-p o))) (return-from senju-zone-step nil))
     (let* ((q (pos-of o)) (dx (- (aref q 0) (hazard-x hz))) (dz (- (aref q 2) (hazard-z hz)))
-           (dist (sqrt (+ (* dx dx) (* dz dz)))) (inside (<= dist (sjh-r d))))
+           (dist (hypot dx dz)) (inside (<= dist (sjh-r d))))
       (case n
         (1 (do-entities (w (wz hazard))                 ; the mirror-eyes: his waves / fireballs turn back
              (when (and (eql (hazard-owner wz) o) (member (hazard-kind wz) '(:wave :fireball)) (> (hazard-hits-left wz) 0)
@@ -1140,9 +1140,7 @@ the bar for it) and the brush 機 + the next hank's short name."
     (when (> refused 0.0) (%houtline (f32 (- x 2)) (f32 (- y0 2)) (f32 (+ w 4)) (f32 (+ hh 4)) 1f0 1f0 1f0 (f32 refused)))
     (when lx                                          ; the label: the brush 針 / 機 and HARI / the next hank
       (let* ((em (* 8 ls)) (kanji (if next "機" "針")) (col (if next '(0.76 0.66 0.4 1.0) '(0.82 0.06 0.11 1.0))))
-        (set-line (if right (- lx (* 0.5 em)) (+ lx (* 0.5 em))) (+ ly (* 3.5 ls)) em col)
-        (setf (aref *bl* 7) (line-width kanji))
-        (brush-line kanji)
+        (brush-text kanji (if right (- lx (* 0.5 em)) (+ lx (* 0.5 em))) (+ ly (* 3.5 ls)) em col)
         (hud-text (if next (hank next :short) "HARI") (if right (- lx em (* 2 ls)) (+ lx em (* 2 ls))) ly ls col
                   :align (if right :right :left))))))
 
@@ -1297,10 +1295,10 @@ Konpaku shatter; she threads the needle again."
                      (vfx-sj-threads x y z (min 1.0 (/ (- cf 70) 28.0)))
                      (when (>= cf 92) (setf (model-tint (model v)) '(1.35 1.35 1.4)))))   ; the robe re-tailored white
   (at 100 (shot-on a 25 1.6 1.35 :look 1.45) (lens 70) (cine-clip a :sj-knot :blend 4) (face-beat a :shout 1.4))   ; the smile
-  (at 128 (shot-on v 150 3.8 0.5 :look 1.4) (hold-both a v 22) (silence 22) (lens 70))
-  (during (128 150) (shot-on v 150 (- 3.8 (* 0.8 u)) (+ 0.5 (* 0.1 u)) :look 1.4))
+  (at 128 (shot-on v 150 3.8 0.5 :look 1.4))
+  (push-in-on a v 128 3.8 0.8 0.5 0.1)
   (at 150 (impact-frame :negative 2)
-      (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x (+ y 0.1) z 3))
+      (cine-shatter v 3 :dy 0.1)
       (play-sfx :needle-burst) (play-sfx :konpaku-shatter) (shake 0.25 0.35))
   (during (150 172) (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-sj-needle-burst x y z (/ (- cf 150) 22.0))))
   (at 152 (impact-frame :manga 12))
@@ -1338,7 +1336,7 @@ hang among the patterned bolts, the Konpaku flames drift out and shatter; her, t
   (at 126 (shot-pair a v (camera-side a) 5.5 1.8) (lens 55) (play-sfx :shears))
   (during (126 150) (let ((q (pos-of v))) (sj-prop :sj-shears (aref q 0) (+ 2.2 (* -0.3 u)) (aref q 2) :yaw (yaw-of a) :roll (* 0.4 (- 1 u)) :s 1.6)))
   (at 150 (impact-frame :negative 1) (impact-frame :manga 12)
-      (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x (+ y 0.1) z 3))
+      (cine-shatter v 3 :dy 0.1)
       (play-sfx :konpaku-shatter) (shake 0.2 0.3))
   (during (150 172) (let ((q (pos-of v)))                 ; the bolt rolled up, rising to hang among the others
                       (setf (model-alpha (model v)) 0f0)
@@ -1364,7 +1362,7 @@ back in the plaza, the dark red domain, the loom at the rim, him small."
   (at 20 (play-sfx :candle-out)) (at 30 (play-sfx :candle-out)) (at 40 (play-sfx :candle-out))
   (at 46 (shot-on a 170 5.5 0.5 :look 2.2) (lens 76 -6) (play-sfx :awaken-rise :pitch 0.7))
   (during (46 106) (let* ((q (pos-of v)) (p (pos-of a)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
-                          (l (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))) (tx (+ (aref q 0) (* 4.0 (/ dx l)))) (tz (+ (aref q 2) (* 4.0 (/ dz l)))))
+                          (l (max 0.01 (hypot dx dz))) (tx (+ (aref q 0) (* 4.0 (/ dx l)))) (tz (+ (aref q 2) (* 4.0 (/ dz l)))))
                      (sj-prop :sj-torii tx (* -4.6 (max 0.0 (- 1.0 (/ (- cf 46) 24.0)))) tz :yaw (yaw-of a))))
   (at 80 (shot-on a 30 5.0 1.2 :look 1.3) (lens 55) (play-sfx :cloth-unfurl) (play-sfx :awaken-boom))
   (during (80 180) (let ((p (pos-of a))) (vfx-sj-carpet (aref p 0) (aref p 2) (yaw-of a) (min 8.0 (* 0.4 (- cf 80))))))

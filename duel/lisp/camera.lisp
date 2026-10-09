@@ -63,7 +63,7 @@ central square: a shot framed for 16:9 is not cropped (§4.3's lens clamp).")
 smoothing. 0 B (state in *PCAM* / *CAM-ANCHOR*, knobs read as floats)."
   (declare (type f32vec p q) (single-float rdt))
   (let* ((c *cam-anchor*) (pc *pcam*) (e *cam-eye*) (at *cam-at*) (bd *band*) (cam *camera*)
-         (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2))) (sep (f-sqrt (+ (* dx dx) (* dz dz))))
+         (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2))) (sep (f-hypot dx dz))
          (sim *behind-yaw*) (lim (* 0.017453292f0 (the single-float *pt-lead*)))
          (want (if (> sep 0.01f0) (f-clamp (f-wrap (- (f-atan2 (- dx) (- dz)) sim)) (- lim) lim) 0f0))
          (k (if snap 1f0 (- 1f0 (f-exp (* -8f0 rdt)))))
@@ -79,12 +79,12 @@ smoothing. 0 B (state in *PCAM* / *CAM-ANCHOR*, knobs read as floats)."
     (setf (aref pc 0) lead
           (aref c 0) (+ (aref c 0) (* ka (- (aref p 0) (aref c 0)))) (aref c 2) (+ (aref c 2) (* ka (- (aref p 2) (aref c 2)))))
     (let* ((ex (+ (aref c 0) (* (- bk) fx) (* side (- fz)))) (ez (+ (aref c 2) (* (- bk) fz) (* side fx)))
-           (r (f-sqrt (+ (* ex ex) (* ez ez)))) (kr (f-min 1f0 (/ (the single-float *cam-max-r*) (f-max 0.01f0 r))))
+           (r (f-hypot ex ez)) (kr (f-min 1f0 (/ (the single-float *cam-max-r*) (f-max 0.01f0 r))))
            (h (+ (the single-float *pt-up*) (* 0.33f0 wide) (* 0.4f0 (- r (* kr r))))))   ; pulled in by the wall: rise
       (declare (single-float ex ez r kr h))
       (setf ex (* kr ex) ez (* kr ez))
       (macrolet ((clear-of (o)                          ; never inside a fighter
-                   `(let* ((ddx (- ex (aref ,o 0))) (ddz (- ez (aref ,o 2))) (d (f-sqrt (+ (* ddx ddx) (* ddz ddz)))))
+                   `(let* ((ddx (- ex (aref ,o 0))) (ddz (- ez (aref ,o 2))) (d (f-hypot ddx ddz)))
                       (declare (single-float ddx ddz d))
                       (when (and (< d 1f0) (> d 0.001f0)) (setf ex (+ (aref ,o 0) (/ ddx d)) ez (+ (aref ,o 2) (/ ddz d)))))))
         (clear-of p) (clear-of q))
@@ -93,7 +93,7 @@ smoothing. 0 B (state in *PCAM* / *CAM-ANCHOR*, knobs read as floats)."
       ;; lands it on the band's middle (the shift) and widens past *PT-BAND-FOV* only when the pair needs more (the eye
       ;; pulled in by the wall, P2 wide after a Hoho): a vertical and a horizontal fit with a margin for their bulk
       (let* ((ax (- (aref p 0) ex)) (az (- (aref p 2) ez)) (bx (- (aref q 0) ex)) (bz (- (aref q 2) ez))
-             (d1 (f-sqrt (+ (* ax ax) (* az az)))) (d2 (f-sqrt (+ (* bx bx) (* bz bz))))
+             (d1 (f-hypot ax az)) (d2 (f-hypot bx bz))
              (a1 (f-atan2 (- ax) (- az))) (a2 (f-atan2 (- bx) (- bz))) (da (f-wrap (- a2 a1)))
              (want (f-wrap (- (+ a1 (* 0.5f0 da)) yaw))) (dy (f-clamp want (- lim) lim)) (aim (+ yaw dy))
              (t1 (f-atan2 h (f-max 0.5f0 (- d1 0.6f0)))) (t2 (f-atan2 (- h (the single-float *pt-head*) 0.3f0) (+ d2 0.6f0)))
@@ -159,7 +159,7 @@ his depth; nothing moves while he already is. Render-side; the joints are the la
       (let* ((jm (model-joints (model e))) (o (* 16 (ji :pelvis)))
              (eye *cam-eye*) (at *cam-at*)
              (dx (- (aref at 0) (aref eye 0))) (dz (- (aref at 2) (aref eye 2)))
-             (l (f-sqrt (+ (* dx dx) (* dz dz)))))
+             (l (f-hypot dx dz)))
         (declare (type f32vec jm eye at) (fixnum o) (single-float dx dz l))
         (when (> l 1f-3)
           (let* ((ux (/ dx l)) (uz (/ dz l))                          ; the view's ground direction, its right (-uz ux)
@@ -207,12 +207,12 @@ line the duel camera is on."
                 (aref c 2) (f32 (+ (aref c 2) (* k (- (aref p 2) (aref c 2))))))))
     (let* ((ex (+ (aref c 0) (* (- back) fx) (* side (- fz))))   ; right = (-fz, fx)
            (ez (+ (aref c 2) (* (- back) fz) (* side fx)))
-           (r (sqrt (+ (* ex ex) (* ez ez))))
+           (r (hypot ex ez))
            (k (min 1.0 (/ *cam-max-r* (max 0.01 r))))
            (h (+ *behind-up* (* 0.33 wide) (* 0.4 (- r (* k r))))))   ; pulled in by the wall: rise instead
       (setf ex (* k ex) ez (* k ez))
       (dolist (e (list a b))                             ; never inside a fighter
-        (let* ((o (pos-of e)) (dx (- ex (aref o 0))) (dz (- ez (aref o 2))) (d (sqrt (+ (* dx dx) (* dz dz))))
+        (let* ((o (pos-of e)) (dx (- ex (aref o 0))) (dz (- ez (aref o 2))) (d (hypot dx dz))
                (min-d (+ 0.5 (body-hurt-r (model-body (model e))))))
           (when (and (< d min-d) (> d 0.001))
             (setf ex (+ (aref o 0) (* dx (/ min-d d))) ez (+ (aref o 2) (* dz (/ min-d d)))))))
@@ -223,7 +223,7 @@ line the duel camera is on."
   "UP := the world's up rolled ROLL degrees about the view direction EYE -> AT (a dutch angle)."
   (declare (type f32vec up eye at) (single-float roll))
   (let* ((fx (- (aref at 0) (aref eye 0))) (fz (- (aref at 2) (aref eye 2)))
-         (l (f-max 1f-4 (f-sqrt (+ (* fx fx) (* fz fz))))) (r (* roll 0.017453292f0)) (s (f-sin r)))
+         (l (f-max 1f-4 (f-hypot fx fz))) (r (* roll 0.017453292f0)) (s (f-sin r)))
     (declare (single-float fx fz l r s))
     (setf (aref up 0) (* s (/ (- fz) l)) (aref up 1) (f-cos r) (aref up 2) (* s (/ fx l)))
     nil))
@@ -245,7 +245,7 @@ smoothing, e.g. a new round)."
         ((and a b)
          (let* ((p (pos-of a)) (q (pos-of b))
                 (mx (* 0.5 (+ (aref p 0) (aref q 0)))) (mz (* 0.5 (+ (aref p 2) (aref q 2))))
-                (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2))) (sep (sqrt (+ (* dx dx) (* dz dz))))
+                (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2))) (sep (hypot dx dz))
                 (ux (if (> sep 0.01) (/ dx sep) 1.0)) (uz (if (> sep 0.01) (/ dz sep) 0.0))
                 (ang (atan *view-z* *view-x*))
                 (dist (* *cam-close* (max 6.0 (+ 4.5 (* 0.85 sep))) (if (> *punch-t* 0) 0.6 1.0)))
@@ -261,7 +261,7 @@ smoothing, e.g. a new round)."
            (let* ((back (* 0.05 *cam-dist*))            ; 3/4: a little behind P1
                   (ex (- (+ (aref c 0) (* *cam-dist* (cos *cam-ang*))) (* back ux)))
                   (ez (- (+ (aref c 2) (* *cam-dist* (sin *cam-ang*))) (* back uz)))
-                  (k (min 1.0 (/ *cam-max-r* (max 0.01 (sqrt (+ (* ex ex) (* ez ez))))))))
+                  (k (min 1.0 (/ *cam-max-r* (max 0.01 (hypot ex ez))))))
              (v3-set! *cam-eye* (f32 (* k ex)) (f32 h) (f32 (* k ez)))
              (setf (aref c 1) 1.05f0)))))
   (let ((e *cam-eye*) (c *cam-at*) (up (camera-up *camera*)))

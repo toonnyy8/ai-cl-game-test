@@ -27,7 +27,7 @@
       (let* ((p (pos-of e)) (q (pos-of pl))
              (want (yaw-to (- (aref q 0) (aref p 0)) (- (aref q 2) (aref p 2)))))
         (setf (transform-yaw (transform e)) (turn-toward (yaw-of e) want (* (deg 360) dt)))))
-    (setf (brain-cooldown b) (f32 (max 0.0 (- (brain-cooldown b) dt))))
+    (countdown! (brain-cooldown b) dt)
     (let ((v (motion-vel (motion e))) (walk (and *dummies-attack* (alive-p pl) (> d 2.0) (< d 12.0))))
       (setf (aref v 0) (if walk (* 3.0 (fwd-x (yaw-of e))) 0f0) (aref v 2) (if walk (* 3.0 (fwd-z (yaw-of e))) 0f0))
       (play-clip e (if walk :walk :idle) :blend 8f0 :restart nil))

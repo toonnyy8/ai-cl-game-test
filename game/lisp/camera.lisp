@@ -46,7 +46,7 @@
             ((eq sp :thunderfall)
              (setf (cam-override-yaw c) (cam-yaw c) (cam-override-dist c) 7.5 (cam-override-pitch c) (deg 30)
                    (cam-override-w c) (f32 (min 1.0 (+ (cam-override-w c) (/ dt 0.2))))))
-            (t (setf (cam-override-w c) (f32 (max 0.0 (- (cam-override-w c) (/ dt 0.3))))))))
+            (t (countdown! (cam-override-w c) (/ dt 0.3)))))
     (setf (cam-pitch c) (f32 (clamp (cam-pitch c) (deg -10) (deg 55))))
     (let* ((want (if (any-enemy-within 12.0) *cam-fight-dist* *cam-dist*)))
       (setf (cam-dist c) (f32 (+ (cam-dist c) (* (- want (cam-dist c)) (min 1.0 (* 2.0 dt)))))))
@@ -86,7 +86,7 @@ in toward REN and lift it), then out of the props (AC units, tank, stair house, 
   (let* ((cam *camera*) (p (camera-pos cam)) (tg (camera-target cam))
          (x0 (aref tg 0)) (y0 (aref tg 1)) (z0 (aref tg 2))
          (dx (- (aref p 0) x0)) (dy (- (aref p 1) y0)) (dz (- (aref p 2) z0))
-         (len (sqrt (+ (* dx dx) (* dy dy) (* dz dz))))
+         (len (hypot dx dy dz))
          (u (if (> len 0.5) (arena-raycast x0 y0 z0 (aref p 0) (aref p 1) (aref p 2)) 1.0))
          (k (if (< u 1.0) (max 0.35 (/ (- (* u len) 0.3) len)) 1.0)))
     ;; snap in when a prop blocks the view, ease back out (no pops); lift the eye as it pulls in

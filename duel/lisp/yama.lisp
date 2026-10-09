@@ -459,9 +459,8 @@ and an ink splash; the aftermath wide."
                        (vfx-fire-dome (aref q 0) (aref q 2) 1.7 (/ (- cf 42) 60.0) 1.96 (cine-dt))
                        (add-point-light (aref q 0) 1.5 (aref q 2) 1.0 0.35 0.08 10.0 (+ 0.5 (* 1.5 u)) 5))))
   (at 100 (shot-on v 150 3.8 0.35 :look 1.4) (lens 88) (caption-exit))
-  (at 120 (hold-both a v 22) (silence 22) (lens 70))
-  (during (120 142) (shot-on v 150 (- 3.6 (* 0.6 u)) (+ 0.4 (* 0.05 u)) :look 1.4))   ; a slow push-in, not cuts
-  (at 142 (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))
+  (push-in-on a v 120 3.6 0.6 0.4 0.05)   ; a slow push-in, not cuts
+  (at 142 (cine-shatter v 3)
       (impact-frame :negative 2) (let ((q (pos-of v))) (impact-splash (aref q 0) 0.0 (aref q 2) 16 0.07))
       (play-sfx :explode) (play-sfx :konpaku-shatter) (shake 0.3 0.4))
   (at 144 (impact-frame :manga 12))

@@ -36,7 +36,7 @@ fighter and blade-trail. PLAYER-INIT adds the player component, SPAWN-ENEMY / SP
 (defun distance (a b)
   "Horizontal distance between entities A and B."
   (let* ((p (pos-of a)) (q (pos-of b)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2))))
-    (sqrt (+ (* dx dx) (* dz dz)))))
+    (hypot dx dz)))
 
 (defun face-toward (a b)
   "Turn A to face B at once."
@@ -47,7 +47,7 @@ fighter and blade-trail. PLAYER-INIT adds the player component, SPAWN-ENEMY / SP
 (defun facing-p (a b half-deg)
   "Is B within HALF-DEG of A's facing?"
   (let* ((p (pos-of a)) (q (pos-of b)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
-         (l (sqrt (+ (* dx dx) (* dz dz)))) (yaw (yaw-of a)))
+         (l (hypot dx dz)) (yaw (yaw-of a)))
     (or (< l 0.01)
         (>= (/ (+ (* dx (fwd-x yaw)) (* dz (fwd-z yaw))) l) (cos (deg half-deg))))))
 
@@ -106,7 +106,7 @@ maul core). RIM overrides the body's silhouette rim (f32vec, see RIM-VEC)."
 (defun draw-scarf (e raven alpha)
   "Two trailing segments on the chest; they lift with horizontal speed and flutter."
   (let* ((b (body-of e)) (jm (model-joints (model e))) (v (motion-vel (motion e))) (m *scarf-m*) (dm *dm*)
-         (spd (min 9.0 (sqrt (+ (* (aref v 0) (aref v 0)) (* (aref v 2) (aref v 2))))))
+         (spd (min 9.0 (hypot (aref v 0) (aref v 2))))
          (tm (elapsed-time))
          (a1 (- 1.25 (* 0.12 spd) (* 0.1 (sin (* tm (+ 5 spd)))))) (a2 (* 0.3 (sin (* tm (+ 7 spd))))))
     (replace dm jm :start2 (* (ji :chest) 16) :end2 (+ 16 (* (ji :chest) 16)))

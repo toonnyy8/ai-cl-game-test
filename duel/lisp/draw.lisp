@@ -39,7 +39,7 @@ The hulls follow (they are drawn from the same joints)."
 
 (defun smear (e dx dz)
   "One squash / stretch smear drawing of fighter E along the ground direction (DX DZ)."
-  (let* ((m (model e)) (l (max 1e-4 (sqrt (+ (* dx dx) (* dz dz))))) (v (model-smear-dir m)))
+  (let* ((m (model e)) (l (max 1e-4 (hypot dx dz))) (v (model-smear-dir m)))
     (setf (model-smear m) (/ 1.0 60.0) (aref v 0) (f32 (/ dx l)) (aref v 1) (f32 (/ dz l)))))
 
 (defun start-ghost (e)
@@ -184,16 +184,18 @@ ink afterimages during the dash, :charge a stronger aura, :leap lifts the drawin
          (sc (draw-scale-of e))                           ; (a cinematic's giant: CINE-SCALE, about his feet)
          (weapon (if (or planted flashing) nil (model-weapon m))) (x (aref p 0))
          (y (+ (aref p 1) (rush-lift f mv) (if (= sc 1f0) (body-lift kit b) (* sc (body-lift kit b))))) (z (aref p 2)))
-    (setf (model-flash m) (f32 (max 0.0 (- (model-flash m) rdt))) (model-super m) (f32 (max 0.0 (- (model-super m) rdt))))
+    (progn (countdown! (model-flash m) rdt)
+           (countdown! (model-super m) rdt))
     (let ((pose (if (> (model-hold m) 0) (anim-pose (model-anim m)) (anim-eval (model-anim m)))))
       (pose-fk! (model-joints m) (if (> (model-beat m) 0f0) (beat-pose! pose (model-beat m)) pose)
                 x y z yaw (if (= sc 1f0) (body-scale b) (* sc (body-scale b))) (body-hunch b) (body-props b)))
     (let ((c (anim-clip (model-anim m))))                  ; a two-handed clip: the left fist on the handle
       (grip-step m (and weapon c (member (clip-name c) *grip-clips*)) (f32 rdt)))
-    (setf (model-hold m) (f32 (max 0.0 (- (model-hold m) rdt))))
+    (countdown! (model-hold m) rdt)
     (when (> rdt 0)                                       ; the Phase 5 look timers (effect seconds)
-      (setf (model-face-t m) (f32 (max 0.0 (- (model-face-t m) rdt))) (model-beat m) (f32 (max 0.0 (- (model-beat m) rdt)))
-            (model-flare m) (f32 (max 0.0 (- (model-flare m) rdt)))))
+      (progn (countdown! (model-face-t m) rdt)
+             (countdown! (model-beat m) rdt)
+             (countdown! (model-flare m) rdt)))
     (move-beats e f m mv x y z yaw)
     (when (> (model-smear m) 0)
       (let ((v (model-smear-dir m)))

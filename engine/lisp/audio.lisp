@@ -393,7 +393,7 @@ startup in definition order."
   "Positional PLAY-SFX. Yaw rotates about +Y; yaw 0 looks down -Z with +X on the
 right. Gain falls off as 1/(1+d/8); pan follows the listener's right vector."
   (declare (ignore y))
-  (let* ((dx (- x listener-x)) (dz (- z listener-z)) (d (sqrt (+ (* dx dx) (* dz dz))))
+  (let* ((dx (- x listener-x)) (dz (- z listener-z)) (d (hypot dx dz))
          (pan (if (< d 0.01) 0.0
                   (* 0.8 (/ (- (* dx (cos listener-yaw)) (* dz (sin listener-yaw))) d))))
          (gain (/ (getf keys :gain 1.0) (+ 1.0 (/ d 8.0)))))

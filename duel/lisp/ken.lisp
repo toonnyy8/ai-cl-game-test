@@ -654,7 +654,7 @@ stay), the Konpaku shatter and a splash; he laughs; a wide from behind."
   (during (122 142) (shot-on a 20 (+ 1.5 (* 0.4 u)) 0.5 :look 1.45))   ; a slow pull, not cuts
   (at 142 (cine-slash v :heavy) (shot-pair a v (- (camera-side a)) 5.5 1.3) (lens 55)
       (impact-frame :negative 2)
-      (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))
+      (cine-shatter v 3)
       (let ((q (pos-of v))) (impact-splash (aref q 0) 0.0 (aref q 2) 16 0.07))
       (play-sfx :kikon-slash) (play-sfx :konpaku-shatter) (shake 0.3 0.35))
   (at 144 (impact-frame :manga 12))
@@ -680,7 +680,7 @@ split from the side, then Kenpachi."
   (at 68 (card nil) (cine-slash v :heavy) (play-sfx :kikon-slash) (play-sfx :ground-crack) (shake 0.4 0.5)
       (impact-frame :negative 2) (hold-both a v 12) (focus-lines 30)
       (shot-on a 180 10.0 3.6 :look 1.2 :ahead 5.0) (lens 60)     ; down the cut: it splits the screen at its centre
-      (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3)))
+      (cine-shatter v 3))
   (at 70 (impact-frame :manga 12))
   ;; (the ground split is part of the look, on the cine clock: a sim hazard would freeze with the sim)
   (during (68 162) (let ((q (pos-of v))) (vfx-sky-split (aref q 0) (aref q 2) (yaw-of a) (/ (- cf 68) 60.0) 1.5)))
@@ -797,7 +797,7 @@ Kenpachi laughing, head back."
   (at 68 (card nil) (cine-slash v :heavy) (play-sfx :kikon-slash) (play-sfx :ground-crack) (shake 0.45 0.5)
       (impact-frame :negative 2) (hold-both a v 12) (focus-lines 30)
       (shot-on v 0 5.5 1.3 :look 1.1) (lens 55)                  ; face on: the line splits him and the screen
-      (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 3))
+      (cine-shatter v 3)
       (let ((q (pos-of v))) (impact-splash (aref q 0) 1.0 (aref q 2) 16 0.08)))
   (at 70 (impact-frame :manga 12))
   (during (68 162) (let ((q (pos-of v))) (vfx-sky-split (aref q 0) (aref q 2) (yaw-of a) (/ (- cf 68) 60.0) 1.5)))

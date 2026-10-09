@@ -98,14 +98,14 @@ the other third to a caption."
   "Both fighters from the SIDE (+1 / -1) of the A->V line, DIST metres from their midpoint."
   (setf *cine-close* nil *cine-subject* nil)
   (let* ((p (pos-of a)) (q (pos-of v)) (mx (* 0.5 (+ (aref p 0) (aref q 0)))) (mz (* 0.5 (+ (aref p 2) (aref q 2))))
-         (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2))) (d (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))))
+         (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2))) (d (max 0.01 (hypot dx dz))))
     (cine-cam (+ mx (* side dist (/ (- dz) d))) h (+ mz (* side dist (/ dx d))) mx 1.1 mz)))
 
 (defun face-each-other (a v &optional (gap nil))
   "Turn A and V to face each other; with GAP, first put A GAP metres in front of V (a flash step)."
   (let ((p (pos-of a)) (q (pos-of v)))
     (when gap
-      (let* ((dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2))) (d (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))))
+      (let* ((dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2))) (d (max 0.01 (hypot dx dz))))
         (setf (aref p 0) (+ (aref q 0) (* gap (/ dx d))) (aref p 2) (+ (aref q 2) (* gap (/ dz d))) (aref p 1) 0f0)))
     (setf (transform-yaw (transform a)) (f32 (dir-yaw (- (aref q 0) (aref p 0)) (- (aref q 2) (aref p 2))))
           (transform-yaw (transform v)) (f32 (dir-yaw (- (aref p 0) (aref q 0)) (- (aref p 2) (aref q 2)))))
@@ -150,6 +150,18 @@ the cinematic's end (decision 56's Kikon: its first shots' hits)."
 (defun actor-point (e up)
   "X Y Z (values) of fighter E's body, UP metres above the feet."
   (let ((p (pos-of e))) (values (aref p 0) (+ (aref p 1) up) (aref p 2))))
+
+(defun cine-shatter (v n &key (up 1.1) (dy 0.0))
+  "The Konpaku shatter's look on fighter V (VFX-KONPAKU-SHATTER of N souls at UP metres above his feet, DY higher); the
+beat's sound and shake stay at the call site."
+  (multiple-value-bind (x y z) (actor-point v up)
+    (vfx-konpaku-shatter x (if (= dy 0.0) y (+ y dy)) z n)))
+
+(defmacro push-in-on (a v from d0 dd h0 dh &optional (len 22))
+  "The held push-in before a finishing blow, inside DEFCINE: both held LEN frames in silence under a 70 degree lens, while
+the shot on V closes from D0 metres / H0 high by DD / DH (U runs 0..1 across the beat), FROM to FROM + LEN."
+  `(progn (at ,from (hold-both ,a ,v ,len) (silence ,len) (lens 70))
+          (during (,from ,(+ from len)) (shot-on ,v 150 (- ,d0 (* ,dd u)) (+ ,h0 (* ,dh u)) :look 1.4))))
 
 ;;; ---------------------------------------------------------------- screen punctuation
 ;;; Impact frames (the engine's *GRADE-IMPACT* composite modes), focus lines, the Burst's back-rim and
@@ -304,7 +316,7 @@ a wide."
   (at 6 (shot-on v 60 3.4 0.8 :look 0.9 :off -0.7) (lens 50 -6)
       (caption "魂" :reading "SOUL BREAK" :side 1))
   (at 28 (hold-both a v 12) (silence 12) (shot-on v 60 1.9 0.45 :look 0.9) (lens 82))
-  (at 40 (multiple-value-bind (x y z) (actor-point v 1.1) (vfx-konpaku-shatter x y z 4))
+  (at 40 (cine-shatter v 4)
       (impact-frame :negative 2) (lens 55)
       (play-sfx :konpaku-shatter) (shake 0.15 0.3))
   (at 42 (impact-frame :manga 10))

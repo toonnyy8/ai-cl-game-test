@@ -22,7 +22,7 @@ K on an Obliterate prompt, roll away from red windups."
     (clear-stick s)
     (when (and tg (alive-p a))
       (let* ((p (pos-of a)) (q (pos-of tg)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
-             (d (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))) (threat (bot-threat)))
+             (d (max 0.01 (hypot dx dz))) (threat (bot-threat)))
         (setf (player-stick-x s) (f32 (/ dx d)) (player-stick-z s) (f32 (/ dz d)) (player-stick-mag s) 1f0 (player-stick-on s) t)
         (cond (threat (setf (player-stick-x s) (f32 (- (/ dx d))) (player-stick-z s) (f32 (- (/ dz d))) (player-press-dodge s) tk))
               ((obliterate-target a) (setf (player-press-heavy s) tk))

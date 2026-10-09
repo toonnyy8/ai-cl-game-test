@@ -30,7 +30,7 @@ with, so the sim keeps it."
 (defun clamp-to-circle (x z r)
   "(X Z) moved inside the circle of radius R around the origin (the arena's invisible wall).
 Values: x z."
-  (let ((d (sqrt (+ (* x x) (* z z)))))
+  (let ((d (hypot x z)))
     (if (<= d r) (values x z) (values (* x (/ r d)) (* z (/ r d))))))
 
 (defun stick-toward-strafe (sx sy cam-yaw px pz ox oz)
@@ -41,7 +41,7 @@ right while he faces the opponent). One code path for every camera."
   (let* ((fx (fwd-x cam-yaw)) (fz (fwd-z cam-yaw))
          (wx (+ (* sy fx) (* sx (- fz))))            ; camera right = (-fz, fx)
          (wz (+ (* sy fz) (* sx fx)))
-         (ax (- ox px)) (az (- oz pz)) (d (sqrt (+ (* ax ax) (* az az)))))
+         (ax (- ox px)) (az (- oz pz)) (d (hypot ax az)))
     (if (< d 1e-4)
         (values sy sx)
         (let ((ux (/ ax d)) (uz (/ az d)))
@@ -50,14 +50,14 @@ right while he faces the opponent). One code path for every camera."
 (defun toward-strafe-dir (toward strafe px pz ox oz)
   "The inverse of STICK-TOWARD-STRAFE's projection: world direction (values dx dz) of moving
 TOWARD / STRAFE relative to the opponent at (OX OZ)."
-  (let* ((ax (- ox px)) (az (- oz pz)) (d (max 1e-4 (sqrt (+ (* ax ax) (* az az)))))
+  (let* ((ax (- ox px)) (az (- oz pz)) (d (max 1e-4 (hypot ax az)))
          (ux (/ ax d)) (uz (/ az d)))
     (values (+ (* toward ux) (* strafe (- uz))) (+ (* toward uz) (* strafe ux)))))
 
 (defun in-front-p (yaw px pz ax az arc-deg)
   "Is the point (AX AZ) within the ARC-DEG wide cone in front of a fighter at (PX PZ) facing YAW?
 Guard uses *GUARD-ARC* (200 deg)."
-  (let* ((dx (- ax px)) (dz (- az pz)) (d (sqrt (+ (* dx dx) (* dz dz)))))
+  (let* ((dx (- ax px)) (dz (- az pz)) (d (hypot dx dz)))
     (or (< d 1e-4)
         (>= (/ (+ (* dx (fwd-x yaw)) (* dz (fwd-z yaw))) d)
             (cos (deg (/ arc-deg 2.0)))))))
@@ -73,7 +73,7 @@ back, clamped into the arena. Values: x z yaw."
 (defun reset-placement (ax az bx bz)
   "Post-Kikon reset (§1): A and B placed *RESET-DISTANCE* apart around the arena centre, on the
 line they stood on (A keeps his side). Values: ax az bx bz (each then faces the other)."
-  (let* ((dx (- bx ax)) (dz (- bz az)) (d (sqrt (+ (* dx dx) (* dz dz))))
+  (let* ((dx (- bx ax)) (dz (- bz az)) (d (hypot dx dz))
          (h (/ *reset-distance* 2.0)))
     (if (< d 1e-3) (setf dx 0.0 dz 1.0) (setf dx (/ dx d) dz (/ dz d)))
     (values (* dx (- h)) (* dz (- h)) (* dx h) (* dz h))))
@@ -81,7 +81,7 @@ line they stood on (A keeps his side). Values: ax az bx bz (each then faces the 
 (defun step-direction (toward strafe &optional (neutral -1.0))
   "Step direction (values toward strafe, unit length): the stick's, or straight back when the
 stick is neutral. NEUTRAL 1.0: straight at the opponent instead (the run)."
-  (let ((m (sqrt (+ (* toward toward) (* strafe strafe)))))
+  (let ((m (hypot toward strafe)))
     (if (< m 0.3) (values neutral 0.0) (values (/ toward m) (/ strafe m)))))
 
 ;;; ---------------------------------------------------------------- the run (Step held)
@@ -316,7 +316,7 @@ DEF-MODS: :mult on the defender's side (1 in v1). COMBO-INDEX: this hit's number
 (defun cast-point (px pz tx tz range)
   "Where a cast aimed from (PX PZ) at a target at (TX TZ) lands: on the target, or RANGE along the line
 when he is farther (South's bind). Values: x z."
-  (let* ((dx (- tx px)) (dz (- tz pz)) (d (sqrt (+ (* dx dx) (* dz dz)))))
+  (let* ((dx (- tx px)) (dz (- tz pz)) (d (hypot dx dz)))
     (if (<= d range) (values tx tz) (values (+ px (* dx (/ range d))) (+ pz (* dz (/ range d)))))))
 
 (defun chip-damage (dmg rate reishi)
@@ -778,7 +778,7 @@ Burst would be worth it (below *AI-BURST-LOW* of its Reishi) it keeps *FS-BURST*
   (let* ((fx (fwd-x (float yaw 1f0))) (fz (fwd-z (float yaw 1f0))) (dx (- tx ax)) (dz (- tz az))
          (along (+ (* dx fx) (* dz fz))) (s (max a (min b along)))
          (ex (- tx (+ ax (* fx s)))) (ez (- tz (+ az (* fz s)))))
-    (sqrt (+ (* ex ex) (* ez ez)))))
+    (hypot ex ez)))
 
 (defun line-off-strafe (ax az yaw px pz ox oz)
   "The strafe (+1.0 / -1.0: the CPU stick's x, relative to the opponent at (OX OZ), TOWARD-STRAFE-DIR) that takes a fighter

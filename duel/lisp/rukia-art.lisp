@@ -706,7 +706,7 @@ cores, rising over its first 0.15 s, shards thrown out, ice motes (TSUKISHIRO, �
   "The cold running off the blade's tip along the ground from (x0 z0) toward (x1 z1): a white sheet racing out in 0.15 s,
 SOUL-glass edges, eroding over LIFE (HAKKA's lane, the Hakuren-like wave of 白霞罸)."
   (with-floats (x0 z0 x1 z1 age life)
-    (let* ((dx (- x1 x0)) (dz (- z1 z0)) (l (f-max 0.01f0 (f-sqrt (+ (* dx dx) (* dz dz))))) (ux (/ dx l)) (uz (/ dz l))
+    (let* ((dx (- x1 x0)) (dz (- z1 z0)) (l (f-max 0.01f0 (f-hypot dx dz))) (ux (/ dx l)) (uz (/ dz l))
            (run (f-clamp (/ age 0.15f0) 0f0 1f0)) (k (f-clamp (* 0.98f0 (- 1f0 (/ age (f-max life 0.01f0)))) 0f0 0.98f0))
            (dr (drawing-no)) (sd (i->f (mod (f->i dr) 5))) (e (* run l)))
       (declare (single-float dx dz l ux uz run k dr sd e))

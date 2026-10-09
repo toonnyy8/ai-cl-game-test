@@ -128,7 +128,7 @@ one forearm crack per spent pip: :crack-1 .. :crack-4)."
 
 (defun set-slide (e dist frames dx dz)
   "Slide E DIST metres over FRAMES along (DX DZ) (knockback, pushback, Step, clash)."
-  (let* ((mo (motion e)) (kb (motion-kb mo)) (l (max 1e-4 (sqrt (+ (* dx dx) (* dz dz))))) (k (/ dist (max 1 frames) l)))
+  (let* ((mo (motion e)) (kb (motion-kb mo)) (l (max 1e-4 (hypot dx dz))) (k (/ dist (max 1 frames) l)))
     (setf (aref kb 0) (f32 (* dx k)) (aref kb 2) (f32 (* dz k)) (motion-kb-left mo) frames)))
 
 ;;; ---------------------------------------------------------------- the view humans steer by
@@ -153,7 +153,7 @@ one forearm crack per spent pip: :crack-1 .. :crack-4)."
 nearest last step's, so it never swings 180 deg after a Hoho. RESET: P1 on the left (battle start,
 every Kikon reset). Screen right is SIDE x (A->B) for a right-handed look-at."
   (let* ((p (pos-of a)) (q (pos-of b)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
-         (d (sqrt (+ (* dx dx) (* dz dz)))))
+         (d (hypot dx dz)))
     (when (> d 0.01)
       (let* ((nx (/ (- dz) d)) (nz (/ dx d))
              (side (if (or reset (>= (+ (* nx *view-x*) (* nz *view-z*)) 0)) 1f0 -1f0)))
@@ -243,7 +243,7 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
       (multiple-value-bind (dx dz) (world-dir e f to st)
         (set-slide e (multiple-value-bind (k ux uz) (opp-field e f)   ; her cold field shortens a Step away from her
                        (if k
-                           (field-step *step-distance* (/ (- (+ (* dx ux) (* dz uz))) (max 1e-4 (sqrt (+ (* dx dx) (* dz dz)))))
+                           (field-step *step-distance* (/ (- (+ (* dx ux) (* dz uz))) (max 1e-4 (hypot dx dz)))
                                        (getf k :step))
                            *step-distance*))
                    12 dx dz))
@@ -309,7 +309,7 @@ is never perfect)."
   "COMMAND starts in KIT: its cold is spent (Rukia's cold gauge, the kit meter; never below 0)."
   (let ((c (cold-cost kit command)))
     (when (plusp c)
-      (let ((g (gauges e))) (setf (gauges-meter g) (f32 (max 0.0 (- (gauges-meter g) c))))))))
+      (let ((g (gauges e))) (countdown! (gauges-meter g) c)))))
 
 (defun kit-command-ok-p (e command &optional (kit (kit-of e)) ender combo)
   "Can E start COMMAND's move (of KIT, default his form's) now: Reiatsu bars, not cooling down (its :cooldown), a pip of
@@ -456,7 +456,7 @@ ward is up after *GUARD-RAISE* frames (FIGHTER-GUARD-T counts them, and keeps co
           (multiple-value-bind (to st) (if (zerop (fighter-lock f)) (stick-relative e f) (values 0.0 0.0))
             (when (eq (fighter-state f) :guard) (to-idle e 4))
             (setf (fighter-guard-t f) (if (passive-p e :ward) (min 9999 (1+ (fighter-guard-t f))) 0))
-            (let ((m (sqrt (+ (* to to) (* st st)))) (kit (fighter-kit f)))
+            (let ((m (hypot to st)) (kit (fighter-kit f)))
               (if (or (< m 0.2) (<= (kit-walk kit) 0))   ; (absolute zero: rooted where she stands)
                   (progn (fill v 0f0) (play-clip e (kit-stance kit) :blend 6 :restart nil))
                   (multiple-value-bind (dx dz) (world-dir e f to st)
@@ -570,7 +570,7 @@ the end (MOVE-END-FRAME)."
   "Push fighter B DIST metres away from A over FRAMES; what the arena's edge leaves no room for pushes A back instead (the
 user 2026-10-02: a victim against the wall can't be moved, so the attacker is). Values B's and A's share."
   (let* ((p (pos-of a)) (q (pos-of b)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
-         (l (max 1e-4 (sqrt (+ (* dx dx) (* dz dz))))) (ux (/ dx l)) (uz (/ dz l))
+         (l (max 1e-4 (hypot dx dz))) (ux (/ dx l)) (uz (/ dz l))
          (room (ray-room (aref q 0) (aref q 2) ux uz (- *arena-radius* (body-hurt-r (model-body (model b))))))
          (mb (min dist room)) (ma (- dist mb)))
     (when (> mb 0.01) (set-slide b mb frames ux uz))
@@ -874,7 +874,7 @@ still :parry); never in a reaction (a bind, a Guard Break, a crush reel: no armo
       (setf (aref v 1) (- (aref v 1) (* (the single-float *gravity*) dt)) (aref p 1) (+ (aref p 1) (* dt (aref v 1))))
       (when (and (<= (aref p 1) 0f0) (<= (aref v 1) 0f0))
         (setf (aref p 1) 0f0 (aref v 1) 0f0 (motion-grounded mo) t)))
-    (let* ((x (aref p 0)) (z (aref p 2)) (d (f-sqrt (+ (* x x) (* z z)))))
+    (let* ((x (aref p 0)) (z (aref p 2)) (d (f-hypot x z)))
       (declare (single-float x z d))
       (when (> d r) (setf (aref p 0) (* x (/ r d)) (aref p 2) (* z (/ r d)))))
     nil))
@@ -883,7 +883,7 @@ still :parry); never in a reaction (a bind, a Guard Break, a crush reel: no armo
   "Two grounded, visible fighters never overlap: push both apart equally (symmetric)."
   (unless (or (member (state-of a) '(:hoho :cine)) (member (state-of b) '(:hoho :cine)))
     (let* ((p (pos-of a)) (q (pos-of b)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2)))
-           (d (sqrt (+ (* dx dx) (* dz dz))))
+           (d (hypot dx dz))
            (min-d (+ (body-hurt-r (model-body (model a))) (body-hurt-r (model-body (model b))))))
       (when (and (< d min-d) (< (abs (- (aref p 1) (aref q 1))) 1.2))
         (let* ((push (* 0.5 (- min-d d))) (ux (if (> d 1e-3) (/ dx d) 1.0)) (uz (if (> d 1e-3) (/ dz d) 0.0)))
@@ -922,7 +922,7 @@ step: a symmetric sim), step each, then keep them apart."
       (let ((o (fighter-opp f)))
         (when (entity-alive-p o)
           (let* ((p (pos-of e)) (q (pos-of o)) (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2))))
-            (setf (fighter-ox f) (aref q 0) (fighter-oz f) (aref q 2) (fighter-dist f) (f32 (sqrt (+ (* dx dx) (* dz dz))))))))
+            (setf (fighter-ox f) (aref q 0) (fighter-oz f) (aref q 2) (fighter-dist f) (f32 (hypot dx dz))))))
       (if a (setf b e) (setf a e)))
     (when (and a b) (view-step a b))
     (do-entities (e (f fighter)) (unless (eq (fighter-state f) :cine) (fighter-step e f)))

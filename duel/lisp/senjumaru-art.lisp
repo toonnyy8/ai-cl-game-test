@@ -549,11 +549,11 @@ the toon's darker-toward-the-feet height (a cloth lying on the plaza passes -2: 
 
 (defun sj-seg (key ax ay az bx by bz w &optional (alpha 1.0))
   "Draw prop KEY (built along +Y, unit length) from A to B, W wide (a bone of an echo arm, a bolt)."
-  (let* ((dx (- bx ax)) (dy (- by ay)) (dz (- bz az)) (l (max 1e-4 (sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
+  (let* ((dx (- bx ax)) (dy (- by ay)) (dz (- bz az)) (l (max 1e-4 (hypot dx dy dz)))
          (ux (/ dx l)) (uy (/ dy l)) (uz (/ dz l))
          ;; a unit perpendicular (the side axis), then the third
          (px (if (> (abs uy) 0.9) 1.0 (- uz))) (py (if (> (abs uy) 0.9) 0.0 0.0)) (pz (if (> (abs uy) 0.9) 0.0 ux))
-         (pl (max 1e-4 (sqrt (+ (* px px) (* py py) (* pz pz))))) (px (/ px pl)) (py (/ py pl)) (pz (/ pz pl))
+         (pl (max 1e-4 (hypot px py pz))) (px (/ px pl)) (py (/ py pl)) (pz (/ pz pl))
          (qx (- (* uy pz) (* uz py))) (qy (- (* uz px) (* ux pz))) (qz (- (* ux py) (* uy px)))
          (m *sj-m*))
     (setf (aref m 0) (f32 (* w px)) (aref m 1) (f32 (* w py)) (aref m 2) (f32 (* w pz)) (aref m 3) 0f0
@@ -614,7 +614,7 @@ framing the crescent (eased over ~0.1 s either way)."
                  (tx (+ (* act tx) (* (- 1 act) (aref r 0)))) (ty (+ (* act ty) (* (- 1 act) (aref r 1))))
                  (tz (+ (* act tz) (* (- 1 act) (aref r 2))))
                  (ax (aref a 0)) (ay (aref a 1)) (az (aref a 2))
-                 (mx (* 0.5 (+ ax tx))) (mz (* 0.5 (+ az tz))) (ox (- mx cx)) (oz (- mz cz)) (ol (max 1e-3 (sqrt (+ (* ox ox) (* oz oz)))))
+                 (mx (* 0.5 (+ ax tx))) (mz (* 0.5 (+ az tz))) (ox (- mx cx)) (oz (- mz cz)) (ol (max 1e-3 (hypot ox oz)))
                  (ex (+ mx (* 0.16 (/ ox ol)))) (ey (+ (* 0.5 (+ ay ty)) 0.06)) (ez (+ mz (* 0.16 (/ oz ol)))))
             (sj-seg :sj-bone ax ay az ex ey ez 0.018)
             (sj-seg :sj-bone ex ey ez tx ty tz 0.013)
@@ -723,13 +723,13 @@ the drapes' ring (it keeps to *CAM-MAX-R* 18 m, the drapes hang at 16.8), so the
 (SJ-RIM-ALPHA), in every camera: landscape, the portrait / behind camera, the cinematics."
   (let* ((o (opp-of e)) (at (svref *sj-loom-at* side))
          (ex (aref *cam-eye* 0)) (ez (aref *cam-eye* 2))
-         (vx (- (aref *cam-at* 0) ex)) (vz (- (aref *cam-at* 2) ez)) (vl (max 1e-3 (sqrt (+ (* vx vx) (* vz vz)))))
+         (vx (- (aref *cam-at* 0) ex)) (vz (- (aref *cam-at* 2) ez)) (vl (max 1e-3 (hypot vx vz)))
          (vx (/ vx vl)) (vz (/ vz vl))
          (near (flet ((depth (q) (+ (* (- (aref q 0) ex) vx) (* (- (aref q 2) ez) vz))))
                  (if (entity-alive-p o) (min (depth (pos-of e)) (depth (pos-of o))) (depth (pos-of e))))))
     (unless (and at (eql (first at) e))
       (let* ((p (pos-of e)) (q (pos-of o)) (dx (- (aref p 0) (aref q 0))) (dz (- (aref p 2) (aref q 2)))
-             (l (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))) (x (* 15.6 (/ dx l))) (z (* 15.6 (/ dz l))))
+             (l (max 0.01 (hypot dx dz))) (x (* 15.6 (/ dx l))) (z (* 15.6 (/ dz l))))
         (setf at (list e x z (dir-yaw (- x) (- z))) (svref *sj-loom-at* side) at)))
     (unless (and (= side 1) (entity-alive-p o) (eq (fighter-character (fighter o)) :senjumaru)
                  (kit-awakening (kit-of o)))                ; two awakened Senjumarus drape the rim once

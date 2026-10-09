@@ -72,7 +72,7 @@ their silhouettes still read against the sky.")
 
 (defun st-strip (mb x0 z0 x1 z1 w0 w1 y)
   "A flat strip on the ground from (X0 Z0) to (X1 Z1), half-width W0 tapering to W1, at height Y."
-  (let* ((dx (- x1 x0)) (dz (- z1 z0)) (l (max 1e-4 (sqrt (+ (* dx dx) (* dz dz))))) (nx (/ (- dz) l)) (nz (/ dx l)))
+  (let* ((dx (- x1 x0)) (dz (- z1 z0)) (l (max 1e-4 (hypot dx dz))) (nx (/ (- dz) l)) (nz (/ dx l)))
     (st-up-quad mb (list (list (- x0 (* w0 nx)) (- z0 (* w0 nz))) (list (+ x0 (* w0 nx)) (+ z0 (* w0 nz)))
                          (list (+ x1 (* w1 nx)) (+ z1 (* w1 nz))) (list (- x1 (* w1 nx)) (- z1 (* w1 nz))))
                 y)))
@@ -238,7 +238,7 @@ the newest +CRACK-MAX+ (the oldest is replaced)."
 (x1 z1) at height Y, half-width W: an along shape (SEED is made negative) whose field runs across it, heat H0
 at the start .. H1 at the end (the low-heat end erodes first as the presence in PK fades). A macro: 0 B."
   `(let* ((x0 ,x0) (z0 ,z0) (x1 ,x1) (z1 ,z1) (gy ,y) (w ,w) (h0 ,h0) (h1 ,h1) (sd (- -1f0 (f-abs ,seed))) (wb ,wob) (pk ,pk)
-          (dx (- x1 x0)) (dz (- z1 z0)) (l (f-sqrt (+ (* dx dx) (* dz dz)))))
+          (dx (- x1 x0)) (dz (- z1 z0)) (l (f-hypot dx dz)))
      (declare (single-float x0 z0 x1 z1 gy w h0 h1 sd wb pk dx dz l))
      (when (> l 1f-4)
        (let* ((nx (* w (/ (- dz) l))) (nz (* w (/ dx l))))
