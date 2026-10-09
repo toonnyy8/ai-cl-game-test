@@ -111,7 +111,7 @@ tools/pkgcheck.sh duel                   # ECL never warns about undefined / une
 ## SOUL DUEL architecture in one screen
 
 - **Roster**: index 0 Yamamoto (`yama*.lisp`), 1 Kenpachi (`ken*`), 2 Rukia (`rukia*`), 3 Ichigo (`ichigo*`),
-  4 Senjumaru (`senjumaru*`). Each character = data + hooks: `defkit` forms with `:ai` plists, `defmove`s, its own CPU
+  4 Senjumaru (`senjumaru*`), 5 Lille (`lille*`), 6 Lille II (`barro*`, art shared with `lille-art.lisp`; DUEL_LILLE_V2, in build). Each character = data + hooks: `defkit` forms with `:ai` plists, `defmove`s, its own CPU
   functions (`:reflex`, `:opp-reflex`, `:sp-ender`, `:sig-hold`, `:assist-guard`), cinematics; art in `<char>-art.lisp`
   (`defstrike` clips, bodies).
 - **Plain CL, host-tested**: `tuning.lisp` (every knob, `defparameter` + docstring with old → new, date, who decided),
@@ -137,7 +137,7 @@ tools/pkgcheck.sh duel                   # ECL never warns about undefined / une
 | `docs/guides/` | `TUTORIAL.zh-TW.md` (learning path), `PLAYBOOK.zh-TW.md` (reusable experience), `DREAM_RSI.zh-TW.md` (the AI search experience), `CHARACTER_DESIGN.zh-TW.md` (designing a fighter, from Lille: the ⚠ questions to ask first) |
 | `docs/engine/` | `ARCHITECTURE.md`, `ENGINE_API.md`, `AUDIO.md`, `WORLD.md` (+ `world-shots/`), `REFACTOR_2026-10.md` (the refactor: verdicts, determinism rules for helpers), `REFACTOR_NEXT.md` (the next round's backlog) |
 | `docs/raven-edge/` | `GAME_DESIGN.md`, `GAMEPLAY.md` |
-| `docs/duel/` | `DUEL_DESIGN.md` (rules + move tables, the source of truth), `DUEL_GAMEPLAY.md` (build, debug commands, gates), `DUEL_STRINGS.md`, per character (`DUEL_YAMA_REWORK`, `DUEL_NOZARASHI_V2`, `DUEL_KEN_BANKAI`, `DUEL_RUKIA`, `DUEL_ICHIGO`, `DUEL_SENJUMARU`, `DUEL_LILLE` (in design)), systems (`DUEL_AI_V2`, `DUEL_LEARNING`, `DUEL_ASSIST`, `DUEL_ENDLESS`, `DUEL_MOBILE_DESIGN`) |
+| `docs/duel/` | `DUEL_DESIGN.md` (rules + move tables, the source of truth), `DUEL_GAMEPLAY.md` (build, debug commands, gates), `DUEL_STRINGS.md`, per character (`DUEL_YAMA_REWORK`, `DUEL_NOZARASHI_V2`, `DUEL_KEN_BANKAI`, `DUEL_RUKIA`, `DUEL_ICHIGO`, `DUEL_SENJUMARU`, `DUEL_LILLE`, `DUEL_LILLE_V2` (the rebuilt Lille, index 6, in build)), systems (`DUEL_AI_V2`, `DUEL_LEARNING`, `DUEL_ASSIST`, `DUEL_ENDLESS`, `DUEL_MOBILE_DESIGN`) |
 | `docs/style/` | `STYLE_STORM_RESEARCH.md`, `STYLE_STORM_DESIGN.md` (the ink look, its numbers and gates) |
 | `docs/babylon/` | the discontinued port's records |
 | `docs/research/` | `ng4-notes.md`; `tybw-characters/` (report + notes on the four TYBW characters); `ai-v2-drsi/` (the AI v2 dream-rsi workspace and its coordinator scripts); `lille-ai-drsi/`; `lille-retrospective/digest.md` (Lille's 56 decisions, rework chains, numbers) |

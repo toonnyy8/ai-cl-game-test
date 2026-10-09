@@ -48,6 +48,7 @@ Claude skill 在 repo 根目錄的 `skills/`（連結到 `~/.claude/skills/`）�
 | [DUEL_ICHIGO.md](duel/DUEL_ICHIGO.md) | 黑崎一護（血戰篇）：二刀斬月與血鎖の一護，含試玩後的 v2 重新設計（英文） |
 | [DUEL_SENJUMARU.md](duel/DUEL_SENJUMARU.md) | 修多羅千手丸：刺絡與卍解娑闥迦羅骸刺絡辻的設計與實作（英文） |
 | [DUEL_LILLE.md](duel/DUEL_LILLE.md) | 利傑巴羅（2026-10-06 起，討論中）：純遠距狙擊、萬物貫通穿防、覺醒 Jilliel 的無實體架式，使用者的決定與待決問題（英文） |
+| [DUEL_LILLE_V2.md](duel/DUEL_LILLE_V2.md) | 利傑巴羅・重製（2026-10-09 起，roster 7 號，舊版保留）：萬物貫通、常態狙擊架式＋狙擊量表、覺醒近戰／遠程兩模式＋軌跡實體化與回收衍生連段、保留貓頭鷹復活（英文） |
 | [DUEL_AI_V2.md](duel/DUEL_AI_V2.md) | 每個角色的 AI v2（2026-10-02，已實作）：dream-rsi 搜尋、選用的變體、各角色行動方針、NORMAL 校正、與學習型 AI 和 ASSIST 的整合、gate 結果（英文） |
 | [DUEL_LEARNING.md](duel/DUEL_LEARNING.md) | 學習型 CPU：從對戰中學玩家習慣的讀心與反制、學習 gate（英文） |
 | [DUEL_ASSIST.md](duel/DUEL_ASSIST.md) | ASSIST：AUTO GUARD／AUTO COMBO／AUTO BREAK 輔助模式與它的代價、assistgate（英文） |
