@@ -54,6 +54,7 @@ all PASS, 108 stills identical; final head: §5).
 | ECS fix (from B8's probe) | lead | `*used*` read with `aref`, not `sbit`: ECL compiles `sbit` to the varargs `cl_sbit`, 8 B per component getter / `do-entities` slot | Lille draw 240 -> 0 B per 10 draws, meter 560 -> 400, ring 400 -> 240; RAVEN 17369 -> 13613 B per frame |
 | B9 with-cam names (the user's item 3) | Opus | `(with-cam (rx ry rz ux uy uz) ...)`; the engine's six exports withdrawn; no other engine macro read them; ARCHITECTURE's gotcha: names a body needs come from the caller, never anaphoric | +20 / −16 |
 | B6 sweep | Sonnet | 150 `hypot` / `f-hypot` sites (engine 25, RAVEN 26, duel 99; flavour kept, `(expt x 2)` never folded), 19 `countdown!`, 2 more `brush-text`, `cine-shatter` (11 beats) and `push-in-on` (3); every changed file's forms compared EQUAL after inlining the macros (scripted) | +196 / −188 |
+| advisor's final review | Fable + Sonnet | read the merged diff for what the gates cannot see; no behaviour issue. Fixed: `do-events` symbol clauses `ignorable`, `fx-smear-capture!`'s internals %-prefixed (no capture of the caller's forms), engine docstrings without game names, `cons-per` documents its `I`, literal-only arguments stated (`%tring`, `push-in-on`; `%sector-verts` a literal or a variable), `%trail-drop` N >= 1, `cine-shatter` `(+ y dy)`, one more `drawing-no` | gate quick + fx / cine stills identical |
 | looks gate | Sonnet + lead | `tests/style-gates.py looks` (108 stills), `--keep-base`; the raven mode's runs get `--timeout 7200` | |
 
 ## 5. Numbers
