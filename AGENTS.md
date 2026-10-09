@@ -115,8 +115,8 @@ tools/pkgcheck.sh duel                   # ECL never warns about undefined / une
   (`defstrike` clips, bodies).
 - **Plain CL, host-tested**: `tuning.lisp` (every knob, `defparameter` + docstring with old → new, date, who decided),
   `rules.lisp`, `control.lisp`, `learn.lisp`, `kit.lisp` (`parse-move`, reach floors). **Systems**: `fighter`, `combat`,
-  `hazards`, `ai`, `assist`, `camera`, `feedback`, `flow`, `hud`, `onehand`, `endless`, `debug` (debug commands, gate
-  scenarios), `main`; shared look: `body`, `brush`, `vfx`, `stage`, `cinema`, `glyphs`, `sounds`. Compile order:
+  `hazards`, `ai`, `ai-learn`, `assist`, `camera`, `feedback`, `flow`, `hud`, `onehand`, `endless`, `debug` (debug commands, gate
+  scenarios), `draw`, `main`; shared look: `body`, `brush`, `vfx`, `stage`, `cinema`, `glyphs`, `sounds`. Compile order:
   `duel/MANIFEST`.
 - **Determinism**: fixed 60 Hz steps, vpads for every input source (keys, touch, CPU), `sim-rnd01` inside the step only
   (`rnd01` for cosmetics), per-match reset, periodic state-hash lines. The native sim and the browser must agree bit for bit.

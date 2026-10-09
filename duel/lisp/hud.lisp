@@ -107,11 +107,10 @@ greps \"over the P\")."
     (let* ((age (- (fx-clock) (word-t0 x)))
            (fade (min 1.0 (/ (- (word-secs x) age) 0.25))) (col (word-col x)))
       (multiple-value-bind (cx cy em) (word-layout x w h)
-        (set-line cx cy em col fade) (setf (aref *bl* 7) (line-width (word-text x))) (brush-line (word-text x))
+        (brush-text (word-text x) cx cy em col fade)
         (when (word-sub x)
           (let ((se (max (* 0.032 h) (* 0.36 em))))
-            (set-line cx (+ cy (* 0.55 em) (* 0.5 se)) se col fade) (setf (aref *bl* 7) (line-width (word-sub x)))
-            (brush-line (word-sub x))))))))
+            (brush-text (word-sub x) cx (+ cy (* 0.55 em) (* 0.5 se)) se col fade)))))))
 
 ;;; ---------------------------------------------------------------- side panels: the meters
 (declaim (type f32vec *trail-v* *pip-t* *hud-v*))
@@ -273,6 +272,7 @@ flashes it). LOCK: the THAW lock after a CRACK (grey). CRACK 0..1: a BLOOD hairl
 
 (declaim (type f32vec *refused-t*))
 (defvar *refused-t* (make-f32 2) "Per side: FX-CLOCK of the last refused L press (its bar, or the cold gauge's cost, flashes).")
+(defun refused-flash (side tm) "SIDE's refused-press flash at fx time TM: 1 at the press, 0 after 0.25 s." (f32 (max 0.0 (- 1.0 (* 4.0 (- tm (aref *refused-t* side)))))))
 
 (defun hud-temp (e kit x y w h right tm)
   "Draw E's cold gauge (KIT has a :temp meter) at (X Y), W x H: HUD-TEMP's numbers from the gauges and the form."
@@ -280,7 +280,7 @@ flashes it). LOCK: the THAW lock after a CRACK (grey). CRACK 0..1: a BLOOD hairl
     (%hud-temp (f32 x) (f32 y) (f32 w) (f32 h) (gauges-meter g) (case (kit-form kit) (:m50 1) (:zero 2) (t 0))
                (f32 (cold-cost kit :sig)) (plusp (gauges-meter-idle g))
                (f32 (max 0.0 (- 1.0 (* 2.5 (- tm (aref *crack-t* side))))))
-               (f32 (max 0.0 (- 1.0 (* 4.0 (- tm (aref *refused-t* side))))))
+               (refused-flash side tm)
                right tm)))
 
 (defparameter *temp-kanji* "凍")
@@ -292,9 +292,7 @@ flashes it). LOCK: the THAW lock after a CRACK (grey). CRACK 0..1: a BLOOD hairl
   "The cold gauge's label: the brush glyph 凍 and the band (-18C, -50C, -273C, or THAW in the lock), from X toward the
 panel's outside."
   (let* ((em (* 8 s)))
-    (set-line (if right (- x (* 0.5 em)) (+ x (* 0.5 em))) (+ y (* 3.5 s)) em *c-ice*)
-    (setf (aref *bl* 7) (line-width *temp-kanji*))
-    (brush-line *temp-kanji*)
+    (brush-text *temp-kanji* (if right (- x (* 0.5 em)) (+ x (* 0.5 em))) (+ y (* 3.5 s)) em *c-ice*)
     (hud-text name (if right (- x em (* 2 s)) (+ x em (* 2 s))) y s *c-ice* :align (if right :right :left))))
 
 (defmacro %soul-flame (cx cy r lean r0 g0 b0 a0 r1 g1 b1 a1)
@@ -380,7 +378,7 @@ washes it white (a refused press)."
   (%hud-cd (f32 x) (f32 y) (f32 w) (f32 h)
            (f32 (max 0.0 (- 1.0 (/ (aref (fighter-cd f) (position :sig *kit-commands*))
                                    (float (mv-cooldown (kit-command-move kit :sig)))))))
-           (f32 (max 0.0 (- 1.0 (* 4.0 (- tm (aref *refused-t* (fighter-side f))))))) right 0.84f0 0.88f0 0.94f0))
+           (refused-flash (fighter-side f) tm) right 0.84f0 0.88f0 0.94f0))
 
 (defun-fast %hud-thin (x y w h fill right r g b a0 hz tm)
   "A thin gauge (Awakening, the kit meter): dark back, FILL in (R G B), alpha A0, pulsing up to 1
@@ -414,9 +412,7 @@ the last paying contact's mote flying to (TX TY), his Reiatsu bar, 0.35 s."
     (when (>= m 1.5)
       (let* ((em (* ek s)) (str (svref *kosei-tags* (max 0 (min 15 (- (round (* 10 m)) 15)))))
              (tw (text-width str s)) (kx (if right (+ x (* 0.5 em)) (- x tw (* 2 s) (* 0.5 em)))))
-        (set-line kx y em *c-kosei*)
-        (setf (aref *bl* 7) (line-width *kosei-kanji*))
-        (brush-line *kosei-kanji*)
+        (brush-text *kosei-kanji* kx y em *c-kosei*)
         (hud-text str (if right (+ x em (* 2 s)) x) (- y (* 3.5 s)) s *c-kosei* :align (if right :left :right)))))
   (%kosei-mote (* 5 side) (f32 tx) (f32 ty) (f32 s)))
 
@@ -483,33 +479,48 @@ bindings, CONTROLS-KEY-PROMPT)."
 (defun hud-arm-label (x y s right)
   "The arm meter's label: the brush glyph 腕 and UDE, from X toward the panel's outside (RIGHT: the right panel)."
   (let* ((em (* 8 s)) (tw (text-width "UDE" s)))
-    (set-line (if right (- x (* 0.5 em)) (+ x (* 0.5 em))) (+ y (* 3.5 s)) em *c-blood*)
-    (setf (aref *bl* 7) (line-width *arm-kanji*))
-    (brush-line *arm-kanji*)
+    (brush-text *arm-kanji* (if right (- x (* 0.5 em)) (+ x (* 0.5 em))) (+ y (* 3.5 s)) em *c-blood*)
     (hud-text "UDE" (if right (- x em (* 2 s)) (+ x em (* 2 s))) y s *c-blood* :align (if right :right :left))
     tw))
+
+(defun trail-step! (i target rate)
+  "*TRAIL-V*[I], a damage trail, eases down to TARGET at RATE per second (HUD seconds), or snaps up to it."
+  (let ((tr (aref *trail-v* i)))
+    (setf (aref *trail-v* i) (f32 (if (> tr target) (max target (- tr (* rate (hud-dt)))) target)))))
+
+(defun guard-gauge-bits (e f gf)
+  "%HUD-GUARD's MODE bits for entity E, whose fighter component is F, at guard fraction GF: 1 guarding below full (or
+warded), 2 pierce / ward, 4 the guard lock."
+  (let ((ward (passive-p e :ward)))
+    (logior (if (and (or ward (member (fighter-state f) '(:guard :guard-hit))) (< gf 1.0)) 1 0)
+            (if (or ward (passive-p e :pierce)) 2 0) (if (guard-locked-now-p f) 4 0))))
+
+(defun awaken-fill (g kit)
+  "The Awakening bar's fill (0..1) for gauges G of KIT: the form's timer while a timed awakening runs, full in a form that is
+an awakening, else the awakening gauge."
+  (let ((timed (and (kit-awakening kit) (plusp (gauges-form-total g)))))
+    (cond (timed (timer-fill (gauges-form-left g) (gauges-form-total g) 1.0))
+          ((kit-awakening kit) 1.0) (t (/ (gauges-awaken g) *awaken-max*)))))
+
+(defun prompt-alpha () "The KIKON / BURST / BANKAI prompts' pulsing alpha." (+ 0.5 (* 0.5 (hud-pulse 4.0))))
 
 (defun hud-side (e w h s)
   (let* ((f (fighter e)) (g (gauges e)) (kit (fighter-kit f)) (kh (kit-hud kit)) (side (fighter-side f)) (right (= side 1))
          (m (* 0.03 w)) (bw (* 0.36 w)) (x (if right (- w m bw) m)) (edge (if right (+ x bw) x))
          (align (if right :right :left)) (y (* 0.05 h)) (bh (max (* 7 s) (* 0.028 h)))
          (ns (max 2 s)) (tm (fx-clock)) (ls s)
-         (frac (/ (gauges-reishi g) (float (gauges-reishi-max g)))) (red (red-p (gauges-reishi g) (gauges-reishi-max g))))
+         (frac (reishi-frac g)) (red (gauges-red-p g)))
     ;; name + form
     (hud-text (svref kh 0) edge (- y (* 8 ns) s) ns (if (kit-awakening kit) *ember* *white*)
               :align align)
     ;; Reishi + trail
-    (let ((tr (aref *trail-v* side)))
-      (setf (aref *trail-v* side) (f32 (if (> tr frac) (max frac (- tr (* 0.35 (hud-dt)))) frac)))
-      (%hud-reishi (f32 x) (f32 y) (f32 bw) (f32 bh) (f32 frac) (aref *trail-v* side) right red tm))
+    (trail-step! side frac 0.35)
+    (%hud-reishi (f32 x) (f32 y) (f32 bw) (f32 bh) (f32 frac) (aref *trail-v* side) right red tm)
     ;; the guard gauge, right under it
-    (let* ((gf (/ (gauges-gg g) *gg-max*)) (ti (+ 2 side)) (tr (aref *trail-v* ti)) (ward (passive-p e :ward)))
-      (setf (aref *trail-v* ti) (f32 (if (> tr gf) (max gf (- tr (* 0.5 (hud-dt)))) gf)))
+    (let* ((gf (/ (gauges-gg g) *gg-max*)) (ti (+ 2 side)))
+      (trail-step! ti gf 0.5)
       (%hud-guard (f32 x) (f32 (+ y bh (* 2 s))) (f32 bw) (f32 (max (* 3 s) (* 0.3 bh))) (f32 gf) (aref *trail-v* ti)
-                  right (gauges-guardless g)
-                  (logior (if (and (or ward (member (fighter-state f) '(:guard :guard-hit))) (< gf 1.0)) 1 0)
-                          (if (or ward (passive-p e :pierce)) 2 0) (if (guard-locked-now-p f) 4 0))
-                  tm)
+                  right (gauges-guardless g) (guard-gauge-bits e f gf) tm)
       (let ((hk (kit-hook kit :hud-guard)))              ; a form's own look of the bar (drawn over it)
         (when hk (funcall hk e x (+ y bh (* 2 s)) bw (max (* 3 s) (* 0.3 bh)) right s tm))))
     ;; KOSEI: the tag at the guard bar's inner end (on the Konpaku row, clear of the pips), the mote to the Reiatsu bars
@@ -526,10 +537,8 @@ bindings, CONTROLS-KEY-PROMPT)."
       ;; flash-step (Hoho, Burst), Awakening (drains during a timed awakening), the kit meter (Inferno; drains in its form)
       (let* ((fy (+ sy row)) (ay (+ fy row)) (aw (+ (* 3 sw) (* 6 s))) (ah (max (* 3 s) (* 0.009 h))) (ty (- (* 0.5 ah) (* 3.5 s)))
              (ax (if right (- edge aw) x)) (lx (if right (- edge aw (* 6 s)) (+ edge aw (* 6 s))))
-             (timed (and (kit-awakening kit) (plusp (gauges-form-total g))))
              (hot (or (gauges-evolution g) (kit-awakening kit)))
-             (afill (cond (timed (timer-fill (gauges-form-left g) (gauges-form-total g) 1.0))
-                          ((kit-awakening kit) 1.0) (t (/ (gauges-awaken g) *awaken-max*)))))
+             (afill (awaken-fill g kit)))
         (%hud-flash (f32 ax) (f32 fy) (f32 aw) (f32 ah) (f32 (/ (gauges-fs g) *fs-max*)) right (burst-ok-p e) (gauges-burst g) tm)
         (hud-text "FLASH STEP" lx (+ fy ty) ls '(0.6 0.78 1 0.9) :align align)
         (%hud-thin (f32 ax) (f32 ay) (f32 aw) (f32 ah) (f32 afill) right 1f0 (if hot 0.85f0 0.75f0) 0.3f0
@@ -584,19 +593,19 @@ bindings, CONTROLS-KEY-PROMPT)."
                (hud-text (cond ((pad-connected-p side) (getf bp :pad "BACK  BANKAI")) (right (getf bp :right "KP+  BANKAI"))
                                (t (getf bp :key "P  BANKAI")))
                          (if right (* 0.75 w) (* 0.25 w)) (* 0.72 h) (* 3 s)
-                         (alpha! (or (getf bp :rgb) *c-blood*) (+ 0.5 (* 0.5 (hud-pulse 4.0))))
+                         (alpha! (or (getf bp :rgb) *c-blood*) (prompt-alpha))
                          :align :center))
              (when (kikon-ready-p e)
                (hud-text (if (pad-connected-p side) "HOLD RT  KIKON" (if right "HOLD KP6  KIKON" "HOLD O  KIKON"))
-                         (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 3 s) (alpha! *c-kikon* (+ 0.5 (* 0.5 (hud-pulse 4.0))))
+                         (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 3 s) (alpha! *c-kikon* (prompt-alpha))
                          :align :center)))
             ((kikon-ready-p e)                            ; the opponent is red: the rush, held, Kiko's
              (hud-text (if (pad-connected-p side) "HOLD RT  KIKON" (if right "HOLD KP6  KIKON" "HOLD O  KIKON"))
-                       (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 3 s) (alpha! *c-kikon* (+ 0.5 (* 0.5 (hud-pulse 4.0))))
+                       (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 3 s) (alpha! *c-kikon* (prompt-alpha))
                        :align :center))
             ((member (burst-ok-p e) '(:blue :orange))    ; (WHITE: most of neutral; the bar's glow says it)
              (hud-text (burst-prompt (burst-ok-p e) (cond (*one-hand* :flick) ((pad-connected-p side) :pad) (t :key)) side)
-                       (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 2 s) (alpha! (burst-color (burst-ok-p e)) (+ 0.5 (* 0.5 (hud-pulse 4.0))))
+                       (if right (* 0.75 w) (* 0.25 w)) (* 0.78 h) (* 2 s) (alpha! (burst-color (burst-ok-p e)) (prompt-alpha))
                        :align :center))))))
 
 ;;; ---------------------------------------------------------------- portrait blocks (P2, docs/duel/DUEL_MOBILE_DESIGN.md §4.2)
@@ -633,7 +642,7 @@ bindings, CONTROLS-KEY-PROMPT)."
   (let* ((f (fighter e)) (g (gauges e)) (kit (fighter-kit f)) (kh (kit-hud kit)) (side (fighter-side f)) (top (= side 1))
          (tm (fx-clock)) (y (if top (portrait-top-px s) (portrait-p1-top s h))) (m (* 4 s)) (bw (- w m m))
          (ns (round (* 1.4 s))) (tsc (round (* 1.4 s)))
-         (frac (/ (gauges-reishi g) (float (gauges-reishi-max g)))) (red (red-p (gauges-reishi g) (gauges-reishi-max g)))
+         (frac (reishi-frac g)) (red (gauges-red-p g))
          (ry (+ y (* 7 ns) (* 2 s))) (bh (* 5 s)) (gy (+ ry bh s))
          (yb (+ gy (* 5 s))) (bar (* 4 s))                                ; the last row: the small gauges
          (meter (svref kh 1)) (label (portrait-label g kit kh meter))
@@ -668,15 +677,12 @@ bindings, CONTROLS-KEY-PROMPT)."
                    (f32 pitch) (at-stake e))
         (hud-kosei side (gauges-gg g) (- rx s) (+ y (* 3.5 ns)) nil (+ m (* 0.1 bw)) (+ yb (* 0.5 bar)) s 7)))
     ;; Reishi + trail, the guard gauge
-    (let ((tr (aref *trail-v* side)))
-      (setf (aref *trail-v* side) (f32 (if (> tr frac) (max frac (- tr (* 0.35 (hud-dt)))) frac)))
-      (%hud-reishi (f32 m) (f32 ry) (f32 bw) (f32 bh) (f32 frac) (aref *trail-v* side) nil red tm))
-    (let* ((gf (/ (gauges-gg g) *gg-max*)) (ti (+ 2 side)) (tr (aref *trail-v* ti)) (ward (passive-p e :ward)))
-      (setf (aref *trail-v* ti) (f32 (if (> tr gf) (max gf (- tr (* 0.5 (hud-dt)))) gf)))
+    (trail-step! side frac 0.35)
+    (%hud-reishi (f32 m) (f32 ry) (f32 bw) (f32 bh) (f32 frac) (aref *trail-v* side) nil red tm)
+    (let* ((gf (/ (gauges-gg g) *gg-max*)) (ti (+ 2 side)))
+      (trail-step! ti gf 0.5)
       (%hud-guard (f32 m) (f32 gy) (f32 bw) (f32 (* 2 s)) (f32 gf) (aref *trail-v* ti) nil (gauges-guardless g)
-                  (logior (if (and (or ward (member (fighter-state f) '(:guard :guard-hit))) (< gf 1.0)) 1 0)
-                          (if (or ward (passive-p e :pierce)) 2 0) (if (guard-locked-now-p f) 4 0))
-                  tm)
+                  (guard-gauge-bits e f gf) tm)
       (let ((hk (kit-hook kit :hud-guard))) (when hk (funcall hk e m gy bw (* 2 s) nil s tm))))
     ;; the small gauges (the last row, as long as the Reishi bar): Reiatsu cells, flash step, Awakening, the kit meter /
     ;; cooldowns
@@ -684,10 +690,8 @@ bindings, CONTROLS-KEY-PROMPT)."
                                                         (plusp (mv-cooldown (kit-command-move kit :sig)))))
            (kitp (or (getf meter :draw) (getf meter :ladder) (kit-pips kit) (getf meter :temp) cd (and meter (not (kit-awakening kit)))))
            (n (if kitp 4 3)) (gw (/ (- a (* (1- n) gap)) n)) (sw (/ (- gw (* 2 s)) 3))
-           (timed (and (kit-awakening kit) (plusp (gauges-form-total g))))
            (hot (or (gauges-evolution g) (kit-awakening kit)))
-           (afill (cond (timed (timer-fill (gauges-form-left g) (gauges-form-total g) 1.0))
-                        ((kit-awakening kit) 1.0) (t (/ (gauges-awaken g) *awaken-max*)))))
+           (afill (awaken-fill g kit)))
       (%hud-reiatsu (f32 x0) (f32 yb) (f32 sw) (f32 bar) (f32 s) (gauges-reiatsu g) nil)
       (%hud-flash (f32 (+ x0 gw gap)) (f32 yb) (f32 gw) (f32 bar) (f32 (/ (gauges-fs g) *fs-max*)) nil (burst-ok-p e) (gauges-burst g) tm)
       (%hud-thin (f32 (+ x0 (* 2 (+ gw gap)))) (f32 yb) (f32 gw) (f32 bar) (f32 afill) nil 1f0 (if hot 0.85f0 0.75f0) 0.3f0
@@ -725,13 +729,13 @@ bindings, CONTROLS-KEY-PROMPT)."
                (let ((bp (getf meter :bankai-prompt)))     ; (a form's meter may rename it: its :bankai-prompt)
                  (prompt (if *one-hand* (getf bp :one-hand "AWAKEN  BANKAI")
                              (if (pad-connected-p side) (getf bp :pad "BACK  BANKAI") (getf bp :key "P  BANKAI")))
-                         (alpha! (or (getf bp :rgb) *c-blood*) (+ 0.5 (* 0.5 (hud-pulse 4.0)))))))
+                         (alpha! (or (getf bp :rgb) *c-blood*) (prompt-alpha)))))
               ((kikon-ready-p e)
                (prompt (if *one-hand* "HOLD O  KIKON" (key-prompt *bind-pair* side (if (pad-connected-p side) :pad :key) :kikon))
-                       (alpha! *c-kikon* (+ 0.5 (* 0.5 (hud-pulse 4.0))))))
+                       (alpha! *c-kikon* (prompt-alpha))))
               ((member (burst-ok-p e) '(:blue :orange))
                (prompt (burst-prompt (burst-ok-p e) (cond (*one-hand* :flick) ((pad-connected-p side) :pad) (t :key)) side)
-                       (alpha! (burst-color (burst-ok-p e)) (+ 0.5 (* 0.5 (hud-pulse 4.0)))))))))))
+                       (alpha! (burst-color (burst-ok-p e)) (prompt-alpha)))))))))
 
 ;;; ---------------------------------------------------------------- over the fighters
 (defvar *callout-box* (vector nil 0 0 0 0) "The callout drawn first this frame: #(drawn x0 y0 x1 y1).")
@@ -794,10 +798,8 @@ when he is red."
              (cb *callout-box*))
         (setf (svref cb 0) t (svref cb 1) x0 (svref cb 2) (round y0) (svref cb 3) (+ x0 tw) (svref cb 4) (+ (round y0) th))
         (hud-over-panel "callout" str x0 y0 (+ x0 tw) (+ y0 th) w h)
-        (set-line (+ x0 (* 0.5 tw)) (+ y0 (* 0.5 th)) em *c-callout* (min 1.0 (/ (fighter-callout-t f) 20.0)))
-        (setf (aref *bl* 7) (line-width str))
-        (brush-line str)))
-    (when (red-p (gauges-reishi g) (gauges-reishi-max g))
+        (brush-text str (+ x0 (* 0.5 tw)) (+ y0 (* 0.5 th)) em *c-callout* (min 1.0 (/ (fighter-callout-t f) 20.0)))))
+    (when (gauges-red-p g)
       (vfx-soul-flame (aref p 0) top (aref p 2) (fx-clock)))))
 
 (defvar *c-auto* (list 1.0 0.72 0.3 1.0) "ASSIST's AUTO tag.")
@@ -809,14 +811,10 @@ after the assist pressed for him."
   (let ((p (pos-of e)) (v *hud-v*))
     (when (and (plusp (svref *assist-tag* (fighter-side (fighter e))))
                (world-to-screen v (aref p 0) (- (aref p 1) 0.25) (aref p 2)))   ; at his feet (move callouts own the space over heads)
-      (set-line (aref v 0) (aref v 1) (* (if (portrait-p) 0.03 0.038) h) *c-auto*)
-      (setf (aref *bl* 7) (line-width "AUTO"))
-      (brush-line "AUTO"))
+      (brush-text "AUTO" (aref v 0) (aref v 1) (* (if (portrait-p) 0.03 0.038) h) *c-auto*))
     (when (and (= 1 (setting :hint)) (not (cpu-p e)) (perfect-up-p e (state-of e))
                (world-to-screen v (aref p 0) (+ (aref p 1) (body-hurt-h (model-body (model e))) 0.15) (aref p 2)))
-      (set-line (aref v 0) (aref v 1) (* (if (portrait-p) 0.035 0.045) h) *c-hint*)
-      (setf (aref *bl* 7) (line-width "HOHO!"))
-      (brush-line "HOHO!"))))
+      (brush-text "HOHO!" (aref v 0) (aref v 1) (* (if (portrait-p) 0.035 0.045) h) *c-hint*))))
 
 (defvar *timer-strings* (make-array 1000 :initial-element nil) "Seconds -> their string, made once.")
 
@@ -841,10 +839,10 @@ facing."
 
 (defun hud-battle (w h s)
   (setf (svref *callout-box* 0) nil)
-  (dolist (e (list *p1* *p2*)) (when (entity-alive-p e) (hud-rush-lines e)))
-  (dolist (e (list *p1* *p2*))                                                   ; both panels first: the callouts
+  (do-sides (e) (when (entity-alive-p e) (hud-rush-lines e)))
+  (do-sides (e)                                                                   ; both panels first: the callouts
     (when (entity-alive-p e) (if (portrait-p) (hud-side-portrait e w h s) (hud-side e w h s))))
-  (dolist (e (list *p1* *p2*)) (when (entity-alive-p e) (hud-world e w h s) (hud-hint e h)))  ; keep clear of them
+  (do-sides (e) (when (entity-alive-p e) (hud-world e w h s) (hud-hint e h)))  ; keep clear of them
   (when (eq *mode* :endless) (hud-endless-tag w h s))    ; STAGE n (endless.lisp)
   (when (eq *mode* :practice)                            ; no timer: PRACTICE's tag in its place (landscape)
     (unless (portrait-p) (hud-text "PRACTICE" (floor w 2) (* 0.06 h) (* 2 s) *dim* :align :center))
@@ -983,19 +981,31 @@ and the tap help (left / right third: choose, the middle: confirm)."
                               (format nil "~d S" (round (match-play-ticks) 60))))))
     (cdr c)))
 
+(defun results-card (w h s)
+  "Draw the black card of the RESULTS (the left panel; portrait the lower part) and of the endless STAGE CLEAR / run RESULTS
+(endless.lisp), which lay their lines out on it. Values: its centre x, top y, width."
+  (if (portrait-p)
+      (let ((top (* 0.42 h)))
+        (ui-rect 0 top w (- h top) '(0.031 0.031 0.047 0.94))
+        (ui-rect 0 top w (max 1 (round s 2)) '(0.96 0.96 0.94 0.8))
+        (values (* 0.5 w) (+ top (* 8 s)) w))
+      (let* ((sc (max 1 (round (* 1.5 s)))) (px (* 0.04 w)) (pw (+ (* 28 s) (* 131 sc))))
+        (ui-rect px 0 pw h '(0.031 0.031 0.047 0.94))
+        (ui-rect (+ px pw) 0 (max 1 (round s 2)) h '(0.96 0.96 0.94 0.8))
+        (values (+ px (* 0.5 pw)) (* 0.2 h) pw))))
+
 (defun hud-results-portrait (w h s)
   "RESULTS on a tall screen: the winner in the top part (main.lisp MENU-CAMERA) under the 勝 stamp at the left, a black
 card over the lower part with the winner's name, the stats table and the menu."
   (let* ((rs (results-strings)) (sc (max s (fit-scale "PERFECT HOHOS  00000  00000" (round (* 1.5 s)) (* 0.9 w)))) (row (* 11 sc))
          (top (* 0.42 h)) (cx (* 0.5 w)))
-    (ui-rect 0 top w (- h top) '(0.031 0.031 0.047 0.94))
-    (ui-rect 0 top w (max 1 (round s 2)) '(0.96 0.96 0.94 0.8))
+    (results-card w h s)
     (if (svref rs 0)
         (let ((c *results-cap*))
           (setf (aref (bcap-f c) 6) 0.2f0)
           (draw-bcap c w h)
           (hud-text (svref rs 0) cx (+ top (* 6 s)) (fit-scale (svref rs 0) (* 2 s) (* 0.92 w)) *white* :align :center))
-        (progn (set-line cx (* 0.12 h) (* 0.13 h) *white*) (setf (aref *bl* 7) (line-width "DRAW")) (brush-line "DRAW")))
+        (brush-text "DRAW" cx (* 0.12 h) (* 0.13 h) *white*))
     (let* ((y0 (+ top (* 16 s))) (lx (* 0.06 w)) (c2 (* 0.9 w)) (c1 (- c2 (* 30 sc))))
       (hud-text "P1" c1 y0 sc '(1 0.6 0.3 1) :align :center)
       (hud-text "P2" c2 y0 sc '(0.5 0.7 1 1) :align :center)
@@ -1016,14 +1026,13 @@ WINNER + name, the stats table (P1 / P2 columns), the match time, the menu."
   (when (portrait-p) (return-from hud-results (hud-results-portrait w h s)))
   (let* ((rs (results-strings)) (sc (max 1 (round (* 1.5 s)))) (row (* 11 sc))
          (px (* 0.04 w)) (pw (+ (* 28 s) (* 131 sc))) (cx (+ px (* 0.5 pw))))   ; fits "PERFECT HOHOS" + 2 columns
-    (ui-rect px 0 pw h '(0.031 0.031 0.047 0.94))                ; a black card (§4.4)
-    (ui-rect (+ px pw) 0 (max 1 (round s 2)) h '(0.96 0.96 0.94 0.8))
+    (results-card w h s)                                         ; a black card (§4.4)
     (if (svref rs 0)
         (let ((c *results-cap*))                                 ; the big brush 勝 replaces WINNER
           (setf (aref (bcap-f c) 6) (f32 (/ cx w)))
           (draw-bcap c w h)
           (hud-text (svref rs 0) cx (* 0.29 h) (fit-scale (svref rs 0) (* 2 s) (- pw (* 8 s))) *white* :align :center))
-        (progn (set-line cx (* 0.12 h) (* 0.13 h) *white*) (setf (aref *bl* 7) (line-width "DRAW")) (brush-line "DRAW")))
+        (brush-text "DRAW" cx (* 0.12 h) (* 0.13 h) *white*))
     (let* ((y0 (* 0.36 h)) (lx (+ px (* 10 s))) (c1 (+ px (* 18 s) (* 89 sc))) (c2 (+ c1 (* 30 sc))))
       (hud-text "P1" c1 y0 sc '(1 0.6 0.3 1) :align :center)
       (hud-text "P2" c2 y0 sc '(0.5 0.7 1 1) :align :center)

@@ -26,6 +26,15 @@
   (emit :hit 1 2) (emit :died 3)
   (assert (equal (take-events) '((:hit 1 2) (:died 3))))
   (assert (null (take-events)))
+  (emit :hit 1 2) (emit :died 3 4) (emit :idle) (emit :other 9)         ; DO-EVENTS: oldest first, one clause per kind
+  (let ((out nil))
+    (do-events (kind)
+      (:hit (att def) (push (list kind att def) out))                    ; a lambda-list destructures the data
+      (:died all (push (cons kind all) out))                             ; a symbol gets the whole data list
+      (:idle () (push kind out))
+      (t (push (list :else kind) out)))
+    (assert (equal (nreverse out) '((:hit 1 2) (:died 3 4) :idle (:else :other))))
+    (assert (null (take-events))))
   (clear-entities)
   (assert (= *top* 0))
   (format t "ecs-test: ALL PASS~%"))

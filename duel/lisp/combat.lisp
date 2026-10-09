@@ -360,7 +360,7 @@ Hoho's counter strike on its frame (it always connects)."
                                                    (body-hurt-r ob) (body-hurt-h ob) 0f0)))
                   do (push (make-pending :att e :def o :hw w :i i :sx (aref p 0) :sz (aref p 2)
                                          :state (defender-state o) :mv mv
-                                         :red (red-p (gauges-reishi go) (gauges-reishi-max go))
+                                         :red (gauges-red-p go)
                                          :bonus (fighter-dmg-bonus f) :crush (fighter-crush f))
                            *pending*)))))))
 
@@ -635,7 +635,7 @@ worth that follows the fighter's state), else the kit's :kikon-konpaku. (The red
 (defun kikon-ready-p (e)
   "Is E's opponent red: would E's Kikon rush, connecting now with the button held, be the Kikon?
 (The HUD's HOLD O prompt, the CPU's rush.)"
-  (let ((go (gauges (opp-of e)))) (red-p (gauges-reishi go) (gauges-reishi-max go))))
+  (let ((go (gauges (opp-of e)))) (gauges-red-p go)))
 
 (defun settle-konpaku (att def soul-break)
   "Konpaku at connect time (KIKON-RESULT): DEF loses the Kikon's count (ATT's rush's, read when it started:

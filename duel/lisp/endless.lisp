@@ -189,23 +189,10 @@ picks its policy at once."
                         (2 (go-title))))))
 
 ;;; ---------------------------------------------------------------- drawing
-(defun endless-card (w h s)
-  "The black card of STAGE CLEAR / the run's RESULTS (the results' layout: the left panel, portrait the lower part).
-Values: its centre x, top y, width."
-  (if (portrait-p)
-      (let ((top (* 0.42 h)))
-        (ui-rect 0 top w (- h top) '(0.031 0.031 0.047 0.94))
-        (ui-rect 0 top w (max 1 (round s 2)) '(0.96 0.96 0.94 0.8))
-        (values (* 0.5 w) (+ top (* 8 s)) w))
-      (let* ((sc (max 1 (round (* 1.5 s)))) (px (* 0.04 w)) (pw (+ (* 28 s) (* 131 sc))))
-        (ui-rect px 0 pw h '(0.031 0.031 0.047 0.94))
-        (ui-rect (+ px pw) 0 (max 1 (round s 2)) h '(0.96 0.96 0.94 0.8))
-        (values (+ px (* 0.5 pw)) (* 0.2 h) pw))))
-
 (defun hud-endless-clear (w h s)
   "STAGE CLEAR: the stage, the times, what carries over, the next stage, the rows (CONTINUE / REVERT / QUIT)."
   (let ((l *endless-lines*))
-    (multiple-value-bind (cx y pw) (endless-card w h s)
+    (multiple-value-bind (cx y pw) (results-card w h s)
       (let* ((row (* 11 (max 1 (round (* 1.5 s))))))
         (ui-big-text (svref l 0) (round cx) (round (+ y (* 4 s))) (fit-scale (svref l 0) (* 3 s) (- pw (* 8 s)))
                      '(1 0.92 0.8 1) '(0.7 0.18 0.05 1) s :shear 0.0)
@@ -221,7 +208,7 @@ Values: its centre x, top y, width."
   "The run's RESULTS: the character, STAGES CLEARED, TIME, BEST (NEW RECORD), the run's totals, the opponents faced, the
 menu (NEW RUN / CHARACTER SELECT / TITLE)."
   (let ((l *endless-lines*))
-    (multiple-value-bind (cx y pw) (endless-card w h s)
+    (multiple-value-bind (cx y pw) (results-card w h s)
       (let* ((sc (max 1 (fit-scale "PERFECT HOHOS  00000" (round (* 1.5 s)) (- pw (* 8 s))))) (row (* 9 sc))
              (lx (- cx (* 0.42 pw))) (vx (+ cx (* 0.38 pw))))
         (ui-big-text (svref l 0) (round cx) (round (+ y (* 4 s))) (fit-scale (svref l 0) (* 3 s) (- pw (* 8 s)))
