@@ -267,3 +267,50 @@ volumes unchanged:
   KATAUDE 「改成空手（照原作）」 (replacing the left-hand blade: the left-hand weapon option built for it was reverted).
   KATAUDE's moves keep their frames and volumes; its fist / grab / kick strikes may fall short of them (the FK test
   allows KATAUDE short, and 0.6 m long).
+- The user's figure references (「我給你其他卍解的參考圖，你看一下」, four product photos of Bankai figures, kept in
+  `.refs/kenpachi-bankai/user/`): the broken blade is an axe head there, its spine straight along the haft, a hooked
+  spur by the haft, the snapped end square, the blade light steel. Asked about the colour: 「維持漫畫：黑色」.
+
+### 8.1 The look (built)
+
+- The oni (`:kenpachi-oni`, the anime's): crimson skin; two small horns over the eyes (cones 0.06 m); the brow slit, the
+  black commas, the eye mask, the tear streaks; tiger stripes on the cheeks, the jaw and the neck; the bare chest and
+  belly with crease lines; a ragged black sleeveless vest with a white lining down the front edges; the white obi; the
+  black hakama with flared ragged cuffs; bare crimson feet. The hair wilder: Nomihose's eight lifted spikes kept.
+- The haori: its 42 shapes (hem strips and teeth, holes, every chest / spine / shoulder piece) now carry `:tag :haori`;
+  the Bankai and KATAUDE kits hide `:haori` (and the arm wreck / cracks as before).
+- The broken cleaver (`:ke-broken`): first built in the manga's black, the figures' axe outline, 1.12 m. On the stills
+  the user: 「卍解刀身直接沿用始解刀身，然後將我打 X 的地方移除變成斷刀」 (the X over the cap, the tassel and the far half
+  of the head). Now Nozarashi's own head, haft, butt and colours (one function, `ke-mb-noz-head`, draws both: every
+  profile clipped at the plane y = END), snapped at 0.9 m up the blade: the khaki cap, the tassel and the far 0.72 m gone,
+  the square break chipped. `:length` 1.12 → 0.9 m (only the art: the FK test's tip).
+- The fringe (every form; the user on the Bankai's face still: 「我圈起來的那兩個刺刺頭髮畫反了，變成尖角朝下」): the two
+  fringe cones hung tips down at the brow (pitch 160); now rooted at the hairline (0.262 m up, 0.072 m forward), pitched
+  25°, tips up and forward, splayed 12° / 15°.
+
+### 8.2 The strikes (built)
+
+Through `:clip-map` (the Bankai: the base J1 / J2 / K1 / K2 slots, RYOTE's K3, the meteor and the stance's cut; KATAUDE
+its own map); every move's frames, reach and volume unchanged.
+
+| Slot | Bankai | KATAUDE (bare-handed, the left) |
+|---|---|---|
+| J1 | `:ke-b-q1` a beast's hack, forehand off the right shoulder | `:ke-a-q1` a lunging left hook |
+| J2 | `:ke-b-q2` the backhand hack, low, out to the right | `:ke-a-q2` the backfist across |
+| K1 | `:ke-b-f1` ONATA: sprung from the crouch, a hatchet chop | `:ke-a-f1` the overhand haymaker |
+| K2 | `:ke-b-f2` EGURI-AGE: laid on the floor, gouged up | `:ke-a-f2` the foot catch (dropped low, the left hand shoots out) |
+| K3 | `:ke-b-f3` the leaping cleave from over the left shoulder | `:ke-a-spin` BUNMAWASHI, a spinning low sweep |
+| SP1 | `:ke-b-split` TATE-GOTO, the leaping two-handed diagonal | `:ke-a-stomp` the leap down onto the right heel |
+| SP2 | `:ke-b-fist` NAGURI-TOBASHI, now the left uppercut | `:ke-a-flurry` left fists, the uppercut last |
+| L | `:ke-b-bite` the bite, now with a wrench (chest 45°, head 35°) | (the bite kept) |
+| O | `:ke-b-cut` MAPPUTATSU's vertical from the leap | `:ke-a-haymaker` the wide left haymaker |
+| stance | (`:ke-b-stance` kept) | `:ke-a-stance` the crouch, the right arm hanging, the left claw up |
+
+Not done from the plan: the prowl walk and the roaring back-dash leap (the existing oni walk and guard kept).
+
+Reach (art vs edge, the FK test; after the 0.9 m blade): Bankai J1 1.32 / 1.40, J2 1.33 / 1.40 (d −0.08, −0.07), K1
+2.05 / 3.40, K2 2.28 / 3.00, K3 1.74 / 4.25 (the one-sided forms may fall short); KATAUDE J1 1.34 / 1.40, J2 1.22 / 1.40,
+J3 kick 1.40 / 1.40, K1 1.59 / 1.96, K2 1.54 / 1.75, K3 1.34 / 1.89.
+
+### 8.3 Checks
+

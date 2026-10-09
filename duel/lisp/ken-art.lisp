@@ -163,8 +163,10 @@
          (:cone 0.05 0.24 :at (0.091 -0.284 -0.197) :rot (0 162 -3) :seg 4 :c :hair)
          (:cone 0.034 0.38 :at (0.141 -0.103 -0.068) :rot (0 174 -14) :seg 4 :c :hair) ; over the shoulders
          (:cone 0.034 0.38 :at (-0.141 -0.103 -0.068) :rot (0 174 14) :seg 4 :c :hair)
-         (:cone 0.0225 0.108 :at (0.028 0.19 0.085) :rot (0 160 -10) :seg 4 :c :hair)         ; fringe
-         (:cone 0.0225 0.108 :at (-0.035 0.19 0.085) :rot (0 160 15) :seg 4 :c :hair)
+         ;; fringe: two spikes rooted at the hairline, tips up and forward (the user, 2026-10-09: 「刺刺頭髮畫反了，變成尖角朝下」;
+         ;; they were pitched 160, tips down at the brow)
+         (:cone 0.0225 0.108 :at (0.016 0.262 0.072) :rot (0 25 -12) :seg 4 :c :hair)
+         (:cone 0.0225 0.108 :at (-0.02 0.262 0.072) :rot (0 25 15) :seg 4 :c :hair)
          ;; white highlight strokes on the black hair (Kubo's white-on-black)
          (:box 0.006 0.05 0.004 :at (0.028 0.215 0.036) :rot (0 -48 -12) :c :fold)
          (:box 0.006 0.04 0.004 :at (-0.034 0.21 0.034) :rot (0 -48 16) :c :fold)
@@ -327,35 +329,50 @@
     (loop for i below n for j = (mod (1+ i) n)
           do (mb-poly-out mb (list (nth i f0) (nth j f0) (nth j f1) (nth i f1)) :center c))))
 
+;; Nozarashi's head up to END along the blade (1.62: whole; the Bankai's broken cleaver cuts it short): the body, the
+;; point, the black bar, the pale band and its chips, each profile clipped at the plane y = END; then the haft and the butt
+(defun ke-mb-noz-head (mb end)
+  (flet ((prism (profile x0 x1)
+           (let ((pts (loop with out = nil
+                            for ((y0 z0) (y1 z1)) on (append profile (list (first profile)))
+                            while y1
+                            do (when (<= y0 end) (push (list y0 z0) out))
+                               (when (or (and (< y0 end) (> y1 end)) (and (> y0 end) (< y1 end)))
+                                 (push (list end (+ z0 (* (- z1 z0) (/ (- end y0) (- y1 y0))))) out))
+                            finally (return (nreverse out)))))
+             (when (>= (length pts) 3) (ke-mb-prism mb pts x0 x1)))))
+    (mbc mb #x1C1C20)                                    ; the head: the body, then the point (two convex prisms)
+    (prism '((0.3 0.07) (1.62 0.086) (1.62 0.611) (1.426 0.605) (1.069 0.596) (0.771 0.575) (0.532 0.545)
+             (0.323 0.462) (0.174 0.387))
+           -0.021 0.021)
+    (prism '((0.174 0.387) (-0.034 0.283) (-0.183 0.209) (0.01 0.185) (0.26 0.17)) -0.018 0.018)   ; (its back on the body's)
+    (prism '((0.07 -0.025) (0.4 0.045) (0.4 0.115) (0.07 0.025)) -0.022 0.022)   ; the black slanted bar: haft to head
+    ;; the edge's pale band, both faces: light and grey stripes, the inner line ragged (each stripe its own depth)
+    (loop for ((y0 z0 d0) (y1 z1 d1)) on '((-0.183 0.209 0.02) (-0.034 0.283 0.06) (0.115 0.358 0.107) (0.323 0.462 0.133)
+                                            (0.532 0.545 0.16) (0.771 0.575 0.14) (1.069 0.596 0.167) (1.426 0.605 0.147))
+          for k from 0
+          while y1
+          do (mbc mb (if (evenp k) #xE2E4E8 #x9EA0A8))
+             (prism (list (list y0 z0) (list y1 z1) (list (+ y1 (* 0.4 d1)) (- z1 d1)) (list (+ y0 (* 0.4 d0)) (- z0 d0)))
+                    -0.023 0.023))
+    (mbc mb #x1C1C20)                                    ; chips bitten out of the edge
+    (loop for (y z) in '((0.22 0.415) (0.65 0.562) (1.0 0.594) (1.3 0.603))
+          when (< y (- end 0.05))
+            do (with-xform (mb (xform :y y :z z :roll 0.6)) (mb-box mb 0.05 0.03 0.03)))
+    (mbc mb #xECECE8)                                    ; the long white-wrapped haft
+    (with-xform (mb (xform :y -0.3)) (mb-box mb 0.05 0.76 0.05))   ; (it stops short of the head: the bar joins them)
+    (mbc mb #x6A6A70)
+    (loop for i below 8 do (with-xform (mb (xform :y (- 0.03 (* i 0.085)) :roll 0.6)) (mb-box mb 0.054 0.006 0.054)))
+    (mbc mb #x16161A)                                    ; the black butt
+    (with-xform (mb (xform :y -0.67)) (mb-bevel-box mb 0.058 0.06 0.058 0.008))))
+
 (defweapon :nozarashi (:length 1.62 :base 0.2)         ; the haft below the grip, the head above it
-  (:solid (mbc mb #x1C1C20)                              ; the head: the body, then the point (two convex prisms)
-          (ke-mb-prism mb '((0.3 0.07) (1.62 0.086) (1.62 0.611) (1.426 0.605) (1.069 0.596) (0.771 0.575) (0.532 0.545)
-                            (0.323 0.462) (0.174 0.387))
-                       -0.021 0.021)
-          (ke-mb-prism mb '((0.174 0.387) (-0.034 0.283) (-0.183 0.209) (0.01 0.185) (0.26 0.17)) -0.018 0.018)   ; (its back on the body's)
-          (ke-mb-prism mb '((0.07 -0.025) (0.4 0.045) (0.4 0.115) (0.07 0.025)) -0.022 0.022)   ; the black slanted bar: haft to head
-          ;; the edge's pale band, both faces: light and grey stripes, the inner line ragged (each stripe its own depth)
-          (loop for ((y0 z0 d0) (y1 z1 d1)) on '((-0.183 0.209 0.02) (-0.034 0.283 0.06) (0.115 0.358 0.107) (0.323 0.462 0.133)
-                                                  (0.532 0.545 0.16) (0.771 0.575 0.14) (1.069 0.596 0.167) (1.426 0.605 0.147))
-                for k from 0
-                while y1
-                do (mbc mb (if (evenp k) #xE2E4E8 #x9EA0A8))
-                   (ke-mb-prism mb (list (list y0 z0) (list y1 z1) (list (+ y1 (* 0.4 d1)) (- z1 d1)) (list (+ y0 (* 0.4 d0)) (- z0 d0)))
-                                -0.023 0.023))
-          (mbc mb #x1C1C20)                              ; chips bitten out of the edge
-          (loop for (y z) in '((0.22 0.415) (0.65 0.562) (1.0 0.594) (1.3 0.603))
-                do (with-xform (mb (xform :y y :z z :roll 0.6)) (mb-box mb 0.05 0.03 0.03)))
+  (:solid (ke-mb-noz-head mb 1.62)
           (mbc mb #x9C9478)                              ; the khaki cap over the far end, its stepped foot
           (with-xform (mb (xform :y 1.525 :z 0.348)) (mb-bevel-box mb 0.07 0.2 0.56 0.012))
           (with-xform (mb (xform :y 1.39 :z 0.14)) (mb-bevel-box mb 0.06 0.09 0.13 0.01))
           (mbc mb #x6E6852)                              ; its groove
           (with-xform (mb (xform :y 1.455 :z 0.36)) (mb-box mb 0.074 0.018 0.46))
-          (mbc mb #xECECE8)                              ; the long white-wrapped haft
-          (with-xform (mb (xform :y -0.3)) (mb-box mb 0.05 0.76 0.05))   ; (it stops short of the head: the bar joins them)
-          (mbc mb #x6A6A70)
-          (loop for i below 8 do (with-xform (mb (xform :y (- 0.03 (* i 0.085)) :roll 0.6)) (mb-box mb 0.054 0.006 0.054)))
-          (mbc mb #x16161A)                              ; the black butt
-          (with-xform (mb (xform :y -0.67)) (mb-bevel-box mb 0.058 0.06 0.058 0.008))
           (mbc mb #x2F4A35)                              ; the tassel (candidate B, the user 2026-10-09: 「調整始解的流蘇成 B
           (with-xform (mb (xform :y 1.54 :z 0.06)) (mb-box mb 0.035 0.06 0.045))   ; 選項」): a dark green knot at the cap's
           ;; (spine corner) the strands: each a cone whose point sits in the knot, its base fanning out away from the blade
@@ -366,27 +383,14 @@
                                             :pitch (atan uz uy) :roll (asin (- ux))))
                        (mb-cone mb 0.026 h :segments 4))))))
 
-;; the Bankai's broken cleaver (DUEL_KEN_REWORK §8; the user 2026-10-09: 「漫畫版：黑色、方形斷口」, the outline after the user's
-;; figure references): Nozarashi's head snapped short, an axe head now: the haft runs on under its straight spine, the
-;; blade hangs on the edge side (+Z) from a hooked spur by the haft, its edge a low convex curve, its far end cut square
-;; and chipped; black with a thin white edge line; no cap, no tassel; the beige-wrapped haft, a black butt
-(defweapon :ke-broken (:length 1.12 :base 0.18)
-  (:solid (mbc mb #x18181C)                              ; the head (one convex prism)
-          (ke-mb-prism mb '((0.32 0.0) (0.36 0.36) (0.6 0.5) (0.85 0.58) (1.12 0.62) (1.12 0.0)) -0.022 0.022)
-          (ke-mb-prism mb '((0.33 0.16) (0.17 0.48) (0.36 0.36)) -0.02 0.02)                   ; the hooked spur by the haft
-          (mbc mb #xE8E8E4)                              ; the white edge line
-          (loop for ((y0 z0) (y1 z1)) on '((0.17 0.48) (0.36 0.36) (0.6 0.5) (0.85 0.58) (1.12 0.62))
-                while y1
-                do (ke-mb-prism mb (list (list y0 z0) (list y1 z1) (list y1 (- z1 0.03)) (list y0 (- z0 0.03))) -0.024 0.024))
-          (mbc mb #x18181C)                              ; the square break, chipped
-          (loop for (z r) in '((0.14 0.5) (0.34 -0.4) (0.52 0.7))
-                do (with-xform (mb (xform :y 1.12 :z z :roll r)) (mb-box mb 0.05 0.045 0.05)))
-          (mbc mb #xC8B48A)                              ; the beige-wrapped haft, on under the spine
-          (with-xform (mb (xform :y 0.18)) (mb-box mb 0.048 1.6 0.048))
-          (mbc mb #x5A4E3A)
-          (loop for i below 7 do (with-xform (mb (xform :y (- 0.4 (* i 0.15)) :roll 0.6)) (mb-box mb 0.052 0.006 0.052)))
-          (mbc mb #x16161A)                              ; the black butt
-          (with-xform (mb (xform :y -0.64)) (mb-bevel-box mb 0.056 0.06 0.056 0.008))))
+;; the Bankai's broken cleaver (DUEL_KEN_REWORK §8; the user 2026-10-09: 「卍解刀身直接沿用始解刀身，然後將我打 X 的地方移除
+;;變成斷刀」): Nozarashi's own head, haft and colours, snapped at 0.9 m up the blade: the cap, the tassel and the far
+;; 0.72 m gone, the end cut square and chipped
+(defweapon :ke-broken (:length 0.9 :base 0.2)
+  (:solid (ke-mb-noz-head mb 0.9)
+          (mbc mb #x1C1C20)                              ; the square break, chipped
+          (loop for (z r) in '((0.13 0.5) (0.3 -0.4) (0.46 0.7))
+                do (with-xform (mb (xform :y 0.9 :z z :roll r)) (mb-box mb 0.05 0.045 0.05)))))
 
 ;;; ---------------------------------------------------------------- poses
 (defpose :ke-stance ()
