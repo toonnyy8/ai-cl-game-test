@@ -804,7 +804,9 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :lb-o-trompete :lb-o-breaker :lb-o-stamp      ; Lille (DUEL_LILLE §12 Art)
     :lb-kamae :lb-k-shot :lb-k-hosha :lb-k-taisha :lb-k-dash :lb-w-tenshin :lb-w-tenshin-in   ; his rework (DUEL_LILLE §22, §23)
     :lb-oe-stance :lb-o-fold :lb-oe-fold :lb-oe-sabaki :lb-o-tenshin :lb-o-tenshin-in   ; the owl on Jilliel's system (decision 36, §23.14)
-    :lb-oe-q1 :lb-oe-q2 :lb-oe-q3 :lb-oe-f1 :lb-oe-f2 :lb-oe-f3))   ; its EN casts (decision 56, §23.37)
+    :lb-oe-q1 :lb-oe-q2 :lb-oe-q3 :lb-oe-f1 :lb-oe-f2 :lb-oe-f3   ; its EN casts (decision 56, §23.37)
+    :ke-k-q1 :ke-k-q2 :ke-k-f1 :ke-k-f2 :ke-k-spin :ke-k-meteor   ; Kenpachi's cup 1 and cup 3 sets (DUEL_KEN_REWORK §6.2)
+    :ke-x-stance :ke-x-q1 :ke-x-kote :ke-x-q3 :ke-x-f1 :ke-x-tsuki :ke-x-f2 :ke-x-meteor :ke-x-drink))
 ;; (Jilliel's SPs and Kikon, decision 56, DUEL_LILLE §23.37: :lb-w-sanren is KIN's SANREN through his :clip-map, :lb-e-sanren
 ;; EN's own, :lb-w-kikon / :lb-w-kikon-fire the Kikon in play; :lb-w-aim and :lb-w-fire are gone)
 ;; (the Kikon cinematics' own clips, :ya-kikon :ya-tenchi :ke-kikon :ke-kikon-n, are played by their
@@ -1020,10 +1022,12 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     (check (and (eq (mv-name c) :ke-meteor-n) (= 390 (mv-dmg c)) (equal (first (mv-on-frame c)) '(0 ken-drink-dry))
                 (~= 6.0 (getf (mv-params c) :crush-range)) (= -16 (mv-adv-block c)) (= 22 (hw-guard (svref (mv-hits c) 0)))
                 (= 390 (hit-damage 390 (kit-atk-mods t1 0) nil 1 nil)))))
-  ;; the looks: one hand in cup 1, two hands in cups 2 / 3; the HUD names
-  (check (and (eq (kit-stance t1) :ke-n-stance) (eq (kit-stance t2) :ke-r-stance) (eq (kit-stance t3) :ke-r-stance)
+  ;; the looks: one hand in cup 1, two hands in cups 2 / 3 (cup 3 its own low stance and drink since DUEL_KEN_REWORK §6.2;
+  ;; the Bankai keeps the old drink); the HUD names
+  (check (and (eq (kit-stance t1) :ke-n-stance) (eq (kit-stance t2) :ke-r-stance) (eq (kit-stance t3) :ke-x-stance)
               (equal (mapcar #'kit-form-name (list t1 t2 t3)) '("KATATE" "RYOTE" "NOMIHOSE"))
-              (eq (kit-aura t3) :nomihose) (eq (kit-drink-clip t3) :ke-drink) (equal (kit-respect-callout t2) "OMOSHIREE!")))
+              (eq (kit-aura t3) :nomihose) (eq (kit-drink-clip t3) :ke-x-drink) (eq (kit-drink-clip (kit :kenpachi :bankai)) :ke-drink)
+              (equal (kit-respect-callout t2) "OMOSHIREE!")))
   ;; AI keys: the Kikon chance by cup, the cash-out rule (the near cash-out below 55 since the 2x drain: DUEL_NOZARASHI_V2.md,
   ;; "The CPU after the faster drain")
   (check (and (~= 0.25 (getf (kit-ai t1) :kikon-p)) (~= 0.5 (getf (kit-ai t2) :kikon-p)) (~= 0.9 (getf (kit-ai t3) :kikon-p))
@@ -1703,7 +1707,8 @@ along the left forearm, so the fist leads).")
                                                                ; (the stance's HOSHA / TAISHA: line hits from the muzzle, §23.1)
           (let* ((mv (first lm)) (hw (svref (mv-hits mv) 0)) (vol (first (hw-vols hw))) (cap (> (aref vol 0) 0.5))
                  (edge (if cap (+ (aref vol 2) (aref vol 4)) (aref vol 1)))
-                 (clip (if (eq (second lm) :breaker) (mv-clip-2 mv) (mv-clip mv)))   ; (the Breaker's strike: its clip 2)
+                 (clip (kit-move-clip k (if (eq (second lm) :breaker) (mv-clip-2 mv) (mv-clip mv))))   ; (the Breaker's strike:
+                                                                                         ; its clip 2; the form's :clip-map)
                  (point (second (assoc clip points)))                ; Lille's: :weapon (the plank) or a joint
                  (striker (or (cdr (assoc clip *strikers*)) (and point (not (eq point :weapon)) point)))
                  (art (or (third (assoc clip strike))
@@ -2418,7 +2423,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
             (eq :lb-switch (mv-name (kit-command-move (kit :lille :jilliel-kin-mujittai) :sig)))))
 ;; decision 56 (DUEL_LILLE §23.37): KIN plays SANREN, the base form's move (one move, its name, frames and volumes), on his
 ;; wings through his :clip-map (a look: FIGHTER.LISP plays KIT-MOVE-CLIP); the base form plays the rifle's clip, and no other
-;; form maps a clip; EN's SANREN and the Kikon play their own clips at speed 1
+;; form maps a clip but Kenpachi's cups 1 and 3 (their own strikes, DUEL_KEN_REWORK §6.2); EN's SANREN and the Kikon play their own clips at speed 1
 (let ((san (find-move :lb-sanren)))
   (check (and (eq (kit-command-move (kit :lille :base) :sp1) san) (eq (kit-command-move (kit :lille :jilliel-kin) :sp1) san)
               (eq :lb-sanren (mv-clip san)) (eq :lb-sanren (kit-move-clip (kit :lille :base) (mv-clip san)))
@@ -2429,7 +2434,8 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (null (kit-move-clip (kit :lille :jilliel-kin) nil))
               (member :lb-w-sanren (kit-clips (kit :lille :jilliel-kin))) (not (member :lb-sanren (kit-clips (kit :lille :jilliel-kin))))
               (member :lb-sanren (kit-clips (kit :lille :base))))))
-(check (every (lambda (cf) (or (member cf '((:lille :jilliel-kin) (:lille :jilliel-kin-mujittai)) :test #'equal)
+(check (every (lambda (cf) (or (member cf '((:lille :jilliel-kin) (:lille :jilliel-kin-mujittai) (:kenpachi :nozarashi)
+                                           (:kenpachi :nomihose)) :test #'equal)
                                (null (kit-clip-map (apply #'kit cf)))))
               *forms*))
 (check (and (eq :lb-e-sanren (mv-clip (find-move :lb-e-sanren))) (~= 1.0 (mv-clip-speed (find-move :lb-e-sanren)))

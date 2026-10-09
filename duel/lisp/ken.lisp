@@ -172,6 +172,8 @@
                    (:nomihose *nome-drain-t3* 0 *nome-up-t3* *nome-down-t3*)))
   :meter-gain (:dealt *nome-dealt* :taken *nome-taken* :drunk *nome-drunk*)
   :commands (:sp1 :ke-meteor :kikon :ke-kikon-n)
+  ;; its own one-handed clips for the base moves and the meteor (a look: DUEL_KEN_REWORK §6.2)
+  :clip-map (:ke-q1 :ke-k-q1 :ke-q2 :ke-k-q2 :ke-f1 :ke-k-f1 :ke-f2 :ke-k-f2 :ke-q3 :ke-k-spin :ke-meteor :ke-k-meteor)
   ;; toys with his opponent (a Kikon only 0.25 per decision until the last minute: it is worth 2 here; the O ender on
   ;; one who isn't red per cup, :o-ender, docs/duel/DUEL_STRINGS.md §4)
   :ai (:intents (:approach 2 :pressure 4 :zone 0 :defend 1)
@@ -189,6 +191,7 @@
 (defkit :kenpachi :ryote :inherit :nozarashi       ; cup 2, RYOTE (NOME >= 40): two-handed kendo, the cut
   :mult *ryote-mult* :startup-add *ryote-startup* :reach-mult *ryote-reach* :form-name "RYOTE" :kikon-konpaku 3
   :passives (:projectile-cut :cut) :stance :ke-r-stance :aura :nozarashi :enter-hook ken-ryote-enter
+  :clip-map nil                                     ; (not cup 1's: RYOTE plays the clips as written)
   :commands (:q :ke-r-j1 :f :ke-r-k1 :sp1 :ke-meteor :kikon :ke-kikon-n)   ; (the cup-1 moves as written: not re-derived)
   :grid (:ke-r-j1 :ke-r-j2 :ke-r-j3 :ke-r-k1 :ke-r-k2 :ke-r-k3 :ke-r-j2s :ke-r-k2s)
   ;; after the 2x NOME drain (docs/duel/DUEL_NOZARASHI_V2.md, "The CPU after the faster drain"): no DEFEND intent, no idle
@@ -208,7 +211,11 @@
 
 (defkit :kenpachi :nomihose :inherit :ryote        ; cup 3, NOMIHOSE (NOME = 100): no guard, U drinks; RYOTE's moves
   :mult *nomihose-mult* :form-name "NOMIHOSE" :kikon-konpaku 4 :blade-chip *nomihose-chip* :bankai-form :bankai
-  :passives (:projectile-cut :cut :drink) :aura :nomihose :drink-clip :ke-drink :enter-hook ken-nomihose-enter
+  :passives (:projectile-cut :cut :drink) :aura :nomihose :drink-clip :ke-x-drink :enter-hook ken-nomihose-enter
+  ;; its own set (a look, DUEL_KEN_REWORK §6.2: 「三杯也改用一套自己的獨立動作」): RYOTE's moves on cup 3's clips
+  :stance :ke-x-stance :body :kenpachi-nomi              ; (the hair lifted: a body variant, the same rig)
+  :clip-map (:ke-r-q1 :ke-x-q1 :ke-r-kote :ke-x-kote :ke-r-q3 :ke-x-q3 :ke-n-f1 :ke-x-f1 :ke-r-tsuki :ke-x-tsuki
+             :ke-r-f2 :ke-x-f2 :ke-meteor :ke-x-meteor)
   :commands (:f :ke-n-f1 :sp1 :ke-meteor-n)
   :strings ((:ke-n-f1 :f :ke-r-k2) (:ke-n-f1 :q :ke-r-j2s))   ; KUKAN-GIRI is cup 3's K1
   ;; the cup drains 20/s: never idle at range (a dash from 0.3 m outside, no wait option), decide 1.7x as often
@@ -235,6 +242,7 @@
 (defkit :kenpachi :bankai :inherit :nomihose
   :awakening t :mult *bankai-ken-mult* :form-name "BANKAI" :kikon-konpaku 4 :blade-chip *nomihose-chip*
   :bankai-form nil :passives (:projectile-cut :drink)
+  :clip-map nil :drink-clip :ke-drink                ; (not cup 3's set: the Bankai keeps its clips)
   :meter (:name "UDE" :max *arm-pips* :start *arm-pips*) :meter-gain nil
   :pips (:n *arm-pips* :to :kataude :cmds (:f :sig :sp1 :sp2 :breaker :kikon))
   :body :kenpachi-oni :weapon :ke-broken :stance :ke-b-stance :aura :oni :hide (:arm-wreck :crack-1 :crack-2 :crack-3 :crack-4)

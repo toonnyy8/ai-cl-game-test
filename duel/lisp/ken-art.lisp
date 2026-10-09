@@ -189,6 +189,18 @@
   (:foot-r (:bevel 0.09 0.06 0.23 0.02 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.25 :at (0 -0.055 0.06) :c :sole))
   (:foot-l (:bevel 0.09 0.06 0.23 0.02 :at (0 -0.02 0.06) :c :tabi) (:box 0.1 0.02 0.25 :at (0 -0.055 0.06) :c :sole)))
 
+;; cup 3 NOMIHOSE (DUEL_KEN_REWORK §6.2): the hair lifted by the reiatsu: 8 more spikes standing up and out off the crown,
+;; the sides and the mane (a look; the same rig and hurt cylinder)
+(body-variant :kenpachi-nomi :kenpachi
+  :parts '((:head (:cone 0.036 0.24 :at (0.113 0.276 -0.036) :rot (0 9 -26) :seg 4 :c :hair)
+                 (:cone 0.04 0.26 :at (0.177 0.198 -0.109) :rot (0 27 -48) :seg 4 :c :hair)
+                 (:cone 0.045 0.3 :at (0.169 0.055 -0.219) :rot (0 61 -41) :seg 4 :c :hair)
+                 (:cone 0.036 0.24 :at (-0.113 0.276 -0.036) :rot (0 9 26) :seg 4 :c :hair)
+                 (:cone 0.04 0.26 :at (-0.177 0.198 -0.109) :rot (0 27 48) :seg 4 :c :hair)
+                 (:cone 0.045 0.3 :at (-0.169 0.055 -0.219) :rot (0 61 41) :seg 4 :c :hair)
+                 (:cone 0.035 0.24 :at (0.000 0.319 0.032) :rot (0 -6 -0) :seg 4 :c :hair)
+                 (:cone 0.05 0.34 :at (0.000 0.137 -0.296) :rot (0 59 -0) :seg 4 :c :hair))))
+
 ;; the Bankai's oni (docs/duel/DUEL_KEN_BANKAI.md §12, the user's decisions 2026-09-28: 片腕 stays the oni): the same body, the
 ;; skin a MUTED crimson (S <= 0.45: not a spot colour), two short horns at the hairline, the pupils white (irisless), four
 ;; thin BLOOD cracks on the right forearm (:crack-1 .. :crack-4, one shown per spent pip) and the torn forearm of 片腕
@@ -243,9 +255,9 @@
 ;; traced off that sheet (2.31 m from butt to end, the grip 0.69 m up the haft so the left fist has its 0.14-0.62 m of
 ;; handle): the white-wrapped haft with a black butt; the head on the edge side (+Z) only, its spine just above the haft
 ;; line, a raked point overhanging back beside the hand with a round notch under it, the cutting edge a long convex curve
-;; rising to 0.6 m at the square far end; near-black, the edge's pale band ~40 % deep in light and grey stripes with a
-;; ragged inner line, the stripes slanted; a khaki box cap over the whole far end with a stepped foot and a groove; a white tassel from a ring at
-;; the cap's spine corner
+;; rising to 0.6 m at the square far end; near-black, the edge's pale band (2/3 of the sheet's) in slanted light and grey
+;; stripes with a ragged inner line; a khaki box cap over the whole far end with a stepped foot and a groove; a black
+;; slanted bar from the haft to the head; the original's dark green-grey tassel at the butt
 (defun ke-mb-prism (mb profile x0 x1)
   "A prism of the convex PROFILE ((y z) ...) between the planes x = X0 and X1 (a blade's faces and its rim)."
   (let* ((n (length profile))
@@ -286,11 +298,9 @@
           (loop for i below 8 do (with-xform (mb (xform :y (- 0.03 (* i 0.085)) :roll 0.6)) (mb-box mb 0.054 0.006 0.054)))
           (mbc mb #x16161A)                              ; the black butt
           (with-xform (mb (xform :y -0.67)) (mb-bevel-box mb 0.058 0.06 0.058 0.008))
-          (mbc mb #x2F4A35)                              ; the tassel (candidate B): a dark green cord and strands at the cap
-          (with-xform (mb (xform :y 1.54 :z 0.06)) (mb-box mb 0.03 0.05 0.04))
-          (loop for (dy r) in '((-0.03 0.25) (0.0 0.1) (0.03 -0.05) (-0.05 0.4) (0.04 -0.2))
-                do (with-xform (mb (xform :y (+ 1.5 dy) :z -0.14 :pitch (+ 1.75 r) :roll (* 2 dy)))
-                     (mb-cone mb 0.024 0.42 :segments 4)))))
+          (mbc mb #x3A4A3E)                              ; the tassel (the original's, the user 2026-10-09: 「選 A」): dark
+          (with-xform (mb (xform :y -0.76)) (mb-box mb 0.04 0.06 0.04))   ; green-grey, hung from the butt
+          (with-xform (mb (xform :y -0.9 :z -0.02 :pitch 0.2)) (mb-box mb 0.05 0.22 0.03))))
 
 ;; the Bankai's broken cleaver (anime ep. 44): Nozarashi's slab snapped off on a diagonal at ~1 m, ink-black with a white
 ;; edge line, no guard, no cap, a long cloth-wrapped tang like the first Zangetsu's hilt; no fire, no glow
@@ -527,8 +537,12 @@
   (0.25 (:root :u 0.1) (:thighs :flex 55) (:knees :flex 90) (:arms :flex 175 :side 8) (:elbows :flex 25)
         (:hand-r :twist 0 :flex -50) (:spine :flex -18) (:head :flex -18))
   (0.7 (:root :u 0.1) (:thighs :flex 50) (:knees :flex 85) (:arms :flex 178 :side 6) (:spine :flex -22)))
-(defclip :ke-n-stance (2.0 :loop t :base :ke-n-stance)
-  (0) (1.0 (:chest :flex 3) (:root :u -0.07)))
+;; KATATE's rest (DUEL_KEN_REWORK §6.2): the cleaver's haft on the right shoulder, the fist in front of the chest, the head
+;; up behind him (the canon carry); the idle and every KATATE strike start and end here
+(defpose :ke-k-rest (:base :ke-n-stance)
+  (:arm-r :flex 35 :side 25 :twist 0) (:elbow-r :flex 110) (:hand-r :flex 25 :twist 0) (:arm-l :flex 10 :side 25) (:elbow-l :flex 30))
+(defclip :ke-n-stance (2.0 :loop t :base :ke-k-rest)
+  (0) (1.0 (:chest :flex 3) (:root :u -0.07) (:arm-r :flex 33)))
 ;; Nozarashi v2, the cups read from the grip: cup 1 one hand (:ke-n-stance); cups 2 and 3 two-handed jodan, the
 ;; cleaver raised over the right shoulder in both hands, the green tassel hanging
 (defpose :ke-r-stance (:base :ke-n-stance)
@@ -542,7 +556,8 @@
 (defclip :ke-drink (0.3 :base :ke-r-stance)
   (0 :snap (:head :flex -32) (:spine :flex -14) (:chest :twist 6) (:root :u -0.03))
   (0.3 (:head :flex -20) (:spine :flex -8)))
-;; the RYOTE kendo set (cups 2 and 3, DUEL_DESIGN §6.2), from jodan and back to it: kamae -> a big anticipation
+;; the RYOTE kendo set (cup 2, DUEL_DESIGN §6.2; cup 3 has its own since DUEL_KEN_REWORK §6.2), from jodan and back to it
+;; (the front foot lifted and stamped down on the cut, fumikomi, §6.2): kamae -> a big anticipation
 ;; held a few frames -> a :snap into the cut on frame S -> zanshin held through S+A with a small overshoot -> settle.
 ;; Both fists stay on the long handle: the left arm of every key was solved onto the handle (the right fist at the
 ;; collar, the left 0.16-0.42 down the handle); the right arm is posed and the wrist aims the blade. Phase 6: the draw
@@ -553,6 +568,7 @@
      (:arm-r :flex 165 :side 12 :twist 23) (:elbow-r :flex 75) (:hand-r :flex -47 :twist -8) ; dropped behind the back
      (:arm-l :flex 157 :side 8 :twist 42) (:elbow-l :flex 65))
   (7 (:root :f -0.08 :u 0.05) (:spine :flex -11) (:head :flex -8))
+  (8 (:thigh-l :flex 58 :side 6) (:knee-l :flex 80))                                         ; fumikomi: the front foot up
   (:s :snap (:root :f 0.04 :u -0.1) (:spine :flex 14) (:head :flex 4) (:chest :twist 0) (:pelvis :twist 0)
       (:thigh-l :flex 48 :side 6) (:knee-l :flex 42) (:thigh-r :flex -32 :side 8) (:knee-r :flex 14)
       (:arm-r :flex 94 :side -12 :twist 11) (:elbow-r :flex 8) (:hand-r :flex -125 :twist 0)
@@ -569,6 +585,7 @@
      (:arm-r :flex 150 :side 35 :twist -48) (:elbow-r :flex 70) (:hand-r :flex -47 :twist -7)
      (:arm-l :flex 133 :side -1 :twist 48) (:elbow-l :flex 71))
   (10 (:root :u -0.08 :f -0.06) (:chest :twist -40) (:spine :flex -6))
+  (12 (:thigh-l :flex 58 :side 8) (:knee-l :flex 80))                                        ; fumikomi
   (:s :snap (:root :f 0.03 :u -0.14) (:pelvis :twist -10) (:chest :twist 35) (:spine :flex 20) (:head :flex 0 :twist -15)
       (:thigh-l :flex 46 :side 8) (:knee-l :flex 45) (:thigh-r :flex -25 :side 10) (:knee-r :flex 18)
       (:arm-r :flex 10 :side -25 :twist -9) (:elbow-r :flex 140) (:hand-r :flex -180 :twist 4)
@@ -585,6 +602,7 @@
      (:arm-r :flex 20 :side 25 :twist -90) (:elbow-r :flex 60) (:hand-r :flex -101 :twist -45)
      (:arm-l :flex 27 :side -62 :twist 48) (:elbow-l :flex 25))
   (14 (:root :u -0.15 :f -0.08) (:chest :twist -56) (:pelvis :twist 28) (:knees :flex 44))
+  (17 (:thigh-l :flex 62 :side 8) (:knee-l :flex 85))                                        ; fumikomi
   (:s :snap (:root :f 0.6 :u -0.2) (:pelvis :twist -20) (:chest :twist 55) (:spine :flex 22) (:head :flex 0 :twist -30)
       (:thigh-l :flex 55 :side 8) (:knee-l :flex 55) (:thigh-r :flex -30 :side 12) (:knee-r :flex 25)
       (:arm-r :flex 70 :side -35 :twist -26) (:elbow-r :flex 8) (:hand-r :flex -92 :twist 22)
@@ -624,7 +642,7 @@
   (0)
   (4 (:root :f -0.03 :u 0.02) (:spine :flex -4) (:arm-r :flex 132 :side 12 :twist 15) (:elbow-r :flex 70) (:hand-r :flex -40 :twist -6)
      (:arm-l :flex 128 :side 14 :twist 40) (:elbow-l :flex 60))
-  (7 (:root :f -0.04 :u 0.03) (:arm-r :flex 136) (:hand-r :flex -36))                              ; the lift, held
+  (7 (:root :f -0.04 :u 0.03) (:arm-r :flex 136) (:hand-r :flex -36) (:thigh-l :flex 50 :side 6) (:knee-l :flex 70))                              ; the lift, held
   (:s :snap (:root :f 0.03 :u -0.07) (:spine :flex 10) (:chest :twist -4) (:pelvis :twist 4)
       (:thigh-l :flex 36 :side 6) (:knee-l :flex 32) (:thigh-r :flex -22 :side 8) (:knee-r :flex 12)
       (:arm-r :flex 10 :side -10 :twist 11) (:elbow-r :flex 120) (:hand-r :flex -170 :twist 0)
@@ -688,6 +706,167 @@
         (:root :f 0.6 :u -0.3) (:thigh-l :flex 55) (:knee-l :flex 60) (:spine :flex 25))
   (1.0 (:chest :twist 88))
   (1.5 :ke-n-stance))
+
+;;; ---------------------------------------------------------------- KATATE's own strikes (DUEL_KEN_REWORK §6.2)
+;;; Cup 1 plays the base moves (+2 f, reach x1.3) through the kit's :clip-map on these: one hand, the cleaver's weight
+;;; leads and the man follows. Authored at the base clips' S/A/R (the derived move plays them at S/(S+2)).
+(defstrike :ke-k-q1 (7 3 12 :base :ke-k-rest)          ; J1: the shoulder-roll drop: heaved off the shoulder, it rolls
+  (0)                                                   ; over and down in front and drags him a step
+  (3 (:root :f -0.05 :u 0.03) (:spine :flex -10) (:chest :twist -15) (:arm-r :flex 70 :side 20) (:elbow-r :flex 90)
+     (:hand-r :flex 0 :twist 0) (:arm-l :flex 40 :side 35) (:elbow-l :flex 30) (:head :flex -10))
+  (5 (:root :f -0.07 :u 0.04) (:spine :flex -13) (:arm-r :flex 80))                                            ; held
+  (:s :snap (:root :f 0.35 :u -0.15) (:spine :flex 34) (:chest :twist 10) (:arm-r :flex 50 :side 5) (:elbow-r :flex 5)
+      (:hand-r :flex -75) (:arm-l :flex -20 :side 40) (:elbow-l :flex 15) (:thigh-r :flex 50) (:knee-r :flex 55)
+      (:thigh-l :flex -20) (:knee-l :flex 40) (:head :flex -10))
+  (:a (:root :f 0.45 :u -0.2) (:spine :flex 40) (:arm-r :flex 40) (:hand-r :flex -85))                        ; carried on
+  (15 (:root :f 0.4 :u -0.18) (:spine :flex 36))
+  (:end :ke-k-rest))
+(defstrike :ke-k-q2 (7 3 13 :base :ke-k-rest)          ; J2: the mowing sweep: flat and low, right to left, the
+  (0)                                                   ; cleaver dragging him round after it
+  (3 (:pelvis :twist 30) (:chest :twist -50) (:spine :flex 10) (:arm-r :flex 30 :side 75) (:elbow-r :flex 15)
+     (:hand-r :twist 180 :flex 0) (:arm-l :flex 30 :side 20) (:elbow-l :flex 30) (:knees :flex 35) (:root :u -0.08))
+  (5 (:chest :twist -58) (:arm-r :side 82))                                                                   ; held
+  (:s :snap (:pelvis :twist -20) (:chest :twist 80) (:spine :flex 14) (:arm-r :flex 70 :side -10) (:elbow-r :flex 60)
+      (:hand-r :twist 180 :flex 0) (:arm-l :flex 10 :side 60) (:root :f 0.2 :u -0.1) (:thigh-l :flex 40) (:knee-l :flex 40))
+  (:a (:pelvis :twist -35) (:chest :twist 95) (:arm-r :flex 65 :side -25) (:root :f 0.25 :yaw 25))
+  (16 (:chest :twist 85) (:root :f 0.2 :yaw 20))
+  (:end :ke-k-rest))
+(defstrike :ke-k-f1 (16 4 20 :base :ke-k-rest)         ; K1: the flat smack: a club, not a cut: swung up over the left
+  (0)                                                   ; shoulder, held, then a lunging backhand diagonal, flat first
+  (6 (:root :u -0.05 :f -0.08) (:pelvis :twist -20) (:chest :twist 45) (:spine :flex -5) (:arm-r :flex 150 :side -20)
+     (:elbow-r :flex 70) (:hand-r :flex -30 :twist 0) (:arm-l :flex 20 :side 50) (:elbow-l :flex 30) (:head :twist -20))
+  (13 (:root :u -0.03 :f -0.12) (:chest :twist 52) (:spine :flex -8))                                          ; held
+  (:s :snap (:root :f 0.9 :u -0.15) (:pelvis :twist 20) (:chest :twist -30) (:spine :flex 22) (:arm-r :flex 75 :side 40)
+      (:elbow-r :flex 5) (:hand-r :flex -60 :twist 0) (:arm-l :flex -10 :side 40) (:elbow-l :flex 20) (:head :twist 15)
+      (:thigh-l :flex 50) (:knee-l :flex 45) (:thigh-r :flex -35) (:knee-r :flex 15))
+  (:a (:root :f 0.98 :u -0.17) (:chest :twist -42) (:spine :flex 26) (:arm-r :flex 60 :side 60))
+  (28 (:root :f 0.9 :u -0.15) (:chest :twist -38) (:spine :flex 22))
+  (:end :ke-k-rest))
+(defstrike :ke-k-f2 (20 5 28 :base :ke-k-rest)         ; K2: the heave-up: the head dragged low behind him, then a
+  (0)                                                   ; one-handed scoop up in front, leaning back against its weight
+  (8 (:pelvis :twist 20) (:chest :twist -20) (:spine :flex 35) (:root :u -0.3) (:knees :flex 60) (:arm-r :flex -40 :side 20)
+     (:elbow-r :flex 5) (:hand-r :twist 0 :flex -60) (:arm-l :flex 30 :side 30) (:elbow-l :flex 30) (:head :flex -20))
+  (16 (:root :u -0.34 :f 0.15) (:spine :flex 38) (:arm-r :flex -48))                                          ; held
+  (:s :snap (:pelvis :twist 0) (:chest :twist 0) (:spine :flex -20) (:root :u 0.02 :f 0.45) (:knees :flex 20)
+      (:arm-r :flex 70 :side 5) (:elbow-r :flex 5) (:hand-r :flex -90) (:arm-l :flex 20 :side 60) (:head :flex -20)
+      (:thigh-r :flex 25) (:thigh-l :flex -10))
+  (:a (:arm-r :flex 150) (:hand-r :flex -50) (:spine :flex -30) (:root :u 0.06 :f 0.42) (:head :flex -30))
+  (36 (:arm-r :flex 140) (:spine :flex -26))
+  (:end :ke-k-rest))
+(defstrike :ke-k-spin (11 4 22 :base :ke-k-rest)       ; K3 BUNMAWASHI: the arm locked out, the cleaver's weight carries
+  (0)                                                   ; him round once and a bit
+  (5 (:root :u -0.12) (:knees :flex 40) (:chest :twist -25) (:arm-r :side 85 :flex 0) (:elbow-r :flex 5)
+     (:hand-r :twist -5 :flex -90) (:arm-l :side 30 :flex 30) (:elbow-l :flex 60))
+  (8 (:root :u -0.16 :yaw -15) (:knees :flex 48) (:chest :twist -32))                                         ; coiled, held
+  (:s :snap (:root :yaw 360 :u -0.1 :f 0.35) (:chest :twist 30) (:knees :flex 40) (:spine :flex 10))
+  (:a (:root :yaw 410 :u -0.14 :f 0.42) (:chest :twist 40) (:spine :flex 14))                                ; dragged on
+  (22 (:root :yaw 395 :u -0.1 :f 0.4) (:chest :twist 34))
+  (:end :ke-k-rest (:root :yaw 360)))
+(defstrike :ke-k-meteor (26 4 30 :base :ke-k-rest)     ; SP1 "Split the meteor", one hand: the leap, the cleaver cocked
+  (0)                                                   ; over the right shoulder, the top-down split, back onto it
+  (8 (:root :u -0.3) (:knees :flex 80) (:thighs :flex 60) (:spine :flex 28) (:arm-l :flex 30 :side 30))
+  (16 (:root :u 0.6) (:thighs :flex 60) (:knees :flex 90) (:arm-r :flex 170 :side 25) (:elbow-r :flex 100)
+      (:hand-r :flex -20 :twist 0) (:arm-l :flex 80 :side 70) (:elbow-l :flex 10) (:spine :flex -25) (:head :flex -20))
+  (22 (:root :u 0.75) (:spine :flex -30) (:elbow-r :flex 110))                                                ; held, high
+  (:s :snap (:root :u -0.44 :f 0.42) (:spine :flex 60) (:arm-r :flex 25 :side 0) (:elbow-r :flex 0) (:hand-r :flex -40 :twist 0)
+      (:arm-l :flex -35 :side 45) (:elbow-l :flex 10) (:knees :flex 92) (:thighs :flex 70) (:head :flex -35))
+  (:a (:spine :flex 64) (:root :u -0.47 :f 0.44))
+  (44 (:root :u -0.41 :f 0.4) (:spine :flex 58))
+  (:end :ke-k-rest))
+
+;;; ---------------------------------------------------------------- NOMIHOSE's own strikes (DUEL_KEN_REWORK §6.2)
+;;; Cup 3, drained to the dregs (the user: 「三杯也改用一套自己的獨立動作」): RYOTE's moves through the kit's :clip-map on
+;;; these, at those clips' S/A/R. Two hands, every cut overcommitted, the body low and bestial; the left fist held on the
+;;; haft by GRIP-LEFT! (registered below) except in the drink.
+(defpose :ke-x-stance (:base :ke-r-stance)             ; the cleaver dragged low behind in both hands, hunched, wide
+  (:root :u -0.1) (:pelvis :twist 20) (:chest :twist -20) (:spine :flex 22) (:head :flex -18)
+  (:arm-r :flex -20 :side 25 :twist 0) (:elbow-r :flex 25) (:hand-r :flex -30 :twist 0)
+  (:arm-l :flex 10 :side -20 :twist 40) (:elbow-l :flex 60)
+  (:thigh-r :flex -18 :side 16) (:thigh-l :flex 32 :side 14) (:knee-r :flex 35) (:knee-l :flex 45))
+(defclip :ke-x-stance (1.6 :loop t :base :ke-x-stance)
+  (0) (0.8 (:chest :flex 4) (:root :u -0.13) (:head :flex -14)))
+(defstrike :ke-x-q1 (10 3 12 :base :ke-x-stance)       ; J1: the ground-shaker: up from behind over the head in both hands,
+  (0)                                                   ; then everything behind one vertical; it buries in the floor
+  (5 (:root :u 0.05 :f -0.08) (:spine :flex -14) (:chest :twist 0) (:pelvis :twist 0) (:head :flex -15)
+     (:arm-r :flex 175 :side 10) (:elbow-r :flex 60) (:hand-r :flex -40 :twist 0) (:arm-l :flex 165 :side -10 :twist 40) (:elbow-l :flex 60))
+  (8 (:root :u 0.08 :f -0.1) (:spine :flex -18))                                                              ; held, high
+  (:s :snap (:root :u -0.28 :f 0.3) (:spine :flex 50) (:head :flex -25) (:arm-r :flex 70 :side -5) (:elbow-r :flex 5)
+      (:hand-r :flex -70) (:arm-l :flex 50 :side -40 :twist 60) (:elbow-l :flex 20)
+      (:thigh-l :flex 60) (:knee-l :flex 70) (:thigh-r :flex -25) (:knee-r :flex 40))
+  (:a (:root :u -0.32 :f 0.32) (:spine :flex 55) (:hand-r :flex -78))
+  (20 (:root :u -0.3 :f 0.3) (:spine :flex 52))
+  (:end :ke-x-stance))
+(defstrike :ke-x-kote (9 3 13 :base :ke-x-stance)      ; J2: a short brutal hack off the shoulder, elbows bent, a lurch
+  (0)
+  (4 (:root :u -0.04) (:spine :flex 8) (:chest :twist -20) (:arm-r :flex 120 :side 30) (:elbow-r :flex 100) (:hand-r :flex -30)
+     (:arm-l :flex 110 :side 0 :twist 40) (:elbow-l :flex 90))
+  (7 (:chest :twist -24) (:arm-r :flex 125))                                                                  ; held
+  (:s :snap (:root :f 0.25 :u -0.12) (:spine :flex 30) (:chest :twist 10) (:arm-r :flex 30 :side 5) (:elbow-r :flex 85)
+      (:hand-r :flex -150) (:arm-l :flex 30 :side -40 :twist 60) (:elbow-l :flex 60) (:thigh-l :flex 45) (:knee-l :flex 50))
+  (:a (:root :f 0.28 :u -0.14) (:spine :flex 33))
+  (18 (:root :f 0.25 :u -0.12) (:spine :flex 30))
+  (:end :ke-x-stance))
+(defstrike :ke-x-q3 (14 4 22 :base :ke-x-stance)       ; J3: the shoulder-to-floor diagonal, overcommitted: it turns him
+  (0)                                                   ; half round and he ends crouched
+  (6 (:pelvis :twist 25) (:chest :twist -45) (:spine :flex -6) (:root :u 0.0) (:arm-r :flex 155 :side 45) (:elbow-r :flex 70)
+     (:hand-r :flex -40) (:arm-l :flex 140 :side 10 :twist 45) (:elbow-l :flex 70) (:head :twist 20))
+  (10 (:chest :twist -52) (:root :u 0.03))                                                                    ; held
+  (:s :snap (:pelvis :twist -25) (:chest :twist 45) (:spine :flex 35) (:root :f 0.25 :u -0.25 :yaw 30) (:arm-r :flex 20 :side -30)
+      (:elbow-r :flex 80) (:hand-r :flex -160) (:arm-l :flex 20 :side -40 :twist 60) (:elbow-l :flex 40) (:head :twist -15)
+      (:thigh-l :flex 60) (:knee-l :flex 70) (:thigh-r :flex -20) (:knee-r :flex 50))
+  (:a (:root :f 0.3 :u -0.32 :yaw 70) (:chest :twist 55) (:spine :flex 40))                                  ; turned on
+  (28 (:root :f 0.28 :u -0.3 :yaw 60) (:spine :flex 38))
+  (:end :ke-x-stance))
+(defstrike :ke-x-f1 (20 4 22 :base :ke-x-stance)       ; K1 KUKAN-GIRI: one huge rising diagonal, low left to high right;
+  (0)                                                   ; its chord hangs in the air (the rift, f20)
+  (8 (:root :u -0.2 :f -0.05) (:pelvis :twist -20) (:chest :twist 50) (:spine :flex 25) (:head :twist -25) (:knees :flex 50)
+     (:arm-r :flex 10 :side -40) (:elbow-r :flex 30) (:hand-r :flex -40 :twist 0) (:arm-l :flex 10 :side -60 :twist 50) (:elbow-l :flex 40))
+  (16 (:root :u -0.24 :f -0.08) (:chest :twist 56) (:knees :flex 55))                                         ; held, low
+  (:s :snap (:root :f 0.5 :u 0.0) (:pelvis :twist 25) (:chest :twist -50) (:spine :flex -10) (:head :twist 25)
+      (:arm-r :flex 85 :side 45) (:elbow-r :flex 5) (:hand-r :flex -90) (:arm-l :flex 110 :side 10 :twist 50) (:elbow-l :flex 40)
+      (:thigh-l :flex 40) (:knee-l :flex 30) (:thigh-r :flex -25) (:knee-r :flex 15))
+  (:a (:root :f 0.55 :u 0.04) (:chest :twist -60) (:spine :flex -14) (:arm-r :flex 120) (:hand-r :flex -60))
+  (34 (:root :f 0.52 :u 0.0) (:chest :twist -55))
+  (:end :ke-x-stance))
+(defstrike :ke-x-tsuki (21 4 24 :base :ke-x-stance)    ; K2: the battering ram: the cleaver level at the hip in both hands,
+  (0)                                                   ; the capped end first, the whole body charging behind it
+  (8 (:root :u -0.15 :f -0.12) (:pelvis :twist 15) (:chest :twist -20) (:spine :flex 25) (:knees :flex 50)
+     (:arm-r :flex 20 :side 10) (:elbow-r :flex 80) (:hand-r :flex -60 :twist 0) (:arm-l :flex 30 :side -30 :twist 50) (:elbow-l :flex 70))
+  (17 (:root :u -0.18 :f -0.16) (:spine :flex 28) (:knees :flex 55))                                          ; held, coiled
+  (:s :snap (:root :f 0.9 :u -0.15) (:pelvis :twist 0) (:chest :twist 0) (:spine :flex 30) (:arm-r :flex 75 :side 0)
+      (:elbow-r :flex 15) (:hand-r :flex -75) (:arm-l :flex 60 :side -30 :twist 60) (:elbow-l :flex 35)
+      (:thigh-l :flex 60) (:knee-l :flex 55) (:thigh-r :flex -45) (:knee-r :flex 10))
+  (:a (:root :f 0.98 :u -0.17) (:spine :flex 33))
+  (29 (:root :f 0.95 :u -0.16))                                                                               ; held out
+  (:end :ke-x-stance))
+(defstrike :ke-x-f2 (21 5 28 :base :ke-x-stance)       ; K3 KABUTO-WARI: the full-length bisector: crouch, a leap with the
+  (0)                                                   ; cleaver overhead, one cut from above his head to the floor
+  (6 (:root :u -0.32) (:knees :flex 75) (:thighs :flex 55) (:spine :flex 30) (:arm-r :flex 20) (:arm-l :flex 20 :side -30 :twist 50))
+  (13 (:root :u 0.45 :f 0.1) (:spine :flex -24) (:head :flex -22) (:knees :flex 60) (:thighs :flex 50) (:arm-r :flex 178 :side 8)
+      (:elbow-r :flex 40) (:hand-r :flex -60 :twist 0) (:arm-l :flex 165 :side -5 :twist 45) (:elbow-l :flex 50))
+  (17 (:root :u 0.55 :f 0.15) (:spine :flex -30) (:head :flex -26))                                            ; held, high
+  (:s :snap (:root :u -0.38 :f 0.5) (:spine :flex 55) (:head :flex -30) (:arm-r :flex 70 :side -5) (:elbow-r :flex 5)
+      (:hand-r :flex -30) (:arm-l :flex 35 :side -40 :twist 55) (:elbow-l :flex 20)
+      (:thigh-l :flex 70) (:knee-l :flex 90) (:thigh-r :flex -15) (:knee-r :flex 60))
+  (:a (:root :u -0.42 :f 0.52) (:spine :flex 60))
+  (40 (:root :u -0.4 :f 0.5) (:spine :flex 57))                                                               ; crouched, held
+  (:end :ke-x-stance))
+(defstrike :ke-x-meteor (26 4 30 :base :ke-x-stance)   ; Shift+K NOMIHOSE: the meteor at full power: higher, arched back,
+  (0)                                                   ; both hands, then down through everything
+  (8 (:root :u -0.35) (:knees :flex 85) (:thighs :flex 65) (:spine :flex 32))
+  (16 (:root :u 0.85) (:thighs :flex 50) (:knees :flex 80) (:arm-r :flex 180 :side 5) (:elbow-r :flex 50) (:hand-r :flex -60 :twist 0)
+      (:arm-l :flex 168 :side -5 :twist 45) (:elbow-l :flex 55) (:spine :flex -35) (:head :flex -30))
+  (22 (:root :u 1.0) (:spine :flex -40) (:head :flex -32))                                                    ; arched, held
+  (:s :snap (:root :u -0.46 :f 0.45) (:spine :flex 64) (:arm-r :flex 30 :side 0) (:elbow-r :flex 5) (:hand-r :flex -40)
+      (:arm-l :flex 15 :side -40 :twist 55) (:elbow-l :flex 15) (:knees :flex 95) (:thighs :flex 72) (:head :flex -35))
+  (:a (:spine :flex 68) (:root :u -0.5 :f 0.47))
+  (44 (:root :u -0.44 :f 0.44) (:spine :flex 62))
+  (:end :ke-x-stance))
+(defclip :ke-x-drink (0.3 :base :ke-x-stance)           ; U DRINK: the head thrown back roaring, arms wide, the cleaver
+  (0 :snap (:head :flex -40) (:spine :flex -16) (:chest :twist 0) (:root :u -0.02) (:arm-r :flex 40 :side 80) (:elbow-r :flex 10)
+     (:hand-r :twist -90 :flex 0) (:arm-l :flex 40 :side 80 :twist 0) (:elbow-l :flex 10))   ; raised high on the right
+  (0.3 (:head :flex -30) (:spine :flex -10)))
+(setf *grip-clips* (append *grip-clips* '(:ke-x-stance :ke-x-q1 :ke-x-kote :ke-x-q3 :ke-x-f1 :ke-x-tsuki :ke-x-f2 :ke-x-meteor)))
 
 ;;; ---------------------------------------------------------------- the Bankai (docs/duel/DUEL_KEN_BANKAI.md §12): the oni
 ;; The feral pass (the user's request 2026-09-28, 「更野性」): a beast, not a swordsman. A deep forward-leaning crouch on
