@@ -1212,7 +1212,7 @@ sim step), `:hud-guard` (over the guard bar, both HUDs) and `:deck` (the one-han
 function tried among the reflexes) and `ai-guard-k` (no guard rolls in a `:u` form); the passive `:parry-block`; the hazard
 flag `:blade` (a blade's hit look, not fire); the one-hand U chip (a `:u` form turns the spent AWAKEN chip into U, a rest
 does nothing); and `*char-debug*` (a character's own debug range). Registration: two MANIFEST lines, four `*pairs*` in
-debug.lisp; his brush names, callouts and glyphs are appended from `ichigo-art.lisp`.
+debug.lisp; his brush names and callouts are appended from `ichigo-art.lisp`, his glyphs from `glyphs-extra.lisp`.
 
 ## Character code layout: the second user and the unified hooks (2026-09-29)
 

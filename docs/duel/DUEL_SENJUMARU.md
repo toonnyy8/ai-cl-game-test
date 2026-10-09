@@ -1298,7 +1298,7 @@ KKK 143, KKJ 117, KJJ 102.
 | MAKITORI / the gulps' pull | Ichigo's `:pull` | her `:hit` hook slides him to 1.4 m of her (8 f) / to the pit's centre (10 f) after the reaction | no shared change |
 | HUD awakening row | "SHIGARAMI NO TSUJI" | the form name `TSUJI` (the name line reads SENJUMARU  TSUJI) | one form name serves both lines |
 | Hoho / Burst cloth double | a look | **not built** | cosmetic; left for the art review |
-| Glyphs | `tools/glyph-bake.py` into glyphs.lisp | 49 glyphs baked with the same tool's functions into `senjumaru-art.lisp` (appended to `*glyph-outlines*` before `brush-init` triangulates them) | keeps the shared generated file out of her branch |
+| Glyphs | `tools/glyph-bake.py` into glyphs.lisp | 49 glyphs baked with the same tool's functions into `glyphs-extra.lisp` (first in `senjumaru-art.lisp`; appended to `*glyph-outlines*` before `brush-init` triangulates them) | keeps the shared generated file out of her branch |
 | Stage drapes and the loom | a stage key `:stage :cloth` read by stage.lisp | drawn from her `:draw` hook while she is awakened (18 drapes on the rim, the torii-loom at the rim behind her; the second awakened Senjumaru of a mirror draws none) | no stage change |
 
 **The generic hook points** (the only shared-code changes; inert for every other character, so the old six pairings

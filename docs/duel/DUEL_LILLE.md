@@ -1153,7 +1153,7 @@ Stills: debug 79100 + 19 i + k (cinematic i at frame 10 k), 79195 the consing pr
 glint), `:lb-trumpet` (a brass note swelling a fourth: Trompete's tell). The emits in lille.lisp's mechanics now name them
 (the lock, the aimed shot, Trompete's tell; sound only).
 
-**Glyphs** baked (tools/glyph-bake.py's `GLYPH()`, the Yuji Syuku subset, appended in lille-art.lisp): か さ ず で と な を 器 圧
+**Glyphs** baked (tools/glyph-bake.py's `GLYPH()`, the Yuji Syuku subset, appended in lille-art.lisp; since the C5 refactor in glyphs-extra.lisp): か さ ず で と な を 器 圧
 姿 尚 武 異 端 等 落 開 霊 首 (19).
 
 **Generic hooks** (each inert for the other characters: nothing else uses them):
