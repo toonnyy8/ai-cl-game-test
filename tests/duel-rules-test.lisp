@@ -1677,7 +1677,7 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
 along the left forearm, so the fist leads).")
 (defparameter *reach-one-sided* '((:yamamoto :bankai-east) (:yamamoto :bankai-west) (:kenpachi :nozarashi)
                                   (:kenpachi :bankai) (:rukia :zero)))
-(let ((bodies nil) (weapons nil) (strike nil) (points nil) (butt 0.0))
+(let ((bodies nil) (weapons nil) (left-weapons nil) (strike nil) (points nil) (butt 0.0))   ; (a :left weapon: the left hand's)
   (dolist (art '("yama" "ken" "rukia" "ichigo" "senjumaru" "lille"))
     (with-open-file (in (merge-pathnames (format nil "../duel/lisp/~a-art.lisp" art) *load-truename*))
       (let ((*package* (find-package :duel)))
@@ -1691,7 +1691,8 @@ along the left forearm, so the fist leads).")
                                      (*lb-strike-points* (setf points (eval (third form))))   ; Lille: the plank, the
                                      (*lb-butt* (setf butt (eval (third form))))))           ; wing / arm tips
                      (defbody (push (cons (second form) (third form)) bodies))
-                     (defweapon (push (cons (second form) (getf (third form) :length)) weapons)))))))
+                     (defweapon (push (cons (second form) (getf (third form) :length)) weapons)
+                                (when (getf (third form) :left) (push (second form) left-weapons))))))))
   (let ((jm (make-f32 (* 16 +nj+))) (pose (make-f32 +pose-n+)) (v (make-f32 3))
         (min-hurt (loop for (nil . b) in bodies minimize (getf b :hurt-r))) (max-hurt (loop for (nil . b) in bodies maximize (getf b :hurt-r))))
     ;; J is close (the J cut): the chase and a lunge stop at *LUNGE-STOP*, outside any two hurt cylinders' push-apart, and
@@ -1718,7 +1719,8 @@ along the left forearm, so the fist leads).")
                                            (pose-fk! jm pose 0f0 0f0 0f0 0f0 (f32 (getf b :scale)) (f32 (deg (getf b :hunch 0))) props)
                                            (if striker                            ; (yaw 0 faces -Z)
                                                (joint-point! v jm (joint-index striker) 0f0 0f0 0f0)
-                                               (joint-point! v jm (ji :weapon-r) 0f0 0f0 (f32 (if (eq point :weapon) butt (- wlen)))))
+                                               (joint-point! v jm (joint-index (if (member (kit-weapon k) left-weapons) :weapon-l :weapon-r)) 0f0 0f0
+                                                             (f32 (if (eq point :weapon) butt (- wlen)))))
                                            (if cap (- (aref v 2)) (sqrt (+ (expt (aref v 0) 2) (expt (aref v 2) 2))))))))
                  (d (- art edge)))
             (when (eq (mv-kind mv) :quick)
