@@ -14,7 +14,7 @@ dists are built with ./build.sh (a BASE dist is a copy of dist/NAME built before
                                                     heap and first frame of each
   python3 tests/style-gates.py smoke DIST...        WGSL smoke: each dist runs 14 s with run.mjs exit 0 (no JS
                                                     exception, no WebGPU validation error, every pipeline built)
-  python3 tests/style-gates.py looks BASE NEW [--jobs N] [--size WxH] [--only TEXT] [--once]
+  python3 tests/style-gates.py looks BASE NEW [--jobs N] [--size WxH] [--only TEXT] [--once] [--keep-base]
                                                     the look identity gate (for refactors that must not change a
                                                     pixel): 109 fixed stills of SOUL DUEL under run.mjs --fixed-dt
                                                     (menus, select of all six fighters, four CPU-vs-CPU matches at
@@ -287,9 +287,11 @@ def still_diff(a, b):
     return int(d.max()), int((d > 0).sum()), np.clip(d * 4 + 80 * (d > 0), 0, 255).astype(np.uint8)
 
 
-def looks(base, new, jobs=3, size="640x360", only=None, once=False):
+def looks(base, new, jobs=3, size="640x360", only=None, once=False, keep_base=False):
     """Every scenario of looks_scenarios() rendered from BASE twice and NEW once (run.mjs --fixed-dt, JOBS at a time);
-    PASS per still when NEW's diff to the first BASE run is within the BASE-vs-BASE one (the noise floor)."""
+    PASS per still when NEW's diff to the first BASE run is within the BASE-vs-BASE one (the noise floor).
+    KEEP_BASE: reuse a scenario's BASE renders left in build/style/looks/ by an earlier run of the same BASE (its log
+    is there), so a series of gates against one BASE renders it once."""
     sc = {k: v for k, v in looks_scenarios().items() if not only or only in k}
     root = f"{TMP}/looks"
     os.makedirs(f"{root}/diff", exist_ok=True)
@@ -300,6 +302,7 @@ def looks(base, new, jobs=3, size="640x360", only=None, once=False):
         for name, (steps, secs, extra) in sc.items():
             st = [dict(e, shot=f"{root}/{tag}/{name}-{e['shot']}.png") if "shot" in e else e for e in steps]
             if tag == "base1": stills += [(name, e["shot"]) for e in steps if "shot" in e]
+            if keep_base and tag != "new" and os.path.exists(f"{root}/{tag}/{name}.log"): continue
             todo.append((tag, name, dist, script(f"looks-{tag}-{name}", st), secs, extra))
     todo.sort(key=lambda x: -x[4])                                    # the longest first
     t0 = time.time(); running, codes, wall = [], {}, {}
@@ -362,5 +365,5 @@ if __name__ == "__main__":
     {"raven": lambda: raven(a[1], a[2]), "rc": lambda: rc(a[1]), "cvc": lambda: cvc(a[1]),
      "perf": lambda: perf(a[1], a[2], a[3]), "smoke": lambda: smoke(a[1:]),
      "duelstill": lambda: duelstill(a[1], a[2], "--flat" in a),
-     "looks": lambda: looks(a[1], a[2], int(opt("--jobs", 3)), opt("--size", "640x360"), opt("--only"), "--once" in a)}[a[0]]()
+     "looks": lambda: looks(a[1], a[2], int(opt("--jobs", 3)), opt("--size", "640x360"), opt("--only"), "--once" in a, "--keep-base" in a)}[a[0]]()
     sys.exit(1 if fails else 0)
