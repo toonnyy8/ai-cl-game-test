@@ -334,3 +334,5 @@ Presentation only, proved on the last commit of the round (the broken cleaver's 
 yk 103.7 s, kk 140.8 s, as before); `duel-rules-test` 6481 checks ALL PASS (the FK reach above, the KATAUDE weapon NIL,
 the clip maps); `pkgcheck.sh duel` 0 / 0 / 0; `./build.sh duel` 0 warnings.
 
+The head turn (§6.1) re-gated the same way: summary byte-identical, cvc 3 PASS, rules test ALL PASS, pkgcheck clean,
+build 0 warnings. The playtest Artifact carries §8 and the turn (v37; the user: 「善哉，請幫我上 playtest」).
