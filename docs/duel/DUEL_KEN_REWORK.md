@@ -356,5 +356,4 @@ build 0 warnings. The playtest Artifact carries §8 and the turn (v37; the user:
   on the model: since §8.1 every torso part of the haori is tagged `:haori`, so the base body lost its torso until the
   oni at f58. Now f0 also clears the model's hide list (`refresh-look` at f58 restores the Bankai's).- Checks: `simgate.py --seeds 10 --summary` byte-identical to the base, `--cvc` 3 PASS, `duel-rules-test` 6481 ALL PASS,
   `pkgcheck.sh duel` 0 / 0 / 0, `./build.sh duel` 0 warnings, the headless run clean; the cinematic's stills (35005,
-  35040, 35070) show the haori torso until the oni.
-
+  35040, 35070) show the haori torso until the oni.- The playtest Artifact carries §8.4 (v38; the user: 「請幫我上 playtest」).
