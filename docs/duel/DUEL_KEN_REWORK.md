@@ -235,3 +235,20 @@ volumes unchanged:
 - Gates (all 21 pairings, 20 seeds, against the parent `7e7f5b0`): every match K.O.; every median, min, max and win count
   identical; one match of LI changed (132 → 120 s). `--cvc` 3 PASS (the references unchanged). Host tests ALL PASS (the
   revival test now passes FREE: rules 6481); `pkgcheck` 0 / 0 / 0; `./build.sh duel` 0 warnings.
+
+## 8. The Bankai and KATAUDE (2026-10-09, in progress)
+
+- The playtest Artifact carries §6–§7 (v36; the user: 「幫我更新 playtest」), then 「開始設計」 for the Bankai.
+- Diagnosis (stills of every `:ke-b-*` clip and the weapon): the oni still wears the white haori; the broken cleaver is
+  the old slab's, not the new Nozarashi's; J1 / J2 / K1 / K2 borrow the upright base clips, K3 RYOTE's KABUTO-WARI, SP1
+  the meteor (the oni stands up out of his crouch for each); KATAUDE swings with the burst right arm, its drawn reach up
+  to 0.58 m past the volume.
+- Asked (the face and horns were chosen in §4): the look (multi-select), the motion plan, KATAUDE. The user:
+  - look: 「服裝改成原作」「斷刀照新野晒重做」「頭髮更狂亂」 and 「開始前請先找尋卍解的參考圖」 (steam not chosen);
+  - the plan: 「可以，照方案做」: stance / prowl low, head forward, jaw open, the left hand a claw, the back dash a roaring
+    leap; J1 / J2 beast hacks forehand / backhand off the shoulder; J3 the left hook kept; K1 ONATA a hatchet chop sprung
+    from the crouch; K2 EGURI-AGE a gouge up from the floor; K3 a leaping cleave through the guard; L the bite with a
+    wrench; SP1 TATE-GOTO the leaping two-handed diagonal; SP2's NAGURI-TOBASHI a left uppercut; O MAPPUTATSU the leaping
+    vertical, refined;
+  - KATAUDE: 「換左手拿刀＋專屬動作」: the cleaver in the left hand (a generic draw option, presentation only), the right
+    arm hanging, a one-handed close set at the ×0.7 reach.
