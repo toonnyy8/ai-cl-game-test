@@ -2338,3 +2338,11 @@ J／K 縮短、受擊值、分身消耗三批合併後，照新的測試規則�
 - 延後項目（各附先量什麼）：`defdebug`、一護／千手丸 HUD 量表的每幀配置、`hud-text` 快取、千手丸繪圖的 `defun-fast`、`gate.lisp` 拆檔、`toon-ground-seg` 搬進引擎前要先改寫的 4 處。
 - 顧問最終審查（Fable 讀合併後的差異，專看閘門看不到的地方）：沒有行為問題；收尾修正 `do-events` 的 `ignorable`、`fx-smear-capture!` 內部變數加 `%` 前綴、引擎說明文字拿掉遊戲名稱、只接受字面值的參數寫進說明等（`0dccdd0`；模擬逐列相同、cvc 3 項、特效與過場 53 張畫面相同）。
 - 細節：`docs/engine/REFACTOR_2026-10.md`。
+
+## 154. 重構合併回 main（2026-10-09）
+
+使用者：「合併回 main」
+
+- `claude/loving-euler-qhsjxo`（§153 的重構）快轉合併進 `main`；分支開出後 `main` 沒有新提交，所以沒有衝突，§153 的最終閘門（模擬逐列與 `09c6102` 相同、cvc 3 項、108 張畫面與 RAVEN G1 逐位元組相同）就是合併後的狀態。
+- 沒有部署 GitHub Pages，也沒有更新 playtest（只在使用者要求時進行）。
+- 細節：`docs/engine/REFACTOR_2026-10.md`。

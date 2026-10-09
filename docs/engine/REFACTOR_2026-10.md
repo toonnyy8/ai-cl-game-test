@@ -1,6 +1,6 @@
 # Refactor 2026-10: simplify, abstract, promote to the engine
 
-Status: done on branch `claude/loving-euler-qhsjxo` (2026-10-09). Nothing in it changes the sim or a pixel: every batch
+Status: done on branch `claude/loving-euler-qhsjxo` and merged into `main` by fast-forward (the user, 2026-10-09: 「合併回 main」; DEVLOG §154). Nothing in it changes the sim or a pixel: every batch
 passed the bit-identity gates below. DEVLOG §153 is the decision log entry.
 
 ## 1. Request
