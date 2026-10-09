@@ -413,6 +413,25 @@ the 125–210 window); otherwise it is rerun with the full 20 (31120, or no knob
 gates and the awaken A/B streams run on the host-native sim gate** (`tools/simgate.py`, below; built 2026-09-29, DEVLOG
 §38); the browser keeps G2 (`style-gates.py cvc`, the bit-exact references), smoke, duelstill and the touch scripts.
 
+**The looks gate (`style-gates.py looks BASE NEW`, for refactors that must not change a pixel).** 109 fixed stills of
+SOUL DUEL from `run.mjs --fixed-dt` at 640x360 (390x844 for the portrait ones), 15 scripts generated in Python (nothing
+committed): title, MODE / SETTINGS / CONTROLS, the select screen with all six fighters; four CPU-vs-CPU matches (debug
+2000+seed: Yamamoto-Senjumaru, Ichigo-Rukia, Kenpachi-Lille, Senjumaru-Ichigo; the intro, the first frame, then turbo
+jumps of 240 / 960 / 1920 / 3600 ticks each followed by live frames, plus the pause menu); the Kikon and awakening /
+form-change cinematics at their key frames (Yamamoto's Kikon and Bankai, Kenpachi's Kikon, Nozarashi and Bankai, K.O. and
+RESULTS, Rukia's Kikon / awakening / 白霞罸, Ichigo's, Senjumaru's and Lille's awakenings); the HUD in every form (2430+k,
+landscape and portrait), sword smears, the Bankai's cracks and impact stamps, Rukia's ice, Senjumaru's bolts of cloth /
+stitches / umbrella / drapes, Lille's wings and claws; ENDLESS; the portrait touch layout with its RESULTS. They are
+rendered from BASE twice (the noise floor) and NEW once, three at a time by default; per still the max abs channel diff
+and the number of differing pixels, a diff image under `build/style/looks/diff/` for any that differ, and the `duel hash`
+/ `RESULTS` lines of every scenario; PASS only when NEW is within the BASE-vs-BASE noise floor (0 px: all 109 were byte
+identical between two BASE renders on 2026-10-09). Options: `--jobs N`, `--size WxH`, `--only TEXT` (scenario names),
+`--once` (BASE only, to look at the stills). Cost: ~11.9 k rendered frames a dist (~0.085 s each under SwiftShader at
+640x360), so ~17 min of process time per dist and a full three-render gate of ~50 min of process time (measured under a
+machine load of 20-40 on four cores: ~56 min wall at `--jobs 4`); the 900 s default of `run.mjs --timeout` is raised to
+7200 s for it. A still that is noisy between the two BASE runs is not dropped but compared against its own floor and
+listed in the summary line.
+
 **The native sim gate (`tools/simgate.py`).** The same Lisp as `./build.sh duel` (engine + duel MANIFESTs, nothing
 forked, no `#+` guard in any game file), compiled by the 32-bit host ECL with `gcc -m32 -msse2 -mfpmath=sse
 -ffp-contract=off` into `build/simgate/duel.fas` (~2 min, redone when a source is newer). The engine's C layer is
