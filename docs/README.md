@@ -21,6 +21,7 @@ Claude skill 在 repo 根目錄的 `skills/`（連結到 `~/.claude/skills/`）�
 | [ARCHITECTURE.md](engine/ARCHITECTURE.md) | 建置管線、執行模型、GC 規則、ECS／規則／事件、模組分工表，以及一長串 ECL／Emscripten／WebGPU 踩過的坑 |
 | [ENGINE_API.md](engine/ENGINE_API.md) | 引擎 API 參考（依原始檔分組）：座標慣例、輸入與虛擬手把、數學、命中判定、算圖、模型產生、UI、音訊、動畫、剛體角色、時間、過場導演、特效、ECS、`RUN-GAME` |
 | [AUDIO.md](engine/AUDIO.md) | 音訊：Lisp API、C 混音器設計、瀏覽器自動播放處理、合成工具、音效清單 |
+| [REFACTOR_2026-10.md](engine/REFACTOR_2026-10.md) | 2026-10 的重構：精簡、抽象化、搬進引擎的元件；66 個候選項的判定、確定性規則、各批結果與延後清單 |
 | [WORLD.md](engine/WORLD.md) | 頂樓場景：API、碰撞體、場景內容、光源配置、雨、效能數據 |
 | [world-shots/](engine/world-shots/) | 場景 demo 的截圖（出生點、各角落、俯視、水窪、頭目戰的血雨） |
 

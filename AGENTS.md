@@ -88,6 +88,7 @@ tools/pkgcheck.sh duel                   # ECL never warns about undefined / une
 | ASSIST | `python3 tools/assistgate.py` | report the masher's win % per setting |
 | CPU score | `python3 tools/aieval.py --char C` (roster index 0–4) | AI work only (DUEL_AI_V2) |
 | G2 references | `python3 tests/style-gates.py cvc dist/duel` (or `simgate.py --cvc`) | identical to `tests/style-cvc-ref.txt`; on an intended change regenerate it (header note + "Before:") and update every quote of those lines |
+| Looks (refactors) | `python3 tests/style-gates.py looks BASE_DIST dist/duel --jobs 4 [--keep-base]` (BASE = a copy of `dist/duel` built before the change) | 108 stills byte-identical to BASE (noise floor 0); for changes that must not move a pixel |
 | Shipping build | `./build.sh duel` last | |
 
 - Engine and RAVEN EDGE tests (run what a change touches): `tests/ecs-test.lisp`, `tests/test-math.lisp` (header has its load line), `tests/input-test.lisp`,
@@ -134,7 +135,7 @@ tools/pkgcheck.sh duel                   # ECL never warns about undefined / une
 | `docs/README.md` | the index of every doc, one line each |
 | `docs/DEVLOG.zh-TW.md` | the decision log (numbered §, newest last), why things are the way they are |
 | `docs/guides/` | `TUTORIAL.zh-TW.md` (learning path), `PLAYBOOK.zh-TW.md` (reusable experience), `DREAM_RSI.zh-TW.md` (the AI search experience), `CHARACTER_DESIGN.zh-TW.md` (designing a fighter, from Lille: the ⚠ questions to ask first) |
-| `docs/engine/` | `ARCHITECTURE.md`, `ENGINE_API.md`, `AUDIO.md`, `WORLD.md` (+ `world-shots/`) |
+| `docs/engine/` | `ARCHITECTURE.md`, `ENGINE_API.md`, `AUDIO.md`, `WORLD.md` (+ `world-shots/`), `REFACTOR_2026-10.md` (the refactor: verdicts, determinism rules for helpers, deferred list) |
 | `docs/raven-edge/` | `GAME_DESIGN.md`, `GAMEPLAY.md` |
 | `docs/duel/` | `DUEL_DESIGN.md` (rules + move tables, the source of truth), `DUEL_GAMEPLAY.md` (build, debug commands, gates), `DUEL_STRINGS.md`, per character (`DUEL_YAMA_REWORK`, `DUEL_NOZARASHI_V2`, `DUEL_KEN_BANKAI`, `DUEL_RUKIA`, `DUEL_ICHIGO`, `DUEL_SENJUMARU`, `DUEL_LILLE` (in design)), systems (`DUEL_AI_V2`, `DUEL_LEARNING`, `DUEL_ASSIST`, `DUEL_ENDLESS`, `DUEL_MOBILE_DESIGN`) |
 | `docs/style/` | `STYLE_STORM_RESEARCH.md`, `STYLE_STORM_DESIGN.md` (the ink look, its numbers and gates) |
