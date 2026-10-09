@@ -1,129 +1,15 @@
 ;;;; debug.lisp — developer tools (design-v1 §15). Module._debug_cmd(N) from the page / test scripts
 ;;;; (arguments are encoded in the integer); the first call turns the combat log and stats lines on.
-;;;;   2000+s   seeded CPU vs CPU now, NORMAL, both characters drawn from seed s (s < 100)
-;;;;   3000+s / 4000+s / 5000+s   the same with a fixed pairing: YY / YK (P1 Yama) / KK   (s < 1000)
-;;;;   2100 skip every cinematic (toggle)     2101 next match starts with 2 Konpaku each (smoke run)
-;;;;   2102 turbo: up to 120 steps per frame, no scene drawn (seed gates; toggle)
-;;;;   2103 hitbox overlay   2104 CPU intent overlay   2105 CPUs off (toggle)   2106 perf log
-;;;;   2107 dump both fighters (state, gauges) to the log    2108 fill both fighters' Reiatsu
-;;;;   2109 toggle the CAMERA option (BEHIND / SIDE; the behind camera is VS CPU's)
-;;;;   2120+k   perf: toggle drawing part k off (0 HUD, 1 fighters, 2 stage, 3 hazards + cine looks)
-;;;;   2110+p   the seed gate: seeds 1..20 of pairing p (0 YY, 1 YK, 2 KK, 3 all six: + RY RK RR) back to back
-;;;;            (turbo; cinematics play: they are part of the match time), then "duel gate ..." lines
-;;;;   2200+k   force cinematic k now and hold it (0 Bankai, 1 Nozarashi, 2 Jokaku Enjo, 3 Tenchi Kaijin,
-;;;;            4 Ken Kikon, 5 sky split, 6 Soul Break, 7 intro, 8 K.O.)   2209 a K.O. of P2 (YK), then RESULTS
-;;;;            9 Ken Bankai (P1 in the Bankai), 10 MAPPUTATSU (2210)
-;;;;   10000+1000k+f   stills: cinematic k (as 2200+k) held at frame f, the effects frozen there; when k already
-;;;;            runs, it continues to frame f
-;;;;   2300+k   force a special now (0 Hellfire + Ennetsu, 1 full Shiranui, 2 fire wave, 3 Kaka
-;;;;            skeletons, 4 Kyokujitsujin, 5 Split the Meteor, 6 guard break, 7 perfect Hoho,
-;;;;            8 Ken stance, 9 Buttagiru, 10 Ken SP2 flurry, 11 EVOLUTION both, 12 Bankai form (+ 2 crack patches),
-;;;;            13 Nozarashi form (cup 1), 14 P2 red, 15 cup 2 RYOTE, 16 cup 3 NOMIHOSE)
-;;;;   2315+k   frame probe, YY at 2 m: P1's move k (0 J1, 1 K3, 2 J3, 3 Taimatsu) into P2's held guard
-;;;;            -> "duel probe ... advantage"; 2319 trade probe: both Q1 on the same tick -> hash line
-;;;;   2320     Burst test: human P1 Yamamoto (3 bars) at 2 m from Kenpachi, whose idle CPU mashes Quick for
-;;;;            60 steps (J1 J2 J3): press Shift+J after the 2nd hit
-;;;;   2321     force a Burst Reverse now: P1 (in Kenpachi's Q2 hitstun) bursts out (screenshots)
-;;;;   2322-2324 a burst on P1 now (YK 3.5 m apart, CPUs off, P1 flash-step full): 2322 WHITE, 2323 BLUE, 2324 ORANGE (its aura,
-;;;;            the HUD bar draining in its colour; screenshots); 2325 the same scene, no burst (the bar's glow, the RV chip)
-;;;;   2327     guard gauge test: human P1 Yamamoto 2 m from Kenpachi pressing Quick for 20 s (hold U): the
-;;;;            gauge drains, GUARD CRUSH, hits land while U is held, the guard back only when full
-;;;;   2328     consing of the new HUD gauge bars (100 draws each) -> "hud consing" line; the Bankai stances' looks
-;;;;            (10 draws each) -> "vfx consing" line
-;;;;   2329     consing of the brush captions (each layout, 100 draws) and the impact splash -> "brush consing" line
-;;;;   2330+k   O module test: human P1 with module k mod 4 (0 ENJO, 1 TENCHI, 2 CHARGE, 3 LEAP) 1 m inside
-;;;;            its reach from a Yamamoto CPU who (k div 4) 0 stands, 1 guards, 2 stands red, 3 guards red,
-;;;;            4 plays (HARD), 5 stands, 0.1x slow motion 14 s (shots), 6 guards once hit (the dash-in is
-;;;;            BLOCKED), 7 red and guards once hit (the Kikon anyway); the script holds O
-;;;;   2326     force a clash now (Breaker vs Breaker: YK 3 m apart, the CLASH event; screenshots)
-;;;;   2370+k   Bankai stance tests (human P1; the script presses the keys; STANCE-TEST): 0 East vs an idle Kenpachi
-;;;;            3 m (KYOKKO, U to West, SHONETSU JIGOKU, J drops to East), 1 East's J strings into a guard kept full (the
-;;;;            pierce's chip), 2 West's ward under Kenpachi's Quick mash (no blockstun, 28 a string, GUARD CRUSH on the
-;;;;            4th -> East), 3 / 4 East Shift+K into a guard at 2 / 6 m,
-;;;;            5 West parry (Kenpachi's F1 comes when the parry starts; P1's gauge at 40: the catch refills it), 6 South
-;;;;            cast on an idle Kenpachi 3 m, 7 / 8 human Kenpachi under a CPU's South at 5 m (7 normal speed, 8 0.25x slow
-;;;;            motion 6 s), 9 West's ward vs ranged hits (the :ranged probe: cup-3 Kenpachi at 4.8 m casts the rift twice,
-;;;;            the cash-out, then cup 1's Meteor, then the Meteor again at 3 m)
-;;;;   2380+k   Nozarashi v2 / West ward tests (human P1, P2's CPU off; NOME-TEST): 0 the ladder (NOME raised +12 every
-;;;;            45 steps to 100, then left to drain: cups up, then down), 1 DRINK (cup 3, Bankai East mashes Quick into
-;;;;            his held U), 2 / 3 KUKAN-GIRI's rift into a guard / a standing Yamamoto (K, K K), 4 the cash-out (cup 3,
-;;;;            Shift+K into a red Yamamoto's guard at 4 m, then O held: the Kikon is worth 2), 5 West's ward under
-;;;;            RYOTE's K K (the cut, x*WARD-MULT*: 53 of his guard gauge per string, GUARD CRUSH on the 2nd)
-;;;;   2362+k   Phase 5 looks (force-special 62+k): 0 Taimatsu (YK 4.5 m), 1 Nadegiri (Hellfire, 5 m), 2 Yamamoto's
-;;;;            Breaker (Ikkotsu, 6 m), 3 Kenpachi drinks cup 3 dry on entry (the NOMIHOSE rung event: the grin beat)
-;;;;   2390     consing of the Phase 5 per-frame looks (10 draws each) -> "vfx5 consing" line
-;;;;   2366     Phase 6 destruction still: YK 4 m apart, a scorch under Kenpachi, a crack and a burst of chips beside him;
-;;;;            Yamamoto shouts and Kenpachi is hurt (face beats: both gameplay face accents)
-;;;;   2391     consing of the Phase 6 per-frame looks (10 draws each) -> "vfx6 consing" line
-;;;;   2392     the left fist's gap to the cleaver's handle over the grip clips and their transitions, raw and with GRIP-LEFT!
-;;;;            (P1 must be Kenpachi, e.g. after 2315 or 2383) -> "grip drift" line
-;;;;   2114+p   the seed gate of 2110+p with the combat log and a pace line every 60 ticks (scratchpad pace.py)
-;;;;   2600+k   *RED-THRESHOLD* = k % (pacing the seed gate without a rebuild)
-;;;;   20000+k / 21000+k / 22000+k / 23000+k   balance knobs without a rebuild (the Bankai rework's gate tuning):
-;;;;            *WARD-MULT* / *PIERCE-MAX* = k / 100, *GG-REGEN* / *GG-REGEN-GUARDLESS* = k / 10
-;;;;   2393     the string test: the fighters of the running match 2.2 m apart, facing, idle, nothing held (scripts: a
-;;;;            string + the O ender, e.g. duel-touch.json)
-;;;;   2394+k   the string test (docs/duel/DUEL_STRINGS.md): human P1 in form k (0 Yamamoto Shikai, 1 Bankai East, 2 Kenpachi
-;;;;            base, 3 RYOTE) 2.2 m from an idle Kenpachi (CPU off; East with his guard gauge at 30: KOSEI x2.4); the
-;;;;            script presses J / K / O (duel-strings.json)
-;;;;   24000+k / 25000+k / 26000+k   the strings' gate knobs without a rebuild: *AI-O-ENDER* = k / 100, NORMAL's
-;;;;            *AI-FOLLOW-GUARD-P* = k / 100, every K2 / K3 (and copy) deals k % of its written damage;
-;;;;            27000+k *KOSEI-REIATSU* = k / 100 (and *KOSEI-FS* half that), 28000+k *AI-STRING-FLASH-P* = k / 100,
-;;;;            29000+k *AI-SP-CANCEL-P* = k / 100
-;;;;   2700+k   portrait presentation (docs/duel/DUEL_MOBILE_DESIGN.md P2): 0 the framing / text probe on (every 30th battle
-;;;;            frame off a cinematic: both fighters' upper halves clear of the two HUD blocks, >= 70 % of each one's width on
-;;;;            the screen; the smallest pixel-font
-;;;;            glyph drawn) and its "duel frame ..." line now; 1 the fighters 24 m apart; 2 P2 flashed to P1's side
-;;;;            (90 deg, 4 m: the camera's catch-up); 3 1 m apart; 4 consing of the portrait camera, dolly and HUD column
-;;;;            (100 calls each) -> "portrait consing" line
-;;;;   35000+f / 36000+f   stills of the Bankai cinematic / MAPPUTATSU held at frame f (as 10000+1000k+f, k 9 / 10)
-;;;;   2386+k   Kenpachi's Bankai tests (docs/duel/DUEL_KEN_BANKAI.md; BANKAI-TEST): 0 cup 3 + red 3 m from an idle Yamamoto (P
-;;;;            enters), 1 in the Bankai at once 2.2 m, 2 the Bankai with 1 pip left, 3 片腕
-;;;;   30000+k  the seed gate plays seeds k+1 .. k+N (31100+n: N = n, default 20);  31000+10a+b the CPUs' Bankai entry, P1 a / P2 b: 0 the kit's rule,
-;;;;            1 always (whenever allowed), 2 never, 3 the rule with its chance 1 (the gamble A/B);
-;;;;            32000+k *ARM-SELF* = k, 33000+k *ARM-BURST-SELF* = k, 34000+k *ARM-CRACK* = k; 37000+k the cup-3 CPU's
-;;;;            Bankai chance :p = k / 100, 38000+k its :own-konpaku = k
-;;;;   Rukia (docs/duel/DUEL_RUKIA.md): 6000+s / 7000+s / 8000+s seeded CPU vs CPU RY / RK / RR (P1 Rukia); 2118 the seed gate of
-;;;;            her three pairings (RY RK RR; 2113 now plays all six), 2119 RY and RK only, 2125+k pairing k alone (0 YY 1 YK
-;;;;            2 KK 3 RY 4 RK 5 RR: the gate in parallel; k 0-14, then 2135+k for k 15-64 in 2150-2199; *PAIRS* =
-;;;;            ROSTER-PAIRS), 2136+i roster character i's pairings (i 4-13: 2140 Senjumaru's five), 2124 2118 with the combat log
-;;;;            (the pacing log); 2410+k her tests (RUKIA-TEST: human P1 Rukia, P2's CPU
-;;;;            off): 0 Shikai 5 m from Kenpachi, 1 -18 C 2.2 m, 2 -50 C 2.2 m, 3 zero 1.8 m, Kenpachi's J1 into the ward (the
-;;;;            freeze-touch), 4 zero, Yamamoto's full Shiranui from 7 m (optic: it hits), 5 zero, Kenpachi's Breaker from 5 m
-;;;;            (the CRACK), 6 zero, the same Breaker answered by REIDO TOKETSU within 5.5 m (a counter-hit), 7 zero left to
-;;;;            warm out (-50 after ~2.9 s), 8 zero 3 m from him (hold U: braced until the guard gauge runs out, the CRACK);
-;;;;            2420+k K -> L (RUKIA-KL-TEST, *KL-TESTS*: 0 Shikai, 1 -18, 2 -50, 3 zero, 4 -18 short of L's cold, 5 / 6 Shikai /
-;;;;            -18 into a held guard): "duel probe kl" lines per hit, his stun frames left before it; 72000+k / 73000+k her
-;;;;            CPU's :l-after-k = k / 100 in the Shikai / the three bands; 68001 the white Rukia's lashes dark again (the before still); 2430+k the portrait
-;;;;            HUD review (HUD-REVIEW, *HUD-REVIEW*: both sides in given forms and gauges, CPUs off);
-;;;;            40000+f / 41000+f / 42000+f stills of her Kikon / 白霞罸 / awakening cinematics held at frame f
-;;;;            (as 10000+1000k+f, k 11 / 12 / 13; 2211-2213 force them); 39000+10a+b the CPUs' awakening, P1 a / P2 b: 0 the
-;;;;            kit's :awaken rule, 1 always on EVOLUTION, 2 never (the A/B); knobs 43000+k *FROST-SLOW* = k / 100, 44000+k
-;;;;            *ZERO-BRACE-DRAIN* = k / 10 per s, 45000+k *FREEZE-TOUCH* = k, 46000+k *RU-COOL-RATE* = k per s, 47000+k
-;;;;            *CRACK-SELF* = k, 48000+k zero's damage x k / 100, 49000+k the awakening rule's :melee-share = k / 100,
-;;;;            50000+k the -18 / -50 CPU's :cool chance = k / 100, 51000+k *RU-THAW-LOCK* = k frames,
-;;;;            53000+k the :cool distance k / 10 m, 54000+k the Shikai CPU's ZONE intent weight k, 55000+k zero's warming
-;;;;            k / 10 per s, 56000+k / 57000+k the -50 / -18 walk k / 10 m/s, 58000+k the Shikai's damage x k / 100,
-;;;;            60000+k the Shikai's damage taken x k / 100, 61000+k the bands' (-18 k / 100, -50 x0.9, zero x0.889 of it),
-;;;;            62000+k *RU-BLOCK-COOL* = k / 100, 63000+k *RU-HIT-WARM* = k / 100, 65000+k zero's field :away = k / 100,
-;;;;            66000+k *FIELD-FLOOR* = k / 100, 67000+k P1's cold = k (0-200) and its band (review stills); 68000 the
-;;;;            white Rukia's bodies rebuilt with the old ink keyline and hair-coloured brows (before / after stills);
-;;;;            69000+f / 70000+f a close-up of the white Rukia's face at zero / in the 白霞罸 costume; 71000 Kenpachi's
-;;;;            reiatsu opaque <-> see-through (*REIATSU-GLASS*, before / after stills), 71001+k human P1 Kenpachi in cup
-;;;;            k+1 (4: the Bankai) 3 m from an idle Yamamoto. Every gate row is followed by a "duel band" line per awakened Rukia side
-;;;;            (BAND-ACC: frames, damage dealt / taken per band, zero visits and their exits, bracing frames, freeze-touches)
-;;;;   200000 + 1000 h + 100 c1 + 10 c2 + m   the learning gate (docs/duel/DUEL_LEARNING.md): seeds as the seed gate, P1 (roster
-;;;;            c1) a CPU with habit h (*HABITS*: 0 plain, 1 J on wake-up, 2 guard after a block, 3 grab-happy, 4 Hoho-happy,
-;;;;            5 burst-happy, 6 the button-masher of ASSIST's gate: 81000 + g + 3 c + 6 b its assist, g AUTO GUARD 0-2, c / b
-;;;;            AUTO COMBO / BREAK on; 81020+i the gates' CPU difficulty (0 EASY 1 NORMAL 2 HARD), 81100+k *ASSIST-MULT* = k / 100;
-;;;;            81030+i the assist's learner off / on, 81040+i P2 a button-masher too (unassisted: the anti-mash check);
-;;;;            tools/assistgate.py; docs/duel/DUEL_ASSIST.md),
-;;;;            7-9 against Lille (DUEL_LILLE §24.9): 7 steps off his traces to their right, 8 Hohos his TENSHIN, 9 guards HOSHA;
-;;;;            P2 (roster c2) learning by m (0 off, 1 all, 2 model only, 3 bandit only, 4 all but its character's own
-;;;;            situations), fresh at the start, kept across
-;;;;            the matches; a "duel learn row" per match. Every other debug command switches learning off (*LEARN-DEBUG-OFF*)
-;;;;   2400 god (both fighters' Reishi is topped back up to 400 every frame; Kikon still lands)   2500+k human P1 vs an
-;;;;            idle CPU (k: 0 Yama vs Ken, 1 Ken vs Yama, 2 Yama vs Yama, 3 Ken vs Ken)
+;;;; The full command table (every range, with its arguments and the probe lines it prints) is in
+;;;; docs/duel/DUEL_GAMEPLAY.md "Debug commands"; claim a new range THERE before using it. In brief:
+;;;;   2000-8000+s   seeded CPU vs CPU now (2000+s random pairing, 3000+ YY, 4000+ YK, 5000+ KK; 6000-8000+s the Rukia pairings)
+;;;;   2100-2109     toggles: skip cinematics, turbo, hitbox / intent overlays, CPUs off, perf log, dump, fill Reiatsu, camera
+;;;;   2110-2119, 2125+k, 2136+i, 30000+k   the seed gates (all pairings / one pairing / one character's), their seed offset
+;;;;   2200+k, 10000+1000k+f   force cinematic k now and hold it / stills of it at frame f
+;;;;   2300-2399, 2410-2430, 2450+k   scenarios and probes (2300+k specials, 2315+k frame probes, 2370+k / 2380+k stance
+;;;;               tests, 2386+k Bankai tests, 2410+k Rukia, 2450+k Senjumaru); 2400 god; 2500+k human P1 vs an idle CPU
+;;;;   20000-29000, 32000-73000   knobs without a rebuild (value = k, k / 10 or k / 100 per range: see the doc)
+;;;;   74000-75599 Ichigo, 79000-79999 Lille, 80000-80999 ENDLESS, 81000+ the ASSIST gate, 90000+ Senjumaru, 200000+ the learning gate
 ;;;; Log lines: "duel -> STATE" (flow.lisp), "duel hash t=N ..." every 600 battle ticks (h = CPU heat),
 ;;;; "duel -> RESULTS winner ..." (flow.lisp), CLOG combat lines "[tick] ...".
 (in-package :duel)
@@ -134,6 +20,10 @@
 (defvar *god* nil)
 (defvar *gate-log* nil "Debug 2114+p: the seed gate keeps the combat log and logs a pace line every 60 ticks.")
 (defvar *no-draw* (make-array 4 :initial-element nil) "Debug 2120+k: skip drawing part k (perf bisection).")
+
+(defmacro cons-per (name form &optional (n 10))
+  "The consing probes' unit: run FORM N times and give \"NAME bytes\" (the string the *-cons-check lines list)."
+  `(let ((c0 (cons-bytes))) (dotimes (i ,n) ,form) (format nil "~a ~d" ,name (- (cons-bytes) c0))))
 
 (defun state-hash-line ()
   "The determinism hash: positions quantized to cm, facing to 0.01 rad, every gauge (f flash-step,
@@ -240,6 +130,23 @@ KATAUDE (0-4), rung changes 1->2 (5), 2->3 (6), 3->2 (7), 2->1 (8), 3->1 (9: the
 
 (defvar *probe* nil "A running frame probe: (kind name t0 attacker-free defender-free blocked).")
 
+(defun set-probe (kind name &optional a b c)
+  "Start a frame probe now: *PROBE* = (KIND NAME this tick A B C)."
+  (setf *probe* (list kind name *match-tick* a b c)))
+
+(defun full-gauges! (e &optional meter)
+  "A scenario's preamble for fighter E: cooldowns cleared, Reiatsu / flash-step / guard gauge full, not guardless,
+Reishi at its cap; with METER also the kit meter set to it and its idle timer cleared."
+  (let ((g (gauges e)))
+    (fill (fighter-cd (fighter e)) 0)
+    (setf (gauges-reiatsu g) *reiatsu-max* (gauges-fs g) *fs-max* (gauges-gg g) *gg-max* (gauges-guardless g) nil
+          (gauges-reishi g) (gauges-reishi-max g))
+    (when meter (setf (gauges-meter g) meter (gauges-meter-idle g) 0))))
+
+(defun hold-guard! (b left)
+  "Brain B (switched off) presses Guard for LEFT more steps (a large LEFT holds it; 0 releases)."
+  (setf (brain-press b) :guard (brain-press-mod b) nil (brain-press-left b) left))
+
 (defun probe-block (name)
   "Frame probe: P1 (YY, 2 m) starts move NAME into P2's held guard; PROBE-UPDATE logs the advantage."
   (ensure-battle :yamamoto :yamamoto)
@@ -247,21 +154,21 @@ KATAUDE (0-4), rung changes 1->2 (5), 2->3 (6), 3->2 (7), 2->1 (8), 3->1 (9: the
   (setf (fighter-state (fighter *p2*)) :guard (fighter-guard-t (fighter *p2*)) 30
         (brain-press (brain *p2*)) :guard (brain-press-left (brain *p2*)) 999)   ; off: held
   (start-move *p1* (kit-move (kit-of *p1*) name))
-  (setf *probe* (list :block name *match-tick* nil nil nil)))
+  (set-probe :block name))
 
 (defun probe-trade ()
   "Trade probe: YY at 2 m, both start Q1 on the same step; 40 steps later the hash line."
   (ensure-battle :yamamoto :yamamoto)
   (place *p1* *p2* 2.0)
   (dolist (e (list *p1* *p2*)) (start-move e (kit-move (kit-of e) :ya-j1)))
-  (setf *probe* (list :trade :ya-j1 *match-tick* nil nil nil)))
+  (set-probe :trade :ya-j1))
 
 (defun probe-mash ()
   "Burst test (2320): human P1 at 2 m from P2, whose (switched off) CPU mashes Quick (PROBE-UPDATE)."
   (ensure-battle :yamamoto :kenpachi)
   (place *p1* *p2* 2.0)
   (setf (gauges-reiatsu (gauges *p1*)) *reiatsu-max*)
-  (setf *probe* (list :mash :quick *match-tick* nil nil nil)))
+  (set-probe :mash :quick))
 
 (defun force-burst ()
   "P1 Yamamoto, 2 hits into Kenpachi's string, bursts out now."
@@ -294,12 +201,12 @@ The script holds O (or taps it)."
       (place *p1* *p2* (- reach 1.0)))
     (fill (fighter-cd (fighter *p1*)) 0)
     (when (<= 20 k 23) (slowmo 0.1 14.0))
-    (when (>= k 24) (setf *probe* (list :guard-after nil *match-tick* nil nil nil)))
+    (when (>= k 24) (set-probe :guard-after nil))
     (let ((v (floor k 4)) (g (gauges *p2*)) (b (brain *p2*)))
       (setf (gauges-reishi g) (if (member v '(2 3 7)) 200 (gauges-reishi-max g))
             (gauges-gg g) *gg-max* (gauges-guardless g) nil
-            (brain-off b) (/= v 4) (brain-difficulty b) :hard (brain-delay b) (getf *ai-delay* :hard)
-            (brain-press b) :guard (brain-press-mod b) nil (brain-press-left b) (if (member v '(1 3)) 999 0)))))
+            (brain-off b) (/= v 4) (brain-difficulty b) :hard (brain-delay b) (getf *ai-delay* :hard))
+      (hold-guard! b (if (member v '(1 3)) 999 0)))))
 
 (defun probe-pressure ()
   "Guard gauge test (2327): human P1 Yamamoto 2 m from Kenpachi, whose switched-off CPU presses Quick
@@ -310,7 +217,7 @@ gauge is full again (60 f + 7.1 s)."
   (ensure-battle :yamamoto :kenpachi)
   (place *p1* *p2* 2.0)
   (setf (gauges-gg (gauges *p1*)) *gg-max* (gauges-guardless (gauges *p1*)) nil)
-  (setf *probe* (list :pressure :quick *match-tick* nil nil nil)))
+  (set-probe :pressure :quick))
 
 (defparameter *stance-tests*
   ;; k: P1 P1-form P2 P2-form distance
@@ -328,19 +235,15 @@ gauge at 40); 7 / 8 make P2 cast South at once; 9: P2 is a cup-3 Kenpachi (NOME 
     (ensure-battle c1 c2)
     (force-form *p1* f1) (force-form *p2* f2)
     (place *p1* *p2* d)
-    (dolist (e (list *p1* *p2*))
-      (let ((g (gauges e)))
-        (fill (fighter-cd (fighter e)) 0)
-        (setf (gauges-reiatsu g) *reiatsu-max* (gauges-fs g) *fs-max* (gauges-gg g) *gg-max* (gauges-guardless g) nil
-              (gauges-reishi g) (gauges-reishi-max g))))
+    (dolist (e (list *p1* *p2*)) (full-gauges! e))
     (let ((b (brain *p2*)))
-      (setf (brain-press b) :guard (brain-press-mod b) nil (brain-press-left b) (if (member k '(1 3 4)) 999 0)))
+      (hold-guard! b (if (member k '(1 3 4)) 999 0)))
     (case k
-      (1 (setf *probe* (list :wall nil *match-tick* nil nil nil)))
-      (2 (setf *probe* (list :ward :quick *match-tick* nil nil nil)))
-      (9 (setf (gauges-meter (gauges *p2*)) 100f0 (gauges-meter-idle (gauges *p2*)) 0
-               *probe* (list :ranged nil *match-tick* nil nil nil)))
-      (5 (setf *probe* (list :parry-bait nil *match-tick* nil nil nil) (gauges-gg (gauges *p1*)) 40f0))
+      (1 (set-probe :wall nil))
+      (2 (set-probe :ward :quick))
+      (9 (setf (gauges-meter (gauges *p2*)) 100f0 (gauges-meter-idle (gauges *p2*)) 0)
+         (set-probe :ranged nil))
+      (5 (set-probe :parry-bait nil) (setf (gauges-gg (gauges *p1*)) 40f0))
       ((7 8) (when (= k 8) (slowmo 0.25 6.0)) (force-cmd *p2* :sp2)))))
 
 (defparameter *nome-tests*
@@ -358,19 +261,15 @@ probe (the ladder), 1 the :drink probe (P2 mashes Quick), 2 / 4 hold P2's guard,
     (ensure-battle c1 c2)
     (force-form *p1* f1) (force-form *p2* f2)
     (place *p1* *p2* d)
-    (dolist (e (list *p1* *p2*))
-      (let ((g (gauges e)))
-        (fill (fighter-cd (fighter e)) 0)
-        (setf (gauges-reiatsu g) *reiatsu-max* (gauges-fs g) *fs-max* (gauges-gg g) *gg-max* (gauges-guardless g) nil
-              (gauges-reishi g) (gauges-reishi-max g) (gauges-meter-idle g) 0)))
+    (dolist (e (list *p1* *p2*)) (full-gauges! e 0f0))   ; (the meters are set right below)
     (setf (gauges-meter (gauges *p1*)) (f32 m) (gauges-meter (gauges *p2*)) (if (= k 5) 70f0 0f0))
     (when (= k 4) (setf (gauges-reishi (gauges *p2*)) 200))
     (let ((b (brain *p2*)))
-      (setf (brain-press b) :guard (brain-press-mod b) nil (brain-press-left b) (if (member k '(2 4)) 999 0)))
+      (hold-guard! b (if (member k '(2 4)) 999 0)))
     (case k
-      (0 (setf *probe* (list :nome nil *match-tick* nil nil nil)))
-      (1 (setf *probe* (list :drink :quick *match-tick* nil nil nil)))
-      (5 (setf *probe* (list :cut :flash *match-tick* nil nil nil))))))
+      (0 (set-probe :nome nil))
+      (1 (set-probe :drink :quick))
+      (5 (set-probe :cut :flash)))))
 
 (defun bankai-test (k)
   "Kenpachi's Bankai tests 2386+K (docs/duel/DUEL_KEN_BANKAI.md; human P1 Kenpachi, P2 an idle Yamamoto CPU; the script presses
@@ -381,10 +280,9 @@ with 1 pip, 2.2 m: the 4th strike, then the burst; 3 片腕 at 2.2 m."
   (ensure-battle :kenpachi :yamamoto)
   (force-form *p1* :nomihose)
   (place *p1* *p2* (if (zerop k) 3.0 2.2))
+  (full-gauges! *p1* 100f0)
   (let ((g (gauges *p1*)))
-    (fill (fighter-cd (fighter *p1*)) 0)
-    (setf (gauges-reiatsu g) *reiatsu-max* (gauges-fs g) *fs-max* (gauges-gg g) *gg-max* (gauges-guardless g) nil
-          (gauges-meter g) 100f0 (gauges-meter-idle g) 0 (gauges-reishi g) 300 (gauges-arm-pending g) nil
+    (setf (gauges-reishi g) 300 (gauges-arm-pending g) nil
           (gauges-konpaku g) (min (gauges-konpaku g) *bankai-konpaku*)))   ; the entry: <= 4 Konpaku (2026-09-28)
   (setf (gauges-reishi (gauges *p2*)) (gauges-reishi-max (gauges *p2*)))
   (case k
@@ -408,14 +306,10 @@ zero left to warm out, 8 zero 3 m from him (hold U: braced to the CRACK). A :ruk
     (ensure-battle :rukia c2)
     (force-form *p1* (if (eq f1 :zero) :m50 f1)) (force-form *p2* f2)
     (place *p1* *p2* d)
-    (dolist (e (list *p1* *p2*))
-      (let ((g (gauges e)))
-        (fill (fighter-cd (fighter e)) 0)
-        (setf (gauges-reiatsu g) *reiatsu-max* (gauges-fs g) *fs-max* (gauges-gg g) *gg-max* (gauges-guardless g) nil
-              (gauges-reishi g) (gauges-reishi-max g) (gauges-meter g) 0f0 (gauges-meter-idle g) 0)))
+    (dolist (e (list *p1* *p2*)) (full-gauges! e 0f0))
     (setf (gauges-meter (gauges *p1*)) (case f1 (:m50 150f0) (:zero *cold-max*) (t 0f0)))   ; the band's cold
     (when (eq f1 :zero) (force-form *p1* :zero))
-    (setf *probe* (list :rukia k *match-tick* nil nil nil))
+    (set-probe :rukia k)
     (let ((b (brain *p2*)))                             ; (the switched-off brain still writes its held button)
       (case k
         (3 (force-cmd *p2* :q))
@@ -433,17 +327,13 @@ P2 takes: its reaction, his stun frames left just before it (> 0: a combo), the 
     (ensure-battle :rukia :kenpachi)
     (force-form *p1* (if (eq form :zero) :m50 form)) (force-form *p2* :base)
     (place *p1* *p2* 2.2)
-    (dolist (e (list *p1* *p2*))
-      (let ((g (gauges e)))
-        (fill (fighter-cd (fighter e)) 0)
-        (setf (gauges-reiatsu g) *reiatsu-max* (gauges-fs g) *fs-max* (gauges-gg g) *gg-max* (gauges-guardless g) nil
-              (gauges-reishi g) (gauges-reishi-max g) (gauges-meter g) 0f0 (gauges-meter-idle g) 0)))
+    (dolist (e (list *p1* *p2*)) (full-gauges! e 0f0))
     (setf (gauges-meter (gauges *p1*)) (f32 cold))
     (when (eq form :zero) (force-form *p1* :zero))
     (when guard
       (setf (fighter-state (fighter *p2*)) :guard (fighter-guard-t (fighter *p2*)) 30
             (brain-press (brain *p2*)) :guard (brain-press-left (brain *p2*)) 999))
-    (setf *probe* (list :kl k *match-tick* 0 0 nil))))
+    (set-probe :kl k 0 0)))
 
 (defparameter *hud-review*
   ;; P1 (character form meter) P2 (character form meter) low-gauge: the portrait HUD's last row in every form (stills)
@@ -577,14 +467,12 @@ screen punctuation with an impact splash and of a brush Latin line (callouts, bi
     (dolist (c (list cine card call res)) (setf (aref (bcap-f c) 0) (f32 (- (fx-clock) 1.0))))
     (dotimes (i 2) (dolist (c (list cine card call res)) (draw-bcap c w h)))   ; the splash arguments boxed once
     (impact-splash 0.0 0.0 0.0 60)
-    (macrolet ((per (name form)
-                 `(let ((c0 (cons-bytes))) (dotimes (i 100) ,form) (format nil "~a ~d" ,name (- (cons-bytes) c0)))))
-      (log-msg "brush consing (100 draws, B): ~{~a~^, ~}"
-               (list (per "cine" (draw-bcap cine w h)) (per "card" (draw-bcap card w h)) (per "callout" (draw-bcap call w h))
-                     (per "results" (draw-bcap res w h)) (per "splash" (draw-screen-fx w h))
-                     (progn (set-line 300 300 40 '(1 1 1 1)) (setf (aref *bl* 7) (line-width "GUARD BREAK"))
-                            (per "line" (brush-line "GUARD BREAK")))
-                     (per "roll" (%roll-up (camera-up *camera*) *cam-eye* *cam-at* 8f0)))))
+    (log-msg "brush consing (100 draws, B): ~{~a~^, ~}"
+             (list (cons-per "cine" (draw-bcap cine w h) 100) (cons-per "card" (draw-bcap card w h) 100) (cons-per "callout" (draw-bcap call w h) 100)
+                   (cons-per "results" (draw-bcap res w h) 100) (cons-per "splash" (draw-screen-fx w h) 100)
+                   (progn (set-line 300 300 40 '(1 1 1 1)) (setf (aref *bl* 7) (line-width "GUARD BREAK"))
+                          (cons-per "line" (brush-line "GUARD BREAK") 100))
+                   (cons-per "roll" (%roll-up (camera-up *camera*) *cam-eye* *cam-at* 8f0) 100)))
     (v3-set! (camera-up *camera*) 0f0 1f0 0f0)
     (setf (aref *screen-fx* 7) 0f0)))
 
@@ -607,28 +495,26 @@ by 10 draws of each Bankai stance look (0 B each; the crossfade only while it ru
   ;; the Bankai stances' per-frame looks (10 draws each; particles emitted too): West's flame garb, the bound ash,
   ;; the heat sheet, KYOKKO's ray, South's crack, the aura crossfade (DRAW-AURA); and the Phase-3 :heat aura for
   ;; comparison
-  (macrolet ((per (name form)
-               `(let ((c0 (cons-bytes))) (dotimes (i 10) ,form) (format nil "~a ~d" ,name (- (cons-bytes) c0)))))
-    (log-msg "vfx consing (10 draws, B): ~{~a~^, ~}"
-             (list (per "garb" (vfx-aura 0f0 0f0 0f0 1.8f0 :garb 1f0 0.016f0))
-                   (per "bound" (vfx-aura 0f0 0f0 0f0 1.8f0 :bound 1f0 0.016f0))
-                   (per "nomihose" (vfx-aura 0f0 0f0 0f0 2f0 :nomihose 1f0 0.016f0))
-                   (per "oni" (vfx-aura 0f0 0f0 0f0 2f0 :oni 1f0 0.016f0))                 ; Kenpachi's Bankai pillar
-                   (per "oni smoulder" (vfx-aura 0f0 0f0 0f0 2f0 :oni 1f0 0.016f0 :k 0.15f0))
-                   (per "rift" (vfx-rift 1f0 0f0 4.4f0 0f0 nil))
-                   (per "heat(old)" (vfx-aura 0f0 0f0 0f0 1.8f0 :heat 1f0 0.016f0))
-                   (per "blade(old)" (vfx-blade-embers 0f0 1f0 0f0 0f0 1.8f0 -0.5f0 0.016f0))
-                   (per "kyoku" (vfx-line-cut 0f0 0f0 0f0 -9f0 0.2f0 0.67f0 :kyoku :dt 0.016f0))
-                   (per "kyokko" (vfx-line-cut 0f0 0f0 0f0 -4.6f0 0.1f0 0.23f0 :kyokko :dt 0.016f0))
-                   (per "south" (vfx-line-cut 0f0 0f0 0f0 -1.2f0 0.1f0 0.93f0 :south :dt 0.016f0))
-                   (per "enjo(old)" (vfx-line-cut 0f0 0f0 0f0 -9f0 0.2f0 0.67f0 :enjo :dt 0.016f0))
-                   (progn (kosei-mote *p1* 2.0 0.0 1.0 0.0)                     ; KOSEI's mote, 0.1 s into its flight
-                          (setf (aref *kosei-v* 0) (f32 (- (fx-clock) 0.1)))
-                          (per "kosei mote" (%kosei-mote 0 300f0 90f0 2f0)))
-                   (let ((f (fighter *p1*)))
-                     (format nil "~a, ~a" (per "aura crossfading" (draw-aura f (if (evenp i) :garb :heat) 0f0 0f0 0f0 1.8f0 1f0 0.016f0 1.0))
-                             (progn (setf (aref *aura-t* (fighter-side f)) (f32 (- (fx-clock) 5.0)))   ; settled
-                                    (per "aura settled" (draw-aura f :heat 0f0 0f0 0f0 1.8f0 1f0 0.016f0 1.0)))))))))
+  (log-msg "vfx consing (10 draws, B): ~{~a~^, ~}"
+           (list (cons-per "garb" (vfx-aura 0f0 0f0 0f0 1.8f0 :garb 1f0 0.016f0))
+                 (cons-per "bound" (vfx-aura 0f0 0f0 0f0 1.8f0 :bound 1f0 0.016f0))
+                 (cons-per "nomihose" (vfx-aura 0f0 0f0 0f0 2f0 :nomihose 1f0 0.016f0))
+                 (cons-per "oni" (vfx-aura 0f0 0f0 0f0 2f0 :oni 1f0 0.016f0))                 ; Kenpachi's Bankai pillar
+                 (cons-per "oni smoulder" (vfx-aura 0f0 0f0 0f0 2f0 :oni 1f0 0.016f0 :k 0.15f0))
+                 (cons-per "rift" (vfx-rift 1f0 0f0 4.4f0 0f0 nil))
+                 (cons-per "heat(old)" (vfx-aura 0f0 0f0 0f0 1.8f0 :heat 1f0 0.016f0))
+                 (cons-per "blade(old)" (vfx-blade-embers 0f0 1f0 0f0 0f0 1.8f0 -0.5f0 0.016f0))
+                 (cons-per "kyoku" (vfx-line-cut 0f0 0f0 0f0 -9f0 0.2f0 0.67f0 :kyoku :dt 0.016f0))
+                 (cons-per "kyokko" (vfx-line-cut 0f0 0f0 0f0 -4.6f0 0.1f0 0.23f0 :kyokko :dt 0.016f0))
+                 (cons-per "south" (vfx-line-cut 0f0 0f0 0f0 -1.2f0 0.1f0 0.93f0 :south :dt 0.016f0))
+                 (cons-per "enjo(old)" (vfx-line-cut 0f0 0f0 0f0 -9f0 0.2f0 0.67f0 :enjo :dt 0.016f0))
+                 (progn (kosei-mote *p1* 2.0 0.0 1.0 0.0)                     ; KOSEI's mote, 0.1 s into its flight
+                        (setf (aref *kosei-v* 0) (f32 (- (fx-clock) 0.1)))
+                        (cons-per "kosei mote" (%kosei-mote 0 300f0 90f0 2f0)))
+                 (let ((f (fighter *p1*)))
+                   (format nil "~a, ~a" (cons-per "aura crossfading" (draw-aura f (if (evenp i) :garb :heat) 0f0 0f0 0f0 1.8f0 1f0 0.016f0 1.0))
+                           (progn (setf (aref *aura-t* (fighter-side f)) (f32 (- (fx-clock) 5.0)))   ; settled
+                                  (cons-per "aura settled" (draw-aura f :heat 0f0 0f0 0f0 1.8f0 1f0 0.016f0 1.0))))))))
 
 (defun god-update ()
   (when *god*
@@ -814,20 +700,18 @@ left-hand grip (its step and the IK), and a caption slicing out."
     (stage-debris 0.0 0.0 24)
     (bcap-exit cap) (setf (aref (bcap-f cap) 7) (- (fx-clock) 0.1))
     (face-accent m :shout)                                  ; (a face change stamps the time once: not per frame)
-    (macrolet ((per (name form)
-                 `(let ((c0 (cons-bytes))) (dotimes (i 10) ,form) (format nil "~a ~d" ,name (- (cons-bytes) c0)))))
-      (log-msg "vfx6 consing (10 draws, B): ~{~a~^, ~}"
-               (list (per "marks" (st-draw-marks))
-                     (per "chips" (st-chips 0.016f0))
-                     (per "pillar-near" (vfx-fire-pillar px ez 0.3f0 0.8f0 0.016f0))
-                     (per "wave-near" (vfx-fire-wave wx ez 0f0 0.3f0 9f0 0.016f0))
-                     (per "skull" (vfx-skull 0f0 3f0 0f0 0.98f0))
-                     (per "rain" (vfx-rain 0f0 0f0 0.5f0 0.9f0))
-                     (per "shout" (vfx-face-accent (model-joints m) 1 100))
-                     (per "hurt" (vfx-face-accent (model-joints m) 2 100))
-                     (per "face-accent" (face-accent m :shout))
-                     (per "grip" (grip-step m t 0.016f0))
-                     (per "caption-exit" (draw-bcap cap 1280 720)))))
+    (log-msg "vfx6 consing (10 draws, B): ~{~a~^, ~}"
+             (list (cons-per "marks" (st-draw-marks))
+                   (cons-per "chips" (st-chips 0.016f0))
+                   (cons-per "pillar-near" (vfx-fire-pillar px ez 0.3f0 0.8f0 0.016f0))
+                   (cons-per "wave-near" (vfx-fire-wave wx ez 0f0 0.3f0 9f0 0.016f0))
+                   (cons-per "skull" (vfx-skull 0f0 3f0 0f0 0.98f0))
+                   (cons-per "rain" (vfx-rain 0f0 0f0 0.5f0 0.9f0))
+                   (cons-per "shout" (vfx-face-accent (model-joints m) 1 100))
+                   (cons-per "hurt" (vfx-face-accent (model-joints m) 2 100))
+                   (cons-per "face-accent" (face-accent m :shout))
+                   (cons-per "grip" (grip-step m t 0.016f0))
+                   (cons-per "caption-exit" (draw-bcap cap 1280 720))))
     (stage-clear-marks) (setf (aref (model-looks m) 0) 0f0)))
 
 (defun vfx5-cons-check ()
@@ -838,24 +722,22 @@ move-beat choices of DRAW-FIGHTER."
     (dolist (k '(:cone :boom :ring :gash :garb-guard :scorch :flare :gutter :nade)) (stamp k 1.0 1.0 0.0 :dx 1.0 :dz 0.0 :scale 2.0 :n 0.7))
     (wave-ghost-start 3.0 0.0 0.0 3.5 0.3)
     (setf (model-beat m) 0.5)
-    (macrolet ((per (name form)
-                 `(let ((c0 (cons-bytes))) (dotimes (i 10) ,form) (format nil "~a ~d" ,name (- (cons-bytes) c0)))))
-      (log-msg "vfx5 consing (10 draws, B): ~{~a~^, ~}"
-               (list (per "fireball" (vfx-fireball 0f0 1.2f0 0f0 0.5f0 1f0 0f0 0.016f0))
-                     (per "charge" (vfx-charge 0f0 1.2f0 0f0 0.6f0 0.016f0))
-                     (per "pillar" (vfx-fire-pillar 0f0 0f0 0.3f0 0.8f0 0.016f0))
-                     (per "dome" (vfx-fire-dome 0f0 0f0 1.7f0 1.2f0 1.96f0 0.016f0))
-                     (per "hellfire" (vfx-aura 0f0 0f0 0f0 1.8f0 :hellfire 1f0 0.016f0))
-                     (per "evolution" (vfx-aura 0f0 0f0 0f0 1.8f0 :evolution 1f0 0.016f0 :k 0.5f0))
-                     (per "breaker" (vfx-aura 0f0 0f0 0f0 1.8f0 :breaker-fire 1f0 0.016f0 :k 1.5f0))
-                     (per "breaker-ring" (vfx-breaker-ring 0f0 0f0 0.3f0))
-                     (per "garb-flare" (vfx-aura 0f0 0f0 0f0 1.8f0 :garb 1f0 0.016f0 :k 1.9f0))
-                     (per "rift" (vfx-rift 1f0 0f0 4.4f0 0f0 nil))
-                     (per "wave-ghost" (wave-ghosts-draw 0.001f0))
-                     (per "stamps" (stamps-draw 0f0))
-                     (per "face" (face-of e f m mv))
-                     (per "beat-pose" (beat-pose! (anim-pose (model-anim m)) 0.5f0))
-                     (per "move-beats" (move-beats e f m mv 0f0 0f0 0f0 0f0)))))
+    (log-msg "vfx5 consing (10 draws, B): ~{~a~^, ~}"
+             (list (cons-per "fireball" (vfx-fireball 0f0 1.2f0 0f0 0.5f0 1f0 0f0 0.016f0))
+                   (cons-per "charge" (vfx-charge 0f0 1.2f0 0f0 0.6f0 0.016f0))
+                   (cons-per "pillar" (vfx-fire-pillar 0f0 0f0 0.3f0 0.8f0 0.016f0))
+                   (cons-per "dome" (vfx-fire-dome 0f0 0f0 1.7f0 1.2f0 1.96f0 0.016f0))
+                   (cons-per "hellfire" (vfx-aura 0f0 0f0 0f0 1.8f0 :hellfire 1f0 0.016f0))
+                   (cons-per "evolution" (vfx-aura 0f0 0f0 0f0 1.8f0 :evolution 1f0 0.016f0 :k 0.5f0))
+                   (cons-per "breaker" (vfx-aura 0f0 0f0 0f0 1.8f0 :breaker-fire 1f0 0.016f0 :k 1.5f0))
+                   (cons-per "breaker-ring" (vfx-breaker-ring 0f0 0f0 0.3f0))
+                   (cons-per "garb-flare" (vfx-aura 0f0 0f0 0f0 1.8f0 :garb 1f0 0.016f0 :k 1.9f0))
+                   (cons-per "rift" (vfx-rift 1f0 0f0 4.4f0 0f0 nil))
+                   (cons-per "wave-ghost" (wave-ghosts-draw 0.001f0))
+                   (cons-per "stamps" (stamps-draw 0f0))
+                   (cons-per "face" (face-of e f m mv))
+                   (cons-per "beat-pose" (beat-pose! (anim-pose (model-anim m)) 0.5f0))
+                   (cons-per "move-beats" (move-beats e f m mv 0f0 0f0 0f0 0f0))))
     (setf (model-beat m) 0f0)))
 
 (defvar *gate-difficulty* :normal "Debug 81020+i: the gates' CPU difficulty (0 EASY 1 NORMAL 2 HARD; ASSIST's gate).")
