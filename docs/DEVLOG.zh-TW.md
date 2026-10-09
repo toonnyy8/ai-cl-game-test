@@ -2316,3 +2316,9 @@ J／K 縮短、受擊值、分身消耗三批合併後，照新的測試規則�
 - 沒有部署 GitHub Pages（只在使用者要求時執行 `tools/deploy-pages.sh`）。
 - 細節：`DUEL_KEN_REWORK.md` §9。
 
+## 152. 部署劍八重製到 gh-pages（2026-10-09）
+
+使用者：「部署到 gh-pages」
+
+- `tools/deploy-pages.sh` 部署了 `main` 的 `1827686`（gh-pages `ebcc58e`）：包含 §141–§151 的劍八重製（基本型態、野晒、卍解與片腕的外觀和動作，以及二次覺醒時機的規則改動）。
+
