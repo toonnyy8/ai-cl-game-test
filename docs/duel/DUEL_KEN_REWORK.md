@@ -255,3 +255,15 @@ volumes unchanged:
     vertical, refined;
   - KATAUDE: 「換左手拿刀＋專屬動作」: the cleaver in the left hand (a generic draw option, presentation only), the right
     arm hanging, a one-handed close set at the ×0.7 reach.
+- References (the user: 「開始前請先找尋卍解的參考圖」): 18 stills of the anime (THE PERFECT CRIMSON) and the colour manga
+  (ch. 669–671) in `.refs/kenpachi-bankai/` (git-ignored third-party art), their sources and notes in
+  `docs/research/kenpachi-rework/bankai-refs.md`. Findings: the whole body crimson; two horns over the eyes (small cones
+  in the anime, big brow-ridge horns in the manga); a brow slit, black commas over the eyes, an eye mask, tear streaks,
+  and in the anime tiger stripes on the cheeks and neck; blank eyes, a full-teeth grin, the scar; bare torso, a ragged
+  black sleeveless mantle over the shoulders, the white obi, black hakama, bare feet; the broken cleaver black with a
+  square snapped end (manga) or steel grey with a hooked spur (anime); after the burst he fights **bare-handed** with
+  his left (grabs Gerard's foot): no source shows the blade moved to the left hand.
+- Asked again on those (2026-10-09): the horns and face 「動畫版：小角＋虎斑紋」; the broken cleaver 「漫畫版：黑色、方形斷口」;
+  KATAUDE 「改成空手（照原作）」 (replacing the left-hand blade: the left-hand weapon option built for it was reverted).
+  KATAUDE's moves keep their frames and volumes; its fist / grab / kick strikes may fall short of them (the FK test
+  allows KATAUDE short, and 0.6 m long).
