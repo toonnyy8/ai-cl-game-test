@@ -170,7 +170,10 @@ volumes unchanged:
     axis, rising 0.07 → 0.115 m toward the edge side) joins it to the head's spine, which now starts at (0.30, 0.07).
   - "The original tassel" read two ways, shown side by side for the user to pick: A, the pre-rework one (dark
     green-grey, hung from the butt); B, the first pass's (dark green strands at the cap's spine corner). The user:
-    「選 A」.
+    「選 A」; then (2026-10-09, during §8): 「抱歉，先幫我重新調整始解的流蘇成 B 選項（另外，當時流蘇的頭尾掛反了）」.
+    B again, its strands now cones whose points sit in the knot at the cap's spine corner and whose bases fan out away
+    from the blade (before, each strand was turned about its middle: they crossed, the spread at the knot and the
+    tails gathered, so it read upside down).
 
 ### 6.2 The strikes
 - The user, on the plan (KATATE gets its own clips through the kit's `:clip-map`, RYOTE's kendo clips refined, NOMIHOSE

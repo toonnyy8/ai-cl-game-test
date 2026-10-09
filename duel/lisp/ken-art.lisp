@@ -257,7 +257,7 @@
 ;; line, a raked point overhanging back beside the hand with a round notch under it, the cutting edge a long convex curve
 ;; rising to 0.6 m at the square far end; near-black, the edge's pale band (2/3 of the sheet's) in slanted light and grey
 ;; stripes with a ragged inner line; a khaki box cap over the whole far end with a stepped foot and a groove; a black
-;; slanted bar from the haft to the head; the original's dark green-grey tassel at the butt
+;; slanted bar from the haft to the head; a dark green tassel from the cap's spine corner, its strands fanning out
 (defun ke-mb-prism (mb profile x0 x1)
   "A prism of the convex PROFILE ((y z) ...) between the planes x = X0 and X1 (a blade's faces and its rim)."
   (let* ((n (length profile))
@@ -298,9 +298,15 @@
           (loop for i below 8 do (with-xform (mb (xform :y (- 0.03 (* i 0.085)) :roll 0.6)) (mb-box mb 0.054 0.006 0.054)))
           (mbc mb #x16161A)                              ; the black butt
           (with-xform (mb (xform :y -0.67)) (mb-bevel-box mb 0.058 0.06 0.058 0.008))
-          (mbc mb #x3A4A3E)                              ; the tassel (the original's, the user 2026-10-09: 「選 A」): dark
-          (with-xform (mb (xform :y -0.76)) (mb-box mb 0.04 0.06 0.04))   ; green-grey, hung from the butt
-          (with-xform (mb (xform :y -0.9 :z -0.02 :pitch 0.2)) (mb-box mb 0.05 0.22 0.03))))
+          (mbc mb #x2F4A35)                              ; the tassel (candidate B, the user 2026-10-09: 「調整始解的流蘇成 B
+          (with-xform (mb (xform :y 1.54 :z 0.06)) (mb-box mb 0.035 0.06 0.045))   ; 選項」): a dark green knot at the cap's
+          ;; (spine corner) the strands: each a cone whose point sits in the knot, its base fanning out away from the blade
+          ;; (each turned about the knot, not its middle: the head up, the tail spread; the user: 「當時流蘇的頭尾掛反了」)
+          (loop for (ax ay) in '((0.0 0.0) (0.22 0.1) (-0.22 0.1) (0.14 -0.18) (-0.14 -0.18) (0.0 0.24))
+                do (let* ((n (sqrt (+ (* ax ax) (* ay ay) 1.0))) (ux (/ (- ax) n)) (uy (/ (- ay) n)) (uz (/ 1.0 n)) (h 0.42))
+                     (with-xform (mb (xform :x (* -0.5 h ux) :y (- 1.51 (* 0.5 h uy)) :z (- 0.04 (* 0.5 h uz))
+                                            :pitch (atan uz uy) :roll (asin (- ux))))
+                       (mb-cone mb 0.026 h :segments 4))))))
 
 ;; the Bankai's broken cleaver (anime ep. 44): Nozarashi's slab snapped off on a diagonal at ~1 m, ink-black with a white
 ;; edge line, no guard, no cap, a long cloth-wrapped tang like the first Zangetsu's hilt; no fire, no glow
