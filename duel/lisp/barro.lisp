@@ -1110,7 +1110,7 @@ him whose delay is at most LEAD): its key (-2 - its spawn tick), or NIL."
   "An awakened mode (§8, the old Lille's stance rule): a move of his starting within its reach + 1 m (an :x-axis line: E on
 it), not a Breaker / grab, or a hazard of his within 12 f: one roll per window, :stance :p x the difficulty (0 under :gg of
 the guard gauge): U (MUJITTAI, the kit's :guard-to). Else a sideways Step off a lane, or a Hoho on the generic Hoho roll
-(his move >= 6 f out), or nothing (:NONE: the generic guard would enter the stance)."
+(his move >= 6 f out), else the generic answers (its guard is U: MUJITTAI as well)."
   (let* ((solid (not (or (eq (snap-kind s) :breaker) (member :grab (snap-flags s)))))
          (mv-threat (and solid (br-ai-threat-p e s d 1.0)))
          (key (if mv-threat (snap-start s) (br-ai-hazard-key e 12))))
@@ -1132,8 +1132,8 @@ the guard gauge): U (MUJITTAI, the kit's :guard-to). Else a sideways Step off a 
                             (ai-hoho-spare-p (gauges-fs g) (gauges-reishi g) (gauges-reishi-max g))
                             (< (brain-hoho-roll b) (ai-table e :hoho 0.2)))
                        (why b :stance-hoho :hoho)
-                       (why b :stance-pass :none)))
-            (t (why b :stance-pass :none)))))))
+                       nil))                              ; (the generic answers: a guard is U, MUJITTAI too)
+            (t nil))))))
 
 (defun br-ai-opp-reach (e)
   "His longest J / K reach (his current kit): what 'in reach' means for MUJITTAI's idle rule."
