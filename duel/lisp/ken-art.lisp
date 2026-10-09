@@ -142,7 +142,7 @@
          (:box 0.004 0.03 0.004 :at (0.035 0.08 0.0745) :rot (0 0 36) :c :crease :tag :face-hurt)
          ;; TYBW hair (DUEL_KEN_REWORK §5.1, the user 2026-10-08: 「頭髮：刺狀頭頂＋長鬃髮」): a cap over the skull, an upswept
          ;; spiky crown (up, back and out), a back sheet and ragged ends hanging to mid-back, strands over the shoulders, the
-         ;; side locks and two fringe strands; no bells
+         ;; side locks; no fringe, no bells
          (:sphere 0.0695 :stretch 0.03 :at (0 0.15 -0.024) :seg 10 :c :hair)
          (:box 0.2 0.44 0.04 :at (0 -0.03 -0.15) :rot (0 -18 0) :c :hair)
          (:cone 0.0413 0.324 :at (0.0805 0.045 -0.008) :rot (0 172 -14) :seg 4 :c :hair)      ; side locks
@@ -163,10 +163,7 @@
          (:cone 0.05 0.24 :at (0.091 -0.284 -0.197) :rot (0 162 -3) :seg 4 :c :hair)
          (:cone 0.034 0.38 :at (0.141 -0.103 -0.068) :rot (0 174 -14) :seg 4 :c :hair) ; over the shoulders
          (:cone 0.034 0.38 :at (-0.141 -0.103 -0.068) :rot (0 174 14) :seg 4 :c :hair)
-         ;; fringe: two spikes rooted at the hairline, tips up and forward (the user, 2026-10-09: 「刺刺頭髮畫反了，變成尖角朝下」;
-         ;; they were pitched 160, tips down at the brow)
-         (:cone 0.0225 0.108 :at (0.016 0.262 0.072) :rot (0 25 -12) :seg 4 :c :hair)
-         (:cone 0.0225 0.108 :at (-0.02 0.262 0.072) :rot (0 25 15) :seg 4 :c :hair)
+         ;; (no fringe: its two strands are gone, the user 2026-10-09: 「那兩根瀏海直接刪除」)
          ;; white highlight strokes on the black hair (Kubo's white-on-black)
          (:box 0.006 0.05 0.004 :at (0.028 0.215 0.036) :rot (0 -48 -12) :c :fold)
          (:box 0.006 0.04 0.004 :at (-0.034 0.21 0.034) :rot (0 -48 16) :c :fold)
@@ -331,7 +328,8 @@
 
 ;; Nozarashi's head up to END along the blade (1.62: whole; the Bankai's broken cleaver cuts it short): the body, the
 ;; point, the black bar, the pale band and its chips, each profile clipped at the plane y = END; then the haft and the butt
-(defun ke-mb-noz-head (mb end)
+(defun ke-mb-noz-head (mb end &optional (haft 1.0))
+  "Nozarashi's head cut at END up the blade; the haft HAFT times its length, lengthened downward (the top kept at 0.08)."
   (flet ((prism (profile x0 x1)
            (let ((pts (loop with out = nil
                             for ((y0 z0) (y1 z1)) on (append profile (list (first profile)))
@@ -359,12 +357,13 @@
     (loop for (y z) in '((0.22 0.415) (0.65 0.562) (1.0 0.594) (1.3 0.603))
           when (< y (- end 0.05))
             do (with-xform (mb (xform :y y :z z :roll 0.6)) (mb-box mb 0.05 0.03 0.03)))
-    (mbc mb #xECECE8)                                    ; the long white-wrapped haft
-    (with-xform (mb (xform :y -0.3)) (mb-box mb 0.05 0.76 0.05))   ; (it stops short of the head: the bar joins them)
-    (mbc mb #x6A6A70)
-    (loop for i below 8 do (with-xform (mb (xform :y (- 0.03 (* i 0.085)) :roll 0.6)) (mb-box mb 0.054 0.006 0.054)))
-    (mbc mb #x16161A)                                    ; the black butt
-    (with-xform (mb (xform :y -0.67)) (mb-bevel-box mb 0.058 0.06 0.058 0.008))))
+    (let* ((len (* 0.76 haft)) (drop (- len 0.76)))
+      (mbc mb #xECECE8)                                  ; the long white-wrapped haft
+      (with-xform (mb (xform :y (- 0.08 (* 0.5 len)))) (mb-box mb 0.05 len 0.05))   ; (it stops short of the head: the bar joins them)
+      (mbc mb #x6A6A70)
+      (loop for i below (round (* 8 haft)) do (with-xform (mb (xform :y (- 0.03 (* i 0.085)) :roll 0.6)) (mb-box mb 0.054 0.006 0.054)))
+      (mbc mb #x16161A)                                  ; the black butt
+      (with-xform (mb (xform :y (- -0.67 drop))) (mb-bevel-box mb 0.058 0.06 0.058 0.008)))))
 
 (defweapon :nozarashi (:length 1.62 :base 0.2)         ; the haft below the grip, the head above it
   (:solid (ke-mb-noz-head mb 1.62)
@@ -385,9 +384,10 @@
 
 ;; the Bankai's broken cleaver (DUEL_KEN_REWORK §8; the user 2026-10-09: 「卍解刀身直接沿用始解刀身，然後將我打 X 的地方移除
 ;;變成斷刀」): Nozarashi's own head, haft and colours, snapped at 0.9 m up the blade: the cap, the tassel and the far
-;; 0.72 m gone, the end cut square and chipped
+;; 0.72 m gone, the end cut square and chipped; its haft 1.3 times as long, lengthened downward (the user: 「將刀柄向下
+;; 伸長，使其變成原本的 1.3 倍」)
 (defweapon :ke-broken (:length 0.9 :base 0.2)
-  (:solid (ke-mb-noz-head mb 0.9)
+  (:solid (ke-mb-noz-head mb 0.9 1.3)                    ; the haft 1.3 times Nozarashi's, longer below (0.76 -> 0.99 m)
           (mbc mb #x1C1C20)                              ; the square break, chipped
           (loop for (z r) in '((0.13 0.5) (0.3 -0.4) (0.46 0.7))
                 do (with-xform (mb (xform :y 0.9 :z z :roll r)) (mb-box mb 0.05 0.045 0.05)))))

@@ -283,7 +283,9 @@ fingertips ~,3f m (~,2f of height), hips ~,3f m (legs ~,2f of height), neck gap 
                 (body-scale b) (body-hunch b) (body-props b))
       (when (actor-grip a) (grip-left! (actor-joints a) *v-one*))
       (draw-body b (actor-joints a) (actor-x a) 0.0 (actor-z a) (actor-yaw a)
-                 :weapon (actor-weapon a) :hide (actor-hide a) :face (actor-face a) :tint (actor-tint a) :rim (actor-rim a))))
+                 :weapon (actor-weapon a) :face (actor-face a)
+                 ;; a non-NIL :hide replaces the face list: add the other two faces' tags, as the game's HIDE-SET does
+                 :hide (and (actor-hide a) (append (actor-hide a) (face-hide (actor-face a)))) :tint (actor-tint a) :rim (actor-rim a))))
   (when *v-weapon* (draw-weapon *v-weapon* *v-weapon-m*))
   (perf-mark)
   (when *v-stage* (stage-draw rdt))

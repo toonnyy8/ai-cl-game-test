@@ -283,10 +283,18 @@ volumes unchanged:
   the user: 「卍解刀身直接沿用始解刀身，然後將我打 X 的地方移除變成斷刀」 (the X over the cap, the tassel and the far half
   of the head). Now Nozarashi's own head, haft, butt and colours (one function, `ke-mb-noz-head`, draws both: every
   profile clipped at the plane y = END), snapped at 0.9 m up the blade: the khaki cap, the tassel and the far 0.72 m gone,
-  the square break chipped. `:length` 1.12 → 0.9 m (only the art: the FK test's tip).
+  the square break chipped. `:length` 1.12 → 0.9 m (only the art: the FK test's tip). Then (the user:
+  「卍解刀身造型直接把始解修改成斷刀，然後把刀柄伸長 1.3 倍」「將刀柄向下伸長，使其變成原本的 1.3 倍」) its haft 1.3 times
+  Nozarashi's, lengthened downward: 0.76 → 0.99 m, the top kept, the butt 0.23 m lower, 10 bindings for 8
+  (`ke-mb-noz-head`'s HAFT argument; Nozarashi passes 1.0 and draws as before).
 - The fringe (every form; the user on the Bankai's face still: 「我圈起來的那兩個刺刺頭髮畫反了，變成尖角朝下」): the two
-  fringe cones hung tips down at the brow (pitch 160); now rooted at the hairline (0.262 m up, 0.072 m forward), pitched
-  25°, tips up and forward, splayed 12° / 15°.
+  fringe cones hung tips down at the brow (pitch 160); first turned up from the hairline (pitch 25), then on the next
+  stills the user: 「那兩根瀏海直接刪除」: both removed.
+- The lips (the user: 「嘴唇不要用白色，換回紅膚色」): the face has no lip parts; the white bands round the mouth in the
+  stills were the three expressions' teeth drawn at once: the viewer (`tests/duel-view.lisp`) passed a kit's `:hide`
+  list as is, and a non-NIL `:hide` replaces the face list. The viewer now adds the other two faces' tags as the game's
+  `hide-set` does; in the game each expression shows only its own teeth (neutral: one bar; shout: the upper and lower
+  rows in the dark open mouth; hurt: the clenched rows) on the crimson skin.
 
 ### 8.2 The strikes (built)
 
