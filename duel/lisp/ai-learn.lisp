@@ -148,8 +148,8 @@ perception delay) and swings where he reappears."
 (defun learn-press (e b cmd d &optional anywhere)
   "Press counter CMD at distance D when it can go (a J / K only within its reach, unless ANYWHERE: he reappears behind
 us; an SP's Hoho without flash-step is a guard): T when pressed; the read is counted."
-  (let* ((kit (kit-of e)) (f (fighter e)) (g (gauges e))
-         (cmd (if (and (eq cmd :hoho) (not (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)))) :guard cmd))
+  (let* ((kit (kit-of e))
+         (cmd (if (and (eq cmd :hoho) (not (hoho-ready-p e))) :guard cmd))
          (mv (and (member cmd *kit-commands*) (kit-command-move kit cmd))))
     (when (case cmd
             ((:q :f) (and mv (kit-command-ok-p e cmd) (or anywhere (<= d (+ (mv-reach mv) 0.4)))))
@@ -213,10 +213,10 @@ predicted Hoho is only primed (the decision goes on: the bait)."
 (defun learn-weights (e l d weights)
   "The bandit's factors on a neutral pick's WEIGHTS (a fresh plist) for distance D in E's context; a Hoho the band leaves
 out gets *LEARN-HOHO-W* first when it may go. Returns the plist."
-  (let ((row (learn-row (learn-context e) (learn-bin d))) (tab (lrn-tab l)) (f (fighter e)) (g (gauges e)))
+  (let ((row (learn-row (learn-context e) (learn-bin d))) (tab (lrn-tab l)))
     (when (member :bandit *learn-use*)
       (unless (or (getf weights :hoho) (kit-rooted (kit-of e))
-                  (not (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))))
+                  (not (hoho-ready-p e)))
         (setf weights (list* :hoho *learn-hoho-w* weights)))
       (loop for tail on weights by #'cddr
             for arm = (position (car tail) *learn-arms*)

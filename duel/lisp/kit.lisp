@@ -364,6 +364,9 @@ plays the base form's SANREN, :lb-sanren, on his wings)."
                        (loop for mv being the hash-values of (kit-moves kit)
                              collect (kit-move-clip kit (mv-clip mv)) collect (kit-move-clip kit (mv-clip-2 mv)))))))
 
+(defun strip-keys (plist keys) "PLIST without the entries of KEYS (a fresh list)."
+  (loop for (k v) on plist by #'cddr unless (member k keys) append (list k v)))
+
 (defun register-kit (character form spec)
   (let* ((spec (resolve-tuning spec))
          (parent (and (getf spec :inherit) (find-kit character (getf spec :inherit))))
@@ -371,57 +374,37 @@ plays the base form's SANREN, :lb-sanren, on his wings)."
          (commands (append (getf spec :commands) (and parent (kit-commands parent))))
          (strings (append (getf spec :strings) (and (getf spec :grid) (string-grid (getf spec :grid)))
                           (and parent (kit-strings parent))))
-         ;; the child's keys come first, so they win (&key takes the leftmost)
+         ;; the child's keys come first, so they win (a keyword argument list takes the leftmost)
          (merged (list* :commands commands :strings strings
-                        (append spec (loop for (k v) on pspec by #'cddr
-                                           unless (member k '(:inherit :startup-add :reach-mult :grid))
-                                             append (list k v))))))
-    (destructuring-bind (&key inherit name awakening awaken-form duration (burn 0.0) (mult 1.0) (taken 1.0) guard-to drop-to keep
-                           (cornered 0.0) (cornered-max 0.0) passives blade-chip (walk 3.0) (run 8.0)
-                           (run-clips '(:sh-run :sh-skate-b :sh-slide-r :sh-slide-l)) (reishi *reishi-max*)
-                           body weapon stance hide aura (lift 0.0) intro win intro-callout intro-weapon callout swing-sfx absorb-sfx
-                           enter-clips enter-hook exit-hook meter (reset-reiatsu 0.0) ai cine blade grade
-                           kikon-konpaku meter-gain form-name drink-clip respect-callout bankai-form bankai-ok pips
-                           crush-hook rooted field (warm 0.0) cold (frost-touch 0) reset-form u-tag l-after-k l-after-j calm hooks endless-form clip-map
-                           stun-tolerance (gg-regen 1.0) (startup-add 0) (reach-mult 1.0) commands strings grid)
-        merged
-      (declare (ignore grid))
-      (let ((kit (make-kit :character character :form form :inherit inherit :name name
-                           :awakening awakening :awaken-form awaken-form :duration duration :burn burn
-                           :mult mult :taken taken :guard-to guard-to :drop-to drop-to :keep keep :cornered cornered :cornered-max cornered-max
-                           :passives passives :blade-chip blade-chip :walk walk :run run :run-clips run-clips :reishi reishi :body body :lift lift
-                           :weapon weapon :stance stance :hide hide :aura aura :intro intro :win win
-                           :intro-callout intro-callout :intro-weapon intro-weapon :callout callout
-                           :swing-sfx swing-sfx :absorb-sfx absorb-sfx
-                           :enter-clips enter-clips :enter-hook enter-hook :exit-hook exit-hook
-                           :meter meter :reset-reiatsu reset-reiatsu :ai ai :cine cine :blade blade :grade grade
-                           :kikon-konpaku (or kikon-konpaku (if awakening *kikon-konpaku-awakened* *kikon-konpaku*))
-                           :meter-gain meter-gain :form-name (or form-name (symbol-name form)) :drink-clip drink-clip
-                           :respect-callout respect-callout :bankai-form bankai-form :bankai-ok bankai-ok :pips pips
-                           :crush-hook crush-hook :rooted rooted :field field :warm warm :cold cold
-                           :frost-touch frost-touch :reset-form reset-form :u-tag u-tag :l-after-k l-after-k :l-after-j l-after-j :calm calm :endless-form endless-form :clip-map clip-map
-                           :stun-tolerance stun-tolerance :gg-regen gg-regen
-                           :hooks hooks :commands commands :strings strings :spec merged))
-            (own (loop for (nil m) on (getf spec :commands) by #'cddr collect m)))
-        ;; every move the form can reach. The derivation rule (design v2 §0): a move is as written when the
-        ;; form lists it in its own :commands or the parent form doesn't have it (new to this form: its
-        ;; own strings); an inherited one gets the form's derivation (:startup-add / :reach-mult), and a form
-        ;; with no derivation takes the parent's version of it (Nozarashi v2 §2.8: NOMIHOSE plays RYOTE's
-        ;; derived moves, not the written ones)
-        (dolist (m (remove-duplicates
-                    (append (loop for (nil m) on commands by #'cddr when m collect m)   ; (a NIL command: none in this form)
-                            (loop for (from nil to) in strings collect from collect to)
-                            (loop for l in (list l-after-k l-after-j) when (and l (not (eq l t))) collect l))))
-          (let ((mv (find-move m)) (pmv (and parent (gethash m (kit-moves parent)))))
-            (setf (gethash m (kit-moves kit))
-                  (cond ((or (member m own) (not pmv)) mv)
-                        ((and (eql startup-add 0) (= reach-mult 1)) pmv)
-                        (t (parse-move m (mv-spec mv) :startup-add startup-add :reach-mult reach-mult))))))
-        (when (and (eq form :base) (not (member character *roster*)))
-          (setf *roster* (append *roster* (list character))))
-        (let ((forms (remove form (gethash character *kits*) :key #'car)))
-          (setf (gethash character *kits*) (acons form kit forms)))
-        kit))))
+                        (append spec (strip-keys pspec '(:inherit :startup-add :reach-mult :grid)))))
+         (startup-add (getf merged :startup-add 0)) (reach-mult (getf merged :reach-mult 1.0)))
+    ;; every other key is a slot of the same name (MAKE-KIT refuses an unknown one); a key the form doesn't set keeps the
+    ;; slot's default (DEFSTRUCT KIT)
+    (let ((kit (apply #'make-kit :character character :form form :spec merged
+                      :kikon-konpaku (or (getf merged :kikon-konpaku)
+                                         (if (getf merged :awakening) *kikon-konpaku-awakened* *kikon-konpaku*))
+                      :form-name (or (getf merged :form-name) (symbol-name form))
+                      (strip-keys merged '(:startup-add :reach-mult :grid))))
+          (own (loop for (nil m) on (getf spec :commands) by #'cddr collect m)))
+      ;; every move the form can reach. The derivation rule (design v2 §0): a move is as written when the
+      ;; form lists it in its own :commands or the parent form doesn't have it (new to this form: its
+      ;; own strings); an inherited one gets the form's derivation (:startup-add / :reach-mult), and a form
+      ;; with no derivation takes the parent's version of it (Nozarashi v2 §2.8: NOMIHOSE plays RYOTE's
+      ;; derived moves, not the written ones)
+      (dolist (m (remove-duplicates
+                  (append (loop for (nil m) on commands by #'cddr when m collect m)   ; (a NIL command: none in this form)
+                          (loop for (from nil to) in strings collect from collect to)
+                          (loop for l in (list (kit-l-after-k kit) (kit-l-after-j kit)) when (and l (not (eq l t))) collect l))))
+        (let ((mv (find-move m)) (pmv (and parent (gethash m (kit-moves parent)))))
+          (setf (gethash m (kit-moves kit))
+                (cond ((or (member m own) (not pmv)) mv)
+                      ((and (eql startup-add 0) (= reach-mult 1)) pmv)
+                      (t (parse-move m (mv-spec mv) :startup-add startup-add :reach-mult reach-mult))))))
+      (when (and (eq form :base) (not (member character *roster*)))
+        (setf *roster* (append *roster* (list character))))
+      (let ((forms (remove form (gethash character *kits*) :key #'car)))
+        (setf (gethash character *kits*) (acons form kit forms)))
+      kit)))
 
 (defmacro defkit (character form &rest spec)
   "One character form as one plist. :inherit FORM takes every key of that (earlier) form; the

@@ -110,6 +110,14 @@ answers it at its timing (AI-OPP-REFLECT): the kits' timed Hohos and the generic
       (x-live-p (snap-move s) (snap-phase s) (snap-hold s) (snap-sf s))
       (< (snap-sf s) (snap-active-end s))))
 
+(defun snap-recovering-p (s)
+  "Is he, as perceived, recovering from a move (its main phase past its active frames)?"
+  (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s))))
+(defun snap-punishable-p (s)
+  "Is he, as perceived, recovering (SNAP-RECOVERING-P) or reeling?"
+  (or (snap-recovering-p s) (eq (snap-state s) :stun)))
+(defun snap-left-seen (s b) "His frames left as perceived S, less brain B's perception delay." (- (snap-left s) (brain-delay b)))
+
 (defun x-on-line-p (s e)
   "Are E's feet on his perceived :x-axis line: within its radius + E's hurt radius + *AI-LINE-MARGIN*?"
   (let ((p (pos-of e)))
@@ -132,9 +140,9 @@ line, X-ON-LINE-P, MARGIN aside)?"
 A command, :PRESSED (the dash), or NIL."
   (let* ((k (getf (kit-ai (kit-of (opp-of e))) :opp-aim)) (mv (snap-move s)))
     (when (and k mv (eq (snap-state s) :move) (mv-hold mv) (snap-x-axis-p s) (not (kit-rooted (kit-of e))))
-      (let* ((lock (move-lock mv)) (g (gauges e)) (f (fighter e))
+      (let* ((lock (move-lock mv))
              (pre (and (eq (snap-phase s) :hold) (< (snap-hold s) lock)))   ; before his lock, as perceived
-             (hoho-ok (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))))
+             (hoho-ok (hoho-ready-p e)))
         (when (/= (snap-start s) (brain-aim-key b))         ; a new aim: its one roll
           (let ((r (sim-rnd01))
                 (ph (opp-chance (getf k :hoho 0.0) (brain-difficulty b))) (ps (opp-chance (getf k :step 0.0) (brain-difficulty b))))
@@ -176,8 +184,7 @@ before the press. Rooted forms can't (they must not stand in it). A command, :PR
         (setf (brain-reflect-key b) (snap-start s)
               (brain-reflect-go b) (< (sim-rnd01) (opp-chance (getf k :p 0.0) (brain-difficulty b)))))
       (when (brain-reflect-go b)
-        (let* ((g (gauges e)) (f (fighter e))
-               (guard (and (plusp (ai-guard-k e)) (not (passive-p e :ward))))
+        (let* ((guard (and (plusp (ai-guard-k e)) (not (passive-p e :ward))))
                (act (reflect-action (+ (snap-sf s) (brain-delay b)) (getf (mv-params mv) :blast (mv-s mv)) guard)))
           (case act
             (:wait (setf (brain-press-left b) 0) (why b :reflect-wait :wait))
@@ -185,7 +192,7 @@ before the press. Rooted forms can't (they must not stand in it). A command, :PR
                     (ai-press b :guard (+ *ai-reflect-guard-lead* 12) :act :hold)   ; (held through the blast)
                     (why b :reflect :pressed))
             (:hoho (setf (brain-reflect-go b) nil)
-                   (and (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)) (why b :reflect :hoho)))
+                   (and (hoho-ready-p e) (why b :reflect :hoho)))
             (:late (setf (brain-reflect-go b) nil) nil)))))))
 
 ;;; ---------------------------------------------------------------- pressing buttons
@@ -206,7 +213,7 @@ awakening (Kenpachi's Bankai, Lille's revival: BANKAI-READY-P, the kit's :bankai
 stay), which breaks a combo the same way since the user 2026-10-09 (DUEL_KEN_REWORK §7)."
   (let ((g (gauges e)))
     (or (and (gauges-evolution g) (awaken-state-p e (fighter e))
-             (>= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (ai-table e :awaken-above 0.0))
+             (>= (reishi-frac g) (ai-table e :awaken-above 0.0))
              (ai-awaken-p e))
         (let ((bk (ai-table e :bankai)))
           (and b bk (bankai-ready-p e) (ai-bankai-p e b bk) t)))))
@@ -271,6 +278,11 @@ while: a charge move is held to its full charge from beyond 7 m, where it has th
 him (*AI-BRAIN*; the gate's masher has a brain of its own), else his own (a CPU), else NIL."
   (or *ai-brain* (brain e)))
 
+(defun ai-chance (e plist)
+  "PLIST's chance (:easy :normal :hard) at E's CPU difficulty: its brain's (AI-BRAIN: an assisted human's is the assist's
+HARD one); no brain: NORMAL's."
+  (let ((b (ai-brain e))) (getf plist (if b (brain-difficulty b) :normal) (getf plist :normal 0.0))))
+
 (defun ai-event-rolls (b s)
   "One roll per opponent action (his SNAP S starts a new one): brain B's guard / Hoho / reaction rolls (AI-REFLEX; the
 assist's AUTO GUARD for the kit's :assist-guard)."
@@ -308,7 +320,7 @@ cancel into SP2 when the victim is on the ground (a launched victim would drop o
   (let* ((kit (fighter-kit f))
          (nq (kit-next kit (mv-name mv) :q))
          (nf (kit-next kit (mv-name mv) :f))
-         (bars (floor (gauges-reiatsu (gauges e)) *reiatsu-bar*)))
+         (bars (reiatsu-bars e)))
     (setf (brain-why b) :string)
     (when (and nf (kit-pip-cmd-p kit :f) (< (gauges-meter (gauges e)) 1f0)) (setf nf nil))   ; no pip: no K link
     (cond ((fighter-queued f) nil)                      ; the next link is latched already
@@ -358,7 +370,7 @@ its own combo)."
 on Reishi by *AI-WHITE-BEHIND* of the max (fractions), *AI-WHITE-P* of the time."
   (let ((g (gauges e)) (go (gauges (opp-of e))))
     (and (eq (burst-ok-p e) :white) (>= d *ai-white-range*) (not (eq (snap-state s) :move))
-         (>= (- (/ (gauges-reishi go) (float (gauges-reishi-max go))) (/ (gauges-reishi g) (float (gauges-reishi-max g))))
+         (>= (- (reishi-frac go) (reishi-frac g))
              *ai-white-behind*)
          (ai-burst-rolled e b :white *ai-white-p*))))
 
@@ -418,8 +430,8 @@ he is within :near m and the guard gauge is at least :min-gg %, :p of the decisi
 D = the perceived distance."
   (let* ((f (fighter e)) (g (gauges e)) (kit (fighter-kit f)) (st (fighter-state f)) (mv (fighter-move f))
          (free (member st '(:idle :guard :run)))
-         (red (red-p (gauges-reishi g) (gauges-reishi-max g)))
-         (hoho-ok (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)))   ; flash-step for one
+         (red (gauges-red-p g))
+         (hoho-ok (hoho-ready-p e))   ; flash-step for one
          (guard-k (ai-guard-k e))                                                      ; the guard gauge left
          (q (kit-command-move kit :q)))
     (ai-event-rolls b s)                                  ; one roll per opponent action
@@ -447,7 +459,7 @@ D = the perceived distance."
       ((and (eq st :move) (not (fighter-queued f))
             (guard-cancel-open-p (fighter-sf f) (mv-s mv) (mv-a mv) (mv-r mv) (fighter-contact f) (eq (mv-kind mv) :quick))
             (not (and (member (snap-state s) '(:stun :air :down :wakeup))
-                      (> (- (snap-left s) (brain-delay b)) (- (mv-total mv) (fighter-sf f))))))
+                      (> (snap-left-seen s b) (- (mv-total mv) (fighter-sf f))))))
        (why b :guard-cancel :guard-cancel))
       ;; our own hit: finish the string, else an SP / L cancel
       ((and (eq st :move) (eq (fighter-contact f) :hit) (member (mv-kind mv) '(:quick :flash)))
@@ -512,7 +524,7 @@ D = the perceived distance."
          (and c (kit-command-ok-p e :sp1) (< d 12.0)
               (setf (brain-why b)
                     (cond ((and (member (snap-state s) '(:move :stun)) (< (snap-left s) 99)
-                                (>= (- (snap-left s) (brain-delay b)) (getf c :punish)))
+                                (>= (snap-left-seen s b) (getf c :punish)))
                            :cashout-punish)
                           ((and (< d (getf c :near)) (< (gauges-meter g) (getf c :below))) :cashout-near)))))
        :sp1)
@@ -525,7 +537,7 @@ D = the perceived distance."
       ;; a parry up close: don't feed it; a Breaker breaks it (half the time), else wait
       ((and (member :parry (snap-flags s)) (eq (snap-phase s) :main) (< d 4.0))
        (and (< (brain-react-roll b) 0.5) (why b :anti-parry :breaker)))
-      ((and (gauges-evolution g) (>= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (ai-table e :awaken-above 0.0))
+      ((and (gauges-evolution g) (>= (reishi-frac g) (ai-table e :awaken-above 0.0))
             (ai-awaken-p e))
        :awaken)
       ;; we just blocked an ender (-12 ...): it's our turn, felt at once (no perception delay); a K3 (-20) HARD
@@ -538,23 +550,22 @@ D = the perceived distance."
                      (< (fighter-dist f) (mv-reach (kit-command-move kit :f))))
                 :f :q)))
       ;; a stunned opponent (Guard Break, broken stance, our knockback) still stunned when Q1 lands
-      ((and (eq (snap-state s) :stun) (>= (- (snap-left s) (brain-delay b)) (mv-s q)) (< d (+ (mv-reach q) 0.6)))
+      ((and (eq (snap-state s) :stun) (>= (snap-left-seen s b) (mv-s q)) (< d (+ (mv-reach q) 0.6)))
        (why b :follow-up :q))
       ;; ... farther, the kit's :stun-follow (cmd lo hi): its move if it lands before he is free (Rukia: Shirafune, SOSEN)
       ((let* ((sf (ai-table e :stun-follow)) (c (first sf)))
          (and sf (eq (snap-state s) :stun) (<= (second sf) d (third sf)) (kit-command-ok-p e c)
-              (>= (- (snap-left s) (brain-delay b)) (mv-s (kit-command-move kit c)))))
+              (>= (snap-left-seen s b) (mv-s (kit-command-move kit c)))))
        (why b :stun-follow (first (ai-table e :stun-follow))))
       ;; the opponent is launched / down (untouchable for a while): the kit's :oki command
       ;; (Yamamoto: a full-charge Shiranui, which also fills Inferno -> Hellfire, whose burn he
       ;; only risks above :oki-above of his Reishi)
       ((and (member (snap-state s) '(:air :down)) (eq (ai-table e :oki) :sp1-full) (mv-hold (kit-command-move kit :sp1))
             (kit-command-ok-p e :sp1) (> d 3.0)
-            (>= (/ (gauges-reishi g) (float (gauges-reishi-max g))) (ai-table e :oki-above 0.0)))
+            (>= (reishi-frac g) (ai-table e :oki-above 0.0)))
        (why b :oki (ai-table e :oki)))
       ;; a recovering opponent in reach: punish
-      ((and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s))
-            (>= (- (snap-left s) (brain-delay b)) (mv-s q)) (< d (+ (mv-reach q) 0.4)))
+      ((and (snap-recovering-p s) (>= (snap-left-seen s b) (mv-s q)) (< d (+ (mv-reach q) 0.4)))
        (why b :punish :q))
       ;; an incoming Breaker, a Kikon rush, or a rush's follow-up strike coming (it hit us, not red): guard
       ;; a rush when not red (the chance by difficulty); else Hoho through its dash (flash-step); a Breaker: J1 as its dash
@@ -752,7 +763,7 @@ fraction of the guard gauge."
                       (member :parry (snap-flags s))))
           do (setf (getf weights cmd) 0))
   (let ((low (ai-table e :low)) (sg (ai-table e :sig-gg)) (g (gauges e)))
-    (when (and low (getf weights :sig) (< (/ (gauges-reishi g) (float (gauges-reishi-max g))) (first low)))
+    (when (and low (getf weights :sig) (< (reishi-frac g) (first low)))
       (setf (getf weights :sig) (* (getf weights :sig) (getf (rest low) :sig 1))))
     (when (and sg (getf weights :sig) (< (ai-gg e) sg))
       (setf (getf weights :sig) (* 0.5 (getf weights :sig)))))
@@ -785,11 +796,11 @@ wins vs HARD 69 -> 74 %, 2026-10-02)."
   "The CPU's first free step out of a hit or a wake-up with him close (BRAIN-STEP): hold Guard *AI-WAKE-GUARD-FRAMES*
 (*AI-WAKE-GUARD-P* by difficulty x AI-GUARD-K: a low gauge guards less), else half the time a Hoho (flash-step to spare)
 or a back Step out of his reach (the user 2026-10-02); else nothing (a reflex may still act)."
-  (let* ((f (fighter e)) (g (gauges e)) (r (sim-rnd01)) (p (* (getf *ai-wake-guard-p* (brain-difficulty b) 0.6) (ai-guard-k e))))
+  (let* ((g (gauges e)) (r (sim-rnd01)) (p (* (getf *ai-wake-guard-p* (brain-difficulty b) 0.6) (ai-guard-k e))))
     (cond ((< r p) (ai-press b :guard *ai-wake-guard-frames* :act :hold) (setf (brain-why b) :wake-guard))
           ((< r (+ p (* 0.5 (- 1.0 p))))
            (ai-command b (kit-of e)
-                       (if (and (not (kit-rooted (kit-of e))) (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))
+                       (if (and (not (kit-rooted (kit-of e))) (hoho-ready-p e)
                                 (ai-hoho-spare-p (gauges-fs g) (gauges-reishi g) (gauges-reishi-max g)))
                            :hoho :step)                       ; (a Step with the stick at rest: the back hop)
                        d e)

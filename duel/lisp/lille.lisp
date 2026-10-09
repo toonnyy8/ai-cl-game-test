@@ -196,7 +196,6 @@ knocked back 1.0 m before).")
 (defparameter *lb-sabaki-speed* 40.0 "... erupting outward at this many m/s (design 2026-10-06).")
 (defparameter *lb-sabaki-life* 24 "Frames each point of the line burns (0.4 s; design 2026-10-06).")
 (defparameter *lb-sabaki-width* 0.6 "The line's width, metres (design 2026-10-06).")
-(defparameter *lb-misuji-fan* 20.0 "MISUJI's lines: -this, 0, +this degrees (design 2026-10-06).")
 (defparameter *lb-reflect-hoho* '(48 59)
   "Trompete's reflect by a perfect Hoho started on these Trompete frames (design 2026-10-06, decision 9; f60 can't dodge
 the beam's first frame: Built, deviations).")
@@ -911,7 +910,7 @@ back) over its 12 f, iframes f0-8, the flash step's vanish (TSUKIWATARI's, the o
   (let* ((f (fighter e)) (p (pos-of e)))
     (multiple-value-bind (to st) (if (lb-tick-brain e) (values -1.0 0.0) (stick-relative e f))
       (multiple-value-bind (to st) (step-direction to st -1.0)
-        (multiple-value-bind (dx dz) (toward-strafe-dir to st (aref p 0) (aref p 2) (fighter-ox f) (fighter-oz f))
+        (multiple-value-bind (dx dz) (world-dir e f to st)
           (set-slide e *lb-kamae-dash* 12 dx dz))))
     (setf (fighter-invuln f) (max (fighter-invuln f) *lb-dash-iframes*))
     (lb-count e :k-dash)
@@ -947,11 +946,11 @@ stick: LB-AI-EN-STICK), facing kept on the opponent; from the move's active end 
 wind-up (:lb-switch-in-c, decision 30; a human's press; his CPU's switch rule, LB-AI-SWITCH-IN-P)."
   (let* ((f (fighter e)) (mv (fighter-move f)))
     (when (and (eq (fighter-state f) :move) mv (eq (mv-tick mv) 'lb-en-tick) (eq (fighter-phase f) :main))
-      (let ((v (motion-vel (motion e))) (p (pos-of e)) (b (lb-tick-brain e)))
+      (let ((v (motion-vel (motion e))) (b (lb-tick-brain e)))
         (multiple-value-bind (to st) (if b (lb-ai-en-stick e f) (stick-relative e f))
           (let ((m (sqrt (+ (* to to) (* st st)))))
             (when (>= m 0.2)
-              (multiple-value-bind (dx dz) (toward-strafe-dir to st (aref p 0) (aref p 2) (fighter-ox f) (fighter-oz f))
+              (multiple-value-bind (dx dz) (world-dir e f to st)
                 (let ((sp (* (frost-speed *lb-en-walk* (fighter-frost f)) (min 1.0 m) (/ 1.0 m))))
                   (setf (aref v 0) (f32 (* sp dx)) (aref v 2) (f32 (* sp dz)))
                   (field-slow! e f v))))))
@@ -1220,7 +1219,7 @@ chase ran him at the opponent through the whole 14 f dash, eating the dash away:
 then, at the dash's end (LBS-DASH-END) with nothing linked, the rest of the startup is skipped: the 8 f recovery follows the
 dash (decision 53, a fixed speed: a short dash, a short move). A dash ending before its f6 changes the form at its end,
 before the link (its J / K is the new form's: the user 2026-10-07, the ASSIST's and the CPU's TENSHIN in -> J1 up close)."
-  (fill (motion-vel (motion e)) 0f0)
+  (halt! e)
   (let* ((f (fighter e)) (mv (fighter-move f)) (st (lb e)) (go (getf (mv-params mv) :go 0)))
     (when (< (fighter-sf f) go) (setf (lbs-dash-end st) 99))   ; (the wind-up: no link before this switch's own dash)
     (when (and (eq (fighter-phase f) :main) (> (fighter-sf f) go) (>= (fighter-sf f) (lbs-dash-end st)) (lbs-switch-to st))
@@ -1653,7 +1652,7 @@ held from now (its share by AI-GUARD-K), or a sideways Step off a lane / from a 
       (when (/= (snap-start s) (lbai-key ai))           ; a new window: its one roll
         (let* ((r (sim-rnd01))
                (dodge (or (lb-ai-line-p s) (eq (snap-kind s) :breaker) (member :grab (snap-flags s))
-                          (and (eq (snap-kind s) :kikon) (red-p (gauges-reishi g) (gauges-reishi-max g)))))
+                          (and (eq (snap-kind s) :kikon) (gauges-red-p g))))
                (plan (lb-ai-eye-plan r (lb-ai-chance (getf (ai-table e :eye) :p 0.0) (brain-difficulty b))
                                      (lb-ai-eye-ready-p lead (lbs-u-up st) (lbs-eyes st)) dodge (ai-guard-k e))))
           (setf (lbai-key ai) (snap-start s) (lbai-plan ai) plan)
@@ -1702,7 +1701,7 @@ generic guard's wider margin. (It can't catch a J1: the perception delay + the 2
     (if (null key)
         (and solid (lb-ai-threat-p e s d *ai-threat-margin*) (why b :stance-out-of-reach :none))   ; (the generic guard's
                                                                                                      ; wider margin: no)
-      (let ((ai (lb-ai-state e b)) (k (ai-table e :stance)) (g (gauges e)) (f (fighter e)))
+      (let ((ai (lb-ai-state e b)) (k (ai-table e :stance)) (g (gauges e)))
         (when (/= key (lbai-key ai))
           (setf (lbai-key ai) key
                 (lbai-plan ai) (lb-ai-stance-plan (sim-rnd01)
@@ -1715,7 +1714,7 @@ generic guard's wider margin. (It can't catch a J1: the perception delay + the 2
           (:step (setf (lbai-plan ai) :done) (why b :stance-step (lb-ai-side-step e b s)))
           (:pass (setf (lbai-plan ai) :done)
                  (if (and mv-threat (>= (- (snap-s s) (snap-sf s)) 6)
-                          (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g))
+                          (hoho-ready-p e)
                           (ai-hoho-spare-p (gauges-fs g) (gauges-reishi g) (gauges-reishi-max g))
                           (< (brain-hoho-roll b) (ai-table e :hoho 0.2)))
                      (why b :stance-hoho :hoho)
@@ -1731,8 +1730,7 @@ generic guard's wider margin. (It can't catch a J1: the perception delay + the 2
   "Is he, as perceived, recovering (his move past its active frames) or reeling, with at least FRAMES of it left after
 DELAY? (FRAMES 0: just busy.)"
   (and (< (snap-left s) 99)
-       (or (eq (snap-state s) :stun)
-           (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s))))
+       (snap-punishable-p s)
        (>= (- (snap-left s) delay) frames)))
 
 (defun lb-ai-exit-cmd (e b s d &optional why)
@@ -2047,7 +2045,7 @@ first number of frames, 3 from its second (*LB-AI-WEB-VOLLEY*)."
 (defun lb-ai-web-k (e b s)
   "The volley size his web waits for now (LB-AI-VOLLEY-K): more while he is committed in a move or reeling."
   (declare (ignore e))
-  (lb-ai-volley-k (and s (member (snap-state s) '(:move :stun)) (< (snap-left s) 99) (- (snap-left s) (brain-delay b)))))
+  (lb-ai-volley-k (and s (member (snap-state s) '(:move :stun)) (< (snap-left s) 99) (snap-left-seen s b))))
 (defun lb-ai-web-fired (e b)
   "EN's tick just cancelled into TENSHIN for the web: its tick, for the wary read (LB-AI-WEB-SETTLE)."
   (setf (lbai-web-sw (lb-ai-state e b)) *match-tick*)

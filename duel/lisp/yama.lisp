@@ -259,8 +259,7 @@
 
 (defun yama-enjo-line (e)
   "ENJO f4: the line of fire walls starts rising along the locked lane (a look: the hit is the move's)."
-  (let ((p (pos-of e)))
-    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 9.0 :life 34 :look :enjo))
+  (spawn-ground-line e 9.0 34 :enjo)
   (emit :sfx :fire-roar e))
 
 (defun yama-tenchi-slash (e)
@@ -290,9 +289,7 @@
 (defun yama-kyokko (e)
   "KYOKKO f15: the ray (a look: the hit is the move's line window): a white core over an ember rim along the 4.6 m
 line and a small sun at its tip (the :line hazard look :kyokko)."
-  (let ((p (pos-of e)))
-    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 4.6 :life 14
-                          :look :kyokko))
+  (spawn-ground-line e 4.6 14 :kyokko)
   (emit :sfx :kikon-slash e))
 
 (defun yama-shonetsu-tell (e)
@@ -327,8 +324,7 @@ frames, :hits x :dmg, blockable) and the plaza cracks under him."
 (defun yama-kyoku-sheet (e)
   "KYOKUJITSUJIN f20: the tip bites the ground and a flat 25 deg sheet of heat runs 9 m ahead (a look: the
 hit is the move's cone window)."
-  (let ((p (pos-of e)))
-    (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size 9.0 :life 40 :look :kyoku))
+  (spawn-ground-line e 9.0 40 :kyoku)
   (emit :sfx :heat-flare e))
 
 (defun yama-south (e)
@@ -348,11 +344,6 @@ the ground there cracks (a look) and :hands skeleton hands claw out; a :bind haz
     (emit :sfx :ground-crack e)))
 
 ;;; ================================================================ the CPU (the kit's :ai hooks; ai.lisp; docs/duel/DUEL_AI_V2.md)
-(defun yama-dif (e p)
-  "E's CPU's chance from P, a plist by difficulty (:easy :normal :hard): its brain's (AI-BRAIN: an assisted human's is the
-assist's HARD one); no brain: NORMAL's."
-  (let ((b (ai-brain e))) (getf p (if b (brain-difficulty b) :normal) (getf p :normal))))
-
 (defparameter *yama-breaker-step* 0.16 "A Breaker's dash per frame (9.6 m/s, *BREAKER-SPEED-MIN* .. -MAX): what the delay hides.")
 
 (defun yama-ai-reflex (e b s d)
@@ -377,9 +368,8 @@ from farther out is on him before he sees it in that range.")
 before he is free (a stun or a move's recovery)."
   (let ((dash (plusp (rush-param (kit-command-move (kit-of e) :kikon) :dash-max))))
     (or (>= d (if dash *yama-rush-far* 1.5))
-        (and (or (eq (snap-state s) :stun)
-                 (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s))))
-             (>= (- (snap-left s) (brain-delay b)) (yama-rush-frames e d))))))
+        (and (snap-punishable-p s)
+             (>= (snap-left-seen s b) (yama-rush-frames e d))))))
 
 (defun yama-rush-veto (e b s d)
   "The rush on a red opponent only where it lands (YAMA-RUSH-OK-P). The generic rush, at a neutral decision or on his
@@ -388,15 +378,15 @@ On his stun: J1's follow-up if it is in reach and time, else wait (:wait presses
 decision's attack pick instead (AI-ATTACK). Chance by difficulty; a command or NIL."
   (when (and (kikon-ready-p e) (< d (ai-table e :kikon-range 7.0)) (kit-command-ok-p e :kikon) (not (ai-sb-finish-p e))
              (not (yama-rush-ok-p e b s d)))
-    (let ((p (yama-dif e '(:easy 0.0 :normal 0.0 :hard 0.9))) (q (kit-command-move (kit-of e) :q)))
+    (let ((p (ai-chance e '(:easy 0.0 :normal 0.0 :hard 0.9))) (q (kit-command-move (kit-of e) :q)))
       (cond ((eq (snap-state s) :stun)
              (when (< (brain-react-roll b) p)
-               (if (and (< d (+ (mv-reach q) 0.6)) (>= (- (snap-left s) (brain-delay b)) (mv-s q)))
+               (if (and (< d (+ (mv-reach q) 0.6)) (>= (snap-left-seen s b) (mv-s q)))
                    (why b :follow-up :q)
                    :wait)))
             ((and (<= (brain-decide-t b) 1) (member (fighter-state (fighter e)) '(:idle :run))
                   (not (member (snap-state s) '(:down :wakeup :hoho :air))) (plusp p) (< (sim-rnd01) p))
-             (setf (brain-decide-t b) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
+             (setf (brain-decide-t b) (ai-decide-time e b))
              (ai-attack e b (kit-of e) s d (brain-heat b) nil)
              nil)))))
 
@@ -417,7 +407,7 @@ Guard Break's Breaker starts within 3 m, and its dash is in J1's reach before th
              (in (+ aura (/ (max 0.0 (- x (mv-reach q) 0.3)) *yama-breaker-step*)))   ; frames till J1 reaches him
              (strike (+ aura (/ (max 0.0 (- x *breaker-trigger*)) *yama-breaker-step*) *breaker-startup*)))
         (and (<= in (+ (mv-s q) (mv-a q) -2)) (< (+ (mv-s q) 1) strike)
-             (< (brain-react-roll b) (yama-dif e '(:easy 0.0 :normal 0.0 :hard 0.85)))
+             (< (brain-react-roll b) (ai-chance e '(:easy 0.0 :normal 0.0 :hard 0.85)))
              (why b :anti-breaker :q))))))
 
 (defun yama-stun-sp (e b s d)
@@ -429,9 +419,9 @@ KYOKUJITSUJIN, the blade then the 9 m sheet), one roll per stun (the reaction ro
          (mv (and sp (kit-command-move kit sp))))
     (when (and mv q (eq (snap-state s) :stun)
                (or (> d (+ (mv-reach q) 0.6))      ; (close: East's sheet over the J follow-up, a bar kept for the confirm)
-                   (and (eq sp :sp1) (>= (floor (gauges-reiatsu (gauges e)) *reiatsu-bar*) 2))) (< d (if (eq sp :sp1) 6.0 3.8))
-               (kit-command-ok-p e sp) (>= (- (snap-left s) (brain-delay b)) (+ (mv-s mv) (if (eq sp :sp1) 8 2)))
-               (< (brain-react-roll b) (yama-dif e '(:easy 0.0 :normal 0.0 :hard 0.7))))
+                   (and (eq sp :sp1) (>= (reiatsu-bars e) 2))) (< d (if (eq sp :sp1) 6.0 3.8))
+               (kit-command-ok-p e sp) (>= (snap-left-seen s b) (+ (mv-s mv) (if (eq sp :sp1) 8 2)))
+               (< (brain-react-roll b) (ai-chance e '(:easy 0.0 :normal 0.0 :hard 0.7))))
       (why b :stun-sp sp))))
 
 (defun yama-sp-ender (e kit)
@@ -442,10 +432,10 @@ else the O ender (ENJO / TENCHI, cooldown 90), but never ENJO off a J3: it has n
 stagger he guards it (97 of 113 blocked, -14). Chance by difficulty; a command or NIL."
   (let* ((sp (case (kit-form kit) ((:base :hellfire) :sp2) (:bankai-east :sp1)))   ; (West's SP1 is the parry)
          (mv (fighter-move (fighter e))) (o (kit-command-move kit :kikon)))
-    (cond ((and sp (kit-command-ok-p e sp kit) (< (sim-rnd01) (yama-dif e '(:easy 0.1 :normal 0.3 :hard 0.95)))) sp)
+    (cond ((and sp (kit-command-ok-p e sp kit) (< (sim-rnd01) (ai-chance e '(:easy 0.1 :normal 0.3 :hard 0.95)))) sp)
           ((and o (kit-command-ok-p e :kikon kit t) (not (ai-sb-finish-p e))
                 (not (and (eq (mv-kind mv) :quick) (eql 0 (rush-param o :dash-max))))   ; (ENJO off J3)
-                (< (sim-rnd01) (yama-dif e '(:easy 0.05 :normal 0.15 :hard 0.85))))
+                (< (sim-rnd01) (ai-chance e '(:easy 0.05 :normal 0.15 :hard 0.85))))
            :kikon))))
 
 ;;; ================================================================ cinematics

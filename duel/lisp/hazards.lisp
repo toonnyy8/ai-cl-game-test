@@ -26,6 +26,16 @@ hit group (MAKE-HIT-GROUP) shared with other hazards: together they deal its hit
                              :life life :delay delay :hits-left (if hw hits 0) :hw hw :look look :src src :fragile fragile
                              :hook hook :data data :group group)))
 
+(defun spawn-look (e look &key (x (aref (pos-of e) 0)) (z (aref (pos-of e) 2)) (yaw 0.0) (size 1.0) (life 30) (delay 0)
+                               fragile data)
+  "A look-only hazard (kind :fx) of fighter E at X Z (default: E's feet) drawn by the function LOOK (the character's art
+file): no hit, no sim effect but its entity."
+  (spawn-hazard :fx e :x x :z z :yaw yaw :size size :life life :delay delay :look look :fragile fragile :data data))
+
+(defun spawn-ground-line (e size life look)
+  "A look-only :line hazard of fighter E from his feet along his facing, SIZE m long, LIFE frames, drawn as LOOK."
+  (let ((p (pos-of e))) (spawn-hazard :line e :x (aref p 0) :z (aref p 2) :yaw (yaw-of e) :size size :life life :look look)))
+
 (defun make-hit-group (&optional (hits 1))
   "A hit group several hazards share (SPAWN-HAZARD :group): (hits-left . tick of the last pending hit). Three overlapping
 lines of one move hit a fighter once (docs/duel/DUEL_LILLE.md gap G12)."

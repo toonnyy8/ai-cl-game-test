@@ -192,13 +192,9 @@
        :reflex rukia-ai-reflex :assist-guard rukia-assist-guard))
 
 ;;; ================================================================ hooks (called through the data's symbols)
-(defun rukia-look (e kind x z &key (yaw 0.0) (size 1.0) (life 30) (delay 0) fragile)
-  "A look-only hazard (kind :fx) drawn by the function KIND (rukia-art.lisp): no hit, no sim effect but its entity."
-  (spawn-hazard :fx e :x x :z z :yaw yaw :size size :life life :delay delay :look kind :fragile fragile))
-
 (defun rukia-snow-burst (e)
   "NADARE f21: snow bursts from the plaza at the point (a look)."
-  (multiple-value-bind (x z) (ahead e 2.4) (rukia-look e 'rukia-burst-look x z :size 1.0 :life 24))
+  (multiple-value-bind (x z) (ahead e 2.4) (spawn-look e 'rukia-burst-look :x x :z z :size 1.0 :life 24))
   (emit :sfx :ice-shatter e))
 
 (defun rukia-tsukishiro (e)
@@ -209,14 +205,14 @@
       (spawn-hazard :freeze e :x x :z z :size r :y (move-param e :height) :delay d :life (move-param e :life) :src t :fragile t
                             :hw (make-hitwin :dmg (move-param e :dmg) :react :bind :stun (move-param e :stun) :hs *hitstop-heavy*
                                              :guard (move-param e :guard) :frost (move-param e :frost) :flags '(:ice)))
-      (rukia-look e 'rukia-ring-look x z :size r :delay d :life 36 :fragile t)))
+      (spawn-look e 'rukia-ring-look :x x :z z :size r :delay d :life 36 :fragile t)))
   (emit :sfx :frost-tick e))
 
 (defun rukia-spike (e i)
   "HAKUREN's stab I (0-3): an ice spike in a half circle before her."
   (let* ((a (+ (yaw-of e) (deg (- 45 (* 30 i))))) (p (pos-of e)))
-    (rukia-look e 'rukia-spike-look (+ (aref p 0) (* 1.1 (fwd-x a))) (+ (aref p 2) (* 1.1 (fwd-z a))) :size (+ 0.5 (* 0.1 i))
-                :life 70)))
+    (spawn-look e 'rukia-spike-look :x (+ (aref p 0) (* 1.1 (fwd-x a))) :z (+ (aref p 2) (* 1.1 (fwd-z a)))
+                                    :size (+ 0.5 (* 0.1 i)) :life 70)))
 
 (defun rukia-hakuren-charge (e)
   "HAKUREN's hold: a stab into the plaza every :per f (16; -50: 12), 1-4 of them, an ice spike at each."
@@ -249,21 +245,19 @@ wide (a half-width <= 1.8 m: a side Step clears it), :dmg + :dmg-per per stab; a
 
 (defun rukia-shirafune-ice (e)
   "SHIRAFUNE f13: the ice grows off the point along the thrust (a look; the hit is the move's line)."
-  (let ((p (pos-of e)))
-    (rukia-look e 'rukia-blade-look (aref p 0) (aref p 2) :yaw (yaw-of e) :size (mv-reach (fighter-move (fighter e))) :life 20))
+  (spawn-look e 'rukia-blade-look :yaw (yaw-of e) :size (mv-reach (fighter-move (fighter e))) :life 20)
   (emit :sfx :freeze e))
 
 (defun rukia-ice-flower (e)
   "HYOKA f21: the ice flower bursts at his feet, larger the colder she is (its size follows the link's reach; a look,
 the hit is the move's arc)."
   (let ((k (/ (mv-reach (fighter-move (fighter e))) 2.7)))
-    (multiple-value-bind (x z) (ahead e (* 1.9 k)) (rukia-look e 'rukia-flower-look x z :size (* 1.1 k k) :life 40)))
+    (multiple-value-bind (x z) (ahead e (* 1.9 k)) (spawn-look e 'rukia-flower-look :x x :z z :size (* 1.1 k k) :life 40)))
   (emit :sfx :ice-shatter e))
 
 (defun rukia-hyoshin-tell (e)
   "HYOSHIN f0: the blade driven into the plaza, frost cracks radiating (the tell), then the quake at f14 (one look)."
-  (let ((p (pos-of e)))
-    (rukia-look e 'rukia-quake-look (aref p 0) (aref p 2) :size (move-param e :radius) :delay 15 :life 30))
+  (spawn-look e 'rukia-quake-look :size (move-param e :radius) :delay 15 :life 30)
   (emit :sfx :frost-tick e))
 
 (defun rukia-disc (e r h hw)
@@ -283,7 +277,7 @@ the hit is the move's arc)."
   (let ((p (pos-of e)) (r (* 0.8 (move-param e :radius))))
     (dotimes (i 6)
       (let ((a (+ (yaw-of e) (* i 1.0472))))
-        (rukia-look e 'rukia-spike-look (+ (aref p 0) (* r (fwd-x a))) (+ (aref p 2) (* r (fwd-z a))) :size 0.7 :life 40))))
+        (spawn-look e 'rukia-spike-look :x (+ (aref p 0) (* r (fwd-x a))) :z (+ (aref p 2) (* r (fwd-z a))) :size 0.7 :life 40))))
   (rukia-hyoshin e))
 
 (defun rukia-reido (e)
@@ -292,18 +286,17 @@ Its cold (the whole top bar) drops her to -50 once she is free."
   (rukia-disc e (move-param e :radius) (move-param e :height)
               (make-hitwin :dmg (move-param e :dmg) :react :bind :stun (move-param e :stun) :hs *hitstop-heavy*
                            :guard (move-param e :guard) :frost (move-param e :frost) :flags '(:ice)))
-  (let ((p (pos-of e))) (rukia-look e 'rukia-burst-look (aref p 0) (aref p 2) :size (move-param e :radius) :life 30))
+  (spawn-look e 'rukia-burst-look :size (move-param e :radius) :life 30)
   (emit :sfx :freeze e))
 
 (defun rukia-hakka-pillar (e)
   "HAKKA f4: a white pillar of cold rises at her (a look)."
-  (let ((p (pos-of e))) (rukia-look e 'rukia-pillar-look (aref p 0) (aref p 2) :size 0.9 :life 40))
+  (spawn-look e 'rukia-pillar-look :size 0.9 :life 40)
   (emit :sfx :ice-rise e))
 
 (defun rukia-hakka-sheet (e)
   "HAKKA f20: the cold runs off the tip along the lane (a look; the hit is the move's lane)."
-  (let ((p (pos-of e)))
-    (rukia-look e 'rukia-sheet-look (aref p 0) (aref p 2) :yaw (yaw-of e) :size (mv-reach (fighter-move (fighter e))) :life 34))
+  (spawn-look e 'rukia-sheet-look :yaw (yaw-of e) :size (mv-reach (fighter-move (fighter e))) :life 34)
   (emit :sfx :kikon-slash e))
 
 (defparameter *ru-hoho-cold* 50.0 "Cold a Hoho adds when she reappears behind him (-18 / -50; the user 2026-09-30: dive in and freeze).")
@@ -326,9 +319,9 @@ Not in the THAW after a CRACK."
   "-50's :ai :reflex: beyond 3 m, when a Hoho's cold (RUKIA-HOHO-COLD) would reach -273 and the Hoho is allowed, dive in
 now and then (*AI-RU-HOHO-IN* per free step). A command or NIL."
   (declare (ignore s))
-  (let ((g (gauges e)) (f (fighter e)))
+  (let ((g (gauges e)))
     (and (> d 3.0) (zerop (gauges-meter-idle g)) (>= (+ (gauges-meter g) *ru-hoho-cold*) *cold-max*)
-         (hoho-allowed-p nil (gauges-fs g) (fighter-hoho-lock f) (gauges-burst g)) (< (sim-rnd01) *ai-ru-hoho-in*)
+         (hoho-ready-p e) (< (sim-rnd01) *ai-ru-hoho-in*)
          (why b :hoho-in :hoho))))
 
 ;;; ---------------------------------------------------------------- her CPU's action policy (AI v2, docs/duel/DUEL_AI_V2.md)
@@ -341,25 +334,21 @@ REIDO), per ender hit (RUKIA-AI-SP-ENDER).")
 (defparameter *ai-ru-ender-o* '(:easy 0.0 :normal 0.02 :hard 0.9)
   "An ender hit with neither of those taken: the O ender after all (it chases the pushed victim), per ender hit.")
 
-(defun rukia-ai-p (e plist)
-  "PLIST's chance (:easy :normal :hard) at E's CPU difficulty (NORMAL's without a brain)."
-  (let ((b (ai-brain e))) (getf plist (if b (brain-difficulty b) :normal) (getf plist :normal 0.0))))
-
 (defun rukia-ai-bars-p (e)
   "Bars enough for an SP and the kit's reserve (:sp-cancel-bars) after it."
-  (>= (floor (gauges-reiatsu (gauges e)) *reiatsu-bar*) (ai-table e :sp-cancel-bars 1)))
+  (>= (reiatsu-bars e) (ai-table e :sp-cancel-bars 1)))
 
 (defun rukia-ai-sp-ender (e kit)
   "Her :sp-ender (ai.lisp STRING-REFLEX; a landed ender, no link after it): after a K ender the band's L link (a combo off
 the crumple, free in the Shikai, cold in the bands: a chained L overdraws), after a J ender SHIRAFUNE (not at zero: it
 would cash the top bar for less than REIDO). A command or NIL."
   (let* ((name (mv-name (fighter-move (fighter e)))) (l (kit-l-link kit name)))
-    (cond ((and l (kit-k-link-p kit name) (kit-command-ok-p e :sig kit nil l) (< (sim-rnd01) (rukia-ai-p e *ai-ru-k-ender-l*)))
+    (cond ((and l (kit-k-link-p kit name) (kit-command-ok-p e :sig kit nil l) (< (sim-rnd01) (ai-chance e *ai-ru-k-ender-l*)))
            :sig)
           ((and (kit-j-link-p kit name) (not (kit-rooted kit)) (kit-command-ok-p e :sp2) (rukia-ai-bars-p e)
-                (< (sim-rnd01) (rukia-ai-p e *ai-ru-j-ender-sp2*)))
+                (< (sim-rnd01) (ai-chance e *ai-ru-j-ender-sp2*)))
            :sp2)
-          ((and (not (ai-sb-finish-p e)) (kit-command-ok-p e :kikon kit t) (< (sim-rnd01) (rukia-ai-p e *ai-ru-ender-o*))) :kikon))))
+          ((and (not (ai-sb-finish-p e)) (kit-command-ok-p e :kikon kit t) (< (sim-rnd01) (ai-chance e *ai-ru-ender-o*))) :kikon))))
 
 ;;; ---------------------------------------------------------------- her CPU (AI v2): the perfect-Hoho counter-fighter
 ;;; Her answer to a commitment is not to meet it but to vanish through it: a Hoho timed into his hit window from what she
@@ -383,16 +372,16 @@ early would be beaten), or NIL. From the perceived SNAP S (DELAY frames old): a 
 began (SNAP-START is exact), its dash closes at BREAKER-SPEED, its strike is perfect-able from *BREAKER-TRIGGER* + 0.5 m
 through its startup; a committed move's window is SNAP-S .. SNAP-ACTIVE-END of his move frame (now SNAP-SF + DELAY); a J
 masher restarts his J as soon as his recovering one ends. A Hoho started inside *PERFECT-LEAD* of the window is PERFECT."
-  (let* ((f (fighter e)) (g (gauges e)) (dl (brain-delay b)) (el (- *match-tick* (snap-start s)))
+  (let* ((g (gauges e)) (dl (brain-delay b)) (el (- *match-tick* (snap-start s)))
          (roll (brain-react-roll b)) (fs (gauges-fs g)))
     (when (and (not (kit-rooted (kit-of e)))
-               (hoho-allowed-p nil fs (fighter-hoho-lock f) (gauges-burst g))
+               (hoho-ready-p e)
                (ai-hoho-spare-p fs (gauges-reishi g) (gauges-reishi-max g)))
       (flet ((go-when (frames-to-window into)          ; pressed INTO frames inside the window (a frame or two of slack)
                (if (<= frames-to-window (- into)) (why b :perfect-hoho :hoho) (why b :ph-wait :wait))))
         (case (snap-kind s)
           (:breaker
-           (when (< roll (rukia-ai-p e *ai-ru-ph-breaker*))
+           (when (< roll (ai-chance e *ai-ru-ph-breaker*))
              (let ((v (/ (breaker-speed 20) 60.0)) (win (+ *breaker-trigger* 0.5)))
                (case (snap-phase s)
                  (:aura (when (< d 7.0)
@@ -400,20 +389,20 @@ masher restarts his J as soon as his recovering one ends. A Hoho started inside 
                  (:dash (when (< d 8.0) (go-when (/ (- d win (* v dl)) v) 2)))
                  (:main (when (< (+ (snap-sf s) dl) (snap-active-end s)) (go-when 0 0)))))))
           (:kikon                                    ; (a rush module's speed is its own: its dash seen within 3 m)
-           (when (and (< roll (rukia-ai-p e *ai-ru-ph-breaker*)) (member (snap-phase s) '(:dash :main)) (< d 3.5)
+           (when (and (< roll (ai-chance e *ai-ru-ph-breaker*)) (member (snap-phase s) '(:dash :main)) (< d 3.5)
                       (or (eq (snap-phase s) :dash) (< (+ (snap-sf s) dl) (snap-active-end s))))
              (go-when 0 0)))
           ((:flash :sig :sp)
            (when (and (eq (snap-phase s) :main) (plusp (snap-reach s)) (> (snap-active-end s) (snap-s s))   ; (a hit of its own)
                       (snap-near-p s e d 0.7) (not (snap-reflect-p s))   ; (an :x-axis line: on it; a reflect: ai.lisp)
                       (>= fs *ai-ru-ph-move-fs*)
-                      (< roll (rukia-ai-p e *ai-ru-ph-move*)))
+                      (< roll (ai-chance e *ai-ru-ph-move*)))
              (let ((lead (- (snap-s s) (snap-sf s) dl)))
                (when (and (< (+ (snap-sf s) dl 1) (snap-active-end s)) (<= lead 40))
                  (go-when (- lead *perfect-lead*) 3)))))
           (:quick
            (when (and (ai-mash-p b) (eq (snap-phase s) :main) (>= (+ (snap-sf s) dl) (snap-active-end s)) (< (snap-left s) 99)
-                      (< d (+ (snap-reach s) 1.0)) (< roll (rukia-ai-p e *ai-ru-ph-mash*)))
+                      (< d (+ (snap-reach s) 1.0)) (< roll (ai-chance e *ai-ru-ph-mash*)))
              (go-when (- (+ (- (snap-left s) dl) (snap-s s)) *perfect-lead*) 1))))))))
 
 (defparameter *ai-ru-cash-o* '(:easy 0.0 :normal 0.02 :hard 0.9)
@@ -433,22 +422,22 @@ ice: SHIRAFUNE within its line (bars and the kit's reserve permitting), else the
 REIDO) within its radius, else (a stun only) her O when it strikes in time (RUKIA-AI-O-LANDS-P: the Shikai's ENBU after
 a perfect Hoho's counter with no bar left, where a J string went before). A command or NIL."
   (let* ((kit (kit-of e)) (sp2 (kit-command-move kit :sp2)) (l (kit-command-move kit :sig))
-         (left (- (snap-left s) (brain-delay b))))
+         (left (snap-left-seen s b)))
     (flet ((lands (mv) (>= left (+ (mv-s mv) (getf (mv-params mv) :delay 0) 1))))   ; (TSUKISHIRO: its pillar's delay)
       (when (and (or (eq (snap-state s) :stun)
                      (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (< (snap-left s) 99)   ; his recovery
                           (>= (+ (snap-sf s) (brain-delay b)) (snap-active-end s))
                           (not (ai-mash-p b))))         ; (a masher's next J comes out of it at once: the Hoho's)
-                 (< (brain-react-roll b) (rukia-ai-p e *ai-ru-ph-cash*)))
+                 (< (brain-react-roll b) (ai-chance e *ai-ru-ph-cash*)))
         (cond ((and sp2 (< 0.5 d (- (mv-reach sp2) 0.5)) (lands sp2) (kit-command-ok-p e :sp2)
-                    (>= (floor (gauges-reiatsu (gauges e)) *reiatsu-bar*) (ai-table e :sp-cancel-bars 1)))
+                    (>= (reiatsu-bars e) (ai-table e :sp-cancel-bars 1)))
                (why b :ice-cash :sp2))
               ((and l (getf (mv-params l) :radius) (< d (- (getf (mv-params l) :radius) 0.4)) (lands l)
                     (kit-command-ok-p e :sig))
                (why b :ice-cash :sig))
               ((let ((o (kit-command-move kit :kikon)))
                  (and o (eq (snap-state s) :stun) (not (ai-sb-finish-p e)) (kit-command-ok-p e :kikon)
-                      (rukia-ai-o-lands-p o d left) (< (brain-react-roll b) (rukia-ai-p e *ai-ru-cash-o*))))
+                      (rukia-ai-o-lands-p o d left) (< (brain-react-roll b) (ai-chance e *ai-ru-cash-o*))))
                (why b :o-cash :kikon)))))))
 
 (defparameter *ai-ru-zone-wave* '(:easy 0.0 :normal 0.0 :hard 0.5)
@@ -459,9 +448,9 @@ steps out of: about one in six lands, the wave about two in three), per decision
   "Her Shikai's neutral decision at range, at HARD half the time: HAKUREN (SP1, held: AI-COMMAND). A command or NIL."
   (declare (ignore s))
   (when (and (<= (brain-decide-t b) 1) (eq (kit-form (kit-of e)) :base) (<= 5.0 d 11.0)
-             (kit-command-ok-p e :sp1) (let ((p (rukia-ai-p e *ai-ru-zone-wave*))) (and (plusp p) (< (sim-rnd01) p))))
-    ;; (the next decision as AI-NEUTRAL times it; her kit has no :tempo)
-    (setf (brain-decide-t b) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
+             (kit-command-ok-p e :sp1) (let ((p (ai-chance e *ai-ru-zone-wave*))) (and (plusp p) (< (sim-rnd01) p))))
+    ;; (the next decision, as AI-NEUTRAL times it)
+    (setf (brain-decide-t b) (ai-decide-time e b))
     (why b :zone-wave :sp1)))
 
 ;;; ---------------------------------------------------------------- absolute zero (round 2): REIDO is her answer
@@ -483,9 +472,9 @@ aura / dash (its disc active at the move's S, him inside radius - 0.5 by then). 
   (let* ((f (fighter e)) (l (kit-command-move (kit-of e) :sig)) (r (- (getf (mv-params l) :radius 5.5) 0.5)))
     (when (kit-command-ok-p e :sig)
       (cond ((and (passive-p e :ward) (<= (- *match-tick* (fighter-warded f)) *ai-ru-z-ward-window*) (< (fighter-dist f) r)
-                  (< (brain-react-roll b) (rukia-ai-p e *ai-ru-z-ward-reido*)))     ; (one roll per action of his)
+                  (< (brain-react-roll b) (ai-chance e *ai-ru-z-ward-reido*)))     ; (one roll per action of his)
              (why b :ward-reido :sig))
-            ((and (eq (snap-kind s) :breaker) (< (brain-react-roll b) (rukia-ai-p e *ai-ru-z-anti-breaker*))
+            ((and (eq (snap-kind s) :breaker) (< (brain-react-roll b) (ai-chance e *ai-ru-z-anti-breaker*))
                   (case (snap-phase s)
                     (:aura (< d r))
                     (:dash (<= (- d (* (/ (breaker-speed 20) 60.0) (+ (brain-delay b) (mv-s l)))) r))))
@@ -502,10 +491,10 @@ cashed in ice: RUKIA-AI-CASH). A command or NIL."
     (when (and (<= (brain-decide-t b) 1) (member (kit-form (kit-of e)) '(:m18 :m50))
                (< d (- (getf (mv-params l) :radius 0.0) 0.6))
                (or (member (snap-state s) '(:idle :run))
-                   (and (eq (snap-state s) :move) (eq (snap-phase s) :main) (>= (snap-sf s) (snap-active-end s))))
+                   (snap-recovering-p s))
                (kit-command-ok-p e :sig)
-               (let ((p (rukia-ai-p e *ai-ru-band-disc*))) (and (plusp p) (< (sim-rnd01) p))))
-      (setf (brain-decide-t b) (+ (getf *ai-think* (brain-difficulty b) 24) (floor (* 40 (sim-rnd01)))))
+               (let ((p (ai-chance e *ai-ru-band-disc*))) (and (plusp p) (< (sim-rnd01) p))))
+      (setf (brain-decide-t b) (ai-decide-time e b))
       (why b :band-disc :sig))))
 
 (defun rukia-ai-reflex (e b s d)
@@ -532,7 +521,7 @@ freeze-touch; the white burst."
   (let ((f (fighter e)))
     (when (member (fighter-state f) '(:guard :guard-hit :hoho)) (setf (fighter-guard-t f) *guard-raise*))   ; (a Hoho: RUKIA-HOHO-COLD)
     (setf (gauges-froze (gauges e)) nil)
-    (let ((p (pos-of e))) (rukia-look e 'rukia-burst-look (aref p 0) (aref p 2) :size 1.4 :life 24))
+    (spawn-look e 'rukia-burst-look :size 1.4 :life 24)
     (emit :sfx :freeze e)
     (clog "~a ZERO" (side-name e))))
 
