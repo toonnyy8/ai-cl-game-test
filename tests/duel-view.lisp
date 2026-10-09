@@ -13,6 +13,7 @@
 ;;;;   6300+k  every actor's expression: 0 neutral, 1 shout, 2 hurt (DRAW-BODY :face; scene 5 shows all three)
 ;;;;   7000+k  grip strip of *GRIP-CLIPS* k: its 4 worst-drift frames, each a pair: keys only, then with GRIP-LEFT!
 ;;;;   3000+d  turntable angle d degrees (0 = facing the camera)     4000 stage off/on   4001 spin on/off
+;;;;   4100+k / 4110+k  weapon k (0 katana, 1 Nozarashi, 2 the broken cleaver) alone, side on, one face / the other
 ;;;;   4002 / 4003  add three Bankai cracks / clear them    4004 actors off/on (cons baseline)
 ;;;;   4005  log every body's proportions (standing, no hunch): crown, head length, heads, head width,
 ;;;;         shoulder span, fingertips, hips (legs / height), from the joints and the shape extents
@@ -47,6 +48,9 @@
 (defvar *v-label* "")
 (defvar *v-cam* (list 0.0 1.2 5.5 0.0 1.0 0.0) "camera eye xyz, target xyz")
 (defvar *v-clip* 0)
+(defvar *v-weapon* nil "4100+k / 4110+k: the weapon shown alone, side on (its +Y along the screen, its edge up), one face
+or the other (the weapon reviews, DUEL_KEN_REWORK §6.1); NIL: none")
+(defvar *v-weapon-m* (make-f32 16))
 (defun clip-names () (list-clips))
 (defun strike-sar (name)
   "(S A R) frames of a DEFSTRIKE clip (its :s / :a marks), NIL for other clips."
@@ -220,6 +224,14 @@ fingertips ~,3f m (~,2f of height), hips ~,3f m (legs ~,2f of height), neck gap 
         ((>= c 5000) (let ((k (nth (- c 5000) (list-sounds))))
                        (when k (log-msg "view: play sound ~d ~a" (- c 5000) k)
                          (if (sound-loop-p k) (music-play k) (play-sfx k :pitch-jitter 0.0)))))
+        ((<= 4100 c 4119)
+         (let* ((k (mod (- c 4100) 10)) (back (>= c 4110)) (w (nth (mod k 3) '(:ken-katana :nozarashi :ke-broken)))
+                (s (if back -1f0 1f0)) (m *v-weapon-m*))
+           (fill m 0f0)
+           (setf (aref m 2) s (aref m 4) s (aref m 9) 1f0 (aref m 15) 1f0      ; x -> +-z, y -> +-x, z -> y
+                 (aref m 12) (* s -0.47) (aref m 13) 1.0)
+           (setf *v-weapon* w *v-hide-actors* t *v-stage* nil *v-label* (format nil "WEAPON ~a~:[~; (OTHER FACE)~]" w back))
+           (look-at 0 1.0 3.3 0 1.0 0)))
         ((= c 4004) (setf *v-hide-actors* (not *v-hide-actors*)))
         ((= c 4005) (dolist (k '(:yamamoto :kenpachi)) (measure-body k)))
         ((= c 4003) (stage-clear-cracks))
@@ -262,6 +274,7 @@ fingertips ~,3f m (~,2f of height), hips ~,3f m (legs ~,2f of height), neck gap 
       (when (actor-grip a) (grip-left! (actor-joints a) *v-one*))
       (draw-body b (actor-joints a) (actor-x a) 0.0 (actor-z a) (actor-yaw a)
                  :weapon (actor-weapon a) :hide (actor-hide a) :face (actor-face a) :tint (actor-tint a) :rim (actor-rim a))))
+  (when *v-weapon* (draw-weapon *v-weapon* *v-weapon-m*))
   (perf-mark)
   (when *v-stage* (stage-draw rdt))
   (fx-update (f32 rdt))

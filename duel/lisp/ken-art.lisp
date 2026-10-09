@@ -238,10 +238,14 @@
                 do (with-xform (mb (xform :y y :z (- 0.016 (* 0.018 (/ y 1.02) (/ y 1.02))) :roll 0.6))
                      (mb-box mb 0.012 d d)))))
 
-;; NOZARASHI (DUEL_KEN_REWORK §6.1, the user 2026-10-08: 「改成原作形狀，大小貼合現有判定」): the canon war cleaver at the old
-;; length (the hit reaches are the sim's): a long cloth-wrapped haft, then a broad cleaver head from a rounded heel, its
-;; cutting edge (+Z) bulging from 0.22 to 0.46 m and ending in a raked point at the top; a near-black body, a pale bevel band with chips along the edge, a brass
-;; box cap over the top's spine-side corner with a stepped notch, and the green tassel (the manga's colour) hung from it
+;; NOZARASHI (DUEL_KEN_REWORK §6.1; the user 2026-10-08: 「改成原作形狀，大小貼合現有判定」, then 2026-10-09 a model sheet to
+;; follow, the cgtrader "Nozarashi from Bleach" preview): the war cleaver at the old length (the hit reaches are the sim's),
+;; traced off that sheet (2.31 m from butt to end, the grip 0.69 m up the haft so the left fist has its 0.14-0.62 m of
+;; handle): the white-wrapped haft with a black butt; the head on the edge side (+Z) only, its spine just above the haft
+;; line, a raked point overhanging back beside the hand with a round notch under it, the cutting edge a long convex curve
+;; rising to 0.6 m at the square far end; near-black, the edge's pale band ~40 % deep in light and grey stripes with a
+;; ragged inner line, the stripes slanted; a khaki box cap over the whole far end with a stepped foot and a groove; a white tassel from a ring at
+;; the cap's spine corner
 (defun ke-mb-prism (mb profile x0 x1)
   "A prism of the convex PROFILE ((y z) ...) between the planes x = X0 and X1 (a blade's faces and its rim)."
   (let* ((n (length profile))
@@ -252,40 +256,40 @@
     (mb-poly-out mb f1 :center c)
     (loop for i below n for j = (mod (1+ i) n)
           do (mb-poly-out mb (list (nth i f0) (nth j f0) (nth j f1) (nth i f1)) :center c))))
-(defun ke-noz-edge (u)
-  "The cleaver's cutting edge at U (0 the haft end, 1 the top): (y z)."
-  (list (+ 0.3 (* 1.28 u)) (+ 0.22 (* 0.24 (- 1 (expt (- 1 u) 2))))))
 
 (defweapon :nozarashi (:length 1.62 :base 0.2)         ; the haft below the grip, the head above it
-  (:solid (mbc mb #x24262E)                              ; the head: near-black, convex
-          (ke-mb-prism mb (append (list (list 0.32 -0.05) (list 0.24 0.04) (list 0.25 0.16))   ; the rounded heel
-                                  (loop for k to 8 collect (ke-noz-edge (/ k 8.0)))
-                                  (list (list 1.63 0.44) (list 1.62 -0.05)))
+  (:solid (mbc mb #x1C1C20)                              ; the head: the body, then the point (two convex prisms)
+          (ke-mb-prism mb '((0.234 0.051) (1.62 0.086) (1.62 0.611) (1.426 0.605) (1.069 0.596) (0.771 0.575) (0.532 0.545)
+                            (0.323 0.462) (0.174 0.387))
                        -0.021 0.021)
-          (mbc mb #xD8DCE2)                              ; the pale bevel band along the edge, both faces
-          (loop for k below 8
-                do (let ((a (ke-noz-edge (/ k 8.0))) (b (ke-noz-edge (/ (1+ k) 8.0))))
-                     (ke-mb-prism mb (list a b (list (first b) (- (second b) 0.07)) (list (first a) (- (second a) 0.07)))
-                                  -0.023 0.023)))
-          (mbc mb #x24262E)                              ; chips bitten out of the edge
-          (loop for u in '(0.18 0.41 0.63 0.86)
-                do (destructuring-bind (y z) (ke-noz-edge u)
-                     (with-xform (mb (xform :y y :z z :roll 0.6)) (mb-box mb 0.05 0.035 0.035))))
-          (mbc mb #xBFA868)                              ; the brass cap over the top's spine side, its stepped notch
-          (with-xform (mb (xform :y 1.56 :z 0.1)) (mb-bevel-box mb 0.075 0.2 0.36 0.015))
-          (with-xform (mb (xform :y 1.53 :z 0.31)) (mb-bevel-box mb 0.06 0.13 0.08 0.01))
-          (with-xform (mb (xform :y 0.2 :z 0.0)) (mb-bevel-box mb 0.07 0.07 0.12 0.012))   ; the collar at the head
-          (mbc mb #xD9CBB0)                              ; the long cloth-wrapped haft
-          (with-xform (mb (xform :y -0.23)) (mb-box mb 0.05 0.86 0.05))
-          (mbc mb #x5A5650)
-          (loop for i below 8 do (with-xform (mb (xform :y (- 0.12 (* i 0.1)) :roll 0.785)) (mb-box mb 0.035 0.035 0.058)))
-          (mbc mb #x7A6A3C)
-          (with-xform (mb (xform :y -0.69)) (mb-bevel-box mb 0.065 0.05 0.065 0.01))
-          (mbc mb #x2F4A35)                              ; the tassel: a cord from the cap's back corner, a bundle of strands
-          (with-xform (mb (xform :y 1.47 :z -0.1)) (mb-box mb 0.03 0.05 0.03))
-          (loop for (dz r) in '((-0.02 0.1) (0.0 0.0) (0.02 -0.1) (-0.035 0.2) (0.035 -0.2))
-                do (with-xform (mb (xform :y 1.22 :z (- -0.12 dz) :roll r :pitch (* 4 dz)))
-                     (mb-cone mb 0.022 0.48 :segments 4)))))
+          (ke-mb-prism mb '((0.174 0.387) (-0.034 0.283) (-0.183 0.209) (0.01 0.185) (0.213 0.17)) -0.018 0.018)
+          ;; the edge's pale band, both faces: light and grey stripes, the inner line ragged (each stripe its own depth)
+          (loop for ((y0 z0 d0) (y1 z1 d1)) on '((-0.183 0.209 0.03) (-0.034 0.283 0.09) (0.115 0.358 0.16) (0.323 0.462 0.2)
+                                                  (0.532 0.545 0.24) (0.771 0.575 0.21) (1.069 0.596 0.25) (1.426 0.605 0.22))
+                for k from 0
+                while y1
+                do (mbc mb (if (evenp k) #xE2E4E8 #x9EA0A8))
+                   (ke-mb-prism mb (list (list y0 z0) (list y1 z1) (list (+ y1 (* 0.4 d1)) (- z1 d1)) (list (+ y0 (* 0.4 d0)) (- z0 d0)))
+                                -0.023 0.023))
+          (mbc mb #x1C1C20)                              ; chips bitten out of the edge
+          (loop for (y z) in '((0.22 0.415) (0.65 0.562) (1.0 0.594) (1.3 0.603))
+                do (with-xform (mb (xform :y y :z z :roll 0.6)) (mb-box mb 0.05 0.03 0.03)))
+          (mbc mb #x9C9478)                              ; the khaki cap over the far end, its stepped foot
+          (with-xform (mb (xform :y 1.525 :z 0.348)) (mb-bevel-box mb 0.07 0.2 0.56 0.012))
+          (with-xform (mb (xform :y 1.39 :z 0.14)) (mb-bevel-box mb 0.06 0.09 0.13 0.01))
+          (mbc mb #x6E6852)                              ; its groove
+          (with-xform (mb (xform :y 1.455 :z 0.36)) (mb-box mb 0.074 0.018 0.46))
+          (mbc mb #xECECE8)                              ; the long white-wrapped haft
+          (with-xform (mb (xform :y -0.2)) (mb-box mb 0.05 0.96 0.05))   ; (on into the head, under the notch)
+          (mbc mb #x6A6A70)
+          (loop for i below 9 do (with-xform (mb (xform :y (- 0.06 (* i 0.085)) :roll 0.6)) (mb-box mb 0.054 0.006 0.054)))
+          (mbc mb #x16161A)                              ; the black butt
+          (with-xform (mb (xform :y -0.67)) (mb-bevel-box mb 0.058 0.06 0.058 0.008))
+          (mbc mb #xD8D8D4)                              ; the tassel: a ring at the cap's spine corner, white strands
+          (with-xform (mb (xform :y 1.54 :z 0.06)) (mb-box mb 0.03 0.05 0.04))
+          (loop for (dy r) in '((-0.03 0.25) (0.0 0.1) (0.03 -0.05) (-0.05 0.4) (0.04 -0.2))
+                do (with-xform (mb (xform :y (+ 1.5 dy) :z -0.12 :pitch (+ 1.75 r) :roll (* 2 dy)))
+                     (mb-cone mb 0.02 0.34 :segments 4)))))
 
 ;; the Bankai's broken cleaver (anime ep. 44): Nozarashi's slab snapped off on a diagonal at ~1 m, ink-black with a white
 ;; edge line, no guard, no cap, a long cloth-wrapped tang like the first Zangetsu's hilt; no fire, no glow
