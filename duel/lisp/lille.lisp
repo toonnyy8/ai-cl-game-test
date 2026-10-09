@@ -707,9 +707,9 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
                   (:lb-oe-sabaki "裁きの光明" "SABAKI NO KOMYO" nil) (:lb-trompete "神の喇叭" "TROMPETE" nil)
                   (:lb-oe-trompete "神の喇叭" "TROMPETE" nil)))))
 
-;;; ================================================================ per-side state (the sim's; reset with every match)
-(defstruct (lbs (:conc-name lbs-))
-  (e nil)                                 ; the fighter it belongs to: a new match's fighter gets a fresh state (LB)
+;;; ================================================================ his state (the sim's): a component on his fighter entity
+(defcomponent lbs
+  "Lille's state (LB): on his fighter entity, made on its first use, so a new match's fighter starts fresh."
   (eyes *lb-eyes* :type fixnum)           ; the eye's pips left (never refilled)
   (u-up 0 :type fixnum)                   ; frames U has been up (the eye's rest rule)
   (eye-t -1 :type fixnum)                 ; *MATCH-TICK* of the last opening (the look)
@@ -729,12 +729,11 @@ revive's condition is the Jilliel kits' :bankai-ok, LILLE-BANKAI-OK.)")
   (awake-t -1 :type fixnum) (revive-t -1 :type fixnum)   ; ticks of the awakening and the revival (the pacing log)
   (sig-origin nil)                        ; the combat log only: what opened his current combo (LB-SIG-LOG)
   (cross-off 9999 :type fixnum))          ; sim frames the opponent has been off all his live traces (decision 44)
-(defvar *lb* (vector (make-lbs) (make-lbs)) "Per side: his eye, the seal, the shooting stance, the traces.")
 (defvar *lb-reflect-test* nil "Debug 79007 / 79008: P2 reflects P1's Trompete by a guard (:guard) / a perfect Hoho (:hoho).")
 (defun lb (e)
-  "E's state; a new fighter entity (a new match) gets a fresh one (Senjumaru's carry-over bug, DEVLOG §38-§39)."
-  (let* ((i (fighter-side (fighter e))) (st (svref *lb* i)))
-    (if (eql (lbs-e st) e) st (setf (svref *lb* i) (make-lbs :e e)))))
+  "E's state: his eye, the seal, the shooting stance, the traces (his LBS component, attached on the first call: a new
+fighter entity, a new match, gets a fresh one; Senjumaru's carry-over bug, DEVLOG §38-§39)."
+  (or (lbs e) (let ((st (make-lbs))) (add-component e st) st)))
 (defun lb-band (d) "The pacing log's distance band of D metres: :near (< 8) :mid (8-14) :far (>= 14)." (cond ((< d 8.0) :near) ((< d 14.0) :mid) (t :far)))
 (defun lb-band-key (prefix d) (intern (format nil "~a-~a" prefix (lb-band d)) :keyword))
 

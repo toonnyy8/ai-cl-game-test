@@ -463,10 +463,11 @@ lines are the pacing log, counted only while `*pacing-log*` is on (`PACE` into t
 components.lisp; `BAND-ACC-STEP` / `CUP-ACC-STEP` in `HASH-LOG`): `START-CVC` sets it (and clears the counts) before
 `START-MATCH`, so every gate and every 2000+s / 3000+s CPU-vs-CPU match counts while play builds no keys (refactor,
 2026-10-09). A new pacing counter goes through `pace` (or under `*pacing-log*`). `--cmd N` (repeatable) queues any debug knob before the gate command;
-`-j` sets the processes (default 16). One process plays a pairing's seeds back to back, as the page does: Senjumaru's
-per-side state (`*sj*`, senjumaru.lisp) is not reset between matches, so her SR / SS rows depend on the matches played
-before them; `--chunk N` (seeds per process) is faster for one long stream but then differs from the page on her
-pairings. The wasm build's libm is emscripten's musl, and glibc's `sinf` / `expf` / ... differ from it in the last bit
+`-j` sets the processes (default 16). One process plays a pairing's seeds back to back, as the page does; `--chunk N`
+(seeds per process) is faster for one long stream and gives the same rows: Ichigo's, Senjumaru's and Lille's state is a
+component on their fighter entity (`ics` / `sjs` / `lbs`, made on first use, so every match's fighters start fresh;
+Senjumaru's per-side state carried over between matches until 2026-09-29, DEVLOG §38–§39; components since the
+2026-10-09 refactor). The wasm build's libm is emscripten's musl, and glibc's `sinf` / `expf` / ... differ from it in the last bit
 now and then (3 of 15 pairings drifted a few cm by t=7200, one row changed), so `simgate.py` builds the same musl math
 sources from the emsdk (`build/simgate/muslm.so`) and preloads them (`LD_PRELOAD`: the Lisp's inline calls and libecl's
 both land there); running `tools/simgate/run.lisp` by hand without it gives glibc's math.
