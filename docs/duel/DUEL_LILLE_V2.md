@@ -347,3 +347,137 @@ BY and BK are under the 125 s floor: he loses most cross pairings fast (the CPU 
 and snap 40 → 50: BY 123.8, BK 122.3, BR 127.2, BI 138.6, BS 133.5, BL 168.9, BB 146.7 (noise-level, not kept: the spec's
 numbers stay); the melee CPU's L into ranged at 2.4–8 m (kept) moved BY 107 → 114, BK 114 → 123. Left to batch 4 (the CPU)
 and the gate batch. `aieval.py --char 6 --seeds 4`: strength 0.06, masher 1.0, signature 0.37, pacing ok.
+
+## 13. CPU, ASSIST, learning and gates (batch 4, 2026-10-09, branch `barro-cpu`)
+
+(§12 is the art batch's.) Everything here is in `duel/lisp/barro.lisp` (the AI, ASSIST and learning sections) and its
+kits' `:ai` plists; no other character's code or knob moved (the old 21 pairings' rows are byte-identical, below).
+
+### 13.1 The sim fix: L after a melee J1 / J2 / K1 / K2
+
+Batch 1 refused (and ate) L pressed in a non-ender melee link. Now the melee kits' `:l-after-k` / `:l-after-j` name one
+router move, `:br-l-link` (it lives no frame: its f0 starts the real move through the non-button strings
+`*br-melee-strings*`). `BARRO-OK` routes it off the link it was pressed in (`BR-L-ROUTE`, kept in `BRS-L-TO`): K3 → the
+recall, J3 → the backstep, J1 / J2 / K1 / K2 → `:br-to-en` (the plain L, the mode turn). It starts where the enders'
+L links start: latched, at the link's chain open on hit or block. A human's L is never refused now; the CPU's clause
+(`BR-AI-L-OK-P`) still gates the recall and the backstep. The owl's melee shares it. Host-tested (the routes, the router's
+f0, the strings in both melee kits); the browser smoke ran it.
+
+### 13.2 The CPU (§8)
+
+Every chance is a `:p` in the kit's `:ai`, × `*br-ai-diff*` (EASY 0.5 / NORMAL 1.0 / HARD 1.5, at most 1). Every roll is
+made once per event: a base decision window (`*br-ai-every*` 30 f), a threat window (his move's start, a hazard's spawn),
+a trace laid (the fire roll), a link's land frame (the enders), the stance's f6 (its plan). `BR-AI-REFLEX` is every
+form's `:reflex`.
+
+| Form | Rule | `:ai` key (NORMAL) |
+|---|---|---|
+| base | the stance at range (its plan: the 萬物貫通 shot) | `:zone (:p 0.5 :near 6.0)` |
+| base | the stance in close with a 狙擊 pip (its plan: TAISHA / the snap) | `:pip (:p 0.6 :near 4.0)` |
+| base | L after a K link (the stance at f4; its plan the shot on the reeling opponent) | `:l-after-k 0.4 → 0.6` |
+| base | strings up close | the bands (unchanged) |
+| melee | K3 → L the recall at n ≥ 3, or n ≥ 1 under 35 % Reishi (`BR-AI-SP-ENDER` on K3's hit) | `:recall (:p 0.6 :n 3 :low-n 1 :low 0.35)` |
+| melee | J3 → L the backstep with no trace and ≥ 9 flash step (batch 1's clause was "or") | `:backstep (:p 0.5 :fs 9.0)` |
+| melee | K links more often (the way to K3) | `:string-k 0.6` (generic 0.3) |
+| melee | K at ≥ 4 traces near him (it materialises them at its first active frame, hit or whiff), or ≥ 1 near with him busy past K1's startup | `:fire (:p 0.6 :n 4 :busy-n 1)` |
+| ranged | lay at him every 12 f from 4 m while the flash step stays ≥ 15 after the price (SP1's fan on one roll per lay with a bar, else L), fewer than `:fire :n` near | `:lay (:far 4.0 :reserve 15.0 :every 12 :sp1 0.3)` |
+| ranged | J / K in: K at ≥ 4 near (or 1 on a busy opponent); inside 4 m J within J1's reach + 0.4, else K | `:fire (:p 0.6 :n 4 :in 4.0 :busy-n 1)` |
+| awakened | MUJITTAI (U) on a threat within reach + 1 m or a hazard within 12 f, one roll per window (0 under 30 guard gauge); else a Step off a lane, a Hoho on the generic roll, else the generic answers (whose guard is U, MUJITTAI too) | `:stance (:p 0.4 :max 120 :gg 30)` |
+| MUJITTAI | out by attacking: his whiff / recovery, 120 f, the guard gauge under 30, him idle out of reach (K1 / J1 / the near traces' K / L) | `:stance` |
+| JILLIEL | the owl's revival when allowed | `:bankai (:p 0.9 …)` (generic, unchanged) |
+| facing him | a CPU facing his awakened forms Steps off his live traces (inside a trace's 10° snap, laid ≥ its delay ago), one roll per new trace, × `*ai-opp-diff*` (`BR-OPP-TRACE`, the old `LB-OPP-TRACE` copied; read off his kits, so no other pairing runs it) | `:opp-trace (:p 0.5)` |
+
+Other `:ai` changes: melee `:o-ender` 0.5 → 0.3 (the O ender rolls before the recall), the owl melee's 0.6 → 0.3; the
+melee `:l-after-k` 0.9 / `:l-after-j` 0.6 → none (the enders go through `:sp-ender`; the router would turn any K link's
+L into the mode turn). Batch 1's `*br-ai-fire-n*` 4 / `*br-ai-in*` 3.5 m are gone (now `:fire :n` / `:in`).
+
+Tried and changed: the MUJITTAI rule first took the whole threat window (`:none` on a failed roll, the old Lille's
+shape): BY 13 → 16, BK 12 → 11, BR 3 → 5, BI 6 → 4, BS 13 → 9, BL 15 → 18 of 20 once the failed roll falls to the
+generic answers (kept).
+
+### 13.3 ASSIST AUTO COMBO routes (`BR-ASSIST-COMBO`, every form's `:assist-combo`)
+
+- **Base: J → K → L → L.** His J in a link that hit → its K link (J1 → K2s) on the land frame → L latched on the K link
+  (the stance at f4, a combo) → the stance's plan (`BR-AI-KAMAE-PLAN`: the shot on the reeling opponent) pressed once it is
+  up; his J eaten meanwhile. The spec's J J J → L → L was built first: the stance after J3 comes from neutral after his
+  stagger, and the masher's wins as him with COMBO fell 36 % → 24 %; J → K → L is a real combo (60 %).
+- **Melee: K K K → L.** His J in a melee link that hit → its K link to K3 → L the recall with ≥ 1 trace; J3 → L the
+  backstep with no trace and 9 flash step.
+- **Ranged: L.** His J pressed while free in ranged mode → K in at 4 traces near him, else a lay at him (L) from 4 m with
+  the flash step ≥ 15 after it; else his J (J1, back to melee).
+
+The gate's masher never awakens, so only the base route comes up there (logged, BA vs KE, 2 seeds: J1 90, the route's K
+54 → K2s 53, L 104 → the stance 52 → the shot 52).
+
+### 13.4 Learning (`learn-def-kit :barro`, the old Lille's §24.9 pattern)
+
+Situations `#(:shot :trace :mujittai)`, answers `#(:guard :hoho :step :attack :back :take)`; reads × `*br-learn-diff*`
+(0.5 / 1.0 / 1.5), one roll each, only a learner (a CPU facing a human) runs them.
+
+| Situation | Opens | Read → answer |
+|---|---|---|
+| `:shot` | his stance's 萬物貫通 shot on a free opponent | at the stance's plan: a guard → the stance's SP1 (three lines, 120 of guard); a Step / backing off → the snap (a pip) else SP1; a Hoho / an attack → TAISHA (a pip) else the stance's SP2 |
+| `:trace` | awakened, the human inside a live trace's snap (one he could have seen) | at the onset: a guard → K now; a Step → SP1's fan (ranged); a Hoho → the fire held while he is free (`*br-learn-hold*` 60 f); an attack → U (MUJITTAI) inside 4 m |
+| `:mujittai` | his MUJITTAI with the human inside 5 m | at the onset: an attack → he stays (only the whiff exit); waiting → he leaves at once |
+
+`*br-learn-episode*` (:shot 24 :trace 40 :mujittai 60) + the delay. No scripted habits for the learning gate yet.
+`tests/learn-test.lisp`: 131 ALL PASS.
+
+### 13.5 Knobs changed
+
+No damage knob changed (the spec's numbers stay). New: `*br-ai-diff*`, `*br-ai-every*` 30, `*br-learn-diff*`,
+`*br-learn-episode*`, `*br-learn-hold*` 60, the `:ai` keys above. Removed: `*br-ai-fire-n*`, `*br-ai-in*`.
+
+Damage levers measured for the A/B (none kept): `*br-shot-dmg*` 50 → 60 (BK 9, BI 25 of 60 on stream 100); base
+`:guard` 0.5 → 0.35, `:hoho` 0.3 → 0.4, `:dash-back` 0.7 → 0.9 (BK 9); `*br-mult*` 1.3 → 1.4 (BK 10), → 1.5 (BK 24 / 19 /
+16, BI 27 / 30 / 29 on streams 100 / 300 / 500, one draw).
+
+### 13.6 Gates (native sim, NORMAL)
+
+The match time leaves the cinematics out (DEVLOG §134); the "with the cinematics" median is given beside it.
+
+**His seven pairings, 20 seeds** (the verdict; every match K.O.):
+
+| Pairing | Median s | With cinematics | K.O. | His wins (P1) / P2 |
+|---|---|---|---|---|
+| BY | **121.1** | 163.0 | 20 / 20 | 16 / 4 |
+| BK | **112.4** | 157.3 | 20 / 20 | 11 / 9 |
+| BR | 141.5 | 186.3 | 20 / 20 | 5 / 15 |
+| BI | 134.8 | 180.5 | 20 / 20 | 4 / 16 |
+| BS | 129.4 | 174.6 | 20 / 20 | 9 / 11 |
+| BL | 145.2 | 192.8 | 20 / 20 | 18 / 2 |
+| BB (mirror) | 132.1 | 185.3 | 20 / 20 | 9 / 11 |
+
+(Batch 1, 10 seeds: his wins 1 / 4 / 4 / 5 / 4 / 3 of 10.) **60-seed reruns:** BY 115.9 s (153.8 with the cinematics),
+45 / 15; BK 112.9 s (157.3), 34 / 26. Both stay under 125 s of play time, inside the window with the cinematics; under
+the new measure 14 of the old 21 pairings sit under 125 s too (DEVLOG §134: the window is the user's to restate).
+**Reported to the user, not tuned further.**
+
+**Awaken A/B** (`--cmd 39020`: 39000 + 10 × P1's mode + P2's, 0 the kit's rule / 1 always / 2 never; he is P1 in all
+seven, so §9's "39060 + b" is 39020), the never-awaken side's wins of 60, streams seed0 100 / 300 / 500:
+
+| BY | BK | BR | BI | BS | BL | BB |
+|---|---|---|---|---|---|
+| 45 / 41 / 39 | **8 / 11 / 14** | 26 / 28 / 27 | 21 / **17** / 23 | 40 / 40 / 40 | 55 / 53 / 54 | 36 / 41 / 28 |
+
+BK fails on every stream, BI on one: his base form needs the awakening against Kenpachi (as the old Lille's never-awaken
+rows, DUEL_LILLE §24.12). The levers tried are in §13.5; only `*br-mult*` 1.5 moves BK, and not on every stream.
+**Reported to the user.**
+
+**ASSIST gate** (`assistgate.py`'s jobs, his 13 rows, NORMAL, 20 seeds; P1 the masher):
+
+| assist (k) | masher as him | masher vs him |
+|---|---|---|
+| none (0) | 51 / 140 = 36 % | 2 / 120 = 2 % |
+| COMBO (3) | 84 / 140 = 60 % (the J J J → L route: 24 %) | 24 / 120 = 20 % |
+| HOLD U + COMBO + BREAK (10) | 115 / 140 = 82 % | 48 / 120 = 40 % |
+
+**CPU score** (`aieval.py --char 6 --seeds 10`): strength (HARD) 0.083, masher 1.0, signature 0.466, score 0.343, pacing ok (NORMAL medians Y 121.2, K 119.8, R 150.2, I 135.6, S 133.8, L 140.7, all K.O.). Batch 1: strength 0.06, signature 0.37. HARD stays weak:
+the other characters' HARD layers came from dream-rsi searches (DUEL_AI_V2, DUEL_LILLE §24); a HARD Kenpachi deals him
+~16 000 to ~6 000 in 4 matches (logged), as he does to a HARD Ichigo.
+
+**Isolation and the rest:** the old 21 pairings' rows, companion and summary lines at 10 seeds: byte-identical to the merged head (bd5fd75). `simgate.py
+--cvc`: PASS 3 / 3. Host: duel-rules-test 8372 checks ALL PASS (the router, the CPU's pure rules, the kits' keys, the learning
+spec and answers), duel-control 89, learn 131, input 33, touch 64, cine 18 pass; `tools/pkgcheck.sh duel` 0 / 0 / 0;
+`./build.sh duel` 0 warnings; smoke `run.mjs --secs 8` exit 0 and a script through 82020 (the CPU mirror), 82005 (K
+materialised the six traces) and 82002 + J + L (the router): exit 0, no error (J1 hit → L → `BR-L-LINK` → `BR-TO-EN`; K1 hit → L → the same).
