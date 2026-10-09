@@ -225,6 +225,13 @@ yes (§5.1: 「K 連段的結尾接入 L」, 「J 連段的結尾接入 L」)."
     (:br-recall (and cur-ender (eq cur-kind :flash)))
     (:br-backstep (and cur-ender (eq cur-kind :quick)))
     (t t)))
+(defun br-l-route (cur-kind cur-ender)
+  "The move L pressed in a melee string link starts (the kit's :l-after-k / :l-after-j name the router :BR-L-LINK): off K3
+(a :flash ender, CUR-ENDER) the recall, off J3 (a :quick ender) the backstep, off J1 / J2 / K1 / K2 the plain L, the mode
+turn into ranged, as a cancel in the window the enders' links use (batch 4, 2026-10-09: the press was refused and eaten)."
+  (cond ((and cur-ender (eq cur-kind :flash)) :br-recall)
+        ((and cur-ender (eq cur-kind :quick)) :br-backstep)
+        (t :br-to-en)))
 (defun br-revive-ok-p (form free konpaku)
   "May P revive him into the owl (§6): any JILLIEL FORM (melee, ranged, MUJITTAI), FREE as for the first awakening, at most
 *BANKAI-KONPAKU* Konpaku."
@@ -341,6 +348,9 @@ the stance's SP2 (inside 5 m) or SP1; else the shot."
 ;; 回收 the recall (every live trace taken back, counted, then the derivative string for the count: :strings :rc0 .. :rc3)
 (defmove :br-to-en :kind :sig :clip :lb-w-fold :callout "EN" :startup *br-to-en-f* :active 0 :recovery 0 :tick br-halt-tick
   :on-frame ((11 br-go-ranged)))
+;; L latched in a melee J / K link (the kits' :l-after-k / :l-after-j): a router that lives no frame: its f0 starts the
+;; move BARRO-OK routed off the link it was pressed in (BR-L-ROUTE: K3 the recall, J3 the backstep, else :br-to-en; batch 4)
+(defmove :br-l-link :kind :sig :clip :lb-w-fold :startup 1 :active 0 :recovery 0 :on-frame ((0 br-l-link-go)))
 (defmove :br-backstep :kind :sig :clip :lb-w-tenshin :callout "KOTAI" :startup *br-backstep-f* :active 0 :recovery 8
   :tick br-halt-tick :on-frame ((0 br-backstep-go) (13 br-go-ranged)))
 (defmove :br-recall :kind :sig :clip :lb-w-fold :callout "KAISHU" :startup *br-recall-f* :active 0 :recovery 0
@@ -438,6 +448,10 @@ pacing log (:struck); his looks (:draw, barro-art.lisp).")
 (defparameter *br-recall-strings*
   '((:br-recall :rc0 :br-rc0) (:br-recall :rc1 :br-rc1) (:br-recall :rc2 :br-rc2) (:br-recall :rc3 :br-rc3))
   "The recall's derivative strings: non-button strings its f7 starts (BR-RECALL-FIRE).")
+(defparameter *br-melee-strings*
+  (append *br-recall-strings*
+          '((:br-l-link :br-recall :br-recall) (:br-l-link :br-backstep :br-backstep) (:br-l-link :br-to-en :br-to-en)))
+  "The melee forms' non-button strings: the recall's, and the L router's three targets (BR-L-LINK-GO; batch 4).")
 
 (defkit :barro :base
   :name "LILLE II" :body :lille :weapon :diagramm :stance :lb-stance :calm t
@@ -453,8 +467,9 @@ pacing log (:struck); his looks (:draw, barro-art.lisp).")
        :moves ((0.0 2.2 :q 4 :f 2 :breaker 1 :step 2 :sig 1)
                (2.2 6.0 :sp2 1 :step 2 :sp1 1 :sig 3 nil 1)
                (6.0 99.0 :sig 6 :sp1 1 nil 1))
-       :guard 0.5 :hoho 0.3 :dash 0.3 :dash-back 0.7 :block-string 0.3 :o-ender 0.3 :l-after-k 0.4 :kikon-range 7.7
-       :awaken (:min-taken 150)))
+       :guard 0.5 :hoho 0.3 :dash 0.3 :dash-back 0.7 :block-string 0.3 :o-ender 0.3 :l-after-k 0.6 :kikon-range 7.7
+       :awaken (:min-taken 150)
+       :zone (:p 0.5 :near 6.0) :pip (:p 0.6 :near 4.0) :reflex br-ai-reflex))   ; (his CPU: batch 4, §13)
 
 ;; JILLIEL melee (the awakening enters it [G]): the wing strings, SP1 / SP2 the old KIN's, L to ranged, J3 -> L the
 ;; backstep, K3 -> L the recall, U MUJITTAI, P the revival
@@ -466,16 +481,17 @@ pacing log (:struck); his looks (:draw, barro-art.lisp).")
   :commands (:q :br-w-j1 :f :br-w-k1 :sig :br-to-en :sp1 :br-w-sanren :sp2 :br-w-nijushi :breaker :br-w-breaker
              :kikon :br-w-kikon)
   :grid (:br-w-j1 :br-w-j2 :br-w-j3 :br-w-k1 :br-w-k2 :br-w-k3 :br-w-j2s :br-w-k2s)
-  :strings *br-recall-strings*
-  :l-after-k :br-recall :l-after-j :br-backstep   ; (only off K3 / J3: BARRO-OK, BR-L-LINK-OK-P)
+  :strings *br-melee-strings*
+  :l-after-k :br-l-link :l-after-j :br-l-link     ; (the router: K3 the recall, J3 the backstep, else the mode turn: BR-L-ROUTE)
   :ai (:intents (:approach 3 :pressure 4 :zone 0 :defend 1)
        :ranges (:approach (2.4 6.0) :pressure (1.4 2.4) :zone (3.0 6.0) :defend (3.0 6.0))
        :moves ((0.0 2.4 :q 4 :f 4 :breaker 1)
                (2.4 8.0 :sig 2 :step 1 :sp1 1 nil 1)
                (8.0 99.0 :sig 4 :step 1 nil 1))
-       :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.8 :block-string 0.3 :o-ender 0.5 :kikon-range 8.5
-       :l-after-k 0.9 :l-after-j 0.6 :stance (:max 120 :gg 30)
-       :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1) :reflex br-ai-reflex))
+       :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.8 :block-string 0.3 :o-ender 0.3 :kikon-range 8.5
+       :string-k 0.6 :recall (:p 0.6 :n 3 :low-n 1 :low 0.35) :backstep (:p 0.5 :fs 9.0) :fire (:p 0.6 :n 4 :busy-n 1)
+       :stance (:p 0.4 :max 120 :gg 30) :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1)
+       :sp-ender br-ai-sp-ender :opp-trace (:p 0.5) :opp-reflex br-opp-trace :reflex br-ai-reflex))
 
 ;; U in every awakened form: 無実体 MUJITTAI (the old Lille's, the user 2026-10-09): West's ward with :intangible; every
 ;; command drops it (no :keep)
@@ -491,8 +507,10 @@ pacing log (:struck); his looks (:draw, barro-art.lisp).")
        :moves ((0.0 3.0 :q 2 :f 2 :step 1)
                (3.0 14.0 :sig 4 :sp1 1 :sp2 1 :f 1 nil 1)
                (14.0 99.0 :sig 2 :step 1 nil 2))
-       :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.4 :dash-back 0.6 :kikon-range 8.5 :stance (:max 120 :gg 30)
-       :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1) :reflex br-ai-reflex))
+       :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.4 :dash-back 0.6 :kikon-range 8.5
+       :fire (:p 0.6 :n 4 :in 4.0 :busy-n 1) :lay (:far 4.0 :reserve 15.0 :every 12 :sp1 0.3)
+       :stance (:p 0.4 :max 120 :gg 30) :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1)
+       :opp-trace (:p 0.5) :opp-reflex br-opp-trace :reflex br-ai-reflex))
 
 (defkit :barro :jilliel-mujittai :inherit :jilliel
   :guard-to nil :drop-to :jilliel :passives (:ward :intangible) :stance :lb-w-fold :u-tag "U: MUJITTAI")
@@ -511,8 +529,10 @@ pacing log (:struck); his looks (:draw, barro-art.lisp).")
        :moves ((0.0 2.6 :q 4 :f 4 :breaker 1)
                (2.6 8.0 :step 1 :sp1 1 nil 1)
                (8.0 99.0 :sp2 2 :sig 1 :step 1 nil 1))
-       :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.8 :block-string 0.3 :o-ender 0.6 :kikon-range 9.0
-       :l-after-k 0.9 :l-after-j 0.6 :stance (:max 120 :gg 30) :opp-reflect (:p 0.3) :reflex br-ai-reflex))
+       :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.8 :block-string 0.3 :o-ender 0.3 :kikon-range 9.0
+       :string-k 0.6 :recall (:p 0.6 :n 3 :low-n 1 :low 0.35) :backstep (:p 0.5 :fs 9.0) :fire (:p 0.6 :n 4 :busy-n 1)
+       :stance (:p 0.4 :max 120 :gg 30) :opp-reflect (:p 0.3)
+       :sp-ender br-ai-sp-ender :opp-trace (:p 0.5) :opp-reflex br-opp-trace :reflex br-ai-reflex))
 
 (defkit :barro :shin-kin-mujittai :inherit :shin-kin
   :guard-to nil :drop-to :shin-kin :passives (:ward :intangible) :stance :lb-o-fold :u-tag "U: MUJITTAI")
@@ -525,8 +545,9 @@ pacing log (:struck); his looks (:draw, barro-art.lisp).")
        :moves ((0.0 3.0 :q 2 :f 2 :step 1)
                (3.0 14.0 :sig 4 :sp1 1 :sp2 1 :f 1 nil 1)
                (14.0 99.0 :sig 2 :step 1 nil 2))
-       :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.4 :dash-back 0.6 :kikon-range 9.0 :stance (:max 120 :gg 30)
-       :reflex br-ai-reflex))
+       :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.4 :dash-back 0.6 :kikon-range 9.0
+       :fire (:p 0.6 :n 4 :in 4.0 :busy-n 1) :lay (:far 4.0 :reserve 15.0 :every 12 :sp1 0.3)
+       :stance (:p 0.4 :max 120 :gg 30) :opp-trace (:p 0.5) :opp-reflex br-opp-trace :reflex br-ai-reflex))
 
 (defkit :barro :shin-mujittai :inherit :shin
   :guard-to nil :drop-to :shin :passives (:ward :intangible) :stance :lb-oe-fold :u-tag "U: MUJITTAI")
@@ -557,6 +578,8 @@ pacing log (:struck); his looks (:draw, barro-art.lisp).")
   (snipe 0 :type fixnum)                  ; the 狙擊 gauge, 0-3
   (armed nil)                             ; the running stance L / SP1 / SP2 may still fill a pip (once a move)
   (k-plan nil)                            ; his CPU's stance follow-up (picked once at its f6)
+  (l-to :br-to-en)                        ; the melee L router's target (BARRO-OK, BR-L-ROUTE), started at its f0
+  (opp-roll 0 :type fixnum)               ; a CPU facing him: the newest trace id it rolled for (BR-OPP-TRACE)
   (trace-n 0 :type fixnum)                ; the traces laid (their ids count up)
   (live 0 :type fixnum)                   ; live traces now (counted each step: the HUD, his CPU)
   (recall-n 0 :type fixnum)               ; the recall's count (its f0) for its string (its f7)
@@ -583,21 +606,21 @@ for the ASSIST gate's button-masher (habit :dumb, read as a human)."
   (let ((b (brain e))) (and b (not (brain-off b)) (not (eq (brain-habit b) :dumb)) b)))
 
 (defun barro-ok (e command combo)
-  "His kit's refusals: a lay short of its flash step (BR-LAY-OK-P: ranged L 3, SP1 9, SP2 9); an L link off anything but
-the string's end (the recall after K3, the backstep after J3: BR-L-LINK-OK-P), his CPU's only when it pays (the recall at
->= 3 traces or low Reishi, the backstep with no trace or the flash step for a lay); the owl's SP2 once sealed."
+  "His kit's refusals: a lay short of its flash step (BR-LAY-OK-P: ranged L 3, SP1 9, SP2 9); the melee L router (an L
+latched in a J / K link) routed off the link it was pressed in (BR-L-ROUTE, kept in BRS-L-TO for its f0), his CPU's only
+when it pays (BR-AI-L-OK-P: the recall at its count, the backstep with no trace and the flash step for lines); the owl's
+SP2 once sealed."
   (let* ((f (fighter e)) (form (fighter-form f)) (g (gauges e)) (b (br-tick-brain e))
          (cur (and (eq (fighter-state f) :move) (fighter-move f))))
     (cond ((br-sp2-sealed-p command form (brs-sealed (br e))) nil)
           ((and (eq command :sig) (typep combo 'move))
            (let ((l (mv-name combo)))
-             (and cur (br-l-link-ok-p l (mv-name cur) (mv-kind cur) (member :ender (mv-flags cur)))
-                  (or (null b)
-                      (case l
-                        (:br-recall (let ((n (brs-live (br e))))
-                                      (or (>= n 3) (and (>= n 1) (< (gauges-reishi g) (* 0.35 (gauges-reishi-max g)))))))
-                        (:br-backstep (or (zerop (brs-live (br e))) (>= (gauges-fs g) *br-lay-sp1*)))
-                        (t t)))
+             (and cur
+                  (if (eq l :br-l-link)
+                      (let ((to (br-l-route (mv-kind cur) (and (member :ender (mv-flags cur)) t))))
+                        (setf (brs-l-to (br e)) to)
+                        (or (null b) (br-ai-l-ok-p e to)))
+                      (br-l-link-ok-p l (mv-name cur) (mv-kind cur) (member :ender (mv-flags cur))))
                   t)))
           (t (br-lay-ok-p (or (kit-drop-to (fighter-kit f)) form) command (gauges-fs g))))))   ; (MUJITTAI: its mode's price)
 
@@ -710,6 +733,7 @@ BR-AI-KAMAE-PLAN), then carried out."
       (setf (brs-k-plan st)
             (br-ai-kamae-plan (sim-rnd01) (fighter-dist f) (and (member (fighter-state fo) '(:stun :air)) t) (brs-snipe st)
                               (>= (gauges-reiatsu (gauges e)) (* (kit-command-cost (fighter-kit f) :sp1) *reiatsu-bar*))))
+      (setf (brs-k-plan st) (br-learn-kamae e b (brs-k-plan st)))   ; (a learner's read of the shot, §13)
       (pace e (intern (format nil "AI-~a" (brs-k-plan st)) :keyword))
       (why b :kamae (brs-k-plan st))))
   (brs-k-plan st))
@@ -786,6 +810,12 @@ goes on: the same move is melee's)."
   "The turn's / the backstep's last frame: ranged mode."
   (let* ((form (fighter-form (fighter e))) (to (br-ranged-of form)))
     (unless (eq to form) (set-form e to) (pace e :to-ranged))))
+
+(defun br-l-link-go (e)
+  "The melee L router's f0: the move BARRO-OK routed it to (the recall off K3, the backstep off J3, else the mode turn)."
+  (let ((f (fighter e)))
+    (start-move e (kit-next (fighter-kit f) :br-l-link (brs-l-to (br e))))
+    (pace e (case (brs-l-to (br e)) (:br-recall :l-recall) (:br-backstep :l-backstep) (t :l-to-en)))))
 
 (defun br-halt-tick (e) "The mode turns, the backstep, the recall: no string chase (the slide is their only movement)." (halt! e))
 
@@ -949,25 +979,569 @@ sealed in the owl's modes for the match. The reflector takes nothing."
       (cond ((and (eq *br-reflect-test* :guard) (= sf 53)) (ai-press b :guard 200 :act :hold))
             ((and (eq *br-reflect-test* :hoho) (= sf 51)) (ai-press b :step 1 :modded t :act :hoho))))))
 
-;;; ================================================================ AI (batch 1: enough to play every mechanic; DUEL_LILLE_V2 §8)
-(defparameter *br-ai-fire-n* 4
-  "His CPU in a ranged mode presses K (back to melee, the near traces materialised at K1's first active frame) at this
-many live traces (new 2026-10-09 [G], §8 「n >= 4 ... J / K in」) ...")
-(defparameter *br-ai-in* 3.5 "... or J with him inside this many metres (new 2026-10-09 [G]).")
+;;; ================================================================ AI (batch 4, 2026-10-09: DUEL_LILLE_V2 §8, §13)
+;;; His CPU: his kits' :ai keys (every chance a :p there, x *BR-AI-DIFF* by difficulty: EASY <= NORMAL <= HARD) and these
+;;; reflexes (the kits' :reflex BR-AI-REFLEX, ai.lisp AI-REFLEX: free states, before the generic answers). Every roll is
+;;; made once per event: a decision window (the base form's every *BR-AI-EVERY* f), a threat window (his move's start tick,
+;;; a hazard's spawn), a trace laid (the fire roll), a link's land frame (the enders), a stance (its plan at f6).
+;;;   base      the stance at range (:zone: L, then its plan: the 萬物貫通 shot), the stance in close with a 狙擊 pip (:pip:
+;;;             its plan TAISHA / the snap shot); strings up close (the generic bands); L after a K link (:l-after-k, the
+;;;             stance at f4, its plan the shot on the reeling opponent)
+;;;   melee     strings (the bands); K3 -> L the recall at :recall's count (n >= :n, or >= :low-n under :low of his Reishi),
+;;;             J3 -> L the backstep with no trace and the flash step for lines (:backstep :fs) (BR-AI-SP-ENDER on the
+;;;             ender's hit); K at the traces near him (:fire :n: K materialises them at its first active frame)
+;;;   ranged    lay lines at him (L, SP1 the fan: :lay) while the flash step stays over :reserve, from :far m; at :fire :n
+;;;             traces near him, or him inside :in m, or reeling / recovering for K1's startup with one near: K / J in
+;;;   MUJITTAI  U as a reaction to a threat (:stance :p, one roll per window: BR-AI-STANCE-IN, the old stance rule's shape);
+;;;             out by attacking on his whiff, after :max frames, under :gg of the guard gauge, or him idle out of reach
+;;;   the owl   the same rules; the revival (P) is the generic :bankai key with the JILLIEL kits' :bankai-ok
+;;;   opponents a CPU facing his awakened forms steps off his live traces near it, one roll per new trace (BR-OPP-TRACE)
+(defparameter *br-ai-diff* '(:easy 0.5 :normal 1.0 :hard 1.5)
+  "His CPU's chances (his kits' :ai :p values) x this by difficulty, at most 1 (new 2026-10-09, batch 4: the old Lille's
+*LB-AI-DIFF*).")
+(defparameter *br-ai-every* 30
+  "Frames between two of the base form's stance decisions (:zone / :pip, one roll each; new 2026-10-09, batch 4).")
+
+;; pure: host-tested (tests/duel-rules-test.lisp)
+(defun br-ai-chance (p difficulty) "A chance P of his kit's :ai at DIFFICULTY: x *BR-AI-DIFF*, at most 1." (min 1.0 (* p (getf *br-ai-diff* difficulty 1.0))))
+(defun br-ai-base-plan (r d snipe threat zone pip difficulty)
+  "The base form's stance decision from one roll R (§8): with a 狙擊 pip (SNIPE >= 1) and him inside PIP's :near m, PIP's
+:p: :PIP (the stance; its plan TAISHA / the snap); from ZONE's :near m, ZONE's :p: :ZONE (the stance; its plan the shot);
+none while THREAT (his attack coming: the generic answers it) or without the keys."
+  (cond (threat nil)
+        ((and pip (>= snipe 1) (< d (getf pip :near 4.0)) (< r (br-ai-chance (getf pip :p 0.0) difficulty))) :pip)
+        ((and zone (>= d (getf zone :near 6.0)) (< r (br-ai-chance (getf zone :p 0.0) difficulty))) :zone)))
+(defun br-ai-recall-p (n reishi-frac k)
+  "Does his CPU recall (K3 -> L) with N traces live at REISHI-FRAC of his Reishi (K: the kit's :recall): N >= :n, or N >=
+:low-n under :low (§8: 「n >= 3 (or n >= 1 at low HP)」)?"
+  (and k (or (>= n (getf k :n 3)) (and (>= n (getf k :low-n 1)) (< reishi-frac (getf k :low 0.35)))) t))
+(defun br-ai-backstep-p (n fs k)
+  "Does his CPU back off (J3 -> L) with N traces live and FS flash step (K: the kit's :backstep): no trace left to recall and
+the flash step for a fan of lines (:fs)?"
+  (and k (zerop n) (>= fs (getf k :fs 9.0)) t))
+(defun br-ai-fire-plan (near d busy k1-s q-reach k)
+  "His ranged / melee CPU going in (K: the kit's :fire), NEAR traces near him (his perceived spot), D metres, BUSY his frames
+reeling / recovering left (NIL: free): K (:F, it materialises them at its first active frame) at >= :n near, or at >=
+:busy-n near while he stays busy past K1's startup K1-S; inside :in m J (:Q) within its reach Q-REACH + 0.4, else K; NIL."
+  (cond ((null k) nil)
+        ((>= near (getf k :n 4)) :f)
+        ((and busy (>= busy k1-s) (>= near (getf k :busy-n 1))) :f)
+        ((< d (getf k :in 0.0)) (if (<= d (+ q-reach 0.4)) :q :f))))
+(defun br-ai-lay-plan (fs bars d near r k)
+  "His ranged CPU's lay (K: the kit's :lay) at D metres with FS flash step and BARS Reiatsu bars, NEAR traces near him: from
+:far m while fewer than :n of :fire lie near (passed as NEAR's cap by the caller), the price leaving >= :reserve: SP1's fan
+(:SP1) on one roll R under :sp1 with a bar, else L (:SIG); NIL."
+  (when (and k (>= d (getf k :far 4.0)) (< near (getf k :cap 99)))
+    (let ((res (getf k :reserve 15.0)))
+      (cond ((and (>= bars 1) (>= (- fs *br-lay-sp1*) res) (< r (getf k :sp1 0.0))) :sp1)
+            ((>= (- fs *br-lay-l*) res) :sig)))))
+(defun br-ai-stance-plan (r p line)
+  "An awakened form's answer to one threatening window, from its one roll R: :STANCE (R < P: U, MUJITTAI), else :STEP off a
+LINE, else :PASS (a Hoho on the generic roll, or nothing)."
+  (cond ((< r p) :stance) (line :step) (t :pass)))
+(defun br-stance-exit (busy frames max gg gg-min idle-far)
+  "Why his CPU leaves MUJITTAI now (by attacking), or NIL: :WHIFF (he is BUSY), :MAX (FRAMES in it >= MAX), :GAUGE (the
+guard gauge GG under GG-MIN), :IDLE (he is out of reach and idle: IDLE-FAR)."
+  (cond (busy :whiff) ((>= frames max) :max) ((< gg gg-min) :gauge) (idle-far :idle)))
+
+;; the shell
+(defstruct (brai (:conc-name brai-))
+  (e nil) (b nil)                         ; the fighter and the brain it belongs to (a new match: a fresh one)
+  (key -1 :type fixnum)                   ; MUJITTAI: the threatening window rolled for (his move's start; a hazard's -2 - spawn)
+  (plan nil)                              ; ... its answer: :stance :step :pass :done
+  (exit -1 :type fixnum)                  ; the MUJITTAI whose exit was counted (its start tick)
+  (base-t 0 :type fixnum)                 ; the base form's next stance decision tick
+  (lay-t 0 :type fixnum)                  ; the ranged form's next lay tick
+  (fire-key -1 :type fixnum) (fire-go nil))   ; the fire roll's event (the traces laid so far) and its answer
+(defvar *br-ai* (vector (make-brai) (make-brai)) "Per side: his CPU's state.")
+(defun br-ai-state (e b)
+  (let* ((i (fighter-side (fighter e))) (st (svref *br-ai* i)))
+    (if (and (eql (brai-e st) e) (eq (brai-b st) b)) st (setf (svref *br-ai* i) (make-brai :e e :b b)))))
+
+(defun br-near-count (e x z)
+  "How many of E's live traces have (X Z) inside their *BR-NEAR-DEG* snap (BR-NEAR-P): what a K would materialise there."
+  (let ((n 0))
+    (do-entities (h (hz hazard))
+      (let ((d (hazard-data hz)))
+        (when (and (eql (hazard-owner hz) e) (brh-p d) (brh-live d)
+                   (multiple-value-call #'br-near-p (br-trace-angle (hazard-x hz) (hazard-z hz) (hazard-yaw hz) x z)))
+          (incf n))))
+    n))
+
+(defun br-ai-threat-p (e s d margin)
+  "Is his perceived move S a threat: an attack in its main phase with hit frames, still to hit and within its reach + MARGIN
+(an :x-axis line: E on it), not a parry, a bind's tell or a :reflectable blast?"
+  (and (eq (snap-state s) :move) (eq (snap-phase s) :main)
+       (member (snap-kind s) '(:quick :flash :sig :sp :breaker :kikon))
+       (> (snap-active-end s) (snap-s s))
+       (snap-live-p s) (snap-near-p s e d margin)
+       (not (intersection '(:parry :bind :reflectable) (snap-flags s)))))
+
+(defun br-ai-line-p (s)
+  "Is his perceived move a lane: an :x-axis line or a Kikon module's lane? A Step clears it."
+  (or (snap-x-axis-p s) (and (snap-move s) (eq (getf (mv-params (snap-move s)) :look) :lane))))
+
+(defun br-ai-side-step (e b s)
+  "A sideways Step off his perceived line (LINE-OFF-STRAFE; anything else: the current strafe)."
+  (when (br-ai-line-p s)
+    (let ((p (pos-of e)))
+      (setf (brain-strafe b) (f32 (line-off-strafe (snap-x s) (snap-z s) (snap-yaw s) (aref p 0) (aref p 2) (snap-x s) (snap-z s))))))
+  :side-step)
+
+(defun br-ai-hazard-key (e lead)
+  "One of his opponent's hazards about to hit E within LEAD frames (a wave / fireball flying at him, or a delayed one under
+him whose delay is at most LEAD): its key (-2 - its spawn tick), or NIL."
+  (let* ((o (opp-of e)) (q (pos-of e)) (bd (model-body (model e))) (key nil))
+    (do-entities (h (hz hazard))
+      (when (and (null key) (eql (hazard-owner hz) o) (hazard-hw hz) (> (hazard-hits-left hz) 0)
+                 (if (and (member (hazard-kind hz) '(:wave :fireball)) (<= (hazard-delay hz) 0) (> (hazard-speed hz) 0.1))
+                     (let ((dist (sqrt (+ (expt (- (aref q 0) (hazard-x hz)) 2) (expt (- (aref q 2) (hazard-z hz)) 2)))))
+                       (<= (/ (* 60 (max 0.0 (- dist 1.0))) (hazard-speed hz)) lead))
+                     (and (< 0 (hazard-delay hz) (1+ lead))
+                          (hazard-touches-p hz (aref q 0) (aref q 1) (aref q 2) (body-hurt-r bd) (body-hurt-h bd)))))
+        (setf key (- -2 (- *match-tick* (hazard-age hz))))))
+    key))
+
+(defun br-ai-busy-p (s delay frames)
+  "Is he, as perceived, recovering or reeling, with at least FRAMES of it left after DELAY? (FRAMES 0: just busy.)"
+  (and (< (snap-left s) 99) (snap-punishable-p s) (>= (- (snap-left s) delay) frames)))
+
+(defun br-ai-stance-in (e b s d)
+  "An awakened mode (§8, the old Lille's stance rule): a move of his starting within its reach + 1 m (an :x-axis line: E on
+it), not a Breaker / grab, or a hazard of his within 12 f: one roll per window, :stance :p x the difficulty (0 under :gg of
+the guard gauge): U (MUJITTAI, the kit's :guard-to). Else a sideways Step off a lane, or a Hoho on the generic Hoho roll
+(his move >= 6 f out), else the generic answers (its guard is U: MUJITTAI as well)."
+  (let* ((solid (not (or (eq (snap-kind s) :breaker) (member :grab (snap-flags s)))))
+         (mv-threat (and solid (br-ai-threat-p e s d 1.0)))
+         (key (if mv-threat (snap-start s) (br-ai-hazard-key e 12))))
+    (if (null key)
+        (and solid (br-ai-threat-p e s d *ai-threat-margin*) (why b :stance-out-of-reach :none))
+        (let ((ai (br-ai-state e b)) (k (ai-table e :stance)) (g (gauges e)))
+          (when (/= key (brai-key ai))
+            (setf (brai-key ai) key
+                  (brai-plan ai) (br-ai-stance-plan (sim-rnd01)
+                                                    (if (or (gauges-guardless g) (< (gauges-gg g) (getf k :gg 30))) 0.0
+                                                        (br-ai-chance (getf k :p 0.0) (brain-difficulty b)))
+                                                    (and mv-threat (br-ai-line-p s))))
+            (pace e (case (brai-plan ai) (:stance :ai-stance) (:step :ai-step) (t :ai-pass))))
+          (case (brai-plan ai)
+            (:stance (setf (brai-plan ai) :done) (ai-press b :guard 4 :act :hold) (why b :stance :none))
+            (:step (setf (brai-plan ai) :done) (why b :stance-step (br-ai-side-step e b s)))
+            (:pass (setf (brai-plan ai) :done)
+                   (if (and mv-threat (>= (- (snap-s s) (snap-sf s)) 6) (hoho-ready-p e)
+                            (ai-hoho-spare-p (gauges-fs g) (gauges-reishi g) (gauges-reishi-max g))
+                            (< (brain-hoho-roll b) (ai-table e :hoho 0.2)))
+                       (why b :stance-hoho :hoho)
+                       nil))                              ; (the generic answers: a guard is U, MUJITTAI too)
+            (t nil))))))
+
+(defun br-ai-opp-reach (e)
+  "His longest J / K reach (his current kit): what 'in reach' means for MUJITTAI's idle rule."
+  (let ((kit (kit-of (opp-of e))))
+    (loop for c in '(:q :f) for mv = (kit-command-move kit c) maximize (if mv (mv-reach mv) 0.0))))
+
+(defun br-ai-exit-cmd (e b s d)
+  "The attack that ends MUJITTAI: K1 when he stays busy for its startup within its reach, J1 within its, the traces near him
+K (:fire), else L (ranged: a lay; melee: the turn to ranged) when it may start, else K1."
+  (let* ((kit (kit-of e)) (q (kit-command-move kit :q)) (fm (kit-command-move kit :f)))
+    (cond ((and fm (<= d (+ (mv-reach fm) 0.2)) (br-ai-busy-p s (brain-delay b) (mv-s fm)) (kit-command-ok-p e :f)) :f)
+          ((and q (<= d (+ (mv-reach q) 0.2)) (kit-command-ok-p e :q)) :q)
+          ((and fm (<= d (+ (mv-reach fm) 0.2)) (kit-command-ok-p e :f)) :f)
+          ((and (>= (br-near-count e (snap-x s) (snap-z s)) (getf (ai-table e :fire) :n 4)) (kit-command-ok-p e :f)) :f)
+          ((kit-command-ok-p e :sig) :sig)
+          ((kit-command-ok-p e :f) :f))))
+
+(defun br-ai-stance-out (e b s d)
+  "MUJITTAI (§8): he leaves it only by attacking: on his whiff or recovery (as perceived), after :max frames in it, under :gg
+of the guard gauge, or with him out of reach (+ 1 m) and idle; the whiff and idle rules wait while a hazard of his is
+coming. Deterministic on what it sees, no roll."
+  (let* ((k (ai-table e :stance)) (st (br e)) (calm (not (br-ai-hazard-key e 12))) (read (br-learn-mujittai b))
+         (why (br-stance-exit (and calm (br-ai-busy-p s (brain-delay b) 0)) (brs-stance st)
+                              (if (eq read :stay) 9999 (getf k :max 120))   ; (a learner's read: §13)
+                              (gauges-gg (gauges e)) (getf k :gg 30)
+                              (and calm (not (eq read :stay))
+                                   (or (eq read :leave)
+                                       (and (member (snap-state s) '(:idle :guard)) (> d (+ (br-ai-opp-reach e) 1.0))))))))
+    (when why
+      (let ((cmd (br-ai-exit-cmd e b s d)) (ai (br-ai-state e b)) (t0 (- *match-tick* (brs-stance st))))
+        (when cmd
+          (when (/= (brai-exit ai) t0)
+            (setf (brai-exit ai) t0)
+            (pace e (case why (:whiff :ai-exit-whiff) (:max :ai-exit-max) (:gauge :ai-exit-gauge) (t :ai-exit-idle))))
+          (why b :br-stance-exit cmd))))))
+
+(defun br-ai-base (e b s d)
+  "The base form (§8): every *BR-AI-EVERY* f one roll (BR-AI-BASE-PLAN): the stance with a pip close (its plan TAISHA / the
+snap), at range (its plan the shot); L pressed (the stance), or NIL."
+  (let ((ai (br-ai-state e b)))
+    (when (and (>= *match-tick* (brai-base-t ai)) (kit-command-ok-p e :sig))
+      (setf (brai-base-t ai) (+ *match-tick* *br-ai-every*))
+      (let ((plan (br-ai-base-plan (sim-rnd01) d (brs-snipe (br e)) (br-ai-threat-p e s d *ai-threat-margin*)
+                                   (ai-table e :zone) (ai-table e :pip) (brain-difficulty b))))
+        (when plan
+          (pace e (if (eq plan :pip) :ai-pip :ai-zone))
+          (why b plan :sig))))))
+
+(defun br-ai-fire (e b s d)
+  "Melee / ranged (§8): going in at the traces near him (BR-AI-FIRE-PLAN at his perceived spot): one roll per trace laid
+(:fire :p x the difficulty; a no waits for the next line), a J inside :in m on the generic react roll. K / J, or NIL."
+  (let* ((k (ai-table e :fire)) (kit (kit-of e)) (q (kit-command-move kit :q)) (fm (kit-command-move kit :f)))
+    (when (and k q fm (not (br-learn-hold-p e b s)))   ; (a learner's Hoho read holds it: §13)
+      (let* ((near (br-near-count e (snap-x s) (snap-z s)))
+             (busy (and (br-ai-busy-p s (brain-delay b) 0) (snap-left-seen s b)))
+             (cmd (br-ai-fire-plan near d busy (mv-s fm) (mv-reach q) k)))
+        (when (and cmd (kit-command-ok-p e cmd))
+          (let ((ai (br-ai-state e b)) (p (br-ai-chance (getf k :p 0.0) (brain-difficulty b))))
+            (if (>= near (getf k :busy-n 1))
+                (let ((key (brs-trace-n (br e))))     ; (one roll per trace laid)
+                  (when (/= key (brai-fire-key ai))
+                    (setf (brai-fire-key ai) key (brai-fire-go ai) (< (sim-rnd01) p)))
+                  (and (brai-fire-go ai) (progn (pace e :ai-fire) (why b :br-fire cmd))))
+                (and (< (brain-react-roll b) p) (progn (pace e :ai-in) (why b :br-in cmd))))))))))
+
+(defun br-ai-lay (e b s d)
+  "The ranged form (§8): a lay at him every :lay :every f (BR-AI-LAY-PLAN: SP1's fan on one roll per lay, else L), while the
+flash step stays over :reserve and fewer than :fire :n traces lie near him. L / SP1, or NIL."
+  (let ((k (ai-table e :lay)) (ai (br-ai-state e b)))
+    (when (and k (>= *match-tick* (brai-lay-t ai)))
+      (let* ((g (gauges e))
+             (plan (br-ai-lay-plan (gauges-fs g) (reiatsu-bars e) d
+                                   (min (br-near-count e (snap-x s) (snap-z s)) 99)
+                                   (sim-rnd01) (list* :cap (getf (ai-table e :fire) :n 4) k))))
+        (setf (brai-lay-t ai) (+ *match-tick* (getf k :every 12)))
+        (when (and plan (kit-command-ok-p e plan))
+          (pace e (if (eq plan :sp1) :ai-lay-fan :ai-lay))
+          (why b :br-lay plan))))))
 
 (defun br-ai-reflex (e b s d)
-  "His awakened kits' :reflex (ai.lisp AI-REFLEX, free states): ranged, K at >= *BR-AI-FIRE-N* traces, J with him close;
-MUJITTAI, out by attacking after :stance :max frames or with the guard gauge under :gg (no turtling). No roll."
-  (declare (ignore s))
-  (let* ((f (fighter e)) (form (fighter-form f)) (st (br e)))
-    (cond ((member :intangible (kit-passives (fighter-kit f)))
-           (let ((k (ai-table e :stance)))
-             (when (or (>= (brs-stance st) (getf k :max 120)) (< (gauges-gg (gauges e)) (getf k :gg 30)))
-               (pace e :ai-stance-out)
-               (why b :br-stance-out (if (< d 2.4) :q :f)))))
-          ((br-ranged-form-p form)
-           (cond ((and (>= (brs-live st) *br-ai-fire-n*) (kit-command-ok-p e :f)) (pace e :ai-fire) (why b :br-fire :f))
-                 ((and (< d *br-ai-in*) (kit-command-ok-p e :q)) (why b :br-in :q)))))))
+  "Every form's :reflex (ai.lisp AI-REFLEX, free states): the base form's stance (BR-AI-BASE); MUJITTAI's exit
+(BR-AI-STANCE-OUT); ranged: MUJITTAI on a threat, going in, laying; melee: MUJITTAI on a threat, K at the traces near him.
+A command, :NONE (the window is his), or NIL."
+  (let* ((kit (kit-of e)) (form (kit-form kit)))
+    (cond ((eq form :base) (br-ai-base e b s d))
+          ((member :intangible (kit-passives kit)) (br-ai-stance-out e b s d))
+          ((br-ranged-form-p form) (or (br-ai-stance-in e b s d) (br-learn-trace e b s d) (br-ai-fire e b s d) (br-ai-lay e b s d)))
+          ((br-melee-form-p form) (or (br-ai-stance-in e b s d) (br-learn-trace e b s d) (br-ai-fire e b s d))))))
+
+(defun br-ai-l-ok-p (e to)
+  "His CPU's L link (BARRO-OK's CPU clause) to TO: the recall at :recall's count (BR-AI-RECALL-P), the backstep with no
+trace and the flash step for lines (BR-AI-BACKSTEP-P), the mode turn always."
+  (let ((st (br e)) (g (gauges e)))
+    (case to
+      (:br-recall (br-ai-recall-p (brs-live st) (reishi-frac g) (ai-table e :recall)))
+      (:br-backstep (br-ai-backstep-p (brs-live st) (gauges-fs g) (ai-table e :backstep)))
+      (t t))))
+
+(defun br-ai-sp-ender (e kit)
+  "The melee forms' :sp-ender (ai.lisp STRING-REFLEX: a landed J3 / K3, no O ender rolled; AI-BRAIN: his CPU's, or the
+ASSIST's for a human): K3 -> L the recall (BR-AI-RECALL-P), J3 -> L the backstep (BR-AI-BACKSTEP-P), one roll on the land
+frame at :recall / :backstep :p x the difficulty. :SIG, or NIL (the generic SP2 cancel)."
+  (let* ((b (ai-brain e)) (f (fighter e)) (mv (fighter-move f)) (st (br e)) (g (gauges e)))
+    (when (and b mv (member :ender (mv-flags mv)) (br-melee-form-p (kit-form kit)))
+      (let* ((to (br-l-route (mv-kind mv) t)) (key (if (eq to :br-recall) :recall :backstep)) (k (getf (kit-ai kit) key)))
+        (when (and (if (eq to :br-recall)
+                       (br-ai-recall-p (brs-live st) (reishi-frac g) k)
+                       (br-ai-backstep-p (brs-live st) (gauges-fs g) k))
+                   (kit-command-ok-p e :sig kit nil (kit-l-link kit (mv-name mv)))
+                   (< (sim-rnd01) (br-ai-chance (getf k :p 0.0) (brain-difficulty b))))
+          (pace e (if (eq to :br-recall) :ai-recall :ai-backstep))
+          :sig)))))
+
+(defun br-opp-trace (e b s d)
+  "A CPU facing his awakened forms (his kits' :opp-reflex, :opp-trace (:p)): standing inside the snap of one of his traces
+it has seen (laid at least its perception delay ago) newer than the ones it rolled for: one roll for the new ones, :p x
+the difficulty (OPP-CHANCE): a sideways Step off that line (LINE-OFF-STRAFE). Rooted forms can't. (The old Lille's
+LB-OPP-TRACE, copied 2026-10-09: his K materialises them at any time, so no readiness test.)"
+  (declare (ignore s d))
+  (let* ((o (opp-of e)) (k (getf (kit-ai (kit-of o)) :opp-trace)))
+    (when (and k (not (kit-rooted (kit-of e))) (br-awake-form-p (fighter-form (fighter o))))
+      (let* ((st (br o)) (p (pos-of e)) (on nil) (newest 0))
+        (do-entities (h (hz hazard))
+          (let ((dd (hazard-data hz)))
+            (when (and (eql (hazard-owner hz) o) (brh-p dd) (brh-live dd) (>= (hazard-age hz) (brain-delay b)))
+              (setf newest (max newest (brh-id dd)))
+              (when (and (> (brh-id dd) (brs-opp-roll st))
+                         (multiple-value-call #'br-near-p
+                           (br-trace-angle (hazard-x hz) (hazard-z hz) (hazard-yaw hz) (aref p 0) (aref p 2)))
+                         (or (null on) (> (brh-id dd) (brh-id (hazard-data on)))))
+                (setf on hz)))))
+        (when on
+          (setf (brs-opp-roll st) newest)
+          (pace o :opp-trace-roll)
+          (when (< (sim-rnd01) (opp-chance (getf k :p 0.0) (brain-difficulty b)))
+            (pace o :opp-trace-step)
+            (let ((q (pos-of o)))
+              (setf (brain-strafe b) (f32 (line-off-strafe (hazard-x on) (hazard-z on) (hazard-yaw on) (aref p 0) (aref p 2)
+                                                           (aref q 0) (aref q 2)))))
+            (why b :trace-step :side-step)))))))
+
+;;; ================================================================ AI: the learning CPU's situations (DUEL_LILLE_V2 §13)
+;;; The old Lille's pattern (DUEL_LILLE §24.9): only a learner runs this (a CPU facing a human: VS CPU, ENDLESS, the learning
+;;; gate; LRN-KIT); CPU VS CPU and the gates never get here. A read is one roll of the learner's own stream per event
+;;; (LEARN-KIT-READ: p_exploit x *BR-LEARN-DIFF*), every answer a command of his kit.
+;;;   :shot      his stance's 萬物貫通 shot on a free opponent (the stance's plan :kamae-l): the human's answer (:guard :hoho
+;;;              :step :attack :back :take). Read at that plan: a guard -> the stance's SP1 (three lines, 120 of guard);
+;;;              a Step / backing off -> the snap shot (S6) with a pip, else SP1 (it turns 90 deg/s); a Hoho / an attack ->
+;;;              TAISHA's back-slide with a pip, else the stance's SP2 (the 6 m slide)
+;;;   :trace     awakened, the human inside a live trace's snap (perceived, one he could have seen): his answer (:step off
+;;;              it, :guard, :hoho, :attack, :back along it, :take). Read at the onset: a guard -> K now (萬物貫通 through
+;;;              it); a Step -> SP1's fan at him (ranged, the bar and the flash step there); a Hoho -> the fire held while
+;;;              he is free (*BR-LEARN-HOLD* f); an attack -> MUJITTAI (U) once he is inside 4 m
+;;;   :mujittai  his MUJITTAI with the human inside 5 m: his answer (:attack into it, :guard, :hoho, :step, :back, :take). Read
+;;;              at the onset: an attack -> he stays (no :max / idle exit: the whiff exit only); waiting (:guard :back :take)
+;;;              -> he leaves at once (MUJITTAI's exit command)
+(defparameter *br-learn-diff* '(:easy 0.5 :normal 1.0 :hard 1.5)
+  "His learning CPU's read chance x this by difficulty (on the learner's p_exploit): EASY <= NORMAL <= HARD (new 2026-10-09,
+batch 4; the old Lille's *LB-LEARN-DIFF*).")
+(defparameter *br-learn-episode* '(:shot 24 :trace 40 :mujittai 60)
+  "Frames a situation waits for his answer, + the perception delay (new 2026-10-09, batch 4).")
+(defparameter *br-learn-hold* 60 "Frames a :trace read of a Hoho holds the fire at most (new 2026-10-09, batch 4).")
+
+;; pure: host-tested
+(defun br-learn-answer (hprev hs new away)
+  "His answer starting this step (perceived HPREV -> HS, NEW: a new move of his, AWAY: metres he moved away since the onset):
+:HOHO, :STEP, :ATTACK, :GUARD, :BACK, or NIL (the old Lille's LB-LEARN-ANSWER)."
+  (cond ((and (eq hs :hoho) (not (eq hprev :hoho))) :hoho)
+        ((and (eq hs :step) (not (eq hprev :step))) :step)
+        ((and (eq hs :move) (or (not (eq hprev :move)) new)) :attack)
+        ((and (eq hs :guard) (not (eq hprev :guard))) :guard)
+        ((> away *learn-back*) :back)))
+(defun br-learn-onset-answer (hs) "His answer already under way at the onset (perceived HS): a guard, a Hoho, a Step, or NIL."
+  (case hs ((:guard :guard-hit) :guard) (:hoho :hoho) (:step :step)))
+(defun br-learn-kamae-plan (read snipe sp-ok plan)
+  "The stance's follow-up instead of PLAN (the shot) for his predicted answer READ to it (SNIPE pips, SP-OK the bars): a
+guard the stance's SP1; a Step / backing off the snap shot (a pip) else SP1; a Hoho / an attack TAISHA (a pip) else the
+stance's SP2; else PLAN."
+  (case read
+    (:guard (if sp-ok :kamae-sp1 plan))
+    ((:step :back) (cond ((>= snipe 1) :kamae-j) (sp-ok :kamae-sp1) (t plan)))
+    ((:hoho :attack) (cond ((>= snipe 1) :kamae-k) (sp-ok :kamae-sp2) (t plan)))
+    (t plan)))
+(defun br-learn-trace-plan (read)
+  "The :trace read's answer: a guard :FIRE (K now), a Step :FAN (SP1 at him), a Hoho :HOLD (the fire waits), an attack
+:STANCE (MUJITTAI), else NIL."
+  (case read (:guard :fire) (:step :fan) (:hoho :hold) (:attack :stance)))
+(defun br-learn-mujittai-plan (read)
+  "The :mujittai read's answer: an attack :STAY (only the whiff exit), waiting (:guard :back :take) :LEAVE (out at once)."
+  (case read (:attack :stay) ((:guard :back :take) :leave)))
+
+;; the shell
+(defstruct (brl (:conc-name brl-))
+  "His learner's own state within a match (LRN-KDATA)."
+  (own-mv nil) (own-sf 0 :type fixnum)                      ; his move last step (the shot's onset)
+  (ox 0f0 :type single-float) (oz 0f0 :type single-float)   ; the open situation's onset: his perceived position,
+  (ux 0f0 :type single-float) (uz 0f0 :type single-float)   ; ... the way from Lille II to him (his :back)
+  (len 0 :type fixnum)                                      ; ... its episode's frames
+  (on-id 0 :type fixnum)                                    ; the newest trace he was perceived near (id; 0 none)
+  (trace-plan nil) (trace-until -1 :type fixnum) (trace-done nil)   ; the :trace read's answer, its life, acted
+  (mu-t0 -1 :type fixnum) (mu-plan nil))                    ; the MUJITTAI read (its start tick) and its answer
+(defun br-learn-state (l) (or (lrn-kdata l) (setf (lrn-kdata l) (make-brl))))
+(defun br-learn-l (b) "Brain B's learner when it reads his situations (LRN-KIT), else NIL." (let ((l (and b (brain-learn b)))) (and l (lrn-kit l) l)))
+(defun br-learn-scale (b) (float (getf *br-learn-diff* (brain-difficulty b) 1.0) 1.0))
+(defun br-learn-acted (e l cmd)
+  "A read of his situations acted on with CMD: the learner's count (LEARN-COUNT-READ), the log."
+  (learn-count-read e l cmd)
+  (pace e cmd)
+  (clog "~a read ~a" (side-name e) cmd))
+
+(defun br-learn-open (e s l k key)
+  "Open his situation KEY at the perceived SNAP S: the onset's position, the way to him; an answer already under way
+(BR-LEARN-ONSET-ANSWER) counts at once."
+  (let* ((dx (- (snap-x s) (aref (pos-of e) 0))) (dz (- (snap-z s) (aref (pos-of e) 2))) (m (max 1e-3 (hypot dx dz))))
+    (setf (brl-ox k) (snap-x s) (brl-oz k) (snap-z s) (brl-ux k) (f32 (/ dx m)) (brl-uz k) (f32 (/ dz m))
+          (brl-len k) (+ (getf *br-learn-episode* key 30) (brain-delay (brain e)))))
+  (learn-kit-open l key)
+  (let ((now (br-learn-onset-answer (snap-state s))))
+    (when now (learn-kit-close l now))))
+
+(defun br-learn-near-id (e x z age)
+  "The newest of E's live traces at least AGE frames old with (X Z) inside its snap (BR-NEAR-P): its id, 0 for none."
+  (let ((id 0))
+    (do-entities (h (hz hazard))
+      (let ((dd (hazard-data hz)))
+        (when (and (eql (hazard-owner hz) e) (brh-p dd) (brh-live dd) (>= (hazard-age hz) age) (> (brh-id dd) id)
+                   (multiple-value-call #'br-near-p (br-trace-angle (hazard-x hz) (hazard-z hz) (hazard-yaw hz) x z)))
+          (setf id (brh-id dd)))))
+    id))
+
+(defun br-learn-step (e b s d l)
+  "His learner's step (LEARN-DEF-KIT's :step): the onsets (his stance's shot; MUJITTAI with him inside 5 m; the human inside
+a trace's snap, perceived), the open situation's answer (BR-LEARN-ANSWER; :trace's :step when he left every snap; at its
+end :TAKE, or :GUARD held through), the :trace and :mujittai reads at their onsets (one roll each)."
+  (let* ((k (br-learn-state l)) (f (fighter e)) (mv (and (eq (fighter-state f) :move) (fighter-move f)))
+         (hs (snap-state s)) (hprev (lrn-hstate l)) (new (/= (snap-start s) (lrn-hstart l))) (st (br e))
+         (x (snap-x s)) (z (snap-z s)))
+    (when (and mv (or (not (eq mv (brl-own-mv k))) (< (fighter-sf f) (brl-own-sf k)))
+               (eq (mv-name mv) :br-k-shot) (< (lrn-ksit l) 0) (member hs '(:idle :run :guard)))
+      (br-learn-open e s l k :shot))
+    (setf (brl-own-mv k) mv (brl-own-sf k) (if mv (fighter-sf f) 0))
+    (when (and (member :intangible (kit-passives (fighter-kit f))) (< d 5.0))
+      (let ((t0 (- *match-tick* (brs-stance st))))
+        (when (/= t0 (brl-mu-t0 k))
+          (setf (brl-mu-t0 k) t0
+                (brl-mu-plan k) (br-learn-mujittai-plan (learn-kit-read l :mujittai (br-learn-scale b))))
+          (when (brl-mu-plan k) (br-learn-acted e l (if (eq (brl-mu-plan k) :stay) :br-mu-stay :br-mu-leave)))
+          (when (< (lrn-ksit l) 0) (br-learn-open e s l k :mujittai)))))
+    (when (and (br-awake-form-p (fighter-form f)) (plusp (brs-live st)))
+      (let ((id (br-learn-near-id e x z (brain-delay b))))
+        (when (and (> id (brl-on-id k)) (< (lrn-ksit l) 0))
+          (br-learn-open e s l k :trace)
+          (setf (brl-trace-plan k) (br-learn-trace-plan (learn-kit-read l :trace (br-learn-scale b)))
+                (brl-trace-until k) (+ *match-tick* (if (eq (brl-trace-plan k) :hold) *br-learn-hold* (brl-len k)))
+                (brl-trace-done k) nil))
+        (setf (brl-on-id k) (max id (brl-on-id k)))))
+    (when (>= (lrn-ksit l) 0)
+      (let ((sit (aref (getf (lrn-kit l) :situations) (lrn-ksit l))) (end (>= (incf (lrn-kep-t l)) (brl-len k)))
+            (away (+ (* (- x (brl-ox k)) (brl-ux k)) (* (- z (brl-oz k)) (brl-uz k)))))
+        (cond ((member hs '(:stun :air :down :wakeup)) (learn-kit-close l (if (eq sit :trace) nil :take)))
+              (t (let ((ans (or (br-learn-answer hprev hs new away)
+                                (and (eq sit :trace) (zerop (br-near-count e x z)) :step))))
+                   (cond (ans (learn-kit-close l ans))
+                         (end (learn-kit-close l (if (member hs '(:guard :guard-hit)) :guard :take)))))))))))
+
+(defun br-learn-trace (e b s d)
+  "Melee / ranged free (BR-AI-REFLEX, before BR-AI-FIRE): the :trace read's answer, once a read: K at the traces near him (a
+guard read), SP1's fan at him (a Step read, ranged), U (an attack read, him inside 4 m). A command, or NIL. (A Hoho read
+holds the fire: BR-LEARN-HOLD-P.)"
+  (let ((l (br-learn-l b)))
+    (when l
+      (let* ((k (br-learn-state l)) (p (brl-trace-plan k)))
+        (when (and p (not (brl-trace-done k)) (<= *match-tick* (brl-trace-until k)))
+          (case p
+            (:fire (when (and (plusp (br-near-count e (snap-x s) (snap-z s))) (kit-command-ok-p e :f))
+                     (setf (brl-trace-done k) t) (br-learn-acted e l :br-trace-fire) (why b :learn-fire :f)))
+            (:fan (when (and (br-ranged-form-p (fighter-form (fighter e))) (kit-command-ok-p e :sp1))
+                    (setf (brl-trace-done k) t) (br-learn-acted e l :br-trace-fan) (why b :learn-fan :sp1)))
+            (:stance (when (< d 4.0)
+                       (setf (brl-trace-done k) t) (br-learn-acted e l :br-trace-stance)
+                       (ai-press b :guard 4 :act :hold) (why b :learn-stance :none)))))))))
+
+(defun br-learn-hold-p (e b s)
+  "Does a :trace read of a Hoho hold his fire now (the read's window, him free: BR-AI-FIRE waits)?"
+  (let ((l (br-learn-l b)))
+    (and l (let ((k (br-learn-state l)))
+             (and (eq (brl-trace-plan k) :hold) (<= *match-tick* (brl-trace-until k))
+                  (not (br-ai-busy-p s (brain-delay b) 0))
+                  (progn (unless (brl-trace-done k) (setf (brl-trace-done k) t) (br-learn-acted e l :br-trace-hold)) t))))))
+
+(defun br-learn-mujittai (b)
+  "The :mujittai read's answer for MUJITTAI's exit (BR-AI-STANCE-OUT): :STAY, :LEAVE, or NIL."
+  (let ((l (br-learn-l b))) (and l (brl-mu-plan (br-learn-state l)))))
+
+(defun br-learn-kamae (e b plan)
+  "The stance's PLAN (BR-AI-KAMAE, once a stance, his CPU): the shot on a free opponent is read (one roll: :shot) and
+answered (BR-LEARN-KAMAE-PLAN); anything else, or no learner, as planned."
+  (let ((l (br-learn-l b)))
+    (if (and l (eq plan :kamae-l) (not (member (state-of (opp-of e)) '(:stun :air))))
+        (let* ((r (learn-kit-read l :shot (br-learn-scale b)))
+               (p (br-learn-kamae-plan r (brs-snipe (br e))
+                                       (>= (gauges-reiatsu (gauges e)) (* (kit-command-cost (kit-of e) :sp1) *reiatsu-bar*)) plan)))
+          (unless (eq p plan) (br-learn-acted e l (intern (format nil "BR-SHOT-~a" r) :keyword)))
+          p)
+        plan)))
+
+(learn-def-kit :barro :situations #(:shot :trace :mujittai) :actions #(:guard :hoho :step :attack :back :take)
+               :step 'br-learn-step)
+
+;;; ================================================================ ASSIST AUTO COMBO's routes (DUEL_LILLE_V2 §8, §13)
+;;; His kits' :ai name BR-ASSIST-COMBO as :assist-combo (assist.lisp AUTO-ROUTE: asked every step AUTO COMBO is on, before
+;;; the generic AUTO COMBO; the old Lille's LB-ASSIST-COMBO's shape). "You press J, the CPU chooses": the routes press his
+;;; buttons as a human's (his ticks read his vpad: BR-TICK-BRAIN is NIL for a human), x*ASSIST-MULT*, the AUTO tag.
+;;;   base    J -> K -> L -> L: his J in a link that hit -> its K link (J1 -> K2s) -> L latched on the K link (the stance at
+;;;           f4, KIT-L-LINK: a combo) -> its plan (BR-AI-KAMAE-PLAN: the 萬物貫通 shot on the reeling opponent; TAISHA /
+;;;           the snap with a pip close) pressed once it is up; his J eaten meanwhile. (J J J -> L measured first: the
+;;;           stance off J3 comes from neutral, after his stagger: the masher's wins 36 % -> 24 %, §13)
+;;;   melee   K K K -> L: his J in a melee link that hit -> its K link (to K3) on the land frame -> K3 -> L the recall with a
+;;;           trace to take back (n >= 1); J3 -> L the backstep with no trace and 9 flash step; his J eaten after a press
+;;;   ranged  L: his J pressed while free in ranged mode -> a lay at him (L) from 4 m while the flash step allows, K in once
+;;;           :fire's count of traces lies near him; else his J (J1 back to melee)
+(defstruct (bras (:conc-name bras-))
+  (b nil)                                 ; the assist brain it belongs to (a new match: a fresh one)
+  (mv nil) (sf -1 :type fixnum)           ; the move instance seen
+  (j nil)                                 ; his J seen during it (pressed, buffered or latched)
+  (done nil)                              ; the route pressed in it (his J eaten after)
+  (route nil)                             ; a route runs (the stance's)
+  (plan nil))                             ; the base route: the stance's plan
+(defvar *br-as* (vector (make-bras) (make-bras)) "Per side: the ASSIST routes' state (BR-ASSIST-COMBO).")
+
+(defun br-as-track (f b vp)
+  "The route state of F's side for brain B, its move instance brought up to date, his J this step noted."
+  (let* ((side (fighter-side f)) (a (svref *br-as* side)) (mv (and (eq (fighter-state f) :move) (fighter-move f))))
+    (unless (eq (bras-b a) b) (setf a (make-bras :b b) (svref *br-as* side) a))
+    (cond ((null mv) (setf (bras-mv a) nil (bras-j a) nil (bras-done a) nil))
+          ((or (not (eq mv (bras-mv a))) (< (fighter-sf f) (bras-sf a)))
+           (setf (bras-mv a) mv (bras-j a) nil (bras-done a) nil)
+           (unless (member (mv-name mv) '(:br-kamae :br-kamae-k)) (setf (bras-route a) nil (bras-plan a) nil))))
+    (when mv
+      (setf (bras-sf a) (fighter-sf f))
+      (when (or (vpad-command-pressed-p vp :quick nil) (eq (fighter-queued f) :q)) (setf (bras-j a) t)))
+    a))
+
+(defun br-as-press (e a key cmd)
+  "A route press: counted in his pacing log (the gates' route counts), his J eaten after it in this move. CMD."
+  (setf (bras-done a) t)
+  (pace e key)
+  cmd)
+
+(defun br-as-kamae (e f vp a)
+  "Route base, the stance of the route's: his J eaten till it is up, then its plan (one roll, BR-AI-KAMAE-PLAN) pressed once."
+  (cond ((bras-done a) (vpad-consume! vp :quick) :none)
+        ((< (1+ (fighter-sf f)) *br-kamae-up*) (vpad-consume! vp :quick) :none)
+        (t (unless (bras-plan a)
+             (setf (bras-plan a) (br-ai-kamae-plan (sim-rnd01) (fighter-dist f) (member (state-of (opp-of e)) '(:stun :air))
+                                                   (brs-snipe (br e))
+                                                   (>= (gauges-reiatsu (gauges e)) (* (kit-command-cost (fighter-kit f) :sp1) *reiatsu-bar*)))))
+           (br-as-press e a :as-stance-plan
+                        (case (bras-plan a) (:kamae-j :q) (:kamae-k :f) (:kamae-sp1 :sp1) (:kamae-sp2 :sp2) (t :sig))))))
+
+(defun br-as-base (e f vp a mv)
+  "Route base, a J / K link that hit with his J in it: on its land frame a K link's L (the stance at f4: KIT-L-LINK), else
+its K link (J1 -> K2s); his J eaten after a press. A command, :NONE, or NIL (the generic AUTO COMBO)."
+  (let* ((kit (fighter-kit f)) (name (mv-name mv)) (l (kit-l-link kit name)))
+    (cond ((bras-done a) (vpad-consume! vp :quick) (when (eq (fighter-queued f) :q) (setf (fighter-queued f) nil)) :none)
+          ((not (and (bras-j a) (eq (fighter-contact f) :hit) (= (fighter-sf f) (fighter-land-sf f)))) nil)
+          ((and l (kit-k-link-p kit name) (kit-command-ok-p e :sig kit nil l))
+           (setf (bras-route a) t)
+           (br-as-press e a :as-stance :sig))
+          ((kit-next kit name :f) (br-as-press e a :as-k-link :f)))))
+
+(defun br-as-melee (e f vp a mv)
+  "Route melee, a link that hit with his J in it: on its land frame its K link (to K3), K3 -> L the recall (n >= 1), J3 -> L
+the backstep (no trace, 9 flash step); his J eaten after a press. A command, :NONE, or NIL (the generic AUTO COMBO)."
+  (let* ((kit (fighter-kit f)) (st (br e)) (nf (kit-next kit (mv-name mv) :f)))
+    (cond ((bras-done a) (vpad-consume! vp :quick) (when (eq (fighter-queued f) :q) (setf (fighter-queued f) nil)) :none)
+          ((not (and (bras-j a) (eq (fighter-contact f) :hit) (= (fighter-sf f) (fighter-land-sf f)))) nil)
+          (nf (br-as-press e a :as-k-link :f))
+          ((and (member :ender (mv-flags mv)) (not (eq (state-of (opp-of e)) :air))
+                (if (eq (mv-kind mv) :flash) (>= (brs-live st) 1) (br-ai-backstep-p (brs-live st) (gauges-fs (gauges e)) '(:fs 9.0)))
+                (kit-command-ok-p e :sig kit nil (kit-l-link kit (mv-name mv))))
+           (br-as-press e a (if (eq (mv-kind mv) :flash) :as-recall :as-backstep) :sig)))))
+
+(defun br-as-ranged (e f s vp)
+  "Route ranged, his J pressed while free: K in at :fire's count near him, else a lay (L) at him from 4 m with the flash step
+over 15, else NIL (his J)."
+  (when (and s (vpad-command-pressed-p vp :quick nil))
+    (let ((near (br-near-count e (snap-x s) (snap-z s))))
+      (cond ((and (>= near (getf (ai-table e :fire) :n 4)) (kit-command-ok-p e :f)) (pace e :as-fire) :f)
+            ((and (>= (fighter-dist f) 4.0) (>= (- (gauges-fs (gauges e)) *br-lay-l*) 15.0) (kit-command-ok-p e :sig))
+             (pace e :as-lay) :sig)))))
+
+(defun br-assist-combo (e f b s d vp)
+  "His kits' :assist-combo (assist.lisp AUTO-ROUTE): the routes above on the assist's brain B (S, D as it perceives him), his
+vpad VP: a command, :NONE (the route holds the step) or NIL (the generic AUTO COMBO)."
+  (declare (ignore d))
+  (let* ((a (br-as-track f b vp)) (mv (bras-mv a)) (form (fighter-form f))
+         (free (and (member (fighter-state f) '(:idle :guard :run)) (zerop (fighter-lock f)))))
+    (cond ((and mv (member (mv-name mv) '(:br-kamae :br-kamae-k)) (bras-route a)) (br-as-kamae e f vp a))
+          ((and mv (eq form :base) (member (mv-kind mv) '(:quick :flash))) (br-as-base e f vp a mv))
+          ((and mv (br-melee-form-p form) (member (mv-kind mv) '(:quick :flash))) (br-as-melee e f vp a mv))
+          ((and free (br-ranged-form-p form)) (br-as-ranged e f s vp)))))
+
+;; every form of his names it (assist.lisp AUTO-ROUTE reads the key off the form's kit)
+(dolist (form *br-forms*)
+  (let ((k (find-kit :barro form)))
+    (unless (getf (kit-ai k) :assist-combo)
+      (setf (kit-ai k) (list* :assist-combo 'br-assist-combo (kit-ai k))))))
 
 ;;; ================================================================ debug: tests, the pacing log (debug.lisp dispatches)
 (defun barro-acc-line ()

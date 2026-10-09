@@ -2503,7 +2503,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (equalp (getf sp :actions) #(:left :right :back :guard :hoho :step :attack :take))
               (<= (length (getf sp :situations)) +learn-ks+) (<= (length (getf sp :actions)) +learn-ka+)
               (eq (getf sp :step) 'lb-learn-step)))
-  (check (every (lambda (c) (null (learn-kit-spec c))) (remove :lille *roster*))))
+  (check (every (lambda (c) (null (learn-kit-spec c))) (remove :barro (remove :lille *roster*)))))   ; (+ Lille II's, DUEL_LILLE_V2 §13)
 (check (and (= *lb-learn-hold* 60) (= *lb-learn-step-off* 0.6)
             (equal *lb-learn-episode* '(:trace 45 :tenshin 20 :hosha 18))
             (<= (getf *lb-learn-diff* :easy) (getf *lb-learn-diff* :normal) (getf *lb-learn-diff* :hard))
@@ -2670,11 +2670,11 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (every (lambda (k) (eq (getf (kit-ai k) :reflex) 'lb-ai-reflex)) owls))))
 
 ;;; ---------------------------------------------------------------- ASSIST AUTO COMBO's Lille routes (DUEL_LILLE §24.10)
-;; every form of his names his routes as :assist-combo (assist.lisp AUTO-ROUTE reads it off the form's kit), no other kit
-;; has the key (their assisted play stays the generic AUTO COMBO's, bit for bit)
+;; every form of his names his routes as :assist-combo (assist.lisp AUTO-ROUTE reads it off the form's kit), Lille II's
+;; his own (BR-ASSIST-COMBO, DUEL_LILLE_V2 §13), no other kit has the key (their assisted play stays the generic AUTO COMBO's, bit for bit)
 (check (loop for c being the hash-keys of *kits* using (hash-value forms)
              always (loop for (nil . k) in forms
-                          always (eq (getf (kit-ai k) :assist-combo) (and (eq c :lille) 'lb-assist-combo)))))
+                          always (eq (getf (kit-ai k) :assist-combo) (case c (:lille 'lb-assist-combo) (:barro 'br-assist-combo))))))
 (check (= 9 (length (gethash :lille *kits*))))
 ;; which route step a move is (LB-AS-KIND), on the move data it reads
 (check (and (eq (mv-tick (find-move :lb-e-j1)) 'lb-en-tick) (eq (mv-tick (find-move :lb-oe-k3)) 'lb-en-tick)
@@ -2815,10 +2815,18 @@ defender's next step. Values: the attacker's and the defender's first actionable
                 (find 'br-melee-in (mv-on-frame (kit-command-move k :f)) :key #'second))))
   (check (and (eq :jilliel (br-ranged-of :jilliel-kin)) (eq :shin (br-ranged-of :shin-kin)) (eq :jilliel-kin (br-melee-of :jilliel))
               (eq :shin-kin (br-melee-of :shin)) (eq :base (br-melee-of :base))))
-  (check (and (eq :br-recall (kit-l-after-k m)) (eq :br-backstep (kit-l-after-j m)) (eq :br-recall (kit-l-after-k om))
-              (br-l-link-ok-p :br-recall :br-w-k3 :flash t) (not (br-l-link-ok-p :br-recall :br-w-k2 :flash nil))
-              (not (br-l-link-ok-p :br-recall :br-w-j3 :quick t)) (br-l-link-ok-p :br-backstep :br-w-j3 :quick t)
-              (not (br-l-link-ok-p :br-backstep :br-w-j1 :quick nil)) (br-l-link-ok-p :br-kamae-k :br-k1 :flash nil)))
+  ;; the melee L links (batch 4's fix, 2026-10-09): one router (:br-l-link) after every J / K link, routed off the link it
+  ;; was pressed in: K3 the recall, J3 the backstep, J1 / J2 / K1 / K2 the plain L (the mode turn), never refused
+  (check (and (eq :br-l-link (kit-l-after-k m)) (eq :br-l-link (kit-l-after-j m)) (eq :br-l-link (kit-l-after-k om))
+              (eq :br-l-link (kit-l-after-j om)) (br-l-link-ok-p :br-kamae-k :br-k1 :flash nil)
+              (eq :br-recall (br-l-route :flash t)) (eq :br-backstep (br-l-route :quick t))
+              (eq :br-to-en (br-l-route :flash nil)) (eq :br-to-en (br-l-route :quick nil))))
+  (dolist (k (list m om))
+    (check (and (eq :br-l-link (mv-name (kit-l-link k (if (eq k m) :br-w-j1 :br-o-j1))))
+                (eq :br-l-link (mv-name (kit-l-link k (if (eq k m) :br-w-k2 :br-o-k2))))
+                (eq :br-recall (mv-name (kit-next k :br-l-link :br-recall))) (eq :br-backstep (mv-name (kit-next k :br-l-link :br-backstep)))
+                (eq :br-to-en (mv-name (kit-next k :br-l-link :br-to-en))))))
+  (check (eql 0 (first (find 'br-l-link-go (mv-on-frame (find-move :br-l-link)) :key #'second))))
   (check (equal (mapcar (lambda (f) (kit-bankai-form (kit :barro f))) *br-forms*) '(nil :shin :shin :shin :shin nil nil nil nil)))
   (check (and (br-revive-ok-p :jilliel t 4) (br-revive-ok-p :jilliel-kin-mujittai t 1) (not (br-revive-ok-p :jilliel t 5))
               (not (br-revive-ok-p :jilliel nil 2)) (not (br-revive-ok-p :shin t 1)) (not (br-revive-ok-p :base t 1))
@@ -2839,7 +2847,55 @@ defender's next step. Values: the attacker's and the defender's first actionable
   ;; his CPU's stance plan (one roll): reeling -> the shot; close with a pip -> TAISHA / the snap; the SPs a quarter
   (check (and (eq :kamae-l (br-ai-kamae-plan 0.1 3.0 t 2 t)) (eq :kamae-k (br-ai-kamae-plan 0.1 3.0 nil 1 t))
               (eq :kamae-j (br-ai-kamae-plan 0.7 3.0 nil 1 t)) (eq :kamae-sp2 (br-ai-kamae-plan 0.1 4.5 nil 0 t))
-              (eq :kamae-sp1 (br-ai-kamae-plan 0.1 9.0 nil 0 t)) (eq :kamae-l (br-ai-kamae-plan 0.1 9.0 nil 0 nil)))))
+              (eq :kamae-sp1 (br-ai-kamae-plan 0.1 9.0 nil 0 t)) (eq :kamae-l (br-ai-kamae-plan 0.1 9.0 nil 0 nil))))
+  ;; his CPU (batch 4, DUEL_LILLE_V2 §13): every chance x *BR-AI-DIFF* (EASY <= NORMAL <= HARD), at most 1
+  (check (and (<= (getf *br-ai-diff* :easy) (getf *br-ai-diff* :normal) (getf *br-ai-diff* :hard))
+              (~= 0.3 (br-ai-chance 0.6 :easy)) (~= 0.6 (br-ai-chance 0.6 :normal)) (~= 1.0 (br-ai-chance 0.8 :hard))))
+  ;; the base form: the stance with a pip close, at range; nothing on a threat
+  (let ((z '(:p 0.5 :near 6.0)) (p '(:p 0.6 :near 4.0)))
+    (check (and (eq :pip (br-ai-base-plan 0.1 3.0 1 nil z p :normal)) (null (br-ai-base-plan 0.1 3.0 0 nil z p :normal))
+                (eq :zone (br-ai-base-plan 0.4 8.0 0 nil z p :normal)) (null (br-ai-base-plan 0.6 8.0 0 nil z p :normal))
+                (eq :zone (br-ai-base-plan 0.6 8.0 0 nil z p :hard)) (null (br-ai-base-plan 0.1 8.0 3 t z p :hard))
+                (null (br-ai-base-plan 0.1 5.0 0 nil z p :hard)))))
+  ;; melee: the recall at n >= 3 (>= 1 under 35 % Reishi), the backstep with no trace and 9 flash step
+  (let ((k '(:p 0.6 :n 3 :low-n 1 :low 0.35)))
+    (check (and (br-ai-recall-p 3 0.9 k) (not (br-ai-recall-p 2 0.9 k)) (br-ai-recall-p 1 0.3 k) (not (br-ai-recall-p 0 0.1 k))
+                (br-ai-backstep-p 0 9.0 '(:fs 9.0)) (not (br-ai-backstep-p 1 50.0 '(:fs 9.0))) (not (br-ai-backstep-p 0 8.0 '(:fs 9.0))))))
+  ;; going in: K at >= 4 near (or 1 on a busy opponent past K1's startup), J inside 4 m within its reach, else K
+  (let ((k '(:n 4 :in 4.0 :busy-n 1)))
+    (check (and (eq :f (br-ai-fire-plan 4 9.0 nil 17 1.6 k)) (null (br-ai-fire-plan 3 9.0 nil 17 1.6 k))
+                (eq :f (br-ai-fire-plan 1 9.0 20 17 1.6 k)) (null (br-ai-fire-plan 1 9.0 10 17 1.6 k))
+                (eq :q (br-ai-fire-plan 0 1.8 nil 17 1.6 k)) (eq :f (br-ai-fire-plan 0 3.0 nil 17 1.6 k))
+                (null (br-ai-fire-plan 0 3.0 nil 17 1.6 '(:n 4))))))
+  ;; laying: from 4 m, over the reserve, SP1's fan on its roll with a bar, never at the fire count
+  (let ((k '(:far 4.0 :reserve 15.0 :sp1 0.3 :cap 4)))
+    (check (and (eq :sig (br-ai-lay-plan 50.0 0 8.0 0 0.1 k)) (eq :sp1 (br-ai-lay-plan 50.0 1 8.0 0 0.1 k))
+                (eq :sig (br-ai-lay-plan 50.0 1 8.0 0 0.5 k)) (null (br-ai-lay-plan 17.0 1 8.0 0 0.1 k))
+                (eq :sig (br-ai-lay-plan 18.0 1 8.0 0 0.1 k)) (null (br-ai-lay-plan 50.0 1 3.0 0 0.1 k))
+                (null (br-ai-lay-plan 50.0 1 8.0 4 0.1 k)))))
+  ;; MUJITTAI: one roll per window; out by attacking on his whiff, at :max, under :gg, him idle out of reach
+  (check (and (eq :stance (br-ai-stance-plan 0.1 0.4 nil)) (eq :step (br-ai-stance-plan 0.5 0.4 t)) (eq :pass (br-ai-stance-plan 0.5 0.4 nil))
+              (eq :whiff (br-stance-exit t 0 120 100 30 nil)) (eq :max (br-stance-exit nil 120 120 100 30 nil))
+              (eq :gauge (br-stance-exit nil 0 120 20 30 nil)) (eq :idle (br-stance-exit nil 0 120 100 30 t))
+              (null (br-stance-exit nil 0 120 100 30 nil))))
+  ;; the kits' keys: the reflex in every form, the enders in melee, a CPU facing his awakened forms reads his traces
+  (check (every (lambda (f) (eq 'br-ai-reflex (getf (kit-ai (kit :barro f)) :reflex))) *br-forms*))
+  (check (and (eq 'br-ai-sp-ender (getf (kit-ai m) :sp-ender)) (eq 'br-ai-sp-ender (getf (kit-ai om) :sp-ender))
+              (zerop (getf (kit-ai m) :l-after-k 0.0)) (zerop (getf (kit-ai m) :l-after-j 0.0))
+              (null (getf (kit-ai b) :opp-reflex))
+              (every (lambda (f) (eq 'br-opp-trace (getf (kit-ai (kit :barro f)) :opp-reflex))) (remove :base *br-forms*))))
+  ;; learning (§13): three situations of his own, their answers
+  (let ((sp (learn-kit-spec :barro)))
+    (check (and sp (equalp (getf sp :situations) #(:shot :trace :mujittai)) (eq (getf sp :step) 'br-learn-step)
+                (<= (length (getf sp :situations)) +learn-ks+) (<= (length (getf sp :actions)) +learn-ka+))))
+  (check (and (eq :kamae-sp1 (br-learn-kamae-plan :guard 0 t :kamae-l)) (eq :kamae-l (br-learn-kamae-plan :guard 0 nil :kamae-l))
+              (eq :kamae-j (br-learn-kamae-plan :step 1 t :kamae-l)) (eq :kamae-sp1 (br-learn-kamae-plan :back 0 t :kamae-l))
+              (eq :kamae-k (br-learn-kamae-plan :hoho 2 t :kamae-l)) (eq :kamae-sp2 (br-learn-kamae-plan :attack 0 t :kamae-l))
+              (eq :kamae-l (br-learn-kamae-plan :take 3 t :kamae-l))
+              (eq :fire (br-learn-trace-plan :guard)) (eq :fan (br-learn-trace-plan :step)) (eq :hold (br-learn-trace-plan :hoho))
+              (eq :stance (br-learn-trace-plan :attack)) (null (br-learn-trace-plan :take))
+              (eq :stay (br-learn-mujittai-plan :attack)) (eq :leave (br-learn-mujittai-plan :guard)) (null (br-learn-mujittai-plan :hoho))
+              (<= (getf *br-learn-diff* :easy) (getf *br-learn-diff* :normal) (getf *br-learn-diff* :hard)))))
 
 ;; The gate's match length leaves the cinematics out (the user, 2026-10-08: 「毀魂技演出不計入對戰時長」, every cinematic):
 ;; PLAY-TICKS (flow's MATCH-PLAY-TICKS) are the frames the timer ran (it stops while a cinematic plays: MAIN's step)
