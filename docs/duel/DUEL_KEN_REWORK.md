@@ -112,8 +112,8 @@ volumes unchanged:
 | J3, SP2, Breaker | `:ke-kick`, `:ke-charge` / `:ke-flurry`, `:ke-shoulder` | | unchanged |
 
 - **K3 stays the spin.** The plan put the armoured walking thrust on K3, but K3 BUNMAWASHI's hit is a 360° arc
-  (`ken.lisp`, `:arc 360`, crumple): a thrust would draw a front-only strike that hits behind him too. Moving the thrust
-  needs the user's call (a sim change to K3's volume, or another slot).
+  (`ken.lisp`, `:arc 360`, crumple): a thrust would draw a front-only strike that hits behind him too. Asked (keep the
+  spin / make K3's volume a thrust, a sim change / the thrust on another slot), the user: 「維持旋轉斬」 (2026-10-09).
 - **The flurry** (`:ke-flurry`) was checked: it plays at speed 1, so its cuts at f10 / 16 / 22 / 28 and the launcher at
   f40 land on the move's hit windows; the cut at f4 is drawn only (the charge's contact was hit 1). No change.
 - Drawn reach (the FK test's measure, the tip's radial distance at the hit frames; edge = the volume's):
@@ -137,3 +137,7 @@ volumes unchanged:
   gate lines) and `--cvc` (every line PASS) byte-identical.
 - Host tests ALL PASS (rules 6481, control 89, learn 131, input 33, touch 64, cine 18); `pkgcheck` 0 / 0 / 0;
   `./build.sh duel` 0 warnings.
+
+### 5.4 Playtest and next
+- The playtest Artifact (v35, 2026-10-09) carries this round: the user, 「幫我更新 playtest」.
+- Next, the user: 「做野晒」: NOZARASHI (KATATE / RYOTE / NOMIHOSE), its look first, then its strikes (§6).
