@@ -109,6 +109,14 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
 
+### Fix (2026-10-10): MUJITTAI's look
+
+The user: 「目前的 U 無實體防禦模式只有腿部特效正確」. The copy of Lille's kits had dropped two look hooks the old Lille hangs on
+every form (lille.lisp): `:body-alpha` (`LILLE-BODY-ALPHA`: the column 0.72 see-through in MUJITTAI) and `:hud-guard`
+(`LILLE-HUD-GUARD`: the guard bar's jade outline); the legs and the wings' curl were right because the shared draw hook reads
+the form. Both added to `*BARRO-HOOKS*` (all nine forms inherit them). Stills: 82011 / 82012 now match the old Lille's
+79015 / 79003. Looks only, no sim change.
+
 ### Decision V9i (2026-10-10): the snap shot on the move (the Step keeps sliding)
 
 The user: 「常態 L > J 的速射幫我改成可以在 step 的過程中使用，達成類似原本跳射的效果」; the picks 「繼續滑完」, 「照 Step 回到架勢」,

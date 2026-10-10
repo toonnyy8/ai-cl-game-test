@@ -782,10 +782,13 @@ plays at old / new speed and still reaches its hit pose on the new hit frame). A
 (*BR-STAND-INS*; the owl's backstep steps its lift with ranged from f0 (art §17.1), not Lille's TENSHIN's f6).")
 
 ;;; ================================================================ forms
-(defparameter *barro-hooks* '(:tick barro-tick :ok barro-ok :hit barro-hit :struck barro-struck :draw br-draw)
+(defparameter *barro-hooks* '(:tick barro-tick :ok barro-ok :hit barro-hit :struck barro-struck :draw br-draw
+                               :body-alpha lille-body-alpha :hud-guard lille-hud-guard)
   "His mechanics (kit.lisp KIT-HOOK): the trace count, MUJITTAI's perfect-Hoho drop, Trompete's reflect, the revival's
 clearing (:tick); the lay prices, the L links, the seal (:ok); the 狙擊 gauge, the J's materialise, the refunds (:hit); the
-pacing log (:struck); his looks (:draw, barro-art.lisp).")
+pacing log (:struck); his looks (:draw, barro-art.lisp); the old Lille's MUJITTAI looks, by form only (lille-art.lisp):
+the column half see-through (:body-alpha) and the guard bar's jade outline (:hud-guard) (missing from the copy until
+2026-10-10: the user, 「目前的 U 無實體防禦模式只有腿部特效正確」).")
 
 (defparameter *br-kamae-strings*
   (append (loop for s in '(:br-kamae :br-kamae-k :br-kamae-j :br-kamae-re)
