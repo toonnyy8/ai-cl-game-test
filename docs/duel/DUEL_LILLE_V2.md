@@ -1,6 +1,6 @@
 # SOUL DUEL: Lille Barro II (利傑巴羅・重製), the rebuilt kit
 
-Status: **built 2026-10-09 (batches 1–4: §11–§13); awaiting the user's playtest (decision V5).** The old Lille (`DUEL_LILLE.md`, roster index 5) stays as he
+Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7, §15) in build 2026-10-10.** The old Lille (`DUEL_LILLE.md`, roster index 5) stays as he
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -69,6 +69,43 @@ the base form's damage ×1.3 → ×1.5 moved BK, to 24 / 19 / 16):
 - Pacing: 「接受為例外」 — BY 115.9 s and BK 112.9 s are accepted exceptions (AGENTS.md list).
 - Awaken A/B: 「先試玩再決定」 — no retune; `*br-mult*` stays ×1.3; the build goes to the playtest (GitHub Pages) and the
   user decides after playing.
+
+### Decision V6 (2026-10-10): the stance step, one trace at a time, no refund, the pendulum back
+
+The user, after the first playtest build: 「常態進入 L 架勢後可以靠 Step 消耗 10 點閃步量表快速位移（就如同原版 lille 一樣）」、
+「「附近」的判定條件改成 2.5 公尺內，然後每次只會觸發一條。」; on the old Lille's pendulum: 「我想把鐘擺循環重新帶入 L -> J 與 J -> L
+的設計中」; the follow-ups 「把 J 改成就算近攻沒打中也會出發最近實體化，然後後撤瞬間會變回遠程，這樣鐘擺循環的邏輯就跟原本的循環銜接上」、
+「只有 J，然後 K 揮空不再觸發實體化」. Choices (AskUserQuestion, the recommended first unless noted):
+
+| Topic | Before | Now (the user's pick) |
+|---|---|---|
+| The base stance's Step | none | the old HIRENKYAKU: 10 flash step, 3.5 m in the stick direction (neutral: back) over 12 f, iframes f0–7, back in the stance at f6 (a fresh window, aim snapped onto him); **once per stance** |
+| "Near" | inside the trace's 10° snap (V4) | the opponent within **2.5 m** of the trace's line (point-to-segment on the ground) |
+| How many | every near trace | **one**: the nearest to him (a tie: the newer) |
+| Aim | turned ≤ 10° | **fired along its line** as it is at that frame (V7; the pick 「直接對準對手」 of the step before was replaced by V7) |
+| J | materialises on a touch | **every J materialises one, hit or whiff** |
+| K | materialises at its active frame, hit or whiff | **only on a touch (hit or block)**; a whiff never does (「命中或被防都觸發」) |
+| Ranged J | back to melee in place, J1 | **TENSHIN in**: the old dash (30 m/s, ≤ 7 m, stops 1 m short, iframes 9 f, free), 16 f wind-up from neutral, a 2 f cancel out of a ranged L / SP1 / SP2; melee from the dash, J1 at its end (「照原版」) |
+| Ranged K | back to melee in place, K1 | unchanged |
+| J3 → L backstep | 5 m / 14 f, iframes 7, free, ranged at f13 | 5 m / 14 f, **iframes 9, 10 flash step**, **ranged at f0**; a lay only from the dash's end (「衝刺結束才能接」) |
+| J1 / J2 → L | the mode turn | unchanged (only J3 backsteps: 「只有 J3」) |
+| Flash-step refund on a materialised hit | 4 / 2 (owl 5 / 2) | **0** (「改成 0」) |
+
+### Decision V7 (2026-10-10): aim points, every trace aims through him
+
+The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，軌跡會隨時對準自身」. Choices: the point 「設在自己後方 0.5 m 處」; the line
+「穿過利捷」; the shot 「沿當下的線射出」; the life 「留到被實體化或回收」; SP1 「隨三發的轉身依序放」; the pick radius 「維持 2.5 m」.
+
+- Ranged L / SP1 / SP2 set an **aim point** 0.5 m behind him (behind his facing at that frame): L one, SP1 one at each of its
+  three shot frames (f12 / f22 / f32: he turns at the opponent between them, so the lines part), SP2 one thick (radius 1.2).
+  Costs unchanged (3 / 9 / 9 flash step, refused if short); at most 16, the oldest dropped first.
+- A trace is the line **from its aim point through Lille's current position, 31 m long**, recomputed every frame: as he
+  moves, every line turns about its point. Within 0.3 m of the point the line keeps its last direction [G].
+- Materialising (V6: J always, K on a touch; the nearest line within 2.5 m of the opponent, one): the shot runs **along
+  that line as it is**, from the point through him and on, with 萬物貫通. The line is ~0.6 m wide: an opponent 2.5 m off it
+  is picked and missed (the trace is spent). The opponent sees every line and can step off.
+- The recall (K3 → L) takes every aim point, as before.
+- The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
 
 Everything below that the user did not decide is marked **[G]** (our reading, a knob; changed on the next playtest).
 
