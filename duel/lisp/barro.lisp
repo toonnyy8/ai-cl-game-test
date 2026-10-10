@@ -59,6 +59,12 @@ each J / K conversion. New, 2026-10-09, the user's decision V1 「3 格，命中
 (defparameter *br-dash-snap-f* 3
   "The stance Step's frame from which a J fires the stance's J (the snap shot; J1 at 0 pips) (new 2026-10-10, decision V9c
 「減少 step 跟速射之間的切換硬直」, 「兩邊都可取消」; f3 [G]; before: the Step's f11, back in the stance at its f6).")
+(defparameter *br-step-snap-delay* 3
+  "The stance Step: a J at >= 1 pip from its *BR-DASH-SNAP-F* fires the snap shot this many frames later WHILE the Step
+slides on (decision V9i, the user 2026-10-10: 「常態 L > J 的速射幫我改成可以在 step 的過程中使用，達成類似原本跳射的效果」; 「繼續滑完」,
+「照 Step 回到架勢」, 「一槍」, 「開槍就取消」 the iframes) [G 3 f], at the latest on *BR-STEP-SNAP-LAST*.")
+(defparameter *br-step-snap-last* 10
+  "... the Step's last frame a shot fires on (its f11 is back in the stance, *BR-KAMAE-BACK*) (new 2026-10-10, decision V9i).")
 (defparameter *br-snap-step-f* 8
   "The snap shot's frame from which its recovery cancels into the stance Step 飛廉脚 (once per stance, its 10 flash step; it
 returns to the stance as usual) (new 2026-10-10, decision V9c 「兩邊都可取消」; f8 = after its shot, S 6 + A 2 [G]).")
@@ -964,6 +970,8 @@ decision V9; at 0 pips the plain K1, V9d).")
   (latch nil)                             ; ... the J1 / K1 it links into (:q, a K pressed during it :f)
   (switch-to nil)                         ; ... the melee form it turns into (6 f into the dash, or at its end)
   (dash-j nil)                            ; ... the J1 it started (that move while it runs): it fires no trace (V9g)
+  (step-shot nil)                         ; the stance Step: the frame its latched moving snap fires (V9i) ...
+  (step-fired nil)                        ; ... it fired (one a Step)
   (dash-took nil)                         ; ... a J / K pressed during the dash taken for the link (V9h) ...
   (dash-next nil)                         ; ... and the next one (:q / :f), pressed again at the J1's hit frame (V9h)
   (dash-q nil)                            ; a ranged lay: a J latched before its last point (it dashes there; V6c)
@@ -1146,6 +1154,7 @@ iframes f0-7 (*BR-KAMAE-DASH-IFRAMES*), the flash step's vanish."
         (multiple-value-bind (dx dz) (world-dir e f to st)
           (set-slide e *br-kamae-dash* *br-kamae-dash-f* dx dz))))
     (setf (fighter-invuln f) (max (fighter-invuln f) *br-kamae-dash-iframes*))
+    (setf (brs-step-shot (br e)) nil (brs-step-fired (br e)) nil)   ; (decision V9i: one moving shot a Step)
     (pace e :k-dash)
     (emit :hoho-out e (aref p 0) (aref p 2))
     (emit :sfx :whoosh-light e)))
@@ -1154,22 +1163,55 @@ iframes f0-7 (*BR-KAMAE-DASH-IFRAMES*), the flash step's vanish."
   (start-move e (kit-next (kit-of e) :br-k-dash :kamae-back))
   (turn-to-opp e (fighter e) 10.0))
 
+(defun br-step-snap-frame (press)
+  "The Step frame the moving snap shot latched on Step frame PRESS fires (decision V9i): *BR-STEP-SNAP-DELAY* later, at the
+latest *BR-STEP-SNAP-LAST*."
+  (min (+ press *br-step-snap-delay*) *br-step-snap-last*))
+
 (defun br-k-dash-tick (e)
-  "The stance Step (decision V9c): from its *BR-DASH-SNAP-F* a J fires the stance's J (the snap shot; J1 at 0 pips) at once,
-the aim snapped onto him (a human's press, buffered; his CPU's one roll at that frame, :kamae :dash-snap x the difficulty,
-with a pip)."
-  (let* ((f (fighter e)) (mv (fighter-move f)))
+  "The stance Step (decision V9c): from its *BR-DASH-SNAP-F* a J (a human's press, buffered; his CPU's one roll at that frame,
+:kamae :dash-snap x the difficulty, with a pip) at >= 1 pip latches the moving snap shot (decision V9i): it fires
+BR-STEP-SNAP-FRAME while the Step slides on (BR-STEP-SNAP), once a Step, and the Step returns to the stance as usual; at 0
+pips the J is J1 at once (V9c / V9d), the Step cancelled."
+  (let* ((f (fighter e)) (mv (fighter-move f)) (st (br e)))
     (when (and (eq (fighter-state f) :move) mv (eq (fighter-phase f) :main) (br-dash-snap-p (fighter-sf f)))
-      (let* ((st (br e)) (b (br-tick-brain e)) (vp (pilot-vpad (pilot e)))
-             (go (if b
-                     (and (= (fighter-sf f) *br-dash-snap-f*) (>= (brs-snipe st) 1)
-                          (< (sim-rnd01) (br-ai-chance (getf (ai-table e :kamae) :dash-snap 0.0) (brain-difficulty b))))
-                     (vpad-command-pressed-p vp :quick nil))))
-        (when go
-          (unless b (vpad-consume! vp :quick))
-          (turn-to-opp e f 10.0)
-          (br-kamae-go e f st mv :kamae-j)
-          (pace e :dash-snap))))))
+      (let ((sf (fighter-sf f)))
+        (when (and (brs-step-shot st) (>= sf (brs-step-shot st)))
+          (setf (brs-step-shot st) nil (brs-step-fired st) t)
+          (br-step-snap e f st))
+        (unless (or (brs-step-shot st) (brs-step-fired st) (> sf *br-step-snap-last*))
+          (let* ((b (br-tick-brain e)) (vp (pilot-vpad (pilot e)))
+                 (go (if b
+                         (and (= sf *br-dash-snap-f*) (>= (brs-snipe st) 1)
+                              (< (sim-rnd01) (br-ai-chance (getf (ai-table e :kamae) :dash-snap 0.0) (brain-difficulty b))))
+                         (vpad-command-pressed-p vp :quick nil))))
+            (when go
+              (unless b (vpad-consume! vp :quick))
+              (cond ((>= (brs-snipe st) 1)
+                     (setf (brs-step-shot st) (br-step-snap-frame sf))
+                     (pace e :step-snap-latch))
+                    (t (turn-to-opp e f 10.0)
+                       (br-kamae-go e f st mv :kamae-j)
+                       (pace e :dash-snap))))))))))
+
+(defun br-step-snap (e f st)
+  "The moving snap shot's frame (decision V9i): a pip spent (BR-KAMAE-LEFT); the snap shot's hit (:br-k-snap's window, 萬物貫通)
+as a 2-frame line from him straight at the opponent (a hazard: the Step keeps sliding), his facing turned onto him; the
+Step's iframes end (「開槍就取消」)."
+  (let* ((kit (fighter-kit f)) (snap (kit-move kit :br-k-snap)) (hw (copy-hitwin (svref (mv-hits snap) 0)))
+         (p (pos-of e)) (q (pos-of (opp-of e)))
+         (dx (- (aref q 0) (aref p 0))) (dz (- (aref q 2) (aref p 2))) (d (max 0.001 (sqrt (+ (* dx dx) (* dz dz)))))
+         (ux (/ dx d)) (uz (/ dz d)) (yaw (f32 (dir-yaw ux uz))))
+    (setf (brs-snipe st) (br-kamae-left :kamae-j (brs-snipe st)) (hw-vols hw) nil)
+    (turn-to-opp e f 10.0)
+    (setf (fighter-invuln f) 0)
+    (let ((h (spawn-hazard :br-step-snap e :x (aref p 0) :z (aref p 2) :yaw yaw :size *br-x-len* :life 3 :hw hw :hook 'br-hz
+                                           :data (make-brh :src :snap :live nil :width 0.25f0 :ux (f32 ux) :uz (f32 uz)
+                                                           :vol (make-vol :cap (list 0.6 *br-x-len* 1.2 0.25))))))
+      (declare (ignore h)))
+    (br-spawn-look-at e :shot (aref p 0) (aref p 2) yaw *br-x-len* 0.05 t)
+    (emit :sfx :lb-crack e)
+    (pace e :step-snap)))
 
 (defun br-snap-enter (e) "The snap shot's f0: no J latched yet (decision V9c)." (setf (brs-snap-j (br e)) nil))
 

@@ -2,7 +2,7 @@
 
 Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17); decision V6a (TENSHIN in only as a quick J after a lay) built 2026-10-10 (§18); decision V6c (the wider L → J window, TENSHIN in fires a line at its f0) built 2026-10-10 (§19); decisions V9 / V9b / V9c / V9d (the stance K by pips, the snap's links) built 2026-10-10 (§20); decisions V8 / V8a (two
 routes, one pool; a dash spends a trace) built 2026-10-10 (§21); decision V8b (the ranged L back to the plain lay) built
-2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22); decisions V9f / V9g / V9h (TENSHIN in fires before it pays; its J1 fires none; the backstep fires, dash presses kept) built 2026-10-10.**
+2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22); decisions V9f / V9g / V9h (TENSHIN in fires before it pays; its J1 fires none; the backstep fires, dash presses kept) and V9i (the snap shot on the move) built 2026-10-10.**
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -108,6 +108,23 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
   is picked and missed (the trace is spent). The opponent sees every line and can step off.
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
+
+### Decision V9i (2026-10-10): the snap shot on the move (the Step keeps sliding)
+
+The user: 「常態 L > J 的速射幫我改成可以在 step 的過程中使用，達成類似原本跳射的效果」; the picks 「繼續滑完」, 「照 Step 回到架勢」,
+「一槍」, 「開槍就取消」 (the iframes).
+
+- In the stance's Step 飛廉脚 (`:br-k-dash`), a J from its f3 (`*BR-DASH-SNAP-F*`) at >= 1 pip no longer cancels the Step
+  into the planted snap: it is latched and the snap shot fires `*BR-STEP-SNAP-DELAY*` 3 f later, at the latest on f10
+  (`*BR-STEP-SNAP-LAST*`; f11 is back in the stance), `BR-STEP-SNAP-FRAME`. The Step slides on its full 3.5 m and returns to
+  the stance on its f11 as usual (a fresh window: L / J / K follow).
+- The shot (`BR-STEP-SNAP`): one pip spent; the snap's own hit (`:br-k-snap`'s window copied: 40, 萬物貫通, stagger) as a
+  2-frame line from him straight at the opponent (a hazard `:br-step-snap`, so the Step keeps moving), his facing turned
+  onto him, the jade line's look and crack; **the Step's iframes end on the shot**. One a Step.
+- At 0 pips a J in the Step is J1 at once (V9c / V9d, unchanged). His CPU's `:dash-snap` roll now takes the moving shot.
+- Host test (duel-rules 8672): the delay and the frame clamp. Browser (82026, 2 pips, 4 m): L, Step, J at the Step's f3:
+  the shot hits on its f6 (40, pips 2 → 1), the Step slides on (the gap 5.5 → 7.9 m), back in the stance; 82024 (0 pips):
+  J1 as before.
 
 ### Decision V9h (2026-10-10): the pendulum's rounds link (the backstep fires; dash presses kept)
 

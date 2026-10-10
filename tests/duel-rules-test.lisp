@@ -2877,6 +2877,11 @@ defender's next step. Values: the attacker's and the defender's first actionable
   (let ((dash (find-move :br-k-dash)) (snap (find-move :br-k-snap)) (kj (find-move :br-kamae-j)))
     (check (and (= 3 *br-dash-snap-f*) (eq 'br-k-dash-tick (mv-tick dash)) (not (br-dash-snap-p 2)) (br-dash-snap-p 3)
                 (br-dash-snap-p 11) (< *br-dash-snap-f* *br-kamae-back*)))
+  ;; decision V9i (the user 2026-10-10: 「常態 L > J 的速射幫我改成可以在 step 的過程中使用，達成類似原本跳射的效果」): a J in the Step at
+  ;; >= 1 pip fires the snap 3 f later while it slides on, at the latest on f10 (f11 is back in the stance); one a Step
+  (check (and (= 3 *br-step-snap-delay*) (= 10 *br-step-snap-last*) (= (1- *br-kamae-back*) *br-step-snap-last*)
+              (= 6 (br-step-snap-frame 3)) (= 10 (br-step-snap-frame 7)) (= 10 (br-step-snap-frame 9))
+              (= 10 (br-step-snap-frame 10))))
     (check (and (= 8 *br-snap-step-f*) (= (+ (mv-s snap) (mv-a snap)) *br-snap-step-f*) (eq 'br-snap-tick (mv-tick snap))
                 (not (br-snap-step-p 7 nil 100.0)) (br-snap-step-p 8 nil 100.0) (br-snap-step-p 27 nil 10.0)
                 (not (br-snap-step-p 8 t 100.0)) (not (br-snap-step-p 8 nil 9.0))
