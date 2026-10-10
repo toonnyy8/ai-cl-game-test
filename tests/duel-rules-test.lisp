@@ -2819,9 +2819,8 @@ defender's next step. Values: the attacker's and the defender's first actionable
   (flet ((lays-p (mv) (and (find 'br-lay (mv-on-frame mv) :key #'second) t)))
     (dolist (k (list m om (kit :barro :jilliel-kin-mujittai) (kit :barro :shin-kin-mujittai)))
       (check (notany (lambda (c) (lays-p (kit-command-move k c))) '(:sp1 :sp2 :q :f))))
-    (dolist (k (list r or*))   ; (decision V8: the ranged L is a swing that sets its point on a hit, BARRO-HIT)
-      (check (and (every (lambda (c) (lays-p (kit-command-move k c))) '(:sp1 :sp2))
-                  (not (lays-p (kit-command-move k :sig))) (br-swing-p (kit-command-move k :sig))))))
+    (dolist (k (list r or*))   ; (decision V8b: the ranged L lays again, V8's swing gone)
+      (check (every (lambda (c) (lays-p (kit-command-move k c))) '(:sig :sp1 :sp2)))))
   ;; the 狙擊 gauge (§4, decision V1): +1 on a hit only, at most 3; -1 a conversion; at 0 the stance drops into J1 / K1
   (check (and (= 1 (br-snipe-after 0 :hit)) (= 0 (br-snipe-after 0 :block)) (= 0 (br-snipe-after 0 nil))
               (= 3 (br-snipe-after 3 :hit)) (= 3 (br-snipe-after 2 :hit)) (= 3 *br-snipe-max*)))
@@ -2959,9 +2958,12 @@ defender's next step. Values: the attacker's and the defender's first actionable
                 (eq *br-rc4-clip* (mv-clip rc4))
                 (eq :br-o-rc3 (kit-move-clip om (mv-clip rc4))))))   ; (the owl's claws: the stand-in until :br-o-rc4)
   ;; the lays' prices (§5.2): ranged L 3, SP1 9, SP2 9, refused when short; nothing else costs
-  (check (and (zerop (br-lay-price :jilliel :sig)) (~= 9.0 (br-lay-price :jilliel :sp1)) (~= 9.0 (br-lay-price :shin :sp2))
+  ;; (decision V8b: L's 3 and its refusal back, V8's free swing gone)
+  (check (and (~= 3.0 (br-lay-price :jilliel :sig)) (~= 3.0 (br-lay-price :shin :sig)) (~= 9.0 (br-lay-price :jilliel :sp1))
+              (~= 9.0 (br-lay-price :shin :sp2))
               (zerop (br-lay-price :jilliel-kin :sp1)) (zerop (br-lay-price :base :sig)) (zerop (br-lay-price :jilliel :q))
-              (br-lay-ok-p :jilliel :sig 0.0) (br-lay-ok-p :shin :sig 0.0) (not (br-lay-ok-p :shin :sp1 8.0))   ; (V8: L free)
+              (br-lay-ok-p :jilliel :sig 3.0) (not (br-lay-ok-p :jilliel :sig 2.9)) (not (br-lay-ok-p :shin :sig 2.9))
+              (not (br-lay-ok-p :shin :sp1 8.0))
               (br-lay-ok-p :jilliel-kin :sp2 0.0) (~= 3.0 (br-line-cost :sp1)) (~= 9.0 (br-line-cost :sp2))))
   (let ((ids (loop for i from 1 to 16 collect i)))
     (multiple-value-bind (new drop) (br-trace-lay ids 17)
@@ -3012,7 +3014,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
   ;; after its end too (BR-DASH-FRAME: end + 9 dashes, end + 10 / + 11 are J1 in place)
   (check (= 10 *br-dash-late*))
   (dolist (k (list r or*))
-    (dolist (c '(:sp1 :sp2))   ; (the L swing: below, decision V8)
+    (dolist (c '(:sig :sp1 :sp2))   ; (the L too again, decision V8b)
       (let* ((mv (kit-command-move k c)) (end (+ (mv-s mv) (mv-a mv) (mv-r mv))) (last (br-last-point mv))
              (lays (loop for (fr fn) in (mv-on-frame mv) when (eq fn 'br-lay) collect fr)))
         (check (and (eq 'br-lay-tick (mv-tick mv)) lays (= last (reduce #'max lays)) (< last end)
@@ -3025,16 +3027,18 @@ defender's next step. Values: the attacker's and the defender's first actionable
                     (eql (+ end 9) (br-dash-frame (+ end 9) last end))      ; (9 f after its end: dashes)
                     (null (br-dash-frame (+ end 10) last end))
                     (null (br-dash-frame (+ end 11) last end)))))))        ; (11 f after: J1 in place)
-  ;; L's numbers (decision V8, the swing): S 7, A 3, R 12, 1.8 m, arc 110, 16, a flinch; its window opens at its active
-  ;; end f10, hit or whiff (「L 揮空也能接 J 前衝」), over at f22, so a J from f0 to f31 dashes (with a trace to spend, V8a);
-  ;; the owl's R 11 (adv + 1). SP1's J before its third point (f18) dashes after the third, not before
+  ;; L's numbers (decision V8b, the user 2026-10-10: 「L 改回 v9 的不帶傷害 可以直接放」: V8's 7 f / 1.8 m / 16 swing gone): no
+  ;; damage, no reach, no swing; its one point at f4, over at f13 (the end's + 0), so a J from f0 to f22 dashes (23 f); the
+  ;; owl's R 5. SP1's J before its third point (f18) dashes after the third, not before
   (let* ((l (kit-command-move r :sig)) (sp1 (kit-command-move r :sp1)) (le (+ (mv-s l) (mv-a l) (mv-r l)))
-         (se (+ (mv-s sp1) (mv-a sp1) (mv-r sp1))) (ol (kit-command-move or* :sig)) (w (svref (mv-hits l) 0)))
-    (check (and (= 7 (mv-s l)) (= 3 (mv-a l)) (= 12 (mv-r l)) (~= 1.8 (mv-reach l)) (= 16 (hw-dmg w)) (eq :flinch (hw-react w))
-                (= 16 (mv-dmg ol)) (= 11 (mv-r ol)) (= (1+ (mv-adv-block l)) (mv-adv-block ol)) (~= 1.8 (mv-reach ol))
-                (eq :lb-e-q1 (mv-clip l)) (= 7 (mv-s ol)) (eq 'br-lay-tick (mv-tick l)) (eq 'br-lay-tick (mv-tick ol))
-                (= 10 (br-last-point l)) (= 10 (br-last-point ol)) (= 22 le) (eql 10 (br-dash-frame 0 10 le))
-                (eql 31 (br-dash-frame 31 10 le)) (null (br-dash-frame 32 10 le)) (= 18 (br-last-point sp1))
+         (se (+ (mv-s sp1) (mv-a sp1) (mv-r sp1))) (ol (kit-command-move or* :sig)))
+    (check (and (zerop (length (mv-hits l))) (zerop (length (mv-hits ol))) (null (getf (mv-params l) :swing))
+                (not (fboundp 'br-swing-p)) (not (fboundp 'br-swing-point)) (not (boundp '*br-swing-dmg*))
+                (= 4 (mv-s l)) (= 3 (mv-a l)) (= 6 (mv-r l)) (= 4 (mv-s ol)) (= 5 (mv-r ol))
+                (equal '((4 br-lay)) (mv-on-frame l)) (equal '((4 br-lay)) (mv-on-frame ol))
+                (eq :lb-e-q1 (mv-clip l)) (eq 'br-lay-tick (mv-tick l)) (eq 'br-lay-tick (mv-tick ol))
+                (= 4 (br-last-point l)) (= 4 (br-last-point ol)) (= 13 le) (eql 4 (br-dash-frame 0 4 le))
+                (eql 22 (br-dash-frame 22 4 le)) (null (br-dash-frame 23 4 le)) (= 18 (br-last-point sp1))
                 (equal '(6 12 18) (loop for (fr fn) in (mv-on-frame sp1) when (eq fn 'br-lay) collect fr))
                 (eql 18 (br-dash-frame 7 18 se)) (eql 18 (br-dash-frame 13 18 se)) (eql 18 (br-dash-frame 17 18 se))
                 (= 20 (br-last-point (kit-command-move r :sp2))) (= 12 (br-last-point (kit-command-move or* :sp2))))))
@@ -3055,8 +3059,8 @@ defender's next step. Values: the attacker's and the defender's first actionable
   ;; his CPU goes in the same way (BR-AI-IN-CMD): J1 in place within its reach + 0.2, else an L (its window's cancel), else
   ;; walk; never a lay inside J1's reach
   (check (and (eq :q (br-ai-in-cmd 1.7 1.6 t t)) (eq :sig (br-ai-in-cmd 1.9 1.6 t t)) (eq :sig (br-ai-in-cmd 12.0 1.6 t t))
-              (null (br-ai-in-cmd 6.0 1.6 t nil)) (null (br-ai-in-cmd 1.0 1.6 nil t)) (eq :q (br-ai-in-cmd 1.8 1.6 t nil))
-              (null (br-ai-in-cmd 6.0 1.6 t t nil)) (eq :q (br-ai-in-cmd 1.7 1.6 t t nil))))   ; (V8a: no trace, no dash)
+              (null (br-ai-in-cmd 6.0 1.6 t nil)) (null (br-ai-in-cmd 1.0 1.6 nil t)) (eq :q (br-ai-in-cmd 1.8 1.6 t nil))))
+  ;; (decision V8b: the L's own point pays the dash, V8a, so no trace check before it)
   ;; J3 -> L the backstep (decision V6): 5 m / 14 f, iframes 9, a lay only from its f14; no flash step since decision V8a
   ;; (「後撤不再扣閃步」: its price is one trace, BR-SPEND-FAR at its f0; *BR-BACKSTEP-FS* gone)
   (check (and (~= 5.0 *br-backstep*) (= 14 *br-backstep-f*) (= 9 *br-backstep-iframes*) (not (boundp '*br-backstep-fs*))
@@ -3204,14 +3208,13 @@ defender's next step. Values: the attacker's and the defender's first actionable
   (let ((k '(:p 0.6 :n 3 :low-n 1 :low 0.35 :off-n 1)))
     (check (and (br-ai-recall-p 1 0.9 k 0) (not (br-ai-recall-p 1 0.9 k 1)) (not (br-ai-recall-p 0 0.9 k 0)) (br-ai-recall-p 3 0.9 k 2)
                 (br-as-k-route-p 3) (br-as-k-route-p 10) (not (br-as-k-route-p 2)))))   ; (V8: a K spends none)
-  ;; laying from range (decision V8: only SP1 / SP2 set points there; L is the close swing): from 4 m, over the reserve,
-  ;; SP1's fan on its roll with a bar, else SP2's thick point with its bars, else SP1; never at the stay's goal (:cap)
+  ;; laying: from 4 m, over the reserve, SP1's fan on its roll with a bar, else L; never at the stay's goal (:cap)
+  ;; (decision V8b: L lays from range again, as before V8)
   (let ((k '(:far 4.0 :reserve 15.0 :sp1 0.3 :cap 4)))
-    (check (and (null (br-ai-lay-plan 50.0 0 8.0 0 0.1 k)) (eq :sp1 (br-ai-lay-plan 50.0 1 8.0 0 0.1 k))
-                (eq :sp1 (br-ai-lay-plan 50.0 1 8.0 0 0.5 k)) (eq :sp2 (br-ai-lay-plan 50.0 2 8.0 0 0.5 k))
-                (null (br-ai-lay-plan 23.0 1 8.0 0 0.1 k)) (eq :sp1 (br-ai-lay-plan 24.0 1 8.0 0 0.1 k))
-                (null (br-ai-lay-plan 50.0 1 3.0 0 0.1 k)) (null (br-ai-lay-plan 50.0 1 8.0 4 0.1 k))
-                (not (member :sig (mapcar (lambda (r) (br-ai-lay-plan 100.0 9 8.0 0 r k)) '(0.0 0.5 0.99)))))))
+    (check (and (eq :sig (br-ai-lay-plan 50.0 0 8.0 0 0.1 k)) (eq :sp1 (br-ai-lay-plan 50.0 1 8.0 0 0.1 k))
+                (eq :sig (br-ai-lay-plan 50.0 1 8.0 0 0.5 k)) (null (br-ai-lay-plan 17.0 1 8.0 0 0.1 k))
+                (eq :sig (br-ai-lay-plan 18.0 1 8.0 0 0.1 k)) (null (br-ai-lay-plan 50.0 1 3.0 0 0.1 k))
+                (null (br-ai-lay-plan 50.0 1 8.0 4 0.1 k)))))
   ;; MUJITTAI: one roll per window; out by attacking on his whiff, at :max, under :gg, him idle out of reach
   (check (and (eq :stance (br-ai-stance-plan 0.1 0.4 nil)) (eq :step (br-ai-stance-plan 0.5 0.4 t)) (eq :pass (br-ai-stance-plan 0.5 0.4 nil))
               (eq :whiff (br-stance-exit t 0 120 100 30 nil)) (eq :max (br-stance-exit nil 120 120 100 30 nil))
@@ -3264,10 +3267,14 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (= 0 (br-snipe-after 0 :block 1.0 t)) (= 1 (br-snipe-after 0 :hit nil t))
               (getf (mv-params (find-move :br-k-shot)) :snipe-close)
               (notany (lambda (n) (getf (mv-params (find-move n)) :snipe-close)) '(:br-k-sanren :br-k-hiren :br-k-snap))))
-  ;; the ranged L swing sets its point (and pays 3) only on a hit with 3 flash step; a block, a whiff, a hit short: none
-  (check (and (br-swing-point-p :hit 3.0) (br-swing-point-p :hit 100.0) (not (br-swing-point-p :hit 2.9))
-              (not (br-swing-point-p :block 100.0)) (not (br-swing-point-p nil 100.0)) (~= 3.0 *br-lay-l*) (= 16 *br-swing-dmg*)
-              (br-swing-p (find-move :br-e-lay)) (br-swing-p (find-move :br-oe-lay)) (not (br-swing-p (find-move :br-e-sanren)))))
+  ;; decision V8b (the user 2026-10-10: 「L 改回 v9 的不帶傷害 可以直接放」): the ranged L is the plain lay again, no damage,
+  ;; its one point (3) at f4 whatever it touches; refused short (above); so an L always leaves a trace for its L -> J dash
+  ;; (V8a's price): with no other, the dash spends L's own and nothing fires (below)
+  (check (and (~= 3.0 *br-lay-l*) (~= 3.0 (br-line-cost :l))
+              (every (lambda (n) (let ((mv (find-move n)))
+                                   (and (zerop (length (mv-hits mv))) (eq :l (getf (mv-params mv) :trace))
+                                        (eql 4 (first (find 'br-lay (mv-on-frame mv) :key #'second))))))
+                     '(:br-e-lay :br-oe-lay))))
   ;; decision V8a (the user 2026-10-10: 「覺醒後的 L>J / J > L 前後衝刺都需要消耗一條軌跡才能發動」, 「最遠那條，不射出」,
   ;; 「不衝刺、後撤不再扣閃步」): a dash spends the trace FARTHEST from him (a tie the older), none: no dash; TENSHIN in spends
   ;; it as it starts (BR-TENSHIN-START, BR-MELEE-IN's late path) and its f0 then fires the nearest of the rest; the backstep
@@ -3279,7 +3286,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (null (br-pick (remove (br-pick-far '((1 0.5))) '((1 0.5)) :key #'first)))   ; (the only one spent: none fires)
               (eql 0 (first (find 'br-backstep-go (mv-on-frame (find-move :br-backstep)) :key #'second)))))
   ;; his CPU (decision V8): the base form's close snipe (:close, no pip, inside 3 m) and its plan in the stance (the shot, safe,
-  ;; <= 1 pip, inside :close-in, the roll rescaled when it does not fire); the ranged close swing (:swing)
+  ;; <= 1 pip, inside :close-in, the roll rescaled when it does not fire); no ranged close swing since decision V8b
   (let ((k (getf (kit-ai b) :kamae)) (z '(:p 0.5 :near 6.0)) (p '(:p 0.6 :near 4.0)) (c '(:p 0.4 :near 3.0)))
     (check (and (eq :close (br-ai-base-plan 0.1 2.5 0 nil z p :normal c)) (null (br-ai-base-plan 0.5 2.5 0 nil z p :normal c))
                 (null (br-ai-base-plan 0.1 3.5 0 nil z p :normal c)) (null (br-ai-base-plan 0.1 2.5 0 t z p :normal c))
@@ -3293,12 +3300,15 @@ defender's next step. Values: the attacker's and the defender's first actionable
                 (eq :kamae-k (br-ai-kamae-plan 0.2 3.5 nil 1 nil k :normal nil t t))
                 (<= (br-ai-chance (getf k :close-shot) :easy) (br-ai-chance (getf k :close-shot) :normal)
                     (br-ai-chance (getf k :close-shot) :hard))
-                (every (lambda (f) (getf (getf (kit-ai (kit :barro f)) :swing) :p)) '(:jilliel :shin))
+                (notany (lambda (f) (getf (kit-ai (kit :barro f)) :swing)) '(:jilliel :shin))
+                (not (fboundp 'br-ai-swing))
                 (every (lambda (f) (= 6 (getf (getf (kit-ai (kit :barro f)) :route) :bank))) '(:jilliel-kin :shin-kin)))))
-  ;; the ranged CPU's bands: no L from range (it is the close swing), SP1 / SP2 set points there
+  ;; the ranged CPU's bands (decision V8b: the pre-V8 ones): L lays from 3 m out, never inside 3 m (J / K there)
   (dolist (f '(:jilliel :shin))
-    (check (loop for band in (getf (kit-ai (kit :barro f)) :moves)
-                 always (or (< (first band) 2.0) (not (member :sig band))))))
+    (let ((bands (getf (kit-ai (kit :barro f)) :moves)))
+      (check (and (loop for band in bands always (or (>= (first band) 3.0) (not (member :sig band))))
+                  (some (lambda (band) (and (>= (first band) 3.0) (member :sig band))) bands)
+                  (~= 0.3 (getf (getf (kit-ai (kit :barro f)) :lay) :sp1))))))
   ;; learning (§13): three situations of his own, their answers
   (let ((sp (learn-kit-spec :barro)))
     (check (and sp (equalp (getf sp :situations) #(:shot :trace :mujittai)) (eq (getf sp :step) 'br-learn-step)

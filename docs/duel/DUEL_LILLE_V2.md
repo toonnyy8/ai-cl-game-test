@@ -1,7 +1,8 @@
 # SOUL DUEL: Lille Barro II (利傑巴羅・重製), the rebuilt kit
 
 Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17); decision V6a (TENSHIN in only as a quick J after a lay) built 2026-10-10 (§18); decision V6c (the wider L → J window, TENSHIN in fires a line at its f0) built 2026-10-10 (§19); decisions V9 / V9b / V9c / V9d (the stance K by pips, the snap's links) built 2026-10-10 (§20); decisions V8 / V8a (two
-routes, one pool; a dash spends a trace) built 2026-10-10 (§21).**
+routes, one pool; a dash spends a trace) built 2026-10-10 (§21); decision V8b (the ranged L back to the plain lay) built
+2026-10-10 (§21.8).**
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -108,6 +109,22 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
 
+### Decision V8b (2026-10-10): the ranged L back to the plain lay
+
+The user, after the V8 playtest (v45): 「L 改回 v9 的不帶傷害 可以直接放」.
+
+- The ranged L (JILLIEL `:br-e-lay`, the owl's `:br-oe-lay`) goes back to the lay as it was before V8 (V9, commit
+  86c0f7e): **no swing, no damage, no reach**; it sets its aim point 0.5 m behind him on its f4 whatever it touches,
+  costs 3 flash step, and is refused when short (`BR-LAY-OK-P`). S 4, A 3, R 6 (the owl's R 5).
+- V8's swing (7 f / 1.8 m / 16, the point only on a hit) is reverted, with its CPU (the close swing, the ranged bands
+  without L) and ASSIST routes (the swing, SP1's fan from range and after the backstep): the pre-V8 ones are back (L lays
+  from range; L → J for the dash).
+- Kept: the L → J window as V6c (from L's point at f4 to 10 f after its end) and V8a's price (the dash needs a live trace and
+  spends the farthest; L's own point is always there, so with no other it is spent and nothing fires); everything else of
+  V8 / V8a (the J / K feel split, K fires no trace, the five recall tiers with `:br-rc4`, close sniping +2, the dashes'
+  trace price, the backstep free of flash step).
+- The art batch's swing look for L is dropped. Built: §21.8.
+
 ### Decision V8a (2026-10-10): both awakened dashes cost one trace
 
 The user: 「另外幫我設定覺醒後的 L>J / J > L 前後衝刺都需要消耗一條軌跡才能發動」; choices 「最遠那條，不射出」, 「不衝刺、後撤不再扣閃步」.
@@ -136,8 +153,8 @@ every form; the conflicts: 「L 揮空也能接 J 前衝」, 「維持 3 格＋ 
 | K and traces | a K touch fires one (V6) | **K never fires a trace**: the K route keeps the pool for the recall |
 | J and traces | every J fires the nearest within 2.5 m | unchanged (the J route spends one at a time) |
 | The recall's tiers | 0 / 1–2 / 3–5 / 6+ = 30 / 80 / 150 / 210 | **0 / 1–2 / 3–5 / 6–9 / 10+ = 30 / 70 / 160 / 300 / 480** [numbers G]; 10+ is a new move `:br-rc4` with its own clip |
-| Ranged L | sets a point 0.5 m behind him, always (3 flash step) | **a swing**: startup 7, reach 1.8 m, 16 damage; **a hit** sets the point (and pays 3 flash step); a block or whiff sets none, pays none |
-| Ranged L → J | dash only if L set its point (V6c reading) | **the dash in L's window always** (「L 揮空也能接 J 前衝」): its f0 fires the nearest existing line, or none |
+| Ranged L | sets a point 0.5 m behind him, always (3 flash step) | ~~**a swing**: startup 7, reach 1.8 m, 16 damage; **a hit** sets the point (and pays 3 flash step); a block or whiff sets none, pays none~~ **reverted (V8b)**: the plain lay again |
+| Ranged L → J | dash only if L set its point (V6c reading) | ~~**the dash in L's window always** (「L 揮空也能接 J 前衝」): its f0 fires the nearest existing line, or none~~ **reverted (V8b)**: L always sets its point, the window is V6c's (with V8a's price) |
 | Ranged SP1 / SP2 | lay unconditionally | unchanged |
 | Base stance L | a hit: +1 pip | a hit **within 3 m: +2**, farther +1 (cap 3) |
 | Snipe gauge / stance K / snap | 3 pips, V9's tiers, V9c / V9d / V9e | unchanged |
@@ -1444,8 +1461,8 @@ no shared file. The art agent's `:br-rc4` / `:br-o-rc4` clips and the L swing's 
 | `*br-k-slow*` / `*br-k-link-slow*` | 2 / 1 | a K's startup and recovery + 2; a K link's effective startup only + 1 (14 → 15) [G] |
 | `*br-k-mult*` / `*br-k-adv*` | 1.20 / − 4 | damage × 1.2 rounded; block advantage − 4 |
 | `*br-snipe-close*` / `*br-snipe-close-n*` | 3.0 / 2 | the stance's L: a hit within 3 m fills 2 pips, farther 1 (cap 3) |
-| `*br-swing-dmg*` | 16 | the ranged L swing (S 7, A 3, R 12, 1.8 m, arc 110, flinch; the owl's R 11) |
-| `*br-lay-l*` | 3.0 | now the swing's price, paid only on its hit |
+| `*br-swing-dmg*` | 16 | the ranged L swing (S 7, A 3, R 12, 1.8 m, arc 110, flinch; the owl's R 11) — **reverted (V8b)**: removed |
+| `*br-lay-l*` | 3.0 | now the swing's price, paid only on its hit — **reverted (V8b)**: the lay's price again, refused short |
 | `*br-rc1-dmg*` | 40 → 35 | 二連 2 × 35 = 70 (was 80) |
 | `*br-rc2-dmg*` / `*br-rc2-last*` | 35 / 45 → 37 / 49 | 四連 3 × 37 + 49 = 160 (was 150) |
 | `*br-rc3-dmg*` / `*br-rc3-last*` | 30 / 90 → 43 / 128 | 裁き 4 × 43 + 128 = 300 (was 210) |
@@ -1467,7 +1484,7 @@ hit pose on the new hit frame; the host FK reach test passes unchanged). Per mov
 | wing K1 / K2 / K3 | 17/21/50/−3, 20/24/50/−3, 21/34/72/−20 | 19/23/60/−7, 22/26/60/−7, 23/36/86/−24 |
 | claw J1 / J2 / J3 | 8/11/26/−1, 7/12/26/−1, 9/17/32/−3 | 6/9/22/+1, 5/10/22/+1, 7/15/27/−1 |
 | claw K1 / K2 / K3 | 17/20/54/−2, 20/23/54/−2, 21/33/78/−19 | 19/22/65/−6, 22/25/65/−6, 23/35/94/−23 |
-| ranged L (JILLIEL / owl) | the lay: S 4, R 6 / 5, no hit, 3 FS | the swing: S 7, A 3, R 12 / 11, 16, adv −2 / −1, free |
+| ranged L (JILLIEL / owl) | the lay: S 4, R 6 / 5, no hit, 3 FS | ~~the swing: S 7, A 3, R 12 / 11, 16, adv −2 / −1, free~~ **reverted (V8b)**: the lay again |
 
 ### 21.2 What changed
 
@@ -1478,11 +1495,11 @@ hit pose on the new hit frame; the host FK reach test passes unchanged). Per mov
   frames with the new damages; **`:br-rc4` 裁き・極**: S 6, six 40 beats at f6 / f12 / f18 / f24 / f30 / f36 (stagger 28
   each: every gap 6 < 28), the NIJUSHI-KO ring's tell at f38 (`BR-NIJUSHI-TELL`), the beam at f48 (240, knockdown, kb 2),
   A 44, R 30; every hit 萬物貫通. Its clip `*BR-RC4-CLIP*` (`:br-rc3`; the owl's `:br-o-rc3` through the existing map).
-- **The ranged L swing** (`:br-e-lay`, `:br-oe-lay`, `:params (:swing t)`): no `BR-LAY` hook; BARRO-HIT → `BR-SWING-POINT`:
+- **The ranged L swing** (reverted by V8b, §21.8) (`:br-e-lay`, `:br-oe-lay`, `:params (:swing t)`): no `BR-LAY` hook; BARRO-HIT → `BR-SWING-POINT`:
   on a **hit** with ≥ 3 flash step it pays 3 and sets the point 0.5 m behind him (`BR-LAY-TRACE`); a block, a whiff or a hit
   short of 3 sets none and pays none. `BR-LAY-PRICE` of L is 0 (no flash step to swing). From the backstep's end L is the
   swing too.
-- **L → J**: the swing's window opens at its active end (S + A = f10) whether it hit or not (`BR-LAST-POINT`; BR-LAY-TICK's
+- **L → J** (reverted by V8b, §21.8: V6c's window again): the swing's window opens at its active end (S + A = f10) whether it hit or not (`BR-LAST-POINT`; BR-LAY-TICK's
   `paid` is true for the swing), so a J at any frame of L, or up to 10 f after its end (f0–f31), dashes, under V8a's price.
 - **The stance's L** (`:br-k-shot`, `:snipe-close t`): BARRO-HIT passes his distance at the hit; `BR-SNIPE-AFTER` fills 2
   within 3 m, 1 beyond (the pacing key `snipe-fill2` for a double).
@@ -1504,9 +1521,9 @@ hit pose on the new hit frame; the host FK reach test passes unchanged). Per mov
   15: at 16 a J's 18 f flinch ends as K2s / K3 hits (J's A 3 + 16 − 1 = 18), so J → K would stop comboing; 15 still does
   (host: every link combos on hit). A blocked J then K2s leaves 12 f (base, JILLIEL) / 10 f (the owl, its J at +1) before
   the K's hit, against the budget's ≥ 11: accepted for V8 (host checks ≥ 10 for him).
-- **The swing's point**: a hit with < 3 flash step sets none (the brief's reading). The point is set on the hit frame,
+- **The swing's point** (gone, V8b): a hit with < 3 flash step sets none (the brief's reading). The point is set on the hit frame,
   0.5 m behind his facing then (the swing tracks him, so the line runs through the opponent).
-- **The swing's dash window** opens at its active end (f10), hit or whiff (「L 揮空也能接 J 前衝」); a hit at f7 and the
+- **The swing's dash window** (gone, V8b) opens at its active end (f10), hit or whiff (「L 揮空也能接 J 前衝」); a hit at f7 and the
   cancel at f10 put TENSHIN in's f0 line 5 f after the swing's hit.
 - **V8a's order** (written down as asked): the price (farthest) first, at the cancel; then the f0 fire (nearest of the
   rest). With one trace the dash spends it and fires nothing: L hit → J with no other trace = the swing's point spent, J1
@@ -1519,7 +1536,7 @@ hit pose on the new hit frame; the host FK reach test passes unchanged). Per mov
 - **Base**: `:close (:p 0.4 :near 3.0)`: at 0 pips inside 3 m, not threatened, the stance (`BR-AI-BASE-PLAN` → `:close`,
   pacing `ai-close`); in the stance `:kamae :close-shot 0.5 :close-in 3.0`: safe (his attack not perceived coming), ≤ 1 pip,
   inside 3 m → the shot (+2); when it does not fire the plan's roll is rescaled for the rest (one roll a stance).
-- **Ranged**: `:swing (:p 0.5)`: within the swing's reach + 0.2 m, on his action's react roll → L (`BR-AI-SWING`, before
+- **Ranged** (the swing parts reverted by V8b, §21.8; the stay's goal kept): `:swing (:p 0.5)`: within the swing's reach + 0.2 m, on his action's react roll → L (`BR-AI-SWING`, before
   going in; pacing `ai-swing`). From range points come from SP1 (3) / SP2 (1 thick) only (`BR-AI-LAY-PLAN`: SP1 under
   `:sp1` 0.3 → 0.7, else SP2 with its 2 bars, else SP1); the bands drop L from 2–14 m (`:sig` only inside 2 m). Starved =
   no bar for SP1 or its flash step short. Going in (`BR-AI-GO-IN`): J1 in reach, else L → J (TENSHIN in) only with a live
@@ -1528,7 +1545,7 @@ hit pose on the new hit frame; the host FK reach test passes unchanged). Per mov
 - **Melee**: `:route :bank` 5 → 6 (the K route needs 6 live; a K spends none now, so the recall takes them all);
   `:backstep (:p 0.6 :min 2)` (was `:fs 13 :n 3`): J3 → L only with ≥ 2 traces (one paid, one left for the dash back).
   MUJITTAI's exit with lines near him presses J (a K fires none).
-- **ASSIST**: melee K links while ≥ 3 points are live (`BR-AS-K-ROUTE-P`, no spending), J3 → L with ≥ 2; ranged: his J
+- **ASSIST**: melee K links while ≥ 3 points are live (`BR-AS-K-ROUTE-P`, no spending), J3 → L with ≥ 2; ranged (reverted by V8b, §21.8): his J
   within the swing's reach → the swing; beyond with a trace → L (its J dashes); none → SP1 with a bar (`as-swing`,
   `as-lay`, `as-fan`); out of the backstep → SP1 (was an L point).
 - The learner: unchanged (its `:fire` read already used J).
@@ -1570,5 +1587,33 @@ swing; L then J); 82019 the same with two points (−40° / 0°: L then J spends
 - `:br-rc4` (JILLIEL) / `:br-o-rc4` (the owl): the move is S 6, A 44, R 30 (80 f); beats (a line from a wing tip / claw at
   him) on f6, f12, f18, f24, f30, f36; NIJUSHI-KO's ring f38–f47; the beam on f48. When drawn: `*br-rc4-clip*` → `:br-rc4`,
   `(:br-rc4 :br-o-rc4)` into `*br-owl-clip-map*`, both clips into the host test's `*clips-5*` list and its art rows.
-- The ranged L swing keeps `:lb-e-q1` (`:br-oe-lay` `:lb-oe-q1`), played at `:clip-s 4` over S 7 (speed 4 / 7: its pose
-  lands on f7); its hit reach is 1.8 m, arc 110, so the drawn reach should be ≈ 1.8 m at f7.
+- ~~The ranged L swing keeps `:lb-e-q1` (`:br-oe-lay` `:lb-oe-q1`), played at `:clip-s 4` over S 7 (speed 4 / 7: its pose
+  lands on f7); its hit reach is 1.8 m, arc 110, so the drawn reach should be ≈ 1.8 m at f7.~~ Dropped (V8b, §21.8): the L
+  is the plain lay again on its own clip speed (S 4), no hit, no reach to draw.
+
+### 21.8 Decision V8b built: the ranged L back to the plain lay (2026-10-10, branch `barro-v8b`)
+
+The user: 「L 改回 v9 的不帶傷害 可以直接放」 (§1). Only `duel/lisp/barro.lisp`, `tests/duel-rules-test.lisp`, the docs and
+the manual; no other character, no shared file, `barro-art.lisp` untouched.
+
+- **The moves**: `:br-e-lay` / `:br-oe-lay` exactly as at 86c0f7e: S 4, A 3, R 6 / 5, `:on-frame ((4 br-lay))`,
+  `:params (:trace :l)`; no `:dmg`, `:reach`, `:arc`, `:clip-s`, `:swing`. The point is set 0.5 m behind him on f4
+  (`BR-LAY`: 3 flash step, or none and `traces-unpaid` when short).
+- **Removed**: `*br-swing-dmg*`, `BR-SWING-P`, `BR-SWING-POINT-P`, `BR-SWING-POINT` and its BARRO-HIT clause, the CPU's
+  `:swing` plan and `BR-AI-SWING`, the ASSIST's swing and SP1-fan routes (pacing keys `swing-point`, `ai-swing`, `as-swing`,
+  `as-fan` gone).
+- **Restored to pre-V8**: `BR-LAY-PRICE` (L 3: BARRO-OK refuses an L short of it), `BR-LAST-POINT` (the last `BR-LAY`
+  frame: L f4), BR-LAY-TICK's window (open only once the lay set its point: `brs-laid`), the ranged CPU's bands
+  (0–3 m J / K / Step, 3–14 m L 4 / SP1 / SP2 / K, 14+ m L 2) and `:lay :sp1` 0.7 → 0.3, `BR-AI-LAY-PLAN` (SP1 on its roll
+  with a bar, else L), `BR-AI-STARVED-P` (L's 3 over the reserve), `BR-AI-IN-CMD` (no dash-ok argument: L's own point pays
+  the dash), the ASSIST's ranged route (beyond J1's reach + 0.2 m, L with 10 flash step left after it) and its route out
+  of the backstep (L, not SP1).
+- **Kept** (V8 / V8a): the J / K split, K fires no trace, the five recall tiers and `:br-rc4`, close sniping +2, the
+  stay's big bank (`:big-p` / `:big-goal` 10 / `:safe`), `:route :bank` 6; the dash's price (`BR-DASH-OK-P`,
+  `BR-TENSHIN-START`, `BR-SPEND-FAR`), the backstep free of flash step, `:backstep (:p 0.6 :min 2)` and the ASSIST's J3 → L
+  with ≥ 2 (the backstep spends one; the L after it sets a point, so the dash back spends the farther and fires the nearer).
+- **L → J now**: L sets its point at f4, so a J from f0 to f22 (10 f after its f13 end) dashes; V8a's price is always
+  payable (L's own point at least): with no other trace the dash spends L's point and fires nothing, with others it spends
+  the farthest and fires the nearest within 2.5 m (usually L's new point, whose line runs through him).
+- **Debug** 82018 / 82019 kept, read anew: 82018 (no point) L then J = L's point spent, nothing fires, J1; 82019 (two
+  points) L adds a third, the dash spends the farthest, fires the nearest.
