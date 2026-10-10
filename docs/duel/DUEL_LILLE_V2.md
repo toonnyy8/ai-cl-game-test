@@ -107,6 +107,26 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
 
+### Decision V9 (2026-10-10): the stance's J = HOSHA with 萬物貫通, its K = a shot by the pips spent
+
+The user: 「還有常態的 J 改成原本的前衝三連發， K 改成依據累積的資源數打出不同效果的槍擊」. Choices: 「架式 J，但花 1 格且帶萬物貫通」;
+the K 「四段效果」; the gauge 「維持 3 格」.
+
+- **Stance → J** (≥ 1 狙擊 pip, costs 1): the old HOSHA (`:lb-k-j`): a 5 m forward leap over f0–14, three bullets at
+  f6 / f10 / f14, 16 each, to 3.6 m, **each with 萬物貫通** (drain 40, 30 % through); any bullet's hit links into J1 / K1
+  (the old HOSHA loop: → K → L back into the stance). With 0 pips the stance's J stays J1 (V1). Replaces the snap shot.
+  (Three blocked bullets drain 120 > 100: a fully blocked HOSHA breaks guard. Noted for the gate / playtest.)
+- **Stance → K** spends **every** pip and fires by the count [G numbers]:
+
+| Pips | Shot | Effect |
+|---|---|---|
+| 0 | 退射 TAISHA | the 3 m back-slide, one shot 40, no 萬物貫通 |
+| 1 | 退射・貫通 | the back-slide, 70, 萬物貫通 (as before) |
+| 2 | 穿甲弾 | 110, 萬物貫通, a knockdown on hit |
+| 3 | 破陣弾 | 150, 萬物貫通, a guard break on block |
+
+  More pips, a longer recovery [G]. The gauge stays 3 pips (V8's 5 waits for V8).
+
 ### Decision V6c (2026-10-10): a wider L → J window; TENSHIN in fires a line at its f0 (the old combo)
 
 The user, on the V6a playtest build: 「L 接 J 的判定再寬鬆一點，另外現在鐘擺戰法沒辦法串成真正的連段」; asked how the old one linked
