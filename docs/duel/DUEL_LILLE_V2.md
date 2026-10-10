@@ -1,6 +1,6 @@
 # SOUL DUEL: Lille Barro II (利傑巴羅・重製), the rebuilt kit
 
-Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5, §15; its CPU pass next); its art polish 2026-10-10 (§17).** The old Lille (`DUEL_LILLE.md`, roster index 5) stays as he
+Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17).**
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -709,7 +709,7 @@ Decisions V6 and V7 (§1) built. Everything is in `duel/lisp/barro.lisp` (sim, C
 - ASSIST ranged: J while free → TENSHIN at a point on his line, else a lay from 4 m.
 - Logged per match (10 seeds, his 70 matches as P1): 6.4 TENSHIN (4.5 of them the lay's cancel), 7.7 materialised,
   4.7 trace hits, 8.4 points set, 1.1 backsteps, 0 recalls (the J's spend the points before a K3 sees 3), no stance Step.
-- Left for the CPU batch: the stance Step (HIRENKYAKU) in his base CPU's plan; walking so the lines cross him (he lays and
+- Left for the CPU batch (done in batch 6, §16): the stance Step (HIRENKYAKU) in his base CPU's plan; walking so the lines cross him (he lays and
   dashes; he does not yet steer the lines); the recall (it never comes up now); K's touch-only materialise in his melee
   choices; the learner's `:trace` situation and BR-OPP-TRACE on the new lines (read as "on a line", untuned); his HARD
   layer; ASSIST's melee route (K K K → L assumes traces to recall); `aieval.py --char 6`, the ASSIST gate, the awaken A/B.
@@ -748,6 +748,154 @@ the owl, 82014 the base form 6 m out with the stance started (Step), 82015 force
 
 BY and BK stay under 125 s (accepted exceptions at 60 seeds since V5); he now wins most cross pairings. No damage knob was
 touched (reported, not tuned).
+
+## 16. Batch 6: the CPU on the pendulum and aim points (2026-10-10, branch `barro-cpu2`)
+
+§15.4's list done. Everything is in `duel/lisp/barro.lisp` (his CPU, ASSIST and learning sections, his kits' `:ai`, two debug
+flags) and `tests/duel-rules-test.lisp`; no other character's code or knob, and no damage / frame / cost knob of his, moved
+(the old 21 pairings' rows are byte-identical, §16.7). Every new chance is a `:p` × `*br-ai-diff*` (EASY 0.5 / NORMAL 1.0 /
+HARD 1.5, at most 1), rolled once per event.
+
+### 16.1 Reading the lines (what the CPUs see of decision V7)
+
+- **Within 8 m every line is "on him at the dash's end".** TENSHIN in stops 1 m short, and every line runs from its point
+  through Lille, so at the dash's end each line passes at most 1 m from him: inside its radius 0.6 + `*br-ai-on*` 0.5 (and
+  inside the real hit, 0.6 + his hurt radius ~0.35, for any line within ~70° of the dash). The dash-end reading
+  (`BR-DASH-LINE-GAP`, `BR-END-COUNT`) therefore tells lines apart only beyond 8 m (the long dash). The steering reads the
+  line **on him now** (`BR-NEAR-COUNT`): from 6 m a line through Lille passes within 1.1 m of him only when Lille stands
+  near the ray from its point through him (within ~9° at 7 m).
+- **Steering** (`BR-STEER`, `BR-STEER-TARGET`): Lille puts a point's line on him by standing on the ray from the point
+  through him; the strafe that closes his distance to the nearest such ray (points behind him toward the opponent only) is
+  written to `BRAIN-STRAFE` and the neutral walk carries it.
+- **A crossing**: a line comes onto him now without a point set since the last look (Lille walked it there, or he walked
+  into it). The fire roll is made per crossing (and per point set, below).
+
+### 16.2 The CPU by form (`:ai` keys at NORMAL)
+
+| Form | Rule | Keys (old → new) |
+|---|---|---|
+| base | the stance's Step 飛廉脚 once a stance, at its plan (f6; `BR-AI-KAMAE-STEP`, one roll): his attack coming (perceived, `BR-AI-THREAT-P`) → :threat: aside and back off a lane (`BR-AI-STEP-STICK`: 60° off straight back, `LINE-OFF-STRAFE`'s side) else straight back; him inside 3 m, or running at him inside 5 m, with no pip → :p: back; never on a reeling opponent or short of 10 flash step; the window after the Step plans again (the shot / snap / TAISHA as before) | new `:kamae-step (:p 0.4 :threat 0.5 :close 3.0 :rush 5.0)` |
+| ranged | a stay (coming into a ranged mode) rolls its goal once (`BR-AI-GOAL`): from 6 m the bank (6 points, for the K route) under :bank-p, else 2–4 evenly; closer 1 (the point and the 2 f cancel); and once whether it steers (:steer) | `:lay (… :cap 2)` → `(:far 4.0 :reserve 10.0 :every 12 :sp1 0.3 :near 6.0 :goal (2 4) :close-goal 1 :bank-p 0.25 :bank-goal 6 :patience 90)`; new `:steer (:p 0.4)` |
+| ranged | lays at him (L, SP1's fan) every 12 f below the goal, the flash step staying over 10; with the goal set and no line on him now, a steering stay walks a line onto him (`BR-AI-STEER`); after 90 f of it without one, a new point | |
+| ranged | J (TENSHIN in, `BR-AI-IN-WHY`) within 8 m: him perceived busy for 30 f (the dash and J1) on his action's roll (:busy), inside 3 m, a line on him at the dash's end with the goal set (:p, one roll per event: a point set in a stay that does not steer, or a crossing), starved; from 8 to 13 m only on a crossing (**the long dash**: J1 whiffs short of him, the line it spends does not) | `:fire (:p 0.8 :n 1 :in 8.0 :close 3.0)` → `(… :far-in 13.0 :busy 0.5 :busy-f 30)` |
+| ranged → melee | TENSHIN in by his CPU rolls the melee route (`BR-AI-ROUTE-IN`, :p): **K** with ≥ :bank points set (K1 latched at the dash's end, then the K links: K3 → L the recall), else **J** (J1, the J links, J3 → L the backstep); each hit latches the route's next link (`BR-AI-ROUTE-LATCH`, the old Lille's LB-AI-ROUTE); a failed roll leaves the generic strings | new `:route (:p 0.6 :bank 5)` |
+| melee | free: the opener in reach on his action's roll: K1 with ≥ :bank points, J1 with a line on him (every J spends the nearest line: `BR-AI-MELEE`) | `:route` |
+| melee | K3 → L the recall at n ≥ :n, ≥ :low-n under 35 % Reishi, or ≥ :off-n with no line on him (lines that would miss, taken back); J3 → L the backstep below 3 points and 13 flash step (unchanged) | `:recall (:n 3 …)` → `(:p 0.6 :n 2 :low-n 1 :low 0.35 :off-n 1)` |
+| awakened | MUJITTAI on a threat, its exits, the owl's revival, the owl's two modes: unchanged (the owl's kits carry the same keys) | |
+
+Every chance scales by difficulty; the K route needs 5 points (three K touches spend three, decision V6, so 2 are left: the
+recall's 二連; the bank's 6 leave 3: 四連).
+
+### 16.3 The HARD layer (`*br-ai-hard*` 0 / 0 / 1, the kits' `:hard`)
+
+`BR-AI-HARD` (before the form's own rules; his action's react roll under the level, so EASY and NORMAL never): a 萬物貫通 line
+**on his recovery** (perceived, at least :punish-f frames left: the base form's stance and the shot, or the snap with a pip,
+18 f from 2.5 m; ranged TENSHIN in, 30 f; melee J with a line on him) or **into a guard one line breaks** (him guarding at
+≤ 40 of his guard gauge: a 萬物貫通 block drains 40). Keys: base `:hard (:near 2.5 :punish-f 18 :crush 40.0)`, melee
+`(:near 0.0 :punish-f 12 :crush 40.0)`, ranged `(:near 2.0 :punish-f 30 :crush 40.0)`. Fires ~1.1 times a HARD match.
+
+Tried and dropped (his HARD against the five HARD CPUs, 10 seeds, both seats, 120 matches): ranged TENSHIN only through
+the lay's 2 f cancel at HARD (no 16 f wind-up from neutral): 0.175 → 0.108; smaller goals (1–2, no bank): 0.142.
+
+### 16.4 The opponents and the learner (the moving lines)
+
+- **BR-OPP-TRACE** (a CPU facing his awakened forms): one roll per **crossing** (onto one of his lines, its radius +
+  `*br-ai-on*`, after being off every line; at most once in `*br-opp-gap*` 30 f) or per line newer than the ones it rolled
+  for (was: per new trace only); the Step across the line from its point through him (`LINE-OFF-STRAFE`). New `BRS-OPP-ON`,
+  `BRS-OPP-T`.
+- **The learner's `:trace`** opens on a crossing too (`BRL-ON-WAS`); its `:step` answer needs him off every line **and** moved
+  ≥ `*br-learn-off*` 0.5 m from the onset (a line swinging off him with Lille is not his answer); a guard read now answers
+  with **J** (TENSHIN in at the dash's end / a melee J on a line on him: a K spends one only on a touch since V6) instead of K.
+
+### 16.5 ASSIST AUTO COMBO (`BR-ASSIST-COMBO`)
+
+- **Base**: unchanged (J → K → L → the stance's plan).
+- **Melee**: his J in a link that hit, on its land frame: the K links while the points left after their touches still
+  number 3 (`BR-AS-K-ROUTE-P`: 5 at link 1, 4 at link 2) → K3 → L the recall (n ≥ 1); else the J links (J J J) → J3 → L the
+  backstep with 13 flash step (its 10 + a lay's 3). (Was: K links to K3 always, the recall at n ≥ 1, the backstep only with
+  no trace.)
+- **Ranged**: his J while free: J (TENSHIN in) with a line on him at the dash's end, else an aim point at him (L) from 4 m with
+  10 flash step left after it; his J in the backstep from its f14 lays that point at once (`BR-AS-BACKSTEP`: the recovery
+  cancelled into it); his next J in the lay cancels it into TENSHIN in (2 f) along that line (L point → J dash → J1 …).
+
+### 16.6 Knobs and code
+
+New: `*br-ai-hard*`, `*br-opp-gap*` 30, `*br-learn-off*` 0.5, the `:ai` keys above; pure and host-tested:
+`BR-AI-KAMAE-STEP-PLAN`, `BR-AI-STEP-STICK`, `BR-AI-GOAL`, `BR-DASH-LINE-GAP`, `BR-STEER`, `BR-AI-IN-WHY` (replaces
+`BR-AI-IN-PLAN`), `BR-AI-ROUTE`, `BR-AI-HARD-WHY`, `BR-AS-K-ROUTE-P`, `BR-AI-RECALL-P`'s :off-n. Debug (DUEL_GAMEPLAY 82000
+row): 82040 / 82041 the ASSIST gate's masher as him plays from JILLIEL melee (off / on); 82050–82052 his CPU at EASY /
+NORMAL / HARD whatever the gate's difficulty, 82053 off. Pacing keys: `ai-kamae-step`, `ai-step-back` / `-side`,
+`ai-goal-1` … `-4` / `-bank`, `ai-steer`, `ai-cross`, `ai-in-far`, `ai-lay-bored`, `ai-route-j` / `-k` / `-none`,
+`ai-hard-punish` / `-crush`, `as-j-link`.
+
+### 16.7 Gates (2026-10-10, branch `barro-cpu2`; native sim; before = the parent 99fba9c, measured the same way)
+
+- **Isolation**: all 28 pairings at 20 seeds: the old 21 pairings' 1161 lines (rows, companion and summary lines)
+  byte-identical to 99fba9c's. `simgate.py --cvc`: PASS 3 / 3.
+- **His seven pairings, 20 seeds** (play time without the cinematics; every match K.O.):
+
+| Pairing | Median s (before) | With cinematics | K.O. | His wins (P1) / P2 (before) |
+|---|---|---|---|---|
+| BY | **104.7** (110.8) | 148.0 | 20 / 20 | 17 / 3 (16 / 4) |
+| BK | **108.4** (109.3) | 148.6 | 20 / 20 | 15 / 5 (18 / 2) |
+| BR | 139.7 (132.1) | 184.8 | 20 / 20 | 14 / 6 (13 / 7) |
+| BI | 133.9 (135.6) | 182.9 | 20 / 20 | 12 / 8 (12 / 8) |
+| BS | 133.2 (127.0) | 174.0 | 20 / 20 | 16 / 4 (15 / 5) |
+| BL | 130.2 (133.6) | 177.9 | 20 / 20 | 18 / 2 (19 / 1) |
+| BB (mirror) | **117.7** (118.1) | 169.4 | 20 / 20 | 8 / 12 (8 / 12) |
+
+  **60-seed reruns**: BY 112.3 s (152.4 with the cinematics), 50 / 10; BK 108.7 s (152.1), 42 / 18 (both under 125 s:
+  the accepted exceptions of decision V5, which measured 115.9 / 112.9 s); BB 117.7 s (167.9), 27 / 33 (the mirror under
+  125 s, as before this batch: 118.1 s at 20 seeds). **Reported, not tuned.**
+- **His play, per match as P1** (his 140 matches, before → after): points set 9.2 → 14.6, TENSHIN in 6.2 → 6.6 (the lay's
+  2 f cancel 4.4 → 3.1), lines materialised 8.2 → 11.7, trace hits 5.0 → 7.8 (guarded 0.2 → 0.5), backsteps 0.9 → 1.5,
+  recalls 0.03 → 0.18, the stance's Step 0 → 0.14, steering stays 0 → 2.4, crossings 0 → 2.2, long dashes 0 → 0.16, routes
+  J 5.0 / K 1.2; a CPU facing him rolls 6.8 → 14.0 times to Step off his lines and Steps 3.4 → 6.8 times.
+- **Awaken A/B** (`--cmd 39020`: he is P1 and never awakens; the never-awaken side's wins of 60, streams seed0 100 / 300 /
+  500; before = 99fba9c for BK / BB, §13.6 (batch 4) for the rest):
+
+| BY | BK | BR | BI | BS | BL | BB |
+|---|---|---|---|---|---|---|
+| 42 / 47 / 46 | **18 / 17 / 11** | 31 / 27 / 28 | 23 / 22 / 20 | 42 / 48 / 38 | 51 / 57 / 55 | **6 / 12 / 6** |
+| (45 / 41 / 39) | (8 / 11 / 14) | (26 / 28 / 27) | (21 / 17 / 23) | (40 / 40 / 40) | (55 / 53 / 54) | (6 / 5 / 8) |
+
+  Every A/B match K.O. but one (BR, stream 100: 59 / 60, a time-up with his base form never awakening). BK still fails, better than before (the stance's Step is the base form's only CPU change at NORMAL);
+  BI passes on all three streams now; **BB fails, as it did on the parent** (6 / 5 / 8: batch 5's pendulum made the awakened mirror much
+  stronger than the base form; batch 4 measured 36 / 41 / 28). **Reported to the user** (the base form's damage and the
+  awakening's rules are the user's; decision V5's 「先試玩再決定」 stands).
+- **CPU score** (`aieval.py --char 6 --seeds 10`, before → after): strength (HARD) 0.142 → 0.150, masher 1.0 → 1.0,
+  signature 0.401 → 0.443, score 0.365 → 0.379, pacing ok (NORMAL medians Y 109.2, K 107.8, R 137.8, I 132.8, S 143.2, L 118.8,
+  all K.O.).
+- **His difficulty ladder** (aieval's learning-gate runner with debug 82050–82052: his CPU at each difficulty against the five
+  HARD CPUs, both seats, 10 seeds, 120 matches): EASY 0 / 120 = 0.000 ≤ NORMAL 3 / 120 = 0.025 ≤ HARD 18 / 120 = 0.150 (by
+  opponent at HARD: Y 7, K 3, R 0, I 1, S 7, L 0 of 20). Both sides at one difficulty (aieval's strength runs at E / N / H):
+  0.775 / 0.717 / 0.150 (before 0.825 / 0.767 / 0.142): the five HARD CPUs (dream-rsi layers, DUEL_AI_V2) are the cliff,
+  not his HARD.
+- **ASSIST gate** (`assistgate.py`'s jobs, his 13 rows, NORMAL, 20 seeds; P1 the masher; before = 99fba9c):
+
+| assist (k) | masher as him | masher vs him |
+|---|---|---|
+| none (0) | 51 / 140 = 36 % (36 %) | 0 / 120 = 0 % (1 %) |
+| COMBO (3) | 81 / 140 = 58 % (61 %) | 12 / 120 = 10 % (14 %) |
+| HOLD U + COMBO + BREAK (10) | 111 / 140 = 79 % (80 %) | 36 / 120 = 30 % (28 %) |
+
+  The masher never awakens, so his rows play the base route (unchanged); the "vs him" rows move with his CPU. With 82041 (the
+  masher as him forced into JILLIEL melee, 10 seeds, his 7 rows): none 31 / 70 = 44 %, COMBO 24 / 70 = 34 %; the melee
+  route fired 7889 J links, 53 K links, 62 backsteps (each followed by TENSHIN in); no recall (the masher's strings start
+  with few points) and no ranged route: the masher presses J only inside J1's reach (it walks in out of the backstep), where
+  there is no line to dash along and no room to lay. The ranged route and the backstep's lay need a J pressed at range.
+- **Host**: duel-rules-test 8109 checks ALL PASS (8099 before: the batch's pure rules, the kits' keys), duel-control 89,
+  learn 131, input 33, touch 64, cine 18 pass. `tools/pkgcheck.sh duel` 0 / 0 / 0. `./build.sh duel` 0 warnings. Smoke
+  `run.mjs --secs 8`: exit 0; a browser script (39011, then 82020: the CPU mirror, both awakening, 64 s) exit 0, no error,
+  both in JILLIEL by t 3719.
+
+### 16.8 For the user
+
+- **BB's and BK's awaken A/B rows fail** (the never-awaken side 6 / 12 / 6 and 18 / 17 / 11 of 60; pass ≥ 20). BB failed
+  on the parent too (6 / 5 / 8, batch 5's pendulum); BK improved (8 / 11 / 14). Only his base form's damage or the
+  awakening's rules would move them; decision V5 left that to the playtest.
+- **The mirror BB runs 117.7 s** (60 seeds; 118.1 s before this batch), under 125 s; BY / BK stay under it as accepted.
+- **He wins 92 of 120 cross matches at NORMAL** (93 before): strong at NORMAL, weak against the HARD CPUs (0.15).
 
 ## 17. Art: aim points and the pendulum (2026-10-10, branch `barro-art2`)
 
