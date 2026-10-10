@@ -1,6 +1,6 @@
 # SOUL DUEL: Lille Barro II, awakening v3: the stance grammar (proposal)
 
-Status: **proposal, 2026-10-10, waiting on the user. Nothing is built.** The current kit is `DUEL_LILLE_V2.md` (decisions
+Status: **proposal, revision 2 (2026-10-10, after the user's R1 below), waiting on the user. Nothing is built.** The current kit is `DUEL_LILLE_V2.md` (decisions
 V1–V9l); this file holds the animation inventory the user asked for and the v3 design drawn from the base form's stance.
 
 The request (the user, 2026-10-10), verbatim:
@@ -11,8 +11,27 @@ Reading [G]: "版本三" is the third design of Lille II's awakening (the user, 
 paused with 「主要是軌跡的手感不好，想用新玩法替代」; kept: the owl's revival, U MUJITTAI, the melee / ranged forms, the K → L
 five-tier recall; wanted: 指向, materialising one by one and all at once, the J / K feel split with a fast pendulum that
 spends flash step and returns Reiatsu and big Reiatsu spends for output or flash step). The base form stays as built. If a
-separate fighter (a "Lille III", roster index 7) is meant instead, the design below still applies; only the build plan (§7)
+separate fighter (a "Lille III", roster index 7) is meant instead, the design below still applies; only the build plan (§6)
 changes.
+
+## 0. User decisions on the proposal
+
+### R1 (2026-10-10): three stances, the burst owl, one spend-all, plain guard, SP by wings, the 4-wing armour
+
+The user, on revision 1 (verbatim):
+
+> - 我想把架式改有不同的效果，包含高攻擊、高額普通資源恢復、高額特殊資源恢復
+> - 取消掉再覺醒，改成爆氣時會進入梟頭模式與獲得對應的 buff（因此取得資源並進入爆氣變成主要的輸出循環）
+> - 盡量避免不同手段的效果同質化 e.g. 不要有多種將資源耗盡來打出高額傷害的路線
+> - U 變成普通防禦
+> - 依據特殊資源數量不同，SP1 與 SP2 會有相對應的變化
+> - 攻擊時如果被攻擊可以消耗四片翼使自己不會被打斷（不足時不觸發效果）
+
+What it changes in revision 1: the one stance becomes **three** (§3.2); the owl's revival (Konpaku ≤ 4) is gone and the
+owl becomes **the awakened burst** (§3.4); only **one** route spends every wing for damage (§3.3); U is a **plain guard**
+in every form (MUJITTAI gone); SP1 / SP2 **read the wing count** (§3.5); a hit during his own attack can spend **4 wings**
+to keep it going (§3.6). Read as accepted by building on it: the wing magazine replaces the ground traces (rev. 1's Q1).
+Superseded: rev. 1's Q2 (the stance's K: no longer a spend-all) and Q3 (the tiers matter only for the one volley).
 
 ## 1. The animation inventory
 
@@ -57,26 +76,26 @@ game's generic clips on his bodies, not clips of his own. Frames are startup / a
 | `:lb-w-f1` | 17 / 4 / 21 | K1 旋: a full turn, the right wing sweeping | KIN K1 | KIN K1 | KIN K1 |
 | `:lb-w-f2` | 20 / 4 / 24 | K2 逆旋: the counter-spin | KIN K2 | KIN K2 | KIN K2 |
 | `:lb-w-f3` | 21 / 5 / 34 | K3 昇翼: a rising cleave, the landing | KIN K3 | KIN K3 | KIN K3 |
-| `:lb-w-fold` | loop 2.0 s | MUJITTAI: the wings curled round the column | MUJITTAI | MUJITTAI, the L turn | MUJITTAI |
+| `:lb-w-fold` | loop 2.0 s | MUJITTAI: the wings curled round the column | MUJITTAI | MUJITTAI, the L turn | spare (MUJITTAI dropped) |
 
 **Jilliel ranged (EN, the casts)** (`lille-art.lisp`)
 
 | Clip | Frames (S / A / R) | Motion | Lille | Lille II | v3 |
 |---|---|---|---|---|---|
-| `:lb-e-q1` | 4 / 3 / 6 | EN J1: the right wing thrown down along the line | EN J1 lay | ranged L, 1st | stance L, shot 1 |
-| `:lb-e-q2` | 4 / 3 / 6 | EN J2: the mirror | EN J2 | ranged L, 2nd | stance L, shot 2 |
+| `:lb-e-q1` | 4 / 3 / 6 | EN J1: the right wing thrown down along the line | EN J1 lay | ranged L, 1st | the stances' L, shot 1 |
+| `:lb-e-q2` | 4 / 3 / 6 | EN J2: the mirror | EN J2 | ranged L, 2nd | the stances' L, shot 2 |
 | `:lb-e-q3` | 5 / 3 / 9 | EN J3: both wings crossed onto the line | EN J3 | unused | stance Step shot (candidate) |
-| `:lb-e-f1` | 9 / 4 / 10 | EN K1: a whirl, the right wing fanned low | EN K1 | ranged L, 3rd | stance L, shot 3 |
-| `:lb-e-f2` | 10 / 4 / 12 | EN K2: the counter-whirl | EN K2 | ranged L, 4th | stance L, shot 4 |
-| `:lb-e-f3` | 11 / 5 / 17 | EN K3: risen, both wings slammed down | EN K3 | ranged L, 5th | stance L, shot 5 |
-| `:lb-e-sanren` | 6 / 14 / 12 | EN SP1: three lines | EN SP1 | ranged SP1 (3 points) | stance SP1 (3 FS-free loads) |
+| `:lb-e-f1` | 9 / 4 / 10 | EN K1: a whirl, the right wing fanned low | EN K1 | ranged L, 3rd | the stances' L, shot 3 |
+| `:lb-e-f2` | 10 / 4 / 12 | EN K2: the counter-whirl | EN K2 | ranged L, 4th | the stances' L, shot 4 |
+| `:lb-e-f3` | 11 / 5 / 17 | EN K3: risen, both wings slammed down | EN K3 | ranged L, 5th | the stances' L, shot 5 |
+| `:lb-e-sanren` | 6 / 14 / 12 | EN SP1: three lines | EN SP1 | ranged SP1 (3 points) | stance SP1 (FS back by the wings) |
 
 **Jilliel's specials and Kikon** (`lille-art.lisp`)
 
 | Clip | Frames (S / A / R) | Motion | Lille | Lille II | v3 |
 |---|---|---|---|---|---|
-| `:lb-w-sanren` | 12 / 22 / 24 | KIN SP1: three wing shots | KIN SP1 | KIN SP1 | KIN SP1 |
-| `:lb-w-nijushi` | 40 / 6 / 30 | NIJUSHI-KO: the ring charged, the beam | SP2 | SP2 (melee beam / ranged thick line) | SP2 (damage only) |
+| `:lb-w-sanren` | 12 / 22 / 24 | KIN SP1: three wing shots | KIN SP1 | KIN SP1 | KIN SP1 (FS back by the wings) |
+| `:lb-w-nijushi` | 40 / 6 / 30 | NIJUSHI-KO: the ring charged, the beam | SP2 | SP2 (melee beam / ranged thick line) | SP2 (fixed damage; wings cut the charge) |
 | `:lb-w-kikon + -fire` | 8 / 0 / 0; 20 / 3 / 30 | Kikon: the wind-up, the fire | Kikon | Kikon | Kikon |
 | `:lb-w-judge-open / -shot / -close / -volley` | 24 / 0 / 64; 2 / 0 / 14; 6 / 0 / 40; loop | the old Kikon cinematic's judgement beats | cinematic | unused | spare (for the full volley's look) |
 | `:lb-w-breaker + :lb-w-ram` | loop 0.4 s; 8 / 4 / 18 | Breaker: the ram | Breaker | Breaker | same |
@@ -85,47 +104,47 @@ game's generic clips on his bodies, not clips of his own. Frames are startup / a
 
 | Clip | Frames (S / A / R) | Motion | Lille | Lille II | v3 |
 |---|---|---|---|---|---|
-| `:lb-w-tenshin` | 14 / 0 / 8 | TENSHIN out: fold, the flash step, open | TENSHIN out | J3 → L backstep | J → L backstep into the stance |
+| `:lb-w-tenshin` | 14 / 0 / 8 | TENSHIN out: fold, the flash step, open | TENSHIN out | J3 → L backstep | J string → L: backstep into the wing stance |
 | `:lb-w-tenshin-in` | 30 / 0 / 8 (cancel at f14) | TENSHIN in: the wind-up, the dash | TENSHIN in | ranged J dash | stance J: fire 1 wing + dash |
-| `:br-to-en` | 12 / 0 / 0 | melee to ranged: folded, risen, thrown open | — | L to ranged | L into the stance |
-| `:br-recall` | 8 / 0 / 0 | 回収: flung open, the light flies in | — | K3 → L recall | the full volley's start |
-| `:br-rc0` | 6 / 2 / 24 | 空收: one line, both wings | — | 0 traces | 0 wings |
-| `:br-rc1` | 6 / 12 / 24 | 二連: right f6, left f16 | — | 1–2 | 1–2 |
-| `:br-rc2` | 6 / 28 / 24 | 四連: three beats and the launch | — | 3–5 | 3–4 |
-| `:br-rc3` | 6 / 32 / 26 | 裁き: four beats, the ring, the beam | — | 6–9 | 5–7 |
-| `:br-rc4` | 6 / 44 / 30 | 裁き・極: six beats, the ring, the big beam | — | 10+ | 8 (full) |
+| `:br-to-en` | 12 / 0 / 0 | melee to ranged: folded, risen, thrown open | — | L to ranged | neutral L into the supply stance |
+| `:br-recall` | 8 / 0 / 0 | 回収: flung open, the light flies in | — | K3 → L recall | see Q4 (spare if the volley is the owl's only) |
+| `:br-rc0` | 6 / 2 / 24 | 空收: one line, both wings | — | 0 traces | see Q4 |
+| `:br-rc1` | 6 / 12 / 24 | 二連: right f6, left f16 | — | 1–2 | see Q4 |
+| `:br-rc2` | 6 / 28 / 24 | 四連: three beats and the launch | — | 3–5 | see Q4 |
+| `:br-rc3` | 6 / 32 / 26 | 裁き: four beats, the ring, the beam | — | 6–9 | see Q4 |
+| `:br-rc4` | 6 / 44 / 30 | 裁き・極: six beats, the ring, the big beam | — | 10+ | see Q4 |
 | `:br-e-swing / :br-oe-swing` | 7 / 3 / 6; 7 / 3 / 5 | V8's ranged L swing | — | withdrawn (V8b) | spare |
 
-**The owl** (`lille-art / barro-art`)
+**The owl (v3: the burst mode)** (`lille-art / barro-art`)
 
 | Clip | Frames (S / A / R) | Motion | Lille | Lille II | v3 |
 |---|---|---|---|---|---|
-| `:lb-o-stance` | loop 2.4 s | KIN: pitched on the ㄇ legs, wings back | idle | idle | idle |
-| `:lb-o-q1 / q2 / q3` | 8/3/12; 7/3/13; 9/3/18 | 右爪撕 / 左爪撕 / 雙爪剪 | J1–J3 | J1–J3 | J1–J3, 1 wing each |
-| `:lb-o-f1 / f2 / f3` | 17/4/21; 20/4/24; 21/5/34 | 掠爪 / 回爪 / 俯衝 | K1–K3 | K1–K3 | K1–K3 |
-| `:lb-o-chop` | 16 / 0 / 24 | SABAKI NO KOMYO: the chop | SP1 | MISUJI SP1 | same |
-| `:lb-o-trompete` | 60 / 30 / 40 | TROMPETE: the fist at the beak | SP2 | SP2 (reflectable) | same |
-| `:lb-oe-stance` | loop 2.6 s | EN: upright, afloat, wings wide | idle | idle | the owl's stance |
-| `:lb-oe-q1 / q2` | 4 / 3 / 5 | EN claw casts | EN J1–J2 | ranged L 1–2 | stance L 1–2 |
+| `:lb-o-stance` | loop 2.4 s | KIN: pitched on the ㄇ legs, wings back | idle | idle | burst owl idle |
+| `:lb-o-q1 / q2 / q3` | 8/3/12; 7/3/13; 9/3/18 | 右爪撕 / 左爪撕 / 雙爪剪 | J1–J3 | J1–J3 | burst owl J1–J3, 1 wing each |
+| `:lb-o-f1 / f2 / f3` | 17/4/21; 20/4/24; 21/5/34 | 掠爪 / 回爪 / 俯衝 | K1–K3 | K1–K3 | burst owl K1–K3 |
+| `:lb-o-chop` | 16 / 0 / 24 | SABAKI NO KOMYO: the chop | SP1 | MISUJI SP1 | burst owl SP1 |
+| `:lb-o-trompete` | 60 / 30 / 40 | TROMPETE: the fist at the beak | SP2 | SP2 (reflectable) | burst owl SP2 |
+| `:lb-oe-stance` | loop 2.6 s | EN: upright, afloat, wings wide | idle | idle | the burst owl's stance |
+| `:lb-oe-q1 / q2` | 4 / 3 / 5 | EN claw casts | EN J1–J2 | ranged L 1–2 | owl stance L 1–2 |
 | `:lb-oe-q3` | 5 / 3 / 8 | EN J3: both claws and a peck | EN J3 | unused | Step shot (candidate) |
-| `:lb-oe-f1 / f2 / f3` | 9/4/9; 10/4/11; 11/5/16 | EN rakes and the slam | EN K1–K3 | ranged L 3–5 | stance L 3–5 |
-| `:lb-oe-sabaki` | 6 / 14 / 11 | EN SP1: three chops, a line each | EN SP1 | ranged SP1 | stance SP1 |
-| `:lb-o-fold / :lb-oe-fold` | loop 2.0 s | MUJITTAI, each mode's silhouette | MUJITTAI | MUJITTAI | same |
-| `:lb-o-tenshin / -in` | 14 / 0 / 8; 30 / 0 / 8 | the owl's TENSHIN out / in | TENSHIN | in: ranged J; out: unused | as II |
-| `:br-o-to-en / :br-o-backstep` | 12 / 0 / 0; 14 / 0 / 8 | KIN to EN / the backstep (ranged at f0) | — | L turn / J3 → L | as II |
-| `:br-o-recall, :br-o-rc0 … rc4` | as Jilliel's | the recall strings on the claws | — | the recall | the owl's full volley |
-| `:lb-o-breaker + :lb-o-stamp` | loop 0.4 s; 8 / 4 / 18 | Breaker: the stamp | Breaker | Breaker | same |
+| `:lb-oe-f1 / f2 / f3` | 9/4/9; 10/4/11; 11/5/16 | EN rakes and the slam | EN K1–K3 | ranged L 3–5 | owl stance L 3–5 |
+| `:lb-oe-sabaki` | 6 / 14 / 11 | EN SP1: three chops, a line each | EN SP1 | ranged SP1 | owl stance SP1 |
+| `:lb-o-fold / :lb-oe-fold` | loop 2.0 s | MUJITTAI, each mode's silhouette | MUJITTAI | MUJITTAI | spare (MUJITTAI dropped) |
+| `:lb-o-tenshin / -in` | 14 / 0 / 8; 30 / 0 / 8 | the owl's TENSHIN out / in | TENSHIN | in: ranged J; out: unused | the owl's dashes |
+| `:br-o-to-en / :br-o-backstep` | 12 / 0 / 0; 14 / 0 / 8 | KIN to EN / the backstep (ranged at f0) | — | L turn / J3 → L | as II (in the burst) |
+| `:br-o-recall, :br-o-rc0 … rc4` | as Jilliel's | the recall strings on the claws | — | the recall | the burst's full volley (the one spend-all) |
+| `:lb-o-breaker + :lb-o-stamp` | loop 0.4 s; 8 / 4 / 18 | Breaker: the stamp | Breaker | Breaker | burst owl Breaker |
 
 **Cinematics** (`lille-art.lisp`)
 
 | Clip | Frames (S / A / R) | Motion | Lille | Lille II | v3 |
 |---|---|---|---|---|---|
-| `:lb-rise` | 1.0 s | the revival: the headless column rises | cinematic | cinematic | same |
-| `:lb-o-reveal` | 2.0 s | the owl revealed | cinematic | cinematic | same |
-**Spare clips** (in no move of Lille II): `:lb-k-hosha` (dropped by V9b), `:lb-e-q3` / `:lb-oe-q3` (the old EN J3 casts),
-`:lb-w-judge-*` (the old Kikon cinematic's beats), `:lb-o-tenshin` (the owl's TENSHIN out; II uses `:br-o-backstep`),
-`:br-e-swing` / `:br-oe-swing` (V8's swing, withdrawn by V8b). The old Lille alone uses `:lb-k-hosha`, `:lb-w-judge-*` and
-`:lb-o-tenshin`.
+| `:lb-rise` | 1.0 s | the revival: the headless column rises | cinematic | cinematic | spare (the revival dropped) |
+| `:lb-o-reveal` | 2.0 s | the owl revealed | cinematic | cinematic | burst transformation (candidate) |
+
+**Spare clips** (in no move of v3): `:lb-k-hosha` (dropped by V9b), `:lb-e-q3` / `:lb-oe-q3` (the old EN J3 casts),
+`:lb-w-judge-*` (the old Kikon cinematic's beats), `:br-e-swing` / `:br-oe-swing` (V8's swing), and after R1 the
+MUJITTAI folds `:lb-w-fold`, `:lb-o-fold`, `:lb-oe-fold` and the revival's `:lb-rise`.
 
 ## 2. What the base stance already is
 
@@ -142,94 +161,109 @@ Lille II's base form (`DUEL_LILLE_V2` §4, decisions V1, V6, V9–V9e, V9i, V9l)
 
 B3 and B4 are the user's two materialisations already: one at a time, and all at once.
 
-## 3. v3: one grammar, three bodies
+## 3. v3, revision 2
 
-The awakening and the owl run B1–B6 with their own bodies. The ground traces go (「軌跡的手感不好，想用新玩法替代」); the
-rounds live on his wings instead:
+### 3.1 Resources
 
-- **翼倉 the wing magazine.** Jilliel's eight wing blades are the rounds: a loaded round lights a wing (the owl: its eight
-  gold wings). Cap **8** [G]. The HUD shows the count; both players see the lit wings.
-- **指向.** A round has no place on the floor: when it fires it leaves the tip of a lit wing as a 萬物貫通 line straight at
-  the opponent, wherever he is. Counterplay is the Step's iframes, a block (30 % through, 40 guard drain) or MUJITTAI.
-- **One by one = the J route** (B3), **all at once = the K route** (B4, the recall kept as its input).
+| Resource | What | Reading [G, Q1] |
+|---|---|---|
+| 普通資源 (the shared ones) | Reiatsu (3 bars, SP1 / SP2) and flash step (100; a burst needs 70 and drains it) | every fighter has them |
+| 特殊資源 (his own) | **翼 the wings**, cap 8, a lit wing blade each (the owl: its gold wings) | rev. 1's magazine |
+| The base form's 狙擊 pips | 3, as built | carried in as wings at the awakening (rev. 1's Q4 default) |
 
-| | Attack state (strings) | The stance (L) | Rounds |
+Every wing sink does one different job (R1: 「避免同質化」):
+
+| Sink | Wings | Job |
+|---|---|---|
+| A KIN J, the stance's J (TENSHIN in), a J in the stance's Step | 1 | small damage (25 flat) + Reiatsu back (+10): the pendulum |
+| Hit during his own attack (§3.6) | 4 | not interrupted: defence |
+| **The full volley** (§3.3) | all | **the only big-damage spend** |
+| SP1 / SP2 (§3.5) | none: they read the count | SP1 more flash step back, SP2 a shorter charge |
+
+### 3.2 Three stances (awakened; the base keeps its one sniping stance)
+
+The awakened ranged form is the stance (rev. 1); it now comes in three kinds, picked by how he enters it [G, Q2]. All
+three share the grammar: L x5 shoots (`:lb-e-q1, q2, f1, f2, f3`, V9k's chain), J = TENSHIN in (fires 1 wing, then KIN
+J1), K = back to KIN K1, Step keeps the stance (a J fires 1 wing on the move), SP1 / SP2 by the wings (§3.5).
+
+| Stance | Entered by | The L shot [G] | Its effect |
 |---|---|---|---|
-| Base | the man: J / K with Diagramm | 狙擊架式 `:lb-kamae` | 狙擊, 3 pips (as built) |
-| Awakened | KIN: the wing cuts | EN afloat, the eight wings open | 翼倉, 8 wings |
-| The owl | KIN: the claws | EN upright, the gold wings wide | 翼倉, 8 gold wings |
+| 攻 断罪の構え (high attack) | a KIN K string → L | **35**, 萬物貫通, 6 FS | damage only: no wing, no resource back |
+| 補 糧の構え (shared resources) | L from neutral (`:br-to-en`) | 10, 萬物貫通, **free** | a hit **+12 flash step, +15 Reiatsu** (a block half) |
+| 翼 装翼の構え (wings) | a KIN J string → L (J3: the backstep, `:lb-w-tenshin`) | 10, 萬物貫通, 6 FS | a hit or block **+2 wings** |
 
-## 4. The awakened rules (Jilliel; the owl the same with its own clips and numbers)
+The look tells them apart (cosmetic): the wings' spread and the halo's tint per stance [G].
 
-| Input | Move | Rule |
+### 3.3 The burst owl and the one full volley
+
+- **A burst in an awakened form** (any of WHITE / BLUE / ORANGE, the shared rules: 70 flash step, drained 18 / s) turns him
+  into **the owl** until it ends, then back to the form he burst from. No cinematic: the body changes on the burst's frame
+  (`:lb-o-reveal` is a candidate for a short flourish). The base form's burst stays a plain burst [G].
+- **Buffs by the burst's colour** [G, Q3]: WHITE (neutral) → +1 wing every 0.5 s; ORANGE (on his hit) → damage x1.2;
+  BLUE (the combo breaker) → the 4-wing armour costs 0 for the burst. Plus the owl's V9j numbers (a fired wing 30, +15
+  Reiatsu; SP2 Trompete 120 and its reflect / seal) and his stance shots free of flash step (V9j's burst rule).
+- **The full volley** (K3 → L, `:br-o-recall` → `:br-o-rc0..rc4`, every wing, tiers 0 / 1–2 / 3–4 / 5–7 / 8 =
+  30 / 70 / 160 / 300 / 480 [G]; SP2 after it uncharged, V9l): **only in the owl** [Q4]. Outside the burst K3 → L
+  opens the 攻 stance. So the loop is: gather wings and flash step in the stances → burst → the owl's volley.
+
+### 3.4 What is gone
+
+The owl's revival at ≤ 4 Konpaku (`br-revive-cine`), MUJITTAI on U (every form guards), the ground traces and their
+rules (aim points, the 2.5 m pick, the 1.5 m circle, the Hoho points, the crossing slow motion: the slow motion moves to
+the first stance-shot hit of each stance and the volley's last beam, rev. 1).
+
+### 3.5 SP1 / SP2 by the wing count (the count is read, not spent)
+
+| Wings | SP1 (1 bar; KIN `:lb-w-sanren`, stance `:lb-e-sanren`) | SP2 (2 bars; NIJUSHI-KO, fixed **90**; the owl's Trompete 120) |
 |---|---|---|
-| KIN J1 / J2 / J3 | `:lb-w-q1..q3` | **each J fires one round** from a lit wing at him on its first active frame, hit or whiff (V6's "every J"); 25 flat, 萬物貫通, +10 Reiatsu on a hit (+5 on a block). Empty: just the cut |
-| KIN K1 / K2 / K3 | `:lb-w-f1..f3` | fire nothing (the K route keeps the magazine, V8) |
-| KIN J link → L | J1 / J2 → L: `:br-to-en`; J3 → L: the backstep `:lb-w-tenshin` | into the stance (B1); the backstep fires one round as it leaves (V9h). Empty: the turn in place |
-| KIN K3 → L | `:br-recall` → `:br-rc0..rc4` | **全彈 the full volley**: every round, the tier by the count (§5); SP2 after it uncharged (V9l). No Reiatsu from it (V9j: 「回收不算」) |
-| Stance L (×5) | `:lb-e-q1`, `-q2`, `-f1`, `-f2`, `-f3` | a 萬物貫通 shot at him [G 15 damage], 6 flash step (owl 4.5; none in a burst, V9j); **a hit or block loads one wing** [G: the base loads on a hit only]; L latched during one chains the next (V9k's string) |
-| Stance J | `:lb-w-tenshin-in` | TENSHIN in: fires one round at f0, then the dash into KIN J1 (V9f's order; the round is its price, V8a). Empty: J1 in place |
-| Stance K | Q2 | the full volley from range, or back to KIN K1 |
-| Stance SP1 | `:lb-e-sanren` | three shots, **no flash step**, each hit or block loads a wing; 1 bar |
-| Stance SP2 | `:lb-w-nijushi` | the thick beam, 90 flat (owl Trompete 120), damage only; 2 bars |
-| Stance Step | generic Step | keeps the stance; J during it fires one round on the move (V9l's moving snap; the iframes end on the shot) |
-| KIN SP1 / SP2 | `:lb-w-sanren`, `:lb-w-nijushi` | as built (V3) |
-| U | MUJITTAI | as built (V2) |
-| P | the owl's revival (≤ 4 Konpaku) | as built (V1) |
+| 0–3 | 3 shots, **+18** flash step | the 40 f charge (as built) |
+| 4–7 | 3 shots, **+35** (one bar) | a 20 f charge |
+| 8 | 5 shots, **+70** (a burst's worth) | no charge, a guard break on block |
 
-## 5. Numbers and the resource loop
+SP1 is the flash-step side of the loop (V9j: 「約 2 格 SP 換 1 格閃步」, more with wings); SP2 never deals more with
+wings, it only lands more easily (R1: no second 「耗盡打高傷」).
 
-| Knob | v3 [G] | From |
-|---|---|---|
-| Wings (cap) | 8 (the owl 8) | Jilliel's eight blades |
-| A fired round | 25 flat (owl 30), 萬物貫通, +10 Reiatsu (owl +15; block half) | V9j's line |
-| Stance L shot | 15, 萬物貫通, 6 FS (owl 4.5), loads 1 | V9j's price, V8's swing damage |
-| Full volley tiers | 0 / 1–2 / 3–4 / 5–7 / 8 = 30 / 70 / 160 / 300 / 480 | V8's five tiers, cut to 8 |
-| The owl | ×1.1 dealt and taken, +1 f, Trompete reflect and seal | as built |
+### 3.6 The 4-wing armour
 
-The loop the user set (V9j: 「2 格閃步換 1 格 SP」 ⇔ 「約 2 格 SP 換 1 格閃步」) carries over unchanged in its arithmetic:
-flash step → (stance L) → wings → (the J route) → Reiatsu → (SP1) → wings without flash step.
-- 70 FS (two bars) = 11.7 stance shots → up to 11.7 wings → fired by J = ~117 Reiatsu (1.2 bars).
-- 2 bars of Reiatsu = two SP1 = 6 wings with no flash step (~36 FS worth).
-- The K route turns the same wings into one burst instead (no Reiatsu back): the user's 高攻循環.
+During his own attack (`:move`, startup to recovery), a hit that would stagger him spends **4 wings** instead: he takes
+the damage and the move goes on [G: full damage, once a hit]. Fewer than 4: the hit lands as usual (「不足時不觸發」).
+Automatic, no input [G]. Breaker, Kikon and throws ignore it [G]. The BLUE burst owl's armour is free.
 
-Defaults taken without a question [G]: the awakened Hoho leaves nothing (no traces to leave); the slow motion moves from
-the traces to **the first stance-shot hit of each stance** (fresh, 0.1 × 0.2 s) and **the full volley's last beam**
-(0.2 × 0.5 s); the base's 狙擊 pips stay the base's.
+### 3.7 Inputs by form
 
-## 6. What changes, what stays
+| Input | Base | Awakened KIN | The stance (three kinds) | The burst owl |
+|---|---|---|---|---|
+| J | J string | each J fires 1 wing | TENSHIN in (1 wing) → J1 | claws, 1 wing each J |
+| K | K string | K string | back to K1 | claws |
+| L | the sniping stance | neutral: 補; J string → L: 翼; K string → L: 攻 | the stance's shot x5 | stances as Jilliel; K3 → L: **the full volley** |
+| SP1 / SP2 | as built | by the wings (§3.5) | by the wings | MISUJI / Trompete by the wings |
+| U | guard | guard | guard | guard |
+| Burst | plain | → the owl | → the owl | — |
 
-| Item | Lille II now | v3 |
-|---|---|---|
-| Ground traces, aim points, the 2.5 m pick, the 1.5 m circle, Hoho points | the core | **gone** |
-| Ranged L | a damage-less point (6 FS) | a 萬物貫通 shot that loads a wing |
-| Ranged form | a mode | **the stance** (B1–B6) |
-| J's materialisation | the nearest line within 2.5 m | one round, always at him (指向) |
-| K3 → L recall | every trace, five tiers | every wing, five tiers (same clips) |
-| TENSHIN in / the backstep | price: a trace | price: a round |
-| Kept | the owl's revival, MUJITTAI, both forms, the recall's five tiers, SP2 after it, the V8 J / K feel split, V9j's loop | |
+## 4. Animation plan
 
-## 7. Animation plan
+Reused: the inventory's v3 column. New, all cosmetic:
+1. The lit wings (a loaded wing brightens, dims as it fires); the owl's gold the same.
+2. The fired wing's line from that wing's tip (the recall strings already draw tip lines: `BR-DRAW`).
+3. The three stances' looks: the wings' spread and the halo tint on the EN idle (no new clip, or three short idles).
+4. The armour's flash (a wing set shattering, 4 dimmed at once).
+5. The stance Step shot: the spare `:lb-e-q3` / `:lb-oe-q3`, or a new 6 f clip.
+6. Optional: the burst's owl flourish from `:lb-o-reveal`; the judge beats for the 8-wing volley.
 
-Nearly everything is reused (the inventory's v3 column). New work, all cosmetic:
-1. **The lit wings** (draw hook): a loaded round brightens one blade, it dims as it fires; the owl's gold the same.
-2. **The fired round's look**: a line from that wing's tip at him (the recall strings already draw tip lines: `BR-DRAW`).
-3. **The stance Step shot**: from the spare `:lb-e-q3` / `:lb-oe-q3` (a quick both-wing cast) or a new 6 f clip.
-4. Optional: the spare `:lb-w-judge-*` beats as the 8-wing volley's look.
-
-## 8. Open questions (for the user)
+## 5. Open questions (for the user)
 
 | # | Question | Options (recommended first) |
 |---|---|---|
-| Q1 | The ground traces | remove them, the wing magazine instead / keep aim points but always aimed at him / both (wings + Hoho points) |
-| Q2 | The stance's K | the full volley from range (B4 as the base) / back to melee K1 (as now) |
-| Q3 | Magazine and tiers | 8 wings, 0 / 1–2 / 3–4 / 5–7 / 8 / 16 as now, 0 / 1–2 / 3–5 / 6–9 / 10+ |
-| Q4 | 狙擊 pips at the awakening | carried in as wings (3 pips → 3 wings) / not carried |
+| Q1 | 普通資源 / 特殊資源 | shared = Reiatsu + flash step, special = the wings / shared = flash step only / shared = Reiatsu only |
+| Q2 | How a stance is picked | by the entry (neutral L 補, J string → L 翼, K string → L 攻) / K in the stance cycles them / both |
+| Q3 | The owl's buffs | by the burst's colour (WHITE wings, ORANGE damage, BLUE free armour) / one set for every colour |
+| Q4 | The full volley | the owl's only (outside, K3 → L opens 攻) / always on K3 → L, the owl only buffs it |
 
-## 9. Build plan (after the user's 「開始實作」)
+Noted, not asked: the base stance's K (spend every pip for 70 / 110 / 150) is also a spend-all; R1 may want it changed.
 
-1. Sim: the magazine, the J route, the stance L / SP1 / J / Step, the full volley on wings; the traces' code removed
-   (`barro.lisp`, his own files only; nothing shared).
-2. Art: the lit wings, the fired round, the Step shot.
-3. CPU / ASSIST / learning on the new rules.
-4. Docs, manual, playtest; then his gates (6 pairings without BL, the mirror, the awaken A/B).
+## 6. Build plan (after 「開始實作」)
+
+1. Sim (`barro.lisp` only): the wings and their sinks, the three stances, the burst owl and its buffs, SP1 / SP2 tiers,
+   the armour; the traces, MUJITTAI and the revival removed. The armour needs a hook in the shared hit path (a kit hook,
+   inert for everyone else).
+2. Art: §4. 3. CPU / ASSIST / learning. 4. Docs, manual, playtest; then his gates (6 pairings, the mirror, the A/B).
