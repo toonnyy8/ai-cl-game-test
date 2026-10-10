@@ -111,7 +111,7 @@ window? The hit-based string checks skip it (its own block below checks its fram
 (check (and (> *breaker-trigger* 0.9) (> (+ *breaker-reach* 0.34) *breaker-trigger*)))
 (dolist (cf *forms*)
   (let* ((k (apply #'kit cf)) (br (kit-command-move k :breaker)) (j1 (kit-command-move k :q)))
-    (when (and br (not (eq (mv-tick j1) 'br-tenshin-tick)))   ; (Lille II's ranged J is TENSHIN in, a dash: DUEL_LILLE_V2 V6)
+    (when br   ; (Lille II's ranged J is J1 in place again: DUEL_LILLE_V2 decision V6a; V6's TENSHIN in skipped it)
       (let* ((v (/ *breaker-speed-max* 60.0)) (s (mv-s j1)) (a (mv-a j1))
              (d-hi (+ (mv-reach j1) 0.34 (* v (+ s a -1))))              ; the farthest press: its last active frame meets him
              (d-lo (+ *breaker-trigger* (* v (max 0 (- s (mv-s br)))))))  ; the nearest: J1 hits before the strike does
@@ -2881,26 +2881,56 @@ defender's next step. Values: the attacker's and the defender's first actionable
   (check (and (eq :jilliel-kin (kit-awaken-form b)) (kit-awakening m) (kit-awakening r)))
   (check (and (eq :br-to-en (mv-name (kit-command-move m :sig))) (find 'br-go-ranged (mv-on-frame (find-move :br-to-en)) :key #'second)
               (eql 0 (first (find 'br-backstep-go (mv-on-frame (find-move :br-backstep)) :key #'second)))))   ; (ranged at f0)
-  ;; ranged K: melee in place + K1; ranged J: TENSHIN in (decision V6)
+  ;; ranged K and J (decision V6a, the user 2026-10-10: 「L 放軌跡後快速連結 J 才會前衝」, other ranged J 「原地切近戰出 J1」):
+  ;; melee in place + K1 / J1 (BR-MELEE-IN at their f0: the form melee at once; no dash: no TENSHIN tick, go or slide); the
+  ;; J1 materialises one line at its first active frame as melee's does (it is melee's J1, the owl's claws' J1)
   (dolist (k (list r or* (kit :barro :jilliel-mujittai) (kit :barro :shin-mujittai)))
-    (check (and (eq 'br-tenshin-tick (mv-tick (kit-command-move k :q)))
-                (find 'br-melee-in (mv-on-frame (kit-command-move k :f)) :key #'second))))
-  (check (and (eq :br-tenshin (mv-name (kit-command-move r :q))) (eq :br-o-tenshin (mv-name (kit-command-move or* :q)))
-              (eq :lb-w-tenshin-in (mv-clip (find-move :br-tenshin))) (eq :lb-o-tenshin-in (mv-clip (find-move :br-o-tenshin)))))
-  ;; TENSHIN in's numbers (the old Lille's): 16 f wind-up from neutral, a 2 f cancel (the copy enters at 14), the dash at
-  ;; 30 m/s up to 7 m stopping 1 m short, iframes 9, free
-  (dolist (n '(:br-tenshin :br-o-tenshin))
-    (let ((mv (find-move n)) (c (find-move (if (eq n :br-tenshin) :br-tenshin-c :br-o-tenshin-c))))
-      (check (and (= 16 *br-tenshin-windup*) (= 2 *br-tenshin-windup-c*) (= 30 (mv-s mv)) (= 8 (mv-r mv))
-                  (eql 16 (first (find 'br-tenshin-go (mv-on-frame mv) :key #'second)))
-                  (= 14 (mv-enter c)) (= 2 (- 16 (mv-enter c))) (eq (mv-clip mv) (mv-clip c))))))
+    (let ((j (kit-command-move k :q)))
+      (check (and (eql 0 (first (find 'br-melee-in (mv-on-frame j) :key #'second)))
+                  (not (eq 'br-tenshin-tick (mv-tick j))) (not (find 'br-tenshin-go (mv-on-frame j) :key #'second))
+                  (eql (mv-s j) (first (find 'br-j-mat (mv-on-frame j) :key #'second)))
+                  (eql 0 (first (find 'br-melee-in (mv-on-frame (kit-command-move k :f)) :key #'second)))))))
+  (check (and (eq :br-w-j1 (mv-name (kit-command-move r :q))) (eq :br-o-j1 (mv-name (kit-command-move or* :q)))
+              (eq (kit-command-move m :q) (kit-command-move r :q)) (eq (kit-command-move om :q) (kit-command-move or* :q))
+              (eq :br-w-j1 (mv-name (kit-command-move (kit :barro :jilliel-mujittai) :q)))
+              (eq :jilliel-kin (br-melee-of :jilliel)) (eq :shin-kin (br-melee-of :shin))))
+  ;; no command of any form starts TENSHIN in: the neutral 16 f wind-up is gone; only the lay's cancel copies reach it
+  (dolist (f *br-forms*)
+    (check (every (lambda (c) (let ((mv (kit-command-move (kit :barro f) c)))
+                                (or (null mv) (not (eq 'br-tenshin-tick (mv-tick mv))))))
+                  *kit-commands*)))
+  (check (and (eq :lb-w-tenshin-in (mv-clip (find-move :br-tenshin-c))) (eq :lb-o-tenshin-in (mv-clip (find-move :br-o-tenshin-c)))))
+  ;; TENSHIN in's numbers (the old Lille's): the dash at the move's f16, the cancel copies entered at f14 (a 2 f wind-up),
+  ;; the dash at 30 m/s up to 7 m stopping 1 m short, iframes 9, free
+  (dolist (n '(:br-tenshin-c :br-o-tenshin-c))
+    (let ((c (find-move n)))
+      (check (and (= 16 *br-tenshin-windup*) (= 2 *br-tenshin-windup-c*) (= 30 (mv-s c)) (= 8 (mv-r c))
+                  (eq 'br-tenshin-tick (mv-tick c))
+                  (eql 16 (first (find 'br-tenshin-go (mv-on-frame c) :key #'second)))
+                  (= 14 (mv-enter c)) (= 2 (- 16 (mv-enter c)))))))
   (check (and (~= 7.0 (br-tenshin-dist 10.0)) (~= 7.0 (br-tenshin-dist 8.0)) (~= 4.0 (br-tenshin-dist 5.0))
               (zerop (br-tenshin-dist 0.8)) (= 14 (br-tenshin-dash-f 7.0)) (= 8 (br-tenshin-dash-f 4.0))
               (= 0 (br-tenshin-dash-f 0.0)) (~= 30.0 *br-tenshin-speed*) (= 9 *br-tenshin-iframes*) (~= 1.0 *br-tenshin-stop*)
               (zerop (br-lay-price :jilliel :q)) (zerop (br-lay-price :shin :q))))
-  ;; the cancel: out of every ranged L / SP1 / SP2 from its active end (BR-LAY-TICK)
+  ;; the cancel (decision V6a: the only TENSHIN in): a J in every ranged L / SP1 / SP2's window (BR-LAY-TICK,
+  ;; BR-DASH-WINDOW-P), JILLIEL's and the owl's: from the active end (every point set) to the recovery's last frame; a frame
+  ;; before it nothing (no dash), after it the move is over (a J there: the ranged :q, J1 in place, above). The latch
+  ;; reading: the vpad's buffer (*INPUT-BUFFER* 10) carries a J pressed from the frame the move's last point is set into the
+  ;; window's first frame (it dashes); an older press lapses (SP1 between its first points: neither a dash nor a J1 later)
   (dolist (k (list r or*))
-    (check (every (lambda (c) (eq 'br-lay-tick (mv-tick (kit-command-move k c)))) '(:sig :sp1 :sp2))))
+    (dolist (c '(:sig :sp1 :sp2))
+      (let* ((mv (kit-command-move k c)) (s (mv-s mv)) (a (mv-a mv)) (rr (mv-r mv)) (w (+ s a))
+             (lays (loop for (fr fn) in (mv-on-frame mv) when (eq fn 'br-lay) collect fr)))
+        (check (and (eq 'br-lay-tick (mv-tick mv)) lays
+                    (not (br-dash-window-p (1- w) s a rr)) (br-dash-window-p w s a rr)
+                    (br-dash-window-p (+ w rr -1) s a rr) (not (br-dash-window-p (+ w rr) s a rr))
+                    (<= (reduce #'max lays) w)                          ; (every point set by then)
+                    (< (- w (reduce #'max lays)) *input-buffer*)        ; (a J from the last point's frame dashes)
+                    (or (= 1 (length lays)) (>= (- w (reduce #'min lays)) *input-buffer*)))))))   ; (SP1's first: lapses)
+  ;; his CPU goes in the same way (BR-AI-IN-CMD): J1 in place within its reach + 0.2, else an L (its window's cancel), else
+  ;; walk; never a lay inside J1's reach
+  (check (and (eq :q (br-ai-in-cmd 1.7 1.6 t t)) (eq :sig (br-ai-in-cmd 1.9 1.6 t t)) (eq :sig (br-ai-in-cmd 12.0 1.6 t t))
+              (null (br-ai-in-cmd 6.0 1.6 t nil)) (null (br-ai-in-cmd 1.0 1.6 nil t)) (eq :q (br-ai-in-cmd 1.8 1.6 t nil))))
   ;; J3 -> L the backstep (decision V6): 5 m / 14 f, iframes 9, 10 flash step (refused short), a lay only from its f14
   (check (and (~= 5.0 *br-backstep*) (= 14 *br-backstep-f*) (= 9 *br-backstep-iframes*) (~= 10.0 *br-backstep-fs*)
               (br-backstep-ok-p 10.0) (not (br-backstep-ok-p 9.9)) (not (br-backstep-lay-ok-p 13)) (br-backstep-lay-ok-p 14)

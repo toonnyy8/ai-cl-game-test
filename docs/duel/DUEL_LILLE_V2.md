@@ -1,6 +1,6 @@
 # SOUL DUEL: Lille Barro II (利傑巴羅・重製), the rebuilt kit
 
-Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17).**
+Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17); decision V6a (TENSHIN in only as a quick J after a lay) built 2026-10-10 (§18).**
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -974,3 +974,81 @@ Host suites: duel-rules 8099, duel-control 89, learn 131, input 33, touch 64, ci
 0 / 0 / 0. `./build.sh duel` 0 warnings. Smoke `run.mjs --secs 8` exit 0; the still scripts exit 0. simgate, 10 seeds, all
 28 pairings: 815 lines byte-identical to 99fba9c's; `--cvc` PASS 3 / 3. Needs the user's eyes (checked by numbers and
 stills only).
+
+## 18. Decision V6a built (2026-10-10, branch `barro-v6a`)
+
+Decision V6a (§1, 「L 放軌跡後快速連結 J 才會前衝」; other ranged J 「原地切近戰出 J1」; 「L、SP1、SP2 都可以」) built. Everything is in
+`duel/lisp/barro.lisp` (sim, CPU, ASSIST, learner, a debug line) and `tests/duel-rules-test.lisp`; no other character's code,
+and no damage / frame / cost knob of his, moved (the old 21 pairings' rows are byte-identical, §18.5).
+
+### 18.1 What changed
+
+- **Ranged J = melee J1 in place** (JILLIEL's `:jilliel` and its MUJITTAI: `:br-w-j1`; the owl's `:shin` and its MUJITTAI:
+  `:br-o-j1`), exactly as the ranged K: `BR-MELEE-IN` at its f0 turns him melee at once, no dash, and the J1's first active
+  frame materialises one line as every melee J does (V6). The ranged MUJITTAI's J drops to ranged, then this J1.
+- **TENSHIN in only as the 2 f cancel of a J in a ranged L / SP1 / SP2's window** (JILLIEL's `:br-e-lay` / `-sanren` /
+  `-nijushi`, the owl's `:br-oe-lay` / `-sabaki` / `-trompete`): batch 5's window, now a pure rule `BR-DASH-WINDOW-P`: from
+  the move's active end (every point of it set) to the end of its recovery (L f7–f12, SP1 f20–f31, SP2 f26–f40; the owl's
+  L f7–f11, SP1 f20–f30, SP2 f18–f25). `BR-LAY-TICK` cancels into `:br-tenshin-c` / `:br-o-tenshin-c` (entered at f14: the
+  dash on f16); the dash, its numbers and its J1 / K1 link are V6's, unchanged.
+- **The neutral 16 f wind-up path is gone**: no command of any form starts `:br-tenshin` (kept only as the cancel copies'
+  template; the owl's `:br-o-tenshin` copy deleted). `*br-tenshin-windup*` 16 stays: it is still referenced (the dash's
+  frame in the move, `*br-tenshin-enter*` = 16 − 2); its docstring now says so (the §15.3 row "16 f wind-up from neutral"
+  is history).
+- "After a backstep before a lay": the backstep (J3 → L) takes only a lay from its f14; a J pressed in it is left buffered
+  and, once the backstep ends, is the ranged J: J1 in place.
+
+### 18.2 The latch reading
+
+[G] **No latch of its own: the vpad's input buffer, as every cancel in the game and as the old Lille's EN cancel
+(`LB-EN-TICK`, the same code).** A J press stays buffered `*input-buffer*` 10 frames; the window reads it on its first frame.
+So a J pressed from the frame the move's last point is set always dashes (every lay's last point is within 10 f of its
+window: L f4 → f7, SP1 f18 → f20, SP2 f20 → f26, the owl's SP2 f12 → f18; host-tested): **a quick J after the lay dashes**,
+and on L (13 f) any J during the move does. A J pressed 10 f or more before the window (only in SP1 between its first
+points, ~f6–f10, or in SP2's wind-up up to ~f16) **lapses**: no dash, and no J1 after the lay either (it does not wait). A J after
+the move has ended is the ranged J: J1 in place.
+
+### 18.3 The CPU, ASSIST, the learner
+
+- **Going in** (`BR-AI-GO-IN`, pure `BR-AI-IN-CMD`): whenever his ranged CPU went in with J (TENSHIN in from neutral: the
+  :busy punish, :close, :line on a crossing or a point set, the long dash 8–13 m on a crossing, :starved), it now presses
+  **J1 in place within J1's reach + 0.2 m (1.8 m)**, else **an L pressed for its cancel** (`BRAI-DASH-T`; `BR-AI-CANCEL-P`
+  takes it in the L's window: 7 f + the 2 f wind-up instead of 16; the new point is behind him, so its line runs through
+  the opponent at the dash's end and J1 spends it), else (short of the L's 3 flash step) nothing: the neutral walk goes in.
+  The cancel of a lay laid for the stay's goal is unchanged (`BR-AI-IN-P` at the window). The same chances and rolls: the
+  :fire keys and their one roll per event (a point set, a crossing, his action's react roll), × `*br-ai-diff*`.
+- **HARD layer** (ranged `:hard`): the punish / guard crush goes in the same way (`BR-AI-GO-IN`).
+- **The learner's :trace guard read** (ranged): `BR-AI-GO-IN` with a line on him at the dash's end (was: J, TENSHIN in).
+- **ASSIST AUTO COMBO ranged** (`BR-AS-RANGED`): his J pressed while free beyond J1's reach + 0.2 m → an aim point (L) with
+  10 flash step left after it; his next J in its window cancels into TENSHIN in (2 f) → J1 (L point → J dash → J1 …); else
+  his J is J1 in place. (Was: J straight into TENSHIN in with a line on him, the L only from 4 m.) `as-fire` is gone.
+- MUJITTAI's exit J, the melee forms, the opponents' Step off his lines: unchanged (the exit's J is now J1 in place).
+- New pacing keys: `ai-in-j1`, `ai-lay-dash`. Debug: the `duel probe barro` line ends `| d` (P1–P2 distance); 82013 / 82016
+  now test L then J (the dash) and J alone (J1 in place).
+
+### 18.4 Host tests
+
+duel-rules-test (8109 → 8516 checks, ALL PASS: the four ranged forms' J is a hit move again, so the generic J-string and
+Breaker-vs-J1 checks cover them as they did before V6): the ranged :q is melee's J1 / the claws' J1 with `BR-MELEE-IN` at f0,
+no TENSHIN tick / go, J1's materialise at S (JILLIEL, the owl, both MUJITTAIs); no command of any form starts TENSHIN; the
+cancel copies' numbers (f14 → the dash at f16); every ranged L / SP1 / SP2 (JILLIEL's and the owl's): no dash a frame before
+the window, the dash at its first and last frames, none after (the move over: J1 in place), every point set by the window,
+the last within the buffer, SP1's first point outside it; `BR-AI-IN-CMD` (J1 in reach, L beyond, nothing short).
+duel-control 89, learn 131, input 33, touch 64, cine 18 pass.
+
+### 18.5 Checks (2026-10-10)
+
+- `tools/pkgcheck.sh duel` 0 / 0 / 0. `./build.sh duel` 0 warnings. Smoke `run.mjs --secs 8`: exit 0.
+- **Browser script** (`--fixed-dt`, 17 s, exit 0, no error; the probe's `d` and fs): 82013 L + J 0.1 s later: TENSHIN in, d
+  6.00 → 0.83, fs 100 → 98, P2 1300 → 1246 (J1 24 + the line 30); 82013 J alone: d 6.00, JILLIEL KIN, one line spent and hit
+  (P2 −30); 82013 L, J 0.5 s later (after L's 13 f): d 6.00, fs 97, J1 in place; 82016 (owl) L + J: d 0.83, P2 −65; 82013
+  SP1 + J on ~f20: d 0.83 (the dash), 5 live; SP2 + J on ~f24 (buffered into its window at f26): dashed, the thick line hit (P2 −114, knocked back to
+  2.70); 82016 J alone: d 6.00, SHIN KIN.
+- **Gates: run by the lead after the playtest** (the user, 2026-10-10: the playtest goes up before the gates, automated and
+  human testing in parallel; Lille II's gates no longer include the old Lille: no BL pairing for him).
+
+### 18.6 For the user
+
+- In play: **L (or SP1 / SP2) then J quickly** is the dash; J anywhere else is J1 on the spot (from range it whiffs, but its
+  first active frame still fires the nearest line within 2.5 m of him: a ranged J now spends a line in 8 f without moving).
+- The CPU's way in is now an L and its cancel (about 9 f before the dash instead of 16).
