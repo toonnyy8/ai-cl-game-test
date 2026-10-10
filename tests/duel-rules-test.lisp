@@ -2803,9 +2803,22 @@ defender's next step. Values: the attacker's and the defender's first actionable
   (check (and (= 50 (mv-dmg (find-move :br-k-shot))) (= 40 (mv-dmg (find-move :br-k-snap))) (= 70 (mv-dmg (find-move :br-k-taisha)))
               (= 3 (length (mv-hits (find-move :br-k-sanren)))) (= 30 (hw-dmg (svref (mv-hits (find-move :br-k-sanren)) 2)))
               (= 50 (mv-dmg (find-move :br-k-hiren)))))
-  (let ((l (br-trace-hitwin :l 1.0)) (t2 (br-trace-hitwin :sp2 1.0)) (o (br-trace-hitwin :sp1 *br-owl-mult*)))
-    (check (and (br-x-hit-p l) (br-x-hit-p t2) (= 30 (hw-dmg l)) (= 90 (hw-dmg t2)) (= 33 (hw-dmg o))
-                (= 26 (hw-stun l)) (eq :stagger (hw-react l)) (eq :knockback (hw-react t2)))))
+  ;; decision V9j (the user 2026-10-10): flat 25 / 90, the owl's 30 / 120 (:flat: no multiplier, no combo scaling)
+  (let ((l (br-trace-hitwin :l nil)) (t2 (br-trace-hitwin :sp2 nil)) (o (br-trace-hitwin :sp1 t)) (ot (br-trace-hitwin :sp2 t)))
+    (check (and (br-x-hit-p l) (br-x-hit-p t2) (= 25 (hw-dmg l)) (= 90 (hw-dmg t2)) (= 30 (hw-dmg o)) (= 120 (hw-dmg ot))
+                (every (lambda (w) (member :flat (hw-flags w))) (list l t2 o ot))
+                (= 26 (hw-stun l)) (eq :stagger (hw-react l)) (eq :knockback (hw-react t2))))
+    ;; :flat in HIT-DAMAGE's terms: what APPLY-HIT passes for it (x1, combo index 1, no counter) is the base
+    (check (and (= 25 (hit-damage 25 '(:mult 1.0) '(:mult 1.0) 1 nil)) (< (hit-damage 25 '(:mult 1.0) '(:mult 1.0) 9 nil) 25))))
+  ;; decision V9j: Reiatsu per trace contact (+10 / the owl +15, a block half, ORANGE x1.5), the circle round the point,
+  ;; an awakened Hoho's points (JILLIEL 3, the owl 5) on a 0.5 m ring
+  (check (and (~= 10.0 (br-trace-sp :hit nil nil)) (~= 5.0 (br-trace-sp :block nil nil)) (~= 15.0 (br-trace-sp :hit t nil))
+              (~= 7.5 (br-trace-sp :block t nil)) (~= 15.0 (br-trace-sp :hit nil :orange)) (~= 10.0 (br-trace-sp :hit nil :blue))
+              (zerop (br-trace-sp nil nil nil))
+              (~= 1.5 *br-mat-burst-r*) (br-near-point-p 0.0 0.0 1.8 0.0 0.35) (not (br-near-point-p 0.0 0.0 1.9 0.0 0.35))
+              (= 3 *br-hoho-traces*) (= 5 *br-owl-hoho-traces*)
+              (= 3 (length (br-hoho-points 1.0 2.0 3)))
+              (every (lambda (pt) (< (abs (- 0.5 (hypot (- (first pt) 1.0) (- (second pt) 2.0)))) 0.001)) (br-hoho-points 1.0 2.0 5))))
   ;; without 萬物貫通: SP1 / SP2 outside the stance (the kind's chip / drain), the melee SPs the old KIN's numbers
   (check (notany #'br-x-hit-p (append (coerce (mv-hits (find-move :br-sanren)) 'list) (coerce (mv-hits (find-move :br-hiren)) 'list))))
   (check (and (eq :br-sanren (mv-name (kit-command-move b :sp1))) (eq :br-hiren (mv-name (kit-command-move b :sp2)))
@@ -2962,14 +2975,15 @@ defender's next step. Values: the attacker's and the defender's first actionable
                 (eql 48 (first (find 'br-beam-shot (mv-on-frame rc4) :key #'second)))
                 (eq *br-rc4-clip* (mv-clip rc4))
                 (eq :br-o-rc4 (kit-move-clip om (mv-clip rc4))))))   ; (the owl's claws, art §22)
-  ;; the lays' prices (§5.2): ranged L 3, SP1 9, SP2 9, refused when short; nothing else costs
-  ;; (decision V8b: L's 3 and its refusal back, V8's free swing gone)
-  (check (and (~= 3.0 (br-lay-price :jilliel :sig)) (~= 3.0 (br-lay-price :shin :sig)) (~= 9.0 (br-lay-price :jilliel :sp1))
-              (~= 9.0 (br-lay-price :shin :sp2))
+  ;; the lays' prices (§5.2; decision V9j): ranged L 6 (the owl 4.5), refused when short; SP1 / SP2 0; none in a burst;
+  ;; nothing else costs
+  (check (and (~= 6.0 (br-lay-price :jilliel :sig)) (~= 4.5 (br-lay-price :shin :sig)) (zerop (br-lay-price :jilliel :sp1))
+              (zerop (br-lay-price :shin :sp2)) (zerop (br-lay-price :jilliel :sig :orange)) (zerop (br-lay-price :shin :sig :blue))
               (zerop (br-lay-price :jilliel-kin :sp1)) (zerop (br-lay-price :base :sig)) (zerop (br-lay-price :jilliel :q))
-              (br-lay-ok-p :jilliel :sig 3.0) (not (br-lay-ok-p :jilliel :sig 2.9)) (not (br-lay-ok-p :shin :sig 2.9))
-              (not (br-lay-ok-p :shin :sp1 8.0))
-              (br-lay-ok-p :jilliel-kin :sp2 0.0) (~= 3.0 (br-line-cost :sp1)) (~= 9.0 (br-line-cost :sp2))))
+              (br-lay-ok-p :jilliel :sig 6.0) (not (br-lay-ok-p :jilliel :sig 5.9)) (not (br-lay-ok-p :shin :sig 4.4))
+              (br-lay-ok-p :jilliel :sig 0.0 :white) (br-lay-ok-p :shin :sp1 0.0)
+              (br-lay-ok-p :jilliel-kin :sp2 0.0) (zerop (br-line-cost :sp1)) (zerop (br-line-cost :sp2))
+              (~= 6.0 (br-line-cost :l)) (~= 4.5 (br-line-cost :l t)) (zerop (br-line-cost :l nil :orange))))
   (let ((ids (loop for i from 1 to 16 collect i)))
     (multiple-value-bind (new drop) (br-trace-lay ids 17)
       (check (and (eql drop 1) (= 16 (length new)) (= 17 (car (last new))))))
@@ -3217,8 +3231,10 @@ defender's next step. Values: the attacker's and the defender's first actionable
   ;; (decision V8b: L lays from range again, as before V8)
   (let ((k '(:far 4.0 :reserve 15.0 :sp1 0.3 :cap 4)))
     (check (and (eq :sig (br-ai-lay-plan 50.0 0 8.0 0 0.1 k)) (eq :sp1 (br-ai-lay-plan 50.0 1 8.0 0 0.1 k))
-                (eq :sig (br-ai-lay-plan 50.0 1 8.0 0 0.5 k)) (null (br-ai-lay-plan 17.0 1 8.0 0 0.1 k))
-                (eq :sig (br-ai-lay-plan 18.0 1 8.0 0 0.1 k)) (null (br-ai-lay-plan 50.0 1 3.0 0 0.1 k))
+                (eq :sig (br-ai-lay-plan 50.0 1 8.0 0 0.5 k)) (null (br-ai-lay-plan 20.0 0 8.0 0 0.1 k))   ; (L 6: V9j)
+                (eq :sig (br-ai-lay-plan 21.0 0 8.0 0 0.1 k)) (null (br-ai-lay-plan 50.0 1 3.0 0 0.1 k))
+                (eq :sp1 (br-ai-lay-plan 15.0 1 8.0 0 0.1 k))                      ; (SP1 free of flash step: V9j)
+                (eq :sig (br-ai-lay-plan 19.5 0 8.0 0 0.1 k 4.5))                  ; (the owl's L 4.5)
                 (null (br-ai-lay-plan 50.0 1 8.0 4 0.1 k)))))
   ;; MUJITTAI: one roll per window; out by attacking on his whiff, at :max, under :gg, him idle out of reach
   (check (and (eq :stance (br-ai-stance-plan 0.1 0.4 nil)) (eq :step (br-ai-stance-plan 0.5 0.4 t)) (eq :pass (br-ai-stance-plan 0.5 0.4 nil))
@@ -3275,7 +3291,7 @@ defender's next step. Values: the attacker's and the defender's first actionable
   ;; decision V8b (the user 2026-10-10: 「L 改回 v9 的不帶傷害 可以直接放」): the ranged L is the plain lay again, no damage,
   ;; its one point (3) at f4 whatever it touches; refused short (above); so an L always leaves a trace: with no other, its
   ;; L -> J fires it from a J1 in place, no dash (decision V9f, below)
-  (check (and (~= 3.0 *br-lay-l*) (~= 3.0 (br-line-cost :l))
+  (check (and (~= 6.0 *br-lay-l*) (~= 6.0 (br-line-cost :l))
               (every (lambda (n) (let ((mv (find-move n)))
                                    (and (zerop (length (mv-hits mv))) (eq :l (getf (mv-params mv) :trace))
                                         (eql 4 (first (find 'br-lay (mv-on-frame mv) :key #'second))))))

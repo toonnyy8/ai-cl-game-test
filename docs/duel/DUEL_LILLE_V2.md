@@ -2,7 +2,7 @@
 
 Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17); decision V6a (TENSHIN in only as a quick J after a lay) built 2026-10-10 (§18); decision V6c (the wider L → J window, TENSHIN in fires a line at its f0) built 2026-10-10 (§19); decisions V9 / V9b / V9c / V9d (the stance K by pips, the snap's links) built 2026-10-10 (§20); decisions V8 / V8a (two
 routes, one pool; a dash spends a trace) built 2026-10-10 (§21); decision V8b (the ranged L back to the plain lay) built
-2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22); decisions V9f / V9g / V9h (TENSHIN in fires before it pays; its J1 fires none; the backstep fires, dash presses kept) and V9i (the snap shot on the move) built 2026-10-10.**
+2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22); decisions V9f / V9g / V9h (TENSHIN in fires before it pays; its J1 fires none; the backstep fires, dash presses kept) and V9i (the snap shot on the move), V9j (the traces' resource loop) built 2026-10-10.**
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -108,6 +108,47 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
   is picked and missed (the trace is spent). The opponent sees every line and can step off.
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
+
+### Decision V9j (2026-10-10): the traces' resource loop (flash step <-> Reiatsu)
+
+The user, over one discussion (implemented on 「開始實作」), verbatim:
+- 「然後幫我調整覺醒時軌跡實體化的 SP 回收量，請先跟我討論，等我確認可以在開始實作」; picks 「每條 +10」, 「鐘擺的線算，回收不算」, 「回一半」.
+- 「然後 SP1 與 SP2 不再消耗閃步量表」.
+- 「爆氣時放軌跡不額外消耗閃步。」 「hoho 時會在原處留下 5 個軌跡。」 「將軌跡的閃步消耗提升到 6 點。」 「軌跡實體化傷害改成 25，且軌跡
+  不再受到傷害校正影響。」 「幫我調整 SP1 與 SP2 的設計，使整個資源輪轉呈現約 『2 格閃步換 1 格 SP』<=>『約 2 格 SP 換 1 格閃步』」;
+  picks: SP2 「只是高傷害」, 「完全固定 25」, the thick line 「維持 90，也不吃校正」, the Hoho points 「原處小圓排開，覆醒才留」.
+- 「hoho 減少軌跡數好了，目前這樣有點太超值了。」 → 「3 個」.
+- 「梟頭模式：軌跡的閃步消耗減少至 4.5／hoho 時會在原處留下 5 個軌跡。／軌跡實體化傷害改成 30。／線命中回 15 SP。」 「覺醒&再覺醒通用：
+  軌跡起點半徑內一樣會受到傷害」 → 「起點周圍 1.5 m 圓形」; 「再覺醒（梟頭）的粗線（SP2）實體化固定 120」.
+
+| Knob (barro.lisp) | Before | JILLIEL | The owl |
+|---|---|---|---|
+| Ranged L's point (`*BR-LAY-L*`, `*BR-OWL-LAY-L*`) | 3 FS | 6 | 4.5 |
+| Ranged SP1 / SP2 (`*BR-LAY-SP1*`, `-SP2*`) | 9 / 9 FS | 0 (the Reiatsu bars only) | 0 |
+| Any lay in a burst mode (`BR-LAY-PRICE` / `BR-LINE-COST` BURST) | priced | 0 | 0 |
+| Awakened Hoho (`*BR-HOHO-TRACES*`, `*BR-OWL-HOHO-TRACES*`, ring `*BR-HOHO-RING*` 0.5 m) | none | 3 points | 5 points |
+| A line's damage (`*BR-MAT-DMG*`, `*BR-OWL-MAT-DMG*`) | 30 x the form's | 25 flat | 30 flat |
+| The thick line (`*BR-MAT-THICK*`, `*BR-OWL-MAT-THICK*`) | 90 x the form's | 90 flat | 120 flat |
+| Reiatsu per line (`*BR-MAT-SP*`, `*BR-OWL-MAT-SP*`; a block x `*BR-MAT-SP-BLOCK*` 0.5; ORANGE x1.5) | the hit's own (~2.4) | +10 (+5) | +15 (+7.5) |
+| The circle round the aim point (`*BR-MAT-BURST-R*`) | the line's cap only | 1.5 m | 1.5 m |
+
+- **Flat**: the trace's window carries a new `:flat` flag; `APPLY-HIT` (combat.lisp, shared, used by nothing else) then passes
+  x1 attacker / defender multipliers, combo index 1 and no counter bonus to `HIT-DAMAGE`: exactly the written number. Chip
+  on a block is still the window's 30 % of it.
+- **Reiatsu**: `BARRO-HIT` pays `BR-TRACE-SP` on a trace hazard's hit / block (the J's, TENSHIN in's f0, the backstep's; the
+  recall's strings are moves, not traces, so they pay nothing extra; V9i's moving snap shot is excluded), on top of the
+  generic Reiatsu of the damage.
+- **The Hoho's points**: BARRO-TICK on the Hoho's first step (he is still where he left), awakened forms only (MUJITTAI too):
+  `BR-HOHO-POINTS`, L traces (their lines through him from then on, V7), no flash step; past 16 the oldest drop.
+- **The circle**: `BR-HZ` :touches = the line's volume OR `BR-NEAR-POINT-P` (the hurt cylinder within 1.5 m + its radius of
+  the aim point); one hit a trace either way.
+- **The loop** (one FS bar = 35, the burst's 「two bars」 = 70): 70 FS of L lays = 11.7 lines → ~117 Reiatsu if all hit
+  (JILLIEL; the owl 15.6 lines → ~233); 2 bars of SP1 = 6 lines free = ~36 FS worth. SP2 is only the big line.
+- His CPU's reserve checks use the L's price now (`BR-L-PRICE`); `BR-AI-LAY-PLAN` takes it.
+- The probe line gains `rei` (Reiatsu).
+- Host tests (duel-rules 8674): prices (form, burst), flat damages and the :flat flag, Reiatsu by contact / form / ORANGE,
+  the circle, the Hoho ring; the CPU's lay plan at the new prices. Browser (82013 / 82002 / 82004 / 82016): SP1 lays 3 for
+  a bar and no FS; L 6 (the owl 4.5); a line hits 25 (the owl 30); Hoho leaves 3 (the owl 5).
 
 ### Fix (2026-10-10): MUJITTAI's look
 

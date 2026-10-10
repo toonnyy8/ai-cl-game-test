@@ -181,12 +181,29 @@ during the dash makes it K1: the old link, the last press wins).")
 (defparameter *br-kamae-dash-fs* 10.0
   "... its flash-step price, once per stance; refused (the press ignored) when short or already used (the old
 *LB-KAMAE-DASH-FS*, copied 2026-10-10, decision V6). No charge (Lille II has none).")
-(defparameter *br-lay-l* 3.0
-  "Ranged L: the flash step its one aim point costs; a lay is refused when the flash step is short of its price (new
+(defparameter *br-lay-l* 6.0
+  "Ranged L, JILLIEL: the flash step its one aim point costs (3 -> 6, decision V9j, the user 2026-10-10: 「將軌跡的閃步消耗提升到
+6 點」; the owl's *BR-OWL-LAY-L*; none during a burst, BR-LAY-PRICE); a lay is refused when the flash step is short of its price (new
 2026-10-09, the user: 「留下軌跡會消耗閃步量表」, 3 a line). (Decision V8 made L a 7 f / 1.8 m / 16 swing whose hit set the point;
 decision V8b, the user 2026-10-10: 「L 改回 v9 的不帶傷害 可以直接放」, put this plain lay back: no damage, its point at f4.)")
-(defparameter *br-lay-sp1* 9.0 "Ranged SP1: three lines, 3 each (new 2026-10-09, the user's rule; [G] the price).")
-(defparameter *br-lay-sp2* 9.0 "Ranged SP2: one thick line (new 2026-10-09 [G]).")
+(defparameter *br-owl-lay-l* 4.5
+  "Ranged L, the owl: its aim point's flash step (new 2026-10-10, decision V9j: 「梟頭模式：軌跡的閃步消耗減少至 4.5」).")
+(defparameter *br-lay-sp1* 0.0
+  "Ranged SP1: three lines, no flash step (9 -> 0, decision V9j: 「SP1 與 SP2 不再消耗閃步量表」; its Reiatsu bar is the price).")
+(defparameter *br-lay-sp2* 0.0 "Ranged SP2: one thick line, no flash step (9 -> 0, decision V9j).")
+(defparameter *br-hoho-traces* 3
+  "An awakened Hoho leaves this many aim points round the spot he left, JILLIEL (new 2026-10-10, decision V9j: 「hoho 時會在原處
+留下 5 個軌跡」 -> 「hoho 減少軌跡數好了，目前這樣有點太超值了」, 3) ...")
+(defparameter *br-owl-hoho-traces* 5 "... the owl (decision V9j: 「梟頭模式：hoho 時會在原處留下 5 個軌跡」) ...")
+(defparameter *br-hoho-ring* 0.5 "... evenly on a ring this many metres round the spot (decision V9j [G]).")
+(defparameter *br-mat-sp* 10.0
+  "Reiatsu a materialised trace's hit gives, JILLIEL (new 2026-10-10, decision V9j: 「每條 +10」), a block half
+(*BR-MAT-SP-BLOCK*), ORANGE x *ORANGE-GAIN*; on top of the hit's own Reiatsu; the recall's strings are moves, not traces ...")
+(defparameter *br-owl-mat-sp* 15.0 "... the owl's (decision V9j: 「線命中回 15 SP」) ...")
+(defparameter *br-mat-sp-block* 0.5 "... a blocked line's share (decision V9j: 「回一半」).")
+(defparameter *br-mat-burst-r* 1.5
+  "A materialised trace also hits round its aim point, this many metres (the circle; the line's own radius beside it)
+(new 2026-10-10, decision V9j: 「軌跡起點半徑內一樣會受到傷害」, 「起點周圍 1.5 m 圓形」); one hit a trace either way.")
 (defparameter *br-trace-max* 16 "Live traces at most; a 17th drops the oldest (the old *LB-TRACE-MAX*, copied 2026-10-09).")
 (defparameter *br-trace-len* 31.0
   "A trace's line, metres: from its aim point through his current position and on (*BR-X-LEN*; 2026-10-09: from 0.6 m
@@ -207,8 +224,12 @@ the point it keeps its last direction (decision V7 [G], 2026-10-10).")
   "Materialising picks the one live trace whose line (point-to-segment on the ground) passes nearest the opponent, within
 this many metres; a tie: the newer (decision V6, the user 2026-10-10: 「「附近」的判定條件改成 2.5 公尺內，然後每次只會觸發一條」;
 decision V4's 10 deg snap before, *BR-NEAR-DEG*, gone; the user 2026-10-10 「維持 2.5 m」 with the aim points).")
-(defparameter *br-mat-dmg* 30 "A materialised L / SP1 line's damage, before the form's x (new 2026-10-09 [G]; the old 30).")
-(defparameter *br-mat-thick* 90 "A materialised SP2 thick line's damage, before the form's x (new 2026-10-09 [G]; the old 180).")
+(defparameter *br-mat-dmg* 25
+  "A materialised L / SP1 line's damage, JILLIEL, flat: no form / taken multiplier, no combo scaling (the window's :flat)
+(30 x the form's -> 25 flat, decision V9j: 「軌跡實體化傷害改成 25，且軌跡不再受到傷害校正影響」) ...")
+(defparameter *br-owl-mat-dmg* 30 "... the owl's, flat (decision V9j: 「梟頭模式：軌跡實體化傷害改成 30」) ...")
+(defparameter *br-mat-thick* 90 "... SP2's thick line, JILLIEL, flat (90 x the form's -> 90 flat, decision V9j) ...")
+(defparameter *br-owl-mat-thick* 120 "... the owl's thick line, flat (decision V9j: 「再覺醒（梟頭）的粗線（SP2）實體化固定 120」).")
 (defparameter *br-mat-stun* 26 "A materialised line (not SP2's) staggers this many frames in place (the old, 2026-10-09).")
 (defparameter *br-refund* 0.0
   "A materialised trace that hits gives this much flash step back (the old 4, 2026-10-09; decision V6, the user 2026-10-10:
@@ -329,16 +350,37 @@ every one, else none."
   "Does the stance (move frame SF, L HELD) end its hold now: past its tap with L up, before the held maximum?"
   (and (<= (+ *br-kamae-up* *br-kamae-tap*) sf) (< sf (+ *br-kamae-up* *br-kamae-max*)) (not held)))
 
-(defun br-lay-price (form command)
-  "The flash step COMMAND lays traces for in FORM (§5.2): a ranged mode's L *BR-LAY-L*, SP1 *BR-LAY-SP1*, SP2 *BR-LAY-SP2*;
-anything else 0 (melee SP1 / SP2 fire directly, the user 2026-10-09; L's 3 back since decision V8b: the plain lay again)."
-  (if (br-ranged-form-p form)
-      (case command (:sig *br-lay-l*) (:sp1 *br-lay-sp1*) (:sp2 *br-lay-sp2*) (t 0.0))
+(defun br-lay-price (form command &optional burst)
+  "The flash step COMMAND lays traces for in FORM (§5.2): a ranged mode's L *BR-LAY-L* (the owl's *BR-OWL-LAY-L*), SP1
+*BR-LAY-SP1*, SP2 *BR-LAY-SP2* (0 since decision V9j); anything else 0 (melee SP1 / SP2 fire directly, the user
+2026-10-09); none in a BURST mode (decision V9j: 「爆氣時放軌跡不額外消耗閃步」)."
+  (if (and (br-ranged-form-p form) (not burst))
+      (case command (:sig (if (br-owl-form-p form) *br-owl-lay-l* *br-lay-l*)) (:sp1 *br-lay-sp1*) (:sp2 *br-lay-sp2*) (t 0.0))
       0.0))
-(defun br-lay-ok-p (form command fs) "May COMMAND start in FORM with FS flash step (BR-LAY-PRICE: refused when short)?"
-  (>= fs (br-lay-price form command)))
-(defun br-line-cost (src) "The flash step one trace line of SRC (:l :sp1 :sp2) costs when laid."
-  (case src (:sp2 *br-lay-sp2*) (:sp1 (/ *br-lay-sp1* (length *br-sp1-fan*))) (t *br-lay-l*)))
+(defun br-lay-ok-p (form command fs &optional burst)
+  "May COMMAND start in FORM with FS flash step (BR-LAY-PRICE, BURST its burst mode: refused when short)?"
+  (>= fs (br-lay-price form command burst)))
+(defun br-line-cost (src &optional owl burst)
+  "The flash step one trace line of SRC (:l :sp1 :sp2) costs when laid (the owl's L: OWL; none in a BURST mode)."
+  (cond (burst 0.0)
+        ((eq src :sp2) *br-lay-sp2*) ((eq src :sp1) (/ *br-lay-sp1* (length *br-sp1-fan*)))
+        (owl *br-owl-lay-l*) (t *br-lay-l*)))
+(defun br-l-price (e)
+  "The flash step E's ranged L costs now (his ranged mode's: BR-LAY-PRICE with his burst mode): his CPU's reserve checks."
+  (let ((form (or (kit-drop-to (fighter-kit (fighter e))) (fighter-form (fighter e)))))
+    (br-lay-price (br-ranged-of form) :sig (gauges-burst (gauges e)))))
+(defun br-hoho-points (x z n)
+  "The N aim points an awakened Hoho leaves round (X Z) (decision V9j): evenly on a *BR-HOHO-RING* m ring, the first toward -Z.
+A list of (x z)."
+  (loop for i below n
+        for a = (/ (* 6.2831855 i) n)                   ; (single floats: pi is a double)
+        collect (list (f32 (+ x (* *br-hoho-ring* (sin a)))) (f32 (- z (* *br-hoho-ring* (cos a)))))))
+(defun br-trace-sp (contact owl burst)
+  "The Reiatsu a materialised trace's CONTACT gives (decision V9j): a hit *BR-MAT-SP* (the owl's *BR-OWL-MAT-SP*), a block
+x *BR-MAT-SP-BLOCK*, else 0; x ORANGE's gain in BURST mode :orange (BURST-GAIN-MULT)."
+  (* (case contact (:hit 1.0) (:block *br-mat-sp-block*) (t 0.0))
+     (if owl *br-owl-mat-sp* *br-mat-sp*)
+     (burst-gain-mult burst)))
 (defun br-trace-lay (ids id)
   "The FIFO of live trace IDS (oldest first) after trace ID is laid: values the new list and the id dropped (the oldest,
 when *BR-TRACE-MAX* were live) or NIL."
@@ -421,13 +463,15 @@ fires the near one) and the id that fires (NIL: none near)."
 (defun br-kamae-step-ok-p (dashed fs)
   "May the stance's Step (飛廉脚) start: not yet used in this stance (DASHED) and FS >= *BR-KAMAE-DASH-FS* (decision V6)?"
   (and (not dashed) (>= fs *br-kamae-dash-fs*)))
-(defun br-trace-hitwin (src mult)
-  "The hit a materialised trace of SRC deals (once): *BR-MAT-DMG* (SP2's *BR-MAT-THICK*) x MULT with 萬物貫通 (chip
-*BR-X-CHIP*, drain *BR-X-GUARD*, :ranged :x-axis :uncatchable); a *BR-MAT-STUN* stagger in place, SP2's a knockback."
+(defun br-trace-hitwin (src owl)
+  "The hit a materialised trace of SRC deals (once): *BR-MAT-DMG* (SP2's *BR-MAT-THICK*; the OWL's *BR-OWL-MAT-DMG* /
+*BR-OWL-MAT-THICK*) flat (:flat: no multiplier, no combo scaling; decision V9j) with 萬物貫通 (chip *BR-X-CHIP*, drain
+*BR-X-GUARD*, :ranged :x-axis :uncatchable); a *BR-MAT-STUN* stagger in place, SP2's a knockback."
   (let ((sp2 (eq src :sp2)))
-    (make-hitwin :dmg (round (* (if sp2 *br-mat-thick* *br-mat-dmg*) mult)) :react (if sp2 :knockback :stagger)
+    (make-hitwin :dmg (if sp2 (if owl *br-owl-mat-thick* *br-mat-thick*) (if owl *br-owl-mat-dmg* *br-mat-dmg*))
+                 :react (if sp2 :knockback :stagger)
                  :kb (if sp2 2.0 0.0) :stun (if sp2 nil *br-mat-stun*) :hs (if sp2 *hitstop-heavy* *hitstop-light*)
-                 :chip *br-x-chip* :guard *br-x-guard* :flags (list :ranged :x-axis :uncatchable))))
+                 :chip *br-x-chip* :guard *br-x-guard* :flags (list :ranged :x-axis :uncatchable :flat))))
 (defun br-refund (contact &optional owl)
   "The flash step a materialised trace's CONTACT gives back: a hit *BR-REFUND* (the owl's *BR-OWL-REFUND*), a block
 *BR-REFUND-BLOCK* (*BR-OWL-REFUND-BLOCK*), else 0."
@@ -973,6 +1017,7 @@ decision V9; at 0 pips the plain K1, V9d).")
   (latch nil)                             ; ... the J1 / K1 it links into (:q, a K pressed during it :f)
   (switch-to nil)                         ; ... the melee form it turns into (6 f into the dash, or at its end)
   (dash-j nil)                            ; ... the J1 it started (that move while it runs): it fires no trace (V9g)
+  (hoho-laid nil)                         ; this Hoho left its points (decision V9j)
   (step-shot nil)                         ; the stance Step: the frame its latched moving snap fires (V9i) ...
   (step-fired nil)                        ; ... it fired (one a Step)
   (dash-took nil)                         ; ... a J / K pressed during the dash taken for the link (V9h) ...
@@ -1027,7 +1072,7 @@ his CPU's only when it pays (BR-AI-L-OK-P: the recall at its count, the backstep
                       (and (br-l-link-ok-p l (mv-name cur) (mv-kind cur) (member :ender (mv-flags cur)))
                            (br-kamae-link-ok-p l (brs-snipe (br e)))))                ; (decision V9e: no pip, no stance link)
                   t)))
-          (t (br-lay-ok-p (or (kit-drop-to (fighter-kit f)) form) command (gauges-fs g))))))   ; (MUJITTAI: its mode's price)
+          (t (br-lay-ok-p (or (kit-drop-to (fighter-kit f)) form) command (gauges-fs g) (gauges-burst g))))))   ; (MUJITTAI: its mode's price)
 
 (defun barro-bankai-ok (e)
   "His kit's :bankai-ok: P revives him into the owl from any JILLIEL form where the first awakening could be taken, with <=
@@ -1050,6 +1095,11 @@ check on its f59."
       (setf (brs-dash-j st) nil))                         ; (decision V9g: only while TENSHIN in's own J1 runs)
     (unless (or (brs-dash-j st) (and (eq (fighter-state f) :move) (fighter-move f) (eq (mv-tick (fighter-move f)) 'br-tenshin-tick)))
       (setf (brs-dash-next st) nil))                      ; (decision V9h: a kept press lives through the dash and its J1)
+    (if (eq (fighter-state f) :hoho)                      ; (decision V9j: an awakened Hoho leaves points where he was)
+        (unless (brs-hoho-laid st)
+          (setf (brs-hoho-laid st) t)
+          (when (br-awake-form-p form) (br-hoho-lay e)))
+        (setf (brs-hoho-laid st) nil))
     (setf (brs-live st) (br-live-traces e))
     (when (and (br-awake-form-p form) (minusp (brs-awake-t st)))
       (setf (brs-awake-t st) *match-tick*) (pace e :awaken-tick *match-tick*))
@@ -1083,9 +1133,11 @@ hit setting the point, is gone: decision V8b, the plain lay again.)"
         (setf (brs-snipe st) n)))
     (when (and mv (not hazard) (eq c :hit) (member (mv-kind mv) '(:quick :flash)) (br-melee-form-p (fighter-form (fighter att))))
       (let ((b (br-tick-brain att))) (when b (br-ai-route-latch att b mv))))             ; (his CPU's route: batch 6)
-    (when (and hazard (brh-p (hazard-data hazard)))
-      (let* ((owl (br-owl-form-p (fighter-form (fighter att)))) (fs (br-refund c owl)))
-        (when (plusp fs) (pay-gauges (or (siphon-of att) att) 0.0 fs) (pace att :trace-refund)))
+    (when (and hazard (brh-p (hazard-data hazard)) (not (eq (brh-src (hazard-data hazard)) :snap)))   ; (a trace, not V9i's shot)
+      (let* ((owl (br-owl-form-p (fighter-form (fighter att)))) (fs (br-refund c owl))
+             (r (br-trace-sp c owl (gauges-burst (gauges att)))))
+        (when (plusp fs) (pay-gauges (or (siphon-of att) att) 0.0 fs) (pace att :trace-refund))
+        (when (plusp r) (pay-gauges att r 0.0) (pace att :trace-sp)))   ; (decision V9j: +10 / +15, a block half)
       (pace att (if (eq c :hit) :trace-hit :trace-guarded)))
     (when (and hw (br-x-hit-p hw))
       (pace att (if (eq c :hit) :x-hit :x-guarded)))))
@@ -1542,17 +1594,35 @@ live (the oldest dropped)."
     (multiple-value-bind (n old) (br-live-traces e)
       (when (>= n *br-trace-max*) (destroy-entity old) (pace e :traces-dropped)))
     (multiple-value-bind (px pz) (br-aim-point (aref p 0) (aref p 2) yaw)
-      (spawn-hazard :br-trace e :x px :z pz :yaw yaw :size *br-trace-len*
-                                :life 1000000 :hook 'br-hz :look 'br-trace-look
-                                :data (make-brh :src src :id (incf (brs-trace-n st)) :live t :width (f32 r)
-                                                :ux (f32 (fwd-x yaw)) :uz (f32 (fwd-z yaw))
-                                                :vol (br-trace-vol src))))
+      (br-spawn-trace e st src px pz yaw r))
     (pace e :traces)))
+
+(defun br-spawn-trace (e st src px pz yaw r)
+  "One live trace of SRC: its aim point at (PX PZ), its line along YAW until BR-TRACES-AIM turns it through him, radius R."
+  (spawn-hazard :br-trace e :x px :z pz :yaw yaw :size *br-trace-len*
+                            :life 1000000 :hook 'br-hz :look 'br-trace-look
+                            :data (make-brh :src src :id (incf (brs-trace-n st)) :live t :width (f32 r)
+                                            :ux (f32 (fwd-x yaw)) :uz (f32 (fwd-z yaw))
+                                            :vol (br-trace-vol src))))
+
+(defun br-hoho-lay (e)
+  "An awakened Hoho's take-off (decision V9j, the user 2026-10-10: 「hoho 時會在原處留下 5 個軌跡」, JILLIEL 3, the owl 5): aim
+points round the spot he leaves (BR-HOHO-POINTS), L traces (their lines through him from the next step, decision V7), no
+flash step (the Hoho paid its own); the oldest drop past *BR-TRACE-MAX*."
+  (let* ((st (br e)) (p (pos-of e)) (owl (br-owl-form-p (fighter-form (fighter e))))
+         (pts (br-hoho-points (aref p 0) (aref p 2) (if owl *br-owl-hoho-traces* *br-hoho-traces*))))
+    (dolist (pt pts)
+      (multiple-value-bind (n old) (br-live-traces e)
+        (when (>= n *br-trace-max*) (destroy-entity old) (pace e :traces-dropped)))
+      (destructuring-bind (x z) pt
+        (br-spawn-trace e st :l x z (f32 (dir-yaw (- (aref p 0) x) (- (aref p 2) z))) *br-trace-r*)))
+    (pace e :hoho-traces)))
 
 (defun br-lay (e)
   "A ranged lay's frame: he faces the opponent, pays the point (BR-LINE-COST; short of it, none) and sets it (SP1's by its
 frame, *BR-SP1-FAN*). Laying deals nothing."
-  (let* ((f (fighter e)) (g (gauges e)) (src (move-param e :trace)) (cost (br-line-cost src))
+  (let* ((f (fighter e)) (g (gauges e)) (src (move-param e :trace))
+         (cost (br-line-cost src (br-owl-form-p (fighter-form f)) (gauges-burst g)))   ; (decision V9j)
          (off (if (eq src :sp1) (or (second (assoc (fighter-sf f) *br-sp1-fan*)) 0.0) 0.0)))
     (turn-to-opp e f 10.0)
     (if (>= (gauges-fs g) cost)
@@ -1565,7 +1635,7 @@ frame, *BR-SP1-FAN*). Laying deals nothing."
 (no snap: decision V7), then gone; its flash (the owl's: 裁きの光明's gold)."
   (let ((owl (br-owl-form-p (fighter-form (fighter e)))))
     (setf (brh-live d) nil
-          (hazard-hw hz) (br-trace-hitwin (brh-src d) (kit-mult (kit-of e)))
+          (hazard-hw hz) (br-trace-hitwin (brh-src d) owl)
           (hazard-hits-left hz) 1 (hazard-life hz) (+ (hazard-age hz) 3))
     (cond (owl (br-spawn-look-at e :judge (hazard-x hz) (hazard-z hz) (hazard-yaw hz) 31.0 (brh-width d)
                                  (if (eq (brh-src d) :sp2) :thick t)))
@@ -1648,6 +1718,11 @@ V9f). T when one was."
 (defun br-rc-tick (e) "The recall strings: he keeps on the opponent (*BR-RC-TRACK*)." (halt! e) (turn-to-opp e (fighter e) (track-step *br-rc-track*)))
 (defun br-rc-shot (e) "A recall string's line: its look." (br-spawn-look e :shot *br-x-len* 0.05 t) (emit :sfx :lb-crack e))
 
+(defun br-near-point-p (px pz tx tz tr)
+  "Does a hurt cylinder at (TX TZ), radius TR, touch the *BR-MAT-BURST-R* m circle round a trace's aim point (PX PZ)
+(decision V9j: 「軌跡起點半徑內一樣會受到傷害」)?"
+  (<= (hypot (- tx px) (- tz pz)) (+ *br-mat-burst-r* tr)))
+
 (defun br-hz (h hz ev &optional a b c dd ee)
   "His hazards' hook: a trace's line from its aim point along BRH-UX / -UZ (only a materialised one has a hit), a 裁きの光明 ground line's burning span; the looks
 touch nothing."
@@ -1656,8 +1731,10 @@ touch nothing."
     (case ev
       (:touches
        (cond ((brh-p d)
-              (vol-hit-p (brh-vol d) (hazard-x hz) 0f0 (hazard-z hz) (brh-ux d) (brh-uz d)   ; (its line through him: V7)
-                         (f32 a) (f32 b) (f32 c) (f32 dd) (f32 ee) 0f0))
+              (or (vol-hit-p (brh-vol d) (hazard-x hz) 0f0 (hazard-z hz) (brh-ux d) (brh-uz d)   ; (its line through him: V7)
+                             (f32 a) (f32 b) (f32 c) (f32 dd) (f32 ee) 0f0)
+                  (and (not (eq (brh-src d) :snap))      ; (decision V9j: round its aim point too, *BR-MAT-BURST-R*)
+                       (br-near-point-p (hazard-x hz) (hazard-z hz) a c dd))))
              ((and (eq (hazard-kind hz) :br-misuji))
               (multiple-value-bind (from to) (br-misuji-span (hazard-age hz))
                 (and (> to from)
@@ -1773,14 +1850,14 @@ miss, taken back)?"
   "Does his CPU back off (J3 -> L) with N traces live (K: the kit's :backstep): at least :min (decision V8a: the backstep spends
 one, and TENSHIN in back needs another: :min 2 keeps one for it; no flash step since)?"
   (and k (>= n (getf k :min 1)) t))
-(defun br-ai-lay-plan (fs bars d near r k)
+(defun br-ai-lay-plan (fs bars d near r k &optional (l *br-lay-l*))
   "His ranged CPU's lay (K: the kit's :lay) at D metres with FS flash step and BARS Reiatsu bars, NEAR traces near him: from
 :far m while fewer than :n of :fire lie near (passed as NEAR's cap by the caller), the price leaving >= :reserve: SP1's fan
 (:SP1) on one roll R under :sp1 with a bar, else L (:SIG); NIL. (Decision V8b: L lays from range again, as before V8.)"
   (when (and k (>= d (getf k :far 4.0)) (< near (getf k :cap 99)))
     (let ((res (getf k :reserve 15.0)))
       (cond ((and (>= bars 1) (>= (- fs *br-lay-sp1*) res) (< r (getf k :sp1 0.0))) :sp1)
-            ((>= (- fs *br-lay-l*) res) :sig)))))
+            ((>= (- fs l) res) :sig)))))   ; (L the L's price now, BR-L-PRICE: decision V9j)
 (defun br-ai-stance-plan (r p line)
   "An awakened form's answer to one threatening window, from its one roll R: :STANCE (R < P: U, MUJITTAI), else :STEP off a
 LINE, else :PASS (a Hoho on the generic roll, or nothing)."
@@ -2070,7 +2147,7 @@ snap), at range (its plan the shot); L pressed (the stance), or NIL."
 (defun br-ai-starved-p (e)
   "Can his CPU no longer lay an L above its :lay :reserve (then he goes in: an L into the reserve and its TENSHIN in, free
 past the lay; decision V6a; L lays from range again since decision V8b)?"
-  (let ((k (ai-table e :lay))) (and k (< (- (gauges-fs (gauges e)) *br-lay-l*) (getf k :reserve 10.0)))))
+  (let ((k (ai-table e :lay))) (and k (< (- (gauges-fs (gauges e)) (br-l-price e)) (getf k :reserve 10.0)))))
 
 (defun br-ai-stay (e b d)
   "His ranged CPU's stay (batch 6): coming into a ranged mode (the turn, the backstep, MUJITTAI's drop, the revival) picks
@@ -2167,7 +2244,7 @@ flash step staying over :reserve. L / SP1, or NIL."
       (let* ((g (gauges e)) (live (brs-live (br e)))
              (bored (and (>= (brai-steer-t ai) 0) (> (- *match-tick* (brai-steer-t ai)) (getf k :patience 90))))
              (plan (br-ai-lay-plan (gauges-fs g) (reiatsu-bars e) d (if bored 0 live) (sim-rnd01)
-                                   (list* :cap (brai-goal ai) k))))
+                                   (list* :cap (brai-goal ai) k) (br-l-price e))))
         (setf (brai-lay-t ai) (+ *match-tick* (getf k :every 12)))
         (when (and plan (kit-command-ok-p e plan))
           (when bored (setf (brai-steer-t ai) -1) (pace e :ai-lay-bored))
@@ -2574,7 +2651,7 @@ rest, J1 at the dash's end (L point -> J dash -> J1 ...); within *BR-DASH-LATE* 
 alone: it dashes (BR-MELEE-IN); else NIL (his J: J1 in place). (Decision V8's swing route gone: decision V8b.)"
   (when (and s (zerop (brs-late (br e))) (vpad-command-pressed-p vp :quick nil))
     (let ((q (kit-command-move (fighter-kit f) :q)))
-      (when (and q (> (fighter-dist f) (+ (mv-reach q) 0.2)) (>= (- (gauges-fs (gauges e)) *br-lay-l*) 10.0)
+      (when (and q (> (fighter-dist f) (+ (mv-reach q) 0.2)) (>= (- (gauges-fs (gauges e)) (br-l-price e)) 10.0)
                  (kit-command-ok-p e :sig))
         (pace e :as-lay) :sig))))
 
@@ -2585,7 +2662,7 @@ next J cancels that lay into TENSHIN in (2 f; it spends the farthest trace and f
 pendulum). A command, :NONE or NIL. (The L again since decision V8b; SP1's fan under V8.)"
   (cond ((bras-done a) (vpad-consume! vp :quick) :none)
         ((and (br-backstep-lay-ok-p (fighter-sf f)) (vpad-command-pressed-p vp :quick nil)
-              (>= (- (gauges-fs (gauges e)) *br-lay-l*) 10.0))
+              (>= (- (gauges-fs (gauges e)) (br-l-price e)) 10.0))
          (br-as-press e a :as-lay :sig))))
 
 (defun br-assist-combo (e f b s d vp)
@@ -2618,9 +2695,9 @@ vpad VP: a command, :NONE (the route holds the step) or NIL (the generic AUTO CO
 
 (defun barro-probe-line (tag)
   (let ((g1 (gauges *p1*)) (g2 (gauges *p2*)) (st (br *p1*)))
-    (log-msg "duel probe barro ~a t ~d p1 ~a ~a r~d k~d fs ~d snipe ~d live ~d revive ~a | p2 ~a r~d gg ~d | d ~,2f"
+    (log-msg "duel probe barro ~a t ~d p1 ~a ~a r~d k~d fs ~d rei ~,1f snipe ~d live ~d revive ~a | p2 ~a r~d gg ~d | d ~,2f"
              tag *match-tick* (fighter-form (fighter *p1*)) (state-of *p1*) (gauges-reishi g1) (gauges-konpaku g1)
-             (round (gauges-fs g1)) (brs-snipe st) (br-live-traces *p1*) (bankai-ready-p *p1*)
+             (round (gauges-fs g1)) (gauges-reiatsu g1) (brs-snipe st) (br-live-traces *p1*) (bankai-ready-p *p1*)
              (state-of *p2*) (gauges-reishi g2) (round (gauges-gg g2)) (fighter-dist (fighter *p1*)))))
 
 (defun barro-test (k)

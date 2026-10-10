@@ -148,7 +148,9 @@ damage through as chip (on top of a DRINK's taken half). A Kikon rush strike (MV
 hit; one that hits with ATT still holding the button that started it (KIKON-OUTCOME) knocks DEF back into
 a short stagger and ATT's rush dashes in after him to the follow-up strike (phase :follow), whose hit is the
 Kikon (no damage, queued in *KIKONS* for SETTLE-SOULS): a guard held during the dash blocks it unless DEF
-is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no effect)."
+is RED (KIKON-FOLLOW-UNGUARDABLE-P). A window flagged :flat deals exactly its damage: no form or taken multiplier, no
+combo scaling, no counter bonus (Lille II's materialised traces, DUEL_LILLE_V2 decision V9j). Returns RESOLVE-CONTACT's
+result (NIL = no effect)."
   (let* ((fa (fighter att)) (fd (fighter def)) (flags (hw-flags hw))
          (p (pos-of def))
          (d2 (+ (expt (- (aref p 0) sx) 2) (expt (- (aref p 2) sz) 2)))   ; DEF's distance (squared) from the attacker
@@ -174,9 +176,12 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                                :in-front (in-front-p (yaw-of def) (aref p 0) (aref p 2) sx sz *guard-arc*)
                                :unguardable (or (member :unguardable flags) (and fstrike (kikon-follow-unguardable-p red)))
                                :hazard ranged :ward ward :rend (member :rend flags)))
-         (atk (kit-atk-mods (kit-of att) (- *konpaku-max* (gauges-konpaku (gauges att)))
-                            (* (if (eq res :blocked) 1.0 (+ 1.0 k)) (if (and own (fighter-assisted fa)) *assist-mult* 1.0))))   ; ASSIST
-         (dmods (if optic '(:mult 1.0) (kit-def-mods (kit-of def))))   ; (a ranged hit through Rukia's ward: x1.0 taken)
+         (flat (member :flat flags))                    ; a :flat window deals its damage as written (Lille II's traces)
+         (atk (if flat
+                  '(:mult 1.0)
+                  (kit-atk-mods (kit-of att) (- *konpaku-max* (gauges-konpaku (gauges att)))
+                                (* (if (eq res :blocked) 1.0 (+ 1.0 k)) (if (and own (fighter-assisted fa)) *assist-mult* 1.0)))))   ; ASSIST
+         (dmods (if (or optic flat) '(:mult 1.0) (kit-def-mods (kit-of def))))   ; (a ranged hit through Rukia's ward: x1.0 taken)
          (x (or x (aref p 0))) (z (or z (aref p 2))) (y (+ (aref p 1) 1.1))
          (base (+ (hw-dmg hw) bonus))
          (outcome (and rush (kikon-outcome (vpad-down (pilot-vpad (pilot att)) :kikon) res fstrike)))
@@ -210,7 +215,7 @@ is RED (KIKON-FOLLOW-UNGUARDABLE-P). Returns RESOLVE-CONTACT's result (NIL = no 
                     (blow (and *stun-blow-away* (not rush) (not (eq (gauges-burst (gauges att)) :orange))   ; (off since 2026-10-10)
                                (stun-over-p st (stun-tolerance-of (kit-of def)))))
                     (react (if blow :knockdown react))
-                    (dmg (let ((d (hit-damage base atk dmods hits (eq res :counter))))   ; :spare never takes the last point
+                    (dmg (let ((d (hit-damage base atk dmods (if flat 1 hits) (and (not flat) (eq res :counter)))))   ; :spare: never the last point
                            (if (member :spare flags) (min d (max 0 (1- (gauges-reishi (gauges def))))) d)))
                     (stun (cond (follow (kikon-follow-stun red (mv-s mv)))
                                 ((and (hw-stun hw) (eq react (hw-react hw))) (hw-stun hw))   ; (a bind in a combo: a flinch)
