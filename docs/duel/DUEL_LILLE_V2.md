@@ -107,6 +107,17 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
 
+### Decision V9c (2026-10-10): the snap shot linked to the Step and to J
+
+The user: 「然後透過以下更改強化速射的性能：1. 減少 step 跟速射之間的切換硬直 2. 讓速射跟 J 可以互相銜接」. Choices: 「兩邊都可取消」;
+「J 連段→L 開架→J 速射；速射命中→J1」.
+
+- Step → snap: a J from the stance Step's **f3** fires the snap (was f6, the stance's return) [G f3].
+- Snap → Step: the snap's recovery after its shot cancels into the stance Step while this stance's Step is unused; the Step
+  returns to the stance, which may fire again. Still one Step per stance.
+- J → snap: L after a J1 / J2 / J3 hit or block opens the stance at f4 (as after a K link), then J = the snap.
+- Snap → J: on the snap's hit its recovery cancels into J1 (a link; J1 connects only if he is close).
+
 ### Decision V9 (2026-10-10): the stance's J = HOSHA with 萬物貫通, its K = a shot by the pips spent
 
 The user: 「還有常態的 J 改成原本的前衝三連發， K 改成依據累積的資源數打出不同效果的槍擊」. Choices: 「架式 J，但花 1 格且帶萬物貫通」;
