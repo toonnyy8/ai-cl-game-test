@@ -45,6 +45,10 @@ the user (as metres).")
   "The 狙擊 gauge's pips (BRS-SNIPE): 0-3; +1 when the stance's L / SP1 / SP2 hits (once a move, not on a block), -1 for
 each J / K conversion. New, 2026-10-09, the user's decision V1 「3 格，命中 +1，轉換一次 -1」.")
 (defparameter *br-shot-dmg* 50 "The stance's L 万物貫通: damage, flat (new 2026-10-09 [G]; the old quick shot 40).")
+(defparameter *br-snipe-close* 3.0
+  "The stance's L 万物貫通 that hits him within this many metres fills 2 狙擊 pips, farther 1 (cap *BR-SNIPE-MAX*) (new
+2026-10-10, decision V8, the user: 「普攻累積的資源少，並增加額外高風險高回報率的資源回收手段」, close sniping 3 m: +2).")
+(defparameter *br-snipe-close-n* 2 "... the pips a close hit fills (new 2026-10-10, decision V8: +2; a far hit +1).")
 (defparameter *br-k-sanren-dmg* 30 "The stance's SP1: each of its three 萬物貫通 lines (new 2026-10-09 [G]).")
 (defparameter *br-k-hiren-dmg* 50 "The stance's SP2: the shot after the 6 m back-slide (new 2026-10-09 [G]).")
 (defparameter *br-snap-dmg* 40
@@ -77,6 +81,32 @@ connects only up close) (new 2026-10-10, decision V9c 「速射命中→J1」; f
 (defparameter *br-hiren-dmg* 40 "SP2 outside the stance: the shot after the slide, 20 m, no 萬物貫通 (new 2026-10-09 [G]).")
 (defparameter *br-plain-len* 20.0 "SP1 / SP2 outside the stance: their lines' length, metres (new 2026-10-09 [G]).")
 
+;; the two routes (decision V8, the user 2026-10-10: 「我想將設計轉成具有兩種不同特性的戰鬥風格 — 高速循環：特徵是高速、低攻、破綻小，
+;; 能取用部分累積的資源進行小爆發並不斷循環。 — 高攻循環：特徵是高攻、低速、破綻大，爆發時會將所有的資源一次輸出」; 「J / K feel split in every
+;; form」): every J / K string of every form (base J1-J3 / K1-K3, JILLIEL's wings, the owl's claws, their J2s / K2s copies)
+;; is written with its old numbers and BR-DEFSTRING applies these (BR-V8-SPEC); the clip plays at old-S / new-S (:clip-s),
+;; so it still reaches its hit pose on the new hit frame
+(defparameter *br-j-speed* 2
+  "Decision V8, the J route 「高速、低攻、破綻小」: a J's startup and recovery each this many frames shorter (new 2026-10-10;
+floors *BR-J-MIN-S* / *BR-J-MIN-R*) ...")
+(defparameter *br-j-min-s* 4 "... the startup at least this (new 2026-10-10, decision V8) ...")
+(defparameter *br-j-min-r* 6 "... the recovery at least this (new 2026-10-10, decision V8) ...")
+(defparameter *br-j-mult* 0.85 "... its damage x this, rounded (new 2026-10-10, decision V8) ...")
+(defparameter *br-j-adv* 2
+  "... and its block advantage this many frames higher (new 2026-10-10, decision V8 「raised toward ±0」 [G]: + 2 for every
+J, so J1 / J2 -2 -> 0, J3 -4 -> -2; the owl's +1 kept on top: -1 -> +1, -3 -> -1).")
+(defparameter *br-k-slow* 2
+  "Decision V8, the K route 「高攻、低速、破綻大」: a K's startup and recovery each this many frames longer (new 2026-10-10)
+...")
+(defparameter *br-k-link-slow* 1
+  "... but a K link's (K2 / K3 / K2s) effective startup (S - :enter, the budget's 14) only this many longer, 14 -> 15: its
+:enter grows by *BR-K-SLOW* - this (new 2026-10-10, decision V8 [G]: at + 2, 16, a J's 18 f flinch ends as K2s / K3
+hits (J's A 3 + 16 - 1 = 18): J -> K would no longer combo; 15 is the most that still does, host-tested) ...")
+(defparameter *br-k-mult* 1.20 "... its damage x this, rounded (new 2026-10-10, decision V8) ...")
+(defparameter *br-k-adv* -4
+  "... and its block advantage this many frames lower (new 2026-10-10, decision V8 「-4 more (punishable)」: K1 / K2 -3 -> -7,
+K3 -20 -> -24; the owl's -2 -> -6, -19 -> -23).")
+
 ;; JILLIEL (§5)
 (defparameter *br-walk-en* 3.0 "Walk m/s, ranged (EN, afloat; the old *WALK-JILLIEL*, copied 2026-10-09).")
 (defparameter *br-run-en* 8.0 "Run m/s, ranged (the old *RUN-JILLIEL*, copied 2026-10-09).")
@@ -99,9 +129,8 @@ V6, the user 2026-10-10: 「衝刺結束才能接」; the backstep's 8 f recover
 (defparameter *br-backstep-iframes* 9
   "... invulnerable on its frames 0-8 (new 2026-10-09 [G] 7, frames 0-6; decision V6, the user 2026-10-10: 7 -> 9). He is
 ranged from its f0 (f13 before, decision V6: 「後撤瞬間會變回遠程」).")
-(defparameter *br-backstep-fs* 10.0
-  "... and it costs this much flash step, refused when short (free before; decision V6, the user 2026-10-10: 10). Short, L
-after J3 does nothing (the old Lille's rule for TENSHIN out short of its price: refused, no mode turn; LILLE-OK).")
+;; (*BR-BACKSTEP-FS* 10, decision V6, is gone: decision V8a, the user 2026-10-10: 「覺醒後的 L>J / J > L 前後衝刺都需要消耗一條軌跡才能
+;; 發動」, 「後撤不再扣閃步」: the backstep's price is one trace, BR-SPEND-FAR)
 (defparameter *br-tenshin-in* 7.0
   "Ranged J 転身 TENSHIN in (decision V6, the user 2026-10-10: 「我想把鐘擺循環重新帶入 L -> J 與 J -> L 的設計中」, 「照原版」;
 decision V6a: only out of a lay's window):
@@ -147,8 +176,12 @@ during the dash makes it K1: the old link, the last press wins).")
   "... its flash-step price, once per stance; refused (the press ignored) when short or already used (the old
 *LB-KAMAE-DASH-FS*, copied 2026-10-10, decision V6). No charge (Lille II has none).")
 (defparameter *br-lay-l* 3.0
-  "Ranged L: the flash step its one trace line costs; a lay is refused when the flash step is short of its price (new
-2026-10-09, the user: 「留下軌跡會消耗閃步量表」, 3 a line).")
+  "Ranged L: the flash step its one aim point costs (new 2026-10-09, the user: 「留下軌跡會消耗閃步量表」, 3 a line). Since
+decision V8 (the user 2026-10-10: 「L 放出軌跡時的揮擊動作也視為攻擊」, 「L 只有近程打中才會釋放瞄準點」) L is a swing that needs no
+flash step: only its HIT sets the point and pays this; a hit with less than this sets none (BR-SWING-POINT).")
+(defparameter *br-swing-dmg* 16
+  "Ranged L, the swing (decision V8, the user 2026-10-10: 「L 放出軌跡時的揮擊動作也視為攻擊」): damage (startup 7, active 3, recovery
+12, reach 1.8 m, arc 110, a flinch; new 2026-10-10 [G numbers from the decision's table: 7 f / 1.8 m / 16]).")
 (defparameter *br-lay-sp1* 9.0 "Ranged SP1: three lines, 3 each (new 2026-10-09, the user's rule; [G] the price).")
 (defparameter *br-lay-sp2* 9.0 "Ranged SP2: one thick line (new 2026-10-09 [G]).")
 (defparameter *br-trace-max* 16 "Live traces at most; a 17th drops the oldest (the old *LB-TRACE-MAX*, copied 2026-10-09).")
@@ -181,14 +214,28 @@ decision V4's 10 deg snap before, *BR-NEAR-DEG*, gone; the user 2026-10-10 「�
 (defparameter *br-owl-refund* 0.0 "The owl's materialised trace that hits: flash step back (the old owl's 5, 2026-10-09; decision V6: 5 -> 0) ...")
 (defparameter *br-owl-refund-block* 0.0 "... blocked (the old owl's 2, 2026-10-09; decision V6: 2 -> 0).")
 (defparameter *br-recall-f* 8 "K3 -> L 回收: the recall's frames before its derivative string (new 2026-10-09 [G]).")
-(defparameter *br-recall-tiers* '((0 0) (1 1) (2 1) (3 2) (4 2) (5 2))
-  "The recall's tier by the traces counted (n tier); 6 and up: tier 3 (new 2026-10-09 [G]: 0 / 1-2 / 3-5 / 6+).")
-(defparameter *br-rc0-dmg* 30 "Recall tier 0 空收 (n = 0): one 萬物貫通 line (new 2026-10-09 [G]; the gate's lever).")
-(defparameter *br-rc1-dmg* 40 "Recall tier 1 二連 (n 1-2): each of two lines (new 2026-10-09 [G]).")
-(defparameter *br-rc2-dmg* 35 "Recall tier 2 四連 (n 3-5): each of the first three lines ... (new 2026-10-09 [G])")
-(defparameter *br-rc2-last* 45 "... and the launching fourth (new 2026-10-09 [G]).")
-(defparameter *br-rc3-dmg* 30 "Recall tier 3 裁き (n >= 6): each of the first four lines ... (new 2026-10-09 [G])")
-(defparameter *br-rc3-last* 90 "... and the fifth (new 2026-10-09 [G]).")
+(defparameter *br-recall-tiers* '((0 0) (1 1) (2 1) (3 2) (4 2) (5 2) (6 3) (7 3) (8 3) (9 3))
+  "The recall's tier by the traces counted (n tier); 10 and up: tier 4 (new 2026-10-09 [G]: 0 / 1-2 / 3-5 / 6+; decision V8,
+the user 2026-10-10: five super-linear tiers 0 / 1-2 / 3-5 / 6-9 / 10+ = 30 / 70 / 160 / 300 / 480, 10+ a new move :BR-RC4).")
+(defparameter *br-rc0-dmg* 30 "Recall tier 0 空收 (n = 0): one 萬物貫通 line (new 2026-10-09 [G]; the gate's lever; decision V8: 30 kept).")
+(defparameter *br-rc1-dmg* 35
+  "Recall tier 1 二連 (n 1-2): each of two lines (new 2026-10-09 [G] 40; decision V8, 2026-10-10: the tier's 80 -> 70, 40 -> 35).")
+(defparameter *br-rc2-dmg* 37
+  "Recall tier 2 四連 (n 3-5): each of the first three lines ... (new 2026-10-09 [G] 35; decision V8: the tier's 150 -> 160, 35 -> 37)")
+(defparameter *br-rc2-last* 49 "... and the launching fourth (new 2026-10-09 [G] 45; decision V8: 45 -> 49, 3 x 37 + 49 = 160).")
+(defparameter *br-rc3-dmg* 43
+  "Recall tier 3 裁き (n 6-9, 6+ before V8): each of the first four lines ... (new 2026-10-09 [G] 30; decision V8: the tier's
+210 -> 300, 30 -> 43)")
+(defparameter *br-rc3-last* 128 "... and the fifth (new 2026-10-09 [G] 90; decision V8: 90 -> 128, 4 x 43 + 128 = 300).")
+(defparameter *br-rc4-dmg* 40
+  "Recall tier 4 裁き・極 (n >= 10, decision V8, the user 2026-10-10: 「畫新的動作」): each of the six beats at f6 / f12 / f18 /
+f24 / f30 / f36, 萬物貫通 lines from the wing tips ... (new 2026-10-10 [G])")
+(defparameter *br-rc4-last* 240
+  "... and the beam at f48 (NIJUSHI-KO's ring f38-f47 before it), 萬物貫通, a knockdown; 6 x 40 + 240 = 480; recovery 30 (new
+2026-10-10, decision V8 [G]).")
+(defparameter *br-rc4-clip* :br-rc3
+  "The clip :BR-RC4 plays (the art agent draws :br-rc4 and the owl's :br-o-rc4, decision V8 「畫新的動作」): until then :br-rc3
+(the owl's :br-o-rc3 through *BR-OWL-CLIP-MAP*). When it lands: :br-rc4 here and (:br-rc4 :br-o-rc4) in the owl's map.")
 (defparameter *br-rc-stun* 28 "The recall strings' lines before the last stagger this many frames: the next line combos (new 2026-10-09 [G]).")
 (defparameter *br-rc-track* 360.0 "Degrees / s he turns at the opponent through the recall strings (new 2026-10-09 [G]).")
 
@@ -231,10 +278,13 @@ copied 2026-10-09; the moves carry the numbers).")
   (and (member :x-axis (hw-flags hw)) (member :uncatchable (hw-flags hw)) (member :ranged (hw-flags hw))
        (eql (hw-guard hw) *br-x-guard*) (hw-chip hw) (< (abs (- (hw-chip hw) *br-x-chip*)) 1e-6) t))
 
-(defun br-snipe-after (n contact)
+(defun br-snipe-after (n contact &optional dist close)
   "The 狙擊 gauge after one of the stance's L / SP1 / SP2 moves made CONTACT (:hit / :block / NIL) for the first time: +1 on a
-hit, at most *BR-SNIPE-MAX*; a block or a whiff nothing (decision V1)."
-  (if (eq contact :hit) (min *br-snipe-max* (1+ n)) n))
+hit, at most *BR-SNIPE-MAX*; a block or a whiff nothing (decision V1). A CLOSE move (the stance's L, its :snipe-close) hitting
+him DIST <= *BR-SNIPE-CLOSE* m away fills *BR-SNIPE-CLOSE-N* (decision V8: close sniping, +2 within 3 m)."
+  (if (eq contact :hit)
+      (min *br-snipe-max* (+ n (if (and close dist (<= dist *br-snipe-close*)) *br-snipe-close-n* 1)))
+      n))
 (defun br-snipe-spend (n)
   "The stance's J (the snap shot) at N pips: values the pips left and whether it converts (N >= 1, one spent); at 0 the
 stance drops into J1 (「一般攻擊」)."
@@ -277,10 +327,10 @@ every one, else none."
   (and (<= (+ *br-kamae-up* *br-kamae-tap*) sf) (< sf (+ *br-kamae-up* *br-kamae-max*)) (not held)))
 
 (defun br-lay-price (form command)
-  "The flash step COMMAND lays traces for in FORM (§5.2): a ranged mode's L *BR-LAY-L*, SP1 *BR-LAY-SP1*, SP2 *BR-LAY-SP2*;
-anything else 0 (melee SP1 / SP2 fire directly, the user 2026-10-09)."
+  "The flash step COMMAND needs to start in FORM (§5.2): a ranged mode's SP1 *BR-LAY-SP1*, SP2 *BR-LAY-SP2*; anything else 0
+(melee SP1 / SP2 fire directly, the user 2026-10-09; the ranged L is a swing since decision V8: its hit pays *BR-LAY-L*)."
   (if (br-ranged-form-p form)
-      (case command (:sig *br-lay-l*) (:sp1 *br-lay-sp1*) (:sp2 *br-lay-sp2*) (t 0.0))
+      (case command (:sp1 *br-lay-sp1*) (:sp2 *br-lay-sp2*) (t 0.0))   ; (decision V8: L is a swing, free; its hit pays)
       0.0))
 (defun br-lay-ok-p (form command fs) "May COMMAND start in FORM with FS flash step (BR-LAY-PRICE: refused when short)?"
   (>= fs (br-lay-price form command)))
@@ -322,10 +372,6 @@ within *BR-NEAR-R* (BR-NEAR-P), a tie the newer (the larger id). Its id, or NIL.
   "A trace's hit volume: a :cap from its aim point (0) along its line, *BR-TRACE-LEN* long, radius *BR-TRACE-R* (SP2's
 *BR-TRACE-R-THICK*) (decision V7: the shot runs from the point through him and on)."
   (make-vol :cap (list 0.0 *br-trace-len* 1.2 (if (eq src :sp2) *br-trace-r-thick* *br-trace-r*))))
-(defun br-k-mat-p (params contact)
-  "Does a melee K (PARAMS has :mat-k) materialise a trace on CONTACT: a touch, hit or block; never a whiff (decision V6:
-「只有 J，然後 K 揮空不再觸發實體化」, 「命中或被防都觸發」)?"
-  (and (getf params :mat-k) (member contact '(:hit :block)) t))
 (defun br-tenshin-dist (d)
   "TENSHIN in's dash, metres, at him D metres away: at most *BR-TENSHIN-IN*, stopping *BR-TENSHIN-STOP* short (none when
 he is nearer) (the old LB-SWITCH-DIST's in-case, copied 2026-10-10)."
@@ -346,10 +392,28 @@ NIL (J1 in place). Before LAST it is latched and dashes at LAST; from LAST to EN
 V6c). A lay that set no point (refused for lack of flash step) never dashes: its latched J is J1 in place at its end."
   (cond ((< press last) last)
         ((< press (+ end *br-dash-late*)) press)))
+(defun br-swing-p (mv) "Is MV the ranged L's swing (decision V8: :params :swing, JILLIEL's and the owl's)?" (and (getf (mv-params mv) :swing) t))
 (defun br-last-point (mv)
-  "The move frame a ranged lay MV sets its last point on (its last BR-LAY on-frame: L f4, SP1 f18, SP2 f20, the owl's SP2 f12)."
-  (let ((last 0)) (loop for (fr fn) in (mv-on-frame mv) when (and (eq fn 'br-lay) (> fr last)) do (setf last fr)) last))
-(defun br-backstep-ok-p (fs) "May J3 -> L backstep with FS flash step (*BR-BACKSTEP-FS*, decision V6)?" (>= fs *br-backstep-fs*))
+  "The move frame a ranged lay MV opens TENSHIN in's window on: its last BR-LAY on-frame (SP1 f18, SP2 f20, the owl's SP2
+f12); the L swing's (decision V8, it sets its point on a hit) the end of its active frames, S + A (f10), hit or whiff."
+  (if (br-swing-p mv)
+      (+ (mv-s mv) (mv-a mv))
+      (let ((last 0)) (loop for (fr fn) in (mv-on-frame mv) when (and (eq fn 'br-lay) (> fr last)) do (setf last fr)) last)))
+(defun br-swing-point-p (contact fs)
+  "Does the ranged L's swing set its aim point (and pay *BR-LAY-L*): only on a HIT (CONTACT :hit; a block or a whiff none)
+with FS >= *BR-LAY-L* flash step (decision V8, the user 2026-10-10: 「L 只有近程打中才會釋放瞄準點」; [G] a hit short of 3 sets
+none)?"
+  (and (eq contact :hit) (>= fs *br-lay-l*)))
+(defun br-pick-far (cands)
+  "The trace a dash spends (decision V8a, the user 2026-10-10: 「覺醒後的 L>J / J > L 前後衝刺都需要消耗一條軌跡才能發動」,
+「最遠那條，不射出」): CANDS a list of (id dist) for the live traces (dist: the line's ground distance to the opponent); the
+FARTHEST, a tie the older (the smaller id). Its id, or NIL (no trace: no dash)."
+  (let ((best nil) (bd 0.0))
+    (dolist (c cands)
+      (destructuring-bind (id d) c
+        (when (or (null best) (> d bd) (and (= d bd) (< id best)))
+          (setf best id bd d))))
+    best))
 (defun br-backstep-lay-ok-p (sf) "May a ranged lay start on the backstep's frame SF: from the dash's end (*BR-BACKSTEP-F*, decision V6)?"
   (>= sf *br-backstep-f*))
 (defun br-kamae-step-ok-p (dashed fs)
@@ -369,15 +433,16 @@ V6c). A lay that set no point (refused for lack of flash step) never dashes: its
     (:hit (if owl *br-owl-refund* *br-refund*))
     (:block (if owl *br-owl-refund-block* *br-refund-block*))
     (t 0.0)))
-(defun br-recall-tier (n) "The recall's tier (0-3) for N traces taken back (*BR-RECALL-TIERS*: 0 / 1-2 / 3-5 / 6+)."
-  (or (second (assoc n *br-recall-tiers*)) 3))
-(defun br-recall-move (tier) "The derivative string's move for TIER." (svref #(:br-rc0 :br-rc1 :br-rc2 :br-rc3) tier))
+(defun br-recall-tier (n) "The recall's tier (0-4) for N traces taken back (*BR-RECALL-TIERS*: 0 / 1-2 / 3-5 / 6-9 / 10+, decision V8)."
+  (or (second (assoc n *br-recall-tiers*)) 4))
+(defun br-recall-move (tier) "The derivative string's move for TIER." (svref #(:br-rc0 :br-rc1 :br-rc2 :br-rc3 :br-rc4) tier))
 (defun br-recall-damage (tier)
   "The damages of TIER's lines in order, before the form's x (the host test's view of the moves' windows)."
   (case tier
     (0 (list *br-rc0-dmg*)) (1 (list *br-rc1-dmg* *br-rc1-dmg*))
     (2 (list *br-rc2-dmg* *br-rc2-dmg* *br-rc2-dmg* *br-rc2-last*))
-    (t (list *br-rc3-dmg* *br-rc3-dmg* *br-rc3-dmg* *br-rc3-dmg* *br-rc3-last*))))
+    (3 (list *br-rc3-dmg* *br-rc3-dmg* *br-rc3-dmg* *br-rc3-dmg* *br-rc3-last*))
+    (t (append (make-list 6 :initial-element *br-rc4-dmg*) (list *br-rc4-last*)))))
 (defun br-l-link-ok-p (l-name cur-name cur-kind cur-ender)
   "May the L link L-NAME start off the running move (CUR-NAME, CUR-KIND, CUR-ENDER its :ender flag): the recall only off a
 K3 (a :flash ender), the backstep only off a J3 (a :quick ender); the stance after any K link (the old rule); anything else
@@ -393,12 +458,13 @@ yes (§5.1: 「K 連段的結尾接入 L」, 「J 連段的結尾接入 L」)."
 會打斷後搖接入架式然後又可以繼續 J / K => L 這樣無限循環到對手倒地」, the pick 「0 格時連段中的 L 不能開架」): at 0 pips the stance's J / K are
 J1 / K1 (V9d), so the link closed a loop that cost nothing; with pips each turn spends one (the snap) or all (the K)."
   (or (not (member l-name '(:br-kamae-k :br-kamae-j))) (>= snipe 1)))
-(defun br-l-route (cur-kind cur-ender)
+(defun br-l-route (cur-kind cur-ender &optional (live 1))
   "The move L pressed in a melee string link starts (the kit's :l-after-k / :l-after-j name the router :BR-L-LINK): off K3
-(a :flash ender, CUR-ENDER) the recall, off J3 (a :quick ender) the backstep, off J1 / J2 / K1 / K2 the plain L, the mode
-turn into ranged, as a cancel in the window the enders' links use (batch 4, 2026-10-09: the press was refused and eaten)."
+(a :flash ender, CUR-ENDER) the recall, off J3 (a :quick ender) the backstep while a trace is LIVE (decision V8a: it spends
+one; none: the plain mode turn in place, 「不衝刺」), off J1 / J2 / K1 / K2 the plain L, the mode turn into ranged, as a cancel
+in the window the enders' links use (batch 4, 2026-10-09: the press was refused and eaten)."
   (cond ((and cur-ender (eq cur-kind :flash)) :br-recall)
-        ((and cur-ender (eq cur-kind :quick)) :br-backstep)
+        ((and cur-ender (eq cur-kind :quick) (plusp live)) :br-backstep)
         (t :br-to-en)))
 (defun br-revive-ok-p (form free konpaku)
   "May P revive him into the owl (§6): any JILLIEL FORM (melee, ranged, MUJITTAI), FREE as for the first awakening, at most
@@ -417,10 +483,12 @@ turn into ranged, as a cancel in the window the enders' links use (batch 4, 2026
          (tail (max *br-misuji-from* (+ *br-misuji-from* (* *br-misuji-speed* (/ (- age *br-misuji-life*) 60.0))))))
     (values (min tail front) front)))
 (defun br-misuji-frames () "A 裁きの光明 line's life." (+ (ceiling (* 60 (- *br-misuji-to* *br-misuji-from*)) *br-misuji-speed*) *br-misuji-life*))
-(defun br-ai-kamae-plan (r d reeling snipe sp-ok &optional k (difficulty :normal) jlink step-ok)
+(defun br-ai-kamae-plan (r d reeling snipe sp-ok &optional k (difficulty :normal) jlink step-ok safe)
   "His CPU's follow-up in the stance, picked once at its f6 from one roll R (§8; K: the stance's :ai :kamae, chances x the
 DIFFICULTY): at 3 pips the K (破陣弾, decision V9: every pip's shot) under :full; a stance opened off a J link (JLINK) with
-a pip the snap shot under :snap-link (decision V9c: J string -> L -> J); a REELING opponent the shot (it combos);
+a pip the snap shot under :snap-link (decision V9c: J string -> L -> J); a REELING opponent the shot (it combos); SAFE (his
+attack not coming) at <= 1 pip inside :close-in m the close snipe, the shot (+2 on a hit within 3 m, decision V8), under
+:close-shot (when it does not fire, the roll is rescaled for the rest);
 >= 1 pip and inside 4 m the K (its tier's back-slide shot) or the snap shot, half each; 0 pips inside :escape-in m the
 stance Step straight back (:KAMAE-STEP) under :escape while this stance's Step is there (STEP-OK: unused, its flash step;
 decision V9d: the K at 0 pips is the plain K1, no longer TAISHA's back-slide); with the bars (SP-OK) a quarter of the time
@@ -428,6 +496,10 @@ the stance's SP2 (inside 5 m) or SP1; else the shot."
   (cond ((and k (>= snipe 3) (< r (br-ai-chance (getf k :full 0.0) difficulty))) :kamae-k)
         ((and k jlink (>= snipe 1) (< r (br-ai-chance (getf k :snap-link 0.0) difficulty))) :kamae-j)
         (reeling :kamae-l)
+        ((and k safe (<= snipe 1) (< d (getf k :close-in 3.0))
+              (let ((p (br-ai-chance (getf k :close-shot 0.0) difficulty)))
+                (or (< r p) (progn (setf r (/ (- r p) (max 1e-6 (- 1.0 p)))) nil))))
+         :kamae-l)
         ((and (>= snipe 1) (< d 4.0)) (if (< r 0.5) :kamae-k :kamae-j))
         ((and k step-ok (< snipe 1) (< d (getf k :escape-in 3.0)) (< r (br-ai-chance (getf k :escape 0.0) difficulty)))
          :kamae-step)
@@ -442,19 +514,48 @@ the stance's SP2 (inside 5 m) or SP1; else the shot."
           ((>= snipe 1) :kamae-j)
           (t :kamae-l))))
 
+;;; ================================================================ the two routes' strings (decision V8)
+(defun br-v8-shift (on-frame s0 ds)
+  "ON-FRAME ((frame hook) ...) with every frame from the old startup S0 on moved by DS (the hit-frame hooks follow the hit)."
+  (loop for (fr fn) in on-frame collect (list (if (>= fr s0) (+ fr ds) fr) fn)))
+(defun br-v8-spec (route spec)
+  "Decision V8 (the user 2026-10-10, the two routes): a J / K string move's SPEC (written with its old numbers, the
+DUEL_STRINGS §2.1 budget's) for ROUTE :J (startup and recovery - *BR-J-SPEED*, floors *BR-J-MIN-S* / *BR-J-MIN-R*, damage x
+*BR-J-MULT*, block advantage + *BR-J-ADV*) or :K (startup and recovery + *BR-K-SLOW*, damage x *BR-K-MULT*, block advantage +
+*BR-K-ADV*); a K link's :enter + (*BR-K-SLOW* - *BR-K-LINK-SLOW*) (its effective startup 14 -> 15), a J's unchanged; its
+hit-frame hooks follow the new startup; :clip-s the old startup (the clip, authored at it,
+plays at old / new speed and still reaches its hit pose on the new hit frame). A new plist, each key once."
+  (let* ((j (eq route :j)) (s0 (getf spec :startup)) (r0 (getf spec :recovery))
+         (s1 (if j (max *br-j-min-s* (- s0 *br-j-speed*)) (+ s0 *br-k-slow*)))
+         (r1 (if j (max *br-j-min-r* (- r0 *br-j-speed*)) (+ r0 *br-k-slow*)))
+         (new (list :startup s1 :recovery r1
+                    :dmg (round (* (getf spec :dmg) (if j *br-j-mult* *br-k-mult*)))
+                    :adv-block (+ (getf spec :adv-block) (if j *br-j-adv* *br-k-adv*))
+                    :on-frame (br-v8-shift (getf spec :on-frame) s0 (- s1 s0))
+                    :enter (let ((n (or (getf spec :enter) 0)))
+                             (if (and (not j) (plusp n)) (+ n (- *br-k-slow* *br-k-link-slow*)) n))
+                    :clip-s (or (getf spec :clip-s) s0))))
+    (append new (loop for (k v) on spec by #'cddr unless (member k '(:startup :recovery :dmg :adv-block :on-frame :clip-s :enter))
+                      append (list k v)))))
+(defmacro br-defstring (route name &rest spec)
+  "DEFMOVE for one of his J (ROUTE :J) / K (:K) string links: SPEC with the old numbers, BR-V8-SPEC applies decision V8."
+  `(register-move ',name (br-v8-spec ,route ',spec)))
+
 ;;; ================================================================ base 万物貫通 (§4)
-;; the J / K strings: the old Lille's frames and clips, literal numbers (DUEL_STRINGS §2.1's budget)
-(defmove :br-j1 :kind :quick :clip :lb-q1 :startup 8 :active 3 :recovery 12 :dmg 26 :adv-block -2
+;; the J / K strings: the old Lille's frames and clips, literal numbers (DUEL_STRINGS §2.1's budget), decision V8 on top
+;; (BR-DEFSTRING: J S 6 / 5 / 7, R 10 / 11 / 16, 22 / 19 / 24, adv 0 / 0 / -2; K S 19 / 22 / 23 (:enter 7 / 8: S_eff 15),
+;; R 23 / 26 / 36, 58 / 58 / 84, adv -7 / -7 / -24)
+(br-defstring :j :br-j1 :kind :quick :clip :lb-q1 :startup 8 :active 3 :recovery 12 :dmg 26 :adv-block -2
   :reach 1.45 :arc 100 :on-hit :flinch)
-(defmove :br-j2 :kind :quick :clip :lb-q2 :startup 7 :active 3 :recovery 13 :dmg 22 :adv-block -2
+(br-defstring :j :br-j2 :kind :quick :clip :lb-q2 :startup 7 :active 3 :recovery 13 :dmg 22 :adv-block -2
   :reach 1.45 :arc 110 :on-hit :flinch)
-(defmove :br-j3 :kind :quick :clip :lb-jab :startup 9 :active 3 :recovery 18 :dmg 28 :adv-block -4
+(br-defstring :j :br-j3 :kind :quick :clip :lb-jab :startup 9 :active 3 :recovery 18 :dmg 28 :adv-block -4
   :reach 1.6 :arc 70 :on-hit :stagger :flags (:ender))
-(defmove :br-k1 :kind :flash :clip :lb-f1 :startup 17 :active 4 :recovery 21 :dmg 48 :adv-block -3
+(br-defstring :k :br-k1 :kind :flash :clip :lb-f1 :startup 17 :active 4 :recovery 21 :dmg 48 :adv-block -3
   :reach 2.05 :arc 150 :on-hit :stagger)
-(defmove :br-k2 :kind :flash :clip :lb-f2 :enter 6 :startup 20 :active 4 :recovery 24 :dmg 48 :adv-block -3
+(br-defstring :k :br-k2 :kind :flash :clip :lb-f2 :enter 6 :startup 20 :active 4 :recovery 24 :dmg 48 :adv-block -3
   :reach 2.05 :arc 100 :on-hit :stagger)
-(defmove :br-k3 :kind :flash :clip :lb-f3 :enter 7 :startup 21 :active 5 :recovery 34 :dmg 70 :adv-block -20
+(br-defstring :k :br-k3 :kind :flash :clip :lb-f3 :enter 7 :startup 21 :active 5 :recovery 34 :dmg 70 :adv-block -20
   :reach 2.15 :arc 60 :on-hit :crumple :flags (:ender))
 (defmove-copy :br-j2s :br-j2)
 (defmove-copy :br-k2s :br-k2)
@@ -469,10 +570,11 @@ the stance's SP2 (inside 5 m) or SP1; else the shot."
 (defmove-copy :br-kamae-re :br-kamae :enter *br-kamae-up* :on-frame nil)
 (defmove :br-k-dash :kind :sig :clip :lb-k-dash :startup *br-kamae-dash-f* :active 0 :recovery 0 :tick br-k-dash-tick
   :on-frame ((0 br-kamae-dash) (*br-kamae-back* br-kamae-back)))
-;; stance -> L 万物貫通: locked on the press, fired 10 f later; 50 flat, 萬物貫通; a hit fills a pip
+;; stance -> L 万物貫通: locked on the press, fired 10 f later; 50 flat, 萬物貫通; a hit fills a pip, within 3 m two (:snipe-close,
+;; decision V8: close sniping)
 (defmove :br-k-shot :kind :sig :clip :lb-k-shot :callout "X-AXIS" :startup 10 :active 2 :recovery 26 :dmg *br-shot-dmg*
   :adv-block -14 :track 0 :vol (:cap 0.6 *br-x-len* 1.2 0.25) :on-hit :stagger :kb 1.0 :chip *br-x-chip* :guard *br-x-guard*
-  :flags (:ranged :x-axis :uncatchable) :on-frame ((0 br-k-lock) (10 br-shot-fire)) :params (:lock 0 :snipe t :len *br-x-len*))
+  :flags (:ranged :x-axis :uncatchable) :on-frame ((0 br-k-lock) (10 br-shot-fire)) :params (:lock 0 :snipe t :snipe-close t :len *br-x-len*))
 ;; stance -> SP1: three 萬物貫通 lines (f12 / f22 / f32), turning 90 deg/s between them
 (defmove :br-k-sanren :kind :sp :clip :lb-sanren :callout "SANREN" :startup 12 :active 22 :recovery 24 :dmg *br-k-sanren-dmg*
   :adv-block -14 :track 90 :vol (:cap 0.6 *br-x-len* 1.2 0.25) :on-hit :flinch :kb 0.5 :chip *br-x-chip* :guard *br-x-guard*
@@ -527,18 +629,19 @@ the stance's SP2 (inside 5 m) or SP1; else the shot."
 ;; touches him, hit or block, never on a whiff (BARRO-HIT, :params :mat-k) (decision V6, the user 2026-10-10: 「把 J 改成就算
 ;; 近攻沒打中也會出發最近實體化」, 「只有 J，然後 K 揮空不再觸發實體化」). J1 / K1 start by putting him in melee (BR-MELEE-IN: J / K
 ;; pressed in ranged mode or its MUJITTAI, in place; decision V6a: a ranged J is TENSHIN in only in a lay's window)
-(defmove :br-w-j1 :kind :quick :clip :lb-w-q1 :startup 8 :active 3 :recovery 12 :dmg 24 :adv-block -2
+(br-defstring :j :br-w-j1 :kind :quick :clip :lb-w-q1 :startup 8 :active 3 :recovery 12 :dmg 24 :adv-block -2
   :reach 1.6 :arc 110 :on-hit :flinch :on-frame ((0 br-melee-in) (8 br-j-mat)))
-(defmove :br-w-j2 :kind :quick :clip :lb-w-q2 :startup 7 :active 3 :recovery 13 :dmg 24 :adv-block -2
+(br-defstring :j :br-w-j2 :kind :quick :clip :lb-w-q2 :startup 7 :active 3 :recovery 13 :dmg 24 :adv-block -2
   :reach 1.6 :arc 110 :on-hit :flinch :on-frame ((7 br-j-mat)))
-(defmove :br-w-j3 :kind :quick :clip :lb-w-q3 :startup 9 :active 3 :recovery 18 :dmg 30 :adv-block -4
+(br-defstring :j :br-w-j3 :kind :quick :clip :lb-w-q3 :startup 9 :active 3 :recovery 18 :dmg 30 :adv-block -4
   :reach 1.7 :arc 120 :on-hit :stagger :flags (:ender) :on-frame ((9 br-j-mat)))
-(defmove :br-w-k1 :kind :flash :clip :lb-w-f1 :startup 17 :active 4 :recovery 21 :dmg 50 :adv-block -3
-  :reach 2.2 :arc 150 :on-hit :stagger :on-frame ((0 br-melee-in)) :params (:mat-k t))
-(defmove :br-w-k2 :kind :flash :clip :lb-w-f2 :enter 6 :startup 20 :active 4 :recovery 24 :dmg 50 :adv-block -3
-  :reach 2.2 :arc 110 :on-hit :stagger :params (:mat-k t))
-(defmove :br-w-k3 :kind :flash :clip :lb-w-f3 :enter 7 :startup 21 :active 5 :recovery 34 :dmg 72 :adv-block -20
-  :reach 2.3 :arc 90 :on-hit :crumple :flags (:ender) :params (:mat-k t))
+;; (decision V8, the user 2026-10-10: 「K never fires a trace」: the K route keeps the pool for the recall; :mat-k gone)
+(br-defstring :k :br-w-k1 :kind :flash :clip :lb-w-f1 :startup 17 :active 4 :recovery 21 :dmg 50 :adv-block -3
+  :reach 2.2 :arc 150 :on-hit :stagger :on-frame ((0 br-melee-in)))
+(br-defstring :k :br-w-k2 :kind :flash :clip :lb-w-f2 :enter 6 :startup 20 :active 4 :recovery 24 :dmg 50 :adv-block -3
+  :reach 2.2 :arc 110 :on-hit :stagger)
+(br-defstring :k :br-w-k3 :kind :flash :clip :lb-w-f3 :enter 7 :startup 21 :active 5 :recovery 34 :dmg 72 :adv-block -20
+  :reach 2.3 :arc 90 :on-hit :crumple :flags (:ender))
 (defmove-copy :br-w-j2s :br-w-j2)
 (defmove-copy :br-w-k2s :br-w-k2)
 ;; melee SP1 / SP2: the old KIN's, fired directly (the user 2026-10-09: 「近戰模式的 SP1／SP2 跟原版一樣會直接放出」): SANREN
@@ -594,34 +697,49 @@ the stance's SP2 (inside 5 m) or SP1; else the shot."
          (36 38 :dmg *br-rc3-last* :on-hit :knockback :kb 2.0))
   :tick br-rc-tick :on-frame ((6 br-rc-shot) (12 br-rc-shot) (18 br-rc-shot) (24 br-rc-shot) (36 br-beam-shot))
   :params (:lock 0 :len *br-x-len* :width 1.2))
+;; 裁き・極 (n >= 10, decision V8, the user 2026-10-10: five tiers, 10+ 「畫新的動作」): six 40 beats at f6 / f12 / f18 / f24 /
+;; f30 / f36 (萬物貫通 lines from the wing tips at him), NIJUSHI-KO's ring f38-f47 (its tell at f38), the beam at f48, 240,
+;; 萬物貫通, a knockdown; recovery 30. Its clip *BR-RC4-CLIP* (:br-rc3 until the art agent's :br-rc4)
+(defmove :br-rc4 :kind :sig :clip *br-rc4-clip* :callout "SABAKI KIWAMI" :startup 6 :active 44 :recovery 30 :dmg *br-rc4-dmg*
+  :adv-block -14 :track 0 :vol (:cap 0.6 *br-x-len* 1.2 0.3) :on-hit :stagger :kb 0.3 :chip *br-x-chip* :guard *br-x-guard*
+  :flags (:ranged :x-axis :uncatchable)
+  :hits ((6 8 :stun *br-rc-stun*) (12 14 :stun *br-rc-stun*) (18 20 :stun *br-rc-stun*) (24 26 :stun *br-rc-stun*)
+         (30 32 :stun *br-rc-stun*) (36 38 :stun *br-rc-stun*)
+         (48 50 :dmg *br-rc4-last* :on-hit :knockdown :kb 2.0))
+  :tick br-rc-tick :on-frame ((6 br-rc-shot) (12 br-rc-shot) (18 br-rc-shot) (24 br-rc-shot) (30 br-rc-shot) (36 br-rc-shot)
+                              (38 br-nijushi-tell) (48 br-beam-shot))
+  :params (:lock 0 :len *br-x-len* :width 1.2))
 (defmove :br-w-breaker :kind :breaker :clip :lb-w-breaker :clip-2 :lb-w-ram :callout "JILLIEL")
 (defmove :br-w-kikon :kind :kikon :clip :lb-w-kikon :clip-2 :lb-w-kikon-fire :callout "KAMI NO SABAKI"
   :cine lb-jilliel-kikon-cine :startup 20 :active 3 :recovery 30 :whiff 30 :dmg 70 :adv-block -14 :track 0
   :vol (:cap 0.5 12.0 1.2 1.2) :on-hit :knockback :kb 2.0 :cooldown 90 :on-frame ((20 br-lane-shot))
   :params (:aura 8 :aim 120.0 :speed 0.0 :dash-max 0 :dash-track 0.0 :look :lane :follow-speed 14.0 :len 12.0))
-;; ranged: L sets one aim point (3), SP1 three, one a shot (9), SP2 one thick (9) (decision V7: 0.5 m behind him, its line
-;; through him, BR-LAY); laying deals nothing; refused when short. From the active end to the end of the recovery J cancels
-;; into TENSHIN in (BR-LAY-TICK, BR-DASH-WINDOW-P: the only TENSHIN in, decision V6a)
-(defmove :br-e-lay :kind :sig :clip :lb-e-q1 :startup 4 :active 3 :recovery 6 :tick br-lay-tick :on-frame ((4 br-lay))
-  :params (:trace :l))
+;; ranged: SP1 three aim points, one a shot (9), SP2 one thick (9) (decision V7: 0.5 m behind him, its line through him,
+;; BR-LAY); laying deals nothing; refused when short. L is a swing (decision V8, the user 2026-10-10: 「L 放出軌跡時的揮擊動作也視為
+;; 攻擊」, 「L 只有近程打中才會釋放瞄準點」): S 7, A 3, R 12, 1.8 m, arc 110, 16, a flinch; no flash step to swing; its HIT sets the
+;; point and pays 3 (BARRO-HIT, BR-SWING-POINT-P), a block or a whiff none. J in a lay's window (L: from its active end, hit or
+;; whiff: 「L 揮空也能接 J 前衝」) cancels into TENSHIN in (BR-LAY-TICK, BR-DASH-WINDOW-P), which spends a trace (decision V8a).
+;; The clip stays Lille's EN cast :lb-e-q1 (the art agent checks its reach)
+(defmove :br-e-lay :kind :sig :clip :lb-e-q1 :clip-s 4 :startup 7 :active 3 :recovery 12 :dmg *br-swing-dmg* :adv-block -2
+  :reach 1.8 :arc 110 :on-hit :flinch :tick br-lay-tick :params (:trace :l :swing t))
 (defmove :br-e-sanren :kind :sp :clip :lb-e-sanren :callout "SANREN" :startup 6 :active 14 :recovery 12 :tick br-lay-tick
   :on-frame ((6 br-lay) (12 br-lay) (18 br-lay)) :params (:trace :sp1))
 (defmove :br-e-nijushi :kind :sp :clip :lb-w-nijushi :clip-s 40 :callout "NIJUSHI-KO" :startup 20 :active 6 :recovery 15
   :track 0 :tick br-lay-tick :on-frame ((0 br-nijushi-tell) (20 br-lay)) :params (:lock 10 :track 60.0 :trace :sp2))
 
 ;;; ================================================================ the owl (§6): the old owl's numbers (R - 1, adv + 1)
-(defmove :br-o-j1 :kind :quick :clip :lb-o-q1 :startup 8 :active 3 :recovery 11 :dmg 26 :adv-block -1
+(br-defstring :j :br-o-j1 :kind :quick :clip :lb-o-q1 :startup 8 :active 3 :recovery 11 :dmg 26 :adv-block -1
   :reach 1.7 :arc 110 :on-hit :flinch :on-frame ((0 br-melee-in) (8 br-j-mat)))
-(defmove :br-o-j2 :kind :quick :clip :lb-o-q2 :startup 7 :active 3 :recovery 12 :dmg 26 :adv-block -1
+(br-defstring :j :br-o-j2 :kind :quick :clip :lb-o-q2 :startup 7 :active 3 :recovery 12 :dmg 26 :adv-block -1
   :reach 1.7 :arc 110 :on-hit :flinch :on-frame ((7 br-j-mat)))
-(defmove :br-o-j3 :kind :quick :clip :lb-o-q3 :startup 9 :active 3 :recovery 17 :dmg 32 :adv-block -3
+(br-defstring :j :br-o-j3 :kind :quick :clip :lb-o-q3 :startup 9 :active 3 :recovery 17 :dmg 32 :adv-block -3
   :reach 1.7 :arc 120 :on-hit :stagger :flags (:ender) :on-frame ((9 br-j-mat)))
-(defmove :br-o-k1 :kind :flash :clip :lb-o-f1 :startup 17 :active 4 :recovery 20 :dmg 54 :adv-block -2
-  :reach 2.3 :arc 150 :on-hit :stagger :on-frame ((0 br-melee-in)) :params (:mat-k t))
-(defmove :br-o-k2 :kind :flash :clip :lb-o-f2 :enter 6 :startup 20 :active 4 :recovery 23 :dmg 54 :adv-block -2
-  :reach 2.3 :arc 110 :on-hit :stagger :params (:mat-k t))
-(defmove :br-o-k3 :kind :flash :clip :lb-o-f3 :enter 7 :startup 21 :active 5 :recovery 33 :dmg 78 :adv-block -19
-  :reach 2.3 :arc 90 :on-hit :crumple :flags (:ender) :params (:mat-k t))
+(br-defstring :k :br-o-k1 :kind :flash :clip :lb-o-f1 :startup 17 :active 4 :recovery 20 :dmg 54 :adv-block -2
+  :reach 2.3 :arc 150 :on-hit :stagger :on-frame ((0 br-melee-in)))
+(br-defstring :k :br-o-k2 :kind :flash :clip :lb-o-f2 :enter 6 :startup 20 :active 4 :recovery 23 :dmg 54 :adv-block -2
+  :reach 2.3 :arc 110 :on-hit :stagger)
+(br-defstring :k :br-o-k3 :kind :flash :clip :lb-o-f3 :enter 7 :startup 21 :active 5 :recovery 33 :dmg 78 :adv-block -19
+  :reach 2.3 :arc 90 :on-hit :crumple :flags (:ender))
 (defmove-copy :br-o-j2s :br-o-j2)
 (defmove-copy :br-o-k2s :br-o-k2)
 ;; owl melee SP1 裁きの光明 (the old MISUJI: three SABAKI ground lines at -20 / 0 / +20 deg, one hit group, 70 each, 18 m)
@@ -640,8 +758,8 @@ the stance's SP2 (inside 5 m) or SP1; else the shot."
   :params (:aura 10 :aim 120.0 :speed 0.0 :dash-max 0 :dash-track 0.0 :look :lane :follow-speed 14.0 :len 12.0))
 ;; owl ranged: the old owl EN's casts with R - 1, laying as JILLIEL ranged's; J in a lay's window the owl's TENSHIN in (the old
 ;; :lb-o-switch-in-c), any other J the claws' J1 in place (decision V6a)
-(defmove :br-oe-lay :kind :sig :clip :lb-oe-q1 :startup 4 :active 3 :recovery 5 :tick br-lay-tick :on-frame ((4 br-lay))
-  :params (:trace :l))
+(defmove :br-oe-lay :kind :sig :clip :lb-oe-q1 :clip-s 4 :startup 7 :active 3 :recovery 11 :dmg *br-swing-dmg* :adv-block -1
+  :reach 1.8 :arc 110 :on-hit :flinch :tick br-lay-tick :params (:trace :l :swing t))   ; (the swing, the owl's R - 1, adv + 1)
 (defmove :br-oe-sabaki :kind :sp :clip :lb-oe-sabaki :callout "SABAKI NO KOMYO" :startup 6 :active 14 :recovery 11
   :tick br-lay-tick :on-frame ((6 br-lay) (12 br-lay) (18 br-lay)) :params (:trace :sp1))
 (defmove :br-oe-trompete :kind :sp :clip :lb-o-trompete :clip-s 60 :callout "TROMPETE" :startup 12 :active 6 :recovery 8
@@ -654,6 +772,7 @@ the stance's SP2 (inside 5 m) or SP1; else the shot."
 (defparameter *br-stand-ins*
   '((:br-recall :br-recall :br-o-recall :lb-w-fold) (:br-rc0 :br-rc0 :br-o-rc0 :lb-w-q3)
     (:br-rc1 :br-rc1 :br-o-rc1 :lb-w-sanren) (:br-rc2 :br-rc2 :br-o-rc2 :lb-e-sanren) (:br-rc3 :br-rc3 :br-o-rc3 :lb-w-nijushi)
+    (:br-rc4 :br-rc4 :br-o-rc4 :br-rc3)   ; (decision V8: to be drawn; *BR-RC4-CLIP* plays :br-rc3 / :br-o-rc3 till then)
     (:br-to-en :br-to-en :br-o-to-en :lb-w-fold) (:br-backstep :lb-w-tenshin :br-o-backstep :lb-w-tenshin))
   "His own moves' clips (JILLIEL's, the owl's) and the batch-1 stand-ins they replaced (the art batch, 2026-10-09).")
 (defparameter *br-owl-clip-map* '(:br-recall :br-o-recall :br-rc0 :br-o-rc0 :br-rc1 :br-o-rc1 :br-rc2 :br-o-rc2
@@ -677,7 +796,8 @@ pacing log (:struck); his looks (:draw, barro-art.lisp).")
 back into the stance (decision V6; the snap shot's cancel into it, V9c); the K's three tiers by the pips (:kamae-k / -k2 / -k3, BR-KAMAE-PICK picks one:
 decision V9; at 0 pips the plain K1, V9d).")
 (defparameter *br-recall-strings*
-  '((:br-recall :rc0 :br-rc0) (:br-recall :rc1 :br-rc1) (:br-recall :rc2 :br-rc2) (:br-recall :rc3 :br-rc3))
+  '((:br-recall :rc0 :br-rc0) (:br-recall :rc1 :br-rc1) (:br-recall :rc2 :br-rc2) (:br-recall :rc3 :br-rc3)
+    (:br-recall :rc4 :br-rc4))
   "The recall's derivative strings: non-button strings its f7 starts (BR-RECALL-FIRE).")
 (defparameter *br-melee-strings*
   (append *br-recall-strings*
@@ -702,7 +822,9 @@ decision V9; at 0 pips the plain K1, V9d).")
        :guard 0.5 :hoho 0.3 :dash 0.3 :dash-back 0.7 :block-string 0.3 :o-ender 0.3 :l-after-k 0.6 :l-after-j 0.3 :kikon-range 7.7
        :awaken (:min-taken 150)
        :zone (:p 0.5 :near 6.0) :pip (:p 0.6 :near 4.0) :reflex br-ai-reflex   ; (his CPU: batch 4, §13)
+       :close (:p 0.4 :near 3.0)                           ; (the stance for the close snipe, +2: decision V8)
        :kamae (:full 0.9 :escape 0.4 :escape-in 3.0        ; (the stance's K by pips: decision V9; :escape the Step at 0 pips: V9d)
+               :close-shot 0.5 :close-in 3.0               ; (the close snipe at <= 1 pip, safe: decision V8)
                :snap-link 0.8 :snap-j1 0.8 :snap-step 0.5 :snap-step-in 4.0 :dash-snap 0.6)   ; (the snap's links: V9c)
        :kamae-step (:p 0.4 :threat 0.5 :close 3.0 :rush 5.0)                     ; (the stance's Step: batch 6, §16)
        :hard (:near 2.5 :punish-f 18 :crush 40.0)))                              ; (the HARD layer: *BR-AI-HARD*)
@@ -725,8 +847,8 @@ decision V9; at 0 pips the plain K1, V9d).")
                (2.4 8.0 :sig 2 :step 1 :sp1 1 nil 1)
                (8.0 99.0 :sig 4 :step 1 nil 1))
        :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.8 :block-string 0.3 :o-ender 0.3 :kikon-range 8.5
-       :string-k 0.6 :recall (:p 0.6 :n 2 :low-n 1 :low 0.35 :off-n 1) :backstep (:p 0.6 :fs 13.0 :n 3)
-       :route (:p 0.6 :bank 5) :hard (:near 0.0 :punish-f 12 :crush 40.0)
+       :string-k 0.6 :recall (:p 0.6 :n 2 :low-n 1 :low 0.35 :off-n 1) :backstep (:p 0.6 :min 2)
+       :route (:p 0.6 :bank 6) :hard (:near 0.0 :punish-f 12 :crush 40.0)
        :stance (:p 0.4 :max 120 :gg 30) :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1)
        :sp-ender br-ai-sp-ender :opp-trace (:p 0.5) :opp-reflex br-opp-trace :reflex br-ai-reflex))
 
@@ -742,13 +864,14 @@ decision V9; at 0 pips the plain K1, V9d).")
   :commands (:q :br-w-j1 :sig :br-e-lay :sp1 :br-e-sanren :sp2 :br-e-nijushi)   ; (J: J1 in place, decision V6a)
   :ai (:intents (:approach 1 :pressure 0 :zone 5 :defend 2)
        :ranges (:approach (6.0 12.0) :pressure (6.0 9.0) :zone (6.0 12.0) :defend (8.0 12.0))
-       :moves ((0.0 3.0 :q 2 :f 2 :step 1)
-               (3.0 14.0 :sig 4 :sp1 1 :sp2 1 :f 1 nil 1)
-               (14.0 99.0 :sig 2 :step 1 nil 2))
+       :moves ((0.0 2.0 :sig 2 :q 2 :f 1 :step 1)          ; (decision V8: L the close swing; points from range by SP1 / SP2)
+               (2.0 14.0 :sp1 2 :sp2 1 :step 1 nil 2)
+               (14.0 99.0 :step 1 nil 2))
        :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.4 :dash-back 0.6 :kikon-range 8.5
        :fire (:p 0.8 :n 1 :in 8.0 :far-in 13.0 :close 3.0 :busy 0.5 :busy-f 30)
-       :lay (:far 4.0 :reserve 10.0 :every 12 :sp1 0.3 :near 6.0 :goal (2 4) :close-goal 1 :bank-p 0.25 :bank-goal 6
-             :patience 90)
+       :lay (:far 4.0 :reserve 10.0 :every 12 :sp1 0.7 :near 6.0 :goal (2 4) :close-goal 1 :bank-p 0.25 :bank-goal 6
+             :big-p 0.2 :big-goal 10 :safe 0.5 :patience 90)
+       :swing (:p 0.5)                                    ; (the close L swing that banks a point: decision V8)
        :steer (:p 0.4) :hard (:near 2.0 :punish-f 30 :crush 40.0)
        :stance (:p 0.4 :max 120 :gg 30) :bankai (:p 0.9 :opp-konpaku 4 :own-konpaku 1)
        :opp-trace (:p 0.5) :opp-reflex br-opp-trace :reflex br-ai-reflex))
@@ -771,8 +894,8 @@ decision V9; at 0 pips the plain K1, V9d).")
                (2.6 8.0 :step 1 :sp1 1 nil 1)
                (8.0 99.0 :sp2 2 :sig 1 :step 1 nil 1))
        :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.8 :block-string 0.3 :o-ender 0.3 :kikon-range 9.0
-       :string-k 0.6 :recall (:p 0.6 :n 2 :low-n 1 :low 0.35 :off-n 1) :backstep (:p 0.6 :fs 13.0 :n 3)
-       :route (:p 0.6 :bank 5) :hard (:near 0.0 :punish-f 12 :crush 40.0)
+       :string-k 0.6 :recall (:p 0.6 :n 2 :low-n 1 :low 0.35 :off-n 1) :backstep (:p 0.6 :min 2)
+       :route (:p 0.6 :bank 6) :hard (:near 0.0 :punish-f 12 :crush 40.0)
        :stance (:p 0.4 :max 120 :gg 30) :opp-reflect (:p 0.3)
        :sp-ender br-ai-sp-ender :opp-trace (:p 0.5) :opp-reflex br-opp-trace :reflex br-ai-reflex))
 
@@ -784,13 +907,14 @@ decision V9; at 0 pips the plain K1, V9d).")
   :commands (:q :br-o-j1 :sig :br-oe-lay :sp1 :br-oe-sabaki :sp2 :br-oe-trompete)   ; (J: J1 in place, decision V6a)
   :ai (:intents (:approach 1 :pressure 0 :zone 5 :defend 2)
        :ranges (:approach (6.0 12.0) :pressure (6.0 9.0) :zone (6.0 12.0) :defend (8.0 12.0))
-       :moves ((0.0 3.0 :q 2 :f 2 :step 1)
-               (3.0 14.0 :sig 4 :sp1 1 :sp2 1 :f 1 nil 1)
-               (14.0 99.0 :sig 2 :step 1 nil 2))
+       :moves ((0.0 2.0 :sig 2 :q 2 :f 1 :step 1)          ; (decision V8: L the close swing; points from range by SP1 / SP2)
+               (2.0 14.0 :sp1 2 :sp2 1 :step 1 nil 2)
+               (14.0 99.0 :step 1 nil 2))
        :guard 0.4 :neutral-guard 0.0 :hoho 0.3 :dash 0.4 :dash-back 0.6 :kikon-range 9.0
        :fire (:p 0.8 :n 1 :in 8.0 :far-in 13.0 :close 3.0 :busy 0.5 :busy-f 30)
-       :lay (:far 4.0 :reserve 10.0 :every 12 :sp1 0.3 :near 6.0 :goal (2 4) :close-goal 1 :bank-p 0.25 :bank-goal 6
-             :patience 90)
+       :lay (:far 4.0 :reserve 10.0 :every 12 :sp1 0.7 :near 6.0 :goal (2 4) :close-goal 1 :bank-p 0.25 :bank-goal 6
+             :big-p 0.2 :big-goal 10 :safe 0.5 :patience 90)
+       :swing (:p 0.5)                                    ; (the close L swing that banks a point: decision V8)
        :steer (:p 0.4) :hard (:near 2.0 :punish-f 30 :crush 40.0)
        :stance (:p 0.4 :max 120 :gg 30) :opp-trace (:p 0.5) :opp-reflex br-opp-trace :reflex br-ai-reflex))
 
@@ -810,7 +934,7 @@ decision V9; at 0 pips the plain K1, V9d).")
                                                             :br-k-senko :br-k-hajin
                                                             :br-e-sanren :br-e-nijushi :br-w-sanren :br-w-nijushi :br-misuji
                                                             :br-trompete :br-oe-sabaki :br-oe-trompete :br-k-snap :br-to-en
-                                                            :br-backstep :br-recall :br-rc0 :br-rc1 :br-rc2 :br-rc3 :br-k-dash)))
+                                                            :br-backstep :br-recall :br-rc0 :br-rc1 :br-rc2 :br-rc3 :br-rc4 :br-k-dash)))
                            *brush-callouts*)
                 '((:br-k-shot "万物貫通" "THE X-AXIS" nil) (:br-k-sanren "三連" "SANREN" nil) (:br-k-hiren "飛廉脚" "HIRENKYAKU" nil)
                   (:br-k-taisha "退射" "TAISHA" nil) (:br-k-senko "穿甲弾" "SENKO-DAN" nil)
@@ -821,7 +945,9 @@ decision V9; at 0 pips the plain K1, V9d).")
                   (:br-oe-sabaki "裁きの光明" "SABAKI NO KOMYO" nil) (:br-oe-trompete "神の喇叭" "TROMPETE" nil)
                   (:br-k-snap "速射" "SOKUSHA" nil) (:br-to-en "遠" "EN" nil) (:br-backstep "後退" "KOTAI" nil)
                   (:br-recall "回収" "KAISHU" nil) (:br-rc0 "回収" "KAISHU" nil) (:br-rc1 "二連" "NIREN" nil)
-                  (:br-rc2 "四連" "YONREN" nil) (:br-rc3 "裁き" "SABAKI" nil) (:br-k-dash "飛廉脚" "HIRENKYAKU" nil)))))
+                  (:br-rc2 "四連" "YONREN" nil) (:br-rc3 "裁き" "SABAKI" nil)
+                  (:br-rc4 "裁き" "SABAKI KIWAMI" nil)   ; (極 has no glyph yet: the art batch may bake it, glyphs-extra.lisp)
+                  (:br-k-dash "飛廉脚" "HIRENKYAKU" nil)))))
 
 ;;; ================================================================ his state (the sim's): a component on his fighter entity
 (defcomponent brs
@@ -877,11 +1003,10 @@ for the ASSIST gate's button-masher (habit :dumb, read as a human)."
   (let ((b (brain e))) (and b (not (brain-off b)) (not (eq (brain-habit b) :dumb)) b)))
 
 (defun barro-ok (e command combo)
-  "His kit's refusals: a lay short of its flash step (BR-LAY-OK-P: ranged L 3, SP1 9, SP2 9); the melee L router (an L
-latched in a J / K link) routed off the link it was pressed in (BR-L-ROUTE, kept in BRS-L-TO for its f0), the backstep
-refused short of its flash step (BR-BACKSTEP-OK-P, decision V6: the old TENSHIN out's rule, no mode turn instead), his CPU's only
-when it pays (BR-AI-L-OK-P: the recall at its count, the backstep with no trace and the flash step for lines); the owl's
-SP2 once sealed."
+  "His kit's refusals: a lay short of its flash step (BR-LAY-OK-P: ranged SP1 9, SP2 9; the L swing is free since decision
+V8); the melee L router (an L latched in a J / K link) routed off the link it was pressed in (BR-L-ROUTE, kept in BRS-L-TO for
+its f0): off J3 the backstep only with a live trace to spend, else the mode turn in place (decision V8a; no flash step since),
+his CPU's only when it pays (BR-AI-L-OK-P: the recall at its count, the backstep with its traces); the owl's SP2 once sealed."
   (let* ((f (fighter e)) (form (fighter-form f)) (g (gauges e)) (b (br-tick-brain e))
          (cur (and (eq (fighter-state f) :move) (fighter-move f))))
     (cond ((br-sp2-sealed-p command form (brs-sealed (br e))) nil)
@@ -889,10 +1014,9 @@ SP2 once sealed."
            (let ((l (mv-name combo)))
              (and cur
                   (if (eq l :br-l-link)
-                      (let ((to (br-l-route (mv-kind cur) (and (member :ender (mv-flags cur)) t))))
-                        (setf (brs-l-to (br e)) to)
-                        (and (or (not (eq to :br-backstep)) (br-backstep-ok-p (gauges-fs g)))   ; (decision V6: 10 FS)
-                             (or (null b) (br-ai-l-ok-p e to))))
+                      (let ((to (br-l-route (mv-kind cur) (and (member :ender (mv-flags cur)) t) (br-live-traces e))))
+                        (setf (brs-l-to (br e)) to)                                   ; (decision V8a: no trace, no backstep)
+                        (or (null b) (br-ai-l-ok-p e to)))
                       (and (br-l-link-ok-p l (mv-name cur) (mv-kind cur) (member :ender (mv-flags cur)))
                            (br-kamae-link-ok-p l (brs-snipe (br e)))))                ; (decision V9e: no pip, no stance link)
                   t)))
@@ -935,18 +1059,19 @@ check on its f59."
         (when (= (fighter-sf f) 59) (br-reflect-check e st mv))))))
 
 (defun barro-hit (att def res hw mv hazard ranged)
-  "After a hit he dealt (his kit's :hit): the stance's L / SP1 / SP2 fill a pip on their first hit (BR-SNIPE-AFTER); an
-awakened K touching him (hit or block) materialises one trace (decision V6; a J does at its first active frame, BR-J-MAT);
-a materialised trace's flash step back (BR-REFUND: 0 since decision V6); the pacing log."
+  "After a hit he dealt (his kit's :hit): the stance's L / SP1 / SP2 fill a pip on their first hit (BR-SNIPE-AFTER; the L
+two within 3 m, decision V8); the ranged L swing's hit sets its aim point (BR-SWING-POINT, decision V8); a K fires no trace
+(decision V8; a J does at its first active frame, BR-J-MAT); a materialised trace's flash step back (BR-REFUND: 0 since
+decision V6); the pacing log."
   (declare (ignore def ranged))
   (let ((st (br att)) (c (contact-of res)))
     (when (and mv (not hazard) (getf (mv-params mv) :snipe) (brs-armed st) (eq c :hit))   ; (a block fills nothing and
       (setf (brs-armed st) nil)                                                           ;  leaves the move armed)
-      (let ((n (br-snipe-after (brs-snipe st) c)))
-        (when (> n (brs-snipe st)) (pace att :snipe-fill))
+      (let ((n (br-snipe-after (brs-snipe st) c (fighter-dist (fighter att)) (getf (mv-params mv) :snipe-close))))
+        (when (> n (brs-snipe st)) (pace att (if (> n (1+ (brs-snipe st))) :snipe-fill2 :snipe-fill)))   ; (V8: +2 close)
         (setf (brs-snipe st) n)))
-    (when (and mv (not hazard) (br-k-mat-p (mv-params mv) c))                    ; (a K's touch: one trace,
-      (br-materialise-one att))                                                          ;  decision V6)
+    (when (and mv (not hazard) (br-swing-p mv))                                   ; (decision V8: the L swing's hit
+      (br-swing-point att c))                                                            ;  sets the point; K fires none)
     (when (and mv (not hazard) (eq c :hit) (member (mv-kind mv) '(:quick :flash)) (br-melee-form-p (fighter-form (fighter att))))
       (let ((b (br-tick-brain att))) (when b (br-ai-route-latch att b mv))))             ; (his CPU's route: batch 6)
     (when (and hazard (brh-p (hazard-data hazard)))
@@ -1091,7 +1216,9 @@ clears itself, so the fresh window after the Step picks again (with the Step spe
                                   (>= (gauges-reiatsu (gauges e)) (* (kit-command-cost (fighter-kit f) :sp1) *reiatsu-bar*))
                                   (ai-table e :kamae) (brain-difficulty b)
                                   (eq (mv-name (fighter-move f)) :br-kamae-j)
-                                  (br-kamae-step-ok-p (brs-dashed st) (gauges-fs (gauges e))))))
+                                  (br-kamae-step-ok-p (brs-dashed st) (gauges-fs (gauges e)))
+                                  (let ((s (br-ai-seen b)))           ; (safe: his attack not coming, the close snipe: V8)
+                                    (and s (not (br-ai-threat-p e s (fighter-dist f) *ai-threat-margin*)))))))
       (unless step (setf (brs-k-plan st) (br-learn-kamae e b (brs-k-plan st))))   ; (a learner's read of the shot, §13)
       (when (and (not step) (eq (brs-k-plan st) :kamae-step))   ; (decision V9d: the 0-pip escape / the learner's Step: straight back)
         (setf (brs-dash-dir st) 0f0)
@@ -1188,11 +1315,13 @@ pip to answer it: :KAMAE-STEP, its direction kept in BRS-DASH-DIR (off a lane: b
 (defun br-melee-in (e)
   "A melee J1's / K1's frame 0: pressed in a ranged mode (or its MUJITTAI, dropped there first), he is back in melee (the move goes
 on: the same move is melee's). A ranged J within *BR-DASH-LATE* frames after a lay that set its points (BRS-LATE) is
-TENSHIN in instead: its 2 f cancel copy starts here (decision V6c, the user 2026-10-10: 「整個放點招式＋收招後 10 幀」)."
+TENSHIN in instead: its 2 f cancel copy starts here (decision V6c, the user 2026-10-10: 「整個放點招式＋收招後 10 幀」), spending a
+trace (decision V8a: with none, the J1 in place goes on)."
   (let* ((f (fighter e)) (st (br e)) (form (fighter-form f)) (to (br-melee-of form)))
-    (cond ((and (plusp (brs-late st)) (br-ranged-form-p form) (eq (mv-kind (fighter-move f)) :quick))
+    (cond ((and (plusp (brs-late st)) (br-ranged-form-p form) (eq (mv-kind (fighter-move f)) :quick) (br-dash-ok-p e))
            (setf (brs-late st) 0)
            (start-move e (br-tenshin-cancel-move f))
+           (br-spend-far e)
            (pace e :tenshin-late))
           ((not (eq to form)) (set-form e to) (pace e :to-melee)))))
 
@@ -1210,10 +1339,11 @@ TENSHIN in instead: its 2 f cancel copy starts here (decision V6c, the user 2026
 (defun br-halt-tick (e) "The mode turns, the recall: no string chase (the slide is their only movement)." (halt! e))
 
 (defun br-backstep-go (e)
-  "J3 -> L f0 (decision V6): *BR-BACKSTEP-FS* flash step paid (BARRO-OK refused it short), *BR-BACKSTEP* m straight back
-from him over *BR-BACKSTEP-F*, iframes f0-8, ranged now."
+  "J3 -> L f0 (decision V6): one trace spent, the farthest from him, unfired (BR-SPEND-FAR; decision V8a, the user
+2026-10-10: 「最遠那條，不射出」, 「後撤不再扣閃步」: no flash step; BARRO-OK routed it here only with a trace), *BR-BACKSTEP* m
+straight back from him over *BR-BACKSTEP-F*, iframes f0-8, ranged now."
   (let* ((f (fighter e)) (p (pos-of e)))
-    (spend-fs (gauges e) *br-backstep-fs*)
+    (br-spend-far e)
     (set-slide e *br-backstep* *br-backstep-f* (- (aref p 0) (fighter-ox f)) (- (aref p 2) (fighter-oz f)))
     (setf (fighter-invuln f) (max (fighter-invuln f) *br-backstep-iframes*))
     (br-go-ranged e)
@@ -1238,7 +1368,9 @@ buffered) cancels its recovery: 「衝刺結束才能接」 (decision V6). His C
 (defun br-tenshin-fire (e)
   "TENSHIN in's dash f0 (before BR-TENSHIN-GO): one line materialises, the nearest within *BR-NEAR-R* of him along its line
 (BR-MATERIALISE-ONE: a 26 f stagger, 萬物貫通), none when no line is near; the dash and J1 follow (decision V6c, the user
-2026-10-10: 「照原版：前衝第 0 幀觸發」: the old Lille's TENSHIN in fired at its f0, 26 > the dash + J1's 8 f, a real combo)."
+2026-10-10: 「照原版：前衝第 0 幀觸發」: the old Lille's TENSHIN in fired at its f0, 26 > the dash + J1's 8 f, a real combo).
+The order (decision V8a): the dash's price, the farthest trace, was spent when it started (BR-SPEND-FAR, 2 f before);
+this fires the nearest of what is left (the only trace spent: nothing fires)."
   (when (br-materialise-one e) (pace e :tenshin-fire)))
 
 (defun br-tenshin-go (e)
@@ -1295,23 +1427,40 @@ of flash step sets none: no dash, its latched J is J1 in place at its end. TENSH
     (when (and (eq (fighter-state f) :move) mv (eq (fighter-phase f) :main))
       (when (move-param e :lock) (br-planted-tick e))
       (let* ((sf (fighter-sf f)) (last (br-last-point mv)) (end (+ (mv-s mv) (mv-a mv) (mv-r mv)))
-             (open (and (br-dash-window-p sf last end) (brs-laid st))))
+             (paid (or (br-swing-p mv) (brs-laid st)))           ; (decision V8: the swing opens it hit or whiff)
+             (open (and (br-dash-window-p sf last end) paid)))
         (when (zerop (fighter-lock f))
           (let ((b (br-tick-brain e)) (vp (pilot-vpad (pilot e))))
-            (cond (b (when (and open (br-ai-cancel-p e b))
-                       (when (try-command e f :q nil nil (br-tenshin-cancel-move f)) (pace e :ai-tenshin-cancel))))
+            (cond (b (when (and open (br-dash-ok-p e) (br-ai-cancel-p e b))
+                       (when (br-tenshin-start e f) (pace e :ai-tenshin-cancel))))
                   (t (when (vpad-command-pressed-p vp :quick nil)       ; (any frame: latched, decision V6c)
                        (vpad-consume! vp :quick)
                        (unless (brs-dash-q st) (pace e (if (< sf last) :tenshin-latch :tenshin-press)))
                        (setf (brs-dash-q st) t))
-                     (when (and open (brs-dash-q st))
-                       (setf (brs-dash-q st) nil)
-                       (try-command e f :q nil nil (br-tenshin-cancel-move f)))
+                     (when (and open (brs-dash-q st) (br-dash-ok-p e))  ; (decision V8a: a trace to spend, else J1 at
+                       (setf (brs-dash-q st) nil)                       ;  the end, below)
+                       (br-tenshin-start e f))
                      (when (and (>= sf end) (brs-dash-q st) (eq (fighter-move f) mv))   ; (no point set: J1 in place)
                        (setf (brs-dash-q st) nil)
                        (when (try-command e f :q) (pace e :tenshin-unpaid-j1)))))))
         (when (and (>= sf end) (eq (fighter-move f) mv))
-          (setf (brs-late st) (if (brs-laid st) *br-dash-late* 0)))))))
+          (setf (brs-late st) (if paid *br-dash-late* 0)))))))
+
+(defun br-tenshin-start (e f)
+  "Start TENSHIN in's 2 f cancel copy (a J in a lay's window) and pay its price, the farthest trace, unfired (BR-SPEND-FAR;
+decision V8a). T when it started."
+  (when (try-command e f :q nil nil (br-tenshin-cancel-move f))
+    (br-spend-far e)
+    t))
+(defun br-dash-ok-p (e) "May a dash (TENSHIN in, the backstep) start: a live trace to spend (decision V8a)?" (plusp (br-live-traces e)))
+
+(defun br-swing-point (e contact)
+  "The ranged L swing's contact (BARRO-HIT, decision V8): a hit with *BR-LAY-L* flash step sets the aim point (0.5 m behind
+him, BR-LAY-TRACE) and pays it (BR-SWING-POINT-P); a block, a whiff, a hit short of it: none, nothing paid."
+  (let ((g (gauges e)))
+    (cond ((br-swing-point-p contact (gauges-fs g))
+           (spend-fs g *br-lay-l*) (br-lay-trace e :l 0.0) (pace e :swing-point))
+          ((eq contact :hit) (pace e :traces-unpaid)))))
 
 ;;; ---------------------------------------------------------------- the traces: aim points (decision V7)
 (defun br-live-traces (e)
@@ -1397,6 +1546,24 @@ materialises along it. T when one did."
 
 (defun br-j-mat (e) "A melee J's first active frame: one trace materialises, hit or whiff (decision V6)." (br-materialise-one e))
 
+(defun br-spend-far (e)
+  "A dash's price (decision V8a, the user 2026-10-10: 「覺醒後的 L>J / J > L 前後衝刺都需要消耗一條軌跡才能發動」, 「最遠那條，不射出」):
+the lines turned through him now (BR-TRACES-AIM), the live trace whose line passes FARTHEST from the opponent (BR-PICK-FAR;
+a tie the older) is removed without firing. T when one was."
+  (br-traces-aim e)
+  (let ((q (pos-of (opp-of e))) (cands nil) (hs nil))
+    (do-entities (h (hz hazard))
+      (let ((d (hazard-data hz)))
+        (when (and (eql (hazard-owner hz) e) (brh-p d) (brh-live d))
+          (push (list (brh-id d) (br-trace-dist hz d (aref q 0) (aref q 2))) cands)
+          (push (cons (brh-id d) h) hs))))
+    (let ((id (br-pick-far cands)))
+      (when id
+        (destroy-entity (cdr (assoc id hs)))
+        (setf (brs-live (br e)) (max 0 (1- (brs-live (br e)))))
+        (pace e :trace-spent)
+        t))))
+
 (defun br-clear-traces (e)
   "His live traces vanish (the revival, the recall). Values how many."
   (let ((gone nil))
@@ -1415,7 +1582,7 @@ materialises along it. T when one did."
   "The recall's f7: the derivative string for its count (BR-RECALL-TIER), facing him."
   (let* ((f (fighter e)) (tier (br-recall-tier (brs-recall-n (br e)))))
     (turn-to-opp e f 10.0)
-    (start-move e (kit-next (fighter-kit f) :br-recall (svref #(:rc0 :rc1 :rc2 :rc3) tier)))))
+    (start-move e (kit-next (fighter-kit f) :br-recall (svref #(:rc0 :rc1 :rc2 :rc3 :rc4) tier)))))
 
 (defun br-rc-tick (e) "The recall strings: he keeps on the opponent (*BR-RC-TRACK*)." (halt! e) (turn-to-opp e (fighter e) (track-step *br-rc-track*)))
 (defun br-rc-shot (e) "A recall string's line: its look." (br-spawn-look e :shot *br-x-len* 0.05 t) (emit :sfx :lb-crack e))
@@ -1525,12 +1692,14 @@ NORMAL, 1 at HARD (EASY <= NORMAL <= HARD; new 2026-10-10, batch 6, DUEL_LILLE_V
 
 ;; pure: host-tested (tests/duel-rules-test.lisp)
 (defun br-ai-chance (p difficulty) "A chance P of his kit's :ai at DIFFICULTY: x *BR-AI-DIFF*, at most 1." (min 1.0 (* p (getf *br-ai-diff* difficulty 1.0))))
-(defun br-ai-base-plan (r d snipe threat zone pip difficulty)
+(defun br-ai-base-plan (r d snipe threat zone pip difficulty &optional close)
   "The base form's stance decision from one roll R (§8): with a 狙擊 pip (SNIPE >= 1) and him inside PIP's :near m, PIP's
-:p: :PIP (the stance; its plan TAISHA / the snap); from ZONE's :near m, ZONE's :p: :ZONE (the stance; its plan the shot);
-none while THREAT (his attack coming: the generic answers it) or without the keys."
+:p: :PIP (the stance; its plan TAISHA / the snap); no pip and him inside CLOSE's :near m, CLOSE's :p: :CLOSE (the stance; its
+plan the close snipe, +2: decision V8); from ZONE's :near m, ZONE's :p: :ZONE (the stance; its plan the shot); none while
+THREAT (his attack coming: the generic answers it) or without the keys."
   (cond (threat nil)
         ((and pip (>= snipe 1) (< d (getf pip :near 4.0)) (< r (br-ai-chance (getf pip :p 0.0) difficulty))) :pip)
+        ((and close (< snipe 1) (< d (getf close :near 3.0)) (< r (br-ai-chance (getf close :p 0.0) difficulty))) :close)
         ((and zone (>= d (getf zone :near 6.0)) (< r (br-ai-chance (getf zone :p 0.0) difficulty))) :zone)))
 (defun br-ai-recall-p (n reishi-frac k &optional (on 1))
   "Does his CPU recall (K3 -> L) with N traces live at REISHI-FRAC of his Reishi (K: the kit's :recall): N >= :n, or N >=
@@ -1539,18 +1708,20 @@ miss, taken back)?"
   (and k (or (>= n (getf k :n 3)) (and (>= n (getf k :low-n 1)) (< reishi-frac (getf k :low 0.35)))
              (and (getf k :off-n) (>= n (getf k :off-n)) (zerop on)))
        t))
-(defun br-ai-backstep-p (n fs k)
-  "Does his CPU back off (J3 -> L) with N traces live and FS flash step (K: the kit's :backstep): fewer than :n traces (the
-recall's count is K3's) and the flash step for the backstep and a lay (:fs; batch 5: the pendulum, the backstep's 10)?"
-  (and k (< n (getf k :n 1)) (>= fs (getf k :fs 13.0)) t))
-(defun br-ai-lay-plan (fs bars d near r k)
+(defun br-ai-backstep-p (n k)
+  "Does his CPU back off (J3 -> L) with N traces live (K: the kit's :backstep): at least :min (decision V8a: the backstep spends
+one, and TENSHIN in back needs another: :min 2 keeps one for it; no flash step since)?"
+  (and k (>= n (getf k :min 1)) t))
+(defun br-ai-lay-plan (fs bars d near r k &optional (sp2-bars *cost-sp-awakened*))
   "His ranged CPU's lay (K: the kit's :lay) at D metres with FS flash step and BARS Reiatsu bars, NEAR traces near him: from
 :far m while fewer than :n of :fire lie near (passed as NEAR's cap by the caller), the price leaving >= :reserve: SP1's fan
-(:SP1) on one roll R under :sp1 with a bar, else L (:SIG); NIL."
+(:SP1, three points) on one roll R under :sp1 with a bar, else SP2's thick point (:SP2) with its SP2-BARS, else SP1 with a
+bar; NIL. (Decision V8: L is a close swing that sets a point only on a hit: from range only SP1 / SP2 set points.)"
   (when (and k (>= d (getf k :far 4.0)) (< near (getf k :cap 99)))
     (let ((res (getf k :reserve 15.0)))
       (cond ((and (>= bars 1) (>= (- fs *br-lay-sp1*) res) (< r (getf k :sp1 0.0))) :sp1)
-            ((>= (- fs *br-lay-l*) res) :sig)))))
+            ((and (>= bars sp2-bars) (>= (- fs *br-lay-sp2*) res)) :sp2)
+            ((and (>= bars 1) (>= (- fs *br-lay-sp1*) res)) :sp1)))))
 (defun br-ai-stance-plan (r p line)
   "An awakened form's answer to one threatening window, from its one roll R: :STANCE (R < P: U, MUJITTAI), else :STEP off a
 LINE, else :PASS (a Hoho on the generic roll, or nothing)."
@@ -1572,16 +1743,19 @@ answer): :p x the difficulty, :BACK. NIL."
 (defun br-ai-step-stick (dir)
   "His CPU's stance Step as a stick (values toward strafe): DIR 0 straight back, +1 / -1 back and aside (60 deg off back)."
   (if (zerop dir) (values -1.0 0.0) (values -0.5 (* 0.866 (signum dir)))))
-(defun br-ai-goal (r d k difficulty)
+(defun br-ai-goal (r d k difficulty &optional safe)
   "The aim points his ranged CPU sets before going in, picked once a ranged stay from one roll R at D metres (K: the kit's
-:lay): from :near m the bank (:bank-goal points, for the K route and the recall) under :bank-p x the difficulty, else one of
-:goal (lo hi), evenly over the rest of the roll; closer :close-goal (1: the point and the 2 f cancel)."
+:lay): from :near m, SAFE (his Reishi at least :safe of its max), the big bank (:big-goal 10, the recall's 480: decision V8)
+under :big-p x the difficulty; else the bank (:bank-goal points, for the K route and the recall) under :bank-p x the
+difficulty (on the roll's rest), else one of :goal (lo hi), evenly over the rest; closer :close-goal (1)."
   (if (>= d (getf k :near 6.0))
-      (let ((q (br-ai-chance (getf k :bank-p 0.0) difficulty)))
-        (if (< r q)
-            (getf k :bank-goal 6)
-            (destructuring-bind (lo hi) (getf k :goal '(2 4))
-              (min hi (+ lo (floor (* (/ (- r q) (max 1e-6 (- 1.0 q))) (1+ (- hi lo)))))))))
+      (let* ((bp (if safe (br-ai-chance (getf k :big-p 0.0) difficulty) 0.0))
+             (r (if (< r bp) -1.0 (/ (- r bp) (max 1e-6 (- 1.0 bp)))))
+             (q (br-ai-chance (getf k :bank-p 0.0) difficulty)))
+        (cond ((< r 0.0) (getf k :big-goal 10))
+              ((< r q) (getf k :bank-goal 6))
+              (t (destructuring-bind (lo hi) (getf k :goal '(2 4))
+                   (min hi (+ lo (floor (* (/ (- r q) (max 1e-6 (- 1.0 q))) (1+ (- hi lo))))))))))
       (getf k :close-goal 1)))
 (defun br-dash-line-gap (px pz ux uz lx lz ox oz)
   "The ground distance from him at (OX OZ) to a trace's line (its aim point (PX PZ), its direction (UX UZ) now) once TENSHIN
@@ -1615,12 +1789,12 @@ reserve); beyond it up to :far-in m only :LINE (the long dash: J1 whiffs short o
           ((< d (getf k :close 3.0)) :close)
           ((and (>= near (getf k :n 1)) (>= live goal)) :line)
           (starved :starved))))
-(defun br-ai-in-cmd (d reach q-ok sig-ok)
+(defun br-ai-in-cmd (d reach q-ok sig-ok &optional (dash-ok t))
   "How his ranged CPU goes in from neutral D metres from him (decision V6a, 2026-10-10: TENSHIN in only out of a lay's
-window): within J1's REACH + 0.2 m :Q (J1 in place, Q-OK); else :SIG (an L whose window his CPU cancels into TENSHIN in,
-SIG-OK: its flash step there); else NIL (walk in)."
+window): within J1's REACH + 0.2 m :Q (J1 in place, Q-OK); else :SIG (an L, the swing since decision V8, whose window his
+CPU cancels into TENSHIN in, SIG-OK) while a trace is there to pay the dash (DASH-OK, decision V8a); else NIL (walk in)."
   (cond ((and q-ok (<= d (+ reach 0.2))) :q)
-        ((and sig-ok (> d (+ reach 0.2))) :sig)))
+        ((and sig-ok dash-ok (> d (+ reach 0.2))) :sig)))
 (defun br-ai-route (r live k difficulty)
   "His CPU's melee route as it goes in (TENSHIN in, a melee opener), one roll R (K: the melee kit's :route): :p x the
 difficulty: :K (the K links, then K3 -> L the recall) with LIVE >= :bank points set, else :J (the J links, then J3 -> L the
@@ -1761,12 +1935,12 @@ the guard gauge): U (MUJITTAI, the kit's :guard-to). Else a sideways Step off a 
 
 (defun br-ai-exit-cmd (e b s d)
   "The attack that ends MUJITTAI: K1 when he stays busy for its startup within its reach, J1 within its, the traces near him
-K (:fire), else L (ranged: a lay; melee: the turn to ranged) when it may start, else K1."
+J (:fire; a K fires none since decision V8), else L (ranged: the swing; melee: the turn to ranged) when it may start, else K1."
   (let* ((kit (kit-of e)) (q (kit-command-move kit :q)) (fm (kit-command-move kit :f)))
     (cond ((and fm (<= d (+ (mv-reach fm) 0.2)) (br-ai-busy-p s (brain-delay b) (mv-s fm)) (kit-command-ok-p e :f)) :f)
           ((and q (<= d (+ (mv-reach q) 0.2)) (kit-command-ok-p e :q)) :q)
           ((and fm (<= d (+ (mv-reach fm) 0.2)) (kit-command-ok-p e :f)) :f)
-          ((and (>= (br-near-count e (snap-x s) (snap-z s)) (getf (ai-table e :fire) :n 1)) (kit-command-ok-p e :f)) :f)
+          ((and (>= (br-near-count e (snap-x s) (snap-z s)) (getf (ai-table e :fire) :n 1)) (kit-command-ok-p e :q)) :q)   ; (V8: J fires)
           ((kit-command-ok-p e :sig) :sig)
           ((kit-command-ok-p e :f) :f))))
 
@@ -1829,15 +2003,16 @@ snap), at range (its plan the shot); L pressed (the stance), or NIL."
     (when (and (>= *match-tick* (brai-base-t ai)) (kit-command-ok-p e :sig))
       (setf (brai-base-t ai) (+ *match-tick* *br-ai-every*))
       (let ((plan (br-ai-base-plan (sim-rnd01) d (brs-snipe (br e)) (br-ai-threat-p e s d *ai-threat-margin*)
-                                   (ai-table e :zone) (ai-table e :pip) (brain-difficulty b))))
+                                   (ai-table e :zone) (ai-table e :pip) (brain-difficulty b) (ai-table e :close))))
         (when plan
-          (pace e (if (eq plan :pip) :ai-pip :ai-zone))
+          (pace e (case plan (:pip :ai-pip) (:close :ai-close) (t :ai-zone)))
           (why b plan :sig))))))
 
 (defun br-ai-starved-p (e)
-  "Can his CPU no longer lay an L above its :lay :reserve (then he goes in: an L into the reserve and its TENSHIN in, free
-past the lay; decision V6a)?"
-  (let ((k (ai-table e :lay))) (and k (< (- (gauges-fs (gauges e)) *br-lay-l*) (getf k :reserve 10.0)))))
+  "Can his CPU no longer set points from range above its :lay :reserve (no bar for SP1, or its flash step short: then he
+goes in; decision V8: L is a close swing)?"
+  (let ((k (ai-table e :lay)))
+    (and k (or (< (reiatsu-bars e) 1) (< (- (gauges-fs (gauges e)) *br-lay-sp1*) (getf k :reserve 10.0))))))
 
 (defun br-ai-stay (e b d)
   "His ranged CPU's stay (batch 6): coming into a ranged mode (the turn, the backstep, MUJITTAI's drop, the revival) picks
@@ -1845,9 +2020,12 @@ the points to set before going in on a line (BR-AI-GOAL, one roll) and whether h
 the difficulty, one roll); the melee forms end the stay (BR-AI-ROUTE-RESET). Its state (BRAI)."
   (let ((ai (br-ai-state e b)) (k (ai-table e :lay)) (ks (ai-table e :steer)))
     (unless (brai-ranged ai)
-      (setf (brai-ranged ai) t (brai-goal ai) (if k (br-ai-goal (sim-rnd01) d k (brain-difficulty b)) 1) (brai-steer-t ai) -1
+      (setf (brai-ranged ai) t (brai-goal ai) (if k (br-ai-goal (sim-rnd01) d k (brain-difficulty b)
+                                                                (>= (reishi-frac (gauges e)) (getf k :safe 0.5)))
+                                                    1)
+            (brai-steer-t ai) -1
             (brai-steer ai) (and ks (< (sim-rnd01) (br-ai-chance (getf ks :p 0.0) (brain-difficulty b))) t))
-      (pace e (case (brai-goal ai) (1 :ai-goal-1) (2 :ai-goal-2) (3 :ai-goal-3) (4 :ai-goal-4) (t :ai-goal-bank))))
+      (pace e (case (brai-goal ai) (1 :ai-goal-1) (2 :ai-goal-2) (3 :ai-goal-3) (4 :ai-goal-4) (10 :ai-goal-big) (t :ai-goal-bank))))
     ai))
 
 (defun br-ai-in-p (e b s d)
@@ -1887,7 +2065,7 @@ for a later one (decision V6a, 2026-10-10 [G]).")
 BR-AI-CANCEL-P; the new line runs from behind Lille through him, so J1 at the dash's end spends it); short of the lay's
 flash step: NIL (the neutral walk goes in). :Q, :SIG or NIL."
   (let* ((q (kit-command-move (kit-of e) :q))
-         (c (br-ai-in-cmd d (if q (mv-reach q) 0.0) (and q (kit-command-ok-p e :q)) (kit-command-ok-p e :sig))))
+         (c (br-ai-in-cmd d (if q (mv-reach q) 0.0) (and q (kit-command-ok-p e :q)) (kit-command-ok-p e :sig) (br-dash-ok-p e))))
     (case c
       (:q (pace e :ai-in-j1))
       (:sig (setf (brai-dash-t (br-ai-state e b)) *match-tick*) (pace e :ai-lay-dash)))
@@ -1935,7 +2113,7 @@ flash step staying over :reserve. L / SP1, or NIL."
         (setf (brai-lay-t ai) (+ *match-tick* (getf k :every 12)))
         (when (and plan (kit-command-ok-p e plan))
           (when bored (setf (brai-steer-t ai) -1) (pace e :ai-lay-bored))
-          (pace e (if (eq plan :sp1) :ai-lay-fan :ai-lay))
+          (pace e (if (eq plan :sp1) :ai-lay-fan :ai-lay))   ; (:ai-lay: SP2's thick point since decision V8)
           (why b :br-lay plan))))))
 
 (defun br-ai-steer (e b s d)
@@ -1987,6 +2165,15 @@ the J links) when the grid has one and nothing is latched yet (the old Lille's L
     (when (and c (null (fighter-queued f)) (kit-next (fighter-kit f) (mv-name mv) c))
       (setf (fighter-queued f) c))))
 
+(defun br-ai-swing (e b s d)
+  "Ranged (decision V8): him within the L swing's reach + 0.2 m, not reeling on the ground: the swing to bank a point (its
+hit sets one), on his action's react roll under :swing :p x the difficulty. :SIG or NIL."
+  (let ((k (ai-table e :swing)) (l (kit-command-move (kit-of e) :sig)))
+    (when (and k l (br-swing-p l) (<= d (+ (mv-reach l) 0.2)) (not (member (snap-state s) '(:down :wakeup)))
+               (< (brain-react-roll b) (br-ai-chance (getf k :p 0.0) (brain-difficulty b))) (kit-command-ok-p e :sig))
+      (pace e :ai-swing)
+      (why b :br-swing :sig))))
+
 (defun br-ai-reflex (e b s d)
   "Every form's :reflex (ai.lisp AI-REFLEX, free states): the base form's stance (BR-AI-BASE); MUJITTAI's exit
 (BR-AI-STANCE-OUT); ranged: MUJITTAI on a threat, going in (a lay and TENSHIN in, J1 in place: BR-AI-GO-IN), laying, steering the lines (batch 6); melee:
@@ -1997,8 +2184,8 @@ A command, :NONE (the window is his), or NIL."
           ((member :intangible (kit-passives kit)) (br-ai-stance-out e b s d))
           ((br-ranged-form-p form)
            (br-ai-stay e b d)
-           (or (br-ai-stance-in e b s d) (br-learn-trace e b s d) (br-ai-hard e b s d) (br-ai-fire e b s d) (br-ai-lay e b s d)
-               (br-ai-steer e b s d)))
+           (or (br-ai-stance-in e b s d) (br-learn-trace e b s d) (br-ai-hard e b s d) (br-ai-swing e b s d) (br-ai-fire e b s d)
+               (br-ai-lay e b s d) (br-ai-steer e b s d)))
           ((br-melee-form-p form)
            (br-ai-route-reset e b)
            (or (br-ai-stance-in e b s d) (br-learn-trace e b s d) (br-ai-hard e b s d) (br-ai-melee e b s d))))))
@@ -2012,7 +2199,7 @@ trace and the flash step for lines (BR-AI-BACKSTEP-P), the mode turn always."
   (let ((st (br e)) (g (gauges e)))
     (case to
       (:br-recall (br-ai-recall-p (brs-live st) (reishi-frac g) (ai-table e :recall) (br-on-him e)))
-      (:br-backstep (br-ai-backstep-p (brs-live st) (gauges-fs g) (ai-table e :backstep)))
+      (:br-backstep (br-ai-backstep-p (brs-live st) (ai-table e :backstep)))
       (t t))))
 
 (defun br-ai-sp-ender (e kit)
@@ -2024,7 +2211,7 @@ frame at :recall / :backstep :p x the difficulty. :SIG, or NIL (the generic SP2 
       (let* ((to (br-l-route (mv-kind mv) t)) (key (if (eq to :br-recall) :recall :backstep)) (k (getf (kit-ai kit) key)))
         (when (and (if (eq to :br-recall)
                        (br-ai-recall-p (brs-live st) (reishi-frac g) k (br-on-him e))
-                       (br-ai-backstep-p (brs-live st) (gauges-fs g) k))
+                       (br-ai-backstep-p (brs-live st) k))
                    (kit-command-ok-p e :sig kit nil (kit-l-link kit (mv-name mv)))
                    (< (sim-rnd01) (br-ai-chance (getf k :p 0.0) (brain-difficulty b))))
           (pace e (if (eq to :br-recall) :ai-recall :ai-backstep))
@@ -2309,47 +2496,49 @@ its K link (J1 -> K2s); his J eaten after a press. A command, :NONE, or NIL (the
            (br-as-press e a :as-stance :sig))
           ((kit-next kit name :f) (br-as-press e a :as-k-link :f)))))
 
-(defun br-as-k-route-p (live left)
-  "The ASSIST's melee route (batch 6): K links on with LIVE points set while LEFT more K touches (each spends one, decision
-V6) would still leave 3 for the recall (K3 -> L, tier 2)."
-  (>= (- live left) 3))
+(defun br-as-k-route-p (live)
+  "The ASSIST's melee route (batch 6): K links on with LIVE >= 3 points set (the recall's tier 2 and up; decision V8: a K
+spends none, the recall takes them all)."
+  (>= live 3))
 
 (defun br-as-melee (e f vp a mv)
-  "Route melee (batch 6), a link that hit with his J in it, on its land frame: the K links while the points left after their
-touches still number 3 for the recall (BR-AS-K-ROUTE-P), else the J links (J J J: each J spends a line on him); K3 -> L the
-recall with a point to take back (n >= 1), J3 -> L the backstep with its 10 flash step and a lay's (13); his J eaten after
-a press. A command, :NONE, or NIL (the generic AUTO COMBO)."
+  "Route melee (batch 6), a link that hit with his J in it, on its land frame: the K links with 3 points set for the recall
+(BR-AS-K-ROUTE-P; a K spends none, decision V8), else the J links (J J J: each J spends a line on him); K3 -> L the recall
+with a point to take back (n >= 1), J3 -> L the backstep with 2 (it spends one, TENSHIN in back another: decision V8a); his
+J eaten after a press. A command, :NONE, or NIL (the generic AUTO COMBO)."
   (let* ((kit (fighter-kit f)) (st (br e)) (name (mv-name mv)) (nf (kit-next kit name :f)) (nq (kit-next kit name :q)))
     (cond ((bras-done a) (vpad-consume! vp :quick) (when (eq (fighter-queued f) :q) (setf (fighter-queued f) nil)) :none)
           ((not (and (bras-j a) (eq (fighter-contact f) :hit) (= (fighter-sf f) (fighter-land-sf f)))) nil)
-          ((and nf (br-as-k-route-p (brs-live st) (if (kit-next kit nf :f) 2 1))) (br-as-press e a :as-k-link :f))
+          ((and nf (br-as-k-route-p (brs-live st))) (br-as-press e a :as-k-link :f))
           (nq (br-as-press e a :as-j-link :q))
           (nf (br-as-press e a :as-k-link :f))
           ((and (member :ender (mv-flags mv)) (not (eq (state-of (opp-of e)) :air))
-                (if (eq (mv-kind mv) :flash) (>= (brs-live st) 1) (>= (gauges-fs (gauges e)) (+ *br-backstep-fs* *br-lay-l*)))
+                (>= (brs-live st) (if (eq (mv-kind mv) :flash) 1 2))   ; (V8a: the backstep spends one, the dash back another)
                 (kit-command-ok-p e :sig kit nil (kit-l-link kit name)))
            (br-as-press e a (if (eq (mv-kind mv) :flash) :as-recall :as-backstep) :sig)))))
 
 (defun br-as-ranged (e f s vp)
-  "Route ranged (batch 6; decision V6a, 2026-10-10: TENSHIN in only out of a lay), his J pressed while free beyond J1's reach
-(+ 0.2 m): L (an aim point at him) with the flash step over 10 after it: his next J in it (latched at any frame, decision
-V6c) cancels into TENSHIN in (2 f, BR-LAY-TICK) along that line, its f0 fires the line, J1 at the dash's end (L point -> J
-dash -> J1 ...); within *BR-DASH-LATE* f after a lay (BRS-LATE) his J is left alone: it dashes (BR-MELEE-IN); else NIL (his
-J: J1 in place)."
+  "Route ranged (batch 6; decisions V6a, V8, V8a), his J pressed while free: within the L swing's reach (+ 0.2 m) the swing
+(its hit banks a point); beyond, with a trace to pay TENSHIN in, L (it whiffs) so his next J in it (latched at any frame,
+decision V6c) cancels into TENSHIN in (2 f): the farthest trace spent, its f0 fires the nearest of the rest, J1 at the dash's
+end; with none, SP1's fan (three points) with a bar and 9 + 10 flash step; within *BR-DASH-LATE* f after a lay (BRS-LATE) his
+J is left alone: it dashes (BR-MELEE-IN); else NIL (his J: J1 in place)."
   (when (and s (zerop (brs-late (br e))) (vpad-command-pressed-p vp :quick nil))
-    (let ((q (kit-command-move (fighter-kit f) :q)))
-      (when (and q (> (fighter-dist f) (+ (mv-reach q) 0.2)) (>= (- (gauges-fs (gauges e)) *br-lay-l*) 10.0)
-                 (kit-command-ok-p e :sig))
-        (pace e :as-lay) :sig))))
+    (let ((l (kit-command-move (fighter-kit f) :sig)) (d (fighter-dist f)))
+      (cond ((and l (<= d (+ (mv-reach l) 0.2)) (kit-command-ok-p e :sig)) (pace e :as-swing) :sig)
+            ((and (br-dash-ok-p e) (kit-command-ok-p e :sig)) (pace e :as-lay) :sig)
+            ((and (>= (reiatsu-bars e) 1) (>= (- (gauges-fs (gauges e)) *br-lay-sp1*) 10.0) (kit-command-ok-p e :sp1))
+             (pace e :as-fan) :sp1)))))
 
 (defun br-as-backstep (e f vp a)
-  "Route ranged out of the backstep (J3 -> L; batch 6): his J from its f14 (the lay's window, BR-BACKSTEP-LAY-OK-P) -> an aim
-point at him (L: BR-BACKSTEP-TICK cancels the recovery into it) with 10 flash step left after it; his J eaten after; his
-next J cancels that lay into TENSHIN in (2 f) along its line (L point -> J dash -> J1: the pendulum). A command, :NONE or NIL."
+  "Route ranged out of the backstep (J3 -> L; batch 6): his J from its f14 (the lay's window, BR-BACKSTEP-LAY-OK-P) -> SP1's
+fan at him (three points; BR-BACKSTEP-TICK cancels the recovery into it) with a bar and 10 flash step left after it (decision
+V8: the L there is a swing that whiffs at 5 m); his J eaten after; his next J cancels that lay into TENSHIN in (2 f; it
+spends the farthest trace and fires the nearest: the pendulum). A command, :NONE or NIL."
   (cond ((bras-done a) (vpad-consume! vp :quick) :none)
-        ((and (br-backstep-lay-ok-p (fighter-sf f)) (vpad-command-pressed-p vp :quick nil)
-              (>= (- (gauges-fs (gauges e)) *br-lay-l*) 10.0))
-         (br-as-press e a :as-lay :sig))))
+        ((and (br-backstep-lay-ok-p (fighter-sf f)) (vpad-command-pressed-p vp :quick nil) (>= (reiatsu-bars e) 1)
+              (>= (- (gauges-fs (gauges e)) *br-lay-sp1*) 10.0))
+         (br-as-press e a :as-lay :sp1))))
 
 (defun br-assist-combo (e f b s d vp)
   "His kits' :assist-combo (assist.lisp AUTO-ROUTE): the routes above on the assist's brain B (S, D as it perceives him), his
@@ -2396,7 +2585,10 @@ vpad VP: a command, :NONE (the route holds the step) or NIL (the generic AUTO CO
 cancel, TENSHIN in -> J1 -> a trace hits; J alone: J1 in place, decision V6a); 14 the base form 6 m out, the shooting stance started (Step: 飛廉脚); 15 forced melee 1.4 m out (J J J
 L: the backstep); 16 as 13 with the owl; 20 both CPUs (the mirror) 12 m apart; 24 / 25 / 26 the base form 4 m out with
 0 / 1 / 2 狙擊 pips (decision V9: L then K, the K's tiers; 6 has 3); 27 / 28 the same with 3 / 2 pips, P2 holding guard
-(破陣弾's guard break / 穿甲弾's block); 29 the base form 1.3 m out with 1 pip (V9c: J, L, J the snap, J: J1); 30 a \"duel probe barro-trace\" line per
+(破陣弾's guard break / 穿甲弾's block); 29 the base form 1.3 m out with 1 pip (V9c: J, L, J the snap, J: J1); 17 forced melee 1.4 m
+out with 10 aim points (decision V8: K K K L, 裁き・極); 18 forced ranged 1.5 m out, no point (the L swing; L then J: J1 in
+place, decision V8a); 19 the same with two points (-40 / 0 deg: L then J, the dash spends the farther, fires the
+nearer); 30 a \"duel probe barro-trace\" line per
 live trace of P1's (its point, direction, distance to P2); any other k (31) the probe line only (batch 5, DUEL_LILLE_V2 §15)."
   (flet ((setup (c2 form dist &key cpu)
            (ensure-battle :barro c2 :cpu cpu)
@@ -2429,6 +2621,11 @@ live trace of P1's (its point, direction, distance to P2); any other k (31) the 
       ((27 28) (setup :kenpachi :base 4.0) (setf (brs-snipe (br *p1*)) (if (= k 27) 3 2))   ; (... into P2's held guard)
        (when (brain *p2*) (ai-press (brain *p2*) :guard 600 :act :hold)))
       (29 (setup :kenpachi :base 1.3) (setf (brs-snipe (br *p1*)) 1))   ; (decision V9c: J -> L -> J the snap -> J1)
+      (17 (setup :kenpachi :jilliel-kin 1.4)                            ; (decision V8: K K K -> L with 10 points: 裁き・極)
+       (dotimes (i 10) (br-lay-trace *p1* :l (- (* 4.0 i) 18.0))))
+      (18 (setup :kenpachi :jilliel 1.5))                               ; (decision V8: the L swing, no point: L then J)
+      (19 (setup :kenpachi :jilliel 1.5)                                ; (... with two points: the dash spends the
+       (dolist (a '(-40.0 0.0)) (br-lay-trace *p1* :l a)))              ;  farther, fires the nearer: decision V8a)
       (30 (br-trace-probe)))
     (barro-probe-line (format nil "test ~d" k))))
 
