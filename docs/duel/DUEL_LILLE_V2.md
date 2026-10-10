@@ -1060,3 +1060,22 @@ duel-control 89, learn 131, input 33, touch 64, cine 18 pass.
 - In play: **L (or SP1 / SP2) then J quickly** is the dash; J anywhere else is J1 on the spot (from range it whiffs, but its
   first active frame still fires the nearest line within 2.5 m of him: a ranged J now spends a line in 8 f without moving).
 - The CPU's way in is now an L and its cancel (about 9 f before the dash instead of 16).
+
+### 18.x Gates (the lead, 2026-10-10, after the playtest went up: decision V6b)
+
+Run on `barro-v6a` 18affe9 (the merged head 4c9051d adds docs only): the old 21 pairings' 1120 lines byte-identical to
+ca447c1, `--cvc` 3 / 3; his six pairings (BL dropped, V6b), 20 seeds, every match K.O.:
+
+| Pairing | Median s (before, §16) | His wins / 20 (before) |
+|---|---|---|
+| BY | 114.6 (104.7) | 16 (17) |
+| BK | 111.9 (108.4) | 19 (15) |
+| BR | 148.8 (139.7) | 16 (14) |
+| BI | 130.1 (133.9) | 10 (12) |
+| BS | 130.1 (133.2) | 17 (16) |
+| BB | 124.9 (117.7) | mirror |
+
+Awaken A/B (the never-awaken side of 60, streams 100 / 300 / 500, pass >= 20): BK 18 / 17 / 11 (unchanged), BB 7 / 8 / 9
+(6 / 12 / 6). aieval `--char 6` (20 seeds): 0.373 (0.377), HARD strength 0.142 (0.150), signature 0.438. TENSHIN in 6.4 a
+match (6.6), all from the lay cancel. Playtest Artifact version 41.
+
