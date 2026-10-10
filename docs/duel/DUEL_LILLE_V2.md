@@ -107,6 +107,18 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
 
+### Decision V9e (2026-10-10): no stance link at 0 pips (the loop fix)
+
+The user, on playtest v42: 「常態模式出現錯誤連段：在麼有資源的情況下 J / K 攻擊中快速按 L 會打斷後搖接入架式然後又可以繼續 J / K => L 這樣無限
+循環到對手倒地」; the pick 「0 格時連段中的 L 不能開架」.
+
+- The cause: L in a base J / K link opens the stance at f4 (`:br-kamae-j` / `-k`), and at 0 pips the stance's J / K are
+  J1 / K1 (V9d), which link into L again: a loop that cost nothing.
+- The fix: that L link opens the stance only with **>= 1 pip** (`BR-KAMAE-LINK-OK-P`, barro.lisp, BARRO-OK); at 0 pips the L
+  is refused there (after the recovery a fresh L opens the stance as usual). With pips each turn spends one (the snap) or
+  all (the K), so the loop ends within 3. The other L links (recall, backstep, the mode turn) are untouched. Host test
+  added (duel-rules 8585).
+
 ### Decision V9d (2026-10-10): at 0 pips the stance's J / K are the plain J1 / K1
 
 The user: 「0 格時不能用架式 J / K」; asked what the J / K do then, the user chose 「照你最初的規則：變成普通 J1／K1」, and for

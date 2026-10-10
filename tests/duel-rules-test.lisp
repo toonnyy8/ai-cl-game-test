@@ -3204,6 +3204,12 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (eq :stay (br-learn-mujittai-plan :attack)) (eq :leave (br-learn-mujittai-plan :guard)) (null (br-learn-mujittai-plan :hoho))
               (<= (getf *br-learn-diff* :easy) (getf *br-learn-diff* :normal) (getf *br-learn-diff* :hard)))))
 
+;; Lille II decision V9e (the user 2026-10-10: 「0 格時連段中的 L 不能開架」): an L in a base J / K link opens the stance only with
+;; >= 1 狙擊 pip; the other L links (recall, backstep, the mode turn) don't read the pips
+(check (and (not (br-kamae-link-ok-p :br-kamae-k 0)) (not (br-kamae-link-ok-p :br-kamae-j 0))
+            (br-kamae-link-ok-p :br-kamae-k 1) (br-kamae-link-ok-p :br-kamae-j 3)
+            (br-kamae-link-ok-p :br-recall 0) (br-kamae-link-ok-p :br-backstep 0) (br-kamae-link-ok-p :br-l-link 0)))
+
 ;; The gate's match length leaves the cinematics out (the user, 2026-10-08: 「毀魂技演出不計入對戰時長」, every cinematic):
 ;; PLAY-TICKS (flow's MATCH-PLAY-TICKS) are the frames the timer ran (it stops while a cinematic plays: MAIN's step)
 (check (= 600 (play-ticks 300 (- 18000 600))))

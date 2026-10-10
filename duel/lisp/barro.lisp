@@ -387,6 +387,12 @@ yes (§5.1: 「K 連段的結尾接入 L」, 「J 連段的結尾接入 L」)."
     (:br-recall (and cur-ender (eq cur-kind :flash)))
     (:br-backstep (and cur-ender (eq cur-kind :quick)))
     (t t)))
+(defun br-kamae-link-ok-p (l-name snipe)
+  "May L-NAME, an L pressed in a base J / K link, open the stance there (the :l-after-j / :l-after-k copies :BR-KAMAE-J /
+:BR-KAMAE-K at f4): only with >= 1 狙擊 pip (SNIPE). Decision V9e (the user 2026-10-10, 「在麼有資源的情況下 J / K 攻擊中快速按 L
+會打斷後搖接入架式然後又可以繼續 J / K => L 這樣無限循環到對手倒地」, the pick 「0 格時連段中的 L 不能開架」): at 0 pips the stance's J / K are
+J1 / K1 (V9d), so the link closed a loop that cost nothing; with pips each turn spends one (the snap) or all (the K)."
+  (or (not (member l-name '(:br-kamae-k :br-kamae-j))) (>= snipe 1)))
 (defun br-l-route (cur-kind cur-ender)
   "The move L pressed in a melee string link starts (the kit's :l-after-k / :l-after-j name the router :BR-L-LINK): off K3
 (a :flash ender, CUR-ENDER) the recall, off J3 (a :quick ender) the backstep, off J1 / J2 / K1 / K2 the plain L, the mode
@@ -887,7 +893,8 @@ SP2 once sealed."
                         (setf (brs-l-to (br e)) to)
                         (and (or (not (eq to :br-backstep)) (br-backstep-ok-p (gauges-fs g)))   ; (decision V6: 10 FS)
                              (or (null b) (br-ai-l-ok-p e to))))
-                      (br-l-link-ok-p l (mv-name cur) (mv-kind cur) (member :ender (mv-flags cur))))
+                      (and (br-l-link-ok-p l (mv-name cur) (mv-kind cur) (member :ender (mv-flags cur)))
+                           (br-kamae-link-ok-p l (brs-snipe (br e)))))                ; (decision V9e: no pip, no stance link)
                   t)))
           (t (br-lay-ok-p (or (kit-drop-to (fighter-kit f)) form) command (gauges-fs g))))))   ; (MUJITTAI: its mode's price)
 
