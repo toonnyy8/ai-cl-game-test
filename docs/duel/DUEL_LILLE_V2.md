@@ -2,7 +2,7 @@
 
 Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17); decision V6a (TENSHIN in only as a quick J after a lay) built 2026-10-10 (§18); decision V6c (the wider L → J window, TENSHIN in fires a line at its f0) built 2026-10-10 (§19); decisions V9 / V9b / V9c / V9d (the stance K by pips, the snap's links) built 2026-10-10 (§20); decisions V8 / V8a (two
 routes, one pool; a dash spends a trace) built 2026-10-10 (§21); decision V8b (the ranged L back to the plain lay) built
-2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22); decisions V9f / V9g (TENSHIN in fires before it pays; its J1 fires none) built 2026-10-10.**
+2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22); decisions V9f / V9g / V9h (TENSHIN in fires before it pays; its J1 fires none; the backstep fires, dash presses kept) built 2026-10-10.**
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -108,6 +108,25 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
   is picked and missed (the trace is spent). The opponent sees every line and can step off.
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
+
+### Decision V9h (2026-10-10): the pendulum's rounds link (the backstep fires; dash presses kept)
+
+The user, on playtest v49: 「我發現目前 L > J J J > L 的鐘擺連擊很難串連」. Measured (debug 82017, every press on its earliest
+frame): J3 and its own line hit on f62 (a 26 f stagger + 4 f hitstop: he is free about f92); J3 → L f69, the backstep 14 f,
+the lay from its f14 (f83), its point f87, TENSHIN in's 2 f, its f0 line f89: **about 3 frames to spare**; any later press
+and the next round's line hit a free opponent. Also every J pressed during TENSHIN in's dash was eaten as its J1 link.
+The user, on the trace budget: 「原本就是改成要足夠軌跡才能串，這樣 16 條軌跡最多串 3 輪，但我發現兩輪之間很難接起 combo，在懷疑是對手的硬直沒調整好」
+(the trace prices stay); the picks 「後撤的代價改成射出」 and, for the dash presses, 「要」.
+
+- The J3 → L backstep's trace FIRES: at its f0 the nearest within 2.5 m materialises (`BR-MATERIALISE-ONE`, a fresh 26 f
+  stagger); only with none near is the farthest removed unfired (V8a's rule). Same count (one trace), so 16 traces still
+  make about 3 rounds. Measured: the spare between rounds about 3 → about 9 frames (the next line on f90 / f96 combos,
+  on f99 the opponent was free).
+- TENSHIN in's dash: the first J / K after its wind-up is the J1 / K1 link (as before); the next press is kept
+  (`BRS-DASH-NEXT`) and pressed again (`VPAD-STAMP!`) on the J1's first active frame (`BR-J-MAT`), so it buffers J2 / K2.
+  A human's only (his CPU drives its own). Measured: J mashed every 7 f through the dash gives J1 J2 J3 → L, the next
+  backstep, all hits.
+- Host tests unchanged (8671); browser runs above.
 
 ### Decision V9g (2026-10-10): TENSHIN in's own J1 fires no trace
 

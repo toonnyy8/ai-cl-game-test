@@ -964,6 +964,8 @@ decision V9; at 0 pips the plain K1, V9d).")
   (latch nil)                             ; ... the J1 / K1 it links into (:q, a K pressed during it :f)
   (switch-to nil)                         ; ... the melee form it turns into (6 f into the dash, or at its end)
   (dash-j nil)                            ; ... the J1 it started (that move while it runs): it fires no trace (V9g)
+  (dash-took nil)                         ; ... a J / K pressed during the dash taken for the link (V9h) ...
+  (dash-next nil)                         ; ... and the next one (:q / :f), pressed again at the J1's hit frame (V9h)
   (dash-q nil)                            ; a ranged lay: a J latched before its last point (it dashes there; V6c)
   (laid nil)                              ; ... its latest BR-LAY set a point (paid; a refused one sets none: no dash)
   (late 0 :type fixnum)                   ; frames left after a lay that set its points: a J dashes (*BR-DASH-LATE*; V6c)
@@ -1035,6 +1037,8 @@ check on its f59."
             ((and (plusp (brs-late st)) (zerop (fighter-freeze f))) (decf (brs-late st)))))                       ;  counts down free)
     (unless (and (brs-dash-j st) (eq (fighter-state f) :move) (eq (fighter-move f) (brs-dash-j st)))
       (setf (brs-dash-j st) nil))                         ; (decision V9g: only while TENSHIN in's own J1 runs)
+    (unless (or (brs-dash-j st) (and (eq (fighter-state f) :move) (fighter-move f) (eq (mv-tick (fighter-move f)) 'br-tenshin-tick)))
+      (setf (brs-dash-next st) nil))                      ; (decision V9h: a kept press lives through the dash and its J1)
     (setf (brs-live st) (br-live-traces e))
     (when (and (br-awake-form-p form) (minusp (brs-awake-t st)))
       (setf (brs-awake-t st) *match-tick*) (pace e :awaken-tick *match-tick*))
@@ -1333,11 +1337,13 @@ trace (decision V8a; V9f: not the one that fires, BR-TENSHIN-OK-P; with none to 
 (defun br-halt-tick (e) "The mode turns, the recall: no string chase (the slide is their only movement)." (halt! e))
 
 (defun br-backstep-go (e)
-  "J3 -> L f0 (decision V6): one trace spent, the farthest from him, unfired (BR-SPEND-FAR; decision V8a, the user
-2026-10-10: 「最遠那條，不射出」, 「後撤不再扣閃步」: no flash step; BARRO-OK routed it here only with a trace), *BR-BACKSTEP* m
-straight back from him over *BR-BACKSTEP-F*, iframes f0-8, ranged now."
+  "J3 -> L f0 (decision V6): one trace spent (decision V8a, the user 2026-10-10: 「後撤不再扣閃步」: no flash step; BARRO-OK
+routed it here only with a trace): since decision V9h (the user 2026-10-10: 「後撤的代價改成射出」) the nearest within
+*BR-NEAR-R* FIRES (BR-MATERIALISE-ONE: a fresh 26 f stagger, so the next round's TENSHIN in still combos), only with none
+near the farthest is removed unfired (V8a's 「最遠那條，不射出」); *BR-BACKSTEP* m straight back from him over *BR-BACKSTEP-F*,
+iframes f0-8, ranged now."
   (let* ((f (fighter e)) (p (pos-of e)))
-    (br-spend-far e)
+    (if (br-materialise-one e) (pace e :backstep-fire) (br-spend-far e))
     (set-slide e *br-backstep* *br-backstep-f* (- (aref p 0) (fighter-ox f)) (- (aref p 2) (fighter-oz f)))
     (setf (fighter-invuln f) (max (fighter-invuln f) *br-backstep-iframes*))
     (br-go-ranged e)
@@ -1372,7 +1378,8 @@ was no TENSHIN in (BR-TENSHIN-OK-P: J1 in place, 「不前衝，原地出 J1」)
   "TENSHIN in at its wind-up's end: the dash at him (BR-TENSHIN-DIST at *BR-TENSHIN-SPEED*, BR-TENSHIN-DASH-F frames), its
 end kept (the link frame), iframes f0-8, free; the melee form to turn into; J1 latched (a K pressed during the dash: K1)."
   (let* ((f (fighter e)) (st (br e)) (p (pos-of e)) (dist (br-tenshin-dist (fighter-dist f))) (n (br-tenshin-dash-f dist)))
-    (setf (brs-switch-to st) (br-melee-of (fighter-form f)) (brs-latch st) :q (brs-dash-end st) (+ (fighter-sf f) n))
+    (setf (brs-switch-to st) (br-melee-of (fighter-form f)) (brs-latch st) :q (brs-dash-end st) (+ (fighter-sf f) n)
+          (brs-dash-took st) nil (brs-dash-next st) nil)
     (when (plusp n)
       (set-slide e dist n (- (fighter-ox f) (aref p 0)) (- (fighter-oz f) (aref p 2))))
     (setf (fighter-invuln f) (max (fighter-invuln f) *br-tenshin-iframes*))
@@ -1386,8 +1393,9 @@ end kept (the link frame), iframes f0-8, free; the melee form to turn into; J1 l
   (let ((to (brs-switch-to (br e)))) (when to (setf (brs-switch-to (br e)) nil) (set-form e to) (pace e :to-melee))))
 
 (defun br-tenshin-tick (e)
-  "TENSHIN in's frames (the old LB-SWITCH-TICK + LB-LINK-TICK): no string chase; a human's J / K during the dash latched
-(the last press wins; J1 by default); melee *BR-TENSHIN-FORM* frames into the dash or at its end; from the dash's end the
+  "TENSHIN in's frames (the old LB-SWITCH-TICK + LB-LINK-TICK): no string chase; a human's first J / K after the wind-up
+latched (J1 by default; decision V9h, the user 2026-10-10: presses after it are not eaten, they stay buffered for J2 / K2;
+until then the last press won and every press was consumed); melee *BR-TENSHIN-FORM* frames into the dash or at its end; from the dash's end the
 latch starts the melee J1 / K1 (TRY-COMMAND), else the rest of the startup is skipped (R 8 after the dash)."
   (halt! e)
   (let* ((f (fighter e)) (mv (fighter-move f)) (st (br e)) (go *br-tenshin-windup*) (sf (fighter-sf f)))
@@ -1398,8 +1406,13 @@ latch starts the melee J1 / K1 (TRY-COMMAND), else the rest of the startup is sk
     (when (and (eq (fighter-phase f) :main) (zerop (fighter-lock f)))
       (unless (br-tick-brain e)
         (let ((vp (pilot-vpad (pilot e))))
-          (cond ((vpad-command-pressed-p vp :quick nil) (vpad-consume! vp :quick) (when (> sf go) (setf (brs-latch st) :q)))
-                ((vpad-command-pressed-p vp :flash nil) (vpad-consume! vp :flash) (when (> sf go) (setf (brs-latch st) :f))))))
+          (when (> sf go)                                  ; (decision V9h: the first press is the link, the next one is
+            (cond ((vpad-command-pressed-p vp :quick nil)  ;  kept for the J1's own J2 / K2: BR-J-MAT presses it again)
+                   (vpad-consume! vp :quick)
+                   (if (brs-dash-took st) (setf (brs-dash-next st) :q) (setf (brs-latch st) :q (brs-dash-took st) t)))
+                  ((vpad-command-pressed-p vp :flash nil)
+                   (vpad-consume! vp :flash)
+                   (if (brs-dash-took st) (setf (brs-dash-next st) :f) (setf (brs-latch st) :f (brs-dash-took st) t)))))))
       (when (and (> sf go) (>= sf (brs-dash-end st)) (member (brs-latch st) '(:q :f)))
         (let ((c (brs-latch st)))
           (setf (brs-latch st) nil)
@@ -1545,7 +1558,14 @@ materialises along it. T when one did."
 (defun br-j-mat (e)
   "A melee J's first active frame: one trace materialises, hit or whiff (decision V6); not the J1 TENSHIN in links into
 (BRS-DASH-J: decision V9g, the user 2026-10-10: 「前衝後的 J1 不射」; its dash's f0 fired one already, so a dash spends 2)."
-  (if (brs-dash-j (br e)) (pace e :dash-j1-no-mat) (br-materialise-one e)))
+  (let ((st (br e)))
+    (cond ((brs-dash-j st)
+           (pace e :dash-j1-no-mat)
+           (when (and (brs-dash-next st) (null (br-tick-brain e)))   ; (decision V9h: the press kept during the dash, made
+             (vpad-stamp! (pilot-vpad (pilot e)) (if (eq (brs-dash-next st) :q) :quick :flash))   ;  now: J2 / K2 buffered)
+             (setf (brs-dash-next st) nil)
+             (pace e :dash-next)))
+          (t (br-materialise-one e)))))
 
 (defun br-spend-far (e &optional tenshin)
   "A dash's price (decision V8a, the user 2026-10-10: 「覺醒後的 L>J / J > L 前後衝刺都需要消耗一條軌跡才能發動」, 「最遠那條，不射出」):
