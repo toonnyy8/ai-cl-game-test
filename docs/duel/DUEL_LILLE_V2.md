@@ -2,7 +2,7 @@
 
 Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17); decision V6a (TENSHIN in only as a quick J after a lay) built 2026-10-10 (§18); decision V6c (the wider L → J window, TENSHIN in fires a line at its f0) built 2026-10-10 (§19); decisions V9 / V9b / V9c / V9d (the stance K by pips, the snap's links) built 2026-10-10 (§20); decisions V8 / V8a (two
 routes, one pool; a dash spends a trace) built 2026-10-10 (§21); decision V8b (the ranged L back to the plain lay) built
-2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22); decisions V9f / V9g / V9h (TENSHIN in fires before it pays; its J1 fires none; the backstep fires, dash presses kept) and V9i (the snap shot on the move), V9j (the traces' resource loop), V9k (the ranged L string, SP2 after the recall) built 2026-10-10.**
+2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22); decisions V9f / V9g / V9h (TENSHIN in fires before it pays; its J1 fires none; the backstep fires, dash presses kept) and V9i (the snap shot on the move), V9j (the traces' resource loop), V9k (the ranged L string, SP2 after the recall), V9l (uncharged SP2, the slow motion, the plain Step's snap) built 2026-10-10.**
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -108,6 +108,28 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
   is picked and missed (the trace is spent). The opponent sees every line and can step off.
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
+
+### Decision V9l (2026-10-10): SP2 off the recall uncharged, the old slow motion, the snap in a plain Step
+
+The user: 「讓接在回收後的 SP2 跳過蓄力」, 「讓軌跡具有與原版利捷一樣的時緩效果」, 「常態的速射現在還是不能在 step 的過程中使用」.
+
+- **SP2 off the recall** (V9k's cancel) starts a charge-less copy: `:br-w-nijushi-c` (entered at f38, the beam f40) and the
+  owl's `:br-trompete-c` (f58, the beam f60; not :reflectable: nothing to read), facing him; registered in every awakened
+  kit through `*BR-MELEE-STRINGS*` (`:rc-sp2-w` / `:rc-sp2-o`). Browser (82015): KKK → L → rc0 30 → NIJUSHI 2 f later, 180,
+  in the stagger.
+- **The slow motion** (`BR-TRACE-CROSS`, BARRO-TICK, after the lines turn through him): the old Lille's rule and numbers,
+  his own knobs: a line laid onto the opponent (its first frame touches his hurt cylinder) slows the match 0.1 for 0.2 s
+  (`*BR-FRESH-SCALE*` / `-SECS*`); stepping onto the live lines after 10 f off all of them 0.2 for 0.5 s (`*BR-CROSS-*`).
+  The lines here turn with him (V7), so a walk can sweep one onto the opponent: that counts as a crossing, as the
+  opponent's own step does. A `clog` line marks each. Browser (82003): an L at 8 m → the fresh slow motion on its f4.
+- **The snap in a plain Step**: V9i made the stance's Step shoot; the user meant any Step. In the base form with >= 1 pip a
+  J during a plain Step (state :step) is the moving snap, not its J1 cancel: BARRO-TICK takes the J the Step latched
+  (`FIGHTER-QUEUED :q`, `BR-PLAIN-STEP-SNAP`), BARRO-OK refuses the J1 cancel from f12 and latches it the same way; it fires
+  3 f after the press (at most the Step's last frame, `BR-PLAIN-STEP-FRAME`), one a Step, a pip, the Step sliding on; its
+  iframes end on the shot through a new fighter flag `FIGHTER-STEP-OPEN` (components.lisp; DEFENDER-STATE, fighter.lisp: a
+  Step's iframes hold only while it is NIL; it resets on every Step). At 0 pips the J1 cancel as before. Browser (82025,
+  1 pip): Step, J 2 f later: the shot hits 40, 1 → 0 pips, the Step slides on; 82024 (0 pips): J1.
+- Host tests (duel-rules 8787). Shared files touched: components.lisp, fighter.lisp (the flag, NIL for everyone else).
 
 ### Decision V9k (2026-10-10): the ranged L string, SP2 after the recall
 

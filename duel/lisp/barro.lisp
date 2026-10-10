@@ -201,6 +201,15 @@ decision V8b, the user 2026-10-10: 「L 改回 v9 的不帶傷害 可以直接�
 (*BR-MAT-SP-BLOCK*), ORANGE x *ORANGE-GAIN*; on top of the hit's own Reiatsu; the recall's strings are moves, not traces ...")
 (defparameter *br-owl-mat-sp* 15.0 "... the owl's (decision V9j: 「線命中回 15 SP」) ...")
 (defparameter *br-mat-sp-block* 0.5 "... a blocked line's share (decision V9j: 「回一半」).")
+(defparameter *br-fresh-scale* 0.1
+  "A trace laid onto the opponent (its line touches him on its first frame) slows the whole match to this time scale
+(SLOWMO) ... (new 2026-10-10, decision V9l, the user: 「讓軌跡具有與原版利捷一樣的時緩效果」: the old Lille's *LB-FRESH-SCALE*)")
+(defparameter *br-fresh-secs* 0.2 "... for this many real seconds (the old *LB-FRESH-SECS*, decision V9l).")
+(defparameter *br-cross-scale* 0.2
+  "The opponent stepping onto his live traces after *BR-CROSS-OFF* frames off all of them slows it to this ... (the old
+*LB-CROSS-SCALE*, decision V9l) ...")
+(defparameter *br-cross-secs* 0.5 "... for this many real seconds (the old *LB-CROSS-SECS*, decision V9l) ...")
+(defparameter *br-cross-off* 10 "... the frames off every line first (the old *LB-CROSS-OFF*: the lines count as one region).")
 (defparameter *br-mat-burst-r* 1.5
   "A materialised trace also hits round its aim point, this many metres (the circle; the line's own radius beside it)
 (new 2026-10-10, decision V9j: 「軌跡起點半徑內一樣會受到傷害」, 「起點周圍 1.5 m 圓形」); one hit a trace either way.")
@@ -700,6 +709,9 @@ plays at old / new speed and still reaches its hit pose on the new hit frame). A
   :adv-block -14 :track 0 :vol (:cap 0.6 31.0 1.2 1.2) :on-hit :knockback :kb 2.0 :chip 0.15 :guard 45
   :flags (:ranged :x-axis :uncatchable) :tick br-planted-tick :on-frame ((0 br-nijushi-tell) (40 br-beam-shot))
   :params (:lock 20 :track 60.0 :width 1.2))
+;; SP2 off the recall's string, the charge skipped (decision V9l, the user 2026-10-10: 「讓接在回收後的 SP2 跳過蓄力」): the
+;; beam 2 f in (entered 2 f before it); Trompete's copy is not reflectable (no wind-up to read)
+(defmove-copy :br-w-nijushi-c :br-w-nijushi :enter 38)
 ;; melee L: the turn into ranged mode (12 f); J3 -> L 後撤 the backstep (5 m / 14 f, iframes f0-8, 10 flash step, ranged from
 ;; its f0, a lay from its f14: decision V6) into ranged; K3 -> L
 ;; 回收 the recall (every live trace taken back, counted, then the derivative string for the count: :strings :rc0 .. :rc3)
@@ -807,6 +819,7 @@ plays at old / new speed and still reaches its hit pose on the new hit frame). A
   :adv-block -13 :track 0 :vol (:cap 0.6 31.0 1.4 1.2) :on-hit :knockback :kb 3.0 :chip 0.15 :guard 60
   :flags (:ranged :x-axis :uncatchable :reflectable) :tick br-planted-tick :on-frame ((0 br-trompete-tell) (60 br-beam-shot))
   :params (:lock 40 :blast 60 :track 30.0 :width 1.2))
+(defmove-copy :br-trompete-c :br-trompete :enter 58 :flags (:ranged :x-axis :uncatchable))   ; (after the recall: V9l)
 (defmove :br-o-breaker :kind :breaker :clip :lb-o-breaker :clip-2 :lb-o-stamp :callout "KAGIZUME")
 (defmove :br-o-kikon :kind :kikon :clip :lb-o-trompete :clip-2 :lb-o-chop :clip-s 4 :callout "TROMPETE"
   :cine lb-trompete-cine :startup 20 :active 3 :recovery 30 :whiff 30 :dmg 80 :adv-block -14 :track 0
@@ -873,7 +886,8 @@ decision V9; at 0 pips the plain K1, V9d).")
   "The ranged L string (decision V9k): an L latched in a lay starts the next one (BR-LAY-TICK, :lchain), five in all.")
 (defparameter *br-melee-strings*
   (append *br-recall-strings*
-          '((:br-l-link :br-recall :br-recall) (:br-l-link :br-backstep :br-backstep) (:br-l-link :br-to-en :br-to-en))
+          '((:br-l-link :br-recall :br-recall) (:br-l-link :br-backstep :br-backstep) (:br-l-link :br-to-en :br-to-en)
+            (:br-recall :rc-sp2-w :br-w-nijushi-c) (:br-recall :rc-sp2-o :br-trompete-c))   ; (the charge-less SP2s: V9l)
           *br-lay-strings*)
   "The awakened forms' non-button strings: the recall's, the L router's three targets (BR-L-LINK-GO; batch 4), the ranged
 L string (decision V9k; every awakened form inherits these).")
@@ -1044,6 +1058,9 @@ L string (decision V9k; every awakened form inherits these).")
   (switch-to nil)                         ; ... the melee form it turns into (6 f into the dash, or at its end)
   (dash-j nil)                            ; ... the J1 it started (that move while it runs): it fires no trace (V9g)
   (hoho-laid nil)                         ; this Hoho left its points (decision V9j)
+  (cross-off 9999 :type fixnum)           ; sim frames the opponent has been off every live line (decision V9l)
+  (g-shot nil)                            ; a plain Step's latched moving snap: the Step frame it fires (decision V9l) ...
+  (g-fired nil)                           ; ... it fired (one a Step)
   (l-next nil)                            ; a ranged lay: an L latched for the string's next lay (decision V9k)
   (rc-sp2 nil)                            ; the recall's string: SP2 latched for its recovery (decision V9k)
   (step-shot nil)                         ; the stance Step: the frame its latched moving snap fires (V9i) ...
@@ -1074,7 +1091,8 @@ the gate's *DIFFICULTY* (the others' stays): his own difficulty ladder against f
   (width 0f0 :type single-float)          ; its radius (0.6, SP2's 1.2)
   (ux 0f0 :type single-float) (uz -1f0 :type single-float)   ; its line's direction: from the aim point (the hazard's x z)
                                           ;  through him, recomputed every step (BR-TRACES-AIM; decision V7)
-  (vol nil))                              ; its line: a :cap volume from the point along (ux uz)
+  (vol nil)                               ; its line: a :cap volume from the point along (ux uz)
+  (fresh t))                              ; not yet checked against him (its first frame: the fresh slow motion, V9l)
 
 ;;; ================================================================ hooks
 (defun br-tick-brain (e)
@@ -1090,6 +1108,10 @@ his CPU's only when it pays (BR-AI-L-OK-P: the recall at its count, the backstep
   (let* ((f (fighter e)) (form (fighter-form f)) (g (gauges e)) (b (br-tick-brain e))
          (cur (and (eq (fighter-state f) :move) (fighter-move f))))
     (cond ((br-sp2-sealed-p command form (brs-sealed (br e))) nil)
+          ((and (eq command :q) (br-plain-step-latch-p e f (br e) form))   ; (decision V9l: the Step's J1 cancel is the
+           (setf (brs-g-shot (br e)) (br-plain-step-frame (fighter-sf f)) (fighter-queued f) nil)   ;  moving snap instead)
+           (pace e :step-snap-latch)
+           nil)
           ((and (eq command :sig) (typep combo 'move))
            (let ((l (mv-name combo)))
              (and cur
@@ -1132,6 +1154,8 @@ check on its f59."
           (when (br-awake-form-p form) (br-hoho-lay e)))
         (setf (brs-hoho-laid st) nil))
     (setf (brs-live st) (br-live-traces e))
+    (br-trace-cross e st)                                 ; (decision V9l: the old Lille's slow motion)
+    (br-plain-step-snap e f st form)                      ; (decision V9l: the snap shot in a plain Step)
     (when (and (br-awake-form-p form) (minusp (brs-awake-t st)))
       (setf (brs-awake-t st) *match-tick*) (pace e :awaken-tick *match-tick*))
     (when (and (br-owl-form-p form) (minusp (brs-revive-t st)))
@@ -1279,6 +1303,28 @@ pips the J is J1 at once (V9c / V9d), the Step cancelled."
                     (t (turn-to-opp e f 10.0)
                        (br-kamae-go e f st mv :kamae-j)
                        (pace e :dash-snap))))))))))
+
+(defun br-plain-step-latch-p (e f st form)
+  "Does a J in a plain Step (state :step, the base form, >= 1 pip, none fired this Step) become the moving snap shot
+(decision V9l, the user 2026-10-10: 「常態的速射現在還是不能在 step 的過程中使用」)? His CPU never."
+  (and (eq form :base) (eq (fighter-state f) :step) (>= (brs-snipe st) 1) (not (brs-g-fired st)) (not (brs-g-shot st))
+       (null (br-tick-brain e))))
+(defun br-plain-step-frame (press)
+  "The plain Step frame the moving snap latched on Step frame PRESS fires: *BR-STEP-SNAP-DELAY* later, at the latest the
+Step's last frame (*STEP-FRAMES* - 1)."
+  (min (+ press *br-step-snap-delay*) (1- *step-frames*)))
+(defun br-plain-step-snap (e f st form)
+  "The plain Step's moving snap (decision V9l): the J the Step latched for its J1 cancel (FIGHTER-QUEUED :q) is taken
+instead (BR-PLAIN-STEP-LATCH-P), the shot latched for BR-PLAIN-STEP-FRAME; on that frame BR-STEP-SNAP fires it (a pip, the
+snap's hit as a line at him) and the Step's iframes end (FIGHTER-STEP-OPEN); the Step goes on. Off a Step it resets.
+(A J pressed from the Step's J1 cancel frame is refused there by BARRO-OK, which latches it the same way.)"
+  (cond ((not (eq (fighter-state f) :step)) (setf (brs-g-shot st) nil (brs-g-fired st) nil))
+        (t (when (and (eq (fighter-queued f) :q) (br-plain-step-latch-p e f st form))
+             (setf (fighter-queued f) nil (brs-g-shot st) (br-plain-step-frame (fighter-sf f)))
+             (pace e :step-snap-latch))
+           (when (and (brs-g-shot st) (>= (fighter-sf f) (brs-g-shot st)))
+             (setf (brs-g-shot st) nil (brs-g-fired st) t (fighter-step-open f) t)
+             (br-step-snap e f st)))))
 
 (defun br-step-snap (e f st)
   "The moving snap shot's frame (decision V9i): a pip spent (BR-KAMAE-LEFT); the snap shot's hit (:br-k-snap's window, 萬物貫通)
@@ -1777,10 +1823,41 @@ from its last active frame's end (BR-RC-SP2-P) into the form's SP2 under SP2's o
         (when (vpad-command-pressed-p vp :sig t) (vpad-consume! vp :sig) (setf (brs-rc-sp2 st) t))
         (when (and (brs-rc-sp2 st) (br-rc-sp2-p (fighter-sf f) (mv-s mv) (mv-a mv)))
           (setf (brs-rc-sp2 st) nil)
-          (when (try-command e f :sp2) (pace e :rc-sp2)))))))
+          (turn-to-opp e f 10.0)
+          (let ((with (kit-next (fighter-kit f) :br-recall (if (br-owl-form-p (fighter-form f)) :rc-sp2-o :rc-sp2-w))))
+            (when (try-command e f :sp2 nil nil with) (pace e :rc-sp2))))))))   ; (decision V9l: the charge skipped)
 (defun br-rc-sp2-p (sf s a) "May the recall's string at frame SF (startup S, active A) cancel into SP2: from S + A (decision V9k)?"
   (>= sf (+ s a)))
 (defun br-rc-shot (e) "A recall string's line: its look." (br-spawn-look e :shot *br-x-len* 0.05 t) (emit :sfx :lb-crack e))
+
+(defun br-cross-kind (fresh now off)
+  "The slow motion his lines start this frame (decision V9l, the old Lille's LB-CROSS-KIND): :FRESH when a line laid this
+frame touches him, else :CROSS when he is on one NOW after OFF >= *BR-CROSS-OFF* frames off all of them, else NIL."
+  (cond (fresh :fresh) ((and now (>= off *br-cross-off*)) :cross)))
+(defun br-cross-off-next (now off) "Frames off every live line after this one: 0 when on one (NOW), else OFF + 1 (capped)."
+  (if now 0 (min 9999 (1+ off))))
+(defun br-trace-cross (e st)
+  "Per sim frame (BARRO-TICK, after the lines turned through him): is the opponent on any of his live lines (the line's
+volume against his hurt cylinder, as a hit tests it)? A line laid this frame onto him slows the match at *BR-FRESH-SCALE*
+for *BR-FRESH-SECS*; else stepping onto them after *BR-CROSS-OFF* frames off all slows it at *BR-CROSS-SCALE* for
+*BR-CROSS-SECS* (decision V9l, the user 2026-10-10: 「讓軌跡具有與原版利捷一樣的時緩效果」: the old LB-TRACE-CROSS)."
+  (let ((o (opp-of e)) (now nil) (fresh nil))
+    (when (entity-alive-p o)
+      (let ((q (pos-of o)) (b (model-body (model o))))
+        (do-entities (h (hz hazard))
+          (let ((d (hazard-data hz)))
+            (when (and (eql (hazard-owner hz) e) (brh-p d) (brh-live d))
+              (when (vol-hit-p (brh-vol d) (hazard-x hz) 0f0 (hazard-z hz) (brh-ux d) (brh-uz d)
+                               (aref q 0) (aref q 1) (aref q 2) (body-hurt-r b) (body-hurt-h b) 0f0)
+                (setf now t)
+                (when (brh-fresh d) (setf fresh t)))
+              (setf (brh-fresh d) nil))))
+        (case (br-cross-kind fresh now (brs-cross-off st))
+          (:fresh (slowmo *br-fresh-scale* *br-fresh-secs*) (pace e :trace-fresh) (emit :sfx :rift-open e)
+                  (clog "~a trace slow motion (fresh)" (side-name e)))
+          (:cross (slowmo *br-cross-scale* *br-cross-secs*) (pace e :trace-cross) (emit :sfx :rift-open e)
+                  (clog "~a trace slow motion (cross)" (side-name e))))))
+    (setf (brs-cross-off st) (br-cross-off-next now (brs-cross-off st)))))
 
 (defun br-near-point-p (px pz tx tz tr)
   "Does a hurt cylinder at (TX TZ), radius TR, touch the *BR-MAT-BURST-R* m circle round a trace's aim point (PX PZ)

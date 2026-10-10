@@ -104,6 +104,7 @@ States (fighter.lisp): :idle (stand / walk / strafe) :guard :guard-hit (blockstu
   (burst nil)                           ; the burst mode pressed this step (:white :blue :orange; applied after both stepped)
   (chain 0 :type fixnum)                ; ORANGE: frames the next move started still has its startup cut
   (invuln 0 :type fixnum)               ; frames of invulnerability left (after a Burst)
+  (step-open nil)                       ; this Step's iframes ended early (a kit's shot from it: Lille II, DUEL_LILLE_V2 V9l)
   (ox 0f0 :type single-float) (oz 0f0 :type single-float)   ; the opponent at the start of this step
   (dist 0f0 :type single-float)         ; ... and the distance to him
   (run-yaw 0f0 :type single-float)      ; the run's heading (he faces the opponent; this is where he goes)

@@ -247,7 +247,8 @@ view (camera-relative, VIEW-STEP); the CPU writes (strafe, toward) directly."
                                        (getf k :step))
                            *step-distance*))
                    12 dx dz))
-      (setf (fighter-state f) :step (fighter-sf f) 0 (fighter-move f) nil (fighter-queued f) nil)   ; (the J latch)
+      (setf (fighter-state f) :step (fighter-sf f) 0 (fighter-move f) nil (fighter-queued f) nil   ; (the J latch)
+            (fighter-step-open f) nil)
       (halt! e)
       (let ((h (kit-hook (fighter-kit f) :step))) (when h (funcall h e)))   ; the form's own take-off (a clone)
       (play-clip e (cond ((> (abs st) (abs to)) (if (> st 0) :sh-step-r :sh-step-l)) ((> to 0) :sh-step-f) (t :sh-step-b))
@@ -833,7 +834,7 @@ still :parry); never in a reaction (a bind, a Guard Break, a crush reel: no armo
       (:guard (if (and (>= (fighter-guard-t f) *guard-raise*) (can-guard-p (gauges-gg (gauges e)) (gauges-guardless (gauges e))))
                   :guard :neutral))
       (:guard-hit :guard)
-      (:step (if (invulnerable-frame-p sf *step-iframes*) :invuln open))
+      (:step (if (and (invulnerable-frame-p sf *step-iframes*) (not (fighter-step-open f))) :invuln open))
       (:hoho (if (invulnerable-frame-p sf *hoho-iframes*) :invuln open))
       ((:down :wakeup :cine :intro :win :lose) :invuln)
       (:air (if (eq (fighter-phase f) :knockdown) :invuln :neutral))   ; the combo limits' forced knockdown

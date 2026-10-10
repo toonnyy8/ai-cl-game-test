@@ -2825,6 +2825,17 @@ defender's next step. Values: the attacker's and the defender's first actionable
                                            (eq 'br-lay-tick (mv-tick mv))))))))
   (check (and (not (br-lay-chain-p 6 4 3)) (br-lay-chain-p 7 4 3) (not (br-rc-sp2-p 7 6 2)) (br-rc-sp2-p 8 6 2)
               (eq 'br-rc-tick (mv-tick (find-move :br-rc4))) (eq 'br-rc-tick (mv-tick (find-move :br-rc0)))))
+;; decision V9l (the user 2026-10-10: 「讓接在回收後的 SP2 跳過蓄力」, 「讓軌跡具有與原版利捷一樣的時緩效果」, 「常態的速射現在還是不能在
+  ;; step 的過程中使用」): the charge-less SP2s off the recall; the old Lille's slow motion numbers; the plain Step's shot frame
+  (let ((n (find-move :br-w-nijushi-c)) (tc (find-move :br-trompete-c)) (k (find-kit :barro :jilliel-kin)))
+    (check (and (= 38 (mv-enter n)) (= 58 (mv-enter tc)) (not (member :reflectable (mv-flags tc)))
+                (eq n (kit-next k :br-recall :rc-sp2-w)) (eq tc (kit-next k :br-recall :rc-sp2-o))
+                (eq tc (kit-next (find-kit :barro :shin-kin) :br-recall :rc-sp2-o)))))
+  (check (and (= *br-fresh-scale* *lb-fresh-scale*) (= *br-fresh-secs* *lb-fresh-secs*) (= *br-cross-scale* *lb-cross-scale*)
+              (= *br-cross-secs* *lb-cross-secs*) (= *br-cross-off* *lb-cross-off*)
+              (eq :fresh (br-cross-kind t t 0)) (eq :cross (br-cross-kind nil t 10)) (null (br-cross-kind nil t 9))
+              (null (br-cross-kind nil nil 99)) (= 0 (br-cross-off-next t 50)) (= 6 (br-cross-off-next nil 5))
+              (= 5 (br-plain-step-frame 2)) (= 23 (br-plain-step-frame 22)) (= 23 (br-plain-step-frame 23))))
   ;; decision V9j: Reiatsu per trace contact (+10 / the owl +15, a block half, ORANGE x1.5), the circle round the point,
   ;; an awakened Hoho's points (JILLIEL 3, the owl 5) on a 0.5 m ring
   (check (and (~= 10.0 (br-trace-sp :hit nil nil)) (~= 5.0 (br-trace-sp :block nil nil)) (~= 15.0 (br-trace-sp :hit t nil))
