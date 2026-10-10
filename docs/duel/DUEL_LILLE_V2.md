@@ -107,6 +107,19 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
 
+### Decision V6c (2026-10-10): a wider L → J window; TENSHIN in fires a line at its f0 (the old combo)
+
+The user, on the V6a playtest build: 「L 接 J 的判定再寬鬆一點，另外現在鐘擺戰法沒辦法串成真正的連段」; asked how the old one linked
+(the old Lille: TENSHIN in's f0 fired every trace, a 26 f stagger, the ≤ 14 f dash, J1's 8 f: 22 < 26; the out half was
+neutral), the user chose 「照原版：前衝第 0 幀觸發」 and the window 「整個放點招式＋收招後 10 幀」.
+
+- The window: a J pressed at any frame of a ranged L / SP1 / SP2 is kept and dashes on the frame the move's last point is
+  set (the 2 f cancel); a J within **10 f after the move ends** dashes too (L ≈ 23 f in all). Elsewhere, ranged J = J1 in
+  place (V6a).
+- TENSHIN in's **f0 fires one line**: the nearest within 2.5 m of the opponent (V6's pick), along the line (V7), stagger
+  26 f as every materialised trace; then the dash and J1 (whose own first active frame still fires one more, V6). The
+  backstep half stays neutral, as the old.
+
 ### Decision V6b (2026-10-10): gates without the old Lille, the playtest first
 
 The user: 「未來測試閘門不要跟第一版 lille 比較，然後先上 playteat 後再跑閘門測試讓自動測試跟人工測試兩邊能同時運作」.
