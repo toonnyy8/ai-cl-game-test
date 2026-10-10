@@ -2451,7 +2451,7 @@ the move's frame only (cosmetic). 0 B."
                           %cl (if %kk (%lb-ss (/ (- %post 4f0) 8f0)) 0f0)
                           %vb (* (the single-float *lb-ring-blow*) %b %b)
                           %lit (if (< %post 6f0) 255 0) %fl (f-max 0f0 (- 1f0 (/ %post 6f0))))))))
-           ((:br-rc0 :br-rc1 :br-rc2 :br-rc3)            ; Lille II's recall strings (barro-art.lisp BR-RC-DRIVE)
+           ((:br-rc0 :br-rc1 :br-rc2 :br-rc3 :br-rc4)    ; Lille II's recall strings (barro-art.lisp BR-RC-DRIVE)
             (when (br-rc-drive %f %mv)
               (let ((%x *lb-sp-ext*))
                 (setf %rg (aref %x 0) %cup (aref %x 1) %sh (aref %x 2) %vb (aref %x 3) %fl (aref %x 4)

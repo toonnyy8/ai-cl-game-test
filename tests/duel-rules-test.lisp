@@ -3210,6 +3210,61 @@ defender's next step. Values: the attacker's and the defender's first actionable
             (br-kamae-link-ok-p :br-kamae-k 1) (br-kamae-link-ok-p :br-kamae-j 3)
             (br-kamae-link-ok-p :br-recall 0) (br-kamae-link-ok-p :br-backstep 0) (br-kamae-link-ok-p :br-l-link 0)))
 
+;;; ---------------------------------------------------------------- Lille II decision V8's art (DUEL_LILLE_V2 §22, art batch 3)
+;; 裁き・極 :br-rc4 / :br-o-rc4 (the recall at 10+): S 6, active 43, R 30 (79 f; barro.lisp's move when it has one, else the
+;; spec's numbers); six beats f6 R / f12 L / f18 R / f24 L / f30 R / f36 L, each firing tip at him (>= 1.2 m ahead, within
+;; 0.4 m of his line, the owl's 0.5; the move's BR-RC-SHOT frames when it exists), the beam on f48 (BR-BEAM-SHOT); f47 in
+;; the bigger ring (each wing >= 1 m aside, further aside and higher than 裁き's f35), the owl's claws thrown at him on f48.
+;; The ranged L swing :br-e-swing / :br-oe-swing (S 7, A 3, R 6 / 5): through its hit frames f7-9 the striking tip (the
+;; rig's right hand) reaches 1.8 m +-0.15 (the spec; the ranged kits' L move's own volume edge once it plays the clip).
+(let ((jm (make-f32 (* 16 +nj+))) (pose (make-f32 +pose-n+)) (v (make-f32 3))
+      (pj (make-rig-proportions :arms 2.6)) (po (make-rig-proportions :arms 2.2 :legs 1.5))
+      (rc4 (gethash :br-rc4 *moves*)))
+  (flet ((tip (clip frame joint props)
+           (clip-sample! pose (find-clip clip) (/ frame 60.0))
+           (pose-fk! jm pose 0f0 0f0 0f0 0f0 1f0 0f0 props)
+           (joint-point! v jm (joint-index joint) 0f0 0f0 0f0)
+           (values (aref v 0) (- (aref v 2)) (aref v 1)))
+         (frames (clip) (round (* 60 (clip-dur (find-clip clip))))))
+    (let ((sar (if rc4 (list (mv-s rc4) (mv-a rc4) (mv-r rc4)) '(6 43 30)))
+          (beats '((6 :hand-r) (12 :hand-l) (18 :hand-r) (24 :hand-l) (30 :hand-r) (36 :hand-l))))
+      (check (equal sar '(6 43 30)))
+      (dolist (clip '(:br-rc4 :br-o-rc4))
+        (check (or (and (= (frames clip) (reduce #'+ sar)) (= (round (* 60 (clip-mark clip :s))) (first sar)))
+                   (format t "~a: ~d f, ~a~%" clip (frames clip) sar))))
+      (when rc4
+        (check (eq :br-rc4 (mv-clip rc4)))
+        (check (eq :br-o-rc4 (kit-move-clip (kit :barro :shin-kin) :br-rc4)))
+        (check (equal (append (mapcar #'first beats) '(48))
+                      (loop for (fr fn) in (mv-on-frame rc4) when (member fn '(br-rc-shot br-beam-shot)) collect fr))))
+      (loop for (fr j) in beats
+            do (multiple-value-bind (x ahead) (tip :br-rc4 fr j pj)
+                 (check (or (and (>= ahead 1.2) (<= (abs x) 0.4)) (format t ":br-rc4 f~d ~a: ~,2f ahead ~,2f aside~%" fr j ahead x))))
+               (multiple-value-bind (x ahead) (tip :br-o-rc4 fr j po)
+                 (check (or (and (>= ahead 1.2) (<= (abs x) 0.5)) (format t ":br-o-rc4 f~d ~a: ~,2f ahead ~,2f aside~%" fr j ahead x)))))
+      (dolist (j '(:hand-r :hand-l))
+        (let ((sg (if (eq j :hand-r) 1 -1)))
+          (multiple-value-bind (x ahead up) (tip :br-rc4 47 j pj)
+            (declare (ignore ahead))
+            (multiple-value-bind (x3 ahead3 up3) (tip :br-rc3 35 j pj)
+              (declare (ignore ahead3))
+              (check (or (and (>= (* sg x) 1.0) (> (* sg x) (* sg x3)) (> up up3))
+                         (format t ":br-rc4 f47 ~a: ~,2f aside ~,2f up (裁き f35: ~,2f ~,2f)~%" j x up x3 up3)))))
+          (multiple-value-bind (x ahead) (tip :br-o-rc4 48 j po)
+            (check (or (and (>= ahead 1.2) (<= (abs x) 0.5)) (format t ":br-o-rc4 f48 ~a: ~,2f ahead ~,2f aside~%" j ahead x)))))))
+    ;; the swing: the spec's 1.8 m, or the ranged kits' L move's volume edge once it plays the swing clip
+    (dolist (row '((:br-e-swing :jilliel (7 3 6) pj) (:br-oe-swing :shin (7 3 5) po)))
+      (destructuring-bind (clip form sar pv) row
+        (let* ((props (if (eq pv 'pj) pj po)) (l (kit-command-move (kit :barro form) :sig))
+               (mine (eq clip (kit-move-clip (kit :barro form) (mv-clip l))))
+               (edge (if (and mine (plusp (length (mv-hits l)))) (aref (first (hw-vols (svref (mv-hits l) 0))) 1) 1.8))
+               (sar (if mine (list (mv-s l) (mv-a l) (mv-r l)) sar))
+               (art (loop for fr from (first sar) below (+ (first sar) (second sar))
+                          maximize (multiple-value-bind (x ahead) (tip clip fr :hand-r props) (sqrt (+ (* x x) (* ahead ahead)))))))
+          (check (or (and (= (frames clip) (reduce #'+ sar)) (= (round (* 60 (clip-mark clip :s))) (first sar)))
+                     (format t "~a: ~d f, ~a~%" clip (frames clip) sar)))
+          (check (or (<= (abs (- art edge)) 0.15) (format t "~a: the reach ~,2f m, the swing's tip ~,2f m~%" clip edge art))))))))
+
 ;; The gate's match length leaves the cinematics out (the user, 2026-10-08: 「毀魂技演出不計入對戰時長」, every cinematic):
 ;; PLAY-TICKS (flow's MATCH-PLAY-TICKS) are the frames the timer ran (it stops while a cinematic plays: MAIN's step)
 (check (= 600 (play-ticks 300 (- 18000 600))))

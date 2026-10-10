@@ -7,7 +7,7 @@
 ;;;; barro.lisp (whose state and knobs these functions read at draw time).
 (in-package :duel)
 
-(declaim (special *br-trace-len* *br-trace-r-thick*))  ; (barro.lisp's, loaded after this file)
+(declaim (special *br-trace-len* *br-trace-r-thick* *br-at*))  ; (barro.lisp's, loaded after this file; *BR-AT* below, §17)
 
 ;;; ---------------------------------------------------------------- his clips (DUEL_LILLE_V2 §7, §12: the art batch)
 ;;; The motions Lille never had, timed to barro.lisp's frame data. JILLIEL's on its rig (the front wing pair's tips are the
@@ -93,6 +93,39 @@
   (26 :br-kick-l) (31 :br-ring-pose) (35 :br-ring-pose (:root :f -0.12 :u 0.34 :pitch -4) (:spine :flex -10))
   (36 :snap :br-blown-pose) (:a :br-blown-pose (:root :f -0.7 :u 0.42 :pitch -15) (:spine :flex -22))
   (50 :br-settle-both (:root :u 0.2)) (:end :lb-w-stance))
+;; 裁き・極 SABAKI KIWAMI (decision V8: the recall at 10+ points, §22): six beats, R f6, L f12, R f18, L f24, R f30, L f36,
+;; then risen higher into a bigger NIJUSHI-KO ring (f38-47, every hole lit, shaking harder), the wider beam on f48 blowing
+;; him further back; recovery 30 (6 43 30 = 79 f)
+(defpose :br-ring-big (:base :lb-w-stance)           ; the bigger ring: R 86/-12, L -86/-12, risen 0.5 m
+  (:root :f -0.06 :u 0.5 :pitch -2) (:spine :flex -6) (:head :flex -4) (:arm-r :flex 4 :side 78) (:elbow-r :flex 2)
+  (:arm-l :flex 4 :side 78) (:elbow-l :flex 2) (:thigh-r :flex -8) (:thigh-l :flex -8))
+(defpose :br-blown-big (:base :lb-w-stance)          ; the wider beam's recoil: R 122/-2, L -122/-2, blown further back
+  (:root :f -0.85 :u 0.6 :pitch -18) (:spine :flex -26) (:head :flex -12) (:arm-r :flex -32 :side 88) (:elbow-r :flex 24)
+  (:arm-l :flex -32 :side 88) (:elbow-l :flex 24) (:thigh-r :flex -10) (:thigh-l :flex -4))
+(defstrike :br-rc4 (6 43 30 :base :lb-w-stance)   ; 裁き・極: R f6, L f12, R f18, L f24, R f30, L f36, the ring f38-47, the beam f48
+  (0 :br-gather-pose) (3 :br-cock-r) (:s :snap :br-fire-r) (8 :br-kick-r) (10 :br-cock-l) (12 :snap :br-fire-l)
+  (14 :br-kick-l) (16 :br-cock-r) (18 :snap :br-fire-r) (20 :br-kick-r) (22 :br-cock-l) (24 :snap :br-fire-l)
+  (26 :br-kick-l) (28 :br-cock-r) (30 :snap :br-fire-r) (32 :br-kick-r) (34 :br-cock-l) (36 :snap :br-fire-l)
+  (38 :br-kick-l) (42 :br-ring-big) (47 :br-ring-big (:root :f -0.16 :u 0.56 :pitch -5) (:spine :flex -12))
+  (48 :snap :br-blown-big) (:a :br-blown-big (:root :f -0.95 :u 0.62 :pitch -19) (:spine :flex -28))
+  (64 :br-settle-both (:root :u 0.24)) (:end :lb-w-stance))
+;; (UNUSED since the user's revert the same day, 「L 改回 v9 的不帶傷害 可以直接放」: the ranged L is the V9 lay again; kept for a
+;; later swing, its reach host-tested, DUEL_LILLE_V2 §22) the ranged L's swing (decision V8: startup 7, active 3, reach 1.8 m,
+;; arc 110; a hit sets the aim point): from EN's float
+;; the right wing cocked high behind, swept flat right -> left at chest height, the tip on the 1.8 m arc through f7-9
+(defstrike :br-e-swing (7 3 6 :base :lb-w-stance)
+  (0)
+  (4 (:root :f -0.1 :u 0.04 :yaw -8) (:spine :flex -5) (:chest :twist -24) (:arm-r :flex -34.2 :side 119.5)
+   (:elbow-r :flex 28) (:arm-l :flex 4 :side 84) (:elbow-l :flex 4) (:thigh-r :flex -12) (:thigh-l :flex 14))   ; R 128/24
+  (6 (:root :f -0.12 :u 0.04 :yaw -10) (:spine :flex -6) (:chest :twist -28) (:arm-r :flex -40.1 :side 130.8)
+   (:elbow-r :flex 32) (:arm-l :flex 6 :side 86) (:elbow-l :flex 4) (:thigh-r :flex -14) (:thigh-l :flex 16))   ; R 138/30
+  (:s :snap (:root :f 0.22 :u -0.02 :yaw 6) (:spine :flex 12) (:chest :twist 16) (:arm-r :flex 58 :side 93)
+   (:elbow-r :flex 4) (:arm-l :flex -11.8 :side 79.8) (:elbow-l :flex 4) (:thigh-r :flex 26) (:thigh-l :flex -16))   ; R 32/2
+  (:a (:root :f 0.24 :u -0.02 :yaw 10) (:spine :flex 13) (:chest :twist 26) (:arm-r :flex 77 :side 72)
+   (:elbow-r :flex 4) (:arm-l :flex -19.5 :side 77.3) (:elbow-l :flex 4) (:thigh-r :flex 26) (:thigh-l :flex -16))   ; R 12/-4
+  (13 (:root :f 0.16 :u 0 :yaw 10) (:spine :flex 10) (:chest :twist 24) (:arm-r :flex 110 :side 100) (:elbow-r :flex 10)
+   (:arm-l :flex -16 :side 78) (:elbow-l :flex 4))
+  (:end :lb-w-stance))
 (defstrike :br-to-en (12 0 0 :base :lb-w-stance)   ; melee -> ranged: folded, rising with the wings thrown open, EN
   (0 :lb-w-fold-pose) (5 (:root :u 0.16 :pitch -4) (:spine :flex -6) (:arm-r :flex 10 :side 60) (:elbow-r :flex 60)
                          (:arm-l :flex 10 :side 60) (:elbow-l :flex 60))
@@ -177,6 +210,30 @@
   (14 :br-o-kick-l) (16 :br-o-cock-r) (18 :snap :br-o-fire-r) (20 :br-o-kick-r) (22 :br-o-cock-l) (24 :snap :br-o-fire-l)
   (26 :br-o-kick-l) (31 :br-o-raise-both) (35 :br-o-raise-both (:root :u 0.36 :pitch -10))
   (36 :snap :br-o-throw-both) (:a :br-o-throw-both (:root :f 0.64 :u -0.1)) (52 :br-o-gather-pose) (:end :lb-o-stance))
+;; 裁き・極 as the owl: six claw throws (R f6 .. L f36), both claws raised high overhead and shaking while the gold blast
+;; gathers between them (f38-47), thrown at him on f48 with the Trompete-like blast (BR-DRAW's %BR-KIWAMI-LOOK)
+(defstrike :br-o-rc4 (6 43 30 :base :lb-o-stance)
+  (0 :br-o-gather-pose) (3 :br-o-cock-r) (:s :snap :br-o-fire-r) (8 :br-o-kick-r) (10 :br-o-cock-l) (12 :snap :br-o-fire-l)
+  (14 :br-o-kick-l) (16 :br-o-cock-r) (18 :snap :br-o-fire-r) (20 :br-o-kick-r) (22 :br-o-cock-l) (24 :snap :br-o-fire-l)
+  (26 :br-o-kick-l) (28 :br-o-cock-r) (30 :snap :br-o-fire-r) (32 :br-o-kick-r) (34 :br-o-cock-l) (36 :snap :br-o-fire-l)
+  (38 :br-o-kick-l) (42 :br-o-raise-both (:root :u 0.4)) (47 :br-o-raise-both (:root :f 0.04 :u 0.46 :pitch -12) (:neck :flex -20))
+  (48 :snap :br-o-throw-both) (:a :br-o-throw-both (:root :f 0.7 :u -0.12)) (64 :br-o-gather-pose) (:end :lb-o-stance))
+;; the owl EN's ranged L swing (decision V8, as :br-e-swing): reared, the right claw cocked high, raked flat across at him
+(defstrike :br-oe-swing (7 3 5 :base :lb-oe-stance)
+  (0)
+  (3 (:root :f -0.06 :u 0.02 :yaw -6 :pitch -2) (:spine :flex 14) (:chest :twist -14) (:neck :flex 14)
+   (:head :flex -4) (:arm-r :flex 88.7 :side -11.4) (:elbow-r :flex 119.2) (:hand-r :flex -20)
+   (:arm-l :flex 35.5 :side 53.2) (:elbow-l :flex 85.4) (:hand-l :flex 10))
+  (5 (:root :f -0.14 :u 0.04 :yaw -12 :pitch -4) (:spine :flex 8) (:chest :twist -26) (:neck :flex 2)
+   (:head :flex -14) (:arm-r :flex 118.3 :side -17.9) (:elbow-r :flex 79.2) (:hand-r :flex -40)
+   (:arm-l :flex 17.3 :side 60.3) (:elbow-l :flex 89.3) (:hand-l :flex 10))
+  (:s :snap (:root :f 0.5 :u -0.06 :yaw 6 :pitch 4) (:spine :flex 30) (:chest :twist 14) (:neck :flex 34)
+   (:head :flex 12) (:arm-r :flex 93 :side -50.8) (:elbow-r :flex 70.8) (:hand-r :flex 30)
+   (:arm-l :flex -44 :side 16.4) (:elbow-l :flex 148.1) (:hand-l :flex 10))
+  (:a (:root :f 0.56 :u -0.07 :yaw 12 :pitch 5) (:spine :flex 33) (:chest :twist 24) (:neck :flex 36)
+   (:head :flex 14) (:arm-r :flex 84.3 :side -72.9) (:elbow-r :flex 68.5) (:hand-r :flex 50)
+   (:arm-l :flex -46.9 :side 17.5) (:elbow-l :flex 130) (:hand-l :flex 10))
+  (:end :lb-oe-stance))
 (defstrike :br-o-to-en (12 0 0 :base :lb-o-stance)   ; KIN -> EN (the form and its lift 0 -> 0.35 at f11)
   (0 :lb-o-fold-pose) (6 (:root :u 0.3 :pitch -6) (:spine :flex 6) (:arm-r :flex -40 :side 40) (:arm-l :flex -40 :side 40))
   (11 (:root :u 0.4 :pitch -6) (:spine :flex 6) (:arm-r :flex -40 :side 40) (:arm-l :flex -40 :side 40))
@@ -218,10 +275,19 @@ the opponent's distance, turning while it tracks, closing once locked."
 
 ;;; ---------------------------------------------------------------- the recall and its strings' looks (§12)
 (defparameter *br-rc-beats*
-  '((:br-rc0 (6 3)) (:br-rc1 (6 1) (16 2)) (:br-rc2 (6 1) (14 2) (22 1) (32 3)) (:br-rc3 (6 1) (12 2) (18 1) (24 2) (36 4)))
+  '((:br-rc0 (6 3)) (:br-rc1 (6 1) (16 2)) (:br-rc2 (6 1) (14 2) (22 1) (32 3)) (:br-rc3 (6 1) (12 2) (18 1) (24 2) (36 4))
+    (:br-rc4 (6 1) (12 2) (18 1) (24 2) (30 1) (36 2) (48 4)))
   "The recall strings' beats (their moves' line frames, barro.lisp): (frame kind), kind 1 the right wing / claw fires, 2 the
-left, 3 both, 4 the finisher (the ring and the beam). The clips (above) and the looks (BR-RC-DRIVE, BR-DRAW) read them.")
-(dolist (c '(:br-recall :br-rc0 :br-rc1 :br-rc2 :br-rc3))   ; the six table wings fan out through the recall and its strings
+left, 3 both, 4 the finisher (the ring and the beam). The clips (above) and the looks (BR-RC-DRIVE, BR-DRAW) read them.
+:br-rc4 (裁き・極, decision V8's 10+ recall, §22) is spec frames until barro.lisp has the move (the host test compares).")
+(defparameter *br-finisher* '((:br-rc3 36 10 1.0) (:br-rc4 48 10 1.6))
+  "The strings that end in NIJUSHI-KO's ring and beam: (move beam-frame ring-frames scale): the ring rises over the frames
+before the beam; SCALE (1 = 裁き's) drives 裁き・極's bigger ring, harder shake, wider and longer beam and blow-back (§22).")
+;; 裁き・極's brush callout (decision V8, §22; its 極 baked into glyphs-extra.lisp): barro.lisp's list replaces only the rows it
+;; names, so this row stands until it names :br-rc4 itself
+(when (boundp '*brush-callouts*)
+  (setf *brush-callouts* (append (remove :br-rc4 *brush-callouts* :key #'first) '((:br-rc4 "裁き・極" "SABAKI KIWAMI" nil)))))
+(dolist (c '(:br-recall :br-rc0 :br-rc1 :br-rc2 :br-rc3 :br-rc4))   ; the six table wings fan out through the recall and its strings
   (pushnew c *lb-spread-clips*))                             ;  (LILLE-DRAW's spread: an SP's; Lille never plays these clips)
 
 (defun-fast br-rc-beat (nm sf)
@@ -240,7 +306,7 @@ before the first (or NM not a string). 0 B (a constant list walked)."
 it), else -1."
   `(let ((%nm ,nm) (%sf ,sf))
      (declare (fixnum %sf))
-     (cond ((eq %nm :br-recall) %sf) ((member %nm '(:br-rc0 :br-rc1 :br-rc2 :br-rc3)) (+ 7 %sf)) (t -1))))
+     (cond ((eq %nm :br-recall) %sf) ((member %nm '(:br-rc0 :br-rc1 :br-rc2 :br-rc3 :br-rc4)) (+ 7 %sf)) (t -1))))
 
 (defun-fast br-rc-drive (f mv)
   "Lille's %LB-SP-DRIVE! for his recall strings (JILLIEL's wings; its clause calls this): each beat kicks the firing wing
@@ -248,24 +314,26 @@ it), else -1."
 f36) rises into NIJUSHI-KO's ring over f26-35 (lit, shaking), the beam blows it back. The numbers go out through
 *LB-SP-EXT* (ring, cup, shake, speed, flash, lit bits, the striking wings' mask, the other wings' share). T when it set
 them. Reads the move's frame only (cosmetic). 0 B."
-  (let* ((x *lb-sp-ext*) (sf (fighter-sf f)) (nm (mv-name mv)) (b (br-rc-beat nm sf)))
-    (declare (type f32vec x) (fixnum sf b))
+  (let* ((x *lb-sp-ext*) (sf (fighter-sf f)) (nm (mv-name mv)) (b (br-rc-beat nm sf)) (fin (assoc nm *br-finisher*))
+         (bf (if fin (the fixnum (second fin)) 9999)) (rf (if fin (the fixnum (third fin)) 0))
+         (sc (if fin (f32 (fourth fin)) 1f0)))
+    (declare (type f32vec x) (fixnum sf b bf rf) (single-float sc))
     (when (eq (fighter-phase f) :main)
-      (cond ((and (eq nm :br-rc3) (>= sf 26))                ; the finisher: NIJUSHI-KO's ring, its beam (frames, no scale)
-             (let ((post (i->f (- sf 36))) (pre (/ (i->f (- sf 26)) 10f0)))
+      (cond ((>= sf (- bf rf))                              ; the finisher: NIJUSHI-KO's ring, its beam (frames; 極 scaled)
+             (let ((post (i->f (- sf bf))) (pre (/ (i->f (- sf (- bf rf))) (i->f rf))))
                (declare (single-float post pre))
                (setf (aref x 5) 255f0 (aref x 6) 3f0 (aref x 7) 0.8f0 (aref x 2) 0f0 (aref x 4) 0f0)
                (if (< post 0f0)
                    (setf (aref x 0) (%lb-ss (/ pre 0.35f0))
-                         (aref x 1) (- 0.35f0 (* 0.25f0 (%lb-ss (/ (- pre 0.4f0) 0.6f0))))
-                         (aref x 2) (* (the single-float *lb-ring-shake*) (%lb-ss (/ (- pre 0.3f0) 0.7f0)) (+ 0.3f0 (* 0.7f0 pre)))
+                         (aref x 1) (- (* 0.35f0 sc) (* 0.25f0 (%lb-ss (/ (- pre 0.4f0) 0.6f0))))
+                         (aref x 2) (* sc (the single-float *lb-ring-shake*) (%lb-ss (/ (- pre 0.3f0) 0.7f0)) (+ 0.3f0 (* 0.7f0 pre)))
                          (aref x 3) (* 0.5f0 (the single-float *lb-strike-in*) (%lb-ss (/ (- pre 0.5f0) 0.5f0))))
-                   (let ((bl (f-max 0f0 (- 1f0 (/ post 10f0)))))
+                   (let ((bl (f-max 0f0 (- 1f0 (/ post (* 10f0 sc))))))
                      (declare (single-float bl))
                      (setf (aref x 0) (- 1f0 (%lb-ss (/ (- post 18f0) 16f0)))
                            (aref x 1) (* -0.85f0 (%lb-ss (/ post 2.5f0)) (- 1f0 (%lb-ss (/ (- post 8f0) 18f0))))
-                           (aref x 3) (* (the single-float *lb-ring-blow*) bl bl)
-                           (aref x 5) (if (< post 6f0) 255f0 0f0) (aref x 4) (f-max 0f0 (- 1f0 (/ post 6f0))))))
+                           (aref x 3) (* sc (the single-float *lb-ring-blow*) bl bl)
+                           (aref x 5) (if (< post (* 6f0 sc)) 255f0 0f0) (aref x 4) (f-max 0f0 (- 1f0 (/ post (* 6f0 sc)))))))
                t))
             ((>= b 0)                                         ; a beat: SANREN's kick on the firing wing
              (let ((kind (floor b 1000)) (age (mod b 1000)))
@@ -332,14 +400,15 @@ faint puff for none). 0 B."
 (defun-fast %br-beat-look (e f jm side mv)
   "A recall string's beat (*BR-RC-BEATS*), its first 5 frames: from each firing wing tip (the claw: the rig's hand) a line
 at him (to his chest, the line's height), jade (the owl's gold), thinning, a flash at the tip; the finisher's from both
-(wider). 0 B but the opponent's place (one lookup on those frames)."
+(wider; 裁き・極's wider still and held 9 frames). 0 B but the opponent's place (one lookup on those frames)."
   (declare (type f32vec jm) (fixnum side))
   (setf e nil)
-  (let* ((b (br-rc-beat (mv-name mv) (fighter-sf f))) (kind (if (>= b 0) (floor b 1000) 0)) (age (if (>= b 0) (mod b 1000) 99)))
-    (declare (fixnum b kind age))
-    (when (and (eq (fighter-phase f) :main) (< age 5))
-      (let* ((q (pos-of (fighter-opp f))) (p *lb-p*) (k (- 1f0 (/ (i->f age) 5f0)))
-             (pal (if (> (lb-fxs side 15) 0.5f0) +pal-gold+ +pal-jade+)) (w (* k (if (= kind 4) 0.16f0 0.06f0)))
+  (let* ((b (br-rc-beat (mv-name mv) (fighter-sf f))) (kind (if (>= b 0) (floor b 1000) 0)) (age (if (>= b 0) (mod b 1000) 99))
+         (big (and (= kind 4) (eq (mv-name mv) :br-rc4))) (life (if big 9 5)))
+    (declare (fixnum b kind age life))
+    (when (and (eq (fighter-phase f) :main) (< age life))
+      (let* ((q (pos-of (fighter-opp f))) (p *lb-p*) (k (- 1f0 (/ (i->f age) (i->f life))))
+             (pal (if (> (lb-fxs side 15) 0.5f0) +pal-gold+ +pal-jade+)) (w (* k (if (= kind 4) (if big 0.24f0 0.16f0) 0.06f0)))
              (tx (aref q 0)) (ty 1.2f0) (tz (aref q 2)))
         (declare (type f32vec q p) (single-float k pal w tx ty tz))
         (dotimes (h 2)
@@ -352,6 +421,122 @@ at him (to his chest, the line's height), jade (the owl's gold), thinning, a fla
               (toon-ribbon (hx hy hz) ((- tx hx) (- ty hy) (- tz hz)) ((* 0.35f0 w) (* 0.2f0 w)) :heat (1f0 1f0) :seed (- -72f0 sd)
                            :wob 0f0 :pal +pal-hit+ :k (* 0.9f0 k) :k1 (* 0.6f0 k) :segs 2)
               (fx-star hx hy hz (* 0.05f0 k) (* (if (= kind 4) 0.4f0 0.2f0) k) 6 sd 0f0 0f0 0.1f0 (+ 73f0 sd) pal k :push 0.25f0)))))))
+  nil)
+
+;; 裁き・極's own looks (decision V8, §22), over the shared finisher drive (BR-RC-DRIVE's ring at *BR-FINISHER*'s scale):
+;; JILLIEL's NIJUSHI-KO ring drawn out as its twenty-four holes round him, bigger than the wings' (lit one after another,
+;; all lit and shaking by f44), bursting outward with the beam; the owl's Trompete-like gold blast gathering between its
+;; raised claws; then the wider, longer beam along his line to the wall, a floor shock ring under him.
+(defparameter *br-kiwami-ring* '(1.0 2.0 0.35)
+  "裁き・極's hole ring: its radius grows from the first (m) to the second over the ring's first half; its centre sits the
+third (m) behind his chest, in the plane facing the opponent.")
+(defparameter *br-kiwami-beam* '(14 0.42 3.0)
+  "裁き・極's beam overlay: lasts this many frames from f48, this half-width (m) at its widest (裁き's line overlay 5 f, 0.16),
+and runs this far (m) past the opponent (the wall nearer; never on into the front view's camera).")
+
+(defun-fast %br-kiwami-look (f jm side)
+  "裁き・極 (the move :br-rc4) at its frame: f38-47 the ring (JILLIEL: 24 holes on a circle facing him, lit in turn,
+shaking; the owl: the gold blast gathering between its raised claws), f48 on the beam (*BR-KIWAMI-BEAM*: a wide jade / gold
+ribbon from his chest along his line to the wall, its white core, the holes bursting outward, a shock ring on the floor).
+Reads *BR-AT* (his place and the opponent's, BR-DRAW's) and the move's frame. 0 B."
+  (declare (type f32vec jm) (fixnum side))
+  (let* ((at *br-at*) (o (* 8 side)) (sf (fighter-sf f)) (gold (> (lb-fxs side 15) 0.5f0))
+         (pal (if gold +pal-gold+ +pal-jade+)) (tm (fx-clock)) (p *lb-p*))
+    (declare (type f32vec at p) (fixnum o sf) (single-float pal tm))
+    (when (and (> (aref at (+ o 4)) 0.5f0) (<= 38 sf 61))
+      (let* ((dx (- (aref at (+ o 2)) (aref at o))) (dz (- (aref at (+ o 3)) (aref at (+ o 1))))
+             (dl (f-max 0.01f0 (f-hypot dx dz))) (ux (/ dx dl)) (uz (/ dz dl)) (sx (- uz)) (sz ux)
+             (r0 (f32 (first *br-kiwami-ring*))) (r1 (f32 (second *br-kiwami-ring*))) (bk (f32 (third *br-kiwami-ring*))))
+        (declare (single-float dx dz dl ux uz sx sz r0 r1 bk))
+        (joint-point! p jm (ji :chest) 0f0 0f0 0f0)
+        (let ((cx (- (aref p 0) (* bk ux))) (cy (+ (aref p 1) 0.25f0)) (cz (- (aref p 2) (* bk uz))))
+          (declare (single-float cx cy cz))
+          (if (< sf 48)
+              (let* ((u (/ (i->f (- sf 38)) 10f0)) (r (+ r0 (* (- r1 r0) (%lb-ss (/ u 0.5f0)))))
+                     (lit (f->i (* 24f0 (%lb-ss (/ u 0.6f0))))) (shk (* 0.06f0 (%lb-ss (/ (- u 0.3f0) 0.7f0)))))
+                (declare (single-float u r shk) (fixnum lit))
+                (if gold                                ; the owl: the blast gathering between the raised claws
+                    (progn
+                      (joint-point! p jm (ji :hand-r) 0f0 0f0 0f0)
+                      (let ((hx (aref p 0)) (hy (aref p 1)) (hz (aref p 2)))
+                        (declare (single-float hx hy hz))
+                        (joint-point! p jm (ji :hand-l) 0f0 0f0 0f0)
+                        (let* ((mx (* 0.5f0 (+ hx (aref p 0)))) (my (+ 0.1f0 (* 0.5f0 (+ hy (aref p 1)))))
+                               (mz (* 0.5f0 (+ hz (aref p 2)))) (j (* shk (f-sin (* 41f0 tm))))
+                               (g (+ 0.12f0 (* 0.48f0 (%lb-ss u)))))
+                          (declare (single-float mx my mz j g))
+                          (fx-disc (+ mx j) my (- mz j) g 0.25f0 131f0 +pal-gold+ 0.95f0 :push 0.3f0)
+                          (fx-disc (+ mx j) my (- mz j) (* 0.45f0 g) 0.15f0 132f0 +pal-hit+ 0.98f0 :push 0.4f0)
+                          (fx-star (+ mx j) my (- mz j) (* 0.5f0 g) (* 2.2f0 g) 10 (* 2f0 tm) 0f0 0f0 0.15f0 133f0 +pal-gold+
+                                   (+ 0.5f0 (* 0.45f0 u)) :push 0.35f0))))
+                    (dotimes (i 24)                     ; JILLIEL: the twenty-four holes, lit in turn
+                      (when (< i lit)
+                        (let* ((a (+ (* 0.2617994f0 (i->f i)) (* shk (f-sin (+ (* 37f0 tm) (* 2.3f0 (i->f i)))))))
+                               (ca (f-cos a)) (sa (f-sin a)) (hx (+ cx (* r ca sx))) (hy (+ cy (* r sa))) (hz (+ cz (* r ca sz)))
+                               (sd (i->f i)))
+                          (declare (single-float a ca sa hx hy hz sd))
+                          (fx-star hx hy hz 0.03f0 (+ 0.06f0 (* 0.06f0 u)) 6 (+ sd tm) 0f0 0f0 0.1f0 (+ 134f0 sd) +pal-jade+ 0.95f0
+                                   :push 0.25f0)
+                          (fx-disc hx hy hz 0.04f0 0.1f0 (+ 160f0 sd) +pal-hit+ 0.95f0 :push 0.3f0)
+                          (when (< (1+ i) lit)                ; (the chord to the next lit hole: the ring's line)
+                            (let* ((b (+ a 0.2617994f0)) (nx (+ cx (* r (f-cos b) sx))) (ny (+ cy (* r (f-sin b))))
+                                   (nz (+ cz (* r (f-cos b) sz))))
+                              (declare (single-float b nx ny nz))
+                              (toon-ribbon (hx hy hz) ((- nx hx) (- ny hy) (- nz hz)) (0.02f0 0.02f0) :heat (0.8f0 0.8f0)
+                                           :seed (- -170f0 sd) :wob 0f0 :pal +pal-jade+ :k 0.85f0 :segs 1))))))))
+              (let* ((a (i->f (- sf 48))) (life (i->f (the fixnum (first *br-kiwami-beam*))))
+                     (hw (f32 (second *br-kiwami-beam*))) (ex (f32 (third *br-kiwami-beam*)))
+                     (k (* (f-min 1f0 (+ 0.5f0 (/ a 4f0))) (- 1f0 (* (/ a life) (/ a life)))))
+                     (bx (+ (aref p 0) (* 0.4f0 ux))) (bz (+ (aref p 2) (* 0.4f0 uz)))
+                     (len (f-min (+ dl ex) (%lb-wall bx bz ux uz))))
+                (declare (single-float a life hw ex k bx bz len))
+                (when (and (< a life) (> k 0.02f0))     ; the beam, wider and longer than 裁き's
+                  (toon-ribbon (bx 1.2f0 bz) ((* len ux) 0f0 (* len uz)) ((* hw k) (* 0.5f0 hw k)) :heat (1f0 0.8f0)
+                               :seed -141f0 :wob 0.03f0 :pal pal :k (* 0.95f0 k) :k1 (* 0.8f0 k) :segs 3)
+                  (toon-ribbon (bx 1.2f0 bz) ((* len ux) 0f0 (* len uz)) ((* 0.35f0 hw k) (* 0.25f0 hw k)) :heat (1f0 1f0)
+                               :seed -142f0 :wob 0f0 :pal +pal-hit+ :k (* 0.95f0 k) :k1 (* 0.85f0 k) :segs 2)
+                  (fx-star bx 1.2f0 bz (* 0.2f0 k) (* 1.4f0 k) 12 (* 0.5f0 a) 0f0 0f0 0.15f0 143f0 +pal-hit+ k :push 0.4f0)
+                  (%tring (aref at o) 0f0 (aref at (+ o 1)) (+ 1f0 (* 0.45f0 a)) 0.08f0 pal (* 0.9f0 k) 144f0 32))
+                (when (and (not gold) (< a 10f0))       ; the holes burst outward with it
+                  (let ((r (+ r1 (* 0.12f0 a))) (kk (- 1f0 (/ a 10f0))))
+                    (declare (single-float r kk))
+                    (dotimes (i 24)
+                      (let* ((an (* 0.2617994f0 (i->f i))) (ca (f-cos an)) (sa (f-sin an)) (sd (i->f i)))
+                        (declare (single-float an ca sa sd))
+                        (fx-star (+ cx (* r ca sx)) (+ cy (* r sa)) (+ cz (* r ca sz)) 0.03f0 (* 0.12f0 kk) 6 sd 0f0 0f0 0.1f0
+                                 (+ 134f0 sd) +pal-jade+ kk :push 0.25f0)))))))))))
+  nil)
+
+;; (unused with the swing clips since the revert: no move plays them, so this never draws) the ranged L swing's hit
+;; (decision V8: a hit sets the aim point): a light stroke flicked from the swing's tip back over
+;; his shoulder onto the new sigil 0.5 m behind him, while the set's flare (%BR-LIVE-LOOK) stamps it in
+(declaim (type f32vec *br-new*))
+(defvar *br-new* (let ((v (make-f32 8))) (setf (aref v 2) 99f0 (aref v 6) 99f0) v)
+  "Per side (4): the youngest live trace %BR-LIVE-LOOK drew this frame: [0 1] its point, [2] its age (frames; 99 none), [3]
+its yaw. BR-DRAW reads it on the next frame (fighters draw before hazards) and clears it.")
+(defparameter *br-swing-clips* '(:br-e-swing :br-oe-swing) "The ranged L swing's clips (the flick plays while one runs).")
+(defparameter *br-flick-f* 8 "The flick: the stroke runs from the tip to the sigil over the first half, all of it fading by this frame.")
+
+(defun-fast %br-swing-flick (f side)
+  "The flick (*BR-NEW*'s trace younger than *BR-FLICK-F*, his clip a swing): a stroke from the swing's tip (1.7 m ahead of
+him on the new line, chest height) arcing up over him and down onto the sigil, a light head running it, jade (the
+owl's gold). 0 B."
+  (declare (fixnum side))
+  (let* ((v *br-new*) (o (* 4 side)) (age (aref v (+ o 2))) (ff (i->f (the fixnum *br-flick-f*))))
+    (declare (type f32vec v) (fixnum o) (single-float age ff))
+    (when (and (< age ff) (member (kit-move-clip (fighter-kit f) (mv-clip (fighter-move f))) *br-swing-clips*))
+      (let* ((px (aref v o)) (pz (aref v (+ o 1))) (yaw (aref v (+ o 3))) (ux (- (f-sin yaw))) (uz (- (f-cos yaw)))
+             (tx (+ px (* 2.2f0 ux))) (tz (+ pz (* 2.2f0 uz))) (mx (+ px (* 0.9f0 ux))) (mz (+ pz (* 0.9f0 uz)))
+             (k (- 1f0 (/ age ff))) (h (f-min 1f0 (/ (+ age 1f0) (* 0.5f0 ff))))
+             (pal (if (> (lb-fxs side 15) 0.5f0) +pal-gold+ +pal-jade+)) (sd (i->f side)))
+        (declare (single-float px pz yaw ux uz tx tz mx mz k h pal sd))
+        (fx-crescent tx 1.5f0 tz px 0.08f0 pz mx 3.1f0 mz (* 0.14f0 k) :comet 0.04f0 (+ 151f0 sd) pal (* 0.95f0 k) :push 0.2f0)
+        (fx-crescent tx 1.5f0 tz px 0.08f0 pz mx 3.1f0 mz (* 0.05f0 k) :comet 0.02f0 (+ 153f0 sd) +pal-hit+ (* 0.9f0 k) :push 0.25f0)
+        (let* ((q (- 1f0 h)) (hx (+ (* q q tx) (* 2f0 q h mx) (* h h px))) (hy (+ (* q q 1.5f0) (* 2f0 q h 3.1f0) (* h h 0.08f0)))
+               (hz (+ (* q q tz) (* 2f0 q h mz) (* h h pz))))
+          (declare (single-float q hx hy hz))
+          (when (< h 0.999f0)
+            (fx-star hx hy hz 0.04f0 0.22f0 6 (* 3f0 age) 0f0 0f0 0.1f0 (+ 152f0 sd) +pal-hit+ (* 0.95f0 k) :push 0.3f0))))))
   nil)
 
 (defun br-hold-clock (f)
@@ -524,6 +709,11 @@ lane edges, and the set's flare over its first 14 frames (the hazard's age: sim 
                            (0f0 0.07f0) :heat (0.7f0 1f0) :seed (- -84f0 sd) :wob 0.02f0 :pal +pal-hit+ :k 0.6f0 :k1 0.95f0 :segs 2)
               (fx-star (+ x (* grow ux)) 0.1f0 (+ z (* grow uz)) 0.03f0 0.2f0 6 sd 0f0 0f0 0.1f0 (+ 85f0 sd) pal 0.9f0
                        :push 0.2f0))))))
+    ;; the youngest, for the swing's flick (BR-DRAW, the next frame)
+    (let ((nw *br-new*) (o4 (* 4 side)))
+      (declare (type f32vec nw) (fixnum o4))
+      (when (< af (aref nw (+ o4 2)))
+        (setf (aref nw o4) x (aref nw (+ o4 1)) z (aref nw (+ o4 2)) af (aref nw (+ o4 3)) yaw)))
     ;; noted for the recall's look (BR-DRAW)
     (let* ((s *br-seen*) (o2 (* 65 side)) (n (f->i (aref s o2))))
       (declare (type f32vec s) (fixnum o2 n))
@@ -651,7 +841,8 @@ him (jade, the owl's gold): the hinge they all turn on. 0 B."
 cinematics' drives come out the same; his recall strings drive its SP looks through BR-RC-DRIVE), then the stance's aim
 line (%BR-AIM-LOOK); awakened, his place and the opponent's for his traces' looks (%BR-PLACE!), the hinge ring under him
 (%BR-HINGE) and his fired traces (%BR-FIRED-LOOK, §17); the recall's traces flying back (%BR-RECALL-LOOK: *BR-SEEN* kept as
-*BR-FLY* while he is not recalling) and each string beat's lines from the wing tips (%BR-BEAT-LOOK)."
+*BR-FLY* while he is not recalling) and each string beat's lines from the wing tips (%BR-BEAT-LOOK); 裁き・極's ring, blast
+and beam (%BR-KIWAMI-LOOK) and the ranged L swing's flick onto its new point (%BR-SWING-FLICK, §22)."
   (declare (single-float rdt))
   (lille-draw e rdt)
   (let* ((f (fighter e)) (side (fighter-side f)) (mv (and (eq (fighter-state f) :move) (fighter-move f)))
@@ -666,8 +857,10 @@ line (%BR-AIM-LOOK); awakened, his place and the opponent's for his traces' look
         (let ((d *br-fly*)) (declare (type f32vec d)) (dotimes (i 65) (setf (aref d (+ o i)) (aref s (+ o i)))))   ; (his traces as last seen)
         (let ((jm (model-joints (model e))))
           (when (<= c 16) (%br-recall-look e jm side c))
-          (when (not (eq (mv-name mv) :br-recall)) (%br-beat-look e f jm side mv))))
-    (setf (aref s o) 0f0)
+          (when (not (eq (mv-name mv) :br-recall)) (%br-beat-look e f jm side mv))
+          (when (and (eq (mv-name mv) :br-rc4) (eq (fighter-phase f) :main)) (%br-kiwami-look f jm side))))
+    (when (and mv (not (eq (fighter-form f) :base))) (%br-swing-flick f side))   ; (the ranged L swing's hit: §22)
+    (setf (aref s o) 0f0 (aref *br-new* (+ (* 4 side) 2)) 99f0)
     (when (and (>= *br-art-hold* 0) (>= (the fixnum (br-hold-clock f)) *br-art-hold*))   ; (debug stills)
       (setf *br-art-hold* -1)
       (hitstop 100000)))
@@ -688,8 +881,12 @@ the broken halo from its f59); 14 JILLIEL melee's SANREN (the wings' kick, Lille
 started (its point set on f4: the set's flare); 16 the owl's (82016's three points, then its lay; P1 only); 17 JILLIEL
 melee 3 m out with one L point 4 m behind, 50 deg off (its line ~2.3 m beside him), J1 started (a whiff: the trace picked
 and missed); 18 the same with a thick SP2 point 12 deg off (its 1.2 m lane on him: J1 whiffs, the line hits); 19 17 as
-the owl (P1 only)."
-  (let* ((front (>= k 20)) (k (mod k 20)) (owl (or (<= 4 k 7) (<= 10 k 13))))
+the owl (P1 only). Decision V8's art (§22; k + 20 the front view): 40 JILLIEL melee with 10 traces laid from behind him and
+the recall started (its string: barro.lisp's tier for 10); 41 / 42 JILLIEL's / the owl's 裁き・極 :br-rc4 started directly
+(BR-ART-MOVE: a stand-in of the spec's frames while barro.lisp has no such move); 43 / 44 JILLIEL's / the owl's ranged L
+swing 1.5 m out (the kit's L when it plays a swing clip, else a stand-in on :br-e-swing / :br-oe-swing; its f7 sets the
+point: the flick)."
+  (let* ((front (oddp (floor k 20))) (k (if front (- k 20) k)) (owl (or (<= 4 k 7) (<= 10 k 13) (member k '(42 44)))))
     (when (and (not front) (member k '(16 19)))         ; (the owl's: 82016 sets him up, its revival's clearing off)
       (barro-test 16)
       (if (= k 16)
@@ -701,16 +898,16 @@ the owl (P1 only)."
       (return-from br-art-scene nil))
     (if front (ensure-battle :kenpachi :barro) (ensure-battle :barro :kenpachi))
     (let* ((b (if front *p2* *p1*)) (o (if front *p1* *p2*)) (g (gauges b)))
-      (force-form b (cond ((= k 15) :jilliel) (owl :shin-kin) (t :jilliel-kin)))
-      (place *p1* *p2* (case k (15 6.0) ((17 18) 3.0) (t 4.0)))
+      (force-form b (cond ((member k '(15 43)) :jilliel) ((= k 44) :shin) (owl :shin-kin) (t :jilliel-kin)))
+      (place *p1* *p2* (case k (15 6.0) ((17 18) 3.0) ((43 44) 1.5) (t 4.0)))
       (setf (gauges-reiatsu g) *reiatsu-max* (gauges-fs g) (f32 *fs-max*)
             (gauges-reishi (gauges o)) (gauges-reishi-max (gauges o)))   ; (no K.O. across a script's scenes)
       (case k
-        ((0 1 2 3 4 5 6 7)
-         (let* ((n (nth (mod k 4) '(0 2 4 6))) (p (pos-of b)) (q (pos-of o)) (x0 (aref p 0)) (z0 (aref p 2)) (yaw0 (yaw-of b))
+        ((0 1 2 3 4 5 6 7 40)
+         (let* ((n (if (= k 40) 10 (nth (mod k 4) '(0 2 4 6)))) (p (pos-of b)) (q (pos-of o)) (x0 (aref p 0)) (z0 (aref p 2)) (yaw0 (yaw-of b))
                 (dx (- (aref q 0) x0)) (dz (- (aref q 2) z0)) (l (max 0.01 (sqrt (+ (* dx dx) (* dz dz))))) (ux (/ dx l)) (uz (/ dz l)))
            (dotimes (i n)                               ; laid from behind him, spread across, each aimed at him
-             (let* ((lat (* 1.7 (- i (* 0.5 (1- n))))) (back (+ 1.2 (* 0.9 (mod i 2))))
+             (let* ((lat (* (if (> n 6) 0.9 1.7) (- i (* 0.5 (1- n))))) (back (+ 1.2 (* 0.9 (mod i 2))))
                     (x (+ x0 (* -1 back ux) (* lat (- uz)))) (z (+ z0 (* -1 back uz) (* lat ux))))
                (v3-set! p (f32 x) 0f0 (f32 z))
                (setf (transform-yaw (transform b)) (f32 (atan (- (- (aref q 0) x)) (- (- (aref q 2) z)))))
@@ -735,8 +932,39 @@ the owl (P1 only)."
             (start-move b (find-move :br-e-lay)))
         ((17 18) (multiple-value-bind (x z) (br-art-behind b o 4.0 (if (= k 17) 50.0 12.0))
                    (br-art-point b (if (= k 17) :l :sp2) x z))
-                 (start-move b (find-move :br-w-j1))))
+                 (start-move b (find-move :br-w-j1)))
+        ((41 42) (start-move b (br-art-move b :rc4)))
+        ((43 44) (start-move b (br-art-move b :swing))))
       (setf *br-art-hold* *br-art-hold-next* *br-art-hold-next* -1))))
+
+(defun br-art-move (b what)
+  "Scenes 41-44 (decision V8's art, §22): the move to play B's new clip. WHAT :rc4 → barro.lisp's :br-rc4, else a stand-in
+registered here under that name (the spec's frames: S 6, six beats f6-f36 and the beam f48, R 30; its looks key on the
+name), the owl's kit given :br-o-rc4 in its :clip-map when it lacks it. WHAT :swing → his form's L when it already plays a
+swing clip (*BR-SWING-CLIPS*), else a stand-in :br-art-swing / :br-art-o-swing (his L's copy on the swing clip, startup 7,
+active 3, reach 1.8, arc 110, 16; its f7 lays the point). Debug only: a gate never runs it."
+  (let* ((f (fighter b)) (k (fighter-kit f)) (owl (br-owl-form-p (fighter-form f))))
+    (if (eq what :rc4)
+        (progn
+          (unless (gethash :br-rc4 *moves*)
+            (register-move :br-rc4 (append '(:clip :br-rc4 :callout "SABAKI KIWAMI" :active 43 :recovery 30 :dmg 40
+                                             :hits ((6 8) (12 14) (18 20) (24 26) (30 32) (36 38) (48 50 :dmg 240 :on-hit :knockback :kb 2.5))
+                                             :on-frame ((6 br-rc-shot) (12 br-rc-shot) (18 br-rc-shot) (24 br-rc-shot) (30 br-rc-shot)
+                                                        (36 br-rc-shot) (48 br-beam-shot))
+                                             :params (:lock 0 :len *br-x-len* :width 1.6))
+                                           (mv-spec (find-move :br-rc3)))))
+          (when (and owl (not (getf (kit-clip-map k) :br-rc4)))
+            (setf (kit-clip-map k) (list* :br-rc4 :br-o-rc4 (kit-clip-map k))))
+          (find-move :br-rc4))
+        (let ((l (kit-command-move k :sig)))
+          (if (member (kit-move-clip k (mv-clip l)) *br-swing-clips*)
+              l
+              (let ((nm (if owl :br-art-o-swing :br-art-swing)))
+                (unless (gethash nm *moves*)
+                  (register-move nm (append (list :clip (if owl :br-oe-swing :br-e-swing) :startup 7 :active 3 :recovery (if owl 5 6)
+                                                  :dmg 16 :reach 1.8 :arc 110 :on-hit :flinch :on-frame '((7 br-lay)))
+                                            (mv-spec l))))
+                (find-move nm)))))))
 
 (defun br-art-behind (b o dist deg)
   "The scenes' place DIST m behind B, DEG degrees off his line to O (+ = toward his right): values x z."
@@ -763,8 +991,8 @@ the owl (P1 only)."
   (when *cine* (setf *cine-hold* t (cine-hold *cine*) f)))
 
 (defun barro-art-debug (c)
-  "His art stills (barro.lisp registers 82100-82399 ahead of BARRO-DEBUG): 82100+k BR-ART-SCENE k (k 0-19, + 20 the front
-view); 82200+f the sim freezes once his look clock reaches f (the recall chain's: the recall's frame, 7 + its string's;
+  "His art stills (barro.lisp registers 82100-82399 ahead of BARRO-DEBUG): 82100+k BR-ART-SCENE k (k 0-19 and 40-44, + 20
+the front view); 82200+f the sim freezes once his look clock reaches f (the recall chain's: the recall's frame, 7 + its string's;
 else the move's frame; issue it before the scene), 82299 lets go; 82300+k his awakening held at frame 10 k (BR-ART-CINE)."
   (let ((n (- c 82100)))
     (cond ((< n 100) (br-art-scene n))
@@ -778,14 +1006,15 @@ else the move's frame; issue it before the scene), 82299 lets go; 82300+k his aw
   "82398: bytes consed by 10 draws of P1 Lille II's :draw hook (BR-DRAW, LILLE-DRAW's lookups included), of his recall look
 at its clock 4 (the traces flying back, *BR-FLY*) and of a string beat's lines (when a string runs), of his live traces'
 looks (BR-TRACE-LOOK), and of §17's parts: his place (%BR-PLACE!), the hinge, a fired trace's look (a miss, faked in slot
-0), in the running scene (a \"barro consing\" line)."
+0), and §22's: 裁き・極's ring / blast / beam (%BR-KIWAMI-LOOK, while it runs) and the swing's flick (%BR-SWING-FLICK, a
+point 2 frames old faked in *BR-NEW*), in the running scene (a \"barro consing\" line)."
   (let* ((e *p1*) (f (fighter e)) (side (fighter-side f)) (jm (model-joints (model e)))
          (mv (and (eq (fighter-state f) :move) (fighter-move f))) (hz-n 0))
     (macrolet ((per (form) `(let ((c0 (cons-bytes))) (dotimes (i 10) ,form) (- (cons-bytes) c0))))
-      (log-msg "barro consing (10 draws, B): form ~a clock ~d traces ~d draw ~d (Lille's ~d) recall ~d beat (lines drive beat) ~a looks ~d (~d hazards) place ~d hinge ~d fired ~d"
+      (log-msg "barro consing (10 draws, B): form ~a clock ~d traces ~d draw ~d (Lille's ~d) recall ~d beat (lines drive beat) ~a looks ~d (~d hazards) place ~d hinge ~d fired ~d kiwami ~d flick ~d"
                (fighter-form f) (br-hold-clock f) (round (aref *br-fly* (* 65 side)))
                (per (br-draw e 0.016f0)) (per (lille-draw e 0.016f0)) (per (%br-recall-look e jm side 4))
-               (if (and mv (member (mv-name mv) '(:br-rc0 :br-rc1 :br-rc2 :br-rc3)))
+               (if (and mv (member (mv-name mv) '(:br-rc0 :br-rc1 :br-rc2 :br-rc3 :br-rc4)))
                    (list (per (%br-beat-look e f jm side mv)) (per (br-rc-drive f mv)) (per (br-rc-beat (mv-name mv) (fighter-sf f))))
                    -1)
                (let ((c0 (cons-bytes)))
@@ -799,7 +1028,11 @@ looks (BR-TRACE-LOOK), and of §17's parts: his place (%BR-PLACE!), the hinge, a
                  (setf (aref v q) 999f0 (aref v (+ q 1)) (- tm 0.1f0) (aref v (+ q 2)) 0f0 (aref v (+ q 3)) 0f0 (aref v (+ q 4)) 0f0
                        (aref v (+ q 5)) 0f0 (aref v (+ q 6)) 0f0 (aref v (+ q 7)) 2f0 (aref v (+ q 8)) 1.5f0 (aref v (+ q 9)) -4f0
                        (aref v (+ q 10)) 0f0 (aref v (+ q 11)) (- tm 0.1f0))
-                 (prog1 (per (%br-fired-look side)) (setf (aref v q) 0f0 (aref v (+ q 1)) -1f6)))))))
+                 (prog1 (per (%br-fired-look side)) (setf (aref v q) 0f0 (aref v (+ q 1)) -1f6)))
+               (if (and mv (eq (mv-name mv) :br-rc4)) (per (%br-kiwami-look f jm side)) -1)
+               (let ((v *br-new*) (q (* 4 side)))   ; (a point 2 frames old, then cleared; drawn only while a swing runs)
+                 (setf (aref v q) 0f0 (aref v (+ q 1)) 0f0 (aref v (+ q 2)) 2f0 (aref v (+ q 3)) 0f0)
+                 (prog1 (if mv (per (%br-swing-flick f side)) -1) (setf (aref v (+ q 2)) 99f0)))))))
 
 ;;; ---------------------------------------------------------------- the HUD: the 狙擊 gauge (DUEL_LILLE_V2 §4)
 (defparameter *br-sn-strings* #("SN 0" "SN 1" "SN 2" "SN 3") "The 狙擊 row's label: SN + the pips.")
