@@ -767,6 +767,17 @@ plays at old / new speed and still reaches its hit pose on the new hit frame). A
 ;; 可以直接放」)
 (defmove :br-e-lay :kind :sig :clip :lb-e-q1 :startup 4 :active 3 :recovery 6 :tick br-lay-tick :on-frame ((4 br-lay))
   :params (:trace :l))
+;; the ranged L string (decision V9k, the user 2026-10-10: 「幫我把原版利捷的遠距攻擊模組套入到 L 的揮擊動畫組成一套 5 連擊的動作」;
+;; 「J1 J2 K1 K2 K3」, 「每下放 1 個點，不帶傷害」): L L L L L, the old Lille's ranged J1 / J2 (擲翼) and K1 / K2 / K3 (旋翼) swings
+;; at their old frames, each one point on its first active frame (the old window's start), no damage (BR-LAY-TICK's L latch)
+(defmove :br-e-lay2 :kind :sig :clip :lb-e-q2 :startup 4 :active 3 :recovery 6 :tick br-lay-tick :on-frame ((4 br-lay))
+  :params (:trace :l))
+(defmove :br-e-lay3 :kind :sig :clip :lb-e-f1 :startup 9 :active 4 :recovery 10 :tick br-lay-tick :on-frame ((9 br-lay))
+  :params (:trace :l))
+(defmove :br-e-lay4 :kind :sig :clip :lb-e-f2 :enter 3 :startup 10 :active 4 :recovery 12 :tick br-lay-tick
+  :on-frame ((10 br-lay)) :params (:trace :l))
+(defmove :br-e-lay5 :kind :sig :clip :lb-e-f3 :enter 4 :startup 11 :active 5 :recovery 17 :tick br-lay-tick
+  :on-frame ((11 br-lay)) :params (:trace :l))
 (defmove :br-e-sanren :kind :sp :clip :lb-e-sanren :callout "SANREN" :startup 6 :active 14 :recovery 12 :tick br-lay-tick
   :on-frame ((6 br-lay) (12 br-lay) (18 br-lay)) :params (:trace :sp1))
 (defmove :br-e-nijushi :kind :sp :clip :lb-w-nijushi :clip-s 40 :callout "NIJUSHI-KO" :startup 20 :active 6 :recovery 15
@@ -805,6 +816,14 @@ plays at old / new speed and still reaches its hit pose on the new hit frame). A
 ;; :lb-o-switch-in-c), any other J the claws' J1 in place (decision V6a)
 (defmove :br-oe-lay :kind :sig :clip :lb-oe-q1 :startup 4 :active 3 :recovery 5 :tick br-lay-tick :on-frame ((4 br-lay))
   :params (:trace :l))   ; (the plain lay again, decision V8b)
+(defmove :br-oe-lay2 :kind :sig :clip :lb-oe-q2 :startup 4 :active 3 :recovery 5 :tick br-lay-tick :on-frame ((4 br-lay))
+  :params (:trace :l))   ; (the owl's ranged L string, decision V9k: the old owl EN's J1 / J2 / K1 / K2 / K3)
+(defmove :br-oe-lay3 :kind :sig :clip :lb-oe-f1 :startup 9 :active 4 :recovery 9 :tick br-lay-tick :on-frame ((9 br-lay))
+  :params (:trace :l))
+(defmove :br-oe-lay4 :kind :sig :clip :lb-oe-f2 :enter 3 :startup 10 :active 4 :recovery 11 :tick br-lay-tick
+  :on-frame ((10 br-lay)) :params (:trace :l))
+(defmove :br-oe-lay5 :kind :sig :clip :lb-oe-f3 :enter 4 :startup 11 :active 5 :recovery 16 :tick br-lay-tick
+  :on-frame ((11 br-lay)) :params (:trace :l))
 (defmove :br-oe-sabaki :kind :sp :clip :lb-oe-sabaki :callout "SABAKI NO KOMYO" :startup 6 :active 14 :recovery 11
   :tick br-lay-tick :on-frame ((6 br-lay) (12 br-lay) (18 br-lay)) :params (:trace :sp1))
 (defmove :br-oe-trompete :kind :sp :clip :lb-o-trompete :clip-s 60 :callout "TROMPETE" :startup 12 :active 6 :recovery 8
@@ -847,10 +866,17 @@ decision V9; at 0 pips the plain K1, V9d).")
   '((:br-recall :rc0 :br-rc0) (:br-recall :rc1 :br-rc1) (:br-recall :rc2 :br-rc2) (:br-recall :rc3 :br-rc3)
     (:br-recall :rc4 :br-rc4))
   "The recall's derivative strings: non-button strings its f7 starts (BR-RECALL-FIRE).")
+(defparameter *br-lay-strings*
+  '((:br-e-lay :lchain :br-e-lay2) (:br-e-lay2 :lchain :br-e-lay3) (:br-e-lay3 :lchain :br-e-lay4) (:br-e-lay4 :lchain :br-e-lay5)
+    (:br-oe-lay :lchain :br-oe-lay2) (:br-oe-lay2 :lchain :br-oe-lay3) (:br-oe-lay3 :lchain :br-oe-lay4)
+    (:br-oe-lay4 :lchain :br-oe-lay5))
+  "The ranged L string (decision V9k): an L latched in a lay starts the next one (BR-LAY-TICK, :lchain), five in all.")
 (defparameter *br-melee-strings*
   (append *br-recall-strings*
-          '((:br-l-link :br-recall :br-recall) (:br-l-link :br-backstep :br-backstep) (:br-l-link :br-to-en :br-to-en)))
-  "The melee forms' non-button strings: the recall's, and the L router's three targets (BR-L-LINK-GO; batch 4).")
+          '((:br-l-link :br-recall :br-recall) (:br-l-link :br-backstep :br-backstep) (:br-l-link :br-to-en :br-to-en))
+          *br-lay-strings*)
+  "The awakened forms' non-button strings: the recall's, the L router's three targets (BR-L-LINK-GO; batch 4), the ranged
+L string (decision V9k; every awakened form inherits these).")
 
 (defkit :barro :base
   :name "LILLE II" :body :lille :weapon :diagramm :stance :lb-stance :calm t
@@ -1018,6 +1044,8 @@ decision V9; at 0 pips the plain K1, V9d).")
   (switch-to nil)                         ; ... the melee form it turns into (6 f into the dash, or at its end)
   (dash-j nil)                            ; ... the J1 it started (that move while it runs): it fires no trace (V9g)
   (hoho-laid nil)                         ; this Hoho left its points (decision V9j)
+  (l-next nil)                            ; a ranged lay: an L latched for the string's next lay (decision V9k)
+  (rc-sp2 nil)                            ; the recall's string: SP2 latched for its recovery (decision V9k)
   (step-shot nil)                         ; the stance Step: the frame its latched moving snap fires (V9i) ...
   (step-fired nil)                        ; ... it fired (one a Step)
   (dash-took nil)                         ; ... a J / K pressed during the dash taken for the link (V9h) ...
@@ -1095,6 +1123,9 @@ check on its f59."
       (setf (brs-dash-j st) nil))                         ; (decision V9g: only while TENSHIN in's own J1 runs)
     (unless (or (brs-dash-j st) (and (eq (fighter-state f) :move) (fighter-move f) (eq (mv-tick (fighter-move f)) 'br-tenshin-tick)))
       (setf (brs-dash-next st) nil))                      ; (decision V9h: a kept press lives through the dash and its J1)
+    (let ((m (and (eq (fighter-state f) :move) (fighter-move f))))   ; (decision V9k: the latches live in their moves)
+      (unless (and m (eq (mv-tick m) 'br-lay-tick)) (setf (brs-l-next st) nil))
+      (unless (and m (member (mv-tick m) '(br-rc-tick br-halt-tick))) (setf (brs-rc-sp2 st) nil)))
     (if (eq (fighter-state f) :hoho)                      ; (decision V9j: an awakened Hoho leaves points where he was)
         (unless (brs-hoho-laid st)
           (setf (brs-hoho-laid st) t)
@@ -1550,8 +1581,27 @@ of flash step sets none: no dash, its latched J is J1 in place at its end. TENSH
                      (when (and (>= sf end) (brs-dash-q st) (eq (fighter-move f) mv))   ; (no point set: J1 in place)
                        (setf (brs-dash-q st) nil)
                        (when (try-command e f :q) (pace e :tenshin-unpaid-j1)))))))
+        (br-lay-chain e f st mv sf)
         (when (and (>= sf end) (eq (fighter-move f) mv))
           (setf (brs-late st) (if paid *br-dash-late* 0)))))))
+
+(defun br-lay-chain-p (sf s a) "May a ranged lay at frame SF (startup S, active A) start the string's next lay: from S + A (decision V9k)?"
+  (>= sf (+ s a)))
+(defun br-lay-chain (e f st mv sf)
+  "The ranged L string (decision V9k): a human's L pressed at any frame of a lay that has a next (:lchain) is latched
+(consumed); from the end of its active window (BR-LAY-CHAIN-P) the next lay starts, under the lay's price (BR-LAY-OK-P:
+short, the string ends there). His CPU lays one at a time."
+  (when (and (eq (fighter-move f) mv) (zerop (fighter-lock f)) (null (br-tick-brain e)))
+    (let ((next (kit-next (fighter-kit f) (mv-name mv) :lchain)) (vp (pilot-vpad (pilot e))))
+      (when next
+        (when (vpad-command-pressed-p vp :sig nil)
+          (vpad-consume! vp :sig) (setf (brs-l-next st) t))
+        (when (and (brs-l-next st) (br-lay-chain-p sf (mv-s mv) (mv-a mv)))
+          (setf (brs-l-next st) nil)
+          (let ((form (or (kit-drop-to (fighter-kit f)) (fighter-form f))))
+            (when (br-lay-ok-p form :sig (gauges-fs (gauges e)) (gauges-burst (gauges e)))
+              (start-move e next)
+              (pace e :lay-chain))))))))
 
 (defun br-tenshin-start (e f)
   "Start TENSHIN in's 2 f cancel copy (a J in a lay's window) and pay its price, the farthest trace but the one its f0 fires,
@@ -1715,7 +1765,21 @@ V9f). T when one was."
     (turn-to-opp e f 10.0)
     (start-move e (kit-next (fighter-kit f) :br-recall (svref #(:rc0 :rc1 :rc2 :rc3 :rc4) tier)))))
 
-(defun br-rc-tick (e) "The recall strings: he keeps on the opponent (*BR-RC-TRACK*)." (halt! e) (turn-to-opp e (fighter e) (track-step *br-rc-track*)))
+(defun br-rc-tick (e)
+  "The recall strings: he keeps on the opponent (*BR-RC-TRACK*); SP2 (decision V9k, the user 2026-10-10: 「SP2 可以銜接到 K > L
+後面」, 「覆醒 K3→L 回收之後」): a human's SP2 pressed at any frame of the string is latched (consumed) and cancels its recovery
+from its last active frame's end (BR-RC-SP2-P) into the form's SP2 under SP2's own checks (its bars)."
+  (halt! e)
+  (let* ((f (fighter e)) (mv (fighter-move f)) (st (br e)))
+    (turn-to-opp e f (track-step *br-rc-track*))
+    (when (and (eq (fighter-state f) :move) mv (eq (fighter-phase f) :main) (zerop (fighter-lock f)) (null (br-tick-brain e)))
+      (let ((vp (pilot-vpad (pilot e))))
+        (when (vpad-command-pressed-p vp :sig t) (vpad-consume! vp :sig) (setf (brs-rc-sp2 st) t))
+        (when (and (brs-rc-sp2 st) (br-rc-sp2-p (fighter-sf f) (mv-s mv) (mv-a mv)))
+          (setf (brs-rc-sp2 st) nil)
+          (when (try-command e f :sp2) (pace e :rc-sp2)))))))
+(defun br-rc-sp2-p (sf s a) "May the recall's string at frame SF (startup S, active A) cancel into SP2: from S + A (decision V9k)?"
+  (>= sf (+ s a)))
 (defun br-rc-shot (e) "A recall string's line: its look." (br-spawn-look e :shot *br-x-len* 0.05 t) (emit :sfx :lb-crack e))
 
 (defun br-near-point-p (px pz tx tz tr)

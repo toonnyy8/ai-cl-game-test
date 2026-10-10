@@ -2,7 +2,7 @@
 
 Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17); decision V6a (TENSHIN in only as a quick J after a lay) built 2026-10-10 (§18); decision V6c (the wider L → J window, TENSHIN in fires a line at its f0) built 2026-10-10 (§19); decisions V9 / V9b / V9c / V9d (the stance K by pips, the snap's links) built 2026-10-10 (§20); decisions V8 / V8a (two
 routes, one pool; a dash spends a trace) built 2026-10-10 (§21); decision V8b (the ranged L back to the plain lay) built
-2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22); decisions V9f / V9g / V9h (TENSHIN in fires before it pays; its J1 fires none; the backstep fires, dash presses kept) and V9i (the snap shot on the move), V9j (the traces' resource loop) built 2026-10-10.**
+2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22); decisions V9f / V9g / V9h (TENSHIN in fires before it pays; its J1 fires none; the backstep fires, dash presses kept) and V9i (the snap shot on the move), V9j (the traces' resource loop), V9k (the ranged L string, SP2 after the recall) built 2026-10-10.**
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -108,6 +108,24 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
   is picked and missed (the trace is spent). The opponent sees every line and can step off.
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
+
+### Decision V9k (2026-10-10): the ranged L string, SP2 after the recall
+
+The user: 「幫我把原版利捷的遠距攻擊模組套入到 L 的揮擊動畫組成一套 5 連擊的動作」 and 「SP2 可以銜接到 K > L 後面」; the picks
+「J1 J2 K1 K2 K3」, 「每下放 1 個點，不帶傷害」, 「覆醒 K3→L 回收之後」.
+
+- **L L L L L** (ranged, JILLIEL and the owl): `:br-e-lay` → `:br-e-lay2` … `:br-e-lay5` (the owl's `:br-oe-lay` …
+  `:br-oe-lay5`) on the old Lille's ranged J1 / J2 (擲翼) and K1 / K2 / K3 (旋翼) clips at their old frames (4/3/6, 4/3/6,
+  9/4/10, enter 3 10/4/12, enter 4 11/5/17; the owl's R 1 less), each laying one point on its first active frame (L's
+  price, V9j: 6 / the owl 4.5; none in a burst), no hit. A human's L pressed at any frame of a lay is latched and starts the
+  next from the end of its active window (`BR-LAY-CHAIN`, `BR-LAY-CHAIN-P`; the strings `*BR-LAY-STRINGS*`, command `:lchain`);
+  short of the price the string ends. Every one keeps TENSHIN in's window (J → the dash). His CPU still lays one at a time.
+- **SP2 after the recall**: in the recall's derivative string (`:br-rc0` … `:br-rc4`) a human's SP2 is latched and cancels
+  the recovery from the last active frame's end (`BR-RC-SP2-P`) into the form's SP2 (`:br-w-nijushi`, the owl's Trompete)
+  under SP2's own checks (2 bars). Measured: KKK → L with no trace (rc0, 30) → NIJUSHI hits 180 (its 40 f charge is longer
+  than the stagger: not a guaranteed combo); with 10 traces 裁き・極's last beam knocks him down and NIJUSHI whiffs.
+- Host tests (duel-rules 8753): the strings, clips, point frames, no hits; the two cancel frames. Browser: 82003 L x5 → 5
+  points, 30 FS; 82009 the owl L x4 → J dashes; 82015 / 82017 KKK → L → SP2.
 
 ### Decision V9j (2026-10-10): the traces' resource loop (flash step <-> Reiatsu)
 

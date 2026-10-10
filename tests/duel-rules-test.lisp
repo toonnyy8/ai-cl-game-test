@@ -2810,6 +2810,21 @@ defender's next step. Values: the attacker's and the defender's first actionable
                 (= 26 (hw-stun l)) (eq :stagger (hw-react l)) (eq :knockback (hw-react t2))))
     ;; :flat in HIT-DAMAGE's terms: what APPLY-HIT passes for it (x1, combo index 1, no counter) is the base
     (check (and (= 25 (hit-damage 25 '(:mult 1.0) '(:mult 1.0) 1 nil)) (< (hit-damage 25 '(:mult 1.0) '(:mult 1.0) 9 nil) 25))))
+;; decision V9k (the user 2026-10-10: 「幫我把原版利捷的遠距攻擊模組套入到 L 的揮擊動畫組成一套 5 連擊的動作」, 「J1 J2 K1 K2 K3」,
+  ;; 「每下放 1 個點，不帶傷害」; 「SP2 可以銜接到 K > L 後面」, 「覆醒 K3→L 回收之後」): five lays chained by L on the old ranged
+  ;; J1 / J2 / K1 / K2 / K3 clips and frames, each one point on its first active frame, no hit; SP2 off the recall's string
+  (loop for (fam clips) in '(((:br-e-lay :br-e-lay2 :br-e-lay3 :br-e-lay4 :br-e-lay5) (:lb-e-q1 :lb-e-q2 :lb-e-f1 :lb-e-f2 :lb-e-f3))
+                             ((:br-oe-lay :br-oe-lay2 :br-oe-lay3 :br-oe-lay4 :br-oe-lay5) (:lb-oe-q1 :lb-oe-q2 :lb-oe-f1 :lb-oe-f2 :lb-oe-f3)))
+        for kit in (list (find-kit :barro :jilliel) (find-kit :barro :shin))
+        do (check (and (loop for (a b) on fam while b always (eq (kit-next kit a :lchain) (find-move b)))
+                       (null (kit-next kit (car (last fam)) :lchain))
+                       (loop for n in fam for c in clips
+                             always (let ((mv (find-move n)))
+                                      (and (eq c (mv-clip mv)) (zerop (length (mv-hits mv))) (eq :l (getf (mv-params mv) :trace))
+                                           (eql (mv-s mv) (first (find 'br-lay (mv-on-frame mv) :key #'second)))
+                                           (eq 'br-lay-tick (mv-tick mv))))))))
+  (check (and (not (br-lay-chain-p 6 4 3)) (br-lay-chain-p 7 4 3) (not (br-rc-sp2-p 7 6 2)) (br-rc-sp2-p 8 6 2)
+              (eq 'br-rc-tick (mv-tick (find-move :br-rc4))) (eq 'br-rc-tick (mv-tick (find-move :br-rc0)))))
   ;; decision V9j: Reiatsu per trace contact (+10 / the owl +15, a block half, ORANGE x1.5), the circle round the point,
   ;; an awakened Hoho's points (JILLIEL 3, the owl 5) on a 0.5 m ring
   (check (and (~= 10.0 (br-trace-sp :hit nil nil)) (~= 5.0 (br-trace-sp :block nil nil)) (~= 15.0 (br-trace-sp :hit t nil))
