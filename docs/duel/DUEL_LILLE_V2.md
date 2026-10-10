@@ -1,6 +1,6 @@
 # SOUL DUEL: Lille Barro II (利傑巴羅・重製), the rebuilt kit
 
-Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17); decision V6a (TENSHIN in only as a quick J after a lay) built 2026-10-10 (§18).**
+Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17); decision V6a (TENSHIN in only as a quick J after a lay) built 2026-10-10 (§18); decision V6c (the wider L → J window, TENSHIN in fires a line at its f0) built 2026-10-10 (§19).**
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -1092,3 +1092,73 @@ Awaken A/B (the never-awaken side of 60, streams 100 / 300 / 500, pass >= 20): B
 (6 / 12 / 6). aieval `--char 6` (20 seeds): 0.373 (0.377), HARD strength 0.142 (0.150), signature 0.438. TENSHIN in 6.4 a
 match (6.6), all from the lay cancel. Playtest Artifact version 41.
 
+
+## 19. Decision V6c built (2026-10-10, branch `barro-v6c`)
+
+Decision V6c (§1, 「L 接 J 的判定再寬鬆一點，另外現在鐘擺戰法沒辦法串成真正的連段」; the user's picks 「照原版：前衝第 0 幀觸發」 and
+「整個放點招式＋收招後 10 幀」) built. Everything is in `duel/lisp/barro.lisp` (sim, ASSIST, a CPU docstring) and
+`tests/duel-rules-test.lisp`; no other character's code, and no damage / frame / cost knob of his, moved.
+
+### 19.1 What changed
+
+- **The window** (`BR-DASH-WINDOW-P`, now `(sf last end)`; `BR-DASH-FRAME`, `BR-LAST-POINT`, `*br-dash-late*` 10): a human's J
+  pressed at **any frame** of a ranged L / SP1 / SP2 (JILLIEL's and the owl's) is latched (consumed, `brs-dash-q`) and
+  cancels into TENSHIN in (the 2 f copy) **on the frame the move's last point is set**: L f4, SP1 f18 (its third), SP2 f20,
+  the owl's L f4 / SP1 f18 / SP2 f12. From there to the move's end (frame S + A + R, L's f13) a J dashes at once. The end
+  opens `*br-dash-late*` = 10 more frames (`brs-late`, counted down by BARRO-TICK while he is free, cleared by anything
+  else): a ranged J pressed then still dashes: J1's f0 hook `BR-MELEE-IN` starts the cancel copy instead of turning melee.
+  L's window is therefore f0–f22 (23 f, as the decision says). Elsewhere a ranged J is J1 in place (V6a, unchanged).
+- **TENSHIN in's f0 fires one line** (`BR-TENSHIN-FIRE`, on the copies' f16, before `BR-TENSHIN-GO`): `BR-MATERIALISE-ONE`,
+  the nearest line within 2.5 m of him along its line (V6 / V7), 30 a line (90 the thick one) × the form, stagger 26 f,
+  萬物貫通; then the dash and J1 as before. J1's own first active frame still fires one more (`BR-J-MAT`). No line within
+  2.5 m: nothing fires, the dash and J1 go on. The backstep (the out half) is unchanged.
+- **ASSIST** (`BR-AS-RANGED`): inside the 10 f after a lay his J is left alone (it dashes) instead of becoming another L.
+  A J during the lay is latched like any human's, so L point → J dash → J1 works with an early J too.
+- **His CPU**: no new rule. `BR-AI-CANCEL-P` is asked in the new window, so it may cancel at the point's frame (L f4
+  instead of f7); `*br-ai-dash-life*` 20 still covers it (docstring updated). His CPU's J pressed within 10 f after a lay
+  now dashes too (it is a game rule, read off the J1's f0): from J1's reach (≤ 1.8 m) that is a ≤ 0.8 m dash and J1.
+
+### 19.2 Readings
+
+- [G] **A lay refused for lack of flash step sets no point → no dash**: `brs-laid` (the latest `BR-LAY` paid) gates the
+  window; a J latched in such a lay comes out as **J1 in place at the move's end**, and its end opens no late window.
+  (A lay is refused at its start when short of its whole price, so a move that started almost always sets its points.)
+- [G] "10 f after the move ends": the end's frame (S + A + R, where he turns idle) is + 0; + 9 dashes, + 10 does not.
+- [G] The late window counts his own free frames (idle / guard / walk / run; it waits while he is frozen by the opponent's
+  super flash, and hitstop stops the sim anyway); a K, a Step, a new lay or a hit ends it.
+- [G] "The frame the last point is set": the latch fires in the move's tick after that frame's `BR-LAY`, so the dash's
+  wind-up starts on the point's own frame (L: the copy enters on f4, its line fires 2 f later).
+
+### 19.3 Host tests
+
+duel-rules-test 8516 → 8524 checks, ALL PASS: for every ranged L / SP1 / SP2 (JILLIEL's and the owl's) the window starts on
+the last point (not a frame before) and ends on the end frame; a J at f0 dashes on the point's frame; at the end + 9 it
+dashes, + 10 / + 11 J1 in place; L's numbers (point f4, end f13, J f0–f22 dash, f23 not); SP1's J at f7 / f13 / f17 dashes
+on f18 (its third point); both cancel copies run `BR-TENSHIN-FIRE` on f16 before `BR-TENSHIN-GO`; the pick (one within
+2.5 m, none beyond); for every dash (0–12 m out) the dash's frames + J1's 8 f < the line's 26 f stagger (22 at the longest).
+duel-control 89, learn 131, input 33, touch 64, cine 18 pass.
+
+### 19.4 Checks (2026-10-10)
+
+- `tools/pkgcheck.sh duel` 0 / 0 / 0. `./build.sh duel` 0 warnings. Smoke `run.mjs --secs 8`: exit 0.
+- **Browser script** (`--fixed-dt`, exit 0, no error; the combat log's match ticks, which include the 4 f hitstop of the
+  line's hit):
+  - 82013 (6 m, the middle point's line through P2), L then J one frame later: L at t 30, the cancel at t 34 (L's f4, its
+    point), **the line hits P2 at t 36 (the dash's f0, −30, stagger)**, 5 m in 10 f, J1 from t 50, **J1 hits at t 58** (24,
+    and its own line 30): 22 ticks = 18 sim frames into the 26 f stagger, **8 f to spare**, P2 in STUN throughout.
+  - 82003 (8 m, no point set before; L's own point): the line at t 36, the longest dash (7 m, 14 f), J1 hits at t 62: 22 sim
+    frames, **4 f to spare**: still a combo.
+  - 82016 (the owl): the same ticks (line 33 at t 36, the claws' J1 26 at t 58).
+  - 82013, SP1 then J at its ~f12: latched, the cancel at its f18 (the third point), the line at its f20, J1 hits 18 sim
+    frames later.
+  - 82013, L then J later: processed at L's f21 (the end + 8): the dash (J1's f0 → the cancel copy); at f23 / f24 (+ 10 /
+    + 11): J1 in place (the script's key timing lands on 3-frame steps, so + 9 itself is host-tested only).
+  - 39011 + 82020 + 2311 (the CPU mirror, both awakened, 32 s): exit 0, no error; 3 TENSHIN in by the CPUs (each its lay's
+    cancel, the f0 line hitting 2 f after the cancel).
+- **Gates: run by the lead after the playtest** (decision V6b).
+
+### 19.5 For the user
+
+- **L then J, as fast as you like**: the J is kept until L's point is set, the dash's first frame fires the line through
+  him (a stagger), and J1 lands while he still staggers (18–22 frames into the 26): L → J is a true combo again, as the old
+  Lille's. A J up to 10 frames after the lay has ended still dashes.
