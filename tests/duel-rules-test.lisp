@@ -2979,21 +2979,48 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (zerop (br-tenshin-dist 0.8)) (= 14 (br-tenshin-dash-f 7.0)) (= 8 (br-tenshin-dash-f 4.0))
               (= 0 (br-tenshin-dash-f 0.0)) (~= 30.0 *br-tenshin-speed*) (= 9 *br-tenshin-iframes*) (~= 1.0 *br-tenshin-stop*)
               (zerop (br-lay-price :jilliel :q)) (zerop (br-lay-price :shin :q))))
-  ;; the cancel (decision V6a: the only TENSHIN in): a J in every ranged L / SP1 / SP2's window (BR-LAY-TICK,
-  ;; BR-DASH-WINDOW-P), JILLIEL's and the owl's: from the active end (every point set) to the recovery's last frame; a frame
-  ;; before it nothing (no dash), after it the move is over (a J there: the ranged :q, J1 in place, above). The latch
-  ;; reading: the vpad's buffer (*INPUT-BUFFER* 10) carries a J pressed from the frame the move's last point is set into the
-  ;; window's first frame (it dashes); an older press lapses (SP1 between its first points: neither a dash nor a J1 later)
+  ;; the window (decision V6c, the user 2026-10-10: 「L 接 J 的判定再寬鬆一點」, 「整個放點招式＋收招後 10 幀」): a J at any frame of
+  ;; every ranged L / SP1 / SP2 (JILLIEL's and the owl's) is latched and dashes (the 2 f cancel) on the frame the move's last
+  ;; point is set (BR-LAST-POINT); from there to its end (S + A + R) at once (BR-DASH-WINDOW-P); within *BR-DASH-LATE* 10 f
+  ;; after its end too (BR-DASH-FRAME: end + 9 dashes, end + 10 / + 11 are J1 in place)
+  (check (= 10 *br-dash-late*))
   (dolist (k (list r or*))
     (dolist (c '(:sig :sp1 :sp2))
-      (let* ((mv (kit-command-move k c)) (s (mv-s mv)) (a (mv-a mv)) (rr (mv-r mv)) (w (+ s a))
+      (let* ((mv (kit-command-move k c)) (end (+ (mv-s mv) (mv-a mv) (mv-r mv))) (last (br-last-point mv))
              (lays (loop for (fr fn) in (mv-on-frame mv) when (eq fn 'br-lay) collect fr)))
-        (check (and (eq 'br-lay-tick (mv-tick mv)) lays
-                    (not (br-dash-window-p (1- w) s a rr)) (br-dash-window-p w s a rr)
-                    (br-dash-window-p (+ w rr -1) s a rr) (not (br-dash-window-p (+ w rr) s a rr))
-                    (<= (reduce #'max lays) w)                          ; (every point set by then)
-                    (< (- w (reduce #'max lays)) *input-buffer*)        ; (a J from the last point's frame dashes)
-                    (or (= 1 (length lays)) (>= (- w (reduce #'min lays)) *input-buffer*)))))))   ; (SP1's first: lapses)
+        (check (and (eq 'br-lay-tick (mv-tick mv)) lays (= last (reduce #'max lays)) (< last end)
+                    (not (br-dash-window-p (1- last) last end)) (br-dash-window-p last last end)
+                    (br-dash-window-p end last end) (not (br-dash-window-p (1+ end) last end))
+                    (eql last (br-dash-frame 0 last end))                   ; (a J at its f0: latched, the point's frame)
+                    (eql last (br-dash-frame (1- last) last end))
+                    (eql last (br-dash-frame last last end))
+                    (eql end (br-dash-frame end last end))                  ; (its last frame: at once)
+                    (eql (+ end 9) (br-dash-frame (+ end 9) last end))      ; (9 f after its end: dashes)
+                    (null (br-dash-frame (+ end 10) last end))
+                    (null (br-dash-frame (+ end 11) last end)))))))        ; (11 f after: J1 in place)
+  ;; L's numbers: its one point at f4, over at f13 (the end's + 0), so a J from f0 to f22 dashes (23 f); SP1's J before its
+  ;; third point (f18) dashes after the third, not before
+  (let* ((l (kit-command-move r :sig)) (sp1 (kit-command-move r :sp1)) (le (+ (mv-s l) (mv-a l) (mv-r l)))
+         (se (+ (mv-s sp1) (mv-a sp1) (mv-r sp1))))
+    (check (and (= 4 (br-last-point l)) (= 13 le) (eql 4 (br-dash-frame 0 4 le)) (eql 22 (br-dash-frame 22 4 le))
+                (null (br-dash-frame 23 4 le)) (= 18 (br-last-point sp1))
+                (equal '(6 12 18) (loop for (fr fn) in (mv-on-frame sp1) when (eq fn 'br-lay) collect fr))
+                (eql 18 (br-dash-frame 7 18 se)) (eql 18 (br-dash-frame 13 18 se)) (eql 18 (br-dash-frame 17 18 se))
+                (= 20 (br-last-point (kit-command-move r :sp2))) (= 12 (br-last-point (kit-command-move or* :sp2))))))
+  ;; TENSHIN in's f0 fires one line (decision V6c, 「照原版：前衝第 0 幀觸發」): BR-TENSHIN-FIRE on the dash's frame, before the
+  ;; dash itself (BR-TENSHIN-GO), in both cancel copies; it picks as every materialise (BR-PICK: the nearest within 2.5 m, one;
+  ;; none when no line is near); its line staggers 26 f, and the J1 at the dash's end lands inside it for every dash (the
+  ;; longest, 7 m in 14 f: the line on the dash's f0, J1's first active frame 14 + 8 = 22 f later < 26), the owl's J1 too
+  (dolist (n '(:br-tenshin-c :br-o-tenshin-c))
+    (let* ((c (find-move n)) (fire (position 'br-tenshin-fire (mv-on-frame c) :key #'second))
+           (go (position 'br-tenshin-go (mv-on-frame c) :key #'second)))
+      (check (and fire go (< fire go) (eql *br-tenshin-windup* (first (nth fire (mv-on-frame c))))
+                  (eql *br-tenshin-windup* (first (nth go (mv-on-frame c))))))))
+  (check (and (eql 2 (br-pick '((1 3.0) (2 2.4)))) (null (br-pick '((1 2.6) (2 9.0)))) (null (br-pick nil))))
+  (dolist (j (list (find-move :br-w-j1) (find-move :br-o-j1)))
+    (check (loop for d from 0.0 to 12.0 by 0.25
+                 always (< (+ (br-tenshin-dash-f (br-tenshin-dist d)) (mv-s j)) (hw-stun (br-trace-hitwin :l 1.0))))))
+  (check (= 22 (+ (br-tenshin-dash-f (br-tenshin-dist 9.0)) (mv-s (find-move :br-w-j1)))))
   ;; his CPU goes in the same way (BR-AI-IN-CMD): J1 in place within its reach + 0.2, else an L (its window's cancel), else
   ;; walk; never a lay inside J1's reach
   (check (and (eq :q (br-ai-in-cmd 1.7 1.6 t t)) (eq :sig (br-ai-in-cmd 1.9 1.6 t t)) (eq :sig (br-ai-in-cmd 12.0 1.6 t t))

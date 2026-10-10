@@ -119,6 +119,11 @@ in since, the knob places the dash in the move the cancel copy enters, *BR-TENSH
   "... and TENSHIN in comes only as this many frames' cancel out of a ranged L / SP1 / SP2, a J from its active end to the
 end of its recovery (the old *LB-SWITCH-WINDUP-C* and its cancel window, copied 2026-10-10; the only way in since decision
 V6a, 2026-10-10, BR-DASH-WINDOW-P) ...")
+(defparameter *br-dash-late* 10
+  "... and a J pressed within this many frames after that lay ends (its frame S + A + R is the end's + 0: L's f13, so L's J
+window is f0-f22, 23 f) dashes too, as one pressed at any frame of the lay (latched, it dashes on the frame the move's last
+point is set) (new 2026-10-10, decision V6c, the user: 「L 接 J 的判定再寬鬆一點」, the window 「整個放點招式＋收招後 10 幀」).
+Elsewhere a ranged J is J1 in place (decision V6a).")
 (defparameter *br-tenshin-iframes* 9
   "... invulnerable on the dash's frames 0-8 (the old *LB-DASH-IFRAMES*, copied 2026-10-10); free (no flash step). He turns
 melee *BR-TENSHIN-FORM* frames into the dash (or at its end if sooner) and J1 comes out at the dash's end (a K pressed
@@ -328,12 +333,22 @@ he is nearer) (the old LB-SWITCH-DIST's in-case, copied 2026-10-10)."
 (defun br-tenshin-dash-f (dist)
   "Frames TENSHIN in's dash of DIST metres takes at *BR-TENSHIN-SPEED* (rounded up, at most *BR-TENSHIN-F*; 0 for none)."
   (if (> dist 0.01) (min *br-tenshin-f* (max 1 (ceiling (* 60.0 dist) *br-tenshin-speed*))) 0))
-(defun br-dash-window-p (sf s a r)
-  "Is move frame SF of a ranged lay (L / SP1 / SP2, startup S, active A, recovery R) inside TENSHIN in's window: from its
-active end (every point of the move set) to the end of its recovery (batch 5's cancel window; decision V6a, the user
-2026-10-10: 「L 放軌跡後快速連結 J 才會前衝」: the only way to TENSHIN in). A J pressed in it (or buffered into it: the vpad's
-*INPUT-BUFFER*) dashes; any other ranged J is J1 in place."
-  (and (<= (+ s a) sf) (< sf (+ s a r)) t))
+(defun br-dash-window-p (sf last end)
+  "Is move frame SF of a ranged lay (L / SP1 / SP2, its last point set on frame LAST, over on frame END = S + A + R) inside
+TENSHIN in's window in the move: from the frame its last point is set to its end (decision V6c, the user 2026-10-10:
+「整個放點招式＋收招後 10 幀」; V6a's window started at the active end). A J latched earlier in the move or pressed now dashes
+here (the 2 f cancel); *BR-DASH-LATE* frames after the end too (BR-DASH-FRAME); any other ranged J is J1 in place."
+  (and (<= last sf end) t))
+(defun br-dash-frame (press last end)
+  "A J pressed on frame PRESS of a ranged lay whose last point is set on frame LAST and which ends on frame END (S + A + R;
+frames past it count on: END + k is k frames after the end): the move frame its TENSHIN in starts (the 2 f cancel), or
+NIL (J1 in place). Before LAST it is latched and dashes at LAST; from LAST to END + *BR-DASH-LATE* - 1 at once (decision
+V6c). A lay that set no point (refused for lack of flash step) never dashes: its latched J is J1 in place at its end."
+  (cond ((< press last) last)
+        ((< press (+ end *br-dash-late*)) press)))
+(defun br-last-point (mv)
+  "The move frame a ranged lay MV sets its last point on (its last BR-LAY on-frame: L f4, SP1 f18, SP2 f20, the owl's SP2 f12)."
+  (let ((last 0)) (loop for (fr fn) in (mv-on-frame mv) when (and (eq fn 'br-lay) (> fr last)) do (setf last fr)) last))
 (defun br-backstep-ok-p (fs) "May J3 -> L backstep with FS flash step (*BR-BACKSTEP-FS*, decision V6)?" (>= fs *br-backstep-fs*))
 (defun br-backstep-lay-ok-p (sf) "May a ranged lay start on the backstep's frame SF: from the dash's end (*BR-BACKSTEP-F*, decision V6)?"
   (>= sf *br-backstep-f*))
@@ -542,12 +557,14 @@ the stance's SP2 (inside 5 m) or SP1; else the shot."
   :tick br-backstep-tick :on-frame ((0 br-backstep-go)))
 ;; 転身 TENSHIN in (decision V6: the old Lille's :lb-switch-in, 「照原版」), since decision V6a (the user 2026-10-10: 「L 放軌跡後
 ;; 快速連結 J 才會前衝」) only as the 2 f cancel of a J in a ranged L / SP1 / SP2's window (the copy entered at f14: BR-LAY-TICK,
-;; BR-DASH-WINDOW-P; :br-tenshin itself is only the copies' template, no command starts it): the dash at him at 30 m/s, at most
-;; 7 m, stopping 1 m short, iframes f0-8, free; melee 6 f into the dash (or at its end); J1 at the dash's end (a K pressed
-;; during it: K1), and J1's first active frame materialises one trace (BR-J-MAT). R 8 when nothing links. Any other ranged
+;; BR-DASH-WINDOW-P; since decision V6c a J at any frame of the lay, latched to its last point, or within *BR-DASH-LATE* f after
+;; it: BR-MELEE-IN; :br-tenshin itself is only the copies' template, no command starts it): the dash's f0 fires one line (the
+;; nearest within 2.5 m of him, BR-TENSHIN-FIRE: decision V6c, 「照原版：前衝第 0 幀觸發」), then the dash at him at 30 m/s, at
+;; most 7 m, stopping 1 m short, iframes f0-8, free; melee 6 f into the dash (or at its end); J1 at the dash's end (a K pressed
+;; during it: K1), and J1's first active frame materialises one more (BR-J-MAT). R 8 when nothing links. Any other ranged
 ;; J: melee in place and J1 (the ranged kits' :q is the melee J1, BR-MELEE-IN at its f0), as the ranged K
 (defmove :br-tenshin :kind :sig :clip :lb-w-tenshin-in :callout "TENSHIN" :startup *br-tenshin-s* :active 0 :recovery 8
-  :tick br-tenshin-tick :on-frame ((*br-tenshin-windup* br-tenshin-go)))
+  :tick br-tenshin-tick :on-frame ((*br-tenshin-windup* br-tenshin-fire) (*br-tenshin-windup* br-tenshin-go)))
 (defmove-copy :br-tenshin-c :br-tenshin :enter *br-tenshin-enter*)
 (defmove :br-recall :kind :sig :clip :br-recall :callout "KAISHU" :startup *br-recall-f* :active 0 :recovery 0
   :tick br-halt-tick :on-frame ((0 br-recall-go) (7 br-recall-fire)))
@@ -821,6 +838,9 @@ decision V9; at 0 pips the plain K1, V9d).")
   (dash-end 99 :type fixnum)              ; TENSHIN in: the move frame its dash ends (the link frame)
   (latch nil)                             ; ... the J1 / K1 it links into (:q, a K pressed during it :f)
   (switch-to nil)                         ; ... the melee form it turns into (6 f into the dash, or at its end)
+  (dash-q nil)                            ; a ranged lay: a J latched before its last point (it dashes there; V6c)
+  (laid nil)                              ; ... its latest BR-LAY set a point (paid; a refused one sets none: no dash)
+  (late 0 :type fixnum)                   ; frames left after a lay that set its points: a J dashes (*BR-DASH-LATE*; V6c)
   (awake-t -1 :type fixnum) (revive-t -1 :type fixnum))   ; ticks of the awakening and the revival (the pacing log)
 (defvar *br-test-awake* nil
   "Debug 82041 (82040 off): the ASSIST gate's masher as him (P1, habit :dumb) plays every match from JILLIEL melee (forced at
@@ -884,6 +904,10 @@ check on its f59."
   (when (or *br-test-awake* *br-test-diff*) (br-test-tick e f))   ; (debug 82041 / 82050-52: the gates' flags, batch 6)
   (let ((st (br e)) (form (fighter-form f)))
     (br-traces-aim e)                                     ; (every line through him, decision V7)
+    (let ((mv (fighter-move f)))                          ; (decision V6c: the J latch lives in a lay only; the
+      (unless (and (eq (fighter-state f) :move) mv (eq (mv-tick mv) 'br-lay-tick)) (setf (brs-dash-q st) nil))   ; late
+      (cond ((not (member (fighter-state f) '(:idle :guard :run))) (setf (brs-late st) 0))                       ;  window
+            ((and (plusp (brs-late st)) (zerop (fighter-freeze f))) (decf (brs-late st)))))                       ;  counts down free)
     (setf (brs-live st) (br-live-traces e))
     (when (and (br-awake-form-p form) (minusp (brs-awake-t st)))
       (setf (brs-awake-t st) *match-tick*) (pace e :awaken-tick *match-tick*))
@@ -1156,9 +1180,14 @@ pip to answer it: :KAMAE-STEP, its direction kept in BRS-DASH-DIR (off a lane: b
 ;;; ---------------------------------------------------------------- JILLIEL: the modes, the traces (§5)
 (defun br-melee-in (e)
   "A melee J1's / K1's frame 0: pressed in a ranged mode (or its MUJITTAI, dropped there first), he is back in melee (the move goes
-on: the same move is melee's)."
-  (let* ((form (fighter-form (fighter e))) (to (br-melee-of form)))
-    (unless (eq to form) (set-form e to) (pace e :to-melee))))
+on: the same move is melee's). A ranged J within *BR-DASH-LATE* frames after a lay that set its points (BRS-LATE) is
+TENSHIN in instead: its 2 f cancel copy starts here (decision V6c, the user 2026-10-10: 「整個放點招式＋收招後 10 幀」)."
+  (let* ((f (fighter e)) (st (br e)) (form (fighter-form f)) (to (br-melee-of form)))
+    (cond ((and (plusp (brs-late st)) (br-ranged-form-p form) (eq (mv-kind (fighter-move f)) :quick))
+           (setf (brs-late st) 0)
+           (start-move e (br-tenshin-cancel-move f))
+           (pace e :tenshin-late))
+          ((not (eq to form)) (set-form e to) (pace e :to-melee)))))
 
 (defun br-go-ranged (e)
   "The turn's last frame / the backstep's first: ranged mode."
@@ -1198,7 +1227,13 @@ buffered) cancels its recovery: 「衝刺結束才能接」 (decision V6). His C
                 do (when (try-command e f cmd) (vpad-consume! vp button) (pace e :backstep-lay))
                    (return))))))
 
-;;; ---------------------------------------------------------------- 転身 TENSHIN in: a J in a lay's window (decisions V6, V6a)
+;;; ---------------------------------------------------------------- 転身 TENSHIN in: a J in a lay's window (decisions V6, V6a, V6c)
+(defun br-tenshin-fire (e)
+  "TENSHIN in's dash f0 (before BR-TENSHIN-GO): one line materialises, the nearest within *BR-NEAR-R* of him along its line
+(BR-MATERIALISE-ONE: a 26 f stagger, 萬物貫通), none when no line is near; the dash and J1 follow (decision V6c, the user
+2026-10-10: 「照原版：前衝第 0 幀觸發」: the old Lille's TENSHIN in fired at its f0, 26 > the dash + J1's 8 f, a real combo)."
+  (when (br-materialise-one e) (pace e :tenshin-fire)))
+
 (defun br-tenshin-go (e)
   "TENSHIN in at its wind-up's end: the dash at him (BR-TENSHIN-DIST at *BR-TENSHIN-SPEED*, BR-TENSHIN-DASH-F frames), its
 end kept (the link frame), iframes f0-8, free; the melee form to turn into; J1 latched (a K pressed during the dash: K1)."
@@ -1244,21 +1279,32 @@ latch starts the melee J1 / K1 (TRY-COMMAND), else the rest of the startup is sk
   (find-move (if (br-owl-form-p (fighter-form f)) :br-o-tenshin-c :br-tenshin-c)))
 
 (defun br-lay-tick (e)
-  "A ranged lay (L / SP1 / SP2): the planted ones turn until their :lock (BR-PLANTED-TICK); in TENSHIN in's window (its
-active end to the end of its recovery, BR-DASH-WINDOW-P) J cancels it into TENSHIN in with its 2 f wind-up (the old
-Lille's EN cancel; a human's press, buffered *INPUT-BUFFER* frames as every cancel: a J pressed from the frame its last
-point is set dashes, an older one has lapsed; his CPU's BR-AI-CANCEL-P). Decision V6a (2026-10-10): the only TENSHIN in."
-  (let* ((f (fighter e)) (mv (fighter-move f)))
+  "A ranged lay (L / SP1 / SP2): the planted ones turn until their :lock (BR-PLANTED-TICK); TENSHIN in (decision V6c): a
+human's J pressed at any frame of it is latched (consumed) and cancels it into TENSHIN in's 2 f wind-up on the frame its last
+point is set, or at once from there to its end (BR-DASH-WINDOW-P; his CPU's BR-AI-CANCEL-P in the same window); its end
+opens *BR-DASH-LATE* more frames (BRS-LATE: a ranged J then dashes, BR-MELEE-IN). A lay whose last point was refused for lack
+of flash step sets none: no dash, its latched J is J1 in place at its end. TENSHIN in has no other way in (decision V6a)."
+  (let* ((f (fighter e)) (mv (fighter-move f)) (st (br e)))
     (when (and (eq (fighter-state f) :move) mv (eq (fighter-phase f) :main))
       (when (move-param e :lock) (br-planted-tick e))
-      (when (and (br-dash-window-p (fighter-sf f) (mv-s mv) (mv-a mv) (mv-r mv)) (zerop (fighter-lock f)))
-        (let ((b (br-tick-brain e)) (vp (pilot-vpad (pilot e))))
-          (cond (b (when (br-ai-cancel-p e b)
-                     (when (try-command e f :q nil nil (br-tenshin-cancel-move f)) (pace e :ai-tenshin-cancel))))
-                ((vpad-command-pressed-p vp :quick nil)
-                 (if (try-command e f :q nil nil (br-tenshin-cancel-move f))
-                     (vpad-consume! vp :quick)
-                     (refused-cue e f :q vp :quick)))))))))
+      (let* ((sf (fighter-sf f)) (last (br-last-point mv)) (end (+ (mv-s mv) (mv-a mv) (mv-r mv)))
+             (open (and (br-dash-window-p sf last end) (brs-laid st))))
+        (when (zerop (fighter-lock f))
+          (let ((b (br-tick-brain e)) (vp (pilot-vpad (pilot e))))
+            (cond (b (when (and open (br-ai-cancel-p e b))
+                       (when (try-command e f :q nil nil (br-tenshin-cancel-move f)) (pace e :ai-tenshin-cancel))))
+                  (t (when (vpad-command-pressed-p vp :quick nil)       ; (any frame: latched, decision V6c)
+                       (vpad-consume! vp :quick)
+                       (unless (brs-dash-q st) (pace e (if (< sf last) :tenshin-latch :tenshin-press)))
+                       (setf (brs-dash-q st) t))
+                     (when (and open (brs-dash-q st))
+                       (setf (brs-dash-q st) nil)
+                       (try-command e f :q nil nil (br-tenshin-cancel-move f)))
+                     (when (and (>= sf end) (brs-dash-q st) (eq (fighter-move f) mv))   ; (no point set: J1 in place)
+                       (setf (brs-dash-q st) nil)
+                       (when (try-command e f :q) (pace e :tenshin-unpaid-j1)))))))
+        (when (and (>= sf end) (eq (fighter-move f) mv))
+          (setf (brs-late st) (if (brs-laid st) *br-dash-late* 0)))))))
 
 ;;; ---------------------------------------------------------------- the traces: aim points (decision V7)
 (defun br-live-traces (e)
@@ -1304,8 +1350,8 @@ frame, *BR-SP1-FAN*). Laying deals nothing."
          (off (if (eq src :sp1) (or (second (assoc (fighter-sf f) *br-sp1-fan*)) 0.0) 0.0)))
     (turn-to-opp e f 10.0)
     (if (>= (gauges-fs g) cost)
-        (progn (spend-fs g cost) (br-lay-trace e src off))
-        (pace e :traces-unpaid))
+        (progn (spend-fs g cost) (br-lay-trace e src off) (setf (brs-laid (br e)) t))
+        (progn (pace e :traces-unpaid) (setf (brs-laid (br e)) nil)))
     (emit :sfx :rift-cut e)))
 
 (defun br-materialise! (e hz d)
@@ -1826,7 +1872,8 @@ close, starved: the react roll under :p."
 
 (defparameter *br-ai-dash-life* 20
   "Frames a lay his ranged CPU pressed to go in by (BR-AI-GO-IN) keeps its planned cancel: the lay's window opens within
-them (L: f7 after the press's step), and a lay cut short leaves no plan for a later one (decision V6a, 2026-10-10 [G]).")
+them (L: f4 after the press's step, its point's frame since decision V6c; f7 before), and a lay cut short leaves no plan
+for a later one (decision V6a, 2026-10-10 [G]).")
 (defun br-ai-go-in (e b d)
   "Going in from ranged neutral (decision V6a, 2026-10-10: TENSHIN in only out of a lay's window): him within J1's reach
 (+ 0.2 m): J, J1 in place; else L, an aim point at him whose window cancels into TENSHIN in (BRAI-DASH-T, taken by
@@ -2278,9 +2325,11 @@ a press. A command, :NONE, or NIL (the generic AUTO COMBO)."
 
 (defun br-as-ranged (e f s vp)
   "Route ranged (batch 6; decision V6a, 2026-10-10: TENSHIN in only out of a lay), his J pressed while free beyond J1's reach
-(+ 0.2 m): L (an aim point at him) with the flash step over 10 after it: his next J in it cancels into TENSHIN in (2 f,
-BR-LAY-TICK) along that line, J1 at the dash's end spends it (L point -> J dash -> J1 ...); else NIL (his J: J1 in place)."
-  (when (and s (vpad-command-pressed-p vp :quick nil))
+(+ 0.2 m): L (an aim point at him) with the flash step over 10 after it: his next J in it (latched at any frame, decision
+V6c) cancels into TENSHIN in (2 f, BR-LAY-TICK) along that line, its f0 fires the line, J1 at the dash's end (L point -> J
+dash -> J1 ...); within *BR-DASH-LATE* f after a lay (BRS-LATE) his J is left alone: it dashes (BR-MELEE-IN); else NIL (his
+J: J1 in place)."
+  (when (and s (zerop (brs-late (br e))) (vpad-command-pressed-p vp :quick nil))
     (let ((q (kit-command-move (fighter-kit f) :q)))
       (when (and q (> (fighter-dist f) (+ (mv-reach q) 0.2)) (>= (- (gauges-fs (gauges e)) *br-lay-l*) 10.0)
                  (kit-command-ok-p e :sig))
