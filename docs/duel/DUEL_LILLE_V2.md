@@ -140,6 +140,15 @@ the K 「四段效果」; the gauge 「維持 3 格」.
 | 3 | 破陣弾 | 150, 萬物貫通, a guard break on block |
 
   More pips, a longer recovery [G]. The gauge stays 3 pips (V8's 5 waits for V8).
+- **V9a** (the user, same day): 「HŌSHA 三發都擋下來就扣 40 防禦量表」 (the three bullets 40 in all, not 40 each). Moot: V9b.
+- **V9b** (the user, same day, before the build was played): 「等等，取消跳射改回用速射」. **The J part of V9 is withdrawn**: the
+  stance's J stays the snap shot `:br-k-snap` (≥ 1 pip, costs 1, 40, 萬物貫通; 0 pips J1), exactly as before V9. The K part
+  stands. Built: §20.
+- **V9c** (the user, same day): 「透過以下更改強化速射的性能：1. 減少 step 跟速射之間的切換硬直 2. 讓速射跟 J 可以互相銜接」. Choices:
+  「兩邊都可取消」 and 「J 連段→L 開架→J 速射；速射命中→J1」. (a) a J from the stance Step's f3 fires the snap shot (before: back in
+  the stance at the Step's f11); (b) the snap's recovery after its shot cancels into the stance Step if this stance's Step is
+  unused (still once per stance; it returns to the stance, which can fire again); (c) L after a J1 / J2 / J3 hit or block
+  opens the stance at f4 (as after a K link), its J the snap; (d) the snap's hit links into J1 (only up close). Built: §20.7.
 
 ### Decision V6c (2026-10-10): a wider L → J window; TENSHIN in fires a line at its f0 (the old combo)
 
@@ -215,17 +224,21 @@ The old base Lille's body, rifle and strings; L is the shooting stance.
 | stance → L | `:br-k-shot` 万物貫通 | S 10 (the lock), dmg **50** flat, PA | clip `:lb-k-shot`. A hit: 狙擊 +1 |
 | stance → SP1 | `:br-k-sanren` | 3 lines × 30, PA (each 31 m) | clip `:lb-sanren`. Any hit: 狙擊 +1 (once per move) [G] |
 | stance → SP2 | `:br-k-hiren` | 6 m back-slide, then one shot 50, PA | clip `:lb-hiren`. A hit: 狙擊 +1 |
-| stance → J, 狙擊 ≥ 1 | `:br-k-snap` 速射 | S 6, dmg **40**, PA, costs 1 | clip `:lb-snap` (Lille's unused hip snap shot) [G] |
-| stance → K, 狙擊 ≥ 1 | `:br-k-taisha` 退射 | 3 m back-slide, one shot **70**, PA, costs 1 | clip `:lb-k-taisha` [G] |
-| stance → J / K, 狙擊 0 | `:br-j1` / `:br-k1` | — | the stance drops into the normal attack (「一般攻擊」) |
+| stance → J, 狙擊 ≥ 1 | `:br-k-snap` 速射 | S 6, dmg **40**, PA, costs 1 | clip `:lb-snap` (Lille's unused hip snap shot) [G]; kept by V9b; V9c: also from the Step's f3, its recovery → the Step (f8), its hit → J1 (f8) (§20.7) |
+| J link → L | `:br-kamae-j` | the stance at f4 (hit or block) | decision V9c (§20.7), as `:br-kamae-k` after a K link |
+| stance → K, 狙擊 0 | `:br-k-taisha0` 退射 | 3 m back-slide, one shot **40**, no PA (20 m), R 24 | decision V9 (§20) [G] |
+| stance → K, 狙擊 1 | `:br-k-taisha` 退射 | 3 m back-slide, one shot **70**, PA, R 28 | clip `:lb-k-taisha` [G] |
+| stance → K, 狙擊 2 | `:br-k-senko` 穿甲弾 | the slide, **110**, PA, knockdown, R 32 | decision V9 (§20) [G] |
+| stance → K, 狙擊 3 | `:br-k-hajin` 破陣弾 | the slide, **150**, PA, knockdown, guard break on block, R 36 | decision V9 (§20) [G] |
+| stance → J, 狙擊 0 | `:br-j1` | — | the stance drops into the normal attack (「一般攻擊」); the K spends every pip (V9) |
 | SP1 (not in the stance) | `:br-sanren` | 3 lines × 30, 20 m, default ranged chip / drain | no 萬物貫通, no 狙擊 [G] |
 | SP2 (not in the stance) | `:br-hiren` | slide, one 40 shot, 20 m | no 萬物貫通, no 狙擊 [G] |
 | U | guard | — | no eye |
 | P (full awaken gauge) | awakening → 覺醒 近戰 | cinematic `lb-jilliel-cine` (copied as `br-jilliel-cine`) | the awaken gauge fills the usual way (no eye) |
 | Breaker, O | `:br-breaker`, `:br-kikon` | as the old (Kikon 2) | |
 
-**狙擊 gauge** (`brs-snipe`): 0–3 (user). +1 when the stance's L / SP1 / SP2 hits (not on block, user); −1 for each J / K
-conversion. Not filled by the converted shots themselves [G]. Kept through the awakening (unused there) and reset each
+**狙擊 gauge** (`brs-snipe`): 0–3 (user). +1 when the stance's L / SP1 / SP2 hits (not on block, user); −1 for the J's
+conversion, **every pip for the K** (decision V9). Not filled by the converted shots themselves [G]. Kept through the awakening (unused there) and reset each
 match. HUD: three pips labelled "SN" in the kit meter slot.
 
 ## 5. 覺醒 (Jilliel, two modes)
@@ -1125,4 +1138,114 @@ ca447c1, `--cvc` 3 / 3; his six pairings (BL dropped, V6b), 20 seeds, every matc
 Awaken A/B (the never-awaken side of 60, streams 100 / 300 / 500, pass >= 20): BK 18 / 17 / 11 (unchanged), BB 7 / 8 / 9
 (6 / 12 / 6). aieval `--char 6` (20 seeds): 0.373 (0.377), HARD strength 0.142 (0.150), signature 0.438. TENSHIN in 6.4 a
 match (6.6), all from the lay cancel. Playtest Artifact version 41.
+
+## 20. Decision V9 built (2026-10-10, branch `barro-v9`)
+
+Decision V9 (§1, 「K 改成依據累積的資源數打出不同效果的槍擊」, 「四段效果」, 「維持 3 格」) built for the K; its J part (HOSHA) was
+withdrawn before the build by **V9b** (「等等，取消跳射改回用速射」), and with it V9a (HOSHA's 40 in all, 「HŌSHA 三發都擋下來就扣 40 防禦
+量表」): the stance's J is the snap shot as before. Everything is in `duel/lisp/barro.lisp` (sim, CPU, ASSIST, learner, debug),
+`duel/lisp/glyphs-extra.lisp` (four brush glyphs), `tests/duel-rules-test.lisp` and the manual; no other character's code moved.
+
+### 20.1 What changed
+
+- **Stance → K spends every pip** and starts the move of its tier (`BR-KAMAE-PICK` → `BR-K-TIER-MOVE`, the pips left
+  `BR-KAMAE-LEFT`: 0 after the K, one less after the J, unchanged after L / SP1 / SP2). The K at 0 pips is no longer K1.
+  All four play the TAISHA clip (`:lb-k-taisha`: the 3 m back-slide over f0–12 turning 90 °/s, the line locked at f12, the
+  shot at f16; art can differ later); the kit reaches them through non-button strings `:kamae-k0` / `:kamae-k` /
+  `:kamae-k2` / `:kamae-k3` from every stance move (`:br-kamae`, `-k`, `-re`).
+
+| Pips | Move | Callout (kanji / romaji) | Damage | 萬物貫通 | On hit | On block | Recovery |
+|---|---|---|---|---|---|---|---|
+| 0 | `:br-k-taisha0` | 退射 TAISHA | 40 | no: the kind's chip and drain, a 20 m line (`*br-plain-len*`) | stagger | blocked | 24 |
+| 1 | `:br-k-taisha` | 退射 TAISHA | 70 | yes (31 m, drain 40, 30 % through) | stagger | blocked | 28 (was 24) |
+| 2 | `:br-k-senko` | 穿甲弾 SENKO-DAN | 110 | yes | **knockdown** (kb 1.5) | blocked | 32 |
+| 3 | `:br-k-hajin` | 破陣弾 HAJIN-DAN | 150 | yes | knockdown (kb 2.0) [G] | **guard break** (`:guard-crush` → RESOLVE-CONTACT `:guard-break`) | 36 |
+
+  Damages × the form's ×1.3 as every move of his. None of the four fills a pip. The brush callouts: 退射 / 穿甲弾 / 破陣弾
+  (穿 甲 弾 破 baked into glyphs-extra.lisp with tools/glyph-bake.py's GLYPH(), 陣 was in glyphs.lisp).
+- **The J**: unchanged (`:br-k-snap`, 1 pip, 40, 萬物貫通; J1 at 0), V9b.
+- Pacing keys: `snap` (as before), `kamae-drop` (the J1 at 0), `k-tier0` … `k-tier3` (replacing `taisha`).
+
+### 20.2 Readings of the spec [G]
+
+- **Row 0's line:** "no 萬物貫通" read as all of it: the kind's chip and drain and a finite 20 m line (`*br-plain-len*`, as his
+  SP1 / SP2 outside the stance).
+- **破陣弾 on hit:** the table gives only the block; it knocks down as 穿甲弾 (the tiers escalate).
+- **A blocked 破陣弾** counts as a touch that hit for the attacker (`contact-of :guard-break` = `:hit`), as every Breaker.
+- **Recovery:** 24 / 28 / 32 / 36 (the brief's example).
+
+### 20.3 Knobs (barro.lisp, docstrings with old → new)
+
+| Knob | Value |
+|---|---|
+| `*br-taisha0-dmg*` / `*br-taisha-dmg*` / `*br-senko-dmg*` / `*br-hajin-dmg*` | 40 / 70 / 110 / 150 [G] |
+| `*br-taisha0-r*` / `*br-taisha-r*` / `*br-senko-r*` / `*br-hajin-r*` | 24 / 28 (24 → 28) / 32 / 36 [G] |
+| base `:ai :kamae` | `(:full 0.9 :escape 0.4 :escape-in 3.0)` [G] |
+
+### 20.4 The CPU, ASSIST, the learner
+
+- **The stance's plan** (`BR-AI-KAMAE-PLAN`, one roll a stance, his CPU's and the ASSIST's): at 3 pips the K (破陣弾) under
+  `:kamae :full` 0.9 × the difficulty (before the reeling rule); a reeling opponent the shot; ≥ 1 pip inside 4 m the K
+  (its tier) or the snap, half each (as before); **0 pips inside `:escape-in` 3 m the K's back-slide** (TAISHA 40) under
+  `:escape` 0.4 × the difficulty; the SPs a quarter of the time; else the shot. Chances × `*br-ai-diff*` 0.5 / 1.0 / 1.5.
+- **HARD layer** (`BR-AI-HARD-KAMAE`): a guard to crush at 3 pips → the K (破陣弾 breaks it on block); else the snap with a
+  pip, else the shot (as before).
+- **ASSIST** (base route J → K2s → L → the stance's plan): the same plan with the ASSIST brain's difficulty; it never used
+  the J part, nothing else changed.
+- **The learner's `:shot` read**: a Hoho / an attack → the K with a pip (its tier), else SP2 with the bar, else the K at
+  0 pips (the slide) (was: the shot).
+
+### 20.5 Debug commands (DUEL_GAMEPLAY 82000 row)
+
+82024 / 82025 / 82026: the base form 4 m from Kenpachi with 0 / 1 / 2 狙擊 pips (82006 has 3): L, then K for the tiers;
+82027 / 82028: 3 / 2 pips with P2 holding guard (破陣弾's guard break, 穿甲弾's block).
+82029: 1.3 m out with 1 pip (V9c: J, L, J the snap, J into J1).
+
+### 20.6 Host tests and checks (2026-10-10)
+
+- duel-rules-test 8516 → 8580 checks (V9; 8594 with V9c, §20.7), ALL PASS: per tier its move, the strings from all three stance moves, the clip, 16 f
+  startup, the slide, damage 40 / 70 / 110 / 150, 萬物貫通 from 1 pip (`BR-X-HIT-P`) and none at 0 (no chip), the reaction
+  (stagger, stagger, knockdown, knockdown), `:guard-crush` only at 3, recovery 24 / 28 / 32 / 36 rising, the pips 0 after
+  every K; the J's 1 pip and J1 at 0; `:guard-crush` → `:guard-break` on a guard; the CPU plan (3 pips first, the escape,
+  the difficulty order), the HARD stance, the learner's 0-pip answer. duel-control 89, learn 131, input 33, touch 64,
+  cine 18 pass.
+- `tools/pkgcheck.sh duel` 0 / 0 / 0. `./build.sh duel` 0 warnings. Smoke `run.mjs --secs 8`: exit 0.
+- **Browser script** (`--fixed-dt`, 28 s, exit 0, no error; P1's damage × 1.3): 82006 (3 pips) L, K: `BR-K-HAJIN` hit 150
+  (P2 −195, wake-up: the knockdown), pips 0; 82026 (2): `BR-K-SENKO` 110 (−143, wake-up); 82025 (1): `BR-K-TAISHA` 70 (−91);
+  82024 (0): `BR-K-TAISHA0` 40 (−52); 82025 L, J: the snap 40 (−52), pips 0; 82024 L, J: J1 (a whiff at 4 m); 82027 (3, P2
+  guarding): `GUARD-BREAK` (P2 stunned); 82028 (2, guarding): `BLOCKED`, the guard gauge −40 (65 → 25), 33 through.
+  V9c: 82025 L, Space, J 4 f later: the snap out of the Step (flash step 100 → 90; blocked: P2's guard was still held from
+  82028, a GUARD CRUSH at 25); 82025 L, J, Space in its recovery: the snap hit, then the Step (fs 90); 82029 J, L, J, J:
+  `BR-J1` hit → `BR-K-SNAP` hit → `BR-J1` hit (J → L → the snap → J1).
+### 20.7 Decision V9c: the snap shot's links (2026-10-10)
+
+The user: 「透過以下更改強化速射的性能：1. 減少 step 跟速射之間的切換硬直 2. 讓速射跟 J 可以互相銜接」; 「兩邊都可取消」, 「J 連段→L 開架→J
+速射；速射命中→J1」.
+
+- **(a) Step → snap**: the stance Step `:br-k-dash` has a tick (`BR-K-DASH-TICK`): from its f3 (`*br-dash-snap-f*` 3 [G]) a
+  J (buffered) fires the stance's J at once, the aim snapped onto him: the snap shot with a pip, J1 at 0 (the stance's rule).
+  The Step's slide and iframes run on under it. Before: the Step's f11, back in the stance at its f6.
+- **(b) snap → Step**: the snap `:br-k-snap` has a tick (`BR-SNAP-TICK`): from its f8 (`*br-snap-step-f*`, its S 6 + A 2: after
+  the shot [G]) Step cancels the recovery into the stance Step (the string `(:br-k-snap :kamae-step :br-k-dash)`) when this
+  stance's Step is unused and 10 flash step are there (`BR-SNAP-STEP-P`); it returns to the stance (`:br-kamae-re`, a fresh
+  window) as every Step, so the stance can fire again; once per stance (`brs-dashed`).
+- **(c) J link → L**: the base kit's `:l-after-j :br-kamae-j` (a copy of the stance entered at f4, as `:br-kamae-k` after a K
+  link): L latched in J1 / J2 / J2s / J3 starts it once the link touched (hit or block: the generic L-link chain rule); its
+  J is the snap with a pip. The stance's follow-ups, Step and look are the same from it.
+- **(d) snap hit → J1**: a J pressed during the snap is latched (`brs-snap-j`); from f8 (`*br-snap-link*` [G]) on its hit
+  the recovery cancels into J1 (TRY-COMMAND :q, no chase: J1 connects only up close). Host-checked: J1 from f8 lands
+  inside the snap's stagger.
+- **CPU** (base `:ai`, × `*br-ai-diff*`, one roll per event): the generic `:l-after-j` 0.3 (L after a J link, one roll per
+  hit, the existing `:l-after-k` 0.6's rule); the stance opened off a J link plans the snap with a pip under `:kamae
+  :snap-link` 0.8 (before the reeling rule); the snap's hit → J1 inside J1's reach + 0.2 m under `:snap-j1` 0.8 (rolled at
+  f8); a whiffed or blocked snap inside `:snap-step-in` 4 m → the Step straight back under `:snap-step` 0.5 (at f8); the
+  stance Step → the snap at its f3 with a pip under `:dash-snap` 0.6 [G all].
+- **ASSIST**: no route change: the route's stance plan may pick the snap; the masher's J during the snap is latched like a
+  human's, so a snap hit up close goes on into J1.
+- Pacing keys: `dash-snap`, `snap-step`, `snap-j1`. Debug: as below (82025: L, Space, J at f3 of the Step).
+- Host tests (duel-rules-test → 8594): the f3 / f8 / f8 frames and their pure rules, the strings (snap → Step → the stance),
+  `:l-after-j` and `KIT-L-LINK` for J1 / J2 / J2s / J3 (K1 still `:br-kamae-k`), the snap from `:br-kamae-j`, J1's timing
+  inside the snap's stagger, the CPU's J-link plan; the `:step-branch` list gains `:br-kamae-j`.
+
+- **Gates: run by the lead after the playtest** (decision V6b).
 
