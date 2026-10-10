@@ -195,12 +195,12 @@
 ;;; ---------------------------------------------------------------- the draw hook
 (defun-fast %br-aim-look (e f side)
   "The stance's aim line (Lille's %LB-AIM-LOOK on his moves): a thin line on the floor from under the muzzle to the wall,
-grey while the stance (:br-kamae / :br-kamae-k / :br-kamae-re) tracks, jade once the shot :br-k-shot locks until it fires; the reticle at
+grey while the stance (:br-kamae / :br-kamae-k / :br-kamae-j / :br-kamae-re) tracks, jade once the shot :br-k-shot locks until it fires; the reticle at
 the opponent's distance, turning while it tracks, closing once locked."
   (declare (fixnum side))
   (setf side 0)                                         ; (unused: the slot memory is Lille's HUD tag's, not his)
   (let* ((mv (fighter-move f)) (nm (and mv (eq (fighter-state f) :move) (mv-name mv)))
-         (stance (or (eq nm :br-kamae) (eq nm :br-kamae-k) (eq nm :br-kamae-re)))
+         (stance (or (eq nm :br-kamae) (eq nm :br-kamae-k) (eq nm :br-kamae-j) (eq nm :br-kamae-re)))
          (locked (and (eq nm :br-k-shot) (eq (fighter-phase f) :main) (< (fighter-sf f) (mv-s mv)))))
     (when (or stance locked)
       (%lb-load-place! e)

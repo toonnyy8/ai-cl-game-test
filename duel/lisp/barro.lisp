@@ -2,7 +2,8 @@
 ;;;; rebuilt Lille, a separate fighter built from a copy of lille.lisp (the old Lille stays as he is, index 5). The user's
 ;;;; rules (2026-10-09): 萬物貫通 THE X-AXIS on the lines (a block drains 40 of the guard gauge and lets 30 % through, the
 ;;;; line runs 31 m); the base form's L is the shooting stance whose L / SP1 / SP2 carry it and fill the 狙擊 gauge (3 pips,
-;;;; +1 a hit), whose J / K spend a pip for a snap shot / TAISHA; the awakening JILLIEL in two modes: melee (:jilliel-kin)
+;;;; +1 a hit), whose J spends a pip for a snap shot, its K every pip for a shot by their count (TAISHA / 穿甲弾 / 破陣弾,
+;;;; decision V9); the awakening JILLIEL in two modes: melee (:jilliel-kin)
 ;;;; and ranged (:jilliel, its L / SP1 / SP2 lay trace lines for flash step); J / K go back to melee; J touching him or any
 ;;;; K's first active frame materialises the traces near him (萬物貫通 hits); J3 -> L the backstep into ranged, K3 -> L the
 ;;;; recall (every trace taken back, a derivative string by their count); U in every awakened form the intangible stance
@@ -46,8 +47,35 @@ each J / K conversion. New, 2026-10-09, the user's decision V1 「3 格，命中
 (defparameter *br-shot-dmg* 50 "The stance's L 万物貫通: damage, flat (new 2026-10-09 [G]; the old quick shot 40).")
 (defparameter *br-k-sanren-dmg* 30 "The stance's SP1: each of its three 萬物貫通 lines (new 2026-10-09 [G]).")
 (defparameter *br-k-hiren-dmg* 50 "The stance's SP2: the shot after the 6 m back-slide (new 2026-10-09 [G]).")
-(defparameter *br-snap-dmg* 40 "The stance's J at >= 1 pip, 速射 the snap shot (new 2026-10-09 [G]).")
-(defparameter *br-taisha-dmg* 70 "The stance's K at >= 1 pip, 退射 TAISHA (new 2026-10-09 [G]; the old 60 on a 6 m line).")
+(defparameter *br-snap-dmg* 40
+  "The stance's J at >= 1 pip, 速射 the snap shot (new 2026-10-09 [G]; kept by decision V9b, the user 2026-10-10:
+「等等，取消跳射改回用速射」).")
+;; the snap shot's links (decision V9c, the user 2026-10-10: 「透過以下更改強化速射的性能：1. 減少 step 跟速射之間的切換硬直 2. 讓速射跟
+;; J 可以互相銜接」; 「兩邊都可取消」, 「J 連段→L 開架→J 速射；速射命中→J1」)
+(defparameter *br-dash-snap-f* 3
+  "The stance Step's frame from which a J fires the stance's J (the snap shot; J1 at 0 pips) (new 2026-10-10, decision V9c
+「減少 step 跟速射之間的切換硬直」, 「兩邊都可取消」; f3 [G]; before: the Step's f11, back in the stance at its f6).")
+(defparameter *br-snap-step-f* 8
+  "The snap shot's frame from which its recovery cancels into the stance Step 飛廉脚 (once per stance, its 10 flash step; it
+returns to the stance as usual) (new 2026-10-10, decision V9c 「兩邊都可取消」; f8 = after its shot, S 6 + A 2 [G]).")
+(defparameter *br-snap-link* 8
+  "The snap shot's frame from which, on its hit, its recovery cancels into J1 (a J pressed during it is latched; no chase: J1
+connects only up close) (new 2026-10-10, decision V9c 「速射命中→J1」; f8 [G]).")
+;; the stance's K: a shot by the pips spent (decision V9, the user 2026-10-10: 「K 改成依據累積的資源數打出不同效果的槍擊」, 「四段效果」);
+;; every pip is spent; the numbers [G]
+(defparameter *br-taisha0-dmg* 40
+  "Stance K at 0 pips: 退射 TAISHA, the 3 m back-slide and one shot WITHOUT 萬物貫通 (the kind's chip and drain, a 20 m line)
+(new 2026-10-10, decision V9 row 0 [G]; before V9 the stance's K at 0 was K1).")
+(defparameter *br-taisha-dmg* 70
+  "Stance K at 1 pip: 退射 TAISHA with 萬物貫通 (new 2026-10-09 [G]; the old 60 on a 6 m line; decision V9 row 1 keeps it).")
+(defparameter *br-senko-dmg* 110
+  "Stance K at 2 pips: 穿甲弾 SENKO-DAN, 萬物貫通, a knockdown on hit (new 2026-10-10, decision V9 row 2 [G]).")
+(defparameter *br-hajin-dmg* 150
+  "Stance K at 3 pips: 破陣弾 HAJIN-DAN, 萬物貫通, a guard break on block (:guard-crush) (new 2026-10-10, decision V9 row 3 [G]).")
+(defparameter *br-taisha0-r* 24 "Stance K's recovery at 0 pips (new 2026-10-10, decision V9 「more pips, a longer recovery」 [G]).")
+(defparameter *br-taisha-r* 28 "... at 1 pip (24 -> 28, 2026-10-10, decision V9 [G]) ...")
+(defparameter *br-senko-r* 32 "... at 2 pips (new 2026-10-10, decision V9 [G]) ...")
+(defparameter *br-hajin-r* 36 "... at 3 pips (new 2026-10-10, decision V9 [G]).")
 (defparameter *br-sanren-dmg* 30 "SP1 outside the stance: each of three lines, 20 m, no 萬物貫通 (new 2026-10-09 [G]).")
 (defparameter *br-hiren-dmg* 40 "SP2 outside the stance: the shot after the slide, 20 m, no 萬物貫通 (new 2026-10-09 [G]).")
 (defparameter *br-plain-len* 20.0 "SP1 / SP2 outside the stance: their lines' length, metres (new 2026-10-09 [G]).")
@@ -206,16 +234,39 @@ copied 2026-10-09; the moves carry the numbers).")
 hit, at most *BR-SNIPE-MAX*; a block or a whiff nothing (decision V1)."
   (if (eq contact :hit) (min *br-snipe-max* (1+ n)) n))
 (defun br-snipe-spend (n)
-  "One J / K conversion out of the stance at N pips: values the pips left and whether it converts (N >= 1); at 0 the
-stance drops into J1 / K1 (「一般攻擊」)."
+  "The stance's J (the snap shot) at N pips: values the pips left and whether it converts (N >= 1, one spent); at 0 the
+stance drops into J1 (「一般攻擊」)."
   (if (>= n 1) (values (1- n) t) (values n nil)))
+(defun br-k-tier (n)
+  "The stance's K at N pips (decision V9): the tier it fires, 0-3 (every pip spent: the gauge is 0 after)."
+  (max 0 (min 3 n)))
+(defun br-k-tier-move (tier)
+  "The stance's K's move for TIER (decision V9): 0 退射 TAISHA (no 萬物貫通), 1 TAISHA (萬物貫通), 2 穿甲弾, 3 破陣弾."
+  (svref #(:br-k-taisha0 :br-k-taisha :br-k-senko :br-k-hajin) tier))
 (defun br-kamae-pick (cmd snipe)
-  "The move the stance's follow-up CMD (:kamae-l -sp1 -sp2 -j -k) starts at SNIPE pips (§4): L the 万物貫通 shot, SP1 /
-SP2 the stance's 萬物貫通 SPs, J / K the snap shot / TAISHA at >= 1 pip, else J1 / K1."
+  "The move the stance's follow-up CMD (:kamae-l -sp1 -sp2 -j -k) starts at SNIPE pips (§4, decision V9): L the 万物貫通 shot,
+SP1 / SP2 the stance's 萬物貫通 SPs, J the snap shot at >= 1 pip (else J1), K the shot of its tier (every pip: BR-K-TIER)."
   (case cmd
     (:kamae-l :br-k-shot) (:kamae-sp1 :br-k-sanren) (:kamae-sp2 :br-k-hiren)
     (:kamae-j (if (>= snipe 1) :br-k-snap :br-j1))
-    (:kamae-k (if (>= snipe 1) :br-k-taisha :br-k1))))
+    (:kamae-k (br-k-tier-move (br-k-tier snipe)))))
+(defun br-kamae-left (cmd snipe)
+  "The 狙擊 pips left after the stance's follow-up CMD at SNIPE (decision V9): J one spent (the snap shot; none at 0, J1), K
+every one, else none."
+  (case cmd
+    (:kamae-j (values (br-snipe-spend snipe)))
+    (:kamae-k 0)
+    (t snipe)))
+(defun br-dash-snap-p (sf)
+  "May a J in the stance Step at its frame SF fire the stance's J (decision V9c): from *BR-DASH-SNAP-F*?"
+  (>= sf *br-dash-snap-f*))
+(defun br-snap-step-p (sf dashed fs)
+  "May the snap shot at frame SF cancel into the stance Step (decision V9c): from *BR-SNAP-STEP-F*, this stance's Step unused
+(DASHED) and FS flash step for it (BR-KAMAE-STEP-OK-P)?"
+  (and (>= sf *br-snap-step-f*) (br-kamae-step-ok-p dashed fs)))
+(defun br-snap-link-p (sf contact)
+  "May the snap shot at frame SF link into J1 (decision V9c): from *BR-SNAP-LINK*, once it hit (CONTACT :hit)?"
+  (and (>= sf *br-snap-link*) (eq contact :hit)))
 (defun br-kamae-hold-over-p (sf held)
   "Does the stance (move frame SF, L HELD) end its hold now: past its tap with L up, before the held maximum?"
   (and (<= (+ *br-kamae-up* *br-kamae-tap*) sf) (< sf (+ *br-kamae-up* *br-kamae-max*)) (not held)))
@@ -345,14 +396,28 @@ turn into ranged, as a cancel in the window the enders' links use (batch 4, 2026
          (tail (max *br-misuji-from* (+ *br-misuji-from* (* *br-misuji-speed* (/ (- age *br-misuji-life*) 60.0))))))
     (values (min tail front) front)))
 (defun br-misuji-frames () "A 裁きの光明 line's life." (+ (ceiling (* 60 (- *br-misuji-to* *br-misuji-from*)) *br-misuji-speed*) *br-misuji-life*))
-(defun br-ai-kamae-plan (r d reeling snipe sp-ok)
-  "His CPU's follow-up in the stance, picked once at its f6 from one roll R (§8): a REELING opponent the shot (it combos);
->= 1 pip and inside 4 m TAISHA (its back-slide) or the snap shot, half each; with the bars (SP-OK) a quarter of the time
-the stance's SP2 (inside 5 m) or SP1; else the shot."
-  (cond (reeling :kamae-l)
+(defun br-ai-kamae-plan (r d reeling snipe sp-ok &optional k (difficulty :normal) jlink)
+  "His CPU's follow-up in the stance, picked once at its f6 from one roll R (§8; K: the stance's :ai :kamae, chances x the
+DIFFICULTY): at 3 pips the K (破陣弾, decision V9: every pip's shot) under :full; a stance opened off a J link (JLINK) with
+a pip the snap shot under :snap-link (decision V9c: J string -> L -> J); a REELING opponent the shot (it combos);
+>= 1 pip and inside 4 m the K (its tier's back-slide shot) or the snap shot, half each; 0 pips inside :escape-in m the K
+(TAISHA's 3 m back-slide, 40, decision V9 row 0) under :escape; with the bars (SP-OK) a quarter of the time the stance's
+SP2 (inside 5 m) or SP1; else the shot."
+  (cond ((and k (>= snipe 3) (< r (br-ai-chance (getf k :full 0.0) difficulty))) :kamae-k)
+        ((and k jlink (>= snipe 1) (< r (br-ai-chance (getf k :snap-link 0.0) difficulty))) :kamae-j)
+        (reeling :kamae-l)
         ((and (>= snipe 1) (< d 4.0)) (if (< r 0.5) :kamae-k :kamae-j))
+        ((and k (< snipe 1) (< d (getf k :escape-in 3.0)) (< r (br-ai-chance (getf k :escape 0.0) difficulty))) :kamae-k)
         ((and sp-ok (< r 0.25)) (if (< d 5.0) :kamae-sp2 :kamae-sp1))
         (t :kamae-l)))
+
+(defun br-ai-hard-kamae (why snipe)
+  "The HARD layer's stance plan for its WHY (:punish / :crush, or NIL: none) at SNIPE pips: a guard to crush at 3 pips the K
+(破陣弾 breaks it on block, decision V9), else the snap shot with a pip, else the shot."
+  (when why
+    (cond ((and (eq why :crush) (>= snipe 3)) :kamae-k)
+          ((>= snipe 1) :kamae-j)
+          (t :kamae-l))))
 
 ;;; ================================================================ base 万物貫通 (§4)
 ;; the J / K strings: the old Lille's frames and clips, literal numbers (DUEL_STRINGS §2.1's budget)
@@ -377,8 +442,9 @@ the stance's SP2 (inside 5 m) or SP1; else the shot."
 (defmove :br-kamae :kind :sig :clip :lb-kamae :startup 6 :active 0 :recovery 104 :track 60.0 :tick br-kamae-tick
   :flags (:step-branch) :on-frame ((0 br-kamae-enter)))
 (defmove-copy :br-kamae-k :br-kamae :enter 4 :on-frame ((4 br-kamae-enter)))
+(defmove-copy :br-kamae-j :br-kamae :enter 4 :on-frame ((4 br-kamae-enter)))   ; (L after a J link, decision V9c)
 (defmove-copy :br-kamae-re :br-kamae :enter *br-kamae-up* :on-frame nil)
-(defmove :br-k-dash :kind :sig :clip :lb-k-dash :startup *br-kamae-dash-f* :active 0 :recovery 0
+(defmove :br-k-dash :kind :sig :clip :lb-k-dash :startup *br-kamae-dash-f* :active 0 :recovery 0 :tick br-k-dash-tick
   :on-frame ((0 br-kamae-dash) (*br-kamae-back* br-kamae-back)))
 ;; stance -> L 万物貫通: locked on the press, fired 10 f later; 50 flat, 萬物貫通; a hit fills a pip
 (defmove :br-k-shot :kind :sig :clip :lb-k-shot :callout "X-AXIS" :startup 10 :active 2 :recovery 26 :dmg *br-shot-dmg*
@@ -394,15 +460,35 @@ the stance's SP2 (inside 5 m) or SP1; else the shot."
   :adv-block -14 :track 0 :vol (:cap 0.6 *br-x-len* 1.2 0.25) :on-hit :stagger :kb 1.0 :chip *br-x-chip* :guard *br-x-guard*
   :flags (:ranged :x-axis :uncatchable) :tick br-slide-tick :on-frame ((0 br-slide) (20 br-shot-fire))
   :params (:slide 6.0 :slide-f 14 :lock 14 :snipe t :len *br-x-len*))
-;; stance -> J at >= 1 pip: 速射 the snap shot from the hip (Lille's unused :lb-snap), 40, 萬物貫通, a pip spent
+;; stance -> J at >= 1 pip: 速射 the snap shot from the hip (Lille's unused :lb-snap), 40, 萬物貫通, a pip spent (decision V9b
+;; kept it: the user 2026-10-10 「等等，取消跳射改回用速射」). Decision V9c: also from the stance Step's f3; its recovery from f8
+;; cancels into the Step (once per stance) and, on its hit, into J1 (BR-SNAP-TICK)
 (defmove :br-k-snap :kind :sig :clip :lb-snap :callout "SOKUSHA" :startup 6 :active 2 :recovery 20 :dmg *br-snap-dmg*
   :adv-block -12 :track 0 :vol (:cap 0.6 *br-x-len* 1.2 0.25) :on-hit :stagger :kb 1.0 :chip *br-x-chip* :guard *br-x-guard*
-  :flags (:ranged :x-axis :uncatchable) :on-frame ((6 br-shot-fire)) :params (:lock 0 :len *br-x-len*))
-;; stance -> K at >= 1 pip: 退射 TAISHA, a 3 m back-slide, then one 萬物貫通 shot of 70, a pip spent
-(defmove :br-k-taisha :kind :sig :clip :lb-k-taisha :callout "TAISHA" :startup 16 :active 2 :recovery 24 :dmg *br-taisha-dmg*
+  :flags (:ranged :x-axis :uncatchable) :on-frame ((0 br-snap-enter) (6 br-shot-fire)) :tick br-snap-tick
+  :params (:lock 0 :len *br-x-len*))
+;; stance -> K: a shot by EVERY pip spent (decision V9, the user 2026-10-10, 「四段效果」), the TAISHA clip for all four: the 3 m
+;; back-slide over f0-12 (turning 90 deg/s, then the line locks), one shot at f16; more pips, a longer recovery
+;; (*BR-TAISHA0-R* / *BR-TAISHA-R* / *BR-SENKO-R* / *BR-HAJIN-R*). 0 pips: 退射 TAISHA 40 without 萬物貫通 (the kind's chip and drain, a 20 m line)
+(defmove :br-k-taisha0 :kind :sig :clip :lb-k-taisha :callout "TAISHA" :startup 16 :active 2 :recovery *br-taisha0-r* :dmg *br-taisha0-dmg*
+  :adv-block -14 :track 0 :vol (:cap 0.6 *br-plain-len* 1.2 0.3) :on-hit :stagger :kb 1.0 :flags (:ranged)
+  :tick br-slide-tick :on-frame ((0 br-slide) (16 br-shot-fire))
+  :params (:slide 3.0 :slide-f 12 :lock 12 :len *br-plain-len* :pips 0))
+;; ... 1 pip: 退射 TAISHA 70 with 萬物貫通 (as before V9)
+(defmove :br-k-taisha :kind :sig :clip :lb-k-taisha :callout "TAISHA" :startup 16 :active 2 :recovery *br-taisha-r* :dmg *br-taisha-dmg*
   :adv-block -14 :track 0 :vol (:cap 0.6 *br-x-len* 1.2 0.3) :on-hit :stagger :kb 1.0 :chip *br-x-chip* :guard *br-x-guard*
   :flags (:ranged :x-axis :uncatchable) :tick br-slide-tick :on-frame ((0 br-slide) (16 br-shot-fire))
-  :params (:slide 3.0 :slide-f 12 :lock 12 :len *br-x-len*))
+  :params (:slide 3.0 :slide-f 12 :lock 12 :len *br-x-len* :pips 1))
+;; ... 2 pips: 穿甲弾 SENKO-DAN 110, 萬物貫通, a knockdown on hit
+(defmove :br-k-senko :kind :sig :clip :lb-k-taisha :callout "SENKO-DAN" :startup 16 :active 2 :recovery *br-senko-r* :dmg *br-senko-dmg*
+  :adv-block -14 :track 0 :vol (:cap 0.6 *br-x-len* 1.2 0.3) :on-hit :knockdown :kb 1.5 :chip *br-x-chip* :guard *br-x-guard*
+  :flags (:ranged :x-axis :uncatchable) :tick br-slide-tick :on-frame ((0 br-slide) (16 br-shot-fire))
+  :params (:slide 3.0 :slide-f 12 :lock 12 :len *br-x-len* :pips 2))
+;; ... 3 pips: 破陣弾 HAJIN-DAN 150, 萬物貫通, a guard break on block (:guard-crush), a knockdown on hit [G]
+(defmove :br-k-hajin :kind :sig :clip :lb-k-taisha :callout "HAJIN-DAN" :startup 16 :active 2 :recovery *br-hajin-r* :dmg *br-hajin-dmg*
+  :adv-block -14 :track 0 :vol (:cap 0.6 *br-x-len* 1.2 0.3) :on-hit :knockdown :kb 2.0 :chip *br-x-chip* :guard *br-x-guard*
+  :flags (:ranged :x-axis :uncatchable :guard-crush) :tick br-slide-tick :on-frame ((0 br-slide) (16 br-shot-fire))
+  :params (:slide 3.0 :slide-f 12 :lock 12 :len *br-x-len* :pips 3))
 ;; SP1 / SP2 outside the stance: no 萬物貫通 (the kind's chip and drain), 20 m lines, no pip
 (defmove :br-sanren :kind :sp :clip :lb-sanren :callout "SANREN" :startup 12 :active 22 :recovery 24 :dmg *br-sanren-dmg*
   :adv-block -14 :track 90 :vol (:cap 0.6 *br-plain-len* 1.2 0.25) :on-hit :flinch :kb 0.5 :flags (:ranged)
@@ -561,12 +647,14 @@ clearing (:tick); the lay prices, the L links, the seal (:ok); the 狙擊 gauge,
 pacing log (:struck); his looks (:draw, barro-art.lisp).")
 
 (defparameter *br-kamae-strings*
-  (append (loop for s in '(:br-kamae :br-kamae-k :br-kamae-re)
+  (append (loop for s in '(:br-kamae :br-kamae-k :br-kamae-j :br-kamae-re)
                 append `((,s :kamae-l :br-k-shot) (,s :kamae-sp1 :br-k-sanren) (,s :kamae-sp2 :br-k-hiren)
-                         (,s :kamae-j :br-k-snap) (,s :kamae-k :br-k-taisha) (,s :kamae-step :br-k-dash)))
-          '((:br-k-dash :kamae-back :br-kamae-re)))
+                         (,s :kamae-j :br-k-snap) (,s :kamae-k :br-k-taisha) (,s :kamae-step :br-k-dash)
+                         (,s :kamae-k0 :br-k-taisha0) (,s :kamae-k2 :br-k-senko) (,s :kamae-k3 :br-k-hajin)))
+          '((:br-k-dash :kamae-back :br-kamae-re) (:br-k-snap :kamae-step :br-k-dash)))
   "The shooting stance's follow-ups: non-button strings (KIT-NEXT) its :tick starts (BR-KAMAE-TICK); the Step and its way
-back into the stance (decision V6).")
+back into the stance (decision V6; the snap shot's cancel into it, V9c); the K's four tiers by the pips (:kamae-k0 / -k / -k2 / -k3, BR-KAMAE-PICK picks one:
+decision V9).")
 (defparameter *br-recall-strings*
   '((:br-recall :rc0 :br-rc0) (:br-recall :rc1 :br-rc1) (:br-recall :rc2 :br-rc2) (:br-recall :rc3 :br-rc3))
   "The recall's derivative strings: non-button strings its f7 starts (BR-RECALL-FIRE).")
@@ -583,15 +671,18 @@ back into the stance (decision V6).")
   :grid (:br-j1 :br-j2 :br-j3 :br-k1 :br-k2 :br-k3 :br-j2s :br-k2s)
   :strings *br-kamae-strings*
   :l-after-k :br-kamae-k                        ; L after K1 / K2 / K3: the stance at f4 (the old rule)
+  :l-after-j :br-kamae-j                        ; L after J1 / J2 / J3 (hit or block): the same (decision V9c)
   :awaken-form :jilliel-kin :kikon-konpaku 2 :hooks *barro-hooks*
   :ai (:intents (:approach 1 :pressure 1 :zone 5 :defend 2)
        :ranges (:approach (2.2 8.0) :pressure (1.3 2.2) :zone (8.0 20.0) :defend (5.0 9.0))
        :moves ((0.0 2.2 :q 4 :f 2 :breaker 1 :step 2 :sig 1)
                (2.2 6.0 :sp2 1 :step 2 :sp1 1 :sig 3 nil 1)
                (6.0 99.0 :sig 6 :sp1 1 nil 1))
-       :guard 0.5 :hoho 0.3 :dash 0.3 :dash-back 0.7 :block-string 0.3 :o-ender 0.3 :l-after-k 0.6 :kikon-range 7.7
+       :guard 0.5 :hoho 0.3 :dash 0.3 :dash-back 0.7 :block-string 0.3 :o-ender 0.3 :l-after-k 0.6 :l-after-j 0.3 :kikon-range 7.7
        :awaken (:min-taken 150)
        :zone (:p 0.5 :near 6.0) :pip (:p 0.6 :near 4.0) :reflex br-ai-reflex   ; (his CPU: batch 4, §13)
+       :kamae (:full 0.9 :escape 0.4 :escape-in 3.0                              ; (the stance's K by pips: decision V9)
+               :snap-link 0.8 :snap-j1 0.8 :snap-step 0.5 :snap-step-in 4.0 :dash-snap 0.6)   ; (the snap's links: V9c)
        :kamae-step (:p 0.4 :threat 0.5 :close 3.0 :rush 5.0)                     ; (the stance's Step: batch 6, §16)
        :hard (:near 2.5 :punish-f 18 :crush 40.0)))                              ; (the HARD layer: *BR-AI-HARD*)
 
@@ -690,17 +781,19 @@ back into the stance (decision V6).")
   "Every form of his (the HUD meter, the host tests).")
 
 ;; his names in the brush tables (brush.lisp): the intro's column and the technique columns (not on the host); the new
-;; moves' glyphs (速 遠 後 回 収) are in glyphs-extra.lisp (the art batch, DUEL_LILLE_V2 §12)
+;; moves' glyphs (速 遠 後 回 収; 穿 甲 弾 破 for decision V9's K tiers) are in glyphs-extra.lisp (the art batch, DUEL_LILLE_V2 §12)
 (when (boundp '*brush-names*)
   (setf *brush-names* (append (remove :barro *brush-names* :key #'first) '((:barro "リジェ・バロ" "LILLE II")))
         *brush-callouts*
         (append (remove-if (lambda (c) (member (first c) '(:br-k-shot :br-k-sanren :br-k-hiren :br-k-taisha :br-sanren :br-hiren
+                                                            :br-k-taisha0 :br-k-senko :br-k-hajin
                                                             :br-e-sanren :br-e-nijushi :br-w-sanren :br-w-nijushi :br-misuji
                                                             :br-trompete :br-oe-sabaki :br-oe-trompete :br-k-snap :br-to-en
                                                             :br-backstep :br-recall :br-rc0 :br-rc1 :br-rc2 :br-rc3 :br-k-dash)))
                            *brush-callouts*)
                 '((:br-k-shot "万物貫通" "THE X-AXIS" nil) (:br-k-sanren "三連" "SANREN" nil) (:br-k-hiren "飛廉脚" "HIRENKYAKU" nil)
-                  (:br-k-taisha "退射" "TAISHA" nil) (:br-sanren "三連" "SANREN" nil) (:br-hiren "飛廉脚" "HIRENKYAKU" nil)
+                  (:br-k-taisha "退射" "TAISHA" nil) (:br-k-taisha0 "退射" "TAISHA" nil) (:br-k-senko "穿甲弾" "SENKO-DAN" nil)
+                  (:br-k-hajin "破陣弾" "HAJIN-DAN" nil) (:br-sanren "三連" "SANREN" nil) (:br-hiren "飛廉脚" "HIRENKYAKU" nil)
                   (:br-e-sanren "三連" "SANREN" nil) (:br-e-nijushi "二十四孔" "NIJUSHI-KO" nil)
                   (:br-w-sanren "三連" "SANREN" nil) (:br-w-nijushi "二十四孔" "NIJUSHI-KO" nil)
                   (:br-misuji "裁きの光明" "SABAKI NO KOMYO" nil) (:br-trompete "神の喇叭" "TROMPETE" nil)
@@ -726,6 +819,7 @@ back into the stance (decision V6).")
   (stance 0 :type fixnum)                 ; frames of the current MUJITTAI
   (sealed nil)                            ; the owl's Trompete was reflected: SP2 sealed for the match
   (dashed nil)                            ; the stance's Step used (once per stance; decision V6)
+  (snap-j nil)                            ; a J pressed during the snap shot: its J1 link on the hit (decision V9c)
   (dash-end 99 :type fixnum)              ; TENSHIN in: the move frame its dash ends (the link frame)
   (latch nil)                             ; ... the J1 / K1 it links into (:q, a K pressed during it :f)
   (switch-to nil)                         ; ... the melee form it turns into (6 f into the dash, or at its end)
@@ -852,7 +946,7 @@ a materialised trace's flash step back (BR-REFUND: 0 since decision V6); the pac
 
 (defun br-kamae-go (e f st mv cmd)
   "Start the stance's follow-up CMD from stance move MV: L / SP1 / SP2 armed to fill a pip (SP1 / SP2 under their command's
-bars, TRY-COMMAND's WITH); J / K a pip's conversion (the snap shot / TAISHA), at 0 the plain J1 / K1; Step 飛廉脚 once per
+bars, TRY-COMMAND's WITH); J the snap shot for a pip (at 0 the plain J1), K the shot of every pip's tier (decision V9); Step 飛廉脚 once per
 stance for its flash step (BR-KAMAE-STEP-OK-P; refused: the press is ignored). T when it started."
   (let* ((kit (fighter-kit f)) (snipe (brs-snipe st)) (name (br-kamae-pick cmd snipe)))
     (case cmd
@@ -863,19 +957,19 @@ stance for its flash step (BR-KAMAE-STEP-OK-P; refused: the press is ignored). T
       ((:kamae-sp1 :kamae-sp2)
        (when (try-command e f (if (eq cmd :kamae-sp1) :sp1 :sp2) nil nil (kit-next kit (mv-name mv) cmd))
          (setf (brs-armed st) t) (pace e (if (eq cmd :kamae-sp1) :k-sanren :k-hiren)) t))
-      ((:kamae-j :kamae-k)
-       (multiple-value-bind (left ok) (br-snipe-spend snipe)
-         (if ok
-             (progn (setf (brs-snipe st) left) (start-move e (kit-next kit (mv-name mv) cmd))
-                    (pace e (if (eq cmd :kamae-j) :snap :taisha)))
-             (progn (start-move e (kit-move kit name)) (pace e :kamae-drop)))
+      ((:kamae-j :kamae-k)   ; (decision V9: J the snap shot for a pip, else J1; K the shot of every pip's tier)
+       (let ((mv2 (kit-move kit name)))
+         (setf (brs-snipe st) (br-kamae-left cmd snipe))
+         (start-move e mv2)
+         (pace e (case name (:br-j1 :kamae-drop) (:br-k-snap :snap) (:br-k-taisha0 :k-tier0) (:br-k-taisha :k-tier1)
+                   (:br-k-senko :k-tier2) (t :k-tier3)))
          t)))))
 
 (defun br-kamae-tick (e)
   "One step of the stance: it turns at *BR-AIM-TRACK*; from f6 the first L / SP1 / SP2 / J / K fires its follow-up (his
 CPU's: BR-AI-KAMAE's plan); past the hold (30 f, 90 while L is held) the stance recovers (R 14)."
   (let* ((f (fighter e)) (mv (fighter-move f)))
-    (when (and (eq (fighter-state f) :move) mv (member (mv-name mv) '(:br-kamae :br-kamae-k :br-kamae-re)))
+    (when (and (eq (fighter-state f) :move) mv (member (mv-name mv) '(:br-kamae :br-kamae-k :br-kamae-j :br-kamae-re)))
       (let* ((st (br e)) (sf (fighter-sf f)) (vp (pilot-vpad (pilot e))) (b (br-tick-brain e)))
         (turn-to-opp e f (track-step *br-aim-track*))
         (when (>= sf *br-kamae-up*)
@@ -908,6 +1002,53 @@ iframes f0-7 (*BR-KAMAE-DASH-IFRAMES*), the flash step's vanish."
   (start-move e (kit-next (kit-of e) :br-k-dash :kamae-back))
   (turn-to-opp e (fighter e) 10.0))
 
+(defun br-k-dash-tick (e)
+  "The stance Step (decision V9c): from its *BR-DASH-SNAP-F* a J fires the stance's J (the snap shot; J1 at 0 pips) at once,
+the aim snapped onto him (a human's press, buffered; his CPU's one roll at that frame, :kamae :dash-snap x the difficulty,
+with a pip)."
+  (let* ((f (fighter e)) (mv (fighter-move f)))
+    (when (and (eq (fighter-state f) :move) mv (eq (fighter-phase f) :main) (br-dash-snap-p (fighter-sf f)))
+      (let* ((st (br e)) (b (br-tick-brain e)) (vp (pilot-vpad (pilot e)))
+             (go (if b
+                     (and (= (fighter-sf f) *br-dash-snap-f*) (>= (brs-snipe st) 1)
+                          (< (sim-rnd01) (br-ai-chance (getf (ai-table e :kamae) :dash-snap 0.0) (brain-difficulty b))))
+                     (vpad-command-pressed-p vp :quick nil))))
+        (when go
+          (unless b (vpad-consume! vp :quick))
+          (turn-to-opp e f 10.0)
+          (br-kamae-go e f st mv :kamae-j)
+          (pace e :dash-snap))))))
+
+(defun br-snap-enter (e) "The snap shot's f0: no J latched yet (decision V9c)." (setf (brs-snap-j (br e)) nil))
+
+(defun br-snap-tick (e)
+  "The snap shot (decision V9c): a J pressed during it is latched (a human's, consumed); from *BR-SNAP-LINK* on its hit the
+latch links into J1 (no chase); else from *BR-SNAP-STEP-F* a Step cancels its recovery into the stance Step (BR-SNAP-STEP-P:
+once per stance), which returns to the stance. His CPU: J1 on the hit inside J1's reach + 0.2 m (:kamae :snap-j1), the Step
+off a whiff or a block inside :snap-step-in m (:snap-step), one roll each at that frame, x the difficulty."
+  (let* ((f (fighter e)) (mv (fighter-move f)))
+    (when (and (eq (fighter-state f) :move) mv (eq (fighter-phase f) :main) (zerop (fighter-lock f)))
+      (let* ((st (br e)) (b (br-tick-brain e)) (vp (pilot-vpad (pilot e))) (sf (fighter-sf f)) (k (ai-table e :kamae))
+             (kit (fighter-kit f)) (q (kit-command-move kit :q)))
+        (when (and (null b) (vpad-command-pressed-p vp :quick nil))
+          (vpad-consume! vp :quick) (setf (brs-snap-j st) t))
+        (when (and b (= sf *br-snap-link*) (eq (fighter-contact f) :hit) q (<= (fighter-dist f) (+ (mv-reach q) 0.2))
+                   (< (sim-rnd01) (br-ai-chance (getf k :snap-j1 0.0) (brain-difficulty b))))
+          (setf (brs-snap-j st) t))
+        (cond ((and (brs-snap-j st) (br-snap-link-p sf (fighter-contact f)))
+               (setf (brs-snap-j st) nil)
+               (when (try-command e f :q) (pace e :snap-j1)))
+              ((br-snap-step-p sf (brs-dashed st) (gauges-fs (gauges e)))
+               (when (if b
+                         (and (= sf *br-snap-step-f*) (not (eq (fighter-contact f) :hit))
+                              (< (fighter-dist f) (getf k :snap-step-in 4.0))
+                              (< (sim-rnd01) (br-ai-chance (getf k :snap-step 0.0) (brain-difficulty b)))
+                              (progn (setf (brs-dash-dir st) 0f0) t))
+                         (and (vpad-command-pressed-p vp :step nil) (progn (vpad-consume! vp :step) t)))
+                 (spend-fs (gauges e) *br-kamae-dash-fs*) (setf (brs-dashed st) t)
+                 (start-move e (kit-next kit :br-k-snap :kamae-step))
+                 (pace e :snap-step))))))))
+
 (defun br-ai-kamae (e f st b)
   "His CPU's follow-up in the stance (BR-KAMAE-TICK, from f6): the plan picked once, on the first step it is up (one roll,
 BR-AI-KAMAE-PLAN), then carried out. First the Step 飛廉脚 (batch 6, once a stance, BR-AI-KAMAE-STEP): a :kamae-step plan
@@ -916,10 +1057,11 @@ clears itself, so the fresh window after the Step picks again (with the Step spe
     (let* ((o (opp-of e)) (fo (fighter o)) (step (br-ai-kamae-step e f st b)))
       (setf (brs-k-plan st)
             (or step
-                (and (br-ai-take-hard-plan e b)   ; (the HARD layer's stance: the snap with a pip, else the shot)
-                     (if (>= (brs-snipe st) 1) :kamae-j :kamae-l))
+                (br-ai-hard-kamae (br-ai-take-hard-plan e b) (brs-snipe st))   ; (the HARD layer's stance)
                 (br-ai-kamae-plan (sim-rnd01) (fighter-dist f) (and (member (fighter-state fo) '(:stun :air)) t) (brs-snipe st)
-                                  (>= (gauges-reiatsu (gauges e)) (* (kit-command-cost (fighter-kit f) :sp1) *reiatsu-bar*)))))
+                                  (>= (gauges-reiatsu (gauges e)) (* (kit-command-cost (fighter-kit f) :sp1) *reiatsu-bar*))
+                                  (ai-table e :kamae) (brain-difficulty b)
+                                  (eq (mv-name (fighter-move f)) :br-kamae-j))))
       (unless step (setf (brs-k-plan st) (br-learn-kamae e b (brs-k-plan st))))   ; (a learner's read of the shot, §13)
       (pace e (intern (format nil "AI-~a" (brs-k-plan st)) :keyword))
       (why b :kamae (brs-k-plan st))))
@@ -1296,7 +1438,8 @@ sealed in the owl's modes for the match. The reflector takes nothing."
 ;;; a hazard's spawn), his action (the react roll), a point set or a line crossing (the fire roll), a ranged stay (its goal,
 ;;; its steering), a TENSHIN in (the route), a link's land frame (the enders), a stance (its plan and its Step at f6).
 ;;;   base      the stance at range (:zone: L, then its plan: the 萬物貫通 shot), the stance in close with a 狙擊 pip (:pip:
-;;;             its plan TAISHA / the snap shot); strings up close (the generic bands); L after a K link (:l-after-k, the
+;;;             its plan the K / the snap shot; decision V9: the K at 3 pips first (:kamae :full), at 0 the K's back-slide
+;;;             as an escape inside :escape-in m (:kamae :escape)); strings up close (the generic bands); L after a K link (:l-after-k, the
 ;;;             stance at f4, its plan the shot on the reeling opponent); the stance's Step once a stance (:kamae-step: his
 ;;;             attack coming, aside off a lane else back; him closing in with no pip, back; then the plan again)
 ;;;   ranged    a stay picks its goal (:lay :goal 2-4 points from :near m, the bank :bank-goal 6 under :bank-p, else 1) and
@@ -1903,12 +2046,12 @@ with Lille, decision V7: one swinging off him is not his answer) (new 2026-10-10
   (case hs ((:guard :guard-hit) :guard) (:hoho :hoho) (:step :step)))
 (defun br-learn-kamae-plan (read snipe sp-ok plan)
   "The stance's follow-up instead of PLAN (the shot) for his predicted answer READ to it (SNIPE pips, SP-OK the bars): a
-guard the stance's SP1; a Step / backing off the snap shot (a pip) else SP1; a Hoho / an attack TAISHA (a pip) else the
-stance's SP2; else PLAN."
+guard the stance's SP1; a Step / backing off the snap shot (a pip) else SP1; a Hoho / an attack the K (its tier's
+back-slide shot, decision V9) with a pip, else the stance's SP2, else the K at 0 pips (TAISHA's slide, 40); else PLAN."
   (case read
     (:guard (if sp-ok :kamae-sp1 plan))
     ((:step :back) (cond ((>= snipe 1) :kamae-j) (sp-ok :kamae-sp1) (t plan)))
-    ((:hoho :attack) (cond ((>= snipe 1) :kamae-k) (sp-ok :kamae-sp2) (t plan)))
+    ((:hoho :attack) (cond ((>= snipe 1) :kamae-k) (sp-ok :kamae-sp2) (t :kamae-k)))   ; (0 pips: TAISHA's slide, V9)
     (t plan)))
 (defun br-learn-trace-plan (read)
   "The :trace read's answer: a guard :FIRE (K now), a Step :FAN (SP1 at him), a Hoho :HOLD (the fire waits), an attack
@@ -2072,7 +2215,7 @@ answered (BR-LEARN-KAMAE-PLAN); anything else, or no learner, as planned."
     (cond ((null mv) (setf (bras-mv a) nil (bras-j a) nil (bras-done a) nil))
           ((or (not (eq mv (bras-mv a))) (< (fighter-sf f) (bras-sf a)))
            (setf (bras-mv a) mv (bras-j a) nil (bras-done a) nil)
-           (unless (member (mv-name mv) '(:br-kamae :br-kamae-k :br-kamae-re)) (setf (bras-route a) nil (bras-plan a) nil))))
+           (unless (member (mv-name mv) '(:br-kamae :br-kamae-k :br-kamae-j :br-kamae-re)) (setf (bras-route a) nil (bras-plan a) nil))))
     (when mv
       (setf (bras-sf a) (fighter-sf f))
       (when (or (vpad-command-pressed-p vp :quick nil) (eq (fighter-queued f) :q)) (setf (bras-j a) t)))
@@ -2091,7 +2234,8 @@ answered (BR-LEARN-KAMAE-PLAN); anything else, or no learner, as planned."
         (t (unless (bras-plan a)
              (setf (bras-plan a) (br-ai-kamae-plan (sim-rnd01) (fighter-dist f) (member (state-of (opp-of e)) '(:stun :air))
                                                    (brs-snipe (br e))
-                                                   (>= (gauges-reiatsu (gauges e)) (* (kit-command-cost (fighter-kit f) :sp1) *reiatsu-bar*)))))
+                                                   (>= (gauges-reiatsu (gauges e)) (* (kit-command-cost (fighter-kit f) :sp1) *reiatsu-bar*))
+                                                   (ai-table e :kamae) (if (bras-b a) (brain-difficulty (bras-b a)) :normal))))
            (br-as-press e a :as-stance-plan
                         (case (bras-plan a) (:kamae-j :q) (:kamae-k :f) (:kamae-sp1 :sp1) (:kamae-sp2 :sp2) (t :sig))))))
 
@@ -2152,7 +2296,7 @@ vpad VP: a command, :NONE (the route holds the step) or NIL (the generic AUTO CO
   (declare (ignore d))
   (let* ((a (br-as-track f b vp)) (mv (bras-mv a)) (form (fighter-form f))
          (free (and (member (fighter-state f) '(:idle :guard :run)) (zerop (fighter-lock f)))))
-    (cond ((and mv (member (mv-name mv) '(:br-kamae :br-kamae-k :br-kamae-re)) (bras-route a)) (br-as-kamae e f vp a))
+    (cond ((and mv (member (mv-name mv) '(:br-kamae :br-kamae-k :br-kamae-j :br-kamae-re)) (bras-route a)) (br-as-kamae e f vp a))
           ((and mv (eq (mv-name mv) :br-backstep)) (br-as-backstep e f vp a))
           ((and mv (eq form :base) (member (mv-kind mv) '(:quick :flash))) (br-as-base e f vp a mv))
           ((and mv (br-melee-form-p form) (member (mv-kind mv) '(:quick :flash))) (br-as-melee e f vp a mv))
@@ -2189,7 +2333,9 @@ vpad VP: a command, :NONE (the route holds the step) or NIL (the generic AUTO CO
 8 m out; 10 JILLIEL melee with 3 Konpaku (P revives); 11 / 12 forced melee / ranged MUJITTAI 5 m out; 13 forced ranged
 6 m out with 3 aim points set around him (facing P2 -30 / 0 / +30 deg: the middle line through P2; L then J: the lay's 2 f
 cancel, TENSHIN in -> J1 -> a trace hits; J alone: J1 in place, decision V6a); 14 the base form 6 m out, the shooting stance started (Step: 飛廉脚); 15 forced melee 1.4 m out (J J J
-L: the backstep); 16 as 13 with the owl; 20 both CPUs (the mirror) 12 m apart; 30 a \"duel probe barro-trace\" line per
+L: the backstep); 16 as 13 with the owl; 20 both CPUs (the mirror) 12 m apart; 24 / 25 / 26 the base form 4 m out with
+0 / 1 / 2 狙擊 pips (decision V9: L then K, the K's tiers; 6 has 3); 27 / 28 the same with 3 / 2 pips, P2 holding guard
+(破陣弾's guard break / 穿甲弾's block); 29 the base form 1.3 m out with 1 pip (V9c: J, L, J the snap, J: J1); 30 a \"duel probe barro-trace\" line per
 live trace of P1's (its point, direction, distance to P2); any other k (31) the probe line only (batch 5, DUEL_LILLE_V2 §15)."
   (flet ((setup (c2 form dist &key cpu)
            (ensure-battle :barro c2 :cpu cpu)
@@ -2218,6 +2364,10 @@ live trace of P1's (its point, direction, distance to P2); any other k (31) the 
       (14 (setup :kenpachi :base 6.0) (force-cmd *p1* :sig))
       (15 (setup :kenpachi :jilliel-kin 1.4))
       (20 (setup :barro :base 12.0 :cpu t))
+      ((24 25 26) (setup :kenpachi :base 4.0) (setf (brs-snipe (br *p1*)) (- k 24)))   ; (decision V9: the K's tiers 0-2)
+      ((27 28) (setup :kenpachi :base 4.0) (setf (brs-snipe (br *p1*)) (if (= k 27) 3 2))   ; (... into P2's held guard)
+       (when (brain *p2*) (ai-press (brain *p2*) :guard 600 :act :hold)))
+      (29 (setup :kenpachi :base 1.3) (setf (brs-snipe (br *p1*)) 1))   ; (decision V9c: J -> L -> J the snap -> J1)
       (30 (br-trace-probe)))
     (barro-probe-line (format nil "test ~d" k))))
 
