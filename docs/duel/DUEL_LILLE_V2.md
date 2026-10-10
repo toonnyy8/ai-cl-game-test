@@ -107,6 +107,16 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
 
+### Decision V8a (2026-10-10): both awakened dashes cost one trace
+
+The user: 「另外幫我設定覺醒後的 L>J / J > L 前後衝刺都需要消耗一條軌跡才能發動」; choices 「最遠那條，不射出」, 「不衝刺、後撤不再扣閃步」.
+
+- TENSHIN in (L → J) and the J3 → L backstep each spend one live trace at their start: the one **farthest from the
+  opponent** [G: "farthest" read as from him], removed **without firing**. TENSHIN in's f0 shot (V6c) then fires the
+  nearest within 2.5 m of what is left.
+- No live trace: no dash. L → J is J1 in place (V6a); J3 → L is the plain mode turn in place.
+- The backstep's 10 flash step is gone (the trace is its price).
+
 ### Decision V8 (2026-10-10): two routes, one pool (integrated over V6–V9e)
 
 The user's style request (2026-10-10): 「我想將設計轉成具有兩種不同特性的戰鬥風格 — 高速循環：特徵是高速、低攻、破綻小，能取用部分累積的資源進行小
