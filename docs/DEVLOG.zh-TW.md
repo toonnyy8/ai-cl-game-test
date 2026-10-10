@@ -2403,3 +2403,4 @@ J／K 縮短、受擊值、分身消耗三批合併後，照新的測試規則�
 - 畫面比對閘門（`tests/style-gates.py looks`）改成 7 人：抽籤種子改為 1 YS／56 RI／32 KL／39 BK（roster 長度變了，舊種子抽到的組合也變了）、選角畫面 7 張、加入 LILLE II 覺醒過場；共 112 張（原 108），雜訊 0、0 FAIL。
 - 合併進 `main`，部署 playtest 給使用者試玩（覺醒 A/B 等試玩後決定）。
 - 細節：DUEL_LILLE_V2 §14。
+- 補記：使用者問的 playtest 是私人 Artifact（https://claude.ai/artifact/JFuuxi3T1FQf6mA2n58YcV ），不是 GitHub Pages。已用 `main` 8f93bcf 的 `dist/duel`（index.js／index.wasm／pwa.js）更新為第 39 版；GitHub Pages 沒有更動。
