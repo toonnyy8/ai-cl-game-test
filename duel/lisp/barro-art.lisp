@@ -190,12 +190,12 @@
 ;;; ---------------------------------------------------------------- the draw hook
 (defun-fast %br-aim-look (e f side)
   "The stance's aim line (Lille's %LB-AIM-LOOK on his moves): a thin line on the floor from under the muzzle to the wall,
-grey while the stance (:br-kamae / :br-kamae-k) tracks, jade once the shot :br-k-shot locks until it fires; the reticle at
+grey while the stance (:br-kamae / :br-kamae-k / :br-kamae-re) tracks, jade once the shot :br-k-shot locks until it fires; the reticle at
 the opponent's distance, turning while it tracks, closing once locked."
   (declare (fixnum side))
   (setf side 0)                                         ; (unused: the slot memory is Lille's HUD tag's, not his)
   (let* ((mv (fighter-move f)) (nm (and mv (eq (fighter-state f) :move) (mv-name mv)))
-         (stance (or (eq nm :br-kamae) (eq nm :br-kamae-k)))
+         (stance (or (eq nm :br-kamae) (eq nm :br-kamae-k) (eq nm :br-kamae-re)))
          (locked (and (eq nm :br-k-shot) (eq (fighter-phase f) :main) (< (fighter-sf f) (mv-s mv)))))
     (when (or stance locked)
       (%lb-load-place! e)
@@ -378,20 +378,22 @@ recalling) and each string beat's lines from the wing tips (%BR-BEAT-LOOK)."
 
 ;;; ---------------------------------------------------------------- his traces (cosmetic, 0 B a frame)
 (defun-fast br-trace-look (hz rdt)
-  "A live trace's look (HAZARD-DRAW): a faint jade line (the owl's gold) on the floor from 0.6 m ahead of where it was laid
-to the wall, its width pulsing (SP2's thick one wider); nothing once materialised (LB-LOOK's flash takes over). Each one
-drawn is noted in *BR-SEEN* (its place, yaw, thickness) for the recall's look (BR-DRAW)."
+  "A live trace's look (HAZARD-DRAW; decision V7, batch 5's functional look): its aim point a small jade reticle on the floor
+(turning), its line a faint jade line (the owl's gold) from the point through him to the wall along the hazard's yaw, which
+the sim turns every step (BR-TRACES-AIM), its width pulsing (SP2's thick one wider); nothing once materialised (LB-LOOK's
+flash takes over). Each one drawn is noted in *BR-SEEN* (its place, yaw, thickness) for the recall's look (BR-DRAW). 0 B."
   (declare (single-float rdt))
   (setf rdt 0f0)                                        ; (unused: HAZARD-DRAW's signature)
   (let ((d (hazard-data hz)))
     (when (and (brh-p d) (brh-live d))
       (let* ((x (hazard-x hz)) (z (hazard-z hz)) (yaw (hazard-yaw hz)) (ux (- (f-sin yaw))) (uz (- (f-cos yaw)))
-             (x0 (+ x (* 0.6f0 ux))) (z0 (+ z (* 0.6f0 uz)))
-             (pulse (+ 0.8f0 (* 0.2f0 (f-sin (+ (* 5f0 (fx-clock)) (* 0.7f0 (i->f (mod (brh-id d) 9))))))))
+             (x0 x) (z0 z) (tm (fx-clock))
+             (pulse (+ 0.8f0 (* 0.2f0 (f-sin (+ (* 5f0 tm) (* 0.7f0 (i->f (mod (brh-id d) 9))))))))
              (w (* pulse (if (eq (brh-src d) :sp2) 0.14f0 0.04f0))))
-        (declare (single-float x z yaw ux uz x0 z0 pulse w))
+        (declare (single-float x z yaw ux uz x0 z0 tm pulse w))
         (%lb-floor-line (if (> (lb-fxs (if (eql (hazard-owner hz) *p1*) 0 1) 15) 0.5f0) 3 1)   ; (the owl's: gold; LILLE-DRAW's
                         x0 z0 ux uz (%lb-wall x0 z0 ux uz) w)                                   ;  flag, no lookup)
+        (%lb-reticle t x z (if (eq (brh-src d) :sp2) 0.4f0 0.22f0) (+ (* 1.4f0 tm) (* 0.9f0 (i->f (mod (brh-id d) 7)))))
         (let* ((s *br-seen*) (o (if (eql (hazard-owner hz) *p1*) 0 65)) (n (f->i (aref s o))))   ; noted for the recall's
           (declare (type f32vec s) (fixnum o n))                                                  ;  look (BR-DRAW)
           (when (< n 16)

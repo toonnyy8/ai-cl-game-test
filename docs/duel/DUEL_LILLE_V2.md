@@ -1,6 +1,6 @@
 # SOUL DUEL: Lille Barro II (利傑巴羅・重製), the rebuilt kit
 
-Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7, §15) in build 2026-10-10.** The old Lille (`DUEL_LILLE.md`, roster index 5) stays as he
+Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5, §15; its CPU pass next).** The old Lille (`DUEL_LILLE.md`, roster index 5) stays as he
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -123,7 +123,8 @@ Everything below that the user did not decide is marked **[G]** (our reading, a 
 - Debug range **82000–82999** (claimed here; DUEL_GAMEPLAY "Debug commands"). Gate command for his pairings: 2156–2162
   (k 21–27), character gate 2142.
 - Dropped from the old kit: the eye (the base form's U is a plain guard), TENSHIN's dash switch, the crossing
-  slow motion, Hoho → KIN, the stance's charge bonus and its HIRENKYAKU step, HOSHA. Kept: the owl's revival (decision V1) and MUJITTAI on U in every awakened form (decision V2).
+  slow motion, Hoho → KIN, the stance's charge bonus and its HIRENKYAKU step, HOSHA. (Batch 5, decision V6, brought back
+  the stance's HIRENKYAKU step and TENSHIN in as ranged J: §15.) Kept: the owl's revival (decision V1) and MUJITTAI on U in every awakened form (decision V2).
 
 ## 3. 萬物貫通 THE X-AXIS (one rule, every move that carries it)
 
@@ -163,6 +164,9 @@ conversion. Not filled by the converted shots themselves [G]. Kept through the a
 match. HUD: three pips labelled "SN" in the kit meter slot.
 
 ## 5. 覺醒 (Jilliel, two modes)
+
+(Batch 1's build. Decisions V6–V7 changed ranged J (TENSHIN in), the lays (aim points), materialising (one trace, J
+always, K on a touch, along the line), the refunds (0) and the backstep: §15 is the current rule where they differ.)
 
 Two forms of one awakening: **近戰 melee** `:barro :jilliel-kin` (KIN's wing blades and forked legs) and **遠程 ranged**
 `:barro :jilliel` (EN, afloat). The awakening enters **melee** [G] (the rule names L as the way into ranged).
@@ -617,3 +621,130 @@ materialised the six traces) and 82002 + J + L (the router): exit 0, no error (J
   (his awakening, 82300 + k at frames 30 / 90 / 150). Run on the merged build against a copy of itself: 112 stills
   (before 108), noise floor 0, 132 PASS, 0 FAIL; every cvc scene's "duel match" line names the pinned pair.
 
+## 15. Batch 5: the pendulum and aim points (2026-10-10, branch `barro-v7`)
+
+Decisions V6 and V7 (§1) built. Everything is in `duel/lisp/barro.lisp` (sim, CPU, debug) and `duel/lisp/barro-art.lisp`
+(the look); no other character's code or knob moved (the old 21 pairings' rows are byte-identical, §15.6).
+
+### 15.1 What was built
+
+- **The base stance's Step 飛廉脚** (V6): `:br-k-dash` (Lille's `:lb-k-dash` clip), the stance's non-button string
+  `:kamae-step` from `:br-kamae` / `:br-kamae-k` / `:br-kamae-re`. 10 flash step, 3.5 m in the stick direction (neutral:
+  away from him; his CPU's: straight back) over 12 f, iframes f0–7, f11 back in the stance at its f6 (`:br-kamae-re`, a
+  copy entered at f6 with no f0 hook: a fresh 30 / 90 f window, the aim snapped onto him). Once per stance
+  (`brs-dashed`, cleared by `br-kamae-enter`); refused when used or short: the press is eaten and nothing happens. The
+  stance carries `:step-branch` (the one-hand up-flick stays a Step there, as in Lille's / Ichigo's stances). No charge.
+- **Aim points** (V7): ranged L / SP1 / SP2 (`br-lay`) set a point `*br-aim-back*` 0.5 m behind him along his facing
+  (`br-aim-point`; the hazard's x / z is the point). L one (3 flash step), SP1 one at each of its shot frames (9), SP2 one
+  thick (radius 1.2, 9); refused when short; 16 at most, the oldest dropped. Every step (`barro-tick` →
+  `br-traces-aim`) each live trace's line is recomputed: the unit vector from its point through his current position
+  (`br-line-dir`, single floats), kept within `*br-aim-freeze*` 0.3 m of the point; stored in `brh-ux` / `-uz` (the hit's
+  axis) and the hazard's yaw (the look's, the CPUs'). The line is 31 m from the point (`br-trace-vol`: a `:cap` 0 → 31,
+  radius 0.6 / 1.2).
+- **Materialising** (V6, V7): `br-materialise-one`: the lines turned through him now, then the one live trace whose line
+  (point-to-segment on the ground, `br-seg-dist`) passes nearest the opponent within `*br-near-r*` 2.5 m (`br-pick`; a tie:
+  the larger id, the newer) becomes a 2-frame 萬物貫通 hit along its line as it is (no snap), 30 a line / 90 the thick one
+  × the form's damage, as before. If he is not on that line the shot misses and the trace is spent. Every melee J
+  (JILLIEL's and the owl's J1 / J2 / J3 and the J2s copies) calls it at its first active frame (`br-j-mat` on-frame at S),
+  hit or whiff; a melee K (`:params (:mat-k t)`) only from `barro-hit` on a touch (hit or block: `br-k-mat-p`), never on a
+  whiff; a K's one window touches once, so once a K. Refunds 0 (`*br-refund*` / `-block*`, the owl's: 0.0).
+- **Ranged J = TENSHIN in** (V6): `:br-tenshin` (clip `:lb-w-tenshin-in`) and the owl's `:br-o-tenshin`
+  (`:lb-o-tenshin-in`), the old `:lb-switch-in` copied: 16 f wind-up, then (`br-tenshin-go`) the dash at him at 30 m/s, at
+  most 7 m, stopping 1 m short (`br-tenshin-dist`, `br-tenshin-dash-f`), iframes 9, free; melee 6 f into the dash or at its
+  end (`br-tenshin-form`); from the dash's end (`br-tenshin-tick`, the old switch + link ticks) the latch starts the melee
+  J1 (J1 by default; a K pressed during the dash makes it K1, the last press wins), else the rest of the startup is
+  skipped and R 8 follows. J1's own first active frame then materialises one trace. The 2 f cancel: `:br-tenshin-c` /
+  `:br-o-tenshin-c` (entered at f14) out of any ranged L / SP1 / SP2 from its active end (`br-lay-tick`; the old EN
+  cancel window). Ranged K: unchanged (melee in place + K1). The ranged MUJITTAI's J drops to ranged, then TENSHIN.
+- **J3 → L backstep** (V6): 5 m / 14 f, iframes 9 (`*br-backstep-iframes*` 7 → 9), 10 flash step (`*br-backstep-fs*`,
+  paid at f0), ranged at f0 (`br-backstep-go`); from f14 (`br-backstep-tick`, `br-backstep-lay-ok-p`) a human's L / SP1 /
+  SP2 press cancels its 8 f recovery into the lay; before, nothing starts. Short of 10: BARRO-OK refuses the L router's
+  backstep, so L after J3 does nothing (no mode turn). J1 / J2 → L: the mode turn, unchanged.
+- **The look** (functional; the art batch polishes): BR-TRACE-LOOK draws each live trace's point as a small jade reticle
+  on the floor (Lille's `%lb-reticle`, turning; SP2's bigger) and its line from the point through him to the wall along
+  the hazard's yaw (the owl's gold), every frame. Measured with 82398 (82013's three points; 82005's six): the looks 0 B
+  over 10 draws (the first probe of a page reads a one-off heap step in every column, Lille's draw too). Not done: the
+  owl's backstep clip (`:br-o-backstep`) still steps its lift on f13, while the owl now turns ranged at f0.
+
+### 15.2 Readings of the spec
+
+- **SP1's frames:** the spec quotes f12 / f22 / f32 "as its moves define"; the ranged SP1 moves (`:br-e-sanren`,
+  `:br-oe-sabaki`) lay at **f6 / f12 / f18** (their clips are timed to that), so the points go there; he turns at the
+  opponent on each. The fan offsets (−6 / 0 / +6°, `*br-sp1-fan*`) are kept on the points' facing [G], so the three lines
+  part by 6° about him even when nobody moves.
+- **The stance Step's iframes:** V6's table says f0–7 → `*br-kamae-dash-iframes*` 8 (the old Lille's 9 was f0–8).
+- **The backstep short of flash step:** the old Lille's rule for TENSHIN out short of its price (LILLE-OK refuses it):
+  refused, L after J3 does nothing.
+- **"A lay only after the dash's 14 f":** a lay pressed from f14 cancels the backstep's 8 f recovery (「衝刺結束才能接」);
+  before f14 the backstep runs on.
+- **The cancel window** ("mid-move"): the old Lille's, from the lay's active end (after its points are set), not earlier.
+- **TENSHIN's link:** J1 by default (the J press that started it); a K during the dash: K1 (the old latch).
+- **The CPUs' "on a line":** what a CPU reads as standing on a trace is its line within the trace's radius + `*br-ai-on*`
+  0.5 m ([G]; the 2.5 m pick would read every line at melee range, as they all run through him): his going in, the
+  opponents' Step off it (BR-OPP-TRACE), the learner's `:trace`.
+
+### 15.3 Knobs (old → new, 2026-10-10)
+
+| Knob | Value |
+|---|---|
+| `*br-near-r*` | 2.5 (the user, V6); `*br-near-deg*` 10 removed |
+| `*br-aim-back*` / `*br-aim-freeze*` | 0.5 (the user, V7) / 0.3 [G] |
+| `*br-refund*` / `-block*` / `*br-owl-refund*` / `-block*` | 4 / 2 / 5 / 2 → 0.0 (the user, V6) |
+| `*br-backstep-iframes*` / `*br-backstep-fs*` | 7 → 9 / new 10.0 (the user, V6) |
+| `*br-tenshin-in*` / `-stop*` / `-speed*` / `-f*` | 7.0 / 1.0 / 30.0 / 14 (the old Lille's, copied) |
+| `*br-tenshin-windup*` / `-windup-c*` / `-iframes*` / `-form*` | 16 / 2 / 9 / 6 (copied); `*br-tenshin-s*` 30 and `-enter*` 14 derived |
+| `*br-kamae-dash*` / `-f*` / `-back*` / `-iframes*` / `-fs*` | 3.5 / 12 / 11 / 8 / 10.0 (copied; 8 from V6's f0–7) |
+| `*br-trace-len*` | 31.0, now from the aim point |
+| `*br-ai-on*` | 0.5 [G] |
+| CPU keys | ranged `:fire (:p 0.8 :n 1 :in 8.0 :close 3.0)`, `:lay (… :reserve 10.0 … :cap 2)`; melee `:backstep (:p 0.6 :fs 13.0 :n 3)`; melee `:fire` removed |
+
+### 15.4 The CPU (only what the new rules need; the full pass is the next batch)
+
+- Ranged: lay a point at him from 4 m (`br-ai-lay`, at most 2 on his line, keeping 10 flash step); go in with J (TENSHIN)
+  when he stands on a line within 8 m (one roll per point set, `:fire :p`), inside 3 m, or starved (no lay above the
+  reserve) (`br-ai-in-plan`, `br-ai-in-p`); the same rule cancels a lay into TENSHIN in at its active end (`br-ai-cancel-p`,
+  the 2 f wind-up; `br-ai-seen`, the old LB-AI-SEEN).
+- Melee: the generic J / K strings (every J materialises on its own); J3 → L the backstep with ≥ 13 flash step and < 3
+  traces; K3 → L the recall at ≥ 3 (unchanged). The melee K-at-traces rule is gone (a K whiff no longer fires).
+- ASSIST ranged: J while free → TENSHIN at a point on his line, else a lay from 4 m.
+- Logged per match (10 seeds, his 70 matches as P1): 6.4 TENSHIN (4.5 of them the lay's cancel), 7.7 materialised,
+  4.7 trace hits, 8.4 points set, 1.1 backsteps, 0 recalls (the J's spend the points before a K3 sees 3), no stance Step.
+- Left for the CPU batch: the stance Step (HIRENKYAKU) in his base CPU's plan; walking so the lines cross him (he lays and
+  dashes; he does not yet steer the lines); the recall (it never comes up now); K's touch-only materialise in his melee
+  choices; the learner's `:trace` situation and BR-OPP-TRACE on the new lines (read as "on a line", untuned); his HARD
+  layer; ASSIST's melee route (K K K → L assumes traces to recall); `aieval.py --char 6`, the ASSIST gate, the awaken A/B.
+
+### 15.5 Debug commands (DUEL_GAMEPLAY 82000 row)
+
+82013 forced ranged 6 m out with 3 points set around him (−30 / 0 / +30°: the middle line through P2), 82016 the same as
+the owl, 82014 the base form 6 m out with the stance started (Step), 82015 forced melee 1.4 m out (J J J → L), 82030 a
+`duel probe barro-trace` line per live point (id, point, direction, the line's distance to P2), 82031 the probe line only.
+
+### 15.6 Gates (2026-10-10, branch `barro-v7`)
+
+- Host: duel-rules-test 8099 checks ALL PASS (8440 before: the four ranged forms' J is now TENSHIN, a move with no hit
+  window, so the generic hit-based string checks skip them as they skip Lille's EN forms; the Breaker-vs-J1 check skips a
+  TENSHIN J; the angle-snap checks went; the batch's came in: the stance Step, the pick (2.4 in, 2.6 out, nearest, tie →
+  newer), J / K triggers, refunds 0, the aim point, the line and its freeze, the hit on / 2 m off the line, TENSHIN's
+  numbers and cancel, the backstep); duel-control 89, learn 131, input 33, touch 64, cine 18 pass.
+  `tools/pkgcheck.sh duel` 0 / 0 / 0. `./build.sh duel` 0 warnings. Smoke `run.mjs --secs 8`: exit 0.
+- Browser script (82013 J; 82016 J; 82015 J J J L, then L; 82014 Step, Step): exit 0, no error. 82013: TENSHIN, J1, the
+  middle point materialised and hit (P2 1300 → 1246: J1 24 + the line 30); the other two lines then ran 0.04 m from P2
+  (they turn through him). The owl: one point spent, P2 −65. The backstep: ranged, flash step 100 → 90, then L set a
+  point (87) whose line runs through P2. The Step: 100 → 90, the second Step in the same stance refused (90).
+- The old 21 pairings at 10 seeds: all 559 lines (210 rows, companion and summary lines) byte-identical to the merged
+  head's (dc3a9d0). `simgate.py --cvc`: PASS 3 / 3.
+- His seven pairings, 10 seeds (play time without the cinematics; before = dc3a9d0), every match K.O.:
+
+| Pairing | Median s (before) | With cinematics | K.O. | His wins (P1) / P2 (before) |
+|---|---|---|---|---|
+| BY | 118.2 (121.3) | 162.6 | 10 / 10 | 9 / 1 (7 / 3) |
+| BK | 115.9 (122.2) | 159.0 | 10 / 10 | 8 / 2 (6 / 4) |
+| BR | 130.1 (152.3) | 177.8 | 10 / 10 | 6 / 4 (2 / 8) |
+| BI | 142.5 (136.4) | 192.9 | 10 / 10 | 6 / 4 (2 / 8) |
+| BS | 132.9 (134.7) | 177.3 | 10 / 10 | 9 / 1 (4 / 6) |
+| BL | 139.3 (141.2) | 191.5 | 10 / 10 | 10 / 0 (9 / 1) |
+| BB | 131.1 (138.5) | 185.1 | 10 / 10 | 3 / 7 (5 / 5) |
+
+BY and BK stay under 125 s (accepted exceptions at 60 seeds since V5); he now wins most cross pairings. No damage knob was
+touched (reported, not tuned).
