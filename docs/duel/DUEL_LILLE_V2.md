@@ -1,6 +1,6 @@
 # SOUL DUEL: Lille Barro II (利傑巴羅・重製), the rebuilt kit
 
-Status: **design written 2026-10-09; build not started.** The old Lille (`DUEL_LILLE.md`, roster index 5) stays as he
+Status: **built 2026-10-09 (batches 1–4: §11–§13); awaiting the user's playtest (decision V5).** The old Lille (`DUEL_LILLE.md`, roster index 5) stays as he
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -59,6 +59,16 @@ The user: 「「附近」指對手在軌跡線的 10° 補正範圍以內。」
 - A trace is near (materialised by a J touch or a K) when the opponent is inside its 10° snap: the ground-plane angle
   between the trace's direction and the line from the trace's origin to him is ≤ 10°, and he is within its length.
   One knob `*br-near-deg*` 10.0 for both the selection and the turn. Replaces the 2.5 m distance of §5.3 ([G], dropped).
+
+### Decision V5 (2026-10-10): the gate results
+
+Asked with the gate numbers of §13.6 (60 seeds, play time without cinematics: BY 115.9 s, BK 112.9 s, both under 125 s;
+153.8 / 157.3 s with cinematics; awaken A/B: the never-awaken side BK 8 / 11 / 14 of 60, BI 21 / 17 / 23, pass ≥ 20; only
+the base form's damage ×1.3 → ×1.5 moved BK, to 24 / 19 / 16):
+
+- Pacing: 「接受為例外」 — BY 115.9 s and BK 112.9 s are accepted exceptions (AGENTS.md list).
+- Awaken A/B: 「先試玩再決定」 — no retune; `*br-mult*` stays ×1.3; the build goes to the playtest (GitHub Pages) and the
+  user decides after playing.
 
 Everything below that the user did not decide is marked **[G]** (our reading, a knob; changed on the next playtest).
 
