@@ -17,7 +17,7 @@ dists are built with ./build.sh (a BASE dist is a copy of dist/NAME built before
   python3 tests/style-gates.py looks BASE NEW [--jobs N] [--size WxH] [--only TEXT] [--once] [--keep-base]
                                                     the look identity gate (for refactors that must not change a
                                                     pixel): 109 fixed stills of SOUL DUEL under run.mjs --fixed-dt
-                                                    (menus, select of all six fighters, four CPU-vs-CPU matches at
+                                                    (menus, select of all seven fighters, four CPU-vs-CPU matches at
                                                     several times, Kikon / awakening / form-change cinematics, HUD
                                                     in every form, VFX, ENDLESS, the portrait touch layout, results)
                                                     from BASE twice (noise floor) and NEW once; per still the max abs
@@ -173,10 +173,11 @@ def smoke(dists):
 
 # ---------------------------------------------------------------- looks: the look identity gate (for refactors)
 LOOKS_START = 4.0          # virtual s of the first event: the title stands from ~2 s on (raven's G1 uses 4.0 too)
-# 2000+seed is a CPU-vs-CPU match whose two fighters are drawn from the seed (xorshift32 over the six-fighter roster
-# Y K R I S L): seed 1 = Yamamoto-Senjumaru, 5 Ichigo-Rukia, 0 Kenpachi-Lille, 18 Senjumaru-Ichigo
-# (every fighter in a match; the "duel match" log line is checked against this table)
-LOOKS_SEEDS = ((1, "YS"), (5, "IR"), (0, "KL"), (18, "SI"))
+# 2000+seed is a CPU-vs-CPU match whose two fighters are drawn from the seed (xorshift32 over the seven-fighter roster
+# Y K R I S L B): seed 1 = Yamamoto-Senjumaru, 56 Rukia-Ichigo, 32 Kenpachi-Lille, 39 Lille II-Kenpachi (every fighter in a
+# match; the "duel match" log line is checked against this table). Re-pinned 2026-10-10 when Lille II (B) joined the roster
+# (DUEL_LILLE_V2 §14); before: ((1 YS) (5 IR) (0 KL) (18 SI)) over six fighters
+LOOKS_SEEDS = ((1, "YS"), (56, "RI"), (32, "KL"), (39, "BK"))
 LOOKS_WINDOWS = ((2, (0.1,)), (8, (0.1, 0.4)), (16, (0.1,)), (30, (0.1,)))   # (turbo frames of 120 steps, the live shots after)
 # the cinematics at their key frames: (still name, debug command base, frames); 10000 + 1000 k + f is debug.lisp's, the
 # others a character's own range (75300 + k: Ichigo's awakening at frame 2k; 79100 + k: Lille's at frame 10k)
@@ -187,8 +188,9 @@ LOOKS_CINES = {
     "cine-ichigo": [("ichigo-awaken", 75300, (10, 30, 55))],
     "cine-senju": [("senju-awaken", 78000, (30, 90, 150))],
     "cine-lille": [("lille-awaken", 79100, (3, 9, 15))],
+    "cine-barro": [("barro-awaken", 82300, (3, 9, 15))],
 }
-LOOKS_FRAMES = {75300: 2, 79100: 10}      # cinematic frames per unit of the command's last digits
+LOOKS_FRAMES = {75300: 2, 79100: 10, 82300: 10}      # cinematic frames per unit of the command's last digits
 
 
 def looks_scenarios():
@@ -200,7 +202,7 @@ def looks_scenarios():
     def tap(s, t, x, y): s.extend([{"at": round(t, 3), "touch": "start", "x": x, "y": y}, {"at": round(t + 0.05, 3), "touch": "end", "x": x, "y": y}])
     def done(s): return max(e["at"] for e in s) + 0.3
 
-    # menus: title, MODE, SETTINGS, CONTROLS, then the select screen with each of the six fighters (P1's cycle)
+    # menus: title, MODE, SETTINGS, CONTROLS, then the select screen with each of the seven fighters (P1's cycle)
     s, t = [], LOOKS_START
     shot(s, t, "title"); key(s, t + 0.3, "Enter"); shot(s, t + 0.9, "mode")
     t += 1.2
@@ -209,7 +211,7 @@ def looks_scenarios():
     key(s, t + 2.1, "ArrowDown"); key(s, t + 2.4, "Enter"); shot(s, t + 3.0, "controls"); key(s, t + 3.2, "Escape")
     key(s, t + 3.6, "ArrowUp"); key(s, t + 3.8, "ArrowUp"); key(s, t + 4.0, "Enter")          # CPU VS CPU
     t += 4.5
-    for i in range(6):
+    for i in range(7):
         shot(s, t, f"select-{i}"); key(s, t + 0.1, "ArrowRight"); t += 0.6
     sc["menus"] = (s, done(s), ())
 
@@ -337,7 +339,7 @@ def looks(base, new, jobs=3, size="640x360", only=None, once=False, keep_base=Fa
         a1, a2, n = lines("base1"), lines("base2"), lines("new")
         if name.startswith("cvc-"):
             m = [l for l in a1 if l.startswith("duel match")]
-            pair = name[4:].upper(); want = [dict(Y="YAMAMOTO", K="KENPACHI", R="RUKIA", I="ICHIGO", S="SENJUMARU", L="LILLE")[c] for c in pair]
+            pair = name[4:].upper(); want = [dict(Y="YAMAMOTO", K="KENPACHI", R="RUKIA", I="ICHIGO", S="SENJUMARU", L="LILLE", B="BARRO")[c] for c in pair]
             check(f"looks {name} fighters", bool(m) and all(w in m[0] for w in want), (m[0] if m else "no match line") + f" (want {' vs '.join(want)})")
         check(f"looks {name} sim lines", a1 == a2 and a1 == n or a1 != a2, f"{len(a1)} lines" + ("" if a1 == n else " DIFFER from base") + ("" if a1 == a2 else " (base runs differ: not compared)"))
     print(f"looks: {len(stills)} stills in {len(sc)} scenarios, {total:.0f} s wall for 3 renders at {jobs} jobs "
