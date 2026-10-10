@@ -115,7 +115,8 @@ the K 「四段效果」; the gauge 「維持 3 格」.
 - **Stance → J** (≥ 1 狙擊 pip, costs 1): the old HOSHA (`:lb-k-j`): a 5 m forward leap over f0–14, three bullets at
   f6 / f10 / f14, 16 each, to 3.6 m, **each with 萬物貫通** (drain 40, 30 % through); any bullet's hit links into J1 / K1
   (the old HOSHA loop: → K → L back into the stance). With 0 pips the stance's J stays J1 (V1). Replaces the snap shot.
-  (Three blocked bullets drain 120 > 100: a fully blocked HOSHA breaks guard. Noted for the gate / playtest.)
+  (Decision V9a, the user 2026-10-10: 「HŌSHA 三發都擋下來就扣 40 防禦量表」: the three bullets drain **40 in all** when
+  all are blocked (13 / 13 / 14), not 40 each; the 30 % through stays.)
 - **Stance → K** spends **every** pip and fires by the count [G numbers]:
 
 | Pips | Shot | Effect |
