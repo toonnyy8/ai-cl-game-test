@@ -1,6 +1,7 @@
 # SOUL DUEL: Lille Barro II (利傑巴羅・重製), the rebuilt kit
 
-Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17); decision V6a (TENSHIN in only as a quick J after a lay) built 2026-10-10 (§18); decision V6c (the wider L → J window, TENSHIN in fires a line at its f0) built 2026-10-10 (§19); decisions V9 / V9b / V9c / V9d (the stance K by pips, the snap's links) built 2026-10-10 (§20).**
+Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17); decision V6a (TENSHIN in only as a quick J after a lay) built 2026-10-10 (§18); decision V6c (the wider L → J window, TENSHIN in fires a line at its f0) built 2026-10-10 (§19); decisions V9 / V9b / V9c / V9d (the stance K by pips, the snap's links) built 2026-10-10 (§20); decisions V8 / V8a (two
+routes, one pool; a dash spends a trace) built 2026-10-10 (§21).**
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -135,6 +136,19 @@ every form; the conflicts: 「L 揮空也能接 J 前衝」, 「維持 3 格＋ 
 `:br-rc4` 裁き・極 (10+ points, 480 in all) [G frames]: S 6; six beats at f6 / f12 / f18 / f24 / f30 / f36, 40 each, 萬物貫通
 lines from the wing tips at him; f38–f47 the NIJUSHI-KO ring, then the beam at f48, 240, 萬物貫通, a knockdown; recovery 30.
 The owl: claws. Until its clip is drawn it borrows `:br-rc3`.
+
+### Decision V8a (2026-10-10): both awakened dashes spend a trace
+
+The user (relayed with V8's integration): 「覺醒後的 L>J / J > L 前後衝刺都需要消耗一條軌跡才能發動」; choices 「最遠那條，不射出」 and
+「不衝刺、後撤不再扣閃步」.
+
+- TENSHIN in (L / SP1 / SP2 → J) and the J3 → L backstep (JILLIEL's and the owl's) each need one live trace and remove it as
+  they start: the one **farthest** from the opponent (its line's ground distance to him; a tie the older), **unfired**.
+- TENSHIN in's own f0 shot (V6c) stays: the farthest is spent first, then the nearest of the rest within 2.5 m fires (the
+  only trace spent: nothing fires).
+- No live trace: no dash. L → J = J1 in place (V6a); J3 → L = the plain mode turn in place (`:br-to-en`).
+- The backstep no longer costs flash step (V6's 10): its price is the trace.
+- Built: §21.
 
 ### Decision V9e (2026-10-10): no stance link at 0 pips (the loop fix)
 
@@ -1404,3 +1418,147 @@ The user: 「0 格時不能用架式 J / K」; asked, 「照你最初的規則�
   64, cine 18 pass. `tools/pkgcheck.sh duel` 0 / 0 / 0; `./build.sh duel` 0 warnings; smoke exit 0.
 - Manual (LILLE II base table): the 0-pip K row → 「架式中 J／K（0 格）一般 J1／K1」; the gauge note and the tip.
 - **Gates: run by the lead after the playtest** (decision V6b).
+
+## 21. Decision V8 built (2026-10-10, branch `barro-v8`)
+
+Decision V8 (§1, two routes, one pool) and its addition **V8a** (§1, a dash spends a trace) built. Everything is in
+`duel/lisp/barro.lisp` (sim, CPU, ASSIST, debug), `tests/duel-rules-test.lisp` and the manual; no other character's code,
+no shared file. The art agent's `:br-rc4` / `:br-o-rc4` clips and the L swing's look are not here (§21.6).
+
+### 21.1 Knobs (barro.lisp, docstrings with old → new and the user's words)
+
+| Knob | Value | Note |
+|---|---|---|
+| `*br-j-speed*` / `*br-j-min-s*` / `*br-j-min-r*` | 2 / 4 / 6 | a J's startup and recovery − 2, floors 4 / 6 (none reached) |
+| `*br-j-mult*` / `*br-j-adv*` | 0.85 / + 2 | damage × 0.85 rounded; block advantage + 2 |
+| `*br-k-slow*` / `*br-k-link-slow*` | 2 / 1 | a K's startup and recovery + 2; a K link's effective startup only + 1 (14 → 15) [G] |
+| `*br-k-mult*` / `*br-k-adv*` | 1.20 / − 4 | damage × 1.2 rounded; block advantage − 4 |
+| `*br-snipe-close*` / `*br-snipe-close-n*` | 3.0 / 2 | the stance's L: a hit within 3 m fills 2 pips, farther 1 (cap 3) |
+| `*br-swing-dmg*` | 16 | the ranged L swing (S 7, A 3, R 12, 1.8 m, arc 110, flinch; the owl's R 11) |
+| `*br-lay-l*` | 3.0 | now the swing's price, paid only on its hit |
+| `*br-rc1-dmg*` | 40 → 35 | 二連 2 × 35 = 70 (was 80) |
+| `*br-rc2-dmg*` / `*br-rc2-last*` | 35 / 45 → 37 / 49 | 四連 3 × 37 + 49 = 160 (was 150) |
+| `*br-rc3-dmg*` / `*br-rc3-last*` | 30 / 90 → 43 / 128 | 裁き 4 × 43 + 128 = 300 (was 210) |
+| `*br-rc4-dmg*` / `*br-rc4-last*` | new 40 / 240 | 裁き・極 6 × 40 + 240 = 480 |
+| `*br-recall-tiers*` | 0 / 1–2 / 3–5 / 6+ → 0 / 1–2 / 3–5 / 6–9 / 10+ | five tiers |
+| `*br-rc4-clip*` | `:br-rc3` | the stand-in until the art agent's `:br-rc4` |
+| `*br-backstep-fs*` | 10 → removed | V8a: the backstep's price is one trace |
+
+**The J / K strings** are written with their old numbers and `BR-DEFSTRING` → `BR-V8-SPEC` applies the knobs at load (the
+hit-frame hooks follow the new startup; `:clip-s` = the old startup, so each clip plays at old / new speed and reaches its
+hit pose on the new hit frame; the host FK reach test passes unchanged). Per move (S / R / damage / block adv; K links
+`:enter` 6 → 7, 7 → 8):
+
+| Move | Before | Now |
+|---|---|---|
+| base J1 / J2 / J3 (J2s) | 8/12/26/−2, 7/13/22/−2, 9/18/28/−4 | 6/10/22/0, 5/11/19/0, 7/16/24/−2 |
+| base K1 / K2 / K3 (K2s) | 17/21/48/−3, 20/24/48/−3, 21/34/70/−20 | 19/23/58/−7, 22/26/58/−7, 23/36/84/−24 |
+| wing J1 / J2 / J3 | 8/12/24/−2, 7/13/24/−2, 9/18/30/−4 | 6/10/20/0, 5/11/20/0, 7/16/26/−2 |
+| wing K1 / K2 / K3 | 17/21/50/−3, 20/24/50/−3, 21/34/72/−20 | 19/23/60/−7, 22/26/60/−7, 23/36/86/−24 |
+| claw J1 / J2 / J3 | 8/11/26/−1, 7/12/26/−1, 9/17/32/−3 | 6/9/22/+1, 5/10/22/+1, 7/15/27/−1 |
+| claw K1 / K2 / K3 | 17/20/54/−2, 20/23/54/−2, 21/33/78/−19 | 19/22/65/−6, 22/25/65/−6, 23/35/94/−23 |
+| ranged L (JILLIEL / owl) | the lay: S 4, R 6 / 5, no hit, 3 FS | the swing: S 7, A 3, R 12 / 11, 16, adv −2 / −1, free |
+
+### 21.2 What changed
+
+- **J / K feel** in every form, as the table. The owl keeps its +1 on top of JILLIEL's (R − 1, adv + 1).
+- **K fires no trace**: the wing and claw K lost `:mat-k`; `BR-K-MAT-P` and its BARRO-HIT clause are gone. The ranged K
+  (melee K1 in place) the same. Every J still fires the nearest line at its first active frame (now f6 / f5 / f7).
+- **The recall** picks five tiers (`BR-RECALL-TIER`, the strings `:rc0` … `:rc4`); rc1–rc3 keep their hit counts and
+  frames with the new damages; **`:br-rc4` 裁き・極**: S 6, six 40 beats at f6 / f12 / f18 / f24 / f30 / f36 (stagger 28
+  each: every gap 6 < 28), the NIJUSHI-KO ring's tell at f38 (`BR-NIJUSHI-TELL`), the beam at f48 (240, knockdown, kb 2),
+  A 44, R 30; every hit 萬物貫通. Its clip `*BR-RC4-CLIP*` (`:br-rc3`; the owl's `:br-o-rc3` through the existing map).
+- **The ranged L swing** (`:br-e-lay`, `:br-oe-lay`, `:params (:swing t)`): no `BR-LAY` hook; BARRO-HIT → `BR-SWING-POINT`:
+  on a **hit** with ≥ 3 flash step it pays 3 and sets the point 0.5 m behind him (`BR-LAY-TRACE`); a block, a whiff or a hit
+  short of 3 sets none and pays none. `BR-LAY-PRICE` of L is 0 (no flash step to swing). From the backstep's end L is the
+  swing too.
+- **L → J**: the swing's window opens at its active end (S + A = f10) whether it hit or not (`BR-LAST-POINT`; BR-LAY-TICK's
+  `paid` is true for the swing), so a J at any frame of L, or up to 10 f after its end (f0–f31), dashes, under V8a's price.
+- **The stance's L** (`:br-k-shot`, `:snipe-close t`): BARRO-HIT passes his distance at the hit; `BR-SNIPE-AFTER` fills 2
+  within 3 m, 1 beyond (the pacing key `snipe-fill2` for a double).
+- **V8a, a dash spends a trace** (`BR-SPEND-FAR`, pure `BR-PICK-FAR`): the live trace whose line passes **farthest** from
+  the opponent (point-to-segment at his position, the lines turned through Lille first; a tie the older) is destroyed,
+  unfired (pacing `trace-spent`).
+  - TENSHIN in: spent as the cancel copy starts (`BR-TENSHIN-START` from BR-LAY-TICK, the human's latch and his CPU's
+    cancel; `BR-MELEE-IN`'s late-window path), **then** its f0 (2 f later) fires the nearest of what is left within 2.5 m
+    (`BR-TENSHIN-FIRE`, unchanged). The only trace spent → nothing fires. No live trace → no dash (`BR-DASH-OK-P`): a latched
+    J comes out as J1 in place at the move's end, a late J is J1 in place (V6a's rule).
+  - The backstep: `BR-L-ROUTE` takes the live count; off J3 with none the L router starts the plain mode turn `:br-to-en`
+    in place; with one, the backstep, which spends it at its f0 (`BR-BACKSTEP-GO`) and no longer pays flash step
+    (`*br-backstep-fs*`, `BR-BACKSTEP-OK-P` removed).
+
+### 21.3 Readings [G]
+
+- **Block advantage "toward ±0"**: + 2 on every J (J1 / J2 0, J3 −2), not a cap at 0, so the owl's +1 rule stays (its J1 +1).
+- **K links' startup**: + 2 on the move (K1 from neutral 19), but a link's effective startup (S − `:enter`) only + 1, 14 →
+  15: at 16 a J's 18 f flinch ends as K2s / K3 hits (J's A 3 + 16 − 1 = 18), so J → K would stop comboing; 15 still does
+  (host: every link combos on hit). A blocked J then K2s leaves 12 f (base, JILLIEL) / 10 f (the owl, its J at +1) before
+  the K's hit, against the budget's ≥ 11: accepted for V8 (host checks ≥ 10 for him).
+- **The swing's point**: a hit with < 3 flash step sets none (the brief's reading). The point is set on the hit frame,
+  0.5 m behind his facing then (the swing tracks him, so the line runs through the opponent).
+- **The swing's dash window** opens at its active end (f10), hit or whiff (「L 揮空也能接 J 前衝」); a hit at f7 and the
+  cancel at f10 put TENSHIN in's f0 line 5 f after the swing's hit.
+- **V8a's order** (written down as asked): the price (farthest) first, at the cancel; then the f0 fire (nearest of the
+  rest). With one trace the dash spends it and fires nothing: L hit → J with no other trace = the swing's point spent, J1
+  lands on its own. "Farthest" is the line's ground distance to the opponent, the same measure the pick uses.
+- **The 10+ recall's ring**: `BR-NIJUSHI-TELL` at f38 is cosmetic (the 24 holes glow); the art agent owns the look.
+- **The callout** for `:br-rc4` is 「裁き」 / SABAKI KIWAMI: 極 has no brush glyph yet (glyphs-extra.lisp is shared art).
+
+### 21.4 The CPU, ASSIST, the learner
+
+- **Base**: `:close (:p 0.4 :near 3.0)`: at 0 pips inside 3 m, not threatened, the stance (`BR-AI-BASE-PLAN` → `:close`,
+  pacing `ai-close`); in the stance `:kamae :close-shot 0.5 :close-in 3.0`: safe (his attack not perceived coming), ≤ 1 pip,
+  inside 3 m → the shot (+2); when it does not fire the plan's roll is rescaled for the rest (one roll a stance).
+- **Ranged**: `:swing (:p 0.5)`: within the swing's reach + 0.2 m, on his action's react roll → L (`BR-AI-SWING`, before
+  going in; pacing `ai-swing`). From range points come from SP1 (3) / SP2 (1 thick) only (`BR-AI-LAY-PLAN`: SP1 under
+  `:sp1` 0.3 → 0.7, else SP2 with its 2 bars, else SP1); the bands drop L from 2–14 m (`:sig` only inside 2 m). Starved =
+  no bar for SP1 or its flash step short. Going in (`BR-AI-GO-IN`): J1 in reach, else L → J (TENSHIN in) only with a live
+  trace (`BR-AI-IN-CMD`'s dash-ok), else walk. The stay's goal: from 6 m, his Reishi ≥ 50 % (`:safe`), the big bank 10
+  under `:big-p` 0.2 (pacing `ai-goal-big`), else 6 under `:bank-p`, else 2–4.
+- **Melee**: `:route :bank` 5 → 6 (the K route needs 6 live; a K spends none now, so the recall takes them all);
+  `:backstep (:p 0.6 :min 2)` (was `:fs 13 :n 3`): J3 → L only with ≥ 2 traces (one paid, one left for the dash back).
+  MUJITTAI's exit with lines near him presses J (a K fires none).
+- **ASSIST**: melee K links while ≥ 3 points are live (`BR-AS-K-ROUTE-P`, no spending), J3 → L with ≥ 2; ranged: his J
+  within the swing's reach → the swing; beyond with a trace → L (its J dashes); none → SP1 with a bar (`as-swing`,
+  `as-lay`, `as-fan`); out of the backstep → SP1 (was an L point).
+- The learner: unchanged (its `:fire` read already used J).
+
+### 21.5 Debug commands (DUEL_GAMEPLAY 82000 row)
+
+82017 forced JILLIEL melee 1.4 m out with 10 aim points (K K K L: 裁き・極); 82018 forced ranged 1.5 m out, no point (the
+swing; L then J); 82019 the same with two points (−40° / 0°: L then J spends the farther, fires the nearer).
+
+### 21.6 Host tests and checks (2026-10-10)
+
+- duel-rules-test 8576 → 8641 checks, ALL PASS: the string budget checks his forms against V8's numbers (J1 S 6, K1 S 19,
+  link adv 0 / −2 / −7 / −24, K links S_eff 15, every link still combos on hit, a blocked J → K ≥ 10 f); every J / K of
+  his 24 string moves (S, R, damage, adv, `:enter`, clip-s × S = the old S); the knobs and `BR-V8-SPEC`'s floors and hook
+  shift; the owl's +1; no K (base, wing, claw) has a trace hook or `:mat-k`; the recall tiers 0…16 (10+ → 4), the totals
+  30 / 70 / 160 / 300 / 480, hit counts 1 / 2 / 4 / 5 / 7, each tier's move from both melee kits, `:br-rc4`'s frames,
+  stagger and knockdown; the swing's numbers (both forms), its window f10–f31, its point only on a hit with 3 flash step;
+  the stance L +2 within 3 m (3.0 in, 3.1 out, cap 3, block 0, only the L); `BR-PICK-FAR` (farthest, tie older, none) and
+  the order (spent far, the nearest of the rest fires, the only one spent fires none); the L router with no trace → the
+  turn; no backstep flash step; the CPU's close snipe, close shot (safe, rescaled roll), goal 10, lay plan (never L), bands,
+  backstep `:min`, `BR-AI-IN-CMD` with no trace. duel-control 89, learn 131, input 33, touch 64, cine 18 pass.
+- `tools/pkgcheck.sh duel` 0 / 0 / 0. `./build.sh duel` 0 warnings. Smoke `run.mjs --secs 8`: exit 0.
+- **Browser script** (`--fixed-dt`, no error; two runs: the first stopped by `--timeout` at virtual 25.3 s after its first
+  four scenes, the last two re-run, exit 0; match ticks include hitstop):
+  - 82017 (10 points, 1.4 m), K K K L: K1 60, K2 60, K3 86 hit, the L router → the recall (live 10 → 0) → **`BR-RC4`**:
+    six beats of 40 at t 117 … 187 and the beam 240 at t 207, **all seven hit**, P2 in STUN throughout and DOWN after the
+    beam (P2 1300 → 842 with the combo scaling).
+  - 82019 (two points: 0.96 m and 0.00 m off P2), L then J: the swing hits (16) and sets a third point (fs 100 → 97), the
+    TENSHIN in cancel spends the farther (id 11, unfired), its f0 fires the nearest (the swing's new point, 30, stagger), J1
+    20 and its own line 30 (the last one): live 2 → 3 → 1 → 0.
+  - 82018 (no point), L then J: the swing hits (point set, 3 paid), the dash spends that only point, nothing fires, J1 20.
+  - 82003 (8 m, no point), L then J: the swing whiffs (no point, no flash step), no trace → no dash: J1 in place (d 8.00).
+  - 82015 (no trace), J J J L: J1 20, J2 20, J3 26, the L router → `BR-TO-EN`, the mode turn in place (no backstep).
+  - 82000 (2.2 m), L then L: the shot hits 50 → 狙擊 0 → **2** (the close snipe).
+- **Gates: run by the lead after the playtest** (decision V6b).
+
+### 21.7 For the art agent
+
+- `:br-rc4` (JILLIEL) / `:br-o-rc4` (the owl): the move is S 6, A 44, R 30 (80 f); beats (a line from a wing tip / claw at
+  him) on f6, f12, f18, f24, f30, f36; NIJUSHI-KO's ring f38–f47; the beam on f48. When drawn: `*br-rc4-clip*` → `:br-rc4`,
+  `(:br-rc4 :br-o-rc4)` into `*br-owl-clip-map*`, both clips into the host test's `*clips-5*` list and its art rows.
+- The ranged L swing keeps `:lb-e-q1` (`:br-oe-lay` `:lb-oe-q1`), played at `:clip-s 4` over S 7 (speed 4 / 7: its pose
+  lands on f7); its hit reach is 1.8 m, arc 110, so the drawn reach should be ≈ 1.8 m at f7.
