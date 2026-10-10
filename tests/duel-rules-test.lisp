@@ -813,6 +813,8 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
     :lb-oe-stance :lb-o-fold :lb-oe-fold :lb-oe-sabaki :lb-o-tenshin :lb-o-tenshin-in   ; the owl on Jilliel's system (decision 36, §23.14)
     :lb-oe-q1 :lb-oe-q2 :lb-oe-q3 :lb-oe-f1 :lb-oe-f2 :lb-oe-f3   ; its EN casts (decision 56, §23.37)
     :lb-snap                                      ; Lille's unused hip shot: Lille II's snap shot (DUEL_LILLE_V2 §4)
+    :br-recall :br-rc0 :br-rc1 :br-rc2 :br-rc3 :br-to-en   ; Lille II's own (the art batch, DUEL_LILLE_V2 §12) ...
+    :br-o-recall :br-o-rc0 :br-o-rc1 :br-o-rc2 :br-o-rc3 :br-o-to-en :br-o-backstep   ; ... and the owl's
     :ke-k-q1 :ke-k-q2 :ke-k-f1 :ke-k-f2 :ke-k-spin :ke-k-meteor   ; Kenpachi's cup 1 and cup 3 sets (DUEL_KEN_REWORK §6.2)
     :ke-x-stance :ke-x-q1 :ke-x-kote :ke-x-q3 :ke-x-f1 :ke-x-tsuki :ke-x-f2 :ke-x-meteor :ke-x-drink
     :ke-b-q1 :ke-b-q2 :ke-b-f1 :ke-b-f2 :ke-b-f3 :ke-b-split :ke-b-cut   ; the Bankai's own (§8)
@@ -1691,7 +1693,7 @@ along the left forearm, so the fist leads).")
 (defparameter *reach-one-sided* '((:yamamoto :bankai-east) (:yamamoto :bankai-west) (:kenpachi :nozarashi)
                                   (:kenpachi :bankai) (:rukia :zero)))
 (let ((bodies nil) (weapons nil) (strike nil) (points nil) (butt 0.0))
-  (dolist (art '("yama" "ken" "rukia" "ichigo" "senjumaru" "lille"))
+  (dolist (art '("yama" "ken" "rukia" "ichigo" "senjumaru" "lille" "barro"))
     (with-open-file (in (merge-pathnames (format nil "../duel/lisp/~a-art.lisp" art) *load-truename*))
       (let ((*package* (find-package :duel)))
         (loop for form = (read in nil in) until (eq form in)
@@ -1788,6 +1790,50 @@ along the left forearm, so the fist leads).")
                 (check (or (>= (* x (if (eq j :hand-r) 1 -1)) 1.0)
                            (format t "~a f~d ~a: ~,2f m aside~%" clip (1- (mv-s mv)) j x)))))))))))
     (check (= (round (* 60 (clip-dur (find-clip :lb-w-kikon)))) (getf (mv-params (find-move :lb-w-kikon)) :aura)))   ; (the aura)
+
+;; Lille II's own clips (the art batch, DUEL_LILLE_V2 §12; the art evaluated above): each lasts its move (S + A + R, its :s
+;; mark on S), JILLIEL's and the owl's; the recall strings' beats are their moves' line frames (BR-RC-SHOT / BR-BEAM-SHOT),
+;; and on each the firing tip (JILLIEL's wing: the rig's hand; the owl's claw) points at him (>= 1.2 m ahead, within 0.4 m
+;; of his line, the owl's 0.5); the finisher (裁き f36) in NIJUSHI-KO's ring the frame before (each wing >= 1 m aside), the
+;; owl's both claws thrown at him on it
+(let ((jm (make-f32 (* 16 +nj+))) (pose (make-f32 +pose-n+)) (v (make-f32 3))
+      (pj (make-rig-proportions :arms 2.6)) (po (make-rig-proportions :arms 2.2 :legs 1.5))
+      (beats '((:br-rc0 (6 3)) (:br-rc1 (6 1) (16 2)) (:br-rc2 (6 1) (14 2) (22 1) (32 3)) (:br-rc3 (6 1) (12 2) (18 1) (24 2) (36 4)))))
+  (flet ((tip (clip frame joint props)
+           (clip-sample! pose (find-clip clip) (/ frame 60.0))
+           (pose-fk! jm pose 0f0 0f0 0f0 0f0 1f0 0f0 props)
+           (joint-point! v jm (joint-index joint) 0f0 0f0 0f0)
+           (values (aref v 0) (- (aref v 2)))))
+    (dolist (row '((:br-recall :br-recall :br-o-recall) (:br-rc0 :br-rc0 :br-o-rc0) (:br-rc1 :br-rc1 :br-o-rc1)
+                   (:br-rc2 :br-rc2 :br-o-rc2) (:br-rc3 :br-rc3 :br-o-rc3) (:br-to-en :br-to-en :br-o-to-en)
+                   (:br-backstep nil :br-o-backstep)))
+      (destructuring-bind (move jclip oclip) row
+        (let ((mv (find-move move)))
+          (check (eq (or jclip :lb-w-tenshin) (mv-clip mv)))
+          (check (eq oclip (kit-move-clip (kit :barro :shin-kin) (mv-clip mv))))
+          (check (~= 1.0 (mv-clip-speed mv)))
+          (dolist (clip (remove nil (list jclip oclip)))
+            (check (or (and (= (round (* 60 (clip-dur (find-clip clip)))) (+ (mv-s mv) (mv-a mv) (mv-r mv)))
+                            (= (round (* 60 (clip-mark clip :s))) (mv-s mv)))
+                       (format t "~a: ~,1f f, its move ~a ~d f~%" clip (* 60 (clip-dur (find-clip clip))) move
+                               (+ (mv-s mv) (mv-a mv) (mv-r mv)))))))))
+    (dolist (row beats)
+      (destructuring-bind (move &rest bs) row
+        (let ((mv (find-move move)) (oclip (intern (format nil "BR-O-~a" (subseq (symbol-name move) 3)) :keyword)))
+          (check (equal (mapcar #'first bs) (loop for (fr fn) in (mv-on-frame mv) when (member fn '(br-rc-shot br-beam-shot)) collect fr)))
+          (loop for (fr kind) in bs
+                do (if (= kind 4)
+                       (dolist (j '(:hand-r :hand-l))
+                         (multiple-value-bind (x ahead) (tip move (1- fr) j pj)
+                           (declare (ignore ahead))
+                           (check (or (>= (* x (if (eq j :hand-r) 1 -1)) 1.0) (format t "~a f~d ~a: ~,2f m aside~%" move (1- fr) j x))))
+                         (multiple-value-bind (x ahead) (tip oclip fr j po)
+                           (check (or (and (>= ahead 1.2) (<= (abs x) 0.5)) (format t "~a f~d ~a: ~,2f ahead ~,2f aside~%" oclip fr j ahead x)))))
+                       (dolist (j (case kind (1 '(:hand-r)) (2 '(:hand-l)) (t '(:hand-r :hand-l))))
+                         (multiple-value-bind (x ahead) (tip move fr j pj)
+                           (check (or (and (>= ahead 1.2) (<= (abs x) 0.4)) (format t "~a f~d ~a: ~,2f ahead ~,2f aside~%" move fr j ahead x))))
+                         (multiple-value-bind (x ahead) (tip oclip fr j po)
+                           (check (or (and (>= ahead 1.2) (<= (abs x) 0.5)) (format t "~a f~d ~a: ~,2f ahead ~,2f aside~%" oclip fr j ahead x))))))))))))
 
 ;; J is short, K long (the user, 2026-09-29, docs/duel/DUEL_STRINGS.md §13): in every form every K link reaches at least 0.5 m further
 ;; than any J link at the same position of the string; 片腕's short K against the J floor (2026-10-06) excepted

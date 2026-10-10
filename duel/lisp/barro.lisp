@@ -346,29 +346,29 @@ the stance's SP2 (inside 5 m) or SP1; else the shot."
   :params (:lock 20 :track 60.0 :width 1.2))
 ;; melee L: the turn into ranged mode (12 f); J3 -> L 後撤 the backstep (5 m / 14 f, iframes f0-6) into ranged; K3 -> L
 ;; 回收 the recall (every live trace taken back, counted, then the derivative string for the count: :strings :rc0 .. :rc3)
-(defmove :br-to-en :kind :sig :clip :lb-w-fold :callout "EN" :startup *br-to-en-f* :active 0 :recovery 0 :tick br-halt-tick
+(defmove :br-to-en :kind :sig :clip :br-to-en :callout "EN" :startup *br-to-en-f* :active 0 :recovery 0 :tick br-halt-tick
   :on-frame ((11 br-go-ranged)))
 ;; L latched in a melee J / K link (the kits' :l-after-k / :l-after-j): a router that lives no frame: its f0 starts the
 ;; move BARRO-OK routed off the link it was pressed in (BR-L-ROUTE: K3 the recall, J3 the backstep, else :br-to-en; batch 4)
 (defmove :br-l-link :kind :sig :clip :lb-w-fold :startup 1 :active 0 :recovery 0 :on-frame ((0 br-l-link-go)))
 (defmove :br-backstep :kind :sig :clip :lb-w-tenshin :callout "KOTAI" :startup *br-backstep-f* :active 0 :recovery 8
   :tick br-halt-tick :on-frame ((0 br-backstep-go) (13 br-go-ranged)))
-(defmove :br-recall :kind :sig :clip :lb-w-fold :callout "KAISHU" :startup *br-recall-f* :active 0 :recovery 0
+(defmove :br-recall :kind :sig :clip :br-recall :callout "KAISHU" :startup *br-recall-f* :active 0 :recovery 0
   :tick br-halt-tick :on-frame ((0 br-recall-go) (7 br-recall-fire)))
 ;; the recall's derivative strings (§5.4): every line 萬物貫通 from him at the opponent (BR-RC-TICK keeps him on him)
-(defmove :br-rc0 :kind :sig :clip :lb-w-q3 :callout "KAISHU" :startup 6 :active 2 :recovery 24 :dmg *br-rc0-dmg* :adv-block -14
+(defmove :br-rc0 :kind :sig :clip :br-rc0 :callout "KAISHU" :startup 6 :active 2 :recovery 24 :dmg *br-rc0-dmg* :adv-block -14
   :track 0 :vol (:cap 0.6 *br-x-len* 1.2 0.3) :on-hit :stagger :kb 1.0 :chip *br-x-chip* :guard *br-x-guard*
   :flags (:ranged :x-axis :uncatchable) :tick br-rc-tick :on-frame ((6 br-rc-shot)) :params (:lock 0 :len *br-x-len*))
-(defmove :br-rc1 :kind :sig :clip :lb-w-sanren :clip-s 12 :callout "NIREN" :startup 6 :active 12 :recovery 24 :dmg *br-rc1-dmg*
+(defmove :br-rc1 :kind :sig :clip :br-rc1 :callout "NIREN" :startup 6 :active 12 :recovery 24 :dmg *br-rc1-dmg*
   :adv-block -14 :track 0 :vol (:cap 0.6 *br-x-len* 1.2 0.3) :on-hit :stagger :kb 0.5 :chip *br-x-chip* :guard *br-x-guard*
   :flags (:ranged :x-axis :uncatchable) :hits ((6 8 :stun *br-rc-stun*) (16 18)) :tick br-rc-tick
   :on-frame ((6 br-rc-shot) (16 br-rc-shot)) :params (:lock 0 :len *br-x-len*))
-(defmove :br-rc2 :kind :sig :clip :lb-e-sanren :clip-s 6 :callout "YONREN" :startup 6 :active 28 :recovery 24 :dmg *br-rc2-dmg*
+(defmove :br-rc2 :kind :sig :clip :br-rc2 :callout "YONREN" :startup 6 :active 28 :recovery 24 :dmg *br-rc2-dmg*
   :adv-block -14 :track 0 :vol (:cap 0.6 *br-x-len* 1.2 0.3) :on-hit :stagger :kb 0.3 :chip *br-x-chip* :guard *br-x-guard*
   :flags (:ranged :x-axis :uncatchable)
   :hits ((6 8 :stun *br-rc-stun*) (14 16 :stun *br-rc-stun*) (22 24 :stun *br-rc-stun*) (32 34 :dmg *br-rc2-last* :on-hit :launch))
   :tick br-rc-tick :on-frame ((6 br-rc-shot) (14 br-rc-shot) (22 br-rc-shot) (32 br-rc-shot)) :params (:lock 0 :len *br-x-len*))
-(defmove :br-rc3 :kind :sig :clip :lb-w-nijushi :clip-s 6 :callout "SABAKI" :startup 6 :active 32 :recovery 26 :dmg *br-rc3-dmg*
+(defmove :br-rc3 :kind :sig :clip :br-rc3 :callout "SABAKI" :startup 6 :active 32 :recovery 26 :dmg *br-rc3-dmg*
   :adv-block -14 :track 0 :vol (:cap 0.6 *br-x-len* 1.2 0.3) :on-hit :stagger :kb 0.3 :chip *br-x-chip* :guard *br-x-guard*
   :flags (:ranged :x-axis :uncatchable)
   :hits ((6 8 :stun *br-rc-stun*) (12 14 :stun *br-rc-stun*) (18 20 :stun *br-rc-stun*) (24 26 :stun *br-rc-stun*)
@@ -423,16 +423,18 @@ the stance's SP2 (inside 5 m) or SP1; else the shot."
 (defmove :br-oe-trompete :kind :sp :clip :lb-o-trompete :clip-s 60 :callout "TROMPETE" :startup 12 :active 6 :recovery 8
   :track 0 :tick br-planted-tick :on-frame ((0 br-trompete-tell) (12 br-lay)) :params (:lock 6 :track 100.0 :trace :sp2))
 
-;;; The stand-in clips (the art batch swaps these for barro-art.lisp's new clips, DUEL_LILLE_V2 §7): move -> (the clip it
-;;; plays now in JILLIEL, the owl's through its kits' :clip-map, the new clip to come)
+;;; The moves Lille never had and their clips (barro-art.lisp, DUEL_LILLE_V2 §7, §12): move -> (the clip JILLIEL plays, the
+;;; owl's through its kits' :clip-map, the stand-in it replaced). Batch 1 played Lille's clips; the art batch (2026-10-09)
+;;; drew his own (the backstep keeps Lille's TENSHIN in JILLIEL: a 14 f fold, dash and open that reads as it is).
 (defparameter *br-stand-ins*
-  '((:br-recall :lb-w-fold :lb-o-fold :br-recall) (:br-rc0 :lb-w-q3 :lb-o-q3 :br-recall)
-    (:br-rc1 :lb-w-sanren :lb-o-f2 :br-rc1) (:br-rc2 :lb-e-sanren :lb-o-f3 :br-rc2) (:br-rc3 :lb-w-nijushi :lb-o-chop :br-rc3)
-    (:br-to-en :lb-w-fold :lb-o-fold :br-to-en) (:br-backstep :lb-w-tenshin :lb-o-tenshin nil))
-  "The moves Lille never had, on his clips for now (batch 1, 2026-10-09).")
-(defparameter *br-owl-clip-map* '(:lb-w-fold :lb-o-fold :lb-w-q3 :lb-o-q3 :lb-w-sanren :lb-o-f2 :lb-e-sanren :lb-o-f3
-                                  :lb-w-nijushi :lb-o-chop :lb-w-tenshin :lb-o-tenshin)
-  "The owl kits' :clip-map: the shared moves (the recall, its strings, the mode turns) on the claws (*BR-STAND-INS*).")
+  '((:br-recall :br-recall :br-o-recall :lb-w-fold) (:br-rc0 :br-rc0 :br-o-rc0 :lb-w-q3)
+    (:br-rc1 :br-rc1 :br-o-rc1 :lb-w-sanren) (:br-rc2 :br-rc2 :br-o-rc2 :lb-e-sanren) (:br-rc3 :br-rc3 :br-o-rc3 :lb-w-nijushi)
+    (:br-to-en :br-to-en :br-o-to-en :lb-w-fold) (:br-backstep :lb-w-tenshin :br-o-backstep :lb-w-tenshin))
+  "His own moves' clips (JILLIEL's, the owl's) and the batch-1 stand-ins they replaced (the art batch, 2026-10-09).")
+(defparameter *br-owl-clip-map* '(:br-recall :br-o-recall :br-rc0 :br-o-rc0 :br-rc1 :br-o-rc1 :br-rc2 :br-o-rc2
+                                  :br-rc3 :br-o-rc3 :br-to-en :br-o-to-en :lb-w-tenshin :br-o-backstep)
+  "The owl kits' :clip-map: the shared moves (the recall, its strings, the mode turns) on the claws' own clips
+(*BR-STAND-INS*; the owl's backstep steps its lift on f13, not Lille's TENSHIN's f6).")
 
 ;;; ================================================================ forms
 (defparameter *barro-hooks* '(:tick barro-tick :ok barro-ok :hit barro-hit :struck barro-struck :draw br-draw)
@@ -556,21 +558,25 @@ pacing log (:struck); his looks (:draw, barro-art.lisp).")
                            :shin :shin-mujittai)
   "Every form of his (the HUD meter, the host tests).")
 
-;; his names in the brush tables (brush.lisp): the intro's column and the technique columns (not on the host); only the
-;; names whose glyphs Lille's already brought (the new moves show their plain callout)
+;; his names in the brush tables (brush.lisp): the intro's column and the technique columns (not on the host); the new
+;; moves' glyphs (速 遠 後 回 収) are in glyphs-extra.lisp (the art batch, DUEL_LILLE_V2 §12)
 (when (boundp '*brush-names*)
   (setf *brush-names* (append (remove :barro *brush-names* :key #'first) '((:barro "リジェ・バロ" "LILLE II")))
         *brush-callouts*
         (append (remove-if (lambda (c) (member (first c) '(:br-k-shot :br-k-sanren :br-k-hiren :br-k-taisha :br-sanren :br-hiren
                                                             :br-e-sanren :br-e-nijushi :br-w-sanren :br-w-nijushi :br-misuji
-                                                            :br-trompete :br-oe-sabaki :br-oe-trompete)))
+                                                            :br-trompete :br-oe-sabaki :br-oe-trompete :br-k-snap :br-to-en
+                                                            :br-backstep :br-recall :br-rc0 :br-rc1 :br-rc2 :br-rc3)))
                            *brush-callouts*)
                 '((:br-k-shot "万物貫通" "THE X-AXIS" nil) (:br-k-sanren "三連" "SANREN" nil) (:br-k-hiren "飛廉脚" "HIRENKYAKU" nil)
                   (:br-k-taisha "退射" "TAISHA" nil) (:br-sanren "三連" "SANREN" nil) (:br-hiren "飛廉脚" "HIRENKYAKU" nil)
                   (:br-e-sanren "三連" "SANREN" nil) (:br-e-nijushi "二十四孔" "NIJUSHI-KO" nil)
                   (:br-w-sanren "三連" "SANREN" nil) (:br-w-nijushi "二十四孔" "NIJUSHI-KO" nil)
                   (:br-misuji "裁きの光明" "SABAKI NO KOMYO" nil) (:br-trompete "神の喇叭" "TROMPETE" nil)
-                  (:br-oe-sabaki "裁きの光明" "SABAKI NO KOMYO" nil) (:br-oe-trompete "神の喇叭" "TROMPETE" nil)))))
+                  (:br-oe-sabaki "裁きの光明" "SABAKI NO KOMYO" nil) (:br-oe-trompete "神の喇叭" "TROMPETE" nil)
+                  (:br-k-snap "速射" "SOKUSHA" nil) (:br-to-en "遠" "EN" nil) (:br-backstep "後退" "KOTAI" nil)
+                  (:br-recall "回収" "KAISHU" nil) (:br-rc0 "回収" "KAISHU" nil) (:br-rc1 "二連" "NIREN" nil)
+                  (:br-rc2 "四連" "YONREN" nil) (:br-rc3 "裁き" "SABAKI" nil)))))
 
 ;;; ================================================================ his state (the sim's): a component on his fighter entity
 (defcomponent brs
@@ -1595,6 +1601,7 @@ mirror) 12 m apart."
   "His debug commands (debug.lisp *CHAR-DEBUG*, the range 82000-82999, docs/duel/DUEL_GAMEPLAY.md): 82000+k BARRO-TEST k."
   (if (< c 82100) (barro-test (- c 82000)) (log-msg "duel barro: no debug command ~d" c)))
 (pushnew '(82000 82999 barro-debug) *char-debug* :test #'equal)
+(pushnew '(82100 82399 barro-art-debug) *char-debug* :test #'equal)   ; (the art stills, barro-art.lisp: ahead of the above)
 
 ;;; ================================================================ the HUD (barro-art.lisp's functions; not on the host)
 (when (fboundp 'br-hud-meter)
