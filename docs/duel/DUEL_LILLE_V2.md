@@ -107,6 +107,35 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
 
+### Decision V8 (2026-10-10): two routes, one pool (integrated over V6–V9e)
+
+The user's style request (2026-10-10): 「我想將設計轉成具有兩種不同特性的戰鬥風格 — 高速循環：特徵是高速、低攻、破綻小，能取用部分累積的資源進行小
+爆發並不斷循環。 — 高攻循環：特徵是高攻、低速、破綻大，爆發時會將所有的資源一次輸出，屬於需要積累後抓時間一口氣輸出的玩法」; then 「普攻累積的資源
+少，並增加額外高風險高回報率的資源回收手段」, 「把 L 作為速攻手段之一呢？讓 J 作為速攻小爆發的手段」, 「L 放出軌跡時的揮擊動作也視為攻擊」,
+「L 只有近程打中才會釋放瞄準點」; the integration call 「可以開始把 V8 進行整合，開始前先討論 V8 與當前版本規則的不同之處要如何處理」.
+Choices (all the recommended unless noted): two routes in one kit; one shared pool; the base form too; K never fires a trace;
+the recall in five super-linear tiers; the snipe gauge 3 pips + V9's tiers (V8's 5 pips dropped); close sniping (3 m: +2);
+L's swing hit sets the point, its block sets none, 7 f / 1.8 m / 16; SP1 / SP2 lay unconditionally; J / K feel split in
+every form; the conflicts: 「L 揮空也能接 J 前衝」, 「維持 3 格＋ V9 效果」, the 10+ recall 「畫新的動作」, 「全部型態」.
+
+| Item | Before (V6–V9e) | Now |
+|---|---|---|
+| J strings (base J1–J3, JILLIEL wing J, owl claw J) | as built | startup −2, recovery −2 (min 4 / 6), damage ×0.85, block advantage raised to about ±0 [G] |
+| K strings (base K1–K3, wing K, claw K) | as built | startup +2, recovery +2, damage ×1.20, block advantage −4 more (punishable) [G] |
+| K and traces | a K touch fires one (V6) | **K never fires a trace**: the K route keeps the pool for the recall |
+| J and traces | every J fires the nearest within 2.5 m | unchanged (the J route spends one at a time) |
+| The recall's tiers | 0 / 1–2 / 3–5 / 6+ = 30 / 80 / 150 / 210 | **0 / 1–2 / 3–5 / 6–9 / 10+ = 30 / 70 / 160 / 300 / 480** [numbers G]; 10+ is a new move `:br-rc4` with its own clip |
+| Ranged L | sets a point 0.5 m behind him, always (3 flash step) | **a swing**: startup 7, reach 1.8 m, 16 damage; **a hit** sets the point (and pays 3 flash step); a block or whiff sets none, pays none |
+| Ranged L → J | dash only if L set its point (V6c reading) | **the dash in L's window always** (「L 揮空也能接 J 前衝」): its f0 fires the nearest existing line, or none |
+| Ranged SP1 / SP2 | lay unconditionally | unchanged |
+| Base stance L | a hit: +1 pip | a hit **within 3 m: +2**, farther +1 (cap 3) |
+| Snipe gauge / stance K / snap | 3 pips, V9's tiers, V9c / V9d / V9e | unchanged |
+| Normal J / K | gather nothing | unchanged |
+
+`:br-rc4` 裁き・極 (10+ points, 480 in all) [G frames]: S 6; six beats at f6 / f12 / f18 / f24 / f30 / f36, 40 each, 萬物貫通
+lines from the wing tips at him; f38–f47 the NIJUSHI-KO ring, then the beam at f48, 240, 萬物貫通, a knockdown; recovery 30.
+The owl: claws. Until its clip is drawn it borrows `:br-rc3`.
+
 ### Decision V9e (2026-10-10): no stance link at 0 pips (the loop fix)
 
 The user, on playtest v42: 「常態模式出現錯誤連段：在麼有資源的情況下 J / K 攻擊中快速按 L 會打斷後搖接入架式然後又可以繼續 J / K => L 這樣無限
