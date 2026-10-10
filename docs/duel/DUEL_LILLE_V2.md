@@ -2,7 +2,7 @@
 
 Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17); decision V6a (TENSHIN in only as a quick J after a lay) built 2026-10-10 (§18); decision V6c (the wider L → J window, TENSHIN in fires a line at its f0) built 2026-10-10 (§19); decisions V9 / V9b / V9c / V9d (the stance K by pips, the snap's links) built 2026-10-10 (§20); decisions V8 / V8a (two
 routes, one pool; a dash spends a trace) built 2026-10-10 (§21); decision V8b (the ranged L back to the plain lay) built
-2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22).**
+2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22); decision V9f (TENSHIN in fires before it pays) built 2026-10-10.**
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -109,6 +109,23 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
 
+### Decision V9f (2026-10-10): TENSHIN in fires before it pays
+
+The user, while the awakening's third redesign is being discussed: 「先幫我把 Lille II 的覺醒 L > J 優先級改成實體化先於前衝」;
+asked what a lone trace does then, the pick 「不前衝，原地出 J1」.
+
+- V8a's order was: the dash's price (the farthest trace) spent as TENSHIN in starts, then its f0 fired the nearest **of the
+  rest**: a lone trace (one L, then J) paid the dash and nothing fired.
+- Now the line that fires comes first: TENSHIN in keeps the nearest within 2.5 m for its f0 (as before, V6c) and pays with
+  the farthest **of the others** (`BR-TENSHIN-PAY`, a pure function; `BR-SPEND-FAR` with TENSHIN true).
+- No other trace to pay with: **no TENSHIN in**; the J is J1 in place (`BR-TENSHIN-OK-P` gates the lay's latch, the 10 f late
+  path and the CPU's cancel), and that J1's own first active frame fires the near line (V6). So one L → J is a shot from a
+  J1 in place; the dash needs two traces (or one that is not near: it pays, nothing fires, as before).
+- The J3 → L backstep is unchanged (it spends the farthest, `BR-DASH-OK-P`).
+- Host test (duel-rules 8671): `BR-TENSHIN-PAY` cases (fire 2 / pay 1; a lone near one fires, no dash; a lone far one pays;
+  the nearer of two fires, the other pays; a near tie fires the newer).
+- No gate run (the awakening is being redesigned; gates stay pending, task list).
+
 ### Decision V8b (2026-10-10): the ranged L back to the plain lay
 
 The user, after the V8 playtest (v45): 「L 改回 v9 的不帶傷害 可以直接放」.
@@ -120,7 +137,8 @@ The user, after the V8 playtest (v45): 「L 改回 v9 的不帶傷害 可以直�
   without L) and ASSIST routes (the swing, SP1's fan from range and after the backstep): the pre-V8 ones are back (L lays
   from range; L → J for the dash).
 - Kept: the L → J window as V6c (from L's point at f4 to 10 f after its end) and V8a's price (the dash needs a live trace and
-  spends the farthest; L's own point is always there, so with no other it is spent and nothing fires); everything else of
+  spends the farthest; L's own point is always there, so with no other it is spent and nothing fires; since V9f the near
+  one fires first and a lone one means J1 in place); everything else of
   V8 / V8a (the J / K feel split, K fires no trace, the five recall tiers with `:br-rc4`, close sniping +2, the dashes'
   trace price, the backstep free of flash step).
 - The art batch's swing look for L is dropped. Built: §21.8.

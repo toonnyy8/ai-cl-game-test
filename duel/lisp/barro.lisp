@@ -403,6 +403,13 @@ FARTHEST, a tie the older (the smaller id). Its id, or NIL (no trace: no dash)."
         (when (or (null best) (> d bd) (and (= d bd) (< id best)))
           (setf best id bd d))))
     best))
+(defun br-tenshin-pay (cands)
+  "TENSHIN in's traces (decision V9f, the user 2026-10-10: 「覺醒 L > J 優先級改成實體化先於前衝」, 「不前衝，原地出 J1」):
+CANDS as BR-PICK's. The one that fires comes first (BR-PICK: the nearest within *BR-NEAR-R*), the dash's price is the
+farthest of the rest (BR-PICK-FAR). Values the price's id (NIL: no dash, the J is J1 in place, its own first active frame
+fires the near one) and the id that fires (NIL: none near)."
+  (let ((fire (br-pick cands)))
+    (values (br-pick-far (if fire (remove fire cands :key #'first) cands)) fire)))
 (defun br-backstep-lay-ok-p (sf) "May a ranged lay start on the backstep's frame SF: from the dash's end (*BR-BACKSTEP-F*, decision V6)?"
   (>= sf *br-backstep-f*))
 (defun br-kamae-step-ok-p (dashed fs)
@@ -1300,12 +1307,12 @@ pip to answer it: :KAMAE-STEP, its direction kept in BRS-DASH-DIR (off a lane: b
   "A melee J1's / K1's frame 0: pressed in a ranged mode (or its MUJITTAI, dropped there first), he is back in melee (the move goes
 on: the same move is melee's). A ranged J within *BR-DASH-LATE* frames after a lay that set its points (BRS-LATE) is
 TENSHIN in instead: its 2 f cancel copy starts here (decision V6c, the user 2026-10-10: 「整個放點招式＋收招後 10 幀」), spending a
-trace (decision V8a: with none, the J1 in place goes on)."
+trace (decision V8a; V9f: not the one that fires, BR-TENSHIN-OK-P; with none to spare, the J1 in place goes on)."
   (let* ((f (fighter e)) (st (br e)) (form (fighter-form f)) (to (br-melee-of form)))
-    (cond ((and (plusp (brs-late st)) (br-ranged-form-p form) (eq (mv-kind (fighter-move f)) :quick) (br-dash-ok-p e))
+    (cond ((and (plusp (brs-late st)) (br-ranged-form-p form) (eq (mv-kind (fighter-move f)) :quick) (br-tenshin-ok-p e))
            (setf (brs-late st) 0)
            (start-move e (br-tenshin-cancel-move f))
-           (br-spend-far e)
+           (br-spend-far e t)
            (pace e :tenshin-late))
           ((not (eq to form)) (set-form e to) (pace e :to-melee)))))
 
@@ -1353,8 +1360,9 @@ buffered) cancels its recovery: 「衝刺結束才能接」 (decision V6). His C
   "TENSHIN in's dash f0 (before BR-TENSHIN-GO): one line materialises, the nearest within *BR-NEAR-R* of him along its line
 (BR-MATERIALISE-ONE: a 26 f stagger, 萬物貫通), none when no line is near; the dash and J1 follow (decision V6c, the user
 2026-10-10: 「照原版：前衝第 0 幀觸發」: the old Lille's TENSHIN in fired at its f0, 26 > the dash + J1's 8 f, a real combo).
-The order (decision V8a): the dash's price, the farthest trace, was spent when it started (BR-SPEND-FAR, 2 f before);
-this fires the nearest of what is left (the only trace spent: nothing fires)."
+The order (decision V9f, the user 2026-10-10: 「覺醒 L > J 優先級改成實體化先於前衝」): the near line is kept for this; the
+dash's price, the farthest of the others, was spent when it started (BR-SPEND-FAR, 2 f before); with no other trace there
+was no TENSHIN in (BR-TENSHIN-OK-P: J1 in place, 「不前衝，原地出 J1」). (V8a's order spent first: a lone trace paid, none fired.)"
   (when (br-materialise-one e) (pace e :tenshin-fire)))
 
 (defun br-tenshin-go (e)
@@ -1415,14 +1423,14 @@ of flash step sets none: no dash, its latched J is J1 in place at its end. TENSH
              (open (and (br-dash-window-p sf last end) paid)))
         (when (zerop (fighter-lock f))
           (let ((b (br-tick-brain e)) (vp (pilot-vpad (pilot e))))
-            (cond (b (when (and open (br-dash-ok-p e) (br-ai-cancel-p e b))
+            (cond (b (when (and open (br-tenshin-ok-p e) (br-ai-cancel-p e b))
                        (when (br-tenshin-start e f) (pace e :ai-tenshin-cancel))))
                   (t (when (vpad-command-pressed-p vp :quick nil)       ; (any frame: latched, decision V6c)
                        (vpad-consume! vp :quick)
                        (unless (brs-dash-q st) (pace e (if (< sf last) :tenshin-latch :tenshin-press)))
                        (setf (brs-dash-q st) t))
-                     (when (and open (brs-dash-q st) (br-dash-ok-p e))  ; (decision V8a: a trace to spend, else J1 at
-                       (setf (brs-dash-q st) nil)                       ;  the end, below)
+                     (when (and open (brs-dash-q st) (br-tenshin-ok-p e))  ; (decision V9f: a trace to spend besides the one
+                       (setf (brs-dash-q st) nil)                          ;  that fires, else J1 at the end, below)
                        (br-tenshin-start e f))
                      (when (and (>= sf end) (brs-dash-q st) (eq (fighter-move f) mv))   ; (no point set: J1 in place)
                        (setf (brs-dash-q st) nil)
@@ -1431,12 +1439,15 @@ of flash step sets none: no dash, its latched J is J1 in place at its end. TENSH
           (setf (brs-late st) (if paid *br-dash-late* 0)))))))
 
 (defun br-tenshin-start (e f)
-  "Start TENSHIN in's 2 f cancel copy (a J in a lay's window) and pay its price, the farthest trace, unfired (BR-SPEND-FAR;
-decision V8a). T when it started."
+  "Start TENSHIN in's 2 f cancel copy (a J in a lay's window) and pay its price, the farthest trace but the one its f0 fires,
+unfired (BR-SPEND-FAR; decisions V8a, V9f). T when it started."
   (when (try-command e f :q nil nil (br-tenshin-cancel-move f))
-    (br-spend-far e)
+    (br-spend-far e t)
     t))
-(defun br-dash-ok-p (e) "May a dash (TENSHIN in, the backstep) start: a live trace to spend (decision V8a)?" (plusp (br-live-traces e)))
+(defun br-dash-ok-p (e) "May the backstep start: a live trace to spend (decision V8a)?" (plusp (br-live-traces e)))
+(defun br-tenshin-ok-p (e)
+  "May TENSHIN in start: a live trace to spend besides the one its f0 fires (BR-TENSHIN-PAY; decision V9f)?"
+  (and (br-tenshin-pay (br-trace-cands e)) t))
 
 ;;; ---------------------------------------------------------------- the traces: aim points (decision V7)
 (defun br-live-traces (e)
@@ -1501,20 +1512,26 @@ frame, *BR-SP1-FAN*). Laying deals nothing."
 (defun br-trace-dist (hz d x z) "The ground distance from (X Z) to trace D's (hazard HZ) line (BR-SEG-DIST)."
   (br-seg-dist (hazard-x hz) (hazard-z hz) (brh-ux d) (brh-uz d) x z))
 
-(defun br-materialise-one (e)
-  "One trigger (decision V6: every J at its first active frame, a K on its touch): the lines turned through him now
-(BR-TRACES-AIM), the live trace whose line passes nearest the opponent within *BR-NEAR-R* (BR-PICK; a tie the newer)
-materialises along it. T when one did."
+(defun br-trace-cands (e)
+  "The lines turned through him now (BR-TRACES-AIM), his live traces as BR-PICK's CANDS ((id dist), dist the line's ground
+distance to the opponent); second value an alist id -> (entity . hazard)."
   (br-traces-aim e)
   (let ((q (pos-of (opp-of e))) (cands nil) (hs nil))
     (do-entities (h (hz hazard))
       (let ((d (hazard-data hz)))
         (when (and (eql (hazard-owner hz) e) (brh-p d) (brh-live d))
           (push (list (brh-id d) (br-trace-dist hz d (aref q 0) (aref q 2))) cands)
-          (push (cons (brh-id d) hz) hs))))
+          (push (list* (brh-id d) h hz) hs))))
+    (values cands hs)))
+
+(defun br-materialise-one (e)
+  "One trigger (decision V6: every J at its first active frame, a K on its touch): the lines turned through him now
+(BR-TRACES-AIM), the live trace whose line passes nearest the opponent within *BR-NEAR-R* (BR-PICK; a tie the newer)
+materialises along it. T when one did."
+  (multiple-value-bind (cands hs) (br-trace-cands e)
     (let ((id (br-pick cands)))
       (when id
-        (let ((hz (cdr (assoc id hs))))
+        (let ((hz (cddr (assoc id hs))))
           (br-materialise! e hz (hazard-data hz))
           (pace e :materialised)
           (emit :sfx :lb-crack e)
@@ -1522,20 +1539,15 @@ materialises along it. T when one did."
 
 (defun br-j-mat (e) "A melee J's first active frame: one trace materialises, hit or whiff (decision V6)." (br-materialise-one e))
 
-(defun br-spend-far (e)
+(defun br-spend-far (e &optional tenshin)
   "A dash's price (decision V8a, the user 2026-10-10: 「覺醒後的 L>J / J > L 前後衝刺都需要消耗一條軌跡才能發動」, 「最遠那條，不射出」):
 the lines turned through him now (BR-TRACES-AIM), the live trace whose line passes FARTHEST from the opponent (BR-PICK-FAR;
-a tie the older) is removed without firing. T when one was."
-  (br-traces-aim e)
-  (let ((q (pos-of (opp-of e))) (cands nil) (hs nil))
-    (do-entities (h (hz hazard))
-      (let ((d (hazard-data hz)))
-        (when (and (eql (hazard-owner hz) e) (brh-p d) (brh-live d))
-          (push (list (brh-id d) (br-trace-dist hz d (aref q 0) (aref q 2))) cands)
-          (push (cons (brh-id d) h) hs))))
-    (let ((id (br-pick-far cands)))
+a tie the older) is removed without firing; TENSHIN in's (TENSHIN true) never the one its f0 fires (BR-TENSHIN-PAY, decision
+V9f). T when one was."
+  (multiple-value-bind (cands hs) (br-trace-cands e)
+    (let ((id (if tenshin (br-tenshin-pay cands) (br-pick-far cands))))
       (when id
-        (destroy-entity (cdr (assoc id hs)))
+        (destroy-entity (cadr (assoc id hs)))
         (setf (brs-live (br e)) (max 0 (1- (brs-live (br e)))))
         (pace e :trace-spent)
         t))))

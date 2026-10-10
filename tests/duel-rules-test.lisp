@@ -3268,8 +3268,8 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (getf (mv-params (find-move :br-k-shot)) :snipe-close)
               (notany (lambda (n) (getf (mv-params (find-move n)) :snipe-close)) '(:br-k-sanren :br-k-hiren :br-k-snap))))
   ;; decision V8b (the user 2026-10-10: 「L 改回 v9 的不帶傷害 可以直接放」): the ranged L is the plain lay again, no damage,
-  ;; its one point (3) at f4 whatever it touches; refused short (above); so an L always leaves a trace for its L -> J dash
-  ;; (V8a's price): with no other, the dash spends L's own and nothing fires (below)
+  ;; its one point (3) at f4 whatever it touches; refused short (above); so an L always leaves a trace: with no other, its
+  ;; L -> J fires it from a J1 in place, no dash (decision V9f, below)
   (check (and (~= 3.0 *br-lay-l*) (~= 3.0 (br-line-cost :l))
               (every (lambda (n) (let ((mv (find-move n)))
                                    (and (zerop (length (mv-hits mv))) (eq :l (getf (mv-params mv) :trace))
@@ -3283,8 +3283,17 @@ defender's next step. Values: the attacker's and the defender's first actionable
               (null (br-pick-far nil)) (eql 4 (br-pick-far '((4 0.0))))
               (let ((c '((1 9.0) (2 1.0) (3 2.0))))   ; (spent the far one, the nearest of the rest fires)
                 (eql 2 (br-pick (remove (br-pick-far c) c :key #'first))))
-              (null (br-pick (remove (br-pick-far '((1 0.5))) '((1 0.5)) :key #'first)))   ; (the only one spent: none fires)
+              (null (br-pick (remove (br-pick-far '((1 0.5))) '((1 0.5)) :key #'first)))   ; (the backstep: the only one spent)
               (eql 0 (first (find 'br-backstep-go (mv-on-frame (find-move :br-backstep)) :key #'second)))))
+  ;; decision V9f (the user 2026-10-10: 「覺醒 L > J 優先級改成實體化先於前衝」, 「不前衝，原地出 J1」): TENSHIN in keeps the line
+  ;; that fires (the nearest within 2.5 m) and pays with the farthest of the rest; nothing else to pay: no dash, J1 in place
+  (flet ((pay (c) (multiple-value-list (br-tenshin-pay c))))
+    (check (and (equal '(1 2) (pay '((1 9.0) (2 1.0) (3 2.0))))   ; (fires 2, pays 1)
+                (equal '(nil 1) (pay '((1 0.5))))                 ; (the lone near one fires: no dash)
+                (equal '(1 nil) (pay '((1 4.0))))                 ; (none near: the lone far one pays, nothing fires)
+                (equal '(3 2) (pay '((2 0.4) (3 0.6))))           ; (the nearer fires, the other pays)
+                (equal '(nil nil) (pay nil))
+                (equal '(2 4) (pay '((1 3.0) (3 2.0) (2 5.0) (4 2.0)))))))   ; (a near tie fires the newer; the farthest pays)
   ;; his CPU (decision V8): the base form's close snipe (:close, no pip, inside 3 m) and its plan in the stance (the shot, safe,
   ;; <= 1 pip, inside :close-in, the roll rescaled when it does not fire); no ranged close swing since decision V8b
   (let ((k (getf (kit-ai b) :kamae)) (z '(:p 0.5 :near 6.0)) (p '(:p 0.6 :near 4.0)) (c '(:p 0.4 :near 3.0)))
