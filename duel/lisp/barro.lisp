@@ -963,6 +963,7 @@ decision V9; at 0 pips the plain K1, V9d).")
   (dash-end 99 :type fixnum)              ; TENSHIN in: the move frame its dash ends (the link frame)
   (latch nil)                             ; ... the J1 / K1 it links into (:q, a K pressed during it :f)
   (switch-to nil)                         ; ... the melee form it turns into (6 f into the dash, or at its end)
+  (dash-j nil)                            ; ... the J1 it started (that move while it runs): it fires no trace (V9g)
   (dash-q nil)                            ; a ranged lay: a J latched before its last point (it dashes there; V6c)
   (laid nil)                              ; ... its latest BR-LAY set a point (paid; a refused one sets none: no dash)
   (late 0 :type fixnum)                   ; frames left after a lay that set its points: a J dashes (*BR-DASH-LATE*; V6c)
@@ -1032,6 +1033,8 @@ check on its f59."
       (unless (and (eq (fighter-state f) :move) mv (eq (mv-tick mv) 'br-lay-tick)) (setf (brs-dash-q st) nil))   ; late
       (cond ((not (member (fighter-state f) '(:idle :guard :run))) (setf (brs-late st) 0))                       ;  window
             ((and (plusp (brs-late st)) (zerop (fighter-freeze f))) (decf (brs-late st)))))                       ;  counts down free)
+    (unless (and (brs-dash-j st) (eq (fighter-state f) :move) (eq (fighter-move f) (brs-dash-j st)))
+      (setf (brs-dash-j st) nil))                         ; (decision V9g: only while TENSHIN in's own J1 runs)
     (setf (brs-live st) (br-live-traces e))
     (when (and (br-awake-form-p form) (minusp (brs-awake-t st)))
       (setf (brs-awake-t st) *match-tick*) (pace e :awaken-tick *match-tick*))
@@ -1400,7 +1403,9 @@ latch starts the melee J1 / K1 (TRY-COMMAND), else the rest of the startup is sk
       (when (and (> sf go) (>= sf (brs-dash-end st)) (member (brs-latch st) '(:q :f)))
         (let ((c (brs-latch st)))
           (setf (brs-latch st) nil)
-          (when (try-command e f c) (pace e (if (eq c :q) :tenshin-j1 :tenshin-k1))))))
+          (when (try-command e f c)
+            (when (eq c :q) (setf (brs-dash-j st) (fighter-move f)))   ; (decision V9g: this J1 fires no trace)
+            (pace e (if (eq c :q) :tenshin-j1 :tenshin-k1))))))
     (when (and (eq (fighter-state f) :move) (eq (fighter-move f) mv) (eq (fighter-phase f) :main)
                (>= (fighter-sf f) go) (>= (fighter-sf f) (brs-dash-end st)) (< (fighter-sf f) (1- (mv-s mv))))
       (setf (fighter-sf f) (1- (mv-s mv))))))
@@ -1537,7 +1542,10 @@ materialises along it. T when one did."
           (emit :sfx :lb-crack e)
           t)))))
 
-(defun br-j-mat (e) "A melee J's first active frame: one trace materialises, hit or whiff (decision V6)." (br-materialise-one e))
+(defun br-j-mat (e)
+  "A melee J's first active frame: one trace materialises, hit or whiff (decision V6); not the J1 TENSHIN in links into
+(BRS-DASH-J: decision V9g, the user 2026-10-10: 「前衝後的 J1 不射」; its dash's f0 fired one already, so a dash spends 2)."
+  (if (brs-dash-j (br e)) (pace e :dash-j1-no-mat) (br-materialise-one e)))
 
 (defun br-spend-far (e &optional tenshin)
   "A dash's price (decision V8a, the user 2026-10-10: 「覺醒後的 L>J / J > L 前後衝刺都需要消耗一條軌跡才能發動」, 「最遠那條，不射出」):

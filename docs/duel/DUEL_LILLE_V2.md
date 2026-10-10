@@ -2,7 +2,7 @@
 
 Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17); decision V6a (TENSHIN in only as a quick J after a lay) built 2026-10-10 (§18); decision V6c (the wider L → J window, TENSHIN in fires a line at its f0) built 2026-10-10 (§19); decisions V9 / V9b / V9c / V9d (the stance K by pips, the snap's links) built 2026-10-10 (§20); decisions V8 / V8a (two
 routes, one pool; a dash spends a trace) built 2026-10-10 (§21); decision V8b (the ranged L back to the plain lay) built
-2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22); decision V9f (TENSHIN in fires before it pays) built 2026-10-10.**
+2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22); decisions V9f / V9g (TENSHIN in fires before it pays; its J1 fires none) built 2026-10-10.**
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -108,6 +108,19 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
   is picked and missed (the trace is spent). The opponent sees every line and can step off.
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
+
+### Decision V9g (2026-10-10): TENSHIN in's own J1 fires no trace
+
+The user, on playtest v48: 「我發現目前 L > J1 衝刺會消耗 3 條軌跡？」; told it was three rules stacked (V8a's price, V6c's f0 shot,
+V6's "every J fires one" on the J1 the dash links into), the pick 「前衝後的 J1 不射」.
+
+- The J1 that TENSHIN in starts (`BR-TENSHIN-TICK`'s link, a human's or his CPU's) fires no trace: `BRS-DASH-J` holds that
+  move while it runs (cleared by BARRO-TICK once he is in any other move or none) and `BR-J-MAT` skips it (pacing
+  `dash-j1-no-mat`). A dash spends 2: the price and the f0 shot.
+- Every other J fires one as before (V6), the J2 / J3 after it included; a K1 latched after the dash fires none anyway (V8).
+- With V9f: a lone near trace means no dash, and that J1 in place still fires it (it is not TENSHIN in's).
+- Checked in the browser (debug 82019, two points + L's own: live 3 → 1 after L → J, the J1 hits with no line; 82018, L's
+  own only: J1 in place, its line hits, live 1 → 0). Host tests unchanged (8671).
 
 ### Decision V9f (2026-10-10): TENSHIN in fires before it pays
 
