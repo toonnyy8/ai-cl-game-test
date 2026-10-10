@@ -117,6 +117,8 @@ the K 「四段效果」; the gauge 「維持 3 格」.
   (the old HOSHA loop: → K → L back into the stance). With 0 pips the stance's J stays J1 (V1). Replaces the snap shot.
   (Decision V9a, the user 2026-10-10: 「HŌSHA 三發都擋下來就扣 40 防禦量表」: the three bullets drain **40 in all** when
   all are blocked (13 / 13 / 14), not 40 each; the 30 % through stays.)
+- **Withdrawn (decision V9b, the user 2026-10-10: 「等等，取消跳射改回用速射」):** the HOSHA above (and V9a) is not built;
+  the stance's J stays the snap shot (≥ 1 pip, costs 1, 40, 萬物貫通; 0 pips → J1). The K below stands.
 - **Stance → K** spends **every** pip and fires by the count [G numbers]:
 
 | Pips | Shot | Effect |
