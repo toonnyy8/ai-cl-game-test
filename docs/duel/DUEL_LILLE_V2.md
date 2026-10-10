@@ -107,6 +107,16 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
 
+### Decision V9d (2026-10-10): at 0 pips the stance's J / K are the plain J1 / K1
+
+The user: 「0 格時不能用架式 J / K」; asked what the J / K do then, the user chose 「照你最初的規則：變成普通 J1／K1」, and for
+HAJIN-DAN's knockdown on hit 「保留擊倒」.
+
+- Stance → J at 0 狙擊 pips: the plain J1 (as since V1). Stance → K at 0 pips: the plain **K1** (the stance drops into the
+  normal attack), not V9's 0-pip 退射 TAISHA (40, no 萬物貫通), which is removed. Tiers 1 / 2 / 3 stay as built (§20).
+- 破陣弾 HAJIN-DAN (3 pips) keeps its knockdown on hit and its guard break on block.
+- Built: §20.8.
+
 ### Decision V9c (2026-10-10): the snap shot linked to the Step and to J
 
 The user: 「然後透過以下更改強化速射的性能：1. 減少 step 跟速射之間的切換硬直 2. 讓速射跟 J 可以互相銜接」. Choices: 「兩邊都可取消」;
@@ -134,7 +144,7 @@ the K 「四段效果」; the gauge 「維持 3 格」.
 
 | Pips | Shot | Effect |
 |---|---|---|
-| 0 | 退射 TAISHA | the 3 m back-slide, one shot 40, no 萬物貫通 |
+| 0 | plain K1 (V9d) | the stance drops into K1 (decision V9d; was: 退射 TAISHA, the 3 m back-slide, one shot 40, no 萬物貫通) |
 | 1 | 退射・貫通 | the back-slide, 70, 萬物貫通 (as before) |
 | 2 | 穿甲弾 | 110, 萬物貫通, a knockdown on hit |
 | 3 | 破陣弾 | 150, 萬物貫通, a guard break on block |
@@ -149,6 +159,8 @@ the K 「四段效果」; the gauge 「維持 3 格」.
   the stance at the Step's f11); (b) the snap's recovery after its shot cancels into the stance Step if this stance's Step is
   unused (still once per stance; it returns to the stance, which can fire again); (c) L after a J1 / J2 / J3 hit or block
   opens the stance at f4 (as after a K link), its J the snap; (d) the snap's hit links into J1 (only up close). Built: §20.7.
+- **V9d** (the user, same day): 「0 格時不能用架式 J / K」, 「照你最初的規則：變成普通 J1／K1」; 「保留擊倒」 (HAJIN-DAN). At 0 pips the
+  stance's J / K are the plain J1 / K1; row 0 above is gone. Built: §20.8.
 
 ### Decision V6c (2026-10-10): a wider L → J window; TENSHIN in fires a line at its f0 (the old combo)
 
@@ -226,11 +238,10 @@ The old base Lille's body, rifle and strings; L is the shooting stance.
 | stance → SP2 | `:br-k-hiren` | 6 m back-slide, then one shot 50, PA | clip `:lb-hiren`. A hit: 狙擊 +1 |
 | stance → J, 狙擊 ≥ 1 | `:br-k-snap` 速射 | S 6, dmg **40**, PA, costs 1 | clip `:lb-snap` (Lille's unused hip snap shot) [G]; kept by V9b; V9c: also from the Step's f3, its recovery → the Step (f8), its hit → J1 (f8) (§20.7) |
 | J link → L | `:br-kamae-j` | the stance at f4 (hit or block) | decision V9c (§20.7), as `:br-kamae-k` after a K link |
-| stance → K, 狙擊 0 | `:br-k-taisha0` 退射 | 3 m back-slide, one shot **40**, no PA (20 m), R 24 | decision V9 (§20) [G] |
 | stance → K, 狙擊 1 | `:br-k-taisha` 退射 | 3 m back-slide, one shot **70**, PA, R 28 | clip `:lb-k-taisha` [G] |
 | stance → K, 狙擊 2 | `:br-k-senko` 穿甲弾 | the slide, **110**, PA, knockdown, R 32 | decision V9 (§20) [G] |
 | stance → K, 狙擊 3 | `:br-k-hajin` 破陣弾 | the slide, **150**, PA, knockdown, guard break on block, R 36 | decision V9 (§20) [G] |
-| stance → J, 狙擊 0 | `:br-j1` | — | the stance drops into the normal attack (「一般攻擊」); the K spends every pip (V9) |
+| stance → J / K, 狙擊 0 | `:br-j1` / `:br-k1` | — | the stance drops into the normal attack (「一般攻擊」); decision V9d (§20.8): the K too (V9's 0-pip 退射 40 removed); the K spends every pip (V9) |
 | SP1 (not in the stance) | `:br-sanren` | 3 lines × 30, 20 m, default ranged chip / drain | no 萬物貫通, no 狙擊 [G] |
 | SP2 (not in the stance) | `:br-hiren` | slide, one 40 shot, 20 m | no 萬物貫通, no 狙擊 [G] |
 | U | guard | — | no eye |
@@ -1149,14 +1160,15 @@ withdrawn before the build by **V9b** (「等等，取消跳射改回用速射�
 ### 20.1 What changed
 
 - **Stance → K spends every pip** and starts the move of its tier (`BR-KAMAE-PICK` → `BR-K-TIER-MOVE`, the pips left
-  `BR-KAMAE-LEFT`: 0 after the K, one less after the J, unchanged after L / SP1 / SP2). The K at 0 pips is no longer K1.
+  `BR-KAMAE-LEFT`: 0 after the K, one less after the J, unchanged after L / SP1 / SP2). The K at 0 pips is no longer K1
+  (V9d put it back: §20.8).
   All four play the TAISHA clip (`:lb-k-taisha`: the 3 m back-slide over f0–12 turning 90 °/s, the line locked at f12, the
   shot at f16; art can differ later); the kit reaches them through non-button strings `:kamae-k0` / `:kamae-k` /
   `:kamae-k2` / `:kamae-k3` from every stance move (`:br-kamae`, `-k`, `-re`).
 
 | Pips | Move | Callout (kanji / romaji) | Damage | 萬物貫通 | On hit | On block | Recovery |
 |---|---|---|---|---|---|---|---|
-| 0 | `:br-k-taisha0` | 退射 TAISHA | 40 | no: the kind's chip and drain, a 20 m line (`*br-plain-len*`) | stagger | blocked | 24 |
+| 0 | ~~`:br-k-taisha0`~~ (removed, V9d: K1) | 退射 TAISHA | 40 | no: the kind's chip and drain, a 20 m line (`*br-plain-len*`) | stagger | blocked | 24 |
 | 1 | `:br-k-taisha` | 退射 TAISHA | 70 | yes (31 m, drain 40, 30 % through) | stagger | blocked | 28 (was 24) |
 | 2 | `:br-k-senko` | 穿甲弾 SENKO-DAN | 110 | yes | **knockdown** (kb 1.5) | blocked | 32 |
 | 3 | `:br-k-hajin` | 破陣弾 HAJIN-DAN | 150 | yes | knockdown (kb 2.0) [G] | **guard break** (`:guard-crush` → RESOLVE-CONTACT `:guard-break`) | 36 |
@@ -1178,26 +1190,27 @@ withdrawn before the build by **V9b** (「等等，取消跳射改回用速射�
 
 | Knob | Value |
 |---|---|
-| `*br-taisha0-dmg*` / `*br-taisha-dmg*` / `*br-senko-dmg*` / `*br-hajin-dmg*` | 40 / 70 / 110 / 150 [G] |
-| `*br-taisha0-r*` / `*br-taisha-r*` / `*br-senko-r*` / `*br-hajin-r*` | 24 / 28 (24 → 28) / 32 / 36 [G] |
-| base `:ai :kamae` | `(:full 0.9 :escape 0.4 :escape-in 3.0)` [G] |
+| `*br-taisha0-dmg*` / `*br-taisha-dmg*` / `*br-senko-dmg*` / `*br-hajin-dmg*` | 40 / 70 / 110 / 150 [G] (`*br-taisha0-dmg*` removed, V9d) |
+| `*br-taisha0-r*` / `*br-taisha-r*` / `*br-senko-r*` / `*br-hajin-r*` | 24 / 28 (24 → 28) / 32 / 36 [G] (`*br-taisha0-r*` removed, V9d) |
+| base `:ai :kamae` | `(:full 0.9 :escape 0.4 :escape-in 3.0)` [G] (`:escape` the stance Step since V9d) |
 
 ### 20.4 The CPU, ASSIST, the learner
 
 - **The stance's plan** (`BR-AI-KAMAE-PLAN`, one roll a stance, his CPU's and the ASSIST's): at 3 pips the K (破陣弾) under
   `:kamae :full` 0.9 × the difficulty (before the reeling rule); a reeling opponent the shot; ≥ 1 pip inside 4 m the K
   (its tier) or the snap, half each (as before); **0 pips inside `:escape-in` 3 m the K's back-slide** (TAISHA 40) under
-  `:escape` 0.4 × the difficulty; the SPs a quarter of the time; else the shot. Chances × `*br-ai-diff*` 0.5 / 1.0 / 1.5.
+  `:escape` 0.4 × the difficulty (V9d: the stance Step instead, §20.8); the SPs a quarter of the time; else the shot. Chances × `*br-ai-diff*` 0.5 / 1.0 / 1.5.
 - **HARD layer** (`BR-AI-HARD-KAMAE`): a guard to crush at 3 pips → the K (破陣弾 breaks it on block); else the snap with a
   pip, else the shot (as before).
 - **ASSIST** (base route J → K2s → L → the stance's plan): the same plan with the ASSIST brain's difficulty; it never used
   the J part, nothing else changed.
 - **The learner's `:shot` read**: a Hoho / an attack → the K with a pip (its tier), else SP2 with the bar, else the K at
-  0 pips (the slide) (was: the shot).
+  0 pips (the slide) (was: the shot; V9d: the stance Step, §20.8).
 
 ### 20.5 Debug commands (DUEL_GAMEPLAY 82000 row)
 
-82024 / 82025 / 82026: the base form 4 m from Kenpachi with 0 / 1 / 2 狙擊 pips (82006 has 3): L, then K for the tiers;
+82024 / 82025 / 82026: the base form 4 m from Kenpachi with 0 / 1 / 2 狙擊 pips (82006 has 3): L, then K for the tiers
+(V9d: 82024's K is the plain K1);
 82027 / 82028: 3 / 2 pips with P2 holding guard (破陣弾's guard break, 穿甲弾's block).
 82029: 1.3 m out with 1 pip (V9c: J, L, J the snap, J into J1).
 
@@ -1249,3 +1262,33 @@ The user: 「透過以下更改強化速射的性能：1. 減少 step 跟速射�
 
 - **Gates: run by the lead after the playtest** (decision V6b).
 
+### 20.8 Decision V9d: 0 pips, the plain J1 / K1 (2026-10-10)
+
+The user: 「0 格時不能用架式 J / K」; asked, 「照你最初的規則：變成普通 J1／K1」; HAJIN-DAN on hit: 「保留擊倒」.
+
+- **Sim** (`duel/lisp/barro.lisp`): `BR-KAMAE-PICK` at 0 pips gives `:br-j1` for the J (as before) and **`:br-k1`** for the
+  K (the stance drops into the normal attack, no pip spent, 0 left); `BR-K-TIER-MOVE` holds tiers 1–3 only. Removed:
+  the move `:br-k-taisha0`, its knobs `*br-taisha0-dmg*` (40) / `*br-taisha0-r*` (24), its strings `:kamae-k0` (from the
+  four stance moves), its brush callout row, its pacing key `k-tier0` (a K1 at 0 counts as `kamae-drop`, as the J1 at 0).
+  Tiers 1 / 2 / 3 (TAISHA 70 / 穿甲弾 110 / 破陣弾 150, R 28 / 32 / 36) are unchanged; 破陣弾 keeps the knockdown on hit and
+  the guard break on block (「保留擊倒」).
+- **CPU, the 0-pip escape** (base `:ai :kamae :escape 0.4 :escape-in 3.0`, the same keys and numbers): at 0 pips inside
+  3 m, under `:escape` × the difficulty (one roll a stance, the plan's roll), the plan is now the **stance Step straight back**
+  (`:kamae-step`, 飛廉脚, iframes f0–7) instead of the 0-pip K, and only while this stance's Step is unused and its 10 flash
+  step are there (`BR-AI-KAMAE-PLAN`'s new `step-ok`); else the plan goes on as before (the SPs, else the shot). It never
+  picks the K at 0 pips. The window after the Step picks again (with the Step spent). Pacing: `ai-kamae-step` +
+  `ai-step-back`. This stacks on the stance's own Step roll (`:kamae-step :p` 0.4 for him closing in with no pip), which
+  comes first, as the 0-pip K did before. The ASSIST's stance plan passes no `step-ok`: at 0 pips close it goes on to the SPs
+  or the shot (it no longer presses a 0-pip K).
+- **The learner** (`:shot` read, `BR-LEARN-KAMAE-PLAN`): a predicted Hoho / attack at 0 pips without the bars → the stance
+  Step straight back while it is there (was: the 0-pip K), else the plan (the shot). With a pip the K (its tier), with the
+  bars SP2, as before.
+- **Debug**: 82024 (0 pips, L then K) now shows K1. No new command.
+- **Host tests** (duel-rules-test 8594 → 8576: the removed move drops its two per-move checks in each of his 9 kits, −18;
+  the tier loop runs 1–3, −1; one V9d check, +1): 0 pips → `:br-j1` / `:br-k1` from the stance, no pip left; no
+  `:br-k-taisha0` move, no `*br-taisha0-*` knob, no `:kamae-k0` string; HAJIN's knockdown and `:guard-crush`; tiers 1–3 as
+  before; the CPU plan's Step at 0 pips (Step spent → the SPs; EASY / NORMAL / HARD order) and never the K at 0 pips over
+  every roll, difficulty, bars and Step; the learner's Step / plan at 0 pips. duel-control 89, learn 131, input 33, touch
+  64, cine 18 pass. `tools/pkgcheck.sh duel` 0 / 0 / 0; `./build.sh duel` 0 warnings; smoke exit 0.
+- Manual (LILLE II base table): the 0-pip K row → 「架式中 J／K（0 格）一般 J1／K1」; the gauge note and the tip.
+- **Gates: run by the lead after the playtest** (decision V6b).
