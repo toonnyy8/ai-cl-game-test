@@ -1,6 +1,6 @@
 # SOUL DUEL: Lille Barro II (利傑巴羅・重製), the rebuilt kit
 
-Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5, §15; its CPU pass next).** The old Lille (`DUEL_LILLE.md`, roster index 5) stays as he
+Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5, §15; its CPU pass next); its art polish 2026-10-10 (§17).** The old Lille (`DUEL_LILLE.md`, roster index 5) stays as he
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -664,7 +664,7 @@ Decisions V6 and V7 (§1) built. Everything is in `duel/lisp/barro.lisp` (sim, C
   on the floor (Lille's `%lb-reticle`, turning; SP2's bigger) and its line from the point through him to the wall along
   the hazard's yaw (the owl's gold), every frame. Measured with 82398 (82013's three points; 82005's six): the looks 0 B
   over 10 draws (the first probe of a page reads a one-off heap step in every column, Lille's draw too). Not done: the
-  owl's backstep clip (`:br-o-backstep`) still steps its lift on f13, while the owl now turns ranged at f0.
+  owl's backstep clip (`:br-o-backstep`) still steps its lift on f13, while the owl now turns ranged at f0 (re-timed in §17).
 
 ### 15.2 Readings of the spec
 
@@ -748,3 +748,71 @@ the owl, 82014 the base form 6 m out with the stance started (Step), 82015 force
 
 BY and BK stay under 125 s (accepted exceptions at 60 seeds since V5); he now wins most cross pairings. No damage knob was
 touched (reported, not tuned).
+
+## 17. Art: aim points and the pendulum (2026-10-10, branch `barro-art2`)
+
+Presentation only, in `duel/lisp/barro-art.lisp` (no other file's code moved; `lille-art.lisp` untouched): every simgate row
+of all 28 pairings at 10 seeds byte-identical before / after (815 lines), `--cvc` 3 / 3. The brief (the lead, relaying the
+user's V7 look line, 「軌跡會隨時對準自身」): the point a sigil on the floor, the line readable as pivoting on Lille, a flare
+when set, SP2's thick line distinct, the picked line flashing along itself when it fires and a miss visibly missing, the
+opponent still able to read every line (the counterplay).
+
+### 17.1 The owl's backstep (decision V6: ranged at f0)
+
+- `:br-o-backstep` stepped its root 0.35 m down on f13 (the frame the form used to turn ranged). Since V6 the form (and the
+  owl's kit `:lift`, `*BR-OWL-LIFT*` 0.35) turns at f0, so the old clip popped the owl 0.35 m up on f0 and dropped it back
+  on f13. Re-timed: every key is now written in EN's lift (drawn height = root u + 0.35): f0 the fold with u −0.38 (drawn
+  −0.03, the floor the J3 leaves), f6 −0.05 (drawn 0.3, the leap up and back), f13 0.05 (drawn 0.4), EN's stance by f17
+  (drawn 0.35). No step anywhere; same length (22 f) and marks (the host clip test passes unchanged). `barro.lisp`'s
+  `*BR-OWL-CLIP-MAP*` docstring still says "its lift on f13" (a file this batch did not touch; for the lead).
+- JILLIEL's backstep keeps Lille's `:lb-w-tenshin`: JILLIEL's two forms float at the same lift (0.5), so the f0 turn only
+  swaps the body to EN's fanned wings at the move's own first frame (a snap like any move start); the 5 m glide back reads
+  as "out to range" (stills `jl-backstep-*`). No `:br-backstep` clip drawn (it would also need `barro.lisp`'s move `:clip`).
+- TENSHIN in (ranged J, `:lb-w-tenshin-in` / the owl's `:lb-o-tenshin-in`, item 3 of the brief): the 16 f wind-up, the dash,
+  KIN's body at the dash's end and J1's swing on him read as one dash ending in J1 (stills `tenshin-d*`, `owl-tenshin-d*`);
+  the owl's lift step falls inside the dash (f22) as in Lille's. Unchanged.
+
+### 17.2 Aim points (decision V7's look, replacing batch 5's reticle)
+
+All drawn by `BR-TRACE-LOOK` (each live trace, HAZARD-DRAW) and `BR-DRAW` (his draw hook, before the hazards), jade, the
+owl's gold (LILLE-DRAW's flag); flat floor meshes for what must stay readable, the toon fx kit for what flashes:
+
+| Part | Look | Numbers |
+|---|---|---|
+| The point | a sigil on the floor: a ring, eight ticks round it, a chevron past it pointing along the line toward him; Lille's eye mark turning inside (the owl's in gold: `:br-reticle-gold`, Lille's mesh) | r 0.42 (SP2 0.7); meshes `:br-sigil-jade` #B4DCC4 / `:br-sigil-gold` #E2CC8E |
+| The line | value steps along it, read from the point: dim (0.8 w) up to 2.5 m before him, the light tone (1.35 w, `:br-line-jade-hi` / `-gold-hi`) from 2.5 m before to 3.5 m past him, then the plain tone (w) to 12 m past him, 0.6 w to 20 m, 0.35 w to its 31 m end (or the wall) | w 0.042 (SP2 0.11) |
+| The pivot | a light dash running along each line from the point through him and on, fading past him to the end (one 3.8 s lap, 9 m/s, its own phase per trace); a thin ring on the floor under him while he has live traces (`%BR-HINGE`: where they all turn) | dash 1.6 m; ring r 0.62 |
+| SP2's thick line | wider steps, its 1.2 m lane edged on both sides (thin lines at ±1.2 m), a second ring round its sigil at 1.2 m, a wider dash | `*BR-TRACE-R-THICK*` read, not copied |
+| Set (its first 14 frames, the hazard's age: held by a hitstop) | the sigil stamped in at 1.5 x settling by f8; an `fx-envelope` (flash 1, grow 3, hold 2, out 8): a white flash at the point, a ring spreading to 3.8 r, a star; the line drawn out from the point to its end in 4 frames, a light head at its tip | 7.5 m a frame |
+| Fired (a J / K materialised it; kept in `*BR-SHOT*`, 4 per side, the fx clock) | a light head runs the line at the shot's height (1.2 m) from the point through him to its end in `*BR-FIRE-F*` 5 frames, a star where it passes through him, the spent line flashes on the floor (light tone, thinning over 14 frames), the sigil bursts (a ring to 4 r, a star); over the sim's own LB-LOOK shot / beam / 裁きの光明 | `*BR-FIRE-LIFE*` 0.6 s |
+| Missed (its hazard gone with its hit unspent: `hazard-hits-left` > 0) | a grey puff and two ink streaks at the point of the line nearest him (where it passed him by), three ink dashes across the gap to him | fading k² over the 0.6 s |
+
+- His place for the trace looks: BR-DRAW writes his and the opponent's x z into `*BR-AT*` each frame with a DO-ENTITIES pass
+  over the transforms (`%BR-PLACE!`; a component getter conses 8 B in this build, the pass does not); fighters draw before
+  hazards, so the looks read this frame's place.
+- 0 B a frame (82398, 10 draws each, after a page's first probe): the trace looks 0 (3 and 6 traces, JILLIEL and the owl),
+  `%BR-PLACE!` 0, the hinge 0, a fired (missed) trace's look 0; BR-DRAW 80 B / 10 (its existing fighter lookup).
+- The recall's fly-back look (§12) is unchanged: the live look still notes each trace in `*BR-SEEN*`.
+
+### 17.3 Debug commands (DUEL_GAMEPLAY 82000 row)
+
+82100+k art scenes 15–19 (k + 20 the front view for 15 / 17 / 18): 15 JILLIEL ranged 6 m out with a thick SP2 point (3 m
+behind, −35°) and an L point (2.5 m, +30°), then the L lay (the set on its f4: hold with 82200+f); 16 the owl's (82016, then
+its lay; P1 only); 17 JILLIEL melee 3 m out, one L point 4 m behind and 50° off (its line ~2.3 m beside him: picked, missed),
+J1 started; 18 the same with a thick SP2 point 12° off (J1 whiffs, the line hits); 19 17 as the owl (P1 only). 82398's line
+now ends `place / hinge / fired`.
+
+### 17.4 Stills (not committed; `tests/shots/barro2/`)
+
+`node tools/run.mjs dist/duel --fixed-dt 16.666667 --script …` (four scripts: held scenes 82299 / 82200+f / 82100+k;
+timed shots after 82117–82119 and 82137; 82013 / 82016 + J; 82015 J J J → L then L, 82014 Space, the idle points); `before-*`
+on the batch-5 build (99fba9c), `after-*` on this one. Contact sheet `barro2-sheet.png` (24 tiles: the idle points behind /
+front / owl, the set, TENSHIN's hit, the thick hit, the misses, the owl's backstep before / after, JILLIEL's backstep, the
+lay after the backstep, the stance Step).
+
+### 17.5 Gates (2026-10-10)
+
+Host suites: duel-rules 8099, duel-control 89, learn 131, input 33, touch 64, cine 18, all pass. `tools/pkgcheck.sh duel`
+0 / 0 / 0. `./build.sh duel` 0 warnings. Smoke `run.mjs --secs 8` exit 0; the still scripts exit 0. simgate, 10 seeds, all
+28 pairings: 815 lines byte-identical to 99fba9c's; `--cvc` PASS 3 / 3. Needs the user's eyes (checked by numbers and
+stills only).
