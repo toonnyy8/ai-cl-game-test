@@ -38,6 +38,9 @@ Read this first. It is the map; the detail lives in the files it points to. The 
   re-runs the tests/gates, merges, pushes. Subagents never push or deploy.
 - Ask with `AskUserQuestion` (2–4 options, recommended first) only when the answer changes the design; small clear
   requests get no questions.
+- **Playtest first, gates after** (the user, 2026-10-10, DEVLOG §165): once a change passes the fast checks (host tests,
+  pkgcheck, build, smoke), publish the playtest Artifact, then run the sim gates, so the user's playtest and the automated
+  gates run at the same time; report the gates when they finish.
 
 ## Repo map
 
@@ -94,7 +97,8 @@ tools/pkgcheck.sh duel                   # ECL never warns about undefined / une
 - Engine and RAVEN EDGE tests (run what a change touches): `tests/ecs-test.lisp`, `tests/test-math.lisp` (header has its load line), `tests/input-test.lisp`,
   `tests/cine-test.lisp`, `tests/engine-check.sh` (browser), and keep RAVEN EDGE intact (`tests/rules-test.lisp`, G1 in
   `tests/style-gates.py`).
-- Scope: a change inside one character's files → its pairings and its A/B; shared files (combat, fighter, rules, ai,
+- Scope: a change inside one character's files → its pairings and its A/B (Lille II: not against the old Lille, no BL
+  pairing, the user 2026-10-10); shared files (combat, fighter, rules, ai,
   tuning, kit) → all fifteen. Attribute a shift with a baseline on the parent commit (`git worktree add`).
 - Accepted exceptions are recorded with the user's words: YK median 119.5 s (60 seeds) after the J reach change
   (2026-10-06, DUEL_STRINGS §20 / DEVLOG §81); Lille's LR 229.6 s and LI 216.2 s (60 seeds) after his trace-laying

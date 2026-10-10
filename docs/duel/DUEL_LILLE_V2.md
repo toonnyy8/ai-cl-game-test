@@ -107,6 +107,14 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
 
+### Decision V6b (2026-10-10): gates without the old Lille, the playtest first
+
+The user: 「未來測試閘門不要跟第一版 lille 比較，然後先上 playteat 後再跑閘門測試讓自動測試跟人工測試兩邊能同時運作」.
+
+- His gates (pacing, A/B, aieval reads) no longer include BL (Lille II vs the old Lille): six pairings, BY BK BR BI BS BB.
+  (The isolation check, the old 21 pairings' rows unchanged, stays: it compares nothing with him.)
+- Each change goes to the playtest Artifact once the fast checks pass; the sim gates run after, alongside the playtest.
+
 ### Decision V6a (2026-10-10): TENSHIN in only as a quick J after a lay
 
 The user, after the V6–V7 playtest build: 「L > 前衝的設計理解錯誤，我希望是 L 放軌跡後快速連結 J 才會前衝」. Choices: other ranged J
