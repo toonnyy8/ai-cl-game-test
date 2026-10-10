@@ -88,7 +88,7 @@ tools/pkgcheck.sh duel                   # ECL never warns about undefined / une
 | ASSIST | `python3 tools/assistgate.py` | report the masher's win % per setting |
 | CPU score | `python3 tools/aieval.py --char C` (roster index 0–4) | AI work only (DUEL_AI_V2) |
 | G2 references | `python3 tests/style-gates.py cvc dist/duel` (or `simgate.py --cvc`) | identical to `tests/style-cvc-ref.txt`; on an intended change regenerate it (header note + "Before:") and update every quote of those lines |
-| Looks (refactors) | `python3 tests/style-gates.py looks BASE_DIST dist/duel --jobs 4 [--keep-base]` (BASE = a copy of `dist/duel` built before the change) | 108 stills byte-identical to BASE (noise floor 0); for changes that must not move a pixel |
+| Looks (refactors) | `python3 tests/style-gates.py looks BASE_DIST dist/duel --jobs 4 [--keep-base]` (BASE = a copy of `dist/duel` built before the change) | 112 stills byte-identical to BASE (noise floor 0; 108 before Lille II, 2026-10-10); for changes that must not move a pixel |
 | Shipping build | `./build.sh duel` last | |
 
 - Engine and RAVEN EDGE tests (run what a change touches): `tests/ecs-test.lisp`, `tests/test-math.lisp` (header has its load line), `tests/input-test.lisp`,

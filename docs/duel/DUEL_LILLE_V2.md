@@ -568,3 +568,15 @@ the other characters' HARD layers came from dream-rsi searches (DUEL_AI_V2, DUEL
 spec and answers), duel-control 89, learn 131, input 33, touch 64, cine 18 pass; `tools/pkgcheck.sh duel` 0 / 0 / 0;
 `./build.sh duel` 0 warnings; smoke `run.mjs --secs 8` exit 0 and a script through 82020 (the CPU mirror), 82005 (K
 materialised the six traces) and 82002 + J + L (the router): exit 0, no error (J1 hit → L → `BR-L-LINK` → `BR-TO-EN`; K1 hit → L → the same).
+
+## 14. Lead's merge gate (2026-10-10)
+
+- Merged `barro-b1`, `barro-cpu`, `barro-art` on `claude/loving-euler-qhsjxo`. Host suites: rules 8440, control 89, learn
+  131, input 33, touch 64, cine 18, all pass; pkgcheck 0 / 0 / 0; `./build.sh duel` 0 warnings; smoke exit 0.
+- simgate, 10 seeds, all 28 pairings: the merged head's 813 lines byte-identical to `barro-cpu`'s (the art merge moved no
+  sim bit); `--cvc` 3/3.
+- The looks gate re-pinned for seven fighters (`tests/style-gates.py`): LOOKS_SEEDS ((1 YS) (56 RI) (32 KL) (39 BK)) (before
+  ((1 YS) (5 IR) (0 KL) (18 SI)) over six: the draw changed with the roster length), seven select stills, `cine-barro`
+  (his awakening, 82300 + k at frames 30 / 90 / 150). Run on the merged build against a copy of itself: 112 stills
+  (before 108), noise floor 0, 132 PASS, 0 FAIL; every cvc scene's "duel match" line names the pinned pair.
+
