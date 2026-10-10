@@ -107,6 +107,16 @@ The user: 「另外由於軌跡主動性太低，我想改成設置瞄準點，�
 - The recall (K3 → L) takes every aim point, as before.
 - The look [G]: a small mark on each point, its line redrawn each frame (0 B a frame).
 
+### Decision V6a (2026-10-10): TENSHIN in only as a quick J after a lay
+
+The user, after the V6–V7 playtest build: 「L > 前衝的設計理解錯誤，我希望是 L 放軌跡後快速連結 J 才會前衝」. Choices: other ranged J
+「原地切近戰出 J1」; which lays 「L、SP1、SP2 都可以」.
+
+- TENSHIN in (the dash, its numbers as V6) comes **only** as the 2 f cancel of a J pressed quickly after a ranged L / SP1 /
+  SP2: from the frame its point is set to the end of its recovery (the window batch 5 built for the cancel) [G window].
+- A ranged J anywhere else (neutral, walking, after the window): back to melee **in place** and J1, as the ranged K. The
+  neutral 16 f wind-up dash is gone.
+
 Everything below that the user did not decide is marked **[G]** (our reading, a knob; changed on the next playtest).
 
 ## 2. Frame
