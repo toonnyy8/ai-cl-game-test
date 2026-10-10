@@ -2,7 +2,7 @@
 
 Status: **built 2026-10-09 (batches 1–4: §11–§13); the pendulum and aim-point rework (decisions V6–V7) built 2026-10-10 (batch 5 §15, its CPU batch 6 §16, its art §17); decision V6a (TENSHIN in only as a quick J after a lay) built 2026-10-10 (§18); decision V6c (the wider L → J window, TENSHIN in fires a line at its f0) built 2026-10-10 (§19); decisions V9 / V9b / V9c / V9d (the stance K by pips, the snap's links) built 2026-10-10 (§20); decisions V8 / V8a (two
 routes, one pool; a dash spends a trace) built 2026-10-10 (§21); decision V8b (the ranged L back to the plain lay) built
-2026-10-10 (§21.8).**
+2026-10-10 (§21.8).; 裁き・極's clips drawn 2026-10-10 (§22).**
 is and stays selectable; this is a second, separate fighter built from a copy of him.
 
 The request (the user, 2026-10-09), verbatim:
@@ -1617,3 +1617,96 @@ the manual; no other character, no shared file, `barro-art.lisp` untouched.
   the farthest and fires the nearest within 2.5 m (usually L's new point, whose line runs through him).
 - **Debug** 82018 / 82019 kept, read anew: 82018 (no point) L then J = L's point spent, nothing fires, J1; 82019 (two
   points) L adds a third, the dash spends the farthest, fires the nearest.
+
+## 22. Art for V8 (2026-10-10, branch `barro-art3`)
+
+Decision V8's two new looks: 裁き・極 `:br-rc4` (the recall at 10+ points, 「畫新的動作」) and the ranged L as a swing (「L 放出軌跡時
+的揮擊動作也視為攻擊」, startup 7, active 3, reach 1.8 m, arc 110).
+
+**The swing was withdrawn the same day** (the user, 2026-10-10: 「L 改回 v9 的不帶傷害 可以直接放」: the ranged L is the V9 lay
+again, no damage, its point set directly; relayed by the lead while this batch ran). Its two clips (`:br-e-swing`,
+`:br-oe-swing`) and its flick look were already drawn: they stay in `barro-art.lisp` **unused** (no move plays them, so the
+flick never draws; the debug scenes 43 / 44 still show them through their stand-in), kept for a later swing; the host test
+still checks their reach. 裁き・極 is the live part of this batch. Presentation only, in `duel/lisp/barro-art.lisp`; outside it
+only pure additions: `lille-art.lisp`'s `%LB-SP-DRIVE!` case lists `:br-rc4` beside `:br-rc0`…`:br-rc3` (Lille's own moves
+never reach it), `glyphs-extra.lisp` gains 極. `barro.lisp` is the sim batch's: its moves point at these clips (below).
+
+### 22.1 The clips (timed to the spec's frames)
+
+| Clip | Frames (S A R) | What it shows |
+|---|---|---|
+| `:br-rc4` 裁き・極 (JILLIEL) | 6 43 30 = 79 | six beats, R f6 / L f12 / R f18 / L f24 / R f30 / L f36 (each cocked 2–3 f, snapped at him, kicked back: 裁き's beat poses); risen 0.5 m into a bigger NIJUSHI-KO ring over f38–47 (`:br-ring-big`: the front wings 1.66 m aside and 1.71 m up on f47, 裁き's 1.53 / 1.31 on its f35), shaking; the beam on f48 blows him further back (`:br-blown-big`, root 0.85–0.95 m back, 0.6 m up), settling by f64 |
+| `:br-o-rc4` (the owl) | 6 43 30 | six claw throws on the same frames (J1 / J2's rakes); both claws raised overhead and shaking over f38–47 (risen 0.4–0.46 m) while the gold blast gathers between them; both thrown at him on f48 (2.04 m ahead) |
+| `:br-e-swing` (JILLIEL EN's ranged L) | 7 3 6 | from EN's float the right front wing cocked high behind (f4–6, KIN J1's wind-up), swept flat right → left at chest height through f7–9, followed through, settled by f13 |
+| `:br-oe-swing` (the owl EN's ranged L) | 7 3 5 | reared, the right claw cocked high (J1's), raked flat across at him through f7–9 (root 0.5–0.56 forward) |
+
+**The reach check (item 2 of the brief).** `:lb-e-q1` (what V8's swing borrows "for now") is a cast thrown down onto the
+floor line, not a swing: at the swing's hit frames its tip is 1.18 / 1.10 / 0.97 m out at speed 1, at most 1.62 m played
+at `:clip-s 4` (startup 4 → 7), so JILLIEL's drawn reach falls 0.18 m short of 1.8 at best (outside ±0.15). The owl's
+`:lb-oe-q1`: 1.53 m at speed 1, 1.70 m at `:clip-s 4` (inside, but still a downward cast). Hence the two swing clips; their
+tips on f7 / f8 / f9: JILLIEL 1.86 / 1.84 / 1.81 m, the owl 1.79 / 1.79 / 1.78 m (radial, the host FK test's arc rule, ±0.15
+of 1.8). **For the sim batch:** `:br-rc4` takes `:clip :br-rc4`, and `*br-owl-clip-map*` the pair `:br-rc4 :br-o-rc4`. (Had the
+swing stayed, the ranged L moves would have taken `:clip :br-e-swing` / `:clip :br-oe-swing`, no `:clip-s`, R 6 / 5; unused
+since the revert above.)
+
+### 22.2 The looks (cosmetic; the move's frame and *BR-AT* only)
+
+- **The beats** (`*BR-RC-BEATS*` gains `:br-rc4` (6 1) (12 2) (18 1) (24 2) (30 1) (36 2) (48 4)): each beat's line and flash
+  from the firing tip, SANREN's kick on the firing wing (BR-RC-DRIVE), as 裁き's.
+- **The finisher** (`*BR-FINISHER*` `(move beam-frame ring-frames scale)`: 裁き `(36 10 1.0)`, 極 `(48 10 1.6)`; BR-RC-DRIVE's
+  ring written once for both, 裁き's numbers unchanged at scale 1): 極's wings cup 1.6 × further forward, shake 1.6 ×
+  harder, the beam blows them back 1.6 × harder and longer (16 f), their holes flash longer (10 f).
+- **The ring of holes** (`%BR-KIWAMI-LOOK`, JILLIEL, f38–47; `*BR-KIWAMI-RING*` 1.0 → 2.0 m, 0.35 m behind his chest): the
+  twenty-four holes of NIJUSHI-KO drawn out on a circle facing him, lit one after another (all 24 by f44), a thin jade
+  chord between lit holes, shaking from f41; on the beam they burst outward and fade over 10 f.
+- **The owl's blast** (f38–47): a gold disc between the raised claws growing 0.12 → 0.6 m, its white core, ten gold rays
+  turning, shaking (Trompete's gather, without the trumpet).
+- **The beam** (f48–61, `*BR-KIWAMI-BEAM*` 14 f, half-width 0.42 m, to 3 m past him or the wall): a wide jade (the owl's
+  gold) ribbon from his chest along his line, its white core, a white star at his chest, a shock ring spreading on the
+  floor under him; the beat's line overlay on f48 is 0.24 wide and held 9 f (裁き's 0.16 and 5 f). Over the sim's own
+  LB-LOOK beam (BR-BEAM-SHOT, its `:width` the move's: the sim may give 極 1.6, 裁き's 1.2; the debug stand-in uses 1.6). The
+  overlay stops 3 m past him so it never runs on into the front view's camera; the screen-filling band in
+  `front-jl-rc4-c56-beam` is LB-LOOK's own 31 m beam coming at that camera (the sim's spawn, as in 裁き's front view).
+- **The swing's flick** (`%BR-SWING-FLICK`, decision V8 「L 只有近程打中才會釋放瞄準點」; unused since the revert): while a swing clip plays and a point
+  was set in the last 8 frames (`*BR-NEW*`, noted by `%BR-LIVE-LOOK` for the next frame's BR-DRAW), a jade (gold) comet
+  stroke from the swing's tip (2.2 m past the point along the new line, 1.5 m up) arcing up over him and down onto the
+  sigil, a white core, a light head running it over 4 f; the set's flare (§17.2) stamps the sigil in. A block or a whiff
+  sets no point, so draws no flick.
+- **The callout** 裁き・極 / SABAKI KIWAMI (`*brush-callouts*` row added in barro-art.lisp: barro.lisp's list replaces only
+  the rows it names); 極 baked into `glyphs-extra.lisp` (tools/glyph-bake.py's GLYPH(), Yuji Syuku, the same subset rules).
+- 0 B a frame (82398, 10 draws, after the page's first probe): `%BR-KIWAMI-LOOK` 0 (the ring f47, the beam f51, the owl's
+  blast f45), `%BR-SWING-FLICK` 0, the beat lines / BR-RC-DRIVE / BR-RC-BEAT 0 on 極; BR-DRAW 240 B / 10 with LILLE-DRAW's
+  160 (his own 80, the fighter lookup, as §17).
+
+### 22.3 Debug commands (DUEL_GAMEPLAY 82000 row)
+
+82100+k art scenes 40–44 (k + 20 the front view, 82160–82164): 40 JILLIEL melee with 10 traces laid behind him and the
+recall started (its string the sim's tier for 10); 41 / 42 JILLIEL's / the owl's 裁き・極 started directly; 43 / 44 JILLIEL's
+/ the owl's ranged L swing 1.5 m out. Until barro.lisp has `:br-rc4` (and the swing on the ranged L), the command registers
+a stand-in move of the spec's frames (`BR-ART-MOVE`: `:br-rc4` on 裁き's data with six beats and the f48 beam; `:br-art-swing`
+/ `:br-art-o-swing`, the L's copy on the swing clip whose f7 lays the point) and gives the owl's kit `:br-o-rc4` in its
+`:clip-map`; once the sim's exist it plays them. Debug only (no gate runs these). 82398's line ends `kiwami / flick`.
+
+### 22.4 Stills (not committed; `tests/shots/barro3/`)
+
+`node tools/run.mjs dist/duel --fixed-dt 16.666667 --script …` (four scripts: per still 82299, 82200+f, 82100+k, a shot;
+c = the look clock: 極 started directly reads 7 + its frame, beats at c13 … c43, the beam c55; the swing's clock its frame).
+Contact sheet `barro3-sheet.png` (33 tiles): `jl-rc4-c13-beat1R`, `-c19-beat2L`, `-c37-beat5R`, `-c43-beat6L`, `-c48-ring`,
+`-c54-ring-full`, `-c55-beam`, `-c59-beam`, `-c70-blown`; `jl-rc3-c41-ring`, `-c43-beam` (裁き beside it); `jl-recall10-c03-flyback`,
+`-c08-gather`; `owl-rc4-c13-beat1R`, `-c43-beat6L`, `-c50-raise`, `-c54-blast`, `-c55-throw`, `-c59-beam`, `owl-rc3-c43-throw`;
+`front-jl-rc4-c13-beat1R`, `-c54-ring`, `-c56-beam`, `front-owl-rc4-c54-blast`, `-c56-throw`; `jl-swing-f05`, `-f08-hit`,
+`-f10-flick`, `owl-swing-*` the same, `front-jl-swing-f09`, `front-owl-swing-f09`. A held still's callout may be the previous
+scene's (the hold freezes the sim's callout timer).
+
+### 22.5 Host tests and checks (2026-10-10)
+
+- duel-rules-test 8585 → 8608 (one block at the end of the Lille II section, "Lille II decision V8's art"): 極's numbers
+  (6 43 30, the move's once barro.lisp has it, with its clip, the owl's clip map and its BR-RC-SHOT / BR-BEAM-SHOT frames
+  = the beats), both clips' length and S; on each beat the firing tip >= 1.2 m ahead, within 0.4 m of his line (the owl's
+  0.5); f47's ring wider and higher than 裁き's f35 and each wing >= 1 m aside; the owl's claws thrown at him on f48; the
+  swing clips' length and S and their tips at 1.8 m ±0.15 over f7–9 (the ranged L move's own volume edge once it plays
+  the clip). duel-control 89, learn 131, input 33, touch 64, cine 18 pass.
+- `tools/pkgcheck.sh duel` 0 / 0 / 0. `./build.sh duel` 0 warnings. Smoke `run.mjs --secs 8` exit 0; the four still
+  scripts exit 0.
+- Needs the user's eyes (checked by numbers and stills only). The gates are the sim batch's (its moves change the sim; this
+  batch changes no sim path).

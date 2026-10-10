@@ -230,9 +230,9 @@ f24 / f30 / f36, 萬物貫通 lines from the wing tips ... (new 2026-10-10 [G])"
 (defparameter *br-rc4-last* 240
   "... and the beam at f48 (NIJUSHI-KO's ring f38-f47 before it), 萬物貫通, a knockdown; 6 x 40 + 240 = 480; recovery 30 (new
 2026-10-10, decision V8 [G]).")
-(defparameter *br-rc4-clip* :br-rc3
-  "The clip :BR-RC4 plays (the art agent draws :br-rc4 and the owl's :br-o-rc4, decision V8 「畫新的動作」): until then :br-rc3
-(the owl's :br-o-rc3 through *BR-OWL-CLIP-MAP*). When it lands: :br-rc4 here and (:br-rc4 :br-o-rc4) in the owl's map.")
+(defparameter *br-rc4-clip* :br-rc4
+  "The clip :BR-RC4 plays: its own 裁き・極 clip :br-rc4 (the owl's :br-o-rc4 through *BR-OWL-CLIP-MAP*), drawn 2026-10-10
+(decision V8 「畫新的動作」, DUEL_LILLE_V2 §22); :br-rc3 before (the stand-in).")
 (defparameter *br-rc-stun* 28 "The recall strings' lines before the last stagger this many frames: the next line combos (new 2026-10-09 [G]).")
 (defparameter *br-rc-track* 360.0 "Degrees / s he turns at the opponent through the recall strings (new 2026-10-09 [G]).")
 
@@ -764,7 +764,7 @@ plays at old / new speed and still reaches its hit pose on the new hit frame). A
     (:br-to-en :br-to-en :br-o-to-en :lb-w-fold) (:br-backstep :lb-w-tenshin :br-o-backstep :lb-w-tenshin))
   "His own moves' clips (JILLIEL's, the owl's) and the batch-1 stand-ins they replaced (the art batch, 2026-10-09).")
 (defparameter *br-owl-clip-map* '(:br-recall :br-o-recall :br-rc0 :br-o-rc0 :br-rc1 :br-o-rc1 :br-rc2 :br-o-rc2
-                                  :br-rc3 :br-o-rc3 :br-to-en :br-o-to-en :lb-w-tenshin :br-o-backstep)
+                                  :br-rc3 :br-o-rc3 :br-rc4 :br-o-rc4 :br-to-en :br-o-to-en :lb-w-tenshin :br-o-backstep)
   "The owl kits' :clip-map: the shared moves (the recall, its strings, the mode turns) on the claws' own clips
 (*BR-STAND-INS*; the owl's backstep steps its lift with ranged from f0 (art §17.1), not Lille's TENSHIN's f6).")
 
