@@ -250,6 +250,11 @@ then :down + :wakeup (iframes in both).")
 ;; hit fills the victim's hidden stun gauge; the hit that takes it past his kit's :stun-tolerance blows him away
 (defparameter *stun-weights* '(:flinch 1 :bind 1 :stagger 2 :crumple 3 :knockback 3 :launch 3 :knockdown 3 :heavy 3)
   "Stun points a connected hit adds by its written reaction (any other: 1); :heavy is the floor of an SP / Kikon-rush strike.")
+(defparameter *stun-blow-away* nil
+  "Does a hit past the hidden stun's tolerance blow the victim away? T 2026-09-29 (DEVLOG §37, the user: 「所有角色應該要設一個
+隱藏的受擊數值…」) -> NIL 2026-10-10 (DEVLOG §173, the user: 「現在的系統當角色吃下過多傷害或連段會在中途強制倒地，這導致覺醒的 K > L
+回收的高傷害連段會在中途就強制中斷。」, then 「全角色取消暈眩值」): no blow-away for anyone. The stun still adds and decays (inert);
+the tolerances and the pure rules stay for a later return.")
 (defparameter *stun-tolerance* 16.0 "The stun a form without :stun-tolerance takes; the hit past it is the blow-away.")
 (defparameter *stun-delay* 45 "Frames after the last hit before the stun decays ...")
 (defparameter *stun-decay* 6.0 "... at this many points per second (never at once: a re-pin loop with gaps still fills it).")
