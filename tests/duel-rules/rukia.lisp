@@ -242,8 +242,8 @@
               (every (lambda (f) (and (null (kit-hook (kit :rukia f) :hit)) (null (kit-hook (kit :rukia f) :ok)))) '(:m18 :m50 :zero))))
   ;; the tap / hold splits: L tap BYAKURAI (12 / 3 / 28, 45, a :ranged line 0.5 -> 6 m, 0.3 m wide, flinch, guard 10, -12,
   ;; no bar), held >= 12 f TSUKISHIRO (the switch at its f11, before its hit; no :track that hides aim); SP1 tap SOKATSUI
-  ;; (14 / 4 / 26, 90, a 5 m cone of 40 deg, knockback 3 m, 1 bar), held 16 f RIKUJOKORO (the rods at f16: the mark at f2,
-  ;; the bind 14 f later, 20, a :bind of 45 f, <= 6 m, :src: guardable facing her; its :tell for a CPU victim)
+  ;; (14 / 4 / 26, 90, a 5 m cone of 40 deg, knockback 3 m, 1 bar), held 16 f RIKUJOKORO (the rods at f32: the mark at f2,
+  ;; the bind 30 f later (14 before §17.13), one frame only, 20, a :bind of 45 f, <= 6 m, :src; its :tell for a CPU victim)
   (let* ((by (kit-command-move b :sig)) (ts (kit-next b :ru-byakurai :hold)) (so (kit-command-move b :sp1)) (ri (kit-next b :ru-sokatsui :hold))
          (wb (svref (mv-hits by) 0)) (vb (first (hw-vols wb))) (ws (svref (mv-hits so) 0)))
     (check (and (eq :ru-byakurai (mv-name by)) (equal '(12 3 28) (list (mv-s by) (mv-a by) (mv-r by))) (= 45 (mv-dmg by))
@@ -255,12 +255,15 @@
                 (eq :ru-sokatsui (mv-name so)) (equal '(1 16) (mv-hold so)) (eq 'rukia-sp1-release (mv-release so))
                 (equal '(14 4 26) (list (mv-s so) (mv-a so) (mv-r so))) (= 90 (mv-dmg so)) (~= 5.0 (mv-reach so))
                 (eq :knockback (hw-react ws)) (~= 3.0 (hw-kb ws)) (member :ranged (mv-flags so)) (= 1 (kit-command-cost b :sp1))
-                (eq :ru-rikujo (mv-name ri)) (= 16 (mv-s ri)) (zerop (length (mv-hits ri))) (member :bind (mv-flags ri))
-                (= 16 (+ 2 (getf (mv-params ri) :delay))) (equal '((2 rukia-rikujo)) (mv-on-frame ri))
+                (eq :ru-rikujo (mv-name ri)) (= 32 (mv-s ri)) (~= 0.5 (mv-clip-speed ri)) (zerop (length (mv-hits ri))) (member :bind (mv-flags ri))
+                (= 32 (+ 2 (getf (mv-params ri) :delay))) (= 1 (getf (mv-params ri) :life)) (equal '((2 rukia-rikujo)) (mv-on-frame ri))
                 (= 20 (getf (mv-params ri) :dmg)) (= 45 (getf (mv-params ri) :stun)) (~= 6.0 (getf (mv-params ri) :range))
-                ;; held past 16 f, a bind frame a held frame up to *RU-RIKUJO-MAX* (§10): its hold's end reaches the cap
-                (equal (list 0 (1+ (- *ru-rikujo-max* (getf (mv-params ri) :stun)))) (mv-hold ri))
-                (< (+ (getf (mv-params ri) :radius) 0.45) *step-distance*) (equal '(2 16) (getf (mv-params ri) :tell))
+                ;; held past 16 f, a bind frame each *RU-RIKUJO-RATE* held frames up to *RU-RIKUJO-MAX* (§10, §17.13: 2 held frames a
+                ;; bind frame, the cap 100 unchanged): its hold's end reaches the cap
+                (= 2 *ru-rikujo-rate*) (= 100 *ru-rikujo-max*)
+                (equal (list 0 (1+ (* *ru-rikujo-rate* (- *ru-rikujo-max* (getf (mv-params ri) :stun))))) (mv-hold ri))
+                (= *ru-rikujo-max* (+ (getf (mv-params ri) :stun) (floor (1- (second (mv-hold ri))) *ru-rikujo-rate*)))
+                (< (+ (getf (mv-params ri) :radius) 0.45) *step-distance*) (equal '(2 32) (getf (mv-params ri) :tell))
                 (eq :ru-shirafune-s (mv-name (kit-command-move b :sp2))) (= 1 (kit-command-cost b :sp2)))))
   ;; removed from the Shikai: the K -> L TSUKISHIRO copy, HAKUREN on SP1, the K hits' frost (above)
   (check (and (not (gethash :ru-tsukishiro-k *moves*)) (not (gethash :ru-hakuren (kit-moves b)))
@@ -516,7 +519,7 @@
   ;; payoff pick instead: RUKIA-AI-SP-ENDER), RIKUJOKORO held 14 f past SOKATSUI's 16 (the bind long enough for the O)
   (check (and (every (lambda (k) (and (= 1.0 (getf (kit-ai k) :string-k)) (= 0.0 (getf (kit-ai k) :o-ender)))) (list b m18 m50 z))
               (eq 'rukia-ai-sp-ender (getf (kit-ai b) :sp-ender)) (eq 'rukia-ai-reflex (getf (kit-ai b) :reflex))
-              (= 14 *ai-ru-rikujo-hold*) (= 30 (rukia-ai-sp1-hold b 5.5)) (= 1 *ai-ru-bind-bar*)
+              (= 27 *ai-ru-rikujo-hold*) (= 43 (rukia-ai-sp1-hold b 5.5)) (= 1 *ai-ru-bind-bar*)
               (equal (getf (getf (kit-ai b) :ranges) :poke) '(2.1 2.8)) (equal (getf (getf (kit-ai b) :ranges) :mid) '(3.0 5.0))
               (every (lambda (p) (<= (getf p :easy) (getf p :normal) (getf p :hard)))
                      (list *ai-ru-mu-p* *ai-ru-mu-guard-p* *ai-ru-seal-o* *ai-ru-k-ender-l*))
@@ -555,7 +558,7 @@
               (notany (lambda (band) (or (getf (cddr band) :kikon) (getf (cddr band) :sp1) (getf (cddr band) :sp2)))
                       (getf (kit-ai b) :moves))
               (= 52 (rukia-ai-free-in :down 0 8)) (= 12 (rukia-ai-free-in :wakeup 10 8)) (null (rukia-ai-free-in :stun 3 8))
-              (<= 13 *ai-ru-oki-lead* 17) (= 331 *ai-ru-route*))))
+              (<= 29 *ai-ru-oki-lead* 33) (= 331 *ai-ru-route*))))
   ;; cell b0a2: the awakening after 1800 taken (above); his first-strike envelope at a neutral decision (EASY <= NORMAL <= HARD,
   ;; HARD 0.95), b1a0's values by default, off against Yamamoto (:front :none); the envelope from his J1 (reach + lunge + 0.3 +
   ;; his closing over his J1's startup and her delay)

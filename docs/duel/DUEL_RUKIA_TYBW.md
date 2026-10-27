@@ -1046,3 +1046,43 @@ The user: 「把露琪亞覺醒的 L 改成打傷對手的話可以透過 J1 提
   does not push, so it combos there too); K: none, she is free f52 / f54 / f54 and he blocks.
 - Tests: `tests/duel-rules/rukia.lisp` (the three moves' `:r-cancel` / `:r-cancel-from` = S + A + R − 10, the bands' pin),
   `tests/duel-rules/hisagi.lisp` (the moves with `:r-cancel`: Hisagi's two and Rukia's three).
+
+### 17.13 RIKUJŌKŌRŌ: a 30 f shut, a slower charge, a Step's iframes escape it (the user, 2026-10-27)
+
+The user: 「露琪亞的六丈光牢必須要有更長的蓄力時間且要更容易用 step 躲開，不然性能太過頭了」. Asked (the ring shut 14 f after
+its mark, a Step needs ~8 f to leave it: ~6 f to react), the user chose: 「拉長到達蓄力上限所需要的時間（封鎖時間跟之前的上限
+一樣）並將光環收束改成 30f」 and 「Step 無敵幀也算躲開」.
+
+| Knob (`duel/lisp/rukia.lisp` `:ru-rikujo`) | Old → new |
+|---|---|
+| The ring's shut after its mark (`:delay`) | 14 → **30** f (the mark at f2, the bind at f32) |
+| Its startup (S = the shut; her recovery 26 after it, as before) | 16 → **32** (`:clip-s` 16: the cast clip at half speed) |
+| `*ru-rikujo-rate*` (new): held frames per bind frame past the 45 | 1 → **2**: the cap `*ru-rikujo-max*` 100 unchanged, reached at 111 held frames (`:hold (0 111)`, was 56) |
+| The bind's hit (`:life`) | 6 → **1** frame: it binds only on the frame it shuts, so a Step or a Hoho out of the ring, **or inside its iframes on that frame**, escapes it |
+| `:tell` (the CPU victims' anti-bind window) | (2 16) → **(2 32)** |
+| Her CPU: `*ai-ru-rikujo-hold*` | 14 → **27** (the same 58 f bind at rate 2); the cash-out's stun floor uses S 32; `*ai-ru-oki-lead*` 15 → **31** (the oki's bind still on his wake-up: the shut 16 f later) |
+
+The SOKATSUI / RIKUJOKORO hold threshold (16 f) is unchanged.
+
+- Host tests: `tests/duel-rules/rukia.lisp` re-pinned (S 32, the shut at S, life 1, the rate, the hold reaching the cap
+  exactly, the tell, the CPU's hold 27 / 43 and the oki lead 29..33). duel-rules 10244, learn 131, control 97 ALL PASS;
+  pkgcheck clean; built.
+- Smoke (browser): 85026 (into a held guard) binds at tick 33; 85027 (into his CPU): Kenpachi ran in and hit her during the
+  longer cast; 85028 (held to its end at 5.9 m): the bind lasts ~100 f, she is free ~25 f after it starts.
+- Manual: the row says 0.5 s to the shut, the hold's longer cap and that a Step / Hoho in its iframes on the shut escapes.
+
+**Gates** (her 7 pairings, 10 seeds, all K.O.; median s, before = 146ef31 at 10 seeds; her wins of 10):
+
+| Pairing | Before | After | Her wins before → after |
+|---|---|---|---|
+| RY | 114.6 | 117.5 | 4 → 3 |
+| RK | 102.3 | 114.8 | 3 → 3 |
+| RR (mirror) | 168.6 | 204.6 | — |
+| IR | 150.7 | 127.3 | 5 → 2 |
+| SR | 140.0 | 157.4 | 6 → 2 |
+| BR | 163.9 | 182.6 | 5 → 2 |
+| HR | 147.5 | 163.4 | 4 → 1 |
+
+IR at 20 seeds (its quick pass under 135 s): 132.7 s, 20 K.O., her wins 4 of 20: inside 125–210. RY / RK stay under
+125 s as before (their accepted exceptions, §17.9). `--cvc` 3 PASS (no Rukia in G2's three matches). Her CPU leaned on the bind: its wins outside the mirror 27 → 13 of 60.
+

@@ -237,7 +237,7 @@ roll. A command or NIL (none lands: the old order)."
                                 :q (if (can :q 0.0 (+ (mv-reach (kit-command-move kit :q)) 0.5) 0) 6 0)
                                 :f (if (can :f 1.2 (+ (mv-reach (kit-command-move kit :f)) 0.2) 0) 6 0)
                                 :sp2 (if (and (rukia-ai-sp2-bars-p e) (can :sp2 0.5 4.5 0)) (+ 2 (* 2 layers)) 0)
-                                :rikujo (if (and bars (can :sp1 2.5 5.8 (+ 16 *ai-ru-rikujo-hold* 16))) 6 0)
+                                :rikujo (if (and bars (can :sp1 2.5 5.8 (+ 16 *ai-ru-rikujo-hold* 32))) 6 0)   ; (its S 32, §17.13)
                                 :byakurai (if (can :sig 2.0 6.0 0) 1 0))))   ; (b0a1: the O out: not hers but on a seal)
         (case opt
           ((:q :f :sp2) (why b :ice-cash opt))
@@ -556,9 +556,9 @@ command, :PRESSED, or NIL (a wait: the decision is made)."
 (defparameter *ai-ru-seal-o* '(:easy 0.3 :normal 0.8 :hard 1.0)
   "Her RIKUJOKORO bound him (his FIGHTER-SEAL: the bind seals him as red for a Kikon follow-up): the O, its follow-up the
 Kikon from any health, per bind (cell b0a0: the cash pressed SHIRAFUNE into 60 % of her landed binds, the seal unused).")
-(defparameter *ai-ru-rikujo-hold* 14
-  "Frames her CPU holds RIKUJOKORO past SOKATSUI's 16 (the bind 45 + 1 a held frame: 58, long enough for her recovery 26
-and the O's strike from 6 m; debug trials E7 / E9c held 8; cell b0a0).")
+(defparameter *ai-ru-rikujo-hold* 27
+  "Frames her CPU holds RIKUJOKORO past SOKATSUI's 16 (14 -> 27 with *RU-RIKUJO-RATE* 2, 2026-10-27: the same bind, 45 + 13 =
+58, long enough for her recovery 26 and the O's strike from 6 m; debug trials E7 / E9c held 8; cell b0a0).")
 (defvar *ru-ai-seal* (vector nil nil)
   "Per side: (tick seal . yes) at her last look, the bind's one roll (RUKIA-AI-SEAL-O; a tick past now: an earlier match's).")
 
@@ -578,12 +578,14 @@ and the O's strike from 6 m; debug trials E7 / E9c held 8; cell b0a0).")
 
 ;;; ---------------------------------------------------------------- b2a0: the knockdown's oki at mid range (the seal)
 ;;; 白漣 (K3 + L) knocks him down at ~4.35 m, +50 with his wake-up (catalogue B6). Verified (combo-trial, b2a0): SP1 held H
-;;; frames from P frames before he is free, with P - H in 13..17, lays RIKUJOKORO's bind on his first vulnerable frame (gap 0,
+;;; frames from P frames before he is free, with P - H in 13..17 (29..33 since §17.13: the shut 16 f later), lays RIKUJOKORO's bind on his first vulnerable frame (gap 0,
 ;;; against Kenpachi, Hisagi, Lille, Ichigo alike), then her O lands sealed: the Kikon from full health (2 Konpaku, his Reishi
 ;;; refilled); TSUKISHIRO pressed 50 frames before he is free puts its pillar on his wake-up (gap 0: 60 + 2 layers, +26).
 (defparameter *ai-ru-oki* '(:easy 0.0 :normal 0.4 :hard 0.95)
   "Him down within RIKUJOKORO's range: the oki table (RUKIA-AI-OKI), per knockdown (his last action's roll).")
-(defparameter *ai-ru-oki-lead* 15 "The oki's RIKUJOKORO: frames before he is free minus this = its SP1 hold (13..17 lands).")
+(defparameter *ai-ru-oki-lead* 31
+  "The oki's RIKUJOKORO: frames before he is free minus this = its SP1 hold (29..33 lands; 15, 13..17, before the ring's
+shut moved 16 f later, 2026-10-27, DUEL_RUKIA_TYBW §17.13).")
 (defparameter *ai-ru-konpaku-dmg* 433
   "The damage a Konpaku is worth to her CPU's tables (a Soul Break's 3 for his 1300 Reishi): a Kikon's 2 Konpaku, less the
 Reishi it refills.")

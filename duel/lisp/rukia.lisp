@@ -86,8 +86,9 @@ the user 2026-10-24, DUEL_RUKIA_TYBW §10).")
   :params (:range 8.0 :radius 1.8 :height 3.0 :delay 24 :dmg 60 :stun 36 :guard 14 :frost 0 :layers 2 :life 8 :tell (21 30)))
 ;; Shift+K, a tap: HADO NO SANJUSAN: SOKATSUI, blue fire from both palms (a 5 m cone, 40 deg, knockback 3 m), 1 bar; held
 ;; >= 16 f (RUKIA-SP1-RELEASE at the hold's end): BAKUDO NO ROKUJUICHI: RIKUJOKORO, six rods of light at him <= 6 m (the
-;; ring under him at its f2, the bind 14 f later: a :bind disc 45 f that no guard stops (the user 2026-10-24: a guarding
-;; victim is bound too, DUEL_RUKIA_TYBW §8); only a Step or a Hoho out of the ring before it shuts escapes it)
+;; ring under him at its f2, the bind 30 f later (14 -> 30, the user 2026-10-27: 「光環收束改成 30f」, DUEL_RUKIA_TYBW §17.13):
+;; a :bind disc 45 f that no guard stops (the user 2026-10-24: a guarding victim is bound too, §8); it hits only on the
+;; frame it shuts (:life 6 -> 1), so a Step or a Hoho out of the ring, or inside its iframes on that frame, escapes it)
 (defmove :ru-sokatsui :kind :sp :clip :ru-s-kido :clip-2 :ru-s-sokatsui :callout "HADO NO SANJUSAN: SOKATSUI"
   :hold (1 16) :release rukia-sp1-release :startup 14 :active 4 :recovery 26 :dmg 90 :adv-block -16
   :reach 5.0 :arc 40 :height (0.2 1.8) :on-hit :knockback :kb 3.0 :flags (:ranged) :on-frame ((14 rukia-sokatsui-fire)))
@@ -97,9 +98,12 @@ this, which lasts from the bind at its farthest (6 m) until her O's Kikon follow
 recovery 26 + ENBU's hit 25 f after the press at 5.9 m + the follow-up 49 = 100) (the user 2026-10-24: 「長按可延長
 六丈光牢的鎖定時間，最長可封鎖至毀魂技追擊打中」, DUEL_RUKIA_TYBW §10). While it seals him (FIGHTER-SEAL) a Kikon
 follow-up treats him as red: no guard cancels its reel or blocks it.")
-(defmove :ru-rikujo :kind :sig :clip :ru-s-rikujo :clip-2 :ru-s-rikujo-cast :callout "BAKUDO NO ROKUJUICHI: RIKUJOKORO" :startup 16 :active 0
-  :hold (0 56) :recovery 26 :flags (:bind) :on-frame ((2 rukia-rikujo))
-  :params (:range 6.0 :radius 1.2 :height 2.2 :delay 14 :dmg 20 :stun 45 :guard 12 :life 6 :tell (2 16)))
+(defparameter *ru-rikujo-rate* 2
+  "RIKUJOKORO: held frames per frame of bind past its 45 (1 -> 2, the user 2026-10-27: 「拉長到達蓄力上限所需要的時間（封鎖
+時間跟之前的上限一樣）」: the 100 f cap now takes 111 held frames, :hold (0 111), not 56; DUEL_RUKIA_TYBW §17.13).")
+(defmove :ru-rikujo :kind :sig :clip :ru-s-rikujo :clip-2 :ru-s-rikujo-cast :callout "BAKUDO NO ROKUJUICHI: RIKUJOKORO" :startup 32 :active 0
+  :clip-s 16 :hold (0 111) :recovery 26 :flags (:bind) :on-frame ((2 rukia-rikujo))   ; (S 16 -> 32 = the ring's shut, its
+  :params (:range 6.0 :radius 1.2 :height 2.2 :delay 30 :dmg 20 :stun 45 :guard 12 :life 1 :tell (2 32)))  ;  recovery after it)
 ;; Shift+L, SAN NO MAI: SHIRAFUNE: the ice blade grows off the point: a 5 m thrust (her own blade: melee), frost 150 (the
 ;; bands' own). The Shikai's copy: no frost, it bursts every layer: 110 + 25 a layer (alone or off any string hit)
 (defmove :ru-shirafune :kind :sp :clip :ru-shirafune :callout "SAN NO MAI: SHIRAFUNE" :startup 16 :active 4 :recovery 28
@@ -435,7 +439,8 @@ string: TSUKISHIRO), from its frame 0."
 a Step or a Hoho out of the ring escapes it)."
   (let* ((p (pos-of e)) (q (pos-of (opp-of e))) (r (move-param e :radius)) (d (1+ (move-param e :delay))))
     (multiple-value-bind (x z) (cast-point (aref p 0) (aref p 2) (aref q 0) (aref q 2) (move-param e :range))
-      (let ((stun (min *ru-rikujo-max* (+ (move-param e :stun) (max 0 (1- (fighter-charge (fighter e))))))))   ; (held longer)
+      (let ((stun (min *ru-rikujo-max* (+ (move-param e :stun)                                    ; (held longer: a frame
+                                          (floor (max 0 (1- (fighter-charge (fighter e)))) *ru-rikujo-rate*)))))   ;  a RATE)
         (spawn-hazard :freeze e :x x :z z :size r :y (move-param e :height) :delay d :life (move-param e :life) :src t
                               :data (list :seal stun)
                               :hw (make-hitwin :dmg (move-param e :dmg) :react :bind :stun stun :hs *hitstop-heavy*
