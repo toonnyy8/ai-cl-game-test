@@ -421,6 +421,11 @@ not red he was free after *KIKON-FOLLOW-STUN* until then); not red, U cancels th
   (declare (ignore red))
   (+ (kikon-follow-wait s) s 2))
 
+(defun kikon-lock-after-seal (lock seal red)
+  "His Kikon lock this step: a red lock (2) that only a sealing bind made (SEAL frames left 0, RED he isn't) opens to the
+guard (1) once the bind is over (the user 2026-10-27: 「封印期間如果六丈光牢解鎖就要開放能防禦」, DUEL_RUKIA_TYBW §17.14)."
+  (if (and (= lock 2) (zerop seal) (not red)) 1 lock))
+
 (defun kikon-lock-p (state follow phase contact sf s a)
   "Does the rusher (STATE, FOLLOW: his move is a Kikon rush past its first strike, PHASE, CONTACT, move frame SF of a
 strike S / A) still hold his victim's Kikon lock (FIGHTER-KIKON-LOCK: guard only, or nothing when red)? While he dashes

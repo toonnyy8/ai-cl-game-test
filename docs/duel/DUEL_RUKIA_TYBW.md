@@ -1090,3 +1090,24 @@ IR at 20 seeds (its quick pass under 135 s): 132.7 s, 20 K.O., her wins 4 of 20:
 RK 1 / 3 / 3, RR 15 / 16 / 15, IR 4 / 5 / 2, SR 9 / 7 / 2, BR 3 / 3 / 2, HR 8 / 8 / 8 of 60: **all 21 rows under 20** (they all
 passed at 21-40 on 2026-10-26, §17.9, before the Reiatsu change of DEVLOG §394; no baseline A/B re-run on 146ef31). Read with
 the 10-seed rows above: her Shikai CPU lost its main tool. Reported to the user, nothing retuned.
+
+### 17.14 The seal ends, the guard opens (the user, 2026-10-27)
+
+The user asked why a victim bound by RIKUJŌKŌRŌ and hit by her O stays locked until the Kikon follow-up lands (the O's hit
+set his Kikon lock to 2, "red: no guard", from the seal, and the lock held to the follow-up's strike whatever the seal did
+after; §10, rules KIKON-FOLLOW-STUN), then: 「封印期間如果六丈光牢解鎖就要開放能防禦」.
+
+- **Built** (a sim change, shared code that only a seal reaches): rules **KIKON-LOCK-AFTER-SEAL** (lock seal red), called
+  by FIGHTER-STEP after the seal's count-down: a lock of 2 with no seal left, on a victim who isn't red, becomes 1 (U
+  cancels the reel into a guard that blocks the follow-up, as for any victim who isn't red). While the seal lasts, or on a
+  red victim, the lock stays 2. The follow-up strike's own unguardable flag was already read at its strike (the seal then).
+- So a short bind no longer guarantees the Kikon: the seal must outlast the O and its follow-up (her held cap 100 f does).
+- Host: `tests/duel-rules/core.lisp` (the five cases). duel-rules 10245, learn 131, control 97 ALL PASS; pkgcheck clean;
+  built. Browser: 85026 with SP1 held ~1 s (a ~74 f seal) and O pressed on her recovery: the O hits (red, sealed), the seal
+  ends, his held guard cancels the reel at once and the follow-up is BLOCKED.
+- Gates: `--cvc` 3 PASS; her pairings at 10 seeds, all K.O. (§17.13's in brackets): RY 117.9 (117.5), RK 114.8 (114.8),
+  RR 204.6 (204.6), IR 127.3 (127.3), SR 157.4 (157.4), BR 200.8 (182.6; her wins 2 -> 3), HR 159.6 (163.4). Only matches with
+  a sealed O moved. No other fighter has a seal, so their rows are unchanged by construction (the lock's other source, red,
+  is not undone during a reel).
+- Manual: the RIKUJŌKŌRŌ row says the follow-up is unguardable only while the bind lasts.
+

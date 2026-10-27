@@ -396,6 +396,10 @@ presses made during it (STRING-LATCH: the last allowed press wins, a press after
             (not (kikon-lock-p :move t :main nil 11 8 3)) (not (kikon-lock-p :move nil :follow nil 0 8 3))
             (not (kikon-lock-p :move nil :main nil 2 8 3)) (not (kikon-lock-p :idle t :follow nil 0 8 3))
             (not (kikon-lock-p :stun t :main nil 2 8 3))))
+;; 2026-10-27 (DUEL_RUKIA_TYBW §17.14): a seal's red lock opens to the guard once the bind is over, never while it lasts
+;; or while he is red; a guard lock and no lock stay as they are
+(check (and (= 1 (kikon-lock-after-seal 2 0 nil)) (= 2 (kikon-lock-after-seal 2 5 nil)) (= 2 (kikon-lock-after-seal 2 0 t))
+            (= 1 (kikon-lock-after-seal 1 0 nil)) (= 0 (kikon-lock-after-seal 0 0 nil))))
 (check (and (null (kikon-follow-unguardable-p nil)) (kikon-follow-unguardable-p t)))
 (check (and (eq (resolve-contact :guard :unguardable (kikon-follow-unguardable-p nil)) :blocked)     ; not red: blocked
             (eq (resolve-contact :guard :unguardable (kikon-follow-unguardable-p t)) :hit)           ; red: the Kikon

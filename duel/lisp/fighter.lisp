@@ -1125,6 +1125,7 @@ cinematic or a :through move."
   (when (> (fighter-callout-t f) 0) (decf (fighter-callout-t f)))
   (when (> (fighter-frost f) 0) (decf (fighter-frost f)))
   (when (> (fighter-seal f) 0) (decf (fighter-seal f)))
+  (setf (fighter-kikon-lock f) (kikon-lock-after-seal (fighter-kikon-lock f) (fighter-seal f) (gauges-red-p (gauges e))))
   (when (or (plusp (fighter-layers f)) (plusp (fighter-chill f)))   ; 霜の層 thaw (Rukia's Shikai: rules LAYERS-THAW)
     (multiple-value-bind (l th c) (layers-thaw (fighter-layers f) (fighter-thaw f) (fighter-chill f))
       (setf (fighter-layers f) l (fighter-thaw f) th (fighter-chill f) c)))
