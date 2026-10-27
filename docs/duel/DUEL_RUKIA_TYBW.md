@@ -1086,3 +1086,7 @@ The SOKATSUI / RIKUJOKORO hold threshold (16 f) is unchanged.
 IR at 20 seeds (its quick pass under 135 s): 132.7 s, 20 K.O., her wins 4 of 20: inside 125–210. RY / RK stay under
 125 s as before (their accepted exceptions, §17.9). `--cvc` 3 PASS (no Rukia in G2's three matches). Her CPU leaned on the bind: its wins outside the mirror 27 → 13 of 60.
 
+**Awaken A/B** (`--cmd 39020` / `39002`, 60 seeds a stream; her never-awaken side's wins at seed0 100 / 300 / 500): RY 5 / 10 / 10,
+RK 1 / 3 / 3, RR 15 / 16 / 15, IR 4 / 5 / 2, SR 9 / 7 / 2, BR 3 / 3 / 2, HR 8 / 8 / 8 of 60: **all 21 rows under 20** (they all
+passed at 21-40 on 2026-10-26, §17.9, before the Reiatsu change of DEVLOG §394; no baseline A/B re-run on 146ef31). Read with
+the 10-seed rows above: her Shikai CPU lost its main tool. Reported to the user, nothing retuned.
